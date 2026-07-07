@@ -1,0 +1,34 @@
+.box{background:#FBF6E8;border:1.5px solid var(--accent);border-radius:var(--radius);padding:0;overflow:hidden}
+.box.primary{background:#EEF4EC;border-color:var(--primary)}
+.box summary{display:flex;align-items:center;gap:14px;cursor:pointer;list-style:none;padding:18px 20px}
+.box summary::-webkit-details-marker{display:none}
+.badge{
+  flex:none;width:44px;height:44px;border-radius:11px;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.box.primary .badge{background:var(--primary)}
+.badge svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.titleWrap{font-family:var(--font-fraunces),serif;font-weight:700;font-size:17px;color:var(--primary-deep);line-height:1.25}
+.titleWrap small{
+  display:block;font-family:var(--font-spline-mono),monospace;font-weight:400;font-size:10.5px;
+  letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-top:4px;
+}
+.box.primary .titleWrap small{color:var(--primary)}
+.chev{margin-left:auto;color:var(--accent);font-size:15px;transition:transform .2s}
+.box.primary .chev{color:var(--primary)}
+.box[open] .chev{transform:rotate(180deg)}
+.body{padding:0 20px 20px 78px;border-top:1px dashed var(--accent-soft)}
+.box.primary .body{border-top-color:#9DB8A4}
+@media(max-width:560px){.body{padding-left:20px}}
+.body p{font-size:14px;color:var(--muted);margin-top:14px;line-height:1.65}
+.body b{color:var(--ink)}
+.tag3{display:inline-flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.tag3 span{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:4px 10px;
+}
+.box.primary .tag3 span{border-color:var(--primary);color:var(--primary)}
+.body ul{list-style:none;margin:12px 0 0;display:grid;gap:8px}
+.body li{padding-left:20px;position:relative;font-size:14px;color:var(--muted)}
+.body li::before{content:"—";position:absolute;left:0;color:var(--accent);font-weight:700}
+.box.primary li::before{color:var(--primary)}

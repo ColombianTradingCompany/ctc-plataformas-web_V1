@@ -1,0 +1,6 @@
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin:14px 0 20px}
+.wide{grid-column:1/-1}
+.grid label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+.grid input,.grid select,.grid textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:var(--font-spline-mono),monospace;font-size:13px;background:var(--paper)}
+.grid textarea{font-family:var(--font-instrument-sans),sans-serif;min-height:76px;resize:vertical}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}

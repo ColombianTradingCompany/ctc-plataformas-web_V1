@@ -85,6 +85,8 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .btn-solid:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:#fff}
 .btn-accent{border-color:var(--accent);color:var(--accent)}
 .btn-accent:hover{background:var(--accent);color:#fff}
+.btn-solid-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-solid-accent:hover{background:var(--primary-deep);border-color:var(--primary-deep);color:#fff}
 .btn-sm{padding:6px 14px;font-size:13px;height:auto}
 
 /* ============================================================

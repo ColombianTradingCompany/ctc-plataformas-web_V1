@@ -1,0 +1,29 @@
+.calWrap{overflow-x:auto;padding-bottom:8px}
+.cal{min-width:960px}
+.calMonths{
+  display:grid;grid-template-columns:repeat(12,1fr);font-family:var(--font-spline-mono),monospace;
+  font-size:10.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;
+  border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px;
+}
+.calMonths span{text-align:center}
+.calRow{display:grid;grid-template-columns:repeat(12,1fr);align-items:stretch;min-height:46px;position:relative}
+.calRow + .calRow{margin-top:6px}
+.calLabel{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px}
+.calBar{
+  min-height:36px;height:auto;border-radius:8px;display:flex;align-items:center;gap:7px;padding:6px 10px;
+  font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:600;letter-spacing:.02em;
+  white-space:normal;line-height:1.25;color:#fff;position:relative;z-index:2;margin:2px 0;
+}
+.cbSearch{background:#7A8C6E}
+.cbHarvest{background:var(--primary)}
+.cbArena{background:var(--t-tyrian)}
+.cbSamples{background:var(--accent)}
+.cbPack{background:#8A5A2B}
+.cbLiq{background:#55607A}
+.cbShip{background:var(--ink)}
+.cbSeason{background:repeating-linear-gradient(90deg,var(--t-black),var(--t-black) 12px,#33373B 12px,#33373B 24px)}
+.calGridLines{position:absolute;inset:0;display:grid;grid-template-columns:repeat(12,1fr);pointer-events:none;z-index:1}
+.calGridLines i{border-left:1px dashed #E0DCCB}
+.calLegend{display:flex;gap:16px;flex-wrap:wrap;margin-top:20px;font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted)}
+.calLegend span{display:inline-flex;align-items:center;gap:6px}
+.calLegend i{width:12px;height:12px;border-radius:3px;display:inline-block}

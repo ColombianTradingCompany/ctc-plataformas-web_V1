@@ -1,0 +1,37 @@
+.dealGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:860px){.dealGrid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:30px;position:relative;overflow:hidden}
+.panel h3{font-size:22px;margin-bottom:12px;color:var(--primary-deep)}
+.panel ul{list-style:none;margin:14px 0 6px;display:grid;gap:10px}
+.panel li{padding-left:22px;position:relative;font-size:14.5px}
+.panel li::before{content:"—";position:absolute;left:0;color:var(--accent);font-weight:700}
+.stairs{margin-top:16px}
+.stair{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;margin-bottom:9px}
+.sl{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted)}
+.sbar{height:26px;border-radius:6px;background:var(--primary);color:#EFE9D6;font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:600;display:flex;align-items:center;padding:0 10px;white-space:nowrap}
+.sbar.freed{background:#C9C2A8;color:var(--ink)}
+.row2{display:flex;gap:4px}
+.humid{background:var(--primary-deep);color:#EFE9D6;grid-column:1/-1;display:grid;grid-template-columns:1.15fr .85fr;gap:26px;align-items:center}
+.humid h3{color:#F7F2E2}
+.humid li::before{color:var(--accent-soft)}
+.humid li{color:#CFD8C8}
+.humid img{border-radius:12px;border:1px solid rgba(255,255,255,.2);width:100%;height:auto}
+@media(max-width:860px){.humid{grid-template-columns:1fr}}
+
+.hic{margin-top:14px;border:1px dashed var(--accent-soft);border-radius:10px;padding:0}
+.hic summary{cursor:pointer;font-family:var(--font-spline-mono),monospace;font-size:12px;font-weight:600;padding:11px 14px;color:var(--accent-soft);list-style:none}
+.hic summary::-webkit-details-marker{display:none}
+.hic[open] summary{border-bottom:1px dashed var(--accent-soft)}
+.hbody{padding:12px 14px;font-size:13.5px;line-height:1.65}
+
+.cpk{
+  margin-top:18px;background:linear-gradient(120deg,#2A0119,#66023C 65%,#8A0E55);color:#F6E9F0;border-radius:16px;
+  padding:0;display:grid;grid-template-columns:1fr 300px;overflow:hidden;align-items:center;
+}
+.cpt{padding:30px 34px}
+.cpt h3{color:#fff;font-size:24px}
+.cpt p{color:#EDD3E1;font-size:14.5px;margin-top:8px;max-width:64ch}
+.cpk img{width:100%;height:100%;object-fit:cover;min-height:190px}
+.cpt button{border-color:#F6E9F0;color:#F6E9F0;margin-top:16px}
+.cpt button:hover{background:#F6E9F0;color:#66023C}
+@media(max-width:760px){.cpk{grid-template-columns:1fr}.cpk img{order:-1;max-height:170px}}

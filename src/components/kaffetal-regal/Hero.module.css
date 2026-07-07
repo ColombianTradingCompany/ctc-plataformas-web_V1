@@ -1,0 +1,44 @@
+.hero{padding:68px 0 56px;border-top:none}
+.heroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
+@media(max-width:880px){.heroGrid{grid-template-columns:1fr}}
+.coldots{display:inline-flex;gap:6px;vertical-align:middle}
+.coldots i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.coldots i:nth-child(1){background:#E8B10E}
+.coldots i:nth-child(2){background:#1F4FB0}
+.coldots i:nth-child(3){background:#B01F24}
+.coldots i:nth-child(4){background:#1A1C1E}
+.h1{font-size:clamp(35px,4.8vw,58px);font-weight:800;color:var(--primary-deep);margin-top:14px}
+.h1 em{font-style:italic;color:var(--accent)}
+.lead{max-width:56ch;margin-top:20px;font-size:17.5px;color:var(--muted)}
+.heroCta{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;align-items:center}
+.heroVisual{position:relative}
+.photo{border-radius:16px;box-shadow:0 24px 60px -28px rgba(14,32,26,.5);border:1px solid var(--line);width:100%;height:auto}
+.krlogo{position:absolute;left:-28px;bottom:-38px;width:min(40%,190px);height:auto;border-radius:50%;box-shadow:0 14px 34px -12px rgba(14,32,26,.45);border:3px solid var(--card)}
+.tag{position:absolute;bottom:14px;right:14px;background:rgba(14,32,26,.85);color:var(--paper);font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.08em;padding:6px 11px;border-radius:6px}
+@media(max-width:880px){.heroVisual{margin-bottom:24px}}
+
+.pipeline{margin-top:58px;border:1px solid var(--primary);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+.pipelineHead{padding:12px 18px;background:var(--primary);color:#F1EBD8;font-family:var(--font-spline-mono),monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.pipelineGrid{display:grid;grid-template-columns:repeat(4,1fr)}
+.pipelineCell{padding:18px;border-right:1px solid var(--line)}
+.pipelineCell:last-child{border-right:none}
+.pic{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:#EEF3EA;color:var(--primary);margin-bottom:10px}
+.pic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.k{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.v{font-family:var(--font-fraunces),serif;font-weight:700;font-size:19px;margin-top:6px;color:var(--primary-deep)}
+@media(max-width:820px){.pipelineGrid{grid-template-columns:repeat(2,1fr)}.pipelineCell{border-bottom:1px solid var(--line)}}
+
+.ctcdo{margin-top:14px;border:1px solid var(--accent);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+.ctcdoHead{padding:12px 18px;background:var(--accent);color:#FFF9EC;font-family:var(--font-spline-mono),monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ctcdoGrid{display:grid;grid-template-columns:repeat(3,1fr)}
+.ctcdoCell{padding:15px 18px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.5px;color:var(--muted);display:flex;gap:10px;align-items:start}
+.ctcdoCell b{color:var(--ink);font-weight:600}
+.gd{color:var(--accent);font-weight:700;flex:none}
+.ctcdoGrid .ctcdoCell:nth-child(3n){border-right:none}
+.ctcdoGrid .ctcdoCell:nth-last-child(-n+3){border-bottom:none}
+.ctcdoFoot{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 18px;background:#F7EDF3;border-top:1px solid var(--line)}
+.cplogo{flex:none;width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 4px 12px -4px rgba(102,2,60,.35)}
+.ftxt{display:flex;align-items:center;gap:14px;flex:1;min-width:280px}
+.ftxt p{font-size:13.5px;color:var(--muted);max-width:72ch;margin:0}
+.ftxt p b{color:var(--t-tyrian)}
+@media(max-width:880px){.ctcdoGrid{grid-template-columns:1fr}.ctcdoCell{border-right:none}.ctcdoGrid .ctcdoCell:nth-last-child(n+2){border-bottom:1px solid var(--line)}}

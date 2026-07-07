@@ -50,7 +50,7 @@ export function EcosystemSection() {
               </ul>
             </details>
             <div className={styles.foot}>
-              <a className="btn btn-sm btn-accent" href="/kaffetal-regal">
+              <a className="btn btn-sm btn-accent" href="https://kaffetal-regal.ctcexport.com" target="_blank" rel="noopener">
                 Entrar a Kaffetal Regal ↗
               </a>
             </div>
@@ -89,7 +89,7 @@ export function EcosystemSection() {
               </ul>
             </details>
             <div className={styles.foot}>
-              <a className="btn btn-sm" href="/cherry-picked">
+              <a className="btn btn-sm" href="https://cherry-picked.ctcexport.com" target="_blank" rel="noopener">
                 Cherry Picked ↗
               </a>
             </div>

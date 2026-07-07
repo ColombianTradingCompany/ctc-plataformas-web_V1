@@ -1,0 +1,4 @@
+.footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-size:13.5px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.fb{display:flex;align-items:center;gap:10px}
+.fb img{width:30px;height:auto}

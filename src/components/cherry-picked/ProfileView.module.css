@@ -1,0 +1,19 @@
+.profile{min-height:100vh;background:var(--primary-deep);color:#EAF2EC}
+.pfTop{display:flex;align-items:center;gap:16px;height:68px;border-bottom:1px solid rgba(255,255,255,.18)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{width:42px;height:42px;border-radius:50%;object-fit:cover}
+.name{font-family:var(--font-fraunces),serif;font-weight:800;font-size:19px;line-height:1;color:#fff;display:block}
+.by{display:block;font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;color:#9FD3B4;text-transform:uppercase;margin-top:3px}
+.pfTop :global(.btn){border-color:#EAF2EC;color:#EAF2EC;margin-left:auto}
+.pfTop :global(.btn):hover{background:#EAF2EC;color:var(--primary-deep)}
+.pfMain{padding:52px 0 80px}
+.h1{font-size:clamp(28px,4vw,44px);margin-top:10px;color:#fff}
+.pfGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+.pfCard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:24px}
+.pfCard.wide{grid-column:span 2}
+.k{font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#9FD3B4}
+.v{font-family:var(--font-fraunces),serif;font-weight:800;font-size:30px;margin-top:6px}
+.pfList{margin-top:14px;font-family:var(--font-spline-mono),monospace;font-size:12.5px;line-height:2.1;color:#D7E7DB}
+.pfList b{color:#fff;font-weight:600}
+.pfNote{font-size:13px;color:#B9D4C2;margin-top:12px;max-width:52ch}
+@media(max-width:860px){.pfGrid{grid-template-columns:1fr}.pfCard.wide{grid-column:span 1}}

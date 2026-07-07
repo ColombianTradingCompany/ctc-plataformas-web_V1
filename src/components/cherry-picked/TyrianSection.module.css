@@ -1,0 +1,18 @@
+.tyrianCard{background:linear-gradient(135deg,#2A0119,#66023C 58%,#8A0E55);color:#F6E9F0;border-radius:16px;padding:40px;display:grid;grid-template-columns:1fr;gap:28px}
+.tyrianCard h2{font-size:clamp(26px,3.6vw,40px)}
+.tyrianCard p{color:#EDD3E1;max-width:70ch}
+.specs{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-family:var(--font-spline-mono),monospace;font-size:12px}
+.k{color:#D9A6C4}
+.mediaLinks{display:flex;gap:8px;flex-wrap:wrap}
+.mediaLinks a{font-size:12px;font-weight:600;color:#F6E9F0;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 11px;background:rgba(255,255,255,.08)}
+.mediaLinks a:hover{border-color:#F6E9F0}
+.halves{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bidBox{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:22px}
+.hk{font-family:var(--font-fraunces),serif;font-weight:700;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.big{font-family:var(--font-fraunces),serif;font-weight:800;font-size:32px;margin:2px 0}
+.sub{font-family:var(--font-spline-mono),monospace;font-size:11.5px;color:#EDD3E1}
+.bidBox hr{border:none;border-top:1px dashed rgba(255,255,255,.3);margin:13px 0}
+.btnTyrian{background:#F6E9F0;border:none;color:#66023C;border-radius:999px;padding:11px 20px;font-weight:700;font-size:14px;width:100%}
+.btnTyrian:hover{background:#fff}
+.leadChip{font-family:var(--font-spline-mono),monospace;font-size:10.5px;background:#F6E9F0;color:#66023C;border-radius:4px;padding:2px 8px;font-weight:600}
+@media(max-width:760px){.halves{grid-template-columns:1fr}}

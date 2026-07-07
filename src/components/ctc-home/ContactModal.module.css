@@ -1,0 +1,18 @@
+.fform{display:grid;gap:13px}
+.fform label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+.fform input,
+.fform select,
+.fform textarea{
+  width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;
+  font-family:var(--font-spline-mono),monospace;font-size:13px;background:var(--card);
+}
+.fform textarea{font-family:var(--font-instrument-sans),sans-serif;min-height:80px;resize:vertical}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);
+  border-radius:999px;padding:7px 13px;font-size:12.5px;cursor:pointer;background:var(--card);
+}
+.chip input{width:auto;accent-color:var(--primary)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+.hint{font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted)}

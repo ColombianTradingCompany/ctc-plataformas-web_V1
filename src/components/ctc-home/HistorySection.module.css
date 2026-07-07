@@ -1,0 +1,6 @@
+.story{display:grid;grid-template-columns:300px 1fr;gap:56px;align-items:center}
+@media(max-width:860px){.story{grid-template-columns:1fr}}
+.imgs img{width:100%;height:auto;border-radius:14px}
+.quote{font-family:var(--font-fraunces),serif;font-size:clamp(21px,2.6vw,29px);font-weight:600;line-height:1.35;margin-top:14px}
+.quote em{font-style:italic;color:var(--primary)}
+.by{margin-top:18px;font-family:var(--font-spline-mono),monospace;font-size:11.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}

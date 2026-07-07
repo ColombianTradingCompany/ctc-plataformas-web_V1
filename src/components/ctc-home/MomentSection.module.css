@@ -1,0 +1,33 @@
+.vizGrid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:22px;align-items:stretch}
+@media(max-width:860px){.vizGrid{grid-template-columns:1fr}}
+.viz{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 14px}
+.viz svg{width:100%;height:auto;display:block}
+.vt{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+}
+.vt b{color:var(--accent)}
+.vizPhoto{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);min-height:220px}
+.vizPhoto span{
+  position:absolute;left:12px;bottom:12px;background:rgba(14,44,72,.87);color:#F2E7C8;
+  font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.08em;padding:5px 11px;
+  border-radius:6px;text-transform:uppercase;z-index:2;max-width:calc(100% - 24px);
+}
+
+.waves{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.waves{grid-template-columns:1fr}}
+.wave{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;border-top:5px solid var(--wc)}
+.wn{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--wc)}
+.wave h3{font-size:19px;margin:8px 0 10px}
+.wave p{font-size:13.5px;color:var(--muted);line-height:1.65}
+.wave b{color:var(--ink)}
+
+.momentClose{
+  margin-top:22px;background:var(--primary-deep);color:#C9D4E2;border-radius:var(--radius);padding:28px 30px;
+  display:grid;grid-template-columns:1.25fr .75fr;gap:26px;align-items:center;
+}
+@media(max-width:820px){.momentClose{grid-template-columns:1fr}}
+.momentClose p{font-size:15px;line-height:1.75}
+.momentClose b{color:#fff}
+.momentClose em{color:var(--accent-soft);font-style:italic}
+.momentClose img{width:100%;height:auto;border-radius:11px;border:1px solid rgba(255,255,255,.2)}

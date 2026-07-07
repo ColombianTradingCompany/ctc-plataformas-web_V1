@@ -1,0 +1,31 @@
+.header{
+  position:sticky;top:0;z-index:50;background:rgba(245,246,248,.94);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  transition:transform .28s ease;
+}
+.hide{transform:translateY(-102%)}
+.nav{display:flex;align-items:center;gap:30px;padding:20px 32px;max-width:1240px;margin:0 auto}
+.brandLogo{margin-right:auto;flex:none}
+.brandLogo img{height:54px;width:auto;max-width:min(340px,58vw);object-fit:contain;display:block}
+@media(max-width:520px){.brandLogo img{height:44px}}
+
+.idx{position:relative;flex:none}
+.idx summary{
+  list-style:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  width:58px;height:42px;border:1.5px solid var(--primary);border-radius:999px;color:var(--primary);
+  background:var(--card);transition:all .15s;
+}
+.idx summary::-webkit-details-marker{display:none}
+.idx summary:hover{background:var(--primary);color:#fff}
+.idx summary svg{width:22px;height:22px}
+.idx[open] summary{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+.idxMenu{
+  position:absolute;right:0;top:calc(100% + 12px);background:var(--card);
+  border:1px solid var(--line);border-radius:16px;box-shadow:0 28px 56px -20px rgba(14,44,72,.45);
+  min-width:330px;padding:12px;z-index:60;
+}
+.idxMenu a{display:flex;align-items:baseline;gap:14px;padding:14px 16px;border-radius:11px;text-decoration:none;color:var(--ink);font-size:15px;font-weight:600;line-height:1.35}
+.idxMenu a:hover{background:var(--paper);color:var(--primary)}
+.idxMenu a small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.n{font-family:var(--font-spline-mono),monospace;font-size:10px;color:var(--accent);flex:none}

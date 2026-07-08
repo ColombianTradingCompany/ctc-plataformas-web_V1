@@ -55,6 +55,12 @@ img{display:block;max-width:100%}
   --accent:#A87A14; --accent-soft:#C9A45C;
   --line:#CDD1C4; --radius:12px;
 }
+[data-theme="bcp"]{
+  --paper:#F4F4F5; --card:#FFFFFF; --ink:#18181B; --muted:#6B7280;
+  --primary:#3F3F46; --primary-deep:#27272A;
+  --accent:#B45309; --accent-soft:#D97706;
+  --line:#E4E4E7; --radius:10px;
+}
 
 /* ============================================================
    Shared layout primitives

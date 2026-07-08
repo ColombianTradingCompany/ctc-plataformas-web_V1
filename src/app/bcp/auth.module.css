@@ -1,0 +1,10 @@
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:36px;max-width:380px;width:100%;box-shadow:0 20px 48px -24px rgba(24,24,27,.25)}
+.card h1{font-size:20px;margin-bottom:6px;color:var(--ink)}
+.card p{font-size:13.5px;color:var(--muted);margin-bottom:22px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink)}
+.field input{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper)}
+.field input:focus{border-color:var(--primary);outline:none}
+.err{color:#B91C1C;font-size:13px;margin-bottom:14px;display:block}
+.code{letter-spacing:.4em;font-size:20px;text-align:center;font-family:var(--font-spline-mono),monospace}

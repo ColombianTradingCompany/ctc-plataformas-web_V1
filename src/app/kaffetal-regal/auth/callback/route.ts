@@ -17,16 +17,17 @@ export async function GET(request: NextRequest) {
   }
 
   // Google sign-in carries no `role` metadata, so the shared handle_new_user
-  // trigger defaults brand-new accounts to 'buyer'. Fix that up here, but only
-  // for a still-blank buyer profile -- a real buyer's data must never be touched.
+  // trigger defaults brand-new accounts to 'buyer'. Promote them to 'producer'
+  // here -- but ONLY a fresh, still-default buyer. Never touch a bcp_admin (that
+  // would downgrade a CTC staff account) or an established buyer with real data.
   const service = createServiceRoleClient();
-  const { data: producerProfile } = await service
-    .from("producer_profiles")
-    .select("profile_id")
-    .eq("profile_id", data.user.id)
+  const { data: profile } = await service
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
     .maybeSingle();
 
-  if (!producerProfile) {
+  if (profile?.role === "buyer") {
     const { data: buyerProfile } = await service
       .from("buyer_profiles")
       .select("lifetime_points, company_name, vat_number")

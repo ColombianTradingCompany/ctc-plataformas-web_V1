@@ -53,4 +53,10 @@ if (profileError) {
   process.exit(1);
 }
 
+// createUser fires handle_new_user, which defaults the account to 'buyer' and
+// leaves a stray buyer_profiles row. Remove it so an admin account carries no
+// producer/buyer profile at all -- otherwise a later Kaffetal/Cherry callback
+// could mistake the empty buyer profile for a fresh signup and downgrade the admin.
+await supabase.from("buyer_profiles").delete().eq("profile_id", data.user.id);
+
 console.log(`Created BCP admin: ${email} (${data.user.id})`);

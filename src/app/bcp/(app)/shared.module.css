@@ -1,0 +1,38 @@
+.title{font-size:22px;color:var(--ink);margin-bottom:20px}
+.subtitle{font-size:13.5px;color:var(--muted);margin-top:-14px;margin-bottom:20px}
+.empty{color:var(--muted);font-size:14px}
+.list{display:grid;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.card h3{font-size:16px;color:var(--ink)}
+.meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+.warn{font-size:12.5px;color:#B45309;margin-top:6px;font-weight:600}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rejectForm{display:flex;gap:8px}
+.rejectForm input{padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;background:var(--paper)}
+
+.tabs{display:flex;gap:8px;margin-bottom:20px}
+.tabs a{padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;border:1px solid var(--line)}
+.tabActive{background:var(--primary);border-color:var(--primary) !important;color:#fff !important}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper);font-family:inherit}
+.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+
+.badge{font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--ink)}
+.badgeWarn{background:#FEF3C7;color:#92400E}
+.badgeGood{background:#DCFCE7;color:#166534}
+.badgeBad{background:#FEE2E2;color:#991B1B}
+
+.digestGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:32px}
+.digestCard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.digestCard a{text-decoration:none;color:inherit;display:block}
+.digestK{font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.digestV{font-family:var(--font-fraunces),serif;font-weight:800;font-size:30px;margin-top:6px;color:var(--ink)}
+.digestV.warnV{color:#B45309}
+
+.auditList{font-size:13px;color:var(--muted);display:grid;gap:6px}
+.auditList b{color:var(--ink)}
+
+.backLink{display:inline-block;margin-bottom:16px;font-size:13px;color:var(--muted);text-decoration:none}
+.backLink:hover{color:var(--ink)}

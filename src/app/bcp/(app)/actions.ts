@@ -93,6 +93,19 @@ export async function updateLotStage(lotId: string, newStage: (typeof LOT_STAGES
   const { data: lot } = await service.from("lots").select("stage").eq("id", lotId).single();
   if (!lot) throw new Error("Lote no encontrado.");
 
+  if (newStage === "evaluado" || newStage === "galardonado") {
+    throw new Error("Solo la Arena asigna estos estados — cierra una sesión de catación en /bcp/arena.");
+  }
+  const { data: liveListing } = await service
+    .from("lot_listings")
+    .select("id")
+    .eq("lot_id", lotId)
+    .neq("status", "archived")
+    .maybeSingle();
+  if (liveListing) {
+    throw new Error("Este lote tiene una publicación activa en Cherry Picked — archívala en /bcp/catalogo antes de cambiar su etapa.");
+  }
+
   const update: Record<string, unknown> = { stage: newStage };
   if (newStage === "muestra_transito" || LOT_STAGES.indexOf(newStage) > LOT_STAGES.indexOf("muestra_transito")) {
     update.sample_2kg_confirmed_at = new Date().toISOString();

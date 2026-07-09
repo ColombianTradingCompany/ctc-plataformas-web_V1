@@ -2,15 +2,24 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, updateLotStage } from "../actions";
 import styles from "../shared.module.css";
 
+// evaluado/galardonado are deliberately absent: only closing an Arena session assigns them.
 const STAGES = [
   { value: "borrador", label: "Borrador" },
   { value: "ficha_completa", label: "Ficha completa" },
   { value: "videos_ok", label: "Videos ✓" },
   { value: "muestra_transito", label: "Muestra en tránsito" },
   { value: "fila_arena", label: "En fila Arena" },
-  { value: "evaluado", label: "Evaluado" },
-  { value: "galardonado", label: "Galardonado" },
 ] as const;
+
+const STAGE_LABEL: Record<string, string> = {
+  borrador: "Borrador",
+  ficha_completa: "Ficha completa",
+  videos_ok: "Videos ✓",
+  muestra_transito: "Muestra en tránsito",
+  fila_arena: "En fila Arena",
+  evaluado: "Evaluado",
+  galardonado: "Galardonado",
+};
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
 
@@ -102,24 +111,28 @@ export default async function BcpLotesPage() {
                 )}
               </p>
             </div>
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-                await updateLotStage(lot.id, formData.get("stage") as (typeof STAGES)[number]["value"]);
-              }}
-              className={styles.actions}
-            >
-              <select name="stage" defaultValue={lot.stage}>
-                {STAGES.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <button className="btn btn-sm" type="submit">
-                Guardar etapa
-              </button>
-            </form>
+            {lot.stage === "evaluado" || lot.stage === "galardonado" ? (
+              <span className={styles.badge}>{STAGE_LABEL[lot.stage]} · asignado por la Arena</span>
+            ) : (
+              <form
+                action={async (formData: FormData) => {
+                  "use server";
+                  await updateLotStage(lot.id, formData.get("stage") as (typeof STAGES)[number]["value"]);
+                }}
+                className={styles.actions}
+              >
+                <select name="stage" defaultValue={lot.stage}>
+                  {STAGES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <button className="btn btn-sm" type="submit">
+                  Guardar etapa
+                </button>
+              </form>
+            )}
           </div>
         ))}
       </div>

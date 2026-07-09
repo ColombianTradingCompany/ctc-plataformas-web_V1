@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useToast } from "@/components/Toast";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, type Finca, type GeneralInfo, type Lot, type ProducerContract } from "./data";
 import styles from "./AppDashboard.module.css";
 
@@ -33,7 +32,6 @@ export function AppDashboard({
   onOpenFincaModal: (index: number) => void;
   onOpenInfoModal: () => void;
 }) {
-  const { showToast } = useToast();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
@@ -59,12 +57,8 @@ export function AppDashboard({
               <span className={styles.by}>Panel del productor · by CTC</span>
             </span>
           </a>
-          <button className="btn btn-sm" style={{ marginLeft: "auto", borderColor: "var(--t-tyrian)", color: "var(--t-tyrian)" }} onClick={() => showToast("Cherry Picked · así se ve su café en Europa (demo)")}>
-            Cherry Picked ↗
-          </button>
-          <button className="btn btn-sm" onClick={onBackHome}>← Inicio</button>
+          <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBackHome}>← Inicio</button>
           <button className="btn btn-sm" onClick={onLogout}>Cerrar sesión</button>
-          <button className="btn btn-sm btn-solid" onClick={onNewLot}>+ Registrar nuevo lote</button>
         </div>
       </div>
 
@@ -73,7 +67,10 @@ export function AppDashboard({
         <h1 className={styles.h1}>Buenos días, {userName}</h1>
         <div className={styles.ag}>
           <div className={`${styles.acard} ${styles.wide}`}>
-            <span className={styles.k}>Mis lotes · cada café se asocia a una finca</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <span className={styles.k}>Mis lotes · cada café se asocia a una finca</span>
+              <button className="btn btn-sm btn-solid" onClick={onNewLot}>+ Registrar nuevo lote</button>
+            </div>
             <div style={{ marginTop: 8 }}>
               {lots.map((l) => {
                 const col = l.grade ? GRADES[l.grade] : "var(--accent)";

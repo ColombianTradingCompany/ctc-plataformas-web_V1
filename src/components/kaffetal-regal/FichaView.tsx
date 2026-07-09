@@ -51,15 +51,13 @@ export function FichaView({
 }) {
   const { showToast } = useToast();
   const [active, setActive] = useState<PaneId>("a1");
-  const [data, setData] = useState<FichaFormData>(() =>
-    lot.datasheet
-      ? lot.datasheet
-      : {
-          ...EMPTY_FICHA,
-          product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : "",
-          razon_social: gi.razon !== "—" ? gi.razon : "",
-        }
-  );
+  const [data, setData] = useState<FichaFormData>(() => {
+    const base: FichaFormData = lot.datasheet ?? { ...EMPTY_FICHA, razon_social: gi.razon !== "—" ? gi.razon : "" };
+    // lots.name is the single source of truth for the lot's name -- it wins over
+    // whatever product_name was last saved in the datasheet, so a rename from the
+    // dashboard and an edit here can never drift apart.
+    return { ...base, product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : base.product_name };
+  });
   const [declared, setDeclared] = useState(false);
 
   function onChange(patch: Partial<FichaFormData>) {

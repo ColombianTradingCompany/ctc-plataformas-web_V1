@@ -20,6 +20,7 @@ export type Lot = {
   moq: number; // minimum per customer
   price: number; // EUR/kg
   cup: string; // tasting notes
+  transparency?: { locked: number; reference: number }; // real producer-vs-market price, only when the listing opted in
 };
 
 export const GRADE_COLOR: Record<Grade, string> = {

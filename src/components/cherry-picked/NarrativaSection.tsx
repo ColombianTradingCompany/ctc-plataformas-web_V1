@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { eur, type Lot } from "./data";
 import styles from "./NarrativaSection.module.css";
 
-export function NarrativaSection() {
+export function NarrativaSection({ lots }: { lots: Lot[] }) {
   const [videos, setVideos] = useState(true);
   const [ficha, setFicha] = useState(true);
   const [cert, setCert] = useState(true);
   const [tcredit, setTcredit] = useState(false);
+
+  const transparencyLot = lots.find((l) => l.transparency);
+  const previewLot = transparencyLot ?? lots[0] ?? null;
 
   return (
     <section id="narrativa">
@@ -47,57 +51,74 @@ export function NarrativaSection() {
               </span>
             </label>
             <label className={`${styles.tgl} ${styles.tc}`}>
-              <input type="checkbox" checked={tcredit} onChange={(e) => setTcredit(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={tcredit}
+                disabled={!transparencyLot}
+                onChange={(e) => setTcredit(e.target.checked)}
+              />
               <span>
                 <span className={styles.tt}>Transparency Credit · las condiciones del contrato</span>
                 <span className={styles.td}>
                   El nivel máximo de transparencia radical: mostrar el <strong>precio base pagado al productor
                   frente al precio base del mercado</strong> del día del contrato. Es opcional — la transparencia se
                   ofrece, no se impone — pero quien lo activa convierte cada taza en un argumento.
+                  {!transparencyLot && " (Aún no hay ningún lote con esta opción activada por CTC.)"}
                 </span>
               </span>
             </label>
           </div>
           <div className={styles.pubcard} aria-label="Vista previa de la página pública del lote">
-            <div className={styles.ph}>
-              <span>cherrypicked.coffee/lote/GD-2710</span>
-              <span>Vista previa</span>
-            </div>
-            <h4>Finca El Vergel Alto · Sidra</h4>
-            <p className={styles.porig}>Elías Bayter · Fresno, Tolima · Grado Gold · Arena #12</p>
-            <div style={{ marginTop: 14 }}>
-              {videos && (
-                <div className={styles.publine}>
-                  <span className={styles.plIc}>▸</span>
-                  <span>Mini-documental de finca · Catación del panel en video</span>
+            {previewLot ? (
+              <>
+                <div className={styles.ph}>
+                  <span>cherrypicked.coffee/lote/{previewLot.code}</span>
+                  <span>Vista previa</span>
                 </div>
-              )}
-              {ficha && (
-                <div className={styles.publine}>
-                  <span className={styles.plIc}>▸</span>
-                  <span>Sidra · Honey anaeróbico · 1.900 msnm · 88 pts SCA</span>
+                <h4>{previewLot.name}</h4>
+                <p className={styles.porig}>
+                  {previewLot.origin} · Grado {previewLot.grade}
+                </p>
+                <div style={{ marginTop: 14 }}>
+                  {videos && (
+                    <div className={styles.publine}>
+                      <span className={styles.plIc}>▸</span>
+                      <span>Mini-documental de finca · Catación del panel en video</span>
+                    </div>
+                  )}
+                  {ficha && (
+                    <div className={styles.publine}>
+                      <span className={styles.plIc}>▸</span>
+                      <span>
+                        {previewLot.variety} · {previewLot.process} · {previewLot.alt} · {previewLot.score} pts SCA
+                      </span>
+                    </div>
+                  )}
+                  {cert && (
+                    <div className={styles.publine}>
+                      <span className={styles.plIc}>⛓</span>
+                      <span>Certificado Arena · sello verificable · DDS EUDR verificable</span>
+                    </div>
+                  )}
+                  {tcredit && previewLot.transparency && (
+                    <div className={`${styles.publine} ${styles.tcredit}`}>
+                      <span className={styles.plIc}>✦</span>
+                      <span>
+                        <b>Transparency Credit:</b> precio base pagado al productor{" "}
+                        <b>{eur(previewLot.transparency.locked)}</b> vs. precio base del mercado del día{" "}
+                        <b>{eur(previewLot.transparency.reference)}</b> · contrato de opción a 3 meses, condiciones a la vista
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {cert && (
-                <div className={styles.publine}>
-                  <span className={styles.plIc}>⛓</span>
-                  <span>Certificado Arena · sello 0x3f8a…9c2 · DDS EUDR verificable</span>
+                <div className={styles.pubQr}>
+                  <span className={styles.qr} role="img" aria-label="Código QR de ejemplo" />
+                  <span>Imprime el QR en tu empaque:<br />tu cliente escanea, la historia habla.</span>
                 </div>
-              )}
-              {tcredit && (
-                <div className={`${styles.publine} ${styles.tcredit}`}>
-                  <span className={styles.plIc}>✦</span>
-                  <span>
-                    <b>Transparency Credit:</b> precio base pagado al productor <b>142</b> vs. precio base del
-                    mercado del día <b>100</b> · contrato de opción a 3 meses, condiciones a la vista
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className={styles.pubQr}>
-              <span className={styles.qr} role="img" aria-label="Código QR de ejemplo" />
-              <span>Imprime el QR en tu empaque:<br />tu cliente escanea, la historia habla.</span>
-            </div>
+              </>
+            ) : (
+              <p className={styles.porig}>Aún no hay lotes publicados para previsualizar su página pública.</p>
+            )}
           </div>
         </div>
       </div>

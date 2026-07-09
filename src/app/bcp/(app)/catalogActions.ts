@@ -26,15 +26,35 @@ export async function publishLot(formData: FormData) {
   if (lot.stage !== "galardonado") throw new Error("Solo se pueden publicar lotes galardonados.");
   if (lot.grade === "tyrian") throw new Error("Los lotes Tyrian no se publican en el catálogo — van a la subasta.");
 
+  const { data: contract } = await service
+    .from("purchase_contracts")
+    .select("id, status")
+    .eq("lot_id", lotId)
+    .single();
+  if (!contract || contract.status !== "active") {
+    throw new Error("Este lote necesita un contrato firmado (activo) antes de poder publicarse.");
+  }
+
+  const { data: releases } = await service
+    .from("contract_releases")
+    .select("released_kg")
+    .eq("contract_id", contract.id)
+    .not("released_at", "is", null);
+  const releasedSoFar = (releases ?? []).reduce((a, r) => a + Number(r.released_kg ?? 0), 0);
+  if (releasedSoFar <= 0) {
+    throw new Error("Este contrato aún no tiene ninguna liberación mensual confirmada — regístrala en /bcp/contratos antes de publicar.");
+  }
+
   const { error } = await service.from("lot_listings").insert({
     lot_id: lotId,
     commercial_mode: String(formData.get("commercial_mode")),
     unit_kg: Number(formData.get("unit_kg")),
     moq_kg: Number(formData.get("moq_kg")),
-    total_kg: Number(formData.get("total_kg")),
+    total_kg: releasedSoFar,
     price_per_kg: Number(formData.get("price_per_kg")),
     deposit_pct: Number(formData.get("deposit_pct") || 30),
     arrival_date: String(formData.get("arrival_date") || "") || null,
+    transparency_credit_enabled: formData.get("transparency_credit_enabled") === "true",
     status: "published",
     published_at: new Date().toISOString(),
   });

@@ -48,7 +48,9 @@ type CatalogRow = {
   departamento: string | null;
 };
 
-function listingToLot(row: ListingRow, catalog: CatalogRow | undefined): Lot | null {
+type TransparencyRow = { lot_listing_id: string; price_per_kg_locked: number; reference_price_snapshot: number };
+
+function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transparency: TransparencyRow | undefined): Lot | null {
   const grade = catalog?.grade ? GRADE_DB[catalog.grade] : null;
   if (!catalog || !grade) return null;
   return {
@@ -70,6 +72,7 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined): Lot | n
     moq: row.moq_kg,
     price: row.price_per_kg,
     cup: catalog.ficha_notas_cata || "—",
+    transparency: transparency ? { locked: Number(transparency.price_per_kg_locked), reference: Number(transparency.reference_price_snapshot) } : undefined,
   };
 }
 
@@ -103,7 +106,7 @@ function Experience() {
   const [myBids, setMyBids] = useState(0);
 
   const loadCatalog = useCallback(async () => {
-    const [{ data: listingRows }, { data: catalogRows }, { data: zoneRows }] = await Promise.all([
+    const [{ data: listingRows }, { data: catalogRows }, { data: transparencyRows }, { data: zoneRows }] = await Promise.all([
       supabase
         .from("lot_listings")
         .select("id, lot_id, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg")
@@ -111,12 +114,14 @@ function Experience() {
       supabase
         .from("public_lot_catalog")
         .select("lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, ficha_notas_cata, finca_name, municipio, departamento"),
+      supabase.from("public_transparency_pricing").select("lot_listing_id, price_per_kg_locked, reference_price_snapshot"),
       supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),
     ]);
     const catalogByLotId = new Map(((catalogRows ?? []) as CatalogRow[]).map((c) => [c.lot_id, c]));
+    const transparencyByListingId = new Map(((transparencyRows ?? []) as TransparencyRow[]).map((t) => [t.lot_listing_id, t]));
     setLots(
       ((listingRows as ListingRow[] | null) ?? [])
-        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id)))
+        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id), transparencyByListingId.get(r.id)))
         .filter((l): l is Lot => l !== null)
     );
     setZones(((zoneRows ?? []) as { code: string; label: string; rate_per_kg: number }[]).map((z) => ({ code: z.code, label: z.label, ratePerKg: Number(z.rate_per_kg) })));
@@ -331,7 +336,7 @@ function Experience() {
           <EnviosSection />
           <TyrianSection loggedIn={!!userId} bidA={bidA} bidB={bidB} onBid={bid} />
           <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
-          <NarrativaSection />
+          <NarrativaSection lots={lots} />
           <CosechaSection />
           <ManifiestoSection />
           <HistoriaSection />

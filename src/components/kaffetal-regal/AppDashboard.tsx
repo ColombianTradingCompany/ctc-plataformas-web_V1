@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
-import { GRADES, STAGES, type Finca, type GeneralInfo, type Lot } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, STAGES, type Finca, type GeneralInfo, type Lot, type ProducerContract } from "./data";
 import styles from "./AppDashboard.module.css";
 
 export function AppDashboard({
@@ -11,7 +11,9 @@ export function AppDashboard({
   lots,
   fincas,
   gi,
+  contracts,
   onBackHome,
+  onLogout,
   onNewLot,
   onOpenFicha,
   onRenameLot,
@@ -22,7 +24,9 @@ export function AppDashboard({
   lots: Lot[];
   fincas: Finca[];
   gi: GeneralInfo;
+  contracts: ProducerContract[];
   onBackHome: () => void;
+  onLogout: () => void;
   onNewLot: () => void;
   onOpenFicha: (lotId: string) => void;
   onRenameLot: (lotId: string, newName: string) => void;
@@ -32,8 +36,8 @@ export function AppDashboard({
   const { showToast } = useToast();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const [humConfirmed, setHumConfirmed] = useState<number | null>(null);
-  const [humInput, setHumInput] = useState("");
+
+  const certified = lots.filter((l) => l.stage >= 5);
 
   function startRename(l: Lot) {
     setRenamingId(l.id);
@@ -42,17 +46,6 @@ export function AppDashboard({
   function saveRename(id: string) {
     if (renameValue.trim()) onRenameLot(id, renameValue.trim());
     setRenamingId(null);
-  }
-
-  function confirmHum() {
-    const v = parseFloat(humInput);
-    if (!v) {
-      showToast("Escriba el porcentaje leído en la papeleta HIC");
-      return;
-    }
-    setHumConfirmed(v);
-    if (v > 12.5) showToast(`⚠ ${v.toFixed(1)}% está alto: reacondicione el secado. Un asesor de CTC lo contactará (demo)`);
-    else showToast(`Humedad de fin de mes 2 confirmada: ${v.toFixed(1)}% ✓`);
   }
 
   return (
@@ -70,6 +63,7 @@ export function AppDashboard({
             Cherry Picked ↗
           </button>
           <button className="btn btn-sm" onClick={onBackHome}>← Inicio</button>
+          <button className="btn btn-sm" onClick={onLogout}>Cerrar sesión</button>
           <button className="btn btn-sm btn-solid" onClick={onNewLot}>+ Registrar nuevo lote</button>
         </div>
       </div>
@@ -100,8 +94,8 @@ export function AppDashboard({
                         </div>
                       ) : (
                         <h4>
-                          {l.id} · {l.name}{" "}
-                          <button className={styles.iconbtn} title="Renombrar lote" aria-label={`Renombrar ${l.id}`} onClick={() => startRename(l)}>✎</button>
+                          {l.code} · {l.name}{" "}
+                          <button className={styles.iconbtn} title="Renombrar lote" aria-label={`Renombrar ${l.code}`} onClick={() => startRename(l)}>✎</button>
                         </h4>
                       )}
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
@@ -124,22 +118,49 @@ export function AppDashboard({
             <div className={styles.alist} style={{ marginTop: 8 }}>
               Razón social: <b>{gi.razon}</b><br />
               NIT / CC: <b>{gi.nit}</b><br />
-              Agricultor: <b>{gi.agri}</b><br />
-              Estado: <b className={styles.ok}>verificado ✓</b>
+              Agricultor: <b>{gi.agri}</b>
             </div>
             <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={onOpenInfoModal}>Editar información</button>
           </div>
 
           <div className={`${styles.acard} ${styles.wide}`}>
-            <span className={styles.k}>Oferta activa · L-0007 galardonado <b style={{ color: "var(--t-blue)" }}>BLUE</b> · Arena #12</span>
-            <div className={styles.alist} style={{ marginTop: 8 }}>
-              Congelado: <b>400 kg pergamino</b> · Compra inicial muestras: <b>15 kg pagados ✓</b><br />
-              Pedidos confirmados desde Europa: <b>240 kg</b> (aumentos firmados: 2)<br />
-              Fin mes 1: liberó <b>120 kg</b> al mercado local (tenía derecho a 200)<br />
-              Corte y pago total: <b>fin del mes 3 · 28 sep 2026</b> · Contrato renovable
-            </div>
-            <div className={styles.track} aria-label="Progreso del trato"><i className={styles.on} /><i className={styles.on} /><i /></div>
-            <div className={styles.alist} style={{ marginTop: 4 }}>Mes 1 ✓ · Mes 2 en curso · Mes 3 pendiente</div>
+            <span className={styles.k}>Mis contratos con CTC</span>
+            {contracts.length === 0 ? (
+              <div className={styles.alist} style={{ marginTop: 8 }}>Sin lotes galardonados todavía. Cuando un lote suyo gane un galardón en la Arena, su contrato aparecerá aquí.</div>
+            ) : (
+              contracts.map((c) => (
+                <div className={styles.fincarow} key={c.id} style={{ marginTop: 10 }}>
+                  <h5>
+                    {c.lotCode} · {c.lotName}{" "}
+                    {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
+                  </h5>
+                  <div className={styles.sub}>
+                    Estado: <b>{CONTRACT_STATUS_LABEL[c.status]}</b>
+                    {c.quantityFrozenKg != null && <> · Congelado: <b>{c.quantityFrozenKg} kg pergamino</b></>}
+                    {c.pricePerKgLocked != null && <> · Precio: <b>${c.pricePerKgLocked}/kg</b></>}
+                  </div>
+                  <div className={styles.track} aria-label="Progreso del trato">
+                    {[1, 2, 3].map((m) => (
+                      <i key={m} className={c.releases.find((r) => r.month === m)?.releasedAt ? styles.on : ""} />
+                    ))}
+                  </div>
+                  <div className={styles.alist} style={{ marginTop: 4 }}>
+                    {c.releases.map((r) => (
+                      <span key={r.month}>
+                        Mes {r.month}: {r.releasedKg != null ? `liberó ${r.releasedKg} kg` : "pendiente"}
+                        {r.shippedAt ? " · enviado" : ""}
+                        {r.month < 3 ? " · " : ""}
+                      </span>
+                    ))}
+                  </div>
+                  {c.humidity.length > 0 && (
+                    <div className={styles.alist} style={{ marginTop: 6 }}>
+                      Humedad: {c.humidity.map((h) => `mes ${h.month}: ${h.pct.toFixed(1)}%${h.flagged ? " ⚠" : " ✓"}`).join(" · ")}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
 
           <div className={styles.acard}>
@@ -161,33 +182,21 @@ export function AppDashboard({
           </div>
 
           <div className={styles.acard}>
-            <span className={styles.k}>Control de humedad · L-0007</span>
-            <div className={styles.humMonth}>Fin mes 1 · <span className={styles.ok}>10,8 % ✓</span> <span style={{ color: "var(--muted)" }}>· papeleta HIC #0331</span></div>
-            {humConfirmed === null ? (
-              <div className={styles.humMonth}>
-                Fin mes 2 · <span className={styles.pend}>pendiente</span>
-                <input type="number" step="0.1" min={8} max={14} placeholder="%" value={humInput} onChange={(e) => setHumInput(e.target.value)} />
-                <button className="btn btn-sm btn-solid" onClick={confirmHum}>Confirmar</button>
-              </div>
-            ) : (
-              <div className={styles.humMonth}>Fin mes 2 · <span className={styles.ok}>{humConfirmed.toFixed(1).replace(".", ",")} % ✓</span> <span style={{ color: "var(--muted)" }}>· confirmado hoy</span></div>
-            )}
-            <div className={styles.humMonth}>Fin mes 3 · <span style={{ color: "var(--muted)" }}>se habilita el 31 ago</span></div>
-            <div className={styles.alist} style={{ marginTop: 8 }}>
-              Papeletas HIC: <b>enviadas gratis ✓</b> ·{" "}
-              <a href="#" onClick={(e) => { e.preventDefault(); showToast("Video: cómo medir con la papeleta HIC (demo)"); }} style={{ color: "var(--primary)", fontWeight: 600 }}>▸ Capacitación</a>
-            </div>
-          </div>
-
-          <div className={styles.acard}>
             <span className={styles.k}>Certificación CTC</span>
-            <div className={styles.v} style={{ fontSize: 20 }}>2 emitidas</div>
-            <div className={styles.alist}>
-              L-0007 · Blue · Arena #12<br />
-              L-0009 · Evaluado (sin galardón) + feedback<br />
-              Sello: <b>0x3f8a…9c2</b> ⛓ verificable
-            </div>
-            <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={() => showToast("Certificado CTC con sello verificable (demo)")}>Ver certificados</button>
+            {certified.length === 0 ? (
+              <div className={styles.alist} style={{ marginTop: 8 }}>Sin certificados todavía. Aparecerán aquí cuando sus lotes sean evaluados en la Arena.</div>
+            ) : (
+              <>
+                <div className={styles.v} style={{ fontSize: 20 }}>{certified.length} {certified.length === 1 ? "emitido" : "emitidos"}</div>
+                <div className={styles.alist}>
+                  {certified.map((l) => (
+                    <span key={l.id}>
+                      {l.code} · {l.grade ? `Galardonado ${l.grade}` : "Evaluado (sin galardón)"}<br />
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className={`${styles.acard} ${styles.wide}`}>

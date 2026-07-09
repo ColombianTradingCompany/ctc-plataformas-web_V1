@@ -44,6 +44,7 @@ export function FincaModal({
     const name = nameRef.current?.value.trim();
     if (!name) return;
     onSave({
+      id: finca?.id ?? "",
       name,
       vereda: veredaRef.current?.value.trim() || "—",
       mun: munRef.current?.value.trim() || "—",

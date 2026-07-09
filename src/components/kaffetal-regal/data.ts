@@ -1,4 +1,7 @@
+import type { FichaFormData } from "./ficha/fichaData";
+
 export type Finca = {
+  id: string;
   name: string;
   vereda: string;
   mun: string;
@@ -12,14 +15,48 @@ export type Finca = {
 
 export type Lot = {
   id: string;
+  code: string;
   name: string;
   finca: string;
   stage: number; // 0-6, index into STAGES
   grade: "Black" | "Red" | "Blue" | "Gold" | "Tyrian" | null;
   extra: string;
+  datasheet?: FichaFormData | null;
 };
 
 export type GeneralInfo = { razon: string; nit: string; agri: string };
+
+export type ContractRelease = {
+  month: number;
+  maxReleasePct: number;
+  releasedKg: number | null;
+  releasedAt: string | null;
+  paymentConfirmedAt: string | null;
+  shippedAt: string | null;
+};
+
+export type HumidityReading = { month: number; pct: number; flagged: boolean; reportedAt: string };
+
+export type ProducerContract = {
+  id: string;
+  lotId: string;
+  lotCode: string;
+  lotName: string;
+  grade: Lot["grade"];
+  status: "pending_signature" | "active" | "reconditioning" | "completed" | "cancelled";
+  pricePerKgLocked: number | null;
+  quantityFrozenKg: number | null;
+  releases: ContractRelease[];
+  humidity: HumidityReading[];
+};
+
+export const CONTRACT_STATUS_LABEL: Record<ProducerContract["status"], string> = {
+  pending_signature: "Por firmar",
+  active: "Activo",
+  reconditioning: "En reacondicionamiento",
+  completed: "Completado",
+  cancelled: "Cancelado",
+};
 
 export const GRADES: Record<string, string> = {
   Black: "var(--t-black)",
@@ -31,34 +68,27 @@ export const GRADES: Record<string, string> = {
 
 export const STAGES = ["Borrador", "Ficha completa", "Videos ✓", "Muestra en tránsito", "En fila Arena", "Evaluado", "Galardonado"];
 
-export const INITIAL_FINCAS: Finca[] = [
-  {
-    name: "La Primavera",
-    vereda: "El Encanto",
-    mun: "Piedecuesta",
-    depto: "Santander",
-    alt: "1.680",
-    ha: "4,2",
-    hist: "Tres generaciones cultivando en ladera, con beneficio propio.",
-    carac: "Sombrío de guamo · Pink Bourbon y Castillo",
-  },
-  {
-    name: "El Roble",
-    vereda: "Mesa de Los Santos",
-    mun: "Los Santos",
-    depto: "Santander",
-    alt: "1.540",
-    ha: "2,8",
-    hist: "Suelos arenosos de mesa, noches frías.",
-    carac: "Caturra · secado en marquesina",
-  },
-];
+// Order matches the `lot_stage` Postgres enum exactly, so the array index doubles as the UI stage number.
+export const STAGE_DB = ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "fila_arena", "evaluado", "galardonado"] as const;
 
-export const INITIAL_LOTS: Lot[] = [
-  { id: "L-0007", name: "Pink Bourbon Lavado", finca: "La Primavera", stage: 6, grade: "Blue", extra: "Arena #12 · Trato activo (mes 2 de 3)" },
-  { id: "L-0009", name: "Castillo Honey", finca: "La Primavera", stage: 5, grade: null, extra: "Arena #12 · Certificado + feedback emitidos" },
-  { id: "L-0011", name: "Caturra Natural", finca: "El Roble", stage: 4, grade: null, extra: "Puesto 14 en fila · muestra recibida ✓" },
-  { id: "L-0012", name: "Lote nuevo · sin nombre", finca: "—", stage: 0, grade: null, extra: "Recién creado · complete la ficha técnica" },
-];
+export const GRADE_DB: Record<string, NonNullable<Lot["grade"]>> = {
+  black: "Black",
+  red: "Red",
+  blue: "Blue",
+  gold: "Gold",
+  tyrian: "Tyrian",
+};
 
-export const INITIAL_GI: GeneralInfo = { razon: "—", nit: "901.XXX.XXX-1", agri: "—" };
+export const GRADE_TO_DB: Record<NonNullable<Lot["grade"]>, string> = {
+  Black: "black",
+  Red: "red",
+  Blue: "blue",
+  Gold: "gold",
+  Tyrian: "tyrian",
+};
+
+export function lotCode(id: string) {
+  return "L-" + id.replace(/-/g, "").slice(0, 6).toUpperCase();
+}
+
+export const EMPTY_GI: GeneralInfo = { razon: "—", nit: "—", agri: "—" };

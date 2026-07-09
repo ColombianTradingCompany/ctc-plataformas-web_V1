@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import type { Finca, Lot } from "./data";
-import { EMPTY_FICHA, type FichaFormData } from "./ficha/fichaData";
+import { EMPTY_FICHA, num, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
@@ -21,6 +21,19 @@ import styles from "./FichaView.module.css";
 
 export type { PaneProps } from "./ficha/panes/types";
 
+export type FichaSaveUpdate = {
+  name?: string;
+  finca?: string;
+  datasheet: FichaFormData;
+  summary: {
+    ficha_variedad: string | null;
+    ficha_proceso: string | null;
+    ficha_altitud_m: number | null;
+    ficha_notas_cata: string | null;
+    ficha_puntaje_estimado: number | null;
+  };
+};
+
 export function FichaView({
   lot,
   fincas,
@@ -33,16 +46,20 @@ export function FichaView({
   fincas: Finca[];
   gi: import("./data").GeneralInfo;
   onBack: () => void;
-  onSave: (updates: { name?: string; finca?: string }) => void;
+  onSave: (updates: FichaSaveUpdate) => void;
   onOpenNewFinca: () => void;
 }) {
   const { showToast } = useToast();
   const [active, setActive] = useState<PaneId>("a1");
-  const [data, setData] = useState<FichaFormData>({
-    ...EMPTY_FICHA,
-    product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : "",
-    razon_social: gi.razon !== "—" ? gi.razon : "",
-  });
+  const [data, setData] = useState<FichaFormData>(() =>
+    lot.datasheet
+      ? lot.datasheet
+      : {
+          ...EMPTY_FICHA,
+          product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : "",
+          razon_social: gi.razon !== "—" ? gi.razon : "",
+        }
+  );
   const [declared, setDeclared] = useState(false);
 
   function onChange(patch: Partial<FichaFormData>) {
@@ -75,7 +92,19 @@ export function FichaView({
       showToast("Marque la declaración de veracidad antes de guardar.");
       return;
     }
-    onSave({ name: data.product_name.trim() || undefined, finca: data.estate || undefined });
+    const topVariety = data.varieties.find((v) => num(v.pct) > 0);
+    onSave({
+      name: data.product_name.trim() || undefined,
+      finca: data.estate || undefined,
+      datasheet: data,
+      summary: {
+        ficha_variedad: topVariety?.name || null,
+        ficha_proceso: data.base_processing || null,
+        ficha_altitud_m: data.masl ? Math.round(num(data.masl)) : null,
+        ficha_notas_cata: data.analysis_notes || null,
+        ficha_puntaje_estimado: sca.total > 0 ? sca.total : null,
+      },
+    });
     showToast("Ficha guardada. Con la muestra de 2 kg recibida, su lote entra en fila para la Arena.");
     onBack();
   }

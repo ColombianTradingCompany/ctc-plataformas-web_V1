@@ -56,10 +56,12 @@ img{display:block;max-width:100%}
   --line:#CDD1C4; --radius:12px;
 }
 [data-theme="bcp"]{
-  --paper:#F4F4F5; --card:#FFFFFF; --ink:#18181B; --muted:#6B7280;
-  --primary:#3F3F46; --primary-deep:#27272A;
-  --accent:#B45309; --accent-soft:#D97706;
-  --line:#E4E4E7; --radius:10px;
+  /* CTC corporate palette (from the official green coffee datasheet doc) */
+  --paper:#F7F6FB; --card:#FFFFFF; --ink:#12101A; --muted:#4E4A60;
+  --primary:#3C0A86; --primary-deep:#2A0760;
+  --accent:#FFCD00; --accent-soft:#D3B8FA;
+  --crimson:#C8102F; --navy:#003087;
+  --line:#DDD9EE; --radius:6px;
 }
 
 /* ============================================================

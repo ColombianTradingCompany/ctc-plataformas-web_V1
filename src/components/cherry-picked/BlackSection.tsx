@@ -1,25 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { LOTS } from "./data";
+import type { Lot } from "./data";
 import { LotCard } from "./LotCard";
 import styles from "./BlackSection.module.css";
 
-const BLACK_LOTS = LOTS.filter((l) => l.grade === "Black");
-
 export function BlackSection({
+  lots,
   myKg,
   openLots,
   loggedIn,
   onToggleOpen,
   onChangeQty,
 }: {
+  lots: Lot[];
   myKg: Record<string, number>;
   openLots: Record<string, boolean>;
   loggedIn: boolean;
   onToggleOpen: (id: string, open: boolean) => void;
   onChangeQty: (id: string, delta: number) => void;
 }) {
+  const blackLots = lots.filter((l) => l.grade === "Black");
   return (
     <section id="black">
       <div className="wrap">
@@ -41,7 +42,7 @@ export function BlackSection({
           <Image src="/images/cherry-picked/22-black-scoop.jpg" alt="Granos de café verde y tostado" width={635} height={424} />
         </div>
         <div className={styles.lots}>
-          {BLACK_LOTS.map((l) => (
+          {blackLots.map((l) => (
             <LotCard
               key={l.id}
               lot={l}

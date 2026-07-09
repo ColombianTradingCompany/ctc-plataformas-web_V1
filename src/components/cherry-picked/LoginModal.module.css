@@ -5,3 +5,15 @@
 .field input:focus{border-color:var(--primary);outline:none}
 .alt{text-align:center;font-size:13px;margin-top:16px;color:var(--muted)}
 .err{color:var(--t-red);font-size:12.5px;display:block;margin-top:4px}
+.notice{color:var(--primary);font-size:12.5px;display:block;margin-top:4px}
+.link{background:none;border:none;padding:0;font:inherit;font-weight:600;color:var(--primary);text-decoration:underline;cursor:pointer}
+
+.tabs{display:flex;gap:6px;margin:16px 0 14px;border-bottom:1.5px solid var(--line)}
+.tab{flex:1;padding:9px 0;border:none;background:none;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px}
+.tabActive{color:var(--primary);border-bottom-color:var(--primary)}
+
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:12px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.googleBtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);font-size:14px;font-weight:600;cursor:pointer}
+.googleBtn:hover{background:var(--paper)}

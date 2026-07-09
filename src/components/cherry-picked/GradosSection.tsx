@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import { InfoAccordion } from "@/components/InfoAccordion";
-import { LOTS, type Grade } from "./data";
+import type { Grade, Lot } from "./data";
 import { LotCard } from "./LotCard";
 import styles from "./GradosSection.module.css";
 
-const PRE_LOTS = LOTS.filter((l) => l.mode === "pre");
 const TAB_COLOR: Record<string, string> = { Red: "var(--t-red)", Blue: "var(--t-blue)", Gold: "var(--t-gold)" };
 
 export function GradosSection({
+  lots,
   myKg,
   openLots,
   loggedIn,
@@ -18,6 +18,7 @@ export function GradosSection({
   onToggleOpen,
   onChangeQty,
 }: {
+  lots: Lot[];
   myKg: Record<string, number>;
   openLots: Record<string, boolean>;
   loggedIn: boolean;
@@ -26,7 +27,8 @@ export function GradosSection({
   onToggleOpen: (id: string, open: boolean) => void;
   onChangeQty: (id: string, delta: number) => void;
 }) {
-  const shown = activeGrade === "all" ? PRE_LOTS : PRE_LOTS.filter((l) => l.grade === activeGrade);
+  const preLots = lots.filter((l) => l.mode === "pre");
+  const shown = activeGrade === "all" ? preLots : preLots.filter((l) => l.grade === activeGrade);
 
   return (
     <section id="grados">
@@ -77,7 +79,7 @@ export function GradosSection({
 
         <div className={styles.tabs} role="tablist" aria-label="Filtrar por grado">
           <button className={`${styles.tab} ${activeGrade === "all" ? styles.active : ""}`} role="tab" onClick={() => onSetGrade("all")}>
-            Todos <span className={styles.n}>{PRE_LOTS.length}</span>
+            Todos <span className={styles.n}>{preLots.length}</span>
           </button>
           {(["Red", "Blue", "Gold"] as Grade[]).map((g) => (
             <button
@@ -88,7 +90,7 @@ export function GradosSection({
               onClick={() => onSetGrade(g)}
             >
               <span className={styles.cdot} />
-              {g} <span className={styles.n}>{PRE_LOTS.filter((l) => l.grade === g).length}</span>
+              {g} <span className={styles.n}>{preLots.filter((l) => l.grade === g).length}</span>
             </button>
           ))}
         </div>

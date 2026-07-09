@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
+import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
 import { BlackSection } from "./BlackSection";
@@ -14,45 +15,209 @@ import { CosechaSection } from "./CosechaSection";
 import { ManifiestoSection } from "./ManifiestoSection";
 import { HistoriaSection } from "./HistoriaSection";
 import { Footer } from "./Footer";
-import { Cart } from "./Cart";
+import { Cart, type ShippingZone } from "./Cart";
 import { LoginModal } from "./LoginModal";
-import { ProfileView } from "./ProfileView";
-import { LOTS, cartData, fmt, moqOf, type Grade } from "./data";
+import { ProfileView, type Billing, type OrderSummary } from "./ProfileView";
+import { GRADE_DB, cartData, fmt, listingCode, moqOf, type Grade, type Lot } from "./data";
 
 type View = "store" | "profile";
 const BID_STEP = 0.5;
 
+type ListingRow = {
+  id: string;
+  lot_id: string;
+  commercial_mode: "spot" | "pre";
+  unit_kg: number;
+  moq_kg: number;
+  total_kg: number;
+  sold_kg: number;
+  price_per_kg: number;
+};
+
+type CatalogRow = {
+  lot_id: string;
+  name: string;
+  grade: string | null;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  ficha_altitud_m: number | null;
+  ficha_puntaje_estimado: number | null;
+  ficha_notas_cata: string | null;
+  finca_name: string;
+  municipio: string | null;
+  departamento: string | null;
+};
+
+function listingToLot(row: ListingRow, catalog: CatalogRow | undefined): Lot | null {
+  const grade = catalog?.grade ? GRADE_DB[catalog.grade] : null;
+  if (!catalog || !grade) return null;
+  return {
+    id: row.id,
+    code: listingCode(row.id, grade),
+    mode: row.commercial_mode,
+    grade,
+    tc: `var(--t-${catalog.grade})`,
+    name: catalog.name,
+    origin: `${catalog.finca_name} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
+    variety: catalog.ficha_variedad || "—",
+    process: catalog.ficha_proceso || "—",
+    score: catalog.ficha_puntaje_estimado != null ? String(catalog.ficha_puntaje_estimado) : "—",
+    alt: catalog.ficha_altitud_m != null ? `${catalog.ficha_altitud_m} m` : "—",
+    pack: `Empaque de ${row.unit_kg} kg`,
+    total: row.total_kg,
+    sold: row.sold_kg,
+    unit: row.unit_kg,
+    moq: row.moq_kg,
+    price: row.price_per_kg,
+    cup: catalog.ficha_notas_cata || "—",
+  };
+}
+
+const EMPTY_BILLING: Billing = { companyName: "", vatNumber: "", deliveryAddress: "" };
+
 function Experience() {
   const { showToast } = useToast();
+  const [supabase] = useState(() => createClient());
   const [view, setView] = useState<View>("store");
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("tostador");
   const [loginOpen, setLoginOpen] = useState(false);
 
+  const [lots, setLots] = useState<Lot[]>([]);
+  const [zones, setZones] = useState<ShippingZone[]>([]);
   const [myKg, setMyKg] = useState<Record<string, number>>({});
-  const [openLots, setOpenLots] = useState<Record<string, boolean>>({ "BK-2620": true });
+  const [openLots, setOpenLots] = useState<Record<string, boolean>>({});
   const [packInCart, setPackInCart] = useState(false);
   const [activeGrade, setActiveGrade] = useState<"all" | Grade>("all");
   const [shipZone, setShipZone] = useState("Z1");
   const [cartClosed, setCartClosed] = useState(false);
 
+  const [points, setPoints] = useState(0);
+  const [tier, setTier] = useState<"verde" | "pinton" | "maduro">("verde");
+  const [billing, setBilling] = useState<Billing>(EMPTY_BILLING);
+  const [orders, setOrders] = useState<OrderSummary[]>([]);
+  const [samplePackOrdered, setSamplePackOrdered] = useState(false);
+
   const [bidA, setBidA] = useState(24.5);
   const [bidB, setBidB] = useState(23.0);
   const [myBids, setMyBids] = useState(0);
+
+  const loadCatalog = useCallback(async () => {
+    const [{ data: listingRows }, { data: catalogRows }, { data: zoneRows }] = await Promise.all([
+      supabase
+        .from("lot_listings")
+        .select("id, lot_id, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg")
+        .eq("status", "published"),
+      supabase
+        .from("public_lot_catalog")
+        .select("lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, ficha_notas_cata, finca_name, municipio, departamento"),
+      supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),
+    ]);
+    const catalogByLotId = new Map(((catalogRows ?? []) as CatalogRow[]).map((c) => [c.lot_id, c]));
+    setLots(
+      ((listingRows as ListingRow[] | null) ?? [])
+        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id)))
+        .filter((l): l is Lot => l !== null)
+    );
+    setZones(((zoneRows ?? []) as { code: string; label: string; rate_per_kg: number }[]).map((z) => ({ code: z.code, label: z.label, ratePerKg: Number(z.rate_per_kg) })));
+  }, [supabase]);
+
+  const loadBuyerData = useCallback(
+    async (uid: string) => {
+      type OrderRow = {
+        id: string;
+        placed_at: string;
+        total_now: number;
+        points_earned: number;
+        order_items: { kg: number; lot_name: string }[];
+      };
+
+      const [{ data: profile }, { data: buyerProfile }, { data: reservationRows }, { data: orderRows }, { data: packRows }] =
+        await Promise.all([
+          supabase.from("profiles").select("full_name").eq("id", uid).single(),
+          supabase.from("buyer_profiles").select("membership_tier, lifetime_points, company_name, vat_number, delivery_address").eq("profile_id", uid).single(),
+          supabase.from("lot_reservations").select("lot_listing_id, kg").eq("buyer_id", uid),
+          supabase
+            .from("orders")
+            .select("id, placed_at, total_now, points_earned, order_items(kg, lot_name)")
+            .eq("buyer_id", uid)
+            .order("placed_at", { ascending: false }),
+          supabase.from("sample_pack_orders").select("id").eq("buyer_id", uid).limit(1),
+        ]);
+
+      setUserName((profile?.full_name || "tostador").split(" ")[0]);
+      setPoints(buyerProfile?.lifetime_points ?? 0);
+      setTier((buyerProfile?.membership_tier as "verde" | "pinton" | "maduro") ?? "verde");
+      setBilling({
+        companyName: buyerProfile?.company_name ?? "",
+        vatNumber: buyerProfile?.vat_number ?? "",
+        deliveryAddress: buyerProfile?.delivery_address ?? "",
+      });
+      setMyKg(Object.fromEntries((reservationRows ?? []).map((r) => [r.lot_listing_id, Number(r.kg)])));
+      setSamplePackOrdered((packRows ?? []).length > 0);
+      setOrders(
+        ((orderRows as unknown as OrderRow[] | null) ?? []).map((o) => ({
+          id: o.id,
+          code: o.id.replace(/-/g, "").slice(0, 6).toUpperCase(),
+          placedAt: o.placed_at,
+          kg: o.order_items.reduce((a, i) => a + Number(i.kg), 0),
+          totalNow: Number(o.total_now),
+          pointsEarned: o.points_earned,
+          items: o.order_items.map((i) => ({ name: i.lot_name || "—", kg: Number(i.kg) })),
+        }))
+      );
+    },
+    [supabase]
+  );
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      loadCatalog();
+      if (!data.session?.user) return;
+      setUserId(data.session.user.id);
+      loadBuyerData(data.session.user.id);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        setUserId(session.user.id);
+        setLoginOpen(false);
+        loadBuyerData(session.user.id);
+      } else if (event === "SIGNED_OUT") {
+        setUserId(null);
+        setUserName("tostador");
+        setMyKg({});
+        setPackInCart(false);
+        setOrders([]);
+        setPoints(0);
+        setTier("verde");
+        setBilling(EMPTY_BILLING);
+        setView("store");
+      }
+    });
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [supabase, loadCatalog, loadBuyerData]);
 
   function toggleOpen(id: string, open: boolean) {
     setOpenLots((prev) => ({ ...prev, [id]: open }));
   }
 
-  function changeQty(id: string, delta: number) {
-    const lot = LOTS.find((l) => l.id === id)!;
+  async function changeQty(id: string, delta: number) {
+    const lot = lots.find((l) => l.id === id);
+    if (!lot) return;
     const cur = myKg[id] ?? 0;
-    if (delta > 0 && !loggedIn && lot.mode === "pre") {
+    if (delta > 0 && !userId && lot.mode === "pre") {
       setLoginOpen(true);
       showToast("Inicia sesión para reservar fracciones de la mitaca");
       return;
     }
-    const m = moqOf(lot, loggedIn);
+    const m = moqOf(lot, !!userId);
     let next: number;
     if (delta > 0) {
       next = cur === 0 ? m : cur + lot.unit;
@@ -60,51 +225,80 @@ function Experience() {
         showToast("No queda esa cantidad disponible en el lote");
         return;
       }
-      if (cur === 0) showToast(`Fracción mínima de ${fmt(m)} kg de ${id} añadida al pedido`);
+      if (cur === 0) showToast(`Fracción mínima de ${fmt(m)} kg de ${lot.code} añadida al pedido`);
     } else {
       next = cur - lot.unit;
       if (next < m) next = 0;
     }
     setMyKg((prev) => ({ ...prev, [id]: next }));
+
+    if (!userId) return; // anonymous Black/spot browsing stays local-only until login
+    if (next === 0) {
+      await supabase.from("lot_reservations").delete().eq("lot_listing_id", id).eq("buyer_id", userId);
+    } else {
+      await supabase.from("lot_reservations").upsert({ lot_listing_id: id, buyer_id: userId, kg: next }, { onConflict: "lot_listing_id,buyer_id" });
+    }
   }
 
-  function removeLot(id: string) {
+  async function removeLot(id: string) {
     setMyKg((prev) => ({ ...prev, [id]: 0 }));
+    if (userId) await supabase.from("lot_reservations").delete().eq("lot_listing_id", id).eq("buyer_id", userId);
   }
 
   function addPack() {
     setPackInCart(true);
-    showToast("Pack de muestras de la cosecha principal añadido");
+    showToast("Pack de muestras añadido al pedido");
   }
   function removePack() {
     setPackInCart(false);
   }
 
-  function doLogin(email: string) {
-    const name = email.split("@")[0];
-    setUserName(name);
-    setLoggedIn(true);
-    setLoginOpen(false);
-    showToast(`Bienvenido de vuelta · Nivel Pintón · Black desde 350 kg activo`);
+  async function logout() {
+    await supabase.auth.signOut();
   }
 
-  function logout() {
-    setLoggedIn(false);
-    setView("store");
-    showToast("Sesión cerrada.");
-  }
-
-  function checkout() {
-    if (!loggedIn) {
+  async function checkout() {
+    if (!userId) {
       setLoginOpen(true);
       showToast("Inicia sesión o crea tu cuenta para confirmar el pedido");
       return;
     }
-    showToast("Pedido confirmado (demo): recibirás la orden proforma con la referencia DDS por correo.");
+    const hasLots = Object.values(myKg).some((q) => q > 0);
+    if (!hasLots && !packInCart) return;
+
+    if (hasLots) {
+      const { error } = await supabase.rpc("place_order", { p_zone_code: shipZone });
+      if (error) {
+        showToast(error.message || "No se pudo confirmar el pedido.");
+        return;
+      }
+    }
+    if (packInCart) {
+      await supabase.from("sample_pack_orders").insert({ buyer_id: userId });
+    }
+
+    setMyKg({});
+    setPackInCart(false);
+    showToast("Pedido confirmado. Recibirás la orden proforma por correo.");
+    await Promise.all([loadCatalog(), loadBuyerData(userId)]);
+  }
+
+  async function saveBilling(next: Billing) {
+    if (!userId) return;
+    const { error } = await supabase
+      .from("buyer_profiles")
+      .update({ company_name: next.companyName || null, vat_number: next.vatNumber || null, delivery_address: next.deliveryAddress || null })
+      .eq("profile_id", userId);
+    if (error) {
+      showToast("No se pudo guardar la información.");
+      return;
+    }
+    setBilling(next);
+    showToast("Datos de facturación actualizados ✓");
   }
 
   function bid(half: "A" | "B") {
-    if (!loggedIn) {
+    if (!userId) {
       setLoginOpen(true);
       showToast("Inicia sesión para pujar (nivel Pintón o superior)");
       return;
@@ -115,27 +309,28 @@ function Experience() {
     showToast(`Tu puja por la Mitad ${half} va ganando (demo)`);
   }
 
-  const summary = cartData(myKg, packInCart, shipZone);
+  const summary = cartData(lots, myKg, packInCart, shipZone, zones);
 
   return (
     <div data-theme="cherry-picked">
       {view === "store" ? (
         <>
-          <Header loggedIn={loggedIn} onLogin={() => setLoginOpen(true)} onShowProfile={() => setView("profile")} />
+          <Header loggedIn={!!userId} onLogin={() => setLoginOpen(true)} onShowProfile={() => setView("profile")} />
           <Hero />
-          <BlackSection myKg={myKg} openLots={openLots} loggedIn={loggedIn} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
+          <BlackSection lots={lots} myKg={myKg} openLots={openLots} loggedIn={!!userId} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
           <GradosSection
+            lots={lots}
             myKg={myKg}
             openLots={openLots}
-            loggedIn={loggedIn}
+            loggedIn={!!userId}
             activeGrade={activeGrade}
             onSetGrade={setActiveGrade}
             onToggleOpen={toggleOpen}
             onChangeQty={changeQty}
           />
           <EnviosSection />
-          <TyrianSection loggedIn={loggedIn} bidA={bidA} bidB={bidB} onBid={bid} />
-          <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={loggedIn} onOpenLogin={() => setLoginOpen(true)} />
+          <TyrianSection loggedIn={!!userId} bidA={bidA} bidB={bidB} onBid={bid} />
+          <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
           <NarrativaSection />
           <CosechaSection />
           <ManifiestoSection />
@@ -145,6 +340,7 @@ function Experience() {
             summary={summary}
             packInCart={packInCart}
             shipZone={shipZone}
+            zones={zones}
             onSetZone={setShipZone}
             onRemoveLot={removeLot}
             onRemovePack={removePack}
@@ -159,12 +355,18 @@ function Experience() {
           summary={summary}
           packInCart={packInCart}
           myBids={myBids}
+          points={points}
+          tier={tier}
+          orders={orders}
+          samplePackOrdered={samplePackOrdered}
+          billing={billing}
           onBack={() => setView("store")}
           onLogout={logout}
+          onSaveBilling={saveBilling}
         />
       )}
 
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} onLogin={doLogin} />
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );
 }

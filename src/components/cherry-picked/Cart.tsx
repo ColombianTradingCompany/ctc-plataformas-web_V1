@@ -3,19 +3,13 @@
 import { ARRIVAL, eur, fmt, type CartSummary } from "./data";
 import styles from "./Cart.module.css";
 
-const ZONE_OPTIONS = [
-  { value: "EXW", label: "Recogida EXW Ámsterdam · 0,00 €/kg" },
-  { value: "Z1", label: "Z1 · NL/BE/LU · 0,10 €/kg" },
-  { value: "Z2", label: "Z2 · DE/FR/DK · 0,18 €/kg" },
-  { value: "Z3", label: "Z3 · AT/CZ/PL/IT · 0,25 €/kg" },
-  { value: "Z4", label: "Z4 · ES/SE/HU/SI/HR · 0,35 €/kg" },
-  { value: "Z5", label: "Z5 · PT/GR/IE/FI/Bálticos/RO/BG · 0,45 €/kg" },
-];
+export type ShippingZone = { code: string; label: string; ratePerKg: number };
 
 export function Cart({
   summary,
   packInCart,
   shipZone,
+  zones,
   onSetZone,
   onRemoveLot,
   onRemovePack,
@@ -26,6 +20,7 @@ export function Cart({
   summary: CartSummary;
   packInCart: boolean;
   shipZone: string;
+  zones: ShippingZone[];
   onSetZone: (z: string) => void;
   onRemoveLot: (id: string) => void;
   onRemovePack: () => void;
@@ -73,8 +68,8 @@ export function Cart({
         <div className={styles.cartZone}>
           <label htmlFor="shipSel">Última milla</label>
           <select id="shipSel" value={shipZone} onChange={(e) => onSetZone(e.target.value)}>
-            {ZONE_OPTIONS.map((z) => (
-              <option key={z.value} value={z.value}>{z.label}</option>
+            {zones.map((z) => (
+              <option key={z.code} value={z.code}>{z.label} · {eur(z.ratePerKg)} €/kg</option>
             ))}
           </select>
         </div>

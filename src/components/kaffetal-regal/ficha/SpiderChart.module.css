@@ -1,0 +1,6 @@
+.svg{width:100%;max-width:260px;margin:0 auto;display:block}
+.bg{fill:none;stroke:#2A2540;stroke-width:0.5}
+.axis{stroke:#3A3550;stroke-width:0.5}
+.poly{fill:rgba(211,184,250,.25);stroke:#D3B8FA;stroke-width:1.5}
+.dot{fill:#FFCD00}
+.label{font-family:var(--font-spline-mono),monospace;font-size:6px;fill:#9389B0;text-anchor:middle;dominant-baseline:middle}

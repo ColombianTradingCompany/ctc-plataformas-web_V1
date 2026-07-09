@@ -10,7 +10,12 @@
 .fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%;transition:width .3s}
 .pt{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
 
-.fichaMain{padding:40px 0 90px;max-width:920px;margin:0 auto}
+.fichaMain{padding:32px 0 100px}
+.shell{display:flex;gap:32px;align-items:flex-start}
+.content{flex:1;min-width:0;max-width:880px}
+.footer{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:14px 0;margin-top:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.csvRow{display:flex;gap:8px;align-items:center}
+@media(max-width:860px){.shell{flex-direction:column}}
 .fsec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin-top:22px}
 .fsec h3{font-size:19px;color:var(--primary-deep);display:flex;align-items:center;gap:10px}
 .fn{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--accent);letter-spacing:.1em}

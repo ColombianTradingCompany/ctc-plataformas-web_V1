@@ -206,7 +206,7 @@ function Experience() {
       if (event === "SIGNED_IN" && session?.user) {
         setUserId(session.user.id);
         setLoginOpen(false);
-        setView("app");
+        setView((v) => (v === "landing" ? "app" : v));
         loadData(session.user.id);
       } else if (event === "SIGNED_OUT") {
         setUserId(null);

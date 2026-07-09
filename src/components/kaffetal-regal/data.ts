@@ -13,6 +13,8 @@ export type Finca = {
   carac: string;
 };
 
+export type CompletionPoint = { pct: number; recordedAt: string };
+
 export type Lot = {
   id: string;
   code: string;
@@ -21,6 +23,10 @@ export type Lot = {
   stage: number; // 0-6, index into STAGES
   grade: "Black" | "Red" | "Blue" | "Gold" | "Tyrian" | null;
   extra: string;
+  variety: string;
+  process: string;
+  score: string;
+  completionHistory: CompletionPoint[];
   datasheet?: FichaFormData | null;
 };
 

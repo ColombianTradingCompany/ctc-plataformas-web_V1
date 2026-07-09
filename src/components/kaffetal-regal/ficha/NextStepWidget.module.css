@@ -1,0 +1,8 @@
+.widget{background:var(--card);border:1.5px solid var(--accent);border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.head{display:flex;align-items:center;justify-content:space-between}
+.label{font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);font-weight:700}
+.refresh{background:none;border:1px solid var(--line);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;color:var(--muted);line-height:1}
+.refresh:hover{background:var(--paper)}
+.refresh:disabled{opacity:.5;cursor:default}
+.advice{font-size:15px;color:var(--ink);line-height:1.4}
+.muted{font-size:13.5px;color:var(--muted)}

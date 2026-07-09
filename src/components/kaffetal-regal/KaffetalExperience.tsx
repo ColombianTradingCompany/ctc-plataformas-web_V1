@@ -14,6 +14,7 @@ import {
   GRADE_DB,
   STAGE_DB,
   lotCode,
+  type CompletionPoint,
   type Finca,
   type GeneralInfo,
   type Lot,
@@ -51,6 +52,9 @@ type LotRow = {
   stage: string;
   grade: string | null;
   status_note: string | null;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  ficha_puntaje_estimado: number | null;
   datasheet: Lot["datasheet"];
 };
 
@@ -69,7 +73,7 @@ function dbFincaToFinca(row: FincaRow): Finca {
   };
 }
 
-function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>): Lot {
+function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionHistory: CompletionPoint[] = []): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
   const stageIdx = stage < 0 ? 0 : stage;
   return {
@@ -80,6 +84,10 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>): Lot {
     stage: stageIdx,
     grade: row.grade ? GRADE_DB[row.grade] : null,
     extra: row.status_note || STAGE_EXTRA[stageIdx],
+    variety: row.ficha_variedad || "—",
+    process: row.ficha_proceso || "—",
+    score: row.ficha_puntaje_estimado != null ? String(row.ficha_puntaje_estimado) : "—",
+    completionHistory,
     datasheet: row.datasheet ?? null,
   };
 }
@@ -104,7 +112,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name").eq("id", uid).single(),
           supabase.from("producer_profiles").select("company_name, tax_id").eq("profile_id", uid).single(),
@@ -114,12 +122,20 @@ function Experience() {
             .from("purchase_contracts")
             .select("*, lots(id, name, grade), contract_releases(*), humidity_readings(*)")
             .order("created_at", { ascending: false }),
+          supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
         ]);
 
       const fincaList = ((fincaRows as FincaRow[] | null) ?? []).map(dbFincaToFinca);
       const fincaNameById = new Map(fincaList.map((f) => [f.id, f.name]));
       setFincas(fincaList);
-      setLots(((lotRows as LotRow[] | null) ?? []).map((r) => dbLotToLot(r, fincaNameById)));
+
+      const completionByLotId = new Map<string, CompletionPoint[]>();
+      for (const s of (snapshotRows as { lot_id: string; completion_pct: number; recorded_at: string }[] | null) ?? []) {
+        const list = completionByLotId.get(s.lot_id) ?? [];
+        list.push({ pct: s.completion_pct, recordedAt: s.recorded_at });
+        completionByLotId.set(s.lot_id, list);
+      }
+      setLots(((lotRows as LotRow[] | null) ?? []).map((r) => dbLotToLot(r, fincaNameById, completionByLotId.get(r.id))));
 
       type ContractRow = {
         id: string;
@@ -268,8 +284,10 @@ function Experience() {
       showToast("No se pudo guardar la ficha. Intente de nuevo.");
       return;
     }
+    await supabase.from("ficha_completion_snapshots").insert({ lot_id: curLotId, completion_pct: updates.completionPct });
     const fincaNameById = new Map(fincas.map((f) => [f.id, f.name]));
-    const saved = dbLotToLot(data as LotRow, fincaNameById);
+    const newHistory = [...(current?.completionHistory ?? []), { pct: updates.completionPct, recordedAt: new Date().toISOString() }];
+    const saved = dbLotToLot(data as LotRow, fincaNameById, newHistory);
     setLots((ls) => ls.map((l) => (l.id === curLotId ? saved : l)));
   }
 

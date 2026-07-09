@@ -16,7 +16,9 @@ import { PaneB2 } from "./ficha/panes/PaneB2";
 import { PaneB3 } from "./ficha/panes/PaneB3";
 import { PaneB4 } from "./ficha/panes/PaneB4";
 import { FichaPreview } from "./ficha/FichaPreview";
+import { NextStepWidget } from "./ficha/NextStepWidget";
 import { downloadFichaCSV, parseFichaCSV } from "./ficha/fichaCsv";
+import { STAGES } from "./data";
 import styles from "./FichaView.module.css";
 
 export type { PaneProps } from "./ficha/panes/types";
@@ -25,6 +27,7 @@ export type FichaSaveUpdate = {
   name?: string;
   finca?: string;
   datasheet: FichaFormData;
+  completionPct: number;
   summary: {
     ficha_variedad: string | null;
     ficha_proceso: string | null;
@@ -95,6 +98,7 @@ export function FichaView({
       name: data.product_name.trim() || undefined,
       finca: data.estate || undefined,
       datasheet: data,
+      completionPct: overallPct,
       summary: {
         ficha_variedad: topVariety?.name || null,
         ficha_proceso: data.base_processing || null,
@@ -138,10 +142,7 @@ export function FichaView({
       </div>
 
       <div className="wrap">
-        <div className={styles.fprog}>
-          <div className={styles.bar}><div className={styles.fill} style={{ width: `${overallPct}%` }} /></div>
-          <div className={styles.pt}><span>Progreso de la ficha</span><span>{overallPct}% completado</span></div>
-        </div>
+        <NextStepWidget lotCode={lot.code} stageLabel={STAGES[lot.stage]} data={data} completed={completed} scaTotal={sca.total} />
       </div>
 
       <div className={`wrap ${styles.fichaMain}`}>

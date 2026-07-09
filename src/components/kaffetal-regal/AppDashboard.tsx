@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, type Finca, type GeneralInfo, type Lot, type ProducerContract } from "./data";
+import { LotCompletionSparkline } from "./LotCompletionSparkline";
+import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
 
 export function AppDashboard({
@@ -96,13 +98,16 @@ export function AppDashboard({
                         </h4>
                       )}
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
-                      <div className={styles.track}>
-                        {STAGES.slice(0, 6).map((_, i) => (
-                          <i key={i} className={i <= l.stage ? styles.on : ""} />
-                        ))}
-                      </div>
+                      <LotKanbanStepper stage={l.stage} grade={l.grade} />
                     </div>
-                    <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{state}</span>
+                    <div className={styles.metrics}>
+                      <div className={styles.chips}>
+                        <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{state}</span>
+                        <span className={styles.datachip}>Variedad: <b>{l.variety}</b></span>
+                        <span className={styles.datachip}>Puntaje: <b>{l.score}</b></span>
+                      </div>
+                      <LotCompletionSparkline history={l.completionHistory} />
+                    </div>
                     <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
                   </div>
                 );

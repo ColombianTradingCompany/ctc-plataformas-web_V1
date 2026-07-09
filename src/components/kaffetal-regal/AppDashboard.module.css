@@ -23,6 +23,10 @@
 .track{display:flex;gap:4px;margin-top:8px}
 .track i{flex:1;height:6px;border-radius:3px;background:#E2DECE}
 .track i.on{background:var(--primary)}
+.metrics{display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.datachip{font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);padding:3px 9px;border-radius:999px;border:1.5px solid var(--line);justify-self:start}
+.datachip b{color:var(--ink)}
 @media(max-width:760px){.lotrow{grid-template-columns:1fr}}
 
 .fincarow{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:13px 15px;margin-top:10px}

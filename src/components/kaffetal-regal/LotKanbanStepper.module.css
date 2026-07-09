@@ -1,0 +1,12 @@
+.row{display:flex;align-items:center;gap:5px;margin-top:8px}
+.step,.ending{
+  font: 700 10px var(--font-spline-mono),monospace;
+  padding:3px 7px;border-radius:5px;border:1.5px solid var(--line);
+  color:var(--muted);background:var(--paper);letter-spacing:.02em;
+}
+.step.done,.ending.done{background:var(--primary);border-color:var(--primary);color:#fff}
+.step.active,.ending.active{background:var(--accent-soft);border-color:var(--primary);color:var(--ink)}
+.step.pending,.ending.pending{opacity:.55}
+.fork{color:var(--muted);font-size:12px;padding:0 1px}
+.ending{border-style:dashed}
+.ending.done{border-style:solid}

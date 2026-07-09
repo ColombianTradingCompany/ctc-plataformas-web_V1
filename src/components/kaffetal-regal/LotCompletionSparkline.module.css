@@ -1,0 +1,5 @@
+.svg{width:64px;height:20px;display:block;overflow:visible}
+.empty{stroke:var(--line);stroke-width:1.5;stroke-dasharray:2 2}
+.line{fill:none;stroke:var(--primary);stroke-width:1.5}
+.dot{fill:var(--primary);opacity:.55}
+.dotLast{fill:var(--accent);stroke:var(--primary);stroke-width:.75}

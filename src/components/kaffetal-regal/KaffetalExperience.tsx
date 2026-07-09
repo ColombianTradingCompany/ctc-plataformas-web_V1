@@ -56,6 +56,8 @@ type LotRow = {
   ficha_proceso: string | null;
   ficha_puntaje_estimado: number | null;
   datasheet: Lot["datasheet"];
+  ai_next_step_advice: string | null;
+  ai_next_step_context: Record<string, unknown> | null;
 };
 
 function dbFincaToFinca(row: FincaRow): Finca {
@@ -89,6 +91,8 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
     score: row.ficha_puntaje_estimado != null ? String(row.ficha_puntaje_estimado) : "—",
     completionHistory,
     datasheet: row.datasheet ?? null,
+    nextStepAdvice: row.ai_next_step_advice ?? null,
+    nextStepContext: row.ai_next_step_context ?? null,
   };
 }
 
@@ -291,6 +295,10 @@ function Experience() {
     setLots((ls) => ls.map((l) => (l.id === curLotId ? saved : l)));
   }
 
+  function applyNextStepAdvice(lotId: string, advice: string, context: Record<string, unknown>) {
+    setLots((ls) => ls.map((l) => (l.id === lotId ? { ...l, nextStepAdvice: advice, nextStepContext: context } : l)));
+  }
+
   async function saveFinca(f: Finca) {
     if (!userId) return;
     const payload = {
@@ -375,6 +383,7 @@ function Experience() {
           gi={gi}
           onBack={() => setView(userId ? "app" : "landing")}
           onSave={saveFicha}
+          onAdviceUpdate={applyNextStepAdvice}
           onOpenNewFinca={() => {
             setEditingFincaIdx(-1);
             setFincaModalOpen(true);

@@ -27,6 +27,8 @@
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .datachip{font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);padding:3px 9px;border-radius:999px;border:1.5px solid var(--line);justify-self:start}
 .datachip b{color:var(--ink)}
+.nextstep{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4;max-width:46ch}
+.nextstepLabel{font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);font-weight:700;margin-right:4px}
 @media(max-width:760px){.lotrow{grid-template-columns:1fr}}
 
 .fincarow{border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:13px 15px;margin-top:10px}

@@ -99,6 +99,11 @@ export function AppDashboard({
                       )}
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
                       <LotKanbanStepper stage={l.stage} grade={l.grade} />
+                      {l.nextStepAdvice && (
+                        <div className={styles.nextstep}>
+                          <span className={styles.nextstepLabel}>¿Y ahora qué?</span> {l.nextStepAdvice}
+                        </div>
+                      )}
                     </div>
                     <div className={styles.metrics}>
                       <div className={styles.chips}>

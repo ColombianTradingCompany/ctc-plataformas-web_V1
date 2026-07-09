@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createSessionClient } from "@/lib/supabase/server";
+import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { stableStringify } from "@/lib/stableStringify";
 
 type NextStepContext = {
+  lotId: string;
   lotCode: string;
   stageLabel: string;
   panes: { id: string; label: string; done: boolean }[];
@@ -13,6 +15,7 @@ type NextStepContext = {
   scaTotal: number;
   primaryDefect: number;
   secondaryDefect: number;
+  force?: boolean;
 };
 
 const SYSTEM_PROMPT = `Eres un asistente interno embebido en la Ficha Técnica de Kaffetal Regal, la herramienta donde un caficultor colombiano documenta un lote de café antes de enviarlo a evaluación.
@@ -34,6 +37,17 @@ export async function POST(request: NextRequest) {
   }
 
   const context = (await request.json()) as NextStepContext;
+  const { lotId, force, ...comparable } = context;
+
+  const { data: lot } = await sessionClient.from("lots").select("producer_id, ai_next_step_advice, ai_next_step_context").eq("id", lotId).maybeSingle();
+  if (!lot || lot.producer_id !== user.id) {
+    return NextResponse.json({ error: "Lote no encontrado." }, { status: 404 });
+  }
+
+  if (!force && lot.ai_next_step_advice && stableStringify(comparable) === stableStringify(lot.ai_next_step_context)) {
+    return NextResponse.json({ configured: true, advice: lot.ai_next_step_advice, cached: true });
+  }
+
   const pendingPanes = context.panes.filter((p) => !p.done).map((p) => p.label);
 
   const userContent = `Lote: ${context.lotCode}
@@ -57,7 +71,7 @@ Paneles de la ficha aún incompletos: ${pendingPanes.length ? pendingPanes.join(
       body: JSON.stringify({
         model: "claude-sonnet-5",
         max_tokens: 120,
-        system: SYSTEM_PROMPT,
+        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userContent }],
       }),
     });
@@ -69,7 +83,11 @@ Paneles de la ficha aún incompletos: ${pendingPanes.length ? pendingPanes.join(
 
     const json = await res.json();
     const advice: string = json.content?.[0]?.text?.trim() || "No se pudo generar una recomendación.";
-    return NextResponse.json({ configured: true, advice });
+
+    const service = createServiceRoleClient();
+    await service.from("lots").update({ ai_next_step_advice: advice, ai_next_step_context: comparable }).eq("id", lotId);
+
+    return NextResponse.json({ configured: true, advice, cached: false });
   } catch (err) {
     return NextResponse.json({ configured: true, error: err instanceof Error ? err.message : "Error desconocido." }, { status: 502 });
   }

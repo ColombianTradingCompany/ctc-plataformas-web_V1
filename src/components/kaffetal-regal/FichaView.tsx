@@ -43,6 +43,7 @@ export function FichaView({
   gi,
   onBack,
   onSave,
+  onAdviceUpdate,
   onOpenNewFinca,
 }: {
   lot: Lot;
@@ -50,6 +51,7 @@ export function FichaView({
   gi: import("./data").GeneralInfo;
   onBack: () => void;
   onSave: (updates: FichaSaveUpdate) => void;
+  onAdviceUpdate: (lotId: string, advice: string, context: Record<string, unknown>) => void;
   onOpenNewFinca: () => void;
 }) {
   const { showToast } = useToast();
@@ -142,7 +144,17 @@ export function FichaView({
       </div>
 
       <div className="wrap">
-        <NextStepWidget lotCode={lot.code} stageLabel={STAGES[lot.stage]} data={data} completed={completed} scaTotal={sca.total} />
+        <NextStepWidget
+          lotId={lot.id}
+          lotCode={lot.code}
+          stageLabel={STAGES[lot.stage]}
+          data={data}
+          completed={completed}
+          scaTotal={sca.total}
+          cachedAdvice={lot.nextStepAdvice}
+          cachedContext={lot.nextStepContext}
+          onAdviceUpdate={(advice, context) => onAdviceUpdate(lot.id, advice, context)}
+        />
       </div>
 
       <div className={`wrap ${styles.fichaMain}`}>

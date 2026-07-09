@@ -28,6 +28,8 @@ export type Lot = {
   score: string;
   completionHistory: CompletionPoint[];
   datasheet?: FichaFormData | null;
+  nextStepAdvice: string | null;
+  nextStepContext: Record<string, unknown> | null;
 };
 
 export type GeneralInfo = { razon: string; nit: string; agri: string };

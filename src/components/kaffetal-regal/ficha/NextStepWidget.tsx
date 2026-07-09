@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { num, type FichaFormData } from "./fichaData";
 import type { PaneId } from "./FichaNav";
+import { stableStringify } from "@/lib/stableStringify";
 import styles from "./NextStepWidget.module.css";
 
 const PANE_LABELS: Record<Exclude<PaneId, "ficha">, string> = {
@@ -16,7 +17,7 @@ const PANE_LABELS: Record<Exclude<PaneId, "ficha">, string> = {
   b4: "Notas y Q-Grader",
 };
 
-type AdviceResponse = { configured: boolean; advice?: string; error?: string };
+type AdviceResponse = { configured: boolean; advice?: string; error?: string; cached?: boolean };
 
 async function requestAdvice(payload: unknown): Promise<AdviceResponse> {
   const res = await fetch("/api/kaffetal-regal/next-step", {
@@ -28,24 +29,32 @@ async function requestAdvice(payload: unknown): Promise<AdviceResponse> {
 }
 
 export function NextStepWidget({
+  lotId,
   lotCode,
   stageLabel,
   data,
   completed,
   scaTotal,
+  cachedAdvice,
+  cachedContext,
+  onAdviceUpdate,
 }: {
+  lotId: string;
   lotCode: string;
   stageLabel: string;
   data: FichaFormData;
   completed: Partial<Record<PaneId, boolean>>;
   scaTotal: number;
+  cachedAdvice: string | null;
+  cachedContext: Record<string, unknown> | null;
+  onAdviceUpdate: (advice: string, context: Record<string, unknown>) => void;
 }) {
-  const [advice, setAdvice] = useState<string | null>(null);
+  const [advice, setAdvice] = useState<string | null>(cachedAdvice);
   const [configured, setConfigured] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedAdvice);
   const [error, setError] = useState<string | null>(null);
 
-  function buildPayload() {
+  function buildContext() {
     const panes = (Object.keys(PANE_LABELS) as Exclude<PaneId, "ficha">[]).map((id) => ({
       id,
       label: PANE_LABELS[id],
@@ -71,15 +80,25 @@ export function NextStepWidget({
       setConfigured(false);
     } else if (json.error) {
       setError(json.error);
-    } else {
-      setAdvice(json.advice ?? null);
+    } else if (json.advice) {
+      setAdvice(json.advice);
     }
   }
 
   useEffect(() => {
-    // FichaView remounts this widget on every lot switch (keyed by lot id), so
-    // `loading`/`error` already start fresh -- this only needs to kick off the fetch.
-    requestAdvice(buildPayload()).then(handleResult);
+    // FichaView remounts this widget on every lot switch (keyed by lot id).
+    // Client-side memoization: if the context that produced the cached advice
+    // is byte-identical to the current one, skip the network call entirely --
+    // no reason to re-derive advice from data that hasn't changed.
+    const context = buildContext();
+    if (cachedAdvice && stableStringify(context) === stableStringify(cachedContext)) {
+      // Already reflected by the cachedAdvice-seeded initial state above -- nothing to do.
+      return;
+    }
+    requestAdvice({ lotId, ...context }).then((json) => {
+      handleResult(json);
+      if (json.configured !== false && !json.error && json.advice) onAdviceUpdate(json.advice, context);
+    });
     // Re-fetch only when switching lots -- not on every keystroke, to keep API calls bounded.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lotCode]);
@@ -87,7 +106,11 @@ export function NextStepWidget({
   function refresh() {
     setLoading(true);
     setError(null);
-    requestAdvice(buildPayload()).then(handleResult);
+    const context = buildContext();
+    requestAdvice({ lotId, ...context, force: true }).then((json) => {
+      handleResult(json);
+      if (json.configured !== false && !json.error && json.advice) onAdviceUpdate(json.advice, context);
+    });
   }
 
   if (!configured) {

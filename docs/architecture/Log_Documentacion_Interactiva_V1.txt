@@ -1,6 +1,9 @@
 Log_Documentacion_Interactiva_V1
-Status: WRAPPED into Documentacion_Interactiva_V1.1(880f8c8).html -- kept here as the historical record.
-Covers: everything since Documentacion_Interactiva_V1.0(b2134ed).html.
+Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
+into a real HTML file; this log is where every change lives, in plain text,
+until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V2.0(<sha>).html.
+Covers: everything since Documentacion_Interactiva_V1.0(b2134ed).html, which
+remains the current (and only) real HTML snapshot.
 
 ## [2026-07-10] Kaffetal Regal producer-profile + Ficha Técnica rework (commit 520180b)
 - Producer profile ("Información general") expanded: cédula cafetera, celular + WhatsApp
@@ -25,12 +28,13 @@ Covers: everything since Documentacion_Interactiva_V1.0(b2134ed).html.
   relocated to where they belong.
 - Sample-shipping address corrected across CTC Home and Kaffetal Regal.
 
-  Doc changes this produced: updated n-kaffetal node (note about the profile
-  expansion + storage), rewrote n-storage node (was "0 filas, gap conocido" ->
-  now describes the real kaffetal-media bucket and its RLS path convention),
-  added n-supaclient -> n-storage wire (the direct-upload path is now real,
-  not speculative), updated the "kaffetal" and "storage" DICT entries to match,
-  added a new scenario "perfil" (Productor completa su perfil y sube archivos).
+  Doc changes this should produce at the next wrap: update n-kaffetal node
+  (note about the profile expansion + storage), rewrite n-storage node (was
+  "0 filas, gap conocido" -> now describes the real kaffetal-media bucket and
+  its RLS path convention), add n-supaclient -> n-storage wire (the
+  direct-upload path is now real, not speculative), update the "kaffetal" and
+  "storage" DICT entries to match, add a new scenario "perfil" (Productor
+  completa su perfil y sube archivos).
 
 ## [2026-07-10] Follow-up fixes, round 1 (commit 8ce14a0)
 - Fixed a real production crash: old lots with a saved datasheet from before
@@ -64,15 +68,19 @@ Covers: everything since Documentacion_Interactiva_V1.0(b2134ed).html.
   what now sets sample_2kg_confirmed_at deliberately, not as a dropdown
   side effect.
 
-  Doc changes this produced (commit 880f8c8): added a new scenario "envio"
-  (Confirmación de envío y recibo de la muestra), covering the full
-  producer-confirms -> BCP-confirms-receipt round trip through n-kaffetal,
-  n-supaclient, n-guards, n-bcp, n-actions, n-db.
+  Doc changes this should produce at the next wrap (commit 880f8c8): add a new
+  scenario "envio" (Confirmación de envío y recibo de la muestra), covering the
+  full producer-confirms -> BCP-confirms-receipt round trip through
+  n-kaffetal, n-supaclient, n-guards, n-bcp, n-actions, n-db.
 
 ## Bootstrap note
-This log was written retroactively when adopting the architecture-doc-versioning
-skill -- the doc edits above had already been made directly to the live file
-during the session (the old workflow), not staged through a log-then-wrap
-cycle. From here on, new changes go into a fresh Log_Documentacion_Interactiva_V2.txt
-instead of touching the html directly; a Version Wrap will compile that into
-Documentacion_Interactiva_V1.2(<sha>).html (or the next appropriate version).
+This log was written when adopting the architecture-doc-versioning skill.
+Earlier sessions edited the live HTML directly (the old workflow); that habit
+stops here. From now on, every change is appended to this log, and the log
+stays open -- nothing gets compiled into a new HTML file -- until a real
+Version Wrap is invoked. A wrap takes everything in this log, applies it on
+top of Documentacion_Interactiva_V1.0(b2134ed).html, and produces
+Documentacion_Interactiva_V2.0(<sha>).html -- the next integer version. There
+is no V1.1 or V1.2 as a file; those labels don't exist here. Once wrapped,
+this file is left as-is (historical record) and a fresh
+Log_Documentacion_Interactiva_V2.txt opens for whatever comes after V2.0.

@@ -19,7 +19,6 @@ export type CompletionPoint = { pct: number; recordedAt: string };
 
 export type Lot = {
   id: string;
-  code: string;
   name: string;
   finca: string;
   stage: number; // 0-6, index into STAGES
@@ -65,7 +64,6 @@ export type HumidityReading = { month: number; pct: number; flagged: boolean; re
 export type ProducerContract = {
   id: string;
   lotId: string;
-  lotCode: string;
   lotName: string;
   grade: Lot["grade"];
   status: "pending_signature" | "active" | "reconditioning" | "completed" | "cancelled";
@@ -112,12 +110,9 @@ export const GRADE_TO_DB: Record<NonNullable<Lot["grade"]>, string> = {
   Tyrian: "tyrian",
 };
 
-export function lotCode(id: string) {
-  return "L-" + id.replace(/-/g, "").slice(0, 6).toUpperCase();
-}
-
-// The long reference stamped on shipping/sample packages. Same id-derivation
-// approach as lotCode() -- deterministic, no separate DB column to keep in sync.
+// The long reference stamped on shipping/sample packages -- the only lot
+// reference used anywhere in the system (a shorter L-XXXXXX form existed
+// briefly but was removed in favor of always using this one).
 export function ctcLotReference(id: string) {
   return "CTC_" + id.replace(/-/g, "").toUpperCase();
 }

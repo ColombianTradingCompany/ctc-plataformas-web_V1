@@ -7,6 +7,15 @@ import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
 
+// The reference is long, so only the 7 characters that actually go on the
+// physical sample package are bolded -- same convention used in the Ficha.
+function CtcRef({ id }: { id: string }) {
+  const ref = ctcLotReference(id);
+  const short = ctcLotReferenceShort(id);
+  const idx = ref.indexOf(short);
+  return <span className="mono">{ref.slice(0, idx)}<b style={{ color: "var(--ink)" }}>{short}</b>{ref.slice(idx + short.length)}</span>;
+}
+
 export function AppDashboard({
   userName,
   lots,
@@ -93,17 +102,12 @@ export function AppDashboard({
                         </div>
                       ) : (
                         <h4>
-                          {l.code} · {l.name}{" "}
-                          <button className={styles.iconbtn} title="Renombrar lote" aria-label={`Renombrar ${l.code}`} onClick={() => startRename(l)}>✎</button>
+                          {l.name}{" "}
+                          <button className={styles.iconbtn} title="Renombrar lote" aria-label={`Renombrar ${l.name}`} onClick={() => startRename(l)}>✎</button>
                         </h4>
                       )}
                       <div className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
-                        {(() => {
-                          const ref = ctcLotReference(l.id);
-                          const short = ctcLotReferenceShort(l.id);
-                          const idx = ref.indexOf(short);
-                          return <>{ref.slice(0, idx)}<b style={{ color: "var(--ink)" }}>{short}</b>{ref.slice(idx + short.length)}</>;
-                        })()}
+                        <CtcRef id={l.id} />
                       </div>
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
                       <LotKanbanStepper stage={l.stage} grade={l.grade} />
@@ -146,7 +150,7 @@ export function AppDashboard({
               contracts.map((c) => (
                 <div className={styles.fincarow} key={c.id} style={{ marginTop: 10 }}>
                   <h5>
-                    {c.lotCode} · {c.lotName}{" "}
+                    <CtcRef id={c.lotId} /> · {c.lotName}{" "}
                     {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
                   </h5>
                   <div className={styles.sub}>
@@ -206,7 +210,7 @@ export function AppDashboard({
                 <div className={styles.alist}>
                   {certified.map((l) => (
                     <span key={l.id}>
-                      {l.code} · {l.grade ? `Galardonado ${l.grade}` : "Evaluado (sin galardón)"}<br />
+                      <CtcRef id={l.id} /> · {l.grade ? `Galardonado ${l.grade}` : "Evaluado (sin galardón)"}<br />
                     </span>
                   ))}
                 </div>

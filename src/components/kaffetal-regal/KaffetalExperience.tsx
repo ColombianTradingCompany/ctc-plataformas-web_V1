@@ -14,7 +14,6 @@ import {
   EMPTY_GI,
   GRADE_DB,
   STAGE_DB,
-  lotCode,
   type CompletionPoint,
   type Finca,
   type GeneralInfo,
@@ -85,7 +84,6 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
   const stageIdx = stage < 0 ? 0 : stage;
   return {
     id: row.id,
-    code: lotCode(row.id),
     name: row.name,
     finca: (row.finca_id && fincaNameById.get(row.finca_id)) || "—",
     stage: stageIdx,
@@ -188,7 +186,6 @@ function Experience() {
         ((contractRows as ContractRow[] | null) ?? []).map((c) => ({
           id: c.id,
           lotId: c.lot_id,
-          lotCode: lotCode(c.lot_id),
           lotName: c.lots?.name ?? "—",
           grade: c.lots?.grade ? GRADE_DB[c.lots.grade] : null,
           status: c.status,
@@ -297,7 +294,7 @@ function Experience() {
       return;
     }
     setLots((ls) => ls.map((l) => (l.id === id ? { ...l, name } : l)));
-    showToast(`Lote ${lotCode(id)} renombrado ✓`);
+    showToast(`Lote "${name}" renombrado ✓`);
   }
 
   async function saveFicha(updates: FichaSaveUpdate) {

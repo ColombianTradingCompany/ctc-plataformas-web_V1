@@ -77,6 +77,7 @@ export function FichaView({
     };
   });
   const [declared, setDeclared] = useState(false);
+  const [showDeclare, setShowDeclare] = useState(false);
 
   function onChange(patch: Partial<FichaFormData>) {
     setData((d) => ({ ...d, ...patch }));
@@ -128,11 +129,15 @@ export function FichaView({
   }
 
   function completeAndSend() {
-    if (!declared) {
-      showToast("Marque la declaración de veracidad antes de completar y enviar.");
+    if (!readyToComplete) return;
+    if (!showDeclare) {
+      setShowDeclare(true);
       return;
     }
-    if (!readyToComplete) return;
+    if (!declared) {
+      showToast("Marque la declaración de veracidad antes de continuar.");
+      return;
+    }
     onSave(buildUpdate(true));
     showToast("Ficha completada. Con la muestra de 2 kg recibida, su lote entra en fila para la Arena.");
     onBack();
@@ -188,10 +193,12 @@ export function FichaView({
         </div>
 
         <div className={styles.footer}>
-          <label className={styles.chip}>
-            <input type="checkbox" checked={declared} onChange={(e) => setDeclared(e.target.checked)} /> Declaro que la información
-            es veraz y que enviaré la muestra de 2 kg de pergamino marcada con el código del lote.
-          </label>
+          {showDeclare && (
+            <label className={styles.chip}>
+              <input type="checkbox" checked={declared} onChange={(e) => setDeclared(e.target.checked)} autoFocus /> Declaro que la información
+              es veraz y que enviaré la muestra de 2 kg de pergamino marcada con el código del lote.
+            </label>
+          )}
           <div className={styles.csvRow}>
             <button className="btn btn-sm" onClick={save}>Guardar</button>
             <button
@@ -200,7 +207,7 @@ export function FichaView({
               disabled={!readyToComplete}
               title={readyToComplete ? undefined : "Complete Identidad & Comercio, Información de Origen y Variedades & Básica primero"}
             >
-              Completar y Enviar
+              {showDeclare ? "Confirmar y Enviar" : "Completar y Enviar"}
             </button>
           </div>
         </div>
@@ -208,7 +215,7 @@ export function FichaView({
         <div style={{ marginTop: 24 }}>
           <NextStepWidget
             lotId={lot.id}
-            lotCode={lot.code}
+            lotCode={ctcLotReference(lot.id)}
             stageLabel={STAGES[lot.stage]}
             data={data}
             completed={completed}

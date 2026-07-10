@@ -129,6 +129,28 @@ export const ORIGIN_CERTS: [string, string][] = [
   ["origin_cert_fedecafe", "Café de Colombia (FEDECAFE)"],
 ];
 
+export const CERT_INFO: Record<string, string> = {
+  origin_cert_dor: "Certificación regional colombiana que vincula el lote a una región cafetera específica con características reconocidas.",
+  origin_cert_do: "Protección legal que garantiza que el café proviene de una zona geográfica delimitada con cualidades propias de ese origen.",
+  origin_cert_igp: "Distintivo que vincula la calidad o reputación del café a su origen geográfico, sin exigir el mismo rigor que una DO.",
+  origin_cert_fedecafe: "Sello de la Federación Nacional de Cafeteros de Colombia que certifica el origen 100% colombiano del café.",
+  intl_eudr: "Reglamento europeo (UE) 2023/1115: exige probar que el café no proviene de tierras deforestadas después de diciembre de 2020. Obligatorio para exportar a la UE.",
+  intl_rainforest: "Certifica prácticas de sostenibilidad ambiental y social en la finca, incluyendo conservación de bosque y bienestar de trabajadores.",
+  intl_organic: "Certifica la ausencia de agroquímicos sintéticos durante el cultivo y el procesamiento, bajo los estándares USDA, UE o JAS.",
+  intl_eujas: "Equivalencia entre los estándares orgánicos de la Unión Europea y Japón (JAS), útil para exportar a ambos mercados con un solo certificado.",
+  intl_birdfriendly: "Certificación del Smithsonian Migratory Bird Center para café cultivado bajo sombra que preserva hábitat de aves migratorias.",
+  intl_foe: "Certificación internacional de sostenibilidad ambiental otorgada por la red Friend of the Earth.",
+  intl_iwca: "International Women's Coffee Alliance: reconoce la participación activa de mujeres en la producción y la cadena de valor del café.",
+  intl_cafe: "Programa propio de Starbucks (Coffee and Farmer Equity) que evalúa calidad, prácticas responsables y trazabilidad.",
+  intl_bpa: "Estándar de Buenas Prácticas Agrícolas: manejo responsable del cultivo, uso seguro de insumos y trazabilidad básica.",
+  intl_fairtrade: "Garantiza un precio mínimo y condiciones comerciales justas para el productor, certificado por Fairtrade International (FLO).",
+  intl_spp: "Símbolo de Pequeños Productores: sello de comercio justo administrado directamente por organizaciones de pequeños productores.",
+  intl_fairtradeusa: "Versión estadounidense del sello de comercio justo, con estándares propios de Fairtrade USA.",
+  intl_demeter: "Certificación de agricultura biodinámica; más estricta que la orgánica en cuanto a manejo del suelo y los ciclos naturales.",
+  intl_nespresso: "Programa propio de calidad y sostenibilidad de Nespresso (AAA Sustainable Quality Program).",
+  intl_globalgap: "Estándar internacional de buenas prácticas agrícolas, seguridad alimentaria y trazabilidad, reconocido globalmente.",
+};
+
 export const INTL_CERTS: [string, string, string][] = [
   ["intl_eudr", "Regulatorio", "EUDR (EU 2023/1115)"],
   ["intl_rainforest", "Sostenibilidad", "Rainforest Alliance"],
@@ -180,6 +202,8 @@ export type FichaFormData = {
   intl_bpa: boolean; intl_fairtrade: boolean; intl_spp: boolean; intl_fairtradeusa: boolean;
   intl_demeter: boolean; intl_nespresso: boolean; intl_globalgap: boolean;
   intl_other: boolean; intl_cert_other_text: string;
+  // Archivos de soporte para certificados marcados en A3/A4, por clave de certificado
+  cert_attachments: Record<string, { assetId: string; fileName: string }>;
   // B1 — Variedades & Caracterización Básica
   varieties: VarietyRow[];
   green_bean_humidity: string; green_bean_density: string; water_activity: string;
@@ -212,6 +236,7 @@ export const EMPTY_FICHA: FichaFormData = {
   intl_bpa: false, intl_fairtrade: false, intl_spp: false, intl_fairtradeusa: false,
   intl_demeter: false, intl_nespresso: false, intl_globalgap: false,
   intl_other: false, intl_cert_other_text: "",
+  cert_attachments: {},
   varieties: [{ pct: "", name: "" }],
   green_bean_humidity: "", green_bean_density: "", water_activity: "",
   base_processing: "", special_processing: "", yield_factor_producer: "",

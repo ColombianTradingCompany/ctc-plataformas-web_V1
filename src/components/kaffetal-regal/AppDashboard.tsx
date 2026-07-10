@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, STAGES, type Finca, type GeneralInfo, type Lot, type ProducerContract } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, type Finca, type GeneralInfo, type Lot, type ProducerContract } from "./data";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
@@ -97,6 +97,14 @@ export function AppDashboard({
                           <button className={styles.iconbtn} title="Renombrar lote" aria-label={`Renombrar ${l.code}`} onClick={() => startRename(l)}>✎</button>
                         </h4>
                       )}
+                      <div className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                        {(() => {
+                          const ref = ctcLotReference(l.id);
+                          const short = ctcLotReferenceShort(l.id);
+                          const idx = ref.indexOf(short);
+                          return <>{ref.slice(0, idx)}<b style={{ color: "var(--ink)" }}>{short}</b>{ref.slice(idx + short.length)}</>;
+                        })()}
+                      </div>
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
                       <LotKanbanStepper stage={l.stage} grade={l.grade} />
                       {l.nextStepAdvice && (
@@ -209,7 +217,7 @@ export function AppDashboard({
           <div className={`${styles.acard} ${styles.wide}`}>
             <span className={styles.k}>Envío de muestras · 2 kg pergamino por lote</span>
             <div className={styles.alist} style={{ marginTop: 6 }}>
-              <b>CTC · Cra. 4 # 10-8 · Piedecuesta, Santander · Colombia</b><br />
+              <b>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · Colombia</b><br />
               Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
             </div>
           </div>

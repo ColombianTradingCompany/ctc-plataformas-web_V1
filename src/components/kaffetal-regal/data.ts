@@ -11,6 +11,8 @@ export type Finca = {
   geo?: string;
   hist: string;
   carac: string;
+  videoAssetId: string | null;
+  videoUrl: string | null;
 };
 
 export type CompletionPoint = { pct: number; recordedAt: string };
@@ -30,9 +32,24 @@ export type Lot = {
   datasheet?: FichaFormData | null;
   nextStepAdvice: string | null;
   nextStepContext: Record<string, unknown> | null;
+  videoAssetId: string | null;
+  videoUrl: string | null;
 };
 
-export type GeneralInfo = { razon: string; nit: string; agri: string };
+export type GeneralInfo = {
+  razon: string;
+  nit: string;
+  agri: string;
+  cedulaCafetera: string;
+  phone: string;
+  whatsappConfirmed: boolean;
+  country: string;
+  department: string;
+  avatarAssetId: string | null;
+  avatarUrl: string | null;
+  producerVideoAssetId: string | null;
+  producerVideoUrl: string | null;
+};
 
 export type ContractRelease = {
   month: number;
@@ -99,4 +116,33 @@ export function lotCode(id: string) {
   return "L-" + id.replace(/-/g, "").slice(0, 6).toUpperCase();
 }
 
-export const EMPTY_GI: GeneralInfo = { razon: "—", nit: "—", agri: "—" };
+// The long reference stamped on shipping/sample packages. Same id-derivation
+// approach as lotCode() -- deterministic, no separate DB column to keep in sync.
+export function ctcLotReference(id: string) {
+  return "CTC_" + id.replace(/-/g, "").toUpperCase();
+}
+
+// The first 7 characters after "CTC_" are what actually needs to go on the
+// physical package label -- short enough to write by hand, long enough to be unique.
+export function ctcLotReferenceShort(id: string) {
+  return id.replace(/-/g, "").toUpperCase().slice(0, 7);
+}
+
+export function supplierCode(id: string) {
+  return "CTC-P-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
+}
+
+export const EMPTY_GI: GeneralInfo = {
+  razon: "—",
+  nit: "—",
+  agri: "—",
+  cedulaCafetera: "",
+  phone: "",
+  whatsappConfirmed: false,
+  country: "Colombia",
+  department: "",
+  avatarAssetId: null,
+  avatarUrl: null,
+  producerVideoAssetId: null,
+  producerVideoUrl: null,
+};

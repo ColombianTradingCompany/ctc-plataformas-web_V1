@@ -27,7 +27,7 @@ export function Footer() {
             </a>
           </span>
         </div>
-        <div className="mono">Cra. 4 # 10-8 · Piedecuesta, Santander · info@ctcexport.com</div>
+        <div className="mono">Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · info@ctcexport.com</div>
       </div>
     </footer>
   );

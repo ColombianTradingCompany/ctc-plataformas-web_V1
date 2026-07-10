@@ -310,6 +310,7 @@ footer.pagefoot b{color:var(--ink)}
           <button class="caret">▾</button></div>
         <span class="role productor">Productor</span>
         <p class="sub">Portal del caficultor: login real (email+contraseña o Google), CRUD de fincas/lotes, y la Ficha Técnica de 8 paneles con cálculos en vivo. La superficie más activa del proyecto ahora mismo.</p>
+        <p class="note">Perfil ("Información general") ampliado 2026-07-10: cédula cafetera, celular+WhatsApp, foto y video del productor, país/departamento base, y un código de proveedor autogenerado exportable como QR — ver el nodo Supabase Storage.</p>
       </div>
       <div class="node" id="n-cherry">
         <div class="node-head"><span class="emoji">☕</span><h3>Cherry Picked</h3>
@@ -429,12 +430,12 @@ footer.pagefoot b{color:var(--ink)}
         <p class="sub"><code>public_lot_catalog</code> y <code>public_transparency_pricing</code>: existen para no tener que ensanchar el RLS de <code>lots</code>/<code>fincas</code>.</p>
       </div>
       <div class="node" id="n-storage">
-        <div class="node-head"><span class="emoji">📦</span><h3>Supabase Storage<span class="badge">0 filas</span></h3>
+        <div class="node-head"><span class="emoji">📦</span><h3>Supabase Storage<span class="badge">bucket kaffetal-media</span></h3>
           <button class="ibtn" data-info="storage" aria-label="Sobre Supabase Storage">i</button>
           <button class="caret">▾</button></div>
         <span class="role infra">Archivos</span>
-        <p class="sub"><code>media_assets</code> existe en el esquema (RLS incluido) pero ninguna pantalla actual sube archivos de verdad todavía.</p>
-        <p class="note">Gap conocido, no un bug — el esquema está listo para cuando la Ficha Técnica suba fotos/certificados reales.</p>
+        <p class="sub"><code>media_assets</code> + el bucket privado <code>kaffetal-media</code> (activado 2026-07-10, límite 100 MB/archivo): foto y video del productor, video de cada finca, video del café por lote, y adjuntos de soporte por certificado en A3/A4 (≤5 MB).</p>
+        <p class="note">Todo path empieza por <code>{producer_id}/...</code> — las 4 políticas RLS de <code>storage.objects</code> solo comparan ese primer segmento contra <code>auth.uid()</code>, así que un upload nuevo no necesita una política nueva mientras respete esa forma.</p>
       </div>
     </div>
   </section>
@@ -484,7 +485,7 @@ footer.pagefoot b{color:var(--ink)}
 ============================================================ */
 const DICT = {
   home:{k:"Superficie",t:"CTC Home",b:`<p>Sitio de marketing corporativo, servido en la raíz del dominio (<code>/</code>). Terminado, sin backend real.</p><p>El único JavaScript de verdad es un modal de contacto con 4 variantes de formulario que arma un <code>mailto:</code> — nunca hace un <code>INSERT</code> en ninguna tabla. Es también, deliberadamente, donde iría el "Admin login" corporativo si algún día se separa de BCP.</p>`,a:["nextcode","vercel"]},
-  kaffetal:{k:"Superficie",t:"Kaffetal Regal",b:`<p>El portal del productor colombiano. Landing pública (grado-premium, panel EUDR, calendario de cosecha) + una app real detrás de login: CRUD de fincas y lotes, y la Ficha Técnica de 8 paneles.</p><p>La Ficha Técnica (<code>src/components/kaffetal-regal/ficha/</code>) fue portada campo a campo de la herramienta interna real de CTC (<code>V5_CTC_Green_Coffee_Datasheet.html</code>) — incluyendo cálculos en vivo como el factor de rendimiento y el spider-chart SCA.</p>`,a:["supaclient","guards","eudr","stagelifecycle"]},
+  kaffetal:{k:"Superficie",t:"Kaffetal Regal",b:`<p>El portal del productor colombiano. Landing pública (grado-premium, panel EUDR, calendario de cosecha) + una app real detrás de login: CRUD de fincas y lotes, y la Ficha Técnica de 8 paneles.</p><p>La Ficha Técnica (<code>src/components/kaffetal-regal/ficha/</code>) fue portada campo a campo de la herramienta interna real de CTC (<code>V5_CTC_Green_Coffee_Datasheet.html</code>) — incluyendo cálculos en vivo como el factor de rendimiento y el spider-chart SCA.</p><p>El perfil ("Información general") se amplió el 2026-07-10: cédula cafetera, celular+WhatsApp, foto y video del productor, país/departamento base (default para nuevas fincas y para A2), y un código de proveedor autogenerado exportable como QR (paquete <code>qrcode</code>, todo client-side).</p>`,a:["supaclient","guards","eudr","stagelifecycle","storage"]},
   cherry:{k:"Superficie",t:"Cherry Picked",b:`<p>La vitrina para tostadoras europeas. El catálogo se alimenta <b>solo</b> de lo que BCP publica explícitamente — nunca lee <code>lots</code> directo.</p><p>Checkout real vía <code>place_order()</code>, membresías por puntos, sample packs. La subasta Tyrian (medio-lote, en vivo) está diseñada pero es 100% estática todavía — fase deliberadamente aplazada.</p>`,a:["definer","views","stagelifecycle"]},
   bcp:{k:"Superficie",t:"BCP · Business Control Panel",b:`<p>La única pantalla que usa el propio equipo de CTC (2 fundadores). No aparece en ningún nav público y <code>robots.ts</code> la desindexa.</p><p>Login con 2 factores (contraseña + código de 6 dígitos), luego 6 secciones: fincas, lotes, Arena, contratos, catálogo, y los placeholders "Próximamente" de subastas/leads.</p><p>Cada Server Action re-verifica <code>bcp_admin</code> por su cuenta — el chequeo del layout es solo conveniencia de lectura, no la única defensa.</p>`,a:["actions","auditlog"]},
 
@@ -502,7 +503,7 @@ const DICT = {
 
   db:{k:"Capa",t:"Postgres — 23 tablas",b:`<p>Proyecto <code>sjznkzvefqfcysczllli</code> ("ctc-platform"), Postgres 17, región <code>eu-central-1</code>. Agrupadas por dominio:</p><p><b>Identidad</b>: <code>profiles</code>, <code>producer_profiles</code>, <code>buyer_profiles</code>.<br><b>Kaffetal</b>: <code>fincas</code>, <code>lots</code>, <code>ficha_completion_snapshots</code>, <code>media_assets</code>.<br><b>Arena/Contratos</b> (service-role-only, sin política RLS de cliente): <code>harvest_seasons</code>, <code>arena_sessions</code>, <code>arena_session_lots</code>, <code>arena_scores</code>, <code>purchase_contracts</code>, <code>contract_releases</code>, <code>humidity_readings</code>.<br><b>Cherry Picked</b>: <code>lot_listings</code>, <code>shipping_zones</code>, <code>lot_reservations</code>, <code>orders</code>, <code>order_items</code>, <code>points_ledger</code>, <code>sample_pack_orders</code>.<br><b>Ops</b>: <code>admin_otp_codes</code>, <code>audit_log</code>.</p>`,a:["views","guards","auditlog"]},
   views:{k:"Concepto",t:"Vistas públicas SECURITY DEFINER",b:`<p><code>public_lot_catalog</code> (solo lotes publicados/agotados, columnas curadas) y <code>public_transparency_pricing</code> (precio bloqueado vs. de referencia, solo si <code>transparency_credit_enabled</code>) existen porque una política RLS amplia sobre <code>lots</code>/<code>fincas</code> habría expuesto la ficha completa y la geolocalización exacta de la finca a cualquier comprador.</p><p>En vez de eso: una vista angosta, con las columnas exactas que un comprador anónimo debería poder leer, definida con los permisos de quien la creó (no de quien la consulta). Ambas revisadas en la auditoría 2026-07-10 — alcance de columnas correcto.</p>`,a:["securitydefiner","db"]},
-  storage:{k:"Capa",t:"Supabase Storage",b:`<p><code>media_assets</code> tiene su tabla y su RLS ya definidos, pero 0 filas reales: ninguna pantalla actual sube un archivo de verdad todavía (ni fotos de lote, ni certificados). Confirmado por grep — no hay ninguna llamada a <code>.storage.</code> ni <code>.upload(</code> en el código fuente.</p><p>Es un hueco conocido y esperado, no un bug: el esquema está listo para el día en que la Ficha Técnica o Kaffetal Regal necesiten adjuntar archivos reales.</p>`,a:["kaffetal"]},
+  storage:{k:"Capa",t:"Supabase Storage",b:`<p>Bucket privado <code>kaffetal-media</code> (activado 2026-07-10, límite 100 MB/archivo), con <code>media_assets</code> como índice (bucket, path, mime, tamaño, quién lo subió).</p><p>Guarda: foto de perfil y video del productor (<code>producer_profiles</code>), video de cada finca (<code>fincas.video_asset_id</code>), video del café por lote (<code>lots.video_asset_id</code> — columna que ya existía en el esquema, sin usar hasta ahora), y adjuntos de soporte por certificado en la Ficha A3/A4 (≤5 MB, referenciados dentro del <code>datasheet</code> jsonb, no en columnas nuevas).</p><p>Todo path se guarda como <code>{producer_id}/...</code> — las 4 políticas RLS de <code>storage.objects</code> comparan ese primer segmento contra <code>auth.uid()</code>, así que cualquier upload nuevo que respete esa forma no necesita una política adicional. <code>src/lib/kaffetalMedia.ts</code> centraliza el upload + registro en <code>media_assets</code> + resolución de URLs firmadas (1h) para los 5 sitios que lo usan.</p>`,a:["kaffetal","guards"]},
 
   local:{k:"Paso de build",t:"Máquina local",b:`<p>Donde se escribe el código: Claude Code + Node.js + Git. <code>npx tsc --noEmit</code> (cero errores de tipos) y <code>npx eslint src --max-warnings=0</code> deben salir limpios antes de considerar cualquier cambio terminado — esto se ha sostenido en todo el proyecto.</p><p>No hay suite de tests automatizados: la verificación siempre es navegador en vivo + chequeo directo por SQL.</p>`,a:["github"]},
   github:{k:"Paso de build",t:"GitHub",b:`<p><code>ColombianTradingCompany/ctc-plataformas-web_V1</code>, rama <code>main</code>. <code>git push</code> es el momento en que el trabajo local se vuelve verdad compartida — y el disparador del deploy en Vercel.</p>`,a:["local","vercel"]},
@@ -536,6 +537,7 @@ const WIRES = [
 
   ["n-db","n-views"],["n-views","n-cherry"],
   ["n-actions","n-storage","dashed"],
+  ["n-supaclient","n-storage"],
 
   ["n-local","n-gh"],["n-gh","n-vercel"],
 ];
@@ -551,7 +553,14 @@ const SCENARIOS = [
     {n:"n-guards",from:"n-supaclient",w:"RLS + guarda",t:"RLS confirma que la fila es del productor autenticado. El lote nace en stage <b>borrador</b>."},
     {n:"n-db",from:"n-guards",w:"Postgres",t:"<code>INSERT</code> en <b>lots</b>. El productor abre la Ficha Técnica: 8 paneles portados campo a campo de la herramienta interna real de CTC."},
     {n:"n-kaffetal",from:"n-db",w:"Ficha Técnica",t:"Cálculos en vivo (factor de rendimiento, % granulometría, spider-chart SCA) mientras completa los paneles A1–A4 y B1–B4."},
-    {n:"n-db",from:"n-kaffetal",w:"Postgres",t:"Cada guardado hace <code>UPDATE lots SET datasheet = {...jsonb}</code> + una fila en <b>ficha_completion_snapshots</b>. Pasado <b>ficha_completa</b>, la guarda le cierra la puerta al productor — de aquí en más solo BCP mueve el lote."},
+    {n:"n-db",from:"n-kaffetal",w:"Postgres",t:"El botón <b>Guardar</b> hace <code>UPDATE lots SET datasheet = {...jsonb}</code> + una fila en <b>ficha_completion_snapshots</b>, sin tocar <code>stage</code> — el productor sigue pudiendo editar. Solo <b>Completar y Enviar</b> (deshabilitado hasta que A1+A2+B1 estén completos) pasa <code>stage</code> a <b>ficha_completa</b>; a partir de ahí la guarda le cierra la puerta — de aquí en más solo BCP mueve el lote."},
+  ]},
+  {id:"perfil",name:"🪪 Productor completa su perfil y sube archivos",steps:[
+    {n:"n-kaffetal",w:"Información general",t:"El productor abre \"Editar información\": cédula cafetera, celular + confirmación de WhatsApp, país y departamento base, foto de perfil y video del productor y su equipo."},
+    {n:"n-supaclient",from:"n-kaffetal",w:"Upload directo",t:"Cada archivo se sube de inmediato (no espera al botón Guardar): <code>supabase.storage.from('kaffetal-media').upload(...)</code> seguido de un <code>INSERT</code> en <b>media_assets</b>."},
+    {n:"n-storage",from:"n-supaclient",w:"kaffetal-media",t:"El archivo aterriza en <code>{producer_id}/avatar/...</code> o <code>/producer-video/...</code> — RLS de <code>storage.objects</code> exige que ese primer segmento del path sea el propio <code>auth.uid()</code>."},
+    {n:"n-db",from:"n-storage",w:"Postgres",t:"<code>UPDATE producer_profiles SET avatar_asset_id = ...</code> (o <code>video_asset_id</code>). El código de proveedor (<code>CTC-P-XXXXXXXX</code>) no se guarda — se deriva del <code>profile_id</code>, igual que el código de cada lote."},
+    {n:"n-kaffetal",from:"n-db",w:"Exportar QR",t:"El botón \"Exportar QR (.jpg)\" genera el QR enteramente en el navegador (paquete <code>qrcode</code> → canvas → JPEG) — ninguna llamada a un servicio externo."},
   ]},
   {id:"finca",name:"🛡️ BCP aprueba una finca (gate EUDR)",steps:[
     {n:"n-bcp",w:"BCP · Fincas",t:"Se abre <b>/bcp/fincas</b>: una finca de más de 4 ha sin polígono EUDR muestra el botón Aprobar bloqueado."},

@@ -54,6 +54,28 @@ export function PaneB2({
           </table>
         </div>
       </div>
+
+      <p className={styles.fexample} style={{ marginTop: 22, borderTop: "1px solid var(--line)", paddingTop: 14, fontWeight: 600, color: "var(--ink)" }}>
+        Notas de Análisis & Referencias Q-Grader
+      </p>
+      <div className={styles.fgrid} style={{ marginTop: 10 }}>
+        <div className={`${styles.ff} ${styles.fw}`}>
+          <label>Notas de Análisis</label>
+          <textarea value={data.analysis_notes} onChange={(e) => onChange({ analysis_notes: e.target.value })} placeholder="Observaciones del laboratorio físico, condiciones de muestra…" />
+        </div>
+        <div className={styles.ff}>
+          <label>Q-Grader Ref 1</label>
+          <input value={data.qgrader_1} onChange={(e) => onChange({ qgrader_1: e.target.value })} placeholder="Nombre · Puntaje · Fecha" />
+        </div>
+        <div className={styles.ff}>
+          <label>Q-Grader Ref 2</label>
+          <input value={data.qgrader_2} onChange={(e) => onChange({ qgrader_2: e.target.value })} placeholder="Nombre · Puntaje · Fecha" />
+        </div>
+        <div className={styles.ff}>
+          <label>Q-Grader Ref 3</label>
+          <input value={data.qgrader_3} onChange={(e) => onChange({ qgrader_3: e.target.value })} placeholder="Nombre · Puntaje · Fecha" />
+        </div>
+      </div>
     </div>
   );
 }

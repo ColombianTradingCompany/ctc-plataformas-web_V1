@@ -10,6 +10,8 @@ const DEPARTMENTS = Object.keys(DEP_MUNI).sort();
 
 export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
   const [muniManual, setMuniManual] = useState(false);
+  const selectedFinca = fincas.find((f) => f.name === data.estate) ?? null;
+  const derived = !!selectedFinca;
   const municipalities = data.region_dep && DEP_MUNI[data.region_dep] ? DEP_MUNI[data.region_dep] : [];
   const showBlend = data.origin_category === "Regional Blend" || data.origin_category === "Multi-Origin Blend";
 
@@ -23,13 +25,17 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
       onChange({ estate: name });
       return;
     }
+    // A finca is the source of truth for its own origin data -- once selected,
+    // these fields track the finca record instead of being typed independently
+    // (edit the finca itself, from "Mis fincas", if any of this changes).
     onChange({
       estate: finca.name,
-      country: data.country || "Colombia",
-      region_dep: data.region_dep || finca.depto,
-      county_muni: data.county_muni || finca.mun,
-      masl: data.masl || finca.alt,
-      geo_ref: data.geo_ref || finca.geo || "",
+      country: "Colombia",
+      region_dep: finca.depto !== "—" ? finca.depto : "",
+      county_muni: finca.mun !== "—" ? finca.mun : "",
+      county_muni_text: "",
+      masl: finca.alt !== "—" ? finca.alt : "",
+      geo_ref: finca.geo || "",
     });
   }
 
@@ -65,23 +71,33 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
           )}
         </div>
         <div className={styles.ff}>
-          <label>País</label>
-          <select value={data.country} onChange={(e) => onChange({ country: e.target.value })}>
-            <option value="">—</option>
-            <option>Colombia</option>
-            <option>Multi-Origin</option>
-          </select>
+          <label>País {derived && <small>(desde la finca)</small>}</label>
+          {derived ? (
+            <input value={data.country} readOnly />
+          ) : (
+            <select value={data.country} onChange={(e) => onChange({ country: e.target.value })}>
+              <option value="">—</option>
+              <option>Colombia</option>
+              <option>Multi-Origin</option>
+            </select>
+          )}
         </div>
         <div className={styles.ff}>
-          <label>Departamento</label>
-          <select value={data.region_dep} onChange={(e) => onChange({ region_dep: e.target.value, county_muni: "" })}>
-            <option value="">— Departamento —</option>
-            {DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
-          </select>
+          <label>Departamento {derived && <small>(desde la finca)</small>}</label>
+          {derived ? (
+            <input value={data.region_dep} readOnly />
+          ) : (
+            <select value={data.region_dep} onChange={(e) => onChange({ region_dep: e.target.value, county_muni: "" })}>
+              <option value="">— Departamento —</option>
+              {DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
+            </select>
+          )}
         </div>
         <div className={styles.ff}>
-          <label>Municipio</label>
-          {muniManual ? (
+          <label>Municipio {derived && <small>(desde la finca)</small>}</label>
+          {derived ? (
+            <input value={data.county_muni} readOnly />
+          ) : muniManual ? (
             <input value={data.county_muni_text} onChange={(e) => onChange({ county_muni_text: e.target.value })} placeholder="Municipio (texto libre)" />
           ) : (
             <select value={data.county_muni} onChange={(e) => onChange({ county_muni: e.target.value })}>
@@ -89,17 +105,19 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
               {municipalities.map((m) => <option key={m}>{m}</option>)}
             </select>
           )}
-          <button type="button" className={styles.fexample} style={{ marginTop: 4, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", color: "var(--primary)" }} onClick={() => setMuniManual((v) => !v)}>
-            {muniManual ? "☰ Usar lista" : "✎ Escribir manualmente"}
-          </button>
+          {!derived && (
+            <button type="button" className={styles.fexample} style={{ marginTop: 4, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", color: "var(--primary)" }} onClick={() => setMuniManual((v) => !v)}>
+              {muniManual ? "☰ Usar lista" : "✎ Escribir manualmente"}
+            </button>
+          )}
         </div>
         <div className={styles.ff}>
-          <label>M.A.S.L. (msnm)</label>
-          <input type="number" value={data.masl} onChange={(e) => onChange({ masl: e.target.value })} placeholder="1600" />
+          <label>M.A.S.L. (msnm) {derived && <small>(desde la finca)</small>}</label>
+          <input type="number" value={data.masl} readOnly={derived} onChange={(e) => onChange({ masl: e.target.value })} placeholder="1600" />
         </div>
         <div className={styles.ff}>
-          <label>Geo Referencia <small>(EUDR)</small></label>
-          <input value={data.geo_ref} onChange={(e) => onChange({ geo_ref: e.target.value })} placeholder="Lat, Lon o código" />
+          <label>Geo Referencia <small>(EUDR{derived ? " · desde la finca" : ""})</small></label>
+          <input value={data.geo_ref} readOnly={derived} onChange={(e) => onChange({ geo_ref: e.target.value })} placeholder="Lat, Lon o código" />
         </div>
         <div className={styles.ff}>
           <label>Edad Plantación (años)</label>

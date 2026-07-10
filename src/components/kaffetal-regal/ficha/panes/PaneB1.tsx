@@ -64,6 +64,14 @@ export function PaneB1({ data, onChange }: PaneProps) {
 
       <div className={styles.fgrid} style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--line)" }}>
         <div className={styles.ff}>
+          <label>Especie</label>
+          <select value={data.species} onChange={(e) => onChange({ species: e.target.value })}>
+            <option value="">—</option>
+            <option>Arabica</option>
+            <option>Robusta</option>
+          </select>
+        </div>
+        <div className={styles.ff}>
           <label>Humedad del Grano (%)</label>
           <input type="number" step="0.1" value={data.green_bean_humidity} onChange={(e) => onChange({ green_bean_humidity: e.target.value })} placeholder="0.0" />
         </div>

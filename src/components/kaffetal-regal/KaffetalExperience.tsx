@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { createClient } from "@/lib/supabase/client";
+import { uploadKaffetalMedia, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
 import { AppDashboard } from "./AppDashboard";
@@ -43,6 +44,7 @@ type FincaRow = {
   hectares: string | number | null;
   history_text: string | null;
   characteristics_text: string | null;
+  video_asset_id: string | null;
 };
 
 type LotRow = {
@@ -58,9 +60,10 @@ type LotRow = {
   datasheet: Lot["datasheet"];
   ai_next_step_advice: string | null;
   ai_next_step_context: Record<string, unknown> | null;
+  video_asset_id: string | null;
 };
 
-function dbFincaToFinca(row: FincaRow): Finca {
+function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
   return {
     id: row.id,
     name: row.name,
@@ -72,10 +75,12 @@ function dbFincaToFinca(row: FincaRow): Finca {
     geo: "",
     hist: row.history_text || "—",
     carac: row.characteristics_text || "—",
+    videoAssetId: row.video_asset_id,
+    videoUrl,
   };
 }
 
-function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionHistory: CompletionPoint[] = []): Lot {
+function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionHistory: CompletionPoint[] = [], videoUrl: string | null = null): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
   const stageIdx = stage < 0 ? 0 : stage;
   return {
@@ -93,6 +98,8 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
     datasheet: row.datasheet ?? null,
     nextStepAdvice: row.ai_next_step_advice ?? null,
     nextStepContext: row.ai_next_step_context ?? null,
+    videoAssetId: row.video_asset_id,
+    videoUrl,
   };
 }
 
@@ -118,8 +125,12 @@ function Experience() {
     async (uid: string) => {
       const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }] =
         await Promise.all([
-          supabase.from("profiles").select("full_name").eq("id", uid).single(),
-          supabase.from("producer_profiles").select("company_name, tax_id").eq("profile_id", uid).single(),
+          supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
+          supabase
+            .from("producer_profiles")
+            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id")
+            .eq("profile_id", uid)
+            .single(),
           supabase.from("fincas").select("*").eq("producer_id", uid).order("created_at", { ascending: true }),
           supabase.from("lots").select("*").eq("producer_id", uid).order("created_at", { ascending: false }),
           supabase
@@ -129,7 +140,17 @@ function Experience() {
           supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
         ]);
 
-      const fincaList = ((fincaRows as FincaRow[] | null) ?? []).map(dbFincaToFinca);
+      const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
+      const lotRowList = (lotRows as LotRow[] | null) ?? [];
+      const assetIds = [
+        producerProfile?.avatar_asset_id,
+        producerProfile?.video_asset_id,
+        ...fincaRowList.map((f) => f.video_asset_id),
+        ...lotRowList.map((l) => l.video_asset_id),
+      ];
+      const urlByAssetId = await signedKaffetalMediaUrls(supabase, assetIds);
+
+      const fincaList = fincaRowList.map((row) => dbFincaToFinca(row, row.video_asset_id ? urlByAssetId.get(row.video_asset_id) ?? null : null));
       const fincaNameById = new Map(fincaList.map((f) => [f.id, f.name]));
       setFincas(fincaList);
 
@@ -139,7 +160,11 @@ function Experience() {
         list.push({ pct: s.completion_pct, recordedAt: s.recorded_at });
         completionByLotId.set(s.lot_id, list);
       }
-      setLots(((lotRows as LotRow[] | null) ?? []).map((r) => dbLotToLot(r, fincaNameById, completionByLotId.get(r.id))));
+      setLots(
+        lotRowList.map((r) =>
+          dbLotToLot(r, fincaNameById, completionByLotId.get(r.id), r.video_asset_id ? urlByAssetId.get(r.video_asset_id) ?? null : null)
+        )
+      );
 
       type ContractRow = {
         id: string;
@@ -191,6 +216,15 @@ function Experience() {
         razon: producerProfile?.company_name || "—",
         nit: producerProfile?.tax_id || "—",
         agri: profile?.full_name || "—",
+        cedulaCafetera: producerProfile?.cedula_cafetera || "",
+        phone: profile?.phone || "",
+        whatsappConfirmed: producerProfile?.whatsapp_confirmed || false,
+        country: producerProfile?.country || "Colombia",
+        department: producerProfile?.department || "",
+        avatarAssetId: producerProfile?.avatar_asset_id ?? null,
+        avatarUrl: producerProfile?.avatar_asset_id ? urlByAssetId.get(producerProfile.avatar_asset_id) ?? null : null,
+        producerVideoAssetId: producerProfile?.video_asset_id ?? null,
+        producerVideoUrl: producerProfile?.video_asset_id ? urlByAssetId.get(producerProfile.video_asset_id) ?? null : null,
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
     },
@@ -281,7 +315,7 @@ function Experience() {
     };
     if (updates.name) patch.name = updates.name;
     if (finca) patch.finca_id = finca.id;
-    if (current && current.stage === 0) patch.stage = "ficha_completa";
+    if (updates.finalize && current && current.stage === 0) patch.stage = "ficha_completa";
 
     const { data, error } = await supabase.from("lots").update(patch).eq("id", curLotId).select("*").single();
     if (error || !data) {
@@ -291,7 +325,7 @@ function Experience() {
     await supabase.from("ficha_completion_snapshots").insert({ lot_id: curLotId, completion_pct: updates.completionPct });
     const fincaNameById = new Map(fincas.map((f) => [f.id, f.name]));
     const newHistory = [...(current?.completionHistory ?? []), { pct: updates.completionPct, recordedAt: new Date().toISOString() }];
-    const saved = dbLotToLot(data as LotRow, fincaNameById, newHistory);
+    const saved = dbLotToLot(data as LotRow, fincaNameById, newHistory, current?.videoUrl ?? null);
     setLots((ls) => ls.map((l) => (l.id === curLotId ? saved : l)));
   }
 
@@ -320,7 +354,7 @@ function Experience() {
         showToast("No se pudo actualizar la finca.");
         return;
       }
-      setFincas((prev) => prev.map((x) => (x.id === editing.id ? dbFincaToFinca(data as FincaRow) : x)));
+      setFincas((prev) => prev.map((x) => (x.id === editing.id ? dbFincaToFinca(data as FincaRow, editing.videoUrl) : x)));
     } else {
       const { data, error } = await supabase.from("fincas").insert(payload).select("*").single();
       if (error || !data) {
@@ -336,8 +370,18 @@ function Experience() {
   async function saveInfo(next: GeneralInfo) {
     if (!userId) return;
     const [{ error: e1 }, { error: e2 }] = await Promise.all([
-      supabase.from("profiles").update({ full_name: next.agri }).eq("id", userId),
-      supabase.from("producer_profiles").update({ company_name: next.razon, tax_id: next.nit }).eq("profile_id", userId),
+      supabase.from("profiles").update({ full_name: next.agri, phone: next.phone || null }).eq("id", userId),
+      supabase
+        .from("producer_profiles")
+        .update({
+          company_name: next.razon,
+          tax_id: next.nit,
+          cedula_cafetera: next.cedulaCafetera || null,
+          whatsapp_confirmed: next.whatsappConfirmed,
+          country: next.country,
+          department: next.department || null,
+        })
+        .eq("profile_id", userId),
     ]);
     if (e1 || e2) {
       showToast("No se pudo actualizar la información.");
@@ -347,6 +391,81 @@ function Experience() {
     setUserName(next.agri !== "—" ? next.agri.split(" ")[0] : "productor");
     setInfoModalOpen(false);
     showToast("Información general actualizada ✓ · aplica a todos sus lotes");
+  }
+
+  async function uploadFile(subpath: string, file: File): Promise<{ assetId: string } | { error: string }> {
+    if (!userId) return { error: "No autenticado." };
+    return uploadKaffetalMedia(supabase, userId, subpath, file);
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, "avatar", file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const { error } = await supabase.from("producer_profiles").update({ avatar_asset_id: result.assetId }).eq("profile_id", userId);
+    if (error) {
+      showToast("No se pudo guardar la foto de perfil.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    setGi((g) => ({ ...g, avatarAssetId: result.assetId, avatarUrl: urlByAssetId.get(result.assetId) ?? null }));
+    showToast("Foto de perfil actualizada ✓");
+  }
+
+  async function uploadProducerVideo(file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, "producer-video", file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const { error } = await supabase.from("producer_profiles").update({ video_asset_id: result.assetId }).eq("profile_id", userId);
+    if (error) {
+      showToast("No se pudo guardar el video.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    setGi((g) => ({ ...g, producerVideoAssetId: result.assetId, producerVideoUrl: urlByAssetId.get(result.assetId) ?? null }));
+    showToast("Video guardado ✓");
+  }
+
+  async function uploadFincaVideo(fincaId: string, file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/video`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const { error } = await supabase.from("fincas").update({ video_asset_id: result.assetId }).eq("id", fincaId);
+    if (error) {
+      showToast("No se pudo guardar el video de la finca.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    const videoUrl = urlByAssetId.get(result.assetId) ?? null;
+    setFincas((prev) => prev.map((f) => (f.id === fincaId ? { ...f, videoAssetId: result.assetId, videoUrl } : f)));
+    showToast("Video de la finca guardado ✓");
+  }
+
+  async function uploadLotVideo(lotId: string, file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, `lots/${lotId}/video`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const { error } = await supabase.from("lots").update({ video_asset_id: result.assetId }).eq("id", lotId);
+    if (error) {
+      showToast("No se pudo guardar el video del café.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    const videoUrl = urlByAssetId.get(result.assetId) ?? null;
+    setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, videoAssetId: result.assetId, videoUrl } : l)));
+    showToast("Video del café guardado ✓");
   }
 
   const curLot = lots.find((l) => l.id === curLotId) ?? null;
@@ -388,6 +507,8 @@ function Experience() {
             setEditingFincaIdx(-1);
             setFincaModalOpen(true);
           }}
+          onUploadFile={uploadFile}
+          onUploadLotVideo={(file) => uploadLotVideo(curLot.id, file)}
         />
       )}
 
@@ -396,9 +517,22 @@ function Experience() {
         open={fincaModalOpen}
         onClose={() => setFincaModalOpen(false)}
         finca={editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null}
+        gi={gi}
         onSave={saveFinca}
+        onUploadVideo={(file) => {
+          const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
+          if (editing) uploadFincaVideo(editing.id, file);
+        }}
       />
-      <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} gi={gi} onSave={saveInfo} />
+      <InfoModal
+        open={infoModalOpen}
+        onClose={() => setInfoModalOpen(false)}
+        gi={gi}
+        userId={userId}
+        onSave={saveInfo}
+        onUploadAvatar={uploadAvatar}
+        onUploadVideo={uploadProducerVideo}
+      />
     </div>
   );
 }

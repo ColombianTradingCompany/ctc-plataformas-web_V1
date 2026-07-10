@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
-import type { Finca, Lot } from "./data";
+import { ctcLotReference, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
@@ -17,7 +17,6 @@ import { PaneB3 } from "./ficha/panes/PaneB3";
 import { PaneB4 } from "./ficha/panes/PaneB4";
 import { FichaPreview } from "./ficha/FichaPreview";
 import { NextStepWidget } from "./ficha/NextStepWidget";
-import { downloadFichaCSV, parseFichaCSV } from "./ficha/fichaCsv";
 import { STAGES } from "./data";
 import styles from "./FichaView.module.css";
 
@@ -28,6 +27,7 @@ export type FichaSaveUpdate = {
   finca?: string;
   datasheet: FichaFormData;
   completionPct: number;
+  finalize?: boolean;
   summary: {
     ficha_variedad: string | null;
     ficha_proceso: string | null;
@@ -45,6 +45,8 @@ export function FichaView({
   onSave,
   onAdviceUpdate,
   onOpenNewFinca,
+  onUploadFile,
+  onUploadLotVideo,
 }: {
   lot: Lot;
   fincas: Finca[];
@@ -53,15 +55,26 @@ export function FichaView({
   onSave: (updates: FichaSaveUpdate) => void;
   onAdviceUpdate: (lotId: string, advice: string, context: Record<string, unknown>) => void;
   onOpenNewFinca: () => void;
+  onUploadFile: (subpath: string, file: File) => Promise<{ assetId: string } | { error: string }>;
+  onUploadLotVideo: (file: File) => void;
 }) {
   const { showToast } = useToast();
   const [active, setActive] = useState<PaneId>("a1");
   const [data, setData] = useState<FichaFormData>(() => {
-    const base: FichaFormData = lot.datasheet ?? { ...EMPTY_FICHA, razon_social: gi.razon !== "—" ? gi.razon : "" };
-    // lots.name is the single source of truth for the lot's name -- it wins over
-    // whatever product_name was last saved in the datasheet, so a rename from the
-    // dashboard and an edit here can never drift apart.
-    return { ...base, product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : base.product_name };
+    const base: FichaFormData = lot.datasheet ?? EMPTY_FICHA;
+    // A few fields aren't independently editable inside the Ficha -- they're owned
+    // elsewhere (the producer's profile, the lot record itself) and always win over
+    // whatever was last saved in the datasheet, so the two can never drift apart.
+    return {
+      ...base,
+      product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : base.product_name,
+      razon_social: gi.razon !== "—" ? gi.razon : "",
+      nit_rut: gi.nit !== "—" ? gi.nit : "",
+      productor: gi.agri !== "—" ? gi.agri : "",
+      ctc_uid: ctcLotReference(lot.id),
+      country: base.country || gi.country,
+      region_dep: base.region_dep || gi.department,
+    };
   });
   const [declared, setDeclared] = useState(false);
 
@@ -76,31 +89,29 @@ export function FichaView({
 
   const completed = useMemo<Partial<Record<PaneId, boolean>>>(
     () => ({
-      a1: !!data.product_name && !!data.species,
+      a1: !!data.product_name,
       a2: !!data.estate || !!data.region_dep,
       a3: data.origin_cert_dor || data.origin_cert_do || data.origin_cert_igp || data.origin_cert_fedecafe || !!data.awards,
       a4: [data.intl_eudr, data.intl_rainforest, data.intl_organic, data.intl_fairtrade].some(Boolean),
-      b1: vTotal > 0,
+      b1: vTotal > 0 && !!data.species,
       b2: sca.total > 0,
       b3: factor.remainder > 0,
-      b4: !!data.analysis_notes || !!data.qgrader_1,
+      b4: !!lot.videoUrl,
     }),
-    [data, vTotal, sca.total, factor.remainder]
+    [data, vTotal, sca.total, factor.remainder, lot.videoUrl]
   );
 
   const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 8) * 100);
+  const readyToComplete = !!completed.a1 && !!completed.a2 && !!completed.b1;
 
-  function save() {
-    if (!declared) {
-      showToast("Marque la declaración de veracidad antes de guardar.");
-      return;
-    }
+  function buildUpdate(finalize: boolean): FichaSaveUpdate {
     const topVariety = data.varieties.find((v) => num(v.pct) > 0);
-    onSave({
+    return {
       name: data.product_name.trim() || undefined,
       finca: data.estate || undefined,
       datasheet: data,
       completionPct: overallPct,
+      finalize,
       summary: {
         ficha_variedad: topVariety?.name || null,
         ficha_proceso: data.base_processing || null,
@@ -108,25 +119,35 @@ export function FichaView({
         ficha_notas_cata: data.analysis_notes || null,
         ficha_puntaje_estimado: sca.total > 0 ? sca.total : null,
       },
-    });
-    showToast("Ficha guardada. Con la muestra de 2 kg recibida, su lote entra en fila para la Arena.");
+    };
+  }
+
+  function save() {
+    onSave(buildUpdate(false));
+    showToast("Progreso guardado ✓");
+  }
+
+  function completeAndSend() {
+    if (!declared) {
+      showToast("Marque la declaración de veracidad antes de completar y enviar.");
+      return;
+    }
+    if (!readyToComplete) return;
+    onSave(buildUpdate(true));
+    showToast("Ficha completada. Con la muestra de 2 kg recibida, su lote entra en fila para la Arena.");
     onBack();
   }
 
-  function handleLoadCSV(file: File) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        setData((d) => parseFichaCSV(String(reader.result), d));
-        showToast("Configuración cargada correctamente");
-      } catch {
-        showToast("Error al leer el CSV");
-      }
-    };
-    reader.readAsText(file);
+  async function uploadCert(certKey: string, file: File) {
+    const result = await onUploadFile(`lots/${lot.id}/certs/${certKey}`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    onChange({ cert_attachments: { ...data.cert_attachments, [certKey]: { assetId: result.assetId, fileName: file.name } } });
   }
 
-  const paneProps = { data, onChange, fincas, onOpenNewFinca };
+  const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo };
 
   return (
     <div>
@@ -143,22 +164,8 @@ export function FichaView({
         </div>
       </div>
 
-      <div className="wrap">
-        <NextStepWidget
-          lotId={lot.id}
-          lotCode={lot.code}
-          stageLabel={STAGES[lot.stage]}
-          data={data}
-          completed={completed}
-          scaTotal={sca.total}
-          cachedAdvice={lot.nextStepAdvice}
-          cachedContext={lot.nextStepContext}
-          onAdviceUpdate={(advice, context) => onAdviceUpdate(lot.id, advice, context)}
-        />
-      </div>
-
       <div className={`wrap ${styles.fichaMain}`}>
-        <p className="eyebrow">Lote <span className="mono">CTC_2601{lot.id.replace(/\D/g, "").padStart(2, "0")}</span></p>
+        <p className="eyebrow">Lote <span className="mono">{ctcLotReference(lot.id)}</span></p>
         <h1 style={{ marginTop: 8 }}>Cuéntenos todo sobre este café</h1>
         <p style={{ color: "var(--muted)", marginTop: 10, maxWidth: "64ch" }}>
           Esta ficha es la hoja de vida de su lote: la leen el panel de la Arena y, después, los tostadores en
@@ -186,21 +193,29 @@ export function FichaView({
             es veraz y que enviaré la muestra de 2 kg de pergamino marcada con el código del lote.
           </label>
           <div className={styles.csvRow}>
-            <input
-              type="file"
-              accept=".csv"
-              id="ficha-csv-input"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleLoadCSV(f);
-                e.target.value = "";
-              }}
-            />
-            <button className="btn btn-sm" onClick={() => document.getElementById("ficha-csv-input")?.click()}>Cargar CSV</button>
-            <button className="btn btn-sm" onClick={() => downloadFichaCSV(data)}>Guardar CSV</button>
-            <button className="btn btn-solid-accent" onClick={save}>Guardar y poner en fila para la Arena</button>
+            <button className="btn btn-sm" onClick={save}>Guardar</button>
+            <button
+              className="btn btn-solid-accent"
+              onClick={completeAndSend}
+              disabled={!readyToComplete}
+              title={readyToComplete ? undefined : "Complete Identidad & Comercio, Información de Origen y Variedades & Básica primero"}
+            >
+              Completar y Enviar
+            </button>
           </div>
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <NextStepWidget
+            lotId={lot.id}
+            lotCode={lot.code}
+            stageLabel={STAGES[lot.stage]}
+            data={data}
+            completed={completed}
+            scaTotal={sca.total}
+            cachedAdvice={lot.nextStepAdvice}
+            onAdviceUpdate={(advice, context) => onAdviceUpdate(lot.id, advice, context)}
+          />
         </div>
       </div>
     </div>

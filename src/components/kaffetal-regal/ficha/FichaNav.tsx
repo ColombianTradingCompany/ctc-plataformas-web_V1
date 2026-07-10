@@ -8,9 +8,9 @@ const PANES: { id: PaneId; idx: string; label: string; group: "A" | "B" | "F" }[
   { id: "a3", idx: "A3", label: "Certificados de Origen", group: "A" },
   { id: "a4", idx: "A4", label: "Certificados Internacionales", group: "A" },
   { id: "b1", idx: "B1", label: "Variedades & Básica", group: "B" },
-  { id: "b2", idx: "B2", label: "Perfil de Taza · SCA", group: "B" },
+  { id: "b2", idx: "B2", label: "Perfil de Taza · Notas", group: "B" },
   { id: "b3", idx: "B3", label: "Física · Granulometría", group: "B" },
-  { id: "b4", idx: "B4", label: "Notas & Q-Grader", group: "B" },
+  { id: "b4", idx: "B4", label: "Video del Café", group: "B" },
   { id: "ficha", idx: "→", label: "Ficha (vista final)", group: "F" },
 ];
 

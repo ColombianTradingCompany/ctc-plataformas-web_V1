@@ -16,7 +16,7 @@ export function Footer() {
           </span>
         </div>
         <div className={`mono ${styles.right}`}>
-          Cra. 4 # 10-8 · Piedecuesta, Santander · Colombia
+          Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander
           <br />
           <a href="mailto:info@ctcexport.com">info@ctcexport.com</a> · DDS EUDR en cada despacho
           <div className={styles.social}>

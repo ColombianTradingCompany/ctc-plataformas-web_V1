@@ -47,11 +47,14 @@ src/
   components/
     ctc-home/, kaffetal-regal/, cherry-picked/       one folder per platform
     kaffetal-regal/ficha/                            Ficha Técnica: 8 panes + preview + AI widget
+    kaffetal-regal/ficha/panes/CertCheckbox.tsx       shared A3/A4 cert row: info toggle + attachment upload
     ui/                                               shadcn primitives (BCP only)
   lib/
     supabase/{client,server}.ts        3 client factories — see below
     bcp/{otp,sendOtpEmail,requireAdminProfile}.ts
     stableStringify.ts                 deterministic JSON compare, used by the AI-advice cache
+    kaffetalMedia.ts                   upload-to-storage + batch signed-URL helper, used by every KR upload site
+    fileSize.ts                        tiny checkFileSizeMb() shared by every upload field's client-side size gate
 scripts/
     create-qa-producer.mjs, create-qa-buyer.mjs, seed-bcp-admin.mjs,
     qa-guard-check.mjs, qa-checkout-check.mjs        disposable QA account + regression helpers
@@ -69,8 +72,9 @@ Three, each for a different trust level — know which one a piece of code shoul
 
 Full table list, RLS policies, and triggers were audited 2026-07-10 (see Audit Findings below); the schema is otherwise stable. Domains:
 
-- **Identity**: `profiles` (role enum: producer/buyer/bcp_admin), `producer_profiles`, `buyer_profiles`.
-- **Kaffetal Regal**: `fincas`, `lots` (stage enum borrador→...→galardonado, `datasheet` jsonb holding the full ~50-field Ficha, `ai_next_step_advice`/`ai_next_step_context` for the AI-advice cache), `ficha_completion_snapshots`, `media_assets`.
+- **Identity**: `profiles` (role enum: producer/buyer/bcp_admin, `phone`), `producer_profiles` (`company_name`, `tax_id`, `cedula_cafetera`, `whatsapp_confirmed`, `country`, `department`, `avatar_asset_id`, `video_asset_id` — the last two added 2026-07-10), `buyer_profiles`.
+- **Kaffetal Regal**: `fincas` (+ `video_asset_id`, added 2026-07-10), `lots` (stage enum borrador→...→galardonado, `datasheet` jsonb holding the full ~50-field Ficha, `ai_next_step_advice`/`ai_next_step_context` for the AI-advice cache, `video_asset_id` — pre-existing column, only wired to real UI as of 2026-07-10), `ficha_completion_snapshots`, `media_assets`.
+- **Storage**: one bucket, `kaffetal-media` (private, 100 MB/file limit, added 2026-07-10), holding producer avatars/videos, finca videos, lot ("café") videos, and A3/A4 certificate support attachments. Path convention is always `{producer_id}/...` (avatar, producer-video, fincas/{id}/video, lots/{id}/video, lots/{id}/certs/{certKey}/...) — the 4 storage.objects RLS policies (select/insert/update/delete) all check `(storage.foldername(name))[1] = auth.uid()::text`, so a new upload site just needs to keep that path shape, no new policy. `src/lib/kaffetalMedia.ts` wraps upload+`media_assets` insert and batch signed-URL resolution (1h expiry, re-fetched on every `loadData()`) — every KR upload site (avatar, producer video, finca video, lot video, cert attachments) goes through it.
 - **Arena/Contracts**: `harvest_seasons`, `arena_sessions`, `arena_session_lots`, `arena_scores`, `purchase_contracts`, `contract_releases`, `humidity_readings`. These four Arena tables are **service-role-only by design** — zero client RLS policies, since they're internal grading machinery BCP alone touches.
 - **Cherry Picked**: `lot_listings`, `shipping_zones`, `lot_reservations`, `orders`, `order_items`, `points_ledger`, `sample_pack_orders`.
 - **Ops**: `admin_otp_codes` (BCP 2FA), `audit_log`.
@@ -88,11 +92,22 @@ Every table a normal user JWT can write to has a guard: RLS restricts *whose* ro
 
 If you add a new producer/buyer-writable column to one of these tables, check whether it needs carving out of (or into) its guard function — the AI-advice cache columns deliberately go around this guard via the service-role client rather than punching a hole in it.
 
+**This guard also blocks `lots.video_asset_id`** — a producer can only attach the "Video del café" (Ficha B4) while the lot is still at `borrador`/`ficha_completa`. Confirmed live 2026-07-10: an upload attempt against a `fila_arena` lot raises `"Este lote ya está en el proceso de CTC y no puede modificarse."` (surfaced as a toast, not a silent no-op) instead of writing. This is almost certainly the right behavior long-term (the video belongs to the producer-editable window), but note it if a future session wants producers to add/replace the café video later in the lifecycle — that would need an explicit carve-out in the guard function, not just a UI change.
+
 ## Feature status per platform
 
 **CTC Home** — static marketing, done, no backend.
 
-**Kaffetal Regal** — real auth (email/password + Google), real finca/lot CRUD, full Ficha Técnica (all 8 panes ported 1:1 from the source CTC datasheet tool), dashboard with per-lot sparkline/kanban/AI-advice display. This is the most actively developed surface right now.
+**Kaffetal Regal** — real auth (email/password + Google), real finca/lot CRUD, full Ficha Técnica (all 8 panes ported 1:1 from the source CTC datasheet tool), dashboard with per-lot sparkline/kanban/AI-advice display. This is the most actively developed surface right now. **UI/UX pass 2026-07-10** (first of an ongoing progressive pass across all platforms) reworked the producer profile and the whole Ficha flow:
+  - **"Información general" (`InfoModal.tsx`)** expanded from 3 fields to: razón social, NIT/CC, nombre del agricultor, cédula cafetera, celular (+ "tiene WhatsApp" toggle), foto de perfil (≤5 MB), video del productor y su equipo (≤100 MB), país, departamento base, and an auto-generated supplier code (`supplierCode()` in `data.ts`, derived from the profile id like `lotCode()`/`ctcLotReference()` — no extra column) with a "Exportar QR (.jpg)" button (`qrcode` npm package → canvas → JPEG download, fully client-side, no third-party network call). País/departamento base are also the seed default for a new finca's department and a new Ficha's A2 país/departamento when neither is yet set.
+  - **Unified lot reference**: `ctcLotReference(id)`/`ctcLotReferenceShort(id)` in `data.ts` replace the old ad-hoc `CTC_2601{...}` string that used to live inline in `FichaView.tsx` and didn't match the dashboard's `lotCode()`. Both the dashboard's lot card and Ficha A1 now derive from the same function and bold the first 7 characters after `CTC_` — that's what actually goes on the physical sample package.
+  - **Ficha A1**: Proveedor/NIT/Productor are now read-only, sourced from the producer's profile (`gi`) instead of independently typed — edited via "Editar información," never drift-able from the Ficha. "Especie" moved out of A1 into B1 (next to the variety table, where it's used).
+  - **Ficha A2**: selecting a real finca now makes país/departamento/municipio/masl/geo read-only and permanently synced to that finca's own record (edit the finca to change them) — previously it only filled blanks once. Freeform/blend categories are unaffected.
+  - **Ficha A3/A4**: every certificate checkbox got a `CertCheckbox` (shared component) with an ⓘ info toggle (short plain-language description, `CERT_INFO` map in `fichaData.ts`) and, once checked, a file upload (≤5 MB) for supporting documentation — stored as `{assetId, fileName}` in a new `cert_attachments` map on `FichaFormData` (jsonb, not a new table/columns).
+  - **Ficha footer**: the old Cargar/Guardar CSV + "Guardar y poner en fila" buttons are gone, replaced by **Guardar** (persists progress, stays on the page, never advances `stage`) and **Completar y Enviar** (disabled until A1+A2+B1 are complete; only this button can advance `stage` borrador→ficha_completa, via a new `finalize` flag on `FichaSaveUpdate` — see the guard-model note above for why this distinction matters).
+  - **NextStepWidget ("¿Y ahora qué?")** moved from above the panes to below the footer, and no longer auto-fires on mount/lot-switch — it now shows a neutral prompt and only calls the API on an explicit click (the backend route's own `force`-aware cache check still avoids redundant Anthropic calls either way).
+  - **B4/B2 restructure**: B4 is now just "Video del Café" (uploads straight to the pre-existing `lots.video_asset_id`, previously unwired to any UI). "Video del productor y su equipo" moved to Información General; "Video de la finca" moved to `FincaModal` (new `fincas.video_asset_id`). Everything B4 used to hold (notas de análisis, Q-Grader refs 1–3) moved into B2, underneath the SCA table.
+  - Sample-shipping address corrected across `AppDashboard.tsx`, Kaffetal's `Footer.tsx`, `ParticiparSection.tsx`, and CTC Home's `Footer.tsx` (was a stale `Cra. 4 # 10-8`).
 
 **Cherry Picked** — real buyer auth, real catalog (fed only by BCP-published listings), cart/reservations, checkout via the atomic `place_order()` RPC, membership tiers, sample packs. **Tyrian auction is still 100% static demo** (`TyrianSection.tsx`) — explicitly deferred, not started.
 
@@ -133,11 +148,11 @@ Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`
 - `dangerouslySetInnerHTML` usage (the only one in the codebase) — properly escaped.
 - All 4 `ai_next_step_*` cache columns — no cross-user leakage; ownership-checked in the API route before any read/write.
 
-## Visual system map (`docs/architecture/index.html`)
+## Visual system map (`docs/architecture/Documentacion_Interactiva_V1.0.html`)
 
-A self-contained, no-build-step HTML/CSS/JS page — open it directly in a browser (or `npx serve docs/architecture`). It's a node-and-wire diagram of the *actual* system (not a generic teaching example): 18 real components across 6 zones (Clients, Frontend & delivery, Identity & data access, Business logic, Data, Build & ship), 23 real wires between them, and a "Traza" (trace) selector with 8 real business-flow scenarios (register a lot, EUDR approval, Arena grading, contract signing, catalog publishing, checkout, BCP 2FA login, deploy) that animate a packet hop-by-hop through the nodes involved, narrated from the actual Server Action / RPC / route-handler code. Every ⓘ button opens a drawer explaining that piece and cross-links related concepts.
+Renamed from `index.html` shortly after creation (2026-07-10) — check this exact filename before linking to it; it may get renamed again. A self-contained, no-build-step HTML/CSS/JS page — open it directly in a browser (or `npx serve docs/architecture`). It's a node-and-wire diagram of the *actual* system (not a generic teaching example): 18 real components across 6 zones (Clients, Frontend & delivery, Identity & data access, Business logic, Data, Build & ship), 23 real wires between them, and a "Traza" (trace) selector with real business-flow scenarios (register a lot, EUDR approval, Arena grading, contract signing, catalog publishing, checkout, BCP 2FA login, deploy) that animate a packet hop-by-hop through the nodes involved, narrated from the actual Server Action / RPC / route-handler code. Every ⓘ button opens a drawer explaining that piece and cross-links related concepts.
 
-**Treat this as a living document, same as this file** — update its `SCENARIOS`/`DICT`/node cards (all plain JS objects near the bottom of the file, no build tooling to fight) whenever a flow changes or a new one is added, especially at the end of a session that touched UI/UX or added a feature. Last synced with the real system: 2026-07-10.
+**Treat this as a living document, same as this file** — update its `SCENARIOS`/`DICT`/node cards (all plain JS objects near the bottom of the file, no build tooling to fight) whenever a flow changes or a new one is added, especially at the end of a session that touched UI/UX or added a feature. Last synced with the real system: 2026-07-10 (Kaffetal Regal producer-profile + Ficha rework).
 
 ## Where to find deeper history
 

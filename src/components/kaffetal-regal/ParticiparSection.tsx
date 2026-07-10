@@ -87,7 +87,7 @@ export function ParticiparSection({ onLogin }: { onLogin: () => void }) {
           <div className={styles.addrband} style={{ backgroundImage: "url('/images/kaffetal-regal/32-cerezas-rama.jpg')" }}>
             <p className="eyebrow" style={{ color: "var(--accent-soft)" }}>Envío de muestras · 2 kg pergamino</p>
             <strong style={{ color: "#fff", fontFamily: "var(--font-fraunces)", fontSize: 21 }}>De su cosecha a nuestra mesa de pruebas</strong>
-            <span className="mono" style={{ fontSize: 13.5, color: "#fff" }}>CTC · Cra. 4 # 10-8 · Piedecuesta, Santander · Colombia</span>
+            <span className="mono" style={{ fontSize: 13.5, color: "#fff" }}>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander</span>
             <span className="mono" style={{ color: "#C9A45C", fontSize: 12 }}>Marque el paquete con su código de lote (CTC_XXXXXX)</span>
           </div>
           <figure className={styles.bench}>

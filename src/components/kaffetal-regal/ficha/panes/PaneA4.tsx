@@ -1,8 +1,9 @@
-import { INTL_CERTS, type FichaFormData } from "../fichaData";
+import { CERT_INFO, INTL_CERTS, type FichaFormData } from "../fichaData";
+import { CertCheckbox } from "./CertCheckbox";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
-export function PaneA4({ data, onChange }: PaneProps) {
+export function PaneA4({ data, onChange, onUploadCertFile }: PaneProps) {
   return (
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>A4</span> Certificados Internacionales</h3>
@@ -11,14 +12,16 @@ export function PaneA4({ data, onChange }: PaneProps) {
       </p>
       <div className={styles.chips} style={{ marginTop: 14 }}>
         {INTL_CERTS.map(([key, group, label]) => (
-          <label className={styles.chip} key={key}>
-            <input
-              type="checkbox"
-              checked={data[key as keyof FichaFormData] as boolean}
-              onChange={(e) => onChange({ [key]: e.target.checked } as Partial<FichaFormData>)}
-            />{" "}
-            <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>{group}</span> {label}
-          </label>
+          <CertCheckbox
+            key={key}
+            certKey={key}
+            label={<><span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>{group}</span> {label}</>}
+            info={CERT_INFO[key]}
+            checked={data[key as keyof FichaFormData] as boolean}
+            onToggle={(checked) => onChange({ [key]: checked } as Partial<FichaFormData>)}
+            attachment={data.cert_attachments[key]}
+            onUpload={onUploadCertFile}
+          />
         ))}
         <label className={styles.chip}>
           <input type="checkbox" checked={data.intl_other} onChange={(e) => onChange({ intl_other: e.target.checked })} /> Otro certificado

@@ -154,6 +154,96 @@ export async function confirmSampleReceived(lotId: string) {
   revalidatePath("/bcp");
 }
 
+// Tri-state yes/no/unset fields render as a <select> with "si"/"no"/"" values
+// in the BCP "aided by BCP" forms (see fincas/page.tsx, lotes/page.tsx) --
+// this is the single place that string turns into the boolean|null the
+// eudr_* columns and src/lib/eudr.ts expect.
+function triState(formData: FormData, key: string): boolean | null {
+  const v = formData.get(key);
+  if (v === "si") return true;
+  if (v === "no") return false;
+  return null;
+}
+
+function textOrNull(formData: FormData, key: string): string | null {
+  const v = String(formData.get(key) ?? "").trim();
+  return v || null;
+}
+
+// BCP filling in a finca's EUDR fields on the producer's behalf -- same spirit as
+// createLot's source: "bcp_manual_entry", but for the due-diligence dossier rather
+// than a whole new lot. Unlike the producer's own edit path (RLS-gated to
+// status = 'pending_review'), this uses the service-role client so BCP can still
+// help complete a finca even if it's already been approved.
+export async function updateFincaEudr(fincaId: string, formData: FormData) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const patch = {
+    eudr_lat: formData.get("eudr_lat") ? Number(formData.get("eudr_lat")) : null,
+    eudr_lng: formData.get("eudr_lng") ? Number(formData.get("eudr_lng")) : null,
+    eudr_planting_date: textOrNull(formData, "eudr_planting_date"),
+    eudr_production_system: textOrNull(formData, "eudr_production_system"),
+    eudr_deforestation_free: triState(formData, "eudr_deforestation_free"),
+    eudr_legal_production: triState(formData, "eudr_legal_production"),
+    eudr_evidence_types: formData.getAll("eudr_evidence_types").map(String),
+    eudr_evidence_notes: textOrNull(formData, "eudr_evidence_notes"),
+    eudr_legal_areas: formData.getAll("eudr_legal_areas").map(String),
+    eudr_tenure: textOrNull(formData, "eudr_tenure"),
+    eudr_legal_docs: textOrNull(formData, "eudr_legal_docs"),
+    eudr_sustainability_tags: formData.getAll("eudr_sustainability_tags").map(String),
+    eudr_sustainability_notes: textOrNull(formData, "eudr_sustainability_notes"),
+  };
+
+  const { error } = await service.from("fincas").update(patch).eq("id", fincaId);
+  if (error) throw new Error("No se pudo guardar la información EUDR de la finca.");
+
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: fincaId,
+    action: "eudr_updated_by_bcp",
+    performed_by: adminId,
+    notes: "Campos EUDR completados/editados por BCP en nombre del productor",
+  });
+
+  revalidatePath("/bcp/fincas");
+}
+
+// Same "aided by BCP" pattern as updateFincaEudr, for the lot-level custody
+// chain / risk assessment / mitigation fields.
+export async function updateLotEudr(lotId: string, formData: FormData) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const patch = {
+    eudr_custody_stages: formData.getAll("eudr_custody_stages").map(String),
+    eudr_custody_notes: textOrNull(formData, "eudr_custody_notes"),
+    eudr_country_risk: textOrNull(formData, "eudr_country_risk") ?? "Estándar",
+    eudr_chain_complexity: textOrNull(formData, "eudr_chain_complexity"),
+    eudr_product_risk: textOrNull(formData, "eudr_product_risk"),
+    eudr_illegality_indicators: triState(formData, "eudr_illegality_indicators"),
+    eudr_docs_available: triState(formData, "eudr_docs_available"),
+    eudr_cert_scheme: textOrNull(formData, "eudr_cert_scheme"),
+    eudr_risk_level: textOrNull(formData, "eudr_risk_level"),
+    eudr_mitigation_actions: textOrNull(formData, "eudr_mitigation_actions"),
+    eudr_mitigation_effective: triState(formData, "eudr_mitigation_effective"),
+    eudr_mitigation_responsible: textOrNull(formData, "eudr_mitigation_responsible"),
+  };
+
+  const { error } = await service.from("lots").update(patch).eq("id", lotId);
+  if (error) throw new Error("No se pudo guardar la información EUDR del lote.");
+
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eudr_updated_by_bcp",
+    performed_by: adminId,
+    notes: "Campos EUDR completados/editados por BCP en nombre del productor",
+  });
+
+  revalidatePath("/bcp/lotes");
+}
+
 export async function rejectFinca(fincaId: string, notes: string) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();

@@ -73,6 +73,48 @@ remains the current (and only) real HTML snapshot.
   full producer-confirms -> BCP-confirms-receipt round trip through
   n-kaffetal, n-supaclient, n-guards, n-bcp, n-actions, n-db.
 
+## [2026-07-10] EUDR due-diligence module: Finca + Lote + BCP (commit pending)
+- New `src/lib/eudr.ts`: pure, dependency-free `fincaEudrStatus()`/`lotEudrStatus()`
+  ported from the reference "EUDR Ready · Café" prototype's fincaEstado()/loteEstado(),
+  reinterpreted onto this system's real Finca/Lot records. Shared verbatim between
+  the Kaffetal Regal client UI and BCP's server-rendered review pages.
+- Finca-level (migration eudr_finca_fields): geolocation (lat/lng), fecha de
+  establecimiento, sistema productivo, declaración de no deforestación + de
+  producción legal, evidencia, áreas de legislación, tenencia, sostenibilidad.
+  New "EUDR · Debida diligencia" section in FincaModal.tsx with a live status
+  badge. Also fixed a pre-existing gap found while building this: the old
+  "Geolocalización" field was never actually saved (dbFincaToFinca hardcoded
+  geo:"" and saveFinca never sent it), so BCP's requires_eudr_polygon gate was
+  silently inert -- now real lat/lng round-trips both ways.
+- Lote-level (migration eudr_lot_fields): cadena de custodia, evaluación de
+  riesgo (Art. 10(2)), mitigación -- new Ficha pane A5 ("EUDR / Debida
+  Diligencia"), wired into FichaNav/FichaView alongside a live status badge.
+  `additional_estates: string[]` (freetext finca names, used by Regional/
+  Multi-Origin blends) renamed to `additional_estate_ids: string[]` (real
+  finca ids) -- without that fix a blend's other fincas had no real EUDR
+  record to roll up from.
+- BCP: `/bcp/fincas` now shows the full checklist (not just the polygon gate)
+  and blocks approval on a "no_apta" declaration, not only a missing polygon.
+  New `updateFincaEudr`/`updateLotEudr` server actions + inline `<details>`
+  forms on `/bcp/fincas` and `/bcp/lotes` let CTC staff fill in EUDR fields on
+  a producer's behalf ("aided by BCP") the same way `bcp_manual_entry` already
+  lets them register a lot for a producer. `/bcp/lotes` now shows each lot's
+  live EUDR badge too.
+- Deferred, not built this round: a printable/exportable DDS document (the
+  reference tool's print/export button), and surfacing "EUDR Ready" as a
+  buyer-facing badge on Cherry Picked's public catalog.
+- Real bug caught during live verification: `fincas.requires_eudr_polygon` is
+  a Postgres `GENERATED ALWAYS AS (hectares > 4) STORED` column -- an early
+  version of saveFinca() tried to write to it explicitly, which made Postgres
+  reject the *entire* UPDATE (400). Fixed by never sending that column;
+  Postgres derives it from `hectares` on its own.
+
+  Doc changes this should produce at the next wrap: a new node or note on
+  n-kaffetal describing the EUDR dossier (finca + lote), a new DICT entry for
+  the EUDR roll-up model, and a new scenario "eudr" covering producer fills
+  finca+lote dossier -> BCP reviews/assists -> approval gate, through
+  n-kaffetal, n-supaclient, n-guards, n-bcp, n-actions, n-db.
+
 ## Bootstrap note
 This log was written when adopting the architecture-doc-versioning skill.
 Earlier sessions edited the live HTML directly (the old workflow); that habit

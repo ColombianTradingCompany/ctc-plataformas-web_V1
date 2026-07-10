@@ -1,12 +1,13 @@
 import styles from "./FichaNav.module.css";
 
-export type PaneId = "a1" | "a2" | "a3" | "a4" | "b1" | "b2" | "b3" | "b4" | "ficha";
+export type PaneId = "a1" | "a2" | "a3" | "a4" | "a5" | "b1" | "b2" | "b3" | "b4" | "ficha";
 
 const PANES: { id: PaneId; idx: string; label: string; group: "A" | "B" | "F" }[] = [
   { id: "a1", idx: "A1", label: "Identidad & Comercio", group: "A" },
   { id: "a2", idx: "A2", label: "Información de Origen", group: "A" },
   { id: "a3", idx: "A3", label: "Certificados de Origen", group: "A" },
   { id: "a4", idx: "A4", label: "Certificados Internacionales", group: "A" },
+  { id: "a5", idx: "A5", label: "EUDR / Debida Diligencia", group: "A" },
   { id: "b1", idx: "B1", label: "Variedades & Básica", group: "B" },
   { id: "b2", idx: "B2", label: "Perfil de Taza · Notas", group: "B" },
   { id: "b3", idx: "B3", label: "Física · Granulometría", group: "B" },

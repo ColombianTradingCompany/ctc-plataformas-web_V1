@@ -5,3 +5,6 @@
 .grid textarea{font-family:var(--font-instrument-sans),sans-serif;min-height:76px;resize:vertical}
 .grid input:read-only{background:var(--line);color:var(--muted);cursor:not-allowed}
 @media(max-width:560px){.grid{grid-template-columns:1fr}}
+
+.chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer;background:var(--paper)}
+.chip:has(input:checked){border-color:var(--primary);background:#E8EFE4;font-weight:600}

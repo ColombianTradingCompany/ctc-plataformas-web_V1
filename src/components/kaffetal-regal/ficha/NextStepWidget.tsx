@@ -10,6 +10,7 @@ const PANE_LABELS: Record<Exclude<PaneId, "ficha">, string> = {
   a2: "Información de Origen",
   a3: "Certificados de Origen",
   a4: "Certificados Internacionales",
+  a5: "EUDR / Debida Diligencia",
   b1: "Variedades y Básica",
   b2: "Perfil de Taza y Notas",
   b3: "Física y Granulometría",

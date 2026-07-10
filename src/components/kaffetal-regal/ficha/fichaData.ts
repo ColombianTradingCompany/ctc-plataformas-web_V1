@@ -194,8 +194,10 @@ export type FichaFormData = {
   county_muni: string; county_muni_text: string; masl: string; geo_ref: string;
   plantation_age: string; multi_origin_specs: string;
   // Only used when origin_category !== "Single Estate" -- lets a blend draw from
-  // more than one of the producer's own registered fincas.
-  additional_estates: string[];
+  // more than one of the producer's own registered fincas. Stores real finca ids
+  // (not names) so each origin's EUDR status can actually be rolled up -- see
+  // src/lib/eudr.ts.
+  additional_estate_ids: string[];
   // A3 — Certificados de Origen
   origin_cert_dor: boolean; origin_cert_do: boolean; origin_cert_igp: boolean; origin_cert_fedecafe: boolean;
   origin_cert_other: boolean; origin_cert_other_text: string; awards: string; about_origin: string;
@@ -207,6 +209,21 @@ export type FichaFormData = {
   intl_other: boolean; intl_cert_other_text: string;
   // Archivos de soporte para certificados marcados en A3/A4, por clave de certificado
   cert_attachments: Record<string, { assetId: string; fileName: string }>;
+  // A5 — EUDR / Debida Diligencia. Fuente de verdad real son las columnas de `lots`
+  // (para que BCP pueda leer/editarlas directo) -- estos campos viajan aquí solo
+  // para que el pane se edite igual que el resto de la Ficha; ver FichaView.tsx.
+  eudr_custody_stages: string[];
+  eudr_custody_notes: string;
+  eudr_country_risk: string;
+  eudr_chain_complexity: string;
+  eudr_product_risk: string;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_cert_scheme: string;
+  eudr_risk_level: "" | "insignificante" | "no_insignificante";
+  eudr_mitigation_actions: string;
+  eudr_mitigation_effective: boolean | null;
+  eudr_mitigation_responsible: string;
   // B1 — Variedades & Caracterización Básica
   varieties: VarietyRow[];
   green_bean_humidity: string; green_bean_density: string; water_activity: string;
@@ -232,7 +249,7 @@ export const EMPTY_FICHA: FichaFormData = {
   origin_category: "", estate: "", country: "", region_dep: "",
   county_muni: "", county_muni_text: "", masl: "", geo_ref: "",
   plantation_age: "", multi_origin_specs: "",
-  additional_estates: [],
+  additional_estate_ids: [],
   origin_cert_dor: false, origin_cert_do: false, origin_cert_igp: false, origin_cert_fedecafe: false,
   origin_cert_other: false, origin_cert_other_text: "", awards: "", about_origin: "",
   intl_eudr: false, intl_rainforest: false, intl_organic: false, intl_eujas: false,
@@ -241,6 +258,18 @@ export const EMPTY_FICHA: FichaFormData = {
   intl_demeter: false, intl_nespresso: false, intl_globalgap: false,
   intl_other: false, intl_cert_other_text: "",
   cert_attachments: {},
+  eudr_custody_stages: [],
+  eudr_custody_notes: "",
+  eudr_country_risk: "Estándar",
+  eudr_chain_complexity: "",
+  eudr_product_risk: "",
+  eudr_illegality_indicators: null,
+  eudr_docs_available: null,
+  eudr_cert_scheme: "",
+  eudr_risk_level: "",
+  eudr_mitigation_actions: "",
+  eudr_mitigation_effective: null,
+  eudr_mitigation_responsible: "",
   varieties: [{ pct: "", name: "" }],
   green_bean_humidity: "", green_bean_density: "", water_activity: "",
   base_processing: "", special_processing: "", yield_factor_producer: "",

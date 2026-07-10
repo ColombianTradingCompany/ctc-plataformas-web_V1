@@ -8,11 +8,25 @@ export type Finca = {
   depto: string;
   alt: string;
   ha: string;
-  geo?: string;
   hist: string;
   carac: string;
   videoAssetId: string | null;
   videoUrl: string | null;
+  // EUDR — debida diligencia (2026-07-10)
+  lat: string;
+  lng: string;
+  eudrPlantingDate: string; // "YYYY-MM-DD", "" si no se ha definido
+  eudrProductionSystem: "" | "sombra" | "agroforestal" | "tradicional";
+  eudrDeforestationFree: boolean | null;
+  eudrLegalProduction: boolean | null;
+  eudrEvidenceTypes: string[];
+  eudrEvidenceNotes: string;
+  eudrLegalAreas: string[];
+  eudrTenure: "" | "propietario" | "poseedor" | "asociacion";
+  eudrLegalDocs: string;
+  eudrSustainabilityTags: string[];
+  eudrSustainabilityNotes: string;
+  requiresEudrPolygon: boolean;
 };
 
 export type CompletionPoint = { pct: number; recordedAt: string };
@@ -34,6 +48,21 @@ export type Lot = {
   videoAssetId: string | null;
   videoUrl: string | null;
   sampleShippedAt: string | null;
+  // EUDR — debida diligencia del lote (2026-07-10). Fuente de verdad para estas
+  // columnas es la fila real de `lots`, no `datasheet` -- así lo que BCP llene
+  // directamente (asistencia) siempre se refleja en la Ficha, ver FichaView.
+  eudrCustodyStages: string[];
+  eudrCustodyNotes: string;
+  eudrCountryRisk: string;
+  eudrChainComplexity: string;
+  eudrProductRisk: string;
+  eudrIllegalityIndicators: boolean | null;
+  eudrDocsAvailable: boolean | null;
+  eudrCertScheme: string;
+  eudrRiskLevel: "" | "insignificante" | "no_insignificante";
+  eudrMitigationActions: string;
+  eudrMitigationEffective: boolean | null;
+  eudrMitigationResponsible: string;
 };
 
 export type GeneralInfo = {

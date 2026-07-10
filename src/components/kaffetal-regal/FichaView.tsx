@@ -11,6 +11,7 @@ import { PaneA1 } from "./ficha/panes/PaneA1";
 import { PaneA2 } from "./ficha/panes/PaneA2";
 import { PaneA3 } from "./ficha/panes/PaneA3";
 import { PaneA4 } from "./ficha/panes/PaneA4";
+import { PaneA5Eudr } from "./ficha/panes/PaneA5Eudr";
 import { PaneB1 } from "./ficha/panes/PaneB1";
 import { PaneB2 } from "./ficha/panes/PaneB2";
 import { PaneB3 } from "./ficha/panes/PaneB3";
@@ -34,6 +35,22 @@ export type FichaSaveUpdate = {
     ficha_altitud_m: number | null;
     ficha_notas_cata: string | null;
     ficha_puntaje_estimado: number | null;
+  };
+  // Real `lots` columns, not just the datasheet jsonb -- so BCP's review pages
+  // can read/filter/edit them directly. See src/lib/eudr.ts.
+  eudr: {
+    eudr_custody_stages: string[];
+    eudr_custody_notes: string | null;
+    eudr_country_risk: string;
+    eudr_chain_complexity: string | null;
+    eudr_product_risk: string | null;
+    eudr_illegality_indicators: boolean | null;
+    eudr_docs_available: boolean | null;
+    eudr_cert_scheme: string | null;
+    eudr_risk_level: string | null;
+    eudr_mitigation_actions: string | null;
+    eudr_mitigation_effective: boolean | null;
+    eudr_mitigation_responsible: string | null;
   };
 };
 
@@ -69,6 +86,10 @@ export function FichaView({
     // A few fields aren't independently editable inside the Ficha -- they're owned
     // elsewhere (the producer's profile, the lot record itself) and always win over
     // whatever was last saved in the datasheet, so the two can never drift apart.
+    // The eudr_* fields are in this group too: their real source of truth is the
+    // `lots` row (not the datasheet blob), specifically so that BCP filling them
+    // in on the producer's behalf (the "aided by BCP" edit path) always shows up
+    // here even if the producer's local datasheet copy predates that edit.
     return {
       ...base,
       product_name: lot.name !== "Lote nuevo · sin nombre" ? lot.name : base.product_name,
@@ -78,6 +99,18 @@ export function FichaView({
       ctc_uid: ctcLotReference(lot.id),
       country: base.country || gi.country,
       region_dep: base.region_dep || gi.department,
+      eudr_custody_stages: lot.eudrCustodyStages,
+      eudr_custody_notes: lot.eudrCustodyNotes,
+      eudr_country_risk: lot.eudrCountryRisk,
+      eudr_chain_complexity: lot.eudrChainComplexity,
+      eudr_product_risk: lot.eudrProductRisk,
+      eudr_illegality_indicators: lot.eudrIllegalityIndicators,
+      eudr_docs_available: lot.eudrDocsAvailable,
+      eudr_cert_scheme: lot.eudrCertScheme,
+      eudr_risk_level: lot.eudrRiskLevel,
+      eudr_mitigation_actions: lot.eudrMitigationActions,
+      eudr_mitigation_effective: lot.eudrMitigationEffective,
+      eudr_mitigation_responsible: lot.eudrMitigationResponsible,
     };
   });
   const [declared, setDeclared] = useState(false);
@@ -98,6 +131,7 @@ export function FichaView({
       a2: !!data.estate || !!data.region_dep,
       a3: data.origin_cert_dor || data.origin_cert_do || data.origin_cert_igp || data.origin_cert_fedecafe || !!data.awards,
       a4: [data.intl_eudr, data.intl_rainforest, data.intl_organic, data.intl_fairtrade].some(Boolean),
+      a5: !!data.eudr_risk_level,
       b1: vTotal > 0 && !!data.species,
       b2: sca.total > 0,
       b3: factor.remainder > 0,
@@ -106,7 +140,7 @@ export function FichaView({
     [data, vTotal, sca.total, factor.remainder, lot.videoUrl]
   );
 
-  const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 8) * 100);
+  const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 9) * 100);
   const readyToComplete = !!completed.a1 && !!completed.a2 && !!completed.b1;
 
   function buildUpdate(source: FichaFormData, finalize: boolean): FichaSaveUpdate {
@@ -123,6 +157,20 @@ export function FichaView({
         ficha_altitud_m: source.masl ? Math.round(num(source.masl)) : null,
         ficha_notas_cata: source.analysis_notes || null,
         ficha_puntaje_estimado: sca.total > 0 ? sca.total : null,
+      },
+      eudr: {
+        eudr_custody_stages: source.eudr_custody_stages,
+        eudr_custody_notes: source.eudr_custody_notes || null,
+        eudr_country_risk: source.eudr_country_risk,
+        eudr_chain_complexity: source.eudr_chain_complexity || null,
+        eudr_product_risk: source.eudr_product_risk || null,
+        eudr_illegality_indicators: source.eudr_illegality_indicators,
+        eudr_docs_available: source.eudr_docs_available,
+        eudr_cert_scheme: source.eudr_cert_scheme || null,
+        eudr_risk_level: source.eudr_risk_level || null,
+        eudr_mitigation_actions: source.eudr_mitigation_actions || null,
+        eudr_mitigation_effective: source.eudr_mitigation_effective,
+        eudr_mitigation_responsible: source.eudr_mitigation_responsible || null,
       },
     };
   }
@@ -200,6 +248,7 @@ export function FichaView({
             {active === "a2" && <PaneA2 {...paneProps} />}
             {active === "a3" && <PaneA3 {...paneProps} />}
             {active === "a4" && <PaneA4 {...paneProps} />}
+            {active === "a5" && <PaneA5Eudr {...paneProps} />}
             {active === "b1" && <PaneB1 {...paneProps} />}
             {active === "b2" && <PaneB2 {...paneProps} sca={sca} />}
             {active === "b3" && <PaneB3 {...paneProps} factor={factor} mesh={mesh} />}

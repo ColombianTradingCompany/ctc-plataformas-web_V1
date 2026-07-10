@@ -16,9 +16,9 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
   const showBlend = data.origin_category === "Regional Blend" || data.origin_category === "Multi-Origin Blend";
   const multiFinca = !!data.origin_category && data.origin_category !== "Single Estate";
 
-  function toggleAdditionalEstate(name: string, checked: boolean) {
-    const next = checked ? [...data.additional_estates, name] : data.additional_estates.filter((n) => n !== name);
-    onChange({ additional_estates: next });
+  function toggleAdditionalEstate(id: string, checked: boolean) {
+    const next = checked ? [...data.additional_estate_ids, id] : data.additional_estate_ids.filter((x) => x !== id);
+    onChange({ additional_estate_ids: next });
   }
 
   function selectFinca(name: string) {
@@ -41,7 +41,7 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
       county_muni: finca.mun !== "—" ? finca.mun : "",
       county_muni_text: "",
       masl: finca.alt !== "—" ? finca.alt : "",
-      geo_ref: finca.geo || "",
+      geo_ref: finca.lat && finca.lng ? `${finca.lat}, ${finca.lng}` : "",
     });
   }
 
@@ -71,8 +71,8 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
                 <label className={styles.chip} key={f.id}>
                   <input
                     type="checkbox"
-                    checked={data.additional_estates.includes(f.name)}
-                    onChange={(e) => toggleAdditionalEstate(f.name, e.target.checked)}
+                    checked={data.additional_estate_ids.includes(f.id)}
+                    onChange={(e) => toggleAdditionalEstate(f.id, e.target.checked)}
                   />{" "}
                   {f.name} · {f.mun}, {f.depto}
                 </label>

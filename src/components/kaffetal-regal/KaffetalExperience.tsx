@@ -46,6 +46,20 @@ type FincaRow = {
   history_text: string | null;
   characteristics_text: string | null;
   video_asset_id: string | null;
+  requires_eudr_polygon: boolean | null;
+  eudr_lat: string | number | null;
+  eudr_lng: string | number | null;
+  eudr_planting_date: string | null;
+  eudr_production_system: string | null;
+  eudr_deforestation_free: boolean | null;
+  eudr_legal_production: boolean | null;
+  eudr_evidence_types: string[] | null;
+  eudr_evidence_notes: string | null;
+  eudr_legal_areas: string[] | null;
+  eudr_tenure: string | null;
+  eudr_legal_docs: string | null;
+  eudr_sustainability_tags: string[] | null;
+  eudr_sustainability_notes: string | null;
 };
 
 type LotRow = {
@@ -63,6 +77,18 @@ type LotRow = {
   ai_next_step_context: Record<string, unknown> | null;
   video_asset_id: string | null;
   sample_shipped_at: string | null;
+  eudr_custody_stages: string[] | null;
+  eudr_custody_notes: string | null;
+  eudr_country_risk: string | null;
+  eudr_chain_complexity: string | null;
+  eudr_product_risk: string | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_cert_scheme: string | null;
+  eudr_risk_level: string | null;
+  eudr_mitigation_actions: string | null;
+  eudr_mitigation_effective: boolean | null;
+  eudr_mitigation_responsible: string | null;
 };
 
 function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
@@ -74,11 +100,24 @@ function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
     depto: row.departamento || "—",
     alt: row.altitude_m != null ? String(row.altitude_m) : "—",
     ha: row.hectares != null ? String(row.hectares) : "—",
-    geo: "",
     hist: row.history_text || "—",
     carac: row.characteristics_text || "—",
     videoAssetId: row.video_asset_id,
     videoUrl,
+    lat: row.eudr_lat != null ? String(row.eudr_lat) : "",
+    lng: row.eudr_lng != null ? String(row.eudr_lng) : "",
+    eudrPlantingDate: row.eudr_planting_date || "",
+    eudrProductionSystem: (row.eudr_production_system as Finca["eudrProductionSystem"]) || "",
+    eudrDeforestationFree: row.eudr_deforestation_free,
+    eudrLegalProduction: row.eudr_legal_production,
+    eudrEvidenceTypes: row.eudr_evidence_types || [],
+    eudrEvidenceNotes: row.eudr_evidence_notes || "",
+    eudrLegalAreas: row.eudr_legal_areas || [],
+    eudrTenure: (row.eudr_tenure as Finca["eudrTenure"]) || "",
+    eudrLegalDocs: row.eudr_legal_docs || "",
+    eudrSustainabilityTags: row.eudr_sustainability_tags || [],
+    eudrSustainabilityNotes: row.eudr_sustainability_notes || "",
+    requiresEudrPolygon: row.requires_eudr_polygon ?? false,
   };
 }
 
@@ -112,6 +151,18 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
     videoAssetId: row.video_asset_id,
     videoUrl,
     sampleShippedAt: row.sample_shipped_at,
+    eudrCustodyStages: row.eudr_custody_stages || [],
+    eudrCustodyNotes: row.eudr_custody_notes || "",
+    eudrCountryRisk: row.eudr_country_risk || "Estándar",
+    eudrChainComplexity: row.eudr_chain_complexity || "",
+    eudrProductRisk: row.eudr_product_risk || "",
+    eudrIllegalityIndicators: row.eudr_illegality_indicators,
+    eudrDocsAvailable: row.eudr_docs_available,
+    eudrCertScheme: row.eudr_cert_scheme || "",
+    eudrRiskLevel: (row.eudr_risk_level as Lot["eudrRiskLevel"]) || "",
+    eudrMitigationActions: row.eudr_mitigation_actions || "",
+    eudrMitigationEffective: row.eudr_mitigation_effective,
+    eudrMitigationResponsible: row.eudr_mitigation_responsible || "",
   };
 }
 
@@ -340,6 +391,7 @@ function Experience() {
       ficha_altitud_m: updates.summary.ficha_altitud_m,
       ficha_notas_cata: updates.summary.ficha_notas_cata,
       ficha_puntaje_estimado: updates.summary.ficha_puntaje_estimado,
+      ...updates.eudr,
     };
     if (updates.name) patch.name = updates.name;
     if (finca) patch.finca_id = finca.id;
@@ -363,6 +415,7 @@ function Experience() {
 
   async function saveFinca(f: Finca) {
     if (!userId) return;
+    const hectares = f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : 0;
     const payload = {
       producer_id: userId,
       name: f.name,
@@ -370,9 +423,26 @@ function Experience() {
       municipio: f.mun === "—" ? null : f.mun,
       departamento: f.depto === "—" ? null : f.depto,
       altitude_m: f.alt !== "—" && f.alt.trim() ? Number(f.alt) : null,
-      hectares: f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : 0,
+      hectares,
       history_text: f.hist === "—" ? null : f.hist,
       characteristics_text: f.carac === "—" ? null : f.carac,
+      // requires_eudr_polygon is NOT sent here -- it's `generated always as
+      // (hectares > 4) stored` in Postgres, so Postgres derives it from
+      // `hectares` automatically. Sending it explicitly makes the whole
+      // UPDATE fail (Postgres rejects writes to generated columns outright).
+      eudr_lat: f.lat.trim() ? Number(f.lat.replace(",", ".")) : null,
+      eudr_lng: f.lng.trim() ? Number(f.lng.replace(",", ".")) : null,
+      eudr_planting_date: f.eudrPlantingDate || null,
+      eudr_production_system: f.eudrProductionSystem || null,
+      eudr_deforestation_free: f.eudrDeforestationFree,
+      eudr_legal_production: f.eudrLegalProduction,
+      eudr_evidence_types: f.eudrEvidenceTypes,
+      eudr_evidence_notes: f.eudrEvidenceNotes || null,
+      eudr_legal_areas: f.eudrLegalAreas,
+      eudr_tenure: f.eudrTenure || null,
+      eudr_legal_docs: f.eudrLegalDocs || null,
+      eudr_sustainability_tags: f.eudrSustainabilityTags,
+      eudr_sustainability_notes: f.eudrSustainabilityNotes || null,
     };
     const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
 

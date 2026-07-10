@@ -562,6 +562,14 @@ const SCENARIOS = [
     {n:"n-db",from:"n-storage",w:"Postgres",t:"<code>UPDATE producer_profiles SET avatar_asset_id = ...</code> (o <code>video_asset_id</code>). El código de proveedor (<code>CTC-P-XXXXXXXX</code>) no se guarda — se deriva del <code>profile_id</code>, igual que el código de cada lote."},
     {n:"n-kaffetal",from:"n-db",w:"Exportar QR",t:"El botón \"Exportar QR (.jpg)\" genera el QR enteramente en el navegador (paquete <code>qrcode</code> → canvas → JPEG) — ninguna llamada a un servicio externo."},
   ]},
+  {id:"envio",name:"📦 Confirmación de envío y recibo de la muestra",steps:[
+    {n:"n-kaffetal",w:"Kaffetal Regal",t:"Una vez el lote llega a <b>ficha_completa</b> (tras \"Completar y Enviar\"), el productor ve un botón \"Confirmar envío de la muestra\" en su panel."},
+    {n:"n-supaclient",from:"n-kaffetal",w:"Cliente Supabase",t:"<code>UPDATE lots SET sample_shipped_at = now()</code> — la guarda lo permite porque <code>stage</code> no cambia (sigue en <code>ficha_completa</code>), solo esta columna."},
+    {n:"n-guards",from:"n-supaclient",w:"RLS + guarda",t:"El productor solo puede tocar este lote mientras siga en ese stage — es la misma ventana que protege el resto de la Ficha."},
+    {n:"n-bcp",from:"n-guards",w:"BCP · Lotes",t:"<code>/bcp/lotes</code> muestra \"Muestra enviada · pendiente de confirmar recibo\". El selector manual de stage ya no incluye <b>fila_arena</b> — ese salto solo lo da la acción siguiente."},
+    {n:"n-actions",from:"n-bcp",w:"confirmSampleReceived()",t:"Exige que <code>sample_shipped_at</code> esté marcado (o que el lote sea <code>source='bcp_manual_entry'</code>, sin productor que confirme)."},
+    {n:"n-db",from:"n-actions",w:"Postgres",t:"<code>UPDATE lots SET sample_2kg_confirmed_at = now(), stage = 'fila_arena'</code> + audit_log — el recibo físico es ahora una confirmación deliberada, no un efecto secundario de elegir cualquier stage del desplegable."},
+  ]},
   {id:"finca",name:"🛡️ BCP aprueba una finca (gate EUDR)",steps:[
     {n:"n-bcp",w:"BCP · Fincas",t:"Se abre <b>/bcp/fincas</b>: una finca de más de 4 ha sin polígono EUDR muestra el botón Aprobar bloqueado."},
     {n:"n-actions",from:"n-bcp",w:"approveFinca()",t:"La Server Action llama a <code>requireAdmin()</code> primero — vuelve a verificar sesión + rol, no confía en que la UI ya lo mostró."},

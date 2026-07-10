@@ -73,22 +73,22 @@ export function PaneB1({ data, onChange }: PaneProps) {
           </select>
         </div>
         <div className={styles.ff}>
-          <label>Humedad del Grano (%)<FieldInfo text="Porcentaje de agua en el grano verde. Fuera del rango 10–12% compromete el almacenamiento y la calidad en taza." /></label>
+          <label>Humedad del Grano (%)<FieldInfo text="Porcentaje de agua en el grano verde. Rango aceptable: 10–12%. Por debajo de 10% el grano se vuelve quebradizo; por encima de 12% compromete el almacenamiento y favorece hongos." /></label>
           <input type="number" step="0.1" value={data.green_bean_humidity} onChange={(e) => onChange({ green_bean_humidity: e.target.value })} placeholder="0.0" />
         </div>
         <div className={styles.ff}>
-          <label>Densidad del Grano (g/L)<FieldInfo text="Masa por volumen del grano verde — un indicador físico ligado a la altitud de cultivo y la calidad del llenado del grano." /></label>
+          <label>Densidad del Grano (g/L)<FieldInfo text="Masa por volumen del grano verde. Rango típico: 650–800 g/L — valores más altos suelen indicar mayor altitud de cultivo y mejor calidad física." /></label>
           <input type="number" step="1" value={data.green_bean_density} onChange={(e) => onChange({ green_bean_density: e.target.value })} placeholder="0" />
         </div>
         <div className={styles.ff}>
-          <label>Actividad de Agua (aW)<FieldInfo text="Mide el agua disponible para reacciones químicas y microbianas, no solo el contenido total de humedad — clave para la estabilidad durante el almacenamiento." /></label>
+          <label>Actividad de Agua (aW)<FieldInfo text="Mide el agua disponible para reacciones químicas y microbianas, no solo el contenido total de humedad. Rango seguro para almacenamiento: 0.55–0.65 aW; por encima de 0.70 aumenta fuerte el riesgo de moho." /></label>
           <input type="number" step="0.001" value={data.water_activity} onChange={(e) => onChange({ water_activity: e.target.value })} placeholder="0.000" />
         </div>
         <div className={styles.ff}>
           <label>Proceso Base<FieldInfo text="El método de beneficio: Lavado, Honey o Natural — define cómo se retira la pulpa y el mucílago antes del secado." /></label>
           <select value={data.base_processing} onChange={(e) => onChange({ base_processing: e.target.value })}>
             <option value="">—</option>
-            <option>Washed</option>
+            <option>Lavado</option>
             <option>Honey</option>
             <option>Natural</option>
           </select>
@@ -98,7 +98,7 @@ export function PaneB1({ data, onChange }: PaneProps) {
           <input value={data.special_processing} onChange={(e) => onChange({ special_processing: e.target.value })} placeholder="Anaeróbico, láctico, thermal…" />
         </div>
         <div className={styles.ff}>
-          <label>Factor de Rendimiento (productor)<FieldInfo text="Kg de café pergamino necesarios para producir 70 kg de café verde exportable, según su propia estimación — antes de la medición oficial en B3." /></label>
+          <label>Factor de Rendimiento (productor)<FieldInfo text="Kg de café pergamino necesarios para producir 70 kg de café verde exportable, según su propia estimación. El valor de referencia (par) en Colombia es 94; valores más bajos (87–93) indican mejor rendimiento físico." /></label>
           <input value={data.yield_factor_producer} onChange={(e) => onChange({ yield_factor_producer: e.target.value })} placeholder="kg pergamino / 70 kg verde" />
         </div>
       </div>

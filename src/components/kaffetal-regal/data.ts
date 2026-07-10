@@ -33,6 +33,7 @@ export type Lot = {
   nextStepContext: Record<string, unknown> | null;
   videoAssetId: string | null;
   videoUrl: string | null;
+  sampleShippedAt: string | null;
 };
 
 export type GeneralInfo = {

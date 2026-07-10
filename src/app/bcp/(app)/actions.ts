@@ -45,7 +45,7 @@ export async function approveFinca(fincaId: string) {
   revalidatePath("/bcp");
 }
 
-const LOT_STAGES = ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "fila_arena", "evaluado", "galardonado"] as const;
+type LotStage = "borrador" | "ficha_completa" | "videos_ok" | "muestra_transito" | "fila_arena" | "evaluado" | "galardonado";
 
 export async function createLot(formData: FormData) {
   const adminId = await requireAdmin();
@@ -86,7 +86,7 @@ export async function createLot(formData: FormData) {
   revalidatePath("/bcp");
 }
 
-export async function updateLotStage(lotId: string, newStage: (typeof LOT_STAGES)[number]) {
+export async function updateLotStage(lotId: string, newStage: LotStage) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
@@ -95,6 +95,9 @@ export async function updateLotStage(lotId: string, newStage: (typeof LOT_STAGES
 
   if (newStage === "evaluado" || newStage === "galardonado") {
     throw new Error("Solo la Arena asigna estos estados — cierra una sesión de catación en /bcp/arena.");
+  }
+  if (newStage === "fila_arena") {
+    throw new Error("Usa \"Confirmar recibido\" para pasar a fila Arena — valida que la muestra ya llegó.");
   }
   const { data: liveListing } = await service
     .from("lot_listings")
@@ -106,18 +109,44 @@ export async function updateLotStage(lotId: string, newStage: (typeof LOT_STAGES
     throw new Error("Este lote tiene una publicación activa en Cherry Picked — archívala en /bcp/catalogo antes de cambiar su etapa.");
   }
 
-  const update: Record<string, unknown> = { stage: newStage };
-  if (newStage === "muestra_transito" || LOT_STAGES.indexOf(newStage) > LOT_STAGES.indexOf("muestra_transito")) {
-    update.sample_2kg_confirmed_at = new Date().toISOString();
-  }
-
-  await service.from("lots").update(update).eq("id", lotId);
+  await service.from("lots").update({ stage: newStage }).eq("id", lotId);
   await service.from("audit_log").insert({
     entity_type: "lot",
     entity_id: lotId,
     action: "stage_updated",
     previous_status: lot.stage,
     new_status: newStage,
+    performed_by: adminId,
+  });
+
+  revalidatePath("/bcp/lotes");
+  revalidatePath("/bcp");
+}
+
+// The 2kg-sample handoff is a deliberate two-sided confirmation, not a side effect
+// of picking a stage from the dropdown: the producer confirms shipment (Kaffetal
+// Regal sets lots.sample_shipped_at), and only then can BCP confirm receipt here --
+// which is what actually advances the lot into the Arena queue (fila_arena).
+export async function confirmSampleReceived(lotId: string) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage, sample_shipped_at, source").eq("id", lotId).single();
+  if (!lot) throw new Error("Lote no encontrado.");
+  if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
+    throw new Error("El productor todavía no ha confirmado el envío de la muestra.");
+  }
+
+  await service
+    .from("lots")
+    .update({ sample_2kg_confirmed_at: new Date().toISOString(), stage: "fila_arena" })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "sample_received",
+    previous_status: lot.stage,
+    new_status: "fila_arena",
     performed_by: adminId,
   });
 

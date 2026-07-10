@@ -5,10 +5,10 @@ import styles from "./LotKanbanStepper.module.css";
 // no new states invented, just a clearer shape for the existing stage/grade data.
 // `stage` is the 0-6 index into STAGE_DB (borrador..galardonado, see data.ts).
 const STEP_DEFS = [
-  { label: "S1", title: "Ficha", activeStages: [0], doneFrom: 1 },
-  { label: "S2", title: "Videos", activeStages: [1], doneFrom: 2 },
-  { label: "S3", title: "Muestra", activeStages: [2, 3], doneFrom: 4 },
-  { label: "S4", title: "Arena", activeStages: [4], doneFrom: 5 },
+  { label: "FT", title: "Ficha", activeStages: [0], doneFrom: 1 },
+  { label: "VID", title: "Videos", activeStages: [1], doneFrom: 2 },
+  { label: "MUE", title: "Muestra", activeStages: [2, 3], doneFrom: 4 },
+  { label: "ARE", title: "Arena", activeStages: [4], doneFrom: 5 },
 ];
 
 export function LotKanbanStepper({ stage, grade }: { stage: number; grade: string | null }) {
@@ -28,10 +28,10 @@ export function LotKanbanStepper({ stage, grade }: { stage: number; grade: strin
       })}
       <span className={styles.fork}>→</span>
       <div className={`${styles.ending} ${isEvaluado ? styles.active : styles.pending}`} title="Evaluado, sin galardón">
-        E1
+        EVA
       </div>
       <div className={`${styles.ending} ${isGalardonado ? styles.done : styles.pending}`} title={grade ? `Galardonado ${grade}` : "Galardonado"}>
-        E2
+        GAL
       </div>
     </div>
   );

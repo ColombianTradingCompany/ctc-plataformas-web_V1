@@ -1,14 +1,15 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot, updateLotStage } from "../actions";
+import { createLot, updateLotStage, confirmSampleReceived } from "../actions";
 import styles from "../shared.module.css";
 
 // evaluado/galardonado are deliberately absent: only closing an Arena session assigns them.
+// fila_arena is deliberately absent too: only "Confirmar recibido" can reach it, since
+// that action validates the producer already confirmed shipping the sample.
 const STAGES = [
   { value: "borrador", label: "Borrador" },
   { value: "ficha_completa", label: "Ficha completa" },
   { value: "videos_ok", label: "Videos ✓" },
   { value: "muestra_transito", label: "Muestra en tránsito" },
-  { value: "fila_arena", label: "En fila Arena" },
 ] as const;
 
 const STAGE_LABEL: Record<string, string> = {
@@ -29,7 +30,7 @@ export default async function BcpLotesPage() {
   const [{ data: lots }, { data: approvedFincas }] = await Promise.all([
     service
       .from("lots")
-      .select("id, name, stage, grade, source, fincas(name)")
+      .select("id, name, stage, grade, source, sample_shipped_at, sample_2kg_confirmed_at, fincas(name)")
       .order("created_at", { ascending: false }),
     service.from("fincas").select("id, name, municipio").eq("status", "approved").order("name"),
   ]);
@@ -110,28 +111,50 @@ export default async function BcpLotesPage() {
                   </>
                 )}
               </p>
+              {lot.sample_shipped_at && !lot.sample_2kg_confirmed_at && (
+                <p className={styles.meta}>
+                  Muestra enviada por el productor el {new Date(lot.sample_shipped_at).toLocaleDateString("es-CO")} · pendiente de confirmar recibo
+                </p>
+              )}
+              {lot.sample_2kg_confirmed_at && (
+                <p className={styles.meta}>Muestra recibida el {new Date(lot.sample_2kg_confirmed_at).toLocaleDateString("es-CO")}</p>
+              )}
             </div>
-            {lot.stage === "evaluado" || lot.stage === "galardonado" ? (
-              <span className={styles.badge}>{STAGE_LABEL[lot.stage]} · asignado por la Arena</span>
+            {lot.stage === "evaluado" || lot.stage === "galardonado" || lot.stage === "fila_arena" ? (
+              <span className={styles.badge}>{STAGE_LABEL[lot.stage]}{lot.stage !== "fila_arena" ? " · asignado por la Arena" : ""}</span>
             ) : (
-              <form
-                action={async (formData: FormData) => {
-                  "use server";
-                  await updateLotStage(lot.id, formData.get("stage") as (typeof STAGES)[number]["value"]);
-                }}
-                className={styles.actions}
-              >
-                <select name="stage" defaultValue={lot.stage}>
-                  {STAGES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-                <button className="btn btn-sm" type="submit">
-                  Guardar etapa
-                </button>
-              </form>
+              <div className={styles.actions} style={{ flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                <form
+                  action={async (formData: FormData) => {
+                    "use server";
+                    await updateLotStage(lot.id, formData.get("stage") as (typeof STAGES)[number]["value"]);
+                  }}
+                  className={styles.actions}
+                >
+                  <select name="stage" defaultValue={lot.stage}>
+                    {STAGES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button className="btn btn-sm" type="submit">
+                    Guardar etapa
+                  </button>
+                </form>
+                {(lot.sample_shipped_at || lot.source === "bcp_manual_entry") && !lot.sample_2kg_confirmed_at && (
+                  <form
+                    action={async () => {
+                      "use server";
+                      await confirmSampleReceived(lot.id);
+                    }}
+                  >
+                    <button className="btn btn-sm btn-solid" type="submit">
+                      Confirmar recibido → fila Arena
+                    </button>
+                  </form>
+                )}
+              </div>
             )}
           </div>
         ))}

@@ -14,6 +14,12 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
   const derived = !!selectedFinca;
   const municipalities = data.region_dep && DEP_MUNI[data.region_dep] ? DEP_MUNI[data.region_dep] : [];
   const showBlend = data.origin_category === "Regional Blend" || data.origin_category === "Multi-Origin Blend";
+  const multiFinca = !!data.origin_category && data.origin_category !== "Single Estate";
+
+  function toggleAdditionalEstate(name: string, checked: boolean) {
+    const next = checked ? [...data.additional_estates, name] : data.additional_estates.filter((n) => n !== name);
+    onChange({ additional_estates: next });
+  }
 
   function selectFinca(name: string) {
     if (name === "__new__") {
@@ -57,17 +63,35 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
         </div>
       </div>
       <div className={styles.fgrid} style={{ marginTop: 14 }}>
-        <div className={styles.ff}>
-          <label>Finca (Estate)</label>
-          <select value={fincas.some((f) => f.name === data.estate) ? data.estate : ""} onChange={(e) => selectFinca(e.target.value)}>
-            <option value="">— Seleccione una de sus fincas —</option>
-            {fincas.map((f) => (
-              <option key={f.name} value={f.name}>{f.name} · {f.mun}, {f.depto}</option>
-            ))}
-            <option value="__new__">＋ Registrar una finca nueva</option>
-          </select>
-          {!fincas.some((f) => f.name === data.estate) && (
-            <input style={{ marginTop: 6 }} value={data.estate} onChange={(e) => onChange({ estate: e.target.value })} placeholder="O escriba el nombre de la finca" />
+        <div className={`${styles.ff} ${multiFinca ? styles.fw : ""}`}>
+          <label>{multiFinca ? "Fincas incluidas" : "Finca (Estate)"}</label>
+          {multiFinca ? (
+            <div className={styles.chips}>
+              {fincas.map((f) => (
+                <label className={styles.chip} key={f.id}>
+                  <input
+                    type="checkbox"
+                    checked={data.additional_estates.includes(f.name)}
+                    onChange={(e) => toggleAdditionalEstate(f.name, e.target.checked)}
+                  />{" "}
+                  {f.name} · {f.mun}, {f.depto}
+                </label>
+              ))}
+              <button type="button" className="btn btn-sm" onClick={onOpenNewFinca}>+ Registrar finca nueva</button>
+            </div>
+          ) : (
+            <>
+              <select value={fincas.some((f) => f.name === data.estate) ? data.estate : ""} onChange={(e) => selectFinca(e.target.value)}>
+                <option value="">— Seleccione una de sus fincas —</option>
+                {fincas.map((f) => (
+                  <option key={f.name} value={f.name}>{f.name} · {f.mun}, {f.depto}</option>
+                ))}
+                <option value="__new__">＋ Registrar una finca nueva</option>
+              </select>
+              {!fincas.some((f) => f.name === data.estate) && (
+                <input style={{ marginTop: 6 }} value={data.estate} onChange={(e) => onChange({ estate: e.target.value })} placeholder="O escriba el nombre de la finca" />
+              )}
+            </>
           )}
         </div>
         <div className={styles.ff}>

@@ -46,8 +46,8 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
           <input value={data.productor} readOnly />
         </div>
         <div className={styles.ff}>
-          <label>Fecha de Revisión</label>
-          <input type="date" value={data.revision_date} onChange={(e) => onChange({ revision_date: e.target.value })} />
+          <label>Fecha de Revisión <small>(se actualiza al Guardar)</small></label>
+          <input type="date" value={data.revision_date} readOnly />
         </div>
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Tipo de Producto</label>

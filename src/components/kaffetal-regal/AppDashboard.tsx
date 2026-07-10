@@ -29,6 +29,7 @@ export function AppDashboard({
   onRenameLot,
   onOpenFincaModal,
   onOpenInfoModal,
+  onConfirmSampleShipped,
 }: {
   userName: string;
   lots: Lot[];
@@ -42,6 +43,7 @@ export function AppDashboard({
   onRenameLot: (lotId: string, newName: string) => void;
   onOpenFincaModal: (index: number) => void;
   onOpenInfoModal: () => void;
+  onConfirmSampleShipped: (lotId: string) => void;
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -85,7 +87,7 @@ export function AppDashboard({
             <div style={{ marginTop: 8 }}>
               {lots.map((l) => {
                 const col = l.grade ? GRADES[l.grade] : "var(--accent)";
-                const state = l.grade ? `Galardonado ${l.grade}` : STAGES[l.stage];
+                const state = STAGES[l.stage];
                 return (
                   <div className={styles.lotrow} style={{ ["--lc" as string]: col } as React.CSSProperties} key={l.id}>
                     <div>
@@ -110,6 +112,11 @@ export function AppDashboard({
                         <CtcRef id={l.id} />
                       </div>
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
+                      {l.stage === 1 && !l.sampleShippedAt && (
+                        <button className="btn btn-sm btn-solid-accent" style={{ marginTop: 6 }} onClick={() => onConfirmSampleShipped(l.id)}>
+                          Confirmar envío de la muestra
+                        </button>
+                      )}
                       <LotKanbanStepper stage={l.stage} grade={l.grade} />
                       {l.nextStepAdvice && (
                         <div className={styles.nextstep}>
@@ -122,6 +129,8 @@ export function AppDashboard({
                         <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{state}</span>
                         <span className={styles.datachip}>Variedad: <b>{l.variety}</b></span>
                         <span className={styles.datachip}>Puntaje: <b>{l.score}</b></span>
+                        <span className={styles.datachip}>Proceso: <b>{l.process}</b></span>
+                        <span className={styles.datachip}>Grado CTC: <b style={l.grade ? { color: GRADES[l.grade] } : undefined}>{l.grade || "Pendiente"}</b></span>
                       </div>
                       <LotCompletionSparkline history={l.completionHistory} />
                     </div>

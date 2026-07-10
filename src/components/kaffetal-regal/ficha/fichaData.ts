@@ -193,6 +193,9 @@ export type FichaFormData = {
   origin_category: string; estate: string; country: string; region_dep: string;
   county_muni: string; county_muni_text: string; masl: string; geo_ref: string;
   plantation_age: string; multi_origin_specs: string;
+  // Only used when origin_category !== "Single Estate" -- lets a blend draw from
+  // more than one of the producer's own registered fincas.
+  additional_estates: string[];
   // A3 — Certificados de Origen
   origin_cert_dor: boolean; origin_cert_do: boolean; origin_cert_igp: boolean; origin_cert_fedecafe: boolean;
   origin_cert_other: boolean; origin_cert_other_text: string; awards: string; about_origin: string;
@@ -229,6 +232,7 @@ export const EMPTY_FICHA: FichaFormData = {
   origin_category: "", estate: "", country: "", region_dep: "",
   county_muni: "", county_muni_text: "", masl: "", geo_ref: "",
   plantation_age: "", multi_origin_specs: "",
+  additional_estates: [],
   origin_cert_dor: false, origin_cert_do: false, origin_cert_igp: false, origin_cert_fedecafe: false,
   origin_cert_other: false, origin_cert_other_text: "", awards: "", about_origin: "",
   intl_eudr: false, intl_rainforest: false, intl_organic: false, intl_eujas: false,

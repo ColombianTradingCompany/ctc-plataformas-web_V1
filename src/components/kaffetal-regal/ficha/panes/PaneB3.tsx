@@ -34,11 +34,11 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
           </div>
           <div className={styles.fgrid} style={{ marginTop: 10 }}>
             <div className={styles.ff}>
-              <label>Muestra Pergamino Inicial (g)<FieldInfo text="El peso de la muestra de café pergamino antes de trillar — el punto de partida del cálculo físico." /></label>
+              <label>Muestra Pergamino Inicial (g)<FieldInfo text="El peso de la muestra de café pergamino antes de trillar — el punto de partida del cálculo físico. El estándar de laboratorio es una muestra de 250 g." /></label>
               <input type="number" step="0.1" value={data.fa_start} onChange={(e) => onChange({ fa_start: e.target.value })} placeholder="250.0" />
             </div>
             <div className={styles.ff}>
-              <label>Humedad Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino antes de trillar." /></label>
+              <label>Humedad Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino antes de trillar. Rango aceptable: 10–12%, igual que el grano verde." /></label>
               <input type="number" step="0.1" value={data.fa_parch_hum} onChange={(e) => onChange({ fa_parch_hum: e.target.value })} placeholder="0.0" />
             </div>
           </div>
@@ -53,11 +53,11 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
               <input readOnly value={factor.remainder > 0 ? factor.healthy.toFixed(1) : ""} placeholder="Calculado automáticamente" />
             </div>
             <div className={styles.ff}>
-              <label>Defecto Primario (g)<FieldInfo text="Peso en gramos de los defectos físicos más graves (grano negro, agrio, con hongo, etc.) encontrados en la muestra." /></label>
+              <label>Defecto Primario (g)<FieldInfo text="Peso en gramos de los defectos físicos más graves (grano negro, agrio, con hongo, etc.). Para grado Especialidad (SCA) sobre una muestra de 350 g: 0 defectos primarios permitidos." /></label>
               <input type="number" step="0.1" value={data.fa_primary_defect} onChange={(e) => onChange({ fa_primary_defect: e.target.value })} placeholder="0.0" />
             </div>
             <div className={styles.ff}>
-              <label>Defecto Secundario (g)<FieldInfo text="Peso en gramos de defectos menores (partido, inmaduro, picado, etc.) encontrados en la muestra." /></label>
+              <label>Defecto Secundario (g)<FieldInfo text="Peso en gramos de defectos menores (partido, inmaduro, picado, etc.). Para grado Especialidad (SCA) sobre una muestra de 350 g: máximo 5 defectos equivalentes." /></label>
               <input type="number" step="0.1" value={data.fa_secondary_defect} onChange={(e) => onChange({ fa_secondary_defect: e.target.value })} placeholder="0.0" />
             </div>
           </div>

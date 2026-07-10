@@ -23,14 +23,16 @@ import {
 
 type View = "landing" | "app" | "ficha";
 
+// Purely forward-looking guidance -- the stage/grade itself is already shown
+// by the state chip, so this never repeats that word (see AppDashboard).
 const STAGE_EXTRA = [
-  "Recién creado · complete la ficha técnica",
-  "Ficha guardada · siguen videos y muestra",
-  "Video recibido · falta enviar la muestra",
-  "Muestra en tránsito hacia CTC",
-  "En fila para la Arena",
-  "Evaluado por el panel de la Arena",
-  "Galardonado · en trato con CTC",
+  "Complete la ficha técnica para avanzar.",
+  "Ahora suba los videos del café.",
+  "Falta enviar la muestra de 2 kg a CTC.",
+  "En camino hacia CTC.",
+  "Esperando su turno en la próxima Arena.",
+  "El panel ya la calificó.",
+  "Siga el contrato en Mis contratos.",
 ];
 
 type FincaRow = {
@@ -60,6 +62,7 @@ type LotRow = {
   ai_next_step_advice: string | null;
   ai_next_step_context: Record<string, unknown> | null;
   video_asset_id: string | null;
+  sample_shipped_at: string | null;
 };
 
 function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
@@ -82,13 +85,23 @@ function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
 function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionHistory: CompletionPoint[] = [], videoUrl: string | null = null): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
   const stageIdx = stage < 0 ? 0 : stage;
+  // Stage 1 (ficha_completa) is the one window where the producer still has an
+  // action to take (confirm sample shipment) before CTC picks the lot up --
+  // special-cased here since it depends on sample_shipped_at, not just the stage.
+  const extra = row.status_note
+    ? row.status_note
+    : stageIdx === 1
+    ? row.sample_shipped_at
+      ? `Muestra enviada el ${new Date(row.sample_shipped_at).toLocaleDateString("es-CO")} · en revisión por CTC`
+      : "Ficha en revisión por CTC · confirme el envío de la muestra de 2 kg"
+    : STAGE_EXTRA[stageIdx];
   return {
     id: row.id,
     name: row.name,
     finca: (row.finca_id && fincaNameById.get(row.finca_id)) || "—",
     stage: stageIdx,
     grade: row.grade ? GRADE_DB[row.grade] : null,
-    extra: row.status_note || STAGE_EXTRA[stageIdx],
+    extra,
     variety: row.ficha_variedad || "—",
     process: row.ficha_proceso || "—",
     score: row.ficha_puntaje_estimado != null ? String(row.ficha_puntaje_estimado) : "—",
@@ -98,6 +111,7 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
     nextStepContext: row.ai_next_step_context ?? null,
     videoAssetId: row.video_asset_id,
     videoUrl,
+    sampleShippedAt: row.sample_shipped_at,
   };
 }
 
@@ -297,6 +311,23 @@ function Experience() {
     showToast(`Lote "${name}" renombrado ✓`);
   }
 
+  async function confirmSampleShipped(id: string) {
+    const shippedAt = new Date().toISOString();
+    const { error } = await supabase.from("lots").update({ sample_shipped_at: shippedAt }).eq("id", id);
+    if (error) {
+      showToast("No se pudo confirmar el envío. Intente de nuevo.");
+      return;
+    }
+    setLots((ls) =>
+      ls.map((l) =>
+        l.id === id
+          ? { ...l, sampleShippedAt: shippedAt, extra: `Muestra enviada el ${new Date(shippedAt).toLocaleDateString("es-CO")} · en revisión por CTC` }
+          : l
+      )
+    );
+    showToast("Envío de muestra confirmado ✓ · CTC revisará su recibo");
+  }
+
   async function saveFicha(updates: FichaSaveUpdate) {
     if (!curLotId) return;
     const finca = updates.finca ? fincas.find((f) => f.name === updates.finca) : undefined;
@@ -483,6 +514,7 @@ function Experience() {
           onNewLot={newLot}
           onOpenFicha={openFicha}
           onRenameLot={renameLot}
+          onConfirmSampleShipped={confirmSampleShipped}
           onOpenFincaModal={(i) => {
             setEditingFincaIdx(i);
             setFincaModalOpen(true);

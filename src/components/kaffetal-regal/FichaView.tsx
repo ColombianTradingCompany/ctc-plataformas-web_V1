@@ -109,26 +109,35 @@ export function FichaView({
   const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 8) * 100);
   const readyToComplete = !!completed.a1 && !!completed.a2 && !!completed.b1;
 
-  function buildUpdate(finalize: boolean): FichaSaveUpdate {
-    const topVariety = data.varieties.find((v) => num(v.pct) > 0);
+  function buildUpdate(source: FichaFormData, finalize: boolean): FichaSaveUpdate {
+    const topVariety = source.varieties.find((v) => num(v.pct) > 0);
     return {
-      name: data.product_name.trim() || undefined,
-      finca: data.estate || undefined,
-      datasheet: data,
+      name: source.product_name.trim() || undefined,
+      finca: source.estate || undefined,
+      datasheet: source,
       completionPct: overallPct,
       finalize,
       summary: {
         ficha_variedad: topVariety?.name || null,
-        ficha_proceso: data.base_processing || null,
-        ficha_altitud_m: data.masl ? Math.round(num(data.masl)) : null,
-        ficha_notas_cata: data.analysis_notes || null,
+        ficha_proceso: source.base_processing || null,
+        ficha_altitud_m: source.masl ? Math.round(num(source.masl)) : null,
+        ficha_notas_cata: source.analysis_notes || null,
         ficha_puntaje_estimado: sca.total > 0 ? sca.total : null,
       },
     };
   }
 
+  // "Fecha de Revisión" is stamped automatically on every save -- it tracks
+  // when the Ficha was last touched, not something the producer types by hand.
+  function withRevisionDate(): FichaFormData {
+    const revision_date = new Date().toISOString().slice(0, 10);
+    const stamped = { ...data, revision_date };
+    setData(stamped);
+    return stamped;
+  }
+
   function save() {
-    onSave(buildUpdate(false));
+    onSave(buildUpdate(withRevisionDate(), false));
     showToast("Progreso guardado ✓");
   }
 
@@ -145,7 +154,7 @@ export function FichaView({
       showToast("Marque la declaración de veracidad antes de continuar.");
       return;
     }
-    onSave(buildUpdate(true));
+    onSave(buildUpdate(withRevisionDate(), true));
     showToast("Ficha completada. Con la muestra de 2 kg recibida, su lote entra en fila para la Arena.");
     onBack();
   }

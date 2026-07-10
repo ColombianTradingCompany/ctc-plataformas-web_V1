@@ -61,7 +61,11 @@ export function FichaView({
   const { showToast } = useToast();
   const [active, setActive] = useState<PaneId>("a1");
   const [data, setData] = useState<FichaFormData>(() => {
-    const base: FichaFormData = lot.datasheet ?? EMPTY_FICHA;
+    // Merge onto EMPTY_FICHA (not lot.datasheet ?? EMPTY_FICHA) so a lot saved
+    // before a field existed in FichaFormData (e.g. cert_attachments, added
+    // 2026-07-10) still gets that field's default instead of `undefined` --
+    // reading `undefined[key]` in A3/A4 crashed the whole Ficha for old lots.
+    const base: FichaFormData = { ...EMPTY_FICHA, ...(lot.datasheet ?? {}) };
     // A few fields aren't independently editable inside the Ficha -- they're owned
     // elsewhere (the producer's profile, the lot record itself) and always win over
     // whatever was last saved in the datasheet, so the two can never drift apart.
@@ -129,7 +133,10 @@ export function FichaView({
   }
 
   function completeAndSend() {
-    if (!readyToComplete) return;
+    if (!readyToComplete) {
+      showToast("Complete primero Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
+      return;
+    }
     if (!showDeclare) {
       setShowDeclare(true);
       return;
@@ -204,7 +211,8 @@ export function FichaView({
             <button
               className="btn btn-solid-accent"
               onClick={completeAndSend}
-              disabled={!readyToComplete}
+              aria-disabled={!readyToComplete}
+              style={!readyToComplete ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
               title={readyToComplete ? undefined : "Complete Identidad & Comercio, Información de Origen y Variedades & Básica primero"}
             >
               {showDeclare ? "Confirmar y Enviar" : "Completar y Enviar"}

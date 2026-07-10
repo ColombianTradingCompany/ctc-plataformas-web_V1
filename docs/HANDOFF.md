@@ -133,6 +133,12 @@ Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`
 - `dangerouslySetInnerHTML` usage (the only one in the codebase) — properly escaped.
 - All 4 `ai_next_step_*` cache columns — no cross-user leakage; ownership-checked in the API route before any read/write.
 
+## Visual system map (`docs/architecture/index.html`)
+
+A self-contained, no-build-step HTML/CSS/JS page — open it directly in a browser (or `npx serve docs/architecture`). It's a node-and-wire diagram of the *actual* system (not a generic teaching example): 18 real components across 6 zones (Clients, Frontend & delivery, Identity & data access, Business logic, Data, Build & ship), 23 real wires between them, and a "Traza" (trace) selector with 8 real business-flow scenarios (register a lot, EUDR approval, Arena grading, contract signing, catalog publishing, checkout, BCP 2FA login, deploy) that animate a packet hop-by-hop through the nodes involved, narrated from the actual Server Action / RPC / route-handler code. Every ⓘ button opens a drawer explaining that piece and cross-links related concepts.
+
+**Treat this as a living document, same as this file** — update its `SCENARIOS`/`DICT`/node cards (all plain JS objects near the bottom of the file, no build tooling to fight) whenever a flow changes or a new one is added, especially at the end of a session that touched UI/UX or added a feature. Last synced with the real system: 2026-07-10.
+
 ## Where to find deeper history
 
 `C:\Users\gabri\.claude\plans\warm-bubbling-dongarra.md` (outside this repo, on the machine that ran these sessions) has the full addendum-by-addendum design rationale for every phase — read it if you need the *why* behind a decision this doc only summarizes.

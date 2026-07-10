@@ -115,6 +115,71 @@ remains the current (and only) real HTML snapshot.
   finca+lote dossier -> BCP reviews/assists -> approval gate, through
   n-kaffetal, n-supaclient, n-guards, n-bcp, n-actions, n-db.
 
+## [2026-07-11] Lot intake redesign: FT/FT2/EUDR/Video sub-stages, BCP Kanban, multi-evaluation scoring, Finca EUDR polish (commit pending)
+- Root cause of a real reported bug: a lot showed FT/VID/MUE all "done" and
+  already in fila_arena with zero real variety/process/score data. Cause:
+  LotKanbanStepper.tsx derived its dots purely from lots.stage's numeric index,
+  and nothing validated Ficha content before stage could advance past
+  ficha_completa. Fixed by introducing a new `lots.intake_step` column
+  (0-4) that actually gates the four producer-facing sub-stages, independent
+  of `stage` -- see below.
+- **Finca EUDR polish**: "Evidencia disponible", "Áreas de legislación
+  verificadas", and "Sostenibilidad y enfoque social" moved to BCP-only (no
+  longer producer-editable in FincaModal.tsx -- CTC staff attest these on
+  /bcp/fincas as part of their own review, not the producer). "Documentos de
+  respaldo" changed from a textarea to a real PDF upload
+  (eudr_legal_docs_asset_id/filename, dropping the old text column). New
+  FincaMapPicker.tsx: a real Google Map (pin for <=4 ha, click-to-add-vertex
+  polygon for >4 ha, stored as eudr_polygon_geojson jsonb) replaces the plain
+  lat/lng text inputs. Note: the polygon UI originally used
+  @react-google-maps/api's DrawingManager, which crashed the browser
+  (renderer-level crash, "This page couldn't load") the moment drawingMode was
+  set -- replaced with a simpler manual click-to-add-vertex approach (no
+  DrawingManager/drawing library dependency at all) which works correctly.
+- **Lot intake sub-stages (FT/FT2/EUDR/Video)**: FichaView.tsx now has four
+  sequential gates instead of one. FT (A1+A2+B1, same as the old single gate).
+  FT2 (A3+A4+B2+B3, each either genuinely complete or explicitly declared "no
+  lo sé / no aplica" via new ft2_*_na fields in fichaData.ts). EUDR (A5's risk
+  level set, AND -- the IMPORTANT rule -- every source finca must resolve to
+  "Apta" via fincaEudrStatus(), else it's blocked with an explicit message).
+  Video (B4 uploaded) -- reaching this is what sets intake_step=4 and finally
+  flips stage to ficha_completa, and opens a new ShipmentInstructionsModal.tsx
+  (congratulations + downloadable shipment instructions, no new PDF
+  dependency, just a Blob text download). FichaNav.tsx now groups panes by
+  sub-stage and disables navigation into not-yet-unlocked ones; already-
+  submitted sections show a "🔒 ya enviado" banner. LotKanbanStepper.tsx's
+  FT/FT2/EUDR/Video dots now read `intakeStep`, not `stage` -- the actual fix
+  for the reported bug. Nothing about `lot_stage`'s 7 existing values, the
+  guard trigger, Arena, contracts, or catalog changed at all.
+- **BCP Kanban board**: /bcp/lotes reworked from a flat list into columns (FT
+  | FT2 | EUDR | Video | Muestra en tránsito), bucketed by intake_step/stage.
+  No drag-and-drop library added -- progression is producer-driven, BCP's only
+  action is "Confirmar recibido" (unchanged), which still moves a lot to
+  fila_arena and off this board into the Arena's existing "Disponibles" list.
+  Retired the old manual stage dropdown (updateLotStage) entirely -- dead code
+  once intake_step drives the early stages.
+- **Multi-evaluation scoring + officialization**: new `lot_evaluations` table
+  (source: bcp_arena | producer_claim; status: pending/accepted/rejected). A
+  lot's official Perfil de Taza / Granulometría = average of its *accepted*
+  rows (src/lib/evaluations.ts, computed at read-time). BCP submits
+  bcp_arena evaluations (auto-accepted) via new /bcp/evaluaciones; producer's
+  own self-report is never official on its own -- a new "Solicitar
+  oficialización" flow on Ficha B2 (Q-Grader reference + supporting file)
+  inserts a pending producer_claim row (narrow RLS: producers may only insert
+  their own pending claims for their own lots), which lands in BCP's review
+  queue (accept/reject). Cherry Picked's public_lot_catalog view gained an
+  official_score column (LEFT JOIN avg over accepted evaluations); the buyer
+  UI now prefers it and labels the self-report "(estimado)" when no official
+  score exists yet -- fixes a real pre-existing issue where the unverified
+  self-report was shown indistinguishable from a verified score.
+
+  Doc changes this should produce at the next wrap: rework the n-kaffetal
+  node's Ficha description around the new 4 sub-stage model; add a new
+  n-bcp-kanban concept or fold into n-bcp; add a new DICT entry for the
+  multi-evaluation/officialization model; new scenario "intake" covering
+  FT->FT2->EUDR->Video->shipment->BCP kanban->Arena backlog; update the
+  "envio" scenario if it referenced the old single-gate model.
+
 ## Bootstrap note
 This log was written when adopting the architecture-doc-versioning skill.
 Earlier sessions edited the live HTML directly (the old workflow); that habit

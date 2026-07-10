@@ -240,6 +240,14 @@ export type FichaFormData = {
   mesh_ugq: string; mesh_peaberry: string; mesh_residue: string;
   // B4 — Notas & Referencias Q-Grader
   analysis_notes: string; qgrader_1: string; qgrader_2: string; qgrader_3: string;
+  // FT2 sub-stage: A3/A4/B2/B3 can each be explicitly declared "no lo sé / no
+  // aplica" instead of filled in -- see FichaView.tsx's ft2 gate. Only these
+  // four panes get this; A1/A2/B1 (FT) and A5/B4 (EUDR/Video) are always
+  // required with real data, no N/A escape hatch.
+  ft2_a3_na: boolean;
+  ft2_a4_na: boolean;
+  ft2_b2_na: boolean;
+  ft2_b3_na: boolean;
 };
 
 export const EMPTY_FICHA: FichaFormData = {
@@ -282,6 +290,7 @@ export const EMPTY_FICHA: FichaFormData = {
   mesh_supremo_plus: "", mesh_supremo: "", mesh_extra: "", mesh_europa: "",
   mesh_ugq: "", mesh_peaberry: "", mesh_residue: "",
   analysis_notes: "", qgrader_1: "", qgrader_2: "", qgrader_3: "",
+  ft2_a3_na: false, ft2_a4_na: false, ft2_b2_na: false, ft2_b3_na: false,
 };
 
 export const num = (v: string) => {

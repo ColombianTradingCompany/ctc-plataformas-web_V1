@@ -117,7 +117,7 @@ export function AppDashboard({
                           Confirmar envío de la muestra
                         </button>
                       )}
-                      <LotKanbanStepper stage={l.stage} grade={l.grade} />
+                      <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} />
                       {l.nextStepAdvice && (
                         <div className={styles.nextstep}>
                           <span className={styles.nextstepLabel}>¿Y ahora qué?</span> {l.nextStepAdvice}

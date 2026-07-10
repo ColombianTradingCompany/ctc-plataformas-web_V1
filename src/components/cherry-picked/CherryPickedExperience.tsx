@@ -42,6 +42,7 @@ type CatalogRow = {
   ficha_proceso: string | null;
   ficha_altitud_m: number | null;
   ficha_puntaje_estimado: number | null;
+  official_score: number | null;
   ficha_notas_cata: string | null;
   finca_name: string;
   municipio: string | null;
@@ -63,7 +64,16 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
     origin: `${catalog.finca_name} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
     variety: catalog.ficha_variedad || "—",
     process: catalog.ficha_proceso || "—",
-    score: catalog.ficha_puntaje_estimado != null ? String(catalog.ficha_puntaje_estimado) : "—",
+    // Prefer the real official average (accepted lot_evaluations) over the
+    // producer's own self-report -- and label the self-report as an estimate
+    // when that's all there is, so it's never shown indistinguishable from a
+    // verified score. See public_lot_catalog's official_score column.
+    score:
+      catalog.official_score != null
+        ? catalog.official_score.toFixed(1)
+        : catalog.ficha_puntaje_estimado != null
+        ? `${catalog.ficha_puntaje_estimado} (estimado)`
+        : "—",
     alt: catalog.ficha_altitud_m != null ? `${catalog.ficha_altitud_m} m` : "—",
     pack: `Empaque de ${row.unit_kg} kg`,
     total: row.total_kg,
@@ -113,7 +123,9 @@ function Experience() {
         .eq("status", "published"),
       supabase
         .from("public_lot_catalog")
-        .select("lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, ficha_notas_cata, finca_name, municipio, departamento"),
+        .select(
+          "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento"
+        ),
       supabase.from("public_transparency_pricing").select("lot_listing_id, price_per_kg_locked, reference_price_snapshot"),
       supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),
     ]);

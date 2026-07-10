@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMedia, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
+import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
 import { AppDashboard } from "./AppDashboard";
@@ -57,9 +58,11 @@ type FincaRow = {
   eudr_evidence_notes: string | null;
   eudr_legal_areas: string[] | null;
   eudr_tenure: string | null;
-  eudr_legal_docs: string | null;
+  eudr_legal_docs_asset_id: string | null;
+  eudr_legal_docs_filename: string | null;
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
+  eudr_polygon_geojson: { lat: number; lng: number }[] | null;
 };
 
 type LotRow = {
@@ -67,6 +70,7 @@ type LotRow = {
   finca_id: string | null;
   name: string;
   stage: string;
+  intake_step: number;
   grade: string | null;
   status_note: string | null;
   ficha_variedad: string | null;
@@ -91,7 +95,7 @@ type LotRow = {
   eudr_mitigation_responsible: string | null;
 };
 
-function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
+function dbFincaToFinca(row: FincaRow, urls: { videoUrl?: string | null; legalDocsUrl?: string | null } = {}): Finca {
   return {
     id: row.id,
     name: row.name,
@@ -103,9 +107,10 @@ function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
     hist: row.history_text || "—",
     carac: row.characteristics_text || "—",
     videoAssetId: row.video_asset_id,
-    videoUrl,
+    videoUrl: urls.videoUrl ?? null,
     lat: row.eudr_lat != null ? String(row.eudr_lat) : "",
     lng: row.eudr_lng != null ? String(row.eudr_lng) : "",
+    eudrPolygon: row.eudr_polygon_geojson ?? null,
     eudrPlantingDate: row.eudr_planting_date || "",
     eudrProductionSystem: (row.eudr_production_system as Finca["eudrProductionSystem"]) || "",
     eudrDeforestationFree: row.eudr_deforestation_free,
@@ -114,14 +119,24 @@ function dbFincaToFinca(row: FincaRow, videoUrl: string | null = null): Finca {
     eudrEvidenceNotes: row.eudr_evidence_notes || "",
     eudrLegalAreas: row.eudr_legal_areas || [],
     eudrTenure: (row.eudr_tenure as Finca["eudrTenure"]) || "",
-    eudrLegalDocs: row.eudr_legal_docs || "",
+    eudrLegalDocsAssetId: row.eudr_legal_docs_asset_id,
+    eudrLegalDocsFilename: row.eudr_legal_docs_filename,
+    eudrLegalDocsUrl: urls.legalDocsUrl ?? null,
     eudrSustainabilityTags: row.eudr_sustainability_tags || [],
     eudrSustainabilityNotes: row.eudr_sustainability_notes || "",
     requiresEudrPolygon: row.requires_eudr_polygon ?? false,
   };
 }
 
-function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionHistory: CompletionPoint[] = [], videoUrl: string | null = null): Lot {
+const EMPTY_EVAL_SUMMARY = { scaAverage: null as number | null, factorAverage: null as number | null, acceptedCount: 0, hasPendingClaim: false };
+
+function dbLotToLot(
+  row: LotRow,
+  fincaNameById: Map<string, string>,
+  completionHistory: CompletionPoint[] = [],
+  videoUrl: string | null = null,
+  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean } = EMPTY_EVAL_SUMMARY
+): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
   const stageIdx = stage < 0 ? 0 : stage;
   // Stage 1 (ficha_completa) is the one window where the producer still has an
@@ -139,6 +154,7 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
     name: row.name,
     finca: (row.finca_id && fincaNameById.get(row.finca_id)) || "—",
     stage: stageIdx,
+    intakeStep: row.intake_step ?? 0,
     grade: row.grade ? GRADE_DB[row.grade] : null,
     extra,
     variety: row.ficha_variedad || "—",
@@ -163,6 +179,10 @@ function dbLotToLot(row: LotRow, fincaNameById: Map<string, string>, completionH
     eudrMitigationActions: row.eudr_mitigation_actions || "",
     eudrMitigationEffective: row.eudr_mitigation_effective,
     eudrMitigationResponsible: row.eudr_mitigation_responsible || "",
+    officialScaAverage: evalSummary.scaAverage,
+    officialFactorAverage: evalSummary.factorAverage,
+    officialEvalCount: evalSummary.acceptedCount,
+    hasPendingOfficializationClaim: evalSummary.hasPendingClaim,
   };
 }
 
@@ -186,7 +206,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -201,6 +221,8 @@ function Experience() {
             .select("*, lots(id, name, grade), contract_releases(*), humidity_readings(*)")
             .order("created_at", { ascending: false }),
           supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
+          // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
+          supabase.from("lot_evaluations").select("lot_id, source, status, sca_total, factor_rendimiento"),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -209,11 +231,17 @@ function Experience() {
         producerProfile?.avatar_asset_id,
         producerProfile?.video_asset_id,
         ...fincaRowList.map((f) => f.video_asset_id),
+        ...fincaRowList.map((f) => f.eudr_legal_docs_asset_id),
         ...lotRowList.map((l) => l.video_asset_id),
       ];
       const urlByAssetId = await signedKaffetalMediaUrls(supabase, assetIds);
 
-      const fincaList = fincaRowList.map((row) => dbFincaToFinca(row, row.video_asset_id ? urlByAssetId.get(row.video_asset_id) ?? null : null));
+      const fincaList = fincaRowList.map((row) =>
+        dbFincaToFinca(row, {
+          videoUrl: row.video_asset_id ? urlByAssetId.get(row.video_asset_id) ?? null : null,
+          legalDocsUrl: row.eudr_legal_docs_asset_id ? urlByAssetId.get(row.eudr_legal_docs_asset_id) ?? null : null,
+        })
+      );
       const fincaNameById = new Map(fincaList.map((f) => [f.id, f.name]));
       setFincas(fincaList);
 
@@ -223,10 +251,24 @@ function Experience() {
         list.push({ pct: s.completion_pct, recordedAt: s.recorded_at });
         completionByLotId.set(s.lot_id, list);
       }
+      type LotEvaluationRow = EvaluationRow & { lot_id: string; source: string };
+      const evalsByLotId = new Map<string, LotEvaluationRow[]>();
+      for (const e of (evalRows as LotEvaluationRow[] | null) ?? []) {
+        evalsByLotId.set(e.lot_id, [...(evalsByLotId.get(e.lot_id) ?? []), e]);
+      }
       setLots(
-        lotRowList.map((r) =>
-          dbLotToLot(r, fincaNameById, completionByLotId.get(r.id), r.video_asset_id ? urlByAssetId.get(r.video_asset_id) ?? null : null)
-        )
+        lotRowList.map((r) => {
+          const rows = evalsByLotId.get(r.id) ?? [];
+          const avg = officialAverages(rows);
+          const hasPendingClaim = rows.some((e) => e.source === "producer_claim" && e.status === "pending");
+          return dbLotToLot(
+            r,
+            fincaNameById,
+            completionByLotId.get(r.id),
+            r.video_asset_id ? urlByAssetId.get(r.video_asset_id) ?? null : null,
+            { scaAverage: avg.scaAverage, factorAverage: avg.factorAverage, acceptedCount: avg.acceptedCount, hasPendingClaim }
+          );
+        })
       );
 
       type ContractRow = {
@@ -395,7 +437,14 @@ function Experience() {
     };
     if (updates.name) patch.name = updates.name;
     if (finca) patch.finca_id = finca.id;
-    if (updates.finalize && current && current.stage === 0) patch.stage = "ficha_completa";
+    if (updates.intakeStep != null) {
+      patch.intake_step = updates.intakeStep;
+      // Reaching the last intake sub-stage (Video) is what actually locks the
+      // Ficha in and moves the lot out of "borrador" -- everything downstream
+      // (Arena, contracts, catalog) only ever reasons about `stage`, so this
+      // is the one place the two concepts connect.
+      if (updates.intakeStep >= 4 && current && current.stage === 0) patch.stage = "ficha_completa";
+    }
 
     const { data, error } = await supabase.from("lots").update(patch).eq("id", curLotId).select("*").single();
     if (error || !data) {
@@ -432,17 +481,16 @@ function Experience() {
       // UPDATE fail (Postgres rejects writes to generated columns outright).
       eudr_lat: f.lat.trim() ? Number(f.lat.replace(",", ".")) : null,
       eudr_lng: f.lng.trim() ? Number(f.lng.replace(",", ".")) : null,
+      eudr_polygon_geojson: f.eudrPolygon,
       eudr_planting_date: f.eudrPlantingDate || null,
       eudr_production_system: f.eudrProductionSystem || null,
       eudr_deforestation_free: f.eudrDeforestationFree,
       eudr_legal_production: f.eudrLegalProduction,
-      eudr_evidence_types: f.eudrEvidenceTypes,
-      eudr_evidence_notes: f.eudrEvidenceNotes || null,
-      eudr_legal_areas: f.eudrLegalAreas,
       eudr_tenure: f.eudrTenure || null,
-      eudr_legal_docs: f.eudrLegalDocs || null,
-      eudr_sustainability_tags: f.eudrSustainabilityTags,
-      eudr_sustainability_notes: f.eudrSustainabilityNotes || null,
+      // eudr_evidence_types/eudr_legal_areas/eudr_sustainability_tags/notes are
+      // BCP-only now (see FincaModal) and eudr_legal_docs_asset_id/filename go
+      // through uploadFincaLegalDoc -- none of those are sent here, same as
+      // video_asset_id never being sent through this general save.
     };
     const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
 
@@ -452,7 +500,9 @@ function Experience() {
         showToast("No se pudo actualizar la finca.");
         return;
       }
-      setFincas((prev) => prev.map((x) => (x.id === editing.id ? dbFincaToFinca(data as FincaRow, editing.videoUrl) : x)));
+      setFincas((prev) =>
+        prev.map((x) => (x.id === editing.id ? dbFincaToFinca(data as FincaRow, { videoUrl: editing.videoUrl, legalDocsUrl: editing.eudrLegalDocsUrl }) : x))
+      );
     } else {
       const { data, error } = await supabase.from("fincas").insert(payload).select("*").single();
       if (error || !data) {
@@ -548,6 +598,31 @@ function Experience() {
     showToast("Video de la finca guardado ✓");
   }
 
+  async function uploadFincaLegalDoc(fincaId: string, file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/legal-docs`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const { error } = await supabase
+      .from("fincas")
+      .update({ eudr_legal_docs_asset_id: result.assetId, eudr_legal_docs_filename: file.name })
+      .eq("id", fincaId);
+    if (error) {
+      showToast("No se pudo guardar el documento de respaldo.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    const docUrl = urlByAssetId.get(result.assetId) ?? null;
+    setFincas((prev) =>
+      prev.map((f) =>
+        f.id === fincaId ? { ...f, eudrLegalDocsAssetId: result.assetId, eudrLegalDocsFilename: file.name, eudrLegalDocsUrl: docUrl } : f
+      )
+    );
+    showToast("Documento de respaldo guardado ✓");
+  }
+
   async function uploadLotVideo(lotId: string, file: File) {
     if (!userId) return;
     const result = await uploadKaffetalMedia(supabase, userId, `lots/${lotId}/video`, file);
@@ -564,6 +639,40 @@ function Experience() {
     const videoUrl = urlByAssetId.get(result.assetId) ?? null;
     setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, videoAssetId: result.assetId, videoUrl } : l)));
     showToast("Video del café guardado ✓");
+  }
+
+  // Officializing the producer's own self-report: a pending claim with a real
+  // Q-Grader reference + supporting document, reviewed by BCP (see
+  // evaluationActions.ts's reviewEvaluationClaim). Snapshots the CURRENT
+  // self-reported scores so what BCP reviews matches what the producer is
+  // claiming at submission time.
+  async function submitOfficializationClaim(lotId: string, qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null) {
+    if (!userId) return;
+    let referenceAssetId: string | null = null;
+    if (file) {
+      const result = await uploadKaffetalMedia(supabase, userId, `lots/${lotId}/official-cupping`, file);
+      if ("error" in result) {
+        showToast(result.error);
+        return;
+      }
+      referenceAssetId = result.assetId;
+    }
+    const { error } = await supabase.from("lot_evaluations").insert({
+      lot_id: lotId,
+      source: "producer_claim",
+      status: "pending",
+      sca_total: scaTotal,
+      factor_rendimiento: factorRendimiento,
+      q_grader_reference: qGraderRef,
+      reference_asset_id: referenceAssetId,
+      submitted_by: userId,
+    });
+    if (error) {
+      showToast("No se pudo enviar la solicitud de oficialización.");
+      return;
+    }
+    setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, hasPendingOfficializationClaim: true } : l)));
+    showToast("Solicitud de oficialización enviada ✓ · CTC la revisará");
   }
 
   const curLot = lots.find((l) => l.id === curLotId) ?? null;
@@ -608,6 +717,9 @@ function Experience() {
           }}
           onUploadFile={uploadFile}
           onUploadLotVideo={(file) => uploadLotVideo(curLot.id, file)}
+          onSubmitOfficializationClaim={(qGraderRef, file, scaTotal, factorRendimiento) =>
+            submitOfficializationClaim(curLot.id, qGraderRef, file, scaTotal, factorRendimiento)
+          }
         />
       )}
 
@@ -621,6 +733,10 @@ function Experience() {
         onUploadVideo={(file) => {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
           if (editing) uploadFincaVideo(editing.id, file);
+        }}
+        onUploadLegalDoc={(file) => {
+          const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
+          if (editing) uploadFincaLegalDoc(editing.id, file);
         }}
       />
       <InfoModal

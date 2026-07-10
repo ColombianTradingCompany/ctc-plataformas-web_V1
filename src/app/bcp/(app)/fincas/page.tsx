@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
+import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
 import styles from "../shared.module.css";
@@ -25,7 +26,7 @@ type FincaRow = {
   departamento: string | null;
   hectares: string | number | null;
   requires_eudr_polygon: boolean | null;
-  eudr_polygon: unknown;
+  eudr_polygon_geojson: { lat: number; lng: number }[] | null;
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
   eudr_planting_date: string | null;
@@ -36,7 +37,8 @@ type FincaRow = {
   eudr_evidence_notes: string | null;
   eudr_legal_areas: string[] | null;
   eudr_tenure: string | null;
-  eudr_legal_docs: string | null;
+  eudr_legal_docs_asset_id: string | null;
+  eudr_legal_docs_filename: string | null;
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   created_at: string;
@@ -76,12 +78,18 @@ export default async function BcpFincasPage() {
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon, eudr_lat, eudr_lng,
+      `id, name, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
-       eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs, eudr_sustainability_tags, eudr_sustainability_notes, created_at`
+       eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
+       eudr_sustainability_tags, eudr_sustainability_notes, created_at`
     )
     .eq("status", "pending_review")
     .order("created_at", { ascending: true });
+
+  const legalDocUrlByAssetId = await signedKaffetalMediaUrls(
+    service,
+    (pendingFincas as FincaRow[] | null)?.map((f) => f.eudr_legal_docs_asset_id) ?? []
+  );
 
   return (
     <div>
@@ -92,7 +100,7 @@ export default async function BcpFincasPage() {
           const eudrFields = toEudrFields(finca);
           const status = fincaEudrStatus(eudrFields);
           const gaps = missingChecks(eudrFields);
-          const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon);
+          const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
           const blockedByEudr = status.code === "no_apta" || blockedByPolygon;
 
           async function reject(formData: FormData) {
@@ -216,8 +224,20 @@ export default async function BcpFincasPage() {
                     </div>
                   </div>
                   <div className={styles.field}>
-                    <label>Documentos de respaldo disponibles</label>
-                    <textarea name="eudr_legal_docs" defaultValue={finca.eudr_legal_docs ?? ""} />
+                    <label>Documento de respaldo</label>
+                    {finca.eudr_legal_docs_filename ? (
+                      <p className={styles.meta} style={{ margin: 0 }}>
+                        {finca.eudr_legal_docs_filename}
+                        {finca.eudr_legal_docs_asset_id && legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) && (
+                          <>
+                            {" · "}
+                            <a href={legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id)} target="_blank" rel="noopener noreferrer">ver</a>
+                          </>
+                        )}
+                      </p>
+                    ) : (
+                      <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
+                    )}
                   </div>
 
                   <div className={styles.field}>

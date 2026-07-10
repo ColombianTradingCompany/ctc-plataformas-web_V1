@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/bcp/fincas", label: "Fincas" },
   { href: "/bcp/lotes", label: "Lotes" },
   { href: "/bcp/arena", label: "Arena" },
+  { href: "/bcp/evaluaciones", label: "Evaluaciones" },
   { href: "/bcp/contratos", label: "Contratos" },
   { href: "/bcp/catalogo", label: "Catálogo Cherry Picked" },
   { href: "/bcp/subastas", label: "Subastas Tyrian" },

@@ -45,8 +45,6 @@ export async function approveFinca(fincaId: string) {
   revalidatePath("/bcp");
 }
 
-type LotStage = "borrador" | "ficha_completa" | "videos_ok" | "muestra_transito" | "fila_arena" | "evaluado" | "galardonado";
-
 export async function createLot(formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
@@ -80,43 +78,6 @@ export async function createLot(formData: FormData) {
     new_status: "borrador",
     performed_by: adminId,
     notes: "Creado por BCP en nombre del productor (source=bcp_manual_entry)",
-  });
-
-  revalidatePath("/bcp/lotes");
-  revalidatePath("/bcp");
-}
-
-export async function updateLotStage(lotId: string, newStage: LotStage) {
-  const adminId = await requireAdmin();
-  const service = createServiceRoleClient();
-
-  const { data: lot } = await service.from("lots").select("stage").eq("id", lotId).single();
-  if (!lot) throw new Error("Lote no encontrado.");
-
-  if (newStage === "evaluado" || newStage === "galardonado") {
-    throw new Error("Solo la Arena asigna estos estados — cierra una sesión de catación en /bcp/arena.");
-  }
-  if (newStage === "fila_arena") {
-    throw new Error("Usa \"Confirmar recibido\" para pasar a fila Arena — valida que la muestra ya llegó.");
-  }
-  const { data: liveListing } = await service
-    .from("lot_listings")
-    .select("id")
-    .eq("lot_id", lotId)
-    .neq("status", "archived")
-    .maybeSingle();
-  if (liveListing) {
-    throw new Error("Este lote tiene una publicación activa en Cherry Picked — archívala en /bcp/catalogo antes de cambiar su etapa.");
-  }
-
-  await service.from("lots").update({ stage: newStage }).eq("id", lotId);
-  await service.from("audit_log").insert({
-    entity_type: "lot",
-    entity_id: lotId,
-    action: "stage_updated",
-    previous_status: lot.stage,
-    new_status: newStage,
-    performed_by: adminId,
   });
 
   revalidatePath("/bcp/lotes");
@@ -190,7 +151,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     eudr_evidence_notes: textOrNull(formData, "eudr_evidence_notes"),
     eudr_legal_areas: formData.getAll("eudr_legal_areas").map(String),
     eudr_tenure: textOrNull(formData, "eudr_tenure"),
-    eudr_legal_docs: textOrNull(formData, "eudr_legal_docs"),
+    // eudr_legal_docs_asset_id/filename are NOT set here -- that's the
+    // producer's own PDF upload (uploadFincaLegalDoc in KaffetalExperience.tsx),
+    // not something BCP fills in on their behalf.
     eudr_sustainability_tags: formData.getAll("eudr_sustainability_tags").map(String),
     eudr_sustainability_notes: textOrNull(formData, "eudr_sustainability_notes"),
   };

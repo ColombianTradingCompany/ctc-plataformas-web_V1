@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
+import { fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr";
 import { ctcLotReference, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
@@ -18,17 +19,36 @@ import { PaneB3 } from "./ficha/panes/PaneB3";
 import { PaneB4 } from "./ficha/panes/PaneB4";
 import { FichaPreview } from "./ficha/FichaPreview";
 import { NextStepWidget } from "./ficha/NextStepWidget";
+import { ShipmentInstructionsModal } from "./ficha/ShipmentInstructionsModal";
+import { OfficialScoreBanner } from "./ficha/OfficialScoreBanner";
 import { STAGES } from "./data";
 import styles from "./FichaView.module.css";
 
 export type { PaneProps } from "./ficha/panes/types";
+
+// Which FichaNav pane opens by default for each intake_step (0-4) -- the
+// first not-yet-submitted pane in that sub-stage, or the final preview once
+// everything is locked in.
+const FIRST_PANE_BY_STEP: PaneId[] = ["a1", "a3", "a5", "b4", "ficha"];
+const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 1, b2: 1, b3: 1, a5: 2, b4: 3, ficha: 4 };
+// FT2's four panes can each be declared "no lo sé / no aplica" instead of
+// filled in -- see fichaData.ts's ft2_*_na fields and FichaView's ft2Ready gate.
+const FT2_NA_FIELD: Partial<Record<PaneId, "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na" | "ft2_b3_na">> = {
+  a3: "ft2_a3_na",
+  a4: "ft2_a4_na",
+  b2: "ft2_b2_na",
+  b3: "ft2_b3_na",
+};
 
 export type FichaSaveUpdate = {
   name?: string;
   finca?: string;
   datasheet: FichaFormData;
   completionPct: number;
-  finalize?: boolean;
+  // Present only when this save also advances the intake sub-stage (i.e. a
+  // "Completar X y continuar" click, not a plain "Guardar"). 4 is the last
+  // one (Video) -- reaching it is what flips `lots.stage` to "ficha_completa".
+  intakeStep?: number;
   summary: {
     ficha_variedad: string | null;
     ficha_proceso: string | null;
@@ -64,6 +84,7 @@ export function FichaView({
   onOpenNewFinca,
   onUploadFile,
   onUploadLotVideo,
+  onSubmitOfficializationClaim,
 }: {
   lot: Lot;
   fincas: Finca[];
@@ -74,9 +95,10 @@ export function FichaView({
   onOpenNewFinca: () => void;
   onUploadFile: (subpath: string, file: File) => Promise<{ assetId: string } | { error: string }>;
   onUploadLotVideo: (file: File) => void;
+  onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null) => void;
 }) {
   const { showToast } = useToast();
-  const [active, setActive] = useState<PaneId>("a1");
+  const [active, setActive] = useState<PaneId>(FIRST_PANE_BY_STEP[Math.min(lot.intakeStep, 4)]);
   const [data, setData] = useState<FichaFormData>(() => {
     // Merge onto EMPTY_FICHA (not lot.datasheet ?? EMPTY_FICHA) so a lot saved
     // before a field existed in FichaFormData (e.g. cert_attachments, added
@@ -115,6 +137,7 @@ export function FichaView({
   });
   const [declared, setDeclared] = useState(false);
   const [showDeclare, setShowDeclare] = useState(false);
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
 
   function onChange(patch: Partial<FichaFormData>) {
     setData((d) => ({ ...d, ...patch }));
@@ -141,16 +164,39 @@ export function FichaView({
   );
 
   const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 9) * 100);
-  const readyToComplete = !!completed.a1 && !!completed.a2 && !!completed.b1;
 
-  function buildUpdate(source: FichaFormData, finalize: boolean): FichaSaveUpdate {
+  const sourceFincas = useMemo(
+    () => resolveSourceFincas(data.origin_category, data.estate, data.additional_estate_ids, fincas),
+    [data.origin_category, data.additional_estate_ids, data.estate, fincas]
+  );
+  // The IMPORTANT rule: EUDR can't be submitted until every source finca has
+  // finished its own due diligence (fincaEudrStatus "apta") -- see PaneA5Eudr
+  // for the same resolution logic applied to the live status badge.
+  const allFincasApta = sourceFincas.length > 0 && sourceFincas.every((f) => fincaEudrStatus(f).code === "apta");
+
+  // The four sequential intake gates. Each corresponds to one `intake_step`
+  // value (0->1, 1->2, 2->3, 3->4) and its own "Completar X y continuar"
+  // action -- see submitCurrentStage(). FT2 lets each of A3/A4/B2/B3 be
+  // either genuinely complete or explicitly declared "no lo sé / no aplica".
+  const ftReady = !!completed.a1 && !!completed.a2 && !!completed.b1;
+  const ft2Ready =
+    (!!completed.a3 || data.ft2_a3_na) &&
+    (!!completed.a4 || data.ft2_a4_na) &&
+    (!!completed.b2 || data.ft2_b2_na) &&
+    (!!completed.b3 || data.ft2_b3_na);
+  const eudrReady = !!completed.a5 && allFincasApta;
+  const videoReady = !!completed.b4;
+  const STAGE_READY = [ftReady, ft2Ready, eudrReady, videoReady];
+  const currentStepReady = lot.intakeStep < 4 ? STAGE_READY[lot.intakeStep] : true;
+
+  function buildUpdate(source: FichaFormData, intakeStep?: number): FichaSaveUpdate {
     const topVariety = source.varieties.find((v) => num(v.pct) > 0);
     return {
       name: source.product_name.trim() || undefined,
       finca: source.estate || undefined,
       datasheet: source,
       completionPct: overallPct,
-      finalize,
+      intakeStep,
       summary: {
         ficha_variedad: topVariety?.name || null,
         ficha_proceso: source.base_processing || null,
@@ -185,26 +231,66 @@ export function FichaView({
   }
 
   function save() {
-    onSave(buildUpdate(withRevisionDate(), false));
+    onSave(buildUpdate(withRevisionDate()));
     showToast("Progreso guardado ✓");
   }
 
-  function completeAndSend() {
-    if (!readyToComplete) {
-      showToast("Complete primero Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
+  // Submits whichever intake sub-stage is currently active for this lot (FT,
+  // FT2, EUDR, or Video), validating that stage's own gate first. Advancing
+  // past Video is what finally locks the Ficha in and moves the lot to
+  // "ficha_completa" -- see KaffetalExperience.tsx's saveFicha().
+  function submitCurrentStage() {
+    const step = lot.intakeStep;
+    if (step === 0) {
+      if (!ftReady) {
+        showToast("Complete Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
+        return;
+      }
+      onSave(buildUpdate(withRevisionDate(), 1));
+      showToast("FT enviado a CTC ✓ · continúe con FT2");
+      setActive("a3");
       return;
     }
-    if (!showDeclare) {
-      setShowDeclare(true);
+    if (step === 1) {
+      if (!ft2Ready) {
+        showToast('Complete A3, A4, B2 y B3 -- o marque "No lo sé / no aplica" en cada uno.');
+        return;
+      }
+      onSave(buildUpdate(withRevisionDate(), 2));
+      showToast("FT2 enviado a CTC ✓ · continúe con EUDR");
+      setActive("a5");
       return;
     }
-    if (!declared) {
-      showToast("Marque la declaración de veracidad antes de continuar.");
+    if (step === 2) {
+      if (!completed.a5) {
+        showToast("Defina el nivel de riesgo en la sección EUDR antes de continuar.");
+        return;
+      }
+      if (!allFincasApta) {
+        showToast('La(s) finca(s) de origen de este lote deben completar su propia debida diligencia (estado "Apta") antes de continuar.');
+        return;
+      }
+      onSave(buildUpdate(withRevisionDate(), 3));
+      showToast("EUDR enviado a CTC ✓ · continúe con el video");
+      setActive("b4");
       return;
     }
-    onSave(buildUpdate(withRevisionDate(), true));
-    showToast("Ficha completada. Con la muestra de 2 kg recibida, su lote entra en fila para la Arena.");
-    onBack();
+    if (step === 3) {
+      if (!videoReady) {
+        showToast("Suba el video del café antes de continuar.");
+        return;
+      }
+      if (!showDeclare) {
+        setShowDeclare(true);
+        return;
+      }
+      if (!declared) {
+        showToast("Marque la declaración de veracidad antes de continuar.");
+        return;
+      }
+      onSave(buildUpdate(withRevisionDate(), 4));
+      setShowShipmentModal(true);
+    }
   }
 
   async function uploadCert(certKey: string, file: File) {
@@ -217,6 +303,13 @@ export function FichaView({
   }
 
   const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo };
+  const viewingLocked = PANE_SUBSTAGE[active] < lot.intakeStep;
+  const STAGE_BUTTON_LABEL = [
+    "Completar FT y continuar",
+    "Completar FT2 y continuar",
+    "Completar EUDR y continuar",
+    showDeclare ? "Confirmar y Enviar" : "Completar Video y Enviar",
+  ];
 
   return (
     <div>
@@ -242,16 +335,54 @@ export function FichaView({
         </p>
 
         <div className={styles.shell} style={{ marginTop: 24 }}>
-          <FichaNav active={active} completed={completed} onSelect={setActive} />
+          <FichaNav active={active} completed={completed} intakeStep={lot.intakeStep} onSelect={setActive} />
           <div className={styles.content}>
+            {viewingLocked && (
+              <p style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--muted)", marginBottom: 14 }}>
+                🔒 Esta sección ya fue enviada a CTC y quedó registrada para revisión.
+              </p>
+            )}
+            {!viewingLocked && FT2_NA_FIELD[active] && (
+              <label
+                className={styles.chip}
+                style={{ display: "inline-flex", marginBottom: 14 }}
+              >
+                <input
+                  type="checkbox"
+                  checked={data[FT2_NA_FIELD[active]!]}
+                  onChange={(e) => onChange({ [FT2_NA_FIELD[active]!]: e.target.checked })}
+                />{" "}
+                No lo sé / no aplica para este lote
+              </label>
+            )}
             {active === "a1" && <PaneA1 {...paneProps} />}
             {active === "a2" && <PaneA2 {...paneProps} />}
             {active === "a3" && <PaneA3 {...paneProps} />}
             {active === "a4" && <PaneA4 {...paneProps} />}
             {active === "a5" && <PaneA5Eudr {...paneProps} />}
             {active === "b1" && <PaneB1 {...paneProps} />}
-            {active === "b2" && <PaneB2 {...paneProps} sca={sca} />}
-            {active === "b3" && <PaneB3 {...paneProps} factor={factor} mesh={mesh} />}
+            {active === "b2" && (
+              <>
+                <OfficialScoreBanner
+                  lot={lot}
+                  selfEstimate={sca.total}
+                  kind="sca"
+                  onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+                />
+                <PaneB2 {...paneProps} sca={sca} />
+              </>
+            )}
+            {active === "b3" && (
+              <>
+                <OfficialScoreBanner
+                  lot={lot}
+                  selfEstimate={factor.remainder}
+                  kind="factor"
+                  onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+                />
+                <PaneB3 {...paneProps} factor={factor} mesh={mesh} />
+              </>
+            )}
             {active === "b4" && <PaneB4 {...paneProps} />}
             {active === "ficha" && <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} />}
           </div>
@@ -266,15 +397,18 @@ export function FichaView({
           )}
           <div className={styles.csvRow}>
             <button className="btn btn-sm" onClick={save}>Guardar</button>
-            <button
-              className="btn btn-solid-accent"
-              onClick={completeAndSend}
-              aria-disabled={!readyToComplete}
-              style={!readyToComplete ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
-              title={readyToComplete ? undefined : "Complete Identidad & Comercio, Información de Origen y Variedades & Básica primero"}
-            >
-              {showDeclare ? "Confirmar y Enviar" : "Completar y Enviar"}
-            </button>
+            {lot.intakeStep >= 4 ? (
+              <span className={styles.chip}>✓ Ficha enviada a CTC · en revisión</span>
+            ) : (
+              <button
+                className="btn btn-solid-accent"
+                onClick={submitCurrentStage}
+                aria-disabled={!currentStepReady}
+                style={!currentStepReady ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
+              >
+                {STAGE_BUTTON_LABEL[lot.intakeStep]}
+              </button>
+            )}
           </div>
         </div>
 
@@ -291,6 +425,15 @@ export function FichaView({
           />
         </div>
       </div>
+
+      <ShipmentInstructionsModal
+        open={showShipmentModal}
+        onClose={() => {
+          setShowShipmentModal(false);
+          onBack();
+        }}
+        lotCode={ctcLotReference(lot.id)}
+      />
     </div>
   );
 }

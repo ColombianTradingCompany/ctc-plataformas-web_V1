@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { lotEudrStatus, fincaEudrStatus } from "@/lib/eudr";
+import { lotEudrStatus, fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr";
 import { EudrYesNo } from "../../EudrYesNo";
 import { EudrStatusBadge } from "../../EudrStatusBadge";
-import type { Finca } from "../../data";
 import type { FichaFormData } from "../fichaData";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
@@ -19,16 +18,10 @@ const CUSTODY_STAGES: [string, string][] = [
 ];
 
 export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
-  const sourceFincas = useMemo(() => {
-    const multi = !!data.origin_category && data.origin_category !== "Single Estate";
-    if (multi) {
-      return data.additional_estate_ids
-        .map((id) => fincas.find((f) => f.id === id))
-        .filter((f): f is Finca => !!f);
-    }
-    const f = fincas.find((f) => f.name === data.estate);
-    return f ? [f] : [];
-  }, [data.origin_category, data.additional_estate_ids, data.estate, fincas]);
+  const sourceFincas = useMemo(
+    () => resolveSourceFincas(data.origin_category, data.estate, data.additional_estate_ids, fincas),
+    [data.origin_category, data.additional_estate_ids, data.estate, fincas]
+  );
 
   const status = lotEudrStatus(data, sourceFincas);
 

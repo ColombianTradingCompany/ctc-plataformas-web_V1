@@ -1,32 +1,47 @@
 import styles from "./LotKanbanStepper.module.css";
 
-// S1-S4 mirror the real lot_stage progression up to Arena entry; the two endings
-// (E1/E2) are the two terminal outcomes an Arena session can actually produce --
-// no new states invented, just a clearer shape for the existing stage/grade data.
-// `stage` is the 0-6 index into STAGE_DB (borrador..galardonado, see data.ts).
-const STEP_DEFS = [
-  { label: "FT", title: "Ficha", activeStages: [0], doneFrom: 1 },
-  { label: "VID", title: "Videos", activeStages: [1], doneFrom: 2 },
-  { label: "MUE", title: "Muestra", activeStages: [2, 3], doneFrom: 4 },
-  { label: "ARE", title: "Arena", activeStages: [4], doneFrom: 5 },
+// FT/FT2/EUDR/VID reflect `intakeStep` (0-4), the actual gated progress through
+// the Ficha's four sub-stages -- NOT `stage`, which only moves once all four
+// are locked in. This is the fix for a real reported bug: the old stepper read
+// dots purely off `stage`'s numeric index, so a lot whose stage got bumped
+// (by BCP, or by any path that doesn't go through the real gates) showed early
+// steps as "done" even with an empty Ficha. `stage >= 1` is kept as a fallback
+// so lots that predate this system (intake_step defaults to 0) still render
+// as fully done rather than perpetually "pending" for something no longer
+// trackable -- see FichaView.tsx for what actually gates each intake step.
+const INTAKE_STEPS = [
+  { label: "FT", title: "Ficha (A1, A2, B1)", atStep: 0 },
+  { label: "FT2", title: "A3, A4, B2, B3", atStep: 1 },
+  { label: "EUDR", title: "Debida diligencia", atStep: 2 },
+  { label: "VID", title: "Video del café", atStep: 3 },
 ];
 
-export function LotKanbanStepper({ stage, grade }: { stage: number; grade: string | null }) {
+export function LotKanbanStepper({ stage, intakeStep, grade }: { stage: number; intakeStep: number; grade: string | null }) {
+  const intakeDone = stage >= 1; // ficha_completa+ means the whole intake locked in, regardless of intakeStep bookkeeping
   const isEvaluado = stage === 5;
   const isGalardonado = stage === 6;
   const reachedEnding = isEvaluado || isGalardonado;
+  const mueDone = stage >= 4 || reachedEnding; // muestra recibida (fila_arena+)
+  const mueActive = stage === 1; // ficha ya cerrada, esperando envío/confirmación de la muestra
+  const areActive = stage === 4;
 
   return (
     <div className={styles.row} role="list" aria-label="Etapas del lote">
-      {STEP_DEFS.map((s) => {
-        const state = stage >= s.doneFrom || reachedEnding ? "done" : s.activeStages.includes(stage) ? "active" : "pending";
+      {INTAKE_STEPS.map((s) => {
+        const state = intakeDone || intakeStep > s.atStep ? "done" : intakeStep === s.atStep ? "active" : "pending";
         return (
           <div key={s.label} className={`${styles.step} ${styles[state]}`} role="listitem" title={s.title}>
             {s.label}
           </div>
         );
       })}
+      <div className={`${styles.step} ${styles[mueDone ? "done" : mueActive ? "active" : "pending"]}`} role="listitem" title="Muestra">
+        MUE
+      </div>
       <span className={styles.fork}>→</span>
+      <div className={`${styles.ending} ${areActive ? styles.active : reachedEnding ? styles.done : styles.pending}`} title="Arena">
+        ARE
+      </div>
       <div className={`${styles.ending} ${isEvaluado ? styles.active : styles.pending}`} title="Evaluado, sin galardón">
         EVA
       </div>

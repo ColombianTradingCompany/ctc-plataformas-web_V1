@@ -23,10 +23,15 @@ export type Finca = {
   eudrEvidenceNotes: string;
   eudrLegalAreas: string[];
   eudrTenure: "" | "propietario" | "poseedor" | "asociacion";
-  eudrLegalDocs: string;
+  eudrLegalDocsAssetId: string | null;
+  eudrLegalDocsFilename: string | null;
+  eudrLegalDocsUrl: string | null;
   eudrSustainabilityTags: string[];
   eudrSustainabilityNotes: string;
   requiresEudrPolygon: boolean;
+  // Vertices captured by the Google Maps Drawing Manager when ha > 4 -- null
+  // when the finca only needs the lat/lng point.
+  eudrPolygon: { lat: number; lng: number }[] | null;
 };
 
 export type CompletionPoint = { pct: number; recordedAt: string };
@@ -36,6 +41,10 @@ export type Lot = {
   name: string;
   finca: string;
   stage: number; // 0-6, index into STAGES
+  // 0-4: progress through the producer-facing intake sub-stages (FT, FT2,
+  // EUDR, Video) while `stage` is still "borrador" -- see FichaView.tsx and
+  // LotKanbanStepper.tsx. Reaching 4 is what flips `stage` to "ficha_completa".
+  intakeStep: number;
   grade: "Black" | "Red" | "Blue" | "Gold" | "Tyrian" | null;
   extra: string;
   variety: string;
@@ -63,6 +72,15 @@ export type Lot = {
   eudrMitigationActions: string;
   eudrMitigationEffective: boolean | null;
   eudrMitigationResponsible: string;
+  // Official Perfil de Taza / Granulometría -- the average of every accepted
+  // `lot_evaluations` row (BCP-submitted, or a producer claim BCP accepted).
+  // null until at least one evaluation is accepted; the producer's own
+  // self-report (ficha_puntaje_estimado / this.score) is never official on
+  // its own. See src/lib/evaluations.ts.
+  officialScaAverage: number | null;
+  officialFactorAverage: number | null;
+  officialEvalCount: number;
+  hasPendingOfficializationClaim: boolean;
 };
 
 export type GeneralInfo = {

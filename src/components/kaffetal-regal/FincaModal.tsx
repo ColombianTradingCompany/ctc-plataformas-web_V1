@@ -7,6 +7,7 @@ import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus } from "@/lib/eudr";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
+import { FincaMapPicker } from "./FincaMapPicker";
 import type { Finca, GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
 
@@ -15,68 +16,55 @@ const PRODUCTION_SYSTEMS: [Finca["eudrProductionSystem"], string][] = [
   ["agroforestal", "Agroforestal"],
   ["tradicional", "Tradicional / pleno sol"],
 ];
-const EVIDENCE_TYPES: [string, string][] = [
-  ["satelital", "Imágenes satelitales"],
-  ["observatory", "EU Observatory 2020"],
-  ["registros", "Registros productivos"],
-  ["terreno", "Verificación en campo"],
-  ["catastro", "Mapas catastrales"],
-];
-const LEGAL_AREAS: [string, string][] = [
-  ["suelo", "Uso del suelo y forestal"],
-  ["ambiental", "Protección ambiental"],
-  ["laboral", "Laborales y humanos"],
-  ["clpi", "CLPI / terceros"],
-  ["fiscal", "Fiscal / anticorrupción / aduanas"],
-];
 const TENURE_OPTIONS: [Finca["eudrTenure"], string][] = [
   ["propietario", "Propietario"],
   ["poseedor", "Poseedor reconocido"],
   ["asociacion", "Asociación"],
 ];
-const SUSTAINABILITY_TAGS: [string, string][] = [
-  ["sa8000", "SA 8000 evaluación voluntaria"],
-  ["familiar", "Agricultura familiar campesina"],
-  ["inclusion", "Inclusión de mujeres y jóvenes"],
-  ["paisaje", "Conservación de paisajes"],
-];
 
+// Evidencia disponible, Áreas de legislación verificadas, y Sostenibilidad y
+// enfoque social are BCP-only fields now (filled in by CTC staff on
+// /bcp/fincas as part of their own review, not self-declared by the
+// producer) -- see EudrDraft below, which only covers what the producer
+// still edits here. Their existing values still feed fincaEudrStatus() and
+// round-trip on save; the producer just can't see or change them from here.
 type EudrDraft = Pick<
   Finca,
   | "lat"
   | "lng"
+  | "eudrPolygon"
   | "eudrPlantingDate"
   | "eudrProductionSystem"
   | "eudrDeforestationFree"
   | "eudrLegalProduction"
-  | "eudrEvidenceTypes"
-  | "eudrEvidenceNotes"
-  | "eudrLegalAreas"
   | "eudrTenure"
-  | "eudrLegalDocs"
-  | "eudrSustainabilityTags"
-  | "eudrSustainabilityNotes"
->;
+  | "eudrLegalDocsAssetId"
+  | "eudrLegalDocsFilename"
+> & {
+  eudrEvidenceTypes: Finca["eudrEvidenceTypes"];
+  eudrEvidenceNotes: Finca["eudrEvidenceNotes"];
+  eudrLegalAreas: Finca["eudrLegalAreas"];
+  eudrSustainabilityTags: Finca["eudrSustainabilityTags"];
+  eudrSustainabilityNotes: Finca["eudrSustainabilityNotes"];
+};
 
 const EMPTY_EUDR_DRAFT: EudrDraft = {
   lat: "",
   lng: "",
+  eudrPolygon: null,
   eudrPlantingDate: "",
   eudrProductionSystem: "",
   eudrDeforestationFree: null,
   eudrLegalProduction: null,
+  eudrTenure: "",
+  eudrLegalDocsAssetId: null,
+  eudrLegalDocsFilename: null,
   eudrEvidenceTypes: [],
   eudrEvidenceNotes: "",
   eudrLegalAreas: [],
-  eudrTenure: "",
-  eudrLegalDocs: "",
   eudrSustainabilityTags: [],
   eudrSustainabilityNotes: "",
 };
-
-function toggleInArray(list: string[], key: string): string[] {
-  return list.includes(key) ? list.filter((k) => k !== key) : [...list, key];
-}
 
 export function FincaModal({
   open,
@@ -85,6 +73,7 @@ export function FincaModal({
   gi,
   onSave,
   onUploadVideo,
+  onUploadLegalDoc,
 }: {
   open: boolean;
   onClose: () => void;
@@ -92,6 +81,7 @@ export function FincaModal({
   gi: GeneralInfo;
   onSave: (f: Finca) => void;
   onUploadVideo: (file: File) => void;
+  onUploadLegalDoc: (file: File) => void;
 }) {
   return (
     <Modal open={open} onClose={onClose} ariaLabel="Identidad de la finca">
@@ -99,7 +89,14 @@ export function FincaModal({
           this body with fresh initial state, instead of an effect that resets state
           imperatively on every open -- Modal itself never unmounts its children. */}
       {open && (
-        <FincaModalBody key={finca?.id ?? "new"} finca={finca} gi={gi} onSave={onSave} onUploadVideo={onUploadVideo} />
+        <FincaModalBody
+          key={finca?.id ?? "new"}
+          finca={finca}
+          gi={gi}
+          onSave={onSave}
+          onUploadVideo={onUploadVideo}
+          onUploadLegalDoc={onUploadLegalDoc}
+        />
       )}
     </Modal>
   );
@@ -110,11 +107,13 @@ function FincaModalBody({
   gi,
   onSave,
   onUploadVideo,
+  onUploadLegalDoc,
 }: {
   finca: Finca | null;
   gi: GeneralInfo;
   onSave: (f: Finca) => void;
   onUploadVideo: (file: File) => void;
+  onUploadLegalDoc: (file: File) => void;
 }) {
   const { showToast } = useToast();
   const veredaRef = useRef<HTMLInputElement>(null);
@@ -135,15 +134,18 @@ function FincaModalBody({
       ? {
           lat: finca.lat,
           lng: finca.lng,
+          eudrPolygon: finca.eudrPolygon,
           eudrPlantingDate: finca.eudrPlantingDate,
           eudrProductionSystem: finca.eudrProductionSystem,
           eudrDeforestationFree: finca.eudrDeforestationFree,
           eudrLegalProduction: finca.eudrLegalProduction,
+          eudrTenure: finca.eudrTenure,
+          eudrLegalDocsAssetId: finca.eudrLegalDocsAssetId,
+          eudrLegalDocsFilename: finca.eudrLegalDocsFilename,
+          // Read-only carry-through -- BCP-only fields, see EudrDraft's comment.
           eudrEvidenceTypes: finca.eudrEvidenceTypes,
           eudrEvidenceNotes: finca.eudrEvidenceNotes,
           eudrLegalAreas: finca.eudrLegalAreas,
-          eudrTenure: finca.eudrTenure,
-          eudrLegalDocs: finca.eudrLegalDocs,
           eudrSustainabilityTags: finca.eudrSustainabilityTags,
           eudrSustainabilityNotes: finca.eudrSustainabilityNotes,
         }
@@ -171,6 +173,7 @@ function FincaModalBody({
     videoAssetId: finca?.videoAssetId ?? null,
     videoUrl: finca?.videoUrl ?? null,
     requiresEudrPolygon: finca?.requiresEudrPolygon ?? false,
+    eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
     ...eudr,
   };
   const eudrStatus = fincaEudrStatus(previewFinca);
@@ -193,6 +196,7 @@ function FincaModalBody({
       videoAssetId: finca?.videoAssetId ?? null,
       videoUrl: finca?.videoUrl ?? null,
       requiresEudrPolygon: needsPolygon,
+      eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
       ...eudr,
     });
   }
@@ -205,6 +209,20 @@ function FincaModalBody({
       return;
     }
     onUploadVideo(file);
+  }
+
+  function handleDocFile(file: File | undefined) {
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      showToast("El documento de respaldo debe ser un PDF.");
+      return;
+    }
+    const { ok, mb } = checkFileSizeMb(file, 10);
+    if (!ok) {
+      showToast(`El documento pesa ${mb.toFixed(1)} MB — el máximo es 10 MB.`);
+      return;
+    }
+    onUploadLegalDoc(file);
   }
 
   return (
@@ -256,19 +274,23 @@ function FincaModalBody({
           Reglamento (UE) 2023/1115. Este predio se declara una sola vez y se reutiliza en todos los lotes que salgan de él.
         </p>
 
+        <div className={styles.wide} style={{ marginTop: 14, marginBottom: 14 }}>
+          <label>{needsPolygon ? "Polígono del predio (> 4 ha)" : "Ubicación del predio"}</label>
+          <FincaMapPicker
+            lat={eudr.lat}
+            lng={eudr.lng}
+            polygon={eudr.eudrPolygon}
+            needsPolygon={needsPolygon}
+            onChangePoint={(lat, lng) => patchEudr({ lat, lng })}
+            onChangePolygon={(polygon) => patchEudr({ eudrPolygon: polygon })}
+          />
+        </div>
         <div className={styles.grid} style={{ marginTop: 14 }}>
-          <div><label>Latitud (WGS84)</label><input value={eudr.lat} onChange={(e) => patchEudr({ lat: e.target.value })} placeholder="4.712345" /></div>
-          <div><label>Longitud (WGS84)</label><input value={eudr.lng} onChange={(e) => patchEudr({ lng: e.target.value })} placeholder="-75.612345" /></div>
           <div>
             <label>Fecha de establecimiento del cultivo</label>
             <input type="date" value={eudr.eudrPlantingDate} onChange={(e) => patchEudr({ eudrPlantingDate: e.target.value })} />
           </div>
         </div>
-        {needsPolygon && (
-          <p style={{ fontSize: 12, color: "var(--red)", margin: "0 0 12px" }}>
-            Esta finca supera 4 ha: además de las coordenadas, CTC necesitará el polígono del predio antes de poder aprobarla — un asesor de CTC la contactará para levantarlo.
-          </p>
-        )}
 
         <div className={styles.wide} style={{ marginBottom: 14 }}>
           <label>Sistema productivo</label>
@@ -297,44 +319,6 @@ function FincaModalBody({
         </div>
 
         <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>Evidencia disponible</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {EVIDENCE_TYPES.map(([key, label]) => (
-              <label key={key} className={styles.chip}>
-                <input
-                  type="checkbox"
-                  checked={eudr.eudrEvidenceTypes.includes(key)}
-                  onChange={() => patchEudr({ eudrEvidenceTypes: toggleInArray(eudr.eudrEvidenceTypes, key) })}
-                />{" "}
-                {label}
-              </label>
-            ))}
-          </div>
-          <textarea
-            style={{ marginTop: 8 }}
-            value={eudr.eudrEvidenceNotes}
-            onChange={(e) => patchEudr({ eudrEvidenceNotes: e.target.value })}
-            placeholder="Fechas, fuente, quién verificó…"
-          />
-        </div>
-
-        <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>Áreas de legislación verificadas</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {LEGAL_AREAS.map(([key, label]) => (
-              <label key={key} className={styles.chip}>
-                <input
-                  type="checkbox"
-                  checked={eudr.eudrLegalAreas.includes(key)}
-                  onChange={() => patchEudr({ eudrLegalAreas: toggleInArray(eudr.eudrLegalAreas, key) })}
-                />{" "}
-                {label}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.wide} style={{ marginBottom: 14 }}>
           <label>Tenencia de la tierra</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {TENURE_OPTIONS.map(([key, label]) => (
@@ -351,35 +335,30 @@ function FincaModalBody({
           </div>
         </div>
         <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>Documentos de respaldo disponibles</label>
-          <textarea
-            value={eudr.eudrLegalDocs}
-            onChange={(e) => patchEudr({ eudrLegalDocs: e.target.value })}
-            placeholder="Certificado de libertad, registro de la asociación, permisos ambientales…"
-          />
+          <label>Documento de respaldo (PDF) <small>(máx. 10 MB)</small></label>
+          {finca ? (
+            <>
+              <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />
+              {eudr.eudrLegalDocsFilename && (
+                <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+                  ✓ {eudr.eudrLegalDocsFilename}
+                  {finca.eudrLegalDocsUrl && (
+                    <>
+                      {" · "}
+                      <a href={finca.eudrLegalDocsUrl} target="_blank" rel="noopener noreferrer">ver</a>
+                    </>
+                  )}
+                </p>
+              )}
+            </>
+          ) : (
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder adjuntar el documento.</p>
+          )}
         </div>
 
-        <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>Sostenibilidad y enfoque social</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {SUSTAINABILITY_TAGS.map(([key, label]) => (
-              <label key={key} className={styles.chip}>
-                <input
-                  type="checkbox"
-                  checked={eudr.eudrSustainabilityTags.includes(key)}
-                  onChange={() => patchEudr({ eudrSustainabilityTags: toggleInArray(eudr.eudrSustainabilityTags, key) })}
-                />{" "}
-                {label}
-              </label>
-            ))}
-          </div>
-          <textarea
-            style={{ marginTop: 8 }}
-            value={eudr.eudrSustainabilityNotes}
-            onChange={(e) => patchEudr({ eudrSustainabilityNotes: e.target.value })}
-            placeholder="Familias vinculadas, programas, buenas prácticas…"
-          />
-        </div>
+        <p style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
+          La evidencia de no deforestación, las áreas de legislación verificadas y el enfoque de sostenibilidad los completa CTC como parte de su propia revisión — no requieren acción suya aquí.
+        </p>
       </div>
 
       <button className="btn btn-solid" onClick={save}>Guardar finca</button>

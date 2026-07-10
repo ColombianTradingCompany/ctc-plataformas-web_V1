@@ -94,3 +94,21 @@ export function lotEudrStatus(lot: LotEudrInput, sourceFincas: FincaEudrFields[]
   }
   return status("eudr_ready", "EUDR Ready", "ok");
 }
+
+// Shared by PaneA5Eudr.tsx (live display) and FichaView.tsx (the EUDR
+// sub-stage gate) so both resolve a lot's origin finca(s) the same way --
+// Single Estate uses `estate` (a finca name, matching PaneA2's picker),
+// anything else uses `additional_estate_ids` (real finca ids).
+export function resolveSourceFincas(
+  originCategory: string,
+  estate: string,
+  additionalEstateIds: string[],
+  fincas: Finca[]
+): Finca[] {
+  const multi = !!originCategory && originCategory !== "Single Estate";
+  if (multi) {
+    return additionalEstateIds.map((id) => fincas.find((f) => f.id === id)).filter((f): f is Finca => !!f);
+  }
+  const f = fincas.find((f) => f.name === estate);
+  return f ? [f] : [];
+}

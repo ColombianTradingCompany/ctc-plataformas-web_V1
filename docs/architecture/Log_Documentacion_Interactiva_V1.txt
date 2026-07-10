@@ -1,0 +1,78 @@
+Log_Documentacion_Interactiva_V1
+Status: WRAPPED into Documentacion_Interactiva_V1.1(880f8c8).html -- kept here as the historical record.
+Covers: everything since Documentacion_Interactiva_V1.0(b2134ed).html.
+
+## [2026-07-10] Kaffetal Regal producer-profile + Ficha Técnica rework (commit 520180b)
+- Producer profile ("Información general") expanded: cédula cafetera, celular + WhatsApp
+  toggle, foto de perfil, video del productor y su equipo, país, departamento base, and
+  an auto-generated supplier code exportable as a QR (client-side, qrcode package).
+- New private Supabase Storage bucket "kaffetal-media" backs every upload (avatar,
+  producer video, finca video, lot video, certificate support attachments), via
+  src/lib/kaffetalMedia.ts. Path convention: {producer_id}/... everywhere.
+- Ficha A1: Proveedor/NIT/Productor now read-only, sourced from the profile. Especie
+  moved from A1 to B1.
+- Ficha A2: selecting a real finca now makes país/departamento/municipio/masl/geo
+  read-only and permanently synced to that finca's record (previously only filled
+  blanks once).
+- Ficha A3/A4: every certificate got an info tooltip + a support-document upload
+  (stored in a new cert_attachments map on FichaFormData, not new columns).
+- Ficha footer: CSV buttons removed, replaced by Guardar (progress-only) and
+  Completar y Enviar (gated on A1+A2+B1; only this can advance stage past
+  ficha_completa, via a new `finalize` flag).
+- NextStepWidget ("¿Y ahora qué?") moved below the footer, no longer auto-fires.
+- B4 restructured to just "Video del Café" (wired to the previously-unused
+  lots.video_asset_id); old B4 notes/Q-Grader moved into B2; producer/finca videos
+  relocated to where they belong.
+- Sample-shipping address corrected across CTC Home and Kaffetal Regal.
+
+  Doc changes this produced: updated n-kaffetal node (note about the profile
+  expansion + storage), rewrote n-storage node (was "0 filas, gap conocido" ->
+  now describes the real kaffetal-media bucket and its RLS path convention),
+  added n-supaclient -> n-storage wire (the direct-upload path is now real,
+  not speculative), updated the "kaffetal" and "storage" DICT entries to match,
+  added a new scenario "perfil" (Productor completa su perfil y sube archivos).
+
+## [2026-07-10] Follow-up fixes, round 1 (commit 8ce14a0)
+- Fixed a real production crash: old lots with a saved datasheet from before
+  cert_attachments existed threw on A3/A4 mount (`undefined[key]`). Fixed by
+  merging onto EMPTY_FICHA instead of an either/or fallback -- this matters for
+  *any* future field added to FichaFormData, not just this one.
+- "Completar y Enviar" was a real HTML disabled button (silently did nothing
+  when incomplete) -- switched to aria-disabled + dimmed styling, still
+  clickable, now shows a toast naming what's missing.
+
+  Doc changes: none directly (this was a bugfix to already-documented
+  behavior, not a new flow) -- captured here so the wrap history is complete;
+  worth a one-line mention in the n-kaffetal or n-guards node text in a
+  future wrap if it comes up again.
+
+## [2026-07-10] Follow-up fixes, round 2 (commit b377086)
+- Fecha de Revisión (A1) now auto-stamps on Guardar/Completar y Enviar.
+- FieldInfo tooltips in B1/B3 now state acceptable ranges, not just definitions.
+- "Washed" renamed to "Lavado" in Proceso Base.
+- Dashboard kanban stepper relabeled S1-S4/E1-E2 -> FT/VID/MUE/ARE/EVA/GAL.
+- De-duplicated stage/grade text between the state chip and the "Finca: X"
+  line; added Proceso and Grado CTC chips.
+- A2: non-"Single Estate" categories now allow selecting multiple fincas
+  (new additional_estates: string[] field).
+- New two-sided sample-handoff workflow: producer confirms shipment (new
+  lots.sample_shipped_at, set while stage stays ficha_completa -- allowed by
+  the guard because the stage itself doesn't change); BCP's /bcp/lotes can no
+  longer reach fila_arena via the generic stage dropdown (removed from the
+  options) -- only the new confirmSampleReceived() action can, and it
+  requires sample_shipped_at first (or source='bcp_manual_entry'). This is
+  what now sets sample_2kg_confirmed_at deliberately, not as a dropdown
+  side effect.
+
+  Doc changes this produced (commit 880f8c8): added a new scenario "envio"
+  (Confirmación de envío y recibo de la muestra), covering the full
+  producer-confirms -> BCP-confirms-receipt round trip through n-kaffetal,
+  n-supaclient, n-guards, n-bcp, n-actions, n-db.
+
+## Bootstrap note
+This log was written retroactively when adopting the architecture-doc-versioning
+skill -- the doc edits above had already been made directly to the live file
+during the session (the old workflow), not staged through a log-then-wrap
+cycle. From here on, new changes go into a fresh Log_Documentacion_Interactiva_V2.txt
+instead of touching the html directly; a Version Wrap will compile that into
+Documentacion_Interactiva_V1.2(<sha>).html (or the next appropriate version).

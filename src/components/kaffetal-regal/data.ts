@@ -34,6 +34,22 @@ export type Finca = {
   eudrPolygon: { lat: number; lng: number }[] | null;
 };
 
+// A finca is only self-deletable (fincas_delete_own_before_eudr RLS policy)
+// before any EUDR declaration has been started -- shared between the delete
+// action and the button's visibility so they can't drift apart.
+export function fincaEudrUntouched(f: Finca): boolean {
+  return (
+    !f.lat.trim() &&
+    !f.lng.trim() &&
+    !f.eudrPolygon?.length &&
+    f.eudrDeforestationFree === null &&
+    f.eudrLegalProduction === null &&
+    !f.eudrTenure &&
+    !f.eudrPlantingDate &&
+    !f.eudrProductionSystem
+  );
+}
+
 export type CompletionPoint = { pct: number; recordedAt: string };
 
 export type Lot = {

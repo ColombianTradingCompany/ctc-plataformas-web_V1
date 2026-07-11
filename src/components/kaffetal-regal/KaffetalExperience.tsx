@@ -17,6 +17,7 @@ import {
   STAGE_DB,
   type CompletionPoint,
   type Finca,
+  fincaEudrUntouched,
   type GeneralInfo,
   type Lot,
   type ProducerContract,
@@ -564,6 +565,31 @@ function Experience() {
     showToast(`Finca "${f.name}" guardada ✓ · ya puede asociarle cafés`);
   }
 
+  async function deleteFinca(fincaId: string) {
+    const finca = fincas.find((f) => f.id === fincaId);
+    if (!finca) return;
+    // Guard here matches the RLS policy (fincas_delete_own_before_eudr): only
+    // deletable before any EUDR declaration has been started, and only while
+    // no lot references it (lots.finca_id is ON DELETE CASCADE).
+    const hasLots = lots.some((l) => l.finca === finca.name);
+    if (!fincaEudrUntouched(finca) || hasLots) {
+      showToast(
+        hasLots
+          ? "Esta finca tiene lotes asociados y no puede eliminarse."
+          : "Esta finca ya tiene información EUDR declarada y no puede eliminarse."
+      );
+      return;
+    }
+    if (!window.confirm(`¿Eliminar la finca "${finca.name}"? Esta acción no se puede deshacer.`)) return;
+    const { data, error } = await supabase.from("fincas").delete().eq("id", fincaId).select("id");
+    if (error || !data?.length) {
+      showToast("No se pudo eliminar la finca.");
+      return;
+    }
+    setFincas((prev) => prev.filter((f) => f.id !== fincaId));
+    showToast("Finca eliminada ✓");
+  }
+
   async function saveInfo(next: GeneralInfo) {
     if (!userId) return;
     const [{ error: e1 }, { error: e2 }] = await Promise.all([
@@ -804,6 +830,7 @@ function Experience() {
             setEditingFincaIdx(i);
             setFincaModalOpen(true);
           }}
+          onDeleteFinca={deleteFinca}
           onOpenInfoModal={() => setInfoModalOpen(true)}
         />
       )}

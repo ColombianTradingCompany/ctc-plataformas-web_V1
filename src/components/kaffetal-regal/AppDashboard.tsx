@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaEudrUntouched, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
@@ -42,6 +42,7 @@ export function AppDashboard({
   onRenameLot,
   onDeleteLot,
   onOpenFincaModal,
+  onDeleteFinca,
   onOpenInfoModal,
   onConfirmSampleShipped,
 }: {
@@ -58,6 +59,7 @@ export function AppDashboard({
   onRenameLot: (lotId: string, newName: string) => void;
   onDeleteLot: (lotId: string) => void;
   onOpenFincaModal: (index: number) => void;
+  onDeleteFinca: (fincaId: string) => void;
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
 }) {
@@ -260,7 +262,15 @@ export function AppDashboard({
                     {f.hist}<br />
                     {f.carac}
                   </div>
-                  <div style={{ marginTop: 8 }}><button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button></div>
+                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                    <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button>
+                    {/* Deletable only before any EUDR declaration has been started -- once
+                        the producer begins filling that section, CTC may already be relying
+                        on this record. */}
+                    {fincaEudrUntouched(f) && (
+                      <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Eliminar</button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

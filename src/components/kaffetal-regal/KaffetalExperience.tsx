@@ -49,6 +49,7 @@ type FincaRow = {
   history_text: string | null;
   characteristics_text: string | null;
   video_asset_id: string | null;
+  profile_photo_asset_id: string | null;
   requires_eudr_polygon: boolean | null;
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
@@ -99,7 +100,10 @@ type LotRow = {
   eudr_mitigation_responsible: string | null;
 };
 
-function dbFincaToFinca(row: FincaRow, urls: { videoUrl?: string | null; legalDocsUrl?: string | null } = {}): Finca {
+function dbFincaToFinca(
+  row: FincaRow,
+  urls: { videoUrl?: string | null; legalDocsUrl?: string | null; profilePhotoUrl?: string | null } = {}
+): Finca {
   return {
     id: row.id,
     name: row.name,
@@ -112,6 +116,8 @@ function dbFincaToFinca(row: FincaRow, urls: { videoUrl?: string | null; legalDo
     carac: row.characteristics_text || "—",
     videoAssetId: row.video_asset_id,
     videoUrl: urls.videoUrl ?? null,
+    profilePhotoAssetId: row.profile_photo_asset_id,
+    profilePhotoUrl: urls.profilePhotoUrl ?? null,
     lat: row.eudr_lat != null ? String(row.eudr_lat) : "",
     lng: row.eudr_lng != null ? String(row.eudr_lng) : "",
     eudrPolygon: row.eudr_polygon_geojson ?? null,
@@ -242,6 +248,7 @@ function Experience() {
         ...(producerProfile?.gallery_asset_ids ?? []),
         ...fincaRowList.map((f) => f.video_asset_id),
         ...fincaRowList.map((f) => f.eudr_legal_docs_asset_id),
+        ...fincaRowList.map((f) => f.profile_photo_asset_id),
         ...lotRowList.map((l) => l.video_asset_id),
       ];
       const urlByAssetId = await signedKaffetalMediaUrls(supabase, assetIds);
@@ -250,6 +257,7 @@ function Experience() {
         dbFincaToFinca(row, {
           videoUrl: row.video_asset_id ? urlByAssetId.get(row.video_asset_id) ?? null : null,
           legalDocsUrl: row.eudr_legal_docs_asset_id ? urlByAssetId.get(row.eudr_legal_docs_asset_id) ?? null : null,
+          profilePhotoUrl: row.profile_photo_asset_id ? urlByAssetId.get(row.profile_photo_asset_id) ?? null : null,
         })
       );
       const fincaNameById = new Map(fincaList.map((f) => [f.id, f.name]));
@@ -551,7 +559,11 @@ function Experience() {
         return;
       }
       setFincas((prev) =>
-        prev.map((x) => (x.id === editing.id ? dbFincaToFinca(data as FincaRow, { videoUrl: editing.videoUrl, legalDocsUrl: editing.eudrLegalDocsUrl }) : x))
+        prev.map((x) =>
+          x.id === editing.id
+            ? dbFincaToFinca(data as FincaRow, { videoUrl: editing.videoUrl, legalDocsUrl: editing.eudrLegalDocsUrl, profilePhotoUrl: editing.profilePhotoUrl })
+            : x
+        )
       );
     } else {
       const { data, error } = await supabase.from("fincas").insert(payload).select("*").single();
@@ -710,6 +722,24 @@ function Experience() {
     showToast("Video guardado ✓");
   }
 
+  async function uploadFincaPhoto(fincaId: string, file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/profile-photo`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const { error } = await supabase.from("fincas").update({ profile_photo_asset_id: result.assetId }).eq("id", fincaId);
+    if (error) {
+      showToast("No se pudo guardar la foto de la finca.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    const profilePhotoUrl = urlByAssetId.get(result.assetId) ?? null;
+    setFincas((prev) => prev.map((f) => (f.id === fincaId ? { ...f, profilePhotoAssetId: result.assetId, profilePhotoUrl } : f)));
+    showToast("Foto de la finca guardada ✓");
+  }
+
   async function uploadFincaVideo(fincaId: string, file: File) {
     if (!userId) return;
     const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/video`, file);
@@ -863,6 +893,10 @@ function Experience() {
         finca={editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null}
         gi={gi}
         onSave={saveFinca}
+        onUploadPhoto={(file) => {
+          const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
+          if (editing) uploadFincaPhoto(editing.id, file);
+        }}
         onUploadVideo={(file) => {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
           if (editing) uploadFincaVideo(editing.id, file);

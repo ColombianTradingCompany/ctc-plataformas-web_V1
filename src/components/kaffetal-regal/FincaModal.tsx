@@ -73,6 +73,7 @@ export function FincaModal({
   finca,
   gi,
   onSave,
+  onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
 }: {
@@ -81,6 +82,7 @@ export function FincaModal({
   finca: Finca | null; // null = creating new
   gi: GeneralInfo;
   onSave: (f: Finca) => void;
+  onUploadPhoto: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadLegalDoc: (file: File) => void;
 }) {
@@ -95,6 +97,7 @@ export function FincaModal({
           finca={finca}
           gi={gi}
           onSave={onSave}
+          onUploadPhoto={onUploadPhoto}
           onUploadVideo={onUploadVideo}
           onUploadLegalDoc={onUploadLegalDoc}
         />
@@ -107,12 +110,14 @@ function FincaModalBody({
   finca,
   gi,
   onSave,
+  onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
 }: {
   finca: Finca | null;
   gi: GeneralInfo;
   onSave: (f: Finca) => void;
+  onUploadPhoto: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadLegalDoc: (file: File) => void;
 }) {
@@ -173,6 +178,8 @@ function FincaModalBody({
     carac: finca?.carac ?? "—",
     videoAssetId: finca?.videoAssetId ?? null,
     videoUrl: finca?.videoUrl ?? null,
+    profilePhotoAssetId: finca?.profilePhotoAssetId ?? null,
+    profilePhotoUrl: finca?.profilePhotoUrl ?? null,
     requiresEudrPolygon: finca?.requiresEudrPolygon ?? false,
     eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
     ...eudr,
@@ -196,10 +203,22 @@ function FincaModalBody({
       carac: caracRef.current?.value.trim() || "—",
       videoAssetId: finca?.videoAssetId ?? null,
       videoUrl: finca?.videoUrl ?? null,
+      profilePhotoAssetId: finca?.profilePhotoAssetId ?? null,
+      profilePhotoUrl: finca?.profilePhotoUrl ?? null,
       requiresEudrPolygon: needsPolygon,
       eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
       ...eudr,
     });
+  }
+
+  function handlePhotoFile(file: File | undefined) {
+    if (!file) return;
+    const { ok, mb } = checkFileSizeMb(file, 5);
+    if (!ok) {
+      showToast(`La foto pesa ${mb.toFixed(1)} MB — el máximo es 5 MB.`);
+      return;
+    }
+    onUploadPhoto(file);
   }
 
   function handleVideoFile(file: File | undefined) {
@@ -249,6 +268,20 @@ function FincaModalBody({
         <div><label>Área en café (ha)</label><input value={ha} onChange={(e) => setHa(e.target.value)} type="number" step="0.1" placeholder="3.5" /></div>
         <div className={styles.wide}><label>Historia de la finca</label><textarea ref={histRef} defaultValue={finca?.hist ?? ""} placeholder="Historia, microclima, comunidad…" /></div>
         <div className={styles.wide}><label>Características</label><input ref={caracRef} defaultValue={finca?.carac ?? ""} placeholder="Sombrío, variedades sembradas, beneficio propio…" /></div>
+        <div className={styles.wide}>
+          <label>Foto de perfil de la finca <small>(máx. 5 MB)</small></label>
+          {finca ? (
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              {finca.profilePhotoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                <img src={finca.profilePhotoUrl} alt={finca.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--line)" }} />
+              )}
+              <input type="file" accept="image/*" onChange={(e) => handlePhotoFile(e.target.files?.[0])} />
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder subir su foto.</p>
+          )}
+        </div>
         <div className={styles.wide}>
           <label>Video de la finca <small>(máx. 100 MB)</small></label>
           {finca ? (

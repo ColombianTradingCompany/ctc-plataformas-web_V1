@@ -12,6 +12,8 @@ export type Finca = {
   carac: string;
   videoAssetId: string | null;
   videoUrl: string | null;
+  profilePhotoAssetId: string | null;
+  profilePhotoUrl: string | null;
   // EUDR — debida diligencia (2026-07-10)
   lat: string;
   lng: string;

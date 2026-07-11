@@ -123,10 +123,20 @@ export function AppDashboard({
             <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={onOpenInfoModal}>Editar información</button>
           </div>
 
-          {feedback.length > 0 && (
-            <div className={styles.acard}>
-              <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
-              {groupFeedback(feedback).map(([group, notes]) => (
+          <div className={styles.acard}>
+            <span className={styles.k}>Envío de muestras · 2 kg pergamino por lote</span>
+            <div className={styles.alist} style={{ marginTop: 6 }}>
+              <b>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · Colombia</b><br />
+              Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
+            </div>
+          </div>
+
+          <div className={`${styles.acard} ${styles.tall}`}>
+            <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
+            {feedback.length === 0 ? (
+              <div className={styles.alist} style={{ marginTop: 8 }}>Sin notas todavía. Aquí verá lo que CTC le comunique sobre sus fincas y lotes.</div>
+            ) : (
+              groupFeedback(feedback).map(([group, notes]) => (
                 <div key={group} style={{ marginTop: 10 }}>
                   <h5>{group}</h5>
                   <div className={styles.alist}>
@@ -137,11 +147,45 @@ export function AppDashboard({
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
 
           <div className={`${styles.acard} ${styles.wide}`}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+              <span className={styles.k}>Mis fincas · {fincas.length} registradas</span>
+              <button className="btn btn-sm btn-solid" onClick={() => onOpenFincaModal(-1)}>+ Agregar finca</button>
+            </div>
+            <div className={styles.fincaScroll}>
+              {fincas.map((f, i) => (
+                <div className={styles.fincaCard} key={f.name + i}>
+                  {f.profilePhotoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                    <img src={f.profilePhotoUrl} alt={f.name} className={styles.fincaThumb} />
+                  ) : (
+                    <div className={styles.fincaThumbEmpty} />
+                  )}
+                  <h5>{f.name}</h5>
+                  <div className={styles.sub}>
+                    {f.vereda} · {f.mun}<br />
+                    {f.depto}<br />
+                    {f.alt} msnm · {f.ha} ha
+                  </div>
+                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                    <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button>
+                    {/* Deletable only before any EUDR declaration has been started -- once
+                        the producer begins filling that section, CTC may already be relying
+                        on this record. */}
+                    {fincaEudrUntouched(f) && (
+                      <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Eliminar</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={`${styles.acard} ${styles.full}`}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span className={styles.k}>Mis lotes · cada café se asocia a una finca</span>
               <button className="btn btn-sm btn-solid" onClick={onNewLot}>+ Registrar nuevo lote</button>
@@ -211,6 +255,24 @@ export function AppDashboard({
             </div>
           </div>
 
+          <div className={styles.acard}>
+            <span className={styles.k}>Certificación CTC</span>
+            {certified.length === 0 ? (
+              <div className={styles.alist} style={{ marginTop: 8 }}>Sin certificados todavía. Aparecerán aquí cuando sus lotes sean evaluados en la Arena.</div>
+            ) : (
+              <>
+                <div className={styles.v} style={{ fontSize: 20 }}>{certified.length} {certified.length === 1 ? "emitido" : "emitidos"}</div>
+                <div className={styles.alist}>
+                  {certified.map((l) => (
+                    <span key={l.id}>
+                      <CtcRef id={l.id} /> · {l.grade ? `Galardonado ${l.grade}` : "Evaluado (sin galardón)"}<br />
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <div className={`${styles.acard} ${styles.wide}`}>
             <span className={styles.k}>Mis contratos con CTC</span>
             {contracts.length === 0 ? (
@@ -249,58 +311,6 @@ export function AppDashboard({
                 </div>
               ))
             )}
-          </div>
-
-          <div className={styles.acard}>
-            <span className={styles.k}>Mis fincas · {fincas.length} registradas</span>
-            <div>
-              {fincas.map((f, i) => (
-                <div className={styles.fincarow} key={f.name + i}>
-                  <h5>{f.name}</h5>
-                  <div className={styles.sub}>
-                    {f.vereda} · {f.mun}, {f.depto} · {f.alt} msnm · {f.ha} ha<br />
-                    {f.hist}<br />
-                    {f.carac}
-                  </div>
-                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
-                    <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button>
-                    {/* Deletable only before any EUDR declaration has been started -- once
-                        the producer begins filling that section, CTC may already be relying
-                        on this record. */}
-                    {fincaEudrUntouched(f) && (
-                      <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Eliminar</button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={() => onOpenFincaModal(-1)}>+ Agregar finca</button>
-          </div>
-
-          <div className={styles.acard}>
-            <span className={styles.k}>Certificación CTC</span>
-            {certified.length === 0 ? (
-              <div className={styles.alist} style={{ marginTop: 8 }}>Sin certificados todavía. Aparecerán aquí cuando sus lotes sean evaluados en la Arena.</div>
-            ) : (
-              <>
-                <div className={styles.v} style={{ fontSize: 20 }}>{certified.length} {certified.length === 1 ? "emitido" : "emitidos"}</div>
-                <div className={styles.alist}>
-                  {certified.map((l) => (
-                    <span key={l.id}>
-                      <CtcRef id={l.id} /> · {l.grade ? `Galardonado ${l.grade}` : "Evaluado (sin galardón)"}<br />
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className={`${styles.acard} ${styles.wide}`}>
-            <span className={styles.k}>Envío de muestras · 2 kg pergamino por lote</span>
-            <div className={styles.alist} style={{ marginTop: 6 }}>
-              <b>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · Colombia</b><br />
-              Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
-            </div>
           </div>
         </div>
       </div>

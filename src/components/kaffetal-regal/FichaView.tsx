@@ -156,7 +156,11 @@ export function FichaView({
   }
 
   const factor = useMemo(() => computeFactor(data), [data]);
-  const mesh = useMemo(() => computeMesh(data, factor.remainder), [data, factor.remainder]);
+  // Granulometry is sieved from the healthy beans only -- defects are
+  // physically sorted out before mesh sizing, so the mesh weights should sum
+  // to (and their percentages should be relative to) Grano Sano, not the
+  // full Trillado Verde Restante (which still includes the defects).
+  const mesh = useMemo(() => computeMesh(data, factor.healthy), [data, factor.healthy]);
   const sca = useMemo(() => computeSca(data), [data]);
   const vTotal = useMemo(() => varietyTotal(data), [data]);
 

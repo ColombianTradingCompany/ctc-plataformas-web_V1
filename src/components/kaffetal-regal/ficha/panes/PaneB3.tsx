@@ -23,7 +23,7 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>B3</span> Caracterización Física · Granulometría & Factor</h3>
       <p className={styles.fexample} style={{ marginTop: 8 }}>
-        El &quot;Trillado Verde Restante&quot; es el dato central: los defectos se restan de él para obtener el Grano Sano, base del Factor de Rendimiento.
+        El &quot;Trillado Verde Restante&quot; es el dato central: los defectos se restan de él para obtener el Grano Sano, base del Factor de Rendimiento y de la granulometría (las mallas se tamizan sobre el grano ya sano, sin defectos).
       </p>
 
       <div className={bstyles.layout}>
@@ -93,12 +93,12 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
               <tr>
                 <td>Total mallas</td>
                 <td className={bstyles.pct}>{mesh.sum.toFixed(1)} g</td>
-                <td className={bstyles.pct}>{factor.remainder > 0 ? mesh.totalPct.toFixed(1) + "%" : "—"}</td>
+                <td className={bstyles.pct}>{factor.healthy > 0 ? mesh.totalPct.toFixed(1) + "%" : "—"}</td>
               </tr>
             </tfoot>
           </table>
           <div className={`${bstyles.meshAlert} ${mesh.bad ? bstyles.meshBad : ""}`}>
-            Suma de mallas: <b>{factor.remainder > 0 ? mesh.totalPct.toFixed(1) + "%" : "—"}</b> del trillado verde restante
+            Suma de mallas: <b>{factor.healthy > 0 ? mesh.totalPct.toFixed(1) + "%" : "—"}</b> del grano sano (trillado verde restante menos defectos)
           </div>
         </div>
       </div>

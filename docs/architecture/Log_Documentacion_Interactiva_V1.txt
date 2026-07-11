@@ -216,6 +216,103 @@ remains the current (and only) real HTML snapshot.
   communication-log to the n-bcp description; mention the CTC Parchment
   Storage Standard as the canonical custody method in the EUDR DICT entry.
 
+## [2026-07-11] Finca map upgrades, EUDR reference PDFs, BCP edit-toggle, contextual comm log (commit 4cb322a)
+- FincaMapPicker.tsx: geolocation button ("Usar mi ubicación actual"), Google
+  Places Autocomplete address search (restricted to Colombia), and -- for
+  polygons (>4 ha) -- a manual lat/lng point-list entry mode as an
+  alternative to clicking on the map (type coordinates or capture each
+  corner's GPS on the spot), with inline guidance on how to use it.
+- FincaModal.tsx: linked the two EUDR reference PDFs (Boletín 25, EU
+  guidance document, copied into public/docs/eudr/) under the EUDR section;
+  added "i" tooltips on the two Sí/No EUDR declarations clarifying that Sí
+  is the required answer and "no sé" isn't a valid EUDR response.
+- BCP's Finca EUDR assist form (FincaEudrEditor.tsx) reworked from an
+  always-expanded raw form into a plain read summary by default with an
+  "Editar" toggle.
+- **Communication log redesign**: producer_comm_log dropped its `channel`
+  column in favor of `context_label` (plain snapshot text like "Finca La
+  Primavera" or "Lote CTC_..."), so BCP can leave a note from a specific
+  Finca/Lote card (not just the general /bcp/productores page) and it stays
+  grouped by what it was about. New `producer_comm_log_select_own` RLS
+  policy lets producers read their own log -- this is what backs a new
+  "Retroalimentación y ayuda" section on their dashboard, grouped by
+  finca/lote.
+
+  Doc changes this should produce at the next wrap: mention the address
+  search/geolocation/manual-polygon-entry additions on the EUDR DICT entry
+  or n-kaffetal note; note that the comm log is now bidirectional
+  (BCP-writes, producer-reads) rather than BCP-internal-only.
+
+## [2026-07-11] Producer self-delete widened to MUE, Finca self-delete, Finca EUDR save fix (commit 1ec8dd9, 8fc14f9, c180571)
+- **Real bug found and fixed**: any account without a `producer_profiles`
+  row (e.g. a bcp_admin account also used to test the producer panel) had
+  every "Información general" save silently no-op -- `.update().eq()`
+  matches zero rows without erroring, so the UI looked saved, then the next
+  full data reload pulled the still-empty row and wiped the fields back.
+  Fixed with a new `producer_profiles_insert_own` RLS policy and switching
+  every producer-profile write (info save, avatar/gallery/video upload) to
+  `upsert` instead of `update`, so this can't silently fail for any account.
+- Producer lot self-delete widened from "before FT2" to "any time before
+  MUE" (before the lot passes into the Arena backlog, i.e. `stage < 4`),
+  excluding `bcp_manual_entry` lots (BCP already has the physical sample in
+  hand for those). New RLS policy `lots_delete_own_before_mue` replaces
+  `lots_delete_own_before_ft2`.
+- New: producers can delete their own Finca, but only before any EUDR
+  declaration has been started (every EUDR field still blank) and only
+  while no lot references it -- `lots.finca_id` is `ON DELETE CASCADE`, so
+  without the second check a Finca delete could silently wipe out the
+  producer's own lots too. New RLS policy `fincas_delete_own_before_eudr`;
+  shared `fincaEudrUntouched()` predicate in data.ts drives both the delete
+  guard and the button's visibility.
+- **Real bug found and fixed**: BCP's Finca EUDR "Guardar" appeared to do
+  nothing -- the save actually persisted (service-role writes bypass RLS),
+  but the editor stayed in edit mode afterward with stale uncontrolled
+  `defaultValue` inputs, indistinguishable from a failed save. Fixed by
+  awaiting the server action explicitly and flipping back to the read view
+  once it lands. `updateFincaEudr` now also diffs the submitted values
+  against what was in the database and, when something actually changed,
+  auto-inserts a `producer_comm_log` entry describing what changed -- every
+  BCP-made EUDR edit is now logged without relying on the admin doing it
+  as a separate step.
+
+  Doc changes this should produce at the next wrap: update the producer
+  self-delete note on n-guards to say "before MUE", not "before FT2"; add
+  the Finca self-delete rule alongside it; mention the auto-logged BCP-edit
+  trail as part of the comm-log DICT entry.
+
+## [2026-07-12] Derived EUDR risk level, producer photo gallery, granulometry fix, dashboard reorder (commit 8e96527, plus earlier same-day commits)
+- "Nivel de riesgo determinado" (lot EUDR risk level) is no longer a raw
+  dropdown BCP picks by eye -- new `deriveLotRiskLevel()` in src/lib/eudr.ts
+  computes it from illegality indicators, document availability, country
+  risk, and mitigation effectiveness (Art. 10-11's actual determination
+  logic); `updateLotEudr` always recomputes it server-side from the
+  submitted factors rather than trusting a hand-picked value.
+- BCP's Finca EUDR editor gained a static map (Google Static Maps API, no
+  JS SDK) of the saved point/polygon, a "Descargar coordenadas (.json)"
+  button, and a Google Earth URL field (new `fincas.eudr_google_earth_url`
+  column) as a placeholder for a future integration.
+- Producer profile: the uploaded avatar photo was never actually displayed
+  anywhere on the dashboard (upload worked, nothing rendered it) -- now
+  shown next to "Información general". Added up to 3 additional photos
+  (new `producer_profiles.gallery_asset_ids` column, 5 MB cap each).
+- **Real bug found and fixed**: Ficha B3's granulometry (mesh) percentages
+  and "Suma de mallas" total were computed against Trillado Verde Restante,
+  which still includes the primary/secondary defects -- but mesh sizing is
+  done on the healthy beans only, after defects are physically sorted out.
+  Fixed the denominator to Grano Sano (remainder minus defects) in
+  FichaView.tsx/PaneB3.tsx.
+- Producer dashboard grid rebuilt to a new fixed order: Información
+  general, Envío de muestras, Retroalimentación y ayuda (now spans 2 rows),
+  Mis fincas (2/3 width, horizontally-scrolling compact cards with a new
+  Finca profile-photo thumbnail -- `fincas.profile_photo_asset_id`), Mis
+  lotes (full width), Certificación CTC, Mis contratos.
+
+  Doc changes this should produce at the next wrap: note the derived
+  (not manual) risk-level rule in the EUDR DICT entry; mention the producer
+  photo gallery and Finca profile photo on the n-kaffetal node; update any
+  screenshot-adjacent description of the dashboard's card order if the doc
+  describes it.
+
 ## Bootstrap note
 This log was written when adopting the architecture-doc-versioning skill.
 Earlier sessions edited the live HTML directly (the old workflow); that habit

@@ -213,6 +213,10 @@ export type FichaFormData = {
   // (para que BCP pueda leer/editarlas directo) -- estos campos viajan aquí solo
   // para que el pane se edite igual que el resto de la Ficha; ver FichaView.tsx.
   eudr_custody_stages: string[];
+  // "ctc_standard" = CTC Parchment Storage Standard (sacos de yute + liner
+  // hermético + tarjeta indicadora de humedad + QR del lote); "custom" = the
+  // producer describes their own method in eudr_custody_notes.
+  eudr_custody_method: "" | "ctc_standard" | "custom";
   eudr_custody_notes: string;
   eudr_country_risk: string;
   eudr_chain_complexity: string;
@@ -267,6 +271,7 @@ export const EMPTY_FICHA: FichaFormData = {
   intl_other: false, intl_cert_other_text: "",
   cert_attachments: {},
   eudr_custody_stages: [],
+  eudr_custody_method: "",
   eudr_custody_notes: "",
   eudr_country_risk: "Estándar",
   eudr_chain_complexity: "",

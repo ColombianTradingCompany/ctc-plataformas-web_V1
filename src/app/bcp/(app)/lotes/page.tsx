@@ -1,7 +1,9 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, confirmSampleReceived, updateLotEudr } from "../actions";
 import { fincaEudrStatus, lotEudrStatus, type FincaEudrFields, type EudrStatus } from "@/lib/eudr";
+import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
+import { ProducerContactLine } from "../ProducerContactLine";
 import styles from "../shared.module.css";
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
@@ -43,6 +45,7 @@ type FincaJoin = {
 type LotRow = {
   id: string;
   name: string;
+  producer_id: string;
   stage: string;
   intake_step: number;
   grade: string | null;
@@ -53,6 +56,7 @@ type LotRow = {
   // here -- shown on the card so BCP sees what the producer declared unknown.
   datasheet: { ft2_a3_na?: boolean; ft2_a4_na?: boolean; ft2_b2_na?: boolean; ft2_b3_na?: boolean } | null;
   eudr_custody_stages: string[] | null;
+  eudr_custody_method: string | null;
   eudr_custody_notes: string | null;
   eudr_country_risk: string | null;
   eudr_chain_complexity: string | null;
@@ -115,8 +119,8 @@ export default async function BcpLotesPage() {
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, datasheet,
-         eudr_custody_stages, eudr_custody_notes, eudr_country_risk, eudr_chain_complexity, eudr_product_risk,
+        `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, datasheet,
+         eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country_risk, eudr_chain_complexity, eudr_product_risk,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
          eudr_mitigation_effective, eudr_mitigation_responsible,
          fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
@@ -127,6 +131,7 @@ export default async function BcpLotesPage() {
   ]);
 
   const lotRows = (lots as LotRow[] | null) ?? [];
+  const producers = await fetchProducerContacts(service, lotRows.map((l) => l.producer_id));
   const byBucket = new Map<Bucket, LotRow[]>(COLUMNS.map((c) => [c.id, []]));
   for (const lot of lotRows) byBucket.get(bucketOf(lot))!.push(lot);
 
@@ -203,7 +208,7 @@ export default async function BcpLotesPage() {
                 </div>
                 <div className={styles.columnList}>
                   {colLots.map((lot) => (
-                    <LotCard key={lot.id} lot={lot} showConfirmReceipt={col.id === "muestra"} />
+                    <LotCard key={lot.id} lot={lot} producer={producers.get(lot.producer_id)} showConfirmReceipt={col.id === "muestra"} />
                   ))}
                 </div>
               </div>
@@ -222,7 +227,7 @@ const FT2_NA_LABELS: { key: "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na" | "ft2_b3_na
   { key: "ft2_b3_na", label: "B3 Granulometría" },
 ];
 
-function LotCard({ lot, showConfirmReceipt }: { lot: LotRow; showConfirmReceipt: boolean }) {
+function LotCard({ lot, producer, showConfirmReceipt }: { lot: LotRow; producer: ProducerContact | undefined; showConfirmReceipt: boolean }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
   const naLabels = FT2_NA_LABELS.filter((f) => lot.datasheet?.[f.key]).map((f) => f.label);
@@ -240,6 +245,7 @@ function LotCard({ lot, showConfirmReceipt }: { lot: LotRow; showConfirmReceipt:
         <h4>{lot.name}</h4>
         <EudrStatusBadge status={eudrStatus} />
       </div>
+      <ProducerContactLine producer={producer} />
       <p className={styles.meta}>
         {lot.fincas?.name ?? "—"}
         {lot.grade && (
@@ -293,7 +299,15 @@ function LotCard({ lot, showConfirmReceipt }: { lot: LotRow; showConfirmReceipt:
                 </label>
               ))}
             </div>
-            <textarea name="eudr_custody_notes" defaultValue={lot.eudr_custody_notes ?? ""} placeholder="Método de separación física / documental…" />
+          </div>
+          <div className={styles.field}>
+            <label>Método de separación física / documental</label>
+            <select name="eudr_custody_method" defaultValue={lot.eudr_custody_method ?? ""}>
+              <option value="">Sin definir</option>
+              <option value="ctc_standard">CTC Parchment Storage Standard (yute + liner + HIC + QR)</option>
+              <option value="custom">Método propio</option>
+            </select>
+            <textarea name="eudr_custody_notes" defaultValue={lot.eudr_custody_notes ?? ""} placeholder="Si es método propio: describa cómo se mantiene separado e identificado el lote…" />
           </div>
 
           <div className={styles.field}>

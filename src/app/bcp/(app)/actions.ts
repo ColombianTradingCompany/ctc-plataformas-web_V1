@@ -180,6 +180,7 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
 
   const patch = {
     eudr_custody_stages: formData.getAll("eudr_custody_stages").map(String),
+    eudr_custody_method: textOrNull(formData, "eudr_custody_method"),
     eudr_custody_notes: textOrNull(formData, "eudr_custody_notes"),
     eudr_country_risk: textOrNull(formData, "eudr_country_risk") ?? "Estándar",
     eudr_chain_complexity: textOrNull(formData, "eudr_chain_complexity"),

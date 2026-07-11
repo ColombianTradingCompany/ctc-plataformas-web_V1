@@ -27,6 +27,7 @@ export function AppDashboard({
   onNewLot,
   onOpenFicha,
   onRenameLot,
+  onDeleteLot,
   onOpenFincaModal,
   onOpenInfoModal,
   onConfirmSampleShipped,
@@ -41,6 +42,7 @@ export function AppDashboard({
   onNewLot: () => void;
   onOpenFicha: (lotId: string) => void;
   onRenameLot: (lotId: string, newName: string) => void;
+  onDeleteLot: (lotId: string) => void;
   onOpenFincaModal: (index: number) => void;
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
@@ -134,7 +136,14 @@ export function AppDashboard({
                       </div>
                       <LotCompletionSparkline history={l.completionHistory} />
                     </div>
-                    <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
+                      <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+                      {/* Deletable only before FT2 is submitted -- a lot still in
+                          borrador with intake_step < 2 has nothing CTC is reviewing yet. */}
+                      {l.stage === 0 && l.intakeStep < 2 && (
+                        <button className={styles.deletebtn} onClick={() => onDeleteLot(l.id)}>Eliminar lote</button>
+                      )}
+                    </div>
                   </div>
                 );
               })}

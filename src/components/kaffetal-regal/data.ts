@@ -61,6 +61,7 @@ export type Lot = {
   // columnas es la fila real de `lots`, no `datasheet` -- así lo que BCP llene
   // directamente (asistencia) siempre se refleja en la Ficha, ver FichaView.
   eudrCustodyStages: string[];
+  eudrCustodyMethod: "" | "ctc_standard" | "custom";
   eudrCustodyNotes: string;
   eudrCountryRisk: string;
   eudrChainComplexity: string;

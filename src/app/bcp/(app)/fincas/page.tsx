@@ -1,8 +1,10 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
+import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
+import { ProducerContactLine } from "../ProducerContactLine";
 import styles from "../shared.module.css";
 
 const EVIDENCE_TYPES: [string, string][] = [
@@ -21,6 +23,7 @@ const SUSTAINABILITY_TAGS: [string, string][] = [
 type FincaRow = {
   id: string;
   name: string;
+  producer_id: string;
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
@@ -78,7 +81,7 @@ export default async function BcpFincasPage() {
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
+      `id, name, producer_id, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
        eudr_sustainability_tags, eudr_sustainability_notes, created_at`
@@ -86,17 +89,18 @@ export default async function BcpFincasPage() {
     .eq("status", "pending_review")
     .order("created_at", { ascending: true });
 
-  const legalDocUrlByAssetId = await signedKaffetalMediaUrls(
-    service,
-    (pendingFincas as FincaRow[] | null)?.map((f) => f.eudr_legal_docs_asset_id) ?? []
-  );
+  const fincaRows = (pendingFincas as FincaRow[] | null) ?? [];
+  const [legalDocUrlByAssetId, producers] = await Promise.all([
+    signedKaffetalMediaUrls(service, fincaRows.map((f) => f.eudr_legal_docs_asset_id)),
+    fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
+  ]);
 
   return (
     <div>
       <h1 className={styles.title}>Fincas pendientes de revisión</h1>
-      {!pendingFincas?.length && <p className={styles.empty}>No hay fincas pendientes.</p>}
+      {!fincaRows.length && <p className={styles.empty}>No hay fincas pendientes.</p>}
       <div className={styles.list}>
-        {(pendingFincas as FincaRow[] | null)?.map((finca) => {
+        {fincaRows.map((finca) => {
           const eudrFields = toEudrFields(finca);
           const status = fincaEudrStatus(eudrFields);
           const gaps = missingChecks(eudrFields);
@@ -120,6 +124,7 @@ export default async function BcpFincasPage() {
                     <h3>{finca.name}</h3>
                     <EudrStatusBadge status={status} />
                   </div>
+                  <ProducerContactLine producer={producers.get(finca.producer_id)} />
                   <p className={styles.meta}>
                     {finca.municipio}, {finca.departamento} · {finca.hectares} ha
                     {finca.requires_eudr_polygon && " · requiere polígono EUDR"}

@@ -180,6 +180,42 @@ remains the current (and only) real HTML snapshot.
   FT->FT2->EUDR->Video->shipment->BCP kanban->Arena backlog; update the
   "envio" scenario if it referenced the old single-gate model.
 
+## [2026-07-11] Producer lot-delete, A5 guidance + CTC packaging standard, BCP Productores view + comm log (commit pending)
+- Producers can now delete their own lots, but only before FT2 is submitted:
+  new RLS policy lots_delete_own_before_ft2 (auth.uid() = producer_id AND
+  stage = 'borrador' AND intake_step < 2), a matching guard + confirm() in
+  KaffetalExperience.deleteLot, and an "Eliminar lote" button on the dashboard
+  card shown only under those conditions. ficha_completion_snapshots FK made
+  ON DELETE CASCADE so a delete can't orphan-block.
+- Removed a bad lot (Castillo 1, id d4847218…, producer CTC-P-78337EC3 /
+  Gabriel Camilo Vásquez) that had reached fila_arena with no real data --
+  had zero dependents, deleted directly.
+- A5 (EUDR) pane got a FieldInfo "i" on every item (custody chain, risk
+  criteria, mitigation…), each grounded in the EU Commission's EUDR guidance.
+  New "Método de separación física / documental" as an explicit choice: "CTC
+  Parchment Storage Standard" (jute sacks + hermetic liner + Humidity
+  Indicator Card + QR linked to the lot code -- expanded explanation in a
+  tooltip) or "Método propio" (free-text). Backed by new lots.eudr_custody_method
+  column + fichaData field, round-tripped through FichaView's eudr block and
+  editable in BCP's assist form.
+- BCP incoming finca/lote cards now show the producer's contact (name,
+  company, phone/WhatsApp, email, region, supplier code) via a shared
+  fetchProducerContacts helper + ProducerContactLine component -- so an
+  incoming request can actually be acted on.
+- New /bcp/productores page: each producer mapped to their fincas (with
+  status) and their intake lots -- deliberately EXCLUDING fila_arena/evaluado/
+  galardonado (Arena is the panel's business, not the producer-relationship
+  view). Also the entry point for the communication log.
+- New producer_comm_log table (service-role only) + logProducerComm action:
+  BCP records each contact (WhatsApp/llamada/correo/…) from the producer's row
+  in /bcp/productores; the most recent entries surface on the main /bcp panel.
+  New "Productores" sidebar link.
+
+  Doc changes this should produce at the next wrap: note the producer
+  self-delete window on n-guards/n-kaffetal; add n-bcp "Productores" +
+  communication-log to the n-bcp description; mention the CTC Parchment
+  Storage Standard as the canonical custody method in the EUDR DICT entry.
+
 ## Bootstrap note
 This log was written when adopting the architecture-doc-versioning skill.
 Earlier sessions edited the live HTML directly (the old workflow); that habit

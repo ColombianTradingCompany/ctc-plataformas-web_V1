@@ -82,6 +82,7 @@ type LotRow = {
   video_asset_id: string | null;
   sample_shipped_at: string | null;
   eudr_custody_stages: string[] | null;
+  eudr_custody_method: string | null;
   eudr_custody_notes: string | null;
   eudr_country_risk: string | null;
   eudr_chain_complexity: string | null;
@@ -168,6 +169,7 @@ function dbLotToLot(
     videoUrl,
     sampleShippedAt: row.sample_shipped_at,
     eudrCustodyStages: row.eudr_custody_stages || [],
+    eudrCustodyMethod: (row.eudr_custody_method as Lot["eudrCustodyMethod"]) || "",
     eudrCustodyNotes: row.eudr_custody_notes || "",
     eudrCountryRisk: row.eudr_country_risk || "Estándar",
     eudrChainComplexity: row.eudr_chain_complexity || "",
@@ -402,6 +404,24 @@ function Experience() {
     }
     setLots((ls) => ls.map((l) => (l.id === id ? { ...l, name } : l)));
     showToast(`Lote "${name}" renombrado ✓`);
+  }
+
+  async function deleteLot(id: string) {
+    const lot = lots.find((l) => l.id === id);
+    // Guard here matches the RLS policy (lots_delete_own_before_ft2): a lot is
+    // only self-deletable while still in borrador before FT2 is submitted.
+    if (!lot || lot.stage !== 0 || lot.intakeStep >= 2) {
+      showToast("Este lote ya entró en revisión de CTC y no puede eliminarse.");
+      return;
+    }
+    if (!window.confirm(`¿Eliminar el lote "${lot.name}"? Esta acción no se puede deshacer.`)) return;
+    const { error } = await supabase.from("lots").delete().eq("id", id);
+    if (error) {
+      showToast("No se pudo eliminar el lote.");
+      return;
+    }
+    setLots((ls) => ls.filter((l) => l.id !== id));
+    showToast("Lote eliminado ✓");
   }
 
   async function confirmSampleShipped(id: string) {
@@ -702,6 +722,7 @@ function Experience() {
           onNewLot={newLot}
           onOpenFicha={openFicha}
           onRenameLot={renameLot}
+          onDeleteLot={deleteLot}
           onConfirmSampleShipped={confirmSampleShipped}
           onOpenFincaModal={(i) => {
             setEditingFincaIdx(i);

@@ -60,6 +60,7 @@ export type FichaSaveUpdate = {
   // can read/filter/edit them directly. See src/lib/eudr.ts.
   eudr: {
     eudr_custody_stages: string[];
+    eudr_custody_method: string | null;
     eudr_custody_notes: string | null;
     eudr_country_risk: string;
     eudr_chain_complexity: string | null;
@@ -132,6 +133,7 @@ export function FichaView({
       country: base.country || gi.country,
       region_dep: base.region_dep || gi.department,
       eudr_custody_stages: lot.eudrCustodyStages,
+      eudr_custody_method: lot.eudrCustodyMethod,
       eudr_custody_notes: lot.eudrCustodyNotes,
       eudr_country_risk: lot.eudrCountryRisk,
       eudr_chain_complexity: lot.eudrChainComplexity,
@@ -216,7 +218,10 @@ export function FichaView({
       },
       eudr: {
         eudr_custody_stages: source.eudr_custody_stages,
-        eudr_custody_notes: source.eudr_custody_notes || null,
+        eudr_custody_method: source.eudr_custody_method || null,
+        // The CTC standard covers custody notes on its own, so a producer who
+        // picked it never fills the free-text box -- clear any stale note.
+        eudr_custody_notes: source.eudr_custody_method === "custom" ? source.eudr_custody_notes || null : null,
         eudr_country_risk: source.eudr_country_risk,
         eudr_chain_complexity: source.eudr_chain_complexity || null,
         eudr_product_risk: source.eudr_product_risk || null,

@@ -196,9 +196,10 @@ export function AppDashboard({
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
                       <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
-                      {/* Deletable only before FT2 is submitted -- a lot still in
-                          borrador with intake_step < 2 has nothing CTC is reviewing yet. */}
-                      {l.stage === 0 && l.intakeStep < 2 && (
+                      {/* Deletable any time before MUE passes the lot into the Arena
+                          backlog (stage < 4 = fila_arena), unless BCP already has the
+                          physical sample in hand (bcp_manual_entry). */}
+                      {l.stage < 4 && l.source !== "bcp_manual_entry" && (
                         <button className={styles.deletebtn} onClick={() => onDeleteLot(l.id)}>Eliminar lote</button>
                       )}
                     </div>

@@ -57,6 +57,7 @@ export type Lot = {
   videoAssetId: string | null;
   videoUrl: string | null;
   sampleShippedAt: string | null;
+  source: string;
   // EUDR — debida diligencia del lote (2026-07-10). Fuente de verdad para estas
   // columnas es la fila real de `lots`, no `datasheet` -- así lo que BCP llene
   // directamente (asistencia) siempre se refleja en la Ficha, ver FichaView.

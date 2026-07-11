@@ -72,6 +72,7 @@ type LotRow = {
   name: string;
   stage: string;
   intake_step: number;
+  source: string;
   grade: string | null;
   status_note: string | null;
   ficha_variedad: string | null;
@@ -169,6 +170,7 @@ function dbLotToLot(
     videoAssetId: row.video_asset_id,
     videoUrl,
     sampleShippedAt: row.sample_shipped_at,
+    source: row.source,
     eudrCustodyStages: row.eudr_custody_stages || [],
     eudrCustodyMethod: (row.eudr_custody_method as Lot["eudrCustodyMethod"]) || "",
     eudrCustodyNotes: row.eudr_custody_notes || "",
@@ -424,9 +426,11 @@ function Experience() {
 
   async function deleteLot(id: string) {
     const lot = lots.find((l) => l.id === id);
-    // Guard here matches the RLS policy (lots_delete_own_before_ft2): a lot is
-    // only self-deletable while still in borrador before FT2 is submitted.
-    if (!lot || lot.stage !== 0 || lot.intakeStep >= 2) {
+    // Guard here matches the RLS policy (lots_delete_own_before_mue): a lot is
+    // self-deletable any time before it passes MUE into the Arena backlog
+    // (stage < 4 = fila_arena), excluding bcp_manual_entry lots -- those exist
+    // because BCP already has the physical sample in hand.
+    if (!lot || lot.stage >= 4 || lot.source === "bcp_manual_entry") {
       showToast("Este lote ya entró en revisión de CTC y no puede eliminarse.");
       return;
     }
@@ -564,17 +568,24 @@ function Experience() {
     if (!userId) return;
     const [{ error: e1 }, { error: e2 }] = await Promise.all([
       supabase.from("profiles").update({ full_name: next.agri, phone: next.phone || null }).eq("id", userId),
+      // upsert, not update -- an account without a producer_profiles row yet
+      // (e.g. one created outside the normal producer-signup trigger) would
+      // otherwise have this silently match zero rows and look saved without
+      // persisting anything.
       supabase
         .from("producer_profiles")
-        .update({
-          company_name: next.razon,
-          tax_id: next.nit,
-          cedula_cafetera: next.cedulaCafetera || null,
-          whatsapp_confirmed: next.whatsappConfirmed,
-          country: next.country,
-          department: next.department || null,
-        })
-        .eq("profile_id", userId),
+        .upsert(
+          {
+            profile_id: userId,
+            company_name: next.razon,
+            tax_id: next.nit,
+            cedula_cafetera: next.cedulaCafetera || null,
+            whatsapp_confirmed: next.whatsappConfirmed,
+            country: next.country,
+            department: next.department || null,
+          },
+          { onConflict: "profile_id" }
+        ),
     ]);
     if (e1 || e2) {
       showToast("No se pudo actualizar la información.");
@@ -598,7 +609,9 @@ function Experience() {
       showToast(result.error);
       return;
     }
-    const { error } = await supabase.from("producer_profiles").update({ avatar_asset_id: result.assetId }).eq("profile_id", userId);
+    const { error } = await supabase
+      .from("producer_profiles")
+      .upsert({ profile_id: userId, avatar_asset_id: result.assetId }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo guardar la foto de perfil.");
       return;
@@ -617,7 +630,9 @@ function Experience() {
     }
     const nextIds = [...gi.galleryAssetIds];
     nextIds[index] = result.assetId;
-    const { error } = await supabase.from("producer_profiles").update({ gallery_asset_ids: nextIds }).eq("profile_id", userId);
+    const { error } = await supabase
+      .from("producer_profiles")
+      .upsert({ profile_id: userId, gallery_asset_ids: nextIds }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo guardar la foto.");
       return;
@@ -636,7 +651,9 @@ function Experience() {
   async function removeGalleryPhoto(index: number) {
     if (!userId) return;
     const nextIds = gi.galleryAssetIds.filter((_, i) => i !== index);
-    const { error } = await supabase.from("producer_profiles").update({ gallery_asset_ids: nextIds }).eq("profile_id", userId);
+    const { error } = await supabase
+      .from("producer_profiles")
+      .upsert({ profile_id: userId, gallery_asset_ids: nextIds }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo quitar la foto.");
       return;
@@ -655,7 +672,9 @@ function Experience() {
       showToast(result.error);
       return;
     }
-    const { error } = await supabase.from("producer_profiles").update({ video_asset_id: result.assetId }).eq("profile_id", userId);
+    const { error } = await supabase
+      .from("producer_profiles")
+      .upsert({ profile_id: userId, video_asset_id: result.assetId }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo guardar el video.");
       return;

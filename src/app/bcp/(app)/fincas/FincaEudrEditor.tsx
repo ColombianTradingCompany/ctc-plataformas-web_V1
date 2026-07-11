@@ -106,7 +106,30 @@ export function FincaEudrEditor({
   saveAction: (formData: FormData) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const mapUrl = staticMapUrl(values);
+
+  // A plain <form action={saveAction}> looks like it "does nothing" after
+  // submit: the server action's revalidatePath() refreshes `values`, but this
+  // component stays mounted with `editing` still true (React preserves local
+  // state across the prop update), and the edit inputs are uncontrolled
+  // (defaultValue), so they never visually reflect the save either. Awaiting
+  // the action directly lets us flip back to the read view -- which reads
+  // straight from `values`, not defaultValue -- once the save actually lands.
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await saveAction(new FormData(e.currentTarget));
+      setEditing(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "No se pudo guardar la información EUDR.");
+    } finally {
+      setSaving(false);
+    }
+  }
   const hasCoords = !!(mapUrl && (values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng)));
 
   const mapBlock = (
@@ -165,7 +188,8 @@ export function FincaEudrEditor({
         <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
       </div>
       {mapBlock}
-      <form action={saveAction}>
+      {saveError && <p style={{ color: "var(--red)", fontSize: 12.5, marginBottom: 8 }}>{saveError}</p>}
+      <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label>Latitud (WGS84)</label>
@@ -268,7 +292,7 @@ export function FincaEudrEditor({
           <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} />
         </div>
 
-        <button className="btn btn-solid" type="submit">Guardar información EUDR</button>
+        <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar información EUDR"}</button>
       </form>
     </div>
   );

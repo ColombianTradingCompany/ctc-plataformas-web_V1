@@ -137,9 +137,41 @@ function textOrNull(formData: FormData, key: string): string | null {
 // than a whole new lot. Unlike the producer's own edit path (RLS-gated to
 // status = 'pending_review'), this uses the service-role client so BCP can still
 // help complete a finca even if it's already been approved.
+const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
+  eudr_lat: "Latitud",
+  eudr_lng: "Longitud",
+  eudr_planting_date: "Fecha de siembra",
+  eudr_production_system: "Sistema productivo",
+  eudr_deforestation_free: "Libre de deforestación",
+  eudr_legal_production: "Producción legal",
+  eudr_evidence_types: "Evidencia disponible",
+  eudr_evidence_notes: "Notas de evidencia",
+  eudr_legal_areas: "Áreas legales verificadas",
+  eudr_tenure: "Tenencia de la tierra",
+  eudr_sustainability_tags: "Sostenibilidad",
+  eudr_sustainability_notes: "Notas de sostenibilidad",
+  eudr_google_earth_url: "URL de Google Earth",
+};
+
+function valuesDiffer(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return JSON.stringify([...((a as string[]) ?? [])].sort()) !== JSON.stringify([...((b as string[]) ?? [])].sort());
+  }
+  return (a ?? null) !== (b ?? null);
+}
+
 export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
+
+  const { data: before } = await service
+    .from("fincas")
+    .select(
+      "name, producer_id, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url"
+    )
+    .eq("id", fincaId)
+    .single();
+  if (!before) throw new Error("Finca no encontrada.");
 
   const patch = {
     eudr_lat: formData.get("eudr_lat") ? Number(formData.get("eudr_lat")) : null,
@@ -165,6 +197,10 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { error } = await service.from("fincas").update(patch).eq("id", fincaId);
   if (error) throw new Error("No se pudo guardar la información EUDR de la finca.");
 
+  const changedFields = Object.keys(patch).filter((key) =>
+    valuesDiffer((before as Record<string, unknown>)[key], (patch as Record<string, unknown>)[key])
+  );
+
   await service.from("audit_log").insert({
     entity_type: "finca",
     entity_id: fincaId,
@@ -173,7 +209,22 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     notes: "Campos EUDR completados/editados por BCP en nombre del productor",
   });
 
+  // Auto-log every EUDR edit BCP makes on a producer's behalf so there's
+  // always a record of what changed and when -- visible to the producer
+  // themselves under "Retroalimentación y ayuda".
+  if (changedFields.length > 0) {
+    const summary = changedFields.map((k) => FINCA_EUDR_FIELD_LABEL[k] ?? k).join(", ");
+    await service.from("producer_comm_log").insert({
+      producer_id: before.producer_id,
+      context_label: `Finca ${before.name}`,
+      note: `CTC actualizó la información EUDR: ${summary}.`,
+      created_by: adminId,
+    });
+  }
+
   revalidatePath("/bcp/fincas");
+  revalidatePath("/bcp/productores");
+  revalidatePath("/bcp");
 }
 
 // Same "aided by BCP" pattern as updateFincaEudr, for the lot-level custody

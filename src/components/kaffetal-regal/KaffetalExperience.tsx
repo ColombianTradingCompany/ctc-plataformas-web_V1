@@ -421,8 +421,8 @@ function Experience() {
     showToast("Envío de muestra confirmado ✓ · CTC revisará su recibo");
   }
 
-  async function saveFicha(updates: FichaSaveUpdate) {
-    if (!curLotId) return;
+  async function saveFicha(updates: FichaSaveUpdate): Promise<boolean> {
+    if (!curLotId) return false;
     const finca = updates.finca ? fincas.find((f) => f.name === updates.finca) : undefined;
     const current = lots.find((l) => l.id === curLotId);
 
@@ -449,13 +449,22 @@ function Experience() {
     const { data, error } = await supabase.from("lots").update(patch).eq("id", curLotId).select("*").single();
     if (error || !data) {
       showToast("No se pudo guardar la ficha. Intente de nuevo.");
-      return;
+      return false;
     }
     await supabase.from("ficha_completion_snapshots").insert({ lot_id: curLotId, completion_pct: updates.completionPct });
     const fincaNameById = new Map(fincas.map((f) => [f.id, f.name]));
     const newHistory = [...(current?.completionHistory ?? []), { pct: updates.completionPct, recordedAt: new Date().toISOString() }];
-    const saved = dbLotToLot(data as LotRow, fincaNameById, newHistory, current?.videoUrl ?? null);
+    // Carry the evaluation summary over from the in-memory lot -- it comes
+    // from lot_evaluations (a separate query at load time), so remapping the
+    // lots row without it would blank the official score on every Guardar.
+    const saved = dbLotToLot(data as LotRow, fincaNameById, newHistory, current?.videoUrl ?? null, {
+      scaAverage: current?.officialScaAverage ?? null,
+      factorAverage: current?.officialFactorAverage ?? null,
+      acceptedCount: current?.officialEvalCount ?? 0,
+      hasPendingClaim: current?.hasPendingOfficializationClaim ?? false,
+    });
     setLots((ls) => ls.map((l) => (l.id === curLotId ? saved : l)));
+    return true;
   }
 
   function applyNextStepAdvice(lotId: string, advice: string, context: Record<string, unknown>) {

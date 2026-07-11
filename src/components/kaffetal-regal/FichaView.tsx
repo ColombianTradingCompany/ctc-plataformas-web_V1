@@ -90,7 +90,9 @@ export function FichaView({
   fincas: Finca[];
   gi: import("./data").GeneralInfo;
   onBack: () => void;
-  onSave: (updates: FichaSaveUpdate) => void;
+  // Resolves true only when the row actually persisted -- the buttons below
+  // await this so success toasts / stage advances never fire on a failed save.
+  onSave: (updates: FichaSaveUpdate) => Promise<boolean>;
   onAdviceUpdate: (lotId: string, advice: string, context: Record<string, unknown>) => void;
   onOpenNewFinca: () => void;
   onUploadFile: (subpath: string, file: File) => Promise<{ assetId: string } | { error: string }>;
@@ -98,7 +100,15 @@ export function FichaView({
   onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null) => void;
 }) {
   const { showToast } = useToast();
-  const [active, setActive] = useState<PaneId>(FIRST_PANE_BY_STEP[Math.min(lot.intakeStep, 4)]);
+  // Lots that predate the intake_step system (or that BCP moved along) can be
+  // past "borrador" while their intake_step bookkeeping still reads 0. Once a
+  // lot's stage left borrador the whole intake is locked-in by definition, so
+  // everything downstream treats it as fully complete -- otherwise an already
+  // galardonado lot would absurdly show "Completar FT y continuar" and lock
+  // its own panes out of view.
+  const effectiveIntakeStep = lot.stage >= 1 ? 4 : lot.intakeStep;
+  const [active, setActive] = useState<PaneId>(FIRST_PANE_BY_STEP[Math.min(effectiveIntakeStep, 4)]);
+  const [saving, setSaving] = useState(false);
   const [data, setData] = useState<FichaFormData>(() => {
     // Merge onto EMPTY_FICHA (not lot.datasheet ?? EMPTY_FICHA) so a lot saved
     // before a field existed in FichaFormData (e.g. cert_attachments, added
@@ -187,7 +197,7 @@ export function FichaView({
   const eudrReady = !!completed.a5 && allFincasApta;
   const videoReady = !!completed.b4;
   const STAGE_READY = [ftReady, ft2Ready, eudrReady, videoReady];
-  const currentStepReady = lot.intakeStep < 4 ? STAGE_READY[lot.intakeStep] : true;
+  const currentStepReady = effectiveIntakeStep < 4 ? STAGE_READY[effectiveIntakeStep] : true;
 
   function buildUpdate(source: FichaFormData, intakeStep?: number): FichaSaveUpdate {
     const topVariety = source.varieties.find((v) => num(v.pct) > 0);
@@ -230,23 +240,35 @@ export function FichaView({
     return stamped;
   }
 
-  function save() {
-    onSave(buildUpdate(withRevisionDate()));
-    showToast("Progreso guardado ✓");
+  async function save() {
+    if (saving) return;
+    setSaving(true);
+    const ok = await onSave(buildUpdate(withRevisionDate()));
+    setSaving(false);
+    // Only claim success once the row actually persisted -- on failure,
+    // saveFicha already showed its own error toast.
+    if (ok) showToast("Progreso guardado ✓");
   }
 
   // Submits whichever intake sub-stage is currently active for this lot (FT,
   // FT2, EUDR, or Video), validating that stage's own gate first. Advancing
   // past Video is what finally locks the Ficha in and moves the lot to
-  // "ficha_completa" -- see KaffetalExperience.tsx's saveFicha().
-  function submitCurrentStage() {
-    const step = lot.intakeStep;
+  // "ficha_completa" -- see KaffetalExperience.tsx's saveFicha(). The success
+  // toast and pane advance only happen after the save confirms -- otherwise a
+  // failed network call would tell the producer their stage was submitted
+  // when the DB never heard about it.
+  async function submitCurrentStage() {
+    if (saving) return;
+    const step = effectiveIntakeStep;
     if (step === 0) {
       if (!ftReady) {
         showToast("Complete Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
         return;
       }
-      onSave(buildUpdate(withRevisionDate(), 1));
+      setSaving(true);
+      const ok = await onSave(buildUpdate(withRevisionDate(), 1));
+      setSaving(false);
+      if (!ok) return;
       showToast("FT enviado a CTC ✓ · continúe con FT2");
       setActive("a3");
       return;
@@ -256,7 +278,10 @@ export function FichaView({
         showToast('Complete A3, A4, B2 y B3 -- o marque "No lo sé / no aplica" en cada uno.');
         return;
       }
-      onSave(buildUpdate(withRevisionDate(), 2));
+      setSaving(true);
+      const ok = await onSave(buildUpdate(withRevisionDate(), 2));
+      setSaving(false);
+      if (!ok) return;
       showToast("FT2 enviado a CTC ✓ · continúe con EUDR");
       setActive("a5");
       return;
@@ -270,7 +295,10 @@ export function FichaView({
         showToast('La(s) finca(s) de origen de este lote deben completar su propia debida diligencia (estado "Apta") antes de continuar.');
         return;
       }
-      onSave(buildUpdate(withRevisionDate(), 3));
+      setSaving(true);
+      const ok = await onSave(buildUpdate(withRevisionDate(), 3));
+      setSaving(false);
+      if (!ok) return;
       showToast("EUDR enviado a CTC ✓ · continúe con el video");
       setActive("b4");
       return;
@@ -288,7 +316,10 @@ export function FichaView({
         showToast("Marque la declaración de veracidad antes de continuar.");
         return;
       }
-      onSave(buildUpdate(withRevisionDate(), 4));
+      setSaving(true);
+      const ok = await onSave(buildUpdate(withRevisionDate(), 4));
+      setSaving(false);
+      if (!ok) return;
       setShowShipmentModal(true);
     }
   }
@@ -303,7 +334,7 @@ export function FichaView({
   }
 
   const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo };
-  const viewingLocked = PANE_SUBSTAGE[active] < lot.intakeStep;
+  const viewingLocked = PANE_SUBSTAGE[active] < effectiveIntakeStep;
   const STAGE_BUTTON_LABEL = [
     "Completar FT y continuar",
     "Completar FT2 y continuar",
@@ -335,7 +366,7 @@ export function FichaView({
         </p>
 
         <div className={styles.shell} style={{ marginTop: 24 }}>
-          <FichaNav active={active} completed={completed} intakeStep={lot.intakeStep} onSelect={setActive} />
+          <FichaNav active={active} completed={completed} intakeStep={effectiveIntakeStep} onSelect={setActive} />
           <div className={styles.content}>
             {viewingLocked && (
               <p style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "var(--muted)", marginBottom: 14 }}>
@@ -355,36 +386,42 @@ export function FichaView({
                 No lo sé / no aplica para este lote
               </label>
             )}
-            {active === "a1" && <PaneA1 {...paneProps} />}
-            {active === "a2" && <PaneA2 {...paneProps} />}
-            {active === "a3" && <PaneA3 {...paneProps} />}
-            {active === "a4" && <PaneA4 {...paneProps} />}
-            {active === "a5" && <PaneA5Eudr {...paneProps} />}
-            {active === "b1" && <PaneB1 {...paneProps} />}
+            {/* The officialization banners live OUTSIDE the locking fieldset:
+                requesting an official score is precisely a post-lock action
+                (the self-report is frozen; now the producer wants it verified). */}
             {active === "b2" && (
-              <>
-                <OfficialScoreBanner
-                  lot={lot}
-                  selfEstimate={sca.total}
-                  kind="sca"
-                  onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
-                />
-                <PaneB2 {...paneProps} sca={sca} />
-              </>
+              <OfficialScoreBanner
+                lot={lot}
+                selfEstimate={sca.total}
+                kind="sca"
+                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+              />
             )}
             {active === "b3" && (
-              <>
-                <OfficialScoreBanner
-                  lot={lot}
-                  selfEstimate={factor.remainder}
-                  kind="factor"
-                  onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
-                />
-                <PaneB3 {...paneProps} factor={factor} mesh={mesh} />
-              </>
+              <OfficialScoreBanner
+                lot={lot}
+                selfEstimate={factor.remainder}
+                kind="factor"
+                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+              />
             )}
-            {active === "b4" && <PaneB4 {...paneProps} />}
-            {active === "ficha" && <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} />}
+            {/* disabled fieldset = every input/button inside a submitted-and-
+                locked section is genuinely read-only, not just banner-decorated.
+                "Completar y Enviar" locks the information in; without this, a
+                producer could keep editing FT after submitting it and Guardar
+                would silently push the changes to what BCP is reviewing. */}
+            <fieldset disabled={viewingLocked} style={{ border: "none", padding: 0, margin: 0, minWidth: 0 }}>
+              {active === "a1" && <PaneA1 {...paneProps} />}
+              {active === "a2" && <PaneA2 {...paneProps} />}
+              {active === "a3" && <PaneA3 {...paneProps} />}
+              {active === "a4" && <PaneA4 {...paneProps} />}
+              {active === "a5" && <PaneA5Eudr {...paneProps} />}
+              {active === "b1" && <PaneB1 {...paneProps} />}
+              {active === "b2" && <PaneB2 {...paneProps} sca={sca} />}
+              {active === "b3" && <PaneB3 {...paneProps} factor={factor} mesh={mesh} />}
+              {active === "b4" && <PaneB4 {...paneProps} />}
+              {active === "ficha" && <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} />}
+            </fieldset>
           </div>
         </div>
 
@@ -396,18 +433,25 @@ export function FichaView({
             </label>
           )}
           <div className={styles.csvRow}>
-            <button className="btn btn-sm" onClick={save}>Guardar</button>
-            {lot.intakeStep >= 4 ? (
-              <span className={styles.chip}>✓ Ficha enviada a CTC · en revisión</span>
+            {effectiveIntakeStep >= 4 ? (
+              // "en revisión" only while the lot is actually sitting with CTC
+              // (ficha_completa) -- past that (arena queue, evaluado,
+              // galardonado) the state chip on the dashboard tells the story.
+              <span className={styles.chip}>{lot.stage <= 1 ? "✓ Ficha enviada a CTC · en revisión" : "✓ Ficha registrada en CTC"}</span>
             ) : (
-              <button
-                className="btn btn-solid-accent"
-                onClick={submitCurrentStage}
-                aria-disabled={!currentStepReady}
-                style={!currentStepReady ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
-              >
-                {STAGE_BUTTON_LABEL[lot.intakeStep]}
-              </button>
+              <>
+                <button className="btn btn-sm" onClick={save} disabled={saving}>
+                  {saving ? "Guardando…" : "Guardar"}
+                </button>
+                <button
+                  className="btn btn-solid-accent"
+                  onClick={submitCurrentStage}
+                  aria-disabled={!currentStepReady || saving}
+                  style={!currentStepReady || saving ? { opacity: 0.45, cursor: "not-allowed" } : undefined}
+                >
+                  {saving ? "Enviando…" : STAGE_BUTTON_LABEL[effectiveIntakeStep]}
+                </button>
+              </>
             )}
           </div>
         </div>

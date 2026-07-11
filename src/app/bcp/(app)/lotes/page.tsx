@@ -49,6 +49,9 @@ type LotRow = {
   source: string;
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
+  // Only the four FT2 "no lo sé / no aplica" flags are read off the datasheet
+  // here -- shown on the card so BCP sees what the producer declared unknown.
+  datasheet: { ft2_a3_na?: boolean; ft2_a4_na?: boolean; ft2_b2_na?: boolean; ft2_b3_na?: boolean } | null;
   eudr_custody_stages: string[] | null;
   eudr_custody_notes: string | null;
   eudr_country_risk: string | null;
@@ -88,6 +91,13 @@ function triSelectValue(v: boolean | null): string {
 }
 
 function bucketOf(lot: LotRow): Bucket {
+  // Lots BCP registered by hand exist precisely because the physical sample
+  // is already in CTC's hands -- they never go through the producer-driven
+  // intake columns, so they'd be stranded in FT forever (the old manual
+  // stage dropdown that used to move them is retired). Straight to the
+  // sample column, where "Confirmar recibido" lives and already
+  // special-cases bcp_manual_entry.
+  if (lot.source === "bcp_manual_entry") return "muestra";
   if (lot.stage !== "borrador") return "muestra"; // ficha locked in -- shipping/awaiting confirmation
   if (lot.intake_step <= 0) return "ft";
   if (lot.intake_step === 1) return "ft2";
@@ -105,7 +115,7 @@ export default async function BcpLotesPage() {
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at,
+        `id, name, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, datasheet,
          eudr_custody_stages, eudr_custody_notes, eudr_country_risk, eudr_chain_complexity, eudr_product_risk,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
          eudr_mitigation_effective, eudr_mitigation_responsible,
@@ -205,9 +215,19 @@ export default async function BcpLotesPage() {
   );
 }
 
+const FT2_NA_LABELS: { key: "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na" | "ft2_b3_na"; label: string }[] = [
+  { key: "ft2_a3_na", label: "A3 Cert. Origen" },
+  { key: "ft2_a4_na", label: "A4 Cert. Intl." },
+  { key: "ft2_b2_na", label: "B2 Perfil de Taza" },
+  { key: "ft2_b3_na", label: "B3 Granulometría" },
+];
+
 function LotCard({ lot, showConfirmReceipt }: { lot: LotRow; showConfirmReceipt: boolean }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
+  const naLabels = FT2_NA_LABELS.filter((f) => lot.datasheet?.[f.key]).map((f) => f.label);
+  const awaitingShipment =
+    showConfirmReceipt && lot.source !== "bcp_manual_entry" && !lot.sample_shipped_at && !lot.sample_2kg_confirmed_at;
 
   async function saveEudr(formData: FormData) {
     "use server";
@@ -235,6 +255,10 @@ function LotCard({ lot, showConfirmReceipt }: { lot: LotRow; showConfirmReceipt:
           </>
         )}
       </p>
+      {naLabels.length > 0 && (
+        <p className={styles.meta}>Declarado &quot;no lo sé / no aplica&quot;: {naLabels.join(" · ")}</p>
+      )}
+      {awaitingShipment && <p className={styles.meta}>Ficha completa · esperando que el productor confirme el envío de la muestra</p>}
       {lot.sample_shipped_at && !lot.sample_2kg_confirmed_at && (
         <p className={styles.meta}>
           Muestra enviada el {new Date(lot.sample_shipped_at).toLocaleDateString("es-CO")} · pendiente de confirmar recibo

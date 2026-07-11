@@ -1,10 +1,13 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, confirmSampleReceived, updateLotEudr } from "../actions";
+import { logProducerComm } from "../commActions";
 import { fincaEudrStatus, lotEudrStatus, type FincaEudrFields, type EudrStatus } from "@/lib/eudr";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { ProducerContactLine } from "../ProducerContactLine";
 import styles from "../shared.module.css";
+
+type CommRow = { id: string; context_label: string | null; note: string; created_at: string };
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
 
@@ -131,7 +134,19 @@ export default async function BcpLotesPage() {
   ]);
 
   const lotRows = (lots as LotRow[] | null) ?? [];
-  const producers = await fetchProducerContacts(service, lotRows.map((l) => l.producer_id));
+  const [producers, { data: comms }] = await Promise.all([
+    fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
+    service
+      .from("producer_comm_log")
+      .select("id, context_label, note, created_at")
+      .in("context_label", lotRows.map((l) => `Lote ${l.name}`))
+      .order("created_at", { ascending: false }),
+  ]);
+  const commsByContext = new Map<string, CommRow[]>();
+  for (const c of (comms as CommRow[] | null) ?? []) {
+    const key = c.context_label ?? "";
+    commsByContext.set(key, [...(commsByContext.get(key) ?? []), c]);
+  }
   const byBucket = new Map<Bucket, LotRow[]>(COLUMNS.map((c) => [c.id, []]));
   for (const lot of lotRows) byBucket.get(bucketOf(lot))!.push(lot);
 
@@ -208,7 +223,13 @@ export default async function BcpLotesPage() {
                 </div>
                 <div className={styles.columnList}>
                   {colLots.map((lot) => (
-                    <LotCard key={lot.id} lot={lot} producer={producers.get(lot.producer_id)} showConfirmReceipt={col.id === "muestra"} />
+                    <LotCard
+                      key={lot.id}
+                      lot={lot}
+                      producer={producers.get(lot.producer_id)}
+                      comms={commsByContext.get(`Lote ${lot.name}`) ?? []}
+                      showConfirmReceipt={col.id === "muestra"}
+                    />
                   ))}
                 </div>
               </div>
@@ -227,7 +248,17 @@ const FT2_NA_LABELS: { key: "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na" | "ft2_b3_na
   { key: "ft2_b3_na", label: "B3 Granulometría" },
 ];
 
-function LotCard({ lot, producer, showConfirmReceipt }: { lot: LotRow; producer: ProducerContact | undefined; showConfirmReceipt: boolean }) {
+function LotCard({
+  lot,
+  producer,
+  comms,
+  showConfirmReceipt,
+}: {
+  lot: LotRow;
+  producer: ProducerContact | undefined;
+  comms: CommRow[];
+  showConfirmReceipt: boolean;
+}) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
   const naLabels = FT2_NA_LABELS.filter((f) => lot.datasheet?.[f.key]).map((f) => f.label);
@@ -237,6 +268,10 @@ function LotCard({ lot, producer, showConfirmReceipt }: { lot: LotRow; producer:
   async function saveEudr(formData: FormData) {
     "use server";
     await updateLotEudr(lot.id, formData);
+  }
+  async function addComm(formData: FormData) {
+    "use server";
+    await logProducerComm(lot.producer_id, `Lote ${lot.name}`, formData);
   }
 
   return (
@@ -377,6 +412,23 @@ function LotCard({ lot, producer, showConfirmReceipt }: { lot: LotRow; producer:
 
           <button className="btn btn-sm btn-solid" type="submit">Guardar información EUDR</button>
         </form>
+      </details>
+
+      <details style={{ marginTop: 10 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 12.5 }}>Registro de comunicación ({comms.length})</summary>
+        <form action={addComm} style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input name="note" required placeholder="Nota interna sobre este lote…" style={{ flex: 1, minWidth: 180 }} />
+          <button className="btn btn-sm btn-solid" type="submit">Registrar</button>
+        </form>
+        {comms.length > 0 && (
+          <ul className={styles.auditList} style={{ marginTop: 10 }}>
+            {comms.map((c) => (
+              <li key={c.id}>
+                <b>{new Date(c.created_at).toLocaleDateString("es-CO")}</b> · {c.note}
+              </li>
+            ))}
+          </ul>
+        )}
       </details>
     </div>
   );

@@ -110,6 +110,11 @@ export type ContractRelease = {
 
 export type HumidityReading = { month: number; pct: number; flagged: boolean; reportedAt: string };
 
+// A note CTC left for this producer (producer_comm_log) -- contextLabel is
+// null for a general note, or "Finca X" / "Lote Y" when left from that
+// specific review card. Read-only from the producer's side.
+export type FeedbackNote = { id: string; contextLabel: string | null; note: string; createdAt: string };
+
 export type ProducerContract = {
   id: string;
   lotId: string;

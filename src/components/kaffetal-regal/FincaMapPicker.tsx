@@ -1,12 +1,17 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { GoogleMap, Marker, Polygon, useJsApiLoader } from "@react-google-maps/api";
+import { useCallback, useRef, useState } from "react";
+import { GoogleMap, Marker, Polygon, Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import { FieldInfo } from "./ficha/panes/FieldInfo";
 
 // Piedecuesta, Santander -- CTC's home region, used only as the map's default
 // center before a finca has any coordinates yet.
 const DEFAULT_CENTER = { lat: 6.9989, lng: -73.0499 };
 const MAP_STYLE = { width: "100%", height: 320, borderRadius: 10 };
+// Must be a module-level constant -- passing a fresh array literal as the
+// `libraries` prop on every render makes @react-google-maps/api's loader
+// think the config changed and reload the whole script in a loop.
+const LIBRARIES: "places"[] = ["places"];
 
 export type PolygonPoint = { lat: number; lng: number };
 
@@ -29,7 +34,11 @@ export function FincaMapPicker({
   const { isLoaded, loadError } = useJsApiLoader({
     id: "ctc-google-maps-script",
     googleMapsApiKey: apiKey || "",
+    libraries: LIBRARIES,
   });
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
   // Vertices being placed for a not-yet-committed polygon -- click-to-add, no
   // Google Maps "drawing" library/DrawingManager involved (that overlay was
   // crashing this environment's renderer; a plain accumulate-on-click list
@@ -37,6 +46,11 @@ export function FincaMapPicker({
   // no dependency on Google's own drawing-mode UI).
   const [draftPoints, setDraftPoints] = useState<PolygonPoint[] | null>(null);
   const drawing = draftPoints !== null;
+  // Manual-entry mode: typed/GPS-captured lat,lng rows instead of clicking on
+  // the map -- useful when a producer already has coordinates from a handheld
+  // GPS or another app, or wants to walk each corner and capture it directly.
+  const [manualPoints, setManualPoints] = useState<{ lat: string; lng: string }[] | null>(null);
+  const manualMode = manualPoints !== null;
 
   const parsedLat = Number(lat);
   const parsedLng = Number(lng);
@@ -70,6 +84,71 @@ export function FincaMapPicker({
     setDraftPoints(null);
   }
 
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setGeoError("Este navegador no admite geolocalización.");
+      return;
+    }
+    setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (needsPolygon) {
+          if (drawing) setDraftPoints((pts) => [...(pts ?? []), point]);
+          else mapRef.current?.panTo(point);
+        } else {
+          onChangePoint(String(point.lat), String(point.lng));
+        }
+        mapRef.current?.panTo(point);
+      },
+      () => setGeoError("No se pudo obtener su ubicación. Revise los permisos de ubicación del navegador."),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  function handlePlaceChanged() {
+    const place = autocompleteRef.current?.getPlace();
+    const loc = place?.geometry?.location;
+    if (!loc) return;
+    const point = { lat: loc.lat(), lng: loc.lng() };
+    if (!needsPolygon) onChangePoint(String(point.lat), String(point.lng));
+    mapRef.current?.panTo(point);
+    mapRef.current?.setZoom(16);
+  }
+
+  function startManualEntry() {
+    setManualPoints((polygon ?? []).map((p) => ({ lat: String(p.lat), lng: String(p.lng) })));
+  }
+  function addManualRow() {
+    setManualPoints((rows) => [...(rows ?? []), { lat: "", lng: "" }]);
+  }
+  function addManualRowFromLocation() {
+    if (!navigator.geolocation) {
+      setGeoError("Este navegador no admite geolocalización.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setManualPoints((rows) => [...(rows ?? []), { lat: String(pos.coords.latitude), lng: String(pos.coords.longitude) }]);
+      },
+      () => setGeoError("No se pudo obtener su ubicación. Revise los permisos de ubicación del navegador."),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+  function updateManualRow(i: number, patch: Partial<{ lat: string; lng: string }>) {
+    setManualPoints((rows) => rows?.map((r, idx) => (idx === i ? { ...r, ...patch } : r)) ?? null);
+  }
+  function removeManualRow(i: number) {
+    setManualPoints((rows) => rows?.filter((_, idx) => idx !== i) ?? null);
+  }
+  function saveManualPoints() {
+    const points = (manualPoints ?? [])
+      .map((r) => ({ lat: Number(r.lat.replace(",", ".")), lng: Number(r.lng.replace(",", ".")) }))
+      .filter((p) => !isNaN(p.lat) && !isNaN(p.lng));
+    if (points.length >= 3) onChangePolygon(points);
+    setManualPoints(null);
+  }
+
   if (!apiKey) {
     return (
       <p style={{ fontSize: 12.5, color: "var(--muted)", fontStyle: "italic" }}>
@@ -86,11 +165,25 @@ export function FincaMapPicker({
 
   return (
     <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+        <Autocomplete
+          onLoad={(a) => { autocompleteRef.current = a; }}
+          onPlaceChanged={handlePlaceChanged}
+          options={{ componentRestrictions: { country: "co" } }}
+        >
+          <input type="text" placeholder="Buscar dirección, vereda o municipio…" style={{ minWidth: 220, flex: 1 }} />
+        </Autocomplete>
+        <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>
+          📍 Usar mi ubicación actual
+        </button>
+      </div>
+      {geoError && <p style={{ fontSize: 11.5, color: "var(--red)", marginBottom: 6 }}>{geoError}</p>}
       <GoogleMap
         mapContainerStyle={MAP_STYLE}
         center={center}
         zoom={hasPoint || polygon?.length ? 15 : 8}
         onClick={handleMapClick}
+        onLoad={(map) => { mapRef.current = map; }}
         options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false, mapTypeId: "hybrid" }}
       >
         {!needsPolygon && hasPoint && <Marker position={center} draggable onDragEnd={handleMarkerDragEnd} />}
@@ -111,15 +204,19 @@ export function FincaMapPicker({
       </GoogleMap>
       {!needsPolygon && (
         <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
-          Haga clic en el mapa o arrastre el pin para ajustar la ubicación.
+          Busque su dirección, use su ubicación actual, o haga clic en el mapa / arrastre el pin para ajustar.
         </p>
       )}
-      {needsPolygon && (
+      {needsPolygon && !manualMode && (
         <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {!drawing ? (
             <>
               <button type="button" className="btn btn-sm" onClick={() => setDraftPoints([])}>
                 {polygon?.length ? "Redibujar polígono" : "Dibujar polígono"}
+              </button>
+              <button type="button" className="btn btn-sm" onClick={startManualEntry}>
+                Ingresar puntos manualmente
+                <FieldInfo text="Alternativa a dibujar en el mapa: agregue cada esquina del lote como un punto de coordenadas. Puede escribir las coordenadas si ya las tiene (de un GPS de mano u otra app), o caminar hasta cada esquina y presionar 'Usar mi ubicación aquí' para capturarla automáticamente. Necesita al menos 3 puntos, en orden alrededor del perímetro del lote." />
               </button>
               {polygon && polygon.length > 0 && (
                 <button type="button" className="btn btn-sm" onClick={() => onChangePolygon(null)}>
@@ -135,14 +232,52 @@ export function FincaMapPicker({
               <button type="button" className="btn btn-sm btn-solid" onClick={finishDrawing} disabled={(draftPoints?.length ?? 0) < 3}>
                 Terminar polígono
               </button>
+              <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>
+                📍 Agregar mi ubicación aquí
+              </button>
               <button type="button" className="btn btn-sm" onClick={() => setDraftPoints(null)}>
                 Cancelar
               </button>
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
-                Haga clic en el mapa para marcar cada vértice ({draftPoints?.length ?? 0} hasta ahora, mínimo 3).
+                Haga clic en el mapa o use su ubicación para marcar cada vértice ({draftPoints?.length ?? 0} hasta ahora, mínimo 3).
               </p>
             </>
           )}
+        </div>
+      )}
+      {needsPolygon && manualMode && (
+        <div style={{ marginTop: 10 }}>
+          <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "0 0 6px" }}>
+            Ingrese cada vértice del lote en orden alrededor del perímetro (mínimo 3).
+          </p>
+          {(manualPoints ?? []).map((row, i) => (
+            <div key={i} style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+              <span style={{ fontSize: 11.5, color: "var(--muted)", width: 18 }}>{i + 1}.</span>
+              <input
+                type="text"
+                value={row.lat}
+                onChange={(e) => updateManualRow(i, { lat: e.target.value })}
+                placeholder="Latitud"
+                style={{ width: 130 }}
+              />
+              <input
+                type="text"
+                value={row.lng}
+                onChange={(e) => updateManualRow(i, { lng: e.target.value })}
+                placeholder="Longitud"
+                style={{ width: 130 }}
+              />
+              <button type="button" className={"btn btn-sm"} onClick={() => removeManualRow(i)}>✕</button>
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+            <button type="button" className="btn btn-sm" onClick={addManualRow}>+ Agregar punto</button>
+            <button type="button" className="btn btn-sm" onClick={addManualRowFromLocation}>📍 Usar mi ubicación aquí</button>
+            <button type="button" className="btn btn-sm btn-solid" onClick={saveManualPoints} disabled={(manualPoints?.length ?? 0) < 3}>
+              Guardar polígono
+            </button>
+            <button type="button" className="btn btn-sm" onClick={() => setManualPoints(null)}>Cancelar</button>
+          </div>
         </div>
       )}
     </div>

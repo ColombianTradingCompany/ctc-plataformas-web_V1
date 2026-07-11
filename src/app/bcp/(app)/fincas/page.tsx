@@ -4,21 +4,12 @@ import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
+import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
+import { FincaEudrEditor } from "./FincaEudrEditor";
 import styles from "../shared.module.css";
 
-const EVIDENCE_TYPES: [string, string][] = [
-  ["satelital", "Imágenes satelitales"], ["observatory", "EU Observatory 2020"],
-  ["registros", "Registros productivos"], ["terreno", "Verificación en campo"], ["catastro", "Mapas catastrales"],
-];
-const LEGAL_AREAS: [string, string][] = [
-  ["suelo", "Uso del suelo y forestal"], ["ambiental", "Protección ambiental"],
-  ["laboral", "Laborales y humanos"], ["clpi", "CLPI / terceros"], ["fiscal", "Fiscal / anticorrupción / aduanas"],
-];
-const SUSTAINABILITY_TAGS: [string, string][] = [
-  ["sa8000", "SA 8000 evaluación voluntaria"], ["familiar", "Agricultura familiar campesina"],
-  ["inclusion", "Inclusión de mujeres y jóvenes"], ["paisaje", "Conservación de paisajes"],
-];
+type CommRow = { id: string; context_label: string | null; note: string; created_at: string };
 
 type FincaRow = {
   id: string;
@@ -90,10 +81,20 @@ export default async function BcpFincasPage() {
     .order("created_at", { ascending: true });
 
   const fincaRows = (pendingFincas as FincaRow[] | null) ?? [];
-  const [legalDocUrlByAssetId, producers] = await Promise.all([
+  const [legalDocUrlByAssetId, producers, { data: comms }] = await Promise.all([
     signedKaffetalMediaUrls(service, fincaRows.map((f) => f.eudr_legal_docs_asset_id)),
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
+    service
+      .from("producer_comm_log")
+      .select("id, context_label, note, created_at")
+      .in("context_label", fincaRows.map((f) => `Finca ${f.name}`))
+      .order("created_at", { ascending: false }),
   ]);
+  const commsByContext = new Map<string, CommRow[]>();
+  for (const c of (comms as CommRow[] | null) ?? []) {
+    const key = c.context_label ?? "";
+    commsByContext.set(key, [...(commsByContext.get(key) ?? []), c]);
+  }
 
   return (
     <div>
@@ -115,6 +116,11 @@ export default async function BcpFincasPage() {
             "use server";
             await updateFincaEudr(finca.id, formData);
           }
+          async function addComm(formData: FormData) {
+            "use server";
+            await logProducerComm(finca.producer_id, `Finca ${finca.name}`, formData);
+          }
+          const comms = commsByContext.get(`Finca ${finca.name}`) ?? [];
 
           return (
             <div className={styles.card} key={finca.id} style={{ flexDirection: "column", alignItems: "stretch" }}>
@@ -152,113 +158,29 @@ export default async function BcpFincasPage() {
                 </div>
               </div>
 
+              <FincaEudrEditor
+                values={finca}
+                legalDocUrl={finca.eudr_legal_docs_asset_id ? legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) : undefined}
+                saveAction={saveEudr}
+              />
+
               <details style={{ marginTop: 14 }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13.5 }}>
-                  Completar información EUDR (asistencia BCP)
+                <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
+                  Registro de comunicación ({comms.length})
                 </summary>
-                <form action={saveEudr} style={{ marginTop: 14 }}>
-                  <div className={styles.formGrid}>
-                    <div className={styles.field}>
-                      <label>Latitud (WGS84)</label>
-                      <input name="eudr_lat" defaultValue={finca.eudr_lat ?? ""} placeholder="4.712345" />
-                    </div>
-                    <div className={styles.field}>
-                      <label>Longitud (WGS84)</label>
-                      <input name="eudr_lng" defaultValue={finca.eudr_lng ?? ""} placeholder="-75.612345" />
-                    </div>
-                    <div className={styles.field}>
-                      <label>Fecha de establecimiento del cultivo</label>
-                      <input type="date" name="eudr_planting_date" defaultValue={finca.eudr_planting_date ?? ""} />
-                    </div>
-                    <div className={styles.field}>
-                      <label>Sistema productivo</label>
-                      <select name="eudr_production_system" defaultValue={finca.eudr_production_system ?? ""}>
-                        <option value="">Seleccione…</option>
-                        <option value="sombra">Café bajo sombra</option>
-                        <option value="agroforestal">Agroforestal</option>
-                        <option value="tradicional">Tradicional / pleno sol</option>
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label>¿Libre de deforestación posterior al 31/12/2020?</label>
-                      <select name="eudr_deforestation_free" defaultValue={triSelectValue(finca.eudr_deforestation_free)}>
-                        <option value="">Sin definir</option>
-                        <option value="si">Sí</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label>¿Producción en áreas legalmente establecidas?</label>
-                      <select name="eudr_legal_production" defaultValue={triSelectValue(finca.eudr_legal_production)}>
-                        <option value="">Sin definir</option>
-                        <option value="si">Sí</option>
-                        <option value="no">No</option>
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label>Tenencia de la tierra</label>
-                      <select name="eudr_tenure" defaultValue={finca.eudr_tenure ?? ""}>
-                        <option value="">Seleccione…</option>
-                        <option value="propietario">Propietario</option>
-                        <option value="poseedor">Poseedor reconocido</option>
-                        <option value="asociacion">Asociación</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className={styles.field}>
-                    <label>Evidencia disponible</label>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {EVIDENCE_TYPES.map(([key, label]) => (
-                        <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                          <input type="checkbox" name="eudr_evidence_types" value={key} defaultChecked={finca.eudr_evidence_types?.includes(key)} /> {label}
-                        </label>
-                      ))}
-                    </div>
-                    <textarea name="eudr_evidence_notes" defaultValue={finca.eudr_evidence_notes ?? ""} placeholder="Fechas, fuente, quién verificó…" />
-                  </div>
-
-                  <div className={styles.field}>
-                    <label>Áreas de legislación verificadas</label>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {LEGAL_AREAS.map(([key, label]) => (
-                        <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                          <input type="checkbox" name="eudr_legal_areas" value={key} defaultChecked={finca.eudr_legal_areas?.includes(key)} /> {label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div className={styles.field}>
-                    <label>Documento de respaldo</label>
-                    {finca.eudr_legal_docs_filename ? (
-                      <p className={styles.meta} style={{ margin: 0 }}>
-                        {finca.eudr_legal_docs_filename}
-                        {finca.eudr_legal_docs_asset_id && legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) && (
-                          <>
-                            {" · "}
-                            <a href={legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id)} target="_blank" rel="noopener noreferrer">ver</a>
-                          </>
-                        )}
-                      </p>
-                    ) : (
-                      <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
-                    )}
-                  </div>
-
-                  <div className={styles.field}>
-                    <label>Sostenibilidad y enfoque social</label>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {SUSTAINABILITY_TAGS.map(([key, label]) => (
-                        <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                          <input type="checkbox" name="eudr_sustainability_tags" value={key} defaultChecked={finca.eudr_sustainability_tags?.includes(key)} /> {label}
-                        </label>
-                      ))}
-                    </div>
-                    <textarea name="eudr_sustainability_notes" defaultValue={finca.eudr_sustainability_notes ?? ""} />
-                  </div>
-
-                  <button className="btn btn-solid" type="submit">Guardar información EUDR</button>
+                <form action={addComm} style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <input name="note" required placeholder="Nota interna sobre esta finca…" style={{ flex: 1, minWidth: 200 }} />
+                  <button className="btn btn-sm btn-solid" type="submit">Registrar</button>
                 </form>
+                {comms.length > 0 && (
+                  <ul className={styles.auditList} style={{ marginTop: 10 }}>
+                    {comms.map((c) => (
+                      <li key={c.id}>
+                        <b>{new Date(c.created_at).toLocaleDateString("es-CO")}</b> · {c.note}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </details>
             </div>
           );
@@ -266,10 +188,4 @@ export default async function BcpFincasPage() {
       </div>
     </div>
   );
-}
-
-function triSelectValue(v: boolean | null): string {
-  if (v === true) return "si";
-  if (v === false) return "no";
-  return "";
 }

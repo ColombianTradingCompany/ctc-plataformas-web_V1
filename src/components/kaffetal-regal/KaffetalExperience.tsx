@@ -20,6 +20,7 @@ import {
   type GeneralInfo,
   type Lot,
   type ProducerContract,
+  type FeedbackNote,
 } from "./data";
 
 type View = "landing" | "app" | "ficha";
@@ -200,6 +201,7 @@ function Experience() {
   const [fincas, setFincas] = useState<Finca[]>([]);
   const [lots, setLots] = useState<Lot[]>([]);
   const [contracts, setContracts] = useState<ProducerContract[]>([]);
+  const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
   const [curLotId, setCurLotId] = useState<string | null>(null);
 
   const [fincaModalOpen, setFincaModalOpen] = useState(false);
@@ -208,7 +210,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -225,6 +227,8 @@ function Experience() {
           supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
           // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
           supabase.from("lot_evaluations").select("lot_id, source, status, sca_total, factor_rendimiento"),
+          // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
+          supabase.from("producer_comm_log").select("id, context_label, note, created_at").order("created_at", { ascending: false }),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -333,6 +337,14 @@ function Experience() {
         producerVideoUrl: producerProfile?.video_asset_id ? urlByAssetId.get(producerProfile.video_asset_id) ?? null : null,
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
+      setFeedback(
+        ((commRows as { id: string; context_label: string | null; note: string; created_at: string }[] | null) ?? []).map((c) => ({
+          id: c.id,
+          contextLabel: c.context_label,
+          note: c.note,
+          createdAt: c.created_at,
+        }))
+      );
     },
     [supabase]
   );
@@ -357,6 +369,7 @@ function Experience() {
         setFincas([]);
         setLots([]);
         setContracts([]);
+        setFeedback([]);
         setGi(EMPTY_GI);
         setCurLotId(null);
         setView("landing");
@@ -717,6 +730,7 @@ function Experience() {
           fincas={fincas}
           gi={gi}
           contracts={contracts}
+          feedback={feedback}
           onBackHome={() => setView("landing")}
           onLogout={logout}
           onNewLot={newLot}

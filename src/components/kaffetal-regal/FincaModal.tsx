@@ -274,6 +274,14 @@ function FincaModalBody({
         <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
           Reglamento (UE) 2023/1115. Este predio se declara una sola vez y se reutiliza en todos los lotes que salgan de él.
         </p>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", margin: "6px 0 14px" }}>
+          <a href="/docs/eudr/boletin-25-novedades-exportadores-ue-mayo-2026.pdf" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5 }}>
+            📄 Boletín No. 25 · Novedades para exportadores a la UE (may. 2026)
+          </a>
+          <a href="/docs/eudr/eudr-guidance-document-deforestation-free-2026.pdf" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5 }}>
+            📄 Guía oficial EUDR · Reglamento de deforestación (2026)
+          </a>
+        </div>
 
         <div className={styles.wide} style={{ marginTop: 14, marginBottom: 14 }}>
           <label>{needsPolygon ? "Polígono del predio (> 4 ha)" : "Ubicación del predio"}</label>
@@ -311,11 +319,17 @@ function FincaModalBody({
         </div>
 
         <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>El predio no presenta deforestación posterior al 31/12/2020</label>
+          <label>
+            El predio no presenta deforestación posterior al 31/12/2020
+            <FieldInfo text="El EUDR exige que la respuesta sea Sí — es la fecha de corte del reglamento y no admite excepciones. 'No sé' no es una respuesta válida: si no tiene certeza, reúna la evidencia (fecha de siembra, fotos históricas, verificación satelital) antes de declarar, ya que una respuesta 'No' o sin sustento bloquea la exportación de este predio bajo EUDR." />
+          </label>
           <EudrYesNo value={eudr.eudrDeforestationFree} onChange={(v) => patchEudr({ eudrDeforestationFree: v })} />
         </div>
         <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>Producción realizada en áreas legalmente establecidas</label>
+          <label>
+            Producción realizada en áreas legalmente establecidas
+            <FieldInfo text="El EUDR exige que la respuesta sea Sí — el predio debe cumplir con la legislación colombiana aplicable (uso del suelo, tenencia de la tierra, laboral, ambiental, tributaria, de derechos de comunidades). 'No sé' no es una respuesta válida: verifique con las autoridades locales o su documento de respaldo antes de declarar." />
+          </label>
           <EudrYesNo value={eudr.eudrLegalProduction} onChange={(v) => patchEudr({ eudrLegalProduction: v })} />
         </div>
 

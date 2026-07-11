@@ -22,17 +22,9 @@ const INTAKE_STAGE_LABEL: Record<string, string> = {
 };
 const INTAKE_STAGES = Object.keys(INTAKE_STAGE_LABEL);
 
-const CHANNELS: [string, string][] = [
-  ["whatsapp", "WhatsApp"],
-  ["llamada", "Llamada"],
-  ["correo", "Correo"],
-  ["presencial", "Presencial"],
-  ["otro", "Otro"],
-];
-
 type FincaRow = { id: string; name: string; producer_id: string; status: string; municipio: string | null };
 type LotRow = { id: string; name: string; producer_id: string; stage: string };
-type CommRow = { id: string; producer_id: string; channel: string; note: string; created_at: string };
+type CommRow = { id: string; producer_id: string; context_label: string | null; note: string; created_at: string };
 
 export default async function BcpProductoresPage() {
   const service = createServiceRoleClient();
@@ -41,7 +33,7 @@ export default async function BcpProductoresPage() {
     service.from("profiles").select("id").eq("role", "producer"),
     service.from("fincas").select("id, name, producer_id, status, municipio").order("created_at", { ascending: true }),
     service.from("lots").select("id, name, producer_id, stage").in("stage", INTAKE_STAGES).order("created_at", { ascending: false }),
-    service.from("producer_comm_log").select("id, producer_id, channel, note, created_at").order("created_at", { ascending: false }),
+    service.from("producer_comm_log").select("id, producer_id, context_label, note, created_at").order("created_at", { ascending: false }),
   ]);
 
   const producerIds = ((producerProfiles as { id: string }[] | null) ?? []).map((p) => p.id);
@@ -68,7 +60,7 @@ export default async function BcpProductoresPage() {
 
           async function addComm(formData: FormData) {
             "use server";
-            await logProducerComm(id, formData);
+            await logProducerComm(id, null, formData);
           }
 
           return (
@@ -122,29 +114,23 @@ export default async function BcpProductoresPage() {
                   Registro de comunicación ({producerComms.length})
                 </summary>
                 <form action={addComm} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <div className={styles.field} style={{ margin: 0, minWidth: 130 }}>
-                    <label>Canal</label>
-                    <select name="channel" defaultValue="whatsapp">
-                      {CHANNELS.map(([v, label]) => (
-                        <option key={v} value={v}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                   <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 200 }}>
                     <label>Nota</label>
-                    <input name="note" required placeholder="Resumen de la conversación…" />
+                    <input name="note" required placeholder="Nota interna sobre este productor…" />
                   </div>
                   <button className="btn btn-sm btn-solid" type="submit">
                     Registrar
                   </button>
                 </form>
+                <p style={{ fontSize: 11, color: "var(--muted)", margin: "6px 0 0" }}>
+                  El productor puede ver estas notas en su panel, bajo &quot;Retroalimentación y ayuda&quot;.
+                </p>
                 {producerComms.length > 0 && (
                   <ul className={styles.auditList} style={{ marginTop: 12 }}>
                     {producerComms.map((cm) => (
                       <li key={cm.id}>
-                        <b>{new Date(cm.created_at).toLocaleDateString("es-CO")}</b> · {cm.channel} · {cm.note}
+                        <b>{new Date(cm.created_at).toLocaleDateString("es-CO")}</b>
+                        {cm.context_label && ` · ${cm.context_label}`} · {cm.note}
                       </li>
                     ))}
                   </ul>

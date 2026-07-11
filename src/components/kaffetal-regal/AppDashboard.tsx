@@ -2,10 +2,22 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, type Finca, type GeneralInfo, type Lot, type ProducerContract } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
+
+// Groups feedback notes by their context ("Finca X" / "Lote Y" / general),
+// most-recently-active group first, notes within a group newest first
+// (matches the order they already arrive in from the server query).
+function groupFeedback(feedback: FeedbackNote[]): [string, FeedbackNote[]][] {
+  const groups = new Map<string, FeedbackNote[]>();
+  for (const n of feedback) {
+    const key = n.contextLabel ?? "General";
+    groups.set(key, [...(groups.get(key) ?? []), n]);
+  }
+  return [...groups.entries()];
+}
 
 // The reference is long, so only the 7 characters that actually go on the
 // physical sample package are bolded -- same convention used in the Ficha.
@@ -22,6 +34,7 @@ export function AppDashboard({
   fincas,
   gi,
   contracts,
+  feedback,
   onBackHome,
   onLogout,
   onNewLot,
@@ -37,6 +50,7 @@ export function AppDashboard({
   fincas: Finca[];
   gi: GeneralInfo;
   contracts: ProducerContract[];
+  feedback: FeedbackNote[];
   onBackHome: () => void;
   onLogout: () => void;
   onNewLot: () => void;
@@ -243,6 +257,24 @@ export function AppDashboard({
               Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
             </div>
           </div>
+
+          {feedback.length > 0 && (
+            <div className={`${styles.acard} ${styles.wide}`}>
+              <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
+              {groupFeedback(feedback).map(([group, notes]) => (
+                <div key={group} style={{ marginTop: 10 }}>
+                  <h5>{group}</h5>
+                  <div className={styles.alist}>
+                    {notes.map((n) => (
+                      <span key={n.id}>
+                        {new Date(n.createdAt).toLocaleDateString("es-CO")}: {n.note}<br />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

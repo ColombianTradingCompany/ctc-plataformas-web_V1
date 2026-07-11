@@ -35,6 +35,7 @@ type FincaRow = {
   eudr_legal_docs_filename: string | null;
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
+  eudr_google_earth_url: string | null;
   created_at: string;
 };
 
@@ -75,7 +76,7 @@ export default async function BcpFincasPage() {
       `id, name, producer_id, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, created_at`
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, created_at`
     )
     .eq("status", "pending_review")
     .order("created_at", { ascending: true });
@@ -159,6 +160,7 @@ export default async function BcpFincasPage() {
               </div>
 
               <FincaEudrEditor
+                fincaName={finca.name}
                 values={finca}
                 legalDocUrl={finca.eudr_legal_docs_asset_id ? legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) : undefined}
                 saveAction={saveEudr}

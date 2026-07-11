@@ -215,7 +215,7 @@ function Experience() {
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
             .from("producer_profiles")
-            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id")
+            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids")
             .eq("profile_id", uid)
             .single(),
           supabase.from("fincas").select("*").eq("producer_id", uid).order("created_at", { ascending: true }),
@@ -236,6 +236,7 @@ function Experience() {
       const assetIds = [
         producerProfile?.avatar_asset_id,
         producerProfile?.video_asset_id,
+        ...(producerProfile?.gallery_asset_ids ?? []),
         ...fincaRowList.map((f) => f.video_asset_id),
         ...fincaRowList.map((f) => f.eudr_legal_docs_asset_id),
         ...lotRowList.map((l) => l.video_asset_id),
@@ -335,6 +336,8 @@ function Experience() {
         avatarUrl: producerProfile?.avatar_asset_id ? urlByAssetId.get(producerProfile.avatar_asset_id) ?? null : null,
         producerVideoAssetId: producerProfile?.video_asset_id ?? null,
         producerVideoUrl: producerProfile?.video_asset_id ? urlByAssetId.get(producerProfile.video_asset_id) ?? null : null,
+        galleryAssetIds: producerProfile?.gallery_asset_ids ?? [],
+        galleryUrls: (producerProfile?.gallery_asset_ids ?? []).map((id: string) => urlByAssetId.get(id) ?? ""),
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
       setFeedback(
@@ -605,6 +608,46 @@ function Experience() {
     showToast("Foto de perfil actualizada ✓");
   }
 
+  async function uploadGalleryPhoto(index: number, file: File) {
+    if (!userId) return;
+    const result = await uploadKaffetalMedia(supabase, userId, `gallery-${index}`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const nextIds = [...gi.galleryAssetIds];
+    nextIds[index] = result.assetId;
+    const { error } = await supabase.from("producer_profiles").update({ gallery_asset_ids: nextIds }).eq("profile_id", userId);
+    if (error) {
+      showToast("No se pudo guardar la foto.");
+      return;
+    }
+    const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
+    setGi((g) => {
+      const ids = [...g.galleryAssetIds];
+      const urls = [...g.galleryUrls];
+      ids[index] = result.assetId;
+      urls[index] = urlByAssetId.get(result.assetId) ?? "";
+      return { ...g, galleryAssetIds: ids, galleryUrls: urls };
+    });
+    showToast("Foto agregada ✓");
+  }
+
+  async function removeGalleryPhoto(index: number) {
+    if (!userId) return;
+    const nextIds = gi.galleryAssetIds.filter((_, i) => i !== index);
+    const { error } = await supabase.from("producer_profiles").update({ gallery_asset_ids: nextIds }).eq("profile_id", userId);
+    if (error) {
+      showToast("No se pudo quitar la foto.");
+      return;
+    }
+    setGi((g) => ({
+      ...g,
+      galleryAssetIds: g.galleryAssetIds.filter((_, i) => i !== index),
+      galleryUrls: g.galleryUrls.filter((_, i) => i !== index),
+    }));
+  }
+
   async function uploadProducerVideo(file: File) {
     if (!userId) return;
     const result = await uploadKaffetalMedia(supabase, userId, "producer-video", file);
@@ -791,6 +834,8 @@ function Experience() {
         onSave={saveInfo}
         onUploadAvatar={uploadAvatar}
         onUploadVideo={uploadProducerVideo}
+        onUploadGalleryPhoto={uploadGalleryPhoto}
+        onRemoveGalleryPhoto={removeGalleryPhoto}
       />
     </div>
   );

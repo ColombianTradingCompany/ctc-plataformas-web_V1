@@ -1,11 +1,14 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, confirmSampleReceived, updateLotEudr } from "../actions";
 import { logProducerComm } from "../commActions";
-import { fincaEudrStatus, lotEudrStatus, type FincaEudrFields, type EudrStatus } from "@/lib/eudr";
+import { fincaEudrStatus, lotEudrStatus, deriveLotRiskLevel, type FincaEudrFields, type EudrStatus } from "@/lib/eudr";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
+import { FieldInfo } from "@/components/kaffetal-regal/ficha/panes/FieldInfo";
 import { ProducerContactLine } from "../ProducerContactLine";
 import styles from "../shared.module.css";
+
+const RISK_LEVEL_LABEL: Record<string, string> = { insignificante: "Insignificante", no_insignificante: "No insignificante" };
 
 type CommRow = { id: string; context_label: string | null; note: string; created_at: string };
 
@@ -261,6 +264,7 @@ function LotCard({
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
+  const derivedRiskLevel = deriveLotRiskLevel(lot);
   const naLabels = FT2_NA_LABELS.filter((f) => lot.datasheet?.[f.key]).map((f) => f.label);
   const awaitingShipment =
     showConfirmReceipt && lot.source !== "bcp_manual_entry" && !lot.sample_shipped_at && !lot.sample_2kg_confirmed_at;
@@ -386,12 +390,13 @@ function LotCard({
             </select>
           </div>
           <div className={styles.field}>
-            <label>Nivel de riesgo determinado</label>
-            <select name="eudr_risk_level" defaultValue={lot.eudr_risk_level ?? ""}>
-              <option value="">Seleccione…</option>
-              <option value="insignificante">Insignificante</option>
-              <option value="no_insignificante">No insignificante</option>
-            </select>
+            <label>
+              Nivel de riesgo determinado
+              <FieldInfo text="Se calcula automáticamente a partir de los indicios de ilegalidad, la disponibilidad de documentos y el riesgo país (Art. 10-11 EUDR) -- no se selecciona a mano. Si queda en 'No insignificante', puede bajar a 'Insignificante' marcando la mitigación como efectiva abajo." />
+            </label>
+            <p className={styles.meta} style={{ margin: 0, fontWeight: 600 }}>
+              {RISK_LEVEL_LABEL[derivedRiskLevel] ?? "Pendiente (defina riesgo país, indicios y documentos)"}
+            </p>
           </div>
           <div className={styles.field}>
             <label>Acciones de mitigación</label>

@@ -95,6 +95,50 @@ export function AppDashboard({
         <p className="eyebrow">Panel del productor</p>
         <h1 className={styles.h1}>Buenos días, {userName}</h1>
         <div className={styles.ag}>
+          <div className={styles.acard}>
+            <span className={styles.k}>Información general · se registra una sola vez</span>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginTop: 8 }}>
+              {gi.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                <img src={gi.avatarUrl} alt={gi.agri} style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid var(--line)" }} />
+              ) : (
+                <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--paper)", border: "1.5px dashed var(--line)", flexShrink: 0 }} />
+              )}
+              <div className={styles.alist}>
+                Razón social: <b>{gi.razon}</b><br />
+                NIT / CC: <b>{gi.nit}</b><br />
+                Agricultor: <b>{gi.agri}</b>
+              </div>
+            </div>
+            {gi.galleryUrls.filter(Boolean).length > 0 && (
+              <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                {gi.galleryUrls.filter(Boolean).map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                  <img key={i} src={url} alt="" style={{ width: 48, height: 48, borderRadius: 6, objectFit: "cover", border: "1px solid var(--line)" }} />
+                ))}
+              </div>
+            )}
+            <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={onOpenInfoModal}>Editar información</button>
+          </div>
+
+          {feedback.length > 0 && (
+            <div className={styles.acard}>
+              <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
+              {groupFeedback(feedback).map(([group, notes]) => (
+                <div key={group} style={{ marginTop: 10 }}>
+                  <h5>{group}</h5>
+                  <div className={styles.alist}>
+                    {notes.map((n) => (
+                      <span key={n.id}>
+                        {new Date(n.createdAt).toLocaleDateString("es-CO")}: {n.note}<br />
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className={`${styles.acard} ${styles.wide}`}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span className={styles.k}>Mis lotes · cada café se asocia a una finca</span>
@@ -162,16 +206,6 @@ export function AppDashboard({
                 );
               })}
             </div>
-          </div>
-
-          <div className={styles.acard}>
-            <span className={styles.k}>Información general · se registra una sola vez</span>
-            <div className={styles.alist} style={{ marginTop: 8 }}>
-              Razón social: <b>{gi.razon}</b><br />
-              NIT / CC: <b>{gi.nit}</b><br />
-              Agricultor: <b>{gi.agri}</b>
-            </div>
-            <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={onOpenInfoModal}>Editar información</button>
           </div>
 
           <div className={`${styles.acard} ${styles.wide}`}>
@@ -257,24 +291,6 @@ export function AppDashboard({
               Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
             </div>
           </div>
-
-          {feedback.length > 0 && (
-            <div className={`${styles.acard} ${styles.wide}`}>
-              <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
-              {groupFeedback(feedback).map(([group, notes]) => (
-                <div key={group} style={{ marginTop: 10 }}>
-                  <h5>{group}</h5>
-                  <div className={styles.alist}>
-                    {notes.map((n) => (
-                      <span key={n.id}>
-                        {new Date(n.createdAt).toLocaleDateString("es-CO")}: {n.note}<br />
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

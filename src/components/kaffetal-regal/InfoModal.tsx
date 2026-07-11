@@ -21,6 +21,8 @@ export function InfoModal({
   onSave,
   onUploadAvatar,
   onUploadVideo,
+  onUploadGalleryPhoto,
+  onRemoveGalleryPhoto,
 }: {
   open: boolean;
   onClose: () => void;
@@ -29,6 +31,8 @@ export function InfoModal({
   onSave: (gi: GeneralInfo) => void;
   onUploadAvatar: (file: File) => void;
   onUploadVideo: (file: File) => void;
+  onUploadGalleryPhoto: (index: number, file: File) => void;
+  onRemoveGalleryPhoto: (index: number) => void;
 }) {
   const { showToast } = useToast();
   const razonRef = useRef<HTMLInputElement>(null);
@@ -84,6 +88,20 @@ export function InfoModal({
       return;
     }
     onUploadVideo(file);
+  }
+
+  // 5 MB per photo (same cap as the avatar) -- three of these plus the avatar
+  // and a 100 MB video stays comfortably inside Supabase Storage's free-tier
+  // 1 GB bucket across many producers, and well under its default per-request
+  // upload size limit.
+  function handleGalleryFile(index: number, file: File | undefined) {
+    if (!file) return;
+    const { ok, mb } = checkFileSizeMb(file, 5);
+    if (!ok) {
+      showToast(`La foto pesa ${mb.toFixed(1)} MB — el máximo es 5 MB.`);
+      return;
+    }
+    onUploadGalleryPhoto(index, file);
   }
 
   async function exportQr() {
@@ -158,6 +176,37 @@ export function InfoModal({
               ✓ Video actual: <a href={gi.producerVideoUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
             </p>
           )}
+        </div>
+        <div className={styles.wide}>
+          <label>Fotos adicionales <small>(hasta 3, máx. 5 MB c/u — finca, equipo, cerezas…)</small></label>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 4 }}>
+            {[0, 1, 2].map((i) => {
+              const url = gi.galleryUrls[i];
+              return (
+                <div key={i} style={{ width: 130 }}>
+                  {url ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL, not a static asset next/image can optimize
+                    <img src={url} alt={`Foto ${i + 1}`} style={{ width: 130, height: 100, objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)" }} />
+                  ) : (
+                    <div style={{ width: 130, height: 100, borderRadius: 8, border: "1.5px dashed var(--line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--muted)" }}>
+                      Sin foto
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ marginTop: 4, fontSize: 11, width: 130 }}
+                    onChange={(e) => handleGalleryFile(i, e.target.files?.[0])}
+                  />
+                  {url && (
+                    <button type="button" className="btn btn-sm" style={{ marginTop: 4, fontSize: 11, padding: "2px 8px" }} onClick={() => onRemoveGalleryPhoto(i)}>
+                      Quitar
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
         {code && (
           <div className={styles.wide}>

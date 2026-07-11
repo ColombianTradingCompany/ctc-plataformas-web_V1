@@ -95,6 +95,36 @@ export function lotEudrStatus(lot: LotEudrInput, sourceFincas: FincaEudrFields[]
   return status("eudr_ready", "EUDR Ready", "ok");
 }
 
+// The lot-level "Nivel de riesgo determinado" used to be a raw dropdown BCP
+// picked by eye -- error-prone and inconsistent between reviewers. EUDR
+// Art. 10-11 actually defines this as a determination from the underlying
+// risk factors, so it's derived here instead: illegality indicators, missing
+// documentation, or a high-risk country/region each push the raw risk to
+// "no insignificante" on their own; if none of those apply, risk is
+// "insignificante". A raw "no insignificante" can still be brought back down
+// if BCP recorded effective mitigation (Art. 11) -- everything else stays
+// "no insignificante" until it's addressed. Returns "" (not yet
+// determinable) until country risk + both yes/no factors are set.
+export type LotRiskFactors = {
+  eudr_country_risk: string | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_mitigation_effective: boolean | null;
+};
+
+export function deriveLotRiskLevel(f: LotRiskFactors): "" | "insignificante" | "no_insignificante" {
+  const countryRisk = f.eudr_country_risk || "Estándar";
+  if (f.eudr_illegality_indicators === null || f.eudr_docs_available === null) return "";
+
+  const raw: "insignificante" | "no_insignificante" =
+    f.eudr_illegality_indicators === true || f.eudr_docs_available === false || countryRisk === "Alto"
+      ? "no_insignificante"
+      : "insignificante";
+
+  if (raw === "no_insignificante" && f.eudr_mitigation_effective === true) return "insignificante";
+  return raw;
+}
+
 // Shared by PaneA5Eudr.tsx (live display) and FichaView.tsx (the EUDR
 // sub-stage gate) so both resolve a lot's origin finca(s) the same way --
 // Single Estate uses `estate` (a finca name, matching PaneA2's picker),

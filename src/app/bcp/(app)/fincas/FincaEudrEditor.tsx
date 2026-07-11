@@ -37,6 +37,7 @@ function labelsFor(keys: string[] | null, dict: [string, string][]): string {
 export type FincaEudrValues = {
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
+  eudr_polygon_geojson: { lat: number; lng: number }[] | null;
   eudr_planting_date: string | null;
   eudr_production_system: string | null;
   eudr_deforestation_free: boolean | null;
@@ -49,22 +50,80 @@ export type FincaEudrValues = {
   eudr_legal_docs_filename: string | null;
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
+  eudr_google_earth_url: string | null;
 };
+
+// A plain <img> against Google's Static Maps API -- no JS SDK needed, so this
+// renders instantly and can't hit the WebGL rendering issues the interactive
+// picker (FincaMapPicker) has run into. Returns null when there's nothing to
+// show yet, so callers can fall back to a placeholder.
+function staticMapUrl(values: FincaEudrValues): string | null {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return null;
+  const polygon = values.eudr_polygon_geojson;
+  const params = new URLSearchParams({ size: "360x220", maptype: "hybrid", key: apiKey });
+  if (polygon && polygon.length >= 3) {
+    params.set("path", "color:0xffcc00ff|weight:3|" + polygon.map((p) => `${p.lat},${p.lng}`).join("|"));
+    return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+  }
+  if (values.eudr_lat != null && values.eudr_lng != null && values.eudr_lat !== "" && values.eudr_lng !== "") {
+    params.set("center", `${values.eudr_lat},${values.eudr_lng}`);
+    params.set("zoom", "15");
+    params.set("markers", `color:red|${values.eudr_lat},${values.eudr_lng}`);
+    return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+  }
+  return null;
+}
+
+function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
+  const payload = {
+    finca: fincaName,
+    point: values.eudr_lat != null && values.eudr_lng != null ? { lat: Number(values.eudr_lat), lng: Number(values.eudr_lng) } : null,
+    polygon: values.eudr_polygon_geojson ?? null,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${fincaName.replace(/\s+/g, "_").toLowerCase()}-coordenadas.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // BCP's own EUDR assist form used to be always-expanded raw <select>/<input>
 // fields under a <details> -- fine for the one BCP admin who built it, hard
 // to scan for anyone else. This shows a plain read summary by default and
 // only reveals the edit form when BCP explicitly clicks "Editar".
 export function FincaEudrEditor({
+  fincaName,
   values,
   legalDocUrl,
   saveAction,
 }: {
+  fincaName: string;
   values: FincaEudrValues;
   legalDocUrl: string | undefined;
   saveAction: (formData: FormData) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
+  const mapUrl = staticMapUrl(values);
+  const hasCoords = !!(mapUrl && (values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng)));
+
+  const mapBlock = (
+    <div style={{ marginTop: 10 }}>
+      {mapUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
+        <img src={mapUrl} alt={`Mapa de ${fincaName}`} style={{ borderRadius: 8, border: "1px solid var(--line)", display: "block" }} />
+      ) : (
+        <p className={styles.meta} style={{ margin: 0 }}>Sin coordenadas capturadas todavía.</p>
+      )}
+      {hasCoords && (
+        <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => downloadCoordinatesJson(fincaName, values)}>
+          Descargar coordenadas (.json)
+        </button>
+      )}
+    </div>
+  );
 
   if (!editing) {
     return (
@@ -73,6 +132,7 @@ export function FincaEudrEditor({
           <span style={{ fontWeight: 600, fontSize: 13.5 }}>Información EUDR (asistencia BCP)</span>
           <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>Editar</button>
         </div>
+        {mapBlock}
         <div className={styles.meta} style={{ marginTop: 8, lineHeight: 1.9 }}>
           <div>Ubicación: {values.eudr_lat && values.eudr_lng ? `${values.eudr_lat}, ${values.eudr_lng}` : "no capturada"}</div>
           <div>Fecha de siembra: {values.eudr_planting_date || "sin definir"}</div>
@@ -88,6 +148,11 @@ export function FincaEudrEditor({
             ) : "no adjuntado"}
           </div>
           <div>Sostenibilidad: {labelsFor(values.eudr_sustainability_tags, SUSTAINABILITY_TAGS)}</div>
+          <div>
+            Google Earth: {values.eudr_google_earth_url ? (
+              <a href={values.eudr_google_earth_url} target="_blank" rel="noopener noreferrer">ver enlace</a>
+            ) : "sin enlace"}
+          </div>
         </div>
       </div>
     );
@@ -99,6 +164,7 @@ export function FincaEudrEditor({
         <span style={{ fontWeight: 600, fontSize: 13.5 }}>Editando información EUDR</span>
         <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
       </div>
+      {mapBlock}
       <form action={saveAction}>
         <div className={styles.formGrid}>
           <div className={styles.field}>
@@ -108,6 +174,13 @@ export function FincaEudrEditor({
           <div className={styles.field}>
             <label>Longitud (WGS84)</label>
             <input name="eudr_lng" defaultValue={values.eudr_lng ?? ""} placeholder="-75.612345" />
+          </div>
+          <div className={styles.field}>
+            <label>
+              URL de Google Earth
+              <span style={{ fontWeight: 400, color: "var(--muted)" }}> (opcional -- integración futura)</span>
+            </label>
+            <input name="eudr_google_earth_url" type="url" defaultValue={values.eudr_google_earth_url ?? ""} placeholder="https://earth.google.com/..." />
           </div>
           <div className={styles.field}>
             <label>Fecha de establecimiento del cultivo</label>

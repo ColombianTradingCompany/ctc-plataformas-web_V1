@@ -97,6 +97,10 @@ export type GeneralInfo = {
   avatarUrl: string | null;
   producerVideoAssetId: string | null;
   producerVideoUrl: string | null;
+  // Up to 3 additional photos (farm, team, cherries…) beyond the single
+  // avatar -- galleryAssetIds/galleryUrls stay index-aligned.
+  galleryAssetIds: string[];
+  galleryUrls: string[];
 };
 
 export type ContractRelease = {
@@ -194,4 +198,6 @@ export const EMPTY_GI: GeneralInfo = {
   avatarUrl: null,
   producerVideoAssetId: null,
   producerVideoUrl: null,
+  galleryAssetIds: [],
+  galleryUrls: [],
 };

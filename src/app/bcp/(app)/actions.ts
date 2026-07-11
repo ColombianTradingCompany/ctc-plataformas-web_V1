@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { deriveLotRiskLevel } from "@/lib/eudr";
 
 async function requireAdmin() {
   const session = await createSessionClient();
@@ -156,6 +157,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     // not something BCP fills in on their behalf.
     eudr_sustainability_tags: formData.getAll("eudr_sustainability_tags").map(String),
     eudr_sustainability_notes: textOrNull(formData, "eudr_sustainability_notes"),
+    // Placeholder field for a future Google Earth Engine integration -- just
+    // stored and linked for now, nothing reads it yet.
+    eudr_google_earth_url: textOrNull(formData, "eudr_google_earth_url"),
   };
 
   const { error } = await service.from("fincas").update(patch).eq("id", fincaId);
@@ -178,19 +182,26 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
+  const eudr_country_risk = textOrNull(formData, "eudr_country_risk") ?? "Estándar";
+  const eudr_illegality_indicators = triState(formData, "eudr_illegality_indicators");
+  const eudr_docs_available = triState(formData, "eudr_docs_available");
+  const eudr_mitigation_effective = triState(formData, "eudr_mitigation_effective");
+
   const patch = {
     eudr_custody_stages: formData.getAll("eudr_custody_stages").map(String),
     eudr_custody_method: textOrNull(formData, "eudr_custody_method"),
     eudr_custody_notes: textOrNull(formData, "eudr_custody_notes"),
-    eudr_country_risk: textOrNull(formData, "eudr_country_risk") ?? "Estándar",
+    eudr_country_risk,
     eudr_chain_complexity: textOrNull(formData, "eudr_chain_complexity"),
     eudr_product_risk: textOrNull(formData, "eudr_product_risk"),
-    eudr_illegality_indicators: triState(formData, "eudr_illegality_indicators"),
-    eudr_docs_available: triState(formData, "eudr_docs_available"),
+    eudr_illegality_indicators,
+    eudr_docs_available,
     eudr_cert_scheme: textOrNull(formData, "eudr_cert_scheme"),
-    eudr_risk_level: textOrNull(formData, "eudr_risk_level"),
+    // Derived, not hand-picked -- see deriveLotRiskLevel's comment (Art. 10-11).
+    eudr_risk_level:
+      deriveLotRiskLevel({ eudr_country_risk, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective }) || null,
     eudr_mitigation_actions: textOrNull(formData, "eudr_mitigation_actions"),
-    eudr_mitigation_effective: triState(formData, "eudr_mitigation_effective"),
+    eudr_mitigation_effective,
     eudr_mitigation_responsible: textOrNull(formData, "eudr_mitigation_responsible"),
   };
 

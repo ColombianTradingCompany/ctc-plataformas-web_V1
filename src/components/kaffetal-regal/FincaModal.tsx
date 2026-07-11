@@ -8,6 +8,7 @@ import { fincaEudrStatus } from "@/lib/eudr";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker } from "./FincaMapPicker";
+import { FieldInfo } from "./ficha/panes/FieldInfo";
 import type { Finca, GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
 
@@ -335,7 +336,10 @@ function FincaModalBody({
           </div>
         </div>
         <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>Documento de respaldo (PDF) <small>(máx. 10 MB)</small></label>
+          <label>
+            Documento de respaldo (PDF) <small>(máx. 10 MB)</small>
+            <FieldInfo text="Adjunte, si lo tiene disponible, un documento que respalde la tenencia de la tierra declarada arriba (escritura, certificado de tradición y libertad, contrato de arrendamiento, acta de la asociación, etc.). No es obligatorio para guardar la finca." />
+          </label>
           {finca ? (
             <>
               <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />

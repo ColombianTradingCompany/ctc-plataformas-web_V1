@@ -146,7 +146,13 @@ export function mapPreviewUrl(
 ): string | null {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!apiKey) return null;
-  const params = new URLSearchParams({ size, maptype: "hybrid", key: apiKey });
+  // terrain, NOT hybrid/satellite: the Static Maps API refuses satellite
+  // imagery for EEA-billed accounts (CTC's Google Cloud billing is in
+  // Germany) -- confirmed live 2026-07-12 with a 403 "satellite and hybrid
+  // map types are not available for your account and region". The
+  // interactive picker (Maps JavaScript API) is not affected and stays
+  // on hybrid.
+  const params = new URLSearchParams({ size, maptype: "terrain", key: apiKey });
   if (loc.polygon && loc.polygon.length >= 3) {
     params.set("path", "color:0xffcc00ff|weight:3|" + loc.polygon.map((p) => `${p.lat},${p.lng}`).join("|"));
     return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;

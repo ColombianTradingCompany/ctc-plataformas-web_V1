@@ -83,5 +83,32 @@ is closed and left as historical record of what went into producing it).
   in data.ts keep the button state and the RLS policy in sync. Lot type
   gained fincaId (real FK) for robust finca<->lot matching (the old
   name-based match could confuse two same-named fincas).
+(commit: 1e94ab3)
+
+## [2026-07-12] DB cleanup, finca UID, BCP fincas tabs, producer replies, Panel redesign
+- Removed test finca "San Ramon" (+ its lot) for producer CTC-P-78337EC3;
+  Finca Germania kept. Pure data cleanup, no doc-model change.
+- fincaCode(id) -> CTC-F-XXXXXXXX, a human UID per finca (mirrors
+  supplierCode/ctcLotReference). Shown on producer finca card + modal and
+  every BCP finca surface. Worth a DICT note alongside the existing lot/
+  supplier code convention.
+- BCP /bcp/fincas now has Pendientes/Aprobadas/Rechazadas tabs (searchParams
+  ?status=, counts per tab) instead of only the pending backlog; approve/
+  reject actions adapt per tab (revoke an approved, reinstate a rejected).
+- Producer <-> CTC comms are now two-way + threaded: producer_comm_log gained
+  author_role (bcp|producer) + parent_id; a new RLS insert policy lets a
+  producer post producer-authored replies only on their own threads. The
+  producer's "Retroalimentación y ayuda" panel threads CTC notes with the
+  producer's replies and has a per-note reply composer; BCP comm lists label
+  each row CTC vs Productor. This turns the one-way "commlog" concept into a
+  real conversation -- update the commlog DICT entry.
+- BCP Panel redesign: graphical KPI tiles (number + proportion meter, brand
+  color, linked) replace the plain stat cards; a new "Tareas · pendientes de
+  CTC" action feed lists pending fincas, producer messages, flagged humidity
+  and Arena-queued lots, each hyperlinked to its section and each toggleable
+  Done/TBD (persisted in the new service-role-only bcp_task_state table via
+  the setTaskState server action, shared across the two admins); "Actividad
+  reciente" (audit) stays as a hyperlinked reference log. New node/DICT
+  candidate: bcp_task_state (triage overlay) + the Panel as a triage surface.
 (commit: pending)
 

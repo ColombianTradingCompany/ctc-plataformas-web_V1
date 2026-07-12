@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
+import { fincaCode } from "@/components/kaffetal-regal/data";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
 import { logProducerComm } from "../commActions";
@@ -9,7 +11,7 @@ import { ProducerContactLine } from "../ProducerContactLine";
 import { FincaEudrEditor } from "./FincaEudrEditor";
 import styles from "../shared.module.css";
 
-type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string };
+type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
 
 type FincaRow = {
   id: string;
@@ -66,7 +68,16 @@ function missingChecks(f: FincaEudrFields): string[] {
   return gaps;
 }
 
-export default async function BcpFincasPage() {
+const TABS = [
+  { value: "pending_review", label: "Pendientes" },
+  { value: "approved", label: "Aprobadas" },
+  { value: "rejected", label: "Rechazadas" },
+] as const;
+
+export default async function BcpFincasPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status: statusParam } = await searchParams;
+  const activeStatus = (statusParam && TABS.some((t) => t.value === statusParam) ? statusParam : "pending_review") as (typeof TABS)[number]["value"];
+
   const service = createServiceRoleClient();
   const { data: pendingFincas } = await service
     .from("fincas")
@@ -78,8 +89,17 @@ export default async function BcpFincasPage() {
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
        eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, created_at`
     )
-    .eq("status", "pending_review")
+    .eq("status", activeStatus)
     .order("created_at", { ascending: true });
+
+  // Per-status counts for the tab labels (cheap: head+count, no rows fetched).
+  const countByStatus: Record<string, number> = {};
+  await Promise.all(
+    TABS.map(async (t) => {
+      const { count } = await service.from("fincas").select("id", { count: "exact", head: true }).eq("status", t.value);
+      countByStatus[t.value] = count ?? 0;
+    })
+  );
 
   const fincaRows = (pendingFincas as FincaRow[] | null) ?? [];
   const [legalDocUrlByAssetId, producers, { data: comms }] = await Promise.all([
@@ -87,7 +107,7 @@ export default async function BcpFincasPage() {
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
     service
       .from("producer_comm_log")
-      .select("id, finca_id, context_label, note, created_at")
+      .select("id, finca_id, context_label, note, created_at, author_role")
       .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: false }),
   ]);
@@ -97,10 +117,25 @@ export default async function BcpFincasPage() {
     commsByFinca.set(c.finca_id, [...(commsByFinca.get(c.finca_id) ?? []), c]);
   }
 
+  const emptyLabel: Record<string, string> = {
+    pending_review: "No hay fincas pendientes.",
+    approved: "No hay fincas aprobadas todavía.",
+    rejected: "No hay fincas rechazadas.",
+  };
+
   return (
     <div>
-      <h1 className={styles.title}>Fincas pendientes de revisión</h1>
-      {!fincaRows.length && <p className={styles.empty}>No hay fincas pendientes.</p>}
+      <h1 className={styles.title}>Fincas</h1>
+
+      <div className={styles.tabs}>
+        {TABS.map((t) => (
+          <Link key={t.value} href={`/bcp/fincas?status=${t.value}`} className={activeStatus === t.value ? styles.tabActive : undefined}>
+            {t.label} ({countByStatus[t.value] ?? 0})
+          </Link>
+        ))}
+      </div>
+
+      {!fincaRows.length && <p className={styles.empty}>{emptyLabel[activeStatus]}</p>}
       <div className={styles.list}>
         {fincaRows.map((finca) => {
           const eudrFields = toEudrFields(finca);
@@ -127,8 +162,9 @@ export default async function BcpFincasPage() {
             <div className={styles.card} key={finca.id} style={{ flexDirection: "column", alignItems: "stretch" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                 <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     <h3>{finca.name}</h3>
+                    <span className={styles.badge}>{fincaCode(finca.id)}</span>
                     <EudrStatusBadge status={status} />
                   </div>
                   <ProducerContactLine producer={producers.get(finca.producer_id)} />
@@ -136,26 +172,35 @@ export default async function BcpFincasPage() {
                     {finca.municipio}, {finca.departamento} · {finca.hectares} ha
                     {finca.requires_eudr_polygon && " · requiere polígono EUDR"}
                   </p>
-                  {blockedByPolygon && <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>}
-                  {status.code === "no_apta" && (
+                  {activeStatus !== "approved" && blockedByPolygon && (
+                    <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
+                  )}
+                  {activeStatus !== "approved" && status.code === "no_apta" && (
                     <p className={styles.warn}>Deforestación o producción ilegal declarada — no se puede aprobar.</p>
                   )}
-                  {status.code === "pendiente" && gaps.length > 0 && (
+                  {activeStatus !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
                     <p className={styles.meta}>Falta: {gaps.join(", ")}.</p>
                   )}
                 </div>
                 <div className={styles.actions}>
-                  <form action={approveFinca.bind(null, finca.id)}>
-                    <button className="btn btn-solid" type="submit" disabled={blockedByEudr}>
-                      Aprobar
-                    </button>
-                  </form>
-                  <form action={reject} className={styles.rejectForm}>
-                    <input name="notes" placeholder="Motivo del rechazo (opcional)" />
-                    <button className="btn" type="submit">
-                      Rechazar
-                    </button>
-                  </form>
+                  {/* Pending: approve (gated on EUDR) or reject. Approved: allow
+                      revoking to rejected. Rejected: allow reinstating to approved
+                      (same EUDR gate). The underlying actions are status-agnostic. */}
+                  {activeStatus !== "approved" && (
+                    <form action={approveFinca.bind(null, finca.id)}>
+                      <button className="btn btn-solid" type="submit" disabled={blockedByEudr}>
+                        {activeStatus === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
+                      </button>
+                    </form>
+                  )}
+                  {activeStatus !== "rejected" && (
+                    <form action={reject} className={styles.rejectForm}>
+                      <input name="notes" placeholder="Motivo del rechazo (opcional)" />
+                      <button className="btn" type="submit">
+                        {activeStatus === "approved" ? "Revocar (rechazar)" : "Rechazar"}
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
 
@@ -178,6 +223,9 @@ export default async function BcpFincasPage() {
                   <ul className={styles.auditList} style={{ marginTop: 10 }}>
                     {comms.map((c) => (
                       <li key={c.id}>
+                        <span className={c.author_role === "producer" ? styles.badgeGood : styles.badge}>
+                          {c.author_role === "producer" ? "Productor" : "CTC"}
+                        </span>{" "}
                         <b>{new Date(c.created_at).toLocaleDateString("es-CO")}</b> · {c.note}
                       </li>
                     ))}

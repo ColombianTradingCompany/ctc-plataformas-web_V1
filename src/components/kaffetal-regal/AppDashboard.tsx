@@ -2,20 +2,37 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { mapPreviewUrl } from "@/lib/eudr";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
 
-// Groups feedback notes by their context ("Finca X" / "Lote Y" / general),
-// most-recently-active group first, notes within a group newest first
-// (matches the order they already arrive in from the server query).
-function groupFeedback(feedback: FeedbackNote[]): [string, FeedbackNote[]][] {
-  const groups = new Map<string, FeedbackNote[]>();
+// A CTC note plus the producer's replies to it, threaded by parent_id.
+type FeedbackThread = { root: FeedbackNote; replies: FeedbackNote[] };
+
+// Builds threads (a top-level CTC note + its producer replies) and groups them
+// by context ("Finca X" / "Lote Y" / general). Producer replies always carry a
+// parentId (RLS enforces it), so top-level notes are the CTC ones; any reply
+// whose parent isn't in view (edge case) is promoted to its own root so it's
+// never silently dropped. Notes already arrive newest-first from the query.
+function groupFeedback(feedback: FeedbackNote[]): [string, FeedbackThread[]][] {
+  const byId = new Map(feedback.map((n) => [n.id, n]));
+  const repliesByParent = new Map<string, FeedbackNote[]>();
+  const roots: FeedbackNote[] = [];
   for (const n of feedback) {
-    const key = n.contextLabel ?? "General";
-    groups.set(key, [...(groups.get(key) ?? []), n]);
+    if (n.parentId && byId.has(n.parentId)) {
+      repliesByParent.set(n.parentId, [...(repliesByParent.get(n.parentId) ?? []), n]);
+    } else {
+      roots.push(n);
+    }
+  }
+  const groups = new Map<string, FeedbackThread[]>();
+  for (const root of roots) {
+    const key = root.contextLabel ?? "General";
+    // Replies oldest-first so a thread reads top-to-bottom in time.
+    const replies = (repliesByParent.get(root.id) ?? []).slice().reverse();
+    groups.set(key, [...(groups.get(key) ?? []), { root, replies }]);
   }
   return [...groups.entries()];
 }
@@ -45,6 +62,7 @@ export function AppDashboard({
   onOpenFincaModal,
   onDeleteFinca,
   onRequestFincaRevision,
+  onReplyToFeedback,
   onOpenInfoModal,
   onConfirmSampleShipped,
 }: {
@@ -63,11 +81,23 @@ export function AppDashboard({
   onOpenFincaModal: (index: number) => void;
   onDeleteFinca: (fincaId: string) => void;
   onRequestFincaRevision: (finca: Finca) => void;
+  onReplyToFeedback: (parent: FeedbackNote, text: string) => void;
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  // Which CTC note the producer is currently replying to, and the draft text.
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+
+  function submitReply(parent: FeedbackNote) {
+    const text = replyText.trim();
+    if (!text) return;
+    onReplyToFeedback(parent, text);
+    setReplyingToId(null);
+    setReplyText("");
+  }
 
   const certified = lots.filter((l) => l.stage >= 5);
 
@@ -155,27 +185,59 @@ export function AppDashboard({
             {feedback.length === 0 ? (
               <div className={styles.alist} style={{ marginTop: 8 }}>Sin notas todavía. Aquí verá lo que CTC le comunique sobre sus fincas y lotes.</div>
             ) : (
-              groupFeedback(feedback).map(([group, notes]) => {
-                const target = notes.find((n) => n.lotId || n.fincaId);
+              groupFeedback(feedback).map(([group, threads]) => {
+                const target = threads.map((t) => t.root).find((n) => n.lotId || n.fincaId);
                 return (
-                <div key={group} style={{ marginTop: 10 }}>
-                  {target ? (
-                    <h5>
-                      <button type="button" className={styles.feedbackLink} onClick={() => openFeedbackTarget(target)}>
-                        {group} ↗
-                      </button>
-                    </h5>
-                  ) : (
-                    <h5>{group}</h5>
-                  )}
-                  <div className={styles.alist}>
-                    {notes.map((n) => (
-                      <span key={n.id}>
-                        {new Date(n.createdAt).toLocaleDateString("es-CO")}: {n.note}<br />
-                      </span>
+                  <div key={group} style={{ marginTop: 10 }}>
+                    {target ? (
+                      <h5>
+                        <button type="button" className={styles.feedbackLink} onClick={() => openFeedbackTarget(target)}>
+                          {group} ↗
+                        </button>
+                      </h5>
+                    ) : (
+                      <h5>{group}</h5>
+                    )}
+                    {threads.map(({ root, replies }) => (
+                      <div key={root.id} className={styles.thread}>
+                        <div className={styles.alist}>
+                          <b>CTC · {new Date(root.createdAt).toLocaleDateString("es-CO")}:</b> {root.note}
+                        </div>
+                        {replies.map((r) => (
+                          <div key={r.id} className={styles.reply}>
+                            <b>Usted · {new Date(r.createdAt).toLocaleDateString("es-CO")}:</b> {r.note}
+                          </div>
+                        ))}
+                        {replyingToId === root.id ? (
+                          <div className={styles.replyBox}>
+                            <textarea
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="Escriba su respuesta a CTC…"
+                              rows={2}
+                              autoFocus
+                            />
+                            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                              <button className="btn btn-sm btn-solid" onClick={() => submitReply(root)} disabled={!replyText.trim()}>
+                                Enviar
+                              </button>
+                              <button className="btn btn-sm" onClick={() => { setReplyingToId(null); setReplyText(""); }}>
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.replyLink}
+                            onClick={() => { setReplyingToId(root.id); setReplyText(""); }}
+                          >
+                            Responder
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
-                </div>
                 );
               })
             )}
@@ -202,6 +264,7 @@ export function AppDashboard({
                     <img src={mapUrl} alt={`Ubicación de ${f.name}`} className={styles.fincaMap} />
                   )}
                   <h5>{f.name}</h5>
+                  <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere", marginTop: 2 }}>{fincaCode(f.id)}</div>
                   <div className={styles.sub}>
                     {f.vereda} · {f.mun}<br />
                     {f.depto}<br />

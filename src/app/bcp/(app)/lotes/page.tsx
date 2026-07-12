@@ -10,7 +10,7 @@ import styles from "../shared.module.css";
 
 const RISK_LEVEL_LABEL: Record<string, string> = { insignificante: "Insignificante", no_insignificante: "No insignificante" };
 
-type CommRow = { id: string; lot_id: string | null; context_label: string | null; note: string; created_at: string };
+type CommRow = { id: string; lot_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
 
@@ -141,7 +141,7 @@ export default async function BcpLotesPage() {
     fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
     service
       .from("producer_comm_log")
-      .select("id, lot_id, context_label, note, created_at")
+      .select("id, lot_id, context_label, note, created_at, author_role")
       .in("lot_id", lotRows.map((l) => l.id))
       .order("created_at", { ascending: false }),
   ]);
@@ -429,6 +429,9 @@ function LotCard({
           <ul className={styles.auditList} style={{ marginTop: 10 }}>
             {comms.map((c) => (
               <li key={c.id}>
+                <span className={c.author_role === "producer" ? styles.badgeGood : styles.badge}>
+                  {c.author_role === "producer" ? "Productor" : "CTC"}
+                </span>{" "}
                 <b>{new Date(c.created_at).toLocaleDateString("es-CO")}</b> · {c.note}
               </li>
             ))}

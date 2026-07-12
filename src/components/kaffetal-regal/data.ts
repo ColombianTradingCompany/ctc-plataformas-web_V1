@@ -159,6 +159,10 @@ export type FeedbackNote = {
   lotId: string | null;
   note: string;
   createdAt: string;
+  // "bcp" = written by CTC; "producer" = the producer's own reply.
+  authorRole: "bcp" | "producer";
+  // Set on a producer reply -> the id of the CTC note it answers.
+  parentId: string | null;
 };
 
 export type ProducerContract = {
@@ -225,6 +229,14 @@ export function ctcLotReferenceShort(id: string) {
 
 export function supplierCode(id: string) {
   return "CTC-P-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
+}
+
+// Human-readable finca identifier, same shape as supplierCode (CTC-P-...) and
+// derived the same way from the finca's uuid -- no extra column needed. Shown
+// on the producer's finca card, in the finca modal, and on every BCP finca
+// surface so a specific predio can be referenced unambiguously.
+export function fincaCode(id: string) {
+  return "CTC-F-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
 
 export const EMPTY_GI: GeneralInfo = {

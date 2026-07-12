@@ -242,7 +242,7 @@ function Experience() {
           // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
           supabase.from("lot_evaluations").select("lot_id, source, status, sca_total, factor_rendimiento"),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
-          supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at").order("created_at", { ascending: false }),
+          supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id").order("created_at", { ascending: false }),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -359,7 +359,16 @@ function Experience() {
       setFeedback(
         (
           (commRows as
-            | { id: string; context_label: string | null; finca_id: string | null; lot_id: string | null; note: string; created_at: string }[]
+            | {
+                id: string;
+                context_label: string | null;
+                finca_id: string | null;
+                lot_id: string | null;
+                note: string;
+                created_at: string;
+                author_role: "bcp" | "producer";
+                parent_id: string | null;
+              }[]
             | null) ?? []
         ).map((c) => ({
           id: c.id,
@@ -368,6 +377,8 @@ function Experience() {
           lotId: c.lot_id,
           note: c.note,
           createdAt: c.created_at,
+          authorRole: c.author_role,
+          parentId: c.parent_id,
         }))
       );
     },
@@ -643,6 +654,48 @@ function Experience() {
     window.location.href = `mailto:info@ctcexport.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
+  // Producer replies to a specific CTC note. The reply copies the parent's
+  // context (label + finca/lot ids) so it threads under the same subject and
+  // stays linked to the same finca/lote, and is tagged author_role='producer'
+  // (the RLS insert policy pins that, so a producer can't forge a CTC note).
+  async function replyToFeedback(parent: FeedbackNote, text: string) {
+    if (!userId) return;
+    const body = text.trim();
+    if (!body) return;
+    const { data, error } = await supabase
+      .from("producer_comm_log")
+      .insert({
+        producer_id: userId,
+        parent_id: parent.id,
+        author_role: "producer",
+        context_label: parent.contextLabel,
+        finca_id: parent.fincaId,
+        lot_id: parent.lotId,
+        note: body,
+        created_by: userId,
+      })
+      .select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id")
+      .single();
+    if (error || !data) {
+      showToast("No se pudo enviar su respuesta.");
+      return;
+    }
+    setFeedback((prev) => [
+      {
+        id: data.id,
+        contextLabel: data.context_label,
+        fincaId: data.finca_id,
+        lotId: data.lot_id,
+        note: data.note,
+        createdAt: data.created_at,
+        authorRole: data.author_role as "bcp" | "producer",
+        parentId: data.parent_id,
+      },
+      ...prev,
+    ]);
+    showToast("Respuesta enviada a CTC ✓");
+  }
+
   async function saveInfo(next: GeneralInfo) {
     if (!userId) return;
     const [{ error: e1 }, { error: e2 }] = await Promise.all([
@@ -903,6 +956,7 @@ function Experience() {
           }}
           onDeleteFinca={deleteFinca}
           onRequestFincaRevision={requestFincaRevision}
+          onReplyToFeedback={replyToFeedback}
           onOpenInfoModal={() => setInfoModalOpen(true)}
         />
       )}

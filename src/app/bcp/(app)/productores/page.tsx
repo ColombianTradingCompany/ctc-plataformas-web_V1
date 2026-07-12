@@ -1,6 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { supplierCode } from "@/components/kaffetal-regal/data";
+import { supplierCode, fincaCode } from "@/components/kaffetal-regal/data";
 import { logProducerComm } from "../commActions";
 import styles from "../shared.module.css";
 
@@ -24,7 +24,7 @@ const INTAKE_STAGES = Object.keys(INTAKE_STAGE_LABEL);
 
 type FincaRow = { id: string; name: string; producer_id: string; status: string; municipio: string | null };
 type LotRow = { id: string; name: string; producer_id: string; stage: string };
-type CommRow = { id: string; producer_id: string; context_label: string | null; note: string; created_at: string };
+type CommRow = { id: string; producer_id: string; context_label: string | null; note: string; created_at: string; author_role: string };
 
 export default async function BcpProductoresPage() {
   const service = createServiceRoleClient();
@@ -33,7 +33,7 @@ export default async function BcpProductoresPage() {
     service.from("profiles").select("id").eq("role", "producer"),
     service.from("fincas").select("id, name, producer_id, status, municipio").order("created_at", { ascending: true }),
     service.from("lots").select("id, name, producer_id, stage").in("stage", INTAKE_STAGES).order("created_at", { ascending: false }),
-    service.from("producer_comm_log").select("id, producer_id, context_label, note, created_at").order("created_at", { ascending: false }),
+    service.from("producer_comm_log").select("id, producer_id, context_label, note, created_at, author_role").order("created_at", { ascending: false }),
   ]);
 
   const producerIds = ((producerProfiles as { id: string }[] | null) ?? []).map((p) => p.id);
@@ -84,7 +84,7 @@ export default async function BcpProductoresPage() {
                     <ul style={{ margin: "6px 0 0", paddingLeft: 16, fontSize: 13 }}>
                       {producerFincas.map((f) => (
                         <li key={f.id}>
-                          {f.name} {f.municipio ? `· ${f.municipio}` : ""}{" "}
+                          <span className={styles.badge}>{fincaCode(f.id)}</span> {f.name} {f.municipio ? `· ${f.municipio}` : ""}{" "}
                           <span className={styles.badge}>{FINCA_STATUS_LABEL[f.status] ?? f.status}</span>
                         </li>
                       ))}
@@ -129,6 +129,9 @@ export default async function BcpProductoresPage() {
                   <ul className={styles.auditList} style={{ marginTop: 12 }}>
                     {producerComms.map((cm) => (
                       <li key={cm.id}>
+                        <span className={cm.author_role === "producer" ? styles.badgeGood : styles.badge}>
+                          {cm.author_role === "producer" ? "Productor" : "CTC"}
+                        </span>{" "}
                         <b>{new Date(cm.created_at).toLocaleDateString("es-CO")}</b>
                         {cm.context_label && ` · ${cm.context_label}`} · {cm.note}
                       </li>

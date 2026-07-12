@@ -9,7 +9,7 @@ import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
-import type { Finca, GeneralInfo } from "./data";
+import { fincaCode, type Finca, type GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
 
 const PRODUCTION_SYSTEMS: [Finca["eudrProductionSystem"], string][] = [
@@ -252,6 +252,7 @@ function FincaModalBody({
   return (
     <>
       <h3>{finca ? `Editar finca · ${finca.name}` : "Registrar finca nueva"}</h3>
+      {finca && <p className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: -4 }}>{fincaCode(finca.id)}</p>}
       <p>Cada finca se identifica una vez y queda disponible para asociar sus cafés. Esta es la cara de su café en Europa.</p>
       <div className={styles.grid}>
         <div className={styles.wide}>

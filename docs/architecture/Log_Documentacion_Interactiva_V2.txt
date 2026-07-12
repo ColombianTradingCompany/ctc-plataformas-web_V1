@@ -34,5 +34,19 @@ is closed and left as historical record of what went into producing it).
 - Bug fix: nested <button> inside <button> hydration error in
   FincaMapPicker.tsx (FieldInfo's info icon next to "Ingresar puntos
   manualmente") -- no doc-visible behavior change, purely a correctness fix.
-(commit: pending)
+(commit: 8eb44fa)
+
+## [2026-07-12] Static map: terrain, not hybrid (EEA restriction) + Ubicación polygon count
+- Follow-up to the mapPreviewUrl() entry above: Google's Static Maps API
+  returns 403 for maptype=hybrid/satellite on EEA-billed accounts (CTC's
+  Google Cloud billing is in Germany), so the static previews now use
+  maptype=terrain. The interactive picker (Maps JavaScript API) is exempt
+  and stays on hybrid. Worth a note in whatever DICT entry describes the
+  Google Maps integration: the two map surfaces intentionally use
+  different imagery for a billing-region reason, not by accident. Also
+  required two one-time Google Cloud console steps (enable Maps Static
+  API on the project + add it to the key's API-restrictions allowlist).
+- BCP's read-only "Ubicación" line now says "Polígono de N vértices" for
+  polygon-only fincas instead of the misleading "no capturada".
+(commits: c8d3b16, 200e0df)
 

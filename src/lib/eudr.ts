@@ -129,6 +129,37 @@ export function deriveLotRiskLevel(f: LotRiskFactors): "" | "insignificante" | "
 // sub-stage gate) so both resolve a lot's origin finca(s) the same way --
 // Single Estate uses `estate` (a finca name, matching PaneA2's picker),
 // anything else uses `additional_estate_ids` (real finca ids).
+// A plain <img> against Google's Static Maps API -- no JS SDK needed, so it
+// renders instantly and can't hit the WebGL rendering issues the interactive
+// picker (FincaMapPicker) has run into. Works identically server-side (BCP's
+// read-only review pages) and client-side (the producer's own dashboard finca
+// cards), so both surfaces render a saved pin/polygon the same way instead of
+// drifting apart. Returns null when there's nothing to show yet, so callers
+// can fall back to a placeholder.
+export function mapPreviewUrl(
+  loc: {
+    lat?: string | number | null;
+    lng?: string | number | null;
+    polygon?: { lat: number; lng: number }[] | null;
+  },
+  size = "360x220"
+): string | null {
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey) return null;
+  const params = new URLSearchParams({ size, maptype: "hybrid", key: apiKey });
+  if (loc.polygon && loc.polygon.length >= 3) {
+    params.set("path", "color:0xffcc00ff|weight:3|" + loc.polygon.map((p) => `${p.lat},${p.lng}`).join("|"));
+    return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+  }
+  if (loc.lat != null && loc.lng != null && loc.lat !== "" && loc.lng !== "") {
+    params.set("center", `${loc.lat},${loc.lng}`);
+    params.set("zoom", "15");
+    params.set("markers", `color:red|${loc.lat},${loc.lng}`);
+    return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
+  }
+  return null;
+}
+
 export function resolveSourceFincas(
   originCategory: string,
   estate: string,

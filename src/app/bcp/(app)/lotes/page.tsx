@@ -10,7 +10,7 @@ import styles from "../shared.module.css";
 
 const RISK_LEVEL_LABEL: Record<string, string> = { insignificante: "Insignificante", no_insignificante: "No insignificante" };
 
-type CommRow = { id: string; context_label: string | null; note: string; created_at: string };
+type CommRow = { id: string; lot_id: string | null; context_label: string | null; note: string; created_at: string };
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
 
@@ -141,14 +141,14 @@ export default async function BcpLotesPage() {
     fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
     service
       .from("producer_comm_log")
-      .select("id, context_label, note, created_at")
-      .in("context_label", lotRows.map((l) => `Lote ${l.name}`))
+      .select("id, lot_id, context_label, note, created_at")
+      .in("lot_id", lotRows.map((l) => l.id))
       .order("created_at", { ascending: false }),
   ]);
-  const commsByContext = new Map<string, CommRow[]>();
+  const commsByLot = new Map<string, CommRow[]>();
   for (const c of (comms as CommRow[] | null) ?? []) {
-    const key = c.context_label ?? "";
-    commsByContext.set(key, [...(commsByContext.get(key) ?? []), c]);
+    if (!c.lot_id) continue;
+    commsByLot.set(c.lot_id, [...(commsByLot.get(c.lot_id) ?? []), c]);
   }
   const byBucket = new Map<Bucket, LotRow[]>(COLUMNS.map((c) => [c.id, []]));
   for (const lot of lotRows) byBucket.get(bucketOf(lot))!.push(lot);
@@ -230,7 +230,7 @@ export default async function BcpLotesPage() {
                       key={lot.id}
                       lot={lot}
                       producer={producers.get(lot.producer_id)}
-                      comms={commsByContext.get(`Lote ${lot.name}`) ?? []}
+                      comms={commsByLot.get(lot.id) ?? []}
                       showConfirmReceipt={col.id === "muestra"}
                     />
                   ))}
@@ -275,7 +275,7 @@ function LotCard({
   }
   async function addComm(formData: FormData) {
     "use server";
-    await logProducerComm(lot.producer_id, `Lote ${lot.name}`, formData);
+    await logProducerComm(lot.producer_id, `Lote ${lot.name}`, formData, { lotId: lot.id });
   }
 
   return (

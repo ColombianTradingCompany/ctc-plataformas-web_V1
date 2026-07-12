@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaEudrUntouched, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
+import { mapPreviewUrl } from "@/lib/eudr";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
@@ -77,6 +78,22 @@ export function AppDashboard({
     setRenamingId(null);
   }
 
+  // A feedback group's notes were all left from the same finca/lote card, so
+  // any note carrying a fincaId/lotId is enough to resolve where the group's
+  // heading link should go -- there's no in-app route to jump to for a
+  // finca/lot, so this reuses the same modal/view-switch handlers the cards
+  // themselves use, rather than a real <a href>.
+  function openFeedbackTarget(n: FeedbackNote) {
+    if (n.lotId) {
+      onOpenFicha(n.lotId);
+      return;
+    }
+    if (n.fincaId) {
+      const idx = fincas.findIndex((f) => f.id === n.fincaId);
+      if (idx >= 0) onOpenFincaModal(idx);
+    }
+  }
+
   return (
     <div>
       <div className={styles.appTop}>
@@ -136,9 +153,19 @@ export function AppDashboard({
             {feedback.length === 0 ? (
               <div className={styles.alist} style={{ marginTop: 8 }}>Sin notas todavía. Aquí verá lo que CTC le comunique sobre sus fincas y lotes.</div>
             ) : (
-              groupFeedback(feedback).map(([group, notes]) => (
+              groupFeedback(feedback).map(([group, notes]) => {
+                const target = notes.find((n) => n.lotId || n.fincaId);
+                return (
                 <div key={group} style={{ marginTop: 10 }}>
-                  <h5>{group}</h5>
+                  {target ? (
+                    <h5>
+                      <button type="button" className={styles.feedbackLink} onClick={() => openFeedbackTarget(target)}>
+                        {group} ↗
+                      </button>
+                    </h5>
+                  ) : (
+                    <h5>{group}</h5>
+                  )}
                   <div className={styles.alist}>
                     {notes.map((n) => (
                       <span key={n.id}>
@@ -147,7 +174,8 @@ export function AppDashboard({
                     ))}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -157,13 +185,19 @@ export function AppDashboard({
               <button className="btn btn-sm btn-solid" onClick={() => onOpenFincaModal(-1)}>+ Agregar finca</button>
             </div>
             <div className={styles.fincaScroll}>
-              {fincas.map((f, i) => (
+              {fincas.map((f, i) => {
+                const mapUrl = mapPreviewUrl({ lat: f.lat, lng: f.lng, polygon: f.eudrPolygon }, "160x90");
+                return (
                 <div className={styles.fincaCard} key={f.name + i}>
                   {f.profilePhotoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
                     <img src={f.profilePhotoUrl} alt={f.name} className={styles.fincaThumb} />
                   ) : (
                     <div className={styles.fincaThumbEmpty} />
+                  )}
+                  {mapUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
+                    <img src={mapUrl} alt={`Ubicación de ${f.name}`} className={styles.fincaMap} />
                   )}
                   <h5>{f.name}</h5>
                   <div className={styles.sub}>
@@ -181,7 +215,8 @@ export function AppDashboard({
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

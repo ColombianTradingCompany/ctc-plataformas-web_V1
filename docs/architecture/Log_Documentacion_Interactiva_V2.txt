@@ -6,3 +6,33 @@ Covers: everything since Documentacion_Interactiva_V2.0(8e96527).html, which
 is now the current real HTML snapshot (Log_Documentacion_Interactiva_V1.txt
 is closed and left as historical record of what went into producing it).
 
+## [2026-07-12] Finca location rendering + comm-log internal links
+- Finca map: new shared mapPreviewUrl() (src/lib/eudr.ts) -- a Google Static
+  Maps <img>, no WebGL -- now renders a saved pin/polygon outside the edit
+  modal on both sides: a new thumbnail on the producer's own finca card
+  (AppDashboard.tsx, Kaffetal Regal) and BCP's existing FincaEudrEditor.tsx
+  map preview (refactored off its own local duplicate onto the shared
+  helper). Not a new scenario -- refines the existing "producer sets
+  finca geolocation" flow's node behavior (Kaffetal Regal finca card,
+  BCP finca review card) rather than adding a new one.
+- Comm-log internal links: producer_comm_log gained real finca_id/lot_id FK
+  columns (previously only a free-text context_label). logProducerComm()
+  and every BCP call site (fincas/lotes/productores pages, the EUDR
+  auto-log in bcp/actions.ts) now pass the real id. The producer's
+  "Retroalimentación y ayuda" panel (AppDashboard.tsx) renders each note's
+  context label as a clickable link that opens the referenced finca modal
+  or lot ficha directly -- refines the existing BCP<->producer
+  communication node/flow, not a new one.
+- Bug fix: approveFinca() (bcp/actions.ts) was gating on a dead legacy
+  column (eudr_polygon, PostGIS) instead of eudr_polygon_geojson, silently
+  blocking approval of any >4ha finca even after the producer drew a
+  polygon. Worth a DICT-level note if the EUDR approval flow's description
+  ever mentions the polygon gate mechanics.
+- Bug fix: comm-log matching was by free-text label, which could leak
+  notes across two different producers whose finca/lot shared a name --
+  fixed as part of the FK change above.
+- Bug fix: nested <button> inside <button> hydration error in
+  FincaMapPicker.tsx (FieldInfo's info icon next to "Ingresar puntos
+  manualmente") -- no doc-visible behavior change, purely a correctness fix.
+(commit: pending)
+

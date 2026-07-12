@@ -214,10 +214,14 @@ export function FincaMapPicker({
               <button type="button" className="btn btn-sm" onClick={() => setDraftPoints([])}>
                 {polygon?.length ? "Redibujar polígono" : "Dibujar polígono"}
               </button>
-              <button type="button" className="btn btn-sm" onClick={startManualEntry}>
-                Ingresar puntos manualmente
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                <button type="button" className="btn btn-sm" onClick={startManualEntry}>
+                  Ingresar puntos manualmente
+                </button>
+                {/* Sibling, not nested inside the button above -- a <button> inside a
+                    <button> is invalid HTML and was throwing a hydration error. */}
                 <FieldInfo text="Alternativa a dibujar en el mapa: agregue cada esquina del lote como un punto de coordenadas. Puede escribir las coordenadas si ya las tiene (de un GPS de mano u otra app), o caminar hasta cada esquina y presionar 'Usar mi ubicación aquí' para capturarla automáticamente. Necesita al menos 3 puntos, en orden alrededor del perímetro del lote." />
-              </button>
+              </span>
               {polygon && polygon.length > 0 && (
                 <button type="button" className="btn btn-sm" onClick={() => onChangePolygon(null)}>
                   Borrar

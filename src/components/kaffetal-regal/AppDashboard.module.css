@@ -16,6 +16,8 @@
 .v{font-family:var(--font-fraunces),serif;font-weight:800;font-size:24px;margin-top:6px;color:var(--primary-deep)}
 .alist{font-family:var(--font-spline-mono),monospace;font-size:12.5px;line-height:2;color:var(--muted)}
 .alist b{color:var(--ink);font-weight:600}
+.feedbackLink{font-family:var(--font-fraunces),serif;font-size:15px;color:var(--accent);text-decoration:none;cursor:pointer;background:none;border:none;padding:0;display:inline-flex;align-items:center;gap:4px}
+.feedbackLink:hover{text-decoration:underline}
 @media(max-width:880px){.ag{grid-template-columns:1fr}.acard.wide,.acard.full{grid-column:span 1}.acard.tall{grid-row:auto}}
 
 .fincaScroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;margin-top:10px;scroll-snap-type:x proximity}
@@ -23,6 +25,7 @@
 .fincaCard h5{font-family:var(--font-fraunces),serif;font-size:14.5px;color:var(--primary-deep);margin-top:8px}
 .fincaThumb{width:100%;height:90px;border-radius:8px;object-fit:cover;border:1px solid var(--line);display:block}
 .fincaThumbEmpty{width:100%;height:90px;border-radius:8px;background:var(--card);border:1.5px dashed var(--line)}
+.fincaMap{width:100%;height:90px;border-radius:8px;object-fit:cover;border:1px solid var(--line);display:block;margin-top:8px}
 
 .lotrow{border:1px solid var(--line);border-left:7px solid var(--lc,var(--line));border-radius:10px;background:var(--paper);padding:16px 18px;display:grid;grid-template-columns:1.3fr 1fr auto;gap:14px;align-items:center;margin-top:12px}
 .lotrow h4{font-size:17px}

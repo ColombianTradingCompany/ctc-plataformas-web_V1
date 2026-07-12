@@ -135,8 +135,17 @@ export type HumidityReading = { month: number; pct: number; flagged: boolean; re
 
 // A note CTC left for this producer (producer_comm_log) -- contextLabel is
 // null for a general note, or "Finca X" / "Lote Y" when left from that
-// specific review card. Read-only from the producer's side.
-export type FeedbackNote = { id: string; contextLabel: string | null; note: string; createdAt: string };
+// specific review card. fincaId/lotId (when set) are the real record the
+// note refers to, used to render an internal link back to it. Read-only
+// from the producer's side.
+export type FeedbackNote = {
+  id: string;
+  contextLabel: string | null;
+  fincaId: string | null;
+  lotId: string | null;
+  note: string;
+  createdAt: string;
+};
 
 export type ProducerContract = {
   id: string;

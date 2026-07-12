@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { mapPreviewUrl } from "@/lib/eudr";
 import styles from "../shared.module.css";
 
 const EVIDENCE_TYPES: [string, string][] = [
@@ -53,28 +54,6 @@ export type FincaEudrValues = {
   eudr_google_earth_url: string | null;
 };
 
-// A plain <img> against Google's Static Maps API -- no JS SDK needed, so this
-// renders instantly and can't hit the WebGL rendering issues the interactive
-// picker (FincaMapPicker) has run into. Returns null when there's nothing to
-// show yet, so callers can fall back to a placeholder.
-function staticMapUrl(values: FincaEudrValues): string | null {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!apiKey) return null;
-  const polygon = values.eudr_polygon_geojson;
-  const params = new URLSearchParams({ size: "360x220", maptype: "hybrid", key: apiKey });
-  if (polygon && polygon.length >= 3) {
-    params.set("path", "color:0xffcc00ff|weight:3|" + polygon.map((p) => `${p.lat},${p.lng}`).join("|"));
-    return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
-  }
-  if (values.eudr_lat != null && values.eudr_lng != null && values.eudr_lat !== "" && values.eudr_lng !== "") {
-    params.set("center", `${values.eudr_lat},${values.eudr_lng}`);
-    params.set("zoom", "15");
-    params.set("markers", `color:red|${values.eudr_lat},${values.eudr_lng}`);
-    return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
-  }
-  return null;
-}
-
 function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
   const payload = {
     finca: fincaName,
@@ -108,7 +87,7 @@ export function FincaEudrEditor({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const mapUrl = staticMapUrl(values);
+  const mapUrl = mapPreviewUrl({ lat: values.eudr_lat, lng: values.eudr_lng, polygon: values.eudr_polygon_geojson });
 
   // A plain <form action={saveAction}> looks like it "does nothing" after
   // submit: the server action's revalidatePath() refreshes `values`, but this

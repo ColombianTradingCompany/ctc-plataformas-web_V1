@@ -9,7 +9,7 @@ import { ProducerContactLine } from "../ProducerContactLine";
 import { FincaEudrEditor } from "./FincaEudrEditor";
 import styles from "../shared.module.css";
 
-type CommRow = { id: string; context_label: string | null; note: string; created_at: string };
+type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string };
 
 type FincaRow = {
   id: string;
@@ -87,14 +87,14 @@ export default async function BcpFincasPage() {
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
     service
       .from("producer_comm_log")
-      .select("id, context_label, note, created_at")
-      .in("context_label", fincaRows.map((f) => `Finca ${f.name}`))
+      .select("id, finca_id, context_label, note, created_at")
+      .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: false }),
   ]);
-  const commsByContext = new Map<string, CommRow[]>();
+  const commsByFinca = new Map<string, CommRow[]>();
   for (const c of (comms as CommRow[] | null) ?? []) {
-    const key = c.context_label ?? "";
-    commsByContext.set(key, [...(commsByContext.get(key) ?? []), c]);
+    if (!c.finca_id) continue;
+    commsByFinca.set(c.finca_id, [...(commsByFinca.get(c.finca_id) ?? []), c]);
   }
 
   return (
@@ -119,9 +119,9 @@ export default async function BcpFincasPage() {
           }
           async function addComm(formData: FormData) {
             "use server";
-            await logProducerComm(finca.producer_id, `Finca ${finca.name}`, formData);
+            await logProducerComm(finca.producer_id, `Finca ${finca.name}`, formData, { fincaId: finca.id });
           }
-          const comms = commsByContext.get(`Finca ${finca.name}`) ?? [];
+          const comms = commsByFinca.get(finca.id) ?? [];
 
           return (
             <div className={styles.card} key={finca.id} style={{ flexDirection: "column", alignItems: "stretch" }}>

@@ -23,12 +23,12 @@ export async function approveFinca(fincaId: string) {
 
   const { data: finca } = await service
     .from("fincas")
-    .select("requires_eudr_polygon, eudr_polygon, status")
+    .select("requires_eudr_polygon, eudr_polygon_geojson, status")
     .eq("id", fincaId)
     .single();
 
   if (!finca) throw new Error("Finca no encontrada.");
-  if (finca.requires_eudr_polygon && !finca.eudr_polygon) {
+  if (finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length) {
     throw new Error("Esta finca supera 4 ha y necesita el polígono EUDR antes de poder aprobarse.");
   }
 
@@ -217,6 +217,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     await service.from("producer_comm_log").insert({
       producer_id: before.producer_id,
       context_label: `Finca ${before.name}`,
+      finca_id: fincaId,
       note: `CTC actualizó la información EUDR: ${summary}.`,
       created_by: adminId,
     });

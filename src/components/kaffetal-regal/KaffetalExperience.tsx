@@ -237,7 +237,7 @@ function Experience() {
           // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
           supabase.from("lot_evaluations").select("lot_id, source, status, sca_total, factor_rendimiento"),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
-          supabase.from("producer_comm_log").select("id, context_label, note, created_at").order("created_at", { ascending: false }),
+          supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at").order("created_at", { ascending: false }),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -352,9 +352,15 @@ function Experience() {
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
       setFeedback(
-        ((commRows as { id: string; context_label: string | null; note: string; created_at: string }[] | null) ?? []).map((c) => ({
+        (
+          (commRows as
+            | { id: string; context_label: string | null; finca_id: string | null; lot_id: string | null; note: string; created_at: string }[]
+            | null) ?? []
+        ).map((c) => ({
           id: c.id,
           contextLabel: c.context_label,
+          fincaId: c.finca_id,
+          lotId: c.lot_id,
           note: c.note,
           createdAt: c.created_at,
         }))

@@ -169,6 +169,7 @@ function FincaModalBody({
   const previewFinca: Finca = {
     id: finca?.id ?? "",
     name,
+    status: finca?.status ?? "pending_review",
     vereda: finca?.vereda ?? "—",
     mun: finca?.mun ?? "—",
     depto: finca?.depto ?? "—",
@@ -194,6 +195,9 @@ function FincaModalBody({
     onSave({
       id: finca?.id ?? "",
       name: trimmedName,
+      // Carried for the Finca type only -- saveFinca() never writes status
+      // (it's CTC-managed); the producer can't change their own review state.
+      status: finca?.status ?? "pending_review",
       vereda: veredaRef.current?.value.trim() || "—",
       mun: munRef.current?.value.trim() || "—",
       depto: deptoRef.current?.value ?? defaultDepto,

@@ -62,5 +62,26 @@ is closed and left as historical record of what went into producing it).
   "Deshacer punto" while drawing; vertex counter on "Terminar polígono";
   interactive polygon restyled to the same gold as the static previews.
   No node/scenario changes -- refines the same finca-geolocation flow.
+(commit: 06dac07)
+
+## [2026-07-12] Producer mobile layout fix + finca delete/revision lifecycle
+- Mobile: the producer dashboard's "Mis fincas" strip and "Mis lotes" rows
+  overflowed the viewport in portrait (only usable in landscape). Root
+  cause was grid items defaulting to min-width:auto; fixed with min-width:0
+  on .acard/.lotrow, kanban stepper now wraps, long CTC_ ref wraps. Pure
+  CSS/layout, no doc-model change.
+- Finca deletion lifecycle (worth a DICT note + possibly a small scenario
+  on the finca node): a producer can now DELETE a finca while CTC hasn't
+  accepted it (status != approved) AND no lot of it has reached the Arena
+  (stage < fila_arena) -- deleting cascades its still-pending lots (with a
+  warning naming them). New RLS policy fincas_delete_own_not_committed
+  replaces fincas_delete_own_before_eudr. Once the finca is approved or has
+  a committed lot, the "Eliminar" button is replaced by "Solicitar revisión
+  de datos", which opens a prefilled email to info@ctcexport.com; a full
+  deletion affecting committed lots is handled by CTC on that thread. New
+  shared helpers fincaSelfDeletable()/pendingLotsOfFinca()/isLotCommitted()
+  in data.ts keep the button state and the RLS policy in sync. Lot type
+  gained fincaId (real FK) for robust finca<->lot matching (the old
+  name-based match could confuse two same-named fincas).
 (commit: pending)
 

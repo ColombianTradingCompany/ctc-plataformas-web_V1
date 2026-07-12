@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaEudrUntouched, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { mapPreviewUrl } from "@/lib/eudr";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
@@ -44,6 +44,7 @@ export function AppDashboard({
   onDeleteLot,
   onOpenFincaModal,
   onDeleteFinca,
+  onRequestFincaRevision,
   onOpenInfoModal,
   onConfirmSampleShipped,
 }: {
@@ -61,6 +62,7 @@ export function AppDashboard({
   onDeleteLot: (lotId: string) => void;
   onOpenFincaModal: (index: number) => void;
   onDeleteFinca: (fincaId: string) => void;
+  onRequestFincaRevision: (finca: Finca) => void;
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
 }) {
@@ -205,13 +207,17 @@ export function AppDashboard({
                     {f.depto}<br />
                     {f.alt} msnm · {f.ha} ha
                   </div>
-                  <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                  <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button>
-                    {/* Deletable only before any EUDR declaration has been started -- once
-                        the producer begins filling that section, CTC may already be relying
-                        on this record. */}
-                    {fincaEudrUntouched(f) && (
+                    {/* Deletable while CTC hasn't accepted the finca and no lot of it has
+                        entered the Arena pipeline (fincaSelfDeletable mirrors the RLS
+                        policy). Otherwise CTC is relying on it, so the producer can only
+                        request a data revision -- a full deletion affecting committed
+                        lots is handled by CTC over that email thread. */}
+                    {fincaSelfDeletable(f, lots) ? (
                       <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Eliminar</button>
+                    ) : (
+                      <button className="btn btn-sm" onClick={() => onRequestFincaRevision(f)}>Solicitar revisión de datos</button>
                     )}
                   </div>
                 </div>
@@ -249,7 +255,7 @@ export function AppDashboard({
                           <button className={styles.iconbtn} title="Renombrar lote" aria-label={`Renombrar ${l.name}`} onClick={() => startRename(l)}>✎</button>
                         </h4>
                       )}
-                      <div className="mono" style={{ fontSize: 11, color: "var(--muted)" }}>
+                      <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere" }}>
                         <CtcRef id={l.id} />
                       </div>
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>

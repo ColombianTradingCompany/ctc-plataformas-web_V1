@@ -1,4 +1,4 @@
-.row{display:flex;align-items:center;gap:5px;margin-top:8px}
+.row{display:flex;align-items:center;gap:5px;margin-top:8px;flex-wrap:wrap}
 .step,.ending{
   font: 700 10px var(--font-spline-mono),monospace;
   padding:3px 7px;border-radius:5px;border:1.5px solid var(--line);

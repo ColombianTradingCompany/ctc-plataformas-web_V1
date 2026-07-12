@@ -17,7 +17,9 @@ import {
   STAGE_DB,
   type CompletionPoint,
   type Finca,
-  fincaEudrUntouched,
+  fincaSelfDeletable,
+  pendingLotsOfFinca,
+  supplierCode,
   type GeneralInfo,
   type Lot,
   type ProducerContract,
@@ -41,6 +43,7 @@ const STAGE_EXTRA = [
 type FincaRow = {
   id: string;
   name: string;
+  status: Finca["status"];
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
@@ -107,6 +110,7 @@ function dbFincaToFinca(
   return {
     id: row.id,
     name: row.name,
+    status: row.status ?? "pending_review",
     vereda: row.vereda || "—",
     mun: row.municipio || "—",
     depto: row.departamento || "—",
@@ -163,6 +167,7 @@ function dbLotToLot(
     id: row.id,
     name: row.name,
     finca: (row.finca_id && fincaNameById.get(row.finca_id)) || "—",
+    fincaId: row.finca_id,
     stage: stageIdx,
     intakeStep: row.intake_step ?? 0,
     grade: row.grade ? GRADE_DB[row.grade] : null,
@@ -586,26 +591,56 @@ function Experience() {
   async function deleteFinca(fincaId: string) {
     const finca = fincas.find((f) => f.id === fincaId);
     if (!finca) return;
-    // Guard here matches the RLS policy (fincas_delete_own_before_eudr): only
-    // deletable before any EUDR declaration has been started, and only while
-    // no lot references it (lots.finca_id is ON DELETE CASCADE).
-    const hasLots = lots.some((l) => l.finca === finca.name);
-    if (!fincaEudrUntouched(finca) || hasLots) {
-      showToast(
-        hasLots
-          ? "Esta finca tiene lotes asociados y no puede eliminarse."
-          : "Esta finca ya tiene información EUDR declarada y no puede eliminarse."
-      );
+    // Guard mirrors the RLS policy (fincas_delete_own_not_committed): deletable
+    // while CTC hasn't accepted the finca and none of its lots have entered the
+    // Arena pipeline. Anything else routes through requestFincaRevision instead.
+    if (!fincaSelfDeletable(finca, lots)) {
+      showToast("Esta finca ya está en el proceso de CTC. Solicite una revisión de datos para modificarla.");
       return;
     }
-    if (!window.confirm(`¿Eliminar la finca "${finca.name}"? Esta acción no se puede deshacer.`)) return;
+    const cascading = pendingLotsOfFinca(finca, lots);
+    const warning =
+      cascading.length > 0
+        ? `¿Eliminar la finca "${finca.name}"? Se eliminarán también ${cascading.length} lote(s) pendiente(s) asociado(s) (${cascading
+            .map((l) => l.name)
+            .join(", ")}). Esta acción no se puede deshacer.`
+        : `¿Eliminar la finca "${finca.name}"? Esta acción no se puede deshacer.`;
+    if (!window.confirm(warning)) return;
     const { data, error } = await supabase.from("fincas").delete().eq("id", fincaId).select("id");
     if (error || !data?.length) {
       showToast("No se pudo eliminar la finca.");
       return;
     }
+    // The DB cascades the pending lots; mirror that in local state so the lot
+    // list updates without a full reload.
+    const cascadedIds = new Set(cascading.map((l) => l.id));
     setFincas((prev) => prev.filter((f) => f.id !== fincaId));
-    showToast("Finca eliminada ✓");
+    setLots((prev) => prev.filter((l) => !cascadedIds.has(l.id)));
+    showToast(
+      cascading.length > 0
+        ? `Finca y ${cascading.length} lote(s) pendiente(s) eliminados ✓`
+        : "Finca eliminada ✓"
+    );
+  }
+
+  // For a finca CTC has already accepted (or one with lots already in the Arena
+  // pipeline) the producer can't self-delete -- changing or removing it has to
+  // go through CTC. This opens a prefilled email (same channel as the CTC Home
+  // contact forms); a full deletion that would affect committed lots is handled
+  // by CTC on that thread.
+  function requestFincaRevision(finca: Finca) {
+    const supplier = supplierCode(userId ?? "");
+    const subject = `Revisión de datos — Finca ${finca.name} (${supplier})`;
+    const body = [
+      `Proveedor: ${gi.razon} (${supplier})`,
+      `Finca: ${finca.name} — ${finca.mun}, ${finca.depto}`,
+      "",
+      "Solicito una revisión de los datos de esta finca. Describo abajo el cambio requerido",
+      "(o, si se trata de una eliminación que afecta lotes ya aprobados, indíquenme cómo proceder):",
+      "",
+      "",
+    ].join("\n");
+    window.location.href = `mailto:info@ctcexport.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   async function saveInfo(next: GeneralInfo) {
@@ -867,6 +902,7 @@ function Experience() {
             setFincaModalOpen(true);
           }}
           onDeleteFinca={deleteFinca}
+          onRequestFincaRevision={requestFincaRevision}
           onOpenInfoModal={() => setInfoModalOpen(true)}
         />
       )}

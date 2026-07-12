@@ -3,6 +3,10 @@ import type { FichaFormData } from "./ficha/fichaData";
 export type Finca = {
   id: string;
   name: string;
+  // CTC review state (finca_status enum). Drives whether the producer can
+  // self-delete the finca vs. must request changes from CTC -- see
+  // fincaSelfDeletable() and the finca card in AppDashboard.
+  status: "pending_review" | "approved" | "rejected";
   vereda: string;
   mun: string;
   depto: string;
@@ -36,20 +40,29 @@ export type Finca = {
   eudrPolygon: { lat: number; lng: number }[] | null;
 };
 
-// A finca is only self-deletable (fincas_delete_own_before_eudr RLS policy)
-// before any EUDR declaration has been started -- shared between the delete
-// action and the button's visibility so they can't drift apart.
-export function fincaEudrUntouched(f: Finca): boolean {
-  return (
-    !f.lat.trim() &&
-    !f.lng.trim() &&
-    !f.eudrPolygon?.length &&
-    f.eudrDeforestationFree === null &&
-    f.eudrLegalProduction === null &&
-    !f.eudrTenure &&
-    !f.eudrPlantingDate &&
-    !f.eudrProductionSystem
-  );
+// A lot is "committed" to CTC once it enters the Arena pipeline (stage index
+// >= 4 == fila_arena): the producer can no longer self-delete it, and a finca
+// with any committed lot can't be deleted from the app either. Mirrors the
+// `stage >= 'fila_arena'` check in the fincas delete RLS policy.
+export const LOT_COMMITTED_STAGE = 4;
+export function isLotCommitted(l: Pick<Lot, "stage">): boolean {
+  return l.stage >= LOT_COMMITTED_STAGE;
+}
+
+// Mirrors the fincas_delete_own_not_committed RLS policy so the button state
+// and what the DB will actually allow can't drift apart: a finca is self-
+// deletable while CTC hasn't accepted it (status !== 'approved') AND none of
+// its lots have entered the Arena pipeline. Deleting it cascades whatever
+// still-pending lots it has (lots.finca_id is ON DELETE CASCADE).
+export function fincaSelfDeletable(finca: Finca, lots: Lot[]): boolean {
+  if (finca.status === "approved") return false;
+  return !lots.some((l) => l.fincaId === finca.id && isLotCommitted(l));
+}
+
+// The still-pending lots that a finca deletion would cascade away -- surfaced
+// in the confirmation dialog so the producer knows what else gets terminated.
+export function pendingLotsOfFinca(finca: Finca, lots: Lot[]): Lot[] {
+  return lots.filter((l) => l.fincaId === finca.id && !isLotCommitted(l));
 }
 
 export type CompletionPoint = { pct: number; recordedAt: string };
@@ -57,7 +70,8 @@ export type CompletionPoint = { pct: number; recordedAt: string };
 export type Lot = {
   id: string;
   name: string;
-  finca: string;
+  finca: string; // finca display name (for the "Finca: X" line)
+  fincaId: string | null; // real FK -- use this, not the name, to match a lot to its finca
   stage: number; // 0-6, index into STAGES
   // 0-4: progress through the producer-facing intake sub-stages (FT, FT2,
   // EUDR, Video) while `stage` is still "borrador" -- see FichaView.tsx and

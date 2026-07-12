@@ -55,20 +55,42 @@ export function FincaMapPicker({
   const parsedLat = Number(lat);
   const parsedLng = Number(lng);
   const hasPoint = lat.trim() !== "" && lng.trim() !== "" && !isNaN(parsedLat) && !isNaN(parsedLng);
-  const center = hasPoint ? { lat: parsedLat, lng: parsedLng } : DEFAULT_CENTER;
+  const markerPos = hasPoint ? { lat: parsedLat, lng: parsedLng } : null;
   const shownPolygon = drawing ? draftPoints : polygon;
+
+  // Initial-only center/zoom: passing a fresh `center` object on every render
+  // makes GoogleMap snap the viewport back on every state change -- each
+  // clicked vertex used to re-center the map out from under the producer.
+  // After mount, all movement goes through panTo/fitBounds on the map ref.
+  const [initialCenter] = useState(() => markerPos ?? (polygon?.length ? polygon[0] : DEFAULT_CENTER));
+  const [initialZoom] = useState(() => (markerPos || polygon?.length ? 15 : 8));
+
+  const fitToPolygon = useCallback((points: PolygonPoint[]) => {
+    const map = mapRef.current;
+    if (!map || points.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    for (const p of points) bounds.extend(p);
+    map.fitBounds(bounds, 40);
+  }, []);
 
   const handleMapClick = useCallback(
     (e: google.maps.MapMouseEvent) => {
       if (!e.latLng) return;
       const point = { lat: e.latLng.lat(), lng: e.latLng.lng() };
       if (needsPolygon) {
-        if (drawing) setDraftPoints((pts) => [...(pts ?? []), point]);
+        if (manualMode) return;
+        if (drawing) {
+          setDraftPoints((pts) => [...(pts ?? []), point]);
+        } else if (!polygon?.length) {
+          // First click on an empty map starts the draft directly -- no need
+          // to find the "Dibujar polígono" button first.
+          setDraftPoints([point]);
+        }
         return;
       }
       onChangePoint(String(point.lat), String(point.lng));
     },
-    [needsPolygon, drawing, onChangePoint]
+    [needsPolygon, drawing, manualMode, polygon, onChangePoint]
   );
 
   const handleMarkerDragEnd = useCallback(
@@ -80,8 +102,15 @@ export function FincaMapPicker({
   );
 
   function finishDrawing() {
-    if (draftPoints && draftPoints.length >= 3) onChangePolygon(draftPoints);
+    if (draftPoints && draftPoints.length >= 3) {
+      onChangePolygon(draftPoints);
+      fitToPolygon(draftPoints);
+    }
     setDraftPoints(null);
+  }
+
+  function undoLastPoint() {
+    setDraftPoints((pts) => (pts && pts.length > 0 ? pts.slice(0, -1) : pts));
   }
 
   function useCurrentLocation() {
@@ -145,7 +174,10 @@ export function FincaMapPicker({
     const points = (manualPoints ?? [])
       .map((r) => ({ lat: Number(r.lat.replace(",", ".")), lng: Number(r.lng.replace(",", ".")) }))
       .filter((p) => !isNaN(p.lat) && !isNaN(p.lng));
-    if (points.length >= 3) onChangePolygon(points);
+    if (points.length >= 3) {
+      onChangePolygon(points);
+      fitToPolygon(points);
+    }
     setManualPoints(null);
   }
 
@@ -180,17 +212,25 @@ export function FincaMapPicker({
       {geoError && <p style={{ fontSize: 11.5, color: "var(--red)", marginBottom: 6 }}>{geoError}</p>}
       <GoogleMap
         mapContainerStyle={MAP_STYLE}
-        center={center}
-        zoom={hasPoint || polygon?.length ? 15 : 8}
+        center={initialCenter}
+        zoom={initialZoom}
         onClick={handleMapClick}
-        onLoad={(map) => { mapRef.current = map; }}
+        onLoad={(map) => {
+          mapRef.current = map;
+          // An already-saved polygon may be nowhere near the initial center
+          // (default Piedecuesta, or the point fields) -- bring it into view.
+          if (polygon && polygon.length >= 3) fitToPolygon(polygon);
+        }}
         options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false, mapTypeId: "hybrid" }}
       >
-        {!needsPolygon && hasPoint && <Marker position={center} draggable onDragEnd={handleMarkerDragEnd} />}
+        {!needsPolygon && markerPos && <Marker position={markerPos} draggable onDragEnd={handleMarkerDragEnd} />}
         {needsPolygon && shownPolygon && shownPolygon.length > 0 && (
           <Polygon
             path={shownPolygon}
             editable={!drawing}
+            // Same gold as the static previews (mapPreviewUrl), so the shape
+            // reads as the same object across both renderings.
+            options={{ strokeColor: "#FFCD00", strokeWeight: 3, fillColor: "#FFCD00", fillOpacity: 0.2 }}
             onMouseUp={(e) => {
               if (drawing) return;
               // Editable-polygon vertex drags don't carry the full path in the
@@ -228,13 +268,18 @@ export function FincaMapPicker({
                 </button>
               )}
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
-                {polygon?.length ? `${polygon.length} vértices — arrastre los puntos para ajustar` : "Predio > 4 ha: dibuje el polígono del terreno"}
+                {polygon?.length
+                  ? `${polygon.length} vértices — arrastre los puntos para ajustar`
+                  : "Predio > 4 ha: haga clic en el mapa para marcar el primer vértice del terreno"}
               </p>
             </>
           ) : (
             <>
               <button type="button" className="btn btn-sm btn-solid" onClick={finishDrawing} disabled={(draftPoints?.length ?? 0) < 3}>
-                Terminar polígono
+                Terminar polígono{draftPoints?.length ? ` (${draftPoints.length})` : ""}
+              </button>
+              <button type="button" className="btn btn-sm" onClick={undoLastPoint} disabled={(draftPoints?.length ?? 0) === 0}>
+                ↩ Deshacer punto
               </button>
               <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>
                 📍 Agregar mi ubicación aquí
@@ -243,7 +288,9 @@ export function FincaMapPicker({
                 Cancelar
               </button>
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
-                Haga clic en el mapa o use su ubicación para marcar cada vértice ({draftPoints?.length ?? 0} hasta ahora, mínimo 3).
+                {(draftPoints?.length ?? 0) < 3
+                  ? `Marque cada esquina del terreno en el mapa (${draftPoints?.length ?? 0} de mínimo 3).`
+                  : `${draftPoints?.length} vértices marcados — puede seguir agregando o terminar.`}
               </p>
             </>
           )}

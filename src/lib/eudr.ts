@@ -154,7 +154,10 @@ export function mapPreviewUrl(
   // on hybrid.
   const params = new URLSearchParams({ size, maptype: "terrain", key: apiKey });
   if (loc.polygon && loc.polygon.length >= 3) {
-    params.set("path", "color:0xffcc00ff|weight:3|" + loc.polygon.map((p) => `${p.lat},${p.lng}`).join("|"));
+    // Close the ring (repeat the first vertex) and give it a fill -- an open
+    // `path` renders as a route line, not an area. 0xFFCD00 is CTC gold.
+    const ring = [...loc.polygon, loc.polygon[0]];
+    params.set("path", "color:0xFFCD00FF|weight:3|fillcolor:0xFFCD0033|" + ring.map((p) => `${p.lat},${p.lng}`).join("|"));
     return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
   }
   if (loc.lat != null && loc.lng != null && loc.lat !== "" && loc.lng !== "") {

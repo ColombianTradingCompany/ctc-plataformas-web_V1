@@ -50,3 +50,17 @@ is closed and left as historical record of what went into producing it).
   polygon-only fincas instead of the misleading "no capturada".
 (commits: c8d3b16, 200e0df)
 
+## [2026-07-12] Static polygon fill + interactive picker UX pass
+- mapPreviewUrl() now closes the polygon ring (repeats the first vertex)
+  and adds a translucent CTC-gold fill -- an open `path` renders as a route
+  line, not an area, which is exactly how the first live thumbnails looked.
+- FincaMapPicker: the map now fits to an already-saved polygon on open
+  (before, it stayed centered on the Piedecuesta default and the polygon
+  could be entirely off-screen -- looked like "no polygon"); center/zoom
+  are initial-only so the viewport no longer snaps back on every clicked
+  vertex; first click on an empty map starts the draft directly; new
+  "Deshacer punto" while drawing; vertex counter on "Terminar polígono";
+  interactive polygon restyled to the same gold as the static previews.
+  No node/scenario changes -- refines the same finca-geolocation flow.
+(commit: pending)
+

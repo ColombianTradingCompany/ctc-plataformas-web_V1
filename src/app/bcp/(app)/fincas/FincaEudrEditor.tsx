@@ -136,7 +136,14 @@ export function FincaEudrEditor({
         </div>
         {mapBlock}
         <div className={styles.meta} style={{ marginTop: 8, lineHeight: 1.9 }}>
-          <div>Ubicación: {values.eudr_lat && values.eudr_lng ? `${values.eudr_lat}, ${values.eudr_lng}` : "no capturada"}</div>
+          <div>
+            Ubicación:{" "}
+            {values.eudr_polygon_geojson?.length
+              ? `Polígono de ${values.eudr_polygon_geojson.length} vértices`
+              : values.eudr_lat && values.eudr_lng
+                ? `${values.eudr_lat}, ${values.eudr_lng}`
+                : "no capturada"}
+          </div>
           <div>Fecha de siembra: {values.eudr_planting_date || "sin definir"}</div>
           <div>Sistema productivo: {values.eudr_production_system ? PRODUCTION_SYSTEM_LABEL[values.eudr_production_system] : "sin definir"}</div>
           <div>Libre de deforestación: {yesNoLabel(values.eudr_deforestation_free)}</div>

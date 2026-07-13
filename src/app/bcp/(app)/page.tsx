@@ -24,6 +24,14 @@ const ENTITY_HREF: Record<string, string> = {
   lot: "/bcp/lotes",
   contract: "/bcp/contratos",
   lot_listing: "/bcp/catalogo",
+  lead: "/bcp/leads",
+};
+
+const LEAD_PILLAR_LABEL: Record<string, string> = {
+  general: "Escríbenos",
+  tech: "CTC Tech",
+  cocreate: "Co-Create",
+  varietales: "Varietales",
 };
 
 function snippet(text: string, n = 60): string {
@@ -45,6 +53,8 @@ export default async function BcpHomePage() {
     { data: producerMsgs },
     { data: recentAudit },
     { data: taskStates },
+    { data: newLeadRows },
+    { count: totalLeads },
   ] = await Promise.all([
     service.from("fincas").select("id, name, municipio").eq("status", "pending_review").order("created_at", { ascending: true }),
     service.from("lots").select("id, name").eq("stage", "fila_arena").order("created_at", { ascending: true }),
@@ -62,6 +72,8 @@ export default async function BcpHomePage() {
       .limit(25),
     service.from("audit_log").select("entity_type, entity_id, action, notes, created_at").order("created_at", { ascending: false }).limit(8),
     service.from("bcp_task_state").select("item_key, state"),
+    service.from("leads").select("id, nombre, pillar").eq("status", "nuevo").order("created_at", { ascending: true }),
+    service.from("leads").select("id", { count: "exact", head: true }),
   ]);
 
   const pendingFincas = (pendingFincaRows as NamedRow[] | null) ?? [];
@@ -73,6 +85,7 @@ export default async function BcpHomePage() {
     ((taskStates as { item_key: string; state: "tbd" | "done" }[] | null) ?? []).map((r) => [r.item_key, r.state])
   );
   const msgProducers = await fetchProducerContacts(service, msgs.map((m) => m.producer_id));
+  const newLeads = (newLeadRows as { id: string; nombre: string; pillar: string }[] | null) ?? [];
 
   // ---- KPI tiles (graphical: number + proportion meter, colored + linked) ----
   const kpis = [
@@ -112,10 +125,30 @@ export default async function BcpHomePage() {
       href: "/bcp/contratos/humedad",
       sub: `de ${totalReadings ?? 0} lecturas`,
     },
+    {
+      k: "Leads sin responder",
+      icon: "✉️",
+      v: newLeads.length,
+      denom: totalLeads ?? 0,
+      color: "#2E7D52",
+      href: "/bcp/leads",
+      sub: `de ${totalLeads ?? 0} leads`,
+    },
   ];
 
   // ---- Action feed: hyperlinked + Done/TBD-toggleable ----
   const items: PanelTaskItem[] = [];
+  for (const l of newLeads) {
+    const key = `lead:${l.id}`;
+    items.push({
+      key,
+      icon: "✉️",
+      label: `Responder lead ${l.nombre}`,
+      sublabel: LEAD_PILLAR_LABEL[l.pillar] ?? l.pillar,
+      href: "/bcp/leads",
+      state: stateByKey.get(key) ?? "tbd",
+    });
+  }
   for (const f of pendingFincas) {
     const key = `finca:${f.id}`;
     items.push({

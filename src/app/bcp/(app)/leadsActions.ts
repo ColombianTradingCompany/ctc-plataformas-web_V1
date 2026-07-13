@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { sendLeadWelcomeEmail, sendLeadReplyEmail, type LeadEmailInput } from "@/lib/email/leadEmails";
+import { sendLeadWelcomeEmail, sendLeadReplyEmail, PILLAR_LABEL, type LeadEmailInput } from "@/lib/email/leadEmails";
 
 async function requireAdmin() {
   const session = await createSessionClient();
@@ -24,16 +24,58 @@ type LeadRow = LeadEmailInput & {
   status: string;
   temp_password: string | null;
   first_replied_at: string | null;
+  profile_id: string | null;
 };
 
 async function getLead(service: ReturnType<typeof createServiceRoleClient>, leadId: string): Promise<LeadRow> {
   const { data } = await service
     .from("leads")
-    .select("id, pillar, nombre, email, status, account_provisioning, temp_password, first_replied_at")
+    .select("id, pillar, nombre, email, status, account_provisioning, temp_password, first_replied_at, profile_id")
     .eq("id", leadId)
     .single();
   if (!data) throw new Error("Lead no encontrado.");
   return data as LeadRow;
+}
+
+// A successful reply also lands in the producer's in-app "Retroalimentación y
+// ayuda" feed (producer-role leads only) so the conversation lives on both
+// channels, not just email. The password block is never mirrored.
+async function mirrorReplyToProducerFeed(
+  service: ReturnType<typeof createServiceRoleClient>,
+  lead: LeadRow,
+  body: string,
+  adminId: string
+) {
+  if (!lead.profile_id) return;
+  const { data: profile } = await service.from("profiles").select("role").eq("id", lead.profile_id).maybeSingle();
+  if (profile?.role !== "producer") return;
+  await service.from("producer_comm_log").insert({
+    producer_id: lead.profile_id,
+    lead_id: lead.id,
+    context_label: `Solicitud CTC Home · ${PILLAR_LABEL[lead.pillar] ?? lead.pillar}`,
+    note: body,
+    created_by: adminId,
+  });
+}
+
+// Post-send bookkeeping shared by replyToLead and retryReplyEmail: stamp the
+// reply, clear the temp password ONLY when this send actually carried it,
+// advance the pipeline, and mirror in-app.
+async function applySuccessfulReply(
+  service: ReturnType<typeof createServiceRoleClient>,
+  lead: LeadRow,
+  replyId: string,
+  body: string,
+  carriedPassword: boolean,
+  adminId: string
+) {
+  await service.from("lead_replies").update({ sent_at: new Date().toISOString(), send_error: null }).eq("id", replyId);
+  const leadPatch: Record<string, unknown> = {};
+  if (carriedPassword) leadPatch.temp_password = null;
+  if (!lead.first_replied_at) leadPatch.first_replied_at = new Date().toISOString();
+  if (lead.status === "nuevo") leadPatch.status = "en_conversacion";
+  if (Object.keys(leadPatch).length) await service.from("leads").update(leadPatch).eq("id", lead.id);
+  await mirrorReplyToProducerFeed(service, lead, body, adminId);
 }
 
 // BCP replies by email. The FIRST successful reply to an account created on
@@ -59,11 +101,7 @@ export async function replyToLead(leadId: string, formData: FormData) {
 
   const result = await sendLeadReplyEmail(lead, { subject, body }, lead.temp_password);
   if (result.ok) {
-    await service.from("lead_replies").update({ sent_at: new Date().toISOString(), send_error: null }).eq("id", reply.id);
-    const leadPatch: Record<string, unknown> = { temp_password: null };
-    if (!lead.first_replied_at) leadPatch.first_replied_at = new Date().toISOString();
-    if (lead.status === "nuevo") leadPatch.status = "en_conversacion";
-    await service.from("leads").update(leadPatch).eq("id", leadId);
+    await applySuccessfulReply(service, lead, reply.id, body, includesPassword, adminId);
   } else {
     // Send failed: keep temp_password so the retry still carries it.
     await service.from("lead_replies").update({ send_error: result.error }).eq("id", reply.id);
@@ -137,11 +175,9 @@ export async function retryReplyEmail(replyId: string) {
   const tempPassword = reply.includes_password ? lead.temp_password : null;
   const result = await sendLeadReplyEmail(lead, reply, tempPassword);
   if (result.ok) {
-    await service.from("lead_replies").update({ sent_at: new Date().toISOString(), send_error: null }).eq("id", reply.id);
-    const leadPatch: Record<string, unknown> = { temp_password: null };
-    if (!lead.first_replied_at) leadPatch.first_replied_at = new Date().toISOString();
-    if (lead.status === "nuevo") leadPatch.status = "en_conversacion";
-    await service.from("leads").update(leadPatch).eq("id", lead.id);
+    // Clear the password only if THIS send actually carried it -- a retried
+    // non-carrier reply must not discard an undelivered password.
+    await applySuccessfulReply(service, lead, reply.id, reply.body, tempPassword !== null, adminId);
   } else {
     await service.from("lead_replies").update({ send_error: result.error }).eq("id", reply.id);
   }

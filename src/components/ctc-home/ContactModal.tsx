@@ -85,6 +85,10 @@ function readFreshStash(): (LeadPayload & { ts: number }) | null {
 export function ContactModalProvider({ children }: { children: React.ReactNode }) {
   const [openKey, setOpenKey] = useState<FormKey | null>(null);
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
+  // What the visitor already typed in the general form survives a "Tema"
+  // switch: switching used to unmount the form and silently discard
+  // nombre/correo/mensaje.
+  const [carry, setCarry] = useState<{ nombre?: string; email?: string; msg?: string }>({});
   const [supabase] = useState(() => createClient());
   const { showToast } = useToast();
   const resuming = useRef(false);
@@ -95,8 +99,19 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
   };
   const openForm = (key: FormKey) => {
     setPhase({ name: "idle" });
+    setCarry({});
     setOpenKey(key);
   };
+
+  function switchTema(nextKey: FormKey, select: HTMLSelectElement) {
+    const form = select.closest("form");
+    if (form) {
+      const fd = new FormData(form);
+      const s = (k: string) => String(fd.get(k) ?? "").trim();
+      setCarry({ nombre: s("nombre"), email: s("email"), msg: s("msg") });
+    }
+    setOpenKey(nextKey);
+  }
 
   function applyResult(result: LeadSubmitResult, pillar: FormKey) {
     if (result.ok) {
@@ -168,7 +183,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
     <>
       <div>
         <label htmlFor={`${key}-email`}>Correo electrónico</label>
-        <input id={`${key}-email`} name="email" type="email" required placeholder="tu@correo.com" />
+        <input id={`${key}-email`} name="email" type="email" required placeholder="tu@correo.com" defaultValue={carry.email} />
       </div>
       {/* Honeypot: hidden from humans; bots that fill it get a silent no-op. */}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className={styles.hp} />
@@ -245,7 +260,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
                   name="tema"
                   defaultValue="general"
                   onChange={(e) => {
-                    if (e.target.value !== "general") setOpenKey(e.target.value as FormKey);
+                    if (e.target.value !== "general") switchTema(e.target.value as FormKey, e.target);
                   }}
                 >
                   <option value="general">Consulta general</option>
@@ -277,7 +292,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="t-nombre">Nombre</label>
-                  <input id="t-nombre" name="nombre" required placeholder="Su nombre" />
+                  <input id="t-nombre" name="nombre" required placeholder="Su nombre" defaultValue={carry.nombre} />
                 </div>
                 <div>
                   <label htmlFor="t-finca">Finca / organización</label>
@@ -302,7 +317,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               </div>
               <div>
                 <label htmlFor="t-msg">Cuéntenos de su proceso actual</label>
-                <textarea id="t-msg" name="msg" placeholder="Volumen, beneficio actual, retos…" />
+                <textarea id="t-msg" name="msg" placeholder="Volumen, beneficio actual, retos…" defaultValue={carry.msg} />
               </div>
               {footer("tech")}
             </form>
@@ -323,7 +338,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="c-nombre">Nombre</label>
-                  <input id="c-nombre" name="nombre" required placeholder="Tu nombre" />
+                  <input id="c-nombre" name="nombre" required placeholder="Tu nombre" defaultValue={carry.nombre} />
                 </div>
                 <div>
                   <label htmlFor="c-marca">Empresa / marca</label>
@@ -366,7 +381,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               </div>
               <div>
                 <label htmlFor="c-msg">El proyecto</label>
-                <textarea id="c-msg" name="msg" placeholder="Etapa del funnel, calidades buscadas, tiempos…" />
+                <textarea id="c-msg" name="msg" placeholder="Etapa del funnel, calidades buscadas, tiempos…" defaultValue={carry.msg} />
               </div>
               {footer("cocreate")}
             </form>
@@ -387,7 +402,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="v-nombre">Nombre</label>
-                  <input id="v-nombre" name="nombre" required placeholder="Su nombre" />
+                  <input id="v-nombre" name="nombre" required placeholder="Su nombre" defaultValue={carry.nombre} />
                 </div>
                 <div>
                   <label htmlFor="v-finca">Finca</label>
@@ -410,7 +425,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               </div>
               <div>
                 <label htmlFor="v-msg">Mensaje</label>
-                <textarea id="v-msg" name="msg" placeholder="Perfil de taza objetivo, fecha de siembra…" />
+                <textarea id="v-msg" name="msg" placeholder="Perfil de taza objetivo, fecha de siembra…" defaultValue={carry.msg} />
               </div>
               {footer("varietales")}
             </form>

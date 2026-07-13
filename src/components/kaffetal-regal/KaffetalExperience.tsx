@@ -7,7 +7,7 @@ import { uploadKaffetalMedia, signedKaffetalMediaUrls } from "@/lib/kaffetalMedi
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
-import { AppDashboard } from "./AppDashboard";
+import { AppDashboard, type DashboardModule } from "./AppDashboard";
 import { FichaView, type FichaSaveUpdate } from "./FichaView";
 import { FincaModal } from "./FincaModal";
 import { InfoModal } from "./InfoModal";
@@ -232,6 +232,9 @@ function Experience() {
   const [fincaModalOpen, setFincaModalOpen] = useState(false);
   const [editingFincaIdx, setEditingFincaIdx] = useState(-1);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
+  // Which dashboard module is open (null = the hub landing). Lives here, not
+  // in AppDashboard, so it participates in the Back-button layer stack below.
+  const [activeModule, setActiveModule] = useState<DashboardModule | null>(null);
 
   const loadData = useCallback(
     async (uid: string) => {
@@ -1072,15 +1075,21 @@ function Experience() {
   // vez de abandonar la app. Al cerrar con un botón de la interfaz rebobinamos
   // la entrada correspondiente para que el conteo no se desalinee.
   const backLayerCount =
-    (loginOpen ? 1 : 0) + (fincaModalOpen ? 1 : 0) + (infoModalOpen ? 1 : 0) + (view === "ficha" ? 1 : 0);
+    (loginOpen ? 1 : 0) +
+    (fincaModalOpen ? 1 : 0) +
+    (infoModalOpen ? 1 : 0) +
+    (view === "ficha" ? 1 : 0) +
+    (activeModule ? 1 : 0);
   const closeTopLayer = useCallback(() => {
     // Orden de cierre: los modales están por encima de la ficha (un modal
-    // puede abrirse desde dentro de la ficha), así que se cierran primero.
+    // puede abrirse desde dentro de la ficha), la ficha por encima del módulo
+    // del panel, y el módulo por encima del hub.
     if (loginOpen) setLoginOpen(false);
     else if (fincaModalOpen) setFincaModalOpen(false);
     else if (infoModalOpen) setInfoModalOpen(false);
     else if (view === "ficha") setView(userId ? "app" : "landing");
-  }, [loginOpen, fincaModalOpen, infoModalOpen, view, userId]);
+    else if (activeModule) setActiveModule(null);
+  }, [loginOpen, fincaModalOpen, infoModalOpen, view, userId, activeModule]);
 
   const backDepth = useRef(0);
   const backFromPop = useRef(false);
@@ -1129,7 +1138,12 @@ function Experience() {
           gi={gi}
           contracts={contracts}
           feedback={feedback}
-          onBackHome={() => setView("landing")}
+          module={activeModule}
+          onSelectModule={setActiveModule}
+          onBackHome={() => {
+            setActiveModule(null);
+            setView("landing");
+          }}
           onLogout={logout}
           onNewLot={newLot}
           onOpenFicha={openFicha}

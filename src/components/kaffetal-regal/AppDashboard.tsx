@@ -29,6 +29,12 @@ function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
   return order.map((key) => ({ key, notes: byKey.get(key)!.slice().reverse() }));
 }
 
+// The producer panel is a HUB: a landing of big module tiles (each with its
+// key facts) that open one module at a time, instead of one endless page.
+// The active module lives in KaffetalExperience so the phone's Back button
+// closes it like any other layer.
+export type DashboardModule = "info" | "muestras" | "retro" | "fincas" | "lotes" | "cert" | "contratos";
+
 // The reference is long, so only the 7 characters that actually go on the
 // physical sample package are bolded -- same convention used in the Ficha.
 function CtcRef({ id }: { id: string }) {
@@ -45,6 +51,8 @@ export function AppDashboard({
   gi,
   contracts,
   feedback,
+  module,
+  onSelectModule,
   onBackHome,
   onLogout,
   onNewLot,
@@ -65,6 +73,8 @@ export function AppDashboard({
   gi: GeneralInfo;
   contracts: ProducerContract[];
   feedback: FeedbackNote[];
+  module: DashboardModule | null;
+  onSelectModule: (m: DashboardModule | null) => void;
   onBackHome: () => void;
   onLogout: () => void;
   onNewLot: () => void;
@@ -100,6 +110,67 @@ export function AppDashboard({
   }
 
   const certified = lots.filter((l) => l.stage >= 5);
+
+  // Key facts for the hub tiles: enough to know whether a module needs
+  // attention without opening it. `alert` facts render highlighted.
+  const samplesToShip = lots.filter((l) => l.stage === 1 && !l.sampleShippedAt).length;
+  const newCtcNotes = feedback.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
+  const aptFincas = fincas.filter((f) => fincaEudrStatus(f).code === "apta").length;
+  const lotsInQueue = lots.filter((l) => l.stage === 4).length;
+  const infoComplete = gi.razon !== "—" && gi.agri !== "—";
+
+  const tiles: { key: DashboardModule; icon: string; title: string; fact: string; alert?: boolean }[] = [
+    {
+      key: "info",
+      icon: "👤",
+      title: "Información general",
+      fact: infoComplete ? `${gi.agri} · ${gi.razon}` : "Complete su información una sola vez",
+      alert: !infoComplete,
+    },
+    {
+      key: "fincas",
+      icon: "🌱",
+      title: "Mis fincas",
+      fact: fincas.length
+        ? `${fincas.length} registrada${fincas.length === 1 ? "" : "s"} · ${aptFincas} EUDR Apta${aptFincas === 1 ? "" : "s"}`
+        : "Registre su primera finca",
+      alert: fincas.length === 0,
+    },
+    {
+      key: "lotes",
+      icon: "☕",
+      title: "Mis lotes",
+      fact: lots.length
+        ? `${lots.length} lote${lots.length === 1 ? "" : "s"} · ${lotsInQueue} en fila para la Arena`
+        : "Registre su primer café",
+    },
+    {
+      key: "muestras",
+      icon: "📦",
+      title: "Envío de muestras",
+      fact: samplesToShip > 0 ? `${samplesToShip} muestra${samplesToShip === 1 ? "" : "s"} por enviar` : "Dirección y guía de envío · 2 kg por lote",
+      alert: samplesToShip > 0,
+    },
+    {
+      key: "retro",
+      icon: "💬",
+      title: "Retroalimentación y ayuda",
+      fact: newCtcNotes > 0 ? `${newCtcNotes} nota${newCtcNotes === 1 ? "" : "s"} nueva${newCtcNotes === 1 ? "" : "s"} de CTC` : "Converse con CTC sobre sus fincas y solicitudes",
+      alert: newCtcNotes > 0,
+    },
+    {
+      key: "cert",
+      icon: "🏅",
+      title: "Certificación CTC",
+      fact: certified.length ? `${certified.length} certificado${certified.length === 1 ? "" : "s"} emitido${certified.length === 1 ? "" : "s"}` : "Se emiten al evaluar sus lotes en la Arena",
+    },
+    {
+      key: "contratos",
+      icon: "🤝",
+      title: "Mis contratos",
+      fact: contracts.length ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC` : "Aparecen al ganar un galardón en la Arena",
+    },
+  ];
 
   function startRename(l: Lot) {
     setRenamingId(l.id);
@@ -145,7 +216,26 @@ export function AppDashboard({
       <div className={`wrap ${styles.main}`}>
         <p className="eyebrow">Panel del productor</p>
         <h1 className={styles.h1}>Buenos días, {userName}</h1>
-        <div className={styles.ag}>
+
+        {module === null && (
+          <div className={styles.hubGrid}>
+            {tiles.map((t) => (
+              <button key={t.key} type="button" className={styles.hubTile} onClick={() => onSelectModule(t.key)}>
+                <span className={styles.hubIcon} aria-hidden>{t.icon}</span>
+                <span className={styles.hubTitle}>{t.title}</span>
+                <span className={t.alert ? styles.hubFactAlert : styles.hubFact}>{t.fact}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {module !== null && (
+          <>
+          <button className="btn btn-sm" style={{ marginTop: 14 }} onClick={() => onSelectModule(null)}>
+            ← Volver al panel
+          </button>
+          <div className={styles.ag} style={{ marginTop: 14 }}>
+          {module === "info" && (
           <div className={styles.acard}>
             <span className={styles.k}>Información general · se registra una sola vez</span>
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginTop: 8 }}>
@@ -171,15 +261,24 @@ export function AppDashboard({
             )}
             <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={onOpenInfoModal}>Editar información</button>
           </div>
+          )}
 
+          {module === "muestras" && (
           <div className={styles.acard}>
             <span className={styles.k}>Envío de muestras · 2 kg pergamino por lote</span>
             <div className={styles.alist} style={{ marginTop: 6 }}>
               <b>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · Colombia</b><br />
               Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
             </div>
+            {samplesToShip > 0 && (
+              <div className={styles.alist} style={{ marginTop: 10 }}>
+                <b>{samplesToShip} lote{samplesToShip === 1 ? "" : "s"} esperando su envío</b> — confírmelo desde la tarjeta del lote en &quot;Mis lotes&quot;.
+              </div>
+            )}
           </div>
+          )}
 
+          {module === "retro" && (
           <div className={`${styles.acard} ${styles.tall}`}>
             <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
             {feedback.length === 0 ? (
@@ -263,7 +362,9 @@ export function AppDashboard({
               })
             )}
           </div>
+          )}
 
+          {module === "fincas" && (
           <div className={`${styles.acard} ${styles.wide}`}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span className={styles.k}>Mis fincas · {fincas.length} registradas</span>
@@ -326,6 +427,9 @@ export function AppDashboard({
             </div>
           </div>
 
+          )}
+
+          {module === "lotes" && (
           <div className={`${styles.acard} ${styles.full}`}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
               <span className={styles.k}>Mis lotes · cada café se asocia a una finca</span>
@@ -402,6 +506,9 @@ export function AppDashboard({
             </div>
           </div>
 
+          )}
+
+          {module === "cert" && (
           <div className={styles.acard}>
             <span className={styles.k}>Certificación CTC</span>
             {certified.length === 0 ? (
@@ -420,6 +527,9 @@ export function AppDashboard({
             )}
           </div>
 
+          )}
+
+          {module === "contratos" && (
           <div className={`${styles.acard} ${styles.wide}`}>
             <span className={styles.k}>Mis contratos con CTC</span>
             {contracts.length === 0 ? (
@@ -459,7 +569,10 @@ export function AppDashboard({
               ))
             )}
           </div>
-        </div>
+          )}
+          </div>
+          </>
+        )}
       </div>
     </div>
   );

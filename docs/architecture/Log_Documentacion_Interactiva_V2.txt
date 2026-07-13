@@ -271,6 +271,46 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] Leads: reflexión y mejora + hub del Panel del Productor
+Segunda pasada sobre el sistema de leads (reflexión pedida por el usuario) +
+el módulo del lado del productor que faltaba:
+
+LÓGICA
+- El Panel de BCP ahora integra los leads: 5ª tarjeta KPI "Leads sin
+  responder", ítems "Responder lead X" en el feed de tareas (Done/TBD) y los
+  audit rows entity_type 'lead' quedan hipervinculados a /bcp/leads.
+- Conversación BIDIRECCIONAL con el productor: nueva columna
+  producer_comm_log.lead_id. Al crear un lead con cuenta de productor y en
+  cada respuesta de BCP se espeja una nota en "Retroalimentación y ayuda"
+  (hilo "Solicitud CTC Home · {pilar}"); las respuestas in-app del productor
+  (parent_id) aparecen de vuelta en la tarjeta del lead en BCP, sección
+  "Conversación en la plataforma". El bloque de contraseña nunca se espeja.
+- Fix latente: retryReplyEmail solo limpia temp_password cuando ESE envío la
+  llevó realmente (antes un reintento no-portador la descartaba sin entregar).
+
+UX/UI
+- ContactModal: cambiar el "Tema" ya no descarta lo escrito — nombre, correo y
+  mensaje se trasladan al formulario del pilar elegido (verificado en vivo).
+- Tarjetas del tablero de leads: línea-gancho por pilar (marca · kg, varietal ·
+  chapolas, tecnologías, organización), fecha relativa ("hace 2 días"),
+  chevron y hover (.leadCardBtn); pilares sin leads colapsan a una línea vacía
+  en vez de 4 columnas muertas; los KPI usan el markup .kpiCard>a correcto;
+  el compositor aclara que saludo y firma se añaden solos al correo.
+
+HUB DEL PANEL DEL PRODUCTOR (nuevo)
+- AppDashboard deja de ser una página infinita: aterriza en un HUB de
+  tarjetas grandes (Información general, Mis fincas, Mis lotes, Envío de
+  muestras, Retroalimentación y ayuda, Certificación CTC, Mis contratos),
+  cada una con sus datos clave al vistazo (p.ej. "3 lotes · 2 en fila para la
+  Arena", "N muestras por enviar" resaltado, "N notas nuevas de CTC"). Elegir
+  una tarjeta abre SOLO ese módulo con "← Volver al panel".
+- El módulo activo vive en KaffetalExperience y participa en la pila del botón
+  "Atrás" del teléfono (modales > ficha > módulo > hub) — verificado en vivo:
+  abrir módulo, Atrás vuelve al hub sin salir del sitio.
+- El módulo Retroalimentación es donde el productor conversa con BCP sobre su
+  solicitud de CTC Home (espejos del lead + respuestas por hilo).
+(commit: pending)
+
 ## [2026-07-13] Leads CTC Home: Escríbenos -> cuentas + bienvenida + dashboard BCP
 NUEVO subsistema completo de leads (plan aprobado por el usuario). El
 "Escríbenos" y los CTAs de "Más allá de la exportación" (CTC Tech, Co-Create,

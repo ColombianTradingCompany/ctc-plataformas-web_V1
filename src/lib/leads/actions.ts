@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { headers } from "next/headers";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { promoteFreshBuyerToProducer } from "@/lib/auth/promoteFreshBuyerToProducer";
-import { sendLeadWelcomeEmail } from "@/lib/email/leadEmails";
+import { sendLeadWelcomeEmail, PILLAR_LABEL } from "@/lib/email/leadEmails";
 
 // Public lead intake for CTC Home's "Escríbenos" + the "Más allá de la
 // exportación" service CTAs. Every lead becomes a platform account:
@@ -61,6 +61,30 @@ function generatePassword(): string {
   return randomBytes(9).toString("base64url");
 }
 
+// Producer-role leads also get an in-app note in "Retroalimentación y ayuda"
+// (producer_comm_log), so the conversation exists on BOTH channels: the email
+// thread and the Kaffetal Regal feed they'll see when they log in. Buyers have
+// no equivalent feed, so cocreate leads stay email-only.
+async function mirrorToProducerFeed(
+  service: ReturnType<typeof createServiceRoleClient>,
+  profileId: string | null,
+  leadId: string,
+  pillar: Pillar,
+  note: string,
+  createdBy: string | null = null
+) {
+  if (!profileId) return;
+  const { data: profile } = await service.from("profiles").select("role").eq("id", profileId).maybeSingle();
+  if (profile?.role !== "producer") return;
+  await service.from("producer_comm_log").insert({
+    producer_id: profileId,
+    lead_id: leadId,
+    context_label: `Solicitud CTC Home · ${PILLAR_LABEL[pillar] ?? pillar}`,
+    note,
+    created_by: createdBy,
+  });
+}
+
 async function insertLeadAndWelcome(
   service: ReturnType<typeof createServiceRoleClient>,
   row: {
@@ -89,6 +113,14 @@ async function insertLeadAndWelcome(
     .from("leads")
     .update(result.ok ? { welcome_sent_at: new Date().toISOString(), welcome_error: null } : { welcome_error: result.error })
     .eq("id", lead.id);
+
+  await mirrorToProducerFeed(
+    service,
+    row.profile_id,
+    lead.id,
+    row.pillar,
+    "Recibimos su solicitud desde ctcexport.com. Nuestro equipo la está revisando y le responderemos pronto por correo."
+  );
 
   return { ok: true, outcome: row.account_provisioning === "existing" ? "existing" : "created", pillar: row.pillar };
 }

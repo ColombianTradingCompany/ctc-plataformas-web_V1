@@ -40,6 +40,7 @@ type ReplyRow = {
 };
 
 type ProfileRow = { id: string; role: string; full_name: string | null };
+type PlatformNote = { id: string; lead_id: string | null; parent_id: string | null; note: string; author_role: string; created_at: string };
 
 const PILLARS: { key: string; label: string; color: string; icon: string }[] = [
   { key: "general", label: "Escríbenos · Consulta general", color: "#3C0A86", icon: "✉️" },
@@ -74,6 +75,27 @@ const PROVISIONING_LABEL: Record<string, string> = {
 };
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
+
+// "hace 2 días" reads faster than a raw date when triaging a board.
+function relTime(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
+  if (days <= 0) return "hoy";
+  if (days === 1) return "ayer";
+  if (days < 30) return `hace ${days} días`;
+  return fecha(iso);
+}
+
+// One-line pillar-specific hook so a card is scannable without opening it.
+function hookLine(pillar: string, fields: Record<string, unknown>): string {
+  const f = (k: string) => {
+    const v = fields[k];
+    return Array.isArray(v) ? v.join(", ") : v ? String(v) : "";
+  };
+  if (pillar === "tech") return f("interes") || f("finca");
+  if (pillar === "cocreate") return [f("marca"), f("vol") && `${f("vol")} kg/año`].filter(Boolean).join(" · ");
+  if (pillar === "varietales") return [f("varietal"), f("cantidad") && `${f("cantidad")} chapolas`].filter(Boolean).join(" · ");
+  return f("org");
+}
 
 export default async function BcpLeadsPage() {
   const service = createServiceRoleClient();
@@ -114,6 +136,33 @@ export default async function BcpLeadsPage() {
   for (const r of (repliesData as ReplyRow[] | null) ?? []) {
     repliesByLead.set(r.lead_id, [...(repliesByLead.get(r.lead_id) ?? []), r]);
   }
+
+  // The in-platform side of the conversation: the mirrored notes carry
+  // lead_id; the producer's own in-app replies hang off them via parent_id.
+  const platformByLead = new Map<string, PlatformNote[]>();
+  if (leads.length) {
+    const { data: mirroredData } = await service
+      .from("producer_comm_log")
+      .select("id, lead_id, parent_id, note, author_role, created_at")
+      .in("lead_id", leads.map((l) => l.id))
+      .order("created_at", { ascending: true });
+    const mirrored = (mirroredData as PlatformNote[] | null) ?? [];
+    let all = mirrored;
+    if (mirrored.length) {
+      const { data: replyData } = await service
+        .from("producer_comm_log")
+        .select("id, lead_id, parent_id, note, author_role, created_at")
+        .in("parent_id", mirrored.map((n) => n.id))
+        .order("created_at", { ascending: true });
+      all = [...mirrored, ...((replyData as PlatformNote[] | null) ?? [])];
+    }
+    const leadIdByNote = new Map(mirrored.map((n) => [n.id, n.lead_id!]));
+    for (const n of all.sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+      const leadId = n.lead_id ?? (n.parent_id ? leadIdByNote.get(n.parent_id) : undefined);
+      if (!leadId) continue;
+      platformByLead.set(leadId, [...(platformByLead.get(leadId) ?? []), n]);
+    }
+  }
   const profileById = new Map(((profilesData as ProfileRow[] | null) ?? []).map((p) => [p.id, p]));
   const countBy = (rows: Record<string, unknown>[] | null, key: string) => {
     const m = new Map<string, number>();
@@ -144,22 +193,24 @@ export default async function BcpLeadsPage() {
           const all = leads.filter((l) => l.pillar === p.key);
           const active = all.filter((l) => l.status !== "cerrado").length;
           return (
-            <a key={p.key} className={styles.kpiCard} href={`#board-${p.key}`}>
-              <span className={styles.kpiTop}>
-                <span className={styles.kpiK}>{p.label}</span>
-                <span className={styles.kpiIcon}>{p.icon}</span>
-              </span>
-              <span className={styles.kpiV} style={{ color: all.length ? p.color : undefined }}>
-                {all.length}
-              </span>
-              <span className={styles.kpiMeter}>
-                <span
-                  className={styles.kpiMeterFill}
-                  style={{ width: `${all.length ? Math.round((active / all.length) * 100) : 0}%`, background: p.color }}
-                />
-              </span>
-              <span className={styles.kpiSub}>{active} activos</span>
-            </a>
+            <div key={p.key} className={styles.kpiCard}>
+              <a href={`#board-${p.key}`}>
+                <span className={styles.kpiTop}>
+                  <span className={styles.kpiK}>{p.label}</span>
+                  <span className={styles.kpiIcon}>{p.icon}</span>
+                </span>
+                <span className={styles.kpiV} style={{ color: all.length ? p.color : undefined, display: "block" }}>
+                  {all.length}
+                </span>
+                <span className={styles.kpiMeter} style={{ display: "block" }}>
+                  <span
+                    className={styles.kpiMeterFill}
+                    style={{ width: `${all.length ? Math.round((active / all.length) * 100) : 0}%`, background: p.color, display: "block" }}
+                  />
+                </span>
+                <span className={styles.kpiSub}>{active} activos</span>
+              </a>
+            </div>
           );
         })}
         <div className={styles.kpiCard}>
@@ -183,6 +234,10 @@ export default async function BcpLeadsPage() {
                 {p.icon} {p.label} ({pillarLeads.length})
               </h2>
             </div>
+            {pillarLeads.length === 0 && (
+              <p className={styles.empty}>Sin leads de {p.label} todavía.</p>
+            )}
+            {pillarLeads.length > 0 && (
             <div className={styles.board}>
               {STATUSES.map((s) => {
                 const colLeads = pillarLeads.filter((l) => l.status === s.key);
@@ -199,6 +254,7 @@ export default async function BcpLeadsPage() {
                           lead={lead}
                           pillarLabel={p.label}
                           replies={repliesByLead.get(lead.id) ?? []}
+                          platformNotes={platformByLead.get(lead.id) ?? []}
                           profile={lead.profile_id ? profileById.get(lead.profile_id) : undefined}
                           fincaCount={lead.profile_id ? fincasByProfile.get(lead.profile_id) ?? 0 : 0}
                           lotCount={lead.profile_id ? lotsByProfile.get(lead.profile_id) ?? 0 : 0}
@@ -211,6 +267,7 @@ export default async function BcpLeadsPage() {
                 );
               })}
             </div>
+            )}
           </section>
         );
       })}
@@ -222,6 +279,7 @@ function LeadCard({
   lead,
   pillarLabel,
   replies,
+  platformNotes,
   profile,
   fincaCount,
   lotCount,
@@ -231,6 +289,7 @@ function LeadCard({
   lead: LeadRow;
   pillarLabel: string;
   replies: ReplyRow[];
+  platformNotes: PlatformNote[];
   profile: ProfileRow | undefined;
   fincaCount: number;
   lotCount: number;
@@ -257,6 +316,7 @@ function LeadCard({
     <h4 style={{ margin: "16px 0 6px", fontSize: 13.5, borderBottom: "1px solid var(--line)", paddingBottom: 4 }}>{label}</h4>
   );
 
+  const hook = hookLine(lead.pillar, fields);
   const summary = (
     <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -264,8 +324,9 @@ function LeadCard({
         {lead.temp_password && <span className={styles.badgeWarn}>Contraseña pendiente</span>}
         {hasEmailError && <span className={styles.badgeBad}>Error de correo</span>}
       </span>
-      <span className={styles.meta}>
-        {lead.email} · {fecha(lead.created_at)}
+      {hook && <span className={styles.meta} style={{ marginTop: 0 }}>{hook}</span>}
+      <span className={styles.meta} style={{ marginTop: 0 }}>
+        {lead.email} · {relTime(lead.created_at)}
         {replies.length > 0 && ` · ${replies.length} respuesta${replies.length === 1 ? "" : "s"}`}
       </span>
     </span>
@@ -368,6 +429,24 @@ function LeadCard({
         </div>
       ))}
 
+      {sectionHead("Conversación en la plataforma")}
+      {platformNotes.length === 0 ? (
+        <p className={styles.meta} style={{ margin: 0 }}>
+          {profile?.role === "producer"
+            ? "Sin mensajes en Kaffetal Regal todavía — los espejos de esta conversación y las respuestas in-app del productor aparecerán aquí."
+            : "Solo los leads con cuenta de productor ven esta conversación dentro de Kaffetal Regal."}
+        </p>
+      ) : (
+        platformNotes.map((n) => (
+          <p key={n.id} className={styles.meta} style={{ margin: "3px 0" }}>
+            <span className={n.author_role === "producer" ? styles.badgeGood : styles.badge}>
+              {n.author_role === "producer" ? "Productor" : "CTC"}
+            </span>{" "}
+            {fecha(n.created_at)} · {n.note}
+          </p>
+        ))
+      )}
+
       {sectionHead("Responder")}
       {lead.temp_password && (
         <p className={styles.warn} style={{ marginBottom: 6 }}>
@@ -382,6 +461,9 @@ function LeadCard({
         <div className={styles.field}>
           <label>Mensaje</label>
           <textarea name="body" required rows={4} placeholder="Su respuesta llega al correo del lead…" />
+          <p className={styles.meta} style={{ margin: "4px 0 0" }}>
+            El saludo (&quot;Hola {lead.nombre}&quot;) y la firma de CTC se añaden automáticamente al correo.
+          </p>
         </div>
         <button className="btn btn-sm btn-solid" type="submit">Enviar respuesta</button>
       </form>

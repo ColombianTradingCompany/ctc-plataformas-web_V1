@@ -10,13 +10,11 @@ export function LeadModalRow({ summary, title, children }: { summary: ReactNode;
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
-        type="button"
-        className={styles.miniCard}
-        style={{ width: "100%", textAlign: "left", cursor: "pointer", border: "1px solid var(--line)" }}
-        onClick={() => setOpen(true)}
-      >
-        {summary}
+      <button type="button" className={styles.leadCardBtn} onClick={() => setOpen(true)}>
+        <span style={{ flex: 1, minWidth: 0 }}>{summary}</span>
+        <span className={styles.fincaRowChevron} aria-hidden>
+          ›
+        </span>
       </button>
       {open && (
         <div className="modal-bg open" onClick={() => setOpen(false)}>

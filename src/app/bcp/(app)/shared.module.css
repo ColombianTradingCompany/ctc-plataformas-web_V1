@@ -84,3 +84,6 @@
 .columnList{display:grid;gap:12px}
 .miniCard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
 .miniCard h4{font-size:13.5px;color:var(--ink);margin-bottom:2px}
+/* miniCard as a clickable board card (leads): hover affordance + chevron slot */
+.leadCardBtn{width:100%;display:flex;align-items:center;gap:8px;text-align:left;cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.leadCardBtn:hover{border-color:var(--primary);background:var(--card);box-shadow:0 1px 6px rgba(0,0,0,.06)}

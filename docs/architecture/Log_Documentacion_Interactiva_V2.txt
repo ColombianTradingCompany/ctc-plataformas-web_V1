@@ -302,7 +302,7 @@ src/lib/eudr.ts keep the two sides identical.
   EudrYesNo quedaba con texto blanco sobre fondo claro (invisible). Se
   añadieron a globals.css y EudrYesNo usa fallbacks var(--green,#2E7D52) /
   var(--red,#C4402F).
-(commit: pending)
+(commit: f944c56)
 
 ## [2026-07-13] "Infraestructura local" moved from the Lote to the Finca
 - Correction: the local-infrastructure multiselect (semillero, tractor,

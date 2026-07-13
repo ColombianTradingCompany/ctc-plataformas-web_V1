@@ -1,8 +1,40 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { deriveLotRiskLevel } from "@/lib/eudr";
+import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
+
+type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
+
+// Rebuilds a per-key supporting-file map for an EUDR checkbox group. Keeps only
+// currently-checked keys; for each, uploads a newly-attached file (form field
+// "{group}_file_{key}", max 5 MB enforced client-side + here) or carries the
+// existing entry over. Uploads go to kaffetal-media under the producer's own
+// folder via the service-role client (BCP acts on the producer's behalf).
+async function collectKeyedFiles(
+  service: SupabaseClient,
+  producerId: string,
+  formData: FormData,
+  group: "evidence" | "sustainability",
+  checkedKeys: string[],
+  existing: KeyedFiles
+): Promise<KeyedFiles> {
+  const out: KeyedFiles = {};
+  for (const key of checkedKeys) {
+    const file = formData.get(`${group}_file_${key}`);
+    if (file instanceof File && file.size > 0 && file.size <= 5 * 1024 * 1024) {
+      const result = await uploadKaffetalMedia(service, producerId, `eudr-${group}/${key}`, file);
+      if ("assetId" in result) {
+        out[key] = { assetId: result.assetId, fileName: file.name };
+        continue;
+      }
+    }
+    if (existing[key]) out[key] = existing[key];
+  }
+  return out;
+}
 
 async function requireAdmin() {
   const session = await createSessionClient();
@@ -167,11 +199,18 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { data: before } = await service
     .from("fincas")
     .select(
-      "name, producer_id, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url"
+      "name, producer_id, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files"
     )
     .eq("id", fincaId)
     .single();
   if (!before) throw new Error("Finca no encontrada.");
+
+  const evidenceTypes = formData.getAll("eudr_evidence_types").map(String);
+  const sustainabilityTags = formData.getAll("eudr_sustainability_tags").map(String);
+  // Rebuild the per-key supporting-file maps: keep only currently-checked keys,
+  // upload any newly-attached file, otherwise carry the existing one over.
+  const evidenceFiles = await collectKeyedFiles(service, before.producer_id as string, formData, "evidence", evidenceTypes, (before.eudr_evidence_files as KeyedFiles) ?? {});
+  const sustainabilityFiles = await collectKeyedFiles(service, before.producer_id as string, formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
 
   const patch = {
     eudr_lat: formData.get("eudr_lat") ? Number(formData.get("eudr_lat")) : null,
@@ -180,15 +219,17 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     eudr_production_system: textOrNull(formData, "eudr_production_system"),
     eudr_deforestation_free: triState(formData, "eudr_deforestation_free"),
     eudr_legal_production: triState(formData, "eudr_legal_production"),
-    eudr_evidence_types: formData.getAll("eudr_evidence_types").map(String),
+    eudr_evidence_types: evidenceTypes,
     eudr_evidence_notes: textOrNull(formData, "eudr_evidence_notes"),
+    eudr_evidence_files: evidenceFiles,
     eudr_legal_areas: formData.getAll("eudr_legal_areas").map(String),
     eudr_tenure: textOrNull(formData, "eudr_tenure"),
     // eudr_legal_docs_asset_id/filename are NOT set here -- that's the
     // producer's own PDF upload (uploadFincaLegalDoc in KaffetalExperience.tsx),
     // not something BCP fills in on their behalf.
-    eudr_sustainability_tags: formData.getAll("eudr_sustainability_tags").map(String),
+    eudr_sustainability_tags: sustainabilityTags,
     eudr_sustainability_notes: textOrNull(formData, "eudr_sustainability_notes"),
+    eudr_sustainability_files: sustainabilityFiles,
     // Placeholder field for a future Google Earth Engine integration -- just
     // stored and linked for now, nothing reads it yet.
     eudr_google_earth_url: textOrNull(formData, "eudr_google_earth_url"),

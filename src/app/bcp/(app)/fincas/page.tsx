@@ -10,6 +10,7 @@ import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
 import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
 import { FincaEudrEditor } from "./FincaEudrEditor";
+import { FincaModalRow } from "./FincaModalRow";
 import styles from "../shared.module.css";
 
 type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
@@ -39,6 +40,8 @@ type FincaRow = {
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   eudr_google_earth_url: string | null;
+  eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
   created_at: string;
 };
 
@@ -88,7 +91,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
       `id, name, producer_id, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, created_at`
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, created_at`
     )
     .eq("status", activeStatus)
     .order("created_at", { ascending: true });
@@ -103,8 +106,15 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
   );
 
   const fincaRows = (pendingFincas as FincaRow[] | null) ?? [];
+  // All EUDR-related asset ids (producer legal doc + BCP's per-evidence /
+  // per-sustainability attachments) resolved to signed URLs in one call.
+  const allAssetIds = fincaRows.flatMap((f) => [
+    f.eudr_legal_docs_asset_id,
+    ...Object.values(f.eudr_evidence_files ?? {}).map((v) => v.assetId),
+    ...Object.values(f.eudr_sustainability_files ?? {}).map((v) => v.assetId),
+  ]);
   const [legalDocUrlByAssetId, producers, { data: comms }] = await Promise.all([
-    signedKaffetalMediaUrls(service, fincaRows.map((f) => f.eudr_legal_docs_asset_id)),
+    signedKaffetalMediaUrls(service, allAssetIds),
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
     service
       .from("producer_comm_log")
@@ -158,72 +168,91 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
             await logProducerComm(finca.producer_id, `Finca ${finca.name}`, formData, { fincaId: finca.id });
           }
           const comms = commsByFinca.get(finca.id) ?? [];
+          const dane = daneCodeFor(finca.departamento, finca.municipio);
+
+          const summary = (
+            <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <b style={{ fontSize: 15, color: "var(--ink)" }}>{finca.name}</b>
+                <span className={styles.badge}>{fincaCode(finca.id)}</span>
+                <EudrStatusBadge status={status} />
+                {finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length && (
+                  <span className={styles.badgeWarn}>Falta polígono</span>
+                )}
+              </span>
+              <span className={styles.meta}>
+                {producers.get(finca.producer_id)?.fullName ?? "Productor"} · {finca.municipio}, {finca.departamento} · {finca.hectares} ha
+                {dane ? ` · DANE ${dane.code}` : ""}
+              </span>
+            </span>
+          );
 
           return (
-            <div className={styles.card} key={finca.id} style={{ flexDirection: "column", alignItems: "stretch" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <h3>{finca.name}</h3>
-                    <span className={styles.badge}>{fincaCode(finca.id)}</span>
-                    <EudrStatusBadge status={status} />
-                  </div>
-                  <ProducerContactLine producer={producers.get(finca.producer_id)} />
-                  <p className={styles.meta}>
-                    {finca.municipio}, {finca.departamento} · {finca.hectares} ha
-                    {finca.requires_eudr_polygon && " · requiere polígono EUDR"}
-                  </p>
-                  {(() => {
-                    const dane = daneCodeFor(finca.departamento, finca.municipio);
-                    return (
-                      <p className={styles.meta}>
-                        DANE:{" "}
-                        {dane ? (
-                          <>
-                            <span className={styles.badge}>{dane.code}</span> {dane.mun}, {dane.dep} (depto {dane.depCode})
-                          </>
-                        ) : (
-                          "sin coincidencia — verifique municipio/departamento"
-                        )}
-                      </p>
-                    );
-                  })()}
-                  {activeStatus !== "approved" && blockedByPolygon && (
-                    <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
-                  )}
-                  {activeStatus !== "approved" && status.code === "no_apta" && (
-                    <p className={styles.warn}>Deforestación o producción ilegal declarada — no se puede aprobar.</p>
-                  )}
-                  {activeStatus !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
-                    <p className={styles.meta}>Falta: {gaps.join(", ")}.</p>
-                  )}
-                </div>
-                <div className={styles.actions}>
-                  {/* Pending: approve (gated on EUDR) or reject. Approved: allow
-                      revoking to rejected. Rejected: allow reinstating to approved
-                      (same EUDR gate). The underlying actions are status-agnostic. */}
-                  {activeStatus !== "approved" && (
-                    <form action={approveFinca.bind(null, finca.id)}>
-                      <button className="btn btn-solid" type="submit" disabled={blockedByEudr}>
-                        {activeStatus === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
-                      </button>
-                    </form>
-                  )}
-                  {activeStatus !== "rejected" && (
-                    <form action={reject} className={styles.rejectForm}>
-                      <input name="notes" placeholder="Motivo del rechazo (opcional)" />
-                      <button className="btn" type="submit">
-                        {activeStatus === "approved" ? "Revocar (rechazar)" : "Rechazar"}
-                      </button>
-                    </form>
-                  )}
-                </div>
+            <FincaModalRow key={finca.id} title={finca.name} summary={summary}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+                <span className={styles.badge}>{fincaCode(finca.id)}</span>
+                <EudrStatusBadge status={status} />
+              </div>
+              <ProducerContactLine producer={producers.get(finca.producer_id)} />
+              <p className={styles.meta}>
+                {finca.municipio}, {finca.departamento} · {finca.hectares} ha
+                {finca.requires_eudr_polygon && " · requiere polígono EUDR"}
+              </p>
+              <p className={styles.meta}>
+                DANE:{" "}
+                {dane ? (
+                  <>
+                    <span className={styles.badge}>{dane.code}</span> {dane.mun}, {dane.dep} (depto {dane.depCode})
+                  </>
+                ) : (
+                  "sin coincidencia — verifique municipio/departamento"
+                )}
+              </p>
+              {activeStatus !== "approved" && blockedByPolygon && (
+                <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
+              )}
+              {activeStatus !== "approved" && status.code === "no_apta" && (
+                <p className={styles.warn}>Deforestación o producción ilegal declarada — no se puede aprobar.</p>
+              )}
+              {activeStatus !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
+                <p className={styles.meta}>Falta: {gaps.join(", ")}.</p>
+              )}
+
+              <div className={styles.actions} style={{ marginTop: 10 }}>
+                {activeStatus !== "approved" && (
+                  <form action={approveFinca.bind(null, finca.id)}>
+                    <button className="btn btn-solid" type="submit" disabled={blockedByEudr}>
+                      {activeStatus === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
+                    </button>
+                  </form>
+                )}
+                {activeStatus !== "rejected" && (
+                  <form action={reject} className={styles.rejectForm}>
+                    <input name="notes" placeholder="Motivo del rechazo (opcional)" />
+                    <button className="btn" type="submit">
+                      {activeStatus === "approved" ? "Revocar (rechazar)" : "Rechazar"}
+                    </button>
+                  </form>
+                )}
+                {activeStatus === "approved" && (
+                  <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
+                    Ver dossier EUDR ↗
+                  </a>
+                )}
               </div>
 
               <FincaEudrEditor
                 fincaName={finca.name}
                 values={finca}
                 legalDocUrl={finca.eudr_legal_docs_asset_id ? legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) : undefined}
+                fileUrls={Object.fromEntries(
+                  [
+                    ...Object.values(finca.eudr_evidence_files ?? {}),
+                    ...Object.values(finca.eudr_sustainability_files ?? {}),
+                  ]
+                    .map((v) => [v.assetId, legalDocUrlByAssetId.get(v.assetId)])
+                    .filter((e): e is [string, string] => !!e[1])
+                )}
                 saveAction={saveEudr}
               />
 
@@ -248,7 +277,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                   </ul>
                 )}
               </details>
-            </div>
+            </FincaModalRow>
           );
         })}
       </div>

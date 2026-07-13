@@ -52,6 +52,8 @@ export type FincaEudrValues = {
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   eudr_google_earth_url: string | null;
+  eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
 };
 
 function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
@@ -77,16 +79,27 @@ export function FincaEudrEditor({
   fincaName,
   values,
   legalDocUrl,
+  fileUrls,
   saveAction,
 }: {
   fincaName: string;
   values: FincaEudrValues;
   legalDocUrl: string | undefined;
+  fileUrls: Record<string, string>;
   saveAction: (formData: FormData) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Controlled so a per-item file input appears only for checked evidence /
+  // sustainability keys.
+  const [evidence, setEvidence] = useState<string[]>(values.eudr_evidence_types ?? []);
+  const [sustain, setSustain] = useState<string[]>(values.eudr_sustainability_tags ?? []);
+  const evidenceFiles = values.eudr_evidence_files ?? {};
+  const sustainabilityFiles = values.eudr_sustainability_files ?? {};
+  function toggle(list: string[], set: (v: string[]) => void, key: string, on: boolean) {
+    set(on ? [...list, key] : list.filter((k) => k !== key));
+  }
   const mapUrl = mapPreviewUrl({ lat: values.eudr_lat, lng: values.eudr_lng, polygon: values.eudr_polygon_geojson });
 
   // A plain <form action={saveAction}> looks like it "does nothing" after
@@ -98,10 +111,17 @@ export function FincaEudrEditor({
   // straight from `values`, not defaultValue -- once the save actually lands.
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    for (const [, v] of fd.entries()) {
+      if (v instanceof File && v.size > 5 * 1024 * 1024) {
+        setSaveError(`El archivo "${v.name}" supera 5 MB. Adjunte uno más liviano.`);
+        return;
+      }
+    }
     setSaving(true);
     setSaveError(null);
     try {
-      await saveAction(new FormData(e.currentTarget));
+      await saveAction(fd);
       setEditing(false);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "No se pudo guardar la información EUDR.");
@@ -234,26 +254,41 @@ export function FincaEudrEditor({
 
         <div className={styles.field}>
           <label>Evidencia disponible</label>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {EVIDENCE_TYPES.map(([key, label]) => (
-              <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                <input type="checkbox" name="eudr_evidence_types" value={key} defaultChecked={values.eudr_evidence_types?.includes(key)} /> {label}
-              </label>
-            ))}
+          <div style={{ display: "grid", gap: 8 }}>
+            {EVIDENCE_TYPES.map(([key, label]) => {
+              const on = evidence.includes(key);
+              const existing = evidenceFiles[key];
+              return (
+                <div key={key}>
+                  <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                    <input
+                      type="checkbox"
+                      name="eudr_evidence_types"
+                      value={key}
+                      checked={on}
+                      onChange={(e) => toggle(evidence, setEvidence, key, e.target.checked)}
+                    />{" "}
+                    {label}
+                  </label>
+                  {on && (
+                    <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
+                      {existing && (
+                        <p className={styles.meta} style={{ margin: "0 0 3px" }}>
+                          ✓ {existing.fileName}
+                          {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
+                        </p>
+                      )}
+                      <input type="file" name={`evidence_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <textarea name="eudr_evidence_notes" defaultValue={values.eudr_evidence_notes ?? ""} placeholder="Fechas, fuente, quién verificó…" />
+          <textarea name="eudr_evidence_notes" defaultValue={values.eudr_evidence_notes ?? ""} placeholder="Fechas, fuente, quién verificó…" style={{ marginTop: 8 }} />
+          <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada evidencia marcada.</p>
         </div>
 
-        <div className={styles.field}>
-          <label>Áreas de legislación verificadas</label>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {LEGAL_AREAS.map(([key, label]) => (
-              <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                <input type="checkbox" name="eudr_legal_areas" value={key} defaultChecked={values.eudr_legal_areas?.includes(key)} /> {label}
-              </label>
-            ))}
-          </div>
-        </div>
         <div className={styles.field}>
           <label>Documento de respaldo</label>
           {values.eudr_legal_docs_filename ? (
@@ -265,17 +300,52 @@ export function FincaEudrEditor({
             <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
           )}
         </div>
-
         <div className={styles.field}>
-          <label>Sostenibilidad y enfoque social</label>
+          <label>Áreas de legislación verificadas</label>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {SUSTAINABILITY_TAGS.map(([key, label]) => (
+            {LEGAL_AREAS.map(([key, label]) => (
               <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                <input type="checkbox" name="eudr_sustainability_tags" value={key} defaultChecked={values.eudr_sustainability_tags?.includes(key)} /> {label}
+                <input type="checkbox" name="eudr_legal_areas" value={key} defaultChecked={values.eudr_legal_areas?.includes(key)} /> {label}
               </label>
             ))}
           </div>
-          <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} />
+        </div>
+
+        <div className={styles.field}>
+          <label>Sostenibilidad y enfoque social</label>
+          <div style={{ display: "grid", gap: 8 }}>
+            {SUSTAINABILITY_TAGS.map(([key, label]) => {
+              const on = sustain.includes(key);
+              const existing = sustainabilityFiles[key];
+              return (
+                <div key={key}>
+                  <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                    <input
+                      type="checkbox"
+                      name="eudr_sustainability_tags"
+                      value={key}
+                      checked={on}
+                      onChange={(e) => toggle(sustain, setSustain, key, e.target.checked)}
+                    />{" "}
+                    {label}
+                  </label>
+                  {on && (
+                    <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
+                      {existing && (
+                        <p className={styles.meta} style={{ margin: "0 0 3px" }}>
+                          ✓ {existing.fileName}
+                          {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
+                        </p>
+                      )}
+                      <input type="file" name={`sustainability_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} style={{ marginTop: 8 }} />
+          <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada ítem marcado.</p>
         </div>
 
         <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar información EUDR"}</button>

@@ -155,5 +155,35 @@ is closed and left as historical record of what went into producing it).
 - FincaMapPicker/FincaModal: flipped the EUDR layout so "Área en café (ha)" +
   "Fecha de establecimiento" sit ABOVE the map and the address search bar
   ("Buscar" + "Usar mi ubicación actual") sits BELOW the map.
+(commit: 8a7612d)
+
+## [2026-07-13] Chip colors, scrap AI UI, BCP navigation + EUDR evaluation dossier
+- EudrStatusBadge: explicit semantic colors (green Apta / amber Pendiente /
+  red No apta) instead of the muted theme --accent.
+- Scrapped the "¿Y ahora qué?" AI module from the UI (Ficha widget + dashboard
+  advice line). API route + lib + ai_next_step_* columns kept for future use.
+  DICT: remove the "advisor" node from the live diagram, note it's dormant.
+- "Nivel de riesgo determinado" is no longer producer-selectable; it's a
+  read-only readout of CTC's determination on the lot A5 pane (BCP evaluates).
+- BCP Fincas panel rebuilt as compact clickable rows -> a detail popup modal
+  (FincaModalRow) holding approve/reject, the EUDR editor and the comm log,
+  instead of a wall of tall cards. Keeps the pending/approved/rejected tabs.
+- FincaEudrEditor: "Documento de respaldo" now sits directly below "Evidencia
+  disponible"; "Evidencia disponible" and "Sostenibilidad y enfoque social"
+  are per-item checkboxes that, when checked, reveal a ≤5 MB file upload.
+  Files stored via service-role upload to kaffetal-media under the producer's
+  folder; new fincas.eudr_evidence_files / eudr_sustainability_files jsonb
+  maps {key:{assetId,fileName}}. updateFincaEudr rebuilds the maps (keep
+  checked keys, upload new file or carry existing).
+- New: approving a finca yields a printable, CTCx-watermarked EUDR dossier at
+  /bcp/fincas/[id]/dossier (linked from the approved finca in the modal). It
+  compiles identity + DANE code + geolocation (static map) + all EUDR
+  declarations + evidence/sustainability with inline image annexes / PDF
+  links + Documento de respaldo + the full Registro de Comunicación. v1 is a
+  print-to-PDF HTML doc (watermark via CSS, print-isolation so only the
+  dossier prints); look to be refined later. New node/DICT candidates: EUDR
+  dossier, per-item evidence annexes. NOTE: BCP surfaces here were verified
+  statically (tsc/eslint + migrations); live BCP verification needs the
+  founder's own 2FA admin session (emailed OTP), so it wasn't exercised.
 (commit: pending)
 

@@ -310,7 +310,7 @@ LEAD con una CUENTA de plataforma y recibe un correo de bienvenida automático.
   correcto en ambos. Pasos manuales pendientes del usuario: verificar
   ctcexport.com en Resend + EMAIL_FROM, y añadir /auth/callback al allowlist
   de redirects de Supabase Auth.
-(commit: pending)
+(commit: ae37877)
 
 ## [2026-07-13] Certificación EUDR del Lote + modal BCP de lotes + rework de mitigación
 - NUEVO: Certificación EUDR a nivel de LOTE (LotEudrCertDoc.tsx, mismo lenguaje

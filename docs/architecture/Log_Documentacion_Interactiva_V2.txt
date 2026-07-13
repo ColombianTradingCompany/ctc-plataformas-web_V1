@@ -309,7 +309,7 @@ HUB DEL PANEL DEL PRODUCTOR (nuevo)
   abrir módulo, Atrás vuelve al hub sin salir del sitio.
 - El módulo Retroalimentación es donde el productor conversa con BCP sobre su
   solicitud de CTC Home (espejos del lead + respuestas por hilo).
-(commit: pending)
+(commit: fe5e250)
 
 ## [2026-07-13] Leads CTC Home: Escríbenos -> cuentas + bienvenida + dashboard BCP
 NUEVO subsistema completo de leads (plan aprobado por el usuario). El

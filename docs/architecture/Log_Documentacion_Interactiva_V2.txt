@@ -185,5 +185,28 @@ is closed and left as historical record of what went into producing it).
   dossier, per-item evidence annexes. NOTE: BCP surfaces here were verified
   statically (tsc/eslint + migrations); live BCP verification needs the
   founder's own 2FA admin session (emailed OTP), so it wasn't exercised.
+(commit: d189c46 / bcd0f62)
+
+## [2026-07-13] EUDR cert lifecycle: producer download + BCP share gate
+- Extracted the dossier render into a shared component
+  (components/kaffetal-regal/EudrDossierDoc.tsx) used by both the BCP route
+  (/bcp/fincas/[id]/dossier) and a NEW producer route
+  (/kaffetal-regal/certificacion/[id]). New DICT/node: the certificate is a
+  producer-facing artifact, not only internal.
+- New fincas.eudr_cert_shared flag + setFincaCertShared server action. BCP's
+  finca modal (approved fincas) gets "Compartir/Dejar de compartir
+  certificación con el productor" + a status line; sharing also drops a note
+  in the producer's feed.
+- The producer certificate route is gated: owner AND status=approved AND
+  eudr_cert_shared (verified via session, data read via service role after
+  the gate). Verified live: download link appears only when approved+shared;
+  the route renders the full dossier when shared and shows a "todavía no está
+  disponible" gate otherwise.
+- Producer finca card now shows the cert state: "Descargar Certificación EUDR
+  de [finca]" when available, "Información incompleta" (with an ⓘ explaining
+  what to complete) when EUDR is pendiente, or "En proceso" while awaiting
+  CTC's decision. Finca type gained certShared.
+- STILL PENDING (design-heavy, next): producer answers kept as "Respuesta de
+  Productor" with BCP confirm/override, not printed on the certificate.
 (commit: pending)
 

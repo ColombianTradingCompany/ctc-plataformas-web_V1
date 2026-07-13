@@ -44,6 +44,7 @@ type FincaRow = {
   id: string;
   name: string;
   status: Finca["status"];
+  eudr_cert_shared: boolean | null;
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
@@ -111,6 +112,7 @@ function dbFincaToFinca(
     id: row.id,
     name: row.name,
     status: row.status ?? "pending_review",
+    certShared: row.eudr_cert_shared ?? false,
     vereda: row.vereda || "—",
     mun: row.municipio || "—",
     depto: row.departamento || "—",

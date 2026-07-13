@@ -7,6 +7,8 @@ export type Finca = {
   // self-delete the finca vs. must request changes from CTC -- see
   // fincaSelfDeletable() and the finca card in AppDashboard.
   status: "pending_review" | "approved" | "rejected";
+  // CTC has released the EUDR certification dossier for the producer to download.
+  certShared: boolean;
   vereda: string;
   mun: string;
   depto: string;

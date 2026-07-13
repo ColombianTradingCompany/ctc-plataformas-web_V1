@@ -78,6 +78,30 @@ export async function approveFinca(fincaId: string) {
   revalidatePath("/bcp");
 }
 
+// Release (or un-release) the EUDR certification dossier to the producer. Until
+// this is on, the producer's certificate page stays gated -- sharing is an
+// explicit CTC step, not always-available.
+export async function setFincaCertShared(fincaId: string, shared: boolean) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const { data: finca } = await service.from("fincas").select("name, producer_id, status").eq("id", fincaId).single();
+  if (!finca) throw new Error("Finca no encontrada.");
+  if (shared && finca.status !== "approved") throw new Error("Apruebe la finca antes de compartir su certificación.");
+
+  await service.from("fincas").update({ eudr_cert_shared: shared }).eq("id", fincaId);
+  if (shared) {
+    // Let the producer know the certificate is available, in their feed.
+    await service.from("producer_comm_log").insert({
+      producer_id: finca.producer_id,
+      context_label: `Finca ${finca.name}`,
+      finca_id: fincaId,
+      note: "Su Certificación EUDR está disponible para descargar en el panel de la finca.",
+      created_by: adminId,
+    });
+  }
+  revalidatePath("/bcp/fincas");
+}
+
 export async function createLot(formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { mapPreviewUrl, fincaEudrStatus } from "@/lib/eudr";
 import { EudrStatusBadge } from "./EudrStatusBadge";
+import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
@@ -304,6 +305,22 @@ export function AppDashboard({
                       <button className={styles.deletebtn} onClick={() => onDeleteFinca(f.id)}>Eliminar</button>
                     ) : (
                       <button className="btn btn-sm" onClick={() => onRequestFincaRevision(f)}>Solicitar revisión de datos</button>
+                    )}
+                  </div>
+                  {/* EUDR certification state: download once CTC approved + shared;
+                      otherwise show why it isn't available yet. */}
+                  <div className={styles.certRow}>
+                    {f.status === "approved" && f.certShared ? (
+                      <a className={styles.certDownload} href={`/kaffetal-regal/certificacion/${f.id}`} target="_blank" rel="noopener noreferrer">
+                        ⬇ Descargar Certificación EUDR de {f.name}
+                      </a>
+                    ) : fincaEudrStatus(f).code === "pendiente" ? (
+                      <span className={styles.certPending}>
+                        Certificación: Información incompleta
+                        <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y áreas legales) desde 'Editar'. Cuando esté completa, CTC la revisará y, si la aprueba, habilitará la descarga de su Certificación EUDR." />
+                      </span>
+                    ) : (
+                      <span className={styles.certPending}>Certificación: En proceso (a la espera de la revisión de CTC)</span>
                     )}
                   </div>
                 </div>

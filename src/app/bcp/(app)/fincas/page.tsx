@@ -6,7 +6,7 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaCode } from "@/components/kaffetal-regal/data";
 import { daneCodeFor } from "@/lib/daneCodes";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
-import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
+import { approveFinca, rejectFinca, updateFincaEudr, setFincaCertShared } from "../actions";
 import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
 import { FincaEudrEditor } from "./FincaEudrEditor";
@@ -42,6 +42,7 @@ type FincaRow = {
   eudr_google_earth_url: string | null;
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_cert_shared: boolean | null;
   created_at: string;
 };
 
@@ -91,7 +92,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
       `id, name, producer_id, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, created_at`
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, created_at`
     )
     .eq("status", activeStatus)
     .order("created_at", { ascending: true });
@@ -252,11 +253,25 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                   </form>
                 )}
                 {activeStatus === "approved" && (
-                  <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
-                    Ver dossier EUDR ↗
-                  </a>
+                  <>
+                    <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
+                      Ver dossier EUDR ↗
+                    </a>
+                    <form action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}>
+                      <button className={`btn btn-sm ${finca.eudr_cert_shared ? "" : "btn-solid"}`} type="submit">
+                        {finca.eudr_cert_shared ? "Dejar de compartir con el productor" : "Compartir certificación con el productor"}
+                      </button>
+                    </form>
+                  </>
                 )}
               </div>
+              {activeStatus === "approved" && (
+                <p className={styles.meta} style={{ marginTop: 4 }}>
+                  {finca.eudr_cert_shared
+                    ? "✓ El productor puede descargar su Certificación EUDR."
+                    : "El productor aún no puede descargar la certificación (no compartida)."}
+                </p>
+              )}
 
               <FincaEudrEditor
                 fincaName={finca.name}

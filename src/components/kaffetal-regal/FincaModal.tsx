@@ -193,6 +193,7 @@ function FincaModalBody({
     id: finca?.id ?? "",
     name,
     status: finca?.status ?? "pending_review",
+    certShared: finca?.certShared ?? false,
     vereda: finca?.vereda ?? "—",
     mun: finca?.mun ?? "—",
     depto: finca?.depto ?? "—",
@@ -219,9 +220,10 @@ function FincaModalBody({
     const ok = await onSave({
       id: finca?.id ?? "",
       name: trimmedName,
-      // Carried for the Finca type only -- saveFinca() never writes status
-      // (it's CTC-managed); the producer can't change their own review state.
+      // Carried for the Finca type only -- saveFinca() never writes these
+      // (CTC-managed); the producer can't change their own review/share state.
       status: finca?.status ?? "pending_review",
+      certShared: finca?.certShared ?? false,
       vereda: veredaRef.current?.value.trim() || "—",
       mun: munRef.current?.value.trim() || "—",
       depto: deptoRef.current?.value ?? defaultDepto,

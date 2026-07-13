@@ -81,7 +81,7 @@ export function FincaModal({
   onClose: () => void;
   finca: Finca | null; // null = creating new
   gi: GeneralInfo;
-  onSave: (f: Finca) => void;
+  onSave: (f: Finca) => Promise<boolean>;
   onUploadPhoto: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadLegalDoc: (file: File) => void;
@@ -116,7 +116,7 @@ function FincaModalBody({
 }: {
   finca: Finca | null;
   gi: GeneralInfo;
-  onSave: (f: Finca) => void;
+  onSave: (f: Finca) => Promise<boolean>;
   onUploadPhoto: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadLegalDoc: (file: File) => void;
@@ -135,6 +135,9 @@ function FincaModalBody({
   // the live EUDR status preview below needs to react to them as the producer types.
   const [name, setName] = useState(finca?.name ?? "");
   const [ha, setHa] = useState(finca?.ha ?? "");
+  const [saving, setSaving] = useState(false);
+  // Centered "Datos de Finca Actualizados" confirmation that fades on its own.
+  const [flash, setFlash] = useState(false);
   const [eudr, setEudr] = useState<EudrDraft>(
     finca
       ? {
@@ -189,10 +192,11 @@ function FincaModalBody({
   const haNum = Number(ha.replace(",", "."));
   const needsPolygon = !isNaN(haNum) && haNum > 4;
 
-  function save() {
+  async function save() {
     const trimmedName = name.trim();
-    if (!trimmedName) return;
-    onSave({
+    if (!trimmedName || saving) return;
+    setSaving(true);
+    const ok = await onSave({
       id: finca?.id ?? "",
       name: trimmedName,
       // Carried for the Finca type only -- saveFinca() never writes status
@@ -213,6 +217,11 @@ function FincaModalBody({
       eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
       ...eudr,
     });
+    setSaving(false);
+    if (ok) {
+      setFlash(true);
+      window.setTimeout(() => setFlash(false), 1900);
+    }
   }
 
   function handlePhotoFile(file: File | undefined) {
@@ -270,7 +279,6 @@ function FincaModalBody({
           </select>
         </div>
         <div><label>Altura (msnm)</label><input ref={altRef} defaultValue={finca?.alt ?? ""} type="number" placeholder="1680" /></div>
-        <div><label>Área en café (ha)</label><input value={ha} onChange={(e) => setHa(e.target.value)} type="number" step="0.1" placeholder="3.5" /></div>
         <div className={styles.wide}><label>Historia de la finca</label><textarea ref={histRef} defaultValue={finca?.hist ?? ""} placeholder="Historia, microclima, comunidad…" /></div>
         <div className={styles.wide}><label>Características</label><input ref={caracRef} defaultValue={finca?.carac ?? ""} placeholder="Sombrío, variedades sembradas, beneficio propio…" /></div>
         <div className={styles.wide}>
@@ -313,11 +321,16 @@ function FincaModalBody({
           Reglamento (UE) 2023/1115. Este predio se declara una sola vez y se reutiliza en todos los lotes que salgan de él.
         </p>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", margin: "6px 0 14px" }}>
-          <a href="/docs/eudr/boletin-25-novedades-exportadores-ue-mayo-2026.pdf" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5 }}>
+          {/* download (not target=_blank): these should save to disk, not open the
+              in-browser PDF viewer. */}
+          <a href="/docs/eudr/boletin-25-novedades-exportadores-ue-mayo-2026.pdf" download style={{ fontSize: 12.5 }}>
             📄 Boletín No. 25 · Novedades para exportadores a la UE (may. 2026)
           </a>
-          <a href="/docs/eudr/eudr-guidance-document-deforestation-free-2026.pdf" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12.5 }}>
+          <a href="/docs/eudr/eudr-guidance-document-deforestation-free-2026.pdf" download style={{ fontSize: 12.5 }}>
             📄 Guía oficial EUDR · Reglamento de deforestación (2026)
+          </a>
+          <a href="/docs/eudr/tabla-codigos-dane.pdf" download style={{ fontSize: 12.5 }}>
+            📄 Tabla de códigos DANE · municipios y departamentos
           </a>
         </div>
 
@@ -333,6 +346,13 @@ function FincaModalBody({
           />
         </div>
         <div className={styles.grid} style={{ marginTop: 14 }}>
+          <div>
+            <label>
+              Área en café (ha)
+              <FieldInfo text="Superficie sembrada en café de este predio. A partir de 4 ha el EUDR exige delimitar el terreno con un polígono (arriba), no solo un punto." />
+            </label>
+            <input value={ha} onChange={(e) => setHa(e.target.value)} type="number" step="0.1" placeholder="3.5" />
+          </div>
           <div>
             <label>Fecha de establecimiento del cultivo</label>
             <input type="date" value={eudr.eudrPlantingDate} onChange={(e) => patchEudr({ eudrPlantingDate: e.target.value })} />
@@ -417,7 +437,18 @@ function FincaModalBody({
         </p>
       </div>
 
-      <button className="btn btn-solid" onClick={save}>Guardar finca</button>
+      {/* Floating save: always visible bottom-right, a diskette that expands to
+          its label on hover/focus. */}
+      <button className={styles.fab} onClick={save} disabled={saving} aria-label="Guardar finca">
+        <span className={styles.fabIcon} aria-hidden>💾</span>
+        <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
+      </button>
+
+      {flash && (
+        <div className={styles.flash} role="status" aria-live="polite">
+          <span>✓ Datos de Finca Actualizados</span>
+        </div>
+      )}
     </>
   );
 }

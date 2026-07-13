@@ -23,6 +23,11 @@
 .feedbackLink{font-family:var(--font-fraunces),serif;font-size:15px;color:var(--accent);text-decoration:none;cursor:pointer;background:none;border:none;padding:0;display:inline-flex;align-items:center;gap:4px}
 .feedbackLink:hover{text-decoration:underline}
 .thread{margin:8px 0 12px;padding-left:10px;border-left:2px solid var(--line)}
+.threadHead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.threadToggle{background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;padding:0;width:16px;flex:0 0 auto}
+.threadTitle{font-family:var(--font-fraunces),serif;font-size:15px;color:var(--primary-deep)}
+.threadCount{font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);background:var(--line);border-radius:999px;padding:1px 8px}
+.ackRow{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap}
 .thread .alist{font-family:var(--font-spline-mono),monospace;font-size:12.5px;line-height:1.6;color:var(--muted)}
 .reply{font-family:var(--font-spline-mono),monospace;font-size:12px;line-height:1.6;color:var(--muted);margin-top:4px;padding-left:12px;border-left:2px solid var(--accent-soft,#e7d9b0)}
 .reply b{color:var(--primary)}

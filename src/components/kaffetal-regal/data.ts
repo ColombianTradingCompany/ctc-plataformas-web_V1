@@ -161,8 +161,10 @@ export type FeedbackNote = {
   createdAt: string;
   // "bcp" = written by CTC; "producer" = the producer's own reply.
   authorRole: "bcp" | "producer";
-  // Set on a producer reply -> the id of the CTC note it answers.
+  // Set on a producer reply -> the id of the CTC note/thread it answers.
   parentId: string | null;
+  // When the producer has ticked "Entendido" on this note (producer_comm_ack).
+  acknowledgedAt: string | null;
 };
 
 export type ProducerContract = {

@@ -1,17 +1,17 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { GoogleMap, Marker, Polygon, Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polygon, useJsApiLoader } from "@react-google-maps/api";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 
 // Piedecuesta, Santander -- CTC's home region, used only as the map's default
 // center before a finca has any coordinates yet.
 const DEFAULT_CENTER = { lat: 6.9989, lng: -73.0499 };
 const MAP_STYLE = { width: "100%", height: 320, borderRadius: 10 };
-// Must be a module-level constant -- passing a fresh array literal as the
-// `libraries` prop on every render makes @react-google-maps/api's loader
-// think the config changed and reload the whole script in a loop.
-const LIBRARIES: "places"[] = ["places"];
+// No extra libraries: we deliberately dropped the Places `places` library +
+// its (now legacy, un-enabled) Autocomplete widget -- it was what made the
+// whole map throw "This page can't load Google Maps correctly". Address search
+// now goes through google.maps.Geocoder (core Maps JS), see runSearch().
 
 export type PolygonPoint = { lat: number; lng: number };
 
@@ -34,10 +34,10 @@ export function FincaMapPicker({
   const { isLoaded, loadError } = useJsApiLoader({
     id: "ctc-google-maps-script",
     googleMapsApiKey: apiKey || "",
-    libraries: LIBRARIES,
   });
   const mapRef = useRef<google.maps.Map | null>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [searching, setSearching] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
   // Vertices being placed for a not-yet-committed polygon -- click-to-add, no
   // Google Maps "drawing" library/DrawingManager involved (that overlay was
@@ -135,14 +135,32 @@ export function FincaMapPicker({
     );
   }
 
-  function handlePlaceChanged() {
-    const place = autocompleteRef.current?.getPlace();
-    const loc = place?.geometry?.location;
-    if (!loc) return;
-    const point = { lat: loc.lat(), lng: loc.lng() };
-    if (!needsPolygon) onChangePoint(String(point.lat), String(point.lng));
-    mapRef.current?.panTo(point);
-    mapRef.current?.setZoom(16);
+  // Address search via the core Geocoder (no Places library). Pans/zooms the
+  // map; in point mode it also drops the pin. If the Geocoding API isn't
+  // enabled on the key yet, the status won't be OK and we surface a hint
+  // rather than failing silently -- the rest of the map keeps working.
+  function runSearch() {
+    const q = searchText.trim();
+    if (!q || searching) return;
+    setGeoError(null);
+    setSearching(true);
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: q, componentRestrictions: { country: "co" } }, (results, status) => {
+      setSearching(false);
+      if (status !== "OK" || !results || !results[0]) {
+        setGeoError(
+          status === "ZERO_RESULTS"
+            ? "No se encontró esa dirección. Pruebe con el municipio o la vereda."
+            : "La búsqueda de direcciones no está disponible por ahora. Use el mapa o ingrese las coordenadas."
+        );
+        return;
+      }
+      const loc = results[0].geometry.location;
+      const point = { lat: loc.lat(), lng: loc.lng() };
+      if (!needsPolygon) onChangePoint(String(point.lat), String(point.lng));
+      mapRef.current?.panTo(point);
+      mapRef.current?.setZoom(16);
+    });
   }
 
   function startManualEntry() {
@@ -198,13 +216,22 @@ export function FincaMapPicker({
   return (
     <div>
       <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-        <Autocomplete
-          onLoad={(a) => { autocompleteRef.current = a; }}
-          onPlaceChanged={handlePlaceChanged}
-          options={{ componentRestrictions: { country: "co" } }}
-        >
-          <input type="text" placeholder="Buscar dirección, vereda o municipio…" style={{ minWidth: 220, flex: 1 }} />
-        </Autocomplete>
+        <input
+          type="text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              runSearch();
+            }
+          }}
+          placeholder="Buscar dirección, vereda o municipio…"
+          style={{ minWidth: 220, flex: 1 }}
+        />
+        <button type="button" className="btn btn-sm" onClick={runSearch} disabled={searching}>
+          {searching ? "Buscando…" : "🔎 Buscar"}
+        </button>
         <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>
           📍 Usar mi ubicación actual
         </button>

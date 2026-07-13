@@ -8,3 +8,18 @@
 
 .chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer;background:var(--paper)}
 .chip:has(input:checked){border-color:var(--primary);background:#E8EFE4;font-weight:600}
+
+/* Floating save button: circular diskette, expands to its label on hover/focus.
+   Fixed to the viewport so it stays reachable while the long modal scrolls. */
+.fab{position:fixed;right:24px;bottom:24px;z-index:60;display:inline-flex;align-items:center;gap:0;height:56px;padding:0;width:56px;border:none;border-radius:999px;background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
+.fab:hover,.fab:focus-visible{width:auto;padding:0 22px 0 16px;gap:9px}
+.fab:disabled{opacity:.7;cursor:default}
+.fabIcon{font-size:20px;line-height:1;flex:0 0 auto;width:56px;text-align:center}
+.fab:hover .fabIcon,.fab:focus-visible .fabIcon{width:auto}
+.fabLabel{max-width:0;opacity:0;overflow:hidden;font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:600;transition:max-width .22s ease,opacity .18s ease}
+.fab:hover .fabLabel,.fab:focus-visible .fabLabel{max-width:220px;opacity:1}
+
+/* Centered save confirmation that fades in and out on its own. */
+.flash{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;pointer-events:none;animation:flashFade 1.9s ease forwards}
+.flash span{background:var(--primary);color:#fff;font-family:var(--font-fraunces),serif;font-weight:700;font-size:18px;padding:16px 28px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+@keyframes flashFade{0%{opacity:0;transform:scale(.96)}15%{opacity:1;transform:scale(1)}75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}

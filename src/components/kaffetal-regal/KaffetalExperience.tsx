@@ -224,7 +224,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -243,6 +243,8 @@ function Experience() {
           supabase.from("lot_evaluations").select("lot_id, source, status, sca_total, factor_rendimiento"),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
           supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id").order("created_at", { ascending: false }),
+          // RLS (producer_comm_ack_select_own) scopes this to the producer's own acks.
+          supabase.from("producer_comm_ack").select("comm_id, acknowledged_at"),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -356,6 +358,9 @@ function Experience() {
         galleryUrls: (producerProfile?.gallery_asset_ids ?? []).map((id: string) => urlByAssetId.get(id) ?? ""),
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
+      const ackByCommId = new Map<string, string>(
+        ((ackRows as { comm_id: string; acknowledged_at: string }[] | null) ?? []).map((a) => [a.comm_id, a.acknowledged_at])
+      );
       setFeedback(
         (
           (commRows as
@@ -379,6 +384,7 @@ function Experience() {
           createdAt: c.created_at,
           authorRole: c.author_role,
           parentId: c.parent_id,
+          acknowledgedAt: ackByCommId.get(c.id) ?? null,
         }))
       );
     },
@@ -542,8 +548,8 @@ function Experience() {
     setLots((ls) => ls.map((l) => (l.id === lotId ? { ...l, nextStepAdvice: advice, nextStepContext: context } : l)));
   }
 
-  async function saveFinca(f: Finca) {
-    if (!userId) return;
+  async function saveFinca(f: Finca): Promise<boolean> {
+    if (!userId) return false;
     const hectares = f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : 0;
     const payload = {
       producer_id: userId,
@@ -578,7 +584,7 @@ function Experience() {
       const { data, error } = await supabase.from("fincas").update(payload).eq("id", editing.id).select("*").single();
       if (error || !data) {
         showToast("No se pudo actualizar la finca.");
-        return;
+        return false;
       }
       setFincas((prev) =>
         prev.map((x) =>
@@ -587,16 +593,20 @@ function Experience() {
             : x
         )
       );
-    } else {
-      const { data, error } = await supabase.from("fincas").insert(payload).select("*").single();
-      if (error || !data) {
-        showToast("No se pudo registrar la finca.");
-        return;
-      }
-      setFincas((prev) => [...prev, dbFincaToFinca(data as FincaRow)]);
+      // Stay in the modal on an edit -- the floating save button + the centered
+      // "Datos de Finca Actualizados" flash confirm the save, so the producer
+      // can keep refining. (Creating a new finca still closes below.)
+      return true;
     }
+    const { data, error } = await supabase.from("fincas").insert(payload).select("*").single();
+    if (error || !data) {
+      showToast("No se pudo registrar la finca.");
+      return false;
+    }
+    setFincas((prev) => [...prev, dbFincaToFinca(data as FincaRow)]);
     setFincaModalOpen(false);
     showToast(`Finca "${f.name}" guardada ✓ · ya puede asociarle cafés`);
+    return true;
   }
 
   async function deleteFinca(fincaId: string) {
@@ -690,10 +700,33 @@ function Experience() {
         createdAt: data.created_at,
         authorRole: data.author_role as "bcp" | "producer",
         parentId: data.parent_id,
+        acknowledgedAt: null,
       },
       ...prev,
     ]);
     showToast("Respuesta enviada a CTC ✓");
+  }
+
+  // "Entendido" acknowledgment of a CTC note. Toggling on inserts a
+  // producer_comm_ack row, off deletes it (both RLS-scoped to own notes).
+  async function acknowledgeNote(noteId: string, ack: boolean) {
+    if (!userId) return;
+    if (ack) {
+      const { error } = await supabase
+        .from("producer_comm_ack")
+        .insert({ comm_id: noteId, producer_id: userId });
+      if (error) {
+        showToast("No se pudo marcar como entendido.");
+        return;
+      }
+    } else {
+      const { error } = await supabase.from("producer_comm_ack").delete().eq("comm_id", noteId);
+      if (error) {
+        showToast("No se pudo quitar la marca.");
+        return;
+      }
+    }
+    setFeedback((prev) => prev.map((n) => (n.id === noteId ? { ...n, acknowledgedAt: ack ? new Date().toISOString() : null } : n)));
   }
 
   async function saveInfo(next: GeneralInfo) {
@@ -957,6 +990,7 @@ function Experience() {
           onDeleteFinca={deleteFinca}
           onRequestFincaRevision={requestFincaRevision}
           onReplyToFeedback={replyToFeedback}
+          onAcknowledgeNote={acknowledgeNote}
           onOpenInfoModal={() => setInfoModalOpen(true)}
         />
       )}

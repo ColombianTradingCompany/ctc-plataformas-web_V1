@@ -3,38 +3,29 @@
 import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
-import { mapPreviewUrl } from "@/lib/eudr";
+import { mapPreviewUrl, fincaEudrStatus } from "@/lib/eudr";
+import { EudrStatusBadge } from "./EudrStatusBadge";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import styles from "./AppDashboard.module.css";
 
-// A CTC note plus the producer's replies to it, threaded by parent_id.
-type FeedbackThread = { root: FeedbackNote; replies: FeedbackNote[] };
-
-// Builds threads (a top-level CTC note + its producer replies) and groups them
-// by context ("Finca X" / "Lote Y" / general). Producer replies always carry a
-// parentId (RLS enforces it), so top-level notes are the CTC ones; any reply
-// whose parent isn't in view (edge case) is promoted to its own root so it's
-// never silently dropped. Notes already arrive newest-first from the query.
-function groupFeedback(feedback: FeedbackNote[]): [string, FeedbackThread[]][] {
-  const byId = new Map(feedback.map((n) => [n.id, n]));
-  const repliesByParent = new Map<string, FeedbackNote[]>();
-  const roots: FeedbackNote[] = [];
+// A conversation thread = every note (CTC notes + the producer's replies)
+// sharing one hyperlinked element (Finca X / Lote Y / General). Notes arrive
+// newest-first; within a thread we show them oldest-first so it reads top to
+// bottom in time. Groups stay in most-recent-activity order.
+type FeedbackThreadEntry = { key: string; notes: FeedbackNote[] };
+function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
+  const order: string[] = [];
+  const byKey = new Map<string, FeedbackNote[]>();
   for (const n of feedback) {
-    if (n.parentId && byId.has(n.parentId)) {
-      repliesByParent.set(n.parentId, [...(repliesByParent.get(n.parentId) ?? []), n]);
-    } else {
-      roots.push(n);
+    const key = n.contextLabel ?? "General";
+    if (!byKey.has(key)) {
+      byKey.set(key, []);
+      order.push(key);
     }
+    byKey.get(key)!.push(n);
   }
-  const groups = new Map<string, FeedbackThread[]>();
-  for (const root of roots) {
-    const key = root.contextLabel ?? "General";
-    // Replies oldest-first so a thread reads top-to-bottom in time.
-    const replies = (repliesByParent.get(root.id) ?? []).slice().reverse();
-    groups.set(key, [...(groups.get(key) ?? []), { root, replies }]);
-  }
-  return [...groups.entries()];
+  return order.map((key) => ({ key, notes: byKey.get(key)!.slice().reverse() }));
 }
 
 // The reference is long, so only the 7 characters that actually go on the
@@ -63,6 +54,7 @@ export function AppDashboard({
   onDeleteFinca,
   onRequestFincaRevision,
   onReplyToFeedback,
+  onAcknowledgeNote,
   onOpenInfoModal,
   onConfirmSampleShipped,
 }: {
@@ -82,20 +74,27 @@ export function AppDashboard({
   onDeleteFinca: (fincaId: string) => void;
   onRequestFincaRevision: (finca: Finca) => void;
   onReplyToFeedback: (parent: FeedbackNote, text: string) => void;
+  onAcknowledgeNote: (noteId: string, ack: boolean) => void;
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  // Which CTC note the producer is currently replying to, and the draft text.
-  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  // Reply is per conversation thread (per hyperlinked element), keyed by the
+  // thread key; and threads can be collapsed.
+  const [replyThreadKey, setReplyThreadKey] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  function submitReply(parent: FeedbackNote) {
+  function submitThreadReply(threadKey: string, notes: FeedbackNote[]) {
     const text = replyText.trim();
     if (!text) return;
+    // The reply attaches to the thread; parent_id (required by RLS) points at
+    // the thread's most recent CTC note, falling back to its most recent note.
+    const parent = [...notes].reverse().find((n) => n.authorRole === "bcp") ?? notes[notes.length - 1];
+    if (!parent) return;
     onReplyToFeedback(parent, text);
-    setReplyingToId(null);
+    setReplyThreadKey(null);
     setReplyText("");
   }
 
@@ -185,30 +184,51 @@ export function AppDashboard({
             {feedback.length === 0 ? (
               <div className={styles.alist} style={{ marginTop: 8 }}>Sin notas todavía. Aquí verá lo que CTC le comunique sobre sus fincas y lotes.</div>
             ) : (
-              groupFeedback(feedback).map(([group, threads]) => {
-                const target = threads.map((t) => t.root).find((n) => n.lotId || n.fincaId);
+              groupFeedback(feedback).map(({ key, notes }) => {
+                const target = notes.find((n) => n.lotId || n.fincaId);
+                const isCollapsed = collapsed[key];
                 return (
-                  <div key={group} style={{ marginTop: 10 }}>
-                    {target ? (
-                      <h5>
+                  <div key={key} className={styles.thread}>
+                    <div className={styles.threadHead}>
+                      <button
+                        type="button"
+                        className={styles.threadToggle}
+                        aria-expanded={!isCollapsed}
+                        onClick={() => setCollapsed((c) => ({ ...c, [key]: !c[key] }))}
+                      >
+                        {isCollapsed ? "▸" : "▾"}
+                      </button>
+                      {target ? (
                         <button type="button" className={styles.feedbackLink} onClick={() => openFeedbackTarget(target)}>
-                          {group} ↗
+                          {key} ↗
                         </button>
-                      </h5>
-                    ) : (
-                      <h5>{group}</h5>
-                    )}
-                    {threads.map(({ root, replies }) => (
-                      <div key={root.id} className={styles.thread}>
-                        <div className={styles.alist}>
-                          <b>CTC · {new Date(root.createdAt).toLocaleDateString("es-CO")}:</b> {root.note}
-                        </div>
-                        {replies.map((r) => (
-                          <div key={r.id} className={styles.reply}>
-                            <b>Usted · {new Date(r.createdAt).toLocaleDateString("es-CO")}:</b> {r.note}
+                      ) : (
+                        <span className={styles.threadTitle}>{key}</span>
+                      )}
+                      <span className={styles.threadCount}>{notes.length}</span>
+                    </div>
+
+                    {!isCollapsed && (
+                      <>
+                        {notes.map((n) => (
+                          <div key={n.id} className={n.authorRole === "producer" ? styles.reply : styles.alist}>
+                            <b>
+                              {n.authorRole === "producer" ? "Usted" : "CTC"} · {new Date(n.createdAt).toLocaleDateString("es-CO")}:
+                            </b>{" "}
+                            {n.note}
+                            {n.authorRole === "bcp" && (
+                              <label className={styles.ackRow}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!n.acknowledgedAt}
+                                  onChange={(e) => onAcknowledgeNote(n.id, e.target.checked)}
+                                />{" "}
+                                Entendido
+                              </label>
+                            )}
                           </div>
                         ))}
-                        {replyingToId === root.id ? (
+                        {replyThreadKey === key ? (
                           <div className={styles.replyBox}>
                             <textarea
                               value={replyText}
@@ -218,10 +238,10 @@ export function AppDashboard({
                               autoFocus
                             />
                             <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                              <button className="btn btn-sm btn-solid" onClick={() => submitReply(root)} disabled={!replyText.trim()}>
+                              <button className="btn btn-sm btn-solid" onClick={() => submitThreadReply(key, notes)} disabled={!replyText.trim()}>
                                 Enviar
                               </button>
-                              <button className="btn btn-sm" onClick={() => { setReplyingToId(null); setReplyText(""); }}>
+                              <button className="btn btn-sm" onClick={() => { setReplyThreadKey(null); setReplyText(""); }}>
                                 Cancelar
                               </button>
                             </div>
@@ -230,13 +250,13 @@ export function AppDashboard({
                           <button
                             type="button"
                             className={styles.replyLink}
-                            onClick={() => { setReplyingToId(root.id); setReplyText(""); }}
+                            onClick={() => { setReplyThreadKey(key); setReplyText(""); }}
                           >
-                            Responder
+                            Responder a este hilo
                           </button>
                         )}
-                      </div>
-                    ))}
+                      </>
+                    )}
                   </div>
                 );
               })
@@ -263,7 +283,10 @@ export function AppDashboard({
                     // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
                     <img src={mapUrl} alt={`Ubicación de ${f.name}`} className={styles.fincaMap} />
                   )}
-                  <h5>{f.name}</h5>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <h5 style={{ margin: 0 }}>{f.name}</h5>
+                    <EudrStatusBadge status={fincaEudrStatus(f)} />
+                  </div>
                   <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere", marginTop: 2 }}>{fincaCode(f.id)}</div>
                   <div className={styles.sub}>
                     {f.vereda} · {f.mun}<br />

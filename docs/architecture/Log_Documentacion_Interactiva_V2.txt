@@ -110,5 +110,36 @@ is closed and left as historical record of what went into producing it).
   the setTaskState server action, shared across the two admins); "Actividad
   reciente" (audit) stays as a hyperlinked reference log. New node/DICT
   candidate: bcp_task_state (triage overlay) + the Panel as a triage surface.
+(commit: c21170b)
+
+## [2026-07-13] Finca UX polish, two-way comms rework, EUDR search/DANE/PDF fixes
+- Producer finca card now shows the EUDR status chip (Apta/Pendiente/No apta)
+  via fincaEudrStatus + EudrStatusBadge.
+- FincaModal "Guardar finca" is now a floating diskette FAB (expands to its
+  label on hover) with a centered auto-fading "Datos de Finca Actualizados"
+  confirmation; on an EDIT the modal stays open (onSave now returns boolean).
+- "Área en café (ha)" moved out of the top grid into the EUDR section, right
+  below the polygon/location picker (it's what triggers the >4 ha polygon).
+- EUDR reference PDFs are now real downloads (download attr, served from
+  public/docs/eudr) and the DANE codes table PDF was added as a third one.
+- Retroalimentación panel reworked into collapsible per-element conversation
+  threads: ONE reply composer per thread (not per note), and each CTC note
+  carries an "Entendido" acknowledgment checkbox (producer-RLS
+  producer_comm_ack table). Verified live: producer reply persists + reaches
+  BCP (author_role='producer', threaded), ack persists. Fixed a real RLS bug
+  found in verification -- the producer-reply insert policy's self-join
+  subquery shadowed the new row's parent_id with the aliased table's own
+  parent_id column, so every reply was rejected; rewritten with
+  `parent_id in (select ...)`.
+- Editar-finca search: dropped the deprecated Places Autocomplete + the
+  `places` library (which was making the whole map throw "can't load Google
+  Maps correctly"); search now uses the core google.maps.Geocoder. NOTE:
+  Geocoding/Places/Static-Maps all need enabling on the Google Cloud key +
+  the prod HTTP-referrer allowlist -- a console action on the user's side.
+- DANE codes: new src/lib/daneCodes(.data).ts generated from
+  refs_EUDR/Tabla-Codigos-Dane.pdf (1120 municipios); daneCodeFor(depto,muni)
+  resolves the 5-digit code, shown on each BCP finca card for due diligence.
+- New DICT/node candidates: producer_comm_ack (receipt), DANE lookup, the
+  two-way comm thread model (supersedes the one-way commlog concept).
 (commit: pending)
 

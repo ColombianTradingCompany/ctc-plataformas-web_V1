@@ -4,6 +4,7 @@ import { fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaCode } from "@/components/kaffetal-regal/data";
+import { daneCodeFor } from "@/lib/daneCodes";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr } from "../actions";
 import { logProducerComm } from "../commActions";
@@ -172,6 +173,21 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                     {finca.municipio}, {finca.departamento} · {finca.hectares} ha
                     {finca.requires_eudr_polygon && " · requiere polígono EUDR"}
                   </p>
+                  {(() => {
+                    const dane = daneCodeFor(finca.departamento, finca.municipio);
+                    return (
+                      <p className={styles.meta}>
+                        DANE:{" "}
+                        {dane ? (
+                          <>
+                            <span className={styles.badge}>{dane.code}</span> {dane.mun}, {dane.dep} (depto {dane.depCode})
+                          </>
+                        ) : (
+                          "sin coincidencia — verifique municipio/departamento"
+                        )}
+                      </p>
+                    );
+                  })()}
                   {activeStatus !== "approved" && blockedByPolygon && (
                     <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
                   )}

@@ -1,7 +1,19 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, confirmSampleReceived, updateLotEudr } from "../actions";
 import { logProducerComm } from "../commActions";
-import { fincaEudrStatus, lotEudrStatus, deriveLotRiskLevel, type FincaEudrFields, type EudrStatus } from "@/lib/eudr";
+import {
+  fincaEudrStatus,
+  lotEudrStatus,
+  deriveLotRiskLevel,
+  deriveChainComplexity,
+  deriveProductRisk,
+  countryRiskFor,
+  EUDR_ORIGIN_COUNTRIES,
+  PRODUCT_RISK_QUESTIONS,
+  type FincaEudrFields,
+  type EudrStatus,
+} from "@/lib/eudr";
+import { deriveCertSchemes, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { FieldInfo } from "@/components/kaffetal-regal/ficha/panes/FieldInfo";
@@ -60,13 +72,15 @@ type LotRow = {
   sample_2kg_confirmed_at: string | null;
   // Only the four FT2 "no lo sé / no aplica" flags are read off the datasheet
   // here -- shown on the card so BCP sees what the producer declared unknown.
-  datasheet: { ft2_a3_na?: boolean; ft2_a4_na?: boolean; ft2_b2_na?: boolean; ft2_b3_na?: boolean } | null;
+  datasheet: (Partial<FichaFormData> & { ft2_a3_na?: boolean; ft2_a4_na?: boolean; ft2_b2_na?: boolean; ft2_b3_na?: boolean }) | null;
   eudr_custody_stages: string[] | null;
   eudr_custody_method: string | null;
   eudr_custody_notes: string | null;
+  eudr_country: string | null;
   eudr_country_risk: string | null;
   eudr_chain_complexity: string | null;
   eudr_product_risk: string | null;
+  eudr_product_risk_factors: string[] | null;
   eudr_illegality_indicators: boolean | null;
   eudr_docs_available: boolean | null;
   eudr_cert_scheme: string | null;
@@ -126,7 +140,8 @@ export default async function BcpLotesPage() {
       // GenericStringError type and every field access below breaks.
       .select(
         `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, datasheet,
-         eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country_risk, eudr_chain_complexity, eudr_product_risk,
+         eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
+         eudr_product_risk, eudr_product_risk_factors,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
          eudr_mitigation_effective, eudr_mitigation_responsible,
          fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
@@ -265,6 +280,14 @@ function LotCard({
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
   const derivedRiskLevel = deriveLotRiskLevel(lot);
+  // País, complejidad, riesgo de producto y esquemas de certificación son
+  // derivados (mismas funciones puras que el pane del productor). Se muestran
+  // ya calculados a partir de lo guardado; se recalculan al guardar el form.
+  const derivedComplexity = deriveChainComplexity(lot.eudr_custody_stages);
+  const derivedProductRisk = deriveProductRisk(lot.eudr_product_risk_factors);
+  const derivedCountryRisk = countryRiskFor(lot.eudr_country);
+  const certSchemes = deriveCertSchemes(lot.datasheet ?? {});
+  const productFactors = lot.eudr_product_risk_factors ?? [];
   const naLabels = FT2_NA_LABELS.filter((f) => lot.datasheet?.[f.key]).map((f) => f.label);
   const awaitingShipment =
     showConfirmReceipt && lot.source !== "bcp_manual_entry" && !lot.sample_shipped_at && !lot.sample_2kg_confirmed_at;
@@ -350,28 +373,41 @@ function LotCard({
           </div>
 
           <div className={styles.field}>
-            <label>Riesgo país / región</label>
-            <select name="eudr_country_risk" defaultValue={lot.eudr_country_risk ?? "Estándar"}>
-              {["Bajo", "Estándar", "Alto"].map((v) => <option key={v}>{v}</option>)}
+            <label>País / región de producción</label>
+            <select name="eudr_country" defaultValue={lot.eudr_country ?? ""}>
+              <option value="">Seleccione…</option>
+              {EUDR_ORIGIN_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
+            <p className={styles.meta} style={{ margin: "4px 0 0" }}>
+              Clasificación EUDR (Reg. 2025/1093): <b>{lot.eudr_country ? derivedCountryRisk : "defina el país"}</b>
+            </p>
           </div>
           <div className={styles.field}>
             <label>Complejidad de la cadena</label>
-            <select name="eudr_chain_complexity" defaultValue={lot.eudr_chain_complexity ?? ""}>
-              <option value="">Seleccione…</option>
-              {["Bajo", "Medio", "Alto"].map((v) => <option key={v}>{v}</option>)}
-            </select>
+            <p className={styles.meta} style={{ margin: 0, fontWeight: 600 }}>
+              {derivedComplexity || "Pendiente"}
+            </p>
+            <p className={styles.meta} style={{ margin: "2px 0 0" }}>
+              Se deriva de las {lot.eudr_custody_stages?.length ?? 0} etapa(s) de custodia marcadas.
+            </p>
           </div>
           <div className={styles.field}>
             <label>Riesgo propio del producto</label>
-            <select name="eudr_product_risk" defaultValue={lot.eudr_product_risk ?? ""}>
-              <option value="">Seleccione…</option>
-              {["Bajo", "Medio", "Alto"].map((v) => <option key={v}>{v}</option>)}
-            </select>
+            <div style={{ display: "grid", gap: 6 }}>
+              {PRODUCT_RISK_QUESTIONS.map(([key, label]) => (
+                <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 12.5, fontWeight: 400, alignItems: "flex-start" }}>
+                  <input type="checkbox" name="eudr_product_risk_factors" value={key} defaultChecked={productFactors.includes(key)} style={{ marginTop: 2 }} />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+            <p className={styles.meta} style={{ margin: "4px 0 0", fontWeight: 600 }}>Nivel derivado: {derivedProductRisk}</p>
           </div>
           <div className={styles.field}>
-            <label>Esquema de certificación (opcional)</label>
-            <input name="eudr_cert_scheme" defaultValue={lot.eudr_cert_scheme ?? ""} />
+            <label>Esquemas de certificación / verificación</label>
+            <p className={styles.meta} style={{ margin: 0 }}>
+              {certSchemes.length ? certSchemes.join(", ") : "Ninguno declarado en A3/A4."}
+            </p>
           </div>
           <div className={styles.field}>
             <label>¿Indicios de ilegalidad/deforestación?</label>

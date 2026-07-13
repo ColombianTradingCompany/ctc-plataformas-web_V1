@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
-import { fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr";
+import { fincaEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, type Finca, type Lot } from "./data";
-import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, type FichaFormData } from "./ficha/fichaData";
+import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
@@ -60,9 +60,11 @@ export type FichaSaveUpdate = {
     eudr_custody_stages: string[];
     eudr_custody_method: string | null;
     eudr_custody_notes: string | null;
+    eudr_country: string | null;
     eudr_country_risk: string;
     eudr_chain_complexity: string | null;
     eudr_product_risk: string | null;
+    eudr_product_risk_factors: string[];
     eudr_illegality_indicators: boolean | null;
     eudr_docs_available: boolean | null;
     eudr_cert_scheme: string | null;
@@ -131,9 +133,11 @@ export function FichaView({
       eudr_custody_stages: lot.eudrCustodyStages,
       eudr_custody_method: lot.eudrCustodyMethod,
       eudr_custody_notes: lot.eudrCustodyNotes,
+      eudr_country: lot.eudrCountry,
       eudr_country_risk: lot.eudrCountryRisk,
       eudr_chain_complexity: lot.eudrChainComplexity,
       eudr_product_risk: lot.eudrProductRisk,
+      eudr_product_risk_factors: lot.eudrProductRiskFactors,
       eudr_illegality_indicators: lot.eudrIllegalityIndicators,
       eudr_docs_available: lot.eudrDocsAvailable,
       eudr_cert_scheme: lot.eudrCertScheme,
@@ -166,7 +170,17 @@ export function FichaView({
       a2: !!data.estate || !!data.region_dep,
       a3: data.origin_cert_dor || data.origin_cert_do || data.origin_cert_igp || data.origin_cert_fedecafe || !!data.awards,
       a4: [data.intl_eudr, data.intl_rainforest, data.intl_organic, data.intl_fairtrade].some(Boolean),
-      a5: !!data.eudr_risk_level,
+      // EUDR sub-stage is "done" when the PRODUCER's own inputs are in --
+      // country, custody chain + separation method, and the two yes/no
+      // factors. The final "Nivel de riesgo determinado" is CTC/BCP's call
+      // (Art. 10-11), so it is deliberately NOT part of this gate; requiring it
+      // used to lock the producer out of "Completar EUDR y continuar".
+      a5:
+        !!data.eudr_country &&
+        data.eudr_custody_stages.length > 0 &&
+        !!data.eudr_custody_method &&
+        data.eudr_illegality_indicators !== null &&
+        data.eudr_docs_available !== null,
       b1: vTotal > 0 && !!data.species,
       b2: sca.total > 0,
       b3: factor.remainder > 0,
@@ -222,12 +236,17 @@ export function FichaView({
         // The CTC standard covers custody notes on its own, so a producer who
         // picked it never fills the free-text box -- clear any stale note.
         eudr_custody_notes: source.eudr_custody_method === "custom" ? source.eudr_custody_notes || null : null,
-        eudr_country_risk: source.eudr_country_risk,
-        eudr_chain_complexity: source.eudr_chain_complexity || null,
-        eudr_product_risk: source.eudr_product_risk || null,
+        // País lo declara el productor; complejidad, riesgo de producto y esquemas
+        // de certificación se derivan y se persisten para que BCP y el dossier
+        // los lean ya calculados (ver src/lib/eudr.ts y deriveCertSchemes).
+        eudr_country: source.eudr_country || null,
+        eudr_country_risk: countryRiskFor(source.eudr_country),
+        eudr_chain_complexity: deriveChainComplexity(source.eudr_custody_stages) || null,
+        eudr_product_risk: deriveProductRisk(source.eudr_product_risk_factors),
+        eudr_product_risk_factors: source.eudr_product_risk_factors,
         eudr_illegality_indicators: source.eudr_illegality_indicators,
         eudr_docs_available: source.eudr_docs_available,
-        eudr_cert_scheme: source.eudr_cert_scheme || null,
+        eudr_cert_scheme: deriveCertSchemes(source).join(", ") || null,
         eudr_risk_level: source.eudr_risk_level || null,
         eudr_mitigation_actions: source.eudr_mitigation_actions || null,
         eudr_mitigation_effective: source.eudr_mitigation_effective,
@@ -304,7 +323,7 @@ export function FichaView({
     }
     if (step === 2) {
       if (!completed.a5) {
-        showToast("Defina el nivel de riesgo en la sección EUDR antes de continuar.");
+        showToast("En EUDR: indique el país, marque la cadena de custodia y su método, y responda las dos preguntas de sí/no.");
         return;
       }
       if (!allFincasApta) {

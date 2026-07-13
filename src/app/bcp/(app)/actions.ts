@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { deriveLotRiskLevel } from "@/lib/eudr";
+import { deriveLotRiskLevel, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
+import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
@@ -299,21 +300,33 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
-  const eudr_country_risk = textOrNull(formData, "eudr_country_risk") ?? "Estándar";
+  // País lo declara BCP; la clasificación de riesgo se deriva de él. Complejidad,
+  // riesgo de producto y esquemas de certificación también son derivados (mismas
+  // funciones puras que el pane del productor) y se persisten ya calculados.
+  const eudr_country = textOrNull(formData, "eudr_country");
+  const eudr_country_risk = countryRiskFor(eudr_country);
+  const eudr_custody_stages = formData.getAll("eudr_custody_stages").map(String);
+  const eudr_product_risk_factors = formData.getAll("eudr_product_risk_factors").map(String);
   const eudr_illegality_indicators = triState(formData, "eudr_illegality_indicators");
   const eudr_docs_available = triState(formData, "eudr_docs_available");
   const eudr_mitigation_effective = triState(formData, "eudr_mitigation_effective");
 
+  // Cert schemes come from A3/A4 in the lot's datasheet, not from this form.
+  const { data: lotRow } = await service.from("lots").select("datasheet").eq("id", lotId).single();
+  const eudr_cert_scheme = deriveCertSchemes(lotRow?.datasheet ?? {}).join(", ") || null;
+
   const patch = {
-    eudr_custody_stages: formData.getAll("eudr_custody_stages").map(String),
+    eudr_custody_stages,
     eudr_custody_method: textOrNull(formData, "eudr_custody_method"),
     eudr_custody_notes: textOrNull(formData, "eudr_custody_notes"),
+    eudr_country,
     eudr_country_risk,
-    eudr_chain_complexity: textOrNull(formData, "eudr_chain_complexity"),
-    eudr_product_risk: textOrNull(formData, "eudr_product_risk"),
+    eudr_chain_complexity: deriveChainComplexity(eudr_custody_stages) || null,
+    eudr_product_risk: deriveProductRisk(eudr_product_risk_factors),
+    eudr_product_risk_factors,
     eudr_illegality_indicators,
     eudr_docs_available,
-    eudr_cert_scheme: textOrNull(formData, "eudr_cert_scheme"),
+    eudr_cert_scheme,
     // Derived, not hand-picked -- see deriveLotRiskLevel's comment (Art. 10-11).
     eudr_risk_level:
       deriveLotRiskLevel({ eudr_country_risk, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective }) || null,

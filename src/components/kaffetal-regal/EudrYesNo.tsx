@@ -29,14 +29,14 @@ export function EudrYesNo({
       <button
         type="button"
         onClick={() => onChange(true)}
-        style={{ ...base, border: 0, ...(value === true ? { background: "var(--green)", color: "#fff" } : {}) }}
+        style={{ ...base, border: 0, ...(value === true ? { background: "var(--green, #2E7D52)", color: "#fff" } : {}) }}
       >
         {siLabel}
       </button>
       <button
         type="button"
         onClick={() => onChange(false)}
-        style={{ ...base, border: 0, borderLeft: "1.5px solid var(--line)", ...(value === false ? { background: "var(--red)", color: "#fff" } : {}) }}
+        style={{ ...base, border: 0, borderLeft: "1.5px solid var(--line)", ...(value === false ? { background: "var(--red, #C4402F)", color: "#fff" } : {}) }}
       >
         {noLabel}
       </button>

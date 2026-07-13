@@ -112,6 +112,57 @@ export type LotRiskFactors = {
   eudr_mitigation_effective: boolean | null;
 };
 
+// --- Riesgo país / región -------------------------------------------------
+// Clasificación oficial de la Comisión Europea, Reglamento de Ejecución (UE)
+// 2025/1093 (22 mayo 2025): solo Rusia, Bielorrusia, Myanmar y Corea del Norte
+// son "alto"; la gran mayoría de países son "bajo"; los que no figuran como
+// bajo ni alto quedan como "estándar". Los orígenes cafeteros de la región
+// (Colombia, Perú, Venezuela, Panamá) son todos estándar. Se declara el país y
+// la clasificación se deriva de aquí, en vez de que alguien la elija a mano.
+export const EUDR_ORIGIN_COUNTRIES = ["Colombia", "Perú", "Venezuela", "Panamá"] as const;
+export type EudrCountryRisk = "Bajo" | "Estándar" | "Alto";
+export const EUDR_COUNTRY_RISK: Record<string, EudrCountryRisk> = {
+  Colombia: "Estándar",
+  Perú: "Estándar",
+  Venezuela: "Estándar",
+  Panamá: "Estándar",
+};
+export function countryRiskFor(country: string | null | undefined): EudrCountryRisk {
+  if (!country) return "Estándar";
+  return EUDR_COUNTRY_RISK[country] ?? "Estándar";
+}
+
+// --- Complejidad de la cadena ---------------------------------------------
+// Se autocontesta con las etapas marcadas en "Cadena de custodia": entre más
+// eslabones toquen el café entre la finca y la exportación, mayor la
+// complejidad y el riesgo de mezcla (Guía CE, Art. 10(2)(i)). 6 etapas
+// posibles -> ≤2 baja, 3-4 media, 5-6 alta. "" mientras no haya ninguna.
+export function deriveChainComplexity(stages: string[] | null | undefined): "" | "Bajo" | "Medio" | "Alto" {
+  const n = stages?.length ?? 0;
+  if (n === 0) return "";
+  if (n <= 2) return "Bajo";
+  if (n <= 4) return "Medio";
+  return "Alto";
+}
+
+// --- Riesgo propio del producto -------------------------------------------
+// En vez de un nivel elegido a dedo, se infiere de preguntas sí/no: cada
+// factor marcado ("sí") es una circunstancia que diluye el origen o rompe la
+// trazabilidad del lote. Sin factores = bajo; 1-2 = medio; 3+ = alto. Como son
+// casillas (sin marcar = "no"), siempre resuelve a por lo menos "Bajo".
+export const PRODUCT_RISK_QUESTIONS: [string, string][] = [
+  ["mezcla", "El café se acopia o mezcla con café de otros orígenes o productores."],
+  ["sin_id_lote", "La identidad del lote (finca de origen) no se conserva durante el proceso."],
+  ["intermediarios", "Pasa por intermediarios o comercializadores ajenos a CTC."],
+  ["transform_terceros", "Se trilla, tuesta o transforma donde terceros, sin control de CTC."],
+];
+export function deriveProductRisk(factors: string[] | null | undefined): "Bajo" | "Medio" | "Alto" {
+  const n = factors?.length ?? 0;
+  if (n === 0) return "Bajo";
+  if (n <= 2) return "Medio";
+  return "Alto";
+}
+
 export function deriveLotRiskLevel(f: LotRiskFactors): "" | "insignificante" | "no_insignificante" {
   const countryRisk = f.eudr_country_risk || "Estándar";
   if (f.eudr_illegality_indicators === null || f.eudr_docs_available === null) return "";

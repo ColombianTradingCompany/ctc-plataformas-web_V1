@@ -271,6 +271,39 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] EUDR risk factors: derive instead of hand-pick (lote)
+Reworked the lot-level EUDR risk section so the classifications are inferred
+from real inputs instead of being chosen by eye, on BOTH surfaces (producer
+PaneA5Eudr and BCP lotes "Asistencia EUDR"). Shared pure helpers in
+src/lib/eudr.ts keep the two sides identical.
+- Riesgo país / región: now a country picker (Colombia, Perú, Venezuela,
+  Panamá) and the classification is DERIVED (countryRiskFor + EUDR_COUNTRY_RISK)
+  from the EU benchmarking list, Reg. de Ejecución (UE) 2025/1093 — the four
+  regional coffee origins are all "Estándar" (solo Rusia, Bielorrusia, Myanmar
+  y Corea del Norte son "Alto"). New column lots.eudr_country.
+- Complejidad de la cadena: autocompletada desde "Cadena de custodia"
+  (deriveChainComplexity: ≤2 etapas Bajo, 3-4 Medio, 5-6 Alto). Read-only.
+- Riesgo propio del producto: ahora son casillas sí/no (PRODUCT_RISK_QUESTIONS,
+  4 factores que diluyen origen/trazabilidad); el nivel se infiere
+  (deriveProductRisk: 0 Bajo, 1-2 Medio, 3+ Alto). New column
+  lots.eudr_product_risk_factors (text[]).
+- Esquemas de certificación / verificación: ya no es texto libre; se arma con
+  los certificados marcados en A3 (origen) y A4 (internacionales) vía
+  deriveCertSchemes() (fichaData.ts). Read-only.
+- eudr_chain_complexity / eudr_product_risk / eudr_country_risk /
+  eudr_cert_scheme se siguen PERSISTIENDO ya calculados (en buildUpdate y en
+  updateLotEudr) para que el dossier y el tablero los lean sin recomputar.
+- Fix (gate): "Completar EUDR y continuar" ya no exige el "Nivel de riesgo
+  determinado" (que lo fija BCP, Art. 10-11) — el productor quedaba bloqueado.
+  Ahora completed.a5 mira las entradas del productor (país + cadena de custodia
+  + método + las dos preguntas sí/no).
+- Fix (contraste): los temas kaffetal-regal, cherry-picked y bcp no definían
+  --green/--red, así que el estado "seleccionado" de los botones Sí/No de
+  EudrYesNo quedaba con texto blanco sobre fondo claro (invisible). Se
+  añadieron a globals.css y EudrYesNo usa fallbacks var(--green,#2E7D52) /
+  var(--red,#C4402F).
+(commit: pending)
+
 ## [2026-07-13] "Infraestructura local" moved from the Lote to the Finca
 - Correction: the local-infrastructure multiselect (semillero, tractor,
   acopio, beneficio, guardiolas, trilladora, etc. -- 18 items with per-item

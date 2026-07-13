@@ -1,12 +1,51 @@
 "use client";
 
 import { useMemo } from "react";
-import { lotEudrStatus, fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr";
+import {
+  lotEudrStatus,
+  fincaEudrStatus,
+  resolveSourceFincas,
+  countryRiskFor,
+  deriveChainComplexity,
+  deriveProductRisk,
+  EUDR_ORIGIN_COUNTRIES,
+  PRODUCT_RISK_QUESTIONS,
+} from "@/lib/eudr";
+import { deriveCertSchemes } from "../fichaData";
 import { EudrYesNo } from "../../EudrYesNo";
 import { EudrStatusBadge } from "../../EudrStatusBadge";
 import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
+
+// Small colored read-out for a derived risk level. Bajo = verde, Medio /
+// Estándar = ámbar, Alto = rojo. Uses fallbacks so it works even in themes
+// that don't define --green/--red.
+function RiskPill({ level }: { level: string }) {
+  const tone =
+    level === "Bajo"
+      ? { bg: "#E8F3EC", fg: "var(--green, #2E7D52)" }
+      : level === "Alto"
+      ? { bg: "#FBE9E7", fg: "var(--red, #C4402F)" }
+      : level
+      ? { bg: "#FBF2DD", fg: "#8A6D1F" }
+      : { bg: "var(--paper)", fg: "var(--muted)" };
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        fontSize: 12.5,
+        fontWeight: 700,
+        padding: "3px 12px",
+        borderRadius: 999,
+        background: tone.bg,
+        color: tone.fg,
+      }}
+    >
+      {level || "Pendiente"}
+    </span>
+  );
+}
 
 const CUSTODY_STAGES: [string, string][] = [
   ["finca", "Finca"],
@@ -52,9 +91,23 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
 
   const status = lotEudrStatus(data, sourceFincas);
 
+  // Derived, not hand-picked (see the request + src/lib/eudr.ts): país risk
+  // from the declared country, chain complexity from the custody stages,
+  // product risk from the sí/no factors, cert schemes from A3/A4.
+  const countryRisk = countryRiskFor(data.eudr_country);
+  const chainComplexity = deriveChainComplexity(data.eudr_custody_stages);
+  const productFactors = data.eudr_product_risk_factors ?? [];
+  const productRisk = deriveProductRisk(productFactors);
+  const certSchemes = deriveCertSchemes(data);
+
   function toggleStage(key: string, checked: boolean) {
     const next = checked ? [...data.eudr_custody_stages, key] : data.eudr_custody_stages.filter((k) => k !== key);
     onChange({ eudr_custody_stages: next });
+  }
+
+  function toggleProductFactor(key: string, checked: boolean) {
+    const next = checked ? [...productFactors, key] : productFactors.filter((k) => k !== key);
+    onChange({ eudr_product_risk_factors: next });
   }
 
 
@@ -141,29 +194,63 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
 
       <div className={styles.fgrid} style={{ margin: "14px 0" }}>
         <div className={styles.ff}>
-          <label>Riesgo país / región<FieldInfo text={INFO.riesgoPais} /></label>
-          <select value={data.eudr_country_risk} onChange={(e) => onChange({ eudr_country_risk: e.target.value })}>
-            {["Bajo", "Estándar", "Alto"].map((v) => <option key={v}>{v}</option>)}
+          <label>País / región de producción<FieldInfo text={INFO.riesgoPais} /></label>
+          <select value={data.eudr_country} onChange={(e) => onChange({ eudr_country: e.target.value })}>
+            <option value="">Seleccione…</option>
+            {EUDR_ORIGIN_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+          <p className={styles.fexample} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+            Clasificación EUDR: <RiskPill level={data.eudr_country ? countryRisk : ""} />
+          </p>
         </div>
         <div className={styles.ff}>
           <label>Complejidad de la cadena<FieldInfo text={INFO.complejidad} /></label>
-          <select value={data.eudr_chain_complexity} onChange={(e) => onChange({ eudr_chain_complexity: e.target.value })}>
-            <option value="">Seleccione…</option>
-            {["Bajo", "Medio", "Alto"].map((v) => <option key={v}>{v}</option>)}
-          </select>
+          <p style={{ margin: "4px 0 0", display: "flex", alignItems: "center", gap: 8 }}>
+            <RiskPill level={chainComplexity} />
+          </p>
+          <p className={styles.fexample} style={{ marginTop: 6 }}>
+            Se calcula sola a partir de las etapas marcadas en “Cadena de custodia”
+            ({data.eudr_custody_stages.length} marcada{data.eudr_custody_stages.length === 1 ? "" : "s"}).
+          </p>
         </div>
-        <div className={styles.ff}>
-          <label>Riesgo propio del producto (café)<FieldInfo text={INFO.riesgoProducto} /></label>
-          <select value={data.eudr_product_risk} onChange={(e) => onChange({ eudr_product_risk: e.target.value })}>
-            <option value="">Seleccione…</option>
-            {["Bajo", "Medio", "Alto"].map((v) => <option key={v}>{v}</option>)}
-          </select>
+      </div>
+
+      <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
+        <label>Riesgo propio del producto (café)<FieldInfo text={INFO.riesgoProducto} /></label>
+        <p className={styles.fexample} style={{ marginTop: 4 }}>
+          Marque las situaciones que apliquen a este lote. Cada una diluye el origen o rompe la trazabilidad — el nivel se calcula solo.
+        </p>
+        <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+          {PRODUCT_RISK_QUESTIONS.map(([key, label]) => (
+            <label key={key} style={{ display: "inline-flex", gap: 8, fontSize: 13, alignItems: "flex-start" }}>
+              <input
+                type="checkbox"
+                checked={productFactors.includes(key)}
+                onChange={(e) => toggleProductFactor(key, e.target.checked)}
+                style={{ width: 16, flex: "none", marginTop: 2 }}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
         </div>
-        <div className={styles.ff}>
-          <label>Esquema de certificación / verificación (opcional)<FieldInfo text={INFO.certificacion} /></label>
-          <input value={data.eudr_cert_scheme} onChange={(e) => onChange({ eudr_cert_scheme: e.target.value })} placeholder="Rainforest Alliance, verificación propia…" />
-        </div>
+        <p style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+          Riesgo del producto: <RiskPill level={productRisk} />
+        </p>
+      </div>
+
+      <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
+        <label>Esquemas de certificación / verificación<FieldInfo text={INFO.certificacion} /></label>
+        {certSchemes.length ? (
+          <div className={styles.chips} style={{ marginTop: 6 }}>
+            {certSchemes.map((c) => (
+              <span key={c} className={styles.chip} style={{ cursor: "default" }}>{c}</span>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.fexample} style={{ marginTop: 6 }}>
+            Ninguno declarado. Se toman de los certificados marcados en A3 (origen) y A4 (internacionales).
+          </p>
+        )}
       </div>
 
       <div className={`${styles.ff} ${styles.fw}`} style={{ marginBottom: 14 }}>

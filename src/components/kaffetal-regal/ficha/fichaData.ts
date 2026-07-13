@@ -179,6 +179,19 @@ export const INTL_CERTS: [string, string, string][] = [
   ["intl_globalgap", "Especializado", "GLOBALG.A.P"],
 ];
 
+// "Esquema de certificación / verificación" ya no se escribe a mano: se arma
+// con lo que el productor marcó en A3 (certificados de origen) y A4
+// (certificados internacionales). Las certificaciones de terceros son
+// evidencia complementaria en la evaluación de riesgo (Guía CE, Art. 10(2)(n)).
+export function deriveCertSchemes(d: Partial<FichaFormData>): string[] {
+  const out: string[] = [];
+  for (const [key, label] of ORIGIN_CERTS) if (d[key as keyof FichaFormData]) out.push(label);
+  if (d.origin_cert_other && d.origin_cert_other_text?.trim()) out.push(d.origin_cert_other_text.trim());
+  for (const [key, , label] of INTL_CERTS) if (d[key as keyof FichaFormData]) out.push(label);
+  if (d.intl_other && d.intl_cert_other_text?.trim()) out.push(d.intl_cert_other_text.trim());
+  return out;
+}
+
 export const SCA_ATTRS: [string, string][] = [
   ["fragrance", "Fragrance/Aroma"], ["flavor", "Flavor"], ["aftertaste", "Aftertaste"],
   ["acidity", "Acidity"], ["body", "Body"], ["balance", "Balance"],
@@ -228,9 +241,15 @@ export type FichaFormData = {
   // producer describes their own method in eudr_custody_notes.
   eudr_custody_method: "" | "ctc_standard" | "custom";
   eudr_custody_notes: string;
+  // País de origen declarado; la clasificación de riesgo (eudr_country_risk) se
+  // deriva de él (Reg. Ejecución UE 2025/1093) en vez de elegirse a mano.
+  eudr_country: string;
   eudr_country_risk: string;
+  // Complejidad y riesgo de producto también son derivados: la complejidad de
+  // las etapas de custodia, el riesgo de producto de las casillas sí/no.
   eudr_chain_complexity: string;
   eudr_product_risk: string;
+  eudr_product_risk_factors: string[];
   eudr_illegality_indicators: boolean | null;
   eudr_docs_available: boolean | null;
   eudr_cert_scheme: string;
@@ -286,9 +305,11 @@ export const EMPTY_FICHA: FichaFormData = {
   eudr_custody_stages: [],
   eudr_custody_method: "",
   eudr_custody_notes: "",
+  eudr_country: "",
   eudr_country_risk: "Estándar",
   eudr_chain_complexity: "",
   eudr_product_risk: "",
+  eudr_product_risk_factors: [],
   eudr_illegality_indicators: null,
   eudr_docs_available: null,
   eudr_cert_scheme: "",

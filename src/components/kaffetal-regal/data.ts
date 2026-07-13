@@ -118,9 +118,11 @@ export type Lot = {
   eudrCustodyStages: string[];
   eudrCustodyMethod: "" | "ctc_standard" | "custom";
   eudrCustodyNotes: string;
+  eudrCountry: string;
   eudrCountryRisk: string;
   eudrChainComplexity: string;
   eudrProductRisk: string;
+  eudrProductRiskFactors: string[];
   eudrIllegalityIndicators: boolean | null;
   eudrDocsAvailable: boolean | null;
   eudrCertScheme: string;

@@ -95,9 +95,11 @@ type LotRow = {
   eudr_custody_stages: string[] | null;
   eudr_custody_method: string | null;
   eudr_custody_notes: string | null;
+  eudr_country: string | null;
   eudr_country_risk: string | null;
   eudr_chain_complexity: string | null;
   eudr_product_risk: string | null;
+  eudr_product_risk_factors: string[] | null;
   eudr_illegality_indicators: boolean | null;
   eudr_docs_available: boolean | null;
   eudr_cert_scheme: string | null;
@@ -193,9 +195,11 @@ function dbLotToLot(
     eudrCustodyStages: row.eudr_custody_stages || [],
     eudrCustodyMethod: (row.eudr_custody_method as Lot["eudrCustodyMethod"]) || "",
     eudrCustodyNotes: row.eudr_custody_notes || "",
+    eudrCountry: row.eudr_country || "",
     eudrCountryRisk: row.eudr_country_risk || "Estándar",
     eudrChainComplexity: row.eudr_chain_complexity || "",
     eudrProductRisk: row.eudr_product_risk || "",
+    eudrProductRiskFactors: row.eudr_product_risk_factors || [],
     eudrIllegalityIndicators: row.eudr_illegality_indicators,
     eudrDocsAvailable: row.eudr_docs_available,
     eudrCertScheme: row.eudr_cert_scheme || "",

@@ -237,5 +237,19 @@ is closed and left as historical record of what went into producing it).
 - Mobile ficha nav: the 220px vertical FichaNav becomes a sticky, horizontally
   scrollable pill bar under 860px (group labels hidden) instead of a tall list
   that buried the form. Verified live at 375px.
+(commit: 2ffa5c6)
+
+## [2026-07-13] Ficha: Infraestructura local multiselect + Tipo de Producto cleanup
+- New eudr_local_infra (FichaFormData/datasheet, no migration) -- an
+  18-item "Infraestructura local" multiselect in PaneA5 (EUDR), each item
+  with an ⓘ explaining it (semillero, tractor, acopio, flotado, lavado,
+  beneficio, fermentadores, patios, marquesinas, guardiolas, silos,
+  trilladora, monitor de mallas, seleccionadora óptica, empacadora al vacío,
+  tostadora, molino, empacadora de consumible). Part of the lot's EUDR /
+  traceability declaration.
+- Tipo de Producto (PaneA1): dropped the roasted (0901.21/22) and seed-stock
+  (0901.11.10) HS codes -- CTC exports green coffee -- leaving green
+  commercial (regular + decaf) + subproducts, rendered as selectable radio
+  cards (label + HS code) instead of a plain <select>.
 (commit: pending)
 

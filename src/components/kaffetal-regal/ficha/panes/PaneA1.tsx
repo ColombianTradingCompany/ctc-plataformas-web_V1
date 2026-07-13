@@ -51,12 +51,32 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
         </div>
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Tipo de Producto</label>
-          <select value={data.product_type} onChange={(e) => setProductType(e.target.value)}>
-            <option value="">— Seleccionar tipo —</option>
-            {HS_CODES.map((h) => (
-              <option key={h[0]} value={h[0]}>{h[0]}</option>
-            ))}
-          </select>
+          <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
+            {HS_CODES.map((h) => {
+              const sel = data.product_type === h[0];
+              return (
+                <label
+                  key={h[0]}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "11px 13px",
+                    border: `1.5px solid ${sel ? "var(--primary)" : "var(--line)"}`,
+                    borderRadius: 10,
+                    background: sel ? "#E8EFE4" : "var(--paper)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input type="radio" name="product_type" checked={sel} onChange={() => setProductType(h[0])} style={{ flex: "0 0 auto", width: 16, height: 16 }} />
+                  <span style={{ fontSize: 13.5, lineHeight: 1.3 }}>
+                    <span style={{ fontWeight: sel ? 600 : 400 }}>{h[0]}</span>
+                    <span style={{ color: "var(--muted)", fontSize: 12 }}> · HS {h[1]}</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
         </div>
         <div className={styles.ff}>
           <label>HS Code (automático)</label>

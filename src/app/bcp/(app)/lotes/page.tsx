@@ -14,6 +14,8 @@ import {
   type EudrStatus,
 } from "@/lib/eudr";
 import { deriveCertSchemes, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
+import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { FincaModalRow } from "../fincas/FincaModalRow";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { FieldInfo } from "@/components/kaffetal-regal/ficha/panes/FieldInfo";
@@ -70,6 +72,11 @@ type LotRow = {
   source: string;
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
+  ficha_variedad: string | null;
+  ficha_proceso: string | null;
+  ficha_altitud_m: number | null;
+  ficha_notas_cata: string | null;
+  ficha_puntaje_estimado: number | null;
   // Only the four FT2 "no lo sé / no aplica" flags are read off the datasheet
   // here -- shown on the card so BCP sees what the producer declared unknown.
   datasheet: (Partial<FichaFormData> & { ft2_a3_na?: boolean; ft2_a4_na?: boolean; ft2_b2_na?: boolean; ft2_b3_na?: boolean }) | null;
@@ -140,6 +147,7 @@ export default async function BcpLotesPage() {
       // GenericStringError type and every field access below breaks.
       .select(
         `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, datasheet,
+         ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
@@ -301,28 +309,61 @@ function LotCard({
     await logProducerComm(lot.producer_id, `Lote ${lot.name}`, formData, { lotId: lot.id });
   }
 
-  return (
-    <div className={styles.miniCard}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <h4>{lot.name}</h4>
+  // Section anchors must be unique per lot -- several modals share the page.
+  const aid = (s: string) => `lot-${lot.id.slice(0, 8)}-${s}`;
+  const ds = lot.datasheet ?? {};
+  const dsRow = (label: string, value: React.ReactNode) =>
+    value ? (
+      <p className={styles.meta} style={{ margin: "3px 0" }}>
+        {label}: <b style={{ color: "var(--ink)" }}>{value}</b>
+      </p>
+    ) : null;
+  const sectionHead = (id: string, label: string) => (
+    <h4 id={id} style={{ margin: "18px 0 6px", fontSize: 13.5, borderBottom: "1px solid var(--line)", paddingBottom: 4, scrollMarginTop: 8 }}>
+      {label}
+    </h4>
+  );
+
+  const summary = (
+    <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 14, color: "var(--ink)" }}>{lot.name}</b>
         <EudrStatusBadge status={eudrStatus} />
+        {lot.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
+        {lot.source === "bcp_manual_entry" && <span className={styles.badge}>registrado por BCP</span>}
+      </span>
+      <span className={styles.meta}>
+        {producer?.fullName ?? "Productor"} · {lot.fincas?.name ?? "—"}
+        {lot.sample_shipped_at && !lot.sample_2kg_confirmed_at && " · muestra enviada, por confirmar"}
+      </span>
+    </span>
+  );
+
+  return (
+    <FincaModalRow title={lot.name} summary={summary}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+        <span className={`${styles.badge} mono`}>{ctcLotReferenceShort(lot.id)}</span>
+        <EudrStatusBadge status={eudrStatus} />
+        {lot.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
+        {lot.source === "bcp_manual_entry" && <span className={styles.badge}>registrado por BCP</span>}
       </div>
       <ProducerContactLine producer={producer} />
-      <p className={styles.meta}>
-        {lot.fincas?.name ?? "—"}
-        {lot.grade && (
-          <>
-            {" · "}
-            <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>
-          </>
-        )}
-        {lot.source === "bcp_manual_entry" && (
-          <>
-            {" · "}
-            <span className={styles.badge}>registrado por BCP</span>
-          </>
-        )}
-      </p>
+      <p className={styles.meta}>Finca: {lot.fincas?.name ?? "—"}</p>
+
+      {/* Quick nav: the modal holds the full FT/FT2/EUDR detail; these jump links keep it navigable. */}
+      <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "10px 0 4px" }}>
+        {[
+          [aid("ft"), "FT · Identidad"],
+          [aid("ft2"), "FT2 · Certificados y análisis"],
+          [aid("eudr"), "EUDR"],
+          [aid("comms"), `Comunicación (${comms.length})`],
+        ].map(([href, label]) => (
+          <a key={href} className="btn btn-sm" href={`#${href}`}>
+            {label}
+          </a>
+        ))}
+      </nav>
+
       {naLabels.length > 0 && (
         <p className={styles.meta}>Declarado &quot;no lo sé / no aplica&quot;: {naLabels.join(" · ")}</p>
       )}
@@ -349,9 +390,32 @@ function LotCard({
         </form>
       )}
 
-      <details style={{ marginTop: 10 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 12.5 }}>Asistencia EUDR (BCP)</summary>
-        <form action={saveEudr} style={{ marginTop: 12 }}>
+      {sectionHead(aid("ft"), "FT · Identidad y Origen")}
+      {dsRow("Producto", ds.product_name)}
+      {dsRow("Especie", ds.species)}
+      {dsRow("Tipo de producto", [ds.product_type, ds.hs_code].filter(Boolean).join(" · HS "))}
+      {dsRow("Cosecha", [ds.harvest_year, ds.harvest_season].filter(Boolean).join(" · "))}
+      {dsRow("Categoría de origen", ds.origin_category)}
+      {dsRow("Finca declarada", ds.estate)}
+      {dsRow("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · "))}
+      {dsRow("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : null)}
+      {dsRow("Edad del cultivo", ds.plantation_age)}
+      {dsRow("Variedad", lot.ficha_variedad)}
+      {dsRow("Proceso", [ds.base_processing || lot.ficha_proceso, ds.special_processing].filter(Boolean).join(" + "))}
+      {!ds.product_name && !lot.ficha_variedad && <p className={styles.meta}>El productor todavía no diligencia esta sección.</p>}
+
+      {sectionHead(aid("ft2"), "FT2 · Certificados y Análisis")}
+      {dsRow("Certificados (A3/A4)", certSchemes.length ? certSchemes.join(", ") : null)}
+      {dsRow("Premios y rankings", ds.awards)}
+      {dsRow("Perfil de taza", ds.cupping_profile)}
+      {dsRow("Puntaje SCA estimado", lot.ficha_puntaje_estimado)}
+      {dsRow("Notas", lot.ficha_notas_cata || ds.analysis_notes)}
+      {!certSchemes.length && !ds.awards && !ds.cupping_profile && !lot.ficha_puntaje_estimado && (
+        <p className={styles.meta}>Sin certificados ni análisis declarados todavía.</p>
+      )}
+
+      {sectionHead(aid("eudr"), "EUDR · Asistencia BCP")}
+      <form action={saveEudr} style={{ marginTop: 8 }}>
           <div className={styles.field}>
             <label>Cadena de custodia</label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -428,15 +492,22 @@ function LotCard({
           <div className={styles.field}>
             <label>
               Nivel de riesgo determinado
-              <FieldInfo text="Se calcula automáticamente a partir de los indicios de ilegalidad, la disponibilidad de documentos y el riesgo país (Art. 10-11 EUDR) -- no se selecciona a mano. Si queda en 'No insignificante', puede bajar a 'Insignificante' marcando la mitigación como efectiva abajo." />
+              <FieldInfo text="Determinación de BCP como evaluador (Art. 10-11 EUDR). La sugerencia se calcula con los indicios de ilegalidad, la disponibilidad de documentos, el riesgo país y la efectividad de la mitigación -- puede adoptarla o apartarse de ella con criterio propio." />
             </label>
-            <p className={styles.meta} style={{ margin: 0, fontWeight: 600 }}>
-              {RISK_LEVEL_LABEL[derivedRiskLevel] ?? "Pendiente (defina riesgo país, indicios y documentos)"}
+            <select name="eudr_risk_level" defaultValue={lot.eudr_risk_level ?? ""}>
+              <option value="">Pendiente</option>
+              <option value="insignificante">Insignificante</option>
+              <option value="no_insignificante">No insignificante</option>
+            </select>
+            <p className={styles.meta} style={{ margin: "4px 0 0" }}>
+              Sugerencia según los criterios: <b>{RISK_LEVEL_LABEL[derivedRiskLevel] ?? "defina riesgo país, indicios y documentos"}</b>
             </p>
           </div>
           <div className={styles.field}>
-            <label>Acciones de mitigación</label>
-            <textarea name="eudr_mitigation_actions" defaultValue={lot.eudr_mitigation_actions ?? ""} />
+            <label>Acciones de mitigación (declaradas por el productor)</label>
+            <p className={styles.meta} style={{ margin: 0 }}>
+              {lot.eudr_mitigation_actions || "El productor no ha declarado acciones de mitigación (Ficha A5)."}
+            </p>
           </div>
           <div className={styles.field}>
             <label>¿La mitigación reduce el riesgo a insignificante?</label>
@@ -447,16 +518,19 @@ function LotCard({
             </select>
           </div>
           <div className={styles.field}>
-            <label>Responsable y fecha</label>
-            <input name="eudr_mitigation_responsible" defaultValue={lot.eudr_mitigation_responsible ?? ""} />
+            <label>Responsable</label>
+            <input name="eudr_mitigation_responsible" defaultValue={(lot.eudr_mitigation_responsible ?? "").split(" · ")[0]} placeholder="Nombre · cargo" />
+            <p className={styles.meta} style={{ margin: "4px 0 0" }}>
+              {lot.eudr_mitigation_responsible
+                ? `Registrado: ${lot.eudr_mitigation_responsible}`
+                : "La fecha se registra automáticamente al guardar."}
+            </p>
           </div>
 
           <button className="btn btn-sm btn-solid" type="submit">Guardar información EUDR</button>
         </form>
-      </details>
 
-      <details style={{ marginTop: 10 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 12.5 }}>Registro de comunicación ({comms.length})</summary>
+      {sectionHead(aid("comms"), `Registro de comunicación (${comms.length})`)}
         <form action={addComm} style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input name="note" required placeholder="Nota interna sobre este lote…" style={{ flex: 1, minWidth: 180 }} />
           <button className="btn btn-sm btn-solid" type="submit">Registrar</button>
@@ -473,7 +547,6 @@ function LotCard({
             ))}
           </ul>
         )}
-      </details>
-    </div>
+    </FincaModalRow>
   );
 }

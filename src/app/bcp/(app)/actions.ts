@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { deriveLotRiskLevel, countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
+import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
@@ -331,8 +331,24 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
   const eudr_mitigation_effective = triState(formData, "eudr_mitigation_effective");
 
   // Cert schemes come from A3/A4 in the lot's datasheet, not from this form.
-  const { data: lotRow } = await service.from("lots").select("datasheet").eq("id", lotId).single();
+  const { data: lotRow } = await service.from("lots").select("datasheet, eudr_mitigation_responsible").eq("id", lotId).single();
   const eudr_cert_scheme = deriveCertSchemes(lotRow?.datasheet ?? {}).join(", ") || null;
+
+  // "Nivel de riesgo determinado" is BCP's explicit call (Art. 10-11), aided
+  // by the derived suggestion shown in the form -- not auto-written anymore.
+  const riskRaw = textOrNull(formData, "eudr_risk_level");
+  const eudr_risk_level = riskRaw === "insignificante" || riskRaw === "no_insignificante" ? riskRaw : null;
+
+  // "Responsable": BCP only types the name; the date is stamped here at
+  // submission time. If the name didn't change, the original stamp is kept.
+  const responsableName = textOrNull(formData, "eudr_mitigation_responsible");
+  const prevResponsible = (lotRow?.eudr_mitigation_responsible as string | null) ?? null;
+  const prevName = prevResponsible?.split(" · ")[0] ?? null;
+  const eudr_mitigation_responsible = !responsableName
+    ? null
+    : responsableName === prevName
+      ? prevResponsible
+      : `${responsableName} · ${new Date().toLocaleDateString("es-CO")}`;
 
   const patch = {
     eudr_custody_stages,
@@ -346,12 +362,12 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
     eudr_illegality_indicators,
     eudr_docs_available,
     eudr_cert_scheme,
-    // Derived, not hand-picked -- see deriveLotRiskLevel's comment (Art. 10-11).
-    eudr_risk_level:
-      deriveLotRiskLevel({ eudr_country_risk, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective }) || null,
-    eudr_mitigation_actions: textOrNull(formData, "eudr_mitigation_actions"),
+    eudr_risk_level,
+    // eudr_mitigation_actions is NOT set here: the acciones de mitigación are
+    // the producer's declaration (Ficha A5); BCP reads them and rules on
+    // effectiveness + risk level.
     eudr_mitigation_effective,
-    eudr_mitigation_responsible: textOrNull(formData, "eudr_mitigation_responsible"),
+    eudr_mitigation_responsible,
   };
 
   const { error } = await service.from("lots").update(patch).eq("id", lotId);

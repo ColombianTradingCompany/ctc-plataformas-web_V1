@@ -271,6 +271,39 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] Certificación EUDR del Lote + modal BCP de lotes + rework de mitigación
+- NUEVO: Certificación EUDR a nivel de LOTE (LotEudrCertDoc.tsx, mismo lenguaje
+  visual del expediente de finca: marca de agua CTCx, sello, imprimible). Ruta
+  del productor /kaffetal-regal/certificacion-lote/[id], protegida: dueño del
+  lote + estado "EUDR Ready" (finca(s) Apta(s) + nivel de riesgo determinado
+  insignificante). Contenido: identidad del lote (variedad/proceso/altitud +
+  finca(s) de origen con código), cadena de custodia con método de separación,
+  evaluación de riesgo Art. 10 (país/clasificación, complejidad, riesgo de
+  producto + factores, esquemas, indicios, documentos, nivel determinado),
+  mitigación Art. 11 y registro de comunicación. Botones de acceso: en la
+  Ficha (vista final) y en la tarjeta de Mis Lotes (solo cuando el lote está
+  EUDR Ready). Verificado en vivo con datos de prueba QA (luego revertidos).
+- BCP Lotes: la "Asistencia EUDR (BCP)" y el registro de comunicación dejan de
+  ser <details> plegados en la tarjeta del kanban; la tarjeta ahora es una fila
+  compacta (reutiliza FincaModalRow) que abre un POPUP con toda la información:
+  FT · Identidad y Origen y FT2 · Certificados y Análisis (leídos del datasheet
+  + columnas ficha_*), el formulario EUDR y la comunicación, con una barra de
+  anclas para navegar entre secciones.
+- "Acciones de mitigación" pasan al lado del PROVEEDOR: el productor las
+  declara en la Ficha A5 (con nota de que CTC evalúa la efectividad); BCP las
+  ve en solo-lectura. El pane A5 pierde los campos de efectividad y
+  responsable (determinaciones de CTC).
+- "Nivel de riesgo determinado": BCP ahora lo SELECCIONA (Pendiente /
+  Insignificante / No insignificante) asistido por la sugerencia derivada de
+  los criterios (deriveLotRiskLevel) mostrada bajo el select — ya no se
+  auto-escribe. El guardado del productor (buildUpdate) dejó de enviar
+  eudr_risk_level / eudr_mitigation_effective / eudr_mitigation_responsible,
+  y guard_lot_protected_columns ahora también los protege a nivel BD.
+- "Responsable y fecha" -> solo "Responsable": BCP escribe el nombre y la
+  fecha se estampa server-side al guardar (se conserva la estampa original si
+  el nombre no cambió).
+(commit: pending)
+
 ## [2026-07-13] Auditoría profunda: guardado BCP, candado del productor, flujo de aprobación
 Reporte del usuario: el panel de revisión de Fincas en BCP "no guarda de
 verdad", en particular los adjuntos; y dudas de si la Respuesta de Productor

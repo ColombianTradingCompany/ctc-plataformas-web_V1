@@ -289,23 +289,10 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
               onChange={(e) => onChange({ eudr_mitigation_actions: e.target.value })}
               placeholder="Geolocalización adicional, auditoría independiente, cambio de proveedor, verificación en campo…"
             />
-          </div>
-          <div className={`${styles.ff} ${styles.fw}`} style={{ marginTop: 10 }}>
-            <label>¿La mitigación reduce el riesgo a insignificante?</label>
-            <EudrYesNo
-              value={data.eudr_mitigation_effective}
-              onChange={(v) => onChange({ eudr_mitigation_effective: v })}
-              siLabel="Sí, ahora es insignificante"
-              noLabel="No"
-            />
-          </div>
-          <div className={`${styles.ff} ${styles.fw}`} style={{ marginTop: 10 }}>
-            <label>Responsable y fecha</label>
-            <input
-              value={data.eudr_mitigation_responsible}
-              onChange={(e) => onChange({ eudr_mitigation_responsible: e.target.value })}
-              placeholder="Nombre · cargo · fecha"
-            />
+            <p className={styles.fexample} style={{ marginTop: 6 }}>
+              Describa aquí lo que usted hizo para mitigar el riesgo. CTC evaluará si la mitigación reduce el riesgo a
+              insignificante y registrará al responsable de esa determinación.
+            </p>
           </div>
         </div>
       )}

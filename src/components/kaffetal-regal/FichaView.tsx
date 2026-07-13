@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
-import { fincaEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk, deriveLotRiskLevel } from "@/lib/eudr";
+import { fincaEudrStatus, lotEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
@@ -55,7 +55,10 @@ export type FichaSaveUpdate = {
     ficha_puntaje_estimado: number | null;
   };
   // Real `lots` columns, not just the datasheet jsonb -- so BCP's review pages
-  // can read/filter/edit them directly. See src/lib/eudr.ts.
+  // can read/filter/edit them directly. See src/lib/eudr.ts. Deliberately
+  // EXCLUDES eudr_risk_level / eudr_mitigation_effective /
+  // eudr_mitigation_responsible: those are CTC's determinations (updateLotEudr)
+  // and the producer's save must never touch them.
   eudr: {
     eudr_custody_stages: string[];
     eudr_custody_method: string | null;
@@ -68,10 +71,7 @@ export type FichaSaveUpdate = {
     eudr_illegality_indicators: boolean | null;
     eudr_docs_available: boolean | null;
     eudr_cert_scheme: string | null;
-    eudr_risk_level: string | null;
     eudr_mitigation_actions: string | null;
-    eudr_mitigation_effective: boolean | null;
-    eudr_mitigation_responsible: string | null;
   };
 };
 
@@ -199,6 +199,8 @@ export function FichaView({
   // finished its own due diligence (fincaEudrStatus "apta") -- see PaneA5Eudr
   // for the same resolution logic applied to the live status badge.
   const allFincasApta = sourceFincas.length > 0 && sourceFincas.every((f) => fincaEudrStatus(f).code === "apta");
+  // "EUDR Ready" gates the downloadable lot certificate (vista final button).
+  const lotIsEudrReady = lotEudrStatus(data, sourceFincas).code === "eudr_ready";
 
   // The four sequential intake gates. Each corresponds to one `intake_step`
   // value (0->1, 1->2, 2->3, 3->4) and its own "Completar X y continuar"
@@ -247,20 +249,12 @@ export function FichaView({
         eudr_illegality_indicators: source.eudr_illegality_indicators,
         eudr_docs_available: source.eudr_docs_available,
         eudr_cert_scheme: deriveCertSchemes(source).join(", ") || null,
-        // Re-derived from the factors on every save (same formula BCP uses in
-        // updateLotEudr) -- echoing the page-load-time copy back used to
-        // revert BCP's determination whenever the producer saved with a
-        // stale tab open.
-        eudr_risk_level:
-          deriveLotRiskLevel({
-            eudr_country_risk: countryRiskFor(source.eudr_country),
-            eudr_illegality_indicators: source.eudr_illegality_indicators,
-            eudr_docs_available: source.eudr_docs_available,
-            eudr_mitigation_effective: source.eudr_mitigation_effective,
-          }) || null,
+        // El productor aporta las Acciones de mitigación; el "Nivel de riesgo
+        // determinado", la efectividad de la mitigación y el responsable son
+        // determinaciones de CTC/BCP (updateLotEudr) y NUNCA se escriben desde
+        // aquí -- el guard de BD (guard_lot_protected_columns) además lo
+        // impide para cualquier escritura del productor.
         eudr_mitigation_actions: source.eudr_mitigation_actions || null,
-        eudr_mitigation_effective: source.eudr_mitigation_effective,
-        eudr_mitigation_responsible: source.eudr_mitigation_responsible || null,
       },
     };
   }
@@ -465,7 +459,21 @@ export function FichaView({
               {active === "b2" && <PaneB2 {...paneProps} sca={sca} />}
               {active === "b3" && <PaneB3 {...paneProps} factor={factor} mesh={mesh} />}
               {active === "b4" && <PaneB4 {...paneProps} />}
-              {active === "ficha" && <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} />}
+              {active === "ficha" && (
+                <>
+                  <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} />
+                  {lotIsEudrReady && (
+                    <div style={{ marginTop: 14 }}>
+                      <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${lot.id}`} target="_blank" rel="noopener noreferrer">
+                        Certificación EUDR del lote ↗
+                      </a>
+                      <p className={styles.fexample} style={{ marginTop: 6 }}>
+                        Documento del lote de la Certificación Voluntaria EUDR — se complementa con el Expediente EUDR de la finca.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </fieldset>
           </div>
         </div>

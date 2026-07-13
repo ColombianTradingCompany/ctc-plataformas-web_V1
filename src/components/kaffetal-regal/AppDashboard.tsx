@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
-import { mapPreviewUrl, fincaEudrStatus } from "@/lib/eudr";
+import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus } from "@/lib/eudr";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
@@ -335,6 +335,12 @@ export function AppDashboard({
               {lots.map((l) => {
                 const col = l.grade ? GRADES[l.grade] : "var(--accent)";
                 const state = STAGES[l.stage];
+                const sourceFinca = fincas.find((f) => f.id === l.fincaId);
+                const lotEudrReady =
+                  lotEudrStatus(
+                    { eudr_risk_level: l.eudrRiskLevel, eudr_mitigation_effective: l.eudrMitigationEffective },
+                    sourceFinca ? [sourceFinca] : []
+                  ).code === "eudr_ready";
                 return (
                   <div className={styles.lotrow} style={{ ["--lc" as string]: col } as React.CSSProperties} key={l.id}>
                     <div>
@@ -378,6 +384,11 @@ export function AppDashboard({
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "stretch" }}>
                       <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
+                      {lotEudrReady && (
+                        <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${l.id}`} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center" }}>
+                          Certificación EUDR ↗
+                        </a>
+                      )}
                       {/* Deletable any time before MUE passes the lot into the Arena
                           backlog (stage < 4 = fila_arena), unless BCP already has the
                           physical sample in hand (bcp_manual_entry). */}

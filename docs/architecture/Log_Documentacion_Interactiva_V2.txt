@@ -271,6 +271,24 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] Solo se aprueban fincas con EUDR completa ("Apta")
+Bug reportado: la finca La Ceiba (CTC-F-7AB150B6) aparecía en la pestaña
+"Aprobadas" de BCP pero mostraba el distintivo EUDR "Pendiente". Diagnóstico:
+no era un problema de clasificación -- la finca estaba realmente aprobada
+(status=approved), pero su debida diligencia EUDR estaba incompleta (0 ha, sin
+declaración de no deforestación, sin tenencia), así que fincaEudrStatus daba
+"Pendiente". El distintivo naranja es el estado EUDR, no el estado de
+aprobación, y la palabra chocaba con la pestaña "Pendientes".
+Causa raíz: el botón "Aprobar" solo se bloqueaba para fincas "No apta" o sin
+polígono, no para las "Pendiente" (incompletas). Arreglo: aprobar exige ahora
+estado EUDR "Apta" tanto en la UI (blockedByEudr = status !== "apta" || ...)
+como en el server action approveFinca (relee los campos EUDR, arma
+FincaEudrFields y rechaza si fincaEudrStatus !== "apta"). Se corrigió el
+registro existente: La Ceiba volvió a pending_review (eudr_cert_shared=false),
+así vuelve a la pestaña "Pendientes" como "En preparación". No tenía lotes
+asociados, así que el cambio no arrastró nada.
+(commit: pending)
+
 ## [2026-07-13] Botón "Atrás" del teléfono navega dentro de la app
 En Kaffetal Regal las pantallas (ficha) y los modales (finca, info, login) se
 cambiaban solo con estado de React, sin tocar el historial del navegador, así

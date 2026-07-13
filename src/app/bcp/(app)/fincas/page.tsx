@@ -168,7 +168,11 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
           const gaps = missingChecks(eudrFields);
           const ready = gaps.length === 0;
           const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
-          const blockedByEudr = status.code === "no_apta" || blockedByPolygon;
+          // Solo se aprueba una finca EUDR "Apta" (completa). Antes solo se
+          // bloqueaba "No apta"/sin polígono, así que una finca "Pendiente"
+          // (incompleta) podía aprobarse y quedaba aprobada con distintivo
+          // EUDR "Pendiente" -- el caso de La Ceiba.
+          const blockedByEudr = status.code !== "apta" || blockedByPolygon;
 
           async function reject(formData: FormData) {
             "use server";

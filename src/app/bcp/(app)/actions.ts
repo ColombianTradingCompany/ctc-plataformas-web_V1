@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { deriveLotRiskLevel, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
+import { deriveLotRiskLevel, countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
 
@@ -56,13 +56,35 @@ export async function approveFinca(fincaId: string) {
 
   const { data: finca } = await service
     .from("fincas")
-    .select("requires_eudr_polygon, eudr_polygon_geojson, status")
+    .select(
+      "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, requires_eudr_polygon, eudr_polygon_geojson, status"
+    )
     .eq("id", fincaId)
     .single();
 
   if (!finca) throw new Error("Finca no encontrada.");
   if (finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length) {
     throw new Error("Esta finca supera 4 ha y necesita el polígono EUDR antes de poder aprobarse.");
+  }
+  // Solo se aprueban fincas cuya debida diligencia EUDR está completa ("Apta").
+  // Aprobar una finca incompleta producía el estado contradictorio de una finca
+  // "aprobada" que sigue mostrando el distintivo EUDR "Pendiente"
+  // (fincaEudrStatus) -- exactamente el bug reportado con La Ceiba.
+  const eudrFields: FincaEudrFields = {
+    name: finca.name,
+    ha: finca.hectares != null ? String(finca.hectares) : "—",
+    lat: finca.eudr_lat != null ? String(finca.eudr_lat) : "",
+    lng: finca.eudr_lng != null ? String(finca.eudr_lng) : "",
+    vereda: finca.vereda || "—",
+    mun: finca.municipio || "—",
+    depto: finca.departamento || "—",
+    eudrDeforestationFree: finca.eudr_deforestation_free,
+    eudrLegalProduction: finca.eudr_legal_production,
+    eudrLegalAreas: finca.eudr_legal_areas || [],
+    eudrTenure: (finca.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
+  };
+  if (fincaEudrStatus(eudrFields).code !== "apta") {
+    throw new Error("La debida diligencia EUDR de esta finca todavía está incompleta; complétela antes de aprobar.");
   }
 
   await service.from("fincas").update({ status: "approved" }).eq("id", fincaId);

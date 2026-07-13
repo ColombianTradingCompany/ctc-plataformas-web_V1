@@ -73,6 +73,7 @@ export function FincaModal({
   finca,
   gi,
   onSave,
+  onRequestHelp,
   onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
@@ -82,6 +83,7 @@ export function FincaModal({
   finca: Finca | null; // null = creating new
   gi: GeneralInfo;
   onSave: (f: Finca) => Promise<boolean>;
+  onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
   onUploadPhoto: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadLegalDoc: (file: File) => void;
@@ -97,6 +99,7 @@ export function FincaModal({
           finca={finca}
           gi={gi}
           onSave={onSave}
+          onRequestHelp={onRequestHelp}
           onUploadPhoto={onUploadPhoto}
           onUploadVideo={onUploadVideo}
           onUploadLegalDoc={onUploadLegalDoc}
@@ -110,6 +113,7 @@ function FincaModalBody({
   finca,
   gi,
   onSave,
+  onRequestHelp,
   onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
@@ -117,6 +121,7 @@ function FincaModalBody({
   finca: Finca | null;
   gi: GeneralInfo;
   onSave: (f: Finca) => Promise<boolean>;
+  onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
   onUploadPhoto: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadLegalDoc: (file: File) => void;
@@ -138,6 +143,21 @@ function FincaModalBody({
   const [saving, setSaving] = useState(false);
   // Centered "Datos de Finca Actualizados" confirmation that fades on its own.
   const [flash, setFlash] = useState(false);
+  // "Ayuda" help-request composer state.
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpText, setHelpText] = useState("");
+  const [helpSending, setHelpSending] = useState(false);
+
+  async function sendHelp() {
+    if (!finca || !helpText.trim() || helpSending) return;
+    setHelpSending(true);
+    const ok = await onRequestHelp(finca, helpText);
+    setHelpSending(false);
+    if (ok) {
+      setHelpText("");
+      setHelpOpen(false);
+    }
+  }
   const [eudr, setEudr] = useState<EudrDraft>(
     finca
       ? {
@@ -443,6 +463,32 @@ function FincaModalBody({
         <span className={styles.fabIcon} aria-hidden>💾</span>
         <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
       </button>
+
+      {/* Floating "Ayuda": sends a help request to CTC (only for a saved finca). */}
+      {finca && (
+        <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
+          <span className={styles.fabIcon} aria-hidden>💬</span>
+          <span className={styles.fabLabel}>Ayuda</span>
+        </button>
+      )}
+      {finca && helpOpen && (
+        <div className={styles.helpBox}>
+          <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta finca?</p>
+          <textarea
+            value={helpText}
+            onChange={(e) => setHelpText(e.target.value)}
+            rows={3}
+            placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
+            autoFocus
+          />
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
+              {helpSending ? "Enviando…" : "Enviar a CTC"}
+            </button>
+            <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
 
       {flash && (
         <div className={styles.flash} role="status" aria-live="polite">

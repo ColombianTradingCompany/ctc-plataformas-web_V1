@@ -147,11 +147,23 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
       </div>
 
       {!fincaRows.length && <p className={styles.empty}>{emptyLabel[activeStatus]}</p>}
+      {activeStatus === "pending_review" && fincaRows.length > 0 && (
+        <p className={styles.subtitle} style={{ marginTop: -8 }}>
+          Las fincas <b>listas para revisión</b> (EUDR completa) aparecen primero; las que están <b>en preparación</b> todavía
+          no requieren su decisión.
+        </p>
+      )}
       <div className={styles.list}>
-        {fincaRows.map((finca) => {
+        {/* For the pending tab, surface complete-and-ready fincas first: an
+            incomplete just-registered finca is not an active review item. */}
+        {(activeStatus === "pending_review"
+          ? [...fincaRows].sort((a, b) => missingChecks(toEudrFields(a)).length - missingChecks(toEudrFields(b)).length)
+          : fincaRows
+        ).map((finca) => {
           const eudrFields = toEudrFields(finca);
           const status = fincaEudrStatus(eudrFields);
           const gaps = missingChecks(eudrFields);
+          const ready = gaps.length === 0;
           const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
           const blockedByEudr = status.code === "no_apta" || blockedByPolygon;
 
@@ -178,6 +190,11 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                 <EudrStatusBadge status={status} />
                 {finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length && (
                   <span className={styles.badgeWarn}>Falta polígono</span>
+                )}
+                {activeStatus === "pending_review" && (
+                  <span className={ready ? styles.badgeGood : styles.badge}>
+                    {ready ? "Lista para revisión" : "En preparación"}
+                  </span>
                 )}
               </span>
               <span className={styles.meta}>

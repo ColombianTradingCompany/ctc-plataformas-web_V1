@@ -640,6 +640,47 @@ function Experience() {
     );
   }
 
+  // "Ayuda" from a finca: the producer opens a help request that lands in BCP's
+  // Registro de comunicación for that finca (author_role='producer'), and shows
+  // up in their own "Retroalimentación y ayuda" feed too.
+  async function requestFincaHelp(finca: Finca, text: string): Promise<boolean> {
+    if (!userId) return false;
+    const body = text.trim();
+    if (!body) return false;
+    const { data, error } = await supabase
+      .from("producer_comm_log")
+      .insert({
+        producer_id: userId,
+        finca_id: finca.id,
+        author_role: "producer",
+        context_label: `Finca ${finca.name}`,
+        note: body,
+        created_by: userId,
+      })
+      .select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id")
+      .single();
+    if (error || !data) {
+      showToast("No se pudo enviar su solicitud de ayuda.");
+      return false;
+    }
+    setFeedback((prev) => [
+      {
+        id: data.id,
+        contextLabel: data.context_label,
+        fincaId: data.finca_id,
+        lotId: data.lot_id,
+        note: data.note,
+        createdAt: data.created_at,
+        authorRole: data.author_role as "bcp" | "producer",
+        parentId: data.parent_id,
+        acknowledgedAt: null,
+      },
+      ...prev,
+    ]);
+    showToast("Solicitud de ayuda enviada a CTC ✓");
+    return true;
+  }
+
   // For a finca CTC has already accepted (or one with lots already in the Arena
   // pipeline) the producer can't self-delete -- changing or removing it has to
   // go through CTC. This opens a prefilled email (same channel as the CTC Home
@@ -1018,6 +1059,7 @@ function Experience() {
         finca={editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null}
         gi={gi}
         onSave={saveFinca}
+        onRequestHelp={requestFincaHelp}
         onUploadPhoto={(file) => {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
           if (editing) uploadFincaPhoto(editing.id, file);

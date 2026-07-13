@@ -19,6 +19,15 @@
 .fabLabel{max-width:0;opacity:0;overflow:hidden;font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:600;transition:max-width .22s ease,opacity .18s ease}
 .fab:hover .fabLabel,.fab:focus-visible .fabLabel{max-width:220px;opacity:1}
 
+/* Secondary "Ayuda" FAB, sits just above the save FAB */
+.fabHelp{position:fixed;right:24px;bottom:92px;z-index:60;display:inline-flex;align-items:center;height:52px;width:52px;padding:0;border:none;border-radius:999px;background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
+.fabHelp:hover,.fabHelp:focus-visible{width:auto;padding:0 22px 0 14px}
+.fabHelp .fabIcon{width:52px}
+.fabHelp .fabLabel{max-width:0;opacity:0;overflow:hidden;font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:600;transition:max-width .22s ease,opacity .18s ease}
+.fabHelp:hover .fabLabel,.fabHelp:focus-visible .fabLabel{max-width:160px;opacity:1}
+.helpBox{position:fixed;right:24px;bottom:150px;z-index:61;width:min(340px,86vw);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.28)}
+.helpBox textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--paper);resize:vertical}
+
 /* Centered save confirmation that fades in and out on its own. */
 .flash{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;pointer-events:none;animation:flashFade 1.9s ease forwards}
 .flash span{background:var(--primary);color:#fff;font-family:var(--font-fraunces),serif;font-weight:700;font-size:18px;padding:16px 28px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}

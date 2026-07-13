@@ -22,6 +22,10 @@
 .field{margin-bottom:14px}
 .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;color:var(--ink)}
 .field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;background:var(--paper);font-family:inherit}
+/* Checkboxes must NOT inherit the full-width text-input styling above -- that
+   was blowing the EUDR evidence/legal/sustainability checkboxes into huge boxes. */
+.field input[type="checkbox"]{width:16px;height:16px;min-width:16px;padding:0;flex:0 0 auto;accent-color:var(--primary);cursor:pointer}
+.field label input[type="checkbox"]{margin:0}
 .formGrid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 
 .badge{font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--ink)}

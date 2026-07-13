@@ -168,17 +168,30 @@ export default async function FincaDossierPage({ params }: { params: Promise<{ i
           <PrintButton />
         </div>
 
-        <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>
-          Colombian Trading Company · CTCx
-        </p>
-        <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Expediente EUDR · Debida Diligencia</h1>
-        <p style={{ color: "#555", margin: "0 0 4px" }}>
-          Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}
-        </p>
-        <p style={{ margin: 0, fontWeight: 700 }}>
-          {finca.name} · {fincaCode(finca.id)}
-          {finca.status === "approved" ? " · APROBADA" : ` · ${finca.status}`}
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+          <div>
+            <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>
+              Colombian Trading Company · CTCx
+            </p>
+            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Expediente EUDR · Debida Diligencia</h1>
+            <p style={{ color: "#555", margin: "0 0 4px" }}>
+              Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}
+            </p>
+            <p style={{ margin: 0, fontWeight: 700 }}>
+              {finca.name} · {fincaCode(finca.id)}
+              {finca.status === "approved" ? " · APROBADA" : ` · ${finca.status}`}
+            </p>
+          </div>
+          {/* Voluntary EUDR seal */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- local public asset */}
+          <img src="/docs/eudr/sello-eudr-voluntario.png" alt="Sello EUDR Voluntario CTC" style={{ width: 110, height: "auto", flex: "0 0 auto" }} />
+        </div>
+
+        <div style={{ background: "#F3EFFB", border: "1px solid #d9ccf2", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12.5, color: "#3a2a5e" }}>
+          <b>Uno de dos documentos de la Certificación Voluntaria EUDR de un lote de café.</b> Este expediente acredita la
+          debida diligencia a nivel de <b>finca</b> (origen y trazabilidad). El segundo documento es la <b>Ficha Técnica del
+          lote</b>, que aporta la información productiva y de calidad necesaria para completar la certificación voluntaria.
+        </div>
 
         <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Identidad del predio y proveedor</h2>
         <table style={{ borderCollapse: "collapse", fontSize: 13, width: "100%" }}>

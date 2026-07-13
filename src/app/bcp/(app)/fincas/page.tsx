@@ -281,6 +281,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
 
               <FincaEudrEditor
                 fincaName={finca.name}
+                producerId={finca.producer_id}
                 values={finca}
                 legalDocUrl={finca.eudr_legal_docs_asset_id ? legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) : undefined}
                 fileUrls={Object.fromEntries(

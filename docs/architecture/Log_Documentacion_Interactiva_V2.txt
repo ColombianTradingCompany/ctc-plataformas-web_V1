@@ -271,6 +271,66 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] Auditoría profunda: guardado BCP, candado del productor, flujo de aprobación
+Reporte del usuario: el panel de revisión de Fincas en BCP "no guarda de
+verdad", en particular los adjuntos; y dudas de si la Respuesta de Productor
+quedó protegida como se decidió. Hallazgos y arreglos:
+
+1) ADJUNTOS QUE NO PERSISTÍAN (causa triple):
+   - Los archivos viajaban DENTRO del server action updateFincaEudr. Next
+     limita el body de un action a 1 MB por defecto y Vercel corta cualquier
+     request en ~4.5 MB: adjuntos de hasta 5 MB "guardaban" en local y nunca
+     llegaban en producción.
+   - collectKeyedFiles tragaba en silencio los errores de subida (guardado
+     "exitoso" sin archivo).
+   - La clave de Storage usaba el nombre de archivo crudo; nombres con
+     espacios/acentos ("Cédula catastral (2024).pdf") fallaban la validación.
+   Arreglo: FincaEudrEditor ahora sube los archivos DIRECTO del navegador a
+   Supabase Storage (igual que todos los uploads del productor) con una nueva
+   policy "bcp admin insert media" en kaffetal-media; por el action solo viajan
+   assetId + nombre ({group}_asset_{key}/{group}_name_{key});
+   collectKeyedAttachments los registra (ya sin subir nada server-side); un
+   error de subida ahora aborta con mensaje visible; uploadKaffetalMedia
+   sanea la clave de Storage (storageSafeName) y acepta uploadedBy distinto
+   del dueño de la carpeta (admin sube a la carpeta del productor).
+
+2) CANDADO DE LA RESPUESTA DE PRODUCTOR (no existía a nivel BD):
+   - fincas no tenía NINGÚN guard trigger y su policy de UPDATE no restringe
+     columnas: un productor podía (vía API directa) auto-aprobarse
+     (status='approved'), auto-compartirse la certificación
+     (eudr_cert_shared=true) o tocar las columnas de evaluación de BCP.
+     Nuevo guard_finca_protected_columns: bloquea status, eudr_cert_shared,
+     producer_id y todo el grupo de evidencia/sostenibilidad para escrituras
+     que no sean service-role; y una vez aprobada la finca, congela las
+     declaraciones EUDR del productor (cambios via "Solicitar revisión").
+     Verificado con SQL simulando la sesión del productor: auto-aprobación
+     BLOQUEADA, auto-compartir BLOQUEADO, edición legítima PASA.
+   - Clobber por caché vieja: saveFinca escribía TODAS las columnas eudr_* con
+     los valores CTC cacheados al cargar la página — un guardado del productor
+     con la pestaña abierta revertía lo que BCP hubiera evaluado entre tanto
+     (muy probablemente parte del "BCP no guarda"). Ahora el payload es
+     quirúrgico: solo incluye los campos que el productor cambió en ese
+     guardado (hectares incluido). Verificado en vivo: sentinel de BCP puesto
+     tras cargar la pestaña del productor sobrevive al guardado del productor.
+   - Lote: buildUpdate devolvía el eudr_risk_level cacheado (determinación de
+     BCP) — mismo clobber. Ahora se re-deriva con deriveLotRiskLevel en cada
+     guardado (misma fórmula que updateLotEudr).
+   - Nuevo guard_lot_protected_columns (complementa el guard existente
+     guard_lots_producer_columns): sample_2kg_confirmed_at, source,
+     producer_id y transiciones de stage fuera de borrador->ficha_completa.
+     Verificado: grade auto-asignado BLOQUEADO (por el guard preexistente).
+
+3) FLUJO DE APROBACIÓN:
+   - rejectFinca ahora también pone eudr_cert_shared=false: revocar retiraba
+     la aprobación pero dejaba la certificación "compartida", y una
+     re-aprobación la habría re-publicado sin decisión explícita.
+   - Observación SIN cambio (decisión de producto pendiente): una finca
+     'rejected' no es editable por el productor (la policy de UPDATE solo
+     permite pending_review/approved) — hoy solo BCP puede reincorporarla.
+   - HANDOFF.md: tabla de guard triggers actualizada (fincas + 2º guard de
+     lots).
+(commit: pending)
+
 ## [2026-07-13] BCP puede editar el "Área cultivada (ha)" de la finca
 El formulario "Información EUDR (asistencia BCP)" no tenía campo para el área
 cultivada, así que BCP no podía corregir el "Falta: área cultivada" ni llevar la

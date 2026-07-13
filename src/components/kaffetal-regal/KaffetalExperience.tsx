@@ -588,40 +588,38 @@ function Experience() {
         }
       : null;
     const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-    // CTC value = producer's new answer if changed (or new finca), else keep CTC's current.
-    const eff = {
-      deforestationFree: !prev || !same(f.eudrDeforestationFree, prev.deforestationFree) ? f.eudrDeforestationFree : editing!.eudrDeforestationFree,
-      legalProduction: !prev || !same(f.eudrLegalProduction, prev.legalProduction) ? f.eudrLegalProduction : editing!.eudrLegalProduction,
-      tenure: !prev || !same(f.eudrTenure, prev.tenure) ? f.eudrTenure : editing!.eudrTenure,
-      plantingDate: !prev || !same(f.eudrPlantingDate, prev.plantingDate) ? f.eudrPlantingDate : editing!.eudrPlantingDate,
-      productionSystem: !prev || !same(f.eudrProductionSystem, prev.productionSystem) ? f.eudrProductionSystem : editing!.eudrProductionSystem,
-      lat: !prev || !same(f.lat, prev.lat) ? f.lat : editing!.lat,
-      lng: !prev || !same(f.lng, prev.lng) ? f.lng : editing!.lng,
-      polygon: !prev || !same(f.eudrPolygon, prev.polygon) ? f.eudrPolygon : editing!.eudrPolygon,
+    // A CTC-evaluated eudr_* column is only written when the PRODUCER changed
+    // that answer in this save (or the finca is new). Unchanged fields are
+    // OMITTED from the update entirely -- writing back the page-load-time copy
+    // used to silently revert whatever BCP had evaluated in the meantime
+    // (open producer tab + BCP edit + producer save = BCP's work gone).
+    const changed = {
+      deforestationFree: !prev || !same(f.eudrDeforestationFree, prev.deforestationFree),
+      legalProduction: !prev || !same(f.eudrLegalProduction, prev.legalProduction),
+      tenure: !prev || !same(f.eudrTenure, prev.tenure),
+      plantingDate: !prev || !same(f.eudrPlantingDate, prev.plantingDate),
+      productionSystem: !prev || !same(f.eudrProductionSystem, prev.productionSystem),
+      lat: !prev || !same(f.lat, prev.lat),
+      lng: !prev || !same(f.lng, prev.lng),
+      polygon: !prev || !same(f.eudrPolygon, prev.polygon),
+      // hectares isn't part of the answers snapshot; compare against the
+      // loaded row so BCP's corrections survive a producer save too.
+      hectares: !editing || f.ha !== editing.ha,
     };
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       producer_id: userId,
       name: f.name,
       vereda: f.vereda === "—" ? null : f.vereda,
       municipio: f.mun === "—" ? null : f.mun,
       departamento: f.depto === "—" ? null : f.depto,
       altitude_m: f.alt !== "—" && f.alt.trim() ? Number(f.alt) : null,
-      hectares,
       history_text: f.hist === "—" ? null : f.hist,
       characteristics_text: f.carac === "—" ? null : f.carac,
       // requires_eudr_polygon is NOT sent here -- it's `generated always as
       // (hectares > 4) stored` in Postgres, so Postgres derives it from
       // `hectares` automatically. Sending it explicitly makes the whole
       // UPDATE fail (Postgres rejects writes to generated columns outright).
-      eudr_lat: eff.lat.trim() ? Number(eff.lat.replace(",", ".")) : null,
-      eudr_lng: eff.lng.trim() ? Number(eff.lng.replace(",", ".")) : null,
-      eudr_polygon_geojson: eff.polygon,
-      eudr_planting_date: eff.plantingDate || null,
-      eudr_production_system: eff.productionSystem || null,
-      eudr_deforestation_free: eff.deforestationFree,
-      eudr_legal_production: eff.legalProduction,
-      eudr_tenure: eff.tenure || null,
       eudr_local_infra: f.eudrLocalInfra ?? [],
       eudr_producer_answers: producerAnswers,
       // eudr_evidence_types/eudr_legal_areas/eudr_sustainability_tags/notes are
@@ -629,11 +627,22 @@ function Experience() {
       // through uploadFincaLegalDoc -- none of those are sent here, same as
       // video_asset_id never being sent through this general save.
     };
+    if (changed.hectares) payload.hectares = hectares;
+    if (changed.lat) payload.eudr_lat = f.lat.trim() ? Number(f.lat.replace(",", ".")) : null;
+    if (changed.lng) payload.eudr_lng = f.lng.trim() ? Number(f.lng.replace(",", ".")) : null;
+    if (changed.polygon) payload.eudr_polygon_geojson = f.eudrPolygon;
+    if (changed.plantingDate) payload.eudr_planting_date = f.eudrPlantingDate || null;
+    if (changed.productionSystem) payload.eudr_production_system = f.eudrProductionSystem || null;
+    if (changed.deforestationFree) payload.eudr_deforestation_free = f.eudrDeforestationFree;
+    if (changed.legalProduction) payload.eudr_legal_production = f.eudrLegalProduction;
+    if (changed.tenure) payload.eudr_tenure = f.eudrTenure || null;
 
     if (editing) {
       const { data, error } = await supabase.from("fincas").update(payload).eq("id", editing.id).select("*").single();
       if (error || !data) {
-        showToast("No se pudo actualizar la finca.");
+        // Surface the DB guard's own message when there is one -- e.g. the
+        // approved-finca lock explains to request a data revision instead.
+        showToast(error?.message?.includes("CTC") ? error.message : "No se pudo actualizar la finca.");
         return false;
       }
       setFincas((prev) =>

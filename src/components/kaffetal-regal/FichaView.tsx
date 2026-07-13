@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
-import { fincaEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
+import { fincaEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk, deriveLotRiskLevel } from "@/lib/eudr";
 import { ctcLotReference, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
@@ -247,7 +247,17 @@ export function FichaView({
         eudr_illegality_indicators: source.eudr_illegality_indicators,
         eudr_docs_available: source.eudr_docs_available,
         eudr_cert_scheme: deriveCertSchemes(source).join(", ") || null,
-        eudr_risk_level: source.eudr_risk_level || null,
+        // Re-derived from the factors on every save (same formula BCP uses in
+        // updateLotEudr) -- echoing the page-load-time copy back used to
+        // revert BCP's determination whenever the producer saved with a
+        // stale tab open.
+        eudr_risk_level:
+          deriveLotRiskLevel({
+            eudr_country_risk: countryRiskFor(source.eudr_country),
+            eudr_illegality_indicators: source.eudr_illegality_indicators,
+            eudr_docs_available: source.eudr_docs_available,
+            eudr_mitigation_effective: source.eudr_mitigation_effective,
+          }) || null,
         eudr_mitigation_actions: source.eudr_mitigation_actions || null,
         eudr_mitigation_effective: source.eudr_mitigation_effective,
         eudr_mitigation_responsible: source.eudr_mitigation_responsible || null,

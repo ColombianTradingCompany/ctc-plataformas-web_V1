@@ -89,6 +89,8 @@ Every table a normal user JWT can write to has a guard: RLS restricts *whose* ro
 | `profiles` | `guard_profiles_protected_columns` | change their own `role` or `email` |
 | `buyer_profiles` | `guard_buyer_protected_columns` | self-assign `lifetime_points`/`membership_tier` (the points trigger sets `app.syncing_points` to bypass this for its own writes) |
 | `lots` | `guard_lots_producer_columns` | touch a lot once its `stage` is past `ficha_completa`, change `stage` outside `{borrador, ficha_completa}`, or ever set `grade` |
+| `lots` (2nd guard) | `guard_lot_protected_columns` | change `sample_2kg_confirmed_at`, `source`, `producer_id`, or make any stage transition other than `borrador → ficha_completa` (added 2026-07-13; overlaps the older guard on purpose — both run, effective rule is the intersection) |
+| `fincas` | `guard_finca_protected_columns` | change `status` (no self-approval), `eudr_cert_shared` (no self-release of the certification), `producer_id`, or any of BCP's evaluation columns (`eudr_evidence_*`, `eudr_legal_areas`, `eudr_sustainability_*`); **and once `status = 'approved'`, their own EUDR declarations (deforestation/legal/tenure/planting/system/lat/lng/polygon/hectares/producer_answers) are locked** — changes go through "Solicitar revisión de datos" (added 2026-07-13; keyed off `auth.role()` not in `{service_role, postgres}`) |
 
 If you add a new producer/buyer-writable column to one of these tables, check whether it needs carving out of (or into) its guard function — the AI-advice cache columns deliberately go around this guard via the service-role client rather than punching a hole in it.
 

@@ -1,38 +1,31 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { deriveLotRiskLevel, countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
-import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
 
 // Rebuilds a per-key supporting-file map for an EUDR checkbox group. Keeps only
-// currently-checked keys; for each, uploads a newly-attached file (form field
-// "{group}_file_{key}", max 5 MB enforced client-side + here) or carries the
-// existing entry over. Uploads go to kaffetal-media under the producer's own
-// folder via the service-role client (BCP acts on the producer's behalf).
-async function collectKeyedFiles(
-  service: SupabaseClient,
-  producerId: string,
+// currently-checked keys; for each, records a newly-uploaded attachment or
+// carries the existing entry over. The file itself never travels through this
+// server action: FincaEudrEditor uploads it straight from the browser to
+// Supabase Storage (Next actions cap bodies at 1 MB; Vercel at ~4.5 MB -- raw
+// 5 MB files through here silently never arrived) and submits only
+// "{group}_asset_{key}" / "{group}_name_{key}".
+function collectKeyedAttachments(
   formData: FormData,
   group: "evidence" | "sustainability",
   checkedKeys: string[],
   existing: KeyedFiles
-): Promise<KeyedFiles> {
+): KeyedFiles {
   const out: KeyedFiles = {};
   for (const key of checkedKeys) {
-    const file = formData.get(`${group}_file_${key}`);
-    if (file instanceof File && file.size > 0 && file.size <= 5 * 1024 * 1024) {
-      const result = await uploadKaffetalMedia(service, producerId, `eudr-${group}/${key}`, file);
-      if ("assetId" in result) {
-        out[key] = { assetId: result.assetId, fileName: file.name };
-        continue;
-      }
-    }
-    if (existing[key]) out[key] = existing[key];
+    const assetId = textOrNull(formData, `${group}_asset_${key}`);
+    const fileName = textOrNull(formData, `${group}_name_${key}`);
+    if (assetId && fileName) out[key] = { assetId, fileName };
+    else if (existing[key]) out[key] = existing[key];
   }
   return out;
 }
@@ -256,9 +249,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const evidenceTypes = formData.getAll("eudr_evidence_types").map(String);
   const sustainabilityTags = formData.getAll("eudr_sustainability_tags").map(String);
   // Rebuild the per-key supporting-file maps: keep only currently-checked keys,
-  // upload any newly-attached file, otherwise carry the existing one over.
-  const evidenceFiles = await collectKeyedFiles(service, before.producer_id as string, formData, "evidence", evidenceTypes, (before.eudr_evidence_files as KeyedFiles) ?? {});
-  const sustainabilityFiles = await collectKeyedFiles(service, before.producer_id as string, formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
+  // record any newly-uploaded attachment, otherwise carry the existing one over.
+  const evidenceFiles = collectKeyedAttachments(formData, "evidence", evidenceTypes, (before.eudr_evidence_files as KeyedFiles) ?? {});
+  const sustainabilityFiles = collectKeyedAttachments(formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
 
   const patch = {
     // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
@@ -382,7 +375,9 @@ export async function rejectFinca(fincaId: string, notes: string) {
   const { data: finca } = await service.from("fincas").select("status").eq("id", fincaId).single();
   if (!finca) throw new Error("Finca no encontrada.");
 
-  await service.from("fincas").update({ status: "rejected" }).eq("id", fincaId);
+  // Revoking also withdraws the certification release: if the finca is later
+  // re-approved, sharing must be an explicit decision again, not a leftover.
+  await service.from("fincas").update({ status: "rejected", eudr_cert_shared: false }).eq("id", fincaId);
   await service.from("audit_log").insert({
     entity_type: "finca",
     entity_id: fincaId,

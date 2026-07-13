@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { mapPreviewUrl } from "@/lib/eudr";
+import { createClient } from "@/lib/supabase/client";
+import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
 import { LOCAL_INFRA } from "@/components/kaffetal-regal/data";
 import styles from "../shared.module.css";
 
@@ -122,6 +124,7 @@ export type ProducerAnswers = {
 
 export function FincaEudrEditor({
   fincaName,
+  producerId,
   values,
   legalDocUrl,
   fileUrls,
@@ -129,12 +132,14 @@ export function FincaEudrEditor({
   saveAction,
 }: {
   fincaName: string;
+  producerId: string;
   values: FincaEudrValues;
   legalDocUrl: string | undefined;
   fileUrls: Record<string, string>;
   producerAnswers: ProducerAnswers;
   saveAction: (formData: FormData) => Promise<void>;
 }) {
+  const [supabase] = useState(() => createClient());
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -168,15 +173,41 @@ export function FincaEudrEditor({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    for (const [, v] of fd.entries()) {
-      if (v instanceof File && v.size > 5 * 1024 * 1024) {
+    // The supporting files are uploaded straight from the browser to Supabase
+    // Storage (like every producer-side upload) and only their assetId/name
+    // travel through the server action. Squeezing the raw files through the
+    // action is a dead end: Next caps action bodies at 1 MB by default and
+    // Vercel hard-caps request bodies at ~4.5 MB, so 5 MB attachments
+    // "saved fine" locally and silently never arrived in production.
+    const staged: { field: string; group: string; key: string; file: File }[] = [];
+    for (const [k, v] of fd.entries()) {
+      const m = k.match(/^(evidence|sustainability)_file_(.+)$/);
+      if (!m || !(v instanceof File)) continue;
+      if (v.size > 5 * 1024 * 1024) {
         setSaveError(`El archivo "${v.name}" supera 5 MB. Adjunte uno más liviano.`);
         return;
       }
+      if (v.size > 0) staged.push({ field: k, group: m[1], key: m[2], file: v });
     }
     setSaving(true);
     setSaveError(null);
     try {
+      if (staged.length) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("Sesión BCP expirada; vuelva a iniciar sesión.");
+        for (const s of staged) {
+          const result = await uploadKaffetalMedia(supabase, producerId, `eudr-${s.group}/${s.key}`, s.file, user.id);
+          if ("error" in result) throw new Error(`No se pudo subir "${s.file.name}": ${result.error}`);
+          fd.set(`${s.group}_asset_${s.key}`, result.assetId);
+          fd.set(`${s.group}_name_${s.key}`, s.file.name);
+        }
+      }
+      // Never ship File payloads (even empty ones) through the action.
+      for (const k of [...fd.keys()]) {
+        if (/^(evidence|sustainability)_file_/.test(k)) fd.delete(k);
+      }
       await saveAction(fd);
       setEditing(false);
     } catch (err) {

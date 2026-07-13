@@ -302,7 +302,7 @@ is closed and left as historical record of what went into producing it).
 - "Responsable y fecha" -> solo "Responsable": BCP escribe el nombre y la
   fecha se estampa server-side al guardar (se conserva la estampa original si
   el nombre no cambió).
-(commit: pending)
+(commit: be13f29)
 
 ## [2026-07-13] Auditoría profunda: guardado BCP, candado del productor, flujo de aprobación
 Reporte del usuario: el panel de revisión de Fincas en BCP "no guarda de

@@ -271,6 +271,15 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] BCP puede editar el "Área cultivada (ha)" de la finca
+El formulario "Información EUDR (asistencia BCP)" no tenía campo para el área
+cultivada, así que BCP no podía corregir el "Falta: área cultivada" ni llevar la
+finca a "Apta" (justo el bloqueo del cambio anterior). Se agregó un input
+Área cultivada en café (ha) al FincaEudrEditor (arriba de Latitud) y a su
+resumen de lectura; updateFincaEudr ahora persiste `hectares` (""->null) y lo
+incluye en el registro de auditoría (FINCA_EUDR_FIELD_LABEL + select de before).
+(commit: pending)
+
 ## [2026-07-13] Solo se aprueban fincas con EUDR completa ("Apta")
 Bug reportado: la finca La Ceiba (CTC-F-7AB150B6) aparecía en la pestaña
 "Aprobadas" de BCP pero mostraba el distintivo EUDR "Pendiente". Diagnóstico:

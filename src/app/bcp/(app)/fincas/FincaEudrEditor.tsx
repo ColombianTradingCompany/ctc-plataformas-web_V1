@@ -68,6 +68,7 @@ function ProducerAnswerNote({
 }
 
 export type FincaEudrValues = {
+  hectares: string | number | null;
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
@@ -219,6 +220,7 @@ export function FincaEudrEditor({
                 ? `${values.eudr_lat}, ${values.eudr_lng}`
                 : "no capturada"}
           </div>
+          <div>Área cultivada en café: {values.hectares != null && String(values.hectares).trim() !== "" && Number(values.hectares) > 0 ? `${values.hectares} ha` : "sin definir"}</div>
           <div>Fecha de siembra: {values.eudr_planting_date || "sin definir"}</div>
           <div>Sistema productivo: {values.eudr_production_system ? PRODUCTION_SYSTEM_LABEL[values.eudr_production_system] : "sin definir"}</div>
           <div>Libre de deforestación: {yesNoLabel(values.eudr_deforestation_free)}</div>
@@ -253,6 +255,10 @@ export function FincaEudrEditor({
       {saveError && <p style={{ color: "var(--red)", fontSize: 12.5, marginBottom: 8 }}>{saveError}</p>}
       <form onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
+          <div className={styles.field}>
+            <label>Área cultivada en café (ha)</label>
+            <input name="hectares" type="number" step="0.01" min="0" defaultValue={values.hectares ?? ""} placeholder="Ej. 3.5" />
+          </div>
           <div className={styles.field}>
             <label>Latitud (WGS84)</label>
             <input name="eudr_lat" defaultValue={values.eudr_lat ?? ""} placeholder="4.712345" />

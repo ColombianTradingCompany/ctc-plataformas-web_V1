@@ -217,6 +217,7 @@ function textOrNull(formData: FormData, key: string): string | null {
 // status = 'pending_review'), this uses the service-role client so BCP can still
 // help complete a finca even if it's already been approved.
 const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
+  hectares: "Área cultivada (ha)",
   eudr_lat: "Latitud",
   eudr_lng: "Longitud",
   eudr_planting_date: "Fecha de siembra",
@@ -246,7 +247,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { data: before } = await service
     .from("fincas")
     .select(
-      "name, producer_id, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files"
+      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files"
     )
     .eq("id", fincaId)
     .single();
@@ -260,6 +261,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const sustainabilityFiles = await collectKeyedFiles(service, before.producer_id as string, formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
 
   const patch = {
+    // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
+    // productor -- es requisito para que la finca llegue a "Apta". "" -> null.
+    hectares: formData.get("hectares") !== null && String(formData.get("hectares")).trim() !== "" ? Number(formData.get("hectares")) : null,
     eudr_lat: formData.get("eudr_lat") ? Number(formData.get("eudr_lat")) : null,
     eudr_lng: formData.get("eudr_lng") ? Number(formData.get("eudr_lng")) : null,
     eudr_planting_date: textOrNull(formData, "eudr_planting_date"),

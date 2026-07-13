@@ -278,7 +278,7 @@ finca a "Apta" (justo el bloqueo del cambio anterior). Se agregó un input
 Área cultivada en café (ha) al FincaEudrEditor (arriba de Latitud) y a su
 resumen de lectura; updateFincaEudr ahora persiste `hectares` (""->null) y lo
 incluye en el registro de auditoría (FINCA_EUDR_FIELD_LABEL + select de before).
-(commit: pending)
+(commit: 9c6232f)
 
 ## [2026-07-13] Solo se aprueban fincas con EUDR completa ("Apta")
 Bug reportado: la finca La Ceiba (CTC-F-7AB150B6) aparecía en la pestaña

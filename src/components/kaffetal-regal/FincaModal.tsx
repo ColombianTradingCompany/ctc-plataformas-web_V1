@@ -334,6 +334,19 @@ function FincaModalBody({
           </a>
         </div>
 
+        <div className={styles.grid} style={{ marginTop: 14 }}>
+          <div>
+            <label>
+              Área en café (ha)
+              <FieldInfo text="Superficie sembrada en café de este predio. A partir de 4 ha el EUDR exige delimitar el terreno con un polígono (en el mapa de abajo), no solo un punto." />
+            </label>
+            <input value={ha} onChange={(e) => setHa(e.target.value)} type="number" step="0.1" placeholder="3.5" />
+          </div>
+          <div>
+            <label>Fecha de establecimiento del cultivo</label>
+            <input type="date" value={eudr.eudrPlantingDate} onChange={(e) => patchEudr({ eudrPlantingDate: e.target.value })} />
+          </div>
+        </div>
         <div className={styles.wide} style={{ marginTop: 14, marginBottom: 14 }}>
           <label>{needsPolygon ? "Polígono del predio (> 4 ha)" : "Ubicación del predio"}</label>
           <FincaMapPicker
@@ -344,19 +357,6 @@ function FincaModalBody({
             onChangePoint={(lat, lng) => patchEudr({ lat, lng })}
             onChangePolygon={(polygon) => patchEudr({ eudrPolygon: polygon })}
           />
-        </div>
-        <div className={styles.grid} style={{ marginTop: 14 }}>
-          <div>
-            <label>
-              Área en café (ha)
-              <FieldInfo text="Superficie sembrada en café de este predio. A partir de 4 ha el EUDR exige delimitar el terreno con un polígono (arriba), no solo un punto." />
-            </label>
-            <input value={ha} onChange={(e) => setHa(e.target.value)} type="number" step="0.1" placeholder="3.5" />
-          </div>
-          <div>
-            <label>Fecha de establecimiento del cultivo</label>
-            <input type="date" value={eudr.eudrPlantingDate} onChange={(e) => patchEudr({ eudrPlantingDate: e.target.value })} />
-          </div>
         </div>
 
         <div className={styles.wide} style={{ marginBottom: 14 }}>

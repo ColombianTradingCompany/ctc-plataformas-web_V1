@@ -215,28 +215,6 @@ export function FincaMapPicker({
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-        <input
-          type="text"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              runSearch();
-            }
-          }}
-          placeholder="Buscar dirección, vereda o municipio…"
-          style={{ minWidth: 220, flex: 1 }}
-        />
-        <button type="button" className="btn btn-sm" onClick={runSearch} disabled={searching}>
-          {searching ? "Buscando…" : "🔎 Buscar"}
-        </button>
-        <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>
-          📍 Usar mi ubicación actual
-        </button>
-      </div>
-      {geoError && <p style={{ fontSize: 11.5, color: "var(--red)", marginBottom: 6 }}>{geoError}</p>}
       <GoogleMap
         mapContainerStyle={MAP_STYLE}
         center={initialCenter}
@@ -269,6 +247,28 @@ export function FincaMapPicker({
           />
         )}
       </GoogleMap>
+      <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+        <input
+          type="text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              runSearch();
+            }
+          }}
+          placeholder="Buscar dirección, vereda o municipio…"
+          style={{ minWidth: 220, flex: 1 }}
+        />
+        <button type="button" className="btn btn-sm" onClick={runSearch} disabled={searching}>
+          {searching ? "Buscando…" : "🔎 Buscar"}
+        </button>
+        <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>
+          📍 Usar mi ubicación actual
+        </button>
+      </div>
+      {geoError && <p style={{ fontSize: 11.5, color: "var(--red)", marginTop: 6 }}>{geoError}</p>}
       {!needsPolygon && (
         <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
           Busque su dirección, use su ubicación actual, o haga clic en el mapa / arrastre el pin para ajustar.

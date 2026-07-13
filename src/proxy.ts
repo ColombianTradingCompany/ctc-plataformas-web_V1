@@ -21,5 +21,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images).*)"],
+  // `docs` (public/docs/*, e.g. the EUDR reference PDFs) must be excluded like
+  // `images`: otherwise on a subdomain host the rewrite turns /docs/eudr/x.pdf
+  // into /kaffetal-regal/docs/eudr/x.pdf, which 404s. Static public assets
+  // should always be served from the root, never proxied to a platform path.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images|docs).*)"],
 };

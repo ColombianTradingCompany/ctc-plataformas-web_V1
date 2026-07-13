@@ -141,5 +141,19 @@ is closed and left as historical record of what went into producing it).
   resolves the 5-digit code, shown on each BCP finca card for due diligence.
 - New DICT/node candidates: producer_comm_ack (receipt), DANE lookup, the
   two-way comm thread model (supersedes the one-way commlog concept).
+(commit: 869203b)
+
+## [2026-07-13] Fix subdomain PDF 404 + finca map layout order
+- proxy.ts: added `docs` to the middleware matcher exclusion (next to
+  `images`). On a subdomain host (kaffetal-regal.ctcexport.com) a request to
+  /docs/eudr/x.pdf was being rewritten to /kaffetal-regal/docs/eudr/x.pdf and
+  404ing -- the EUDR reference PDFs were undownloadable in prod (fine on
+  localhost path-based). Static public assets must never be proxied to a
+  platform path. Verified with a simulated subdomain Host header: PDF now 200.
+  Architectural note: this is a general rule -- any new public/ top-level
+  folder linked with an absolute /path needs adding to this exclusion.
+- FincaMapPicker/FincaModal: flipped the EUDR layout so "Área en café (ha)" +
+  "Fecha de establecimiento" sit ABOVE the map and the address search bar
+  ("Buscar" + "Usar mi ubicación actual") sits BELOW the map.
 (commit: pending)
 

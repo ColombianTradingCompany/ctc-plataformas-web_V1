@@ -287,7 +287,7 @@ FincaEudrFields y rechaza si fincaEudrStatus !== "apta"). Se corrigió el
 registro existente: La Ceiba volvió a pending_review (eudr_cert_shared=false),
 así vuelve a la pestaña "Pendientes" como "En preparación". No tenía lotes
 asociados, así que el cambio no arrastró nada.
-(commit: pending)
+(commit: a44954e)
 
 ## [2026-07-13] Botón "Atrás" del teléfono navega dentro de la app
 En Kaffetal Regal las pantallas (ficha) y los modales (finca, info, login) se

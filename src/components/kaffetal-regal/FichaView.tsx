@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr";
 import { ctcLotReference, type Finca, type Lot } from "./data";
-import { EMPTY_FICHA, num, type FichaFormData } from "./ficha/fichaData";
+import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
@@ -269,6 +269,17 @@ export function FichaView({
       if (!ftReady) {
         showToast("Complete Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
         return;
+      }
+      // If the producer marked physical measurements as "No lo sé aún",
+      // reassure (per field) that CTC will determine them objectively before
+      // sending the FT.
+      const unknownWhy = B1_OPTIONAL_FIELDS.filter((f) => (data.b1_unknown ?? []).includes(f.key)).map((f) => `• ${f.why}`);
+      if (unknownWhy.length > 0) {
+        const msg =
+          'Marcó algunos datos físicos como "No lo sé aún". No hay problema: CTC los determinará con objetividad y método durante la evaluación de su muestra.\n\n' +
+          unknownWhy.join("\n") +
+          "\n\n¿Desea enviar la FT y continuar?";
+        if (!window.confirm(msg)) return;
       }
       setSaving(true);
       const ok = await onSave(buildUpdate(withRevisionDate(), 1));

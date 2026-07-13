@@ -1,12 +1,23 @@
-import { VARIETIES } from "../fichaData";
+import { VARIETIES, type FichaFormData } from "../fichaData";
 import { varietyTotal } from "../fichaCalculations";
 import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 import vstyles from "./PaneB1.module.css";
 
+type OptField = "green_bean_humidity" | "green_bean_density" | "water_activity" | "yield_factor_producer";
+
 export function PaneB1({ data, onChange }: PaneProps) {
   const total = varietyTotal(data);
+  const unknown = data.b1_unknown ?? [];
+
+  // Mark a measurement as "No lo sé aún": records the key and clears the value.
+  function toggleUnknown(key: string, field: OptField, checked: boolean) {
+    const next = checked ? [...unknown, key] : unknown.filter((k) => k !== key);
+    const patch: Partial<FichaFormData> = { b1_unknown: next };
+    if (checked) patch[field] = "";
+    onChange(patch);
+  }
 
   function updateRow(i: number, patch: Partial<{ pct: string; name: string }>) {
     const next = data.varieties.map((v, idx) => (idx === i ? { ...v, ...patch } : v));
@@ -73,18 +84,6 @@ export function PaneB1({ data, onChange }: PaneProps) {
           </select>
         </div>
         <div className={styles.ff}>
-          <label>Humedad del Grano (%)<FieldInfo text="Porcentaje de agua en el grano verde. Rango aceptable: 10–12%. Por debajo de 10% el grano se vuelve quebradizo; por encima de 12% compromete el almacenamiento y favorece hongos." /></label>
-          <input type="number" step="0.1" value={data.green_bean_humidity} onChange={(e) => onChange({ green_bean_humidity: e.target.value })} placeholder="0.0" />
-        </div>
-        <div className={styles.ff}>
-          <label>Densidad del Grano (g/L)<FieldInfo text="Masa por volumen del grano verde. Rango típico: 650–800 g/L — valores más altos suelen indicar mayor altitud de cultivo y mejor calidad física." /></label>
-          <input type="number" step="1" value={data.green_bean_density} onChange={(e) => onChange({ green_bean_density: e.target.value })} placeholder="0" />
-        </div>
-        <div className={styles.ff}>
-          <label>Actividad de Agua (aW)<FieldInfo text="Mide el agua disponible para reacciones químicas y microbianas, no solo el contenido total de humedad. Rango seguro para almacenamiento: 0.55–0.65 aW; por encima de 0.70 aumenta fuerte el riesgo de moho." /></label>
-          <input type="number" step="0.001" value={data.water_activity} onChange={(e) => onChange({ water_activity: e.target.value })} placeholder="0.000" />
-        </div>
-        <div className={styles.ff}>
           <label>Proceso Base<FieldInfo text="El método de beneficio: Lavado, Honey o Natural — define cómo se retira la pulpa y el mucílago antes del secado." /></label>
           <select value={data.base_processing} onChange={(e) => onChange({ base_processing: e.target.value })}>
             <option value="">—</option>
@@ -97,9 +96,33 @@ export function PaneB1({ data, onChange }: PaneProps) {
           <label>Proceso Especial<FieldInfo text="Fermentaciones adicionales (anaeróbica, láctica, térmica) que se suman al proceso base para perfiles sensoriales diferenciados." /></label>
           <input value={data.special_processing} onChange={(e) => onChange({ special_processing: e.target.value })} placeholder="Anaeróbico, láctico, thermal…" />
         </div>
+      </div>
+
+      {/* Optional physical measurements -- the producer may not know these yet;
+          "No lo sé aún" marks them for CTC to determine on evaluation. */}
+      <p className={styles.fexample} style={{ marginTop: 16 }}>
+        Datos físicos (opcionales). Si aún no los conoce, marque &quot;No lo sé aún&quot; — CTC los determinará durante la evaluación.
+      </p>
+      <div className={styles.fgrid} style={{ marginTop: 8 }}>
+        <div className={styles.ff}>
+          <label>Humedad del Grano (%)<FieldInfo text="Porcentaje de agua en el grano verde. Rango aceptable: 10–12%. Por debajo de 10% el grano se vuelve quebradizo; por encima de 12% compromete el almacenamiento y favorece hongos." /></label>
+          <input type="number" step="0.1" value={unknown.includes("humidity") ? "" : data.green_bean_humidity} disabled={unknown.includes("humidity")} onChange={(e) => onChange({ green_bean_humidity: e.target.value })} placeholder={unknown.includes("humidity") ? "No lo sé aún" : "0.0"} />
+          <label className={vstyles.unknownRow}><input type="checkbox" checked={unknown.includes("humidity")} onChange={(e) => toggleUnknown("humidity", "green_bean_humidity", e.target.checked)} /> No lo sé aún</label>
+        </div>
+        <div className={styles.ff}>
+          <label>Densidad del Grano (g/L)<FieldInfo text="Masa por volumen del grano verde. Rango típico: 650–800 g/L — valores más altos suelen indicar mayor altitud de cultivo y mejor calidad física." /></label>
+          <input type="number" step="1" value={unknown.includes("density") ? "" : data.green_bean_density} disabled={unknown.includes("density")} onChange={(e) => onChange({ green_bean_density: e.target.value })} placeholder={unknown.includes("density") ? "No lo sé aún" : "0"} />
+          <label className={vstyles.unknownRow}><input type="checkbox" checked={unknown.includes("density")} onChange={(e) => toggleUnknown("density", "green_bean_density", e.target.checked)} /> No lo sé aún</label>
+        </div>
+        <div className={styles.ff}>
+          <label>Actividad de Agua (aW)<FieldInfo text="Mide el agua disponible para reacciones químicas y microbianas, no solo el contenido total de humedad. Rango seguro para almacenamiento: 0.55–0.65 aW; por encima de 0.70 aumenta fuerte el riesgo de moho." /></label>
+          <input type="number" step="0.001" value={unknown.includes("water_activity") ? "" : data.water_activity} disabled={unknown.includes("water_activity")} onChange={(e) => onChange({ water_activity: e.target.value })} placeholder={unknown.includes("water_activity") ? "No lo sé aún" : "0.000"} />
+          <label className={vstyles.unknownRow}><input type="checkbox" checked={unknown.includes("water_activity")} onChange={(e) => toggleUnknown("water_activity", "water_activity", e.target.checked)} /> No lo sé aún</label>
+        </div>
         <div className={styles.ff}>
           <label>Factor de Rendimiento (productor)<FieldInfo text="Kg de café pergamino necesarios para producir 70 kg de café verde exportable, según su propia estimación. El valor de referencia (par) en Colombia es 94; valores más bajos (87–93) indican mejor rendimiento físico." /></label>
-          <input value={data.yield_factor_producer} onChange={(e) => onChange({ yield_factor_producer: e.target.value })} placeholder="kg pergamino / 70 kg verde" />
+          <input value={unknown.includes("yield_factor") ? "" : data.yield_factor_producer} disabled={unknown.includes("yield_factor")} onChange={(e) => onChange({ yield_factor_producer: e.target.value })} placeholder={unknown.includes("yield_factor") ? "No lo sé aún" : "kg pergamino / 70 kg verde"} />
+          <label className={vstyles.unknownRow}><input type="checkbox" checked={unknown.includes("yield_factor")} onChange={(e) => toggleUnknown("yield_factor", "yield_factor_producer", e.target.checked)} /> No lo sé aún</label>
         </div>
       </div>
     </div>

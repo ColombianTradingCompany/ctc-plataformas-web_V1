@@ -144,6 +144,17 @@ export const LOCAL_INFRA: [string, string, string][] = [
   ["empacadora_consumible", "Empacadora de consumible", "Empaca presentaciones de café de consumo (tostado/molido)."],
 ];
 
+// B1 physical measurements that are optional -- the producer may not know them
+// yet. Each can be marked "No lo sé aún" (key stored in b1_unknown); when so,
+// its `why` line is added to the reassurance message on "Completar FT y
+// continuar". field = the FichaFormData input it controls.
+export const B1_OPTIONAL_FIELDS: { key: string; field: "green_bean_humidity" | "green_bean_density" | "water_activity" | "yield_factor_producer"; why: string }[] = [
+  { key: "humidity", field: "green_bean_humidity", why: "La humedad del grano define la estabilidad del café durante el almacenamiento." },
+  { key: "density", field: "green_bean_density", why: "La densidad del grano se relaciona con la altitud de cultivo y la firmeza física." },
+  { key: "water_activity", field: "water_activity", why: "La actividad de agua (aW) anticipa el riesgo de moho mejor que la humedad por sí sola." },
+  { key: "yield_factor", field: "yield_factor_producer", why: "El factor de rendimiento indica cuánto café verde exportable rinde su pergamino." },
+];
+
 export const ORIGIN_CERTS: [string, string][] = [
   ["origin_cert_dor", "(DOR) Denominación de Origen Regional"],
   ["origin_cert_do", "(DO) Denominación de Origen Protegida"],
@@ -255,6 +266,9 @@ export type FichaFormData = {
   varieties: VarietyRow[];
   green_bean_humidity: string; green_bean_density: string; water_activity: string;
   base_processing: string; special_processing: string; yield_factor_producer: string;
+  // Keys (see B1_OPTIONAL_FIELDS) the producer marked "No lo sé aún" -- these
+  // physical measurements are optional; CTC determines them on evaluation.
+  b1_unknown: string[];
   // B2 — Perfil de Taza · SCA
   cupping_profile: string;
   sca_fragrance: string; sca_flavor: string; sca_aftertaste: string; sca_acidity: string;
@@ -310,6 +324,7 @@ export const EMPTY_FICHA: FichaFormData = {
   varieties: [{ pct: "", name: "" }],
   green_bean_humidity: "", green_bean_density: "", water_activity: "",
   base_processing: "", special_processing: "", yield_factor_producer: "",
+  b1_unknown: [],
   cupping_profile: "",
   sca_fragrance: "", sca_flavor: "", sca_aftertaste: "", sca_acidity: "",
   sca_body: "", sca_balance: "", sca_uniformity: "", sca_clean_cup: "",

@@ -251,5 +251,18 @@ is closed and left as historical record of what went into producing it).
   (0901.11.10) HS codes -- CTC exports green coffee -- leaving green
   commercial (regular + decaf) + subproducts, rendered as selectable radio
   cards (label + HS code) instead of a plain <select>.
+(commit: 6fbdfff)
+
+## [2026-07-13] B1 reorder + optional measurements ("No lo sé aún")
+- PaneB1: Especie / Proceso Base / Proceso Especial now sit together at the
+  top; the four physical measurements (humedad, densidad, aW, factor de
+  rendimiento) moved below as an explicitly optional group.
+- Each measurement has a "No lo sé aún" checkbox (new datasheet field
+  b1_unknown: string[]) that clears + disables the input. B1 completeness
+  already only needs varieties + species, so these never blocked FT.
+- On "Completar FT y continuar", if any measurement is marked unknown, a
+  confirm message lists, per field, why it matters and reassures that CTC
+  will determine it objectively/methodically before continuing. Metadata in
+  B1_OPTIONAL_FIELDS (fichaData) drives both the checkboxes and the message.
 (commit: pending)
 

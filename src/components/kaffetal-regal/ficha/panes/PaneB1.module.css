@@ -11,3 +11,6 @@
 .total b{font-size:14px}
 .good b{color:#1A6B3C}
 .bad b{color:var(--t-red,#B01F24)}
+/* "No lo sé aún" toggle under an optional measurement field */
+.unknownRow{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-spline-mono),monospace;font-size:11.5px;color:var(--muted);cursor:pointer;font-weight:400}
+.unknownRow input{width:15px;height:15px;flex:0 0 auto}

@@ -37,12 +37,13 @@
 .replyBox textarea{width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:7px;font-family:inherit;font-size:12.5px;background:var(--card);resize:vertical}
 @media(max-width:880px){.ag{grid-template-columns:1fr}.acard.wide,.acard.full{grid-column:span 1}.acard.tall{grid-row:auto}}
 
-.fincaScroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;margin-top:10px;scroll-snap-type:x proximity}
-.fincaCard{flex:0 0 180px;border:1px solid var(--line);border-radius:10px;background:var(--paper);padding:12px;scroll-snap-align:start}
-.fincaCard h5{font-family:var(--font-fraunces),serif;font-size:14.5px;color:var(--primary-deep);margin-top:8px}
-.fincaThumb{width:100%;height:90px;border-radius:8px;object-fit:cover;border:1px solid var(--line);display:block}
-.fincaThumbEmpty{width:100%;height:90px;border-radius:8px;background:var(--card);border:1.5px dashed var(--line)}
-.fincaMap{width:100%;height:90px;border-radius:8px;object-fit:cover;border:1px solid var(--line);display:block;margin-top:8px}
+.fincaScroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;margin-top:12px;scroll-snap-type:x proximity}
+.fincaCard{flex:0 0 236px;border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:14px;scroll-snap-align:start;display:flex;flex-direction:column;gap:7px}
+.fincaCard h5{font-family:var(--font-fraunces),serif;font-size:15.5px;color:var(--primary-deep)}
+/* Two-up image strip (photo | map) -- consistent heights so the card reads clean */
+.fincaImgs{display:flex;gap:6px}
+.fincaThumb{flex:1;min-width:0;height:86px;border-radius:8px;object-fit:cover;border:1px solid var(--line);display:block;background:var(--card)}
+.fincaHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .certRow{margin-top:8px;font-family:var(--font-spline-mono),monospace;font-size:10.5px;line-height:1.4}
 .certDownload{display:inline-block;font-weight:700;color:#fff;background:var(--primary);border-radius:7px;padding:6px 9px;text-decoration:none}
 .certDownload:hover{filter:brightness(1.08)}

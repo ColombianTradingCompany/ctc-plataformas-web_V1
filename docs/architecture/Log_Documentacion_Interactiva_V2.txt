@@ -227,5 +227,15 @@ is closed and left as historical record of what went into producing it).
   Productor: X" with a one-click "Confirmar" (adopt) or a normal edit
   (override). Whatever is saved to eudr_* is CTC's value; the certificate
   prints only that, never the producer snapshot.
+(commit: 28c50c3)
+
+## [2026-07-13] Cosmetic pass: finca cards, mobile ficha nav, placeholder
+- "Mis fincas" cards: widened (236px), photo+map now a consistent 2-up image
+  strip, flex-column rhythm; missing photos use a new web-optimized
+  finca-placeholder.jpg (downscaled from reference_images/Image Place
+  Holder.png). Layout only.
+- Mobile ficha nav: the 220px vertical FichaNav becomes a sticky, horizontally
+  scrollable pill bar under 860px (group labels hidden) instead of a tall list
+  that buried the form. Verified live at 375px.
 (commit: pending)
 

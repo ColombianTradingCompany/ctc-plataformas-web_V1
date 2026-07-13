@@ -274,27 +274,24 @@ export function AppDashboard({
                 const mapUrl = mapPreviewUrl({ lat: f.lat, lng: f.lng, polygon: f.eudrPolygon }, "160x90");
                 return (
                 <div className={styles.fincaCard} key={f.name + i}>
-                  {f.profilePhotoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
-                    <img src={f.profilePhotoUrl} alt={f.name} className={styles.fincaThumb} />
-                  ) : (
-                    <div className={styles.fincaThumbEmpty} />
-                  )}
-                  {mapUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
-                    <img src={mapUrl} alt={`Ubicación de ${f.name}`} className={styles.fincaMap} />
-                  )}
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <div className={styles.fincaImgs}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL or local placeholder */}
+                    <img src={f.profilePhotoUrl || "/images/kaffetal-regal/finca-placeholder.jpg"} alt={f.name} className={styles.fincaThumb} />
+                    {mapUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
+                      <img src={mapUrl} alt={`Ubicación de ${f.name}`} className={styles.fincaThumb} />
+                    )}
+                  </div>
+                  <div className={styles.fincaHead}>
                     <h5 style={{ margin: 0 }}>{f.name}</h5>
                     <EudrStatusBadge status={fincaEudrStatus(f)} />
                   </div>
-                  <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere", marginTop: 2 }}>{fincaCode(f.id)}</div>
+                  <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere" }}>{fincaCode(f.id)}</div>
                   <div className={styles.sub}>
                     {f.vereda} · {f.mun}<br />
-                    {f.depto}<br />
-                    {f.alt} msnm · {f.ha} ha
+                    {f.depto} · {f.alt} msnm · {f.ha} ha
                   </div>
-                  <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button className="btn btn-sm" onClick={() => onOpenFincaModal(i)}>Editar</button>
                     {/* Deletable while CTC hasn't accepted the finca and no lot of it has
                         entered the Arena pipeline (fincaSelfDeletable mirrors the RLS

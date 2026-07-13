@@ -329,7 +329,7 @@ quedó protegida como se decidió. Hallazgos y arreglos:
      permite pending_review/approved) — hoy solo BCP puede reincorporarla.
    - HANDOFF.md: tabla de guard triggers actualizada (fincas + 2º guard de
      lots).
-(commit: pending)
+(commit: 89fada4)
 
 ## [2026-07-13] BCP puede editar el "Área cultivada (ha)" de la finca
 El formulario "Información EUDR (asistencia BCP)" no tenía campo para el área

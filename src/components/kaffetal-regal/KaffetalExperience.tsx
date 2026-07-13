@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMedia, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
@@ -1054,6 +1054,59 @@ function Experience() {
   }
 
   const curLot = lots.find((l) => l.id === curLotId) ?? null;
+
+  // --- Botón "Atrás" del teléfono ------------------------------------------
+  // La app cambia de pantalla (ficha) y abre modales solo con estado de React,
+  // sin tocar el historial del navegador -- así que en el celular el gesto de
+  // "Atrás" salía del sitio entero. Aquí cada capa abierta (ficha o modal)
+  // recibe una entrada en el historial; "Atrás" cierra la capa de encima en
+  // vez de abandonar la app. Al cerrar con un botón de la interfaz rebobinamos
+  // la entrada correspondiente para que el conteo no se desalinee.
+  const backLayerCount =
+    (loginOpen ? 1 : 0) + (fincaModalOpen ? 1 : 0) + (infoModalOpen ? 1 : 0) + (view === "ficha" ? 1 : 0);
+  const closeTopLayer = useCallback(() => {
+    // Orden de cierre: los modales están por encima de la ficha (un modal
+    // puede abrirse desde dentro de la ficha), así que se cierran primero.
+    if (loginOpen) setLoginOpen(false);
+    else if (fincaModalOpen) setFincaModalOpen(false);
+    else if (infoModalOpen) setInfoModalOpen(false);
+    else if (view === "ficha") setView(userId ? "app" : "landing");
+  }, [loginOpen, fincaModalOpen, infoModalOpen, view, userId]);
+
+  const backDepth = useRef(0);
+  const backFromPop = useRef(false);
+  useEffect(() => {
+    const onPop = () => {
+      // Solo reaccionamos si la entrada que se sacó es una que empujamos
+      // nosotros; si no, el usuario de verdad está saliendo de la app.
+      if (backDepth.current === 0) return;
+      backFromPop.current = true;
+      closeTopLayer();
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [closeTopLayer]);
+  useEffect(() => {
+    if (backLayerCount > backDepth.current) {
+      // Se abrió una o más capas: una entrada de historial por cada una.
+      while (backDepth.current < backLayerCount) {
+        window.history.pushState({ __ctcNav: true }, "");
+        backDepth.current += 1;
+      }
+    } else if (backLayerCount < backDepth.current) {
+      if (backFromPop.current) {
+        // El cierre vino del gesto "Atrás": el navegador ya sacó la entrada,
+        // solo realineamos el contador.
+        backFromPop.current = false;
+        backDepth.current = backLayerCount;
+      } else {
+        // Se cerró con un control de la interfaz: rebobinamos las entradas.
+        const diff = backDepth.current - backLayerCount;
+        backDepth.current = backLayerCount;
+        window.history.go(-diff);
+      }
+    }
+  }, [backLayerCount]);
 
   return (
     <div data-theme="kaffetal-regal">

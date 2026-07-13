@@ -271,6 +271,22 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] Botón "Atrás" del teléfono navega dentro de la app
+En Kaffetal Regal las pantallas (ficha) y los modales (finca, info, login) se
+cambiaban solo con estado de React, sin tocar el historial del navegador, así
+que en el celular el gesto/botón "Atrás" salía del sitio entero en lugar de
+volver a la pantalla anterior. KaffetalExperience ahora sincroniza las capas
+abiertas con la History API: cada capa (ficha o modal) empuja una entrada de
+historial; el evento popstate cierra la capa de encima (modales antes que la
+ficha, porque un modal puede abrirse desde dentro de la ficha); y al cerrar con
+un control de la interfaz se rebobina (history.go) la entrada correspondiente
+para que el conteo no se desalinee. Verificado en el navegador: abrir ficha +
+Atrás vuelve al panel; abrir modal + Atrás cierra el modal; la secuencia
+ficha -> cerrar con botón -> abrir modal -> Atrás no se desincroniza; nunca se
+abandona el sitio. Solo afecta Kaffetal Regal (las pantallas de BCP y del
+catálogo ya son rutas reales de Next).
+(commit: pending)
+
 ## [2026-07-13] EUDR risk factors: derive instead of hand-pick (lote)
 Reworked the lot-level EUDR risk section so the classifications are inferred
 from real inputs instead of being chosen by eye, on BOTH surfaces (producer

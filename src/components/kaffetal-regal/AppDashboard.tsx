@@ -351,11 +351,6 @@ export function AppDashboard({
                         </button>
                       )}
                       <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} />
-                      {l.nextStepAdvice && (
-                        <div className={styles.nextstep}>
-                          <span className={styles.nextstepLabel}>¿Y ahora qué?</span> {l.nextStepAdvice}
-                        </div>
-                      )}
                     </div>
                     <div className={styles.metrics}>
                       <div className={styles.chips}>

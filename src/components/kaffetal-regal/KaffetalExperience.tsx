@@ -544,10 +544,6 @@ function Experience() {
     return true;
   }
 
-  function applyNextStepAdvice(lotId: string, advice: string, context: Record<string, unknown>) {
-    setLots((ls) => ls.map((l) => (l.id === lotId ? { ...l, nextStepAdvice: advice, nextStepContext: context } : l)));
-  }
-
   async function saveFinca(f: Finca): Promise<boolean> {
     if (!userId) return false;
     const hectares = f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : 0;
@@ -1003,7 +999,6 @@ function Experience() {
           gi={gi}
           onBack={() => setView(userId ? "app" : "landing")}
           onSave={saveFicha}
-          onAdviceUpdate={applyNextStepAdvice}
           onOpenNewFinca={() => {
             setEditingFincaIdx(-1);
             setFincaModalOpen(true);

@@ -5,7 +5,6 @@ import { lotEudrStatus, fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr"
 import { EudrYesNo } from "../../EudrYesNo";
 import { EudrStatusBadge } from "../../EudrStatusBadge";
 import { FieldInfo } from "./FieldInfo";
-import type { FichaFormData } from "../fichaData";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -176,15 +175,17 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
       </div>
 
       <div className={`${styles.ff} ${styles.fw}`} style={{ marginBottom: 14 }}>
-        <label>Nivel de riesgo determinado<FieldInfo text={INFO.nivelRiesgo} /></label>
-        <div className={styles.chips}>
-          {(["insignificante", "no_insignificante"] as FichaFormData["eudr_risk_level"][]).map((v) => (
-            <label className={styles.chip} key={v}>
-              <input type="radio" name="eudr_risk_level" checked={data.eudr_risk_level === v} onChange={() => onChange({ eudr_risk_level: v })} />{" "}
-              {v === "insignificante" ? "Insignificante" : "No insignificante"}
-            </label>
-          ))}
-        </div>
+        <label>
+          Nivel de riesgo determinado
+          <FieldInfo text="Lo determina CTC como evaluador a partir de los factores declarados arriba (Art. 10-11 EUDR). No lo selecciona el productor." />
+        </label>
+        <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: data.eudr_risk_level === "no_insignificante" ? "var(--red)" : "var(--ink)" }}>
+          {data.eudr_risk_level === "insignificante"
+            ? "Insignificante"
+            : data.eudr_risk_level === "no_insignificante"
+            ? "No insignificante"
+            : "Pendiente de evaluación por CTC"}
+        </p>
       </div>
 
       {data.eudr_risk_level === "no_insignificante" && (

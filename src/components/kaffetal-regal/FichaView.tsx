@@ -18,10 +18,8 @@ import { PaneB2 } from "./ficha/panes/PaneB2";
 import { PaneB3 } from "./ficha/panes/PaneB3";
 import { PaneB4 } from "./ficha/panes/PaneB4";
 import { FichaPreview } from "./ficha/FichaPreview";
-import { NextStepWidget } from "./ficha/NextStepWidget";
 import { ShipmentInstructionsModal } from "./ficha/ShipmentInstructionsModal";
 import { OfficialScoreBanner } from "./ficha/OfficialScoreBanner";
-import { STAGES } from "./data";
 import styles from "./FichaView.module.css";
 
 export type { PaneProps } from "./ficha/panes/types";
@@ -81,7 +79,6 @@ export function FichaView({
   gi,
   onBack,
   onSave,
-  onAdviceUpdate,
   onOpenNewFinca,
   onUploadFile,
   onUploadLotVideo,
@@ -94,7 +91,6 @@ export function FichaView({
   // Resolves true only when the row actually persisted -- the buttons below
   // await this so success toasts / stage advances never fire on a failed save.
   onSave: (updates: FichaSaveUpdate) => Promise<boolean>;
-  onAdviceUpdate: (lotId: string, advice: string, context: Record<string, unknown>) => void;
   onOpenNewFinca: () => void;
   onUploadFile: (subpath: string, file: File) => Promise<{ assetId: string } | { error: string }>;
   onUploadLotVideo: (file: File) => void;
@@ -465,18 +461,6 @@ export function FichaView({
           </div>
         </div>
 
-        <div style={{ marginTop: 24 }}>
-          <NextStepWidget
-            lotId={lot.id}
-            lotCode={ctcLotReference(lot.id)}
-            stageLabel={STAGES[lot.stage]}
-            data={data}
-            completed={completed}
-            scaTotal={sca.total}
-            cachedAdvice={lot.nextStepAdvice}
-            onAdviceUpdate={(advice, context) => onAdviceUpdate(lot.id, advice, context)}
-          />
-        </div>
       </div>
 
       <ShipmentInstructionsModal

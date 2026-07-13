@@ -2,10 +2,13 @@
 
 import type { EudrStatus } from "@/lib/eudr";
 
+// Explicit, semantically-clear status colors (not the theme --accent, which is
+// a muted brown in the Kaffetal theme and made "Pendiente" read as plain text):
+// green = Apta, amber = Pendiente, red = No apta.
 const TONE_COLOR: Record<EudrStatus["tone"], string> = {
-  ok: "var(--green)",
-  pend: "var(--accent)",
-  stop: "var(--red)",
+  ok: "#2E7D46",
+  pend: "#B45309",
+  stop: "#C8102F",
 };
 
 export function EudrStatusBadge({ status }: { status: EudrStatus }) {

@@ -285,7 +285,7 @@ Atrás vuelve al panel; abrir modal + Atrás cierra el modal; la secuencia
 ficha -> cerrar con botón -> abrir modal -> Atrás no se desincroniza; nunca se
 abandona el sitio. Solo afecta Kaffetal Regal (las pantallas de BCP y del
 catálogo ya son rutas reales de Next).
-(commit: pending)
+(commit: 9f653a2)
 
 ## [2026-07-13] EUDR risk factors: derive instead of hand-pick (lote)
 Reworked the lot-level EUDR risk section so the classifications are inferred

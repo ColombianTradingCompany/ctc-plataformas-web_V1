@@ -1,13 +1,26 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { useToast } from "@/components/Toast";
+import { createClient } from "@/lib/supabase/client";
+import { submitLeadPublic, submitLeadAuthed, type LeadPayload, type LeadSubmitResult } from "@/lib/leads/actions";
 import styles from "./ContactModal.module.css";
 
 type FormKey = "general" | "tech" | "cocreate" | "varietales";
 
-const MAIL = "info@ctcexport.com";
+// The in-progress form survives the Google OAuth redirect here; the resume
+// effect below picks it up once the session exists. 30-minute freshness so an
+// abandoned attempt never resurrects days later.
+const STASH_KEY = "ctc_lead_stash";
+const STASH_TTL_MS = 30 * 60e3;
+
+const PLATFORM_NAME: Record<FormKey, string> = {
+  general: "Kaffetal Regal",
+  tech: "Kaffetal Regal",
+  varietales: "Kaffetal Regal",
+  cocreate: "Cherry Picked",
+};
 
 const ContactModalContext = createContext<{
   openForm: (key: FormKey) => void;
@@ -19,95 +32,206 @@ export function useContactModal() {
   return ctx;
 }
 
-function gv(fd: FormData, key: string) {
-  const v = (fd.get(key) as string | null)?.trim();
-  return v && v.length ? v : "—";
+// Serializes a form into the server-action payload. The pillar decides which
+// field keys matter (the action whitelists them again server-side).
+function collectPayload(key: FormKey, form: HTMLFormElement): LeadPayload {
+  const fd = new FormData(form);
+  const s = (k: string) => String(fd.get(k) ?? "").trim();
+  const fields: Record<string, unknown> = {};
+  if (key === "general") {
+    fields.org = s("org");
+    const temaSelect = form.elements.namedItem("tema") as HTMLSelectElement | null;
+    fields.tema = temaSelect?.selectedOptions[0]?.text ?? "Consulta general";
+  } else if (key === "tech") {
+    fields.finca = s("finca");
+    fields.ubicacion = s("ubicacion");
+    fields.interes = fd.getAll("interes").map(String);
+  } else if (key === "cocreate") {
+    fields.marca = s("marca");
+    fields.mercado = s("mercado");
+    fields.canal = s("canal");
+    fields.formato = s("formato");
+    fields.vol = s("vol");
+  } else {
+    fields.finca = s("finca");
+    fields.ubicacion = s("ubicacion");
+    fields.varietal = s("varietal");
+    fields.cantidad = s("cantidad");
+  }
+  return { pillar: key, nombre: s("nombre"), email: s("email"), message: s("msg"), fields, website: s("website") };
+}
+
+type Phase = { name: "idle" } | { name: "submitting" } | { name: "success"; outcome: "created" | "existing"; pillar: FormKey };
+
+// Module scope on purpose: the react-compiler purity rule treats component-
+// scoped closures as render code, and Date.now() is only ever called from
+// event handlers here.
+function stashLead(payload: LeadPayload) {
+  localStorage.setItem(STASH_KEY, JSON.stringify({ ...payload, ts: Date.now() }));
+}
+
+function readFreshStash(): (LeadPayload & { ts: number }) | null {
+  const raw = localStorage.getItem(STASH_KEY);
+  if (!raw) return null;
+  localStorage.removeItem(STASH_KEY);
+  try {
+    const stash = JSON.parse(raw) as LeadPayload & { ts: number };
+    return Date.now() - stash.ts > STASH_TTL_MS ? null : stash;
+  } catch {
+    return null;
+  }
 }
 
 export function ContactModalProvider({ children }: { children: React.ReactNode }) {
   const [openKey, setOpenKey] = useState<FormKey | null>(null);
+  const [phase, setPhase] = useState<Phase>({ name: "idle" });
+  const [supabase] = useState(() => createClient());
   const { showToast } = useToast();
+  const resuming = useRef(false);
 
-  const close = () => setOpenKey(null);
+  const close = () => {
+    setOpenKey(null);
+    setPhase({ name: "idle" });
+  };
+  const openForm = (key: FormKey) => {
+    setPhase({ name: "idle" });
+    setOpenKey(key);
+  };
 
-  function sendMail(key: FormKey, form: HTMLFormElement) {
-    const fd = new FormData(form);
-    let subject = "";
-    let lines: string[] = [];
-
-    if (key === "general") {
-      const temaSelect = form.elements.namedItem("tema") as HTMLSelectElement;
-      subject = "CTC · Consulta general";
-      lines = [
-        "Nombre: " + gv(fd, "nombre"),
-        "Organización: " + gv(fd, "org"),
-        "Tema: " + (temaSelect?.selectedOptions[0]?.text ?? "Consulta general"),
-        "",
-        gv(fd, "msg"),
-      ];
-    } else if (key === "tech") {
-      const ints = fd.getAll("interes").join(", ") || "—";
-      subject = "CTC Tech · Solicitud de diagnóstico";
-      lines = [
-        "Nombre: " + gv(fd, "nombre"),
-        "Finca/organización: " + gv(fd, "finca"),
-        "Ubicación: " + gv(fd, "ubicacion"),
-        "Tecnologías de interés: " + ints,
-        "",
-        "Proceso actual:",
-        gv(fd, "msg"),
-      ];
-    } else if (key === "cocreate") {
-      subject = "CTC Co-Create · Propuesta de proyecto";
-      lines = [
-        "Nombre: " + gv(fd, "nombre"),
-        "Empresa/marca: " + gv(fd, "marca"),
-        "Mercado: " + gv(fd, "mercado"),
-        "Canal: " + gv(fd, "canal"),
-        "Formato: " + gv(fd, "formato"),
-        "Volumen estimado: " + gv(fd, "vol") + " kg/año",
-        "",
-        "El proyecto:",
-        gv(fd, "msg"),
-      ];
-    } else if (key === "varietales") {
-      subject = "Varietales Registrados · Solicitud de catálogo";
-      lines = [
-        "Nombre: " + gv(fd, "nombre"),
-        "Finca: " + gv(fd, "finca"),
-        "Ubicación: " + gv(fd, "ubicacion"),
-        "Varietal de interés: " + gv(fd, "varietal"),
-        "Cantidad de chapolas: " + gv(fd, "cantidad"),
-        "",
-        gv(fd, "msg"),
-      ];
+  function applyResult(result: LeadSubmitResult, pillar: FormKey) {
+    if (result.ok) {
+      setPhase({ name: "success", outcome: result.outcome, pillar });
+      setOpenKey(pillar);
+    } else {
+      setPhase({ name: "idle" });
+      showToast(result.message);
     }
-
-    window.location.href =
-      "mailto:" + MAIL + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
-    showToast("Abriendo tu aplicación de correo con el mensaje listo…");
-    close();
   }
 
+  async function submitWithEmail(key: FormKey, form: HTMLFormElement) {
+    setPhase({ name: "submitting" });
+    try {
+      const result = await submitLeadPublic(collectPayload(key, form));
+      applyResult(result, key);
+    } catch {
+      setPhase({ name: "idle" });
+      showToast("No pudimos enviar tu solicitud. Intenta de nuevo.");
+    }
+  }
+
+  async function continueWithGoogle(key: FormKey, form: HTMLFormElement) {
+    const payload = collectPayload(key, form);
+    if (!payload.nombre) {
+      showToast("Escribe tu nombre antes de continuar con Google.");
+      return;
+    }
+    stashLead(payload);
+    setPhase({ name: "submitting" });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (error) {
+      localStorage.removeItem(STASH_KEY);
+      setPhase({ name: "idle" });
+      showToast("No pudimos iniciar sesión con Google. Intenta con tu correo.");
+    }
+  }
+
+  // Resume after the OAuth round-trip: /auth/callback lands on /?lead=resume.
+  // The stash is removed BEFORE the await (strict-mode double-effect guard) and
+  // an in-flight ref blocks concurrent runs. No session = silent cleanup.
+  useEffect(() => {
+    if (resuming.current) return;
+    resuming.current = true;
+    (async () => {
+      const stash = readFreshStash();
+      if (!stash) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return; // abandoned mid-OAuth: costs nothing
+      if (window.location.search.includes("lead=resume")) {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      const pillar = stash.pillar as FormKey;
+      const result = await submitLeadAuthed(stash);
+      applyResult(result, pillar);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
+
+  const submitting = phase.name === "submitting";
+
+  // Shared footer: primary email-path submit + Google alternative.
+  const footer = (key: FormKey) => (
+    <>
+      <div>
+        <label htmlFor={`${key}-email`}>Correo electrónico</label>
+        <input id={`${key}-email`} name="email" type="email" required placeholder="tu@correo.com" />
+      </div>
+      {/* Honeypot: hidden from humans; bots that fill it get a silent no-op. */}
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className={styles.hp} />
+      <button className="btn btn-solid" type="submit" disabled={submitting}>
+        {submitting ? "Enviando…" : "Enviar solicitud"}
+      </button>
+      <div className={styles.divider}>
+        <span>o</span>
+      </div>
+      <button
+        className={`btn ${styles.googleBtn}`}
+        type="button"
+        disabled={submitting}
+        onClick={(e) => continueWithGoogle(key, (e.currentTarget as HTMLButtonElement).form as HTMLFormElement)}
+      >
+        Continuar con Google
+      </button>
+      <span className={styles.hint}>
+        Creamos tu acceso a {PLATFORM_NAME[key]} y te respondemos por correo. Te llegará un mensaje de bienvenida al instante.
+      </span>
+    </>
+  );
+
+  const successPanel = phase.name === "success" && (
+    <div className={styles.success}>
+      <h3>¡Solicitud recibida! 🎉</h3>
+      {phase.outcome === "created" ? (
+        <p>
+          Creamos tu cuenta en <b>{PLATFORM_NAME[phase.pillar]}</b> y te enviamos un correo de bienvenida. Nuestro equipo te
+          responderá pronto — si aún no tienes contraseña, llegará adjunta a nuestra primera respuesta.
+        </p>
+      ) : (
+        <p>
+          Vinculamos tu solicitud a tu cuenta existente y te enviamos un correo de confirmación. Nuestro equipo te responderá
+          pronto.
+        </p>
+      )}
+      <button className="btn btn-solid" type="button" onClick={close}>
+        Entendido
+      </button>
+    </div>
+  );
+
   return (
-    <ContactModalContext.Provider value={{ openForm: setOpenKey }}>
+    <ContactModalContext.Provider value={{ openForm }}>
       {children}
       <Modal open={openKey !== null} onClose={close} ariaLabel="Formulario de contacto">
-        {openKey === "general" && (
+        {successPanel}
+        {phase.name !== "success" && openKey === "general" && (
           <div>
             <h3>Escríbenos</h3>
-            <p>Cuéntanos quién eres y qué necesitas. Al enviar, se abrirá tu correo con el mensaje listo para info@ctcexport.com.</p>
+            <p>Cuéntanos quién eres y qué necesitas. Creamos tu cuenta y te respondemos por correo.</p>
             <form
               className={styles.fform}
               onSubmit={(e) => {
                 e.preventDefault();
-                sendMail("general", e.currentTarget);
+                submitWithEmail("general", e.currentTarget);
               }}
             >
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="g-nombre">Nombre</label>
-                  <input id="g-nombre" name="nombre" placeholder="Su nombre" />
+                  <input id="g-nombre" name="nombre" required placeholder="Su nombre" />
                 </div>
                 <div>
                   <label htmlFor="g-org">Organización / finca</label>
@@ -134,15 +258,12 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
                 <label htmlFor="g-msg">Mensaje</label>
                 <textarea id="g-msg" name="msg" placeholder="¿En qué podemos ayudarte?" />
               </div>
-              <button className="btn btn-solid" type="submit">
-                Enviar correo ✉
-              </button>
-              <span className={styles.hint}>Se abre tu aplicación de correo con todo diligenciado.</span>
+              {footer("general")}
             </form>
           </div>
         )}
 
-        {openKey === "tech" && (
+        {phase.name !== "success" && openKey === "tech" && (
           <div>
             <h3>CTC Tech · Agendar diagnóstico</h3>
             <p>Un diagnóstico en finca para definir qué tecnología aplica a su beneficio y su presupuesto.</p>
@@ -150,13 +271,13 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               className={styles.fform}
               onSubmit={(e) => {
                 e.preventDefault();
-                sendMail("tech", e.currentTarget);
+                submitWithEmail("tech", e.currentTarget);
               }}
             >
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="t-nombre">Nombre</label>
-                  <input id="t-nombre" name="nombre" placeholder="Su nombre" />
+                  <input id="t-nombre" name="nombre" required placeholder="Su nombre" />
                 </div>
                 <div>
                   <label htmlFor="t-finca">Finca / organización</label>
@@ -183,15 +304,12 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
                 <label htmlFor="t-msg">Cuéntenos de su proceso actual</label>
                 <textarea id="t-msg" name="msg" placeholder="Volumen, beneficio actual, retos…" />
               </div>
-              <button className="btn btn-solid" type="submit">
-                Enviar correo ✉
-              </button>
-              <span className={styles.hint}>Se abre tu aplicación de correo con todo diligenciado.</span>
+              {footer("tech")}
             </form>
           </div>
         )}
 
-        {openKey === "cocreate" && (
+        {phase.name !== "success" && openKey === "cocreate" && (
           <div>
             <h3>CTC Co-Create · Proponer un proyecto</h3>
             <p>Cuéntanos de tu funnel de demanda y armamos la mesa de trabajo.</p>
@@ -199,13 +317,13 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               className={styles.fform}
               onSubmit={(e) => {
                 e.preventDefault();
-                sendMail("cocreate", e.currentTarget);
+                submitWithEmail("cocreate", e.currentTarget);
               }}
             >
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="c-nombre">Nombre</label>
-                  <input id="c-nombre" name="nombre" placeholder="Tu nombre" />
+                  <input id="c-nombre" name="nombre" required placeholder="Tu nombre" />
                 </div>
                 <div>
                   <label htmlFor="c-marca">Empresa / marca</label>
@@ -250,15 +368,12 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
                 <label htmlFor="c-msg">El proyecto</label>
                 <textarea id="c-msg" name="msg" placeholder="Etapa del funnel, calidades buscadas, tiempos…" />
               </div>
-              <button className="btn btn-solid" type="submit">
-                Enviar correo ✉
-              </button>
-              <span className={styles.hint}>Sujeto a volúmenes mínimos requeridos · calidades respaldadas por la Arena.</span>
+              {footer("cocreate")}
             </form>
           </div>
         )}
 
-        {openKey === "varietales" && (
+        {phase.name !== "success" && openKey === "varietales" && (
           <div>
             <h3>Varietales Registrados · Solicitar catálogo</h3>
             <p>Genética verificada en estado de chapola. Mínimo 100 unidades · $150–$300 COP c/u según varietal.</p>
@@ -266,13 +381,13 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               className={styles.fform}
               onSubmit={(e) => {
                 e.preventDefault();
-                sendMail("varietales", e.currentTarget);
+                submitWithEmail("varietales", e.currentTarget);
               }}
             >
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="v-nombre">Nombre</label>
-                  <input id="v-nombre" name="nombre" placeholder="Su nombre" />
+                  <input id="v-nombre" name="nombre" required placeholder="Su nombre" />
                 </div>
                 <div>
                   <label htmlFor="v-finca">Finca</label>
@@ -297,10 +412,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
                 <label htmlFor="v-msg">Mensaje</label>
                 <textarea id="v-msg" name="msg" placeholder="Perfil de taza objetivo, fecha de siembra…" />
               </div>
-              <button className="btn btn-solid" type="submit">
-                Enviar correo ✉
-              </button>
-              <span className={styles.hint}>Se abre tu aplicación de correo con todo diligenciado.</span>
+              {footer("varietales")}
             </form>
           </div>
         )}

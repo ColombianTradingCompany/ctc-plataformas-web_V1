@@ -271,6 +271,47 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-13] Leads CTC Home: Escríbenos -> cuentas + bienvenida + dashboard BCP
+NUEVO subsistema completo de leads (plan aprobado por el usuario). El
+"Escríbenos" y los CTAs de "Más allá de la exportación" (CTC Tech, Co-Create,
+Varietales Registrados) dejan de abrir un mailto: ahora cada solicitud crea un
+LEAD con una CUENTA de plataforma y recibe un correo de bienvenida automático.
+- Captura (ContactModal.tsx rework): los 4 formularios ganan campo de correo +
+  honeypot y dos caminos: "Enviar solicitud" (creamos la cuenta en su nombre
+  con contraseña temporal: Co-Create -> comprador Cherry Picked, el resto ->
+  productor Kaffetal Regal; handle_new_user honra user_metadata.role) o
+  "Continuar con Google" (el formulario se guarda en localStorage, OAuth va al
+  nuevo /auth/callback minimalista y al volver se retoma el envío con la
+  sesión; la promoción buyer->producer solo la decide submitLeadAuthed según
+  el pilar, vía el helper compartido promoteFreshBuyerToProducer extraído del
+  callback de Kaffetal). Panel de éxito en el modal; errores por toast.
+- Datos: tablas leads y lead_replies, RLS habilitado SIN políticas
+  (service-role-only, como la Arena). leads.temp_password (decisión explícita
+  de producto) viaja adjunta a la PRIMERA respuesta de BCP y se borra al
+  confirmarse el envío; el cuerpo guardado de la respuesta nunca la contiene.
+- Correo (src/lib/email/leadEmails.ts, Resend): bienvenida por pilar (explica
+  Kaffetal Regal o Cherry Picked, anima a usarla y asegura respuesta pronta) y
+  respuesta de BCP con bloque de acceso adjunto. Remitente por EMAIL_FROM;
+  hasta verificar ctcexport.com en Resend los envíos a terceros fallan y el
+  error queda en welcome_error/send_error con botón de reintento en BCP.
+- Dashboard /bcp/leads (reemplaza el ComingSoon): fila de KPIs por pilar +
+  "Sin responder", y UN TABLERO KANBAN POR SERVICIO (elección del usuario) con
+  columnas Nuevo -> En conversación -> Convertido -> Cerrado. Cada tarjeta abre
+  un popup con: datos capturados por pilar, estado de la cuenta, conexiones
+  del proceso (fincas/lotes del productor o pedidos del comprador + leads
+  hermanos del mismo correo), hilo de correos con reintentos, compositor de
+  respuesta (aviso cuando el envío llevará la contraseña; al éxito se limpia y
+  el estado avanza nuevo->en_conversacion) y selector de estado. Acciones en
+  leadsActions.ts con audit_log entity_type 'lead'.
+- Anti-spam: honeypot + límites por correo (3/24h) y por IP (5/h).
+- Verificado en vivo: lead tech -> cuenta producer + producer_profiles +
+  temp_password + welcome_error capturado (restricción de dominio de Resend,
+  esperada); lead cocreate -> cuenta buyer + buyer_profiles; panel de éxito
+  correcto en ambos. Pasos manuales pendientes del usuario: verificar
+  ctcexport.com en Resend + EMAIL_FROM, y añadir /auth/callback al allowlist
+  de redirects de Supabase Auth.
+(commit: pending)
+
 ## [2026-07-13] Certificación EUDR del Lote + modal BCP de lotes + rework de mitigación
 - NUEVO: Certificación EUDR a nivel de LOTE (LotEudrCertDoc.tsx, mismo lenguaje
   visual del expediente de finca: marca de agua CTCx, sello, imprimible). Ruta

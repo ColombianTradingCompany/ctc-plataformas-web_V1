@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { promoteFreshBuyerToProducer } from "@/lib/auth/promoteFreshBuyerToProducer";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
@@ -16,33 +17,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/kaffetal-regal`);
   }
 
-  // Google sign-in carries no `role` metadata, so the shared handle_new_user
-  // trigger defaults brand-new accounts to 'buyer'. Promote them to 'producer'
-  // here -- but ONLY a fresh, still-default buyer. Never touch a bcp_admin (that
-  // would downgrade a CTC staff account) or an established buyer with real data.
-  const service = createServiceRoleClient();
-  const { data: profile } = await service
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .maybeSingle();
-
-  if (profile?.role === "buyer") {
-    const { data: buyerProfile } = await service
-      .from("buyer_profiles")
-      .select("lifetime_points, company_name, vat_number")
-      .eq("profile_id", data.user.id)
-      .maybeSingle();
-
-    const looksUnused =
-      buyerProfile && buyerProfile.lifetime_points === 0 && !buyerProfile.company_name && !buyerProfile.vat_number;
-
-    if (looksUnused) {
-      await service.from("profiles").update({ role: "producer" }).eq("id", data.user.id);
-      await service.from("producer_profiles").insert({ profile_id: data.user.id });
-      await service.from("buyer_profiles").delete().eq("profile_id", data.user.id);
-    }
-  }
+  // A Kaffetal Regal Google sign-in is a producer sign-in: promote the
+  // trigger-default fresh buyer to producer (shared helper; guards bcp_admin
+  // and established buyers).
+  await promoteFreshBuyerToProducer(createServiceRoleClient(), data.user.id);
 
   return NextResponse.redirect(`${origin}/kaffetal-regal`);
 }

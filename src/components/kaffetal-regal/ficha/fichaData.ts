@@ -121,29 +121,6 @@ export const HS_CODES: [string, string][] = [
   ["Otros subproductos del café (cáscaras, pieles y sucedáneos)", "0901.90.00.00"],
 ];
 
-// Local infrastructure a producer/finca has for processing -- declared as part
-// of the EUDR / traceability picture (PaneA5). key, label, short explanation.
-export const LOCAL_INFRA: [string, string, string][] = [
-  ["semillero", "Semillero", "Área para germinar y criar las plántulas de café antes de llevarlas al campo."],
-  ["tractor", "Tractor / Retroexcavadoras", "Maquinaria para labores de campo y movimiento de tierra."],
-  ["acopio", "Espacio de acopio", "Bodega o espacio para acopiar y almacenar café antes de procesarlo o despacharlo."],
-  ["flotado", "Tanques de flotado", "Tanques que separan por densidad los granos vanos o defectuosos flotando la cereza en agua."],
-  ["lavado", "Instalación de lavado", "Instalación para lavar el café tras la fermentación (beneficio húmedo)."],
-  ["beneficio", "Maquinaria especializada de beneficio", "Despulpadoras, desmucilaginadoras y equipos afines del beneficio húmedo."],
-  ["fermentadores", "Fermentadores anaeróbicos", "Recipientes cerrados para fermentaciones controladas sin oxígeno."],
-  ["patios", "Patios de secado", "Superficies abiertas para secar el café al sol."],
-  ["marquesinas", "Marquesinas de secado", "Túneles/marquesinas de secado parabólico que protegen el café de la lluvia."],
-  ["guardiolas", "Guardiolas", "Secadoras mecánicas de tambor rotatorio para un secado controlado."],
-  ["silos", "Silos de secado", "Silos de secado mecánico con aire forzado."],
-  ["trilladora", "Trilladora", "Retira el pergamino para obtener el café verde (excelso)."],
-  ["monitor_mallas", "Monitor de mallas", "Clasifica el grano por tamaño de malla (granulometría)."],
-  ["optica", "Seleccionadora óptica", "Separa granos por color y detecta defectos de forma automática."],
-  ["vacio", "Empacadora al vacío", "Empaca el café verde al vacío para su conservación."],
-  ["tostadora", "Tostadora", "Tuesta el café destinado a consumo."],
-  ["molino", "Molino", "Muele el café tostado."],
-  ["empacadora_consumible", "Empacadora de consumible", "Empaca presentaciones de café de consumo (tostado/molido)."],
-];
-
 // B1 physical measurements that are optional -- the producer may not know them
 // yet. Each can be marked "No lo sé aún" (key stored in b1_unknown); when so,
 // its `why` line is added to the reassurance message on "Completar FT y
@@ -246,7 +223,6 @@ export type FichaFormData = {
   // (para que BCP pueda leer/editarlas directo) -- estos campos viajan aquí solo
   // para que el pane se edite igual que el resto de la Ficha; ver FichaView.tsx.
   eudr_custody_stages: string[];
-  eudr_local_infra: string[];
   // "ctc_standard" = CTC Parchment Storage Standard (sacos de yute + liner
   // hermético + tarjeta indicadora de humedad + QR del lote); "custom" = the
   // producer describes their own method in eudr_custody_notes.
@@ -308,7 +284,6 @@ export const EMPTY_FICHA: FichaFormData = {
   intl_other: false, intl_cert_other_text: "",
   cert_attachments: {},
   eudr_custody_stages: [],
-  eudr_local_infra: [],
   eudr_custody_method: "",
   eudr_custody_notes: "",
   eudr_country_risk: "Estándar",

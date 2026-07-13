@@ -1,5 +1,7 @@
-import { fincaCode } from "./data";
+import { fincaCode, LOCAL_INFRA } from "./data";
 import { PrintButton } from "./PrintButton";
+
+const INFRA_LABEL: Record<string, string> = Object.fromEntries(LOCAL_INFRA.map(([k, l]) => [k, l]));
 
 const EVIDENCE_LABEL: Record<string, string> = {
   satelital: "Imágenes satelitales",
@@ -50,6 +52,7 @@ export type DossierFinca = {
   eudr_sustainability_notes: string | null;
   eudr_evidence_files: KeyedFiles | null;
   eudr_sustainability_files: KeyedFiles | null;
+  eudr_local_infra: string[] | null;
 };
 
 const yesNo = (v: boolean | null) => (v === true ? "Sí" : v === false ? "No" : "Sin definir");
@@ -192,6 +195,7 @@ export function EudrDossierDoc({
             {row("Producción en áreas legales", yesNo(finca.eudr_legal_production))}
             {row("Tenencia de la tierra", finca.eudr_tenure ? TENURE_LABEL[finca.eudr_tenure] : "sin definir")}
             {row("Áreas de legislación verificadas", (finca.eudr_legal_areas ?? []).map((k) => LEGAL_AREA_LABEL[k] ?? k).join(", ") || "ninguna")}
+            {row("Infraestructura local", (finca.eudr_local_infra ?? []).map((k) => INFRA_LABEL[k] ?? k).join(", ") || "no declarada")}
           </tbody>
         </table>
 

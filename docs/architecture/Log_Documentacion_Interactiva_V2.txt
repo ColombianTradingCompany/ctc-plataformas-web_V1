@@ -270,5 +270,23 @@ is closed and left as historical record of what went into producing it).
 - PaneB3 intro now links to a Cooperativa de Caficultores YouTube tutorial
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
+
+## [2026-07-13] "Infraestructura local" moved from the Lote to the Finca
+- Correction: the local-infrastructure multiselect (semillero, tractor,
+  acopio, beneficio, guardiolas, trilladora, etc. -- 18 items with per-item
+  ⓘ help) had been placed on the lot's EUDR datasheet pane (A5). It belongs
+  to the physical Finca, not to a batch/lote. Moved it accordingly.
+- Removed from the lote: PaneA5Eudr.tsx no longer renders it; the LOCAL_INFRA
+  const and eudr_local_infra field are gone from ficha/fichaData.ts. The lot
+  A5 pane keeps custody chain + method + (read-only) risk readout.
+- Added to the Finca: new fincas.eudr_local_infra column (migration
+  finca_eudr_local_infra); LOCAL_INFRA const now lives in
+  kaffetal-regal/data.ts; Finca type gains eudrLocalInfra. FincaModal.tsx
+  shows the multiselect (chips + per-item FieldInfo) after Tenencia, wired
+  through EudrDraft/seed/save; KaffetalExperience maps the column both ways.
+- Surfaced downstream: BCP FincaEudrEditor read summary line; EudrDossierDoc
+  Declaraciones-EUDR table row ("Infraestructura local"); both dossier route
+  queries (bcp .../fincas/[id]/dossier and producer certificacion/[id]) fetch
+  eudr_local_infra.
 (commit: pending)
 

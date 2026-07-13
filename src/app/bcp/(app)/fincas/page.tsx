@@ -44,6 +44,7 @@ type FincaRow = {
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_cert_shared: boolean | null;
   eudr_producer_answers: Record<string, unknown> | null;
+  eudr_local_infra: string[] | null;
   created_at: string;
 };
 
@@ -93,7 +94,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
       `id, name, producer_id, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, created_at`
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra, created_at`
     )
     .eq("status", activeStatus)
     .order("created_at", { ascending: true });

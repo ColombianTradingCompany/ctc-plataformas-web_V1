@@ -5,7 +5,6 @@ import { lotEudrStatus, fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr"
 import { EudrYesNo } from "../../EudrYesNo";
 import { EudrStatusBadge } from "../../EudrStatusBadge";
 import { FieldInfo } from "./FieldInfo";
-import { LOCAL_INFRA } from "../fichaData";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -58,11 +57,6 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
     onChange({ eudr_custody_stages: next });
   }
 
-  const localInfra = data.eudr_local_infra ?? [];
-  function toggleInfra(key: string, checked: boolean) {
-    const next = checked ? [...localInfra, key] : localInfra.filter((k) => k !== key);
-    onChange({ eudr_local_infra: next });
-  }
 
   return (
     <div className={styles.fsec}>
@@ -101,22 +95,6 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
           {CUSTODY_STAGES.map(([key, label]) => (
             <label className={styles.chip} key={key}>
               <input type="checkbox" checked={data.eudr_custody_stages.includes(key)} onChange={(e) => toggleStage(key, e.target.checked)} /> {label}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
-        <label>
-          Infraestructura local
-          <FieldInfo text="Marque la infraestructura y maquinaria propia disponible en la finca o cerca de ella. Cada elemento incluye una ⓘ que explica para qué sirve. Ayuda a evidenciar la capacidad de procesamiento y la trazabilidad del lote." />
-        </label>
-        <p className={styles.fexample}>Seleccione todo lo que tenga disponible.</p>
-        <div className={styles.chips} style={{ marginTop: 6 }}>
-          {LOCAL_INFRA.map(([key, label, info]) => (
-            <label className={styles.chip} key={key}>
-              <input type="checkbox" checked={localInfra.includes(key)} onChange={(e) => toggleInfra(key, e.target.checked)} /> {label}
-              <FieldInfo text={info} />
             </label>
           ))}
         </div>

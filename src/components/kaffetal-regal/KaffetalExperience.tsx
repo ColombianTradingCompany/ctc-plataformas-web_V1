@@ -71,6 +71,7 @@ type FincaRow = {
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
+  eudr_local_infra: string[] | null;
   eudr_producer_answers: Finca["eudrProducerAnswers"] | null;
 };
 
@@ -129,6 +130,7 @@ function dbFincaToFinca(
     lat: row.eudr_lat != null ? String(row.eudr_lat) : "",
     lng: row.eudr_lng != null ? String(row.eudr_lng) : "",
     eudrPolygon: row.eudr_polygon_geojson ?? null,
+    eudrLocalInfra: row.eudr_local_infra ?? [],
     eudrProducerAnswers: row.eudr_producer_answers && Object.keys(row.eudr_producer_answers).length > 0 ? row.eudr_producer_answers : null,
     eudrPlantingDate: row.eudr_planting_date || "",
     eudrProductionSystem: (row.eudr_production_system as Finca["eudrProductionSystem"]) || "",
@@ -616,6 +618,7 @@ function Experience() {
       eudr_deforestation_free: eff.deforestationFree,
       eudr_legal_production: eff.legalProduction,
       eudr_tenure: eff.tenure || null,
+      eudr_local_infra: f.eudrLocalInfra ?? [],
       eudr_producer_answers: producerAnswers,
       // eudr_evidence_types/eudr_legal_areas/eudr_sustainability_tags/notes are
       // BCP-only now (see FincaModal) and eudr_legal_docs_asset_id/filename go

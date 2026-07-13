@@ -9,7 +9,7 @@ import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
-import { fincaCode, type Finca, type GeneralInfo } from "./data";
+import { fincaCode, LOCAL_INFRA, type Finca, type GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
 
 const PRODUCTION_SYSTEMS: [Finca["eudrProductionSystem"], string][] = [
@@ -39,6 +39,7 @@ type EudrDraft = Pick<
   | "eudrDeforestationFree"
   | "eudrLegalProduction"
   | "eudrTenure"
+  | "eudrLocalInfra"
   | "eudrLegalDocsAssetId"
   | "eudrLegalDocsFilename"
 > & {
@@ -58,6 +59,7 @@ const EMPTY_EUDR_DRAFT: EudrDraft = {
   eudrDeforestationFree: null,
   eudrLegalProduction: null,
   eudrTenure: "",
+  eudrLocalInfra: [],
   eudrLegalDocsAssetId: null,
   eudrLegalDocsFilename: null,
   eudrEvidenceTypes: [],
@@ -173,6 +175,7 @@ function FincaModalBody({
           eudrDeforestationFree: pa ? pa.deforestationFree : finca.eudrDeforestationFree,
           eudrLegalProduction: pa ? pa.legalProduction : finca.eudrLegalProduction,
           eudrTenure: pa ? pa.tenure : finca.eudrTenure,
+          eudrLocalInfra: finca.eudrLocalInfra ?? [],
           eudrLegalDocsAssetId: finca.eudrLegalDocsAssetId,
           eudrLegalDocsFilename: finca.eudrLegalDocsFilename,
           // Read-only carry-through -- BCP-only fields, see EudrDraft's comment.
@@ -455,6 +458,28 @@ function FincaModalBody({
             ))}
           </div>
         </div>
+
+        <div className={styles.wide} style={{ marginBottom: 14 }}>
+          <label>
+            Infraestructura local
+            <FieldInfo text="Marque la infraestructura y maquinaria propia disponible en esta finca o cerca de ella. Cada elemento tiene una ⓘ que explica para qué sirve. Ayuda a evidenciar la capacidad de procesamiento y la trazabilidad de sus cafés." />
+          </label>
+          <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 6px" }}>Seleccione todo lo que tenga disponible.</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {LOCAL_INFRA.map(([key, label, info]) => (
+              <label key={key} className={styles.chip}>
+                <input
+                  type="checkbox"
+                  checked={eudr.eudrLocalInfra.includes(key)}
+                  onChange={(e) => patchEudr({ eudrLocalInfra: e.target.checked ? [...eudr.eudrLocalInfra, key] : eudr.eudrLocalInfra.filter((k) => k !== key) })}
+                />{" "}
+                {label}
+                <FieldInfo text={info} />
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div className={styles.wide} style={{ marginBottom: 14 }}>
           <label>
             Documento de respaldo (PDF) <small>(máx. 10 MB)</small>

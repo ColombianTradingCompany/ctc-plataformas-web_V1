@@ -40,6 +40,9 @@ export type Finca = {
   // Vertices captured by the Google Maps Drawing Manager when ha > 4 -- null
   // when the finca only needs the lat/lng point.
   eudrPolygon: { lat: number; lng: number }[] | null;
+  // Processing infrastructure/machinery available at or near this finca (keys
+  // from LOCAL_INFRA). Producer-declared, part of the finca's EUDR picture.
+  eudrLocalInfra: string[];
   // The producer's own submitted declarations, kept distinct from the eudr*
   // fields above (which hold CTC's evaluated value). Null on legacy fincas
   // saved before the split -- callers fall back to the eudr* fields then.
@@ -259,6 +262,29 @@ export function supplierCode(id: string) {
 export function fincaCode(id: string) {
   return "CTC-F-" + id.replace(/-/g, "").slice(0, 8).toUpperCase();
 }
+
+// Processing infrastructure/machinery a finca may have -- a producer-declared
+// part of the finca's EUDR picture. [key, label, short explanation for the ⓘ].
+export const LOCAL_INFRA: [string, string, string][] = [
+  ["semillero", "Semillero", "Área para germinar y criar las plántulas de café antes de llevarlas al campo."],
+  ["tractor", "Tractor / Retroexcavadoras", "Maquinaria para labores de campo y movimiento de tierra."],
+  ["acopio", "Espacio de acopio", "Bodega o espacio para acopiar y almacenar café antes de procesarlo o despacharlo."],
+  ["flotado", "Tanques de flotado", "Tanques que separan por densidad los granos vanos o defectuosos flotando la cereza en agua."],
+  ["lavado", "Instalación de lavado", "Instalación para lavar el café tras la fermentación (beneficio húmedo)."],
+  ["beneficio", "Maquinaria especializada de beneficio", "Despulpadoras, desmucilaginadoras y equipos afines del beneficio húmedo."],
+  ["fermentadores", "Fermentadores anaeróbicos", "Recipientes cerrados para fermentaciones controladas sin oxígeno."],
+  ["patios", "Patios de secado", "Superficies abiertas para secar el café al sol."],
+  ["marquesinas", "Marquesinas de secado", "Túneles/marquesinas de secado parabólico que protegen el café de la lluvia."],
+  ["guardiolas", "Guardiolas", "Secadoras mecánicas de tambor rotatorio para un secado controlado."],
+  ["silos", "Silos de secado", "Silos de secado mecánico con aire forzado."],
+  ["trilladora", "Trilladora", "Retira el pergamino para obtener el café verde (excelso)."],
+  ["monitor_mallas", "Monitor de mallas", "Clasifica el grano por tamaño de malla (granulometría)."],
+  ["optica", "Seleccionadora óptica", "Separa granos por color y detecta defectos de forma automática."],
+  ["vacio", "Empacadora al vacío", "Empaca el café verde al vacío para su conservación."],
+  ["tostadora", "Tostadora", "Tuesta el café destinado a consumo."],
+  ["molino", "Molino", "Muele el café tostado."],
+  ["empacadora_consumible", "Empacadora de consumible", "Empaca presentaciones de café de consumo (tostado/molido)."],
+];
 
 export const EMPTY_GI: GeneralInfo = {
   razon: "—",

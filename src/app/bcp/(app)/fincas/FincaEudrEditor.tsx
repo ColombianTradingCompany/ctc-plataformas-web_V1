@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { mapPreviewUrl } from "@/lib/eudr";
+import { LOCAL_INFRA } from "@/components/kaffetal-regal/data";
 import styles from "../shared.module.css";
+
+const INFRA_DICT: [string, string][] = LOCAL_INFRA.map(([k, l]) => [k, l]);
 
 const EVIDENCE_TYPES: [string, string][] = [
   ["satelital", "Imágenes satelitales"], ["observatory", "EU Observatory 2020"],
@@ -83,6 +86,7 @@ export type FincaEudrValues = {
   eudr_google_earth_url: string | null;
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
+  eudr_local_infra: string[] | null;
 };
 
 function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
@@ -220,6 +224,7 @@ export function FincaEudrEditor({
           <div>Libre de deforestación: {yesNoLabel(values.eudr_deforestation_free)}</div>
           <div>Producción legal: {yesNoLabel(values.eudr_legal_production)}</div>
           <div>Tenencia: {values.eudr_tenure ? TENURE_LABEL[values.eudr_tenure] : "sin definir"}</div>
+          <div>Infraestructura local: {labelsFor(values.eudr_local_infra, INFRA_DICT)}</div>
           <div>Evidencia: {labelsFor(values.eudr_evidence_types, EVIDENCE_TYPES)}</div>
           <div>Áreas legales verificadas: {labelsFor(values.eudr_legal_areas, LEGAL_AREAS)}</div>
           <div>

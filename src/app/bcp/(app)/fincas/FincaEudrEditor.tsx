@@ -35,6 +35,35 @@ function labelsFor(keys: string[] | null, dict: [string, string][]): string {
   return keys.map((k) => map.get(k) ?? k).join(", ");
 }
 
+// Shows the producer's declared answer for a field and, when CTC's value
+// differs, a one-click "Confirmar" to adopt it. Whatever ends up in the field
+// is CTC's evaluated value (the one printed on the certificate).
+function ProducerAnswerNote({
+  show,
+  producerLabel,
+  matches,
+  onConfirm,
+}: {
+  show: boolean;
+  producerLabel: string;
+  matches: boolean;
+  onConfirm: () => void;
+}) {
+  if (!show) return null;
+  return (
+    <p className={styles.meta} style={{ margin: "4px 0 0", fontSize: 11.5 }}>
+      Respuesta de Productor: <b>{producerLabel}</b>{" "}
+      {matches ? (
+        <span style={{ color: "#166534" }}>· confirmada</span>
+      ) : (
+        <button type="button" className="btn btn-sm" style={{ padding: "1px 8px", fontSize: 11 }} onClick={onConfirm}>
+          Confirmar
+        </button>
+      )}
+    </p>
+  );
+}
+
 export type FincaEudrValues = {
   eudr_lat: string | number | null;
   eudr_lng: string | number | null;
@@ -75,22 +104,44 @@ function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
 // fields under a <details> -- fine for the one BCP admin who built it, hard
 // to scan for anyone else. This shows a plain read summary by default and
 // only reveals the edit form when BCP explicitly clicks "Editar".
+export type ProducerAnswers = {
+  deforestationFree: boolean | null;
+  legalProduction: boolean | null;
+  tenure: string;
+  plantingDate: string;
+  productionSystem: string;
+  lat: string;
+  lng: string;
+  polygon: { lat: number; lng: number }[] | null;
+} | null;
+
 export function FincaEudrEditor({
   fincaName,
   values,
   legalDocUrl,
   fileUrls,
+  producerAnswers,
   saveAction,
 }: {
   fincaName: string;
   values: FincaEudrValues;
   legalDocUrl: string | undefined;
   fileUrls: Record<string, string>;
+  producerAnswers: ProducerAnswers;
   saveAction: (formData: FormData) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // The 5 producer declarations are controlled so CTC can either keep the
+  // producer's answer (Confirmar) or type a different value (override). What is
+  // stored in eudr_* is CTC's evaluated value -- that's what the certificate
+  // prints; "Respuesta de Productor" is shown for reference only.
+  const [evalPlanting, setEvalPlanting] = useState(values.eudr_planting_date ?? "");
+  const [evalSystem, setEvalSystem] = useState(values.eudr_production_system ?? "");
+  const [evalDefor, setEvalDefor] = useState(triSelectValue(values.eudr_deforestation_free));
+  const [evalLegal, setEvalLegal] = useState(triSelectValue(values.eudr_legal_production));
+  const [evalTenure, setEvalTenure] = useState(values.eudr_tenure ?? "");
   // Controlled so a per-item file input appears only for checked evidence /
   // sustainability keys.
   const [evidence, setEvidence] = useState<string[]>(values.eudr_evidence_types ?? []);
@@ -214,41 +265,71 @@ export function FincaEudrEditor({
           </div>
           <div className={styles.field}>
             <label>Fecha de establecimiento del cultivo</label>
-            <input type="date" name="eudr_planting_date" defaultValue={values.eudr_planting_date ?? ""} />
+            <input type="date" name="eudr_planting_date" value={evalPlanting} onChange={(e) => setEvalPlanting(e.target.value)} />
+            <ProducerAnswerNote
+              show={!!producerAnswers}
+              producerLabel={producerAnswers?.plantingDate || "sin definir"}
+              matches={(producerAnswers?.plantingDate ?? "") === evalPlanting}
+              onConfirm={() => setEvalPlanting(producerAnswers?.plantingDate ?? "")}
+            />
           </div>
           <div className={styles.field}>
             <label>Sistema productivo</label>
-            <select name="eudr_production_system" defaultValue={values.eudr_production_system ?? ""}>
+            <select name="eudr_production_system" value={evalSystem} onChange={(e) => setEvalSystem(e.target.value)}>
               <option value="">Seleccione…</option>
               <option value="sombra">Café bajo sombra</option>
               <option value="agroforestal">Agroforestal</option>
               <option value="tradicional">Tradicional / pleno sol</option>
             </select>
+            <ProducerAnswerNote
+              show={!!producerAnswers}
+              producerLabel={PRODUCTION_SYSTEM_LABEL[producerAnswers?.productionSystem ?? ""] ?? "sin definir"}
+              matches={(producerAnswers?.productionSystem ?? "") === evalSystem}
+              onConfirm={() => setEvalSystem(producerAnswers?.productionSystem ?? "")}
+            />
           </div>
           <div className={styles.field}>
             <label>¿Libre de deforestación posterior al 31/12/2020?</label>
-            <select name="eudr_deforestation_free" defaultValue={triSelectValue(values.eudr_deforestation_free)}>
+            <select name="eudr_deforestation_free" value={evalDefor} onChange={(e) => setEvalDefor(e.target.value)}>
               <option value="">Sin definir</option>
               <option value="si">Sí</option>
               <option value="no">No</option>
             </select>
+            <ProducerAnswerNote
+              show={!!producerAnswers}
+              producerLabel={yesNoLabel(producerAnswers?.deforestationFree ?? null)}
+              matches={triSelectValue(producerAnswers?.deforestationFree ?? null) === evalDefor}
+              onConfirm={() => setEvalDefor(triSelectValue(producerAnswers?.deforestationFree ?? null))}
+            />
           </div>
           <div className={styles.field}>
             <label>¿Producción en áreas legalmente establecidas?</label>
-            <select name="eudr_legal_production" defaultValue={triSelectValue(values.eudr_legal_production)}>
+            <select name="eudr_legal_production" value={evalLegal} onChange={(e) => setEvalLegal(e.target.value)}>
               <option value="">Sin definir</option>
               <option value="si">Sí</option>
               <option value="no">No</option>
             </select>
+            <ProducerAnswerNote
+              show={!!producerAnswers}
+              producerLabel={yesNoLabel(producerAnswers?.legalProduction ?? null)}
+              matches={triSelectValue(producerAnswers?.legalProduction ?? null) === evalLegal}
+              onConfirm={() => setEvalLegal(triSelectValue(producerAnswers?.legalProduction ?? null))}
+            />
           </div>
           <div className={styles.field}>
             <label>Tenencia de la tierra</label>
-            <select name="eudr_tenure" defaultValue={values.eudr_tenure ?? ""}>
+            <select name="eudr_tenure" value={evalTenure} onChange={(e) => setEvalTenure(e.target.value)}>
               <option value="">Seleccione…</option>
               <option value="propietario">Propietario</option>
               <option value="poseedor">Poseedor reconocido</option>
               <option value="asociacion">Asociación</option>
             </select>
+            <ProducerAnswerNote
+              show={!!producerAnswers}
+              producerLabel={TENURE_LABEL[producerAnswers?.tenure ?? ""] ?? "sin definir"}
+              matches={(producerAnswers?.tenure ?? "") === evalTenure}
+              onConfirm={() => setEvalTenure(producerAnswers?.tenure ?? "")}
+            />
           </div>
         </div>
 

@@ -17,6 +17,7 @@ import {
   STAGE_DB,
   type CompletionPoint,
   type Finca,
+  type EudrProducerAnswers,
   fincaSelfDeletable,
   pendingLotsOfFinca,
   supplierCode,
@@ -70,6 +71,7 @@ type FincaRow = {
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
+  eudr_producer_answers: Finca["eudrProducerAnswers"] | null;
 };
 
 type LotRow = {
@@ -127,6 +129,7 @@ function dbFincaToFinca(
     lat: row.eudr_lat != null ? String(row.eudr_lat) : "",
     lng: row.eudr_lng != null ? String(row.eudr_lng) : "",
     eudrPolygon: row.eudr_polygon_geojson ?? null,
+    eudrProducerAnswers: row.eudr_producer_answers && Object.keys(row.eudr_producer_answers).length > 0 ? row.eudr_producer_answers : null,
     eudrPlantingDate: row.eudr_planting_date || "",
     eudrProductionSystem: (row.eudr_production_system as Finca["eudrProductionSystem"]) || "",
     eudrDeforestationFree: row.eudr_deforestation_free,
@@ -549,6 +552,48 @@ function Experience() {
   async function saveFinca(f: Finca): Promise<boolean> {
     if (!userId) return false;
     const hectares = f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : 0;
+    const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
+
+    // The FincaModal edits the PRODUCER's declarations, so f's eudr fields carry
+    // the producer's answer. Snapshot it, then let CTC's evaluated columns
+    // (eudr_*) follow the producer only on fields the producer actually changed
+    // -- preserving any CTC override on fields the producer left untouched.
+    const producerAnswers: EudrProducerAnswers = {
+      deforestationFree: f.eudrDeforestationFree,
+      legalProduction: f.eudrLegalProduction,
+      tenure: f.eudrTenure,
+      plantingDate: f.eudrPlantingDate,
+      productionSystem: f.eudrProductionSystem,
+      lat: f.lat,
+      lng: f.lng,
+      polygon: f.eudrPolygon,
+    };
+    // Previous producer answer (fallback to CTC columns for legacy fincas).
+    const prev: EudrProducerAnswers | null = editing
+      ? editing.eudrProducerAnswers ?? {
+          deforestationFree: editing.eudrDeforestationFree,
+          legalProduction: editing.eudrLegalProduction,
+          tenure: editing.eudrTenure,
+          plantingDate: editing.eudrPlantingDate,
+          productionSystem: editing.eudrProductionSystem,
+          lat: editing.lat,
+          lng: editing.lng,
+          polygon: editing.eudrPolygon,
+        }
+      : null;
+    const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+    // CTC value = producer's new answer if changed (or new finca), else keep CTC's current.
+    const eff = {
+      deforestationFree: !prev || !same(f.eudrDeforestationFree, prev.deforestationFree) ? f.eudrDeforestationFree : editing!.eudrDeforestationFree,
+      legalProduction: !prev || !same(f.eudrLegalProduction, prev.legalProduction) ? f.eudrLegalProduction : editing!.eudrLegalProduction,
+      tenure: !prev || !same(f.eudrTenure, prev.tenure) ? f.eudrTenure : editing!.eudrTenure,
+      plantingDate: !prev || !same(f.eudrPlantingDate, prev.plantingDate) ? f.eudrPlantingDate : editing!.eudrPlantingDate,
+      productionSystem: !prev || !same(f.eudrProductionSystem, prev.productionSystem) ? f.eudrProductionSystem : editing!.eudrProductionSystem,
+      lat: !prev || !same(f.lat, prev.lat) ? f.lat : editing!.lat,
+      lng: !prev || !same(f.lng, prev.lng) ? f.lng : editing!.lng,
+      polygon: !prev || !same(f.eudrPolygon, prev.polygon) ? f.eudrPolygon : editing!.eudrPolygon,
+    };
+
     const payload = {
       producer_id: userId,
       name: f.name,
@@ -563,20 +608,20 @@ function Experience() {
       // (hectares > 4) stored` in Postgres, so Postgres derives it from
       // `hectares` automatically. Sending it explicitly makes the whole
       // UPDATE fail (Postgres rejects writes to generated columns outright).
-      eudr_lat: f.lat.trim() ? Number(f.lat.replace(",", ".")) : null,
-      eudr_lng: f.lng.trim() ? Number(f.lng.replace(",", ".")) : null,
-      eudr_polygon_geojson: f.eudrPolygon,
-      eudr_planting_date: f.eudrPlantingDate || null,
-      eudr_production_system: f.eudrProductionSystem || null,
-      eudr_deforestation_free: f.eudrDeforestationFree,
-      eudr_legal_production: f.eudrLegalProduction,
-      eudr_tenure: f.eudrTenure || null,
+      eudr_lat: eff.lat.trim() ? Number(eff.lat.replace(",", ".")) : null,
+      eudr_lng: eff.lng.trim() ? Number(eff.lng.replace(",", ".")) : null,
+      eudr_polygon_geojson: eff.polygon,
+      eudr_planting_date: eff.plantingDate || null,
+      eudr_production_system: eff.productionSystem || null,
+      eudr_deforestation_free: eff.deforestationFree,
+      eudr_legal_production: eff.legalProduction,
+      eudr_tenure: eff.tenure || null,
+      eudr_producer_answers: producerAnswers,
       // eudr_evidence_types/eudr_legal_areas/eudr_sustainability_tags/notes are
       // BCP-only now (see FincaModal) and eudr_legal_docs_asset_id/filename go
       // through uploadFincaLegalDoc -- none of those are sent here, same as
       // video_asset_id never being sent through this general save.
     };
-    const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
 
     if (editing) {
       const { data, error } = await supabase.from("fincas").update(payload).eq("id", editing.id).select("*").single();

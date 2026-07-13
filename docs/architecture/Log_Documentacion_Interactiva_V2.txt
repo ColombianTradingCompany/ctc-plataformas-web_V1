@@ -208,5 +208,24 @@ is closed and left as historical record of what went into producing it).
   CTC's decision. Finca type gained certShared.
 - STILL PENDING (design-heavy, next): producer answers kept as "Respuesta de
   Productor" with BCP confirm/override, not printed on the certificate.
+(commit: 6665199)
+
+## [2026-07-13] Producer answer vs CTC-evaluated split (Respuesta de Productor)
+- New fincas.eudr_producer_answers jsonb snapshots the producer's five
+  declarations + geolocation (deforestationFree, legalProduction, tenure,
+  plantingDate, productionSystem, lat/lng/polygon). The existing eudr_*
+  columns now hold CTC's EVALUATED value -- that's what the status/chip,
+  dossier and certificate use. Key DICT/node update: a finca's EUDR answers
+  now have two layers (producer's declaration vs CTC's evaluation).
+- Producer FincaModal edits their own answer (seeds from eudr_producer_answers,
+  fallback to eudr_* for legacy fincas). saveFinca snapshots the answer and
+  lets eudr_* follow the producer ONLY on fields the producer actually changed
+  -- preserving a prior CTC override on untouched fields. When CTC's value
+  differs, the producer sees an amber banner ("CTC ajustó… → X; su respuesta
+  original se conserva") -- verified live.
+- BCP FincaEudrEditor: each of the five declarations shows "Respuesta de
+  Productor: X" with a one-click "Confirmar" (adopt) or a normal edit
+  (override). Whatever is saved to eudr_* is CTC's value; the certificate
+  prints only that, never the producer snapshot.
 (commit: pending)
 

@@ -158,17 +158,21 @@ function FincaModalBody({
       setHelpOpen(false);
     }
   }
+  // The producer edits their OWN declarations, so seed from eudrProducerAnswers
+  // (the producer's answer), falling back to the eudr* columns for legacy fincas
+  // saved before the producer/CTC split existed.
+  const pa = finca?.eudrProducerAnswers ?? null;
   const [eudr, setEudr] = useState<EudrDraft>(
     finca
       ? {
-          lat: finca.lat,
-          lng: finca.lng,
-          eudrPolygon: finca.eudrPolygon,
-          eudrPlantingDate: finca.eudrPlantingDate,
-          eudrProductionSystem: finca.eudrProductionSystem,
-          eudrDeforestationFree: finca.eudrDeforestationFree,
-          eudrLegalProduction: finca.eudrLegalProduction,
-          eudrTenure: finca.eudrTenure,
+          lat: pa ? pa.lat : finca.lat,
+          lng: pa ? pa.lng : finca.lng,
+          eudrPolygon: pa ? pa.polygon : finca.eudrPolygon,
+          eudrPlantingDate: pa ? pa.plantingDate : finca.eudrPlantingDate,
+          eudrProductionSystem: pa ? pa.productionSystem : finca.eudrProductionSystem,
+          eudrDeforestationFree: pa ? pa.deforestationFree : finca.eudrDeforestationFree,
+          eudrLegalProduction: pa ? pa.legalProduction : finca.eudrLegalProduction,
+          eudrTenure: pa ? pa.tenure : finca.eudrTenure,
           eudrLegalDocsAssetId: finca.eudrLegalDocsAssetId,
           eudrLegalDocsFilename: finca.eudrLegalDocsFilename,
           // Read-only carry-through -- BCP-only fields, see EudrDraft's comment.
@@ -180,6 +184,20 @@ function FincaModalBody({
         }
       : EMPTY_EUDR_DRAFT
   );
+
+  // Fields where CTC's evaluation (finca.eudr*) differs from what the producer
+  // declared (pa) -- surfaced as a note so the producer sees CTC's value.
+  const YESNO = (v: boolean | null) => (v === true ? "Sí" : v === false ? "No" : "sin definir");
+  const TENURE_L: Record<string, string> = { propietario: "Propietario", poseedor: "Poseedor reconocido", asociacion: "Asociación" };
+  const SYS_L: Record<string, string> = { sombra: "Café bajo sombra", agroforestal: "Agroforestal", tradicional: "Tradicional / pleno sol" };
+  const ctcAdjustments: string[] = [];
+  if (finca && pa) {
+    if (pa.deforestationFree !== finca.eudrDeforestationFree) ctcAdjustments.push(`Libre de deforestación → ${YESNO(finca.eudrDeforestationFree)}`);
+    if (pa.legalProduction !== finca.eudrLegalProduction) ctcAdjustments.push(`Producción legal → ${YESNO(finca.eudrLegalProduction)}`);
+    if (pa.tenure !== finca.eudrTenure) ctcAdjustments.push(`Tenencia → ${finca.eudrTenure ? TENURE_L[finca.eudrTenure] : "sin definir"}`);
+    if (pa.plantingDate !== finca.eudrPlantingDate) ctcAdjustments.push(`Fecha de siembra → ${finca.eudrPlantingDate || "sin definir"}`);
+    if (pa.productionSystem !== finca.eudrProductionSystem) ctcAdjustments.push(`Sistema productivo → ${finca.eudrProductionSystem ? SYS_L[finca.eudrProductionSystem] : "sin definir"}`);
+  }
 
   function patchEudr(patch: Partial<EudrDraft>) {
     setEudr((d) => ({ ...d, ...patch }));
@@ -207,6 +225,7 @@ function FincaModalBody({
     profilePhotoUrl: finca?.profilePhotoUrl ?? null,
     requiresEudrPolygon: finca?.requiresEudrPolygon ?? false,
     eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
+    eudrProducerAnswers: finca?.eudrProducerAnswers ?? null,
     ...eudr,
   };
   const eudrStatus = fincaEudrStatus(previewFinca);
@@ -237,6 +256,7 @@ function FincaModalBody({
       profilePhotoUrl: finca?.profilePhotoUrl ?? null,
       requiresEudrPolygon: needsPolygon,
       eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
+      eudrProducerAnswers: finca?.eudrProducerAnswers ?? null,
       ...eudr,
     });
     setSaving(false);
@@ -342,6 +362,12 @@ function FincaModalBody({
         <p style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 2 }}>
           Reglamento (UE) 2023/1115. Este predio se declara una sola vez y se reutiliza en todos los lotes que salgan de él.
         </p>
+        {ctcAdjustments.length > 0 && (
+          <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "9px 12px", margin: "8px 0", fontSize: 12.5, color: "#92400E" }}>
+            <b>CTC ajustó su evaluación de estos campos:</b> {ctcAdjustments.join(" · ")}. Su respuesta original se conserva; los
+            valores que muestra este formulario son los suyos y puede actualizarlos.
+          </div>
+        )}
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", margin: "6px 0 14px" }}>
           {/* download (not target=_blank): these should save to disk, not open the
               in-browser PDF viewer. */}

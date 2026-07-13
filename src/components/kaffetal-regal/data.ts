@@ -40,6 +40,23 @@ export type Finca = {
   // Vertices captured by the Google Maps Drawing Manager when ha > 4 -- null
   // when the finca only needs the lat/lng point.
   eudrPolygon: { lat: number; lng: number }[] | null;
+  // The producer's own submitted declarations, kept distinct from the eudr*
+  // fields above (which hold CTC's evaluated value). Null on legacy fincas
+  // saved before the split -- callers fall back to the eudr* fields then.
+  eudrProducerAnswers: EudrProducerAnswers | null;
+};
+
+// The five categorical declarations + geolocation the producer submits; CTC
+// may confirm or override each. "Respuesta de Productor" in the BCP evaluator.
+export type EudrProducerAnswers = {
+  deforestationFree: boolean | null;
+  legalProduction: boolean | null;
+  tenure: "" | "propietario" | "poseedor" | "asociacion";
+  plantingDate: string;
+  productionSystem: "" | "sombra" | "agroforestal" | "tradicional";
+  lat: string;
+  lng: string;
+  polygon: { lat: number; lng: number }[] | null;
 };
 
 // A lot is "committed" to CTC once it enters the Arena pipeline (stage index

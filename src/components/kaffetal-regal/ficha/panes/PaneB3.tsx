@@ -25,6 +25,13 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
       <p className={styles.fexample} style={{ marginTop: 8 }}>
         El &quot;Trillado Verde Restante&quot; es el dato central: los defectos se restan de él para obtener el Grano Sano, base del Factor de Rendimiento y de la granulometría (las mallas se tamizan sobre el grano ya sano, sin defectos).
       </p>
+      <p className={styles.fexample} style={{ marginTop: 4 }}>
+        🎥{" "}
+        <a href="https://www.youtube.com/watch?v=fLzOAHJkuQg" target="_blank" rel="noopener noreferrer">
+          Aprenda aquí cómo calcular el factor de rendimiento
+        </a>
+        <FieldInfo text="Amigo caficultor, ¿sabe qué es el factor de rendimiento del café y cómo implementarlo? La Cooperativa de Caficultores te enseña cómo se realiza este paso clave en el proceso de compra. 🍒☕" />
+      </p>
 
       <div className={bstyles.layout}>
         <div>

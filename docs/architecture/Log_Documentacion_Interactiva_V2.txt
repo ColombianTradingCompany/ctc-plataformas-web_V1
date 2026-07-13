@@ -264,5 +264,11 @@ is closed and left as historical record of what went into producing it).
   confirm message lists, per field, why it matters and reassures that CTC
   will determine it objectively/methodically before continuing. Metadata in
   B1_OPTIONAL_FIELDS (fichaData) drives both the checkboxes and the message.
+(commit: eda429a)
+
+## [2026-07-13] B3: factor-de-rendimiento tutorial video link
+- PaneB3 intro now links to a Cooperativa de Caficultores YouTube tutorial
+  (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
+  rendimiento, with an ⓘ friendly note. Content only.
 (commit: pending)
 

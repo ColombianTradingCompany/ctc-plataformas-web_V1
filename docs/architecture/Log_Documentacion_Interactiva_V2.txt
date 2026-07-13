@@ -288,5 +288,5 @@ is closed and left as historical record of what went into producing it).
   Declaraciones-EUDR table row ("Infraestructura local"); both dossier route
   queries (bcp .../fincas/[id]/dossier and producer certificacion/[id]) fetch
   eudr_local_infra.
-(commit: pending)
+(commit: f9fae0a)
 

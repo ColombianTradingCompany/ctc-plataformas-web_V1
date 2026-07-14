@@ -13,7 +13,41 @@ export type LeadEmailInput = {
   nombre: string;
   email: string;
   account_provisioning: string; // created_password | created_google | existing
+  message?: string | null; // the lead's original request text (echoed in emails)
 };
+
+// One entry of the lead's conversation, oldest-first, quoted at the bottom of
+// every outbound email so the recipient always has the full context.
+export type ThreadMessage = { who: "CTC" | "Productor"; date: string; text: string };
+
+const SIGN = "Un abrazo,\nColombian Trading Company · CTCx\ninfo@ctcexport.com";
+
+// Nudge the lead back into the web app to keep the conversation going there.
+// Producers have the in-app "Retroalimentación y ayuda" thread; buyers just
+// get an access link.
+function loginCta(pillar: string): string {
+  const p = platformFor(pillar);
+  return pillar === "cocreate"
+    ? `➜ Continúe con nosotros desde su cuenta: inicie sesión en ${p.name} · ${p.url}`
+    : `➜ Continúe esta conversación desde su panel: inicie sesión en ${p.name} (${p.url}) y ábrala en la sección "Retroalimentación y ayuda".`;
+}
+
+function renderThread(thread: ThreadMessage[]): string {
+  if (!thread.length) return "";
+  const lines = thread.map((m) => `[${m.who} · ${new Date(m.date).toLocaleDateString("es-CO")}]\n${m.text}`);
+  return `\n\n———————————— Historial de la conversación ————————————\n\n${lines.join("\n\n·  ·  ·\n\n")}`;
+}
+
+function passwordBlock(lead: LeadEmailInput, tempPassword: string): string {
+  const platform = platformFor(lead.pillar);
+  return [
+    `--- Su acceso a ${platform.name} ---`,
+    `Usuario: ${lead.email}`,
+    `Contraseña: ${tempPassword}`,
+    `Ingrese en: ${platform.url}`,
+    "Le recomendamos cambiarla al ingresar.",
+  ].join("\n");
+}
 
 export const PILLAR_LABEL: Record<string, string> = {
   general: "Consulta general",
@@ -67,21 +101,25 @@ export function buildWelcomeEmail(lead: LeadEmailInput): { subject: string; text
         : `Vinculamos tu solicitud a tu cuenta existente de la plataforma (${platform.url}).`;
 
   const subject = `Recibimos tu solicitud · ${PILLAR_LABEL[lead.pillar] ?? "CTC"} · Colombian Trading Company`;
-  const text = [
-    `Hola ${lead.nombre},`,
-    "",
-    `Gracias por escribirnos. Recibimos tu solicitud de ${PILLAR_LABEL[lead.pillar] ?? "contacto"} y nuestro equipo la está revisando: te responderemos pronto a este mismo correo.`,
-    "",
-    platformIntro,
-    "",
-    accountLine,
-    "",
-    `Mientras tanto, te invitamos a explorar la plataforma: ${platform.url}`,
-    "",
-    "Un abrazo caficultor,",
-    "Colombian Trading Company · CTCx",
-    "info@ctcexport.com",
-  ].join("\n");
+  // The conversation so far is just the lead's own request -- echo it so the
+  // thread reads consistently from the very first email.
+  const thread: ThreadMessage[] = lead.message
+    ? [{ who: "Productor", date: new Date().toISOString(), text: lead.message }]
+    : [];
+  const text =
+    [
+      `Hola ${lead.nombre},`,
+      "",
+      `Gracias por escribirnos. Recibimos tu solicitud de ${PILLAR_LABEL[lead.pillar] ?? "contacto"} y nuestro equipo la está revisando: te responderemos pronto a este mismo correo.`,
+      "",
+      platformIntro,
+      "",
+      accountLine,
+      "",
+      loginCta(lead.pillar),
+      "",
+      SIGN,
+    ].join("\n") + renderThread(thread);
   return { subject, text };
 }
 
@@ -96,20 +134,13 @@ export async function sendLeadWelcomeEmail(lead: LeadEmailInput): Promise<SendRe
 export async function sendLeadReplyEmail(
   lead: LeadEmailInput,
   reply: { subject: string; body: string },
-  tempPassword: string | null
+  tempPassword: string | null,
+  // The full prior conversation (oldest-first), quoted below the new message.
+  thread: ThreadMessage[] = []
 ): Promise<SendResult> {
-  const platform = platformFor(lead.pillar);
-  let text = `Hola ${lead.nombre},\n\n${reply.body}\n\nColombian Trading Company · CTCx\ninfo@ctcexport.com`;
-  if (tempPassword) {
-    text += [
-      "",
-      "",
-      `--- Tu acceso a ${platform.name} ---`,
-      `Usuario: ${lead.email}`,
-      `Contraseña: ${tempPassword}`,
-      `Ingresa en: ${platform.url}`,
-      "Te recomendamos cambiarla al ingresar.",
-    ].join("\n");
-  }
+  const parts = [`Hola ${lead.nombre},`, "", reply.body];
+  if (tempPassword) parts.push("", passwordBlock(lead, tempPassword));
+  parts.push("", loginCta(lead.pillar), "", SIGN);
+  const text = parts.join("\n") + renderThread(thread);
   return send(lead.email, reply.subject, text);
 }

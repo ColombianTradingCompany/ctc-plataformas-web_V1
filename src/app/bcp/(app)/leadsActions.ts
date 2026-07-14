@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { sendLeadWelcomeEmail, sendLeadReplyEmail, PILLAR_LABEL, type LeadEmailInput } from "@/lib/email/leadEmails";
+import { sendLeadWelcomeEmail, sendLeadReplyEmail, PILLAR_LABEL, type LeadEmailInput, type ThreadMessage } from "@/lib/email/leadEmails";
 
 async function requireAdmin() {
   const session = await createSessionClient();
@@ -25,16 +25,55 @@ type LeadRow = LeadEmailInput & {
   temp_password: string | null;
   first_replied_at: string | null;
   profile_id: string | null;
+  created_at: string;
 };
 
 async function getLead(service: ReturnType<typeof createServiceRoleClient>, leadId: string): Promise<LeadRow> {
   const { data } = await service
     .from("leads")
-    .select("id, pillar, nombre, email, status, account_provisioning, temp_password, first_replied_at, profile_id")
+    .select("id, pillar, nombre, email, message, status, account_provisioning, temp_password, first_replied_at, profile_id, created_at")
     .eq("id", leadId)
     .single();
   if (!data) throw new Error("Lead no encontrado.");
   return data as LeadRow;
+}
+
+// Assembles the lead's full conversation (oldest-first) so every outbound
+// email can quote it: the original request, every SENT BCP reply, and the
+// producer's own in-app thread replies (producer-role leads). CTC notes
+// mirrored into producer_comm_log are skipped here -- they'd duplicate the
+// lead_replies rows.
+async function fetchLeadThread(service: ReturnType<typeof createServiceRoleClient>, lead: LeadRow): Promise<ThreadMessage[]> {
+  const msgs: ThreadMessage[] = [];
+  if (lead.message) msgs.push({ who: "Productor", date: lead.created_at, text: lead.message });
+
+  const { data: replies } = await service
+    .from("lead_replies")
+    .select("body, sent_at, created_at")
+    .eq("lead_id", lead.id)
+    .not("sent_at", "is", null)
+    .order("created_at", { ascending: true });
+  for (const r of (replies as { body: string; sent_at: string | null; created_at: string }[] | null) ?? []) {
+    msgs.push({ who: "CTC", date: r.sent_at ?? r.created_at, text: r.body });
+  }
+
+  if (lead.profile_id) {
+    const { data: mirror } = await service.from("producer_comm_log").select("id").eq("lead_id", lead.id);
+    const mirrorIds = ((mirror as { id: string }[] | null) ?? []).map((m) => m.id);
+    if (mirrorIds.length) {
+      const { data: prod } = await service
+        .from("producer_comm_log")
+        .select("note, created_at")
+        .eq("author_role", "producer")
+        .in("parent_id", mirrorIds)
+        .order("created_at", { ascending: true });
+      for (const p of (prod as { note: string; created_at: string }[] | null) ?? []) {
+        msgs.push({ who: "Productor", date: p.created_at, text: p.note });
+      }
+    }
+  }
+
+  return msgs.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // A successful reply also lands in the producer's in-app "Retroalimentación y
@@ -99,7 +138,8 @@ export async function replyToLead(leadId: string, formData: FormData) {
     .single();
   if (error || !reply) throw new Error("No se pudo registrar la respuesta.");
 
-  const result = await sendLeadReplyEmail(lead, { subject, body }, lead.temp_password);
+  const thread = await fetchLeadThread(service, lead);
+  const result = await sendLeadReplyEmail(lead, { subject, body }, lead.temp_password, thread);
   if (result.ok) {
     await applySuccessfulReply(service, lead, reply.id, body, includesPassword, adminId);
   } else {
@@ -173,7 +213,8 @@ export async function retryReplyEmail(replyId: string) {
   // Re-append the password only if this reply was its designated carrier and
   // it hasn't been delivered (cleared) by a successful send yet.
   const tempPassword = reply.includes_password ? lead.temp_password : null;
-  const result = await sendLeadReplyEmail(lead, reply, tempPassword);
+  const thread = await fetchLeadThread(service, lead);
+  const result = await sendLeadReplyEmail(lead, reply, tempPassword, thread);
   if (result.ok) {
     // Clear the password only if THIS send actually carried it -- a retried
     // non-carrier reply must not discard an undelivered password.

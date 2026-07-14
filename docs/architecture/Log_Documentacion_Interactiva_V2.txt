@@ -271,6 +271,26 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-14] Correos de leads: historial completo + CTA de "iniciar sesión"
+Cada correo saliente de un lead ahora (1) cita el HISTORIAL completo de la
+conversación y (2) invita a iniciar sesión para continuarla en la web.
+- leadEmails.ts: nuevo tipo ThreadMessage; renderThread() adjunta al pie
+  "Historial de la conversación" (cronológico, [CTC/Productor · fecha]);
+  loginCta() apunta al panel (productores → "Retroalimentación y ayuda";
+  cocreate → acceso a Cherry Picked). La bienvenida ahora también incluye el
+  CTA y hace eco de la solicitud original (LeadEmailInput.message). El bloque
+  de contraseña y la firma se unificaron en helpers.
+- leadsActions.ts: fetchLeadThread() arma el hilo desde la solicitud inicial +
+  las respuestas de BCP enviadas (lead_replies con sent_at) + las respuestas
+  in-app del productor (producer_comm_log author_role='producer' vía
+  parent_id → nota espejo del lead); evita duplicar las notas espejo de CTC.
+  replyToLead y retryReplyEmail pasan el hilo a sendLeadReplyEmail; getLead
+  ahora trae message + created_at. La respuesta nueva no se autocita (se
+  filtra por sent_at nulo).
+- Verificado renderizando el texto real (fallback dev): bienvenida con eco de
+  solicitud + CTA; 2ª respuesta con hilo Productor→CTC→Productor completo.
+(commit: pending)
+
 ## [2026-07-14] KR móvil: padding lateral + iconos de línea del Panel del Productor
 - BUG de padding (real, no percepción): el panel iba pegado a los bordes en el
   celular. El wrapper es class="wrap main"; el shorthand del módulo

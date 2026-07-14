@@ -108,6 +108,7 @@ async function insertLeadAndWelcome(
     nombre: row.nombre,
     email: row.email,
     account_provisioning: row.account_provisioning,
+    message: row.message,
   });
   await service
     .from("leads")

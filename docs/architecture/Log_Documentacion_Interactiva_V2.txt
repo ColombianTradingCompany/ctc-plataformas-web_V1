@@ -295,7 +295,7 @@ is closed and left as historical record of what went into producing it).
   Certificación, documento en Contratos, destello en Más allá de la
   exportación. Se quitaron también los emoji de los encabezados de servicios.
   Más elegante y serio, acorde al tono editorial de la app.
-(commit: pending)
+(commit: 0c9cde9)
 
 ## [2026-07-14] Remitente unificado EMAIL_FROM (leads + OTP de BCP)
 sendOtpEmail.ts ahora usa el mismo EMAIL_FROM que los correos de leads, con el

@@ -37,6 +37,42 @@ function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
 // closes it like any other layer.
 export type DashboardModule = "info" | "muestras" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
 
+// Minimalist stroked line icons (one visual language, currentColor) — replaces
+// the multicolor emoji that clashed with the panel's editorial tone.
+function LineIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {children}
+    </svg>
+  );
+}
+const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
+  info: (
+    <LineIcon><circle cx="12" cy="8" r="3.4" /><path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" /></LineIcon>
+  ),
+  fincas: (
+    <LineIcon><path d="M12 20v-8" /><path d="M12 12c0-3 2.2-5 5.2-5 0 3-2.2 5-5.2 5Z" /><path d="M12 14.5c0-2.4-1.8-4-4.3-4 0 2.4 1.8 4 4.3 4Z" /></LineIcon>
+  ),
+  lotes: (
+    <LineIcon><path d="M4 8h13v4.5a4.5 4.5 0 0 1-4.5 4.5H8.5A4.5 4.5 0 0 1 4 12.5V8Z" /><path d="M17 9h1.6a2.4 2.4 0 0 1 0 4.8H17" /><path d="M7.5 3.2c.5.8-.5 1.4 0 2.4M11 3.2c.5.8-.5 1.4 0 2.4" /></LineIcon>
+  ),
+  muestras: (
+    <LineIcon><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" /><path d="M4 7l8 4 8-4" /><path d="M12 21V11" /></LineIcon>
+  ),
+  retro: (
+    <LineIcon><path d="M20 12a7.2 7.2 0 0 1-9.9 6.7L5 20l1.3-4.4A7.2 7.2 0 1 1 20 12Z" /></LineIcon>
+  ),
+  cert: (
+    <LineIcon><circle cx="12" cy="10" r="5" /><path d="M8.7 14.3 7 21l5-2.4L17 21l-1.7-6.7" /></LineIcon>
+  ),
+  contratos: (
+    <LineIcon><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4" /><path d="M10 13h5M10 16.5h5" /></LineIcon>
+  ),
+  servicios: (
+    <LineIcon><path d="M12 3.5l1.7 5.3 5.3 1.7-5.3 1.7L12 17.5l-1.7-5.3L5 10.5l5.3-1.7Z" /><path d="M18.5 16.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6Z" /></LineIcon>
+  ),
+};
+
 // The reference is long, so only the 7 characters that actually go on the
 // physical sample package are bolded -- same convention used in the Ficha.
 function CtcRef({ id }: { id: string }) {
@@ -163,17 +199,17 @@ export function AppDashboard({
   const lotsInQueue = lots.filter((l) => l.stage === 4).length;
   const infoComplete = gi.razon !== "—" && gi.agri !== "—";
 
-  const tiles: { key: DashboardModule; icon: string; title: string; fact: string; alert?: boolean }[] = [
+  const tiles: { key: DashboardModule; icon: React.ReactNode; title: string; fact: string; alert?: boolean }[] = [
     {
       key: "info",
-      icon: "👤",
+      icon: HUB_ICON.info,
       title: "Información general",
       fact: infoComplete ? `${gi.agri} · ${gi.razon}` : "Complete su información una sola vez",
       alert: !infoComplete,
     },
     {
       key: "fincas",
-      icon: "🌱",
+      icon: HUB_ICON.fincas,
       title: "Mis fincas",
       fact: fincas.length
         ? `${fincas.length} registrada${fincas.length === 1 ? "" : "s"} · ${aptFincas} EUDR Apta${aptFincas === 1 ? "" : "s"}`
@@ -182,7 +218,7 @@ export function AppDashboard({
     },
     {
       key: "lotes",
-      icon: "☕",
+      icon: HUB_ICON.lotes,
       title: "Mis lotes",
       fact: lots.length
         ? `${lots.length} lote${lots.length === 1 ? "" : "s"} · ${lotsInQueue} en fila para la Arena`
@@ -190,33 +226,33 @@ export function AppDashboard({
     },
     {
       key: "muestras",
-      icon: "📦",
+      icon: HUB_ICON.muestras,
       title: "Envío de muestras",
       fact: samplesToShip > 0 ? `${samplesToShip} muestra${samplesToShip === 1 ? "" : "s"} por enviar` : "Dirección y guía de envío · 2 kg por lote",
       alert: samplesToShip > 0,
     },
     {
       key: "retro",
-      icon: "💬",
+      icon: HUB_ICON.retro,
       title: "Retroalimentación y ayuda",
       fact: newCtcNotes > 0 ? `${newCtcNotes} nota${newCtcNotes === 1 ? "" : "s"} nueva${newCtcNotes === 1 ? "" : "s"} de CTC` : "Converse con CTC sobre sus fincas y solicitudes",
       alert: newCtcNotes > 0,
     },
     {
       key: "cert",
-      icon: "🏅",
+      icon: HUB_ICON.cert,
       title: "Certificación CTC",
       fact: certified.length ? `${certified.length} certificado${certified.length === 1 ? "" : "s"} emitido${certified.length === 1 ? "" : "s"}` : "Se emiten al evaluar sus lotes en la Arena",
     },
     {
       key: "contratos",
-      icon: "🤝",
+      icon: HUB_ICON.contratos,
       title: "Mis contratos",
       fact: contracts.length ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC` : "Aparecen al ganar un galardón en la Arena",
     },
     {
       key: "servicios",
-      icon: "✨",
+      icon: HUB_ICON.servicios,
       title: "Más allá de la exportación",
       fact: "CTC Tech · Varietales Registrados — solicítelos desde su panel",
     },
@@ -630,7 +666,7 @@ export function AppDashboard({
             </div>
 
             <div style={{ marginTop: 18 }}>
-              <h5 style={{ margin: 0 }}>🔬 CTC Tech · Implementación de nuevas tecnologías agrónomas</h5>
+              <h5 style={{ margin: 0 }}>CTC Tech · Implementación de nuevas tecnologías agrónomas</h5>
               <div className={styles.sub}>
                 Diagnóstico en finca para definir qué tecnología aplica a su beneficio y su presupuesto: ozono + UV,
                 fermentación controlada, selección óptica, cromatografía de suelos e instrumentación de medición.
@@ -678,7 +714,7 @@ export function AppDashboard({
             </div>
 
             <div style={{ marginTop: 24, borderTop: "1px solid var(--line)", paddingTop: 16 }}>
-              <h5 style={{ margin: 0 }}>🌱 Varietales Registrados · Plántulas verificadas desde la chapola</h5>
+              <h5 style={{ margin: 0 }}>Varietales Registrados · Plántulas verificadas desde la chapola</h5>
               <div className={styles.sub}>
                 Genética con papeles y asesoría de siembra. Mínimo 100 chapolas · $150–$300 COP c/u según varietal.
               </div>

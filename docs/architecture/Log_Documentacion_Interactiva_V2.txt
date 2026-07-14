@@ -271,6 +271,32 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-14] KR móvil: padding lateral + iconos de línea del Panel del Productor
+- BUG de padding (real, no percepción): el panel iba pegado a los bordes en el
+  celular. El wrapper es class="wrap main"; el shorthand del módulo
+  (.main{padding:44px 0 80px}) reponía a 0 el left/right que ponía el .wrap
+  global (padding:0 24px). En escritorio se ocultaba (el wrap se centra con
+  max-width 1180 + margin auto), pero en cualquier viewport menor iba
+  edge-to-edge. Arreglado poniendo el padding horizontal DIRECTO en .main
+  (40px 22px 84px; 26/18/64 en ≤520px). Mismo bug y arreglo en la Ficha
+  (.fichaMain 32px 0 100px -> 32px 22px 100px). Verificado en 375px: contenido
+  ahora con sangría a ambos lados, sin scroll horizontal en los panes de
+  edición (el overflow del preview imprimible "vista final" es fijo por diseño
+  y preexistente, fuera de alcance).
+- Encabezado móvil del panel: "Kaffetal Regal" ya no envuelve sobre el logo y
+  los botones ya no se apilan -- media query ≤520px (nombre nowrap 14px, se
+  oculta el subtítulo "by CTC", logo 34px, botones compactos). Una sola fila
+  de 59px.
+- Iconos: los emoji multicolor de las tarjetas del hub se reemplazaron por
+  iconos de línea minimalistas (SVG stroke currentColor, un solo lenguaje
+  visual, en color --primary dentro de un chip redondeado suave) -- p.ej.
+  perfil de usuario en Información general, brote en Mis fincas, taza en Mis
+  lotes, caja en Envío de muestras, burbuja en Retroalimentación, medalla en
+  Certificación, documento en Contratos, destello en Más allá de la
+  exportación. Se quitaron también los emoji de los encabezados de servicios.
+  Más elegante y serio, acorde al tono editorial de la app.
+(commit: pending)
+
 ## [2026-07-14] Remitente unificado EMAIL_FROM (leads + OTP de BCP)
 sendOtpEmail.ts ahora usa el mismo EMAIL_FROM que los correos de leads, con el
 fallback resend.dev de siempre. Configuración documentada: verificar

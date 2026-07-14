@@ -280,7 +280,7 @@ luego EMAIL_FROM="Colombian Trading Company <info@ctcexport.com>" en Vercel y
 .env.local (plantilla comentada añadida; activarla ANTES de verificar rompe
 todos los envíos, incluido el OTP de BCP). Las respuestas de los leads llegan
 al buzón info@ existente (Hostinger), independiente del envío por Resend.
-(commit: pending)
+(commit: 480dc25)
 
 ## [2026-07-14] "Más allá de la exportación" DENTRO del Panel del Productor
 Observación del usuario: el hub del productor no tenía NINGUNA referencia a

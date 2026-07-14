@@ -61,4 +61,4 @@ is closed and left as historical record of what went into producing it).
   node to the passport/kanban model; the redemption SCENARIO gains the
   request->emit->confirm pipeline and the campaign bypass variant; new email
   wire BCP -> Resend for passport delivery.
-(commit: pending)
+(commit: 2ac404e)

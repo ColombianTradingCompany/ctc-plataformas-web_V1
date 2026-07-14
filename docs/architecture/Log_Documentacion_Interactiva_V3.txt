@@ -81,3 +81,23 @@ is closed and left as historical record of what went into producing it).
 - Doc impact when wrapping: the Kaffetal Club DICT entry + /bcp/club node gain
   the campaign-entity structure and the campanas/[id] subpage.
 (commit: 83b078f)
+
+## [2026-07-14] Campaña: emisión en dos formularios + CTC Tech: modales legibles
+- /bcp/club/campanas/[id]: the single emission form (producer select + a
+  "Cantidad (sin asignar)" field that silently only applied when NO producer
+  was chosen) was confusing. Split into two explicit forms: "Emitir a un
+  productor" (exactly 1, email + panel note, personal) and "Generar códigos
+  para entregar en mano" (N anonymous codes, max 50, no email). The action
+  emitCampaignPassports backs both and now ignores `cantidad` in assigned mode
+  + validates it in handout mode.
+- CTC Tech info modals (ctcexport.com): the write-ups were walls of text
+  (Ozono was 10 paragraphs). Restructured every item to `lead` (2 short paras)
+  + `points` (scannable bullet cards, new .techPoints styles). Ozono went from
+  ~1725px to ~1299px of modal content.
+- All 5 technologies now have real images: added tech-ozono-2 (OZONUV in a
+  beneficiadero), tech-fermentacion-1 (CTC training w/ biorreactor),
+  tech-instrumentacion-1/2 (Koffee Senser moisture meter + aW meter).
+  Fermentación and Instrumentación no longer fall back to the icon hero.
+- Doc impact when wrapping: none structural (marketing copy/UI only) -- but the
+  CTC Tech node's description can mention the per-technology deep dives.
+(commit: pending)

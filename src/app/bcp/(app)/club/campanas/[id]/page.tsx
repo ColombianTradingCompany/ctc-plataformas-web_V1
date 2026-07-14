@@ -57,7 +57,15 @@ export default async function BcpCampaignDetailPage({ params }: { params: Promis
   const pendientes = codes.filter((c) => c.assigned_to && !c.redeemed_by && !c.revoked_at).length;
   const sueltos = codes.filter((c) => !c.assigned_to && !c.redeemed_by && !c.revoked_at).length;
 
-  async function emit(formData: FormData) {
+  // Two separate forms on purpose: a passport is EITHER emitted to a named
+  // producer (exactly 1, delivered by email + panel note) OR minted as N
+  // anonymous hand-out codes. The old single form had a "cantidad" field that
+  // silently only applied to the unassigned case -- genuinely confusing.
+  async function emitForProducer(formData: FormData) {
+    "use server";
+    await emitCampaignPassports(id, formData);
+  }
+  async function mintHandouts(formData: FormData) {
     "use server";
     await emitCampaignPassports(id, formData);
   }
@@ -75,16 +83,18 @@ export default async function BcpCampaignDetailPage({ params }: { params: Promis
       </p>
 
       <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-        <h3>Emitir Pasaportes de esta campaña</h3>
+        <h3>Emitir a un productor</h3>
         <p className={styles.meta}>
-          Asignado a un productor, el Número de Pasaporte le llega por correo y a su panel. Sin asignar, quedan como
-          códigos para entregar en mano — los activa la primera cuenta que los ingrese.
+          Emite <b>un</b> Pasaporte a nombre de ese productor y se lo entrega: le llega el Número por correo y como nota
+          en su panel. Solo él puede activarlo.
         </p>
-        <form action={emit} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 220 }}>
-            <label>Asignar a (opcional)</label>
-            <select name="producer_id" defaultValue="">
-              <option value="">— Sin asignar (entregar en mano) —</option>
+        <form action={emitForProducer} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 240 }}>
+            <label>Productor</label>
+            <select name="producer_id" required defaultValue="">
+              <option value="" disabled>
+                Elija un productor…
+              </option>
               {asignables.map((pid) => (
                 <option key={pid} value={pid}>
                   {name(pid)}
@@ -92,12 +102,30 @@ export default async function BcpCampaignDetailPage({ params }: { params: Promis
               ))}
             </select>
           </div>
-          <div className={styles.field} style={{ margin: 0, width: 130 }}>
-            <label>Cantidad (sin asignar)</label>
-            <input name="cantidad" type="number" min={1} max={50} defaultValue={1} />
+          <button className="btn btn-sm btn-solid" type="submit" disabled={asignables.length === 0}>
+            Emitir y enviar
+          </button>
+        </form>
+        {asignables.length === 0 && (
+          <p className={styles.meta} style={{ marginTop: 8 }}>
+            Todos los productores ya son miembros o tienen un Pasaporte pendiente.
+          </p>
+        )}
+      </div>
+
+      <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch", marginTop: 14 }}>
+        <h3>Generar códigos para entregar en mano</h3>
+        <p className={styles.meta}>
+          Códigos <b>sin dueño</b>, para repartir en una feria o un evento (no se envía ningún correo). Cada código lo
+          activa la primera cuenta de productor que lo ingrese — genere tantos como personas piense entregar.
+        </p>
+        <form action={mintHandouts} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div className={styles.field} style={{ margin: 0, width: 190 }}>
+            <label>¿Cuántos códigos generar?</label>
+            <input name="cantidad" type="number" min={1} max={50} defaultValue={1} required />
           </div>
-          <button className="btn btn-sm btn-solid" type="submit">
-            Emitir
+          <button className="btn btn-sm" type="submit">
+            Generar códigos
           </button>
         </form>
       </div>

@@ -17,106 +17,81 @@ const TECH_ITEMS = [
     path: "M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4",
     circle: true,
     images: [
+      { src: "/images/ctc-home/tech/tech-ozono-2.jpg", alt: "Equipo de ozono OZONUV instalado en un beneficiadero" },
       { src: "/images/ctc-home/tech/tech-ozono-1.jpg", alt: "Prototipo de ozonización desarrollado por CTC" },
     ] as TechImage[],
-    info: (
+    lead: (
       <>
         <p>
-          <b>Resumen:</b> ozono y radiación UVC fortalecen la inocuidad del café mediante desinfección natural,
-          eficiente, sostenible y sin residuos químicos.
+          La inocuidad no es solo mantener limpio: es <b>controlar los microorganismos</b> que afectan la calidad, la
+          estabilidad y la seguridad del café. El ozono (O₃) y la luz ultravioleta tipo C (UVC) reducen la carga
+          microbiológica <b>por encima del 99%</b> — y no dejan un solo residuo químico.
         </p>
         <p>
-          La inocuidad alimentaria va más allá de mantener instalaciones limpias. Su verdadero objetivo es
-          controlar los microorganismos no deseables que pueden afectar la calidad, la estabilidad y la seguridad
-          del producto. En este contexto, el ozono (O₃) y la radiación ultravioleta tipo C (UVC) se han
-          consolidado como tecnologías altamente efectivas para la reducción de la carga microbiológica,
-          ofreciendo eficiencias de desinfección superiores al 99% en condiciones de operación adecuadas y sin
-          dejar residuos químicos.
-        </p>
-        <p>
-          En CTCX, estas tecnologías hacen parte de una estrategia integral de control microbiológico natural,
-          orientada a fortalecer los procesos asociados al café desde una perspectiva preventiva y sostenible. A
-          diferencia de los desinfectantes químicos convencionales, el ozono se descompone rápidamente en
-          oxígeno, mientras que la radiación UVC actúa mediante energía lumínica, sin generar residuos sobre las
-          superficies o los productos tratados.
-        </p>
-        <p>
-          El principio de funcionamiento es complementario. El ozono posee una elevada capacidad oxidante que
-          inactiva bacterias, hongos, virus y otros microorganismos al alterar sus membranas celulares y
-          componentes esenciales. Por su parte, la radiación UVC afecta el material genético de estos
-          microorganismos, impidiendo su reproducción y favoreciendo su eliminación. La combinación de ambas
-          tecnologías permite ampliar el alcance del control microbiológico en diferentes etapas del proceso
-          productivo.
-        </p>
-        <p>
-          Su aplicación no busca esterilizar el proceso, sino reducir significativamente la carga microbiológica
-          no deseable, disminuyendo el riesgo de contaminación y mejorando las condiciones para obtener cafés de
-          alta calidad, especialmente en procesos donde la microbiología desempeña un papel fundamental.
-        </p>
-        <p>
-          Entre las aplicaciones desarrolladas por CTCX se encuentra la desinfección durante el lavado y el flote
-          de café cereza antes del despulpado. Esta práctica reduce la presencia de microorganismos indeseables
-          sobre la fruta, favoreciendo un mayor control de las fermentaciones posteriores y aumentando la
-          probabilidad de éxito en la elaboración de cafés naturales y amielados. Este desarrollo ha sido
-          registrado por CTCX y actualmente se encuentra en proceso de patente.
-        </p>
-        <p>
-          Otra aplicación corresponde a la ozonización del agua utilizada para el lavado de equipos y superficies.
-          Esta tecnología permite disminuir el uso de productos químicos, mejorar la higiene operacional y reducir
-          el riesgo de contaminación cruzada durante las actividades de limpieza, contribuyendo además a procesos
-          más sostenibles.
-        </p>
-        <p>
-          La desinfección de ambientes mediante equipos UVC constituye una herramienta adicional para controlar la
-          contaminación microbiológica en áreas de empaque, almacenamiento y procesamiento. La reducción de
-          microorganismos presentes en el aire y en las superficies ayuda a preservar las condiciones higiénicas
-          durante las operaciones más sensibles.
-        </p>
-        <p>
-          Estas tecnologías también pueden aplicarse en la desinfección de sustratos destinados a almácigos, en
-          la preparación de agua para procesos de fermentación controlada y en la sanitización de los equipos
-          utilizados durante dichas fermentaciones. De esta manera, se favorece un ambiente microbiológico más
-          estable y reproducible, aspecto esencial para el desarrollo de perfiles sensoriales consistentes.
-        </p>
-        <p>
-          Finalmente, el ozono representa una alternativa de interés para el tratamiento de aguas residuales
-          generadas durante el beneficio del café. Su capacidad para disminuir la carga microbiológica y oxidar
-          compuestos orgánicos contribuye a mejorar la calidad del agua antes de su disposición o reutilización,
-          apoyando una gestión ambiental más responsable.
-        </p>
-        <p>
-          La incorporación del ozono y la radiación UVC demuestra que la inocuidad no depende únicamente de
-          limpiar, sino de controlar científicamente los riesgos microbiológicos. Estas tecnologías permiten
-          fortalecer la seguridad del proceso, reducir la dependencia de productos químicos y avanzar hacia una
-          caficultura más sostenible, innovadora y orientada a la producción de cafés de alta calidad.
+          Son complementarios: el ozono oxida y rompe las membranas celulares; la UVC daña el material genético e impide
+          que el microorganismo se reproduzca. El objetivo no es esterilizar el proceso, sino bajar la carga no deseable
+          para que la fermentación y la taza sean predecibles.
         </p>
       </>
     ),
+    points: [
+      {
+        t: "Lavado y flote de la cereza",
+        d: "Desinfección antes del despulpado: menos microorganismos indeseables sobre la fruta y más control de la fermentación posterior. Desarrollo propio de CTCX, en proceso de patente.",
+      },
+      {
+        t: "Agua de equipos y superficies",
+        d: "Ozonización del agua de lavado: menos químicos, mejor higiene operacional y menor riesgo de contaminación cruzada.",
+      },
+      {
+        t: "Ambientes con UVC",
+        d: "Empaque, almacenamiento y proceso: reduce los microorganismos del aire y las superficies durante las operaciones más sensibles.",
+      },
+      {
+        t: "Almácigos y fermentación",
+        d: "Desinfección de sustratos, preparación del agua y sanitización de fermentadores, para un ambiente microbiológico estable y reproducible.",
+      },
+      {
+        t: "Aguas residuales",
+        d: "El ozono baja la carga microbiológica y oxida compuestos orgánicos antes de disponer o reutilizar el agua del beneficio.",
+      },
+    ],
   },
   {
     title: "Técnicas de fermentación",
     tagline: "La ciencia detrás de cada perfil de taza",
     desc: "Protocolos controlados —anaeróbicos, levaduras, tiempos y temperaturas— para construir perfiles de taza consistentes.",
     path: "M9 3h6M10 3v5.5L5.5 17a3 3 0 0 0 2.7 4.4h7.6a3 3 0 0 0 2.7-4.4L14 8.5V3M7.5 14h9",
-    images: [] as TechImage[],
-    info: (
+    images: [
+      { src: "/images/ctc-home/tech/tech-fermentacion-1.jpg", alt: "Capacitación de CTC en fermentación controlada, con biorreactor" },
+    ] as TechImage[],
+    lead: (
       <>
         <p>
-          Las técnicas de fermentación del café son métodos de control microbiológico y bioquímico aplicados
-          durante el beneficio del café para transformar de manera dirigida los compuestos presentes en el
-          mucílago y en el grano. A través del manejo de variables como tiempo, temperatura, disponibilidad de
-          oxígeno, tipo de microorganismos, pH, grados Brix y condiciones del ambiente, estas técnicas permiten
-          influir en la limpieza, complejidad, dulzor, acidez, cuerpo y expresión aromática del café.
+          Fermentar es <b>control microbiológico y bioquímico dirigido</b>: transformar el mucílago y el grano a
+          propósito, no por azar. Manejando las variables correctas se influye en la limpieza, el dulzor, la acidez, el
+          cuerpo y la expresión aromática del café.
         </p>
         <p>
-          Aplicadas correctamente, las técnicas de fermentación ayudan a mejorar la calidad del café porque
-          permiten desarrollar perfiles sensoriales más consistentes, diferenciados y reproducibles. Además,
-          reducen el riesgo de defectos asociados a fermentaciones descontroladas, como sabores avinagrados,
-          fenólicos, mohosos o sobrefermentados, y favorecen una mayor estandarización del proceso desde la finca
-          hasta el producto final.
+          Bien aplicadas, dan perfiles <b>consistentes, diferenciados y reproducibles</b> — y alejan los defectos de una
+          fermentación descontrolada: avinagrados, fenólicos, mohosos o sobrefermentados.
         </p>
       </>
     ),
+    points: [
+      {
+        t: "Las variables que se controlan",
+        d: "Tiempo, temperatura, disponibilidad de oxígeno, tipo de microorganismos, pH y grados Brix — más las condiciones del ambiente.",
+      },
+      {
+        t: "Anaeróbicos y levaduras",
+        d: "Protocolos cerrados y cultivos de levadura seleccionada para construir un perfil objetivo, no para descubrirlo por suerte.",
+      },
+      {
+        t: "Estandarización cosecha a cosecha",
+        d: "El mismo protocolo, repetible: es lo que convierte un buen lote en una calidad defendible en la mesa de catación.",
+      },
+    ],
   },
   {
     title: "Selección óptica",
@@ -126,27 +101,26 @@ const TECH_ITEMS = [
     innerCircle: true,
     images: [
       { src: "/images/ctc-home/tech/tech-optica-sorter.jpg", alt: "Seleccionadora óptica de Colombian Trading Company" },
-      { src: "/images/ctc-home/tech/tech-optica-diagrama.jpg", alt: "Flujo del proceso de selección óptica: alimentación, escaneo, expulsión por aire y clasificación final" },
+      { src: "/images/ctc-home/tech/tech-optica-diagrama.jpg", alt: "Flujo de la selección óptica: alimentación, escaneo, expulsión por aire y clasificación final" },
     ] as TechImage[],
-    info: (
+    lead: (
       <>
         <p>
-          La selección óptica es una tecnología de clasificación automatizada que utiliza cámaras, sensores y
-          sistemas de análisis de imagen para identificar y separar granos de café según características
-          visuales como color, forma, tamaño, densidad aparente y presencia de defectos. Su objetivo es mejorar
-          la calidad física y sensorial del café al remover granos defectuosos, inmaduros, sobrefermentados,
-          brocados, manchados o contaminados que pueden afectar la taza, la uniformidad del lote y su valor
-          comercial.
+          Cámaras, sensores y análisis de imagen que identifican y separan el grano por <b>color, forma, tamaño,
+          densidad y defecto</b> — con una constancia que ninguna mano puede sostener.
         </p>
         <p>
-          Aplicada al café, la selección óptica permite obtener lotes más homogéneos, consistentes y trazables,
-          reduciendo la variabilidad del producto final y aumentando la probabilidad de alcanzar perfiles
-          sensoriales limpios, estables y de mayor calidad. Además, complementa los procesos manuales y mecánicos
-          de selección, aportando mayor precisión, eficiencia y estandarización en la preparación de cafés
-          especiales y de exportación.
+          Remueve lo que castiga la taza: granos inmaduros, sobrefermentados, brocados, manchados o contaminados. El
+          resultado son lotes <b>más homogéneos, consistentes y trazables</b>.
         </p>
       </>
     ),
+    points: [
+      { t: "1 · Alimentación vibratoria", d: "Un flujo constante y uniforme del grano hacia la zona de lectura." },
+      { t: "2 · Zona de escaneo", d: "La «cortina» de grano es analizada por los sensores, grano a grano." },
+      { t: "3 · Expulsión por aire", d: "Un chorro de aire preciso saca el defecto sin arrastrar el resto del lote." },
+      { t: "4 · Clasificación final", d: "Separación en canales de aceptado y rechazo, con trazabilidad de los descartes." },
+    ],
   },
   {
     title: "Cromatografía de suelos",
@@ -157,20 +131,29 @@ const TECH_ITEMS = [
       { src: "/images/ctc-home/tech/tech-cromatografia-1.jpg", alt: "Cromatografías circulares de suelo secando en finca" },
       { src: "/images/ctc-home/tech/tech-cromatografia-zonas.jpg", alt: "Zonas de lectura de un cromatograma de suelo" },
     ] as TechImage[],
-    info: (
+    lead: (
       <>
         <p>
-          Una de las principales debilidades de la cromatografía de suelos es la interpretación del cromatograma:
-          leerla con precisión exige ojo experto, y hoy ese conocimiento no está al alcance de la mayoría de los
-          productores.
+          Un cromatograma revela en un solo círculo la <b>vida y la salud del suelo</b>: materia orgánica, minerales y
+          actividad biológica, leídas por zonas — central, interna, intermedia y externa.
         </p>
         <p>
-          En CTC estamos desarrollando una solución con inteligencia artificial: un software que analiza
-          fotografías del cromatograma y devuelve una lectura objetiva y estandarizada, para democratizar esta
-          herramienta más allá del especialista.
+          Su gran debilidad es la <b>interpretación</b>: leerla con precisión exige ojo experto, y ese conocimiento hoy
+          no está al alcance de la mayoría de los productores.
         </p>
       </>
     ),
+    points: [
+      { t: "El problema", d: "La lectura depende del especialista — y el especialista es escaso, caro y no está en la finca." },
+      {
+        t: "Lo que estamos construyendo",
+        d: "Un software con inteligencia artificial que analiza una fotografía del cromatograma y devuelve una lectura objetiva y estandarizada.",
+      },
+      {
+        t: "Para qué",
+        d: "Democratizar la herramienta: que cualquier caficultor pueda leer su suelo, no solo quien pueda pagar el diagnóstico.",
+      },
+    ],
   },
   {
     title: "Instrumentación de medición",
@@ -182,32 +165,37 @@ const TECH_ITEMS = [
       </>
     ),
     path: "M7 3h10v18H7zM7 7h4M7 11h4M7 15h4M17 5.5c2 2 2 11 0 13",
-    images: [] as TechImage[],
-    info: (
+    images: [
+      { src: "/images/ctc-home/tech/tech-instrumentacion-1.jpg", alt: "Medidor de humedad de café verde Koffee Senser" },
+      { src: "/images/ctc-home/tech/tech-instrumentacion-2.jpg", alt: "Medidor de actividad de agua (aW) con una muestra de café" },
+    ] as TechImage[],
+    lead: (
       <>
         <p>
-          La instrumentación se refiere al uso de equipos de medición y control —como medidores de humedad,
-          actividad de agua, temperatura, humedad relativa, color, densidad, peso, granulometría o condiciones de
-          almacenamiento— para evaluar objetivamente el estado físico y la estabilidad del café durante y después
-          del beneficio, secado, almacenamiento, trilla, selección y preparación para exportación.
+          Medir es pasar de una evaluación subjetiva a una <b>gestión técnica de la calidad</b>. La humedad y la
+          actividad de agua (a<sub>w</sub>) son críticas: deciden la estabilidad del grano, el riesgo de moho, la pérdida
+          de atributos sensoriales y la vida útil del lote.
         </p>
         <p>
-          Su importancia está en que permite pasar de una evaluación subjetiva a una gestión técnica de la
-          calidad. En el café, variables como la <b>humedad</b> y la <b>actividad de agua</b> son críticas porque
-          influyen directamente en la estabilidad del grano, el riesgo de deterioro microbiológico, la aparición
-          de mohos, la pérdida de atributos sensoriales y la vida útil del producto. Medirlas correctamente ayuda
-          a definir si un lote está en condiciones seguras para almacenar, transportar, vender o exportar.
-        </p>
-        <p>
-          La instrumentación también permite <b>estandarizar procesos, reducir riesgos y tomar decisiones
-          basadas en datos</b>. Por ejemplo, ayuda a determinar el punto óptimo de secado, verificar la
-          uniformidad de un lote, controlar condiciones de bodega, detectar desviaciones antes de que se
-          conviertan en defectos y respaldar técnicamente la calidad ofrecida al cliente. En cafés especiales y
-          de exportación, esto fortalece la trazabilidad, la consistencia entre lotes y la confianza comercial,
-          porque la calidad deja de depender solo de la experiencia sensorial y se apoya en evidencia medible.
+          Con los números en la mano se sabe si un lote está en condiciones seguras para <b>almacenar, transportar,
+          vender o exportar</b> — y se puede demostrar.
         </p>
       </>
     ),
+    points: [
+      {
+        t: "Qué se mide",
+        d: "Humedad, actividad de agua, temperatura, humedad relativa, color, densidad, peso, granulometría y condiciones de bodega.",
+      },
+      {
+        t: "Dónde decide",
+        d: "Punto óptimo de secado, uniformidad del lote, control de almacenamiento y detección de desviaciones antes de que se vuelvan defectos.",
+      },
+      {
+        t: "Lo que gana el productor",
+        d: "Trazabilidad, consistencia entre lotes y confianza comercial: la calidad deja de depender solo del paladar y se apoya en evidencia medible.",
+      },
+    ],
   },
 ];
 
@@ -455,7 +443,15 @@ export function ServicesSection() {
               </div>
             </div>
             <div className={styles.techBody}>
-              {activeItem.info}
+              {activeItem.lead}
+              <ul className={styles.techPoints}>
+                {activeItem.points.map((p) => (
+                  <li key={p.t}>
+                    <b>{p.t}</b>
+                    <span>{p.d}</span>
+                  </li>
+                ))}
+              </ul>
               {activeItem.images[1] && (
                 // eslint-disable-next-line @next/next/no-img-element -- fixed-size reference photo, not worth next/image's layout machinery here
                 <img className={styles.techSecondary} src={activeItem.images[1].src} alt={activeItem.images[1].alt} />

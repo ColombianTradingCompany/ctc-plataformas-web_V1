@@ -157,9 +157,12 @@ export async function createCampaign(formData: FormData) {
   revalidatePath("/bcp/club");
 }
 
-// Campaign passports bypass the Arena gate. Assigned to a producer the número
-// goes out by email + note; unassigned they're hand-out codes (cantidad > 1
-// mints a batch) -- first account to redeem one, wins.
+// Campaign passports bypass the Arena gate. Two distinct modes, one per form
+// in /bcp/club/campanas/[id]:
+//   · producer_id present -> exactly ONE passport to that producer (email + note)
+//   · producer_id absent   -> `cantidad` anonymous hand-out codes (no email)
+// `cantidad` is deliberately ignored in the assigned mode: a personal passport
+// is by definition one.
 export async function emitCampaignPassports(campaignId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
@@ -168,7 +171,11 @@ export async function emitCampaignPassports(campaignId: string, formData: FormDa
   if (!campaign) throw new Error("Campaña no encontrada.");
 
   const producerId = String(formData.get("producer_id") ?? "").trim() || null;
-  const cantidad = producerId ? 1 : Math.min(Math.max(Number(formData.get("cantidad") || 1), 1), 50);
+  const requested = Math.trunc(Number(formData.get("cantidad") || 1));
+  if (!producerId && (!Number.isFinite(requested) || requested < 1)) {
+    throw new Error("Indique cuántos códigos generar (mínimo 1).");
+  }
+  const cantidad = producerId ? 1 : Math.min(Math.max(requested, 1), 50);
 
   if (producerId) await assertAssignable(service, producerId);
 

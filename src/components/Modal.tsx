@@ -7,11 +7,13 @@ export function Modal({
   onClose,
   children,
   ariaLabel,
+  className,
 }: {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
   ariaLabel?: string;
+  className?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -32,7 +34,7 @@ export function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="modal">
+      <div className={`modal${className ? ` ${className}` : ""}`}>
         <button className="close" aria-label="Cerrar" onClick={onClose}>
           ×
         </button>

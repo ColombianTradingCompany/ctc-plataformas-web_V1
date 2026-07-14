@@ -306,7 +306,7 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
               <div>
                 <label>Tecnologías de interés</label>
                 <div className={styles.chips}>
-                  {["Ozono + UV", "Técnicas de fermentación", "Selección óptica", "Cromatografía de suelos", "Instrumentación de medición"].map(
+                  {["Ozono + UVC", "Técnicas de fermentación", "Selección óptica", "Cromatografía de suelos", "Instrumentación de medición"].map(
                     (opt) => (
                       <label className={styles.chip} key={opt}>
                         <input type="checkbox" name="interes" value={opt} /> {opt}

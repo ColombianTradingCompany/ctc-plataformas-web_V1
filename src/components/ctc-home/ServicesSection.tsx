@@ -4,14 +4,21 @@ import { useState } from "react";
 import Image from "next/image";
 import { Modal } from "@/components/Modal";
 import { OpenFormButton } from "./OpenFormButton";
+import { useContactModal } from "./ContactModal";
 import styles from "./ServicesSection.module.css";
+
+type TechImage = { src: string; alt: string };
 
 const TECH_ITEMS = [
   {
     title: "Ozono + UVC",
+    tagline: "Cero residuos, control total",
     desc: "Higienización de aguas de proceso y superficies, control microbiano en beneficio y poscosecha sin residuos químicos.",
     path: "M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4",
     circle: true,
+    images: [
+      { src: "/images/ctc-home/tech/tech-ozono-1.jpg", alt: "Prototipo de ozonización desarrollado por CTC" },
+    ] as TechImage[],
     info: (
       <>
         <p>
@@ -88,8 +95,10 @@ const TECH_ITEMS = [
   },
   {
     title: "Técnicas de fermentación",
+    tagline: "La ciencia detrás de cada perfil de taza",
     desc: "Protocolos controlados —anaeróbicos, levaduras, tiempos y temperaturas— para construir perfiles de taza consistentes.",
     path: "M9 3h6M10 3v5.5L5.5 17a3 3 0 0 0 2.7 4.4h7.6a3 3 0 0 0 2.7-4.4L14 8.5V3M7.5 14h9",
+    images: [] as TechImage[],
     info: (
       <>
         <p>
@@ -111,9 +120,14 @@ const TECH_ITEMS = [
   },
   {
     title: "Selección óptica",
+    tagline: "Un ojo digital que no se cansa",
     desc: "Clasificación de calidad del grano en seco y en húmedo: color, defecto y densidad, con trazabilidad de descartes.",
     path: "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z",
     innerCircle: true,
+    images: [
+      { src: "/images/ctc-home/tech/tech-optica-sorter.jpg", alt: "Seleccionadora óptica de Colombian Trading Company" },
+      { src: "/images/ctc-home/tech/tech-optica-diagrama.jpg", alt: "Flujo del proceso de selección óptica: alimentación, escaneo, expulsión por aire y clasificación final" },
+    ] as TechImage[],
     info: (
       <>
         <p>
@@ -136,8 +150,13 @@ const TECH_ITEMS = [
   },
   {
     title: "Cromatografía de suelos",
+    tagline: "El suelo, leído como un mapa",
     desc: "Diagnóstico de la vida y salud del suelo mediante cromatogramas: materia orgánica, minerales y actividad biológica, leídos en un solo círculo.",
     rings: true,
+    images: [
+      { src: "/images/ctc-home/tech/tech-cromatografia-1.jpg", alt: "Cromatografías circulares de suelo secando en finca" },
+      { src: "/images/ctc-home/tech/tech-cromatografia-zonas.jpg", alt: "Zonas de lectura de un cromatograma de suelo" },
+    ] as TechImage[],
     info: (
       <>
         <p>
@@ -155,6 +174,7 @@ const TECH_ITEMS = [
   },
   {
     title: "Instrumentación de medición",
+    tagline: "Los números que respaldan cada decisión",
     desc: (
       <>
         Humedad, °Brix, actividad de agua (a<sub>w</sub>), pH y más: los números que respaldan cada decisión del
@@ -162,6 +182,7 @@ const TECH_ITEMS = [
       </>
     ),
     path: "M7 3h10v18H7zM7 7h4M7 11h4M7 15h4M17 5.5c2 2 2 11 0 13",
+    images: [] as TechImage[],
     info: (
       <>
         <p>
@@ -190,9 +211,30 @@ const TECH_ITEMS = [
   },
 ];
 
+function TechIcon({ item }: { item: (typeof TECH_ITEMS)[number] }) {
+  return (
+    <svg viewBox="0 0 24 24">
+      {item.rings ? (
+        <>
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="5.5" />
+          <circle cx="12" cy="12" r="2" />
+        </>
+      ) : (
+        <>
+          <path d={item.path} />
+          {item.circle && <circle cx="12" cy="12" r="2.5" />}
+          {item.innerCircle && <circle cx="12" cy="12" r="3" />}
+        </>
+      )}
+    </svg>
+  );
+}
+
 export function ServicesSection() {
   const [infoOpen, setInfoOpen] = useState<number | null>(null);
   const activeItem = infoOpen !== null ? TECH_ITEMS[infoOpen] : null;
+  const { openForm } = useContactModal();
 
   return (
     <section id="tech">
@@ -236,21 +278,7 @@ export function ServicesSection() {
                       i
                     </button>
                     <div className={styles.pic}>
-                      <svg viewBox="0 0 24 24">
-                        {item.rings ? (
-                          <>
-                            <circle cx="12" cy="12" r="9" />
-                            <circle cx="12" cy="12" r="5.5" />
-                            <circle cx="12" cy="12" r="2" />
-                          </>
-                        ) : (
-                          <>
-                            <path d={item.path} />
-                            {item.circle && <circle cx="12" cy="12" r="2.5" />}
-                            {item.innerCircle && <circle cx="12" cy="12" r="3" />}
-                          </>
-                        )}
-                      </svg>
+                      <TechIcon item={item} />
                     </div>
                     <h5>{item.title}</h5>
                     <p>{item.desc}</p>
@@ -404,11 +432,48 @@ export function ServicesSection() {
         </div>
       </div>
 
-      <Modal open={activeItem !== null} onClose={() => setInfoOpen(null)} ariaLabel={activeItem?.title}>
+      <Modal
+        open={activeItem !== null}
+        onClose={() => setInfoOpen(null)}
+        ariaLabel={activeItem?.title}
+        className={styles.techModal}
+      >
         {activeItem && (
           <>
-            <h3>{activeItem.title}</h3>
-            {activeItem.info}
+            <div
+              className={styles.techHero}
+              style={activeItem.images[0] ? { backgroundImage: `url(${activeItem.images[0].src})` } : undefined}
+            >
+              {!activeItem.images[0] && (
+                <div className={styles.techHeroIconWrap}>
+                  <TechIcon item={activeItem} />
+                </div>
+              )}
+              <div className={styles.techHeroOverlay}>
+                <span className={styles.techTag}>{activeItem.title}</span>
+                <h3>{activeItem.tagline}</h3>
+              </div>
+            </div>
+            <div className={styles.techBody}>
+              {activeItem.info}
+              {activeItem.images[1] && (
+                // eslint-disable-next-line @next/next/no-img-element -- fixed-size reference photo, not worth next/image's layout machinery here
+                <img className={styles.techSecondary} src={activeItem.images[1].src} alt={activeItem.images[1].alt} />
+              )}
+            </div>
+            <div className={styles.techCta}>
+              <p>¿Quiere ver esta tecnología aplicada a su propio café?</p>
+              <button
+                type="button"
+                className="btn btn-solid"
+                onClick={() => {
+                  setInfoOpen(null);
+                  openForm("tech");
+                }}
+              >
+                Escríbanos sobre esto
+              </button>
+            </div>
           </>
         )}
       </Modal>

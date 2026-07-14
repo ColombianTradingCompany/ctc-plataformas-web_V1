@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus } from "@/lib/eudr";
+import { useToast } from "@/components/Toast";
+import { submitLeadAuthed } from "@/lib/leads/actions";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
@@ -33,7 +35,7 @@ function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "muestras" | "retro" | "fincas" | "lotes" | "cert" | "contratos";
+export type DashboardModule = "info" | "muestras" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
 
 // The reference is long, so only the 7 characters that actually go on the
 // physical sample package are bolded -- same convention used in the Ficha.
@@ -53,6 +55,7 @@ export function AppDashboard({
   feedback,
   module,
   onSelectModule,
+  onRefreshData,
   onBackHome,
   onLogout,
   onNewLot,
@@ -75,6 +78,7 @@ export function AppDashboard({
   feedback: FeedbackNote[];
   module: DashboardModule | null;
   onSelectModule: (m: DashboardModule | null) => void;
+  onRefreshData: () => void;
   onBackHome: () => void;
   onLogout: () => void;
   onNewLot: () => void;
@@ -89,8 +93,48 @@ export function AppDashboard({
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
 }) {
+  const { showToast } = useToast();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  // "Más allá de la exportación": in-panel requests for CTC Tech / Varietales.
+  // They feed the same leads pipeline as ctcexport.com's Escríbenos, but with
+  // the producer's account (and finca) already linked -- so the reply lands in
+  // their email AND in "Retroalimentación y ayuda".
+  const [serviceSent, setServiceSent] = useState<{ tech?: boolean; varietales?: boolean }>({});
+  const [serviceBusy, setServiceBusy] = useState(false);
+
+  async function requestService(pillar: "tech" | "varietales", form: HTMLFormElement) {
+    setServiceBusy(true);
+    try {
+      const fd = new FormData(form);
+      const fincaName = String(fd.get("finca") ?? "");
+      const finca = fincas.find((f) => f.name === fincaName);
+      const ubicacion = finca ? `${finca.mun}, ${finca.depto}` : "";
+      const fields: Record<string, unknown> =
+        pillar === "tech"
+          ? { finca: fincaName, ubicacion, interes: fd.getAll("interes").map(String) }
+          : { finca: fincaName, ubicacion, varietal: String(fd.get("varietal") ?? ""), cantidad: String(fd.get("cantidad") ?? "") };
+      const result = await submitLeadAuthed({
+        pillar,
+        nombre: gi.agri !== "—" ? gi.agri : userName,
+        message: String(fd.get("msg") ?? "").trim(),
+        fields,
+      });
+      if (result.ok) {
+        setServiceSent((s) => ({ ...s, [pillar]: true }));
+        showToast("Solicitud enviada a CTC ✓ · la conversación sigue en Retroalimentación y ayuda");
+        // The mirror note just landed in producer_comm_log server-side --
+        // refresh so Retroalimentación shows the new thread without a reload.
+        onRefreshData();
+      } else {
+        showToast(result.message);
+      }
+    } catch {
+      showToast("No se pudo enviar la solicitud. Intente de nuevo.");
+    } finally {
+      setServiceBusy(false);
+    }
+  }
   // Reply is per conversation thread (per hyperlinked element), keyed by the
   // thread key; and threads can be collapsed.
   const [replyThreadKey, setReplyThreadKey] = useState<string | null>(null);
@@ -169,6 +213,12 @@ export function AppDashboard({
       icon: "🤝",
       title: "Mis contratos",
       fact: contracts.length ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC` : "Aparecen al ganar un galardón en la Arena",
+    },
+    {
+      key: "servicios",
+      icon: "✨",
+      title: "Más allá de la exportación",
+      fact: "CTC Tech · Varietales Registrados — solicítelos desde su panel",
     },
   ];
 
@@ -568,6 +618,109 @@ export function AppDashboard({
                 </div>
               ))
             )}
+          </div>
+          )}
+
+          {module === "servicios" && (
+          <div className={`${styles.acard} ${styles.full}`}>
+            <span className={styles.k}>Más allá de la exportación · servicios CTC para su finca</span>
+            <div className={styles.alist} style={{ marginTop: 6 }}>
+              Los mismos servicios de ctcexport.com, a un clic desde su panel: su solicitud llega al equipo CTC con su
+              cuenta y su finca ya vinculadas, y la conversación sigue por correo y en &quot;Retroalimentación y ayuda&quot;.
+            </div>
+
+            <div style={{ marginTop: 18 }}>
+              <h5 style={{ margin: 0 }}>🔬 CTC Tech · Implementación de nuevas tecnologías agrónomas</h5>
+              <div className={styles.sub}>
+                Diagnóstico en finca para definir qué tecnología aplica a su beneficio y su presupuesto: ozono + UV,
+                fermentación controlada, selección óptica, cromatografía de suelos e instrumentación de medición.
+              </div>
+              {serviceSent.tech ? (
+                <div className={styles.alist} style={{ marginTop: 10 }}>
+                  ✓ Solicitud enviada. CTC le responderá por correo y en &quot;Retroalimentación y ayuda&quot;.
+                </div>
+              ) : (
+                <form
+                  className={styles.svcForm}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    requestService("tech", e.currentTarget);
+                  }}
+                >
+                  <div>
+                    <label htmlFor="svc-t-finca">Finca</label>
+                    <select id="svc-t-finca" name="finca" defaultValue={fincas[0]?.name ?? ""}>
+                      {fincas.map((f) => (
+                        <option key={f.id} value={f.name}>{f.name} · {f.mun}</option>
+                      ))}
+                      <option value="">Otra / sin registrar</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Tecnologías de interés</label>
+                    <div className={styles.svcChips}>
+                      {["Ozono + UV", "Técnicas de fermentación", "Selección óptica", "Cromatografía de suelos", "Instrumentación de medición"].map((opt) => (
+                        <label className={styles.svcChip} key={opt}>
+                          <input type="checkbox" name="interes" value={opt} /> {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="svc-t-msg">Cuéntenos de su proceso actual</label>
+                    <textarea id="svc-t-msg" name="msg" rows={2} placeholder="Volumen, beneficio actual, retos…" />
+                  </div>
+                  <button className="btn btn-sm btn-solid" type="submit" disabled={serviceBusy} style={{ justifySelf: "start" }}>
+                    {serviceBusy ? "Enviando…" : "Solicitar diagnóstico"}
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div style={{ marginTop: 24, borderTop: "1px solid var(--line)", paddingTop: 16 }}>
+              <h5 style={{ margin: 0 }}>🌱 Varietales Registrados · Plántulas verificadas desde la chapola</h5>
+              <div className={styles.sub}>
+                Genética con papeles y asesoría de siembra. Mínimo 100 chapolas · $150–$300 COP c/u según varietal.
+              </div>
+              {serviceSent.varietales ? (
+                <div className={styles.alist} style={{ marginTop: 10 }}>
+                  ✓ Solicitud enviada. CTC le responderá por correo y en &quot;Retroalimentación y ayuda&quot;.
+                </div>
+              ) : (
+                <form
+                  className={styles.svcForm}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    requestService("varietales", e.currentTarget);
+                  }}
+                >
+                  <div>
+                    <label htmlFor="svc-v-finca">Finca donde sembrará</label>
+                    <select id="svc-v-finca" name="finca" defaultValue={fincas[0]?.name ?? ""}>
+                      {fincas.map((f) => (
+                        <option key={f.id} value={f.name}>{f.name} · {f.mun}</option>
+                      ))}
+                      <option value="">Otra / sin registrar</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="svc-v-var">Varietal de interés</label>
+                    <input id="svc-v-var" name="varietal" placeholder="Ej. Gesha, Sidra, Pink Bourbon…" />
+                  </div>
+                  <div>
+                    <label htmlFor="svc-v-cant">Cantidad de chapolas</label>
+                    <input id="svc-v-cant" name="cantidad" type="number" min={100} placeholder="Mínimo 100" />
+                  </div>
+                  <div>
+                    <label htmlFor="svc-v-msg">Mensaje</label>
+                    <textarea id="svc-v-msg" name="msg" rows={2} placeholder="Perfil de taza objetivo, fecha de siembra…" />
+                  </div>
+                  <button className="btn btn-sm btn-solid" type="submit" disabled={serviceBusy} style={{ justifySelf: "start" }}>
+                    {serviceBusy ? "Enviando…" : "Solicitar catálogo de varietales"}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
           )}
           </div>

@@ -271,6 +271,28 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-14] "Más allá de la exportación" DENTRO del Panel del Productor
+Observación del usuario: el hub del productor no tenía NINGUNA referencia a
+los servicios de "Más allá de la exportación" — un productor ya dentro de la
+plataforma no podía descubrir ni solicitar CTC Tech o Varietales Registrados
+(la única puerta era el formulario de ctcexport.com). Nuevo octavo módulo:
+- Tarjeta "Más allá de la exportación" (✨) en el hub con los dos servicios
+  del lado productor. El módulo presenta CTC Tech (diagnóstico en finca; las
+  5 tecnologías como casillas) y Varietales Registrados (varietal, cantidad
+  mínima 100, precios) con un formulario corto cada uno.
+- La solicitud usa submitLeadAuthed: entra al MISMO pipeline de leads que el
+  Escríbenos público, pero con la cuenta del productor ya vinculada y su
+  finca elegida de un selector de sus fincas registradas (ubicación derivada
+  automáticamente de mun/depto). Nada de correo ni contraseña: cuenta
+  'existing', correo de confirmación, espejo en Retroalimentación, tarjeta en
+  el tablero de /bcp/leads y en el feed del Panel de BCP.
+- Tras enviar: estado de éxito en el módulo + toast, y onRefreshData()
+  recarga los datos del panel para que el hilo "Solicitud CTC Home · {pilar}"
+  aparezca en Retroalimentación SIN recargar la página (verificado en vivo:
+  tech y varietales, hilo visible de inmediato, lead en BD con finca y
+  tecnologías capturadas, espejo con lead_id).
+(commit: pending)
+
 ## [2026-07-13] Leads: reflexión y mejora + hub del Panel del Productor
 Segunda pasada sobre el sistema de leads (reflexión pedida por el usuario) +
 el módulo del lado del productor que faltaba:

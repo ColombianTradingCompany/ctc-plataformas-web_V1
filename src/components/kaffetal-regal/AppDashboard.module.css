@@ -20,6 +20,14 @@
 .hubTitle{font-family:var(--font-fraunces),serif;font-weight:700;font-size:17px;color:var(--primary-deep)}
 .hubFact{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);line-height:1.5}
 .hubFactAlert{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--accent);font-weight:700;line-height:1.5}
+
+/* "Más allá de la exportación" in-panel service request forms */
+.svcForm{display:grid;gap:10px;margin-top:12px;max-width:560px}
+.svcForm label{display:block;font-size:12px;font-weight:600;margin-bottom:4px}
+.svcForm input,.svcForm select,.svcForm textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;background:var(--card);font-family:inherit}
+.svcChips{display:flex;gap:8px;flex-wrap:wrap}
+.svcChip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;background:var(--card);font-weight:400}
+.svcChip input{width:auto;accent-color:var(--primary)}
 .ag{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
 /* min-width:0 is load-bearing: without it a grid item defaults to min-width:auto
    and expands to its content, so the inner .fincaScroll / wide .lotrow blow the

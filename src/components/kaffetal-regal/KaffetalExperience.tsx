@@ -1140,6 +1140,9 @@ function Experience() {
           feedback={feedback}
           module={activeModule}
           onSelectModule={setActiveModule}
+          onRefreshData={() => {
+            if (userId) loadData(userId);
+          }}
           onBackHome={() => {
             setActiveModule(null);
             setView("landing");

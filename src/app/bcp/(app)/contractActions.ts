@@ -26,9 +26,21 @@ export async function signContract(contractId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
-  const { data: contract } = await service.from("purchase_contracts").select("status").eq("id", contractId).single();
+  const { data: contract } = await service.from("purchase_contracts").select("status, lot_id").eq("id", contractId).single();
   if (!contract) throw new Error("Contrato no encontrado.");
   if (contract.status !== "pending_signature") throw new Error("Este contrato ya fue firmado.");
+
+  // Kaffetal Club gate: only member producers sign contracts (and from there
+  // participate in the active catalog / Cherry Picked).
+  const { data: lot } = await service.from("lots").select("producer_id").eq("id", contract.lot_id).single();
+  const { data: pp } = await service
+    .from("producer_profiles")
+    .select("club_member_since")
+    .eq("profile_id", lot?.producer_id ?? "")
+    .maybeSingle();
+  if (!pp?.club_member_since) {
+    throw new Error("El productor de este lote no es miembro del Kaffetal Club — emita un código de miembro en /bcp/club antes de firmar.");
+  }
 
   await service
     .from("purchase_contracts")

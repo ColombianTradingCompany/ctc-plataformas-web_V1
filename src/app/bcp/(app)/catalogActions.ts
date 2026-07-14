@@ -21,10 +21,21 @@ export async function publishLot(formData: FormData) {
   const service = createServiceRoleClient();
 
   const lotId = String(formData.get("lot_id"));
-  const { data: lot } = await service.from("lots").select("stage, grade").eq("id", lotId).single();
+  const { data: lot } = await service.from("lots").select("stage, grade, producer_id").eq("id", lotId).single();
   if (!lot) throw new Error("Lote no encontrado.");
   if (lot.stage !== "galardonado") throw new Error("Solo se pueden publicar lotes galardonados.");
   if (lot.grade === "tyrian") throw new Error("Los lotes Tyrian no se publican en el catálogo — van a la subasta.");
+
+  // Kaffetal Club gate (defensa en profundidad además del gate al firmar):
+  // solo lotes de productores miembros entran al catálogo activo.
+  const { data: pp } = await service
+    .from("producer_profiles")
+    .select("club_member_since")
+    .eq("profile_id", lot.producer_id)
+    .maybeSingle();
+  if (!pp?.club_member_since) {
+    throw new Error("El productor de este lote no es miembro del Kaffetal Club — emita un código de miembro en /bcp/club antes de publicar.");
+  }
 
   const { data: contract } = await service
     .from("purchase_contracts")

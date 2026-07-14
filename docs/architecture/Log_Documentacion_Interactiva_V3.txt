@@ -6,4 +6,32 @@ Covers: everything since Documentacion_Interactiva_V3.0(11268a0).html, which
 is now the current real HTML snapshot (Log_Documentacion_Interactiva_V2.txt
 is closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-14] Kaffetal Club: códigos de miembro que habilitan contratos + catálogo
+- New feature spanning DB + KR + BCP. DB: new service-role-only table
+  `club_member_codes` (code KC-XXXX-XXXX, note, created_by, redeemed_by/at,
+  revoked_at; profile FKs ON DELETE SET NULL) + new guard-protected column
+  `producer_profiles.club_member_since` + new guard trigger
+  `guard_producer_protected_columns` (INSERT+UPDATE -- first guard that also
+  covers INSERT, because producer_profiles_insert_own allows self-insert).
+- Producer flow (Kaffetal Regal): "Mis contratos" hub module is now
+  member-only. Non-members see a locked tile + an explanation card with a
+  code-redemption input (AppDashboard.tsx); redeeming calls the new server
+  action src/lib/club/actions.ts redeemClubCode() -> claims the code
+  (concurrency-safe conditional update), upserts club_member_since, writes
+  audit_log ('club_membership'/'code_redeemed') + a welcome note into
+  producer_comm_log (shows in Retroalimentación y ayuda).
+- BCP flow: new page /bcp/club (emit code with note, revoke unredeemed codes,
+  member list with "Retirar del Club" -> revokeClubMembership) via
+  clubActions.ts; new sidebar link; /bcp/productores shows "Kaffetal Club ✓"
+  chip per member.
+- Enforcement (business-logic gates): contractActions.signContract refuses if
+  the lot's producer has no club_member_since; catalogActions.publishLot same
+  check (defense in depth). Contracts are still auto-created at grading for
+  everyone -- membership gates SIGNING, so late joiners find their pending
+  contract waiting.
+- Doc impact when wrapping: likely a new SCENARIO (producer redeems a member
+  code -> membership -> contract signing unblocked), a DICT entry for
+  "Kaffetal Club" cross-linked from the contracts/catalog nodes, a node-card
+  note update on the BCP contracts + catalog nodes (new gate), and possibly a
+  new node for /bcp/club under Business logic.
+(commit: pending)

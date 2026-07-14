@@ -29,12 +29,14 @@ type CommRow = { id: string; producer_id: string; context_label: string | null; 
 export default async function BcpProductoresPage() {
   const service = createServiceRoleClient();
 
-  const [{ data: producerProfiles }, { data: fincas }, { data: lots }, { data: comms }] = await Promise.all([
+  const [{ data: producerProfiles }, { data: fincas }, { data: lots }, { data: comms }, { data: clubRows }] = await Promise.all([
     service.from("profiles").select("id").eq("role", "producer"),
     service.from("fincas").select("id, name, producer_id, status, municipio").order("created_at", { ascending: true }),
     service.from("lots").select("id, name, producer_id, stage").in("stage", INTAKE_STAGES).order("created_at", { ascending: false }),
     service.from("producer_comm_log").select("id, producer_id, context_label, note, created_at, author_role").order("created_at", { ascending: false }),
+    service.from("producer_profiles").select("profile_id, club_member_since").not("club_member_since", "is", null),
   ]);
+  const clubMembers = new Set(((clubRows as { profile_id: string }[] | null) ?? []).map((r) => r.profile_id));
 
   const producerIds = ((producerProfiles as { id: string }[] | null) ?? []).map((p) => p.id);
   const contacts = await fetchProducerContacts(service, producerIds);
@@ -69,6 +71,7 @@ export default async function BcpProductoresPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <h3>{c?.fullName || "Sin nombre"}</h3>
                   <span className={styles.badge}>{supplierCode(id)}</span>
+                  {clubMembers.has(id) && <span className={styles.badgeGood}>Kaffetal Club ✓</span>}
                 </div>
                 <p className={styles.meta}>
                   {[c?.companyName, c?.phone && `☎ ${c.phone}${c?.whatsappConfirmed ? " (WhatsApp)" : ""}`, c?.email, c?.department, c?.cedulaCafetera && `Cédula cafetera: ${c.cedulaCafetera}`]

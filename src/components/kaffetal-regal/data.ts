@@ -158,6 +158,9 @@ export type GeneralInfo = {
   // avatar -- galleryAssetIds/galleryUrls stay index-aligned.
   galleryAssetIds: string[];
   galleryUrls: string[];
+  // Kaffetal Club: null = no miembro. Set only by CTC (guard-protected column);
+  // the producer activates it redeeming a BCP-emitted code in "Mis contratos".
+  clubMemberSince: string | null;
 };
 
 export type ContractRelease = {
@@ -303,4 +306,5 @@ export const EMPTY_GI: GeneralInfo = {
   producerVideoUrl: null,
   galleryAssetIds: [],
   galleryUrls: [],
+  clubMemberSince: null,
 };

@@ -6,6 +6,7 @@ import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReference
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus } from "@/lib/eudr";
 import { useToast } from "@/components/Toast";
 import { submitLeadAuthed } from "@/lib/leads/actions";
+import { redeemClubCode } from "@/lib/club/actions";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
@@ -138,6 +139,34 @@ export function AppDashboard({
   // their email AND in "Retroalimentación y ayuda".
   const [serviceSent, setServiceSent] = useState<{ tech?: boolean; varietales?: boolean }>({});
   const [serviceBusy, setServiceBusy] = useState(false);
+  // Kaffetal Club: "Mis contratos" (y con ello el catálogo activo / Cherry
+  // Picked) es exclusivo de miembros. El productor activa su membresía
+  // canjeando aquí el código que CTC le emite desde el BCP.
+  const isClubMember = !!gi.clubMemberSince;
+  const [clubCode, setClubCode] = useState("");
+  const [clubBusy, setClubBusy] = useState(false);
+
+  async function submitClubCode() {
+    const code = clubCode.trim();
+    if (!code) return;
+    setClubBusy(true);
+    try {
+      const result = await redeemClubCode(code);
+      if (result.ok) {
+        showToast("¡Bienvenido al Kaffetal Club! Su membresía quedó activa ✓");
+        setClubCode("");
+        // club_member_since cambió server-side; recargar refleja la membresía
+        // (y la nota de bienvenida en Retroalimentación) sin salir del módulo.
+        onRefreshData();
+      } else {
+        showToast(result.message);
+      }
+    } catch {
+      showToast("No se pudo canjear el código. Intente de nuevo.");
+    } finally {
+      setClubBusy(false);
+    }
+  }
 
   async function requestService(pillar: "tech" | "varietales", form: HTMLFormElement) {
     setServiceBusy(true);
@@ -248,7 +277,12 @@ export function AppDashboard({
       key: "contratos",
       icon: HUB_ICON.contratos,
       title: "Mis contratos",
-      fact: contracts.length ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC` : "Aparecen al ganar un galardón en la Arena",
+      fact: !isClubMember
+        ? "Exclusivo Kaffetal Club · canjee su código de miembro"
+        : contracts.length
+          ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC`
+          : "Aparecen al ganar un galardón en la Arena",
+      alert: !isClubMember,
     },
     {
       key: "servicios",
@@ -619,9 +653,37 @@ export function AppDashboard({
 
           )}
 
-          {module === "contratos" && (
+          {module === "contratos" && !isClubMember && (
           <div className={`${styles.acard} ${styles.wide}`}>
-            <span className={styles.k}>Mis contratos con CTC</span>
+            <span className={styles.k}>Mis contratos · exclusivo Kaffetal Club</span>
+            <div className={styles.alist} style={{ marginTop: 8 }}>
+              El <b>Kaffetal Club</b> es el círculo de productores con los que CTC firma contratos de compra: solo sus
+              lotes galardonados entran al <b>catálogo activo</b> y se venden con nombre propio en <b>Cherry Picked</b>{" "}
+              (Europa). La membresía se activa con un <b>código de miembro</b>{" "}que CTC le entrega personalmente —
+              si aún no tiene el suyo, escríbanos por &quot;Retroalimentación y ayuda&quot;.
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                value={clubCode}
+                onChange={(e) => setClubCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && !clubBusy && submitClubCode()}
+                placeholder="KC-XXXX-XXXX"
+                className="mono"
+                style={{ padding: "9px 12px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 14, letterSpacing: ".08em", width: 180 }}
+                aria-label="Código de miembro Kaffetal Club"
+              />
+              <button className="btn btn-sm btn-solid" onClick={submitClubCode} disabled={clubBusy || !clubCode.trim()}>
+                {clubBusy ? "Activando…" : "Activar membresía"}
+              </button>
+            </div>
+          </div>
+          )}
+
+          {module === "contratos" && isClubMember && (
+          <div className={`${styles.acard} ${styles.wide}`}>
+            <span className={styles.k}>
+              Mis contratos con CTC · Kaffetal Club desde {new Date(gi.clubMemberSince!).toLocaleDateString("es-CO")}
+            </span>
             {contracts.length === 0 ? (
               <div className={styles.alist} style={{ marginTop: 8 }}>Sin lotes galardonados todavía. Cuando un lote suyo gane un galardón en la Arena, su contrato aparecerá aquí.</div>
             ) : (

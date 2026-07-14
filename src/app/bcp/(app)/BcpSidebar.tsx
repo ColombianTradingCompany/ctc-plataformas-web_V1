@@ -7,6 +7,7 @@ import styles from "./BcpSidebar.module.css";
 const LINKS = [
   { href: "/bcp", label: "Panel", exact: true },
   { href: "/bcp/productores", label: "Productores" },
+  { href: "/bcp/club", label: "Kaffetal Club" },
   { href: "/bcp/fincas", label: "Fincas" },
   { href: "/bcp/lotes", label: "Lotes" },
   { href: "/bcp/arena", label: "Arena" },

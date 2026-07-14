@@ -243,7 +243,7 @@ function Experience() {
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
             .from("producer_profiles")
-            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids")
+            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids, club_member_since")
             .eq("profile_id", uid)
             .single(),
           supabase.from("fincas").select("*").eq("producer_id", uid).order("created_at", { ascending: true }),
@@ -370,6 +370,7 @@ function Experience() {
         producerVideoUrl: producerProfile?.video_asset_id ? urlByAssetId.get(producerProfile.video_asset_id) ?? null : null,
         galleryAssetIds: producerProfile?.gallery_asset_ids ?? [],
         galleryUrls: (producerProfile?.gallery_asset_ids ?? []).map((id: string) => urlByAssetId.get(id) ?? ""),
+        clubMemberSince: producerProfile?.club_member_since ?? null,
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
       const ackByCommId = new Map<string, string>(

@@ -271,6 +271,17 @@ is closed and left as historical record of what went into producing it).
   (youtube.com/watch?v=fLzOAHJkuQg) on how to calculate the factor de
   rendimiento, with an ⓘ friendly note. Content only.
 
+## [2026-07-14] Remitente unificado EMAIL_FROM (leads + OTP de BCP)
+sendOtpEmail.ts ahora usa el mismo EMAIL_FROM que los correos de leads, con el
+fallback resend.dev de siempre. Configuración documentada: verificar
+ctcexport.com en Resend (DNS en Hostinger hPanel; no toca el MX/SPF del buzón
+de Hostinger porque Resend usa resend._domainkey y el subdominio send.),
+luego EMAIL_FROM="Colombian Trading Company <info@ctcexport.com>" en Vercel y
+.env.local (plantilla comentada añadida; activarla ANTES de verificar rompe
+todos los envíos, incluido el OTP de BCP). Las respuestas de los leads llegan
+al buzón info@ existente (Hostinger), independiente del envío por Resend.
+(commit: pending)
+
 ## [2026-07-14] "Más allá de la exportación" DENTRO del Panel del Productor
 Observación del usuario: el hub del productor no tenía NINGUNA referencia a
 los servicios de "Más allá de la exportación" — un productor ya dentro de la

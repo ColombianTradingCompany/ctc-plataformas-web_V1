@@ -16,7 +16,10 @@ export async function sendOtpEmail(code: string) {
 
   const resend = new Resend(apiKey);
   await resend.emails.send({
-    from: "CTC Business Control Panel <onboarding@resend.dev>",
+    // Same verified sender as the lead emails (EMAIL_FROM once ctcexport.com
+    // is verified in Resend); resend.dev fallback only delivers to the
+    // Resend account owner's inbox -- which is exactly this OTP's recipient.
+    from: process.env.EMAIL_FROM || "CTC Business Control Panel <onboarding@resend.dev>",
     to,
     subject: "Tu código de confirmación · CTC BCP",
     text: `Código de confirmación: ${code}\n\nVálido por 10 minutos. Si no intentaste iniciar sesión en el Business Control Panel, ignora este mensaje.`,

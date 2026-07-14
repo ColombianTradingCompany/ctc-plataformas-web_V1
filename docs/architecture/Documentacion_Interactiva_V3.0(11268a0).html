@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTC Web Platform — Mapa vivo del sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F4FB;
+  --tile:#FFFFFF;
+  --grout:#E3DCF3;
+  --ink:#241A3D;
+  --muted:#665C7D;
+  --brand:#3C0A86;
+  --brand-soft:#EEE6FB;
+  --gold:#B5860A;
+  --gold-line:#FFCD00;
+  --gold-soft:#FCF3D7;
+  --navy:#003087;
+  --navy-soft:#E5EBF9;
+  --crimson:#B01F24;
+  --crimson-soft:#FBEAEA;
+  --wire:#CFC6E6;
+  --shadow:0 2px 8px rgba(36,26,61,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'IBM Plex Sans',sans-serif;
+  color:var(--ink);
+  background:
+    linear-gradient(var(--grout) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grout) 1px, transparent 1px),
+    var(--paper);
+  background-size:34px 34px;
+  min-height:100vh;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:2rem 1rem 5rem}
+
+header{margin-bottom:1.25rem}
+.kicker{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--brand);
+}
+h1{
+  font-family:'Fraunces',serif;font-weight:700;
+  font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.08;margin:.35rem 0 .6rem;
+}
+h1 em{font-style:italic;color:var(--brand)}
+.lede{max-width:70ch;color:var(--muted);font-size:.96rem;line-height:1.6}
+.lede b{color:var(--ink)}
+.lede a{color:var(--brand)}
+.meta{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);margin-top:.5rem}
+
+.deck{
+  position:sticky;top:.6rem;z-index:40;
+  background:var(--tile);border:1.5px solid var(--ink);border-radius:12px;
+  box-shadow:0 5px 0 -2px var(--ink);
+  padding:.55rem .7rem;margin:1.1rem 0 1.3rem;
+}
+.deck-row{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
+.deck label{
+  font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+}
+select{
+  font-family:'IBM Plex Sans',sans-serif;font-size:.84rem;font-weight:500;
+  padding:.38rem .5rem;border:1.5px solid var(--ink);border-radius:8px;
+  background:var(--paper);color:var(--ink);max-width:100%;flex:1 1 220px;min-width:0;
+}
+.btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;font-weight:600;
+  padding:.4rem .65rem;border:1.5px solid var(--ink);border-radius:8px;
+  background:var(--tile);color:var(--ink);cursor:pointer;
+  transition:transform .12s, background .12s;
+  display:inline-flex;align-items:center;gap:.35rem;
+}
+.btn.mini{padding:.32rem .5rem;font-size:.66rem;border-color:var(--grout);color:var(--muted)}
+.btn.mini:hover{border-color:var(--ink);color:var(--ink)}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn.play{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.play.playing{background:var(--gold-line);border-color:var(--gold-line);color:var(--ink)}
+.ticker{
+  margin-top:.5rem;border-top:1.5px dashed var(--grout);padding-top:.5rem;
+  display:flex;gap:.5rem;align-items:baseline;
+}
+.ticker .stepno{
+  font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;
+  background:var(--ink);color:#fff;border-radius:5px;padding:.16rem .4rem;
+  white-space:nowrap;
+}
+.ticker p{font-size:.85rem;line-height:1.4}
+.ticker p .where{
+  font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;
+  color:var(--brand);display:inline;margin-right:.45rem;text-transform:uppercase;letter-spacing:.08em;
+}
+.dots{display:inline-flex;gap:4px;align-items:center;flex:none;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--grout);background:var(--paper);cursor:pointer;padding:0;transition:all .15s}
+.dot:hover{border-color:var(--ink)}
+.dot.on{background:var(--brand);border-color:var(--brand)}
+.dot.cur{background:var(--gold-line);border-color:var(--gold-line);transform:scale(1.25)}
+
+.legend{
+  font-family:'IBM Plex Mono',monospace;font-size:.64rem;color:var(--muted);
+  margin:-.7rem 0 1rem;display:flex;gap:1.1rem;flex-wrap:wrap;padding:0 .2rem;
+}
+.legend .amb{color:var(--gold)}
+
+.board{position:relative}
+svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+svg.wires path.wire{fill:none;stroke:var(--wire);stroke-width:2}
+svg.wires path.wire.dashed{stroke-dasharray:5 6}
+svg.wires path.wire.lit{stroke:var(--gold-line);stroke-width:2.5}
+#packet{fill:var(--gold-line);stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 3px rgba(181,134,10,.55))}
+#packet.hidden{display:none}
+
+.zone{position:relative;z-index:2;margin-bottom:2.1rem}
+.zone-label{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;
+}
+.zone-label::after{content:"";flex:1;height:1.5px;background:var(--grout)}
+.zone-grid{
+  display:grid;gap:1.4rem;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+}
+.zone-grid.pipeline{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+
+.node{
+  background:var(--tile);border:1.5px solid var(--ink);border-radius:12px;
+  padding:.85rem .9rem;box-shadow:var(--shadow);
+  transition:box-shadow .25s, transform .25s, border-color .25s;
+  min-width:0;
+}
+.node.active{
+  border-color:var(--gold-line);
+  box-shadow:0 0 0 4px var(--gold-soft), 0 6px 14px rgba(181,134,10,.25);
+  transform:translateY(-2px);
+}
+.node.done{border-color:var(--brand)}
+.node-head{display:flex;align-items:flex-start;gap:.45rem}
+.node-head .emoji{font-size:1.1rem;line-height:1.3}
+.node-head h3{
+  font-family:'Fraunces',serif;font-weight:700;
+  font-size:.98rem;line-height:1.2;flex:1;
+}
+.node .role{
+  font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.08em;margin:.4rem 0 .3rem;display:inline-block;
+  padding:.15rem .45rem;border-radius:5px;
+}
+.role.publico{background:var(--navy-soft);color:var(--navy)}
+.role.productor{background:var(--gold-soft);color:var(--gold)}
+.role.comprador{background:#E4F1EA;color:#1F6B42}
+.role.staff{background:var(--brand-soft);color:var(--brand)}
+.role.infra{background:#EFEBF7;color:var(--muted)}
+.node .sub{font-size:.79rem;color:var(--muted);line-height:1.5;margin-top:.15rem}
+.node .sub b{color:var(--ink)}
+.node .badge{
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;
+  color:var(--crimson);background:var(--crimson-soft);border-radius:5px;
+  padding:.1rem .4rem;margin-left:.4rem;white-space:nowrap;
+}
+
+.ibtn{
+  flex:none;width:20px;height:20px;border-radius:50%;
+  border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;
+  cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;
+  transition:background .12s;
+}
+.ibtn:hover{background:var(--gold-soft);border-color:var(--gold-line)}
+.caret{
+  flex:none;width:20px;height:20px;border:none;background:none;cursor:pointer;
+  color:var(--muted);font-size:.8rem;transition:transform .2s;padding:0;line-height:1;
+}
+.caret:hover{color:var(--ink)}
+.node.collapsed .caret{transform:rotate(-90deg)}
+.node.collapsed .sub,.node.collapsed .role,.node.collapsed .chips,.node.collapsed .note{display:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.55rem}
+.chips.ctx{border-top:1px dashed var(--grout);padding-top:.45rem}
+.ctxlabel{
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+  align-self:center;
+}
+.chip{
+  display:inline-flex;align-items:center;gap:.3rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:500;
+  padding:.24rem .5rem;border:1.5px dotted var(--grout);border-radius:99px;
+  background:transparent;color:var(--muted);cursor:pointer;transition:all .12s;
+}
+.chip:hover{border-color:var(--gold-line);background:var(--gold-soft);color:var(--ink)}
+
+.node .note{
+  font-size:.73rem;line-height:1.4;margin-top:.5rem;
+  background:var(--gold-soft);border-left:3px solid var(--gold-line);
+  padding:.35rem .5rem;border-radius:0 6px 6px 0;color:var(--ink);
+}
+
+/* ---------- info drawer ---------- */
+.scrim{
+  position:fixed;inset:0;background:rgba(36,26,61,.35);z-index:60;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;z-index:61;background:var(--tile);
+  border:1.5px solid var(--ink);box-shadow:0 8px 0 -2px var(--ink);
+  right:1rem;top:1rem;bottom:auto;width:min(440px,calc(100vw - 2rem));
+  max-height:calc(100vh - 2rem);overflow-y:auto;
+  border-radius:14px;padding:1.2rem;
+  transform:translateX(calc(100% + 2rem));transition:transform .25s;
+}
+.drawer.open{transform:none}
+.drawer .kicker{color:var(--gold)}
+.drawer h2{font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:.25rem 0 .6rem}
+.drawer .body{font-size:.92rem;line-height:1.62;color:var(--ink)}
+.drawer .body p{margin-bottom:.7rem}
+.drawer .body b{color:var(--brand)}
+.drawer .body code{
+  font-family:'IBM Plex Mono',monospace;font-size:.85em;background:var(--paper);
+  padding:.05rem .3rem;border-radius:4px;
+}
+.drawer .also{margin-top:.9rem;border-top:1.5px dashed var(--grout);padding-top:.7rem}
+.drawer .also span{
+  font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.1em;color:var(--muted);display:block;margin-bottom:.4rem;
+}
+.drawer .also .chip{margin:0 .3rem .3rem 0}
+.drawer .close{position:absolute;top:.8rem;right:.8rem}
+
+@media (max-width:760px){
+  .drawer{right:0;left:0;top:auto;bottom:0;width:100%;max-height:75vh;
+    border-radius:14px 14px 0 0;transform:translateY(105%)}
+  .drawer.open{transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;animation:none !important}
+}
+.node:focus-visible,.btn:focus-visible,.chip:focus-visible,.ibtn:focus-visible,select:focus-visible{
+  outline:2.5px solid var(--gold-line);outline-offset:2px;
+}
+footer.pagefoot{
+  margin-top:2.5rem;padding-top:1.2rem;border-top:1.5px dashed var(--grout);
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted);line-height:1.7;
+}
+footer.pagefoot b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Documentación visual e interactiva · CTC Web Platform</div>
+  <h1>Cómo funciona el ecosistema CTC, <em>pieza por pieza</em></h1>
+  <p class="lede">Esto documenta el sistema <b>real</b> que existe hoy en este repo — no un ejemplo genérico. Cada caja de abajo
+  es un componente que realmente corre en producción; cada cable es una conexión real; cada escenario del selector <b>Traza</b>
+  narra un flujo de negocio real, tomado directamente del código (Server Actions, funciones SQL, rutas API). Toca <b>ⓘ</b> en
+  cualquier caja para leer qué es y por qué existe así. Elige una traza y pulsa <b>▶ Play</b> para ver la acción viajar por el
+  sistema, un salto a la vez.</p>
+  <p class="meta">Última actualización: 2026-07-14 (V3.0) · Ver también <code>docs/HANDOFF.md</code> para el detalle textual completo (esquema, RLS, hallazgos de auditoría).</p>
+</header>
+
+<div class="deck">
+  <div class="deck-row">
+    <label for="scenario">Traza</label>
+    <select id="scenario"></select>
+    <button class="btn play" id="playBtn">▶ Play</button>
+    <button class="btn" id="backBtn" title="Paso anterior">←</button>
+    <button class="btn" id="stepBtn">Paso →</button>
+    <button class="btn" id="resetBtn">↺</button>
+    <button class="btn mini" id="collapseAll" title="Colapsar todas las tarjetas">▸ todas</button>
+    <button class="btn mini" id="expandAll" title="Expandir todas las tarjetas">▾ todas</button>
+  </div>
+  <div class="ticker">
+    <span class="stepno" id="stepNo">—</span>
+    <span class="dots" id="dots" aria-hidden="true"></span>
+    <p id="tickerText"><span class="where">Listo</span>Pulsa Play, o Paso para avanzar salto a salto.</p>
+  </div>
+</div>
+
+<div class="legend"><b>Leyenda:</b> línea sólida = ruta de escritura real en producción · discontinua = build/entrega o un bypass intencional (service-role saltándose las guardas) · <span class="amb">punto dorado</span> = la acción viajando ahora mismo</div>
+
+<div class="board" id="board">
+  <svg class="wires" id="wires" aria-hidden="true">
+    <g id="wireLayer"></g>
+    <circle id="packet" class="hidden" r="7"></circle>
+  </svg>
+
+  <section class="zone">
+    <div class="zone-label">Clientes — las 4 superficies que la gente toca</div>
+    <div class="zone-grid">
+      <div class="node" id="n-home">
+        <div class="node-head"><span class="emoji">🏠</span><h3>CTC Home</h3>
+          <button class="ibtn" data-info="home" aria-label="Sobre CTC Home">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role publico">Público</span>
+        <p class="sub">Marketing corporativo + <b>captura de leads</b>. El "Escríbenos" y los servicios de "Más allá de la exportación" (CTC Tech, Co-Create, Varietales) ya no arman un <code>mailto:</code>: crean un <b>lead con una cuenta de plataforma</b> (Google, o creada en su nombre) y disparan un correo de bienvenida automático.</p>
+        <p class="note">Ya no es "sin backend": una Server Action pública (service-role) inserta el lead en <code>leads</code> y crea/vincula la cuenta — Co-Create → comprador Cherry Picked, el resto → productor Kaffetal Regal. El pipeline se tría en <b>/bcp/leads</b>.</p>
+      </div>
+      <div class="node" id="n-kaffetal">
+        <div class="node-head"><span class="emoji">🌱</span><h3>Kaffetal Regal</h3>
+          <button class="ibtn" data-info="kaffetal" aria-label="Sobre Kaffetal Regal">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role productor">Productor</span>
+        <p class="sub">Portal del caficultor: login real (email+contraseña o Google), CRUD de fincas/lotes con expediente EUDR completo, y la Ficha Técnica dividida en 4 sub-etapas secuenciales (FT → FT2 → EUDR → Video). El dashboard es ahora un <b>HUB de módulos</b> (tarjetas grandes con datos clave: Información general, Mis fincas, Mis lotes, Envío de muestras, Retroalimentación, Certificación, Contratos, Más allá de la exportación) — se abre uno a la vez. La superficie más activa del proyecto.</p>
+        <p class="note">Dos novedades clave: el productor puede <b>solicitar los servicios "Más allá de la exportación"</b> (CTC Tech / Varietales) desde su propio panel, y su hilo de "Retroalimentación y ayuda" es una conversación bidireccional real con CTC — incluye los espejos de sus solicitudes de leads.</p>
+      </div>
+      <div class="node" id="n-cherry">
+        <div class="node-head"><span class="emoji">☕</span><h3>Cherry Picked</h3>
+          <button class="ibtn" data-info="cherry" aria-label="Sobre Cherry Picked">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role comprador">Comprador</span>
+        <p class="sub">Vitrina para tostadoras europeas: catálogo alimentado solo por publicaciones de BCP, carrito, checkout atómico, niveles de membresía, sample packs.</p>
+        <p class="note">La subasta Tyrian (<code>TyrianSection.tsx</code>) sigue siendo 100% demo estática — deliberadamente aplazada, aún no empezada.</p>
+      </div>
+      <div class="node" id="n-bcp">
+        <div class="node-head"><span class="emoji">🛡️</span><h3>BCP · Business Control Panel</h3>
+          <button class="ibtn" data-info="bcp" aria-label="Sobre BCP">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role staff">Staff CTC</span>
+        <p class="sub">La única superficie que usa el equipo de CTC: login 2FA; un <b>Panel de triaje</b> (KPIs gráficos + feed de tareas Done/TBD); aprobación de fincas; tablero Kanban de intake (FT/FT2/EUDR/Video/Muestra); Arena; contratos; publicación al catálogo; <b>/bcp/productores</b>; y <b>/bcp/leads</b> — ya no un placeholder: un tablero kanban por servicio (Escríbenos / CTC Tech / Co-Create / Varietales) para responder los leads de CTC Home por correo.</p>
+        <p class="note">Cada edición EUDR que BCP hace a nombre de un productor se auto-registra en el log de comunicación. El Panel triage y el estado Done/TBD viven en la tabla <code>bcp_task_state</code>, compartida entre los dos admins.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone">
+    <div class="zone-label">Frontend y entrega — cómo el código llega al navegador</div>
+    <div class="zone-grid">
+      <div class="node" id="n-next">
+        <div class="node-head"><span class="emoji">🧩</span><h3>Código Next.js</h3>
+          <button class="ibtn" data-info="nextcode" aria-label="Sobre el código Next.js">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Código</span>
+        <p class="sub">Un solo repo, cuatro caras. App Router + TypeScript + React 19, Turbopack. CSS Modules a mano en las 3 superficies públicas; shadcn/ui + Tailwind solo dentro de BCP.</p>
+      </div>
+      <div class="node" id="n-proxy">
+        <div class="node-head"><span class="emoji">🔀</span><h3>proxy.ts</h3>
+          <button class="ibtn" data-info="proxy" aria-label="Sobre proxy.ts">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Enrutador</span>
+        <p class="sub">El <code>middleware.ts</code> de versiones anteriores de Next.js se llama <code>proxy.ts</code> aquí. Lee el hostname, mapea subdominio → ruta interna y reescribe.</p>
+      </div>
+      <div class="node" id="n-vercel">
+        <div class="node-head"><span class="emoji">🌍</span><h3>Vercel</h3>
+          <button class="ibtn" data-info="vercel" aria-label="Sobre Vercel">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Hosting + CI/CD</span>
+        <p class="sub">Build (Turbopack) + CDN + deploy automático en cada <code>git push</code> a <code>main</code>. Un solo proyecto sirve el dominio raíz y ambos subdominios.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone">
+    <div class="zone-label">Identidad y acceso a datos — cómo cada plataforma habla con Supabase</div>
+    <div class="zone-grid">
+      <div class="node" id="n-auth">
+        <div class="node-head"><span class="emoji">🔑</span><h3>Supabase Auth</h3>
+          <button class="ibtn" data-info="auth" aria-label="Sobre Supabase Auth">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Identidad</span>
+        <p class="sub">Dos esquemas conviven: productores/compradores usan email+contraseña o Google OAuth normales; BCP envuelve eso con su propio password+OTP de 2 factores.</p>
+      </div>
+      <div class="node" id="n-supaclient">
+        <div class="node-head"><span class="emoji">🔌</span><h3>Cliente Supabase (navegador)</h3>
+          <button class="ibtn" data-info="supaclient" aria-label="Sobre el cliente Supabase en el navegador">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Acceso directo</span>
+        <p class="sub">Kaffetal Regal y Cherry Picked llaman a <code>supabase-js</code> directo desde el navegador — no existe una API intermedia para ellos. La seguridad vive entera en RLS + guardas.</p>
+      </div>
+      <div class="node" id="n-actions">
+        <div class="node-head"><span class="emoji">📜</span><h3>Server Actions (BCP)</h3>
+          <button class="ibtn" data-info="actions" aria-label="Sobre las Server Actions de BCP">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Contrato admin</span>
+        <p class="sub">BCP nunca toca Supabase desde el navegador. Cada mutación es una Server Action que corre <code>requireAdmin()</code> por su cuenta, más 2 route handlers dedicados (2FA, asesor IA).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone">
+    <div class="zone-label">Lógica de negocio — dónde viven las reglas reales</div>
+    <div class="zone-grid">
+      <div class="node" id="n-guards">
+        <div class="node-head"><span class="emoji">🧱</span><h3>RLS + guardas "ironclad"</h3>
+          <button class="ibtn" data-info="guards" aria-label="Sobre el modelo de guardas">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Reglas</span>
+        <p class="sub">Dos capas: RLS decide de quién son las filas visibles; un trigger <code>BEFORE UPDATE</code> decide además qué columnas/transiciones son legales, y las políticas cubren también <b>DELETE</b>. Se sumaron dos guardas nuevas: <code>guard_finca_protected_columns</code> (nadie que no sea CTC cambia <code>status</code>/<code>eudr_cert_shared</code>, y las declaraciones EUDR quedan congeladas una vez aprobada la finca) y <code>guard_lot_protected_columns</code> (protege el nivel de riesgo, la efectividad de mitigación y el responsable — determinaciones de CTC).</p>
+        <p class="note">Las llamadas service-role tienen <code>auth.uid()</code> nulo y las guardas las dejan pasar por diseño. Hallazgo de esta ronda: <code>fincas</code> no tenía NINGUNA guarda de columnas — un productor podía (vía API directa) auto-aprobarse o auto-compartirse la certificación. Verificado con SQL simulando la sesión del productor: auto-aprobación y auto-share BLOQUEADOS, edición legítima PASA.</p>
+      </div>
+      <div class="node" id="n-definer">
+        <div class="node-head"><span class="emoji">⚙️</span><h3>Funciones SECURITY DEFINER<span class="badge">1 de 5 intencional</span></h3>
+          <button class="ibtn" data-info="definer" aria-label="Sobre las funciones SECURITY DEFINER">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Lógica atómica</span>
+        <p class="sub"><code>place_order()</code> es la única invocada a propósito (desde el navegador del comprador). Las otras 4 son triggers automáticos que Postgres expone sin querer vía RPC.</p>
+      </div>
+      <div class="node" id="n-third">
+        <div class="node-head"><span class="emoji">🤝</span><h3>Servicios externos</h3>
+          <button class="ibtn" data-info="third" aria-label="Sobre los servicios externos">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Rentado</span>
+        <p class="sub"><b>Resend</b> entrega el OTP de BCP <b>y</b> ahora todos los correos de leads (bienvenida + respuestas de CTC), desde <code>info@ctcexport.com</code> con el dominio verificado (env <code>EMAIL_FROM</code>). La <b>API de Anthropic</b> resuelve el asesor "¿Y ahora qué?" — su ruta/lib/columnas siguen, pero la UI está desactivada (dormante).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone">
+    <div class="zone-label">Datos — dónde se recuerda todo</div>
+    <div class="zone-grid">
+      <div class="node" id="n-db">
+        <div class="node-head"><span class="emoji">🗄️</span><h3>Postgres <span class="badge">29 tablas</span></h3>
+          <button class="ibtn" data-info="db" aria-label="Sobre la base de datos">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Fuente de verdad</span>
+        <p class="sub">Agrupadas por dominio: Identidad, Kaffetal (fincas/lots/ficha), Arena/Contratos (service-role-only), Cherry Picked (listings/orders/puntos), Leads (<code>leads</code>/<code>lead_replies</code>, service-role-only), Ops (OTP/audit_log/bcp_task_state).</p>
+      </div>
+      <div class="node" id="n-views">
+        <div class="node-head"><span class="emoji">🔎</span><h3>Vistas públicas</h3>
+          <button class="ibtn" data-info="views" aria-label="Sobre las vistas públicas">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Lectura filtrada</span>
+        <p class="sub"><code>public_lot_catalog</code> y <code>public_transparency_pricing</code>: existen para no tener que ensanchar el RLS de <code>lots</code>/<code>fincas</code>.</p>
+      </div>
+      <div class="node" id="n-storage">
+        <div class="node-head"><span class="emoji">📦</span><h3>Supabase Storage</h3>
+          <button class="ibtn" data-info="storage" aria-label="Sobre Supabase Storage">i</button>
+          <button class="caret">▾</button></div>
+        <span class="role infra">Archivos</span>
+        <p class="sub">El bucket privado <code>kaffetal-media</code> respalda cada subida real: foto de perfil y galería del productor, video del productor/finca/lote, documentos de respaldo EUDR, certificados. Convención de ruta <code>{producer_id}/...</code> en todos lados.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="zone">
+    <div class="zone-label">Build y despliegue — de Claude Code a producción</div>
+    <div class="zone-grid pipeline">
+      <div class="node" id="n-local">
+        <div class="node-head"><span class="emoji">💻</span><h3>Máquina local</h3>
+          <button class="ibtn" data-info="local" aria-label="Sobre la máquina local">i</button>
+          <button class="caret">▾</button></div>
+        <p class="sub">Claude Code + Next.js dev + Git. <code>tsc --noEmit</code> y <code>eslint --max-warnings=0</code> deben salir limpios antes de dar algo por terminado.</p>
+      </div>
+      <div class="node" id="n-gh">
+        <div class="node-head"><span class="emoji">🐙</span><h3>GitHub</h3>
+          <button class="ibtn" data-info="github" aria-label="Sobre GitHub">i</button>
+          <button class="caret">▾</button></div>
+        <p class="sub"><code>ColombianTradingCompany/ctc-plataformas-web_V1</code>, rama <code>main</code>.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="pagefoot">
+  Este archivo es un documento vivo — <b>actualízalo al final de cada sesión de mejora</b>, igual que <code>docs/HANDOFF.md</code>.
+  No tiene build step: es HTML/CSS/JS plano, se abre directo en el navegador o se sirve con cualquier servidor estático.
+  Los datos de la traza y del diccionario viven en los objetos <code>SCENARIOS</code> y <code>DICT</code> al final del archivo —
+  para añadir un flujo nuevo, se agrega un objeto ahí, no se toca el motor.
+</footer>
+
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+  <button class="btn close" id="drawerClose" aria-label="Cerrar">✕</button>
+  <div class="kicker" id="drawerKicker">Concepto</div>
+  <h2 id="drawerTitle">—</h2>
+  <div class="body" id="drawerBody"></div>
+  <div class="also" id="drawerAlso"></div>
+</aside>
+
+<script>
+/* ============================================================
+   DICCIONARIO — todo lo que un ⓘ puede abrir
+   Cada entrada: k(kicker/categoría), t(título), b(cuerpo html), a(relacionados)
+============================================================ */
+const DICT = {
+  home:{k:"Superficie",t:"CTC Home",b:`<p>Sitio de marketing corporativo servido en la raíz del dominio (<code>/</code>) — más, desde V3, la <b>captura de leads</b>. El modal de contacto de 4 variantes (Escríbenos general + CTC Tech / Co-Create / Varietales) ya no arma un <code>mailto:</code>: crea un lead real.</p><p>Dos caminos: "Enviar solicitud" (damos de alta la cuenta con contraseña temporal) o "Continuar con Google" (el formulario se guarda en <code>localStorage</code>, va al callback <code>/auth/callback</code> y se retoma al volver). El pilar decide el tipo de cuenta: Co-Create → comprador Cherry Picked, el resto → productor Kaffetal Regal. Anti-spam por honeypot + límites por correo/IP.</p>`,a:["leads","nextcode","vercel"]},
+  kaffetal:{k:"Superficie",t:"Kaffetal Regal",b:`<p>El portal del productor colombiano. Landing pública + app real detrás de login: CRUD de fincas/lotes y la Ficha Técnica de 8 paneles (portada campo a campo de la herramienta interna <code>V5_CTC_Green_Coffee_Datasheet.html</code>, con cálculos en vivo — factor de rendimiento, spider-chart SCA).</p><p>El dashboard (<code>AppDashboard.tsx</code>) dejó de ser una página infinita: aterriza en un <b>HUB de módulos</b> (tarjetas compactas con icono de línea + datos clave al vistazo). Módulos: Información general, Mis fincas, Mis lotes, Envío de muestras, Retroalimentación y ayuda, Certificación CTC, Mis contratos y <b>Más allá de la exportación</b>. El módulo activo vive en <code>KaffetalExperience</code> y participa en la pila del botón "Atrás" del teléfono (modales &gt; ficha &gt; módulo &gt; hub) — se sincroniza con la History API.</p><p>"Más allá de la exportación": el productor solicita <b>CTC Tech</b> o <b>Varietales Registrados</b> desde su panel (elige finca de un selector). Entra al mismo pipeline de leads que el Escríbenos público, con cuenta ya vinculada.</p>`,a:["leads","supaclient","guards","eudr","intake","commlog","eudrcert"]},
+  cherry:{k:"Superficie",t:"Cherry Picked",b:`<p>La vitrina para tostadoras europeas. El catálogo se alimenta <b>solo</b> de lo que BCP publica explícitamente — nunca lee <code>lots</code> directo.</p><p>Checkout real vía <code>place_order()</code>, membresías por puntos, sample packs. La subasta Tyrian (medio-lote, en vivo) está diseñada pero es 100% estática todavía — fase deliberadamente aplazada.</p>`,a:["definer","views","stagelifecycle"]},
+  bcp:{k:"Superficie",t:"BCP · Business Control Panel",b:`<p>La única pantalla que usa el equipo de CTC (2 fundadores). No aparece en ningún nav público y <code>robots.ts</code> la desindexa. Login 2FA (contraseña + OTP).</p><p>El <b>Panel</b> es una superficie de triaje: KPIs gráficos (número + medidor de proporción, color de marca, enlazados — incluida "Leads sin responder") y un feed de "Tareas · pendientes de CTC" con fincas pendientes, mensajes de productores, humedad marcada, lotes en cola de Arena y leads sin responder, cada uno hipervinculado y toggleable Done/TBD (persistido en <code>bcp_task_state</code>, compartido entre los dos admins). Luego: Fincas (filas compactas → popup), Lotes (Kanban de intake), Productores, Arena, Contratos, Evaluaciones, Catálogo, y <b>Leads</b> (ya vivo).</p><p>Cada Server Action re-verifica <code>bcp_admin</code> por su cuenta — el chequeo del layout es solo conveniencia de lectura.</p>`,a:["leads","actions","auditlog","intake","commlog"]},
+
+  nextcode:{k:"Capa",t:"Código Next.js",b:`<p>Un solo repositorio Next.js 16 (App Router, Turbopack) sirve las 4 superficies — enrutadas por subdominio en producción y por ruta en desarrollo.</p><p>Esta versión de Next.js tiene diferencias reales de API respecto a lo habitual (p. ej. <code>middleware.ts</code> ahora es <code>proxy.ts</code>) — <code>AGENTS.md</code> avisa de esto explícitamente.</p><p>CSS Modules a mano en las 3 superficies públicas, para no perder fidelidad visual con los prototipos ya aprobados; shadcn/ui + Tailwind solo dentro de <code>/bcp</code>, importado únicamente desde su propio <code>layout.tsx</code>.</p>`,a:["proxy","vercel"]},
+  proxy:{k:"Capa",t:"proxy.ts",b:`<p>Lee <code>request.nextUrl.hostname</code>, mapea la etiqueta de subdominio (<code>kaffetal-regal</code>, <code>cherry-picked</code>) a su ruta interna, y reescribe la URL con <code>NextResponse.rewrite</code> — el usuario nunca ve el cambio.</p><p>El <code>matcher</code> excluye <code>/api</code>, <code>/_next/*</code>, <code>favicon.ico</code> e <code>/images</code>, así que los assets estáticos pasan de largo sin pasar por esta lógica.</p>`,a:["nextcode","vercel"]},
+  vercel:{k:"Capa",t:"Vercel",b:`<p>Un solo proyecto de Vercel sirve el dominio raíz y ambos subdominios — cada uno con su propio registro DNS pero apuntando al mismo deploy.</p><p>Cada <code>git push</code> a <code>main</code> dispara un build con Turbopack y un despliegue a la red edge global — nadie toca un servidor manualmente.</p>`,a:["nextcode","github"]},
+
+  auth:{k:"Capa",t:"Supabase Auth",b:`<p>Productores y compradores usan la identidad estándar de Supabase Auth (internamente <b>GoTrue</b>): email+contraseña o Google OAuth, con un trigger <code>handle_new_user()</code> que crea automáticamente la fila en <code>profiles</code>/<code>producer_profiles</code>/<code>buyer_profiles</code> al registrarse.</p><p>BCP <b>no reemplaza</b> esto — lo envuelve con un segundo factor propio (contraseña + OTP por email) antes de emitir la cookie de sesión real. Ver <b>Login BCP</b> en el diccionario.</p>`,a:["supaclient","definer","session"]},
+  supaclient:{k:"Capa",t:"Cliente Supabase (navegador)",b:`<p>Kaffetal Regal y Cherry Picked llaman a <code>supabase-js</code> directamente desde componentes de cliente (<code>KaffetalExperience.tsx</code>, <code>CherryPickedExperience.tsx</code>) — no existe una capa de API intermedia para ellos.</p><p>Esto es seguro porque la responsabilidad completa recae en <b>RLS + las guardas</b>: si el frontend tuviera un bug e intentara leer o escribir una fila ajena, Postgres la rechaza igual.</p>`,a:["guards","rls","actions"]},
+  actions:{k:"Capa",t:"Server Actions (BCP)",b:`<p>BCP nunca llama a Supabase desde el navegador. Cada mutación (<code>approveFinca</code>, <code>createLot</code>, <code>recordArenaScore</code>, <code>closeArenaSession</code>, <code>signContract</code>, <code>publishLot</code>…) es una Server Action que empieza con su propio <code>requireAdmin()</code>: vuelve a leer la sesión y el rol <code>bcp_admin</code>, sin confiar en que el layout ya lo mostró.</p><p>Además hay 2 route handlers dedicados fuera de este patrón: <code>/api/bcp/auth/{password,verify,logout}</code> (2FA) y <code>/api/kaffetal-regal/next-step</code> (asesor IA).</p>`,a:["guards","definer","auditlog"]},
+
+  guards:{k:"Concepto",t:'El modelo de guarda "ironclad"',b:`<p>Dos capas independientes sobre cada tabla que un usuario normal puede escribir:</p><p><b>RLS</b> decide <i>de quién</i> son las filas visibles/escribibles/borrables (p. ej. un productor solo ve sus propias fincas).</p><p>Un trigger <code>BEFORE UPDATE</code> decide además <i>qué columnas o transiciones</i> son legales — un productor jamás puede cambiar su propio <code>role</code>, ni tocar un lote pasado <code>ficha_completa</code>, ni fijar el <code>grade</code> él mismo.</p><p><b>DELETE</b> también quedó cubierto por política, no solo el trigger: un lote es borrable por su dueño hasta antes de MUE (<code>stage</code> &lt; fila_arena, y nunca si <code>source='bcp_manual_entry'</code>); una finca es borrable solo mientras el expediente EUDR sigue completamente en blanco y ningún lote la referencia (evita que el <code>ON DELETE CASCADE</code> de <code>lots.finca_id</code> borre lotes de rebote).</p><p>Guardas confirmadas: <code>guard_profiles_protected_columns</code>, <code>guard_buyer_protected_columns</code>, <code>guard_lots_producer_columns</code>. Las llamadas con la clave service-role tienen <code>auth.uid()</code> nulo, así que las saltan a propósito.</p><p>Hallazgo real de esta ronda: una política <b>UPDATE</b> sin política <b>INSERT</b> hermana es una trampa silenciosa — si la fila que se intenta actualizar no existe todavía, <code>.update().eq(...)</code> no da error, solo no toca nada. Pasó con <code>producer_profiles</code> para una cuenta que nunca pasó por el flujo normal de registro.</p>`,a:["rls","supaclient","stagelifecycle"]},
+  definer:{k:"Concepto",t:"Funciones SECURITY DEFINER",b:`<p>Una función <code>SECURITY DEFINER</code> corre con los permisos de quien la creó, no de quien la llama — útil para una transacción que necesita tocar varias tablas con más poder del que el rol que la invoca tendría por sí solo.</p><p><code>place_order(p_zone_code)</code> es la única invocada <b>a propósito</b>: el comprador la llama directo desde <code>supabase.rpc(...)</code> para que todo el checkout (reservas → orden → stock → puntos) sea una sola transacción atómica con <code>FOR UPDATE</code>.</p><p>Las otras 4 (<code>handle_new_user</code>, <code>sync_buyer_points</code>, <code>sync_listing_total_from_releases</code>, <code>guard_reservation_validity</code>) son triggers automáticos — nunca se llaman a mano, pero Postgres expone <code>EXECUTE</code> a <code>PUBLIC</code> por defecto en funciones de schema público, así que hoy son técnicamente invocables vía <code>/rest/v1/rpc/...</code>. Hallazgo de la auditoría 2026-07-10, poco explotable en la práctica pero aún sin revocar.</p>`,a:["securitydefiner","auditlog"]},
+  third:{k:"Capa",t:"Servicios externos",b:`<p><b>Resend</b> (<code>src/lib/email/leadEmails.ts</code> + <code>sendOtpEmail.ts</code>) entrega el OTP de BCP <b>y</b> todos los correos de leads: bienvenida por pilar y cada respuesta de CTC. Remitente unificado por <code>EMAIL_FROM</code>; con el dominio <code>ctcexport.com</code> verificado en Resend, salen desde <code>info@ctcexport.com</code> (fallback <code>onboarding@resend.dev</code> — que solo entrega al dueño de la cuenta — hasta verificar). Cada correo de lead cita el <b>historial completo</b> de la conversación y trae un CTA para iniciar sesión y continuarla en la web. Los fallos quedan en <code>welcome_error</code>/<code>send_error</code>, reintentables desde BCP.</p><p>La <b>API de Anthropic</b> resolvía el asesor "¿Y ahora qué?" de la Ficha (fetch crudo, caché por lote en <code>lots.ai_next_step_*</code>); su ruta/lib/columnas siguen pero la UI está desactivada.</p>`,a:["leads","promptcache","actions"]},
+
+  db:{k:"Capa",t:"Postgres — 29 tablas",b:`<p>Proyecto <code>sjznkzvefqfcysczllli</code> ("ctc-platform"), Postgres 17, región <code>eu-central-1</code>. Agrupadas por dominio:</p><p><b>Identidad</b>: <code>profiles</code>, <code>producer_profiles</code>, <code>buyer_profiles</code>.<br><b>Kaffetal</b>: <code>fincas</code>, <code>lots</code>, <code>ficha_completion_snapshots</code>, <code>media_assets</code>, <code>lot_evaluations</code>, <code>producer_comm_log</code>, <code>producer_comm_ack</code>.<br><b>Arena/Contratos</b> (service-role-only): <code>harvest_seasons</code>, <code>arena_sessions</code>, <code>arena_session_lots</code>, <code>arena_scores</code>, <code>purchase_contracts</code>, <code>contract_releases</code>, <code>humidity_readings</code>.<br><b>Cherry Picked</b>: <code>lot_listings</code>, <code>shipping_zones</code>, <code>lot_reservations</code>, <code>orders</code>, <code>order_items</code>, <code>points_ledger</code>, <code>sample_pack_orders</code>.<br><b>Leads</b> (service-role-only, sin política): <code>leads</code>, <code>lead_replies</code>.<br><b>Ops</b>: <code>admin_otp_codes</code>, <code>audit_log</code>, <code>bcp_task_state</code>.</p>`,a:["views","guards","auditlog","intake","commlog","leads"]},
+  views:{k:"Concepto",t:"Vistas públicas SECURITY DEFINER",b:`<p><code>public_lot_catalog</code> (solo lotes publicados/agotados, columnas curadas) y <code>public_transparency_pricing</code> (precio bloqueado vs. de referencia, solo si <code>transparency_credit_enabled</code>) existen porque una política RLS amplia sobre <code>lots</code>/<code>fincas</code> habría expuesto la ficha completa y la geolocalización exacta de la finca a cualquier comprador.</p><p>En vez de eso: una vista angosta, con las columnas exactas que un comprador anónimo debería poder leer, definida con los permisos de quien la creó (no de quien la consulta). Ambas revisadas en la auditoría 2026-07-10 — alcance de columnas correcto.</p>`,a:["securitydefiner","db"]},
+  storage:{k:"Capa",t:"Supabase Storage",b:`<p>El bucket privado <code>kaffetal-media</code> (vía <code>src/lib/kaffetalMedia.ts</code>) respalda toda subida real del sistema: foto de perfil y hasta 3 fotos adicionales del productor, video del productor/finca/lote, documentos de respaldo EUDR (PDF), foto de perfil de finca, adjuntos de certificados.</p><p>Convención de ruta consistente: <code>{producer_id}/...</code> en todos lados, así que RLS de Storage puede limitarse por prefijo. URLs firmadas y de corta vida, resueltas en lote (<code>signedKaffetalMediaUrls</code>) para no hacer una llamada por archivo.</p>`,a:["kaffetal"]},
+
+  local:{k:"Paso de build",t:"Máquina local",b:`<p>Donde se escribe el código: Claude Code + Node.js + Git. <code>npx tsc --noEmit</code> (cero errores de tipos) y <code>npx eslint src --max-warnings=0</code> deben salir limpios antes de considerar cualquier cambio terminado — esto se ha sostenido en todo el proyecto.</p><p>No hay suite de tests automatizados: la verificación siempre es navegador en vivo + chequeo directo por SQL.</p>`,a:["github"]},
+  github:{k:"Paso de build",t:"GitHub",b:`<p><code>ColombianTradingCompany/ctc-plataformas-web_V1</code>, rama <code>main</code>. <code>git push</code> es el momento en que el trabajo local se vuelve verdad compartida — y el disparador del deploy en Vercel.</p>`,a:["local","vercel"]},
+
+  rls:{k:"Concepto",t:"Row Level Security (RLS)",b:`<p>Reglas impuestas <b>dentro del propio Postgres</b>: "un productor solo puede leer/escribir filas de <code>lots</code> donde <code>producer_id = su propio id</code>." Aunque el código del frontend tuviera un bug, la base de datos se niega a filtrar datos de otra persona.</p><p>Es la base de todo el modelo de seguridad de Kaffetal Regal y Cherry Picked, ya que ninguno de los dos tiene una API intermedia propia.</p>`,a:["guards","supaclient"]},
+  securitydefiner:{k:"Concepto",t:"SECURITY DEFINER (función o vista)",b:`<p>Por defecto, una función o vista de Postgres corre con los permisos de <b>quien la consulta</b> (<code>SECURITY INVOKER</code>). Marcarla <code>SECURITY DEFINER</code> invierte eso: corre con los permisos de <b>quien la creó</b>.</p><p>Útil cuando alguien con menos privilegios (un comprador anónimo, un usuario autenticado normal) necesita un resultado que exige tocar datos a los que su propio rol no llegaría — siempre que la función/vista en sí limite cuidadosamente qué expone.</p>`,a:["definer","views"]},
+  eudr:{k:"Concepto",t:"EUDR — Reglamento europeo de deforestación",b:`<p>Reglamento (UE) 2023/1115: para exportar café a la UE hace falta una Declaración de Diligencia Debida (DDS) ligada a la geolocalización exacta de la finca de origen. <code>src/lib/eudr.ts</code> tiene las funciones puras (<code>fincaEudrStatus()</code>/<code>lotEudrStatus()</code>/<code>deriveLotRiskLevel()</code>) compartidas sin cambios entre el cliente de Kaffetal Regal y las páginas server-rendered de BCP.</p><p><b>Finca</b>: geolocalización real (mapa Google con búsqueda de dirección, botón de ubicación actual, polígono dibujado o por lista manual de puntos para &gt;4 ha), fecha de siembra, sistema productivo, declaración de no-deforestación + producción legal (el sistema exige Sí en ambas — "no sé" no es válido), tenencia, documento de respaldo (PDF). Evidencia/áreas legales/sostenibilidad las completa BCP como parte de su propia revisión, no el productor. La columna generada <code>fincas.requires_eudr_polygon</code> se activa sola sobre 4 ha; <code>approveFinca()</code> bloquea la aprobación hasta que exista el polígono.</p><p><b>Lote</b>: cadena de custodia (con el "CTC Parchment Storage Standard" como opción estándar). Los factores de riesgo <b>ya no se eligen a mano — se derivan</b> (helpers puros compartidos entre productor y BCP): riesgo país desde un selector de país (Colombia/Perú/Venezuela/Panamá → "Estándar" según Reg. UE 2025/1093), complejidad desde las etapas de custodia, riesgo de producto desde casillas sí/no, esquemas de certificación desde A3/A4. El <b>Nivel de riesgo determinado</b> final lo <b>selecciona BCP</b> (Art. 10-11), asistido por la sugerencia derivada; las Acciones de mitigación las declara el productor.</p><p><b>Dos capas de respuesta</b>: <code>eudr_producer_answers</code> (jsonb) guarda la declaración del productor; las columnas <code>eudr_*</code> guardan el valor EVALUADO por CTC — eso es lo que usan el chip, el dossier y el certificado. BCP puede "Confirmar" (adoptar) o sobrescribir cada declaración; el certificado imprime solo el valor de CTC.</p>`,a:["kaffetal","intake","commlog","eudrcert"]},
+  intake:{k:"Concepto",t:"Las 4 sub-etapas de intake de un lote (lots.intake_step)",b:`<p>Antes de que un lote pueda avanzar a <code>ficha_completa</code>, debe pasar 4 compuertas secuenciales — cada una es un "Completar y Enviar" separado en la Ficha, y una vez enviada esa sección queda bloqueada (solo lectura) para el productor: <b>FT</b> (A1+A2+B1) → <b>FT2</b> (A3+A4+B2+B3, cada uno completo o explícitamente declarado "no lo sé / no aplica") → <b>EUDR</b> (A5 con nivel de riesgo definido, Y la finca de origen debe resolver "Apta") → <b>Video</b> (B4 subido, lo que recién ahí pone <code>stage='ficha_completa'</code> y abre las instrucciones de envío de muestra descargables).</p><p><code>lots.intake_step</code> (0-4) es la columna que rastrea esto — independiente del enum <code>lots.stage</code> de 7 valores, que no cambió. El tablero Kanban de BCP en <b>/bcp/lotes</b> (FT | FT2 | EUDR | Video | Muestra en tránsito) bucketiza cada lote leyendo <code>intake_step</code>/<code>stage</code>, sin ninguna librería de drag-and-drop — la única acción manual de BCP sigue siendo "Confirmar recibido", que mueve el lote a <code>fila_arena</code> y lo saca del tablero.</p><p>El puntaje oficial de un lote (Perfil de Taza / Granulometría) también dejó de ser solo la auto-declaración del productor: ver <b>evaluaciones</b>.</p>`,a:["eudr","evaluations","stagelifecycle","kaffetal"]},
+  evaluations:{k:"Concepto",t:"Evaluaciones múltiples y oficialización",b:`<p>La tabla <code>lot_evaluations</code> (fuente: <code>bcp_arena</code> | <code>producer_claim</code>; estado: pending/accepted/rejected) reemplaza la idea de "un solo puntaje" por un promedio de todas las filas <b>aceptadas</b> — calculado al leer, no guardado.</p><p>BCP somete evaluaciones <code>bcp_arena</code> desde <b>/bcp/evaluaciones</b>, auto-aceptadas. La propia auto-declaración del productor nunca es oficial por sí sola: puede pedir oficialización (referencia de Q-Grader + archivo de respaldo) desde la Ficha, lo que crea una fila <code>producer_claim</code> pendiente que BCP acepta o rechaza. El catálogo público de Cherry Picked prefiere el puntaje oficial cuando existe, y marca "(estimado)" cuando no.</p>`,a:["intake","bcp"]},
+  commlog:{k:"Concepto",t:"Registro de comunicación (producer_comm_log)",b:`<p>Conversación bidireccional y por hilos entre BCP y el productor. Columnas clave: <code>author_role</code> (bcp|producer), <code>parent_id</code> (para hilos), <code>finca_id</code>/<code>lot_id</code> (FK reales — no solo un <code>context_label</code>, para no cruzar notas entre dos fincas del mismo nombre), y <code>lead_id</code> (liga la nota a un lead de CTC Home).</p><p>El productor lee y <b>responde</b> desde su panel "Retroalimentación y ayuda" (una política RLS de INSERT deja postear solo réplicas en sus propios hilos); cada nota de CTC lleva una casilla "Entendido" (tabla <code>producer_comm_ack</code>). Cada edición EUDR que BCP hace a nombre del productor se auto-registra aquí. Un lead con cuenta de productor se <b>espeja</b> a este feed, y las réplicas in-app del productor vuelven a verse en la tarjeta del lead en BCP.</p>`,a:["bcp","kaffetal","eudr","leads"]},
+  leads:{k:"Subsistema",t:"Leads de CTC Home (leads / lead_replies)",b:`<p>Toda solicitud de "Escríbenos" o de los servicios "Más allá de la exportación" se vuelve un <b>lead con una cuenta de plataforma</b>, con correo de bienvenida automático. Tablas <code>leads</code> y <code>lead_replies</code>, <b>service-role-only</b> (RLS habilitado, sin políticas — como la Arena): toda escritura pasa por Server Actions con el cliente service-role.</p><p>Aprovisionamiento de cuenta: si el correo ya existe, se vincula; si no, <code>auth.admin.createUser</code> la crea (Co-Create → comprador Cherry Picked, resto → productor Kaffetal Regal — <code>handle_new_user</code> honra <code>user_metadata.role</code>). Para las creadas por CTC, <code>leads.temp_password</code> (decisión de producto) viaja adjunta a la PRIMERA respuesta de BCP y se borra al confirmarse el envío.</p><p>Triaje en <b>/bcp/leads</b>: un tablero kanban por servicio (Escríbenos/Tech/Co-Create/Varietales) con columnas nuevo → en_conversacion → convertido → cerrado. Cada tarjeta abre un popup: datos capturados, estado de cuenta, conexiones (fincas/lotes o pedidos), hilo de correos con reintentos, y compositor de respuesta. Los leads de productor se espejan a "Retroalimentación y ayuda" (conversación bidireccional).</p>`,a:["home","bcp","commlog","third","guards"]},
+  eudrcert:{k:"Concepto",t:"Certificación EUDR (expediente de finca + certificado de lote)",b:`<p>La Certificación Voluntaria EUDR de un café son <b>dos documentos</b>, ambos imprimibles y con marca de agua CTCx (componentes compartidos <code>EudrDossierDoc.tsx</code> / <code>LotEudrCertDoc.tsx</code>):</p><p><b>Expediente de finca</b>: identidad + DANE + geolocalización (mapa estático) + declaraciones EUDR + evidencia/sostenibilidad con anexos + registro de comunicación. <b>Certificado de lote</b>: identidad del lote + finca(s) de origen, cadena de custodia, evaluación de riesgo Art. 10 y mitigación Art. 11.</p><p>Ambos son <b>de cara al productor</b>, no solo internos. El expediente de finca se libera con la bandera <code>eudr_cert_shared</code> (BCP decide "Compartir"); el certificado de lote se habilita cuando el lote está "EUDR Ready" (finca Apta + nivel de riesgo insignificante). Rutas gateadas: <code>/kaffetal-regal/certificacion/[id]</code> y <code>/kaffetal-regal/certificacion-lote/[id]</code> (dueño + condición), más las rutas espejo de BCP.</p>`,a:["eudr","kaffetal","bcp"]},
+  stagelifecycle:{k:"Concepto",t:"El ciclo de vida de un lote (lots.stage)",b:`<p>Un enum de 7 etapas: <code>borrador → ficha_completa → videos_ok → muestra_transito → fila_arena → evaluado → galardonado</code>. No cambió en ninguna ronda de trabajo reciente — todo el rediseño de intake (ver <b>intake</b>) vive en la columna independiente <code>lots.intake_step</code>, que gobierna las 4 sub-etapas mientras <code>stage</code> sigue en <code>borrador</code>.</p><p>El productor solo puede tocar su lote mientras está en <code>borrador</code> o <code>ficha_completa</code> — la guarda <code>guard_lots_producer_columns</code> se lo impide después. De ahí en más, solo BCP mueve el lote (Arena, contratos, catálogo).</p>`,a:["guards","intake"]},
+  auditlog:{k:"Concepto",t:"audit_log — el rastro de cada mutación de BCP",b:`<p>Una sola tabla (<code>entity_type</code>, <code>entity_id</code>, <code>action</code>, <code>previous_status</code>, <code>new_status</code>, <code>performed_by</code>, <code>notes</code>) que cada Server Action de BCP alimenta después de escribir — aprobar una finca, calificar un lote, firmar un contrato, publicar al catálogo.</p><p>No hay una columna de "quién hizo qué" en cada tabla de negocio; en vez de eso, un solo log unificado y consultable.</p>`,a:["actions","bcp"]},
+  promptcache:{k:"Concepto",t:"Prompt caching (cache_control)",b:`<p>Marcar un bloque del prompt con <code>cache_control:{type:"ephemeral"}</code> le pide al modelo que reutilice ese prefijo en la próxima llamada en vez de reprocesarlo — más barato y más rápido.</p><p>Tiene un mínimo de tokens cacheables (~1024–2048 según el modelo); un system prompt corto por debajo de eso simplemente nunca cachea, sin ningún error — hay que medir el tamaño real del prompt antes de asumir que <code>cache_control</code> sola resuelve el costo.</p>`,a:["third"]},
+  session:{k:"Concepto",t:"Sesiones, cookies y el flujo 2FA de BCP",b:`<p>Un login normal de Supabase Auth pone la sesión directo en una cookie. BCP en cambio hace un paso intermedio: tras validar contraseña + rol, los tokens de sesión (ya válidos) se guardan en una cookie httpOnly <b>separada y temporal</b> (<code>bcp_pending</code>) — la cookie de sesión real de Supabase no se activa hasta que el código OTP se verifica.</p><p>Esto evita que una sesión completa quede activa solo con la contraseña, antes de completar el segundo factor.</p>`,a:["auth","bcp"]},
+};
+
+/* ============================================================
+   CABLES ESTÁTICOS — conexiones reales entre nodos
+============================================================ */
+const WIRES = [
+  ["n-vercel","n-home","dashed"],["n-vercel","n-kaffetal","dashed"],
+  ["n-vercel","n-cherry","dashed"],["n-vercel","n-bcp","dashed"],
+  ["n-next","n-vercel","dashed"],["n-proxy","n-vercel","dashed"],
+
+  ["n-kaffetal","n-supaclient"],["n-cherry","n-supaclient"],
+  ["n-bcp","n-actions"],
+  ["n-home","n-db","dashed"],["n-home","n-third","dashed"],
+
+  ["n-supaclient","n-auth"],["n-actions","n-auth"],
+  ["n-supaclient","n-guards"],["n-guards","n-db"],
+  ["n-actions","n-db","dashed"],
+  ["n-supaclient","n-definer"],["n-actions","n-definer"],
+  ["n-actions","n-third"],
+  ["n-auth","n-definer","dashed"],
+
+  ["n-db","n-views"],["n-views","n-cherry"],
+  ["n-actions","n-storage","dashed"],
+
+  ["n-local","n-gh"],["n-gh","n-vercel"],
+];
+
+/* ============================================================
+   TRAZAS — cada paso: nodo resaltado, salto opcional (from→to)
+   Tomadas directamente del código real (Server Actions, RPCs, rutas).
+============================================================ */
+const SCENARIOS = [
+  {id:"lote",name:"🌱 Productor registra un lote y avanza las 4 sub-etapas",steps:[
+    {n:"n-kaffetal",w:"Kaffetal Regal",t:"El productor inicia sesión y registra una finca — si supera 4 ha, se pide el polígono real (mapa con búsqueda de dirección/ubicación actual/dibujo o lista manual de puntos), no solo un punto."},
+    {n:"n-supaclient",from:"n-kaffetal",w:"Cliente Supabase",t:"<code>supabase.from('lots').insert(...)</code> directo desde el navegador. El lote nace en <code>stage='borrador'</code>, <code>intake_step=0</code>."},
+    {n:"n-kaffetal",from:"n-supaclient",w:"FT",t:"Completa A1+A2+B1 y envía — <code>intake_step</code> pasa a 1, esa sección queda bloqueada (solo lectura, banner \"ya enviado\")."},
+    {n:"n-kaffetal",w:"FT2",t:"A3+A4+B2+B3 — cada uno completo, o explícitamente marcado \"no lo sé / no aplica\". <code>intake_step</code> pasa a 2."},
+    {n:"n-guards",from:"n-kaffetal",w:"Compuerta EUDR",t:"A5 exige nivel de riesgo definido <b>y</b> que la finca de origen resuelva \"Apta\" (<code>fincaEudrStatus()</code>) — si la finca no está lista, la compuerta bloquea con un mensaje explícito, no deja avanzar. <code>intake_step</code> pasa a 3."},
+    {n:"n-db",from:"n-guards",w:"Video → Postgres",t:"Al subir B4, <code>UPDATE lots SET intake_step=4, stage='ficha_completa'</code> en el mismo guardado — recién aquí se abren las instrucciones de envío de muestra descargables."},
+  ]},
+  {id:"finca",name:"🛡️ BCP aprueba una finca (gate EUDR)",steps:[
+    {n:"n-bcp",w:"BCP · Fincas",t:"Se abre <b>/bcp/fincas</b>: una finca de más de 4 ha sin polígono EUDR muestra el botón Aprobar bloqueado."},
+    {n:"n-actions",from:"n-bcp",w:"approveFinca()",t:"La Server Action llama a <code>requireAdmin()</code> primero — vuelve a verificar sesión + rol, no confía en que la UI ya lo mostró."},
+    {n:"n-db",from:"n-actions",w:"Regla de negocio",t:"La Action relee los campos EUDR y solo aprueba si <code>fincaEudrStatus()==='apta'</code> (completa) Y existe el polígono cuando &gt;4 ha — una finca \"Pendiente\" (incompleta) ya no es aprobable. El gate vive en código, replicado en la UI."},
+    {n:"n-db",from:"n-actions",w:"Postgres",t:"Gate superado → <code>UPDATE fincas SET status='approved'</code> + una fila nueva en <b>audit_log</b> (previous_status, new_status, performed_by)."},
+    {n:"n-bcp",from:"n-db",w:"Revalidación",t:"<code>revalidatePath('/bcp/fincas')</code> — la finca desaparece de la cola pendiente al instante, sin recargar la página."},
+  ]},
+  {id:"eudr",name:"🌍 Expediente EUDR — productor llena, BCP asiste/aprueba",steps:[
+    {n:"n-kaffetal",w:"Kaffetal Regal · Finca",t:"El productor declara no-deforestación + producción legal (el sistema exige Sí en ambas), tenencia, y ubicación real vía el mapa (búsqueda, ubicación actual, o polígono si supera 4 ha)."},
+    {n:"n-kaffetal",w:"Ficha · A5",t:"Por lote: cadena de custodia (CTC Parchment Storage Standard u otro), y un nivel de riesgo que <b>ya no se elige a mano</b> — se deriva de indicios de ilegalidad, documentos disponibles, riesgo país y mitigación (<code>deriveLotRiskLevel()</code>)."},
+    {n:"n-bcp",from:"n-kaffetal",w:"BCP · Fincas/Lotes",t:"CTC revisa el expediente; puede completar campos a nombre del productor (\"asistido por BCP\") desde un editor que muestra un resumen de solo lectura por defecto, con \"Editar\" explícito."},
+    {n:"n-actions",from:"n-bcp",w:"updateFincaEudr()",t:"Al guardar, la Action compara contra los valores previos en la base y, si algo cambió de verdad, inserta automáticamente una nota en <b>producer_comm_log</b> describiendo qué cambió — sin que el admin lo anote aparte."},
+    {n:"n-db",from:"n-actions",w:"Gate de aprobación",t:"<code>approveFinca()</code> sigue bloqueando sobre un polígono faltante o una declaración \"no apta\" — el gate vive en código de Server Action."},
+    {n:"n-kaffetal",from:"n-db",w:"Retroalimentación",t:"El productor ve la nota auto-generada en su propio dashboard, bajo \"Retroalimentación y ayuda\", agrupada por esa finca o lote."},
+  ]},
+  {id:"envio",name:"📮 Confirmación de envío y recibo de la muestra",steps:[
+    {n:"n-kaffetal",w:"Kaffetal Regal",t:"Con <code>intake_step=4</code> y <code>stage='ficha_completa'</code>, el productor empaca 2 kg de pergamino, marca el paquete con el código del lote, y confirma el envío desde su dashboard."},
+    {n:"n-supaclient",from:"n-kaffetal",w:"Cliente Supabase",t:"<code>UPDATE lots SET sample_shipped_at=now()</code> directo — el <code>stage</code> no cambia todavía, así que la guarda del productor lo permite sin problema."},
+    {n:"n-bcp",from:"n-supaclient",w:"BCP · Kanban de lotes",t:"El lote aparece en la columna \"Muestra en tránsito\". BCP no tiene un dropdown genérico para saltarlo a Arena — solo puede confirmar recibo."},
+    {n:"n-actions",from:"n-bcp",w:"confirmSampleReceived()",t:"Exige <code>sample_shipped_at</code> ya puesto (o <code>source='bcp_manual_entry'</code>, el caso de un lote que BCP ya tiene en mano). Pone <code>sample_2kg_confirmed_at</code> y <code>stage='fila_arena'</code>."},
+    {n:"n-db",from:"n-actions",w:"Postgres",t:"El lote sale del tablero de intake y entra a la lista \"Disponibles\" de la Arena — de aquí en más es responsabilidad exclusiva de BCP."},
+  ]},
+  {id:"arena",name:"🏅 Arena — calificar y graduar un lote",steps:[
+    {n:"n-bcp",w:"BCP · Arena",t:"Se agenda una <b>harvest_season</b> y una <b>arena_session</b>; los lotes en stage <b>fila_arena</b> entran a la cola (<code>arena_session_lots</code>), sin importar si ya tienen puntaje."},
+    {n:"n-actions",from:"n-bcp",w:"recordArenaScore()",t:"Cada Q-Grader (texto libre, no es un usuario de la plataforma) entra un puntaje → fila en <b>arena_scores</b>."},
+    {n:"n-actions",w:"closeArenaSession()",t:"Al cerrar la sesión: los lotes sin ningún puntaje se liberan de vuelta a la cola — no se fuerza una decisión que nadie tomó."},
+    {n:"n-db",from:"n-actions",w:"Voto de mayoría",t:"<code>computeMajorityGrade()</code> decide el grado final (empates rompen hacia el grado más alto) → <code>UPDATE lots SET grade=?, stage='galardonado'|'evaluado'</code> + audit_log detallado."},
+    {n:"n-definer",from:"n-db",w:"Contrato automático",t:"Si el grado no es Tyrian, se crea un <b>purchase_contracts</b> en <code>pending_signature</code> automáticamente. Tyrian se salta contratos — va directo a subasta (fase aún no construida)."},
+    {n:"n-bcp",from:"n-definer",w:"Revalidación",t:"4 rutas se refrescan a la vez (Arena, Lotes, Contratos, Dashboard) — todo el tablero refleja el grado nuevo."},
+  ]},
+  {id:"contrato",name:"✍️ Contrato — firma, liberación y humedad",steps:[
+    {n:"n-bcp",w:"BCP · Contratos",t:"Se abre el contrato <code>pending_signature</code>, se fija precio de referencia, precio bloqueado y cantidad congelada, y se firma."},
+    {n:"n-actions",from:"n-bcp",w:"signContract()",t:"<code>UPDATE purchase_contracts SET status='active'</code> + <code>INSERT contract_releases</code> × 3 filas fijas (mes 1 máx 50%, mes 2 máx 75%, mes 3 máx 100%) — sin columna de estado, se deriva de si tienen timestamps."},
+    {n:"n-db",from:"n-actions",w:"Liberaciones mensuales",t:"<code>recordContractRelease()</code> llena kg/fecha/pago cada mes; al completar el mes 3 con pago + envío, el contrato pasa solo a <code>completed</code>."},
+    {n:"n-actions",w:"recordHumidityReading()",t:"Lectura de humedad manual (fuente <code>bcp_manual_entry</code>, nota obligatoria) — la columna generada <code>flagged</code> se enciende sola por encima de 12.5%."},
+    {n:"n-bcp",from:"n-actions",w:"Cola de humedad",t:"Las lecturas marcadas aparecen en <b>/bcp/contratos/humedad</b> y un badge en el dashboard — marcar reacondicionamiento o resolver de vuelta a activo/cancelado."},
+  ]},
+  {id:"publicar",name:"📤 BCP publica el lote en Cherry Picked",steps:[
+    {n:"n-bcp",w:"BCP · Catálogo",t:"Se intenta publicar un lote <b>galardonado</b> (no Tyrian) desde <b>/bcp/catalogo</b>."},
+    {n:"n-actions",from:"n-bcp",w:"publishLot()",t:"3 guardas antes de escribir nada: stage+grade correctos, existe un contrato <code>active</code>, y la suma de <code>contract_releases.released_kg</code> confirmados es mayor a 0."},
+    {n:"n-db",from:"n-actions",w:"Postgres",t:"<code>INSERT lot_listings</code> con <code>total_kg = releasedSoFar</code> — el catálogo nunca muestra más de lo que ya se liberó de verdad."},
+    {n:"n-views",from:"n-db",w:"Vista pública",t:"El listing solo es legible externamente a través de <code>public_lot_catalog</code> — columnas curadas, sin ficha ni geolocalización cruda."},
+    {n:"n-cherry",from:"n-views",w:"Cherry Picked",t:"El comprador ve el lote nuevo la próxima vez que carga la tienda."},
+  ]},
+  {id:"checkout",name:"🛒 Comprador reserva y hace checkout",steps:[
+    {n:"n-cherry",w:"Cherry Picked",t:"El comprador sube kg en <code>lot_reservations</code> (upsert) y elige zona de envío."},
+    {n:"n-supaclient",from:"n-cherry",w:"Cliente Supabase",t:"Al pagar, el navegador llama directo <code>supabase.rpc('place_order', {p_zone_code})</code> — ninguna Server Action de por medio."},
+    {n:"n-definer",from:"n-supaclient",w:"place_order()",t:"Una sola transacción SECURITY DEFINER: bloquea cada reserva/listing con <code>FOR UPDATE</code>, valida MOQ y stock, inserta <b>orders</b>+<b>order_items</b>, actualiza <code>sold_kg</code> (marca sold_out si se agota)."},
+    {n:"n-db",from:"n-definer",w:"Todo o nada",t:"Si cualquier validación falla a mitad de camino, Postgres revierte la transacción completa — nunca queda un pedido a medias."},
+    {n:"n-cherry",from:"n-db",w:"Confirmación",t:"Carrito vacío, pedido confirmado, puntos ya acreditados en <b>points_ledger</b>."},
+  ]},
+  {id:"leads",name:"📨 Lead de CTC Home — cuenta, bienvenida y respuesta de BCP",steps:[
+    {n:"n-home",w:"CTC Home · Escríbenos",t:"Un visitante llena el formulario (general / CTC Tech / Co-Create / Varietales) y elige \"Enviar solicitud\" o \"Continuar con Google\" — ya no hay <code>mailto:</code>."},
+    {n:"n-db",from:"n-home",w:"submitLeadPublic()",t:"Server Action pública (service-role): valida + honeypot + límites por correo/IP; vincula la cuenta existente o crea una con <code>auth.admin.createUser</code> (Co-Create → comprador, resto → productor); inserta la fila en <code>leads</code>, RLS-bypassed como la Arena."},
+    {n:"n-third",from:"n-db",w:"Resend · bienvenida",t:"Correo de bienvenida automático desde <code>info@ctcexport.com</code>: explica la plataforma, hace eco de la solicitud y trae el CTA de iniciar sesión. Un fallo queda en <code>welcome_error</code>, reintentable desde BCP."},
+    {n:"n-bcp",from:"n-db",w:"BCP · /bcp/leads",t:"El lead aparece en el kanban de su servicio (columna \"Nuevo\") y como \"Lead sin responder\" en el Panel de triaje."},
+    {n:"n-actions",from:"n-bcp",w:"replyToLead()",t:"BCP responde: se inserta en <code>lead_replies</code> y Resend envía el correo citando el <b>historial completo</b>. La primera respuesta lleva la contraseña temporal (luego se borra); el estado avanza a <code>en_conversacion</code>."},
+    {n:"n-kaffetal",from:"n-actions",w:"Retroalimentación",t:"Si es un lead de productor, la respuesta se espeja en su \"Retroalimentación y ayuda\"; su réplica in-app vuelve a verse en la tarjeta del lead en BCP."},
+  ]},
+  {id:"login2fa",name:"🔐 Login BCP con verificación en dos pasos",steps:[
+    {n:"n-bcp",w:"/bcp/login",t:"Se escribe correo + contraseña."},
+    {n:"n-actions",from:"n-bcp",w:"POST /api/bcp/auth/password",t:"Se valida contra un cliente Supabase <b>efímero</b> (sin persistir sesión) y se confirma <code>role==='bcp_admin'</code> — cualquier otro rol recibe el mismo error genérico que una contraseña incorrecta."},
+    {n:"n-third",from:"n-actions",w:"Resend",t:"Código de 6 dígitos: se guarda solo su <b>hash</b> en <code>admin_otp_codes</code> (expira en 10 min) y Resend lo envía siempre a <code>ctcexportmain@gmail.com</code>, sin importar qué admin inició sesión."},
+    {n:"n-actions",w:"Cookie bcp_pending",t:"Los tokens de sesión reales quedan en una cookie httpOnly de corta vida — la sesión de Supabase de verdad todavía no existe."},
+    {n:"n-bcp",from:"n-actions",w:"/bcp/verify",t:"Se ingresa el código (máx. 5 intentos). Si acierta, recién ahí se activa la sesión real y se borra la cookie temporal."},
+  ]},
+  {id:"deploy",name:"🚀 Deploy — de Claude Code a producción",steps:[
+    {n:"n-local",w:"Máquina local",t:"Se pide un cambio; se editan archivos, corre <code>tsc --noEmit</code> + <code>eslint --max-warnings=0</code> — ambos deben salir limpios."},
+    {n:"n-gh",from:"n-local",w:"git push",t:"El commit sube a <code>ColombianTradingCompany/ctc-plataformas-web_V1</code>, rama <code>main</code>."},
+    {n:"n-vercel",from:"n-gh",w:"Build",t:"El push dispara un build automático con Turbopack en Vercel."},
+    {n:"n-vercel",w:"Deploy",t:"Se despliega a la red edge global — dominio raíz y ambos subdominios sirven la versión nueva en minutos."},
+    {n:"n-bcp",from:"n-vercel",w:"Entrega",t:"La próxima visita de cualquier usuario carga en silencio la versión nueva — nadie tocó un servidor."},
+  ]},
+];
+
+/* ============================================================
+   CONTEXTO — mini-chips por nodo, enlazan a conceptos del DICT
+============================================================ */
+const CTX = {
+  "n-home":["leads"],
+  "n-kaffetal":["eudr","eudrcert","intake","commlog"],
+  "n-guards":["rls","stagelifecycle"],
+  "n-definer":["securitydefiner"],
+  "n-views":["securitydefiner"],
+  "n-bcp":["leads","auditlog","intake","commlog"],
+  "n-actions":["auditlog"],
+  "n-third":["promptcache"],
+  "n-auth":["session"],
+};
+for(const [nid,keys] of Object.entries(CTX)){
+  const node=document.getElementById(nid); if(!node)continue;
+  const row=document.createElement("div");
+  row.className="chips ctx";
+  row.innerHTML=`<span class="ctxlabel">contexto</span>`+keys.map(k=>
+    `<button class="chip" data-info="${k}">${DICT[k].t.split(" — ")[0].split(" (")[0]} ⓘ</button>`).join("");
+  node.appendChild(row);
+}
+
+/* ============================================================
+   MOTOR — cables, animación de paquete, reproducción de trazas
+============================================================ */
+const $=id=>document.getElementById(id);
+const board=$("board"), svg=$("wires"), wireLayer=$("wireLayer"), packet=$("packet");
+const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let wirePaths={};
+
+function center(el){
+  const b=board.getBoundingClientRect(), r=el.getBoundingClientRect();
+  return {x:r.left-b.left+r.width/2, y:r.top-b.top+r.height/2};
+}
+function edgePoint(fromEl,toEl){
+  const b=board.getBoundingClientRect(), r=fromEl.getBoundingClientRect();
+  const c={x:r.left-b.left+r.width/2,y:r.top-b.top+r.height/2};
+  const t=center(toEl); const dx=t.x-c.x, dy=t.y-c.y;
+  const hw=r.width/2, hh=r.height/2;
+  const s=1/Math.max(Math.abs(dx)/hw||1e-9, Math.abs(dy)/hh||1e-9);
+  return {x:c.x+dx*s, y:c.y+dy*s};
+}
+function pathD(a,b){
+  const p1=edgePoint($(a),$(b)), p2=edgePoint($(b),$(a));
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.hypot(dx,dy)||1;
+  const bow=Math.min(26,len*0.12);
+  const nx=-dy/len*bow, ny=dx/len*bow;
+  return `M ${p1.x} ${p1.y} Q ${mx+nx} ${my+ny} ${p2.x} ${p2.y}`;
+}
+function drawWires(){
+  svg.setAttribute("viewBox",`0 0 ${board.offsetWidth} ${board.offsetHeight}`);
+  wireLayer.innerHTML=""; wirePaths={};
+  for(const [a,b,style] of WIRES){
+    if(!$(a)||!$(b))continue;
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",pathD(a,b));
+    p.setAttribute("class","wire"+(style==="dashed"?" dashed":""));
+    wireLayer.appendChild(p);
+    wirePaths[`${a}>${b}`]=p; wirePaths[`${b}>${a}`]=p;
+  }
+}
+window.addEventListener("resize",()=>{drawWires();});
+window.addEventListener("load",drawWires);
+setTimeout(drawWires,300);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawWires);
+drawWires();
+
+let animId=null;
+function animatePacket(from,to,done){
+  const key=`${from}>${to}`;
+  let p=wirePaths[key];
+  let temp=false;
+  if(!p){
+    p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",pathD(from,to));
+    p.setAttribute("class","wire"); p.style.opacity="0";
+    wireLayer.appendChild(p); temp=true;
+  }
+  const reversed = !temp && wirePaths[key]===wirePaths[`${to}>${from}`] &&
+    (()=>{
+      const d=p.getAttribute("d"); const startX=parseFloat(d.split(" ")[1]);
+      const fx=center($(from)).x; const tx=center($(to)).x;
+      return Math.abs(startX-fx)>Math.abs(startX-tx);
+    })();
+  if(!temp){p.classList.add("lit");}
+  const L=p.getTotalLength();
+  packet.classList.remove("hidden");
+  if(reduceMotion){
+    const pt=p.getPointAtLength(reversed?0:L);
+    packet.setAttribute("cx",pt.x); packet.setAttribute("cy",pt.y);
+    finish(); return;
+  }
+  const dur=900; const t0=performance.now();
+  function frame(now){
+    let k=Math.min(1,(now-t0)/dur);
+    const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    const pt=p.getPointAtLength(reversed?L*(1-e):L*e);
+    packet.setAttribute("cx",pt.x); packet.setAttribute("cy",pt.y);
+    if(k<1){animId=requestAnimationFrame(frame);} else finish();
+  }
+  animId=requestAnimationFrame(frame);
+  function finish(){
+    setTimeout(()=>{p.classList.remove("lit"); if(temp)p.remove();},400);
+    done&&done();
+  }
+}
+
+let scn=SCENARIOS[0], stepIdx=-1, playing=false, timer=null;
+const sel=$("scenario");
+function fillScenarioOptions(){
+  sel.innerHTML="";
+  SCENARIOS.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name;sel.appendChild(o);});
+  sel.value=SCENARIOS.indexOf(scn);
+}
+fillScenarioOptions();
+sel.addEventListener("change",()=>{scn=SCENARIOS[+sel.value];reset();});
+
+function clearHighlights(){document.querySelectorAll(".node").forEach(n=>n.classList.remove("active","done"));}
+function renderDots(){
+  const box=$("dots"); box.innerHTML="";
+  scn.steps.forEach((_,i)=>{
+    const d=document.createElement("button");
+    d.className="dot"+(i<stepIdx?" on":"")+(i===stepIdx?" cur":"");
+    d.title=`${i+1}/${scn.steps.length}`;
+    d.addEventListener("click",()=>{playing=false;clearTimeout(timer);updatePlayBtn();jumpTo(i);});
+    box.appendChild(d);
+  });
+}
+function setTicker(w,t,i,total){
+  $("stepNo").textContent=i==null?"—":`${i+1}/${total}`;
+  $("tickerText").innerHTML=`<span class="where">${w}</span>${t}`;
+}
+function paintNode(i){
+  document.querySelectorAll(".node.active").forEach(n=>{n.classList.remove("active");n.classList.add("done");});
+  const st=scn.steps[i], node=$(st.n);
+  node.classList.remove("done","collapsed"); node.classList.add("active");
+  node.scrollIntoView({block:"center",behavior:reduceMotion?"auto":"smooth"});
+}
+function showStep(i){
+  const st=scn.steps[i];
+  paintNode(i);
+  setTicker(st.w,st.t,i,scn.steps.length);
+  renderDots();
+  if(st.from) animatePacket(st.from,st.n);
+  else packet.classList.add("hidden");
+  if(playing){
+    if(i<scn.steps.length-1){timer=setTimeout(()=>{stepIdx++;showStep(stepIdx);},3600);}
+    else{playing=false;updatePlayBtn();}
+  }
+}
+function jumpTo(i){
+  if(animId)cancelAnimationFrame(animId);
+  clearHighlights();
+  for(let k=0;k<i;k++){const n=$(scn.steps[k].n);n.classList.add("done");}
+  stepIdx=i; showStep(i);
+}
+function updatePlayBtn(){
+  const b=$("playBtn");
+  b.textContent=playing?"⏸ Pausa":"▶ Play";
+  b.classList.toggle("playing",playing);
+}
+$("playBtn").addEventListener("click",()=>{
+  if(playing){playing=false;clearTimeout(timer);updatePlayBtn();return;}
+  playing=true;updatePlayBtn();
+  if(stepIdx>=scn.steps.length-1)reset(true);
+  stepIdx++;showStep(stepIdx);
+});
+$("stepBtn").addEventListener("click",()=>{
+  playing=false;clearTimeout(timer);updatePlayBtn();
+  if(stepIdx>=scn.steps.length-1){reset();return;}
+  stepIdx++;showStep(stepIdx);
+});
+$("backBtn").addEventListener("click",()=>{
+  playing=false;clearTimeout(timer);updatePlayBtn();
+  if(stepIdx>0)jumpTo(stepIdx-1);
+  else reset();
+});
+function reset(silent){
+  playing=false;clearTimeout(timer);if(animId)cancelAnimationFrame(animId);
+  stepIdx=-1;clearHighlights();packet.classList.add("hidden");updatePlayBtn();
+  $("dots").innerHTML="";
+  if(!silent)setTicker("Listo","Pulsa Play, o Paso para avanzar salto a salto.");
+}
+$("resetBtn").addEventListener("click",()=>reset());
+
+/* ---- drawer de info ---- */
+const drawer=$("drawer"),scrim=$("scrim");
+function openInfo(key){
+  const d=DICT[key];if(!d)return;
+  $("drawerKicker").textContent=d.k;
+  $("drawerTitle").textContent=d.t;
+  $("drawerBody").innerHTML=d.b;
+  const also=$("drawerAlso");
+  if(d.a&&d.a.length){
+    also.style.display="";
+    also.innerHTML=`<span>Conceptos relacionados</span>`+d.a.map(k=>DICT[k]?`<button class="chip" data-info="${k}">${DICT[k].t}</button>`:"").join("");
+  } else also.style.display="none";
+  drawer.classList.add("open");scrim.classList.add("open");
+}
+function closeInfo(){drawer.classList.remove("open");scrim.classList.remove("open");}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-info]");
+  if(t){e.stopPropagation();openInfo(t.dataset.info);}
+});
+$("drawerClose").addEventListener("click",closeInfo);
+scrim.addEventListener("click",closeInfo);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeInfo();});
+
+/* ---- tarjetas colapsables ---- */
+document.querySelectorAll(".node").forEach(node=>{
+  const caret=node.querySelector(".caret"); if(!caret)return;
+  caret.addEventListener("click",e=>{e.stopPropagation();node.classList.toggle("collapsed");setTimeout(drawWires,60);});
+});
+$("collapseAll").addEventListener("click",()=>{
+  document.querySelectorAll(".node").forEach(n=>n.classList.add("collapsed"));
+  setTimeout(drawWires,60);
+});
+$("expandAll").addEventListener("click",()=>{
+  document.querySelectorAll(".node").forEach(n=>n.classList.remove("collapsed"));
+  setTimeout(drawWires,60);
+});
+
+setTicker("Listo","Pulsa Play, o Paso para avanzar salto a salto.");
+</script>
+</body>
+</html>

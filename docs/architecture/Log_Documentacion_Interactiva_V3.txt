@@ -1,10 +1,9 @@
 Log_Documentacion_Interactiva_V3
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V4.0(<sha>).html.
-Covers: everything since Documentacion_Interactiva_V3.0(11268a0).html, which
-is now the current real HTML snapshot (Log_Documentacion_Interactiva_V2.txt
-is closed and left as historical record of what went into producing it).
+Status: CLOSED -- wrapped on 2026-07-14 into Documentacion_Interactiva_V4.0(9d8440c).html.
+This file is now a historical record of everything that went into producing V4.0.
+Whatever comes next goes in Log_Documentacion_Interactiva_V4.txt.
+Covers: everything between Documentacion_Interactiva_V3.0(11268a0).html and
+Documentacion_Interactiva_V4.0(9d8440c).html.
 
 ## [2026-07-14] Kaffetal Club: códigos de miembro que habilitan contratos + catálogo
 - New feature spanning DB + KR + BCP. DB: new service-role-only table

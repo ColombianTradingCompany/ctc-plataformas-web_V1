@@ -64,7 +64,13 @@ export function platformFor(pillar: string): { name: string; url: string } {
     : { name: "Kaffetal Regal", url: `${SITE}/kaffetal-regal` };
 }
 
-type SendResult = { ok: true } | { ok: false; error: string };
+export type SendResult = { ok: true } | { ok: false; error: string };
+
+// Shared plain-text transactional sender -- also used by clubEmails.ts, so the
+// Resend wiring (dev fallback, never-throw contract) lives in exactly one place.
+export async function sendTransactionalEmail(to: string, subject: string, text: string): Promise<SendResult> {
+  return send(to, subject, text);
+}
 
 async function send(to: string, subject: string, text: string): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;

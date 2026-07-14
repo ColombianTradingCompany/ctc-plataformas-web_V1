@@ -35,3 +35,30 @@ is closed and left as historical record of what went into producing it).
   note update on the BCP contracts + catalog nodes (new gate), and possibly a
   new node for /bcp/club under Business logic.
 (commit: a8abc78)
+
+## [2026-07-14] Kaffetal Club v2: modelo "Pasaporte" (narrativa + pipeline + campañas)
+- Narrative reframe: membership = "Pasaporte del Kaffetal Club", code =
+  "Número de Pasaporte". Producer gate in "Mis contratos" rewritten as an
+  exporters-club passport (request + grant), incl. a "Solicitar mi Pasaporte"
+  button -> deduplicated producer-authored producer_comm_log note (service
+  role; the RLS insert policy wouldn't allow a standalone producer note).
+- club_member_codes gained: kind ('estandar' KC- / 'campana' KCX- secret
+  prefix), campaign label, assigned_to/assigned_at, email_sent_at/email_error
+  (migration club_passport_pipeline). Assigned codes are personal: redemption
+  by anyone else is refused ("emitido a nombre de otro productor").
+- BCP /bcp/club rebuilt as a 3-column passport kanban: Elegibles (>=1 lot past
+  Muestras, grayed until a galardón; "Emitir Pasaporte" is ALSO server-gated on
+  a galardonado lot in emitPassportForProducer), Pendiente de confirmación
+  (assigned+sent, email status with Reenviar + Revocar), Miembros activos
+  (Retirar del Club). Below: campaign-passport creation ("Fundadores", ...;
+  assigned to anyone bypassing the Arena gate, or unassigned to hand out) and
+  a full passport ledger with the 3 states Emitido/Pendiente/Activo.
+- Assigned emission delivers the número twice: passport email
+  (src/lib/email/clubEmails.ts via the shared Resend sender now exported from
+  leadEmails.ts, failures persisted on the code row leads-style) + a
+  producer_comm_log note in Retroalimentación y ayuda.
+- Doc impact when wrapping: update the Kaffetal Club DICT entry + /bcp/club
+  node to the passport/kanban model; the redemption SCENARIO gains the
+  request->emit->confirm pipeline and the campaign bypass variant; new email
+  wire BCP -> Resend for passport delivery.
+(commit: pending)

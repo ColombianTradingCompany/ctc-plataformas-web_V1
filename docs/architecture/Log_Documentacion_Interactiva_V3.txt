@@ -80,4 +80,4 @@ is closed and left as historical record of what went into producing it).
   replace the old createCampaignPassport(label) action.
 - Doc impact when wrapping: the Kaffetal Club DICT entry + /bcp/club node gain
   the campaign-entity structure and the campanas/[id] subpage.
-(commit: pending)
+(commit: 83b078f)

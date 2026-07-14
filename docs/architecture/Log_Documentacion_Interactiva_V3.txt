@@ -100,4 +100,4 @@ is closed and left as historical record of what went into producing it).
   Fermentación and Instrumentación no longer fall back to the icon hero.
 - Doc impact when wrapping: none structural (marketing copy/UI only) -- but the
   CTC Tech node's description can mention the per-technology deep dives.
-(commit: pending)
+(commit: 63f57a7)

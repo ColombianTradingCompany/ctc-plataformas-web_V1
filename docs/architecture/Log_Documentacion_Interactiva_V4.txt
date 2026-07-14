@@ -33,3 +33,51 @@ is closed and left as historical record of what went into producing it).
   next/image is deliberately NOT used on them -- it rasterizes an animation to
   its first frame.
 (commit: b388a67)
+
+## [2026-07-14] Arena: runner en vivo "Jornada de Arena" (nuevo flujo de negocio + schema)
+- NUEVO FLUJO GUIADO de 4 etapas (~3.5 h) sobre las sesiones de Arena, en
+  /bcp/arena/[sessionId]/run: Etapa 1 (presentacion de invitados host CTC /
+  Q-Grader / invitado especial, explicacion de la dinamica, presentacion de
+  los ~7 cafes a ciegas como "Taza N", analisis de factor de rendimiento uno a
+  uno: trilla manual, conteo de defectos, seleccion de malla, pesos, calculo
+  final factor = 70*muestra/excelso, ref <= 94); Etapa 2 (fragancia en seco,
+  aroma en remojo, romper taza + primera catacion, primer descarte de 2
+  tazas); Etapa 3 (revelacion DESENLAZADA de variedad/proceso/origen de las 5
+  en mesa, segunda ronda de aroma con descripciones oficiales del Q-Grader,
+  segunda catacion que completa la planilla SCA, segundo descarte de 2);
+  Etapa 4 (filtro de las 3 finalistas, veredicto: grado CTC por juez por
+  finalista + UN ganador de la jornada, revelacion completa con los videos de
+  los finalistas, cierre). Cada paso tiene timer con duracion sugerida;
+  navegacion solo Anterior/Siguiente con compuertas.
+- Schema: arena_sessions gana run_state jsonb (todo el estado vivo de la
+  jornada, autosave con debounce ~800ms via saveJornadaState) y winner_lot_id
+  uuid FK lots ON DELETE SET NULL (migracion arena_jornada_runner).
+- Codigo nuevo: src/lib/arena/jornada.ts (guion JORNADA_SCRIPT, shape del
+  run_state, factorResults, discardPlan adaptativo 7->[2,2]/5->[1,1]/3->[0,0],
+  stepBlocker compartido cliente/servidor, majorityGrade movido aqui desde
+  arenaActions y ahora compartido por closeArenaSession + finalizeJornada +
+  preview del runner); arenaActions.ts gana startJornada (baraja el orden de
+  tazas, min 3 lotes), saveJornadaState y finalizeJornada; JornadaRunner.tsx +
+  jornada.module.css (client component del runner); run/page.tsx (server
+  component que firma URLs de video a 6h para la revelacion final).
+- Al cerrar (finalizeJornada, re-valida todo server-side): CADA cafe de la
+  jornada recibe una lot_evaluations completa (source bcp_arena, accepted:
+  planilla SCA completa + factor_rendimiento + granulometria detallada en
+  physical_data + notas de fragancia/aroma/catas/descripcion oficial) -- esto
+  alimenta el promedio oficial existente de src/lib/evaluations.ts; las
+  finalistas reciben arena_scores POR JUEZ -> grado por mayoria (desempate
+  hacia arriba, misma regla de siempre) -> galardonado + contrato (regla
+  existente, tyrian excluido); las descartadas pasan a stage evaluado sin
+  grado; la sesion queda completed con winner_lot_id y audit_log ("GANADOR de
+  la jornada" en la nota del lote ganador).
+- La pagina de sesion /bcp/arena/[sessionId] ahora ofrece "Iniciar jornada en
+  vivo" (>=3 lotes) / "Continuar jornada"; una vez arrancada la jornada es
+  duena de la sesion (se ocultan puntajes manuales, agregar lotes y el cierre
+  manual). Al completarse muestra el banner del ganador.
+- Mapa: toca el nodo Arena (n-arena o equivalente) -- su descripcion debe
+  mencionar el runner en vivo y el ganador de jornada; candidato a NUEVO
+  SCENARIO ("jornada de arena en vivo": producer muestra -> fila_arena ->
+  startJornada -> run_state autosave -> finalizeJornada -> lot_evaluations +
+  arena_scores + contrato + winner_lot_id); candidatos DICT: "jornada",
+  "factor de rendimiento" (si no existe ya), run_state.
+(commit: pending)

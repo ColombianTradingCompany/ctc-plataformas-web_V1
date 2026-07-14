@@ -6,4 +6,30 @@ Covers: everything since Documentacion_Interactiva_V4.0(9d8440c).html, which
 is now the current real HTML snapshot (Log_Documentacion_Interactiva_V3.txt
 is closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-14] CTC Home + Kaffetal Regal: pase cosmético (heros animados, quick menu)
+- Cosmetic/marketing only -- no schema, no business logic, no new flows. The
+  system map's nodes/wires/scenarios are unaffected; this entry exists so the
+  next wrap knows the two public surfaces changed visually.
+- CTC Home hero is now DYNAMIC: the guacamayo/finca loop plays behind the copy
+  (Hero.tsx + Hero.module.css). Dark two-layer scrim, light-on-dark type
+  (h1 12:1, lead 9.3:1, facts 7.5:1 worst-case). Hero aside reduced to the
+  single Piedecuesta/Santander photo, caption removed (logo card + marquesina
+  shot dropped).
+- "El hilo de integración" (EcosystemSection) now shows the two ends the copy
+  describes: the coffee-regions map (origin that gets geolocated -> EUDR) and
+  the CTC grade seals (the grade bought in Amsterdam).
+- New QuickMenu component (CTC Home): FAB in the same shape as the Finca
+  panel's save button (round, fixed bottom-right, expands on hover), opens a
+  section index; active section tracked with an IntersectionObserver.
+- Footer closes with the full CTC logo on a light plate + copyright line.
+- New Kaffetal Regal TopBanner: the cherry-zoom loop in a short wide strip
+  (clamp 132-190px) between header and hero. It was FIRST built as a
+  full-section hero backdrop -- that stretched a 400x203 source over ~700px of
+  height and read as a thick odd band, so it was reworked into the banner and
+  the KR hero went back to a plain light section.
+- Media pipeline note: both loops ship as ANIMATED WEBP, converted from the
+  source GIFs with Pillow (guacamayo 7.3MB -> 2.2MB; cereza 5.7MB -> 1.6MB,
+  and its bottom-right "Veo" generator watermark was cropped out first).
+  next/image is deliberately NOT used on them -- it rasterizes an animation to
+  its first frame.
+(commit: b388a67)

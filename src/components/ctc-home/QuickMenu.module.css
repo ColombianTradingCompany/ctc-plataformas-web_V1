@@ -1,0 +1,51 @@
+/* Floating quick-scroll dock, right edge, vertically centered. Collapsed to
+   dots; the label slides out on hover/focus so it never competes with the page. */
+.dock{
+  position:fixed;right:18px;top:50%;transform:translateY(-50%) translateX(14px);
+  z-index:45;display:flex;flex-direction:column;gap:6px;
+  padding:12px 10px;border-radius:999px;
+  background:rgba(245,246,248,.82);backdrop-filter:blur(10px);
+  border:1px solid var(--line);box-shadow:0 18px 40px -22px rgba(14,44,72,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;
+}
+.dock.shown{opacity:1;pointer-events:auto;transform:translateY(-50%) translateX(0)}
+
+.dock a{
+  display:flex;align-items:center;gap:10px;text-decoration:none;
+  padding:5px;border-radius:999px;color:var(--muted);
+}
+.dot{
+  width:9px;height:9px;border-radius:50%;flex:none;
+  background:var(--line);border:1.5px solid transparent;
+  transition:background .18s ease,transform .18s ease,border-color .18s ease;
+}
+.dock a:hover .dot{background:var(--accent);transform:scale(1.25)}
+.dock a.active .dot{background:var(--primary);transform:scale(1.35)}
+
+/* The label lives in the dock but is only painted on hover/focus — the dock
+   keeps its slim width because the label is absolutely positioned. */
+.label{
+  position:absolute;right:calc(100% + 10px);white-space:nowrap;
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#fff;background:var(--primary-deep,var(--primary));
+  padding:5px 10px;border-radius:6px;
+  opacity:0;transform:translateX(6px);pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;
+}
+.dock a:hover .label,.dock a:focus-visible .label{opacity:1;transform:translateX(0)}
+.dock a:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+/* On a phone the dock would sit on top of the content — park it at the bottom
+   as a horizontal pill instead. */
+@media(max-width:820px){
+  .dock{
+    right:50%;top:auto;bottom:16px;
+    transform:translateX(50%) translateY(14px);
+    flex-direction:row;padding:10px 12px;
+  }
+  .dock.shown{transform:translateX(50%) translateY(0)}
+  .label{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .dock,.dot,.label{transition:none}
+}

@@ -136,12 +136,28 @@ export function EcosystemSection() {
               cuenta dos veces, nada se pierde en el camino.
             </p>
           </div>
-          <Image
-            src="/images/ctc-home/10-catador-evaluando-en-la-arena.png"
-            alt="Catador evaluando en la Arena"
-            width={300}
-            height={179}
-          />
+          {/* The two ends of the thread the copy describes: the origin that gets
+              geolocated (the map) and the grade it's finally bought as. */}
+          <div className={styles.threadShots}>
+            <figure>
+              <Image
+                src="/images/ctc-home/thread-regiones-cafeteras.jpg"
+                alt="Mapa de las regiones cafeteras de Colombia"
+                width={760}
+                height={555}
+              />
+              <figcaption>El origen · geolocalizado</figcaption>
+            </figure>
+            <figure>
+              <Image
+                src="/images/ctc-home/thread-grados-ctc.png"
+                alt="Sellos de grado de calidad CTC: Red, Blue y Gold"
+                width={560}
+                height={521}
+              />
+              <figcaption>El grado · que se compra</figcaption>
+            </figure>
+          </div>
         </div>
       </div>
     </section>

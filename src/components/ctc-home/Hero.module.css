@@ -1,22 +1,65 @@
-.hero{padding:88px 0 70px}
-.heroGrid{display:grid;grid-template-columns:1.12fr .88fr;gap:56px;align-items:center}
+/* Dynamic hero: the guacamayo/finca loop runs behind the copy. Everything here
+   is built around one rule — the text has to stay readable over a bright, moving
+   image, so the scrim does the heavy lifting and the copy is light-on-dark. */
+.hero{position:relative;isolation:isolate;padding:96px 0 84px;overflow:hidden;background:var(--primary-deep)}
+
+.heroBg{position:absolute;inset:0;z-index:0}
+.heroBg img{
+  width:100%;height:100%;object-fit:cover;object-position:center 42%;display:block;
+  /* The source loop is only 400x225, so it upscales hard. A touch of blur turns
+     that softness into a deliberate ambient look instead of visible pixelation,
+     and it also calms the busy background sitting behind the text. */
+  filter:blur(1.5px) saturate(1.08);
+  transform:scale(1.06); /* hides the blur's soft edges */
+}
+
+/* Two-layer scrim: a left-to-right gradient so the column that actually holds the
+   copy is the darkest part of the frame, plus a vertical one for overall contrast. */
+.scrim{
+  position:absolute;inset:0;z-index:1;
+  background:
+    linear-gradient(90deg, rgba(14,44,72,.94) 0%, rgba(14,44,72,.86) 42%, rgba(14,44,72,.45) 72%, rgba(14,44,72,.35) 100%),
+    linear-gradient(180deg, rgba(10,26,44,.55) 0%, rgba(10,26,44,.15) 45%, rgba(10,26,44,.6) 100%);
+}
+@media(max-width:900px){
+  /* Single column: the copy sits over the whole frame, so darken it evenly. */
+  .scrim{background:linear-gradient(180deg, rgba(14,44,72,.9) 0%, rgba(14,44,72,.82) 60%, rgba(14,44,72,.92) 100%)}
+}
+
+.heroGrid{position:relative;z-index:2;display:grid;grid-template-columns:1.12fr .88fr;gap:56px;align-items:center}
 @media(max-width:900px){.heroGrid{grid-template-columns:1fr}}
-.h1{font-size:clamp(36px,5.2vw,62px);margin:18px 0 22px}
-.h1 em{font-style:italic;color:var(--primary)}
-.lead{font-size:17.5px;color:var(--muted);max-width:56ch}
+
+.eyebrow{
+  font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--accent-soft);
+}
+.h1{font-size:clamp(36px,5.2vw,62px);margin:18px 0 22px;color:#fff;text-shadow:0 2px 24px rgba(6,18,32,.45)}
+.h1 em{font-style:italic;color:var(--accent-soft)}
+.lead{font-size:17.5px;color:#DCE3EC;max-width:56ch;line-height:1.65;text-shadow:0 1px 14px rgba(6,18,32,.5)}
+
 .heroCta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
-.heroLogo{
-  background:var(--card);border:1px solid var(--line);border-radius:20px;padding:38px;
-  display:flex;align-items:center;justify-content:center;box-shadow:0 24px 60px -30px rgba(14,44,72,.4);
+/* The global .btn outline is dark-on-light and would vanish here. */
+.ghost{border-color:rgba(255,255,255,.72);color:#fff;background:rgba(255,255,255,.06)}
+.ghost:hover{background:#fff;color:var(--primary-deep);border-color:#fff}
+
+.heroFacts{
+  display:flex;gap:22px;flex-wrap:wrap;margin-top:34px;
+  font-family:var(--font-spline-mono),monospace;font-size:11px;color:#C3CDDA;
 }
-.heroLogo img{width:100%;max-width:360px;height:auto}
-.heroDuo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-.heroDuo figure{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-.heroDuo img{width:100%;height:130px;object-fit:cover;display:block}
-.heroDuo figcaption{
-  position:absolute;left:8px;bottom:8px;background:rgba(14,44,72,.85);color:#F2E7C8;
-  font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.08em;
-  padding:3px 8px;border-radius:5px;text-transform:uppercase;
+.heroFacts b{color:var(--accent-soft)}
+
+/* The one surviving photo — no caption, framed so it reads as a window into the
+   origin rather than a cutout floating on the animation. */
+.heroShot{
+  position:relative;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 30px 70px -28px rgba(4,14,26,.85);
 }
-.heroFacts{display:flex;gap:22px;flex-wrap:wrap;margin-top:34px;font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted)}
-.heroFacts b{color:var(--primary)}
+.heroShot img{width:100%;height:auto;display:block}
+@media(max-width:900px){.heroShot{max-width:520px}}
+
+@media(prefers-reduced-motion:reduce){
+  /* CSS can't pause an animated WebP, but a calmer, softer backdrop keeps it
+     from reading as motion competing with the copy. */
+  .heroBg img{filter:blur(3px) saturate(1)}
+}

@@ -3,10 +3,20 @@ import styles from "./Hero.module.css";
 
 export function Hero() {
   return (
-    <section className={styles.hero} style={{ borderTop: "none" }}>
+    <section id="hero" className={styles.hero}>
+      {/* Animated backdrop (guacamayo + finca). Purely decorative — it says
+          nothing the copy doesn't, so it's aria-hidden, and the scrim over it
+          is what guarantees the text stays legible. next/image is not used
+          here on purpose: it would rasterize the animation to a single frame. */}
+      <div className={styles.heroBg} aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
+        <img src="/images/ctc-home/hero-guacamayo-finca.webp" alt="" />
+      </div>
+      <div className={styles.scrim} aria-hidden />
+
       <div className={`wrap ${styles.heroGrid}`}>
         <div>
-          <p className="eyebrow">Casa matriz · Piedecuesta, Santander · Colombia</p>
+          <p className={styles.eyebrow}>Casa matriz · Piedecuesta, Santander · Colombia</p>
           <h1 className={styles.h1}>
             Un ecosistema para que el café colombiano viaje <em>con nombre propio.</em>
           </h1>
@@ -17,10 +27,10 @@ export function Hero() {
             cultivó.
           </p>
           <div className={styles.heroCta}>
-            <a className="btn btn-solid" href="#ecosistema">
+            <a className="btn btn-solid-accent" href="#ecosistema">
               Conocer el ecosistema
             </a>
-            <a className="btn" href="#tech">
+            <a className={`btn ${styles.ghost}`} href="#tech">
               Servicios de acompañamiento
             </a>
           </div>
@@ -40,34 +50,15 @@ export function Hero() {
           </div>
         </div>
         <div>
-          <div className={styles.heroLogo}>
+          <figure className={styles.heroShot}>
             <Image
-              src="/images/shared/ctc-logo-full.png"
-              alt="Colombian Trading Company"
-              width={2234}
-              height={1231}
+              src="/images/ctc-home/20-atardecer-cafetal-real.jpg"
+              alt="Atardecer sobre las montañas cafeteras de Santander"
+              width={900}
+              height={678}
+              priority
             />
-          </div>
-          <div className={styles.heroDuo}>
-            <figure>
-              <Image
-                src="/images/ctc-home/20-atardecer-cafetal-real.jpg"
-                alt="Atardecer sobre las montañas cafeteras de Santander"
-                width={900}
-                height={678}
-              />
-              <figcaption>Piedecuesta · Santander</figcaption>
-            </figure>
-            <figure>
-              <Image
-                src="/images/ctc-home/21-secado-marquesina-real.jpg"
-                alt="Secado de café en marquesina"
-                width={900}
-                height={678}
-              />
-              <figcaption>Secado en marquesina</figcaption>
-            </figure>
-          </div>
+          </figure>
         </div>
       </div>
     </section>

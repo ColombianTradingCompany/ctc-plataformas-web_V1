@@ -7,6 +7,7 @@ import { EcosystemSection } from "@/components/ctc-home/EcosystemSection";
 import { MomentSection } from "@/components/ctc-home/MomentSection";
 import { ServicesSection } from "@/components/ctc-home/ServicesSection";
 import { HistorySection } from "@/components/ctc-home/HistorySection";
+import { QuickMenu } from "@/components/ctc-home/QuickMenu";
 import { Footer } from "@/components/ctc-home/Footer";
 
 export default function CtcHomePage() {
@@ -44,6 +45,7 @@ export default function CtcHomePage() {
           />
 
           <HistorySection />
+          <QuickMenu />
           <Footer />
         </ContactModalProvider>
       </ToastProvider>

@@ -34,4 +34,4 @@ is closed and left as historical record of what went into producing it).
   "Kaffetal Club" cross-linked from the contracts/catalog nodes, a node-card
   note update on the BCP contracts + catalog nodes (new gate), and possibly a
   new node for /bcp/club under Business logic.
-(commit: pending)
+(commit: a8abc78)

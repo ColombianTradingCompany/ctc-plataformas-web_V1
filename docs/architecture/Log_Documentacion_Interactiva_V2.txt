@@ -302,6 +302,7 @@ Ajuste a las tarjetas del hub y el encabezado (feedback del usuario):
   space-between + .navActions (se quitó el marginLeft:auto).
 Verificado en 375px: tarjeta 84px "ICON BESIDE", marca a la izquierda, acciones
 a la derecha.
+(commit: aabc264)
 
 ## [2026-07-14] KR móvil: padding lateral + iconos de línea del Panel del Productor
 - BUG de padding (real, no percepción): el panel iba pegado a los bordes en el

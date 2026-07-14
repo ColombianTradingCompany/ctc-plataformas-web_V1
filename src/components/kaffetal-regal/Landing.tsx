@@ -1,5 +1,6 @@
 import { Band } from "@/components/Band";
 import { Header } from "./Header";
+import { TopBanner } from "./TopBanner";
 import { Hero } from "./Hero";
 import { OportunidadSection } from "./OportunidadSection";
 import { ParticiparSection } from "./ParticiparSection";
@@ -13,6 +14,7 @@ export function Landing({ onLogin }: { onLogin: () => void }) {
   return (
     <div>
       <Header onLogin={onLogin} />
+      <TopBanner />
       <Hero onLogin={onLogin} onGo={(id) => document.getElementById(id)?.scrollIntoView()} />
       <OportunidadSection />
 

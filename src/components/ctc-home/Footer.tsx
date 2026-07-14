@@ -36,6 +36,22 @@ export function Footer() {
           </div>
         </div>
       </div>
+
+      {/* Closing mark: the full logo on a light plate — the colorful wordmark is
+          dark-inked, so it needs a light backing to read on the navy footer. */}
+      <div className={`wrap ${styles.signoff}`}>
+        <div className={styles.logoPlate}>
+          <Image
+            src="/images/shared/ctc-logo-full.png"
+            alt="Colombian Trading Company"
+            width={2234}
+            height={1231}
+          />
+        </div>
+        <p className={`mono ${styles.copy}`}>
+          © {new Date().getFullYear()} Colombian Trading Company · Piedecuesta, Santander · Colombia
+        </p>
+      </div>
     </footer>
   );
 }

@@ -1,5 +1,26 @@
-.hero{padding:68px 0 56px;border-top:none}
-.heroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
+.hero{position:relative;isolation:isolate;padding:68px 0 56px;border-top:none;overflow:hidden}
+/* Ambient cherry-zoom loop behind the copy. This stays a LIGHT section (dark type
+   on paper), so the scrim is a near-opaque paper wash rather than a dark one —
+   the animation reads as texture, never as a background competing with the text. */
+.heroBg{position:absolute;inset:0;z-index:0}
+.heroBg img{
+  width:100%;height:100%;object-fit:cover;object-position:center;display:block;
+  /* 400x203 source upscaled: blur turns the softness into deliberate ambience. */
+  filter:blur(2px) saturate(1.05);transform:scale(1.08);
+}
+.heroScrim{
+  position:absolute;inset:0;z-index:1;
+  background:
+    /* The copy column is washed hardest: the lead is --muted, so it needs the
+       extra headroom to clear WCAG AA over the darkest frames of the loop. */
+    linear-gradient(90deg, rgba(245,243,236,.98) 0%, rgba(245,243,236,.965) 52%, rgba(245,243,236,.8) 76%, rgba(245,243,236,.66) 100%),
+    linear-gradient(180deg, rgba(245,243,236,.55) 0%, rgba(245,243,236,.3) 50%, var(--paper) 100%);
+}
+@media(max-width:880px){
+  /* Single column: the copy covers the whole frame, so wash it evenly. */
+  .heroScrim{background:linear-gradient(180deg, rgba(245,243,236,.95) 0%, rgba(245,243,236,.92) 60%, var(--paper) 100%)}
+}
+.heroGrid{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
 @media(max-width:880px){.heroGrid{grid-template-columns:1fr}}
 .coldots{display:inline-flex;gap:6px;vertical-align:middle}
 .coldots i{width:8px;height:8px;border-radius:50%;display:inline-block}

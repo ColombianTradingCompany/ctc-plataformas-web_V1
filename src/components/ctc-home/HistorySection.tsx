@@ -7,10 +7,10 @@ export function HistorySection() {
       <div className={`wrap ${styles.story}`}>
         <div className={styles.imgs}>
           <Image
-            src="/images/ctc-home/30-feria-seleccionadora-optica.jpg"
-            alt="Gabriel padre e hijo, fundadores de CTC, en una feria de café"
+            src="/images/ctc-home/gyg-fundadores.png"
+            alt="G&G — Gabriel padre y Gabriel hijo, fundadores de CTC"
             width={900}
-            height={678}
+            height={761}
           />
         </div>
         <div>

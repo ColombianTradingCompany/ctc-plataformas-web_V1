@@ -11,3 +11,13 @@
 .social a{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);color:#F2E7C8;transition:all .15s}
 .social a:hover{background:var(--accent);border-color:var(--accent);color:#0E2C48}
 .social svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Sign-off: the full logo closes the page. */
+.signoff{margin-top:40px;padding-top:32px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:16px}
+.logoPlate{
+  background:#fff;border-radius:16px;padding:22px 30px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 22px 50px -26px rgba(0,0,0,.6);
+}
+.logoPlate img{width:100%;max-width:300px;height:auto;display:block}
+.copy{font-size:11px;letter-spacing:.06em;color:#8FA0B2;text-align:center}

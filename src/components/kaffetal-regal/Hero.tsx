@@ -7,6 +7,15 @@ import styles from "./Hero.module.css";
 export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string) => void }) {
   return (
     <section className={styles.hero}>
+      {/* Ambient loop behind the copy (zoom into the cherry). Decorative, so it's
+          aria-hidden; a near-opaque paper scrim over it keeps this a light
+          section with dark type. next/image would freeze the animation. */}
+      <div className={styles.heroBg} aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
+        <img src="/images/kaffetal-regal/hero-zoom-cereza.webp" alt="" />
+      </div>
+      <div className={styles.heroScrim} aria-hidden />
+
       <div className="wrap">
         <div className={styles.heroGrid}>
           <div>

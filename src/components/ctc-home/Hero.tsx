@@ -1,4 +1,3 @@
-import Image from "next/image";
 import styles from "./Hero.module.css";
 
 export function Hero() {
@@ -49,17 +48,9 @@ export function Hero() {
             </span>
           </div>
         </div>
-        <div>
-          <figure className={styles.heroShot}>
-            <Image
-              src="/images/ctc-home/20-atardecer-cafetal-real.jpg"
-              alt="Atardecer sobre las montañas cafeteras de Santander"
-              width={900}
-              height={678}
-              priority
-            />
-          </figure>
-        </div>
+        {/* The right column is intentionally empty: the animated loop itself is
+            the visual. (The Piedecuesta photo that used to sit here now closes
+            the page in the Footer's sign-off.) */}
       </div>
     </section>
   );

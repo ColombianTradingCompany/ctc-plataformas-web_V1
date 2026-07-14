@@ -14,6 +14,14 @@
 
 /* Sign-off: the full logo closes the page. */
 .signoff{margin-top:40px;padding-top:32px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:16px}
+/* Last window into the origin (the Piedecuesta shot that used to live in the
+   hero aside) — framed like it was there, sized as a closing vignette. */
+.closingShot{
+  width:100%;max-width:720px;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 30px 70px -28px rgba(4,14,26,.85);
+}
+.closingShot img{width:100%;height:auto;display:block}
 .logoPlate{
   background:#fff;border-radius:16px;padding:22px 30px;
   display:flex;align-items:center;justify-content:center;

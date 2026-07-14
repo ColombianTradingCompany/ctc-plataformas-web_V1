@@ -14,28 +14,34 @@
 }
 
 /* Two-layer scrim: a left-to-right gradient so the column that actually holds the
-   copy is the darkest part of the frame, plus a vertical one for overall contrast. */
+   copy is the darkest part of the frame, plus a vertical one for overall contrast.
+   Lightened 2026-07-14 (the loop read too dark); re-measured per element band
+   against the brightest frame under the composite: h1 5.5:1, lead 5.8:1, facts
+   5.2:1, hero gold 4.6:1 worst-case — the lead/facts/gold hex values below were
+   brightened in the same pass to buy that headroom. Re-measure before retinting. */
 .scrim{
   position:absolute;inset:0;z-index:1;
   background:
-    linear-gradient(90deg, rgba(14,44,72,.94) 0%, rgba(14,44,72,.86) 42%, rgba(14,44,72,.45) 72%, rgba(14,44,72,.35) 100%),
-    linear-gradient(180deg, rgba(10,26,44,.55) 0%, rgba(10,26,44,.15) 45%, rgba(10,26,44,.6) 100%);
+    linear-gradient(90deg, rgba(14,44,72,.88) 0%, rgba(14,44,72,.78) 42%, rgba(14,44,72,.26) 72%, rgba(14,44,72,.16) 100%),
+    linear-gradient(180deg, rgba(10,26,44,.42) 0%, rgba(10,26,44,.1) 45%, rgba(10,26,44,.5) 100%);
 }
 @media(max-width:900px){
   /* Single column: the copy sits over the whole frame, so darken it evenly. */
-  .scrim{background:linear-gradient(180deg, rgba(14,44,72,.9) 0%, rgba(14,44,72,.82) 60%, rgba(14,44,72,.92) 100%)}
+  .scrim{background:linear-gradient(180deg, rgba(14,44,72,.84) 0%, rgba(14,44,72,.75) 60%, rgba(14,44,72,.88) 100%)}
 }
 
 .heroGrid{position:relative;z-index:2;display:grid;grid-template-columns:1.12fr .88fr;gap:56px;align-items:center}
 @media(max-width:900px){.heroGrid{grid-template-columns:1fr}}
 
+/* Hero-local gold: var(--accent-soft) (#F2C464) drops under 4.5:1 on the
+   lightened scrim for the small mono text; this brighter shade clears it. */
 .eyebrow{
   font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--accent-soft);
+  text-transform:uppercase;color:#F7D287;
 }
 .h1{font-size:clamp(36px,5.2vw,62px);margin:18px 0 22px;color:#fff;text-shadow:0 2px 24px rgba(6,18,32,.45)}
-.h1 em{font-style:italic;color:var(--accent-soft)}
-.lead{font-size:17.5px;color:#DCE3EC;max-width:56ch;line-height:1.65;text-shadow:0 1px 14px rgba(6,18,32,.5)}
+.h1 em{font-style:italic;color:#F7D287}
+.lead{font-size:17.5px;color:#E9EEF5;max-width:56ch;line-height:1.65;text-shadow:0 1px 14px rgba(6,18,32,.5)}
 
 .heroCta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
 /* The global .btn outline is dark-on-light and would vanish here. */
@@ -44,19 +50,9 @@
 
 .heroFacts{
   display:flex;gap:22px;flex-wrap:wrap;margin-top:34px;
-  font-family:var(--font-spline-mono),monospace;font-size:11px;color:#C3CDDA;
+  font-family:var(--font-spline-mono),monospace;font-size:11px;color:#DDE4EE;
 }
-.heroFacts b{color:var(--accent-soft)}
-
-/* The one surviving photo — no caption, framed so it reads as a window into the
-   origin rather than a cutout floating on the animation. */
-.heroShot{
-  position:relative;border-radius:16px;overflow:hidden;
-  border:1px solid rgba(255,255,255,.22);
-  box-shadow:0 30px 70px -28px rgba(4,14,26,.85);
-}
-.heroShot img{width:100%;height:auto;display:block}
-@media(max-width:900px){.heroShot{max-width:520px}}
+.heroFacts b{color:#F7D287}
 
 @media(prefers-reduced-motion:reduce){
   /* CSS can't pause an animated WebP, but a calmer, softer backdrop keeps it

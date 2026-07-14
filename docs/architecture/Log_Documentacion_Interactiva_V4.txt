@@ -81,3 +81,14 @@ is closed and left as historical record of what went into producing it).
   arena_scores + contrato + winner_lot_id); candidatos DICT: "jornada",
   "factor de rendimiento" (si no existe ya), run_state.
 (commit: pending)
+
+## [2026-07-14] CTC Home: scrim del hero aclarado + foto Piedecuesta al cierre
+- Cosmetico, sin cambios de mapa. El scrim del hero se aclaro (feedback "muy
+  oscuro"): capa horizontal .88/.78/.26/.16, vertical .42/.10/.50, movil
+  .84/.75/.88; lead -> #E9EEF5, facts -> #DDE4EE, dorado local del hero
+  #F7D287 (accent-soft ya no pasaba 4.5:1). Re-medido por banda contra el
+  frame mas brillante del loop (script Pillow): h1 5.5 / lead 5.8 / facts 5.2
+  / dorado 4.6. La foto del atardecer de Piedecuesta salio del aside del hero
+  (queda vacio a proposito, el loop es el visual) y ahora CIERRA la pagina en
+  el sign-off del footer (closingShot, antes del logo full + copyright).
+(commit: pending)

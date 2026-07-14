@@ -37,9 +37,19 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Closing mark: the full logo on a light plate — the colorful wordmark is
-          dark-inked, so it needs a light backing to read on the navy footer. */}
+      {/* Closing mark: the Piedecuesta photo (moved here from the hero aside) as
+          a last window into the origin, then the full logo on a light plate —
+          the colorful wordmark is dark-inked, so it needs a light backing to
+          read on the navy footer. */}
       <div className={`wrap ${styles.signoff}`}>
+        <figure className={styles.closingShot}>
+          <Image
+            src="/images/ctc-home/20-atardecer-cafetal-real.jpg"
+            alt="Atardecer sobre las montañas cafeteras de Santander"
+            width={900}
+            height={678}
+          />
+        </figure>
         <div className={styles.logoPlate}>
           <Image
             src="/images/shared/ctc-logo-full.png"

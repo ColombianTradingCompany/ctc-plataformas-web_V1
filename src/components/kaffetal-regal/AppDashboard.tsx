@@ -294,8 +294,10 @@ export function AppDashboard({
               <span className={styles.by}>Panel del productor · by CTC</span>
             </span>
           </a>
-          <button className="btn btn-sm" style={{ marginLeft: "auto" }} onClick={onBackHome}>← Inicio</button>
-          <button className="btn btn-sm" onClick={onLogout}>Cerrar sesión</button>
+          <div className={styles.navActions}>
+            <button className="btn btn-sm" onClick={onBackHome}>← Inicio</button>
+            <button className="btn btn-sm" onClick={onLogout}>Cerrar sesión</button>
+          </div>
         </div>
       </div>
 
@@ -308,8 +310,10 @@ export function AppDashboard({
             {tiles.map((t) => (
               <button key={t.key} type="button" className={styles.hubTile} onClick={() => onSelectModule(t.key)}>
                 <span className={styles.hubIcon} aria-hidden>{t.icon}</span>
-                <span className={styles.hubTitle}>{t.title}</span>
-                <span className={t.alert ? styles.hubFactAlert : styles.hubFact}>{t.fact}</span>
+                <span className={styles.hubText}>
+                  <span className={styles.hubTitle}>{t.title}</span>
+                  <span className={t.alert ? styles.hubFactAlert : styles.hubFact}>{t.fact}</span>
+                </span>
               </button>
             ))}
           </div>

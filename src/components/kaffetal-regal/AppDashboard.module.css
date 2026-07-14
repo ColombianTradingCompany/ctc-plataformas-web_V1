@@ -1,5 +1,6 @@
 .appTop{display:flex;align-items:center;gap:16px;height:72px;border-bottom:1px solid var(--line);background:var(--card)}
-.nav{display:flex;align-items:center;gap:18px;height:72px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:18px;height:72px}
+.navActions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 .brand{display:flex;align-items:center;gap:11px;text-decoration:none}
 .krl{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);object-fit:cover}
 .name{font-family:var(--font-fraunces),serif;font-weight:700;font-size:20px;line-height:1;color:var(--primary-deep);display:block}
@@ -15,17 +16,19 @@
 
 /* Hub landing: one big tile per module, with its key facts at a glance. */
 .hubGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin-top:28px}
+/* Compact row: icon chip on the left, title + fact stacked beside it. */
 .hubTile{
   background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);
-  padding:24px 22px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:9px;
+  padding:14px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;
   transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 .hubTile:hover{border-color:var(--primary);box-shadow:0 3px 14px rgba(0,0,0,.08);transform:translateY(-2px)}
-.hubIcon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:var(--paper);border:1px solid var(--line);color:var(--primary)}
-.hubIcon svg{width:24px;height:24px}
-.hubTitle{font-family:var(--font-fraunces),serif;font-weight:700;font-size:17px;color:var(--primary-deep)}
-.hubFact{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);line-height:1.5}
-.hubFactAlert{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--accent);font-weight:700;line-height:1.5}
+.hubIcon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:42px;height:42px;border-radius:11px;background:var(--paper);border:1px solid var(--line);color:var(--primary)}
+.hubIcon svg{width:22px;height:22px}
+.hubText{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hubTitle{font-family:var(--font-fraunces),serif;font-weight:700;font-size:16px;color:var(--primary-deep)}
+.hubFact{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);line-height:1.45}
+.hubFactAlert{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--accent);font-weight:700;line-height:1.45}
 
 /* "Más allá de la exportación" in-panel service request forms */
 .svcForm{display:grid;gap:10px;margin-top:12px;max-width:560px}

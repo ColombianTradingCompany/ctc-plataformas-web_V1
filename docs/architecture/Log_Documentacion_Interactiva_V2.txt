@@ -291,6 +291,18 @@ conversación y (2) invita a iniciar sesión para continuarla en la web.
   solicitud + CTA; 2ª respuesta con hilo Productor→CTC→Productor completo.
 (commit: e55378c)
 
+## [2026-07-14] Hub del productor: tarjetas compactas + encabezado izq/der
+Ajuste a las tarjetas del hub y el encabezado (feedback del usuario):
+- Tarjetas del hub ahora COMPACTAS y horizontales: el icono va al lado del
+  texto (chip de 42px a la izquierda, título + dato apilados a la derecha) en
+  vez de apilado arriba. Altura 149px -> 84px. Se envolvió título+dato en
+  .hubText y .hubTile pasó a flex row/align-center con padding 14px 16px.
+- Encabezado: el logo/nombre KR queda a la izquierda y los dos botones
+  (Inicio / Cerrar sesión) agrupados a la derecha vía justify-content
+  space-between + .navActions (se quitó el marginLeft:auto).
+Verificado en 375px: tarjeta 84px "ICON BESIDE", marca a la izquierda, acciones
+a la derecha.
+
 ## [2026-07-14] KR móvil: padding lateral + iconos de línea del Panel del Productor
 - BUG de padding (real, no percepción): el panel iba pegado a los bordes en el
   celular. El wrapper es class="wrap main"; el shorthand del módulo

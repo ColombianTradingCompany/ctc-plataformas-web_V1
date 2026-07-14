@@ -34,10 +34,17 @@ function generateCode(prefix: "KC" | "KCX"): string {
 
 type Service = ReturnType<typeof createServiceRoleClient>;
 
+// PostgREST returns the campaign join as an object for a many-to-one FK, but
+// the client's inferred TS type says array -- accept either shape.
+function joinedCampaignName(c: unknown): string | null {
+  const row = Array.isArray(c) ? c[0] : c;
+  return (row as { name?: string } | null | undefined)?.name ?? null;
+}
+
 async function insertCode(
   service: Service,
   adminId: string,
-  fields: { prefix: "KC" | "KCX"; kind: "estandar" | "campana"; campaign: string | null; note: string | null; assignedTo: string | null }
+  fields: { prefix: "KC" | "KCX"; kind: "estandar" | "campana"; campaignId: string | null; note: string | null; assignedTo: string | null }
 ): Promise<{ id: string; code: string }> {
   // Retry on the (astronomically unlikely) unique collision instead of failing.
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -47,7 +54,7 @@ async function insertCode(
       .insert({
         code,
         kind: fields.kind,
-        campaign: fields.campaign,
+        campaign_id: fields.campaignId,
         note: fields.note,
         created_by: adminId,
         assigned_to: fields.assignedTo,
@@ -110,7 +117,7 @@ export async function emitPassportForProducer(producerId: string) {
     throw new Error("Este productor aún no tiene un lote galardonado — el Pasaporte estándar se emite con el galardón.");
   }
 
-  const codeRow = await insertCode(service, adminId, { prefix: "KC", kind: "estandar", campaign: null, note: null, assignedTo: producerId });
+  const codeRow = await insertCode(service, adminId, { prefix: "KC", kind: "estandar", campaignId: null, note: null, assignedTo: producerId });
   await deliverPassport(service, codeRow, null, producerId);
 
   await service.from("audit_log").insert({
@@ -125,31 +132,67 @@ export async function emitPassportForProducer(producerId: string) {
   revalidatePath("/bcp/productores");
 }
 
-// Campaign passport ("Fundadores", "Héroes de Temporada 202X", ...): bypasses
-// the Arena gate. Optionally assigned to any producer (email + note go out);
-// left unassigned it's a code to hand out at events -- first to redeem, wins.
-export async function createCampaignPassport(formData: FormData) {
+// A campaign ("Fundadores", "Héroes de Temporada 202X", ...) roots the
+// passports emitted under it -- created here, managed in /bcp/club/campanas/[id].
+export async function createCampaign(formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
-  const campaign = String(formData.get("campaign") ?? "").trim();
-  if (!campaign) throw new Error("La campaña necesita un nombre (ej. Fundadores).");
-  const producerId = String(formData.get("producer_id") ?? "").trim() || null;
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) throw new Error("La campaña necesita un nombre (ej. Fundadores).");
 
-  if (producerId) await assertAssignable(service, producerId);
-
-  const codeRow = await insertCode(service, adminId, { prefix: "KCX", kind: "campana", campaign, note: null, assignedTo: producerId });
-  if (producerId) await deliverPassport(service, codeRow, campaign, producerId);
+  const { data, error } = await service.from("club_campaigns").insert({ name, created_by: adminId }).select("id").single();
+  if (error) {
+    throw new Error(error.code === "23505" ? "Ya existe una campaña con ese nombre." : "No se pudo crear la campaña: " + error.message);
+  }
 
   await service.from("audit_log").insert({
-    entity_type: "club_member_code",
-    entity_id: codeRow.id,
-    action: "campaign_created",
+    entity_type: "club_campaign",
+    entity_id: data.id,
+    action: "created",
     performed_by: adminId,
-    notes: `${codeRow.code} · ${campaign}${producerId ? ` → productor ${producerId}` : ""}`,
+    notes: name,
   });
 
   revalidatePath("/bcp/club");
+}
+
+// Campaign passports bypass the Arena gate. Assigned to a producer the número
+// goes out by email + note; unassigned they're hand-out codes (cantidad > 1
+// mints a batch) -- first account to redeem one, wins.
+export async function emitCampaignPassports(campaignId: string, formData: FormData) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: campaign } = await service.from("club_campaigns").select("id, name").eq("id", campaignId).maybeSingle();
+  if (!campaign) throw new Error("Campaña no encontrada.");
+
+  const producerId = String(formData.get("producer_id") ?? "").trim() || null;
+  const cantidad = producerId ? 1 : Math.min(Math.max(Number(formData.get("cantidad") || 1), 1), 50);
+
+  if (producerId) await assertAssignable(service, producerId);
+
+  for (let i = 0; i < cantidad; i++) {
+    const codeRow = await insertCode(service, adminId, {
+      prefix: "KCX",
+      kind: "campana",
+      campaignId: campaign.id,
+      note: null,
+      assignedTo: producerId,
+    });
+    if (producerId) await deliverPassport(service, codeRow, campaign.name, producerId);
+
+    await service.from("audit_log").insert({
+      entity_type: "club_member_code",
+      entity_id: codeRow.id,
+      action: "campaign_emitted",
+      performed_by: adminId,
+      notes: `${codeRow.code} · ${campaign.name}${producerId ? ` → productor ${producerId}` : ""}`,
+    });
+  }
+
+  revalidatePath("/bcp/club");
+  revalidatePath(`/bcp/club/campanas/${campaignId}`);
   revalidatePath("/bcp/productores");
 }
 
@@ -159,17 +202,18 @@ export async function resendPassportEmail(codeId: string) {
 
   const { data: code } = await service
     .from("club_member_codes")
-    .select("id, code, campaign, assigned_to, redeemed_by, revoked_at")
+    .select("id, code, assigned_to, redeemed_by, revoked_at, campaign:club_campaigns(name)")
     .eq("id", codeId)
     .maybeSingle();
   if (!code?.assigned_to || code.redeemed_by || code.revoked_at) {
     throw new Error("Este Pasaporte no está pendiente de confirmación.");
   }
+  const campaignName = joinedCampaignName(code.campaign);
 
   const { data: producer } = await service.from("profiles").select("full_name, email").eq("id", code.assigned_to).maybeSingle();
   if (!producer?.email) throw new Error("El productor no tiene correo registrado.");
 
-  const result = await sendPassportEmail({ nombre: producer.full_name || "productor", email: producer.email, code: code.code, campaign: code.campaign });
+  const result = await sendPassportEmail({ nombre: producer.full_name || "productor", email: producer.email, code: code.code, campaign: campaignName });
   await service
     .from("club_member_codes")
     .update(result.ok ? { email_sent_at: new Date().toISOString(), email_error: null } : { email_error: result.error })

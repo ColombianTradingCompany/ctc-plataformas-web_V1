@@ -62,3 +62,22 @@ is closed and left as historical record of what went into producing it).
   request->emit->confirm pipeline and the campaign bypass variant; new email
   wire BCP -> Resend for passport delivery.
 (commit: 2ac404e)
+
+## [2026-07-14] Campañas de Pasaportes como entidad propia + reordenado /bcp/club
+- New table club_campaigns (name unique, created_by, created_at;
+  service-role-only) -- campaign passports now carry campaign_id FK
+  (ON DELETE SET NULL); the loose `campaign` text column on
+  club_member_codes was dropped (migration club_campaigns_entity, with
+  backfill). Campaign names resolve via the FK join everywhere (redemption
+  welcome note/audit, BCP cards, resend email).
+- /bcp/club reordered: Campañas block at the TOP (create form + one clickable
+  card per campaign with activos/pendientes/sin-asignar counts) -> passport
+  kanban below -> ledger. New detail page /bcp/club/campanas/[id] manages one
+  campaign: emit passports rooted under it (assigned to any producer -- Arena
+  bypass -- or a BATCH of up to 50 unassigned hand-out codes) and
+  resend/revoke its existing ones.
+- clubActions: createCampaign + emitCampaignPassports(campaignId, formData)
+  replace the old createCampaignPassport(label) action.
+- Doc impact when wrapping: the Kaffetal Club DICT entry + /bcp/club node gain
+  the campaign-entity structure and the campanas/[id] subpage.
+(commit: pending)

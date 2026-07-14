@@ -1,27 +1,26 @@
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { supplierCode } from "@/components/kaffetal-regal/data";
 import {
   emitPassportForProducer,
-  createCampaignPassport,
+  createCampaign,
   resendPassportEmail,
   revokeClubCode,
   revokeClubMembership,
 } from "../clubActions";
 import styles from "../shared.module.css";
 
-// Kaffetal Club · Pasaportes. The board follows the passport pipeline:
-// Elegibles (≥1 lot past Muestras; grayed until a galardón unlocks emission) →
-// Pendiente de confirmación (Número de Pasaporte emitted + sent, awaiting the
-// producer's activation) → Miembros activos. Campaign passports (secret KCX-
-// prefix, "Fundadores", ...) bypass the Arena gate and are managed below.
+// Kaffetal Club · Pasaportes. Top block: campaigns (first-class rows in
+// club_campaigns) -- create one, click it to manage the passports rooted under
+// it. Below: the passport kanban (Elegibles → Pendiente de confirmación →
+// Miembros activos) and the full ledger.
 
 type CodeRow = {
   id: string;
   code: string;
   kind: "estandar" | "campana";
-  campaign: string | null;
-  note: string | null;
+  campaign_id: string | null;
   created_at: string;
   assigned_to: string | null;
   assigned_at: string | null;
@@ -31,6 +30,7 @@ type CodeRow = {
   email_sent_at: string | null;
   email_error: string | null;
 };
+type CampaignRow = { id: string; name: string; created_at: string };
 type MemberRow = { profile_id: string; club_member_since: string | null };
 type LotRow = { producer_id: string; stage: string };
 
@@ -41,19 +41,23 @@ const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("e
 export default async function BcpClubPage() {
   const service = createServiceRoleClient();
 
-  const [{ data: producers }, { data: memberRows }, { data: lotRows }, { data: codeRows }] = await Promise.all([
-    service.from("profiles").select("id").eq("role", "producer"),
-    service.from("producer_profiles").select("profile_id, club_member_since"),
-    service.from("lots").select("producer_id, stage"),
-    service
-      .from("club_member_codes")
-      .select("id, code, kind, campaign, note, created_at, assigned_to, assigned_at, redeemed_by, redeemed_at, revoked_at, email_sent_at, email_error")
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: producers }, { data: memberRows }, { data: lotRows }, { data: codeRows }, { data: campaignRows }] =
+    await Promise.all([
+      service.from("profiles").select("id").eq("role", "producer"),
+      service.from("producer_profiles").select("profile_id, club_member_since"),
+      service.from("lots").select("producer_id, stage"),
+      service
+        .from("club_member_codes")
+        .select("id, code, kind, campaign_id, created_at, assigned_to, assigned_at, redeemed_by, redeemed_at, revoked_at, email_sent_at, email_error")
+        .order("created_at", { ascending: false }),
+      service.from("club_campaigns").select("id, name, created_at").order("created_at", { ascending: false }),
+    ]);
 
   const producerIds = ((producers as { id: string }[] | null) ?? []).map((p) => p.id);
   const codes = (codeRows as CodeRow[] | null) ?? [];
   const lots = (lotRows as LotRow[] | null) ?? [];
+  const campaigns = (campaignRows as CampaignRow[] | null) ?? [];
+  const campaignName = new Map(campaigns.map((c) => [c.id, c.name]));
 
   const memberSince = new Map<string, string>();
   for (const m of (memberRows as MemberRow[] | null) ?? []) {
@@ -85,23 +89,63 @@ export default async function BcpClubPage() {
   const elegibles = producerIds.filter((id) => !memberSince.has(id) && !pendingByProducer.has(id) && lotStats.has(id));
   const restantes = producerIds.length - activos.length - pendientes.length - elegibles.length;
 
-  // Campaign passports can go to anyone not already in the club or in transit.
-  const asignables = producerIds.filter((id) => !memberSince.has(id) && !pendingByProducer.has(id));
-
   const contacts = await fetchProducerContacts(service, producerIds);
   const name = (id: string | null) => (id && (contacts.get(id)?.fullName || contacts.get(id)?.email)) || "Sin nombre";
-
-  const campaignCodesLoose = codes.filter((c) => c.kind === "campana" && !c.assigned_to && !c.redeemed_by && !c.revoked_at);
 
   return (
     <div>
       <h1 className={styles.title}>Kaffetal Club · Pasaportes</h1>
       <p className={styles.subtitle}>
         El Pasaporte del Kaffetal Club es lo que convierte a un productor en exportador con CTC: firmar contratos,
-        entrar al catálogo activo y vender en Cherry Picked. El Número de Pasaporte estándar se emite cuando un lote
-        gana un galardón; los Pasaportes de campaña (abajo) se otorgan directamente en ocasiones especiales.
+        entrar al catálogo activo y vender en Cherry Picked. El Número de Pasaporte estándar se emite desde el tablero
+        cuando un lote gana un galardón; los Pasaportes de campaña se otorgan directamente en ocasiones especiales.
       </p>
 
+      {/* ─── Campañas (top block) ─── */}
+      <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
+        <h3>Campañas de Pasaportes</h3>
+        <p className={styles.meta}>
+          Para ocasiones especiales (Fundadores, Héroes de Temporada…): cada campaña agrupa sus Pasaportes y se
+          administra por separado — haga clic en una para emitir y gestionar sus códigos.
+        </p>
+        <form action={createCampaign} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 220 }}>
+            <label>Nueva campaña</label>
+            <input name="name" required placeholder="Ej. Fundadores" />
+          </div>
+          <button className="btn btn-sm btn-solid" type="submit">
+            Crear campaña
+          </button>
+        </form>
+
+        {campaigns.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 10, marginTop: 16 }}>
+            {campaigns.map((c) => {
+              const cCodes = codes.filter((x) => x.campaign_id === c.id);
+              const activosC = cCodes.filter((x) => x.redeemed_by).length;
+              const pendientesC = cCodes.filter((x) => x.assigned_to && !x.redeemed_by && !x.revoked_at).length;
+              const sueltos = cCodes.filter((x) => !x.assigned_to && !x.redeemed_by && !x.revoked_at).length;
+              return (
+                <Link key={c.id} href={`/bcp/club/campanas/${c.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                  <div className={styles.miniCard} style={{ cursor: "pointer" }}>
+                    <h4>«{c.name}»</h4>
+                    <p className={styles.meta}>Creada {fecha(c.created_at)}</p>
+                    <p className={styles.meta} style={{ marginTop: 6 }}>
+                      <span className={styles.badgeGood}>{activosC} activos</span>{" "}
+                      <span className={styles.badgeWarn}>{pendientesC} pendientes</span>{" "}
+                      <span className={styles.badge}>{sueltos} sin asignar</span>
+                    </p>
+                    <p className={styles.meta} style={{ marginTop: 6 }}>Gestionar →</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ─── Kanban (dashboard) ─── */}
+      <h2 className={styles.sectionHead} style={{ marginTop: 26 }}>Tablero de Pasaportes</h2>
       <div className={styles.board}>
         {/* Column 1 · Elegibles */}
         <div className={styles.column}>
@@ -155,6 +199,7 @@ export default async function BcpClubPage() {
             {pendientes.length === 0 && <p className={styles.empty}>Ningún Pasaporte esperando activación.</p>}
             {pendientes.map((id) => {
               const code = pendingByProducer.get(id)!;
+              const cName = code.campaign_id ? campaignName.get(code.campaign_id) : null;
               async function resend() {
                 "use server";
                 await resendPassportEmail(code.id);
@@ -168,7 +213,7 @@ export default async function BcpClubPage() {
                   <h4>{name(id)}</h4>
                   <p className={styles.meta}>
                     <span className="mono" style={{ fontWeight: 700 }}>{code.code}</span>
-                    {code.campaign && <> <span className={styles.badge}>Campaña · {code.campaign}</span></>}
+                    {cName && <> <span className={styles.badge}>Campaña · {cName}</span></>}
                   </p>
                   <p className={styles.meta}>
                     Emitido {fecha(code.assigned_at ?? code.created_at)} ·{" "}
@@ -209,6 +254,7 @@ export default async function BcpClubPage() {
             {activos.length === 0 && <p className={styles.empty}>Aún no hay miembros.</p>}
             {activos.map((id) => {
               const code = redeemedByProducer.get(id);
+              const cName = code?.campaign_id ? campaignName.get(code.campaign_id) : null;
               async function remove() {
                 "use server";
                 await revokeClubMembership(id);
@@ -218,7 +264,7 @@ export default async function BcpClubPage() {
                   <h4>{name(id)}</h4>
                   <p className={styles.meta}>
                     Miembro desde {fecha(memberSince.get(id) ?? null)}
-                    {code?.campaign && <> · <span className={styles.badge}>Campaña · {code.campaign}</span></>}
+                    {cName && <> · <span className={styles.badge}>Campaña · {cName}</span></>}
                   </p>
                   {code && <p className={styles.meta}><span className="mono">{code.code}</span></p>}
                   <form action={remove} style={{ marginTop: 8 }}>
@@ -240,58 +286,6 @@ export default async function BcpClubPage() {
         </p>
       )}
 
-      <div className={styles.card} style={{ flexDirection: "column", alignItems: "stretch", marginTop: 24 }}>
-        <h3>Pasaporte de campaña</h3>
-        <p className={styles.meta}>
-          Para ocasiones especiales (Fundadores, Héroes de Temporada…): se otorga directamente, sin esperar la Arena.
-          Asignado a un productor se le envía por correo; sin asignar, queda como código para entregar en mano — lo
-          activa la primera cuenta que lo ingrese.
-        </p>
-        <form action={createCampaignPassport} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 180 }}>
-            <label>Campaña</label>
-            <input name="campaign" required placeholder="Ej. Fundadores" />
-          </div>
-          <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 220 }}>
-            <label>Asignar a (opcional)</label>
-            <select name="producer_id" defaultValue="">
-              <option value="">— Sin asignar (entregar en mano) —</option>
-              {asignables.map((id) => (
-                <option key={id} value={id}>
-                  {name(id)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button className="btn btn-sm btn-solid" type="submit">
-            Crear Pasaporte de campaña
-          </button>
-        </form>
-        {campaignCodesLoose.length > 0 && (
-          <div style={{ marginTop: 14 }}>
-            <p className={styles.digestK}>Sin asignar · para entregar en mano ({campaignCodesLoose.length})</p>
-            {campaignCodesLoose.map((c) => {
-              async function revoke() {
-                "use server";
-                await revokeClubCode(c.id);
-              }
-              return (
-                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 0", borderTop: "1px solid var(--line)" }}>
-                  <span className="mono" style={{ fontWeight: 700 }}>{c.code}</span>
-                  <span className={styles.badge}>{c.campaign}</span>
-                  <span className={styles.meta} style={{ flex: 1 }}>Creado {fecha(c.created_at)}</span>
-                  <form action={revoke}>
-                    <button className="btn btn-sm" type="submit">
-                      Revocar
-                    </button>
-                  </form>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       <details style={{ marginTop: 20 }}>
         <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
           Registro completo de Pasaportes ({codes.length})
@@ -300,7 +294,7 @@ export default async function BcpClubPage() {
           {codes.map((c) => (
             <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 0", borderTop: "1px solid var(--line)" }}>
               <span className="mono" style={{ fontWeight: 700 }}>{c.code}</span>
-              {c.campaign && <span className={styles.badge}>{c.campaign}</span>}
+              {c.campaign_id && <span className={styles.badge}>{campaignName.get(c.campaign_id) ?? "Campaña"}</span>}
               {c.revoked_at ? (
                 <span className={styles.badgeBad}>Revocado · {fecha(c.revoked_at)}</span>
               ) : c.redeemed_by ? (

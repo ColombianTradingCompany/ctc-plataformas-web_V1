@@ -10,6 +10,13 @@ import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/ser
 
 export type RedeemClubCodeResult = { ok: true } | { ok: false; message: string };
 
+// PostgREST returns the campaign join as an object for a many-to-one FK, but
+// the client's inferred TS type says array -- accept either shape.
+function joinedCampaignName(c: unknown): string | null {
+  const row = Array.isArray(c) ? c[0] : c;
+  return (row as { name?: string } | null | undefined)?.name ?? null;
+}
+
 export async function redeemClubCode(rawCode: string): Promise<RedeemClubCodeResult> {
   const session = await createSessionClient();
   const {
@@ -29,13 +36,14 @@ export async function redeemClubCode(rawCode: string): Promise<RedeemClubCodeRes
 
   const { data: row } = await service
     .from("club_member_codes")
-    .select("id, kind, campaign, redeemed_by, revoked_at, assigned_to")
+    .select("id, kind, redeemed_by, revoked_at, assigned_to, campaign:club_campaigns(name)")
     .eq("code", code)
     .maybeSingle();
 
   if (!row || row.revoked_at) {
     return { ok: false, message: "Número de Pasaporte no válido. Verifíquelo o escríbanos por Retroalimentación y ayuda." };
   }
+  const campaignName = joinedCampaignName(row.campaign);
   if (row.redeemed_by) {
     // Re-entering your own already-active passport is a no-op success.
     return row.redeemed_by === user.id ? { ok: true } : { ok: false, message: "Este Pasaporte ya fue activado." };
@@ -69,14 +77,14 @@ export async function redeemClubCode(rawCode: string): Promise<RedeemClubCodeRes
     entity_id: user.id,
     action: "code_redeemed",
     performed_by: user.id,
-    notes: row.campaign ? `Pasaporte ${code} · Edición ${row.campaign}` : `Pasaporte ${code}`,
+    notes: campaignName ? `Pasaporte ${code} · Edición ${campaignName}` : `Pasaporte ${code}`,
   });
 
   // Welcome note lands in "Retroalimentación y ayuda" (author_role defaults to 'bcp').
   await service.from("producer_comm_log").insert({
     producer_id: user.id,
     context_label: null,
-    note: `¡Bienvenido al Kaffetal Club! Su Pasaporte${row.campaign ? ` «${row.campaign}»` : ""} quedó activo: desde ahora puede firmar contratos de compra con CTC y sus lotes galardonados participan en el catálogo activo y en el mercado de Cherry Picked (Europa).`,
+    note: `¡Bienvenido al Kaffetal Club! Su Pasaporte${campaignName ? ` «${campaignName}»` : ""} quedó activo: desde ahora puede firmar contratos de compra con CTC y sus lotes galardonados participan en el catálogo activo y en el mercado de Cherry Picked (Europa).`,
   });
 
   return { ok: true };

@@ -291,7 +291,7 @@ plataforma no podía descubrir ni solicitar CTC Tech o Varietales Registrados
   aparezca en Retroalimentación SIN recargar la página (verificado en vivo:
   tech y varietales, hilo visible de inmediato, lead en BD con finca y
   tecnologías capturadas, espejo con lead_id).
-(commit: pending)
+(commit: b828817)
 
 ## [2026-07-13] Leads: reflexión y mejora + hub del Panel del Productor
 Segunda pasada sobre el sistema de leads (reflexión pedida por el usuario) +

@@ -289,7 +289,7 @@ conversación y (2) invita a iniciar sesión para continuarla en la web.
   filtra por sent_at nulo).
 - Verificado renderizando el texto real (fallback dev): bienvenida con eco de
   solicitud + CTA; 2ª respuesta con hilo Productor→CTC→Productor completo.
-(commit: pending)
+(commit: e55378c)
 
 ## [2026-07-14] KR móvil: padding lateral + iconos de línea del Panel del Productor
 - BUG de padding (real, no percepción): el panel iba pegado a los bordes en el

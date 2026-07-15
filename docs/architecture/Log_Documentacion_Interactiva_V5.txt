@@ -1,0 +1,9 @@
+Log_Documentacion_Interactiva_V5
+Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
+into a real HTML file; this log is where every change lives, in plain text,
+until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V6.0(<sha>).html.
+Covers: everything since Documentacion_Interactiva_V5.0(5980550).html, which
+is now the current real HTML snapshot (Log_Documentacion_Interactiva_V4.txt
+is closed and left as historical record of what went into producing it).
+
+(no entries yet)

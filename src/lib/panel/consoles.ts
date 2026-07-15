@@ -69,7 +69,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // Owner-only: only a founder/owner manages collaborators.
         label: "Administración",
         ownerOnly: true,
-        links: [{ href: "/bcp/usuarios", label: "Usuarios y credenciales" }],
+        links: [
+          { href: "/bcp/usuarios", label: "Usuarios y credenciales" },
+          { href: "/bcp/socios", label: "Socios de la red" },
+        ],
       },
     ],
   },

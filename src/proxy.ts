@@ -5,6 +5,13 @@ import type { NextRequest } from "next/server";
 const SUBDOMAIN_ROUTES: Record<string, string> = {
   "kaffetal-regal": "/kaffetal-regal",
   "cherry-picked": "/cherry-picked",
+  // Partner-node "couples" (landing + login), one subdomain per v3 node.
+  // DNS/Vercel steps: docs/PARTNER_DOMAINS_SETUP.md
+  "centro-calidad": "/socios/centro-calidad",
+  "agente-carga": "/socios/agente-carga",
+  "agente-nacionalizacion": "/socios/agente-nacionalizacion",
+  "master-roaster": "/socios/master-roaster",
+  "estudio-contenido": "/socios/estudio-contenido",
 };
 
 export function proxy(request: NextRequest) {

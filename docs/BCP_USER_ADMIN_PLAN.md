@@ -34,7 +34,16 @@ Estado por pieza:
   Webhook `POST /api/inbound-email` (firma Svix) → `inbound_emails` → BCP · Buzón. La
   entrega real (reenviador Hostinger → MX del subdominio `inbox.` → Resend Inbound) la
   configura el owner siguiendo `docs/INBOUND_EMAIL_SETUP.md`.
-- **Tier de partners (interfaces delegadas)** — **PLAN.** Diseño abajo.
+- **Tier de partners — LO ESENCIAL CONSTRUIDO (2026-07-15).** `profiles.role='partner'` +
+  tabla `partner_accounts` (service-role-only; `node_type` ∈ los 5 nodos, org/contacto,
+  invited/active/suspended). Los 5 "pares" (landing + login) viven en `/socios/<nodo>`
+  (config única `src/lib/partners/partners.ts`, contenido/colores/pantallas de la visión v3;
+  logos en `public/images/socios/`): login single-factor (`/api/socios/auth/login` — rol
+  partner + fila activa para EXACTAMENTE ese nodo; un socio jamás es bcp_admin) y panel
+  scaffold tras `requirePartner()` con cambio de contraseña. Credenciales se emiten/revocan
+  en **/bcp/socios** (owner-only). Subdominios mapeados en `proxy.ts`; DNS pendiente
+  (`docs/PARTNER_DOMAINS_SETUP.md`). **Pendiente**: los flujos reales de cada módulo (los
+  sellos del pasaporte), su espejo en el OCP, y la matriz de permisos fina — diseño abajo.
 
 ## La tesis de identidad de v3
 

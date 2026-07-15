@@ -17,3 +17,30 @@ closed and left as historical record of what went into producing it).
 - Doc impact when wrapped: one sentence in the "masterlogin" DICT entry (the env var is
   fallback-only) — no node/wire/scenario changes.
 (commit: pending)
+
+## [2026-07-15] Partner tier essentials: 5 "couples" (/socios), partner_accounts, /bcp/socios, subdomains
+- OCP scaffold: added the missing 5th mirror (Estudio de Contenido, the transversal partner).
+- Migrations: user_role gains 'partner'; new partner_accounts (service-role-only: node_type
+  check on the 5 slugs, org/contact, invited/active/suspended, invite-email tracking).
+- The 5 partner couples at /socios/[partner] (dynamic route, config-driven from
+  src/lib/partners/partners.ts — copy/colors/screens/sello verbatim from the v3 board;
+  logos extracted from the board's base64 into public/images/socios/): public landing +
+  /acceso login (single-factor, POST /api/socios/auth/login: ephemeral verify + role
+  'partner' + partner_accounts row for EXACTLY that node; invited→active + last_login_at
+  on success) + /panel scaffold (requirePartner gate; v3 screens as cards; change-password
+  card; logout). Wrong-node credential rejected with the generic error.
+- BCP /bcp/socios (owner-only, sidebar under Administración): emit credential (email+org+
+  contact+node; temp password via Resend, partnerEmails.ts; same "public email can't be
+  converted" rule), suspend/reactivate (revocable en un clic), resend/reset. audit_log
+  entity_type 'partner_account'.
+- proxy.ts: 5 new subdomain→route mappings; external DNS/Vercel steps in
+  docs/PARTNER_DOMAINS_SETUP.md (user does the clicks).
+- Doc impact when wrapped: 5 partner nodes become real surfaces (consider a "Socios" zone
+  or extending n-consoles); new DICT "socios-tier" or extend "identidades" (BUILT now, not
+  plan); new SCENARIO "Emisión de credencial de socio → login → módulo"; wires: n-bcp →
+  partner surfaces via credential issuance; Cherry Picked Green/Roast/X still deferred.
+- Verified end-to-end: tsc+eslint clean; all 5 landings 200, bad slug 404, panel unauth
+  redirect, bad login 401; QA partner (estudio) — wrong-node 401, right-node 200,
+  invited→active+timestamps confirmed via SQL, authenticated panel rendered in browser;
+  QA account deleted (cascade).
+(commit: pending)

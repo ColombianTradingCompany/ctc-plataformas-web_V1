@@ -6,4 +6,14 @@ Covers: everything since Documentacion_Interactiva_V8.0(6c8b062).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V7.txt is
 closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-15] Fix: OTP precedence — user's inbox wins over BCP_OTP_RECIPIENT_EMAIL
+- Production bug reported by the owner: a collaborator's login OTP arrived at
+  ctcexportmain@gmail.com instead of their own inbox. Cause: sendOtpEmail computed
+  `to = BCP_OTP_RECIPIENT_EMAIL || recipient || founder` and that env var is still set
+  (Vercel AND .env.local) from the original fixed-address era, so it silently outranked
+  every user's delivery_email. Fixed by flipping precedence:
+  `to = recipient || BCP_OTP_RECIPIENT_EMAIL || founder` — the env var is now strictly
+  a fallback for recipient-less calls, never an override (src/lib/bcp/sendOtpEmail.ts).
+- Doc impact when wrapped: one sentence in the "masterlogin" DICT entry (the env var is
+  fallback-only) — no node/wire/scenario changes.
+(commit: pending)

@@ -1,15 +1,16 @@
 import { Resend } from "resend";
 
 /**
- * Emails the master-login confirmation code. The recipient is the account that
- * is logging in (`recipient`), so each internal collaborator gets their own OTP.
- * `BCP_OTP_RECIPIENT_EMAIL`, if set, overrides everything as an emergency
- * catch-all; the fixed founder address is the last-resort fallback. Falls back
- * to a server-console log when RESEND_API_KEY isn't configured yet, so the flow
- * stays testable before that key is supplied.
+ * Emails the master-login confirmation code to the inbox of the user logging in
+ * (their delivery_email, or their own login email). `BCP_OTP_RECIPIENT_EMAIL` is
+ * strictly a FALLBACK for calls with no recipient — it must never take precedence:
+ * that env var is still set in Vercel from the original fixed-address setup, and
+ * when it outranked `recipient` it sent a collaborator's OTP to the founder's
+ * inbox in production (2026-07-15). Falls back to a server-console log when
+ * RESEND_API_KEY isn't configured, so the flow stays testable locally.
  */
 export async function sendOtpEmail(code: string, recipient?: string | null) {
-  const to = process.env.BCP_OTP_RECIPIENT_EMAIL || recipient || "ctcexportmain@gmail.com";
+  const to = recipient || process.env.BCP_OTP_RECIPIENT_EMAIL || "ctcexportmain@gmail.com";
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {

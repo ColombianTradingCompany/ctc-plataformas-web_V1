@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
+import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
 
@@ -31,16 +32,9 @@ function collectKeyedAttachments(
 }
 
 async function requireAdmin() {
-  const session = await createSessionClient();
-  const {
-    data: { user },
-  } = await session.auth.getUser();
-  if (!user) throw new Error("No autenticado.");
-
-  const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "bcp_admin") throw new Error("No autorizado.");
-
-  return user.id;
+  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
+  // so suspending a collaborator revokes Server Actions instantly.
+  return requireActiveAdmin();
 }
 
 export async function approveFinca(fincaId: string) {

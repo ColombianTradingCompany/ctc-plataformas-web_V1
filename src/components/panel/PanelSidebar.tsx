@@ -1,0 +1,85 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
+import styles from "./panel.module.css";
+
+/**
+ * Shared rail for the three internal consoles. The switcher at the top lets an
+ * operator hop between the consoles they can access (one session, parallel
+ * surfaces); below it is the active console's own navigation.
+ */
+export function PanelSidebar({
+  activeConsole,
+  identityName,
+  accessibleConsoles,
+  isOwner,
+}: {
+  activeConsole: PanelConsoleKey;
+  identityName: string;
+  accessibleConsoles: PanelConsoleKey[];
+  isOwner: boolean;
+}) {
+  const pathname = usePathname();
+  const active = CONSOLES[activeConsole];
+  const switchable = CONSOLE_ORDER.filter((k) => accessibleConsoles.includes(k));
+  const navGroups = active.nav.filter((g) => !g.ownerOnly || isOwner);
+
+  return (
+    <nav className={styles.sidebar}>
+      <div className={styles.brand}>
+        <span className={styles.brandName}>CTC Web Platform</span>
+        <span className={styles.brandSub}>Consolas internas · una sesión</span>
+        {identityName && <span className={styles.identity}>{identityName}</span>}
+      </div>
+
+      {switchable.length > 1 && (
+        <div className={styles.switcher} role="group" aria-label="Cambiar de consola">
+          {switchable.map((key) => {
+            const c = CONSOLES[key];
+            const isActive = key === activeConsole;
+            return (
+              <Link
+                key={key}
+                href={c.home}
+                className={`${styles.switch} ${isActive ? styles.switchActive : ""}`}
+                style={isActive ? { background: c.accent } : undefined}
+                aria-current={isActive ? "page" : undefined}
+                title={c.name}
+              >
+                {c.code}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+      <span className={styles.switchTag}>{active.name}</span>
+
+      {navGroups.map((group) => (
+        <div key={group.label}>
+          <p className={styles.groupLabel}>{group.label}</p>
+          <ul className={styles.links}>
+            {group.links.map((link) => {
+              const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);
+              return (
+                <li key={link.href}>
+                  <Link href={link.href} className={isActive ? styles.active : undefined}>
+                    {link.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+
+      <div style={{ flex: 1 }} />
+      <form action="/api/panel/auth/logout" method="post" className={styles.logout}>
+        <button className="btn btn-sm" type="submit">
+          Cerrar sesión
+        </button>
+      </form>
+    </nav>
+  );
+}

@@ -6,4 +6,100 @@ Covers: everything since Documentacion_Interactiva_V7.0(c602feb).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V6.txt is
 closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-15] Master login + parallel internal consoles (BCP / ECP / OCP)
+- Reworked the internal panel to match the v3 vision board
+  (reference_html-vision-board/ctc-arquitectura-v3.html). Was: one BCP sidebar with
+  ECP/OCP as nested "module group" placeholder pages under /bcp/(app)/. Now: ONE
+  platform master login (/login + /verify, api/panel/auth/{password,verify,logout},
+  password+OTP) opening THREE parallel consoles that share one session — BCP (/bcp),
+  ECP (/ecp), OCP (/ocp) — each its own route tree with a shared shell
+  (src/components/panel/PanelShell+PanelSidebar, config in src/lib/panel/consoles.ts),
+  a cross-console switcher, and a neutral hub at /panel. Old /bcp/login,/bcp/verify,
+  /api/bcp/auth/* redirect/moved; requireAdminProfile → requireConsoleAccess(key).
+- Naming correction (v3 authoritative): ECP = Executive (direction: pricing, primas,
+  finances, reservations, network health); OCP = Operational (mirror of the 5 partner
+  interfaces: dispatch/tracking/exceptions/relevos). The earlier scaffold had these two
+  roughly swapped.
+- Doc impact when wrapped:
+  * New DICT concepts: "master-login" (one door, 2FA, routes by account tier),
+    "consolas-paralelas" (BCP/ECP/OCP one session), "capas-de-identidad" (public
+    self-signup vs internal bcp_admin vs partner tier), "matriz-de-permisos" (partner
+    scoping backbone, 9 roles × 15 passport fields). Cross-link to existing BCP node.
+  * New/updated NODES or node text: BCP is now "Base Control Panel" within a 3-console
+    platform; ECP and OCP become first-class internal nodes (they were partner-mirror
+    concepts only). Consider a small "CTC Web Platform" grouping of the 3 consoles.
+  * New SCENARIOS candidate: "Login maestro → elegir consola" (login → OTP → /panel hub
+    → BCP/ECP/OCP), and later "Alta de credencial de partner" once that tier is built.
+  * Identity two-tier model (internal panel_users + separate partner tier) is documented
+    in docs/BCP_USER_ADMIN_PLAN.md (rewritten this session) — plan, not built.
+- Built + verified: tsc + eslint clean; /login renders, guarded consoles redirect to
+  /login unauthenticated, old URLs forward, zero console errors. panel_users + partner
+  tier remain PLAN.
+(commit: pending)
+
+## [2026-07-15] Console hub aesthetic pass + per-console glyphs
+- /panel hub cards were cramped (code/name/tagline missing display:block ran together).
+  Fixed layout rhythm + added a minimalist line glyph per console (src/components/panel/
+  ConsoleGlyph.tsx): BCP=key, ECP=trending-up, OCP=cycle; tinted icon tile, accent
+  top-stripe, tidier footer. Cosmetic only — no scenario/node/DICT impact.
+(commit: pending)
+
+## [2026-07-15] Fase 1 — panel_users internal-collaborator tier
+- New table public.panel_users (service-role-only, RLS on, zero policies) via migration
+  panel_users_internal_collaborators: profile_id PK→profiles, is_owner, consoles jsonb
+  ({bcp|ecp|ocp: admin|viewer}), status invited/active/suspended, must_change_password,
+  invite email tracking. Seeded the one existing founder (ctcexportmain@gmail.com) as an
+  active owner with all three consoles.
+- Guard: src/lib/panel/requireConsoleAccess now reads the grant (src/lib/panel/panelUsers.ts,
+  service role) — status!=active ⇒ bounced to /login on next nav; console not granted ⇒ /panel;
+  returns isOwner (owner-only nav group "Administración" hidden otherwise). A bcp_admin with
+  no row is grandfathered (all consoles, owner) to avoid lockout.
+- Master login: OTP now goes to the entering user's own email (sendOtpEmail gained a
+  recipient arg; BCP_OTP_RECIPIENT_EMAIL stays as emergency override); password step rejects
+  suspended collaborators; verify step stamps last_login_at and flips invited→active on first
+  login.
+- /bcp/usuarios (owner-only): invite (creates pre-confirmed auth user + panel_users row +
+  Resend invite email w/ temp password), suspend / reactivate (can't self-suspend or drop the
+  last active owner), resend invite (regenerates temp password, invited-only). Server Actions
+  in usuariosActions.ts, owner-gated + audit_log rows (entity_type 'panel_user').
+- Doc impact when wrapped: strengthen the "master-login"/"capas-de-identidad" DICT entries with
+  the internal-collaborator lifecycle (invite→active→suspended, per-console grants). New
+  SCENARIO candidate: "Owner invita colaborador → login por-usuario → activa en primer ingreso".
+- Deferred within Fase 1 (documented in docs/BCP_USER_ADMIN_PLAN.md): forced password-change UX
+  on first login; hardening the ~9 per-file requireAdmin() to also consult panel_users.status
+  (write-side revocation — today revocation is enforced on the read/nav path).
+- Verified: migration + seed confirmed via SQL; tsc + eslint clean; /bcp/usuarios redirects to
+  /login unauthenticated, zero server errors. Interactive invite/login flow NOT browser-verified
+  (real 2FA, no admin password available to the assistant) — pending an owner walkthrough or a
+  disposable-collaborator QA run.
+(commit: pending)
+
+## [2026-07-15] Delivery-email onboarding + forced password change + write-path hardening + inbound Buzón
+- panel_users.delivery_email (migration panel_users_delivery_email): the login email can now be
+  a mailbox-less @ctcexport.com label; invites, per-login OTPs and password resets all deliver
+  to the collaborator's real inbox (delivery_email || login email). Invite form gained the field
+  (+ inline per-row edit); new owner actions resetPanelUserPassword (temp pw + must_change_password,
+  audit 'password_reset') and updateDeliveryEmail (audit 'delivery_email_changed'). Emails in
+  src/lib/email/panelEmails.ts (invite + reset builders explain the login-vs-delivery split).
+- Forced password change: /cambiar-contrasena (own light auth to avoid guard loop) + changeOwnPassword
+  server action (≥10 chars, not containing the username, audit 'password_changed'); the console guard
+  redirects there while must_change_password is set; invite/resend/reset all set the flag.
+- Write-path hardening: all 9 BCP action files' local requireAdmin() now delegate to
+  src/lib/panel/requireActiveAdmin.ts (role + panel_users.status) — suspension revokes Server
+  Actions instantly, closing the open-tab gap noted in the previous entry.
+- Inbound email capture: migration inbound_emails (service-role-only; extracted fields + full raw
+  jsonb; attachments metadata-only) + POST /api/inbound-email (Svix signature verification via
+  RESEND_INBOUND_WEBHOOK_SECRET; 503 unsigned in prod, dev-only unsigned accept) + BCP · Buzón
+  (/bcp/buzon, renders text_body only, mark read/unread). External delivery path (Hostinger
+  forwarder → inbox. subdomain MX → Resend Inbound) is the owner's setup, documented in
+  docs/INBOUND_EMAIL_SETUP.md — root MX untouched by design.
+- Doc impact when wrapped: extend "master-login" DICT (delivery inbox split, forced change);
+  new DICT candidates "correo-de-entrega" and "buzon-de-entrada" (inbound pipeline diagram:
+  forwarder → subdomain MX → webhook → tabla → BCP); new node candidate for the inbound webhook
+  in the Business-logic zone wired to Resend + Supabase; SCENARIO candidate "Correo entrante →
+  Buzón BCP".
+- Verified: full tsc + eslint clean; unauth redirects for /cambiar-contrasena, /bcp/buzon,
+  /bcp/usuarios, /ecp, /ocp; webhook dev-mode POST stored a QA row with every field correctly
+  extracted (from-object, to-array, subject, text, attachment metadata) then deleted; bad JSON
+  → 400; zero server errors. Owner-side email flows still pending a live walkthrough (real 2FA).
+(commit: pending)

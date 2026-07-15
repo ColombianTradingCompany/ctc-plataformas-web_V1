@@ -4,6 +4,17 @@ import { createEphemeralClient, createServiceRoleClient } from "@/lib/supabase/s
 import { generateOtpCode, hashOtpCode } from "@/lib/bcp/otp";
 import { sendOtpEmail } from "@/lib/bcp/sendOtpEmail";
 
+// ── Master login · step 1 (password) ────────────────────────────────────────
+// The single door to the internal CTC Web Platform (BCP / ECP / OCP). Verifies
+// the password against a throwaway client, confirms the account is an internal
+// operator, then emails a 6-digit OTP and parks the session in a short-lived
+// httpOnly cookie until step 2 (verify) promotes it to a real session.
+//
+// Today the only internal tier is `bcp_admin` (the founders). When the
+// `panel_users` collaborator tier lands (docs/BCP_USER_ADMIN_PLAN.md) this is
+// where the per-user check (active status + OTP to the user's own address)
+// slots in; partner accounts are a separate tier and never authenticate here.
+
 const GENERIC_ERROR = "Credenciales inválidas.";
 const OTP_TTL_MS = 10 * 60 * 1000;
 const MAX_CODES_PER_WINDOW = 3;
@@ -33,6 +44,18 @@ export async function POST(request: NextRequest) {
   }
 
   const service = createServiceRoleClient();
+
+  // panel_users lifecycle gate: a suspended collaborator keeps the role but can't
+  // log in. A missing row = a bcp_admin predating panel_users (grandfathered).
+  const { data: panelUser } = await service
+    .from("panel_users")
+    .select("status, delivery_email")
+    .eq("profile_id", signInData.user.id)
+    .maybeSingle();
+  if (panelUser && panelUser.status === "suspended") {
+    return NextResponse.json({ error: GENERIC_ERROR }, { status: 401 });
+  }
+
   const windowStart = new Date(Date.now() - WINDOW_MS).toISOString();
   const { count } = await service
     .from("admin_otp_codes")
@@ -65,11 +88,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No se pudo iniciar el proceso. Intenta de nuevo." }, { status: 500 });
   }
 
-  await sendOtpEmail(code);
+  // Per-user OTP: the code goes to the user's delivery inbox when set (the login
+  // email may be a mailbox-less @ctcexport.com label), else to the login email.
+  await sendOtpEmail(code, panelUser?.delivery_email || signInData.user.email);
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(
-    "bcp_pending",
+    "panel_pending",
     JSON.stringify({
       pendingLoginToken: otpRow.pending_login_token,
       access_token: signInData.session.access_token,

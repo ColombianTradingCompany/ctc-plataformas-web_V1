@@ -1,11 +1,11 @@
 import { PanelShell } from "@/components/panel/PanelShell";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 
-export default async function BcpAppLayout({ children }: { children: React.ReactNode }) {
-  const identity = await requireConsoleAccess("bcp");
+export default async function EcpAppLayout({ children }: { children: React.ReactNode }) {
+  const identity = await requireConsoleAccess("ecp");
   return (
     <PanelShell
-      console="bcp"
+      console="ecp"
       identityName={identity.displayName}
       accessibleConsoles={identity.consoles}
       isOwner={identity.isOwner}

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import {
   activeCups,
   cupLabel,
@@ -18,16 +19,9 @@ import {
 } from "@/lib/arena/jornada";
 
 async function requireAdmin() {
-  const session = await createSessionClient();
-  const {
-    data: { user },
-  } = await session.auth.getUser();
-  if (!user) throw new Error("No autenticado.");
-
-  const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "bcp_admin") throw new Error("No autorizado.");
-
-  return user.id;
+  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
+  // so suspending a collaborator revokes Server Actions instantly.
+  return requireActiveAdmin();
 }
 
 export async function createHarvestSeason(formData: FormData) {

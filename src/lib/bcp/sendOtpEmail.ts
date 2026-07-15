@@ -1,12 +1,15 @@
 import { Resend } from "resend";
 
 /**
- * Emails the BCP login confirmation code to the fixed admin inbox. Falls
- * back to a server-console log when RESEND_API_KEY isn't configured yet,
- * so the flow stays testable before that key is supplied.
+ * Emails the master-login confirmation code. The recipient is the account that
+ * is logging in (`recipient`), so each internal collaborator gets their own OTP.
+ * `BCP_OTP_RECIPIENT_EMAIL`, if set, overrides everything as an emergency
+ * catch-all; the fixed founder address is the last-resort fallback. Falls back
+ * to a server-console log when RESEND_API_KEY isn't configured yet, so the flow
+ * stays testable before that key is supplied.
  */
-export async function sendOtpEmail(code: string) {
-  const to = process.env.BCP_OTP_RECIPIENT_EMAIL || "ctcexportmain@gmail.com";
+export async function sendOtpEmail(code: string, recipient?: string | null) {
+  const to = process.env.BCP_OTP_RECIPIENT_EMAIL || recipient || "ctcexportmain@gmail.com";
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {

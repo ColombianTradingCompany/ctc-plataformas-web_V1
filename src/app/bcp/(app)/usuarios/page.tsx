@@ -1,13 +1,19 @@
-import { ComingSoon } from "../ComingSoon";
+import { redirect } from "next/navigation";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
+import type { PanelUserRow } from "@/lib/panel/panelUsers";
+import { UsuariosClient } from "./UsuariosClient";
 
-// Administración · Usuarios — scaffolding de la gestión de colaboradores del
-// panel (emitir invitaciones por email, roles por módulo BCP/ECP/OCP,
-// revocación). El diseño completo vive en docs/BCP_USER_ADMIN_PLAN.md.
-export default function BcpUsuariosPage() {
-  return (
-    <ComingSoon
-      title="Usuarios del panel"
-      description="Gestión de colaboradores: invitaciones por email, roles por módulo (BCP / ECP / OCP) y revocación de acceso. Diseño en docs/BCP_USER_ADMIN_PLAN.md."
-    />
-  );
+// Collaborator management (owner-only). Identity is BCP's job in the v3 model,
+// so this lives under BCP. panel_users is service-role-only, so the list is read
+// with the service client here on the server.
+export default async function BcpUsuariosPage() {
+  const identity = await requireConsoleAccess("bcp");
+  if (!identity.isOwner) redirect("/bcp");
+
+  const service = createServiceRoleClient();
+  const { data } = await service.from("panel_users").select("*").order("created_at", { ascending: true });
+  const users = (data as PanelUserRow[]) ?? [];
+
+  return <UsuariosClient users={users} currentUserId={identity.userId} />;
 }

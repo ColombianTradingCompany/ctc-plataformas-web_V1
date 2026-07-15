@@ -2,20 +2,14 @@
 
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendPassportEmail } from "@/lib/email/clubEmails";
+import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 async function requireAdmin() {
-  const session = await createSessionClient();
-  const {
-    data: { user },
-  } = await session.auth.getUser();
-  if (!user) throw new Error("No autenticado.");
-
-  const { data: profile } = await session.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "bcp_admin") throw new Error("No autorizado.");
-
-  return user.id;
+  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
+  // so suspending a collaborator revokes Server Actions instantly.
+  return requireActiveAdmin();
 }
 
 // No I/O/0/1 so a passport number survives being read over the phone or

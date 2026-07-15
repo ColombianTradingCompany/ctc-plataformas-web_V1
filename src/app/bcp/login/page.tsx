@@ -1,54 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import styles from "../auth.module.css";
-
-export default function BcpLoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    const res = await fetch("/api/bcp/auth/password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error ?? "Error desconocido.");
-      return;
-    }
-    router.push("/bcp/verify");
-  }
-
-  return (
-    <div className={styles.wrap}>
-      <div className={styles.card}>
-        <h1>CTC Business Control Panel</h1>
-        <p>Acceso restringido al equipo de CTC.</p>
-        <form onSubmit={submit}>
-          {error && <span className={styles.err}>{error}</span>}
-          <div className={styles.field}>
-            <label htmlFor="email">Correo electrónico</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="password">Contraseña</label>
-            <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
-          </div>
-          <button className="btn btn-solid" style={{ width: "100%", padding: 12 }} type="submit" disabled={loading}>
-            {loading ? "Verificando…" : "Continuar"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+// The login moved to the platform-level master door. Keep the old URL alive.
+export default function BcpLoginRedirect() {
+  redirect("/login");
 }

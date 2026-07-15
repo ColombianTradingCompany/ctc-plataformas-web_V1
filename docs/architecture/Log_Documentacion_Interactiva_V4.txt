@@ -170,3 +170,23 @@ is closed and left as historical record of what went into producing it).
 - Verificado en vivo con productor QA end-to-end (FT -> FT2 -> EUDR -> video
   -> envio final con desmarcado de cert sin soporte -> modulo de muestras).
 (commit: pending)
+
+## [2026-07-15] Loop de iconos v2 (compartido) + scaffolding de modulos BCP/ECP/OCP
+- El loop de iconos CTC se reemplazo por la nueva fuente con ALFA REAL
+  (reference_gifs/CTC_Loading_Icons.gif, 63 frames @810ms): ahora vive en
+  public/images/shared/ctc-loading-icons.webp (310 KB) y ademas del hero de
+  CTC Home cierra los footers de Kaffetal Regal y Cherry Picked (96px,
+  .iconLoop) como sello de la familia.
+- BCP se piensa ahora como MODULOS internos: sidebar agrupada en "BCP ·
+  Negocio" (todo lo existente), "ECP · Ejecucion" (/bcp/ecp), "OCP ·
+  Operacion" (/bcp/ocp) y "Administracion · Usuarios" (/bcp/usuarios) --
+  los tres nuevos son ComingSoon (solo scaffolding; detalle despues). Marca
+  de la sidebar ahora "CTC Control Panels".
+- NUEVO docs/BCP_USER_ADMIN_PLAN.md: plan (no implementado) del sistema de
+  usuarios colaboradores -- tabla panel_users service-role-only, OTP al email
+  del usuario que entra (hoy va a una direccion fija por env), grants por
+  modulo (bcp/ecp/ocp), invitacion por email via Resend con retry, revocacion
+  instantanea via el re-check por accion, owners (fundadores) como unicos
+  gestores. Cuando se implemente sera cambio de mapa (nodo auth BCP +
+  posiblemente nueva tabla en Data).
+(commit: pending)

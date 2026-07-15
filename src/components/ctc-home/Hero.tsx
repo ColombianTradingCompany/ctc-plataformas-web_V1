@@ -53,7 +53,7 @@ export function Hero() {
             here (that one now closes the page in the Footer's sign-off). */}
         <div className={styles.heroAside} aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
-          <img className={styles.heroAnim} src="/images/ctc-home/ctc-loading-icons.webp" alt="" />
+          <img className={styles.heroAnim} src="/images/shared/ctc-loading-icons.webp" alt="" />
         </div>
       </div>
     </section>

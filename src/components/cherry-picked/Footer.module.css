@@ -2,3 +2,5 @@
 .foot{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
 .fb{display:flex;align-items:center;gap:10px}
 .fb img{width:30px;height:auto}
+/* Loop de iconos CTC compartido (webp animado con alfa) como sello de cierre. */
+.iconLoop{width:96px;height:96px;flex:0 0 auto;filter:drop-shadow(0 4px 10px rgba(17,22,17,.18))}

@@ -28,6 +28,10 @@ export function Footer() {
           </span>
         </div>
         <div className="mono">Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · info@ctcexport.com</div>
+        {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
+            hero de ctcexport.com, como sello de cierre de la familia. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
+        <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden />
       </div>
     </footer>
   );

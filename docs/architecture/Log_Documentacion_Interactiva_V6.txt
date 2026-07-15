@@ -1,5 +1,5 @@
 Log_Documentacion_Interactiva_V6
-Status: CLOSED -- wrapped into Documentacion_Interactiva_V7.0(<sha>).html.
+Status: CLOSED -- wrapped into Documentacion_Interactiva_V7.0(c602feb).html.
 Historical record of what went into producing V7.0. Covers everything since
 Documentacion_Interactiva_V6.0(7801030).html.
 
@@ -28,4 +28,4 @@ Documentacion_Interactiva_V6.0(7801030).html.
   (todas existen en el arbol), 0 info keys invalidos, toggle + expand de
   carpeta pesada (44 archivos) + chip->drawer OK, sin errores de consola. El
   mapa del sistema (nodos/wires/scenarios/DICT) sin cambios desde V6.0.
-(commit: pending)
+(commit: c602feb)

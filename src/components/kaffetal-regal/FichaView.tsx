@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { fincaEudrStatus, lotEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
-import { ctcLotReference, type Finca, type Lot } from "./data";
-import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, type FichaFormData } from "./ficha/fichaData";
+import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
+import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, pendingCertProofs, stripUnprovenCerts, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
@@ -75,6 +75,43 @@ export type FichaSaveUpdate = {
   };
 };
 
+// Aviso centrado (compuerta bloqueada): aparece al centro con fade y se va
+// solo. El timer vive aquí para que el overlay se auto-desmonte.
+function CenterNotice({ text, onDone }: { text: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className={styles.noticeOverlay}>
+      <div className={styles.notice} role="alert" onClick={onDone}>
+        <b>Aún falta algo:</b>
+        <br />
+        {text}
+      </div>
+    </div>
+  );
+}
+
+type Celebration = { emoji: string; title: string; body: string };
+
+// Mini-celebración al completar una etapa: anima a seguir y adelanta qué viene.
+function StageCelebration({ c, onDone }: { c: Celebration; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 4500);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className={styles.noticeOverlay}>
+      <div className={styles.celebration} role="status" onClick={onDone}>
+        <span className={styles.celebEmoji} aria-hidden>{c.emoji}</span>
+        <h4>{c.title}</h4>
+        <p>{c.body}</p>
+      </div>
+    </div>
+  );
+}
+
 export function FichaView({
   lot,
   fincas,
@@ -84,6 +121,7 @@ export function FichaView({
   onOpenNewFinca,
   onUploadFile,
   onUploadLotVideo,
+  onRequestHelp,
   onSubmitOfficializationClaim,
 }: {
   lot: Lot;
@@ -96,6 +134,7 @@ export function FichaView({
   onOpenNewFinca: () => void;
   onUploadFile: (subpath: string, file: File) => Promise<{ assetId: string } | { error: string }>;
   onUploadLotVideo: (file: File) => void;
+  onRequestHelp: (text: string) => Promise<boolean>;
   onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null) => void;
 }) {
   const { showToast } = useToast();
@@ -150,6 +189,13 @@ export function FichaView({
   const [declared, setDeclared] = useState(false);
   const [showDeclare, setShowDeclare] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
+  // Aviso de compuerta (centrado, con fade) y celebración de etapa completada.
+  const [notice, setNotice] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState<Celebration | null>(null);
+  // FAB "Ayuda" → nota al feed "Retroalimentación y ayuda" (producer_comm_log).
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpText, setHelpText] = useState("");
+  const [helpSending, setHelpSending] = useState(false);
 
   function onChange(patch: Partial<FichaFormData>) {
     setData((d) => ({ ...d, ...patch }));
@@ -212,7 +258,11 @@ export function FichaView({
     (!!completed.a4 || data.ft2_a4_na) &&
     (!!completed.b2 || data.ft2_b2_na) &&
     (!!completed.b3 || data.ft2_b3_na);
-  const eudrReady = !!completed.a5 && allFincasApta;
+  // La aptitud EUDR de las fincas ya NO bloquea en duro: si es lo único que
+  // falta, se puede continuar al video con la bandera roja del lote pendiente
+  // (ver el confirm en submitCurrentStage) -- la finca completa lo suyo en
+  // paralelo sin frenar la Ficha.
+  const eudrReady = !!completed.a5;
   const videoReady = !!completed.b4;
   const STAGE_READY = [ftReady, ft2Ready, eudrReady, videoReady];
   const currentStepReady = effectiveIntakeStep < 4 ? STAGE_READY[effectiveIntakeStep] : true;
@@ -290,7 +340,7 @@ export function FichaView({
     const step = effectiveIntakeStep;
     if (step === 0) {
       if (!ftReady) {
-        showToast("Complete Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
+        setNotice("Complete Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
         return;
       }
       // If the producer marked physical measurements as "No lo sé aún",
@@ -308,43 +358,72 @@ export function FichaView({
       const ok = await onSave(buildUpdate(withRevisionDate(), 1));
       setSaving(false);
       if (!ok) return;
-      showToast("FT enviado a CTC ✓ · continúe con FT2");
+      setCelebrate({
+        emoji: "🎉",
+        title: "¡FT enviada a CTC!",
+        body: "Primera etapa completa. Ahora viene FT2: certificados, perfil de taza y análisis físico — cuéntenos qué hace especial a este café.",
+      });
       setActive("a3");
       return;
     }
     if (step === 1) {
       if (!ft2Ready) {
-        showToast('Complete A3, A4, B2 y B3 -- o marque "No lo sé / no aplica" en cada uno.');
+        setNotice('Complete A3, A4, B2 y B3 — o marque "No lo sé / no aplica" en cada uno.');
         return;
+      }
+      // Compuerta SUAVE de soportes: certificados marcados sin archivo no
+      // bloquean, pero el productor debe saber que sin prueba se desmarcarán
+      // al enviar la Ficha (afirmar una certificación exige confirmarla).
+      const pending = pendingCertProofs(data);
+      if (pending.length > 0) {
+        const msg =
+          "Estos certificados quedaron marcados SIN archivo de soporte:\n\n" +
+          pending.map((p) => `• ${p.label}`).join("\n") +
+          "\n\nPuede continuar y adjuntar los soportes hasta el envío final de la Ficha. Los que sigan sin prueba en ese momento se desmarcarán y el lote seguirá sin ellos.\n\n¿Continuar con FT2?";
+        if (!window.confirm(msg)) return;
       }
       setSaving(true);
       const ok = await onSave(buildUpdate(withRevisionDate(), 2));
       setSaving(false);
       if (!ok) return;
-      showToast("FT2 enviado a CTC ✓ · continúe con EUDR");
+      setCelebrate({
+        emoji: "🏅",
+        title: "¡FT2 enviada a CTC!",
+        body: "Su café ya tiene perfil y análisis. Sigue el EUDR: la debida diligencia que le abre la puerta del mercado europeo.",
+      });
       setActive("a5");
       return;
     }
     if (step === 2) {
       if (!completed.a5) {
-        showToast("En EUDR: indique el país, marque la cadena de custodia y su método, y responda las dos preguntas de sí/no.");
+        setNotice("En EUDR: indique el país, marque la cadena de custodia y su método, y responda las dos preguntas de sí/no.");
         return;
       }
+      // Si lo ÚNICO que falta es la aptitud de la(s) finca(s), se puede seguir
+      // al video -- el lote queda con su bandera roja EUDR pendiente hasta que
+      // la finca complete su propia debida diligencia.
       if (!allFincasApta) {
-        showToast('La(s) finca(s) de origen de este lote deben completar su propia debida diligencia (estado "Apta") antes de continuar.');
-        return;
+        const msg =
+          'La(s) finca(s) de origen aún no completan su propia debida diligencia (estado distinto de "Apta").\n\nPuede continuar con el video, pero el lote quedará marcado en rojo y PENDIENTE de EUDR hasta que su(s) finca(s) queden Aptas.\n\n¿Continuar de todas formas?';
+        if (!window.confirm(msg)) return;
       }
       setSaving(true);
       const ok = await onSave(buildUpdate(withRevisionDate(), 3));
       setSaving(false);
       if (!ok) return;
-      showToast("EUDR enviado a CTC ✓ · continúe con el video");
+      setCelebrate({
+        emoji: "🌍",
+        title: allFincasApta ? "¡EUDR enviado a CTC!" : "EUDR enviado — pendiente de la finca",
+        body: allFincasApta
+          ? "Trazabilidad lista para Europa. Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan."
+          : "Quedó registrado con la aptitud de la finca pendiente (bandera roja). Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan.",
+      });
       setActive("b4");
       return;
     }
     if (step === 3) {
       if (!videoReady) {
-        showToast("Suba el video del café antes de continuar.");
+        setNotice("Suba al menos el video principal del café antes de continuar.");
         return;
       }
       if (!showDeclare) {
@@ -352,11 +431,24 @@ export function FichaView({
         return;
       }
       if (!declared) {
-        showToast("Marque la declaración de veracidad antes de continuar.");
+        setNotice("Marque la declaración de veracidad antes de continuar.");
         return;
       }
+      // ÚLTIMO recordatorio de soportes: lo que siga sin prueba se desmarca y
+      // la Ficha se envía sin esos certificados.
+      let source = withRevisionDate();
+      const pending = pendingCertProofs(source);
+      if (pending.length > 0) {
+        const msg =
+          "ÚLTIMO RECORDATORIO — certificados marcados sin soporte:\n\n" +
+          pending.map((p) => `• ${p.label}`).join("\n") +
+          "\n\nSi envía ahora, estas selecciones se DESMARCARÁN y la Ficha seguirá sin ellas. Cancele si prefiere adjuntar los soportes primero (A3/A4).\n\n¿Enviar la Ficha sin esos certificados?";
+        if (!window.confirm(msg)) return;
+        source = stripUnprovenCerts(source);
+        setData(source);
+      }
       setSaving(true);
-      const ok = await onSave(buildUpdate(withRevisionDate(), 4));
+      const ok = await onSave(buildUpdate(source, 4));
       setSaving(false);
       if (!ok) return;
       setShowShipmentModal(true);
@@ -372,7 +464,33 @@ export function FichaView({
     onChange({ cert_attachments: { ...data.cert_attachments, [certKey]: { assetId: result.assetId, fileName: file.name } } });
   }
 
-  const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo };
+  // Videos 2 y 3 de B4: van al mismo bucket (misma convención de ruta) pero se
+  // registran en el datasheet, no en lots.video_asset_id (que sigue siendo el
+  // video principal).
+  async function uploadExtraVideo(slot: number, file: File) {
+    const result = await onUploadFile(`lots/${lot.id}/video-extra-${slot + 1}`, file);
+    if ("error" in result) {
+      showToast(result.error);
+      return;
+    }
+    const next = [...(data.extra_video_assets ?? [])];
+    next[slot] = { assetId: result.assetId, fileName: file.name };
+    onChange({ extra_video_assets: next });
+    showToast(`Video ${slot + 2} subido ✓ · recuerde Guardar`);
+  }
+
+  async function sendHelp() {
+    if (!helpText.trim() || helpSending) return;
+    setHelpSending(true);
+    const ok = await onRequestHelp(helpText);
+    setHelpSending(false);
+    if (ok) {
+      setHelpText("");
+      setHelpOpen(false);
+    }
+  }
+
+  const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo };
   const viewingLocked = PANE_SUBSTAGE[active] < effectiveIntakeStep;
   const STAGE_BUTTON_LABEL = [
     "Completar FT y continuar",
@@ -425,24 +543,27 @@ export function FichaView({
                 No lo sé / no aplica para este lote
               </label>
             )}
-            {/* The officialization banners live OUTSIDE the locking fieldset:
-                requesting an official score is precisely a post-lock action
-                (the self-report is frozen; now the producer wants it verified). */}
-            {active === "b2" && (
-              <OfficialScoreBanner
-                lot={lot}
-                selfEstimate={sca.total}
-                kind="sca"
-                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
-              />
-            )}
-            {active === "b3" && (
-              <OfficialScoreBanner
-                lot={lot}
-                selfEstimate={factor.remainder}
-                kind="factor"
-                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
-              />
+            {/* Soportes de certificados pendientes: visibles (y cargables)
+                incluso con la sección ya enviada -- la compuerta es suave y
+                los archivos pueden llegar hasta el envío final de la Ficha. */}
+            {viewingLocked && (active === "a3" || active === "a4") && effectiveIntakeStep < 4 && pendingCertProofs(data).length > 0 && (
+              <div style={{ background: "#FDF0D5", border: "1px solid #E3A32C", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px", color: "#8A5B00" }}>
+                  Soportes pendientes — puede adjuntarlos hasta el envío final de la Ficha (luego, lo no probado se desmarca):
+                </p>
+                {pendingCertProofs(data).map((p) => (
+                  <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, marginBottom: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontWeight: 600 }}>{p.label}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ fontSize: 11.5 }}
+                      onChange={(e) => e.target.files?.[0] && uploadCert(p.key, e.target.files[0])}
+                    />
+                  </div>
+                ))}
+                <p className={styles.fexample} style={{ margin: 0 }}>Tras adjuntar, use Guardar para que quede registrado.</p>
+              </div>
             )}
             {/* disabled fieldset = every input/button inside a submitted-and-
                 locked section is genuinely read-only, not just banner-decorated.
@@ -475,6 +596,27 @@ export function FichaView({
                 </>
               )}
             </fieldset>
+            {/* Los banners de oficialización viven DEBAJO del pane y FUERA del
+                fieldset que bloquea: pedir el puntaje oficial es justamente una
+                acción post-envío, y en B2 queda al pie del bloque Q-Grader
+                (referencia diligenciada → solicitar con el adjunto). */}
+            {active === "b2" && (
+              <OfficialScoreBanner
+                lot={lot}
+                selfEstimate={sca.total}
+                kind="sca"
+                defaultRef={[data.qgrader_name, data.qgrader_lab, data.qgrader_cert].filter(Boolean).join(" · ")}
+                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+              />
+            )}
+            {active === "b3" && (
+              <OfficialScoreBanner
+                lot={lot}
+                selfEstimate={factor.remainder}
+                kind="factor"
+                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+              />
+            )}
           </div>
         </div>
 
@@ -511,6 +653,40 @@ export function FichaView({
 
       </div>
 
+      {/* FABs flotantes (como en el panel de Finca): Guardar siempre a mano y
+          Ayuda directo al feed de retroalimentación, con el lote como contexto. */}
+      {effectiveIntakeStep < 4 && (
+        <button className={styles.fab} onClick={save} disabled={saving} aria-label="Guardar ficha">
+          <span className={styles.fabIcon} aria-hidden>💾</span>
+          <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Ficha"}</span>
+        </button>
+      )}
+      <button className={styles.fabHelp} style={effectiveIntakeStep >= 4 ? { bottom: 24 } : undefined} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
+        <span className={styles.fabIcon} aria-hidden>💬</span>
+        <span className={styles.fabLabel}>Ayuda</span>
+      </button>
+      {helpOpen && (
+        <div className={styles.helpBox}>
+          <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta ficha?</p>
+          <textarea
+            value={helpText}
+            onChange={(e) => setHelpText(e.target.value)}
+            rows={3}
+            placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
+            autoFocus
+          />
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
+              {helpSending ? "Enviando…" : "Enviar a CTC"}
+            </button>
+            <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {notice && <CenterNotice text={notice} onDone={() => setNotice(null)} />}
+      {celebrate && <StageCelebration c={celebrate} onDone={() => setCelebrate(null)} />}
+
       <ShipmentInstructionsModal
         open={showShipmentModal}
         onClose={() => {
@@ -518,6 +694,7 @@ export function FichaView({
           onBack();
         }}
         lotCode={ctcLotReference(lot.id)}
+        shortRef={ctcLotReferenceShort(lot.id)}
       />
     </div>
   );

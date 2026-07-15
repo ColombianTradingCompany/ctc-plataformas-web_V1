@@ -141,39 +141,43 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
         )}
       </div>
 
-      <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
-        <label>Cadena de custodia<FieldInfo text={INFO.custodia} /></label>
-        <p className={styles.fexample}>Confirme las etapas por las que pasa este lote.</p>
-        <div className={styles.chips} style={{ marginTop: 6 }}>
-          {CUSTODY_STAGES.map(([key, label]) => (
-            <label className={styles.chip} key={key}>
-              <input type="checkbox" checked={data.eudr_custody_stages.includes(key)} onChange={(e) => toggleStage(key, e.target.checked)} /> {label}
-            </label>
-          ))}
-        </div>
+      {/* Orden del expediente: 1) país (la primera pregunta), 2) método de
+          separación, 3) cadena de custodia (deriva la complejidad). */}
+      <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0", maxWidth: 420 }}>
+        <label>País / región de producción<FieldInfo text={INFO.riesgoPais} /></label>
+        <select value={data.eudr_country} onChange={(e) => onChange({ eudr_country: e.target.value })}>
+          <option value="">Seleccione…</option>
+          {EUDR_ORIGIN_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <p className={styles.fexample} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+          Clasificación EUDR: <RiskPill level={data.eudr_country ? countryRisk : ""} />
+        </p>
       </div>
 
       <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
-        <label>Método de separación física / documental<FieldInfo text={INFO.separacion} /></label>
-        <div className={styles.chips} style={{ marginTop: 6 }}>
-          <label className={styles.chip}>
+        <label>
+          Método de separación física / documental
+          <FieldInfo text={`${INFO.separacion} Con el CTC Parchment Storage Standard le ayudamos a tener un mejor estándar: la separación física y documental queda resuelta de una vez.`} />
+        </label>
+        <div className={styles.catGrid} style={{ gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
+          <label className={`${styles.catCard} ${data.eudr_custody_method === "ctc_standard" ? styles.catCardSel : ""}`}>
             <input
               type="radio"
               name="eudr_custody_method"
               checked={data.eudr_custody_method === "ctc_standard"}
               onChange={() => onChange({ eudr_custody_method: "ctc_standard" })}
-            />{" "}
-            CTC Parchment Storage Standard
+            />
+            <span>CTC Parchment Storage Standard</span>
             <FieldInfo text={INFO.ctcStandard} />
           </label>
-          <label className={styles.chip}>
+          <label className={`${styles.catCard} ${data.eudr_custody_method === "custom" ? styles.catCardSel : ""}`}>
             <input
               type="radio"
               name="eudr_custody_method"
               checked={data.eudr_custody_method === "custom"}
               onChange={() => onChange({ eudr_custody_method: "custom" })}
-            />{" "}
-            Método propio
+            />
+            <span>Método propio</span>
           </label>
         </div>
         {data.eudr_custody_method === "ctc_standard" && (
@@ -192,27 +196,25 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
         )}
       </div>
 
-      <div className={styles.fgrid} style={{ margin: "14px 0" }}>
-        <div className={styles.ff}>
-          <label>País / región de producción<FieldInfo text={INFO.riesgoPais} /></label>
-          <select value={data.eudr_country} onChange={(e) => onChange({ eudr_country: e.target.value })}>
-            <option value="">Seleccione…</option>
-            {EUDR_ORIGIN_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <p className={styles.fexample} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-            Clasificación EUDR: <RiskPill level={data.eudr_country ? countryRisk : ""} />
-          </p>
+      <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
+        <label>Cadena de custodia<FieldInfo text={INFO.custodia} /></label>
+        <p className={styles.fexample}>Confirme las etapas por las que pasa este lote.</p>
+        <div className={styles.catGrid} style={{ gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))" }}>
+          {CUSTODY_STAGES.map(([key, label]) => {
+            const sel = data.eudr_custody_stages.includes(key);
+            return (
+              <label className={`${styles.catCard} ${sel ? styles.catCardSel : ""}`} key={key}>
+                <input type="checkbox" checked={sel} onChange={(e) => toggleStage(key, e.target.checked)} />
+                <span>{label}</span>
+              </label>
+            );
+          })}
         </div>
-        <div className={styles.ff}>
-          <label>Complejidad de la cadena<FieldInfo text={INFO.complejidad} /></label>
-          <p style={{ margin: "4px 0 0", display: "flex", alignItems: "center", gap: 8 }}>
-            <RiskPill level={chainComplexity} />
-          </p>
-          <p className={styles.fexample} style={{ marginTop: 6 }}>
-            Se calcula sola a partir de las etapas marcadas en “Cadena de custodia”
-            ({data.eudr_custody_stages.length} marcada{data.eudr_custody_stages.length === 1 ? "" : "s"}).
-          </p>
-        </div>
+        <p className={styles.fexample} style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          Complejidad de la cadena (se calcula sola, {data.eudr_custody_stages.length} etapa{data.eudr_custody_stages.length === 1 ? "" : "s"}):
+          <RiskPill level={chainComplexity} />
+          <FieldInfo text={INFO.complejidad} />
+        </p>
       </div>
 
       <div className={`${styles.ff} ${styles.fw}`} style={{ margin: "14px 0" }}>
@@ -233,6 +235,17 @@ export function PaneA5Eudr({ data, onChange, fincas }: PaneProps) {
             </label>
           ))}
         </div>
+        {/* La confirmación positiva: no es factor de riesgo, es el reverso
+            tranquilizador -- "al menos esto está bien". */}
+        <label style={{ display: "inline-flex", gap: 8, fontSize: 13, alignItems: "flex-start", marginTop: 10, background: "#EEF3EA", border: "1px solid var(--primary)", borderRadius: 8, padding: "9px 12px", fontWeight: 600 }}>
+          <input
+            type="checkbox"
+            checked={data.eudr_traceability_confirmed}
+            onChange={(e) => onChange({ eudr_traceability_confirmed: e.target.checked })}
+            style={{ width: 16, flex: "none", marginTop: 2 }}
+          />
+          <span>✓ El lote se mantiene identificado con su finca y código de origen durante todo el proceso — la trazabilidad se conserva de punta a punta.</span>
+        </label>
         <p style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
           Riesgo del producto: <RiskPill level={productRisk} />
         </p>

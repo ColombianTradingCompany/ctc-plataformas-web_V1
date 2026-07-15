@@ -2,7 +2,7 @@ import { INTL_CERTS, MESH, ORIGIN_CERTS, SCA_ATTRS, num, type FichaFormData } fr
 
 type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
 type Mesh = { rows: { key: string; label: string; grams: number; pct: number | null }[]; sum: number; totalPct: number; bad: boolean };
-type Sca = { values: number[]; total: number; cls: "Especialidad" | "Comercial" | "Sin puntaje" };
+type Sca = { values: number[]; total: number; cls: import("./fichaCalculations").ScaClass };
 
 function esc(s: string | undefined | null) {
   return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
@@ -156,11 +156,11 @@ export function renderFichaHtml(data: FichaFormData, factor: Factor, mesh: Mesh,
     }
 
     ${
-      data.analysis_notes || data.qgrader_1 || data.qgrader_2 || data.qgrader_3
+      data.analysis_notes || data.qgrader_name || data.qgrader_lab || data.qgrader_cert || data.qgrader_1 || data.qgrader_2 || data.qgrader_3
         ? `<div class="ficha-section">
-      <h3>Notas & Referencias Q-Grader</h3>
+      <h3>Notas & Referencia Q-Grader</h3>
       ${data.analysis_notes ? `<p class="prose">${esc(data.analysis_notes)}</p>` : ""}
-      <div class="dl">${di("Q-Grader Ref 1", data.qgrader_1)}${di("Q-Grader Ref 2", data.qgrader_2)}${di("Q-Grader Ref 3", data.qgrader_3)}</div>
+      <div class="dl">${di("Q-Grader", data.qgrader_name)}${di("Laboratorio", data.qgrader_lab)}${di("N° de certificación", data.qgrader_cert)}${di("Q-Grader Ref 1", data.qgrader_1)}${di("Q-Grader Ref 2", data.qgrader_2)}${di("Q-Grader Ref 3", data.qgrader_3)}</div>
     </div>`
         : ""
     }

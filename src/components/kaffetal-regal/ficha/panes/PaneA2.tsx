@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { DEP_MUNI } from "../fichaData";
+import { DEP_MUNI, ORIGIN_CATEGORIES } from "../fichaData";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
-const CATEGORIES = ["Single Estate", "Single Origin", "Regional Blend", "Multi-Origin Blend"];
 const DEPARTMENTS = Object.keys(DEP_MUNI).sort();
 
 export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
   const [muniManual, setMuniManual] = useState(false);
+  const [catInfoOpen, setCatInfoOpen] = useState<string | null>(null);
   const selectedFinca = fincas.find((f) => f.name === data.estate) ?? null;
   const derived = !!selectedFinca;
   const municipalities = data.region_dep && DEP_MUNI[data.region_dep] ? DEP_MUNI[data.region_dep] : [];
@@ -48,18 +48,35 @@ export function PaneA2({ data, onChange, fincas, onOpenNewFinca }: PaneProps) {
   return (
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>A2</span> Información de Origen</h3>
-      <p className={styles.fexample} style={{ marginTop: 8 }}>
-        Single Estate = una sola finca. Single Origin = un municipio/vereda. Regional Blend = departamento.
-        Multi-Origin Blend = múltiples orígenes o países.
-      </p>
       <div className={`${styles.ff} ${styles.fw}`} style={{ marginTop: 14 }}>
         <label>Categoría de Origen</label>
-        <div className={styles.chips}>
-          {CATEGORIES.map((c) => (
-            <label className={styles.chip} key={c}>
-              <input type="radio" name="origin_category" value={c} checked={data.origin_category === c} onChange={() => onChange({ origin_category: c })} /> {c}
-            </label>
-          ))}
+        <div className={styles.catGrid}>
+          {ORIGIN_CATEGORIES.map((c) => {
+            const sel = data.origin_category === c.name;
+            return (
+              <label className={`${styles.catCard} ${sel ? styles.catCardSel : ""}`} key={c.name}>
+                <input type="radio" name="origin_category" value={c.name} checked={sel} onChange={() => onChange({ origin_category: c.name })} />
+                <span>{c.name}</span>
+                <button
+                  type="button"
+                  className={styles.catInfoBtn}
+                  aria-label={`Qué significa ${c.name}`}
+                  aria-expanded={catInfoOpen === c.name}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCatInfoOpen((v) => (v === c.name ? null : c.name));
+                  }}
+                >
+                  ⓘ
+                </button>
+              </label>
+            );
+          })}
+          {catInfoOpen && (
+            <p className={styles.catInfo}>
+              <b>{catInfoOpen}:</b> {ORIGIN_CATEGORIES.find((c) => c.name === catInfoOpen)?.info}
+            </p>
+          )}
         </div>
       </div>
       <div className={styles.fgrid} style={{ marginTop: 14 }}>

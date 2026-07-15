@@ -18,6 +18,7 @@ import {
   type CompletionPoint,
   type Finca,
   type EudrProducerAnswers,
+  ctcLotReferenceShort,
   fincaSelfDeletable,
   pendingLotsOfFinca,
   supplierCode,
@@ -748,6 +749,46 @@ function Experience() {
     return true;
   }
 
+  // Mismo canal que requestFincaHelp pero con el LOTE como contexto -- lo usa
+  // el FAB "Ayuda" de la Ficha Técnica.
+  async function requestLotHelp(lot: Lot, text: string): Promise<boolean> {
+    if (!userId) return false;
+    const body = text.trim();
+    if (!body) return false;
+    const { data, error } = await supabase
+      .from("producer_comm_log")
+      .insert({
+        producer_id: userId,
+        lot_id: lot.id,
+        author_role: "producer",
+        context_label: `Ficha ${ctcLotReferenceShort(lot.id)}`,
+        note: body,
+        created_by: userId,
+      })
+      .select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id")
+      .single();
+    if (error || !data) {
+      showToast("No se pudo enviar su solicitud de ayuda.");
+      return false;
+    }
+    setFeedback((prev) => [
+      {
+        id: data.id,
+        contextLabel: data.context_label,
+        fincaId: data.finca_id,
+        lotId: data.lot_id,
+        note: data.note,
+        createdAt: data.created_at,
+        authorRole: data.author_role as "bcp" | "producer",
+        parentId: data.parent_id,
+        acknowledgedAt: null,
+      },
+      ...prev,
+    ]);
+    showToast("Solicitud de ayuda enviada a CTC ✓");
+    return true;
+  }
+
   // For a finca CTC has already accepted (or one with lots already in the Arena
   // pipeline) the producer can't self-delete -- changing or removing it has to
   // go through CTC. This opens a prefilled email (same channel as the CTC Home
@@ -1180,6 +1221,7 @@ function Experience() {
           }}
           onUploadFile={uploadFile}
           onUploadLotVideo={(file) => uploadLotVideo(curLot.id, file)}
+          onRequestHelp={(text) => requestLotHelp(curLot, text)}
           onSubmitOfficializationClaim={(qGraderRef, file, scaTotal, factorRendimiento) =>
             submitOfficializationClaim(curLot.id, qGraderRef, file, scaTotal, factorRendimiento)
           }

@@ -11,6 +11,7 @@ import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
+import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
 import styles from "./AppDashboard.module.css";
 
 // A conversation thread = every note (CTC notes + the producer's replies)
@@ -412,11 +413,45 @@ export function AppDashboard({
             <span className={styles.k}>Envío de muestras · 2 kg pergamino por lote</span>
             <div className={styles.alist} style={{ marginTop: 6 }}>
               <b>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · Colombia</b><br />
-              Marque el paquete con el código del lote. El envío corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
+              Marque el paquete <b>únicamente con el código del lote</b> (la evaluación en la Arena es a ciegas). El envío
+              corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
             </div>
-            {samplesToShip > 0 && (
-              <div className={styles.alist} style={{ marginTop: 10 }}>
-                <b>{samplesToShip} lote{samplesToShip === 1 ? "" : "s"} esperando su envío</b> — confírmelo desde la tarjeta del lote en &quot;Mis lotes&quot;.
+            {/* Lotes con ficha completa esperando su muestra: aquí viven las dos
+                acciones (antes el "Confirmar envío" estaba en la tarjeta del
+                lote en Mis Lotes; migró a este módulo). */}
+            {samplesToShip === 0 ? (
+              <div className={styles.alist} style={{ marginTop: 10 }}>Sin muestras pendientes por enviar en este momento.</div>
+            ) : (
+              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                {lots.filter((l) => l.stage === 1 && !l.sampleShippedAt).map((l) => (
+                  <div key={l.id} style={{ border: "1.5px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
+                    <b style={{ fontSize: 14 }}>{l.name}</b>
+                    <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 8px" }}>
+                      <CtcRef id={l.id} />
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => openShipmentInstructions(ctcLotReference(l.id), ctcLotReferenceShort(l.id))}
+                      >
+                        Descargar instrucciones
+                      </button>
+                      <button
+                        className="btn btn-sm btn-solid-accent"
+                        onClick={() => {
+                          const ok = window.confirm(
+                            `¿Confirma que ya despachó la muestra de 2 kg de pergamino del lote ${l.name}?\n\n` +
+                              "Recuerde: el paquete debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).\n\n" +
+                              "Al confirmar, CTC queda a la espera del paquete; cuando valide el recibo físico, el lote entra en la fila de la Arena.",
+                          );
+                          if (ok) onConfirmSampleShipped(l.id);
+                        }}
+                      >
+                        Confirmar envío
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -614,8 +649,8 @@ export function AppDashboard({
                       </div>
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
                       {l.stage === 1 && !l.sampleShippedAt && (
-                        <button className="btn btn-sm btn-solid-accent" style={{ marginTop: 6 }} onClick={() => onConfirmSampleShipped(l.id)}>
-                          Confirmar envío de la muestra
+                        <button className="btn btn-sm btn-solid-accent" style={{ marginTop: 6 }} onClick={() => onSelectModule("muestras")}>
+                          Muestra pendiente · gestionar envío →
                         </button>
                       )}
                       <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} />

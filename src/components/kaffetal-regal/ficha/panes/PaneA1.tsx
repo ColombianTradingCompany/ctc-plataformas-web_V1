@@ -78,10 +78,8 @@ export function PaneA1({ data, onChange, lot }: PaneProps) {
             })}
           </div>
         </div>
-        <div className={styles.ff}>
-          <label>HS Code (automático)</label>
-          <input value={data.hs_code} readOnly placeholder="—" />
-        </div>
+        {/* El HS Code sigue viviendo en el datasheet (setProductType lo fija),
+            pero no se muestra: ya aparece junto a cada Tipo de Producto arriba. */}
         <div className={styles.ff}>
           <label>Año de Cosecha</label>
           <select value={data.harvest_year} onChange={(e) => onChange({ harvest_year: e.target.value })}>

@@ -3,7 +3,13 @@
 .groupLabel:first-child{margin-top:0}
 .item{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;background:none;border:none;text-align:left;font-size:13.5px;color:var(--muted);cursor:pointer}
 .item:hover{background:var(--card)}
-.active{background:var(--card);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--primary)}
+/* Seleccionado = el botón entero en verde (var(--primary) es el verde del
+   tema KR), texto blanco -- el contraste anterior (solo borde + fuente) se
+   perdía sobre el fondo claro. */
+.active{background:var(--primary);color:#fff;font-weight:600}
+.active:hover{background:var(--primary)}
+.active .idx{color:#fff}
+.active .dot{background:#fff}
 .idx{font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:700;color:var(--primary);flex:none;width:20px}
 .label{flex:1;line-height:1.3}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}

@@ -10,4 +10,7 @@ export type PaneProps = {
   gi: GeneralInfo;
   onUploadCertFile: (certKey: string, file: File) => void;
   onUploadLotVideo: (file: File) => void;
+  // Videos adicionales de B4 (slots 2 y 3): viven en datasheet.extra_video_assets,
+  // no en lots.video_asset_id (que sigue siendo el video principal).
+  onUploadExtraVideo: (slot: number, file: File) => void;
 };

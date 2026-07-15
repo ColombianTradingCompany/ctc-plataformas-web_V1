@@ -13,7 +13,11 @@ export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
       <div className={styles.fgrid} style={{ marginTop: 14 }}>
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Certificados de Origen</label>
-          <div className={styles.chips}>
+          <p className={styles.fexample} style={{ marginTop: 2 }}>
+            Puede marcar ahora y adjuntar el soporte más adelante — pero al enviar la Ficha, los certificados sin
+            prueba se desmarcan: afirmarlos es un asunto serio que debe confirmarse.
+          </p>
+          <div className={styles.certGrid}>
             {ORIGIN_CERTS.map(([key, label]) => (
               <CertCheckbox
                 key={key}
@@ -26,9 +30,12 @@ export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
                 onUpload={onUploadCertFile}
               />
             ))}
-            <label className={styles.chip}>
-              <input type="checkbox" checked={data.origin_cert_other} onChange={(e) => onChange({ origin_cert_other: e.target.checked })} /> Otro certificado
-            </label>
+            <div className={`${styles.certCard} ${data.origin_cert_other ? styles.certCardChecked : ""}`}>
+              <label className={styles.certCardHead}>
+                <input type="checkbox" checked={data.origin_cert_other} onChange={(e) => onChange({ origin_cert_other: e.target.checked })} />
+                <span style={{ flex: 1 }}>Otro certificado</span>
+              </label>
+            </div>
           </div>
         </div>
         {data.origin_cert_other && (
@@ -40,6 +47,21 @@ export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Premios & Rankings (Awards)</label>
           <textarea value={data.awards} onChange={(e) => onChange({ awards: e.target.value })} placeholder="Ej. Cup of Excellence 2024 · Top 10…" />
+          {data.awards.trim() !== "" && (
+            <div style={{ marginTop: 6 }}>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => e.target.files?.[0] && onUploadCertFile("awards", e.target.files[0])}
+                style={{ fontSize: 12 }}
+              />
+              {data.cert_attachments["awards"] ? (
+                <p className={styles.fexample}>✓ {data.cert_attachments["awards"].fileName} adjuntado</p>
+              ) : (
+                <p className={styles.fexample}>Puede adjuntar el diploma, ranking o publicación que respalda el premio (≤ 5 MB).</p>
+              )}
+            </div>
+          )}
         </div>
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Acerca del Origen</label>

@@ -120,3 +120,53 @@ is closed and left as historical record of what went into producing it).
   .com — Volver a la casa matriz" (https://ctcexport.com en prod, "/" en dev
   via NODE_ENV). Colores por [data-theme] del sitio anfitrion.
 (commit: pending)
+
+## [2026-07-15] Kaffetal Regal: pase UX profundo de la Ficha Tecnica + modulo Envio de muestras
+- UX + logica de compuertas en el flujo del productor; sin cambios de schema
+  (todo viaja en el datasheet jsonb existente).
+- Ficha: aviso de compuerta bloqueada ahora es POPUP CENTRADO con fade (2s,
+  auto-cierra) en vez del toast sobre el boton; al completar cada etapa
+  (FT/FT2/EUDR) aparece una MINI-CELEBRACION centrada que anticipa la
+  siguiente etapa; tab activo del nav en verde solido (contraste); FABs
+  flotantes Guardar + Ayuda (la Ayuda escribe a producer_comm_log con
+  contexto "Ficha <ref>").
+- A1 sin HS Code visible (sigue en el datasheet); A2 categorias de origen
+  como tarjetas uniformes con i expandida; B1 proporcion por selector
+  (100/75/50/25, +33 con 3 variedades; 1a fila default 100 o 50 segun
+  categoria) + buscador de variedades integrado (datalist) + especies
+  Liberica y Mezcla (Mezcla deshabilitada si hay variedad al 100%).
+- COMPUERTA SUAVE de soportes A3/A4: certificado marcado sin archivo =
+  "Pendiente de soporte" (no bloquea); aviso al enviar FT2; recordatorio
+  FINAL al enviar la Ficha y, si sigue sin prueba, la seleccion SE DESMARCA
+  y el lote sigue sin ella (pendingCertProofs/stripUnprovenCerts en
+  fichaData.ts). Los soportes se pueden adjuntar incluso con A3/A4 ya
+  enviados (franja "Soportes pendientes"). A3 permite adjunto en Premios.
+- B2: atributos SCA directo bajo la grafica; 5 bandas (Comercial <80,
+  Especial 80-84, Especialidad 84-87, Alta Especialidad 87-90, Rareza 90+,
+  scaClassFor en fichaCalculations); Q-Grader Refs 1-3 -> UN bloque
+  (nombre/laboratorio/N cert) y el banner "Solicitar oficializacion" bajo el
+  pane, prellenado con esa referencia. B3: sugerencia 212.7, muestra inicial
+  250 preentrada, Residuo = solucionador de diferencia (readonly, % en rojo,
+  siempre cierra a 100% del grano sano).
+- A5 reordenado: pais primero -> metodo de separacion (tarjetas lado a lado,
+  i "te ayudamos a tener un mejor estandar" del CTC Standard) -> cadena de
+  custodia (tarjetas uniformes, complejidad derivada debajo); checkbox
+  POSITIVO de trazabilidad conservada (no suma riesgo). COMPUERTA SUAVE de
+  aptitud de fincas: si es lo unico pendiente, se continua al video con
+  confirm y el lote queda con bandera roja EUDR pendiente.
+- B4: 6 bullets de instruccion (30s, tomas continuas y estables...), hasta 3
+  videos (principal en lots.video_asset_id; 2 extra en
+  datasheet.extra_video_assets, mismas rutas kaffetal-media, 100MB c/u) y 3
+  YouTube Shorts de referencia.
+- Envio de muestras: el modulo del panel ahora LISTA los lotes en
+  ficha_completa sin envio confirmado con 2 acciones -- "Descargar
+  instrucciones" (HTML imprimible con marca CTC, productor INCOGNITO: el
+  paquete solo lleva el codigo del lote, cata a ciegas;
+  shipmentInstructionsPrint.ts) y "Confirmar envio" (confirm con la
+  advertencia; migrado desde la tarjeta de Mis Lotes, que ahora deep-linkea
+  al modulo). El modal post-envio de la Ficha usa el mismo imprimible.
+- BCP /bcp/fincas: "Documento de respaldo" agrupado junto a "Tenencia de la
+  tierra" entre divisores (el documento respalda la tenencia).
+- Verificado en vivo con productor QA end-to-end (FT -> FT2 -> EUDR -> video
+  -> envio final con desmarcado de cert sin soporte -> modulo de muestras).
+(commit: pending)

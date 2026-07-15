@@ -8,7 +8,7 @@ import styles from "../FichaView.module.css";
 
 type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
 type MeshT = { rows: { key: string; label: string; grams: number; pct: number | null }[]; sum: number; totalPct: number; bad: boolean };
-type ScaT = { values: number[]; total: number; cls: "Especialidad" | "Comercial" | "Sin puntaje" };
+type ScaT = { values: number[]; total: number; cls: import("./fichaCalculations").ScaClass };
 
 export function FichaPreview({
   data,

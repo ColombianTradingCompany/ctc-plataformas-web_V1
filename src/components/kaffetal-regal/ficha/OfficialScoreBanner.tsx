@@ -12,11 +12,14 @@ export function OfficialScoreBanner({
   lot,
   selfEstimate,
   kind,
+  defaultRef,
   onSubmitClaim,
 }: {
   lot: Lot;
   selfEstimate: number | null;
   kind: "sca" | "factor";
+  // Prellenado desde el bloque Q-Grader de B2 (nombre · laboratorio · N° cert).
+  defaultRef?: string;
   onSubmitClaim: (qGraderRef: string, file: File | null) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -34,7 +37,7 @@ export function OfficialScoreBanner({
   }
 
   return (
-    <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+    <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: 14, margin: "16px 0" }}>
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", fontSize: 13 }}>
         <span>
           Su estimación ({label}): <b>{selfEstimate != null && selfEstimate > 0 ? selfEstimate.toFixed(1) : "—"}</b>
@@ -53,7 +56,15 @@ export function OfficialScoreBanner({
         (lot.hasPendingOfficializationClaim ? (
           <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 8 }}>Solicitud de oficialización pendiente de revisión por CTC.</p>
         ) : !open ? (
-          <button type="button" className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{ marginTop: 8 }}
+            onClick={() => {
+              setOpen(true);
+              if (!qGraderRef && defaultRef) setQGraderRef(defaultRef);
+            }}
+          >
             Solicitar oficialización
           </button>
         ) : (

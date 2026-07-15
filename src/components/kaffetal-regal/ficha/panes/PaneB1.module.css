@@ -1,4 +1,4 @@
-.row{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:var(--paper)}
+.row{display:grid;grid-template-columns:88px 1fr auto;gap:8px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:var(--paper)}
 .row input,.row select{padding:9px 10px;border:1.5px solid var(--line);border-radius:6px;font-family:var(--font-spline-mono),monospace;font-size:13px;background:var(--card)}
 .pct{width:100%}
 .del{background:var(--card);border:1px solid var(--line);color:var(--t-red,#B01F24);border-radius:6px;width:32px;height:32px;font-size:16px}

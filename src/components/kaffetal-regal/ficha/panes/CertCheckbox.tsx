@@ -6,6 +6,10 @@ import { checkFileSizeMb } from "@/lib/fileSize";
 import type { FichaFormData } from "../fichaData";
 import styles from "../../FichaView.module.css";
 
+// Tarjeta uniforme de certificado (A3/A4): checkbox + ⓘ + carga de soporte.
+// Marcar sin adjuntar NO bloquea el avance, pero deja el certificado
+// "Pendiente de soporte": si al enviar la Ficha sigue sin prueba, la
+// selección se desmarca (ver pendingCertProofs/stripUnprovenCerts).
 export function CertCheckbox({
   certKey,
   label,
@@ -37,31 +41,31 @@ export function CertCheckbox({
   }
 
   return (
-    <div>
-      <label className={styles.chip}>
+    <div className={`${styles.certCard} ${checked ? styles.certCardChecked : ""}`}>
+      <label className={styles.certCardHead}>
         <input type="checkbox" checked={checked} onChange={(e) => onToggle(e.target.checked)} />
-        {" "}
-        {label}
+        <span style={{ flex: 1 }}>{label}</span>
         {info && (
           <button
             type="button"
+            className={styles.catInfoBtn}
             aria-label={`Qué es ${typeof label === "string" ? label : certKey}`}
             onClick={(e) => {
               e.preventDefault();
               setInfoOpen((v) => !v);
             }}
-            style={{ border: "none", background: "none", cursor: "pointer", color: "var(--muted)", fontSize: 11, padding: 0 }}
           >
             ⓘ
           </button>
         )}
       </label>
-      {infoOpen && info && <p className={styles.fexample} style={{ marginTop: 2 }}>{info}</p>}
+      {infoOpen && info && <p className={styles.fexample} style={{ marginTop: 0 }}>{info}</p>}
       {checked && (
-        <div style={{ marginTop: 6, marginLeft: 4 }}>
-          <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFile(e.target.files?.[0])} />
-          {attachment && <p className={`${styles.fexample}`}>✓ {attachment.fileName} adjuntado</p>}
-        </div>
+        <>
+          {!attachment && <span className={styles.pendChip}>Pendiente de soporte</span>}
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFile(e.target.files?.[0])} style={{ fontSize: 12 }} />
+          {attachment && <p className={styles.fexample} style={{ marginTop: 0 }}>✓ {attachment.fileName} adjuntado</p>}
+        </>
       )}
     </div>
   );

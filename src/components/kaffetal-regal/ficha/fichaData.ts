@@ -132,6 +132,27 @@ export const B1_OPTIONAL_FIELDS: { key: string; field: "green_bean_humidity" | "
   { key: "yield_factor", field: "yield_factor_producer", why: "El factor de rendimiento indica cuánto café verde exportable rinde su pergamino." },
 ];
 
+// A2 · Categoría de Origen -- English names kept on purpose (industry terms);
+// each card gets an ⓘ with this expanded definition.
+export const ORIGIN_CATEGORIES: { name: string; info: string }[] = [
+  {
+    name: "Single Estate",
+    info: "Todo el café proviene de una sola finca registrada. Es la máxima trazabilidad posible: el lote se conecta 1 a 1 con su origen, su microclima y su productor.",
+  },
+  {
+    name: "Single Origin",
+    info: "Un solo origen geográfico (mismo municipio o vereda), que puede reunir varias fincas vecinas de esa misma zona. El perfil expresa el terruño local, no una finca puntual.",
+  },
+  {
+    name: "Regional Blend",
+    info: "Mezcla de cafés de un mismo departamento o región cafetera. El perfil representa el carácter de la región; la trazabilidad se lleva por las fincas participantes.",
+  },
+  {
+    name: "Multi-Origin Blend",
+    info: "Mezcla de cafés de varios departamentos o incluso países, construida por diseño para un perfil objetivo. Requiere especificar la composición del blend.",
+  },
+];
+
 export const ORIGIN_CERTS: [string, string][] = [
   ["origin_cert_dor", "(DOR) Denominación de Origen Regional"],
   ["origin_cert_do", "(DO) Denominación de Origen Protegida"],
@@ -274,8 +295,17 @@ export type FichaFormData = {
   fa_primary_defect: string; fa_secondary_defect: string;
   mesh_supremo_plus: string; mesh_supremo: string; mesh_extra: string; mesh_europa: string;
   mesh_ugq: string; mesh_peaberry: string; mesh_residue: string;
-  // B4 — Notas & Referencias Q-Grader
+  // Notas de análisis + referencia Q-Grader (una sola, estructurada — los
+  // viejos qgrader_1..3 quedan en el tipo solo para lotes guardados antes).
   analysis_notes: string; qgrader_1: string; qgrader_2: string; qgrader_3: string;
+  qgrader_name: string; qgrader_lab: string; qgrader_cert: string;
+  // B4 — hasta 2 videos adicionales del café (el principal vive en
+  // lots.video_asset_id); estos viajan en el datasheet y se suben por el mismo
+  // bucket con la convención de ruta de kaffetalMedia.
+  extra_video_assets: { assetId: string; fileName: string }[];
+  // A5 — confirmación POSITIVA de trazabilidad (no cuenta como factor de
+  // riesgo; es el reverso tranquilizador de las casillas de riesgo).
+  eudr_traceability_confirmed: boolean;
   // FT2 sub-stage: A3/A4/B2/B3 can each be explicitly declared "no lo sé / no
   // aplica" instead of filled in -- see FichaView.tsx's ft2 gate. Only these
   // four panes get this; A1/A2/B1 (FT) and A5/B4 (EUDR/Video) are always
@@ -325,13 +355,43 @@ export const EMPTY_FICHA: FichaFormData = {
   sca_fragrance: "", sca_flavor: "", sca_aftertaste: "", sca_acidity: "",
   sca_body: "", sca_balance: "", sca_uniformity: "", sca_clean_cup: "",
   sca_sweetness: "", sca_cuppers: "",
-  fa_green_remainder: "", fa_start: "", fa_parch_hum: "",
+  // fa_start arranca en el estándar de laboratorio (muestra de 250 g).
+  fa_green_remainder: "", fa_start: "250", fa_parch_hum: "",
   fa_primary_defect: "", fa_secondary_defect: "",
   mesh_supremo_plus: "", mesh_supremo: "", mesh_extra: "", mesh_europa: "",
   mesh_ugq: "", mesh_peaberry: "", mesh_residue: "",
   analysis_notes: "", qgrader_1: "", qgrader_2: "", qgrader_3: "",
+  qgrader_name: "", qgrader_lab: "", qgrader_cert: "",
+  extra_video_assets: [],
+  eudr_traceability_confirmed: false,
   ft2_a3_na: false, ft2_a4_na: false, ft2_b2_na: false, ft2_b3_na: false,
 };
+
+// Certificados marcados en A3/A4 que aún no tienen archivo de soporte. No
+// bloquean el avance (compuerta suave): se advierte al enviar FT2, se recuerda
+// una última vez al enviar la Ficha y, si siguen sin soporte en ese momento,
+// la selección se desmarca y el lote sigue sin ellos (afirmar una
+// certificación es un asunto serio que exige prueba).
+export function pendingCertProofs(d: FichaFormData): { key: string; label: string }[] {
+  const out: { key: string; label: string }[] = [];
+  for (const [key, label] of ORIGIN_CERTS) {
+    if (d[key as keyof FichaFormData] && !d.cert_attachments[key]) out.push({ key, label });
+  }
+  for (const [key, , label] of INTL_CERTS) {
+    if (d[key as keyof FichaFormData] && !d.cert_attachments[key]) out.push({ key, label });
+  }
+  return out;
+}
+
+// Devuelve el datasheet con los certificados sin soporte DESMARCADOS -- se usa
+// solo en el envío final de la Ficha, tras el último recordatorio.
+export function stripUnprovenCerts(d: FichaFormData): FichaFormData {
+  const pending = pendingCertProofs(d);
+  if (!pending.length) return d;
+  const patch: Partial<FichaFormData> = {};
+  for (const { key } of pending) (patch as Record<string, boolean>)[key] = false;
+  return { ...d, ...patch };
+}
 
 export const num = (v: string) => {
   const n = parseFloat(v);

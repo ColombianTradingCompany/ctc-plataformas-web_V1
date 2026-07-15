@@ -358,7 +358,13 @@ export function FincaEudrEditor({
               onConfirm={() => setEvalLegal(triSelectValue(producerAnswers?.legalProduction ?? null))}
             />
           </div>
-          <div className={styles.field}>
+        </div>
+
+        {/* Tenencia + su documento de respaldo van JUNTOS: el documento del
+            productor respalda precisamente la tenencia declarada, así que se
+            agrupan aparte del resto, entre divisores. */}
+        <div style={{ borderTop: "1px dashed var(--line)", borderBottom: "1px dashed var(--line)", padding: "14px 0", margin: "4px 0 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <div className={styles.field} style={{ marginBottom: 0 }}>
             <label>Tenencia de la tierra</label>
             <select name="eudr_tenure" value={evalTenure} onChange={(e) => setEvalTenure(e.target.value)}>
               <option value="">Seleccione…</option>
@@ -372,6 +378,17 @@ export function FincaEudrEditor({
               matches={(producerAnswers?.tenure ?? "") === evalTenure}
               onConfirm={() => setEvalTenure(producerAnswers?.tenure ?? "")}
             />
+          </div>
+          <div className={styles.field} style={{ marginBottom: 0 }}>
+            <label>Documento de respaldo</label>
+            {values.eudr_legal_docs_filename ? (
+              <p className={styles.meta} style={{ margin: 0 }}>
+                {values.eudr_legal_docs_filename}
+                {legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}
+              </p>
+            ) : (
+              <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
+            )}
           </div>
         </div>
 
@@ -412,17 +429,6 @@ export function FincaEudrEditor({
           <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada evidencia marcada.</p>
         </div>
 
-        <div className={styles.field}>
-          <label>Documento de respaldo</label>
-          {values.eudr_legal_docs_filename ? (
-            <p className={styles.meta} style={{ margin: 0 }}>
-              {values.eudr_legal_docs_filename}
-              {legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}
-            </p>
-          ) : (
-            <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
-          )}
-        </div>
         <div className={styles.field}>
           <label>Áreas de legislación verificadas</label>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

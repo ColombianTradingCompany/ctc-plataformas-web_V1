@@ -79,8 +79,20 @@ export function shipmentInstructionsHtml(lotCode: string, shortRef: string): str
 }
 
 export function openShipmentInstructions(lotCode: string, shortRef: string) {
-  const w = window.open("", "_blank", "noopener,width=820,height=900");
-  if (!w) return;
-  w.document.write(shipmentInstructionsHtml(lotCode, shortRef));
-  w.document.close();
+  // OJO: window.open con el feature "noopener" devuelve SIEMPRE null (spec),
+  // así que la versión original con document.write() nunca escribía nada y el
+  // botón quedaba mudo. Un Blob URL no depende del handle devuelto; y si el
+  // popup es bloqueado, el fallback descarga el HTML (los anchor-download no
+  // pasan por el bloqueador de popups).
+  const blob = new Blob([shipmentInstructionsHtml(lotCode, shortRef)], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const w = window.open(url, "_blank");
+  if (!w) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `instrucciones-envio-${shortRef}.html`;
+    a.click();
+  }
+  // Deja margen de sobra para que la pestaña/descarga lea el blob.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

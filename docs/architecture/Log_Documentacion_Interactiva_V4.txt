@@ -92,3 +92,31 @@ is closed and left as historical record of what went into producing it).
   (queda vacio a proposito, el loop es el visual) y ahora CIERRA la pagina en
   el sign-off del footer (closingShot, antes del logo full + copyright).
 (commit: pending)
+
+## [2026-07-15] CTC Home: loop de iconos CTC en el aside del hero
+- Cosmetico, sin cambios de mapa. El aside del hero (vacio desde que la foto
+  Piedecuesta se movio al footer) ahora muestra el loop "CTC_Loading_Icons"
+  (logo guacamayo, cafeto, taza... estilo sketch sobre placa blanca):
+  reference_gifs/CTC_Loading_Icons.gif (800x800, 32.7 MB, metadata de
+  duracion rota a 1810ms/frame) -> public/images/ctc-home/ctc-loading-icons
+  .webp (480x480, cada 2do frame a 160ms, 2.2 MB, Pillow; <img> plano, nunca
+  next/image). El grid del hero mantiene DOS columnas incluso bajo 900px a
+  proposito (copy/CTAs en la primera, loop en la segunda, sin apilar);
+  columna clamp(120px,32vw,300px).
+(commit: pending)
+
+## [2026-07-15] Loop transparente a mitad de tamano + QuickNav compartido KR/CP
+- Cosmetico/navegacion, sin cambios de esquema. El loop de iconos del hero de
+  CTC Home ahora usa CTC_Loading_Icons(transparent).gif -- que en realidad
+  decodifica opaco, asi que el blanco se convierte a alfa real al momento de
+  la conversion (rampa suave de luminancia 200-245; 300x300, cada 3er frame a
+  210ms, 2.0 MB) -- y se muestra a la mitad del tamano (max 210px), sin placa
+  blanca, con drop-shadow.
+- NUEVO src/components/QuickNav.tsx + .module.css: el indice flotante de CTC
+  Home (QuickMenu) generalizado para las plataformas satelite. Montado en el
+  landing de Kaffetal Regal (abajo-derecha, 6 secciones) y en la vista store
+  de Cherry Picked (abajo-IZQUIERDA a proposito, el carrito es dueno de la
+  esquina derecha; 9 secciones). Primera entrada fija y marcada: "ctcexport
+  .com — Volver a la casa matriz" (https://ctcexport.com en prod, "/" en dev
+  via NODE_ENV). Colores por [data-theme] del sitio anfitrion.
+(commit: pending)

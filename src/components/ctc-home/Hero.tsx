@@ -48,9 +48,13 @@ export function Hero() {
             </span>
           </div>
         </div>
-        {/* The right column is intentionally empty: the animated loop itself is
-            the visual. (The Piedecuesta photo that used to sit here now closes
-            the page in the Footer's sign-off.) */}
+        {/* Sketchbook loop of the CTC icons (logo mark, cafeto, taza…) on a
+            white plate, framed like the Piedecuesta photo that used to live
+            here (that one now closes the page in the Footer's sign-off). */}
+        <div className={styles.heroAside} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
+          <img className={styles.heroAnim} src="/images/ctc-home/ctc-loading-icons.webp" alt="" />
+        </div>
       </div>
     </section>
   );

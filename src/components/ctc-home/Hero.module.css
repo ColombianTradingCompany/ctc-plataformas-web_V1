@@ -31,7 +31,20 @@
 }
 
 .heroGrid{position:relative;z-index:2;display:grid;grid-template-columns:1.12fr .88fr;gap:56px;align-items:center}
-@media(max-width:900px){.heroGrid{grid-template-columns:1fr}}
+/* Narrow viewports keep TWO columns on purpose (2026-07-15): the icon loop
+   stays in its own right column and the copy/CTAs stay in the first, instead
+   of stacking. The animation column just gets progressively slimmer. */
+@media(max-width:900px){.heroGrid{grid-template-columns:1fr clamp(80px,16vw,150px);gap:24px;align-items:start}}
+
+/* Sketchbook icon loop (CTC_Loading_Icons): the WebP carries real alpha (white
+   keyed out at conversion time — see HANDOFF), so it floats straight on the
+   hero loop; the drop-shadow follows the ink and keeps it readable. */
+.heroAside{display:flex;justify-content:center}
+.heroAnim{
+  width:100%;max-width:210px;aspect-ratio:1/1;display:block;
+  filter:drop-shadow(0 12px 26px rgba(4,14,26,.55));
+}
+@media(max-width:900px){.heroAside{position:sticky;top:96px}}
 
 /* Hero-local gold: var(--accent-soft) (#F2C464) drops under 4.5:1 on the
    lightened scrim for the small mono text; this brighter shade clears it. */

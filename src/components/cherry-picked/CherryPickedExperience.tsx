@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
+import { QuickNav, type QuickNavSection } from "@/components/QuickNav";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -22,6 +23,18 @@ import { GRADE_DB, cartData, fmt, listingCode, moqOf, type Grade, type Lot } fro
 
 type View = "store" | "profile";
 const BID_STEP = 0.5;
+
+const QUICK_NAV_SECTIONS: QuickNavSection[] = [
+  { id: "black", n: "01", label: "Black Selection", sub: "El café que sostiene tu barra" },
+  { id: "grados", n: "02", label: "La cosecha, grado a grado", sub: "Red · Blue · Gold" },
+  { id: "envios", n: "03", label: "Envíos", sub: "Un precio de envío, sin sorpresas" },
+  { id: "tyrian", n: "04", label: "Tyrian", sub: "La subasta insignia" },
+  { id: "muestras", n: "05", label: "Muestras", sub: "Sample packs de la cosecha" },
+  { id: "narrativa", n: "06", label: "Narrativa", sub: "Del predio a tu taza" },
+  { id: "cosecha", n: "07", label: "El año cafetero", sub: "Visto desde tu tostaduría" },
+  { id: "manifiesto", n: "08", label: "Manifiesto", sub: "Cómo trabajamos" },
+  { id: "historia", n: "09", label: "Historia", sub: "Quiénes somos" },
+];
 
 type ListingRow = {
   id: string;
@@ -353,6 +366,8 @@ function Experience() {
           <ManifiestoSection />
           <HistoriaSection />
           <Footer />
+          {/* Bottom-LEFT on purpose: the cart owns the bottom-right corner. */}
+          <QuickNav sections={QUICK_NAV_SECTIONS} side="left" />
           <Cart
             summary={summary}
             packInCart={packInCart}

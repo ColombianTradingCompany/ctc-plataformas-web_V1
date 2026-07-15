@@ -1,5 +1,5 @@
 Log_Documentacion_Interactiva_V5
-Status: CLOSED -- wrapped into Documentacion_Interactiva_V6.0(<sha>).html.
+Status: CLOSED -- wrapped into Documentacion_Interactiva_V6.0(7801030).html.
 Historical record of what went into producing V6.0. Covers everything since
 Documentacion_Interactiva_V5.0(5980550).html.
 
@@ -31,4 +31,4 @@ Documentacion_Interactiva_V5.0(5980550).html.
 - Validado en vivo (servido local): snippet de referencia con 0 refs colgadas
   (nodos/DICT/wires/CTX), 0 info keys de FILETREE invalidos, toggle + expand +
   chip->drawer + redibujo de cables OK; sin errores de consola.
-(commit: pending)
+(commit: 7801030)

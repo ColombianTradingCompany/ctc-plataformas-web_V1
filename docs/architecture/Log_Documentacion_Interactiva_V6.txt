@@ -1,9 +1,31 @@
 Log_Documentacion_Interactiva_V6
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V7.0(<sha>).html.
-Covers: everything since Documentacion_Interactiva_V6.0(7801030).html, which is
-now the current real HTML snapshot (Log_Documentacion_Interactiva_V5.txt is
-closed and left as historical record of what went into producing it).
+Status: CLOSED -- wrapped into Documentacion_Interactiva_V7.0(<sha>).html.
+Historical record of what went into producing V7.0. Covers everything since
+Documentacion_Interactiva_V6.0(7801030).html.
 
-(no entries yet)
+## [2026-07-15] Mapa de archivos: reescrito al sistema de archivos REAL completo
+- Correccion de alcance por feedback: la V6.0 mostraba un arbol CURADO (subset)
+  del repo. El usuario queria ver el sistema de archivos REAL desde la raiz
+  Desktop/CTC Web Platform hacia abajo -- cada carpeta y cada documento del
+  disco, no una seleccion.
+- FILETREE ahora se GENERA del disco (script Pillow/os.walk -> literal JS):
+  451 archivos + 100 carpetas = 551 nodos, espejo 1:1 del filesystem. Solo se
+  colapsan node_modules / .git / .next (nodos hoja con nota "no listado --
+  dependencias/build/historial", no expandibles). Raiz = "CTC Web Platform/"
+  con ctc-platform/ como pieza central + las carpetas de apoyo
+  (legacy-prototypes, reference_*, pdf_documentation_files, refs_EUDR, .claude).
+- Nuevo modelo: FILETREE es estructura pura (n/c/x); las anotaciones viven en
+  un mapa ANN por RUTA ({i,t,p,d,info}) que el renderer busca al construir cada
+  fila (calcula el path por los ancestros, node.dataset.path). ~55 rutas
+  anotadas (carpetas + ~30 archivos clave); el resto aparece por nombre. Los
+  nodos con info siguen mostrando el chip "Ver en el mapa" que abre el drawer
+  del DICT.
+- Renderer path-aware; abre por defecto ctc-platform/src/{app,components,lib};
+  las carpetas de referencia (44 imagenes, etc.) arrancan colapsadas.
+- Intro reescrita: "sistema de archivos real, desde la raiz ... cada carpeta y
+  cada documento". Etiquetas ruta/cliente/server/service-role/config.
+- Validado en vivo: 551 nodos renderizados, 3 excluidos, 0 rutas ANN huerfanas
+  (todas existen en el arbol), 0 info keys invalidos, toggle + expand de
+  carpeta pesada (44 archivos) + chip->drawer OK, sin errores de consola. El
+  mapa del sistema (nodos/wires/scenarios/DICT) sin cambios desde V6.0.
+(commit: pending)

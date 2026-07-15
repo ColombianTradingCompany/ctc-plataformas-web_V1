@@ -1,9 +1,34 @@
 Log_Documentacion_Interactiva_V5
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V6.0(<sha>).html.
-Covers: everything since Documentacion_Interactiva_V5.0(5980550).html, which
-is now the current real HTML snapshot (Log_Documentacion_Interactiva_V4.txt
-is closed and left as historical record of what went into producing it).
+Status: CLOSED -- wrapped into Documentacion_Interactiva_V6.0(<sha>).html.
+Historical record of what went into producing V6.0. Covers everything since
+Documentacion_Interactiva_V5.0(5980550).html.
 
-(no entries yet)
+## [2026-07-15] Nueva interfaz "Mapa de archivos" dentro del doc interactivo
+- Feature del propio documento (no cambia el sistema documentado): se agrega
+  una segunda UI contenida en el mismo archivo HTML, conmutable desde una
+  barra de modo arriba ("Mapa del sistema" | "Mapa de archivos").
+- El Mapa del sistema existente se envuelve en <div id="sysmap">; el nuevo
+  <section id="filemap"> vive al lado y se muestra/oculta con setMode(). Al
+  volver al mapa del sistema se re-dibujan los cables (drawWires) porque el
+  board estuvo display:none.
+- El Mapa de archivos es un ARBOL ANOTADO data-driven: const FILETREE (mismo
+  patron que WIRES/SCENARIOS/DICT) + renderTree() recursivo. Cada nodo:
+  n(nombre) i(icono) t([claseTag,texto]) p(proposito) d(detalle html)
+  info(clave DICT) c(hijos). Filas expandibles revelan detalle + hijos; los
+  nodos con info muestran un chip "Ver en el mapa ⓘ" que abre el MISMO drawer
+  del DICT (reusa la delegacion data-info existente) -- asi el arbol de
+  carpetas queda cosido al mapa conceptual.
+- Contenido curado y real (explorado del repo): src/ {app (rutas por
+  superficie + api + auth), components (ctc-home/kaffetal-regal/ficha/
+  cherry-picked/ui/compartidos), lib (supabase 3 factories, eudr, arena/
+  jornada, evaluations, club, leads, email, bcp, kaffetalMedia), proxy.ts},
+  public/, scripts/, docs/, Configuracion raiz. Cada folder/archivo con su
+  proposito y como se conecta; etiquetas ruta/cliente/server/service-role/
+  config. 41 nodos, 15 chips de cross-link, todos apuntando a claves DICT
+  reales.
+- CSS nuevo: .modebar/.modebtn (conmutador segmentado), #filemap, .ft-*
+  (arbol: filas, caret, tags, kids con guia de indentacion, panel de detalle).
+- Validado en vivo (servido local): snippet de referencia con 0 refs colgadas
+  (nodos/DICT/wires/CTX), 0 info keys de FILETREE invalidos, toggle + expand +
+  chip->drawer + redibujo de cables OK; sin errores de consola.
+(commit: pending)

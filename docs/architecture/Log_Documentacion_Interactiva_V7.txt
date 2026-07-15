@@ -1,7 +1,6 @@
 Log_Documentacion_Interactiva_V7
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V8.0(<sha>).html.
+Status: WRAPPED into Documentacion_Interactiva_V8.0(6c8b062).html on 2026-07-15.
+This log is now a closed historical record.
 Covers: everything since Documentacion_Interactiva_V7.0(c602feb).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V6.txt is
 closed and left as historical record of what went into producing it).
@@ -35,14 +34,14 @@ closed and left as historical record of what went into producing it).
 - Built + verified: tsc + eslint clean; /login renders, guarded consoles redirect to
   /login unauthenticated, old URLs forward, zero console errors. panel_users + partner
   tier remain PLAN.
-(commit: pending)
+(commit: 6c8b062)
 
 ## [2026-07-15] Console hub aesthetic pass + per-console glyphs
 - /panel hub cards were cramped (code/name/tagline missing display:block ran together).
   Fixed layout rhythm + added a minimalist line glyph per console (src/components/panel/
   ConsoleGlyph.tsx): BCP=key, ECP=trending-up, OCP=cycle; tinted icon tile, accent
   top-stripe, tidier footer. Cosmetic only — no scenario/node/DICT impact.
-(commit: pending)
+(commit: 6c8b062)
 
 ## [2026-07-15] Fase 1 — panel_users internal-collaborator tier
 - New table public.panel_users (service-role-only, RLS on, zero policies) via migration
@@ -72,7 +71,7 @@ closed and left as historical record of what went into producing it).
   /login unauthenticated, zero server errors. Interactive invite/login flow NOT browser-verified
   (real 2FA, no admin password available to the assistant) — pending an owner walkthrough or a
   disposable-collaborator QA run.
-(commit: pending)
+(commit: 6c8b062)
 
 ## [2026-07-15] Delivery-email onboarding + forced password change + write-path hardening + inbound Buzón
 - panel_users.delivery_email (migration panel_users_delivery_email): the login email can now be
@@ -102,4 +101,4 @@ closed and left as historical record of what went into producing it).
   /bcp/usuarios, /ecp, /ocp; webhook dev-mode POST stored a QA row with every field correctly
   extracted (from-object, to-array, subject, text, attachment metadata) then deleted; bad JSON
   → 400; zero server errors. Owner-side email flows still pending a live walkthrough (real 2FA).
-(commit: pending)
+(commit: 6c8b062)

@@ -112,6 +112,15 @@ export type Lot = {
   videoUrl: string | null;
   sampleShippedAt: string | null;
   source: string;
+  // Inscripción de Arena ($80.000, exención por tramos). null = CTC aún no ha
+  // abierto la fila (el lote todavía no llegó a la compuerta). Solo lectura para
+  // el productor: RLS le deja ver la suya, escribir es exclusivo de BCP.
+  inscription: {
+    status: "pendiente" | "pagado" | "exento";
+    amountCop: number;
+    discountPct: number;
+    amountDueCop: number;
+  } | null;
   // EUDR — debida diligencia del lote (2026-07-10). Fuente de verdad para estas
   // columnas es la fila real de `lots`, no `datasheet` -- así lo que BCP llene
   // directamente (asistencia) siempre se refleja en la Ficha, ver FichaView.

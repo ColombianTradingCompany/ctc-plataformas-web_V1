@@ -6,4 +6,26 @@ Covers: everything since Documentacion_Interactiva_V10.0(b294dc8).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V9.txt is
 closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-16] Producer-side "Mis inscripciones" + pago por Nequi (sin pasarela)
+- El productor ya VE su inscripción, no solo la nota del feed. Nuevo módulo "Mis inscripciones" en el
+  hub de Kaffetal Regal (AppDashboard): tarjeta con contador ("N por pagar · $X") y alerta; dentro, una
+  tarjeta por lote en la compuerta con estado (pendiente / pagada / eximida), monto a pagar, la exención
+  que CTC le aplicó, y la referencia de pago (= código corto del lote, el mismo que va en el paquete).
+- Migración arena_inscriptions_producer_select_own: RLS gana UNA policy de SELECT propia
+  (producer_id = auth.uid()). La tabla pasa de "service-role-only" a "ESCRITURA service-role-only":
+  KR lee con el cliente del navegador; crear/saldar sigue siendo exclusivo de BCP.
+  Verificado simulando el JWT del productor: ve 1 (la suya) y 0 de otro; UPDATE y DELETE afectan 0 filas
+  y la fila queda intacta — no puede auto-otorgarse una exención.
+  OJO (gotcha ya conocido, reconfirmado): un UPDATE sin policy NO lanza excepción, afecta 0 filas en
+  silencio — el primer test dio un falso "pudo escribir"; hay que medir row_count, no atrapar excepciones.
+- Nuevo src/lib/arena/payment.ts: NO hay pasarela. El pago es por NEQUI (billetera móvil, se transfiere a
+  un celular) y CTC confirma a mano en /bcp/club. Los datos son públicos de cara al productor, así que
+  viven en código, no en env. Instrucciones en 4 pasos (transferir → escribir la referencia → mandar
+  comprobante a info@ctcexport.com o por el hilo → CTC confirma).
+- PENDIENTE (bloqueante para que sirva de verdad): falta el NÚMERO NEQUI real de CTC (NEQUI.number/holder
+  están vacíos). Mientras esté vacío, nequiConfigured() oculta las instrucciones y muestra "escríbanos a
+  info@ctcexport.com" — nunca un número a medias. Llenarlo es una línea.
+- Doc impact when wrapped: extender la entrada DICT "inscripcion" con la ruta de pago (Nequi + referencia
+  + confirmación manual) y con la nueva policy de lectura; el nodo n-kaffetal suma el módulo.
+(commit: pending)
+

@@ -159,7 +159,8 @@ function dbLotToLot(
   fincaNameById: Map<string, string>,
   completionHistory: CompletionPoint[] = [],
   videoUrl: string | null = null,
-  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean } = EMPTY_EVAL_SUMMARY
+  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean } = EMPTY_EVAL_SUMMARY,
+  inscription: Lot["inscription"] = null
 ): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
   const stageIdx = stage < 0 ? 0 : stage;
@@ -193,6 +194,7 @@ function dbLotToLot(
     videoUrl,
     sampleShippedAt: row.sample_shipped_at,
     source: row.source,
+    inscription,
     eudrCustodyStages: row.eudr_custody_stages || [],
     eudrCustodyMethod: (row.eudr_custody_method as Lot["eudrCustodyMethod"]) || "",
     eudrCustodyNotes: row.eudr_custody_notes || "",
@@ -239,7 +241,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -260,6 +262,9 @@ function Experience() {
           supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id").order("created_at", { ascending: false }),
           // RLS (producer_comm_ack_select_own) scopes this to the producer's own acks.
           supabase.from("producer_comm_ack").select("comm_id, acknowledged_at"),
+          // RLS (arena_inscriptions_select_own) scopes this to the producer's own
+          // inscriptions — read-only; solo BCP las crea y las salda.
+          supabase.from("arena_inscriptions").select("lot_id, status, amount_cop, discount_pct, amount_due_cop"),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -296,6 +301,16 @@ function Experience() {
       for (const e of (evalRows as LotEvaluationRow[] | null) ?? []) {
         evalsByLotId.set(e.lot_id, [...(evalsByLotId.get(e.lot_id) ?? []), e]);
       }
+      type InscriptionRow = { lot_id: string; status: "pendiente" | "pagado" | "exento"; amount_cop: number; discount_pct: number; amount_due_cop: number };
+      const inscriptionByLotId = new Map<string, Lot["inscription"]>();
+      for (const i of (inscriptionRows as InscriptionRow[] | null) ?? []) {
+        inscriptionByLotId.set(i.lot_id, {
+          status: i.status,
+          amountCop: i.amount_cop,
+          discountPct: i.discount_pct,
+          amountDueCop: i.amount_due_cop,
+        });
+      }
       setLots(
         lotRowList.map((r) => {
           const rows = evalsByLotId.get(r.id) ?? [];
@@ -306,7 +321,8 @@ function Experience() {
             fincaNameById,
             completionByLotId.get(r.id),
             r.video_asset_id ? urlByAssetId.get(r.video_asset_id) ?? null : null,
-            { scaAverage: avg.scaAverage, factorAverage: avg.factorAverage, acceptedCount: avg.acceptedCount, hasPendingClaim }
+            { scaAverage: avg.scaAverage, factorAverage: avg.factorAverage, acceptedCount: avg.acceptedCount, hasPendingClaim },
+            inscriptionByLotId.get(r.id) ?? null
           );
         })
       );

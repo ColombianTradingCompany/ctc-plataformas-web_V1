@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus } from "@/lib/eudr";
+import { ARENA_FEE_COP, formatCop } from "@/lib/arena/inscriptions";
+import { NEQUI, PAYMENT_EMAIL, nequiConfigured, paymentReferenceFor } from "@/lib/arena/payment";
 import { useToast } from "@/components/Toast";
 import { submitLeadAuthed } from "@/lib/leads/actions";
 import { redeemClubCode, requestClubPassport } from "@/lib/club/actions";
@@ -37,7 +39,7 @@ function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "muestras" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
+export type DashboardModule = "info" | "muestras" | "inscripciones" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
 
 // Minimalist stroked line icons (one visual language, currentColor) — replaces
 // the multicolor emoji that clashed with the panel's editorial tone.
@@ -60,6 +62,10 @@ const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
   ),
   muestras: (
     <LineIcon><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" /><path d="M4 7l8 4 8-4" /><path d="M12 21V11" /></LineIcon>
+  ),
+  // Recibo/boleta: la inscripción que habilita la Arena.
+  inscripciones: (
+    <LineIcon><path d="M6 3.5h12v17l-2.4-1.6-2.4 1.6-2.4-1.6L8.4 20.5 6 18.9Z" /><path d="M9.2 8h5.6M9.2 12h5.6" /></LineIcon>
   ),
   retro: (
     <LineIcon><path d="M20 12a7.2 7.2 0 0 1-9.9 6.7L5 20l1.3-4.4A7.2 7.2 0 1 1 20 12Z" /></LineIcon>
@@ -244,6 +250,11 @@ export function AppDashboard({
   // Key facts for the hub tiles: enough to know whether a module needs
   // attention without opening it. `alert` facts render highlighted.
   const samplesToShip = lots.filter((l) => l.stage === 1 && !l.sampleShippedAt).length;
+  // Inscripciones: solo importan mientras el lote espera en la compuerta (stage 1).
+  // Sin fila todavía = CTC aún no la abrió, pero el costo ya aplica: se avisa igual.
+  const inscriptionLots = lots.filter((l) => l.stage === 1);
+  const inscriptionsDue = inscriptionLots.filter((l) => l.inscription?.status !== "pagado" && l.inscription?.status !== "exento");
+  const totalDueCop = inscriptionsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? ARENA_FEE_COP), 0);
   const newCtcNotes = feedback.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
   const aptFincas = fincas.filter((f) => fincaEudrStatus(f).code === "apta").length;
   const lotsInQueue = lots.filter((l) => l.stage === 4).length;
@@ -280,6 +291,17 @@ export function AppDashboard({
       title: "Envío de muestras",
       fact: samplesToShip > 0 ? `${samplesToShip} muestra${samplesToShip === 1 ? "" : "s"} por enviar` : "Dirección y guía de envío · 2 kg por lote",
       alert: samplesToShip > 0,
+    },
+    {
+      key: "inscripciones",
+      icon: HUB_ICON.inscripciones,
+      title: "Mis inscripciones",
+      fact: inscriptionsDue.length
+        ? `${inscriptionsDue.length} inscripci${inscriptionsDue.length === 1 ? "ón" : "ones"} por pagar · ${formatCop(totalDueCop)}`
+        : inscriptionLots.length
+          ? "Todas sus inscripciones están al día"
+          : "La Arena cuesta $80.000 por lote · consulte exenciones",
+      alert: inscriptionsDue.length > 0,
     },
     {
       key: "retro",
@@ -405,6 +427,93 @@ export function AppDashboard({
               </div>
             )}
             <button className="btn btn-sm" style={{ marginTop: 12 }} onClick={onOpenInfoModal}>Editar información</button>
+          </div>
+          )}
+
+          {module === "inscripciones" && (
+          <div className={styles.acard}>
+            <span className={styles.k}>Inscripción a la Arena · {formatCop(ARENA_FEE_COP)} por lote</span>
+            <div className={styles.alist} style={{ marginTop: 6 }}>
+              Registrar su finca y armar la ficha no cuesta nada: se paga <b>el lote que decide medir</b>. La inscripción
+              cubre la catación a ciegas ante Q-Graders, el factor de rendimiento, la certificación CTC y el feedback del
+              panel — <b>gane o no gane</b>. Su lote entra en fila para la Arena cuando la inscripción está al día y la
+              muestra recibida.
+            </div>
+            <div className={styles.alist} style={{ marginTop: 8 }}>
+              ¿Le queda difícil? <b>Escríbanos antes de pagar</b>: CTC otorga exenciones de 25%, 50%, 75% o 100% a los
+              productores que quiere ver compitiendo. No es una barrera — es una conversación.
+            </div>
+
+            {inscriptionLots.length === 0 ? (
+              <div className={styles.alist} style={{ marginTop: 10 }}>
+                Aún no tiene lotes en la compuerta de la Arena. Cuando termine la ficha de un lote, su inscripción aparece aquí.
+              </div>
+            ) : (
+              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                {inscriptionLots.map((l) => {
+                  const ins = l.inscription;
+                  const settled = ins?.status === "pagado" || ins?.status === "exento";
+                  const due = ins?.amountDueCop ?? ARENA_FEE_COP;
+                  return (
+                    <div key={l.id} style={{ border: "1.5px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
+                      <b style={{ fontSize: 14 }}>{l.name}</b>
+                      <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 8px" }}>
+                        <CtcRef id={l.id} />
+                      </div>
+                      {settled ? (
+                        <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
+                          {ins?.status === "exento"
+                            ? "✓ Inscripción eximida por CTC — no debe pagar nada."
+                            : `✓ Inscripción pagada${ins && ins.discountPct > 0 ? ` (con exención del ${ins.discountPct}%)` : ""}.`}
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: 13 }}>
+                            Pendiente: <b>{formatCop(due)}</b>
+                            {ins && ins.discountPct > 0 && (
+                              <span style={{ color: "var(--green)", fontWeight: 700 }}> · CTC le aplicó una exención del {ins.discountPct}%</span>
+                            )}
+                          </div>
+                          <div className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
+                            Referencia del pago: <b>{paymentReferenceFor(ctcLotReferenceShort(l.id))}</b>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Instrucciones de pago. Sin cuenta configurada NO se muestra un
+                número a medias: se manda al productor a escribirnos. */}
+            {inscriptionsDue.length > 0 && (
+              <div style={{ marginTop: 14, border: "1.5px solid var(--accent)", borderRadius: 10, padding: "14px 16px", background: "var(--card)" }}>
+                <span className={styles.k}>Cómo pagar · Nequi</span>
+                {nequiConfigured() ? (
+                  <>
+                    <div className={styles.alist} style={{ marginTop: 6 }}>
+                      Transfiera por <b>Nequi</b> al número <b style={{ fontSize: 16 }}>{NEQUI.number}</b>
+                      {NEQUI.holder && <> — a nombre de <b>{NEQUI.holder}</b></>}.
+                      <br />
+                      Total a pagar hoy: <b>{formatCop(totalDueCop)}</b>
+                      {inscriptionsDue.length > 1 && <> por {inscriptionsDue.length} lotes</>}.
+                    </div>
+                    <ol style={{ margin: "10px 0 0 18px", fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
+                      <li>Envíe el valor por Nequi al número de arriba.</li>
+                      <li>Escriba en el mensaje del pago la <b>referencia del lote</b> (el código que aparece en cada tarjeta).</li>
+                      <li>Mándenos el comprobante a <b>{PAYMENT_EMAIL}</b> o por su hilo de &quot;Retroalimentación y ayuda&quot;.</li>
+                      <li>CTC confirma el pago y su lote queda habilitado. Lo verá aquí mismo y en su feed.</li>
+                    </ol>
+                  </>
+                ) : (
+                  <div className={styles.alist} style={{ marginTop: 6 }}>
+                    Escríbanos a <b>{PAYMENT_EMAIL}</b> y le indicamos cómo pagar su inscripción (y si aplica alguna exención
+                    para usted).
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           )}
 

@@ -52,8 +52,23 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
   const [tagsEditing, setTagsEditing] = useState(false);
   const [attachments, setAttachments] = useState<{ filename: string; url: string }[] | null>(null);
 
-  const list = emails.filter((e) => e.status === tab);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
+
+  // Tag counters for the CURRENT tab; the selected filter persists across tabs.
+  const tabEmails = emails.filter((e) => e.status === tab);
+  const tagCounts = new Map<string, number>();
+  for (const e of tabEmails) for (const t of e.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+  const allTags = Array.from(new Set(emails.flatMap((e) => e.tags))).sort(
+    (a, b) => (tagCounts.get(b) ?? 0) - (tagCounts.get(a) ?? 0) || a.localeCompare(b)
+  );
+
+  const list = tabEmails.filter((e) => tagFilter.length === 0 || e.tags.some((t) => tagFilter.includes(t)));
   const unread = emails.filter((e) => e.status === "inbox" && !e.read_at).length;
+
+  function toggleTag(t: string) {
+    setTagFilter((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+  }
 
   function act(fn: () => Promise<{ ok: boolean; error?: string }>, okText: string, onOk?: () => void) {
     setMsg(null);
@@ -96,6 +111,31 @@ export function BuzonMail({ emails, myAddress }: { emails: InboundRow[]; myAddre
             {t.label} ({t.key === "inbox" ? `${unread}/` : ""}{emails.filter((e) => e.status === t.key).length})
           </button>
         ))}
+      </div>
+
+      <div className={styles.tagBar}>
+        <button className={styles.tagToggle} onClick={() => setTagsOpen((v) => !v)}>
+          Etiquetas {tagsOpen ? "▾" : "▸"}
+          {tagFilter.length > 0 && <span className={styles.tagFilterCount}>{tagFilter.length} activa{tagFilter.length === 1 ? "" : "s"}</span>}
+        </button>
+        {tagsOpen && (
+          <div className={styles.tagButtons}>
+            {allTags.map((t) => (
+              <button
+                key={t}
+                className={`${styles.tagBtn} ${tagFilter.includes(t) ? styles.tagBtnActive : ""}`}
+                onClick={() => toggleTag(t)}
+              >
+                {t} <span className={styles.tagCount}>{tagCounts.get(t) ?? 0}</span>
+              </button>
+            ))}
+            {tagFilter.length > 0 && (
+              <button className={styles.tagClear} onClick={() => setTagFilter([])}>
+                × limpiar filtro
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {msg && msg.text && <p className={msg.ok ? styles.syncOk : styles.syncErr} style={{ marginBottom: 12 }}>{msg.text}</p>}

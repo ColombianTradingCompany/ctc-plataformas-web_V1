@@ -18,6 +18,28 @@ closed and left as historical record of what went into producing it).
   fallback-only) — no node/wire/scenario changes.
 (commit: pending)
 
+## [2026-07-16] Buzón becomes a mail CLIENT: reply/forward, tags, archive/delete w/ IMAP reflection
+- Migration buzon_mail_client: inbound_emails gains tags text[], status inbox/archived/deleted,
+  replied_at; new buzon_outbound (service-role-only) records every reply/forward sent.
+- src/lib/buzon/mailClient.ts: sendBuzonMail (Resend sends AS the collaborator's own
+  @ctcexport.com label — domain verified — else info@; threading via In-Reply-To; an RFC822
+  copy APPENDed to Hostinger INBOX.Sent so webmail reflects platform sends);
+  moveRemoteMessage (search by message-id → messageMove to INBOX.Archive [created on first
+  use — Hostinger has no \Archive] or INBOX.Trash), all best-effort against the mailbox.
+- buzonActions rewritten: sendBuzonReply / setBuzonStatus / setBuzonTags /
+  getBuzonAttachmentUrls (signed URLs on demand) / markInboundEmailRead — every action
+  permission-scoped: owners touch any mail, a collaborator only mail addressed to their label.
+- /bcp/buzon UI (BuzonMail.tsx): tabs Recibidos/Archivados/Papelera, expand→auto-mark-read,
+  inline composer (reply prefills sender/Re:, original quoted below), tag chips + editor,
+  archive/delete buttons ("también en Hostinger").
+- Verified live: folder discovery (INBOX.Sent \Sent, INBOX.Trash \Trash, no \Archive);
+  append-to-Sent round-trip (self-cleaned); search-by-real-message-id = 1 hit; tsc+eslint
+  clean; page compiles + 307 unauth redirect. Authenticated send/archive flows: owner's
+  first real use (Resend path identical to proven leadEmails wiring).
+- Doc impact when wrapped: extend "buzon" DICT (mail client: outbound via n-third, remote
+  reflection) + possible wire n-inbound ↔ n-third both ways.
+(commit: pending)
+
 ## [2026-07-16] Buzón: full-history backfill + per-recipient inboxes (commit 90b948c)
 - syncBuzon now scans ALL envelopes and imports missing messages in 25-msg batches
   (returns `remaining`; the Sincronizar button loops until 0) — whole info@ history

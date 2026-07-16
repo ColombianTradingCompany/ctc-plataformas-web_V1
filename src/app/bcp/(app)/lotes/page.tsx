@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot, confirmSampleReceived, updateLotEudr } from "../actions";
+import { createLot, updateLotEudr } from "../actions";
+import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { logProducerComm } from "../commActions";
 import {
   fincaEudrStatus,
@@ -160,14 +161,19 @@ export default async function BcpLotesPage() {
   ]);
 
   const lotRows = (lots as LotRow[] | null) ?? [];
-  const [producers, { data: comms }] = await Promise.all([
+  const [producers, { data: comms }, { data: inscriptionRows }] = await Promise.all([
     fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
     service
       .from("producer_comm_log")
       .select("id, lot_id, context_label, note, created_at, author_role")
       .in("lot_id", lotRows.map((l) => l.id))
       .order("created_at", { ascending: false }),
+    service.from("arena_inscriptions").select("lot_id, status").in("lot_id", lotRows.map((l) => l.id)),
   ]);
+  const inscriptionSettledByLot = new Map<string, boolean>();
+  for (const i of (inscriptionRows as { lot_id: string; status: string }[] | null) ?? []) {
+    inscriptionSettledByLot.set(i.lot_id, i.status === "pagado" || i.status === "exento");
+  }
   const commsByLot = new Map<string, CommRow[]>();
   for (const c of (comms as CommRow[] | null) ?? []) {
     if (!c.lot_id) continue;
@@ -255,6 +261,7 @@ export default async function BcpLotesPage() {
                       producer={producers.get(lot.producer_id)}
                       comms={commsByLot.get(lot.id) ?? []}
                       showConfirmReceipt={col.id === "muestra"}
+                      inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
                     />
                   ))}
                 </div>
@@ -279,11 +286,13 @@ function LotCard({
   producer,
   comms,
   showConfirmReceipt,
+  inscriptionSettled,
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
   comms: CommRow[];
   showConfirmReceipt: boolean;
+  inscriptionSettled: boolean;
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
@@ -377,17 +386,12 @@ function LotCard({
         <p className={styles.warn}>La finca de origen tiene deforestación o producción ilegal declarada.</p>
       )}
       {showConfirmReceipt && (lot.sample_shipped_at || lot.source === "bcp_manual_entry") && !lot.sample_2kg_confirmed_at && (
-        <form
-          action={async () => {
-            "use server";
-            await confirmSampleReceived(lot.id);
-          }}
-          style={{ marginTop: 8 }}
-        >
-          <button className="btn btn-sm btn-solid" type="submit">
-            Confirmar recibido → Muestras Recibidas
-          </button>
-        </form>
+        <ConfirmReceiptButton
+          lotId={lot.id}
+          eudrReady={eudrStatus.code === "eudr_ready"}
+          eudrLabel={eudrStatus.label}
+          inscriptionSettled={inscriptionSettled}
+        />
       )}
 
       {sectionHead(aid("ft"), "FT · Identidad y Origen")}

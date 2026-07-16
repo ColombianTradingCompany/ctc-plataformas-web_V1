@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { activeCups, cupLabel, type JornadaState } from "@/lib/arena/jornada";
+import { JORNADA_SCRIPT, activeCups, cupLabel, type JornadaState } from "@/lib/arena/jornada";
 import { addLotToSession, closeArenaSession, recordArenaScore, startJornada } from "../../arenaActions";
 import styles from "../../shared.module.css";
 
@@ -97,6 +97,42 @@ export default async function BcpArenaSessionPage({ params }: { params: Promise<
             </form>
           )}
         </div>
+      )}
+
+      {!isCompleted && (
+        <details className={styles.card} style={{ flexDirection: "column", alignItems: "stretch", marginBottom: 20 }}>
+          <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14 }}>
+            Agenda de la jornada · {JORNADA_SCRIPT.reduce((t, st) => t + st.steps.reduce((a, s) => a + s.minutes, 0), 0)} min
+            (~3.5 h) — el guion es siempre el mismo
+          </summary>
+          {(() => {
+            // Reloj acumulado T+min para que el host planifique la mesa (plan
+            // canónico: 7 cafés, descartes 2+2, 3 finalistas — se adapta con menos).
+            let offset = 0;
+            return JORNADA_SCRIPT.map((st) => {
+              const stageTotal = st.steps.reduce((a, s) => a + s.minutes, 0);
+              return (
+                <div key={st.title} style={{ marginTop: 14 }}>
+                  <p style={{ fontWeight: 700, fontSize: 13.5, margin: 0 }}>
+                    {st.title} <span className={styles.meta}>· {st.approx} ({stageTotal} min)</span>
+                  </p>
+                  {st.steps.map((s) => {
+                    const at = offset;
+                    offset += s.minutes;
+                    return (
+                      <p key={s.title} className={styles.meta} style={{ margin: "4px 0 0 14px" }}>
+                        <span style={{ fontFamily: "var(--font-spline-mono), monospace", fontSize: 11 }}>
+                          T+{String(Math.floor(at / 60)).padStart(1, "0")}:{String(at % 60).padStart(2, "0")}
+                        </span>{" "}
+                        · {s.title} — <b>{s.minutes}′</b>
+                      </p>
+                    );
+                  })}
+                </div>
+              );
+            });
+          })()}
+        </details>
       )}
 
       {!isCompleted && !jornadaOwns && (

@@ -16,6 +16,9 @@ export type InscripcionRow = {
   discountPct: number;
   amountDueCop: number;
   paymentRef: string | null;
+  // Orden del intake: EUDR → pago. Sin EUDR resuelto no se salda la inscripción.
+  eudrReady: boolean;
+  eudrLabel: string;
 };
 
 const STATUS_LABEL: Record<InscriptionStatus, string> = {
@@ -80,8 +83,15 @@ export function InscripcionesBlock({ rows }: { rows: InscripcionRow[] }) {
             <p className={styles.meta}>
               <span className={styles.badge}>{r.supplierCode}</span> {r.producerName} ·{" "}
               <span className={styles.badgeWarn}>{STATUS_LABEL[r.status ?? "pendiente"]}</span>
+              {!r.eudrReady && <> · <span className={styles.badgeBad}>EUDR: {r.eudrLabel}</span></>}
             </p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
+            {!r.eudrReady && (
+              <p className={styles.warn} style={{ marginTop: 8 }}>
+                Primero resuelva la debida diligencia EUDR de este lote (finca apta + nivel de riesgo determinado, en
+                /bcp/lotes) — el orden del intake es EUDR → pago → muestra.
+              </p>
+            )}
+            <div style={r.eudrReady ? { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 } : { display: "none" }}>
               <span className={styles.meta}>Exención:</span>
               <div style={{ display: "flex", gap: 4 }} role="group" aria-label={`Exención para ${r.lotName}`}>
                 {DISCOUNT_STEPS.map((p) => (

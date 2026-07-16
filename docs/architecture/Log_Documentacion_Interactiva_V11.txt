@@ -6,4 +6,33 @@ Covers: everything since Documentacion_Interactiva_V11.0(5587337).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V10.txt is
 closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-16] Crash de "Confirmar Recibido" + orden del intake EUDR → pago → muestra + agenda de Jornada
+- CRASH diagnosticado: el botón "Confirmar recibido → Muestras Recibidas" en /bcp/lotes era un
+  <form action> inline y confirmSampleReceived() LANZABA en cada compuerta incumplida — un throw en
+  una Server Action de formulario cae al error boundary de Next (página entera rota). El lote del
+  reporte ("Pacamara Doble Fermentación 60h"): muestra enviada, SIN fila de inscripción (llegó a la
+  compuerta después del grandfathering) y EUDR pendiente (sin nivel de riesgo) — la compuerta de
+  inscripción lanzó y reventó la página.
+- Fix estructural: confirmSampleReceived devuelve { ok | error } (nunca lanza) y el botón es ahora
+  ConfirmReceiptButton.tsx (cliente): muestra el rechazo inline y ANTES de hacer clic exhibe las dos
+  compuertas como chips (EUDR ✓/estado · Inscripción ✓/pendiente).
+- ORDEN DEL INTAKE (decidido por el owner): EUDR resuelto → inscripción saldada → muestra recibida →
+  Arena. Implementado con src/lib/arena/eudrGate.ts (lotEudrGate: carga lote + finca primaria y usa
+  el helper canónico lotEudrStatus — misma regla que el chip y el certificado; ready = "eudr_ready"):
+  * confirmSampleReceived chequea EUDR primero, luego inscripción, luego envío.
+  * settleArenaInscription rechaza saldar el pago si el EUDR no está resuelto.
+  * /bcp/club InscripcionesBlock: cada fila trae eudrReady/eudrLabel; sin EUDR resuelto se ocultan
+    los controles de pago y se muestra "primero resuelva la debida diligencia (en /bcp/lotes)".
+- Estado real verificado por SQL: de los 4 lotes en la compuerta hoy, solo "Gesha Lote 1 Ragonvalia"
+  pasa las tres compuertas; "Pacamara" y "Catia de Bavaria" esperan nivel de riesgo EUDR;
+  "funcionalmente" (lote de prueba) no tiene nada diligenciado.
+- Jornada/Arena: el guion JORNADA_SCRIPT ya codificaba la dinámica del owner casi textual
+  (6/2/1/45 · 15/15/20/5 · 10/15/15/5 · 15/10/10/5). Mejoras: (1) la página de la sesión de Arena
+  gana una AGENDA colapsable con las 4 etapas, cada paso con su duración y el reloj acumulado T+h:mm
+  y el total (~3.5 h) — visible ANTES de iniciar la jornada, para planear la mesa; (2) el guion
+  incorpora los números canónicos del rundown (7 cafés, descartes 2+2, 3 finalistas) manteniendo la
+  nota de adaptación con menos tazas.
+- Doc impact when wrapped: la entrada DICT "inscripcion" y el escenario "envio"/"pasaporte" deben
+  reflejar el orden EUDR → pago → muestra; "jornada" suma la agenda T+.
+(commit: pending)
+

@@ -11,6 +11,7 @@ import {
 } from "../clubActions";
 import { InscripcionesBlock, type InscripcionRow } from "./InscripcionesBlock";
 import type { InscriptionStatus } from "@/lib/arena/inscriptions";
+import { lotEudrGate } from "@/lib/arena/eudrGate";
 import styles from "../shared.module.css";
 
 // Kaffetal Club · Pasaportes. Top block: campaigns (first-class rows in
@@ -128,8 +129,11 @@ export default async function BcpClubPage() {
   const restantes = producerIds.length - activos.length - pendientes.length - elegibles.length;
 
   // Rows for the inscriptions block: every lot waiting at the gate (with or
-  // without a row yet) plus any already-settled one, newest work first.
-  const inscripcionRows: InscripcionRow[] = gateLots.map((l) => {
+  // without a row yet) plus any already-settled one, newest work first. Each
+  // carries its EUDR gate state — the intake order is EUDR → pago → muestra,
+  // so a lot with EUDR pendiente can't have its payment settled yet.
+  const eudrGates = await Promise.all(gateLots.map((l) => lotEudrGate(service, l.id)));
+  const inscripcionRows: InscripcionRow[] = gateLots.map((l, i) => {
     const ins = inscriptionByLot.get(l.id);
     return {
       lotId: l.id,
@@ -141,6 +145,8 @@ export default async function BcpClubPage() {
       discountPct: ins?.discount_pct ?? 0,
       amountDueCop: ins?.amount_due_cop ?? 0,
       paymentRef: ins?.payment_ref ?? null,
+      eudrReady: eudrGates[i].ready,
+      eudrLabel: eudrGates[i].label,
     };
   });
 

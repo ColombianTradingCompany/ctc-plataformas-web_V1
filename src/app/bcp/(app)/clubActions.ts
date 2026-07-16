@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendPassportEmail } from "@/lib/email/clubEmails";
 import { ARENA_FEE_COP, dueFor, formatCop, isDiscountPct, producerHasSettledInscription, type DiscountPct } from "@/lib/arena/inscriptions";
+import { lotEudrGate } from "@/lib/arena/eudrGate";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 async function requireAdmin() {
@@ -299,6 +300,13 @@ export async function settleArenaInscription(input: SettleInput): Promise<{ ok: 
 
   const { data: lot } = await service.from("lots").select("id, name, producer_id, stage").eq("id", input.lotId).single();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  // Orden del intake: la debida diligencia EUDR se resuelve ANTES de tocar el
+  // dinero — no se confirma un pago sobre un lote que quizá no pueda exportarse.
+  const eudr = await lotEudrGate(service, input.lotId);
+  if (!eudr.ready) {
+    return { ok: false, error: `El EUDR del lote sigue "${eudr.label}" — confírmelo (finca apta + nivel de riesgo) antes de saldar la inscripción.` };
+  }
 
   const pct = input.discountPct ?? 0;
   if (!isDiscountPct(pct)) return { ok: false, error: "La exención solo admite 0%, 25%, 50%, 75% o 100%." };

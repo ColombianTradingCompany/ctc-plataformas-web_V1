@@ -5,6 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
+import { lotEudrGate } from "@/lib/arena/eudrGate";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
@@ -156,19 +157,31 @@ export async function createLot(formData: FormData) {
 // of picking a stage from the dropdown: the producer confirms shipment (Kaffetal
 // Regal sets lots.sample_shipped_at), and only then can BCP confirm receipt here --
 // which is what actually advances the lot into the Arena queue (fila_arena).
-export async function confirmSampleReceived(lotId: string) {
+// Devuelve resultado en vez de lanzar: un throw en una Server Action invocada
+// desde un <form> revienta la página entera con el error boundary de Next — fue
+// el "crash" reportado al confirmar con la compuerta sin cumplir. Los rechazos
+// son estados de negocio esperables y se muestran inline (ConfirmReceiptButton).
+// Orden del intake (decidido 2026-07-16): EUDR resuelto → inscripción saldada →
+// muestra recibida → recién ahí la fila de la Arena.
+export async function confirmSampleReceived(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("stage, sample_shipped_at, source").eq("id", lotId).single();
-  if (!lot) throw new Error("Lote no encontrado.");
-  if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
-    throw new Error("El productor todavía no ha confirmado el envío de la muestra.");
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  // 1. EUDR primero: sin la debida diligencia resuelta no hay pago ni recibo.
+  const eudr = await lotEudrGate(service, lotId);
+  if (!eudr.ready) {
+    return { ok: false, error: `La debida diligencia EUDR del lote sigue "${eudr.label}" — resuélvala (finca apta + nivel de riesgo determinado) antes de confirmar pagos o muestras.` };
   }
-  // La inscripción de Arena (COP 80.000, descontable/eximible) debe estar
-  // saldada antes de que el lote entre a la fila. Se confirma en /bcp/club.
+  // 2. Luego la inscripción de Arena (COP 80.000, descontable/eximible).
   if (!(await lotInscriptionSettled(service, lotId))) {
-    throw new Error("La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /bcp/club.");
+    return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /bcp/club." };
+  }
+  // 3. Y la muestra tiene que haber salido de la finca.
+  if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
+    return { ok: false, error: "El productor todavía no ha confirmado el envío de la muestra." };
   }
 
   await service
@@ -186,6 +199,7 @@ export async function confirmSampleReceived(lotId: string) {
 
   revalidatePath("/bcp/lotes");
   revalidatePath("/bcp");
+  return { ok: true };
 }
 
 // Tri-state yes/no/unset fields render as a <select> with "si"/"no"/"" values

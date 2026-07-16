@@ -1,7 +1,6 @@
 Log_Documentacion_Interactiva_V9
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V10.0(<sha>).html.
+Status: WRAPPED into Documentacion_Interactiva_V10.0(b294dc8).html on 2026-07-16.
+This log is now a closed historical record.
 Covers: everything since Documentacion_Interactiva_V9.0(875b455).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V8.txt is
 closed and left as historical record of what went into producing it).
@@ -46,7 +45,7 @@ closed and left as historical record of what went into producing it).
   Pasaporte, 3 notas entregadas, y las columnas generadas cuadran (100% → desc. 80.000 → a pagar 0).
 - PENDIENTE: el productor todavía NO ve su inscripción en su panel — solo se entera por la nota del
   feed; falta la vista "Mis inscripciones" + instrucciones de pago.
-(commit: pending)
+(commit: b294dc8)
 
 ## [2026-07-16] Kaffetal Regal: nueva sección "¿Por qué vale la pena?" (el WHY del productor)
 - Diagnóstico: la landing ya respondía POR QUÉ REGISTRARSE en números (OportunidadSection: 0 COP,
@@ -62,4 +61,4 @@ closed and left as historical record of what went into producing it).
 - Doc impact when wrapped: reforzar el nodo n-kaffetal / DICT "kaffetal" con el argumento de red
   (la prima depende de los compradores del otro lado) — es el mismo efecto-red que ya describe
   "Efecto red" en la visión v3; sin cambios estructurales.
-(commit: pending)
+(commit: b294dc8)

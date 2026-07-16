@@ -4,6 +4,7 @@ import { Header } from "./Header";
 import { TopBanner } from "./TopBanner";
 import { Hero } from "./Hero";
 import { OportunidadSection } from "./OportunidadSection";
+import { PorQueSection } from "./PorQueSection";
 import { ParticiparSection } from "./ParticiparSection";
 import { ArenaSection } from "./ArenaSection";
 import { CalendarioSection } from "./CalendarioSection";
@@ -13,11 +14,12 @@ import { Footer } from "./Footer";
 
 const SECTIONS: QuickNavSection[] = [
   { id: "oportunidad", n: "01", label: "La oportunidad", sub: "En números: prima y diferencial" },
-  { id: "participar", n: "02", label: "Cómo participar", sub: "Cinco pasos entre su lote y la Arena" },
-  { id: "arena", n: "03", label: "La Arena", sub: "Cupping en vivo y grados CTC" },
-  { id: "calendario", n: "04", label: "El calendario", sub: "Dos cosechas, dos Arenas" },
-  { id: "trato", n: "05", label: "El trato", sub: "Para los galardonados, por escrito" },
-  { id: "gyg", n: "06", label: "Quiénes somos", sub: "G&G · Fundadores" },
+  { id: "porque", n: "02", label: "Por qué vale la pena", sub: "El dato es suyo · la red fija su prima" },
+  { id: "participar", n: "03", label: "Cómo participar", sub: "Cinco pasos entre su lote y la Arena" },
+  { id: "arena", n: "04", label: "La Arena", sub: "Cupping en vivo y grados CTC" },
+  { id: "calendario", n: "05", label: "El calendario", sub: "Dos cosechas, dos Arenas" },
+  { id: "trato", n: "06", label: "El trato", sub: "Para los galardonados, por escrito" },
+  { id: "gyg", n: "07", label: "Quiénes somos", sub: "G&G · Fundadores" },
 ];
 
 export function Landing({ onLogin }: { onLogin: () => void }) {
@@ -27,6 +29,7 @@ export function Landing({ onLogin }: { onLogin: () => void }) {
       <TopBanner />
       <Hero onLogin={onLogin} onGo={(id) => document.getElementById(id)?.scrollIntoView()} />
       <OportunidadSection />
+      <PorQueSection onLogin={onLogin} />
 
       <Band
         image="/images/kaffetal-regal/31-marquesinas-secado.jpg"

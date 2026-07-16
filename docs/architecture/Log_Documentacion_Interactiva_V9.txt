@@ -6,4 +6,18 @@ Covers: everything since Documentacion_Interactiva_V9.0(875b455).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V8.txt is
 closed and left as historical record of what went into producing it).
 
-(no entries yet)
+## [2026-07-16] Kaffetal Regal: nueva sección "¿Por qué vale la pena?" (el WHY del productor)
+- Diagnóstico: la landing ya respondía POR QUÉ REGISTRARSE en números (OportunidadSection: 0 COP,
+  escalera de prima, 2 cosechas), pero NO decía dos tesis centrales de la visión v3 en voz de
+  productor: (a) la prima la fija la RED, no CTC ("más red = mejor precio, sin cambiar el café"),
+  y (b) el valor se ACUMULA (polígono una vez para toda la vida del predio; historial de puntajes
+  cosecha a cosecha que alimenta CTC Tech; la demanda vuelve con nombre → marca de origen).
+  La página vendía una transacción; la visión es una relación que compone.
+- Nueva PorQueSection.tsx (+ .module.css), id "porque", entre Oportunidad (cuánto vale) y
+  Participar (cómo) — 3 tarjetas: "Por qué registrarse" / "Por qué la comunidad" / "Por qué llegar
+  hasta el final", h2 "Aquí el productor no vende café: compite.", cierre con CTA a registrar.
+  QuickNav renumerado a 7 entradas.
+- Doc impact when wrapped: reforzar el nodo n-kaffetal / DICT "kaffetal" con el argumento de red
+  (la prima depende de los compradores del otro lado) — es el mismo efecto-red que ya describe
+  "Efecto red" en la visión v3; sin cambios estructurales.
+(commit: pending)

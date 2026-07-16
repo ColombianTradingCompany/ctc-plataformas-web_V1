@@ -41,7 +41,7 @@ type LotNamedRow = { id: string; name: string | null; producer_id: string; stage
 type InscriptionRowDb = {
   lot_id: string;
   producer_id: string;
-  discount_cop: number;
+  discount_pct: number;
   amount_due_cop: number;
   status: InscriptionStatus;
   payment_ref: string | null;
@@ -75,7 +75,7 @@ export default async function BcpClubPage() {
       .order("created_at", { ascending: false }),
     service.from("club_campaigns").select("id, name, created_at").order("created_at", { ascending: false }),
     service.from("lots").select("id, name, producer_id, stage").eq("stage", AWAITING_ARENA).order("created_at", { ascending: true }),
-    service.from("arena_inscriptions").select("lot_id, producer_id, discount_cop, amount_due_cop, status, payment_ref"),
+    service.from("arena_inscriptions").select("lot_id, producer_id, discount_pct, amount_due_cop, status, payment_ref"),
   ]);
 
   const producerIds = ((producers as { id: string }[] | null) ?? []).map((p) => p.id);
@@ -138,7 +138,7 @@ export default async function BcpClubPage() {
       producerName: name(l.producer_id),
       supplierCode: supplierCode(l.producer_id),
       status: ins?.status ?? null,
-      discountCop: ins?.discount_cop ?? 0,
+      discountPct: ins?.discount_pct ?? 0,
       amountDueCop: ins?.amount_due_cop ?? 0,
       paymentRef: ins?.payment_ref ?? null,
     };

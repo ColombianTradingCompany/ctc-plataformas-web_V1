@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ARENA_FEE_COP, formatCop, type InscriptionStatus } from "@/lib/arena/inscriptions";
+import { ARENA_FEE_COP, DISCOUNT_STEPS, dueFor, formatCop, type DiscountPct, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { settleArenaInscription, unsettleArenaInscription } from "../clubActions";
 import styles from "../shared.module.css";
 
@@ -13,7 +13,7 @@ export type InscripcionRow = {
   producerName: string;
   supplierCode: string;
   status: InscriptionStatus | null; // null = aún sin fila (pendiente de facto)
-  discountCop: number;
+  discountPct: number;
   amountDueCop: number;
   paymentRef: string | null;
 };
@@ -28,12 +28,12 @@ export function InscripcionesBlock({ rows }: { rows: InscripcionRow[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { discount: string; ref: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, { pct: DiscountPct; ref: string }>>({});
 
   function draft(lotId: string) {
-    return drafts[lotId] ?? { discount: "", ref: "" };
+    return drafts[lotId] ?? { pct: 0 as DiscountPct, ref: "" };
   }
-  function setDraft(lotId: string, patch: Partial<{ discount: string; ref: string }>) {
+  function setDraft(lotId: string, patch: Partial<{ pct: DiscountPct; ref: string }>) {
     setDrafts((d) => ({ ...d, [lotId]: { ...draft(lotId), ...patch } }));
   }
 
@@ -72,7 +72,8 @@ export function InscripcionesBlock({ rows }: { rows: InscripcionRow[] }) {
 
       {pendientes.map((r) => {
         const d = draft(r.lotId);
-        const discount = Math.max(0, Math.min(Number(d.discount || 0), ARENA_FEE_COP));
+        const due = dueFor(d.pct);
+        const isExempt = d.pct === 100;
         return (
           <div key={r.lotId} className={styles.miniCard} style={{ marginTop: 10 }}>
             <h4>{r.lotName}</h4>
@@ -81,49 +82,44 @@ export function InscripcionesBlock({ rows }: { rows: InscripcionRow[] }) {
               <span className={styles.badgeWarn}>{STATUS_LABEL[r.status ?? "pendiente"]}</span>
             </p>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 }}>
-              <input
-                type="number"
-                min={0}
-                max={ARENA_FEE_COP}
-                step={1000}
-                placeholder="Descuento COP (0)"
-                value={d.discount}
-                onChange={(e) => setDraft(r.lotId, { discount: e.target.value })}
-                aria-label={`Descuento para ${r.lotName}`}
-                style={{ width: 160, padding: "8px 10px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 13 }}
-              />
-              <input
-                type="text"
-                placeholder="Referencia de pago"
-                value={d.ref}
-                onChange={(e) => setDraft(r.lotId, { ref: e.target.value })}
-                aria-label={`Referencia de pago para ${r.lotName}`}
-                style={{ width: 180, padding: "8px 10px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 13 }}
-              />
-              <span className={styles.meta}>A pagar: <b>{formatCop(ARENA_FEE_COP - discount)}</b></span>
+              <span className={styles.meta}>Exención:</span>
+              <div style={{ display: "flex", gap: 4 }} role="group" aria-label={`Exención para ${r.lotName}`}>
+                {DISCOUNT_STEPS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`btn btn-sm ${d.pct === p ? "btn-solid" : ""}`}
+                    aria-pressed={d.pct === p}
+                    onClick={() => setDraft(r.lotId, { pct: p })}
+                  >
+                    {p}%
+                  </button>
+                ))}
+              </div>
+              {!isExempt && (
+                <input
+                  type="text"
+                  placeholder="Referencia de pago"
+                  value={d.ref}
+                  onChange={(e) => setDraft(r.lotId, { ref: e.target.value })}
+                  aria-label={`Referencia de pago para ${r.lotName}`}
+                  style={{ width: 170, padding: "8px 10px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 13 }}
+                />
+              )}
+              <span className={styles.meta}>
+                A pagar: <b>{formatCop(due)}</b>
+              </span>
               <button
                 className="btn btn-sm btn-solid"
                 disabled={pending}
                 onClick={() =>
                   act(
-                    () => settleArenaInscription({ lotId: r.lotId, discountCop: discount, paymentRef: d.ref }),
-                    discount >= ARENA_FEE_COP ? "Inscripción eximida." : "Pago confirmado."
+                    () => settleArenaInscription({ lotId: r.lotId, discountPct: d.pct, paymentRef: d.ref }),
+                    isExempt ? "Inscripción eximida al 100%." : `Pago confirmado por ${formatCop(due)}.`
                   )
                 }
               >
-                Confirmar pago
-              </button>
-              <button
-                className="btn btn-sm"
-                disabled={pending}
-                onClick={() =>
-                  act(
-                    () => settleArenaInscription({ lotId: r.lotId, discountCop: ARENA_FEE_COP, notes: "Exención total" }),
-                    "Inscripción eximida."
-                  )
-                }
-              >
-                Eximir (100%)
+                {isExempt ? "Eximir inscripción" : "Confirmar pago"}
               </button>
             </div>
           </div>
@@ -140,7 +136,7 @@ export function InscripcionesBlock({ rows }: { rows: InscripcionRow[] }) {
                 <span className={styles.badge}>{r.supplierCode}</span> {r.producerName} ·{" "}
                 <span className={styles.badgeGood}>{STATUS_LABEL[r.status as InscriptionStatus]}</span>
                 {r.status === "pagado" && ` · ${formatCop(r.amountDueCop)}`}
-                {r.discountCop > 0 && r.status === "pagado" && ` (desc. ${formatCop(r.discountCop)})`}
+                {r.discountPct > 0 && r.status === "pagado" && ` (exención ${r.discountPct}%)`}
                 {r.paymentRef && ` · ref ${r.paymentRef}`}
               </p>
               <button

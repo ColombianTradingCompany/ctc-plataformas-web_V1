@@ -34,9 +34,18 @@ closed and left as historical record of what went into producing it).
 - Verificado: tsc+eslint limpios; la landing ya no contiene ninguna afirmación de gratuidad
   (chequeo en navegador); simulación SQL de las compuertas: 3 lotes en ficha_completa, 0 pasarían
   (todos bloqueados) y 0 productores califican para Pasaporte — la regla nueva está enforcing.
-- PENDIENTE/decisión: (a) ¿grandfathering de esos 3 lotes ya en curso (eximirlos) o cobrarles?
-  (b) el productor todavía NO ve su inscripción en su panel — solo se entera por la nota del feed;
-  falta la vista "Mis inscripciones" + instrucciones de pago.
+- SEGUIMIENTO (mismo día): la exención pasa a ser un PORCENTAJE de tramos fijos (0/25/50/75/100),
+  no un monto libre — migración arena_inscriptions_discount_pct: discount_pct smallint CHECK IN
+  (0,25,50,75,100) como fuente de verdad, y discount_cop + amount_due_cop pasan a ser GENERATED a
+  partir de amount_cop+discount_pct (Postgres no permite que una generada referencie a otra, así que
+  ambas derivan de columnas base). UI: los tramos son botones (no un input libre); la referencia de
+  pago se oculta al 100%. Helpers DISCOUNT_STEPS/dueFor/isDiscountPct en src/lib/arena/inscriptions.ts.
+- GRANDFATHERING aplicado (migración de datos): los 3 lotes que ya esperaban en la compuerta cuando
+  la Arena se volvió paga quedaron eximidos al 100%, con audit_log y una nota al productor que explica
+  el cambio y que no debe pagar. Verificado: 3/3 pasan la compuerta, 3 productores califican para
+  Pasaporte, 3 notas entregadas, y las columnas generadas cuadran (100% → desc. 80.000 → a pagar 0).
+- PENDIENTE: el productor todavía NO ve su inscripción en su panel — solo se entera por la nota del
+  feed; falta la vista "Mis inscripciones" + instrucciones de pago.
 (commit: pending)
 
 ## [2026-07-16] Kaffetal Regal: nueva sección "¿Por qué vale la pena?" (el WHY del productor)

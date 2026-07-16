@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendPassportEmail } from "@/lib/email/clubEmails";
-import { ARENA_FEE_COP, formatCop, producerHasSettledInscription } from "@/lib/arena/inscriptions";
+import { ARENA_FEE_COP, dueFor, formatCop, isDiscountPct, producerHasSettledInscription, type DiscountPct } from "@/lib/arena/inscriptions";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 async function requireAdmin() {
@@ -286,8 +286,8 @@ export async function revokeClubMembership(producerId: string) {
 
 type SettleInput = {
   lotId: string;
-  /** Descuento en COP sobre los 80.000 de lista. Igual al monto = exención. */
-  discountCop?: number;
+  /** Tramo de exención: 0 | 25 | 50 | 75 | 100. 100 = exención total. */
+  discountPct?: number;
   paymentRef?: string;
   notes?: string;
 };
@@ -300,16 +300,18 @@ export async function settleArenaInscription(input: SettleInput): Promise<{ ok: 
   const { data: lot } = await service.from("lots").select("id, name, producer_id, stage").eq("id", input.lotId).single();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
 
-  const discount = Math.max(0, Math.min(Math.round(input.discountCop ?? 0), ARENA_FEE_COP));
-  const due = ARENA_FEE_COP - discount;
-  const status = due === 0 ? "exento" : "pagado";
+  const pct = input.discountPct ?? 0;
+  if (!isDiscountPct(pct)) return { ok: false, error: "La exención solo admite 0%, 25%, 50%, 75% o 100%." };
+  const discountPct = pct as DiscountPct;
+  const due = dueFor(discountPct);
+  const status = discountPct === 100 ? "exento" : "pagado";
 
   const { error } = await service.from("arena_inscriptions").upsert(
     {
       lot_id: lot.id,
       producer_id: lot.producer_id,
       amount_cop: ARENA_FEE_COP,
-      discount_cop: discount,
+      discount_pct: discountPct,
       status,
       payment_ref: input.paymentRef?.trim() || null,
       notes: input.notes?.trim() || null,
@@ -327,8 +329,8 @@ export async function settleArenaInscription(input: SettleInput): Promise<{ ok: 
     lot_id: lot.id,
     note:
       status === "exento"
-        ? `CTC eximió la inscripción de Arena de este lote (valor de lista ${formatCop(ARENA_FEE_COP)}). Su lote queda habilitado para la Arena sin costo.`
-        : `Inscripción de Arena confirmada por ${formatCop(due)}${discount > 0 ? ` (descuento de ${formatCop(discount)} sobre ${formatCop(ARENA_FEE_COP)})` : ""}. Su lote queda habilitado para la Arena.`,
+        ? `CTC eximió al 100% la inscripción de Arena de este lote (valor de lista ${formatCop(ARENA_FEE_COP)}). Su lote queda habilitado para la Arena sin costo.`
+        : `Inscripción de Arena confirmada por ${formatCop(due)}${discountPct > 0 ? ` (exención del ${discountPct}% sobre ${formatCop(ARENA_FEE_COP)})` : ""}. Su lote queda habilitado para la Arena.`,
   });
 
   await service.from("audit_log").insert({
@@ -337,7 +339,7 @@ export async function settleArenaInscription(input: SettleInput): Promise<{ ok: 
     action: status === "exento" ? "exempted" : "payment_confirmed",
     new_status: status,
     performed_by: adminId,
-    notes: `${formatCop(due)} a pagar${discount > 0 ? ` · descuento ${formatCop(discount)}` : ""}${input.paymentRef ? ` · ref ${input.paymentRef}` : ""}`,
+    notes: `${formatCop(due)} a pagar · exención ${discountPct}%${input.paymentRef ? ` · ref ${input.paymentRef}` : ""}`,
   });
 
   revalidatePath("/bcp/club");
@@ -358,7 +360,7 @@ export async function unsettleArenaInscription(lotId: string): Promise<{ ok: tru
 
   const { error } = await service
     .from("arena_inscriptions")
-    .update({ status: "pendiente", discount_cop: 0, payment_ref: null, confirmed_by: null, confirmed_at: null })
+    .update({ status: "pendiente", discount_pct: 0, payment_ref: null, confirmed_by: null, confirmed_at: null })
     .eq("lot_id", lotId);
   if (error) return { ok: false, error: error.message };
 

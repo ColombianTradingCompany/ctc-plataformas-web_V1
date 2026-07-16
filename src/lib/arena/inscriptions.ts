@@ -13,6 +13,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const ARENA_FEE_COP = 80000;
 
+/** La exención se concede en tramos fijos — es política comercial, no un monto libre. */
+export const DISCOUNT_STEPS = [0, 25, 50, 75, 100] as const;
+export type DiscountPct = (typeof DISCOUNT_STEPS)[number];
+
+export function isDiscountPct(v: number): v is DiscountPct {
+  return (DISCOUNT_STEPS as readonly number[]).includes(v);
+}
+
+/** COP a pagar tras aplicar el tramo de exención. */
+export function dueFor(pct: DiscountPct, amountCop: number = ARENA_FEE_COP): number {
+  return amountCop - Math.round((amountCop * pct) / 100);
+}
+
 export type InscriptionStatus = "pendiente" | "pagado" | "exento";
 
 export type ArenaInscription = {
@@ -20,6 +33,7 @@ export type ArenaInscription = {
   lot_id: string;
   producer_id: string;
   amount_cop: number;
+  discount_pct: DiscountPct;
   discount_cop: number;
   amount_due_cop: number;
   status: InscriptionStatus;

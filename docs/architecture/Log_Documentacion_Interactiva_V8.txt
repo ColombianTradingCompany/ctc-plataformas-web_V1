@@ -1,7 +1,6 @@
 Log_Documentacion_Interactiva_V8
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V9.0(<sha>).html.
+Status: WRAPPED into Documentacion_Interactiva_V9.0(875b455).html on 2026-07-16.
+This log is now a closed historical record.
 Covers: everything since Documentacion_Interactiva_V8.0(6c8b062).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V7.txt is
 closed and left as historical record of what went into producing it).
@@ -16,7 +15,7 @@ closed and left as historical record of what went into producing it).
   a fallback for recipient-less calls, never an override (src/lib/bcp/sendOtpEmail.ts).
 - Doc impact when wrapped: one sentence in the "masterlogin" DICT entry (the env var is
   fallback-only) — no node/wire/scenario changes.
-(commit: pending)
+(commit: 875b455)
 
 ## [2026-07-16] Partner subdomains finalized + Red de socios in the CTC Home footer
 - 5th public subdomain renamed: ctc-content.ctcexport.com (proxy.ts maps it to the unchanged
@@ -25,7 +24,7 @@ closed and left as historical record of what went into producing it).
 - CTC Home Footer gains a "Red de socios" nav row linking the 5 partner landings
   (prod = subdomain URLs, dev = /socios paths via compile-time NODE_ENV, QuickNav pattern).
 - Doc impact when wrapped: none structural (footer link row; subdomain label in DICT/ANN texts).
-(commit: pending)
+(commit: 875b455)
 
 ## [2026-07-16] Buzón becomes a mail CLIENT: reply/forward, tags, archive/delete w/ IMAP reflection
 - Migration buzon_mail_client: inbound_emails gains tags text[], status inbox/archived/deleted,
@@ -47,7 +46,7 @@ closed and left as historical record of what went into producing it).
   first real use (Resend path identical to proven leadEmails wiring).
 - Doc impact when wrapped: extend "buzon" DICT (mail client: outbound via n-third, remote
   reflection) + possible wire n-inbound ↔ n-third both ways.
-(commit: pending)
+(commit: 875b455)
 
 ## [2026-07-16] Buzón: full-history backfill + per-recipient inboxes (commit 90b948c)
 - syncBuzon now scans ALL envelopes and imports missing messages in 25-msg batches
@@ -80,7 +79,7 @@ closed and left as historical record of what went into producing it).
 - Doc impact when wrapped: update "buzon" DICT entry (pipeline is now catch-all → info@ →
   IMAP sync; webhook = dormant upgrade) and the n-inbound node text; the "correo" scenario's
   first two steps change accordingly.
-(commit: pending)
+(commit: 875b455)
 
 ## [2026-07-15] Partner tier essentials: 5 "couples" (/socios), partner_accounts, /bcp/socios, subdomains
 - OCP scaffold: added the missing 5th mirror (Estudio de Contenido, the transversal partner).
@@ -107,4 +106,4 @@ closed and left as historical record of what went into producing it).
   redirect, bad login 401; QA partner (estudio) — wrong-node 401, right-node 200,
   invited→active+timestamps confirmed via SQL, authenticated panel rendered in browser;
   QA account deleted (cascade).
-(commit: pending)
+(commit: 875b455)

@@ -18,6 +18,15 @@ closed and left as historical record of what went into producing it).
   fallback-only) — no node/wire/scenario changes.
 (commit: pending)
 
+## [2026-07-16] Partner subdomains finalized + Red de socios in the CTC Home footer
+- 5th public subdomain renamed: ctc-content.ctcexport.com (proxy.ts maps it to the unchanged
+  internal route /socios/estudio-contenido). Final set: centro-calidad, agente-carga,
+  agente-nacionalizacion, master-roaster, ctc-content.
+- CTC Home Footer gains a "Red de socios" nav row linking the 5 partner landings
+  (prod = subdomain URLs, dev = /socios paths via compile-time NODE_ENV, QuickNav pattern).
+- Doc impact when wrapped: none structural (footer link row; subdomain label in DICT/ANN texts).
+(commit: pending)
+
 ## [2026-07-16] Buzón becomes a mail CLIENT: reply/forward, tags, archive/delete w/ IMAP reflection
 - Migration buzon_mail_client: inbound_emails gains tags text[], status inbox/archived/deleted,
   replied_at; new buzon_outbound (service-role-only) records every reply/forward sent.

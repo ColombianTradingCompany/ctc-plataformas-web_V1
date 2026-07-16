@@ -1,6 +1,20 @@
 import Image from "next/image";
 import styles from "./Footer.module.css";
 
+// The 5 partner-node "couples" (landing + login). In prod each lives on its own
+// subdomain (see src/proxy.ts); in dev the same pages answer by path. NODE_ENV
+// is a compile-time constant — no hydration mismatch (same pattern as QuickNav's
+// casa-matriz link).
+const PARTNER_LINKS: { label: string; sub: string; slug: string }[] = [
+  { label: "Centro de Calidad", sub: "centro-calidad", slug: "centro-calidad" },
+  { label: "Agente de Carga", sub: "agente-carga", slug: "agente-carga" },
+  { label: "Agente de Nacionalización", sub: "agente-nacionalizacion", slug: "agente-nacionalizacion" },
+  { label: "Master Roaster", sub: "master-roaster", slug: "master-roaster" },
+  { label: "Estudio de Contenido", sub: "ctc-content", slug: "estudio-contenido" },
+];
+const partnerHref = (l: (typeof PARTNER_LINKS)[number]) =>
+  process.env.NODE_ENV === "production" ? `https://${l.sub}.ctcexport.com` : `/socios/${l.slug}`;
+
 export function Footer() {
   return (
     <footer className={styles.footer}>
@@ -35,6 +49,18 @@ export function Footer() {
             </a>
           </div>
         </div>
+      </div>
+
+      {/* The orchestrated network: one door per partner node. */}
+      <div className={`wrap ${styles.partners}`}>
+        <span className={`mono ${styles.partnersLabel}`}>Red de socios</span>
+        <nav className={styles.partnersLinks} aria-label="Nodos de la red de socios">
+          {PARTNER_LINKS.map((l) => (
+            <a key={l.slug} href={partnerHref(l)}>
+              {l.label}
+            </a>
+          ))}
+        </nav>
       </div>
 
       {/* Closing mark: the Piedecuesta photo (moved here from the hero aside) as

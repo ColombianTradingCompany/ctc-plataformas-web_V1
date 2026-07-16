@@ -12,6 +12,13 @@
 .social a:hover{background:var(--accent);border-color:var(--accent);color:#0E2C48}
 .social svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
+/* The orchestrated network: one link per partner node. */
+.partners{margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.14);display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.partnersLabel{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8FA0B2;white-space:nowrap}
+.partnersLinks{display:flex;gap:8px 22px;flex-wrap:wrap}
+.partnersLinks a{font-size:12.5px;color:#B9C6D4;text-decoration:none;border-bottom:1px solid transparent;transition:all .15s}
+.partnersLinks a:hover{color:var(--accent-soft);border-bottom-color:var(--accent-soft)}
+
 /* Sign-off: the full logo closes the page. */
 .signoff{margin-top:40px;padding-top:32px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:16px}
 /* Last window into the origin (the Piedecuesta shot that used to live in the

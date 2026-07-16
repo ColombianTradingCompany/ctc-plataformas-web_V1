@@ -11,7 +11,8 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
   "agente-carga": "/socios/agente-carga",
   "agente-nacionalizacion": "/socios/agente-nacionalizacion",
   "master-roaster": "/socios/master-roaster",
-  "estudio-contenido": "/socios/estudio-contenido",
+  // Public-facing subdomain is "ctc-content" (2026-07-16); the internal slug stays.
+  "ctc-content": "/socios/estudio-contenido",
 };
 
 export function proxy(request: NextRequest) {

@@ -13,7 +13,7 @@ paso externo (Vercel + Hostinger), igual al que ya se hizo para `kaffetal-regal`
 | `agente-carga.ctcexport.com` | Agente de Carga |
 | `agente-nacionalizacion.ctcexport.com` | Agente de Nacionalización |
 | `master-roaster.ctcexport.com` | Master Roaster |
-| `estudio-contenido.ctcexport.com` | Estudio de Contenido |
+| `ctc-content.ctcexport.com` | Estudio de Contenido (subdominio público renombrado 2026-07-16; la ruta interna sigue siendo `/socios/estudio-contenido`) |
 
 En desarrollo y sin DNS, las mismas páginas responden por ruta: `/socios/<nodo>`.
 

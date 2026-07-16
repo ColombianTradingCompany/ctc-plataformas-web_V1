@@ -18,6 +18,28 @@ closed and left as historical record of what went into producing it).
   fallback-only) — no node/wire/scenario changes.
 (commit: pending)
 
+## [2026-07-16] Buzón goes operative via IMAP pull (option A+pull, $0)
+- Decision trail: Resend Inbound requires Pro ($20/mo, 2nd domain); Hostinger free tier
+  (1 mailbox info@, catch-all included) chosen instead. Catch-all *@ctcexport.com → info@
+  configured by owner; BUZON_IMAP_{HOST,USER,PASSWORD} env vars in Vercel + .env.local.
+- New src/lib/buzon/syncBuzon.ts (imapflow + mailparser): pulls info@ over IMAP into
+  inbound_emails — dedupe by message-id (new partial unique index
+  inbound_emails_message_id_uidx), attachments uploaded to Storage (kaffetal-media/buzon/...),
+  non-destructive reads (no \Seen), bounded (7-day window / 50 msgs per run), and
+  retention cleanup: archived mail >30 days old is deleted from Hostinger (never-archived
+  history untouched) so the free 1 GB mailbox acts as a buffer, Supabase as the archive.
+- /bcp/buzon gains "Sincronizar buzón" (BuzonSyncBar → syncBuzonNow server action,
+  requireActiveAdmin); page copy updated. Resend webhook stays deployed but dormant
+  (future real-time upgrade path; both routes feed the same table).
+- Verified live: IMAP connectivity against the real mailbox (304 msgs, 18 in 7 days);
+  pipeline test archived 2 real messages (SCA welcome + Hostinger forwarder confirmation)
+  with fields parsed correctly; tsc+eslint clean; /bcp/buzon compiles + unauth-redirects.
+  Docs: INBOUND_EMAIL_SETUP.md rewritten around the IMAP path.
+- Doc impact when wrapped: update "buzon" DICT entry (pipeline is now catch-all → info@ →
+  IMAP sync; webhook = dormant upgrade) and the n-inbound node text; the "correo" scenario's
+  first two steps change accordingly.
+(commit: pending)
+
 ## [2026-07-15] Partner tier essentials: 5 "couples" (/socios), partner_accounts, /bcp/socios, subdomains
 - OCP scaffold: added the missing 5th mirror (Estudio de Contenido, the transversal partner).
 - Migrations: user_role gains 'partner'; new partner_accounts (service-role-only: node_type

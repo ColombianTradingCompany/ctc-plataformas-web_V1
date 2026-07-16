@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { markInboundEmailRead } from "../buzonActions";
+import { BuzonSyncBar } from "./BuzonSyncBar";
 import shared from "../shared.module.css";
 import styles from "./buzon.module.css";
 
@@ -31,14 +32,17 @@ export default async function BcpBuzonPage() {
     <div>
       <h1 className={shared.title}>Buzón de entrada</h1>
       <p className={shared.subtitle}>
-        Correos recibidos en las direcciones de la plataforma (vía el webhook de entrada).{" "}
+        Todo el correo a cualquier dirección @ctcexport.com (catch-all → info@ → sincronización IMAP). El buzón remoto se
+        limpia solo: lo archivado con más de 30 días se elimina de Hostinger — aquí queda el archivo permanente.{" "}
         {emails.length ? `${unread} sin leer de ${emails.length}.` : ""}
       </p>
 
+      <BuzonSyncBar />
+
       {!emails.length && (
         <p className={shared.empty}>
-          Aún no ha llegado ningún correo. La ruta de entrada (reenvío en Hostinger → subdominio → webhook) se configura una
-          sola vez — pasos en <code>docs/INBOUND_EMAIL_SETUP.md</code>.
+          Aún no hay correos archivados. Pulsa &quot;Sincronizar buzón&quot; para traer los últimos 7 días de info@ — detalles
+          de la arquitectura en <code>docs/INBOUND_EMAIL_SETUP.md</code>.
         </p>
       )}
 

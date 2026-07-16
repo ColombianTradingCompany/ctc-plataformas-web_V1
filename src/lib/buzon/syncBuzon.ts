@@ -41,6 +41,34 @@ function addressToText(a: AddressObject | AddressObject[] | undefined): string |
   return text || null;
 }
 
+// Auto-classification for incoming mail — the same 14-tag taxonomy and priority
+// order applied to the initial archive (2026-07-16). First rule that matches
+// wins; manual re-tagging in the Buzón always overrides later.
+const TAG_RULES: [tag: string, from: RegExp | null, subject: RegExp | null][] = [
+  ["facturas", /facture\.co|colfact\.co|contapyme\.com/, /^\d{8,};/],
+  ["eudr", /particip\.com/, /eudr|deforest/],
+  ["café", /cafedecolombia|sca\.coffee|bellwethercoffee|agroscada/, /café|coffee|koffesenser/],
+  ["exportación", /procolombia|eventic|zambranodigital/, /export|macrorrueda|fda|aduana/],
+  ["logística", /fedex|cedicolombian|mitlogroup|dhl/, /guía|contenedor|embarque|shipment/],
+  ["gobierno", /\.gov\.co/, null],
+  ["bancos", /bancolombia/, null],
+  ["cámara-comercio", /camaradirecta|confecamaras|gs1co/, null],
+  ["comercial", /anherma|jiacuiworld|tincsolutions/, /cotizaci|quotation|proveedor|consulta comercial/],
+  ["interno", /ctcexport\.com|ctc\.redes/, null],
+  ["servicios", /tigo|enelx|smartsheet|google\.com|resend|vercel|supabase|hostinger/, null],
+  ["eventos", null, /invitaci|capacitaci|summit|encuentro|webinar|conservatorio|meeting|foro/],
+  ["promociones", /icontactmail|seranking|kajabimail|gurusoluciones|solucioneslegales|directcapitalrush|qualtrics/, null],
+];
+
+function autoTag(from: string | null, subject: string | null): string[] {
+  const f = (from ?? "").toLowerCase();
+  const s = (subject ?? "").toLowerCase();
+  for (const [tag, fromRx, subjRx] of TAG_RULES) {
+    if ((fromRx && fromRx.test(f)) || (subjRx && subjRx.test(s))) return [tag];
+  }
+  return ["otros"];
+}
+
 function safeFilename(name: string | undefined, i: number): string {
   const base = (name ?? `adjunto-${i + 1}`).replace(/[^\w.\-() ]+/g, "_").slice(0, 120);
   return base || `adjunto-${i + 1}`;
@@ -116,11 +144,13 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
           }
         }
 
+        const fromText = addressToText(parsed.from);
         const { error: insErr } = await service.from("inbound_emails").insert({
           message_id: messageId,
-          from_email: addressToText(parsed.from),
+          from_email: fromText,
           to_email: addressToText(parsed.to),
           subject: parsed.subject ?? null,
+          tags: autoTag(fromText, parsed.subject ?? null),
           text_body: parsed.text ?? null,
           html_body: typeof parsed.html === "string" ? parsed.html : null,
           attachments: attachmentsMeta.length ? attachmentsMeta : null,

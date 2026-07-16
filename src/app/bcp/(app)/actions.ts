@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
+import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
@@ -163,6 +164,11 @@ export async function confirmSampleReceived(lotId: string) {
   if (!lot) throw new Error("Lote no encontrado.");
   if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
     throw new Error("El productor todavía no ha confirmado el envío de la muestra.");
+  }
+  // La inscripción de Arena (COP 80.000, descontable/eximible) debe estar
+  // saldada antes de que el lote entre a la fila. Se confirma en /bcp/club.
+  if (!(await lotInscriptionSettled(service, lotId))) {
+    throw new Error("La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /bcp/club.");
   }
 
   await service

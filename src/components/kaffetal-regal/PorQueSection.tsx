@@ -9,13 +9,14 @@ const REASONS: { k: string; title: string; lead: string; body: React.ReactNode }
   {
     k: "01",
     title: "Aunque no gane, se lleva algo",
-    lead: "Por qué registrarse",
+    lead: "Por qué inscribirse",
     body: (
       <>
         <p>
-          Registrar es gratis, y lo que recibe de vuelta <b>queda suyo</b>: puntaje, perfil sensorial y el
-          feedback técnico de Q-Graders profesionales — gane o no gane el galardón. Es el diagnóstico que
-          otros pagan en dólares y que ninguna cooperativa le entrega.
+          Registrar su finca y armar la ficha no cuesta nada. Inscribir un lote a la Arena cuesta{" "}
+          <b>$80.000</b> — y lo que recibe de vuelta <b>queda suyo</b>: puntaje, perfil sensorial y el feedback
+          técnico de Q-Graders profesionales, gane o no gane. Es el diagnóstico que otros pagan en dólares y
+          que ninguna cooperativa le entrega.
         </p>
         <p>
           El <b>polígono de su finca</b> se levanta una sola vez y vale para toda la vida del predio: es la
@@ -93,8 +94,11 @@ export function PorQueSection({ onLogin }: { onLogin: () => void }) {
 
         <div className={styles.close}>
           <p>
-            <b>Lo que no cuesta nada probar, y sí cuesta no intentarlo:</b> el café corriente se paga al precio
-            del día y el del día siguiente lo decide otro. Su taza, en cambio, la decide usted.
+            <b>Por qué la inscripción cuesta $80.000 y no es gratis:</b> porque una catación a ciegas ante
+            Q-Graders, el factor de rendimiento y la certificación cuestan de verdad — y porque a la mesa se
+            sienta quien se la juega. Aun así, es la palanca de CTC, no una barrera:{" "}
+            <b>descontamos o eximimos la inscripción</b> a los productores que queremos ver compitiendo.
+            Escríbanos antes de inscribir su primer lote.
           </p>
           <button className="btn btn-solid-accent" onClick={onLogin}>
             Registrar mi primer lote

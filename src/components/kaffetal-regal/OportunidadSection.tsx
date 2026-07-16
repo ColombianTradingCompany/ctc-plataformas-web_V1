@@ -73,7 +73,7 @@ export function OportunidadSection() {
           </div>
           <div className={styles.stats}>
             <div className={styles.stat}><div className={styles.n}>2×</div><p>Dos cosechas al año —principal y mitaca— son dos Arenas, dos catálogos en Europa y dos oportunidades de cobrar con prima. Su café no espera un año para su segunda oportunidad.</p></div>
-            <div className={styles.stat}><div className={styles.n}>0 COP</div><p>La Arena y la certificación CTC no le cuestan nada. Su única inversión: la muestra de 2 kg de pergamino y el envío. Lo que recibe de vuelta —puntaje, perfil sensorial y feedback de Q-Graders— es el diagnóstico que muchos pagan en dólares.</p></div>
+            <div className={styles.stat}><div className={styles.n}>$80.000</div><p>La inscripción de un lote a la Arena, por cosecha. Cubre la catación profesional a ciegas, el factor de rendimiento, la certificación CTC y el feedback del panel — gane o no gane. Registrar su finca y armar la ficha no cuesta nada; solo se paga el lote que decide medir. <b>¿Su primera vez?</b> Escríbanos: CTC otorga descuentos y exenciones a los productores que quiere ver en la mesa.</p></div>
             <div className={styles.stat}><div className={styles.n}>15 kg</div><p>Si su lote es galardonado, CTC le compra de entrada 15 kg de pergamino para muestras, y su café —con su nombre, su finca y sus videos— queda frente a tostadores de toda Europa en Cherry Picked.</p></div>
             <div className={styles.stat}><div className={styles.n}>100%</div><p>Transparencia de punta a punta: el trato se firma con cantidades, precios y fechas claras, y la evaluación queda sellada con respaldo criptográfico verificable. Lo pactado se puede comprobar. Siempre.</p></div>
           </div>

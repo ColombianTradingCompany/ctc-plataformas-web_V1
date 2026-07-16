@@ -21,11 +21,12 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
             </h1>
             <p className={styles.lead}>
               Durante generaciones, el café colombiano salió al mundo sin el nombre de quien lo hizo posible.
-              Kaffetal Regal existe para acabar con eso: usted registra sus lotes gratis, los presenta a ciegas
-              ante Q-Graders en la Arena, y si su taza habla, entra con nombre propio a <strong>Cherry Picked</strong>,
-              nuestra vitrina de microlotes en Europa. Y si esta vez no alcanza el galardón, se lleva algo que
+              Kaffetal Regal existe para acabar con eso: usted registra su finca y arma la ficha de sus lotes sin
+              pagar nada, e inscribe a la Arena el lote que quiera medir. Se presenta a ciegas ante Q-Graders y,
+              si su taza habla, entra con nombre propio a <strong>Cherry Picked</strong>, nuestra vitrina de
+              microlotes en Europa. Y si esta vez no alcanza el galardón, la inscripción igual le deja algo que
               ningún intermediario le ha dado jamás: una evaluación seria, una certificación y el mapa exacto de
-              cómo mejorar. Sin costo.
+              cómo mejorar.
             </p>
             <div className={styles.heroCta}>
               <button className="btn btn-solid-accent" onClick={onLogin}>
@@ -60,7 +61,7 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
                 <svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z" /><path d="M15 3v4h4" /><path d="M10 12h6M10 16h6" /></svg>
               </div>
               <span className={styles.k}>1 · Kaffetal Regal</span>
-              <div className={styles.v}>Registra su lote gratis</div>
+              <div className={styles.v}>Registra y arma su ficha</div>
             </div>
             <div className={styles.pipelineCell}>
               <div className={styles.pic}>
@@ -94,7 +95,7 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
           <div className={styles.ctcdoGrid}>
             <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Recibe y gestiona el material de muestras</b>: registro, custodia y preparación para el panel</span></div>
             <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Administra, cataloga y reporta</b> los resultados de las cataciones profesionales</span></div>
-            <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Certifica sin costo</b> a todos los participantes, con feedback de mejora del panel</span></div>
+            <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Certifica a todos los inscritos</b>, ganen o no, con feedback de mejora del panel</span></div>
             <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Publica los lotes galardonados en Cherry Picked</b>: su nombre, su finca, sus videos y su grado</span></div>
             <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Confirma por escrito cada aumento</b> de compra a medida que entran pedidos de Europa</span></div>
             <div className={styles.ctcdoCell}><span className={styles.gd}>—</span><span><b>Corte, pago total y logística</b> al final del mes 3: trilla, empaque y consolidación del contenedor</span></div>

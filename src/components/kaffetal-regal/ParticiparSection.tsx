@@ -13,7 +13,7 @@ export function ParticiparSection({ onLogin }: { onLogin: () => void }) {
       <div className="wrap">
         <div className="sec-head">
           <div>
-            <p className="eyebrow">Cómo participar · Gratis</p>
+            <p className="eyebrow">Cómo participar · Cinco pasos</p>
             <h2>Cinco pasos entre su lote y la Arena</h2>
           </div>
           <p>
@@ -41,8 +41,8 @@ export function ParticiparSection({ onLogin }: { onLogin: () => void }) {
             <a className={styles.mini} href="#" onClick={(e) => { e.preventDefault(); showToast("Videos de muestra y capacitación (demo)"); }}>▸ Videos de muestra y capacitación</a>
           </div>
           <div className={styles.step}>
-            <h4>Envíe la muestra</h4>
-            <p>2 kg de café pergamino, por su cuenta, a nuestro laboratorio. Con la muestra recibida, su lote entra en fila para la Arena.</p>
+            <h4>Inscriba el lote y envíe la muestra</h4>
+            <p>La inscripción a la Arena cuesta <strong>$80.000 por lote</strong> —consúltenos por descuentos y exenciones— y la muestra son 2 kg de pergamino, por su cuenta, a nuestro laboratorio. Con la inscripción al día y la muestra recibida, su lote entra en fila para la Arena.</p>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendPassportEmail } from "@/lib/email/clubEmails";
+import { ARENA_FEE_COP, formatCop, producerHasSettledInscription } from "@/lib/arena/inscriptions";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 async function requireAdmin() {
@@ -99,16 +100,22 @@ async function assertAssignable(service: Service, producerId: string) {
   if (pending?.length) throw new Error("Este productor ya tiene un Pasaporte pendiente de confirmación.");
 }
 
-// Standard passport, from the kanban: only for producers with a galardón.
+// Standard passport, from the kanban: for producers whose Arena inscription is
+// settled (paid, discounted or exempted) — the passport is the paid entry ticket.
 export async function emitPassportForProducer(producerId: string) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
   await assertAssignable(service, producerId);
 
-  const { data: galardones } = await service.from("lots").select("id").eq("producer_id", producerId).eq("stage", "galardonado").limit(1);
-  if (!galardones?.length) {
-    throw new Error("Este productor aún no tiene un lote galardonado — el Pasaporte estándar se emite con el galardón.");
+  // Desde 2026-07-16 el Pasaporte es la ENTRADA PAGADA, no el premio: se emite
+  // cuando el productor tiene al menos una inscripción de Arena saldada (pagada,
+  // descontada o eximida), no cuando gana un galardón. Los Pasaportes de campaña
+  // (KCX-) siguen siendo la vía gratuita/marketing y no pasan por aquí.
+  if (!(await producerHasSettledInscription(service, producerId))) {
+    throw new Error(
+      "Este productor aún no tiene una inscripción de Arena saldada — confirma el pago, aplica un descuento o exímelo antes de emitir el Pasaporte."
+    );
   }
 
   const codeRow = await insertCode(service, adminId, { prefix: "KC", kind: "estandar", campaignId: null, note: null, assignedTo: producerId });
@@ -269,4 +276,100 @@ export async function revokeClubMembership(producerId: string) {
 
   revalidatePath("/bcp/club");
   revalidatePath("/bcp/productores");
+}
+
+/* ── Inscripciones de Arena ───────────────────────────────────────────────────
+   COP 80.000 por lote. El palo y la zanahoria: CTC puede descontar o eximir.
+   El pago ocurre FUERA de la plataforma (transferencia); aquí solo se confirma.
+   Saldada (pagado|exento) = el lote entra a la Arena y el productor califica
+   para el Pasaporte estándar (que desde 2026-07-16 es la entrada pagada). */
+
+type SettleInput = {
+  lotId: string;
+  /** Descuento en COP sobre los 80.000 de lista. Igual al monto = exención. */
+  discountCop?: number;
+  paymentRef?: string;
+  notes?: string;
+};
+
+/** Crea (si falta) y salda la inscripción de un lote: pago confirmado o exención. */
+export async function settleArenaInscription(input: SettleInput): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("id, name, producer_id, stage").eq("id", input.lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  const discount = Math.max(0, Math.min(Math.round(input.discountCop ?? 0), ARENA_FEE_COP));
+  const due = ARENA_FEE_COP - discount;
+  const status = due === 0 ? "exento" : "pagado";
+
+  const { error } = await service.from("arena_inscriptions").upsert(
+    {
+      lot_id: lot.id,
+      producer_id: lot.producer_id,
+      amount_cop: ARENA_FEE_COP,
+      discount_cop: discount,
+      status,
+      payment_ref: input.paymentRef?.trim() || null,
+      notes: input.notes?.trim() || null,
+      confirmed_by: adminId,
+      confirmed_at: new Date().toISOString(),
+    },
+    { onConflict: "lot_id" }
+  );
+  if (error) return { ok: false, error: error.message };
+
+  // El productor se entera por su feed, no por un correo aparte.
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Inscripción de Arena · ${lot.name ?? "lote"}`,
+    lot_id: lot.id,
+    note:
+      status === "exento"
+        ? `CTC eximió la inscripción de Arena de este lote (valor de lista ${formatCop(ARENA_FEE_COP)}). Su lote queda habilitado para la Arena sin costo.`
+        : `Inscripción de Arena confirmada por ${formatCop(due)}${discount > 0 ? ` (descuento de ${formatCop(discount)} sobre ${formatCop(ARENA_FEE_COP)})` : ""}. Su lote queda habilitado para la Arena.`,
+  });
+
+  await service.from("audit_log").insert({
+    entity_type: "arena_inscription",
+    entity_id: lot.id,
+    action: status === "exento" ? "exempted" : "payment_confirmed",
+    new_status: status,
+    performed_by: adminId,
+    notes: `${formatCop(due)} a pagar${discount > 0 ? ` · descuento ${formatCop(discount)}` : ""}${input.paymentRef ? ` · ref ${input.paymentRef}` : ""}`,
+  });
+
+  revalidatePath("/bcp/club");
+  revalidatePath("/bcp/lotes");
+  return { ok: true };
+}
+
+/** Revierte una inscripción a pendiente (corrección de un error de registro). */
+export async function unsettleArenaInscription(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa" && lot.stage !== "borrador") {
+    return { ok: false, error: "Este lote ya avanzó en el proceso — no se puede revertir su inscripción." };
+  }
+
+  const { error } = await service
+    .from("arena_inscriptions")
+    .update({ status: "pendiente", discount_cop: 0, payment_ref: null, confirmed_by: null, confirmed_at: null })
+    .eq("lot_id", lotId);
+  if (error) return { ok: false, error: error.message };
+
+  await service.from("audit_log").insert({
+    entity_type: "arena_inscription",
+    entity_id: lotId,
+    action: "reverted_to_pending",
+    new_status: "pendiente",
+    performed_by: adminId,
+  });
+
+  revalidatePath("/bcp/club");
+  return { ok: true };
 }

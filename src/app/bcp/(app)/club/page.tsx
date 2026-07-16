@@ -9,12 +9,16 @@ import {
   revokeClubCode,
   revokeClubMembership,
 } from "../clubActions";
+import { InscripcionesBlock, type InscripcionRow } from "./InscripcionesBlock";
+import type { InscriptionStatus } from "@/lib/arena/inscriptions";
 import styles from "../shared.module.css";
 
 // Kaffetal Club · Pasaportes. Top block: campaigns (first-class rows in
 // club_campaigns) -- create one, click it to manage the passports rooted under
-// it. Below: the passport kanban (Elegibles → Pendiente de confirmación →
-// Miembros activos) and the full ledger.
+// it. Then the Arena inscriptions (COP 80.000/lot, discountable/exemptable --
+// settling one is what unlocks a lot into the Arena AND qualifies its producer
+// for a passport). Below: the passport kanban (Elegibles → Pendiente de
+// confirmación → Miembros activos) and the full ledger.
 
 type CodeRow = {
   id: string;
@@ -33,25 +37,46 @@ type CodeRow = {
 type CampaignRow = { id: string; name: string; created_at: string };
 type MemberRow = { profile_id: string; club_member_since: string | null };
 type LotRow = { producer_id: string; stage: string };
+type LotNamedRow = { id: string; name: string | null; producer_id: string; stage: string };
+type InscriptionRowDb = {
+  lot_id: string;
+  producer_id: string;
+  discount_cop: number;
+  amount_due_cop: number;
+  status: InscriptionStatus;
+  payment_ref: string | null;
+};
 
 const PAST_MUESTRAS = new Set(["fila_arena", "evaluado", "galardonado"]);
+// Lots waiting at the gate: their ficha is done, so the inscription is what
+// stands between them and the Arena queue.
+const AWAITING_ARENA = "ficha_completa";
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
 export default async function BcpClubPage() {
   const service = createServiceRoleClient();
 
-  const [{ data: producers }, { data: memberRows }, { data: lotRows }, { data: codeRows }, { data: campaignRows }] =
-    await Promise.all([
-      service.from("profiles").select("id").eq("role", "producer"),
-      service.from("producer_profiles").select("profile_id, club_member_since"),
-      service.from("lots").select("producer_id, stage"),
-      service
-        .from("club_member_codes")
-        .select("id, code, kind, campaign_id, created_at, assigned_to, assigned_at, redeemed_by, redeemed_at, revoked_at, email_sent_at, email_error")
-        .order("created_at", { ascending: false }),
-      service.from("club_campaigns").select("id, name, created_at").order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: producers },
+    { data: memberRows },
+    { data: lotRows },
+    { data: codeRows },
+    { data: campaignRows },
+    { data: gateLotRows },
+    { data: inscriptionRows },
+  ] = await Promise.all([
+    service.from("profiles").select("id").eq("role", "producer"),
+    service.from("producer_profiles").select("profile_id, club_member_since"),
+    service.from("lots").select("producer_id, stage"),
+    service
+      .from("club_member_codes")
+      .select("id, code, kind, campaign_id, created_at, assigned_to, assigned_at, redeemed_by, redeemed_at, revoked_at, email_sent_at, email_error")
+      .order("created_at", { ascending: false }),
+    service.from("club_campaigns").select("id, name, created_at").order("created_at", { ascending: false }),
+    service.from("lots").select("id, name, producer_id, stage").eq("stage", AWAITING_ARENA).order("created_at", { ascending: true }),
+    service.from("arena_inscriptions").select("lot_id, producer_id, discount_cop, amount_due_cop, status, payment_ref"),
+  ]);
 
   const producerIds = ((producers as { id: string }[] | null) ?? []).map((p) => p.id);
   const codes = (codeRows as CodeRow[] | null) ?? [];
@@ -73,6 +98,13 @@ export default async function BcpClubPage() {
     lotStats.set(l.producer_id, s);
   }
 
+  // Inscriptions: what gates the Arena and, now, the passport itself.
+  const inscriptions = (inscriptionRows as InscriptionRowDb[] | null) ?? [];
+  const inscriptionByLot = new Map(inscriptions.map((i) => [i.lot_id, i]));
+  const settledProducers = new Set(
+    inscriptions.filter((i) => i.status === "pagado" || i.status === "exento").map((i) => i.producer_id)
+  );
+
   const pendingByProducer = new Map<string, CodeRow>();
   for (const c of codes) {
     if (c.assigned_to && !c.redeemed_by && !c.revoked_at) pendingByProducer.set(c.assigned_to, c);
@@ -86,8 +118,31 @@ export default async function BcpClubPage() {
   // pipeline yet and only show up as a count.
   const activos = producerIds.filter((id) => memberSince.has(id));
   const pendientes = producerIds.filter((id) => !memberSince.has(id) && pendingByProducer.has(id));
-  const elegibles = producerIds.filter((id) => !memberSince.has(id) && !pendingByProducer.has(id) && lotStats.has(id));
+  // Eligible = in the pipeline at all: either already competing, or with a lot
+  // waiting at the inscription gate. The passport unlocks on a settled inscription.
+  const gateLots = (gateLotRows as LotNamedRow[] | null) ?? [];
+  const producersAtGate = new Set(gateLots.map((l) => l.producer_id));
+  const elegibles = producerIds.filter(
+    (id) => !memberSince.has(id) && !pendingByProducer.has(id) && (lotStats.has(id) || producersAtGate.has(id))
+  );
   const restantes = producerIds.length - activos.length - pendientes.length - elegibles.length;
+
+  // Rows for the inscriptions block: every lot waiting at the gate (with or
+  // without a row yet) plus any already-settled one, newest work first.
+  const inscripcionRows: InscripcionRow[] = gateLots.map((l) => {
+    const ins = inscriptionByLot.get(l.id);
+    return {
+      lotId: l.id,
+      lotName: l.name ?? "(lote sin nombre)",
+      producerId: l.producer_id,
+      producerName: name(l.producer_id),
+      supplierCode: supplierCode(l.producer_id),
+      status: ins?.status ?? null,
+      discountCop: ins?.discount_cop ?? 0,
+      amountDueCop: ins?.amount_due_cop ?? 0,
+      paymentRef: ins?.payment_ref ?? null,
+    };
+  });
 
   const contacts = await fetchProducerContacts(service, producerIds);
   const name = (id: string | null) => (id && (contacts.get(id)?.fullName || contacts.get(id)?.email)) || "Sin nombre";
@@ -145,6 +200,8 @@ export default async function BcpClubPage() {
       </div>
 
       {/* ─── Kanban (dashboard) ─── */}
+      <InscripcionesBlock rows={inscripcionRows} />
+
       <h2 className={styles.sectionHead} style={{ marginTop: 26 }}>Tablero de Pasaportes</h2>
       <div className={styles.board}>
         {/* Column 1 · Elegibles */}
@@ -154,10 +211,12 @@ export default async function BcpClubPage() {
             <span className={styles.columnCount}>{elegibles.length}</span>
           </div>
           <div className={styles.columnList}>
-            {elegibles.length === 0 && <p className={styles.empty}>Ningún productor con lotes más allá de Muestras.</p>}
+            {elegibles.length === 0 && <p className={styles.empty}>Ningún productor en el proceso todavía.</p>}
             {elegibles.map((id) => {
-              const stats = lotStats.get(id)!;
-              const unlocked = stats.galardones > 0;
+              const stats = lotStats.get(id) ?? { inArena: 0, galardones: 0 };
+              // El Pasaporte es la entrada pagada: se desbloquea con la primera
+              // inscripción saldada (pagada, descontada o eximida).
+              const unlocked = settledProducers.has(id);
               async function emit() {
                 "use server";
                 await emitPassportForProducer(id);
@@ -180,7 +239,7 @@ export default async function BcpClubPage() {
                     </form>
                   ) : (
                     <p className={styles.meta} style={{ marginTop: 8 }}>
-                      <span className={styles.badgeWarn}>A la espera de un galardón</span>
+                      <span className={styles.badgeWarn}>A la espera de la inscripción</span>
                     </p>
                   )}
                 </div>

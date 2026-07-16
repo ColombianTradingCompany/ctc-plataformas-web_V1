@@ -6,6 +6,39 @@ Covers: everything since Documentacion_Interactiva_V9.0(875b455).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V8.txt is
 closed and left as historical record of what went into producing it).
 
+## [2026-07-16] La Arena deja de ser gratis: inscripción de COP 80.000 por lote + el Pasaporte se invierte
+- CAMBIO DE MODELO (decidido con el owner): participar en la Arena cuesta COP 80.000 POR LOTE, y CTC
+  puede descontar o eximir a discreción (palo/zanahoria). Y el Pasaporte deja de ser el PREMIO
+  post-galardón: pasa a ser la ENTRADA PAGADA — se emite cuando el productor tiene su primera
+  inscripción saldada. Los Pasaportes de campaña (KCX-) ya existían y se vuelven, tal cual, la
+  herramienta de exención/marketing.
+- Migración arena_inscriptions (service-role-only): lot_id UNIQUE, producer_id, amount_cop 80000
+  (precio de lista congelado en la fila), discount_cop, amount_due_cop GENERATED, status
+  pendiente/pagado/exento, payment_ref, confirmed_by/at. El pago es FUERA de la plataforma
+  (transferencia); BCP solo confirma. Helpers puros en src/lib/arena/inscriptions.ts.
+- Dos compuertas: confirmSampleReceived() exige inscripción saldada antes de fila_arena;
+  emitPassportForProducer() cambia su gate de "tiene lote galardonado" a "tiene inscripción saldada".
+- /bcp/club: nuevo bloque "Inscripciones de Arena" (InscripcionesBlock.tsx) sobre el tablero —
+  lista los lotes en ficha_completa con su estado, permite confirmar pago (con descuento + referencia)
+  o eximir al 100%, y revertir; cada acción deja audit_log (entity_type 'arena_inscription') y una
+  nota en el feed del productor. El tablero: "A la espera de un galardón" → "A la espera de la
+  inscripción"; elegibles ahora incluye a quien tiene lotes esperando en la compuerta.
+- Copy de la landing KR (era FALSO desde este cambio): Hero ("Sin costo" → la inscripción deja la
+  evaluación igual), stat "0 COP" → "$80.000" con lo que cubre + mención de descuentos/exenciones,
+  ParticiparSection ("Cómo participar · Gratis" → "· Cinco pasos"; paso 5 ahora "Inscriba el lote y
+  envíe la muestra"), PorQueSection (justificación honesta del cobro + la palanca). Se conservó
+  "crear cuenta gratis" donde sigue siendo cierto (registrar finca/ficha no cuesta).
+- Doc impact when wrapped: DICT "club" (el Pasaporte es la entrada pagada, no el premio) + "intake"
+  /stagelifecycle (nueva compuerta antes de fila_arena); nodo n-club; escenario "pasaporte" hay que
+  reescribirlo (hoy narra "se emite con el galardón"); nueva entrada DICT candidata "inscripcion".
+- Verificado: tsc+eslint limpios; la landing ya no contiene ninguna afirmación de gratuidad
+  (chequeo en navegador); simulación SQL de las compuertas: 3 lotes en ficha_completa, 0 pasarían
+  (todos bloqueados) y 0 productores califican para Pasaporte — la regla nueva está enforcing.
+- PENDIENTE/decisión: (a) ¿grandfathering de esos 3 lotes ya en curso (eximirlos) o cobrarles?
+  (b) el productor todavía NO ve su inscripción en su panel — solo se entera por la nota del feed;
+  falta la vista "Mis inscripciones" + instrucciones de pago.
+(commit: pending)
+
 ## [2026-07-16] Kaffetal Regal: nueva sección "¿Por qué vale la pena?" (el WHY del productor)
 - Diagnóstico: la landing ya respondía POR QUÉ REGISTRARSE en números (OportunidadSection: 0 COP,
   escalera de prima, 2 cosechas), pero NO decía dos tesis centrales de la visión v3 en voz de

@@ -1,7 +1,6 @@
 Log_Documentacion_Interactiva_V11
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V12.0(<sha>).html.
+Status: WRAPPED into Documentacion_Interactiva_V12.0(fdac560).html on 2026-07-16.
+This log is now a closed historical record.
 Covers: everything since Documentacion_Interactiva_V11.0(5587337).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V10.txt is
 closed and left as historical record of what went into producing it).
@@ -34,5 +33,5 @@ closed and left as historical record of what went into producing it).
   nota de adaptación con menos tazas.
 - Doc impact when wrapped: la entrada DICT "inscripcion" y el escenario "envio"/"pasaporte" deben
   reflejar el orden EUDR → pago → muestra; "jornada" suma la agenda T+.
-(commit: pending)
+(commit: fdac560)
 

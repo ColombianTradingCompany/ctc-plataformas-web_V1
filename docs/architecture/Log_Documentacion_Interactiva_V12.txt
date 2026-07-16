@@ -1,0 +1,19 @@
+Log_Documentacion_Interactiva_V12
+Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
+into a real HTML file; this log is where every change lives, in plain text,
+until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V13.0(<sha>).html.
+Covers: everything since Documentacion_Interactiva_V12.0(fdac560).html, which is
+now the current real HTML snapshot (Log_Documentacion_Interactiva_V11.txt is
+closed and left as historical record of what went into producing it).
+
+## [2026-07-16] ⚠ PENDIENTE DE CONFIRMACIÓN DEL OWNER — lo que entró en V12.0
+- El owner cerró la sesión pidiendo dejar nota de que quiere CONFIRMAR EN VIVO la última
+  actualización (commit fdac560) antes de darla por buena. Qué probar, en orden:
+  1. /bcp/lotes → lote "Pacamara Doble Fermentación 60h" → el botón "Confirmar recibido" ya NO
+     revienta la página: muestra chips (EUDR: Pendiente · Inscripción pendiente) y el rechazo inline.
+  2. Resolver su EUDR (nivel de riesgo en la tarjeta del lote) → /bcp/club: recién ahí aparecen los
+     controles de pago de su inscripción (orden EUDR → pago → muestra) → saldar → Confirmar recibido
+     debe pasar el lote a fila_arena.
+  3. /bcp/arena/[sesión]: la nueva agenda colapsable T+h:mm (~3.5 h) se ve antes de iniciar jornada.
+- Si algo de esto no se comporta como se describe, corregirlo ANTES de construir encima.
+(sin commit: nota de sesión)

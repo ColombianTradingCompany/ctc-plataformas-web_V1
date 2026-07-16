@@ -30,9 +30,10 @@ Configuración ya hecha:
    info@ por webmail sigue intacto.
 3. **Idempotente**: dedupe por message-id (índice único parcial); re-sincronizar
    no duplica.
-4. **Acotado**: ventana de 7 días en el primer run (luego desde la fila más
-   reciente), máx. 50 mensajes por corrida — siempre cabe en una invocación
-   serverless. Los **adjuntos** se suben a Storage (`kaffetal-media/buzon/...`),
+4. **Acotado**: cada corrida escanea TODOS los sobres (barato) pero importa máx.
+   25 mensajes completos y devuelve `remaining`; el botón "Sincronizar" repite en
+   bucle hasta importar el buzón entero (histórico incluido) — cada corrida cabe
+   en una invocación serverless. Los **adjuntos** se suben a Storage (`kaffetal-media/buzon/...`),
    así sobreviven a la limpieza del buzón remoto; el visor sigue mostrando solo
    texto plano (el HTML se archiva pero nunca se renderiza).
 

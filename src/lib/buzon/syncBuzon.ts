@@ -15,14 +15,13 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 //      info@ via webmail keeps working untouched.
 //   3. Idempotent — dedupe by RFC message-id (unique index inbound_emails_message_id_uidx);
 //      re-running a sync can't duplicate rows.
-//   4. Bounded — looks back SYNC_WINDOW_DAYS (or since the newest archived row),
-//      caps MAX_PER_RUN per run, so a run always fits a serverless invocation.
-//      The pre-existing mailbox history stays in Hostinger (25% of 1 GB, static);
-//      only newly-archived mail is subject to retention cleanup.
+//   4. Bounded — each run scans ALL envelopes (cheap) but imports at most
+//      MAX_PER_RUN full messages, returning `remaining` so the client loops
+//      until the whole mailbox (history included) is archived. Retention
+//      cleanup only ever touches mail that has been archived.
 
-const SYNC_WINDOW_DAYS = 7; // first-run lookback; later runs start at newest archived row minus 1 day
 const RETENTION_DAYS = 30; // archived mail older than this is removed from Hostinger
-const MAX_PER_RUN = 50;
+const MAX_PER_RUN = 25; // bounded so each run fits a serverless invocation; the client loops until remaining=0
 const STORAGE_BUCKET = "kaffetal-media";
 
 export type BuzonSyncResult = {
@@ -30,6 +29,8 @@ export type BuzonSyncResult = {
   stored: number;
   skipped: number;
   cleaned: number;
+  /** Messages still in the mailbox and not yet archived — the client re-runs while > 0. */
+  remaining: number;
   error?: string;
 };
 
@@ -50,36 +51,42 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
   const user = process.env.BUZON_IMAP_USER;
   const pass = process.env.BUZON_IMAP_PASSWORD;
   if (!host || !user || !pass) {
-    return { ok: false, stored: 0, skipped: 0, cleaned: 0, error: "Faltan las variables BUZON_IMAP_* en el entorno." };
+    return { ok: false, stored: 0, skipped: 0, cleaned: 0, remaining: 0, error: "Faltan las variables BUZON_IMAP_* en el entorno." };
   }
 
   const service = createServiceRoleClient();
-
-  // Sync window: newest archived IMAP row minus 1 day, else SYNC_WINDOW_DAYS back.
-  const { data: newest } = await service
-    .from("inbound_emails")
-    .select("received_at")
-    .eq("raw->>source", "imap")
-    .order("received_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const since = newest?.received_at
-    ? new Date(new Date(newest.received_at).getTime() - 24 * 3600 * 1000)
-    : new Date(Date.now() - SYNC_WINDOW_DAYS * 24 * 3600 * 1000);
-
   const client = new ImapFlow({ host, port: 993, secure: true, auth: { user, pass }, logger: false });
 
   let stored = 0,
     skipped = 0,
-    cleaned = 0;
+    cleaned = 0,
+    remaining = 0;
 
   try {
     await client.connect();
     const lock = await client.getMailboxLock("INBOX");
     try {
-      // ── 1. Pull new mail ────────────────────────────────────────────────
-      const uids = ((await client.search({ since }, { uid: true })) || []).slice(-MAX_PER_RUN);
-      for (const uid of uids) {
+      // ── 1. Full-mailbox scan: envelopes only (cheap), find what's missing ─
+      // This covers both backfill (pre-existing history) and new mail in one
+      // pass: anything whose message-id isn't archived yet is a candidate.
+      const metas: { uid: number; messageId: string }[] = [];
+      if ((client.mailbox && typeof client.mailbox === "object" ? client.mailbox.exists : 0) > 0) {
+        for await (const m of client.fetch("1:*", { envelope: true }, { uid: true })) {
+          metas.push({ uid: m.uid, messageId: m.envelope?.messageId ?? `imap-uid-${m.uid}-${user}` });
+        }
+      }
+      const archived = new Set<string>();
+      for (let i = 0; i < metas.length; i += 200) {
+        const chunk = metas.slice(i, i + 200).map((m) => m.messageId);
+        const { data } = await service.from("inbound_emails").select("message_id").in("message_id", chunk);
+        for (const r of data ?? []) if (r.message_id) archived.add(r.message_id);
+      }
+      const missing = metas.filter((m) => !archived.has(m.messageId)).sort((a, b) => a.uid - b.uid);
+      const batch = missing.slice(0, MAX_PER_RUN);
+      remaining = missing.length - batch.length;
+
+      // ── 2. Import the batch (oldest first) ────────────────────────────────
+      for (const { uid } of batch) {
         const msg = await client.fetchOne(String(uid), { source: true, internalDate: true }, { uid: true });
         if (!msg || !msg.source) continue;
         const parsed = await simpleParser(msg.source);
@@ -129,7 +136,7 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
         }
       }
 
-      // ── 2. Retention cleanup: delete from Hostinger ONLY what is archived
+      // ── 3. Retention cleanup: delete from Hostinger ONLY what is archived
       //       and older than RETENTION_DAYS. Unarchived history is never touched.
       const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 3600 * 1000);
       const oldUids = ((await client.search({ before: cutoff }, { uid: true })) || []).slice(-200);
@@ -155,11 +162,11 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
       lock.release();
     }
     await client.logout();
-    return { ok: true, stored, skipped, cleaned };
+    return { ok: true, stored, skipped, cleaned, remaining };
   } catch (err) {
     try {
       await client.logout();
     } catch {}
-    return { ok: false, stored, skipped, cleaned, error: err instanceof Error ? err.message : "Fallo desconocido en la sincronización." };
+    return { ok: false, stored, skipped, cleaned, remaining, error: err instanceof Error ? err.message : "Fallo desconocido en la sincronización." };
   }
 }

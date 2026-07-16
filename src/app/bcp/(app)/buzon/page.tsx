@@ -1,8 +1,12 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { markInboundEmailRead } from "../buzonActions";
 import { BuzonSyncBar } from "./BuzonSyncBar";
 import shared from "../shared.module.css";
 import styles from "./buzon.module.css";
+
+// Batched imports can take a while on serverless — give each sync run headroom.
+export const maxDuration = 60;
 
 type InboundRow = {
   id: string;
@@ -19,12 +23,25 @@ type InboundRow = {
 // PLAIN TEXT on purpose (never the html_body — untrusted external markup).
 // Setup for the delivery path lives in docs/INBOUND_EMAIL_SETUP.md.
 export default async function BcpBuzonPage() {
+  const identity = await requireConsoleAccess("bcp");
   const service = createServiceRoleClient();
-  const { data } = await service
+
+  // Per-recipient inboxes: the catch-all preserves the original To: header, so a
+  // non-owner collaborator sees ONLY mail addressed to their own @ctcexport.com
+  // label. Owners see the whole network inbox.
+  let myAddress: string | null = null;
+  if (!identity.isOwner) {
+    const { data: prof } = await service.from("profiles").select("email").eq("id", identity.userId).maybeSingle();
+    myAddress = prof?.email ?? null;
+  }
+
+  let query = service
     .from("inbound_emails")
     .select("id, from_email, to_email, subject, text_body, attachments, received_at, read_at")
     .order("received_at", { ascending: false })
     .limit(200);
+  if (myAddress) query = query.ilike("to_email", `%${myAddress}%`);
+  const { data } = await query;
   const emails = (data as InboundRow[]) ?? [];
   const unread = emails.filter((e) => !e.read_at).length;
 
@@ -32,8 +49,9 @@ export default async function BcpBuzonPage() {
     <div>
       <h1 className={shared.title}>Buzón de entrada</h1>
       <p className={shared.subtitle}>
-        Todo el correo a cualquier dirección @ctcexport.com (catch-all → info@ → sincronización IMAP). El buzón remoto se
-        limpia solo: lo archivado con más de 30 días se elimina de Hostinger — aquí queda el archivo permanente.{" "}
+        {myAddress
+          ? `Tu correo — solo lo dirigido a ${myAddress}. `
+          : "Todo el correo a cualquier dirección @ctcexport.com (catch-all → info@ → sincronización IMAP). El buzón remoto se limpia solo: lo archivado con más de 30 días se elimina de Hostinger — aquí queda el archivo permanente. "}
         {emails.length ? `${unread} sin leer de ${emails.length}.` : ""}
       </p>
 
@@ -41,8 +59,9 @@ export default async function BcpBuzonPage() {
 
       {!emails.length && (
         <p className={shared.empty}>
-          Aún no hay correos archivados. Pulsa &quot;Sincronizar buzón&quot; para traer los últimos 7 días de info@ — detalles
-          de la arquitectura en <code>docs/INBOUND_EMAIL_SETUP.md</code>.
+          {myAddress
+            ? "Aún no hay correos dirigidos a tu dirección. Pulsa “Sincronizar buzón” por si hay correo nuevo sin importar."
+            : "Aún no hay correos archivados. Pulsa “Sincronizar buzón” para importar el buzón completo de info@ (histórico incluido) — detalles en docs/INBOUND_EMAIL_SETUP.md."}
         </p>
       )}
 

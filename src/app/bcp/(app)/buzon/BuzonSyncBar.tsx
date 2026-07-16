@@ -13,16 +13,27 @@ export function BuzonSyncBar() {
   function sync() {
     setMsg(null);
     startTransition(async () => {
-      const r = await syncBuzonNow();
-      if (r.ok) {
-        setMsg({
-          ok: true,
-          text: `Sincronizado: ${r.stored} nuevo${r.stored === 1 ? "" : "s"}, ${r.skipped} ya archivado${r.skipped === 1 ? "" : "s"}${r.cleaned ? `, ${r.cleaned} limpiado${r.cleaned === 1 ? "" : "s"} del buzón remoto` : ""}.`,
-        });
+      // Each run imports a bounded batch and reports what's left; loop until the
+      // whole mailbox (history included) is archived, refreshing as we go.
+      let stored = 0,
+        cleaned = 0;
+      for (let i = 0; i < 20; i++) {
+        const r = await syncBuzonNow();
+        if (!r.ok) {
+          setMsg({ ok: false, text: r.error ?? "Fallo en la sincronización." });
+          router.refresh();
+          return;
+        }
+        stored += r.stored;
+        cleaned += r.cleaned;
+        setMsg({ ok: true, text: `Importando… ${stored} archivados, quedan ${r.remaining}.` });
         router.refresh();
-      } else {
-        setMsg({ ok: false, text: r.error ?? "Fallo en la sincronización." });
+        if (r.remaining <= 0) break;
       }
+      setMsg({
+        ok: true,
+        text: `Sincronizado: ${stored} nuevo${stored === 1 ? "" : "s"} archivado${stored === 1 ? "" : "s"}${cleaned ? `, ${cleaned} limpiado${cleaned === 1 ? "" : "s"} del buzón remoto` : ""}. Buzón al día.`,
+      });
     });
   }
 

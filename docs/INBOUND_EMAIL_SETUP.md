@@ -38,9 +38,18 @@ receptoras con solo crear el reenvío.
 4. **Vercel → Environment Variables**: añadir `RESEND_INBOUND_WEBHOOK_SECRET`
    (Sensitive) con ese valor y redeploy. Sin esta variable, el endpoint rechaza
    todo en producción (503) — es deliberado.
-5. **Hostinger → Emails → ctcexport.com → Reenviadores**: por cada dirección a
-   capturar, crear el reenvío `usuario@ctcexport.com → usuario@inbox.ctcexport.com`.
-   (Para direcciones-etiqueta sin buzón, el reenviador ES su existencia entera.)
+5. **Hostinger → Emails → ctcexport.com**: dos opciones —
+   **(a) Recomendada · catch-all**: configurar la cuenta *catch-all* del dominio para
+   reenviar TODO correo a direcciones no existentes hacia `todo@inbox.ctcexport.com`.
+   Con eso, **cualquier etiqueta** (`gvg@`, `socios@`, lo que sea) se vuelve receptora
+   al instante, sin mantenimiento por dirección; los buzones reales (`info@`) no se
+   afectan porque el catch-all solo aplica a direcciones sin buzón. Trade-off: entra
+   más spam al Buzón (aceptable para triaje interno). Si el panel de Hostinger no
+   permite catch-all hacia un destino externo, usar la opción (b).
+   **(b) Por dirección**: un reenviador `usuario@ctcexport.com → usuario@inbox.ctcexport.com`
+   por cada dirección a capturar. (Para etiquetas sin buzón, el reenviador ES su
+   existencia entera — sin él, Hostinger rebota con "550 User doesn't exist", que es
+   exactamente el bounce observado el 2026-07-16 con gvg@.)
 6. **Prueba**: enviar un correo a la dirección reenviada y confirmar que aparece
    en BCP → Buzón de entrada. En local (sin secret) el webhook acepta payloads
    sin firma SOLO en desarrollo, para pruebas con `curl`.

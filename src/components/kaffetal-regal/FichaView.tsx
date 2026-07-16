@@ -187,6 +187,9 @@ export function FichaView({
     };
   });
   const [declared, setDeclared] = useState(false);
+  // Caja de soportes pendientes al pie: colapsada por defecto (el titular ya
+  // avisa), se abre para adjuntar sin salir del pane en el que se está.
+  const [proofsOpen, setProofsOpen] = useState(false);
   const [showDeclare, setShowDeclare] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   // Aviso de compuerta (centrado, con fade) y celebración de etapa completada.
@@ -490,8 +493,8 @@ export function FichaView({
     }
   }
 
-  const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo };
   const viewingLocked = PANE_SUBSTAGE[active] < effectiveIntakeStep;
+  const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo, viewingLocked };
   const STAGE_BUTTON_LABEL = [
     "Completar FT y continuar",
     "Completar FT2 y continuar",
@@ -543,28 +546,9 @@ export function FichaView({
                 No lo sé / no aplica para este lote
               </label>
             )}
-            {/* Soportes de certificados pendientes: visibles (y cargables)
-                incluso con la sección ya enviada -- la compuerta es suave y
-                los archivos pueden llegar hasta el envío final de la Ficha. */}
-            {viewingLocked && (active === "a3" || active === "a4") && effectiveIntakeStep < 4 && pendingCertProofs(data).length > 0 && (
-              <div style={{ background: "#FDF0D5", border: "1px solid #E3A32C", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 8px", color: "#8A5B00" }}>
-                  Soportes pendientes — puede adjuntarlos hasta el envío final de la Ficha (luego, lo no probado se desmarca):
-                </p>
-                {pendingCertProofs(data).map((p) => (
-                  <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, marginBottom: 6, flexWrap: "wrap" }}>
-                    <span style={{ fontWeight: 600 }}>{p.label}</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      style={{ fontSize: 11.5 }}
-                      onChange={(e) => e.target.files?.[0] && uploadCert(p.key, e.target.files[0])}
-                    />
-                  </div>
-                ))}
-                <p className={styles.fexample} style={{ margin: 0 }}>Tras adjuntar, use Guardar para que quede registrado.</p>
-              </div>
-            )}
+            {/* (La caja de soportes pendientes vivía aquí, solo en A3/A4, lo que
+                obligaba a navegar hacia atrás para adjuntar. Ahora vive al pie,
+                junto a Guardar/Enviar, y está disponible desde cualquier pane.) */}
             {/* disabled fieldset = every input/button inside a submitted-and-
                 locked section is genuinely read-only, not just banner-decorated.
                 "Completar y Enviar" locks the information in; without this, a
@@ -619,6 +603,49 @@ export function FichaView({
             )}
           </div>
         </div>
+
+        {/* Soportes pendientes, al alcance del botón de envío. Antes esta caja
+            solo existía DENTRO de A3/A4, así que al toparse con el aviso de
+            "se van a desmarcar" había que navegar hacia atrás para adjuntar —
+            y encima el input de la tarjeta del certificado está deshabilitado
+            por el fieldset de la sección enviada. Aquí vive fuera del fieldset
+            y en cualquier pane: el aviso y la solución quedan en el mismo sitio. */}
+        {effectiveIntakeStep < 4 && pendingCertProofs(data).length > 0 && (
+          <div className={styles.pendProofs}>
+            <button
+              type="button"
+              className={styles.pendProofsHead}
+              aria-expanded={proofsOpen}
+              onClick={() => setProofsOpen((v) => !v)}
+            >
+              <span>
+                ⚠️ {pendingCertProofs(data).length} certificado{pendingCertProofs(data).length === 1 ? "" : "s"} sin soporte —
+                adjúntelo{pendingCertProofs(data).length === 1 ? "" : "s"} aquí antes de enviar
+              </span>
+              <span aria-hidden>{proofsOpen ? "▾" : "▸"}</span>
+            </button>
+            {proofsOpen && (
+              <div className={styles.pendProofsBody}>
+                <p className={styles.fexample} style={{ margin: "0 0 8px" }}>
+                  Si envía la Ficha sin la prueba, estas selecciones <b>se desmarcarán</b>. No hace falta volver a A3/A4:
+                  adjunte aquí y pulse Guardar.
+                </p>
+                {pendingCertProofs(data).map((p) => (
+                  <div key={p.key} className={styles.pendProofsRow}>
+                    <span style={{ fontWeight: 600 }}>{p.label}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ fontSize: 11.5 }}
+                      aria-label={`Soporte para ${p.label}`}
+                      onChange={(e) => e.target.files?.[0] && uploadCert(p.key, e.target.files[0])}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className={styles.footer}>
           {showDeclare && (

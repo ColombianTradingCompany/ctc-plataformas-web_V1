@@ -3,7 +3,7 @@ import { CertCheckbox } from "./CertCheckbox";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
-export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
+export function PaneA3({ data, onChange, onUploadCertFile, viewingLocked }: PaneProps) {
   return (
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>A3</span> Certificados de Origen & Reconocimientos</h3>
@@ -27,6 +27,7 @@ export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
                 checked={data[key as keyof FichaFormData] as boolean}
                 onToggle={(checked) => onChange({ [key]: checked } as Partial<FichaFormData>)}
                 attachment={data.cert_attachments[key]}
+                locked={viewingLocked}
                 onUpload={onUploadCertFile}
               />
             ))}

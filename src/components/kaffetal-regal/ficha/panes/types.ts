@@ -9,6 +9,9 @@ export type PaneProps = {
   lot: Lot;
   gi: GeneralInfo;
   onUploadCertFile: (certKey: string, file: File) => void;
+  /** La sección que se está viendo ya fue enviada (fieldset deshabilitado).
+   *  A3/A4 lo usan para no mostrar un input de archivo muerto. */
+  viewingLocked?: boolean;
   onUploadLotVideo: (file: File) => void;
   // Videos adicionales de B4 (slots 2 y 3): viven en datasheet.extra_video_assets,
   // no en lots.video_asset_id (que sigue siendo el video principal).

@@ -18,6 +18,7 @@ export function CertCheckbox({
   onToggle,
   attachment,
   onUpload,
+  locked = false,
 }: {
   certKey: string;
   label: React.ReactNode;
@@ -26,6 +27,10 @@ export function CertCheckbox({
   onToggle: (checked: boolean) => void;
   attachment?: FichaFormData["cert_attachments"][string];
   onUpload: (certKey: string, file: File) => void;
+  /** Sección ya enviada: el fieldset padre deshabilita este input, así que en vez
+   *  de mostrarlo en gris (parecía el sitio natural para adjuntar, y no lo era)
+   *  se oculta y se apunta a la caja de soportes del pie, que sí funciona. */
+  locked?: boolean;
 }) {
   const { showToast } = useToast();
   const [infoOpen, setInfoOpen] = useState(false);
@@ -63,7 +68,12 @@ export function CertCheckbox({
       {checked && (
         <>
           {!attachment && <span className={styles.pendChip}>Pendiente de soporte</span>}
-          <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFile(e.target.files?.[0])} style={{ fontSize: 12 }} />
+          {!locked && (
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFile(e.target.files?.[0])} style={{ fontSize: 12 }} />
+          )}
+          {locked && !attachment && (
+            <p className={styles.fexample} style={{ marginTop: 0 }}>Adjunte el soporte en la caja al pie de la Ficha.</p>
+          )}
           {attachment && <p className={styles.fexample} style={{ marginTop: 0 }}>✓ {attachment.fileName} adjuntado</p>}
         </>
       )}

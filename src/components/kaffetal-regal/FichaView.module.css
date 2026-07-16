@@ -17,6 +17,13 @@
 @media(max-width:520px){.fichaMain{padding:22px 16px 80px}}
 .shell{display:flex;gap:32px;align-items:flex-start}
 .content{flex:1;min-width:0;max-width:880px}
+/* Soportes de certificados pendientes, justo encima de Guardar/Enviar. */
+.pendProofs{border:1.5px solid #E3A32C;background:#FDF0D5;border-radius:10px;margin-top:20px;overflow:hidden}
+.pendProofsHead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;background:none;border:0;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:700;color:#8A5B00;text-align:left}
+.pendProofsHead:hover{background:#FBE7BE}
+.pendProofsBody{padding:0 14px 12px;border-top:1px dashed #E3A32C}
+.pendProofsRow{display:flex;align-items:center;gap:10px;font-size:12.5px;margin-top:8px;flex-wrap:wrap}
+
 .footer{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:14px 0;margin-top:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .csvRow{display:flex;gap:8px;align-items:center}
 @media(max-width:860px){.shell{flex-direction:column}}

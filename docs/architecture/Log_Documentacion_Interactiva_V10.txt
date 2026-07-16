@@ -6,6 +6,26 @@ Covers: everything since Documentacion_Interactiva_V10.0(b294dc8).html, which is
 now the current real HTML snapshot (Log_Documentacion_Interactiva_V9.txt is
 closed and left as historical record of what went into producing it).
 
+## [2026-07-16] Fix Ficha: los soportes de certificados, al alcance del botón de envío
+- Bug reportado: al enviar la Ficha, el aviso "los certificados sin soporte se DESMARCARÁN" aparece,
+  pero el productor no podía actuar: A3/A4 ya están enviados (fieldset disabled) y la caja de carga
+  que SÍ funciona estaba condicionada a `active === "a3" || "a4"` — había que navegar hacia atrás.
+  Peor: dentro de la tarjeta del certificado quedaba un input de archivo EN GRIS (deshabilitado por
+  el fieldset) que parecía el sitio natural para adjuntar. De ahí el "estoy bloqueado".
+- Fix: la caja de soportes pendientes se movió al PIE, encima de Guardar/Confirmar y fuera del
+  fieldset — visible desde cualquier pane, colapsable (proofsOpen), con el conteo en el titular
+  ("N certificados sin soporte — adjúntelos aquí antes de enviar"). Se eliminó la caja vieja de A3/A4
+  (habría duplicado). Y CertCheckbox recibe `locked`: con la sección enviada oculta el input muerto y
+  dice "Adjunte el soporte en la caja al pie de la Ficha" (el chip "Pendiente de soporte" sigue).
+- Nota técnica: primero se intentó ocultar el input con CSS (`fieldset:disabled .certCard input[type=file]`),
+  pero al inspeccionar el CSS compilado la clase salía SIN hashear — la regla no habría casado con el
+  DOM real. Se descartó por una prop explícita (viewingLocked → PaneProps → CertCheckbox.locked):
+  no depende del hashing de CSS Modules y es verificable por tipos.
+- Verificado: tsc+eslint limpios, la KR compila sin errores de servidor. El pane vive tras login de
+  productor, así que el render de la caja no se pudo conducir en navegador: pendiente de que el owner
+  lo vea con un lote real en la compuerta.
+(commit: pending)
+
 ## [2026-07-16] Producer-side "Mis inscripciones" + pago por Nequi (sin pasarela)
 - El productor ya VE su inscripción, no solo la nota del feed. Nuevo módulo "Mis inscripciones" en el
   hub de Kaffetal Regal (AppDashboard): tarjeta con contador ("N por pagar · $X") y alerta; dentro, una

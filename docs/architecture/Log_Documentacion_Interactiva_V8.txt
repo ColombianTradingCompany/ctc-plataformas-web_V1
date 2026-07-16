@@ -18,6 +18,17 @@ closed and left as historical record of what went into producing it).
   fallback-only) — no node/wire/scenario changes.
 (commit: pending)
 
+## [2026-07-16] Buzón: full-history backfill + per-recipient inboxes (commit 90b948c)
+- syncBuzon now scans ALL envelopes and imports missing messages in 25-msg batches
+  (returns `remaining`; the Sincronizar button loops until 0) — whole info@ history
+  importable. /bcp/buzon is identity-aware: owners see everything; a collaborator sees
+  only mail whose To: contains their own @ctcexport.com label (catch-all preserves To:).
+- Pending user wishes (feasible, not yet built): reply/forward via Resend as info@ (+
+  IMAP APPEND to Sent), manual tags, archive/delete reflected to Hostinger via IMAP.
+- gvg@ bounce recurred: Hostinger catch-all shows Activo but their LMTP still rejects —
+  propagation issue on their side, not code; retest / support ticket if it persists.
+(commit: 90b948c)
+
 ## [2026-07-16] Buzón goes operative via IMAP pull (option A+pull, $0)
 - Decision trail: Resend Inbound requires Pro ($20/mo, 2nd domain); Hostinger free tier
   (1 mailbox info@, catch-all included) chosen instead. Catch-all *@ctcexport.com → info@

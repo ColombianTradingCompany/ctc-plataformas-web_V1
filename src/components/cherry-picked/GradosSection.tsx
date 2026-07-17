@@ -9,8 +9,11 @@ import styles from "./GradosSection.module.css";
 const TAB_COLOR: Record<string, string> = { Red: "var(--t-red)", Blue: "var(--t-blue)", Gold: "var(--t-gold)" };
 
 const EN = {
-  eyebrow: "Mitaca harvest · Arriving in August · Last fractions · 30% refundable pre-payment",
-  h2: "The harvest, grade by grade",
+  catEyebrow: "Live lots · This season · Mitaca arriving in August",
+  catTitle: "The catalogue",
+  catCopy: "Real lots, graded blind in the Arena, sold by the kilo. Filter by grade, open a card, reserve your fraction.",
+  explainEyebrow: "How to read it · 30% refundable pre-payment",
+  explainTitle: "The harvest, grade by grade",
   body1: "Like cherries on the branch, coffees don't all ripen the same. Our committee cups every lot of the harvest and assigns it a ",
   bodyGrade: "Quality Grade",
   body2: " for the specialty that rotates, ",
@@ -36,8 +39,11 @@ const EN = {
 const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
-    eyebrow: "Cosecha de mitaca · Arribo en agosto · Últimas fracciones · Prepago 30% reembolsable",
-    h2: "La cosecha, grado a grado",
+    catEyebrow: "Lotes en vivo · Esta temporada · Mitaca arribando en agosto",
+    catTitle: "El catálogo",
+    catCopy: "Lotes reales, calificados a ciegas en la Arena y vendidos por kilos. Filtra por grado, abre una tarjeta, reserva tu fracción.",
+    explainEyebrow: "Cómo leerlo · Prepago 30% reembolsable",
+    explainTitle: "La cosecha, grado a grado",
     body1: "Como las cerezas en la rama, no todos los cafés maduran igual. Nuestro comité cata cada lote de la cosecha y le asigna un ",
     bodyGrade: "Grado de Calidad",
     body2: " para la especialidad que rota, ",
@@ -60,8 +66,11 @@ const T: Record<Lang, typeof EN> = {
     all: "Todos",
   },
   de: {
-    eyebrow: "Mitaca-Ernte · Ankunft im August · Letzte Fraktionen · 30 % erstattbare Anzahlung",
-    h2: "Die Ernte, Grad für Grad",
+    catEyebrow: "Live-Lots · Diese Saison · Mitaca kommt im August an",
+    catTitle: "Der Katalog",
+    catCopy: "Echte Lots, blind in der Arena bewertet, kiloweise verkauft. Filtere nach Grad, öffne eine Karte, reserviere deinen Anteil.",
+    explainEyebrow: "So liest du ihn · 30 % erstattbare Anzahlung",
+    explainTitle: "Die Ernte, Grad für Grad",
     body1: "Wie die Kirschen am Zweig reifen nicht alle Kaffees gleich. Unser Komitee verkostet jeden Lot der Ernte und vergibt einen ",
     bodyGrade: "Qualitätsgrad",
     body2: " für die Spezialität, die rotiert, ",
@@ -112,51 +121,14 @@ export function GradosSection({
   return (
     <section id="grados" className={styles.photoSection}>
       <div className="wrap">
+        {/* The catalogue leads; the grade system is explained after it. */}
         <div className="sec-head">
           <div>
-            <p className="eyebrow">{t.eyebrow}</p>
-            <h2>{t.h2}</h2>
+            <p className="eyebrow">{t.catEyebrow}</p>
+            <h2>{t.catTitle}</h2>
           </div>
+          <p>{t.catCopy}</p>
         </div>
-        <div className={styles.introCard}>
-          <p style={{ color: "var(--muted)", fontSize: 16.5 }}>
-            {t.body1}
-            <strong style={{ color: "var(--ink)" }}>{t.bodyGrade}</strong>:{" "}
-            <span className="mono" style={{ fontSize: 13 }}>RED</span>
-            {t.body2}
-            <span className="mono" style={{ fontSize: 13 }}>BLUE</span>
-            {t.body3}
-            <span className="mono" style={{ fontSize: 13 }}>GOLD</span>
-            {t.body4}
-          </p>
-        </div>
-
-        <InfoAccordion
-          icon={
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 21c-5-4.4-8-7.6-8-11a8 8 0 0 1 16 0c0 3.4-3 6.6-8 11z" transform="rotate(180 12 12)" />
-              <path d="M12 3v10M12 8c-1.6-.4-2.8-1.4-3.4-3M12 6c1.4-.3 2.5-1.1 3-2.5" />
-            </svg>
-          }
-          title={t.eudrTitle}
-          subtitle={t.eudrSubtitle}
-        >
-          <p>
-            {t.eudrP1a}
-            <b>{t.eudrP1b}</b>
-            {t.eudrP1c}
-            <b>{t.eudrP1d}</b>
-            {t.eudrP1e}
-            <b>{t.eudrP1f}</b>
-            {t.eudrP1g}
-          </p>
-          <p>
-            <b>{t.eudrP2a}</b>
-            {t.eudrP2b}
-            <b>{t.eudrP2c}</b>
-            {t.eudrP2d}
-          </p>
-        </InfoAccordion>
 
         <div className={styles.tabs} role="tablist" aria-label={t.tabsAria}>
           <button className={`${styles.tab} ${activeGrade === "all" ? styles.active : ""}`} role="tab" onClick={() => onSetGrade("all")}>
@@ -188,6 +160,51 @@ export function GradosSection({
               onChange={(delta) => onChangeQty(l.id, delta)}
             />
           ))}
+        </div>
+
+        {/* Solid block: the grade-by-grade story + EUDR, pushed under the
+            catalogue on purpose (and card-backed, since the photo wash is
+            lightest down here). */}
+        <div className={styles.explain}>
+          <p className="eyebrow">{t.explainEyebrow}</p>
+          <h3 className={styles.explainTitle}>{t.explainTitle}</h3>
+          <p className={styles.explainBody}>
+            {t.body1}
+            <strong style={{ color: "var(--ink)" }}>{t.bodyGrade}</strong>:{" "}
+            <span className="mono" style={{ fontSize: 13 }}>RED</span>
+            {t.body2}
+            <span className="mono" style={{ fontSize: 13 }}>BLUE</span>
+            {t.body3}
+            <span className="mono" style={{ fontSize: 13 }}>GOLD</span>
+            {t.body4}
+          </p>
+
+          <InfoAccordion
+            icon={
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 21c-5-4.4-8-7.6-8-11a8 8 0 0 1 16 0c0 3.4-3 6.6-8 11z" transform="rotate(180 12 12)" />
+                <path d="M12 3v10M12 8c-1.6-.4-2.8-1.4-3.4-3M12 6c1.4-.3 2.5-1.1 3-2.5" />
+              </svg>
+            }
+            title={t.eudrTitle}
+            subtitle={t.eudrSubtitle}
+          >
+            <p>
+              {t.eudrP1a}
+              <b>{t.eudrP1b}</b>
+              {t.eudrP1c}
+              <b>{t.eudrP1d}</b>
+              {t.eudrP1e}
+              <b>{t.eudrP1f}</b>
+              {t.eudrP1g}
+            </p>
+            <p>
+              <b>{t.eudrP2a}</b>
+              {t.eudrP2b}
+              <b>{t.eudrP2c}</b>
+              {t.eudrP2d}
+            </p>
+          </InfoAccordion>
         </div>
       </div>
     </section>

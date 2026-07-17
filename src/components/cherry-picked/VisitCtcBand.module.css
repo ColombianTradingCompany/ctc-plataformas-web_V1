@@ -1,0 +1,6 @@
+.band{display:flex;justify-content:center;padding:64px 24px}
+.link{display:block;border-radius:18px;transition:transform .18s ease}
+.link:hover{transform:translateY(-3px)}
+.link:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+/* The loop's own frames are white, so it gets a white plate + card chrome. */
+.loop{display:block;width:min(420px,84vw);height:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 56px -28px rgba(17,22,17,.4)}

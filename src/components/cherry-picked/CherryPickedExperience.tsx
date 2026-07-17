@@ -21,6 +21,8 @@ import { LoginModal } from "./LoginModal";
 import { ProfileView, type Billing, type OrderSummary } from "./ProfileView";
 import { GRADE_DB, cartData, fmt, listingCode, moqOf, type Grade, type Lot } from "./data";
 import { FamilyBubble } from "./FamilyBubble";
+import { LangBubble } from "./LangBubble";
+import { VisitCtcBand } from "./VisitCtcBand";
 import { LangProvider, useLang, type Lang } from "./i18n";
 
 type View = "store" | "profile";
@@ -28,7 +30,7 @@ const BID_STEP = 0.5;
 
 const EN = {
   quickNav: [
-    { id: "grados", n: "01", label: "The harvest, grade by grade", sub: "Red · Blue · Gold" },
+    { id: "grados", n: "01", label: "The catalogue", sub: "Red · Blue · Gold" },
     { id: "black", n: "02", label: "Black Selection", sub: "The coffee your bar runs on" },
     { id: "envios", n: "03", label: "Shipping", sub: "One shipping price, no surprises" },
     { id: "tyrian", n: "04", label: "Tyrian", sub: "The flagship auction" },
@@ -62,7 +64,7 @@ const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
     quickNav: [
-      { id: "grados", n: "01", label: "La cosecha, grado a grado", sub: "Red · Blue · Gold" },
+      { id: "grados", n: "01", label: "El catálogo", sub: "Red · Blue · Gold" },
       { id: "black", n: "02", label: "Black Selection", sub: "El café que sostiene tu barra" },
       { id: "envios", n: "03", label: "Envíos", sub: "Un precio de envío, sin sorpresas" },
       { id: "tyrian", n: "04", label: "Tyrian", sub: "La subasta insignia" },
@@ -93,7 +95,7 @@ const T: Record<Lang, typeof EN> = {
   },
   de: {
     quickNav: [
-      { id: "grados", n: "01", label: "Die Ernte, Grad für Grad", sub: "Red · Blue · Gold" },
+      { id: "grados", n: "01", label: "Der Katalog", sub: "Red · Blue · Gold" },
       { id: "black", n: "02", label: "Black Selection", sub: "Der Kaffee, der deine Bar trägt" },
       { id: "envios", n: "03", label: "Versand", sub: "Ein Versandpreis, keine Überraschungen" },
       { id: "tyrian", n: "04", label: "Tyrian", sub: "Die Flaggschiff-Auktion" },
@@ -451,6 +453,7 @@ function Experience() {
           />
           <BlackSection lots={lots} myKg={myKg} openLots={openLots} loggedIn={!!userId} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
           <EnviosSection />
+          <VisitCtcBand />
           <TyrianSection loggedIn={!!userId} bidA={bidA} bidB={bidB} onBid={bid} />
           <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
           <NarrativaSection lots={lots} />
@@ -458,10 +461,12 @@ function Experience() {
           <ManifiestoSection />
           <HistoriaSection />
           <Footer />
-          {/* Bottom-LEFT on purpose: the cart owns the bottom-right corner.
-              The FamilyBubble stacks directly above the QuickNav FAB. */}
+          {/* Bottom-LEFT bubble column, on purpose: the cart owns the
+              bottom-right corner. QuickNav FAB at 24, family at 92,
+              language at 148. */}
           <QuickNav sections={t.quickNav} side="left" labels={t.quickNavLabels} />
-          <FamilyBubble active="green" />
+          <FamilyBubble active="green" bottom={92} />
+          <LangBubble bottom={148} />
           <Cart
             summary={summary}
             packInCart={packInCart}

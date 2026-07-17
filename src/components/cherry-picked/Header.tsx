@@ -1,18 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { FAMILY_COLORS, FAMILY_LINKS, LangSwitch, useLang, type Lang } from "./i18n";
+import { useLang, type Lang } from "./i18n";
 import styles from "./Header.module.css";
+
+// Family and language switching live in the floating bubble column
+// (FamilyBubble / LangBubble, bottom-left) — not in this header.
 
 const EN = {
   navAria: "Main",
+  grados: "Catalogue",
   black: "The Black",
-  grados: "Quality Grades",
   tyrian: "Tyrian Auction",
   muestras: "Samples",
   cosecha: "The Harvest",
   historia: "Our Story",
-  familyAria: "The Cherry Picked family",
   account: "My account",
   login: "Sign in",
 };
@@ -21,25 +23,23 @@ const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
     navAria: "Principal",
+    grados: "Catálogo",
     black: "El Black",
-    grados: "Grados de Calidad",
     tyrian: "Subasta Tyrian",
     muestras: "Muestras",
     cosecha: "La cosecha",
     historia: "Nuestra historia",
-    familyAria: "La familia Cherry Picked",
     account: "Mi cuenta",
     login: "Iniciar sesión",
   },
   de: {
     navAria: "Hauptnavigation",
+    grados: "Katalog",
     black: "Black",
-    grados: "Qualitätsgrade",
     tyrian: "Tyrian-Auktion",
     muestras: "Muster",
     cosecha: "Die Ernte",
     historia: "Unsere Geschichte",
-    familyAria: "Die Cherry-Picked-Familie",
     account: "Mein Konto",
     login: "Anmelden",
   },
@@ -78,33 +78,15 @@ export function Header({
           <a href="#cosecha">{t.cosecha}</a>
           <a href="#historia">{t.historia}</a>
         </nav>
-        <div className={styles.controls}>
-          <nav className={styles.family} aria-label={t.familyAria}>
-            <span
-              className={`${styles.famPill} ${styles.famActive}`}
-              aria-current="true"
-              style={{ ["--famc" as string]: FAMILY_COLORS.green } as React.CSSProperties}
-            >
-              Green
-            </span>
-            <a className={styles.famPill} href={FAMILY_LINKS.roast}>
-              Roast
-            </a>
-            <a className={styles.famPill} href={FAMILY_LINKS.x}>
-              X
-            </a>
-          </nav>
-          <LangSwitch />
-          {loggedIn ? (
-            <button className="btn btn-sm btn-solid" onClick={onShowProfile}>
-              {t.account}
-            </button>
-          ) : (
-            <button className="btn btn-sm" onClick={onLogin}>
-              {t.login}
-            </button>
-          )}
-        </div>
+        {loggedIn ? (
+          <button className="btn btn-sm btn-solid" onClick={onShowProfile}>
+            {t.account}
+          </button>
+        ) : (
+          <button className="btn btn-sm" onClick={onLogin}>
+            {t.login}
+          </button>
+        )}
       </div>
     </header>
   );

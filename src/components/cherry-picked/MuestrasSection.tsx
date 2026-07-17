@@ -231,9 +231,14 @@ export function MuestrasSection({
     <section id="muestras">
       <div className={`wrap ${styles.split}`}>
         <div className={styles.panel}>
-          <Image className={styles.scoop} src="/images/cherry-picked/24-scoop-muestras.jpg" alt="" aria-hidden width={635} height={424} />
-          <p className="eyebrow">{t.eyebrow}</p>
-          <h3 style={{ marginTop: 10 }}>{t.h3}</h3>
+          {/* Transparent cutout, anchored bottom-right where the panel has
+              air — never over the copy (the old white-background jpg sat on
+              top of the eyebrow and heading). */}
+          <Image className={styles.scoop} src="/images/cherry-picked/scoop-verde.webp" alt="" aria-hidden width={420} height={280} />
+          <div className={styles.panelHead}>
+            <p className="eyebrow">{t.eyebrow}</p>
+            <h3 style={{ marginTop: 10 }}>{t.h3}</h3>
+          </div>
           <p style={{ fontSize: 14, color: "var(--muted)", maxWidth: "52ch", marginBottom: 14 }}>
             {t.body1}
             <strong style={{ color: "var(--ink)" }}>{t.bodyNext}</strong>

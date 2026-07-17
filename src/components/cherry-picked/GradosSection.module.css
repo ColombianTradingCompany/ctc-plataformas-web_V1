@@ -12,11 +12,15 @@
       rgba(242,243,237,.62) 100%),
     url("/images/cherry-picked/32-cerezas-fondo.jpg") center/cover no-repeat;
 }
-.introCard{
+/* The grade-by-grade story + EUDR, as one solid block under the catalogue —
+   solid on purpose: it sits where the photo wash is lightest. */
+.explain{
   background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:22px 26px;max-width:74ch;margin-bottom:30px;
+  padding:26px 30px;margin-top:34px;
   box-shadow:0 14px 34px -22px rgba(17,22,17,.35);
 }
+.explainTitle{font-family:var(--font-fraunces),serif;font-size:clamp(22px,3vw,30px);font-weight:800;color:var(--primary-deep);margin:8px 0 12px}
+.explainBody{color:var(--muted);font-size:16px;max-width:78ch;margin-bottom:18px}
 
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 22px}
 .tab{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:9px 18px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;color:var(--muted)}

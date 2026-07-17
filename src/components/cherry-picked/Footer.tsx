@@ -47,8 +47,10 @@ export function Footer() {
           <a href={FAMILY_LINKS.x}>X</a>
         </div>
         <div className="mono">{t.mono}</div>
-        {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
-            hero de ctcexport.com, como sello de cierre de la familia. */}
+      </div>
+      {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
+          hero de ctcexport.com, centrado como sello de cierre de la página. */}
+      <div className={styles.loopRow}>
         {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
         <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden />
       </div>

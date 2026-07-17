@@ -1,6 +1,8 @@
-/* Stacked directly above the QuickNav FAB (56px + 12px gap over its
-   bottom:24px, left:24px anchor — see QuickNav.module.css). */
-.wrap{position:fixed;left:24px;bottom:92px;z-index:60}
+/* The bottom-left bubble column (shared by FamilyBubble and LangBubble).
+   Each bubble sets its own --fb-bottom so the stack composes: on Green the
+   QuickNav FAB owns bottom:24, family sits at 92, language at 148; on the
+   Roast/X scaffolds (no QuickNav) family sits at 24, language at 80. */
+.wrap{position:fixed;left:24px;bottom:var(--fb-bottom,92px);z-index:60}
 
 .fab{
   display:inline-flex;align-items:center;justify-content:center;
@@ -13,6 +15,16 @@
 .fab:hover{filter:brightness(1.12)}
 .fab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .fabName{line-height:1}
+
+/* One playful hop, triggered every 10-15 s by useRandomBounce. */
+.bounce{animation:fbBounce .8s cubic-bezier(.36,.07,.19,.97)}
+@keyframes fbBounce{
+  0%,100%{transform:translateY(0)}
+  30%{transform:translateY(-12px)}
+  55%{transform:translateY(0)}
+  75%{transform:translateY(-5px)}
+}
+@media(prefers-reduced-motion:reduce){.bounce{animation:none}}
 
 .panel{
   position:absolute;left:0;bottom:calc(100% + 10px);
@@ -27,6 +39,7 @@
 
 .entry{
   display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;
+  border:none;background:transparent;text-align:left;cursor:pointer;width:100%;
   text-decoration:none;color:var(--ink);font-family:var(--font-fraunces),serif;
   font-weight:800;font-size:15px;line-height:1.2;
 }
@@ -36,5 +49,7 @@
 .entryActive small{color:rgba(255,255,255,.78)}
 .dot{width:12px;height:12px;border-radius:50%;background:var(--fbc,var(--primary));flex:none}
 .entryActive .dot{background:#fff}
+.code{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted);flex:none;width:24px}
+.entryActive .code{color:rgba(255,255,255,.85)}
 
-@media(max-width:520px){.wrap{left:16px;bottom:84px}}
+@media(max-width:520px){.wrap{left:16px;bottom:calc(var(--fb-bottom,92px) - 8px)}}

@@ -4,5 +4,6 @@
 .fb img{width:30px;height:auto}
 .foot a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
 .foot a:hover{border-bottom-color:var(--ink)}
-/* Loop de iconos CTC compartido (webp animado con alfa) como sello de cierre. */
+/* Loop de iconos CTC compartido (webp animado con alfa), centrado al pie. */
+.loopRow{display:flex;justify-content:center;margin-top:30px}
 .iconLoop{width:96px;height:96px;flex:0 0 auto;filter:drop-shadow(0 4px 10px rgba(17,22,17,.18))}

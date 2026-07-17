@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
 import styles from "./XLanding.module.css";
@@ -189,7 +190,9 @@ function Landing() {
         </div>
       </footer>
 
-      <FamilyBubble active="x" />
+      {/* No QuickNav on the scaffolds, so the bubble column starts at 24. */}
+      <FamilyBubble active="x" bottom={24} />
+      <LangBubble bottom={80} />
     </div>
   );
 }

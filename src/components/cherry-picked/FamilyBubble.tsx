@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FAMILY_COLORS, FAMILY_LINKS, useLang, type FamilyKey, type Lang } from "./i18n";
+import { useRandomBounce } from "./useRandomBounce";
 import styles from "./FamilyBubble.module.css";
 
 // Floating family switcher — a bubble stacked right on top of the QuickNav
@@ -43,10 +44,11 @@ const T: Record<Lang, typeof EN> = {
 
 const ORDER: FamilyKey[] = ["green", "roast", "x"];
 
-export function FamilyBubble({ active }: { active: FamilyKey }) {
+export function FamilyBubble({ active, bottom }: { active: FamilyKey; bottom: number }) {
   const lang = useLang();
   const t = T[lang];
   const [open, setOpen] = useState(false);
+  const bouncing = useRandomBounce();
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Click-outside + Escape close — same manners as QuickNav's panel.
@@ -67,11 +69,14 @@ export function FamilyBubble({ active }: { active: FamilyKey }) {
   }, [open]);
 
   return (
+    // Opens on hover but does NOT close on mouse-leave — the panel sits above
+    // a gap, and closing on leave made it vanish before anything could be
+    // clicked. It closes on selection, click-outside or Escape.
     <div
       className={styles.wrap}
+      style={{ ["--fb-bottom" as string]: `${bottom}px` } as React.CSSProperties}
       ref={wrapRef}
       onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
     >
       {open && (
         <nav className={styles.panel} aria-label={t.aria}>
@@ -108,7 +113,7 @@ export function FamilyBubble({ active }: { active: FamilyKey }) {
       )}
 
       <button
-        className={styles.fab}
+        className={`${styles.fab} ${bouncing ? styles.bounce : ""}`}
         style={{ ["--fbc" as string]: FAMILY_COLORS[active] } as React.CSSProperties}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
 import styles from "./RoastLanding.module.css";
@@ -21,6 +22,47 @@ const MOQ = [
   { grade: "Tyrian", kg: 20, color: "var(--t-tyrian)" },
 ];
 
+// Minimal coffee-bag sketches for the three label options. Decorative only
+// (aria-hidden); solid lines = printed design, dashed lines = the space that
+// belongs to the roaster's own brand.
+function BagSketch({ variant }: { variant: "my" | "co" | "pb" }) {
+  return (
+    <svg viewBox="0 0 120 150" fill="none" aria-hidden>
+      {/* bag body + top fold */}
+      <rect x="20" y="22" width="80" height="112" rx="10" stroke="var(--primary-deep)" strokeWidth="2.5" />
+      <path d="M20 40h80" stroke="var(--primary-deep)" strokeWidth="1.6" />
+      <path d="M32 22l6-10h44l6 10" stroke="var(--primary-deep)" strokeWidth="1.6" />
+      {variant === "my" && (
+        <>
+          {/* your full front label */}
+          <rect x="32" y="52" width="56" height="52" rx="5" stroke="var(--accent)" strokeWidth="2" strokeDasharray="5 4" />
+          <path d="M40 70h40M40 80h28" stroke="var(--accent)" strokeWidth="1.6" strokeDasharray="4 4" />
+          {/* Master Roaster + Finca stickers */}
+          <circle cx="44" cy="118" r="8" stroke="var(--primary-deep)" strokeWidth="1.8" />
+          <circle cx="66" cy="118" r="8" stroke="var(--primary-deep)" strokeWidth="1.8" />
+        </>
+      )}
+      {variant === "co" && (
+        <>
+          {/* CP Roast design frame */}
+          <path d="M30 50h60M30 58h60" stroke="var(--primary-deep)" strokeWidth="1.6" />
+          <path d="M30 112h60M30 120h44" stroke="var(--primary-deep)" strokeWidth="1.6" />
+          {/* the predefined space for your brand */}
+          <rect x="38" y="68" width="44" height="34" rx="5" stroke="var(--accent)" strokeWidth="2" strokeDasharray="5 4" />
+        </>
+      )}
+      {variant === "pb" && (
+        <>
+          {/* Papagayo Beans roundel */}
+          <circle cx="60" cy="78" r="24" stroke="var(--primary-deep)" strokeWidth="2" />
+          <path d="M52 82c3-10 13-14 16-12-6 2-9 7-10 14-2 1-5 0-6-2z" stroke="var(--primary-deep)" strokeWidth="1.6" />
+          <path d="M44 114h32M50 122h20" stroke="var(--primary-deep)" strokeWidth="1.6" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 const EN = {
   eyebrow: "Cherry Picked Roast · Roasted fulfillment programme",
   soonChip: "Coming Soon · kickstart 2027",
@@ -36,9 +78,12 @@ const EN = {
   fGreenV: "€/kg catalog",
   fFee: "Roast & fulfillment",
   fFeeV: "9.50 €/kg",
+  fHon: "Orchestration honoraries",
+  fHonV: "by grade",
   fTotal: "Your roasted price",
   fTotalV: "€/kg, in full",
   pricingP: "Roast pricing roots in the live Green catalog: the lot's Green price per kilo plus a flat 9.50 €/kg fulfillment fee covering roasting, packing and handling. No hidden margins — when a Green price moves with the harvest, your Roast price moves with it, and the base price is always there in the catalog for you to check.",
+  honP: "On top sits a small orchestration honorary that depends on the coffee's grade — it pays for what makes the lot what it is: the Arena grading, the passport, the quality custody along the chain. The per-grade figures are announced with each season's catalog.",
   massP: "Roasting costs mass: green coffee loses about 20% of its weight in the drum. Roast quantities and minimums are quoted in roasted kilos, already adjusted for that loss — batches run in blocks of 100 kg green, roughly 80 kg roasted.",
   moqEyebrow: "Minimums · In roasted kilos",
   moqH2: "Minimums by grade",
@@ -80,9 +125,12 @@ const T: Record<Lang, typeof EN> = {
     fGreenV: "€/kg del catálogo",
     fFee: "Tueste y fulfillment",
     fFeeV: "9,50 €/kg",
+    fHon: "Honorarios de orquestación",
+    fHonV: "según el grado",
     fTotal: "Tu precio tostado",
     fTotalV: "€/kg, todo incluido",
     pricingP: "El precio de Roast se enraíza en el catálogo Green en vivo: el precio Green por kilo del lote más una tarifa fija de 9,50 €/kg que cubre tueste, empaque y manejo. Sin márgenes ocultos — cuando un precio Green se mueve con la cosecha, tu precio Roast se mueve con él, y el precio base siempre está en el catálogo para que lo compruebes.",
+    honP: "Encima va un pequeño honorario de orquestación que depende del grado del café — paga lo que hace al lote ser lo que es: la calificación en la Arena, el pasaporte y la custodia de calidad a lo largo de la cadena. Las cifras por grado se anuncian con el catálogo de cada temporada.",
     massP: "Tostar cuesta masa: el café verde pierde cerca del 20% de su peso en el tambor. Las cantidades y mínimos de Roast se cotizan en kilos tostados, ya ajustados por esa merma — los lotes de tueste corren en bloques de 100 kg verde, unos 80 kg tostados.",
     moqEyebrow: "Mínimos · En kilos tostados",
     moqH2: "Mínimos por grado",
@@ -121,9 +169,12 @@ const T: Record<Lang, typeof EN> = {
     fGreenV: "€/kg laut Katalog",
     fFee: "Röstung & Fulfillment",
     fFeeV: "9,50 €/kg",
+    fHon: "Orchestrierungshonorar",
+    fHonV: "je nach Grad",
     fTotal: "Dein Röstpreis",
     fTotalV: "€/kg, alles inklusive",
     pricingP: "Der Roast-Preis wurzelt im laufenden Green-Katalog: der Green-Kilopreis des Lots plus eine fixe Gebühr von 9,50 €/kg für Röstung, Verpackung und Handling. Keine versteckten Margen — bewegt sich ein Green-Preis mit der Ernte, bewegt sich dein Roast-Preis mit, und den Basispreis kannst du jederzeit im Katalog nachschlagen.",
+    honP: "Dazu kommt ein kleines Orchestrierungshonorar, das vom Grad des Kaffees abhängt — es bezahlt, was den Lot ausmacht: die Arena-Bewertung, den Pass und die Qualitäts-Custody entlang der Kette. Die Beträge je Grad werden mit dem Katalog jeder Saison bekannt gegeben.",
     massP: "Rösten kostet Masse: Rohkaffee verliert in der Trommel rund 20 % seines Gewichts. Roast-Mengen und -Minima werden in gerösteten Kilo angegeben, bereits um diesen Verlust bereinigt — Chargen laufen in Blöcken von 100 kg roh, etwa 80 kg geröstet.",
     moqEyebrow: "Minima · In gerösteten Kilo",
     moqH2: "Minima nach Grad",
@@ -197,6 +248,11 @@ function Landing() {
               <span className={styles.fk}>{t.fFee}</span>
               <div className={styles.fv}>{t.fFeeV}</div>
             </div>
+            <div className={styles.fOp} aria-hidden>+</div>
+            <div className={styles.fPart}>
+              <span className={styles.fk}>{t.fHon}</span>
+              <div className={styles.fv}>{t.fHonV}</div>
+            </div>
             <div className={styles.fOp} aria-hidden>=</div>
             <div className={`${styles.fPart} ${styles.fTotal}`}>
               <span className={styles.fk}>{t.fTotal}</span>
@@ -204,6 +260,7 @@ function Landing() {
             </div>
           </div>
           <p className={styles.note}>{t.pricingP}</p>
+          <p className={styles.note} style={{ marginTop: 12 }}>{t.honP}</p>
           <p className={styles.note} style={{ marginTop: 12 }}>{t.massP}</p>
         </div>
       </section>
@@ -216,12 +273,19 @@ function Landing() {
               <h2>{t.moqH2}</h2>
             </div>
           </div>
-          <div className={styles.ladder}>
+          {/* Simple bar chart: each grade's roasted-kg minimum as a share of
+              Black's 200 kg, drawn with a grow-in animation. */}
+          <div className={styles.chart}>
             {MOQ.map((r) => (
-              <div className={styles.rung} key={r.grade} style={{ ["--gc" as string]: r.color } as React.CSSProperties}>
-                <span className={styles.dot} />
-                <span className={styles.gname}>{r.grade}</span>
-                <span className={styles.kg}>{r.kg} kg</span>
+              <div className={styles.crow} key={r.grade}>
+                <span className={styles.cname}>{r.grade}</span>
+                <div className={styles.ctrack}>
+                  <div
+                    className={styles.cbar}
+                    style={{ width: `${(r.kg / MOQ[0].kg) * 100}%`, background: r.color }}
+                  />
+                </div>
+                <span className={styles.ckg}>{r.kg} kg</span>
               </div>
             ))}
           </div>
@@ -239,15 +303,18 @@ function Landing() {
           </div>
           <div className={styles.cards}>
             <div className={styles.card}>
+              <div className={styles.sketch}><BagSketch variant="my" /></div>
               <h3>{t.myBrandT}</h3>
               <p>{t.myBrandP}</p>
             </div>
             <div className={styles.card}>
+              <div className={styles.sketch}><BagSketch variant="co" /></div>
               <h3>{t.coBrandT}</h3>
               <p>{t.coBrandP}</p>
             </div>
             <div className={styles.card}>
               <span className={styles.chip}>{t.pbChip}</span>
+              <div className={styles.sketch}><BagSketch variant="pb" /></div>
               <h3>{t.pbT}</h3>
               <p>{t.pbP}</p>
             </div>
@@ -288,7 +355,9 @@ function Landing() {
         </div>
       </footer>
 
-      <FamilyBubble active="roast" />
+      {/* No QuickNav on the scaffolds, so the bubble column starts at 24. */}
+      <FamilyBubble active="roast" bottom={24} />
+      <LangBubble bottom={80} />
     </div>
   );
 }

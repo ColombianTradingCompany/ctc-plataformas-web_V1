@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import styles from "./i18n.module.css";
 
 // Shared trilingual runtime for the Cherry Picked family (Green / Roast / X).
 // English is the canonical language of the storefront (the audience is
@@ -42,7 +41,9 @@ export const FAMILY_COLORS: Record<FamilyKey, string> = {
 
 const STORAGE_KEY = "cp-lang";
 
-const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({
+// Exported for the LangBubble (the floating language switcher); everything
+// else should keep using the read-only useLang().
+export const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({
   lang: "en",
   setLang: () => {},
 });
@@ -73,25 +74,4 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
 export function useLang(): Lang {
   return useContext(LangContext).lang;
-}
-
-const SWITCH_LABEL: Record<Lang, string> = { en: "Language", es: "Idioma", de: "Sprache" };
-
-export function LangSwitch() {
-  const { lang, setLang } = useContext(LangContext);
-  return (
-    <div className={styles.switch} role="group" aria-label={SWITCH_LABEL[lang]}>
-      {LANGS.map((l) => (
-        <button
-          key={l}
-          type="button"
-          className={`${styles.pill} ${lang === l ? styles.active : ""}`}
-          aria-pressed={lang === l}
-          onClick={() => setLang(l)}
-        >
-          {l.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  );
 }

@@ -1,19 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { FAMILY_COLORS, FAMILY_LINKS, LangSwitch, useLang, type Lang } from "./i18n";
 // Shares the Green header's stylesheet on purpose: the three storefronts are
-// one family and must read as such at a glance.
+// one family and must read as such at a glance. Family and language switching
+// live in the floating bubble column (FamilyBubble / LangBubble), not here.
 import styles from "./Header.module.css";
 
-const FAMILY_ARIA: Record<Lang, string> = {
-  en: "The Cherry Picked family",
-  es: "La familia Cherry Picked",
-  de: "Die Cherry-Picked-Familie",
-};
-
 export function FamilyHeader({ active }: { active: "roast" | "x" }) {
-  const lang = useLang();
   return (
     <header className={styles.header}>
       <div className={`wrap ${styles.nav}`}>
@@ -28,40 +21,6 @@ export function FamilyHeader({ active }: { active: "roast" | "x" }) {
             </span>
           </span>
         </a>
-        <div className={styles.controls}>
-          <nav className={styles.family} aria-label={FAMILY_ARIA[lang]}>
-            <a className={styles.famPill} href={FAMILY_LINKS.green}>
-              Green
-            </a>
-            {active === "roast" ? (
-              <span
-                className={`${styles.famPill} ${styles.famActive}`}
-                aria-current="true"
-                style={{ ["--famc" as string]: FAMILY_COLORS.roast } as React.CSSProperties}
-              >
-                Roast
-              </span>
-            ) : (
-              <a className={styles.famPill} href={FAMILY_LINKS.roast}>
-                Roast
-              </a>
-            )}
-            {active === "x" ? (
-              <span
-                className={`${styles.famPill} ${styles.famActive}`}
-                aria-current="true"
-                style={{ ["--famc" as string]: FAMILY_COLORS.x } as React.CSSProperties}
-              >
-                X
-              </span>
-            ) : (
-              <a className={styles.famPill} href={FAMILY_LINKS.x}>
-                X
-              </a>
-            )}
-          </nav>
-          <LangSwitch />
-        </div>
       </div>
     </header>
   );

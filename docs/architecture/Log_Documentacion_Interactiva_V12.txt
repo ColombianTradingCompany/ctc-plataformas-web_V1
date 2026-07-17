@@ -89,4 +89,32 @@ closed and left as historical record of what went into producing it).
 - Para el wrap: el DICT "familia-cp" debe decir "Coming Soon 2027 + newsletter" para
   Roast/X; nueva tabla en el nodo Postgres (36 tablas); posible mini-escenario
   "Roaster se suscribe al newsletter de Roast" (form → server action → tabla).
+(commit: 179ef24)
+
+## [2026-07-17] Segundo pase de UI (cierre pre-wrap): columna de burbujas + catálogo primero
+- El switcher de familia Y el de idioma salieron del header: viven en una COLUMNA DE
+  BURBUJAS flotante abajo-izquierda (FamilyBubble + LangBubble nuevo, mismo css; prop
+  `bottom` — Green apila 24/92/148 sobre el FAB del QuickNav, Roast/X 24/80). Bug
+  arreglado: el cierre por mouse-leave hacía desaparecer el panel antes de poder
+  clicar; ahora abre por hover y cierra solo por selección/click-fuera/Escape. Cada
+  burbuja "salta" independientemente cada 10–15 s (useRandomBounce; verificado: 2
+  saltos en 17 s entre las 2 burbujas).
+- #grados es CATÁLOGO-PRIMERO: título "El catálogo" + copy de ~20 palabras → tabs →
+  tarjetas; la historia "grado a grado" + EUDR quedaron como UN bloque sólido debajo.
+  Nav del header y QuickNav renombrados a "Catálogo".
+- Banda "Visita ctcexport.com" entre Envíos y Tyrian: el GIF de 149 MB del owner se
+  convirtió a visit-ctcexport.webp (480px, 217 frames, 2,3 MB, lazy). ⚠ El asset trae
+  un TYPO horneado en sus frames ("Expore" sin la L) — regenerar el GIF y reemplazar
+  el webp cuando exista.
+- Muestras: el scoop pasó al recorte transparente (scoop-verde.webp) arriba-derecha
+  con espacio reservado para el heading (antes el jpg de fondo blanco tapaba el texto).
+  Footer: el loop de iconos CTC quedó centrado al pie.
+- Roast: la fórmula de precio ganó un TERCER componente "Honorarios de orquestación ·
+  según el grado" (📌 faltan las cifras por grado del owner; el copy dice "se anuncian
+  con el catálogo de cada temporada"); los mínimos por grado son ahora un BAR CHART
+  con animación de crecimiento (barras a escala del Black 200 kg); las 3 opciones de
+  etiqueta llevan sketches SVG minimalistas de la bolsa (línea punteada = tu espacio).
+- Nota ops: dos veces el dev server sirvió un build a medias tras la ráfaga de edits
+  (Turbopack incremental); un reinicio limpio (borrar .next) lo resolvió — el código
+  y tsc/eslint siempre estuvieron limpios.
 (commit: pending)

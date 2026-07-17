@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FAMILY_LINKS, LangSwitch, useLang, type Lang } from "./i18n";
+import { FAMILY_COLORS, FAMILY_LINKS, LangSwitch, useLang, type Lang } from "./i18n";
 import styles from "./Header.module.css";
 
 const EN = {
@@ -71,8 +71,8 @@ export function Header({
           </span>
         </a>
         <nav className={styles.navLinks} aria-label={t.navAria}>
-          <a href="#black">{t.black}</a>
           <a href="#grados">{t.grados}</a>
+          <a href="#black">{t.black}</a>
           <a href="#tyrian">{t.tyrian}</a>
           <a href="#muestras">{t.muestras}</a>
           <a href="#cosecha">{t.cosecha}</a>
@@ -80,7 +80,11 @@ export function Header({
         </nav>
         <div className={styles.controls}>
           <nav className={styles.family} aria-label={t.familyAria}>
-            <span className={`${styles.famPill} ${styles.famActive}`} aria-current="true">
+            <span
+              className={`${styles.famPill} ${styles.famActive}`}
+              aria-current="true"
+              style={{ ["--famc" as string]: FAMILY_COLORS.green } as React.CSSProperties}
+            >
               Green
             </span>
             <a className={styles.famPill} href={FAMILY_LINKS.roast}>

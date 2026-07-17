@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
 import styles from "./XLanding.module.css";
 
@@ -18,6 +20,7 @@ const GRADES = [
 
 const EN = {
   eyebrow: "Cherry Picked X · Small-format programme",
+  soonChip: "Coming Soon · kickstart 2027",
   h1a: "The whole harvest, ",
   h1b: "in small boxes.",
   lead: "The full Cherry Picked offer — without Black — at discovery scale: Red, Blue, Gold and, when one exists, Tyrian, in boxes starting at 3 kg per season. The same lots, the same passport, a fraction sized for tasting menus, pop-ups and small-batch roasting.",
@@ -35,9 +38,9 @@ const EN = {
   c2bigSub: "/ box, per season",
   c3t: "Season-bound",
   c3p: "X follows the harvest calendar: two sales seasons a year, and each box belongs to its season's catalog. When a season sells out, the next cupping is already on its way.",
-  bandH3: "The X programme is connecting to the Green catalog.",
-  bandP: "Boxes open soon. The lots themselves are already live — explore the season on Green while the small format arrives.",
-  bandCta: "Explore the lots on Green",
+  bandH3: "X kickstarts in 2027 — follow the build-up.",
+  bandP: "The small format rides on the same destination network we're building for 2027. Green goes first — the ripest market, the container-breaking volume — and X follows with the harvest in boxes. Nothing is for sale here yet; subscribe and watch it take shape, starting with the lots already live on Green.",
+  bandCta: "Meanwhile, explore the lots on Green →",
   footBlurb: "Cherry Picked X by CTC · The harvest at discovery scale",
   familyLabel: "The Cherry Picked family:",
 };
@@ -46,6 +49,7 @@ const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
     eyebrow: "Cherry Picked X · Programa de formato pequeño",
+    soonChip: "Muy pronto · arranque 2027",
     h1a: "Toda la cosecha, ",
     h1b: "en cajas pequeñas.",
     lead: "La oferta completa de Cherry Picked — sin Black — a escala de descubrimiento: Red, Blue, Gold y, cuando existe, Tyrian, en cajas desde 3 kg por temporada. Los mismos lotes, el mismo pasaporte, una fracción a la medida de menús de degustación, pop-ups y tuestes de lote pequeño.",
@@ -63,14 +67,15 @@ const T: Record<Lang, typeof EN> = {
     c2bigSub: "/ caja, por temporada",
     c3t: "Atada a la temporada",
     c3p: "X sigue el calendario de cosecha: dos temporadas de venta al año, y cada caja pertenece al catálogo de su temporada. Cuando una temporada se agota, la siguiente catación ya viene en camino.",
-    bandH3: "El programa X se está conectando al catálogo Green.",
-    bandP: "Las cajas abren pronto. Los lotes ya están en vivo — explora la temporada en Green mientras llega el formato pequeño.",
-    bandCta: "Explorar los lotes en Green",
+    bandH3: "X arranca en 2027 — sigue la construcción.",
+    bandP: "El formato pequeño viaja sobre la misma red en destino que estamos construyendo para 2027. Green va primero — el mercado más maduro, el volumen que rompe el contenedor — y X le sigue con la cosecha en cajas. Aquí todavía no se vende nada; suscríbete y mira cómo toma forma, empezando por los lotes que ya están en vivo en Green.",
+    bandCta: "Mientras tanto, explora los lotes en Green →",
     footBlurb: "Cherry Picked X by CTC · La cosecha a escala de descubrimiento",
     familyLabel: "La familia Cherry Picked:",
   },
   de: {
     eyebrow: "Cherry Picked X · Kleinformat-Programm",
+    soonChip: "Bald verfügbar · Start 2027",
     h1a: "Die ganze Ernte, ",
     h1b: "in kleinen Boxen.",
     lead: "Das volle Cherry-Picked-Angebot — ohne Black — im Entdeckerformat: Red, Blue, Gold und, wenn es einen gibt, Tyrian, in Boxen ab 3 kg pro Saison. Dieselben Lots, derselbe Pass, eine Fraktion nach Maß für Tasting-Menüs, Pop-ups und Kleinröstungen.",
@@ -88,9 +93,9 @@ const T: Record<Lang, typeof EN> = {
     c2bigSub: "/ Box, pro Saison",
     c3t: "An die Saison gebunden",
     c3p: "X folgt dem Erntekalender: zwei Verkaufssaisons pro Jahr, und jede Box gehört zum Katalog ihrer Saison. Ist eine Saison ausverkauft, ist die nächste Verkostung schon unterwegs.",
-    bandH3: "Das X-Programm wird gerade mit dem Green-Katalog verbunden.",
-    bandP: "Die Boxen öffnen bald. Die Lots sind schon live — entdecke die Saison auf Green, während das Kleinformat ankommt.",
-    bandCta: "Die Lots auf Green entdecken",
+    bandH3: "X startet 2027 — verfolge den Aufbau.",
+    bandP: "Das Kleinformat fährt auf demselben Zielmarkt-Netzwerk, das wir für 2027 aufbauen. Green kommt zuerst — der reifste Markt, das Volumen, das den Container knackt — und X folgt mit der Ernte in Boxen. Hier wird noch nichts verkauft; trag dich ein und sieh zu, wie es Gestalt annimmt — angefangen bei den Lots, die auf Green schon live sind.",
+    bandCta: "Entdecke inzwischen die Lots auf Green →",
     footBlurb: "Cherry Picked X by CTC · Die Ernte im Entdeckerformat",
     familyLabel: "Die Cherry-Picked-Familie:",
   },
@@ -112,6 +117,7 @@ function Landing() {
                 {t.h1a}
                 <em>{t.h1b}</em>
               </h1>
+              <p className={styles.soon}>{t.soonChip}</p>
               <p className={styles.lead}>{t.lead}</p>
               <div className={styles.grades} role="group" aria-label={t.gradesAria}>
                 {GRADES.map((g) => (
@@ -160,12 +166,15 @@ function Landing() {
               <p>{t.c3p}</p>
             </div>
           </div>
-          <div className={styles.band}>
+          <div className={styles.band} id="follow">
             <div>
               <h3>{t.bandH3}</h3>
               <p>{t.bandP}</p>
             </div>
-            <a className="btn btn-solid-accent" href={FAMILY_LINKS.green}>{t.bandCta}</a>
+            <div>
+              <NewsletterForm source="x" />
+              <a className={styles.bandLink} href={FAMILY_LINKS.green}>{t.bandCta}</a>
+            </div>
           </div>
         </div>
       </section>
@@ -179,6 +188,8 @@ function Landing() {
           </span>
         </div>
       </footer>
+
+      <FamilyBubble active="x" />
     </div>
   );
 }

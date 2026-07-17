@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FAMILY_LINKS, LangSwitch, useLang, type Lang } from "./i18n";
+import { FAMILY_COLORS, FAMILY_LINKS, LangSwitch, useLang, type Lang } from "./i18n";
 // Shares the Green header's stylesheet on purpose: the three storefronts are
 // one family and must read as such at a glance.
 import styles from "./Header.module.css";
@@ -34,7 +34,11 @@ export function FamilyHeader({ active }: { active: "roast" | "x" }) {
               Green
             </a>
             {active === "roast" ? (
-              <span className={`${styles.famPill} ${styles.famActive}`} aria-current="true">
+              <span
+                className={`${styles.famPill} ${styles.famActive}`}
+                aria-current="true"
+                style={{ ["--famc" as string]: FAMILY_COLORS.roast } as React.CSSProperties}
+              >
                 Roast
               </span>
             ) : (
@@ -43,7 +47,11 @@ export function FamilyHeader({ active }: { active: "roast" | "x" }) {
               </a>
             )}
             {active === "x" ? (
-              <span className={`${styles.famPill} ${styles.famActive}`} aria-current="true">
+              <span
+                className={`${styles.famPill} ${styles.famActive}`}
+                aria-current="true"
+                style={{ ["--famc" as string]: FAMILY_COLORS.x } as React.CSSProperties}
+              >
                 X
               </span>
             ) : (

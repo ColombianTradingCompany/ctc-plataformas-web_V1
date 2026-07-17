@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
 import styles from "./RoastLanding.module.css";
 
@@ -21,6 +23,7 @@ const MOQ = [
 
 const EN = {
   eyebrow: "Cherry Picked Roast · Roasted fulfillment programme",
+  soonChip: "Coming Soon · kickstart 2027",
   h1a: "The full Green offer, ",
   h1b: "roasted.",
   lead: "Every lot in the Cherry Picked Green catalog, delivered roast-ready for your shelf: roasted in Europe by the CTC Master Roaster, packed under the label you choose, and carrying the same lot passport — grade, producer and EUDR file included.",
@@ -53,9 +56,9 @@ const EN = {
   transpEyebrow: "Transparency · By design",
   transpH2: "The Master Roaster buys where you buy",
   transpP: "The roasting partner has no private pipeline: the Master Roaster consumes its green through its own Cherry Picked Green account — same catalog, same prices, same fractions — for transparency and management. What lands in your roasted bag is a lot you can audit yourself, from the Green listing to the cup.",
-  bandH3: "The Roast programme is connecting to the Green catalog.",
-  bandP: "Ordering opens soon. The coffees themselves are already live — pick your lots on Green today and roast-fulfill them as the programme opens.",
-  bandCta: "Explore the lots on Green",
+  bandH3: "Roast kickstarts in 2027 — follow the build-up.",
+  bandP: "We're building the destination network that makes it possible: the Master Roaster, packing and fulfillment in Europe. Green goes first because its market is the ripest and it carries the volume that breaks container metrics. Nothing is for sale here yet — but the story is worth following, and it starts with the lots already live on Green.",
+  bandCta: "Meanwhile, explore the lots on Green →",
   footBlurb: "Cherry Picked Roast by CTC · Roasted in Europe by the CTC Master Roaster",
   familyLabel: "The Cherry Picked family:",
 };
@@ -64,6 +67,7 @@ const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
     eyebrow: "Cherry Picked Roast · Programa de tueste y fulfillment",
+    soonChip: "Muy pronto · arranque 2027",
     h1a: "Toda la oferta Green, ",
     h1b: "tostada.",
     lead: "Cada lote del catálogo de Cherry Picked Green, entregado listo para tu estantería: tostado en Europa por el Master Roaster de CTC, empacado bajo la etiqueta que tú elijas, y con el mismo pasaporte del lote — grado, productor y expediente EUDR incluidos.",
@@ -96,14 +100,15 @@ const T: Record<Lang, typeof EN> = {
     transpEyebrow: "Transparencia · Por diseño",
     transpH2: "El Master Roaster compra donde tú compras",
     transpP: "El socio tostador no tiene una tubería privada: el Master Roaster consume su café verde a través de su propia cuenta de Cherry Picked Green — mismo catálogo, mismos precios, mismas fracciones — por transparencia y gestión. Lo que llega a tu bolsa tostada es un lote que tú mismo puedes auditar, del listado Green a la taza.",
-    bandH3: "El programa Roast se está conectando al catálogo Green.",
-    bandP: "Los pedidos abren pronto. Los cafés ya están en vivo — escoge tus lotes en Green hoy y tuéstalos con el programa cuando abra.",
-    bandCta: "Explorar los lotes en Green",
+    bandH3: "Roast arranca en 2027 — sigue la construcción.",
+    bandP: "Estamos construyendo la red en destino que lo hace posible: el Master Roaster, el empaque y el fulfillment en Europa. Green va primero porque su mercado es el más maduro y carga el volumen que rompe las métricas del contenedor. Aquí todavía no se vende nada — pero la historia vale la pena seguirla, y empieza con los lotes que ya están en vivo en Green.",
+    bandCta: "Mientras tanto, explora los lotes en Green →",
     footBlurb: "Cherry Picked Roast by CTC · Tostado en Europa por el Master Roaster de CTC",
     familyLabel: "La familia Cherry Picked:",
   },
   de: {
     eyebrow: "Cherry Picked Roast · Röst- und Fulfillment-Programm",
+    soonChip: "Bald verfügbar · Start 2027",
     h1a: "Das volle Green-Angebot, ",
     h1b: "geröstet.",
     lead: "Jeder Lot aus dem Cherry-Picked-Green-Katalog, regalfertig geliefert: in Europa geröstet vom CTC Master Roaster, verpackt unter dem Label deiner Wahl, mit demselben Lot-Pass — Grad, Produzent und EUDR-Akte inklusive.",
@@ -136,9 +141,9 @@ const T: Record<Lang, typeof EN> = {
     transpEyebrow: "Transparenz · Als Prinzip",
     transpH2: "Der Master Roaster kauft, wo du kaufst",
     transpP: "Der Röstpartner hat keine private Pipeline: Der Master Roaster bezieht seinen Rohkaffee über sein eigenes Cherry-Picked-Green-Konto — gleicher Katalog, gleiche Preise, gleiche Fraktionen — aus Gründen der Transparenz und Steuerung. Was in deiner gerösteten Tüte landet, ist ein Lot, das du selbst prüfen kannst, vom Green-Listing bis zur Tasse.",
-    bandH3: "Das Roast-Programm wird gerade mit dem Green-Katalog verbunden.",
-    bandP: "Bestellungen öffnen bald. Die Kaffees sind schon live — wähle deine Lots heute auf Green und lass sie rösten, sobald das Programm öffnet.",
-    bandCta: "Die Lots auf Green entdecken",
+    bandH3: "Roast startet 2027 — verfolge den Aufbau.",
+    bandP: "Wir bauen gerade das Netzwerk im Zielmarkt auf, das es möglich macht: den Master Roaster, Verpackung und Fulfillment in Europa. Green kommt zuerst, weil sein Markt am reifsten ist und das Volumen trägt, das die Container-Metriken knackt. Hier wird noch nichts verkauft — aber die Geschichte lohnt sich, und sie beginnt mit den Lots, die auf Green schon live sind.",
+    bandCta: "Entdecke inzwischen die Lots auf Green →",
     footBlurb: "Cherry Picked Roast by CTC · In Europa geröstet vom CTC Master Roaster",
     familyLabel: "Die Cherry-Picked-Familie:",
   },
@@ -160,6 +165,7 @@ function Landing() {
                 {t.h1a}
                 <em>{t.h1b}</em>
               </h1>
+              <p className={styles.soon}>{t.soonChip}</p>
               <p className={styles.lead}>{t.lead}</p>
               <div className={styles.heroCta}>
                 <a className="btn btn-solid" href={FAMILY_LINKS.green}>{t.ctaGreen}</a>
@@ -259,12 +265,15 @@ function Landing() {
             </div>
             <p>{t.transpP}</p>
           </div>
-          <div className={styles.band}>
+          <div className={styles.band} id="follow">
             <div>
               <h3>{t.bandH3}</h3>
               <p>{t.bandP}</p>
             </div>
-            <a className="btn btn-solid-accent" href={FAMILY_LINKS.green}>{t.bandCta}</a>
+            <div>
+              <NewsletterForm source="roast" />
+              <a className={styles.bandLink} href={FAMILY_LINKS.green}>{t.bandCta}</a>
+            </div>
           </div>
         </div>
       </section>
@@ -278,6 +287,8 @@ function Landing() {
           </span>
         </div>
       </footer>
+
+      <FamilyBubble active="roast" />
     </div>
   );
 }

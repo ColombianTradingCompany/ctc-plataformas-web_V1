@@ -20,6 +20,7 @@ import { Cart, type ShippingZone } from "./Cart";
 import { LoginModal } from "./LoginModal";
 import { ProfileView, type Billing, type OrderSummary } from "./ProfileView";
 import { GRADE_DB, cartData, fmt, listingCode, moqOf, type Grade, type Lot } from "./data";
+import { FamilyBubble } from "./FamilyBubble";
 import { LangProvider, useLang, type Lang } from "./i18n";
 
 type View = "store" | "profile";
@@ -27,8 +28,8 @@ const BID_STEP = 0.5;
 
 const EN = {
   quickNav: [
-    { id: "black", n: "01", label: "Black Selection", sub: "The coffee your bar runs on" },
-    { id: "grados", n: "02", label: "The harvest, grade by grade", sub: "Red · Blue · Gold" },
+    { id: "grados", n: "01", label: "The harvest, grade by grade", sub: "Red · Blue · Gold" },
+    { id: "black", n: "02", label: "Black Selection", sub: "The coffee your bar runs on" },
     { id: "envios", n: "03", label: "Shipping", sub: "One shipping price, no surprises" },
     { id: "tyrian", n: "04", label: "Tyrian", sub: "The flagship auction" },
     { id: "muestras", n: "05", label: "Samples", sub: "Harvest sample packs" },
@@ -61,8 +62,8 @@ const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
     quickNav: [
-      { id: "black", n: "01", label: "Black Selection", sub: "El café que sostiene tu barra" },
-      { id: "grados", n: "02", label: "La cosecha, grado a grado", sub: "Red · Blue · Gold" },
+      { id: "grados", n: "01", label: "La cosecha, grado a grado", sub: "Red · Blue · Gold" },
+      { id: "black", n: "02", label: "Black Selection", sub: "El café que sostiene tu barra" },
       { id: "envios", n: "03", label: "Envíos", sub: "Un precio de envío, sin sorpresas" },
       { id: "tyrian", n: "04", label: "Tyrian", sub: "La subasta insignia" },
       { id: "muestras", n: "05", label: "Muestras", sub: "Sample packs de la cosecha" },
@@ -92,8 +93,8 @@ const T: Record<Lang, typeof EN> = {
   },
   de: {
     quickNav: [
-      { id: "black", n: "01", label: "Black Selection", sub: "Der Kaffee, der deine Bar trägt" },
-      { id: "grados", n: "02", label: "Die Ernte, Grad für Grad", sub: "Red · Blue · Gold" },
+      { id: "grados", n: "01", label: "Die Ernte, Grad für Grad", sub: "Red · Blue · Gold" },
+      { id: "black", n: "02", label: "Black Selection", sub: "Der Kaffee, der deine Bar trägt" },
       { id: "envios", n: "03", label: "Versand", sub: "Ein Versandpreis, keine Überraschungen" },
       { id: "tyrian", n: "04", label: "Tyrian", sub: "Die Flaggschiff-Auktion" },
       { id: "muestras", n: "05", label: "Muster", sub: "Musterpakete der Ernte" },
@@ -436,7 +437,8 @@ function Experience() {
         <>
           <Header loggedIn={!!userId} onLogin={() => setLoginOpen(true)} onShowProfile={() => setView("profile")} />
           <Hero />
-          <BlackSection lots={lots} myKg={myKg} openLots={openLots} loggedIn={!!userId} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
+          {/* The product leads, right below the hero's manifest board: first
+              the graded harvest (the flagship), then the Black workhorse. */}
           <GradosSection
             lots={lots}
             myKg={myKg}
@@ -447,6 +449,7 @@ function Experience() {
             onToggleOpen={toggleOpen}
             onChangeQty={changeQty}
           />
+          <BlackSection lots={lots} myKg={myKg} openLots={openLots} loggedIn={!!userId} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
           <EnviosSection />
           <TyrianSection loggedIn={!!userId} bidA={bidA} bidB={bidB} onBid={bid} />
           <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
@@ -455,8 +458,10 @@ function Experience() {
           <ManifiestoSection />
           <HistoriaSection />
           <Footer />
-          {/* Bottom-LEFT on purpose: the cart owns the bottom-right corner. */}
+          {/* Bottom-LEFT on purpose: the cart owns the bottom-right corner.
+              The FamilyBubble stacks directly above the QuickNav FAB. */}
           <QuickNav sections={t.quickNav} side="left" labels={t.quickNavLabels} />
+          <FamilyBubble active="green" />
           <Cart
             summary={summary}
             packInCart={packInCart}

@@ -63,4 +63,30 @@ closed and left as historical record of what went into producing it).
   posible escenario nuevo "Roaster cambia de idioma / navega la familia". El mapa de
   archivos ganará src/components/cherry-picked-roast/, cherry-picked-x/,
   cherry-picked/i18n.tsx, FamilyHeader.tsx y app/cherry-picked-{roast,x}/.
+(commit: cd86ce4)
+
+## [2026-07-17] Pase de UI de la familia CP: "Coming Soon 2027" + newsletter + producto primero
+- Roast y X son explícitamente "Coming Soon · kickstart 2027": la operación arranca en
+  2027 cuando esté la red en destino; Green va primero (mercado más maduro, volumen que
+  rompe las métricas del contenedor). NADA se vende en Roast/X; en su lugar hay
+  suscripción a newsletter para "seguir la historia".
+- NUEVA TABLA: newsletter_subscribers (service-role-only, RLS sin políticas, unique
+  email+source roast|x, lang) — único escritor: src/lib/newsletter/actions.ts
+  (subscribeNewsletter, honeypot, upsert idempotente). Sin superficie BCP aún (se lee
+  por SQL). Verificado E2E en dev contra la BD real (fila creada y limpiada).
+- Switcher de familia: la píldora activa viste el color de su marca (Green=verde
+  --primary, Roast=café #6F4E37, X=--t-tyrian), fuente única FAMILY_COLORS en i18n.tsx.
+  NUEVO FamilyBubble: FAB flotante apilado ENCIMA del FAB de líneas del QuickNav
+  (bottom-left, los 3 sitios) que despliega las 3 opciones con su color — accesible
+  siempre, también donde las píldoras del header se ocultan.
+- Green ahora es producto-primero: Grados ("La cosecha, grado a grado") va DIRECTO
+  debajo del manifiesto del hero; Black pasa a segundo (QuickNav renumerado 01/02).
+- Fotos: la sección Grados usa la foto real de la rama como FONDO completo
+  (32-cerezas-fondo.jpg, lavado papel degradado fuerte arriba; contraste medido del
+  texto desnudo: h2 10.7:1, cuerpo 4.98:1 peor caso; todo lo demás va sobre tarjetas
+  sólidas). Black usa la barra de la tostaduría-café (31-bar-tostaduria.jpg) con CSS
+  anti-deformación. Se eliminaron 27-bodega-costales y 28-cerezas-rama-real (huérfanas).
+- Para el wrap: el DICT "familia-cp" debe decir "Coming Soon 2027 + newsletter" para
+  Roast/X; nueva tabla en el nodo Postgres (36 tablas); posible mini-escenario
+  "Roaster se suscribe al newsletter de Roast" (form → server action → tabla).
 (commit: pending)

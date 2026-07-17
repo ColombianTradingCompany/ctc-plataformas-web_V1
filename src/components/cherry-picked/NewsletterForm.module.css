@@ -1,0 +1,13 @@
+.form{margin-top:14px}
+.label{display:block;font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#BFD8C6;margin-bottom:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row input[type="email"]{
+  flex:1 1 220px;min-width:0;padding:11px 14px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);
+  color:#fff;font-size:14.5px;
+}
+.row input[type="email"]::placeholder{color:rgba(255,255,255,.45)}
+.row input[type="email"]:focus{outline:2px solid var(--accent-soft);outline-offset:1px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.err{margin-top:8px;font-size:13px;color:#F3C6C2}
+.done{margin-top:14px;font-size:14.5px;color:#DFF0E4;font-weight:600}

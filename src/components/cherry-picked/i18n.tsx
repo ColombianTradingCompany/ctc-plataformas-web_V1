@@ -30,6 +30,16 @@ export const FAMILY_LINKS =
         x: "https://cherry-picked-x.ctcexport.com",
       };
 
+// One brand color per family member: Green wears the site green, Roast a
+// coffee brown, X the Tyrian purple. Used by the header pills and the
+// floating FamilyBubble.
+export type FamilyKey = "green" | "roast" | "x";
+export const FAMILY_COLORS: Record<FamilyKey, string> = {
+  green: "var(--primary)",
+  roast: "#6F4E37",
+  x: "var(--t-tyrian)",
+};
+
 const STORAGE_KEY = "cp-lang";
 
 const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({

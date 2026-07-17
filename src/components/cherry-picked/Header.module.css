@@ -14,7 +14,7 @@
 .family{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
 .famPill{border:0;text-decoration:none;color:var(--muted);font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;font-weight:600;padding:4px 9px;border-radius:999px;text-transform:uppercase;transition:all .15s}
 .famPill:hover{color:var(--ink)}
-.famActive{background:var(--accent);color:#fff}
+.famActive{background:var(--famc,var(--accent));color:#fff}
 .famActive:hover{color:#fff}
 @media(max-width:1200px){.navLinks{display:none}}
 @media(max-width:560px){.family{display:none}}

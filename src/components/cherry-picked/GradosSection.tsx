@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { InfoAccordion } from "@/components/InfoAccordion";
 import { useLang, type Lang } from "./i18n";
 import type { Grade, Lot } from "./data";
@@ -12,7 +11,6 @@ const TAB_COLOR: Record<string, string> = { Red: "var(--t-red)", Blue: "var(--t-
 const EN = {
   eyebrow: "Mitaca harvest · Arriving in August · Last fractions · 30% refundable pre-payment",
   h2: "The harvest, grade by grade",
-  imgAlt: "Coffee cherries ripening on the branch, at different stages",
   body1: "Like cherries on the branch, coffees don't all ripen the same. Our committee cups every lot of the harvest and assigns it a ",
   bodyGrade: "Quality Grade",
   body2: " for the specialty that rotates, ",
@@ -40,7 +38,6 @@ const T: Record<Lang, typeof EN> = {
   es: {
     eyebrow: "Cosecha de mitaca · Arribo en agosto · Últimas fracciones · Prepago 30% reembolsable",
     h2: "La cosecha, grado a grado",
-    imgAlt: "Cerezas de café madurando en la rama, en distintos puntos",
     body1: "Como las cerezas en la rama, no todos los cafés maduran igual. Nuestro comité cata cada lote de la cosecha y le asigna un ",
     bodyGrade: "Grado de Calidad",
     body2: " para la especialidad que rota, ",
@@ -65,7 +62,6 @@ const T: Record<Lang, typeof EN> = {
   de: {
     eyebrow: "Mitaca-Ernte · Ankunft im August · Letzte Fraktionen · 30 % erstattbare Anzahlung",
     h2: "Die Ernte, Grad für Grad",
-    imgAlt: "Kaffeekirschen am Zweig, in verschiedenen Reifestadien",
     body1: "Wie die Kirschen am Zweig reifen nicht alle Kaffees gleich. Unser Komitee verkostet jeden Lot der Ernte und vergibt einen ",
     bodyGrade: "Qualitätsgrad",
     body2: " für die Spezialität, die rotiert, ",
@@ -114,7 +110,7 @@ export function GradosSection({
   const shown = activeGrade === "all" ? preLots : preLots.filter((l) => l.grade === activeGrade);
 
   return (
-    <section id="grados">
+    <section id="grados" className={styles.photoSection}>
       <div className="wrap">
         <div className="sec-head">
           <div>
@@ -122,9 +118,8 @@ export function GradosSection({
             <h2>{t.h2}</h2>
           </div>
         </div>
-        <div className={styles.gradeIntro}>
-          <Image src="/images/cherry-picked/28-cerezas-rama-real.jpg" alt={t.imgAlt} width={900} height={1195} />
-          <p style={{ color: "var(--muted)", fontSize: 16.5, maxWidth: "62ch" }}>
+        <div className={styles.introCard}>
+          <p style={{ color: "var(--muted)", fontSize: 16.5 }}>
             {t.body1}
             <strong style={{ color: "var(--ink)" }}>{t.bodyGrade}</strong>:{" "}
             <span className="mono" style={{ fontSize: 13 }}>RED</span>

@@ -6,15 +6,17 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import {
   activeCups,
+  allowedDiscardGrades,
   cupLabel,
   discardPlan,
   emptyJornadaState,
   factorResults,
+  finalistAllowedGrades,
   granulometriaComplete,
-  majorityGrade,
   scaComplete,
   scaTotal,
   SCA_KEYS,
+  type DiscardGrade,
   type JornadaState,
 } from "@/lib/arena/jornada";
 
@@ -43,11 +45,13 @@ export async function createArenaSession(formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
+  const capacity = Number(formData.get("capacity")) === 5 ? 5 : 7;
   const { data: session, error } = await service
     .from("arena_sessions")
     .insert({
       harvest_season_id: String(formData.get("harvest_season_id")),
       session_date: String(formData.get("session_date")),
+      capacity,
       created_by: adminId,
     })
     .select("id")
@@ -67,41 +71,11 @@ export async function createArenaSession(formData: FormData) {
   redirect(`/bcp/arena/${session.id}`);
 }
 
-export async function addLotToSession(sessionId: string, lotId: string) {
-  await requireAdmin();
-  const service = createServiceRoleClient();
-  await service.from("arena_session_lots").insert({ arena_session_id: sessionId, lot_id: lotId });
-  revalidatePath(`/bcp/arena/${sessionId}`);
-}
-
-export async function recordArenaScore(formData: FormData) {
-  const adminId = await requireAdmin();
-  const service = createServiceRoleClient();
-
-  const sessionId = String(formData.get("arena_session_id"));
-  const lotId = String(formData.get("lot_id"));
-  const gradeRaw = String(formData.get("grade_awarded") || "");
-
-  await service.from("arena_scores").insert({
-    arena_session_id: sessionId,
-    lot_id: lotId,
-    q_grader_name: String(formData.get("q_grader_name")),
-    grade_awarded: gradeRaw || null,
-    cupping_notes: String(formData.get("cupping_notes") || "") || null,
-    entered_by: adminId,
-  });
-
-  if (await isSessionScheduled(service, sessionId)) {
-    await service.from("arena_sessions").update({ status: "in_progress" }).eq("id", sessionId);
-  }
-
-  revalidatePath(`/bcp/arena/${sessionId}`);
-}
-
-async function isSessionScheduled(service: ReturnType<typeof createServiceRoleClient>, sessionId: string) {
-  const { data } = await service.from("arena_sessions").select("status").eq("id", sessionId).single();
-  return data?.status === "scheduled";
-}
+// Nota: los lotes entran a una sesión desde el tablero Nominados
+// (assignLotToSession en nominadosActions.ts), que exige phase='fila' + cupo
+// 5/7 y mueve el lote a fila_arena. El "Disponibles"/agregar-manual y el flujo
+// de puntaje manual legado (recordArenaScore/closeArenaSession) se retiraron
+// con la jornada v2.
 
 // ---------------------------------------------------------------------------
 // Jornada de Arena (runner en vivo) -- ver src/lib/arena/jornada.ts para el
@@ -116,9 +90,11 @@ export async function startJornada(sessionId: string) {
   if (!session || session.status === "completed") throw new Error("La sesión no está disponible para una jornada.");
 
   if (!session.run_state) {
+    const { data: sessionRow } = await service.from("arena_sessions").select("capacity").eq("id", sessionId).single();
+    const capacity = sessionRow?.capacity ?? 7;
     const { data: sessionLots } = await service.from("arena_session_lots").select("lot_id").eq("arena_session_id", sessionId);
     const lotIds = (sessionLots ?? []).map((r) => r.lot_id);
-    if (lotIds.length < 3) throw new Error("La jornada necesita al menos 3 cafés en la sesión.");
+    if (lotIds.length !== capacity) throw new Error(`La jornada necesita exactamente ${capacity} cafés (hay ${lotIds.length}).`);
 
     // Barajar el orden de tazas: la etiqueta "Taza N" es lo único que ve la
     // mesa, así que el orden no debe delatar el orden en que se agregaron.
@@ -177,22 +153,34 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
     throw new Error("Los descartes de la jornada están incompletos.");
 
   const finalists = activeCups(state);
-  if (!state.verdict.winner || !finalists.includes(state.verdict.winner))
-    throw new Error("Falta el café ganador de la jornada.");
+  const ranking = state.verdict.ranking;
+  if (ranking.length !== finalists.length || new Set(ranking).size !== finalists.length || !ranking.every((id) => finalists.includes(id)))
+    throw new Error("El orden de los finalistas está incompleto.");
+  const winner = ranking[0];
 
   for (const lotId of state.cup_order) {
     if (!granulometriaComplete(state.granulometria[lotId]))
       throw new Error(`Granulometría incompleta en ${cupLabel(state, lotId)}.`);
     if (!scaComplete(state.sca[lotId])) throw new Error(`Planilla SCA incompleta en ${cupLabel(state, lotId)}.`);
   }
-  for (const lotId of finalists) {
-    for (const judge of judges) {
-      if (state.verdict.grades[lotId]?.[judge] === undefined)
-        throw new Error(`Falta el veredicto de ${judge} para ${cupLabel(state, lotId)}.`);
+  // Grados por comité (v2): eliminados en su descarte, finalistas en el veredicto.
+  for (const [round, discarded] of state.discards.entries()) {
+    for (const lotId of discarded) {
+      if (!allowedDiscardGrades(round as 0 | 1).includes(state.discard_grades[lotId] as DiscardGrade))
+        throw new Error(`Falta el grado del descarte en ${cupLabel(state, lotId)}.`);
     }
+  }
+  const finalistAllowed = finalistAllowedGrades(state);
+  for (const lotId of finalists) {
+    const g = state.verdict.grades[lotId];
+    if (!g || !finalistAllowed.includes(g)) throw new Error(`Grado del finalista inválido en ${cupLabel(state, lotId)}.`);
   }
 
   const qGrader = state.guests.find((g) => g.role === "q_grader" && g.name.trim())?.name.trim() ?? null;
+  // Comité como un solo evaluador para arena_scores/producer_comm_log.
+  const committee = qGrader ?? state.guests.find((g) => g.role === "host" && g.name.trim())?.name.trim() ?? "Comité CTC";
+  // Se otorga la membresía del Club a cada productor participante (una vez).
+  const grantedMembers = new Set<string>();
 
   for (const lotId of state.cup_order) {
     const sheet = state.sca[lotId];
@@ -229,39 +217,69 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
     if (error) throw new Error(`No se pudo guardar la evaluación de ${cupLabel(state, lotId)}.`);
   }
 
-  for (const lotId of finalists) {
-    const votes: { grade_awarded: string | null }[] = [];
-    for (const judge of judges) {
-      const grade = state.verdict.grades[lotId]?.[judge] || null;
-      votes.push({ grade_awarded: grade });
-      await service.from("arena_scores").insert({
-        arena_session_id: sessionId,
-        lot_id: lotId,
-        q_grader_name: judge,
-        grade_awarded: grade,
-        cupping_notes: state.notes[lotId].aroma2 || null,
-        entered_by: adminId,
-      });
-    }
+  // Grada CADA participante con el grado del comité (finalistas + eliminados).
+  // Todos salen 'galardonado' con su grado; el destino comercial se decide por
+  // grado: red/blue/gold → contrato; black → negociación aparte; tyrian → subasta.
+  const gradeByLot = new Map<string, string>();
+  for (const lotId of finalists) gradeByLot.set(lotId, state.verdict.grades[lotId]);
+  for (const discarded of state.discards) for (const lotId of discarded) gradeByLot.set(lotId, state.discard_grades[lotId]);
 
-    const finalGrade = majorityGrade(votes);
-    const { data: lot } = await service.from("lots").select("stage").eq("id", lotId).single();
-    const newStage = finalGrade ? "galardonado" : "evaluado";
-    await service.from("lots").update({ grade: finalGrade, stage: newStage }).eq("id", lotId);
+  for (const lotId of state.cup_order) {
+    const grade = gradeByLot.get(lotId)!;
+    const rank = ranking.indexOf(lotId); // -1 si fue descartado
+    const { data: lot } = await service.from("lots").select("stage, producer_id").eq("id", lotId).single();
+
+    // Un renglón de comité en arena_scores conserva la forma de la tabla para el historial.
+    await service.from("arena_scores").insert({
+      arena_session_id: sessionId,
+      lot_id: lotId,
+      q_grader_name: committee,
+      grade_awarded: grade,
+      cupping_notes: state.notes[lotId].aroma2 || null,
+      entered_by: adminId,
+    });
+
+    await service.from("lots").update({ grade, stage: "galardonado" }).eq("id", lotId);
     await service.from("audit_log").insert({
       entity_type: "lot",
       entity_id: lotId,
       action: "graded",
       previous_status: lot?.stage,
-      new_status: newStage,
+      new_status: "galardonado",
       performed_by: adminId,
-      notes: `Jornada de Arena — ${cupLabel(state, lotId)}. Grado por mayoría: ${finalGrade ?? "sin premio"} (${votes.length} veredicto${votes.length === 1 ? "" : "s"})${state.verdict.winner === lotId ? ". GANADOR de la jornada." : ""}`,
+      notes: `Jornada de Arena — ${cupLabel(state, lotId)}. Grado del comité: ${grade}${rank === 0 ? ". GANADOR de la jornada." : rank > 0 ? ` (finalista ${rank + 1}º)` : " (retirado en descarte)"}.`,
     });
 
-    if (finalGrade && finalGrade !== "tyrian") {
+    // Membresía del Kaffetal Club: participar en una sesión completada la otorga.
+    if (lot?.producer_id && !grantedMembers.has(lot.producer_id)) {
+      grantedMembers.add(lot.producer_id);
+      const { data: pp } = await service.from("producer_profiles").select("club_member_since").eq("profile_id", lot.producer_id).maybeSingle();
+      if (!pp?.club_member_since) {
+        await service.from("producer_profiles").upsert(
+          { profile_id: lot.producer_id, club_member_since: new Date().toISOString() },
+          { onConflict: "profile_id" }
+        );
+        await service.from("audit_log").insert({
+          entity_type: "club_membership",
+          entity_id: lot.producer_id,
+          action: "granted_by_arena",
+          performed_by: adminId,
+          notes: `Su lote compitió en la Arena — Pasaporte del Kaffetal Club otorgado.`,
+        });
+        await service.from("producer_comm_log").insert({
+          producer_id: lot.producer_id,
+          context_label: null,
+          note: "¡Bienvenido al Kaffetal Club! Su lote compitió en la Arena, así que su Pasaporte quedó activo: ya puede firmar contratos de compra con CTC y sus lotes participan en el catálogo de Cherry Picked.",
+          created_by: adminId,
+        });
+      }
+    }
+
+    // Destino comercial por grado.
+    if (grade === "red" || grade === "blue" || grade === "gold") {
       const { data: contract } = await service
         .from("purchase_contracts")
-        .insert({ lot_id: lotId, status: "pending_signature", grade_snapshot: finalGrade })
+        .insert({ lot_id: lotId, status: "pending_signature", grade_snapshot: grade })
         .select("id")
         .single();
       if (contract) {
@@ -273,28 +291,28 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
           performed_by: adminId,
         });
       }
+    } else if (grade === "black") {
+      // Los Black se negocian aparte (no forman parte de la compra base).
+      const { data: neg } = await service.from("black_negotiations").insert({ lot_id: lotId }).select("id").single();
+      if (neg) {
+        await service.from("audit_log").insert({
+          entity_type: "black_negotiation",
+          entity_id: neg.id,
+          action: "opened",
+          new_status: "abierta",
+          performed_by: adminId,
+        });
+      }
     }
+    // tyrian: sin contrato — va a la subasta (fase aún no construida).
   }
 
-  for (const [round, discarded] of state.discards.entries()) {
-    for (const lotId of discarded) {
-      const { data: lot } = await service.from("lots").select("stage").eq("id", lotId).single();
-      await service.from("lots").update({ grade: null, stage: "evaluado" }).eq("id", lotId);
-      await service.from("audit_log").insert({
-        entity_type: "lot",
-        entity_id: lotId,
-        action: "graded",
-        previous_status: lot?.stage,
-        new_status: "evaluado",
-        performed_by: adminId,
-        notes: `Jornada de Arena — ${cupLabel(state, lotId)}. Retirado en el ${round === 0 ? "primer" : "segundo"} descarte (evaluación completa registrada).`,
-      });
-    }
-  }
+  // Marca las inscripciones de los participantes como "competido".
+  await service.from("arena_inscriptions").update({ phase: "competido" }).in("lot_id", state.cup_order);
 
   await service
     .from("arena_sessions")
-    .update({ status: "completed", run_state: state, winner_lot_id: state.verdict.winner })
+    .update({ status: "completed", run_state: state, winner_lot_id: winner })
     .eq("id", sessionId);
   await service.from("audit_log").insert({
     entity_type: "arena_session",
@@ -302,7 +320,7 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
     action: "closed",
     new_status: "completed",
     performed_by: adminId,
-    notes: `Jornada cerrada. Ganador: ${cupLabel(state, state.verdict.winner)}.`,
+    notes: `Jornada cerrada. Ganador: ${cupLabel(state, winner)}.`,
   });
 
   revalidatePath(`/bcp/arena/${sessionId}`);
@@ -310,76 +328,8 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
   revalidatePath("/bcp/lotes");
   revalidatePath("/bcp/contratos");
   revalidatePath("/bcp/evaluaciones");
+  revalidatePath("/bcp/nominados");
   revalidatePath("/bcp");
   // Sin redirect() aquí: el runner navega él mismo al resumen de la sesión
   // cuando la promesa resuelve, y así puede distinguir un error real.
-}
-
-export async function closeArenaSession(sessionId: string) {
-  const adminId = await requireAdmin();
-  const service = createServiceRoleClient();
-
-  const { data: sessionLots } = await service.from("arena_session_lots").select("lot_id").eq("arena_session_id", sessionId);
-
-  for (const { lot_id } of sessionLots ?? []) {
-    const { data: scores } = await service
-      .from("arena_scores")
-      .select("grade_awarded")
-      .eq("arena_session_id", sessionId)
-      .eq("lot_id", lot_id);
-
-    if (!scores?.length) {
-      // No one scored this lot -- free it up for the next session instead
-      // of forcing a decision nobody actually made.
-      await service.from("arena_session_lots").delete().eq("arena_session_id", sessionId).eq("lot_id", lot_id);
-      continue;
-    }
-
-    const finalGrade = majorityGrade(scores);
-    const { data: lot } = await service.from("lots").select("stage").eq("id", lot_id).single();
-    const newStage = finalGrade ? "galardonado" : "evaluado";
-
-    await service.from("lots").update({ grade: finalGrade, stage: newStage }).eq("id", lot_id);
-    await service.from("audit_log").insert({
-      entity_type: "lot",
-      entity_id: lot_id,
-      action: "graded",
-      previous_status: lot?.stage,
-      new_status: newStage,
-      performed_by: adminId,
-      notes: `Grado calculado: ${finalGrade ?? "sin premio"} (${scores.length} puntaje${scores.length === 1 ? "" : "s"})`,
-    });
-
-    if (finalGrade && finalGrade !== "tyrian") {
-      const { data: contract } = await service
-        .from("purchase_contracts")
-        .insert({ lot_id, status: "pending_signature", grade_snapshot: finalGrade })
-        .select("id")
-        .single();
-      if (contract) {
-        await service.from("audit_log").insert({
-          entity_type: "purchase_contract",
-          entity_id: contract.id,
-          action: "created",
-          new_status: "pending_signature",
-          performed_by: adminId,
-        });
-      }
-    }
-  }
-
-  await service.from("arena_sessions").update({ status: "completed" }).eq("id", sessionId);
-  await service.from("audit_log").insert({
-    entity_type: "arena_session",
-    entity_id: sessionId,
-    action: "closed",
-    new_status: "completed",
-    performed_by: adminId,
-  });
-
-  revalidatePath(`/bcp/arena/${sessionId}`);
-  revalidatePath("/bcp/arena");
-  revalidatePath("/bcp/lotes");
-  revalidatePath("/bcp/contratos");
-  revalidatePath("/bcp");
 }

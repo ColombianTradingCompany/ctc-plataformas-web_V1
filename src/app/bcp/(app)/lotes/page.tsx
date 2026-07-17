@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot, updateLotEudr } from "../actions";
+import { createLot, revertNoApto, updateLotEudr } from "../actions";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
+import { EvaVerdictButtons } from "./EvaVerdictButtons";
 import { logProducerComm } from "../commActions";
 import {
   fincaEudrStatus,
@@ -35,18 +36,18 @@ const CUSTODY_STAGES: [string, string][] = [
 ];
 
 // Columns mirror the producer-facing intake sub-stages (FT/FT2/EUDR/Video --
-// see FichaView.tsx/intake_step) plus the sample-shipment handoff. Once a lot
-// is confirmed received it leaves this board entirely -- the query below only
-// selects stages up through "muestra_transito"-equivalent, so a lot dropped
-// into the Arena backlog (stage = fila_arena) simply stops showing up here on
-// the next load; it then appears in /bcp/arena's "Disponibles" list instead.
-type Bucket = "ft" | "ft2" | "eudr" | "video" | "muestra";
+// see FichaView.tsx/intake_step) plus EVA, the documentation-evaluation
+// verdict (2026-07-17): a ficha_completa lot waits here until BCP resolves its
+// EUDR and declares it Apto (opening the paid Arena track) or No Apto. Apto
+// lots leave the kanban into the "Aptos" strip below (their pipeline continues
+// in Nominados); No Apto lots collapse into their own rail.
+type Bucket = "ft" | "ft2" | "eudr" | "video" | "eva";
 const COLUMNS: { id: Bucket; label: string }[] = [
   { id: "ft", label: "FT · Identidad y Origen" },
   { id: "ft2", label: "FT2 · Certificados y Análisis" },
   { id: "eudr", label: "EUDR · Debida Diligencia" },
   { id: "video", label: "Video" },
-  { id: "muestra", label: "Muestra en tránsito" },
+  { id: "eva", label: "EVA · Evaluación Documental" },
 ];
 
 type FincaJoin = {
@@ -73,6 +74,7 @@ type LotRow = {
   source: string;
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
+  eva_no_apto_reason: string | null;
   ficha_variedad: string | null;
   ficha_proceso: string | null;
   ficha_altitud_m: number | null;
@@ -126,11 +128,10 @@ function bucketOf(lot: LotRow): Bucket {
   // Lots BCP registered by hand exist precisely because the physical sample
   // is already in CTC's hands -- they never go through the producer-driven
   // intake columns, so they'd be stranded in FT forever (the old manual
-  // stage dropdown that used to move them is retired). Straight to the
-  // sample column, where "Confirmar recibido" lives and already
-  // special-cases bcp_manual_entry.
-  if (lot.source === "bcp_manual_entry") return "muestra";
-  if (lot.stage !== "borrador") return "muestra"; // ficha locked in -- shipping/awaiting confirmation
+  // stage dropdown that used to move them is retired). Straight to EVA,
+  // where the verdict and "Confirmar recibido" (legacy) live.
+  if (lot.source === "bcp_manual_entry") return "eva";
+  if (lot.stage !== "borrador") return "eva"; // ficha locked in -- awaiting the documentation verdict
   if (lot.intake_step <= 0) return "ft";
   if (lot.intake_step === 1) return "ft2";
   if (lot.intake_step === 2) return "eudr";
@@ -147,7 +148,7 @@ export default async function BcpLotesPage() {
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, datasheet,
+        `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, datasheet,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -155,7 +156,7 @@ export default async function BcpLotesPage() {
          eudr_mitigation_effective, eudr_mitigation_responsible,
          fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
       )
-      .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito"])
+      .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "apto", "no_apto"])
       .order("created_at", { ascending: false }),
     service.from("fincas").select("id, name, municipio").eq("status", "approved").order("name"),
   ]);
@@ -179,15 +180,19 @@ export default async function BcpLotesPage() {
     if (!c.lot_id) continue;
     commsByLot.set(c.lot_id, [...(commsByLot.get(c.lot_id) ?? []), c]);
   }
+  const aptoLots = lotRows.filter((l) => l.stage === "apto");
+  const noAptoLots = lotRows.filter((l) => l.stage === "no_apto");
+  const boardLots = lotRows.filter((l) => l.stage !== "apto" && l.stage !== "no_apto");
   const byBucket = new Map<Bucket, LotRow[]>(COLUMNS.map((c) => [c.id, []]));
-  for (const lot of lotRows) byBucket.get(bucketOf(lot))!.push(lot);
+  for (const lot of boardLots) byBucket.get(bucketOf(lot))!.push(lot);
 
   return (
     <div>
       <h1 className={styles.title}>Lotes</h1>
       <p className={styles.subtitle}>
-        Tablero de lotes en proceso de intake. Al confirmar el recibo de la muestra, el lote pasa a &quot;Muestras Recibidas&quot;
-        y sale de este tablero — queda disponible en el backlog de la Arena.
+        Tablero de intake documental (todo gratis para el productor). En la columna EVA, CTC resuelve el EUDR del lote y
+        emite el veredicto: <b>Apto</b> abre el tramo pagado de la Arena (postulación → pago → sondeo), <b>No Apto</b>{" "}
+        devuelve la razón al productor.
       </p>
 
       <details className={styles.card} style={{ display: "block", marginBottom: 28 }}>
@@ -241,7 +246,7 @@ export default async function BcpLotesPage() {
         )}
       </details>
 
-      {!lotRows.length ? (
+      {!boardLots.length ? (
         <p className={styles.empty}>No hay lotes en proceso de intake.</p>
       ) : (
         <div className={styles.board}>
@@ -260,7 +265,10 @@ export default async function BcpLotesPage() {
                       lot={lot}
                       producer={producers.get(lot.producer_id)}
                       comms={commsByLot.get(lot.id) ?? []}
-                      showConfirmReceipt={col.id === "muestra"}
+                      // Legacy receipt path only for lots BCP registered by hand
+                      // (their sample is already in CTC's hands, no EVA verdict).
+                      showConfirmReceipt={col.id === "eva" && lot.source === "bcp_manual_entry"}
+                      showEvaVerdict={col.id === "eva" && lot.stage === "ficha_completa"}
                       inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
                     />
                   ))}
@@ -269,6 +277,55 @@ export default async function BcpLotesPage() {
             );
           })}
         </div>
+      )}
+
+      {/* Aptos: fuera del kanban — su pipeline continúa en Nominados (postulación →
+          pago → sondeo → fila). El botón de recibo legado sigue aquí hasta que el
+          tablero Nominados lo absorba (Fase 3). */}
+      {aptoLots.length > 0 && (
+        <div style={{ marginTop: 30 }}>
+          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Aptos · rumbo a la Arena</h2>
+          <p className={styles.subtitle}>
+            Declarados aptos en la evaluación documental — esperando la postulación del productor.
+          </p>
+          <div className={styles.columnList}>
+            {aptoLots.map((lot) => (
+              <LotCard
+                key={lot.id}
+                lot={lot}
+                producer={producers.get(lot.producer_id)}
+                comms={commsByLot.get(lot.id) ?? []}
+                showConfirmReceipt
+                showEvaVerdict={false}
+                inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {noAptoLots.length > 0 && (
+        <details className={styles.card} style={{ display: "block", marginTop: 30 }}>
+          <summary style={{ cursor: "pointer", fontWeight: 600 }}>No aptos ({noAptoLots.length})</summary>
+          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+            {noAptoLots.map((lot) => (
+              <div key={lot.id} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 10 }}>
+                <b>{lot.name}</b> · {producers.get(lot.producer_id)?.fullName ?? "Productor"}
+                <p className={styles.meta}>Motivo: {lot.eva_no_apto_reason ?? "—"}</p>
+                <form
+                  action={async () => {
+                    "use server";
+                    await revertNoApto(lot.id);
+                  }}
+                >
+                  <button className="btn btn-sm" type="submit">
+                    Reabrir evaluación
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );
@@ -286,12 +343,14 @@ function LotCard({
   producer,
   comms,
   showConfirmReceipt,
+  showEvaVerdict,
   inscriptionSettled,
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
   comms: CommRow[];
   showConfirmReceipt: boolean;
+  showEvaVerdict: boolean;
   inscriptionSettled: boolean;
 }) {
   const finca = toFincaEudrFields(lot.fincas);
@@ -384,6 +443,9 @@ function LotCard({
       )}
       {finca && fincaEudrStatus(finca).code === "no_apta" && (
         <p className={styles.warn}>La finca de origen tiene deforestación o producción ilegal declarada.</p>
+      )}
+      {showEvaVerdict && (
+        <EvaVerdictButtons lotId={lot.id} eudrReady={eudrStatus.code === "eudr_ready"} eudrLabel={eudrStatus.label} />
       )}
       {showConfirmReceipt && (lot.sample_shipped_at || lot.source === "bcp_manual_entry") && !lot.sample_2kg_confirmed_at && (
         <ConfirmReceiptButton

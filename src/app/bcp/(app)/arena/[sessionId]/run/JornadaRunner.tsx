@@ -12,21 +12,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   activeCups,
-  CTC_GRADES,
+  allowedDiscardGrades,
   cupLabel,
   discardPlan,
   factorResults,
+  finalistAllowedGrades,
   GRADE_LABEL,
   granulometriaComplete,
   GUEST_ROLE_LABEL,
   JORNADA_SCRIPT,
-  majorityGrade,
   MALLA_OPTIONS,
   SCA_KEYS,
   SCA_LABEL,
   scaComplete,
   scaTotal,
   stepBlocker,
+  type DiscardGrade,
+  type FinalistGrade,
   type Granulometria,
   type CupNotes,
   type JornadaState,
@@ -155,7 +157,6 @@ export function JornadaRunner({
   const blocker = stepBlocker(state);
   const plan = discardPlan(state.cup_order.length);
   const inMesa = activeCups(state);
-  const judges = state.guests.map((g) => g.name.trim()).filter(Boolean);
   const isLastStep = state.stage === JORNADA_SCRIPT.length - 1 && state.step === stage.steps.length - 1;
 
   // -- helpers de actualización -------------------------------------------
@@ -165,18 +166,31 @@ export function JornadaRunner({
     setState((s) => ({ ...s, sca: { ...s.sca, [lotId]: { ...s.sca[lotId], [key]: value } } }));
   const patchNote = (lotId: string, key: keyof CupNotes, value: string) =>
     setState((s) => ({ ...s, notes: { ...s.notes, [lotId]: { ...s.notes[lotId], [key]: value } } }));
-  const setGrade = (lotId: string, judge: string, value: string) =>
-    setState((s) => ({
-      ...s,
-      verdict: { ...s.verdict, grades: { ...s.verdict.grades, [lotId]: { ...(s.verdict.grades[lotId] ?? {}), [judge]: value } } },
-    }));
+  // v2: el comité asigna UN grado por finalista (no un voto por juez).
+  const setFinalistGrade = (lotId: string, value: FinalistGrade) =>
+    setState((s) => ({ ...s, verdict: { ...s.verdict, grades: { ...s.verdict.grades, [lotId]: value } } }));
+  // Ordena a los finalistas: al elegir la posición de un lote, se reordena la lista.
+  const setRankPosition = (lotId: string, pos: number) =>
+    setState((s) => {
+      const finalists = activeCups(s);
+      const others = (s.verdict.ranking.length ? s.verdict.ranking : finalists).filter((id) => id !== lotId && finalists.includes(id));
+      const next = [...others];
+      next.splice(Math.min(pos, next.length), 0, lotId);
+      return { ...s, verdict: { ...s.verdict, ranking: next.slice(0, finalists.length) } };
+    });
+  const setDiscardGrade = (lotId: string, value: DiscardGrade) =>
+    setState((s) => ({ ...s, discard_grades: { ...s.discard_grades, [lotId]: value } }));
 
   const toggleDiscard = (round: 0 | 1, lotId: string) =>
     setState((s) => {
       const current = s.discards[round];
+      const isRemoving = current.includes(lotId);
       const next: [string[], string[]] = [...s.discards];
-      next[round] = current.includes(lotId) ? current.filter((id) => id !== lotId) : [...current, lotId];
-      return { ...s, discards: next };
+      next[round] = isRemoving ? current.filter((id) => id !== lotId) : [...current, lotId];
+      // Al quitar un descarte, se limpia su grado.
+      const dg = { ...s.discard_grades };
+      if (isRemoving) delete dg[lotId];
+      return { ...s, discards: next, discard_grades: dg };
     });
 
   function goNext() {
@@ -455,23 +469,42 @@ export function JornadaRunner({
                 const total = scaTotal(state.sca[lotId]);
                 const factor = factorResults(state.granulometria[lotId]).factor;
                 return (
-                  <label className={`${styles.discardRow} ${checked ? styles.discardRowChecked : ""}`} key={lotId}>
-                    <input type="checkbox" checked={checked} onChange={() => toggleDiscard(round as 0 | 1, lotId)} />
-                    <span className={styles.cupChipT}>{cupLabel(state, lotId)}</span>
-                    <span className={styles.discardMeta}>
-                      SCA {total ?? "parcial"} · Factor {factor ?? "—"}
-                    </span>
-                  </label>
+                  <div className={`${styles.discardRow} ${checked ? styles.discardRowChecked : ""}`} key={lotId}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleDiscard(round as 0 | 1, lotId)} />
+                      <span className={styles.cupChipT}>{cupLabel(state, lotId)}</span>
+                      <span className={styles.discardMeta}>
+                        SCA {total ?? "parcial"} · Factor {factor ?? "—"}
+                      </span>
+                    </label>
+                    {checked && (
+                      <select
+                        value={state.discard_grades[lotId] ?? "pending"}
+                        onChange={(e) => setDiscardGrade(lotId, e.target.value as DiscardGrade)}
+                      >
+                        <option value="pending" disabled>
+                          Grado…
+                        </option>
+                        {allowedDiscardGrades(round as 0 | 1).map((gr) => (
+                          <option key={gr} value={gr}>
+                            {GRADE_LABEL[gr]}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                 );
               })}
             </div>
+            <p className={styles.guide}>Cada taza retirada recibe su grado CTC ({round === 0 ? "Black o Red" : "Red o Blue"}).</p>
           </>
         );
       }
 
       case "reveal_combos": {
-        // Combinaciones de las tazas aún en mesa, ordenadas por texto (no por
-        // taza) para que el orden no delate la correspondencia.
+        // Variedad + proceso de las tazas aún en mesa, ordenadas por texto (no
+        // por taza) para que el orden no delate la correspondencia. El origen se
+        // revela después (reveal_origin).
         const combos = inMesa
           .map((lotId) => cups[lotId])
           .filter((c): c is CupInfo => !!c)
@@ -485,6 +518,22 @@ export function JornadaRunner({
                 <div className={styles.comboV}>{c.variety ?? "—"}</div>
                 <div className={styles.comboK}>Proceso</div>
                 <div className={styles.comboV}>{c.process ?? "—"}</div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      case "reveal_origin": {
+        const origins = inMesa
+          .map((lotId) => cups[lotId])
+          .filter((c): c is CupInfo => !!c)
+          .sort((a, b) => `${a.origin}`.localeCompare(`${b.origin}`));
+        return (
+          <div className={styles.comboGrid}>
+            {origins.map((c, i) => (
+              <div className={styles.comboCard} key={c.lotId}>
+                <div className={styles.comboK}>Finalista {i + 1}</div>
                 <div className={styles.comboK}>Origen</div>
                 <div className={styles.comboV}>{c.origin ?? "—"}</div>
               </div>
@@ -546,7 +595,9 @@ export function JornadaRunner({
           </div>
         );
 
-      case "verdict":
+      case "verdict": {
+        const allowed = finalistAllowedGrades(state);
+        const rank = state.verdict.ranking;
         return (
           <>
             <div style={{ overflowX: "auto" }}>
@@ -554,67 +605,59 @@ export function JornadaRunner({
                 <thead>
                   <tr>
                     <th>Finalista</th>
-                    {judges.map((j) => (
-                      <th key={j}>{j}</th>
-                    ))}
-                    <th>Mayoría</th>
-                    <th>Ganador</th>
+                    <th>Puesto</th>
+                    <th>Grado del comité</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {inMesa.map((lotId) => {
-                    const votes = judges.map((j) => ({ grade_awarded: state.verdict.grades[lotId]?.[j] || null }));
-                    const allVoted = judges.every((j) => state.verdict.grades[lotId]?.[j] !== undefined);
-                    const majority = allVoted ? majorityGrade(votes) : null;
-                    return (
-                      <tr key={lotId}>
-                        <td>
-                          <span className={styles.cupChipT}>{cupLabel(state, lotId)}</span>
-                          <div className={styles.fieldHint}>SCA {scaTotal(state.sca[lotId]) ?? "—"}</div>
-                        </td>
-                        {judges.map((judge) => (
-                          <td key={judge}>
-                            <select
-                              value={state.verdict.grades[lotId]?.[judge] ?? "pending"}
-                              onChange={(e) => setGrade(lotId, judge, e.target.value === "pending" ? "" : e.target.value)}
-                            >
-                              <option value="pending" disabled>
-                                Elegir…
-                              </option>
-                              <option value="">Sin premio</option>
-                              {CTC_GRADES.map((gr) => (
-                                <option key={gr} value={gr}>
-                                  {GRADE_LABEL[gr]}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                        ))}
-                        <td>
-                          <span className={styles.majorityChip}>{allVoted ? majority ? GRADE_LABEL[majority] : "Sin premio" : "…"}</span>
-                        </td>
-                        <td>
-                          <label className={styles.winnerRadio}>
-                            <input
-                              type="radio"
-                              name="winner"
-                              checked={state.verdict.winner === lotId}
-                              onChange={() => setState((s) => ({ ...s, verdict: { ...s.verdict, winner: lotId } }))}
-                            />
-                            🏆
-                          </label>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {inMesa.map((lotId) => (
+                    <tr key={lotId}>
+                      <td>
+                        <span className={styles.cupChipT}>{cupLabel(state, lotId)}</span>
+                        <div className={styles.fieldHint}>SCA {scaTotal(state.sca[lotId]) ?? "—"}</div>
+                      </td>
+                      <td>
+                        <select
+                          value={rank.indexOf(lotId) === -1 ? "pending" : String(rank.indexOf(lotId))}
+                          onChange={(e) => setRankPosition(lotId, Number(e.target.value))}
+                        >
+                          <option value="pending" disabled>
+                            Puesto…
+                          </option>
+                          {inMesa.map((_, i) => (
+                            <option key={i} value={i}>
+                              {i + 1}º{i === 0 ? " · 🏆 ganador" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          value={state.verdict.grades[lotId] ?? "pending"}
+                          onChange={(e) => setFinalistGrade(lotId, e.target.value as FinalistGrade)}
+                        >
+                          <option value="pending" disabled>
+                            Grado…
+                          </option>
+                          {allowed.map((gr) => (
+                            <option key={gr} value={gr}>
+                              {GRADE_LABEL[gr]}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
             <p className={styles.guide}>
-              El grado oficial de cada lote sale por mayoría de los veredictos (desempate hacia arriba). Solo un café gana la jornada.
+              El comité ordena a los 3 finalistas y asigna el grado de cada uno. El 1º es el ganador de la jornada.
+              {!allowed.includes("red") && " El segundo descarte otorgó un Blue — ningún finalista puede recibir Red."}
             </p>
           </>
         );
+      }
 
       case "reveal_full":
         return (
@@ -622,10 +665,12 @@ export function JornadaRunner({
             <div className={styles.revealGrid}>
               {inMesa.map((lotId) => {
                 const info = cups[lotId];
-                const isWinner = state.verdict.winner === lotId;
+                const isWinner = state.verdict.ranking[0] === lotId;
+                const grade = state.verdict.grades[lotId];
                 return (
                   <div className={`${styles.revealCard} ${isWinner ? styles.revealCardWinner : ""}`} key={lotId}>
                     {isWinner && <span className={styles.winnerBadge}>🏆 Ganador de la jornada</span>}
+                    {grade && <span className={styles.winnerBadge} style={{ background: `var(--t-${grade})` }}>{GRADE_LABEL[grade]}</span>}
                     <div className={styles.revealName}>
                       {cupLabel(state, lotId)} · {info?.lotName}
                     </div>
@@ -661,25 +706,29 @@ export function JornadaRunner({
         );
 
       case "close": {
-        const winnerInfo = state.verdict.winner ? cups[state.verdict.winner] : null;
+        const winner = state.verdict.ranking[0];
+        const winnerInfo = winner ? cups[winner] : null;
+        const gradeOf = (lotId: string): FinalistGrade | DiscardGrade | undefined =>
+          state.verdict.grades[lotId] ?? state.discard_grades[lotId];
         return (
           <>
             <div className={styles.summaryList}>
               <span>
-                🏆 Ganador: <b>{state.verdict.winner ? `${cupLabel(state, state.verdict.winner)} · ${winnerInfo?.lotName ?? ""}` : "—"}</b>
+                🏆 Ganador: <b>{winner ? `${cupLabel(state, winner)} · ${winnerInfo?.lotName ?? ""}` : "—"}</b>
               </span>
-              {inMesa.map((lotId) => {
-                const votes = judges.map((j) => ({ grade_awarded: state.verdict.grades[lotId]?.[j] || null }));
-                const majority = majorityGrade(votes);
+              {state.cup_order.map((lotId) => {
+                const g = gradeOf(lotId);
                 return (
                   <span key={lotId}>
-                    {cupLabel(state, lotId)} ({cups[lotId]?.lotName}): grado por mayoría <b>{majority ? GRADE_LABEL[majority] : "Sin premio"}</b>
+                    {cupLabel(state, lotId)} ({cups[lotId]?.lotName}): grado <b>{g ? GRADE_LABEL[g] : "—"}</b>
+                    {g === "black" ? " · negociación aparte" : g === "tyrian" ? " · subasta" : ""}
                   </span>
                 );
               })}
               <span>
-                Al cerrar se registra la evaluación oficial (planilla SCA + granulometría) de las <b>{state.cup_order.length}</b> tazas, los
-                veredictos de los jueces, los grados por mayoría (galardonado + contrato para los premiados) y el ganador de la jornada.
+                Al cerrar se registra la evaluación oficial (planilla SCA + granulometría) de las <b>{state.cup_order.length}</b> tazas y el
+                grado de cada café: <b>todos</b> quedan galardonados; Red/Blue/Gold estrenan contrato, Black abre una negociación aparte,
+                Tyrian va a subasta. Cada productor participante recibe su Pasaporte del Kaffetal Club.
               </span>
             </div>
             {closeError && <div className={styles.closeError}>{closeError}</div>}
@@ -723,7 +772,7 @@ export function JornadaRunner({
       <div className={styles.cupStrip}>
         {state.cup_order.map((lotId) => {
           const discarded = !inMesa.includes(lotId);
-          const isWinner = state.verdict.winner === lotId && state.stage === 3;
+          const isWinner = state.verdict.ranking[0] === lotId && state.stage === 3;
           const granOk = granulometriaComplete(state.granulometria[lotId]);
           const scaOk = scaComplete(state.sca[lotId]);
           return (

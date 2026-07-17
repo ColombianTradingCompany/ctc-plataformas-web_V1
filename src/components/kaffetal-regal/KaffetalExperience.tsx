@@ -14,6 +14,7 @@ import { InfoModal } from "./InfoModal";
 import {
   EMPTY_GI,
   GRADE_DB,
+  LOT_COMMITTED_STAGE,
   STAGE_DB,
   type CompletionPoint,
   type Finca,
@@ -32,11 +33,14 @@ type View = "landing" | "app" | "ficha";
 
 // Purely forward-looking guidance -- the stage/grade itself is already shown
 // by the state chip, so this never repeats that word (see AppDashboard).
+// Indexed by STAGE_DB position (9 entries since the EVA stages landed).
 const STAGE_EXTRA = [
   "Complete la ficha técnica para avanzar.",
-  "Ahora suba los videos del café.",
-  "Falta enviar la muestra de 2 kg a CTC.",
-  "En camino hacia CTC.",
+  "En evaluación documental por CTC.",
+  "¡Apto para la Arena! Ya puede postularlo.",
+  "Revise la retroalimentación de CTC.",
+  "Etapa histórica.",
+  "Etapa histórica.",
   "Esperando su turno en la próxima Arena.",
   "El panel ya la calificó.",
   "Siga el contrato en Mis contratos.",
@@ -263,8 +267,12 @@ function Experience() {
           // RLS (producer_comm_ack_select_own) scopes this to the producer's own acks.
           supabase.from("producer_comm_ack").select("comm_id, acknowledged_at"),
           // RLS (arena_inscriptions_select_own) scopes this to the producer's own
-          // inscriptions — read-only; solo BCP las crea y las salda.
-          supabase.from("arena_inscriptions").select("lot_id, status, amount_cop, discount_pct, amount_due_cop"),
+          // inscriptions — read-only; las escrituras pasan por Server Actions.
+          supabase
+            .from("arena_inscriptions")
+            .select(
+              "lot_id, status, amount_cop, discount_pct, amount_due_cop, phase, entry_code, sondeo_result, sondeo_result_notes, sondeo_score, mejoras_doc, cashback_cop, cashback_status"
+            ),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -301,7 +309,21 @@ function Experience() {
       for (const e of (evalRows as LotEvaluationRow[] | null) ?? []) {
         evalsByLotId.set(e.lot_id, [...(evalsByLotId.get(e.lot_id) ?? []), e]);
       }
-      type InscriptionRow = { lot_id: string; status: "pendiente" | "pagado" | "exento"; amount_cop: number; discount_pct: number; amount_due_cop: number };
+      type InscriptionRow = {
+        lot_id: string;
+        status: "pendiente" | "pagado" | "exento";
+        amount_cop: number;
+        discount_pct: number;
+        amount_due_cop: number;
+        phase: NonNullable<Lot["inscription"]>["phase"];
+        entry_code: string | null;
+        sondeo_result: "aprobado" | "rechazado" | null;
+        sondeo_result_notes: string | null;
+        sondeo_score: number | string | null;
+        mejoras_doc: string | null;
+        cashback_cop: number | null;
+        cashback_status: "pendiente" | "pagado" | null;
+      };
       const inscriptionByLotId = new Map<string, Lot["inscription"]>();
       for (const i of (inscriptionRows as InscriptionRow[] | null) ?? []) {
         inscriptionByLotId.set(i.lot_id, {
@@ -309,6 +331,14 @@ function Experience() {
           amountCop: i.amount_cop,
           discountPct: i.discount_pct,
           amountDueCop: i.amount_due_cop,
+          phase: i.phase,
+          entryCode: i.entry_code,
+          sondeoResult: i.sondeo_result,
+          sondeoResultNotes: i.sondeo_result_notes,
+          sondeoScore: i.sondeo_score != null ? Number(i.sondeo_score) : null,
+          mejorasDoc: i.mejoras_doc,
+          cashbackCop: i.cashback_cop,
+          cashbackStatus: i.cashback_status,
         });
       }
       setLots(
@@ -497,9 +527,9 @@ function Experience() {
     const lot = lots.find((l) => l.id === id);
     // Guard here matches the RLS policy (lots_delete_own_before_mue): a lot is
     // self-deletable any time before it passes MUE into the Arena backlog
-    // (stage < 4 = fila_arena), excluding bcp_manual_entry lots -- those exist
+    // (stage < fila_arena), excluding bcp_manual_entry lots -- those exist
     // because BCP already has the physical sample in hand.
-    if (!lot || lot.stage >= 4 || lot.source === "bcp_manual_entry") {
+    if (!lot || lot.stage >= LOT_COMMITTED_STAGE || lot.source === "bcp_manual_entry") {
       showToast("Este lote ya entró en revisión de CTC y no puede eliminarse.");
       return;
     }

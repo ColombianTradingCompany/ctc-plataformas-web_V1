@@ -93,14 +93,19 @@ export type CupNotes = {
 
 export const EMPTY_NOTES: CupNotes = { fragancia: "", aroma: "", cata1: "", aroma2: "", cata2: "" };
 
+// v2 (2026-07-17): el comité asigna UN grado por lote (no un voto por juez).
+// Los eliminados reciben su grado al descartarse (discard_grades); los 3
+// finalistas se ordenan 1º/2º/3º y reciben su grado en el veredicto.
+export type DiscardGrade = "black" | "red" | "blue";
+export type FinalistGrade = "red" | "blue" | "gold" | "tyrian";
+
 export type JornadaVerdict = {
-  // lotId -> nombre del juez -> grado ("" = sin premio)
-  grades: Record<string, Record<string, string>>;
-  winner: string | null;
+  ranking: string[]; // [1º, 2º, 3º] lot ids finalistas
+  grades: Record<string, FinalistGrade>; // finalista -> grado del comité
 };
 
 export type JornadaState = {
-  version: 1;
+  version: 2;
   started_at: string;
   stage: number; // 0..3
   step: number; // índice dentro de la etapa
@@ -110,6 +115,7 @@ export type JornadaState = {
   sca: Record<string, ScaSheet>;
   notes: Record<string, CupNotes>;
   discards: [string[], string[]]; // lot ids retirados en cada descarte
+  discard_grades: Record<string, DiscardGrade>; // lotId -> grado al eliminarse
   verdict: JornadaVerdict;
 };
 
@@ -126,6 +132,7 @@ export type StepKind =
   | "aroma2"
   | "cata2"
   | "descarte2"
+  | "reveal_origin"
   | "filter_prep"
   | "verdict"
   | "reveal_full"
@@ -192,7 +199,7 @@ export const JORNADA_SCRIPT: JornadaStage[] = [
         kind: "descarte1",
         title: "Primer descarte",
         minutes: 5,
-        guide: "Plan canónico: se retiran 2 tazas (con 5 en mesa se retira 1; con 3, ninguna). Sus planillas quedan guardadas y cuentan en la evaluación final del café.",
+        guide: "Se retiran 2 tazas (1 en una sesión de 5). A cada café retirado se le asigna su grado CTC: Black o Red. Sus planillas quedan guardadas y cuentan en su evaluación oficial.",
       },
     ],
   },
@@ -202,9 +209,9 @@ export const JORNADA_SCRIPT: JornadaStage[] = [
     steps: [
       {
         kind: "reveal_combos",
-        title: "Revelación de Variedad, Proceso y Origen — desenlazado",
+        title: "Revelación de Variedad y Proceso — desenlazado",
         minutes: 10,
-        guide: "Se enuncian las combinaciones de los cafés que siguen en mesa, SIN decir a qué taza corresponde cada una.",
+        guide: "Se enuncian las combinaciones de variedad y proceso de los cafés que siguen en mesa, SIN decir a qué taza corresponde cada una (el origen se revela después).",
       },
       {
         kind: "aroma2",
@@ -222,14 +229,20 @@ export const JORNADA_SCRIPT: JornadaStage[] = [
         kind: "descarte2",
         title: "Segundo descarte",
         minutes: 5,
-        guide: "Plan canónico: se retiran 2 tazas más — quedan 3 finalistas (el plan se adapta con menos cafés en mesa).",
+        guide: "Se retiran 2 tazas más (1 en una sesión de 5) — quedan 3 finalistas. A cada café retirado en esta ronda se le asigna su grado CTC: Red o Blue.",
       },
     ],
   },
   {
-    title: "Etapa 4 · Filtro, veredicto y revelación",
-    approx: "~45 min",
+    title: "Etapa 4 · Origen, veredicto y revelación",
+    approx: "~55 min",
     steps: [
+      {
+        kind: "reveal_origin",
+        title: "Revelación de Origen — desenlazado",
+        minutes: 8,
+        guide: "Se enuncian los orígenes de los 3 finalistas, SIN decir a qué taza corresponde cada uno.",
+      },
       {
         kind: "filter_prep",
         title: "Preparación de filtro — finalistas",
@@ -238,9 +251,9 @@ export const JORNADA_SCRIPT: JornadaStage[] = [
       },
       {
         kind: "verdict",
-        title: "Veredicto final — grado CTC y ganador",
-        minutes: 10,
-        guide: "Cada juez otorga un grado CTC por finalista (o sin premio). Solo UN café gana la jornada. El grado oficial de cada lote sale por mayoría, con desempate hacia arriba.",
+        title: "Veredicto final — orden y grado CTC",
+        minutes: 12,
+        guide: "El comité ordena a los 3 finalistas (1º, 2º, 3º) y asigna a cada uno su grado CTC: Red, Blue, Gold o (excepcionalmente) Tyrian. Regla: si en el segundo descarte se otorgó un Blue, ningún finalista puede recibir Red. El 1º es el ganador de la jornada.",
       },
       {
         kind: "reveal_full",
@@ -261,27 +274,19 @@ export const JORNADA_SCRIPT: JornadaStage[] = [
 export const CTC_GRADES = ["black", "red", "blue", "gold", "tyrian"] as const;
 export const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
 
-const GRADE_ORDER = [null, "black", "red", "blue", "gold", "tyrian"] as const;
+// Grados asignables en cada ronda de descarte (estructura de la competencia):
+// R1 (primer descarte) → Black o Red; R2 (segundo descarte) → Red o Blue.
+export function allowedDiscardGrades(round: 0 | 1): DiscardGrade[] {
+  return round === 0 ? ["black", "red"] : ["red", "blue"];
+}
 
-// Grado oficial de un lote = mayoría de los veredictos de los jueces, con
-// desempate hacia arriba (misma regla del cierre manual de sesión). Compartido
-// entre el preview del runner y finalizeJornada() para que nunca diverjan.
-export function majorityGrade(votes: { grade_awarded: string | null }[]): string | null {
-  const tally = new Map<string | null, number>();
-  for (const v of votes) tally.set(v.grade_awarded, (tally.get(v.grade_awarded) ?? 0) + 1);
-
-  // GRADE_ORDER va de menor a mayor: usar >= (no >) hace que, en empate, el
-  // grado más alto recorrido después sobreescriba al anterior.
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const grade of GRADE_ORDER) {
-    const count = tally.get(grade) ?? 0;
-    if (count >= bestCount) {
-      best = grade;
-      bestCount = count;
-    }
-  }
-  return best;
+// Grados asignables a los finalistas: Red, Blue, Gold, Tyrian — PERO si en el
+// segundo descarte se otorgó algún Blue, ningún finalista puede recibir Red
+// (no puede haber un finalista peor-clasificado que un eliminado de R2).
+export function finalistAllowedGrades(state: JornadaState): FinalistGrade[] {
+  const r2Blue = state.discards[1].some((id) => state.discard_grades[id] === "blue");
+  const base: FinalistGrade[] = ["red", "blue", "gold", "tyrian"];
+  return r2Blue ? base.filter((g) => g !== "red") : base;
 }
 
 // ---------------------------------------------------------------------------
@@ -371,7 +376,7 @@ export function cupLabel(state: JornadaState, lotId: string): string {
 
 export function emptyJornadaState(shuffledLotIds: string[]): JornadaState {
   return {
-    version: 1,
+    version: 2,
     started_at: new Date().toISOString(),
     stage: 0,
     step: 0,
@@ -385,7 +390,8 @@ export function emptyJornadaState(shuffledLotIds: string[]): JornadaState {
     sca: Object.fromEntries(shuffledLotIds.map((id) => [id, { ...EMPTY_SCA }])),
     notes: Object.fromEntries(shuffledLotIds.map((id) => [id, { ...EMPTY_NOTES }])),
     discards: [[], []],
-    verdict: { grades: {}, winner: null },
+    discard_grades: {},
+    verdict: { ranking: [], grades: {} },
   };
 }
 
@@ -408,24 +414,35 @@ export function stepBlocker(state: JornadaState): string | null {
         ? `Falta la granulometría de: ${missing.map((id) => cupLabel(state, id)).join(", ")}.`
         : null;
     }
-    case "descarte1":
-      return state.discards[0].length === plan[0] ? null : plan[0] === 0 ? null : `Selecciona ${plan[0]} taza${plan[0] === 1 ? "" : "s"} para retirar.`;
-    case "descarte2":
-      return state.discards[1].length === plan[1] ? null : plan[1] === 0 ? null : `Selecciona ${plan[1]} taza${plan[1] === 1 ? "" : "s"} para retirar.`;
+    case "descarte1": {
+      if (plan[0] !== 0 && state.discards[0].length !== plan[0])
+        return `Selecciona ${plan[0]} taza${plan[0] === 1 ? "" : "s"} para retirar.`;
+      const ungraded = state.discards[0].filter((id) => !allowedDiscardGrades(0).includes(state.discard_grades[id] as DiscardGrade));
+      return ungraded.length ? `Asigna el grado (Black/Red) a: ${ungraded.map((id) => cupLabel(state, id)).join(", ")}.` : null;
+    }
+    case "descarte2": {
+      if (plan[1] !== 0 && state.discards[1].length !== plan[1])
+        return `Selecciona ${plan[1]} taza${plan[1] === 1 ? "" : "s"} para retirar.`;
+      const ungraded = state.discards[1].filter((id) => !allowedDiscardGrades(1).includes(state.discard_grades[id] as DiscardGrade));
+      return ungraded.length ? `Asigna el grado (Red/Blue) a: ${ungraded.map((id) => cupLabel(state, id)).join(", ")}.` : null;
+    }
     case "verdict": {
       const incomplete = state.cup_order.filter((id) => !scaComplete(state.sca[id]));
       if (incomplete.length)
         return `Planilla SCA incompleta en: ${incomplete.map((id) => cupLabel(state, id)).join(", ")}.`;
-      const judges = state.guests.map((g) => g.name.trim()).filter(Boolean);
       const finalists = activeCups(state);
+      if (state.verdict.ranking.length !== finalists.length || new Set(state.verdict.ranking).size !== finalists.length ||
+          !state.verdict.ranking.every((id) => finalists.includes(id)))
+        return "Ordena a los 3 finalistas (1º, 2º, 3º).";
+      const allowed = finalistAllowedGrades(state);
       for (const lotId of finalists) {
-        for (const judge of judges) {
-          if (state.verdict.grades[lotId]?.[judge] === undefined)
-            return `Falta el veredicto de ${judge} para ${cupLabel(state, lotId)}.`;
-        }
+        const g = state.verdict.grades[lotId];
+        if (!g) return `Falta el grado de ${cupLabel(state, lotId)}.`;
+        if (!allowed.includes(g))
+          return allowed.includes("red")
+            ? `Grado no válido para ${cupLabel(state, lotId)}.`
+            : "El segundo descarte otorgó un Blue — ningún finalista puede recibir Red.";
       }
-      if (!state.verdict.winner || !finalists.includes(state.verdict.winner))
-        return "Selecciona el café ganador de la jornada.";
       return null;
     }
     default:

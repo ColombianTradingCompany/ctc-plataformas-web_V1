@@ -17,13 +17,15 @@ const INTAKE_STEPS = [
 ];
 
 export function LotKanbanStepper({ stage, intakeStep, grade }: { stage: number; intakeStep: number; grade: string | null }) {
+  // Stage indexes follow STAGE_DB (9 entries since the EVA stages landed):
+  // 1 ficha_completa · 2 apto · 3 no_apto · 6 fila_arena · 7 evaluado · 8 galardonado.
   const intakeDone = stage >= 1; // ficha_completa+ means the whole intake locked in, regardless of intakeStep bookkeeping
-  const isEvaluado = stage === 5;
-  const isGalardonado = stage === 6;
+  const isEvaluado = stage === 7;
+  const isGalardonado = stage === 8;
   const reachedEnding = isEvaluado || isGalardonado;
-  const mueDone = stage >= 4 || reachedEnding; // muestra recibida (fila_arena+)
-  const mueActive = stage === 1; // ficha ya cerrada, esperando envío/confirmación de la muestra
-  const areActive = stage === 4;
+  const mueDone = stage >= 6 || reachedEnding; // muestra recibida (fila_arena+)
+  const mueActive = stage === 1 || stage === 2; // ficha cerrada o apto, esperando envío/confirmación de la muestra
+  const areActive = stage === 6;
 
   return (
     <div className={styles.row} role="list" aria-label="Etapas del lote">

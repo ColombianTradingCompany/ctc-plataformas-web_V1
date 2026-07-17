@@ -33,7 +33,9 @@ export async function signContract(contractId: string, formData: FormData) {
     .eq("profile_id", lot?.producer_id ?? "")
     .maybeSingle();
   if (!pp?.club_member_since) {
-    throw new Error("El productor de este lote no es miembro del Kaffetal Club — emita un código de miembro en /bcp/club antes de firmar.");
+    // Desde 2026-07-17 la membresía se otorga automáticamente al competir en una
+    // jornada; este gate queda como defensa en profundidad.
+    throw new Error("El productor de este lote todavía no es miembro del Kaffetal Club — la membresía se otorga al competir su lote en una jornada de Arena.");
   }
 
   await service
@@ -160,4 +162,65 @@ export async function resolveReconditioning(contractId: string, outcome: "active
 
   revalidatePath(`/bcp/contratos/${contractId}`);
   revalidatePath("/bcp/contratos");
+}
+
+// ── Negociación de lotes Black (2026-07-17) ─────────────────────────────────
+// Un lote graduado Black no entra a la compra base automáticamente: se negocia
+// aparte. "comprar" crea un contrato pending_signature (misma compuerta de Club
+// al firmar); "liberado" lo cierra sin compra — el lote conserva su grado.
+export async function decideBlackNegotiation(
+  negotiationId: string,
+  outcome: "comprar" | "liberado",
+  formData: FormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: neg } = await service.from("black_negotiations").select("id, status, lot_id").eq("id", negotiationId).maybeSingle();
+  if (!neg) return { ok: false, error: "Negociación no encontrada." };
+  if (neg.status !== "abierta") return { ok: false, error: "Esta negociación ya fue resuelta." };
+
+  const notes = String(formData.get("notes") || "").trim() || null;
+  let contractId: string | null = null;
+
+  if (outcome === "comprar") {
+    const price = formData.get("agreed_price_per_kg") ? Number(formData.get("agreed_price_per_kg")) : null;
+    const { data: contract } = await service
+      .from("purchase_contracts")
+      .insert({ lot_id: neg.lot_id, status: "pending_signature", grade_snapshot: "black" })
+      .select("id")
+      .single();
+    contractId = contract?.id ?? null;
+    await service
+      .from("black_negotiations")
+      .update({ status: "comprar", agreed_price_per_kg: price, notes, contract_id: contractId, decided_by: adminId, decided_at: new Date().toISOString() })
+      .eq("id", negotiationId);
+    if (contractId) {
+      await service.from("audit_log").insert({
+        entity_type: "purchase_contract",
+        entity_id: contractId,
+        action: "created",
+        new_status: "pending_signature",
+        performed_by: adminId,
+        notes: "Contrato de negociación Black.",
+      });
+    }
+  } else {
+    await service
+      .from("black_negotiations")
+      .update({ status: "liberado", notes, decided_by: adminId, decided_at: new Date().toISOString() })
+      .eq("id", negotiationId);
+  }
+
+  await service.from("audit_log").insert({
+    entity_type: "black_negotiation",
+    entity_id: negotiationId,
+    action: outcome === "comprar" ? "decided_buy" : "decided_release",
+    previous_status: "abierta",
+    new_status: outcome,
+    performed_by: adminId,
+  });
+
+  revalidatePath("/bcp/contratos");
+  return { ok: true };
 }

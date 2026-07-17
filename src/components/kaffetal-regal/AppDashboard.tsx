@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
+import { CONTRACT_STATUS_LABEL, GRADES, LOT_COMMITTED_STAGE, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus } from "@/lib/eudr";
-import { ARENA_FEE_COP, formatCop } from "@/lib/arena/inscriptions";
-import { NEQUI, PAYMENT_EMAIL, nequiConfigured, paymentReferenceFor } from "@/lib/arena/payment";
+import { ARENA_FEE_COP, formatCop, PHASE_LABEL } from "@/lib/arena/inscriptions";
+import { NEQUI, PAYMENT_EMAIL, nequiConfigured } from "@/lib/arena/payment";
+import { aplicarCodigoCampana, peekCampaignCodeAction, postularLote } from "@/lib/arena/producerActions";
 import { useToast } from "@/components/Toast";
 import { submitLeadAuthed } from "@/lib/leads/actions";
-import { redeemClubCode, requestClubPassport } from "@/lib/club/actions";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
@@ -39,7 +39,7 @@ function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "muestras" | "inscripciones" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
+export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
 
 // Minimalist stroked line icons (one visual language, currentColor) — replaces
 // the multicolor emoji that clashed with the panel's editorial tone.
@@ -60,12 +60,9 @@ const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
   lotes: (
     <LineIcon><path d="M4 8h13v4.5a4.5 4.5 0 0 1-4.5 4.5H8.5A4.5 4.5 0 0 1 4 12.5V8Z" /><path d="M17 9h1.6a2.4 2.4 0 0 1 0 4.8H17" /><path d="M7.5 3.2c.5.8-.5 1.4 0 2.4M11 3.2c.5.8-.5 1.4 0 2.4" /></LineIcon>
   ),
-  muestras: (
-    <LineIcon><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" /><path d="M4 7l8 4 8-4" /><path d="M12 21V11" /></LineIcon>
-  ),
-  // Recibo/boleta: la inscripción que habilita la Arena.
-  inscripciones: (
-    <LineIcon><path d="M6 3.5h12v17l-2.4-1.6-2.4 1.6-2.4-1.6L8.4 20.5 6 18.9Z" /><path d="M9.2 8h5.6M9.2 12h5.6" /></LineIcon>
+  // Copa/trofeo: el camino completo hacia la Arena (postular → pagar → muestra → sondeo).
+  arena: (
+    <LineIcon><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" /><path d="M8 5H5.5a2.5 2.5 0 0 0 2.6 3.4M16 5h2.5a2.5 2.5 0 0 1-2.6 3.4" /><path d="M12 13v3.5M8.5 20.5h7M10 20.5c0-2 .8-4 2-4s2 2 2 4" /></LineIcon>
   ),
   retro: (
     <LineIcon><path d="M20 12a7.2 7.2 0 0 1-9.9 6.7L5 20l1.3-4.4A7.2 7.2 0 1 1 20 12Z" /></LineIcon>
@@ -146,54 +143,10 @@ export function AppDashboard({
   // their email AND in "Retroalimentación y ayuda".
   const [serviceSent, setServiceSent] = useState<{ tech?: boolean; varietales?: boolean }>({});
   const [serviceBusy, setServiceBusy] = useState(false);
-  // Kaffetal Club: "Mis contratos" (y con ello el catálogo activo / Cherry
-  // Picked) es exclusivo de miembros. La membresía es el "Pasaporte" del
-  // productor: se solicita desde aquí y se activa con el Número de Pasaporte
-  // que CTC emite desde el BCP.
+  // Kaffetal Club (2026-07-17): "Mis contratos" es exclusivo de miembros. La
+  // membresía es el "Pasaporte" del productor y se otorga AUTOMÁTICAMENTE cuando
+  // un lote suyo compite en una jornada de Arena — ya no se canjea un código.
   const isClubMember = !!gi.clubMemberSince;
-  const [clubCode, setClubCode] = useState("");
-  const [clubBusy, setClubBusy] = useState(false);
-  const [passportRequested, setPassportRequested] = useState(false);
-
-  async function submitClubCode() {
-    const code = clubCode.trim();
-    if (!code) return;
-    setClubBusy(true);
-    try {
-      const result = await redeemClubCode(code);
-      if (result.ok) {
-        showToast("¡Bienvenido al Kaffetal Club! Su Pasaporte quedó activo ✓");
-        setClubCode("");
-        // club_member_since cambió server-side; recargar refleja la membresía
-        // (y la nota de bienvenida en Retroalimentación) sin salir del módulo.
-        onRefreshData();
-      } else {
-        showToast(result.message);
-      }
-    } catch {
-      showToast("No se pudo activar el Pasaporte. Intente de nuevo.");
-    } finally {
-      setClubBusy(false);
-    }
-  }
-
-  async function submitPassportRequest() {
-    setClubBusy(true);
-    try {
-      const result = await requestClubPassport();
-      if (result.ok) {
-        setPassportRequested(true);
-        showToast(result.already ? "Su solicitud ya estaba registrada — CTC la tiene presente." : "Solicitud registrada ✓ · CTC la verá en su historial");
-        onRefreshData();
-      } else {
-        showToast(result.message);
-      }
-    } catch {
-      showToast("No se pudo registrar la solicitud. Intente de nuevo.");
-    } finally {
-      setClubBusy(false);
-    }
-  }
 
   async function requestService(pillar: "tech" | "varietales", form: HTMLFormElement) {
     setServiceBusy(true);
@@ -245,19 +198,20 @@ export function AppDashboard({
     setReplyText("");
   }
 
-  const certified = lots.filter((l) => l.stage >= 5);
+  const certified = lots.filter((l) => l.stage >= 7);
 
   // Key facts for the hub tiles: enough to know whether a module needs
   // attention without opening it. `alert` facts render highlighted.
-  const samplesToShip = lots.filter((l) => l.stage === 1 && !l.sampleShippedAt).length;
-  // Inscripciones: solo importan mientras el lote espera en la compuerta (stage 1).
-  // Sin fila todavía = CTC aún no la abrió, pero el costo ya aplica: se avisa igual.
-  const inscriptionLots = lots.filter((l) => l.stage === 1);
-  const inscriptionsDue = inscriptionLots.filter((l) => l.inscription?.status !== "pagado" && l.inscription?.status !== "exento");
-  const totalDueCop = inscriptionsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? ARENA_FEE_COP), 0);
+  // El módulo "Kaffetal Regal Arena" (2026-07-17) fusiona muestras +
+  // inscripciones en un solo tracker por lote del tramo pagado.
+  const aptosToPostulate = lots.filter((l) => l.stage === 2 && !l.inscription);
+  const arenaLots = lots.filter((l) => l.inscription || l.stage === 2);
+  const paymentsDue = lots.filter((l) => l.inscription && l.inscription.status === "pendiente" && l.inscription.phase === "postulacion");
+  const totalDueCop = paymentsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? ARENA_FEE_COP), 0);
+  const samplesToShip = lots.filter((l) => l.inscription?.phase === "postulacion" && !l.sampleShippedAt).length;
   const newCtcNotes = feedback.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
   const aptFincas = fincas.filter((f) => fincaEudrStatus(f).code === "apta").length;
-  const lotsInQueue = lots.filter((l) => l.stage === 4).length;
+  const lotsInQueue = lots.filter((l) => l.stage === 6).length;
   const infoComplete = gi.razon !== "—" && gi.agri !== "—";
 
   const tiles: { key: DashboardModule; icon: React.ReactNode; title: string; fact: string; alert?: boolean }[] = [
@@ -286,22 +240,19 @@ export function AppDashboard({
         : "Registre su primer café",
     },
     {
-      key: "muestras",
-      icon: HUB_ICON.muestras,
-      title: "Envío de muestras",
-      fact: samplesToShip > 0 ? `${samplesToShip} muestra${samplesToShip === 1 ? "" : "s"} por enviar` : "Dirección y guía de envío · 2 kg por lote",
-      alert: samplesToShip > 0,
-    },
-    {
-      key: "inscripciones",
-      icon: HUB_ICON.inscripciones,
-      title: "Mis inscripciones",
-      fact: inscriptionsDue.length
-        ? `${inscriptionsDue.length} inscripci${inscriptionsDue.length === 1 ? "ón" : "ones"} por pagar · ${formatCop(totalDueCop)}`
-        : inscriptionLots.length
-          ? "Todas sus inscripciones están al día"
-          : "La Arena cuesta $80.000 por lote · consulte exenciones",
-      alert: inscriptionsDue.length > 0,
+      key: "arena",
+      icon: HUB_ICON.arena,
+      title: "Kaffetal Regal Arena",
+      fact: aptosToPostulate.length
+        ? `${aptosToPostulate.length} lote${aptosToPostulate.length === 1 ? "" : "s"} apto${aptosToPostulate.length === 1 ? "" : "s"} por postular`
+        : paymentsDue.length
+          ? `${paymentsDue.length} inscripci${paymentsDue.length === 1 ? "ón" : "ones"} por pagar · ${formatCop(totalDueCop)}`
+          : samplesToShip > 0
+            ? `${samplesToShip} muestra${samplesToShip === 1 ? "" : "s"} por enviar`
+            : arenaLots.length
+              ? "Siga aquí el camino de sus lotes hacia la Arena"
+              : "Postulación, pago, muestra y sondeo · $80.000 por lote",
+      alert: aptosToPostulate.length > 0 || paymentsDue.length > 0 || samplesToShip > 0,
     },
     {
       key: "retro",
@@ -321,11 +272,11 @@ export function AppDashboard({
       icon: HUB_ICON.contratos,
       title: "Mis contratos",
       fact: !isClubMember
-        ? "Exclusivo Kaffetal Club · active su Pasaporte"
+        ? "Se activa al competir un lote en la Arena"
         : contracts.length
           ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC`
-          : "Aparecen al ganar un galardón en la Arena",
-      alert: !isClubMember,
+          : "Aparecen al competir un lote en la Arena",
+      alert: false,
     },
     {
       key: "servicios",
@@ -430,64 +381,33 @@ export function AppDashboard({
           </div>
           )}
 
-          {module === "inscripciones" && (
+          {module === "arena" && (
           <div className={styles.acard}>
-            <span className={styles.k}>Inscripción a la Arena · {formatCop(ARENA_FEE_COP)} por lote</span>
+            <span className={styles.k}>Kaffetal Regal Arena · el camino de su lote</span>
             <div className={styles.alist} style={{ marginTop: 6 }}>
-              Registrar su finca y armar la ficha no cuesta nada: se paga <b>el lote que decide medir</b>. La inscripción
-              cubre la catación a ciegas ante Q-Graders, el factor de rendimiento, la certificación CTC y el feedback del
-              panel — <b>gane o no gane</b>. Su lote entra en fila para la Arena cuando la inscripción está al día y la
-              muestra recibida.
-            </div>
-            <div className={styles.alist} style={{ marginTop: 8 }}>
-              ¿Le queda difícil? <b>Escríbanos antes de pagar</b>: CTC otorga exenciones de 25%, 50%, 75% o 100% a los
-              productores que quiere ver compitiendo. No es una barrera — es una conversación.
+              Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara un lote <b>Apto</b>, usted decide si
+              lo <b>postula</b> a la Arena: la inscripción cuesta <b>{formatCop(ARENA_FEE_COP)}</b> por lote y cubre el
+              sondeo preliminar, la catación a ciegas ante Q-Graders, el factor de rendimiento, la certificación CTC y el
+              feedback del panel — <b>gane o no gane</b>. ¿Tiene un <b>código de campaña</b>? Aplíquelo al postular y verá
+              su descuento al instante.
             </div>
 
-            {inscriptionLots.length === 0 ? (
+            {arenaLots.length === 0 ? (
               <div className={styles.alist} style={{ marginTop: 10 }}>
-                Aún no tiene lotes en la compuerta de la Arena. Cuando termine la ficha de un lote, su inscripción aparece aquí.
+                Aún no tiene lotes aptos. Complete la ficha de un lote y CTC lo evaluará — al ser declarado Apto, podrá
+                postularlo desde aquí.
               </div>
             ) : (
               <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-                {inscriptionLots.map((l) => {
-                  const ins = l.inscription;
-                  const settled = ins?.status === "pagado" || ins?.status === "exento";
-                  const due = ins?.amountDueCop ?? ARENA_FEE_COP;
-                  return (
-                    <div key={l.id} style={{ border: "1.5px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
-                      <b style={{ fontSize: 14 }}>{l.name}</b>
-                      <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 8px" }}>
-                        <CtcRef id={l.id} />
-                      </div>
-                      {settled ? (
-                        <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
-                          {ins?.status === "exento"
-                            ? "✓ Inscripción eximida por CTC — no debe pagar nada."
-                            : `✓ Inscripción pagada${ins && ins.discountPct > 0 ? ` (con exención del ${ins.discountPct}%)` : ""}.`}
-                        </div>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: 13 }}>
-                            Pendiente: <b>{formatCop(due)}</b>
-                            {ins && ins.discountPct > 0 && (
-                              <span style={{ color: "var(--green)", fontWeight: 700 }}> · CTC le aplicó una exención del {ins.discountPct}%</span>
-                            )}
-                          </div>
-                          <div className="mono" style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
-                            Referencia del pago: <b>{paymentReferenceFor(ctcLotReferenceShort(l.id))}</b>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
+                {arenaLots.map((l) => (
+                  <ArenaLotCard key={l.id} lot={l} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} />
+                ))}
               </div>
             )}
 
             {/* Instrucciones de pago. Sin cuenta configurada NO se muestra un
                 número a medias: se manda al productor a escribirnos. */}
-            {inscriptionsDue.length > 0 && (
+            {paymentsDue.length > 0 && (
               <div style={{ marginTop: 14, border: "1.5px solid var(--accent)", borderRadius: 10, padding: "14px 16px", background: "var(--card)" }}>
                 <span className={styles.k}>Cómo pagar · Nequi</span>
                 {nequiConfigured() ? (
@@ -497,70 +417,20 @@ export function AppDashboard({
                       {NEQUI.holder && <> — a nombre de <b>{NEQUI.holder}</b></>}.
                       <br />
                       Total a pagar hoy: <b>{formatCop(totalDueCop)}</b>
-                      {inscriptionsDue.length > 1 && <> por {inscriptionsDue.length} lotes</>}.
+                      {paymentsDue.length > 1 && <> por {paymentsDue.length} lotes</>}.
                     </div>
                     <ol style={{ margin: "10px 0 0 18px", fontSize: 13, color: "var(--muted)", lineHeight: 1.8 }}>
                       <li>Envíe el valor por Nequi al número de arriba.</li>
-                      <li>Escriba en el mensaje del pago la <b>referencia del lote</b> (el código que aparece en cada tarjeta).</li>
+                      <li>Escriba en el mensaje del pago su <b>código de inscripción</b> (aparece en cada tarjeta).</li>
                       <li>Mándenos el comprobante a <b>{PAYMENT_EMAIL}</b> o por su hilo de &quot;Retroalimentación y ayuda&quot;.</li>
-                      <li>CTC confirma el pago y su lote queda habilitado. Lo verá aquí mismo y en su feed.</li>
+                      <li>CTC confirma el pago y su lote sigue su camino al sondeo preliminar.</li>
                     </ol>
                   </>
                 ) : (
                   <div className={styles.alist} style={{ marginTop: 6 }}>
-                    Escríbanos a <b>{PAYMENT_EMAIL}</b> y le indicamos cómo pagar su inscripción (y si aplica alguna exención
-                    para usted).
+                    Escríbanos a <b>{PAYMENT_EMAIL}</b> y le indicamos cómo pagar su inscripción.
                   </div>
                 )}
-              </div>
-            )}
-          </div>
-          )}
-
-          {module === "muestras" && (
-          <div className={styles.acard}>
-            <span className={styles.k}>Envío de muestras · 2 kg pergamino por lote</span>
-            <div className={styles.alist} style={{ marginTop: 6 }}>
-              <b>CTC · Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · Colombia</b><br />
-              Marque el paquete <b>únicamente con el código del lote</b> (la evaluación en la Arena es a ciegas). El envío
-              corre por su cuenta; con la muestra recibida, el lote entra en fila para la Arena.
-            </div>
-            {/* Lotes con ficha completa esperando su muestra: aquí viven las dos
-                acciones (antes el "Confirmar envío" estaba en la tarjeta del
-                lote en Mis Lotes; migró a este módulo). */}
-            {samplesToShip === 0 ? (
-              <div className={styles.alist} style={{ marginTop: 10 }}>Sin muestras pendientes por enviar en este momento.</div>
-            ) : (
-              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-                {lots.filter((l) => l.stage === 1 && !l.sampleShippedAt).map((l) => (
-                  <div key={l.id} style={{ border: "1.5px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
-                    <b style={{ fontSize: 14 }}>{l.name}</b>
-                    <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 8px" }}>
-                      <CtcRef id={l.id} />
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => openShipmentInstructions(ctcLotReference(l.id), ctcLotReferenceShort(l.id))}
-                      >
-                        Descargar instrucciones
-                      </button>
-                      <button
-                        className="btn btn-sm btn-solid-accent"
-                        onClick={() => {
-                          const ok = window.confirm(
-                            `¿Confirma que ya despachó la muestra de 2 kg de pergamino del lote ${l.name}?\n\n` +
-                              "Recuerde: el paquete debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).\n\n" +
-                              "Al confirmar, CTC queda a la espera del paquete; cuando valide el recibo físico, el lote entra en la fila de la Arena.",
-                          );
-                          if (ok) onConfirmSampleShipped(l.id);
-                        }}
-                      >
-                        Confirmar envío
-                      </button>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </div>
@@ -757,8 +627,13 @@ export function AppDashboard({
                         <CtcRef id={l.id} />
                       </div>
                       <div className={styles.sub}>Finca: {l.finca} · {l.extra}</div>
-                      {l.stage === 1 && !l.sampleShippedAt && (
-                        <button className="btn btn-sm btn-solid-accent" style={{ marginTop: 6 }} onClick={() => onSelectModule("muestras")}>
+                      {l.stage === 2 && !l.inscription && (
+                        <button className="btn btn-sm btn-solid-accent" style={{ marginTop: 6 }} onClick={() => onSelectModule("arena")}>
+                          ¡Apto! · postular a la Arena →
+                        </button>
+                      )}
+                      {l.inscription?.phase === "postulacion" && !l.sampleShippedAt && (
+                        <button className="btn btn-sm btn-solid-accent" style={{ marginTop: 6 }} onClick={() => onSelectModule("arena")}>
                           Muestra pendiente · gestionar envío →
                         </button>
                       )}
@@ -784,7 +659,7 @@ export function AppDashboard({
                       {/* Deletable any time before MUE passes the lot into the Arena
                           backlog (stage < 4 = fila_arena), unless BCP already has the
                           physical sample in hand (bcp_manual_entry). */}
-                      {l.stage < 4 && l.source !== "bcp_manual_entry" && (
+                      {l.stage < LOT_COMMITTED_STAGE && l.source !== "bcp_manual_entry" && (
                         <button className={styles.deletebtn} onClick={() => onDeleteLot(l.id)}>Eliminar lote</button>
                       )}
                     </div>
@@ -822,43 +697,14 @@ export function AppDashboard({
             <span className={styles.k}>Mis contratos · Pasaporte del Kaffetal Club</span>
             <div className={styles.alist} style={{ marginTop: 8 }}>
               Kaffetal Regal es también un club de exportadores: el <b>Kaffetal Club</b>, el círculo de productores
-              con los que CTC firma contratos de compra y cuyos lotes galardonados viajan con nombre propio al{" "}
-              <b>catálogo activo</b> y al mercado de <b>Cherry Picked</b>{" "}(Europa). Su entrada es su{" "}
-              <b>Pasaporte</b>: se solicita aquí, y CTC lo otorga con un <b>Número de Pasaporte</b>{" "}verificado —
-              normalmente cuando uno de sus cafés gana un galardón en la Arena.
+              con los que CTC firma contratos de compra y cuyos lotes viajan con nombre propio al <b>catálogo activo</b>{" "}
+              y al mercado de <b>Cherry Picked</b>{" "}(Europa). Su <b>Pasaporte se activa automáticamente</b> cuando un
+              lote suyo <b>compite en una jornada de Arena</b> — postule un lote apto desde{" "}
+              <b>Kaffetal Regal Arena</b> y, al competir, su membresía y sus contratos aparecerán aquí.
             </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}>
-              <input
-                value={clubCode}
-                onChange={(e) => setClubCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === "Enter" && !clubBusy && submitClubCode()}
-                placeholder="Nº de Pasaporte · KC-XXXX-XXXX"
-                className="mono"
-                style={{ padding: "9px 12px", border: "1px solid var(--line)", borderRadius: 8, fontSize: 13, letterSpacing: ".06em", width: 230 }}
-                aria-label="Número de Pasaporte del Kaffetal Club"
-              />
-              <button className="btn btn-sm btn-solid" onClick={submitClubCode} disabled={clubBusy || !clubCode.trim()}>
-                {clubBusy ? "Activando…" : "Activar Pasaporte"}
-              </button>
-            </div>
-            <div className={styles.alist} style={{ marginTop: 12 }}>
-              {passportRequested ? (
-                <>✓ Su solicitud quedó registrada. CTC le hará llegar su Número de Pasaporte — por correo y aquí en su panel.</>
-              ) : (
-                <>
-                  ¿Aún no tiene su Número?{" "}
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={submitPassportRequest}
-                    disabled={clubBusy}
-                    style={{ marginLeft: 4 }}
-                  >
-                    Solicitar mi Pasaporte
-                  </button>
-                </>
-              )}
-            </div>
+            <button className="btn btn-sm btn-solid" style={{ marginTop: 14 }} onClick={() => onSelectModule("arena")}>
+              Ir a Kaffetal Regal Arena →
+            </button>
           </div>
           )}
 
@@ -1012,6 +858,209 @@ export function AppDashboard({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// La tarjeta por lote del módulo "Kaffetal Regal Arena": un tracker del tramo
+// pagado — Postulación → Código y Pago → Muestra (2 kg) → Sondeo → Fila →
+// Sesión → Resultado. Las escrituras van por Server Actions (producerActions).
+function ArenaLotCard({
+  lot,
+  onRefreshData,
+  onConfirmSampleShipped,
+}: {
+  lot: Lot;
+  onRefreshData: () => void;
+  onConfirmSampleShipped: (lotId: string) => void;
+}) {
+  const { showToast } = useToast();
+  const [code, setCode] = useState("");
+  const [peek, setPeek] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const ins = lot.inscription;
+
+  async function revealCode() {
+    if (!code.trim()) return;
+    const res = await peekCampaignCodeAction(code);
+    setPeek(
+      res.ok
+        ? `Código${res.campaignName ? ` «${res.campaignName}»` : ""} válido — ${res.discountPct}% de descuento · pagaría ${formatCop(res.dueCop)}.`
+        : res.message
+    );
+  }
+
+  async function postular() {
+    setBusy(true);
+    const res = await postularLote(lot.id, code.trim() || undefined);
+    setBusy(false);
+    if (res.ok) {
+      showToast(`Lote postulado ✓ · código ${res.entryCode}`);
+      onRefreshData();
+    } else showToast(res.message);
+  }
+
+  async function applyCode() {
+    if (!code.trim()) return;
+    setBusy(true);
+    const res = await aplicarCodigoCampana(lot.id, code);
+    setBusy(false);
+    if (res.ok) {
+      showToast(`Código aplicado ✓ · ${res.discountPct}% de descuento`);
+      setCode("");
+      setPeek(null);
+      onRefreshData();
+    } else showToast(res.message);
+  }
+
+  const cardStyle = { border: "1.5px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--paper)" } as const;
+  const settled = ins?.status === "pagado" || ins?.status === "exento";
+
+  return (
+    <div style={cardStyle}>
+      <b style={{ fontSize: 14 }}>{lot.name}</b>
+      <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 8px" }}>
+        <CtcRef id={lot.id} />
+      </div>
+
+      {!ins ? (
+        // Apto sin postular: la decisión es del productor.
+        <div>
+          <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>✓ Apto — listo para postular a la Arena</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+            <input
+              placeholder="¿Código de campaña? (opcional)"
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setPeek(null);
+              }}
+              onBlur={revealCode}
+              style={{ maxWidth: 220 }}
+            />
+            <button className="btn btn-sm btn-solid-accent" disabled={busy} onClick={postular}>
+              {busy ? "Postulando…" : "Postular a la Arena"}
+            </button>
+          </div>
+          {peek && <div style={{ fontSize: 12.5, marginTop: 6, color: "var(--muted)" }}>{peek}</div>}
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
+            Inscripción: {formatCop(ARENA_FEE_COP)} — con un código de campaña el descuento se muestra al escribirlo.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <span className="mono" style={{ fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px" }}>
+              {PHASE_LABEL[ins.phase]}
+            </span>
+            <span className="mono" style={{ fontSize: 11.5, border: "1px solid var(--line)", borderRadius: 999, padding: "2px 10px" }}>
+              Código: {ins.entryCode ?? "—"}
+            </span>
+          </div>
+
+          {ins.phase === "postulacion" && (
+            <>
+              <div style={{ fontSize: 13 }}>
+                {settled ? (
+                  <span style={{ color: "var(--green)", fontWeight: 700 }}>
+                    {ins.status === "exento" ? "✓ Inscripción eximida (100%)." : `✓ Inscripción pagada${ins.discountPct > 0 ? ` (descuento ${ins.discountPct}%)` : ""}.`}
+                  </span>
+                ) : (
+                  <>
+                    Pago pendiente: <b>{formatCop(ins.amountDueCop)}</b>
+                    {ins.discountPct > 0 && <span style={{ color: "var(--green)", fontWeight: 700 }}> · descuento {ins.discountPct}%</span>}
+                    <span className="mono" style={{ fontSize: 11.5, color: "var(--muted)" }}> · referencia: {ins.entryCode}</span>
+                  </>
+                )}
+              </div>
+              {!settled && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  <input
+                    placeholder="Aplicar código de campaña"
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value);
+                      setPeek(null);
+                    }}
+                    onBlur={revealCode}
+                    style={{ maxWidth: 200 }}
+                  />
+                  <button className="btn btn-sm" disabled={busy || !code.trim()} onClick={applyCode}>
+                    Aplicar
+                  </button>
+                </div>
+              )}
+              {peek && <div style={{ fontSize: 12.5, color: "var(--muted)" }}>{peek}</div>}
+
+              {!lot.sampleShippedAt ? (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                  <button className="btn btn-sm" onClick={() => openShipmentInstructions(ctcLotReference(lot.id), ctcLotReferenceShort(lot.id))}>
+                    Instrucciones de envío (2 kg)
+                  </button>
+                  <button
+                    className="btn btn-sm btn-solid-accent"
+                    onClick={() => {
+                      const ok = window.confirm(
+                        `¿Confirma que ya despachó la muestra de 2 kg de pergamino del lote ${lot.name}?\n\n` +
+                          "Recuerde: el paquete debe ir marcado ÚNICAMENTE con el código del lote (sin su nombre ni el de su finca — la cata es a ciegas).",
+                      );
+                      if (ok) onConfirmSampleShipped(lot.id);
+                    }}
+                  >
+                    Confirmar envío de muestra
+                  </button>
+                </div>
+              ) : (
+                <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Muestra enviada — CTC confirmará el recibo físico.</div>
+              )}
+            </>
+          )}
+
+          {ins.phase === "sondeo" && (
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>
+              Su muestra está en el <b>sondeo preliminar</b> (laboratorios de calidades vía Fedecafé). Le contaremos el
+              resultado aquí y en su feed.
+            </div>
+          )}
+          {ins.phase === "fila" && (
+            <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
+              ✓ Superó el sondeo{ins.sondeoScore != null ? ` (${ins.sondeoScore})` : ""} — en fila para la próxima sesión de la Arena.
+            </div>
+          )}
+          {ins.phase === "sesion" && (
+            <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
+              ✓ Sesión de Arena confirmada — la fecha está en su feed de Retroalimentación.
+            </div>
+          )}
+          {ins.phase === "competido" && (
+            <div style={{ fontSize: 13 }}>
+              Su lote compitió en la Arena{lot.grade ? <> — Grado <b>{lot.grade}</b></> : ""}. Revise Mis lotes y Mis contratos.
+            </div>
+          )}
+          {ins.phase === "retirado" && (
+            <div style={{ display: "grid", gap: 6 }}>
+              <div style={{ fontSize: 13 }}>
+                Su café no superó el sondeo preliminar esta vez{ins.sondeoScore != null ? ` (${ins.sondeoScore})` : ""}.
+              </div>
+              {ins.sondeoResultNotes && <div style={{ fontSize: 12.5, color: "var(--muted)" }}>Resultado: {ins.sondeoResultNotes}</div>}
+              {ins.cashbackStatus && (
+                <div style={{ fontSize: 12.5 }}>
+                  Reembolso del 80% ({formatCop(ins.cashbackCop ?? 0)}):{" "}
+                  <b style={{ color: ins.cashbackStatus === "pagado" ? "var(--green)" : "var(--accent)" }}>
+                    {ins.cashbackStatus === "pagado" ? "enviado ✓" : "en camino por Nequi"}
+                  </b>
+                </div>
+              )}
+              {ins.mejorasDoc && (
+                <details style={{ border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px", background: "var(--card)" }}>
+                  <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>Recomendaciones de Mejora</summary>
+                  <div style={{ whiteSpace: "pre-wrap", fontSize: 13, marginTop: 8, lineHeight: 1.7 }}>{ins.mejorasDoc}</div>
+                </details>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

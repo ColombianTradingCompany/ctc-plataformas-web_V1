@@ -63,10 +63,10 @@ export type EudrProducerAnswers = {
 };
 
 // A lot is "committed" to CTC once it enters the Arena pipeline (stage index
-// >= 4 == fila_arena): the producer can no longer self-delete it, and a finca
+// >= 6 == fila_arena): the producer can no longer self-delete it, and a finca
 // with any committed lot can't be deleted from the app either. Mirrors the
 // `stage >= 'fila_arena'` check in the fincas delete RLS policy.
-export const LOT_COMMITTED_STAGE = 4;
+export const LOT_COMMITTED_STAGE = 6;
 export function isLotCommitted(l: Pick<Lot, "stage">): boolean {
   return l.stage >= LOT_COMMITTED_STAGE;
 }
@@ -112,14 +112,23 @@ export type Lot = {
   videoUrl: string | null;
   sampleShippedAt: string | null;
   source: string;
-  // Inscripción de Arena ($80.000, exención por tramos). null = CTC aún no ha
-  // abierto la fila (el lote todavía no llegó a la compuerta). Solo lectura para
-  // el productor: RLS le deja ver la suya, escribir es exclusivo de BCP.
+  // Postulación a la Arena (2026-07-17): la fila de arena_inscriptions ES el
+  // tramo pagado del lote — nace cuando el productor postula un lote Apto.
+  // null = aún sin postular. Solo lectura para el productor (RLS select-own);
+  // crear la fila pasa por la Server Action postularLote.
   inscription: {
     status: "pendiente" | "pagado" | "exento";
     amountCop: number;
     discountPct: number;
     amountDueCop: number;
+    phase: "postulacion" | "sondeo" | "fila" | "sesion" | "competido" | "retirado";
+    entryCode: string | null;
+    sondeoResult: "aprobado" | "rechazado" | null;
+    sondeoResultNotes: string | null;
+    sondeoScore: number | null;
+    mejorasDoc: string | null;
+    cashbackCop: number | null;
+    cashbackStatus: "pendiente" | "pagado" | null;
   } | null;
   // EUDR — debida diligencia del lote (2026-07-10). Fuente de verdad para estas
   // columnas es la fila real de `lots`, no `datasheet` -- así lo que BCP llene
@@ -231,10 +240,13 @@ export const GRADES: Record<string, string> = {
   Tyrian: "var(--t-tyrian)",
 };
 
-export const STAGES = ["Borrador", "Ficha completa", "Videos ✓", "Muestra en tránsito", "En fila Arena", "Evaluado", "Galardonado"];
+export const STAGES = ["Borrador", "Ficha completa", "Apto", "No apto", "Videos ✓", "Muestra en tránsito", "En fila Arena", "Evaluado", "Galardonado"];
 
-// Order matches the `lot_stage` Postgres enum exactly, so the array index doubles as the UI stage number.
-export const STAGE_DB = ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "fila_arena", "evaluado", "galardonado"] as const;
+// Order matches the `lot_stage` Postgres enum exactly, so the array index doubles
+// as the UI stage number. `apto`/`no_apto` are the EVA verdict stages (2026-07-17,
+// inserted BEFORE videos_ok in the enum to preserve sort-order comparisons);
+// `videos_ok` and `muestra_transito` are dead legacy values no code writes.
+export const STAGE_DB = ["borrador", "ficha_completa", "apto", "no_apto", "videos_ok", "muestra_transito", "fila_arena", "evaluado", "galardonado"] as const;
 
 export const GRADE_DB: Record<string, NonNullable<Lot["grade"]>> = {
   black: "Black",

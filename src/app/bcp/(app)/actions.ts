@@ -202,6 +202,129 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
   return { ok: true };
 }
 
+// ── EVA: el veredicto documental (2026-07-17) ───────────────────────────────
+// Tras FT/FT2/EUDR/VID (todo gratis), CTC revisa la documentación y declara el
+// lote Apto o No Apto. Apto es la puerta de entrada al tramo pagado (postular →
+// pagar → sondeo → Arena); resolver el EUDR del lote es PARTE de esta revisión,
+// por eso markLotApto exige lotEudrGate listo. Mismo patrón resultado-no-throw
+// que confirmSampleReceived.
+
+export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa") {
+    return { ok: false, error: "Solo un lote con la ficha completa (en evaluación) puede declararse Apto." };
+  }
+  const eudr = await lotEudrGate(service, lotId);
+  if (!eudr.ready) {
+    return { ok: false, error: `La debida diligencia EUDR del lote sigue "${eudr.label}" — resuélvala (finca apta + nivel de riesgo determinado) antes del veredicto.` };
+  }
+
+  await service
+    .from("lots")
+    .update({ stage: "apto", eva_verdict_at: new Date().toISOString(), eva_no_apto_reason: null })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eva_apto",
+    previous_status: lot.stage,
+    new_status: "apto",
+    performed_by: adminId,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: "¡Su lote fue declarado APTO tras la evaluación documental! Ya puede postularlo a la Kaffetal Regal Arena desde su panel.",
+    created_by: adminId,
+  });
+
+  revalidatePath("/bcp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const cleanReason = reason.trim();
+  if (!cleanReason) return { ok: false, error: "Escriba la razón del No Apto — el productor la verá en su panel." };
+
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa" && lot.stage !== "apto") {
+    return { ok: false, error: "Solo un lote en evaluación (o Apto sin postular) puede declararse No Apto." };
+  }
+  if (lot.stage === "apto") {
+    // Un Apto ya postulado está en el tramo pagado — no se revierte por aquí.
+    const { data: ins } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
+    if (ins) return { ok: false, error: "Este lote ya fue postulado a la Arena — gestione su retiro desde Nominados, no desde el veredicto EVA." };
+  }
+
+  await service
+    .from("lots")
+    .update({ stage: "no_apto", eva_verdict_at: new Date().toISOString(), eva_no_apto_reason: cleanReason })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eva_no_apto",
+    previous_status: lot.stage,
+    new_status: "no_apto",
+    performed_by: adminId,
+    notes: cleanReason,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: `Su lote fue declarado No Apto en la evaluación documental. Motivo: ${cleanReason}. Puede escribirnos por este medio — si se corrige lo señalado, CTC puede reabrir la evaluación.`,
+    created_by: adminId,
+  });
+
+  revalidatePath("/bcp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+export async function revertNoApto(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "no_apto") return { ok: false, error: "Este lote no está en No Apto." };
+
+  await service
+    .from("lots")
+    .update({ stage: "ficha_completa", eva_verdict_at: null, eva_no_apto_reason: null })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eva_reopened",
+    previous_status: "no_apto",
+    new_status: "ficha_completa",
+    performed_by: adminId,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: "CTC reabrió la evaluación documental de su lote — está nuevamente en revisión.",
+    created_by: adminId,
+  });
+
+  revalidatePath("/bcp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
 // Tri-state yes/no/unset fields render as a <select> with "si"/"no"/"" values
 // in the BCP "aided by BCP" forms (see fincas/page.tsx, lotes/page.tsx) --
 // this is the single place that string turns into the boolean|null the

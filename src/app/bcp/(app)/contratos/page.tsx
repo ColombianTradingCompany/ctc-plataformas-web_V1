@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { fetchProducerContacts } from "@/lib/bcpProducers";
+import { BlackNegotiationCard } from "./BlackNegotiationCard";
 import styles from "../shared.module.css";
 
 const TABS = [
@@ -16,11 +18,18 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
   const activeStatus = (status && TABS.some((t) => t.value === status) ? status : "pending_signature") as (typeof TABS)[number]["value"];
 
   const service = createServiceRoleClient();
-  const { data: contracts } = await service
-    .from("purchase_contracts")
-    .select("id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, lots(name, fincas(name))")
-    .eq("status", activeStatus)
-    .order("created_at", { ascending: false });
+  const [{ data: contracts }, { data: blackNegs }] = await Promise.all([
+    service
+      .from("purchase_contracts")
+      .select("id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, lots(name, fincas(name))")
+      .eq("status", activeStatus)
+      .order("created_at", { ascending: false }),
+    service.from("black_negotiations").select("id, lots(name, producer_id, fincas(name))").eq("status", "abierta"),
+  ]);
+
+  type BlackNeg = { id: string; lots: { name: string; producer_id: string; fincas: { name: string } | null } | null };
+  const negs = (blackNegs as unknown as BlackNeg[] | null) ?? [];
+  const negProducers = await fetchProducerContacts(service, negs.map((n) => n.lots?.producer_id ?? "").filter(Boolean));
 
   return (
     <div>
@@ -30,6 +39,26 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
           Humedad fuera de rango →
         </Link>
       </div>
+
+      {negs.length > 0 && (
+        <div style={{ marginBottom: 26 }}>
+          <h2 style={{ fontSize: 16, marginBottom: 4 }}>Negociación de lotes Black</h2>
+          <p className={styles.subtitle}>
+            Los Black no entran a la compra base: se negocian aparte para comprar o liberar.
+          </p>
+          <div className={styles.list}>
+            {negs.map((n) => (
+              <BlackNegotiationCard
+                key={n.id}
+                id={n.id}
+                lotName={n.lots?.name ?? "—"}
+                fincaName={n.lots?.fincas?.name ?? "—"}
+                producerName={negProducers.get(n.lots?.producer_id ?? "")?.fullName ?? "Productor"}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className={styles.tabs}>
         {TABS.map((t) => (

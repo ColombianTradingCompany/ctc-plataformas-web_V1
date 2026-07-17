@@ -1,45 +1,69 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // ── Inscripción de Arena ─────────────────────────────────────────────────────
-// Participating in the Arena costs COP 80.000 per lot (2026-07-16). It is the
-// stick/carrot: CTC may discount it or fully exempt a producer. Payment happens
-// OUT OF BAND (bank transfer) — the platform only records BCP's confirmation.
+// Participating in the Arena costs COP 80.000 per lot (2026-07-16). Payment
+// happens OUT OF BAND (Nequi transfer) — the platform only records BCP's
+// confirmation.
 //
-// "Settled" (pagado | exento) is the single condition that:
-//   1. unlocks a lot into the Arena (confirmSampleReceived → fila_arena), and
-//   2. qualifies a producer for a standard Pasaporte — since 2026-07-16 the
-//      passport is the PAID ENTRY TICKET, not the post-galardón reward.
-// Campaign passports (KCX-) remain the free/marketing path and skip this.
+// Since the 2026-07-17 restructuring the inscription row IS the paid track of
+// a lot: it is created at POSTULATION (an Apto lot's producer asks to compete)
+// and carries the whole pipeline in `phase`:
+//   postulacion → sondeo → fila → sesion → competido | retirado
+// `status` keeps its original meaning (payment): pendiente → pagado | exento.
+// Discounts come exclusively from campaign entry codes (free % per campaign) —
+// the old fixed 0/25/50/75/100 tramos are gone.
 
 export const ARENA_FEE_COP = 80000;
 
-/** La exención se concede en tramos fijos — es política comercial, no un monto libre. */
-export const DISCOUNT_STEPS = [0, 25, 50, 75, 100] as const;
-export type DiscountPct = (typeof DISCOUNT_STEPS)[number];
-
-export function isDiscountPct(v: number): v is DiscountPct {
-  return (DISCOUNT_STEPS as readonly number[]).includes(v);
-}
-
-/** COP a pagar tras aplicar el tramo de exención. */
-export function dueFor(pct: DiscountPct, amountCop: number = ARENA_FEE_COP): number {
+/** COP a pagar tras aplicar el descuento del código (0–100%). */
+export function dueFor(pct: number, amountCop: number = ARENA_FEE_COP): number {
   return amountCop - Math.round((amountCop * pct) / 100);
 }
 
 export type InscriptionStatus = "pendiente" | "pagado" | "exento";
+
+export type InscriptionPhase = "postulacion" | "sondeo" | "fila" | "sesion" | "competido" | "retirado";
+
+export const PHASE_LABEL: Record<InscriptionPhase, string> = {
+  postulacion: "Postulado",
+  sondeo: "Sondeo preliminar",
+  fila: "En fila",
+  sesion: "Sesión asignada",
+  competido: "Compitió",
+  retirado: "Retirado",
+};
+
+export type SondeoResult = "aprobado" | "rechazado";
 
 export type ArenaInscription = {
   id: string;
   lot_id: string;
   producer_id: string;
   amount_cop: number;
-  discount_pct: DiscountPct;
+  discount_pct: number;
   discount_cop: number;
   amount_due_cop: number;
   status: InscriptionStatus;
   payment_ref: string | null;
   notes: string | null;
   confirmed_at: string | null;
+  // Paid-track pipeline (2026-07-17)
+  phase: InscriptionPhase;
+  postulated_at: string;
+  postulated_by: string | null; // null = the producer postulated it themselves
+  entry_code: string | null; // denormalized active code (KRA-/KRX-), visible to the producer via select-own RLS
+  entry_code_id: string | null;
+  sondeo_batch_id: string | null;
+  sondeo_sample_ready_at: string | null;
+  sondeo_result: SondeoResult | null;
+  sondeo_result_notes: string | null;
+  sondeo_score: number | null;
+  mejoras_doc: string | null;
+  mejoras_generated_at: string | null;
+  cashback_cop: number | null;
+  cashback_status: "pendiente" | "pagado" | null;
+  cashback_paid_at: string | null;
+  cashback_ref: string | null;
 };
 
 export function isSettled(status: InscriptionStatus | null | undefined): boolean {
@@ -58,18 +82,4 @@ export async function lotInscriptionSettled(
 ): Promise<boolean> {
   const { data } = await service.from("arena_inscriptions").select("status").eq("lot_id", lotId).maybeSingle();
   return isSettled(data?.status as InscriptionStatus | undefined);
-}
-
-/** True when the producer has at least one settled inscription (passport gate). */
-export async function producerHasSettledInscription(
-  service: SupabaseClient,
-  producerId: string
-): Promise<boolean> {
-  const { data } = await service
-    .from("arena_inscriptions")
-    .select("id")
-    .eq("producer_id", producerId)
-    .in("status", ["pagado", "exento"])
-    .limit(1);
-  return Boolean(data?.length);
 }

@@ -46,6 +46,13 @@ export default async function BcpArenaPage() {
               <label htmlFor="session_date">Fecha</label>
               <input id="session_date" name="session_date" type="date" required />
             </div>
+            <div className={styles.field}>
+              <label htmlFor="capacity">Cupos (lotes por sesión)</label>
+              <select id="capacity" name="capacity" defaultValue="7">
+                <option value="7">7 cafés</option>
+                <option value="5">5 cafés</option>
+              </select>
+            </div>
             <button className="btn btn-solid" type="submit">
               Crear sesión
             </button>

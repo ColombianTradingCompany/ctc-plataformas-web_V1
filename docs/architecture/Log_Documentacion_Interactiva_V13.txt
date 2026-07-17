@@ -16,4 +16,66 @@ closed and left as historical record of what went into producing it).
      Confirmar recibido pasa el lote a fila_arena.
   3. /bcp/arena/[sesión]: la agenda colapsable T+h:mm (~3.5 h) se ve antes de iniciar.
 - Si algo no se comporta como se describe, corregirlo ANTES de construir encima.
+- NOTA (2026-07-17): la reestructuración de la Arena de abajo SUPERSEDE estos cambios de V12.
+  El flujo "Confirmar recibido → fila_arena" ya no existe tal cual; la muestra ahora se
+  recibe dentro de Nominados (postulación → pago → muestra → sondeo). Aun así conviene que el
+  owner confirme en vivo el nuevo flujo con los lotes Pacamara y Catia (dejados en
+  ficha_completa a propósito).
 (sin commit: nota de sesión, arrastrada del log V12)
+
+## [2026-07-17] REESTRUCTURACIÓN MAYOR del pipeline de Arena — el modelo "Nominados"
+Contexto: el walkthrough de confirmación de V12 destapó una falla estructural (el productor
+podía enviar la muestra antes de que CTC evaluara la documentación/EUDR). El owner redefinió
+el pipeline: la EVALUACIÓN documental (EVA → Apto/No Apto) es GRATIS y va primero; todo lo que
+sigue es el tramo PAGADO de la Arena. Decisiones del owner registradas (AskUserQuestion):
+sondeo fallido ⇒ lote sale + cashback 80% + doc IA "Recomendaciones de Mejora"; membresía del
+Club ⇒ al COMPETIR un lote en una sesión (cualquier resultado); contratos ⇒ Red/Blue/Gold;
+Black ⇒ negociación aparte; descuentos ⇒ solo por códigos de campaña (% libre por campaña).
+
+- MÁQUINA DE ESTADOS: el enum lot_stage ganó 'apto' y 'no_apto' (insertados ANTES de videos_ok
+  para preservar el orden). STAGE_DB pasa a 9 entradas; LOT_COMMITTED_STAGE 4→6. videos_ok/
+  muestra_transito quedan como valores muertos legados. 'evaluado' pasa a legacy-only: TODOS los
+  participantes de una jornada salen 'galardonado' con grado.
+- El TRAMO PAGADO vive en arena_inscriptions con un pipeline `phase`
+  (postulacion→sondeo→fila→sesion→competido|retirado) junto al `status` de pago sin cambios.
+  Descuentos ahora 0-100 libre (se retiró el CHECK de tramos 0/25/50/75/100).
+- NUEVAS TABLAS: arena_entry_codes (KRA- automático / KRX- de campaña, con % congelado),
+  sondeo_batches (consolidación Fedecafé), black_negotiations; club_campaigns ganó discount_pct;
+  arena_sessions ganó capacity (5|7); arena_session_lots UNIQUE(session,lot).
+- EVA (BCP /bcp/lotes): columna EVA con markLotApto/markLotNoApto/revertNoApto (EvaVerdictButtons),
+  tira de "Aptos" y riel de "No aptos".
+- NOMINADOS (BCP nuevo /bcp/nominados): 4 columnas kanban — Nuevos Lotes Aptos / Lotes Postulados
+  (confirmar pago SIN descuento manual [lee el código], confirmar muestra) / Sondeo Preliminar
+  (envíos consolidados, resultado con adjunto vía signed upload URL, aprobado⇒fila / rechazado⇒
+  retirado+cashback 80%+mejoras IA best-effort) / En Fila (assignLotToSession, sesión 5|7 cupos).
+- PRODUCTOR: los módulos "Envío de muestras" + "Mis inscripciones" se FUSIONARON en un único
+  "Kaffetal Regal Arena" — tracker por lote (postular con código de campaña + revelación de
+  descuento en vivo, pago Nequi, muestra, sondeo, resultado+cashback+mejoras). El módulo "Mis
+  contratos" ya no pide canjear un código: la membresía se activa al competir.
+- JORNADA v2 (jornada.ts run_state version 2): el comité asigna UN grado por lote (se retiró el
+  voto por juez + majorityGrade). Descartes graduados por ronda (R1 Black/Red, R2 Red/Blue);
+  finalistas ordenados 1º/2º/3º + grado (regla: si R2 dio un Blue, ningún finalista puede ser
+  Red). Nuevo paso reveal_origin abre la Etapa 4. startJornada exige roster == capacity.
+  finalizeJornada: lot_evaluations por taza + un arena_scores de comité por lote; TODOS →
+  galardonado con grado; Red/Blue/Gold → contrato, Black → black_negotiations, Tyrian → subasta;
+  club_member_since AUTOMÁTICO a cada productor participante. Se ELIMINÓ el flujo manual
+  (recordArenaScore/closeArenaSession/"Disponibles").
+- CLUB (/bcp/club): sin emisión de Pasaportes — ledger de Miembros + campañas de descuento que
+  emiten códigos de entrada KRX-. Se retiraron emitPassportForProducer/requestClubPassport/
+  redeemClubCode/settleArenaInscription/InscripcionesBlock; lib/club/actions.ts quedó vacío.
+- GUARDA (M3): el productor solo puede fijar sample_shipped_at en stage='apto' con inscripción
+  existente. Verificado en vivo (no postulado BLOQUEADO, postulado PERMITIDO). Delete RLS bloquea
+  con inscripción existente.
+- Verificación: lado productor en vivo (postularLote acuñó código KRA real, 5 fases renderizan);
+  BCP por tsc/eslint+SQL (2FA); jornada v2 por scripts/qa-jornada-check.mjs (11/11 contra la
+  fuente real). Migración: 4 lotes pre-gate borrados por decisión del owner; Pacamara+Catia
+  dejados prístinos para el walkthrough en vivo del nuevo flujo.
+- Para el wrap: es un cambio grande de escenarios/DICT/nodos — nuevo nodo o rework de n-bcp
+  (columna Nominados, EVA), DICT nuevos: "eva" (veredicto Apto/No Apto), "nominados" (el tramo
+  pagado), "sondeo" (Fedecafé + cashback + mejoras IA), "entrycodes" (KRA/KRX), "blacknego";
+  reescribir "inscripcion"/"club"/"jornada"/"stagelifecycle"; escenarios nuevos "Lote Apto →
+  postulación → pago → sondeo → sesión", "Jornada v2 (grados por ronda)", "Negociación Black",
+  "Membresía automática al competir". Postgres sube a ~40 tablas. Muchos archivos nuevos en el
+  mapa (nominados/, nominadosActions.ts, lib/arena/{entryCodes,producerActions,mejoras}.ts,
+  EvaVerdictButtons, BlackNegotiationCard, qa-jornada-check.mjs).
+(commit: pending)

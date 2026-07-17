@@ -1,10 +1,8 @@
 Log_Documentacion_Interactiva_V12
-Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
-into a real HTML file; this log is where every change lives, in plain text,
-until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V13.0(<sha>).html.
-Covers: everything since Documentacion_Interactiva_V12.0(fdac560).html, which is
-now the current real HTML snapshot (Log_Documentacion_Interactiva_V11.txt is
-closed and left as historical record of what went into producing it).
+Status: CLOSED -- wrapped 2026-07-17 into Documentacion_Interactiva_V13.0(48675bb).html.
+Kept as the historical record of what went into producing V13.0. The pending
+log is now Log_Documentacion_Interactiva_V13.txt.
+Covers: everything since Documentacion_Interactiva_V12.0(fdac560).html.
 
 ## [2026-07-16] ⚠ PENDIENTE DE CONFIRMACIÓN DEL OWNER — lo que entró en V12.0
 - El owner cerró la sesión pidiendo dejar nota de que quiere CONFIRMAR EN VIVO la última
@@ -117,4 +115,15 @@ closed and left as historical record of what went into producing it).
 - Nota ops: dos veces el dev server sirvió un build a medias tras la ráfaga de edits
   (Turbopack incremental); un reinicio limpio (borrar .next) lo resolvió — el código
   y tsc/eslint siempre estuvieron limpios.
-(commit: pending)
+(commit: b6baf72)
+
+## [2026-07-17] Redes sociales en todos los footers + YouTube real
+- Componente compartido SocialLinks (src/components/SocialLinks.tsx): Instagram
+  instagram.com/ctcexport + YouTube https://www.youtube.com/@ctcx.oficial (el canal
+  REAL que entregó el owner). Montado en los footers de Kaffetal Regal y los 3 sitios
+  Cherry Picked; el footer de CTC Home conserva su markup propio pero su URL de
+  YouTube se corrigió (el @ctcexport anterior era improvisado).
+- Bonus: el enlace "Conocerla ↗" del footer de KR hacia Cherry Picked era todavía un
+  toast demo — ahora enlaza el sitio real (subdominio en prod / ruta en dev).
+- Para el wrap: detalle menor de frontend; no requiere nodos ni escenarios nuevos.
+(commit: 48675bb)

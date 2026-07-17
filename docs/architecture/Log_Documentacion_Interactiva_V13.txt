@@ -1,0 +1,19 @@
+Log_Documentacion_Interactiva_V13
+Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
+into a real HTML file; this log is where every change lives, in plain text,
+until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V14.0(<sha>).html.
+Covers: everything since Documentacion_Interactiva_V13.0(48675bb).html, which is
+now the current real HTML snapshot (Log_Documentacion_Interactiva_V12.txt is
+closed and left as historical record of what went into producing it).
+
+## [2026-07-17] ⚠ NOTA ARRASTRADA — la confirmación del owner de los cambios de V12 sigue pendiente
+- Los cambios de intake del commit fdac560 (orden EUDR → pago → muestra, fix del crash
+  de "Confirmar recibido", agenda T+ de la Jornada) TODAVÍA no fueron confirmados en
+  vivo por el owner. Qué probar, en orden:
+  1. /bcp/lotes → lote "Pacamara Doble Fermentación 60h" → "Confirmar recibido" NO
+     revienta la página: chips (EUDR: Pendiente · Inscripción pendiente) + rechazo inline.
+  2. Resolver su EUDR → /bcp/club: recién ahí aparecen los controles de pago → saldar →
+     Confirmar recibido pasa el lote a fila_arena.
+  3. /bcp/arena/[sesión]: la agenda colapsable T+h:mm (~3.5 h) se ve antes de iniciar.
+- Si algo no se comporta como se describe, corregirlo ANTES de construir encima.
+(sin commit: nota de sesión, arrastrada del log V12)

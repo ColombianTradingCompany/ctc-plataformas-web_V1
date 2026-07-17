@@ -1,0 +1,10 @@
+/* Inherits the surrounding footer's text color via currentColor, so the one
+   component brand-matches every site it lands on. */
+.social{display:inline-flex;gap:10px;align-items:center}
+.social a{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border:1px solid currentColor;border-radius:10px;
+  color:inherit;opacity:.7;transition:opacity .15s;
+}
+.social a:hover{opacity:1}
+.social svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6}

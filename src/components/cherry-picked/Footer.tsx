@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SocialLinks } from "@/components/SocialLinks";
 import { FAMILY_LINKS, useLang, type Lang } from "./i18n";
 import styles from "./Footer.module.css";
 
@@ -47,6 +48,7 @@ export function Footer() {
           <a href={FAMILY_LINKS.x}>X</a>
         </div>
         <div className="mono">{t.mono}</div>
+        <SocialLinks />
       </div>
       {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
           hero de ctcexport.com, centrado como sello de cierre de la página. */}

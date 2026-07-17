@@ -1,11 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useToast } from "@/components/Toast";
+import { SocialLinks } from "@/components/SocialLinks";
 import styles from "./Footer.module.css";
 
+// Cherry Picked is live: subdomain in prod, path in dev (same compile-time
+// NODE_ENV pattern as QuickNav's casa-matriz link).
+const CHERRY_PICKED_HREF =
+  process.env.NODE_ENV === "development" ? "/cherry-picked" : "https://cherry-picked.ctcexport.com";
+
 export function Footer() {
-  const { showToast } = useToast();
   return (
     <footer className={styles.footer}>
       <div className={`wrap ${styles.foot}`}>
@@ -15,19 +19,13 @@ export function Footer() {
             <strong style={{ color: "var(--ink)" }}>Kaffetal Regal</strong> es una iniciativa de Colombian Trading Company.
             <br />
             El destino de sus lotes: <strong>Cherry Picked</strong>, nuestra vitrina de microlotes en Europa.{" "}
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                showToast("Cherry Picked (demo)");
-              }}
-              style={{ fontWeight: 600, color: "var(--t-tyrian)" }}
-            >
+            <a href={CHERRY_PICKED_HREF} style={{ fontWeight: 600, color: "var(--t-tyrian)" }}>
               Conocerla ↗
             </a>
           </span>
         </div>
         <div className="mono">Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander · info@ctcexport.com</div>
+        <SocialLinks />
         {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
             hero de ctcexport.com, como sello de cierre de la familia. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}

@@ -41,7 +41,7 @@ export function Footer() {
                 <circle cx="17.2" cy="6.8" r=".8" fill="currentColor" stroke="none" />
               </svg>
             </a>
-            <a href="https://youtube.com/@ctcexport" target="_blank" rel="noopener" aria-label="YouTube de CTC">
+            <a href="https://www.youtube.com/@ctcx.oficial" target="_blank" rel="noopener" aria-label="YouTube de CTC">
               <svg viewBox="0 0 24 24">
                 <rect x="2.5" y="5.5" width="19" height="13" rx="3.5" />
                 <path d="M10 9.3v5.4l4.8-2.7z" fill="currentColor" stroke="none" />

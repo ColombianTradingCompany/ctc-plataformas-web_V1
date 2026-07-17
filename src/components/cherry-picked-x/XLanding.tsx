@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
@@ -187,6 +188,7 @@ function Landing() {
             {t.familyLabel} <a href={FAMILY_LINKS.green}>Green</a> · <a href={FAMILY_LINKS.roast}>Roast</a> ·{" "}
             <a href={FAMILY_LINKS.x}>X</a> · info@ctcexport.com
           </span>
+          <SocialLinks />
         </div>
       </footer>
 

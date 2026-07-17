@@ -19,7 +19,25 @@ export type QuickNavSection = { id: string; n: string; label: string; sub: strin
 // cause a hydration mismatch.
 const HOME_HREF = process.env.NODE_ENV === "development" ? "/" : "https://ctcexport.com";
 
-export function QuickNav({ sections, side = "right" }: { sections: QuickNavSection[]; side?: "right" | "left" }) {
+// UI chrome strings, overridable per language by the mounting site (defaults
+// stay Spanish so Kaffetal Regal renders unchanged).
+export type QuickNavLabels = { homeSub: string; fabLabel: string; panelAria: string; fabAria: string };
+const DEFAULT_LABELS: QuickNavLabels = {
+  homeSub: "Volver a la casa matriz · Colombian Trading Company",
+  fabLabel: "Navegar",
+  panelAria: "Índice de la página",
+  fabAria: "Navegación rápida",
+};
+
+export function QuickNav({
+  sections,
+  side = "right",
+  labels = DEFAULT_LABELS,
+}: {
+  sections: QuickNavSection[];
+  side?: "right" | "left";
+  labels?: QuickNavLabels;
+}) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(sections[0]?.id ?? "");
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -62,12 +80,12 @@ export function QuickNav({ sections, side = "right" }: { sections: QuickNavSecti
   return (
     <div className={`${styles.wrap} ${side === "left" ? styles.left : ""}`} ref={wrapRef}>
       {open && (
-        <nav className={styles.panel} aria-label="Índice de la página">
+        <nav className={styles.panel} aria-label={labels.panelAria}>
           <a href={HOME_HREF} className={styles.home}>
             <span className={styles.n}>CTC</span>
             <span>
               ctcexport.com
-              <small>Volver a la casa matriz · Colombian Trading Company</small>
+              <small>{labels.homeSub}</small>
             </span>
           </a>
           <div className={styles.divider} aria-hidden />
@@ -93,7 +111,7 @@ export function QuickNav({ sections, side = "right" }: { sections: QuickNavSecti
         className={styles.fab}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label="Navegación rápida"
+        aria-label={labels.fabAria}
       >
         <span className={styles.fabIcon} aria-hidden>
           {open ? (
@@ -109,7 +127,7 @@ export function QuickNav({ sections, side = "right" }: { sections: QuickNavSecti
             </svg>
           )}
         </span>
-        <span className={styles.fabLabel}>Navegar</span>
+        <span className={styles.fabLabel}>{labels.fabLabel}</span>
       </button>
     </div>
   );

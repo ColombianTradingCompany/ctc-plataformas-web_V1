@@ -4,9 +4,95 @@ import { useState } from "react";
 import Image from "next/image";
 import { Modal } from "@/components/Modal";
 import { createClient } from "@/lib/supabase/client";
+import { useLang, type Lang } from "./i18n";
 import styles from "./LoginModal.module.css";
 
+const EN = {
+  aria: "Sign in to Cherry Picked",
+  welcome: "Welcome to Cherry Picked",
+  sub: "Your orders, points, samples and reserved fractions, in one place.",
+  signin: "Sign in",
+  signup: "Create account",
+  name: "Name",
+  namePh: "Your name",
+  email: "Email",
+  emailPh: "roast@yourroastery.eu",
+  password: "Password",
+  errEmpty: "Enter your email and password to continue.",
+  errExists: "That email already has an account. Use “Sign in” instead of creating a new one.",
+  errCreate: "The account couldn't be created. Try again.",
+  errCreds: "Invalid credentials.",
+  notice: "Account created. Check your email to confirm it, then sign in with your password.",
+  loading: "One moment…",
+  submitSignup: "Create my account",
+  submitSignin: "Sign in",
+  or: "or",
+  google: "Continue with Google",
+  noAccount: "Don't have an account yet? ",
+  noAccountCta: "Create one for free",
+  hasAccount: "Already have an account? ",
+  hasAccountCta: "Sign in here",
+};
+
+const T: Record<Lang, typeof EN> = {
+  en: EN,
+  es: {
+    aria: "Iniciar sesión en Cherry Picked",
+    welcome: "Bienvenido a Cherry Picked",
+    sub: "Tus pedidos, puntos, muestras y fracciones reservadas, en un solo lugar.",
+    signin: "Entrar",
+    signup: "Crear cuenta",
+    name: "Nombre",
+    namePh: "Tu nombre",
+    email: "Correo electrónico",
+    emailPh: "tueste@tutostaduria.eu",
+    password: "Contraseña",
+    errEmpty: "Escribe tu correo y contraseña para continuar.",
+    errExists: "Ese correo ya tiene una cuenta. Usa «Entrar» en vez de crear una nueva.",
+    errCreate: "No se pudo crear la cuenta. Intenta de nuevo.",
+    errCreds: "Credenciales inválidas.",
+    notice: "Cuenta creada. Revisa tu correo para confirmarla y luego entra con tu contraseña.",
+    loading: "Un momento…",
+    submitSignup: "Crear mi cuenta",
+    submitSignin: "Entrar",
+    or: "o",
+    google: "Continuar con Google",
+    noAccount: "¿Aún no tienes cuenta? ",
+    noAccountCta: "Crea una gratis",
+    hasAccount: "¿Ya tienes cuenta? ",
+    hasAccountCta: "Entra aquí",
+  },
+  de: {
+    aria: "Bei Cherry Picked anmelden",
+    welcome: "Willkommen bei Cherry Picked",
+    sub: "Deine Bestellungen, Punkte, Muster und reservierten Fraktionen an einem Ort.",
+    signin: "Anmelden",
+    signup: "Konto erstellen",
+    name: "Name",
+    namePh: "Dein Name",
+    email: "E-Mail",
+    emailPh: "roestung@deine-roesterei.de",
+    password: "Passwort",
+    errEmpty: "Gib E-Mail und Passwort ein, um fortzufahren.",
+    errExists: "Diese E-Mail hat bereits ein Konto. Nutze „Anmelden“ statt ein neues zu erstellen.",
+    errCreate: "Das Konto konnte nicht erstellt werden. Versuch es erneut.",
+    errCreds: "Ungültige Zugangsdaten.",
+    notice: "Konto erstellt. Bestätige es über den Link in deiner E-Mail und melde dich dann mit deinem Passwort an.",
+    loading: "Einen Moment…",
+    submitSignup: "Mein Konto erstellen",
+    submitSignin: "Anmelden",
+    or: "oder",
+    google: "Weiter mit Google",
+    noAccount: "Noch kein Konto? ",
+    noAccountCta: "Erstelle eins kostenlos",
+    hasAccount: "Schon ein Konto? ",
+    hasAccountCta: "Hier anmelden",
+  },
+};
+
 export function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const lang = useLang();
+  const t = T[lang];
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +113,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
 
   async function submit() {
     if (!email.trim() || !password) {
-      setError("Escribe tu correo y contraseña para continuar.");
+      setError(t.errEmpty);
       return;
     }
     setError(null);
@@ -43,15 +129,11 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       });
       setLoading(false);
       if (signUpError) {
-        setError(
-          signUpError.message.includes("already registered")
-            ? "Ese correo ya tiene una cuenta. Usa «Entrar» en vez de crear una nueva."
-            : "No se pudo crear la cuenta. Intenta de nuevo."
-        );
+        setError(signUpError.message.includes("already registered") ? t.errExists : t.errCreate);
         return;
       }
       if (!data.session) {
-        setNotice("Cuenta creada. Revisa tu correo para confirmarla y luego entra con tu contraseña.");
+        setNotice(t.notice);
       }
       return;
     }
@@ -59,7 +141,7 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (signInError) {
-      setError("Credenciales inválidas.");
+      setError(t.errCreds);
       return;
     }
     // Success: the parent's onAuthStateChange subscription picks up the new
@@ -76,39 +158,39 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
   }
 
   return (
-    <Modal open={open} onClose={onClose} ariaLabel="Iniciar sesión en Cherry Picked">
+    <Modal open={open} onClose={onClose} ariaLabel={t.aria}>
       <Image className={styles.mlogo} src="/images/shared/cherry-picked-logo.png" alt="" width={852} height={858} />
-      <h3>Bienvenido a Cherry Picked</h3>
-      <p>Tus pedidos, puntos, muestras y fracciones reservadas, en un solo lugar.</p>
+      <h3>{t.welcome}</h3>
+      <p>{t.sub}</p>
 
       <div className={styles.tabs}>
         <button type="button" className={`${styles.tab} ${mode === "signin" ? styles.tabActive : ""}`} onClick={() => switchMode("signin")}>
-          Entrar
+          {t.signin}
         </button>
         <button type="button" className={`${styles.tab} ${mode === "signup" ? styles.tabActive : ""}`} onClick={() => switchMode("signup")}>
-          Crear cuenta
+          {t.signup}
         </button>
       </div>
 
       {mode === "signup" && (
         <div className={styles.field}>
-          <label htmlFor="cp-name">Nombre</label>
-          <input id="cp-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Tu nombre" autoComplete="name" />
+          <label htmlFor="cp-name">{t.name}</label>
+          <input id="cp-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t.namePh} autoComplete="name" />
         </div>
       )}
       <div className={styles.field}>
-        <label htmlFor="cp-email">Correo electrónico</label>
+        <label htmlFor="cp-email">{t.email}</label>
         <input
           id="cp-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="tueste@tutostaduria.eu"
+          placeholder={t.emailPh}
           autoComplete="email"
         />
       </div>
       <div className={styles.field}>
-        <label htmlFor="cp-pass">Contraseña</label>
+        <label htmlFor="cp-pass">{t.password}</label>
         <input
           id="cp-pass"
           type="password"
@@ -124,10 +206,10 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
         {notice && <span className={styles.notice}>{notice}</span>}
       </div>
       <button className="btn btn-solid" style={{ width: "100%", marginTop: 8, padding: 12 }} onClick={submit} disabled={loading}>
-        {loading ? "Un momento…" : mode === "signup" ? "Crear mi cuenta" : "Entrar"}
+        {loading ? t.loading : mode === "signup" ? t.submitSignup : t.submitSignin}
       </button>
 
-      <div className={styles.divider}><span>o</span></div>
+      <div className={styles.divider}><span>{t.or}</span></div>
 
       <button type="button" className={styles.googleBtn} onClick={submitGoogle}>
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>
@@ -136,14 +218,14 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
           <path fill="#FBBC05" d="M3.96 10.71A5.4 5.4 0 0 1 3.68 9c0-.59.1-1.17.28-1.71V4.96H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.04l3.01-2.33z" />
           <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.96l3.01 2.33C4.67 5.16 6.66 3.58 9 3.58z" />
         </svg>
-        Continuar con Google
+        {t.google}
       </button>
 
       <p className={styles.alt}>
         {mode === "signin" ? (
-          <>¿Aún no tienes cuenta? <button type="button" className={styles.link} onClick={() => switchMode("signup")}>Crea una gratis</button>.</>
+          <>{t.noAccount}<button type="button" className={styles.link} onClick={() => switchMode("signup")}>{t.noAccountCta}</button>.</>
         ) : (
-          <>¿Ya tienes cuenta? <button type="button" className={styles.link} onClick={() => switchMode("signin")}>Entra aquí</button>.</>
+          <>{t.hasAccount}<button type="button" className={styles.link} onClick={() => switchMode("signin")}>{t.hasAccountCta}</button>.</>
         )}
       </p>
     </Modal>

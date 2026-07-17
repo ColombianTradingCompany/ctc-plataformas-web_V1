@@ -5,6 +5,11 @@ import type { NextRequest } from "next/server";
 const SUBDOMAIN_ROUTES: Record<string, string> = {
   "kaffetal-regal": "/kaffetal-regal",
   "cherry-picked": "/cherry-picked",
+  // The Cherry Picked family: Green lives on the original subdomain above;
+  // Roast and X are its sibling programmes (scaffolds until their ordering
+  // logic connects to the Green catalog).
+  "cherry-picked-roast": "/cherry-picked-roast",
+  "cherry-picked-x": "/cherry-picked-x",
   // Partner-node "couples" (landing + login), one subdomain per v3 node.
   // DNS/Vercel steps: docs/PARTNER_DOMAINS_SETUP.md
   "centro-calidad": "/socios/centro-calidad",
@@ -16,7 +21,12 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
 };
 
 export function proxy(request: NextRequest) {
-  const sub = request.nextUrl.hostname.split(".")[0];
+  // Read the Host header, not request.nextUrl.hostname: the dev server
+  // normalizes nextUrl to "localhost" regardless of the incoming Host
+  // (verified 2026-07-17), while the header carries the real hostname in
+  // both dev and on Vercel.
+  const host = request.headers.get("host") ?? request.nextUrl.hostname;
+  const sub = host.split(":")[0].split(".")[0];
   const base = SUBDOMAIN_ROUTES[sub];
 
   if (base && !request.nextUrl.pathname.startsWith(base)) {

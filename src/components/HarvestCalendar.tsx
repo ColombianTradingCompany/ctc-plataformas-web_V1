@@ -14,14 +14,24 @@ export type CalBlock = {
 
 export type CalLegendItem = { color: string; text: string };
 
+// Default month labels stay Spanish so Kaffetal Regal renders unchanged;
+// Cherry Picked passes its own per-language set.
 const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-export function HarvestCalendar({ blocks, legend }: { blocks: CalBlock[]; legend: CalLegendItem[] }) {
+export function HarvestCalendar({
+  blocks,
+  legend,
+  months = MONTHS,
+}: {
+  blocks: CalBlock[];
+  legend: CalLegendItem[];
+  months?: string[];
+}) {
   return (
     <div className={styles.calWrap}>
       <div className={styles.cal}>
         <div className={styles.calMonths}>
-          {MONTHS.map((m) => (
+          {months.map((m) => (
             <span key={m}>{m}</span>
           ))}
         </div>

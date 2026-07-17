@@ -1,3 +1,5 @@
+import { LOCALE, type Lang } from "./i18n";
+
 export type Grade = "Black" | "Red" | "Blue" | "Gold";
 export type Mode = "spot" | "pre";
 
@@ -11,12 +13,12 @@ export type Lot = {
   origin: string;
   variety: string;
   process: string;
-  score: string;
+  score: string; // numeric string or "—"; language-neutral
+  scoreEstimated: boolean; // true when the score is the producer's self-report
   alt: string;
-  pack: string;
   total: number; // kg existing (world/warehouse)
   sold: number; // kg already sold by others
-  unit: number; // purchase step in kg
+  unit: number; // purchase step in kg — also the pack size shown in specs
   moq: number; // minimum per customer
   price: number; // EUR/kg
   cup: string; // tasting notes
@@ -39,16 +41,16 @@ export function listingCode(listingId: string, grade: Grade) {
 
 export const ASSOC_BLACK_MOQ = 350;
 export const PACK_PRICE = 300;
-export const ARRIVAL = "según fecha de llegada del lote";
 
-export const fmt = (n: number) => n.toLocaleString("es-ES");
-export const eur = (n: number) => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const fmt = (n: number, lang: Lang) => n.toLocaleString(LOCALE[lang]);
+export const eur = (n: number, lang: Lang) =>
+  n.toLocaleString(LOCALE[lang], { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function moqOf(l: Lot, loggedIn: boolean) {
   return l.grade === "Black" && loggedIn ? ASSOC_BLACK_MOQ : l.moq;
 }
 
-export type CartItem = { id: string; name: string; kg: number; total: number; mode: Mode };
+export type CartItem = { id: string; code: string; name: string; kg: number; total: number; mode: Mode };
 
 export type CartSummary = {
   items: CartItem[];
@@ -74,7 +76,7 @@ export function cartData(
     .filter(([, q]) => q > 0)
     .map(([id, q]) => {
       const l = lots.find((x) => x.id === id)!;
-      return { id, name: l.name, kg: q, total: q * l.price, mode: l.mode };
+      return { id, code: l.code, name: l.name, kg: q, total: q * l.price, mode: l.mode };
     })
     .filter((i) => i.name !== undefined);
   const spot = items.filter((i) => i.mode === "spot").reduce((a, i) => a + i.total, 0);

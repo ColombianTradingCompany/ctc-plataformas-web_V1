@@ -2,11 +2,92 @@
 
 import Image from "next/image";
 import { InfoAccordion } from "@/components/InfoAccordion";
+import { useLang, type Lang } from "./i18n";
 import type { Grade, Lot } from "./data";
 import { LotCard } from "./LotCard";
 import styles from "./GradosSection.module.css";
 
 const TAB_COLOR: Record<string, string> = { Red: "var(--t-red)", Blue: "var(--t-blue)", Gold: "var(--t-gold)" };
+
+const EN = {
+  eyebrow: "Mitaca harvest · Arriving in August · Last fractions · 30% refundable pre-payment",
+  h2: "The harvest, grade by grade",
+  imgAlt: "Coffee cherries ripening on the branch, at different stages",
+  body1: "Like cherries on the branch, coffees don't all ripen the same. Our committee cups every lot of the harvest and assigns it a ",
+  bodyGrade: "Quality Grade",
+  body2: " for the specialty that rotates, ",
+  body3: " for single origins with character, ",
+  body4: " for the editions people remember. Reserve your fraction in kilos, from each lot's minimum, with a 30% pre-payment we refund if the coffee doesn't arrive or doesn't deliver. The rest you pay when the container reaches port.",
+  eudrTitle: "EUDR compliance included with every lot",
+  eudrSubtitle: "EU deforestation regulation · tap to expand",
+  eudrP1a: "As an operator or trader in the EU, ",
+  eudrP1b: "Regulation (EU) 2023/1115 (EUDR)",
+  eudrP1c: " requires the coffee you place on the market to be ",
+  eudrP1d: "deforestation-free",
+  eudrP1e: " (plots with no deforestation after 31 December 2020), legally produced and traceable to the plot with ",
+  eudrP1f: "geolocation",
+  eudrP1g: " — polygon included when the farm exceeds 4 hectares.",
+  eudrP2a: "With Cherry Picked, that homework arrives done.",
+  eudrP2b: " Every lot in this catalog comes from a producer registered on Kaffetal Regal, with georeferenced plots, a cryptographically sealed evaluation and a ",
+  eudrP2c: "due diligence statement (DDS) filed by CTC",
+  eudrP2d: ": the DDS reference number travels with every dispatch and stays visible on your invoice and on the lot's datasheet. Traceability to the plot, verifiable, without chasing anyone.",
+  tabsAria: "Filter by grade",
+  all: "All",
+};
+
+const T: Record<Lang, typeof EN> = {
+  en: EN,
+  es: {
+    eyebrow: "Cosecha de mitaca · Arribo en agosto · Últimas fracciones · Prepago 30% reembolsable",
+    h2: "La cosecha, grado a grado",
+    imgAlt: "Cerezas de café madurando en la rama, en distintos puntos",
+    body1: "Como las cerezas en la rama, no todos los cafés maduran igual. Nuestro comité cata cada lote de la cosecha y le asigna un ",
+    bodyGrade: "Grado de Calidad",
+    body2: " para la especialidad que rota, ",
+    body3: " para los single origin con carácter, ",
+    body4: " para las ediciones que se recuerdan. Reserva tu fracción en kilos, desde el mínimo de cada lote, con un prepago del 30% que te devolvemos si el café no llega o no cumple. El resto lo pagas cuando el contenedor toque puerto.",
+    eudrTitle: "Cumplimiento EUDR incluido en cada lote",
+    eudrSubtitle: "Reglamento UE contra la deforestación · toque para desplegar",
+    eudrP1a: "Como operador o comerciante en la UE, el ",
+    eudrP1b: "Reglamento (UE) 2023/1115 (EUDR)",
+    eudrP1c: " te exige que el café que comercializas sea ",
+    eudrP1d: "libre de deforestación",
+    eudrP1e: " (predios sin deforestación después del 31 de diciembre de 2020), producido legalmente y trazable hasta el predio con ",
+    eudrP1f: "geolocalización",
+    eudrP1g: " — polígono incluido cuando la finca supera 4 hectáreas.",
+    eudrP2a: "Con Cherry Picked, esa tarea llega hecha.",
+    eudrP2b: " Cada lote de este catálogo viene de un productor registrado en Kaffetal Regal, con sus predios georreferenciados, su evaluación sellada criptográficamente y su ",
+    eudrP2c: "declaración de debida diligencia (DDS) presentada por CTC",
+    eudrP2d: ": el número de referencia DDS acompaña cada despacho y queda visible en tu factura y en la ficha técnica del lote. Trazabilidad al predio, verificable, sin que tengas que perseguir a nadie.",
+    tabsAria: "Filtrar por grado",
+    all: "Todos",
+  },
+  de: {
+    eyebrow: "Mitaca-Ernte · Ankunft im August · Letzte Fraktionen · 30 % erstattbare Anzahlung",
+    h2: "Die Ernte, Grad für Grad",
+    imgAlt: "Kaffeekirschen am Zweig, in verschiedenen Reifestadien",
+    body1: "Wie die Kirschen am Zweig reifen nicht alle Kaffees gleich. Unser Komitee verkostet jeden Lot der Ernte und vergibt einen ",
+    bodyGrade: "Qualitätsgrad",
+    body2: " für die Spezialität, die rotiert, ",
+    body3: " für Single Origins mit Charakter, ",
+    body4: " für die Editionen, an die man sich erinnert. Reserviere deine Fraktion in Kilo, ab dem Minimum des jeweiligen Lots, mit 30 % Anzahlung, die wir erstatten, falls der Kaffee nicht ankommt oder nicht überzeugt. Den Rest zahlst du, wenn der Container den Hafen erreicht.",
+    eudrTitle: "EUDR-Konformität bei jedem Lot inklusive",
+    eudrSubtitle: "EU-Entwaldungsverordnung · zum Aufklappen tippen",
+    eudrP1a: "Als Marktteilnehmer oder Händler in der EU verlangt die ",
+    eudrP1b: "Verordnung (EU) 2023/1115 (EUDR)",
+    eudrP1c: ", dass der Kaffee, den du in Verkehr bringst, ",
+    eudrP1d: "entwaldungsfrei",
+    eudrP1e: " ist (Flächen ohne Entwaldung nach dem 31. Dezember 2020), legal erzeugt und bis zur Parzelle rückverfolgbar — mit ",
+    eudrP1f: "Geolokalisierung",
+    eudrP1g: ", inklusive Polygon, wenn die Finca 4 Hektar überschreitet.",
+    eudrP2a: "Mit Cherry Picked kommt diese Aufgabe fertig erledigt an.",
+    eudrP2b: " Jeder Lot in diesem Katalog stammt von einem bei Kaffetal Regal registrierten Produzenten, mit georeferenzierten Flächen, einer kryptografisch versiegelten Bewertung und einer ",
+    eudrP2c: "von CTC eingereichten Sorgfaltserklärung (DDS)",
+    eudrP2d: ": Die DDS-Referenznummer begleitet jede Lieferung und steht auf deiner Rechnung und im Datenblatt des Lots. Rückverfolgbarkeit bis zur Parzelle, überprüfbar, ohne jemandem hinterherlaufen zu müssen.",
+    tabsAria: "Nach Grad filtern",
+    all: "Alle",
+  },
+};
 
 export function GradosSection({
   lots,
@@ -27,6 +108,8 @@ export function GradosSection({
   onToggleOpen: (id: string, open: boolean) => void;
   onChangeQty: (id: string, delta: number) => void;
 }) {
+  const lang = useLang();
+  const t = T[lang];
   const preLots = lots.filter((l) => l.mode === "pre");
   const shown = activeGrade === "all" ? preLots : preLots.filter((l) => l.grade === activeGrade);
 
@@ -35,20 +118,21 @@ export function GradosSection({
       <div className="wrap">
         <div className="sec-head">
           <div>
-            <p className="eyebrow">Cosecha de mitaca · Arribo en agosto · Últimas fracciones · Prepago 30% reembolsable</p>
-            <h2>La cosecha, grado a grado</h2>
+            <p className="eyebrow">{t.eyebrow}</p>
+            <h2>{t.h2}</h2>
           </div>
         </div>
         <div className={styles.gradeIntro}>
-          <Image src="/images/cherry-picked/23-cerezas-rama.png" alt="Cerezas de café madurando en la rama" width={566} height={256} />
+          <Image src="/images/cherry-picked/28-cerezas-rama-real.jpg" alt={t.imgAlt} width={900} height={1195} />
           <p style={{ color: "var(--muted)", fontSize: 16.5, maxWidth: "62ch" }}>
-            Como las cerezas en la rama, no todos los cafés maduran igual. Nuestro comité cata cada lote de la
-            cosecha y le asigna un <strong style={{ color: "var(--ink)" }}>Grado de Calidad</strong>:{" "}
-            <span className="mono" style={{ fontSize: 13 }}>RED</span> para la especialidad que rota,{" "}
-            <span className="mono" style={{ fontSize: 13 }}>BLUE</span> para los single origin con carácter,{" "}
-            <span className="mono" style={{ fontSize: 13 }}>GOLD</span> para las ediciones que se recuerdan. Reserva
-            tu fracción en kilos, desde el mínimo de cada lote, con un prepago del 30% que te devolvemos si el café
-            no llega o no cumple. El resto lo pagas cuando el contenedor toque puerto.
+            {t.body1}
+            <strong style={{ color: "var(--ink)" }}>{t.bodyGrade}</strong>:{" "}
+            <span className="mono" style={{ fontSize: 13 }}>RED</span>
+            {t.body2}
+            <span className="mono" style={{ fontSize: 13 }}>BLUE</span>
+            {t.body3}
+            <span className="mono" style={{ fontSize: 13 }}>GOLD</span>
+            {t.body4}
           </p>
         </div>
 
@@ -59,27 +143,29 @@ export function GradosSection({
               <path d="M12 3v10M12 8c-1.6-.4-2.8-1.4-3.4-3M12 6c1.4-.3 2.5-1.1 3-2.5" />
             </svg>
           }
-          title="Cumplimiento EUDR incluido en cada lote"
-          subtitle="Reglamento UE contra la deforestación · toque para desplegar"
+          title={t.eudrTitle}
+          subtitle={t.eudrSubtitle}
         >
           <p>
-            Como operador o comerciante en la UE, el <b>Reglamento (UE) 2023/1115 (EUDR)</b> te exige que el café
-            que comercializas sea <b>libre de deforestación</b> (predios sin deforestación después del 31 de
-            diciembre de 2020), producido legalmente y trazable hasta el predio con <b>geolocalización</b> —
-            polígono incluido cuando la finca supera 4 hectáreas.
+            {t.eudrP1a}
+            <b>{t.eudrP1b}</b>
+            {t.eudrP1c}
+            <b>{t.eudrP1d}</b>
+            {t.eudrP1e}
+            <b>{t.eudrP1f}</b>
+            {t.eudrP1g}
           </p>
           <p>
-            <b>Con Cherry Picked, esa tarea llega hecha.</b> Cada lote de este catálogo viene de un productor
-            registrado en Kaffetal Regal, con sus predios georreferenciados, su evaluación sellada
-            criptográficamente y su <b>declaración de debida diligencia (DDS) presentada por CTC</b>: el número de
-            referencia DDS acompaña cada despacho y queda visible en tu factura y en la ficha técnica del lote.
-            Trazabilidad al predio, verificable, sin que tengas que perseguir a nadie.
+            <b>{t.eudrP2a}</b>
+            {t.eudrP2b}
+            <b>{t.eudrP2c}</b>
+            {t.eudrP2d}
           </p>
         </InfoAccordion>
 
-        <div className={styles.tabs} role="tablist" aria-label="Filtrar por grado">
+        <div className={styles.tabs} role="tablist" aria-label={t.tabsAria}>
           <button className={`${styles.tab} ${activeGrade === "all" ? styles.active : ""}`} role="tab" onClick={() => onSetGrade("all")}>
-            Todos <span className={styles.n}>{preLots.length}</span>
+            {t.all} <span className={styles.n}>{preLots.length}</span>
           </button>
           {(["Red", "Blue", "Gold"] as Grade[]).map((g) => (
             <button

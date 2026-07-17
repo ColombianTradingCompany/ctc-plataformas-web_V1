@@ -17,3 +17,50 @@ closed and left as historical record of what went into producing it).
   3. /bcp/arena/[sesión]: la nueva agenda colapsable T+h:mm (~3.5 h) se ve antes de iniciar jornada.
 - Si algo de esto no se comporta como se describe, corregirlo ANTES de construir encima.
 (sin commit: nota de sesión)
+
+## [2026-07-17] Cherry Picked se vuelve familia de 3: Green / Roast / X (trilingüe EN/ES/DE)
+- La tienda existente (/cherry-picked, subdominio cherry-picked.ctcexport.com) ahora es
+  "Cherry Picked Green": sello Green en el hero, switcher de familia en el header
+  (Green/Roast/X) y footer con los 3 enlaces. Funcionalidad de compra sin cambios.
+- DOS SUPERFICIES NUEVAS (scaffolds de programa, SIN lógica de pedidos — apuntan al
+  catálogo Green hasta que se conecten):
+  · /cherry-picked-roast (cherry-picked-roast.ctcexport.com): toda la oferta Green
+    tostada por el Master Roaster. Precio = precio Green vivo + 9,50 €/kg fee de
+    fulfillment (constante única FEE_EUR_KG en RoastLanding.tsx); MOQs en kg TOSTADO:
+    Black 200 / Red 150 / Blue 100 / Gold 50 / Tyrian 20 (merma ~20%, batches
+    100 kg verde → ~80 kg tostado); programa de etiquetas My Brand (etiqueta frontal
+    completa + sticker Master Roaster + sticker Finca) / Co-Brand (espacio predefinido)
+    / Papagayo Beans (marca CTC, default); etiqueta trasera estándar; el Master
+    Roaster consume verde vía su PROPIA cuenta Green (transparencia).
+  · /cherry-picked-x (cherry-picked-x.ctcexport.com): oferta completa SIN Black,
+    cajas por temporada desde 3 kg (Red/Blue/Gold/Tyrian a escala descubrimiento).
+- TRILINGÜE: familia entera en inglés por defecto + toggle ES/DE persistido en
+  localStorage["cp-lang"] compartido entre los 3 sitios. Infra en
+  src/components/cherry-picked/i18n.tsx (LangProvider/useLang/LangSwitch +
+  FAMILY_LINKS dev-paths vs prod-subdominios); diccionarios Record<Lang,...> por
+  componente; fmt/eur de data.ts ahora exigen lang (formato numérico por locale);
+  HarvestCalendar ganó prop opcional `months` y QuickNav prop `labels` (defaults en
+  español → Kaffetal Regal intacto).
+- Fotos reales reemplazan las stock/warped que señaló el owner: Black section →
+  27-bodega-costales.jpg (Gabriel padre entre costales), Grados →
+  28-cerezas-rama-real.jpg (rama real con maduración mixta), Historia → díptico
+  29-fundador-vereda.jpg + 30-tostaduria-europa.jpg (papá en la montaña / hijo en
+  tostaduría europea = la cita "cada vereda / cada tostaduría"). El branch-cutout del
+  hero fue reemplazado por el sello Green. Sellos de familia en
+  public/images/shared/cherry-picked-{green,roast,x}-seal.webp.
+- Las referencias de lote de cara al comprador muestran ahora el código corto
+  (BK-/RD-/BL-/GD-XXXX) en vez del UUID crudo (LotCard, carrito, perfil) — CartItem
+  ganó campo `code`.
+- FIX de infraestructura en src/proxy.ts: request.nextUrl.hostname SIEMPRE es
+  "localhost" en el dev server (no refleja el header Host), así que las pruebas
+  curl con Host llevaban tiempo reescribiendo NADA en local (prod en Vercel sí
+  funcionaba). El proxy ahora lee request.headers.get("host") — correcto en dev y
+  prod. Gotcha #9 nuevo en HANDOFF.md.
+- Para el wrap: toca el nodo del proxy/subdominios (n-frontend/delivery), el nodo de
+  Cherry Picked (ahora "familia CP": 3 subdominios, 1 tienda real + 2 scaffolds),
+  DICT nuevo posible: "familia-cp" (Green/Roast/X, fee 9,50 €/kg, MOQs tostado,
+  etiquetas, Master Roaster con cuenta Green) e "i18n-cp" (trilingüe, cp-lang);
+  posible escenario nuevo "Roaster cambia de idioma / navega la familia". El mapa de
+  archivos ganará src/components/cherry-picked-roast/, cherry-picked-x/,
+  cherry-picked/i18n.tsx, FamilyHeader.tsx y app/cherry-picked-{roast,x}/.
+(commit: pending)

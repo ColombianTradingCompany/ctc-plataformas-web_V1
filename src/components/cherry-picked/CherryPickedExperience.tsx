@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
-import { QuickNav, type QuickNavSection } from "@/components/QuickNav";
+import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -20,21 +20,108 @@ import { Cart, type ShippingZone } from "./Cart";
 import { LoginModal } from "./LoginModal";
 import { ProfileView, type Billing, type OrderSummary } from "./ProfileView";
 import { GRADE_DB, cartData, fmt, listingCode, moqOf, type Grade, type Lot } from "./data";
+import { LangProvider, useLang, type Lang } from "./i18n";
 
 type View = "store" | "profile";
 const BID_STEP = 0.5;
 
-const QUICK_NAV_SECTIONS: QuickNavSection[] = [
-  { id: "black", n: "01", label: "Black Selection", sub: "El café que sostiene tu barra" },
-  { id: "grados", n: "02", label: "La cosecha, grado a grado", sub: "Red · Blue · Gold" },
-  { id: "envios", n: "03", label: "Envíos", sub: "Un precio de envío, sin sorpresas" },
-  { id: "tyrian", n: "04", label: "Tyrian", sub: "La subasta insignia" },
-  { id: "muestras", n: "05", label: "Muestras", sub: "Sample packs de la cosecha" },
-  { id: "narrativa", n: "06", label: "Narrativa", sub: "Del predio a tu taza" },
-  { id: "cosecha", n: "07", label: "El año cafetero", sub: "Visto desde tu tostaduría" },
-  { id: "manifiesto", n: "08", label: "Manifiesto", sub: "Cómo trabajamos" },
-  { id: "historia", n: "09", label: "Historia", sub: "Quiénes somos" },
-];
+const EN = {
+  quickNav: [
+    { id: "black", n: "01", label: "Black Selection", sub: "The coffee your bar runs on" },
+    { id: "grados", n: "02", label: "The harvest, grade by grade", sub: "Red · Blue · Gold" },
+    { id: "envios", n: "03", label: "Shipping", sub: "One shipping price, no surprises" },
+    { id: "tyrian", n: "04", label: "Tyrian", sub: "The flagship auction" },
+    { id: "muestras", n: "05", label: "Samples", sub: "Harvest sample packs" },
+    { id: "narrativa", n: "06", label: "Narrative", sub: "From the plot to your cup" },
+    { id: "cosecha", n: "07", label: "The coffee year", sub: "Seen from your roastery" },
+    { id: "manifiesto", n: "08", label: "Manifesto", sub: "How we work" },
+    { id: "historia", n: "09", label: "Our story", sub: "Who we are" },
+  ] as QuickNavSection[],
+  quickNavLabels: {
+    homeSub: "Back to the mother house · Colombian Trading Company",
+    fabLabel: "Navigate",
+    panelAria: "Page index",
+    fabAria: "Quick navigation",
+  } as QuickNavLabels,
+  roaster: "roaster",
+  loginToReserve: "Sign in to reserve mitaca fractions",
+  noQty: "That quantity is no longer available in this lot",
+  minAdded: (kg: string, code: string) => `Minimum fraction of ${kg} kg of ${code} added to your order`,
+  packAdded: "Sample pack added to your order",
+  loginToCheckout: "Sign in or create your account to confirm the order",
+  orderFailed: "The order couldn't be confirmed.",
+  orderOk: "Order confirmed. You'll receive the pro-forma order by email.",
+  billingFailed: "The details couldn't be saved.",
+  billingOk: "Billing details updated ✓",
+  loginToBid: "Sign in to bid (Pintón level or higher)",
+  bidLeading: (half: string) => `Your bid for Half ${half} is leading (demo)`,
+};
+
+const T: Record<Lang, typeof EN> = {
+  en: EN,
+  es: {
+    quickNav: [
+      { id: "black", n: "01", label: "Black Selection", sub: "El café que sostiene tu barra" },
+      { id: "grados", n: "02", label: "La cosecha, grado a grado", sub: "Red · Blue · Gold" },
+      { id: "envios", n: "03", label: "Envíos", sub: "Un precio de envío, sin sorpresas" },
+      { id: "tyrian", n: "04", label: "Tyrian", sub: "La subasta insignia" },
+      { id: "muestras", n: "05", label: "Muestras", sub: "Sample packs de la cosecha" },
+      { id: "narrativa", n: "06", label: "Narrativa", sub: "Del predio a tu taza" },
+      { id: "cosecha", n: "07", label: "El año cafetero", sub: "Visto desde tu tostaduría" },
+      { id: "manifiesto", n: "08", label: "Manifiesto", sub: "Cómo trabajamos" },
+      { id: "historia", n: "09", label: "Historia", sub: "Quiénes somos" },
+    ],
+    quickNavLabels: {
+      homeSub: "Volver a la casa matriz · Colombian Trading Company",
+      fabLabel: "Navegar",
+      panelAria: "Índice de la página",
+      fabAria: "Navegación rápida",
+    },
+    roaster: "tostador",
+    loginToReserve: "Inicia sesión para reservar fracciones de la mitaca",
+    noQty: "No queda esa cantidad disponible en el lote",
+    minAdded: (kg: string, code: string) => `Fracción mínima de ${kg} kg de ${code} añadida al pedido`,
+    packAdded: "Pack de muestras añadido al pedido",
+    loginToCheckout: "Inicia sesión o crea tu cuenta para confirmar el pedido",
+    orderFailed: "No se pudo confirmar el pedido.",
+    orderOk: "Pedido confirmado. Recibirás la orden proforma por correo.",
+    billingFailed: "No se pudo guardar la información.",
+    billingOk: "Datos de facturación actualizados ✓",
+    loginToBid: "Inicia sesión para pujar (nivel Pintón o superior)",
+    bidLeading: (half: string) => `Tu puja por la Mitad ${half} va ganando (demo)`,
+  },
+  de: {
+    quickNav: [
+      { id: "black", n: "01", label: "Black Selection", sub: "Der Kaffee, der deine Bar trägt" },
+      { id: "grados", n: "02", label: "Die Ernte, Grad für Grad", sub: "Red · Blue · Gold" },
+      { id: "envios", n: "03", label: "Versand", sub: "Ein Versandpreis, keine Überraschungen" },
+      { id: "tyrian", n: "04", label: "Tyrian", sub: "Die Flaggschiff-Auktion" },
+      { id: "muestras", n: "05", label: "Muster", sub: "Musterpakete der Ernte" },
+      { id: "narrativa", n: "06", label: "Erzählung", sub: "Von der Parzelle in deine Tasse" },
+      { id: "cosecha", n: "07", label: "Das Kaffeejahr", sub: "Aus deiner Rösterei gesehen" },
+      { id: "manifiesto", n: "08", label: "Manifest", sub: "Wie wir arbeiten" },
+      { id: "historia", n: "09", label: "Unsere Geschichte", sub: "Wer wir sind" },
+    ],
+    quickNavLabels: {
+      homeSub: "Zurück zum Stammhaus · Colombian Trading Company",
+      fabLabel: "Navigieren",
+      panelAria: "Seitenindex",
+      fabAria: "Schnellnavigation",
+    },
+    roaster: "Rösterei",
+    loginToReserve: "Melde dich an, um Mitaca-Fraktionen zu reservieren",
+    noQty: "Diese Menge ist in diesem Lot nicht mehr verfügbar",
+    minAdded: (kg: string, code: string) => `Mindestanteil von ${kg} kg von ${code} zur Bestellung hinzugefügt`,
+    packAdded: "Musterpaket zur Bestellung hinzugefügt",
+    loginToCheckout: "Melde dich an oder erstelle ein Konto, um die Bestellung zu bestätigen",
+    orderFailed: "Die Bestellung konnte nicht bestätigt werden.",
+    orderOk: "Bestellung bestätigt. Du erhältst die Proforma-Rechnung per E-Mail.",
+    billingFailed: "Die Daten konnten nicht gespeichert werden.",
+    billingOk: "Rechnungsdaten aktualisiert ✓",
+    loginToBid: "Melde dich an, um zu bieten (Level Pintón oder höher)",
+    bidLeading: (half: string) => `Dein Gebot für Hälfte ${half} führt (Demo)`,
+  },
+};
 
 type ListingRow = {
   id: string;
@@ -78,17 +165,17 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
     variety: catalog.ficha_variedad || "—",
     process: catalog.ficha_proceso || "—",
     // Prefer the real official average (accepted lot_evaluations) over the
-    // producer's own self-report -- and label the self-report as an estimate
-    // when that's all there is, so it's never shown indistinguishable from a
-    // verified score. See public_lot_catalog's official_score column.
+    // producer's own self-report -- and flag the self-report as an estimate
+    // so the UI can label it (per-language) and never show it
+    // indistinguishable from a verified score. See public_lot_catalog.
     score:
       catalog.official_score != null
         ? catalog.official_score.toFixed(1)
         : catalog.ficha_puntaje_estimado != null
-        ? `${catalog.ficha_puntaje_estimado} (estimado)`
+        ? String(catalog.ficha_puntaje_estimado)
         : "—",
+    scoreEstimated: catalog.official_score == null && catalog.ficha_puntaje_estimado != null,
     alt: catalog.ficha_altitud_m != null ? `${catalog.ficha_altitud_m} m` : "—",
-    pack: `Empaque de ${row.unit_kg} kg`,
     total: row.total_kg,
     sold: row.sold_kg,
     unit: row.unit_kg,
@@ -103,10 +190,12 @@ const EMPTY_BILLING: Billing = { companyName: "", vatNumber: "", deliveryAddress
 
 function Experience() {
   const { showToast } = useToast();
+  const lang = useLang();
+  const t = T[lang];
   const [supabase] = useState(() => createClient());
   const [view, setView] = useState<View>("store");
   const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState("tostador");
+  const [userName, setUserName] = useState("");
   const [loginOpen, setLoginOpen] = useState(false);
 
   const [lots, setLots] = useState<Lot[]>([]);
@@ -175,7 +264,7 @@ function Experience() {
           supabase.from("sample_pack_orders").select("id").eq("buyer_id", uid).limit(1),
         ]);
 
-      setUserName((profile?.full_name || "tostador").split(" ")[0]);
+      setUserName((profile?.full_name || "").split(" ")[0]);
       setPoints(buyerProfile?.lifetime_points ?? 0);
       setTier((buyerProfile?.membership_tier as "verde" | "pinton" | "maduro") ?? "verde");
       setBilling({
@@ -217,7 +306,7 @@ function Experience() {
         loadBuyerData(session.user.id);
       } else if (event === "SIGNED_OUT") {
         setUserId(null);
-        setUserName("tostador");
+        setUserName("");
         setMyKg({});
         setPackInCart(false);
         setOrders([]);
@@ -244,7 +333,7 @@ function Experience() {
     const cur = myKg[id] ?? 0;
     if (delta > 0 && !userId && lot.mode === "pre") {
       setLoginOpen(true);
-      showToast("Inicia sesión para reservar fracciones de la mitaca");
+      showToast(t.loginToReserve);
       return;
     }
     const m = moqOf(lot, !!userId);
@@ -252,10 +341,10 @@ function Experience() {
     if (delta > 0) {
       next = cur === 0 ? m : cur + lot.unit;
       if (next > lot.total - lot.sold) {
-        showToast("No queda esa cantidad disponible en el lote");
+        showToast(t.noQty);
         return;
       }
-      if (cur === 0) showToast(`Fracción mínima de ${fmt(m)} kg de ${lot.code} añadida al pedido`);
+      if (cur === 0) showToast(t.minAdded(fmt(m, lang), lot.code));
     } else {
       next = cur - lot.unit;
       if (next < m) next = 0;
@@ -277,7 +366,7 @@ function Experience() {
 
   function addPack() {
     setPackInCart(true);
-    showToast("Pack de muestras añadido al pedido");
+    showToast(t.packAdded);
   }
   function removePack() {
     setPackInCart(false);
@@ -290,7 +379,7 @@ function Experience() {
   async function checkout() {
     if (!userId) {
       setLoginOpen(true);
-      showToast("Inicia sesión o crea tu cuenta para confirmar el pedido");
+      showToast(t.loginToCheckout);
       return;
     }
     const hasLots = Object.values(myKg).some((q) => q > 0);
@@ -299,7 +388,7 @@ function Experience() {
     if (hasLots) {
       const { error } = await supabase.rpc("place_order", { p_zone_code: shipZone });
       if (error) {
-        showToast(error.message || "No se pudo confirmar el pedido.");
+        showToast(error.message || t.orderFailed);
         return;
       }
     }
@@ -309,7 +398,7 @@ function Experience() {
 
     setMyKg({});
     setPackInCart(false);
-    showToast("Pedido confirmado. Recibirás la orden proforma por correo.");
+    showToast(t.orderOk);
     await Promise.all([loadCatalog(), loadBuyerData(userId)]);
   }
 
@@ -320,23 +409,23 @@ function Experience() {
       .update({ company_name: next.companyName || null, vat_number: next.vatNumber || null, delivery_address: next.deliveryAddress || null })
       .eq("profile_id", userId);
     if (error) {
-      showToast("No se pudo guardar la información.");
+      showToast(t.billingFailed);
       return;
     }
     setBilling(next);
-    showToast("Datos de facturación actualizados ✓");
+    showToast(t.billingOk);
   }
 
   function bid(half: "A" | "B") {
     if (!userId) {
       setLoginOpen(true);
-      showToast("Inicia sesión para pujar (nivel Pintón o superior)");
+      showToast(t.loginToBid);
       return;
     }
     if (half === "A") setBidA((b) => Math.round((b + BID_STEP) * 100) / 100);
     else setBidB((b) => Math.round((b + BID_STEP) * 100) / 100);
     setMyBids((n) => n + 1);
-    showToast(`Tu puja por la Mitad ${half} va ganando (demo)`);
+    showToast(t.bidLeading(half));
   }
 
   const summary = cartData(lots, myKg, packInCart, shipZone, zones);
@@ -367,7 +456,7 @@ function Experience() {
           <HistoriaSection />
           <Footer />
           {/* Bottom-LEFT on purpose: the cart owns the bottom-right corner. */}
-          <QuickNav sections={QUICK_NAV_SECTIONS} side="left" />
+          <QuickNav sections={t.quickNav} side="left" labels={t.quickNavLabels} />
           <Cart
             summary={summary}
             packInCart={packInCart}
@@ -383,7 +472,7 @@ function Experience() {
         </>
       ) : (
         <ProfileView
-          userName={userName}
+          userName={userName || t.roaster}
           summary={summary}
           packInCart={packInCart}
           myBids={myBids}
@@ -406,7 +495,9 @@ function Experience() {
 export function CherryPickedExperience() {
   return (
     <ToastProvider>
-      <Experience />
+      <LangProvider>
+        <Experience />
+      </LangProvider>
     </ToastProvider>
   );
 }

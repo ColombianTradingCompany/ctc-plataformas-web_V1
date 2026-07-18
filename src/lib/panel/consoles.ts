@@ -23,7 +23,8 @@
 
 export type PanelConsoleKey = "bcp" | "ecp" | "ocp";
 
-export type PanelNavLink = { href: string; label: string; exact?: boolean };
+export type PanelNavLink = { href: string; label: string; exact?: boolean; ownerOnly?: boolean };
+/** `ownerOnly` en el grupo oculta TODO el grupo; en un link, solo ese link. */
 export type PanelNavGroup = { label: string; links: PanelNavLink[]; ownerOnly?: boolean };
 
 export type PanelConsole = {
@@ -86,11 +87,15 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // sí* —quién opera las consolas, qué socios existen, cómo está documentado
         // el sistema— es dirección, no operación diaria. Owner-only, como antes.
         label: "ECP · IT y Plataforma",
-        ownerOnly: true,
+        // El gate es POR LINK, no por grupo: leer el mapa del sistema y repartir
+        // credenciales son riesgos distintos. La documentación es material de
+        // referencia sin secretos (estructura, no llaves) — cualquier operador
+        // con acceso a una consola gana entendiéndola. Emitir credenciales de
+        // colaboradores y socios sigue siendo cosa de owner.
         links: [
           { href: "/ecp/documentacion", label: "Documentación del sistema" },
-          { href: "/ecp/usuarios", label: "Usuarios y credenciales" },
-          { href: "/ecp/socios", label: "Socios de la red" },
+          { href: "/ecp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
+          { href: "/ecp/socios", label: "Socios de la red", ownerOnly: true },
         ],
       },
     ],

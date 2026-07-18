@@ -1,7 +1,12 @@
+import Link from "next/link";
 import styles from "./consoleScaffold.module.css";
 
-/** `built` marca los módulos que YA existen, para que el scaffold no los niegue. */
-export type ScaffoldModule = { name: string; desc: string; built?: boolean };
+/**
+ * `built` marca los módulos que YA existen, para que el scaffold no los niegue.
+ * `href` los vuelve navegables: decir "CONSTRUIDO" y dejar al operador buscando
+ * en la barra lateral es peor que no decir nada.
+ */
+export type ScaffoldModule = { name: string; desc: string; built?: boolean; href?: string };
 
 /**
  * Placeholder dashboard for a console whose modules aren't built yet. Instead of
@@ -36,19 +41,27 @@ export function ConsoleScaffold({
         </span>
       </div>
       <div className={styles.grid}>
-        {modules.map((m) => (
-          <div
-            key={m.name}
-            className={styles.card}
-            style={{ borderLeftColor: accent, opacity: m.built ? 1 : 0.72 }}
-          >
-            <span className={styles.cardName}>
-              {m.name}
-              {m.built && <> ✓</>}
-            </span>
-            <span className={styles.cardDesc}>{m.desc}</span>
-          </div>
-        ))}
+        {modules.map((m) => {
+          const body = (
+            <>
+              <span className={styles.cardName}>
+                {m.name}
+                {m.built && <> ✓</>}
+              </span>
+              <span className={styles.cardDesc}>{m.desc}</span>
+            </>
+          );
+          const style = { borderLeftColor: accent, opacity: m.built ? 1 : 0.72 };
+          return m.href ? (
+            <Link key={m.name} href={m.href} className={styles.card} style={{ ...style, textDecoration: "none" }}>
+              {body}
+            </Link>
+          ) : (
+            <div key={m.name} className={styles.card} style={style}>
+              {body}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

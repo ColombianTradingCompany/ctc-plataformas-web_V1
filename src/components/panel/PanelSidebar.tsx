@@ -24,7 +24,13 @@ export function PanelSidebar({
   const pathname = usePathname();
   const active = CONSOLES[activeConsole];
   const switchable = CONSOLE_ORDER.filter((k) => accessibleConsoles.includes(k));
-  const navGroups = active.nav.filter((g) => !g.ownerOnly || isOwner);
+  // El gate corre en DOS niveles: el grupo entero, y cada link. Un grupo cuyos
+  // links son todos owner-only desaparece completo para un no-owner (nada de
+  // encabezados vacíos).
+  const navGroups = active.nav
+    .filter((g) => !g.ownerOnly || isOwner)
+    .map((g) => ({ ...g, links: g.links.filter((l) => !l.ownerOnly || isOwner) }))
+    .filter((g) => g.links.length > 0);
 
   return (
     <nav className={styles.sidebar}>

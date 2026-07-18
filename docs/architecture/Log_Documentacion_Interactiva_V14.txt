@@ -164,3 +164,20 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
   destacado), la ANN de lotes/ (EvaReviewCard.tsx + evaChecklist.ts, EvaVerdictButtons
   borrado) y el paso 1 del escenario "eva".
 (commit: pending)
+
+## [2026-07-18] Gate del nav por LINK (no por grupo) — el módulo IT no aparecía
+- Síntoma reportado: en ECP no se veía "Documentación" aunque la tarjeta decía CONSTRUIDO.
+- Diagnóstico: NO era despliegue ni bug. La sesión era gvg@ctcexport.com, que en panel_users
+  tiene is_owner=false y consoles todas en "viewer". El grupo entero era ownerOnly (heredado del
+  viejo "Administración" del BCP), así que se ocultaba entero — correcto según el código, pero
+  MAL DISEÑO: mezcla "leer el mapa del sistema" con "repartir credenciales", que son riesgos
+  distintos.
+- PanelNavLink ganó ownerOnly?: el gate ahora corre en dos niveles (grupo y link) y un grupo que
+  se queda sin links visibles desaparece (nada de encabezados vacíos). Documentación pasa a estar
+  disponible para cualquier operador con acceso a ECP; Usuarios y Socios siguen owner-only, y el
+  servidor lo sigue imponiendo aparte (redirect en la page) — ocultar en el nav NO es seguridad.
+- ConsoleScaffold: las tarjetas aceptan href y la de Documentación ahora navega. Decir
+  "CONSTRUIDO" y dejar al operador buscando en la barra lateral era peor que no decir nada.
+- Verificado con el filtro real del sidebar: OWNER ve Documentación|Usuarios|Socios; VIEWER ve
+  solo Documentación; el BCP ya no muestra grupo de Administración a nadie.
+(commit: pending)

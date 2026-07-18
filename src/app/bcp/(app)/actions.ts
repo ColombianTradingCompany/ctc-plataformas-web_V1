@@ -40,7 +40,11 @@ async function requireAdmin() {
   return requireActiveAdmin();
 }
 
-export async function approveFinca(fincaId: string) {
+// Devuelve resultado en vez de lanzar: "falta el polígono" y "EUDR incompleta"
+// son rechazos alcanzables desde el botón Aprobar (la UI lo deshabilita, pero el
+// formulario igual se envía si el estado quedó viejo), y un throw en una form
+// action revienta la página (ver ActionForm.tsx).
+export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
@@ -52,9 +56,9 @@ export async function approveFinca(fincaId: string) {
     .eq("id", fincaId)
     .single();
 
-  if (!finca) throw new Error("Finca no encontrada.");
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
   if (finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length) {
-    throw new Error("Esta finca supera 4 ha y necesita el polígono EUDR antes de poder aprobarse.");
+    return { ok: false, error: "Esta finca supera 4 ha y necesita el polígono EUDR antes de poder aprobarse." };
   }
   // Solo se aprueban fincas cuya debida diligencia EUDR está completa ("Apta").
   // Aprobar una finca incompleta producía el estado contradictorio de una finca
@@ -74,7 +78,10 @@ export async function approveFinca(fincaId: string) {
     eudrTenure: (finca.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
   };
   if (fincaEudrStatus(eudrFields).code !== "apta") {
-    throw new Error("La debida diligencia EUDR de esta finca todavía está incompleta; complétela antes de aprobar.");
+    return {
+      ok: false,
+      error: "La debida diligencia EUDR de esta finca todavía está incompleta; complétela antes de aprobar.",
+    };
   }
 
   await service.from("fincas").update({ status: "approved" }).eq("id", fincaId);
@@ -89,17 +96,23 @@ export async function approveFinca(fincaId: string) {
 
   revalidatePath("/bcp/fincas");
   revalidatePath("/bcp");
+  return { ok: true };
 }
 
 // Release (or un-release) the EUDR certification dossier to the producer. Until
 // this is on, the producer's certificate page stays gated -- sharing is an
 // explicit CTC step, not always-available.
-export async function setFincaCertShared(fincaId: string, shared: boolean) {
+export async function setFincaCertShared(
+  fincaId: string,
+  shared: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
   const { data: finca } = await service.from("fincas").select("name, producer_id, status").eq("id", fincaId).single();
-  if (!finca) throw new Error("Finca no encontrada.");
-  if (shared && finca.status !== "approved") throw new Error("Apruebe la finca antes de compartir su certificación.");
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
+  if (shared && finca.status !== "approved") {
+    return { ok: false, error: "Apruebe la finca antes de compartir su certificación." };
+  }
 
   await service.from("fincas").update({ eudr_cert_shared: shared }).eq("id", fincaId);
   if (shared) {
@@ -113,6 +126,7 @@ export async function setFincaCertShared(fincaId: string, shared: boolean) {
     });
   }
   revalidatePath("/bcp/fincas");
+  return { ok: true };
 }
 
 export async function createLot(formData: FormData) {

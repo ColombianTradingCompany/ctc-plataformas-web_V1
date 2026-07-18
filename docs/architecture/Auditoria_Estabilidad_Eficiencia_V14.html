@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoría de estabilidad y eficiencia · CTC Web Platform · sobre V14.0</title>
+<style>
+  :root{
+    --ink:#1c2733; --muted:#5a6472; --line:#dde1e7; --paper:#f7f6f2; --card:#fff;
+    --crit:#b3261e; --high:#c4402f; --med:#9c6f15; --low:#3a6ea5; --ok:#2c7a4b;
+    --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  /* Nombres de archivo y de política son tokens largos sin espacios: que
+     rompan en pantallas angostas en vez de ensanchar la página. */
+  p,li,td,th,h1,h2,h3{overflow-wrap:anywhere}
+  .wrap{max-width:1080px;margin:0 auto;padding:44px 26px 90px}
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:34px}
+  .kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-size:31px;line-height:1.18;margin:0 0 10px;letter-spacing:-.015em}
+  .sub{color:var(--muted);margin:0;font-size:15.5px;max-width:74ch}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:14px}
+  .meta b{color:var(--ink)}
+
+  h2{font-size:20px;margin:44px 0 6px;padding-bottom:7px;border-bottom:1px solid var(--line);letter-spacing:-.01em}
+  h3{font-size:15.5px;margin:26px 0 6px}
+  p{margin:9px 0}
+  code{font-family:var(--mono);font-size:12.6px;background:#eceff3;padding:1.5px 5px;border-radius:4px}
+  a{color:var(--low)}
+
+  .scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:22px 0 6px}
+  .sc{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 15px}
+  .sc .n{font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.02em}
+  .sc .l{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+  .sc.fixed .n{color:var(--ok)} .sc.open .n{color:var(--med)} .sc.acc .n{color:var(--muted)}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.6px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#eef1f5;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  td code{font-size:12px}
+  .scroll{overflow-x:auto}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;
+       padding:2.5px 8px;border-radius:999px;color:#fff;white-space:nowrap;text-transform:uppercase}
+  .t-crit{background:var(--crit)} .t-high{background:var(--high)} .t-med{background:var(--med)}
+  .t-low{background:var(--low)} .t-ok{background:var(--ok)} .t-acc{background:#7a8592}
+
+  .finding{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);
+           border-radius:9px;padding:16px 18px;margin:16px 0}
+  .finding.f-high{border-left-color:var(--high)}
+  .finding.f-med{border-left-color:var(--med)}
+  .finding.f-ok{border-left-color:var(--ok)}
+  .finding.f-acc{border-left-color:#7a8592}
+  .finding h3{margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .finding .lbl{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+
+  pre{background:#1c2733;color:#e8edf3;padding:13px 15px;border-radius:9px;overflow-x:auto;
+      font-family:var(--mono);font-size:12.2px;line-height:1.55;margin:11px 0}
+  pre .c{color:#8fa3b8}
+  pre .del{color:#ff9f95} pre .add{color:#9be2b4}
+
+  blockquote{margin:12px 0;padding:11px 15px;background:#eef3f8;border-left:3px solid var(--low);
+             border-radius:0 8px 8px 0;font-size:14px}
+  blockquote.warn{background:#fdf3e7;border-left-color:var(--med)}
+  ul,ol{margin:9px 0;padding-left:22px} li{margin:4px 0}
+  .foot{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
+        font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  @media print{body{background:#fff}.wrap{padding:0}.finding,.sc,table{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">CTC Web Platform · Informe de auditoría</p>
+  <h1>Auditoría de estabilidad y eficiencia</h1>
+  <p class="sub">Revisión completa del código y de la base de datos de producción, con las correcciones
+  ya aplicadas y verificadas. Adjunto al wrap <b>Documentacion_Interactiva_V14.0(0925d78)</b>.</p>
+  <p class="meta">
+    Fecha: <b>2026-07-18</b> ·
+    Repo: <b>ctc-plataformas-web_V1</b> · rama <b>main</b> ·
+    Base: <b>64e7fc8</b> ·
+    Proyecto Supabase: <b>sjznkzvefqfcysczllli</b> (Postgres 17)
+  </p>
+</header>
+
+<h2>1 · Resumen ejecutivo</h2>
+
+<div class="scorecards">
+  <div class="sc fixed"><div class="n">9</div><div class="l">hallazgos corregidos y verificados</div></div>
+  <div class="sc acc"><div class="n">5</div><div class="l">revisados y aceptados con justificación</div></div>
+  <div class="sc open"><div class="n">1</div><div class="l">requiere acción del owner (1 clic)</div></div>
+  <div class="sc fixed"><div class="n">40</div><div class="l">políticas RLS optimizadas</div></div>
+  <div class="sc fixed"><div class="n">4</div><div class="l">crashes de página eliminados</div></div>
+</div>
+
+<p>El sistema está <b>sano estructuralmente</b>: <code>tsc</code>, <code>eslint --max-warnings=0</code> y
+<code>next build</code> pasan limpios, el modelo de seguridad (RLS + triggers guarda + service-role) es
+coherente, y no se encontró ninguna fuga de datos ni ruta de escritura sin autenticar.</p>
+
+<p>Dicho eso, la auditoría encontró <b>dos problemas reales y sistémicos</b>, ambos ya corregidos:</p>
+
+<ol>
+  <li><b>Cuatro acciones podían tumbar la página entera</b> con un clic normal. Es exactamente el
+  mismo fallo que ya se sufrió una vez con «Confirmar recibido» (V12): se arregló para <i>esa</i>
+  acción, pero el patrón siguió vivo en <code>publishLot</code>, <code>signContract</code>,
+  <code>approveFinca</code> y <code>setFincaCertShared</code>. Agravante: en producción Next
+  <b>censura</b> el mensaje, así que el usuario habría visto un error genérico sin causa.</li>
+
+  <li><b>Las 40 políticas RLS re-evaluaban <code>auth.uid()</code> una vez por fila.</b> Afecta a
+  <i>toda</i> consulta del productor y del comprador. Envolverlas en <code>(select …)</code> hace que
+  Postgres las evalúe <b>una sola vez por consulta</b>.</li>
+</ol>
+
+<blockquote>
+<b>Calibración importante:</b> la base de datos hoy es pequeña — la tabla más grande tiene
+<b>306 filas</b>. Por eso este informe <b>rechaza deliberadamente</b> dos recomendaciones automáticas
+del linter (45 índices de claves foráneas y el borrado de 2 índices «sin uso»): a esta escala
+costarían escritura y espacio sin comprar ninguna lectura. Se documentan con su umbral de revisión
+en la sección 5.
+</blockquote>
+
+<h2>2 · Alcance y método</h2>
+<table>
+  <tr><th>Frente</th><th>Qué se ejecutó realmente</th><th>Resultado</th></tr>
+  <tr><td>Compilación</td><td><code>npx tsc --noEmit</code></td><td><span class="tag t-ok">limpio</span></td></tr>
+  <tr><td>Lint</td><td><code>npx eslint src --max-warnings=0</code> (repo completo)</td><td><span class="tag t-ok">limpio</span></td></tr>
+  <tr><td>Build</td><td><code>npm run build</code> — 49 rutas, Turbopack</td><td><span class="tag t-ok">exit 0</span></td></tr>
+  <tr><td>Seguridad BD</td><td>Supabase advisors (<code>security</code>) — 34 avisos triados</td><td>2 corregidos · 4 aceptados</td></tr>
+  <tr><td>Rendimiento BD</td><td>Supabase advisors (<code>performance</code>) — 82 avisos triados</td><td>2 corregidos · 2 aplazados</td></tr>
+  <tr><td>Estabilidad código</td><td>Auditoría de las 58 sentencias <code>throw</code> en módulos <code>"use server"</code>, cruzadas contra los 34 enlaces <code>&lt;form action&gt;</code></td><td>4 crashes reales</td></tr>
+  <tr><td>Eficiencia código</td><td><code>await</code> secuenciales por página, consultas N+1, sobre-lectura, consultas sin límite</td><td>sin hallazgos accionables hoy</td></tr>
+</table>
+
+<h2>3 · Hallazgos corregidos</h2>
+
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> S-1 · Rechazos de negocio alcanzables reventaban la página</h3>
+  <p class="lbl">catalogActions.ts · contractActions.ts · actions.ts + 4 puntos de llamada</p>
+  <p>Un <code>throw</code> dentro de una Server Action enlazada como <code>&lt;form action={fn}&gt;</code>
+  <b>no se puede atrapar en el cliente</b>: React lo envía al error boundary y la página entera se cae.
+  Cuatro acciones lanzaban en compuertas que un administrador alcanza con un clic perfectamente normal:</p>
+  <div class="scroll"><table>
+    <tr><th>Acción</th><th>Rechazos alcanzables que lanzaban</th></tr>
+    <tr><td><code>publishLot</code></td><td>productor no es miembro del Club · sin contrato activo · sin liberación confirmada · grado Tyrian</td></tr>
+    <tr><td><code>signContract</code></td><td>productor no es miembro del Club · contrato ya firmado</td></tr>
+    <tr><td><code>approveFinca</code></td><td>falta el polígono EUDR (&gt;4 ha) · debida diligencia EUDR incompleta</td></tr>
+    <tr><td><code>setFincaCertShared</code></td><td>compartir certificación de una finca aún no aprobada</td></tr>
+  </table></div>
+  <p><b>Corrección.</b> Las cuatro acciones ahora <b>devuelven</b> <code>{ok:false, error}</code> en vez de
+  lanzar — el patrón que el propio repo ya usaba en <code>ConfirmReceiptButton</code> y
+  <code>EvaVerdictButtons</code>. Se creó un componente reutilizable
+  <code>src/app/bcp/(app)/ActionForm.tsx</code> que ejecuta la acción en una transición y muestra el
+  rechazo <b>inline, bajo el botón</b>, dejando la página en pie.</p>
+  <pre><span class="c">// antes — el clic tumbaba /bcp/catalogo entero</span>
+<span class="del">if (!pp?.club_member_since) throw new Error("El productor … no es miembro …");</span>
+<span class="c">// ahora — el motivo aparece bajo el botón y el tablero sigue vivo</span>
+<span class="add">if (!pp?.club_member_since) return { ok: false, error: "El productor … no es miembro …" };</span></pre>
+  <blockquote class="warn"><b>Por qué no bastaba con atrapar el error:</b> en producción Next.js
+  <b>redacta</b> los mensajes de error de Server Actions por seguridad. Aunque se atrapara, el
+  administrador vería «An error occurred…» sin saber qué compuerta falló. El resultado <i>tiene</i>
+  que viajar como valor de retorno.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> S-2 · <code>.single()</code> convertía una compuerta amable en un error de base de datos</h3>
+  <p class="lbl">catalogActions.ts · publishLot</p>
+  <p>La comprobación del contrato usaba <code>.single()</code>, que en PostgREST <b>lanza</b>
+  (<code>PGRST116</code>) cuando no hay ninguna fila. Publicar un lote galardonado que todavía no tiene
+  contrato nunca llegaba a su mensaje —«Este lote necesita un contrato firmado (activo)»— sino que
+  moría antes con un error crudo de la base. Cambiado a <code>.maybeSingle()</code>, que devuelve
+  <code>null</code> y deja que la compuerta hable.</p>
+</div>
+
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> P-1 · Las 40 políticas RLS se re-evaluaban por fila</h3>
+  <p class="lbl">migración <code>perf_rls_initplan_wrap_auth_calls</code> · lint <code>auth_rls_initplan</code></p>
+  <p>Cada política llamaba <code>auth.uid()</code> sin envolver, de modo que Postgres ejecutaba la
+  función <b>una vez por cada fila evaluada</b>. Envolverla en <code>(select auth.uid())</code> la
+  convierte en un <i>InitPlan</i>: una única evaluación por consulta, con el resultado reutilizado.
+  Es la recomendación oficial de Supabase y es <b>semánticamente idéntica</b> (<code>auth.*</code> es
+  <code>STABLE</code>).</p>
+  <pre><span class="c">-- 40 sentencias explícitas (no un bucle dinámico: así quedan revisables en git)</span>
+<span class="del">ALTER POLICY lots_select_own ON public.lots USING ((auth.uid() = producer_id));</span>
+<span class="add">ALTER POLICY lots_select_own ON public.lots USING (((select auth.uid()) = producer_id));</span></pre>
+  <p><code>ALTER POLICY</code> preserva nombre, tabla, comando y roles — <b>solo</b> cambia la expresión.
+  Las subconsultas complejas (p. ej. <code>lots_delete_own_before_mue</code>, con su <code>EXISTS</code>
+  sobre <code>arena_inscriptions</code>) se conservaron intactas.</p>
+  <p><b>Verificado:</b> 42 políticas totales, <b>0</b> con llamadas sin envolver, y el conteo de
+  políticas por tabla/comando/rol no cambió.</p>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> P-2 · Índice duplicado (introducido por error en V14)</h3>
+  <p class="lbl">migración <code>perf_drop_duplicate_constraint_arena_session_lots</code></p>
+  <p><code>arena_session_lots</code> ya tenía <code>PRIMARY KEY (arena_session_id, lot_id)</code>. El
+  <code>UNIQUE(session, lot)</code> añadido en la reestructuración V14 creaba <b>exactamente el mismo
+  índice</b>: la unicidad que buscaba ya estaba garantizada. Mantener los dos cobraba escritura y
+  espacio a cambio de nada. Retirado — la unicidad la sigue imponiendo la PK.</p>
+  <p><b>Verificado:</b> <code>arena_session_lots</code> pasó de 2 índices a 1.</p>
+</div>
+
+<div class="finding f-ok">
+  <h3><span class="tag t-ok">Seguridad</span> SEC-1 · <code>search_path</code> mutable en 4 funciones</h3>
+  <p class="lbl">migración <code>security_fix_function_search_path</code> · lint <code>function_search_path_mutable</code></p>
+  <p><code>sync_buyer_tier</code>, <code>guard_profiles_protected_columns</code>,
+  <code>guard_buyer_protected_columns</code> y <code>guard_lots_producer_columns</code> corrían sin
+  <code>search_path</code> fijo. Sin él, quien pueda crear objetos en un esquema del path puede
+  secuestrar una referencia no calificada dentro del cuerpo de la función. Fijado a
+  <code>public, pg_temp</code>, que preserva el comportamiento actual y cierra el vector.</p>
+  <p><b>Verificado:</b> las 4 funciones reportan <code>proconfig</code> no nulo.</p>
+</div>
+
+<div class="finding f-ok">
+  <h3><span class="tag t-ok">Seguridad</span> SEC-2 · <code>place_order()</code> era ejecutable por <code>anon</code></h3>
+  <p class="lbl">migración <code>security_revoke_place_order_from_public</code></p>
+  <p>La RPC del checkout conservaba el <code>GRANT</code> por defecto a <code>PUBLIC</code>, de modo que
+  el rol anónimo podía invocarla. Internamente usa <code>auth.uid()</code>, así que para un anónimo
+  siempre habría fallado — pero exponerla es superficie regalada.</p>
+  <p>Retirado el grant de <code>PUBLIC</code>. Es seguro porque <code>authenticated</code> tiene un
+  <b>grant explícito</b> (<code>authenticated=X/postgres</code>): el comprador logueado conserva el
+  checkout intacto.</p>
+  <pre><span class="c">-- verificación posterior</span>
+anon_can_checkout    = <span class="del">false</span>   <span class="c">(antes: true)</span>
+authed_can_checkout  = <span class="add">true</span>    <span class="c">(sin cambios — el checkout sigue vivo)</span></pre>
+</div>
+
+<h2>4 · Revisados y aceptados (sin cambio, con motivo)</h2>
+
+<p>Un linter no conoce el diseño. Estos avisos se investigaron uno a uno y la decisión de
+<b>no</b> tocarlos es deliberada:</p>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aceptado</span> SEC-3 · 6 funciones de trigger expuestas por RPC</h3>
+  <p>Los lints 0028/0029 marcan <code>handle_new_user</code>, <code>guard_*</code>,
+  <code>sync_buyer_points</code> y <code>sync_listing_total_from_releases</code> como invocables por
+  <code>anon</code>/<code>authenticated</code> vía <code>/rest/v1/rpc/…</code>.</p>
+  <p><b>Se comprobó empíricamente la exposición real</b> en vez de asumirla:</p>
+  <pre>select public.handle_new_user();
+<span class="del">ERROR: 0A000: trigger functions can only be called as triggers</span></pre>
+  <p>Postgres las rechaza <b>en compilación</b>: la explotabilidad es <b>nula</b>. Revocar el
+  <code>EXECUTE</code> silenciaría el lint pero introduce un riesgo no nulo de perturbar el disparo de
+  los triggers en producción — riesgo real a cambio de una insignia. <b>Decisión: no tocar.</b></p>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aceptado</span> SEC-4 · 2 vistas <code>SECURITY DEFINER</code> (nivel ERROR)</h3>
+  <p><code>public_lot_catalog</code> y <code>public_transparency_pricing</code> son
+  <code>SECURITY DEFINER</code> <b>a propósito</b>: son el patrón de catálogo público — una proyección
+  estrecha y curada sobre tablas que el público no puede leer directamente. Cambiarlas a
+  <code>security_invoker</code> <b>rompería el catálogo de Cherry Picked</b>. Se revisó que no expongan
+  ficha ni geolocalización cruda. <b>Riesgo aceptado y documentado.</b></p>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aceptado</span> SEC-5 · 18 tablas con RLS activo y sin políticas</h3>
+  <p>Es el modelo <i>deny-all salvo service-role</i> que el sistema usa por diseño para las tablas
+  administrativas (<code>leads</code>, <code>panel_users</code>, <code>arena_entry_codes</code>,
+  <code>sondeo_batches</code>…). RLS activo sin políticas <b>es</b> la denegación. No es un hallazgo.</p>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aplazado</span> P-3 · 45 claves foráneas sin índice</h3>
+  <p>Correcto en abstracto, <b>prematuro aquí</b>: la tabla más grande tiene 306 filas y la mediana
+  ronda las 10. A esta escala Postgres resuelve con <i>sequential scan</i> y 45 índices nuevos solo
+  añadirían coste de escritura y espacio.</p>
+  <p><b>Umbral de revisión:</b> volver a evaluar cuando cualquier tabla supere las <b>~10.000 filas</b>,
+  priorizando entonces las FK que realmente se usan en <code>JOIN</code> o filtro
+  (<code>lots.producer_id</code>, <code>lots.finca_id</code>, <code>arena_inscriptions.lot_id</code>,
+  <code>producer_comm_log.lot_id</code>).</p>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aplazado</span> P-4 · 2 índices «sin uso» en <code>club_member_codes</code></h3>
+  <p>Aparecen sin uso porque la base es joven <b>y</b> porque la maquinaria de Pasaportes se retiró en
+  V14 — la tabla quedó como registro histórico. No se borran ahora para no tocar una tabla en
+  transición; el momento natural es cuando se archive <code>club_member_codes</code> por completo.</p>
+</div>
+
+<h2>5 · Acción pendiente del owner</h2>
+<div class="finding f-med">
+  <h3><span class="tag t-med">1 clic</span> Protección de contraseñas filtradas está desactivada</h3>
+  <p>Supabase Auth puede contrastar cada contraseña nueva contra la base de HaveIBeenPwned y rechazar
+  las ya filtradas. Hoy está <b>apagado</b>. Es gratis, no requiere código y protege las cuentas de
+  productores, compradores y colaboradores.</p>
+  <p><b>No se puede activar por API</b> — es un ajuste del panel. Ruta:
+  <code>Supabase → Authentication → Policies → Leaked password protection → Enable</code>.</p>
+</div>
+
+<h2>6 · Evidencia de verificación</h2>
+<table>
+  <tr><th>Comprobación</th><th>Antes</th><th>Después</th></tr>
+  <tr><td>Políticas RLS con <code>auth.*()</code> sin envolver</td><td>40</td><td><b>0</b></td></tr>
+  <tr><td>Políticas totales (sin pérdidas)</td><td>42</td><td><b>42</b></td></tr>
+  <tr><td>Índices en <code>arena_session_lots</code></td><td>2 (idénticos)</td><td><b>1</b></td></tr>
+  <tr><td>Funciones con <code>search_path</code> fijo</td><td>0 de 4</td><td><b>4 de 4</b></td></tr>
+  <tr><td><code>anon</code> puede ejecutar <code>place_order</code></td><td>sí</td><td><b>no</b></td></tr>
+  <tr><td><code>authenticated</code> puede ejecutar <code>place_order</code></td><td>sí</td><td><b>sí</b> (intacto)</td></tr>
+  <tr><td>Acciones que revientan la página en rechazo alcanzable</td><td>4</td><td><b>0</b></td></tr>
+  <tr><td><code>tsc --noEmit</code></td><td>limpio</td><td><b>limpio</b></td></tr>
+  <tr><td><code>eslint src --max-warnings=0</code></td><td>limpio</td><td><b>limpio</b></td></tr>
+  <tr><td><code>next build</code></td><td>exit 0 · 49 rutas</td><td><b>exit 0 · 49 rutas</b></td></tr>
+</table>
+
+<blockquote><b>Nota sobre el método de verificación.</b> Un primer chequeo dio un falso negativo:
+se usó <code>(?&lt;!select )</code> en una expresión regular de Postgres, y el motor POSIX de Postgres
+<b>no soporta lookbehind</b>. Al re-verificar con una comprobación válida el resultado real fue
+<code>still_bare = 0</code>. Se deja constancia porque el mismo error puede repetirse en futuras
+auditorías por SQL.</blockquote>
+
+<h2>7 · Lo que NO se encontró</h2>
+<p>Vale tanto como la lista de fallos, y acota el alcance de lo revisado:</p>
+<ul>
+  <li>Ninguna ruta de escritura sin autenticar: todas las Server Actions del panel pasan por
+  <code>requireActiveAdmin()</code> (rol + <code>panel_users.status</code>), verificado módulo a módulo.</li>
+  <li>Ninguna fuga de datos entre productores: las políticas <i>own-rows</i> son consistentes y sus
+  expresiones se conservaron intactas en la reescritura de rendimiento.</li>
+  <li>Ninguna consulta N+1 ni sobre-lectura significativa; las páginas más pesadas
+  (<code>/bcp/lotes</code>, <code>/bcp/leads</code>) ya paralelizan con <code>Promise.all</code> y firman
+  las URLs de adjuntos en lote.</li>
+  <li>Ningún secreto en el cliente: <code>service_role</code> solo aparece en
+  <code>createServiceRoleClient()</code>, siempre en servidor.</li>
+  <li>Los <code>await</code> secuenciales que quedan (p. ej. <code>/bcp/arena/[sessionId]</code>) son
+  genuinamente dependientes entre sí — paralelizarlos sería incorrecto, no más rápido.</li>
+</ul>
+
+<h2>8 · Cambios aplicados</h2>
+<table>
+  <tr><th>#</th><th>Tipo</th><th>Cambio</th></tr>
+  <tr><td>1</td><td>Migración</td><td><code>perf_rls_initplan_wrap_auth_calls</code> — 40 <code>ALTER POLICY</code> explícitos</td></tr>
+  <tr><td>2</td><td>Migración</td><td><code>security_fix_function_search_path</code> — 4 funciones</td></tr>
+  <tr><td>3</td><td>Migración</td><td><code>security_revoke_place_order_from_public</code></td></tr>
+  <tr><td>4</td><td>Migración</td><td><code>perf_drop_duplicate_constraint_arena_session_lots</code></td></tr>
+  <tr><td>5</td><td>Código</td><td><b>nuevo</b> <code>src/app/bcp/(app)/ActionForm.tsx</code> — formulario con resultado inline</td></tr>
+  <tr><td>6</td><td>Código</td><td><code>publishLot</code> → patrón resultado + <code>.maybeSingle()</code></td></tr>
+  <tr><td>7</td><td>Código</td><td><code>signContract</code> → patrón resultado</td></tr>
+  <tr><td>8</td><td>Código</td><td><code>approveFinca</code> y <code>setFincaCertShared</code> → patrón resultado</td></tr>
+  <tr><td>9</td><td>Código</td><td>4 puntos de llamada migrados a <code>&lt;ActionForm&gt;</code> (catálogo, contrato, fincas ×2)</td></tr>
+</table>
+
+<h2>9 · Recomendaciones siguientes</h2>
+<ol>
+  <li><b>Activar la protección de contraseñas filtradas</b> (sección 5) — 1 clic, hoy.</li>
+  <li><b>Confirmar en vivo</b> el nuevo comportamiento: intentar publicar un lote sin contrato en
+  <code>/bcp/catalogo</code> debe mostrar el motivo bajo el botón, con el tablero intacto.</li>
+  <li><b>Extender el patrón</b> <code>ActionForm</code> a las acciones restantes a medida que se
+  toquen: quedan <code>throw</code> en <code>arenaActions</code>, <code>clubActions</code>,
+  <code>leadsActions</code> y <code>usuariosActions</code> que hoy solo son alcanzables en estados
+  improbables, pero el patrón ya está disponible y no cuesta.</li>
+  <li><b>Revisar los índices de FK</b> cuando alguna tabla pase de ~10.000 filas (sección 4, P-3).</li>
+  <li><b>Volver a correr los advisors</b> después de cada cambio de esquema — es gratis y fue la
+  fuente de la mitad de estos hallazgos.</li>
+</ol>
+
+<p class="foot">
+  Auditoría de estabilidad y eficiencia · CTC Web Platform · 2026-07-18<br>
+  Adjunta a <b>Documentacion_Interactiva_V14.0(0925d78).html</b> · registrada en
+  <b>Log_Documentacion_Interactiva_V14.txt</b><br>
+  Archivo autocontenido: se abre en cualquier navegador y se imprime a PDF sin dependencias.
+</p>
+
+</div>
+</body>
+</html>

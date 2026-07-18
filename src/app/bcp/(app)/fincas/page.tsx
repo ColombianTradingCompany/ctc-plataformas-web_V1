@@ -9,6 +9,7 @@ import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr, setFincaCertShared } from "../actions";
 import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
+import { ActionForm } from "../ActionForm";
 import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
 import { FincaModalRow } from "./FincaModalRow";
 import styles from "../shared.module.css";
@@ -244,11 +245,13 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
 
               <div className={styles.actions} style={{ marginTop: 10 }}>
                 {activeStatus !== "approved" && (
-                  <form action={approveFinca.bind(null, finca.id)}>
-                    <button className="btn btn-solid" type="submit" disabled={blockedByEudr}>
-                      {activeStatus === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
-                    </button>
-                  </form>
+                  <ActionForm
+                    action={approveFinca.bind(null, finca.id)}
+                    submitLabel={activeStatus === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
+                    pendingLabel="Aprobando…"
+                    buttonClassName="btn btn-solid"
+                    disabled={blockedByEudr}
+                  />
                 )}
                 {activeStatus !== "rejected" && (
                   <form action={reject} className={styles.rejectForm}>
@@ -263,11 +266,15 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                     <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
                       Ver dossier EUDR ↗
                     </a>
-                    <form action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}>
-                      <button className={`btn btn-sm ${finca.eudr_cert_shared ? "" : "btn-solid"}`} type="submit">
-                        {finca.eudr_cert_shared ? "Dejar de compartir con el productor" : "Compartir certificación con el productor"}
-                      </button>
-                    </form>
+                    <ActionForm
+                      action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}
+                      submitLabel={
+                        finca.eudr_cert_shared
+                          ? "Dejar de compartir con el productor"
+                          : "Compartir certificación con el productor"
+                      }
+                      buttonClassName={`btn btn-sm ${finca.eudr_cert_shared ? "" : "btn-solid"}`}
+                    />
                   </>
                 )}
               </div>

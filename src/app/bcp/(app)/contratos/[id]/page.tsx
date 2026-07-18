@@ -8,6 +8,7 @@ import {
   resolveReconditioning,
   signContract,
 } from "../../contractActions";
+import { ActionForm } from "../../ActionForm";
 import styles from "../../shared.module.css";
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
@@ -52,7 +53,14 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
       </p>
 
       {contract.status === "pending_signature" ? (
-        <form action={signContract.bind(null, id)} className={styles.card} style={{ display: "block" }}>
+        <ActionForm
+          action={signContract.bind(null, id)}
+          submitLabel="Firmar contrato"
+          pendingLabel="Firmando…"
+          buttonClassName="btn btn-solid"
+          className={styles.card}
+          style={{ display: "block" }}
+        >
           <div className={styles.formGrid}>
             <div className={styles.field}>
               <label htmlFor="reference_price_source">Referencia de precio</label>
@@ -71,10 +79,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
               <input id="quantity_frozen_kg" name="quantity_frozen_kg" type="number" step="0.1" required />
             </div>
           </div>
-          <button className="btn btn-solid" type="submit">
-            Firmar contrato
-          </button>
-        </form>
+        </ActionForm>
       ) : (
         <div className={styles.card} style={{ display: "block", marginBottom: 24 }}>
           <p className={styles.meta}>

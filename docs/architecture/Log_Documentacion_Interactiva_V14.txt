@@ -42,6 +42,40 @@ closed and left as historical record of what went into producing it).
 (commit del wrap V14: 0925d78 — el contenido corresponde a ese commit; el trabajo de
 Cherry Picked family + reestructuración Nominados ya está desplegado READY en todos los dominios.)
 
+## [2026-07-18] AUDITORÍA de estabilidad y eficiencia — informe adjunto al wrap V14
+- Informe autocontenido: docs/architecture/Auditoria_Estabilidad_Eficiencia_V14.html
+  (se abre en cualquier navegador, se imprime a PDF; adjunto al wrap V14.0(0925d78)).
+- ESTABILIDAD (el hallazgo grande): CUATRO acciones enlazadas como <form action={fn}>
+  LANZABAN en rechazos de negocio ALCANZABLES, y un throw ahí revienta la página entera
+  (mismo fallo que "Confirmar recibido" en V12, arreglado solo para esa acción). Afectaba a
+  publishLot (4 compuertas), signContract (2), approveFinca (2), setFincaCertShared (1).
+  Agravante: en producción Next REDACTA el mensaje, así que no se vería ni el motivo.
+  Corregido con el patrón resultado del propio repo + NUEVO componente reutilizable
+  src/app/bcp/(app)/ActionForm.tsx (ejecuta en transición, muestra el rechazo inline).
+  Bonus: publishLot usaba .single() para el contrato, que LANZA (PGRST116) cuando no hay
+  fila — su compuerta amable nunca se alcanzaba; ahora .maybeSingle().
+- RENDIMIENTO: las 40 policies RLS llamaban auth.uid() sin envolver ⇒ re-evaluación POR FILA
+  en toda consulta de productor/comprador. Migración perf_rls_initplan_wrap_auth_calls con 40
+  ALTER POLICY EXPLÍCITOS (no bucle dinámico: revisables en git). Verificado: 0 sin envolver,
+  42 policies intactas. También: índice DUPLICADO en arena_session_lots (lo introduje yo en la
+  migración V14 — la PK ya lo cubría) retirado.
+- SEGURIDAD: search_path fijado en 4 funciones (lint function_search_path_mutable);
+  place_order() perdió el GRANT por defecto a PUBLIC — anon ya no puede invocar el checkout,
+  authenticated conserva su grant explícito (verificado antes/después).
+- ACEPTADO CON MOTIVO (no tocar): las 2 vistas SECURITY DEFINER son el patrón de catálogo
+  público a propósito (cambiarlas rompería Cherry Picked); las 18 tablas con RLS sin policies
+  SON el modelo deny-all-salvo-service-role; las 6 funciones de trigger expuestas por RPC se
+  probaron NO explotables ("trigger functions can only be called as triggers"), revocar traería
+  riesgo sin beneficio; los 45 índices de FK son prematuros (la tabla más grande tiene 306
+  filas) — umbral de revisión ~10.000 filas.
+- PENDIENTE DEL OWNER (1 clic, no se puede por API): activar "Leaked password protection" en
+  Supabase → Authentication → Policies.
+- Gotcha registrado: el regex de Postgres NO soporta lookbehind — un primer chequeo con
+  (?<!select ) dio un falso negativo. Re-verificar con LIKE.
+- Para el wrap: mencionar ActionForm.tsx en la ANN de bcp/(app) y quizá un DICT "noThrow"
+  (el patrón resultado ya es transversal: ConfirmReceipt, EvaVerdict, ActionForm).
+(commit: pending)
+
 ## [2026-07-18] CTC Home + landing de Kaffetal Regal TRILINGÜES (ES/EN/DE)
 - Espejo del patrón de Cherry Picked, pero para las superficies español-primero:
   NUEVO kit compartido src/components/lang/ (i18n.tsx con LangProvider genérico —

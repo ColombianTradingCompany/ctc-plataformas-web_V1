@@ -16,13 +16,19 @@ const RELEASE_STAIRCASE = [
   { month_number: 3, max_release_pct: 100 },
 ];
 
-export async function signContract(contractId: string, formData: FormData) {
+// Devuelve resultado en vez de lanzar: "ya fue firmado" y el gate del Club son
+// rechazos alcanzables desde el botón de firmar, y un throw en una form action
+// revienta la página (ver ActionForm.tsx).
+export async function signContract(
+  contractId: string,
+  formData: FormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
   const { data: contract } = await service.from("purchase_contracts").select("status, lot_id").eq("id", contractId).single();
-  if (!contract) throw new Error("Contrato no encontrado.");
-  if (contract.status !== "pending_signature") throw new Error("Este contrato ya fue firmado.");
+  if (!contract) return { ok: false, error: "Contrato no encontrado." };
+  if (contract.status !== "pending_signature") return { ok: false, error: "Este contrato ya fue firmado." };
 
   // Kaffetal Club gate: only member producers sign contracts (and from there
   // participate in the active catalog / Cherry Picked).
@@ -35,7 +41,10 @@ export async function signContract(contractId: string, formData: FormData) {
   if (!pp?.club_member_since) {
     // Desde 2026-07-17 la membresía se otorga automáticamente al competir en una
     // jornada; este gate queda como defensa en profundidad.
-    throw new Error("El productor de este lote todavía no es miembro del Kaffetal Club — la membresía se otorga al competir su lote en una jornada de Arena.");
+    return {
+      ok: false,
+      error: "El productor de este lote todavía no es miembro del Kaffetal Club — la membresía se otorga al competir su lote en una jornada de Arena.",
+    };
   }
 
   await service
@@ -65,6 +74,7 @@ export async function signContract(contractId: string, formData: FormData) {
 
   revalidatePath("/bcp/contratos");
   revalidatePath(`/bcp/contratos/${contractId}`);
+  return { ok: true };
 }
 
 export async function recordContractRelease(contractId: string, monthNumber: number, formData: FormData) {

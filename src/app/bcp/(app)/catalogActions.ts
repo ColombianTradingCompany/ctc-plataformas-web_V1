@@ -10,15 +10,21 @@ async function requireAdmin() {
   return requireActiveAdmin();
 }
 
-export async function publishLot(formData: FormData) {
+// Devuelve resultado en vez de lanzar: sus 4 compuertas son rechazos de negocio
+// ALCANZABLES con un clic normal (no miembro del Club, sin contrato activo, sin
+// liberación confirmada, grado equivocado) y un throw en una form action revienta
+// la página entera — además, en producción Next redacta el mensaje. Ver ActionForm.tsx.
+export async function publishLot(formData: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
   const lotId = String(formData.get("lot_id"));
   const { data: lot } = await service.from("lots").select("stage, grade, producer_id").eq("id", lotId).single();
-  if (!lot) throw new Error("Lote no encontrado.");
-  if (lot.stage !== "galardonado") throw new Error("Solo se pueden publicar lotes galardonados.");
-  if (lot.grade === "tyrian") throw new Error("Los lotes Tyrian no se publican en el catálogo — van a la subasta.");
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "galardonado") return { ok: false, error: "Solo se pueden publicar lotes galardonados." };
+  if (lot.grade === "tyrian") {
+    return { ok: false, error: "Los lotes Tyrian no se publican en el catálogo — van a la subasta." };
+  }
 
   // Kaffetal Club gate (defensa en profundidad además del gate al firmar):
   // solo lotes de productores miembros entran al catálogo activo.
@@ -28,16 +34,19 @@ export async function publishLot(formData: FormData) {
     .eq("profile_id", lot.producer_id)
     .maybeSingle();
   if (!pp?.club_member_since) {
-    throw new Error("El productor de este lote no es miembro del Kaffetal Club — emita un código de miembro en /bcp/club antes de publicar.");
+    return {
+      ok: false,
+      error: "El productor de este lote todavía no es miembro del Kaffetal Club — la membresía se otorga al competir su lote en una jornada de Arena.",
+    };
   }
 
   const { data: contract } = await service
     .from("purchase_contracts")
     .select("id, status")
     .eq("lot_id", lotId)
-    .single();
+    .maybeSingle();
   if (!contract || contract.status !== "active") {
-    throw new Error("Este lote necesita un contrato firmado (activo) antes de poder publicarse.");
+    return { ok: false, error: "Este lote necesita un contrato firmado (activo) antes de poder publicarse." };
   }
 
   const { data: releases } = await service
@@ -47,7 +56,10 @@ export async function publishLot(formData: FormData) {
     .not("released_at", "is", null);
   const releasedSoFar = (releases ?? []).reduce((a, r) => a + Number(r.released_kg ?? 0), 0);
   if (releasedSoFar <= 0) {
-    throw new Error("Este contrato aún no tiene ninguna liberación mensual confirmada — regístrala en /bcp/contratos antes de publicar.");
+    return {
+      ok: false,
+      error: "Este contrato aún no tiene ninguna liberación mensual confirmada — regístrala en /bcp/contratos antes de publicar.",
+    };
   }
 
   const { error } = await service.from("lot_listings").insert({
@@ -63,7 +75,7 @@ export async function publishLot(formData: FormData) {
     status: "published",
     published_at: new Date().toISOString(),
   });
-  if (error) throw new Error("No se pudo publicar el lote: " + error.message);
+  if (error) return { ok: false, error: "No se pudo publicar el lote: " + error.message };
 
   await service.from("audit_log").insert({
     entity_type: "lot_listing",
@@ -75,6 +87,7 @@ export async function publishLot(formData: FormData) {
 
   revalidatePath("/bcp/catalogo");
   revalidatePath("/bcp");
+  return { ok: true };
 }
 
 export async function unpublishListing(listingId: string) {

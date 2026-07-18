@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { publishLot, unpublishListing } from "../catalogActions";
+import { ActionForm } from "../ActionForm";
 import styles from "../shared.module.css";
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
@@ -79,7 +80,13 @@ export default async function BcpCatalogoPage() {
               publicado · Precio pactado con el productor: <b>${contract.price_per_kg_locked ?? "—"}/kg</b>
               {contract.reference_price_snapshot != null && <> (referencia del día: ${contract.reference_price_snapshot}/kg)</>}
             </p>
-            <form action={publishLot} style={{ marginTop: 12 }}>
+            <ActionForm
+              action={publishLot}
+              submitLabel="Publicar en Cherry Picked"
+              pendingLabel="Publicando…"
+              buttonClassName="btn btn-solid"
+              style={{ marginTop: 12 }}
+            >
               <input type="hidden" name="lot_id" value={lot.id} />
               <div className={styles.formGrid}>
                 <div className={styles.field}>
@@ -114,10 +121,7 @@ export default async function BcpCatalogoPage() {
                 <input type="checkbox" name="transparency_credit_enabled" value="true" />
                 Activar Transparency Credit (muestra el precio pactado con el productor frente al de referencia, en la página pública del lote)
               </label>
-              <button className="btn btn-solid" type="submit">
-                Publicar en Cherry Picked
-              </button>
-            </form>
+            </ActionForm>
           </details>
         ))}
       </div>

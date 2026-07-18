@@ -307,7 +307,7 @@ export function AppDashboard({
       key: "herramientas",
       icon: HUB_ICON.herramientas,
       title: "Herramientas Cafeteras",
-      fact: "Calculadoras de rendimiento y mermas — funcionan sin internet",
+      fact: "Mermas, rendimiento y disco Agtron — funcionan sin internet",
     },
     {
       key: "servicios",

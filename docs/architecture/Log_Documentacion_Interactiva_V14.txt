@@ -281,3 +281,15 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
 - Nota: las fuentes viven en public/ aunque las use la herramienta privada — una tipografía no
   es secreto y así no se duplican 1,2 MB.
 (commit: pending)
+
+## [2026-07-18] Corrección: el disco Agtron vuelve a Kaffetal Regal
+- Al "repartir por superficie" lo interpreté como reparto EXCLUYENTE y saqué el Agtron del
+  panel del productor. El owner lo corrigió: faltaba.
+- Tenía razón, y el propio copy que yo había escrito lo decía: el disco Agtron es "para hablar
+  el mismo idioma que el tostador" — o sea que el PRODUCTOR necesita poder mirarlo, porque es
+  el color con el que van a juzgar su café. Las calculadoras de merma sí son exclusivas de KR
+  (español, matemática diaria del caficultor); el Agtron va en LAS DOS superficies.
+- KR_TOOL_IDS = [mermas-rapida, mermas-detallada, agtron]; CP_TOOL_IDS = [agtron].
+- Fue UNA LÍNEA, que es exactamente para lo que se dejaron los diccionarios de copy con las
+  cuatro herramientas en los tres idiomas: mover una de superficie no obliga a traducir nada.
+(commit: pending)

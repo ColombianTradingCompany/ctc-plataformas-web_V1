@@ -34,12 +34,13 @@ export const TOOLS: Record<ToolId, ToolDef> = {
 };
 
 // ── El reparto por superficie ────────────────────────────────────────────────
-// El idioma decide, y coincide con la audiencia: las calculadoras de merma están
-// escritas en español y son la matemática diaria del caficultor; el disco Agtron
-// está en inglés y es EL instrumento del tostador. Cada superficie recibe lo que
-// su gente de verdad usa, en el idioma en que lo va a leer.
-/** Kaffetal Regal · "Herramientas Cafeteras" — el rendimiento de su cosecha. */
-export const KR_TOOL_IDS: ToolId[] = ["mermas-rapida", "mermas-detallada"];
+// Las calculadoras de merma son la matemática diaria del CAFICULTOR (y están en
+// español), así que viven solo en Kaffetal Regal. El disco Agtron va en LAS DOS:
+// es el instrumento del tostador, pero también es el idioma con el que el
+// comprador le va a hablar al productor de su tueste — por eso el productor
+// necesita poder mirarlo. No todo reparto es excluyente.
+/** Kaffetal Regal · "Herramientas Cafeteras" — rendimiento + el color con que lo van a juzgar. */
+export const KR_TOOL_IDS: ToolId[] = ["mermas-rapida", "mermas-detallada", "agtron"];
 /** Cherry Picked · "Coffee Gadgets" — el color de tueste. */
 export const CP_TOOL_IDS: ToolId[] = ["agtron"];
 /** ECP · herramientas internas del equipo. */

@@ -8,8 +8,8 @@ import { UsuariosClient } from "./UsuariosClient";
 // so this lives under BCP. panel_users is service-role-only, so the list is read
 // with the service client here on the server.
 export default async function BcpUsuariosPage() {
-  const identity = await requireConsoleAccess("bcp");
-  if (!identity.isOwner) redirect("/bcp");
+  const identity = await requireConsoleAccess("ecp");
+  if (!identity.isOwner) redirect("/ecp");
 
   const service = createServiceRoleClient();
   const { data } = await service.from("panel_users").select("*").order("created_at", { ascending: true });

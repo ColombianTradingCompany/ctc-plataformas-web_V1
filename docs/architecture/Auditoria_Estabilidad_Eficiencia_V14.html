@@ -92,7 +92,7 @@
 <div class="scorecards">
   <div class="sc fixed"><div class="n">9</div><div class="l">hallazgos corregidos y verificados</div></div>
   <div class="sc acc"><div class="n">5</div><div class="l">revisados y aceptados con justificación</div></div>
-  <div class="sc open"><div class="n">1</div><div class="l">requiere acción del owner (1 clic)</div></div>
+  <div class="sc open"><div class="n">1</div><div class="l">bloqueado por plan (requiere Pro)</div></div>
   <div class="sc fixed"><div class="n">40</div><div class="l">políticas RLS optimizadas</div></div>
   <div class="sc fixed"><div class="n">4</div><div class="l">crashes de página eliminados</div></div>
 </div>
@@ -282,12 +282,23 @@ authed_can_checkout  = <span class="add">true</span>    <span class="c">(sin cam
 
 <h2>5 · Acción pendiente del owner</h2>
 <div class="finding f-med">
-  <h3><span class="tag t-med">1 clic</span> Protección de contraseñas filtradas está desactivada</h3>
-  <p>Supabase Auth puede contrastar cada contraseña nueva contra la base de HaveIBeenPwned y rechazar
-  las ya filtradas. Hoy está <b>apagado</b>. Es gratis, no requiere código y protege las cuentas de
-  productores, compradores y colaboradores.</p>
-  <p><b>No se puede activar por API</b> — es un ajuste del panel. Ruta:
-  <code>Supabase → Authentication → Policies → Leaked password protection → Enable</code>.</p>
+  <h3><span class="tag t-med">Bloqueado por plan</span> Protección de contraseñas filtradas</h3>
+  <p>Supabase Auth puede contrastar cada contraseña nueva contra la base de
+  <b>HaveIBeenPwned</b> y rechazar las ya filtradas, protegiendo las cuentas de productores,
+  compradores y colaboradores contra <i>credential stuffing</i>.</p>
+  <blockquote class="warn"><b>Corrección respecto a la primera versión de este informe.</b> Se
+  documentó como «1 clic, gratis». Es incorrecto: la documentación de Supabase indica que
+  <b>la protección de contraseñas filtradas está disponible desde el plan Pro</b>, y la organización
+  <b>ColombianTradingCompany's Org está hoy en FREE</b>. No es un interruptor disponible: requiere
+  cambiar de plan.</blockquote>
+  <p><b>Dónde vive</b> (cuando el plan lo permita): <code>Supabase → Authentication → Providers →
+  Email</code>, sección de contraseñas. <b>No está en <code>Database → Policies</code></b> — ahí solo
+  viven las políticas RLS, que es otra cosa.</p>
+  <p><b>Mientras tanto, sin costo:</b> en esa misma pantalla sí se pueden subir la
+  <b>longitud mínima</b> de contraseña (≥ 8, recomendable 12) y exigir <b>tipos de carácter</b>
+  (dígitos + minúsculas + mayúsculas + símbolos). Eso no depende del plan y ya sube el listón.
+  El BCP además exige <b>2FA por OTP</b>, así que las cuentas internas no dependen solo de la
+  contraseña.</p>
 </div>
 
 <h2>6 · Evidencia de verificación</h2>
@@ -343,7 +354,9 @@ auditorías por SQL.</blockquote>
 
 <h2>9 · Recomendaciones siguientes</h2>
 <ol>
-  <li><b>Activar la protección de contraseñas filtradas</b> (sección 5) — 1 clic, hoy.</li>
+  <li><b>Subir el listón de contraseñas</b> (sección 5): longitud mínima y tipos de carácter se
+  pueden endurecer HOY sin cambiar de plan. La protección contra contraseñas filtradas queda
+  anotada para cuando la organización pase a Pro.</li>
   <li><b>Confirmar en vivo</b> el nuevo comportamiento: intentar publicar un lote sin contrato en
   <code>/bcp/catalogo</code> debe mostrar el motivo bajo el botón, con el tablero intacto.</li>
   <li><b>Extender el patrón</b> <code>ActionForm</code> a las acciones restantes a medida que se

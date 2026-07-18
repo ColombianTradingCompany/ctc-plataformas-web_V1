@@ -1,6 +1,7 @@
 import styles from "./consoleScaffold.module.css";
 
-export type ScaffoldModule = { name: string; desc: string };
+/** `built` marca los módulos que YA existen, para que el scaffold no los niegue. */
+export type ScaffoldModule = { name: string; desc: string; built?: boolean };
 
 /**
  * Placeholder dashboard for a console whose modules aren't built yet. Instead of
@@ -28,12 +29,23 @@ export function ConsoleScaffold({
         </span>
         <h1 className={styles.title}>{name}</h1>
         <p className={styles.intro}>{intro}</p>
-        <span className={styles.badge}>Scaffolding · módulos por construir</span>
+        <span className={styles.badge}>
+          {modules.some((m) => m.built)
+            ? "Consola en construcción · algunos módulos ya operan"
+            : "Scaffolding · módulos por construir"}
+        </span>
       </div>
       <div className={styles.grid}>
         {modules.map((m) => (
-          <div key={m.name} className={styles.card} style={{ borderLeftColor: accent }}>
-            <span className={styles.cardName}>{m.name}</span>
+          <div
+            key={m.name}
+            className={styles.card}
+            style={{ borderLeftColor: accent, opacity: m.built ? 1 : 0.72 }}
+          >
+            <span className={styles.cardName}>
+              {m.name}
+              {m.built && <> ✓</>}
+            </span>
             <span className={styles.cardDesc}>{m.desc}</span>
           </div>
         ))}

@@ -42,6 +42,36 @@ closed and left as historical record of what went into producing it).
 (commit del wrap V14: 0925d78 — el contenido corresponde a ese commit; el trabajo de
 Cherry Picked family + reestructuración Nominados ya está desplegado READY en todos los dominios.)
 
+## [2026-07-18] NUEVO módulo ECP · IT y Plataforma (documentación + administración)
+- Petición del owner: que las versiones de la documentación dinámica se vean desde la consola, y
+  que los módulos de "Administración" que vivían en BCP pasen a un módulo de IT/Plataforma en ECP.
+- MOVIDO de BCP a ECP (git mv, historia conservada): usuarios/ + socios/ + usuariosActions.ts +
+  sociosActions.ts. Ahora /ecp/usuarios y /ecp/socios; requireConsoleAccess("bcp")→("ecp"),
+  revalidatePath y el redirect de no-owner apuntan a /ecp. Las rutas viejas /bcp/usuarios y
+  /bcp/socios dan 404 (verificado). El grupo "Administración" desapareció del nav del BCP.
+- NUEVO grupo en consoles.ts: "ECP · IT y Plataforma" (ownerOnly) con Documentación del sistema +
+  Usuarios y credenciales + Socios de la red. Racional escrito en el código: el BCP sigue siendo la
+  RAÍZ DE IDENTIDAD del negocio (productor/comprador/lote nacen ahí), pero administrar la
+  PLATAFORMA en sí es dirección, no operación diaria.
+- NUEVO /ecp/documentacion: lee docs/architecture/ del DISCO (fuente única — no se copia a
+  public/, que además los dejaría públicos: los snapshots describen el modelo de permisos entero).
+  src/lib/panel/architectureDocs.ts clasifica por nombre (snapshot .0 con sha / bitácora / informe),
+  ordena por versión desc y sirve por un route handler AUTENTICADO
+  /ecp/documentacion/[file] con requireConsoleAccess("ecp") + CSP + no-store.
+  Defensa contra path traversal por LISTA BLANCA: no se sanea la cadena, se exige que el nombre
+  exista en el listado real.
+- next.config.ts: outputFileTracingIncludes para las 2 rutas — sin esto Vercel no empaqueta
+  docs/architecture (Next solo incluye lo que se importa) y el módulo saldría vacío en producción.
+- ConsoleScaffold ganó `built?: boolean` para no seguir diciendo "por construir" de un módulo que
+  ya opera.
+- Verificado: scripts/qa-docs-check.mjs (14/14 — 14 snapshots, V14 primero con sha 0925d78, el
+  informe de auditoría clasificado, y 5 sondas de path traversal RECHAZADAS); build con las 5 rutas
+  /ecp; y por HTTP que /ecp/documentacion, el archivo crudo, /ecp/usuarios y /ecp/socios redirigen
+  a /login sin sesión, mientras /bcp/usuarios y /bcp/socios dan 404.
+- Para el wrap: nodo n-consoles y DICT "panels"/"identidades" cambian (la administración ya no es
+  del BCP); ANN para src/lib/panel/architectureDocs.ts y app/ecp/(app)/documentacion.
+(commit: pending)
+
 ## [2026-07-18] AUDITORÍA de estabilidad y eficiencia — informe adjunto al wrap V14
 - Informe autocontenido: docs/architecture/Auditoria_Estabilidad_Eficiencia_V14.html
   (se abre en cualquier navegador, se imprime a PDF; adjunto al wrap V14.0(0925d78)).
@@ -68,8 +98,11 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
   probaron NO explotables ("trigger functions can only be called as triggers"), revocar traería
   riesgo sin beneficio; los 45 índices de FK son prematuros (la tabla más grande tiene 306
   filas) — umbral de revisión ~10.000 filas.
-- PENDIENTE DEL OWNER (1 clic, no se puede por API): activar "Leaked password protection" en
-  Supabase → Authentication → Policies.
+- PENDIENTE DEL OWNER — CORREGIDO 2026-07-18: "Leaked password protection" NO es un clic gratis.
+  La doc de Supabase dice que está disponible DESDE EL PLAN PRO y la org está en FREE. Además vive
+  en Authentication → Providers → Email (NO en Database → Policies). Lo que sí se puede endurecer
+  hoy sin cambiar de plan: longitud mínima y tipos de carácter exigidos. El informe ya trae la
+  corrección; se deja aquí para que no se repita el error.
 - Gotcha registrado: el regex de Postgres NO soporta lookbehind — un primer chequeo con
   (?<!select ) dio un falso negativo. Re-verificar con LIKE.
 - Para el wrap: mencionar ActionForm.tsx en la ANN de bcp/(app) y quizá un DICT "noThrow"

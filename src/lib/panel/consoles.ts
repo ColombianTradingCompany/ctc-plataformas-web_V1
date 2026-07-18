@@ -65,16 +65,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/bcp/buzon", label: "Buzón de entrada" },
         ],
       },
-      {
-        // Identity is BCP's job in the v3 model ("cada cuenta nace en el BCP").
-        // Owner-only: only a founder/owner manages collaborators.
-        label: "Administración",
-        ownerOnly: true,
-        links: [
-          { href: "/bcp/usuarios", label: "Usuarios y credenciales" },
-          { href: "/bcp/socios", label: "Socios de la red" },
-        ],
-      },
     ],
   },
   ecp: {
@@ -88,6 +78,20 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       {
         label: "ECP · Dirección",
         links: [{ href: "/ecp", label: "Panel", exact: true }],
+      },
+      {
+        // IT y Plataforma (2026-07-18): la administración de identidades salió del
+        // BCP. El BCP sigue siendo la RAÍZ de identidad del modelo de negocio (cada
+        // productor, comprador y lote nace ahí), pero administrar *la plataforma en
+        // sí* —quién opera las consolas, qué socios existen, cómo está documentado
+        // el sistema— es dirección, no operación diaria. Owner-only, como antes.
+        label: "ECP · IT y Plataforma",
+        ownerOnly: true,
+        links: [
+          { href: "/ecp/documentacion", label: "Documentación del sistema" },
+          { href: "/ecp/usuarios", label: "Usuarios y credenciales" },
+          { href: "/ecp/socios", label: "Socios de la red" },
+        ],
       },
     ],
   },

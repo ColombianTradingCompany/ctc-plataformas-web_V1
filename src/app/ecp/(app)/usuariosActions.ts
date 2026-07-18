@@ -135,7 +135,7 @@ export async function invitePanelUser(input: {
     notes: `Consolas: ${Object.entries(consoles).map(([k, v]) => `${k}:${v}`).join(", ")}`,
   });
 
-  revalidatePath("/bcp/usuarios");
+  revalidatePath("/ecp/usuarios");
   return res.ok ? { ok: true } : { ok: false, error: `Cuenta creada, pero el correo falló: ${res.error}` };
 }
 
@@ -166,7 +166,7 @@ export async function suspendPanelUser(profileId: string): Promise<ActionResult>
     performed_by: ownerId,
   });
 
-  revalidatePath("/bcp/usuarios");
+  revalidatePath("/ecp/usuarios");
   return { ok: true };
 }
 
@@ -189,7 +189,7 @@ export async function reactivatePanelUser(profileId: string): Promise<ActionResu
     performed_by: ownerId,
   });
 
-  revalidatePath("/bcp/usuarios");
+  revalidatePath("/ecp/usuarios");
   return { ok: true };
 }
 
@@ -227,7 +227,7 @@ export async function resendPanelInvite(profileId: string): Promise<ActionResult
     })
     .eq("profile_id", profileId);
 
-  revalidatePath("/bcp/usuarios");
+  revalidatePath("/ecp/usuarios");
   return res.ok ? { ok: true } : { ok: false, error: res.error };
 }
 
@@ -262,7 +262,7 @@ export async function resetPanelUserPassword(profileId: string): Promise<ActionR
     notes: res.ok ? "Nueva contraseña temporal enviada." : `Contraseña restablecida, pero el correo falló: ${res.error}`,
   });
 
-  revalidatePath("/bcp/usuarios");
+  revalidatePath("/ecp/usuarios");
   return res.ok ? { ok: true } : { ok: false, error: `Contraseña restablecida, pero el correo falló: ${res.error}` };
 }
 
@@ -287,6 +287,6 @@ export async function updateDeliveryEmail(profileId: string, deliveryEmail: stri
     notes: `${target.delivery_email ?? "(login)"} → ${cleaned ?? "(login)"}`,
   });
 
-  revalidatePath("/bcp/usuarios");
+  revalidatePath("/ecp/usuarios");
   return { ok: true };
 }

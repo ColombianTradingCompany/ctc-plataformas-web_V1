@@ -100,7 +100,7 @@ export async function invitePartner(input: {
     notes: `${orgName} · ${node}`,
   });
 
-  revalidatePath("/bcp/socios");
+  revalidatePath("/ecp/socios");
   return res.ok ? { ok: true } : { ok: false, error: `Credencial creada, pero el correo falló: ${res.error}` };
 }
 
@@ -123,7 +123,7 @@ export async function setPartnerStatus(profileId: string, to: "suspended" | "act
     performed_by: ownerId,
   });
 
-  revalidatePath("/bcp/socios");
+  revalidatePath("/ecp/socios");
   return { ok: true };
 }
 
@@ -162,6 +162,6 @@ export async function resendPartnerCredential(profileId: string): Promise<Action
     performed_by: ownerId,
   });
 
-  revalidatePath("/bcp/socios");
+  revalidatePath("/ecp/socios");
   return res.ok ? { ok: true } : { ok: false, error: res.error };
 }

@@ -3,17 +3,49 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useContactModal } from "./ContactModal";
+import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./Header.module.css";
 
-const INDEX_LINKS = [
-  { n: "01", href: "#ecosistema", title: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked, integrados" },
-  { n: "02", href: "#momento", title: "El momento del café", sub: "Olas, diáspora y terruño" },
-  { n: "03", href: "#tech", title: "CTC Tech", sub: "Tecnologías agrónomas en finca" },
-  { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Proyectos en EE.UU. y Europa" },
-  { n: "05", href: "#varietales", title: "Varietales Registrados", sub: "Genética verificada, desde la chapola" },
-];
+type IndexLink = { n: string; href: string; title: string; sub: string };
+
+const T: Record<Lang, { write: string; idxAria: string; links: IndexLink[] }> = {
+  es: {
+    write: "Escríbenos",
+    idxAria: "Índice de la página",
+    links: [
+      { n: "01", href: "#ecosistema", title: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked, integrados" },
+      { n: "02", href: "#momento", title: "El momento del café", sub: "Olas, diáspora y terruño" },
+      { n: "03", href: "#tech", title: "CTC Tech", sub: "Tecnologías agrónomas en finca" },
+      { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Proyectos en EE.UU. y Europa" },
+      { n: "05", href: "#varietales", title: "Varietales Registrados", sub: "Genética verificada, desde la chapola" },
+    ],
+  },
+  en: {
+    write: "Write to us",
+    idxAria: "Page index",
+    links: [
+      { n: "01", href: "#ecosistema", title: "The ecosystem", sub: "Kaffetal Regal + Cherry Picked, integrated" },
+      { n: "02", href: "#momento", title: "Coffee's moment", sub: "Waves, diaspora and terroir" },
+      { n: "03", href: "#tech", title: "CTC Tech", sub: "Agronomic technology on the farm" },
+      { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Projects in the US and Europe" },
+      { n: "05", href: "#varietales", title: "Registered Varietals", sub: "Verified genetics, from the seedling" },
+    ],
+  },
+  de: {
+    write: "Schreiben Sie uns",
+    idxAria: "Seitenindex",
+    links: [
+      { n: "01", href: "#ecosistema", title: "Das Ökosystem", sub: "Kaffetal Regal + Cherry Picked, integriert" },
+      { n: "02", href: "#momento", title: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
+      { n: "03", href: "#tech", title: "CTC Tech", sub: "Agrartechnologie auf der Finca" },
+      { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Projekte in den USA und Europa" },
+      { n: "05", href: "#varietales", title: "Registrierte Varietäten", sub: "Verifizierte Genetik, vom Sämling an" },
+    ],
+  },
+};
 
 export function Header() {
+  const t = T[useLang()];
   const [hidden, setHidden] = useState(false);
   const [idxOpen, setIdxOpen] = useState(false);
   const lastY = useRef(0);
@@ -58,10 +90,10 @@ export function Header() {
           />
         </div>
         <button className="btn btn-sm btn-solid" onClick={() => openForm("general")}>
-          Escríbenos
+          {t.write}
         </button>
         <details className={styles.idx} ref={idxRef} open={idxOpen} onToggle={(e) => setIdxOpen(e.currentTarget.open)}>
-          <summary aria-label="Índice de la página" title="Índice">
+          <summary aria-label={t.idxAria} title={t.idxAria}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
               <circle cx="4.5" cy="6" r="1.4" fill="currentColor" stroke="none" />
               <line x1="9" y1="6" x2="20.5" y2="6" />
@@ -72,7 +104,7 @@ export function Header() {
             </svg>
           </summary>
           <div className={styles.idxMenu}>
-            {INDEX_LINKS.map((l) => (
+            {t.links.map((l) => (
               <a key={l.href} href={l.href} onClick={() => setIdxOpen(false)}>
                 <span className={styles.n}>{l.n}</span>
                 <span>

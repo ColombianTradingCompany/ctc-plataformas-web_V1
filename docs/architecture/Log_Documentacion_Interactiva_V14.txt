@@ -42,6 +42,35 @@ closed and left as historical record of what went into producing it).
 (commit del wrap V14: 0925d78 — el contenido corresponde a ese commit; el trabajo de
 Cherry Picked family + reestructuración Nominados ya está desplegado READY en todos los dominios.)
 
+## [2026-07-18] CTC Home + landing de Kaffetal Regal TRILINGÜES (ES/EN/DE)
+- Espejo del patrón de Cherry Picked, pero para las superficies español-primero:
+  NUEVO kit compartido src/components/lang/ (i18n.tsx con LangProvider genérico —
+  storageKey + defaultLang por sitio—, LangBubble flotante inferior-izquierda con
+  salto aleatorio, useRandomBounce, css propio). Cherry Picked NO se tocó (sigue
+  con su runtime propio en cherry-picked/i18n.tsx; unificar después si se quiere).
+- CTC Home (ctcexport.com): TODA la página trilingüe — Header (índice), Hero,
+  EcosystemSection, MomentSection (incl. los labels del SVG de las 4 olas),
+  ServicesSection (las 5 fichas CTC Tech completas ×3 idiomas, Co-Create,
+  Varietales), ContactModal (los 4 formularios + success + toasts), HistorySection,
+  QuickMenu, Footer, y las 2 Bands (nuevo HomeBand client, el copy salió de
+  page.tsx que es server). storageKey "ctc-lang". Todas las secciones pasaron a
+  "use client" (eran estáticas, sin costo).
+- Kaffetal Regal: SOLO la landing (Landing.tsx envuelve con LangProvider
+  "kr-lang" + LangBubble; la webapp tras login queda en español) — TopBanner,
+  Header, Hero (pipeline + "Lo que hace CTC"), Oportunidad (chart + acordeón +
+  stats), PorQue (además se corrigió el copy 01/02: ya no habla del "Pasaporte",
+  ahora "membresía del Kaffetal Club" — coherente con V14), Participar (EUDR
+  acordeón completo), Arena, Calendario (meses/bloques/leyenda por idioma vía el
+  prop months de HarvestCalendar), Trato (escalera + HIC), Gyg, Footer. QuickNav
+  ya aceptaba labels por idioma (prop de CP) — se usa.
+- Verificado en navegador (dev): ES por defecto en ambas, toggle EN en CTC Home
+  (h1/header/footer flip + localStorage persiste), toggle DE en KR (h1, kicker,
+  eyebrows, botones), 0 errores de consola.
+- Para el wrap: actualizar el DICT "i18ncp" (o crear "i18n" general) — el runtime
+  trilingüe ya no es exclusivo de la familia CP; ANN para src/components/lang/ y
+  HomeBand.tsx; notas en los nodos n-home y n-kaffetal (landing trilingüe).
+(commit: pending)
+
 ## [2026-07-18] La revisión EVA rediseñada como CHECKLIST (feedback del owner en vivo)
 - Contexto: al arrancar el walkthrough del nuevo flujo de Arena, el owner pidió rehacer la
   tarjeta de revisión del lote en /bcp/lotes: la EVA debe ser literalmente una lista de

@@ -1,29 +1,70 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./QuickMenu.module.css";
 
 // Floating quick-nav: same shape as the Finca panel's save FAB (round, fixed
 // bottom-right, expands to its label on hover). Tapping it opens the section
 // index; the entry matching the section you're currently in is highlighted,
 // resolved with an IntersectionObserver rather than scroll math.
-const SECTIONS = [
-  { id: "hero", n: "00", label: "Inicio", sub: "Casa matriz · Piedecuesta" },
-  { id: "ecosistema", n: "01", label: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked" },
-  { id: "momento", n: "02", label: "El momento del café", sub: "Olas, diáspora y terruño" },
-  { id: "tech", n: "03", label: "CTC Tech", sub: "Tecnologías agrónomas en finca" },
-  { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Proyectos en EE.UU. y Europa" },
-  { id: "varietales", n: "05", label: "Varietales Registrados", sub: "Genética verificada" },
-  { id: "historia", n: "06", label: "Quiénes somos", sub: "G&G · Fundadores" },
-];
+const SECTION_IDS = ["hero", "ecosistema", "momento", "tech", "cocreate", "varietales", "historia"] as const;
+
+type Entry = { id: (typeof SECTION_IDS)[number]; n: string; label: string; sub: string };
+
+const T: Record<Lang, { fab: string; panelAria: string; fabAria: string; sections: Entry[] }> = {
+  es: {
+    fab: "Navegar",
+    panelAria: "Índice de la página",
+    fabAria: "Navegación rápida",
+    sections: [
+      { id: "hero", n: "00", label: "Inicio", sub: "Casa matriz · Piedecuesta" },
+      { id: "ecosistema", n: "01", label: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked" },
+      { id: "momento", n: "02", label: "El momento del café", sub: "Olas, diáspora y terruño" },
+      { id: "tech", n: "03", label: "CTC Tech", sub: "Tecnologías agrónomas en finca" },
+      { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Proyectos en EE.UU. y Europa" },
+      { id: "varietales", n: "05", label: "Varietales Registrados", sub: "Genética verificada" },
+      { id: "historia", n: "06", label: "Quiénes somos", sub: "G&G · Fundadores" },
+    ],
+  },
+  en: {
+    fab: "Navigate",
+    panelAria: "Page index",
+    fabAria: "Quick navigation",
+    sections: [
+      { id: "hero", n: "00", label: "Home", sub: "Headquarters · Piedecuesta" },
+      { id: "ecosistema", n: "01", label: "The ecosystem", sub: "Kaffetal Regal + Cherry Picked" },
+      { id: "momento", n: "02", label: "Coffee's moment", sub: "Waves, diaspora and terroir" },
+      { id: "tech", n: "03", label: "CTC Tech", sub: "Agronomic technology on the farm" },
+      { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Projects in the US and Europe" },
+      { id: "varietales", n: "05", label: "Registered Varietals", sub: "Verified genetics" },
+      { id: "historia", n: "06", label: "Who we are", sub: "G&G · Founders" },
+    ],
+  },
+  de: {
+    fab: "Navigieren",
+    panelAria: "Seitenindex",
+    fabAria: "Schnellnavigation",
+    sections: [
+      { id: "hero", n: "00", label: "Start", sub: "Stammsitz · Piedecuesta" },
+      { id: "ecosistema", n: "01", label: "Das Ökosystem", sub: "Kaffetal Regal + Cherry Picked" },
+      { id: "momento", n: "02", label: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
+      { id: "tech", n: "03", label: "CTC Tech", sub: "Agrartechnologie auf der Finca" },
+      { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Projekte in USA und Europa" },
+      { id: "varietales", n: "05", label: "Registrierte Varietäten", sub: "Verifizierte Genetik" },
+      { id: "historia", n: "06", label: "Wer wir sind", sub: "G&G · Gründer" },
+    ],
+  },
+};
 
 export function QuickMenu() {
+  const t = T[useLang()];
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("hero");
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const nodes = SECTIONS.map((s) => document.getElementById(s.id)).filter((n): n is HTMLElement => !!n);
+    const nodes = SECTION_IDS.map((id) => document.getElementById(id)).filter((n): n is HTMLElement => !!n);
     if (!nodes.length) return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -60,8 +101,8 @@ export function QuickMenu() {
   return (
     <div className={styles.wrap} ref={wrapRef}>
       {open && (
-        <nav className={styles.panel} aria-label="Índice de la página">
-          {SECTIONS.map((s) => (
+        <nav className={styles.panel} aria-label={t.panelAria}>
+          {t.sections.map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
@@ -83,7 +124,7 @@ export function QuickMenu() {
         className={styles.fab}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label="Navegación rápida"
+        aria-label={t.fabAria}
       >
         <span className={styles.fabIcon} aria-hidden>
           {open ? (
@@ -99,7 +140,7 @@ export function QuickMenu() {
             </svg>
           )}
         </span>
-        <span className={styles.fabLabel}>Navegar</span>
+        <span className={styles.fabLabel}>{t.fab}</span>
       </button>
     </div>
   );

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./Footer.module.css";
 
 // The 5 partner-node "couples" (landing + login). In prod each lives on its own
@@ -15,14 +18,36 @@ const PARTNER_LINKS: { label: string; sub: string; slug: string }[] = [
 const partnerHref = (l: (typeof PARTNER_LINKS)[number]) =>
   process.env.NODE_ENV === "production" ? `https://${l.sub}.ctcexport.com` : `/socios/${l.slug}`;
 
+const T: Record<Lang, { tagline: string; dds: string; partners: string; partnersAria: string }> = {
+  es: {
+    tagline: "Cafés de Colombia, para el mundo",
+    dds: "DDS EUDR en cada despacho",
+    partners: "Red de socios",
+    partnersAria: "Nodos de la red de socios",
+  },
+  en: {
+    tagline: "Coffees of Colombia, for the world",
+    dds: "EUDR DDS on every shipment",
+    partners: "Partner network",
+    partnersAria: "Partner network nodes",
+  },
+  de: {
+    tagline: "Kaffees aus Kolumbien, für die Welt",
+    dds: "EUDR-Sorgfaltserklärung bei jeder Lieferung",
+    partners: "Partnernetzwerk",
+    partnersAria: "Knoten des Partnernetzwerks",
+  },
+};
+
 export function Footer() {
+  const t = T[useLang()];
   return (
     <footer className={styles.footer}>
       <div className={`wrap ${styles.foot}`}>
         <div className={styles.fbrand}>
           <Image src="/images/shared/ctc-logo-parrot.jpg" alt="CTC" width={1484} height={1662} />
           <span>
-            <strong>Colombian Trading Company</strong> · Cafés de Colombia, para el mundo
+            <strong>Colombian Trading Company</strong> · {t.tagline}
             <br />
             <span className="mono" style={{ fontSize: 11.5 }}>
               Kaffetal Regal · Cherry Picked · CTC Tech · Co-Create · Varietales Registrados
@@ -32,7 +57,7 @@ export function Footer() {
         <div className={`mono ${styles.right}`}>
           Cra. 4 #8N-30, vía Guatiguará, casa 205, conjunto campestre Santillana · Piedecuesta, Santander
           <br />
-          <a href="mailto:info@ctcexport.com">info@ctcexport.com</a> · DDS EUDR en cada despacho
+          <a href="mailto:info@ctcexport.com">info@ctcexport.com</a> · {t.dds}
           <div className={styles.social}>
             <a href="https://instagram.com/ctcexport" target="_blank" rel="noopener" aria-label="Instagram de CTC">
               <svg viewBox="0 0 24 24">
@@ -51,10 +76,11 @@ export function Footer() {
         </div>
       </div>
 
-      {/* The orchestrated network: one door per partner node. */}
+      {/* The orchestrated network: one door per partner node. Node names are
+          proper names — they stay Spanish in every language. */}
       <div className={`wrap ${styles.partners}`}>
-        <span className={`mono ${styles.partnersLabel}`}>Red de socios</span>
-        <nav className={styles.partnersLinks} aria-label="Nodos de la red de socios">
+        <span className={`mono ${styles.partnersLabel}`}>{t.partners}</span>
+        <nav className={styles.partnersLinks} aria-label={t.partnersAria}>
           {PARTNER_LINKS.map((l) => (
             <a key={l.slug} href={partnerHref(l)}>
               {l.label}

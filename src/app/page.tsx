@@ -1,8 +1,10 @@
 import { ToastProvider } from "@/components/Toast";
-import { Band } from "@/components/Band";
+import { LangProvider } from "@/components/lang/i18n";
+import { LangBubble } from "@/components/lang/LangBubble";
 import { ContactModalProvider } from "@/components/ctc-home/ContactModal";
 import { Header } from "@/components/ctc-home/Header";
 import { Hero } from "@/components/ctc-home/Hero";
+import { HomeBand } from "@/components/ctc-home/HomeBand";
 import { EcosystemSection } from "@/components/ctc-home/EcosystemSection";
 import { MomentSection } from "@/components/ctc-home/MomentSection";
 import { ServicesSection } from "@/components/ctc-home/ServicesSection";
@@ -14,40 +16,21 @@ export default function CtcHomePage() {
   return (
     <div data-theme="ctc-home">
       <ToastProvider>
-        <ContactModalProvider>
-          <Header />
-          <Hero />
-          <EcosystemSection />
-
-          <Band
-            image="/images/ctc-home/22-papa-en-feria.jpg"
-            eyebrow="Colombia en el mundo"
-            heading={
-              <>
-                Feria por feria, taza por taza: <em>el café con nombre se defiende solo.</em>
-              </>
-            }
-            caption="CTC en ruta · costal al hombro"
-          />
-
-          <MomentSection />
-          <ServicesSection />
-
-          <Band
-            image="/images/ctc-home/31-patio-de-cafe.jpg"
-            eyebrow="Del patio al laboratorio"
-            heading={
-              <>
-                La calidad se construye en el patio <em>y se demuestra con números.</em>
-              </>
-            }
-            caption="Pergamino en secado · control de humedad"
-          />
-
-          <HistorySection />
-          <QuickMenu />
-          <Footer />
-        </ContactModalProvider>
+        <LangProvider storageKey="ctc-lang">
+          <ContactModalProvider>
+            <Header />
+            <Hero />
+            <EcosystemSection />
+            <HomeBand band="feria" />
+            <MomentSection />
+            <ServicesSection />
+            <HomeBand band="patio" />
+            <HistorySection />
+            <QuickMenu />
+            <LangBubble />
+            <Footer />
+          </ContactModalProvider>
+        </LangProvider>
       </ToastProvider>
     </div>
   );

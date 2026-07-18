@@ -15,6 +15,12 @@ export type ToolCopy = {
   desc: string;
 };
 
+// OJO: TODO lo que entra aquí tiene que ser SERIALIZABLE. Este componente es
+// "use client" y lo montan padres de los dos tipos: AppDashboard y GadgetsSection
+// son client, pero la página del ECP es un SERVER component. `frameTitle` era una
+// FUNCIÓN y por eso el panel del ECP —y solo ese— reventaba con "Functions cannot
+// be passed directly to Client Components". Se cambió por un prefijo de texto que
+// el propio panel compone: no hay forma de volver a meter la pata.
 export type ToolPanelLabels = {
   /** Texto del botón que abre la herramienta en una pestaña propia. */
   openInTab: string;
@@ -22,8 +28,8 @@ export type ToolPanelLabels = {
   choose: string;
   /** Etiqueta accesible del grupo de opciones. */
   groupAria: string;
-  /** Prefijo del title del iframe ("Herramienta: X"). */
-  frameTitle: (name: string) => string;
+  /** Prefijo del title del iframe; queda "<prefijo>: <nombre>". */
+  framePrefix: string;
 };
 
 export function ToolPanel({
@@ -83,7 +89,7 @@ export function ToolPanel({
               key={activeDef.id}
               className={styles.frame}
               src={activeDef.src}
-              title={labels.frameTitle(activeCopy.name)}
+              title={`${labels.framePrefix}: ${activeCopy.name}`}
               loading="lazy"
               // Las herramientas son nuestras y autocontenidas, pero se les
               // concede lo mínimo: scripts y formularios sí; navegar la ventana

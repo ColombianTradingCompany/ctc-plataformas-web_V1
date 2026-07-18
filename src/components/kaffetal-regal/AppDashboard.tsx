@@ -797,7 +797,7 @@ export function AppDashboard({
                   openInTab: "Abrir en pestaña nueva ↗",
                   choose: "Elija una herramienta para abrirla aquí.",
                   groupAria: "Herramientas disponibles",
-                  frameTitle: (name) => `Herramienta: ${name}`,
+                  framePrefix: "Herramienta",
                 }}
               />
             </div>

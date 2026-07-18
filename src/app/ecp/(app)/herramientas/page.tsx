@@ -36,7 +36,7 @@ export default async function EcpHerramientasPage() {
           openInTab: "Abrir en pestaña nueva ↗",
           choose: "Elija una herramienta para abrirla aquí.",
           groupAria: "Herramientas internas disponibles",
-          frameTitle: (name) => `Herramienta: ${name}`,
+          framePrefix: "Herramienta",
         }}
         // Solo hay una: se abre directamente en vez de pedir un clic de más.
         initial={ECP_TOOL_IDS[0]}

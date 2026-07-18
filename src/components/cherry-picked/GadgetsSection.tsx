@@ -21,7 +21,7 @@ type Copy = {
   openInTab: string;
   choose: string;
   groupAria: string;
-  frameTitle: (name: string) => string;
+  framePrefix: string;
   tools: Record<ToolId, { name: string; desc: string }>;
 };
 
@@ -34,7 +34,7 @@ const EN: Copy = {
   openInTab: "Open in a new tab ↗",
   choose: "Pick a tool to open it here.",
   groupAria: "Available tools",
-  frameTitle: (name) => `Tool: ${name}`,
+  framePrefix: "Tool",
   tools: {
     agtron: {
       name: "Agtron dial · roast colour",
@@ -63,7 +63,7 @@ const T: Record<Lang, Copy> = {
     openInTab: "Abrir en pestaña nueva ↗",
     choose: "Elige una herramienta para abrirla aquí.",
     groupAria: "Herramientas disponibles",
-    frameTitle: (name) => `Herramienta: ${name}`,
+    framePrefix: "Herramienta",
     tools: {
       agtron: {
         name: "Disco Agtron · color de tueste",
@@ -89,7 +89,7 @@ const T: Record<Lang, Copy> = {
     openInTab: "In neuem Tab öffnen ↗",
     choose: "Wähle ein Werkzeug, um es hier zu öffnen.",
     groupAria: "Verfügbare Werkzeuge",
-    frameTitle: (name) => `Werkzeug: ${name}`,
+    framePrefix: "Werkzeug",
     tools: {
       agtron: {
         name: "Agtron-Scheibe · Röstfarbe",
@@ -130,7 +130,7 @@ export function GadgetsSection() {
             openInTab: t.openInTab,
             choose: t.choose,
             groupAria: t.groupAria,
-            frameTitle: t.frameTitle,
+            framePrefix: t.framePrefix,
           }}
         />
 

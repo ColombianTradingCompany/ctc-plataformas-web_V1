@@ -308,3 +308,25 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
 - Verificado en navegador: chip 34x34, svg 19x19, stroke 1.6, stroke="currentColor", el color
   resuelve al acento de CP. tsc+eslint limpios, build limpio.
 (commit: pending)
+
+## [2026-07-18] BUG: el panel de herramientas del ECP reventaba (props no serializables)
+- Reportado por el owner: /ecp/herramientas crasheaba. KR y CP funcionaban bien.
+- CAUSA: ToolPanel es "use client" y recibía en labels un `frameTitle: (name) => string`,
+  o sea una FUNCIÓN. Desde AppDashboard y GadgetsSection no pasa nada porque esos padres YA
+  son "use client" (client→client). Pero la página del ECP es un SERVER component, y de
+  servidor a cliente solo viajan props SERIALIZABLES: React lanza "Functions cannot be passed
+  directly to Client Components". Por eso fallaba en ESA superficie y solo en esa.
+- POR QUÉ NO LO ATRAPÉ ANTES: mi verificación pidió /ecp/herramientas sin sesión y vio un 307
+  a /login — pero requireConsoleAccess redirige ANTES de renderizar, así que la ruta feliz
+  nunca se ejecutó. Un 307 no prueba que la página renderice.
+- REPRODUCIDO de verdad antes de tocar nada: se creó una ruta temporal (server component, sin
+  auth) que monta ToolPanel igual que el ECP → 500 con el mensaje exacto señalando frameTitle.
+  Tras el arreglo, 200 y el title del iframe correcto. Ruta temporal borrada.
+  (Nota: la primera ruta se llamó __repro y dio 404 — en el App Router una carpeta que empieza
+  por "_" es PRIVADA y queda fuera del enrutado.)
+- ARREGLO DE DISEÑO, no parche: `frameTitle: (name) => string` pasa a `framePrefix: string` y
+  el título lo compone el propio ToolPanel. Ya no queda ninguna prop-función en su API, así
+  que la trampa no puede volver: cualquier padre, cliente o servidor, puede montarlo.
+- Verificado: repro 500→200, CP sigue bien (1 opción, icono, title "Tool: Agtron dial · roast
+  colour"), tsc+eslint limpios, build con las dos rutas /ecp/herramientas.
+(commit: pending)

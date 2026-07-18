@@ -4,7 +4,242 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mermas de Café · CTC</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>/* fuentes locales (vendor-tool-assets.mjs) */
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dPIFZifjKcF5UAWdDRYE58RWq7.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dPIFZifjKcF5UAWdDRYE98RWq7.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dMIFZifjKcF5UAWdDRaPpZUFqaHjyV.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dMIFZifjKcF5UAWdDRaPpZUFuaHjyV.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dMIFZifjKcF5UAWdDRaPpZUFWaHg.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
 <style>
 :root {
   --purple:#3D0D8C; --purple-mid:#5A1FC1; --purple-light:#7C3AED;
@@ -1142,7 +1377,242 @@ function doExport(){
 
   const css=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;color:#1A0F2E;background:#fff;font-size:12.5px;line-height:1.55}.page{max-width:800px;margin:0 auto;padding:36px 40px}.rh{border-bottom:3px solid #3D0D8C;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start}.rh-l .ey{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#B8A4E3;margin-bottom:4px}.rh-l h1{font-size:24px;font-weight:800;color:#3D0D8C;letter-spacing:-.015em}.rh-r{text-align:right;font-size:11px;color:#4A3F6B;line-height:1.9}.rh-r b{color:#1A0F2E}.ci{background:#F5F3FA;border-left:3px solid #3D0D8C;border-radius:0 10px 10px 0;padding:11px 16px;margin-bottom:16px}.ci-main{font-size:16px;font-weight:800;color:#1A0F2E;margin-bottom:6px}.ci-grid{display:flex;flex-wrap:wrap;gap:4px 20px;font-size:12px}.ci-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8B80A8;margin-right:3px}.narr{background:#F7F5FD;border:1px solid #D8CFEE;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px;line-height:1.7;color:#2D1A5C}.narr strong{color:#1A0F2E}.kp{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}.k{background:#F5F3FA;border:1px solid #E2DCF0;border-radius:10px;padding:11px;text-align:center}.kl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#8B80A8;margin-bottom:2px}.kv{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:#1A0F2E;line-height:1.1}.ks{font-size:9px;color:#8B80A8;margin-top:2px}h2{font-size:12px;font-weight:700;color:#3D0D8C;margin:18px 0 8px;padding-bottom:5px;border-bottom:1px solid #E2DCF0;text-transform:uppercase;letter-spacing:.07em}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:7px 8px;border-bottom:1px solid #EDE8F4;text-align:left}th{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:#8B80A8;font-weight:700}.mc{text-align:center}.mo{font-family:'Space Mono',monospace}.r{color:#CC1F3A}.fin{background:linear-gradient(135deg,#1A0F2E,#3D0D8C);color:#fff;border-radius:12px;padding:16px 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fi-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;opacity:.5;margin-bottom:3px}.fi-v{font-family:'Space Mono',monospace;font-size:15px;font-weight:700}.gold{color:#E8C030}.nb{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;margin-top:14px;font-size:12px;color:#78350F;line-height:1.6}.nb-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#B45309;margin-bottom:4px}.fo{margin-top:18px;padding-top:10px;border-top:1px solid #E2DCF0;font-size:9.5px;color:#8B80A8;line-height:1.6}.tb{position:fixed;top:14px;right:14px;display:flex;gap:7px}.tb button{font-family:'Plus Jakarta Sans';font-size:12px;font-weight:700;border:none;border-radius:8px;padding:8px 13px;cursor:pointer}.tp{background:#3D0D8C;color:#fff}.tc{background:#EDE8F8;color:#1A0F2E}@media print{.tb{display:none}.page{padding:0;max-width:100%}@page{margin:11mm}}`;
 
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte · ${productor||'CTC'}</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><style>${css}</style></head><body><div class="tb"><button class="tp" onclick="window.print()">Imprimir / PDF</button><button class="tc" onclick="window.close()">Cerrar</button></div><div class="page"><div class="rh"><div class="rh-l"><div class="ey">Estimación de mermas · CTCx</div><h1>Reporte de Proceso de Café</h1></div><div class="rh-r"><div><b>${startName} → ${endName}</b></div><div>Masa inicial: <b>${kgf(init)}</b></div><div style="color:#8B80A8">${fechaGen}</div></div></div>${clientHTML}<div class="narr">${narrative}</div><div class="kp"><div class="k"><div class="kl">Masa final</div><div class="kv">${final?final.value.toFixed(1):0}kg</div><div class="ks">${endName}</div></div><div class="k"><div class="kl">Merma total</div><div class="kv r">−${pctf((totalLost/init)*100)}</div><div class="ks">${kgf(totalLost)}</div></div><div class="k"><div class="kl">F. Rendimiento</div><div class="kv">${factor!==null?factor.toFixed(1):'N/A'}</div><div class="ks">${factor!==null?'Perg→Verde · '+factorRating:'Requiere perg→verde'}</div></div><div class="k"><div class="kl">Eficiencia</div><div class="kv">${eff.toFixed(1)}%</div><div class="ks">${effRating}</div></div></div><h2>Desglose de mermas por origen</h2><table><thead><tr><th>Origen de la merma</th><th class="mc">% merma</th><th class="mc">Kg perdidos</th><th class="mc">% s/ lote</th><th class="mc">Eficiencia</th><th>Proporción</th></tr></thead><tbody>${lRows}<tr style="font-weight:800;border-top:2px solid #E2DCF0;background:#FEF2F2"><td>TOTAL</td><td></td><td class="mc mo r">−${kgf(totalLost)}</td><td class="mc mo r">−${pctf((totalLost/init)*100)}</td><td></td><td></td></tr></tbody></table><p style="font-size:9.5px;color:#8B80A8;margin:6px 0 14px;font-style:italic">La eficiencia compara la merma de cada proceso con su valor típico realista (café arábica lavado, referencia FNC/Cenicafé). Menor merma = mayor eficiencia. *Las etapas de secado son determinadas por la humedad y no se califican.</p><h2>Valorización estimada</h2><div class="fin"><div><div class="fi-l">Estado valorado</div><div class="fi-v">${refD?refD.value.toFixed(1):0} kg de ${refD?refD.name.es:'—'}</div></div><div><div class="fi-l">Precio unitario</div><div class="fi-v">${fmtCOP(ppkg)}<span style="font-size:10px;opacity:.6"> / kg</span></div></div><div><div class="fi-l">Valor total del lote</div><div class="fi-v gold">${fmtCOP(totalVal)}</div></div></div>
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte · ${productor||'CTC'}</title><style>/* fuentes locales (vendor-tool-assets.mjs) */
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko70yyygA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko50yyygA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yyygA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v12-LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dPIFZifjKcF5UAWdDRYE58RWq7.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dPIFZifjKcF5UAWdDRYE98RWq7.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dMIFZifjKcF5UAWdDRaPpZUFqaHjyV.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dMIFZifjKcF5UAWdDRaPpZUFuaHjyV.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v17-i7dMIFZifjKcF5UAWdDRaPpZUFWaHg.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style><style>${css}</style></head><body><div class="tb"><button class="tp" onclick="window.print()">Imprimir / PDF</button><button class="tc" onclick="window.close()">Cerrar</button></div><div class="page"><div class="rh"><div class="rh-l"><div class="ey">Estimación de mermas · CTCx</div><h1>Reporte de Proceso de Café</h1></div><div class="rh-r"><div><b>${startName} → ${endName}</b></div><div>Masa inicial: <b>${kgf(init)}</b></div><div style="color:#8B80A8">${fechaGen}</div></div></div>${clientHTML}<div class="narr">${narrative}</div><div class="kp"><div class="k"><div class="kl">Masa final</div><div class="kv">${final?final.value.toFixed(1):0}kg</div><div class="ks">${endName}</div></div><div class="k"><div class="kl">Merma total</div><div class="kv r">−${pctf((totalLost/init)*100)}</div><div class="ks">${kgf(totalLost)}</div></div><div class="k"><div class="kl">F. Rendimiento</div><div class="kv">${factor!==null?factor.toFixed(1):'N/A'}</div><div class="ks">${factor!==null?'Perg→Verde · '+factorRating:'Requiere perg→verde'}</div></div><div class="k"><div class="kl">Eficiencia</div><div class="kv">${eff.toFixed(1)}%</div><div class="ks">${effRating}</div></div></div><h2>Desglose de mermas por origen</h2><table><thead><tr><th>Origen de la merma</th><th class="mc">% merma</th><th class="mc">Kg perdidos</th><th class="mc">% s/ lote</th><th class="mc">Eficiencia</th><th>Proporción</th></tr></thead><tbody>${lRows}<tr style="font-weight:800;border-top:2px solid #E2DCF0;background:#FEF2F2"><td>TOTAL</td><td></td><td class="mc mo r">−${kgf(totalLost)}</td><td class="mc mo r">−${pctf((totalLost/init)*100)}</td><td></td><td></td></tr></tbody></table><p style="font-size:9.5px;color:#8B80A8;margin:6px 0 14px;font-style:italic">La eficiencia compara la merma de cada proceso con su valor típico realista (café arábica lavado, referencia FNC/Cenicafé). Menor merma = mayor eficiencia. *Las etapas de secado son determinadas por la humedad y no se califican.</p><h2>Valorización estimada</h2><div class="fin"><div><div class="fi-l">Estado valorado</div><div class="fi-v">${refD?refD.value.toFixed(1):0} kg de ${refD?refD.name.es:'—'}</div></div><div><div class="fi-l">Precio unitario</div><div class="fi-v">${fmtCOP(ppkg)}<span style="font-size:10px;opacity:.6"> / kg</span></div></div><div><div class="fi-l">Valor total del lote</div><div class="fi-v gold">${fmtCOP(totalVal)}</div></div></div>
     <div class="fin" style="margin-top:8px;background:linear-gradient(135deg,#3D1A5C,#5A1FC1)"><div><div class="fi-l">Valor por kg de entrada</div><div class="fi-v">${fmtCOP(startMass>0?totalVal/startMass:0)}<span style="font-size:10px;opacity:.6"> / kg ${startName}</span></div></div><div><div class="fi-l">Rendimiento económico</div><div class="fi-v">${pctf(eff)}<span style="font-size:10px;opacity:.6"> de masa</span></div></div><div><div class="fi-l">Costo de oportunidad (merma)</div><div class="fi-v" style="color:#FCA5A5">${fmtCOP(ppkg*totalLost)}</div></div></div><p style="font-size:9.5px;color:#8B80A8;margin-top:5px;font-style:italic">Valor calculado sobre ${refD?refD.value.toFixed(1):0} kg de café en estado <strong>${refD?refD.name.es:'—'}</strong>, a ${fmtCOP(ppkg)}/kg (precio de referencia ingresado: ${fmtCOP(state.finance.price)}/${state.finance.unit==='carga'?'carga de 125 kg':'kg'}).</p>${notas?`<div class="nb"><div class="nb-l">Notas del evaluador</div>${notas}</div>`:''}<div class="fo">Reporte generado con herramienta de estimación de mermas · CTCx / CTC Colombia · ${fechaGen}. Valores estimativos; no constituyen garantía de resultado comercial. Rangos técnicos según norma NTC colombiana para café exportable.</div></div></body></html>`;
 
   const w=window.open('','_blank');

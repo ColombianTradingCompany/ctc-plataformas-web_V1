@@ -250,3 +250,34 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
   Roast Color Reference"), la altura computada coincide con la regla CSS activa, 0 errores de
   consola, tsc+eslint limpios y el build emite /ecp/herramientas.
 (commit: pending)
+
+## [2026-07-18] Herramientas: QR autenticado, reparto por superficie y OFFLINE
+- Tres ajustes pedidos por el owner sobre los módulos de herramientas.
+- (1) QR SOLO CON SESIÓN: generador-qr.html salió de public/ a private-tools/ y se sirve por
+  /ecp/herramientas/[tool] con requireConsoleAccess("ecp") + CSP estricta + no-store. La URL
+  lleva una CLAVE ("qr"), no un nombre de archivo: privateTools.ts resuelve contra una lista
+  blanca, así que no hay superficie de path traversal. next.config.ts añade el
+  outputFileTracingIncludes correspondiente (sin él Vercel no empaqueta private-tools/).
+  Verificado: /tools/generador-qr.html ahora da 404 y la ruta autenticada redirige a /login.
+- (2) REPARTO POR SUPERFICIE (lib/tools/catalog.ts): lo decide el IDIOMA, que coincide con la
+  audiencia. KR "Herramientas Cafeteras" = las dos calculadoras de mermas (español, la
+  matemática diaria del caficultor). CP "Coffee Gadgets" = el disco Agtron (inglés, EL
+  instrumento del tostador). ECP = el generador de QR. Los diccionarios de copy conservan las
+  cuatro herramientas en los tres idiomas, así que mover una de superficie es cambiar UNA
+  LISTA, no volver a traducir. Se ajustó el copy de CP, que prometía "yield maths" que ya no
+  están ahí.
+- (3) OFFLINE de verdad: NUEVO scripts/vendor-tool-assets.mjs baja a disco las tipografías de
+  Google Fonts (38 woff2) y el CDN de Tailwind (398 KB) y reescribe los enlaces a rutas
+  locales bajo public/tools/assets/. Importaba de verdad: mermas-rapida.html sacaba TODO su
+  CSS de cdn.tailwindcss.com, así que una finca sin señal la veía SIN UN SOLO ESTILO. El
+  script es idempotente y repetible (si el owner actualiza una herramienta, se recopia el
+  original y se vuelve a correr).
+- Verificado en navegador: mermas-rapida carga /tools/assets/tailwind.js, CERO referencias
+  externas, y la clase Tailwind p-4 computa padding:16px — o sea Tailwind CORRIÓ de verdad, no
+  solo se descargó; document.fonts.check pasa para Inter, Fraunces e IBM Plex Mono; el JS de la
+  calculadora sigue recalculando al escribir; en Agtron los únicos enlaces externos que quedan
+  son las 4 citas a artículos (lectura, no assets); CP muestra 1 sola opción (Agtron).
+  tsc+eslint limpios; el build emite /ecp/herramientas y /ecp/herramientas/[tool].
+- Nota: las fuentes viven en public/ aunque las use la herramienta privada — una tipografía no
+  es secreto y así no se duplican 1,2 MB.
+(commit: pending)

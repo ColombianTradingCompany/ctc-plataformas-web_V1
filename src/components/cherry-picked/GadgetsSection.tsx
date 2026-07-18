@@ -1,14 +1,16 @@
 "use client";
 
 import { ToolPanel } from "@/components/tools/ToolPanel";
-import { COFFEE_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
+import { CP_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
 import { useLang, type Lang } from "./i18n";
 import styles from "./GadgetsSection.module.css";
 
-// Coffee Gadgets — las mismas herramientas que el productor ve en Kaffetal
-// Regal, aquí con la voz del tostador. El INTERIOR de cada herramienta queda en
-// su idioma original (las de mermas en español, el disco Agtron en inglés); la
-// tarjeta lo marca con la etiqueta EN/ES para que nadie se lleve la sorpresa.
+// Coffee Gadgets — las herramientas del TOSTADOR. El reparto lo decide el idioma
+// y coincide con la audiencia: aquí va el disco Agtron (inglés, el instrumento
+// del tostador); las calculadoras de merma están en español y viven donde su
+// gente las usa, en el panel del productor (ver lib/tools/catalog.ts).
+// Los diccionarios conservan el copy de las cuatro herramientas para que mover
+// una de superficie sea cambiar una lista, no volver a traducir.
 
 type Copy = {
   eyebrow: string;
@@ -27,8 +29,8 @@ const EN: Copy = {
   eyebrow: "Coffee Gadgets · Free tools, no sign-in",
   h2: "The little instruments that settle an argument. ",
   h2em: "Yours to use.",
-  body: "Working tools we built for ourselves and left open: roast-colour reference and the yield maths that turns cherry into the green you actually buy. Nothing is stored and nothing reaches CTC — every calculation happens in your own browser.",
-  note: "Tip: each tool also opens in its own tab, so you can keep it next to the catalogue while you order.",
+  body: "Working tools we built for ourselves and left open. Nothing is stored and nothing reaches CTC — everything runs in your own browser, and it keeps working with no connection.",
+  note: "Tip: it also opens in its own tab, so you can keep it next to the catalogue while you order.",
   openInTab: "Open in a new tab ↗",
   choose: "Pick a tool to open it here.",
   groupAria: "Available tools",
@@ -56,8 +58,8 @@ const T: Record<Lang, Copy> = {
     eyebrow: "Coffee Gadgets · Herramientas libres, sin registro",
     h2: "Los pequeños instrumentos que zanjan una discusión. ",
     h2em: "Úsalos.",
-    body: "Herramientas de trabajo que construimos para nosotros y dejamos abiertas: la referencia de color de tueste y las cuentas de rendimiento que convierten la cereza en el verde que realmente compras. No se guarda nada ni llega nada a CTC — todo el cálculo ocurre en tu propio navegador.",
-    note: "Tip: cada herramienta también se abre en su propia pestaña, para tenerla al lado del catálogo mientras pides.",
+    body: "Herramientas de trabajo que construimos para nosotros y dejamos abiertas. No se guarda nada ni llega nada a CTC — todo corre en tu propio navegador, y sigue funcionando sin conexión.",
+    note: "Tip: también se abre en su propia pestaña, para tenerla al lado del catálogo mientras pides.",
     openInTab: "Abrir en pestaña nueva ↗",
     choose: "Elige una herramienta para abrirla aquí.",
     groupAria: "Herramientas disponibles",
@@ -82,8 +84,8 @@ const T: Record<Lang, Copy> = {
     eyebrow: "Coffee Gadgets · Freie Werkzeuge, ohne Anmeldung",
     h2: "Die kleinen Instrumente, die eine Diskussion beenden. ",
     h2em: "Nutze sie.",
-    body: "Arbeitswerkzeuge, die wir für uns selbst gebaut und offen gelassen haben: die Referenz für Röstfarbe und die Ausbeuterechnung, die aus der Kirsche den Rohkaffee macht, den du tatsächlich kaufst. Nichts wird gespeichert, nichts erreicht CTC — jede Berechnung läuft in deinem eigenen Browser.",
-    note: "Tipp: Jedes Werkzeug öffnet sich auch in einem eigenen Tab, so hast du es beim Bestellen neben dem Katalog.",
+    body: "Arbeitswerkzeuge, die wir für uns selbst gebaut und offen gelassen haben. Nichts wird gespeichert, nichts erreicht CTC — alles läuft in deinem eigenen Browser und funktioniert auch ohne Verbindung.",
+    note: "Tipp: Es öffnet sich auch in einem eigenen Tab, so hast du es beim Bestellen neben dem Katalog.",
     openInTab: "In neuem Tab öffnen ↗",
     choose: "Wähle ein Werkzeug, um es hier zu öffnen.",
     groupAria: "Verfügbare Werkzeuge",
@@ -123,7 +125,7 @@ export function GadgetsSection() {
         </div>
 
         <ToolPanel
-          tools={COFFEE_TOOL_IDS.map((id) => ({ id, ...t.tools[id] }))}
+          tools={CP_TOOL_IDS.map((id) => ({ id, ...t.tools[id] }))}
           labels={{
             openInTab: t.openInTab,
             choose: t.choose,

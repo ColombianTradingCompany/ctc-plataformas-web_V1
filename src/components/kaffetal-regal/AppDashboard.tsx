@@ -15,7 +15,7 @@ import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
 import { ToolPanel } from "@/components/tools/ToolPanel";
-import { COFFEE_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
+import { KR_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
 import styles from "./AppDashboard.module.css";
 
 // Copy en español de las herramientas para el productor. El INTERIOR de cada
@@ -307,7 +307,7 @@ export function AppDashboard({
       key: "herramientas",
       icon: HUB_ICON.herramientas,
       title: "Herramientas Cafeteras",
-      fact: "Calculadoras de merma y disco Agtron — sin salir de su panel",
+      fact: "Calculadoras de rendimiento y mermas — funcionan sin internet",
     },
     {
       key: "servicios",
@@ -788,10 +788,11 @@ export function AppDashboard({
               <span className={styles.k}>Herramientas Cafeteras · calculadoras y referencias de trabajo</span>
               <div className={styles.alist} style={{ marginTop: 6, marginBottom: 16 }}>
                 Herramientas de uso libre para su finca: no guardan nada ni envían nada a CTC — todo el cálculo
-                ocurre en su propio navegador. Elija una y se abre aquí mismo.
+                ocurre en su propio navegador, y <b>siguen funcionando sin internet</b> una vez abierta la página.
+                Elija una y se abre aquí mismo.
               </div>
               <ToolPanel
-                tools={COFFEE_TOOL_IDS.map((id) => ({ id, ...KR_TOOL_COPY[id] }))}
+                tools={KR_TOOL_IDS.map((id) => ({ id, ...KR_TOOL_COPY[id] }))}
                 labels={{
                   openInTab: "Abrir en pestaña nueva ↗",
                   choose: "Elija una herramienta para abrirla aquí.",

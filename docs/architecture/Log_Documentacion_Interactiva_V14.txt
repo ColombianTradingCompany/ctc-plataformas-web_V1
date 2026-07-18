@@ -293,3 +293,18 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
 - Fue UNA LÍNEA, que es exactamente para lo que se dejaron los diccionarios de copy con las
   cuatro herramientas en los tres idiomas: mover una de superficie no obliga a traducir nada.
 (commit: pending)
+
+## [2026-07-18] Iconos de las herramientas
+- NUEVO src/components/tools/ToolIcons.tsx: un icono de línea por herramienta, con el MISMO
+  lenguaje visual que los iconos del hub del productor (LineIcon de AppDashboard: viewBox 24,
+  trazo 1.6, currentColor, sin relleno) — no se introduce un segundo estilo gráfico.
+  Metáforas: embudo + rayo (merma rápida: entra mucho, sale poco, y rápido); barras que
+  decrecen sobre una línea base (merma detallada: el peso perdiéndose etapa por etapa, que es
+  justo lo que audita); disco con aguja y marcas (Agtron); las tres marcas de posicionamiento
+  (QR).
+- ToolPanel: pastilla de icono de 34px (la del hub es de 42) con svg de 19px, que hereda el
+  --accent de la superficie donde se monte, así que se ve nativo en KR, CP y ECP sin código
+  por superficie. aria-hidden: el nombre de la herramienta ya está al lado.
+- Verificado en navegador: chip 34x34, svg 19x19, stroke 1.6, stroke="currentColor", el color
+  resuelve al acento de CP. tsc+eslint limpios, build limpio.
+(commit: pending)

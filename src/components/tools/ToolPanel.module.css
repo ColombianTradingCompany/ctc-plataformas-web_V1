@@ -20,8 +20,22 @@
   background:color-mix(in srgb, var(--accent,#c9a45c) 8%, var(--card,#fff));
 }
 
-.optionTop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.optionName{font-family:var(--font-fraunces),serif;font-weight:800;font-size:15.5px;line-height:1.25;color:var(--ink,#22303c)}
+.optionTop{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+
+/* Misma pastilla de icono que los mosaicos del hub del productor, un punto más
+   pequeña: el icono hereda el color de acento de la superficie donde se monte. */
+.optionIcon{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:34px;height:34px;border-radius:9px;
+  background:var(--paper,#f4f1ea);border:1px solid var(--line,#dde1e7);
+  color:var(--accent,#c9a45c);
+  transition:color .15s ease, border-color .15s ease;
+}
+.optionIcon svg{width:19px;height:19px}
+.option:hover .optionIcon{border-color:var(--accent,#c9a45c)}
+.optionActive .optionIcon{background:var(--card,#fff);border-color:var(--accent,#c9a45c)}
+
+.optionName{font-family:var(--font-fraunces),serif;font-weight:800;font-size:15.5px;line-height:1.25;color:var(--ink,#22303c);min-width:0}
 .optionDesc{font-size:12.8px;line-height:1.45;color:var(--muted,#5a6472)}
 .langTag{
   font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.09em;

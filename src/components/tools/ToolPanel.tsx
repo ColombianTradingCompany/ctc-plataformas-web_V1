@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TOOLS, type ToolId } from "@/lib/tools/catalog";
+import { TOOL_ICON } from "./ToolIcons";
 import styles from "./ToolPanel.module.css";
 
 // Panel de opciones + visor. Lo comparten las tres superficies (Kaffetal Regal,
@@ -53,6 +54,9 @@ export function ToolPanel({
               onClick={() => setActive(t.id)}
             >
               <span className={styles.optionTop}>
+                <span className={styles.optionIcon} aria-hidden>
+                  {TOOL_ICON[t.id]}
+                </span>
                 <span className={styles.optionName}>{t.name}</span>
                 <span className={styles.langTag}>{TOOLS[t.id].lang.toUpperCase()}</span>
               </span>

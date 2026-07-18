@@ -41,3 +41,30 @@ closed and left as historical record of what went into producing it).
 
 (commit del wrap V14: 0925d78 — el contenido corresponde a ese commit; el trabajo de
 Cherry Picked family + reestructuración Nominados ya está desplegado READY en todos los dominios.)
+
+## [2026-07-18] La revisión EVA rediseñada como CHECKLIST (feedback del owner en vivo)
+- Contexto: al arrancar el walkthrough del nuevo flujo de Arena, el owner pidió rehacer la
+  tarjeta de revisión del lote en /bcp/lotes: la EVA debe ser literalmente una lista de
+  verificación por bloque, no un muro de secciones.
+- NUEVO lots.eva_checklist (jsonb, migración add_eva_checklist): 5 claves — ft, ft2_certs,
+  ft2_fisico, eudr, video — definidas en lotes/evaChecklist.ts (módulo plano compartido
+  cliente/servidor con labels + missingEvaItems()).
+- NUEVO lotes/EvaReviewCard.tsx ("use client"), reemplaza el cuerpo de la tarjeta:
+  (1) la zona de DECISIÓN subió arriba (donde estaban los botones de sección): chips
+  Veredicto EVA + EUDR + progreso Checklist n/5, botones Apto/No Apto; (2) la CHECKLIST
+  vive donde estaba el veredicto: 5 chips con casilla persistida (setEvaChecklistItem,
+  optimista con revert) que abren un SUBPANEL EXCLUSIVO por bloque + botón Comunicación;
+  (3) en el panel EUDR lo declarado se muestra FIJO y cada campo editable tiene botón
+  "Corregir" que abre su control debajo (override); el guardado arma el FormData completo
+  y llama al mismo updateLotEudr (lógica intacta); (4) "Nivel de riesgo determinado" cierra
+  el panel EUDR como BLOQUE DESTACADO (borde grueso + sugerencia derivada) — la última
+  marca antes del veredicto; (5) adjuntos enlazados con signed URLs: soportes de
+  certificados A3/A4 (cert_attachments), video principal (lots.video_asset_id) y B4 extra.
+- markLotApto ganó la compuerta de checklist completa (server-side, lista los bloques
+  faltantes) ADEMÁS del gate EUDR existente. setEvaChecklistItem solo en ficha_completa.
+- EvaVerdictButtons.tsx ELIMINADO (absorbido por EvaReviewCard). page.tsx quedó como
+  preparador de props (firma URLs en lote, arma las filas de solo-lectura por panel).
+- Para el wrap: actualizar el DICT "eva" (checklist + overrides + bloque de riesgo
+  destacado), la ANN de lotes/ (EvaReviewCard.tsx + evaChecklist.ts, EvaVerdictButtons
+  borrado) y el paso 1 del escenario "eva".
+(commit: pending)

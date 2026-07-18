@@ -1,39 +1,26 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot, revertNoApto, updateLotEudr } from "../actions";
+import { createLot, revertNoApto } from "../actions";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
-import { EvaVerdictButtons } from "./EvaVerdictButtons";
-import { logProducerComm } from "../commActions";
+import { EvaReviewCard, type EvaEudrFields, type FileLink, type Row } from "./EvaReviewCard";
+import type { EvaChecklist } from "./evaChecklist";
 import {
   fincaEudrStatus,
   lotEudrStatus,
-  deriveLotRiskLevel,
-  deriveChainComplexity,
-  deriveProductRisk,
-  countryRiskFor,
-  EUDR_ORIGIN_COUNTRIES,
-  PRODUCT_RISK_QUESTIONS,
   type FincaEudrFields,
   type EudrStatus,
 } from "@/lib/eudr";
 import { deriveCertSchemes, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { FincaModalRow } from "../fincas/FincaModalRow";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
-import { FieldInfo } from "@/components/kaffetal-regal/ficha/panes/FieldInfo";
 import { ProducerContactLine } from "../ProducerContactLine";
 import styles from "../shared.module.css";
-
-const RISK_LEVEL_LABEL: Record<string, string> = { insignificante: "Insignificante", no_insignificante: "No insignificante" };
 
 type CommRow = { id: string; lot_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
-
-const CUSTODY_STAGES: [string, string][] = [
-  ["finca", "Finca"], ["beneficio", "Beneficio"], ["secado", "Secado"],
-  ["trilla", "Trilla"], ["almacenamiento", "Almacenamiento"], ["exportacion", "Exportación"],
-];
 
 // Columns mirror the producer-facing intake sub-stages (FT/FT2/EUDR/Video --
 // see FichaView.tsx/intake_step) plus EVA, the documentation-evaluation
@@ -75,13 +62,16 @@ type LotRow = {
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
   eva_no_apto_reason: string | null;
+  eva_checklist: EvaChecklist | null;
+  video_asset_id: string | null;
   ficha_variedad: string | null;
   ficha_proceso: string | null;
   ficha_altitud_m: number | null;
   ficha_notas_cata: string | null;
   ficha_puntaje_estimado: number | null;
-  // Only the four FT2 "no lo sé / no aplica" flags are read off the datasheet
-  // here -- shown on the card so BCP sees what the producer declared unknown.
+  // The datasheet feeds the review panels: FT identity rows, FT2 certs (A3/A4
+  // + attachments), FT2 physical analysis (B2/B3), the B4 extra videos, and
+  // the four "no lo sé / no aplica" flags.
   datasheet: (Partial<FichaFormData> & { ft2_a3_na?: boolean; ft2_a4_na?: boolean; ft2_b2_na?: boolean; ft2_b3_na?: boolean }) | null;
   eudr_custody_stages: string[] | null;
   eudr_custody_method: string | null;
@@ -118,12 +108,6 @@ function toFincaEudrFields(f: FincaJoin): FincaEudrFields | null {
   };
 }
 
-function triSelectValue(v: boolean | null): string {
-  if (v === true) return "si";
-  if (v === false) return "no";
-  return "";
-}
-
 function bucketOf(lot: LotRow): Bucket {
   // Lots BCP registered by hand exist precisely because the physical sample
   // is already in CTC's hands -- they never go through the producer-driven
@@ -148,7 +132,7 @@ export default async function BcpLotesPage() {
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, datasheet,
+        `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -162,7 +146,17 @@ export default async function BcpLotesPage() {
   ]);
 
   const lotRows = (lots as LotRow[] | null) ?? [];
-  const [producers, { data: comms }, { data: inscriptionRows }] = await Promise.all([
+
+  // Firmar en un solo lote todos los adjuntos que los paneles enlazan: los
+  // soportes de certificados (A3/A4), el video principal y los B4 extra.
+  const assetIds: (string | null | undefined)[] = [];
+  for (const lot of lotRows) {
+    assetIds.push(lot.video_asset_id);
+    for (const v of lot.datasheet?.extra_video_assets ?? []) assetIds.push(v.assetId);
+    for (const a of Object.values(lot.datasheet?.cert_attachments ?? {})) assetIds.push(a.assetId);
+  }
+
+  const [producers, { data: comms }, { data: inscriptionRows }, signedUrls] = await Promise.all([
     fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
     service
       .from("producer_comm_log")
@@ -170,6 +164,7 @@ export default async function BcpLotesPage() {
       .in("lot_id", lotRows.map((l) => l.id))
       .order("created_at", { ascending: false }),
     service.from("arena_inscriptions").select("lot_id, status").in("lot_id", lotRows.map((l) => l.id)),
+    signedKaffetalMediaUrls(service, assetIds),
   ]);
   const inscriptionSettledByLot = new Map<string, boolean>();
   for (const i of (inscriptionRows as { lot_id: string; status: string }[] | null) ?? []) {
@@ -190,9 +185,9 @@ export default async function BcpLotesPage() {
     <div>
       <h1 className={styles.title}>Lotes</h1>
       <p className={styles.subtitle}>
-        Tablero de intake documental (todo gratis para el productor). En la columna EVA, CTC resuelve el EUDR del lote y
-        emite el veredicto: <b>Apto</b> abre el tramo pagado de la Arena (postulación → pago → sondeo), <b>No Apto</b>{" "}
-        devuelve la razón al productor.
+        Tablero de intake documental (todo gratis para el productor). En la columna EVA, CTC revisa la Ficha como una
+        <b> checklist</b> (FT · Certificados · Análisis Físico · EUDR · Video) y emite el veredicto: <b>Apto</b> abre el
+        tramo pagado de la Arena (postulación → pago → sondeo), <b>No Apto</b> devuelve la razón al productor.
       </p>
 
       <details className={styles.card} style={{ display: "block", marginBottom: 28 }}>
@@ -265,6 +260,7 @@ export default async function BcpLotesPage() {
                       lot={lot}
                       producer={producers.get(lot.producer_id)}
                       comms={commsByLot.get(lot.id) ?? []}
+                      signedUrls={signedUrls}
                       // Legacy receipt path only for lots BCP registered by hand
                       // (their sample is already in CTC's hands, no EVA verdict).
                       showConfirmReceipt={col.id === "eva" && lot.source === "bcp_manual_entry"}
@@ -295,6 +291,7 @@ export default async function BcpLotesPage() {
                 lot={lot}
                 producer={producers.get(lot.producer_id)}
                 comms={commsByLot.get(lot.id) ?? []}
+                signedUrls={signedUrls}
                 showConfirmReceipt
                 showEvaVerdict={false}
                 inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
@@ -331,17 +328,36 @@ export default async function BcpLotesPage() {
   );
 }
 
-const FT2_NA_LABELS: { key: "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na" | "ft2_b3_na"; label: string }[] = [
-  { key: "ft2_a3_na", label: "A3 Cert. Origen" },
-  { key: "ft2_a4_na", label: "A4 Cert. Intl." },
-  { key: "ft2_b2_na", label: "B2 Perfil de Taza" },
-  { key: "ft2_b3_na", label: "B3 Granulometría" },
-];
+// Etiquetas amistosas para las claves de cert_attachments (A3/A4).
+const CERT_KEY_LABEL: Record<string, string> = {
+  origin_cert_dor: "D.O. Regional",
+  origin_cert_do: "Denominación de Origen",
+  origin_cert_igp: "IGP",
+  origin_cert_fedecafe: "Fedecafé",
+  origin_cert_other: "Otro (origen)",
+  intl_eudr: "EUDR",
+  intl_rainforest: "Rainforest Alliance",
+  intl_organic: "Orgánico",
+  intl_eujas: "EU-JAS",
+  intl_birdfriendly: "Bird Friendly",
+  intl_foe: "Friend of the Earth",
+  intl_iwca: "IWCA",
+  intl_cafe: "C.A.F.E. Practices",
+  intl_bpa: "BPA",
+  intl_fairtrade: "Fairtrade",
+  intl_spp: "SPP",
+  intl_fairtradeusa: "Fair Trade USA",
+  intl_demeter: "Demeter",
+  intl_nespresso: "Nespresso AAA",
+  intl_globalgap: "GlobalG.A.P.",
+  intl_other: "Otro (internacional)",
+};
 
 function LotCard({
   lot,
   producer,
   comms,
+  signedUrls,
   showConfirmReceipt,
   showEvaVerdict,
   inscriptionSettled,
@@ -349,48 +365,106 @@ function LotCard({
   lot: LotRow;
   producer: ProducerContact | undefined;
   comms: CommRow[];
+  signedUrls: Map<string, string>;
   showConfirmReceipt: boolean;
   showEvaVerdict: boolean;
   inscriptionSettled: boolean;
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
-  const derivedRiskLevel = deriveLotRiskLevel(lot);
-  // País, complejidad, riesgo de producto y esquemas de certificación son
-  // derivados (mismas funciones puras que el pane del productor). Se muestran
-  // ya calculados a partir de lo guardado; se recalculan al guardar el form.
-  const derivedComplexity = deriveChainComplexity(lot.eudr_custody_stages);
-  const derivedProductRisk = deriveProductRisk(lot.eudr_product_risk_factors);
-  const derivedCountryRisk = countryRiskFor(lot.eudr_country);
   const certSchemes = deriveCertSchemes(lot.datasheet ?? {});
-  const productFactors = lot.eudr_product_risk_factors ?? [];
-  const naLabels = FT2_NA_LABELS.filter((f) => lot.datasheet?.[f.key]).map((f) => f.label);
+  const ds = lot.datasheet ?? {};
   const awaitingShipment =
     showConfirmReceipt && lot.source !== "bcp_manual_entry" && !lot.sample_shipped_at && !lot.sample_2kg_confirmed_at;
 
-  async function saveEudr(formData: FormData) {
-    "use server";
-    await updateLotEudr(lot.id, formData);
-  }
-  async function addComm(formData: FormData) {
-    "use server";
-    await logProducerComm(lot.producer_id, `Lote ${lot.name}`, formData, { lotId: lot.id });
-  }
+  // ── Filas de solo-lectura para los subpaneles del checklist ────────────────
+  const row = (l: string, v: unknown): Row | null => {
+    const s = v == null ? "" : String(v).trim();
+    return s ? { l, v: s } : null;
+  };
+  const rows = (...items: (Row | null)[]): Row[] => items.filter((r): r is Row => r !== null);
 
-  // Section anchors must be unique per lot -- several modals share the page.
-  const aid = (s: string) => `lot-${lot.id.slice(0, 8)}-${s}`;
-  const ds = lot.datasheet ?? {};
-  const dsRow = (label: string, value: React.ReactNode) =>
-    value ? (
-      <p className={styles.meta} style={{ margin: "3px 0" }}>
-        {label}: <b style={{ color: "var(--ink)" }}>{value}</b>
-      </p>
-    ) : null;
-  const sectionHead = (id: string, label: string) => (
-    <h4 id={id} style={{ margin: "18px 0 6px", fontSize: 13.5, borderBottom: "1px solid var(--line)", paddingBottom: 4, scrollMarginTop: 8 }}>
-      {label}
-    </h4>
+  const ftRows = rows(
+    row("Producto", ds.product_name),
+    row("Especie", ds.species),
+    row("Tipo de producto", [ds.product_type, ds.hs_code].filter(Boolean).join(" · HS ")),
+    row("Cosecha", [ds.harvest_year, ds.harvest_season].filter(Boolean).join(" · ")),
+    row("Categoría de origen", ds.origin_category),
+    row("Finca declarada", ds.estate),
+    row("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · ")),
+    row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : ""),
+    row("Edad del cultivo", ds.plantation_age),
+    row("Variedad", lot.ficha_variedad),
+    row("Proceso", [ds.base_processing || lot.ficha_proceso, ds.special_processing].filter(Boolean).join(" + "))
   );
+
+  const certRows = rows(
+    row("Certificados (A3/A4)", certSchemes.join(", ")),
+    row("Premios y rankings", ds.awards),
+    row("Sobre el origen", ds.about_origin)
+  );
+  const certFiles: FileLink[] = Object.entries(ds.cert_attachments ?? {}).map(([key, a]) => ({
+    label: `${CERT_KEY_LABEL[key] ?? key} — ${a.fileName}`,
+    url: signedUrls.get(a.assetId) ?? null,
+  }));
+
+  const scaCompact = (
+    [
+      ["Fragancia", ds.sca_fragrance], ["Sabor", ds.sca_flavor], ["Postgusto", ds.sca_aftertaste],
+      ["Acidez", ds.sca_acidity], ["Cuerpo", ds.sca_body], ["Balance", ds.sca_balance],
+    ] as [string, string | undefined][]
+  )
+    .filter(([, v]) => v)
+    .map(([l, v]) => `${l} ${v}`)
+    .join(" · ");
+  const meshCompact = (
+    [
+      ["Supremo+", ds.mesh_supremo_plus], ["Supremo", ds.mesh_supremo], ["Extra", ds.mesh_extra],
+      ["Europa", ds.mesh_europa], ["UGQ", ds.mesh_ugq], ["Caracol", ds.mesh_peaberry], ["Residuo", ds.mesh_residue],
+    ] as [string, string | undefined][]
+  )
+    .filter(([, v]) => v)
+    .map(([l, v]) => `${l} ${v}`)
+    .join(" · ");
+
+  const fisicoRows = rows(
+    row("Perfil de taza (B2)", ds.cupping_profile),
+    row("SCA declarado", scaCompact),
+    row("Puntaje SCA estimado", lot.ficha_puntaje_estimado),
+    row("Q-Grader de referencia", [ds.qgrader_name, ds.qgrader_lab, ds.qgrader_cert].filter(Boolean).join(" · ")),
+    row("Granulometría (B3)", meshCompact),
+    row("Defecto primario / secundario", [ds.fa_primary_defect, ds.fa_secondary_defect].filter(Boolean).join(" / ")),
+    row("Humedad pergamino", ds.fa_parch_hum ? `${ds.fa_parch_hum}%` : ""),
+    row("Notas", lot.ficha_notas_cata || ds.analysis_notes)
+  );
+
+  const videoLinks: FileLink[] = [
+    ...(lot.video_asset_id
+      ? [{ label: "Video principal del lote (B4)", url: signedUrls.get(lot.video_asset_id) ?? null }]
+      : []),
+    ...(ds.extra_video_assets ?? []).map((v) => ({
+      label: `Video adicional — ${v.fileName}`,
+      url: signedUrls.get(v.assetId) ?? null,
+    })),
+  ];
+
+  const naCerts = [ds.ft2_a3_na && "A3 Cert. Origen", ds.ft2_a4_na && "A4 Cert. Intl."].filter(Boolean) as string[];
+  const naFisico = [ds.ft2_b2_na && "B2 Perfil de Taza", ds.ft2_b3_na && "B3 Granulometría"].filter(Boolean) as string[];
+
+  const eudrFields: EvaEudrFields = {
+    custodyStages: lot.eudr_custody_stages ?? [],
+    custodyMethod: lot.eudr_custody_method ?? "",
+    custodyNotes: lot.eudr_custody_notes ?? "",
+    country: lot.eudr_country ?? "",
+    productRiskFactors: lot.eudr_product_risk_factors ?? [],
+    illegality: lot.eudr_illegality_indicators,
+    docsAvailable: lot.eudr_docs_available,
+    riskLevel: lot.eudr_risk_level ?? "",
+    mitigationActions: lot.eudr_mitigation_actions ?? "",
+    mitigationEffective: lot.eudr_mitigation_effective,
+    responsibleStored: lot.eudr_mitigation_responsible ?? "",
+    certSchemes,
+  };
 
   const summary = (
     <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -418,23 +492,6 @@ function LotCard({
       <ProducerContactLine producer={producer} />
       <p className={styles.meta}>Finca: {lot.fincas?.name ?? "—"}</p>
 
-      {/* Quick nav: the modal holds the full FT/FT2/EUDR detail; these jump links keep it navigable. */}
-      <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "10px 0 4px" }}>
-        {[
-          [aid("ft"), "FT · Identidad"],
-          [aid("ft2"), "FT2 · Certificados y análisis"],
-          [aid("eudr"), "EUDR"],
-          [aid("comms"), `Comunicación (${comms.length})`],
-        ].map(([href, label]) => (
-          <a key={href} className="btn btn-sm" href={`#${href}`}>
-            {label}
-          </a>
-        ))}
-      </nav>
-
-      {naLabels.length > 0 && (
-        <p className={styles.meta}>Declarado &quot;no lo sé / no aplica&quot;: {naLabels.join(" · ")}</p>
-      )}
       {awaitingShipment && <p className={styles.meta}>Ficha completa · esperando que el productor confirme el envío de la muestra</p>}
       {lot.sample_shipped_at && !lot.sample_2kg_confirmed_at && (
         <p className={styles.meta}>
@@ -444,9 +501,31 @@ function LotCard({
       {finca && fincaEudrStatus(finca).code === "no_apta" && (
         <p className={styles.warn}>La finca de origen tiene deforestación o producción ilegal declarada.</p>
       )}
-      {showEvaVerdict && (
-        <EvaVerdictButtons lotId={lot.id} eudrReady={eudrStatus.code === "eudr_ready"} eudrLabel={eudrStatus.label} />
-      )}
+
+      <EvaReviewCard
+        lotId={lot.id}
+        lotName={lot.name}
+        producerId={lot.producer_id}
+        checklist={lot.eva_checklist ?? {}}
+        showEvaVerdict={showEvaVerdict}
+        eudrReady={eudrStatus.code === "eudr_ready"}
+        eudrLabel={eudrStatus.label}
+        eudr={eudrFields}
+        ftRows={ftRows}
+        certRows={certRows}
+        certFiles={certFiles}
+        fisicoRows={fisicoRows}
+        naCerts={naCerts}
+        naFisico={naFisico}
+        videoLinks={videoLinks}
+        comms={comms.map((c) => ({
+          id: c.id,
+          role: c.author_role,
+          date: new Date(c.created_at).toLocaleDateString("es-CO"),
+          note: c.note,
+        }))}
+      />
+
       {showConfirmReceipt && (lot.sample_shipped_at || lot.source === "bcp_manual_entry") && !lot.sample_2kg_confirmed_at && (
         <ConfirmReceiptButton
           lotId={lot.id}
@@ -455,164 +534,6 @@ function LotCard({
           inscriptionSettled={inscriptionSettled}
         />
       )}
-
-      {sectionHead(aid("ft"), "FT · Identidad y Origen")}
-      {dsRow("Producto", ds.product_name)}
-      {dsRow("Especie", ds.species)}
-      {dsRow("Tipo de producto", [ds.product_type, ds.hs_code].filter(Boolean).join(" · HS "))}
-      {dsRow("Cosecha", [ds.harvest_year, ds.harvest_season].filter(Boolean).join(" · "))}
-      {dsRow("Categoría de origen", ds.origin_category)}
-      {dsRow("Finca declarada", ds.estate)}
-      {dsRow("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · "))}
-      {dsRow("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : null)}
-      {dsRow("Edad del cultivo", ds.plantation_age)}
-      {dsRow("Variedad", lot.ficha_variedad)}
-      {dsRow("Proceso", [ds.base_processing || lot.ficha_proceso, ds.special_processing].filter(Boolean).join(" + "))}
-      {!ds.product_name && !lot.ficha_variedad && <p className={styles.meta}>El productor todavía no diligencia esta sección.</p>}
-
-      {sectionHead(aid("ft2"), "FT2 · Certificados y Análisis")}
-      {dsRow("Certificados (A3/A4)", certSchemes.length ? certSchemes.join(", ") : null)}
-      {dsRow("Premios y rankings", ds.awards)}
-      {dsRow("Perfil de taza", ds.cupping_profile)}
-      {dsRow("Puntaje SCA estimado", lot.ficha_puntaje_estimado)}
-      {dsRow("Notas", lot.ficha_notas_cata || ds.analysis_notes)}
-      {!certSchemes.length && !ds.awards && !ds.cupping_profile && !lot.ficha_puntaje_estimado && (
-        <p className={styles.meta}>Sin certificados ni análisis declarados todavía.</p>
-      )}
-
-      {sectionHead(aid("eudr"), "EUDR · Asistencia BCP")}
-      <form action={saveEudr} style={{ marginTop: 8 }}>
-          <div className={styles.field}>
-            <label>Cadena de custodia</label>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {CUSTODY_STAGES.map(([key, label]) => (
-                <label key={key} style={{ display: "inline-flex", gap: 5, fontSize: 12.5, fontWeight: 400 }}>
-                  <input type="checkbox" name="eudr_custody_stages" value={key} defaultChecked={lot.eudr_custody_stages?.includes(key)} /> {label}
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className={styles.field}>
-            <label>Método de separación física / documental</label>
-            <select name="eudr_custody_method" defaultValue={lot.eudr_custody_method ?? ""}>
-              <option value="">Sin definir</option>
-              <option value="ctc_standard">CTC Parchment Storage Standard (yute + liner + HIC + QR)</option>
-              <option value="custom">Método propio</option>
-            </select>
-            <textarea name="eudr_custody_notes" defaultValue={lot.eudr_custody_notes ?? ""} placeholder="Si es método propio: describa cómo se mantiene separado e identificado el lote…" />
-          </div>
-
-          <div className={styles.field}>
-            <label>País / región de producción</label>
-            <select name="eudr_country" defaultValue={lot.eudr_country ?? ""}>
-              <option value="">Seleccione…</option>
-              {EUDR_ORIGIN_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <p className={styles.meta} style={{ margin: "4px 0 0" }}>
-              Clasificación EUDR (Reg. 2025/1093): <b>{lot.eudr_country ? derivedCountryRisk : "defina el país"}</b>
-            </p>
-          </div>
-          <div className={styles.field}>
-            <label>Complejidad de la cadena</label>
-            <p className={styles.meta} style={{ margin: 0, fontWeight: 600 }}>
-              {derivedComplexity || "Pendiente"}
-            </p>
-            <p className={styles.meta} style={{ margin: "2px 0 0" }}>
-              Se deriva de las {lot.eudr_custody_stages?.length ?? 0} etapa(s) de custodia marcadas.
-            </p>
-          </div>
-          <div className={styles.field}>
-            <label>Riesgo propio del producto</label>
-            <div style={{ display: "grid", gap: 6 }}>
-              {PRODUCT_RISK_QUESTIONS.map(([key, label]) => (
-                <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 12.5, fontWeight: 400, alignItems: "flex-start" }}>
-                  <input type="checkbox" name="eudr_product_risk_factors" value={key} defaultChecked={productFactors.includes(key)} style={{ marginTop: 2 }} />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-            <p className={styles.meta} style={{ margin: "4px 0 0", fontWeight: 600 }}>Nivel derivado: {derivedProductRisk}</p>
-          </div>
-          <div className={styles.field}>
-            <label>Esquemas de certificación / verificación</label>
-            <p className={styles.meta} style={{ margin: 0 }}>
-              {certSchemes.length ? certSchemes.join(", ") : "Ninguno declarado en A3/A4."}
-            </p>
-          </div>
-          <div className={styles.field}>
-            <label>¿Indicios de ilegalidad/deforestación?</label>
-            <select name="eudr_illegality_indicators" defaultValue={triSelectValue(lot.eudr_illegality_indicators)}>
-              <option value="">Sin definir</option>
-              <option value="si">Sí, hay indicios</option>
-              <option value="no">No hay indicios</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label>¿Documentos disponibles y verificables?</label>
-            <select name="eudr_docs_available" defaultValue={triSelectValue(lot.eudr_docs_available)}>
-              <option value="">Sin definir</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label>
-              Nivel de riesgo determinado
-              <FieldInfo text="Determinación de BCP como evaluador (Art. 10-11 EUDR). La sugerencia se calcula con los indicios de ilegalidad, la disponibilidad de documentos, el riesgo país y la efectividad de la mitigación -- puede adoptarla o apartarse de ella con criterio propio." />
-            </label>
-            <select name="eudr_risk_level" defaultValue={lot.eudr_risk_level ?? ""}>
-              <option value="">Pendiente</option>
-              <option value="insignificante">Insignificante</option>
-              <option value="no_insignificante">No insignificante</option>
-            </select>
-            <p className={styles.meta} style={{ margin: "4px 0 0" }}>
-              Sugerencia según los criterios: <b>{RISK_LEVEL_LABEL[derivedRiskLevel] ?? "defina riesgo país, indicios y documentos"}</b>
-            </p>
-          </div>
-          <div className={styles.field}>
-            <label>Acciones de mitigación (declaradas por el productor)</label>
-            <p className={styles.meta} style={{ margin: 0 }}>
-              {lot.eudr_mitigation_actions || "El productor no ha declarado acciones de mitigación (Ficha A5)."}
-            </p>
-          </div>
-          <div className={styles.field}>
-            <label>¿La mitigación reduce el riesgo a insignificante?</label>
-            <select name="eudr_mitigation_effective" defaultValue={triSelectValue(lot.eudr_mitigation_effective)}>
-              <option value="">Sin definir</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label>Responsable</label>
-            <input name="eudr_mitigation_responsible" defaultValue={(lot.eudr_mitigation_responsible ?? "").split(" · ")[0]} placeholder="Nombre · cargo" />
-            <p className={styles.meta} style={{ margin: "4px 0 0" }}>
-              {lot.eudr_mitigation_responsible
-                ? `Registrado: ${lot.eudr_mitigation_responsible}`
-                : "La fecha se registra automáticamente al guardar."}
-            </p>
-          </div>
-
-          <button className="btn btn-sm btn-solid" type="submit">Guardar información EUDR</button>
-        </form>
-
-      {sectionHead(aid("comms"), `Registro de comunicación (${comms.length})`)}
-        <form action={addComm} style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <input name="note" required placeholder="Nota interna sobre este lote…" style={{ flex: 1, minWidth: 180 }} />
-          <button className="btn btn-sm btn-solid" type="submit">Registrar</button>
-        </form>
-        {comms.length > 0 && (
-          <ul className={styles.auditList} style={{ marginTop: 10 }}>
-            {comms.map((c) => (
-              <li key={c.id}>
-                <span className={c.author_role === "producer" ? styles.badgeGood : styles.badge}>
-                  {c.author_role === "producer" ? "Productor" : "CTC"}
-                </span>{" "}
-                <b>{new Date(c.created_at).toLocaleDateString("es-CO")}</b> · {c.note}
-              </li>
-            ))}
-          </ul>
-        )}
     </FincaModalRow>
   );
 }

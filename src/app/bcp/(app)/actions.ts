@@ -6,6 +6,7 @@ import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStat
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
+import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./lotes/evaChecklist";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
@@ -213,10 +214,17 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
-  const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id, eva_checklist").eq("id", lotId).single();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
   if (lot.stage !== "ficha_completa") {
     return { ok: false, error: "Solo un lote con la ficha completa (en evaluación) puede declararse Apto." };
+  }
+  // La EVA es una checklist explícita (2026-07-18): cada bloque de la Ficha debe
+  // quedar marcado como revisado antes del veredicto — la UI deshabilita el botón,
+  // pero la regla vive aquí.
+  const missing = missingEvaItems(lot.eva_checklist as EvaChecklist);
+  if (missing.length) {
+    return { ok: false, error: `Faltan bloques por revisar en la checklist EVA: ${missing.join(" · ")}.` };
   }
   const eudr = await lotEudrGate(service, lotId);
   if (!eudr.ready) {
@@ -245,6 +253,31 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
 
   revalidatePath("/bcp/lotes");
   revalidatePath("/bcp");
+  return { ok: true };
+}
+
+// Marca/desmarca un bloque de la checklist EVA. Merge sobre el jsonb existente
+// (no reemplaza el objeto entero) para que dos revisores no se pisen entre sí.
+export async function setEvaChecklistItem(
+  lotId: string,
+  key: string,
+  checked: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const service = createServiceRoleClient();
+
+  if (!isEvaChecklistKey(key)) return { ok: false, error: "Bloque de checklist desconocido." };
+  const { data: lot } = await service.from("lots").select("stage, eva_checklist").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa") {
+    return { ok: false, error: "La checklist EVA solo aplica a un lote en evaluación (ficha completa)." };
+  }
+
+  const next = { ...((lot.eva_checklist as EvaChecklist) ?? {}), [key]: checked };
+  const { error } = await service.from("lots").update({ eva_checklist: next }).eq("id", lotId);
+  if (error) return { ok: false, error: "No se pudo guardar la checklist." };
+
+  revalidatePath("/bcp/lotes");
   return { ok: true };
 }
 

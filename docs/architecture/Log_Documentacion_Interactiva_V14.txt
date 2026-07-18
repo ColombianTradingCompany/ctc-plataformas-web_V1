@@ -1,0 +1,43 @@
+Log_Documentacion_Interactiva_V14
+Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
+into a real HTML file; this log is where every change lives, in plain text,
+until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V15.0(<sha>).html.
+Covers: everything since Documentacion_Interactiva_V14.0(0925d78).html, which is
+now the current real HTML snapshot (Log_Documentacion_Interactiva_V13.txt is
+closed and left as historical record of what went into producing it).
+
+## [2026-07-18] ⚠ NOTA ARRASTRADA — el owner aún no confirmó en vivo el nuevo flujo de Arena
+- La reestructuración "Nominados" (V14) se verificó por SQL + tsc/eslint + el script de
+  jornada, y el lado productor en navegador (postularLote acuñó un KRA- real). Falta el
+  walkthrough EN VIVO del owner del flujo completo nuevo. Lotes dejados prístinos a propósito
+  para eso: "Pacamara Doble Fermentación 60h" y el de Catia (ambos en ficha_completa).
+  Qué probar, en orden:
+  1. /bcp/lotes → columna EVA → sobre Pacamara: "Marcar Apto" exige el EUDR resuelto
+     (finca apta + nivel de riesgo). Resolverlo primero si hace falta; luego markLotApto.
+  2. Lado productor (cuenta del dueño de esos lotes): módulo "Kaffetal Regal Arena" →
+     "Postular lote". Probar pegar un código de campaña KRX- y ver el descuento en vivo.
+     postularLote debe acuñar el KRA- y mostrarlo como referencia de pago Nequi.
+  3. /bcp/nominados → columna Postulados → confirmInscriptionPayment (lee el código, sin
+     descuento manual) + confirmSampleReceivedNom. La inscripción pasa a phase=sondeo.
+  4. Columna Sondeo → crear batch Fedecafé → registrar resultado. Aprobado ⇒ phase=fila;
+     suboptimal ⇒ retirado + cashback 80% + doc IA de mejoras (best-effort).
+  5. Columna En Fila → assignLotToSession (sesión 5 o 7 cupos). Con el roster EXACTO lleno,
+     /bcp/arena/[sesión] deja "Iniciar jornada en vivo".
+  6. Jornada v2: descartes con grado por ronda (R1 black/red, R2 red/blue), reveal_origin
+     abre la Etapa 4, veredicto ordenado (1º/2º/3º + grado). finalizeJornada: TODOS a
+     galardonado, Red/Blue/Gold → contrato, Black → /bcp/contratos (negociación), Tyrian →
+     subasta, y club_member_since automático a cada participante.
+- Si algo no se comporta como se describe, corregirlo ANTES de construir encima.
+
+## [2026-07-18] 📌 CARRY-OVERS pendientes (no bloquean el wrap, pero siguen abiertos)
+- Número Nequi real: falta llenar NEQUI en src/lib/arena/payment.ts. Mientras esté vacío,
+  la vista del productor oculta las instrucciones de pago y apunta a info@ctcexport.com.
+  NUNCA poner un número a medias.
+- Cherry Picked Roast: faltan las cifras reales de los "honorarios de orquestación" por
+  grado (el componente existe con placeholders).
+- GIF "Visit ctcexport.com": el archivo tiene el typo "Expore" horneado; regenerar.
+- (V14 nuevo) El botón/columna de sondeo usa Fedecafé como destino asumido; confirmar con
+  el owner el canal real de envío consolidado y el de pago del cashback (se asumió Nequi).
+
+(commit del wrap V14: 0925d78 — el contenido corresponde a ese commit; el trabajo de
+Cherry Picked family + reestructuración Nominados ya está desplegado READY en todos los dominios.)

@@ -181,3 +181,32 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
 - Verificado con el filtro real del sidebar: OWNER ve Documentación|Usuarios|Socios; VIEWER ve
   solo Documentación; el BCP ya no muestra grupo de Administración a nadie.
 (commit: pending)
+
+## [2026-07-18] BUG DE SESIÓN: el token renovado nunca se guardaba (re-login cada ~1 h)
+- Síntoma del owner: "las sesiones duran poco, tengo que volver a entrar todo el rato".
+- NO era configuración de Supabase. Era un bug clásico de @supabase/ssr en App Router:
+  createSessionClient() escribe las cookies renovadas con cookies().set(), pero en un
+  SERVER COMPONENT (los layouts/páginas de las consolas) Next DESCARTA las escrituras de
+  cookies — solo las admite en Server Actions y Route Handlers. Resultado: al vencer el
+  access token (1 h por defecto) supabase-js lo renovaba y el token nuevo se PERDÍA; a la
+  siguiente navegación seguía vencido y terminaba en /login.
+- FIX: la renovación se movió al proxy (src/proxy.ts), que SÍ puede escribir cookies en la
+  respuesta — es el patrón que documenta Supabase para SSR. Patrón de dos pasos: set al
+  request (para que el render vea el token nuevo) + respuesta reconstruida con las cookies.
+  El rewrite de subdominios se conserva: la respuesta se reconstruye con NextResponse.rewrite
+  o .next según corresponda.
+- COSTE CONTROLADO: si el request no trae cookie sb-*-auth-token, se salta la renovación
+  entera — el visitante anónimo de la web pública no paga ni una llamada a Supabase.
+- NO autoriza nada: getUser() aquí solo dispara el refresh; los guards siguen siendo
+  requireConsoleAccess / requireActiveAdmin en cada ruta y acción (defensa en profundidad).
+  Un fallo de red con Auth se traga (try/catch) para no tumbar la navegación.
+- VERIFICADO con una cuenta QA desechable (creada y borrada): se forjó la cookie de sesión
+  con expires_at en el pasado y se pidió /kaffetal-regal — la respuesta trajo Set-Cookie del
+  token de auth con expiry FUTURO. Antes del fix un render de página no emitía Set-Cookie
+  ninguno. (Lo que NO se pudo comprimir en la prueba es un ciclo real de 1 h de expiración;
+  la confirmación definitiva es que el owner deje de ser expulsado.)
+- FIX MENOR en el mismo commit: el módulo de Documentación mostraba "actualizado 20 de oct de
+  2018" en producción — era el mtime del CHECKOUT (git no preserva mtime), no la fecha del
+  documento. Se retiró la fecha: el commit corto del nombre del snapshot sí es fiable y ya
+  estaba a la vista. Mostrar una fecha equivocada es peor que no mostrar ninguna.
+(commit: pending)

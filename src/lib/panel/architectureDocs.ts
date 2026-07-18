@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from "fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "path";
 
 // ── El archivo vivo de documentación, leído del disco ────────────────────────
@@ -26,14 +26,19 @@ export type ArchitectureDoc = {
   sha: string | null;
   title: string;
   sizeKb: number;
-  modified: string; // ISO
 };
 
 const SNAPSHOT_RE = /^Documentacion_Interactiva_V(\d+)\.0\(([0-9a-f]+)\)\.html$/i;
 const LOG_RE = /^Log_Documentacion_Interactiva_V(\d+)\.txt$/i;
 const REPORT_RE = /^(.+?)_V(\d+)\.html$/i;
 
-function classify(file: string): Omit<ArchitectureDoc, "sizeKb" | "modified" | "file"> | null {
+// OJO: NO se expone la fecha de modificación. `mtime` es la fecha del CHECKOUT,
+// no la del documento — git no preserva mtime, así que en Vercel todos los
+// archivos salían con la misma fecha absurda (se vio "20 de oct de 2018" en
+// producción). La fecha real de cada versión es la de su commit, que no está
+// disponible en runtime; mostrar una fecha equivocada es peor que no mostrarla.
+// El commit corto SÍ va en el nombre del snapshot y ese sí es fiable.
+function classify(file: string): Omit<ArchitectureDoc, "sizeKb" | "file"> | null {
   const snap = SNAPSHOT_RE.exec(file);
   if (snap) {
     return {
@@ -75,12 +80,7 @@ export async function listArchitectureDocs(): Promise<ArchitectureDoc[]> {
     const meta = classify(file);
     if (!meta) continue;
     const info = await stat(path.join(DOCS_DIR, file));
-    docs.push({
-      ...meta,
-      file,
-      sizeKb: Math.max(1, Math.round(info.size / 1024)),
-      modified: info.mtime.toISOString(),
-    });
+    docs.push({ ...meta, file, sizeKb: Math.max(1, Math.round(info.size / 1024)) });
   }
 
   const kindRank: Record<DocKind, number> = { snapshot: 0, report: 1, log: 2 };

@@ -13,10 +13,6 @@ const KIND_LABEL: Record<ArchitectureDoc["kind"], string> = {
   log: "Bitácora",
 };
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" });
-}
-
 export default async function EcpDocumentacionPage() {
   await requireConsoleAccess("ecp");
   const docs = await listArchitectureDocs();
@@ -38,7 +34,7 @@ export default async function EcpDocumentacionPage() {
       <span className={styles.meta}>
         {KIND_LABEL[d.kind]}
         {d.sha && <> · commit <span className="mono">{d.sha}</span></>}
-        {" · "}{d.sizeKb} KB · {fmtDate(d.modified)}
+        {" · "}{d.sizeKb} KB
       </span>
     </li>
   );
@@ -66,8 +62,7 @@ export default async function EcpDocumentacionPage() {
               <span className={`${styles.badge} ${styles.badgeGood}`}>Versión vigente</span>
               <h2 style={{ fontSize: 19, margin: "10px 0 4px" }}>{current.title}</h2>
               <p className={styles.meta} style={{ marginTop: 0 }}>
-                Corresponde al commit <span className="mono">{current.sha}</span> · {current.sizeKb} KB ·
-                actualizado {fmtDate(current.modified)}
+                Corresponde al commit <span className="mono">{current.sha}</span> · {current.sizeKb} KB
               </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                 <a className="btn btn-sm btn-solid" href={href(current)} target="_blank" rel="noopener noreferrer">

@@ -1,0 +1,6 @@
+.section{padding:64px 0 8px}
+
+.note{
+  margin-top:14px;font-size:13px;color:var(--muted);
+  font-family:var(--font-spline-mono),monospace;line-height:1.5;
+}

@@ -210,3 +210,43 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
   documento. Se retiró la fecha: el commit corto del nombre del snapshot sí es fiable y ya
   estaba a la vista. Mostrar una fecha equivocada es peor que no mostrar ninguna.
 (commit: pending)
+
+## [2026-07-18] NUEVOS módulos de HERRAMIENTAS (KR, CP y ECP)
+- El owner cargó reference_html_tools/ (3 herramientas) y reference_ecp_tools/ (1) y pidió
+  módulos que las carguen desde un panel de opciones simple.
+- DECISIÓN: NO se portan a React. Son ~900 KB de HTML/CSS/JS artesanal y autocontenido;
+  reescribirlas sería mucho trabajo y la garantía de romper comportamiento sutil. Se sirven
+  desde public/tools/ y se muestran en <iframe>, que además AÍSLA su CSS del de la plataforma
+  (ninguna hoja puede pisar a la otra). Se ven y se comportan idénticas al archivo original.
+- Copiadas con nombres limpios (sin espacios, URL-friendly): agtron-dial.html (508 KB),
+  mermas-detallada.html (297 KB), mermas-rapida.html (24 KB), generador-qr.html (78 KB).
+- ⚠ GOTCHA CRÍTICO: hubo que añadir `tools` a la exclusión del matcher de proxy.ts. Sin eso,
+  en un subdominio la reescritura convertía /tools/x.html en /kaffetal-regal/tools/x.html y
+  daba 404 — el MISMO problema que ya estaba documentado para `images` y `docs`. Verificado
+  con Host: kaffetal-regal.ctcexport.com y cherry-picked.ctcexport.com → 200 en ambos.
+- NUEVO src/lib/tools/catalog.ts (registro único: id, ruta, idioma del interior) + NUEVO
+  src/components/tools/ToolPanel.tsx (panel de opciones + visor, neutro: toma los colores del
+  [data-theme] de la superficie donde se monte, así sirve igual en KR, CP y ECP). El iframe
+  lleva sandbox mínimo (scripts/forms/popups/downloads/same-origin) y `key` por herramienta
+  para que cada una arranque limpia.
+- KR: nuevo módulo "Herramientas Cafeteras" en AppDashboard (DashboardModule "herramientas",
+  icono de llave inglesa). Copy en español.
+- CP: nueva GadgetsSection "Coffee Gadgets", TRILINGÜE (EN/ES/DE) como el resto de la tienda,
+  + entrada 10 en el QuickNav en los tres idiomas.
+- ECP: nueva /ecp/herramientas dentro del grupo IT y Plataforma (NO owner-only: es una
+  utilidad, no administración) + tarjeta navegable en el panel. El generador de QR se revisó:
+  sus 13 referencias a CTC son SOLO marca (variables de color, el h1 y un valor por defecto
+  ctcexport.com) — no hay datos ni secretos, así que el archivo va en public/ como los demás y
+  lo que se protege es la PÁGINA. Si el owner lo prefiere cerrado, se sirve autenticado con el
+  mismo patrón del route handler de documentación.
+- El INTERIOR de cada herramienta queda en su idioma original (mermas en español, Agtron y QR
+  en inglés); la tarjeta lo marca con una etiqueta EN/ES para que no sorprenda.
+- Dependencia externa a vigilar: mermas-rapida.html carga Tailwind desde cdn.tailwindcss.com
+  (Play CDN) y todas usan Google Fonts — si algún día se quieren 100% offline, hay que
+  embeber esos assets.
+- Verificado: los 4 archivos dan 200 (también bajo Host de subdominio), /ecp/herramientas
+  redirige a /login sin sesión, la sección de CP renderiza las 3 opciones con sus etiquetas de
+  idioma, al elegir Agtron el iframe carga de verdad (document.title interno = "Agtron Dial —
+  Roast Color Reference"), la altura computada coincide con la regla CSS activa, 0 errores de
+  consola, tsc+eslint limpios y el build emite /ecp/herramientas.
+(commit: pending)

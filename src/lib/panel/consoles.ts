@@ -94,6 +94,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // colaboradores y socios sigue siendo cosa de owner.
         links: [
           { href: "/ecp/documentacion", label: "Documentación del sistema" },
+          { href: "/ecp/herramientas", label: "Herramientas internas" },
           { href: "/ecp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
           { href: "/ecp/socios", label: "Socios de la red", ownerOnly: true },
         ],

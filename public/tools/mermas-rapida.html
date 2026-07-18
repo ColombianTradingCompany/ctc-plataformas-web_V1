@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Rendimiento para Café y Cacao</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .anchor-btn.active {
+            background-color: #38bdf8; /* sky-400 */
+            color: white;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #38bdf8;
+        }
+        .product-btn.active {
+            background-color: #6366f1; /* indigo-500 */
+            color: white;
+            font-weight: 600;
+        }
+        .summary-bar {
+            transition: height 0.3s ease-in-out;
+        }
+        .stage-card.active {
+            box-shadow: 0 0 0 2px #38bdf8; /* sky-400 */
+        }
+        /* Custom styles for range input */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb; /* gray-200 */
+            border-radius: 9999px;
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #6366f1; /* indigo-500 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #6366f1; /* indigo-500 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+        /* Accordion styles */
+        details > summary {
+            list-style: none;
+            cursor: pointer;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        .accordion-content {
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 1rem;
+        }
+        .chevron {
+            transition: transform 0.2s ease-in-out;
+        }
+        details[open] .chevron {
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 sm:p-6 lg:p-8">
+
+
+    <div class="max-w-7xl mx-auto relative">
+         <!-- Help Button -->
+        <button id="info-btn" class="absolute top-0 right-0 bg-sky-500 text-white rounded-full h-10 w-10 flex items-center justify-center text-2xl font-bold shadow-lg hover:bg-sky-600 transition-transform transform hover:scale-110 z-10">?</button>
+
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Calculadora de Rendimiento</h1>
+            <p class="text-lg text-gray-600 mt-2">Modela la merma del café y cacao desde el grano crudo hasta el producto final.</p>
+        </header>
+
+
+        <!-- Product Selector -->
+        <div class="flex justify-center mb-8 bg-gray-200 rounded-xl p-1 max-w-sm mx-auto">
+            <button id="cafe-btn" class="product-btn w-1/2 py-2 px-4 rounded-lg transition-all duration-300">☕ Café</button>
+            <button id="cacao-btn" class="product-btn w-1/2 py-2 px-4 rounded-lg transition-all duration-300">🍫 Cacao</button>
+        </div>
+
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           
+            <!-- Summary Section -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-lg flex flex-col">
+                <h2 class="text-2xl font-bold mb-6 text-center">Resumen Visual</h2>
+                <div id="summary-container" class="w-full max-w-xs mx-auto flex-grow bg-gray-100 rounded-xl flex flex-col-reverse items-stretch overflow-hidden shadow-inner min-h-[24rem]">
+                    <!-- Bars will be injected here by JS -->
+                </div>
+            </div>
+
+
+            <!-- Calculator Section -->
+            <div id="calculator-stages" class="lg:col-span-2 space-y-4">
+                <!-- Anchor input and stages will be injected here by JS -->
+            </div>
+        </div>
+
+
+        <!-- Info Modal -->
+        <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full relative">
+                <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h2 class="text-2xl font-bold mb-4">Diferencias Clave: Café vs. Cacao</h2>
+                <div class="space-y-4 text-gray-700">
+                    <div>
+                        <h3 class="font-semibold text-lg text-indigo-600">☕ Proceso del Café</h3>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li><strong>Beneficio Húmedo (Cereza → Pergamino):</strong> Es la mayor pérdida de peso. La pulpa se retira con agua, perdiendo hasta un 80% del peso inicial.</li>
+                            <li><strong>Trillado (Pergamino → Verde):</strong> Se retira la capa protectora (pergamino) del grano seco. Es una merma mecánica menor.</li>
+                            <li><strong>Tostado (Verde → Tostado):</strong> Se pierde la humedad restante del grano verde. La merma depende del nivel de tueste.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg text-amber-700">🍫 Proceso del Cacao</h3>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li><strong>Fermentación y Secado (Baba → Seco):</strong> La pulpa (mucílago) se descompone y escurre, seguido del secado. La pérdida de peso es masiva (~60%) pero por fermentación y evaporación, no por lavado.</li>
+                            <li><strong>Tostado (Seco → Grano Tostado):</strong> Similar al café, se tuesta para desarrollar sabor y se pierde humedad.</li>
+                            <li><strong>Descacarillado (Grano Tostado → Nibs):</strong> Etapa clave que no existe en el café. Se parte el grano tostado y se retira la cáscara para obtener los "nibs". Representa una pérdida de peso significativa post-tueste.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURACIÓN DE ETAPAS ---
+            const config = {
+                cafe: {
+                    stages: [
+                        { id: 'initial', label: 'Peso Inicial (Cereza)', color: '#b91c1c' },
+                        { id: 'stage1', label: 'Remanente Beneficio Húmedo', standardPercentage: 20, color: '#d97706', info: 'Se retira la pulpa. El rendimiento varía entre 18-22% del peso de la cereza.' },
+                        { id: 'stage2', label: 'Remanente Trillado', standardPercentage: 82, color: '#16a34a', info: 'Se quita el pergamino. La merma es del 18-20%, dejando un rendimiento del 80-82%.' },
+                        { id: 'stage3', label: 'Remanente Tostado', standardPercentage: 84, color: '#78350f', info: 'Pérdida de humedad por tueste. La merma es del 12-18%, con un rendimiento del 82-88%.' }
+                    ],
+                    summaryLabels: ['Crudo', 'Pergamino', 'Verde', 'Tostado']
+                },
+                cacao: {
+                    stages: [
+                        { id: 'initial', label: 'Peso Inicial (en Baba)', color: '#4c1d95' },
+                        { id: 'stage1', label: 'Remanente Fermentación y Secado', standardPercentage: 40, color: '#7f1d1d', info: 'El mucílago escurre y el grano se seca. Merma del 55-65%, con un rendimiento del 35-45%.' },
+                        { id: 'stage2', label: 'Remanente Tostado', standardPercentage: 92, color: '#a16207', info: 'Pérdida de humedad por tueste. Merma del 5-10%, con un rendimiento del 90-95%.' },
+                        { id: 'stage3', label: 'Remanente Descacarillado', standardPercentage: 80, color: '#f59e0b', info: 'Se retira la cáscara para obtener nibs. Merma del 15-25%, con un rendimiento del 75-85%.' }
+                    ],
+                    summaryLabels: ['Crudo', 'Seco', 'Grano Tostado', 'Nibs']
+                }
+            };
+
+
+            // --- ESTADO DE LA APLICACIÓN ---
+            let state = {
+                product: 'cafe',
+                anchor: 'initial',
+                weights: {},
+                percentages: {}
+            };
+
+
+            // --- REFERENCIAS AL DOM ---
+            const cafeBtn = document.getElementById('cafe-btn');
+            const cacaoBtn = document.getElementById('cacao-btn');
+            const calculatorStagesContainer = document.getElementById('calculator-stages');
+            const summaryContainer = document.getElementById('summary-container');
+            const infoBtn = document.getElementById('info-btn');
+            const infoModal = document.getElementById('info-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+           
+            // --- FUNCIONES PRINCIPALES ---
+
+
+            function initializeProduct(productName) {
+                state.product = productName;
+                state.anchor = 'initial';
+                const productConfig = config[productName];
+
+
+                state.percentages = {
+                    stage1: productConfig.stages[1].standardPercentage,
+                    stage2: productConfig.stages[2].standardPercentage,
+                    stage3: productConfig.stages[3].standardPercentage,
+                };
+               
+                state.weights = {
+                    initial: 100, stage1: 0, stage2: 0, stage3: 0
+                };
+
+
+                buildUI();
+                addEventListeners();
+                calculateAll();
+            }
+
+
+            function buildUI() {
+                const productConfig = config[state.product];
+                calculatorStagesContainer.innerHTML = '';
+
+
+                // Contenedor para la entrada de peso anclada
+                const anchorInputContainer = document.createElement('div');
+                anchorInputContainer.id = 'anchor-input-wrapper';
+                anchorInputContainer.className = 'bg-white p-5 rounded-2xl shadow-lg transition-all duration-300 mb-4';
+                anchorInputContainer.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h3 id="anchor-label" class="text-lg font-semibold text-indigo-500"></h3>
+                        <span class="text-2xl">⚓</span>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Introducir Valor Anclado:</label>
+                        <input type="number" id="anchor-weight-input" class="w-full p-3 border-2 border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-500 text-xl font-bold" step="any">
+                    </div>
+                `;
+                calculatorStagesContainer.appendChild(anchorInputContainer);
+
+
+                // Contenedor para las tarjetas de visualización
+                const stagesDisplayContainer = document.createElement('div');
+                stagesDisplayContainer.id = 'stages-display-container';
+                stagesDisplayContainer.className = 'space-y-4';
+                calculatorStagesContainer.appendChild(stagesDisplayContainer);
+
+
+                stagesDisplayContainer.innerHTML = '';
+                productConfig.stages.forEach((stage, index) => {
+                    stagesDisplayContainer.innerHTML += createStageCard(stage.id, stage.label, stage.info);
+                });
+               
+                cafeBtn.classList.toggle('active', state.product === 'cafe');
+                cacaoBtn.classList.toggle('active', state.product === 'cacao');
+            }
+
+
+            function createStageCard(id, label, info) {
+                const hasSlider = !!info;
+
+
+                const contentHtml = hasSlider ? `
+                    <div class="accordion-content">
+                        <p class="text-sm text-gray-600 mb-4">${info}</p>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-sm text-gray-600">Porcentaje:</label>
+                            <span id="${id}-percentage-display" class="font-semibold text-indigo-500"></span>
+                        </div>
+                        <input type="range" id="${id}-slider" min="1" max="100" step="0.1" class="w-full">
+                    </div>
+                ` : '';
+
+
+                const summaryContent = `
+                    <div class="flex justify-between items-center w-full">
+                        <h3 class="text-lg font-semibold text-gray-700">${label}</h3>
+                        <div class="flex items-center gap-4">
+                           <button data-anchor="${id}" class="anchor-btn h-10 w-10 rounded-full flex items-center justify-center text-xl bg-gray-200 hover:bg-gray-300 transition-all duration-300 z-10">⚓</button>
+                           ${hasSlider ? `<svg class="chevron h-6 w-6 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>` : ''}
+                        </div>
+                    </div>
+                `;
+
+
+                if (hasSlider) {
+                    return `
+                        <details id="card-${id}" class="stage-card bg-white p-5 rounded-2xl shadow-lg transition-all duration-300">
+                            <summary>${summaryContent}</summary>
+                            ${contentHtml}
+                        </details>
+                    `;
+                } else {
+                     return `
+                        <div id="card-${id}" class="stage-card bg-white p-5 rounded-2xl shadow-lg transition-all duration-300">
+                           ${summaryContent}
+                        </div>
+                    `;
+                }
+            }
+
+
+            function addEventListeners() {
+                document.querySelectorAll('.anchor-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault(); // Evita que el <details> se cierre al hacer clic en el ancla
+                        setAnchor(e.currentTarget.dataset.anchor)
+                    });
+                });
+                document.getElementById('anchor-weight-input').addEventListener('input', handleWeightInput);
+                document.getElementById('anchor-weight-input').addEventListener('change', handleWeightInput);
+                document.querySelectorAll('input[type="range"]').forEach(slider => {
+                    slider.addEventListener('input', handleSliderInput);
+                });
+            }
+
+
+            function handleWeightInput(e) {
+                calculateAll();
+            }
+
+
+            function handleSliderInput(e) {
+                const stageId = e.target.id.replace('-slider', '');
+                state.percentages[stageId] = parseFloat(e.target.value);
+                calculateAll();
+            }
+
+
+            function setAnchor(stageId) {
+                state.anchor = stageId;
+                const anchorInput = document.getElementById('anchor-weight-input');
+                anchorInput.value = state.weights[state.anchor];
+                render();
+            }
+
+
+            function calculateAll() {
+                readValuesFromDOM();
+
+
+                const p1 = state.percentages.stage1 / 100;
+                const p2 = state.percentages.stage2 / 100;
+                const p3 = state.percentages.stage3 / 100;
+
+
+                const weights = {};
+                const anchorWeight = state.weights[state.anchor];
+
+
+                switch (state.anchor) {
+                    case 'initial':
+                        weights.initial = anchorWeight;
+                        weights.stage1 = weights.initial * p1;
+                        weights.stage2 = weights.stage1 * p2;
+                        weights.stage3 = weights.stage2 * p3;
+                        break;
+                    case 'stage1':
+                        weights.stage1 = anchorWeight;
+                        weights.initial = p1 > 0 ? weights.stage1 / p1 : 0;
+                        weights.stage2 = weights.stage1 * p2;
+                        weights.stage3 = weights.stage2 * p3;
+                        break;
+                    case 'stage2':
+                        weights.stage2 = anchorWeight;
+                        weights.stage1 = p2 > 0 ? weights.stage2 / p2 : 0;
+                        weights.initial = p1 > 0 ? weights.stage1 / p1 : 0;
+                        weights.stage3 = weights.stage2 * p3;
+                        break;
+                    case 'stage3':
+                        weights.stage3 = anchorWeight;
+                        weights.stage2 = p3 > 0 ? weights.stage3 / p3 : 0;
+                        weights.stage1 = p2 > 0 ? weights.stage2 / p2 : 0;
+                        weights.initial = p1 > 0 ? weights.stage1 / p1 : 0;
+                        break;
+                }
+                state.weights = weights;
+                render();
+            }
+
+
+            function readValuesFromDOM() {
+                const anchorInput = document.getElementById('anchor-weight-input');
+                if (anchorInput) {
+                    state.weights[state.anchor] = parseFloat(anchorInput.value) || 0;
+                }
+                for (let i = 1; i <= 3; i++) {
+                    const slider = document.getElementById(`stage${i}-slider`);
+                    if (slider) {
+                        state.percentages[`stage${i}`] = parseFloat(slider.value);
+                    }
+                }
+            }
+
+
+            function render() {
+                const productConfig = config[state.product];
+               
+                const anchorInput = document.getElementById('anchor-weight-input');
+                const anchorLabel = document.getElementById('anchor-label');
+                const anchorStageInfo = productConfig.stages.find(s => s.id === state.anchor);
+                if (anchorStageInfo) {
+                    anchorLabel.textContent = anchorStageInfo.label;
+                }
+
+
+                if(document.activeElement !== anchorInput) {
+                    anchorInput.value = parseFloat(state.weights[state.anchor].toFixed(3));
+                }
+
+
+                for (const stageId in state.percentages) {
+                    const slider = document.getElementById(`${stageId}-slider`);
+                    const display = document.getElementById(`${stageId}-percentage-display`);
+                    if (slider) slider.value = state.percentages[stageId];
+                    if (display) display.textContent = `${state.percentages[stageId].toFixed(1)}%`;
+                }
+               
+                document.querySelectorAll('.anchor-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.anchor === state.anchor);
+                });
+                document.querySelectorAll('.stage-card').forEach(card => {
+                    card.classList.toggle('active', card.id === `card-${state.anchor}`);
+                });
+
+
+                renderSummary();
+            }
+
+
+            function renderSummary() {
+                const productConfig = config[state.product];
+                const totalWeight = state.weights.initial;
+                if (totalWeight <= 0) {
+                    summaryContainer.innerHTML = '';
+                    return;
+                }
+
+
+                const weightsArray = [
+                    state.weights.initial,
+                    state.weights.stage1,
+                    state.weights.stage2,
+                    state.weights.stage3
+                ];
+
+
+                summaryContainer.innerHTML = '';
+                const container = document.createElement('div');
+                container.className = 'w-full h-full flex flex-col justify-end';
+
+
+                const barData = [
+                    { value: weightsArray[3], color: productConfig.stages[3].color, label: productConfig.summaryLabels[3] },
+                    { value: weightsArray[2] - weightsArray[3], color: productConfig.stages[2].color, label: productConfig.summaryLabels[2] },
+                    { value: weightsArray[1] - weightsArray[2], color: productConfig.stages[1].color, label: productConfig.summaryLabels[1] },
+                    { value: weightsArray[0] - weightsArray[1], color: productConfig.stages[0].color, label: productConfig.summaryLabels[0] }
+                ];
+
+
+                barData.forEach((data, index) => {
+                    if (data.value > 0.001) {
+                        const percentageHeight = (data.value / totalWeight) * 100;
+                        const barSegment = document.createElement('div');
+                        barSegment.className = 'summary-bar text-white text-xs font-bold flex items-center justify-center p-1 text-center overflow-hidden';
+                        barSegment.style.height = `${percentageHeight}%`;
+                        barSegment.style.backgroundColor = data.color;
+                       
+                        let cumulativeWeight = 0;
+                        if (index === 0) cumulativeWeight = weightsArray[3];
+                        else if (index === 1) cumulativeWeight = weightsArray[2];
+                        else if (index === 2) cumulativeWeight = weightsArray[1];
+                        else if (index === 3) cumulativeWeight = weightsArray[0];
+
+
+                        barSegment.innerHTML = `<span>${data.label}<br>${cumulativeWeight.toFixed(1)} kg</span>`;
+                       
+                        if (percentageHeight < 5) {
+                           barSegment.querySelector('span').innerHTML = `...`;
+                        }
+
+
+                        container.appendChild(barSegment);
+                    }
+                });
+               
+                summaryContainer.innerHTML = '';
+                summaryContainer.appendChild(container);
+            }
+
+
+            // --- EVENT LISTENERS INICIALES ---
+            cafeBtn.addEventListener('click', () => initializeProduct('cafe'));
+            cacaoBtn.addEventListener('click', () => initializeProduct('cacao'));
+            infoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
+            closeModalBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+            infoModal.addEventListener('click', (e) => {
+                if (e.target === infoModal) infoModal.classList.add('hidden');
+            });
+
+
+            // --- ARRANQUE ---
+            initializeProduct('cafe');
+        });
+    </script>
+</body>
+</html>
+
+
+

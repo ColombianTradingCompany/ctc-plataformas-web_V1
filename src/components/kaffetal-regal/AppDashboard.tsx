@@ -14,7 +14,28 @@ import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
+import { ToolPanel } from "@/components/tools/ToolPanel";
+import { COFFEE_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
 import styles from "./AppDashboard.module.css";
+
+// Copy en español de las herramientas para el productor. El INTERIOR de cada
+// herramienta queda en su idioma original (las de mermas están en español, el
+// disco Agtron en inglés) — se marca con la etiqueta de idioma en la tarjeta.
+const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
+  "mermas-rapida": {
+    name: "Calculadora rápida de mermas",
+    desc: "Rendimiento de café y cacao: cuánto le queda al pasar de cereza a pergamino y a excelso.",
+  },
+  "mermas-detallada": {
+    name: "Calculadora detallada de mermas",
+    desc: "El cálculo completo, etapa por etapa, para auditar dónde se está yendo el peso.",
+  },
+  agtron: {
+    name: "Disco Agtron · color de tueste",
+    desc: "Referencia visual del color de tueste y su número Agtron, para hablar el mismo idioma que el tostador.",
+  },
+  qr: { name: "Generador de QR", desc: "Herramienta interna." },
+};
 
 // A conversation thread = every note (CTC notes + the producer's replies)
 // sharing one hyperlinked element (Finca X / Lote Y / General). Notes arrive
@@ -39,7 +60,7 @@ function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "servicios";
+export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios";
 
 // Minimalist stroked line icons (one visual language, currentColor) — replaces
 // the multicolor emoji that clashed with the panel's editorial tone.
@@ -75,6 +96,10 @@ const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
   ),
   servicios: (
     <LineIcon><path d="M12 3.5l1.7 5.3 5.3 1.7-5.3 1.7L12 17.5l-1.7-5.3L5 10.5l5.3-1.7Z" /><path d="M18.5 16.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6Z" /></LineIcon>
+  ),
+  // Llave inglesa: las calculadoras y referencias de trabajo.
+  herramientas: (
+    <LineIcon><path d="M14.7 6.3a3.6 3.6 0 0 0 4.8 4.6l-8 8a2.3 2.3 0 0 1-3.3-3.3l8-8Z" /><path d="M6.5 17.5h.01" /></LineIcon>
   ),
 };
 
@@ -277,6 +302,12 @@ export function AppDashboard({
           ? `${contracts.length} contrato${contracts.length === 1 ? "" : "s"} con CTC`
           : "Aparecen al competir un lote en la Arena",
       alert: false,
+    },
+    {
+      key: "herramientas",
+      icon: HUB_ICON.herramientas,
+      title: "Herramientas Cafeteras",
+      fact: "Calculadoras de merma y disco Agtron — sin salir de su panel",
     },
     {
       key: "servicios",
@@ -750,6 +781,25 @@ export function AppDashboard({
               ))
             )}
           </div>
+          )}
+
+          {module === "herramientas" && (
+            <div className={`${styles.acard} ${styles.full}`}>
+              <span className={styles.k}>Herramientas Cafeteras · calculadoras y referencias de trabajo</span>
+              <div className={styles.alist} style={{ marginTop: 6, marginBottom: 16 }}>
+                Herramientas de uso libre para su finca: no guardan nada ni envían nada a CTC — todo el cálculo
+                ocurre en su propio navegador. Elija una y se abre aquí mismo.
+              </div>
+              <ToolPanel
+                tools={COFFEE_TOOL_IDS.map((id) => ({ id, ...KR_TOOL_COPY[id] }))}
+                labels={{
+                  openInTab: "Abrir en pestaña nueva ↗",
+                  choose: "Elija una herramienta para abrirla aquí.",
+                  groupAria: "Herramientas disponibles",
+                  frameTitle: (name) => `Herramienta: ${name}`,
+                }}
+              />
+            </div>
           )}
 
           {module === "servicios" && (

@@ -15,6 +15,7 @@ import { NarrativaSection } from "./NarrativaSection";
 import { CosechaSection } from "./CosechaSection";
 import { ManifiestoSection } from "./ManifiestoSection";
 import { HistoriaSection } from "./HistoriaSection";
+import { GadgetsSection } from "./GadgetsSection";
 import { Footer } from "./Footer";
 import { Cart, type ShippingZone } from "./Cart";
 import { LoginModal } from "./LoginModal";
@@ -39,6 +40,7 @@ const EN = {
     { id: "cosecha", n: "07", label: "The coffee year", sub: "Seen from your roastery" },
     { id: "manifiesto", n: "08", label: "Manifesto", sub: "How we work" },
     { id: "historia", n: "09", label: "Our story", sub: "Who we are" },
+    { id: "gadgets", n: "10", label: "Coffee Gadgets", sub: "Free tools, no sign-in" },
   ] as QuickNavSection[],
   quickNavLabels: {
     homeSub: "Back to the mother house · Colombian Trading Company",
@@ -73,6 +75,7 @@ const T: Record<Lang, typeof EN> = {
       { id: "cosecha", n: "07", label: "El año cafetero", sub: "Visto desde tu tostaduría" },
       { id: "manifiesto", n: "08", label: "Manifiesto", sub: "Cómo trabajamos" },
       { id: "historia", n: "09", label: "Historia", sub: "Quiénes somos" },
+      { id: "gadgets", n: "10", label: "Coffee Gadgets", sub: "Herramientas libres, sin registro" },
     ],
     quickNavLabels: {
       homeSub: "Volver a la casa matriz · Colombian Trading Company",
@@ -104,6 +107,7 @@ const T: Record<Lang, typeof EN> = {
       { id: "cosecha", n: "07", label: "Das Kaffeejahr", sub: "Aus deiner Rösterei gesehen" },
       { id: "manifiesto", n: "08", label: "Manifest", sub: "Wie wir arbeiten" },
       { id: "historia", n: "09", label: "Unsere Geschichte", sub: "Wer wir sind" },
+      { id: "gadgets", n: "10", label: "Coffee Gadgets", sub: "Freie Werkzeuge, ohne Anmeldung" },
     ],
     quickNavLabels: {
       homeSub: "Zurück zum Stammhaus · Colombian Trading Company",
@@ -460,6 +464,7 @@ function Experience() {
           <CosechaSection />
           <ManifiestoSection />
           <HistoriaSection />
+          <GadgetsSection />
           <Footer />
           {/* Bottom-LEFT bubble column, on purpose: the cart owns the
               bottom-right corner. QuickNav FAB at 24, family at 92,

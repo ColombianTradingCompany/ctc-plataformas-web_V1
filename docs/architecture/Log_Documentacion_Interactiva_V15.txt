@@ -1,0 +1,52 @@
+Log_Documentacion_Interactiva_V15
+Status: PENDING -- not yet wrapped. Only .0 (major) versions are ever compiled
+into a real HTML file; this log is where every change lives, in plain text,
+until a Version Wrap is actually invoked and produces Documentacion_Interactiva_V16.0(<sha>).html.
+Covers: everything since Documentacion_Interactiva_V15.0(59c4217).html, which is
+now the current real HTML snapshot (Log_Documentacion_Interactiva_V14.txt is
+closed and left as historical record of what went into producing it).
+
+## [2026-07-20] ⚠ NOTA ARRASTRADA — el walkthrough EN VIVO de la Arena sigue pendiente
+- Es lo único grande que queda sin confirmar. El owner lo hará en una SESIÓN NUEVA.
+- Estado del terreno, dejado a propósito para eso: los lotes "Pacamara Doble Fermentación 60h"
+  y el de Catia siguen PRÍSTINOS en stage=ficha_completa, esperando en la columna EVA.
+  Ninguno tiene inscripción todavía. No hay sesión de Arena abierta; las 2 que existen están
+  completed con capacity=5.
+- OJO con la compuerta: los dos lotes tienen eudr_risk_level = NULL, así que "Marcar Apto"
+  se RECHAZA hasta resolver el EUDR del lote. La ruta corta para desbloquearlo, en el panel
+  EUDR de la nueva checklist: indicios de ilegalidad = No, documentos disponibles = Sí
+  (país Colombia = Estándar) ⇒ deriva 'insignificante' ⇒ el gate pasa a eudr_ready.
+- Qué probar, en orden: EVA (checklist 5/5 + EUDR ✓ ⇒ Apto) → postular (KRA- acuñado, código
+  KRX- opcional con descuento en vivo) → /bcp/nominados: confirmar pago + muestra → sondeo
+  (aprobado ⇒ fila / suboptimal ⇒ retirado + cashback 80% + doc IA) → asignar a sesión →
+  jornada v2 (descartes con grado por ronda, reveal_origin, veredicto ordenado) → finalize
+  (TODOS galardonado, Red/Blue/Gold contrato, Black negociación, Tyrian subasta, membresía
+  automática).
+- ⚠ Para correr una jornada COMPLETA hacen falta 5 o 7 lotes en fila (startJornada exige el
+  roster EXACTO). Con solo Pacamara+Catia no alcanza: o se siembran lotes de relleno, o el
+  walkthrough se detiene en "En Fila".
+- Si algo no se comporta como se describe, corregirlo ANTES de construir encima.
+
+## [2026-07-20] ✅ CONFIRMADO POR EL OWNER en la sesión de V15 (no re-verificar)
+- /ecp/herramientas carga bien tras el arreglo de props no serializables. "Works!"
+- El arreglo de sesión funciona: ya no lo expulsa cada hora. "Seems so :)"
+- El disco Agtron V7 no necesita cambios de copy. "Nothing, all good."
+
+## [2026-07-20] 📌 CARRY-OVERS pendientes (no bloquean nada, siguen abiertos)
+- Número Nequi real: falta llenar NEQUI en src/lib/arena/payment.ts. Mientras esté vacío, la
+  vista del productor oculta las instrucciones de pago y apunta a info@ctcexport.com.
+  NUNCA poner un número a medias.
+- Cherry Picked Roast: faltan las cifras reales de los "honorarios de orquestación" por grado.
+- GIF "Visit ctcexport.com": el archivo tiene el typo "Expore" horneado; regenerar.
+- Confirmar con el owner el canal real del envío consolidado del sondeo (se asumió Fedecafé) y
+  el del pago del cashback (se asumió Nequi).
+- SEGURIDAD, aplazado por decisión del owner: "Leaked password protection" requiere plan Pro
+  (la org está en FREE) y vive en Authentication → Providers → Email, NO en Database → Policies.
+  Lo que SÍ se puede endurecer hoy gratis en esa misma pantalla: longitud mínima y tipos de
+  carácter exigidos.
+- RENDIMIENTO, con umbral: los 45 índices de claves foráneas que marca el linter son prematuros
+  (la tabla más grande tiene ~306 filas). Revisar cuando alguna pase de ~10.000 filas,
+  priorizando lots.producer_id, lots.finca_id, arena_inscriptions.lot_id, producer_comm_log.lot_id.
+
+(commit del wrap V15: 59c4217 — el contenido corresponde a ese commit; todo lo que describe
+está desplegado READY en producción.)

@@ -353,3 +353,17 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
   comprobó que la página RENDERIZA de verdad: una ruta temporal montó SociosClient desde un
   server component → 200 (un 307 solo prueba la guarda, no el render). tsc+eslint+build limpios.
 (commit: pending)
+
+## [2026-07-20] Disco Agtron actualizado a V7
+- El owner reemplazó agtron_dial_metre-V6.html por -V7.html en reference_html_tools/.
+- Procedimiento (el que quedó documentado al crear el script): recopiar el original sobre
+  public/tools/agtron-dial.html y volver a correr scripts/vendor-tool-assets.mjs. El archivo
+  nuevo llegaba otra vez con Google Fonts en línea, como cualquier export fresco.
+- El script se comportó como se diseñó — IDEMPOTENTE: solo re-vendorizó el Agtron (18 woff2) y
+  reportó "sin cambios (ya offline)" para las otras tres. No hizo falta tocar nada de código:
+  el catálogo apunta al mismo /tools/agtron-dial.html.
+- Verificado en navegador: 0 referencias externas a ASSETS (los 4 enlaces que quedan son las
+  citas a artículos, que son lectura), Fraunces e IBM Plex Mono resuelven en local, 17
+  controles, el slider de tono responde (o sea su JS corre), 0 errores de consola.
+  Build limpio. 560 KB en disco (V6 pesaba 517 KB ya vendorizado).
+(commit: pending)

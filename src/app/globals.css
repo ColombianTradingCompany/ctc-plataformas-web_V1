@@ -144,6 +144,17 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .modal h3{font-size:22px;margin-bottom:6px;color:var(--primary-deep)}
 .modal p{font-size:14px;color:var(--muted);margin-bottom:20px}
 
+/* En un teléfono los 32 px de relleno y los 20 del fondo se comen el ancho
+   útil; la hoja sube casi a pantalla completa y el botón de cerrar crece a
+   objetivo táctil. Los paneles del BCP (Ficha, EVA, registros B2/B3) son los
+   que más lo notan: son formularios largos dentro del modal. */
+@media (max-width:720px){
+  .modal-bg{padding:10px;align-items:flex-end}
+  .modal{padding:22px 16px;border-radius:16px;max-height:94vh}
+  .modal .close{top:8px;right:8px;width:40px;height:40px;font-size:24px}
+  .modal h3{font-size:19px;padding-right:36px}
+}
+
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   background:var(--primary-deep);color:#fff;padding:12px 22px;border-radius:999px;

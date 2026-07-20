@@ -117,4 +117,38 @@ está desplegado READY en producción.)
 - Contraste MEDIDO en cada fondo, todo AA: letra pequeña 5.58 sobre navy, 6.14 (blanco),
   6.40 (Cherry Picked), 7.90 (acceso y socios); reservas 14.26–18.31. La letra pequeña solo
   se atenúa (0.78) en el tono oscuro — al 0.78 sobre blanco medía 3.73 y REPROBABA AA.
+(commit: d1202b2 · el NIT del pie llegó en d00d03b)
+
+## [2026-07-20] Consolas internas usables en teléfono — rail plegable
+- MOTIVO: el owner quiere operar el BCP desde el móvil. Medición del shell real a 375 px
+  ANTES de tocar nada: .main salía 1100 px empezando en x=240, con 965 px de contenido
+  RECORTADOS Y INALCANZABLES (html/body llevan overflow-x:hidden ⇒ ni scroll horizontal).
+- CAUSA DE FONDO (no era el rail): min-width:auto por defecto en un hijo flex; el ancho
+  intrínseco del kanban estiraba .main y nada podía encogerlo. La corrección es
+  .main{min-width:0} — sin ella cualquier ajuste de anchos se vuelve a romper.
+- NUEVO src/components/panel/PanelChrome.tsx (cliente) envuelve rail + <main>; PanelShell
+  sigue siendo de servidor y solo le pasa los children. Estado de TRES valores a propósito:
+  null = manda el CSS (visible ≥1024, cajón cerrado por debajo), true/false solo por decisión
+  del usuario ⇒ el primer render de servidor y de cliente coinciden sin leer window ni
+  localStorage durante el render.
+  · <1024 px: barra superior con ☰; el rail es cajón fijo fuera de pantalla; lo cierran el
+    fondo, elegir un enlace (delegación, sin efecto) o Escape. Conmutador de consolas subido
+    a 44 px de alto (estaba en 36, se falla con el pulgar).
+  · ≥1024 px: botón "Minimizar menú" + botón flotante para devolverlo; la preferencia de
+    PLEGADO se recuerda (ctc-panel-nav-open). El abierto NO se guarda: haría aparecer el
+    cajón encima del contenido al entrar desde un teléfono.
+  · Minimizar levanta además el max-width:1100px de .main — sin eso el tablero ganaba 75 px
+    (nada); con eso gana 255, una columna entera de kanban.
+- Kanban en vertical: scroll-snap x mandatory + columnas al 86% del ancho y encabezado
+  pegajoso, para pasar columnas con el dedo y saber siempre en cuál se está. Modales casi a
+  pantalla completa bajo 720 px con el botón de cerrar a 40 px. Afecta DICT `panels`,
+  `nominados`, `eva` y el nodo n-consoles (las tres consolas comparten el shell).
+- ⚠ APRENDIZAJE DE ENTORNO: el panel de vista previa NO ejecuta transiciones CSS, así que una
+  propiedad en transición se queda clavada en su valor inicial y getComputedStyle miente — el
+  rail parecía no abrirse jamás, incluso forzando !important o estilo en línea. Para medir
+  transformaciones aquí hay que neutralizar la transición primero (*{transition:none!important}).
+  Medido así: cerrado x=-240, abierto x=0 con los 16 enlaces dentro de pantalla.
+- Verificación: tsc + eslint + build limpios; /bcp /bcp/nominados /ecp /ocp siguen devolviendo
+  307 a /login (las guardas intactas). El shell se midió montándolo en una ruta sonda temporal
+  (el BCP exige 2FA y no se puede conducir automatizado), borrada al terminar.
 (commit: pending)

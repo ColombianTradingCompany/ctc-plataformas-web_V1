@@ -16,11 +16,14 @@ export function PanelSidebar({
   identityName,
   accessibleConsoles,
   isOwner,
+  onMinimize,
 }: {
   activeConsole: PanelConsoleKey;
   identityName: string;
   accessibleConsoles: PanelConsoleKey[];
   isOwner: boolean;
+  /** Pliega el rail (solo escritorio; el botón se oculta bajo 1024 px). */
+  onMinimize?: () => void;
 }) {
   const pathname = usePathname();
   const active = CONSOLES[activeConsole];
@@ -87,6 +90,11 @@ export function PanelSidebar({
       ))}
 
       <div style={{ flex: 1 }} />
+      {onMinimize && (
+        <button type="button" className={styles.minimize} onClick={onMinimize}>
+          ← Minimizar menú
+        </button>
+      )}
       <form action="/api/panel/auth/logout" method="post" className={styles.logout}>
         <button className="btn btn-sm" type="submit">
           Cerrar sesión

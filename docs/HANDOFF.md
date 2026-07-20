@@ -177,6 +177,14 @@ The intake→Arena flow was rebuilt around one principle: **documentation evalua
 
 El pie legal lleva el **NIT 901.483.425-7** (entregado por el owner el 2026-07-20; constante `NIT` en `LegalFooter.tsx`, compartida por los tres idiomas). Todavía **no** enlaza política de privacidad porque no existe (pendiente GDPR: debe declarar a Resend como subprocesador). Contraste medido sobre cada fondo (AA en todos): letra pequeña 5.58 sobre el navy de CTC Home, 6.14–7.90 en las superficies claras. **La letra pequeña solo se atenúa en el tono oscuro** — al 0.78 sobre blanco medía 3.73 y reprobaba AA.
 
+## Consolas en móvil — el rail plegable (2026-07-20)
+
+BCP/ECP/OCP eran **inusables en un teléfono**, y no por estar apretadas: medido en un shell real a 375 px, `.main` salía **1100 px de ancho arrancando en x=240**, con **965 px de contenido recortados y sin forma de alcanzarlos** (`html`/`body` llevan `overflow-x:hidden`, así que no había scroll horizontal que valiera). La causa de fondo no era el rail sino `min-width:auto`, el valor por defecto de un hijo flex: el ancho intrínseco del kanban estiraba `.main` y nada podía encogerlo. **`.main{min-width:0}` es la corrección**; sin ella cualquier retoque de anchos vuelve a romperse.
+
+Encima de eso, `PanelChrome` (cliente, envuelve rail + `<main>`; `PanelShell` sigue siendo servidor) hace el rail plegable con **tres estados a propósito**: `null` = manda el CSS (visible ≥1024, cajón cerrado por debajo), `true`/`false` solo cuando el usuario decidió — así el render del servidor y el del cliente coinciden sin leer `window` ni `localStorage` durante el render. Bajo 1024 px hay barra superior con ☰ y el rail es un cajón que cierran el fondo, un enlace (delegación de eventos, sin efecto) o Escape; a partir de 1024 hay botón «Minimizar menú» y uno flotante para devolverlo. Minimizar **también levanta el tope `max-width:1100px` de `.main`** — sin eso el tablero solo ganaba 75 px (nada); con eso gana 255, una columna entera. Solo se recuerda el plegado (`ctc-panel-nav-open`), nunca el abierto: guardar el abierto haría aparecer el cajón encima del contenido al entrar desde un teléfono.
+
+⚠️ **El panel de vista previa no ejecuta transiciones CSS** (gotcha 11), así que una propiedad en transición se queda clavada en su valor inicial y `getComputedStyle` miente: el rail parecía no abrirse nunca. Para medir transformaciones aquí hay que **neutralizar la transición primero** (`*{transition:none!important}`) y entonces sí leer. Medido así: cerrado x=-240, abierto x=0 con los 16 enlaces dentro de pantalla.
+
 ## Dev workflow
 
 - `npm run dev` (Turbopack). Type-check with `npx tsc --noEmit`, lint with `npx eslint src --max-warnings=0` — both must be clean before considering a change done; this has held throughout the project.

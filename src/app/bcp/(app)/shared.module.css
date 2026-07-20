@@ -81,6 +81,25 @@
    cabe, aparece el scroll horizontal. */
 .board{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;align-items:flex-start;width:100%}
 .column{flex:1 1 260px;min-width:260px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:14px;min-height:80px}
+
+/* ── Kanban en vertical (teléfono) ─────────────────────────────────────────
+   En un teléfono solo cabe una columna, así que el tablero se recorre pasando
+   columnas con el dedo: el ajuste por scroll las deja siempre encuadradas en
+   vez de a medio camino. El encabezado se queda pegado arriba para no perder
+   de vista en qué columna se está. */
+@media (max-width:720px){
+  .board{gap:12px;scroll-snap-type:x mandatory;scroll-padding-left:2px;
+    /* barrido lateral fluido sin que el navegador lo confunda con "volver" */
+    overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .column{scroll-snap-align:start;flex:0 0 86%;min-width:0;padding:12px}
+  .columnHead{position:sticky;top:0;background:var(--paper);z-index:1;padding-bottom:6px;margin:-2px 0 10px}
+  .card{padding:14px}
+  .formGrid{grid-template-columns:1fr}
+  .title{font-size:19px;margin-bottom:14px}
+  .subtitle{margin-top:-8px}
+  /* Los controles del tablero se apilan y son tocables (44 px de alto real) */
+  .actions :global(.btn),.actions button{min-height:40px}
+}
 .columnHead{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .columnHead h3{font-size:13.5px;color:var(--ink);text-transform:uppercase;letter-spacing:.04em}
 .columnCount{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);background:var(--line);border-radius:999px;padding:2px 8px}

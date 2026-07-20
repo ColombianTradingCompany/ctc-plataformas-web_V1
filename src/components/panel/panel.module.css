@@ -4,9 +4,58 @@
    rather than nested. */
 
 .shell{display:flex;min-height:100vh;background:var(--paper)}
-.main{flex:1;padding:36px 40px;max-width:1100px}
+/* min-width:0 es LA corrección de fondo del desbordamiento (medido 2026-07-20):
+   un hijo flexible trae min-width:auto, así que el ancho intrínseco del kanban
+   estiraba .main a 1100 px dentro de un shell de 375 — y como html/body llevan
+   overflow-x:hidden, 965 px de contenido quedaban recortados y sin manera de
+   alcanzarlos. Con min-width:0 .main puede encogerse y el overflow-x:auto del
+   propio tablero hace su trabajo. */
+.main{flex:1;min-width:0;padding:36px 40px;max-width:1100px}
 
+.rail{flex:none}
 .sidebar{width:240px;flex:none;background:var(--primary-deep);color:#F4F4F5;min-height:100vh;display:flex;flex-direction:column;padding:24px 0}
+
+/* ── Barra superior y cajón (móvil) ────────────────────────────────────────
+   Por debajo de 1024 px el rail sale del flujo y se comporta como cajón. */
+.topbar{display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:60;
+  background:var(--primary-deep);color:#F4F4F5;padding:10px 14px;min-height:52px}
+.burger{flex:0 0 auto;width:40px;height:40px;border-radius:9px;border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.08);color:#F4F4F5;font-size:17px;line-height:1;cursor:pointer}
+.burger:hover{background:rgba(255,255,255,.16)}
+.topbarTitle{font-family:var(--font-fraunces),serif;font-weight:700;font-size:15px;min-width:0}
+.topbarSub{font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#9AA3AE;display:block;font-weight:400}
+.backdrop{position:fixed;inset:0;background:rgba(10,20,16,.55);z-index:70}
+/* Botón flotante para devolver el rail cuando está minimizado (escritorio). */
+.restore{position:fixed;left:14px;bottom:16px;z-index:65;width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.2);background:var(--primary-deep);color:#F4F4F5;font-size:17px;
+  cursor:pointer;box-shadow:0 8px 22px -8px rgba(10,20,16,.6)}
+
+@media (max-width:1023px){
+  .shell{display:block}
+  .rail{position:fixed;top:0;bottom:0;left:0;z-index:80;transform:translateX(-100%);
+    transition:transform .22s ease;overflow-y:auto;overscroll-behavior:contain}
+  .navOpen .rail{transform:none}
+  .sidebar{min-height:100%}
+  .main{max-width:none;padding:16px 14px 28px}
+  /* Objetivo táctil: los enlaces del menú ya miden 44 px, pero el conmutador
+     de consolas se quedaba en 36 — con el pulgar eso se falla. */
+  .switch{padding:13px 4px}
+  /* En móvil el ☰ de la barra ya cumple ese papel. */
+  .restore{display:none}
+}
+
+@media (min-width:1024px){
+  .topbar{display:none}
+  .backdrop{display:none}
+  /* Minimizado en escritorio: el rail desaparece y el kanban toma todo el ancho. */
+  .navClosed .rail{display:none}
+  /* Sin soltar el tope de 1100 px, esconder el rail solo devolvía 75 px al
+     tablero — nada. Minimizar es una petición explícita de espacio, así que el
+     tope de lectura se levanta mientras dure. */
+  .navClosed .main{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){.rail{transition:none}}
 
 .brand{padding:0 20px 16px;border-bottom:1px solid rgba(255,255,255,.14);margin-bottom:6px}
 .brandName{display:block;font-family:var(--font-fraunces),serif;font-weight:700;font-size:15px;line-height:1.3}
@@ -30,6 +79,13 @@
 .links li a{display:block;padding:11px 20px;font-size:14px;color:#D4D4D8;text-decoration:none}
 .links li a:hover{background:rgba(255,255,255,.06);color:#fff}
 .active{background:rgba(255,255,255,.1);color:#fff !important;font-weight:600;border-left:3px solid var(--accent)}
+
+/* Minimizar (solo escritorio — en móvil cierran el fondo, un enlace o Escape). */
+.minimize{margin:14px 20px 0;padding:7px 10px;border-radius:8px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#C7CDD6;
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+.minimize:hover{background:rgba(255,255,255,.14);color:#fff}
+@media (max-width:1023px){.minimize{display:none}}
 
 .logout{padding:14px 20px 0}
 .logout :global(.btn){width:100%;border-color:rgba(255,255,255,.3);color:#F4F4F5}

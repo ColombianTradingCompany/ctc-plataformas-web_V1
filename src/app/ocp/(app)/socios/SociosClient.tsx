@@ -13,6 +13,7 @@ import styles from "@/components/panel/credentials.module.css";
 export type PartnerRow = {
   profile_id: string;
   email: string;
+  delivery_email: string | null;
   org_name: string;
   contact_name: string | null;
   node_type: string;
@@ -39,6 +40,7 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const [email, setEmail] = useState("");
+  const [deliveryEmail, setDeliveryEmail] = useState("");
   const [orgName, setOrgName] = useState("");
   const [contactName, setContactName] = useState("");
   const [node, setNode] = useState<string>(PARTNER_SLUGS[0]);
@@ -60,10 +62,11 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
   function submitInvite(e: React.FormEvent) {
     e.preventDefault();
     act(
-      () => invitePartner({ email, orgName, contactName, node }),
+      () => invitePartner({ email, deliveryEmail, orgName, contactName, node }),
       "Credencial emitida y enviada.",
       () => {
         setEmail("");
+        setDeliveryEmail("");
         setOrgName("");
         setContactName("");
       }
@@ -98,8 +101,33 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
             <input id="soc-org" type="text" value={orgName} onChange={(e) => setOrgName(e.target.value)} required />
           </div>
           <div className={shared.field}>
-            <label htmlFor="soc-email">Correo (su buzón real)</label>
-            <input id="soc-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label htmlFor="soc-email">Correo de acceso (usuario)</label>
+            <input
+              id="soc-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={`${node}@ctcexport.com`}
+              required
+            />
+            <p className={shared.meta} style={{ margin: "3px 0 0" }}>
+              La identidad con la que entra. Es única en toda la plataforma, así que si el correo ya es una cuenta de
+              productor o comprador, use una etiqueta propia de CTC — no necesita tener buzón.
+            </p>
+          </div>
+          <div className={shared.field}>
+            <label htmlFor="soc-delivery">Buzón real (a dónde llega la credencial)</label>
+            <input
+              id="soc-delivery"
+              type="email"
+              value={deliveryEmail}
+              onChange={(e) => setDeliveryEmail(e.target.value)}
+              placeholder="opcional · si se deja vacío, se envía al correo de acceso"
+            />
+            <p className={shared.meta} style={{ margin: "3px 0 0" }}>
+              Aquí <b>sí</b> puede repetir un correo: un buzón puede recibir varias credenciales y también ser una
+              cuenta de productor o comprador.
+            </p>
           </div>
           <div className={shared.field}>
             <label htmlFor="soc-contact">Persona de contacto</label>
@@ -127,6 +155,7 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
                 <div className={styles.userEmail}>
                   {u.contact_name ? `${u.contact_name} · ` : ""}
                   {u.email}
+                  {u.delivery_email && u.delivery_email !== u.email ? ` · entregas a ${u.delivery_email}` : ""}
                   {u.last_login_at ? ` · último ingreso ${new Date(u.last_login_at).toLocaleDateString("es-CO")}` : ""}
                 </div>
                 {u.invite_email_error && <div className={styles.emailErr}>El correo falló: {u.invite_email_error}</div>}

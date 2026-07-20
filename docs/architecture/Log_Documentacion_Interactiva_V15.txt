@@ -251,3 +251,28 @@ está desplegado READY en producción.)
 - Verificación: tsc + eslint + build limpios; qa-boards-check 27/27 (añadidos centroide,
   colineales, degenerados y selección punto-vs-polígono); qa-jornada-check 11/11.
 (commit: pending · versión V1.3)
+
+## [2026-07-20] Credenciales de socio: separar la identidad de acceso del buzón real
+- SÍNTOMA: emitir una credencial en OCP → Socios fallaba con "Ese correo ya es una cuenta de
+  productor (Kaffetal Regal)". El mensaje era CIERTO pero el bloqueo no debía existir: el campo
+  se llamaba "Correo (su buzón real)" y se usaba a la vez como identidad de auth y como destino
+  del envío, así que reutilizar una bandeja de entrada quedaba prohibido.
+- ARREGLO (afecta DICT `socios`, `identidades`; nodo n-socios): partner_accounts gana
+  delivery_email — el MISMO desdoblamiento que panel_users ya tenía desde 2026-07-15.
+  · correo de ACCESO = identidad (fila en auth.users ⇒ única en la plataforma; puede ser una
+    etiqueta sin buzón, p. ej. estudio-contenido@ctcexport.com). Sigue validándose contra
+    profiles porque profiles.role es de un solo valor: convertir una cuenta pública en socio le
+    quitaría su rol y dejaría huérfanas sus fincas/lotes/pedidos.
+  · BUZÓN REAL = a dónde llega la invitación y los restablecimientos. NO se valida contra nada:
+    se puede repetir entre credenciales y coincidir con una cuenta pública.
+  · El formulario pasa a dos campos con su explicación; el error del correo de acceso ahora
+    SUGIERE la salida (usar <nodo>@ctcexport.com y poner el buzón abajo).
+  · invitePartner y resendPartnerCredential entregan a delivery_email || email; los correos de
+    invitación y de restablecimiento dicen explícitamente "este mensaje llegó a X pero tu
+    usuario es Y" cuando difieren — si no, el socio intenta entrar con la dirección receptora.
+  · La lista de socios muestra "· entregas a <buzón>" solo cuando difiere.
+- Migración: partner_accounts_delivery_email (columna + comment).
+- Verificación: tsc + eslint + build limpios; SociosClient renderizado en una ruta sonda con
+  datos de forma real (los dos campos, sus ayudas, y la lista mostrando/ocultando la entrega
+  según difiera), sonda borrada.
+(commit: pending · versión V1.4)

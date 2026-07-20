@@ -32,6 +32,7 @@ function generateTempPassword(): string {
 
 export async function invitePartner(input: {
   email: string;
+  deliveryEmail?: string;
   orgName: string;
   contactName: string;
   node: string;
@@ -39,16 +40,30 @@ export async function invitePartner(input: {
   const ownerId = await requireOwner();
   const service = createServiceRoleClient();
 
+  // DOS correos, como en las credenciales internas (panel_users):
+  //   · email        = la IDENTIDAD de acceso. Es una fila en auth.users, así
+  //                    que tiene que ser única en toda la plataforma. Puede ser
+  //                    una etiqueta sin buzón: estudio-contenido@ctcexport.com.
+  //   · deliveryEmail= el BUZÓN REAL donde cae la invitación. Se puede REPETIR
+  //                    entre credenciales y coincidir con una cuenta pública:
+  //                    una bandeja de entrada no es una identidad.
   const email = input.email.trim().toLowerCase();
+  const deliveryEmail = input.deliveryEmail?.trim().toLowerCase() || null;
   const orgName = input.orgName.trim();
   const contactName = input.contactName.trim();
-  if (!email || !email.includes("@")) return { ok: false, error: "Correo inválido." };
+  if (!email || !email.includes("@")) return { ok: false, error: "Correo de acceso inválido." };
+  if (deliveryEmail && !deliveryEmail.includes("@")) return { ok: false, error: "Buzón real inválido." };
+  if (deliveryEmail === email) {
+    return { ok: false, error: "El buzón real es el mismo correo de acceso — déjalo vacío en ese caso." };
+  }
   if (!orgName) return { ok: false, error: "La organización es obligatoria." };
   if (!isPartnerSlug(input.node)) return { ok: false, error: "Nodo inválido." };
   const node = input.node as PartnerSlug;
 
-  // Same identity rule as internal collaborators: a public (or internal) account
-  // email can't be converted — profiles.role is single-valued.
+  // La restricción es SOLO sobre la identidad de acceso: profiles.role es de un
+  // solo valor, así que convertir una cuenta pública en socio le quitaría su rol
+  // y dejaría huérfanas sus fincas/lotes/pedidos. El buzón real no se valida
+  // contra nada — para eso existe.
   const { data: existing } = await service.from("profiles").select("id, role").ilike("email", email).maybeSingle();
   if (existing) {
     const label =
@@ -56,7 +71,10 @@ export async function invitePartner(input: {
       : existing.role === "buyer" ? "una cuenta de comprador (Cherry Picked)"
       : existing.role === "partner" ? "una credencial de socio"
       : "una cuenta interna";
-    return { ok: false, error: `Ese correo ya es ${label}. Usa un correo distinto para esta credencial.` };
+    return {
+      ok: false,
+      error: `Ese correo de acceso ya es ${label}. Usa una etiqueta propia para la credencial (p. ej. ${node}@ctcexport.com) y pon el buzón real abajo — ahí sí puedes repetir el correo.`,
+    };
   }
 
   const tempPassword = generateTempPassword();
@@ -76,6 +94,7 @@ export async function invitePartner(input: {
   const { error: insErr } = await service.from("partner_accounts").insert({
     profile_id: newId,
     email,
+    delivery_email: deliveryEmail,
     org_name: orgName,
     contact_name: contactName || null,
     node_type: node,
@@ -84,8 +103,8 @@ export async function invitePartner(input: {
   });
   if (insErr) return { ok: false, error: insErr.message };
 
-  const { subject, text } = buildPartnerInviteEmail(email, contactName || null, orgName, node, tempPassword);
-  const res = await sendTransactionalEmail(email, subject, text);
+  const { subject, text } = buildPartnerInviteEmail(email, contactName || null, orgName, node, tempPassword, deliveryEmail);
+  const res = await sendTransactionalEmail(deliveryEmail || email, subject, text);
   await service
     .from("partner_accounts")
     .update({ invite_email_sent_at: res.ok ? new Date().toISOString() : null, invite_email_error: res.ok ? null : res.error })
@@ -134,7 +153,7 @@ export async function resendPartnerCredential(profileId: string): Promise<Action
   const service = createServiceRoleClient();
   const { data: target } = await service
     .from("partner_accounts")
-    .select("email, contact_name, org_name, node_type, status")
+    .select("email, delivery_email, contact_name, org_name, node_type, status")
     .eq("profile_id", profileId)
     .single();
   if (!target) return { ok: false, error: "Credencial no encontrada." };
@@ -147,9 +166,10 @@ export async function resendPartnerCredential(profileId: string): Promise<Action
   const node = target.node_type as PartnerSlug;
   const { subject, text } =
     target.status === "invited"
-      ? buildPartnerInviteEmail(target.email, target.contact_name, target.org_name, node, tempPassword)
-      : buildPartnerResetEmail(target.email, target.contact_name, node, tempPassword);
-  const res = await sendTransactionalEmail(target.email, subject, text);
+      ? buildPartnerInviteEmail(target.email, target.contact_name, target.org_name, node, tempPassword, target.delivery_email)
+      : buildPartnerResetEmail(target.email, target.contact_name, node, tempPassword, target.delivery_email);
+  // Se entrega al buzón real cuando existe — el correo de acceso puede no tener bandeja.
+  const res = await sendTransactionalEmail(target.delivery_email || target.email, subject, text);
   await service
     .from("partner_accounts")
     .update({ invite_email_sent_at: res.ok ? new Date().toISOString() : null, invite_email_error: res.ok ? null : res.error })

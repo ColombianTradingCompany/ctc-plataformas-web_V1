@@ -76,8 +76,11 @@
 .backLink{display:inline-block;margin-bottom:16px;font-size:13px;color:var(--muted);text-decoration:none}
 .backLink:hover{color:var(--ink)}
 
-.board{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}
-.column{flex:0 0 300px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:14px;min-height:80px}
+/* Las columnas CRECEN para ocupar todo el ancho disponible (pedido del owner
+   2026-07-20: nada de espacio muerto a la derecha); solo cuando ni el mínimo
+   cabe, aparece el scroll horizontal. */
+.board{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;align-items:flex-start;width:100%}
+.column{flex:1 1 260px;min-width:260px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:14px;min-height:80px}
 .columnHead{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .columnHead h3{font-size:13.5px;color:var(--ink);text-transform:uppercase;letter-spacing:.04em}
 .columnCount{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);background:var(--line);border-radius:999px;padding:2px 8px}

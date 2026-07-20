@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { markLotApto, markLotNoApto, setEvaChecklistItem, updateLotEudr } from "../actions";
+import { markLotApto, markLotNoApto, setCertVerification, setEvaChecklistItem, updateLotEudr } from "../actions";
 import { logProducerComm } from "../commActions";
+import { Q_GRADER_REGISTRY } from "@/lib/certRegistry";
 import { EVA_CHECKLIST_ITEMS, type EvaChecklist, type EvaChecklistKey } from "./evaChecklist";
 import {
   deriveLotRiskLevel,
@@ -43,6 +44,30 @@ const PRODUCT_RISK_LABEL = new Map(PRODUCT_RISK_QUESTIONS);
 export type Row = { l: string; v: string };
 export type FileLink = { label: string; url: string | null };
 
+/** Un certificado A3/A4 declarado, con su soporte EN LÍNEA, su registro público
+ *  de verificación y el veredicto de BCP (Confirmado / No confirmado). */
+export type CertItem = {
+  key: string;
+  label: string;
+  attachment: { fileName: string; url: string | null } | null;
+  registry: { name: string; url: string; searchable: boolean; note?: string } | null;
+  verification: "confirmado" | "no_confirmado" | null;
+};
+
+/** El bloque FT2 · Análisis Físico completo (B2 + B3 + referencia Q-Grader). */
+export type FisicoPanel = {
+  b2Na: boolean;
+  b3Na: boolean;
+  scaRows: Row[];
+  scaTotal: string | null;
+  cuppingProfile: string;
+  qgraderName: string;
+  qgraderLab: string;
+  qgraderCert: string;
+  granRows: Row[];
+  notas: string;
+};
+
 export type EvaEudrFields = {
   custodyStages: string[];
   custodyMethod: string; // "" | "ctc_standard" | "custom"
@@ -68,11 +93,11 @@ export function EvaReviewCard({
   eudrLabel,
   eudr,
   ftRows,
-  certRows,
-  certFiles,
-  fisicoRows,
+  fincaDeclared,
+  certItems,
+  certExtraRows,
   naCerts,
-  naFisico,
+  fisico,
   videoLinks,
   comms,
 }: {
@@ -85,11 +110,12 @@ export function EvaReviewCard({
   eudrLabel: string;
   eudr: EvaEudrFields;
   ftRows: Row[];
-  certRows: Row[];
-  certFiles: FileLink[];
-  fisicoRows: Row[];
+  /** La finca declarada en A2 + el estado de revisión de esa finca en BCP. */
+  fincaDeclared: { name: string; status: "approved" | "rejected" | "pending_review" | null } | null;
+  certItems: CertItem[];
+  certExtraRows: Row[];
   naCerts: string[];
-  naFisico: string[];
+  fisico: FisicoPanel;
   videoLinks: FileLink[];
   comms: { id: string; role: string; date: string; note: string }[];
 }) {
@@ -199,6 +225,15 @@ export function EvaReviewCard({
     startTransition(async () => {
       await logProducerComm(producerId, `Lote ${lotName}`, fd, { lotId });
       router.refresh();
+    });
+  }
+
+  function verifyCert(certKey: string, status: "confirmado" | "no_confirmado" | null) {
+    setError(null);
+    startTransition(async () => {
+      const res = await setCertVerification(lotId, certKey, status);
+      if (!res.ok) setError(res.error);
+      else router.refresh();
     });
   }
 
@@ -369,6 +404,22 @@ export function EvaReviewCard({
           {openPanel === "ft" && (
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>FT · Identidad y Origen</h4>
+              {fincaDeclared && (
+                <p className={styles.meta} style={{ margin: "3px 0", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  Finca declarada: <b style={{ color: "var(--ink)" }}>{fincaDeclared.name}</b>
+                  <span
+                    className={`${styles.badge} ${
+                      fincaDeclared.status === "approved"
+                        ? styles.badgeGood
+                        : fincaDeclared.status === "rejected"
+                          ? styles.badgeBad
+                          : styles.badgeWarn
+                    }`}
+                  >
+                    {fincaDeclared.status === "approved" ? "Apta" : fincaDeclared.status === "rejected" ? "No Apta" : "Pendiente"}
+                  </span>
+                </p>
+              )}
               {dataRows(ftRows, "El productor todavía no diligencia esta sección.")}
             </>
           )}
@@ -379,19 +430,133 @@ export function EvaReviewCard({
               {naCerts.length > 0 && (
                 <p className={styles.meta}>Declarado &quot;no lo sé / no aplica&quot;: {naCerts.join(" · ")}</p>
               )}
-              {dataRows(certRows, "Sin certificados declarados todavía.")}
-              <p className={styles.meta} style={{ margin: "10px 0 0", fontWeight: 600 }}>Soportes adjuntos</p>
-              {fileList(certFiles, "Sin archivos de soporte adjuntos.")}
+              {!certItems.length && <p className={styles.meta}>Sin certificados declarados todavía.</p>}
+              {certItems.length > 0 && (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {certItems.map((c) => (
+                    <div
+                      key={c.key}
+                      style={{ border: "1px dashed var(--line)", borderRadius: 8, padding: "8px 10px", display: "grid", gap: 4 }}
+                    >
+                      {/* Certificado + su soporte, EN LA MISMA LÍNEA (pedido 2026-07-20) */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <b style={{ fontSize: 13 }}>{c.label}</b>
+                        {c.verification === "confirmado" && <span className={`${styles.badge} ${styles.badgeGood}`}>Confirmado</span>}
+                        {c.verification === "no_confirmado" && <span className={`${styles.badge} ${styles.badgeBad}`}>No confirmado</span>}
+                        {!c.verification && <span className={`${styles.badge} ${styles.badgeWarn}`}>Por verificar</span>}
+                        <span style={{ flex: 1 }} />
+                        {c.attachment ? (
+                          c.attachment.url ? (
+                            <a href={c.attachment.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, textDecoration: "underline" }}>
+                              Soporte: {c.attachment.fileName} ↗
+                            </a>
+                          ) : (
+                            <span className={styles.meta}>Soporte: {c.attachment.fileName} (no disponible)</span>
+                          )
+                        ) : (
+                          <span className={styles.meta}>Sin soporte adjunto</span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        {c.registry ? (
+                          <a href={c.registry.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, textDecoration: "underline" }}>
+                            {c.registry.searchable ? "Verificar en" : "Referencia:"} {c.registry.name} ↗
+                          </a>
+                        ) : (
+                          <span className={styles.meta}>Sin registro público conocido.</span>
+                        )}
+                        <span style={{ flex: 1 }} />
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          disabled={pending || c.verification === "confirmado"}
+                          onClick={() => verifyCert(c.key, "confirmado")}
+                        >
+                          Confirmado ✓
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          disabled={pending || c.verification === "no_confirmado"}
+                          onClick={() => verifyCert(c.key, "no_confirmado")}
+                        >
+                          No confirmado
+                        </button>
+                        {c.verification && (
+                          <button type="button" className="btn btn-sm" disabled={pending} onClick={() => verifyCert(c.key, null)}>
+                            Restablecer
+                          </button>
+                        )}
+                      </div>
+                      {c.registry?.note && <p className={styles.meta} style={{ margin: 0 }}>{c.registry.note}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {certExtraRows.length > 0 && <div style={{ marginTop: 8 }}>{dataRows(certExtraRows, "")}</div>}
+              {error && <p className={styles.warn} style={{ marginTop: 6 }}>{error}</p>}
             </>
           )}
 
           {openPanel === "ft2_fisico" && (
             <>
               <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>FT2 · Análisis Físico (B2/B3)</h4>
-              {naFisico.length > 0 && (
-                <p className={styles.meta}>Declarado &quot;no lo sé / no aplica&quot;: {naFisico.join(" · ")}</p>
+
+              <p className={styles.meta} style={{ fontWeight: 600, margin: "6px 0 2px" }}>B2 · Perfil de Taza (SCA declarado)</p>
+              {fisico.b2Na ? (
+                <p className={styles.warn} style={{ margin: "2px 0 6px" }}>
+                  El productor marcó «No lo sé / no aplica» en B2 — todavía NO hay perfil de taza declarado para este lote.
+                </p>
+              ) : fisico.scaRows.length === 0 ? (
+                <p className={styles.meta}>Sin atributos SCA digitados todavía.</p>
+              ) : (
+                <>
+                  {dataRows(fisico.scaRows, "")}
+                  {fisico.scaTotal && (
+                    <p className={styles.meta} style={{ margin: "3px 0" }}>
+                      Total declarado: <b style={{ color: "var(--ink)" }}>{fisico.scaTotal}</b>
+                    </p>
+                  )}
+                  {fisico.cuppingProfile && (
+                    <p className={styles.meta} style={{ margin: "3px 0" }}>
+                      Perfil de taza: <b style={{ color: "var(--ink)" }}>{fisico.cuppingProfile}</b>
+                    </p>
+                  )}
+                </>
               )}
-              {dataRows(fisicoRows, "Sin análisis declarados todavía.")}
+
+              <p className={styles.meta} style={{ fontWeight: 600, margin: "10px 0 2px" }}>Referencia Q-Grader</p>
+              {fisico.qgraderName || fisico.qgraderLab || fisico.qgraderCert ? (
+                <>
+                  <p className={styles.meta} style={{ margin: "3px 0" }}>
+                    {[fisico.qgraderName, fisico.qgraderLab, fisico.qgraderCert && `Cert. ${fisico.qgraderCert}`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  <p className={styles.meta} style={{ margin: "3px 0" }}>
+                    <a href={Q_GRADER_REGISTRY.url} target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>
+                      Verificar en {Q_GRADER_REGISTRY.registry} ↗
+                    </a>{" "}
+                    — confirme que quien firma la evaluación sea un Q-Grader vigente.
+                  </p>
+                </>
+              ) : (
+                <p className={styles.meta}>Sin referencia de Q-Grader — el puntaje declarado no está oficializado.</p>
+              )}
+
+              <p className={styles.meta} style={{ fontWeight: 600, margin: "10px 0 2px" }}>B3 · Caracterización Física</p>
+              {fisico.b3Na ? (
+                <p className={styles.warn} style={{ margin: "2px 0 6px" }}>
+                  El productor marcó «No lo sé / no aplica» en B3 — todavía NO hay análisis físico declarado para este lote.
+                </p>
+              ) : (
+                dataRows(fisico.granRows, "Sin análisis físico digitado todavía.")
+              )}
+              {fisico.notas && (
+                <p className={styles.meta} style={{ margin: "6px 0 0" }}>
+                  Notas: <b style={{ color: "var(--ink)" }}>{fisico.notas}</b>
+                </p>
+              )}
             </>
           )}
 
@@ -431,6 +596,14 @@ export function EvaReviewCard({
                 </div>
               )}
 
+              {/* La complejidad va INMEDIATAMENTE debajo de las etapas de
+                  custodia (pedido 2026-07-20): se deriva de ellas. */}
+              {readonlyRow(
+                "Complejidad de la cadena",
+                derivedComplexity || "Pendiente",
+                `Se deriva de las ${form.custodyStages.length} etapa(s) de custodia marcadas.`
+              )}
+
               {overrideRow(
                 "custodyMethod",
                 "Método de separación física / documental",
@@ -466,12 +639,6 @@ export function EvaReviewCard({
                 "Clasificación EUDR derivada del país (Reg. Ejecución UE 2025/1093)."
               )}
 
-              {readonlyRow(
-                "Complejidad de la cadena",
-                derivedComplexity || "Pendiente",
-                `Se deriva de las ${form.custodyStages.length} etapa(s) de custodia marcadas.`
-              )}
-
               {overrideRow(
                 "productRisk",
                 "Riesgo propio del producto",
@@ -498,10 +665,22 @@ export function EvaReviewCard({
                 </div>
               )}
 
-              {readonlyRow(
-                "Esquemas de certificación / verificación",
-                eudr.certSchemes.length ? eudr.certSchemes.join(", ") : "Ninguno declarado en A3/A4."
-              )}
+              {/* Los esquemas se EVALÚAN en FT2 (A3/A4): el chip cruza al panel
+                  donde vive la verificación Confirmado / No confirmado. */}
+              <div className={styles.field} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 8 }}>
+                <label>Esquemas de certificación / verificación</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {fixedValue(eudr.certSchemes.length ? eudr.certSchemes.join(", ") : "Ninguno declarado en A3/A4.")}
+                  <button
+                    type="button"
+                    className={styles.badge}
+                    style={{ cursor: "pointer", border: "1px solid var(--line)" }}
+                    onClick={() => setOpenPanel("ft2_certs")}
+                  >
+                    Evaluación en FT2 · Certificados →
+                  </button>
+                </div>
+              </div>
 
               {overrideRow(
                 "illegality",
@@ -522,24 +701,17 @@ export function EvaReviewCard({
                 eudr.mitigationActions || "El productor no ha declarado acciones de mitigación (Ficha A5)."
               )}
 
-              {overrideRow(
-                "mitigation",
-                "¿La mitigación reduce el riesgo a insignificante?",
-                form.mitigationEffective === true ? "Sí" : form.mitigationEffective === false ? "No" : "",
-                triSelect(form.mitigationEffective, (v) => setForm((f) => ({ ...f, mitigationEffective: v })))
-              )}
-
-              {overrideRow(
-                "responsible",
-                "Responsable",
-                eudr.responsibleStored || "",
-                <input
-                  value={form.responsibleName}
-                  onChange={(e) => setForm((f) => ({ ...f, responsibleName: e.target.value }))}
-                  placeholder="Nombre · cargo"
-                />,
-                "La fecha se registra automáticamente al guardar."
-              )}
+              {/* Campo PROPIO de BCP (no del productor): el evaluador juzga si
+                  las acciones declaradas arriba reducen el riesgo. Sin patrón
+                  "Corregir" — se responde directo (pedido 2026-07-20). */}
+              <div className={styles.field} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 8 }}>
+                <label>
+                  ¿La mitigación reduce el riesgo a insignificante?
+                  <span className={styles.badge} style={{ marginLeft: 8 }}>evaluación de BCP</span>
+                  <FieldInfo text="Esta respuesta es de CTC como evaluador, NO del productor: juzga si las «Acciones de mitigación (declaradas por el productor)» de arriba realmente reducen el riesgo del lote a insignificante." />
+                </label>
+                {triSelect(form.mitigationEffective, (v) => setForm((f) => ({ ...f, mitigationEffective: v })))}
+              </div>
 
               {/* ── El bloque destacado: la última marca antes del veredicto ── */}
               <div
@@ -564,6 +736,23 @@ export function EvaReviewCard({
                   <option value="insignificante">Insignificante</option>
                   <option value="no_insignificante">No insignificante</option>
                 </select>
+              </div>
+
+              {/* Responsable AL FINAL del panel, editable directo (sin "Corregir"):
+                  quien firma la determinación de riesgo cierra el bloque. */}
+              <div className={styles.field} style={{ marginTop: 12 }}>
+                <label>
+                  Responsable
+                  <FieldInfo text="Quién en CTC firma esta debida diligencia. La fecha se registra automáticamente al guardar." />
+                </label>
+                <input
+                  value={form.responsibleName}
+                  onChange={(e) => setForm((f) => ({ ...f, responsibleName: e.target.value }))}
+                  placeholder="Nombre · cargo"
+                />
+                {eudr.responsibleStored && (
+                  <p className={styles.meta} style={{ margin: "3px 0 0" }}>Registrado: {eudr.responsibleStored}</p>
+                )}
               </div>
 
               {dirty && (

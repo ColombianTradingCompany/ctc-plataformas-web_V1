@@ -1,19 +1,154 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createArenaSession } from "../arenaActions";
+import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { CupRegistroButton } from "./ArenaBoardClient";
 import styles from "../shared.module.css";
 
-const STATUS_LABEL: Record<string, string> = { scheduled: "Programada", in_progress: "En curso", completed: "Completada" };
+// ── Sesiones de Arena como kanban (rediseño 2026-07-20) ─────────────────────
+// Tres columnas derivadas del estado real de cada sesión:
+//   Preparando — roster incompleto (los cafés llegan desde Nominados · En Fila)
+//   Agendada   — roster completo o jornada en curso; aquí se registra el B2/B3
+//                de CADA café individualmente (arena_sessions.cup_registrations)
+//   Culminada  — status=completed, con su ganador
+// La jornada en vivo sigue viviendo en /bcp/arena/[sessionId]/run.
+
+type SessionRow = {
+  id: string;
+  session_date: string | null;
+  status: string;
+  capacity: number;
+  run_state: unknown;
+  cup_registrations: Record<string, unknown> | null;
+  winner_lot_id: string | null;
+  harvest_seasons: { kind: string; year: number } | { kind: string; year: number }[] | null;
+};
+
+type RosterRow = { arena_session_id: string; lot_id: string; lots: { name: string } | { name: string }[] | null };
 
 export default async function BcpArenaPage() {
   const service = createServiceRoleClient();
-  const [{ data: sessions }, { data: seasons }] = await Promise.all([
+  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }] = await Promise.all([
     service
       .from("arena_sessions")
-      .select("id, session_date, status, harvest_seasons(kind, year)")
+      .select("id, session_date, status, capacity, run_state, cup_registrations, winner_lot_id, harvest_seasons(kind, year)")
       .order("session_date", { ascending: false }),
     service.from("harvest_seasons").select("id, kind, year").order("year", { ascending: false }),
+    service.from("arena_session_lots").select("arena_session_id, lot_id, lots(name)"),
   ]);
+
+  const sessions = (sessionsRaw as SessionRow[] | null) ?? [];
+  const rosterBySession = new Map<string, { lotId: string; name: string }[]>();
+  for (const r of (rosterRaw as RosterRow[] | null) ?? []) {
+    const lot = (Array.isArray(r.lots) ? r.lots[0] : r.lots) as { name: string } | null;
+    const list = rosterBySession.get(r.arena_session_id) ?? [];
+    list.push({ lotId: r.lot_id, name: lot?.name ?? "—" });
+    rosterBySession.set(r.arena_session_id, list);
+  }
+  const winnerName = (s: SessionRow) =>
+    s.winner_lot_id ? rosterBySession.get(s.id)?.find((l) => l.lotId === s.winner_lot_id)?.name ?? null : null;
+
+  const seasonOf = (s: SessionRow) => {
+    const season = (Array.isArray(s.harvest_seasons) ? s.harvest_seasons[0] : s.harvest_seasons) as
+      | { kind: string; year: number }
+      | null;
+    return season ? `${season.kind === "mitaca" ? "Mitaca" : "Principal"} ${season.year}` : "—";
+  };
+  const dateOf = (s: SessionRow) => (s.session_date ? new Date(s.session_date).toLocaleDateString("es-CO") : "sin fecha");
+
+  const preparando = sessions.filter((s) => s.status !== "completed" && !s.run_state && (rosterBySession.get(s.id)?.length ?? 0) < s.capacity);
+  const agendadas = sessions.filter((s) => s.status !== "completed" && (Boolean(s.run_state) || (rosterBySession.get(s.id)?.length ?? 0) >= s.capacity));
+  const culminadas = sessions.filter((s) => s.status === "completed");
+
+  const sessionHead = (s: SessionRow) => (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+      <Link href={`/bcp/arena/${s.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+        <b style={{ fontSize: 14 }}>
+          {seasonOf(s)} · {dateOf(s)}
+        </b>
+      </Link>
+      <span className={styles.badge}>
+        {rosterBySession.get(s.id)?.length ?? 0}/{s.capacity}
+      </span>
+    </div>
+  );
+
+  const columns = [
+    {
+      label: "Preparando",
+      count: preparando.length,
+      body: preparando.map((s) => {
+        const roster = rosterBySession.get(s.id) ?? [];
+        return (
+          <div key={s.id} className={styles.miniCard}>
+            {sessionHead(s)}
+            {roster.length > 0 && (
+              <p className={styles.meta} style={{ margin: "6px 0 0" }}>{roster.map((l) => l.name).join(" · ")}</p>
+            )}
+            <p className={styles.meta} style={{ margin: "6px 0 0" }}>
+              Faltan {s.capacity - roster.length} café(s) — asígnelos desde <Link href="/bcp/nominados">Nominados · En Fila</Link>.
+            </p>
+          </div>
+        );
+      }),
+    },
+    {
+      label: "Agendada",
+      count: agendadas.length,
+      body: agendadas.map((s) => {
+        const roster = rosterBySession.get(s.id) ?? [];
+        const regs = s.cup_registrations ?? {};
+        const jornadaOwns = Boolean(s.run_state);
+        const regCount = roster.filter((l) => regs[l.lotId] != null).length;
+        return (
+          <div key={s.id} className={styles.miniCard}>
+            {sessionHead(s)}
+            <p className={styles.meta} style={{ margin: "4px 0 6px" }}>
+              {jornadaOwns ? (
+                <>
+                  Jornada en curso — <Link href={`/bcp/arena/${s.id}/run`}>abrir el runner →</Link>
+                </>
+              ) : (
+                <>Registros B2/B3: {regCount}/{roster.length} cafés</>
+              )}
+            </p>
+            {!jornadaOwns && (
+              <div style={{ display: "grid", gap: 6 }}>
+                {roster.map((l) => (
+                  <div key={l.lotId} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12.5, flex: 1, minWidth: 120 }}>{l.name}</span>
+                    <CupRegistroButton
+                      sessionId={s.id}
+                      lotId={l.lotId}
+                      lotName={l.name}
+                      reference={ctcLotReferenceShort(l.lotId)}
+                      initial={regs[l.lotId] ?? null}
+                    />
+                  </div>
+                ))}
+                <Link href={`/bcp/arena/${s.id}`} className={styles.meta} style={{ textDecoration: "underline" }}>
+                  Abrir sesión (iniciar jornada) →
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      }),
+    },
+    {
+      label: "Culminada",
+      count: culminadas.length,
+      body: culminadas.map((s) => (
+        <div key={s.id} className={styles.miniCard}>
+          {sessionHead(s)}
+          <p className={styles.meta} style={{ margin: "6px 0 0" }}>
+            {winnerName(s) ? <>🏆 Ganador: <b>{winnerName(s)}</b></> : "Sin ganador registrado."}{" "}
+            <Link href={`/bcp/arena/${s.id}`}>Ver sesión →</Link>
+          </p>
+        </div>
+      )),
+    },
+  ];
 
   return (
     <div>
@@ -23,6 +158,10 @@ export default async function BcpArenaPage() {
           Temporadas →
         </Link>
       </div>
+      <p className={styles.subtitle}>
+        Preparando (roster en armado desde Nominados) → Agendada (roster completo; registre el B2/B3 de cada café y
+        arranque la jornada) → Culminada.
+      </p>
 
       <details className={styles.card} style={{ display: "block", marginBottom: 28 }}>
         <summary style={{ cursor: "pointer", fontWeight: 600 }}>Nueva sesión</summary>
@@ -35,9 +174,9 @@ export default async function BcpArenaPage() {
             <div className={styles.field}>
               <label htmlFor="harvest_season_id">Temporada</label>
               <select id="harvest_season_id" name="harvest_season_id" required>
-                {seasons.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.kind === "mitaca" ? "Mitaca" : "Principal"} {s.year}
+                {seasons.map((se) => (
+                  <option key={se.id} value={se.id}>
+                    {se.kind === "mitaca" ? "Mitaca" : "Principal"} {se.year}
                   </option>
                 ))}
               </select>
@@ -60,24 +199,21 @@ export default async function BcpArenaPage() {
         )}
       </details>
 
-      {!sessions?.length && <p className={styles.empty}>No hay sesiones todavía.</p>}
-      <div className={styles.list}>
-        {sessions?.map((s) => {
-          const season = s.harvest_seasons as unknown as { kind: string; year: number } | null;
-          return (
-            <Link key={s.id} href={`/bcp/arena/${s.id}`} style={{ textDecoration: "none" }}>
-              <div className={styles.card}>
-                <div>
-                  <h3>
-                    {season?.kind === "mitaca" ? "Mitaca" : "Principal"} {season?.year} · {s.session_date}
-                  </h3>
-                </div>
-                <span className={styles.badge}>{STATUS_LABEL[s.status] ?? s.status}</span>
+      {!sessions.length ? (
+        <p className={styles.empty}>No hay sesiones todavía.</p>
+      ) : (
+        <div className={styles.board}>
+          {columns.map((col) => (
+            <div className={styles.column} key={col.label}>
+              <div className={styles.columnHead}>
+                <h3>{col.label}</h3>
+                <span className={styles.columnCount}>{col.count}</span>
               </div>
-            </Link>
-          );
-        })}
-      </div>
+              <div className={styles.columnList}>{col.count ? col.body : <p className={styles.empty}>—</p>}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

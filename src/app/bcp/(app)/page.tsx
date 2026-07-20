@@ -138,6 +138,9 @@ export default async function BcpHomePage() {
 
   // ---- Action feed: hyperlinked + Done/TBD-toggleable ----
   const items: PanelTaskItem[] = [];
+  // Deep-links (2026-07-20): cada tarea aterriza en SU elemento — el hash
+  // #lot-/#finca-/#lead-<id> hace que la fila destino se desplace a la vista y
+  // abra su modal sola (ver FincaModalRow/LeadModalRow.anchorId).
   for (const l of newLeads) {
     const key = `lead:${l.id}`;
     items.push({
@@ -145,7 +148,7 @@ export default async function BcpHomePage() {
       icon: "✉️",
       label: `Responder lead ${l.nombre}`,
       sublabel: LEAD_PILLAR_LABEL[l.pillar] ?? l.pillar,
-      href: "/bcp/leads",
+      href: `/bcp/leads#lead-${l.id}`,
       state: stateByKey.get(key) ?? "tbd",
     });
   }
@@ -156,14 +159,18 @@ export default async function BcpHomePage() {
       icon: "🌱",
       label: `Revisar finca ${f.name}`,
       sublabel: f.municipio ?? undefined,
-      href: "/bcp/fincas?status=pending_review",
+      href: `/bcp/fincas?status=pending_review#finca-${f.id}`,
       state: stateByKey.get(key) ?? "tbd",
     });
   }
   for (const m of msgs) {
     const key = `comm:${m.id}`;
     const who = msgProducers.get(m.producer_id)?.fullName ?? "Productor";
-    const href = m.lot_id ? "/bcp/lotes" : m.finca_id ? "/bcp/fincas" : "/bcp/productores";
+    const href = m.lot_id
+      ? `/bcp/lotes#lot-${m.lot_id}`
+      : m.finca_id
+        ? `/bcp/fincas#finca-${m.finca_id}`
+        : "/bcp/productores";
     items.push({
       key,
       icon: "💬",

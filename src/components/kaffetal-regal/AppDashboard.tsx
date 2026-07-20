@@ -1024,7 +1024,9 @@ function ArenaLotCard({
                   </>
                 )}
               </div>
-              {!settled && (
+              {/* Con un código de campaña (KRX-) ya aplicado, la caja desaparece:
+                  cada lote admite UN código y el descuento ya quedó puesto. */}
+              {!settled && !ins.entryCode?.startsWith("KRX-") && (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                   <input
                     placeholder="Aplicar código de campaña"

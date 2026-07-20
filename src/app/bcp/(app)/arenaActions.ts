@@ -19,6 +19,7 @@ import {
   type DiscardGrade,
   type JornadaState,
 } from "@/lib/arena/jornada";
+import { labEvaluationHasData, type LabEvaluation } from "@/lib/arena/labEvaluation";
 
 async function requireAdmin() {
   // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
@@ -76,6 +77,39 @@ export async function createArenaSession(formData: FormData) {
 // 5/7 y mueve el lote a fila_arena. El "Disponibles"/agregar-manual y el flujo
 // de puntaje manual legado (recordArenaScore/closeArenaSession) se retiraron
 // con la jornada v2.
+
+/**
+ * Registro B2/B3 por café de una sesión Agendada (2026-07-20): el laboratorio
+ * puede digitar la planilla SCA y la caracterización física de cada café ANTES
+ * de la jornada, con las mismas interfaces de la Ficha. Se persiste en
+ * arena_sessions.cup_registrations (jsonb {lotId: planilla}) — la jornada
+ * podrá sembrarse de aquí cuando se rediseñe (segunda pasada).
+ */
+export async function saveCupRegistration(
+  sessionId: string,
+  lotId: string,
+  evaluation: LabEvaluation
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const [{ data: session }, { data: roster }] = await Promise.all([
+    service.from("arena_sessions").select("id, status, cup_registrations").eq("id", sessionId).maybeSingle(),
+    service.from("arena_session_lots").select("lot_id").eq("arena_session_id", sessionId),
+  ]);
+  if (!session || session.status === "completed") return { ok: false, error: "La sesión no admite registros." };
+  if (!(roster ?? []).some((r) => r.lot_id === lotId)) return { ok: false, error: "Ese café no está en esta sesión." };
+  if (!labEvaluationHasData(evaluation)) return { ok: false, error: "La planilla está vacía — digite al menos un dato." };
+
+  const current = { ...((session.cup_registrations as Record<string, unknown>) ?? {}) };
+  current[lotId] = { ...evaluation, saved_at: new Date().toISOString(), saved_by: adminId };
+  const { error } = await service.from("arena_sessions").update({ cup_registrations: current }).eq("id", sessionId);
+  if (error) return { ok: false, error: "No se pudo guardar el registro." };
+
+  revalidatePath("/bcp/arena");
+  revalidatePath(`/bcp/arena/${sessionId}`);
+  return { ok: true };
+}
 
 // ---------------------------------------------------------------------------
 // Jornada de Arena (runner en vivo) -- ver src/lib/arena/jornada.ts para el

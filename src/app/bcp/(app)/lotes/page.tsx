@@ -1,7 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, revertNoApto } from "../actions";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
-import { EvaReviewCard, type EvaEudrFields, type FileLink, type Row } from "./EvaReviewCard";
+import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
+import { CERT_REGISTRY } from "@/lib/certRegistry";
 import type { EvaChecklist } from "./evaChecklist";
 import {
   fincaEudrStatus,
@@ -9,7 +10,8 @@ import {
   type FincaEudrFields,
   type EudrStatus,
 } from "@/lib/eudr";
-import { deriveCertSchemes, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
+import { deriveCertSchemes, MESH, SCA_ATTRS, type FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
+import { computeFactor, computeSca, type ScaFields } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { FincaModalRow } from "../fincas/FincaModalRow";
@@ -39,6 +41,7 @@ const COLUMNS: { id: Bucket; label: string }[] = [
 
 type FincaJoin = {
   name: string | null;
+  status: string | null;
   hectares: string | number | null;
   vereda: string | null;
   municipio: string | null;
@@ -88,6 +91,7 @@ type LotRow = {
   eudr_mitigation_actions: string | null;
   eudr_mitigation_effective: boolean | null;
   eudr_mitigation_responsible: string | null;
+  cert_verifications: Record<string, { status?: string }> | null;
   fincas: FincaJoin;
 };
 
@@ -137,8 +141,8 @@ export default async function BcpLotesPage() {
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
-         eudr_mitigation_effective, eudr_mitigation_responsible,
-         fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
+         eudr_mitigation_effective, eudr_mitigation_responsible, cert_verifications,
+         fincas(name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
       )
       .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "apto", "no_apto"])
       .order("created_at", { ascending: false }),
@@ -390,7 +394,6 @@ function LotCard({
     row("Tipo de producto", [ds.product_type, ds.hs_code].filter(Boolean).join(" · HS ")),
     row("Cosecha", [ds.harvest_year, ds.harvest_season].filter(Boolean).join(" · ")),
     row("Categoría de origen", ds.origin_category),
-    row("Finca declarada", ds.estate),
     row("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · ")),
     row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : ""),
     row("Edad del cultivo", ds.plantation_age),
@@ -398,45 +401,96 @@ function LotCard({
     row("Proceso", [ds.base_processing || lot.ficha_proceso, ds.special_processing].filter(Boolean).join(" + "))
   );
 
-  const certRows = rows(
-    row("Certificados (A3/A4)", certSchemes.join(", ")),
-    row("Premios y rankings", ds.awards),
-    row("Sobre el origen", ds.about_origin)
-  );
-  const certFiles: FileLink[] = Object.entries(ds.cert_attachments ?? {}).map(([key, a]) => ({
-    label: `${CERT_KEY_LABEL[key] ?? key} — ${a.fileName}`,
-    url: signedUrls.get(a.assetId) ?? null,
-  }));
+  // "Finca declarada" sale de las filas planas: lleva su propio chip
+  // Apta / No Apta / Pendiente según la revisión de esa finca en BCP.
+  const fincaDeclared =
+    ds.estate || lot.fincas?.name
+      ? {
+          name: ds.estate || lot.fincas?.name || "",
+          status: (lot.fincas?.status ?? null) as "approved" | "rejected" | "pending_review" | null,
+        }
+      : null;
 
-  const scaCompact = (
-    [
-      ["Fragancia", ds.sca_fragrance], ["Sabor", ds.sca_flavor], ["Postgusto", ds.sca_aftertaste],
-      ["Acidez", ds.sca_acidity], ["Cuerpo", ds.sca_body], ["Balance", ds.sca_balance],
-    ] as [string, string | undefined][]
-  )
-    .filter(([, v]) => v)
-    .map(([l, v]) => `${l} ${v}`)
-    .join(" · ");
-  const meshCompact = (
-    [
-      ["Supremo+", ds.mesh_supremo_plus], ["Supremo", ds.mesh_supremo], ["Extra", ds.mesh_extra],
-      ["Europa", ds.mesh_europa], ["UGQ", ds.mesh_ugq], ["Caracol", ds.mesh_peaberry], ["Residuo", ds.mesh_residue],
-    ] as [string, string | undefined][]
-  )
-    .filter(([, v]) => v)
-    .map(([l, v]) => `${l} ${v}`)
-    .join(" · ");
+  // ── FT2 · Certificados: cada declarado con su soporte EN LÍNEA + registro
+  //    público de verificación + veredicto BCP (lots.cert_verifications). ──
+  const verifications = lot.cert_verifications ?? {};
+  const certItems: CertItem[] = [];
+  const pushCert = (key: string, label: string) => {
+    const a = ds.cert_attachments?.[key];
+    const v = verifications[key]?.status;
+    certItems.push({
+      key,
+      label,
+      attachment: a ? { fileName: a.fileName, url: signedUrls.get(a.assetId) ?? null } : null,
+      registry: CERT_REGISTRY[key] ? { name: CERT_REGISTRY[key].registry, url: CERT_REGISTRY[key].url, searchable: CERT_REGISTRY[key].searchable, note: CERT_REGISTRY[key].note } : null,
+      verification: v === "confirmado" || v === "no_confirmado" ? v : null,
+    });
+  };
+  for (const [key, label] of Object.entries(CERT_KEY_LABEL)) {
+    if (key === "origin_cert_other" || key === "intl_other") continue;
+    if (ds[key as keyof FichaFormData]) pushCert(key, label);
+  }
+  if (ds.origin_cert_other && ds.origin_cert_other_text?.trim()) pushCert("origin_cert_other", `${ds.origin_cert_other_text.trim()} (otro origen)`);
+  if (ds.intl_other && ds.intl_cert_other_text?.trim()) pushCert("intl_other", `${ds.intl_cert_other_text.trim()} (otro internacional)`);
+  // Soportes huérfanos: adjuntos cuyo checkbox ya no está marcado — se listan
+  // igual para que ningún archivo quede invisible.
+  for (const [key, a] of Object.entries(ds.cert_attachments ?? {})) {
+    if (!certItems.some((c) => c.key === key)) {
+      certItems.push({
+        key,
+        label: `${CERT_KEY_LABEL[key] ?? key} (soporte sin declaración)`,
+        attachment: { fileName: a.fileName, url: signedUrls.get(a.assetId) ?? null },
+        registry: null,
+        verification: null,
+      });
+    }
+  }
+  const certExtraRows = rows(row("Premios y rankings", ds.awards), row("Sobre el origen", ds.about_origin));
 
-  const fisicoRows = rows(
-    row("Perfil de taza (B2)", ds.cupping_profile),
-    row("SCA declarado", scaCompact),
-    row("Puntaje SCA estimado", lot.ficha_puntaje_estimado),
-    row("Q-Grader de referencia", [ds.qgrader_name, ds.qgrader_lab, ds.qgrader_cert].filter(Boolean).join(" · ")),
-    row("Granulometría (B3)", meshCompact),
-    row("Defecto primario / secundario", [ds.fa_primary_defect, ds.fa_secondary_defect].filter(Boolean).join(" / ")),
+  // ── FT2 · Análisis Físico: B2 completo (los 10 atributos SCA), «No lo sé»
+  //    explícito y la referencia Q-Grader verificable contra el CQI. ──
+  const scaValues: ScaFields = {
+    sca_fragrance: ds.sca_fragrance ?? "", sca_flavor: ds.sca_flavor ?? "", sca_aftertaste: ds.sca_aftertaste ?? "",
+    sca_acidity: ds.sca_acidity ?? "", sca_body: ds.sca_body ?? "", sca_balance: ds.sca_balance ?? "",
+    sca_uniformity: ds.sca_uniformity ?? "", sca_clean_cup: ds.sca_clean_cup ?? "", sca_sweetness: ds.sca_sweetness ?? "",
+    sca_cuppers: ds.sca_cuppers ?? "",
+  };
+  const anySca = Object.values(scaValues).some((v) => String(v).trim() !== "");
+  const scaRows: Row[] = anySca
+    ? SCA_ATTRS.map(([key, label]) => ({
+        l: label,
+        v: String(scaValues[`sca_${key}` as keyof ScaFields]).trim() || "—",
+      }))
+    : [];
+  if (lot.ficha_puntaje_estimado != null) scaRows.push({ l: "Puntaje SCA estimado (B1)", v: String(lot.ficha_puntaje_estimado) });
+
+  const factor = computeFactor({
+    fa_start: ds.fa_start ?? "", fa_green_remainder: ds.fa_green_remainder ?? "",
+    fa_primary_defect: ds.fa_primary_defect ?? "", fa_secondary_defect: ds.fa_secondary_defect ?? "",
+  });
+  const granRows = rows(
+    row("Muestra pergamino inicial", ds.fa_start ? `${ds.fa_start} g` : ""),
+    row("Trillado verde restante", ds.fa_green_remainder ? `${ds.fa_green_remainder} g` : ""),
     row("Humedad pergamino", ds.fa_parch_hum ? `${ds.fa_parch_hum}%` : ""),
-    row("Notas", lot.ficha_notas_cata || ds.analysis_notes)
+    row("Defecto primario / secundario", [ds.fa_primary_defect && `${ds.fa_primary_defect} g`, ds.fa_secondary_defect && `${ds.fa_secondary_defect} g`].filter(Boolean).join(" / ")),
+    row("Factor de rendimiento", factor.yieldFactor !== null ? factor.yieldFactor.toFixed(2) : ""),
+    ...MESH.filter(([key]) => key !== "mesh_residue").map(([key, label]) =>
+      row(label, ds[key as keyof FichaFormData] ? `${ds[key as keyof FichaFormData]} g` : "")
+    )
   );
+
+  const fisico: FisicoPanel = {
+    b2Na: !!ds.ft2_b2_na,
+    b3Na: !!ds.ft2_b3_na,
+    scaRows,
+    scaTotal: anySca ? computeSca(scaValues).total.toFixed(2) : null,
+    cuppingProfile: ds.cupping_profile ?? "",
+    qgraderName: ds.qgrader_name ?? "",
+    qgraderLab: ds.qgrader_lab ?? "",
+    qgraderCert: ds.qgrader_cert ?? "",
+    granRows,
+    notas: lot.ficha_notas_cata || ds.analysis_notes || "",
+  };
 
   const videoLinks: FileLink[] = [
     ...(lot.video_asset_id
@@ -449,7 +503,6 @@ function LotCard({
   ];
 
   const naCerts = [ds.ft2_a3_na && "A3 Cert. Origen", ds.ft2_a4_na && "A4 Cert. Intl."].filter(Boolean) as string[];
-  const naFisico = [ds.ft2_b2_na && "B2 Perfil de Taza", ds.ft2_b3_na && "B3 Granulometría"].filter(Boolean) as string[];
 
   const eudrFields: EvaEudrFields = {
     custodyStages: lot.eudr_custody_stages ?? [],
@@ -482,7 +535,7 @@ function LotCard({
   );
 
   return (
-    <FincaModalRow title={lot.name} summary={summary}>
+    <FincaModalRow title={lot.name} summary={summary} anchorId={`lot-${lot.id}`}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
         <span className={`${styles.badge} mono`}>{ctcLotReferenceShort(lot.id)}</span>
         <EudrStatusBadge status={eudrStatus} />
@@ -512,11 +565,11 @@ function LotCard({
         eudrLabel={eudrStatus.label}
         eudr={eudrFields}
         ftRows={ftRows}
-        certRows={certRows}
-        certFiles={certFiles}
-        fisicoRows={fisicoRows}
+        fincaDeclared={fincaDeclared}
+        certItems={certItems}
+        certExtraRows={certExtraRows}
         naCerts={naCerts}
-        naFisico={naFisico}
+        fisico={fisico}
         videoLinks={videoLinks}
         comms={comms.map((c) => ({
           id: c.id,

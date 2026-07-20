@@ -9,6 +9,7 @@ import {
   assignToBatch,
   confirmInscriptionPayment,
   confirmSampleReceivedNom,
+  createSondeoLotResultUploadUrl,
   createSondeoResultUploadUrl,
   lockBatch,
   markCashbackPaid,
@@ -20,6 +21,8 @@ import {
   removeFromBatch,
   unsettleInscription,
 } from "../nominadosActions";
+import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
+import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import styles from "../shared.module.css";
 
 // Cada control del tablero Nominados sigue el patrón resultado-inline (V12):
@@ -108,21 +111,29 @@ export function PaymentControls({
           {pending ? "Guardando…" : `Confirmar pago · ${dueLabel}`}
         </button>
       </div>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <input
-          placeholder={`Código de campaña (activo: ${entryCode ?? "—"})`}
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          style={{ maxWidth: 220 }}
-        />
-        <button
-          className="btn btn-sm"
-          disabled={pending || !code.trim()}
-          onClick={() => run(() => applyCodeOnBehalf(lotId, code))}
-        >
-          Aplicar código
-        </button>
-      </div>
+      {/* Un código de campaña (KRX-) ya aplicado cierra la caja también aquí:
+          el descuento quedó ligado al código y solo se confirma o revierte. */}
+      {entryCode?.startsWith("KRX-") ? (
+        <p className={styles.meta} style={{ margin: 0 }}>
+          Código de campaña aplicado: <span className="mono">{entryCode}</span> — el descuento ya está ligado.
+        </p>
+      ) : (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          <input
+            placeholder={`Código de campaña (activo: ${entryCode ?? "—"})`}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            style={{ maxWidth: 220 }}
+          />
+          <button
+            className="btn btn-sm"
+            disabled={pending || !code.trim()}
+            onClick={() => run(() => applyCodeOnBehalf(lotId, code))}
+          >
+            Aplicar código
+          </button>
+        </div>
+      )}
       <ErrorLine error={error} />
     </div>
   );
@@ -140,6 +151,9 @@ export function ConfirmSampleButton({ lotId, shipped }: { lotId: string; shipped
   );
 }
 
+/** Columna "Envío a Sondeo": organizar la muestra y consolidarla en un envío.
+ *  El registro del laboratorio vive en la SIGUIENTE columna (SondeoResultControls)
+ *  — el envío es un paso independiente ANTES de los resultados (2026-07-20). */
 export function SondeoControls({
   lotId,
   sampleReady,
@@ -155,9 +169,6 @@ export function SondeoControls({
 }) {
   const { pending, error, run } = useAction();
   const [batch, setBatch] = useState("");
-  const [verdictOpen, setVerdictOpen] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [score, setScore] = useState("");
 
   return (
     <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
@@ -166,8 +177,8 @@ export function SondeoControls({
           {sampleReady ? "Muestra organizada ✓" : "Muestra por organizar"}
         </span>
         {batchId && (
-          <span className={`${styles.badge} ${batchStatus === "abierto" ? "" : styles.badgeGood}`}>
-            {batchStatus === "abierto" ? "En envío (abierto)" : batchStatus === "cerrado" ? "Envío cerrado · esperando resultados" : "Resultados recibidos"}
+          <span className={styles.badge}>
+            {batchStatus === "abierto" ? "En envío (abierto)" : "Envío despachado"}
           </span>
         )}
       </div>
@@ -196,44 +207,112 @@ export function SondeoControls({
           Sacar del envío
         </button>
       )}
-      <div>
-        <button className="btn btn-sm" onClick={() => setVerdictOpen((v) => !v)}>
-          Registrar resultado…
-        </button>
-        {verdictOpen && (
-          <div style={{ marginTop: 6, display: "grid", gap: 6 }}>
-            <textarea
-              rows={2}
-              placeholder="Resultado del laboratorio / catación (el productor lo verá)"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-            <input
-              placeholder="Puntaje (opcional)"
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-              style={{ maxWidth: 160 }}
-            />
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button
-                className="btn btn-sm btn-solid"
-                disabled={pending || !notes.trim()}
-                onClick={() => run(() => recordSondeoResult(lotId, "aprobado", notes, score ? Number(score) : undefined))}
-              >
-                Aprobado → En Fila
+      {sampleReady && !batchId && (
+        <p className={styles.meta} style={{ margin: 0 }}>
+          Al cerrar su envío, el lote pasa a «Resultados del Laboratorio».
+        </p>
+      )}
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+/** Columna "Resultados del Laboratorio": registro del resultado POR LOTE con
+ *  las interfaces B2 (SCA) y B3 (física) de la Ficha + el archivo del lab. */
+export function SondeoResultControls({ lotId, lotName }: { lotId: string; lotName: string }) {
+  const { pending, error, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const score = labEvaluationScore(ev);
+
+  function submit(resultado: "aprobado" | "rechazado") {
+    setUploadError(null);
+    run(async () => {
+      // 1) El archivo del laboratorio sube primero (vía URL firmada); si esa
+      //    subida falla, no se registra nada — el resultado va completo o no va.
+      let resultFile: { path: string; filename: string } | undefined;
+      if (file) {
+        setUploading(true);
+        try {
+          const prep = await createSondeoLotResultUploadUrl(lotId, file.name);
+          if (!prep.ok) return prep;
+          const supabase = createClient();
+          const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, file);
+          if (upErr) return { ok: false as const, error: "La subida del archivo falló. Intente de nuevo." };
+          resultFile = { path: prep.path, filename: file.name };
+        } finally {
+          setUploading(false);
+        }
+      }
+      // 2) Registro estructurado: planilla + notas + veredicto.
+      return recordSondeoResult(lotId, resultado, notes, undefined, {
+        evaluation: labEvaluationHasData(ev) ? ev : undefined,
+        resultFile,
+      });
+    });
+  }
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
+        Registrar resultado del laboratorio…
+      </button>
+      {open && (
+        <div className="modal-bg open" onClick={() => setOpen(false)}>
+          <div className="modal" style={{ maxWidth: 680 }} onClick={(e) => e.stopPropagation()}>
+            <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
+              ×
+            </button>
+            <h3>Resultado del laboratorio · {lotName}</h3>
+            <p className={styles.meta} style={{ marginTop: 2 }}>
+              Registre la planilla tal como llegó del laboratorio (mismas interfaces B2/B3 de la Ficha) y adjunte el
+              documento original del resultado.
+            </p>
+
+            <div className={styles.field} style={{ marginTop: 10 }}>
+              <label>Archivo del resultado (laboratorio)</label>
+              <input
+                type="file"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                disabled={pending || uploading}
+              />
+              {file && <p className={styles.meta} style={{ margin: "3px 0 0" }}>Se subirá al registrar: {file.name}</p>}
+            </div>
+
+            <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending || uploading} />
+            {score != null && (
+              <p className={styles.meta} style={{ margin: "8px 0 0" }}>
+                El total SCA de la planilla (<b>{score.toFixed(2)}</b>) quedará como puntaje del sondeo.
+              </p>
+            )}
+
+            <div className={styles.field} style={{ marginTop: 10 }}>
+              <label>Resumen del resultado (el productor lo verá)</label>
+              <textarea
+                rows={2}
+                placeholder="Resultado del laboratorio / catación…"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+              <button className="btn btn-sm btn-solid" disabled={pending || uploading || !notes.trim()} onClick={() => submit("aprobado")}>
+                {pending || uploading ? "Registrando…" : "Aprobado → En Fila"}
               </button>
-              <button
-                className="btn btn-sm"
-                disabled={pending || !notes.trim()}
-                onClick={() => run(() => recordSondeoResult(lotId, "rechazado", notes, score ? Number(score) : undefined))}
-              >
+              <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => submit("rechazado")}>
                 Rechazado (cashback 80% + mejoras IA)
               </button>
             </div>
+            <ErrorLine error={error ?? uploadError} />
           </div>
-        )}
-      </div>
-      <ErrorLine error={error} />
+        </div>
+      )}
     </div>
   );
 }

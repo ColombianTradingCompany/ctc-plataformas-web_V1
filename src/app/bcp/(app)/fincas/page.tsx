@@ -213,7 +213,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
           );
 
           return (
-            <FincaModalRow key={finca.id} title={finca.name} summary={summary}>
+            <FincaModalRow key={finca.id} title={finca.name} summary={summary} anchorId={`finca-${finca.id}`}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
                 <span className={styles.badge}>{fincaCode(finca.id)}</span>
                 <EudrStatusBadge status={status} />

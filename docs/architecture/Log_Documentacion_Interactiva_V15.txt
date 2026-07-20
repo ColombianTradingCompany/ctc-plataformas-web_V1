@@ -50,3 +50,43 @@ closed and left as historical record of what went into producing it).
 
 (commit del wrap V15: 59c4217 — el contenido corresponde a ese commit; todo lo que describe
 está desplegado READY en producción.)
+
+## [2026-07-20] Pase de feedback del owner tras el primer intento de walkthrough de la Arena
+- SONDEO PARTIDO EN DOS PASOS (afecta DICT `sondeo`, `nominados`, escenario `arena`): el tablero
+  Nominados pasa de 4 a 5 columnas — "Envío a Sondeo" (organizar muestra + consolidar en
+  sondeo_batches + despachar) y "Resultados del Laboratorio" (solo lotes cuyo envío está
+  cerrado/resultados; la separación se DERIVA del status del batch, sin nuevo valor de phase).
+  recordSondeoResult ahora EXIGE envío despachado, y el resultado se registra con una planilla
+  B2/B3 estructurada (nuevo componente compartido src/components/bcp/LabEvalEditor.tsx +
+  src/lib/arena/labEvaluation.ts; se guarda en arena_inscriptions.sondeo_evaluation jsonb, el
+  total SCA se vuelve sondeo_score) + archivo del laboratorio POR LOTE
+  (createSondeoLotResultUploadUrl → sondeo_result_storage_path/filename). Migración:
+  arena_v3_lab_registration_and_cert_verifications.
+- ARENA COMO KANBAN (afecta nodo `n-bcp`, DICT `jornada`/`nominados`, escenario `jornada`):
+  /bcp/arena rediseñado en 3 columnas Preparando (roster incompleto) / Agendada (roster lleno o
+  jornada en curso — CADA café tiene su modal "Registro B2/B3" persistido en
+  arena_sessions.cup_registrations jsonb vía saveCupRegistration) / Culminada (ganador).
+  ⚠ La jornada NO se siembra todavía de cup_registrations — aplazado a la segunda pasada de la
+  Arena que el owner pidió revisar.
+- VERIFICACIÓN DE CERTIFICADOS A3/A4 (afecta DICT `eva`, `intake`): en el panel FT2·Certificados
+  de EVA cada certificado declarado es una fila con su soporte EN LÍNEA + enlace al registro
+  público del esquema (nuevo src/lib/certRegistry.ts, investigado 2026-07-20: Rainforest/FLOCERT/
+  USDA OID/GLOBALG.A.P./CQI etc.) + veredicto Confirmado/No confirmado de BCP, corregible siempre,
+  persistido en lots.cert_verifications (jsonb, protegido del productor por
+  guard_lot_protected_columns — el guard aprendió la columna en la misma migración).
+- PANEL EVA REORDENADO (DICT `eva`): FT muestra chip Apta/No Apta/Pendiente de la finca declarada;
+  FT2 físico muestra los 10 atributos SCA completos + «No lo sé» explícito + enlace al directorio
+  CQI de Q-Graders; EUDR: Complejidad bajo Etapas de custodia, chip de esquemas que cruza al panel
+  FT2, la pregunta de mitigación es campo directo de BCP ("evaluación de BCP"), Responsable al
+  final sin botón Corregir.
+- UI BCP: columnas de kanban crecen a todo el ancho (.column flex:1 1 260px); las "Tareas
+  pendientes de CTC" aterrizan en el elemento exacto (hash #lot-/#finca-/#lead-<id> abre el modal
+  destino — anchorId en FincaModalRow/LeadModalRow); Kaffetal Club debajo de Nominados en el nav;
+  la caja de código de campaña se CIERRA una vez aplicado un KRX- (lado productor Y lado BCP).
+- DATOS: campaña "Fundadores" eliminada (sin uso, 1 código nunca emitido borrado con ella).
+- El walkthrough EN VIVO sigue pendiente — el terreno quedó listo para reintentarlo con el flujo
+  nuevo: Pacamara en "Resultados del Laboratorio" (su envío Sondeo Test 1 está cerrado), Catia en
+  "Envío a Sondeo" (sin batch), 3 lotes QA de relleno en "En Fila" (productor
+  qa-arena-filler@ctc-qa-test.co / borrar tras el walkthrough: primero
+  producer_comm_log del producer 31ac070c-..., luego scripts/delete-qa-user.mjs).
+(commit: pending)

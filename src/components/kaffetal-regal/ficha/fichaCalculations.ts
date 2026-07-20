@@ -1,6 +1,20 @@
 import { MESH, SCA_ATTRS, num, type FichaFormData } from "./fichaData";
 
-export function computeFactor(data: FichaFormData) {
+// Los cómputos aceptan el SUBCONJUNTO de campos que realmente leen (no la
+// Ficha completa): así el editor B2/B3 de BCP (sondeo / registro de Arena)
+// reutiliza EXACTAMENTE la misma aritmética sin cargar una FichaFormData.
+export type FactorFields = Pick<FichaFormData, "fa_start" | "fa_green_remainder" | "fa_primary_defect" | "fa_secondary_defect">;
+export type MeshFields = Pick<
+  FichaFormData,
+  "mesh_supremo_plus" | "mesh_supremo" | "mesh_extra" | "mesh_europa" | "mesh_ugq" | "mesh_peaberry" | "mesh_residue"
+>;
+export type ScaFields = Pick<
+  FichaFormData,
+  | "sca_fragrance" | "sca_flavor" | "sca_aftertaste" | "sca_acidity" | "sca_body"
+  | "sca_balance" | "sca_uniformity" | "sca_clean_cup" | "sca_sweetness" | "sca_cuppers"
+>;
+
+export function computeFactor(data: FactorFields) {
   const start = num(data.fa_start);
   const remainder = num(data.fa_green_remainder);
   const yieldLoss = Math.max(0, start - remainder);
@@ -14,9 +28,9 @@ export function computeFactor(data: FichaFormData) {
 // El Residuo no se digita: es el "solucionador de diferencia" que lleva la
 // suma de mallas siempre a 100% del grano sano -- lo que no quedó retenido en
 // ninguna malla ES el residuo, por definición.
-export function computeMesh(data: FichaFormData, remainder: number) {
+export function computeMesh(data: MeshFields, remainder: number) {
   const measured = MESH.filter(([key]) => key !== "mesh_residue").map(([key, label]) => {
-    const grams = num(data[key as keyof FichaFormData] as string);
+    const grams = num(data[key as keyof MeshFields]);
     const pct = remainder > 0 ? (grams / remainder) * 100 : null;
     return { key, label, grams, pct };
   });
@@ -50,8 +64,8 @@ export function scaClassFor(total: number): ScaClass {
   return "Rareza";
 }
 
-export function computeSca(data: FichaFormData) {
-  const values = SCA_ATTRS.map(([key]) => Math.min(10, Math.max(0, num(data[`sca_${key}` as keyof FichaFormData] as string))));
+export function computeSca(data: ScaFields) {
+  const values = SCA_ATTRS.map(([key]) => Math.min(10, Math.max(0, num(data[`sca_${key}` as keyof ScaFields]))));
   const total = Math.round(values.reduce((s, v) => s + v, 0) * 100) / 100;
   return { values, total, cls: scaClassFor(total) };
 }

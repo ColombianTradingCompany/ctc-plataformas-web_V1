@@ -6,12 +6,14 @@ import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, dueFor, formatCop, isSettled, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
+import { labEvaluationHasData, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
 
 // ── Nominados: el tramo pagado de la Arena, lado BCP ────────────────────────
-// Columnas del tablero (derivadas): Nuevos Lotes Aptos (stage=apto sin
-// inscripción) → Lotes Postulados (phase=postulacion; aquí viven Confirmar
-// pago y Confirmar muestra) → Sondeo Preliminar (phase=sondeo) → En Fila
-// (phase=fila) → sesión asignada (phase=sesion, sale del tablero).
+// Columnas del tablero (derivadas, 2026-07-20): Nuevos Lotes Aptos (stage=apto
+// sin inscripción) → Lotes Postulados (phase=postulacion; pago + muestra) →
+// Envío a Sondeo (phase=sondeo, envío sin despachar) → Resultados del
+// Laboratorio (phase=sondeo, envío cerrado/en lab; registro B2/B3 + archivo)
+// → En Fila (phase=fila) → sesión asignada (phase=sesion, sale del tablero).
 // Todas las acciones devuelven resultado — nunca lanzan (lección V12).
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -312,6 +314,23 @@ export async function createSondeoResultUploadUrl(
   return { ok: true, path, token: data.token };
 }
 
+/** URL firmada para subir el resultado del laboratorio DE UN LOTE (el archivo
+ *  del lab llega por lote; el consolidado del envío sigue viviendo en el batch). */
+export async function createSondeoLotResultUploadUrl(
+  lotId: string,
+  filename: string
+): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
+  await requireAdmin();
+  const service = createServiceRoleClient();
+  const { data: ins } = await service.from("arena_inscriptions").select("id, phase").eq("lot_id", lotId).maybeSingle();
+  if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en sondeo." };
+  const clean = filename.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "resultado";
+  const path = `sondeo/lotes/${lotId}/${Date.now()}-${clean}`;
+  const { data, error } = await service.storage.from("kaffetal-media").createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: "No se pudo preparar la subida." };
+  return { ok: true, path, token: data.token };
+}
+
 /** Paso 2: registra el archivo ya subido como el resultado del envío. */
 export async function recordBatchResult(batchId: string, path: string, filename: string): Promise<Result> {
   const adminId = await requireAdmin();
@@ -342,7 +361,13 @@ export async function recordSondeoResult(
   lotId: string,
   resultado: "aprobado" | "rechazado",
   notes: string,
-  score?: number
+  score?: number,
+  extras?: {
+    /** Planilla B2/B3 estructurada del laboratorio (mismas interfaces de la Ficha). */
+    evaluation?: LabEvaluation;
+    /** Archivo del resultado ya subido a Storage vía createSondeoLotResultUploadUrl. */
+    resultFile?: { path: string; filename: string };
+  }
 ): Promise<Result> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
@@ -352,17 +377,38 @@ export async function recordSondeoResult(
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, phase, status, amount_due_cop, producer_id, lots(name)")
+    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, lots(name)")
     .eq("lot_id", lotId)
     .maybeSingle();
   if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en sondeo." };
 
+  // El ENVÍO es un paso independiente ANTES del registro del laboratorio
+  // (pedido 2026-07-20): sin envío consolidado y despachado, no hay resultado
+  // que registrar — el flujo es organizar → enviar → cerrar → resultados.
+  if (!ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un envío de sondeo — primero organícelo y agréguelo a un envío." };
+  const { data: batch } = await service.from("sondeo_batches").select("status").eq("id", ins.sondeo_batch_id).maybeSingle();
+  if (!batch || batch.status === "abierto") {
+    return { ok: false, error: "El envío de este lote sigue abierto — ciérrelo (despacho al laboratorio) antes de registrar resultados." };
+  }
+
   const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string } | null;
+
+  // La planilla estructurada manda: si trae atributos SCA, su total ES el
+  // puntaje del sondeo (salvo que se digite un puntaje explícito).
+  const evaluation = extras?.evaluation && labEvaluationHasData(extras.evaluation) ? extras.evaluation : null;
+  const effectiveScore = score ?? (evaluation ? labEvaluationScore(evaluation) : null);
+  const resultCols = {
+    sondeo_result_notes: cleanNotes,
+    sondeo_score: effectiveScore,
+    sondeo_evaluation: evaluation,
+    sondeo_result_storage_path: extras?.resultFile?.path ?? null,
+    sondeo_result_filename: extras?.resultFile?.filename ?? null,
+  };
 
   if (resultado === "aprobado") {
     await service
       .from("arena_inscriptions")
-      .update({ phase: "fila", sondeo_result: "aprobado", sondeo_result_notes: cleanNotes, sondeo_score: score ?? null })
+      .update({ phase: "fila", sondeo_result: "aprobado", ...resultCols })
       .eq("id", ins.id);
     await service.from("audit_log").insert({
       entity_type: "arena_inscription",
@@ -376,7 +422,7 @@ export async function recordSondeoResult(
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `¡Su lote superó el sondeo preliminar${score != null ? ` (${score})` : ""}! Está en fila para la próxima sesión de la Arena.`,
+      note: `¡Su lote superó el sondeo preliminar${effectiveScore != null ? ` (${effectiveScore})` : ""}! Está en fila para la próxima sesión de la Arena.`,
       created_by: adminId,
     });
   } else {
@@ -387,8 +433,7 @@ export async function recordSondeoResult(
       .update({
         phase: "retirado",
         sondeo_result: "rechazado",
-        sondeo_result_notes: cleanNotes,
-        sondeo_score: score ?? null,
+        ...resultCols,
         cashback_cop: cashback,
         cashback_status: cashback ? "pendiente" : null,
       })

@@ -333,7 +333,7 @@ function LeadCard({
   );
 
   return (
-    <LeadModalRow title={`${lead.nombre} · ${pillarLabel}`} summary={summary}>
+    <LeadModalRow title={`${lead.nombre} · ${pillarLabel}`} summary={summary} anchorId={`lead-${lead.id}`}>
       <p className={styles.meta} style={{ marginTop: 2 }}>
         {lead.email} · recibido el {fecha(lead.created_at)}
       </p>

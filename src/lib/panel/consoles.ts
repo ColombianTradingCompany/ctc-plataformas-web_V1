@@ -53,10 +53,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         links: [
           { href: "/bcp", label: "Panel", exact: true },
           { href: "/bcp/productores", label: "Productores" },
-          { href: "/bcp/club", label: "Kaffetal Club" },
           { href: "/bcp/fincas", label: "Fincas" },
           { href: "/bcp/lotes", label: "Lotes" },
           { href: "/bcp/nominados", label: "Nominados" },
+          { href: "/bcp/club", label: "Kaffetal Club" },
           { href: "/bcp/arena", label: "Arena" },
           { href: "/bcp/evaluaciones", label: "Evaluaciones" },
           { href: "/bcp/contratos", label: "Contratos" },

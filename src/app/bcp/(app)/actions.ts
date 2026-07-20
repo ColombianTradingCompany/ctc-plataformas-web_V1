@@ -295,6 +295,36 @@ export async function setEvaChecklistItem(
   return { ok: true };
 }
 
+/**
+ * Verificación individual de un certificado A3/A4 (2026-07-20): BCP contrasta
+ * el certificado contra su registro público y lo marca Confirmado / No
+ * confirmado. El certificado permanece en la lista con su etiqueta — nunca se
+ * borra — y el veredicto puede corregirse en cualquier momento. Se persiste en
+ * lots.cert_verifications (jsonb {certKey: {status, at, by}}), columna
+ * protegida del productor por guard_lot_protected_columns.
+ */
+export async function setCertVerification(
+  lotId: string,
+  certKey: string,
+  status: "confirmado" | "no_confirmado" | null
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("id, cert_verifications").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  const current = { ...((lot.cert_verifications as Record<string, unknown>) ?? {}) };
+  if (status === null) delete current[certKey];
+  else current[certKey] = { status, at: new Date().toISOString(), by: adminId };
+
+  const { error } = await service.from("lots").update({ cert_verifications: current }).eq("id", lotId);
+  if (error) return { ok: false, error: "No se pudo guardar la verificación." };
+
+  revalidatePath("/bcp/lotes");
+  return { ok: true };
+}
+
 export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();

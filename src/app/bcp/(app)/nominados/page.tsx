@@ -12,6 +12,7 @@ import {
   PostularOnBehalfButton,
   RegenerateMejorasButton,
   SondeoControls,
+  SondeoResultControls,
 } from "./NominadosClient";
 import styles from "../shared.module.css";
 
@@ -50,6 +51,12 @@ export default async function NominadosPage() {
   const postulados = inscriptions.filter((i) => i.phase === "postulacion" && i.lot);
   const sondeo = inscriptions.filter((i) => i.phase === "sondeo" && i.lot);
   const fila = inscriptions.filter((i) => i.phase === "fila" && i.lot);
+  // El sondeo se parte en DOS columnas (2026-07-20): el envío (organizar +
+  // consolidar + despachar) es un paso independiente ANTES del registro del
+  // laboratorio. Un lote pasa de columna cuando su envío se cierra.
+  const batchStatusOf = (i: (typeof inscriptions)[number]) => (i.sondeo_batch_id ? batchById.get(i.sondeo_batch_id)?.status ?? null : null);
+  const sondeoEnvio = sondeo.filter((i) => !i.sondeo_batch_id || batchStatusOf(i) === "abierto");
+  const sondeoLab = sondeo.filter((i) => i.sondeo_batch_id && batchStatusOf(i) !== "abierto");
   const retiradosPend = inscriptions.filter((i) => i.phase === "retirado" && i.cashback_status === "pendiente" && i.lot);
 
   const producerIds = [...aptos.map((l) => l.producer_id), ...inscriptions.map((i) => i.producer_id)];
@@ -123,9 +130,9 @@ export default async function NominadosPage() {
       )),
     },
     {
-      label: "Sondeo Preliminar",
-      count: sondeo.length,
-      body: sondeo.map((i) => {
+      label: "Envío a Sondeo",
+      count: sondeoEnvio.length,
+      body: sondeoEnvio.map((i) => {
         const b = i.sondeo_batch_id ? batchById.get(i.sondeo_batch_id) : null;
         return (
           <div key={i.id} className={styles.card}>
@@ -138,6 +145,24 @@ export default async function NominadosPage() {
               batchStatus={b?.status ?? null}
               openBatches={openBatches}
             />
+          </div>
+        );
+      }),
+    },
+    {
+      label: "Resultados del Laboratorio",
+      count: sondeoLab.length,
+      body: sondeoLab.map((i) => {
+        const b = i.sondeo_batch_id ? batchById.get(i.sondeo_batch_id) : null;
+        return (
+          <div key={i.id} className={styles.card}>
+            <b>{i.lot!.name}</b>
+            <p className={styles.meta}>{name(i.producer_id)}</p>
+            <p className={styles.meta}>
+              Envío: {b?.label ?? "—"} ·{" "}
+              {b?.status === "cerrado" ? "en el laboratorio" : b?.result_filename ? `resultados del envío: ${b.result_filename}` : "—"}
+            </p>
+            <SondeoResultControls lotId={i.lot_id} lotName={i.lot!.name} />
           </div>
         );
       }),
@@ -162,8 +187,9 @@ export default async function NominadosPage() {
     <div>
       <h1 className={styles.title}>Nominados</h1>
       <p className={styles.subtitle}>
-        El tramo pagado de la Arena: postulación (código de entrada) → pago + muestra → sondeo preliminar (Fedecafé) →
-        fila → sesión. Cada sesión recibe exactamente 5 o 7 lotes.
+        El tramo pagado de la Arena: postulación (código de entrada) → pago + muestra → <b>envío a sondeo</b> (consolidación
+        y despacho al laboratorio) → <b>resultados del laboratorio</b> (planilla B2/B3 + archivo) → fila → sesión. Cada
+        sesión recibe exactamente 5 o 7 lotes.
       </p>
 
       <div className={styles.board}>

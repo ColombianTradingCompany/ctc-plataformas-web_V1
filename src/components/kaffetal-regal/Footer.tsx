@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./Footer.module.css";
 
 // Cherry Picked is live: subdomain in prod, path in dev (same compile-time
@@ -53,7 +54,8 @@ const T: Record<Lang, { line1: React.ReactNode; line2: React.ReactNode; know: st
 };
 
 export function Footer() {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
   return (
     <footer className={styles.footer}>
       <div className={`wrap ${styles.foot}`}>
@@ -75,6 +77,8 @@ export function Footer() {
         {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
         <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden />
       </div>
+
+      <LegalFooter lang={lang} />
     </footer>
   );
 }

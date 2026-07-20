@@ -1,6 +1,6 @@
 /* Shared styling for the master-login screens (/login, /verify). Ported from
    the original bcp/auth.module.css. */
-.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px}
+.wrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;background:var(--paper);padding:24px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:36px;max-width:380px;width:100%;box-shadow:0 20px 48px -24px rgba(24,24,27,.25)}
 .card h1{font-size:20px;margin-bottom:6px;color:var(--ink)}
 .card p{font-size:13.5px;color:var(--muted);margin-bottom:22px}

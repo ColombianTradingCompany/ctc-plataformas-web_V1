@@ -89,4 +89,32 @@ está desplegado READY en producción.)
   "Envío a Sondeo" (sin batch), 3 lotes QA de relleno en "En Fila" (productor
   qa-arena-filler@ctc-qa-test.co / borrar tras el walkthrough: primero
   producer_comm_log del producer 31ac070c-..., luego scripts/delete-qa-user.mjs).
+(commit: 5cd4079)
+
+## [2026-07-20] Insignia de versión + pie legal compartido en toda la plataforma
+- MOTIVO: el owner preguntó "¿seguro que lo último está en vivo?" y no había forma de
+  saberlo mirando la pantalla. Ahora la hay.
+- NUEVO src/lib/version.ts — fuente ÚNICA. APP_VERSION="1.0" ⇒ se pinta "V1.0". El menor
+  sube en el MISMO commit que despliega una tanda. next.config.ts copia
+  VERCEL_GIT_COMMIT_SHA (7 chars) a NEXT_PUBLIC_BUILD_SHA y el title de cada insignia lo
+  muestra: el SHA es la identidad real del build, la versión es la etiqueta legible.
+  ⚠ NO es la versión de la documentación interactiva (esta numera snapshots de documento).
+- NUEVO src/components/LegalFooter.tsx (+ .module.css) — barra legal compartida con el loro
+  CTC en negro (nuevo asset public/images/shared/ctc-logo-parrot-black.webp, 240×268, 11 KB,
+  recortado del reference_logos original; silueta negra pura con alfa real: 0 píxeles opacos
+  no-negros, así que invierte limpio a blanco sobre el navy), reserva de derechos, letra
+  pequeña legal (trilingüe es/en/de) y la insignia de versión. Dos tonos: dark para el pie
+  navy de CTC Home, light para el resto.
+- DÓNDE QUEDA: rail de las consolas (junto a "CTC Web Platform", afecta nodo n-consoles),
+  CTC Home, Kaffetal Regal landing Y panel del productor (no tenía pie alguno), Cherry Picked
+  (las 3), las 4 pantallas de acceso interno vía el nuevo InternalAuthShell
+  (/login, /verify, /panel, /cambiar-contrasena) y las 2 páginas de cada socio.
+- Para que la barra se apoye al fondo del viewport sin scroll, .wrap de auth.module.css y de
+  hub.module.css cambió min-height:100vh por flex:1 1 auto (el shell es la columna 100vh).
+- SIN DATOS INVENTADOS: el pie NO lleva NIT ni matrícula — no están en el repo. Van en
+  LEGAL_ES/EN/DE cuando el owner los entregue. Tampoco enlaza política de privacidad porque
+  no existe (sigue el pendiente GDPR con Resend como subprocesador).
+- Contraste MEDIDO en cada fondo, todo AA: letra pequeña 5.58 sobre navy, 6.14 (blanco),
+  6.40 (Cherry Picked), 7.90 (acceso y socios); reservas 14.26–18.31. La letra pequeña solo
+  se atenúa (0.78) en el tono oscuro — al 0.78 sobre blanco medía 3.73 y REPROBABA AA.
 (commit: pending)

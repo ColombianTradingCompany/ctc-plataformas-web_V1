@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@/app/bcp/tailwind.css";
+import { InternalAuthShell } from "@/components/panel/InternalAuthShell";
 
 export const metadata: Metadata = {
   title: "CTC Web Platform · Nueva contraseña",
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CambiarContrasenaLayout({ children }: { children: React.ReactNode }) {
-  return <div data-theme="bcp">{children}</div>;
+  return <InternalAuthShell>{children}</InternalAuthShell>;
 }

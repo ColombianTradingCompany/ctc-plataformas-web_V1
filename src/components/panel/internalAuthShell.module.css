@@ -1,0 +1,8 @@
+/* Columna a pantalla completa: el contenido de acceso ocupa lo que sobre y la
+   barra legal se apoya al fondo del viewport. */
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}

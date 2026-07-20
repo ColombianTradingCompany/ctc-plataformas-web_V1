@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./Footer.module.css";
 
 // The 5 partner-node "couples" (landing + login). In prod each lives on its own
@@ -40,7 +41,8 @@ const T: Record<Lang, { tagline: string; dds: string; partners: string; partners
 };
 
 export function Footer() {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
   return (
     <footer className={styles.footer}>
       <div className={`wrap ${styles.foot}`}>
@@ -110,10 +112,11 @@ export function Footer() {
             height={1231}
           />
         </div>
-        <p className={`mono ${styles.copy}`}>
-          © {new Date().getFullYear()} Colombian Trading Company · Piedecuesta, Santander · Colombia
-        </p>
       </div>
+
+      {/* Barra legal compartida — reemplaza la línea de copyright suelta que
+          vivía aquí, y añade la insignia de versión del despliegue. */}
+      <LegalFooter tone="dark" lang={lang} />
     </footer>
   );
 }

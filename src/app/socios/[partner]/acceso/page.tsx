@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PARTNERS, isPartnerSlug } from "@/lib/partners/partners";
 import { PartnerLoginForm } from "./PartnerLoginForm";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "../socios.module.css";
 
 export default async function PartnerAccessPage({ params }: { params: Promise<{ partner: string }> }) {
@@ -14,6 +15,7 @@ export default async function PartnerAccessPage({ params }: { params: Promise<{ 
       <div className={styles.center}>
         <PartnerLoginForm slug={p.slug} name={p.name} />
       </div>
+      <LegalFooter />
     </div>
   );
 }

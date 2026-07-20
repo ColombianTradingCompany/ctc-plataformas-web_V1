@@ -16,6 +16,7 @@ import { LotKanbanStepper } from "./LotKanbanStepper";
 import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
 import { ToolPanel } from "@/components/tools/ToolPanel";
 import { KR_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./AppDashboard.module.css";
 
 // Copy en español de las herramientas para el productor. El INTERIOR de cada
@@ -909,6 +910,11 @@ export function AppDashboard({
           </>
         )}
       </div>
+
+      {/* El panel del productor no tenía pie alguno: la barra legal cierra
+          también esta superficie y, sobre todo, deja la versión a la vista
+          donde más se prueba el lado productor. */}
+      <LegalFooter />
     </div>
   );
 }

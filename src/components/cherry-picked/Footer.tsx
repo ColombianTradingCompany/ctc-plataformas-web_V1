@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FAMILY_LINKS, useLang, type Lang } from "./i18n";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./Footer.module.css";
 
 const EN = {
@@ -56,6 +57,8 @@ export function Footer() {
         {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
         <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden />
       </div>
+
+      <LegalFooter lang={lang} />
     </footer>
   );
 }

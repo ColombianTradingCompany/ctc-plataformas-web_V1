@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
+import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import styles from "./panel.module.css";
 
 /**
@@ -35,7 +36,12 @@ export function PanelSidebar({
   return (
     <nav className={styles.sidebar}>
       <div className={styles.brand}>
-        <span className={styles.brandName}>CTC Web Platform</span>
+        <span className={styles.brandName}>
+          CTC Web Platform
+          <span className={styles.brandVersion} title={`Versión ${VERSION_LABEL} · build ${BUILD_SHA}`}>
+            {VERSION_LABEL}
+          </span>
+        </span>
         <span className={styles.brandSub}>Consolas internas · una sesión</span>
         {identityName && <span className={styles.identity}>{identityName}</span>}
       </div>

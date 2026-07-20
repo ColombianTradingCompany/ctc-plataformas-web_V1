@@ -1,0 +1,101 @@
+/* Barra legal compartida — cierra TODAS las superficies públicas y de acceso.
+   Dos tonos porque los pies existentes no comparten fondo: el de CTC Home es
+   navy (--primary-deep) y los de Kaffetal Regal / Cherry Picked son claros. */
+.bar {
+  border-top: 1px solid var(--line);
+  padding: 18px 0 22px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+.inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.left {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+/* El loro es una silueta negra sólida con alfa real: sobre fondo claro va tal
+   cual; sobre el navy se invierte a blanco (brightness(0) invert(1) sobre un
+   monocromo da una silueta limpia, sin halos). */
+.logo {
+  width: 30px;
+  height: auto;
+  flex: 0 0 auto;
+}
+.dark .logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
+}
+.light .logo {
+  filter: brightness(0);
+}
+.legal {
+  min-width: 0;
+}
+.rights {
+  font-weight: 600;
+}
+/* La letra pequeña NO se atenúa sobre fondo claro: medido, --muted a plena
+   opacidad da 6.14:1 sobre blanco, pero al 0.78 cae a 3.73 y reprueba AA
+   (4.5:1). Sobre el navy sí se atenúa — ahí 0.78 mide 5.58:1 y aporta jerarquía
+   sin bajar del umbral. La jerarquía en claro la da .rights, que va en --ink. */
+.light .fine {
+  opacity: 1;
+}
+.dark .fine {
+  opacity: 0.78;
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.version {
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 9px;
+  cursor: help;
+  white-space: nowrap;
+}
+
+/* Tonos */
+.light {
+  color: var(--muted);
+  background: transparent;
+}
+.light .rights {
+  color: var(--ink);
+}
+.light .version {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  color: var(--ink);
+}
+.dark {
+  color: #b9c6d4;
+  background: var(--primary-deep, #0b1b33);
+}
+.dark .rights {
+  color: #fff;
+}
+.dark .version {
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+}
+
+@media (max-width: 620px) {
+  .inner {
+    justify-content: flex-start;
+  }
+}

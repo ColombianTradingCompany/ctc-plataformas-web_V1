@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PARTNERS, PARTNER_SLUGS, isPartnerSlug } from "@/lib/partners/partners";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./socios.module.css";
 
 export function generateStaticParams() {
@@ -83,6 +84,7 @@ export default async function PartnerLandingPage({ params }: { params: Promise<{
           <span>Piedecuesta, Santander · Colombia</span>
         </div>
       </div>
+      <LegalFooter />
     </div>
   );
 }

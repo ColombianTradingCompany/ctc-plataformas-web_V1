@@ -276,3 +276,28 @@ está desplegado READY en producción.)
   datos de forma real (los dos campos, sus ayudas, y la lista mostrando/ocultando la entrega
   según difiera), sonda borrada.
 (commit: pending · versión V1.4)
+
+## [2026-07-20] Bugs del productor: respuesta de hilo (RLS) + orden Tenencia/Documento
+- BUG GRANDE (afecta DICT `identidades`, `intake`; ya estaba en PRODUCCIÓN): responder un hilo en
+  "Retroalimentación y ayuda" fallaba SIEMPRE con "No se pudo enviar su respuesta". Causa real:
+  la política de INSERT de producer_comm_log (producer_comm_log_insert_own) validaba la
+  pertenencia del padre con una subconsulta SOBRE SU PROPIA TABLA
+  (parent_id IN (select id from producer_comm_log ...)); Postgres detecta recursión infinita al
+  planearla y aborta — y como el WITH CHECK expande las TRES ramas del OR, TODA inserción del
+  productor moría, no solo las de respuesta. Reproducido con JWT simulado
+  (ERROR 42P17: infinite recursion detected in policy).
+  ARREGLO (migración fix_producer_comm_log_insert_recursion): nueva función
+  public.producer_owns_comm(comm_id, uid) SECURITY DEFINER + search_path fijo, que lee la tabla
+  con RLS ya resuelta; la política usa esa función para la rama del padre (finca/lote no recursan,
+  son otras tablas). Verificado: el insert pasa con JWT simulado Y en vivo en el navegador (la
+  respuesta se envía, sale "Respuesta enviada a CTC ✓" y aparece en el hilo).
+  ⚠ GOTCHA para el repo: una política cuya expresión consulta SU MISMA tabla recursa; envolver la
+  subconsulta en una función SECURITY DEFINER rompe el ciclo.
+- UI FINCA (FincaModal): "Documento de respaldo (PDF)" pasó a ir JUSTO debajo de "Tenencia de la
+  tierra" (respalda esa declaración). "Infraestructura local" bajó debajo del documento.
+- ⚠ SIN RESOLVER, pedí aclaración al owner: (a) "el blocker de los certificados no funciona" — el
+  camino del código (pendingCertProofs + stripUnprovenCerts, compuerta SUAVE que avisa en FT2 y
+  desmarca al envío final) se leyó correcto y no se pudo reproducir un fallo; falta saber si el
+  owner espera un bloqueo DURO o ve otro comportamiento. (b) "bug con las áreas de verificación" —
+  no se pudo identificar a qué campo/pantalla se refiere.
+(commit: pending · versión V1.5)

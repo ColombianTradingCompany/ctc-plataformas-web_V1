@@ -538,27 +538,9 @@ function FincaModalBody({
           </div>
         </div>
 
-        <div className={styles.wide} style={{ marginBottom: 14 }}>
-          <label>
-            Infraestructura local
-            <FieldInfo text="Marque la infraestructura y maquinaria propia disponible en esta finca o cerca de ella. Cada elemento tiene una ⓘ que explica para qué sirve. Ayuda a evidenciar la capacidad de procesamiento y la trazabilidad de sus cafés." />
-          </label>
-          <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 6px" }}>Seleccione todo lo que tenga disponible.</p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {LOCAL_INFRA.map(([key, label, info]) => (
-              <label key={key} className={styles.chip}>
-                <input
-                  type="checkbox"
-                  checked={eudr.eudrLocalInfra.includes(key)}
-                  onChange={(e) => patchEudr({ eudrLocalInfra: e.target.checked ? [...eudr.eudrLocalInfra, key] : eudr.eudrLocalInfra.filter((k) => k !== key) })}
-                />{" "}
-                {label}
-                <FieldInfo text={info} />
-              </label>
-            ))}
-          </div>
-        </div>
-
+        {/* El documento de respaldo va JUSTO debajo de "Tenencia de la tierra"
+            (pedido del owner 2026-07-20): respalda esa declaración, y tenerlo
+            pegado hace obvia la relación. "Infraestructura local" pasó abajo. */}
         <div className={styles.wide} style={{ marginBottom: 14 }}>
           <label>
             Documento de respaldo (PDF) <small>(máx. 10 MB)</small>
@@ -582,6 +564,27 @@ function FincaModalBody({
           ) : (
             <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder adjuntar el documento.</p>
           )}
+        </div>
+
+        <div className={styles.wide} style={{ marginBottom: 14 }}>
+          <label>
+            Infraestructura local
+            <FieldInfo text="Marque la infraestructura y maquinaria propia disponible en esta finca o cerca de ella. Cada elemento tiene una ⓘ que explica para qué sirve. Ayuda a evidenciar la capacidad de procesamiento y la trazabilidad de sus cafés." />
+          </label>
+          <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 6px" }}>Seleccione todo lo que tenga disponible.</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {LOCAL_INFRA.map(([key, label, info]) => (
+              <label key={key} className={styles.chip}>
+                <input
+                  type="checkbox"
+                  checked={eudr.eudrLocalInfra.includes(key)}
+                  onChange={(e) => patchEudr({ eudrLocalInfra: e.target.checked ? [...eudr.eudrLocalInfra, key] : eudr.eudrLocalInfra.filter((k) => k !== key) })}
+                />{" "}
+                {label}
+                <FieldInfo text={info} />
+              </label>
+            ))}
+          </div>
         </div>
 
         <p style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>

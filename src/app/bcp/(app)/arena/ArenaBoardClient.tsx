@@ -1,15 +1,15 @@
 "use client";
 
 // Controles cliente del tablero de Arena (2026-07-20): el registro B2/B3 por
-// café de una sesión Agendada. Cada café abre un modal con las mismas
-// interfaces B2 (SCA) y B3 (física) de la Ficha; el estado se persiste en
-// arena_sessions.cup_registrations vía saveCupRegistration.
+// café. Cada café puede tener VARIAS planillas (pedido del owner) — el modal
+// lista las existentes y "Nueva planilla" añade otra; cada guardado APPENDEA
+// vía saveCupRegistration (arena_sessions.cup_registrations = {lotId: [..]}).
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveCupRegistration } from "../arenaActions";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
-import { toLabEvaluation, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { EMPTY_LAB_EVALUATION, computeSca, labEvaluationScore, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import styles from "../shared.module.css";
 
 export function CupRegistroButton({
@@ -21,27 +21,27 @@ export function CupRegistroButton({
 }: {
   sessionId: string;
   lotId: string;
+  /** Puede ser la etiqueta a ciegas ("Taza 3") si la jornada está en curso. */
   lotName: string;
   reference: string;
   initial: unknown | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [ev, setEv] = useState<LabEvaluation>(() => toLabEvaluation(initial));
-  const has = initial != null;
-  const score = labEvaluationScore(ev);
+  const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
+  const evaluations = toLabEvaluationList(initial);
 
   function save() {
     setError(null);
-    setSaved(false);
     startTransition(async () => {
       const res = await saveCupRegistration(sessionId, lotId, ev);
       if (!res.ok) setError(res.error);
       else {
-        setSaved(true);
+        setEv(EMPTY_LAB_EVALUATION);
+        setAdding(false);
         router.refresh();
       }
     });
@@ -50,7 +50,7 @@ export function CupRegistroButton({
   return (
     <>
       <button type="button" className="btn btn-sm" onClick={() => setOpen(true)}>
-        {has ? "Registro B2/B3 ✓ · editar" : "Registrar B2/B3…"}
+        {evaluations.length ? `B2/B3 (${evaluations.length}) · añadir` : "Registrar B2/B3…"}
       </button>
       {open && (
         <div className="modal-bg open" onClick={() => setOpen(false)}>
@@ -60,21 +60,41 @@ export function CupRegistroButton({
             </button>
             <h3>Registro del café · {lotName}</h3>
             <p className={styles.meta} style={{ marginTop: 2 }}>
-              <span className="mono">{reference}</span> — planilla SCA y caracterización física de este café para la
-              sesión (interfaces B2/B3 de la Ficha).
+              <span className="mono">{reference}</span> — un café puede tener varias planillas B2/B3 registradas
+              (réplicas, jueces distintos, laboratorio).
             </p>
-            <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending} />
-            {score != null && (
-              <p className={styles.meta} style={{ margin: "8px 0 0" }}>
-                Total SCA de la planilla: <b>{score.toFixed(2)}</b>
-              </p>
+
+            {evaluations.length > 0 && (
+              <div style={{ display: "grid", gap: 4, margin: "10px 0" }}>
+                {evaluations.map((e, i) => {
+                  const total = labEvaluationScore(e);
+                  return (
+                    <p key={i} className={styles.meta} style={{ margin: 0 }}>
+                      Planilla {i + 1}: SCA <b>{total != null ? total.toFixed(2) : "—"}</b>
+                      {total != null && ` · ${computeSca(e).cls}`}
+                    </p>
+                  );
+                })}
+              </div>
             )}
-            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10, flexWrap: "wrap" }}>
-              <button type="button" className="btn btn-sm btn-solid" disabled={pending} onClick={save}>
-                {pending ? "Guardando…" : "Guardar registro"}
+
+            {!adding ? (
+              <button className="btn btn-sm btn-solid" onClick={() => setAdding(true)}>
+                + Nueva planilla B2/B3
               </button>
-              {saved && <span className={`${styles.badge} ${styles.badgeGood}`}>Guardado ✓</span>}
-            </div>
+            ) : (
+              <div style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
+                <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending} />
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <button type="button" className="btn btn-sm btn-solid" disabled={pending} onClick={save}>
+                    {pending ? "Guardando…" : "Guardar planilla"}
+                  </button>
+                  <button type="button" className="btn btn-sm" onClick={() => setAdding(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
             {error && <p className={styles.warn} style={{ marginTop: 6 }}>{error}</p>}
           </div>
         </div>

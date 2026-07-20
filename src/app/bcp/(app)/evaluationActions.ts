@@ -43,7 +43,7 @@ export async function submitLotEvaluation(lotId: string, formData: FormData) {
   });
   if (error) throw new Error("No se pudo guardar la evaluación.");
 
-  revalidatePath("/bcp/evaluaciones");
+  revalidatePath("/bcp/arena");
 }
 
 // Accept or reject a producer's officialization claim. Only on acceptance
@@ -60,5 +60,5 @@ export async function reviewEvaluationClaim(evaluationId: string, decision: "acc
     .eq("status", "pending");
   if (error) throw new Error("No se pudo actualizar la solicitud.");
 
-  revalidatePath("/bcp/evaluaciones");
+  revalidatePath("/bcp/arena");
 }

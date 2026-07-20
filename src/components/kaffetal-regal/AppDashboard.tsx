@@ -1077,15 +1077,22 @@ function ArenaLotCard({
 
           {ins.phase === "sondeo" && (
             <div style={{ fontSize: 13, color: "var(--muted)" }}>
-              Su muestra está en el <b>sondeo preliminar</b> (laboratorios de calidades vía Fedecafé). Le contaremos el
-              resultado aquí y en su feed.
+              Su muestra viaja en un <b>bache de sondeo preliminar</b> rumbo al laboratorio de calidades. Le contaremos
+              el resultado aquí y en su feed.
             </div>
           )}
-          {ins.phase === "fila" && (
-            <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
-              ✓ Superó el sondeo{ins.sondeoScore != null ? ` (${ins.sondeoScore})` : ""} — en fila para la próxima sesión de la Arena.
-            </div>
-          )}
+          {/* En Fila es el POOL (2026-07-20): antes del sondeo = esperando bache;
+              después del sondeo aprobado = esperando sesión de Arena. */}
+          {ins.phase === "fila" &&
+            (ins.sondeoResult === "aprobado" ? (
+              <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
+                ✓ Superó el sondeo{ins.sondeoScore != null ? ` (${ins.sondeoScore})` : ""} — en fila para la próxima sesión de la Arena.
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                ✓ Pago y muestra confirmados — <b>en fila</b> para el próximo bache de sondeo preliminar.
+              </div>
+            ))}
           {ins.phase === "sesion" && (
             <div style={{ fontSize: 13, color: "var(--green)", fontWeight: 700 }}>
               ✓ Sesión de Arena confirmada — la fecha está en su feed de Retroalimentación.

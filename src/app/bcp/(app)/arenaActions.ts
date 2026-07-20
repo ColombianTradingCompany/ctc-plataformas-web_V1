@@ -19,7 +19,7 @@ import {
   type DiscardGrade,
   type JornadaState,
 } from "@/lib/arena/jornada";
-import { labEvaluationHasData, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { labEvaluationHasData, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
 
 async function requireAdmin() {
   // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
@@ -79,10 +79,10 @@ export async function createArenaSession(formData: FormData) {
 // con la jornada v2.
 
 /**
- * Registro B2/B3 por café de una sesión Agendada (2026-07-20): el laboratorio
- * puede digitar la planilla SCA y la caracterización física de cada café ANTES
- * de la jornada, con las mismas interfaces de la Ficha. Se persiste en
- * arena_sessions.cup_registrations (jsonb {lotId: planilla}) — la jornada
+ * Registro B2/B3 por café de una sesión (2026-07-20): las mismas interfaces de
+ * la Ficha, disponibles DESDE EL PRINCIPIO y VARIAS VECES por café (pedido del
+ * owner) — cada guardado AÑADE una planilla a la lista de ese café en
+ * arena_sessions.cup_registrations (jsonb {lotId: [planillas]}). La jornada
  * podrá sembrarse de aquí cuando se rediseñe (segunda pasada).
  */
 export async function saveCupRegistration(
@@ -102,7 +102,7 @@ export async function saveCupRegistration(
   if (!labEvaluationHasData(evaluation)) return { ok: false, error: "La planilla está vacía — digite al menos un dato." };
 
   const current = { ...((session.cup_registrations as Record<string, unknown>) ?? {}) };
-  current[lotId] = { ...evaluation, saved_at: new Date().toISOString(), saved_by: adminId };
+  current[lotId] = [...toLabEvaluationList(current[lotId]), { ...evaluation, saved_at: new Date().toISOString(), saved_by: adminId }];
   const { error } = await service.from("arena_sessions").update({ cup_registrations: current }).eq("id", sessionId);
   if (error) return { ok: false, error: "No se pudo guardar el registro." };
 

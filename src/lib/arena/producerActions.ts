@@ -3,6 +3,7 @@
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { ARENA_FEE_COP, formatCop, dueFor } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode, peekCampaignCode } from "@/lib/arena/entryCodes";
+import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 
 // ── Postulación a la Kaffetal Regal Arena (lado productor) ──────────────────
 // arena_inscriptions y arena_entry_codes son service-role-only en escritura,
@@ -42,6 +43,11 @@ export async function postularLote(lotId: string, campaignCode?: string): Promis
   }
   const { data: existing } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
   if (existing) return { ok: false, message: "Este lote ya está postulado." };
+  // Regla: un lote participa en máximo 2 temporadas.
+  if ((await lotSeasonCount(service, lotId)) >= MAX_SEASONS_PER_LOT) {
+    return { ok: false, message: `Este lote ya participó en sus ${MAX_SEASONS_PER_LOT} temporadas permitidas.` };
+  }
+  const season = await currentSeason(service);
 
   // El código: uno de campaña (con su descuento) o el KRA- automático a precio pleno.
   let codeRow;
@@ -73,6 +79,7 @@ export async function postularLote(lotId: string, campaignCode?: string): Promis
     postulated_by: null, // null = el productor mismo
     entry_code: codeRow.code,
     entry_code_id: codeRow.id,
+    season_id: season?.id ?? null,
   });
   if (error) {
     // UNIQUE(lot_id) — carrera con otra postulación simultánea.

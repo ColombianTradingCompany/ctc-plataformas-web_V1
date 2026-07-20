@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
+import { FINCA_SEGMENTS, segmentFinca } from "@/lib/bcp/producerSegments";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaCode } from "@/components/kaffetal-regal/data";
@@ -20,6 +20,7 @@ type FincaRow = {
   id: string;
   name: string;
   producer_id: string;
+  status: string;
   vereda: string | null;
   municipio: string | null;
   departamento: string | null;
@@ -76,40 +77,28 @@ function missingChecks(f: FincaEudrFields): string[] {
   return gaps;
 }
 
-const TABS = [
-  { value: "pending_review", label: "Pendientes" },
-  { value: "approved", label: "Aprobadas" },
-  { value: "rejected", label: "Rechazadas" },
-] as const;
+// ── Fincas como kanban (2026-07-20, criterios del owner) ────────────────────
+// Cinco columnas derivadas (segmentFinca en src/lib/bcp/producerSegments.ts):
+// Marchitando (pendiente >7 días con EUDR incompleta, sin contar video) ·
+// Nuevas (pendiente ≤7 días, incompleta) · En Proceso (pendiente con EUDR
+// completa — lista para el veredicto, a cualquier edad) · Aprobadas · No
+// Aprobadas. La tarjeta y su modal de detalle son los mismos de siempre.
 
-export default async function BcpFincasPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  const { status: statusParam } = await searchParams;
-  const activeStatus = (statusParam && TABS.some((t) => t.value === statusParam) ? statusParam : "pending_review") as (typeof TABS)[number]["value"];
-
+export default async function BcpFincasPage() {
   const service = createServiceRoleClient();
-  const { data: pendingFincas } = await service
+  const { data: allFincas } = await service
     .from("fincas")
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, producer_id, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
+      `id, name, producer_id, status, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
        eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra, created_at`
     )
-    .eq("status", activeStatus)
     .order("created_at", { ascending: true });
 
-  // Per-status counts for the tab labels (cheap: head+count, no rows fetched).
-  const countByStatus: Record<string, number> = {};
-  await Promise.all(
-    TABS.map(async (t) => {
-      const { count } = await service.from("fincas").select("id", { count: "exact", head: true }).eq("status", t.value);
-      countByStatus[t.value] = count ?? 0;
-    })
-  );
-
-  const fincaRows = (pendingFincas as FincaRow[] | null) ?? [];
+  const fincaRows = (allFincas as FincaRow[] | null) ?? [];
   // All EUDR-related asset ids (producer legal doc + BCP's per-evidence /
   // per-sustainability attachments) resolved to signed URLs in one call.
   const allAssetIds = fincaRows.flatMap((f) => [
@@ -132,38 +121,35 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
     commsByFinca.set(c.finca_id, [...(commsByFinca.get(c.finca_id) ?? []), c]);
   }
 
-  const emptyLabel: Record<string, string> = {
-    pending_review: "No hay fincas pendientes.",
-    approved: "No hay fincas aprobadas todavía.",
-    rejected: "No hay fincas rechazadas.",
-  };
-
   return (
     <div>
       <h1 className={styles.title}>Fincas</h1>
+      <p className={styles.subtitle}>
+        <b>Marchitando</b> (pendiente hace &gt;7 días con EUDR incompleta) · <b>Nuevas</b> (≤7 días) · <b>En Proceso</b>{" "}
+        (EUDR completa — lista para el veredicto) · <b>Aprobadas</b> · <b>No Aprobadas</b>. El video no cuenta para la
+        completitud.
+      </p>
 
-      <div className={styles.tabs}>
-        {TABS.map((t) => (
-          <Link key={t.value} href={`/bcp/fincas?status=${t.value}`} className={activeStatus === t.value ? styles.tabActive : undefined}>
-            {t.label} ({countByStatus[t.value] ?? 0})
-          </Link>
-        ))}
-      </div>
-
-      {!fincaRows.length && <p className={styles.empty}>{emptyLabel[activeStatus]}</p>}
-      {activeStatus === "pending_review" && fincaRows.length > 0 && (
-        <p className={styles.subtitle} style={{ marginTop: -8 }}>
-          Las fincas <b>listas para revisión</b> (EUDR completa) aparecen primero; las que están <b>en preparación</b> todavía
-          no requieren su decisión.
-        </p>
-      )}
-      <div className={styles.list}>
-        {/* For the pending tab, surface complete-and-ready fincas first: an
-            incomplete just-registered finca is not an active review item. */}
-        {(activeStatus === "pending_review"
-          ? [...fincaRows].sort((a, b) => missingChecks(toEudrFields(a)).length - missingChecks(toEudrFields(b)).length)
-          : fincaRows
-        ).map((finca) => {
+      {!fincaRows.length && <p className={styles.empty}>No hay fincas registradas.</p>}
+      <div className={styles.board}>
+        {FINCA_SEGMENTS.map((seg) => {
+          const segRows = fincaRows.filter(
+            (f) =>
+              segmentFinca({
+                status: f.status,
+                createdAt: f.created_at,
+                eudrComplete: missingChecks(toEudrFields(f)).length === 0,
+              }) === seg.id
+          );
+          return (
+            <div className={styles.column} key={seg.id}>
+              <div className={styles.columnHead}>
+                <h3>{seg.label}</h3>
+                <span className={styles.columnCount}>{segRows.length}</span>
+              </div>
+              <div className={styles.columnList}>
+                {!segRows.length && <p className={styles.empty}>—</p>}
+                {segRows.map((finca) => {
           const eudrFields = toEudrFields(finca);
           const status = fincaEudrStatus(eudrFields);
           const gaps = missingChecks(eudrFields);
@@ -199,7 +185,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                 {finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length && (
                   <span className={styles.badgeWarn}>Falta polígono</span>
                 )}
-                {activeStatus === "pending_review" && (
+                {finca.status === "pending_review" && (
                   <span className={ready ? styles.badgeGood : styles.badge}>
                     {ready ? "Lista para revisión" : "En preparación"}
                   </span>
@@ -233,35 +219,35 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                   "sin coincidencia — verifique municipio/departamento"
                 )}
               </p>
-              {activeStatus !== "approved" && blockedByPolygon && (
+              {finca.status !== "approved" && blockedByPolygon && (
                 <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
               )}
-              {activeStatus !== "approved" && status.code === "no_apta" && (
+              {finca.status !== "approved" && status.code === "no_apta" && (
                 <p className={styles.warn}>Deforestación o producción ilegal declarada — no se puede aprobar.</p>
               )}
-              {activeStatus !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
+              {finca.status !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
                 <p className={styles.meta}>Falta: {gaps.join(", ")}.</p>
               )}
 
               <div className={styles.actions} style={{ marginTop: 10 }}>
-                {activeStatus !== "approved" && (
+                {finca.status !== "approved" && (
                   <ActionForm
                     action={approveFinca.bind(null, finca.id)}
-                    submitLabel={activeStatus === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
+                    submitLabel={finca.status === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
                     pendingLabel="Aprobando…"
                     buttonClassName="btn btn-solid"
                     disabled={blockedByEudr}
                   />
                 )}
-                {activeStatus !== "rejected" && (
+                {finca.status !== "rejected" && (
                   <form action={reject} className={styles.rejectForm}>
                     <input name="notes" placeholder="Motivo del rechazo (opcional)" />
                     <button className="btn" type="submit">
-                      {activeStatus === "approved" ? "Revocar (rechazar)" : "Rechazar"}
+                      {finca.status === "approved" ? "Revocar (rechazar)" : "Rechazar"}
                     </button>
                   </form>
                 )}
-                {activeStatus === "approved" && (
+                {finca.status === "approved" && (
                   <>
                     <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
                       Ver dossier EUDR ↗
@@ -278,7 +264,7 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                   </>
                 )}
               </div>
-              {activeStatus === "approved" && (
+              {finca.status === "approved" && (
                 <p className={styles.meta} style={{ marginTop: 4 }}>
                   {finca.eudr_cert_shared
                     ? "✓ El productor puede descargar su Certificación EUDR."
@@ -329,6 +315,10 @@ export default async function BcpFincasPage({ searchParams }: { searchParams: Pr
                 )}
               </details>
             </FincaModalRow>
+          );
+        })}
+              </div>
+            </div>
           );
         })}
       </div>

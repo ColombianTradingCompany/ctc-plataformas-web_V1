@@ -15,6 +15,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const ARENA_FEE_COP = 80000;
 
+/** Un bache de sondeo admite máximo 30 lotes (regla del owner, 2026-07-20). */
+export const MAX_BATCH_LOTS = 30;
+
 /** COP a pagar tras aplicar el descuento del código (0–100%). */
 export function dueFor(pct: number, amountCop: number = ARENA_FEE_COP): number {
   return amountCop - Math.round((amountCop * pct) / 100);
@@ -58,6 +61,11 @@ export type ArenaInscription = {
   sondeo_result: SondeoResult | null;
   sondeo_result_notes: string | null;
   sondeo_score: number | null;
+  /** LISTA de planillas B2/B3 del laboratorio (jsonb; legado: objeto suelto — toLabEvaluationList lo normaliza). */
+  sondeo_evaluation: unknown;
+  sondeo_result_storage_path: string | null;
+  sondeo_result_filename: string | null;
+  season_id: string | null;
   mejoras_doc: string | null;
   mejoras_generated_at: string | null;
   cashback_cop: number | null;

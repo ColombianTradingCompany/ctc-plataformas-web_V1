@@ -4,25 +4,29 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
+  addSondeoEvaluation,
   applyCodeOnBehalf,
   assignLotToSession,
-  assignToBatch,
+  assignLotsToBatch,
   confirmInscriptionPayment,
   confirmSampleReceivedNom,
+  createBatchProofUploadUrl,
   createSondeoLotResultUploadUrl,
-  createSondeoResultUploadUrl,
-  lockBatch,
+  markBatchDelivered,
+  markBatchReceived,
+  markBatchSent,
   markCashbackPaid,
-  markSampleOrganized,
+  planSondeoBatch,
   postularOnBehalf,
-  recordBatchResult,
   recordSondeoResult,
   regenerateMejoras,
   removeFromBatch,
+  setBatchLab,
   unsettleInscription,
 } from "../nominadosActions";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
-import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { openSondeoRequest } from "@/lib/arena/sondeoRequestPrint";
 import styles from "../shared.module.css";
 
 // Cada control del tablero Nominados sigue el patrón resultado-inline (V12):
@@ -111,8 +115,8 @@ export function PaymentControls({
           {pending ? "Guardando…" : `Confirmar pago · ${dueLabel}`}
         </button>
       </div>
-      {/* Un código de campaña (KRX-) ya aplicado cierra la caja también aquí:
-          el descuento quedó ligado al código y solo se confirma o revierte. */}
+      {/* Un código de campaña (KRX-) ya aplicado cierra la caja: el descuento
+          quedó ligado y solo se confirma o revierte. */}
       {entryCode?.startsWith("KRX-") ? (
         <p className={styles.meta} style={{ margin: 0 }}>
           Código de campaña aplicado: <span className="mono">{entryCode}</span> — el descuento ya está ligado.
@@ -151,172 +155,6 @@ export function ConfirmSampleButton({ lotId, shipped }: { lotId: string; shipped
   );
 }
 
-/** Columna "Envío a Sondeo": organizar la muestra y consolidarla en un envío.
- *  El registro del laboratorio vive en la SIGUIENTE columna (SondeoResultControls)
- *  — el envío es un paso independiente ANTES de los resultados (2026-07-20). */
-export function SondeoControls({
-  lotId,
-  sampleReady,
-  batchId,
-  batchStatus,
-  openBatches,
-}: {
-  lotId: string;
-  sampleReady: boolean;
-  batchId: string | null;
-  batchStatus: string | null;
-  openBatches: { id: string; label: string }[];
-}) {
-  const { pending, error, run } = useAction();
-  const [batch, setBatch] = useState("");
-
-  return (
-    <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        <span className={`${styles.badge} ${sampleReady ? styles.badgeGood : styles.badgeWarn}`}>
-          {sampleReady ? "Muestra organizada ✓" : "Muestra por organizar"}
-        </span>
-        {batchId && (
-          <span className={styles.badge}>
-            {batchStatus === "abierto" ? "En envío (abierto)" : "Envío despachado"}
-          </span>
-        )}
-      </div>
-      {!sampleReady && (
-        <button className="btn btn-sm" disabled={pending} onClick={() => run(() => markSampleOrganized(lotId))}>
-          Marcar muestra organizada
-        </button>
-      )}
-      {sampleReady && !batchId && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          <select value={batch} onChange={(e) => setBatch(e.target.value)}>
-            <option value="">Elegir envío…</option>
-            {openBatches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.label}
-              </option>
-            ))}
-          </select>
-          <button className="btn btn-sm" disabled={pending || !batch} onClick={() => run(() => assignToBatch(lotId, batch))}>
-            Agregar al envío
-          </button>
-        </div>
-      )}
-      {batchId && batchStatus === "abierto" && (
-        <button className="btn btn-sm" disabled={pending} onClick={() => run(() => removeFromBatch(lotId))}>
-          Sacar del envío
-        </button>
-      )}
-      {sampleReady && !batchId && (
-        <p className={styles.meta} style={{ margin: 0 }}>
-          Al cerrar su envío, el lote pasa a «Resultados del Laboratorio».
-        </p>
-      )}
-      <ErrorLine error={error} />
-    </div>
-  );
-}
-
-/** Columna "Resultados del Laboratorio": registro del resultado POR LOTE con
- *  las interfaces B2 (SCA) y B3 (física) de la Ficha + el archivo del lab. */
-export function SondeoResultControls({ lotId, lotName }: { lotId: string; lotName: string }) {
-  const { pending, error, run } = useAction();
-  const [open, setOpen] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  const score = labEvaluationScore(ev);
-
-  function submit(resultado: "aprobado" | "rechazado") {
-    setUploadError(null);
-    run(async () => {
-      // 1) El archivo del laboratorio sube primero (vía URL firmada); si esa
-      //    subida falla, no se registra nada — el resultado va completo o no va.
-      let resultFile: { path: string; filename: string } | undefined;
-      if (file) {
-        setUploading(true);
-        try {
-          const prep = await createSondeoLotResultUploadUrl(lotId, file.name);
-          if (!prep.ok) return prep;
-          const supabase = createClient();
-          const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, file);
-          if (upErr) return { ok: false as const, error: "La subida del archivo falló. Intente de nuevo." };
-          resultFile = { path: prep.path, filename: file.name };
-        } finally {
-          setUploading(false);
-        }
-      }
-      // 2) Registro estructurado: planilla + notas + veredicto.
-      return recordSondeoResult(lotId, resultado, notes, undefined, {
-        evaluation: labEvaluationHasData(ev) ? ev : undefined,
-        resultFile,
-      });
-    });
-  }
-
-  return (
-    <div style={{ marginTop: 8 }}>
-      <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
-        Registrar resultado del laboratorio…
-      </button>
-      {open && (
-        <div className="modal-bg open" onClick={() => setOpen(false)}>
-          <div className="modal" style={{ maxWidth: 680 }} onClick={(e) => e.stopPropagation()}>
-            <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
-              ×
-            </button>
-            <h3>Resultado del laboratorio · {lotName}</h3>
-            <p className={styles.meta} style={{ marginTop: 2 }}>
-              Registre la planilla tal como llegó del laboratorio (mismas interfaces B2/B3 de la Ficha) y adjunte el
-              documento original del resultado.
-            </p>
-
-            <div className={styles.field} style={{ marginTop: 10 }}>
-              <label>Archivo del resultado (laboratorio)</label>
-              <input
-                type="file"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                disabled={pending || uploading}
-              />
-              {file && <p className={styles.meta} style={{ margin: "3px 0 0" }}>Se subirá al registrar: {file.name}</p>}
-            </div>
-
-            <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending || uploading} />
-            {score != null && (
-              <p className={styles.meta} style={{ margin: "8px 0 0" }}>
-                El total SCA de la planilla (<b>{score.toFixed(2)}</b>) quedará como puntaje del sondeo.
-              </p>
-            )}
-
-            <div className={styles.field} style={{ marginTop: 10 }}>
-              <label>Resumen del resultado (el productor lo verá)</label>
-              <textarea
-                rows={2}
-                placeholder="Resultado del laboratorio / catación…"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-              <button className="btn btn-sm btn-solid" disabled={pending || uploading || !notes.trim()} onClick={() => submit("aprobado")}>
-                {pending || uploading ? "Registrando…" : "Aprobado → En Fila"}
-              </button>
-              <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => submit("rechazado")}>
-                Rechazado (cashback 80% + mejoras IA)
-              </button>
-            </div>
-            <ErrorLine error={error ?? uploadError} />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function AssignSessionControls({
   lotId,
   openSessions,
@@ -347,58 +185,294 @@ export function AssignSessionControls({
   );
 }
 
-export function BatchAdminControls({ batch }: { batch: { id: string; label: string; status: string } }) {
-  const { pending, error, run } = useAction();
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const router = useRouter();
+// ── Baches de Sondeo ─────────────────────────────────────────────────────────
 
-  async function uploadResult(file: File) {
-    setUploadError(null);
-    setUploading(true);
-    try {
-      const prep = await createSondeoResultUploadUrl(batch.id, file.name);
-      if (!prep.ok) {
-        setUploadError(prep.error);
-        return;
+/** Columna «Nuevo Sondeo»: selección múltiple (≤30) desde el pool En Fila. */
+export function BatchPicker({
+  batchId,
+  candidates,
+  slotsLeft,
+}: {
+  batchId: string;
+  candidates: { lotId: string; name: string; producer: string }[];
+  slotsLeft: number;
+}) {
+  const { pending, error, run } = useAction();
+  const [sel, setSel] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setSel((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  if (!candidates.length) {
+    return <p className={styles.meta}>Sin lotes elegibles en «En Fila» (pendientes de sondeo).</p>;
+  }
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <p className={styles.meta} style={{ margin: 0 }}>
+        Elija lotes de «En Fila» ({slotsLeft} cupos libres de 30):
+      </p>
+      {candidates.map((c) => (
+        <label key={c.lotId} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12.5 }}>
+          <input type="checkbox" checked={sel.has(c.lotId)} onChange={() => toggle(c.lotId)} />
+          <span style={{ flex: 1 }}>
+            <b>{c.name}</b> · {c.producer}
+          </span>
+        </label>
+      ))}
+      <button
+        className="btn btn-sm btn-solid"
+        disabled={pending || sel.size === 0 || sel.size > slotsLeft}
+        onClick={() => run(() => assignLotsToBatch(batchId, [...sel]))}
+      >
+        {pending ? "Agregando…" : `Agregar ${sel.size || ""} al bache`}
+      </button>
+      {sel.size > slotsLeft && <p className={styles.warn}>Seleccionó más lotes que cupos libres.</p>}
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+export function RemoveFromBatchButton({ lotId }: { lotId: string }) {
+  const { pending, error, run } = useAction();
+  return (
+    <span>
+      <button className="btn btn-sm" disabled={pending} onClick={() => run(() => removeFromBatch(lotId))}>
+        Sacar
+      </button>
+      <ErrorLine error={error} />
+    </span>
+  );
+}
+
+export function PlanBatchButton({ batchId }: { batchId: string }) {
+  const { pending, error, run } = useAction();
+  return (
+    <div>
+      <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => planSondeoBatch(batchId))}>
+        {pending ? "Cerrando…" : "Cerrar Bache de sondeo →"}
+      </button>
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+/** Columna «Sondeo Planeado»: lab + Solicitud formal + prueba de recibo + Bache Enviado. */
+export function PlannedBatchControls({
+  batch,
+  samples,
+}: {
+  batch: { id: string; label: string; labName: string; labContact: string };
+  samples: { reference: string; kg: string }[];
+}) {
+  const { pending, error, run } = useAction();
+  const [labName, setLabName] = useState(batch.labName);
+  const [labContact, setLabContact] = useState(batch.labContact);
+  const [proof, setProof] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  function send() {
+    run(async () => {
+      if (!proof) return { ok: false as const, error: "Adjunte la prueba de confirmación de recibo (PDF del correo o confirmación escrita)." };
+      setUploading(true);
+      try {
+        const prep = await createBatchProofUploadUrl(batch.id, proof.name);
+        if (!prep.ok) return prep;
+        const supabase = createClient();
+        const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, proof);
+        if (upErr) return { ok: false as const, error: "La subida de la prueba falló. Intente de nuevo." };
+        return markBatchSent(batch.id, prep.path, proof.name);
+      } finally {
+        setUploading(false);
       }
-      const supabase = createClient();
-      const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, file);
-      if (upErr) {
-        setUploadError("La subida falló. Intente de nuevo.");
-        return;
-      }
-      const rec = await recordBatchResult(batch.id, prep.path, file.name);
-      if (!rec.ok) setUploadError(rec.error);
-      else router.refresh();
-    } finally {
-      setUploading(false);
-    }
+    });
   }
 
   return (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-      {batch.status === "abierto" && (
-        <button className="btn btn-sm" disabled={pending} onClick={() => run(() => lockBatch(batch.id))}>
-          Cerrar sub-set para envío
+    <div style={{ display: "grid", gap: 6 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <input placeholder="Laboratorio (nombre)" value={labName} onChange={(e) => setLabName(e.target.value)} style={{ maxWidth: 200 }} />
+        <input placeholder="Contacto (correo / tel.)" value={labContact} onChange={(e) => setLabContact(e.target.value)} style={{ maxWidth: 200 }} />
+        <button className="btn btn-sm" disabled={pending || !labName.trim()} onClick={() => run(() => setBatchLab(batch.id, labName, labContact))}>
+          Guardar lab
         </button>
-      )}
-      {batch.status !== "abierto" && (
-        <label className="btn btn-sm" style={{ cursor: uploading ? "wait" : "pointer" }}>
-          {uploading ? "Subiendo…" : "Adjuntar resultados"}
+      </div>
+      <div>
+        <button
+          className="btn btn-sm"
+          disabled={!batch.labName}
+          title={batch.labName ? "" : "Guarde primero el laboratorio"}
+          onClick={() => openSondeoRequest({ batchLabel: batch.label, labName: batch.labName, labContact: batch.labContact, samples })}
+        >
+          Solicitud de Bache de muestras (imprimir) ↗
+        </button>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <label className="btn btn-sm" style={{ cursor: "pointer" }}>
+          {proof ? `Prueba: ${proof.name}` : "Adjuntar prueba de recibo…"}
           <input
             type="file"
             style={{ display: "none" }}
-            disabled={uploading}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) uploadResult(f);
-              e.target.value = "";
-            }}
+            onChange={(e) => setProof(e.target.files?.[0] ?? null)}
           />
         </label>
+        <button className="btn btn-sm btn-solid" disabled={pending || uploading || !proof} onClick={send}>
+          {uploading || pending ? "Enviando…" : "Bache Enviado →"}
+        </button>
+      </div>
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+/** Columna «Sondeo Pendiente»: las dos confirmaciones. */
+export function PendingBatchControls({ batchId, received }: { batchId: string; received: boolean }) {
+  const { pending, error, run } = useAction();
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+      {!received ? (
+        <button className="btn btn-sm" disabled={pending} onClick={() => run(() => markBatchReceived(batchId))}>
+          Bache recibido en Lab ✓
+        </button>
+      ) : (
+        <span className={`${styles.badge} ${styles.badgeGood}`}>Recibido en lab ✓</span>
       )}
-      <ErrorLine error={error ?? uploadError} />
+      <button className="btn btn-sm btn-solid" disabled={pending || !received} onClick={() => run(() => markBatchDelivered(batchId))}>
+        Pruebas entregadas →
+      </button>
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+/** Columna «Registro de Sondeo», por lote: varias planillas B2/B3 + archivo del
+ *  lab + el veredicto (aprobado ⇒ vuelve a En Fila / rechazado ⇒ cashback). */
+export function SondeoRegistroControls({
+  lotId,
+  lotName,
+  evaluations,
+  resultFilename,
+}: {
+  lotId: string;
+  lotName: string;
+  evaluations: LabEvaluation[];
+  resultFilename: string | null;
+}) {
+  const { pending, error, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [ev, setEv] = useState<LabEvaluation>(EMPTY_LAB_EVALUATION);
+  const [notes, setNotes] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  function saveEvaluation() {
+    run(async () => {
+      const res = await addSondeoEvaluation(lotId, ev);
+      if (res.ok) {
+        setEv(EMPTY_LAB_EVALUATION);
+        setAdding(false);
+      }
+      return res;
+    });
+  }
+
+  function verdict(resultado: "aprobado" | "rechazado") {
+    run(async () => {
+      let resultFile: { path: string; filename: string } | undefined;
+      if (file) {
+        setUploading(true);
+        try {
+          const prep = await createSondeoLotResultUploadUrl(lotId, file.name);
+          if (!prep.ok) return prep;
+          const supabase = createClient();
+          const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, file);
+          if (upErr) return { ok: false as const, error: "La subida del archivo falló." };
+          resultFile = { path: prep.path, filename: file.name };
+        } finally {
+          setUploading(false);
+        }
+      }
+      return recordSondeoResult(lotId, resultado, notes, undefined, {
+        evaluation: adding && labEvaluationHasData(ev) ? ev : undefined,
+        resultFile,
+      });
+    });
+  }
+
+  return (
+    <div style={{ marginTop: 6 }}>
+      <button className="btn btn-sm btn-solid" onClick={() => setOpen(true)}>
+        Registrar sondeo ({evaluations.length} planilla{evaluations.length === 1 ? "" : "s"})…
+      </button>
+      {open && (
+        <div className="modal-bg open" onClick={() => setOpen(false)}>
+          <div className="modal" style={{ maxWidth: 680 }} onClick={(e) => e.stopPropagation()}>
+            <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
+              ×
+            </button>
+            <h3>Registro de Sondeo · {lotName}</h3>
+            <p className={styles.meta} style={{ marginTop: 2 }}>
+              Un lote puede tener VARIAS planillas B2/B3 (réplicas del laboratorio). El puntaje del sondeo sale de la
+              última registrada, salvo veredicto con puntaje explícito.
+            </p>
+
+            {evaluations.length > 0 && (
+              <div style={{ display: "grid", gap: 4, margin: "10px 0" }}>
+                {evaluations.map((e, i) => {
+                  const total = labEvaluationScore(e);
+                  return (
+                    <p key={i} className={styles.meta} style={{ margin: 0 }}>
+                      Planilla {i + 1}: SCA <b>{total != null ? total.toFixed(2) : "—"}</b>
+                      {total != null && ` · ${computeSca(e).cls}`}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
+
+            {!adding ? (
+              <button className="btn btn-sm" onClick={() => setAdding(true)}>
+                + Nueva planilla B2/B3
+              </button>
+            ) : (
+              <div style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "10px 12px", marginTop: 8 }}>
+                <LabEvalEditor value={ev} onChange={(patch) => setEv((v) => ({ ...v, ...patch }))} disabled={pending} />
+                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                  <button className="btn btn-sm btn-solid" disabled={pending} onClick={saveEvaluation}>
+                    Guardar planilla
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setAdding(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.field} style={{ marginTop: 12 }}>
+              <label>Archivo del laboratorio {resultFilename && <span className={styles.meta}>(actual: {resultFilename})</span>}</label>
+              <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={pending || uploading} />
+            </div>
+            <div className={styles.field}>
+              <label>Resumen del resultado (el productor lo verá)</label>
+              <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado del laboratorio…" />
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button className="btn btn-sm btn-solid" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("aprobado")}>
+                Aprobado → En Fila
+              </button>
+              <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("rechazado")}>
+                Rechazado (cashback 80% + mejoras IA)
+              </button>
+            </div>
+            <ErrorLine error={error} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

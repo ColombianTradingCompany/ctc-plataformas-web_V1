@@ -151,4 +151,54 @@ está desplegado READY en producción.)
 - Verificación: tsc + eslint + build limpios; /bcp /bcp/nominados /ecp /ocp siguen devolviendo
   307 a /login (las guardas intactas). El shell se midió montándolo en una ruta sonda temporal
   (el BCP exige 2FA y no se puede conducir automatizado), borrada al terminar.
+(commit: ddc6ab6)
+
+## [2026-07-20] Los tableros del owner: TODO el flujo BCP como kanbans + Admin Lock
+- ⚠ PRIMERO, EL BUG: /bcp/nominados crasheaba ("This page couldn't load") — TDZ: batchStatusOf
+  leía batchById declarado 10 líneas después; tsc no lo ve (referencia dentro de un closure) y
+  el build tampoco (página dinámica, nunca se ejecuta). LECCIÓN OPERATIVA: cada página BCP
+  tocada se RENDERIZA ahora en una ruta sonda temporal con datos reales antes de commitear.
+- NOMINADOS (afecta DICT `nominados`, `sondeo`; escenarios `envio`/`arena`): columnas
+  Embotellados (>5 días con pago o muestra pendientes) · Recién Nominados (≤5 días) · En Fila.
+  ORDEN DE FASES INVERTIDO: pagado+muestra ⇒ phase='fila' (el POOL); los baches toman ≤30 lotes
+  del pool (phase→'sondeo' mientras viajan); el aprobado VUELVE a 'fila' con su puntaje y solo
+  con sondeo aprobado se asigna a sesión (assignLotToSession lo exige). Sin valores nuevos de
+  phase — solo semántica.
+- BACHES DE SONDEO (kanban nuevo bajo Nominados): abierto (Nuevo Sondeo, selección ≤30 desde En
+  Fila) → planeado (Cerrar Bache; laboratorio + "Solicitud de Bache de muestras" imprimible,
+  src/lib/arena/sondeoRequestPrint.ts, cata a ciegas por código) → pendiente (Bache Enviado
+  EXIGE la prueba de confirmación de recibo subida; luego "recibido en Lab" y "pruebas
+  entregadas") → registro (VARIAS planillas B2/B3 por lote — sondeo_evaluation pasó a LISTA,
+  addSondeoEvaluation appendea, recordSondeoResult da el veredicto). Migración
+  boards_v4_batches_seasons_admin_lock: lab_name/lab_contact/proof_*/received_at/delivered_at +
+  estados nuevos (cerrado→pendiente, resultados→registro en datos vivos).
+- LOTES: secciones Aptos / No aptos con filtro por TEMPORADA DE REGISTRO (lots.season_id +
+  arena_inscriptions.season_id, backfill a Mitaca 2026). REGLA: máximo 2 temporadas por lote
+  (validada en postularLote/postularOnBehalf via lotSeasonCount; UNIQUE(lot_id) hace que la
+  re-postulación real sea segunda pasada — el tope queda de cimiento). Postular-en-nombre vive
+  aquí ahora (los Aptos sin postular salieron de Nominados).
+- PRODUCTORES como kanban: Marchitando/Nuevos/Primíparos/Establecidos/Activos — lógica PURA en
+  src/lib/bcp/producerSegments.ts con criterios documentados (decisiones: "finca pidió
+  revisión"≈tiene fincas; "lote pidió EUDR"=intake_step≥2 o enviado; "procesados"=finca
+  aprobada+lote enviado; >7d en camino cae en Primíparos; recién llegado completo sigue en
+  Nuevos) + scripts/qa-boards-check.mjs (19 checks). Tarjeta con FOTO DE PERFIL; el modal del
+  productor enlaza fincas/lotes/Arena en curso/contratos con deep-links.
+- FINCAS como kanban: Marchitando/Nuevas/En Proceso/Aprobadas/No Aprobadas (completitud EUDR =
+  missingChecks()==0, video excluido; "En Proceso" = completa a cualquier edad — la definición
+  del owner dejaba sin columna a la completa de 8 días). La tarjeta/modal de siempre.
+- ARENA: SessionFunnel = el diagrama "Competition Structure" del owner (ciegas → R1 Red/Black →
+  variedad/proceso → R2 Red/Blue → origen → final 1º/2º/3º) derivado del run_state. A CIEGAS
+  POR DISEÑO: las identidades NO viajan al cliente en el render; "mirar bajo el capó" pasa por
+  revealSessionIdentities + ADMIN LOCK (platform_settings.admin_lock, sha256, semilla "123",
+  se cambia en ECP → Usuarios y Credenciales → tarjeta Admin Lock). Registros B2/B3 por taza en
+  LISTA (varios por café) disponibles desde el principio; en jornada viva las tarjetas van por
+  etiqueta de taza. Módulo EVALUACIONES eliminado (nav + ruta); la cola de reclamos de
+  oficialización quedó embebida al pie de /bcp/arena (reviewEvaluationClaim vive).
+- ⚠ SEGUNDA PASADA PENDIENTE (el owner la anunció): reconciliar la JORNADA con los tableros —
+  hoy la jornada NO lee cup_registrations ni las planillas del sondeo. No construir encima sin
+  esa revisión.
+- Verificación: tsc + eslint + build limpios; qa-boards-check 19/19; qa-jornada-check 11/11;
+  los 6 tableros renderizados con datos reales vía sonda (borrada); servidor frío sin errores.
+  Datos staged: Catia → En Fila (sondeo pendiente), Pacamara → bache "Sondeo Test 1" en Sondeo
+  Pendiente, 3 QA en En Fila con sondeo aprobado.
 (commit: pending)

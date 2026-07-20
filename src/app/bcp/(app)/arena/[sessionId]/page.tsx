@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { JORNADA_SCRIPT, activeCups, cupLabel, type JornadaState } from "@/lib/arena/jornada";
 import { startJornada } from "../../arenaActions";
+import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
+import { CupRegistroButton } from "../ArenaBoardClient";
+import { SessionFunnel, type FunnelCup, type FunnelRound } from "./SessionFunnel";
 import styles from "../../shared.module.css";
 
 const STATUS_LABEL: Record<string, string> = { scheduled: "Programada", in_progress: "En curso", completed: "Completada" };
@@ -14,7 +17,7 @@ export default async function BcpArenaSessionPage({ params }: { params: Promise<
 
   const { data: session } = await service
     .from("arena_sessions")
-    .select("id, session_date, status, capacity, run_state, winner_lot_id, harvest_seasons(kind, year)")
+    .select("id, session_date, status, capacity, run_state, winner_lot_id, cup_registrations, harvest_seasons(kind, year)")
     .eq("id", sessionId)
     .single();
   if (!session) notFound();
@@ -46,6 +49,55 @@ export default async function BcpArenaSessionPage({ params }: { params: Promise<
       return [sl.lot_id, lot?.name ?? sl.lot_id] as const;
     }),
   );
+
+  // ── El embudo de la competencia (diagrama del owner) ───────────────────────
+  // A ciegas mientras la jornada corre: publicName solo se llena con la sesión
+  // culminada; en curso, la identidad exige el Admin Lock (server action).
+  const cupOf = (lotId: string, blindLabel: string, grade: string | null, rank: number | null): FunnelCup => ({
+    lotId,
+    blindLabel,
+    publicName: isCompleted || !runState ? lotNameById.get(lotId) ?? null : null,
+    grade,
+    rank,
+  });
+  const rounds: FunnelRound[] = [];
+  if (runState) {
+    const [d1, d2] = runState.discards;
+    const gradeOf = (id: string) => runState.discard_grades[id] ?? runState.verdict.grades[id] ?? null;
+    const rankOf = (id: string) => {
+      const idx = runState.verdict.ranking.indexOf(id);
+      return idx === -1 ? null : idx + 1;
+    };
+    rounds.push({
+      title: "Sesión a ciegas",
+      note: `${runState.cup_order.length} cafés en mesa — solo la etiqueta de taza`,
+      cups: runState.cup_order.map((id) => cupOf(id, cupLabel(runState, id), d1.includes(id) ? gradeOf(id) : null, null)),
+    });
+    const afterR1 = runState.cup_order.filter((id) => !d1.includes(id));
+    rounds.push({
+      title: "Primera ronda",
+      note: "dos se retiran (Red/Black) · se revela variedad y proceso, sin decir cuál es cuál",
+      cups: afterR1.map((id) => cupOf(id, cupLabel(runState, id), d2.includes(id) ? gradeOf(id) : null, null)),
+    });
+    const finalists = activeCups(runState);
+    rounds.push({
+      title: "Segunda ronda",
+      note: "dos se retiran (Red/Blue) · se revela el origen, sin decir cuál es cuál",
+      cups: finalists.map((id) => cupOf(id, cupLabel(runState, id), null, null)),
+    });
+    rounds.push({
+      title: "Ronda final",
+      note: "1º, 2º y 3º — grados Red/Blue/Gold y (posible) Tyrian; con Blue en la segunda ronda, aquí no cabe Red",
+      cups: finalists.map((id) => cupOf(id, cupLabel(runState, id), runState.verdict.grades[id] ?? null, rankOf(id))),
+    });
+  } else if (sessionLots?.length) {
+    rounds.push({
+      title: "Sesión a ciegas",
+      note: `el orden de tazas se baraja al iniciar la jornada · ${sessionLots.length}/${capacity} cafés`,
+      cups: sessionLots.map((sl, i) => cupOf(sl.lot_id, `L${i + 1}`, null, null)),
+    });
+  }
+  const cupRegs = (session.cup_registrations as Record<string, unknown> | null) ?? {};
 
   return (
     <div>
@@ -129,13 +181,22 @@ export default async function BcpArenaSessionPage({ params }: { params: Promise<
         </details>
       )}
 
+      {/* La visual de la competencia — a ciegas por diseño mientras corre. */}
+      {rounds.length > 0 && <SessionFunnel sessionId={sessionId} rounds={rounds} completed={isCompleted} />}
+
       <h2 className={styles.title} style={{ fontSize: 16 }}>
         En esta sesión ({sessionLots?.length ?? 0}/{capacity})
       </h2>
       {!isCompleted && !jornadaOwns && (
         <p className={styles.subtitle}>
           Los lotes entran a la sesión desde <Link href="/bcp/nominados">Nominados</Link> (columna «En Fila»). La jornada
-          arranca cuando hay exactamente {capacity} cafés.
+          arranca cuando hay exactamente {capacity} cafés. Desde ya puede abrir nuevas planillas B2/B3 por café.
+        </p>
+      )}
+      {jornadaOwns && (
+        <p className={styles.subtitle}>
+          Jornada en curso — el listado va por etiqueta de taza (la mesa es a ciegas); las identidades salen del embudo
+          con el Admin Lock. Las planillas B2/B3 siguen abiertas por taza.
         </p>
       )}
       {!sessionLots?.length && <p className={styles.empty}>Ningún lote agregado todavía.</p>}
@@ -143,16 +204,30 @@ export default async function BcpArenaSessionPage({ params }: { params: Promise<
         {sessionLots?.map((sl) => {
           const lot = sl.lots as unknown as { id: string; name: string; grade: string | null } | null;
           const lotScores = (scores ?? []).filter((s) => s.lot_id === sl.lot_id);
+          // En jornada viva la tarjeta NO delata la identidad: va por taza.
+          const blind = jornadaOwns;
+          const label = blind ? cupLabel(runState!, sl.lot_id) : lot?.name ?? "—";
           return (
             <div className={styles.card} key={sl.lot_id} style={{ flexDirection: "column", alignItems: "stretch" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
                 <h3>
-                  {lot?.name}
-                  {runState && <span className={styles.meta} style={{ marginLeft: 8 }}>{cupLabel(runState, sl.lot_id)}</span>}
+                  {label}
+                  {!blind && runState && (
+                    <span className={styles.meta} style={{ marginLeft: 8 }}>{cupLabel(runState, sl.lot_id)}</span>
+                  )}
                 </h3>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   {isCompleted && session.winner_lot_id === sl.lot_id && <span className={styles.badgeGood}>🏆 Ganador</span>}
-                  {lot?.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
+                  {!blind && lot?.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
+                  {!isCompleted && (
+                    <CupRegistroButton
+                      sessionId={sessionId}
+                      lotId={sl.lot_id}
+                      lotName={label}
+                      reference={blind ? `Taza · sesión ${sessionId.slice(0, 8)}` : ctcLotReferenceShort(sl.lot_id)}
+                      initial={cupRegs[sl.lot_id] ?? null}
+                    />
+                  )}
                 </div>
               </div>
               {lotScores.length > 0 && (

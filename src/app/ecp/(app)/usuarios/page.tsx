@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import type { PanelUserRow } from "@/lib/panel/panelUsers";
 import { UsuariosClient } from "./UsuariosClient";
+import { AdminLockCard } from "./AdminLockCard";
 
 // Collaborator management (owner-only). Identity is BCP's job in the v3 model,
 // so this lives under BCP. panel_users is service-role-only, so the list is read
@@ -15,5 +16,11 @@ export default async function BcpUsuariosPage() {
   const { data } = await service.from("panel_users").select("*").order("created_at", { ascending: true });
   const users = (data as PanelUserRow[]) ?? [];
 
-  return <UsuariosClient users={users} currentUserId={identity.userId} />;
+  return (
+    <>
+      <UsuariosClient users={users} currentUserId={identity.userId} />
+      {/* Submenú Admin Lock (2026-07-20): la contraseña del candado suave. */}
+      <AdminLockCard />
+    </>
+  );
 }

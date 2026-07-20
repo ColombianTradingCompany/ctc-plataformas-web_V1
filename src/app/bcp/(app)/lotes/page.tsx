@@ -1,6 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot, revertNoApto } from "../actions";
+import { createLot } from "../actions";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
+import { AptosNoAptosSections, type SectionLot } from "./AptosNoAptosSections";
+import { seasonLabel, type Season } from "@/lib/arena/seasons";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import type { EvaChecklist } from "./evaChecklist";
@@ -62,6 +64,7 @@ type LotRow = {
   intake_step: number;
   grade: string | null;
   source: string;
+  season_id: string | null;
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
   eva_no_apto_reason: string | null;
@@ -129,14 +132,14 @@ function bucketOf(lot: LotRow): Bucket {
 export default async function BcpLotesPage() {
   const service = createServiceRoleClient();
 
-  const [{ data: lots }, { data: approvedFincas }] = await Promise.all([
+  const [{ data: lots }, { data: approvedFincas }, { data: seasonsRaw }] = await Promise.all([
     service
       .from("lots")
       // Supabase's select() must be a single literal string (not runtime-concatenated)
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, stage, intake_step, grade, source, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet,
+        `id, name, producer_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -147,9 +150,12 @@ export default async function BcpLotesPage() {
       .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "apto", "no_apto"])
       .order("created_at", { ascending: false }),
     service.from("fincas").select("id, name, municipio").eq("status", "approved").order("name"),
+    service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
   ]);
 
   const lotRows = (lots as LotRow[] | null) ?? [];
+  const seasons = (seasonsRaw as Season[] | null) ?? [];
+  const seasonById = new Map(seasons.map((s) => [s.id, s]));
 
   // Firmar en un solo lote todos los adjuntos que los paneles enlazan: los
   // soportes de certificados (A3/A4), el video principal y los B4 extra.
@@ -171,8 +177,10 @@ export default async function BcpLotesPage() {
     signedKaffetalMediaUrls(service, assetIds),
   ]);
   const inscriptionSettledByLot = new Map<string, boolean>();
+  const postulatedLots = new Set<string>();
   for (const i of (inscriptionRows as { lot_id: string; status: string }[] | null) ?? []) {
     inscriptionSettledByLot.set(i.lot_id, i.status === "pagado" || i.status === "exento");
+    postulatedLots.add(i.lot_id);
   }
   const commsByLot = new Map<string, CommRow[]>();
   for (const c of (comms as CommRow[] | null) ?? []) {
@@ -279,55 +287,30 @@ export default async function BcpLotesPage() {
         </div>
       )}
 
-      {/* Aptos: fuera del kanban — su pipeline continúa en Nominados (postulación →
-          pago → sondeo → fila). El botón de recibo legado sigue aquí hasta que el
-          tablero Nominados lo absorba (Fase 3). */}
-      {aptoLots.length > 0 && (
-        <div style={{ marginTop: 30 }}>
-          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Aptos · rumbo a la Arena</h2>
-          <p className={styles.subtitle}>
-            Declarados aptos en la evaluación documental — esperando la postulación del productor.
-          </p>
-          <div className={styles.columnList}>
-            {aptoLots.map((lot) => (
-              <LotCard
-                key={lot.id}
-                lot={lot}
-                producer={producers.get(lot.producer_id)}
-                comms={commsByLot.get(lot.id) ?? []}
-                signedUrls={signedUrls}
-                showConfirmReceipt
-                showEvaVerdict={false}
-                inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {noAptoLots.length > 0 && (
-        <details className={styles.card} style={{ display: "block", marginTop: 30 }}>
-          <summary style={{ cursor: "pointer", fontWeight: 600 }}>No aptos ({noAptoLots.length})</summary>
-          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-            {noAptoLots.map((lot) => (
-              <div key={lot.id} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 10 }}>
-                <b>{lot.name}</b> · {producers.get(lot.producer_id)?.fullName ?? "Productor"}
-                <p className={styles.meta}>Motivo: {lot.eva_no_apto_reason ?? "—"}</p>
-                <form
-                  action={async () => {
-                    "use server";
-                    await revertNoApto(lot.id);
-                  }}
-                >
-                  <button className="btn btn-sm" type="submit">
-                    Reabrir evaluación
-                  </button>
-                </form>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
+      {/* Aptos / No aptos con filtro por TEMPORADA DE REGISTRO (2026-07-20):
+          reemplazan la vieja tira "Aptos · rumbo a la Arena". La postulación en
+          nombre del productor vive aquí; el pipeline pagado sigue en Nominados. */}
+      <AptosNoAptosSections
+        aptos={aptoLots.map((lot): SectionLot => ({
+          id: lot.id,
+          name: lot.name,
+          reference: ctcLotReferenceShort(lot.id),
+          producerName: producers.get(lot.producer_id)?.fullName ?? "Productor",
+          seasonId: lot.season_id,
+          seasonLabel: seasonLabel(seasonById.get(lot.season_id ?? "")),
+          postulated: postulatedLots.has(lot.id),
+        }))}
+        noAptos={noAptoLots.map((lot): SectionLot => ({
+          id: lot.id,
+          name: lot.name,
+          reference: ctcLotReferenceShort(lot.id),
+          producerName: producers.get(lot.producer_id)?.fullName ?? "Productor",
+          seasonId: lot.season_id,
+          seasonLabel: seasonLabel(seasonById.get(lot.season_id ?? "")),
+          reason: lot.eva_no_apto_reason,
+        }))}
+        seasons={seasons.map((s) => ({ id: s.id, label: seasonLabel(s) }))}
+      />
     </div>
   );
 }

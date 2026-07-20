@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createArenaSession } from "../arenaActions";
+import { reviewEvaluationClaim } from "../evaluationActions";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { CupRegistroButton } from "./ArenaBoardClient";
 import styles from "../shared.module.css";
@@ -28,16 +29,25 @@ type RosterRow = { arena_session_id: string; lot_id: string; lots: { name: strin
 
 export default async function BcpArenaPage() {
   const service = createServiceRoleClient();
-  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }] = await Promise.all([
+  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }, { data: claimsRaw }] = await Promise.all([
     service
       .from("arena_sessions")
       .select("id, session_date, status, capacity, run_state, cup_registrations, winner_lot_id, harvest_seasons(kind, year)")
       .order("session_date", { ascending: false }),
     service.from("harvest_seasons").select("id, kind, year").order("year", { ascending: false }),
     service.from("arena_session_lots").select("arena_session_id, lot_id, lots(name)"),
+    // Reclamos de oficialización del productor — el viejo módulo "Evaluaciones"
+    // quedó embebido aquí (2026-07-20): solo la cola pendiente, nada más.
+    service
+      .from("lot_evaluations")
+      .select("id, lot_id, sca_total, factor_rendimiento, q_grader_reference, created_at, lots(name)")
+      .eq("source", "producer_claim")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true }),
   ]);
 
   const sessions = (sessionsRaw as SessionRow[] | null) ?? [];
+  const claims = ((claimsRaw as { id: string; lot_id: string; sca_total: number | null; factor_rendimiento: number | null; q_grader_reference: string | null; created_at: string; lots: unknown }[] | null) ?? []);
   const rosterBySession = new Map<string, { lotId: string; name: string }[]>();
   for (const r of (rosterRaw as RosterRow[] | null) ?? []) {
     const lot = (Array.isArray(r.lots) ? r.lots[0] : r.lots) as { name: string } | null;
@@ -212,6 +222,55 @@ export default async function BcpArenaPage() {
               <div className={styles.columnList}>{col.count ? col.body : <p className={styles.empty}>—</p>}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* El viejo módulo "Evaluaciones" quedó embebido aquí (2026-07-20): la
+          cola de reclamos de oficialización del productor. Aceptar hace que el
+          puntaje cuente en el promedio oficial del lote; rechazar lo excluye
+          (la fila queda como rastro de auditoría). */}
+      {claims.length > 0 && (
+        <div style={{ marginTop: 30 }}>
+          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Reclamos de oficialización pendientes</h2>
+          <div style={{ display: "grid", gap: 10 }}>
+            {claims.map((c) => {
+              const lot = (Array.isArray(c.lots) ? c.lots[0] : c.lots) as { name: string } | null;
+              return (
+                <div key={c.id} className={styles.card}>
+                  <div>
+                    <b>{lot?.name ?? ctcLotReferenceShort(c.lot_id)}</b>
+                    <p className={styles.meta}>
+                      SCA declarado: {c.sca_total ?? "—"} · factor {c.factor_rendimiento ?? "—"}
+                      {c.q_grader_reference && ` · Q-Grader: ${c.q_grader_reference}`} ·{" "}
+                      {new Date(c.created_at).toLocaleDateString("es-CO")}
+                    </p>
+                  </div>
+                  <div className={styles.actions}>
+                    <form
+                      action={async () => {
+                        "use server";
+                        await reviewEvaluationClaim(c.id, "accepted", "");
+                      }}
+                    >
+                      <button className="btn btn-sm btn-solid" type="submit">
+                        Aceptar
+                      </button>
+                    </form>
+                    <form
+                      action={async () => {
+                        "use server";
+                        await reviewEvaluationClaim(c.id, "rejected", "");
+                      }}
+                    >
+                      <button className="btn btn-sm" type="submit">
+                        Rechazar
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

@@ -58,7 +58,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/bcp/nominados", label: "Nominados" },
           { href: "/bcp/club", label: "Kaffetal Club" },
           { href: "/bcp/arena", label: "Arena" },
-          { href: "/bcp/evaluaciones", label: "Evaluaciones" },
+          // "Evaluaciones" se retiró del nav (2026-07-20): las planillas B2/B3
+          // viven embebidas en Arena (sesiones y baches de sondeo).
           { href: "/bcp/contratos", label: "Contratos" },
           { href: "/bcp/catalogo", label: "Catálogo Cherry Picked" },
           { href: "/bcp/subastas", label: "Subastas Tyrian" },

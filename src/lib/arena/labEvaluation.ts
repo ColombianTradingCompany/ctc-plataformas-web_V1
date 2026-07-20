@@ -39,6 +39,18 @@ export function toLabEvaluation(raw: unknown): LabEvaluation {
   return { ...EMPTY_LAB_EVALUATION, ...((raw as Partial<LabEvaluation> | null | undefined) ?? {}) };
 }
 
+/**
+ * Un lote puede tener VARIAS planillas B2/B3 registradas (pedido del owner
+ * 2026-07-20) — el jsonb guarda una LISTA. Este lector acepta los tres estados
+ * que existen en datos vivos: null, el objeto suelto de la primera versión
+ * (se envuelve en lista) y la lista nueva.
+ */
+export function toLabEvaluationList(raw: unknown): LabEvaluation[] {
+  if (raw == null) return [];
+  if (Array.isArray(raw)) return raw.map(toLabEvaluation);
+  return [toLabEvaluation(raw)];
+}
+
 /** ¿Hay al menos un dato digitado? (para no guardar planillas vacías) */
 export function labEvaluationHasData(ev: LabEvaluation): boolean {
   return Object.values(ev).some((v) => String(v ?? "").trim() !== "");

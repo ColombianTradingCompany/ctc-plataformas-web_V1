@@ -17,23 +17,24 @@ import styles from "./LegalFooter.module.css";
 // cada pie: al importarse desde un módulo cliente, Next lo compila como parte
 // de ese árbol. Sin hooks ni handlers, eso es correcto en ambos casos.
 
-// OJO: aquí NO va ningún identificador legal (NIT, matrícula mercantil) hasta
-// que el owner entregue el real — inventarlo sería peor que omitirlo. Cuando
-// llegue, va en esta misma línea, delante de la ciudad. Falta también enlazar
-// una política de privacidad: todavía no existe (ver el pendiente de GDPR —
+// NIT entregado por el owner el 2026-07-20 (9014834257), escrito en el formato
+// colombiano estándar: 9 dígitos + dígito de verificación. Sigue faltando
+// enlazar una política de privacidad — todavía no existe (pendiente de GDPR:
 // debe declarar a Resend como subprocesador de correo).
+const NIT = "NIT 901.483.425-7";
+
 const LEGAL_ES =
-  "Colombian Trading Company · Piedecuesta, Santander, Colombia. " +
+  `Colombian Trading Company · ${NIT} · Piedecuesta, Santander, Colombia. ` +
   "Marcas, sellos y contenidos de este sitio son propiedad de sus titulares. " +
   "Los grados CTC y los resultados de la Arena son evaluaciones propias de CTC y no constituyen certificación de un tercero.";
 
 const LEGAL_EN =
-  "Colombian Trading Company · Piedecuesta, Santander, Colombia. " +
+  `Colombian Trading Company · ${NIT} · Piedecuesta, Santander, Colombia. ` +
   "Trademarks, seals and content on this site belong to their respective owners. " +
   "CTC grades and Arena results are CTC's own evaluations and are not third-party certifications.";
 
 const LEGAL_DE =
-  "Colombian Trading Company · Piedecuesta, Santander, Kolumbien. " +
+  `Colombian Trading Company · ${NIT} · Piedecuesta, Santander, Kolumbien. ` +
   "Marken, Siegel und Inhalte dieser Website gehören ihren jeweiligen Eigentümern. " +
   "CTC-Grade und Arena-Ergebnisse sind eigene Bewertungen von CTC und keine Zertifizierung durch Dritte.";
 

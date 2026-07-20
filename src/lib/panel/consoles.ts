@@ -96,7 +96,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ecp/documentacion", label: "Documentación del sistema" },
           { href: "/ecp/herramientas", label: "Herramientas internas" },
           { href: "/ecp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
-          { href: "/ecp/socios", label: "Socios de la red", ownerOnly: true },
         ],
       },
     ],
@@ -111,7 +110,14 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     nav: [
       {
         label: "OCP · Operación",
-        links: [{ href: "/ocp", label: "Panel", exact: true }],
+        links: [
+          { href: "/ocp", label: "Panel", exact: true },
+          // Los socios se administran donde se OPERAN (2026-07-20): el OCP es el
+          // espejo de las interfaces de partner, así que dar de alta y de baja
+          // una credencial de nodo pertenece aquí, no a la consola de dirección.
+          // Sigue siendo owner-only, y la page lo impone aparte del nav.
+          { href: "/ocp/socios", label: "Socios de la red", ownerOnly: true },
+        ],
       },
     ],
   },

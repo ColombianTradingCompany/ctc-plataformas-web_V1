@@ -12,6 +12,7 @@ export default function OcpHomePage() {
       accent={c.accent}
       intro="El piso de operación de la red: el espejo desde el que CTC coordina cada interfaz de partner. Cuando el Centro de Calidad, la Carga, la Nacionalización o el Master Roaster trabajan en su módulo, aquí se ve el despacho, el seguimiento, las excepciones y los relevos. Lo que el ECP dirige, el OCP lo ejecuta."
       modules={[
+        { name: "Socios de la red", desc: "Alta, baja y reenvío de credenciales de cada nodo partner: quién puede entrar a su interfaz y en qué estado está su acceso.", built: true, href: "/ocp/socios" },
         { name: "Centro de Calidad", desc: "Trilla, monitoreo de humedad y selección óptica: pergamino → verde exportable, con merma y rendimiento sellados en el pasaporte." },
         { name: "Agente de Carga", desc: "Booking, exportación, BL y tracking del contenedor Colombia → Ámsterdam." },
         { name: "Agente de Nacionalización", desc: "Aduana en destino: liquidación, inspección y liberación hacia la bodega del Master Roaster, con la DDS EUDR enlazada." },

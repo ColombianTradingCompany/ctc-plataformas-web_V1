@@ -330,3 +330,26 @@ Cherry Picked family + reestructuración Nominados ya está desplegado READY en 
 - Verificado: repro 500→200, CP sigue bien (1 opción, icono, title "Tool: Agtron dial · roast
   colour"), tsc+eslint limpios, build con las dos rutas /ecp/herramientas.
 (commit: pending)
+
+## [2026-07-20] "Socios de la red" pasa del ECP al OCP
+- Petición del owner. Encaja con la definición que ya estaba escrita en consoles.ts: el OCP es
+  "el espejo de cada interfaz de partner — lo que el ECP dirige, el OCP lo ejecuta". Dar de
+  alta y de baja la credencial de un nodo es administrarlo donde se OPERA, no dirección.
+- MOVIDO (git mv, historia conservada): socios/ + sociosActions.ts de ecp/(app) a ocp/(app).
+  requireConsoleAccess("ecp")→("ocp"), el redirect de no-owner a /ocp, y los 3 revalidatePath
+  a /ocp/socios. Sigue siendo owner-only, impuesto EN LA PAGE además de esconderlo del nav.
+- EFECTO COLATERAL que había que resolver: SociosClient importaba
+  "../usuarios/usuarios.module.css" y usuarios/ se queda en el ECP — el import relativo se
+  rompía al cruzar de consola. La hoja pasó a src/components/panel/credentials.module.css
+  (solo 2 importadores: UsuariosClient y SociosClient, así que promoverla es barato — al revés
+  que shared.module.css, con 31, que se dejó donde está).
+- consoles.ts: el link sale del grupo "ECP · IT y Plataforma" y entra en "OCP · Operación".
+  El panel del OCP gana su tarjeta navegable (built + href); el del ECP no mencionaba socios.
+- Se corrigió el nombre viejo de la función (BcpSociosPage → OcpSociosPage) y su comentario,
+  que seguía diciendo "se emite desde el BCP" — dos mudanzas desactualizado.
+- VERIFICADO: nav owner ECP = Documentación|Herramientas|Usuarios y OCP = Panel|Socios;
+  nav viewer OCP = solo Panel. /ocp/socios existe y redirige a /login sin sesión;
+  /ecp/socios da 404; /ecp/usuarios sigue viva. Y —aprendida la lección del crash del ECP— se
+  comprobó que la página RENDERIZA de verdad: una ruta temporal montó SociosClient desde un
+  server component → 200 (un 307 solo prueba la guarda, no el render). tsc+eslint+build limpios.
+(commit: pending)

@@ -217,3 +217,37 @@ está desplegado READY en producción.)
   el BCP perciben el proceso entero.
 - Verificado en vivo (cuenta QA): lotes fila+aprobado pintan …SON:done ARE:ACTIVO → GAL:pend.
 (commit: pending)
+
+## [2026-07-20] Herramientas configurables (Default/Plus), procedencia SCA en la Ficha, altura derivada
+- HERRAMIENTAS (afecta DICT `herramientas`, nodos n-kaffetal / n-cherry / n-consoles): el reparto
+  por superficie salió del código. catalog.ts define ToolsConfig {kr, cp, tier} + el arranque que
+  reproduce el reparto histórico; lo administrado vive en platform_settings.tools_config y se
+  edita en consola interna → Herramientas → Disponibilidad (ToolsAdmin). Esa página ahora lista
+  TODAS las herramientas, no solo las internas.
+  · DOS NIVELES: default = cualquier cuenta de la superficie; plus = con estatus.
+  · ⚠ La regla de "Plus" es DECISIÓN POR DEFECTO nuestra, no instrucción del owner (se preguntó,
+    no hubo respuesta): productor = Pasaporte del Kaffetal Club; comprador = membership_tier por
+    encima de 'verde' (la escala verde→pinton→maduro arranca toda cuenta en verde, así que "tiene
+    membresía" no distinguiría a nadie). Vive en UN sitio: loadToolAccess (lib/tools/toolAccess).
+  · platform_settings es service-role-only ⇒ la superficie NO lee la config: pide su lista ya
+    filtrada por server action (hook useToolAccess). Lo Plus que falta se anuncia, no se esconde.
+  · Verificado en vivo en los dos sentidos: sin Pasaporte el Agtron marcado plus desaparece y
+    sale el aviso; con Pasaporte reaparece. Config y membresía revertidas tras la prueba.
+- FICHA (VISTA FINAL) — procedencia de cada puntaje (DICT `intake`, `eva`): la exportación lista
+  TODOS los puntajes sensoriales con sus 10 atributos y un rótulo por fila: "Declarado por el
+  productor (B2) · sin contrastar" (la autodeclaración nunca es oficial sola), "Evaluación CTC ·
+  Contrastado por CTC", "Solicitud de oficialización · pendiente de contrastar / NO validado".
+  Nuevo Lot.scaScorings poblado desde lot_evaluations (la consulta ahora trae sca_data,
+  q_grader_reference, created_at). Probado en vivo con los tres estados a la vez.
+- ALTURA DE FINCA derivada (DICT `intake`, `eudr`): nuevo src/lib/geo/elevation.ts — punto de
+  referencia = CENTROIDE del polígono si existe (>4 ha), punto registrado si no (≤4 ha), y
+  consulta a google.maps.ElevationService (mismo SDK y clave del mapa, sin dependencias nuevas).
+  ⚠ El owner lo enunció al revés ("el punto para >4"): el polígono SOLO existe por encima de
+  4 ha, así que el mapeo implementado es el único coherente — queda anotado por si quiere otra
+  cosa. Escribir el campo a mano lo congela hasta "Volver a calcularla". Si la Elevation API no
+  está habilitada en Google Cloud devuelve null y el campo sigue editable: nunca bloquea guardar.
+- ⚠ SIN RESOLVER: el bullet "Kaffetal Klub" del paquete del owner llegó VACÍO. No se tocó nada
+  del Club; queda pendiente saber qué iba ahí.
+- Verificación: tsc + eslint + build limpios; qa-boards-check 27/27 (añadidos centroide,
+  colineales, degenerados y selección punto-vs-polígono); qa-jornada-check 11/11.
+(commit: pending · versión V1.3)

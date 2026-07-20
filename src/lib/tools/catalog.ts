@@ -33,15 +33,61 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   qr: { id: "qr", src: "/ecp/herramientas/qr", lang: "en" },
 };
 
-// ── El reparto por superficie ────────────────────────────────────────────────
-// Las calculadoras de merma son la matemática diaria del CAFICULTOR (y están en
-// español), así que viven solo en Kaffetal Regal. El disco Agtron va en LAS DOS:
-// es el instrumento del tostador, pero también es el idioma con el que el
-// comprador le va a hablar al productor de su tueste — por eso el productor
-// necesita poder mirarlo. No todo reparto es excluyente.
-/** Kaffetal Regal · "Herramientas Cafeteras" — rendimiento + el color con que lo van a juzgar. */
-export const KR_TOOL_IDS: ToolId[] = ["mermas-rapida", "mermas-detallada", "agtron"];
-/** Cherry Picked · "Coffee Gadgets" — el color de tueste. */
-export const CP_TOOL_IDS: ToolId[] = ["agtron"];
-/** ECP · herramientas internas del equipo. */
-export const ECP_TOOL_IDS: ToolId[] = ["qr"];
+/** Todas las herramientas, en el orden en que se listan en el panel interno. */
+export const ALL_TOOL_IDS: ToolId[] = ["mermas-rapida", "mermas-detallada", "agtron", "qr"];
+
+// ── El reparto por superficie, ahora CONFIGURABLE ────────────────────────────
+// Antes eran tres listas fijas en este archivo. Desde 2026-07-20 el reparto se
+// administra desde la consola interna (Herramientas → Disponibilidad) y vive en
+// platform_settings.tools_config; lo de aquí abajo es solo el ARRANQUE, que
+// reproduce exactamente el reparto que había:
+//   · las calculadoras de merma son la matemática diaria del CAFICULTOR (y
+//     están en español) ⇒ solo Kaffetal Regal;
+//   · el disco Agtron va en LAS DOS: es el instrumento del tostador, pero
+//     también el idioma con el que el comprador le hablará al productor de su
+//     tueste — por eso el productor necesita poder mirarlo;
+//   · el generador de QR es interno (no se sirve desde public/, ver privateTools).
+//
+// DOS NIVELES (petición del owner): "default" la ve cualquiera con cuenta en esa
+// superficie; "plus" solo quien tiene el estatus correspondiente (hoy:
+// Pasaporte del Kaffetal Club en el lado productor, membresía en Cherry Picked).
+export type ToolTier = "default" | "plus";
+export type ToolSurface = "kr" | "cp";
+
+export type ToolSetting = {
+  /** Visible en Kaffetal Regal. */
+  kr: boolean;
+  /** Visible en Cherry Picked. */
+  cp: boolean;
+  tier: ToolTier;
+};
+
+export type ToolsConfig = Record<ToolId, ToolSetting>;
+
+export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
+  "mermas-rapida": { kr: true, cp: false, tier: "default" },
+  "mermas-detallada": { kr: true, cp: false, tier: "default" },
+  agtron: { kr: true, cp: true, tier: "default" },
+  // Interna: no se ofrece en ninguna superficie pública.
+  qr: { kr: false, cp: false, tier: "plus" },
+};
+
+/** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */
+export function toToolsConfig(raw: unknown): ToolsConfig {
+  const stored = (raw ?? {}) as Partial<Record<ToolId, Partial<ToolSetting>>>;
+  const out = {} as ToolsConfig;
+  for (const id of ALL_TOOL_IDS) {
+    out[id] = { ...DEFAULT_TOOLS_CONFIG[id], ...(stored[id] ?? {}) };
+  }
+  return out;
+}
+
+/** Las herramientas visibles en una superficie para una audiencia dada. */
+export function toolsForSurface(config: ToolsConfig, surface: ToolSurface, isPlus: boolean): ToolId[] {
+  return ALL_TOOL_IDS.filter((id) => config[id][surface] && (config[id].tier === "default" || isPlus));
+}
+
+/** Las que existen en la superficie pero están reservadas al nivel Plus. */
+export function plusOnlyForSurface(config: ToolsConfig, surface: ToolSurface): ToolId[] {
+  return ALL_TOOL_IDS.filter((id) => config[id][surface] && config[id].tier === "plus");
+}

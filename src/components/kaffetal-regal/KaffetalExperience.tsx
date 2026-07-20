@@ -27,6 +27,7 @@ import {
   type Lot,
   type ProducerContract,
   type FeedbackNote,
+  type ScaScoring,
 } from "./data";
 
 type View = "landing" | "app" | "ficha";
@@ -156,14 +157,14 @@ function dbFincaToFinca(
   };
 }
 
-const EMPTY_EVAL_SUMMARY = { scaAverage: null as number | null, factorAverage: null as number | null, acceptedCount: 0, hasPendingClaim: false };
+const EMPTY_EVAL_SUMMARY = { scaAverage: null as number | null, factorAverage: null as number | null, acceptedCount: 0, hasPendingClaim: false, scorings: [] as ScaScoring[] };
 
 function dbLotToLot(
   row: LotRow,
   fincaNameById: Map<string, string>,
   completionHistory: CompletionPoint[] = [],
   videoUrl: string | null = null,
-  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean } = EMPTY_EVAL_SUMMARY,
+  evalSummary: { scaAverage: number | null; factorAverage: number | null; acceptedCount: number; hasPendingClaim: boolean; scorings: ScaScoring[] } = EMPTY_EVAL_SUMMARY,
   inscription: Lot["inscription"] = null
 ): Lot {
   const stage = STAGE_DB.indexOf(row.stage as (typeof STAGE_DB)[number]);
@@ -218,6 +219,7 @@ function dbLotToLot(
     officialFactorAverage: evalSummary.factorAverage,
     officialEvalCount: evalSummary.acceptedCount,
     hasPendingOfficializationClaim: evalSummary.hasPendingClaim,
+    scaScorings: evalSummary.scorings,
   };
 }
 
@@ -261,7 +263,13 @@ function Experience() {
             .order("created_at", { ascending: false }),
           supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
           // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
-          supabase.from("lot_evaluations").select("lot_id, source, status, sca_total, factor_rendimiento"),
+          // sca_data / q_grader_reference entran para la Ficha (vista final):
+          // la exportación lista CADA puntaje sensorial con su procedencia
+          // (verificado por CTC vs declarado por el productor).
+          supabase
+            .from("lot_evaluations")
+            .select("id, lot_id, source, status, sca_total, sca_data, factor_rendimiento, q_grader_reference, created_at")
+            .order("created_at", { ascending: true }),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
           supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id").order("created_at", { ascending: false }),
           // RLS (producer_comm_ack_select_own) scopes this to the producer's own acks.
@@ -304,7 +312,7 @@ function Experience() {
         list.push({ pct: s.completion_pct, recordedAt: s.recorded_at });
         completionByLotId.set(s.lot_id, list);
       }
-      type LotEvaluationRow = EvaluationRow & { lot_id: string; source: string };
+      type LotEvaluationRow = EvaluationRow & { id: string; lot_id: string; source: string; sca_data: unknown; q_grader_reference: string | null; created_at: string };
       const evalsByLotId = new Map<string, LotEvaluationRow[]>();
       for (const e of (evalRows as LotEvaluationRow[] | null) ?? []) {
         evalsByLotId.set(e.lot_id, [...(evalsByLotId.get(e.lot_id) ?? []), e]);
@@ -351,7 +359,22 @@ function Experience() {
             fincaNameById,
             completionByLotId.get(r.id),
             r.video_asset_id ? urlByAssetId.get(r.video_asset_id) ?? null : null,
-            { scaAverage: avg.scaAverage, factorAverage: avg.factorAverage, acceptedCount: avg.acceptedCount, hasPendingClaim },
+            {
+              scaAverage: avg.scaAverage,
+              factorAverage: avg.factorAverage,
+              acceptedCount: avg.acceptedCount,
+              hasPendingClaim,
+              // Cada puntaje con su procedencia, para la Ficha (vista final).
+              scorings: rows.map((e) => ({
+                id: e.id,
+                source: e.source === "bcp_arena" ? "bcp_arena" : "producer_claim",
+                status: e.status,
+                total: e.sca_total != null ? Number(e.sca_total) : null,
+                attrs: (e.sca_data as Record<string, number> | null) ?? null,
+                qGraderRef: e.q_grader_reference ?? null,
+                date: e.created_at,
+              })),
+            },
             inscriptionByLotId.get(r.id) ?? null
           );
         })
@@ -601,6 +624,7 @@ function Experience() {
       factorAverage: current?.officialFactorAverage ?? null,
       acceptedCount: current?.officialEvalCount ?? 0,
       hasPendingClaim: current?.hasPendingOfficializationClaim ?? false,
+      scorings: current?.scaScorings ?? [],
     });
     setLots((ls) => ls.map((l) => (l.id === curLotId ? saved : l)));
     return true;

@@ -1,7 +1,8 @@
 "use client";
 
 import { ToolPanel } from "@/components/tools/ToolPanel";
-import { CP_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
+import { type ToolId } from "@/lib/tools/catalog";
+import { useToolAccess } from "@/components/tools/useToolAccess";
 import { useLang, type Lang } from "./i18n";
 import styles from "./GadgetsSection.module.css";
 
@@ -110,6 +111,8 @@ const T: Record<Lang, Copy> = {
 
 export function GadgetsSection() {
   const t = T[useLang()];
+  // Reparto administrado desde la consola interna (Herramientas → Disponibilidad).
+  const toolAccess = useToolAccess("cp");
   return (
     <section id="gadgets" className={styles.section}>
       <div className="wrap">
@@ -125,7 +128,7 @@ export function GadgetsSection() {
         </div>
 
         <ToolPanel
-          tools={CP_TOOL_IDS.map((id) => ({ id, ...t.tools[id] }))}
+          tools={toolAccess.ids.map((id) => ({ id, ...t.tools[id] }))}
           labels={{
             openInTab: t.openInTab,
             choose: t.choose,

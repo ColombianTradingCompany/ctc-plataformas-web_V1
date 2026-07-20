@@ -15,7 +15,8 @@ import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
 import { ToolPanel } from "@/components/tools/ToolPanel";
-import { KR_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
+import { type ToolId } from "@/lib/tools/catalog";
+import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./AppDashboard.module.css";
 
@@ -173,6 +174,9 @@ export function AppDashboard({
   // membresía es el "Pasaporte" del productor y se otorga AUTOMÁTICAMENTE cuando
   // un lote suyo compite en una jornada de Arena — ya no se canjea un código.
   const isClubMember = !!gi.clubMemberSince;
+  // El reparto de herramientas se administra desde la consola interna
+  // (Herramientas → Disponibilidad); esto trae ya filtrado lo que le toca.
+  const toolAccess = useToolAccess("kr");
 
   async function requestService(pillar: "tech" | "varietales", form: HTMLFormElement) {
     setServiceBusy(true);
@@ -793,7 +797,7 @@ export function AppDashboard({
                 Elija una y se abre aquí mismo.
               </div>
               <ToolPanel
-                tools={KR_TOOL_IDS.map((id) => ({ id, ...KR_TOOL_COPY[id] }))}
+                tools={toolAccess.ids.map((id) => ({ id, ...KR_TOOL_COPY[id] }))}
                 labels={{
                   openInTab: "Abrir en pestaña nueva ↗",
                   choose: "Elija una herramienta para abrirla aquí.",
@@ -801,6 +805,14 @@ export function AppDashboard({
                   framePrefix: "Herramienta",
                 }}
               />
+              {/* Nivel Plus: se dice qué falta, no se esconde en silencio. */}
+              {toolAccess.lockedCount > 0 && (
+                <div className={styles.alist} style={{ marginTop: 12 }}>
+                  Hay {toolAccess.lockedCount} herramienta{toolAccess.lockedCount === 1 ? "" : "s"} más reservada
+                  {toolAccess.lockedCount === 1 ? "" : "s"} para miembros del <b>Kaffetal Club</b> — el Pasaporte se
+                  gana compitiendo un lote en la Arena.
+                </div>
+              )}
             </div>
           )}
 

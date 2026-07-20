@@ -12,7 +12,36 @@ function di(k: string, v: string) {
   return v && v.trim() ? `<div class="di"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>` : "";
 }
 
-export function renderFichaHtml(data: FichaFormData, factor: Factor, mesh: Mesh, sca: Sca, varTotal: number, spiderSvg: string) {
+/** Un puntaje sensorial registrado sobre el lote, con su procedencia. */
+export type ScaScoringExport = {
+  source: "bcp_arena" | "producer_claim";
+  status: "pending" | "accepted" | "rejected";
+  total: number | null;
+  attrs: Record<string, number> | null;
+  qGraderRef: string | null;
+  date: string;
+};
+
+// Cómo se nombra cada procedencia en la Ficha. El punto (petición del owner
+// 2026-07-20) es que un comprador NO pueda confundir lo que declaró el
+// productor con lo que CTC contrastó — así que el rótulo es explícito y va
+// pegado a cada puntaje, no en una nota al pie.
+function scoringLabel(s: ScaScoringExport): { text: string; cls: string } {
+  if (s.source === "bcp_arena") return { text: "Contrastado por CTC", cls: "ok" };
+  if (s.status === "accepted") return { text: "Aportado por el productor · contrastado por CTC", cls: "ok" };
+  if (s.status === "rejected") return { text: "Aportado por el productor · NO validado por CTC", cls: "bad" };
+  return { text: "Aportado por el productor · pendiente de contrastar", cls: "pend" };
+}
+
+export function renderFichaHtml(
+  data: FichaFormData,
+  factor: Factor,
+  mesh: Mesh,
+  sca: Sca,
+  varTotal: number,
+  spiderSvg: string,
+  scorings: ScaScoringExport[] = []
+) {
   const oc = ORIGIN_CERTS.filter(([key]) => data[key as keyof FichaFormData] as boolean).map(([, label]) => label);
   if (data.origin_cert_other && data.origin_cert_other_text) oc.push(data.origin_cert_other_text);
   const ic = INTL_CERTS.filter(([key]) => data[key as keyof FichaFormData] as boolean).map(([, , label]) => label);
@@ -28,6 +57,55 @@ export function renderFichaHtml(data: FichaFormData, factor: Factor, mesh: Mesh,
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
+
+  // ── TODOS los puntajes sensoriales del lote, con su procedencia ────────────
+  // La autodeclaración del productor (lo digitado en B2) es SIEMPRE la primera
+  // fila y va rotulada como tal: nunca es oficial por sí sola. Debajo, cada
+  // lot_evaluations registrada, con los 10 atributos cuando la fila los trae.
+  const selfDeclared: ScaScoringExport | null =
+    sca.total > 0
+      ? {
+          source: "producer_claim",
+          status: "pending",
+          total: sca.total,
+          attrs: Object.fromEntries(SCA_ATTRS.map(([key], i) => [key, sca.values[i]])),
+          qGraderRef: [data.qgrader_name, data.qgrader_lab, data.qgrader_cert].filter(Boolean).join(" · ") || null,
+          date: "",
+        }
+      : null;
+  // La autodeclaración se rotula aparte: no es un reclamo registrado todavía.
+  const selfRow = selfDeclared
+    ? `<tr><td class="src">Declarado por el productor (B2)<span class="tag pend">sin contrastar</span>${
+        selfDeclared.qGraderRef ? `<div class="ref">Ref. Q-Grader: ${esc(selfDeclared.qGraderRef)}</div>` : ""
+      }</td>${SCA_ATTRS.map((_, i) => `<td>${sca.values[i] ? sca.values[i].toFixed(2) : "—"}</td>`).join("")}<td class="tot">${sca.total.toFixed(2)}</td></tr>`
+    : "";
+  const evalRows = scorings
+    .map((s) => {
+      const l = scoringLabel(s);
+      const cells = SCA_ATTRS.map(([key]) => {
+        const v = s.attrs?.[key];
+        return `<td>${typeof v === "number" && v > 0 ? v.toFixed(2) : "—"}</td>`;
+      }).join("");
+      return `<tr><td class="src">${esc(
+        s.source === "bcp_arena" ? "Evaluación CTC" : "Solicitud de oficialización"
+      )}<span class="tag ${l.cls}">${esc(l.text)}</span>${s.qGraderRef ? `<div class="ref">Ref. Q-Grader: ${esc(s.qGraderRef)}</div>` : ""}${
+        s.date ? `<div class="ref">${esc(new Date(s.date).toLocaleDateString("es-CO"))}</div>` : ""
+      }</td>${cells}<td class="tot">${s.total != null ? Number(s.total).toFixed(2) : "—"}</td></tr>`;
+    })
+    .join("");
+
+  const scaTable =
+    selfRow || evalRows
+      ? `<div class="scatable">
+      <p class="scatitle">Puntajes sensoriales registrados</p>
+      <div class="scascroll"><table class="scat">
+        <thead><tr><th>Origen del puntaje</th>${SCA_ATTRS.map(([, label]) => `<th>${esc(label.split("/")[0])}</th>`).join("")}<th>Total</th></tr></thead>
+        <tbody>${selfRow}${evalRows}</tbody>
+      </table></div>
+      <p class="scafoot">El puntaje <b>oficial</b> de CTC es el promedio de las evaluaciones contrastadas. Lo declarado por el
+      productor se publica como tal y nunca se presenta como verificado.</p>
+    </div>`
+      : "";
 
   const meshRows = MESH.map(([key, label]) => {
     const w = num(data[key as keyof FichaFormData] as string);
@@ -130,9 +208,10 @@ export function renderFichaHtml(data: FichaFormData, factor: Factor, mesh: Mesh,
           ${data.cupping_profile ? `<p class="prose">${esc(data.cupping_profile)}</p>` : ""}
         </div>
       </div>
+      ${scaTable}
     </div>`
-        : data.cupping_profile
-          ? `<div class="ficha-section"><h3>Perfil Sensorial</h3><p class="prose">${esc(data.cupping_profile)}</p></div>`
+        : data.cupping_profile || scaTable
+          ? `<div class="ficha-section"><h3>Perfil Sensorial</h3>${data.cupping_profile ? `<p class="prose">${esc(data.cupping_profile)}</p>` : ""}${scaTable}</div>`
           : ""
     }
 
@@ -206,6 +285,22 @@ export const FICHA_PREVIEW_CSS = `
 .chip{font-family:ui-monospace,monospace;font-size:10.5px;background:#F2EDFD;border:1px solid #D3B8FA;color:#3C0A86;padding:2px 8px;border-radius:2px}
 .chip.navy{background:#EEF3FB;border-color:#BDD0EE;color:#003087}
 .scagrid{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+/* Tabla de puntajes sensoriales con procedencia (2026-07-20). Scroll propio:
+   son 12 columnas y la ficha se abre también en teléfono. */
+.scatable{margin-top:16px}
+.scatitle{font-family:var(--f-mono,monospace);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#5C6459;margin:0 0 6px}
+.scascroll{overflow-x:auto}
+.scat{width:100%;border-collapse:collapse;font-size:11px;min-width:620px}
+.scat th{text-align:left;padding:5px 6px;border-bottom:1.5px solid #17402B;font-family:var(--f-mono,monospace);font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#5C6459;white-space:nowrap}
+.scat td{padding:6px;border-bottom:1px solid #E4E0D4;text-align:center}
+.scat td.src{text-align:left;min-width:190px}
+.scat td.tot{font-weight:700;background:#F7F5EE}
+.scat .tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.scat .tag.ok{background:#DCFCE7;color:#166534}
+.scat .tag.pend{background:#FEF3C7;color:#92400E}
+.scat .tag.bad{background:#FEE2E2;color:#991B1B}
+.scat .ref{font-size:9.5px;color:#5C6459;margin-top:2px}
+.scafoot{font-size:10px;color:#5C6459;margin:6px 0 0}
 .spiderbox{width:180px;flex:0 0 auto}
 .spiderbox svg{width:100%;display:block}
 .scoreband{display:flex;align-items:center;gap:14px;background:#F5F3FC;border:1px solid #D3B8FA;border-radius:3px;padding:10px 14px;margin-bottom:10px}

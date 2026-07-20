@@ -187,6 +187,20 @@ Encima de eso, `PanelChrome` (cliente, envuelve rail + `<main>`; `PanelShell` si
 
 ⚠️ **El panel de vista previa no ejecuta transiciones CSS** (gotcha 11), así que una propiedad en transición se queda clavada en su valor inicial y `getComputedStyle` miente: el rail parecía no abrirse nunca. Para medir transformaciones aquí hay que **neutralizar la transición primero** (`*{transition:none!important}`) y entonces sí leer. Medido así: cerrado x=-240, abierto x=0 con los 16 enlaces dentro de pantalla.
 
+## Herramientas embebidas: reparto configurable + niveles (2026-07-20)
+
+El reparto de las herramientas HTML/CSS (disco Agtron, las dos calculadoras de mermas, el generador de QR) **dejó de estar fijo en el código**. `src/lib/tools/catalog.ts` define `ToolsConfig` (`{kr, cp, tier}` por herramienta) y `DEFAULT_TOOLS_CONFIG`, que reproduce exactamente el reparto histórico; lo administrado vive en `platform_settings.tools_config` y se edita en **consola interna → Herramientas → Disponibilidad** (`ToolsAdmin.tsx`). Esa página ahora lista **TODAS** las herramientas, no solo las internas: el equipo necesita poder abrir lo mismo que ve un productor.
+
+**Dos niveles**: `default` la ve cualquier cuenta de esa superficie; `plus` solo quien tiene el estatus. **La regla de "Plus" es una decisión por defecto, no una instrucción del owner** (la preguntamos y no llegó respuesta) y vive en UN solo sitio, `loadToolAccess` en `src/lib/tools/toolAccess.ts`: productor = tener Pasaporte del Kaffetal Club (`club_member_since`); comprador = `membership_tier` **por encima de `verde`** (la escala es verde→pinton→maduro y toda cuenta nace en verde, así que "tiene membresía" no distinguiría a nadie). `platform_settings` es service-role-only, así que la superficie **no lee la config**: pide su lista ya filtrada con la server action, vía el hook `useToolAccess`. Lo que queda fuera no se esconde en silencio — KR dice cuántas herramientas Plus faltan y cómo se ganan. Verificado en vivo en los dos sentidos (con y sin Pasaporte).
+
+## Ficha (vista final): procedencia de cada puntaje sensorial (2026-07-20)
+
+La exportación lista **todos** los puntajes SCA del lote con sus 10 atributos y un rótulo pegado a cada fila: `Declarado por el productor (B2) · sin contrastar` (la autodeclaración, que **nunca** es oficial sola), `Evaluación CTC · Contrastado por CTC`, `Solicitud de oficialización · pendiente de contrastar` / `NO validado por CTC` según el `status`. Los datos entran por `Lot.scaScorings` (`data.ts`), poblado desde `lot_evaluations` (la consulta de `KaffetalExperience` ahora trae `sca_data`, `q_grader_reference`, `created_at`). El objetivo es que un comprador no pueda confundir lo declarado con lo verificado.
+
+## Altura de finca derivada de la geometría (2026-07-20)
+
+«Altura (msnm)» se autocompleta: `src/lib/geo/elevation.ts` calcula el punto de referencia — **centroide del polígono** cuando existe (predios >4 ha, que EUDR obliga a dibujar) o el **punto registrado** cuando solo hay punto (≤4 ha) — y consulta `google.maps.ElevationService`, el mismo SDK y la misma clave que ya carga el mapa. ⚠️ **El owner lo enunció al revés** ("el punto para >4"); el polígono solo existe por encima de 4 ha, así que el mapeo implementado es el único coherente. Escribir el campo a mano lo congela (`altManual`) hasta pulsar «Volver a calcularla». Si la Elevation API no está habilitada en Google Cloud la llamada devuelve null y el campo queda editable — nunca bloquea guardar. Centroide y selección de punto probados en `scripts/qa-boards-check.mjs` (27 checks).
+
 ## Dev workflow
 
 - `npm run dev` (Turbopack). Type-check with `npx tsc --noEmit`, lint with `npx eslint src --max-warnings=0` — both must be clean before considering a change done; this has held throughout the project.

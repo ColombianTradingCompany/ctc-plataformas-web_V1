@@ -566,7 +566,7 @@ export function FichaView({
               {active === "b4" && <PaneB4 {...paneProps} />}
               {active === "ficha" && (
                 <>
-                  <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} />
+                  <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} />
                   {lotIsEudrReady && (
                     <div style={{ marginTop: 14 }}>
                       <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${lot.id}`} target="_blank" rel="noopener noreferrer">

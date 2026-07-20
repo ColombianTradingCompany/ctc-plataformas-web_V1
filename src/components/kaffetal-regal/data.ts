@@ -157,6 +157,26 @@ export type Lot = {
   officialFactorAverage: number | null;
   officialEvalCount: number;
   hasPendingOfficializationClaim: boolean;
+  /**
+   * CADA puntaje sensorial registrado sobre el lote, con su procedencia — lo
+   * que la Ficha (vista final) tiene que poder mostrar sin ambigüedad
+   * (petición del owner 2026-07-20): un comprador debe distinguir de un vistazo
+   * lo que declaró el productor de lo que CTC contrastó.
+   */
+  scaScorings: ScaScoring[];
+};
+
+/** Un puntaje sensorial con su origen y su estado de verificación. */
+export type ScaScoring = {
+  id: string;
+  /** bcp_arena = registrado por CTC · producer_claim = aportado por el productor. */
+  source: "bcp_arena" | "producer_claim";
+  status: "pending" | "accepted" | "rejected";
+  total: number | null;
+  /** Los 10 atributos, cuando la fila los trae. */
+  attrs: Record<string, number> | null;
+  qGraderRef: string | null;
+  date: string;
 };
 
 export type GeneralInfo = {

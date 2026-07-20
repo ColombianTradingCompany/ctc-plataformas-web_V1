@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type { FichaFormData } from "./fichaData";
-import { FICHA_PREVIEW_CSS, renderFichaHtml } from "./fichaPreviewHtml";
+import { FICHA_PREVIEW_CSS, renderFichaHtml, type ScaScoringExport } from "./fichaPreviewHtml";
 import { spiderSvgString } from "./SpiderChart";
 import styles from "../FichaView.module.css";
 
@@ -16,16 +16,19 @@ export function FichaPreview({
   mesh,
   sca,
   varTotal,
+  scorings = [],
 }: {
   data: FichaFormData;
   factor: Factor;
   mesh: MeshT;
   sca: ScaT;
   varTotal: number;
+  /** Cada puntaje sensorial del lote con su procedencia (CTC vs productor). */
+  scorings?: ScaScoringExport[];
 }) {
   const inner = useMemo(
-    () => renderFichaHtml(data, factor, mesh, sca, varTotal, sca.total > 0 ? spiderSvgString(sca.values) : ""),
-    [data, factor, mesh, sca, varTotal]
+    () => renderFichaHtml(data, factor, mesh, sca, varTotal, sca.total > 0 ? spiderSvgString(sca.values) : "", scorings),
+    [data, factor, mesh, sca, varTotal, scorings]
   );
 
   function downloadHtml() {

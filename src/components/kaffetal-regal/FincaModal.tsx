@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
+import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus } from "@/lib/eudr";
@@ -132,7 +133,6 @@ function FincaModalBody({
   const veredaRef = useRef<HTMLInputElement>(null);
   const munRef = useRef<HTMLInputElement>(null);
   const deptoRef = useRef<HTMLSelectElement>(null);
-  const altRef = useRef<HTMLInputElement>(null);
   const histRef = useRef<HTMLTextAreaElement>(null);
   const caracRef = useRef<HTMLInputElement>(null);
 
@@ -142,6 +142,14 @@ function FincaModalBody({
   // the live EUDR status preview below needs to react to them as the producer types.
   const [name, setName] = useState(finca?.name ?? "");
   const [ha, setHa] = useState(finca?.ha ?? "");
+  // Altura (msnm): se DERIVA de la geometría de la finca (centroide del
+  // polígono si lo hay; si no, el punto registrado) vía la Elevation API del
+  // mismo SDK de Google que ya usa el mapa. Se puede sobrescribir a mano: en
+  // cuanto el productor la escribe, deja de recalcularse sola.
+  const [alt, setAlt] = useState(finca?.alt && finca.alt !== "—" ? finca.alt : "");
+  const [altManual, setAltManual] = useState(false);
+  const [altFrom, setAltFrom] = useState<"polygon" | "point" | null>(null);
+  const [altBusy, setAltBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   // Centered "Datos de Finca Actualizados" confirmation that fades on its own.
   const [flash, setFlash] = useState(false);
@@ -206,6 +214,41 @@ function FincaModalBody({
     setEudr((d) => ({ ...d, ...patch }));
   }
 
+  // Altura derivada: cada vez que cambia la geometría (punto o polígono) se
+  // consulta la elevación del punto que representa a la finca. El setState va
+  // ENCADENADO a la promesa, nunca sincrónico en el cuerpo del efecto (regla
+  // react-hooks/set-state-in-effect). Si el servicio no responde —o la
+  // Elevation API no está habilitada en Google Cloud— el campo queda como
+  // estaba y se escribe a mano: no se bloquea nada.
+  const refPoint = fincaReferencePoint(eudr.lat, eudr.lng, eudr.eudrPolygon);
+  const refKey = refPoint ? `${refPoint.from}:${refPoint.point.lat.toFixed(5)},${refPoint.point.lng.toFixed(5)}` : "";
+  useEffect(() => {
+    if (!refKey || altManual) return;
+    let alive = true;
+    const [from, coords] = refKey.split(":");
+    const [lat, lng] = coords.split(",").map(Number);
+    // Todo el setState va encadenado a una promesa (incluido el "buscando"):
+    // la regla prohíbe cualquier setState sincrónico en el cuerpo del efecto.
+    Promise.resolve()
+      .then(() => {
+        if (alive) setAltBusy(true);
+        return lookupElevation({ lat, lng });
+      })
+      .then((m) => {
+        if (!alive) return;
+        if (m != null) {
+          setAlt(String(m));
+          setAltFrom(from as "polygon" | "point");
+        }
+      })
+      .finally(() => {
+        if (alive) setAltBusy(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [refKey, altManual]);
+
   // Approximate live preview only -- vereda/mun/depto come from the finca prop
   // (not the refs above, which don't trigger re-renders as the producer types),
   // so this can lag slightly for the address-fallback geo path. The lat/lng
@@ -249,7 +292,7 @@ function FincaModalBody({
       vereda: veredaRef.current?.value.trim() || "—",
       mun: munRef.current?.value.trim() || "—",
       depto: deptoRef.current?.value ?? defaultDepto,
-      alt: altRef.current?.value.trim() || "—",
+      alt: alt.trim() || "—",
       ha: ha.trim() || "—",
       hist: histRef.current?.value.trim() || "—",
       carac: caracRef.current?.value.trim() || "—",
@@ -323,7 +366,43 @@ function FincaModalBody({
             ))}
           </select>
         </div>
-        <div><label>Altura (msnm)</label><input ref={altRef} defaultValue={finca?.alt ?? ""} type="number" placeholder="1680" /></div>
+        <div>
+          <label>
+            Altura (msnm)
+            <FieldInfo text="Se calcula sola a partir de la ubicación que registre abajo: el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado en el mapa. Puede escribirla a mano si conoce el dato exacto." />
+          </label>
+          <input
+            value={alt}
+            onChange={(e) => {
+              setAlt(e.target.value);
+              setAltManual(true); // escrita a mano ⇒ no se vuelve a recalcular
+            }}
+            type="number"
+            placeholder={altBusy ? "Calculando…" : "1680"}
+          />
+          <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
+            {altBusy
+              ? "Consultando la altura del terreno…"
+              : altManual
+                ? "Escrita a mano."
+                : altFrom === "polygon"
+                  ? "Calculada en el centro del polígono."
+                  : altFrom === "point"
+                    ? "Calculada en el punto marcado."
+                    : "Marque la ubicación abajo y se calcula sola."}
+            {!altManual && altFrom && " "}
+            {altManual && (
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{ marginLeft: 6, padding: "1px 8px", fontSize: 11 }}
+                onClick={() => setAltManual(false)}
+              >
+                Volver a calcularla
+              </button>
+            )}
+          </p>
+        </div>
         <div className={styles.wide}><label>Historia de la finca</label><textarea ref={histRef} defaultValue={finca?.hist ?? ""} placeholder="Historia, microclima, comunidad…" /></div>
         <div className={styles.wide}><label>Características</label><input ref={caracRef} defaultValue={finca?.carac ?? ""} placeholder="Sombrío, variedades sembradas, beneficio propio…" /></div>
         <div className={styles.wide}>

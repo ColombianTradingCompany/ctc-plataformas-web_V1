@@ -62,5 +62,27 @@ check("recién nominado (3 días)", segmentPostulacion({ postulatedAt: daysAgo(3
 check("embotellado (6 días)", segmentPostulacion({ postulatedAt: daysAgo(6) }, NOW), "embotellados");
 check("borde exacto 5 días = recién", segmentPostulacion({ postulatedAt: daysAgo(5) }, NOW), "recien");
 
+// ── Geometría: el punto de referencia de la finca (altura msnm) ──
+const { polygonCentroid, fincaReferencePoint } = await import("../src/lib/geo/elevation.ts");
+
+const square = [ { lat: 0, lng: 0 }, { lat: 0, lng: 2 }, { lat: 2, lng: 2 }, { lat: 2, lng: 0 } ];
+const c = polygonCentroid(square);
+check("centroide de un cuadrado", [ +c.lat.toFixed(6), +c.lng.toFixed(6) ], [ 1, 1 ]);
+
+// Vértices colineales ⇒ área 0 ⇒ cae al promedio simple en vez de dividir por 0
+const line = [ { lat: 0, lng: 0 }, { lat: 1, lng: 1 }, { lat: 2, lng: 2 } ];
+const lc = polygonCentroid(line);
+check("colineales caen al promedio", [ +lc.lat.toFixed(6), +lc.lng.toFixed(6) ], [ 1, 1 ]);
+check("polígono vacío", polygonCentroid([]), null);
+
+// Con polígono manda el CENTROIDE; sin polígono, el punto registrado.
+const withPoly = fincaReferencePoint("9", "9", square);
+check("con polígono usa el centroide", [ withPoly.from, +withPoly.point.lat.toFixed(4) ], [ "polygon", 1 ]);
+const noPoly = fincaReferencePoint("6.9989", "-73.0499", null);
+check("sin polígono usa el punto", [ noPoly.from, +noPoly.point.lat.toFixed(4) ], [ "point", 6.9989 ]);
+check("2 vértices no son polígono ⇒ usa el punto", fincaReferencePoint("1", "1", [{lat:0,lng:0},{lat:1,lng:1}]).from, "point");
+check("sin geometría no hay punto", fincaReferencePoint(null, null, null), null);
+check("0,0 no cuenta como punto", fincaReferencePoint("0", "0", null), null);
+
 console.log(`${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

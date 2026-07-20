@@ -669,7 +669,7 @@ export function AppDashboard({
                           Muestra pendiente · gestionar envío →
                         </button>
                       )}
-                      <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} />
+                      <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} inscription={l.inscription} />
                     </div>
                     <div className={styles.metrics}>
                       <div className={styles.chips}>

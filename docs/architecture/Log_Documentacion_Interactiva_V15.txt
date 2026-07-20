@@ -201,4 +201,19 @@ está desplegado READY en producción.)
   los 6 tableros renderizados con datos reales vía sonda (borrada); servidor frío sin errores.
   Datos staged: Catia → En Fila (sondeo pendiente), Pacamara → bache "Sondeo Test 1" en Sondeo
   Pendiente, 3 QA en En Fila con sondeo aprobado.
+(commit: 450f511 · desplegado como V1.1 en 55702fa)
+
+## [2026-07-20] La barra CANÓNICA del proceso en el stepper del productor (reclamo del owner)
+- LotKanbanStepper seguía dibujando el orden VIEJO (EVA después de ARE, sin SON): pasó a la
+  barra canónica FT·FT2·EUDR·VID → EVA → MUE·SON·ARE → GAL, con las flechas marcando los DOS
+  puntos de equilibrio (EVA habilita el reporte EUDR; GAL compila y entrega la evaluación
+  Q-Grader + la información de la Arena). Afecta DICT `stagelifecycle` e `intake`.
+- El tramo pagado (MUE/SON/ARE) se deriva ahora de la INSCRIPCIÓN (fase + sondeo), su fuente
+  de verdad desde la inversión de fases: MUE hecho = fase más allá de postulacion; SON activo
+  en bache/pool-sin-resultado (y "no superado" en retirado); ARE activo con sondeo aprobado /
+  sesión / fila_arena; GAL solo con galardonado. Los 4 chips de intake siguen leyendo
+  intake_step (el fix anti-stage-empujado se conserva).
+- Comentario en el componente: NO reordenar esta barra sin el owner — es cómo el productor y
+  el BCP perciben el proceso entero.
+- Verificado en vivo (cuenta QA): lotes fila+aprobado pintan …SON:done ARE:ACTIVO → GAL:pend.
 (commit: pending)

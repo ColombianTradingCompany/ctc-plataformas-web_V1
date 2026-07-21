@@ -389,3 +389,17 @@ está desplegado READY en producción.)
   FincaModal con un punto real (Pitalito, Huila 1.8534,-76.0508): el botón aparece habilitado,
   al tocarlo rellenó "1270" y el hint pasó a "Traída del punto marcado". tsc + eslint + build limpios.
 (commit: pending · versión V1.9)
+
+## [2026-07-21] Consolas internas a ancho completo (se quita el tope de 1100 px)
+- El owner reportó (otra vez) que en BCP quedaba una franja MUERTA a la derecha con el rail
+  abierto. Causa: .main (panel.module.css) tenía max-width:1100px; en pantallas grandes el
+  tablero se quedaba en 1100 y el resto del ancho se desperdiciaba (solo se recuperaba
+  minimizando el rail).
+- ARREGLO: se quitó el max-width de .main. Las consolas internas (BCP/ECP/OCP) son sobre todo
+  kanbans anchos (Fincas, Lotes, Nominados, Arena), así que el tablero ahora usa todo el ancho
+  disponible. Los pocos bloques que sí quieren medida de lectura fijan su propio max-width
+  (redactor del buzón 640, tarjeta de acceso 380), así que no se afectan. Se limpió el
+  .navClosed .main{max-width:none} (ya no hay tope que levantar; minimizar solo esconde el rail).
+  Solo lo usan las 3 consolas internas (layouts de bcp/ecp/ocp vía PanelChrome), todas con 2FA
+  —no drivables en navegador—; build limpio.
+(commit: pending · versión V1.10)

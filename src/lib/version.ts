@@ -15,7 +15,7 @@
 // Documentacion_Interactiva_V15.0(...).html). Esa numera SNAPSHOTS DE DOCUMENTO
 // y avanza con su propio ritmo de "Version Wrap" — que las dos digan "V15" o
 // "V1" al mismo tiempo sería coincidencia, no relación.
-export const APP_VERSION = "1.9";
+export const APP_VERSION = "1.10";
 
 /** "V1.0" — lo que se pinta en pantalla. */
 export const VERSION_LABEL = `V${APP_VERSION}`;

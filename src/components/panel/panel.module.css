@@ -10,7 +10,12 @@
    overflow-x:hidden, 965 px de contenido quedaban recortados y sin manera de
    alcanzarlos. Con min-width:0 .main puede encogerse y el overflow-x:auto del
    propio tablero hace su trabajo. */
-.main{flex:1;min-width:0;padding:36px 40px;max-width:1100px}
+/* Sin tope de ancho: las consolas internas son sobre todo tableros kanban
+   anchos (Fincas, Lotes, Nominados, Arena…) y un max-width dejaba una franja
+   muerta a la derecha en pantallas grandes con el rail abierto. Los pocos
+   bloques que sí quieren medida de lectura (el redactor del buzón, la tarjeta
+   de acceso) fijan su propio max-width. */
+.main{flex:1;min-width:0;padding:36px 40px}
 
 .rail{flex:none}
 .sidebar{width:240px;flex:none;background:var(--primary-deep);color:#F4F4F5;min-height:100vh;display:flex;flex-direction:column;padding:24px 0}
@@ -48,12 +53,10 @@
 @media (min-width:1024px){
   .topbar{display:none}
   .backdrop{display:none}
-  /* Minimizado en escritorio: el rail desaparece y el kanban toma todo el ancho. */
+  /* Minimizado en escritorio: el rail desaparece y el tablero gana además el
+     ancho del propio rail (~240 px). El .main ya no tiene tope, así que aquí
+     solo se esconde el rail. */
   .navClosed .rail{display:none}
-  /* Sin soltar el tope de 1100 px, esconder el rail solo devolvía 75 px al
-     tablero — nada. Minimizar es una petición explícita de espacio, así que el
-     tope de lectura se levanta mientras dure. */
-  .navClosed .main{max-width:none}
 }
 @media (prefers-reduced-motion:reduce){.rail{transition:none}}
 

@@ -374,3 +374,18 @@ está desplegado READY en producción.)
   mudas si esa API no está habilitada en el proyecto — preferir un servicio keyless con CORS
   (Open-Meteo) cuando solo se necesita el dato y no la integración con el mapa.
 (commit: pending · versión V1.8)
+
+## [2026-07-21] Altura: botón explícito "Traer del mapa" en vez de auto-relleno
+- Petición del owner: en vez de que la altura se calcule sola, poner un BOTÓN junto al campo
+  para traer la altura de la selección actual / centro del polígono; así el productor la trae
+  explícitamente o la escribe a mano.
+- FincaModal: se quitó el useEffect que auto-derivaba (y el import de useEffect) y el estado
+  altManual. Ahora hay una función pullAltitude() que, al tocar el botón «Traer del mapa ⛰»,
+  consulta lookupElevation(refPoint.point) y rellena el campo; refPoint sigue siendo el centro
+  del polígono si lo hay, o el punto marcado. El botón se deshabilita si aún no hay ubicación.
+  Estado nuevo altErr para el caso de fallo ("No se pudo obtener la altura; escríbala a mano").
+  Editar el campo a mano limpia altFrom (deja de decir que vino del mapa).
+- Verificado con ruta sonda temporal (zz-finca-probe, borrada antes del commit) montando
+  FincaModal con un punto real (Pitalito, Huila 1.8534,-76.0508): el botón aparece habilitado,
+  al tocarlo rellenó "1270" y el hint pasó a "Traída del punto marcado". tsc + eslint + build limpios.
+(commit: pending · versión V1.9)

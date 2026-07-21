@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { Modal } from "@/components/Modal";
@@ -142,14 +142,14 @@ function FincaModalBody({
   // the live EUDR status preview below needs to react to them as the producer types.
   const [name, setName] = useState(finca?.name ?? "");
   const [ha, setHa] = useState(finca?.ha ?? "");
-  // Altura (msnm): se DERIVA de la geometría de la finca (centroide del
-  // polígono si lo hay; si no, el punto registrado) vía la Elevation API de
-  // Open-Meteo (sin clave, CORS abierto). Se puede sobrescribir a mano: en
-  // cuanto el productor la escribe, deja de recalcularse sola.
+  // Altura (msnm): el productor la trae del mapa con un botón (centro del
+  // polígono si lo hay; si no, el punto marcado) vía la Elevation API de
+  // Open-Meteo (sin clave, CORS abierto), o la escribe a mano. altFrom recuerda
+  // de dónde salió el último valor traído; altErr marca un fallo de consulta.
   const [alt, setAlt] = useState(finca?.alt && finca.alt !== "—" ? finca.alt : "");
-  const [altManual, setAltManual] = useState(false);
   const [altFrom, setAltFrom] = useState<"polygon" | "point" | null>(null);
   const [altBusy, setAltBusy] = useState(false);
+  const [altErr, setAltErr] = useState(false);
   const [saving, setSaving] = useState(false);
   // Centered "Datos de Finca Actualizados" confirmation that fades on its own.
   const [flash, setFlash] = useState(false);
@@ -214,40 +214,24 @@ function FincaModalBody({
     setEudr((d) => ({ ...d, ...patch }));
   }
 
-  // Altura derivada: cada vez que cambia la geometría (punto o polígono) se
-  // consulta la elevación del punto que representa a la finca. El setState va
-  // ENCADENADO a la promesa, nunca sincrónico en el cuerpo del efecto (regla
-  // react-hooks/set-state-in-effect). Si el servicio no responde —o la
-  // Elevation API no está habilitada en Google Cloud— el campo queda como
-  // estaba y se escribe a mano: no se bloquea nada.
+  // Altura (msnm): NO se auto-rellena. El productor la trae del mapa con un
+  // botón explícito (centro del polígono si lo hay; si no, el punto marcado) o
+  // la escribe a mano. refPoint es el punto que representa a la finca; si aún
+  // no hay ubicación registrada, el botón queda deshabilitado.
   const refPoint = fincaReferencePoint(eudr.lat, eudr.lng, eudr.eudrPolygon);
-  const refKey = refPoint ? `${refPoint.from}:${refPoint.point.lat.toFixed(5)},${refPoint.point.lng.toFixed(5)}` : "";
-  useEffect(() => {
-    if (!refKey || altManual) return;
-    let alive = true;
-    const [from, coords] = refKey.split(":");
-    const [lat, lng] = coords.split(",").map(Number);
-    // Todo el setState va encadenado a una promesa (incluido el "buscando"):
-    // la regla prohíbe cualquier setState sincrónico en el cuerpo del efecto.
-    Promise.resolve()
-      .then(() => {
-        if (alive) setAltBusy(true);
-        return lookupElevation({ lat, lng });
-      })
-      .then((m) => {
-        if (!alive) return;
-        if (m != null) {
-          setAlt(String(m));
-          setAltFrom(from as "polygon" | "point");
-        }
-      })
-      .finally(() => {
-        if (alive) setAltBusy(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [refKey, altManual]);
+  async function pullAltitude() {
+    if (!refPoint || altBusy) return;
+    setAltBusy(true);
+    setAltErr(false);
+    const m = await lookupElevation(refPoint.point);
+    if (m != null) {
+      setAlt(String(m));
+      setAltFrom(refPoint.from);
+    } else {
+      setAltErr(true);
+    }
+    setAltBusy(false);
+  }
 
   // Approximate live preview only -- vereda/mun/depto come from the finca prop
   // (not the refs above, which don't trigger re-renders as the producer types),
@@ -369,38 +353,43 @@ function FincaModalBody({
         <div>
           <label>
             Altura (msnm)
-            <FieldInfo text="Se calcula sola a partir de la ubicación que registre abajo: el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado en el mapa. Puede escribirla a mano si conoce el dato exacto." />
+            <FieldInfo text="Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
           </label>
-          <input
-            value={alt}
-            onChange={(e) => {
-              setAlt(e.target.value);
-              setAltManual(true); // escrita a mano ⇒ no se vuelve a recalcular
-            }}
-            type="number"
-            placeholder={altBusy ? "Calculando…" : "1680"}
-          />
-          <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+            <input
+              value={alt}
+              onChange={(e) => {
+                setAlt(e.target.value);
+                setAltFrom(null); // editada a mano ⇒ ya no viene del mapa
+                setAltErr(false);
+              }}
+              type="number"
+              placeholder="1680"
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={pullAltitude}
+              disabled={!refPoint || altBusy}
+              title={refPoint ? "Traer la altura del punto/polígono registrado en el mapa" : "Marque primero la ubicación en el mapa"}
+              style={{ flex: "none", whiteSpace: "nowrap" }}
+            >
+              {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
             {altBusy
               ? "Consultando la altura del terreno…"
-              : altManual
-                ? "Escrita a mano."
+              : altErr
+                ? "No se pudo obtener la altura; escríbala a mano."
                 : altFrom === "polygon"
-                  ? "Calculada en el centro del polígono."
+                  ? "Traída del centro del polígono."
                   : altFrom === "point"
-                    ? "Calculada en el punto marcado."
-                    : "Marque la ubicación abajo y se calcula sola."}
-            {!altManual && altFrom && " "}
-            {altManual && (
-              <button
-                type="button"
-                className="btn btn-sm"
-                style={{ marginLeft: 6, padding: "1px 8px", fontSize: 11 }}
-                onClick={() => setAltManual(false)}
-              >
-                Volver a calcularla
-              </button>
-            )}
+                    ? "Traída del punto marcado."
+                    : !refPoint
+                      ? "Marque la ubicación en el mapa para poder traerla, o escríbala a mano."
+                      : "Toque «Traer del mapa» o escríbala a mano."}
           </p>
         </div>
         <div className={styles.wide}><label>Historia de la finca</label><textarea ref={histRef} defaultValue={finca?.hist ?? ""} placeholder="Historia, microclima, comunidad…" /></div>

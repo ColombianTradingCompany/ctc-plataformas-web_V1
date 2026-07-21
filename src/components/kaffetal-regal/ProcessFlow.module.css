@@ -1,0 +1,219 @@
+/* ── El camino completo del productor (diagrama de flujo HTML/CSS) ──────────
+   Vive dentro de un InfoAccordion en la landing de Kaffetal Regal. Columna
+   única con espina dorsal (timeline): funciona igual en móvil y escritorio,
+   sin librerías. Los DOS hitos de entrega (EVA y GAL) van resaltados en dorado
+   — son los puntos de equilibrio del proceso. */
+
+.flow {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Banda de fase */
+.phase {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.phaseName {
+  font-family: var(--font-fraunces), serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--primary);
+}
+.phaseTag {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+/* La espina: línea vertical continua a la izquierda de los nodos */
+.nodes {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding-left: 30px;
+  margin: 6px 0 2px;
+}
+.nodes::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 14px;
+  bottom: 14px;
+  border-left: 2px solid var(--line);
+}
+
+.node {
+  position: relative;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+/* El punto sobre la espina */
+.node::before {
+  content: "";
+  position: absolute;
+  left: -26px;
+  top: 16px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 3px solid var(--primary);
+}
+
+/* Hito de entrega (EVA · GAL): borde dorado + punto dorado */
+.milestone {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 12%, var(--card));
+}
+.milestone::before {
+  border-color: var(--accent);
+}
+
+.nodeHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.code {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: var(--primary);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.milestone .code {
+  background: var(--accent);
+}
+.nodeTitle {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+.deliver {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.nodeDetail {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 5px 0 0;
+  line-height: 1.55;
+}
+.nodeDetail b {
+  color: var(--ink);
+}
+
+/* Ramas (Apto / No Apto, sondeo aprobado / no superado) */
+.branches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.branch {
+  font-size: 11.5px;
+  line-height: 1.45;
+  border-radius: 9px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--line);
+  background: var(--paper);
+  max-width: 340px;
+}
+.branch b {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-family: var(--font-spline-mono), monospace;
+}
+.ok {
+  border-color: color-mix(in srgb, var(--green) 55%, var(--line));
+}
+.ok b {
+  color: var(--green);
+}
+.bad {
+  border-color: color-mix(in srgb, var(--red) 45%, var(--line));
+}
+.bad b {
+  color: var(--red);
+}
+.info b {
+  color: var(--muted);
+}
+
+/* Flecha entre fases */
+.phaseArrow {
+  text-align: center;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  margin: 2px 0;
+}
+
+/* Destinos por grado (el abanico final) */
+.grades {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+.grade {
+  flex: 1 1 150px;
+  min-width: 140px;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-top: 3.5px solid var(--line);
+}
+.grade b {
+  display: block;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.gBlack {
+  border-top-color: var(--t-black);
+}
+.gRedBlue {
+  border-top-color: var(--t-blue);
+}
+.gGold {
+  border-top-color: var(--t-gold);
+}
+.gTyrian {
+  border-top-color: var(--t-tyrian);
+}
+
+/* Nota al pie del diagrama */
+.foot {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 10px;
+  border-top: 1px dashed var(--line);
+  padding-top: 8px;
+}

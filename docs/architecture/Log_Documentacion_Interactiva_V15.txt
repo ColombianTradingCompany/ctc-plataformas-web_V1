@@ -301,3 +301,31 @@ está desplegado READY en producción.)
   owner espera un bloqueo DURO o ve otro comportamiento. (b) "bug con las áreas de verificación" —
   no se pudo identificar a qué campo/pantalla se refiere.
 (commit: pending · versión V1.5)
+
+## [2026-07-21] Diagrama de flujo del proceso completo en la landing de Kaffetal Regal
+- Pedido del owner: un diagrama HTML/CSS que mapee el proceso COMPLETO del productor, colgado
+  en la landing de KR como acordeón desplegable — entre las 5 tarjetas de pasos (que son un
+  resumen simplificado, NO la guía del diagrama) y el acordeón EUDR, como en su boceto.
+  El diagrama funciona además como CONTRATO DE ALINEACIÓN: su pie invita a corregir si algo
+  no coincide con lo que el productor ve en su panel.
+- NUEVO src/components/kaffetal-regal/ProcessFlow.tsx (+ ProcessFlow.module.css): diagrama
+  trilingüe (es/en/de vía useLang) en columna única con espina dorsal (timeline), sin librerías.
+  3 fases: Documentación (01 Cuenta → 02 Finca+EUDR con ramas Aprobada/No aprobada → 03 Ficha
+  Técnica → hito EVA), Kaffetal Regal Arena (04 Postulación con regla máx. 2 temporadas → MUE
+  pago+muestra a ciegas → SON Sondeo con ramas Aprobado/No superado(80% cashback) → ARE Sesión),
+  Resultado (hito GAL + abanico de grados). Los DOS puntos de equilibrio van en dorado como
+  hitos de entrega: EVA ("★ Entrega: su informe EUDR") y GAL ("★ Entrega: la evaluación del
+  Q-Grader (perfil de taza + granulometría) y la información de su Arena"). Abanico de destinos
+  por grado con los colores globales --t-*: Black (negociación directa), Red·Blue (contrato →
+  catálogo Cherry Picked), Gold (contrato premium), Tyrian (subasta).
+- ParticiparSection.tsx: nuevo InfoAccordion tone="accent" (flowTitle/flowSub en los 3 idiomas)
+  insertado ENTRE la cuadrícula de pasos y el acordeón EUDR, envolviendo <ProcessFlow/>.
+- Verificación: tsc + eslint limpios (entidades JSX escapadas en en/de); en navegador:
+  posición correcta del acordeón, 9 nodos (01/02/03/EVA/04/MUE/SON/ARE/GAL), 2 hitos dorados,
+  4 grados, estilos computados correctos (borde --line, punto de espina 12px --primary, hitos
+  --accent, Tyrian #66023C), sin desborde horizontal a 375px (flow 286px), diccionario EN
+  cotejado en vivo (fases Documentation/Kaffetal Regal Arena/Result, entregas traducidas).
+  ⚠ Gotcha de verificación: al consultar estilos por className en módulos CSS, el formato del
+  hash es "ProcessFlow-module__HASH__node" — un regex suelto puede casar el CONTENEDOR .nodes
+  y dar lecturas falsas (borde negro, punto 0px); inspeccionar primero el className real.
+(commit: pending · versión V1.6)

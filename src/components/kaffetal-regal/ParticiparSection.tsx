@@ -4,6 +4,7 @@ import Image from "next/image";
 import { InfoAccordion } from "@/components/InfoAccordion";
 import { useToast } from "@/components/Toast";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { ProcessFlow } from "./ProcessFlow";
 import styles from "./ParticiparSection.module.css";
 
 type Dict = {
@@ -14,6 +15,8 @@ type Dict = {
   miniFicha: string;
   miniVideos: string;
   videosToast: string;
+  flowTitle: string;
+  flowSub: string;
   eudrTitle: string;
   eudrSub: string;
   eudrIntro: React.ReactNode;
@@ -86,6 +89,8 @@ const T: Record<Lang, Dict> = {
     miniFicha: "▸ Ver la ficha técnica",
     miniVideos: "▸ Videos de muestra y capacitación",
     videosToast: "Videos de muestra y capacitación (demo)",
+    flowTitle: "El camino completo: de su lote al galardón",
+    flowSub: "El proceso real, paso a paso · toque para desplegar",
     eudrTitle: "EUDR: el pasaporte ambiental de su café hacia Europa",
     eudrSub: "Reglamento UE contra la deforestación · toque para desplegar",
     eudrIntro: (
@@ -177,6 +182,8 @@ const T: Record<Lang, Dict> = {
     miniFicha: "▸ See the technical datasheet",
     miniVideos: "▸ Sample and training videos",
     videosToast: "Sample and training videos (demo)",
+    flowTitle: "The full path: from your lot to the award",
+    flowSub: "The real process, step by step · tap to expand",
     eudrTitle: "EUDR: your coffee's environmental passport to Europe",
     eudrSub: "EU deforestation regulation · tap to expand",
     eudrIntro: (
@@ -267,6 +274,8 @@ const T: Record<Lang, Dict> = {
     miniFicha: "▸ Das technische Datenblatt ansehen",
     miniVideos: "▸ Muster- und Schulungsvideos",
     videosToast: "Muster- und Schulungsvideos (Demo)",
+    flowTitle: "Der ganze Weg: von Ihrem Lot zur Auszeichnung",
+    flowSub: "Der echte Prozess, Schritt für Schritt · zum Aufklappen tippen",
     eudrTitle: "EUDR: der Umweltpass Ihres Kaffees nach Europa",
     eudrSub: "EU-Entwaldungsverordnung · zum Aufklappen tippen",
     eudrIntro: (
@@ -332,6 +341,21 @@ export function ParticiparSection({ onLogin }: { onLogin: () => void }) {
               )}
             </div>
           ))}
+        </div>
+
+        {/* El camino completo (2026-07-20): el diagrama del proceso REAL —
+            los cinco pasos de arriba son la simplificación; esto es el mapa. */}
+        <div style={{ marginTop: 20 }}>
+          <InfoAccordion
+            tone="accent"
+            icon={
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="2.2" /><circle cx="12" cy="12" r="2.2" /><circle cx="19" cy="6" r="2.2" /><circle cx="12" cy="19" r="2.2" /><path d="M6.6 7.5 10.4 10.6M17.4 7.5 13.6 10.6M12 14.2v2.6" /></svg>
+            }
+            title={t.flowTitle}
+            subtitle={t.flowSub}
+          >
+            <ProcessFlow />
+          </InfoAccordion>
         </div>
 
         <div style={{ marginTop: 20 }}>

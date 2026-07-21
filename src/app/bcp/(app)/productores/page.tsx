@@ -108,7 +108,7 @@ export default async function BcpProductoresPage() {
     profiles.map((p) => ppById.get(p.id)?.avatar_asset_id)
   );
 
-  const ACTIVE_PHASES = new Set(["postulacion", "sondeo", "fila", "sesion"]);
+  const ACTIVE_PHASES = new Set(["postulacion", "sondeo", "fila", "arena", "sesion"]);
   const bySegment = new Map<ProducerSegment, ProfileRow[]>(PRODUCER_SEGMENTS.map((s) => [s.id, []]));
   const segmentOf = new Map<string, ProducerSegment>();
   for (const p of profiles) {

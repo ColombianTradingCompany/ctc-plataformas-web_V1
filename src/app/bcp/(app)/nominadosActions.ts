@@ -493,15 +493,17 @@ export async function recordSondeoResult(
   };
 
   if (resultado === "aprobado") {
+    // Apto ⇒ el lote SALE de Nominados y entra al módulo Arena (phase='arena'),
+    // desde donde se bloquea en una sesión. Ya no vuelve a la fila de sondeo.
     await service
       .from("arena_inscriptions")
-      .update({ phase: "fila", sondeo_result: "aprobado", ...resultCols })
+      .update({ phase: "arena", sondeo_result: "aprobado", ...resultCols })
       .eq("id", ins.id);
     await service.from("audit_log").insert({
       entity_type: "arena_inscription",
       entity_id: lotId,
       action: "sondeo_aprobado",
-      new_status: "fila",
+      new_status: "arena",
       performed_by: adminId,
       notes: cleanNotes.slice(0, 300),
     });
@@ -509,7 +511,7 @@ export async function recordSondeoResult(
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `¡Su lote superó el sondeo preliminar${effectiveScore != null ? ` (${effectiveScore})` : ""}! Está en fila para la próxima sesión de la Arena.`,
+      note: `¡Su lote superó el sondeo preliminar${effectiveScore != null ? ` (${effectiveScore})` : ""}! Quedó clasificado para la próxima sesión de la Kaffetal Regal Arena.`,
       created_by: adminId,
     });
   } else {
@@ -587,7 +589,8 @@ export async function regenerateMejoras(lotId: string): Promise<Result> {
   return ok ? { ok: true } : { ok: false, error: "La generación falló — revise ANTHROPIC_API_KEY o reintente." };
 }
 
-/** Asigna un lote en fila a una sesión abierta con cupo. Recién aquí llega fila_arena. */
+/** Bloquea un lote APTO (phase='arena', ya sondeado) en una sesión abierta con
+ *  cupo. Se llama desde el módulo Arena, no desde Nominados. Aquí llega fila_arena. */
 export async function assignLotToSession(lotId: string, sessionId: string): Promise<Result> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
@@ -597,8 +600,11 @@ export async function assignLotToSession(lotId: string, sessionId: string): Prom
     service.from("arena_sessions").select("id, status, capacity, run_state, session_date").eq("id", sessionId).maybeSingle(),
     service.from("arena_session_lots").select("id", { count: "exact", head: true }).eq("arena_session_id", sessionId),
   ]);
-  if (!ins || ins.phase !== "fila") return { ok: false, error: "Este lote no está en fila." };
-  // El orden del proceso es MUE → Sondeo → Arena: sin sondeo aprobado no hay sesión.
+  // El orden del proceso es MUE → Sondeo → Arena: solo un lote Apto (sondeo
+  // aprobado, ya en el módulo Arena) puede bloquearse en una sesión.
+  if (!ins || ins.phase !== "arena") {
+    return { ok: false, error: "Este lote no está clasificado para Arena — debe superar antes un bache de sondeo." };
+  }
   if (ins.sondeo_result !== "aprobado") {
     return { ok: false, error: "Este lote aún no tiene sondeo aprobado — pasa primero por un bache de sondeo." };
   }

@@ -417,3 +417,47 @@ está desplegado READY en producción.)
   10 productores + la cuenta del dueño, y NO incluye a gvb/gvg (admins puros) ni al buyer.
   tsc + eslint + build limpios (BCP con 2FA, no drivable en navegador — verificado por SQL).
 (commit: pending · versión V1.11)
+
+## [2026-07-21] Admin Lock: setter resiliente (upsert) + camino de primera vez
+- El Admin Lock (candado suave que revela identidades de sesiones de Arena a ciegas, vive en
+  platform_settings.value = {hash:"<sha256hex>"}, key='admin_lock') no se podía ESTABLECER en
+  un entorno sin la semilla — como pasó hoy en el proyecto sjznkzvefqfcysczllli, donde la fila
+  'admin_lock' no existía. setAdminLockPassword hacía .update().eq('key','admin_lock'): sin fila,
+  afecta 0 filas en silencio, así que el owner nunca podía crear el candado desde ECP → Usuarios
+  y Credenciales, y verifyAdminLock devolvía "El Admin Lock no está configurado."
+- ARREGLO (adminLockActions.ts): (1) .update() → .upsert({key,value,updated_at,updated_by},
+  {onConflict:'key'}) — mismo patrón que saveToolsConfig sobre esta misma tabla; funciona con o
+  sin semilla. (2) Camino de primera vez: si aún no hay hash, se permite establecer el candado
+  sin exigir la "actual en mano" (no hay contraseña previa que pedir), gated en is_owner. Si ya
+  hay hash, se sigue exigiendo que la actual coincida. (3) Se propaga el error del upsert
+  ("No se pudo guardar el Admin Lock.") en vez de asumir éxito.
+- Toca el server action del Admin Lock (BCP/ECP, 2FA — no drivable en navegador). tsc limpio.
+  Verificación end-to-end pendiente: borrar la fila (delete from platform_settings where
+  key='admin_lock') y establecerla como owner desde la UI.
+(commit: pending · versión V1.12)
+
+## [2026-07-21] Corrección FUNDAMENTAL del flujo Sondeo → Arena (nueva fase 'arena')
+- El owner corrigió mi malentendido: tras «En Fila» un lote NO va directo a la Arena; pasa por
+  el Sondeo (Baches). En Fila = SÓLO espera de bache. Al superar el Sondeo y quedar «Registrado»
+  + Apto en el Registro de Sondeo, el lote SALE de Nominados y aparece en el módulo Arena, desde
+  donde se bloquea en una sesión. (No Apto → retirado + cashback, sin cambios.)
+- Antes, recordSondeoResult(aprobado) devolvía el lote a phase='fila' y Nominados mostraba ahí
+  mismo un control de "asignar a sesión" — mezclaba "esperando sondeo" con "listo para sesión".
+- CAMBIO: nueva fase de inscripción **'arena'** (sondeado y aprobado, esperando sesión):
+  · migración arena_inscriptions_add_arena_phase: se amplió el CHECK de phase para incluir 'arena'.
+  · nominadosActions.recordSondeoResult(aprobado): phase 'fila' → 'arena' (audit + comm al productor
+    "clasificado para la Arena").
+  · assignLotToSession: ahora exige phase='arena' (antes 'fila'); se invoca desde el módulo Arena.
+  · nominados/page.tsx: En Fila queda SOLO con pendientes; se quitó AssignSessionControls y toda la
+    plomería de openSessions; el query no trae 'arena' → los aptos desaparecen de Nominados.
+  · arena/page.tsx: nuevo pool «Aptos — listos para sesión» (lee phase='arena') con el control de
+    asignación; la pista de «Preparando» ahora apunta a ese pool, no a Nominados.
+  · inscriptions.ts (tipo + PHASE_LABEL 'Clasificado a Arena'), data.ts (unión de fase del panel),
+    productores ACTIVE_PHASES (+'arena'), AppDashboard (fila = solo espera de bache; rama 'arena' =
+    "clasificado"), LotKanbanStepper (ARE activo con phase='arena'/'sesion', no con fila+aprobado).
+  · Datos: los 3 fillers ya aprobados se migraron fila → arena.
+  ⚠ GOTCHA: arena_inscriptions.phase SÍ tiene CHECK constraint — una consulta multi-statement me
+    ocultó el primer resultado y creí que no existía; confirmar constraints con una consulta sola.
+- Verificado: tsc + eslint + build limpios; SQL confirma el enrutamiento (Nominados = Catia/Pacamara;
+  Arena Aptos = Bourbon/Geisha/Tabi). BCP con 2FA, no drivable en navegador.
+(commit: pending · versión V1.12)

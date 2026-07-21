@@ -60,9 +60,9 @@ export function LotKanbanStepper({
   const sonActive =
     !sonDone && (ins?.phase === "sondeo" || (ins?.phase === "fila" && !ins?.sondeoResult) || ins?.phase === "retirado");
 
-  // ARE — la sesión de Arena (fila post-sondeo → sesión → jornada).
+  // ARE — la sesión de Arena (Apto tras sondeo → sesión → jornada).
   const areDone = isGalardonado || stage === 7 || ins?.phase === "competido";
-  const areActive = !areDone && (stage === 6 || ins?.phase === "sesion" || (ins?.phase === "fila" && ins?.sondeoResult === "aprobado"));
+  const areActive = !areDone && (stage === 6 || ins?.phase === "arena" || ins?.phase === "sesion");
 
   const st = (done: boolean, active: boolean | undefined): StepState => (done ? "done" : active ? "active" : "pending");
 

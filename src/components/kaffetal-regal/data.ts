@@ -121,7 +121,7 @@ export type Lot = {
     amountCop: number;
     discountPct: number;
     amountDueCop: number;
-    phase: "postulacion" | "sondeo" | "fila" | "sesion" | "competido" | "retirado";
+    phase: "postulacion" | "sondeo" | "fila" | "arena" | "sesion" | "competido" | "retirado";
     entryCode: string | null;
     sondeoResult: "aprobado" | "rechazado" | null;
     sondeoResultNotes: string | null;

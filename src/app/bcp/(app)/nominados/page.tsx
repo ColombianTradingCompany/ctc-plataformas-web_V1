@@ -6,7 +6,6 @@ import { segmentPostulacion } from "@/lib/bcp/producerSegments";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { createSondeoBatch } from "../nominadosActions";
 import {
-  AssignSessionControls,
   BatchPicker,
   CashbackControls,
   ConfirmSampleButton,
@@ -48,16 +47,16 @@ type BatchRow = {
 export default async function NominadosPage() {
   const service = createServiceRoleClient();
 
-  const [{ data: insRaw }, { data: batchesRaw }, { data: sessionsRaw }] = await Promise.all([
+  const [{ data: insRaw }, { data: batchesRaw }] = await Promise.all([
     service
       .from("arena_inscriptions")
       .select("*, lots(id, name, producer_id, stage, sample_shipped_at, sample_2kg_confirmed_at)")
+      // Los aptos (phase='arena') ya NO viven en Nominados: pasaron al módulo Arena.
       .in("phase", ["postulacion", "sondeo", "fila", "retirado"]),
     service
       .from("sondeo_batches")
       .select("id, label, status, lab_name, lab_contact, proof_filename, received_at, delivered_at, shipped_at, created_at")
       .order("created_at", { ascending: false }),
-    service.from("arena_sessions").select("id, session_date, status, capacity, run_state").neq("status", "completed"),
   ]);
 
   const inscriptions = ((insRaw as (ArenaInscription & { lots: LotJoin | LotJoin[] | null })[] | null) ?? []).map((i) => ({
@@ -75,27 +74,6 @@ export default async function NominadosPage() {
 
   const producers = await fetchProducerContacts(service, inscriptions.map((i) => i.producer_id));
   const name = (producerId: string) => producers.get(producerId)?.fullName ?? "Productor";
-
-  // Sesiones abiertas con cupo (para los aprobados del pool).
-  const sessions = (sessionsRaw as { id: string; session_date: string | null; status: string; capacity: number; run_state: unknown }[] | null) ?? [];
-  const rosterCounts = new Map<string, number>();
-  if (sessions.length) {
-    const { data: rosterRows } = await service
-      .from("arena_session_lots")
-      .select("arena_session_id")
-      .in("arena_session_id", sessions.map((s) => s.id));
-    for (const r of (rosterRows as { arena_session_id: string }[] | null) ?? []) {
-      rosterCounts.set(r.arena_session_id, (rosterCounts.get(r.arena_session_id) ?? 0) + 1);
-    }
-  }
-  const openSessions = sessions
-    .filter((s) => !s.run_state)
-    .map((s) => ({
-      id: s.id,
-      label: `${s.session_date ? new Date(s.session_date).toLocaleDateString("es-CO") : "sin fecha"} (${rosterCounts.get(s.id) ?? 0}/${s.capacity})`,
-      free: s.capacity - (rosterCounts.get(s.id) ?? 0),
-    }))
-    .filter((s) => s.free > 0);
 
   const postCard = (i: (typeof postulados)[number]) => (
     <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
@@ -124,18 +102,15 @@ export default async function NominadosPage() {
     {
       label: "En Fila",
       count: fila.length,
+      // Sala de espera del sondeo: pago + muestra confirmados, esperando bache.
+      // Los aptos ya no están aquí — pasaron al módulo Arena.
       body: fila.map((i) => (
         <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
           <b>{i.lot!.name}</b>
           <p className={styles.meta}>{name(i.producer_id)}</p>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {i.sondeo_result === "aprobado" ? (
-              <span className={`${styles.badge} ${styles.badgeGood}`}>Sondeo ✓{i.sondeo_score != null ? ` · ${i.sondeo_score}` : ""}</span>
-            ) : (
-              <span className={`${styles.badge} ${styles.badgeWarn}`}>Sondeo pendiente — elegible para bache</span>
-            )}
+            <span className={`${styles.badge} ${styles.badgeWarn}`}>Sondeo pendiente — elegible para bache</span>
           </div>
-          {i.sondeo_result === "aprobado" && <AssignSessionControls lotId={i.lot_id} openSessions={openSessions} />}
         </div>
       )),
     },
@@ -246,8 +221,9 @@ export default async function NominadosPage() {
     <div>
       <h1 className={styles.title}>Nominados</h1>
       <p className={styles.subtitle}>
-        Postulación (pago + muestra) → <b>En Fila</b> (el pool) → bache de sondeo (≤{MAX_BATCH_LOTS} lotes, laboratorio
-        formal) → registro B2/B3 → aprobados de vuelta En Fila, listos para su sesión de Arena.
+        Postulación (pago + muestra) → <b>En Fila</b> (esperando bache) → bache de sondeo (≤{MAX_BATCH_LOTS} lotes,
+        laboratorio formal) → registro B2/B3 → <b>Apto</b> pasa al módulo <b>Arena</b> (y sale de aquí); No Apto sale con
+        cashback.
       </p>
 
       <div className={styles.board}>

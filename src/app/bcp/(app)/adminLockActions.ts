@@ -46,14 +46,22 @@ export async function setAdminLockPassword(current: string, next: string): Promi
   if (pu && !pu.is_owner) return { ok: false, error: "Solo el owner puede cambiar el Admin Lock." };
 
   const hash = await readHash(service);
-  if (!hash || sha256(current) !== hash) return { ok: false, error: "La contraseña actual no coincide." };
+  // Primera vez (fila ausente / sin hash aún): el owner establece el candado sin
+  // "actual en mano" — no existe contraseña previa que exigir. Si ya hay hash, se
+  // exige que la actual coincida.
+  if (hash && sha256(current) !== hash) return { ok: false, error: "La contraseña actual no coincide." };
   const clean = next.trim();
   if (clean.length < 3) return { ok: false, error: "La nueva contraseña necesita al menos 3 caracteres." };
 
-  await service
+  // upsert, no update: en un entorno sin la semilla, .update() no afecta filas y
+  // el candado nunca se puede establecer (véase saveToolsConfig, mismo patrón).
+  const { error } = await service
     .from("platform_settings")
-    .update({ value: { hash: sha256(clean) }, updated_at: new Date().toISOString(), updated_by: adminId })
-    .eq("key", KEY);
+    .upsert(
+      { key: KEY, value: { hash: sha256(clean) }, updated_at: new Date().toISOString(), updated_by: adminId },
+      { onConflict: "key" }
+    );
+  if (error) return { ok: false, error: "No se pudo guardar el Admin Lock." };
   await service.from("audit_log").insert({
     entity_type: "platform_setting",
     entity_id: adminId, // no hay entidad natural — se registra quién lo cambió

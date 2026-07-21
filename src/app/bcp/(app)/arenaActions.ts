@@ -72,11 +72,11 @@ export async function createArenaSession(formData: FormData) {
   redirect(`/bcp/arena/${session.id}`);
 }
 
-// Nota: los lotes entran a una sesión desde el tablero Nominados
-// (assignLotToSession en nominadosActions.ts), que exige phase='fila' + cupo
-// 5/7 y mueve el lote a fila_arena. El "Disponibles"/agregar-manual y el flujo
-// de puntaje manual legado (recordArenaScore/closeArenaSession) se retiraron
-// con la jornada v2.
+// Nota: los lotes se bloquean en una sesión desde el POOL «Aptos» del módulo
+// Arena (assignLotToSession en nominadosActions.ts), que exige phase='arena'
+// (sondeo aprobado) + cupo 5/7 y mueve el lote a fila_arena. El
+// "Disponibles"/agregar-manual y el flujo de puntaje manual legado
+// (recordArenaScore/closeArenaSession) se retiraron con la jornada v2.
 
 /**
  * Registro B2/B3 por café de una sesión (2026-07-20): las mismas interfaces de

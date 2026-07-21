@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { createArenaSession } from "../arenaActions";
 import { reviewEvaluationClaim } from "../evaluationActions";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { CupRegistroButton } from "./ArenaBoardClient";
+import { AssignSessionControls } from "../nominados/NominadosClient";
 import styles from "../shared.module.css";
 
 // ── Sesiones de Arena como kanban (rediseño 2026-07-20) ─────────────────────
@@ -29,7 +31,7 @@ type RosterRow = { arena_session_id: string; lot_id: string; lots: { name: strin
 
 export default async function BcpArenaPage() {
   const service = createServiceRoleClient();
-  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }, { data: claimsRaw }] = await Promise.all([
+  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }, { data: claimsRaw }, { data: aptosRaw }] = await Promise.all([
     service
       .from("arena_sessions")
       .select("id, session_date, status, capacity, run_state, cup_registrations, winner_lot_id, harvest_seasons(kind, year)")
@@ -44,6 +46,11 @@ export default async function BcpArenaPage() {
       .eq("source", "producer_claim")
       .eq("status", "pending")
       .order("created_at", { ascending: true }),
+    // Aptos: sondeo aprobado, esperando sesión (salieron de Nominados).
+    service
+      .from("arena_inscriptions")
+      .select("lot_id, producer_id, sondeo_score, lots(name)")
+      .eq("phase", "arena"),
   ]);
 
   const sessions = (sessionsRaw as SessionRow[] | null) ?? [];
@@ -65,6 +72,21 @@ export default async function BcpArenaPage() {
     return season ? `${season.kind === "mitaca" ? "Mitaca" : "Principal"} ${season.year}` : "—";
   };
   const dateOf = (s: SessionRow) => (s.session_date ? new Date(s.session_date).toLocaleDateString("es-CO") : "sin fecha");
+
+  // ── Aptos: cafés que superaron el sondeo, esperando ser bloqueados en una
+  // sesión. Viven en el módulo Arena (ya no en Nominados). ─────────────────────
+  const aptos = ((aptosRaw as { lot_id: string; producer_id: string; sondeo_score: number | null; lots: { name: string } | { name: string }[] | null }[] | null) ?? []).map((a) => ({
+    lotId: a.lot_id,
+    producerId: a.producer_id,
+    score: a.sondeo_score,
+    name: (Array.isArray(a.lots) ? a.lots[0] : a.lots)?.name ?? "—",
+  }));
+  const aptoProducers = await fetchProducerContacts(service, aptos.map((a) => a.producerId));
+  // Sesiones abiertas (sin jornada en curso, no completadas) con cupo libre.
+  const openSessions = sessions
+    .filter((s) => s.status !== "completed" && !s.run_state)
+    .map((s) => ({ id: s.id, label: `${dateOf(s)} (${rosterBySession.get(s.id)?.length ?? 0}/${s.capacity})`, free: s.capacity - (rosterBySession.get(s.id)?.length ?? 0) }))
+    .filter((s) => s.free > 0);
 
   const preparando = sessions.filter((s) => s.status !== "completed" && !s.run_state && (rosterBySession.get(s.id)?.length ?? 0) < s.capacity);
   const agendadas = sessions.filter((s) => s.status !== "completed" && (Boolean(s.run_state) || (rosterBySession.get(s.id)?.length ?? 0) >= s.capacity));
@@ -96,7 +118,7 @@ export default async function BcpArenaPage() {
               <p className={styles.meta} style={{ margin: "6px 0 0" }}>{roster.map((l) => l.name).join(" · ")}</p>
             )}
             <p className={styles.meta} style={{ margin: "6px 0 0" }}>
-              Faltan {s.capacity - roster.length} café(s) — asígnelos desde <Link href="/bcp/nominados">Nominados · En Fila</Link>.
+              Faltan {s.capacity - roster.length} café(s) — asígnelos desde el pool «Aptos» de arriba.
             </p>
           </div>
         );
@@ -169,9 +191,38 @@ export default async function BcpArenaPage() {
         </Link>
       </div>
       <p className={styles.subtitle}>
-        Preparando (roster en armado desde Nominados) → Agendada (roster completo; registre el B2/B3 de cada café y
+        Preparando (roster en armado desde el pool «Aptos») → Agendada (roster completo; registre el B2/B3 de cada café y
         arranque la jornada) → Culminada.
       </p>
+
+      {/* ── Aptos: superaron el sondeo, esperando sesión (pedido del owner
+          2026-07-21: el lote entra aquí SOLO tras el Registro de Sondeo). ── */}
+      <div className={styles.card} style={{ display: "block", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Aptos — listos para sesión ({aptos.length})</h2>
+        <p className={styles.subtitle} style={{ marginTop: 0 }}>
+          Cafés que superaron el sondeo (Apto). Asigne cada uno a una sesión abierta para bloquearlo en la Arena.
+        </p>
+        {!aptos.length ? (
+          <p className={styles.empty}>Ningún café apto por ahora — llegan desde <Link href="/bcp/nominados">Nominados</Link> tras el Registro de Sondeo.</p>
+        ) : !openSessions.length ? (
+          <p className={styles.meta}>Hay {aptos.length} café(s) apto(s), pero no hay sesión abierta con cupo — cree una abajo.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 8 }}>
+            {aptos.map((a) => (
+              <div key={a.lotId} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px dashed var(--line)", paddingTop: 8 }}>
+                <span style={{ flex: 1, minWidth: 180 }}>
+                  <b>{a.name}</b>{" "}
+                  <span className={styles.meta}>
+                    {aptoProducers.get(a.producerId)?.fullName ?? "Productor"}
+                    {a.score != null ? ` · sondeo ${a.score}` : ""}
+                  </span>
+                </span>
+                <AssignSessionControls lotId={a.lotId} openSessions={openSessions} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <details className={styles.card} style={{ display: "block", marginBottom: 28 }}>
         <summary style={{ cursor: "pointer", fontWeight: 600 }}>Nueva sesión</summary>

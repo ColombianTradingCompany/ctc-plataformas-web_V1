@@ -25,12 +25,25 @@ export function dueFor(pct: number, amountCop: number = ARENA_FEE_COP): number {
 
 export type InscriptionStatus = "pendiente" | "pagado" | "exento";
 
-export type InscriptionPhase = "postulacion" | "sondeo" | "fila" | "sesion" | "competido" | "retirado";
+// El tramo pagado, fase por fase. 'fila' es SÓLO la sala de espera del sondeo
+// (paga+muestra confirmadas, esperando bache); una vez el sondeo aprueba, el
+// lote pasa a 'arena' — sale de Nominados y aparece en el módulo Arena, listo
+// para bloquearse en una sesión. Antes 'aprobado' se quedaba en 'fila', lo que
+// mezclaba "esperando sondeo" con "listo para sesión" (corregido 2026-07-21).
+export type InscriptionPhase =
+  | "postulacion"
+  | "sondeo"
+  | "fila"
+  | "arena"
+  | "sesion"
+  | "competido"
+  | "retirado";
 
 export const PHASE_LABEL: Record<InscriptionPhase, string> = {
   postulacion: "Postulado",
   sondeo: "Sondeo preliminar",
   fila: "En fila",
+  arena: "Clasificado a Arena",
   sesion: "Sesión asignada",
   competido: "Compitió",
   retirado: "Retirado",

@@ -9,7 +9,7 @@ import {
   getBuzonAttachmentUrls,
   markInboundEmailRead,
 } from "../buzonActions";
-import shared from "../shared.module.css";
+import shared from "@/app/bcp/(app)/shared.module.css";
 import styles from "./buzon.module.css";
 
 export type InboundRow = {

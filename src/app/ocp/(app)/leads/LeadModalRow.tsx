@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import styles from "../shared.module.css";
+import styles from "@/app/bcp/(app)/shared.module.css";
 
 // Kanban-card variant of FincaModalRow: a compact miniCard-style button inside
 // a board column that opens a popup with the full lead detail. Summary and

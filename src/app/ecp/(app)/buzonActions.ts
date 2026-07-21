@@ -91,7 +91,7 @@ export async function sendBuzonReply(
   if (input.mode === "reply") {
     await identity.service.from("inbound_emails").update({ replied_at: new Date().toISOString() }).eq("id", row.id);
   }
-  revalidatePath("/bcp/buzon");
+  revalidatePath("/ecp/buzon");
   return { ok: true };
 }
 
@@ -100,7 +100,7 @@ export async function setBuzonStatus(id: string, status: "archived" | "deleted")
   // Reflect to Hostinger first (best-effort — a retention-cleaned message just isn't there).
   if (row.message_id) await moveRemoteMessage(row.message_id, status === "deleted" ? "trash" : "archive");
   await identity.service.from("inbound_emails").update({ status }).eq("id", id);
-  revalidatePath("/bcp/buzon");
+  revalidatePath("/ecp/buzon");
   return { ok: true };
 }
 
@@ -108,7 +108,7 @@ export async function setBuzonTags(id: string, tags: string[]): Promise<BuzonAct
   const { identity } = await loadIfAllowed(id);
   const clean = Array.from(new Set(tags.map((t) => t.trim().toLowerCase()).filter(Boolean))).slice(0, 8).map((t) => t.slice(0, 24));
   await identity.service.from("inbound_emails").update({ tags: clean }).eq("id", id);
-  revalidatePath("/bcp/buzon");
+  revalidatePath("/ecp/buzon");
   return { ok: true };
 }
 
@@ -127,7 +127,7 @@ export async function syncBuzonNow() {
   await requireActiveAdmin();
   const { syncBuzon } = await import("@/lib/buzon/syncBuzon");
   const result = await syncBuzon();
-  revalidatePath("/bcp/buzon");
+  revalidatePath("/ecp/buzon");
   return result;
 }
 
@@ -137,6 +137,6 @@ export async function markInboundEmailRead(id: string, read: boolean): Promise<B
     .from("inbound_emails")
     .update({ read_at: read ? new Date().toISOString() : null })
     .eq("id", id);
-  revalidatePath("/bcp/buzon");
+  revalidatePath("/ecp/buzon");
   return { ok: true };
 }

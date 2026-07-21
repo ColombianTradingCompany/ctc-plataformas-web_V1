@@ -484,3 +484,32 @@ está desplegado READY en producción.)
     patrón resultado-inline + window.confirm con resumen de lo vinculado.
 - Verificado: tsc + eslint + build limpios; SQL confirma los 5 stages en 'apto'. BCP 2FA — no drivable.
 (commit: pending · versión V1.13)
+
+## [2026-07-21] Reorganización de las consolas internas (paso previo a "Mapa de Trabajo")
+- Limpieza previa (SQL, con el mismo rollback de los botones nuevos): se borraron 2 sesiones
+  basura (vacía + una vieja con "Caturra Honey") y el bache de prueba "Sondeo Test 1"; Pacamara
+  volvió a En Fila; Caturra se reseteó a 'apto' sin grado. Y se corrigieron 5 stages fantasma
+  ('fila_arena' sin sesión → 'apto'). Estado limpio: En Fila = Catia + Pacamara; Aptos = 3.
+- BCP: el menú lateral pasó a TRES submenús sin encabezado, separados por un divisor
+  (PanelNavGroup.label ahora opcional; PanelSidebar dibuja el divisor .navGroup; consoles.ts):
+  · Comercial: Panel · Kaffetal Club · Catálogo Cherry Picked
+  · Cadena: Productores · Fincas · Lotes
+  · Competencia: Nominados · Arena · Galardonados (NUEVO)
+- NUEVO módulo Galardonados (/bcp/galardonados): todos los lotes stage='galardonado' organizados
+  por Grado CTC (Black/Red/Blue/Gold/Tyrian, colores --t-*), con link al lote. Hoy: 1 (Castillo
+  Natural · Blue).
+- Catálogo Cherry Picked absorbe Contratos y Subastas Tyrian: ya no son entradas del menú, viven
+  como PESTAÑAS (nuevo CatalogoTabs, usePathname) al tope de catalogo/contratos/subastas. Las
+  rutas y su lógica siguen intactas (contratos/[id], contratos/humedad, subastas=ComingSoon).
+- Buzón de entrada → ECP: se movió la carpeta buzon/ + buzonActions.ts a ecp/(app); page usa
+  requireConsoleAccess("ecp"); revalidatePath → /ecp/buzon; import de estilos apunta al
+  shared.module.css del BCP por ruta absoluta (ECP no tiene el suyo). Entrada nueva en el nav ECP.
+- Leads CTC Home → OCP: carpeta leads/ + leadsActions.ts a ocp/(app); revalidatePath → /ocp/leads;
+  el Panel BCP sigue mostrando las tareas de leads pero enlaza a /ocp/leads. Entrada nueva en OCP.
+  ⚠ GOTCHA: las acciones (buzonActions/leadsActions) usan requireActiveAdmin (agnóstico de consola),
+    así que mudarlas no rompe permisos; solo la page del buzón gateaba por consola.
+- Verificado: tsc + eslint + build limpios; el manifiesto de build lista /bcp/galardonados,
+  /ecp/buzon, /ocp/leads; sin referencias colgadas a /bcp/buzon ni /bcp/leads.
+- SIGUIENTE PROYECTO (no incluido aquí): módulo ECP "Mapa de Trabajo" — mapa de datos interactivo
+  (ver/editar-cosmético/exportar PDF) al estilo del diagrama FT→GATE→FT2.
+(commit: pending · versión V1.14)

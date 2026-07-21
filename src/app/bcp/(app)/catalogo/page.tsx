@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { publishLot, unpublishListing } from "../catalogActions";
 import { ActionForm } from "../ActionForm";
+import { CatalogoTabs } from "./CatalogoTabs";
 import styles from "../shared.module.css";
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
@@ -60,6 +61,7 @@ export default async function BcpCatalogoPage() {
 
   return (
     <div>
+      <CatalogoTabs />
       <h1 className={styles.title}>Catálogo Cherry Picked</h1>
 
       <h3 style={{ marginTop: 8 }}>Listos para publicar</h3>

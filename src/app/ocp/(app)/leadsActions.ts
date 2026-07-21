@@ -148,7 +148,7 @@ export async function replyToLead(leadId: string, formData: FormData) {
     performed_by: adminId,
     notes: subject,
   });
-  revalidatePath("/bcp/leads");
+  revalidatePath("/ocp/leads");
 }
 
 export async function setLeadStatus(leadId: string, formData: FormData) {
@@ -169,7 +169,7 @@ export async function setLeadStatus(leadId: string, formData: FormData) {
     new_status: status,
     performed_by: adminId,
   });
-  revalidatePath("/bcp/leads");
+  revalidatePath("/ocp/leads");
 }
 
 export async function retryWelcomeEmail(leadId: string) {
@@ -189,7 +189,7 @@ export async function retryWelcomeEmail(leadId: string) {
     performed_by: adminId,
     notes: result.ok ? "Enviado" : result.error,
   });
-  revalidatePath("/bcp/leads");
+  revalidatePath("/ocp/leads");
 }
 
 export async function retryReplyEmail(replyId: string) {
@@ -223,5 +223,5 @@ export async function retryReplyEmail(replyId: string) {
     performed_by: adminId,
     notes: result.ok ? "Enviado" : result.error,
   });
-  revalidatePath("/bcp/leads");
+  revalidatePath("/ocp/leads");
 }

@@ -24,8 +24,10 @@
 export type PanelConsoleKey = "bcp" | "ecp" | "ocp";
 
 export type PanelNavLink = { href: string; label: string; exact?: boolean; ownerOnly?: boolean };
-/** `ownerOnly` en el grupo oculta TODO el grupo; en un link, solo ese link. */
-export type PanelNavGroup = { label: string; links: PanelNavLink[]; ownerOnly?: boolean };
+/** `ownerOnly` en el grupo oculta TODO el grupo; en un link, solo ese link.
+ *  `label` opcional: sin label, el grupo se dibuja como un simple bloque
+ *  separado por un divisor (submenús del BCP, 2026-07-21). */
+export type PanelNavGroup = { label?: string; links: PanelNavLink[]; ownerOnly?: boolean };
 
 export type PanelConsole = {
   key: PanelConsoleKey;
@@ -47,24 +49,31 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     tagline: "Identidad y pasaporte del lote",
     accent: "#D3B8FA", // corporate lavender
     home: "/bcp",
+    // Tres submenús (2026-07-21), sin encabezado — separados por un divisor:
+    //   comercial (Panel · Club · Catálogo) · cadena (Productores/Fincas/Lotes)
+    //   · competencia (Nominados · Arena · Galardonados).
+    // Contratos y Subastas Tyrian ya no son entradas propias: viven como
+    // pestañas dentro del Catálogo Cherry Picked. Leads → OCP, Buzón → ECP.
     nav: [
       {
-        label: "BCP · Negocio",
         links: [
           { href: "/bcp", label: "Panel", exact: true },
+          { href: "/bcp/club", label: "Kaffetal Club" },
+          { href: "/bcp/catalogo", label: "Catálogo Cherry Picked" },
+        ],
+      },
+      {
+        links: [
           { href: "/bcp/productores", label: "Productores" },
           { href: "/bcp/fincas", label: "Fincas" },
           { href: "/bcp/lotes", label: "Lotes" },
+        ],
+      },
+      {
+        links: [
           { href: "/bcp/nominados", label: "Nominados" },
-          { href: "/bcp/club", label: "Kaffetal Club" },
           { href: "/bcp/arena", label: "Arena" },
-          // "Evaluaciones" se retiró del nav (2026-07-20): las planillas B2/B3
-          // viven embebidas en Arena (sesiones y baches de sondeo).
-          { href: "/bcp/contratos", label: "Contratos" },
-          { href: "/bcp/catalogo", label: "Catálogo Cherry Picked" },
-          { href: "/bcp/subastas", label: "Subastas Tyrian" },
-          { href: "/bcp/leads", label: "Leads CTC Home" },
-          { href: "/bcp/buzon", label: "Buzón de entrada" },
+          { href: "/bcp/galardonados", label: "Galardonados" },
         ],
       },
     ],
@@ -79,7 +88,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     nav: [
       {
         label: "ECP · Dirección",
-        links: [{ href: "/ecp", label: "Panel", exact: true }],
+        links: [
+          { href: "/ecp", label: "Panel", exact: true },
+          // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
+          // material de dirección, no operación diaria.
+          { href: "/ecp/buzon", label: "Buzón de entrada" },
+        ],
       },
       {
         // IT y Plataforma (2026-07-18): la administración de identidades salió del
@@ -113,6 +127,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "OCP · Operación",
         links: [
           { href: "/ocp", label: "Panel", exact: true },
+          // Leads CTC Home se movió del BCP a OCP (2026-07-21): la recepción y
+          // el triage de prospectos entrantes es operación de la red.
+          { href: "/ocp/leads", label: "Leads CTC Home" },
           // Los socios se administran donde se OPERAN (2026-07-20): el OCP es el
           // espejo de las interfaces de partner, así que dar de alta y de baja
           // una credencial de nodo pertenece aquí, no a la consola de dirección.

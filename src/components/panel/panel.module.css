@@ -78,6 +78,8 @@
 .switchTag{display:block;padding:0 16px 8px;font-size:11px;color:#9AA3AE;line-height:1.4}
 
 .groupLabel{font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8B95A3;padding:14px 20px 6px;margin:0}
+/* Submenú sin encabezado: se separa del anterior con un divisor y aire. */
+.navGroup{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)}
 .links{list-style:none}
 .links li a{display:block;padding:11px 20px;font-size:14px;color:#D4D4D8;text-decoration:none}
 .links li a:hover{background:rgba(255,255,255,.06);color:#fff}

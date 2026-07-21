@@ -71,9 +71,10 @@ export function PanelSidebar({
       )}
       <span className={styles.switchTag}>{active.name}</span>
 
-      {navGroups.map((group) => (
-        <div key={group.label}>
-          <p className={styles.groupLabel}>{group.label}</p>
+      {navGroups.map((group, i) => (
+        // Sin label ⇒ submenú separado solo por un divisor (no encabezado).
+        <div key={group.label ?? `g${i}`} className={i > 0 ? styles.navGroup : undefined}>
+          {group.label && <p className={styles.groupLabel}>{group.label}</p>}
           <ul className={styles.links}>
             {group.links.map((link) => {
               const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);

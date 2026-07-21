@@ -2,16 +2,17 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { BuzonSyncBar } from "./BuzonSyncBar";
 import { BuzonMail, type InboundRow } from "./BuzonMail";
-import shared from "../shared.module.css";
+import shared from "@/app/bcp/(app)/shared.module.css";
 
 // Batched imports + IMAP round-trips need headroom on serverless.
 export const maxDuration = 60;
 
-// BCP · Buzón — the platform's mail client over the virtual inbox.
-// Owners see the whole network inbox; a collaborator sees only mail addressed
-// to their own @ctcexport.com label (the catch-all preserves To:).
+// ECP · Buzón — the platform's mail client over the virtual inbox (2026-07-21:
+// movido a ECP; el buzón es material de dirección, no operación diaria). Owners
+// see the whole network inbox; a collaborator sees only mail addressed to their
+// own @ctcexport.com label (the catch-all preserves To:).
 export default async function BcpBuzonPage() {
-  const identity = await requireConsoleAccess("bcp");
+  const identity = await requireConsoleAccess("ecp");
   const service = createServiceRoleClient();
 
   let myAddress: string | null = null;

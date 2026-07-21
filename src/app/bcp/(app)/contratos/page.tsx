@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { BlackNegotiationCard } from "./BlackNegotiationCard";
+import { CatalogoTabs } from "../catalogo/CatalogoTabs";
 import styles from "../shared.module.css";
 
 const TABS = [
@@ -33,6 +34,7 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
 
   return (
     <div>
+      <CatalogoTabs />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <h1 className={styles.title}>Contratos</h1>
         <Link href="/bcp/contratos/humedad" className={styles.backLink}>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { replyToLead, setLeadStatus, retryWelcomeEmail, retryReplyEmail } from "../leadsActions";
 import { LeadModalRow } from "./LeadModalRow";
-import styles from "../shared.module.css";
+import styles from "@/app/bcp/(app)/shared.module.css";
 
 // Leads CTC Home: every "Escríbenos" / "Más allá de la exportación" submission
 // becomes a lead with a platform account. One kanban board per service pillar

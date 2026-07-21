@@ -19,9 +19,14 @@
 @media(max-width:860px){.humid{grid-template-columns:1fr}}
 
 .hic{margin-top:14px;border:1px dashed var(--accent-soft);border-radius:10px;padding:0}
-.hic summary{cursor:pointer;font-family:var(--font-spline-mono),monospace;font-size:12px;font-weight:600;padding:11px 14px;color:var(--accent-soft);list-style:none}
+.hic summary{cursor:pointer;font-family:var(--font-spline-mono),monospace;font-size:12px;font-weight:600;padding:11px 14px;color:var(--accent-soft);list-style:none;display:flex;align-items:center;gap:10px}
 .hic summary::-webkit-details-marker{display:none}
 .hic[open] summary{border-bottom:1px dashed var(--accent-soft)}
+.hchev{margin-left:auto;font-size:22px;line-height:1;color:var(--accent-soft);transition:transform .2s;flex:none}
+.hic:not([open]) .hchev{animation:ctcChevPulse 1.8s ease-in-out infinite}
+.hic[open] .hchev{transform:rotate(180deg);animation:none}
+@media (prefers-reduced-motion:reduce){.hic:not([open]) .hchev{animation:none}}
+@keyframes ctcChevPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.35);opacity:1}}
 .hbody{padding:12px 14px;font-size:13.5px;line-height:1.65}
 
 .cpk{

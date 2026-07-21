@@ -123,9 +123,22 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .accordion{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
 .accordion summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 20px}
 .accordion summary::-webkit-details-marker{display:none}
-.accordion .chev{margin-left:auto;color:var(--accent);transition:transform .2s;flex:none}
-.accordion[open] .chev{transform:rotate(180deg)}
+.accordion .chev{margin-left:auto;color:var(--accent);font-size:26px;line-height:1;transition:transform .2s;flex:none}
+.accordion[open] .chev{transform:rotate(180deg);animation:none}
+.accordion:not([open]) .chev{animation:ctcChevPulse 1.8s ease-in-out infinite}
 .accordion-body{padding:0 20px 20px;border-top:1px dashed var(--line)}
+
+/* Pulse that draws the eye to a collapsed accordion toggle. Only runs while
+   the <details> is CLOSED (so it never fights the rotate-on-open transform),
+   and stands down for users who ask for reduced motion. Shared by name across
+   every module chevron — the keyframes live here so they stay global. */
+@keyframes ctcChevPulse{
+  0%,100%{transform:scale(1);opacity:.6}
+  50%{transform:scale(1.35);opacity:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .accordion:not([open]) .chev{animation:none}
+}
 
 /* ============================================================
    Modal + toast (shared shell, used by every login/contact/form flow)

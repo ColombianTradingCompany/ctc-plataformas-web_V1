@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useToast } from "@/components/Toast";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./TratoSection.module.css";
 
@@ -190,7 +189,6 @@ const T: Record<Lang, Dict> = {
 };
 
 export function TratoSection() {
-  const { showToast } = useToast();
   const t = T[useLang()];
   return (
     <section id="trato">
@@ -251,7 +249,10 @@ export function TratoSection() {
                 ))}
               </ul>
               <details className={styles.hic}>
-                <summary>{t.hicSummary}</summary>
+                <summary>
+                  <span>{t.hicSummary}</span>
+                  <span className={styles.hchev} aria-hidden>▾</span>
+                </summary>
                 <div className={styles.hbody}>{t.hicBody}</div>
               </details>
             </div>
@@ -263,9 +264,9 @@ export function TratoSection() {
             <p className="eyebrow" style={{ color: "#E9B7D2" }}>{t.cpEyebrow}</p>
             <h3>{t.cpH3}</h3>
             <p>{t.cpBody}</p>
-            <button className="btn" onClick={() => showToast(t.cpToast)}>
+            <a className="btn" href="https://cherry-picked.ctcexport.com" target="_blank" rel="noopener">
               {t.cpBtn}
-            </button>
+            </a>
           </div>
           <Image src="/images/ctc-home/26-tostaduria-gabriel-jr-anna.jpg" alt="Tostaduría de especialidad en Europa" width={900} height={1195} />
         </div>

@@ -15,8 +15,11 @@
   letter-spacing:.1em;text-transform:uppercase;color:var(--ec);display:flex;justify-content:space-between;align-items:center;
 }
 .details summary::-webkit-details-marker{display:none}
-.ch{transition:transform .2s}
-.details[open] .ch{transform:rotate(180deg)}
+.ch{display:inline-block;font-size:22px;line-height:1;vertical-align:-3px;transition:transform .2s}
+.details:not([open]) .ch{animation:ctcChevPulse 1.8s ease-in-out infinite}
+.details[open] .ch{transform:rotate(180deg);animation:none}
+@media (prefers-reduced-motion:reduce){.details:not([open]) .ch{animation:none}}
+@keyframes ctcChevPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.35);opacity:1}}
 .details ul{list-style:none;display:grid;gap:8px;font-size:13.5px;color:var(--muted);padding:2px 16px 15px}
 .details li{padding-left:18px;position:relative}
 .details li::before{content:"—";position:absolute;left:0;color:var(--ec);font-weight:700}

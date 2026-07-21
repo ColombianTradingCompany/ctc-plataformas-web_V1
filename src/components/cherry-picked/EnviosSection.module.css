@@ -1,8 +1,11 @@
 .shipd summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;border:1.5px solid var(--primary);color:var(--primary);border-radius:999px;padding:11px 22px;font-weight:600;font-size:14px;background:var(--card)}
 .shipd summary::-webkit-details-marker{display:none}
 .shipd summary:hover{background:var(--primary);color:#fff}
-.schev{transition:transform .2s}
-.shipd[open] .schev{transform:rotate(180deg)}
+.schev{display:inline-block;font-size:22px;line-height:1;vertical-align:-3px;transition:transform .2s}
+.shipd:not([open]) .schev{animation:ctcChevPulse 1.8s ease-in-out infinite}
+.shipd[open] .schev{transform:rotate(180deg);animation:none}
+@media (prefers-reduced-motion:reduce){.shipd:not([open]) .schev{animation:none}}
+@keyframes ctcChevPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.35);opacity:1}}
 .shipd[open] summary{margin-bottom:26px}
 
 .shipGrid{display:grid;grid-template-columns:380px 1fr;gap:40px;align-items:center}

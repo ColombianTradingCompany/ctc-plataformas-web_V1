@@ -329,3 +329,25 @@ está desplegado READY en producción.)
   hash es "ProcessFlow-module__HASH__node" — un regex suelto puede casar el CONTENEDOR .nodes
   y dar lecturas falsas (borde negro, punto 0px); inspeccionar primero el className real.
 (commit: pending · versión V1.6)
+
+## [2026-07-21] Toggles de acordeón más grandes + con pulso, y botón a CP que sí navega
+- Feedback de usuarios: el símbolo de despliegue de los acordeones es demasiado pequeño en
+  todas las UIs y la gente se pierde la información de abajo. Se agrandó el chevrón y se le
+  puso un PULSO de atención (escala 1→1.35 + opacidad) que SOLO corre cuando el acordeón está
+  cerrado (nunca pelea con el giro-al-abrir) y se apaga con prefers-reduced-motion.
+  Chevrones tratados: InfoAccordion (compartido: KR + ProcessFlow), .accordion global
+  (globals.css), EcosystemSection y ServicesSection (CTC Home), EnviosSection/MuestrasSection/
+  LotCard (Cherry Picked). El Cart de CP solo se agrandó (su giro vive en .closed, así que un
+  pulso ahí chocaría con el transform). Al acordeón HIC de TratoSection, que NO tenía símbolo,
+  se le añadió un chevrón pulsante.
+  ⚠ GOTCHA (Turbopack CSS Modules): referenciar un @keyframes GLOBAL desde un .module.css NO
+  funciona — el loader renombra el animation-name a un hash local que no existe, y la animación
+  queda muda. `:global(nombre)` en la posición de VALOR tampoco compila ("Missed semicolon").
+  Solución: definir el @keyframes ctcChevPulse LOCALMENTE en cada módulo (se renombra igual que
+  su referencia, así que casan). En globals.css (que NO es módulo) el keyframe global sirve para
+  .accordion. Verificado en navegador: getAnimations() muestra el pulso corriendo (scale ~1.35),
+  al abrir animation:none + rotate(180deg).
+- BUG (TratoSection, "Lo que hace CTC"): el botón "Conocer Cherry Picked" solo disparaba un
+  toast demo y no navegaba. Ahora es un <a class="btn"> a https://cherry-picked.ctcexport.com
+  (target _blank, mismo patrón que EcosystemSection). Se quitó useToast (ya no se usa).
+(commit: pending · versión V1.7)

@@ -14,8 +14,11 @@
 .mine{background:repeating-linear-gradient(45deg,var(--tc),var(--tc) 4px,#fff 4px,#fff 6px);height:100%;display:block}
 .note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.6}
 .chevrow{display:flex;justify-content:center;align-items:center;gap:6px;font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-top:2px}
-.ch{transition:transform .2s}
-.lot[open] .ch{transform:rotate(180deg)}
+.ch{display:inline-block;font-size:19px;line-height:1;transition:transform .2s}
+.lot:not([open]) .ch{animation:ctcChevPulse 1.8s ease-in-out infinite}
+.lot[open] .ch{transform:rotate(180deg);animation:none}
+@media (prefers-reduced-motion:reduce){.lot:not([open]) .ch{animation:none}}
+@keyframes ctcChevPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.35);opacity:1}}
 .lot[open] .lblOpen{display:none}
 .lot:not([open]) .lblClose{display:none}
 .lotMore{padding:14px 20px 20px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:14px}

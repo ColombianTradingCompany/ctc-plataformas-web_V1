@@ -513,3 +513,32 @@ está desplegado READY en producción.)
 - SIGUIENTE PROYECTO (no incluido aquí): módulo ECP "Mapa de Trabajo" — mapa de datos interactivo
   (ver/editar-cosmético/exportar PDF) al estilo del diagrama FT→GATE→FT2.
 (commit: pending · versión V1.14)
+
+## [2026-07-21] NUEVO módulo ECP "Mapa de Trabajo" (mapa de datos/UI interactivo)
+- Petición del owner: un mapa visual EXACTO de cómo las tablas se construyen unas sobre otras a
+  través de las compuertas del proceso (FT→FT2→EUDR→EVA→MUE→Sondeo→Arena→GAL + comercio/club/leads)
+  y EN QUÉ UI(s) se muestra cada tabla; al estilo del boceto (bloques Schema/Table + Decisión,
+  bandas de etapa al fondo, flechas). Tres modos: Ver / Editar (cosmético) / Exportar PDF.
+- Decisiones (confirmadas con el owner): SVG a mano SIN librería (coherente con el ethos del repo,
+  p.ej. ProcessFlow puro CSS); yo pre-autoré una semilla curada precisa que el owner reordena.
+- src/lib/workmap/schema.ts: tipos (MapStage/MapNode/MapEdge/WorkMapConfig), toWorkMapConfig
+  (normalizador para round-trip seguro), y DEFAULT_WORK_MAP — semilla con ~33 tablas + 4 decisiones
+  (compuertas EUDR/EVA/Sondeo/Grado) + ~29 aristas + tags de UI por tabla, organizadas en 13 etapas.
+- src/app/ecp/(app)/workmapActions.ts: getWorkMap (requireActiveAdmin) / saveWorkMap (owner-only,
+  upsert a platform_settings.work_map, audit) — mismo patrón que toolAccess.ts.
+- src/app/ecp/(app)/mapa/{page.tsx, WorkMapCanvas.tsx, mapa.module.css}: lienzo SVG con pan (arrastrar
+  fondo) + zoom (rueda/＋－/Ajustar); Ver muestra las UIs de un nodo al tocarlo; Editar (solo owner)
+  arrastra nodos, edita etiqueta/tipo/etapa/UIs, agrega Tabla/Decisión, Conectar (origen→destino),
+  Borrar, Mapa base, Guardar; Exportar abre una ventana nueva autocontenida (colores concretos, no
+  variables CSS) y llama window.print() para "Guardar como PDF" (vista actual o mapa completo).
+- consoles.ts: entrada "Mapa de Trabajo" (ownerOnly) en el grupo ECP · IT y Plataforma.
+- Verificado con ruta sonda temporal (zz-map-probe, borrada antes del commit) en el navegador:
+  render (33 tablas, 4 decisiones, 29 aristas, bandas), Editar, arrastre (x 536→683 finito con
+  viewport real), agregar nodo, inspección de UIs en modo Ver; sin errores de consola. tsc+eslint+build
+  limpios; el manifiesto lista /ecp/mapa.
+  ⚠ GOTCHA: el preview pane puede dar viewport 0×0 (getBoundingClientRect().width=0), lo que hacía que
+    scaleX() diera Infinity y el nodo saltara a x=Infinity; se blindó scaleX contra ancho 0. En un
+    navegador real (viewport 1400×850) el arrastre da coordenadas finitas correctas.
+- MVP: entrega los 3 toggles. Fuera de alcance (futuras iteraciones): auto-diff contra el esquema vivo,
+  detalle de columnas por nodo, y múltiples snapshots nombrados.
+(commit: pending · versión V1.15)

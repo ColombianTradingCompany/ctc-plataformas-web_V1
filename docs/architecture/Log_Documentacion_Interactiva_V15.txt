@@ -403,3 +403,17 @@ está desplegado READY en producción.)
   Solo lo usan las 3 consolas internas (layouts de bcp/ecp/ocp vía PanelChrome), todas con 2FA
   —no drivables en navegador—; build limpio.
 (commit: pending · versión V1.10)
+
+## [2026-07-21] Productores: incluir cuentas con huella de productor (no solo role='producer')
+- El owner no veía el productor "CTCx Colombian Trading Company SAS" en BCP → Productores.
+  Diagnóstico (SQL): esa es su PROPIA cuenta (ctcexportmain@gmail.com, id 30c49414…), con
+  role='bcp_admin' pero con perfil de productor (NIT 9014834257) y 3 fincas + 2 lotes reales.
+  El tablero filtraba .eq('role','producer'), así que la excluía — sus fincas salían en
+  Fincas/Lotes pero el productor era invisible en Productores (inconsistencia).
+- ARREGLO (productores/page.tsx): se quita el filtro por rol en la consulta y se filtra en
+  memoria por HUELLA de productor: role='producer' O tiene producer_profiles O posee fincas/lotes.
+  Así aparece la cuenta del dueño (admin que además opera como productor de prueba) y quedan
+  fuera los administradores y compradores puros sin huella. Validado por SQL: el set incluye los
+  10 productores + la cuenta del dueño, y NO incluye a gvb/gvg (admins puros) ni al buyer.
+  tsc + eslint + build limpios (BCP con 2FA, no drivable en navegador — verificado por SQL).
+(commit: pending · versión V1.11)

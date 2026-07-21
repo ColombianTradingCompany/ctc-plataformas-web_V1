@@ -31,7 +31,7 @@ const STAGE_LABEL: Record<string, string> = {
   galardonado: "Galardonado",
 };
 
-type ProfileRow = { id: string; full_name: string | null; email: string | null; phone: string | null; created_at: string };
+type ProfileRow = { id: string; full_name: string | null; email: string | null; phone: string | null; created_at: string; role: string | null };
 type PPRow = {
   profile_id: string;
   company_name: string | null;
@@ -54,7 +54,14 @@ export default async function BcpProductoresPage() {
 
   const [{ data: profilesRaw }, { data: ppRaw }, { data: fincasRaw }, { data: lotsRaw }, { data: insRaw }, { data: contractsRaw }, { data: commsRaw }] =
     await Promise.all([
-      service.from("profiles").select("id, full_name, email, phone, created_at").eq("role", "producer").order("created_at", { ascending: true }),
+      // Sin filtro por rol: un "productor" del tablero es cualquier cuenta con
+      // HUELLA de productor (perfil de productor, o fincas/lotes propios), no
+      // solo role='producer'. Así aparece la cuenta del dueño (bcp_admin que
+      // además opera como productor de prueba, con fincas y lotes reales),
+      // mientras que los administradores y compradores puros —sin huella— se
+      // filtran abajo. Antes, sus fincas salían en Fincas/Lotes pero el
+      // productor era invisible aquí.
+      service.from("profiles").select("id, full_name, email, phone, created_at, role").order("created_at", { ascending: true }),
       service
         .from("producer_profiles")
         .select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, whatsapp_confirmed, club_member_since"),
@@ -65,7 +72,7 @@ export default async function BcpProductoresPage() {
       service.from("producer_comm_log").select("id, producer_id, context_label, note, created_at, author_role").order("created_at", { ascending: false }),
     ]);
 
-  const profiles = (profilesRaw as ProfileRow[] | null) ?? [];
+  const allProfiles = (profilesRaw as ProfileRow[] | null) ?? [];
   const ppById = new Map(((ppRaw as PPRow[] | null) ?? []).map((p) => [p.profile_id, p]));
   const fincas = (fincasRaw as FincaRow[] | null) ?? [];
   const lots = (lotsRaw as LotRow[] | null) ?? [];
@@ -84,6 +91,16 @@ export default async function BcpProductoresPage() {
     if (!owner) continue;
     contractsBy.set(owner, [...(contractsBy.get(owner) ?? []), c]);
   }
+
+  // Cuentas con HUELLA de productor: role='producer', o un perfil de productor,
+  // o fincas/lotes propios. Deja fuera a los administradores y compradores puros.
+  const profiles = allProfiles.filter(
+    (p) =>
+      p.role === "producer" ||
+      ppById.has(p.id) ||
+      (fincasBy.get(p.id)?.length ?? 0) > 0 ||
+      (lotsBy.get(p.id)?.length ?? 0) > 0
+  );
 
   // Avatares firmados en un solo lote.
   const signedUrls = await signedKaffetalMediaUrls(

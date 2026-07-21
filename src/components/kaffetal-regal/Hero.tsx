@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { ToastButton } from "./ToastButton";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./Hero.module.css";
 
@@ -252,13 +251,15 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
               <Image className={styles.cplogo} src="/images/shared/cherry-picked-logo.png" alt="Cherry Picked" width={852} height={858} />
               <p>{t.cpQ}</p>
             </div>
-            <ToastButton
-              message={t.cpToast}
+            <a
               className="btn btn-sm"
+              href="https://cherry-picked.ctcexport.com"
+              target="_blank"
+              rel="noopener"
               style={{ borderColor: "var(--t-tyrian)", color: "var(--t-tyrian)" }}
             >
               {t.cpBtn}
-            </ToastButton>
+            </a>
           </div>
         </div>
       </div>

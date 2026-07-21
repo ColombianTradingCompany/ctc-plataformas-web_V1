@@ -143,8 +143,8 @@ function FincaModalBody({
   const [name, setName] = useState(finca?.name ?? "");
   const [ha, setHa] = useState(finca?.ha ?? "");
   // Altura (msnm): se DERIVA de la geometría de la finca (centroide del
-  // polígono si lo hay; si no, el punto registrado) vía la Elevation API del
-  // mismo SDK de Google que ya usa el mapa. Se puede sobrescribir a mano: en
+  // polígono si lo hay; si no, el punto registrado) vía la Elevation API de
+  // Open-Meteo (sin clave, CORS abierto). Se puede sobrescribir a mano: en
   // cuanto el productor la escribe, deja de recalcularse sola.
   const [alt, setAlt] = useState(finca?.alt && finca.alt !== "—" ? finca.alt : "");
   const [altManual, setAltManual] = useState(false);

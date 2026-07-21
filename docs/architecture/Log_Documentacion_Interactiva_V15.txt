@@ -351,3 +351,26 @@ está desplegado READY en producción.)
   toast demo y no navegaba. Ahora es un <a class="btn"> a https://cherry-picked.ctcexport.com
   (target _blank, mismo patrón que EcosystemSection). Se quitó useToast (ya no se usa).
 (commit: pending · versión V1.7)
+
+## [2026-07-21] El OTRO botón a CP (Hero) + la altura que sí se auto-calcula
+- El botón "Conocer Cherry Picked" que seguía muerto NO era el de TratoSection (ese ya se
+  arregló en V1.7) sino el del bloque "Lo que hace CTC / ¿Y qué es Cherry Picked?" del HERO
+  (Hero.tsx, banda "DE LA MUESTRA AL CONTENEDOR"). Usaba <ToastButton> (toast demo). Ahora es
+  <a class="btn btn-sm"> a https://cherry-picked.ctcexport.com (target _blank). Quitado el
+  import de ToastButton (ya no se usa en Hero).
+  ⚠ Había DOS botones "Conocer Cherry Picked" con el mismo texto en la landing de KR: el del
+  Hero y el de TratoSection. Al arreglar uno, revisar el otro.
+- ALTURA (Mis Fincas · FincaModal): estaba implementada pero NO auto-llenaba. Causa: lookupElevation
+  usaba google.maps.ElevationService, que exige habilitar la Elevation API en Google Cloud —cosa
+  que no estaba hecha— así que devolvía null en silencio y el campo nunca se llenaba (por eso el
+  helper decía "Marque la ubicación abajo y se calcula sola" pero no pasaba nada).
+  ARREGLO (src/lib/geo/elevation.ts): lookupElevation ahora consulta la Elevation API de
+  Open-Meteo (https://api.open-meteo.com/v1/elevation?latitude=..&longitude=..) — pública,
+  gratis, SIN clave y con CORS abierto, así que corre desde el navegador sin tocar Google Cloud.
+  El resto del flujo (fincaReferencePoint → centroide/punto → efecto encadenado → setAlt) queda
+  igual. Verificado: la API devuelve {"elevation":[538.0]} para Múnich, el fetch pasa CORS desde
+  localhost y el parser da 538. El campo sigue sobrescribible a mano ("Volver a calcularla" resetea).
+  ⚠ GOTCHA: features que dependen de una API de Google Cloud (Elevation, Places, etc.) fallan
+  mudas si esa API no está habilitada en el proyecto — preferir un servicio keyless con CORS
+  (Open-Meteo) cuando solo se necesita el dato y no la integración con el mapa.
+(commit: pending · versión V1.8)

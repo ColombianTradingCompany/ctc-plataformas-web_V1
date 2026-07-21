@@ -10,10 +10,13 @@
 // El owner lo enunció al revés ("el punto para >4"), pero el polígono SOLO
 // existe por encima de 4 ha — el mapeo de arriba es el único coherente.
 //
-// La consulta usa google.maps.ElevationService: el mismo SDK y la misma clave
-// que ya carga el mapa de fincas, sin dependencias ni claves nuevas. Requiere
-// que la Elevation API esté habilitada en el proyecto de Google Cloud; si no lo
-// está, la llamada falla y el campo simplemente queda editable a mano.
+// La consulta usa la Elevation API de Open-Meteo (open-meteo.com): pública,
+// gratuita, sin clave y con CORS abierto, así que corre desde el navegador sin
+// tocar Google Cloud. Antes se usaba google.maps.ElevationService, pero eso
+// exigía habilitar la Elevation API en el proyecto de Google Cloud —cosa que no
+// estaba hecha— y por eso el campo nunca se auto-llenaba. Si Open-Meteo no
+// responde, el campo simplemente queda editable a mano: la altura es una
+// comodidad, nunca puede impedir guardar una finca.
 
 export type LatLng = { lat: number; lng: number };
 
@@ -70,17 +73,20 @@ export function fincaReferencePoint(
 }
 
 /**
- * Altura en metros del punto, vía google.maps.ElevationService. Devuelve null
- * si el SDK no está cargado o el servicio no responde — nunca lanza: la altura
- * es una comodidad, no puede impedir guardar una finca.
+ * Altura en metros del punto, vía la Elevation API de Open-Meteo (sin clave,
+ * CORS abierto). Devuelve null si el punto no es válido o el servicio no
+ * responde — nunca lanza: la altura es una comodidad, no puede impedir guardar
+ * una finca.
  */
 export async function lookupElevation(point: LatLng): Promise<number | null> {
-  const maps = (globalThis as { google?: { maps?: { ElevationService?: new () => google.maps.ElevationService } } }).google?.maps;
-  if (!maps?.ElevationService) return null;
+  const { lat, lng } = point;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   try {
-    const service = new maps.ElevationService();
-    const res = await service.getElevationForLocations({ locations: [point] });
-    const m = res?.results?.[0]?.elevation;
+    const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data: { elevation?: unknown } = await res.json();
+    const m = Array.isArray(data.elevation) ? data.elevation[0] : null;
     return typeof m === "number" && Number.isFinite(m) ? Math.round(m) : null;
   } catch {
     return null;

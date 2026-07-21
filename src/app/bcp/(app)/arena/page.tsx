@@ -4,7 +4,7 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { createArenaSession } from "../arenaActions";
 import { reviewEvaluationClaim } from "../evaluationActions";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
-import { CupRegistroButton } from "./ArenaBoardClient";
+import { CupRegistroButton, DeleteSessionButton } from "./ArenaBoardClient";
 import { AssignSessionControls } from "../nominados/NominadosClient";
 import styles from "../shared.module.css";
 
@@ -102,6 +102,10 @@ export default async function BcpArenaPage() {
       <span className={styles.badge}>
         {rosterBySession.get(s.id)?.length ?? 0}/{s.capacity}
       </span>
+      <DeleteSessionButton
+        sessionId={s.id}
+        summary={`${seasonOf(s)} · ${dateOf(s)} · ${rosterBySession.get(s.id)?.length ?? 0}/${s.capacity} café(s)${winnerName(s) ? ` · ganador ${winnerName(s)}` : ""}`}
+      />
     </div>
   );
 

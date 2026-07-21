@@ -79,6 +79,50 @@ export async function createArenaSession(formData: FormData) {
 // (recordArenaScore/closeArenaSession) se retiraron con la jornada v2.
 
 /**
+ * Elimina una sesión de Arena y DEVUELVE sus cafés al pool de Aptos, para que
+ * ningún dato quede colgado (raíz del bug de "En sesión de Arena" fantasma):
+ * las inscripciones vuelven a phase='arena' y los lotes a stage='apto' (sin
+ * grado), se borran las planillas de taza (arena_scores) y el roster. Sirve
+ * para limpiar sesiones de prueba o rehacer una jornada.
+ */
+export async function deleteArenaSession(
+  sessionId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireActiveAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: sess } = await service.from("arena_sessions").select("id").eq("id", sessionId).maybeSingle();
+  if (!sess) return { ok: false, error: "Sesión no encontrada." };
+
+  const { data: roster } = await service.from("arena_session_lots").select("lot_id").eq("arena_session_id", sessionId);
+  const lotIds = [...new Set((roster ?? []).map((r) => r.lot_id))];
+  if (lotIds.length) {
+    // Las inscripciones que estaban en sesión/competido vuelven a «arena» (Aptos).
+    await service.from("arena_inscriptions").update({ phase: "arena" }).in("lot_id", lotIds).in("phase", ["sesion", "competido"]);
+    // Los lotes marcados por ESTA sesión (fila_arena/evaluado/galardonado) vuelven
+    // a «apto», sin grado (el grado lo otorgaba la sesión que se elimina).
+    await service.from("lots").update({ stage: "apto", grade: null }).in("id", lotIds).in("stage", ["fila_arena", "evaluado", "galardonado"]);
+  }
+
+  await service.from("arena_scores").delete().eq("arena_session_id", sessionId);
+  await service.from("arena_session_lots").delete().eq("arena_session_id", sessionId);
+  const { error } = await service.from("arena_sessions").delete().eq("id", sessionId);
+  if (error) return { ok: false, error: "No se pudo eliminar la sesión." };
+
+  await service.from("audit_log").insert({
+    entity_type: "arena_session",
+    entity_id: sessionId,
+    action: "session_deleted",
+    performed_by: adminId,
+    notes: `${lotIds.length} café(s) devuelto(s) a Aptos`,
+  });
+  revalidatePath("/bcp/arena");
+  revalidatePath("/bcp/nominados");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+/**
  * Registro B2/B3 por café de una sesión (2026-07-20): las mismas interfaces de
  * la Ficha, disponibles DESDE EL PRINCIPIO y VARIAS VECES por café (pedido del
  * owner) — cada guardado AÑADE una planilla a la lista de ese café en

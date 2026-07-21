@@ -7,10 +7,34 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { saveCupRegistration } from "../arenaActions";
+import { deleteArenaSession, saveCupRegistration } from "../arenaActions";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, computeSca, labEvaluationScore, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import styles from "../shared.module.css";
+
+/** Elimina una sesión (con confirmación) y devuelve sus cafés al pool de Aptos. */
+export function DeleteSessionButton({ sessionId, summary }: { sessionId: string; summary: string }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  function del() {
+    if (!window.confirm(`¿Eliminar esta sesión?\n\n${summary}\n\nLos cafés vuelven al pool de Aptos. Esta acción no se puede deshacer.`)) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await deleteArenaSession(sessionId);
+      if (!res.ok) setError(res.error);
+      else router.refresh();
+    });
+  }
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      <button type="button" className="btn btn-sm" disabled={pending} onClick={del} style={{ borderColor: "var(--red)", color: "var(--red)" }}>
+        {pending ? "Eliminando…" : "Eliminar sesión"}
+      </button>
+      {error && <span className={styles.warn} style={{ fontSize: 11.5 }}>{error}</span>}
+    </span>
+  );
+}
 
 export function CupRegistroButton({
   sessionId,

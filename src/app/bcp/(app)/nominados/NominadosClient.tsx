@@ -12,6 +12,7 @@ import {
   confirmSampleReceivedNom,
   createBatchProofUploadUrl,
   createSondeoLotResultUploadUrl,
+  deleteSondeoBatch,
   markBatchDelivered,
   markBatchReceived,
   markBatchSent,
@@ -243,6 +244,28 @@ export function RemoveFromBatchButton({ lotId }: { lotId: string }) {
     <span>
       <button className="btn btn-sm" disabled={pending} onClick={() => run(() => removeFromBatch(lotId))}>
         Sacar
+      </button>
+      <ErrorLine error={error} />
+    </span>
+  );
+}
+
+/** Elimina un bache (con confirmación); los cafés sin veredicto vuelven a En Fila. */
+export function DeleteBatchButton({ batchId, label, lotCount }: { batchId: string; label: string; lotCount: number }) {
+  const { pending, error, run } = useAction();
+  return (
+    <span>
+      <button
+        className="btn btn-sm"
+        disabled={pending}
+        style={{ borderColor: "var(--red)", color: "var(--red)" }}
+        onClick={() => {
+          if (window.confirm(`¿Eliminar el bache «${label}»?\n\n${lotCount} café(s) sin veredicto vuelven a «En Fila». Esta acción no se puede deshacer.`)) {
+            run(() => deleteSondeoBatch(batchId));
+          }
+        }}
+      >
+        {pending ? "Eliminando…" : "Eliminar bache"}
       </button>
       <ErrorLine error={error} />
     </span>

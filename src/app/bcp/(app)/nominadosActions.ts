@@ -298,6 +298,34 @@ export async function assignLotsToBatch(batchId: string, lotIds: string[]): Prom
   return { ok: true };
 }
 
+/**
+ * Elimina un bache de sondeo y DEVUELVE sus cafés sin veredicto a «En Fila»
+ * (phase='fila', sin bache ni planillas), para no dejar datos colgados. Los
+ * cafés que ya tuvieran veredicto (arena/retirado) solo pierden el puntero al
+ * bache; conservan su resultado. Sirve para limpiar baches de prueba.
+ */
+export async function deleteSondeoBatch(batchId: string): Promise<Result> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const { data: batch } = await service.from("sondeo_batches").select("id, label").eq("id", batchId).maybeSingle();
+  if (!batch) return { ok: false, error: "Bache no encontrado." };
+
+  // Sin veredicto todavía (phase='sondeo') ⇒ de vuelta a En Fila, limpio.
+  await service
+    .from("arena_inscriptions")
+    .update({ phase: "fila", sondeo_batch_id: null, sondeo_evaluation: null })
+    .eq("sondeo_batch_id", batchId)
+    .eq("phase", "sondeo");
+  // Cualquier café restante (ya con veredicto) solo suelta el puntero al bache.
+  await service.from("arena_inscriptions").update({ sondeo_batch_id: null }).eq("sondeo_batch_id", batchId);
+
+  const { error } = await service.from("sondeo_batches").delete().eq("id", batchId);
+  if (error) return { ok: false, error: "No se pudo eliminar el bache." };
+  await auditBatch(service, batchId, "batch_deleted", adminId, batch.label);
+  revalidateAll();
+  return { ok: true };
+}
+
 export async function removeFromBatch(lotId: string): Promise<Result> {
   await requireAdmin();
   const service = createServiceRoleClient();

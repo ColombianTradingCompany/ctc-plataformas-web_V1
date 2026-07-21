@@ -9,6 +9,7 @@ import {
   BatchPicker,
   CashbackControls,
   ConfirmSampleButton,
+  DeleteBatchButton,
   PaymentControls,
   PendingBatchControls,
   PlanBatchButton,
@@ -132,6 +133,7 @@ export default async function NominadosPage() {
       <b style={{ fontSize: 14 }}>{b.label}</b>
       <span className={styles.badge}>{batchLots(b).length}/{MAX_BATCH_LOTS}</span>
       {b.lab_name && <span className={styles.meta}>{b.lab_name}</span>}
+      <DeleteBatchButton batchId={b.id} label={b.label} lotCount={batchLots(b).length} />
     </div>
   );
 

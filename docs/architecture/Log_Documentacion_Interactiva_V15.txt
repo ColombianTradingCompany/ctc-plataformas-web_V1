@@ -461,3 +461,26 @@ está desplegado READY en producción.)
 - Verificado: tsc + eslint + build limpios; SQL confirma el enrutamiento (Nominados = Catia/Pacamara;
   Arena Aptos = Bourbon/Geisha/Tabi). BCP con 2FA, no drivable en navegador.
 (commit: pending · versión V1.12)
+
+## [2026-07-21] Datos colgados de Arena + poder eliminar sesiones y baches
+- CONFUSIÓN reportada por el owner: en el popup de Productores, Pacamara y Catia salían "EN SESIÓN
+  DE ARENA" (lots.stage='fila_arena') pero no aparecían en ninguna sesión — estaban en Nominados
+  (Sondeo / En Fila). Causa raíz: assignLotToSession pone stage='fila_arena' al bloquear en sesión,
+  pero NADA lo revierte al desmontar una sesión (no existía "eliminar sesión"); al revertir a mano
+  la sesión de prueba quedaron los 5 lotes con stage fantasma.
+- AUDITORÍA (SQL): los 5 lotes tenían stage='fila_arena' con in_sessions=0. FIX inmediato: se
+  reseteó stage 'fila_arena' → 'apto' para lotes que no están en ninguna sesión. Ahora el popup
+  muestra "Apto" (correcto), coherente con su phase (Aptos/En Fila/Sondeo).
+  También quedaron a la vista 2 sesiones basura (una vacía d4e27ff8; otra vieja 202aac4a con
+  "Caturra Honey") y el bache de prueba "Sondeo Test 1".
+- FEATURE: eliminar sesiones y baches, con rollback que impide que se repita el dato colgado:
+  · arenaActions.deleteArenaSession: devuelve el roster al pool de Aptos (inscripción sesion/competido
+    → 'arena'; lote fila_arena/evaluado/galardonado → 'apto' sin grado), borra arena_scores y el
+    roster, elimina la sesión. Botón «Eliminar sesión» (con confirmación) en cada tarjeta de sesión.
+  · nominadosActions.deleteSondeoBatch: los lotes SIN veredicto (phase='sondeo') vuelven a «En Fila»
+    (bache y planillas limpiados); los ya juzgados solo sueltan el puntero; elimina el bache. Botón
+    «Eliminar bache» (con confirmación) en cada tarjeta de bache.
+  · Componentes cliente DeleteSessionButton (ArenaBoardClient) y DeleteBatchButton (NominadosClient),
+    patrón resultado-inline + window.confirm con resumen de lo vinculado.
+- Verificado: tsc + eslint + build limpios; SQL confirma los 5 stages en 'apto'. BCP 2FA — no drivable.
+(commit: pending · versión V1.13)

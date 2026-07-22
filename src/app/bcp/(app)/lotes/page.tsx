@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot } from "../actions";
+import { createLot, deleteAbandonedLot } from "../actions";
+import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { AptosNoAptosSections, type SectionLot } from "./AptosNoAptosSections";
 import { seasonLabel, type Season } from "@/lib/arena/seasons";
@@ -65,6 +66,7 @@ type LotRow = {
   grade: string | null;
   source: string;
   season_id: string | null;
+  updated_at: string;
   sample_shipped_at: string | null;
   sample_2kg_confirmed_at: string | null;
   eva_no_apto_reason: string | null;
@@ -139,7 +141,7 @@ export default async function BcpLotesPage() {
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, stage, intake_step, grade, source, season_id, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet,
+        `id, name, producer_id, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -569,6 +571,21 @@ function LotCard({
           eudrLabel={eudrStatus.label}
           inscriptionSettled={inscriptionSettled}
         />
+      )}
+
+      {/* Abandonado (V2.0): solo borradores sin actividad >10 días; la regla
+          dura la re-impone el servidor (deleteAbandonedLot). */}
+      {lot.stage === "borrador" && Date.now() - Date.parse(lot.updated_at) > 10 * 86_400_000 && (
+        <div style={{ marginTop: 12 }}>
+          <p className={styles.meta}>
+            Borrador sin actividad desde el {new Date(lot.updated_at).toLocaleDateString("es-CO")}.
+          </p>
+          <DeleteAbandonedButton
+            action={deleteAbandonedLot.bind(null, lot.id)}
+            label="Eliminar lote (abandonado)"
+            confirmText={`¿Eliminar el borrador "${lot.name}" por abandono?\n\nEl productor verá un aviso en su feed y puede registrarlo de nuevo. Esta acción no se puede deshacer.`}
+          />
+        </div>
       )}
     </FincaModalRow>
   );

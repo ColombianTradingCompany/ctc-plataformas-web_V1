@@ -5,8 +5,10 @@
 // cualquier pantalla y saber si lo que está viendo es lo último que se desplegó.
 //
 // CÓMO SE NUMERA
-//   - MAYOR (1.x)  la generación de la plataforma. Hoy 1, igual que el repo
-//                  (ctc-plataformas-web_V1). Solo cambia en una reescritura.
+//   - MAYOR (N.x)  la generación de la plataforma. El owner la declara en un
+//                  "wrap" de hito (V2.0 = wrap del 2026-07-22: boards, Arena
+//                  corregida, consolas reorganizadas, Mapa de Trabajo). No
+//                  exige una reescritura — marca un estado estable del todo.
 //   - MENOR (x.N)  sube UNA vez por cada tanda de trabajo que se despliega.
 //                  Súbala en el MISMO commit que la tanda; si se olvida, el
 //                  SHA de abajo delata igual qué build está corriendo.
@@ -15,7 +17,7 @@
 // Documentacion_Interactiva_V15.0(...).html). Esa numera SNAPSHOTS DE DOCUMENTO
 // y avanza con su propio ritmo de "Version Wrap" — que las dos digan "V15" o
 // "V1" al mismo tiempo sería coincidencia, no relación.
-export const APP_VERSION = "1.18";
+export const APP_VERSION = "2.0";
 
 /** "V1.0" — lo que se pinta en pantalla. */
 export const VERSION_LABEL = `V${APP_VERSION}`;

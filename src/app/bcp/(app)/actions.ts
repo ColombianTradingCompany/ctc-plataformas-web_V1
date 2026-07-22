@@ -598,6 +598,120 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
   revalidatePath("/bcp/lotes");
 }
 
+// ── Limpieza de abandonados (V2.0, pedido del owner) ─────────────────────────
+// BCP puede ELIMINAR lotes y fincas "dejados atrás": sin actividad por más de
+// 10 días. Interpretación documentada (regla del owner: "no activity >10 days"):
+//   · LOTE abandonado  = stage='borrador' (nunca completó su ficha) y
+//     lots.updated_at hace más de 10 días. Un lote más allá de borrador ya
+//     entró al proceso — no se considera abandonado por esta vía.
+//   · FINCA abandonada = status='pending_review', SIN lotes más allá de
+//     borrador, y sin actividad >10 días. fincas no tiene updated_at, así que
+//     "última actividad" = MAX(creación de la finca, updated_at de sus lotes,
+//     comm log de la finca). Eliminarla arrastra sus lotes borrador (FK CASCADE).
+// Ambas dejan rastro en audit_log y avisan al productor por su feed (el comm se
+// inserta DESPUÉS del delete, sin FK al elemento borrado — sobrevive limpio).
+
+const ABANDONED_DAYS = 10;
+
+export async function deleteAbandonedLot(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service
+    .from("lots")
+    .select("id, name, stage, producer_id, updated_at")
+    .eq("id", lotId)
+    .maybeSingle();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "borrador") {
+    return { ok: false, error: "Solo un lote en borrador se considera abandonado — este ya entró al proceso." };
+  }
+  const idleDays = (Date.now() - Date.parse(lot.updated_at)) / 86_400_000;
+  if (idleDays <= ABANDONED_DAYS) {
+    return { ok: false, error: `Este borrador tuvo actividad hace ${Math.floor(idleDays)} día(s) — el mínimo para eliminarlo es ${ABANDONED_DAYS}.` };
+  }
+
+  const { error } = await service.from("lots").delete().eq("id", lotId);
+  if (error) return { ok: false, error: "No se pudo eliminar el lote." };
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "deleted_abandoned",
+    previous_status: "borrador",
+    performed_by: adminId,
+    notes: `Sin actividad por ${Math.floor(idleDays)} días (${lot.name})`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    note: `CTC retiró el borrador de lote "${lot.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarlo de nuevo cuando quiera retomarlo.`,
+    created_by: adminId,
+  });
+
+  revalidatePath("/bcp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+export async function deleteAbandonedFinca(fincaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: finca } = await service
+    .from("fincas")
+    .select("id, name, status, producer_id, created_at")
+    .eq("id", fincaId)
+    .maybeSingle();
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
+  if (finca.status !== "pending_review") {
+    return { ok: false, error: "Solo una finca pendiente de revisión se considera abandonada." };
+  }
+  const { data: lots } = await service.from("lots").select("id, stage, updated_at").eq("finca_id", fincaId);
+  if ((lots ?? []).some((l) => l.stage !== "borrador")) {
+    return { ok: false, error: "Esta finca tiene lotes que ya entraron al proceso — no se puede eliminar por abandono." };
+  }
+  const { data: lastComm } = await service
+    .from("producer_comm_log")
+    .select("created_at")
+    .eq("finca_id", fincaId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const lastActivity = Math.max(
+    Date.parse(finca.created_at),
+    ...(lots ?? []).map((l) => Date.parse(l.updated_at)),
+    lastComm ? Date.parse(lastComm.created_at) : 0
+  );
+  const idleDays = (Date.now() - lastActivity) / 86_400_000;
+  if (idleDays <= ABANDONED_DAYS) {
+    return { ok: false, error: `Esta finca tuvo actividad hace ${Math.floor(idleDays)} día(s) — el mínimo para eliminarla es ${ABANDONED_DAYS}.` };
+  }
+
+  // El delete arrastra los lotes borrador (lots.finca_id ON DELETE CASCADE);
+  // el comm log conserva su historia (finca_id pasa a NULL).
+  const { error } = await service.from("fincas").delete().eq("id", fincaId);
+  if (error) return { ok: false, error: "No se pudo eliminar la finca." };
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: fincaId,
+    action: "deleted_abandoned",
+    previous_status: "pending_review",
+    performed_by: adminId,
+    notes: `Sin actividad por ${Math.floor(idleDays)} días (${finca.name}); ${lots?.length ?? 0} borrador(es) arrastrado(s)`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: finca.producer_id,
+    context_label: `Finca ${finca.name}`,
+    note: `CTC retiró el registro de la finca "${finca.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarla de nuevo cuando quiera retomarla.`,
+    created_by: adminId,
+  });
+
+  revalidatePath("/bcp/fincas");
+  revalidatePath("/bcp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
 export async function rejectFinca(fincaId: string, notes: string) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();

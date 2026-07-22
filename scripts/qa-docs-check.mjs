@@ -14,12 +14,16 @@ for (const d of docs.slice(0, 5)) {
 const kinds = docs.reduce((a, d) => (a[d.kind] = (a[d.kind] || 0) + 1, a), {});
 console.log("by kind:", JSON.stringify(kinds));
 
+// Expectativas DINÁMICAS (V2.0): las fijas ("14 snapshots", "V14") se volvían
+// obsoletas con cada Version Wrap. Ahora se valida la FORMA, no el conteo.
+const snapshots = docs.filter((d) => d.kind === "snapshot");
+const maxVersion = Math.max(...snapshots.map((d) => d.version ?? 0));
 check("finds documents at all", docs.length > 0);
-check("finds the 14 snapshots", kinds.snapshot === 14);
+check("finds snapshots (>=14)", snapshots.length >= 14);
 check("finds logs", (kinds.log ?? 0) > 0);
 check("finds the audit report", docs.some((d) => d.kind === "report" && /Auditor/i.test(d.title)));
-check("newest snapshot first = V14", docs.find((d) => d.kind === "snapshot")?.version === 14);
-check("V14 sha parsed", docs.find((d) => d.kind === "snapshot")?.sha === "0925d78");
+check("newest snapshot first = max version", docs.find((d) => d.kind === "snapshot")?.version === maxVersion);
+check("newest sha parsed (7 hex)", /^[0-9a-f]{7}$/.test(docs.find((d) => d.kind === "snapshot")?.sha ?? ""));
 check("no .mjs leaked in", !docs.some((d) => d.file.endsWith(".mjs")));
 
 // Path traversal must be refused: validation is by whitelist, not by sanitizing.

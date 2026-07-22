@@ -6,10 +6,11 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaCode } from "@/components/kaffetal-regal/data";
 import { daneCodeFor } from "@/lib/daneCodes";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
-import { approveFinca, rejectFinca, updateFincaEudr, setFincaCertShared } from "../actions";
+import { approveFinca, rejectFinca, updateFincaEudr, setFincaCertShared, deleteAbandonedFinca } from "../actions";
 import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
 import { ActionForm } from "../ActionForm";
+import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
 import { FincaModalRow } from "./FincaModalRow";
 import styles from "../shared.module.css";
@@ -246,6 +247,16 @@ export default async function BcpFincasPage() {
                       {finca.status === "approved" ? "Revocar (rechazar)" : "Rechazar"}
                     </button>
                   </form>
+                )}
+                {/* Abandonada (V2.0): el botón sale solo en Marchitando; la regla
+                    dura (>10 días sin actividad, sin lotes en proceso) la impone
+                    el servidor y su rechazo se muestra inline. */}
+                {seg.id === "marchitando" && finca.status === "pending_review" && (
+                  <DeleteAbandonedButton
+                    action={deleteAbandonedFinca.bind(null, finca.id)}
+                    label="Eliminar finca (abandonada)"
+                    confirmText={`¿Eliminar la finca "${finca.name}" por abandono?\n\nSe eliminan también sus lotes en borrador. El productor verá un aviso en su feed y puede registrarla de nuevo. Esta acción no se puede deshacer.`}
+                  />
                 )}
                 {finca.status === "approved" && (
                   <>

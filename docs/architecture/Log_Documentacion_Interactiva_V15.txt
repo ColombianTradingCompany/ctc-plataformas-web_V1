@@ -612,3 +612,26 @@ está desplegado READY en producción.)
   Base solo-lectura; ＋Nueva propuesta → borrador editable; diálogo Guardar; hito dorado (#FBF1DC);
   round-trip de work_map_proposals por SQL (insert→list→delete). tsc+eslint+build limpios.
 (commit: pending · versión V1.18)
+
+## [2026-07-22] V2.0 · derechos de limpieza de abandonados + auditoría de salud
+- NUEVO (pedido del owner para V2.0): BCP puede ELIMINAR lotes y fincas "dejados atrás" — sin
+  actividad por más de 10 días. Interpretación documentada:
+  · Lote abandonado = stage='borrador' + lots.updated_at >10 días. deleteAbandonedLot.
+  · Finca abandonada = pending_review + sin lotes más allá de borrador + última actividad
+    (creación, updated_at de sus lotes, comm log) >10 días. deleteAbandonedFinca (arrastra
+    borradores por FK CASCADE). fincas no tiene updated_at — actividad computada.
+  Ambos con audit_log ('deleted_abandoned') + aviso al productor en su feed (comm insertado
+  después del delete, sin FK al elemento borrado). UI: botón rojo con confirmación
+  (DeleteAbandonedButton, patrón resultado-inline) — en Fincas solo en la columna Marchitando;
+  en Lotes solo en borradores con >10 días visibles. La regla dura SIEMPRE en el servidor.
+- AUDITORÍA de salud V2.0: 9 checks de consistencia de datos TODOS en cero (stages fantasma,
+  huérfanos de sesión/bache, galardonado↔grade, listings, phases); guard-check 9/9 con usuarios
+  QA desechables creados y borrados en el mismo paso (residuo cero); boards 27/27; jornada 11/11;
+  eslint src/ limpio de punta a punta. Advisors: INFOs rls_enabled_no_policy = diseño (tablas
+  service-role-only); las 2 vistas SECURITY DEFINER = patrón intencional del catálogo público;
+  endurecer EXECUTE de funciones queda como seguimiento (⚠ producer_owns_comm DEBE seguir
+  ejecutable por authenticated o se rompen las respuestas de hilo); "leaked password protection"
+  deshabilitado — toggle de Auth para el owner. qa-checkout-check no corrió (exige un listing
+  publicado para comprar; correrlo ensuciaría el catálogo antes del walkthrough del owner).
+- qa-docs-check tenía expectativas fijas (14 snapshots/V14) — se vuelve dinámico con este wrap.
+(commit: pending · versión V2.0)

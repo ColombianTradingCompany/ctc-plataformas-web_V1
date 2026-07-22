@@ -50,6 +50,9 @@ const EN: Copy = {
       desc: "The full stage-by-stage breakdown, to see exactly where the weight goes.",
     },
     qr: { name: "QR generator", desc: "Internal tool." },
+    "mermas-ctc": { name: "CTC yield calculator", desc: "Internal tool." },
+    catacion: { name: "Flavour wheel", desc: "Internal tool." },
+    "green-datasheet": { name: "Green coffee datasheet", desc: "Internal tool." },
   },
 };
 
@@ -79,6 +82,9 @@ const T: Record<Lang, Copy> = {
         desc: "El desglose completo etapa por etapa, para ver exactamente dónde se va el peso.",
       },
       qr: { name: "Generador de QR", desc: "Herramienta interna." },
+      "mermas-ctc": { name: "Calculadora de mermas · CTC", desc: "Herramienta interna." },
+      catacion: { name: "Rueda de catación", desc: "Herramienta interna." },
+      "green-datasheet": { name: "Ficha de café verde", desc: "Herramienta interna." },
     },
   },
   de: {
@@ -105,6 +111,9 @@ const T: Record<Lang, Copy> = {
         desc: "Die vollständige Aufschlüsselung Stufe für Stufe, um zu sehen, wo das Gewicht bleibt.",
       },
       qr: { name: "QR-Generator", desc: "Internes Werkzeug." },
+      "mermas-ctc": { name: "CTC-Schwundrechner", desc: "Internes Werkzeug." },
+      catacion: { name: "Aromarad", desc: "Internes Werkzeug." },
+      "green-datasheet": { name: "Rohkaffee-Datenblatt", desc: "Internes Werkzeug." },
     },
   },
 };

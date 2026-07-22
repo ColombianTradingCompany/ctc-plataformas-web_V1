@@ -14,6 +14,9 @@ export const PRIVATE_TOOLS_DIR = path.join(process.cwd(), "private-tools");
 /** Lista blanca explícita: solo estos nombres se pueden pedir. */
 const PRIVATE_TOOL_FILES: Record<string, string> = {
   qr: "generador-qr.html",
+  "mermas-ctc": "mermas-ctc.html",
+  catacion: "rueda-catacion.html",
+  "green-datasheet": "green-coffee-datasheet.html",
 };
 
 export type PrivateToolKey = keyof typeof PRIVATE_TOOL_FILES;

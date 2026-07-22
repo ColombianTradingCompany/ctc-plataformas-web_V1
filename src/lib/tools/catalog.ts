@@ -15,7 +15,14 @@
 // (kaffetal-regal.ctcexport.com) la reescritura convertiría /tools/x.html en
 // /kaffetal-regal/tools/x.html y daría 404.
 
-export type ToolId = "agtron" | "mermas-rapida" | "mermas-detallada" | "qr";
+export type ToolId =
+  | "agtron"
+  | "mermas-rapida"
+  | "mermas-detallada"
+  | "qr"
+  | "mermas-ctc"
+  | "catacion"
+  | "green-datasheet";
 
 export type ToolDef = {
   id: ToolId;
@@ -29,12 +36,23 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   agtron: { id: "agtron", src: "/tools/agtron-dial.html", lang: "en" },
   "mermas-rapida": { id: "mermas-rapida", src: "/tools/mermas-rapida.html", lang: "es" },
   "mermas-detallada": { id: "mermas-detallada", src: "/tools/mermas-detallada.html", lang: "es" },
-  // Fuera de public/: solo se sirve con sesión de consola (ver privateTools.ts).
+  // Fuera de public/: solo se sirven con sesión de consola (ver privateTools.ts).
   qr: { id: "qr", src: "/ecp/herramientas/qr", lang: "en" },
+  "mermas-ctc": { id: "mermas-ctc", src: "/ecp/herramientas/mermas-ctc", lang: "es" },
+  catacion: { id: "catacion", src: "/ecp/herramientas/catacion", lang: "es" },
+  "green-datasheet": { id: "green-datasheet", src: "/ecp/herramientas/green-datasheet", lang: "en" },
 };
 
 /** Todas las herramientas, en el orden en que se listan en el panel interno. */
-export const ALL_TOOL_IDS: ToolId[] = ["mermas-rapida", "mermas-detallada", "agtron", "qr"];
+export const ALL_TOOL_IDS: ToolId[] = [
+  "mermas-rapida",
+  "mermas-detallada",
+  "agtron",
+  "mermas-ctc",
+  "catacion",
+  "green-datasheet",
+  "qr",
+];
 
 // ── El reparto por superficie, ahora CONFIGURABLE ────────────────────────────
 // Antes eran tres listas fijas en este archivo. Desde 2026-07-20 el reparto se
@@ -68,8 +86,12 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   "mermas-rapida": { kr: true, cp: false, tier: "default" },
   "mermas-detallada": { kr: true, cp: false, tier: "default" },
   agtron: { kr: true, cp: true, tier: "default" },
-  // Interna: no se ofrece en ninguna superficie pública.
+  // Internas: no se ofrecen en ninguna superficie pública — solo se ven en la
+  // consola interna. El owner puede exponerlas a KR/CP desde Disponibilidad.
   qr: { kr: false, cp: false, tier: "plus" },
+  "mermas-ctc": { kr: false, cp: false, tier: "default" },
+  catacion: { kr: false, cp: false, tier: "default" },
+  "green-datasheet": { kr: false, cp: false, tier: "default" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

@@ -56,4 +56,28 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M14 14h2.5v2.5H14zM19 14h1M19 18.5h1M14.5 20h2M18 20v.01" />
     </LineIcon>
   ),
+  // Mermas CTC: el mismo embudo de rendimiento, pero con la hoja de PDF que exporta.
+  "mermas-ctc": (
+    <LineIcon>
+      <path d="M3 4h11l-4.5 5.5V15l-3 1.5V9.5L3 4Z" />
+      <path d="M16 12.5h5v7.5a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-7.5Z" />
+      <path d="M17.5 15.5h2M17.5 18h2" />
+    </LineIcon>
+  ),
+  // Catación: la rueda del sabor — un círculo con radios que la parten en sectores.
+  catacion: (
+    <LineIcon>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3.5V9M12 15v5.5M3.5 12H9M15 12h5.5M6 6l3 3M18 6l-3 3M6 18l3-3M18 18l-3-3" />
+    </LineIcon>
+  ),
+  // Datasheet: una hoja técnica — documento con líneas de campos y una firma/dato.
+  "green-datasheet": (
+    <LineIcon>
+      <path d="M6 3h8l4 4v14a0 0 0 0 1 0 0H6a0 0 0 0 1 0 0V3Z" />
+      <path d="M14 3v4h4" />
+      <path d="M8.5 11h7M8.5 14h7M8.5 17h4" />
+    </LineIcon>
+  ),
 };

@@ -33,6 +33,18 @@ const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "Calculadora detallada de mermas",
     desc: "La versión completa: defectos, mallas y factor, para cuando hay que sustentar el número.",
   },
+  "mermas-ctc": {
+    name: "Calculadora de mermas · Café (CTC)",
+    desc: "La calculadora de rendimiento pergamino → verde con la marca CTC; exporta el resultado a PDF. Funciona sin conexión. Interna del equipo.",
+  },
+  catacion: {
+    name: "Rueda de catación (rueda del sabor)",
+    desc: "La rueda del sabor del café, interactiva: para nombrar aromas y sabores en la mesa de catación. Interna del equipo.",
+  },
+  "green-datasheet": {
+    name: "Ficha de café verde (datasheet)",
+    desc: "La hoja técnica de un lote de café verde, en el formato del comprador. En inglés. Interna del equipo.",
+  },
 };
 
 export default async function EcpHerramientasPage() {

@@ -6,3 +6,45 @@ Formato:
 - Qué cambió, concreto (archivo/tabla/flujo)
 - Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
 (commit: <sha corto o "pending">)
+
+## [2026-07-22] Herramientas internas — 3 nuevas embebidas
+- Añadidas 3 herramientas INTERNAS (tras la sesión de consola, patrón `qr`): `mermas-ctc`
+  (Calculadora de Mermas · Café CTC, exporta PDF con jsPDF), `catacion` (Rueda de Catación /
+  rueda del sabor) y `green-datasheet` (Green Coffee Datasheet, EN). HTML en `private-tools/`,
+  servidas por `/ecp/herramientas/[tool]` (lista blanca en `privateTools.ts`), CSP default-src 'self'.
+- Registro: `ToolId` + `TOOLS` + `ALL_TOOL_IDS` + `DEFAULT_TOOLS_CONFIG` (kr:false/cp:false — el
+  owner las puede exponer a KR/CP desde Disponibilidad); copy en la página ECP, iconos de línea en
+  `ToolIcons.tsx`, y copy de relleno ("interna") en los diccionarios `Record<ToolId>` de KR/CP.
+- `scripts/vendor-tool-assets.mjs` extendido: ahora también baja scripts de CDN (cdnjs/unpkg/jsDelivr)
+  a `/tools/assets` — la calculadora CTC traía jsPDF de cdnjs, que la CSP interna bloqueaba.
+  Corrido: mermas-ctc = 10 woff2 + jsPDF; rueda = 16 woff2; datasheet ya era autocontenida.
+- DICT `herramientas`: pasar de "4 herramientas" a 7 (3 públicas + 4 internas) y anotar el
+  vendoring de CDN scripts, al próximo wrap. Sin cambios de nodo/escenario.
+(commit: pending)
+
+## [2026-07-22] Mapa de Trabajo (Base) — EUDR desdoblado finca vs. lote
+- El Base de la Mapa de Trabajo (`src/lib/workmap/schema.ts`) confundía el EUDR en UNA
+  sola compuerta ("¿Finca apta EUDR? (dossier + certificado)") entre `lots` y el video.
+  En el sistema real son DOS compuertas en cadena de dependencia, en dos entidades, con
+  dos artefactos, resueltas en dos superficies BCP distintas:
+  · Finca: `fincaEudrStatus` (apta/pendiente/no apta), BCP aprueba en /bcp/fincas
+    (`approveFinca` + `setFincaCertShared`) → produce el DOSSIER EUDR de finca.
+  · Lote: `lotEudrStatus` (bloqueado por finca / en revisión / eudr_ready) — DEPENDE de que
+    la(s) finca(s) de origen estén aptas — riesgo Art. 10-11; el veredicto lo cierra BCP
+    dentro de EVA (1 de los 5 ítems del checklist) → produce el CERTIFICADO EUDR de lote.
+- Rehecho el tramo FT→EUDR→EVA del seed: nodos nuevos `finca_eudr_gate` (decisión),
+  `finca_dossier` (artefacto), `finca_stop` (alto) en la etapa FT; `lot_eudr_gate` (decisión),
+  `lot_certificate` (artefacto), `lot_eudr_stop` (alto) en la etapa EUDR. Arista de dependencia
+  explícita `finca_eudr_gate → lot_eudr_gate` ("finca apta habilita"). Etapas renombradas:
+  "FT · Finca" → "FT · Finca + EUDR", "EUDR" → "EUDR · Lote".
+- NUEVO tipo de nodo `artifact` (documento con esquina doblada) en el vocabulario del lienzo
+  (`MapNodeKind`, normalizador, `WorkMapCanvas.tsx`: forma, botón "＋ Documento", dropdown de
+  tipo) — para representar entregables de cumplimiento sin confundirlos con tablas.
+- Corregida arista Black: `black_negotiations` ahora sale de `gal` ("grado Black"), no de
+  `purchase_contracts` (el grado Black NO va a contrato normal; se negocia aparte).
+- Cambio de NODO del mapa `n-mapatrabajo` / entrada DICT `mapatrabajo`: el modelo EUDR del Base
+  pasó de una compuerta a dos + dependencia; documentar el tipo de nodo `artifact` y el
+  desdoblamiento finca/lote (dossier vs. certificado) al próximo wrap.
+- Verificación: tsc + eslint limpios; validador de geometría (43 nodos, 37 aristas, 2 artefactos)
+  sin aristas colgantes ni solapes. La vista real /ecp/mapa está tras 2FA (no automatizable).
+(commit: pending)

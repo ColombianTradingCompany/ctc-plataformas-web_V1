@@ -37,6 +37,9 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     desc: "Referencia visual del color de tueste y su número Agtron, para hablar el mismo idioma que el tostador.",
   },
   qr: { name: "Generador de QR", desc: "Herramienta interna." },
+  "mermas-ctc": { name: "Calculadora de mermas · CTC", desc: "Herramienta interna." },
+  catacion: { name: "Rueda de catación", desc: "Herramienta interna." },
+  "green-datasheet": { name: "Ficha de café verde", desc: "Herramienta interna." },
 };
 
 // A conversation thread = every note (CTC notes + the producer's replies)

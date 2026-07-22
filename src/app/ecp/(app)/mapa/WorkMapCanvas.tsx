@@ -30,6 +30,8 @@ const STOP_W = 196;
 const STOP_H = 52;
 const MILE_W = 226;
 const MILE_H = 72;
+const ART_W = 188;
+const ART_H = 60;
 
 const C = {
   bg: "#FBF9F2",
@@ -57,6 +59,9 @@ const C = {
   stopFill: "#FBE9E7",
   stopBorder: "#C9827C",
   stopText: "#7A2A24",
+  artFill: "#E8F0F3",
+  artBorder: "#5E7A88",
+  artText: "#28414B",
 };
 const tintColor = (t?: StageTint) => (t === "free" ? C.tintFree : t === "paid" ? C.tintPaid : t === "support" ? C.tintSupport : C.band);
 const toneColor = (t?: EdgeTone) => (t === "ok" ? C.ok : t === "bad" ? C.bad : t === "info" ? C.info : C.edge);
@@ -70,6 +75,7 @@ function nodeHalf(n: MapNode) {
   if (n.kind === "decision") return { hw: DECISION_SIZE / 2, hh: DECISION_SIZE / 2 };
   if (n.kind === "stop") return { hw: (n.w ?? STOP_W) / 2, hh: (n.h ?? STOP_H) / 2 };
   if (n.kind === "milestone") return { hw: (n.w ?? MILE_W) / 2, hh: (n.h ?? MILE_H) / 2 };
+  if (n.kind === "artifact") return { hw: (n.w ?? ART_W) / 2, hh: (n.h ?? ART_H) / 2 };
   return { hw: (n.w ?? NODE_W) / 2, hh: (n.h ?? NODE_H) / 2 };
 }
 
@@ -298,7 +304,15 @@ export function WorkMapCanvas({ base, proposals, canEdit }: { base: WorkMapConfi
   function addNode(kind: MapNode["kind"]) {
     const id = newId("n");
     const label =
-      kind === "decision" ? "Nueva decisión" : kind === "stop" ? "Alto del proceso" : kind === "milestone" ? "Hito / entrega" : "nueva_tabla";
+      kind === "decision"
+        ? "Nueva decisión"
+        : kind === "stop"
+          ? "Alto del proceso"
+          : kind === "milestone"
+            ? "Hito / entrega"
+            : kind === "artifact"
+              ? "Documento"
+              : "nueva_tabla";
     const n: MapNode = { id, kind, label, uis: [], x: Math.round(view.x + view.w / 2), y: Math.round(view.y + view.h / 2) };
     setConfig((c) => ({ ...c, nodes: [...c.nodes, n] }));
     setSel({ t: "node", id });
@@ -337,7 +351,15 @@ export function WorkMapCanvas({ base, proposals, canEdit }: { base: WorkMapConfi
 
   const stageOf = (id?: string) => config.stages.find((s) => s.id === id)?.label ?? "—";
   const kindLabel = (k: MapNode["kind"]) =>
-    k === "decision" ? "Decisión" : k === "stop" ? "Alto del proceso" : k === "milestone" ? "Hito / entrega" : "Tabla";
+    k === "decision"
+      ? "Decisión"
+      : k === "stop"
+        ? "Alto del proceso"
+        : k === "milestone"
+          ? "Hito / entrega"
+          : k === "artifact"
+            ? "Documento / artefacto"
+            : "Tabla";
 
   return (
     <div className={styles.root}>
@@ -384,6 +406,7 @@ export function WorkMapCanvas({ base, proposals, canEdit }: { base: WorkMapConfi
             <button className={styles.tbtn} onClick={() => addNode("decision")}>＋ Decisión</button>
             <button className={styles.tbtn} onClick={() => addNode("stop")}>＋ Alto</button>
             <button className={styles.tbtn} onClick={() => addNode("milestone")}>＋ Hito</button>
+            <button className={styles.tbtn} onClick={() => addNode("artifact")}>＋ Documento</button>
             <button
               className={connectFrom ? styles.tbtnOn : styles.tbtn}
               onClick={() => setConnectFrom(connectFrom ? null : sel?.t === "node" ? sel.id : "__pick__")}
@@ -503,6 +526,28 @@ export function WorkMapCanvas({ base, proposals, canEdit }: { base: WorkMapConfi
                 </g>
               );
             }
+            if (n.kind === "artifact") {
+              const w = n.w ?? ART_W;
+              const h = n.h ?? ART_H;
+              const uiLine = (n.uis ?? []).join(" · ");
+              const left = n.x - w / 2;
+              const top = n.y - h / 2;
+              const fold = 14;
+              return (
+                <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: cur }}>
+                  {/* Hoja con esquina doblada: un documento/entregable, no una tabla. */}
+                  <path
+                    d={`M${left},${top} H${left + w - fold} L${left + w},${top + fold} V${top + h} H${left} Z`}
+                    fill={C.artFill}
+                    stroke={isSel || isFrom ? C.sel : C.artBorder}
+                    strokeWidth={isSel || isFrom ? 3 : 1.8}
+                  />
+                  <path d={`M${left + w - fold},${top} V${top + fold} H${left + w} Z`} fill={C.artBorder} opacity={0.28} />
+                  <text x={n.x} y={n.y - (uiLine ? 6 : -2)} textAnchor="middle" fontSize={12} fontWeight={700} fill={C.artText}>▤ {clip(n.label, 22)}</text>
+                  {uiLine && (<text x={n.x} y={n.y + 15} textAnchor="middle" fontSize={9} fill={C.artText} opacity={0.8}>{clip(uiLine, 34)}</text>)}
+                </g>
+              );
+            }
             const w = n.w ?? NODE_W;
             const h = n.h ?? NODE_H;
             const uiLine = (n.uis ?? []).join(" · ");
@@ -561,6 +606,7 @@ export function WorkMapCanvas({ base, proposals, canEdit }: { base: WorkMapConfi
                     <option value="decision">Decisión</option>
                     <option value="stop">Alto del proceso</option>
                     <option value="milestone">Hito / entrega</option>
+                    <option value="artifact">Documento / artefacto</option>
                   </select>
                 </label>
                 <label className={styles.field}>

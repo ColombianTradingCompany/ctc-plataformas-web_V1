@@ -74,6 +74,20 @@ async function processFile(fullPath) {
     notes.push("tailwind");
   }
 
+  // ── 3. Otros scripts de CDN (cdnjs / unpkg / jsDelivr) ─────────────────────
+  // La CSP de la ruta interna es default-src 'self': un <script src> remoto queda
+  // BLOQUEADO. Se bajan a /tools/assets con nombre estable y se reescriben. Hoy
+  // aplica a la calculadora de mermas CTC, que trae jsPDF de cdnjs para exportar.
+  const cdnRe =
+    /<script[^>]+src="(https:\/\/(?:cdnjs\.cloudflare\.com|unpkg\.com|cdn\.jsdelivr\.net)\/[^"]+)"[^>]*><\/script>/g;
+  for (const [tag, url] of [...html.matchAll(cdnRe)]) {
+    const file = safeName(url);
+    const bytes = await get(url, false);
+    await writeFile(path.join(VENDOR_DIR, file), bytes);
+    html = html.replace(tag, `<script src="${ASSETS_REL}/${file}"></script>`);
+    notes.push(file);
+  }
+
   if (html === before) {
     console.log(`  ${name.padEnd(26)} sin cambios (ya offline)`);
     return;

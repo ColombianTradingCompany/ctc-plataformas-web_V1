@@ -13,7 +13,9 @@ export type MapStage = { id: string; label: string; x0: number; x1: number; tint
 
 // table = tabla/registro · decision = compuerta · stop = alto del proceso
 // milestone = punto de equilibrio / entrega (EVA, GAL) — los dos "puntos de parada".
-export type MapNodeKind = "table" | "decision" | "stop" | "milestone";
+// artifact = documento de cumplimiento que PRODUCE una compuerta (dossier EUDR de
+//   finca, certificado EUDR de lote) — no es una tabla, es un entregable impreso.
+export type MapNodeKind = "table" | "decision" | "stop" | "milestone" | "artifact";
 
 // Catálogo de UIs seleccionables (dropdown en el panel del nodo). Agrupado por
 // superficie; el owner puede además escribir una UI a mano ("otra…").
@@ -100,13 +102,25 @@ const ms = (id: string, label: string, tableName: string | null, uis: string[], 
   y,
 });
 
+// Documento / artefacto de cumplimiento que produce una compuerta (dossier EUDR de
+// finca, certificado EUDR de lote): no es tabla, es un entregable impreso.
+const af = (id: string, label: string, uis: string[], stageId: string, x: number, y: number): MapNode => ({
+  id,
+  kind: "artifact",
+  label,
+  uis,
+  stageId,
+  x,
+  y,
+});
+
 // Tramo GRATIS (FT→FT2→EUDR→VID→EVA) · tramo PAGADO (MUE→Sondeo→Arena→GAL, COP 80.000)
 // · soporte (comercio/club/leads/plataforma). EVA y GAL son los dos puntos de equilibrio.
 const STAGES: MapStage[] = [
   { id: "cuenta", label: "Cuenta", x0: 40, x1: 250, tint: "free" },
-  { id: "ft", label: "FT · Finca", x0: 270, x1: 480, tint: "free" },
+  { id: "ft", label: "FT · Finca + EUDR", x0: 270, x1: 480, tint: "free" },
   { id: "ft2", label: "FT2 · Lote", x0: 500, x1: 720, tint: "free" },
-  { id: "eudr", label: "EUDR", x0: 740, x1: 960, tint: "free" },
+  { id: "eudr", label: "EUDR · Lote", x0: 740, x1: 960, tint: "free" },
   { id: "vid", label: "VID · Video", x0: 980, x1: 1160, tint: "free" },
   { id: "eva", label: "EVA · Evaluación", x0: 1180, x1: 1440, tint: "free" },
   { id: "mue", label: "MUE · Pago + Muestra", x0: 1460, x1: 1680, tint: "paid" },
@@ -124,15 +138,24 @@ const NODES: MapNode[] = [
   t("profiles", "profiles", "profiles", ["Auth · todas las cuentas"], "cuenta", 145, 170),
   t("producer_profiles", "producer_profiles", "producer_profiles", ["KR · Información general", "BCP · Productores"], "cuenta", 145, 320),
   t("buyer_profiles", "buyer_profiles", "buyer_profiles", ["CP · Cuenta"], "cuenta", 145, 470),
-  // FT · Finca
+  // FT · Finca + EUDR de finca — compuerta PROPIA de la finca: BCP la aprueba en
+  // /bcp/fincas (fincaEudrStatus: apta / pendiente / no apta) y produce el DOSSIER
+  // EUDR de finca. Es aguas-arriba del lote: una finca no apta bloquea su EUDR.
   t("fincas", "fincas", "fincas", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 375, 250),
-  t("media_assets", "media_assets", "media_assets", ["KR · Fincas/Lotes", "BCP · Arena (jornada)"], "ft", 375, 410),
+  t("media_assets", "media_assets", "media_assets", ["KR · Fincas/Lotes", "BCP · Arena (jornada)"], "ft", 200, 395),
+  d("finca_eudr_gate", "¿Finca apta EUDR?", "ft", 375, 470),
+  af("finca_dossier", "Dossier EUDR · finca", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 275, 680),
+  st("finca_stop", "Finca no apta · corregir", "ft", 495, 680, ["BCP · Fincas", "KR · Mis Fincas"]),
   // FT2 · Lote
   t("lots", "lots", "lots", ["KR · Mis Lotes", "BCP · Lotes", "BCP · Galardonados", "CP · Catálogo"], "ft2", 610, 250),
   t("ficha_snap", "ficha_completion_snapshots", "ficha_completion_snapshots", ["KR · Ficha"], "ft2", 610, 410),
-  // EUDR (compuerta): finca apta + nivel de riesgo → dossier de finca + certificado de lote
-  d("eudr_gate", "¿Finca apta EUDR? (dossier + certificado)", "eudr", 850, 250),
-  st("eudr_stop", "Finca no apta · corregir", "eudr", 850, 470, ["BCP · Fincas", "KR · Mis Fincas"]),
+  // EUDR · Lote — compuerta PROPIA del lote y DEPENDIENTE de la finca: riesgo
+  // Art. 10-11 (lotEudrStatus: bloqueado por finca / en revisión / eudr_ready) sobre
+  // finca(s) de origen aptas → produce el CERTIFICADO EUDR de lote. El veredicto lo
+  // cierra BCP dentro de EVA (1 de los 5 ítems del checklist), no antes.
+  d("lot_eudr_gate", "¿Lote apto EUDR? (riesgo Art. 10-11)", "eudr", 850, 250),
+  af("lot_certificate", "Certificado EUDR · lote", ["KR · Mis Lotes", "BCP · Lotes"], "eudr", 740, 490),
+  st("lot_eudr_stop", "Bloqueado por finca / en revisión", "eudr", 970, 490, ["KR · Mis Lotes", "BCP · Lotes"]),
   // VID · video del lote (lots.video_asset_id + media_assets)
   t("vid", "Video del lote", "media_assets", ["KR · Mis Lotes", "BCP · Lotes"], "vid", 1070, 250),
   // EVA · veredicto documental (HITO / entrega: informe EUDR). Lee lots(eva_checklist,
@@ -187,9 +210,17 @@ const EDGES: MapEdge[] = [
   e("e4", "fincas", "lots"),
   e("e5", "fincas", "media_assets", "info"),
   e("e6", "lots", "ficha_snap", "info"),
-  e("e7", "lots", "eudr_gate"),
-  e("e8", "eudr_gate", "vid", "ok", "apta"),
-  e("e8b", "eudr_gate", "eudr_stop", "bad", "no apta"),
+  // EUDR de FINCA (compuerta propia): produce el dossier; su verdicto habilita/bloquea
+  // aguas abajo el EUDR del lote.
+  e("e7f", "fincas", "finca_eudr_gate"),
+  e("e7d", "finca_eudr_gate", "finca_dossier", "info", "apta · dossier"),
+  e("e7s", "finca_eudr_gate", "finca_stop", "bad", "no apta"),
+  e("e7dep", "finca_eudr_gate", "lot_eudr_gate", "info", "finca apta habilita"),
+  // EUDR de LOTE (compuerta propia, DEPENDE de la finca): produce el certificado.
+  e("e7l", "lots", "lot_eudr_gate"),
+  e("e8c", "lot_eudr_gate", "lot_certificate", "info", "ready · certificado"),
+  e("e8s", "lot_eudr_gate", "lot_eudr_stop", "bad", "bloqueado / revisión"),
+  e("e8v", "lot_eudr_gate", "vid", "ok", "apto → video"),
   e("e_vid", "vid", "eva"),
   e("e10", "eva", "arena_inscriptions", "ok", "Apto → postula (pago)"),
   e("e9b", "eva", "eva_stop", "bad", "No Apto"),
@@ -206,9 +237,10 @@ const EDGES: MapEdge[] = [
   e("e_le", "arena_scores", "lot_evaluations", "info", "planillas → registro"),
   e("e19", "grade_gate", "gal", "ok"),
   e("e20", "gal", "lot_listings"),
-  e("e21", "gal", "purchase_contracts"),
+  e("e21", "gal", "purchase_contracts", "ok", "Red/Blue/Gold"),
   e("e22", "lot_listings", "orders"),
-  e("e23", "purchase_contracts", "black_negotiations", "info"),
+  // Grado Black NO va a contrato normal: sale del galardón a negociación aparte.
+  e("e23", "gal", "black_negotiations", "info", "grado Black"),
   e("e24", "purchase_contracts", "contract_releases", "info"),
   e("e25", "purchase_contracts", "club_member_codes", "info"),
   e("e26", "club_campaigns", "club_member_codes"),
@@ -252,7 +284,15 @@ export function toWorkMapConfig(value: unknown): WorkMapConfig {
           const id = str(o.id);
           if (!id) return null;
           const kind: MapNodeKind =
-            o.kind === "decision" ? "decision" : o.kind === "stop" ? "stop" : o.kind === "milestone" ? "milestone" : "table";
+            o.kind === "decision"
+              ? "decision"
+              : o.kind === "stop"
+                ? "stop"
+                : o.kind === "milestone"
+                  ? "milestone"
+                  : o.kind === "artifact"
+                    ? "artifact"
+                    : "table";
           return {
             id,
             kind,

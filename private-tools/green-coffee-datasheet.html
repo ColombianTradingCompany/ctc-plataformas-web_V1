@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTC · Green Coffee Datasheet</title>
+<style>
+/* ============ CTC BRAND PALETTE ============
+  #3C0A86 — Deep Purple  (primary brand)
+  #D3B8FA — Lavender     (light accent)
+  #FFCD00 — Gold         (highlight)
+  #003087 — Navy Blue    (secondary)
+  #C8102F — Crimson      (alert / warning)
+  ============================================ */
+:root{
+  --purple:#3C0A86; --lavender:#D3B8FA; --gold:#FFCD00;
+  --navy:#003087;   --crimson:#C8102F;
+  --purple-dim:#2A0760; --purple-faint:#F2EDFD;
+  --paper:#F7F6FB; --panel:#FFFFFF; --ink:#12101A; --ink-soft:#4E4A60;
+  --line:#DDD9EE; --line-soft:#ECEAF8; --field:#FFFFFF;
+  --ok:#1A6B3C; --ok-bg:#E8F5EE;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:'Helvetica Neue',Arial,'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:var(--mono);font-size:12.5px}
+
+/* -------- topbar -------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  background:var(--purple);
+  display:flex;align-items:center;gap:14px;padding:0 20px;
+  height:52px;border-bottom:3px solid var(--gold);
+}
+.brand{display:flex;align-items:center;gap:14px;margin-right:auto}
+.ctc-logo{
+  width:34px;height:34px;border-radius:3px;
+  background:var(--gold);display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:11px;letter-spacing:-.5px;color:var(--purple);flex:0 0 auto;
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.1}
+.brand-text .co{font-size:12px;font-weight:700;letter-spacing:.1em;color:#fff;text-transform:uppercase}
+.brand-text .doc{font-family:var(--mono);font-size:10px;color:var(--lavender);letter-spacing:.06em}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.act{
+  background:rgba(255,255,255,.08);color:#fff;
+  border:1px solid rgba(255,255,255,.2);border-radius:3px;
+  padding:7px 12px;font-size:11.5px;letter-spacing:.04em;
+  font-family:var(--mono);display:inline-flex;align-items:center;gap:6px;transition:.15s;
+}
+.act:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.35)}
+.act.gold{background:var(--gold);color:var(--purple);border-color:var(--gold);font-weight:700}
+.act.gold:hover{background:#e6b900}
+.act.navy{background:var(--navy);color:#fff;border-color:var(--navy)}
+.act.navy:hover{background:#00236b}
+.act svg{width:14px;height:14px;flex:0 0 auto}
+
+/* -------- tabs -------- */
+.tabs{
+  position:sticky;top:52px;z-index:40;
+  background:#fff;border-bottom:2px solid var(--line);
+  display:flex;padding:0 20px;gap:0;
+}
+.tab{
+  background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;
+  padding:13px 18px 11px;font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.07em;color:var(--ink-soft);text-transform:uppercase;cursor:pointer;
+}
+.tab .n{color:var(--lavender);font-weight:700;margin-right:7px;
+  /* the active override will change this */
+}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.tab.active .n{color:var(--purple)}
+
+/* -------- layout -------- */
+.wrap{max-width:1160px;margin:0 auto;padding:22px 20px 90px}
+.panel{display:none}
+.panel.active{display:block;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* -------- card -------- */
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:4px;margin-bottom:14px;overflow:hidden;
+}
+.card-head{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;background:#F5F3FC;border-bottom:1px solid var(--line);
+}
+.card-head .idx{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  color:#fff;background:var(--purple);border-radius:2px;padding:2px 7px;
+}
+.card-head h2{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--purple);font-weight:700;flex:1}
+.card-head .card-info{
+  background:none;border:none;width:20px;height:20px;border-radius:50%;
+  border:1px solid var(--lavender);color:var(--purple);font-size:11px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex:0 0 auto;transition:.15s;
+}
+.card-head .card-info:hover{background:var(--purple-faint)}
+.card-body{padding:14px 16px}
+.card-desc{
+  font-size:12px;color:var(--ink-soft);background:var(--purple-faint);
+  border-left:3px solid var(--lavender);padding:9px 12px;
+  margin-bottom:14px;line-height:1.5;display:none;border-radius:0 3px 3px 0;
+}
+.card-desc.open{display:block}
+
+/* -------- grid -------- */
+.grid{display:grid;gap:11px 16px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.span2{grid-column:span 2}.span3{grid-column:span 3}.span4{grid-column:span 4}
+@media(max-width:700px){.span2,.span3,.span4{grid-column:auto}}
+
+/* -------- field -------- */
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field-label{display:flex;align-items:center;gap:6px;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.05em;color:var(--ink-soft);text-transform:uppercase}
+.field-label .fi{
+  width:15px;height:15px;border-radius:50%;border:1px solid var(--line);
+  color:var(--purple);font-size:9.5px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  background:none;transition:.15s;font-family:var(--sans);
+}
+.field-label .fi:hover{background:var(--purple-faint);border-color:var(--lavender)}
+.field input,.field select,.field textarea{
+  background:var(--field);border:1px solid var(--line);border-radius:3px;
+  padding:7px 10px;color:var(--ink);width:100%;
+}
+.field textarea{min-height:70px;resize:vertical;line-height:1.45}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--purple);box-shadow:0 0 0 2px rgba(60,10,134,.12)
+}
+.field .hint{font-size:10.5px;color:#9389B0;font-family:var(--mono);line-height:1.4}
+.field-tip{
+  display:none;font-size:11.5px;color:var(--ink-soft);background:var(--purple-faint);
+  border:1px solid var(--lavender);border-radius:3px;padding:7px 10px;line-height:1.45;
+}
+.field-tip.open{display:block}
+.readonly input{background:#F5F3FC;color:var(--ink-soft)}
+
+/* -------- radio row -------- */
+.radio-row{display:flex;flex-wrap:wrap;gap:7px}
+.radio-row label{
+  display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;
+  border:1px solid var(--line);border-radius:3px;padding:7px 12px;
+  background:var(--field);cursor:pointer;transition:.15s;
+}
+.radio-row label:has(input:checked){
+  border-color:var(--purple);background:var(--purple-faint);color:var(--purple);
+  box-shadow:inset 0 0 0 1px var(--purple);
+}
+.radio-row input{accent-color:var(--purple)}
+
+/* -------- checkbox -------- */
+.checks{display:grid;gap:6px 16px}
+.checks.cols2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:600px){.checks.cols2{grid-template-columns:1fr}}
+.chk{display:flex;align-items:flex-start;gap:8px;font-family:var(--mono);font-size:12px;
+  cursor:pointer;padding:2px 0;line-height:1.35}
+.chk input{width:15px;height:15px;accent-color:var(--purple);margin-top:1px;flex:0 0 auto}
+.chk .grp{font-size:9.5px;color:var(--navy);letter-spacing:.07em;text-transform:uppercase;
+  border:1px solid #BDD0EE;border-radius:2px;padding:1px 5px;margin-right:5px;
+  background:#EEF3FB;flex:0 0 auto}
+
+/* -------- variety rows -------- */
+.vrow{
+  display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:start;
+  padding:10px;border:1px solid var(--line-soft);border-radius:3px;
+  margin-bottom:8px;background:#FDFCFF;
+}
+.vmeta{
+  grid-column:1/-1;font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+  border-top:1px dashed var(--line);padding-top:8px;line-height:1.45;display:none;
+}
+.vmeta.show{display:block}
+.vmeta b{color:var(--purple)}
+.del-btn{
+  background:#fff;border:1px solid var(--line);color:var(--crimson);border-radius:3px;
+  width:30px;height:30px;font-size:15px;display:flex;align-items:center;justify-content:center;
+}
+.del-btn:hover{background:#FEF0F2;border-color:var(--crimson)}
+.add-btn{
+  background:#fff;border:1px dashed var(--purple);color:var(--purple);border-radius:3px;
+  padding:8px 12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;
+  transition:.15s;
+}
+.add-btn:hover{background:var(--purple-faint)}
+.vtotal{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.vtotal b{font-size:13px}.vtotal.bad b{color:var(--crimson)}.vtotal.good b{color:var(--ok)}
+
+/* -------- SCA spider -------- */
+.sca-wrap{
+  background:var(--ink);border-radius:4px;padding:16px;margin-bottom:14px;
+  display:grid;grid-template-columns:1fr 200px;gap:16px;align-items:center;
+}
+@media(max-width:640px){.sca-wrap{grid-template-columns:1fr}}
+.spider-svg{width:100%;max-width:260px;margin:0 auto;display:block}
+.sca-score{text-align:center}
+.sca-score .big{font-family:var(--mono);font-size:44px;font-weight:700;color:#fff;line-height:1}
+.sca-score .big small{font-size:18px;color:#8884AA}
+.sca-badge{
+  display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 10px;border-radius:2px;margin-top:5px;
+  background:var(--navy);color:#fff;
+}
+.sca-badge.spec{background:var(--crimson)}
+.sca-badge.none{background:#3A3550}
+
+/* -------- physical analysis layout -------- */
+.phys-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.phys-layout{grid-template-columns:1fr}}
+
+/* factor primary field */
+.factor-primary{
+  background:var(--purple-faint);border:2px solid var(--purple);border-radius:4px;
+  padding:10px 12px;margin-bottom:10px;
+}
+.factor-primary .field-label{color:var(--purple);font-weight:700}
+.factor-primary input{border-color:var(--purple);font-size:14px;font-weight:700}
+.factor-primary input:focus{box-shadow:0 0 0 3px rgba(60,10,134,.18)}
+.factor-derived{display:grid;gap:8px;margin-top:8px}
+
+/* -------- tables -------- */
+table.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+table.tbl th{
+  background:#F5F3FC;text-align:left;padding:7px 9px;font-size:10px;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--purple);
+  border-bottom:2px solid var(--purple);
+}
+table.tbl td{padding:5px 9px;border-bottom:1px solid var(--line-soft)}
+table.tbl input{width:100%;background:transparent;border:none;text-align:right;
+  color:var(--ink);padding:2px 0}
+table.tbl input:focus{outline:1px solid var(--purple);border-radius:2px;background:#fff}
+table.tbl .pct{text-align:right;font-weight:700}
+table.tbl .pct.over{color:var(--crimson)}
+table.tbl .pct.ok{color:var(--ok)}
+table.tbl tfoot td{font-weight:700;border-top:2px solid var(--purple);background:#F5F3FC;padding:7px 9px}
+.mesh-total-pct{font-family:var(--mono);font-size:12px;margin-top:6px;
+  padding:6px 9px;border-radius:3px;background:#F5F3FC;border:1px solid var(--line)}
+.mesh-total-pct.bad{background:#FEF0F2;border-color:#F5B8BE;color:var(--crimson)}
+.mesh-total-pct b{font-size:14px}
+
+/* -------- muni combo -------- */
+.combo-muni{position:relative}
+.combo-muni input,.combo-muni select{width:100%}
+.combo-switch{
+  font-family:var(--mono);font-size:10px;color:var(--purple);text-decoration:underline;
+  background:none;border:none;cursor:pointer;padding:2px 0;letter-spacing:.03em;
+}
+.combo-switch:hover{opacity:.7}
+
+/* -------- ficha (preview) -------- */
+.ficha{
+  background:#fff;max-width:880px;margin:0 auto;
+  border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.07);
+}
+.ficha-header{
+  background:var(--purple);color:#fff;padding:22px 28px 18px;
+  display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;
+}
+.ficha-header .co{font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--lavender);margin-bottom:3px}
+.ficha-header .pname{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.ficha-header .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.ficha-header .tag{
+  font-family:var(--mono);font-size:10.5px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);border-radius:2px;padding:2px 8px;
+}
+.ficha-header .ctc-mark{
+  text-align:right;
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--lavender);
+}
+.ficha-header .ctc-mark .logo-sm{
+  width:36px;height:36px;background:var(--gold);border-radius:3px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:10px;letter-spacing:-.5px;color:var(--purple);margin-bottom:4px;
+}
+.ficha-gold{background:var(--gold);height:4px}
+.ficha-body{padding:20px 28px}
+.ficha-section{margin-bottom:18px;break-inside:avoid}
+.ficha-section h3{
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--purple);
+  border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:10px;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+}
+.ficha-section h3::before{
+  content:"";display:inline-block;width:3px;height:12px;
+  background:var(--gold);border-radius:1px;flex:0 0 auto;
+}
+.dl{display:grid;grid-template-columns:repeat(2,1fr);gap:2px 24px}
+.dl.one{grid-template-columns:1fr}
+.di{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-family:var(--mono);font-size:11.5px;padding:3.5px 0;border-bottom:1px dotted var(--line-soft)}
+.di .k{color:var(--ink-soft);flex:0 0 auto}
+.di .v{color:var(--ink);font-weight:600;text-align:right}
+.prose{font-size:12.5px;line-height:1.55;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{
+  font-family:var(--mono);font-size:10.5px;background:var(--purple-faint);
+  border:1px solid var(--lavender);color:var(--purple);padding:2px 8px;border-radius:2px;
+}
+.chip.navy{background:#EEF3FB;border-color:#BDD0EE;color:var(--navy)}
+.scoreband{
+  display:flex;align-items:center;gap:14px;background:#F5F3FC;
+  border:1px solid var(--lavender);border-radius:3px;padding:10px 14px;
+}
+.scoreband .big{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--purple)}
+.pi-note{
+  margin-top:14px;border-top:1px solid var(--line);padding-top:12px;
+  font-family:var(--mono);font-size:10px;color:var(--ink-soft);line-height:1.6;
+}
+.pi-note strong{color:var(--crimson)}
+.ficha-foot{
+  background:#F5F3FC;border-top:2px solid var(--purple);padding:12px 28px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10px;color:var(--ink-soft);
+}
+
+/* -------- spider SVG -------- */
+.spider-bg{fill:none;stroke:#2A2540;stroke-width:0.5}
+.spider-axis{stroke:#3A3550;stroke-width:0.5}
+.spider-poly{fill:rgba(211,184,250,.25);stroke:var(--lavender);stroke-width:1.5}
+.spider-dot{fill:var(--gold);r:3}
+.spider-label{font-family:var(--mono);font-size:6px;fill:#9389B0;text-anchor:middle;dominant-baseline:middle}
+
+/* -------- toast -------- */
+#toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(14px);
+  background:var(--purple);color:#fff;padding:10px 18px;border-radius:3px;
+  font-family:var(--mono);font-size:12px;opacity:0;pointer-events:none;
+  transition:.25s;z-index:90;border-left:3px solid var(--gold);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{border-left-color:var(--crimson)}
+
+/* -------- print -------- */
+@media print{
+  .topbar,.tabs,.no-print{display:none!important}
+  body{background:#fff}
+  .wrap{padding:0;max-width:none}
+  .panel{display:none!important}
+  #ficha.active{display:block!important}
+  .ficha{box-shadow:none;border:none;max-width:none;margin:0}
+  .ficha-body{padding:14px 20px}
+}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--purple);margin-bottom:3px}
+.lede{font-size:12.5px;color:var(--ink-soft);max-width:65ch;margin-bottom:18px}
+</style>
+</head>
+<body>
+
+<!-- ========= TOPBAR ========= -->
+<div class="topbar">
+  <div class="brand">
+    <div class="ctc-logo">CTC</div>
+    <div class="brand-text">
+      <span class="co">Colombian Trading Company</span>
+      <span class="doc">Green Coffee Datasheet · v2.0</span>
+    </div>
+  </div>
+  <div class="actions">
+    <input type="file" id="loadfile" accept=".csv" hidden>
+    <button class="act" id="btn-load">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12-4-4m4 4 4-4"/><path d="M3 17v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/></svg>Cargar
+    </button>
+    <button class="act gold" id="btn-save">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Guardar CSV
+    </button>
+    <button class="act navy" id="btn-html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Exportar HTML
+    </button>
+    <button class="act" id="btn-pdf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Imprimir
+    </button>
+  </div>
+</div>
+
+<!-- ========= TABS ========= -->
+<nav class="tabs">
+  <button class="tab active" data-tab="extrinsic"><span class="n">01</span>Extrínsecos</button>
+  <button class="tab" data-tab="intrinsic"><span class="n">02</span>Intrínsecos</button>
+  <button class="tab" data-tab="ficha"><span class="n">03</span>Ficha</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ============================================================
+     PANEL 01 · EXTRÍNSECOS
+     ============================================================ -->
+<section class="panel active" id="extrinsic">
+  <p class="eyebrow">Análisis Extrínseco</p>
+  <p class="lede">Identidad comercial, origen, categoría de mezcla, certificaciones y reconocimientos del productor.</p>
+
+  <!-- A1: Identidad -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">A1</span>
+      <h2>Identidad &amp; Comercio</h2>
+      <button class="card-info" data-desc="a1">i</button>
+    </div>
+    <div class="card-desc" id="desc-a1">
+      Información comercial y de trazabilidad del lote. El CTC UID es el identificador único interno de Colombian Trading Company.
+      El HS Code se autogenera según el tipo de producto seleccionado (Nomenclatura Arancelaria NANDINA / SA 2022).
+    </div>
+    <div class="card-body grid g3">
+      <div class="field span3">
+        <div class="field-label">Nombre del Producto <button class="fi" data-tip="tip-pname">i</button></div>
+        <input data-field="product_name" placeholder="Ej. Colombia Santander Gesha Natural">
+        <div class="field-tip" id="tip-pname">Nombre comercial completo del lote. Suele incluir: País · Región · Variedad · Proceso. Este nombre aparece en la cabecera de la ficha exportable.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Proveedor <button class="fi" data-tip="tip-prov">i</button></div>
+        <input data-field="razon_social" placeholder="Razón social legal del proveedor">
+        <div class="field-tip" id="tip-prov">Nombre legal del proveedor o cooperativa. Distinto del nombre del productor individual de finca.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">NIT / RUT <button class="fi" data-tip="tip-nit">i</button></div>
+        <input data-field="nit_rut" placeholder="N.º de identificación legal">
+        <div class="field-tip" id="tip-nit">Número de Identificación Tributaria (Colombia) o RUT. Requerido para trazabilidad EUDR y documentación de exportación.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">CTC UID <button class="fi" data-tip="tip-uid">i</button></div>
+        <input data-field="ctc_uid" placeholder="CTC_XXXXXX">
+        <div class="field-tip" id="tip-uid">Identificador único interno de Colombian Trading Company. <strong>Este código debe ser proporcionado por CTC</strong> — no lo generes manualmente. Formato: CTC_ seguido de 6 caracteres alfanuméricos. Vincula este documento a la base de datos de trazabilidad CTC.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Productor (Producer's Name) <button class="fi" data-tip="tip-prod">i</button></div>
+        <input data-field="productor" placeholder="Nombre del agricultor / finca">
+        <div class="field-tip" id="tip-prod">Nombre del productor o grupo de productores responsable del cultivo. Para mezclas multi-origen, indicar la cooperativa o agrupación.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Especie <button class="fi" data-tip="tip-esp">i</button></div>
+        <select data-field="species">
+          <option value="">—</option><option>Arabica</option><option>Robusta</option>
+        </select>
+        <div class="field-tip" id="tip-esp">Especie botánica principal. Arabica (Coffea arabica) domina el mercado de especialidad; Robusta (C. canephora) se usa en blends comerciales y espresso.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Fecha de Revisión <button class="fi" data-tip="tip-rev">i</button></div>
+        <input type="date" data-field="revision_date">
+        <div class="field-tip" id="tip-rev">Fecha de última revisión o aprobación de este documento por CTC. Los documentos vencen a los 12 meses sin re-validación.</div>
+      </div>
+      <div class="field span2">
+        <div class="field-label">Tipo de Producto <button class="fi" data-tip="tip-tipo">i</button></div>
+        <select data-field="product_type" id="product_type"></select>
+        <div class="field-tip" id="tip-tipo">Categoría arancelaria según la Nomenclatura del Sistema Armonizado (SA). Determina el HS Code automáticamente para documentos de exportación.</div>
+      </div>
+      <div class="field readonly">
+        <div class="field-label">HS Code (automático)</div>
+        <input data-field="hs_code" id="hs_code" readonly>
+      </div>
+      <div class="field">
+        <div class="field-label">Año de Cosecha <button class="fi" data-tip="tip-year">i</button></div>
+        <select data-field="harvest_year">
+          <option value="">—</option><option>2023</option><option>2024</option><option>2025</option><option>2026</option><option>2027</option><option>2028</option><option>2029</option><option>2030</option>
+        </select>
+        <div class="field-tip" id="tip-year">Año calendario en que se realizó la cosecha principal del lote.</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Temporada (Harvest Season) <button class="fi" data-tip="tip-season">i</button></div>
+        <select data-field="harvest_season">
+          <option value="">—</option><option>Q1 (Ene–Mar)</option><option>Q2 (Abr–Jun)</option><option>Q3 (Jul–Sep)</option><option>Q4 (Oct–Dic)</option>
+        </select>
+        <div class="field-tip" id="tip-season">Trimestre de cosecha. Colombia tiene dos cosechas: principal (oct–feb) y traviesa o mitaca (abr–jun), según la región.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A2: Origen -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">A2</span>
+      <h2>Información de Origen</h2>
+      <button class="card-info" data-desc="a2">i</button>
+    </div>
+    <div class="card-desc" id="desc-a2">
+      Clasificación geográfica y agronómica del lote. La categoría de origen determina las declaraciones de trazabilidad y los requisitos de certificación EUDR (Deforestación).
+    </div>
+    <div class="card-body">
+      <div class="field" style="margin-bottom:12px">
+        <div class="field-label">Categoría de Origen <button class="fi" data-tip="tip-cat">i</button></div>
+        <div class="radio-row" id="origin_cat">
+          <label><input type="radio" name="origin_category" data-field="origin_category" value="Single Estate">Single Estate</label>
+          <label><input type="radio" name="origin_category" data-field="origin_category" value="Single Origin">Single Origin</label>
+          <label><input type="radio" name="origin_category" data-field="origin_category" value="Regional Blend">Regional Blend</label>
+          <label><input type="radio" name="origin_category" data-field="origin_category" value="Multi-Origin Blend">Multi-Origin Blend</label>
+        </div>
+        <div class="field-tip" id="tip-cat">Single Estate = una sola finca. Single Origin = un municipio/vereda. Regional Blend = departamento. Multi-Origin Blend = múltiples orígenes o países.</div>
+      </div>
+      <div class="grid g4">
+        <div class="field">
+          <div class="field-label">Finca (Estate) <button class="fi" data-tip="tip-finca">i</button></div>
+          <input data-field="estate" placeholder="Nombre de la finca">
+          <div class="field-tip" id="tip-finca">Nombre comercial de la finca o unidad productora. Requerido para Single Estate y recomendado para Single Origin.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">País <button class="fi" data-tip="tip-pais">i</button></div>
+          <select data-field="country">
+            <option value="">—</option><option>Colombia</option><option>Multi-Origin</option>
+          </select>
+          <div class="field-tip" id="tip-pais">País de producción. Para blends multi-país, seleccionar "Multi-Origin" y detallar en las specs de blend.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Departamento <button class="fi" data-tip="tip-dep">i</button></div>
+          <select data-field="region_dep" id="region_dep"></select>
+          <div class="field-tip" id="tip-dep">Departamento colombiano de producción. La selección filtra los municipios disponibles.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Municipio <button class="fi" data-tip="tip-muni">i</button></div>
+          <div class="combo-muni" id="muni-combo">
+            <select data-field="county_muni" id="county_muni"></select>
+            <button class="combo-switch" id="muni-toggle">✎ Escribir manualmente</button>
+            <input data-field="county_muni_text" id="county_muni_text" placeholder="Municipio (texto libre)" style="display:none">
+          </div>
+          <div class="field-tip" id="tip-muni">Municipio de producción. Usa el selector para municipios del catálogo, o escribe manualmente para orígenes no listados.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">M.A.S.L. (msnm) <button class="fi" data-tip="tip-masl">i</button></div>
+          <input type="number" data-field="masl" placeholder="1600">
+          <div class="field-tip" id="tip-masl">Metros sobre el nivel del mar del cultivo. Altitud promedio del lote o rango (ej. 1600–1800). Cafés sobre 1200 msnm suelen clasificar como altos y presentan mayor acidez.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Geo Referencia <button class="fi" data-tip="tip-geo">i</button></div>
+          <input data-field="geo_ref" placeholder="Lat, Lon o código">
+          <div class="field-tip" id="tip-geo">Coordenadas GPS o código de geo-referencia del predio. Requerido para declaración EUDR (Art. 9 Reg. EU 2023/1115). Formato: DD.dddd, -DD.dddd</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Edad Plantación (años) <button class="fi" data-tip="tip-edad">i</button></div>
+          <input type="number" data-field="plantation_age" placeholder="Ej. 5">
+          <div class="field-tip" id="tip-edad">Años desde la siembra o renovación del cultivo. Plantaciones entre 4–12 años suelen producir el mejor perfil sensorial.</div>
+        </div>
+        <div class="field span4" id="blend-specs-row" style="display:none">
+          <div class="field-label">Especificaciones del Blend <button class="fi" data-tip="tip-blend">i</button></div>
+          <textarea data-field="multi_origin_specs" placeholder="Ej. 60% Huila · 30% Santander · 10% Nariño…"></textarea>
+          <div class="field-tip" id="tip-blend">Composición detallada del blend cuando el origen es múltiple. Indicar porcentajes y orígenes. Requerido para etiquetado bajo normas de trazabilidad.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A3: Certificados de Origen -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">A3</span>
+      <h2>Certificados de Origen &amp; Reconocimientos</h2>
+      <button class="card-info" data-desc="a3">i</button>
+    </div>
+    <div class="card-desc" id="desc-a3">
+      Certificaciones geográficas y premios que añaden valor diferenciador. Las Denominaciones de Origen (DO/DOR) son reconocimientos legales que restringen el uso del nombre a productores de la zona delimitada.
+    </div>
+    <div class="card-body grid g2">
+      <div>
+        <div class="field-label" style="margin-bottom:8px">Certificados de Origen <button class="fi" data-tip="tip-origcert">i</button></div>
+        <div class="field-tip" id="tip-origcert" style="margin-bottom:8px">DO = Denominación de Origen Protegida (protección máxima). DOR = Denominación de Origen Regional. IGP = Indicación Geográfica Protegida (vínculo geográfico parcial).</div>
+        <div class="checks" id="origin_certs"></div>
+        <div class="field" style="margin-top:10px">
+          <div class="field-label">Otro (especificar)</div>
+          <input data-field="origin_cert_other_text" placeholder="Otro certificado de origen…">
+        </div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Premios &amp; Rankings (Awards) <button class="fi" data-tip="tip-awards">i</button></div>
+          <textarea data-field="awards" placeholder="Ej. Cup of Excellence 2024 · Top 10…"></textarea>
+          <div class="field-tip" id="tip-awards">Concursos y reconocimientos internacionales. Incluir año y puntaje cuando estén disponibles.</div>
+        </div>
+        <div class="field" style="margin-top:12px"><div class="field-label">Acerca del Origen <button class="fi" data-tip="tip-about">i</button></div>
+          <textarea data-field="about_origin" placeholder="Historia, altitud, microclima, comunidad…"></textarea>
+          <div class="field-tip" id="tip-about">Narrativa del origen para uso en materiales de venta y ficha técnica. Destacar lo que diferencia este lote: microclima, historia del productor, prácticas agroecológicas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4: Certificados Internacionales -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">A4</span>
+      <h2>Certificados Internacionales</h2>
+      <button class="card-info" data-desc="a4">i</button>
+    </div>
+    <div class="card-desc" id="desc-a4">
+      Certificaciones de tercera parte reconocidas internacionalmente. EUDR es obligatorio para exportar a la UE desde diciembre 2024. Las demás amplían el acceso a canales premium (Fairtrade, Organic) o mercados específicos (Nespresso AAA, C.A.F.E. Starbucks).
+    </div>
+    <div class="card-body">
+      <div class="checks cols2" id="intl_certs"></div>
+      <div class="field" style="margin-top:12px;max-width:380px">
+        <div class="field-label">Otro certificado internacional</div>
+        <input data-field="intl_cert_other_text" placeholder="Nombre del certificado…">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PANEL 02 · INTRÍNSECOS
+     ============================================================ -->
+<section class="panel" id="intrinsic">
+  <p class="eyebrow">Análisis Intrínseco</p>
+  <p class="lede">Variedades, parámetros físico-químicos, granulometría y evaluación sensorial SCA del grano verde.</p>
+
+  <!-- SCA live spider -->
+  <div class="sca-wrap">
+    <div>
+      <svg class="spider-svg" viewBox="-90 -90 180 180" id="spider-svg">
+        <!-- grid rings & axes built by JS -->
+      </svg>
+    </div>
+    <div class="sca-score">
+      <div class="big" id="sca_total">0<small>/100</small></div>
+      <div class="sca-badge none" id="sca_class">Sin puntaje</div>
+      <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:#8884AA;line-height:1.5">
+        ≥ 80 pts = Especialidad<br>
+        &lt; 80 pts = Comercial
+      </div>
+    </div>
+  </div>
+
+  <!-- B1: Variedades -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">B1</span>
+      <h2>Variedades &amp; Caracterización Básica</h2>
+      <button class="card-info" data-desc="b1">i</button>
+    </div>
+    <div class="card-desc" id="desc-b1">
+      Registra las variedades botánicas del lote con su proporción porcentual. La suma debe ser 100%. Los parámetros físico-químicos (humedad, densidad, actividad de agua) son criterios de calidad para almacenamiento y clasificación.
+    </div>
+    <div class="card-body">
+      <div class="field-label" style="margin-bottom:8px">Variedades del Lote <button class="fi" data-tip="tip-var">i</button></div>
+      <div class="field-tip" id="tip-var" style="margin-bottom:8px">Selecciona la variedad del catálogo y asigna el % de proporción en el lote. La suma de proporciones debe sumar exactamente 100%. Al seleccionar, se muestra información del linaje y especie.</div>
+      <div id="variety_rows"></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:6px;flex-wrap:wrap">
+        <button class="add-btn" id="add_variety">+ Añadir variedad</button>
+        <span class="vtotal" id="variety_total">Proporción total: <b>0%</b></span>
+      </div>
+      <div class="grid g3" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft)">
+        <div class="field">
+          <div class="field-label">Humedad del Grano (%) <button class="fi" data-tip="tip-hum">i</button></div>
+          <input type="number" step="0.1" data-field="green_bean_humidity" placeholder="0.0">
+          <div class="field-tip" id="tip-hum">Rango óptimo: 10–12%. &lt;10%: grano frágil (riesgo de quiebre). &gt;13%: riesgo de hongos y aflatoxinas durante almacenamiento. Medición: higrómetro por infrarrojos o Karl Fischer.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Densidad del Grano (g/L) <button class="fi" data-tip="tip-den">i</button></div>
+          <input type="number" step="1" data-field="green_bean_density" placeholder="0">
+          <div class="field-tip" id="tip-den">Densidad de masa por litro. &gt;700 g/L = alta calidad y consistencia de tueste. Granos de alta altitud suelen tener mayor densidad. Medición: cilindro graduado de 1L.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Actividad de Agua (aW) <button class="fi" data-tip="tip-aw">i</button></div>
+          <input type="number" step="0.001" data-field="water_activity" placeholder="0.000">
+          <div class="field-tip" id="tip-aw">Rango seguro: 0.50–0.65 aW. Por encima de 0.70 aW hay riesgo de crecimiento microbiano. Distinto de humedad: mide el agua libre disponible para microorganismos.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Proceso Base <button class="fi" data-tip="tip-proc">i</button></div>
+          <select data-field="base_processing">
+            <option value="">—</option><option>Washed</option><option>Honey</option><option>Natural</option>
+          </select>
+          <div class="field-tip" id="tip-proc">Washed (Lavado): mayor claridad, acidez brillante. Honey: fermentación parcial, cuerpo y dulzor medios. Natural (Seco): cuerpo denso, frutado intenso, mayor riesgo en fermentación.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Proceso Especial <button class="fi" data-tip="tip-sproc">i</button></div>
+          <input data-field="special_processing" placeholder="Anaeróbico, láctico, thermal…">
+          <div class="field-tip" id="tip-sproc">Proceso secundario o experimental (fermentación anaeróbica, láctico, carbónico, Koji, etc.). Especificar duración y parámetros clave cuando corresponda.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Factor de Rendimiento (productor) <button class="fi" data-tip="tip-yp">i</button></div>
+          <input data-field="yield_factor_producer" placeholder="kg pergamino / 70 kg verde">
+          <div class="field-tip" id="tip-yp">Cantidad de kg de café pergamino seco necesarios para obtener 70 kg de café verde exportable. Ejemplo: un FR de 87.5 significa que se necesitan 87.5 kg de pergamino para producir 70 kg de verde. Referencia estándar CTC para planificación de compra y costeo.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B2: SCA -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">B2</span>
+      <h2>Perfil de Taza · Puntaje SCA</h2>
+      <button class="card-info" data-desc="b2">i</button>
+    </div>
+    <div class="card-desc" id="desc-b2">
+      El protocolo SCA (Specialty Coffee Association) evalúa 10 atributos de 0 a 10 c/u (total máx. 100 pts). Cafés con ≥ 80 puntos clasifican como "Especialidad". La hoja araña en tiempo real muestra el balance del perfil sensorial.
+    </div>
+    <div class="card-body grid g2">
+      <div class="field">
+        <div class="field-label">Perfil de Taza (notas descriptivas) <button class="fi" data-tip="tip-cup">i</button></div>
+        <textarea data-field="cupping_profile" style="min-height:180px" placeholder="En fragancia y aroma se perciben notas a…"></textarea>
+        <div class="field-tip" id="tip-cup">Descripción sensorial narrativa compilada de las referencias Q-Grader. Incluir: fragancia/aroma, sabor, retrogusto, acidez, cuerpo, balance, limpieza. Usar vocabulario SCA/WCR.</div>
+      </div>
+      <div>
+        <table class="tbl">
+          <thead><tr><th>Atributo SCA</th><th style="text-align:right;width:100px">Puntos (0–10)</th></tr></thead>
+          <tbody id="sca_table"></tbody>
+          <tfoot><tr><td>Total Score</td><td class="pct" id="sca_total_cell">0.00</td></tr></tfoot>
+        </table>
+        <div class="hint" style="margin-top:6px;font-family:var(--mono);font-size:10.5px;color:#9389B0">
+          Escala: 6.00 = Bueno · 7.00 = Muy bueno · 8.00 = Excelente · ≥8.5 = Extraordinario
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B3: Físico -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">B3</span>
+      <h2>Caracterización Física · Granulometría &amp; Factor</h2>
+      <button class="card-info" data-desc="b3">i</button>
+    </div>
+    <div class="card-desc" id="desc-b3">
+      La granulometría clasifica el grano por tamaño en zarandas (mallas). El Factor de Rendimiento (FR = 70 × Pergamino Inicial ÷ Grano Sano) estima la eficiencia del trillado. El "Trillado Verde Restante" es el dato central: los defectos se restan de él para obtener el Grano Sano, base del FR.
+    </div>
+    <div class="card-body">
+      <!-- Factor primary -->
+      <div class="phys-layout">
+        <div>
+          <div class="factor-primary">
+            <div class="field-label" style="margin-bottom:6px">
+              Trillado Verde Restante (g) ← dato principal <button class="fi" data-tip="tip-tvr">i</button>
+            </div>
+            <input type="number" step="0.1" data-field="fa_green_remainder" id="fa_green_remainder" placeholder="240.0">
+            <div class="field-tip" id="tip-tvr" style="margin-top:6px">Peso (en gramos) del café verde resultante tras el trillado. Es la BASE de todos los porcentajes de la tabla de mallas y de los cálculos de defectos. Dato más crítico de esta sección.</div>
+          </div>
+          <!-- Muestra + Humedad (condiciones de entrada, no cálculos de merma) -->
+          <div class="factor-derived grid g2" style="margin-bottom:0">
+            <div class="field">
+              <div class="field-label">Muestra Pergamino Inicial (g) <button class="fi" data-tip="tip-mpi">i</button></div>
+              <input type="number" step="0.1" data-field="fa_start" placeholder="250.0">
+              <div class="field-tip" id="tip-mpi">Peso de la muestra de café en pergamino antes de trillar. Estándar: 250 g. Sirve como denominador del Factor de Rendimiento.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Humedad Pergamino (%) <button class="fi" data-tip="tip-hp">i</button></div>
+              <input type="number" step="0.1" data-field="fa_parch_hum" placeholder="0.0">
+              <div class="field-tip" id="tip-hp">Porcentaje de humedad del café en pergamino antes de trillar. Rango típico post-secado: 10–12%. Dato de condición de la muestra — no entra en el cálculo de merma ni de rendimiento.</div>
+            </div>
+          </div>
+          <!-- Divider between conditions and defect/yield calcs -->
+          <div style="border-top:1px dashed var(--line);margin:10px 0 10px;display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap">Análisis de mermas y defectos</span>
+          </div>
+          <div class="factor-derived grid g2">
+            <div class="field readonly">
+              <div class="field-label">Pérdida por Trilla (g) — derivado <button class="fi" data-tip="tip-pdt">i</button></div>
+              <input data-field="fa_yield_loss" id="fa_yield_loss_display" readonly placeholder="Calculado automáticamente">
+              <div class="field-tip" id="tip-pdt">= Pergamino Inicial − Trillado Verde Restante. Incluye la cascarilla (exocarpio + endocarpio) y pérdidas de proceso. Se calcula automáticamente.</div>
+            </div>
+            <div class="field readonly">
+              <div class="field-label">Grano Sano (g) — derivado <button class="fi" data-tip="tip-gs">i</button></div>
+              <input data-field="fa_healthy" id="fa_healthy_display" readonly placeholder="Calculado automáticamente">
+              <div class="field-tip" id="tip-gs">= Trillado Verde Restante − Defecto Primario − Defecto Secundario. Base para el Factor de Rendimiento. Se calcula automáticamente.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Defecto Primario (g) <button class="fi" data-tip="tip-dp">i</button></div>
+              <input type="number" step="0.1" data-field="fa_primary_defect" placeholder="0.0">
+              <div class="field-tip" id="tip-dp">Defectos categoría 1 (SCA): grano negro, grano agrio, cereza seca, material extraño, grano severo con hongo. Cada uno resta puntos directamente de la clasificación.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Defecto Secundario (g) <button class="fi" data-tip="tip-ds">i</button></div>
+              <input type="number" step="0.1" data-field="fa_secondary_defect" placeholder="0.0">
+              <div class="field-tip" id="tip-ds">Defectos categoría 2 (SCA): grano partido, concha, flotador, inmaduro, pergaminoso, etc. Menos severos pero afectan consistencia del perfil en taza.</div>
+            </div>
+          </div>
+          <!-- Yield factor display -->
+          <div style="margin-top:10px;padding:8px 12px;background:#F5F3FC;border:1px solid var(--lavender);border-radius:3px;font-family:var(--mono);font-size:12px">
+            Factor de Rendimiento: <strong id="yield_factor_display" style="color:var(--purple)">—</strong>
+            <span style="color:var(--ink-soft);font-size:10.5px;margin-left:8px">= 70 × Pergamino Inicial ÷ Grano Sano &nbsp;·&nbsp; Grano Sano = Verde Restante − Defectos</span>
+          </div>
+        </div>
+
+        <!-- Mesh table -->
+        <div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Granulometría <button class="fi" data-tip="tip-mesh" style="vertical-align:middle">i</button></th>
+                <th style="text-align:right">Peso (g)</th>
+                <th style="text-align:right">%<span id="mesh-pct-base-note" style="font-size:9px;font-weight:400;opacity:.7"> / verde</span></th>
+              </tr>
+            </thead>
+            <tbody id="mesh_table"></tbody>
+            <tfoot>
+              <tr>
+                <td>Total mallas</td>
+                <td class="pct" id="mesh_sum" style="text-align:right">0.0 g</td>
+                <td class="pct" id="mesh_pct_sum" style="text-align:right">—</td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="mesh-total-pct" id="mesh_pct_alert">
+            Suma de mallas: <b id="mesh_pct_b">0%</b> del trillado verde restante
+          </div>
+          <div class="hint" style="margin-top:6px;font-family:var(--mono);font-size:10.5px;color:#9389B0">
+            Los porcentajes se calculan sobre el Trillado Verde Restante. La suma debe aproximarse a 100%.
+          </div>
+          <div class="field-tip" id="tip-mesh" style="margin-top:8px">Clasificación del grano verde por tamaño mediante zarandas (mallas). M18 = Supremo+ (&gt;7.14 mm) · M17 = Supremo · M16 = Extra · M15 = Europa · M14 = UGQ (Under Grade Quality) · M13–12 = Pea Berry (grano caracol). Determina la categoría de exportación: Supremo requiere ≥50% M17+.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- B4: Q-Graders -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">B4</span>
+      <h2>Notas de Análisis &amp; Referencias Q-Grader</h2>
+      <button class="card-info" data-desc="b4">i</button>
+    </div>
+    <div class="card-desc" id="desc-b4">
+      Registro de evaluaciones de catadores certificados Q-Grader por la Coffee Quality Institute (CQI). Se recomienda mínimo 2 referencias independientes para validar el puntaje SCA. Las notas de análisis documentan observaciones del laboratorio físico.
+    </div>
+    <div class="card-body grid g2">
+      <div class="field span2"><div class="field-label">Notas de Análisis <button class="fi" data-tip="tip-notes">i</button></div>
+        <textarea data-field="analysis_notes" placeholder="Observaciones del laboratorio físico, condiciones de muestra…"></textarea>
+        <div class="field-tip" id="tip-notes">Observaciones adicionales: condición de la muestra al recibo, temperatura, humedad ambiental del laboratorio, lote de equipo, desviaciones del protocolo estándar.</div>
+      </div>
+      <div class="field"><div class="field-label">Q-Grader Ref 1 <button class="fi" data-tip="tip-qg">i</button></div>
+        <input data-field="qgrader_1" placeholder="Nombre · Puntaje · Fecha">
+        <div class="field-tip" id="tip-qg">Catador Q-Grader certificado por CQI. Incluir nombre completo, puntaje individual y fecha de catación. El promedio de múltiples referencias da mayor confiabilidad al puntaje SCA.</div>
+      </div>
+      <div class="field"><div class="field-label">Q-Grader Ref 2</div><input data-field="qgrader_2" placeholder="Nombre · Puntaje · Fecha"></div>
+      <div class="field"><div class="field-label">Q-Grader Ref 3</div><input data-field="qgrader_3" placeholder="Nombre · Puntaje · Fecha"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PANEL 03 · FICHA
+     ============================================================ -->
+<section class="panel" id="ficha">
+  <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <p class="eyebrow" style="margin-bottom:2px">Vista de Ficha — Colombian Trading Company</p>
+      <p class="lede" style="margin:0">Documento técnico confidencial listo para exportar.</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="act gold" id="btn-html2">Descargar HTML</button>
+      <button class="act navy" id="btn-pdf2">Imprimir / PDF</button>
+    </div>
+  </div>
+  <div id="ficha-host"></div>
+</section>
+
+</div><!-- /wrap -->
+
+<div id="toast"></div>
+
+<script>
+const VARIETIES=[{"v": "Typica", "l": "Landrace de Etiopía vía Yemen", "e": "arabica", "c": "Considerada la base de la caficultura mundial; posee porte alto, baja productividad y una taza elegante con acidez limpia y dulzor. 3"}, {"v": "Bourbon", "l": "Mutación natural de Typica", "e": "arabica", "c": "Mayor productividad que Typica; frutos rojos o amarillos densos, dulzura acaramelada, cuerpo redondo y acidez compleja muy apreciada en especialidad. 1"}, {"v": "Caturra", "l": "Mutación enana del Bourbon", "e": "arabica", "c": "Porte bajo que permite alta densidad; muy productivo, acidez viva y cuerpo medio. Es el estándar de productividad en Latinoamérica. 4"}, {"v": "Mundo Novo", "l": "Híbrido natural Typica x Bourbon", "e": "arabica", "c": "Originado en Brasil; planta muy alta, vigorosa y productiva. Taza de alta calidad pero sensible a enfermedades y vientos fuertes. 1"}, {"v": "Catuai", "l": "Híbrido Mundo Novo x Caturra", "e": "arabica", "c": "Planta compacta y altamente productiva; hereda el enanismo del Caturra y el vigor del Mundo Novo. Perfil de taza balanceado. 14"}, {"v": "Variedad Colombia", "l": "Caturra x Híbrido de Timor", "e": "arabica", "c": "Primera variedad compuesta resistente de Cenicafé; porte bajo, alta productividad, resistente a roya con el perfil clásico suave colombiano. 5"}, {"v": "Castillo (General)", "l": "Variedad Colombia x Progenies F5", "e": "arabica", "c": "Evolución de la variedad Colombia; mayor tamaño de grano, resistencia durable a roya y perfil balanceado con notas cítricas. 5"}, {"v": "Tabi", "l": "(Typica x Bourbon) x H. de Timor", "e": "arabica", "c": "Variedad de porte alto; produce granos de tamaño extraordinario (supremo), alta resistencia a roya y calidad sensorial superior. 5"}, {"v": "Cenicafé 1", "l": "Caturra x Híbrido de Timor 1343", "e": "arabica", "c": "Lanzada en 2016; porte muy bajo tipo Caturra, resistente a roya y CBD, con calidad física de exportación excepcional. 5"}, {"v": "Castillo 2", "l": "Cruces multilineales avanzados", "e": "arabica", "c": "Generación 2024; mayor resiliencia climática, incorpora nuevas fuentes de resistencia de Arábicas africanos y Arasari para sostenibilidad a largo plazo. 2"}, {"v": "Umbral", "l": "Selección avanzada de Cenicafé", "e": "arabica", "c": "Nueva variedad 2025 para cambio climático; productiva a  msnm, tolerante a altas temperaturas y estrés hídrico severo. 9"}, {"v": "Castillo Norte", "l": "Regionalización de Castillo", "e": "arabica", "c": "Adaptada a la Sierra Nevada de Santa Marta; perfil achocolatado, cuerpo alto y resistencia optimizada a razas locales de roya. 5"}, {"v": "Castillo Centro", "l": "Regionalización de Castillo", "e": "arabica", "c": "Diseñada para el Eje Cafetero; optimizada para floraciones bimodales, alta productividad y equilibrio sensorial entre acidez y dulzor. 5"}, {"v": "Castillo Sur", "l": "Regionalización de Castillo", "e": "arabica", "c": "Adaptada a Nariño y Huila; optimizada para altitudes extremas, resalta acidez cítrica y notas florales intensas muy demandadas. 5"}, {"v": "Maragogipe", "l": "Mutación de Typica", "e": "arabica", "c": "Grano gigante \"elefante\"; porte muy alto, internudos largos, baja producción pero taza muy suave con notas de nuez. 1"}, {"v": "Gesha", "l": "Landrace etíope (Montaña Gesha)", "e": "arabica", "c": "Variedad icónica de subasta; perfil extremadamente floral (jazmín), notas cítricas bergamota, cuerpo sedoso y claridad parecida al té. 14"}, {"v": "SL28", "l": "Selección Scott Labs (Tanzania)", "e": "arabica", "c": "El orgullo de Kenia; resistente a sequía, acidez vibrante a grosella negra, cuerpo jugoso y gran complejidad en taza. 14"}, {"v": "SL34", "l": "Selección Scott Labs (Borbón/Etíope)", "e": "arabica", "c": "Similar a SL28 pero adaptada a zonas de alta lluvia; porte alto, vigoroso y perfil complejo con cuerpo denso. 13"}, {"v": "Batian", "l": "Selección SL28, SL34, Sudan Rume", "e": "arabica", "c": "Variedad keniana moderna; resistente a roya y CBD, alta productividad, cosecha precoz y calidad sensorial equivalente a SL28. 8"}, {"v": "Ruiru 11", "l": "Híbrido complejo Catimor x SL", "e": "arabica", "c": "Compacto y resistente a todo; desarrollado en Kenia para densidad extrema, con producción masiva y calidad aceptable bien procesada. 23"}, {"v": "Pacas", "l": "Mutación de Bourbon", "e": "arabica", "c": "Descubierta en El Salvador; porte bajo y compacto, muy productivo en altura, con taza dulce de notas equilibradas. 7"}, {"v": "Villa Sarchi", "l": "Mutación de Bourbon", "e": "arabica", "c": "Descubierta en Costa Rica; porte bajo, adaptable a vientos fuertes y gran altitud, con acidez elegante y brillante. 8"}, {"v": "Pacamara", "l": "Híbrido Pacas x Maragogipe", "e": "arabica", "c": "Grano gigante; combina el enanismo con calidad excepcional, notas especiadas, achocolatadas, cuerpo cremoso y acidez málica compleja. 13"}, {"v": "Maracaturra", "l": "Híbrido Maragogipe x Caturra", "e": "arabica", "c": "Grano extragrande; combina tamaño y productividad, perfil muy dulce con notas de frutas amarillas y cuerpo sedoso. 12"}, {"v": "Borbón Rosado", "l": "Landrace etíope (Huila, Col.)", "e": "arabica", "c": "Grano rosado único; altísima glucosa que produce perfiles dulces intensos, florales (rosas), con notas a durazno y bayas. 5"}, {"v": "Chiroso", "l": "Landrace etíope (Urrao, Col.)", "e": "arabica", "c": "Grano alargado; complejidad floral y cítrica superior (mandarina), cuerpo sedoso. Es el \"Geisha colombiano\" por su calidad en catación. 5"}, {"v": "Wush Wush", "l": "Landrace etíope (Wushwush)", "e": "arabica", "c": "Perfil tropical exótico; extremadamente dulce con notas a fruta madura, lavanda y especias orientales. Muy adaptable en Colombia. 5"}, {"v": "Sidra", "l": "Híbrido Typica x Bourbon", "e": "arabica", "c": "Desarrollado en Ecuador; combina dulzura y acidez. Perfil complejo vinoso con notas de bayas rojas y flores blancas. 28"}, {"v": "Papayo", "l": "Mutación probable de B. Rosado", "e": "arabica", "c": "Grano alargado tipo papaya (Huila); perfil dulce a chocolate con leche, caramelo y frutas tropicales muy marcadas. 30"}, {"v": "Ombligón", "l": "Landrace etíope (Acevedo, Col.)", "e": "arabica", "c": "Grano grande con disco saliente; perfil sedoso, complejo, con notas cítricas, chocolate fino y frutas de hueso. Café de competencia. 32"}, {"v": "Laurina", "l": "Mutación de Bourbon (Pointu)", "e": "arabica", "c": "Bajo contenido natural de cafeína (); árbol tipo pino, taza dulce, suave, baja acidez y muy poco amargor. 8"}, {"v": "Moka (Mocha)", "l": "Mutación enana de Bourbon", "e": "arabica", "c": "Granos minúsculos redondos; originario de Yemen, sabor distintivo a chocolate amargo, cuerpo denso y perfil aromático único. 8"}, {"v": "K7", "l": "Selección de Kent (Kenia)", "e": "arabica", "c": "Porte alto; resistente a roya y CBD en África Oriental. Taza equilibrada con cuerpo medio-alto y dulzura notable. 8"}, {"v": "Kent", "l": "Selección de Typica (India)", "e": "arabica", "c": "Primera variedad seleccionada por resistencia a roya; vigorosa, con taza elegante de notas florales y acidez bien balanceada. 8"}, {"v": "S795", "l": "Híbrido S288 x Kent", "e": "arabica", "c": "Muy popular en Asia; resistente a roya, taza con notas a jarabe de arce, azúcar moreno y cuerpo redondo. 38"}, {"v": "Java", "l": "Landrace etíope vía Indonesia", "e": "arabica", "c": "Adaptada a sombra; resistente a CBD, grano alargado, calidad de taza alta similar a etíopes, dulce, floral y limpia. 8"}, {"v": "Marsellesa", "l": "Sarchimor (Villa Sarchi x HdT)", "e": "arabica", "c": "Híbrido moderno de Nicaragua; resistente a roya, acidez superior al Caturra, aroma floral y excelente cuerpo para especialidad. 12"}, {"v": "Arara", "l": "Híbrido Obatã x Catuai Amarillo", "e": "arabica", "c": "\"Geisha brasileño\"; cerezas amarillas grandes, resistente a sequía, extremadamente dulce con notas de almendra y chocolate. 42"}, {"v": "Starmaya", "l": "Marsellesa x Mutación Etíope", "e": "arabica", "c": "Único híbrido F1 por semilla; resistente a roya, alta productividad, acidez brillante y perfil dulce clásico de Centroamérica. 45"}, {"v": "Centroamericano", "l": "Híbrido F1 Sarchimor x Etíope", "e": "arabica", "c": "Vigor híbrido; altísima productividad y calidad, resistente a roya y nematodos, perfil cítrico floral ideal para sistemas agroforestales. 22"}, {"v": "Milenio", "l": "Sarchimor x Sudan Rume", "e": "arabica", "c": "Híbrido F1; combina resistencia a enfermedades con la finura sensorial del Sudan Rume, notas frutales y acidez málica. 48"}, {"v": "Evaluna", "l": "Selección híbrida CIRAD/ECOM", "e": "arabica", "c": "Porte bajo; adaptada a altitudes extremas, productividad masiva y calidad de taza superior con acidez brillante y limpia. 12"}, {"v": "Esperanza", "l": "Selección híbrida avanzada", "e": "arabica", "c": "Muy productiva y tolerante a roya; adaptada a climas húmedos, perfil sensorial equilibrado con buena densidad de frutos. 22"}, {"v": "Casiopea", "l": "Cruce Caturra x Landrace Etíope", "e": "arabica", "c": "Calidad excepcional sobre  msnm; alta productividad, perfil floral complejo y cuerpo sedoso muy competitivo en catación. 22"}, {"v": "Obatã", "l": "Sarchimor (HdT x V. Sarchi)", "e": "arabica", "c": "Vigorosa y resistente; desarrollada en Brasil para zonas medias, ofrece taza limpia, equilibrada y rendimientos agrícolas estables. 41"}, {"v": "Catucaí", "l": "Icatu x Catuai", "e": "arabica", "c": "Cruce brasileño; combina resistencia de Robusta vía Icatu con calidad de Catuai. Muy productivo, notas achocolatadas intensas. 12"}, {"v": "Icatu", "l": "(Robusta x Bourbon) x M. Novo", "e": "arabica", "c": "Híbrido interespecífico retrocruzado; vigor de Robusta con calidad Arábica, resistente a enfermedades y muy productivo comercialmente. 12"}, {"v": "Pache", "l": "Mutación de Typica", "e": "arabica", "c": "Enana (San Bernardo); ideal para zonas de viento, produce taza dulce con notas de chocolate y baja acidez. 52"}, {"v": "Bernardina", "l": "Landrace etíope (El Salvador)", "e": "arabica", "c": "Redescubierta recientemente; genética etíope pura, perfil complejo con notas de durazno, flor de naranjo, té y miel. 12"}, {"v": "Nemaya", "l": "Selección de C. canephora", "e": "canephora", "c": "Robusta especializado; alta resistencia a nematodos de raíz, usado casi exclusivamente como portainjerto para proteger variedades de Arábica. 22"}, {"v": "BP 534", "l": "Selección de germoplasma", "e": "canephora", "c": "Selección de Indonesia; alta productividad en ambientes húmedos, granos de tamaño promedio y resistencia aceptable a patógenos locales fúngicos. 56"}, {"v": "BP 939", "l": "Selección de germoplasma", "e": "canephora", "c": "Clon indonesio calificado como \"Fine Robusta\"; destaca por alta puntuación sensorial en taza y adaptabilidad en altitudes medias."}, {"v": "Roubi 1", "l": "Selección masal mejorada", "e": "canephora", "c": "Selección de República Centroafricana; combina excelente rendimiento agrícola con buena calidad de bebida y alta aceptación por caficultores."}, {"v": "Roubi 6", "l": "Selección de alto vigor", "e": "canephora", "c": "Selección de porte vigoroso; reconocida por su gran calidad de taza para la especie y resistencia superior a enfermedades."}, {"v": "BRS 2314", "l": "Selección Embrapa", "e": "canephora", "c": "Desarrollado en Brasil; planta de porte bajo con granos grandes, específicamente adaptada para tolerar periodos prolongados de sequía hídrica."}, {"v": "BRS 3137", "l": "Selección de porte compacto", "e": "canephora", "c": "Cultivar brasileño de porte reducido; permite alta densidad de siembra y mantiene productividad elevada en condiciones climáticas muy secas."}, {"v": "TR4", "l": "Selección comercial masiva", "e": "canephora", "c": "Variedad líder en Vietnam; destaca por su alto rendimiento, amplia adaptación geográfica y notable resistencia a plagas y enfermedades."}, {"v": "TR9", "l": "Selección de gran calidad", "e": "canephora", "c": "Selección vietnamita de rendimiento masivo; ofrece gran tamaño de grano y una de las mejores calidades sensoriales para Robusta."}, {"v": "TR11", "l": "Selección vigorosa industrial", "e": "canephora", "c": "Variedad vietnamita vigorosa; combina crecimiento fuerte con rendimiento superior, fundamental para la producción comercial de café soluble a escala."}, {"v": "Nganda", "l": "Landrace tradicional", "e": "canephora", "c": "Variante arbustiva de Uganda; valorada por su adaptabilidad tradicional, hábito de crecimiento rastrero y perfil de sabor balanceado distintivo."}, {"v": "Kouilou", "l": "Landrace rústico", "e": "canephora", "c": "Originaria de África Occidental; planta rústica de granos pequeños pero producción abundante, esencial en programas globales de mejora genética."}, {"v": "Conilon", "l": "Selección comercial brasileña", "e": "canephora", "c": "Nombre brasileño del Robusta; seleccionado por su vigor, gran cuerpo y resistencia, ideal para mezclas de espresso de calidad."}, {"v": "Nemaya", "l": "Selección para portainjerto", "e": "canephora", "c": "Robusta especializado para portainjerto; posee altísima resistencia a nematodos, salvaguardando las raíces de variedades de Arábica más sensibles. 41"}, {"v": "INIFAP 00-28", "l": "Selección masal mexicana", "e": "canephora", "c": "Clon mexicano de porte alto; produce hojas y frutos grandes, registrando el mayor rendimiento histórico en la costa chiapaneca."}, {"v": "KR1", "l": "Selección resistente CWD", "e": "canephora", "c": "Selección de Uganda; destaca por su resistencia específica a la marchitez del café y su alta productividad comercial estable."}, {"v": "KR6", "l": "Selección de ladera", "e": "canephora", "c": "Variedad ugandesa mejorada; ofrece un equilibrio entre resistencia a enfermedades foliares y altos niveles de cosecha para pequeños productores."}, {"v": "Barako", "l": "Landrace tradicional", "e": "liberica", "c": "Variedad filipina de sabor amargo intenso; presenta granos gigantes y un aroma picante único que recuerda al anís silvestre. 7"}, {"v": "Kapeng Barako", "l": "Selección regional", "e": "liberica", "c": "Tradición de Filipinas; apreciada por su perfil sensorial ahumado y floral, constituye un símbolo de la identidad cafetera asiática. 21"}, {"v": "Excelsa", "l": "Landrace africano", "e": "liberica var", "c": "Variedad de gran tamaño; ofrece perfil afrutado con notas de tamarindo, frutos rojos y acidez marcada muy distintiva."}, {"v": "Liberica Excelsa", "l": "Selección sudeste asiático", "e": "liberica var", "c": "Selección del sudeste asiático; planta resistente que requiere cosecha manual selectiva debido a la maduración desigual de sus frutos."}, {"v": "Stenophylla", "l": "Landrace silvestre", "e": "stenophylla", "c": "Especie tolerante al calor extremo; posee granos púrpuras y un sabor dulce y floral que rivaliza con el Arábica."}, {"v": "Racemosa", "l": "Landrace de Mozambique", "e": "racemosa", "c": "Adaptada a aridez extrema; hábito deciduo, maduración rápida, granos diminutos con muy baja cafeína y perfil de sabor dulce. 1"}, {"v": "Eugenioides", "l": "Landrace de Kenia", "e": "eugenioides", "c": "Progenitor del Arábica; posee dulzor natural extraordinario, bajísima cafeína y notas que recuerdan a cereales y granos tostados. 8"}, {"v": "Charrieriana", "l": "Landrace de Camerún", "e": "charrieriana", "c": "Especie de Camerún; única variedad conocida naturalmente libre de cafeína, descubierta recientemente con un gran potencial científico y comercial."}, {"v": "Congensis", "l": "Landrace diploide", "e": "congensis", "c": "Especie diploide de selvas húmedas; utilizada en hibridaciones para mejorar la calidad sensorial y la resistencia foliar del Robusta."}, {"v": "Mauritiana", "l": "Landrace de Madagascar", "e": "mauritiana", "c": "Landrace de las Islas Mascareñas; adaptada a climas insulares, funciona como una reserva genética vital frente a desafíos climáticos. 1"}, {"v": "Salvatrix", "l": "Especie silvestre", "e": "salvatrix", "c": "Especie silvestre africana; destaca por su bajo contenido de cafeína y presencia del marcador bioquímico amargo exclusivo llamado mozambioside. 1"}, {"v": "Pseudozanguebariae", "l": "Taxón de África Oriental", "e": "pseudozanguebariae", "c": "Originaria del este de África; altamente adaptada a la sequía y caracterizada por una composición rica en trigonelina y mozambioside. 1"}, {"v": "Anthonyi", "l": "Especie autocompatible", "e": "anthonyi", "c": "Especie diploide autocompatible; recurso genético clave para desarrollar variedades comerciales que no requieran polinización cruzada externa para reproducirse. 7"}, {"v": "Heterocalyx", "l": "Especie autógama", "e": "heterocalyx", "c": "Especie autógama del Congo; de gran interés científico para asegurar la producción uniforme de semillas en entornos con climas variables. 1"}];
+const DEP_MUNI={"Multi-Origin": ["Multi-Origin"], "Santander": ["Aratoca", "Barbosa", "Barichara", "Barrancabermeja", "Bucaramanga", "California", "Capitanejo", "Charalá", "Charta", "Cimitarra", "Concepción", "Curití", "El Carmen de Chucurí", "Floridablanca", "Girón", "Guadalupe", "La Belleza", "Landázuri", "Lebrija", "Los Santos", "Matanza", "Mogotes", "Málaga", "Oiba", "Palmas del Socorro", "Piedecuesta", "Pinchote", "Puente Nacional", "Puerto Wilches", "Rionegro", "Sabana de Torres", "San Gil", "San Vicente de Chucurí", "Simacota", "Socorro", "Suaita", "Suratá", "Tona", "Vetas", "Villanueva", "Vélez", "Zapatoca"], "Norte de Santander": ["Arboledas", "Bochalema", "Bucarasica", "Chinácota", "Chitagá", "Convención", "Cucutilla", "Cáchira", "Cácota", "Cúcuta", "Durania", "El Carmen", "El Tarra", "El Zulia", "Gramalote", "Hacarí", "Herrán", "La Esperanza", "La Playa de Belén", "Labateca", "Los Patios", "Lourdes", "Mutiscua", "Ocaña", "Pamplona", "Pamplonita", "Puerto Santander", "Ragonvalia", "Salazar de Las Palmas", "San Calixto", "San Cayetano", "Santiago", "Sardinata", "Silos", "Teorama", "Tibú", "Toledo", "Villa Caro", "Villa del Rosario", "Ábrego"], "Antioquia": ["Abejorral", "Abriaquí", "Alejandría", "Amagá", "Amalfi", "Andes", "Angelópolis", "Angostura", "Anorí", "Anzá", "Apartadó", "Arboletes", "Argelia", "Armenia", "Barbosa", "Bello", "Belmira", "Betania", "Betulia", "Briceño", "Buriticá", "Caicedo", "Caldas", "Campamento", "Caracolí", "Caramanta", "Carepa", "Carmen de Viboral", "Carolina del Príncipe", "Caucasia", "Cañasgordas", "Chigorodó", "Cisneros", "Ciudad Bolívar", "Cocorná", "Concepción", "Concordia", "Copacabana", "Cáceres", "Dabeiba", "Donmatías", "Ebéjico", "El Bagre", "El Carmen de Viboral", "El Peñol", "El Retiro", "El Santuario", "Entrerríos", "Envigado", "Fredonia", "Frontino", "Giraldo", "Girardota", "Granada", "Guadalupe", "Guarne", "Guatapé", "Gómez Plata", "Heliconia", "Hispania", "Itagüí", "Ituango", "Jardín", "Jericó", "La Ceja", "La Estrella", "La Pintada", "La Unión", "Liborina", "Maceo", "Marinilla", "Medellín", "Montebello", "Murindó", "Mutatá", "Nariño", "Nechí", "Necoclí", "Olaya", "Peque", "Pueblorrico", "Puerto Berrío", "Puerto Nare", "Puerto Triunfo", "Remedios", "Rionegro", "Sabanalarga", "Sabaneta", "Salgar", "San Andrés de Cuerquia", "San Carlos", "San Francisco", "San Jerónimo", "San José de la Montaña", "San Juan de Urabá", "San Luis", "San Pedro de Urabá", "San Pedro de los Milagros", "San Rafael", "San Roque", "San Vicente Ferrer", "Santa Bárbara", "Santa Fe de Antioquia", "Santa Rosa de Osos", "Santo Domingo", "Segovia", "Sonsón", "Sopetrán", "Tarazá", "Tarso", "Titiribí", "Toledo", "Turbo", "Támesis", "Uramita", "Urrao", "Valdivia", "Valparaíso", "Vegachí", "Venecia", "Vigía del Fuerte", "Yalí", "Yarumal", "Yolombó", "Yondó", "Zaragoza"], "Huila": ["Acevedo", "Aipe", "Algeciras", "Altamira", "Baraya", "Campoalegre", "Colombia", "El Agrado", "Elías", "Garzón", "Gigante", "Guadalupe", "Hobo", "Isnos", "La Argentina", "La Plata", "Neiva", "Nátaga", "Oporapa", "Paicol", "Paipa", "Palermo", "Palestina", "Pital", "Pitalito", "Rivera", "Saladoblanco", "San Agustín", "Santa María", "Suaza", "Tarqui", "Tello", "Teruel", "Tesalia", "Timaná", "Villavieja", "Yaguará", "Íquira"], "Tolima": ["Alpujarra", "Alvarado", "Ambalema", "Anzoátegui", "Armero Guayabal", "Ataco", "Cajamarca", "Carmen de Apicalá", "Casabianca", "Chaparral", "Coello", "Coyaima", "Cunday", "Dolores", "Espinal", "Falan", "Flandes", "Fresno", "Guamo", "Herveo", "Honda", "Ibagué", "Icononzo", "Lérida", "Líbano", "Mariquita", "Melgar", "Murillo", "Natagaima", "Ortega", "Palocabildo", "Piedras", "Planadas", "Prado", "Purificación", "Rioblanco", "Roncesvalles", "Rovira", "Saldaña", "San Antonio", "San Luis", "Santa Isabel", "Suárez", "Valle de San Juan", "Venadillo", "Villahermosa", "Villarrica"], "Nariño": ["Albán", "Aldana", "Ancuya", "Arboleda", "Barbacoas", "Belén", "Buesaco", "Chachagüí", "Colón", "Consacá", "Contadero", "Cuaspud", "Cumbal", "Cumbitara", "Córdoba", "El Charco", "El Peñol", "El Rosario", "El Tablón de Gómez", "El Tambo", "Francisco Pizarro", "Funes", "Guachucal", "Guaitarilla", "Gualmatán", "Iles", "Imués", "Ipiales", "La Cruz", "La Florida", "La Llanada", "La Tola", "La Unión", "Leiva", "Linares", "Los Andes", "Magüí Payán", "Mallama", "Mosquera", "Nariño", "Olaya Herrera", "Ospina", "Pasto", "Policarpa", "Potosí", "Providencia", "Puerres", "Pupiales", "Ricaurte", "Roberto Payán", "Samaniego", "San Bernardo", "San Lorenzo", "San Pablo", "San Pedro de Cartago", "Sandoná", "Santa Bárbara", "Santacruz", "Sapuyes", "Taminango", "Tangua", "Tumaco", "Túquerres", "Yacuanquer"], "Cauca": ["Cajibío", "El Tambo", "Inzá", "La Sierra", "Morales", "Piendamó", "Silvia", "Sotará", "Timbío", "Toribío"], "Caldas": ["Aguadas", "Anserma", "Chinchiná", "Manizales", "Manzanares", "Neira", "Palestina", "Pensilvania", "Riosucio", "Villamaría"], "Risaralda": ["Apía", "Balboa", "Belén de Umbría", "Guática", "Marsella", "Mistrató", "Pereira", "Quinchía", "Santa Rosa de Cabal", "Santuario"], "Quindío": ["Armenia", "Buenavista", "Calarcá", "Circasia", "Filandia", "Génova", "Montenegro", "Pijao", "Quimbaya", "Salento"], "Valle del Cauca": ["Ansermanuevo", "Bolívar", "Caicedonia", "Calima El Darién", "El Cairo", "El Águila", "Restrepo", "Sevilla", "Trujillo", "Versalles"], "Magdalena": ["Ciénaga", "Fundación", "Santa Marta"], "Cesar": ["Codazzi", "La Paz", "Pueblo Bello", "Valledupar"], "La Guajira": ["San Juan del Cesar", "Villanueva"], "Cundinamarca": ["Fusagasugá", "La Mesa", "San Juan de Rioseco", "Tibacuy", "Viotá"], "Boyacá": ["Chitaraque", "Miraflores", "Moniquirá", "Togüí", "Zetaquira"], "Meta": ["Lejanías", "Mesetas", "San Juan de Arama"], "Caquetá": ["El Doncello", "Florencia"], "Casanare": ["Nunchía", "Támara"], "Putumayo": ["Mocoa", "Sibundoy"], "Arauca": ["Tame"], "Chocó": ["El Carmen de Atrato"]};
+
+
+/* ====== STATIC CATALOGS ====== */
+const HS_CODES=[
+ ["Café verde para siembra — Sin descafeinar, sin tostar","0901.11.10.00"],
+ ["Café verde comercial — Sin descafeinar, sin tostar","0901.11.90.00"],
+ ["Café verde comercial — Descafeinado, sin tostar","0901.12.00.00"],
+ ["Café tostado — Sin descafeinar, en grano entero","0901.21.10.00"],
+ ["Café tostado — Sin descafeinar, molido","0901.21.20.00"],
+ ["Café tostado — Descafeinado","0901.22.00.00"],
+ ["Otros subproductos del café (cáscaras, pieles y sucedáneos)","0901.90.00.00"],
+];
+const ORIGIN_CERTS=[
+ ["origin_cert_dor","(DOR) Denominación de Origen Regional"],
+ ["origin_cert_do","(DO) Denominación de Origen Protegida"],
+ ["origin_cert_igp","(IGP) Indicación Geográfica Protegida"],
+ ["origin_cert_fedecafe","Café de Colombia (FEDECAFE)"],
+];
+const INTL_CERTS=[
+ ["intl_eudr","Regulatorio","EUDR (EU 2023/1115)"],
+ ["intl_rainforest","Sostenibilidad","Rainforest Alliance"],
+ ["intl_organic","Sostenibilidad","Orgánico (USDA / EU / JAS)"],
+ ["intl_eujas","Sostenibilidad","EU JAS"],
+ ["intl_birdfriendly","Sostenibilidad","Bird-Friendly (SMBC)"],
+ ["intl_foe","Sostenibilidad","Friend of the Earth"],
+ ["intl_iwca","Sostenibilidad","IWCA"],
+ ["intl_cafe","Calidad","C.A.F.E. (Starbucks)"],
+ ["intl_bpa","Calidad","BPA (Buenas Prácticas Agrícolas)"],
+ ["intl_fairtrade","Comercio","Fairtrade (FLO)"],
+ ["intl_spp","Comercio","SPP – Símbolo Pequeños Productores"],
+ ["intl_fairtradeusa","Comercio","Fairtrade USA"],
+ ["intl_demeter","Especializado","Demeter (Biodinámico)"],
+ ["intl_nespresso","Especializado","Nespresso AAA"],
+ ["intl_globalgap","Especializado","GLOBALG.A.P"],
+];
+const SCA_ATTRS=[
+ ["fragrance","Fragrance/Aroma"],["flavor","Flavor"],["aftertaste","Aftertaste"],
+ ["acidity","Acidity"],["body","Body"],["balance","Balance"],
+ ["uniformity","Uniformity"],["clean_cup","Clean Cup"],["sweetness","Sweetness"],
+ ["cuppers","Cupper's Score"],
+];
+const MESH=[
+ ["mesh_supremo_plus","Supremo + (M18)"],["mesh_supremo","Supremo (M17)"],
+ ["mesh_extra","Extra (M16)"],["mesh_europa","Europa (M15)"],
+ ["mesh_ugq","UGQ (M14)"],["mesh_peaberry","Pea Berry (M13–12)"],["mesh_residue","Residuo"],
+];
+const FACTOR_FIELDS=[
+ "fa_green_remainder","fa_start","fa_parch_hum","fa_healthy","fa_primary_defect","fa_secondary_defect"
+];
+
+/* ====== HELPERS ====== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n;};
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let varCounter=0;
+function toast(msg,err=false){
+  const t=$("#toast");t.textContent=msg;t.className=err?"show err":"show";
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className="",2800);
+}
+
+/* ====== SPIDER CHART ====== */
+const CX=0,CY=0,R=72,N=10;
+function spiderPoint(idx,val){
+  const a=(Math.PI*2*idx/N)-Math.PI/2;
+  const r=R*(val/10);
+  return [CX+r*Math.cos(a),CY+r*Math.sin(a)];
+}
+function buildSpiderStatic(){
+  const svg=$("#spider-svg");
+  const rings=[2,4,6,8,10];
+  rings.forEach(v=>{
+    const pts=Array.from({length:N},(_,i)=>spiderPoint(i,v).join(",")).join(" ");
+    const p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+    p.setAttribute("points",pts);p.setAttribute("class","spider-bg");svg.appendChild(p);
+  });
+  SCA_ATTRS.forEach((_,i)=>{
+    const [x1,y1]=spiderPoint(i,0.5);
+    const [x2,y2]=spiderPoint(i,10);
+    const l=document.createElementNS("http://www.w3.org/2000/svg","line");
+    l.setAttribute("x1",x1);l.setAttribute("y1",y1);l.setAttribute("x2",x2);l.setAttribute("y2",y2);
+    l.setAttribute("class","spider-axis");svg.appendChild(l);
+    const [lx,ly]=spiderPoint(i,11.8);
+    const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",lx);t.setAttribute("y",ly);t.setAttribute("class","spider-label");
+    t.textContent=SCA_ATTRS[i][1].split("/")[0].split(" ")[0];svg.appendChild(t);
+  });
+  const poly=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+  poly.setAttribute("class","spider-poly");poly.id="spider-poly";svg.appendChild(poly);
+  SCA_ATTRS.forEach((_,i)=>{
+    const dot=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    dot.setAttribute("class","spider-dot");dot.id="spider-dot-"+i;
+    dot.setAttribute("r","3");svg.appendChild(dot);
+  });
+}
+function updateSpider(){
+  const vals=SCA_ATTRS.map(a=>Math.min(10,Math.max(0,num($('[data-field="sca_'+a[0]+'"]').value))));
+  const pts=vals.map((v,i)=>spiderPoint(i,v).join(",")).join(" ");
+  $("#spider-poly").setAttribute("points",pts);
+  vals.forEach((v,i)=>{
+    const [x,y]=spiderPoint(i,v);
+    const d=$("#spider-dot-"+i);d.setAttribute("cx",x);d.setAttribute("cy",y);
+  });
+  const total=Math.round(vals.reduce((s,x)=>s+x,0)*100)/100;
+  $("#sca_total").innerHTML=total.toFixed(2)+'<small>/100</small>';
+  $("#sca_total_cell").textContent=total.toFixed(2);
+  const cls=$("#sca_class");
+  if(total>=80){cls.textContent="Especialidad";cls.className="sca-badge spec";}
+  else if(total>0){cls.textContent="Comercial";cls.className="sca-badge";}
+  else{cls.textContent="Sin puntaje";cls.className="sca-badge none";}
+}
+
+/* ====== BUILD DYNAMIC CONTROLS ====== */
+function buildAll(){
+  // HS codes select — value = Spanish label, display = Spanish label
+  const pt=$("#product_type");
+  pt.innerHTML='<option value="">— Seleccionar tipo —</option>'+
+    HS_CODES.map(h=>`<option value="${esc(h[0])}">${esc(h[0])}</option>`).join("");
+  pt.addEventListener("change",()=>{
+    const m=HS_CODES.find(h=>h[0]===pt.value);
+    $("#hs_code").value=m?m[1]:"";
+  });
+  // Dept select
+  const deps=Object.keys(DEP_MUNI).sort();
+  const rd=$("#region_dep");
+  rd.innerHTML='<option value="">— Departamento —</option>'+
+    deps.map(d=>`<option>${esc(d)}</option>`).join("");
+  rd.addEventListener("change",()=>fillMuni(rd.value,""));
+  fillMuni("","");
+  // Muni toggle (select vs text)
+  let muniMode="select";
+  $("#muni-toggle").addEventListener("click",()=>{
+    muniMode=muniMode==="select"?"text":"select";
+    const sel=$("#county_muni"),txt=$("#county_muni_text"),tog=$("#muni-toggle");
+    if(muniMode==="text"){sel.style.display="none";txt.style.display="";tog.textContent="☰ Usar lista";
+    }else{sel.style.display="";txt.style.display="none";tog.textContent="✎ Escribir manualmente";}
+  });
+  // Blend specs visibility — only show for Regional Blend or Multi-Origin Blend
+  function updateBlendRow(){
+    const v=document.querySelector('input[name="origin_category"]:checked');
+    const show=v&&(v.value==="Regional Blend"||v.value==="Multi-Origin Blend");
+    $("#blend-specs-row").style.display=show?"":"none";
+  }
+  $$('input[name="origin_category"]').forEach(r=>r.addEventListener("change",updateBlendRow));
+  updateBlendRow();
+
+  // Origin certs checkboxes
+  $("#origin_certs").innerHTML=ORIGIN_CERTS.map(c=>
+    `<label class="chk"><input type="checkbox" data-field="${c[0]}"><span>${esc(c[1])}</span></label>`).join("")+
+    `<label class="chk"><input type="checkbox" data-field="origin_cert_other"><span>Otro certificado</span></label>`;
+  // Intl certs checkboxes
+  $("#intl_certs").innerHTML=INTL_CERTS.map(c=>
+    `<label class="chk"><input type="checkbox" data-field="${c[0]}"><span><span class="grp">${esc(c[1])}</span>${esc(c[2])}</span></label>`).join("")+
+    `<label class="chk"><input type="checkbox" data-field="intl_other"><span><span class="grp">Otro</span>Otro certificado</span></label>`;
+  // SCA table
+  $("#sca_table").innerHTML=SCA_ATTRS.map(a=>
+    `<tr><td>${esc(a[1])}</td><td><input type="number" step="0.25" min="0" max="10" data-field="sca_${a[0]}" data-sca placeholder="0.00"></td></tr>`).join("");
+  // Mesh table
+  $("#mesh_table").innerHTML=MESH.map(m=>
+    `<tr><td>${esc(m[1])}</td><td><input type="number" step="0.1" data-field="${m[0]}" data-mesh placeholder="0.0"></td><td class="pct" data-meshpct="${m[0]}">—</td></tr>`).join("");
+  // Spider static
+  buildSpiderStatic();
+}
+function fillMuni(dep,keepVal){
+  const cm=$("#county_muni");
+  const list=dep&&DEP_MUNI[dep]?DEP_MUNI[dep]:[].concat(...Object.values(DEP_MUNI)).sort();
+  const prev=keepVal!==undefined?keepVal:cm.value;
+  cm.innerHTML='<option value="">— Municipio —</option>'+list.map(m=>`<option>${esc(m)}</option>`).join("");
+  if(prev&&list.includes(prev))cm.value=prev;
+}
+
+/* ====== VARIETY ROWS ====== */
+function varietyRow(data){
+  data=data||{pct:"",name:""};
+  const id=++varCounter;
+  const opts='<option value="">— Variedad —</option>'+
+    VARIETIES.map(v=>`<option${v.v===data.name?" selected":""}>${esc(v.v)}</option>`).join("");
+  const row=document.createElement("div");
+  row.className="vrow";row.dataset.vrow=id;
+  row.innerHTML=`
+    <input type="number" min="0" max="100" step="1" data-vpct value="${esc(data.pct)}" placeholder="%" title="% proporción">
+    <select data-vname>${opts}</select>
+    <button class="del-btn" title="Eliminar">×</button>
+    <div class="vmeta"></div>`;
+  row.querySelector(".del-btn").onclick=()=>{row.remove();updateVarietyTotal();};
+  const sel=row.querySelector("[data-vname]"),meta=row.querySelector(".vmeta");
+  const renderMeta=()=>{
+    const v=VARIETIES.find(x=>x.v===sel.value);
+    if(v){meta.className="vmeta show";
+      meta.innerHTML=`<b>Especie:</b> ${esc(v.e)} &nbsp;·&nbsp; <b>Linaje:</b> ${esc(v.l)}<br><span style="color:#4E4A60">${esc(v.c)}</span>`;}
+    else meta.className="vmeta";
+  };
+  sel.addEventListener("change",renderMeta);
+  row.querySelector("[data-vpct]").addEventListener("input",updateVarietyTotal);
+  renderMeta();return row;
+}
+function updateVarietyTotal(){
+  let t=0;$$("[data-vpct]").forEach(i=>t+=num(i.value));
+  const el=$("#variety_total");
+  el.innerHTML=`Proporción total: <b>${t}%</b>`;
+  el.className="vtotal "+(t===100?"good":(t>0?"bad":""));
+}
+function getVarieties(){
+  return $$(".vrow").map(r=>({pct:r.querySelector("[data-vpct]").value,name:r.querySelector("[data-vname]").value}))
+    .filter(v=>v.pct||v.name);
+}
+
+/* ====== LIVE CALCULATIONS ====== */
+function recalc(){
+  updateSpider();
+  // Factor calcs
+  const start=num($('[data-field="fa_start"]').value);
+  const remainder=num($("#fa_green_remainder").value);
+  const yieldLoss=Math.max(0,start-remainder);
+  $("#fa_yield_loss_display").value=yieldLoss>0?yieldLoss.toFixed(1):"";
+  const prim=num($('[data-field="fa_primary_defect"]').value);
+  const sec=num($('[data-field="fa_secondary_defect"]').value);
+  // Grano Sano = Trillado Verde Restante − Defecto Primario − Defecto Secundario
+  const healthy=remainder>0?Math.max(0,remainder-prim-sec):0;
+  const hdisplay=$("#fa_healthy_display");
+  if(hdisplay)hdisplay.value=remainder>0?healthy.toFixed(1):"";
+  const yf=healthy>0?(70*start/healthy).toFixed(2):"—";
+  $("#yield_factor_display").textContent=yf;
+  // Mesh
+  let meshSum=0;MESH.forEach(m=>meshSum+=num($(`[data-field="${m[0]}"]`).value));
+  $("#mesh_sum").textContent=meshSum.toFixed(1)+" g";
+  let totalPct=0;
+  MESH.forEach(m=>{
+    const w=num($(`[data-field="${m[0]}"]`).value);
+    const cell=$(`[data-meshpct="${m[0]}"]`);
+    if(remainder>0){const p=(w/remainder)*100;totalPct+=p;cell.textContent=p.toFixed(1)+"%";}
+    else cell.textContent="—";
+  });
+  const pct=remainder>0?(meshSum/remainder)*100:0;
+  const alert=$("#mesh_pct_alert"),pb=$("#mesh_pct_b");
+  pb.textContent=remainder>0?pct.toFixed(1)+"%":"—";
+  const bad=remainder>0&&Math.abs(pct-100)>5;
+  alert.className="mesh-total-pct"+(bad?" bad":"");
+  $("#mesh_pct_sum").textContent=remainder>0?pct.toFixed(1)+"%":"—";
+}
+
+/* ====== TOOLTIPS & CARD INFO ====== */
+function setupTooltips(){
+  // Card info buttons
+  $$(".card-info").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const desc=$("#desc-"+btn.dataset.desc);
+      if(desc){desc.classList.toggle("open");btn.style.background=desc.classList.contains("open")?"var(--purple-faint)":"";}
+    });
+  });
+  // Field "i" buttons
+  $$(".fi[data-tip]").forEach(btn=>{
+    btn.addEventListener("click",e=>{
+      e.preventDefault();
+      const tip=$("#"+btn.dataset.tip);
+      if(tip){
+        $$(".field-tip.open").forEach(t=>{if(t!==tip)t.classList.remove("open");});
+        tip.classList.toggle("open");
+      }
+    });
+  });
+}
+
+/* ====== STATE: COLLECT / APPLY ====== */
+function collect(){
+  const o={};
+  $$("[data-field]").forEach(el=>{
+    const k=el.dataset.field;
+    if(el.type==="checkbox") o[k]=el.checked?"TRUE":"FALSE";
+    else if(el.type==="radio"){if(el.checked)o[k]=el.value;else if(!(k in o))o[k]="";}
+    else o[k]=el.value;
+  });
+  // Handle muni text vs select
+  const muniTxt=$("#county_muni_text");
+  if(muniTxt&&muniTxt.style.display!=="none")o["county_muni"]=muniTxt.value;
+  // Derived: yield loss and healthy bean (store computed values for CSV)
+  const start=num(o.fa_start),rem=num(o.fa_green_remainder);
+  o.fa_yield_loss=start>0&&rem>0?Math.max(0,start-rem).toFixed(1):"";
+  const primD=num(o.fa_primary_defect),secD=num(o.fa_secondary_defect);
+  o.fa_healthy=rem>0?Math.max(0,rem-primD-secD).toFixed(1):"";
+  // Varieties
+  getVarieties().forEach((v,i)=>{o[`variedad_${i+1}_proporcion`]=v.pct;o[`variedad_${i+1}_nombre`]=v.name;});
+  return o;
+}
+function apply(o){
+  // varieties
+  const vr=$("#variety_rows");vr.innerHTML="";
+  let i=1;const vs=[];
+  while(`variedad_${i}_nombre` in o||`variedad_${i}_proporcion` in o){
+    vs.push({pct:o[`variedad_${i}_proporcion`]||"",name:o[`variedad_${i}_nombre`]||""});i++;
+  }
+  (vs.length?vs:[{pct:"",name:""}]).forEach(v=>vr.appendChild(varietyRow(v)));
+  $$('input[type=radio][data-field]').forEach(r=>r.checked=false);
+  $$("[data-field]").forEach(el=>{
+    const k=el.dataset.field;if(!(k in o))return;
+    if(el.type==="checkbox")el.checked=(o[k]==="TRUE"||o[k]===true);
+    else if(el.type==="radio")el.checked=(el.value===o[k]);
+    else if(el.id!=="fa_yield_loss_display"&&el.id!=="fa_healthy_display")el.value=o[k];
+  });
+  const pt=$("#product_type");const m=HS_CODES.find(h=>h[0]===pt.value);if(m)$("#hs_code").value=m[1];
+  fillMuni($("#region_dep").value,o["county_muni"]);
+  // restore blend row visibility
+  const blendVis=document.querySelector('input[name="origin_category"]:checked');
+  const showBlend=blendVis&&(blendVis.value==="Regional Blend"||blendVis.value==="Multi-Origin Blend");
+  $("#blend-specs-row").style.display=showBlend?"":"none";
+  updateVarietyTotal();recalc();
+}
+
+/* ====== CSV ====== */
+function csvCell(v){v=String(v==null?"":v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function saveCSV(){
+  const o=collect();
+  const lines=["campo,valor"];Object.keys(o).forEach(k=>lines.push(csvCell(k)+","+csvCell(o[k])));
+  const name=(o.product_name||o.ctc_uid||"ctc_cafe").replace(/[^\w\-]+/g,"_").slice(0,50);
+  download(new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"}),`${name}_datasheet.csv`);
+  toast("Configuración guardada como CSV");
+}
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,"");
+  const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++;}else q=false;}else cell+=c;}
+    else{if(c==='"')q=true;
+      else if(c===","){row.push(cell);cell="";}
+      else if(c==="\n"||c==="\r"){if(c==="\r"&&text[i+1]==="\n")i++;
+        if(cell!==""||row.length){row.push(cell);rows.push(row);row=[];cell="";}}
+      else cell+=c;}
+  }
+  if(cell!==""||row.length){row.push(cell);rows.push(row);}return rows;
+}
+function loadCSV(text){
+  const rows=parseCSV(text);if(!rows.length)throw new Error("vacío");
+  const h=rows[0].map(x=>x.trim().toLowerCase());
+  const start=(h[0]==="campo"&&h[1]==="valor")?1:0;
+  const o={};for(let i=start;i<rows.length;i++){const r=rows[i];if(r.length>=1&&r[0]!=="")o[r[0]]=r[1]!==undefined?r[1]:"";}
+  apply(o);
+}
+function download(blob,filename){
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},100);
+}
+
+/* ====== FICHA RENDER ====== */
+function di(k,v){return v&&String(v).trim()?`<div class="di"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`:"";}
+function renderFicha(){
+  const o=collect();
+  const oc=ORIGIN_CERTS.filter(c=>o[c[0]]==="TRUE").map(c=>c[1]);
+  if(o.origin_cert_other==="TRUE"&&o.origin_cert_other_text)oc.push(o.origin_cert_other_text);
+  const ic=INTL_CERTS.filter(c=>o[c[0]]==="TRUE").map(c=>c[2]);
+  if(o.intl_other==="TRUE"&&o.intl_cert_other_text)ic.push(o.intl_cert_other_text);
+  const vs=getVarieties();
+  const total=SCA_ATTRS.reduce((s,a)=>s+num(o["sca_"+a[0]]),0);
+  const start=num(o.fa_start),rem=num(o.fa_green_remainder),healthy=num(o.fa_healthy);
+  const yf=healthy>0?(70*start/healthy).toFixed(2):"—";
+  const tags=[o.species,o.harvest_year&&("Cosecha "+o.harvest_year+(o.harvest_season?" · "+o.harvest_season.split(" ")[0]:"")),o.origin_category,o.hs_code].filter(Boolean);
+  const now=new Date();
+  const dateStr=now.toLocaleDateString("es-CO",{year:"numeric",month:"long",day:"numeric"});
+  const meshRows=MESH.map(m=>{const w=num(o[m[0]]);
+    return w?`<div class="di"><span class="k">${esc(m[1])}</span><span class="v">${w.toFixed(1)} g${rem>0?" · "+((w/rem)*100).toFixed(1)+"%":""}</span></div>`:""}).join("");
+
+  const html=`
+<div class="ficha">
+  <div class="ficha-header">
+    <div>
+      <div class="co">Colombian Trading Company · Green Coffee Datasheet</div>
+      <div class="pname">${esc(o.product_name||"Producto sin nombre")}</div>
+      ${o.razon_social?`<div style="font-family:var(--mono);font-size:11.5px;color:var(--lavender);margin-top:4px;letter-spacing:.03em">Proveedor: <span style="color:#fff;font-weight:600">${esc(o.razon_social)}</span></div>`:""}
+      <div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+    </div>
+    <div class="ctc-mark">
+      <div><div class="logo-sm">CTC</div></div>
+      <div>CTC UID: ${esc(o.ctc_uid||"—")}</div>
+      <div>${esc(o.revision_date||dateStr)}</div>
+      <div style="margin-top:3px;opacity:.7">CONFIDENCIAL</div>
+    </div>
+  </div>
+  <div class="ficha-gold"></div>
+  <div class="ficha-body">
+
+    <div class="ficha-section">
+      <h3>Identidad &amp; Trazabilidad</h3>
+      <div class="dl">
+        ${di("Proveedor",o.razon_social)}${di("NIT / RUT",o.nit_rut)}
+        ${di("CTC UID",o.ctc_uid)}${di("Productor",o.productor)}
+        ${di("Especie",o.species)}${di("Tipo de Producto",o.product_type)}
+        ${di("HS Code (NANDINA)",o.hs_code)}${di("Revisión",o.revision_date)}
+        ${di("Año de Cosecha",o.harvest_year)}${di("Temporada",o.harvest_season)}
+      </div>
+    </div>
+
+    <div class="ficha-section">
+      <h3>Origen</h3>
+      <div class="dl">
+        ${di("Categoría",o.origin_category)}${di("Finca",o.estate)}
+        ${di("País",o.country)}${di("Departamento",o.region_dep)}
+        ${di("Municipio",o.county_muni||o.county_muni_text)}
+        ${di("M.A.S.L.",o.masl&&o.masl+" msnm")}
+        ${di("Geo Referencia",o.geo_ref)}${di("Edad Plantación",o.plantation_age&&o.plantation_age+" años")}
+      </div>
+      ${o.multi_origin_specs?`<p class="prose" style="margin-top:8px"><strong>Blend specs:</strong> ${esc(o.multi_origin_specs)}</p>`:""}
+      ${o.about_origin?`<p class="prose" style="margin-top:8px">${esc(o.about_origin)}</p>`:""}
+    </div>
+
+    ${(oc.length||ic.length||o.awards)?`<div class="ficha-section">
+      <h3>Certificaciones &amp; Reconocimientos</h3>
+      ${oc.length?`<p style="font-size:10.5px;color:var(--ink-soft);font-family:var(--mono);margin-bottom:5px">ORIGEN</p><div class="chips" style="margin-bottom:10px">${oc.map(c=>`<span class="chip navy">${esc(c)}</span>`).join("")}</div>`:""}
+      ${ic.length?`<p style="font-size:10.5px;color:var(--ink-soft);font-family:var(--mono);margin-bottom:5px">INTERNACIONALES</p><div class="chips" style="margin-bottom:10px">${ic.map(c=>`<span class="chip">${esc(c)}</span>`).join("")}</div>`:""}
+      ${o.awards?`<div class="dl one">${di("Premios & Rankings",o.awards)}</div>`:""}
+    </div>`:""}
+
+    ${vs.length?`<div class="ficha-section">
+      <h3>Variedades del Lote</h3>
+      <div class="dl">${vs.map(v=>{const meta=VARIETIES.find(x=>x.v===v.name);
+        return `<div class="di"><span class="k">${v.pct?v.pct+"% · ":""}${esc(v.name||"—")}</span><span class="v">${meta?esc(meta.e):""}</span></div>`;}).join("")}</div>
+    </div>`:""}
+
+    <div class="ficha-section">
+      <h3>Caracterización Básica</h3>
+      <div class="dl">
+        ${di("Humedad del Grano",o.green_bean_humidity&&o.green_bean_humidity+" %")}
+        ${di("Densidad",o.green_bean_density&&o.green_bean_density+" g/L")}
+        ${di("Actividad de Agua",o.water_activity&&o.water_activity+" aW")}
+        ${di("Proceso Base",o.base_processing)}
+        ${di("Proceso Especial",o.special_processing)}
+        ${di("Factor de Rendimiento (productor)",o.yield_factor_producer)}
+      </div>
+    </div>
+
+    ${total>0?`<div class="ficha-section">
+      <h3>Perfil Sensorial · SCA</h3>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center">
+        <div style="width:180px;flex:0 0 auto">${(()=>{const svg=document.getElementById("spider-svg");return svg?svg.outerHTML:'';})()}</div>
+        <div>
+          <div class="scoreband" style="margin-bottom:10px">
+            <span class="big">${total.toFixed(2)}</span>
+            <div>
+              <div style="font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:${total>=80?"var(--crimson)":"var(--navy)"};font-weight:700">${total>=80?"Café de Especialidad ≥ 80 pts":"Café Comercial"}</div>
+              <div class="prose" style="font-size:11.5px;margin-top:3px">${SCA_ATTRS.map(a=>{const v=num(o["sca_"+a[0]]);return v?a[1].split("/")[0]+" "+v.toFixed(2):"";}).filter(Boolean).join(" · ")}</div>
+            </div>
+          </div>
+          ${o.cupping_profile?`<p class="prose">${esc(o.cupping_profile)}</p>`:""}
+        </div>
+      </div>
+    </div>`:(o.cupping_profile?`<div class="ficha-section"><h3>Perfil Sensorial</h3><p class="prose">${esc(o.cupping_profile)}</p></div>`:"")}
+    ${(rem||healthy||meshRows)?`<div class="ficha-section">
+      <h3>Caracterización Física</h3>
+      <div class="dl">
+        ${di("Muestra Pergamino Inicial",o.fa_start&&o.fa_start+" g")}
+        ${di("Humedad Pergamino",o.fa_parch_hum&&o.fa_parch_hum+" %")}
+        ${di("Pérdida por Trilla",o.fa_yield_loss&&o.fa_yield_loss+" g")}
+        ${di("Trillado Verde Restante",rem&&rem+" g")}
+        ${di("Grano Sano",healthy&&healthy+" g"+(rem>0?" · "+((healthy/rem)*100).toFixed(1)+"%":""))}
+        ${di("Defecto Primario",o.fa_primary_defect&&o.fa_primary_defect+" g"+(rem>0?" · "+(num(o.fa_primary_defect)/rem*100).toFixed(1)+"%":""))}
+        ${di("Defecto Secundario",o.fa_secondary_defect&&o.fa_secondary_defect+" g"+(rem>0?" · "+(num(o.fa_secondary_defect)/rem*100).toFixed(1)+"%":""))}
+        ${di("Factor de Rendimiento",yf)}
+      </div>
+      ${meshRows?`<p style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);margin:12px 0 5px">GRANULOMETRÍA</p><div class="dl">${meshRows}</div>`:""}
+    </div>`:""}
+
+    ${(o.analysis_notes||o.qgrader_1||o.qgrader_2||o.qgrader_3)?`<div class="ficha-section">
+      <h3>Notas &amp; Referencias Q-Grader</h3>
+      ${o.analysis_notes?`<p class="prose" style="margin-bottom:8px">${esc(o.analysis_notes)}</p>`:""}
+      <div class="dl">${di("Q-Grader Ref 1",o.qgrader_1)}${di("Q-Grader Ref 2",o.qgrader_2)}${di("Q-Grader Ref 3",o.qgrader_3)}</div>
+    </div>`:""}
+
+    <div class="pi-note">
+      <strong>AVISO DE PROPIEDAD INTELECTUAL &amp; CONFIDENCIALIDAD</strong><br>
+      Este documento es propiedad de <strong>Colombian Trading Company (CTC)</strong> y contiene información técnica y comercial confidencial protegida por las leyes de propiedad intelectual aplicables. La información aquí consignada — incluyendo perfiles sensoriales, datos de trazabilidad, resultados físico-químicos y evaluaciones Q-Grader — es confidencial y está destinada exclusivamente al destinatario autorizado.<br><br>
+      Queda prohibida su reproducción, distribución, divulgación o uso para fines distintos a los expresamente autorizados por CTC sin previa autorización escrita. Para consultas de licenciamiento o reproducción: <strong>info@colombiantradingcompany.com</strong><br><br>
+      <span style="opacity:.7">© ${now.getFullYear()} Colombian Trading Company · Green Coffee Datasheet System v2.0 · Generado: ${dateStr}</span>
+    </div>
+  </div>
+  <div class="ficha-foot">
+    <span>Colombian Trading Company · Ficha Técnica Café Verde</span>
+    <span>${esc(o.ctc_uid||"—")} · ${dateStr}</span>
+  </div>
+</div>`;
+  $("#ficha-host").innerHTML=html;
+  return html;
+}
+
+function downloadFichaHTML(){
+  const inner=renderFicha();
+  const css=document.querySelector("style").textContent;
+  const title=collect().product_name||"Ficha Técnica CTC";
+  const doc=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>CTC · ${esc(title)}</title><style>${css} body{background:#fff;padding:20px}</style></head><body>${inner}</body></html>`;
+  const name=title.replace(/[^\w\-\sáéíóúÁÉÍÓÚ]/g,"").trim().replace(/\s+/g,"_").slice(0,55);
+  download(new Blob([doc],{type:"text/html;charset=utf-8"}),`CTC_${name}.html`);
+  toast("Ficha exportada como HTML");
+}
+
+/* ====== TABS ====== */
+function switchTab(name){
+  $$(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===name));
+  $$(".panel").forEach(p=>p.classList.toggle("active",p.id===name));
+  if(name==="ficha")renderFicha();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ====== INIT ====== */
+document.addEventListener("DOMContentLoaded",()=>{
+  buildAll();
+  setupTooltips();
+  $("#variety_rows").appendChild(varietyRow());
+  updateVarietyTotal();
+  recalc();
+
+  $$(".tab").forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
+  $("#add_variety").onclick=()=>{$("#variety_rows").appendChild(varietyRow());updateVarietyTotal();};
+
+  // Live recalc on any sca/mesh/factor input
+  document.addEventListener("input",e=>{
+    const el=e.target;
+    if(el.matches("[data-sca],[data-mesh],[data-field^='fa_']"))recalc();
+    if(el.dataset.field==="fa_start"||el.id==="fa_green_remainder")recalc();
+  });
+
+  // CSV
+  $("#btn-save").onclick=saveCSV;
+  $("#btn-load").onclick=()=>$("#loadfile").click();
+  $("#loadfile").onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{try{loadCSV(r.result);toast("Configuración cargada correctamente");}catch(err){toast("Error al leer el CSV",true);}};
+    r.readAsText(f);e.target.value="";
+  };
+  // Print / export
+  $("#btn-pdf").onclick=()=>{switchTab("ficha");setTimeout(()=>window.print(),350);};
+  $("#btn-html").onclick=downloadFichaHTML;
+  $("#btn-html2").onclick=downloadFichaHTML;
+  $("#btn-pdf2").onclick=()=>window.print();
+});
+</script>
+</body>
+</html>

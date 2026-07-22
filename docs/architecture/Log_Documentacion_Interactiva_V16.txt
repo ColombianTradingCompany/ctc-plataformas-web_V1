@@ -1,0 +1,8 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V16.0(d830e4a).html
+(CTC Web Platform V2.0, 2026-07-22). Cada entrada se compila al próximo Version Wrap (V17).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)

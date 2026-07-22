@@ -2,8 +2,14 @@
 .title{font-family:var(--font-fraunces),serif;font-weight:700;font-size:22px;color:var(--primary-deep);margin:0 0 4px}
 .sub{font-size:13px;color:var(--muted);margin:0 0 12px}
 
-.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:10px}
-.group{display:flex;align-items:center;gap:6px}
+.sourceBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px dashed var(--line);margin-bottom:10px}
+.sourceLabel{font-size:12px;color:var(--muted);font-weight:600}
+.sourceSel{padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--card);color:var(--ink);max-width:340px}
+.draftTag{font-size:11.5px;color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 14%,var(--card));border-radius:999px;padding:2px 10px}
+.roLabel{font-size:12px;color:var(--muted);font-style:italic}
+
+.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-bottom:10px;min-height:34px}
+.group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
 .segmented{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
 .seg,.segOn{padding:7px 16px;font-size:13px;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer}
@@ -37,6 +43,11 @@
 .pMeta{font-size:12px;color:var(--muted);margin:2px 0}
 .uiList{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:5px}
 .uiList li{font-size:12px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+
+/* Diálogo Guardar propuesta */
+.dlgBg{position:absolute;inset:0;background:rgba(20,32,26,.35);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;z-index:20}
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 48px -20px rgba(20,32,26,.5);padding:18px;width:min(420px,92%)}
+.dlg > b{font-size:15px;color:var(--ink)}
 
 /* Chips de UIs (multi-selección) */
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}

@@ -582,3 +582,33 @@ está desplegado READY en producción.)
     se desactivó la regla en esa línea (uso legítimo: SSR y primer render de cliente sin portal,
     el efecto lo habilita tras hidratar).
 (commit: pending · versión V1.17)
+
+## [2026-07-21] Mapa de Trabajo v2 · Base autoritativo + Propuestas + reconstrucción fiel
+- Reencuadre del owner: el mapa DEBE reflejar el sistema real, y "Guardar" ya no sobrescribe el
+  Base — guarda una PROPUESTA (iteración con nombre) que el owner diseña para que CTC la implemente.
+  Base = lo que ES (código, fuente de verdad); Propuesta = lo que el owner QUIERE. Lingua franca.
+- AUDITORÍA del pipeline real (actions.ts, arenaActions.ts, nominadosActions.ts, arena/run,
+  evaluationActions.ts) → correcciones al Base:
+  · Se AGREGÓ VID (video del lote: lots.video_asset_id + media_assets), parte del tramo gratis.
+  · EVA es un HITO/entrega que lee lots(eva_checklist/eva_verdict)+fincas → apto/no_apto — NO
+    lot_evaluations (mi mapa v1 lo cableaba mal). markLotApto/markLotNoApto.
+  · lot_evaluations se recolocó como REGISTRO de puntajes SCA (reclamos del productor + planillas
+    de jornada), surtido por arena_scores; se muestra en BCP·Arena (reclamos).
+  · EVA y GAL ahora son bloques "hito" dorados (los dos puntos de equilibrio/entrega).
+  · Bandas tintadas: tramo GRATIS (FT→EVA, verde) vs PAGADO (MUE→GAL, dorado) vs soporte (neutro).
+  · UI tags cotejados contra el código.
+- Modelo Base/Propuestas:
+  · Migración work_map_proposals (id, name, note, config jsonb, created_by, timestamps); RLS
+    service-role-only (sin acceso anon/authenticated). Se retiró el guardado único
+    platform_settings.work_map.
+  · workmapActions: getBaseMap (DEFAULT_WORK_MAP, solo lectura) · listProposals · getProposal ·
+    saveProposal (owner, crea/actualiza) · deleteProposal (owner).
+  · WorkMapCanvas: barra de FUENTE (Base solo-lectura / propuestas / ＋Nueva propuesta); editar solo
+    en borrador o propuesta; Guardar → diálogo nombre+nota (nueva) o actualiza la propuesta; lista
+    con cargar/borrar. Nuevo tipo de bloque "Hito/entrega" (＋Hito) y stage.tint.
+  ⚠ Un archivo "use server" solo exporta funciones async — el tipo ProposalMeta vive en schema.ts
+    (no en workmapActions).
+- Verificado con sonda (borrada antes del commit): Base con VID + EVA/GAL hito + bandas tintadas;
+  Base solo-lectura; ＋Nueva propuesta → borrador editable; diálogo Guardar; hito dorado (#FBF1DC);
+  round-trip de work_map_proposals por SQL (insert→list→delete). tsc+eslint+build limpios.
+(commit: pending · versión V1.18)

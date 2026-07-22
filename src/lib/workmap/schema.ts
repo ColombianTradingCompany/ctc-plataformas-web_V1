@@ -8,9 +8,12 @@
 // Coordenadas: x,y son el CENTRO del nodo (facilita anclar las flechas). Las
 // bandas de etapa (stages) viven al fondo del lienzo y solo etiquetan tramos.
 
-export type MapStage = { id: string; label: string; x0: number; x1: number };
+export type StageTint = "free" | "paid" | "support";
+export type MapStage = { id: string; label: string; x0: number; x1: number; tint?: StageTint };
 
-export type MapNodeKind = "table" | "decision" | "stop";
+// table = tabla/registro · decision = compuerta · stop = alto del proceso
+// milestone = punto de equilibrio / entrega (EVA, GAL) — los dos "puntos de parada".
+export type MapNodeKind = "table" | "decision" | "stop" | "milestone";
 
 // Catálogo de UIs seleccionables (dropdown en el panel del nodo). Agrupado por
 // superficie; el owner puede además escribir una UI a mano ("otra…").
@@ -44,10 +47,13 @@ export type MapEdge = { id: string; from: string; to: string; tone?: EdgeTone; l
 
 export type WorkMapConfig = { stages: MapStage[]; nodes: MapNode[]; edges: MapEdge[] };
 
+/** Metadatos de una propuesta guardada (para la lista, sin el config completo). */
+export type ProposalMeta = { id: string; name: string; note: string | null; updatedAt: string };
+
 export const NODE_W = 168;
 export const NODE_H = 62;
 export const DECISION_SIZE = 118;
-export const CANVAS_W = 3360;
+export const CANVAS_W = 3680;
 export const CANVAS_H = 1440;
 export const BAND_Y = 1300; // los rótulos de etapa arrancan aquí
 
@@ -71,7 +77,7 @@ const d = (id: string, label: string, stageId: string, x: number, y: number): Ma
   y,
 });
 
-// Alto del proceso (punto de parada / equilibrio): un lote que sale del flujo.
+// Alto del proceso (punto de parada): un lote que sale del flujo.
 const st = (id: string, label: string, stageId: string, x: number, y: number, uis: string[] = []): MapNode => ({
   id,
   kind: "stop",
@@ -82,20 +88,35 @@ const st = (id: string, label: string, stageId: string, x: number, y: number, ui
   uis,
 });
 
+// Hito / entrega (EVA, GAL): los dos puntos de equilibrio con entrega al productor.
+const ms = (id: string, label: string, tableName: string | null, uis: string[], stageId: string, x: number, y: number): MapNode => ({
+  id,
+  kind: "milestone",
+  label,
+  tableName: tableName ?? undefined,
+  uis,
+  stageId,
+  x,
+  y,
+});
+
+// Tramo GRATIS (FT→FT2→EUDR→VID→EVA) · tramo PAGADO (MUE→Sondeo→Arena→GAL, COP 80.000)
+// · soporte (comercio/club/leads/plataforma). EVA y GAL son los dos puntos de equilibrio.
 const STAGES: MapStage[] = [
-  { id: "cuenta", label: "Cuenta", x0: 40, x1: 250 },
-  { id: "ft", label: "FT · Finca", x0: 270, x1: 480 },
-  { id: "ft2", label: "FT2 · Lote", x0: 500, x1: 740 },
-  { id: "eudr", label: "EUDR", x0: 760, x1: 980 },
-  { id: "eva", label: "EVA", x0: 1000, x1: 1230 },
-  { id: "mue", label: "MUE", x0: 1250, x1: 1480 },
-  { id: "sondeo", label: "Sondeo", x0: 1500, x1: 1730 },
-  { id: "arena", label: "Arena", x0: 1750, x1: 2010 },
-  { id: "gal", label: "GAL", x0: 2030, x1: 2230 },
-  { id: "comercio", label: "Comercio", x0: 2250, x1: 2620 },
-  { id: "club", label: "Kaffetal Club", x0: 2640, x1: 2860 },
-  { id: "leads", label: "Leads · Buzón", x0: 2880, x1: 3110 },
-  { id: "plataforma", label: "Plataforma", x0: 3130, x1: 3340 },
+  { id: "cuenta", label: "Cuenta", x0: 40, x1: 250, tint: "free" },
+  { id: "ft", label: "FT · Finca", x0: 270, x1: 480, tint: "free" },
+  { id: "ft2", label: "FT2 · Lote", x0: 500, x1: 720, tint: "free" },
+  { id: "eudr", label: "EUDR", x0: 740, x1: 960, tint: "free" },
+  { id: "vid", label: "VID · Video", x0: 980, x1: 1160, tint: "free" },
+  { id: "eva", label: "EVA · Evaluación", x0: 1180, x1: 1440, tint: "free" },
+  { id: "mue", label: "MUE · Pago + Muestra", x0: 1460, x1: 1680, tint: "paid" },
+  { id: "sondeo", label: "Sondeo", x0: 1700, x1: 1940, tint: "paid" },
+  { id: "arena", label: "Arena", x0: 1960, x1: 2220, tint: "paid" },
+  { id: "gal", label: "GAL · Galardón", x0: 2240, x1: 2460, tint: "paid" },
+  { id: "comercio", label: "Comercio", x0: 2480, x1: 2860, tint: "support" },
+  { id: "club", label: "Kaffetal Club", x0: 2880, x1: 3100, tint: "support" },
+  { id: "leads", label: "Leads · Buzón", x0: 3120, x1: 3350, tint: "support" },
+  { id: "plataforma", label: "Plataforma", x0: 3370, x1: 3600, tint: "support" },
 ];
 
 const NODES: MapNode[] = [
@@ -105,52 +126,56 @@ const NODES: MapNode[] = [
   t("buyer_profiles", "buyer_profiles", "buyer_profiles", ["CP · Cuenta"], "cuenta", 145, 470),
   // FT · Finca
   t("fincas", "fincas", "fincas", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 375, 250),
-  t("media_assets", "media_assets", "media_assets", ["KR · Fincas/Lotes", "BCP"], "ft", 375, 410),
+  t("media_assets", "media_assets", "media_assets", ["KR · Fincas/Lotes", "BCP · Arena (jornada)"], "ft", 375, 410),
   // FT2 · Lote
-  t("lots", "lots", "lots", ["KR · Mis Lotes", "BCP · Lotes", "BCP · Galardonados", "CP · Catálogo"], "ft2", 620, 250),
-  t("ficha_snap", "ficha_completion_snapshots", "ficha_completion_snapshots", ["KR · Ficha"], "ft2", 620, 410),
-  // EUDR (compuerta)
-  d("eudr_gate", "¿Finca apta EUDR?", "eudr", 870, 250),
-  st("eudr_stop", "Finca no apta · corregir", "eudr", 870, 470, ["BCP · Fincas", "KR · Mis Fincas"]),
-  // EVA
-  t("lot_evaluations", "lot_evaluations", "lot_evaluations", ["BCP · Arena (reclamos)", "KR · Ficha"], "eva", 1115, 250),
-  d("eva_gate", "Apto / No Apto", "eva", 1115, 440),
-  st("eva_stop", "No Apto · fuera de Arena", "eva", 1115, 640, ["KR · Ficha"]),
-  // MUE
-  t("arena_inscriptions", "arena_inscriptions", "arena_inscriptions", ["BCP · Nominados", "BCP · Arena", "KR · Panel"], "mue", 1365, 250),
-  t("arena_entry_codes", "arena_entry_codes", "arena_entry_codes", ["BCP · códigos", "KR · postulación"], "mue", 1365, 430),
-  // Sondeo
-  t("sondeo_batches", "sondeo_batches", "sondeo_batches", ["BCP · Nominados (Baches)"], "sondeo", 1615, 250),
-  d("sondeo_gate", "Sondeo Apto / No Apto", "sondeo", 1615, 440),
-  // Un No Apto del Sondeo NO va a contrato: recibe resultado, feedback y el 80% de cashback.
-  st("retiro_stop", "No Apto · resultado + feedback + 80% cashback", "sondeo", 1615, 680, ["KR · Panel", "BCP · Nominados (cashback)"]),
-  // Arena
-  t("arena_sessions", "arena_sessions", "arena_sessions", ["BCP · Arena"], "arena", 1880, 190),
-  t("arena_session_lots", "arena_session_lots", "arena_session_lots", ["BCP · Arena (sesión)"], "arena", 1880, 340),
-  t("arena_scores", "arena_scores", "arena_scores", ["BCP · Arena (jornada)"], "arena", 1880, 490),
-  d("grade_gate", "Grado CTC", "arena", 1880, 660),
-  // GAL
-  t("galardon", "Galardón (lots.grade)", "lots", ["BCP · Galardonados", "CP · Catálogo / Subastas"], "gal", 2130, 250),
+  t("lots", "lots", "lots", ["KR · Mis Lotes", "BCP · Lotes", "BCP · Galardonados", "CP · Catálogo"], "ft2", 610, 250),
+  t("ficha_snap", "ficha_completion_snapshots", "ficha_completion_snapshots", ["KR · Ficha"], "ft2", 610, 410),
+  // EUDR (compuerta): finca apta + nivel de riesgo → dossier de finca + certificado de lote
+  d("eudr_gate", "¿Finca apta EUDR? (dossier + certificado)", "eudr", 850, 250),
+  st("eudr_stop", "Finca no apta · corregir", "eudr", 850, 470, ["BCP · Fincas", "KR · Mis Fincas"]),
+  // VID · video del lote (lots.video_asset_id + media_assets)
+  t("vid", "Video del lote", "media_assets", ["KR · Mis Lotes", "BCP · Lotes"], "vid", 1070, 250),
+  // EVA · veredicto documental (HITO / entrega: informe EUDR). Lee lots(eva_checklist,
+  // eva_verdict) + fincas → stage apto/no_apto. NO es lot_evaluations.
+  ms("eva", "EVA · veredicto documental", "lots", ["BCP · Lotes (checklist EVA)", "KR · Mis Lotes"], "eva", 1310, 230),
+  st("eva_stop", "No Apto · fuera de Arena (con motivo)", "eva", 1310, 460, ["KR · Mis Lotes", "BCP · Lotes"]),
+  // MUE · postulación (pago + muestra 2 kg) — arranca el tramo PAGADO
+  t("arena_inscriptions", "arena_inscriptions", "arena_inscriptions", ["BCP · Nominados", "BCP · Arena", "KR · Panel"], "mue", 1570, 250),
+  t("arena_entry_codes", "arena_entry_codes", "arena_entry_codes", ["BCP · códigos", "KR · postulación"], "mue", 1570, 420),
+  // Sondeo · bache de laboratorio
+  t("sondeo_batches", "sondeo_batches", "sondeo_batches", ["BCP · Nominados (Baches)"], "sondeo", 1820, 230),
+  d("sondeo_gate", "Sondeo Apto / No Apto", "sondeo", 1820, 430),
+  st("retiro_stop", "No Apto · resultado + feedback + 80% cashback", "sondeo", 1820, 660, ["KR · Panel", "BCP · Nominados (cashback)"]),
+  // Arena · la jornada
+  t("arena_sessions", "arena_sessions", "arena_sessions", ["BCP · Arena"], "arena", 2090, 175),
+  t("arena_session_lots", "arena_session_lots", "arena_session_lots", ["BCP · Arena (sesión)"], "arena", 2090, 320),
+  t("arena_scores", "arena_scores", "arena_scores", ["BCP · Arena (jornada)"], "arena", 2090, 465),
+  d("grade_gate", "Grado CTC", "arena", 2090, 630),
+  // lot_evaluations · REGISTRO de puntajes SCA (reclamos del productor + planillas de jornada)
+  t("lot_evaluations", "lot_evaluations", "lot_evaluations", ["BCP · Arena (reclamos)", "KR · Ficha (SCA declarado)"], "arena", 2090, 820),
+  // GAL · Galardón (HITO / entrega: evaluación Q-Grader — granulometría + perfil + Arena).
+  // lots.grade + stage=galardonado.
+  ms("gal", "GAL · Galardón + evaluación Q-Grader", "lots", ["BCP · Galardonados", "CP · Catálogo / Subastas"], "gal", 2350, 250),
   // Comercio
-  t("lot_listings", "lot_listings", "lot_listings", ["BCP · Catálogo", "CP · tienda"], "comercio", 2400, 170),
-  t("purchase_contracts", "purchase_contracts", "purchase_contracts", ["BCP · Contratos", "KR · Mis contratos"], "comercio", 2400, 320),
-  t("orders", "orders / order_items", "orders", ["CP · checkout", "OCP"], "comercio", 2400, 470),
-  t("black_negotiations", "black_negotiations", "black_negotiations", ["BCP · Contratos"], "comercio", 2400, 620),
-  t("contract_releases", "contract_releases / humidity_readings", "contract_releases", ["BCP · Contratos / Humedad", "KR"], "comercio", 2400, 780),
+  t("lot_listings", "lot_listings", "lot_listings", ["BCP · Catálogo", "CP · tienda"], "comercio", 2670, 170),
+  t("purchase_contracts", "purchase_contracts", "purchase_contracts", ["BCP · Contratos", "KR · Mis contratos"], "comercio", 2670, 320),
+  t("orders", "orders / order_items", "orders", ["CP · checkout", "OCP"], "comercio", 2670, 470),
+  t("black_negotiations", "black_negotiations", "black_negotiations", ["BCP · Contratos"], "comercio", 2670, 620),
+  t("contract_releases", "contract_releases / humidity_readings", "contract_releases", ["BCP · Contratos / Humedad", "KR · Mis contratos"], "comercio", 2670, 790),
   // Kaffetal Club
-  t("club_campaigns", "club_campaigns", "club_campaigns", ["BCP · Kaffetal Club"], "club", 2740, 190),
-  t("club_member_codes", "club_member_codes", "club_member_codes", ["BCP · Kaffetal Club", "KR · contratos"], "club", 2740, 340),
-  t("points_ledger", "points_ledger", "points_ledger", ["CP · membresía"], "club", 2740, 490),
+  t("club_campaigns", "club_campaigns", "club_campaigns", ["BCP · Kaffetal Club"], "club", 2990, 190),
+  t("club_member_codes", "club_member_codes", "club_member_codes", ["BCP · Kaffetal Club", "KR · Mis contratos"], "club", 2990, 340),
+  t("points_ledger", "points_ledger", "points_ledger", ["CP · membresía"], "club", 2990, 490),
   // Leads · Buzón
-  t("leads", "leads", "leads", ["OCP · Leads CTC Home", "CTC Home"], "leads", 2985, 170),
-  t("lead_replies", "lead_replies", "lead_replies", ["OCP · Leads"], "leads", 2985, 320),
-  t("inbound_emails", "inbound_emails", "inbound_emails", ["ECP · Buzón"], "leads", 2985, 470),
-  t("buzon_outbound", "buzon_outbound", "buzon_outbound", ["ECP · Buzón"], "leads", 2985, 620),
+  t("leads", "leads", "leads", ["OCP · Leads CTC Home", "CTC Home"], "leads", 3235, 170),
+  t("lead_replies", "lead_replies", "lead_replies", ["OCP · Leads"], "leads", 3235, 320),
+  t("inbound_emails", "inbound_emails", "inbound_emails", ["ECP · Buzón"], "leads", 3235, 470),
+  t("buzon_outbound", "buzon_outbound", "buzon_outbound", ["ECP · Buzón"], "leads", 3235, 620),
   // Plataforma
-  t("panel_users", "panel_users", "panel_users", ["ECP · Usuarios y credenciales"], "plataforma", 3230, 190),
-  t("partner_accounts", "partner_accounts", "partner_accounts", ["OCP · Socios de la red"], "plataforma", 3230, 340),
-  t("platform_settings", "platform_settings", "platform_settings", ["ECP · Herramientas / Admin Lock / Mapa"], "plataforma", 3230, 490),
-  t("audit_log", "audit_log", "audit_log", ["(interno) · toda escritura"], "plataforma", 3230, 640),
+  t("panel_users", "panel_users", "panel_users", ["ECP · Usuarios y credenciales"], "plataforma", 3485, 190),
+  t("partner_accounts", "partner_accounts", "partner_accounts", ["OCP · Socios de la red"], "plataforma", 3485, 340),
+  t("platform_settings", "platform_settings", "platform_settings", ["ECP · Herramientas / Admin Lock / Mapa"], "plataforma", 3485, 490),
+  t("audit_log", "audit_log", "audit_log", ["(interno) · toda escritura"], "plataforma", 3485, 640),
 ];
 
 const e = (id: string, from: string, to: string, tone?: EdgeTone, label?: string): MapEdge => ({ id, from, to, tone, label });
@@ -163,11 +188,11 @@ const EDGES: MapEdge[] = [
   e("e5", "fincas", "media_assets", "info"),
   e("e6", "lots", "ficha_snap", "info"),
   e("e7", "lots", "eudr_gate"),
-  e("e8", "eudr_gate", "lot_evaluations", "ok", "apta"),
+  e("e8", "eudr_gate", "vid", "ok", "apta"),
   e("e8b", "eudr_gate", "eudr_stop", "bad", "no apta"),
-  e("e9", "lot_evaluations", "eva_gate"),
-  e("e10", "eva_gate", "arena_inscriptions", "ok", "Apto → postula"),
-  e("e9b", "eva_gate", "eva_stop", "bad", "No Apto"),
+  e("e_vid", "vid", "eva"),
+  e("e10", "eva", "arena_inscriptions", "ok", "Apto → postula (pago)"),
+  e("e9b", "eva", "eva_stop", "bad", "No Apto"),
   e("e11", "arena_entry_codes", "arena_inscriptions", "info"),
   e("e12", "arena_inscriptions", "sondeo_batches"),
   e("e13", "sondeo_batches", "sondeo_gate"),
@@ -177,9 +202,11 @@ const EDGES: MapEdge[] = [
   e("e16", "arena_sessions", "arena_session_lots"),
   e("e17", "arena_session_lots", "arena_scores"),
   e("e18", "arena_scores", "grade_gate"),
-  e("e19", "grade_gate", "galardon", "ok"),
-  e("e20", "galardon", "lot_listings"),
-  e("e21", "galardon", "purchase_contracts"),
+  // Las planillas de la jornada alimentan el registro SCA.
+  e("e_le", "arena_scores", "lot_evaluations", "info", "planillas → registro"),
+  e("e19", "grade_gate", "gal", "ok"),
+  e("e20", "gal", "lot_listings"),
+  e("e21", "gal", "purchase_contracts"),
   e("e22", "lot_listings", "orders"),
   e("e23", "purchase_contracts", "black_negotiations", "info"),
   e("e24", "purchase_contracts", "contract_releases", "info"),
@@ -213,7 +240,8 @@ export function toWorkMapConfig(value: unknown): WorkMapConfig {
           const o = s as Record<string, unknown>;
           const id = str(o.id);
           if (!id) return null;
-          return { id, label: str(o.label, id), x0: num(o.x0), x1: num(o.x1, num(o.x0) + 200) };
+          const tint = o.tint === "free" || o.tint === "paid" || o.tint === "support" ? (o.tint as StageTint) : undefined;
+          return { id, label: str(o.label, id), x0: num(o.x0), x1: num(o.x1, num(o.x0) + 200), tint };
         })
         .filter((s): s is MapStage => s !== null)
     : [];
@@ -223,7 +251,8 @@ export function toWorkMapConfig(value: unknown): WorkMapConfig {
           const o = n as Record<string, unknown>;
           const id = str(o.id);
           if (!id) return null;
-          const kind: MapNodeKind = o.kind === "decision" ? "decision" : o.kind === "stop" ? "stop" : "table";
+          const kind: MapNodeKind =
+            o.kind === "decision" ? "decision" : o.kind === "stop" ? "stop" : o.kind === "milestone" ? "milestone" : "table";
           return {
             id,
             kind,

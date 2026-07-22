@@ -1,17 +1,15 @@
 "use client";
 
 // ── Mapa de Trabajo · lienzo interactivo (SVG a mano, sin librerías) ─────────
-// Tres modos: Ver (solo lectura), Editar (cosmético: arrastrar, etiquetar,
-// agregar/borrar nodos y flechas) y Exportar (PDF por impresión del navegador).
-// Colores concretos (no variables CSS) para que la exportación a una ventana
-// nueva conserve el color. Coordenadas = centro del nodo.
+// BASE = el sistema real (solo lectura). PROPUESTAS = iteraciones que el owner
+// diseña para proponer cambios (Guardar crea/actualiza una propuesta; nunca
+// toca el Base). Colores concretos (no variables CSS) para que la exportación a
+// PDF conserve el color. Coordenadas = centro del nodo.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
-import { saveWorkMap } from "../workmapActions";
+import { saveProposal, getProposal, deleteProposal, listProposals } from "../workmapActions";
 import {
-  DEFAULT_WORK_MAP,
   NODE_W,
   NODE_H,
   DECISION_SIZE,
@@ -23,27 +21,34 @@ import {
   type MapNode,
   type MapEdge,
   type EdgeTone,
+  type StageTint,
+  type ProposalMeta,
 } from "@/lib/workmap/schema";
+import styles from "./mapa.module.css";
 
 const STOP_W = 196;
 const STOP_H = 52;
-import styles from "./mapa.module.css";
+const MILE_W = 226;
+const MILE_H = 72;
 
 const C = {
   bg: "#FBF9F2",
   band: "#ECE7D8",
   bandLine: "#D8D2C0",
   bandText: "#7C7660",
+  tintFree: "#E7F0E6",
+  tintPaid: "#F6EEDA",
+  tintSupport: "#ECE7D8",
   card: "#FFFFFF",
   cardBorder: "#C4BEAC",
   ink: "#1C2620",
   muted: "#6B7268",
-  primary: "#17402B",
   decisionFill: "#FBF2E1",
   decisionBorder: "#C9A45C",
   decisionText: "#7A5A16",
-  chipBg: "#EEF3EC",
-  chipText: "#3A5A46",
+  mileFill: "#FBF1DC",
+  mileBorder: "#B98A2A",
+  mileText: "#6E4E10",
   sel: "#17402B",
   edge: "#7C7C74",
   ok: "#2E7D52",
@@ -53,20 +58,21 @@ const C = {
   stopBorder: "#C9827C",
   stopText: "#7A2A24",
 };
-
+const tintColor = (t?: StageTint) => (t === "free" ? C.tintFree : t === "paid" ? C.tintPaid : t === "support" ? C.tintSupport : C.band);
 const toneColor = (t?: EdgeTone) => (t === "ok" ? C.ok : t === "bad" ? C.bad : t === "info" ? C.info : C.edge);
 
 type Mode = "view" | "edit";
 type ViewBox = { x: number; y: number; w: number; h: number };
 type Sel = { t: "node" | "edge"; id: string } | null;
+type Source = { kind: "base" } | { kind: "draft" } | { kind: "proposal"; id: string; name: string; note: string | null };
 
 function nodeHalf(n: MapNode) {
   if (n.kind === "decision") return { hw: DECISION_SIZE / 2, hh: DECISION_SIZE / 2 };
   if (n.kind === "stop") return { hw: (n.w ?? STOP_W) / 2, hh: (n.h ?? STOP_H) / 2 };
+  if (n.kind === "milestone") return { hw: (n.w ?? MILE_W) / 2, hh: (n.h ?? MILE_H) / 2 };
   return { hw: (n.w ?? NODE_W) / 2, hh: (n.h ?? NODE_H) / 2 };
 }
 
-/** Punto de anclaje en el borde del nodo, según hacia dónde va la flecha. */
 function anchor(n: MapNode, tx: number, ty: number) {
   const { hw, hh } = nodeHalf(n);
   const dx = tx - n.x;
@@ -89,28 +95,32 @@ function contentBounds(cfg: WorkMapConfig): ViewBox {
   return { x: minX - pad, y: minY - pad, w: maxX - minX + pad * 2, h: maxY - minY + pad * 2.4 };
 }
 
-export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; canEdit: boolean }) {
-  const router = useRouter();
+const clone = (c: WorkMapConfig): WorkMapConfig => JSON.parse(JSON.stringify(c));
+
+export function WorkMapCanvas({ base, proposals, canEdit }: { base: WorkMapConfig; proposals: ProposalMeta[]; canEdit: boolean }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
-  // Contador para ids nuevos (prefijo "u" para no chocar con la semilla).
   const idSeq = useRef(1000);
   const newId = (prefix: string) => `${prefix}u${(idSeq.current += 1)}`;
-  const [config, setConfig] = useState<WorkMapConfig>(initial);
+
+  const [source, setSource] = useState<Source>({ kind: "base" });
+  const [config, setConfig] = useState<WorkMapConfig>(base);
+  const [propList, setPropList] = useState<ProposalMeta[]>(proposals);
   const [mode, setMode] = useState<Mode>("view");
   const [view, setView] = useState<ViewBox>(() => ({ x: 0, y: 0, w: CANVAS_W, h: CANVAS_H }));
   const [sel, setSel] = useState<Sel>(null);
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [customUi, setCustomUi] = useState("");
-  // Portal a <body> solo tras montar: SSR y el primer render de cliente coinciden
-  // (ambos sin portal), y el efecto lo habilita después de hidratar.
+  const [saveDlg, setSaveDlg] = useState<{ name: string; note: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
+  const editable = canEdit && source.kind !== "base";
+  const editing = editable && mode === "edit";
   const nodeById = useMemo(() => new Map(config.nodes.map((n) => [n.id, n])), [config.nodes]);
   const selNode = sel?.t === "node" ? nodeById.get(sel.id) ?? null : null;
   const selEdge = sel?.t === "edge" ? config.edges.find((e) => e.id === sel.id) ?? null : null;
@@ -123,7 +133,6 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
 
   const scaleX = () => {
     const r = svgRef.current?.getBoundingClientRect();
-    // Guarda contra ancho 0 (p. ej. panel oculto): evita divisiones a Infinity.
     return r && r.width > 0 ? view.w / r.width : 1;
   };
   const toSvg = (cx: number, cy: number) => {
@@ -131,13 +140,78 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
     return { x: view.x + ((cx - r.left) / r.width) * view.w, y: view.y + ((cy - r.top) / r.height) * view.h };
   };
 
-  // ── Interacción de puntero (pan + arrastre de nodo) ──
+  // ── Fuente: Base / propuesta / borrador ──
+  function showBase() {
+    setSource({ kind: "base" });
+    setConfig(base);
+    setMode("view");
+    setSel(null);
+    setConnectFrom(null);
+    setMsg(null);
+  }
+  async function loadProposal(meta: ProposalMeta) {
+    setBusy(true);
+    setMsg(null);
+    const cfg = await getProposal(meta.id);
+    setBusy(false);
+    if (!cfg) return setMsg("No se pudo cargar la propuesta.");
+    setConfig(cfg);
+    setSource({ kind: "proposal", id: meta.id, name: meta.name, note: meta.note });
+    setMode("view");
+    setSel(null);
+    setConnectFrom(null);
+  }
+  function newDraft() {
+    setConfig(clone(config)); // parte de lo que se está viendo (Base o propuesta)
+    setSource({ kind: "draft" });
+    setMode("edit");
+    setSel(null);
+    setMsg("Borrador nuevo — edite y Guarde como propuesta.");
+  }
+  async function refreshList() {
+    setPropList(await listProposals());
+  }
+
+  // ── Guardar propuesta ──
+  async function saveExisting() {
+    if (source.kind !== "proposal") return;
+    setBusy(true);
+    setMsg(null);
+    const res = await saveProposal({ id: source.id, name: source.name, note: source.note ?? undefined, config });
+    setBusy(false);
+    if (res.ok) {
+      setMsg("Propuesta guardada ✓");
+      refreshList();
+    } else setMsg(res.error);
+  }
+  async function confirmSaveNew() {
+    if (!saveDlg) return;
+    setBusy(true);
+    setMsg(null);
+    const res = await saveProposal({ name: saveDlg.name, note: saveDlg.note || undefined, config });
+    setBusy(false);
+    if (!res.ok) return setMsg(res.error);
+    setSource({ kind: "proposal", id: res.id, name: saveDlg.name.trim(), note: saveDlg.note.trim() || null });
+    setSaveDlg(null);
+    setMsg("Propuesta guardada ✓");
+    refreshList();
+  }
+  async function removeProposal() {
+    if (source.kind !== "proposal") return;
+    if (!window.confirm(`¿Borrar la propuesta «${source.name}»?`)) return;
+    setBusy(true);
+    const res = await deleteProposal(source.id);
+    setBusy(false);
+    if (!res.ok) return setMsg(res.error);
+    await refreshList();
+    showBase();
+  }
+
+  // ── Puntero (pan + arrastre) ──
   function capture(el: Element, pointerId: number) {
     try {
       el.setPointerCapture?.(pointerId);
-    } catch {
-      // puntero sintético o ya liberado — el arrastre sigue por drag.current
-    }
+    } catch {}
   }
   function onPointerDownBg(e: React.PointerEvent) {
     if (connectFrom) return;
@@ -148,20 +222,20 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
   function onPointerDownNode(e: React.PointerEvent, n: MapNode) {
     e.stopPropagation();
     if (connectFrom === "__pick__") {
-      setConnectFrom(n.id); // origen elegido; el próximo toque es el destino
+      setConnectFrom(n.id);
       return;
     }
     if (connectFrom) {
       if (connectFrom !== n.id) {
         const eid = newId("e");
         setConfig((c) => ({ ...c, edges: [...c.edges, { id: eid, from: connectFrom, to: n.id }] }));
-        setSel({ t: "edge", id: eid }); // abre el panel para escribir el resultado
+        setSel({ t: "edge", id: eid });
       }
       setConnectFrom(null);
       return;
     }
     setSel({ t: "node", id: n.id });
-    if (mode !== "edit") return;
+    if (!editing) return;
     drag.current = { kind: "node", id: n.id, sx: e.clientX, sy: e.clientY, nx: n.x, ny: n.y, sc: scaleX(), moved: false };
     capture(e.currentTarget as Element, e.pointerId);
   }
@@ -169,9 +243,7 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
     const d = drag.current;
     if (!d) return;
     if (d.kind === "pan") {
-      const dx = (e.clientX - d.sx) * d.sc;
-      const dy = (e.clientY - d.sy) * d.sc;
-      setView((v) => ({ ...v, x: d.vx - dx, y: d.vy - dy }));
+      setView((v) => ({ ...v, x: d.vx - (e.clientX - d.sx) * d.sc, y: d.vy - (e.clientY - d.sy) * d.sc }));
     } else {
       const dx = (e.clientX - d.sx) * d.sc;
       const dy = (e.clientY - d.sy) * d.sc;
@@ -186,7 +258,6 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
     drag.current = null;
   }
 
-  // Zoom con rueda (listener no pasivo para poder prevenir el scroll).
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -197,8 +268,7 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
       setView((v) => {
         const nw = Math.min(Math.max(v.w * factor, 320), CANVAS_W * 2.2);
         const ratio = nw / v.w;
-        const nh = v.h * ratio;
-        return { x: p.x - (p.x - v.x) * ratio, y: p.y - (p.y - v.y) * ratio, w: nw, h: nh };
+        return { x: p.x - (p.x - v.x) * ratio, y: p.y - (p.y - v.y) * ratio, w: nw, h: v.h * ratio };
       });
     }
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -216,9 +286,7 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
       return { x: cx - nw / 2, y: cy - nh / 2, w: nw, h: nh };
     });
   }
-  function fit() {
-    setView(contentBounds(config));
-  }
+  const fit = () => setView(contentBounds(config));
 
   // ── Edición ──
   function patchNode(id: string, patch: Partial<MapNode>) {
@@ -229,106 +297,104 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
   }
   function addNode(kind: MapNode["kind"]) {
     const id = newId("n");
-    const label = kind === "decision" ? "Nueva decisión" : kind === "stop" ? "Alto del proceso" : "nueva_tabla";
-    const n: MapNode = {
-      id,
-      kind,
-      label,
-      uis: [],
-      x: Math.round(view.x + view.w / 2),
-      y: Math.round(view.y + view.h / 2),
-    };
+    const label =
+      kind === "decision" ? "Nueva decisión" : kind === "stop" ? "Alto del proceso" : kind === "milestone" ? "Hito / entrega" : "nueva_tabla";
+    const n: MapNode = { id, kind, label, uis: [], x: Math.round(view.x + view.w / 2), y: Math.round(view.y + view.h / 2) };
     setConfig((c) => ({ ...c, nodes: [...c.nodes, n] }));
     setSel({ t: "node", id });
   }
   function deleteSel() {
     if (!sel) return;
     if (sel.t === "node") {
-      setConfig((c) => ({
-        ...c,
-        nodes: c.nodes.filter((n) => n.id !== sel.id),
-        edges: c.edges.filter((e) => e.from !== sel.id && e.to !== sel.id),
-      }));
+      setConfig((c) => ({ ...c, nodes: c.nodes.filter((n) => n.id !== sel.id), edges: c.edges.filter((e) => e.from !== sel.id && e.to !== sel.id) }));
     } else {
       setConfig((c) => ({ ...c, edges: c.edges.filter((e) => e.id !== sel.id) }));
     }
     setSel(null);
   }
-  function resetToDefault() {
-    if (window.confirm("¿Restablecer al mapa base? Se pierden los cambios no guardados.")) {
-      setConfig(DEFAULT_WORK_MAP);
-      setSel(null);
-    }
-  }
 
-  async function save() {
-    setSaving(true);
-    setMsg(null);
-    const res = await saveWorkMap(config);
-    setSaving(false);
-    if (res.ok) {
-      setMsg("Guardado ✓");
-      router.refresh();
-    } else setMsg(res.error);
-  }
-
-  // ── Exportar (PDF por impresión EN LA MISMA página, sin ventana nueva) ──
-  // Se clona el SVG vivo (conserva el namespace SVG y los colores concretos)
-  // dentro de un contenedor fijo que solo se ve al imprimir (CSS @media print).
-  // Esto evita el bloqueador de pop-ups y el SVG en blanco de la ventana nueva.
+  // ── Exportar (PDF por impresión en la misma página; contenedor en <body>) ──
   function exportPdf(kind: "view" | "full") {
     const vb = kind === "full" ? contentBounds(config) : view;
     const svg = svgRef.current;
     const host = printRef.current;
     if (!svg || !host) return;
-    const clone = svg.cloneNode(true) as SVGSVGElement;
-    clone.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
-    clone.removeAttribute("style");
-    clone.setAttribute("width", "100%");
-    clone.setAttribute("height", "100%");
-    clone.style.cursor = "default";
-    host.replaceChildren(clone);
+    const c = svg.cloneNode(true) as SVGSVGElement;
+    c.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+    c.removeAttribute("style");
+    c.setAttribute("width", "100%");
+    c.setAttribute("height", "100%");
+    c.style.cursor = "default";
+    host.replaceChildren(c);
     const cleanup = () => {
       host.replaceChildren();
       window.removeEventListener("afterprint", cleanup);
     };
     window.addEventListener("afterprint", cleanup);
     window.print();
-    setTimeout(cleanup, 2000); // respaldo si afterprint no dispara
+    setTimeout(cleanup, 2000);
   }
 
   const stageOf = (id?: string) => config.stages.find((s) => s.id === id)?.label ?? "—";
+  const kindLabel = (k: MapNode["kind"]) =>
+    k === "decision" ? "Decisión" : k === "stop" ? "Alto del proceso" : k === "milestone" ? "Hito / entrega" : "Tabla";
 
   return (
     <div className={styles.root}>
+      {/* Barra de FUENTE: Base vs propuestas */}
+      <div className={styles.sourceBar}>
+        <span className={styles.sourceLabel}>Viendo:</span>
+        <select
+          className={styles.sourceSel}
+          value={source.kind === "proposal" ? source.id : "base"}
+          onChange={(e) => (e.target.value === "base" ? showBase() : loadProposal(propList.find((p) => p.id === e.target.value)!))}
+        >
+          <option value="base">Base · sistema real (solo lectura)</option>
+          {propList.length > 0 && (
+            <optgroup label="Propuestas">
+              {propList.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+        {source.kind === "draft" && <span className={styles.draftTag}>Borrador sin guardar</span>}
+        {canEdit && <button className={styles.tbtn} onClick={newDraft} disabled={busy}>＋ Nueva propuesta</button>}
+        {source.kind === "proposal" && canEdit && (
+          <button className={styles.tbtn} onClick={removeProposal} disabled={busy} style={{ borderColor: "var(--red)", color: "var(--red)" }}>
+            Borrar propuesta
+          </button>
+        )}
+        {msg && <span className={styles.msg}>{msg}</span>}
+      </div>
+
       {/* Barra de herramientas */}
       <div className={styles.toolbar}>
-        <div className={styles.segmented}>
-          <button className={mode === "view" ? styles.segOn : styles.seg} onClick={() => { setMode("view"); setConnectFrom(null); }}>
-            Ver
-          </button>
-          {canEdit && (
-            <button className={mode === "edit" ? styles.segOn : styles.seg} onClick={() => setMode("edit")}>
-              Editar
-            </button>
-          )}
-        </div>
+        {editable && (
+          <div className={styles.segmented}>
+            <button className={mode === "view" ? styles.segOn : styles.seg} onClick={() => { setMode("view"); setConnectFrom(null); }}>Ver</button>
+            <button className={mode === "edit" ? styles.segOn : styles.seg} onClick={() => setMode("edit")}>Editar</button>
+          </div>
+        )}
+        {source.kind === "base" && <span className={styles.roLabel}>El Base es el sistema real — solo lectura. Cree una propuesta para editar.</span>}
 
-        {mode === "edit" && canEdit && (
+        {editing && (
           <div className={styles.group}>
             <button className={styles.tbtn} onClick={() => addNode("table")}>＋ Tabla</button>
             <button className={styles.tbtn} onClick={() => addNode("decision")}>＋ Decisión</button>
             <button className={styles.tbtn} onClick={() => addNode("stop")}>＋ Alto</button>
+            <button className={styles.tbtn} onClick={() => addNode("milestone")}>＋ Hito</button>
             <button
               className={connectFrom ? styles.tbtnOn : styles.tbtn}
               onClick={() => setConnectFrom(connectFrom ? null : sel?.t === "node" ? sel.id : "__pick__")}
-              title="Conectar: toque el nodo origen y luego el destino"
             >
               {connectFrom ? "Conectando…" : "↳ Conectar"}
             </button>
             <button className={styles.tbtn} disabled={!sel} onClick={deleteSel}>🗑 Borrar</button>
-            <button className={styles.tbtn} onClick={resetToDefault}>Mapa base</button>
-            <button className={styles.tbtnSolid} disabled={saving} onClick={save}>{saving ? "Guardando…" : "Guardar"}</button>
+            {source.kind === "proposal" && <button className={styles.tbtnSolid} disabled={busy} onClick={saveExisting}>{busy ? "…" : "Guardar"}</button>}
+            <button className={styles.tbtn} disabled={busy} onClick={() => setSaveDlg({ name: source.kind === "proposal" ? `${source.name} (copia)` : "", note: source.kind === "proposal" ? source.note ?? "" : "" })}>
+              {source.kind === "proposal" ? "Guardar como…" : "Guardar propuesta"}
+            </button>
           </div>
         )}
 
@@ -339,14 +405,13 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
           <button className={styles.tbtn} onClick={() => exportPdf("view")}>PDF · vista</button>
           <button className={styles.tbtn} onClick={() => exportPdf("full")}>PDF · completo</button>
         </div>
-        {msg && <span className={styles.msg}>{msg}</span>}
       </div>
 
       <div className={styles.hint}>
-        {connectFrom === "__pick__" || connectFrom
+        {connectFrom
           ? "Conectar: toque el nodo ORIGEN, luego el DESTINO (o vuelva a «Conectar» para cancelar)."
-          : mode === "edit"
-            ? "Arrastre para mover · rueda/＋－ para zoom · toque un nodo para editarlo · fondo para desplazar."
+          : editing
+            ? "Arrastre para mover · rueda/＋－ zoom · toque un nodo/flecha para editarlo."
             : "Arrastre el fondo para desplazar · rueda o ＋－ para zoom · toque un nodo para ver sus UIs."}
       </div>
 
@@ -366,20 +431,17 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
             </marker>
           </defs>
 
-          {/* fondo */}
           <rect x={-5000} y={-5000} width={20000} height={20000} fill={C.bg} onPointerDown={onPointerDownBg} />
 
-          {/* bandas de etapa (al fondo) */}
           {config.stages.map((s) => (
             <g key={s.id}>
-              <rect x={s.x0} y={BAND_Y} width={Math.max(0, s.x1 - s.x0)} height={CANVAS_H - BAND_Y} fill={C.band} stroke={C.bandLine} />
-              <text x={(s.x0 + s.x1) / 2} y={BAND_Y + 34} textAnchor="middle" fontSize={20} fontWeight={800} fill={C.bandText} style={{ letterSpacing: 1 }}>
+              <rect x={s.x0} y={BAND_Y} width={Math.max(0, s.x1 - s.x0)} height={CANVAS_H - BAND_Y} fill={tintColor(s.tint)} stroke={C.bandLine} />
+              <text x={(s.x0 + s.x1) / 2} y={BAND_Y + 34} textAnchor="middle" fontSize={19} fontWeight={800} fill={C.bandText} style={{ letterSpacing: 0.5 }}>
                 {s.label}
               </text>
             </g>
           ))}
 
-          {/* aristas */}
           {config.edges.map((e) => {
             const a = nodeById.get(e.from);
             const b = nodeById.get(e.to);
@@ -393,45 +455,39 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
             const isSel = sel?.t === "edge" && sel.id === e.id;
             return (
               <g key={e.id}>
-                {/* zona de toque ancha */}
-                <path
-                  d={path}
-                  fill="none"
-                  stroke="transparent"
-                  strokeWidth={16}
-                  style={{ cursor: mode === "edit" ? "pointer" : "default" }}
-                  onPointerDown={(ev) => {
-                    ev.stopPropagation();
-                    setSel({ t: "edge", id: e.id });
-                  }}
-                />
+                <path d={path} fill="none" stroke="transparent" strokeWidth={16} style={{ cursor: editing ? "pointer" : "default" }} onPointerDown={(ev) => { ev.stopPropagation(); setSel({ t: "edge", id: e.id }); }} />
                 <path d={path} fill="none" stroke={col} strokeWidth={isSel ? 3.5 : 2} markerEnd="url(#wm-arrow)" />
                 {e.label && (
-                  <text x={(pa.x + pb.x) / 2} y={(pa.y + pb.y) / 2 - 6} textAnchor="middle" fontSize={12} fill={col} fontWeight={600}>
-                    {e.label}
-                  </text>
+                  <text x={(pa.x + pb.x) / 2} y={(pa.y + pb.y) / 2 - 6} textAnchor="middle" fontSize={12} fill={col} fontWeight={600}>{e.label}</text>
                 )}
               </g>
             );
           })}
 
-          {/* nodos */}
           {config.nodes.map((n) => {
             const isSel = sel?.t === "node" && sel.id === n.id;
             const isFrom = connectFrom === n.id;
+            const cur = editing ? "move" : "pointer";
             if (n.kind === "decision") {
               const s = DECISION_SIZE / 2;
-              const pts = `${n.x},${n.y - s} ${n.x + s},${n.y} ${n.x},${n.y + s} ${n.x - s},${n.y}`;
               return (
-                <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: mode === "edit" ? "move" : "pointer" }}>
-                  <polygon points={pts} fill={C.decisionFill} stroke={isSel || isFrom ? C.sel : C.decisionBorder} strokeWidth={isSel || isFrom ? 3 : 2} />
+                <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: cur }}>
+                  <polygon points={`${n.x},${n.y - s} ${n.x + s},${n.y} ${n.x},${n.y + s} ${n.x - s},${n.y}`} fill={C.decisionFill} stroke={isSel || isFrom ? C.sel : C.decisionBorder} strokeWidth={isSel || isFrom ? 3 : 2} />
                   <text x={n.x} y={n.y - 2} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.decisionText}>
-                    {wrap(n.label, 14).map((ln, i, arr) => (
-                      <tspan key={i} x={n.x} dy={i === 0 ? -(arr.length - 1) * 7 : 14}>
-                        {ln}
-                      </tspan>
-                    ))}
+                    {wrap(n.label, 14).map((ln, i, arr) => (<tspan key={i} x={n.x} dy={i === 0 ? -(arr.length - 1) * 7 : 14}>{ln}</tspan>))}
                   </text>
+                </g>
+              );
+            }
+            if (n.kind === "milestone") {
+              const w = n.w ?? MILE_W;
+              const h = n.h ?? MILE_H;
+              const uiLine = (n.uis ?? []).join(" · ");
+              return (
+                <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: cur }}>
+                  <rect x={n.x - w / 2} y={n.y - h / 2} width={w} height={h} rx={12} fill={C.mileFill} stroke={isSel || isFrom ? C.sel : C.mileBorder} strokeWidth={isSel || isFrom ? 3.5 : 2.5} />
+                  <text x={n.x} y={n.y - (uiLine ? 6 : -2)} textAnchor="middle" fontSize={13} fontWeight={800} fill={C.mileText}>★ {clip(n.label, 26)}</text>
+                  {uiLine && (<text x={n.x} y={n.y + 16} textAnchor="middle" fontSize={9.5} fill={C.mileText} opacity={0.85}>{clip(uiLine, 40)}</text>)}
                 </g>
               );
             }
@@ -439,14 +495,10 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
               const w = n.w ?? STOP_W;
               const h = n.h ?? STOP_H;
               return (
-                <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: mode === "edit" ? "move" : "pointer" }}>
+                <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: cur }}>
                   <rect x={n.x - w / 2} y={n.y - h / 2} width={w} height={h} rx={h / 2} fill={C.stopFill} stroke={isSel || isFrom ? C.sel : C.stopBorder} strokeWidth={isSel || isFrom ? 3 : 2} />
                   <text x={n.x} y={n.y} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.stopText}>
-                    {wrap(n.label, 26).map((ln, i, arr) => (
-                      <tspan key={i} x={n.x} dy={i === 0 ? -(arr.length - 1) * 7 + 4 : 14}>
-                        {ln}
-                      </tspan>
-                    ))}
+                    {wrap(n.label, 26).map((ln, i, arr) => (<tspan key={i} x={n.x} dy={i === 0 ? -(arr.length - 1) * 7 + 4 : 14}>{ln}</tspan>))}
                   </text>
                 </g>
               );
@@ -455,51 +507,35 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
             const h = n.h ?? NODE_H;
             const uiLine = (n.uis ?? []).join(" · ");
             return (
-              <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: mode === "edit" ? "move" : "pointer" }}>
+              <g key={n.id} onPointerDown={(e) => onPointerDownNode(e, n)} style={{ cursor: cur }}>
                 <rect x={n.x - w / 2} y={n.y - h / 2} width={w} height={h} rx={9} fill={C.card} stroke={isSel || isFrom ? C.sel : C.cardBorder} strokeWidth={isSel || isFrom ? 3 : 1.5} />
-                <text x={n.x} y={n.y - 6} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.ink} style={{ fontFamily: "var(--font-spline-mono), monospace" }}>
-                  {clip(n.label, 22)}
-                </text>
-                {uiLine && (
-                  <text x={n.x} y={n.y + 15} textAnchor="middle" fontSize={9} fill={C.muted}>
-                    {clip(uiLine, 34)}
-                  </text>
-                )}
+                <text x={n.x} y={n.y - 6} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.ink} style={{ fontFamily: "var(--font-spline-mono), monospace" }}>{clip(n.label, 22)}</text>
+                {uiLine && (<text x={n.x} y={n.y + 15} textAnchor="middle" fontSize={9} fill={C.muted}>{clip(uiLine, 34)}</text>)}
               </g>
             );
           })}
         </svg>
 
-        {/* Panel lateral: nodo o conector seleccionado */}
+        {/* Panel del nodo/conector seleccionado */}
         {(selNode || selEdge) && (
           <div className={styles.panel}>
             <div className={styles.panelHead}>
-              <b>{selEdge ? "Conector" : selNode!.kind === "decision" ? "Decisión" : selNode!.kind === "stop" ? "Alto del proceso" : "Tabla"}</b>
+              <b>{selEdge ? "Conector" : kindLabel(selNode!.kind)}</b>
               <button className={styles.x} onClick={() => setSel(null)} aria-label="Cerrar">×</button>
             </div>
 
-            {/* ── Conector (arista) ── */}
             {selEdge ? (
               <>
-                <p className={styles.pMeta}>
-                  {nodeById.get(selEdge.from)?.label ?? "?"} → {nodeById.get(selEdge.to)?.label ?? "?"}
-                </p>
-                {mode === "edit" && canEdit ? (
+                <p className={styles.pMeta}>{nodeById.get(selEdge.from)?.label ?? "?"} → {nodeById.get(selEdge.to)?.label ?? "?"}</p>
+                {editing ? (
                   <>
                     <label className={styles.field}>
                       <span>Resultado (rótulo de la flecha)</span>
-                      <input
-                        value={selEdge.label ?? ""}
-                        placeholder="p. ej. Apto · No Apto · apta"
-                        onChange={(e) => patchEdge(selEdge.id, { label: e.target.value || undefined })}
-                      />
+                      <input value={selEdge.label ?? ""} placeholder="p. ej. Apto · No Apto · apta" onChange={(e) => patchEdge(selEdge.id, { label: e.target.value || undefined })} />
                     </label>
                     <label className={styles.field}>
                       <span>Tono</span>
-                      <select
-                        value={selEdge.tone ?? ""}
-                        onChange={(e) => patchEdge(selEdge.id, { tone: (e.target.value || undefined) as EdgeTone | undefined })}
-                      >
+                      <select value={selEdge.tone ?? ""} onChange={(e) => patchEdge(selEdge.id, { tone: (e.target.value || undefined) as EdgeTone | undefined })}>
                         <option value="">Neutro (gris)</option>
                         <option value="ok">Verde · continúa</option>
                         <option value="bad">Rojo · se detiene</option>
@@ -512,8 +548,7 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
                   <p className={styles.pLabel} style={{ marginTop: 8 }}>{selEdge.label || "(sin resultado)"}</p>
                 )}
               </>
-            ) : mode === "edit" && canEdit ? (
-              /* ── Nodo · edición ── */
+            ) : editing ? (
               <>
                 <label className={styles.field}>
                   <span>Etiqueta</span>
@@ -525,15 +560,14 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
                     <option value="table">Schema / Table</option>
                     <option value="decision">Decisión</option>
                     <option value="stop">Alto del proceso</option>
+                    <option value="milestone">Hito / entrega</option>
                   </select>
                 </label>
                 <label className={styles.field}>
                   <span>Etapa</span>
                   <select value={selNode!.stageId ?? ""} onChange={(e) => patchNode(selNode!.id, { stageId: e.target.value || undefined })}>
                     <option value="">(ninguna)</option>
-                    {config.stages.map((s) => (
-                      <option key={s.id} value={s.id}>{s.label}</option>
-                    ))}
+                    {config.stages.map((s) => (<option key={s.id} value={s.id}>{s.label}</option>))}
                   </select>
                 </label>
                 <div className={styles.field}>
@@ -541,59 +575,28 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
                   {(selNode!.uis ?? []).length > 0 && (
                     <div className={styles.chips}>
                       {selNode!.uis!.map((u, i) => (
-                        <span key={i} className={styles.chip}>
-                          {u}
-                          <button onClick={() => patchNode(selNode!.id, { uis: selNode!.uis!.filter((_, j) => j !== i) })} aria-label="Quitar">×</button>
-                        </span>
+                        <span key={i} className={styles.chip}>{u}<button onClick={() => patchNode(selNode!.id, { uis: selNode!.uis!.filter((_, j) => j !== i) })} aria-label="Quitar">×</button></span>
                       ))}
                     </div>
                   )}
-                  <select
-                    value=""
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v && !(selNode!.uis ?? []).includes(v)) patchNode(selNode!.id, { uis: [...(selNode!.uis ?? []), v] });
-                    }}
-                  >
+                  <select value="" onChange={(e) => { const v = e.target.value; if (v && !(selNode!.uis ?? []).includes(v)) patchNode(selNode!.id, { uis: [...(selNode!.uis ?? []), v] }); }}>
                     <option value="">＋ agregar UI…</option>
-                    {UI_CATALOG.map((g) => (
-                      <optgroup key={g.group} label={g.group}>
-                        {g.items.map((it) => (
-                          <option key={it} value={it}>{it}</option>
-                        ))}
-                      </optgroup>
-                    ))}
+                    {UI_CATALOG.map((g) => (<optgroup key={g.group} label={g.group}>{g.items.map((it) => (<option key={it} value={it}>{it}</option>))}</optgroup>))}
                   </select>
                   <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                    <input
-                      placeholder="otra UI…"
-                      value={customUi}
-                      onChange={(e) => setCustomUi(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const v = customUi.trim();
-                          if (v && !(selNode!.uis ?? []).includes(v)) patchNode(selNode!.id, { uis: [...(selNode!.uis ?? []), v] });
-                          setCustomUi("");
-                        }
-                      }}
-                    />
+                    <input placeholder="otra UI…" value={customUi} onChange={(e) => setCustomUi(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { const v = customUi.trim(); if (v && !(selNode!.uis ?? []).includes(v)) patchNode(selNode!.id, { uis: [...(selNode!.uis ?? []), v] }); setCustomUi(""); } }} />
                   </div>
                 </div>
                 <button className={styles.del} onClick={deleteSel}>Borrar nodo</button>
               </>
             ) : (
-              /* ── Nodo · lectura ── */
               <>
                 <p className={styles.pLabel}>{selNode!.label}</p>
                 {selNode!.tableName && <p className={styles.pMeta}>Tabla: <span className="mono">{selNode!.tableName}</span></p>}
                 <p className={styles.pMeta}>Etapa: {stageOf(selNode!.stageId)}</p>
                 <p className={styles.pMeta} style={{ marginTop: 8, fontWeight: 700, color: C.ink }}>Se muestra en:</p>
                 {(selNode!.uis ?? []).length ? (
-                  <ul className={styles.uiList}>
-                    {selNode!.uis!.map((u, i) => (
-                      <li key={i}>{u}</li>
-                    ))}
-                  </ul>
+                  <ul className={styles.uiList}>{selNode!.uis!.map((u, i) => (<li key={i}>{u}</li>))}</ul>
                 ) : (
                   <p className={styles.pMeta}>—</p>
                 )}
@@ -601,11 +604,28 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
             )}
           </div>
         )}
+
+        {/* Diálogo Guardar propuesta */}
+        {saveDlg && (
+          <div className={styles.dlgBg} onPointerDown={() => setSaveDlg(null)}>
+            <div className={styles.dlg} onPointerDown={(e) => e.stopPropagation()}>
+              <b>Guardar como propuesta</b>
+              <p className={styles.pMeta}>Una propuesta es un cambio que usted diseña para que CTC lo implemente. El Base no cambia.</p>
+              <label className={styles.field}><span>Nombre</span>
+                <input autoFocus value={saveDlg.name} onChange={(e) => setSaveDlg({ ...saveDlg, name: e.target.value })} placeholder="p. ej. Separar EVA de la ficha" />
+              </label>
+              <label className={styles.field}><span>Nota (opcional)</span>
+                <textarea rows={3} value={saveDlg.note} onChange={(e) => setSaveDlg({ ...saveDlg, note: e.target.value })} placeholder="Qué propone cambiar y por qué…" />
+              </label>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button className={styles.tbtnSolid} disabled={busy || !saveDlg.name.trim()} onClick={confirmSaveNew}>{busy ? "Guardando…" : "Guardar propuesta"}</button>
+                <button className={styles.tbtn} onClick={() => setSaveDlg(null)}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* El contenedor de impresión va en <body> (portal) para que al imprimir
-          se pueda ocultar TODO lo demás con display:none y el documento quede en
-          UNA sola página (un position:fixed se repetiría en cada hoja). */}
       {mounted && createPortal(<div className={styles.printArea} ref={printRef} aria-hidden />, document.body)}
     </div>
   );

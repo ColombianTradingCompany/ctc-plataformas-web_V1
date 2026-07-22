@@ -7,6 +7,7 @@
 // nueva conserve el color. Coordenadas = centro del nodo.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { saveWorkMap } from "../workmapActions";
 import {
@@ -104,6 +105,11 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [customUi, setCustomUi] = useState("");
+  // Portal a <body> solo tras montar: SSR y el primer render de cliente coinciden
+  // (ambos sin portal), y el efecto lo habilita después de hidratar.
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
 
   const nodeById = useMemo(() => new Map(config.nodes.map((n) => [n.id, n])), [config.nodes]);
   const selNode = sel?.t === "node" ? nodeById.get(sel.id) ?? null : null;
@@ -597,8 +603,10 @@ export function WorkMapCanvas({ initial, canEdit }: { initial: WorkMapConfig; ca
         )}
       </div>
 
-      {/* Solo visible al imprimir (CSS @media print): el mapa clonado a página completa. */}
-      <div className={styles.printArea} ref={printRef} aria-hidden />
+      {/* El contenedor de impresión va en <body> (portal) para que al imprimir
+          se pueda ocultar TODO lo demás con display:none y el documento quede en
+          UNA sola página (un position:fixed se repetiría en cada hoja). */}
+      {mounted && createPortal(<div className={styles.printArea} ref={printRef} aria-hidden />, document.body)}
     </div>
   );
 }

@@ -567,3 +567,18 @@ está desplegado READY en producción.)
   rótulo+tono, dropdown de UIs (6 optgroups + chips), aristas No Apto→Alto; sin errores de consola;
   tsc+eslint+build limpios.
 (commit: pending · versión V1.16)
+
+## [2026-07-21] Mapa de Trabajo · PDF salía en 2 páginas idénticas
+- Causa: el contenedor de impresión usaba position:fixed, y en impresión un elemento fixed se
+  REPITE en cada hoja; como el resto de la app (oculta con visibility:hidden) seguía ocupando
+  alto, el documento medía 2 páginas y el fixed se imprimía en las dos.
+- ARREGLO: el .printArea ahora se monta en <body> vía React portal, y en @media print se oculta
+  TODO lo demás con `body > :not(.printArea){display:none}` (no visibility, no fixed) — el
+  documento colapsa a UNA sola página con solo el mapa. El SVG va width:100% height:auto
+  (max-height:100vh) para caber a página completa apaisada.
+  Verificado con sonda: printArea es hijo directo de <body>; la app sigue renderizando; el clon
+  entra al printArea. tsc+eslint+build limpios.
+  ⚠ El patrón "mounted flag" para portales SSR-safe choca con react-hooks/set-state-in-effect;
+    se desactivó la regla en esa línea (uso legítimo: SSR y primer render de cliente sin portal,
+    el efecto lo habilita tras hidratar).
+(commit: pending · versión V1.17)

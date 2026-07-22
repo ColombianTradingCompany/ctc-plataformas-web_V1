@@ -10,7 +10,19 @@
 
 export type MapStage = { id: string; label: string; x0: number; x1: number };
 
-export type MapNodeKind = "table" | "decision";
+export type MapNodeKind = "table" | "decision" | "stop";
+
+// Catálogo de UIs seleccionables (dropdown en el panel del nodo). Agrupado por
+// superficie; el owner puede además escribir una UI a mano ("otra…").
+export const UI_CATALOG: { group: string; items: string[] }[] = [
+  { group: "Kaffetal Regal (productor)", items: ["KR · Información general", "KR · Mis Fincas", "KR · Mis Lotes", "KR · Ficha", "KR · Panel", "KR · postulación", "KR · Mis contratos"] },
+  { group: "Cherry Picked (comprador)", items: ["CP · tienda", "CP · Catálogo", "CP · checkout", "CP · Cuenta", "CP · membresía", "CP · Subastas"] },
+  { group: "BCP", items: ["BCP · Panel", "BCP · Productores", "BCP · Fincas", "BCP · Lotes", "BCP · Nominados", "BCP · Arena", "BCP · Galardonados", "BCP · Catálogo", "BCP · Contratos", "BCP · Kaffetal Club", "BCP · códigos"] },
+  { group: "ECP", items: ["ECP · Buzón", "ECP · Usuarios y credenciales", "ECP · Herramientas", "ECP · Documentación", "ECP · Mapa de Trabajo"] },
+  { group: "OCP", items: ["OCP · Leads CTC Home", "OCP · Socios de la red"] },
+  { group: "Otros", items: ["CTC Home", "Auth · todas las cuentas", "(interno)"] },
+];
+export const UI_OPTIONS: string[] = UI_CATALOG.flatMap((g) => g.items);
 export type MapNode = {
   id: string;
   kind: MapNodeKind;
@@ -59,6 +71,17 @@ const d = (id: string, label: string, stageId: string, x: number, y: number): Ma
   y,
 });
 
+// Alto del proceso (punto de parada / equilibrio): un lote que sale del flujo.
+const st = (id: string, label: string, stageId: string, x: number, y: number, uis: string[] = []): MapNode => ({
+  id,
+  kind: "stop",
+  label,
+  stageId,
+  x,
+  y,
+  uis,
+});
+
 const STAGES: MapStage[] = [
   { id: "cuenta", label: "Cuenta", x0: 40, x1: 250 },
   { id: "ft", label: "FT · Finca", x0: 270, x1: 480 },
@@ -88,15 +111,19 @@ const NODES: MapNode[] = [
   t("ficha_snap", "ficha_completion_snapshots", "ficha_completion_snapshots", ["KR · Ficha"], "ft2", 620, 410),
   // EUDR (compuerta)
   d("eudr_gate", "¿Finca apta EUDR?", "eudr", 870, 250),
+  st("eudr_stop", "Finca no apta · corregir", "eudr", 870, 470, ["BCP · Fincas", "KR · Mis Fincas"]),
   // EVA
   t("lot_evaluations", "lot_evaluations", "lot_evaluations", ["BCP · Arena (reclamos)", "KR · Ficha"], "eva", 1115, 250),
   d("eva_gate", "Apto / No Apto", "eva", 1115, 440),
+  st("eva_stop", "No Apto · fuera de Arena", "eva", 1115, 640, ["KR · Ficha"]),
   // MUE
   t("arena_inscriptions", "arena_inscriptions", "arena_inscriptions", ["BCP · Nominados", "BCP · Arena", "KR · Panel"], "mue", 1365, 250),
   t("arena_entry_codes", "arena_entry_codes", "arena_entry_codes", ["BCP · códigos", "KR · postulación"], "mue", 1365, 430),
   // Sondeo
   t("sondeo_batches", "sondeo_batches", "sondeo_batches", ["BCP · Nominados (Baches)"], "sondeo", 1615, 250),
   d("sondeo_gate", "Sondeo Apto / No Apto", "sondeo", 1615, 440),
+  // Un No Apto del Sondeo NO va a contrato: recibe resultado, feedback y el 80% de cashback.
+  st("retiro_stop", "No Apto · resultado + feedback + 80% cashback", "sondeo", 1615, 680, ["KR · Panel", "BCP · Nominados (cashback)"]),
   // Arena
   t("arena_sessions", "arena_sessions", "arena_sessions", ["BCP · Arena"], "arena", 1880, 190),
   t("arena_session_lots", "arena_session_lots", "arena_session_lots", ["BCP · Arena (sesión)"], "arena", 1880, 340),
@@ -137,13 +164,16 @@ const EDGES: MapEdge[] = [
   e("e6", "lots", "ficha_snap", "info"),
   e("e7", "lots", "eudr_gate"),
   e("e8", "eudr_gate", "lot_evaluations", "ok", "apta"),
+  e("e8b", "eudr_gate", "eudr_stop", "bad", "no apta"),
   e("e9", "lot_evaluations", "eva_gate"),
   e("e10", "eva_gate", "arena_inscriptions", "ok", "Apto → postula"),
+  e("e9b", "eva_gate", "eva_stop", "bad", "No Apto"),
   e("e11", "arena_entry_codes", "arena_inscriptions", "info"),
   e("e12", "arena_inscriptions", "sondeo_batches"),
   e("e13", "sondeo_batches", "sondeo_gate"),
   e("e14", "sondeo_gate", "arena_sessions", "ok", "Apto"),
-  e("e15", "sondeo_gate", "purchase_contracts", "bad", "No Apto → cashback"),
+  // No Apto ⇒ resultado + feedback + 80% cashback (NO contrato).
+  e("e15", "sondeo_gate", "retiro_stop", "bad", "No Apto"),
   e("e16", "arena_sessions", "arena_session_lots"),
   e("e17", "arena_session_lots", "arena_scores"),
   e("e18", "arena_scores", "grade_gate"),
@@ -193,7 +223,7 @@ export function toWorkMapConfig(value: unknown): WorkMapConfig {
           const o = n as Record<string, unknown>;
           const id = str(o.id);
           if (!id) return null;
-          const kind: MapNodeKind = o.kind === "decision" ? "decision" : "table";
+          const kind: MapNodeKind = o.kind === "decision" ? "decision" : o.kind === "stop" ? "stop" : "table";
           return {
             id,
             kind,

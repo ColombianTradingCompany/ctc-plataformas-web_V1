@@ -542,3 +542,28 @@ está desplegado READY en producción.)
 - MVP: entrega los 3 toggles. Fuera de alcance (futuras iteraciones): auto-diff contra el esquema vivo,
   detalle de columnas por nodo, y múltiples snapshots nombrados.
 (commit: pending · versión V1.15)
+
+## [2026-07-21] Mapa de Trabajo · iteración de feedback del owner
+- PDF export no funcionaba (ventana nueva bloqueada / SVG en blanco por pérdida de namespace).
+  ARREGLO: impresión EN LA MISMA página — se clona el SVG vivo (conserva namespace + colores
+  concretos) dentro de un contenedor fijo .printArea que solo se ve con @media print (visibility:
+  hidden en body, visible en .printArea); window.print() con @page A4 apaisado. Sin pop-up, sin
+  ventana nueva. Verificado: el clon conserva namespaceURI SVG (causa del blanco anterior).
+- Conectores desde una decisión ahora permiten escribir el RESULTADO: al seleccionar una arista se
+  abre el panel "Conector" con input de rótulo + selector de tono (verde/rojo/gris/neutro) + borrar;
+  al crear una arista (Conectar) se auto-selecciona para escribir el resultado enseguida.
+- UIs pasa a DROPDOWN: el catálogo UI_CATALOG (agrupado por superficie KR/CP/BCP/ECP/OCP/otros) se
+  elige desde un <select> con optgroups; las elegidas se muestran como chips con quitar; además un
+  input "otra UI…" para agregar a mano (Enter).
+- NUEVO tipo de bloque "Alto del proceso" (stop): pastilla roja suave para los puntos donde un lote
+  sale del flujo. Botón "＋ Alto"; también en el selector de tipo del panel.
+- CORRECCIÓN de datos (owner): un lote No Apto del Sondeo NO recibe purchase_contract; recibe
+  resultado + feedback + 80% de cashback. Se cambió la arista sondeo_gate→purchase_contracts por
+  sondeo_gate→retiro_stop (nuevo Alto "No Apto · resultado + feedback + 80% cashback"). Se agregaron
+  también los Altos de EUDR no apta y EVA No Apto con sus aristas rojas.
+  ⚠ react-hooks/purity marca Date.now() en un handler ("Cannot call impure function"); se cambió la
+    generación de ids a un contador en useRef (newId) con prefijo "u" para no chocar con la semilla.
+- Verificado con sonda (borrada antes del commit): stops renderizan, panel de conector con
+  rótulo+tono, dropdown de UIs (6 optgroups + chips), aristas No Apto→Alto; sin errores de consola;
+  tsc+eslint+build limpios.
+(commit: pending · versión V1.16)

@@ -20,6 +20,12 @@ export type ProducerArena = { lotId: string; lotName: string; phaseLabel: string
 export type ProducerContrato = { id: string; lotName: string; status: string };
 export type ProducerComm = { id: string; authorRole: string; createdAt: string; contextLabel: string | null; note: string };
 
+// Estado por módulo para la tira de la tarjeta: contador + ✓ (en orden) / ✗
+// (algo requiere atención) / — (sin registros). `count: null` = módulo sin
+// contador (General, que solo dice si la información está completa).
+export type ModuleKey = "general" | "fincas" | "lotes" | "arena" | "contratos" | "comm";
+export type ModuleStat = { count: number | null; state: "ok" | "issue" | "empty" };
+
 export type ProducerData = {
   id: string;
   supplierCode: string;
@@ -36,6 +42,7 @@ export type ProducerData = {
   clubMemberSince: string | null;
   segmentLabel: string;
   media: ProducerMedia;
+  modules: Record<ModuleKey, ModuleStat>;
   fincas: ProducerFinca[];
   lotes: ProducerLote[];
   arena: ProducerArena[];
@@ -43,12 +50,12 @@ export type ProducerData = {
   comms: ProducerComm[];
 };
 
-type TabKey = "general" | "fincas" | "lotes" | "arena" | "contratos" | "comm";
+type TabKey = ModuleKey;
 
 // Iconos de línea minimalistas (trazo 1.6, currentColor, viewBox 20) — mismo
 // lenguaje que ToolIcons/LineIcon del resto de la plataforma.
-function TabIcon({ k }: { k: TabKey }) {
-  const p: Record<TabKey, React.ReactNode> = {
+export function ModuleIcon({ k, size = 15 }: { k: ModuleKey; size?: number }) {
+  const p: Record<ModuleKey, React.ReactNode> = {
     general: <><circle cx="10" cy="7" r="3" /><path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" /></>,
     fincas: <><path d="M2.5 12 10 5l7.5 7" /><path d="M4.5 11v6h11v-6" /><path d="M8.5 17v-3.5h3V17" /></>,
     lotes: <><path d="M3.5 6.5 10 3l6.5 3.5v7L10 17l-6.5-3.5Z" /><path d="M3.5 6.5 10 10l6.5-3.5M10 10v7" /></>,
@@ -57,7 +64,7 @@ function TabIcon({ k }: { k: TabKey }) {
     comm: <><path d="M3.5 5.5h13v8h-8l-3 3v-3h-2Z" /><path d="M7 8.5h6M7 11h4" /></>,
   };
   return (
-    <svg viewBox="0 0 20 20" width={15} height={15} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 20 20" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       {p[k]}
     </svg>
   );
@@ -100,7 +107,7 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
                 fontWeight: active ? 800 : 600, fontSize: 12.5, marginBottom: -2,
               }}
             >
-              <TabIcon k={t.key} />
+              <ModuleIcon k={t.key} />
               {t.label}
               {t.count != null && (
                 <span style={{

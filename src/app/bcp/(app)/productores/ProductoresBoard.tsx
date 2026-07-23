@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { FincaModalRow } from "../fincas/FincaModalRow";
-import { ProducerPanel, type ProducerData } from "./ProducerPanel";
+import { ProducerPanel, ModuleIcon, type ProducerData, type ModuleKey } from "./ProducerPanel";
 import styles from "../shared.module.css";
 
 // ── Tablero de Productores con filtros (2026-07-23) ──────────────────────────
@@ -113,9 +113,18 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
+const MODULE_ORDER: { key: ModuleKey; label: string }[] = [
+  { key: "general", label: "Información general" },
+  { key: "fincas", label: "Fincas" },
+  { key: "lotes", label: "Lotes" },
+  { key: "arena", label: "Arena" },
+  { key: "contratos", label: "Contratos" },
+  { key: "comm", label: "Comunicación" },
+];
+
 function Summary({ p }: { p: ProducerData }) {
   return (
-    <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <span style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
       {p.media.avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- URL firmada efímera; next/image no aporta aquí
         <img
@@ -135,11 +144,33 @@ function Summary({ p }: { p: ProducerData }) {
           {(p.fullName || "?").trim().charAt(0).toUpperCase()}
         </span>
       )}
-      <span style={{ minWidth: 0 }}>
+      <span style={{ minWidth: 0, flex: 1 }}>
         <b style={{ fontSize: 13.5, color: "var(--ink)", display: "block" }}>{p.fullName || "Sin nombre"}</b>
         <span className={styles.meta}>
           {p.companyName || "—"}
           {p.clubMemberSince ? " · Club ✓" : ""}
+        </span>
+        {/* Tira de estado por módulo: icono + contador + ✓/✗ (pedido del owner). */}
+        <span style={{ display: "flex", gap: 9, flexWrap: "wrap", marginTop: 5 }}>
+          {MODULE_ORDER.map(({ key, label }) => {
+            const { count, state } = p.modules[key];
+            const mark = state === "issue" ? "✗" : state === "ok" ? "✓" : null;
+            const tip = `${label}${count != null ? ` · ${count}` : ""} · ${state === "issue" ? "requiere atención" : state === "ok" ? "en orden" : "sin registros"}`;
+            return (
+              <span
+                key={key}
+                title={tip}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 2.5, fontSize: 11,
+                  color: state === "issue" ? "var(--red)" : "var(--muted)", opacity: state === "empty" ? 0.5 : 1,
+                }}
+              >
+                <ModuleIcon k={key} size={13} />
+                {count != null && <b style={{ fontWeight: 700 }}>{count}</b>}
+                {mark && <span style={{ color: state === "issue" ? "var(--red)" : "var(--green)", fontWeight: 800, fontSize: 11.5 }}>{mark}</span>}
+              </span>
+            );
+          })}
         </span>
       </span>
     </span>

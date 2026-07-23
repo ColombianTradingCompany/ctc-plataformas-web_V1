@@ -4,7 +4,7 @@ import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { PHASE_LABEL, type InscriptionPhase } from "@/lib/arena/inscriptions";
 import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer, type ProducerSegment } from "@/lib/bcp/producerSegments";
 import { ProductoresBoard, type BoardSegment } from "./ProductoresBoard";
-import type { ProducerData } from "./ProducerPanel";
+import type { ProducerData, ModuleStat } from "./ProducerPanel";
 import styles from "../shared.module.css";
 
 // ── Productores como kanban de RELACIÓN (2026-07-20, criterios del owner) ────
@@ -144,6 +144,28 @@ export default async function BcpProductoresPage() {
 
   function toData(p: ProfileRow): ProducerData {
     const pp = ppById.get(p.id);
+    const pF = fincasBy.get(p.id) ?? [];
+    const pL = lotsBy.get(p.id) ?? [];
+    const pArena = (insBy.get(p.id) ?? []).filter((i) => ACTIVE_PHASES.has(i.phase));
+    const pC = contractsBy.get(p.id) ?? [];
+    const pM = commsBy.get(p.id) ?? []; // orden created_at desc → pM[0] es la última nota
+
+    const infoComplete = infoGeneralComplete({
+      fullName: p.full_name,
+      companyName: pp?.company_name ?? null,
+      taxId: pp?.tax_id ?? null,
+      cedulaCafetera: pp?.cedula_cafetera ?? null,
+      phone: p.phone,
+      avatarAssetId: pp?.avatar_asset_id ?? null,
+      country: pp?.country ?? null,
+      department: pp?.department ?? null,
+    });
+    // ✓ en orden · ✗ algo requiere atención · — sin registros. Reglas de "algo mal":
+    // Fincas = una finca rechazada; Lotes = un lote No Apto; Comunicación = la última
+    // nota la escribió el productor (CTC aún no responde). Arena/Contratos: sin regla
+    // de error por ahora (✓ si hay, — si no).
+    const mod = (count: number, issue: boolean): ModuleStat => ({ count, state: count === 0 ? "empty" : issue ? "issue" : "ok" });
+
     return {
       id: p.id,
       supplierCode: supplierCode(p.id),
@@ -164,18 +186,24 @@ export default async function BcpProductoresPage() {
         videoUrl: pp?.video_asset_id ? signedUrls.get(pp.video_asset_id) ?? null : null,
         galleryUrls: (pp?.gallery_asset_ids ?? []).map((id) => signedUrls.get(id)).filter((u): u is string => !!u),
       },
-      fincas: (fincasBy.get(p.id) ?? []).map((f) => ({ id: f.id, name: f.name, municipio: f.municipio, statusLabel: FINCA_STATUS_LABEL[f.status] ?? f.status })),
-      lotes: (lotsBy.get(p.id) ?? []).map((l) => ({ id: l.id, name: l.name, stageLabel: STAGE_LABEL[l.stage] ?? l.stage })),
-      arena: (insBy.get(p.id) ?? [])
-        .filter((i) => ACTIVE_PHASES.has(i.phase))
-        .map((i) => ({
-          lotId: i.lot_id,
-          lotName: lotById.get(i.lot_id)?.name ?? ctcLotReferenceShort(i.lot_id),
-          phaseLabel: PHASE_LABEL[i.phase as InscriptionPhase] ?? i.phase,
-          sondeoAprobado: i.sondeo_result === "aprobado",
-        })),
-      contratos: (contractsBy.get(p.id) ?? []).map((c) => ({ id: c.id, lotName: lotById.get(c.lot_id)?.name ?? "Contrato", status: c.status })),
-      comms: (commsBy.get(p.id) ?? []).map((cm) => ({ id: cm.id, authorRole: cm.author_role, createdAt: cm.created_at, contextLabel: cm.context_label, note: cm.note })),
+      modules: {
+        general: { count: null, state: infoComplete ? "ok" : "issue" },
+        fincas: mod(pF.length, pF.some((f) => f.status === "rejected")),
+        lotes: mod(pL.length, pL.some((l) => l.stage === "no_apto")),
+        arena: mod(pArena.length, false),
+        contratos: mod(pC.length, false),
+        comm: mod(pM.length, pM[0]?.author_role === "producer"),
+      },
+      fincas: pF.map((f) => ({ id: f.id, name: f.name, municipio: f.municipio, statusLabel: FINCA_STATUS_LABEL[f.status] ?? f.status })),
+      lotes: pL.map((l) => ({ id: l.id, name: l.name, stageLabel: STAGE_LABEL[l.stage] ?? l.stage })),
+      arena: pArena.map((i) => ({
+        lotId: i.lot_id,
+        lotName: lotById.get(i.lot_id)?.name ?? ctcLotReferenceShort(i.lot_id),
+        phaseLabel: PHASE_LABEL[i.phase as InscriptionPhase] ?? i.phase,
+        sondeoAprobado: i.sondeo_result === "aprobado",
+      })),
+      contratos: pC.map((c) => ({ id: c.id, lotName: lotById.get(c.lot_id)?.name ?? "Contrato", status: c.status })),
+      comms: pM.map((cm) => ({ id: cm.id, authorRole: cm.author_role, createdAt: cm.created_at, contextLabel: cm.context_label, note: cm.note })),
     };
   }
 

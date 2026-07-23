@@ -53,6 +53,7 @@ const EN: Copy = {
     "mermas-ctc": { name: "CTC yield calculator", desc: "Internal tool." },
     catacion: { name: "Flavour wheel", desc: "Internal tool." },
     "green-datasheet": { name: "Green coffee datasheet", desc: "Internal tool." },
+    "formula-calidad": { name: "The quality formula", desc: "Internal tool." },
   },
 };
 
@@ -85,6 +86,7 @@ const T: Record<Lang, Copy> = {
       "mermas-ctc": { name: "Calculadora de mermas · CTC", desc: "Herramienta interna." },
       catacion: { name: "Rueda de catación", desc: "Herramienta interna." },
       "green-datasheet": { name: "Ficha de café verde", desc: "Herramienta interna." },
+      "formula-calidad": { name: "La fórmula de calidad", desc: "Herramienta interna." },
     },
   },
   de: {
@@ -114,6 +116,7 @@ const T: Record<Lang, Copy> = {
       "mermas-ctc": { name: "CTC-Schwundrechner", desc: "Internes Werkzeug." },
       catacion: { name: "Aromarad", desc: "Internes Werkzeug." },
       "green-datasheet": { name: "Rohkaffee-Datenblatt", desc: "Internes Werkzeug." },
+      "formula-calidad": { name: "Die Qualitätsformel", desc: "Internes Werkzeug." },
     },
   },
 };

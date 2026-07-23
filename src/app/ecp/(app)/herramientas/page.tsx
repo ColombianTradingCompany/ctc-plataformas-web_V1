@@ -45,6 +45,10 @@ const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "Ficha de café verde (datasheet)",
     desc: "La hoja técnica de un lote de café verde, en el formato del comprador. En inglés. Se ofrece a productores.",
   },
+  "formula-calidad": {
+    name: "La fórmula de calidad del café",
+    desc: "El marco de CTC para explicar cómo se compone la calidad de un café. Interna del equipo.",
+  },
 };
 
 export default async function EcpHerramientasPage() {

@@ -31,6 +31,7 @@ const OUT_DIR = path.join(ROOT, "src", "lib", "tools", "embedded");
 // servida por /ecp/herramientas/, no puede abrirse fuera de la consola.
 const TOOLS = {
   qr: "generador-qr.html",
+  "formula-calidad": "formula-calidad.html",
 };
 
 // Identificador JS válido a partir de una clave con guiones ("mermas-ctc" → "mermasCtc").

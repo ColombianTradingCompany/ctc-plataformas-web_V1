@@ -49,6 +49,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "Ficha de café verde",
     desc: "La hoja técnica de un lote de café verde, en el formato que lee el comprador. En inglés.",
   },
+  "formula-calidad": { name: "La fórmula de calidad", desc: "Herramienta interna." },
 };
 
 // A conversation thread = every note (CTC notes + the producer's replies)
@@ -448,7 +449,7 @@ export function AppDashboard({
             ) : (
               <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
                 {arenaLots.map((l) => (
-                  <ArenaLotCard key={l.id} lot={l} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} />
+                  <ArenaLotCard key={l.id} lot={l} onRefreshData={onRefreshData} onConfirmSampleShipped={onConfirmSampleShipped} onSelectModule={onSelectModule} />
                 ))}
               </div>
             )}
@@ -950,10 +951,12 @@ function ArenaLotCard({
   lot,
   onRefreshData,
   onConfirmSampleShipped,
+  onSelectModule,
 }: {
   lot: Lot;
   onRefreshData: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
+  onSelectModule: (m: DashboardModule | null) => void;
 }) {
   const { showToast } = useToast();
   const [code, setCode] = useState("");
@@ -998,11 +1001,21 @@ function ArenaLotCard({
   const settled = ins?.status === "pagado" || ins?.status === "exento";
 
   return (
-    <div style={cardStyle}>
-      <b style={{ fontSize: 14 }}>{lot.name}</b>
-      <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 8px" }}>
+    <div style={cardStyle} id={`arena-lot-${lot.id}`}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 14 }}>{lot.name}</b>
+        <button
+          type="button"
+          onClick={() => onSelectModule("lotes")}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--green)", fontWeight: 700, fontSize: 12.5 }}
+        >
+          Ver lote en «Mis lotes» →
+        </button>
+      </div>
+      <div className="mono" style={{ fontSize: 11, color: "var(--muted)", overflowWrap: "anywhere", margin: "3px 0 2px" }}>
         <CtcRef id={lot.id} />
       </div>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8 }}>Finca: {lot.finca}</div>
 
       {!ins ? (
         // Apto sin postular: la decisión es del productor.

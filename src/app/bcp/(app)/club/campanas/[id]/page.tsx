@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
+import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { emitCampaignCodes, revokeCampaignCode } from "../../../clubActions";
 import styles from "../../../shared.module.css";
 
@@ -16,6 +17,14 @@ type CodeRow = {
   redeemed_at: string | null;
   lot_id: string | null;
   revoked_at: string | null;
+};
+
+// El lote que REDIMIÓ un código → su productor y su finca. Es la mitad "quién lo
+// usó" que faltaba: por cada KRX- gastado, a qué Lote/Finca/Productor quedó ligado.
+type LotRow = { id: string; producer_id: string | null; fincas: { name: string } | { name: string }[] | null };
+const fincaNameOf = (l: LotRow | undefined) => {
+  const f = l && (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas);
+  return f?.name ?? "—";
 };
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
@@ -38,7 +47,20 @@ export default async function BcpCampaignDetailPage({ params }: { params: Promis
 
   const codes = (codeRows as CodeRow[] | null) ?? [];
   const producerIds = ((producers as { id: string }[] | null) ?? []).map((p) => p.id);
-  const contacts = await fetchProducerContacts(service, [...producerIds, ...codes.map((c) => c.assigned_to)]);
+
+  // Lotes que gastaron un código de esta campaña (para mostrar quién lo usó).
+  const redeemedLotIds = [...new Set(codes.map((c) => c.lot_id).filter((x): x is string => !!x))];
+  const { data: lotRows } = redeemedLotIds.length
+    ? await service.from("lots").select("id, producer_id, fincas(name)").in("id", redeemedLotIds)
+    : { data: [] as LotRow[] };
+  const lots = (lotRows as LotRow[] | null) ?? [];
+  const lotMap = new Map(lots.map((l) => [l.id, l]));
+
+  const contacts = await fetchProducerContacts(service, [
+    ...producerIds,
+    ...codes.map((c) => c.assigned_to),
+    ...lots.map((l) => l.producer_id),
+  ]);
   const name = (pid: string | null) => (pid && (contacts.get(pid)?.fullName || contacts.get(pid)?.email)) || "Sin nombre";
 
   const usados = codes.filter((c) => c.redeemed_at).length;
@@ -112,23 +134,43 @@ export default async function BcpCampaignDetailPage({ params }: { params: Promis
             "use server";
             await revokeCampaignCode(c.id);
           }
+          const lot = c.lot_id ? lotMap.get(c.lot_id) : undefined;
           return (
-            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "10px 0", borderTop: "1px solid var(--line)" }}>
-              <span className="mono" style={{ fontWeight: 700 }}>{c.code}</span>
-              {c.revoked_at ? (
-                <span className={styles.badgeBad}>Revocado · {fecha(c.revoked_at)}</span>
-              ) : c.redeemed_at ? (
-                <span className={styles.badgeGood}>Usado · {fecha(c.redeemed_at)}</span>
-              ) : c.assigned_to ? (
-                <span className={styles.badgeWarn}>Asignado · {name(c.assigned_to)}</span>
-              ) : (
-                <span className={styles.badge}>Sin asignar · entregar en mano</span>
-              )}
-              <span className={styles.meta} style={{ flex: 1 }}>Emitido {fecha(c.created_at)}</span>
-              {!c.redeemed_at && !c.revoked_at && (
-                <form action={revoke}>
-                  <button className="btn btn-sm" type="submit">Revocar</button>
-                </form>
+            <div key={c.id} style={{ padding: "10px 0", borderTop: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <span className="mono" style={{ fontWeight: 700 }}>{c.code}</span>
+                {c.revoked_at ? (
+                  <span className={styles.badgeBad}>Revocado · {fecha(c.revoked_at)}</span>
+                ) : c.redeemed_at ? (
+                  <span className={styles.badgeGood}>Usado · {fecha(c.redeemed_at)}</span>
+                ) : c.assigned_to ? (
+                  <span className={styles.badgeWarn}>Asignado · {name(c.assigned_to)}</span>
+                ) : (
+                  <span className={styles.badge}>Sin asignar · entregar en mano</span>
+                )}
+                <span className={styles.meta} style={{ flex: 1 }}>Emitido {fecha(c.created_at)}</span>
+                {!c.redeemed_at && !c.revoked_at && (
+                  <form action={revoke}>
+                    <button className="btn btn-sm" type="submit">Revocar</button>
+                  </form>
+                )}
+              </div>
+              {c.redeemed_at && (
+                <div style={{ marginTop: 6, fontSize: 12.5, color: "var(--muted)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <span style={{ fontWeight: 700 }}>Usado por:</span>
+                  {lot ? (
+                    <>
+                      <span className="mono">Lote {ctcLotReferenceShort(lot.id)}</span>
+                      <span>· Finca {fincaNameOf(lot)}</span>
+                      <span>·</span>
+                      <Link href={`/bcp/productores#prod-${lot.producer_id}`} style={{ color: "var(--primary)", fontWeight: 700 }}>
+                        {name(lot.producer_id)} →
+                      </Link>
+                    </>
+                  ) : (
+                    <span>lote ya no disponible</span>
+                  )}
+                </div>
               )}
             </div>
           );

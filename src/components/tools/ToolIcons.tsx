@@ -80,4 +80,11 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8.5 11h7M8.5 14h7M8.5 17h4" />
     </LineIcon>
   ),
+  // Fórmula de calidad: un matraz de laboratorio — la "fórmula" que define la calidad.
+  "formula-calidad": (
+    <LineIcon>
+      <path d="M9.5 3h5M10.5 3v5.5L5.7 17a2 2 0 0 0 1.75 3h9.1a2 2 0 0 0 1.75-3L13.5 8.5V3" />
+      <path d="M8 15h8" />
+    </LineIcon>
+  ),
 };

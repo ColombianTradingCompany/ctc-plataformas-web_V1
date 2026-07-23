@@ -22,7 +22,8 @@ export type ToolId =
   | "qr"
   | "mermas-ctc"
   | "catacion"
-  | "green-datasheet";
+  | "green-datasheet"
+  | "formula-calidad";
 
 export type ToolDef = {
   id: ToolId;
@@ -36,9 +37,10 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   agtron: { id: "agtron", src: "/tools/agtron-dial.html", lang: "en" },
   "mermas-rapida": { id: "mermas-rapida", src: "/tools/mermas-rapida.html", lang: "es" },
   "mermas-detallada": { id: "mermas-detallada", src: "/tools/mermas-detallada.html", lang: "es" },
-  // Fuera de public/: solo se sirve con sesión de consola (ver privateTools.ts).
-  // Solo el QR sigue siendo privado: es la única interna del equipo.
+  // Fuera de public/: solo se sirven con sesión de consola (ver privateTools.ts) —
+  // el HTML va embebido (src/lib/tools/embedded/). Internas del equipo.
   qr: { id: "qr", src: "/ecp/herramientas/qr", lang: "en" },
+  "formula-calidad": { id: "formula-calidad", src: "/ecp/herramientas/formula-calidad", lang: "es" },
   // Públicas (public/tools/): se ofrecen a productores/compradores igual que las
   // calculadoras de merma y el Agtron. DEBEN ser públicas para funcionar en
   // Kaffetal Regal — una herramienta servida por /ecp/herramientas/ no se puede
@@ -57,6 +59,7 @@ export const ALL_TOOL_IDS: ToolId[] = [
   "catacion",
   "green-datasheet",
   "qr",
+  "formula-calidad",
 ];
 
 // ── El reparto por superficie, ahora CONFIGURABLE ────────────────────────────
@@ -91,8 +94,9 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   "mermas-rapida": { kr: true, cp: false, tier: "default" },
   "mermas-detallada": { kr: true, cp: false, tier: "default" },
   agtron: { kr: true, cp: true, tier: "default" },
-  // QR: interna del equipo, no se ofrece en ninguna superficie pública.
+  // Internas del equipo: no se ofrecen en ninguna superficie pública.
   qr: { kr: false, cp: false, tier: "plus" },
+  "formula-calidad": { kr: false, cp: false, tier: "default" },
   // Herramientas de trabajo del productor (como las de merma): visibles en KR.
   // El owner ajusta superficie/nivel desde Disponibilidad.
   "mermas-ctc": { kr: true, cp: false, tier: "default" },

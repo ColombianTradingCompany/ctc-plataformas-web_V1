@@ -36,11 +36,16 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   agtron: { id: "agtron", src: "/tools/agtron-dial.html", lang: "en" },
   "mermas-rapida": { id: "mermas-rapida", src: "/tools/mermas-rapida.html", lang: "es" },
   "mermas-detallada": { id: "mermas-detallada", src: "/tools/mermas-detallada.html", lang: "es" },
-  // Fuera de public/: solo se sirven con sesión de consola (ver privateTools.ts).
+  // Fuera de public/: solo se sirve con sesión de consola (ver privateTools.ts).
+  // Solo el QR sigue siendo privado: es la única interna del equipo.
   qr: { id: "qr", src: "/ecp/herramientas/qr", lang: "en" },
-  "mermas-ctc": { id: "mermas-ctc", src: "/ecp/herramientas/mermas-ctc", lang: "es" },
-  catacion: { id: "catacion", src: "/ecp/herramientas/catacion", lang: "es" },
-  "green-datasheet": { id: "green-datasheet", src: "/ecp/herramientas/green-datasheet", lang: "en" },
+  // Públicas (public/tools/): se ofrecen a productores/compradores igual que las
+  // calculadoras de merma y el Agtron. DEBEN ser públicas para funcionar en
+  // Kaffetal Regal — una herramienta servida por /ecp/herramientas/ no se puede
+  // abrir fuera de la consola (auth de ECP + la reescritura de subdominio de proxy.ts).
+  "mermas-ctc": { id: "mermas-ctc", src: "/tools/mermas-ctc.html", lang: "es" },
+  catacion: { id: "catacion", src: "/tools/rueda-catacion.html", lang: "es" },
+  "green-datasheet": { id: "green-datasheet", src: "/tools/green-coffee-datasheet.html", lang: "en" },
 };
 
 /** Todas las herramientas, en el orden en que se listan en el panel interno. */
@@ -86,12 +91,13 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   "mermas-rapida": { kr: true, cp: false, tier: "default" },
   "mermas-detallada": { kr: true, cp: false, tier: "default" },
   agtron: { kr: true, cp: true, tier: "default" },
-  // Internas: no se ofrecen en ninguna superficie pública — solo se ven en la
-  // consola interna. El owner puede exponerlas a KR/CP desde Disponibilidad.
+  // QR: interna del equipo, no se ofrece en ninguna superficie pública.
   qr: { kr: false, cp: false, tier: "plus" },
-  "mermas-ctc": { kr: false, cp: false, tier: "default" },
-  catacion: { kr: false, cp: false, tier: "default" },
-  "green-datasheet": { kr: false, cp: false, tier: "default" },
+  // Herramientas de trabajo del productor (como las de merma): visibles en KR.
+  // El owner ajusta superficie/nivel desde Disponibilidad.
+  "mermas-ctc": { kr: true, cp: false, tier: "default" },
+  catacion: { kr: true, cp: false, tier: "default" },
+  "green-datasheet": { kr: true, cp: false, tier: "default" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

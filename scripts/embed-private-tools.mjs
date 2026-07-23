@@ -24,12 +24,13 @@ const PRIVATE_DIR = path.join(ROOT, "private-tools");
 const OUT_DIR = path.join(ROOT, "src", "lib", "tools", "embedded");
 
 // Clave de URL → archivo en private-tools/. ESTA es la lista blanca real: sólo lo
-// que esté aquí se genera y, por lo tanto, se puede servir.
+// que esté aquí se genera y, por lo tanto, se puede servir por la ruta interna.
+// Sólo el QR queda como herramienta interna (auth-gated); las demás (calculadora
+// de mermas CTC, rueda de catación, ficha de café verde) se sirven PÚBLICAS desde
+// public/tools/ para que funcionen en Kaffetal Regal — una herramienta privada,
+// servida por /ecp/herramientas/, no puede abrirse fuera de la consola.
 const TOOLS = {
   qr: "generador-qr.html",
-  "mermas-ctc": "mermas-ctc.html",
-  catacion: "rueda-catacion.html",
-  "green-datasheet": "green-coffee-datasheet.html",
 };
 
 // Identificador JS válido a partir de una clave con guiones ("mermas-ctc" → "mermasCtc").

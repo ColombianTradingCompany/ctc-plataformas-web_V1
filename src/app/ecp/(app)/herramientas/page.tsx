@@ -35,15 +35,15 @@ const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
   },
   "mermas-ctc": {
     name: "Calculadora de mermas · Café (CTC)",
-    desc: "La calculadora de rendimiento pergamino → verde con la marca CTC; exporta el resultado a PDF. Funciona sin conexión. Interna del equipo.",
+    desc: "Rendimiento pergamino → verde con la marca CTC; exporta a PDF. Funciona sin conexión. Se ofrece a productores.",
   },
   catacion: {
     name: "Rueda de catación (rueda del sabor)",
-    desc: "La rueda del sabor del café, interactiva: para nombrar aromas y sabores en la mesa de catación. Interna del equipo.",
+    desc: "La rueda del sabor del café, interactiva: para nombrar aromas y sabores en la mesa de catación. Se ofrece a productores.",
   },
   "green-datasheet": {
     name: "Ficha de café verde (datasheet)",
-    desc: "La hoja técnica de un lote de café verde, en el formato del comprador. En inglés. Interna del equipo.",
+    desc: "La hoja técnica de un lote de café verde, en el formato del comprador. En inglés. Se ofrece a productores.",
   },
 };
 

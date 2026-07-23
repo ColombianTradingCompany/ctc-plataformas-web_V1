@@ -16,11 +16,16 @@ export function FincaModalRow({
   title,
   children,
   anchorId,
+  link,
 }: {
   summary: ReactNode;
   title: string;
   children: ReactNode;
   anchorId?: string;
+  /** Enlace secundario dentro de la fila (p. ej. el Proveedor de una finca).
+   *  Un <a> real no puede anidarse en el <button> de la fila (HTML inválido),
+   *  así que se pinta como pseudo-enlace que navega sin abrir el modal. */
+  link?: { href: string; label: string };
 }) {
   const [open, setOpen] = useState(false);
   const rowRef = useRef<HTMLButtonElement>(null);
@@ -40,7 +45,21 @@ export function FincaModalRow({
   return (
     <>
       <button type="button" id={anchorId} ref={rowRef} className={styles.fincaRow} onClick={() => setOpen(true)}>
-        <span style={{ flex: 1, minWidth: 0 }}>{summary}</span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          {summary}
+          {link && (
+            <span
+              role="link"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.assign(link.href);
+              }}
+              style={{ display: "block", marginTop: 3, fontSize: 12, fontWeight: 600, color: "var(--primary)", textDecoration: "underline", textUnderlineOffset: 2, width: "fit-content" }}
+            >
+              {link.label}
+            </span>
+          )}
+        </span>
         <span className={styles.fincaRowChevron} aria-hidden>
           ›
         </span>

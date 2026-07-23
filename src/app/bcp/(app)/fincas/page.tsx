@@ -13,9 +13,11 @@ import { ActionForm } from "../ActionForm";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
 import { FincaModalRow } from "./FincaModalRow";
+import { FincaPanel, type FincaLote } from "./FincaPanel";
 import styles from "../shared.module.css";
 
 type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
+type LotRow = { id: string; name: string; finca_id: string | null; stage: string; intake_step: number };
 
 type FincaRow = {
   id: string;
@@ -26,6 +28,8 @@ type FincaRow = {
   municipio: string | null;
   departamento: string | null;
   hectares: string | number | null;
+  profile_photo_asset_id: string | null;
+  video_asset_id: string | null;
   requires_eudr_polygon: boolean | null;
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
   eudr_lat: string | number | null;
@@ -78,12 +82,58 @@ function missingChecks(f: FincaEudrFields): string[] {
   return gaps;
 }
 
+// ── El estado corto de la tarjeta (2026-07-23, pedido del owner) ─────────────
+// UN solo rótulo por finca, derivado en orden — el primer paso que aplica gana:
+//   1. Rechazada por BCP            → "No aprobada"           (rojo)
+//   2. Aprobada + cert. compartida  → "Aprobada · cert. ✓"    (verde)
+//   3. Aprobada                     → "Aprobada"              (verde)
+//   4. Declaró deforestación/ilegal → "No apta EUDR"          (rojo)
+//   5. >4 ha sin polígono dibujado  → "Falta polígono"        (ámbar)
+//   6. EUDR con vacíos              → "EUDR incompleta"       (ámbar)
+//   7. Todo listo, sin veredicto    → "Lista para veredicto"  (verde)
+type ShortStatus = { label: string; cls: "badgeBad" | "badgeGood" | "badgeWarn" };
+function fincaShortStatus(f: FincaRow): ShortStatus {
+  if (f.status === "rejected") return { label: "No aprobada", cls: "badgeBad" };
+  if (f.status === "approved") return f.eudr_cert_shared ? { label: "Aprobada · cert. ✓", cls: "badgeGood" } : { label: "Aprobada", cls: "badgeGood" };
+  const eudr = fincaEudrStatus(toEudrFields(f));
+  if (eudr.code === "no_apta") return { label: "No apta EUDR", cls: "badgeBad" };
+  if (f.requires_eudr_polygon && !f.eudr_polygon_geojson?.length) return { label: "Falta polígono", cls: "badgeWarn" };
+  if (missingChecks(toEudrFields(f)).length > 0) return { label: "EUDR incompleta", cls: "badgeWarn" };
+  return { label: "Lista para veredicto", cls: "badgeGood" };
+}
+
+// Estado + etapa individual de un lote asociado (pestaña "Lotes asociados").
+const STAGE_LABEL: Record<string, string> = {
+  borrador: "Borrador",
+  ficha_completa: "Ficha enviada",
+  apto: "Apto",
+  no_apto: "No apto",
+  fila_arena: "En sesión de Arena",
+  evaluado: "Evaluado",
+  galardonado: "Galardonado",
+};
+function lotStatus(l: LotRow): Pick<FincaLote, "statusLabel" | "statusTone"> {
+  switch (l.stage) {
+    case "borrador":
+      return { statusLabel: `Ficha en curso · paso ${l.intake_step}/4`, statusTone: "muted" };
+    case "ficha_completa":
+      return { statusLabel: "Esperando EVA", statusTone: "warn" };
+    case "no_apto":
+      return { statusLabel: "Requiere atención", statusTone: "bad" };
+    case "apto":
+    case "fila_arena":
+    case "galardonado":
+      return { statusLabel: "En orden", statusTone: "good" };
+    default:
+      return { statusLabel: "—", statusTone: "muted" };
+  }
+}
+
 // ── Fincas como kanban (2026-07-20, criterios del owner) ────────────────────
 // Cinco columnas derivadas (segmentFinca en src/lib/bcp/producerSegments.ts):
-// Marchitando (pendiente >7 días con EUDR incompleta, sin contar video) ·
-// Nuevas (pendiente ≤7 días, incompleta) · En Proceso (pendiente con EUDR
-// completa — lista para el veredicto, a cualquier edad) · Aprobadas · No
-// Aprobadas. La tarjeta y su modal de detalle son los mismos de siempre.
+// Marchitando · Nuevas · En Proceso · Aprobadas · No Aprobadas. Desde 2026-07-23
+// la tarjeta es COMPACTA (nombre + proveedor con enlace + estado corto) y el
+// detalle vive en un pop-up con pestañas (FincaPanel).
 
 export default async function BcpFincasPage() {
   const service = createServiceRoleClient();
@@ -92,7 +142,8 @@ export default async function BcpFincasPage() {
     // A single literal string (not runtime-concatenated) -- see the note on
     // the lots query in ../lotes/page.tsx for why that distinction matters.
     .select(
-      `id, name, producer_id, status, vereda, municipio, departamento, hectares, requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
+      `id, name, producer_id, status, vereda, municipio, departamento, hectares, profile_photo_asset_id, video_asset_id,
+       requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
        eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra, created_at`
@@ -100,19 +151,26 @@ export default async function BcpFincasPage() {
     .order("created_at", { ascending: true });
 
   const fincaRows = (allFincas as FincaRow[] | null) ?? [];
-  // All EUDR-related asset ids (producer legal doc + BCP's per-evidence /
-  // per-sustainability attachments) resolved to signed URLs in one call.
+  // Todos los asset ids en un solo lote de firmas: documentos EUDR + la foto y
+  // el video de la finca (pestaña General del pop-up).
   const allAssetIds = fincaRows.flatMap((f) => [
     f.eudr_legal_docs_asset_id,
+    f.profile_photo_asset_id,
+    f.video_asset_id,
     ...Object.values(f.eudr_evidence_files ?? {}).map((v) => v.assetId),
     ...Object.values(f.eudr_sustainability_files ?? {}).map((v) => v.assetId),
   ]);
-  const [legalDocUrlByAssetId, producers, { data: comms }] = await Promise.all([
+  const [signedUrls, producers, { data: comms }, { data: lotsRaw }] = await Promise.all([
     signedKaffetalMediaUrls(service, allAssetIds),
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
     service
       .from("producer_comm_log")
       .select("id, finca_id, context_label, note, created_at, author_role")
+      .in("finca_id", fincaRows.map((f) => f.id))
+      .order("created_at", { ascending: false }),
+    service
+      .from("lots")
+      .select("id, name, finca_id, stage, intake_step")
       .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: false }),
   ]);
@@ -121,6 +179,11 @@ export default async function BcpFincasPage() {
     if (!c.finca_id) continue;
     commsByFinca.set(c.finca_id, [...(commsByFinca.get(c.finca_id) ?? []), c]);
   }
+  const lotsByFinca = new Map<string, LotRow[]>();
+  for (const l of (lotsRaw as LotRow[] | null) ?? []) {
+    if (!l.finca_id) continue;
+    lotsByFinca.set(l.finca_id, [...(lotsByFinca.get(l.finca_id) ?? []), l]);
+  }
 
   return (
     <div>
@@ -128,7 +191,7 @@ export default async function BcpFincasPage() {
       <p className={styles.subtitle}>
         <b>Marchitando</b> (pendiente hace &gt;7 días con EUDR incompleta) · <b>Nuevas</b> (≤7 días) · <b>En Proceso</b>{" "}
         (EUDR completa — lista para el veredicto) · <b>Aprobadas</b> · <b>No Aprobadas</b>. El video no cuenta para la
-        completitud.
+        completitud. Toque la tarjeta para abrir el panel de la finca.
       </p>
 
       {!fincaRows.length && <p className={styles.empty}>No hay fincas registradas.</p>}
@@ -151,183 +214,167 @@ export default async function BcpFincasPage() {
               <div className={styles.columnList}>
                 {!segRows.length && <p className={styles.empty}>—</p>}
                 {segRows.map((finca) => {
-          const eudrFields = toEudrFields(finca);
-          const status = fincaEudrStatus(eudrFields);
-          const gaps = missingChecks(eudrFields);
-          const ready = gaps.length === 0;
-          const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
-          // Solo se aprueba una finca EUDR "Apta" (completa). Antes solo se
-          // bloqueaba "No apta"/sin polígono, así que una finca "Pendiente"
-          // (incompleta) podía aprobarse y quedaba aprobada con distintivo
-          // EUDR "Pendiente" -- el caso de La Ceiba.
-          const blockedByEudr = status.code !== "apta" || blockedByPolygon;
+                  const eudrFields = toEudrFields(finca);
+                  const status = fincaEudrStatus(eudrFields);
+                  const gaps = missingChecks(eudrFields);
+                  const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
+                  // Solo se aprueba una finca EUDR "Apta" (completa) — ver el
+                  // caso de La Ceiba en el historial de este archivo.
+                  const blockedByEudr = status.code !== "apta" || blockedByPolygon;
+                  const short = fincaShortStatus(finca);
+                  const producer = producers.get(finca.producer_id);
 
-          async function reject(formData: FormData) {
-            "use server";
-            await rejectFinca(finca.id, String(formData.get("notes") ?? ""));
-          }
-          async function saveEudr(formData: FormData) {
-            "use server";
-            await updateFincaEudr(finca.id, formData);
-          }
-          async function addComm(formData: FormData) {
-            "use server";
-            await logProducerComm(finca.producer_id, `Finca ${finca.name}`, formData, { fincaId: finca.id });
-          }
-          const comms = commsByFinca.get(finca.id) ?? [];
-          const dane = daneCodeFor(finca.departamento, finca.municipio);
+                  async function reject(formData: FormData) {
+                    "use server";
+                    await rejectFinca(finca.id, String(formData.get("notes") ?? ""));
+                  }
+                  async function saveEudr(formData: FormData) {
+                    "use server";
+                    await updateFincaEudr(finca.id, formData);
+                  }
+                  async function addComm(formData: FormData) {
+                    "use server";
+                    await logProducerComm(finca.producer_id, `Finca ${finca.name}`, formData, { fincaId: finca.id });
+                  }
+                  const fincaComms = commsByFinca.get(finca.id) ?? [];
+                  const fincaLots = lotsByFinca.get(finca.id) ?? [];
+                  const dane = daneCodeFor(finca.departamento, finca.municipio);
 
-          const summary = (
-            <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <b style={{ fontSize: 15, color: "var(--ink)" }}>{finca.name}</b>
-                <span className={styles.badge}>{fincaCode(finca.id)}</span>
-                <EudrStatusBadge status={status} />
-                {finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length && (
-                  <span className={styles.badgeWarn}>Falta polígono</span>
-                )}
-                {finca.status === "pending_review" && (
-                  <span className={ready ? styles.badgeGood : styles.badge}>
-                    {ready ? "Lista para revisión" : "En preparación"}
-                  </span>
-                )}
-              </span>
-              <span className={styles.meta}>
-                {producers.get(finca.producer_id)?.fullName ?? "Productor"} · {finca.municipio}, {finca.departamento} · {finca.hectares} ha
-                {dane ? ` · DANE ${dane.code}` : ""}
-              </span>
-            </span>
-          );
+                  // Tarjeta COMPACTA: nombre + estado corto; el proveedor va como
+                  // enlace propio (prop `link` de la fila) para no anidar <a> en el botón.
+                  const summary = (
+                    <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <b style={{ fontSize: 14.5, color: "var(--ink)" }}>{finca.name}</b>
+                      <span className={styles[short.cls]}>{short.label}</span>
+                    </span>
+                  );
 
-          return (
-            <FincaModalRow key={finca.id} title={finca.name} summary={summary} anchorId={`finca-${finca.id}`}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
-                <span className={styles.badge}>{fincaCode(finca.id)}</span>
-                <EudrStatusBadge status={status} />
-              </div>
-              <ProducerContactLine producer={producers.get(finca.producer_id)} />
-              <p className={styles.meta}>
-                {finca.municipio}, {finca.departamento} · {finca.hectares} ha
-                {finca.requires_eudr_polygon && " · requiere polígono EUDR"}
-              </p>
-              <p className={styles.meta}>
-                DANE:{" "}
-                {dane ? (
-                  <>
-                    <span className={styles.badge}>{dane.code}</span> {dane.mun}, {dane.dep} (depto {dane.depCode})
-                  </>
-                ) : (
-                  "sin coincidencia — verifique municipio/departamento"
-                )}
-              </p>
-              {finca.status !== "approved" && blockedByPolygon && (
-                <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
-              )}
-              {finca.status !== "approved" && status.code === "no_apta" && (
-                <p className={styles.warn}>Deforestación o producción ilegal declarada — no se puede aprobar.</p>
-              )}
-              {finca.status !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
-                <p className={styles.meta}>Falta: {gaps.join(", ")}.</p>
-              )}
-
-              <div className={styles.actions} style={{ marginTop: 10 }}>
-                {finca.status !== "approved" && (
-                  <ActionForm
-                    action={approveFinca.bind(null, finca.id)}
-                    submitLabel={finca.status === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
-                    pendingLabel="Aprobando…"
-                    buttonClassName="btn btn-solid"
-                    disabled={blockedByEudr}
-                  />
-                )}
-                {finca.status !== "rejected" && (
-                  <form action={reject} className={styles.rejectForm}>
-                    <input name="notes" placeholder="Motivo del rechazo (opcional)" />
-                    <button className="btn" type="submit">
-                      {finca.status === "approved" ? "Revocar (rechazar)" : "Rechazar"}
-                    </button>
-                  </form>
-                )}
-                {/* Abandonada (V2.0): el botón sale solo en Marchitando; la regla
-                    dura (>10 días sin actividad, sin lotes en proceso) la impone
-                    el servidor y su rechazo se muestra inline. */}
-                {seg.id === "marchitando" && finca.status === "pending_review" && (
-                  <DeleteAbandonedButton
-                    action={deleteAbandonedFinca.bind(null, finca.id)}
-                    label="Eliminar finca (abandonada)"
-                    confirmText={`¿Eliminar la finca "${finca.name}" por abandono?\n\nSe eliminan también sus lotes en borrador. El productor verá un aviso en su feed y puede registrarla de nuevo. Esta acción no se puede deshacer.`}
-                  />
-                )}
-                {finca.status === "approved" && (
-                  <>
-                    <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
-                      Ver dossier EUDR ↗
-                    </a>
-                    <ActionForm
-                      action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}
-                      submitLabel={
-                        finca.eudr_cert_shared
-                          ? "Dejar de compartir con el productor"
-                          : "Compartir certificación con el productor"
-                      }
-                      buttonClassName={`btn btn-sm ${finca.eudr_cert_shared ? "" : "btn-solid"}`}
-                    />
-                  </>
-                )}
-              </div>
-              {finca.status === "approved" && (
-                <p className={styles.meta} style={{ marginTop: 4 }}>
-                  {finca.eudr_cert_shared
-                    ? "✓ El productor puede descargar su Certificación EUDR."
-                    : "El productor aún no puede descargar la certificación (no compartida)."}
-                </p>
-              )}
-
-              <FincaEudrEditor
-                fincaName={finca.name}
-                producerId={finca.producer_id}
-                values={finca}
-                legalDocUrl={finca.eudr_legal_docs_asset_id ? legalDocUrlByAssetId.get(finca.eudr_legal_docs_asset_id) : undefined}
-                fileUrls={Object.fromEntries(
-                  [
-                    ...Object.values(finca.eudr_evidence_files ?? {}),
-                    ...Object.values(finca.eudr_sustainability_files ?? {}),
-                  ]
-                    .map((v) => [v.assetId, legalDocUrlByAssetId.get(v.assetId)])
-                    .filter((e): e is [string, string] => !!e[1])
-                )}
-                producerAnswers={
-                  finca.eudr_producer_answers && Object.keys(finca.eudr_producer_answers).length > 0
-                    ? (finca.eudr_producer_answers as unknown as ProducerAnswers)
-                    : null
-                }
-                saveAction={saveEudr}
-              />
-
-              <details style={{ marginTop: 14 }}>
-                <summary style={{ cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
-                  Registro de comunicación ({comms.length})
-                </summary>
-                <form action={addComm} style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <input name="note" required placeholder="Nota interna sobre esta finca…" style={{ flex: 1, minWidth: 200 }} />
-                  <button className="btn btn-sm btn-solid" type="submit">Registrar</button>
-                </form>
-                {comms.length > 0 && (
-                  <ul className={styles.auditList} style={{ marginTop: 10 }}>
-                    {comms.map((c) => (
-                      <li key={c.id}>
-                        <span className={c.author_role === "producer" ? styles.badgeGood : styles.badge}>
-                          {c.author_role === "producer" ? "Productor" : "CTC"}
-                        </span>{" "}
-                        <b>{new Date(c.created_at).toLocaleDateString("es-CO")}</b> · {c.note}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </details>
-            </FincaModalRow>
-          );
-        })}
+                  return (
+                    <FincaModalRow
+                      key={finca.id}
+                      title={finca.name}
+                      summary={summary}
+                      anchorId={`finca-${finca.id}`}
+                      link={{ href: `/bcp/productores#prod-${finca.producer_id}`, label: producer?.fullName || "Proveedor" }}
+                    >
+                      <FincaPanel
+                        data={{
+                          code: fincaCode(finca.id),
+                          photoUrl: finca.profile_photo_asset_id ? signedUrls.get(finca.profile_photo_asset_id) ?? null : null,
+                          videoUrl: finca.video_asset_id ? signedUrls.get(finca.video_asset_id) ?? null : null,
+                          locationLine: `${finca.municipio}, ${finca.departamento} · ${finca.hectares} ha${finca.requires_eudr_polygon ? " · requiere polígono EUDR" : ""}`,
+                          daneLine: dane
+                            ? `DANE: ${dane.code} · ${dane.mun}, ${dane.dep} (depto ${dane.depCode})`
+                            : "DANE: sin coincidencia — verifique municipio/departamento",
+                          lotes: fincaLots.map((l): FincaLote => ({
+                            id: l.id,
+                            name: l.name,
+                            stageLabel: STAGE_LABEL[l.stage] ?? l.stage,
+                            ...lotStatus(l),
+                          })),
+                          comms: fincaComms.map((c) => ({ id: c.id, authorRole: c.author_role, createdAt: c.created_at, note: c.note })),
+                        }}
+                        header={
+                          <>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
+                              <span className={styles.badge}>{fincaCode(finca.id)}</span>
+                              <span className={styles[short.cls]}>{short.label}</span>
+                              <EudrStatusBadge status={status} />
+                            </div>
+                            <ProducerContactLine producer={producer} />
+                          </>
+                        }
+                        generalActions={
+                          <>
+                            {finca.status !== "approved" && blockedByPolygon && (
+                              <p className={styles.warn}>Falta el polígono EUDR — no se puede aprobar todavía.</p>
+                            )}
+                            {finca.status !== "approved" && status.code === "no_apta" && (
+                              <p className={styles.warn}>Deforestación o producción ilegal declarada — no se puede aprobar.</p>
+                            )}
+                            {finca.status !== "approved" && status.code === "pendiente" && gaps.length > 0 && (
+                              <p className={styles.meta}>Falta: {gaps.join(", ")}.</p>
+                            )}
+                            <div className={styles.actions} style={{ marginTop: 10 }}>
+                              {finca.status !== "approved" && (
+                                <ActionForm
+                                  action={approveFinca.bind(null, finca.id)}
+                                  submitLabel={finca.status === "rejected" ? "Reincorporar (aprobar)" : "Aprobar"}
+                                  pendingLabel="Aprobando…"
+                                  buttonClassName="btn btn-solid"
+                                  disabled={blockedByEudr}
+                                />
+                              )}
+                              {finca.status !== "rejected" && (
+                                <form action={reject} className={styles.rejectForm}>
+                                  <input name="notes" placeholder="Motivo del rechazo (opcional)" />
+                                  <button className="btn" type="submit">
+                                    {finca.status === "approved" ? "Revocar (rechazar)" : "Rechazar"}
+                                  </button>
+                                </form>
+                              )}
+                              {/* Abandonada (V2.0): solo en Marchitando; la regla dura la
+                                  impone el servidor. */}
+                              {seg.id === "marchitando" && finca.status === "pending_review" && (
+                                <DeleteAbandonedButton
+                                  action={deleteAbandonedFinca.bind(null, finca.id)}
+                                  label="Eliminar finca (abandonada)"
+                                  confirmText={`¿Eliminar la finca "${finca.name}" por abandono?\n\nSe eliminan también sus lotes en borrador. El productor verá un aviso en su feed y puede registrarla de nuevo. Esta acción no se puede deshacer.`}
+                                />
+                              )}
+                              {finca.status === "approved" && (
+                                <>
+                                  <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
+                                    Ver dossier EUDR ↗
+                                  </a>
+                                  <ActionForm
+                                    action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}
+                                    submitLabel={
+                                      finca.eudr_cert_shared
+                                        ? "Dejar de compartir con el productor"
+                                        : "Compartir certificación con el productor"
+                                    }
+                                    buttonClassName={`btn btn-sm ${finca.eudr_cert_shared ? "" : "btn-solid"}`}
+                                  />
+                                </>
+                              )}
+                            </div>
+                            {finca.status === "approved" && (
+                              <p className={styles.meta} style={{ marginTop: 4 }}>
+                                {finca.eudr_cert_shared
+                                  ? "✓ El productor puede descargar su Certificación EUDR."
+                                  : "El productor aún no puede descargar la certificación (no compartida)."}
+                              </p>
+                            )}
+                          </>
+                        }
+                        eudrSection={
+                          <FincaEudrEditor
+                            fincaName={finca.name}
+                            producerId={finca.producer_id}
+                            values={finca}
+                            legalDocUrl={finca.eudr_legal_docs_asset_id ? signedUrls.get(finca.eudr_legal_docs_asset_id) : undefined}
+                            fileUrls={Object.fromEntries(
+                              [
+                                ...Object.values(finca.eudr_evidence_files ?? {}),
+                                ...Object.values(finca.eudr_sustainability_files ?? {}),
+                              ]
+                                .map((v) => [v.assetId, signedUrls.get(v.assetId)])
+                                .filter((e): e is [string, string] => !!e[1])
+                            )}
+                            producerAnswers={
+                              finca.eudr_producer_answers && Object.keys(finca.eudr_producer_answers).length > 0
+                                ? (finca.eudr_producer_answers as unknown as ProducerAnswers)
+                                : null
+                            }
+                            saveAction={saveEudr}
+                          />
+                        }
+                        addComm={addComm}
+                      />
+                    </FincaModalRow>
+                  );
+                })}
               </div>
             </div>
           );

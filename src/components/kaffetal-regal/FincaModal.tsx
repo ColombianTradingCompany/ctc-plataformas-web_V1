@@ -497,10 +497,19 @@ function FincaModalBody({
 
         <div className={styles.wide} style={{ marginBottom: 14 }}>
           <label>
-            El predio no presenta deforestación posterior al 31/12/2020
-            <FieldInfo text="El EUDR exige que la respuesta sea Sí — es la fecha de corte del reglamento y no admite excepciones. 'No sé' no es una respuesta válida: si no tiene certeza, reúna la evidencia (fecha de siembra, fotos históricas, verificación satelital) antes de declarar, ya que una respuesta 'No' o sin sustento bloquea la exportación de este predio bajo EUDR." />
+            El predio presenta deforestación posterior al 31/12/2020
+            <FieldInfo text="El EUDR exige que la respuesta sea No — es la fecha de corte del reglamento y no admite excepciones. 'No sé' no es una respuesta válida: si no tiene certeza, reúna la evidencia (fecha de siembra, fotos históricas, verificación satelital) antes de declarar, ya que una respuesta 'Sí' o sin sustento bloquea la exportación de este predio bajo EUDR." />
           </label>
-          <EudrYesNo value={eudr.eudrDeforestationFree} onChange={(v) => patchEudr({ eudrDeforestationFree: v })} />
+          {/* Pregunta formulada en POSITIVO sobre el hecho (¿hay deforestación?),
+              así que la respuesta buena es "No" (verde, goodAnswer={false}). El
+              dato guardado NO cambia de sentido: eudr_deforestation_free sigue
+              siendo true = libre de deforestación — aquí solo se invierte la
+              presentación (valor mostrado = negación del campo). */}
+          <EudrYesNo
+            value={eudr.eudrDeforestationFree == null ? null : !eudr.eudrDeforestationFree}
+            onChange={(v) => patchEudr({ eudrDeforestationFree: !v })}
+            goodAnswer={false}
+          />
         </div>
         <div className={styles.wide} style={{ marginBottom: 14 }}>
           <label>

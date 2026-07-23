@@ -22,6 +22,41 @@ Formato:
   vendoring de CDN scripts, al próximo wrap. Sin cambios de nodo/escenario.
 (commit: pending)
 
+## [2026-07-23] Herramientas: 4 nuevas + regla pública-vs-interna (V2.3–V2.5, V2.8)
+- 3 herramientas nuevas PÚBLICAS en public/tools/ (mermas-ctc, rueda-catacion,
+  green-coffee-datasheet — se ofrecen a productores en KR) y 1 INTERNA nueva
+  (formula-calidad, junto al QR). El QR se actualizó a V3 (Gridwork).
+- Regla aprendida (gotcha 12 de HANDOFF.md): una herramienta de productor/comprador
+  DEBE ser pública (/tools, excluida del proxy); una interna (/ecp/herramientas/<key>)
+  no puede abrirse fuera de la consola. Las internas ya NO se leen del disco: van
+  EMBEBIDAS en el bundle (scripts/embed-private-tools.mjs → src/lib/tools/embedded/)
+  porque outputFileTracingIncludes + build cache de Vercel dejaba archivos nuevos
+  fuera de la función (404). Cambio de DICT `herramientas` al próximo wrap.
+
+## [2026-07-23] Arena: código↔lote/finca/productor explícito (V2.5)
+- KR (ArenaLotCard): cada lote muestra su Finca + enlace «Ver lote en Mis lotes»
+  junto al código/fase. BCP (campañas): cada código USADO muestra quién lo redimió
+  (Lote CTC-ref · Finca · Productor con enlace a /bcp/productores#prod-<id>).
+
+## [2026-07-23] BCP Productores y Fincas: pop-ups con pestañas + tarjetas compactas (V2.6–V2.9)
+- Productores: pop-up con pestañas (General con TODO el material de Info General —
+  foto/video/galería —, Fincas, Lotes, Arena, Contratos, Comunicación), filtros
+  País/Departamento arriba, y en cada tarjeta una tira por módulo (icono + contador
+  + ✓/✗). Nuevos client components ProducerPanel/ProductoresBoard.
+- Fincas: tarjeta COMPACTA (nombre + proveedor con enlace + UN estado corto derivado
+  en orden: No aprobada → Aprobada → No apta EUDR → Falta polígono → EUDR incompleta
+  → Lista para veredicto) y pop-up con pestañas (General con foto/video de la finca
+  + acciones de veredicto, EUDR con el editor completo, Lotes asociados con enlace y
+  estado+etapa, Comunicación). Nuevo FincaPanel; FincaModalRow ganó prop `link`.
+- Cambio de NODO `n-bcp` / DICT `panels` al próximo wrap (tableros con pestañas).
+
+## [2026-07-23] KR: pregunta de deforestación invertida (V2.9)
+- FincaModal: la pregunta pasó de "El predio NO presenta deforestación..." a
+  "El predio presenta deforestación posterior al 31/12/2020" — la respuesta buena
+  ahora es "No" (verde; EudrYesNo ganó prop goodAnswer). El DATO no cambió de
+  sentido: eudr_deforestation_free sigue siendo true = libre — solo se invierte la
+  presentación. Verificado en vivo: "No" guarda true y el round-trip pinta "No" verde.
+
 ## [2026-07-22] Mapa de Trabajo (Base) — EUDR desdoblado finca vs. lote
 - El Base de la Mapa de Trabajo (`src/lib/workmap/schema.ts`) confundía el EUDR en UNA
   sola compuerta ("¿Finca apta EUDR? (dossier + certificado)") entre `lots` y el video.

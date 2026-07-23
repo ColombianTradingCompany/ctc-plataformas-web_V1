@@ -49,6 +49,10 @@ const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "La fórmula de calidad del café",
     desc: "El marco de CTC para explicar cómo se compone la calidad de un café. Interna del equipo.",
   },
+  "viaje-cafe": {
+    name: "El viaje del café",
+    desc: "El recorrido del café CTC, de la finca al destino, paso a paso. Interna del equipo.",
+  },
 };
 
 export default async function EcpHerramientasPage() {

@@ -50,6 +50,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     desc: "La hoja técnica de un lote de café verde, en el formato que lee el comprador. En inglés.",
   },
   "formula-calidad": { name: "La fórmula de calidad", desc: "Herramienta interna." },
+  "viaje-cafe": { name: "El viaje del café", desc: "Herramienta interna." },
 };
 
 // A conversation thread = every note (CTC notes + the producer's replies)

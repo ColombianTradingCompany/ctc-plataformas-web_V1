@@ -23,7 +23,8 @@ export type ToolId =
   | "mermas-ctc"
   | "catacion"
   | "green-datasheet"
-  | "formula-calidad";
+  | "formula-calidad"
+  | "viaje-cafe";
 
 export type ToolDef = {
   id: ToolId;
@@ -41,6 +42,7 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   // el HTML va embebido (src/lib/tools/embedded/). Internas del equipo.
   qr: { id: "qr", src: "/ecp/herramientas/qr", lang: "en" },
   "formula-calidad": { id: "formula-calidad", src: "/ecp/herramientas/formula-calidad", lang: "es" },
+  "viaje-cafe": { id: "viaje-cafe", src: "/ecp/herramientas/viaje-cafe", lang: "es" },
   // Públicas (public/tools/): se ofrecen a productores/compradores igual que las
   // calculadoras de merma y el Agtron. DEBEN ser públicas para funcionar en
   // Kaffetal Regal — una herramienta servida por /ecp/herramientas/ no se puede
@@ -60,6 +62,7 @@ export const ALL_TOOL_IDS: ToolId[] = [
   "green-datasheet",
   "qr",
   "formula-calidad",
+  "viaje-cafe",
 ];
 
 // ── El reparto por superficie, ahora CONFIGURABLE ────────────────────────────
@@ -97,6 +100,7 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   // Internas del equipo: no se ofrecen en ninguna superficie pública.
   qr: { kr: false, cp: false, tier: "plus" },
   "formula-calidad": { kr: false, cp: false, tier: "default" },
+  "viaje-cafe": { kr: false, cp: false, tier: "default" },
   // Herramientas de trabajo del productor (como las de merma): visibles en KR.
   // El owner ajusta superficie/nivel desde Disponibilidad.
   "mermas-ctc": { kr: true, cp: false, tier: "default" },

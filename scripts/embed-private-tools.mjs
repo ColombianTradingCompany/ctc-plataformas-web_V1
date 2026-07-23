@@ -32,6 +32,7 @@ const OUT_DIR = path.join(ROOT, "src", "lib", "tools", "embedded");
 const TOOLS = {
   qr: "generador-qr.html",
   "formula-calidad": "formula-calidad.html",
+  "viaje-cafe": "viaje-cafe.html",
 };
 
 // Identificador JS válido a partir de una clave con guiones ("mermas-ctc" → "mermasCtc").

@@ -54,6 +54,7 @@ const EN: Copy = {
     catacion: { name: "Flavour wheel", desc: "Internal tool." },
     "green-datasheet": { name: "Green coffee datasheet", desc: "Internal tool." },
     "formula-calidad": { name: "The quality formula", desc: "Internal tool." },
+    "viaje-cafe": { name: "The coffee's journey", desc: "Internal tool." },
   },
 };
 
@@ -87,6 +88,7 @@ const T: Record<Lang, Copy> = {
       catacion: { name: "Rueda de catación", desc: "Herramienta interna." },
       "green-datasheet": { name: "Ficha de café verde", desc: "Herramienta interna." },
       "formula-calidad": { name: "La fórmula de calidad", desc: "Herramienta interna." },
+      "viaje-cafe": { name: "El viaje del café", desc: "Herramienta interna." },
     },
   },
   de: {
@@ -117,6 +119,7 @@ const T: Record<Lang, Copy> = {
       catacion: { name: "Aromarad", desc: "Internes Werkzeug." },
       "green-datasheet": { name: "Rohkaffee-Datenblatt", desc: "Internes Werkzeug." },
       "formula-calidad": { name: "Die Qualitätsformel", desc: "Internes Werkzeug." },
+      "viaje-cafe": { name: "Die Reise des Kaffees", desc: "Internes Werkzeug." },
     },
   },
 };

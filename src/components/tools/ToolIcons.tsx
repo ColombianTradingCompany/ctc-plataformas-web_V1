@@ -87,4 +87,13 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8 15h8" />
     </LineIcon>
   ),
+  // El viaje del café: un camino serpenteante con origen y destino marcados.
+  "viaje-cafe": (
+    <LineIcon>
+      <circle cx="5" cy="19" r="2" />
+      <path d="M7 19h7a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h6" strokeDasharray="3 2.6" />
+      <circle cx="18" cy="4.5" r="2.5" />
+      <path d="M18 3.4v2.2M16.9 4.5h2.2" />
+    </LineIcon>
+  ),
 };

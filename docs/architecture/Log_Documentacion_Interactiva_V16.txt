@@ -90,6 +90,33 @@ Formato:
 - Validado contra las dos fincas de los pantallazos (Germania solo-polígono,
   La Ceiba punto+polígono): 13 checks.
 
+## [2026-07-23] Autosave en toda la plataforma + mapas geográficos BCP (V2.12)
+- AUTOSAVE (src/lib/useAutosave.tsx — hook debounced 3.5 s + chip de estado):
+  aplicado a los 4 formularios grandes — KR Ficha Técnica (borradores, vía el
+  mismo saveFicha con skipSnapshot para no inundar la sparkline; nunca avanza
+  intake_step), KR FincaModal (SOLO fincas existentes — nunca auto-crea), KR
+  InfoModal (modo silent: persiste sin cerrar el modal ni toast) y BCP
+  FincaEudrEditor (campos sí, archivos no). Las acciones explícitas (Completar y
+  Enviar, veredictos, publicaciones) siguen siendo manuales. Verificado en vivo
+  (Prueba Uno): teclear → 3.5 s → chip "Guardado automático ✓" + fila en BD sin
+  tocar Guardar; el modal permanece abierto.
+- GEOMAPAS BCP (src/components/bcp/GeoMap.tsx — Google Maps + MarkerClustererF,
+  mismo loader que FincaMapPicker): pines de colores, clusters al alejar y
+  RAMIFICACIÓN de pines en la misma coordenada (abanico ~15 m), tarjetita con
+  datos + enlace.
+  · /bcp/lotes: los lotes post-intake ahora tienen 3 VISTAS (LotesViews.tsx):
+    Mapa (pin sobre la finca de origen — punto o centroide del polígono; color =
+    grado CTC, negro por defecto; dial de temporadas con DOS perillas
+    desde/hasta), Lista (filtros región/temporada/grado/etapa + búsqueda; la
+    postulación en nombre del productor vive aquí) y No aptos (razón + reabrir).
+    AptosNoAptosSections ELIMINADO (subsumido). La consulta del kanban ya no
+    carga apto/no_apto (consulta ligera aparte con la finca para coordenadas).
+  · /bcp/fincas: conmutador Tablero ↔ Mapa (FincasViewSwitch) — pin por finca
+    (verde aprobada / ámbar en revisión / rojo no aprobada); el enlace del pin
+    (#finca-<id>) vuelve al tablero y abre el modal (FincaModalRow ahora
+    escucha hashchange, no solo el hash inicial).
+- Cambios de NODO n-bcp + DICT `panels`/`intake` al próximo wrap.
+
 ## [2026-07-22] Mapa de Trabajo (Base) — EUDR desdoblado finca vs. lote
 - El Base de la Mapa de Trabajo (`src/lib/workmap/schema.ts`) confundía el EUDR en UNA
   sola compuerta ("¿Finca apta EUDR? (dossier + certificado)") entre `lots` y el video.

@@ -2,7 +2,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, deleteAbandonedLot } from "../actions";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
-import { AptosNoAptosSections, type SectionLot } from "./AptosNoAptosSections";
+import { LotesViews, type ViewLot } from "./LotesViews";
+import { fincaCenter } from "@/lib/earthKml";
 import { seasonLabel, type Season } from "@/lib/arena/seasons";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
@@ -149,11 +150,36 @@ export default async function BcpLotesPage() {
          eudr_mitigation_effective, eudr_mitigation_responsible, cert_verifications,
          fincas(name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
       )
-      .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "apto", "no_apto"])
+      // apto/no_apto ya NO viajan por esta consulta pesada del kanban: viven en
+      // la consulta ligera de LotesViews (abajo), junto con fila/galardonado.
+      .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito"])
       .order("created_at", { ascending: false }),
     service.from("fincas").select("id, name, municipio").eq("status", "approved").order("name"),
     service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
   ]);
+
+  // Los lotes que YA PASARON el intake (para las 3 vistas Mapa/Lista/No aptos):
+  // consulta ligera con la finca de origen — el pin del mapa usa su punto o el
+  // centroide de su polígono EUDR.
+  type PassedRow = {
+    id: string;
+    name: string;
+    producer_id: string;
+    stage: ViewLot["stage"];
+    grade: string | null;
+    season_id: string | null;
+    eva_no_apto_reason: string | null;
+    fincas: { name: string | null; departamento: string | null; eudr_lat: string | number | null; eudr_lng: string | number | null; eudr_polygon_geojson: { lat: number; lng: number }[] | null } | { name: string | null; departamento: string | null; eudr_lat: string | number | null; eudr_lng: string | number | null; eudr_polygon_geojson: { lat: number; lng: number }[] | null }[] | null;
+  };
+  const { data: passedRaw } = await service
+    .from("lots")
+    .select(
+      `id, name, producer_id, stage, grade, season_id, eva_no_apto_reason,
+       fincas(name, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson)`
+    )
+    .in("stage", ["apto", "no_apto", "fila_arena", "evaluado", "galardonado"])
+    .order("created_at", { ascending: false });
+  const passedRows = (passedRaw as PassedRow[] | null) ?? [];
 
   const lotRows = (lots as LotRow[] | null) ?? [];
   const seasons = (seasonsRaw as Season[] | null) ?? [];
@@ -169,13 +195,16 @@ export default async function BcpLotesPage() {
   }
 
   const [producers, { data: comms }, { data: inscriptionRows }, signedUrls] = await Promise.all([
-    fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
+    fetchProducerContacts(service, [...lotRows.map((l) => l.producer_id), ...passedRows.map((l) => l.producer_id)]),
     service
       .from("producer_comm_log")
       .select("id, lot_id, context_label, note, created_at, author_role")
       .in("lot_id", lotRows.map((l) => l.id))
       .order("created_at", { ascending: false }),
-    service.from("arena_inscriptions").select("lot_id, status").in("lot_id", lotRows.map((l) => l.id)),
+    service
+      .from("arena_inscriptions")
+      .select("lot_id, status")
+      .in("lot_id", [...lotRows.map((l) => l.id), ...passedRows.map((l) => l.id)]),
     signedKaffetalMediaUrls(service, assetIds),
   ]);
   const inscriptionSettledByLot = new Map<string, boolean>();
@@ -189,11 +218,35 @@ export default async function BcpLotesPage() {
     if (!c.lot_id) continue;
     commsByLot.set(c.lot_id, [...(commsByLot.get(c.lot_id) ?? []), c]);
   }
-  const aptoLots = lotRows.filter((l) => l.stage === "apto");
-  const noAptoLots = lotRows.filter((l) => l.stage === "no_apto");
-  const boardLots = lotRows.filter((l) => l.stage !== "apto" && l.stage !== "no_apto");
+  const boardLots = lotRows; // apto/no_apto ya no llegan en la consulta del kanban
   const byBucket = new Map<Bucket, LotRow[]>(COLUMNS.map((c) => [c.id, []]));
   for (const lot of boardLots) byBucket.get(bucketOf(lot))!.push(lot);
+
+  // Serializa un lote "pasado" para las 3 vistas (Mapa/Lista/No aptos).
+  const toViewLot = (l: PassedRow): ViewLot => {
+    const f = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
+    const center = f ? fincaCenter(f.eudr_lat, f.eudr_lng, f.eudr_polygon_geojson) : null;
+    return {
+      id: l.id,
+      name: l.name,
+      reference: ctcLotReferenceShort(l.id),
+      producerName: producers.get(l.producer_id)?.fullName ?? "Productor",
+      stage: l.stage,
+      grade: l.grade ? GRADE_LABEL[l.grade] ?? l.grade : null,
+      seasonId: l.season_id,
+      seasonLabel: seasonLabel(seasonById.get(l.season_id ?? "")),
+      fincaName: f?.name ?? "—",
+      region: f?.departamento ?? "",
+      lat: center?.la ?? null,
+      lng: center?.ln ?? null,
+      postulated: postulatedLots.has(l.id),
+      reason: l.eva_no_apto_reason,
+    };
+  };
+  const viewLots = passedRows.filter((l) => l.stage !== "no_apto").map(toViewLot);
+  const noAptoViewLots = passedRows.filter((l) => l.stage === "no_apto").map(toViewLot);
+  // Para el dial de rango: de la temporada más vieja a la más nueva.
+  const seasonsAsc = [...seasons].sort((a, b) => a.year - b.year || String(a.kind).localeCompare(String(b.kind)));
 
   return (
     <div>
@@ -289,29 +342,14 @@ export default async function BcpLotesPage() {
         </div>
       )}
 
-      {/* Aptos / No aptos con filtro por TEMPORADA DE REGISTRO (2026-07-20):
-          reemplazan la vieja tira "Aptos · rumbo a la Arena". La postulación en
-          nombre del productor vive aquí; el pipeline pagado sigue en Nominados. */}
-      <AptosNoAptosSections
-        aptos={aptoLots.map((lot): SectionLot => ({
-          id: lot.id,
-          name: lot.name,
-          reference: ctcLotReferenceShort(lot.id),
-          producerName: producers.get(lot.producer_id)?.fullName ?? "Productor",
-          seasonId: lot.season_id,
-          seasonLabel: seasonLabel(seasonById.get(lot.season_id ?? "")),
-          postulated: postulatedLots.has(lot.id),
-        }))}
-        noAptos={noAptoLots.map((lot): SectionLot => ({
-          id: lot.id,
-          name: lot.name,
-          reference: ctcLotReferenceShort(lot.id),
-          producerName: producers.get(lot.producer_id)?.fullName ?? "Productor",
-          seasonId: lot.season_id,
-          seasonLabel: seasonLabel(seasonById.get(lot.season_id ?? "")),
-          reason: lot.eva_no_apto_reason,
-        }))}
-        seasons={seasons.map((s) => ({ id: s.id, label: seasonLabel(s) }))}
+      {/* Las 3 vistas de los lotes que ya pasaron el intake (2026-07-23):
+          Mapa (pin por finca, color = grado, dial de temporadas) · Lista con
+          filtros y búsqueda (la postulación en nombre del productor vive ahí) ·
+          No aptos (veredicto reversible). Reemplazan a AptosNoAptosSections. */}
+      <LotesViews
+        lots={viewLots}
+        noAptos={noAptoViewLots}
+        seasons={seasonsAsc.map((s) => ({ id: s.id, label: seasonLabel(s) }))}
       />
     </div>
   );

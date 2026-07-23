@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import QRCode from "qrcode";
 import { useToast } from "@/components/Toast";
+import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { DEP_MUNI } from "./ficha/fichaData";
@@ -28,7 +29,7 @@ export function InfoModal({
   onClose: () => void;
   gi: GeneralInfo;
   userId: string | null;
-  onSave: (gi: GeneralInfo) => void;
+  onSave: (gi: GeneralInfo, opts?: { silent?: boolean }) => void;
   onUploadAvatar: (file: File) => void;
   onUploadVideo: (file: File) => void;
   onUploadGalleryPhoto: (index: number, file: File) => void;
@@ -56,7 +57,22 @@ export function InfoModal({
     whatsappRef.current!.checked = gi.whatsappConfirmed;
   }, [open, gi]);
 
-  function save() {
+  // Autosave (2026-07-23): todos los campos de texto son refs (no re-renderizan
+  // al teclear), así que el contenedor sube un contador con onInput/onChange y
+  // el guardado arma el payload desde los refs al disparar. Los archivos
+  // (foto/video) siguen en sus flujos propios. Va en modo silent: persiste sin
+  // cerrar el modal ni lanzar el toast (el chip de aquí es el feedback).
+  const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
+  const { status: autosaveStatus } = useAutosave({
+    enabled: open,
+    snapshot: rev,
+    save: async () => {
+      save({ silent: true });
+      return true;
+    },
+  });
+
+  function save(opts?: { silent?: boolean }) {
     onSave({
       ...gi,
       razon: razonRef.current?.value.trim() || gi.razon,
@@ -67,7 +83,7 @@ export function InfoModal({
       whatsappConfirmed: whatsappRef.current?.checked ?? false,
       country: countryRef.current?.value || "Colombia",
       department: deptoRef.current?.value || "",
-    });
+    }, opts);
   }
 
   function handleAvatarFile(file: File | undefined) {
@@ -131,9 +147,12 @@ export function InfoModal({
 
   return (
     <Modal open={open} onClose={onClose} ariaLabel="Información general">
-      <h3>Información general</h3>
+      <h3 style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+        Información general
+        <AutosaveChip status={autosaveStatus} />
+      </h3>
       <p>Se registra una sola vez y aplica a todos sus lotes y fincas. Puede actualizarla cuando lo necesite.</p>
-      <div className={styles.grid}>
+      <div className={styles.grid} onInput={bumpRev} onChange={bumpRev}>
         <div className={styles.wide}><label>Razón social del proveedor</label><input ref={razonRef} placeholder="Razón social legal del proveedor" /></div>
         <div><label>N.º de identificación legal (NIT / CC)</label><input ref={nitRef} placeholder="N.º de identificación legal" /></div>
         <div><label>Nombre del agricultor</label><input ref={agriRef} placeholder="Nombre del agricultor" /></div>
@@ -218,7 +237,7 @@ export function InfoModal({
           </div>
         )}
       </div>
-      <button className="btn btn-solid" onClick={save}>Guardar información</button>
+      <button className="btn btn-solid" onClick={() => save()}>Guardar información</button>
     </Modal>
   );
 }

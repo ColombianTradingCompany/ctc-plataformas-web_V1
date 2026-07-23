@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useReducer, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
+import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
@@ -262,9 +263,9 @@ function FincaModalBody({
   const haNum = Number(ha.replace(",", "."));
   const needsPolygon = !isNaN(haNum) && haNum > 4;
 
-  async function save() {
+  async function save(showFlash = true): Promise<boolean> {
     const trimmedName = name.trim();
-    if (!trimmedName || saving) return;
+    if (!trimmedName || saving) return false;
     setSaving(true);
     const ok = await onSave({
       id: finca?.id ?? "",
@@ -290,11 +291,25 @@ function FincaModalBody({
       ...eudr,
     });
     setSaving(false);
-    if (ok) {
+    // El autosave pasa showFlash=false: el overlay centrado "Datos de Finca
+    // Actualizados" cada pocos segundos de tecleo sería insoportable.
+    if (ok && showFlash) {
       setFlash(true);
       window.setTimeout(() => setFlash(false), 1900);
     }
+    return ok;
   }
+
+  // Autosave (2026-07-23): SOLO para fincas ya existentes — autoguardar una
+  // finca nueva la crearía a medio escribir. Los campos con ref (vereda,
+  // municipio, historia…) no re-renderizan al teclear, así que el contenedor
+  // sube un contador con onInput/onChange; los controlados viajan en el snapshot.
+  const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
+  const { status: autosaveStatus } = useAutosave({
+    enabled: !!finca?.id,
+    snapshot: { rev, name, ha, alt, eudr },
+    save: () => save(false),
+  });
 
   function handlePhotoFile(file: File | undefined) {
     if (!file) return;
@@ -332,10 +347,13 @@ function FincaModalBody({
 
   return (
     <>
-      <h3>{finca ? `Editar finca · ${finca.name}` : "Registrar finca nueva"}</h3>
+      <h3 style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+        {finca ? `Editar finca · ${finca.name}` : "Registrar finca nueva"}
+        <AutosaveChip status={autosaveStatus} />
+      </h3>
       {finca && <p className="mono" style={{ fontSize: 11, color: "var(--muted)", marginTop: -4 }}>{fincaCode(finca.id)}</p>}
       <p>Cada finca se identifica una vez y queda disponible para asociar sus cafés. Esta es la cara de su café en Europa.</p>
-      <div className={styles.grid}>
+      <div className={styles.grid} onInput={bumpRev} onChange={bumpRev}>
         <div className={styles.wide}>
           <label>Nombre de la finca</label>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. La Primavera" autoFocus />
@@ -592,7 +610,7 @@ function FincaModalBody({
 
       {/* Floating save: always visible bottom-right, a diskette that expands to
           its label on hover/focus. */}
-      <button className={styles.fab} onClick={save} disabled={saving} aria-label="Guardar finca">
+      <button className={styles.fab} onClick={() => save()} disabled={saving} aria-label="Guardar finca">
         <span className={styles.fabIcon} aria-hidden>💾</span>
         <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
       </button>

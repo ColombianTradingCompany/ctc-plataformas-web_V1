@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useReducer, useRef, useState, type ReactNode } from "react";
+import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { mapPreviewUrl } from "@/lib/eudr";
 import { earthWebUrl, buildFincaGeoJson } from "@/lib/earthKml";
 import { createClient } from "@/lib/supabase/client";
@@ -234,6 +235,27 @@ export function FincaEudrEditor({
   const earthUrl = earthWebUrl(values.eudr_lat, values.eudr_lng, values.eudr_polygon_geojson);
   const hasCoords = !!(values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng));
 
+  // Autosave del modo edición (2026-07-23): los campos del formulario viajan
+  // con el MISMO server action que Guardar — pero SIN los archivos (esos solo
+  // van por el submit manual, que los sube al Storage primero). Los inputs no
+  // controlados no re-renderizan, así que el <form> sube un contador.
+  const formRef = useRef<HTMLFormElement>(null);
+  const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
+  const { status: autosaveStatus } = useAutosave({
+    enabled: editing,
+    snapshot: { rev, evalPlanting, evalSystem, evalDefor, evalLegal, evalTenure, evidence, sustain },
+    save: async () => {
+      const form = formRef.current;
+      if (!form || saving) return false;
+      const fd = new FormData(form);
+      for (const k of [...fd.keys()]) {
+        if (/^(evidence|sustainability)_file_/.test(k)) fd.delete(k);
+      }
+      await saveAction(fd);
+      return true;
+    },
+  });
+
   // A plain <form action={saveAction}> looks like it "does nothing" after
   // submit: the server action's revalidatePath() refreshes `values`, but this
   // component stays mounted with `editing` still true (React preserves local
@@ -391,8 +413,11 @@ export function FincaEudrEditor({
 
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontWeight: 600, fontSize: 13.5 }}>Editando información EUDR</span>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 10 }}>
+        <span style={{ fontWeight: 600, fontSize: 13.5, display: "inline-flex", alignItems: "baseline", gap: 10 }}>
+          Editando información EUDR
+          <AutosaveChip status={autosaveStatus} />
+        </span>
         <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
       </div>
       <SubTabBar tab={subTab} setTab={setSubTab} />
@@ -401,7 +426,7 @@ export function FincaEudrEditor({
       {/* UN solo formulario para las tres sub-pestañas: los paneles inactivos se
           OCULTAN (display:none), nunca se desmontan — así todos los campos viajan
           juntos al guardar sin importar en cuál pestaña esté parado BCP. */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} ref={formRef} onInput={bumpRev} onChange={bumpRev}>
         <div style={{ display: subTab === "declaracion" ? "block" : "none" }}>
           <div className={styles.formGrid}>
             <div className={styles.field}>

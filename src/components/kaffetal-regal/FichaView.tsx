@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
+import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { fincaEudrStatus, lotEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, pendingCertProofs, stripUnprovenCerts, type FichaFormData } from "./ficha/fichaData";
@@ -43,6 +44,9 @@ export type FichaSaveUpdate = {
   finca?: string;
   datasheet: FichaFormData;
   completionPct: number;
+  // Autosave: no insertar el snapshot de completitud (alimenta la sparkline) —
+  // un autoguardado cada pocos segundos inundaría ficha_completion_snapshots.
+  skipSnapshot?: boolean;
   // Present only when this save also advances the intake sub-stage (i.e. a
   // "Completar X y continuar" click, not a plain "Guardar"). 4 is the last
   // one (Video) -- reaching it is what flips `lots.stage` to "ficha_completa".
@@ -330,6 +334,16 @@ export function FichaView({
     // saveFicha already showed its own error toast.
     if (ok) showToast("Progreso guardado ✓");
   }
+
+  // Autosave del borrador (2026-07-23): mientras la Ficha siga editable, cada
+  // pausa de escritura persiste el progreso por el MISMO camino que Guardar —
+  // pero sin sellar revision_date (evita un bucle de estado) y sin snapshot de
+  // completitud (no inundar la sparkline). Nunca avanza intake_step.
+  const { status: autosaveStatus } = useAutosave({
+    enabled: effectiveIntakeStep < 4 && !saving,
+    snapshot: data,
+    save: () => onSave({ ...buildUpdate(data), skipSnapshot: true }),
+  });
 
   // Submits whichever intake sub-stage is currently active for this lot (FT,
   // FT2, EUDR, or Video), validating that stage's own gate first. Advancing
@@ -662,6 +676,7 @@ export function FichaView({
               <span className={styles.chip}>{lot.stage <= 1 ? "✓ Ficha enviada a CTC · en revisión" : "✓ Ficha registrada en CTC"}</span>
             ) : (
               <>
+                <AutosaveChip status={autosaveStatus} />
                 <button className="btn btn-sm" onClick={save} disabled={saving}>
                   {saving ? "Guardando…" : "Guardar"}
                 </button>

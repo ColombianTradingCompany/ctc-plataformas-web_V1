@@ -613,9 +613,15 @@ function Experience() {
       showToast("No se pudo guardar la ficha. Intente de nuevo.");
       return false;
     }
-    await supabase.from("ficha_completion_snapshots").insert({ lot_id: curLotId, completion_pct: updates.completionPct });
+    // El autosave (skipSnapshot) no alimenta la sparkline: un punto cada pocos
+    // segundos inundaría ficha_completion_snapshots sin contar nada nuevo.
+    if (!updates.skipSnapshot) {
+      await supabase.from("ficha_completion_snapshots").insert({ lot_id: curLotId, completion_pct: updates.completionPct });
+    }
     const fincaNameById = new Map(fincas.map((f) => [f.id, f.name]));
-    const newHistory = [...(current?.completionHistory ?? []), { pct: updates.completionPct, recordedAt: new Date().toISOString() }];
+    const newHistory = updates.skipSnapshot
+      ? current?.completionHistory ?? []
+      : [...(current?.completionHistory ?? []), { pct: updates.completionPct, recordedAt: new Date().toISOString() }];
     // Carry the evaluation summary over from the in-memory lot -- it comes
     // from lot_evaluations (a separate query at load time), so remapping the
     // lots row without it would blank the official score on every Guardar.
@@ -944,7 +950,10 @@ function Experience() {
     setFeedback((prev) => prev.map((n) => (n.id === noteId ? { ...n, acknowledgedAt: ack ? new Date().toISOString() : null } : n)));
   }
 
-  async function saveInfo(next: GeneralInfo) {
+  // `silent` = autosave (2026-07-23): persiste igual, pero sin cerrar el modal
+  // ni lanzar el toast — el productor sigue escribiendo; el chip del modal es
+  // el único feedback.
+  async function saveInfo(next: GeneralInfo, opts?: { silent?: boolean }) {
     if (!userId) return;
     const [{ error: e1 }, { error: e2 }] = await Promise.all([
       supabase.from("profiles").update({ full_name: next.agri, phone: next.phone || null }).eq("id", userId),
@@ -973,8 +982,10 @@ function Experience() {
     }
     setGi(next);
     setUserName(next.agri !== "—" ? next.agri.split(" ")[0] : "productor");
-    setInfoModalOpen(false);
-    showToast("Información general actualizada ✓ · aplica a todos sus lotes");
+    if (!opts?.silent) {
+      setInfoModalOpen(false);
+      showToast("Información general actualizada ✓ · aplica a todos sus lotes");
+    }
   }
 
   async function uploadFile(subpath: string, file: File): Promise<{ assetId: string } | { error: string }> {

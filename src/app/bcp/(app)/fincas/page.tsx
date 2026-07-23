@@ -14,6 +14,9 @@ import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
 import { FincaModalRow } from "./FincaModalRow";
 import { FincaPanel, type FincaLote } from "./FincaPanel";
+import { FincasViewSwitch } from "./FincasViewSwitch";
+import { fincaCenter } from "@/lib/earthKml";
+import type { GeoMarker } from "@/components/bcp/GeoMap";
 import styles from "../shared.module.css";
 
 type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
@@ -195,6 +198,29 @@ export default async function BcpFincasPage() {
       </p>
 
       {!fincaRows.length && <p className={styles.empty}>No hay fincas registradas.</p>}
+      <FincasViewSwitch
+        markers={fincaRows.flatMap((f): GeoMarker[] => {
+          const center = fincaCenter(f.eudr_lat, f.eudr_lng, f.eudr_polygon_geojson);
+          if (!center) return [];
+          const short = fincaShortStatus(f);
+          return [
+            {
+              id: f.id,
+              lat: center.la,
+              lng: center.ln,
+              color: f.status === "approved" ? "#166534" : f.status === "rejected" ? "#991B1B" : "#B45309",
+              title: f.name,
+              lines: [
+                fincaCode(f.id),
+                short.label,
+                [f.municipio, f.departamento].filter(Boolean).join(", ") + (f.hectares ? ` · ${f.hectares} ha` : ""),
+                producers.get(f.producer_id)?.fullName ?? "Productor",
+              ],
+              link: { label: "Abrir panel", href: `#finca-${f.id}` },
+            },
+          ];
+        })}
+      >
       <div className={styles.board}>
         {FINCA_SEGMENTS.map((seg) => {
           const segRows = fincaRows.filter(
@@ -381,6 +407,7 @@ export default async function BcpFincasPage() {
           );
         })}
       </div>
+      </FincasViewSwitch>
     </div>
   );
 }

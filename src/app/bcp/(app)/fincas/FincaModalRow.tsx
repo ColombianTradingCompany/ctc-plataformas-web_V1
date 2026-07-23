@@ -32,14 +32,19 @@ export function FincaModalRow({
 
   useEffect(() => {
     if (!anchorId) return;
-    // Microtarea para no llamar setState sincrónicamente en el cuerpo del
-    // efecto (regla react-hooks/set-state-in-effect — gotcha #3 del repo).
-    Promise.resolve().then(() => {
+    const check = () => {
       if (window.location.hash === `#${anchorId}`) {
         rowRef.current?.scrollIntoView({ block: "center" });
         setOpen(true);
       }
-    });
+    };
+    // Microtarea para no llamar setState sincrónicamente en el cuerpo del
+    // efecto (regla react-hooks/set-state-in-effect — gotcha #3 del repo).
+    Promise.resolve().then(check);
+    // También en caliente: el mapa de fincas (2026-07-23) enlaza con #finca-<id>
+    // desde la tarjetita de un pin — sin esto solo funcionaba al cargar la página.
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
   }, [anchorId]);
 
   return (

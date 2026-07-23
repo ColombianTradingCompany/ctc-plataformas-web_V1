@@ -158,14 +158,15 @@ export default async function BcpLotesPage() {
     service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
   ]);
 
-  // Los lotes que YA PASARON el intake (para las 3 vistas Mapa/Lista/No aptos):
+  // TODOS los lotes para las 3 vistas (Mapa/Lista/No aptos, 2026-07-23):
   // consulta ligera con la finca de origen — el pin del mapa usa su punto o el
-  // centroide de su polígono EUDR.
+  // centroide de su polígono EUDR. La Lista abarca el ciclo completo (también
+  // el intake); el Mapa filtra al camino de la Arena por el flag arenaPath.
   type PassedRow = {
     id: string;
     name: string;
     producer_id: string;
-    stage: ViewLot["stage"];
+    stage: string;
     grade: string | null;
     season_id: string | null;
     eva_no_apto_reason: string | null;
@@ -177,9 +178,9 @@ export default async function BcpLotesPage() {
       `id, name, producer_id, stage, grade, season_id, eva_no_apto_reason,
        fincas(name, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson)`
     )
-    .in("stage", ["apto", "no_apto", "fila_arena", "evaluado", "galardonado"])
     .order("created_at", { ascending: false });
   const passedRows = (passedRaw as PassedRow[] | null) ?? [];
+  const ARENA_PATH_STAGES = new Set(["apto", "fila_arena", "evaluado", "galardonado"]);
 
   const lotRows = (lots as LotRow[] | null) ?? [];
   const seasons = (seasonsRaw as Season[] | null) ?? [];
@@ -232,6 +233,7 @@ export default async function BcpLotesPage() {
       reference: ctcLotReferenceShort(l.id),
       producerName: producers.get(l.producer_id)?.fullName ?? "Productor",
       stage: l.stage,
+      arenaPath: ARENA_PATH_STAGES.has(l.stage),
       grade: l.grade ? GRADE_LABEL[l.grade] ?? l.grade : null,
       seasonId: l.season_id,
       seasonLabel: seasonLabel(seasonById.get(l.season_id ?? "")),

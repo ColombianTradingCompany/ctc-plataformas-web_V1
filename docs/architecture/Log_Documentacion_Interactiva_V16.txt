@@ -116,6 +116,12 @@ Formato:
     (#finca-<id>) vuelve al tablero y abre el modal (FincaModalRow ahora
     escucha hashchange, no solo el hash inicial).
 - Cambios de NODO n-bcp + DICT `panels`/`intake` al próximo wrap.
+- Ajuste V2.13 (feedback del owner sobre V2.12): la LISTA de /bcp/lotes ahora
+  abarca TODOS los lotes del ciclo (también el intake), con un filtro de alcance
+  (Todos / En el camino de la Arena / En intake documental), y pasó de tarjetas a
+  una tabla tipo "detalles" (una fila compacta por lote: nombre, referencia,
+  etapa, grado, temporada, productor, finca, región, postular). El Mapa sigue
+  siendo solo el camino de la Arena (flag arenaPath).
 
 ## [2026-07-22] Mapa de Trabajo (Base) — EUDR desdoblado finca vs. lote
 - El Base de la Mapa de Trabajo (`src/lib/workmap/schema.ts`) confundía el EUDR en UNA

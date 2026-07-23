@@ -22,7 +22,10 @@ export type ViewLot = {
   name: string;
   reference: string;
   producerName: string;
-  stage: "apto" | "no_apto" | "fila_arena" | "evaluado" | "galardonado";
+  /** Cualquier etapa del ciclo — la Lista muestra TODOS los lotes (2026-07-23). */
+  stage: string;
+  /** true = ya pasó el intake (apto en adelante) — "en el camino de la Arena". */
+  arenaPath: boolean;
   grade: string | null;
   seasonId: string | null;
   seasonLabel: string;
@@ -35,13 +38,18 @@ export type ViewLot = {
   reason: string | null;
 };
 
-const STAGE_LABEL: Record<ViewLot["stage"], string> = {
+const STAGE_LABEL: Record<string, string> = {
+  borrador: "Borrador",
+  ficha_completa: "En EVA",
+  videos_ok: "Videos ✓ (legado)",
+  muestra_transito: "Muestra en tránsito (legado)",
   apto: "Apto",
   no_apto: "No apto",
   fila_arena: "En sesión de Arena",
   evaluado: "Evaluado",
   galardonado: "Galardonado",
 };
+const stageLabelOf = (s: string) => STAGE_LABEL[s] ?? s;
 
 // Hexes concretos de los grados (globals.css --t-*): el pin de Maps no lee
 // variables CSS. Negro por defecto = "sin grado todavía" (pedido del owner).
@@ -151,6 +159,19 @@ function RevertNoAptoButton({ lotId }: { lotId: string }) {
   );
 }
 
+// Celdas de la lista "detalles" — mismo lenguaje que las tablas del ECP.
+const th: React.CSSProperties = {
+  textAlign: "left",
+  padding: "7px 10px",
+  fontFamily: "var(--font-spline-mono), monospace",
+  fontSize: 10,
+  letterSpacing: ".06em",
+  textTransform: "uppercase",
+  color: "var(--muted)",
+  whiteSpace: "nowrap",
+};
+const td: React.CSSProperties = { padding: "6px 10px", color: "var(--muted)", whiteSpace: "nowrap" };
+
 function GradeDot({ grade }: { grade: string | null }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700 }}>
@@ -175,8 +196,10 @@ export function LotesViews({
 }) {
   const [view, setView] = useState<ViewKey>("mapa");
   const [range, setRange] = useState<[number, number] | null>(null);
-  // Lista: filtros + búsqueda.
+  // Lista: filtros + búsqueda. `scope` = alcance (todos / camino de la Arena /
+  // intake documental) — la Lista muestra TODOS los lotes por defecto.
   const [q, setQ] = useState("");
+  const [scope, setScope] = useState<"" | "camino" | "intake">("");
   const [region, setRegion] = useState("");
   const [season, setSeason] = useState("");
   const [grade, setGrade] = useState("");
@@ -186,9 +209,12 @@ export function LotesViews({
   const seasonIndex = useMemo(() => new Map(seasons.map((s, i) => [s.id, i])), [seasons]);
   const regions = useMemo(() => [...new Set(lots.map((l) => l.region).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [lots]);
   const grades = useMemo(() => [...new Set(lots.map((l) => l.grade).filter((g): g is string => !!g))], [lots]);
+  const stagesPresent = useMemo(() => [...new Set(lots.map((l) => l.stage))], [lots]);
 
-  // MAPA: rango de temporadas inclusive; lotes sin temporada se muestran siempre.
+  // MAPA: solo el camino de la Arena (apto en adelante) — la Lista es la que
+  // abarca todos. Rango de temporadas inclusive; sin temporada se muestra siempre.
   const mapLots = lots.filter((l) => {
+    if (!l.arenaPath) return false;
     if (!range) return true;
     if (!l.seasonId) return true;
     const i = seasonIndex.get(l.seasonId);
@@ -203,7 +229,7 @@ export function LotesViews({
     title: l.name,
     lines: [
       l.reference,
-      `${STAGE_LABEL[l.stage]}${l.grade ? ` · Grado ${l.grade}` : " · Sin grado"}`,
+      `${stageLabelOf(l.stage)}${l.grade ? ` · Grado ${l.grade}` : " · Sin grado"}`,
       `Finca ${l.fincaName}${l.region ? ` · ${l.region}` : ""}`,
       l.producerName,
       l.seasonLabel,
@@ -211,9 +237,11 @@ export function LotesViews({
     link: lotLink(l),
   }));
 
-  // LISTA: filtros + búsqueda libre.
+  // LISTA: filtros + búsqueda libre sobre TODOS los lotes.
   const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const listLots = lots.filter((l) => {
+    if (scope === "camino" && !l.arenaPath) return false;
+    if (scope === "intake" && l.arenaPath) return false;
     if (region && l.region !== region) return false;
     if (season && l.seasonId !== season) return false;
     if (grade && (l.grade ?? "") !== grade) return false;
@@ -235,10 +263,11 @@ export function LotesViews({
 
   return (
     <div style={{ marginTop: 30 }} id="aptos">
-      <h2 style={{ fontSize: 17, marginBottom: 2 }}>Lotes en el camino de la Arena</h2>
+      <h2 style={{ fontSize: 17, marginBottom: 2 }}>Todos los lotes</h2>
       <p className={styles.subtitle} style={{ marginTop: 0 }}>
-        Todo lote que superó la evaluación documental, en tres vistas: el mapa por finca de origen (color = grado CTC,
-        negro mientras no lo tenga), la lista con filtros, y los No aptos.
+        El mapa muestra los lotes en el camino de la Arena por finca de origen (color = grado CTC, negro mientras no lo
+        tenga); la lista abarca TODOS los lotes del ciclo — filtre por alcance, región, temporada, grado o etapa — y los
+        No aptos tienen su propia vista.
       </p>
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 14px" }}>
@@ -305,6 +334,11 @@ export function LotesViews({
               onChange={(e) => setQ(e.target.value)}
               style={{ flex: 1, minWidth: 220, padding: "8px 12px", border: "1.5px solid var(--line)", borderRadius: 8, fontSize: 13, background: "var(--paper)" }}
             />
+            <select value={scope} onChange={(e) => setScope(e.target.value as typeof scope)} aria-label="Alcance">
+              <option value="">Todos los lotes</option>
+              <option value="camino">En el camino de la Arena</option>
+              <option value="intake">En intake documental</option>
+            </select>
             <select value={region} onChange={(e) => setRegion(e.target.value)} aria-label="Región">
               <option value="">Región (todas)</option>
               {regions.map((r) => (<option key={r} value={r}>{r}</option>))}
@@ -319,34 +353,47 @@ export function LotesViews({
             </select>
             <select value={stage} onChange={(e) => setStage(e.target.value)} aria-label="Etapa">
               <option value="">Etapa (todas)</option>
-              {(Object.keys(STAGE_LABEL) as ViewLot["stage"][]).filter((s) => s !== "no_apto").map((s) => (
-                <option key={s} value={s}>{STAGE_LABEL[s]}</option>
+              {stagesPresent.map((s) => (
+                <option key={s} value={s}>{stageLabelOf(s)}</option>
               ))}
             </select>
           </div>
           {!listLots.length ? (
             <p className={styles.empty}>Ningún lote coincide con el filtro.</p>
           ) : (
-            <div style={{ display: "grid", gap: 10 }}>
-              {listLots.map((l) => (
-                <div key={l.id} id={`lot-${l.id}`} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <b>{l.name}</b>
-                    <span className={`${styles.badge} mono`}>{l.reference}</span>
-                    <span className={styles.badge}>{STAGE_LABEL[l.stage]}</span>
-                    <GradeDot grade={l.grade} />
-                    <span className={styles.badge}>{l.seasonLabel}</span>
-                    {l.stage === "apto" && l.postulated && <span className={`${styles.badge} ${styles.badgeGood}`}>Postulado ✓ · en Nominados</span>}
-                  </div>
-                  <p className={styles.meta}>
-                    {l.producerName} · Finca {l.fincaName}
-                    {l.region ? ` · ${l.region}` : ""}
-                  </p>
-                  {l.stage === "apto" && !l.postulated && <PostularOnBehalfButton lotId={l.id} />}
-                </div>
-              ))}
+            // Lista tipo "detalles" (2026-07-23): una fila compacta por lote.
+            <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: 10, background: "var(--card)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, minWidth: 760 }}>
+                <thead>
+                  <tr>
+                    {["Lote", "Referencia", "Etapa", "Grado", "Temporada", "Productor", "Finca", "Región", ""].map((h) => (
+                      <th key={h} style={th}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {listLots.map((l) => (
+                    <tr key={l.id} id={`lot-${l.id}`} style={{ borderTop: "1px solid var(--line)" }}>
+                      <td style={{ ...td, fontWeight: 700, color: "var(--ink)" }}>{l.name}</td>
+                      <td style={{ ...td, fontFamily: "var(--font-spline-mono), monospace", fontSize: 11.5 }}>{l.reference}</td>
+                      <td style={td}>{stageLabelOf(l.stage)}{l.stage === "apto" && l.postulated ? " · Postulado ✓" : ""}</td>
+                      <td style={td}><GradeDot grade={l.grade} /></td>
+                      <td style={td}>{l.seasonLabel}</td>
+                      <td style={td}>{l.producerName}</td>
+                      <td style={td}>{l.fincaName}</td>
+                      <td style={td}>{l.region || "—"}</td>
+                      <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
+                        {l.stage === "apto" && !l.postulated && <PostularOnBehalfButton lotId={l.id} />}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
+          <p className={styles.meta} style={{ marginTop: 6 }}>
+            {listLots.length} de {lots.length} lote{lots.length === 1 ? "" : "s"}.
+          </p>
         </div>
       )}
 

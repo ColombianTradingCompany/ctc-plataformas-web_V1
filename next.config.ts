@@ -16,10 +16,11 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/ecp/documentacion": ["./docs/architecture/**"],
     "/ecp/documentacion/[file]": ["./docs/architecture/**"],
-    // Igual para las herramientas internas: viven fuera de public/ para que solo
-    // se sirvan con sesión, así que hay que pedir explícitamente que se
-    // empaqueten (Next solo incluye lo que se importa).
-    "/ecp/herramientas/[tool]": ["./private-tools/**"],
+    // NOTA: las herramientas internas (/ecp/herramientas/[tool]) YA NO se trazan
+    // aquí. Antes se leían del disco y esto las empaquetaba, pero con el build
+    // cache de Vercel un .html nuevo no quedaba en la función y daba 404. Ahora
+    // el HTML va embebido en el bundle (src/lib/tools/embedded/, generado por
+    // scripts/embed-private-tools.mjs), así que no hace falta trazar nada.
   },
 };
 

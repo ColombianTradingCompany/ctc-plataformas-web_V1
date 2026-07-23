@@ -32,13 +32,58 @@ const num = (v: string | number | null): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-/** Enlace directo a Google Earth web centrado en el predio (sin API key). */
-export function earthWebUrl(lat: string | number | null, lng: string | number | null): string | null {
+type Ring = { lat: number; lng: number }[] | null | undefined;
+
+/** El punto de referencia del predio: el punto registrado, o — si solo hay
+ *  polígono (predios >4 ha donde el productor dibujó sin marcar punto) — su
+ *  centroide. Sin esto, una finca solo-polígono se quedaba sin enlace a Earth. */
+export function fincaCenter(lat: string | number | null, lng: string | number | null, polygon?: Ring): { la: number; ln: number } | null {
   const la = num(lat);
   const ln = num(lng);
-  if (la == null || ln == null) return null;
+  if (la != null && ln != null) return { la, ln };
+  const ring = (polygon ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+  if (!ring.length) return null;
+  return { la: ring.reduce((s, p) => s + p.lat, 0) / ring.length, ln: ring.reduce((s, p) => s + p.lng, 0) / ring.length };
+}
+
+/** Enlace directo a Google Earth web sobre el predio (sin API key). Va por la
+ *  ruta /search/ — no solo posiciona la cámara: Earth resuelve la búsqueda de
+ *  coordenadas y DEJA UN PIN visible sobre el punto (el fragmento @ solo mueve
+ *  la cámara, por eso antes "aterrizaba" sin marcar nada). El polígono no puede
+ *  viajar por URL — para eso está el .kml importado al proyecto. */
+export function earthWebUrl(lat: string | number | null, lng: string | number | null, polygon?: Ring): string | null {
+  const c = fincaCenter(lat, lng, polygon);
+  if (!c) return null;
   // 1500a = altitud de cámara, 800d = distancia: encuadra un predio pequeño.
-  return `https://earth.google.com/web/@${la},${ln},1500a,800d,35y,0h,0t,0r`;
+  return `https://earth.google.com/web/search/${c.la},${c.ln}/@${c.la},${c.ln},1500a,800d,35y,0h,0t,0r`;
+}
+
+// ── GeoJSON (RFC 7946) ───────────────────────────────────────────────────────
+// El mismo par punto+polígono como FeatureCollection estándar — es el formato
+// que acepta el sistema de la UE (TRACES) para la geolocalización de predios
+// EUDR, y lo abre cualquier SIG (QGIS, geojson.io). Coordenadas [lng, lat] y
+// anillo CERRADO, como manda el estándar.
+export function buildFincaGeoJson(f: Pick<EarthKmlFinca, "name" | "code" | "lat" | "lng" | "polygon">): object {
+  const la = num(f.lat);
+  const ln = num(f.lng);
+  const ring = (f.polygon ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+  const features: object[] = [];
+  if (la != null && ln != null) {
+    features.push({
+      type: "Feature",
+      properties: { name: f.name, code: f.code, kind: "punto_referencia" },
+      geometry: { type: "Point", coordinates: [ln, la] },
+    });
+  }
+  if (ring.length >= 3) {
+    const closed = [...ring, ring[0]].map((p) => [p.lng, p.lat]);
+    features.push({
+      type: "Feature",
+      properties: { name: f.name, code: f.code, kind: "poligono_eudr" },
+      geometry: { type: "Polygon", coordinates: [closed] },
+    });
+  }
+  return { type: "FeatureCollection", features };
 }
 
 export function buildFincaKml(f: EarthKmlFinca): string {
@@ -76,12 +121,7 @@ export function buildFincaKml(f: EarthKmlFinca): string {
   }
 
   // LookAt inicial: el punto, o el centroide del polígono.
-  const center =
-    la != null && ln != null
-      ? { la, ln }
-      : ring.length
-        ? { la: ring.reduce((s, p) => s + p.lat, 0) / ring.length, ln: ring.reduce((s, p) => s + p.lng, 0) / ring.length }
-        : null;
+  const center = fincaCenter(f.lat, f.lng, ring);
   const lookAt = center
     ? `<LookAt><latitude>${center.la}</latitude><longitude>${center.ln}</longitude><range>800</range><tilt>0</tilt></LookAt>`
     : "";

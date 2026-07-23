@@ -2,10 +2,10 @@
 
 import { useState, type ReactNode } from "react";
 import { mapPreviewUrl } from "@/lib/eudr";
-import { earthWebUrl } from "@/lib/earthKml";
+import { earthWebUrl, buildFincaGeoJson } from "@/lib/earthKml";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
-import { LOCAL_INFRA } from "@/components/kaffetal-regal/data";
+import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
 import styles from "../shared.module.css";
 
 const INFRA_DICT: [string, string][] = LOCAL_INFRA.map(([k, l]) => [k, l]);
@@ -93,17 +93,22 @@ export type FincaEudrValues = {
   eudr_local_infra: string[] | null;
 };
 
-function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
-  const payload = {
-    finca: fincaName,
-    point: values.eudr_lat != null && values.eudr_lng != null ? { lat: Number(values.eudr_lat), lng: Number(values.eudr_lng) } : null,
-    polygon: values.eudr_polygon_geojson ?? null,
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+// GeoJSON estándar (RFC 7946) en vez del JSON casero de antes: es el formato
+// que acepta TRACES (el sistema de la UE para la declaración EUDR) y cualquier
+// SIG. El casero no tenía ningún consumidor, así que no se pierde nada.
+function downloadGeoJson(fincaId: string, fincaName: string, values: FincaEudrValues) {
+  const payload = buildFincaGeoJson({
+    name: fincaName,
+    code: fincaCode(fincaId),
+    lat: values.eudr_lat,
+    lng: values.eudr_lng,
+    polygon: values.eudr_polygon_geojson,
+  });
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/geo+json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${fincaName.replace(/\s+/g, "_").toLowerCase()}-coordenadas.json`;
+  a.download = `finca-${fincaName.replace(/\s+/g, "_").toLowerCase()}-eudr.geojson`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -224,7 +229,9 @@ export function FincaEudrEditor({
     set(on ? [...list, key] : list.filter((k) => k !== key));
   }
   const mapUrl = mapPreviewUrl({ lat: values.eudr_lat, lng: values.eudr_lng, polygon: values.eudr_polygon_geojson });
-  const earthUrl = earthWebUrl(values.eudr_lat, values.eudr_lng);
+  // El polígono también cuenta: una finca solo-polígono (>4 ha sin punto
+  // marcado) enlaza a Earth por su centroide.
+  const earthUrl = earthWebUrl(values.eudr_lat, values.eudr_lng, values.eudr_polygon_geojson);
   const hasCoords = !!(values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng));
 
   // A plain <form action={saveAction}> looks like it "does nothing" after
@@ -304,16 +311,19 @@ export function FincaEudrEditor({
             <a className="btn btn-sm" href={`/bcp/fincas/${fincaId}/kml`}>
               Archivo Google Earth (.kml) ⤓
             </a>
-            <button type="button" className="btn btn-sm" onClick={() => downloadCoordinatesJson(fincaName, values)}>
-              Coordenadas (.json) ⤓
+            <button type="button" className="btn btn-sm" onClick={() => downloadGeoJson(fincaId, fincaName, values)}>
+              GeoJSON (.geojson) ⤓
             </button>
           </>
         )}
       </div>
       {hasCoords && (
-        <p className={styles.meta} style={{ margin: "6px 0 0", fontSize: 11.5 }}>
-          El .kml lleva el punto, el polígono y la ficha de la finca — impórtelo en Google Earth y use las{" "}
-          <b>imágenes históricas</b> para verificar que no hay deforestación posterior al 31/12/2020.
+        <p className={styles.meta} style={{ margin: "6px 0 0", fontSize: 11.5, lineHeight: 1.7 }}>
+          El enlace abre Earth con un <b>pin</b> sobre el predio; el <b>polígono</b> no puede viajar por URL — va en el
+          .kml. Para verlo y dejarlo guardado: en Earth, <b>Proyectos → Nuevo proyecto → Importar archivo KML</b> — el
+          pin y el polígono quedan dibujados y guardados en su proyecto. Use las <b>imágenes históricas</b> para
+          verificar que no hay deforestación posterior al 31/12/2020, y pegue abajo la URL del proyecto donde guardó el
+          análisis. El .geojson es el mismo par punto+polígono en el formato estándar que pide la UE (TRACES).
         </p>
       )}
     </div>

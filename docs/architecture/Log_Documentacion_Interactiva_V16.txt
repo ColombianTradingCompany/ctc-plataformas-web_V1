@@ -76,6 +76,20 @@ Formato:
   real Ostpark (13 checks: anillo cerrado, orden lng-lat, escapes XML, null-safety).
 - Cambio de DICT `eva`/`eudr` + FILETREE (earthKml.ts, ruta kml) al próximo wrap.
 
+## [2026-07-23] Google Earth: pin visible + centroide + GeoJSON TRACES (V2.11)
+- Feedback del owner sobre V2.10: (1) el enlace a Earth "aterrizaba" sin marcar
+  nada — el fragmento @ solo mueve la cámara; ahora va por /web/search/lat,lng,
+  que resuelve la búsqueda y DEJA UN PIN visible. El polígono no puede viajar por
+  URL: va en el .kml, y la nota explica el flujo de guardado (Earth → Proyectos →
+  Nuevo → Importar KML — queda dibujado y guardado en el proyecto).
+  (2) Finca Germania no tenía botón de Earth: es solo-polígono (sin punto);
+  earthWebUrl/fincaCenter ahora caen al CENTROIDE del polígono.
+- La descarga "Coordenadas (.json)" (formato casero sin consumidores) pasó a ser
+  GeoJSON estándar RFC 7946 ([lng,lat], anillo cerrado) — el formato que acepta
+  TRACES (el sistema de la UE para la declaración EUDR) y cualquier SIG.
+- Validado contra las dos fincas de los pantallazos (Germania solo-polígono,
+  La Ceiba punto+polígono): 13 checks.
+
 ## [2026-07-22] Mapa de Trabajo (Base) — EUDR desdoblado finca vs. lote
 - El Base de la Mapa de Trabajo (`src/lib/workmap/schema.ts`) confundía el EUDR en UNA
   sola compuerta ("¿Finca apta EUDR? (dossier + certificado)") entre `lots` y el video.

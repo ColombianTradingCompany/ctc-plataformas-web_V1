@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { mapPreviewUrl } from "@/lib/eudr";
+import { earthWebUrl } from "@/lib/earthKml";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
 import { LOCAL_INFRA } from "@/components/kaffetal-regal/data";
@@ -107,10 +108,6 @@ function downloadCoordinatesJson(fincaName: string, values: FincaEudrValues) {
   URL.revokeObjectURL(url);
 }
 
-// BCP's own EUDR assist form used to be always-expanded raw <select>/<input>
-// fields under a <details> -- fine for the one BCP admin who built it, hard
-// to scan for anyone else. This shows a plain read summary by default and
-// only reveals the edit form when BCP explicitly clicks "Editar".
 export type ProducerAnswers = {
   deforestationFree: boolean | null;
   legalProduction: boolean | null;
@@ -122,7 +119,70 @@ export type ProducerAnswers = {
   polygon: { lat: number; lng: number }[] | null;
 } | null;
 
+// ── Sub-pestañas de la sección EUDR (2026-07-23, pedido del owner) ──────────
+// Tres grupos con icono minimalista, en LECTURA y en EDICIÓN:
+//   1. Declaración de Productor — lo que el productor declara (ha, fecha de
+//      siembra, sistema, no-deforestación, producción legal, tenencia, doc).
+//   2. Análisis y Evidencia — coordenadas + mapa + la CONEXIÓN CON GOOGLE
+//      EARTH (enlace directo al predio + archivo .kml autogenerado con la
+//      info de la finca, para el análisis de imágenes satelitales históricas)
+//      + la evidencia disponible.
+//   3. Atributos Complementarios — áreas de legislación y sostenibilidad.
+// En edición sigue habiendo UN solo <form>: los paneles inactivos se ocultan
+// con display:none (los campos siguen montados y viajan completos al guardar).
+type SubTab = "declaracion" | "analisis" | "atributos";
+
+function SubTabIcon({ k }: { k: SubTab }) {
+  const p: Record<SubTab, ReactNode> = {
+    // Documento con lápiz: la declaración del productor.
+    declaracion: <><path d="M5 2.5h7l3 3V17.5H5Z" /><path d="M12 2.5v3h3" /><path d="M7.5 9h5M7.5 11.5h3" /><path d="m11.5 15.5 4-4 1.5 1.5-4 4-2 .5Z" /></>,
+    // Satélite sobre el globo: análisis de imágenes satelitales.
+    analisis: <><circle cx="8" cy="12.5" r="5" /><path d="M5.5 10.5c1.7-.8 3.6-.8 5.3 0M5.5 14.5c1.7.8 3.6.8 5.3 0" /><path d="m12.5 4 3.5 3.5M14.5 3.5l2 2M12 6.5 14 4.5" /></>,
+    // Capas: atributos complementarios.
+    atributos: <><path d="M10 3 17 7l-7 4-7-4Z" /><path d="m3.5 10.5 6.5 3.7 6.5-3.7" /><path d="m3.5 14 6.5 3.7 6.5-3.7" /></>,
+  };
+  return (
+    <svg viewBox="0 0 20 20" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {p[k]}
+    </svg>
+  );
+}
+
+function SubTabBar({ tab, setTab }: { tab: SubTab; setTab: (t: SubTab) => void }) {
+  const tabs: { key: SubTab; label: string }[] = [
+    { key: "declaracion", label: "Declaración de Productor" },
+    { key: "analisis", label: "Análisis y Evidencia" },
+    { key: "atributos", label: "Atributos Complementarios" },
+  ];
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 12px" }}>
+      {tabs.map((t) => {
+        const active = tab === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            aria-pressed={active}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "5px 12px", borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: "pointer",
+              border: `1.5px solid ${active ? "var(--primary)" : "var(--line)"}`,
+              background: active ? "var(--primary)" : "transparent",
+              color: active ? "#fff" : "var(--muted)",
+            }}
+          >
+            <SubTabIcon k={t.key} />
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function FincaEudrEditor({
+  fincaId,
   fincaName,
   producerId,
   values,
@@ -131,6 +191,7 @@ export function FincaEudrEditor({
   producerAnswers,
   saveAction,
 }: {
+  fincaId: string;
   fincaName: string;
   producerId: string;
   values: FincaEudrValues;
@@ -141,6 +202,7 @@ export function FincaEudrEditor({
 }) {
   const [supabase] = useState(() => createClient());
   const [editing, setEditing] = useState(false);
+  const [subTab, setSubTab] = useState<SubTab>("declaracion");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // The 5 producer declarations are controlled so CTC can either keep the
@@ -162,6 +224,8 @@ export function FincaEudrEditor({
     set(on ? [...list, key] : list.filter((k) => k !== key));
   }
   const mapUrl = mapPreviewUrl({ lat: values.eudr_lat, lng: values.eudr_lng, polygon: values.eudr_polygon_geojson });
+  const earthUrl = earthWebUrl(values.eudr_lat, values.eudr_lng);
+  const hasCoords = !!(values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng));
 
   // A plain <form action={saveAction}> looks like it "does nothing" after
   // submit: the server action's revalidatePath() refreshes `values`, but this
@@ -216,20 +280,41 @@ export function FincaEudrEditor({
       setSaving(false);
     }
   }
-  const hasCoords = !!(mapUrl && (values.eudr_polygon_geojson?.length || (values.eudr_lat && values.eudr_lng)));
 
+  // Mapa + conexión con Google Earth: vive en "Análisis y Evidencia". El .kml
+  // autogenerado (ruta autenticada) lleva punto + polígono + ficha de la finca;
+  // el enlace directo abre Earth web centrado en el predio para revisar las
+  // imágenes satelitales (históricas incluidas — la fecha de corte es 31/12/2020).
   const mapBlock = (
-    <div style={{ marginTop: 10 }}>
+    <div style={{ marginTop: 4, marginBottom: 12 }}>
       {mapUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- Google Static Maps URL, not a local asset
         <img src={mapUrl} alt={`Mapa de ${fincaName}`} style={{ borderRadius: 8, border: "1px solid var(--line)", display: "block" }} />
       ) : (
         <p className={styles.meta} style={{ margin: 0 }}>Sin coordenadas capturadas todavía.</p>
       )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+        {earthUrl && (
+          <a className="btn btn-sm btn-solid" href={earthUrl} target="_blank" rel="noopener noreferrer">
+            Abrir en Google Earth ↗
+          </a>
+        )}
+        {hasCoords && (
+          <>
+            <a className="btn btn-sm" href={`/bcp/fincas/${fincaId}/kml`}>
+              Archivo Google Earth (.kml) ⤓
+            </a>
+            <button type="button" className="btn btn-sm" onClick={() => downloadCoordinatesJson(fincaName, values)}>
+              Coordenadas (.json) ⤓
+            </button>
+          </>
+        )}
+      </div>
       {hasCoords && (
-        <button type="button" className="btn btn-sm" style={{ marginTop: 6 }} onClick={() => downloadCoordinatesJson(fincaName, values)}>
-          Descargar coordenadas (.json)
-        </button>
+        <p className={styles.meta} style={{ margin: "6px 0 0", fontSize: 11.5 }}>
+          El .kml lleva el punto, el polígono y la ficha de la finca — impórtelo en Google Earth y use las{" "}
+          <b>imágenes históricas</b> para verificar que no hay deforestación posterior al 31/12/2020.
+        </p>
       )}
     </div>
   );
@@ -241,37 +326,55 @@ export function FincaEudrEditor({
           <span style={{ fontWeight: 600, fontSize: 13.5 }}>Información EUDR (asistencia BCP)</span>
           <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>Editar</button>
         </div>
-        {mapBlock}
-        <div className={styles.meta} style={{ marginTop: 8, lineHeight: 1.9 }}>
-          <div>
-            Ubicación:{" "}
-            {values.eudr_polygon_geojson?.length
-              ? `Polígono de ${values.eudr_polygon_geojson.length} vértices`
-              : values.eudr_lat && values.eudr_lng
-                ? `${values.eudr_lat}, ${values.eudr_lng}`
-                : "no capturada"}
+        <SubTabBar tab={subTab} setTab={setSubTab} />
+
+        {subTab === "declaracion" && (
+          <div className={styles.meta} style={{ lineHeight: 1.9 }}>
+            <div>Área cultivada en café: {values.hectares != null && String(values.hectares).trim() !== "" && Number(values.hectares) > 0 ? `${values.hectares} ha` : "sin definir"}</div>
+            <div>Fecha de establecimiento del cultivo: {values.eudr_planting_date || "sin definir"}</div>
+            <div>Sistema productivo: {values.eudr_production_system ? PRODUCTION_SYSTEM_LABEL[values.eudr_production_system] : "sin definir"}</div>
+            <div>Libre de deforestación posterior al 31/12/2020: {yesNoLabel(values.eudr_deforestation_free)}</div>
+            <div>Producción en áreas legalmente establecidas: {yesNoLabel(values.eudr_legal_production)}</div>
+            <div>Tenencia de la tierra: {values.eudr_tenure ? TENURE_LABEL[values.eudr_tenure] : "sin definir"}</div>
+            <div>
+              Documento de respaldo: {values.eudr_legal_docs_filename ? (
+                <>{values.eudr_legal_docs_filename}{legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}</>
+              ) : "no adjuntado"}
+            </div>
           </div>
-          <div>Área cultivada en café: {values.hectares != null && String(values.hectares).trim() !== "" && Number(values.hectares) > 0 ? `${values.hectares} ha` : "sin definir"}</div>
-          <div>Fecha de siembra: {values.eudr_planting_date || "sin definir"}</div>
-          <div>Sistema productivo: {values.eudr_production_system ? PRODUCTION_SYSTEM_LABEL[values.eudr_production_system] : "sin definir"}</div>
-          <div>Libre de deforestación: {yesNoLabel(values.eudr_deforestation_free)}</div>
-          <div>Producción legal: {yesNoLabel(values.eudr_legal_production)}</div>
-          <div>Tenencia: {values.eudr_tenure ? TENURE_LABEL[values.eudr_tenure] : "sin definir"}</div>
-          <div>Infraestructura local: {labelsFor(values.eudr_local_infra, INFRA_DICT)}</div>
-          <div>Evidencia: {labelsFor(values.eudr_evidence_types, EVIDENCE_TYPES)}</div>
-          <div>Áreas legales verificadas: {labelsFor(values.eudr_legal_areas, LEGAL_AREAS)}</div>
+        )}
+
+        {subTab === "analisis" && (
           <div>
-            Documento: {values.eudr_legal_docs_filename ? (
-              <>{values.eudr_legal_docs_filename}{legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}</>
-            ) : "no adjuntado"}
+            {mapBlock}
+            <div className={styles.meta} style={{ lineHeight: 1.9 }}>
+              <div>
+                Ubicación:{" "}
+                {values.eudr_polygon_geojson?.length
+                  ? `Polígono de ${values.eudr_polygon_geojson.length} vértices`
+                  : values.eudr_lat && values.eudr_lng
+                    ? `${values.eudr_lat}, ${values.eudr_lng}`
+                    : "no capturada"}
+              </div>
+              <div>
+                Proyecto Google Earth guardado: {values.eudr_google_earth_url ? (
+                  <a href={values.eudr_google_earth_url} target="_blank" rel="noopener noreferrer">ver enlace</a>
+                ) : "sin enlace"}
+              </div>
+              <div>Evidencia: {labelsFor(values.eudr_evidence_types, EVIDENCE_TYPES)}</div>
+              {values.eudr_evidence_notes && <div>Notas de evidencia: {values.eudr_evidence_notes}</div>}
+            </div>
           </div>
-          <div>Sostenibilidad: {labelsFor(values.eudr_sustainability_tags, SUSTAINABILITY_TAGS)}</div>
-          <div>
-            Google Earth: {values.eudr_google_earth_url ? (
-              <a href={values.eudr_google_earth_url} target="_blank" rel="noopener noreferrer">ver enlace</a>
-            ) : "sin enlace"}
+        )}
+
+        {subTab === "atributos" && (
+          <div className={styles.meta} style={{ lineHeight: 1.9 }}>
+            <div>Áreas de legislación verificadas: {labelsFor(values.eudr_legal_areas, LEGAL_AREAS)}</div>
+            <div>Sostenibilidad y enfoque social: {labelsFor(values.eudr_sustainability_tags, SUSTAINABILITY_TAGS)}</div>
+            {values.eudr_sustainability_notes && <div>Notas de sostenibilidad: {values.eudr_sustainability_notes}</div>}
+            <div>Infraestructura local: {labelsFor(values.eudr_local_infra, INFRA_DICT)}</div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -282,199 +385,212 @@ export function FincaEudrEditor({
         <span style={{ fontWeight: 600, fontSize: 13.5 }}>Editando información EUDR</span>
         <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
       </div>
-      {mapBlock}
+      <SubTabBar tab={subTab} setTab={setSubTab} />
       {saveError && <p style={{ color: "var(--red)", fontSize: 12.5, marginBottom: 8 }}>{saveError}</p>}
+
+      {/* UN solo formulario para las tres sub-pestañas: los paneles inactivos se
+          OCULTAN (display:none), nunca se desmontan — así todos los campos viajan
+          juntos al guardar sin importar en cuál pestaña esté parado BCP. */}
       <form onSubmit={handleSubmit}>
-        <div className={styles.formGrid}>
-          <div className={styles.field}>
-            <label>Área cultivada en café (ha)</label>
-            <input name="hectares" type="number" step="0.01" min="0" defaultValue={values.hectares ?? ""} placeholder="Ej. 3.5" />
+        <div style={{ display: subTab === "declaracion" ? "block" : "none" }}>
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label>Área cultivada en café (ha)</label>
+              <input name="hectares" type="number" step="0.01" min="0" defaultValue={values.hectares ?? ""} placeholder="Ej. 3.5" />
+            </div>
+            <div className={styles.field}>
+              <label>Fecha de establecimiento del cultivo</label>
+              <input type="date" name="eudr_planting_date" value={evalPlanting} onChange={(e) => setEvalPlanting(e.target.value)} />
+              <ProducerAnswerNote
+                show={!!producerAnswers}
+                producerLabel={producerAnswers?.plantingDate || "sin definir"}
+                matches={(producerAnswers?.plantingDate ?? "") === evalPlanting}
+                onConfirm={() => setEvalPlanting(producerAnswers?.plantingDate ?? "")}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Sistema productivo</label>
+              <select name="eudr_production_system" value={evalSystem} onChange={(e) => setEvalSystem(e.target.value)}>
+                <option value="">Seleccione…</option>
+                <option value="sombra">Café bajo sombra</option>
+                <option value="agroforestal">Agroforestal</option>
+                <option value="tradicional">Tradicional / pleno sol</option>
+              </select>
+              <ProducerAnswerNote
+                show={!!producerAnswers}
+                producerLabel={PRODUCTION_SYSTEM_LABEL[producerAnswers?.productionSystem ?? ""] ?? "sin definir"}
+                matches={(producerAnswers?.productionSystem ?? "") === evalSystem}
+                onConfirm={() => setEvalSystem(producerAnswers?.productionSystem ?? "")}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>¿Libre de deforestación posterior al 31/12/2020?</label>
+              <select name="eudr_deforestation_free" value={evalDefor} onChange={(e) => setEvalDefor(e.target.value)}>
+                <option value="">Sin definir</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+              <ProducerAnswerNote
+                show={!!producerAnswers}
+                producerLabel={yesNoLabel(producerAnswers?.deforestationFree ?? null)}
+                matches={triSelectValue(producerAnswers?.deforestationFree ?? null) === evalDefor}
+                onConfirm={() => setEvalDefor(triSelectValue(producerAnswers?.deforestationFree ?? null))}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>¿Producción en áreas legalmente establecidas?</label>
+              <select name="eudr_legal_production" value={evalLegal} onChange={(e) => setEvalLegal(e.target.value)}>
+                <option value="">Sin definir</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+              <ProducerAnswerNote
+                show={!!producerAnswers}
+                producerLabel={yesNoLabel(producerAnswers?.legalProduction ?? null)}
+                matches={triSelectValue(producerAnswers?.legalProduction ?? null) === evalLegal}
+                onConfirm={() => setEvalLegal(triSelectValue(producerAnswers?.legalProduction ?? null))}
+              />
+            </div>
           </div>
-          <div className={styles.field}>
-            <label>Latitud (WGS84)</label>
-            <input name="eudr_lat" defaultValue={values.eudr_lat ?? ""} placeholder="4.712345" />
-          </div>
-          <div className={styles.field}>
-            <label>Longitud (WGS84)</label>
-            <input name="eudr_lng" defaultValue={values.eudr_lng ?? ""} placeholder="-75.612345" />
-          </div>
-          <div className={styles.field}>
-            <label>
-              URL de Google Earth
-              <span style={{ fontWeight: 400, color: "var(--muted)" }}> (opcional -- integración futura)</span>
-            </label>
-            <input name="eudr_google_earth_url" type="url" defaultValue={values.eudr_google_earth_url ?? ""} placeholder="https://earth.google.com/..." />
-          </div>
-          <div className={styles.field}>
-            <label>Fecha de establecimiento del cultivo</label>
-            <input type="date" name="eudr_planting_date" value={evalPlanting} onChange={(e) => setEvalPlanting(e.target.value)} />
-            <ProducerAnswerNote
-              show={!!producerAnswers}
-              producerLabel={producerAnswers?.plantingDate || "sin definir"}
-              matches={(producerAnswers?.plantingDate ?? "") === evalPlanting}
-              onConfirm={() => setEvalPlanting(producerAnswers?.plantingDate ?? "")}
-            />
-          </div>
-          <div className={styles.field}>
-            <label>Sistema productivo</label>
-            <select name="eudr_production_system" value={evalSystem} onChange={(e) => setEvalSystem(e.target.value)}>
-              <option value="">Seleccione…</option>
-              <option value="sombra">Café bajo sombra</option>
-              <option value="agroforestal">Agroforestal</option>
-              <option value="tradicional">Tradicional / pleno sol</option>
-            </select>
-            <ProducerAnswerNote
-              show={!!producerAnswers}
-              producerLabel={PRODUCTION_SYSTEM_LABEL[producerAnswers?.productionSystem ?? ""] ?? "sin definir"}
-              matches={(producerAnswers?.productionSystem ?? "") === evalSystem}
-              onConfirm={() => setEvalSystem(producerAnswers?.productionSystem ?? "")}
-            />
-          </div>
-          <div className={styles.field}>
-            <label>¿Libre de deforestación posterior al 31/12/2020?</label>
-            <select name="eudr_deforestation_free" value={evalDefor} onChange={(e) => setEvalDefor(e.target.value)}>
-              <option value="">Sin definir</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-            <ProducerAnswerNote
-              show={!!producerAnswers}
-              producerLabel={yesNoLabel(producerAnswers?.deforestationFree ?? null)}
-              matches={triSelectValue(producerAnswers?.deforestationFree ?? null) === evalDefor}
-              onConfirm={() => setEvalDefor(triSelectValue(producerAnswers?.deforestationFree ?? null))}
-            />
-          </div>
-          <div className={styles.field}>
-            <label>¿Producción en áreas legalmente establecidas?</label>
-            <select name="eudr_legal_production" value={evalLegal} onChange={(e) => setEvalLegal(e.target.value)}>
-              <option value="">Sin definir</option>
-              <option value="si">Sí</option>
-              <option value="no">No</option>
-            </select>
-            <ProducerAnswerNote
-              show={!!producerAnswers}
-              producerLabel={yesNoLabel(producerAnswers?.legalProduction ?? null)}
-              matches={triSelectValue(producerAnswers?.legalProduction ?? null) === evalLegal}
-              onConfirm={() => setEvalLegal(triSelectValue(producerAnswers?.legalProduction ?? null))}
-            />
+
+          {/* Tenencia + su documento de respaldo van JUNTOS: el documento del
+              productor respalda precisamente la tenencia declarada. */}
+          <div style={{ borderTop: "1px dashed var(--line)", borderBottom: "1px dashed var(--line)", padding: "14px 0", margin: "4px 0 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className={styles.field} style={{ marginBottom: 0 }}>
+              <label>Tenencia de la tierra</label>
+              <select name="eudr_tenure" value={evalTenure} onChange={(e) => setEvalTenure(e.target.value)}>
+                <option value="">Seleccione…</option>
+                <option value="propietario">Propietario</option>
+                <option value="poseedor">Poseedor reconocido</option>
+                <option value="asociacion">Asociación</option>
+              </select>
+              <ProducerAnswerNote
+                show={!!producerAnswers}
+                producerLabel={TENURE_LABEL[producerAnswers?.tenure ?? ""] ?? "sin definir"}
+                matches={(producerAnswers?.tenure ?? "") === evalTenure}
+                onConfirm={() => setEvalTenure(producerAnswers?.tenure ?? "")}
+              />
+            </div>
+            <div className={styles.field} style={{ marginBottom: 0 }}>
+              <label>Documento de respaldo</label>
+              {values.eudr_legal_docs_filename ? (
+                <p className={styles.meta} style={{ margin: 0 }}>
+                  {values.eudr_legal_docs_filename}
+                  {legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}
+                </p>
+              ) : (
+                <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Tenencia + su documento de respaldo van JUNTOS: el documento del
-            productor respalda precisamente la tenencia declarada, así que se
-            agrupan aparte del resto, entre divisores. */}
-        <div style={{ borderTop: "1px dashed var(--line)", borderBottom: "1px dashed var(--line)", padding: "14px 0", margin: "4px 0 14px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div className={styles.field} style={{ marginBottom: 0 }}>
-            <label>Tenencia de la tierra</label>
-            <select name="eudr_tenure" value={evalTenure} onChange={(e) => setEvalTenure(e.target.value)}>
-              <option value="">Seleccione…</option>
-              <option value="propietario">Propietario</option>
-              <option value="poseedor">Poseedor reconocido</option>
-              <option value="asociacion">Asociación</option>
-            </select>
-            <ProducerAnswerNote
-              show={!!producerAnswers}
-              producerLabel={TENURE_LABEL[producerAnswers?.tenure ?? ""] ?? "sin definir"}
-              matches={(producerAnswers?.tenure ?? "") === evalTenure}
-              onConfirm={() => setEvalTenure(producerAnswers?.tenure ?? "")}
-            />
-          </div>
-          <div className={styles.field} style={{ marginBottom: 0 }}>
-            <label>Documento de respaldo</label>
-            {values.eudr_legal_docs_filename ? (
-              <p className={styles.meta} style={{ margin: 0 }}>
-                {values.eudr_legal_docs_filename}
-                {legalDocUrl && <> · <a href={legalDocUrl} target="_blank" rel="noopener noreferrer">ver</a></>}
-              </p>
-            ) : (
-              <p className={styles.meta} style={{ margin: 0 }}>El productor todavía no ha adjuntado ningún documento.</p>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.field}>
-          <label>Evidencia disponible</label>
-          <div style={{ display: "grid", gap: 8 }}>
-            {EVIDENCE_TYPES.map(([key, label]) => {
-              const on = evidence.includes(key);
-              const existing = evidenceFiles[key];
-              return (
-                <div key={key}>
-                  <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                    <input
-                      type="checkbox"
-                      name="eudr_evidence_types"
-                      value={key}
-                      checked={on}
-                      onChange={(e) => toggle(evidence, setEvidence, key, e.target.checked)}
-                    />{" "}
-                    {label}
-                  </label>
-                  {on && (
-                    <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
-                      {existing && (
-                        <p className={styles.meta} style={{ margin: "0 0 3px" }}>
-                          ✓ {existing.fileName}
-                          {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
-                        </p>
-                      )}
-                      <input type="file" name={`evidence_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <textarea name="eudr_evidence_notes" defaultValue={values.eudr_evidence_notes ?? ""} placeholder="Fechas, fuente, quién verificó…" style={{ marginTop: 8 }} />
-          <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada evidencia marcada.</p>
-        </div>
-
-        <div className={styles.field}>
-          <label>Áreas de legislación verificadas</label>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            {LEGAL_AREAS.map(([key, label]) => (
-              <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                <input type="checkbox" name="eudr_legal_areas" value={key} defaultChecked={values.eudr_legal_areas?.includes(key)} /> {label}
+        <div style={{ display: subTab === "analisis" ? "block" : "none" }}>
+          {mapBlock}
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label>Latitud (WGS84)</label>
+              <input name="eudr_lat" defaultValue={values.eudr_lat ?? ""} placeholder="4.712345" />
+            </div>
+            <div className={styles.field}>
+              <label>Longitud (WGS84)</label>
+              <input name="eudr_lng" defaultValue={values.eudr_lng ?? ""} placeholder="-75.612345" />
+            </div>
+            <div className={styles.field}>
+              <label>
+                URL de proyecto Google Earth
+                <span style={{ fontWeight: 400, color: "var(--muted)" }}> (pegue aquí el enlace del proyecto donde guardó su análisis)</span>
               </label>
-            ))}
+              <input name="eudr_google_earth_url" type="url" defaultValue={values.eudr_google_earth_url ?? ""} placeholder="https://earth.google.com/..." />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Evidencia disponible</label>
+            <div style={{ display: "grid", gap: 8 }}>
+              {EVIDENCE_TYPES.map(([key, label]) => {
+                const on = evidence.includes(key);
+                const existing = evidenceFiles[key];
+                return (
+                  <div key={key}>
+                    <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                      <input
+                        type="checkbox"
+                        name="eudr_evidence_types"
+                        value={key}
+                        checked={on}
+                        onChange={(e) => toggle(evidence, setEvidence, key, e.target.checked)}
+                      />{" "}
+                      {label}
+                    </label>
+                    {on && (
+                      <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
+                        {existing && (
+                          <p className={styles.meta} style={{ margin: "0 0 3px" }}>
+                            ✓ {existing.fileName}
+                            {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
+                          </p>
+                        )}
+                        <input type="file" name={`evidence_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <textarea name="eudr_evidence_notes" defaultValue={values.eudr_evidence_notes ?? ""} placeholder="Fechas, fuente, quién verificó…" style={{ marginTop: 8 }} />
+            <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada evidencia marcada.</p>
           </div>
         </div>
 
-        <div className={styles.field}>
-          <label>Sostenibilidad y enfoque social</label>
-          <div style={{ display: "grid", gap: 8 }}>
-            {SUSTAINABILITY_TAGS.map(([key, label]) => {
-              const on = sustain.includes(key);
-              const existing = sustainabilityFiles[key];
-              return (
-                <div key={key}>
-                  <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
-                    <input
-                      type="checkbox"
-                      name="eudr_sustainability_tags"
-                      value={key}
-                      checked={on}
-                      onChange={(e) => toggle(sustain, setSustain, key, e.target.checked)}
-                    />{" "}
-                    {label}
-                  </label>
-                  {on && (
-                    <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
-                      {existing && (
-                        <p className={styles.meta} style={{ margin: "0 0 3px" }}>
-                          ✓ {existing.fileName}
-                          {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
-                        </p>
-                      )}
-                      <input type="file" name={`sustainability_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        <div style={{ display: subTab === "atributos" ? "block" : "none" }}>
+          <div className={styles.field}>
+            <label>Áreas de legislación verificadas</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {LEGAL_AREAS.map(([key, label]) => (
+                <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                  <input type="checkbox" name="eudr_legal_areas" value={key} defaultChecked={values.eudr_legal_areas?.includes(key)} /> {label}
+                </label>
+              ))}
+            </div>
           </div>
-          <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} style={{ marginTop: 8 }} />
-          <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada ítem marcado.</p>
+
+          <div className={styles.field}>
+            <label>Sostenibilidad y enfoque social</label>
+            <div style={{ display: "grid", gap: 8 }}>
+              {SUSTAINABILITY_TAGS.map(([key, label]) => {
+                const on = sustain.includes(key);
+                const existing = sustainabilityFiles[key];
+                return (
+                  <div key={key}>
+                    <label style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                      <input
+                        type="checkbox"
+                        name="eudr_sustainability_tags"
+                        value={key}
+                        checked={on}
+                        onChange={(e) => toggle(sustain, setSustain, key, e.target.checked)}
+                      />{" "}
+                      {label}
+                    </label>
+                    {on && (
+                      <div style={{ margin: "4px 0 0 24px", fontSize: 12 }}>
+                        {existing && (
+                          <p className={styles.meta} style={{ margin: "0 0 3px" }}>
+                            ✓ {existing.fileName}
+                            {fileUrls[existing.assetId] && <> · <a href={fileUrls[existing.assetId]} target="_blank" rel="noopener noreferrer">ver</a></>}
+                          </p>
+                        )}
+                        <input type="file" name={`sustainability_file_${key}`} accept="image/*,application/pdf" style={{ fontSize: 12 }} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} style={{ marginTop: 8 }} />
+            <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada ítem marcado.</p>
+          </div>
         </div>
 
         <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar información EUDR"}</button>

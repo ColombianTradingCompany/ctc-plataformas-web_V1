@@ -57,6 +57,25 @@ Formato:
   sentido: eudr_deforestation_free sigue siendo true = libre — solo se invierte la
   presentación. Verificado en vivo: "No" guarda true y el round-trip pinta "No" verde.
 
+## [2026-07-23] EUDR BCP: 3 sub-pestañas + conexión con Google Earth (V2.10)
+- FincaEudrEditor (pestaña EUDR del panel de finca) reorganizado en 3 sub-pestañas
+  con icono, en lectura Y edición: Declaración de Productor (ha, fecha de siembra,
+  sistema, no-deforestación, producción legal, tenencia + doc de respaldo) ·
+  Análisis y Evidencia (lat/lng WGS84, mapa, la conexión Google Earth, evidencia) ·
+  Atributos Complementarios (áreas de legislación + sostenibilidad). Sigue habiendo
+  UN formulario: los paneles inactivos se ocultan con display:none, nunca se
+  desmontan, así el guardado viaja completo.
+- CONEXIÓN GOOGLE EARTH (nueva): src/lib/earthKml.ts genera el .kml de la finca
+  (punto + polígono EUDR cerrado + ficha de datos en la descripción, estilo oro CTC)
+  servido por la ruta autenticada /bcp/fincas/[id]/kml (route handler — NO hereda el
+  layout, requireConsoleAccess propio + force-dynamic); más un enlace directo
+  earth.google.com/web/@lat,lng centrado en el predio. Propósito: análisis de
+  imágenes satelitales HISTÓRICAS en Earth para verificar la fecha de corte
+  31/12/2020. El campo manual eudr_google_earth_url pasa a ser "URL de proyecto
+  Google Earth" (donde BCP guarda su análisis). Generador validado contra la finca
+  real Ostpark (13 checks: anillo cerrado, orden lng-lat, escapes XML, null-safety).
+- Cambio de DICT `eva`/`eudr` + FILETREE (earthKml.ts, ruta kml) al próximo wrap.
+
 ## [2026-07-22] Mapa de Trabajo (Base) — EUDR desdoblado finca vs. lote
 - El Base de la Mapa de Trabajo (`src/lib/workmap/schema.ts`) confundía el EUDR en UNA
   sola compuerta ("¿Finca apta EUDR? (dossier + certificado)") entre `lots` y el video.

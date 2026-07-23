@@ -350,6 +350,7 @@ export default async function BcpFincasPage() {
                         }
                         eudrSection={
                           <FincaEudrEditor
+                            fincaId={finca.id}
                             fincaName={finca.name}
                             producerId={finca.producer_id}
                             values={finca}

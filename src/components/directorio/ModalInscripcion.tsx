@@ -1,148 +1,169 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { Modal } from "./Modal";
+import { LegalFooter } from "@/components/LegalFooter";
 import { SelectorEspecialidades } from "./SelectorEspecialidades";
 import { BancoCertificaciones } from "./BancoCertificaciones";
-import { MOTIVOS, MUNICIPIOS, PLATAFORMAS, type Plataforma, type Usuario } from "./data";
+import { DEPARTAMENTOS, MOTIVOS, municipiosDe } from "./data";
+import { registrarFichaDirectorio } from "@/lib/directorio/actions";
 
-const ETIQUETA_PLATAFORMA: Record<Plataforma, string> = {
-  "Kaffetal Regal": "Kaffetal Regal — soy productor / trabajo en origen",
-  "Cherry Picked": "Cherry Picked — tuesto o compro café verde",
-  "Ambas": "Ambas plataformas",
-};
-
-// Formulario de inscripción. Todavía NO persiste nada: rellena la ficha de la
-// sesión de demostración y lleva al ingreso, igual que el prototipo. Cuando el
-// directorio tenga tabla propia en Supabase, este submit es el único punto que
-// cambia (una server action en lugar de onSubmit local).
-export function ModalInscripcion({
-  onSubmit,
-  onClose,
+// Completar la ficha. Se muestra cuando el usuario YA está autenticado pero
+// todavía no tiene ficha en el Directorio (recién creó su cuenta, o entró con
+// una cuenta de Kaffetal Regal / Cherry Picked que aún no está en el
+// directorio). Persiste de verdad: registrarFichaDirectorio crea la fila en
+// directorio_profiles (estado 'pendiente') y siembra la conversación con CTC.
+export function Inscripcion({
+  correo,
+  onListo,
+  onSalir,
 }: {
-  onSubmit: (parcial: Partial<Usuario>) => void;
-  onClose: () => void;
+  correo: string;
+  onListo: () => void;
+  onSalir: () => void;
 }) {
   const [nombre, setNombre] = useState("");
+  const [departamento, setDepartamento] = useState("");
   const [municipio, setMunicipio] = useState("");
   const [tel, setTel] = useState("");
-  const [mail, setMail] = useState("");
   const [esp, setEsp] = useState<string[]>([]);
   const [cert, setCert] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [motivo, setMotivo] = useState(MOTIVOS[0]);
   const [motivoTxt, setMotivoTxt] = useState("");
-  const [plataforma, setPlataforma] = useState<Plataforma>("Kaffetal Regal");
   const [habeas, setHabeas] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
 
-  const enviar = (e: React.FormEvent) => {
+  const municipios = municipiosDe(departamento);
+
+  const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parcial: Partial<Usuario> = { plataforma, motivo };
-    if (nombre.trim()) parcial.nombre = nombre.trim();
-    if (municipio) parcial.municipio = municipio;
-    if (tel) parcial.tel = tel;
-    if (mail) parcial.mail = mail;
-    if (esp.length) parcial.esp = esp;
-    if (cert.length) parcial.cert = cert;
-    if (bio.trim()) parcial.bio = bio.trim();
-    if (motivoTxt.trim()) parcial.motivoTxt = motivoTxt.trim();
-    onSubmit(parcial);
+    if (!nombre.trim()) return setError("Escribe tu nombre completo.");
+    if (!habeas) return setError("Debes autorizar el tratamiento de datos para continuar.");
+    setError(null);
+    setCargando(true);
+    const r = await registrarFichaDirectorio({
+      nombre, departamento, municipio, telefono: tel,
+      especialidades: esp, certificaciones: cert, bio, motivo, motivoTxt,
+    });
+    setCargando(false);
+    if (!r.ok) return setError(r.error);
+    onListo();
   };
 
   return (
-    <Modal
-      eyebrow="Registro · Toma menos de 2 minutos"
-      titulo="Inscribirme al directorio"
-      onClose={onClose}
-      pie={
-        <>
-          <button className="btn" form="form-inscripcion" type="submit">Crear mi ficha</button>
-          <button className="btn btn--fantasma btn--sm" type="button" onClick={onClose}>Cancelar</button>
-          <span className="aviso-linea" style={{ marginLeft: "auto" }}>Demo · no se envía nada</span>
-        </>
-      }
-    >
-      <form className="modal__cuerpo" id="form-inscripcion" onSubmit={enviar}>
-        <div className="campo-fila">
-          <div className="campo">
-            <label htmlFor="i-nombre">Nombre completo</label>
-            <input id="i-nombre" required placeholder="Ej. Marcela Rueda Ardila"
-              value={nombre} onChange={(e) => setNombre(e.target.value)} />
+    <div>
+      <header className="topbar">
+        <div className="wrap topbar__in">
+          <span className="marca">
+            <span className="marca__logo">
+              <Image src="/images/shared/directorio-logo.png" alt="" width={900} height={900} />
+            </span>
+            <span className="marca__txt">Directorio del Café<small>Colombia</small></span>
+          </span>
+          <nav>
+            <a href="#" onClick={(e) => { e.preventDefault(); onSalir(); }}>Salir</a>
+          </nav>
+        </div>
+      </header>
+
+      <main className="seccion">
+        <div className="wrap" style={{ maxWidth: 780 }}>
+          <div className="encabezado con-cinta">
+            <p className="eyebrow">Completa tu ficha · toma menos de 2 minutos</p>
+            <h2>Ya casi estás en el directorio</h2>
+            <p className="deck">
+              Tu cuenta quedó lista con <b>{correo}</b>. Completa tu ficha y el equipo de CTC la revisará;
+              cuando la aprobemos recibirás tu Código de Verificado para activar tu perfil.
+            </p>
           </div>
-          <div className="campo">
-            <label htmlFor="i-mun">Municipio de residencia</label>
-            <select id="i-mun" required value={municipio} onChange={(e) => setMunicipio(e.target.value)}>
-              <option value="">— Selecciona —</option>
-              {MUNICIPIOS.map((m) => <option key={m}>{m}</option>)}
-            </select>
-          </div>
-        </div>
 
-        <div className="campo-fila">
-          <div className="campo">
-            <label htmlFor="i-tel">Teléfono / WhatsApp</label>
-            <input id="i-tel" required placeholder="+57 300 000 0000"
-              value={tel} onChange={(e) => setTel(e.target.value)} />
-          </div>
-          <div className="campo">
-            <label htmlFor="i-mail">Correo electrónico</label>
-            <input id="i-mail" type="email" required placeholder="nombre@correo.com"
-              value={mail} onChange={(e) => setMail(e.target.value)} />
-          </div>
-        </div>
+          <form className="tarjeta" onSubmit={enviar} style={{ marginTop: "1.2rem" }}>
+            <div className="campo-fila">
+              <div className="campo">
+                <label htmlFor="i-nombre">Nombre completo</label>
+                <input id="i-nombre" required placeholder="Ej. Marcela Rueda Ardila"
+                  value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              </div>
+              <div className="campo">
+                <label htmlFor="i-tel">Teléfono / WhatsApp</label>
+                <input id="i-tel" placeholder="+57 300 000 0000"
+                  value={tel} onChange={(e) => setTel(e.target.value)} />
+              </div>
+            </div>
 
-        <div className="campo">
-          <label>¿A qué te dedicas? · marca todo lo que hagas</label>
-          <small style={{ margin: "0 0 .55rem" }}>
-            Toca la <b>i</b> de cada opción si no estás seguro de qué incluye.
-          </small>
-          <SelectorEspecialidades valor={esp} onChange={setEsp} />
-        </div>
+            <div className="campo-fila">
+              <div className="campo">
+                <label htmlFor="i-dep">Departamento</label>
+                <select id="i-dep" value={departamento}
+                  onChange={(e) => { setDepartamento(e.target.value); setMunicipio(""); }}>
+                  <option value="">— Selecciona —</option>
+                  {DEPARTAMENTOS.map((d) => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="campo">
+                <label htmlFor="i-mun">Municipio</label>
+                <select id="i-mun" value={municipio} disabled={!departamento}
+                  onChange={(e) => setMunicipio(e.target.value)}>
+                  <option value="">{departamento ? "— Selecciona —" : "Elige un departamento"}</option>
+                  {municipios.map((m) => <option key={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
 
-        <div className="campo">
-          <label>Certificaciones o experiencia</label>
-          <small style={{ margin: "0 0 .55rem" }}>
-            Busca en la lista o escribe la tuya al final. Si aprendiste en la práctica, marca
-            «Autodidacta»: también cuenta.
-          </small>
-          <BancoCertificaciones valor={cert} onChange={setCert} />
-        </div>
+            <div className="campo">
+              <label>¿A qué te dedicas? · marca todo lo que hagas</label>
+              <small style={{ margin: "0 0 .55rem" }}>Toca la <b>i</b> de cada opción si no estás seguro de qué incluye.</small>
+              <SelectorEspecialidades valor={esp} onChange={setEsp} />
+            </div>
 
-        <div className="campo">
-          <label htmlFor="i-bio">Tu presentación</label>
-          <textarea id="i-bio" placeholder="Dos líneas bastan: qué haces, dónde y con quién trabajas."
-            value={bio} onChange={(e) => setBio(e.target.value)} />
-          <small>Es lo primero que lee quien abre tu ficha.</small>
-        </div>
+            <div className="campo">
+              <label>Certificaciones o experiencia</label>
+              <small style={{ margin: "0 0 .55rem" }}>
+                Busca en la lista o escribe la tuya al final. Si aprendiste en la práctica, marca «Autodidacta».
+              </small>
+              <BancoCertificaciones valor={cert} onChange={setCert} />
+            </div>
 
-        <div className="campo">
-          <label htmlFor="i-motivo">¿Qué te trae al directorio?</label>
-          <select id="i-motivo" value={motivo} onChange={(e) => setMotivo(e.target.value)}>
-            {MOTIVOS.map((m) => <option key={m}>{m}</option>)}
-          </select>
-        </div>
+            <div className="campo">
+              <label htmlFor="i-bio">Tu presentación</label>
+              <textarea id="i-bio" placeholder="Dos líneas bastan: qué haces, dónde y con quién trabajas."
+                value={bio} onChange={(e) => setBio(e.target.value)} />
+            </div>
 
-        <div className="campo">
-          <label htmlFor="i-motivo-txt">Dilo en una línea</label>
-          <input id="i-motivo-txt" maxLength={120}
-            placeholder="Ej. Quiero que los tostadores de Europa conozcan el café de mi finca."
-            value={motivoTxt} onChange={(e) => setMotivoTxt(e.target.value)} />
-          <small>Aparece en tu ficha, bajo tu presentación. Máximo 120 caracteres.</small>
-        </div>
+            <div className="campo-fila">
+              <div className="campo">
+                <label htmlFor="i-motivo">¿Qué te trae al directorio?</label>
+                <select id="i-motivo" value={motivo} onChange={(e) => setMotivo(e.target.value)}>
+                  {MOTIVOS.map((m) => <option key={m}>{m}</option>)}
+                </select>
+              </div>
+              <div className="campo">
+                <label htmlFor="i-motivo-txt">Dilo en una línea</label>
+                <input id="i-motivo-txt" maxLength={140}
+                  placeholder="Ej. Quiero que los tostadores conozcan mi café."
+                  value={motivoTxt} onChange={(e) => setMotivoTxt(e.target.value)} />
+              </div>
+            </div>
 
-        <div className="campo">
-          <label htmlFor="i-plat">¿Con qué cuenta quieres entrar?</label>
-          <select id="i-plat" value={plataforma}
-            onChange={(e) => setPlataforma(e.target.value as Plataforma)}>
-            {PLATAFORMAS.map((p) => <option key={p} value={p}>{ETIQUETA_PLATAFORMA[p]}</option>)}
-          </select>
-        </div>
+            <label className="chk" style={{ textTransform: "none", fontSize: ".8rem", letterSpacing: 0, padding: ".6rem .7rem" }}>
+              <input type="checkbox" required checked={habeas} onChange={(e) => setHabeas(e.target.checked)} />
+              Autorizo el tratamiento de mis datos según la Ley 1581 de 2012
+            </label>
 
-        <label className="chk" style={{ textTransform: "none", fontSize: ".8rem", letterSpacing: 0, padding: ".6rem .7rem" }}>
-          <input type="checkbox" required checked={habeas} onChange={(e) => setHabeas(e.target.checked)} />
-          Autorizo el tratamiento de mis datos según la Ley 1581 de 2012
-        </label>
-      </form>
-    </Modal>
+            {error ? <p className="aviso-linea" style={{ color: "var(--rojo)" }}>{error}</p> : null}
+
+            <div style={{ display: "flex", gap: ".7rem", alignItems: "center", flexWrap: "wrap", marginTop: ".4rem" }}>
+              <button className="btn" type="submit" disabled={cargando}>
+                {cargando ? "Creando tu ficha…" : "Crear mi ficha"}
+              </button>
+              <button className="btn btn--fantasma btn--sm" type="button" onClick={onSalir}>Salir</button>
+            </div>
+          </form>
+        </div>
+      </main>
+      <LegalFooter />
+    </div>
   );
 }

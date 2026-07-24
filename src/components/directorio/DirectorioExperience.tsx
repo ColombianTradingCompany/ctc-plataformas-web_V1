@@ -1,65 +1,95 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { cargarDirectorio } from "@/lib/directorio/actions";
+import type { DirectorioBundle } from "@/lib/directorio/types";
 import { Landing } from "./Landing";
 import { Login } from "./Login";
+import { Inscripcion } from "./ModalInscripcion";
 import { AppView } from "./AppView";
-import { ModalInscripcion } from "./ModalInscripcion";
-import { USUARIO_INICIAL, type Plataforma, type Usuario } from "./data";
 
-type Vista = "landing" | "login" | "app";
+type Vista = "landing" | "login";
 
-// Raíz del Directorio de Especialistas del Café · Santander.
-//
-// Tres vistas en una sola ruta, como el prototipo: landing pública → ingreso →
-// app de miembros. Todo el estado vive en memoria; recargar devuelve la
-// maqueta a su punto de partida. La landing es la parte real (es lo que verá
-// quien entre a directoriodelcafe.ctcexport.com); lo de adentro es la
-// demostración de a dónde va esto cuando tenga respaldo en Supabase.
+// Raíz del Directorio del Café. Ahora con respaldo real en Supabase:
+//   sin sesión              → landing / ingreso (login propio del Directorio)
+//   con sesión, sin ficha   → inscripción (completa tu ficha)
+//   con sesión, con ficha   → app, con las pestañas abiertas según el estado de
+//                             verificación (pendiente/aprobado/verificado…).
+// La sesión es la MISMA de Kaffetal Regal / Cherry Picked: quien entra con su
+// cuenta de Google (o correo) es reconocido en todo el ecosistema.
 export function DirectorioExperience() {
+  const [cargando, setCargando] = useState(true);
+  const [bundle, setBundle] = useState<DirectorioBundle | null>(null);
   const [vista, setVista] = useState<Vista>("landing");
-  const [inscripcionAbierta, setInscripcionAbierta] = useState(false);
-  const [usuario, setUsuario] = useState<Usuario>(USUARIO_INICIAL);
+  const [modoLogin, setModoLogin] = useState<"entrar" | "crear">("entrar");
 
-  const alInscribirse = (parcial: Partial<Usuario>) => {
-    setUsuario({ ...usuario, ...parcial });
-    setInscripcionAbierta(false);
+  const recargar = useCallback(async () => {
+    const b = await cargarDirectorio();
+    setBundle(b);
+    setCargando(false);
+  }, []);
+
+  useEffect(() => {
+    let vivo = true;
+    const supabase = createClient();
+    const cargar = async () => {
+      const b = await cargarDirectorio();
+      if (!vivo) return;
+      setBundle(b);
+      setCargando(false);
+    };
+    cargar();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      // SIGNED_IN también salta al refrescar el token o recuperar la sesión de
+      // cookies; recargar el bundle es idempotente y no toca la pestaña activa
+      // (ese estado vive dentro de AppView), así que no expulsa al usuario.
+      if (["SIGNED_IN", "SIGNED_OUT", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) cargar();
+    });
+    return () => {
+      vivo = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const salir = useCallback(async () => {
+    await createClient().auth.signOut();
+    setBundle(null);
+    setVista("landing");
+    window.scrollTo(0, 0);
+  }, []);
+
+  const irLogin = (modo: "entrar" | "crear") => {
+    setModoLogin(modo);
     setVista("login");
     window.scrollTo(0, 0);
   };
 
-  const ir = (v: Vista) => {
-    setVista(v);
-    window.scrollTo(0, 0);
-  };
+  if (cargando) {
+    return (
+      <div className="pantalla-login">
+        <div className="login" style={{ textAlign: "center" }}>
+          <div className="login__cuerpo">
+            <p className="eyebrow" style={{ margin: 0 }}>Directorio del Café</p>
+            <p style={{ color: "var(--gris)" }}>Cargando…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  return (
-    <>
-      {vista === "landing" ? (
-        <Landing onInscribirme={() => setInscripcionAbierta(true)} onIngresar={() => ir("login")} />
-      ) : null}
+  // Con sesión.
+  if (bundle) {
+    if (!bundle.ficha) {
+      return <Inscripcion correo={bundle.correo} onListo={recargar} onSalir={salir} />;
+    }
+    return <AppView bundle={bundle} onRecargar={recargar} onSalir={salir} />;
+  }
 
-      {vista === "login" ? (
-        <Login
-          mail={usuario.mail}
-          plataforma={usuario.plataforma}
-          onPlataforma={(p: Plataforma) => setUsuario({ ...usuario, plataforma: p })}
-          onEntrar={(mail) => {
-            setUsuario({ ...usuario, mail });
-            ir("app");
-          }}
-          onInscribirme={() => setInscripcionAbierta(true)}
-          onVolver={() => ir("landing")}
-        />
-      ) : null}
-
-      {vista === "app" ? (
-        <AppView usuario={usuario} onUsuario={setUsuario} onSalir={() => ir("landing")} />
-      ) : null}
-
-      {inscripcionAbierta ? (
-        <ModalInscripcion onSubmit={alInscribirse} onClose={() => setInscripcionAbierta(false)} />
-      ) : null}
-    </>
+  // Sin sesión.
+  return vista === "login" ? (
+    <Login modoInicial={modoLogin} onVolver={() => setVista("landing")} />
+  ) : (
+    <Landing onInscribirme={() => irLogin("crear")} onIngresar={() => irLogin("entrar")} />
   );
 }

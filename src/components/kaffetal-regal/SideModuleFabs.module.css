@@ -1,0 +1,44 @@
+/* Ambient side shortcuts to Retroalimentación (left) and Herramientas (right).
+   Vertically centered in the page's side gutters on wide/laptop viewports
+   (there's margin to spare beside the centered .wrap column there); pinned to
+   the bottom corners on narrow ones, same convention as every other
+   bounce-FAB in the app (thumb-reachable, doesn't collide with the
+   single-column card stack). `margin-top` (not a permanent transform) does
+   the vertical centering, so the bounce keyframes stay one simple
+   translateY hop shared by both layouts. */
+.fab{
+  position:fixed;top:50%;margin-top:-30px;z-index:40;
+  display:flex;align-items:center;justify-content:center;
+  width:60px;height:60px;border-radius:50%;border:1.5px solid var(--line);
+  background:var(--card);color:var(--primary);cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,0,0,.14);
+  transition:filter .15s ease, box-shadow .15s ease;
+}
+.fab:hover{filter:brightness(.97);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.fab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fab svg{width:24px;height:24px}
+.left{left:18px}
+.right{right:18px}
+
+.badge{
+  position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;
+  border-radius:999px;background:var(--accent);color:#fff;
+  font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;line-height:1;
+}
+
+.bounce{animation:sideFabBounce .8s cubic-bezier(.36,.07,.19,.97)}
+@keyframes sideFabBounce{
+  0%,100%{transform:translateY(0)}
+  30%{transform:translateY(-12px)}
+  55%{transform:translateY(0)}
+  75%{transform:translateY(-5px)}
+}
+@media(prefers-reduced-motion:reduce){.bounce{animation:none}}
+
+@media(max-width:880px){
+  .fab{top:auto;bottom:16px;margin-top:0;width:52px;height:52px}
+  .fab svg{width:21px;height:21px}
+  .left{left:14px}
+  .right{right:14px}
+}

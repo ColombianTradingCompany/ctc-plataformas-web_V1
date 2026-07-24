@@ -18,6 +18,7 @@ import { ToolPanel } from "@/components/tools/ToolPanel";
 import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
+import { SideModuleFabs } from "./SideModuleFabs";
 import styles from "./AppDashboard.module.css";
 
 // Copy en español de las herramientas para el productor. El INTERIOR de cada
@@ -305,13 +306,6 @@ export function AppDashboard({
       alert: aptosToPostulate.length > 0 || paymentsDue.length > 0 || samplesToShip > 0,
     },
     {
-      key: "retro",
-      icon: HUB_ICON.retro,
-      title: "Retroalimentación y ayuda",
-      fact: newCtcNotes > 0 ? `${newCtcNotes} nota${newCtcNotes === 1 ? "" : "s"} nueva${newCtcNotes === 1 ? "" : "s"} de CTC` : "Converse con CTC sobre sus fincas y solicitudes",
-      alert: newCtcNotes > 0,
-    },
-    {
       key: "cert",
       icon: HUB_ICON.cert,
       title: "Certificación CTC",
@@ -329,18 +323,30 @@ export function AppDashboard({
       alert: false,
     },
     {
-      key: "herramientas",
-      icon: HUB_ICON.herramientas,
-      title: "Herramientas Cafeteras",
-      fact: "Mermas, rendimiento y disco Agtron — funcionan sin internet",
-    },
-    {
       key: "servicios",
       icon: HUB_ICON.servicios,
       title: "Más allá de la exportación",
       fact: "CTC Tech · Varietales Registrados — solicítelos desde su panel",
     },
   ];
+
+  // Looks up one tile's content by key and renders the standard hub button --
+  // used to compose the grouped/divided hub layout below instead of a blind
+  // .map over the whole array (Retroalimentación/Herramientas moved out of
+  // the grid entirely, into the two side FABs).
+  function renderTile(key: DashboardModule) {
+    const t = tiles.find((x) => x.key === key);
+    if (!t) return null;
+    return (
+      <button key={t.key} type="button" className={styles.hubTile} onClick={() => onSelectModule(t.key)}>
+        <span className={styles.hubIcon} aria-hidden>{t.icon}</span>
+        <span className={styles.hubText}>
+          <span className={styles.hubTitle}>{t.title}</span>
+          <span className={t.alert ? styles.hubFactAlert : styles.hubFact}>{t.fact}</span>
+        </span>
+      </button>
+    );
+  }
 
   function startRename(l: Lot) {
     setRenamingId(l.id);
@@ -391,15 +397,19 @@ export function AppDashboard({
 
         {module === null && (
           <div className={styles.hubGrid}>
-            {tiles.map((t) => (
-              <button key={t.key} type="button" className={styles.hubTile} onClick={() => onSelectModule(t.key)}>
-                <span className={styles.hubIcon} aria-hidden>{t.icon}</span>
-                <span className={styles.hubText}>
-                  <span className={styles.hubTitle}>{t.title}</span>
-                  <span className={t.alert ? styles.hubFactAlert : styles.hubFact}>{t.fact}</span>
-                </span>
-              </button>
-            ))}
+            {renderTile("info")}
+            <hr className={styles.hubDivider} />
+            <div className={styles.hubPair}>
+              {renderTile("fincas")}
+              {renderTile("lotes")}
+            </div>
+            <hr className={styles.hubDivider} />
+            <div className={styles.hubPair}>
+              {renderTile("arena")}
+              {renderTile("cert")}
+            </div>
+            {renderTile("contratos")}
+            {renderTile("servicios")}
           </div>
         )}
 
@@ -943,6 +953,11 @@ export function AppDashboard({
           </>
         )}
       </div>
+
+      {/* Retroalimentación (izquierda) y Herramientas (derecha) viven fuera de
+          la rejilla del hub, como atajos ambientales alcanzables desde
+          cualquier vista del panel -- no solo la portada. */}
+      <SideModuleFabs onSelect={onSelectModule} retroCount={newCtcNotes} />
 
       {/* El panel del productor no tenía pie alguno: la barra legal cierra
           también esta superficie y, sobre todo, deja la versión a la vista

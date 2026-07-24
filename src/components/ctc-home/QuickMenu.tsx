@@ -8,9 +8,16 @@ import styles from "./QuickMenu.module.css";
 // bottom-right, expands to its label on hover). Tapping it opens the section
 // index; the entry matching the section you're currently in is highlighted,
 // resolved with an IntersectionObserver rather than scroll math.
-const SECTION_IDS = ["hero", "ecosistema", "momento", "tech", "cocreate", "varietales", "historia"] as const;
+//
+// "Más allá de la exportación" (CTC Tech / Co-Create / Directorio / Varietales)
+// is ONE combined entry here, in third place -- the four cards keep their own
+// 01-04 numbering inside ServicesSection itself (techTag/cocreateTag/dirTag/
+// varTag), which is a separate thing from this list. This list carries no
+// numbering of its own at all (no "00/01/02…" badges) -- the id="tech" anchor
+// on the outer <section> scrolls to the top of the whole services block.
+const SECTION_IDS = ["hero", "ecosistema", "tech", "momento", "historia"] as const;
 
-type Entry = { id: (typeof SECTION_IDS)[number]; n: string; label: string; sub: string };
+type Entry = { id: (typeof SECTION_IDS)[number]; label: string; sub: string };
 
 const T: Record<Lang, { fab: string; panelAria: string; fabAria: string; sections: Entry[] }> = {
   es: {
@@ -18,13 +25,11 @@ const T: Record<Lang, { fab: string; panelAria: string; fabAria: string; section
     panelAria: "Índice de la página",
     fabAria: "Navegación rápida",
     sections: [
-      { id: "hero", n: "00", label: "Inicio", sub: "Casa matriz · Piedecuesta" },
-      { id: "ecosistema", n: "01", label: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked" },
-      { id: "momento", n: "02", label: "El momento del café", sub: "Olas, diáspora y terruño" },
-      { id: "tech", n: "03", label: "CTC Tech", sub: "Tecnologías agrónomas en finca" },
-      { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Proyectos en EE.UU. y Europa" },
-      { id: "varietales", n: "05", label: "Varietales Registrados", sub: "Genética verificada" },
-      { id: "historia", n: "06", label: "Quiénes somos", sub: "G&G · Fundadores" },
+      { id: "hero", label: "Inicio", sub: "Casa matriz · Piedecuesta" },
+      { id: "ecosistema", label: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked" },
+      { id: "tech", label: "Más allá de la exportación", sub: "CTC Tech · Co-Create · Directorio · Varietales" },
+      { id: "momento", label: "El momento del café", sub: "Olas, diáspora y terruño" },
+      { id: "historia", label: "Quiénes somos", sub: "G&G · Fundadores" },
     ],
   },
   en: {
@@ -32,13 +37,11 @@ const T: Record<Lang, { fab: string; panelAria: string; fabAria: string; section
     panelAria: "Page index",
     fabAria: "Quick navigation",
     sections: [
-      { id: "hero", n: "00", label: "Home", sub: "Headquarters · Piedecuesta" },
-      { id: "ecosistema", n: "01", label: "The ecosystem", sub: "Kaffetal Regal + Cherry Picked" },
-      { id: "momento", n: "02", label: "Coffee's moment", sub: "Waves, diaspora and terroir" },
-      { id: "tech", n: "03", label: "CTC Tech", sub: "Agronomic technology on the farm" },
-      { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Projects in the US and Europe" },
-      { id: "varietales", n: "05", label: "Registered Varietals", sub: "Verified genetics" },
-      { id: "historia", n: "06", label: "Who we are", sub: "G&G · Founders" },
+      { id: "hero", label: "Home", sub: "Headquarters · Piedecuesta" },
+      { id: "ecosistema", label: "The ecosystem", sub: "Kaffetal Regal + Cherry Picked" },
+      { id: "tech", label: "Beyond the export", sub: "CTC Tech · Co-Create · Directory · Varietals" },
+      { id: "momento", label: "Coffee's moment", sub: "Waves, diaspora and terroir" },
+      { id: "historia", label: "Who we are", sub: "G&G · Founders" },
     ],
   },
   de: {
@@ -46,13 +49,11 @@ const T: Record<Lang, { fab: string; panelAria: string; fabAria: string; section
     panelAria: "Seitenindex",
     fabAria: "Schnellnavigation",
     sections: [
-      { id: "hero", n: "00", label: "Start", sub: "Stammsitz · Piedecuesta" },
-      { id: "ecosistema", n: "01", label: "Das Ökosystem", sub: "Kaffetal Regal + Cherry Picked" },
-      { id: "momento", n: "02", label: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
-      { id: "tech", n: "03", label: "CTC Tech", sub: "Agrartechnologie auf der Finca" },
-      { id: "cocreate", n: "04", label: "CTC Co-Create", sub: "Projekte in USA und Europa" },
-      { id: "varietales", n: "05", label: "Registrierte Varietäten", sub: "Verifizierte Genetik" },
-      { id: "historia", n: "06", label: "Wer wir sind", sub: "G&G · Gründer" },
+      { id: "hero", label: "Start", sub: "Stammsitz · Piedecuesta" },
+      { id: "ecosistema", label: "Das Ökosystem", sub: "Kaffetal Regal + Cherry Picked" },
+      { id: "tech", label: "Über den Export hinaus", sub: "CTC Tech · Co-Create · Verzeichnis · Varietäten" },
+      { id: "momento", label: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
+      { id: "historia", label: "Wer wir sind", sub: "G&G · Gründer" },
     ],
   },
 };
@@ -110,7 +111,6 @@ export function QuickMenu() {
               aria-current={active === s.id ? "true" : undefined}
               onClick={() => setOpen(false)}
             >
-              <span className={styles.n}>{s.n}</span>
               <span>
                 {s.label}
                 <small>{s.sub}</small>

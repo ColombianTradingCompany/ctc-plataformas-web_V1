@@ -42,8 +42,6 @@
 .panel a small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
 /* The section you're currently in. */
 .panel a.active{background:var(--paper);color:var(--primary)}
-.panel a.active .n{color:var(--primary)}
-.n{font-family:var(--font-spline-mono),monospace;font-size:10px;color:var(--accent);flex:none}
 
 @media(max-width:520px){
   .wrap{right:16px;bottom:16px}

@@ -52,7 +52,15 @@
 body{background:#F2EFF7}
 .dir *{box-sizing:border-box}
 .dir img{max-width:100%; display:block}
-.dir button,.dir input,.dir select,.dir textarea{font:inherit; color:inherit}
+/* :not(.btn) matters: `.btn`/`.btn--oro`/`.btn--fantasma` set their OWN explicit
+   color, but `.dir button{color:inherit}` has higher specificity (0,1,1 vs
+   0,1,0) and was silently winning -- the button then just inherited whatever
+   text color its surrounding section happened to have. It "worked" almost
+   everywhere by coincidence (most of the page inherits --tinta anyway), until
+   a button sat in a differently-colored context: the hero's Inscribirme
+   rendered var(--tinta) text on a var(--tinta) background (invisible, 1:1
+   contrast) and the CTA-final one rendered white text on gold (~1.4:1). */
+.dir button:not(.btn),.dir input,.dir select,.dir textarea{font:inherit; color:inherit}
 .dir button{cursor:pointer}
 .dir a{color:var(--tinta-2)}
 .dir :focus-visible{outline:3px solid var(--oro); outline-offset:2px; border-radius:4px}
@@ -101,8 +109,20 @@ body{background:#F2EFF7}
 .btn:hover{background:var(--tinta-2); border-color:var(--tinta-2); transform:translateY(-1px)}
 .btn--fantasma{background:transparent; color:var(--tinta)}
 .btn--fantasma:hover{background:var(--tinta); color:#fff}
-.btn--oro{background:var(--oro); border-color:var(--oro); color:var(--tinta)}
-.btn--oro:hover{background:#ffd642; border-color:#ffd642; color:var(--tinta)}
+.btn--oro{
+  background:var(--oro); border-color:var(--oro); color:var(--tinta);
+  box-shadow:0 4px 14px rgba(245,197,24,.4);
+  transition:transform .15s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.btn--oro:hover{
+  background:#ffd642; border-color:#ffd642; color:var(--tinta);
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 9px 24px rgba(245,197,24,.6);
+}
+.btn--oro:active{
+  transform:translateY(0) scale(.97);
+  box-shadow:0 2px 8px rgba(245,197,24,.45);
+}
 .btn--sm{font-size:.82rem; padding:.42rem .85rem; border-width:1.5px; border-radius:5px}
 .btn:disabled{opacity:.45; cursor:not-allowed; transform:none}
 
@@ -206,7 +226,13 @@ body{background:#F2EFF7}
 /* ---------- ecosistema ---------- */
 .eco{display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem}
 @media (max-width:900px){.eco{grid-template-columns:1fr}}
-.eco__card{background:#fff; border:1px solid var(--linea); border-radius:var(--r); padding:1.5rem; display:flex; flex-direction:column}
+/* Ahora son <a> reales hacia Kaffetal Regal / Cherry Picked / ctcexport.com. */
+.eco__card{
+  background:#fff; border:1px solid var(--linea); border-radius:var(--r); padding:1.5rem;
+  display:flex; flex-direction:column; text-decoration:none; color:inherit;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.eco__card:hover{border-color:var(--tinta-2); box-shadow:var(--sombra); transform:translateY(-2px)}
 .eco__logo{height:74px; display:flex; align-items:center; margin-bottom:1rem}
 .eco__logo img{max-height:74px; width:auto}
 .eco__card p{font-size:.92rem; color:#4a3a63}

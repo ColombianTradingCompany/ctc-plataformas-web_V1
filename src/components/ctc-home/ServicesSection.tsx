@@ -833,7 +833,7 @@ export function ServicesSection() {
                   ))}
                 </ul>
                 <Image
-                  src="/images/shared/directorio-logo.png"
+                  src="/images/shared/directorio-icon.png"
                   alt="Directorio del Café"
                   width={450}
                   height={450}

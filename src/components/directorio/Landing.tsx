@@ -2,6 +2,15 @@
 
 import Image from "next/image";
 import { LegalFooter } from "@/components/LegalFooter";
+import { QuickNav, type QuickNavSection } from "@/components/QuickNav";
+import { PLATAFORMA_LINKS } from "./data";
+
+const DC_SECTIONS: QuickNavSection[] = [
+  { id: "beneficios", n: "01", label: "Beneficios", sub: "¿Por qué registrarte?" },
+  { id: "pasos", n: "02", label: "Cómo funciona", sub: "De la inscripción a la red" },
+  { id: "requisitos", n: "03", label: "Registro", sub: "Qué necesitamos de ti" },
+  { id: "ecosistema", n: "04", label: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked" },
+];
 
 const LOGOS = {
   parrot: "/images/shared/ctc-logo-parrot.jpg",
@@ -317,7 +326,7 @@ export function Landing({
               </p>
             </div>
             <div className="eco">
-              <article className="eco__card">
+              <a className="eco__card" href={PLATAFORMA_LINKS.kr} target="_blank" rel="noopener noreferrer">
                 <div className="eco__logo">
                   <Image src={LOGOS.kaffetal} alt="Kaffetal Regal" width={1254} height={1254} />
                 </div>
@@ -331,8 +340,8 @@ export function Landing({
                   <li>Cupping Arena: catación a ciegas ante Q-Graders, dos veces al año</li>
                   <li>Certificación CTC gratis, con feedback de mejora del panel</li>
                 </ul>
-              </article>
-              <article className="eco__card">
+              </a>
+              <a className="eco__card" href={PLATAFORMA_LINKS.cp} target="_blank" rel="noopener noreferrer">
                 <div className="eco__logo">
                   <Image src={LOGOS.cherry} alt="Cherry Picked" width={852} height={858} />
                 </div>
@@ -346,8 +355,8 @@ export function Landing({
                   <li>Grados Black · Red · Blue · Gold · Tyrian, decididos en la taza</li>
                   <li>Página pública con QR y trazabilidad EUDR al predio</li>
                 </ul>
-              </article>
-              <article className="eco__card">
+              </a>
+              <a className="eco__card" href={PLATAFORMA_LINKS.home} target="_blank" rel="noopener noreferrer">
                 <div className="eco__logo">
                   <Image src={LOGOS.full} alt="Colombian Trading Company" width={2234} height={1231} />
                 </div>
@@ -361,7 +370,7 @@ export function Landing({
                   <li>Declaración de debida diligencia EUDR en cada despacho</li>
                   <li>Acopio, trilla, empaque, consolidación y embarque a Ámsterdam</li>
                 </ul>
-              </article>
+              </a>
             </div>
           </div>
         </section>
@@ -407,6 +416,30 @@ export function Landing({
           </p>
         </div>
       </footer>
+      {/* Botón flotante que también lleva de regreso a ctcexport.com (primera
+          entrada fija de QuickNav) -- mismo componente que usan Kaffetal Regal
+          y Cherry Picked, así que el Directorio queda consistente con el resto
+          del ecosistema en vez de ser la única superficie sin salida.
+          QuickNav espera los tokens COMPARTIDOS (--primary/--accent/--card/...)
+          que llegan por [data-theme] en las otras plataformas; el Directorio
+          usa su PROPIO sistema de tokens (.dir: --tinta/--oro/...), así que se
+          remapean aquí en vez de tocar globals.css (que sí afectaría a las
+          demás plataformas). */}
+      <div
+        style={{
+          ["--primary" as string]: "var(--tinta)",
+          ["--primary-deep" as string]: "var(--tinta-2)",
+          ["--accent" as string]: "var(--oro)",
+          ["--accent-soft" as string]: "#FBE18A",
+          ["--card" as string]: "var(--blanco)",
+          ["--paper" as string]: "var(--papel)",
+          ["--line" as string]: "var(--linea)",
+          ["--ink" as string]: "var(--tinta)",
+          ["--muted" as string]: "var(--gris)",
+        } as React.CSSProperties}
+      >
+        <QuickNav sections={DC_SECTIONS} />
+      </div>
       {/* Pie legal compartido: el mismo NIT, reserva de derechos e insignia de
           versión que cierran CTC Home, Kaffetal Regal y Cherry Picked. */}
       <LegalFooter />

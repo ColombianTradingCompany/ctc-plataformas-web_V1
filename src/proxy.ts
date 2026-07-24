@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
 
 // Maps a subdomain label to the internal route that should serve it.
 const SUBDOMAIN_ROUTES: Record<string, string> = {
@@ -66,10 +67,16 @@ export async function proxy(request: NextRequest) {
 
   let response = build();
 
+  // La cookie de sesión se comparte entre TODOS los subdominios *.ctcexport.com
+  // (Domain=.ctcexport.com) — sin esto, cada plataforma guardaba una cookie
+  // host-only y saltar de subdominio aterrizaba en la landing "deslogueada".
+  const cookieDomain = sharedCookieDomain(host);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: { domain: cookieDomain, path: "/" },
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
@@ -78,7 +85,14 @@ export async function proxy(request: NextRequest) {
           // reconstruida a partir de ese request (para que viaje al navegador).
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = build();
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Migración: al escribir la variante compartida (Domain=…), se
+            // expira la vieja cookie host-only del mismo nombre en ESTE host —
+            // si quedara viva, el navegador enviaría ambas y la vieja podría
+            // "taparle" la sesión nueva al servidor.
+            if (cookieDomain) response.cookies.set({ name, value: "", path: "/", maxAge: 0 });
+            response.cookies.set(name, value, options);
+          });
         },
       },
     }

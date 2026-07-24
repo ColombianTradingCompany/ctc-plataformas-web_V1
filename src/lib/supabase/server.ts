@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { sharedCookieDomain } from "./cookieDomain";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -8,7 +9,12 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 /** Cookie-bound client for an already-authenticated request (respects RLS as the signed-in user). */
 export async function createSessionClient() {
   const cookieStore = await cookies();
+  // Session cookie shared across every *.ctcexport.com subdomain (see
+  // cookieDomain.ts) — this is what lets a login made on one platform be
+  // recognized by the others in production.
+  const host = (await headers()).get("host");
   return createServerClient(url, anonKey, {
+    cookieOptions: { domain: sharedCookieDomain(host), path: "/" },
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll: (cookiesToSet) => {

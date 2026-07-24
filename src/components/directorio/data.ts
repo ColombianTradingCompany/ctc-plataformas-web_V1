@@ -127,7 +127,23 @@ export const ASUNTOS_MENSAJE = [
 
 /* ---------- documentos del perfil ---------- */
 
-export const TIPOS_DOC = ["Certificado", "Diploma", "Hoja de vida", "Registro o licencia", "Otro"];
+export const TIPOS_DOC = [
+  "Certificado", "Diploma", "Hoja de vida", "Registro o licencia",
+  "Página web", "Red social", "Portafolio en línea", "Video", "Otro",
+];
+
+// Enlaces a las otras superficies del ecosistema, para el panel "Mis plataformas".
+// NODE_ENV es constante en compilación (cliente y servidor), así que no genera
+// hydration mismatch — mismo patrón que FAMILY_LINKS en Cherry Picked.
+export const PLATAFORMA_LINKS =
+  process.env.NODE_ENV === "development"
+    ? { kr: "/kaffetal-regal", cp: "/cherry-picked", panel: "/panel", home: "/" }
+    : {
+        kr: "https://kaffetal-regal.ctcexport.com",
+        cp: "https://cherry-picked.ctcexport.com",
+        panel: "https://ctcexport.com/panel",
+        home: "https://ctcexport.com",
+      };
 
 // ── Geografía de Colombia (todo el país, no solo Santander) ──────────────────
 // Construida sobre la tabla DANE ya presente en el repo (src/lib/daneCodes.data.ts),

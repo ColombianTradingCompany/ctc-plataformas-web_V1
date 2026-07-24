@@ -93,6 +93,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
           // material de dirección, no operación diaria.
           { href: "/ecp/buzon", label: "Buzón de entrada" },
+          // Directorio del Café (2026-07-24): la capa de personas de la red. Aquí
+          // se verifican las fichas (Aceptar/Revisar/Rechazar → Código de
+          // Verificado) y se modera el muro.
+          { href: "/ecp/directorio", label: "Directorio del Café" },
         ],
       },
       {

@@ -159,7 +159,7 @@ export function AppView({
         ) : null}
         <PanelMensajes activo={pestana === "mensajes"} hilos={hilos} activa={activaMsg}
           soloCtc={!verificado} onSeleccionar={abrirHilo} onEnviar={enviarEnHilo} />
-        <PanelPerfil activo={pestana === "perfil"} ficha={ficha!} onGuardar={guardarPerfil} />
+        <PanelPerfil activo={pestana === "perfil"} ficha={ficha!} onGuardar={guardarPerfil} onRecargar={onRecargar} />
       </div>
 
       <LegalFooter />

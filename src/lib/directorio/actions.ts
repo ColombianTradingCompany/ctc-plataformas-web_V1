@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { codigoDirectorio, colorPara, hace, iniciales } from "@/components/directorio/data";
 import type {
   DirectorioBundle,
@@ -75,20 +76,22 @@ function sanitizeFicha(input: FichaInput) {
 
 type DirRow = Record<string, unknown>;
 
-function mapDoc(r: DirRow): FichaDoc {
+function mapDoc(r: DirRow, signed: Map<string, string>, sizes: Map<string, number>): FichaDoc {
+  const kind = r.kind === "url" ? "url" : "file";
+  const assetId = r.asset_id ? String(r.asset_id) : null;
   return {
     id: String(r.id),
-    kind: r.kind === "url" ? "url" : "file",
-    url: (r.url as string) ?? null, // file signed URLs come in Stage 3
+    kind,
+    url: kind === "url" ? ((r.url as string) ?? null) : assetId ? signed.get(assetId) ?? null : null,
     nombre: String(r.nombre ?? ""),
     tipo: String(r.tipo ?? "Certificado"),
     enlazaA: (r.enlaza_a as FichaDoc["enlazaA"]) ?? null,
     enlaceValor: (r.enlace_valor as string) ?? null,
-    tam: null,
+    tam: assetId ? sizes.get(assetId) ?? null : null,
   };
 }
 
-function mapMiFicha(r: DirRow, correo: string, docs: DirRow[]): MiFicha {
+function mapMiFicha(r: DirRow, correo: string, documentos: FichaDoc[]): MiFicha {
   const id = String(r.profile_id);
   return {
     profileId: id,
@@ -111,7 +114,7 @@ function mapMiFicha(r: DirRow, correo: string, docs: DirRow[]): MiFicha {
     estado: (r.estado as DirectorioEstado) ?? "pendiente",
     tieneCodigo: r.estado === "aprobado" && !!r.verificado_codigo,
     createdAt: String(r.created_at ?? ""),
-    documentos: docs.map(mapDoc),
+    documentos,
   };
 }
 
@@ -172,8 +175,16 @@ export async function cargarDirectorio(): Promise<DirectorioBundle | null> {
     .select("*")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true });
+  const docs = docRows ?? [];
+  const fileAssetIds = docs.filter((d) => d.kind === "file" && d.asset_id).map((d) => String(d.asset_id));
+  const signed = await signedKaffetalMediaUrls(service, fileAssetIds);
+  const { data: assetRows } = fileAssetIds.length
+    ? await service.from("media_assets").select("id, size_bytes").in("id", fileAssetIds)
+    : { data: [] as DirRow[] };
+  const sizes = new Map((assetRows ?? []).map((a) => [String(a.id), Number(a.size_bytes) || 0]));
+  const documentos = docs.map((d) => mapDoc(d, signed, sizes));
 
-  const ficha = mapMiFicha(fichaRow, correo, docRows ?? []);
+  const ficha = mapMiFicha(fichaRow, correo, documentos);
 
   // The CTC conversation (ecp channel) — always available, even unverified.
   const { data: ecpRows } = await service
@@ -535,4 +546,91 @@ export async function marcarHiloLeido(clave: string, canal: "ecp" | "directo"): 
       .eq("leido", false);
   }
   return { ok: true };
+}
+
+// ── Documentos y soportes ─────────────────────────────────────────────────────
+
+export type DocInput = {
+  nombre: string;
+  tipo: string;
+  enlazaA: "certificacion" | "especialidad" | null;
+  enlaceValor: string | null;
+};
+
+function sanitizeDoc(d: DocInput) {
+  const enlazaA = d.enlazaA === "certificacion" || d.enlazaA === "especialidad" ? d.enlazaA : null;
+  return {
+    nombre: clamp(d.nombre, 200) || "Documento",
+    tipo: clamp(d.tipo, 60) || "Certificado",
+    enlaza_a: enlazaA,
+    enlace_valor: enlazaA ? clamp(d.enlaceValor, 200) || null : null,
+  };
+}
+
+export async function agregarDocumentoUrl(url: string, doc: DocInput): Promise<ActionResult> {
+  const user = await sessionUser();
+  if (!user) return { ok: false, error: "Sesión no válida." };
+  let u = clamp(url, 500);
+  if (!u) return { ok: false, error: "Escribe un enlace." };
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  try {
+    new URL(u);
+  } catch {
+    return { ok: false, error: "Ese enlace no es válido." };
+  }
+  const service = createServiceRoleClient();
+  const { error } = await service.from("directorio_documents").insert({
+    profile_id: user.id,
+    kind: "url",
+    url: u,
+    ...sanitizeDoc(doc),
+  });
+  if (error) return { ok: false, error: "No se pudo guardar el enlace." };
+  return { ok: true };
+}
+
+export async function agregarDocumentoArchivo(assetId: string, doc: DocInput): Promise<ActionResult> {
+  const user = await sessionUser();
+  if (!user) return { ok: false, error: "Sesión no válida." };
+  const service = createServiceRoleClient();
+  // El archivo debe pertenecer al usuario (se subió con su sesión a su carpeta).
+  const { data: asset } = await service.from("media_assets").select("id, uploaded_by").eq("id", assetId).maybeSingle();
+  if (!asset || String(asset.uploaded_by) !== user.id) return { ok: false, error: "Archivo no válido." };
+
+  const { error } = await service.from("directorio_documents").insert({
+    profile_id: user.id,
+    kind: "file",
+    asset_id: assetId,
+    ...sanitizeDoc(doc),
+  });
+  if (error) return { ok: false, error: "No se pudo guardar el documento." };
+  return { ok: true };
+}
+
+export async function eliminarDocumento(id: string): Promise<ActionResult> {
+  const user = await sessionUser();
+  if (!user) return { ok: false, error: "Sesión no válida." };
+  const service = createServiceRoleClient();
+  const { error } = await service.from("directorio_documents").delete().eq("id", id).eq("profile_id", user.id);
+  if (error) return { ok: false, error: "No se pudo eliminar." };
+  return { ok: true };
+}
+
+// ── Mis plataformas ───────────────────────────────────────────────────────────
+// Detección de a qué OTRAS superficies del ecosistema pertenece esta misma
+// identidad (mismo profiles.id). No enlaza cuentas ni cambia roles: solo lee lo
+// que ya existe para ofrecer saltos rápidos. Entrega el "auto-link por login".
+
+export type MisPlataformas = { productor: boolean; comprador: boolean; interno: boolean };
+
+export async function misPlataformas(): Promise<MisPlataformas> {
+  const user = await sessionUser();
+  if (!user) return { productor: false, comprador: false, interno: false };
+  const service = createServiceRoleClient();
+  const [{ data: prod }, { data: buy }, { data: prof }] = await Promise.all([
+    service.from("producer_profiles").select("profile_id").eq("profile_id", user.id).maybeSingle(),
+    service.from("buyer_profiles").select("profile_id").eq("profile_id", user.id).maybeSingle(),
+    service.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+  ]);
+  return { productor: !!prod, comprador: !!buy, interno: prof?.role === "bcp_admin" };
 }

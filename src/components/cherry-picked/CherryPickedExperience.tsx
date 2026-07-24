@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
+import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -48,6 +49,7 @@ const EN = {
     panelAria: "Page index",
     fabAria: "Quick navigation",
   } as QuickNavLabels,
+  dcSub: "The ecosystem's people layer · professional profile",
   roaster: "roaster",
   loginToReserve: "Sign in to reserve mitaca fractions",
   noQty: "That quantity is no longer available in this lot",
@@ -83,6 +85,7 @@ const T: Record<Lang, typeof EN> = {
       panelAria: "Índice de la página",
       fabAria: "Navegación rápida",
     },
+    dcSub: "La capa de personas del ecosistema · ficha profesional",
     roaster: "tostador",
     loginToReserve: "Inicia sesión para reservar fracciones de la mitaca",
     noQty: "No queda esa cantidad disponible en el lote",
@@ -115,6 +118,7 @@ const T: Record<Lang, typeof EN> = {
       panelAria: "Seitenindex",
       fabAria: "Schnellnavigation",
     },
+    dcSub: "Die Menschen-Ebene des Ökosystems · Fachprofil",
     roaster: "Rösterei",
     loginToReserve: "Melde dich an, um Mitaca-Fraktionen zu reservieren",
     noQty: "Diese Menge ist in diesem Lot nicht mehr verfügbar",
@@ -469,7 +473,12 @@ function Experience() {
           {/* Bottom-LEFT bubble column, on purpose: the cart owns the
               bottom-right corner. QuickNav FAB at 24, family at 92,
               language at 148. */}
-          <QuickNav sections={t.quickNav} side="left" labels={t.quickNavLabels} />
+          <QuickNav
+            sections={t.quickNav}
+            side="left"
+            labels={t.quickNavLabels}
+            extraLinks={[{ href: DIRECTORIO_HREF, code: "DC", label: "Directorio del Café", sub: t.dcSub }]}
+          />
           <FamilyBubble active="green" bottom={92} />
           <LangBubble bottom={148} />
           <Cart

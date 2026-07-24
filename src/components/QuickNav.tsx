@@ -12,6 +12,11 @@ import styles from "./QuickNav.module.css";
 
 export type QuickNavSection = { id: string; n: string; label: string; sub: string };
 
+// Cross-platform shortcuts pinned under the casa-matriz entry (2026-07-24):
+// e.g. Kaffetal Regal and Cherry Picked both link to the Directorio del Café
+// (and the Directorio links back) — deliberately NOT KR ↔ CP.
+export type QuickNavExtraLink = { href: string; code: string; label: string; sub: string };
+
 // In production the platforms live on subdomains (kaffetal-regal.ctcexport.com,
 // cherry-picked.ctcexport.com — see src/proxy.ts), so "back to CTC" means
 // leaving the origin; in dev everything is path-routed off localhost.
@@ -33,10 +38,12 @@ export function QuickNav({
   sections,
   side = "right",
   labels = DEFAULT_LABELS,
+  extraLinks = [],
 }: {
   sections: QuickNavSection[];
   side?: "right" | "left";
   labels?: QuickNavLabels;
+  extraLinks?: QuickNavExtraLink[];
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(sections[0]?.id ?? "");
@@ -88,6 +95,15 @@ export function QuickNav({
               <small>{labels.homeSub}</small>
             </span>
           </a>
+          {extraLinks.map((l) => (
+            <a key={l.href} href={l.href} className={styles.home}>
+              <span className={styles.n}>{l.code}</span>
+              <span>
+                {l.label}
+                <small>{l.sub}</small>
+              </span>
+            </a>
+          ))}
           <div className={styles.divider} aria-hidden />
           {sections.map((s) => (
             <a

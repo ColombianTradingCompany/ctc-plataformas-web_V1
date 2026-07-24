@@ -2,6 +2,7 @@
 
 import { Band } from "@/components/Band";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
+import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { LangProvider, useLang, type Lang } from "@/components/lang/i18n";
 import { LangBubble } from "@/components/lang/LangBubble";
 import { Header } from "./Header";
@@ -23,6 +24,7 @@ import { Footer } from "./Footer";
 type Dict = {
   sections: QuickNavSection[];
   quickNav: QuickNavLabels;
+  dcSub: string;
   band1: { eyebrow: string; head: string; em: string; caption: string };
   band2: { eyebrow: string; head: string; em: string; caption: string };
 };
@@ -44,6 +46,7 @@ const T: Record<Lang, Dict> = {
       panelAria: "Índice de la página",
       fabAria: "Navegación rápida",
     },
+    dcSub: "La capa de personas del ecosistema · ficha profesional",
     band1: {
       eyebrow: "Donde se gana la prima",
       head: "El precio se decide mucho antes de la venta: ",
@@ -73,6 +76,7 @@ const T: Record<Lang, Dict> = {
       panelAria: "Page index",
       fabAria: "Quick navigation",
     },
+    dcSub: "The ecosystem's people layer · professional profile",
     band1: {
       eyebrow: "Where the premium is earned",
       head: "The price is decided long before the sale: ",
@@ -102,6 +106,7 @@ const T: Record<Lang, Dict> = {
       panelAria: "Seitenindex",
       fabAria: "Schnellnavigation",
     },
+    dcSub: "Die Menschen-Ebene des Ökosystems · Fachprofil",
     band1: {
       eyebrow: "Wo die Prämie verdient wird",
       head: "Der Preis entscheidet sich lange vor dem Verkauf: ",
@@ -158,7 +163,11 @@ function LandingInner({ onLogin }: { onLogin: () => void }) {
       <TratoSection />
       <GygSection />
       <Footer />
-      <QuickNav sections={t.sections} labels={t.quickNav} />
+      <QuickNav
+        sections={t.sections}
+        labels={t.quickNav}
+        extraLinks={[{ href: DIRECTORIO_HREF, code: "DC", label: "Directorio del Café", sub: t.dcSub }]}
+      />
       <LangBubble />
     </div>
   );

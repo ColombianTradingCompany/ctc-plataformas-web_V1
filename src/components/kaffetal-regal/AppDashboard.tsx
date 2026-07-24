@@ -18,6 +18,7 @@ import { ToolPanel } from "@/components/tools/ToolPanel";
 import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
+import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { SideModuleFabs } from "./SideModuleFabs";
 import { RetroalimentacionPanel } from "./RetroalimentacionPanel";
 import styles from "./AppDashboard.module.css";
@@ -368,6 +369,19 @@ export function AppDashboard({
             </div>
             {renderTile("contratos")}
             {renderTile("servicios")}
+            {/* Puente a la capa de personas del ecosistema (2026-07-24): el
+                Directorio es OTRA plataforma (misma cuenta, perfil propio),
+                así que esta tarjeta navega, no abre un módulo. El puente
+                existe KR→DC y CP→DC (y de vuelta), nunca KR↔CP. */}
+            <a className={styles.hubTile} href={DIRECTORIO_HREF} style={{ textDecoration: "none" }}>
+              <span className={styles.hubIcon} aria-hidden>
+                <Image src="/images/shared/directorio-icon.png" alt="" width={689} height={700} style={{ width: 26, height: "auto" }} />
+              </span>
+              <span className={styles.hubText}>
+                <span className={styles.hubTitle}>Directorio del Café</span>
+                <span className={styles.hubFact}>Su ficha profesional en la capa de personas del ecosistema ↗</span>
+              </span>
+            </a>
           </div>
         )}
 

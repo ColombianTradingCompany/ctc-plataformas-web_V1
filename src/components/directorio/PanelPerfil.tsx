@@ -379,8 +379,11 @@ function MisPlataformasCard() {
       </p>
       <ul className="datos">
         <li><b>Directorio del Café</b><span style={{ color: "var(--gris)", fontSize: ".8rem" }}>estás aquí</span></li>
-        {p?.productor ? fila(PLATAFORMA_LINKS.kr, "Kaffetal Regal", "productor") : null}
-        {p?.comprador ? fila(PLATAFORMA_LINKS.cp, "Cherry Picked", "comprador") : null}
+        {/* Los puentes DC→KR y DC→CP se muestran SIEMPRE (2026-07-24): si la
+            cuenta ya es productor/comprador entra directo con la misma sesión;
+            si no, aterriza en la portada de esa plataforma para conocerla. */}
+        {fila(PLATAFORMA_LINKS.kr, "Kaffetal Regal", p?.productor ? "productor" : "conócela · misma cuenta")}
+        {fila(PLATAFORMA_LINKS.cp, "Cherry Picked", p?.comprador ? "comprador" : "conócela · misma cuenta")}
         {p?.interno ? fila(PLATAFORMA_LINKS.panel, "Consolas internas", "equipo CTC") : null}
       </ul>
       <a href={PLATAFORMA_LINKS.home} target="_blank" rel="noopener noreferrer" className="enlace-btn" style={{ marginTop: ".5rem", display: "inline-block" }}>

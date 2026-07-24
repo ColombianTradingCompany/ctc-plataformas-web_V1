@@ -85,6 +85,13 @@ type Dict = {
   cocreatePoints: React.ReactNode[];
   cocreateSpecs: string[];
   cocreateCta: string;
+  dirTag: string;
+  dirH3: string;
+  dirSub: string;
+  dirBody: string;
+  dirPoints: React.ReactNode[];
+  dirSpecs: string[];
+  dirCta: string;
   sep2: string;
   varTag: string;
   varH3: string;
@@ -249,8 +256,20 @@ const T: Record<Lang, Dict> = {
     ],
     cocreateSpecs: ["Sujeto a volúmenes mínimos requeridos", "Verde + tostado", "EE.UU. y Europa", "Calidades respaldadas por la Arena"],
     cocreateCta: "Proponer un proyecto",
+    dirTag: "03 · Directorio del Café",
+    dirH3: "El directorio oficial de especialistas del café de Santander",
+    dirSub: "Caficultores · Baristas · Tostadores · Catadores · Formadores — inscripción gratuita",
+    dirBody:
+      "La capa de personas sobre nuestro ecosistema: una ficha pública y verificada para cada profesional del café del departamento, para que productores, tostadores y marcas puedan encontrarte y validar tu especialidad sin intermediarios. Registro gratuito, bajo la Ley 1581 de 2012.",
+    dirPoints: [
+      <><b>Ficha pública verificada:</b> tu especialidad, certificaciones y experiencia, con el sello de CTC y mejor posición en las búsquedas</>,
+      <><b>Red y oportunidades:</b> conecta con otros especialistas y entérate primero de proyectos, ferias, ofertas y seminarios del sector</>,
+      <><b>Ligado al ecosistema:</b> una sola cuenta con Kaffetal Regal y Cherry Picked — el hilo de personas de la finca a la taza</>,
+    ],
+    dirSpecs: ["Inscripción gratuita", "Santander · 87 municipios", "Toma menos de 2 minutos", "Ley 1581 de 2012"],
+    dirCta: "Ir al Directorio del Café",
     sep2: "Toda taza empezó en una flor · genética con papeles",
-    varTag: "03 · Varietales Registrados",
+    varTag: "04 · Varietales Registrados",
     varH3: "Plántulas de especies verificadas, desde la chapola",
     varSub: "Genética con papeles · Mínimo 100 chapolas · $150–$300 COP c/u",
     varBody: (
@@ -421,8 +440,20 @@ const T: Record<Lang, Dict> = {
     ],
     cocreateSpecs: ["Subject to required minimum volumes", "Green + roasted", "US and Europe", "Qualities backed by the Arena"],
     cocreateCta: "Propose a project",
+    dirTag: "03 · Coffee Directory",
+    dirH3: "Santander's official directory of coffee specialists",
+    dirSub: "Growers · Baristas · Roasters · Cuppers · Trainers — free registration",
+    dirBody:
+      "The layer of people on top of our ecosystem: a public, verified profile for every coffee professional in the department, so producers, roasters and brands can find you and validate your specialty with no intermediary. Free registration, under Colombia's Law 1581 of 2012.",
+    dirPoints: [
+      <><b>Verified public profile:</b> your specialty, certifications and experience, with CTC&apos;s seal and a higher spot in search results</>,
+      <><b>Network and opportunities:</b> connect with other specialists and hear first about projects, fairs, job offers and seminars</>,
+      <><b>Tied to the ecosystem:</b> one account across Kaffetal Regal and Cherry Picked — the human thread from farm to cup</>,
+    ],
+    dirSpecs: ["Free registration", "Santander · 87 municipalities", "Under 2 minutes", "Law 1581 of 2012"],
+    dirCta: "Go to the Coffee Directory",
     sep2: "Every cup began as a blossom · genetics with papers",
-    varTag: "03 · Registered Varietals",
+    varTag: "04 · Registered Varietals",
     varH3: "Seedlings of verified species, from the chapola stage",
     varSub: "Genetics with papers · Minimum 100 seedlings · $150–$300 COP each",
     varBody: (
@@ -595,8 +626,20 @@ const T: Record<Lang, Dict> = {
     ],
     cocreateSpecs: ["Vorbehaltlich erforderlicher Mindestmengen", "Roh + geröstet", "USA und Europa", "Qualitäten, belegt durch die Arena"],
     cocreateCta: "Ein Projekt vorschlagen",
+    dirTag: "03 · Kaffee-Verzeichnis",
+    dirH3: "Das offizielle Verzeichnis der Kaffeespezialisten Santanders",
+    dirSub: "Kaffeebauern · Baristas · Röster · Verkoster · Ausbilder — kostenlose Anmeldung",
+    dirBody:
+      "Die Ebene der Menschen über unserem Ökosystem: ein öffentliches, verifiziertes Profil für jeden Kaffeeprofi des Departements, damit Produzenten, Röster und Marken Sie finden und Ihre Spezialität ohne Zwischenhändler prüfen können. Kostenlose Anmeldung, nach dem kolumbianischen Gesetz 1581 von 2012.",
+    dirPoints: [
+      <><b>Verifiziertes öffentliches Profil:</b> Ihre Spezialität, Zertifikate und Erfahrung, mit dem Siegel von CTC und besserer Platzierung in der Suche</>,
+      <><b>Netzwerk und Chancen:</b> vernetzen Sie sich mit anderen Spezialisten und erfahren Sie zuerst von Projekten, Messen, Stellenangeboten und Seminaren</>,
+      <><b>Mit dem Ökosystem verbunden:</b> ein einziges Konto für Kaffetal Regal und Cherry Picked — der menschliche Faden von der Finca bis zur Tasse</>,
+    ],
+    dirSpecs: ["Kostenlose Anmeldung", "Santander · 87 Gemeinden", "Unter 2 Minuten", "Gesetz 1581 von 2012"],
+    dirCta: "Zum Kaffee-Verzeichnis",
     sep2: "Jede Tasse begann als Blüte · Genetik mit Papieren",
-    varTag: "03 · Registrierte Varietäten",
+    varTag: "04 · Registrierte Varietäten",
     varH3: "Setzlinge verifizierter Arten, ab dem Chapola-Stadium",
     varSub: "Genetik mit Papieren · Mindestens 100 Setzlinge · $150–$300 COP pro Stück",
     varBody: (
@@ -750,6 +793,52 @@ export function ServicesSection() {
                 <OpenFormButton formKey="cocreate" className="btn btn-sm" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
                   {t.cocreateCta}
                 </OpenFormButton>
+              </div>
+            </div>
+          </details>
+
+          {/* Directorio del Café (03): NO abre el formulario de contacto como los
+              demás servicios — es una superficie viva propia, así que su CTA es un
+              enlace real a /directorio. */}
+          <details className={`${styles.svcCard} ${styles.green}`} id="directorio">
+            <summary>
+              <div>
+                <span className={styles.tag}>{t.dirTag}</span>
+                <h3>{t.dirH3}</h3>
+                <p className={styles.sub}>{t.dirSub}</p>
+              </div>
+              <span className={styles.schev}>▾</span>
+            </summary>
+            <div className={styles.svcBody}>
+              <p>{t.dirBody}</p>
+              <div className={styles.cocreateGrid}>
+                <ul className={styles.svclist}>
+                  {t.dirPoints.map((p, i) => (
+                    <li key={i}>{p}</li>
+                  ))}
+                </ul>
+                <Image
+                  src="/images/ctc-home/24-catacion-3.jpg"
+                  alt="Especialistas del café de Santander en una mesa de catación"
+                  width={450}
+                  height={269}
+                />
+              </div>
+              <div className={styles.svcSpecs}>
+                {t.dirSpecs.map((s) => (
+                  <span key={s}>{s}</span>
+                ))}
+              </div>
+              <div className={styles.svcFoot}>
+                <a
+                  href="/directorio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-sm"
+                  style={{ borderColor: "var(--green)", color: "var(--green)" }}
+                >
+                  {t.dirCta}
+                </a>
               </div>
             </div>
           </details>

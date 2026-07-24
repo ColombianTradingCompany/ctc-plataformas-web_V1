@@ -3,6 +3,7 @@
 .svcCard.blue{--sc:var(--primary)}
 .svcCard.gold{--sc:var(--accent)}
 .svcCard.red{--sc:var(--red)}
+.svcCard.green{--sc:var(--green)}
 .svcCard summary{list-style:none;cursor:pointer;padding:24px 30px;display:flex;align-items:center;gap:20px}
 .svcCard summary::-webkit-details-marker{display:none}
 .tag{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--sc)}

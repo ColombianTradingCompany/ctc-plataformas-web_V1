@@ -7,6 +7,29 @@ Formato:
 - Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
 (commit: <sha corto o "pending">)
 
+## [2026-07-24] CTC Home: tarjeta "Directorio del Café" en Más allá de la exportación (V2.16)
+- ServicesSection.tsx (sección "Más allá de la exportación", id=tech): nueva tarjeta
+  desplegable "03 · Directorio del Café" insertada entre Co-Create (02) y Varietales,
+  que pasó de 03 a "04 · Varietales Registrados". Copy trilingüe (es/en/de): titular,
+  sub, cuerpo, 3 viñetas (ficha verificada · red y oportunidades · ligado al
+  ecosistema) y 4 chips (inscripción gratuita · Santander 87 municipios · <2 min ·
+  Ley 1581 de 2012). Color propio: nueva clase .svcCard.green (--green #2E7D52) en el
+  module.css. La tarjeta usa la foto 24-catacion-3.jpg.
+- DIFERENCIA CLAVE con los otros servicios: su CTA NO abre el formulario de contacto
+  (OpenFormButton) — el Directorio es una superficie viva propia, así que es un enlace
+  real <a href="/directorio" target="_blank"> "Ir al Directorio del Café". El
+  directorio ya está en producción (subdominio directoriodelcafe → /directorio, ver
+  proxy.ts SUBDOMAIN_ROUTES; DNS/Vercel en docs/DIRECTORIO_DOMAIN_SETUP.md). El owner
+  actualizó Vercel + Hostinger.
+- La numeración de nav global (Header/QuickMenu 03 Tech / 04 Co-Create / 05 Varietales)
+  NO se tocó — es un esquema aparte de anclas de página; solo cambió la numeración
+  INTERNA de las tarjetas de la sección. Verificado en vivo (DOM + estilos): tags
+  01→04 en orden, borde/CTA verdes, /directorio 200, imagen 200.
+- DICT de CTC Home (`servicios`/`masalla`) al próximo wrap: 3→4 tarjetas, nueva
+  superficie Directorio enlazada. FILETREE: nada nuevo (superficie /directorio ya
+  existía). Sin cambio de nodo del mapa base (el Directorio es capa de PERSONAS,
+  ya modelada como nodo aparte en la v3).
+
 ## [2026-07-24] EUDR reestructurado: Pasaporte / Visa / Sello (V2.15) — CAMBIO DE ARQUITECTURA
 - Decisión del owner: la debida diligencia EUDR vive SOLO en la FINCA; el lote la
   hereda por completo. Narrativa de viaje: el PRODUCTOR porta su "Pasaporte"

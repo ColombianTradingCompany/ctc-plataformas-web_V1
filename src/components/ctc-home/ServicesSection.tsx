@@ -92,6 +92,7 @@ type Dict = {
   dirPoints: React.ReactNode[];
   dirSpecs: string[];
   dirCta: string;
+  sepDir: string;
   sep2: string;
   varTag: string;
   varH3: string;
@@ -257,17 +258,18 @@ const T: Record<Lang, Dict> = {
     cocreateSpecs: ["Sujeto a volúmenes mínimos requeridos", "Verde + tostado", "EE.UU. y Europa", "Calidades respaldadas por la Arena"],
     cocreateCta: "Proponer un proyecto",
     dirTag: "03 · Directorio del Café",
-    dirH3: "El directorio oficial de especialistas del café de Santander",
+    dirH3: "El directorio oficial de especialistas del café de Colombia",
     dirSub: "Caficultores · Baristas · Tostadores · Catadores · Formadores — inscripción gratuita",
     dirBody:
-      "La capa de personas sobre nuestro ecosistema: una ficha pública y verificada para cada profesional del café del departamento, para que productores, tostadores y marcas puedan encontrarte y validar tu especialidad sin intermediarios. Registro gratuito, bajo la Ley 1581 de 2012.",
+      "La capa de personas sobre nuestro ecosistema: una ficha pública y verificada para cada profesional del café del país, para que productores, tostadores y marcas puedan encontrarte y validar tu especialidad sin intermediarios. Registro gratuito, bajo la Ley 1581 de 2012.",
     dirPoints: [
       <><b>Ficha pública verificada:</b> tu especialidad, certificaciones y experiencia, con el sello de CTC y mejor posición en las búsquedas</>,
       <><b>Red y oportunidades:</b> conecta con otros especialistas y entérate primero de proyectos, ferias, ofertas y seminarios del sector</>,
       <><b>Ligado al ecosistema:</b> una sola cuenta con Kaffetal Regal y Cherry Picked — el hilo de personas de la finca a la taza</>,
     ],
-    dirSpecs: ["Inscripción gratuita", "Santander · 87 municipios", "Toma menos de 2 minutos", "Ley 1581 de 2012"],
+    dirSpecs: ["Inscripción gratuita", "Colombia · todo el país", "Toma menos de 2 minutos", "Ley 1581 de 2012"],
     dirCta: "Ir al Directorio del Café",
+    sepDir: "Las personas detrás de cada taza · el directorio del café",
     sep2: "Toda taza empezó en una flor · genética con papeles",
     varTag: "04 · Varietales Registrados",
     varH3: "Plántulas de especies verificadas, desde la chapola",
@@ -441,17 +443,18 @@ const T: Record<Lang, Dict> = {
     cocreateSpecs: ["Subject to required minimum volumes", "Green + roasted", "US and Europe", "Qualities backed by the Arena"],
     cocreateCta: "Propose a project",
     dirTag: "03 · Coffee Directory",
-    dirH3: "Santander's official directory of coffee specialists",
+    dirH3: "Colombia's official directory of coffee specialists",
     dirSub: "Growers · Baristas · Roasters · Cuppers · Trainers — free registration",
     dirBody:
-      "The layer of people on top of our ecosystem: a public, verified profile for every coffee professional in the department, so producers, roasters and brands can find you and validate your specialty with no intermediary. Free registration, under Colombia's Law 1581 of 2012.",
+      "The layer of people on top of our ecosystem: a public, verified profile for every coffee professional in the country, so producers, roasters and brands can find you and validate your specialty with no intermediary. Free registration, under Colombia's Law 1581 of 2012.",
     dirPoints: [
       <><b>Verified public profile:</b> your specialty, certifications and experience, with CTC&apos;s seal and a higher spot in search results</>,
       <><b>Network and opportunities:</b> connect with other specialists and hear first about projects, fairs, job offers and seminars</>,
       <><b>Tied to the ecosystem:</b> one account across Kaffetal Regal and Cherry Picked — the human thread from farm to cup</>,
     ],
-    dirSpecs: ["Free registration", "Santander · 87 municipalities", "Under 2 minutes", "Law 1581 of 2012"],
+    dirSpecs: ["Free registration", "Colombia · nationwide", "Under 2 minutes", "Law 1581 of 2012"],
     dirCta: "Go to the Coffee Directory",
+    sepDir: "The people behind every cup · the coffee directory",
     sep2: "Every cup began as a blossom · genetics with papers",
     varTag: "04 · Registered Varietals",
     varH3: "Seedlings of verified species, from the chapola stage",
@@ -627,17 +630,18 @@ const T: Record<Lang, Dict> = {
     cocreateSpecs: ["Vorbehaltlich erforderlicher Mindestmengen", "Roh + geröstet", "USA und Europa", "Qualitäten, belegt durch die Arena"],
     cocreateCta: "Ein Projekt vorschlagen",
     dirTag: "03 · Kaffee-Verzeichnis",
-    dirH3: "Das offizielle Verzeichnis der Kaffeespezialisten Santanders",
+    dirH3: "Das offizielle Verzeichnis der Kaffeespezialisten Kolumbiens",
     dirSub: "Kaffeebauern · Baristas · Röster · Verkoster · Ausbilder — kostenlose Anmeldung",
     dirBody:
-      "Die Ebene der Menschen über unserem Ökosystem: ein öffentliches, verifiziertes Profil für jeden Kaffeeprofi des Departements, damit Produzenten, Röster und Marken Sie finden und Ihre Spezialität ohne Zwischenhändler prüfen können. Kostenlose Anmeldung, nach dem kolumbianischen Gesetz 1581 von 2012.",
+      "Die Ebene der Menschen über unserem Ökosystem: ein öffentliches, verifiziertes Profil für jeden Kaffeeprofi des Landes, damit Produzenten, Röster und Marken Sie finden und Ihre Spezialität ohne Zwischenhändler prüfen können. Kostenlose Anmeldung, nach dem kolumbianischen Gesetz 1581 von 2012.",
     dirPoints: [
       <><b>Verifiziertes öffentliches Profil:</b> Ihre Spezialität, Zertifikate und Erfahrung, mit dem Siegel von CTC und besserer Platzierung in der Suche</>,
       <><b>Netzwerk und Chancen:</b> vernetzen Sie sich mit anderen Spezialisten und erfahren Sie zuerst von Projekten, Messen, Stellenangeboten und Seminaren</>,
       <><b>Mit dem Ökosystem verbunden:</b> ein einziges Konto für Kaffetal Regal und Cherry Picked — der menschliche Faden von der Finca bis zur Tasse</>,
     ],
-    dirSpecs: ["Kostenlose Anmeldung", "Santander · 87 Gemeinden", "Unter 2 Minuten", "Gesetz 1581 von 2012"],
+    dirSpecs: ["Kostenlose Anmeldung", "Kolumbien · landesweit", "Unter 2 Minuten", "Gesetz 1581 von 2012"],
     dirCta: "Zum Kaffee-Verzeichnis",
+    sepDir: "Die Menschen hinter jeder Tasse · das Kaffee-Verzeichnis",
     sep2: "Jede Tasse begann als Blüte · Genetik mit Papieren",
     varTag: "04 · Registrierte Varietäten",
     varH3: "Setzlinge verifizierter Arten, ab dem Chapola-Stadium",
@@ -797,6 +801,17 @@ export function ServicesSection() {
             </div>
           </details>
 
+          <figure className={styles.sep}>
+            <Image
+              src="/images/ctc-home/24-catacion-3.jpg"
+              alt="Especialistas del café de Colombia en una mesa de catación"
+              fill
+              sizes="100vw"
+              style={{ objectFit: "cover" }}
+            />
+            <figcaption>{t.sepDir}</figcaption>
+          </figure>
+
           {/* Directorio del Café (03): NO abre el formulario de contacto como los
               demás servicios — es una superficie viva propia, así que su CTA es un
               enlace real a /directorio. */}
@@ -818,10 +833,11 @@ export function ServicesSection() {
                   ))}
                 </ul>
                 <Image
-                  src="/images/ctc-home/24-catacion-3.jpg"
-                  alt="Especialistas del café de Santander en una mesa de catación"
+                  src="/images/shared/directorio-logo.png"
+                  alt="Directorio del Café"
                   width={450}
-                  height={269}
+                  height={450}
+                  style={{ background: "#fff" }}
                 />
               </div>
               <div className={styles.svcSpecs}>

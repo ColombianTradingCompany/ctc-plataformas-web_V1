@@ -11,6 +11,8 @@
 // banco de certificaciones) sí son reales y son los que sobrevivirán a esa
 // migración.
 
+import { DANE_ENTRIES } from "@/lib/daneCodes.data";
+
 export type Plataforma = "Kaffetal Regal" | "Cherry Picked" | "Ambas";
 
 export const MUNICIPIOS = [
@@ -18,6 +20,48 @@ export const MUNICIPIOS = [
   "Barichara", "Curití", "Charalá", "Mogotes", "Zapatoca", "Los Santos", "Rionegro", "Lebrija",
   "Vélez", "Oiba", "Suaita", "San Vicente de Chucurí", "Landázuri", "Málaga", "Guaca",
 ];
+
+// ── Geografía de Colombia (todo el país, no solo Santander) ──────────────────
+// Construida sobre la tabla DANE ya presente en el repo (src/lib/daneCodes.data.ts),
+// que EUDR usa para resolver códigos de predio. Los nombres del DANE vienen en
+// MAYÚSCULAS y sin tildes; aquí se muestran con tilde/casing correcto en los 33
+// departamentos (mapa fijo) y en título para los ~1.120 municipios.
+const DEP_DISPLAY: Record<string, string> = {
+  "AMAZONAS": "Amazonas", "ANTIOQUIA": "Antioquia", "ARAUCA": "Arauca",
+  "ATLANTICO": "Atlántico", "BOGOTA": "Bogotá D.C.", "BOLIVAR": "Bolívar",
+  "BOYACA": "Boyacá", "CALDAS": "Caldas", "CAQUETA": "Caquetá", "CASANARE": "Casanare",
+  "CAUCA": "Cauca", "CESAR": "Cesar", "CHOCO": "Chocó", "CORDOBA": "Córdoba",
+  "CUNDINAMARCA": "Cundinamarca", "GUAINIA": "Guainía", "GUAVIARE": "Guaviare",
+  "HUILA": "Huila", "LA GUAJIRA": "La Guajira", "MAGDALENA": "Magdalena", "META": "Meta",
+  "N. DE SANTANDER": "Norte de Santander", "NARIÑO": "Nariño", "PUTUMAYO": "Putumayo",
+  "QUINDIO": "Quindío", "RISARALDA": "Risaralda", "SAN ANDRES": "San Andrés y Providencia",
+  "SANTANDER": "Santander", "SUCRE": "Sucre", "TOLIMA": "Tolima",
+  "VALLE DEL CAUCA": "Valle del Cauca", "VAUPES": "Vaupés", "VICHADA": "Vichada",
+};
+
+const CONECTORES = new Set(["de", "del", "la", "las", "los", "y", "e"]);
+const tituloMun = (s: string) =>
+  s.toLowerCase().split(/(\s+|-)/).map((w, i) => {
+    if (/^\s+$/.test(w) || w === "-" || w === "") return w;
+    if (i > 0 && CONECTORES.has(w)) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join("");
+
+const depDisplay = (raw: string) => DEP_DISPLAY[raw] ?? tituloMun(raw);
+
+const MUN_POR_DEP = new Map<string, string[]>();
+for (const e of DANE_ENTRIES) {
+  const dep = depDisplay(e.dep);
+  if (!MUN_POR_DEP.has(dep)) MUN_POR_DEP.set(dep, []);
+  MUN_POR_DEP.get(dep)!.push(tituloMun(e.mun));
+}
+for (const list of MUN_POR_DEP.values()) list.sort((a, b) => a.localeCompare(b, "es"));
+
+/** Los 33 departamentos de Colombia, con tilde, ordenados alfabéticamente. */
+export const DEPARTAMENTOS: string[] = [...MUN_POR_DEP.keys()].sort((a, b) => a.localeCompare(b, "es"));
+
+/** Municipios de un departamento (título, ordenados). Vacío si no se reconoce. */
+export const municipiosDe = (dep: string): string[] => MUN_POR_DEP.get(dep) ?? [];
 
 export const ESPECIALIDADES = [
   "Barismo", "Tueste", "Catación", "Caficultura", "Beneficio y fermentación",
@@ -78,6 +122,26 @@ export const BANCO_CERT: { g: string; items: string[] }[] = [
   {
     g: "Inocuidad e industria", items: [
       "HACCP", "BPM · Buenas Prácticas de Manufactura", "ISO 9001", "ISO 22000", "Manipulación de alimentos",
+    ],
+  },
+  {
+    g: "Fermentación y beneficio", items: [
+      "Fermentación controlada", "Fermentación anaeróbica", "Fermentación con levaduras seleccionadas",
+      "Control de pH y °Brix en fermentación", "Beneficio lavado, honey y natural",
+      "Termómetro y data logger de fermentación",
+    ],
+  },
+  {
+    g: "Cumplimiento y EUDR", items: [
+      "Debida diligencia EUDR", "Geolocalización y polígono de predio (EUDR)",
+      "Declaración de debida diligencia (DDS)", "Trazabilidad de cadena de custodia",
+    ],
+  },
+  {
+    g: "Auditoría y aseguramiento", items: [
+      "Auditor interno BPA (ICA)", "Auditor interno BPM / HACCP", "Auditoría de inocuidad",
+      "Auditoría de cadena de custodia", "ISO 19011 · auditoría de sistemas de gestión",
+      "Auditor Rainforest / Fairtrade",
     ],
   },
   {

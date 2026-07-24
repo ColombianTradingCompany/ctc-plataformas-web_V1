@@ -5,6 +5,7 @@ import { LegalFooter } from "@/components/LegalFooter";
 
 const LOGOS = {
   parrot: "/images/shared/ctc-logo-parrot.jpg",
+  directorio: "/images/shared/directorio-logo.png",
   full: "/images/shared/ctc-logo-full.png",
   kaffetal: "/images/shared/kaffetal-regal-logo.png",
   cherry: "/images/shared/cherry-picked-logo.png",
@@ -26,11 +27,11 @@ export function Landing({
         <div className="wrap topbar__in">
           <a className="marca" href="#top">
             <span className="marca__logo">
-              <Image src={LOGOS.parrot} alt="Colombian Trading Company" width={1484} height={1662} priority />
+              <Image src={LOGOS.directorio} alt="Directorio del Café" width={900} height={900} priority />
             </span>
             <span className="marca__txt">
               Directorio del Café
-              <small>Santander · Colombia</small>
+              <small>Colombia</small>
             </span>
           </a>
           <nav>
@@ -58,16 +59,16 @@ export function Landing({
       <main id="top">
         {/* HERO: la tesis es la ficha misma */}
         <section className="hero">
-          <Image className="hero__fondo" src={LOGOS.parrot} alt="" width={1484} height={1662} />
+          <Image className="hero__fondo" src={LOGOS.directorio} alt="" width={900} height={900} />
           <div className="wrap hero__grid">
             <div>
-              <p className="eyebrow">Directorio de Especialistas del Café · Santander</p>
+              <p className="eyebrow">Directorio de Especialistas del Café · Colombia</p>
               <h1>
-                ¿Eres un profesional del café en <em>Santander?</em>
+                ¿Eres un profesional del café en <em>Colombia?</em>
               </h1>
               <p className="hero__deck">
                 Tu trabajo ya existe: la finca, el tueste, la barra, la mesa de catación. Lo que falta
-                es que se pueda encontrar. Inscríbete en el primer directorio oficial del departamento
+                es que se pueda encontrar. Inscríbete en el primer directorio oficial del país
                 y ten una ficha pública que productores, tostadores y marcas puedan consultar.
               </p>
               <div className="hero__acciones">
@@ -89,7 +90,7 @@ export function Landing({
                   <div className="ficha__top">
                     <span className="avatar" style={{ background: "#1B3A2C" }}>MR</span>
                     <div>
-                      <p className="ficha__id">SDR-0007 · Verificado</p>
+                      <p className="ficha__id">DC-0007 · Verificado</p>
                       <h3 className="ficha__nombre">Marcela Rueda</h3>
                       <p className="ficha__lugar">Barichara · Santander</p>
                     </div>
@@ -113,7 +114,7 @@ export function Landing({
                 </div>
               </article>
               <div className="sello hero__sello">
-                Directorio oficial<b>Santander</b>2026
+                Directorio oficial<b>Colombia</b>2026
               </div>
             </div>
           </div>
@@ -163,7 +164,7 @@ export function Landing({
                 </span>
                 <div>
                   <h4>Conexión</h4>
-                  <p>Red de contactos directa con caficultores, baristas, tostadores y catadores del departamento. Escribes desde el mismo directorio.</p>
+                  <p>Red de contactos directa con caficultores, baristas, tostadores y catadores de todo el país. Escribes desde el mismo directorio.</p>
                 </div>
               </div>
               <div className="beneficio">
@@ -196,7 +197,7 @@ export function Landing({
                 </span>
                 <div>
                   <h4>Crecemos juntos</h4>
-                  <p>Fortalecemos la industria del café de especialidad del departamento y llevamos el talento santandereano más lejos.</p>
+                  <p>Fortalecemos la industria del café de especialidad del país y llevamos el talento cafetero colombiano más lejos.</p>
                 </div>
               </div>
               <div className="beneficio">
@@ -228,8 +229,8 @@ export function Landing({
                 <p>Nombre, municipio, contacto, especialidad y certificaciones. Cinco campos, sin costo.</p>
               </div>
               <div className="paso">
-                <p className="paso__n">02</p><h4>Entras con tu cuenta</h4>
-                <p>Tu ficha queda ligada a tu cuenta de Kaffetal Regal o Cherry Picked. Una sola clave para todo.</p>
+                <p className="paso__n">02</p><h4>Creas tu cuenta</h4>
+                <p>El Directorio tiene su propio ingreso. Si ya usas Kaffetal Regal o Cherry Picked, entra con el mismo correo o Google: una sola clave para todo el ecosistema.</p>
               </div>
               <div className="paso">
                 <p className="paso__n">03</p><h4>Completas tu ficha</h4>
@@ -251,7 +252,7 @@ export function Landing({
               <h2>Solo necesitamos<br />información básica</h2>
               <ul className="req__lista brecha">
                 <li><i>01</i><div><b>Nombre completo</b><span>Como quieres que aparezca en tu ficha pública.</span></div></li>
-                <li><i>02</i><div><b>Municipio de residencia</b><span>Bucaramanga, Piedecuesta, San Gil, Barichara… los 87 del departamento.</span></div></li>
+                <li><i>02</i><div><b>Departamento y municipio</b><span>Tu ubicación en cualquier región de Colombia — de Nariño a La Guajira.</span></div></li>
                 <li><i>03</i><div><b>Teléfono / WhatsApp</b><span>Solo visible para miembros del directorio si tú lo autorizas.</span></div></li>
                 <li><i>04</i><div><b>Especialidad</b><span>Barismo, tueste, catación, caficultura, beneficio, preparación de bebidas…</span></div></li>
                 <li><i>05</i><div><b>Certificaciones o experiencia</b><span>SCA, CQI, SENA, cursos, autodidacta. La experiencia también cuenta.</span></div></li>
@@ -286,11 +287,11 @@ export function Landing({
             <div className="cta-final">
               <p className="eyebrow">Es hora de hacer visible tu talento</p>
               <h2>
-                Hagamos que el talento cafetero<br />de Santander se reconozca<br />dentro y fuera de Colombia
+                Hagamos que el talento cafetero<br />de Colombia se reconozca<br />dentro y fuera del país
               </h2>
               <p className="brecha">
                 El registro toma menos de 2 minutos y no tiene costo. Juntos fortalecemos la cadena del
-                café santandereano, de la finca a la taza.
+                café colombiano, de la finca a la taza.
               </p>
               <div className="hero__acciones">
                 <button className="btn btn--oro" type="button" onClick={onInscribirme}>
@@ -402,7 +403,7 @@ export function Landing({
             </div>
           </div>
           <p className="pie__legal">
-            Maqueta de demostración · datos simulados · Directorio de Especialistas del Café · Santander
+            Maqueta de demostración · datos simulados · Directorio de Especialistas del Café · Colombia
           </p>
         </div>
       </footer>

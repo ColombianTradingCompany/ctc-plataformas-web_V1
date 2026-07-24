@@ -38,11 +38,15 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   agtron: { id: "agtron", src: "/tools/agtron-dial.html", lang: "en" },
   "mermas-rapida": { id: "mermas-rapida", src: "/tools/mermas-rapida.html", lang: "es" },
   "mermas-detallada": { id: "mermas-detallada", src: "/tools/mermas-detallada.html", lang: "es" },
-  // Fuera de public/: solo se sirven con sesión de consola (ver privateTools.ts) —
-  // el HTML va embebido (src/lib/tools/embedded/). Internas del equipo.
-  qr: { id: "qr", src: "/ecp/herramientas/qr", lang: "en" },
-  "formula-calidad": { id: "formula-calidad", src: "/ecp/herramientas/formula-calidad", lang: "es" },
-  "viaje-cafe": { id: "viaje-cafe", src: "/ecp/herramientas/viaje-cafe", lang: "es" },
+  // 2026-07-24: el mecanismo de herramientas "privadas" (/ecp/herramientas/<key>,
+  // HTML embebido) se RETIRÓ — el owner activó qr/formula-calidad/viaje-cafe para
+  // Kaffetal Regal en Disponibilidad y una herramienta servida por la consola no
+  // puede abrirse fuera de ella (404, segunda vez que pasa). Ahora TODAS viven en
+  // public/tools/ y la tabla de Disponibilidad es el único control: no contienen
+  // datos ni secretos — lo que se protege son las PÁGINAS, no los archivos.
+  qr: { id: "qr", src: "/tools/generador-qr.html", lang: "en" },
+  "formula-calidad": { id: "formula-calidad", src: "/tools/formula-calidad.html", lang: "es" },
+  "viaje-cafe": { id: "viaje-cafe", src: "/tools/viaje-cafe.html", lang: "es" },
   // Públicas (public/tools/): se ofrecen a productores/compradores igual que las
   // calculadoras de merma y el Agtron. DEBEN ser públicas para funcionar en
   // Kaffetal Regal — una herramienta servida por /ecp/herramientas/ no se puede
@@ -75,7 +79,7 @@ export const ALL_TOOL_IDS: ToolId[] = [
 //   · el disco Agtron va en LAS DOS: es el instrumento del tostador, pero
 //     también el idioma con el que el comprador le hablará al productor de su
 //     tueste — por eso el productor necesita poder mirarlo;
-//   · el generador de QR es interno (no se sirve desde public/, ver privateTools).
+//   · el generador de QR nació interno pero el owner lo activó para KR (2026-07-24).
 //
 // DOS NIVELES (petición del owner): "default" la ve cualquiera con cuenta en esa
 // superficie; "plus" solo quien tiene el estatus correspondiente (hoy:

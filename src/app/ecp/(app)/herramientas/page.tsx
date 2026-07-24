@@ -12,14 +12,14 @@ import styles from "@/app/bcp/(app)/shared.module.css";
 // una herramienta sigue sirviendo). Arriba, el tablero que decide dónde se
 // ofrece cada una y con qué nivel.
 //
-// Las herramientas viven en public/tools/ (la interna, tras un route handler
-// autenticado): no contienen datos ni secretos, así que lo que se protege es la
-// PÁGINA, no el archivo.
+// TODAS las herramientas viven en public/tools/ (2026-07-24 — el mecanismo de
+// servido "privado" se retiró): no contienen datos ni secretos, y la tabla de
+// Disponibilidad es el único control de dónde se ofrecen.
 
 const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
   qr: {
     name: "Generador de códigos QR",
-    desc: "Genera QR con la marca CTC para etiquetas, empaques y material impreso. Exporta a PNG y SVG; funciona sin conexión. Interna del equipo.",
+    desc: "Genera QR con la marca CTC para etiquetas, empaques y material impreso. Exporta a PNG y SVG; funciona sin conexión. Se ofrece a productores.",
   },
   agtron: {
     name: "Disco Agtron",
@@ -47,11 +47,11 @@ const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
   },
   "formula-calidad": {
     name: "La fórmula de calidad del café",
-    desc: "El marco de CTC para explicar cómo se compone la calidad de un café. Interna del equipo.",
+    desc: "El marco de CTC para explicar cómo se compone la calidad de un café. Se ofrece a productores.",
   },
   "viaje-cafe": {
     name: "El viaje del café",
-    desc: "El recorrido del café CTC, de la finca al destino, paso a paso. Interna del equipo.",
+    desc: "El recorrido del café CTC, de la finca al destino, paso a paso. Se ofrece a productores.",
   },
 };
 

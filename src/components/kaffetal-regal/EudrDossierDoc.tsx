@@ -143,7 +143,7 @@ export function EudrDossierDoc({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
           <div>
             <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>Colombian Trading Company · CTCx</p>
-            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Expediente EUDR · Debida Diligencia</h1>
+            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Visa EUDR de la Finca · Debida Diligencia</h1>
             <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}</p>
             <p style={{ margin: 0, fontWeight: 700 }}>
               {finca.name} · {fincaCode(finca.id)}

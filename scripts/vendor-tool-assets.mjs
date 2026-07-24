@@ -13,7 +13,6 @@ import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
 
 const TOOLS_DIR = path.join(process.cwd(), "public", "tools");
-const PRIVATE_DIR = path.join(process.cwd(), "private-tools");
 const ASSETS_REL = "/tools/assets";
 const FONTS_DIR = path.join(TOOLS_DIR, "assets", "fonts");
 const VENDOR_DIR = path.join(TOOLS_DIR, "assets");
@@ -103,20 +102,11 @@ for (const f of (await readdir(TOOLS_DIR)).filter((f) => f.endsWith(".html"))) {
   await processFile(path.join(TOOLS_DIR, f));
 }
 
-// Las privadas (servidas autenticadas) se procesan igual; sus assets sí viven en
-// public/ — una tipografía no es secreto.
-try {
-  const priv = (await readdir(PRIVATE_DIR)).filter((f) => f.endsWith(".html"));
-  if (priv.length) {
-    console.log("private-tools:");
-    for (const f of priv) await processFile(path.join(PRIVATE_DIR, f));
-  }
-} catch {
-  /* aún no existe */
-}
+// (2026-07-24: el directorio private-tools/ se retiró — todas las herramientas
+// viven en public/tools/ y la tabla de Disponibilidad es el único control.)
 
 const remaining = [];
-for (const dir of [TOOLS_DIR, PRIVATE_DIR]) {
+for (const dir of [TOOLS_DIR]) {
   let files = [];
   try { files = (await readdir(dir)).filter((f) => f.endsWith(".html")); } catch { continue; }
   for (const f of files) {

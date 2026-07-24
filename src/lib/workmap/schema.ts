@@ -118,9 +118,9 @@ const af = (id: string, label: string, uis: string[], stageId: string, x: number
 // · soporte (comercio/club/leads/plataforma). EVA y GAL son los dos puntos de equilibrio.
 const STAGES: MapStage[] = [
   { id: "cuenta", label: "Cuenta", x0: 40, x1: 250, tint: "free" },
-  { id: "ft", label: "FT · Finca + EUDR", x0: 270, x1: 480, tint: "free" },
+  { id: "ft", label: "FT · Finca + Visa EUDR", x0: 270, x1: 480, tint: "free" },
   { id: "ft2", label: "FT2 · Lote", x0: 500, x1: 720, tint: "free" },
-  { id: "eudr", label: "EUDR · Lote", x0: 740, x1: 960, tint: "free" },
+  { id: "eudr", label: "Sello EUDR", x0: 740, x1: 960, tint: "free" },
   { id: "vid", label: "VID · Video", x0: 980, x1: 1160, tint: "free" },
   { id: "eva", label: "EVA · Evaluación", x0: 1180, x1: 1440, tint: "free" },
   { id: "mue", label: "MUE · Pago + Muestra", x0: 1460, x1: 1680, tint: "paid" },
@@ -138,24 +138,22 @@ const NODES: MapNode[] = [
   t("profiles", "profiles", "profiles", ["Auth · todas las cuentas"], "cuenta", 145, 170),
   t("producer_profiles", "producer_profiles", "producer_profiles", ["KR · Información general", "BCP · Productores"], "cuenta", 145, 320),
   t("buyer_profiles", "buyer_profiles", "buyer_profiles", ["CP · Cuenta"], "cuenta", 145, 470),
-  // FT · Finca + EUDR de finca — compuerta PROPIA de la finca: BCP la aprueba en
-  // /bcp/fincas (fincaEudrStatus: apta / pendiente / no apta) y produce el DOSSIER
-  // EUDR de finca. Es aguas-arriba del lote: una finca no apta bloquea su EUDR.
+  // FT · Finca + VISA EUDR (modelo Pasaporte/Visa/Sello, 2026-07-24): la debida
+  // diligencia vive SOLO en la finca — BCP revisa y otorga su VISA en /bcp/fincas
+  // (fincaEudrStatus: Visa vigente / en trámite / sin Visa) y produce el dossier.
   t("fincas", "fincas", "fincas", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 375, 250),
   t("media_assets", "media_assets", "media_assets", ["KR · Fincas/Lotes", "BCP · Arena (jornada)"], "ft", 200, 395),
-  d("finca_eudr_gate", "¿Finca apta EUDR?", "ft", 375, 470),
-  af("finca_dossier", "Dossier EUDR · finca", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 275, 680),
-  st("finca_stop", "Finca no apta · corregir", "ft", 495, 680, ["BCP · Fincas", "KR · Mis Fincas"]),
+  d("finca_eudr_gate", "¿Visa EUDR de la finca?", "ft", 375, 470),
+  af("finca_dossier", "Visa EUDR · finca (dossier)", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 275, 680),
+  st("finca_stop", "Sin Visa · corregir", "ft", 495, 680, ["BCP · Fincas", "KR · Mis Fincas"]),
   // FT2 · Lote
   t("lots", "lots", "lots", ["KR · Mis Lotes", "BCP · Lotes", "BCP · Galardonados", "CP · Catálogo"], "ft2", 610, 250),
   t("ficha_snap", "ficha_completion_snapshots", "ficha_completion_snapshots", ["KR · Ficha"], "ft2", 610, 410),
-  // EUDR · Lote — compuerta PROPIA del lote y DEPENDIENTE de la finca: riesgo
-  // Art. 10-11 (lotEudrStatus: bloqueado por finca / en revisión / eudr_ready) sobre
-  // finca(s) de origen aptas → produce el CERTIFICADO EUDR de lote. El veredicto lo
-  // cierra BCP dentro de EVA (1 de los 5 ítems del checklist), no antes.
-  d("lot_eudr_gate", "¿Lote apto EUDR? (riesgo Art. 10-11)", "eudr", 850, 250),
-  af("lot_certificate", "Certificado EUDR · lote", ["KR · Mis Lotes", "BCP · Lotes"], "eudr", 740, 490),
-  st("lot_eudr_stop", "Bloqueado por finca / en revisión", "eudr", 970, 490, ["KR · Mis Lotes", "BCP · Lotes"]),
+  // SELLO del lote — SIN compuerta propia: se HEREDA por completo de la Visa de
+  // la(s) finca(s) de origen (lotEudrStatus = herencia pura). El lote solo espera
+  // a que su finca tenga la Visa; el artefacto es su Sello imprimible.
+  af("lot_stamp", "Sello EUDR · lote (heredado)", ["KR · Mis Lotes", "BCP · Lotes"], "eudr", 850, 250),
+  st("lot_eudr_stop", "Sin Visa de finca · en espera", "eudr", 850, 490, ["KR · Mis Lotes", "BCP · Lotes"]),
   // VID · video del lote (lots.video_asset_id + media_assets)
   t("vid", "Video del lote", "media_assets", ["KR · Mis Lotes", "BCP · Lotes"], "vid", 1070, 250),
   // EVA · veredicto documental (HITO / entrega: informe EUDR). Lee lots(eva_checklist,
@@ -210,17 +208,16 @@ const EDGES: MapEdge[] = [
   e("e4", "fincas", "lots"),
   e("e5", "fincas", "media_assets", "info"),
   e("e6", "lots", "ficha_snap", "info"),
-  // EUDR de FINCA (compuerta propia): produce el dossier; su verdicto habilita/bloquea
-  // aguas abajo el EUDR del lote.
+  // VISA de la FINCA (la ÚNICA compuerta EUDR — modelo Pasaporte/Visa/Sello):
+  // produce el dossier; su otorgamiento SELLA aguas abajo todos los lotes.
   e("e7f", "fincas", "finca_eudr_gate"),
-  e("e7d", "finca_eudr_gate", "finca_dossier", "info", "apta · dossier"),
-  e("e7s", "finca_eudr_gate", "finca_stop", "bad", "no apta"),
-  e("e7dep", "finca_eudr_gate", "lot_eudr_gate", "info", "finca apta habilita"),
-  // EUDR de LOTE (compuerta propia, DEPENDE de la finca): produce el certificado.
-  e("e7l", "lots", "lot_eudr_gate"),
-  e("e8c", "lot_eudr_gate", "lot_certificate", "info", "ready · certificado"),
-  e("e8s", "lot_eudr_gate", "lot_eudr_stop", "bad", "bloqueado / revisión"),
-  e("e8v", "lot_eudr_gate", "vid", "ok", "apto → video"),
+  e("e7d", "finca_eudr_gate", "finca_dossier", "info", "Visa · dossier"),
+  e("e7s", "finca_eudr_gate", "finca_stop", "bad", "sin Visa"),
+  // SELLO del LOTE: herencia pura de la Visa — sin compuerta propia.
+  e("e7dep", "finca_eudr_gate", "lot_stamp", "ok", "Visa vigente → Sello"),
+  e("e7l", "lots", "lot_stamp", "info", "hereda"),
+  e("e8s", "lot_stamp", "lot_eudr_stop", "bad", "finca sin Visa"),
+  e("e8v", "lot_stamp", "vid", "ok", "sellado → video"),
   e("e_vid", "vid", "eva"),
   e("e10", "eva", "arena_inscriptions", "ok", "Apto → postula (pago)"),
   e("e9b", "eva", "eva_stop", "bad", "No Apto"),

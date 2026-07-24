@@ -7,6 +7,48 @@ Formato:
 - Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
 (commit: <sha corto o "pending">)
 
+## [2026-07-24] EUDR reestructurado: Pasaporte / Visa / Sello (V2.15) — CAMBIO DE ARQUITECTURA
+- Decisión del owner: la debida diligencia EUDR vive SOLO en la FINCA; el lote la
+  hereda por completo. Narrativa de viaje: el PRODUCTOR porta su "Pasaporte"
+  (identidad CTC-P-…), cada FINCA obtiene su "VISA" (la aptitud EUDR que otorga
+  BCP) y cada LOTE recibe su "SELLO" — heredado de la Visa, sin trámite propio.
+- Regla central (src/lib/eudr.ts): lotEudrStatus = HERENCIA PURA — todas las
+  fincas de origen con Visa vigente ⇒ Sello listo; los campos eudr_* del lote
+  (riesgo, mitigación, custodia, país…) YA NO participan (quedan como datos
+  históricos, sin migración destructiva). fincaEudrStatus renombrado a la Visa:
+  "Visa vigente / en trámite / Sin Visa". Los 9 consumidores siguen la función.
+- KR: el pane A5 del intake pasó de cuestionario (país, custodia, factores,
+  riesgo) a la vista "Visa EUDR y Sello del Lote" (estado heredado + qué falta y
+  dónde se resuelve); la sub-etapa A5 se completa con el ORIGEN RESUELTO (≥1
+  finca). Rótulos: dossier → "Visa EUDR de la Finca", certificado del lote →
+  "Sello EUDR del Lote" (el doc explica la herencia; custodia y evaluación de
+  riesgo del lote se imprimen solo como ANEXO HISTÓRICO si existen datos).
+  InfoModal: el código único es el "Pasaporte del Productor".
+- BCP: el panel EUDR de la EVA (custodia/país/factores/nivel de riesgo/responsable
+  con overrides "Corregir") se RETIRÓ — ahora muestra el estado del Sello heredado
+  y remite a Fincas para otorgar la Visa; ítem del checklist renombrado "EUDR ·
+  Visa de la finca"; markLotApto exige solo la Visa de la finca. updateLotEudr
+  queda LEGADO (sin UI). FincaEudrEditor = "Visa EUDR de la finca"; el botón del
+  dossier = "Ver Visa EUDR". ProducerPanel: chip "Pasaporte · CTC-P-…".
+- Mapa de Trabajo (Base): la compuerta de lote desapareció — queda UNA compuerta
+  EUDR ("¿Visa EUDR de la finca?") y el lote pasa a artefacto "Sello EUDR · lote
+  (heredado)" alimentado por la Visa; banda "EUDR · Lote" → "Sello EUDR".
+- Cambios al próximo wrap: DICT `eudr`/`eva`/`intake` reescritos al modelo
+  Visa/Sello; nodo n-kaffetal (A5) y n-bcp (EVA); escenario `eva` simplificado.
+- Verificación: 10 checks semánticos de herencia (riesgo del lote ignorado,
+  multi-finca bloquea, labels) + qa-boards 27/27 + qa-jornada 11/11 + tsc/eslint.
+
+## [2026-07-24] Herramientas: TODAS públicas — mecanismo privado retirado (V2.15)
+- El owner activó qr/formula-calidad/viaje-cafe para KR en Disponibilidad y
+  volvieron los 404 (una herramienta servida por la consola no abre fuera de
+  ella — segunda vez). Fix DEFINITIVO: se retiró el mecanismo privado completo
+  (ruta /ecp/herramientas/[tool], privateTools.ts, módulos embebidos y
+  embed-private-tools.mjs); las 9 herramientas viven en public/tools/ y la tabla
+  de Disponibilidad es el ÚNICO control. Gotcha 12 de HANDOFF marcado RESUELTO.
+- Verificado en vivo como productor (Prueba Uno): el módulo Herramientas lista
+  las 8 habilitadas y "El viaje del café" carga su contenido real en el iframe.
+- DICT `herramientas` al próximo wrap: un solo mecanismo de servido (público).
+
 ## [2026-07-22] Herramientas internas — 3 nuevas embebidas
 - Añadidas 3 herramientas INTERNAS (tras la sesión de consola, patrón `qr`): `mermas-ctc`
   (Calculadora de Mermas · Café CTC, exporta PDF con jsPDF), `catacion` (Rueda de Catación /
@@ -148,4 +190,64 @@ Formato:
   desdoblamiento finca/lote (dossier vs. certificado) al próximo wrap.
 - Verificación: tsc + eslint limpios; validador de geometría (43 nodos, 37 aristas, 2 artefactos)
   sin aristas colgantes ni solapes. La vista real /ecp/mapa está tras 2FA (no automatizable).
+(commit: pending)
+
+## [2026-07-24] Directorio de Especialistas del Café · Santander — superficie nueva
+- Portado el prototipo suelto del owner `reference_directorio-expertos/
+  directorio-cafe-santander_V2.html` (247 KB, HTML+CSS+JS de una pieza, base64 embebido)
+  al repo como una superficie más: ruta `/directorio`, subdominio
+  `directoriodelcafe.ctcexport.com` (nueva entrada en `SUBDOMAIN_ROUTES` de `src/proxy.ts`,
+  la número 10). Pasos DNS/Vercel en `ctc-platform/docs/DIRECTORIO_DOMAIN_SETUP.md`.
+- QUÉ ES, conceptualmente: la CAPA DE PERSONAS de la red. Kaffetal Regal, Cherry Picked y
+  la Arena giran alrededor de LOTES; el directorio gira alrededor de la GENTE del café de
+  Santander (caficultores, baristas, tostadores, catadores, formadores, logística, comercio
+  exterior). Es la primera superficie pública que no vende ni compra café.
+- Estructura: una ruta, tres vistas en estado de cliente (`DirectorioExperience.tsx`):
+  landing pública → ingreso → app de miembros con 4 pestañas (Muro, Directorio, Mensajes,
+  Mi perfil). Componentes en `src/components/directorio/`; catálogos y datos en `data.ts`.
+- REAL vs. MAQUETA (importante para el wrap, no aplanar esta distinción): la LANDING es la
+  entrega real — es lo que verá quien llegue al subdominio. Todo lo que hay tras el ingreso
+  es maqueta con datos inventados (44 fichas, 3 conversaciones, 8 publicaciones) y la
+  interfaz lo grita a propósito (`.mockbar` dorada punteada, etiqueta "Simulado" por
+  tarjeta, "Perfil simulado", "Demo · no se envía nada"). Los CATÁLOGOS sí son reales
+  (21 municipios, 12 especialidades con su explicación ⓘ, banco de certificaciones en
+  7 grupos) y son lo que sobrevive a la migración a Supabase.
+- NADA PERSISTE todavía: inscripción, ingreso, perfil, mensajes y muro viven en memoria y
+  se reinician al recargar. Los dos únicos puntos que cambian cuando tenga respaldo:
+  el `onSubmit` de `ModalInscripcion` (→ server action + tabla propia, service-role-only
+  al estilo `leads`) y el ingreso (→ la MISMA cuenta Supabase de Kaffetal Regal o Cherry
+  Picked, que es literalmente lo que promete el paso 02 de la landing).
+- Decisiones técnicas que conviene documentar: hoja de estilo de RUTA no-módulo
+  (`src/app/directorio/directorio.css`, mismo patrón que `src/app/bcp/tailwind.css`) para
+  conservar los nombres de clase del prototipo; tokens sobre un envoltorio `.dir` en vez de
+  `:root` (next/font entrega sus variables en una clase que cae en un `<div>`, así que un
+  `var(--font-…)` referenciado en `:root` se resolvería contra `:root` y moriría);
+  selectores de elemento prefijados con `.dir` para ganarle a `globals.css` por
+  especificidad en vez de por orden de carga; fuentes Big Shoulders / Lora / IBM Plex Mono
+  por `next/font` (ojo: Google renombró la familia, `Big_Shoulders_Display` ya no existe en
+  next/font, es `Big_Shoulders`); los base64 del prototipo sustituidos por los assets
+  compartidos de `public/images/shared/`; `LegalFooter` compartido en las tres vistas.
+- CAMBIOS PARA EL PRÓXIMO WRAP:
+  · NODO nuevo `n-directorio` (zona Clientes/Frontend, junto a n-kaffetal y n-cherry):
+    "Directorio del Café · Santander — capa de personas". Wire desde `n-proxy`
+    (subdominio 10) y wire punteado/futuro hacia `n-db` (aún sin tabla).
+  · Entrada DICT nueva `directorio`: qué es, las tres vistas, real-vs-maqueta, los
+    catálogos que sí son reales, y qué falta para que persista. Cross-link (`a:`) con
+    `proxy`, `identidades` y `leads`.
+  · Reescribir el nodo `n-proxy` / entrada DICT `proxy`: pasa de 9 a 10 subdominios.
+  · Escenario nuevo `directorio` (inscripción → ingreso → ficha pública → mensaje directo),
+    marcándolo explícitamente como flujo de MAQUETA, no de producción.
+  · FILETREE: carpetas nuevas `ctc-platform/src/app/directorio/` y
+    `ctc-platform/src/components/directorio/` + `reference_directorio-expertos/`;
+    entradas ANN para `DirectorioExperience.tsx`, `data.ts`, `directorio.css` y
+    `docs/DIRECTORIO_DOMAIN_SETUP.md`.
+- Verificación en vivo (2026-07-24, 1280 y 375 px): inscripción → ingreso (correo y
+  plataforma viajan) → app; muro filtrar/publicar/me gusta; directorio búsqueda sin tildes
+  ("genetica" encuentra "Genética y viveros"), 5 filtros, 4 órdenes, estado vacío, limpiar;
+  ficha → mensaje → hilo creado arriba en Mensajes con la pestaña cambiada y la píldora de
+  no leídos bajando 3→2; perfil con vista previa en vivo, medidor 92%→83% al quitar el
+  adjunto y guardado reflejado en la barra. `curl -H "Host: directoriodelcafe.ctcexport.com"`
+  devuelve el directorio sin afectar a kaffetal-regal ni a la raíz. tsc y eslint limpios.
+  Sin errores de consola; las 8 imágenes responden 200.
+- Versión de plataforma subida a V2.15 en el mismo commit (`src/lib/version.ts`).
 (commit: pending)

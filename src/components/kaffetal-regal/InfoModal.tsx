@@ -229,7 +229,7 @@ export function InfoModal({
         </div>
         {code && (
           <div className={styles.wide}>
-            <label>Código único de identidad de Proveedor <small>(autogenerado)</small></label>
+            <label>Pasaporte del Productor · código único CTC-P <small>(autogenerado)</small></label>
             <input value={code} readOnly />
             <button type="button" className="btn btn-sm" style={{ marginTop: 8 }} onClick={exportQr}>
               Exportar QR (.jpg)

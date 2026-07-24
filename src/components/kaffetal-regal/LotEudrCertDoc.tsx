@@ -98,7 +98,7 @@ export function LotEudrCertDoc({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
           <div>
             <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>Colombian Trading Company · CTCx</p>
-            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Certificación EUDR · Lote</h1>
+            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Sello EUDR del Lote</h1>
             <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}</p>
             <p style={{ margin: 0, fontWeight: 700 }}>
               {lot.name} · <span style={{ fontFamily: "monospace" }}>{ctcLotReferenceShort(lot.id)}</span>
@@ -110,9 +110,10 @@ export function LotEudrCertDoc({
         </div>
 
         <div style={{ background: "#F3EFFB", border: "1px solid #d9ccf2", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12.5, color: "#3a2a5e" }}>
-          <b>Documento del LOTE de la Certificación Voluntaria EUDR.</b> Acredita la debida diligencia a nivel de lote
-          (cadena de custodia y evaluación de riesgo). Se complementa con el <b>Expediente EUDR de la(s) finca(s) de
-          origen</b>, que acredita el origen libre de deforestación y la legalidad del predio.
+          <b>Sello EUDR del lote — heredado de la Visa EUDR de su(s) finca(s) de origen.</b> La debida diligencia
+          (Reglamento (UE) 2023/1115) vive en la finca: su <b>Visa EUDR</b> acredita el origen libre de deforestación
+          posterior al 31/12/2020, la producción legal, la tenencia y la geolocalización del predio. Este Sello se
+          emite por herencia directa de esa Visa vigente — el lote no requiere trámites adicionales.
         </div>
 
         <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Identidad del lote</h2>
@@ -132,8 +133,12 @@ export function LotEudrCertDoc({
           </tbody>
         </table>
 
-        <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Cadena de custodia</h2>
-        <p style={{ fontSize: 13, fontWeight: 600 }}>{custody.length ? custody.map((k) => CUSTODY_LABEL[k]).join(" → ") : "Sin etapas declaradas"}</p>
+        {/* Anexo HISTÓRICO (modelo Visa/Sello 2026-07-24): la cadena de custodia y
+            la evaluación de riesgo por lote ya no se diligencian — se imprimen solo
+            si el lote las tiene de antes. */}
+        {custody.length > 0 && (<>
+        <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Cadena de custodia (anexo histórico)</h2>
+        <p style={{ fontSize: 13, fontWeight: 600 }}>{custody.map((k) => CUSTODY_LABEL[k]).join(" → ")}</p>
         <p style={{ fontSize: 12.5, color: "#555" }}>
           {lot.eudr_custody_method === "ctc_standard" ? (
             <>
@@ -149,32 +154,38 @@ export function LotEudrCertDoc({
           )}
         </p>
 
-        <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Evaluación de riesgo (Art. 10)</h2>
-        <table style={{ borderCollapse: "collapse", fontSize: 13, width: "100%" }}>
-          <tbody>
-            {row("País / región de producción", lot.eudr_country ? `${lot.eudr_country} · riesgo ${lot.eudr_country_risk ?? "Estándar"} (Reg. UE 2025/1093)` : "sin definir")}
-            {row("Complejidad de la cadena", lot.eudr_chain_complexity || "sin definir")}
-            {row("Riesgo propio del producto", lot.eudr_product_risk || "sin definir")}
-            {factors.length > 0 &&
-              row(
-                "Factores declarados",
-                <ul style={{ margin: 0, paddingLeft: 16, fontWeight: 400 }}>
-                  {factors.map((k) => (
-                    <li key={k}>{PRODUCT_RISK_LABEL[k] ?? k}</li>
-                  ))}
-                </ul>
-              )}
-            {row("Esquemas de certificación / verificación", lot.eudr_cert_scheme || "ninguno declarado")}
-            {row("Indicios de ilegalidad o deforestación", yesNo(lot.eudr_illegality_indicators))}
-            {row("Documentos disponibles y verificables", yesNo(lot.eudr_docs_available))}
-            {row(
-              "Nivel de riesgo determinado",
-              <span style={{ color: lot.eudr_risk_level === "no_insignificante" ? "#C4402F" : "#166534" }}>
-                {RISK_LEVEL_LABEL[lot.eudr_risk_level ?? ""] ?? "Pendiente"}
-              </span>
-            )}
-          </tbody>
-        </table>
+        </>)}
+
+        {(lot.eudr_country || lot.eudr_risk_level) && (
+          <>
+            <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Evaluación de riesgo (anexo histórico · Art. 10)</h2>
+            <table style={{ borderCollapse: "collapse", fontSize: 13, width: "100%" }}>
+              <tbody>
+                {row("País / región de producción", lot.eudr_country ? `${lot.eudr_country} · riesgo ${lot.eudr_country_risk ?? "Estándar"} (Reg. UE 2025/1093)` : "sin definir")}
+                {row("Complejidad de la cadena", lot.eudr_chain_complexity || "sin definir")}
+                {row("Riesgo propio del producto", lot.eudr_product_risk || "sin definir")}
+                {factors.length > 0 &&
+                  row(
+                    "Factores declarados",
+                    <ul style={{ margin: 0, paddingLeft: 16, fontWeight: 400 }}>
+                      {factors.map((k) => (
+                        <li key={k}>{PRODUCT_RISK_LABEL[k] ?? k}</li>
+                      ))}
+                    </ul>
+                  )}
+                {row("Esquemas de certificación / verificación", lot.eudr_cert_scheme || "ninguno declarado")}
+                {row("Indicios de ilegalidad o deforestación", yesNo(lot.eudr_illegality_indicators))}
+                {row("Documentos disponibles y verificables", yesNo(lot.eudr_docs_available))}
+                {row(
+                  "Nivel de riesgo determinado",
+                  <span style={{ color: lot.eudr_risk_level === "no_insignificante" ? "#C4402F" : "#166534" }}>
+                    {RISK_LEVEL_LABEL[lot.eudr_risk_level ?? ""] ?? "Pendiente"}
+                  </span>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
 
         {(lot.eudr_mitigation_actions || lot.eudr_mitigation_effective !== null || lot.eudr_mitigation_responsible) && (
           <>

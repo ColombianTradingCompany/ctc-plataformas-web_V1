@@ -10,7 +10,7 @@ export const EVA_CHECKLIST_ITEMS = [
   { key: "ft", label: "FT · Identidad y Origen" },
   { key: "ft2_certs", label: "FT2 · Certificados (A3/A4)" },
   { key: "ft2_fisico", label: "FT2 · Análisis Físico (B2/B3)" },
-  { key: "eudr", label: "EUDR · Debida Diligencia" },
+  { key: "eudr", label: "EUDR · Visa de la finca" },
   { key: "video", label: "Video (B4)" },
 ] as const;
 

@@ -217,37 +217,31 @@ export function FichaView({
   const sca = useMemo(() => computeSca(data), [data]);
   const vTotal = useMemo(() => varietyTotal(data), [data]);
 
+  const sourceFincas = useMemo(
+    () => resolveSourceFincas(data.origin_category, data.estate, data.additional_estate_ids, fincas),
+    [data.origin_category, data.additional_estate_ids, data.estate, fincas]
+  );
+
   const completed = useMemo<Partial<Record<PaneId, boolean>>>(
     () => ({
       a1: !!data.product_name,
       a2: !!data.estate || !!data.region_dep,
       a3: data.origin_cert_dor || data.origin_cert_do || data.origin_cert_igp || data.origin_cert_fedecafe || !!data.awards,
       a4: [data.intl_eudr, data.intl_rainforest, data.intl_organic, data.intl_fairtrade].some(Boolean),
-      // EUDR sub-stage is "done" when the PRODUCER's own inputs are in --
-      // country, custody chain + separation method, and the two yes/no
-      // factors. The final "Nivel de riesgo determinado" is CTC/BCP's call
-      // (Art. 10-11), so it is deliberately NOT part of this gate; requiring it
-      // used to lock the producer out of "Completar EUDR y continuar".
-      a5:
-        !!data.eudr_country &&
-        data.eudr_custody_stages.length > 0 &&
-        !!data.eudr_custody_method &&
-        data.eudr_illegality_indicators !== null &&
-        data.eudr_docs_available !== null,
+      // 2026-07-24 (modelo Visa/Sello): la debida diligencia EUDR vive en la
+      // FINCA; el lote hereda su Sello de la Visa de sus fincas de origen. La
+      // sub-etapa A5 queda "completa" con el origen RESUELTO (≥1 finca real) —
+      // el lote ya no declara custodia/país/factores propios.
+      a5: sourceFincas.length > 0,
       b1: vTotal > 0 && !!data.species,
       b2: sca.total > 0,
       b3: factor.remainder > 0,
       b4: !!lot.videoUrl,
     }),
-    [data, vTotal, sca.total, factor.remainder, lot.videoUrl]
+    [data, vTotal, sca.total, factor.remainder, lot.videoUrl, sourceFincas.length]
   );
 
   const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 9) * 100);
-
-  const sourceFincas = useMemo(
-    () => resolveSourceFincas(data.origin_category, data.estate, data.additional_estate_ids, fincas),
-    [data.origin_category, data.additional_estate_ids, data.estate, fincas]
-  );
   // The IMPORTANT rule: EUDR can't be submitted until every source finca has
   // finished its own due diligence (fincaEudrStatus "apta") -- see PaneA5Eudr
   // for the same resolution logic applied to the live status badge.
@@ -413,15 +407,15 @@ export function FichaView({
     }
     if (step === 2) {
       if (!completed.a5) {
-        setNotice("En EUDR: indique el país, marque la cadena de custodia y su método, y responda las dos preguntas de sí/no.");
+        setNotice("En A5: seleccione la finca de origen (en A2) — el Sello EUDR del lote se hereda de la Visa de su finca.");
         return;
       }
-      // Si lo ÚNICO que falta es la aptitud de la(s) finca(s), se puede seguir
-      // al video -- el lote queda con su bandera roja EUDR pendiente hasta que
-      // la finca complete su propia debida diligencia.
+      // El Sello se hereda de la Visa de la finca: si la Visa aún está en
+      // trámite, se puede seguir al video — el lote queda con su bandera roja
+      // hasta que la finca obtenga su Visa.
       if (!allFincasApta) {
         const msg =
-          'La(s) finca(s) de origen aún no completan su propia debida diligencia (estado distinto de "Apta").\n\nPuede continuar con el video, pero el lote quedará marcado en rojo y PENDIENTE de EUDR hasta que su(s) finca(s) queden Aptas.\n\n¿Continuar de todas formas?';
+          "La(s) finca(s) de origen aún no tienen su Visa EUDR vigente.\n\nPuede continuar con el video, pero el lote quedará marcado en rojo y su Sello EUDR PENDIENTE hasta que su(s) finca(s) obtengan la Visa.\n\n¿Continuar de todas formas?";
         if (!window.confirm(msg)) return;
       }
       setSaving(true);
@@ -430,10 +424,10 @@ export function FichaView({
       if (!ok) return;
       setCelebrate({
         emoji: "🌍",
-        title: allFincasApta ? "¡EUDR enviado a CTC!" : "EUDR enviado — pendiente de la finca",
+        title: allFincasApta ? "¡Sello EUDR en camino!" : "Origen registrado — Visa de finca pendiente",
         body: allFincasApta
-          ? "Trazabilidad lista para Europa. Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan."
-          : "Quedó registrado con la aptitud de la finca pendiente (bandera roja). Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan.",
+          ? "La Visa de su finca está vigente: el Sello del lote queda listo. Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan."
+          : "Quedó registrado con la Visa de la finca en trámite (bandera roja). Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan.",
       });
       setActive("b4");
       return;

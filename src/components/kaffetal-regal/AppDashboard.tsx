@@ -36,7 +36,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "Disco Agtron · color de tueste",
     desc: "Referencia visual del color de tueste y su número Agtron, para hablar el mismo idioma que el tostador.",
   },
-  qr: { name: "Generador de QR", desc: "Herramienta interna." },
+  qr: { name: "Generador de QR", desc: "Genere códigos QR para etiquetas y empaques de su café. Exporta a imagen; funciona sin conexión." },
   "mermas-ctc": {
     name: "Calculadora de mermas · CTC",
     desc: "Rendimiento pergamino → verde con la marca CTC; exporta el resultado a PDF. Funciona sin conexión.",
@@ -49,8 +49,14 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "Ficha de café verde",
     desc: "La hoja técnica de un lote de café verde, en el formato que lee el comprador. En inglés.",
   },
-  "formula-calidad": { name: "La fórmula de calidad", desc: "Herramienta interna." },
-  "viaje-cafe": { name: "El viaje del café", desc: "Herramienta interna." },
+  "formula-calidad": {
+    name: "La fórmula de calidad",
+    desc: "El marco de CTC para entender cómo se compone la calidad de un café, factor por factor.",
+  },
+  "viaje-cafe": {
+    name: "El viaje del café",
+    desc: "El recorrido del café CTC, de la finca al destino, paso a paso.",
+  },
 };
 
 // A conversation thread = every note (CTC notes + the producer's replies)
@@ -613,20 +619,21 @@ export function AppDashboard({
                       <button className="btn btn-sm" onClick={() => onRequestFincaRevision(f)}>Solicitar revisión de datos</button>
                     )}
                   </div>
-                  {/* EUDR certification state: download once CTC approved + shared;
-                      otherwise show why it isn't available yet. */}
+                  {/* La VISA EUDR de la finca (modelo Pasaporte/Visa/Sello, 2026-07-24):
+                      descargable cuando CTC la otorgó y la compartió; si no, se
+                      explica en qué va el trámite. */}
                   <div className={styles.certRow}>
                     {f.status === "approved" && f.certShared ? (
                       <a className={styles.certDownload} href={`/kaffetal-regal/certificacion/${f.id}`} target="_blank" rel="noopener noreferrer">
-                        ⬇ Descargar Certificación EUDR de {f.name}
+                        ⬇ Descargar Visa EUDR de {f.name}
                       </a>
                     ) : fincaEudrStatus(f).code === "pendiente" ? (
                       <span className={styles.certPending}>
-                        Certificación: Información incompleta
-                        <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y áreas legales) desde 'Editar'. Cuando esté completa, CTC la revisará y, si la aprueba, habilitará la descarga de su Certificación EUDR." />
+                        Visa EUDR: en trámite — información incompleta
+                        <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y áreas legales) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga la Visa EUDR, habilitará su descarga. Con la Visa vigente, todos los lotes de esta finca reciben su Sello EUDR automáticamente." />
                       </span>
                     ) : (
-                      <span className={styles.certPending}>Certificación: En proceso (a la espera de la revisión de CTC)</span>
+                      <span className={styles.certPending}>Visa EUDR: en trámite (a la espera de la revisión de CTC)</span>
                     )}
                   </div>
                 </div>
@@ -703,7 +710,7 @@ export function AppDashboard({
                       <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
                       {lotEudrReady && (
                         <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${l.id}`} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center" }}>
-                          Certificación EUDR ↗
+                          Sello EUDR ↗
                         </a>
                       )}
                       {/* Deletable any time before MUE passes the lot into the Arena

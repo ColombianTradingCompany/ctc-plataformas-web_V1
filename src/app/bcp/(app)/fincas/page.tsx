@@ -351,7 +351,7 @@ export default async function BcpFincasPage() {
                               {finca.status === "approved" && (
                                 <>
                                   <a className="btn btn-sm" href={`/bcp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
-                                    Ver dossier EUDR ↗
+                                    Ver Visa EUDR (dossier) ↗
                                   </a>
                                   <ActionForm
                                     action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}

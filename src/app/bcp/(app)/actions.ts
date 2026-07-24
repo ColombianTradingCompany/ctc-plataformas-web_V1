@@ -240,9 +240,12 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
   if (missing.length) {
     return { ok: false, error: `Faltan bloques por revisar en la checklist EVA: ${missing.join(" · ")}.` };
   }
+  // Modelo Visa/Sello (2026-07-24): el Sello del lote se hereda de la Visa EUDR
+  // de su(s) finca(s) de origen — la compuerta ya no exige determinación propia
+  // del lote, solo que la finca tenga su Visa vigente.
   const eudr = await lotEudrGate(service, lotId);
   if (!eudr.ready) {
-    return { ok: false, error: `La debida diligencia EUDR del lote sigue "${eudr.label}" — resuélvala (finca apta + nivel de riesgo determinado) antes del veredicto.` };
+    return { ok: false, error: `El Sello EUDR del lote sigue "${eudr.label}" — otorgue la Visa EUDR de la finca de origen (en Fincas) antes del veredicto.` };
   }
 
   await service
@@ -529,6 +532,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
 
 // Same "aided by BCP" pattern as updateFincaEudr, for the lot-level custody
 // chain / risk assessment / mitigation fields.
+// ⚠ LEGADO (2026-07-24, modelo Visa/Sello): la debida diligencia vive en la
+// finca y NINGUNA UI llama esto ya — se conserva solo para correcciones de
+// datos históricos por consola.
 export async function updateLotEudr(lotId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();

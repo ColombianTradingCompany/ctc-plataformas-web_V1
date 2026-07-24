@@ -46,10 +46,16 @@ function hasGeo(f: Pick<FincaEudrFields, "lat" | "lng" | "vereda" | "mun" | "dep
   return f.vereda !== "—" || f.mun !== "—" || f.depto !== "—";
 }
 
+// ── La narrativa de viaje (2026-07-24, decisión del owner) ──────────────────
+// La debida diligencia EUDR vive SOLO en la finca:
+//   · el PRODUCTOR porta su "Pasaporte" (su identidad de proveedor, CTC-P-…),
+//   · cada FINCA obtiene su "VISA" (la aptitud EUDR que otorga BCP),
+//   · cada LOTE recibe su "SELLO" — heredado por completo de la Visa de su(s)
+//     finca(s) de origen, sin debida diligencia propia del lote.
 export function fincaEudrStatus(f: FincaEudrFields | null | undefined): EudrStatus {
-  if (!f) return status("no_apta", "No apta", "stop");
+  if (!f) return status("no_apta", "Sin Visa", "stop");
   if (f.eudrDeforestationFree === false || f.eudrLegalProduction === false) {
-    return status("no_apta", "No apta", "stop");
+    return status("no_apta", "Sin Visa", "stop");
   }
   const haOk = f.ha !== "—" && f.ha.trim() !== "" && Number(f.ha.replace(",", ".")) > 0;
   const incomplete =
@@ -59,8 +65,8 @@ export function fincaEudrStatus(f: FincaEudrFields | null | undefined): EudrStat
     f.eudrDeforestationFree !== true ||
     f.eudrLegalAreas.length === 0 ||
     !f.eudrTenure;
-  if (incomplete) return status("pendiente", "Pendiente", "pend");
-  return status("apta", "Apta", "ok");
+  if (incomplete) return status("pendiente", "Visa en trámite", "pend");
+  return status("apta", "Visa vigente", "ok");
 }
 
 // The lot-level input is intentionally a narrow pick, not the whole FichaFormData --
@@ -76,23 +82,24 @@ export type LotEudrInput = {
 // which had no structural link between a lot and its origin fincas and so needed a
 // manual "¿el sistema conecta este lote con su finca?" yes/no -- lots here are always
 // FK'd to real fincas, so an empty `sourceFincas` list IS that "not traceable" case.
+//
+// 2026-07-24 (owner): el SELLO del lote se HEREDA por completo de la Visa de sus
+// fincas de origen — el lote ya no tiene debida diligencia propia (los campos
+// eudr_* del lote quedan como datos históricos; el parámetro `lot` se conserva
+// por compatibilidad de firma pero YA NO participa en la determinación). Regla:
+// todas las fincas con Visa vigente ⇒ Sello listo.
 export function lotEudrStatus(lot: LotEudrInput, sourceFincas: FincaEudrFields[]): EudrStatus {
+  void lot; // heredado: la determinación es 100 % de la finca
   if (!sourceFincas.length) return status("sin_origen", "Sin origen", "pend");
 
   const fincaStatuses = sourceFincas.map(fincaEudrStatus);
   if (fincaStatuses.some((s) => s.code === "no_apta")) {
-    return status("bloqueado", "Bloqueado por finca", "stop");
-  }
-  if (lot.eudr_risk_level === "no_insignificante" && lot.eudr_mitigation_effective !== true) {
-    return status("en_revision", "En revisión", "pend");
+    return status("bloqueado", "Sin Visa de finca", "stop");
   }
   if (fincaStatuses.some((s) => s.code === "pendiente")) {
-    return status("pendiente", "Finca pendiente", "pend");
+    return status("pendiente", "Visa de finca en trámite", "pend");
   }
-  if (!lot.eudr_risk_level) {
-    return status("pendiente", "Pendiente", "pend");
-  }
-  return status("eudr_ready", "EUDR Ready", "ok");
+  return status("eudr_ready", "Sello listo", "ok");
 }
 
 // The lot-level "Nivel de riesgo determinado" used to be a raw dropdown BCP

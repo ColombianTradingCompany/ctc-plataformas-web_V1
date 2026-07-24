@@ -125,7 +125,11 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
       {tab === "general" && (
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <span className={styles.badge}>{data.supplierCode}</span>
+            {/* El "Pasaporte del Productor": su identidad de proveedor (modelo
+                Pasaporte/Visa/Sello, 2026-07-24). */}
+            <span className={styles.badge} title="Pasaporte del Productor — su identidad de proveedor CTC">
+              Pasaporte · {data.supplierCode}
+            </span>
             {data.clubMemberSince && <span className={styles.badgeGood}>Kaffetal Club ✓</span>}
             <span className={styles.badge}>{data.segmentLabel}</span>
           </div>

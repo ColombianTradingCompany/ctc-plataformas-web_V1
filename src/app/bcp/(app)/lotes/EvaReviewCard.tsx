@@ -1,20 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { markLotApto, markLotNoApto, setCertVerification, setEvaChecklistItem, updateLotEudr } from "../actions";
+import { markLotApto, markLotNoApto, setCertVerification, setEvaChecklistItem } from "../actions";
 import { logProducerComm } from "../commActions";
 import { Q_GRADER_REGISTRY } from "@/lib/certRegistry";
 import { EVA_CHECKLIST_ITEMS, type EvaChecklist, type EvaChecklistKey } from "./evaChecklist";
-import {
-  deriveLotRiskLevel,
-  deriveChainComplexity,
-  deriveProductRisk,
-  countryRiskFor,
-  EUDR_ORIGIN_COUNTRIES,
-  PRODUCT_RISK_QUESTIONS,
-} from "@/lib/eudr";
-import { FieldInfo } from "@/components/kaffetal-regal/ficha/panes/FieldInfo";
 import styles from "../shared.module.css";
 
 // ── La revisión EVA como checklist (2026-07-18) ──────────────────────────────
@@ -23,23 +14,11 @@ import styles from "../shared.module.css";
 // checklist + EUDR); debajo, un botón por bloque (FT · FT2 Certificados · FT2
 // Análisis Físico · EUDR · Video · Comunicación) — cada uno con su casilla de
 // "revisado" persistida (lots.eva_checklist) y un subpanel EXCLUSIVO que
-// muestra solo la información de ese bloque. Dentro de los paneles, lo
-// declarado por el productor se muestra FIJO; en el panel EUDR cada campo
-// editable tiene un botón "Corregir" que abre su control debajo (override).
-// "Nivel de riesgo determinado" cierra el panel EUDR como bloque destacado: es
-// la última marca antes del veredicto.
-
-const RISK_LEVEL_LABEL: Record<string, string> = {
-  insignificante: "Insignificante",
-  no_insignificante: "No insignificante",
-};
-
-const CUSTODY_STAGES: [string, string][] = [
-  ["finca", "Finca"], ["beneficio", "Beneficio"], ["secado", "Secado"],
-  ["trilla", "Trilla"], ["almacenamiento", "Almacenamiento"], ["exportacion", "Exportación"],
-];
-const CUSTODY_LABEL = new Map(CUSTODY_STAGES);
-const PRODUCT_RISK_LABEL = new Map(PRODUCT_RISK_QUESTIONS);
+// muestra solo la información de ese bloque.
+// 2026-07-24 (modelo Pasaporte/Visa/Sello): el viejo expediente EUDR por lote
+// (custodia, país, factores, nivel de riesgo, responsable — con sus overrides
+// "Corregir") se RETIRÓ: la debida diligencia vive en la finca (su Visa) y el
+// panel EUDR de aquí solo muestra el estado heredado del Sello.
 
 export type Row = { l: string; v: string };
 export type FileLink = { label: string; url: string | null };
@@ -127,46 +106,8 @@ export function EvaReviewCard({
   const [showReason, setShowReason] = useState(false);
   const [reason, setReason] = useState("");
 
-  // ── Estado del formulario EUDR (fijo + overrides) ──────────────────────────
-  const initialForm = useMemo(
-    () => ({
-      custodyStages: eudr.custodyStages,
-      custodyMethod: eudr.custodyMethod,
-      custodyNotes: eudr.custodyNotes,
-      country: eudr.country,
-      productRiskFactors: eudr.productRiskFactors,
-      illegality: eudr.illegality,
-      docsAvailable: eudr.docsAvailable,
-      riskLevel: eudr.riskLevel,
-      mitigationEffective: eudr.mitigationEffective,
-      responsibleName: eudr.responsibleStored.split(" · ")[0] ?? "",
-    }),
-    [eudr]
-  );
-  const [form, setForm] = useState(initialForm);
-  const [overrides, setOverrides] = useState<Set<string>>(new Set());
-  const dirty = JSON.stringify(form) !== JSON.stringify(initialForm);
-
-  const derivedRisk = deriveLotRiskLevel({
-    eudr_country_risk: countryRiskFor(form.country),
-    eudr_illegality_indicators: form.illegality,
-    eudr_docs_available: form.docsAvailable,
-    eudr_mitigation_effective: form.mitigationEffective,
-  });
-  const derivedComplexity = deriveChainComplexity(form.custodyStages);
-  const derivedProductRisk = deriveProductRisk(form.productRiskFactors);
-
   const checkedCount = EVA_CHECKLIST_ITEMS.filter((i) => checks[i.key]).length;
   const allChecked = checkedCount === EVA_CHECKLIST_ITEMS.length;
-
-  function toggleOverride(key: string) {
-    setOverrides((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
 
   function toggleCheck(key: EvaChecklistKey) {
     const nextVal = !checks[key];
@@ -180,26 +121,6 @@ export function EvaReviewCard({
       } else {
         router.refresh();
       }
-    });
-  }
-
-  function saveEudr() {
-    setError(null);
-    const fd = new FormData();
-    for (const s of form.custodyStages) fd.append("eudr_custody_stages", s);
-    fd.set("eudr_custody_method", form.custodyMethod);
-    fd.set("eudr_custody_notes", form.custodyNotes);
-    fd.set("eudr_country", form.country);
-    for (const f of form.productRiskFactors) fd.append("eudr_product_risk_factors", f);
-    fd.set("eudr_illegality_indicators", triToSel(form.illegality));
-    fd.set("eudr_docs_available", triToSel(form.docsAvailable));
-    fd.set("eudr_mitigation_effective", triToSel(form.mitigationEffective));
-    fd.set("eudr_risk_level", form.riskLevel);
-    fd.set("eudr_mitigation_responsible", form.responsibleName);
-    startTransition(async () => {
-      await updateLotEudr(lotId, fd);
-      setOverrides(new Set());
-      router.refresh();
     });
   }
 
@@ -242,31 +163,6 @@ export function EvaReviewCard({
     <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{v || "Sin definir"}</span>
   );
 
-  // Info del productor FIJA + botón "Corregir" que abre el control debajo.
-  const overrideRow = (key: string, label: string, display: string, editor: React.ReactNode, info?: string) => (
-    <div className={styles.field} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 8 }}>
-      <label>
-        {label}
-        {info && <FieldInfo text={info} />}
-      </label>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 160 }}>{fixedValue(display)}</div>
-        <button type="button" className="btn btn-sm" onClick={() => toggleOverride(key)}>
-          {overrides.has(key) ? "Cancelar" : "Corregir"}
-        </button>
-      </div>
-      {overrides.has(key) && <div style={{ marginTop: 8 }}>{editor}</div>}
-    </div>
-  );
-
-  const readonlyRow = (label: string, display: string, hint?: string) => (
-    <div className={styles.field} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 8 }}>
-      <label>{label}</label>
-      {fixedValue(display)}
-      {hint && <p className={styles.meta} style={{ margin: "3px 0 0" }}>{hint}</p>}
-    </div>
-  );
-
   const dataRows = (rows: Row[], emptyMsg: string) =>
     rows.length ? (
       rows.map((r) => (
@@ -296,14 +192,6 @@ export function EvaReviewCard({
     ) : (
       <p className={styles.meta}>{emptyMsg}</p>
     );
-
-  const triSelect = (value: boolean | null, onChange: (v: boolean | null) => void) => (
-    <select value={triToSel(value)} onChange={(e) => onChange(selToTri(e.target.value))}>
-      <option value="">Sin definir</option>
-      <option value="si">Sí</option>
-      <option value="no">No</option>
-    </select>
-  );
 
   return (
     <div>
@@ -569,105 +457,27 @@ export function EvaReviewCard({
 
           {openPanel === "eudr" && (
             <>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>EUDR · Debida Diligencia</h4>
-
-              {overrideRow(
-                "custody",
-                "Cadena de custodia",
-                form.custodyStages.map((s) => CUSTODY_LABEL.get(s) ?? s).join(" · "),
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {CUSTODY_STAGES.map(([key, label]) => (
-                    <label key={key} style={{ display: "inline-flex", gap: 5, fontSize: 12.5, fontWeight: 400 }}>
-                      <input
-                        type="checkbox"
-                        checked={form.custodyStages.includes(key)}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            custodyStages: e.target.checked
-                              ? [...f.custodyStages, key]
-                              : f.custodyStages.filter((s) => s !== key),
-                          }))
-                        }
-                      />{" "}
-                      {label}
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              {/* La complejidad va INMEDIATAMENTE debajo de las etapas de
-                  custodia (pedido 2026-07-20): se deriva de ellas. */}
-              {readonlyRow(
-                "Complejidad de la cadena",
-                derivedComplexity || "Pendiente",
-                `Se deriva de las ${form.custodyStages.length} etapa(s) de custodia marcadas.`
-              )}
-
-              {overrideRow(
-                "custodyMethod",
-                "Método de separación física / documental",
-                form.custodyMethod === "ctc_standard"
-                  ? "CTC Parchment Storage Standard"
-                  : form.custodyMethod === "custom"
-                    ? `Método propio${form.custodyNotes ? ` — ${form.custodyNotes}` : ""}`
-                    : "",
-                <div style={{ display: "grid", gap: 6 }}>
-                  <select value={form.custodyMethod} onChange={(e) => setForm((f) => ({ ...f, custodyMethod: e.target.value }))}>
-                    <option value="">Sin definir</option>
-                    <option value="ctc_standard">CTC Parchment Storage Standard (yute + liner + HIC + QR)</option>
-                    <option value="custom">Método propio</option>
-                  </select>
-                  <textarea
-                    value={form.custodyNotes}
-                    onChange={(e) => setForm((f) => ({ ...f, custodyNotes: e.target.value }))}
-                    placeholder="Si es método propio: describa cómo se mantiene separado e identificado el lote…"
-                  />
-                </div>
-              )}
-
-              {overrideRow(
-                "country",
-                "País / región de producción",
-                form.country ? `${form.country} · Riesgo ${countryRiskFor(form.country)}` : "",
-                <select value={form.country} onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}>
-                  <option value="">Seleccione…</option>
-                  {EUDR_ORIGIN_COUNTRIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>,
-                "Clasificación EUDR derivada del país (Reg. Ejecución UE 2025/1093)."
-              )}
-
-              {overrideRow(
-                "productRisk",
-                "Riesgo propio del producto",
-                `${derivedProductRisk}${form.productRiskFactors.length ? ` — ${form.productRiskFactors.map((k) => PRODUCT_RISK_LABEL.get(k) ?? k).join(" · ")}` : " — sin factores marcados"}`,
-                <div style={{ display: "grid", gap: 6 }}>
-                  {PRODUCT_RISK_QUESTIONS.map(([key, label]) => (
-                    <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 12.5, fontWeight: 400, alignItems: "flex-start" }}>
-                      <input
-                        type="checkbox"
-                        checked={form.productRiskFactors.includes(key)}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            productRiskFactors: e.target.checked
-                              ? [...f.productRiskFactors, key]
-                              : f.productRiskFactors.filter((s) => s !== key),
-                          }))
-                        }
-                        style={{ marginTop: 2 }}
-                      />
-                      <span>{label}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+              <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>EUDR · Visa de la finca</h4>
+              {/* Modelo Pasaporte/Visa/Sello (2026-07-24): la debida diligencia
+                  EUDR vive SOLO en la finca. El viejo expediente por lote
+                  (custodia, país, factores, nivel de riesgo, responsable) se
+                  retiró — el Sello del lote se hereda de la Visa de la finca. */}
+              <p className={styles.meta} style={{ margin: "0 0 10px" }}>
+                El <b>Sello EUDR</b> de este lote se hereda por completo de la <b>Visa EUDR</b> de su(s) finca(s) de
+                origen — el lote no tiene debida diligencia propia.
+              </p>
+              <p style={{ fontSize: 13.5, fontWeight: 700, margin: "0 0 6px", color: eudrReady ? "var(--primary)" : "#B45309" }}>
+                {eudrReady ? "✓ " : ""}Estado del Sello: {eudrLabel}
+              </p>
+              <p className={styles.meta} style={{ margin: 0 }}>
+                La Visa se revisa y otorga en <a href="/bcp/fincas">Fincas</a> (panel de la finca → pestaña EUDR:
+                declaración del productor, análisis con Google Earth y atributos). Al quedar la Visa vigente, este
+                checklist se puede marcar y el veredicto Apto queda desbloqueado.
+              </p>
 
               {/* Los esquemas se EVALÚAN en FT2 (A3/A4): el chip cruza al panel
                   donde vive la verificación Confirmado / No confirmado. */}
-              <div className={styles.field} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 8 }}>
+              <div className={styles.field} style={{ marginTop: 12 }}>
                 <label>Esquemas de certificación / verificación</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {fixedValue(eudr.certSchemes.length ? eudr.certSchemes.join(", ") : "Ninguno declarado en A3/A4.")}
@@ -681,85 +491,6 @@ export function EvaReviewCard({
                   </button>
                 </div>
               </div>
-
-              {overrideRow(
-                "illegality",
-                "¿Indicios de ilegalidad/deforestación?",
-                form.illegality === true ? "Sí, hay indicios" : form.illegality === false ? "No hay indicios" : "",
-                triSelect(form.illegality, (v) => setForm((f) => ({ ...f, illegality: v })))
-              )}
-
-              {overrideRow(
-                "docs",
-                "¿Documentos disponibles y verificables?",
-                form.docsAvailable === true ? "Sí" : form.docsAvailable === false ? "No" : "",
-                triSelect(form.docsAvailable, (v) => setForm((f) => ({ ...f, docsAvailable: v })))
-              )}
-
-              {readonlyRow(
-                "Acciones de mitigación (declaradas por el productor)",
-                eudr.mitigationActions || "El productor no ha declarado acciones de mitigación (Ficha A5)."
-              )}
-
-              {/* Campo PROPIO de BCP (no del productor): el evaluador juzga si
-                  las acciones declaradas arriba reducen el riesgo. Sin patrón
-                  "Corregir" — se responde directo (pedido 2026-07-20). */}
-              <div className={styles.field} style={{ borderBottom: "1px dashed var(--line)", paddingBottom: 8 }}>
-                <label>
-                  ¿La mitigación reduce el riesgo a insignificante?
-                  <span className={styles.badge} style={{ marginLeft: 8 }}>evaluación de BCP</span>
-                  <FieldInfo text="Esta respuesta es de CTC como evaluador, NO del productor: juzga si las «Acciones de mitigación (declaradas por el productor)» de arriba realmente reducen el riesgo del lote a insignificante." />
-                </label>
-                {triSelect(form.mitigationEffective, (v) => setForm((f) => ({ ...f, mitigationEffective: v })))}
-              </div>
-
-              {/* ── El bloque destacado: la última marca antes del veredicto ── */}
-              <div
-                style={{
-                  marginTop: 14,
-                  border: "2px solid var(--ink)",
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                  background: "color-mix(in srgb, var(--ink) 4%, transparent)",
-                }}
-              >
-                <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700 }}>
-                  Nivel de riesgo determinado
-                  <FieldInfo text="Determinación de BCP como evaluador (Art. 10-11 EUDR). La sugerencia se calcula con los indicios de ilegalidad, la disponibilidad de documentos, el riesgo país y la efectividad de la mitigación — puede adoptarla o apartarse de ella con criterio propio." />
-                </p>
-                <p className={styles.meta} style={{ margin: "4px 0 8px" }}>
-                  La última marca del EUDR antes del veredicto Apto / No Apto. Sugerencia según los criterios:{" "}
-                  <b>{RISK_LEVEL_LABEL[derivedRisk] ?? "defina país, indicios y documentos"}</b>
-                </p>
-                <select value={form.riskLevel} onChange={(e) => setForm((f) => ({ ...f, riskLevel: e.target.value }))}>
-                  <option value="">Pendiente</option>
-                  <option value="insignificante">Insignificante</option>
-                  <option value="no_insignificante">No insignificante</option>
-                </select>
-              </div>
-
-              {/* Responsable AL FINAL del panel, editable directo (sin "Corregir"):
-                  quien firma la determinación de riesgo cierra el bloque. */}
-              <div className={styles.field} style={{ marginTop: 12 }}>
-                <label>
-                  Responsable
-                  <FieldInfo text="Quién en CTC firma esta debida diligencia. La fecha se registra automáticamente al guardar." />
-                </label>
-                <input
-                  value={form.responsibleName}
-                  onChange={(e) => setForm((f) => ({ ...f, responsibleName: e.target.value }))}
-                  placeholder="Nombre · cargo"
-                />
-                {eudr.responsibleStored && (
-                  <p className={styles.meta} style={{ margin: "3px 0 0" }}>Registrado: {eudr.responsibleStored}</p>
-                )}
-              </div>
-
-              {dirty && (
-                <button className="btn btn-sm btn-solid" style={{ marginTop: 12 }} onClick={saveEudr} disabled={pending}>
-                  {pending ? "Guardando…" : "Guardar cambios EUDR"}
-                </button>
-              )}
             </>
           )}
 
@@ -795,13 +526,3 @@ export function EvaReviewCard({
   );
 }
 
-function triToSel(v: boolean | null): string {
-  if (v === true) return "si";
-  if (v === false) return "no";
-  return "";
-}
-function selToTri(v: string): boolean | null {
-  if (v === "si") return true;
-  if (v === "no") return false;
-  return null;
-}

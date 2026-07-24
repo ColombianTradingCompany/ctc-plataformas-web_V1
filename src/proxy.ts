@@ -11,6 +11,10 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
   // logic connects to the Green catalog).
   "cherry-picked-roast": "/cherry-picked-roast",
   "cherry-picked-x": "/cherry-picked-x",
+  // Directorio de Especialistas del Café · Santander — la capa de PERSONAS
+  // sobre el ecosistema (las otras superficies son de lotes y de café).
+  // DNS/Vercel: docs/DIRECTORIO_DOMAIN_SETUP.md
+  "directoriodelcafe": "/directorio",
   // Partner-node "couples" (landing + login), one subdomain per v3 node.
   // DNS/Vercel steps: docs/PARTNER_DOMAINS_SETUP.md
   "centro-calidad": "/socios/centro-calidad",

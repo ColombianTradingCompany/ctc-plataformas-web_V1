@@ -355,7 +355,7 @@ export function FincaEudrEditor({
     return (
       <div style={{ marginTop: 14 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontWeight: 600, fontSize: 13.5 }}>Información EUDR (asistencia BCP)</span>
+          <span style={{ fontWeight: 600, fontSize: 13.5 }}>Visa EUDR de la finca (asistencia BCP)</span>
           <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>Editar</button>
         </div>
         <SubTabBar tab={subTab} setTab={setSubTab} />
@@ -415,7 +415,7 @@ export function FincaEudrEditor({
     <div style={{ marginTop: 14 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 10 }}>
         <span style={{ fontWeight: 600, fontSize: 13.5, display: "inline-flex", alignItems: "baseline", gap: 10 }}>
-          Editando información EUDR
+          Editando la Visa EUDR de la finca
           <AutosaveChip status={autosaveStatus} />
         </span>
         <button type="button" className="btn btn-sm" onClick={() => setEditing(false)}>Cancelar</button>
@@ -628,7 +628,7 @@ export function FincaEudrEditor({
           </div>
         </div>
 
-        <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar información EUDR"}</button>
+        <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar Visa EUDR"}</button>
       </form>
     </div>
   );

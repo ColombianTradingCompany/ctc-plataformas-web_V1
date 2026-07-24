@@ -32,8 +32,8 @@
   --rojo:#C8102E;
   --verde:#1B3A2C;
   --verde-2:#3E6B4F;
-  --gris:#6E6480;
-  --gris-2:#8E85A0;
+  --gris:#635977;
+  --gris-2:#6B6180;
   --linea:rgba(42,10,85,.13);
   --linea-fuerte:rgba(42,10,85,.28);
   --sombra:0 1px 2px rgba(42,10,85,.05), 0 12px 28px -18px rgba(42,10,85,.35);
@@ -52,16 +52,17 @@
 body{background:#F2EFF7}
 .dir *{box-sizing:border-box}
 .dir img{max-width:100%; display:block}
-/* :not(.btn) matters: `.btn`/`.btn--oro`/`.btn--fantasma` set their OWN explicit
-   color, but `.dir button{color:inherit}` has higher specificity (0,1,1 vs
-   0,1,0) and was silently winning -- the button then just inherited whatever
-   text color its surrounding section happened to have. It "worked" almost
-   everywhere by coincidence (most of the page inherits --tinta anyway), until
-   a button sat in a differently-colored context: the hero's Inscribirme
-   rendered var(--tinta) text on a var(--tinta) background (invisible, 1:1
-   contrast) and the CTA-final one rendered white text on gold (~1.4:1). */
-.dir button:not(.btn),.dir input,.dir select,.dir textarea{font:inherit; color:inherit}
-.dir button{cursor:pointer}
+/* color:inherit belongs ONLY on the form fields (they should read as body
+   text). It must NOT be forced on <button>: `.dir button{color:inherit}` has
+   specificity 0,1,1 and silently beat every component button's own 0,1,0
+   `color` rule, so buttons inherited whatever their surrounding context was.
+   That broke, one by one: the Inscribirme CTA (tinta-on-tinta, invisible) and
+   the nav tabs (`.tab` sets white, but inherited dark --tinta on the purple
+   bar → ~1:1). Buttons now keep the color their own class sets; a bare button
+   with no color class falls back to the UA default (dark), which is correct
+   on the light surfaces where bare buttons live. */
+.dir input,.dir select,.dir textarea{font:inherit; color:inherit}
+.dir button{font:inherit; cursor:pointer}
 .dir a{color:var(--tinta-2)}
 .dir :focus-visible{outline:3px solid var(--oro); outline-offset:2px; border-radius:4px}
 @media (prefers-reduced-motion:reduce){.dir *{animation:none!important; transition:none!important}}
@@ -374,6 +375,18 @@ body{background:#F2EFF7}
 /* ---------- perfil ---------- */
 .perfil{display:grid; grid-template-columns:1.25fr .75fr; gap:2rem; align-items:start}
 @media (max-width:900px){.perfil{grid-template-columns:1fr}}
+
+/* Foto de perfil (subida) */
+.perfil-avatar{display:flex; gap:1rem; align-items:center; margin-bottom:1.1rem}
+.perfil-avatar__img,.perfil-avatar__ph{flex:none; width:72px; height:72px; border-radius:50%; object-fit:cover;
+  border:1px solid var(--linea)}
+.perfil-avatar__ph{display:grid; place-items:center; color:#fff; font-family:var(--display); font-weight:700; font-size:1.5rem}
+.perfil-avatar input[type=file]{font-size:.82rem}
+
+/* Botón flotante de guardar (abajo a la derecha). */
+.perfil-guardar-fab{position:fixed; right:24px; bottom:24px; z-index:55; border-radius:999px;
+  padding:.8rem 1.5rem; box-shadow:0 10px 26px -8px rgba(42,10,85,.55)}
+@media (max-width:520px){.perfil-guardar-fab{right:16px; bottom:16px}}
 .tarjeta{background:#fff; border:1px solid var(--linea); border-radius:var(--r); padding:1.4rem; box-shadow:var(--sombra)}
 .tarjeta h3{margin-bottom:1rem}
 .tarjeta + .tarjeta{margin-top:1.2rem}
@@ -432,6 +445,25 @@ body{background:#F2EFF7}
   text-transform:uppercase; color:var(--gris); display:inline-flex; align-items:center; gap:.35rem; padding:.2rem .3rem; border-radius:4px}
 .accion:hover{color:var(--tinta); background:var(--lila-pale)}
 .accion[aria-pressed="true"]{color:var(--rojo)}
+/* Formulario por tipo de publicación + nombre-enlace + campos + comentarios. */
+.muro-form{display:grid; grid-template-columns:1fr 1fr; gap:.5rem .7rem; margin-bottom:.6rem}
+.muro-form .campo{margin:0}
+@media (max-width:520px){.muro-form{grid-template-columns:1fr}}
+.post__autor--link{font-family:var(--display); font-weight:700; font-size:1.08rem; text-transform:uppercase;
+  line-height:1; margin:0 0 .2rem; background:none; border:0; padding:0; color:var(--tinta-2); cursor:pointer}
+.post__autor--link:hover{text-decoration:underline}
+.post__campos{list-style:none; margin:.2rem 0 .6rem; padding:.55rem .75rem; background:var(--lila-pale);
+  border-radius:8px; font-size:.86rem; color:#3d2c58; display:grid; gap:.2rem}
+.post__campos b{font-family:var(--mono); font-size:.66rem; letter-spacing:.06em; text-transform:uppercase; color:var(--tinta-2); margin-right:.3rem}
+.post__comentarios{margin-top:.75rem; padding-top:.7rem; border-top:1px solid var(--linea); display:grid; gap:.6rem}
+.comentario{display:flex; gap:.55rem; align-items:flex-start}
+.comentario__meta{margin:0; font-size:.78rem; color:var(--gris)}
+.comentario__meta b, .comentario__meta .post__autor--link{font-family:var(--body); font-weight:700; font-size:.82rem;
+  text-transform:none; letter-spacing:0; color:var(--tinta)}
+.comentario__txt{margin:.1rem 0 0; font-size:.9rem; color:#3d2c58; white-space:pre-wrap}
+.comentario-nuevo{display:flex; gap:.5rem; align-items:center}
+.comentario-nuevo input{flex:1; padding:.5rem .7rem; border:1.5px solid var(--linea); border-radius:8px; font-size:.88rem}
+
 .muro__lado .tarjeta{padding:1.1rem}
 .muro__lado h4{margin-bottom:.7rem}
 .lista-simple{list-style:none; margin:0; padding:0; font-size:.86rem}

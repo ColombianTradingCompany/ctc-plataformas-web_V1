@@ -4,6 +4,7 @@ import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/ser
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { codigoDirectorio, colorPara, hace, iniciales } from "@/components/directorio/data";
 import type {
+  Comentario,
   DirectorioBundle,
   DirectorioEstado,
   Ficha,
@@ -91,7 +92,7 @@ function mapDoc(r: DirRow, signed: Map<string, string>, sizes: Map<string, numbe
   };
 }
 
-function mapMiFicha(r: DirRow, correo: string, documentos: FichaDoc[]): MiFicha {
+function mapMiFicha(r: DirRow, correo: string, documentos: FichaDoc[], avatarUrl: string | null): MiFicha {
   const id = String(r.profile_id);
   return {
     profileId: id,
@@ -111,14 +112,15 @@ function mapMiFicha(r: DirRow, correo: string, documentos: FichaDoc[]): MiFicha 
     motivo: String(r.motivo ?? ""),
     motivoTxt: String(r.motivo_txt ?? ""),
     color: String(r.color ?? colorPara(id)),
+    avatarUrl,
+    smsNotifications: r.sms_notifications === true,
     estado: (r.estado as DirectorioEstado) ?? "pendiente",
-    tieneCodigo: r.estado === "aprobado" && !!r.verificado_codigo,
     createdAt: String(r.created_at ?? ""),
     documentos,
   };
 }
 
-function mapFicha(r: DirRow, correo: string | null): Ficha {
+function mapFicha(r: DirRow, correo: string | null, avatarUrl: string | null): Ficha {
   const id = String(r.profile_id);
   const nombre = String(r.nombre ?? "");
   return {
@@ -136,6 +138,7 @@ function mapFicha(r: DirRow, correo: string | null): Ficha {
     bio: String(r.bio ?? ""),
     motivoTxt: String(r.motivo_txt ?? ""),
     color: String(r.color ?? colorPara(id)),
+    avatarUrl,
     iniciales: iniciales(nombre),
   };
 }
@@ -177,14 +180,15 @@ export async function cargarDirectorio(): Promise<DirectorioBundle | null> {
     .order("created_at", { ascending: true });
   const docs = docRows ?? [];
   const fileAssetIds = docs.filter((d) => d.kind === "file" && d.asset_id).map((d) => String(d.asset_id));
-  const signed = await signedKaffetalMediaUrls(service, fileAssetIds);
+  const avatarId = fichaRow.avatar_asset_id ? String(fichaRow.avatar_asset_id) : null;
+  const signed = await signedKaffetalMediaUrls(service, [...fileAssetIds, ...(avatarId ? [avatarId] : [])]);
   const { data: assetRows } = fileAssetIds.length
     ? await service.from("media_assets").select("id, size_bytes").in("id", fileAssetIds)
     : { data: [] as DirRow[] };
   const sizes = new Map((assetRows ?? []).map((a) => [String(a.id), Number(a.size_bytes) || 0]));
   const documentos = docs.map((d) => mapDoc(d, signed, sizes));
 
-  const ficha = mapMiFicha(fichaRow, correo, documentos);
+  const ficha = mapMiFicha(fichaRow, correo, documentos, avatarId ? signed.get(avatarId) ?? null : null);
 
   // The CTC conversation (ecp channel) — always available, even unverified.
   const { data: ecpRows } = await service
@@ -232,7 +236,15 @@ async function loadDirectorio(service: Service, me: string): Promise<Ficha[]> {
     .neq("profile_id", me);
   const rows = data ?? [];
   const emails = await emailsFor(service, rows.map((r) => String(r.profile_id)));
-  return rows.map((r) => mapFicha(r, emails.get(String(r.profile_id)) ?? null));
+  const avatarIds = rows.map((r) => r.avatar_asset_id).filter(Boolean).map(String);
+  const avatarUrls = await signedKaffetalMediaUrls(service, avatarIds);
+  return rows.map((r) =>
+    mapFicha(
+      r,
+      emails.get(String(r.profile_id)) ?? null,
+      r.avatar_asset_id ? avatarUrls.get(String(r.avatar_asset_id)) ?? null : null
+    )
+  );
 }
 
 async function loadPosts(service: Service, me: string): Promise<Post[]> {
@@ -244,24 +256,50 @@ async function loadPosts(service: Service, me: string): Promise<Post[]> {
     .order("created_at", { ascending: false })
     .limit(200);
   const rows = data ?? [];
+  const postIds = rows.map((r) => String(r.id));
 
-  const authorIds = rows.map((r) => r.author_profile_id).filter(Boolean).map(String);
+  // Comentarios (un nivel), solo publicados.
+  const { data: commentRows } = postIds.length
+    ? await service.from("directorio_post_comments").select("*").eq("estado", "publicado").in("post_id", postIds).order("created_at", { ascending: true })
+    : { data: [] as DirRow[] };
+  const comments = commentRows ?? [];
+
+  // Autores de posts Y de comentarios, resueltos de una vez (con avatar).
+  const authorIds = [...rows.map((r) => r.author_profile_id), ...comments.map((c) => c.author_profile_id)].filter(Boolean).map(String);
   const { data: authors } = authorIds.length
-    ? await service.from("directorio_profiles").select("profile_id, nombre, departamento, municipio, especialidades, color").in("profile_id", [...new Set(authorIds)])
+    ? await service.from("directorio_profiles").select("profile_id, nombre, departamento, municipio, especialidades, color, avatar_asset_id").in("profile_id", [...new Set(authorIds)])
     : { data: [] as DirRow[] };
   const byId = new Map((authors ?? []).map((a) => [String(a.profile_id), a]));
+  const avatarUrls = await signedKaffetalMediaUrls(service, (authors ?? []).map((a) => a.avatar_asset_id).filter(Boolean).map(String));
+  const avatarOf = (a: DirRow | null | undefined) => (a && a.avatar_asset_id ? avatarUrls.get(String(a.avatar_asset_id)) ?? null : null);
 
-  const postIds = rows.map((r) => String(r.id));
   const { data: myLikes } = postIds.length
     ? await service.from("directorio_post_likes").select("post_id").eq("profile_id", me).in("post_id", postIds)
     : { data: [] as DirRow[] };
   const liked = new Set((myLikes ?? []).map((l) => String(l.post_id)));
-
   const { data: likeCounts } = postIds.length
     ? await service.from("directorio_post_likes").select("post_id").in("post_id", postIds)
     : { data: [] as DirRow[] };
   const counts = new Map<string, number>();
   for (const l of likeCounts ?? []) counts.set(String(l.post_id), (counts.get(String(l.post_id)) ?? 0) + 1);
+
+  const commentsByPost = new Map<string, Comentario[]>();
+  for (const c of comments) {
+    const a = c.author_profile_id ? byId.get(String(c.author_profile_id)) : null;
+    const nombre = a ? String(a.nombre ?? "") : CTC.nombre;
+    const list = commentsByPost.get(String(c.post_id)) ?? [];
+    list.push({
+      id: String(c.id),
+      autorId: c.author_profile_id ? String(c.author_profile_id) : null,
+      autor: nombre,
+      ini: a ? iniciales(nombre) : CTC.ini,
+      color: a ? String(a.color ?? colorPara(String(a.profile_id))) : CTC.color,
+      avatarUrl: avatarOf(a),
+      cuando: hace(String(c.created_at)),
+      texto: String(c.texto),
+    });
+    commentsByPost.set(String(c.post_id), list);
+  }
 
   return rows.map((r): Post => {
     const id = String(r.id);
@@ -277,13 +315,16 @@ async function loadPosts(service: Service, me: string): Promise<Post[]> {
       sub,
       ini: a ? iniciales(nombre) : CTC.ini,
       color: a ? String(a.color ?? colorPara(String(a.profile_id))) : CTC.color,
+      avatarUrl: avatarOf(a),
       etiqueta: String(r.etiqueta ?? "Anuncio"),
+      fields: (r.fields as Record<string, string> | null) ?? null,
       fijo: !!r.fijo,
       esCtc: !r.author_profile_id,
       cuando: r.fijo ? "Fijado" : hace(String(r.created_at)),
       megusta: counts.get(id) ?? 0,
       miGusta: liked.has(id),
       texto: String(r.texto ?? ""),
+      comentarios: commentsByPost.get(id) ?? [],
     };
   });
 }
@@ -378,7 +419,13 @@ export async function registrarFichaDirectorio(input: FichaInput): Promise<Actio
 }
 
 export async function guardarFichaDirectorio(
-  input: FichaInput & { mostrarTelefono: boolean; mostrarCorreo: boolean; recibirMensajes: boolean; anios: number }
+  input: FichaInput & {
+    mostrarTelefono: boolean;
+    mostrarCorreo: boolean;
+    recibirMensajes: boolean;
+    smsNotifications: boolean;
+    anios: number;
+  }
 ): Promise<ActionResult> {
   const user = await sessionUser();
   if (!user) return { ok: false, error: "Sesión no válida." };
@@ -394,11 +441,31 @@ export async function guardarFichaDirectorio(
       mostrar_telefono: !!input.mostrarTelefono,
       mostrar_correo: !!input.mostrarCorreo,
       recibir_mensajes: !!input.recibirMensajes,
+      sms_notifications: !!input.smsNotifications,
       anios_experiencia: Math.max(0, Math.min(80, Math.round(Number(input.anios) || 0))),
       updated_at: new Date().toISOString(),
     })
     .eq("profile_id", user.id);
   if (error) return { ok: false, error: "No se pudieron guardar los cambios." };
+  return { ok: true };
+}
+
+// Foto de perfil: el archivo se sube en el cliente (uploadKaffetalMedia →
+// {uid}/directorio/avatar), aquí solo se enlaza el asset a la ficha. El asset
+// debe pertenecer al usuario (defensa; el guard de storage ya lo garantiza).
+export async function guardarAvatarDirectorio(assetId: string | null): Promise<ActionResult> {
+  const user = await sessionUser();
+  if (!user) return { ok: false, error: "Sesión no válida." };
+  const service = createServiceRoleClient();
+  if (assetId) {
+    const { data: asset } = await service.from("media_assets").select("id, uploaded_by").eq("id", assetId).maybeSingle();
+    if (!asset || String(asset.uploaded_by) !== user.id) return { ok: false, error: "Archivo no válido." };
+  }
+  const { error } = await service
+    .from("directorio_profiles")
+    .update({ avatar_asset_id: assetId, updated_at: new Date().toISOString() })
+    .eq("profile_id", user.id);
+  if (error) return { ok: false, error: "No se pudo guardar la foto." };
   return { ok: true };
 }
 
@@ -424,33 +491,6 @@ export async function enviarMensajeEcp(texto: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-export async function ingresarCodigoVerificado(codigo: string): Promise<ActionResult> {
-  const user = await sessionUser();
-  if (!user) return { ok: false, error: "Sesión no válida." };
-  const code = clamp(codigo, 40).toUpperCase();
-  if (!code) return { ok: false, error: "Escribe tu Código de Verificado." };
-
-  const service = createServiceRoleClient();
-  const { data: ficha } = await service
-    .from("directorio_profiles")
-    .select("estado, verificado_codigo")
-    .eq("profile_id", user.id)
-    .maybeSingle();
-  if (!ficha) return { ok: false, error: "Aún no tienes una ficha en el directorio." };
-  if (ficha.estado === "verificado") return { ok: true };
-  if (ficha.estado !== "aprobado" || !ficha.verificado_codigo)
-    return { ok: false, error: "Tu ficha todavía no tiene un código. Espera el veredicto de CTC." };
-  if (String(ficha.verificado_codigo).toUpperCase() !== code)
-    return { ok: false, error: "El código no coincide. Revísalo en tu conversación con CTC." };
-
-  const { error } = await service
-    .from("directorio_profiles")
-    .update({ estado: "verificado", verificado_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq("profile_id", user.id);
-  if (error) return { ok: false, error: "No se pudo activar tu cuenta. Intenta de nuevo." };
-  return { ok: true };
-}
-
 // ── Verified-only actions ─────────────────────────────────────────────────────
 
 async function requireVerified(service: Service, userId: string): Promise<boolean> {
@@ -458,21 +498,56 @@ async function requireVerified(service: Service, userId: string): Promise<boolea
   return data?.estado === "verificado";
 }
 
-export async function publicarPost(etiqueta: string, texto: string): Promise<ActionResult> {
+export async function publicarPost(
+  etiqueta: string,
+  texto: string,
+  fields?: Record<string, string> | null
+): Promise<ActionResult> {
   const user = await sessionUser();
   if (!user) return { ok: false, error: "Sesión no válida." };
   const service = createServiceRoleClient();
   if (!(await requireVerified(service, user.id)))
-    return { ok: false, error: "Activa tu cuenta con el Código de Verificado para publicar." };
+    return { ok: false, error: "Activa tu cuenta para publicar." };
 
   const t = clamp(texto, 4000);
   if (!t) return { ok: false, error: "Escribe algo para publicar." };
+  // Whitelist + cap the structured fields (values only; keys are the form's).
+  let cleanFields: Record<string, string> | null = null;
+  if (fields && typeof fields === "object") {
+    const entries = Object.entries(fields)
+      .map(([k, v]) => [clamp(k, 40), clamp(v, 400)] as const)
+      .filter(([k, v]) => k && v)
+      .slice(0, 12);
+    if (entries.length) cleanFields = Object.fromEntries(entries);
+  }
   const { error } = await service.from("directorio_posts").insert({
     author_profile_id: user.id,
     etiqueta: clamp(etiqueta, 40) || "Anuncio",
     texto: t,
+    fields: cleanFields,
   });
   if (error) return { ok: false, error: "No se pudo publicar." };
+  return { ok: true };
+}
+
+export async function comentarPost(postId: string, texto: string): Promise<ActionResult> {
+  const user = await sessionUser();
+  if (!user) return { ok: false, error: "Sesión no válida." };
+  const service = createServiceRoleClient();
+  if (!(await requireVerified(service, user.id)))
+    return { ok: false, error: "Activa tu cuenta para comentar." };
+  const t = clamp(texto, 2000);
+  if (!t) return { ok: false, error: "Escribe un comentario." };
+  // Un solo nivel: se comenta una PUBLICACIÓN, no un comentario (no hay
+  // parent_id de comentario en la tabla, por diseño).
+  const { data: post } = await service.from("directorio_posts").select("id, estado").eq("id", postId).maybeSingle();
+  if (!post || post.estado !== "publicado") return { ok: false, error: "Esa publicación no está disponible." };
+  const { error } = await service.from("directorio_post_comments").insert({
+    post_id: postId,
+    author_profile_id: user.id,
+    texto: t,
+  });
+  if (error) return { ok: false, error: "No se pudo comentar." };
   return { ok: true };
 }
 

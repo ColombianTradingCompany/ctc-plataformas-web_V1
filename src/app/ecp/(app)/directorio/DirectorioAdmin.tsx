@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import shared from "@/app/bcp/(app)/shared.module.css";
 import {
@@ -14,8 +14,8 @@ import {
   revisarFicha,
   type AdminFicha,
   type AdminResult,
-  type DirectorioAdminData,
   type AdminUsuario,
+  type DirectorioAdminData,
 } from "../directorioActions";
 
 const BADGE: Record<AdminUsuario["estado"], string> = {
@@ -28,44 +28,65 @@ const BADGE: Record<AdminUsuario["estado"], string> = {
 const ESTADO_LABEL: Record<AdminUsuario["estado"], string> = {
   pendiente: "Pendiente",
   en_revision: "En revisión",
-  aprobado: "Aprobada",
+  aprobado: "Verificado",
   verificado: "Verificado",
   rechazado: "Rechazado",
 };
+
+// Cuatro columnas de estado. 'aprobado' quedó fusionado en 'verificado'
+// (2026-07-24), así que si sobrevive alguna fila aprobada cae en Verificados.
+const COLUMNS: { key: AdminUsuario["estado"]; label: string; match: AdminUsuario["estado"][] }[] = [
+  { key: "pendiente", label: "Pendientes", match: ["pendiente"] },
+  { key: "en_revision", label: "En revisión", match: ["en_revision"] },
+  { key: "verificado", label: "Verificados", match: ["verificado", "aprobado"] },
+  { key: "rechazado", label: "Rechazados", match: ["rechazado"] },
+];
+
+function MiniAvatar({ url, nombre, size = 30 }: { url: string | null; nombre: string; size?: number }) {
+  const ini = (nombre || "··").split(/\s+/).filter((_, i, a) => i === 0 || i === a.length - 1).map((w) => w[0] ?? "").join("").toUpperCase();
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+    <img src={url} alt="" style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flex: "0 0 auto" }} />
+  ) : (
+    <span style={{ width: size, height: size, borderRadius: "50%", background: "#3C0A86", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.36, fontWeight: 700, flex: "0 0 auto" }}>{ini}</span>
+  );
+}
 
 export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
   const router = useRouter();
   const [tab, setTab] = useState<"usuarios" | "muro">("usuarios");
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [sel, setSel] = useState<AdminFicha | null>(null);
+  const [busca, setBusca] = useState("");
+  const [modal, setModal] = useState<AdminFicha | null>(null);
   const [nota, setNota] = useState("");
   const [respuesta, setRespuesta] = useState("");
   const [anuncio, setAnuncio] = useState("");
 
-  const flash = (r: AdminResult, okText: string) =>
-    setMsg(r.ok ? { ok: true, text: okText } : { ok: false, text: r.error });
+  const flash = (r: AdminResult, okText: string) => setMsg(r.ok ? { ok: true, text: okText } : { ok: false, text: r.error });
+
+  const filtrados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return data.usuarios;
+    return data.usuarios.filter((u) =>
+      [u.nombre, u.codigo, u.correo ?? "", u.departamento, u.municipio, u.esp.join(" "), u.cert.join(" ")].join(" ").toLowerCase().includes(q)
+    );
+  }, [data.usuarios, busca]);
 
   const abrir = (profileId: string) => {
     setMsg(null);
-    startTransition(async () => {
-      const f = await cargarFichaAdmin(profileId);
-      setSel(f);
-    });
+    startTransition(async () => setModal(await cargarFichaAdmin(profileId)));
   };
-
-  const refrescarDetalle = async (profileId: string) => {
-    const f = await cargarFichaAdmin(profileId);
-    setSel(f);
+  const refrescar = async (profileId: string) => {
+    setModal(await cargarFichaAdmin(profileId));
     router.refresh();
   };
-
   const act = (fn: () => Promise<AdminResult>, okText: string, refetchId?: string) => {
     setMsg(null);
     startTransition(async () => {
       const r = await fn();
       flash(r, okText);
-      if (r.ok && refetchId) await refrescarDetalle(refetchId);
+      if (r.ok && refetchId) await refrescar(refetchId);
       else if (r.ok) router.refresh();
     });
   };
@@ -95,42 +116,40 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
       {msg ? <p style={{ color: msg.ok ? "#1B7A3A" : "#C8102F", fontSize: 13, margin: "10px 0" }}>{msg.text}</p> : null}
 
       {tab === "usuarios" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(280px, 1fr) minmax(320px, 1.3fr)", gap: 18, alignItems: "start" }}>
-          <div className={shared.card}>
-            <div className={shared.list}>
-              {data.usuarios.length ? (
-                data.usuarios.map((u) => (
-                  <button key={u.profileId} onClick={() => abrir(u.profileId)}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, width: "100%",
-                      textAlign: "left", padding: "10px 12px", border: "1px solid var(--border,#e5e7eb)", borderRadius: 10,
-                      marginBottom: 8, background: sel?.profileId === u.profileId ? "rgba(60,10,134,.06)" : "#fff", cursor: "pointer" }}>
-                    <span>
-                      <b style={{ display: "block" }}>{u.nombre || "(sin nombre)"}</b>
-                      <span style={{ fontSize: 12, color: "#6b7280" }}>{u.codigo} · {[u.municipio, u.departamento].filter(Boolean).join(", ") || "—"}</span>
-                    </span>
-                    <span className={`${shared.badge} ${BADGE[u.estado]}`}>{ESTADO_LABEL[u.estado]}</span>
-                  </button>
-                ))
-              ) : (
-                <p className={shared.empty}>Todavía no hay fichas en el directorio.</p>
-              )}
-            </div>
+        <>
+          <div style={{ margin: "6px 0 14px" }}>
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nombre, código, correo, especialidad…"
+              style={{ width: "100%", maxWidth: 460, padding: "9px 12px", borderRadius: 9, border: "1px solid #e5e7eb" }} />
           </div>
 
-          <div className={shared.card}>
-            {sel ? (
-              <FichaDetalle
-                f={sel} pending={pending} nota={nota} setNota={setNota} respuesta={respuesta} setRespuesta={setRespuesta}
-                onAceptar={() => act(() => aceptarFicha(sel.profileId), "Ficha aprobada · código emitido.", sel.profileId)}
-                onRevisar={() => act(() => revisarFicha(sel.profileId, nota), "Solicitud de revisión enviada.", sel.profileId)}
-                onRechazar={() => act(() => rechazarFicha(sel.profileId, nota), "Ficha rechazada.", sel.profileId)}
-                onResponder={() => { act(() => responderEcp(sel.profileId, respuesta), "Mensaje enviado.", sel.profileId); setRespuesta(""); }}
-              />
-            ) : (
-              <p className={shared.empty}>Selecciona una ficha para revisarla.</p>
-            )}
+          <div className={shared.board}>
+            {COLUMNS.map((col) => {
+              const items = filtrados.filter((u) => col.match.includes(u.estado));
+              return (
+                <div className={shared.column} key={col.key}>
+                  <div className={shared.columnHead}>{col.label}<span className={shared.columnCount}>{items.length}</span></div>
+                  <div className={shared.columnList}>
+                    {items.length ? (
+                      items.map((u) => (
+                        <button key={u.profileId} onClick={() => abrir(u.profileId)}
+                          style={{ display: "flex", gap: 9, alignItems: "center", width: "100%", textAlign: "left",
+                            padding: "9px 11px", border: "1px solid #e5e7eb", borderRadius: 10, marginBottom: 8, background: "#fff", cursor: "pointer" }}>
+                          <MiniAvatar url={u.avatarUrl} nombre={u.nombre} />
+                          <span style={{ minWidth: 0 }}>
+                            <b style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{u.nombre || "(sin nombre)"}</b>
+                            <span style={{ fontSize: 11.5, color: "#6b7280" }}>{u.codigo} · {u.municipio || u.departamento || "—"}</span>
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <p className={shared.empty} style={{ fontSize: 12.5 }}>—</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </>
       ) : (
         <div style={{ display: "grid", gap: 18 }}>
           <div className={shared.card}>
@@ -138,10 +157,7 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
             <textarea value={anuncio} onChange={(e) => setAnuncio(e.target.value)} rows={3}
               placeholder="Anuncio para todo el directorio…" style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #e5e7eb" }} />
             <div className={shared.actions} style={{ marginTop: 8 }}>
-              <button disabled={pending || !anuncio.trim()}
-                onClick={() => { act(() => crearAnuncioCtc("Anuncio", anuncio), "Anuncio publicado."); setAnuncio(""); }}>
-                Publicar anuncio
-              </button>
+              <button disabled={pending || !anuncio.trim()} onClick={() => { act(() => crearAnuncioCtc("Anuncio", anuncio), "Anuncio publicado."); setAnuncio(""); }}>Publicar anuncio</button>
             </div>
           </div>
 
@@ -149,26 +165,17 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
             <div className={shared.list}>
               {data.posts.length ? (
                 data.posts.map((p) => (
-                  <div key={p.id} style={{ padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 10, marginBottom: 8,
-                    opacity: p.estado === "publicado" ? 1 : 0.55 }}>
+                  <div key={p.id} style={{ padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 10, marginBottom: 8, opacity: p.estado === "publicado" ? 1 : 0.55 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                       <b>{p.autor}{p.esCtc ? " · CTC" : ""}</b>
-                      <span style={{ fontSize: 12, color: "#6b7280" }}>{p.etiqueta} · {p.cuando}
-                        {p.fijo ? " · 📌 fijado" : ""}{p.estado !== "publicado" ? ` · ${p.estado}` : ""}</span>
+                      <span style={{ fontSize: 12, color: "#6b7280" }}>{p.etiqueta} · {p.cuando}{p.fijo ? " · 📌 fijado" : ""}{p.estado !== "publicado" ? ` · ${p.estado}` : ""}</span>
                     </div>
                     <p style={{ margin: "6px 0", fontSize: 14, whiteSpace: "pre-wrap" }}>{p.texto}</p>
                     <div className={shared.actions} style={{ gap: 8 }}>
-                      {p.estado === "publicado"
-                        ? <button disabled={pending} onClick={() => act(() => moderarPost(p.id, "ocultar"), "Publicación oculta.")}>Ocultar</button>
-                        : p.estado === "oculto"
-                          ? <button disabled={pending} onClick={() => act(() => moderarPost(p.id, "publicar"), "Publicación visible.")}>Mostrar</button>
-                          : null}
-                      {p.estado !== "eliminado"
-                        ? <button disabled={pending} onClick={() => act(() => moderarPost(p.id, "eliminar"), "Publicación eliminada.")}>Eliminar</button>
-                        : null}
-                      <button disabled={pending} onClick={() => act(() => fijarPost(p.id, !p.fijo), p.fijo ? "Desfijada." : "Fijada.")}>
-                        {p.fijo ? "Desfijar" : "Fijar"}
-                      </button>
+                      {p.estado === "publicado" ? <button disabled={pending} onClick={() => act(() => moderarPost(p.id, "ocultar"), "Publicación oculta.")}>Ocultar</button>
+                        : p.estado === "oculto" ? <button disabled={pending} onClick={() => act(() => moderarPost(p.id, "publicar"), "Publicación visible.")}>Mostrar</button> : null}
+                      {p.estado !== "eliminado" ? <button disabled={pending} onClick={() => act(() => moderarPost(p.id, "eliminar"), "Publicación eliminada.")}>Eliminar</button> : null}
+                      <button disabled={pending} onClick={() => act(() => fijarPost(p.id, !p.fijo), p.fijo ? "Desfijada." : "Fijada.")}>{p.fijo ? "Desfijar" : "Fijar"}</button>
                     </div>
                   </div>
                 ))
@@ -179,12 +186,29 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
           </div>
         </div>
       )}
+
+      {modal ? (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(20,20,20,.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 80, padding: 20 }}
+          onClick={() => setModal(null)}>
+          <div style={{ background: "#fff", borderRadius: 12, maxWidth: 640, width: "100%", maxHeight: "88vh", overflowY: "auto", padding: 24 }}
+            onClick={(e) => e.stopPropagation()}>
+            <FichaDetalle
+              f={modal} pending={pending} nota={nota} setNota={setNota} respuesta={respuesta} setRespuesta={setRespuesta}
+              onClose={() => setModal(null)}
+              onAceptar={() => act(() => aceptarFicha(modal.profileId), "Ficha verificada.", modal.profileId)}
+              onRevisar={() => act(() => revisarFicha(modal.profileId, nota), "Solicitud de revisión enviada.", modal.profileId)}
+              onRechazar={() => act(() => rechazarFicha(modal.profileId, nota), "Ficha rechazada.", modal.profileId)}
+              onResponder={() => { act(() => responderEcp(modal.profileId, respuesta), "Mensaje enviado.", modal.profileId); setRespuesta(""); }}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function FichaDetalle({
-  f, pending, nota, setNota, respuesta, setRespuesta, onAceptar, onRevisar, onRechazar, onResponder,
+  f, pending, nota, setNota, respuesta, setRespuesta, onClose, onAceptar, onRevisar, onRechazar, onResponder,
 }: {
   f: AdminFicha;
   pending: boolean;
@@ -192,21 +216,30 @@ function FichaDetalle({
   setNota: (s: string) => void;
   respuesta: string;
   setRespuesta: (s: string) => void;
+  onClose: () => void;
   onAceptar: () => void;
   onRevisar: () => void;
   onRechazar: () => void;
   onResponder: () => void;
 }) {
-  const yaVerificado = f.estado === "verificado";
+  const yaVerificado = f.estado === "verificado" || f.estado === "aprobado";
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
-        <h3 style={{ margin: 0 }}>{f.nombre || "(sin nombre)"}</h3>
-        <span className={`${shared.badge} ${BADGE[f.estado]}`}>{ESTADO_LABEL[f.estado]}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <MiniAvatar url={f.avatarUrl} nombre={f.nombre} size={48} />
+          <div>
+            <h3 style={{ margin: 0 }}>{f.nombre || "(sin nombre)"}</h3>
+            <span className={`${shared.badge} ${BADGE[f.estado]}`}>{ESTADO_LABEL[f.estado]}</span>
+          </div>
+        </div>
+        <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#6b7280", lineHeight: 1 }} aria-label="Cerrar">×</button>
       </div>
-      <p style={{ fontSize: 12.5, color: "#6b7280", margin: "4px 0 12px" }}>
+
+      <p style={{ fontSize: 12.5, color: "#6b7280", margin: "10px 0 12px" }}>
         {f.codigo} · {[f.municipio, f.departamento].filter(Boolean).join(", ") || "—"} · {f.anios} años
         {f.correo ? ` · ${f.correo}` : ""}{f.telefono ? ` · ${f.telefono}` : ""}
+        {f.smsNotifications ? " · 🔔 SMS activadas" : ""}
       </p>
 
       {f.esp.length ? <p style={{ fontSize: 13, margin: "0 0 6px" }}><b>Se dedica a:</b> {f.esp.join(" · ")}</p> : null}
@@ -219,8 +252,8 @@ function FichaDetalle({
         <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>
           {f.documentos.map((d) => (
             <li key={d.id} style={{ marginBottom: 4 }}>
-              {d.url ? <a href={d.url} target="_blank" rel="noopener noreferrer">{d.nombre}</a> : d.nombre}
-              {" "}<span style={{ color: "#6b7280" }}>· {d.tipo}{d.enlazaA ? ` · ${d.enlazaA === "certificacion" ? "Cert." : "Esp."}: ${d.enlaceValor}` : ""}</span>
+              {d.url ? <a href={d.url} target="_blank" rel="noopener noreferrer">{d.nombre}</a> : d.nombre}{" "}
+              <span style={{ color: "#6b7280" }}>· {d.tipo}{d.enlazaA ? ` · ${d.enlazaA === "certificacion" ? "Cert." : "Esp."}: ${d.enlaceValor}` : ""}</span>
             </li>
           ))}
         </ul>
@@ -229,7 +262,7 @@ function FichaDetalle({
       )}
 
       <h4 style={{ margin: "16px 0 6px" }}>Conversación con el usuario</h4>
-      <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid #eee", borderRadius: 8, padding: 8, background: "#fafafa" }}>
+      <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid #eee", borderRadius: 8, padding: 8, background: "#fafafa" }}>
         {f.conversacion.length ? f.conversacion.map((m) => (
           <div key={m.id} style={{ textAlign: m.ctc ? "right" : "left", margin: "4px 0" }}>
             <span style={{ display: "inline-block", maxWidth: "85%", padding: "6px 9px", borderRadius: 8, fontSize: 13,
@@ -246,26 +279,19 @@ function FichaDetalle({
       </div>
 
       {yaVerificado ? (
-        <p style={{ marginTop: 16, color: "#1B7A3A", fontSize: 13 }}>✓ Cuenta verificada — activó su Código de Verificado.</p>
+        <p style={{ marginTop: 16, color: "#1B7A3A", fontSize: 13 }}>✓ Cuenta verificada — tiene acceso completo al directorio.</p>
       ) : (
         <>
-          {f.estado === "aprobado" && f.codigoVerificado ? (
-            <p style={{ marginTop: 16, fontSize: 13 }}>
-              Código emitido: <b style={{ fontFamily: "monospace" }}>{f.codigoVerificado}</b> — el usuario debe ingresarlo para activarse.
-            </p>
-          ) : null}
           <h4 style={{ margin: "16px 0 6px" }}>Veredicto</h4>
           <textarea value={nota} onChange={(e) => setNota(e.target.value)} rows={2}
             placeholder="Nota para Revisar/Rechazar (se envía al usuario)…"
             style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #e5e7eb", marginBottom: 8 }} />
           <div className={shared.actions} style={{ gap: 8 }}>
-            <button disabled={pending} onClick={onAceptar}
-              style={{ background: "#1B7A3A", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px" }}>
-              Aceptar (emite código)
+            <button disabled={pending} onClick={onAceptar} style={{ background: "#1B7A3A", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px" }}>
+              Aceptar y verificar
             </button>
             <button disabled={pending} onClick={onRevisar}>Revisar (pedir info)</button>
-            <button disabled={pending} onClick={onRechazar}
-              style={{ background: "#C8102F", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px" }}>
+            <button disabled={pending} onClick={onRechazar} style={{ background: "#C8102F", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px" }}>
               Rechazar
             </button>
           </div>

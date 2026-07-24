@@ -11,10 +11,10 @@ import { iniciales } from "./data";
 import type { DirectorioBundle, DirectorioEstado, Ficha } from "@/lib/directorio/types";
 import {
   alternarMeGusta,
+  comentarPost,
   enviarMensajeDirecto,
   enviarMensajeEcp,
   guardarFichaDirectorio,
-  ingresarCodigoVerificado,
   marcarHiloLeido,
   publicarPost,
   type ActionResult,
@@ -22,19 +22,28 @@ import {
 } from "@/lib/directorio/actions";
 
 type Pestana = "muro" | "directorio" | "mensajes" | "perfil";
+type GuardarInput = FichaInput & {
+  mostrarTelefono: boolean;
+  mostrarCorreo: boolean;
+  recibirMensajes: boolean;
+  smsNotifications: boolean;
+  anios: number;
+};
 
+// Colores CLAROS a propósito: el chip se pinta sobre la barra morada (--tinta),
+// donde el verde/dorado/rojo oscuros no daban contraste (medido: <2.5:1).
 const ESTADO_CHIP: Record<DirectorioEstado, { t: string; c: string }> = {
-  pendiente: { t: "En revisión", c: "#B07800" },
-  en_revision: { t: "En revisión", c: "#B07800" },
-  aprobado: { t: "Aprobada · activa tu código", c: "#1B7A3A" },
-  verificado: { t: "Verificado por CTC", c: "#1B7A3A" },
-  rechazado: { t: "No aprobada", c: "#C8102E" },
+  pendiente: { t: "En revisión", c: "#E7B24A" },
+  en_revision: { t: "En revisión", c: "#E7B24A" },
+  aprobado: { t: "Verificado por CTC", c: "#6FD98E" },
+  verificado: { t: "Verificado por CTC", c: "#6FD98E" },
+  rechazado: { t: "No aprobada", c: "#F4A0A0" },
 };
 
 // Cascarón de la app real del Directorio. Gate de verificación: sin estar
 // 'verificado' solo se ven «Mi perfil» y la «Conversación con CTC»; el resto
-// (Muro, Directorio, Mensajes con miembros) queda bloqueado hasta ingresar el
-// Código de Verificado que CTC entrega al aprobar.
+// (Muro, Directorio, Mensajes con miembros) se habilita cuando CTC verifica la
+// ficha desde el ECP (2026-07-24: Aceptar verifica directo, sin paso de código).
 export function AppView({
   bundle,
   onRecargar,
@@ -83,8 +92,8 @@ export function AppView({
     return r;
   };
 
-  const publicar = async (etiqueta: string, texto: string) => {
-    const r = await publicarPost(etiqueta, texto);
+  const publicar = async (etiqueta: string, texto: string, fields: Record<string, string> | null) => {
+    const r = await publicarPost(etiqueta, texto, fields);
     if (r.ok) await onRecargar();
     return r;
   };
@@ -94,7 +103,20 @@ export function AppView({
     await onRecargar();
   };
 
-  const guardarPerfil = async (input: FichaInput & { mostrarTelefono: boolean; mostrarCorreo: boolean; recibirMensajes: boolean; anios: number }): Promise<ActionResult> => {
+  const comentar = async (postId: string, texto: string) => {
+    const r = await comentarPost(postId, texto);
+    if (r.ok) await onRecargar();
+    return r;
+  };
+
+  const abrirFicha = (profileId: string) => {
+    setPestana("directorio");
+    window.scrollTo(0, 0);
+    // Deja que PanelDirectorio abra la ficha por su cuenta vía el hash del código.
+    if (typeof window !== "undefined") window.location.hash = `ficha-${profileId}`;
+  };
+
+  const guardarPerfil = async (input: GuardarInput): Promise<ActionResult> => {
     const r = await guardarFichaDirectorio(input);
     if (r.ok) await onRecargar();
     return r;
@@ -116,21 +138,18 @@ export function AppView({
               <span style={{ color: chip.c, fontWeight: 700 }}>{chip.t}</span>
               <b>{ficha!.nombre || ficha!.correo}</b>
             </div>
-            <span className="avatar" style={{ background: ficha!.color }}>{ini}</span>
+            {ficha!.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+              <img className="avatar" src={ficha!.avatarUrl} alt="" style={{ objectFit: "cover" }} />
+            ) : (
+              <span className="avatar" style={{ background: ficha!.color }}>{ini}</span>
+            )}
             <button className="salir" type="button" onClick={onSalir}>Salir</button>
           </div>
         </div>
       </header>
 
-      {!verificado ? (
-        <GateVerificacion estado={ficha!.estado} tieneCodigo={ficha!.tieneCodigo}
-          onIrConversacion={() => irA("mensajes")}
-          onActivar={async (codigo) => {
-            const r = await ingresarCodigoVerificado(codigo);
-            if (r.ok) await onRecargar();
-            return r;
-          }} />
-      ) : null}
+      {!verificado ? <GateVerificacion estado={ficha!.estado} onIrConversacion={() => irA("mensajes")} /> : null}
 
       <nav className="tabs">
         <div className="wrap tabs__in" role="tablist">
@@ -153,7 +172,8 @@ export function AppView({
         {verificado ? (
           <>
             <PanelMuro activo={pestana === "muro"} posts={posts}
-              usuarioColor={ficha!.color} usuarioIni={ini} onPublicar={publicar} onMeGusta={meGusta} />
+              usuarioColor={ficha!.color} usuarioIni={ini} usuarioAvatar={ficha!.avatarUrl}
+              onPublicar={publicar} onMeGusta={meGusta} onComentar={comentar} onAbrirFicha={abrirFicha} />
             <PanelDirectorio activo={pestana === "directorio"} fichas={directorio} onEnviarMensaje={escribirDesdeDirectorio} />
           </>
         ) : null}
@@ -169,32 +189,21 @@ export function AppView({
 
 function GateVerificacion({
   estado,
-  tieneCodigo,
-  onActivar,
   onIrConversacion,
 }: {
   estado: DirectorioEstado;
-  tieneCodigo: boolean;
-  onActivar: (codigo: string) => Promise<ActionResult>;
   onIrConversacion: () => void;
 }) {
-  const [codigo, setCodigo] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [cargando, setCargando] = useState(false);
-
   const mensaje: Record<DirectorioEstado, { t: string; d: string }> = {
     pendiente: {
       t: "Tu ficha está en revisión",
-      d: "El equipo de CTC está revisando tu inscripción. Cuando la aprobemos recibirás tu Código de Verificado en tu conversación con CTC. Mientras tanto puedes completar tu perfil.",
+      d: "El equipo de CTC está revisando tu inscripción. Cuando la verifiquemos, tu cuenta se activa y verás todo el directorio. Mientras tanto, completa tu perfil para que la revisión sea más rápida.",
     },
     en_revision: {
       t: "CTC necesita más información",
       d: "Revisa tu conversación con CTC: te pedimos algún dato o soporte adicional para continuar con tu verificación.",
     },
-    aprobado: {
-      t: "¡Tu ficha fue aprobada!",
-      d: "Ingresa tu Código de Verificado (lo tienes en tu conversación con CTC) para activar tu cuenta y ver todo el directorio.",
-    },
+    aprobado: { t: "Tu ficha fue verificada", d: "Tu cuenta ya está activa." },
     verificado: { t: "", d: "" },
     rechazado: {
       t: "Tu solicitud no fue aprobada por ahora",
@@ -203,38 +212,23 @@ function GateVerificacion({
   };
   const m = mensaje[estado];
 
-  const activar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!codigo.trim()) return;
-    setError(null);
-    setCargando(true);
-    const r = await onActivar(codigo.trim());
-    setCargando(false);
-    if (!r.ok) setError(r.error);
-  };
-
   return (
     <div className="wrap" style={{ marginTop: "1.1rem" }}>
-      <div className="gate-verif" style={{
-        border: "1px solid var(--linea, #e6ddf2)", borderLeft: `4px solid ${estado === "rechazado" ? "#C8102E" : estado === "aprobado" ? "#1B7A3A" : "#B07800"}`,
-        borderRadius: 14, padding: "1.1rem 1.2rem", background: "#fff",
-      }}>
+      <div
+        className="gate-verif"
+        style={{
+          border: "1px solid var(--linea, #e6ddf2)",
+          borderLeft: `4px solid ${estado === "rechazado" ? "var(--rojo)" : "var(--oro)"}`,
+          borderRadius: 14,
+          padding: "1.1rem 1.2rem",
+          background: "#fff",
+        }}
+      >
         <h3 style={{ margin: "0 0 .35rem" }}>{m.t}</h3>
         <p style={{ margin: "0 0 .8rem", color: "var(--gris)", fontSize: ".92rem" }}>{m.d}</p>
-        {tieneCodigo ? (
-          <form onSubmit={activar} style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", alignItems: "center" }}>
-            <input aria-label="Código de Verificado" placeholder="Código de Verificado"
-              value={codigo} onChange={(e) => setCodigo(e.target.value)}
-              style={{ maxWidth: 240, textTransform: "uppercase", letterSpacing: ".06em" }} />
-            <button className="btn" type="submit" disabled={cargando}>{cargando ? "Activando…" : "Activar mi cuenta"}</button>
-            <button className="enlace-btn" type="button" onClick={onIrConversacion}>Ver mi conversación con CTC</button>
-          </form>
-        ) : (
-          <button className="btn btn--sm btn--fantasma" type="button" onClick={onIrConversacion}>
-            Ver mi conversación con CTC
-          </button>
-        )}
-        {error ? <p className="aviso-linea" style={{ color: "var(--rojo)", marginTop: ".6rem" }}>{error}</p> : null}
+        <button className="btn btn--sm btn--fantasma" type="button" onClick={onIrConversacion}>
+          Ver mi conversación con CTC
+        </button>
       </div>
     </div>
   );

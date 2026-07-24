@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal } from "./Modal";
 import { ASUNTOS_MENSAJE, ESPECIALIDADES, sinTildes } from "./data";
 import type { Ficha } from "@/lib/directorio/types";
@@ -31,6 +31,24 @@ export function PanelDirectorio({
   const [asunto, setAsunto] = useState(ASUNTOS_MENSAJE[0]);
   const [cuerpo, setCuerpo] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Abrir una ficha desde otra parte de la app (p. ej. el nombre-enlace del
+  // Muro): AppView pone el hash #ficha-<profileId> y salta a esta pestaña.
+  useEffect(() => {
+    if (!activo) return;
+    const abrir = () => {
+      const m = window.location.hash.match(/^#ficha-(.+)$/);
+      if (!m) return;
+      const f = fichas.find((x) => x.profileId === m[1]);
+      if (f) {
+        setFichaAbierta(f);
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    };
+    abrir();
+    window.addEventListener("hashchange", abrir);
+    return () => window.removeEventListener("hashchange", abrir);
+  }, [activo, fichas]);
 
   const departamentos = useMemo(
     () => [...new Set(fichas.map((x) => x.departamento).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")),
@@ -138,7 +156,12 @@ export function PanelDirectorio({
             <article className="ficha" key={x.profileId}>
               <div className="ficha__cuerpo">
                 <div className="ficha__top">
-                  <span className="avatar" style={{ background: x.color }}>{x.iniciales}</span>
+                  {x.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                    <img className="avatar" src={x.avatarUrl} alt="" style={{ objectFit: "cover" }} />
+                  ) : (
+                    <span className="avatar" style={{ background: x.color }}>{x.iniciales}</span>
+                  )}
                   <div>
                     <p className="ficha__id">{x.codigo} · Verificado · {x.anios} años</p>
                     <h3 className="ficha__nombre">{x.nombre}</h3>
@@ -184,7 +207,12 @@ export function PanelDirectorio({
           }>
           <div className="modal__cuerpo">
             <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1.1rem" }}>
-              <span className="avatar" style={{ width: 58, height: 58, fontSize: "1.4rem", background: fichaAbierta.color }}>{fichaAbierta.iniciales}</span>
+              {fichaAbierta.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                <img className="avatar" src={fichaAbierta.avatarUrl} alt="" style={{ width: 58, height: 58, objectFit: "cover" }} />
+              ) : (
+                <span className="avatar" style={{ width: 58, height: 58, fontSize: "1.4rem", background: fichaAbierta.color }}>{fichaAbierta.iniciales}</span>
+              )}
               <div>
                 <p style={{ margin: 0, fontSize: ".95rem" }}>{lugar(fichaAbierta)}</p>
                 <p style={{ margin: 0, fontSize: ".85rem", color: "var(--gris)" }}>{fichaAbierta.anios} años de experiencia</p>

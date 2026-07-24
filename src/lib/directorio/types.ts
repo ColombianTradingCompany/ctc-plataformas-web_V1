@@ -43,9 +43,9 @@ export type MiFicha = {
   motivo: string;
   motivoTxt: string;
   color: string;
+  avatarUrl: string | null;
+  smsNotifications: boolean;
   estado: DirectorioEstado;
-  /** estado==='aprobado' and a verification code is waiting to be entered. */
-  tieneCodigo: boolean;
   createdAt: string;
   documentos: FichaDoc[];
 };
@@ -66,7 +66,19 @@ export type Ficha = {
   bio: string;
   motivoTxt: string;
   color: string;
+  avatarUrl: string | null;
   iniciales: string;
+};
+
+export type Comentario = {
+  id: string;
+  autorId: string | null;
+  autor: string;
+  ini: string;
+  color: string;
+  avatarUrl: string | null;
+  cuando: string;
+  texto: string;
 };
 
 export type Post = {
@@ -76,13 +88,16 @@ export type Post = {
   sub: string;
   ini: string;
   color: string;
+  avatarUrl: string | null;
   etiqueta: string;
+  fields: Record<string, string> | null; // structured per-category fields
   fijo: boolean;
   esCtc: boolean;
   cuando: string; // relative time
   megusta: number;
   miGusta: boolean;
   texto: string;
+  comentarios: Comentario[];
 };
 
 export type Mensaje = { id: string; yo: boolean; esCtc: boolean; texto: string; hora: string };

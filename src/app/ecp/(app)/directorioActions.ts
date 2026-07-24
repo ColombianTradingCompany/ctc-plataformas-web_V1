@@ -1,6 +1,5 @@
 "use server";
 
-import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
@@ -25,6 +24,7 @@ export type AdminUsuario = {
   estado: DirectorioEstado;
   esp: string[];
   cert: string[];
+  avatarUrl: string | null;
   creado: string;
 };
 
@@ -35,7 +35,7 @@ export type AdminFicha = AdminUsuario & {
   anios: number;
   bio: string;
   motivoTxt: string;
-  codigoVerificado: string | null;
+  smsNotifications: boolean;
   documentos: FichaDoc[];
   conversacion: AdminMensaje[];
 };
@@ -63,17 +63,13 @@ type Row = Record<string, unknown>;
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 const clamp = (s: unknown, n: number) => String(s ?? "").trim().slice(0, n);
 
-function mintCodigo(): string {
-  return "DCV-" + randomBytes(4).toString("hex").toUpperCase().slice(0, 6);
-}
-
 async function emails(service: ReturnType<typeof createServiceRoleClient>, ids: string[]) {
   if (!ids.length) return new Map<string, string | null>();
   const { data } = await service.from("profiles").select("id, email").in("id", [...new Set(ids)]);
   return new Map((data ?? []).map((p) => [String(p.id), (p.email as string) ?? null]));
 }
 
-function mapUsuario(r: Row, correo: string | null): AdminUsuario {
+function mapUsuario(r: Row, correo: string | null, avatarUrl: string | null): AdminUsuario {
   const id = String(r.profile_id);
   return {
     profileId: id,
@@ -85,6 +81,7 @@ function mapUsuario(r: Row, correo: string | null): AdminUsuario {
     estado: (r.estado as DirectorioEstado) ?? "pendiente",
     esp: (r.especialidades as string[]) ?? [],
     cert: (r.certificaciones as string[]) ?? [],
+    avatarUrl,
     creado: String(r.created_at ?? ""),
   };
 }
@@ -96,7 +93,14 @@ export async function listarDirectorioAdmin(): Promise<DirectorioAdminData> {
   const { data: rows } = await service.from("directorio_profiles").select("*").order("created_at", { ascending: false });
   const fichas = rows ?? [];
   const emailBy = await emails(service, fichas.map((r) => String(r.profile_id)));
-  const usuarios = fichas.map((r) => mapUsuario(r, emailBy.get(String(r.profile_id)) ?? null));
+  const avatarUrls = await signedKaffetalMediaUrls(service, fichas.map((r) => r.avatar_asset_id).filter(Boolean).map(String));
+  const usuarios = fichas.map((r) =>
+    mapUsuario(
+      r,
+      emailBy.get(String(r.profile_id)) ?? null,
+      r.avatar_asset_id ? avatarUrls.get(String(r.avatar_asset_id)) ?? null : null
+    )
+  );
 
   const kpis = {
     total: usuarios.length,
@@ -145,7 +149,8 @@ export async function cargarFichaAdmin(profileId: string): Promise<AdminFicha | 
   const { data: docRows } = await service.from("directorio_documents").select("*").eq("profile_id", profileId).order("created_at", { ascending: true });
   const docs = docRows ?? [];
   const fileIds = docs.filter((d) => d.kind === "file" && d.asset_id).map((d) => String(d.asset_id));
-  const signed = await signedKaffetalMediaUrls(service, fileIds);
+  const avatarId = r.avatar_asset_id ? String(r.avatar_asset_id) : null;
+  const signed = await signedKaffetalMediaUrls(service, [...fileIds, ...(avatarId ? [avatarId] : [])]);
   const documentos: FichaDoc[] = docs.map((d) => ({
     id: String(d.id),
     kind: d.kind === "url" ? "url" : "file",
@@ -171,12 +176,12 @@ export async function cargarFichaAdmin(profileId: string): Promise<AdminFicha | 
   }));
 
   return {
-    ...mapUsuario(r, emailBy.get(profileId) ?? null),
+    ...mapUsuario(r, emailBy.get(profileId) ?? null, avatarId ? signed.get(avatarId) ?? null : null),
     telefono: String(r.telefono ?? ""),
     anios: Number(r.anios_experiencia ?? 0),
     bio: String(r.bio ?? ""),
     motivoTxt: String(r.motivo_txt ?? ""),
-    codigoVerificado: (r.verificado_codigo as string) ?? null,
+    smsNotifications: r.sms_notifications === true,
     documentos,
     conversacion,
   };
@@ -196,23 +201,25 @@ async function logVerdicto(service: ReturnType<typeof createServiceRoleClient>, 
   });
 }
 
+// Aceptar VERIFICA directo (2026-07-24): 'aprobado' y el paso de "ingresar
+// código" se eliminaron — Aceptar es lo mismo que verificar. La cuenta gana
+// acceso completo de inmediato en su próxima carga.
 export async function aceptarFicha(profileId: string): Promise<AdminResult> {
   const adminId = await requireActiveAdmin();
   const service = createServiceRoleClient();
-  const { data: r } = await service.from("directorio_profiles").select("estado, verificado_codigo").eq("profile_id", profileId).maybeSingle();
+  const { data: r } = await service.from("directorio_profiles").select("estado").eq("profile_id", profileId).maybeSingle();
   if (!r) return { ok: false, error: "Ficha no encontrada." };
   if (r.estado === "verificado") return { ok: false, error: "Esta ficha ya está verificada." };
 
-  const codigo = (r.verificado_codigo as string) || mintCodigo();
   await service
     .from("directorio_profiles")
-    .update({ estado: "aprobado", verificado_codigo: codigo, verdicto_por: adminId, verdicto_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .update({ estado: "verificado", verificado_at: new Date().toISOString(), verdicto_por: adminId, verdicto_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq("profile_id", profileId);
   await postCtc(
     service, adminId, profileId,
-    `¡Buenas noticias! Tu ficha fue aprobada por CTC. Tu Código de Verificado es ${codigo} — ingrésalo en tu panel para activar tu cuenta y ver todo el directorio.`
+    "¡Buenas noticias! Tu ficha fue verificada por CTC. Tu cuenta ya está activa: ya puedes ver todo el directorio, el muro y escribir a otros especialistas."
   );
-  await logVerdicto(service, adminId, profileId, "aceptar", String(r.estado), "aprobado", codigo);
+  await logVerdicto(service, adminId, profileId, "aceptar", String(r.estado), "verificado", null);
   revalidatePath("/ecp/directorio");
   return { ok: true };
 }

@@ -13,23 +13,31 @@ import {
   agregarDocumentoArchivo,
   agregarDocumentoUrl,
   eliminarDocumento,
+  guardarAvatarDirectorio,
   misPlataformas,
   type ActionResult,
   type FichaInput,
   type MisPlataformas,
 } from "@/lib/directorio/actions";
 
-type GuardarInput = FichaInput & { mostrarTelefono: boolean; mostrarCorreo: boolean; recibirMensajes: boolean; anios: number };
+type GuardarInput = FichaInput & {
+  mostrarTelefono: boolean;
+  mostrarCorreo: boolean;
+  recibirMensajes: boolean;
+  smsNotifications: boolean;
+  anios: number;
+};
 
 const ESTADO_TXT: Record<MiFicha["estado"], string> = {
   pendiente: "En revisión por CTC",
   en_revision: "En revisión por CTC",
-  aprobado: "Aprobada · activa tu código",
+  aprobado: "Verificado por CTC",
   verificado: "Verificado por CTC",
   rechazado: "No aprobada",
 };
 
 const MAX_MB = 10;
+const MAX_AVATAR_MB = 5;
 
 export function PanelPerfil({
   activo,
@@ -45,11 +53,15 @@ export function PanelPerfil({
   const [b, setB] = useState({
     nombre: ficha.nombre, departamento: ficha.departamento, municipio: ficha.municipio, telefono: ficha.telefono,
     mostrarTelefono: ficha.mostrarTelefono, mostrarCorreo: ficha.mostrarCorreo, recibirMensajes: ficha.recibirMensajes,
+    smsNotifications: ficha.smsNotifications,
     anios: ficha.anios, esp: ficha.esp, cert: ficha.cert, bio: ficha.bio, motivo: ficha.motivo || MOTIVOS[0], motivoTxt: ficha.motivoTxt,
   });
   const [guardado, setGuardado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoEstado, setAutoEstado] = useState<"idle" | "guardando" | "guardado">("idle");
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof typeof b>(k: K, v: (typeof b)[K]) => setB({ ...b, [k]: v });
   const ini = iniciales(b.nombre);
@@ -58,23 +70,79 @@ export function PanelPerfil({
   const partes = [
     b.nombre.trim().length > 3, !!b.departamento, !!b.municipio, !!b.telefono,
     b.esp.length > 0, b.cert.length > 0, b.bio.length > 40, b.anios > 0,
-    !!b.motivoTxt, ficha.documentos.length > 0, ficha.estado === "verificado",
+    !!b.motivoTxt, ficha.documentos.length > 0, !!ficha.avatarUrl,
   ];
   const pct = Math.round((partes.filter(Boolean).length / partes.length) * 100);
+
+  const buildInput = (): GuardarInput => ({
+    nombre: b.nombre, departamento: b.departamento, municipio: b.municipio, telefono: b.telefono,
+    especialidades: b.esp, certificaciones: b.cert, bio: b.bio, motivo: b.motivo, motivoTxt: b.motivoTxt,
+    mostrarTelefono: b.mostrarTelefono, mostrarCorreo: b.mostrarCorreo, recibirMensajes: b.recibirMensajes,
+    smsNotifications: b.smsNotifications, anios: b.anios,
+  });
+
+  // Autosave (debounced): persiste solo 1.2 s después de un cambio REAL. Se
+  // compara una firma del borrador con la última guardada, así ni el montaje
+  // (ni el doble-montaje de StrictMode en dev) dispara un guardado espurio.
+  // onGuardar por ref para no reejecutar el efecto por su identidad.
+  const guardarRef = useRef(onGuardar);
+  useEffect(() => {
+    guardarRef.current = onGuardar;
+  });
+  const firma = JSON.stringify(b);
+  const firmaGuardada = useRef(firma);
+  useEffect(() => {
+    if (firma === firmaGuardada.current) return;
+    const d = JSON.parse(firma) as typeof b; // draft en el shape crudo (esp/cert)
+    const t = setTimeout(() => {
+      firmaGuardada.current = firma;
+      setAutoEstado("guardando");
+      guardarRef
+        .current({
+          nombre: d.nombre, departamento: d.departamento, municipio: d.municipio, telefono: d.telefono,
+          especialidades: d.esp, certificaciones: d.cert, bio: d.bio, motivo: d.motivo, motivoTxt: d.motivoTxt,
+          mostrarTelefono: d.mostrarTelefono, mostrarCorreo: d.mostrarCorreo, recibirMensajes: d.recibirMensajes,
+          smsNotifications: d.smsNotifications, anios: d.anios,
+        })
+        .then((r) => setAutoEstado(r.ok ? "guardado" : "idle"));
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [firma]);
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setGuardando(true);
-    const r = await onGuardar({
-      nombre: b.nombre, departamento: b.departamento, municipio: b.municipio, telefono: b.telefono,
-      especialidades: b.esp, certificaciones: b.cert, bio: b.bio, motivo: b.motivo, motivoTxt: b.motivoTxt,
-      mostrarTelefono: b.mostrarTelefono, mostrarCorreo: b.mostrarCorreo, recibirMensajes: b.recibirMensajes, anios: b.anios,
-    });
+    const r = await onGuardar(buildInput());
     setGuardando(false);
     if (!r.ok) return setError(r.error);
     setGuardado(true);
+    setAutoEstado("guardado");
     setTimeout(() => setGuardado(false), 2200);
+  };
+
+  const subirAvatar = async (file: File | null) => {
+    if (!file) return;
+    if (!checkFileSizeMb(file, MAX_AVATAR_MB).ok) return setError(`La foto supera ${MAX_AVATAR_MB} MB.`);
+    setError(null);
+    setAvatarBusy(true);
+    const up = await uploadKaffetalMedia(createClient(), ficha.profileId, "directorio", file);
+    if ("error" in up) {
+      setAvatarBusy(false);
+      return setError("No se pudo subir la foto.");
+    }
+    const r = await guardarAvatarDirectorio(up.assetId);
+    setAvatarBusy(false);
+    if (!r.ok) return setError(r.error);
+    if (avatarInput.current) avatarInput.current.value = "";
+    await onRecargar();
+  };
+
+  const quitarAvatar = async () => {
+    setAvatarBusy(true);
+    await guardarAvatarDirectorio(null);
+    setAvatarBusy(false);
+    await onRecargar();
   };
 
   return (
@@ -89,8 +157,28 @@ export function PanelPerfil({
 
       <div className="perfil">
         <div>
-          <form className="tarjeta" onSubmit={guardar}>
+          <form id="perfil-form" className="tarjeta" onSubmit={guardar}>
             <h3>Datos de la ficha</h3>
+
+            <div className="perfil-avatar">
+              {ficha.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                <img className="perfil-avatar__img" src={ficha.avatarUrl} alt="" />
+              ) : (
+                <span className="perfil-avatar__ph" style={{ background: ficha.color }}>{ini}</span>
+              )}
+              <div>
+                <label htmlFor="p-avatar">Foto de perfil</label>
+                <input id="p-avatar" ref={avatarInput} type="file" accept="image/png,image/jpeg,image/webp"
+                  disabled={avatarBusy} onChange={(e) => subirAvatar(e.target.files?.[0] ?? null)} />
+                <div style={{ display: "flex", gap: ".6rem", alignItems: "center", marginTop: ".35rem" }}>
+                  <small style={{ margin: 0 }}>JPG, PNG o WebP · máx. {MAX_AVATAR_MB} MB.</small>
+                  {ficha.avatarUrl ? <button type="button" className="enlace-btn" onClick={quitarAvatar} disabled={avatarBusy}>Quitar</button> : null}
+                  {avatarBusy ? <span className="aviso-linea" style={{ margin: 0 }}>Subiendo…</span> : null}
+                </div>
+              </div>
+            </div>
+
             <div className="campo-fila">
               <div className="campo">
                 <label htmlFor="p-nombre">Nombre completo</label>
@@ -155,19 +243,19 @@ export function PanelPerfil({
             </div>
 
             <div className="campo">
-              <label>Visibilidad</label>
+              <label>Visibilidad y notificaciones</label>
               <div className="chks">
                 <label className="chk"><input type="checkbox" checked={b.mostrarTelefono} onChange={(e) => set("mostrarTelefono", e.target.checked)} /> Mostrar mi teléfono</label>
                 <label className="chk"><input type="checkbox" checked={b.mostrarCorreo} onChange={(e) => set("mostrarCorreo", e.target.checked)} /> Mostrar mi correo</label>
                 <label className="chk"><input type="checkbox" checked={b.recibirMensajes} onChange={(e) => set("recibirMensajes", e.target.checked)} /> Recibir mensajes directos</label>
+                <label className="chk"><input type="checkbox" checked={b.smsNotifications} onChange={(e) => set("smsNotifications", e.target.checked)} /> Recibir notificaciones por SMS a mi teléfono</label>
               </div>
             </div>
 
             {error ? <p className="aviso-linea" style={{ color: "var(--rojo)" }}>{error}</p> : null}
-            <div style={{ display: "flex", gap: ".7rem", alignItems: "center", flexWrap: "wrap" }}>
-              <button className="btn" type="submit" disabled={guardando}>{guardando ? "Guardando…" : "Guardar cambios"}</button>
-              <span className={`guardado${guardado ? " ver" : ""}`}>Cambios guardados</span>
-            </div>
+            <p className="aviso-linea" style={{ margin: 0 }}>
+              {autoEstado === "guardando" ? "Guardando…" : autoEstado === "guardado" || guardado ? "Cambios guardados ✓" : "Tus cambios se guardan solos."}
+            </p>
           </form>
 
           <DocumentosCard ficha={ficha} onRecargar={onRecargar} />
@@ -179,7 +267,12 @@ export function PanelPerfil({
             <article className="ficha" style={{ boxShadow: "none", marginTop: ".8rem" }}>
               <div className="ficha__cuerpo">
                 <div className="ficha__top">
-                  <span className="avatar" style={{ background: ficha.color }}>{ini}</span>
+                  {ficha.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
+                    <img className="avatar" src={ficha.avatarUrl} alt="" style={{ objectFit: "cover" }} />
+                  ) : (
+                    <span className="avatar" style={{ background: ficha.color }}>{ini}</span>
+                  )}
                   <div>
                     <p className="ficha__id">{ficha.codigo} · {ESTADO_TXT[ficha.estado]}</p>
                     <h3 className="ficha__nombre">{b.nombre || "Tu nombre"}</h3>
@@ -225,6 +318,15 @@ export function PanelPerfil({
           </div>
         </div>
       </div>
+
+      {/* Botón flotante de guardar (abajo a la derecha). Guarda al instante;
+          además el perfil se autoguarda mientras editas. Solo cuando la
+          pestaña está activa, para no flotar sobre las otras. */}
+      {activo ? (
+        <button className="btn perfil-guardar-fab" type="submit" form="perfil-form" disabled={guardando}>
+          {guardando ? "Guardando…" : guardado ? "Guardado ✓" : "Guardar"}
+        </button>
+      ) : null}
     </section>
   );
 }

@@ -36,6 +36,13 @@ export type FincaEudrFields = Pick<
   | "eudrLegalProduction"
   | "eudrLegalAreas"
   | "eudrTenure"
+  // Risk questionnaire (2026-07-24) -- moved onto the finca from the lot in the
+  // Pasaporte/Visa/Sello restructure. The two yes/no answers below are what the
+  // risk determination (deriveFincaRiskLevel) needs; the checkbox lists and free
+  // text are stored/displayed but don't gate the Visa on their own.
+  | "eudrIllegalityIndicators"
+  | "eudrDocsAvailable"
+  | "eudrMitigationEffective"
 >;
 
 // A point (lat/lng) is the primary evidence; a known vereda/municipio/departamento
@@ -58,14 +65,23 @@ export function fincaEudrStatus(f: FincaEudrFields | null | undefined): EudrStat
     return status("no_apta", "Sin Visa", "stop");
   }
   const haOk = f.ha !== "—" && f.ha.trim() !== "" && Number(f.ha.replace(",", ".")) > 0;
+  // Risk determination (transferred from the lot 2026-07-24). "" until the two
+  // yes/no questions of the questionnaire are answered -> still en trámite.
+  const risk = deriveFincaRiskLevel(f);
   const incomplete =
     !f.name ||
     !hasGeo(f) ||
     !haOk ||
     f.eudrDeforestationFree !== true ||
     f.eudrLegalAreas.length === 0 ||
-    !f.eudrTenure;
+    !f.eudrTenure ||
+    risk === "";
   if (incomplete) return status("pendiente", "Visa en trámite", "pend");
+  // Questionnaire answered but the residual risk is not insignificant (and no
+  // effective mitigation on record): the Visa is withheld until it's addressed.
+  if (risk === "no_insignificante") {
+    return status("no_apta", "Sin Visa · riesgo no insignificante", "stop");
+  }
   return status("apta", "Visa vigente", "ok");
 }
 
@@ -181,6 +197,22 @@ export function deriveLotRiskLevel(f: LotRiskFactors): "" | "insignificante" | "
 
   if (raw === "no_insignificante" && f.eudr_mitigation_effective === true) return "insignificante";
   return raw;
+}
+
+// The finca-level determination (2026-07-24): same Art. 10-11 rules as
+// deriveLotRiskLevel, now sourced from the finca's own questionnaire. País is
+// implicit -- a finca in this system is in Colombia, so country risk is always
+// "Estándar" (never the "Alto" escalator). Returns "" until both yes/no factors
+// (indicios de ilegalidad, documentación disponible) are answered.
+export function deriveFincaRiskLevel(
+  f: Pick<FincaEudrFields, "eudrIllegalityIndicators" | "eudrDocsAvailable" | "eudrMitigationEffective">
+): "" | "insignificante" | "no_insignificante" {
+  return deriveLotRiskLevel({
+    eudr_country_risk: "Estándar",
+    eudr_illegality_indicators: f.eudrIllegalityIndicators,
+    eudr_docs_available: f.eudrDocsAvailable,
+    eudr_mitigation_effective: f.eudrMitigationEffective,
+  });
 }
 
 // Shared by PaneA5Eudr.tsx (live display) and FichaView.tsx (the EUDR

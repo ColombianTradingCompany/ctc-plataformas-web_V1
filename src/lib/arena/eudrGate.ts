@@ -21,6 +21,9 @@ type FincaJoinRow = {
   eudr_legal_production: boolean | null;
   eudr_legal_areas: string[] | null;
   eudr_tenure: string | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_mitigation_effective: boolean | null;
 };
 
 function toFields(f: FincaJoinRow): FincaEudrFields {
@@ -36,6 +39,9 @@ function toFields(f: FincaJoinRow): FincaEudrFields {
     eudrLegalProduction: f.eudr_legal_production,
     eudrLegalAreas: f.eudr_legal_areas || [],
     eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
+    eudrIllegalityIndicators: f.eudr_illegality_indicators,
+    eudrDocsAvailable: f.eudr_docs_available,
+    eudrMitigationEffective: f.eudr_mitigation_effective,
   };
 }
 
@@ -45,7 +51,7 @@ export async function lotEudrGate(service: SupabaseClient, lotId: string): Promi
   const { data: lot } = await service
     .from("lots")
     .select(
-      "eudr_risk_level, eudr_mitigation_effective, fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)"
+      "eudr_risk_level, eudr_mitigation_effective, fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)"
     )
     .eq("id", lotId)
     .maybeSingle();

@@ -1,5 +1,12 @@
 import { fincaCode, LOCAL_INFRA } from "./data";
+import { deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { PrintButton } from "./PrintButton";
+
+const CUSTODY_LABEL: Record<string, string> = {
+  finca: "Finca", beneficio: "Beneficio", secado: "Secado", trilla: "Trilla", almacenamiento: "Almacenamiento", exportacion: "Exportación",
+};
+const PRODUCT_RISK_LABEL: Record<string, string> = Object.fromEntries(PRODUCT_RISK_QUESTIONS.map(([k, l]) => [k, l]));
+const CUSTODY_METHOD_LABEL: Record<string, string> = { ctc_standard: "CTC Parchment Storage Standard", custom: "Método propio" };
 
 const INFRA_LABEL: Record<string, string> = Object.fromEntries(LOCAL_INFRA.map(([k, l]) => [k, l]));
 
@@ -53,6 +60,17 @@ export type DossierFinca = {
   eudr_evidence_files: KeyedFiles | null;
   eudr_sustainability_files: KeyedFiles | null;
   eudr_local_infra: string[] | null;
+  // Cuestionario de riesgo (2026-07-24).
+  eudr_custody_stages: string[] | null;
+  eudr_custody_method: string | null;
+  eudr_custody_notes: string | null;
+  eudr_product_risk_factors: string[] | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_cert_scheme: string | null;
+  eudr_mitigation_actions: string | null;
+  eudr_mitigation_responsible: string | null;
+  eudr_mitigation_effective: boolean | null;
 };
 
 const yesNo = (v: boolean | null) => (v === true ? "Sí" : v === false ? "No" : "Sin definir");
@@ -219,6 +237,34 @@ export function EudrDossierDoc({
         <p style={{ fontSize: 13 }}>{(finca.eudr_sustainability_tags ?? []).map((k) => SUSTAIN_LABEL[k] ?? k).join(", ") || "ninguna"}</p>
         {finca.eudr_sustainability_notes && <p style={{ fontSize: 12.5, color: "#555" }}>{finca.eudr_sustainability_notes}</p>}
         {annexBlock(sustainFiles, SUSTAIN_LABEL)}
+
+        <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Evaluación de riesgo (Art. 10-11)</h2>
+        {(() => {
+          const riskLevel = deriveFincaRiskLevel({
+            eudrIllegalityIndicators: finca.eudr_illegality_indicators,
+            eudrDocsAvailable: finca.eudr_docs_available,
+            eudrMitigationEffective: finca.eudr_mitigation_effective,
+          });
+          const riskText = riskLevel === "insignificante" ? "Insignificante" : riskLevel === "no_insignificante" ? "No insignificante" : "Pendiente";
+          return (
+            <table style={{ borderCollapse: "collapse", fontSize: 13, width: "100%" }}>
+              <tbody>
+                {row("País / región de producción", "Colombia · riesgo estándar")}
+                {row("Método de separación", finca.eudr_custody_method ? CUSTODY_METHOD_LABEL[finca.eudr_custody_method] ?? finca.eudr_custody_method : "sin definir")}
+                {finca.eudr_custody_method === "custom" && finca.eudr_custody_notes ? row("Notas de custodia", finca.eudr_custody_notes) : null}
+                {row("Cadena de custodia", `${(finca.eudr_custody_stages ?? []).map((k) => CUSTODY_LABEL[k] ?? k).join(", ") || "ninguna"} · complejidad ${deriveChainComplexity(finca.eudr_custody_stages) || "—"}`)}
+                {row("Riesgo del producto", `${deriveProductRisk(finca.eudr_product_risk_factors)}${(finca.eudr_product_risk_factors ?? []).length ? " · " + (finca.eudr_product_risk_factors ?? []).map((k) => PRODUCT_RISK_LABEL[k] ?? k).join("; ") : ""}`)}
+                {row("Esquemas de certificación", finca.eudr_cert_scheme || "ninguno declarado")}
+                {row("Indicios de ilegalidad/deforestación", yesNo(finca.eudr_illegality_indicators))}
+                {row("Documentos disponibles y verificables", yesNo(finca.eudr_docs_available))}
+                {row("Nivel de riesgo determinado", riskText)}
+                {finca.eudr_mitigation_actions ? row("Acciones de mitigación", finca.eudr_mitigation_actions) : null}
+                {row("Mitigación efectiva", yesNo(finca.eudr_mitigation_effective))}
+                {finca.eudr_mitigation_responsible ? row("Responsable de la determinación", finca.eudr_mitigation_responsible) : null}
+              </tbody>
+            </table>
+          );
+        })()}
 
         <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Registro de comunicación</h2>
         {comms.length === 0 ? (

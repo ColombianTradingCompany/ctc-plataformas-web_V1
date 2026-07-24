@@ -18,6 +18,9 @@ type FincaJoin = {
   eudr_legal_production: boolean | null;
   eudr_legal_areas: string[] | null;
   eudr_tenure: string | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_mitigation_effective: boolean | null;
 } | null;
 
 function toFincaEudrFields(f: NonNullable<FincaJoin>): FincaEudrFields {
@@ -33,6 +36,9 @@ function toFincaEudrFields(f: NonNullable<FincaJoin>): FincaEudrFields {
     eudrLegalProduction: f.eudr_legal_production,
     eudrLegalAreas: f.eudr_legal_areas || [],
     eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
+    eudrIllegalityIndicators: f.eudr_illegality_indicators,
+    eudrDocsAvailable: f.eudr_docs_available,
+    eudrMitigationEffective: f.eudr_mitigation_effective,
   };
 }
 
@@ -69,7 +75,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
        eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
        eudr_product_risk, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme,
        eudr_risk_level, eudr_mitigation_actions, eudr_mitigation_effective, eudr_mitigation_responsible,
-       fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure)`
+       fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)`
     )
     .eq("id", id)
     .single();

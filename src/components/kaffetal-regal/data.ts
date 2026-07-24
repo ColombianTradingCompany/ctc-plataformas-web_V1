@@ -36,6 +36,22 @@ export type Finca = {
   eudrLegalDocsUrl: string | null;
   eudrSustainabilityTags: string[];
   eudrSustainabilityNotes: string;
+  // Tipo de documento de respaldo legal subido (escritura, contrato de
+  // arrendamiento, Registro SICA / cédula cafetera, …) — admite documentación SICA.
+  eudrSupportDocType: string;
+  // EUDR — cuestionario de riesgo (2026-07-24). Trasladado del lote a la finca en
+  // la reestructuración Pasaporte/Visa/Sello: la debida diligencia de riesgo ahora
+  // vive en la finca y el lote hereda el Sello. Mismos campos que tenía el lote.
+  eudrCustodyStages: string[];
+  eudrCustodyMethod: "" | "ctc_standard" | "custom";
+  eudrCustodyNotes: string;
+  eudrProductRiskFactors: string[];
+  eudrIllegalityIndicators: boolean | null;
+  eudrDocsAvailable: boolean | null;
+  eudrCertScheme: string;
+  eudrMitigationActions: string;
+  eudrMitigationResponsible: string;
+  eudrMitigationEffective: boolean | null;
   requiresEudrPolygon: boolean;
   // Vertices captured by the Google Maps Drawing Manager when ha > 4 -- null
   // when the finca only needs the lat/lng point.
@@ -60,6 +76,20 @@ export type EudrProducerAnswers = {
   lat: string;
   lng: string;
   polygon: { lat: number; lng: number }[] | null;
+  // Risk questionnaire the producer declares (2026-07-24). Optional so legacy
+  // producer-answer snapshots saved before the transfer still parse; callers
+  // fall back to the finca's eudr_* columns when a field is absent.
+  supportDocType?: string;
+  custodyStages?: string[];
+  custodyMethod?: "" | "ctc_standard" | "custom";
+  custodyNotes?: string;
+  productRiskFactors?: string[];
+  illegalityIndicators?: boolean | null;
+  docsAvailable?: boolean | null;
+  certScheme?: string;
+  mitigationActions?: string;
+  mitigationResponsible?: string;
+  mitigationEffective?: boolean | null;
 };
 
 // A lot is "committed" to CTC once it enters the Arena pipeline (stage index

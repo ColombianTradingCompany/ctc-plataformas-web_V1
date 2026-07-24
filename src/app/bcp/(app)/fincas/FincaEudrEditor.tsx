@@ -2,7 +2,7 @@
 
 import { useReducer, useRef, useState, type ReactNode } from "react";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
-import { mapPreviewUrl } from "@/lib/eudr";
+import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { earthWebUrl, buildFincaGeoJson } from "@/lib/earthKml";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
@@ -92,6 +92,18 @@ export type FincaEudrValues = {
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_local_infra: string[] | null;
+  // Risk questionnaire (moved onto the finca 2026-07-24).
+  eudr_support_doc_type: string | null;
+  eudr_custody_stages: string[] | null;
+  eudr_custody_method: string | null;
+  eudr_custody_notes: string | null;
+  eudr_product_risk_factors: string[] | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_cert_scheme: string | null;
+  eudr_mitigation_actions: string | null;
+  eudr_mitigation_responsible: string | null;
+  eudr_mitigation_effective: boolean | null;
 };
 
 // GeoJSON estándar (RFC 7946) en vez del JSON casero de antes: es el formato
@@ -123,7 +135,22 @@ export type ProducerAnswers = {
   lat: string;
   lng: string;
   polygon: { lat: number; lng: number }[] | null;
+  // Risk questionnaire the producer declared (optional: absent on snapshots
+  // saved before the questionnaire moved onto the finca).
+  custodyStages?: string[];
+  custodyMethod?: string;
+  custodyNotes?: string;
+  productRiskFactors?: string[];
+  illegalityIndicators?: boolean | null;
+  docsAvailable?: boolean | null;
+  certScheme?: string;
+  mitigationActions?: string;
 } | null;
+
+const CUSTODY_STAGES: [string, string][] = [
+  ["finca", "Finca"], ["beneficio", "Beneficio"], ["secado", "Secado"],
+  ["trilla", "Trilla"], ["almacenamiento", "Almacenamiento"], ["exportacion", "Exportación"],
+];
 
 // ── Sub-pestañas de la sección EUDR (2026-07-23, pedido del owner) ──────────
 // Tres grupos con icono minimalista, en LECTURA y en EDICIÓN:
@@ -136,7 +163,7 @@ export type ProducerAnswers = {
 //   3. Atributos Complementarios — áreas de legislación y sostenibilidad.
 // En edición sigue habiendo UN solo <form>: los paneles inactivos se ocultan
 // con display:none (los campos siguen montados y viajan completos al guardar).
-type SubTab = "declaracion" | "analisis" | "atributos";
+type SubTab = "declaracion" | "analisis" | "atributos" | "riesgo";
 
 function SubTabIcon({ k }: { k: SubTab }) {
   const p: Record<SubTab, ReactNode> = {
@@ -146,6 +173,8 @@ function SubTabIcon({ k }: { k: SubTab }) {
     analisis: <><circle cx="8" cy="12.5" r="5" /><path d="M5.5 10.5c1.7-.8 3.6-.8 5.3 0M5.5 14.5c1.7.8 3.6.8 5.3 0" /><path d="m12.5 4 3.5 3.5M14.5 3.5l2 2M12 6.5 14 4.5" /></>,
     // Capas: atributos complementarios.
     atributos: <><path d="M10 3 17 7l-7 4-7-4Z" /><path d="m3.5 10.5 6.5 3.7 6.5-3.7" /><path d="m3.5 14 6.5 3.7 6.5-3.7" /></>,
+    // Escudo con check: evaluación de riesgo y mitigación.
+    riesgo: <><path d="M10 2.5 16 5v5c0 4-2.8 6.4-6 7.5C6.8 16.4 4 14 4 10V5Z" /><path d="m7.5 10 2 2 3.5-3.5" /></>,
   };
   return (
     <svg viewBox="0 0 20 20" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -159,6 +188,7 @@ function SubTabBar({ tab, setTab }: { tab: SubTab; setTab: (t: SubTab) => void }
     { key: "declaracion", label: "Declaración de Productor" },
     { key: "analisis", label: "Análisis y Evidencia" },
     { key: "atributos", label: "Atributos Complementarios" },
+    { key: "riesgo", label: "Riesgo y Mitigación" },
   ];
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 12px" }}>
@@ -224,6 +254,15 @@ export function FincaEudrEditor({
   // sustainability keys.
   const [evidence, setEvidence] = useState<string[]>(values.eudr_evidence_types ?? []);
   const [sustain, setSustain] = useState<string[]>(values.eudr_sustainability_tags ?? []);
+  // Risk questionnaire (BCP-evaluated values). Custody stages / product factors
+  // are controlled so the derived pills recompute live; the yes/no factors gate
+  // the risk determination shown read-only.
+  const [custodyStages, setCustodyStages] = useState<string[]>(values.eudr_custody_stages ?? []);
+  const [custodyMethod, setCustodyMethod] = useState(values.eudr_custody_method ?? "");
+  const [productFactors, setProductFactors] = useState<string[]>(values.eudr_product_risk_factors ?? []);
+  const [evalIllegality, setEvalIllegality] = useState(triSelectValue(values.eudr_illegality_indicators));
+  const [evalDocs, setEvalDocs] = useState(triSelectValue(values.eudr_docs_available));
+  const [evalMitEffective, setEvalMitEffective] = useState(triSelectValue(values.eudr_mitigation_effective));
   const evidenceFiles = values.eudr_evidence_files ?? {};
   const sustainabilityFiles = values.eudr_sustainability_files ?? {};
   function toggle(list: string[], set: (v: string[]) => void, key: string, on: boolean) {
@@ -243,7 +282,7 @@ export function FincaEudrEditor({
   const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
   const { status: autosaveStatus } = useAutosave({
     enabled: editing,
-    snapshot: { rev, evalPlanting, evalSystem, evalDefor, evalLegal, evalTenure, evidence, sustain },
+    snapshot: { rev, evalPlanting, evalSystem, evalDefor, evalLegal, evalTenure, evidence, sustain, custodyStages, custodyMethod, productFactors, evalIllegality, evalDocs, evalMitEffective },
     save: async () => {
       const form = formRef.current;
       if (!form || saving) return false;
@@ -405,6 +444,31 @@ export function FincaEudrEditor({
             <div>Sostenibilidad y enfoque social: {labelsFor(values.eudr_sustainability_tags, SUSTAINABILITY_TAGS)}</div>
             {values.eudr_sustainability_notes && <div>Notas de sostenibilidad: {values.eudr_sustainability_notes}</div>}
             <div>Infraestructura local: {labelsFor(values.eudr_local_infra, INFRA_DICT)}</div>
+          </div>
+        )}
+
+        {subTab === "riesgo" && (
+          <div className={styles.meta} style={{ lineHeight: 1.9 }}>
+            <div>Método de separación: {values.eudr_custody_method === "ctc_standard" ? "CTC Parchment Storage Standard" : values.eudr_custody_method === "custom" ? "Método propio" : "sin definir"}</div>
+            {values.eudr_custody_method === "custom" && values.eudr_custody_notes && <div>Notas de custodia: {values.eudr_custody_notes}</div>}
+            <div>Cadena de custodia: {labelsFor(values.eudr_custody_stages, CUSTODY_STAGES)} · complejidad {deriveChainComplexity(values.eudr_custody_stages) || "—"}</div>
+            <div>Riesgo del producto: {deriveProductRisk(values.eudr_product_risk_factors)} ({values.eudr_product_risk_factors?.length ?? 0} factor(es))</div>
+            <div>Esquemas de certificación: {values.eudr_cert_scheme || "ninguno declarado"}</div>
+            <div>¿Indicios de ilegalidad/deforestación?: {yesNoLabel(values.eudr_illegality_indicators)}</div>
+            <div>¿Documentos disponibles y verificables?: {yesNoLabel(values.eudr_docs_available)}</div>
+            <div>
+              Nivel de riesgo determinado:{" "}
+              <b style={{ color: deriveFincaRiskLevel({ eudrIllegalityIndicators: values.eudr_illegality_indicators, eudrDocsAvailable: values.eudr_docs_available, eudrMitigationEffective: values.eudr_mitigation_effective }) === "no_insignificante" ? "var(--red)" : "inherit" }}>
+                {deriveFincaRiskLevel({ eudrIllegalityIndicators: values.eudr_illegality_indicators, eudrDocsAvailable: values.eudr_docs_available, eudrMitigationEffective: values.eudr_mitigation_effective }) === "insignificante"
+                  ? "Insignificante"
+                  : deriveFincaRiskLevel({ eudrIllegalityIndicators: values.eudr_illegality_indicators, eudrDocsAvailable: values.eudr_docs_available, eudrMitigationEffective: values.eudr_mitigation_effective }) === "no_insignificante"
+                  ? "No insignificante"
+                  : "Pendiente"}
+              </b>
+            </div>
+            {values.eudr_mitigation_actions && <div>Acciones de mitigación: {values.eudr_mitigation_actions}</div>}
+            <div>¿Mitigación efectiva?: {yesNoLabel(values.eudr_mitigation_effective)}</div>
+            {values.eudr_mitigation_responsible && <div>Responsable de la determinación: {values.eudr_mitigation_responsible}</div>}
           </div>
         )}
       </div>
@@ -625,6 +689,115 @@ export function FincaEudrEditor({
             </div>
             <textarea name="eudr_sustainability_notes" defaultValue={values.eudr_sustainability_notes ?? ""} style={{ marginTop: 8 }} />
             <p className={styles.meta} style={{ margin: "4px 0 0" }}>Puede adjuntar un archivo de respaldo (≤ 5 MB) por cada ítem marcado.</p>
+          </div>
+        </div>
+
+        <div style={{ display: subTab === "riesgo" ? "block" : "none" }}>
+          <div className={styles.field}>
+            <label>Método de separación física / documental</label>
+            <select name="eudr_custody_method" value={custodyMethod} onChange={(e) => setCustodyMethod(e.target.value)}>
+              <option value="">Seleccione…</option>
+              <option value="ctc_standard">CTC Parchment Storage Standard</option>
+              <option value="custom">Método propio</option>
+            </select>
+            {custodyMethod === "custom" && (
+              <textarea name="eudr_custody_notes" defaultValue={values.eudr_custody_notes ?? ""} placeholder="Descripción del método propio…" style={{ marginTop: 8 }} />
+            )}
+            <ProducerAnswerNote
+              show={!!producerAnswers && producerAnswers.custodyMethod !== undefined}
+              producerLabel={producerAnswers?.custodyMethod === "ctc_standard" ? "CTC Parchment Storage Standard" : producerAnswers?.custodyMethod === "custom" ? "Método propio" : "sin definir"}
+              matches={(producerAnswers?.custodyMethod ?? "") === custodyMethod}
+              onConfirm={() => setCustodyMethod(producerAnswers?.custodyMethod ?? "")}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label>Cadena de custodia · complejidad {deriveChainComplexity(custodyStages) || "—"}</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {CUSTODY_STAGES.map(([key, label]) => (
+                <label key={key} style={{ display: "inline-flex", gap: 6, fontSize: 13, fontWeight: 400 }}>
+                  <input type="checkbox" name="eudr_custody_stages" value={key} checked={custodyStages.includes(key)} onChange={(e) => toggle(custodyStages, setCustodyStages, key, e.target.checked)} /> {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Riesgo propio del producto · {deriveProductRisk(productFactors)}</label>
+            <div style={{ display: "grid", gap: 8 }}>
+              {PRODUCT_RISK_QUESTIONS.map(([key, label]) => (
+                <label key={key} style={{ display: "inline-flex", gap: 8, fontSize: 13, fontWeight: 400, alignItems: "flex-start" }}>
+                  <input type="checkbox" name="eudr_product_risk_factors" value={key} checked={productFactors.includes(key)} onChange={(e) => toggle(productFactors, setProductFactors, key, e.target.checked)} style={{ marginTop: 2 }} /> <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Esquemas de certificación / verificación</label>
+            <input name="eudr_cert_scheme" defaultValue={values.eudr_cert_scheme ?? ""} placeholder="Rainforest Alliance, orgánico, Fairtrade…" />
+          </div>
+
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label>¿Indicios de ilegalidad, deforestación o degradación?</label>
+              <select name="eudr_illegality_indicators" value={evalIllegality} onChange={(e) => setEvalIllegality(e.target.value)}>
+                <option value="">Sin definir</option>
+                <option value="si">Sí, hay indicios</option>
+                <option value="no">No hay indicios</option>
+              </select>
+              <ProducerAnswerNote
+                show={!!producerAnswers && producerAnswers.illegalityIndicators !== undefined}
+                producerLabel={yesNoLabel(producerAnswers?.illegalityIndicators ?? null)}
+                matches={triSelectValue(producerAnswers?.illegalityIndicators ?? null) === evalIllegality}
+                onConfirm={() => setEvalIllegality(triSelectValue(producerAnswers?.illegalityIndicators ?? null))}
+              />
+            </div>
+            <div className={styles.field}>
+              <label>¿Documentos disponibles y verificables de inmediato?</label>
+              <select name="eudr_docs_available" value={evalDocs} onChange={(e) => setEvalDocs(e.target.value)}>
+                <option value="">Sin definir</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+              <ProducerAnswerNote
+                show={!!producerAnswers && producerAnswers.docsAvailable !== undefined}
+                producerLabel={yesNoLabel(producerAnswers?.docsAvailable ?? null)}
+                matches={triSelectValue(producerAnswers?.docsAvailable ?? null) === evalDocs}
+                onConfirm={() => setEvalDocs(triSelectValue(producerAnswers?.docsAvailable ?? null))}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Nivel de riesgo determinado (se deriva de las respuestas de arriba)</label>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: deriveFincaRiskLevel({ eudrIllegalityIndicators: evalIllegality === "si" ? true : evalIllegality === "no" ? false : null, eudrDocsAvailable: evalDocs === "si" ? true : evalDocs === "no" ? false : null, eudrMitigationEffective: evalMitEffective === "si" ? true : evalMitEffective === "no" ? false : null }) === "no_insignificante" ? "var(--red)" : "var(--ink)" }}>
+              {(() => {
+                const r = deriveFincaRiskLevel({ eudrIllegalityIndicators: evalIllegality === "si" ? true : evalIllegality === "no" ? false : null, eudrDocsAvailable: evalDocs === "si" ? true : evalDocs === "no" ? false : null, eudrMitigationEffective: evalMitEffective === "si" ? true : evalMitEffective === "no" ? false : null });
+                return r === "insignificante" ? "Insignificante" : r === "no_insignificante" ? "No insignificante — requiere mitigación efectiva" : "Pendiente — responda indicios y documentos";
+              })()}
+            </p>
+          </div>
+
+          <div style={{ borderTop: "1px dashed var(--line)", paddingTop: 12, marginTop: 8 }}>
+            <div className={styles.field}>
+              <label>Acciones de mitigación (aportadas por el productor / registradas por CTC)</label>
+              <textarea name="eudr_mitigation_actions" defaultValue={values.eudr_mitigation_actions ?? ""} placeholder="Geolocalización adicional, auditoría independiente, verificación en campo…" />
+            </div>
+            <div className={styles.formGrid}>
+              <div className={styles.field}>
+                <label>¿La mitigación reduce el riesgo a insignificante?</label>
+                <select name="eudr_mitigation_effective" value={evalMitEffective} onChange={(e) => setEvalMitEffective(e.target.value)}>
+                  <option value="">Sin definir</option>
+                  <option value="si">Sí, efectiva</option>
+                  <option value="no">No suficiente</option>
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label>Responsable de la determinación</label>
+                <input name="eudr_mitigation_responsible" defaultValue={(values.eudr_mitigation_responsible ?? "").split(" · ")[0]} placeholder="Nombre de quien evaluó" />
+              </div>
+            </div>
           </div>
         </div>
 

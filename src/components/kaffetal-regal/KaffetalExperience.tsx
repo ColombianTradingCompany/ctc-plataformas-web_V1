@@ -79,6 +79,17 @@ type FincaRow = {
   eudr_polygon_geojson: { lat: number; lng: number }[] | null;
   eudr_local_infra: string[] | null;
   eudr_producer_answers: Finca["eudrProducerAnswers"] | null;
+  eudr_support_doc_type: string | null;
+  eudr_custody_stages: string[] | null;
+  eudr_custody_method: string | null;
+  eudr_custody_notes: string | null;
+  eudr_product_risk_factors: string[] | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_cert_scheme: string | null;
+  eudr_mitigation_actions: string | null;
+  eudr_mitigation_responsible: string | null;
+  eudr_mitigation_effective: boolean | null;
 };
 
 type LotRow = {
@@ -153,6 +164,17 @@ function dbFincaToFinca(
     eudrLegalDocsUrl: urls.legalDocsUrl ?? null,
     eudrSustainabilityTags: row.eudr_sustainability_tags || [],
     eudrSustainabilityNotes: row.eudr_sustainability_notes || "",
+    eudrSupportDocType: row.eudr_support_doc_type || "",
+    eudrCustodyStages: row.eudr_custody_stages || [],
+    eudrCustodyMethod: (row.eudr_custody_method as Finca["eudrCustodyMethod"]) || "",
+    eudrCustodyNotes: row.eudr_custody_notes || "",
+    eudrProductRiskFactors: row.eudr_product_risk_factors || [],
+    eudrIllegalityIndicators: row.eudr_illegality_indicators,
+    eudrDocsAvailable: row.eudr_docs_available,
+    eudrCertScheme: row.eudr_cert_scheme || "",
+    eudrMitigationActions: row.eudr_mitigation_actions || "",
+    eudrMitigationResponsible: row.eudr_mitigation_responsible || "",
+    eudrMitigationEffective: row.eudr_mitigation_effective,
     requiresEudrPolygon: row.requires_eudr_polygon ?? false,
   };
 }
@@ -654,6 +676,17 @@ function Experience() {
       lat: f.lat,
       lng: f.lng,
       polygon: f.eudrPolygon,
+      supportDocType: f.eudrSupportDocType,
+      custodyStages: f.eudrCustodyStages,
+      custodyMethod: f.eudrCustodyMethod,
+      custodyNotes: f.eudrCustodyNotes,
+      productRiskFactors: f.eudrProductRiskFactors,
+      illegalityIndicators: f.eudrIllegalityIndicators,
+      docsAvailable: f.eudrDocsAvailable,
+      certScheme: f.eudrCertScheme,
+      mitigationActions: f.eudrMitigationActions,
+      mitigationResponsible: f.eudrMitigationResponsible,
+      mitigationEffective: f.eudrMitigationEffective,
     };
     // Previous producer answer (fallback to CTC columns for legacy fincas).
     const prev: EudrProducerAnswers | null = editing
@@ -666,6 +699,17 @@ function Experience() {
           lat: editing.lat,
           lng: editing.lng,
           polygon: editing.eudrPolygon,
+          supportDocType: editing.eudrSupportDocType,
+          custodyStages: editing.eudrCustodyStages,
+          custodyMethod: editing.eudrCustodyMethod,
+          custodyNotes: editing.eudrCustodyNotes,
+          productRiskFactors: editing.eudrProductRiskFactors,
+          illegalityIndicators: editing.eudrIllegalityIndicators,
+          docsAvailable: editing.eudrDocsAvailable,
+          certScheme: editing.eudrCertScheme,
+          mitigationActions: editing.eudrMitigationActions,
+          mitigationResponsible: editing.eudrMitigationResponsible,
+          mitigationEffective: editing.eudrMitigationEffective,
         }
       : null;
     const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
@@ -683,6 +727,17 @@ function Experience() {
       lat: !prev || !same(f.lat, prev.lat),
       lng: !prev || !same(f.lng, prev.lng),
       polygon: !prev || !same(f.eudrPolygon, prev.polygon),
+      supportDocType: !prev || !same(f.eudrSupportDocType, prev.supportDocType),
+      custodyStages: !prev || !same(f.eudrCustodyStages, prev.custodyStages),
+      custodyMethod: !prev || !same(f.eudrCustodyMethod, prev.custodyMethod),
+      custodyNotes: !prev || !same(f.eudrCustodyNotes, prev.custodyNotes),
+      productRiskFactors: !prev || !same(f.eudrProductRiskFactors, prev.productRiskFactors),
+      illegalityIndicators: !prev || !same(f.eudrIllegalityIndicators, prev.illegalityIndicators),
+      docsAvailable: !prev || !same(f.eudrDocsAvailable, prev.docsAvailable),
+      certScheme: !prev || !same(f.eudrCertScheme, prev.certScheme),
+      mitigationActions: !prev || !same(f.eudrMitigationActions, prev.mitigationActions),
+      mitigationResponsible: !prev || !same(f.eudrMitigationResponsible, prev.mitigationResponsible),
+      mitigationEffective: !prev || !same(f.eudrMitigationEffective, prev.mitigationEffective),
       // hectares isn't part of the answers snapshot; compare against the
       // loaded row so BCP's corrections survive a producer save too.
       hectares: !editing || f.ha !== editing.ha,
@@ -717,6 +772,17 @@ function Experience() {
     if (changed.deforestationFree) payload.eudr_deforestation_free = f.eudrDeforestationFree;
     if (changed.legalProduction) payload.eudr_legal_production = f.eudrLegalProduction;
     if (changed.tenure) payload.eudr_tenure = f.eudrTenure || null;
+    if (changed.supportDocType) payload.eudr_support_doc_type = f.eudrSupportDocType || null;
+    if (changed.custodyStages) payload.eudr_custody_stages = f.eudrCustodyStages;
+    if (changed.custodyMethod) payload.eudr_custody_method = f.eudrCustodyMethod || null;
+    if (changed.custodyNotes) payload.eudr_custody_notes = f.eudrCustodyNotes || null;
+    if (changed.productRiskFactors) payload.eudr_product_risk_factors = f.eudrProductRiskFactors;
+    if (changed.illegalityIndicators) payload.eudr_illegality_indicators = f.eudrIllegalityIndicators;
+    if (changed.docsAvailable) payload.eudr_docs_available = f.eudrDocsAvailable;
+    if (changed.certScheme) payload.eudr_cert_scheme = f.eudrCertScheme || null;
+    if (changed.mitigationActions) payload.eudr_mitigation_actions = f.eudrMitigationActions || null;
+    if (changed.mitigationResponsible) payload.eudr_mitigation_responsible = f.eudrMitigationResponsible || null;
+    if (changed.mitigationEffective) payload.eudr_mitigation_effective = f.eudrMitigationEffective;
 
     if (editing) {
       const { data, error } = await supabase.from("fincas").update(payload).eq("id", editing.id).select("*").single();

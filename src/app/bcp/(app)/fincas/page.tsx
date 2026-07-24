@@ -55,6 +55,18 @@ type FincaRow = {
   eudr_cert_shared: boolean | null;
   eudr_producer_answers: Record<string, unknown> | null;
   eudr_local_infra: string[] | null;
+  // Risk questionnaire (moved onto the finca 2026-07-24).
+  eudr_support_doc_type: string | null;
+  eudr_custody_stages: string[] | null;
+  eudr_custody_method: string | null;
+  eudr_custody_notes: string | null;
+  eudr_product_risk_factors: string[] | null;
+  eudr_illegality_indicators: boolean | null;
+  eudr_docs_available: boolean | null;
+  eudr_cert_scheme: string | null;
+  eudr_mitigation_actions: string | null;
+  eudr_mitigation_responsible: string | null;
+  eudr_mitigation_effective: boolean | null;
   created_at: string;
 };
 
@@ -71,6 +83,9 @@ function toEudrFields(f: FincaRow): FincaEudrFields {
     eudrLegalProduction: f.eudr_legal_production,
     eudrLegalAreas: f.eudr_legal_areas || [],
     eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
+    eudrIllegalityIndicators: f.eudr_illegality_indicators,
+    eudrDocsAvailable: f.eudr_docs_available,
+    eudrMitigationEffective: f.eudr_mitigation_effective,
   };
 }
 
@@ -82,6 +97,8 @@ function missingChecks(f: FincaEudrFields): string[] {
   if (f.eudrDeforestationFree !== true) gaps.push("declaración de no deforestación");
   if (f.eudrLegalAreas.length === 0) gaps.push("áreas de legislación verificadas");
   if (!f.eudrTenure) gaps.push("tenencia de la tierra");
+  // Risk questionnaire: the two yes/no answers gate the risk determination.
+  if (f.eudrIllegalityIndicators == null || f.eudrDocsAvailable == null) gaps.push("cuestionario de riesgo (indicios / documentos)");
   return gaps;
 }
 
@@ -149,7 +166,8 @@ export default async function BcpFincasPage() {
        requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra, created_at`
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra,
+       eudr_support_doc_type, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, created_at`
     )
     .order("created_at", { ascending: true });
 

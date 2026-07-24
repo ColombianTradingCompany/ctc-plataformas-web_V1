@@ -51,7 +51,7 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
   const { data: finca } = await service
     .from("fincas")
     .select(
-      "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, requires_eudr_polygon, eudr_polygon_geojson, status"
+      "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, requires_eudr_polygon, eudr_polygon_geojson, status"
     )
     .eq("id", fincaId)
     .single();
@@ -63,7 +63,9 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
   // Solo se aprueban fincas cuya debida diligencia EUDR está completa ("Apta").
   // Aprobar una finca incompleta producía el estado contradictorio de una finca
   // "aprobada" que sigue mostrando el distintivo EUDR "Pendiente"
-  // (fincaEudrStatus) -- exactamente el bug reportado con La Ceiba.
+  // (fincaEudrStatus) -- exactamente el bug reportado con La Ceiba. Desde
+  // 2026-07-24 el gate también exige el cuestionario de riesgo (indicios /
+  // documentos) y que el riesgo determinado sea insignificante.
   const eudrFields: FincaEudrFields = {
     name: finca.name,
     ha: finca.hectares != null ? String(finca.hectares) : "—",
@@ -76,6 +78,9 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
     eudrLegalProduction: finca.eudr_legal_production,
     eudrLegalAreas: finca.eudr_legal_areas || [],
     eudrTenure: (finca.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
+    eudrIllegalityIndicators: finca.eudr_illegality_indicators,
+    eudrDocsAvailable: finca.eudr_docs_available,
+    eudrMitigationEffective: finca.eudr_mitigation_effective,
   };
   if (fincaEudrStatus(eudrFields).code !== "apta") {
     return {
@@ -441,6 +446,16 @@ const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
   eudr_sustainability_tags: "Sostenibilidad",
   eudr_sustainability_notes: "Notas de sostenibilidad",
   eudr_google_earth_url: "URL de Google Earth",
+  eudr_custody_stages: "Cadena de custodia",
+  eudr_custody_method: "Método de separación",
+  eudr_custody_notes: "Notas de custodia",
+  eudr_product_risk_factors: "Riesgo del producto",
+  eudr_illegality_indicators: "Indicios de ilegalidad",
+  eudr_docs_available: "Documentos disponibles",
+  eudr_cert_scheme: "Esquemas de certificación",
+  eudr_mitigation_actions: "Acciones de mitigación",
+  eudr_mitigation_effective: "Mitigación efectiva",
+  eudr_mitigation_responsible: "Responsable de mitigación",
 };
 
 function valuesDiffer(a: unknown, b: unknown): boolean {
@@ -457,7 +472,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { data: before } = await service
     .from("fincas")
     .select(
-      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files"
+      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective"
     )
     .eq("id", fincaId)
     .single();
@@ -469,6 +484,18 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   // record any newly-uploaded attachment, otherwise carry the existing one over.
   const evidenceFiles = collectKeyedAttachments(formData, "evidence", evidenceTypes, (before.eudr_evidence_files as KeyedFiles) ?? {});
   const sustainabilityFiles = collectKeyedAttachments(formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
+
+  // Cuestionario de riesgo (trasladado del lote a la finca 2026-07-24). El
+  // "Responsable" lleva el mismo sello nombre · fecha que el lote: se estampa la
+  // fecha al enviar, y se conserva la original si el nombre no cambió.
+  const fincaResponsableName = textOrNull(formData, "eudr_mitigation_responsible");
+  const fincaPrevResponsible = (before.eudr_mitigation_responsible as string | null) ?? null;
+  const fincaPrevName = fincaPrevResponsible?.split(" · ")[0] ?? null;
+  const eudr_mitigation_responsible = !fincaResponsableName
+    ? null
+    : fincaResponsableName === fincaPrevName
+      ? fincaPrevResponsible
+      : `${fincaResponsableName} · ${new Date().toLocaleDateString("es-CO")}`;
 
   const patch = {
     // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
@@ -494,6 +521,19 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     // Placeholder field for a future Google Earth Engine integration -- just
     // stored and linked for now, nothing reads it yet.
     eudr_google_earth_url: textOrNull(formData, "eudr_google_earth_url"),
+    // Cuestionario de riesgo. chain_complexity / product_risk se DERIVAN al leer
+    // (deriveChainComplexity / deriveProductRisk sobre estos campos) y no se
+    // almacenan en la finca; el nivel de riesgo se deriva de indicios+documentos.
+    eudr_custody_stages: formData.getAll("eudr_custody_stages").map(String),
+    eudr_custody_method: textOrNull(formData, "eudr_custody_method"),
+    eudr_custody_notes: textOrNull(formData, "eudr_custody_method") === "custom" ? textOrNull(formData, "eudr_custody_notes") : null,
+    eudr_product_risk_factors: formData.getAll("eudr_product_risk_factors").map(String),
+    eudr_illegality_indicators: triState(formData, "eudr_illegality_indicators"),
+    eudr_docs_available: triState(formData, "eudr_docs_available"),
+    eudr_cert_scheme: textOrNull(formData, "eudr_cert_scheme"),
+    eudr_mitigation_actions: textOrNull(formData, "eudr_mitigation_actions"),
+    eudr_mitigation_effective: triState(formData, "eudr_mitigation_effective"),
+    eudr_mitigation_responsible,
   };
 
   const { error } = await service.from("fincas").update(patch).eq("id", fincaId);

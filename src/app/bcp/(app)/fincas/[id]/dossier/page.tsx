@@ -11,7 +11,8 @@ type CommRow = { id: string; note: string; created_at: string; author_role: stri
 const DOSSIER_COLUMNS = `id, name, producer_id, status, vereda, municipio, departamento, hectares, eudr_lat, eudr_lng, eudr_polygon_geojson,
   eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
   eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-  eudr_sustainability_tags, eudr_sustainability_notes, eudr_evidence_files, eudr_sustainability_files, eudr_local_infra`;
+  eudr_sustainability_tags, eudr_sustainability_notes, eudr_evidence_files, eudr_sustainability_files, eudr_local_infra,
+  eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective`;
 
 export default async function FincaDossierPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

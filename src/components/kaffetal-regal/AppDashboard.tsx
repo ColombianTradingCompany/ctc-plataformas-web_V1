@@ -19,6 +19,7 @@ import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
 import { SideModuleFabs } from "./SideModuleFabs";
+import { RetroalimentacionPanel } from "./RetroalimentacionPanel";
 import styles from "./AppDashboard.module.css";
 
 // Copy en español de las herramientas para el productor. El INTERIOR de cada
@@ -59,25 +60,6 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     desc: "El recorrido del café CTC, de la finca al destino, paso a paso.",
   },
 };
-
-// A conversation thread = every note (CTC notes + the producer's replies)
-// sharing one hyperlinked element (Finca X / Lote Y / General). Notes arrive
-// newest-first; within a thread we show them oldest-first so it reads top to
-// bottom in time. Groups stay in most-recent-activity order.
-type FeedbackThreadEntry = { key: string; notes: FeedbackNote[] };
-function groupFeedback(feedback: FeedbackNote[]): FeedbackThreadEntry[] {
-  const order: string[] = [];
-  const byKey = new Map<string, FeedbackNote[]>();
-  for (const n of feedback) {
-    const key = n.contextLabel ?? "General";
-    if (!byKey.has(key)) {
-      byKey.set(key, []);
-      order.push(key);
-    }
-    byKey.get(key)!.push(n);
-  }
-  return order.map((key) => ({ key, notes: byKey.get(key)!.slice().reverse() }));
-}
 
 // The producer panel is a HUB: a landing of big module tiles (each with its
 // key facts) that open one module at a time, instead of one endless page.
@@ -155,6 +137,7 @@ export function AppDashboard({
   onDeleteFinca,
   onRequestFincaRevision,
   onReplyToFeedback,
+  onCreateThread,
   onAcknowledgeNote,
   onOpenInfoModal,
   onConfirmSampleShipped,
@@ -178,6 +161,11 @@ export function AppDashboard({
   onDeleteFinca: (fincaId: string) => void;
   onRequestFincaRevision: (finca: Finca) => void;
   onReplyToFeedback: (parent: FeedbackNote, text: string) => void;
+  onCreateThread: (
+    title: string,
+    link: { type: "finca" | "lote" | "contrato"; id: string } | null,
+    message: string
+  ) => Promise<boolean>;
   onAcknowledgeNote: (noteId: string, ack: boolean) => void;
   onOpenInfoModal: () => void;
   onConfirmSampleShipped: (lotId: string) => void;
@@ -185,6 +173,10 @@ export function AppDashboard({
   const { showToast } = useToast();
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  // "Nuevo hilo" (Retroalimentación y ayuda): el modal de creación se abre
+  // desde el botón junto a "← Volver al panel", pero vive dentro de
+  // RetroalimentacionPanel -- este estado solo decide si está abierto.
+  const [composeThreadOpen, setComposeThreadOpen] = useState(false);
   // "Más allá de la exportación": in-panel requests for CTC Tech / Varietales.
   // They feed the same leads pipeline as ctcexport.com's Escríbenos, but with
   // the producer's account (and finca) already linked -- so the reply lands in
@@ -231,24 +223,6 @@ export function AppDashboard({
       setServiceBusy(false);
     }
   }
-  // Reply is per conversation thread (per hyperlinked element), keyed by the
-  // thread key; and threads can be collapsed.
-  const [replyThreadKey, setReplyThreadKey] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-
-  function submitThreadReply(threadKey: string, notes: FeedbackNote[]) {
-    const text = replyText.trim();
-    if (!text) return;
-    // The reply attaches to the thread; parent_id (required by RLS) points at
-    // the thread's most recent CTC note, falling back to its most recent note.
-    const parent = [...notes].reverse().find((n) => n.authorRole === "bcp") ?? notes[notes.length - 1];
-    if (!parent) return;
-    onReplyToFeedback(parent, text);
-    setReplyThreadKey(null);
-    setReplyText("");
-  }
-
   const certified = lots.filter((l) => l.stage >= 7);
 
   // Key facts for the hub tiles: enough to know whether a module needs
@@ -357,22 +331,6 @@ export function AppDashboard({
     setRenamingId(null);
   }
 
-  // A feedback group's notes were all left from the same finca/lote card, so
-  // any note carrying a fincaId/lotId is enough to resolve where the group's
-  // heading link should go -- there's no in-app route to jump to for a
-  // finca/lot, so this reuses the same modal/view-switch handlers the cards
-  // themselves use, rather than a real <a href>.
-  function openFeedbackTarget(n: FeedbackNote) {
-    if (n.lotId) {
-      onOpenFicha(n.lotId);
-      return;
-    }
-    if (n.fincaId) {
-      const idx = fincas.findIndex((f) => f.id === n.fincaId);
-      if (idx >= 0) onOpenFincaModal(idx);
-    }
-  }
-
   return (
     <div>
       <div className={styles.appTop}>
@@ -415,9 +373,16 @@ export function AppDashboard({
 
         {module !== null && (
           <>
-          <button className="btn btn-sm" style={{ marginTop: 14 }} onClick={() => onSelectModule(null)}>
-            ← Volver al panel
-          </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 14, flexWrap: "wrap" }}>
+            <button className="btn btn-sm" onClick={() => onSelectModule(null)}>
+              ← Volver al panel
+            </button>
+            {module === "retro" && (
+              <button className="btn btn-sm btn-solid-accent" onClick={() => setComposeThreadOpen(true)}>
+                Nuevo hilo
+              </button>
+            )}
+          </div>
           <div className={styles.ag} style={{ marginTop: 14 }}>
           {module === "info" && (
           <div className={styles.acard}>
@@ -503,89 +468,19 @@ export function AppDashboard({
           )}
 
           {module === "retro" && (
-          <div className={`${styles.acard} ${styles.tall}`}>
-            <span className={styles.k}>Retroalimentación y ayuda · notas de CTC</span>
-            {feedback.length === 0 ? (
-              <div className={styles.alist} style={{ marginTop: 8 }}>Sin notas todavía. Aquí verá lo que CTC le comunique sobre sus fincas y lotes.</div>
-            ) : (
-              groupFeedback(feedback).map(({ key, notes }) => {
-                const target = notes.find((n) => n.lotId || n.fincaId);
-                const isCollapsed = collapsed[key];
-                return (
-                  <div key={key} className={styles.thread}>
-                    <div className={styles.threadHead}>
-                      <button
-                        type="button"
-                        className={styles.threadToggle}
-                        aria-expanded={!isCollapsed}
-                        onClick={() => setCollapsed((c) => ({ ...c, [key]: !c[key] }))}
-                      >
-                        {isCollapsed ? "▸" : "▾"}
-                      </button>
-                      {target ? (
-                        <button type="button" className={styles.feedbackLink} onClick={() => openFeedbackTarget(target)}>
-                          {key} ↗
-                        </button>
-                      ) : (
-                        <span className={styles.threadTitle}>{key}</span>
-                      )}
-                      <span className={styles.threadCount}>{notes.length}</span>
-                    </div>
-
-                    {!isCollapsed && (
-                      <>
-                        {notes.map((n) => (
-                          <div key={n.id} className={n.authorRole === "producer" ? styles.reply : styles.alist}>
-                            <b>
-                              {n.authorRole === "producer" ? "Usted" : "CTC"} · {new Date(n.createdAt).toLocaleDateString("es-CO")}:
-                            </b>{" "}
-                            {n.note}
-                            {n.authorRole === "bcp" && (
-                              <label className={styles.ackRow}>
-                                <input
-                                  type="checkbox"
-                                  checked={!!n.acknowledgedAt}
-                                  onChange={(e) => onAcknowledgeNote(n.id, e.target.checked)}
-                                />{" "}
-                                Entendido
-                              </label>
-                            )}
-                          </div>
-                        ))}
-                        {replyThreadKey === key ? (
-                          <div className={styles.replyBox}>
-                            <textarea
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              placeholder="Escriba su respuesta a CTC…"
-                              rows={2}
-                              autoFocus
-                            />
-                            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                              <button className="btn btn-sm btn-solid" onClick={() => submitThreadReply(key, notes)} disabled={!replyText.trim()}>
-                                Enviar
-                              </button>
-                              <button className="btn btn-sm" onClick={() => { setReplyThreadKey(null); setReplyText(""); }}>
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className={styles.replyLink}
-                            onClick={() => { setReplyThreadKey(key); setReplyText(""); }}
-                          >
-                            Responder a este hilo
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
+            <RetroalimentacionPanel
+              feedback={feedback}
+              fincas={fincas}
+              lots={lots}
+              contracts={contracts}
+              composeOpen={composeThreadOpen}
+              onCloseCompose={() => setComposeThreadOpen(false)}
+              onReplyToFeedback={onReplyToFeedback}
+              onAcknowledgeNote={onAcknowledgeNote}
+              onCreateThread={onCreateThread}
+              onOpenFicha={onOpenFicha}
+              onOpenFincaModal={onOpenFincaModal}
+            />
           )}
 
           {module === "fincas" && (

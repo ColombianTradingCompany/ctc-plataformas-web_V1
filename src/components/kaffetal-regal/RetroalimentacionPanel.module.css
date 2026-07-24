@@ -1,0 +1,87 @@
+/* Two-pane "Retroalimentación y ayuda" (2026-07-24): thread list (left,
+   collapsible/slides horizontally) + conversation (right). Lives inside the
+   shared .acard.full wrapper from AppDashboard.module.css -- this file only
+   styles what's INSIDE that card. */
+.wrap{display:flex;min-height:420px;max-height:70vh;position:relative}
+
+.list{
+  flex:0 0 280px;width:280px;border-right:1px solid var(--line);background:var(--paper);
+  display:flex;flex-direction:column;min-width:0;
+  transition:flex-basis .2s ease, width .2s ease, margin-left .2s ease, opacity .15s ease;
+  overflow:hidden;
+}
+/* "Se desliza horizontalmente" -- en vez de display:none (que perdería el
+   ancho de golpe), se colapsa a 0 con margin negativo para que la
+   transición se vea como un panel deslizándose fuera de la vista. */
+.listClosed{flex-basis:0;width:0;margin-left:-1px;opacity:0;border-right-color:transparent}
+
+.listHead{
+  padding:14px 16px;border-bottom:1px solid var(--line);flex:0 0 auto;
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);white-space:nowrap;
+}
+.listBody{flex:1 1 auto;overflow-y:auto;padding:8px}
+
+.threadRow{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 10px;border-radius:9px;border:none;background:transparent;cursor:pointer;
+  text-align:left;white-space:nowrap;
+}
+.threadRow:hover{background:var(--card)}
+.threadRowActive{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.threadRowTitle{
+  font-family:var(--font-fraunces),serif;font-weight:700;font-size:13.5px;color:var(--primary-deep);
+  display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;min-width:0;
+}
+.jumpBtn{background:none;border:none;padding:0;color:var(--green,var(--primary));cursor:pointer;font-size:12px;flex:0 0 auto}
+.count{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);
+  background:var(--line);border-radius:999px;padding:1px 8px;flex:0 0 auto;
+}
+.countAlert{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:#fff;
+  background:var(--accent);border-radius:999px;padding:1px 8px;flex:0 0 auto;font-weight:700;
+}
+
+/* La pestaña que pliega/despliega la lista -- pegada al borde entre las dos
+   columnas, siempre visible aunque la lista esté colapsada. */
+.toggleTab{
+  flex:0 0 auto;width:18px;align-self:stretch;border:none;border-right:1px solid var(--line);
+  background:var(--card);color:var(--muted);cursor:pointer;font-size:13px;
+}
+.toggleTab:hover{background:var(--paper);color:var(--ink)}
+
+.conversation{flex:1 1 auto;display:flex;flex-direction:column;min-width:0}
+.convoHead{padding:14px 18px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.convoHead h4{margin:0;font-family:var(--font-fraunces),serif;color:var(--primary-deep);font-size:17px}
+.convoBody{flex:1 1 auto;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.convoReply{flex:0 0 auto;border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:8px;align-items:flex-end}
+.convoReply textarea{flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--card);resize:vertical}
+
+.bubbleCtc,.bubbleMine{
+  max-width:80%;padding:9px 12px;border-radius:10px;font-family:var(--font-spline-mono),monospace;font-size:12.5px;line-height:1.6;
+}
+.bubbleCtc{background:var(--paper);border:1px solid var(--line);align-self:flex-start;color:var(--muted)}
+.bubbleCtc b{color:var(--primary-deep)}
+.bubbleMine{background:var(--card);border:1px solid var(--accent-soft,#e7d9b0);align-self:flex-end;color:var(--muted)}
+.bubbleMine b{color:var(--accent)}
+.bubbleDate{font-size:10.5px;color:var(--muted);opacity:.8}
+.bubbleCtc p,.bubbleMine p{margin:4px 0 0;color:var(--ink)}
+.ackRow{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--muted);cursor:pointer}
+
+.empty{padding:24px 18px;color:var(--muted);font-size:13px;font-family:var(--font-spline-mono),monospace}
+
+@media(max-width:640px){
+  .wrap{flex-direction:column;max-height:none}
+  .list{flex-basis:auto;width:100%;border-right:none;border-bottom:1px solid var(--line);max-height:220px}
+  .listClosed{flex-basis:0;width:100%;max-height:0;margin-left:0;border-bottom-color:transparent}
+  .toggleTab{width:100%;height:18px;border-right:none;border-bottom:1px solid var(--line)}
+}
+
+/* Modal "Nuevo hilo" */
+.modalScrim{position:fixed;inset:0;background:rgba(20,20,20,.45);display:flex;align-items:center;justify-content:center;z-index:80;padding:20px}
+.modal{background:var(--card);border-radius:var(--radius);padding:24px;max-width:440px;width:100%;display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow-y:auto}
+.modal h3{margin:0 0 4px;font-family:var(--font-fraunces),serif;color:var(--primary-deep)}
+.modal label{font-size:12px;font-weight:600;margin-top:6px}
+.modal input,.modal select,.modal textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;background:var(--card);font-family:inherit}
+.modalActions{display:flex;gap:8px;margin-top:10px}

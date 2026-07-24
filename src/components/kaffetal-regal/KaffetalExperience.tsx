@@ -928,6 +928,61 @@ function Experience() {
     showToast("Respuesta enviada a CTC ✓");
   }
 
+  // "Nuevo hilo" (2026-07-24): el productor arranca una conversación con un
+  // título propio, opcionalmente vinculada a una finca/lote/contrato. Un
+  // "Contrato" no tiene columna propia en producer_comm_log -- se ancla al
+  // lot_id del contrato (mismo mecanismo que "Lote", origen distinto en el
+  // selector). Sin ningún vínculo, la fila cae en la rama nueva de la política
+  // RLS (parent_id/finca_id/lot_id todos null) añadida junto con esta función.
+  async function createThread(
+    title: string,
+    link: { type: "finca" | "lote" | "contrato"; id: string } | null,
+    message: string
+  ): Promise<boolean> {
+    if (!userId) return false;
+    const label = title.trim();
+    const body = message.trim();
+    if (!label || !body) return false;
+
+    const fincaId = link?.type === "finca" ? link.id : null;
+    const lotId =
+      link?.type === "lote" ? link.id : link?.type === "contrato" ? contracts.find((c) => c.id === link.id)?.lotId ?? null : null;
+
+    const { data, error } = await supabase
+      .from("producer_comm_log")
+      .insert({
+        producer_id: userId,
+        finca_id: fincaId,
+        lot_id: lotId,
+        author_role: "producer",
+        context_label: label,
+        note: body,
+        created_by: userId,
+      })
+      .select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id")
+      .single();
+    if (error || !data) {
+      showToast("No se pudo crear la conversación.");
+      return false;
+    }
+    setFeedback((prev) => [
+      {
+        id: data.id,
+        contextLabel: data.context_label,
+        fincaId: data.finca_id,
+        lotId: data.lot_id,
+        note: data.note,
+        createdAt: data.created_at,
+        authorRole: data.author_role as "bcp" | "producer",
+        parentId: data.parent_id,
+        acknowledgedAt: null,
+      },
+      ...prev,
+    ]);
+    showToast("Conversación creada ✓");
+    return true;
+  }
+
   // "Entendido" acknowledgment of a CTC note. Toggling on inserts a
   // producer_comm_ack row, off deletes it (both RLS-scoped to own notes).
   async function acknowledgeNote(noteId: string, ack: boolean) {
@@ -1283,6 +1338,7 @@ function Experience() {
           onDeleteFinca={deleteFinca}
           onRequestFincaRevision={requestFincaRevision}
           onReplyToFeedback={replyToFeedback}
+          onCreateThread={createThread}
           onAcknowledgeNote={acknowledgeNote}
           onOpenInfoModal={() => setInfoModalOpen(true)}
         />

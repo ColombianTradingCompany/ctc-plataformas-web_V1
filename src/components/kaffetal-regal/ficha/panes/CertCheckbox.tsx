@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import { checkFileSizeMb } from "@/lib/fileSize";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import type { FichaFormData } from "../fichaData";
 import styles from "../../FichaView.module.css";
 
@@ -26,7 +27,7 @@ export function CertCheckbox({
   checked: boolean;
   onToggle: (checked: boolean) => void;
   attachment?: FichaFormData["cert_attachments"][string];
-  onUpload: (certKey: string, file: File) => void;
+  onUpload: (certKey: string, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   /** Sección ya enviada: el fieldset padre deshabilita este input, así que en vez
    *  de mostrarlo en gris (parecía el sitio natural para adjuntar, y no lo era)
    *  se oculta y se apunta a la caja de soportes del pie, que sí funciona. */
@@ -34,6 +35,7 @@ export function CertCheckbox({
 }) {
   const { showToast } = useToast();
   const [infoOpen, setInfoOpen] = useState(false);
+  const up = useUpload();
 
   function handleFile(file: File | undefined) {
     if (!file) return;
@@ -42,7 +44,7 @@ export function CertCheckbox({
       showToast(`El archivo pesa ${mb.toFixed(1)} MB — el máximo para soporte de certificados es 5 MB.`);
       return;
     }
-    onUpload(certKey, file);
+    void up.run(() => onUpload(certKey, file, up.progress));
   }
 
   return (
@@ -69,7 +71,10 @@ export function CertCheckbox({
         <>
           {!attachment && <span className={styles.pendChip}>Pendiente de soporte</span>}
           {!locked && (
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFile(e.target.files?.[0])} style={{ fontSize: 12 }} />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFile(e.target.files?.[0])} style={{ fontSize: 12 }} />
+              <UploadProgressRing state={up.state} size={26} label={false} />
+            </span>
           )}
           {locked && !attachment && (
             <p className={styles.fexample} style={{ marginTop: 0 }}>Adjunte el soporte en la caja al pie de la Ficha.</p>

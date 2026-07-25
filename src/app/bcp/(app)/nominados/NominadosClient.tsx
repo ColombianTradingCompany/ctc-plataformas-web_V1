@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { putSignedUrlWithProgress } from "@/lib/kaffetalMedia";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import {
   addSondeoEvaluation,
   applyCodeOnBehalf,
@@ -297,17 +298,19 @@ export function PlannedBatchControls({
   const [labContact, setLabContact] = useState(batch.labContact);
   const [proof, setProof] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const proofUp = useUpload();
 
   function send() {
     run(async () => {
       if (!proof) return { ok: false as const, error: "Adjunte la prueba de confirmación de recibo (PDF del correo o confirmación escrita)." };
       setUploading(true);
+      proofUp.start();
       try {
         const prep = await createBatchProofUploadUrl(batch.id, proof.name);
-        if (!prep.ok) return prep;
-        const supabase = createClient();
-        const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, proof);
-        if (upErr) return { ok: false as const, error: "La subida de la prueba falló. Intente de nuevo." };
+        if (!prep.ok) { proofUp.fail(); return prep; }
+        const put = await putSignedUrlWithProgress(prep.path, prep.token, proof, proofUp.progress);
+        if (!put.ok) { proofUp.fail(); return { ok: false as const, error: "La subida de la prueba falló. Intente de nuevo." }; }
+        proofUp.done();
         return markBatchSent(batch.id, prep.path, proof.name);
       } finally {
         setUploading(false);
@@ -346,6 +349,7 @@ export function PlannedBatchControls({
         <button className="btn btn-sm btn-solid" disabled={pending || uploading || !proof} onClick={send}>
           {uploading || pending ? "Enviando…" : "Bache Enviado →"}
         </button>
+        <UploadProgressRing state={proofUp.state} size={26} />
       </div>
       <ErrorLine error={error} />
     </div>
@@ -392,6 +396,7 @@ export function SondeoRegistroControls({
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const resultUp = useUpload();
 
   function saveEvaluation() {
     run(async () => {
@@ -409,12 +414,13 @@ export function SondeoRegistroControls({
       let resultFile: { path: string; filename: string } | undefined;
       if (file) {
         setUploading(true);
+        resultUp.start();
         try {
           const prep = await createSondeoLotResultUploadUrl(lotId, file.name);
-          if (!prep.ok) return prep;
-          const supabase = createClient();
-          const { error: upErr } = await supabase.storage.from("kaffetal-media").uploadToSignedUrl(prep.path, prep.token, file);
-          if (upErr) return { ok: false as const, error: "La subida del archivo falló." };
+          if (!prep.ok) { resultUp.fail(); return prep; }
+          const put = await putSignedUrlWithProgress(prep.path, prep.token, file, resultUp.progress);
+          if (!put.ok) { resultUp.fail(); return { ok: false as const, error: "La subida del archivo falló." }; }
+          resultUp.done();
           resultFile = { path: prep.path, filename: file.name };
         } finally {
           setUploading(false);
@@ -478,7 +484,10 @@ export function SondeoRegistroControls({
 
             <div className={styles.field} style={{ marginTop: 12 }}>
               <label>Archivo del laboratorio {resultFilename && <span className={styles.meta}>(actual: {resultFilename})</span>}</label>
-              <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={pending || uploading} />
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={pending || uploading} />
+                <UploadProgressRing state={resultUp.state} size={26} />
+              </div>
             </div>
             <div className={styles.field}>
               <label>Resumen del resultado (el productor lo verá)</label>

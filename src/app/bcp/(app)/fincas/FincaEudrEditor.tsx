@@ -5,7 +5,8 @@ import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { earthWebUrl, buildFincaGeoJson } from "@/lib/earthKml";
 import { createClient } from "@/lib/supabase/client";
-import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
+import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
 import styles from "../shared.module.css";
 
@@ -241,6 +242,9 @@ export function FincaEudrEditor({
   const [subTab, setSubTab] = useState<SubTab>("declaracion");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Aggregate ring for the (possibly several) evidence/sustainability files
+  // uploaded on submit.
+  const filesUp = useUpload();
   // The 5 producer declarations are controlled so CTC can either keep the
   // producer's answer (Confirmar) or type a different value (override). What is
   // stored in eudr_* is CTC's evaluated value -- that's what the certificate
@@ -329,12 +333,27 @@ export function FincaEudrEditor({
           data: { user },
         } = await supabase.auth.getUser();
         if (!user) throw new Error("Sesión BCP expirada; vuelva a iniciar sesión.");
-        for (const s of staged) {
-          const result = await uploadKaffetalMedia(supabase, producerId, `eudr-${s.group}/${s.key}`, s.file, user.id);
-          if ("error" in result) throw new Error(`No se pudo subir "${s.file.name}": ${result.error}`);
+        filesUp.start();
+        for (let i = 0; i < staged.length; i++) {
+          const s = staged[i];
+          // Aggregate progress across all staged files: completed files + the
+          // current file's fraction, over the total count.
+          const result = await uploadKaffetalMediaWithProgress(
+            supabase,
+            producerId,
+            `eudr-${s.group}/${s.key}`,
+            s.file,
+            (f) => filesUp.progress((i + f) / staged.length),
+            user.id
+          );
+          if ("error" in result) {
+            filesUp.fail();
+            throw new Error(`No se pudo subir "${s.file.name}": ${result.error}`);
+          }
           fd.set(`${s.group}_asset_${s.key}`, result.assetId);
           fd.set(`${s.group}_name_${s.key}`, s.file.name);
         }
+        filesUp.done();
       }
       // Never ship File payloads (even empty ones) through the action.
       for (const k of [...fd.keys()]) {
@@ -801,7 +820,10 @@ export function FincaEudrEditor({
           </div>
         </div>
 
-        <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar Visa EUDR"}</button>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar Visa EUDR"}</button>
+          <UploadProgressRing state={filesUp.state} />
+        </div>
       </form>
     </div>
   );

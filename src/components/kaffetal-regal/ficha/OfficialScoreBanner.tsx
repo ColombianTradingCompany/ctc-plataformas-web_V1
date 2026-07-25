@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import type { Lot } from "../data";
 
 // The producer's own self-report is never official on its own -- this shows
@@ -20,17 +21,22 @@ export function OfficialScoreBanner({
   kind: "sca" | "factor";
   // Prellenado desde el bloque Q-Grader de B2 (nombre · laboratorio · N° cert).
   defaultRef?: string;
-  onSubmitClaim: (qGraderRef: string, file: File | null) => void;
+  onSubmitClaim: (qGraderRef: string, file: File | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [qGraderRef, setQGraderRef] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const up = useUpload();
   const official = kind === "sca" ? lot.officialScaAverage : lot.officialFactorAverage;
   const label = kind === "sca" ? "Perfil de Taza" : "Granulometría";
 
-  function submit() {
+  async function submit() {
     if (!qGraderRef.trim()) return;
-    onSubmitClaim(qGraderRef.trim(), file);
+    // Only the file (if any) reports byte progress; the ring stays hidden when
+    // there's no attachment since useUpload starts idle.
+    if (file) up.start();
+    await onSubmitClaim(qGraderRef.trim(), file, up.progress);
+    if (file) up.done();
     setOpen(false);
     setQGraderRef("");
     setFile(null);
@@ -78,7 +84,10 @@ export function OfficialScoreBanner({
               placeholder="Nombre del Q-Grader / laboratorio · certificación"
               style={{ width: "100%", marginBottom: 8, padding: "8px 10px", border: "1.5px solid var(--line)", borderRadius: 8, background: "var(--paper)" }}
             />
-            <input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+              <UploadProgressRing state={up.state} size={26} />
+            </div>
             <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
               <button type="button" className="btn btn-sm btn-solid" onClick={submit} disabled={!qGraderRef.trim()}>
                 Enviar solicitud

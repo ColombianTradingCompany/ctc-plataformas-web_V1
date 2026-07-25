@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { createClient } from "@/lib/supabase/client";
-import { uploadKaffetalMedia, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
+import { uploadKaffetalMediaWithProgress, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
+
+// A 0..1 progress reporter threaded from a child input's useUpload() ring down
+// into these upload handlers, so the byte-level % shows next to the input.
+type ProgressFn = (fraction: number) => void;
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
@@ -1109,36 +1113,37 @@ function Experience() {
     }
   }
 
-  async function uploadFile(subpath: string, file: File): Promise<{ assetId: string } | { error: string }> {
+  async function uploadFile(subpath: string, file: File, onProgress?: ProgressFn): Promise<{ assetId: string } | { error: string }> {
     if (!userId) return { error: "No autenticado." };
-    return uploadKaffetalMedia(supabase, userId, subpath, file);
+    return uploadKaffetalMediaWithProgress(supabase, userId, subpath, file, onProgress);
   }
 
-  async function uploadAvatar(file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, "avatar", file);
+  async function uploadAvatar(file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, "avatar", file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const { error } = await supabase
       .from("producer_profiles")
       .upsert({ profile_id: userId, avatar_asset_id: result.assetId }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo guardar la foto de perfil.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     setGi((g) => ({ ...g, avatarAssetId: result.assetId, avatarUrl: urlByAssetId.get(result.assetId) ?? null }));
     showToast("Foto de perfil actualizada ✓");
+    return true;
   }
 
-  async function uploadGalleryPhoto(index: number, file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, `gallery-${index}`, file);
+  async function uploadGalleryPhoto(index: number, file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, `gallery-${index}`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const nextIds = [...gi.galleryAssetIds];
     nextIds[index] = result.assetId;
@@ -1147,7 +1152,7 @@ function Experience() {
       .upsert({ profile_id: userId, gallery_asset_ids: nextIds }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo guardar la foto.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     setGi((g) => {
@@ -1158,6 +1163,7 @@ function Experience() {
       return { ...g, galleryAssetIds: ids, galleryUrls: urls };
     });
     showToast("Foto agregada ✓");
+    return true;
   }
 
   async function removeGalleryPhoto(index: number) {
@@ -1177,67 +1183,70 @@ function Experience() {
     }));
   }
 
-  async function uploadProducerVideo(file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, "producer-video", file);
+  async function uploadProducerVideo(file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, "producer-video", file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const { error } = await supabase
       .from("producer_profiles")
       .upsert({ profile_id: userId, video_asset_id: result.assetId }, { onConflict: "profile_id" });
     if (error) {
       showToast("No se pudo guardar el video.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     setGi((g) => ({ ...g, producerVideoAssetId: result.assetId, producerVideoUrl: urlByAssetId.get(result.assetId) ?? null }));
     showToast("Video guardado ✓");
+    return true;
   }
 
-  async function uploadFincaPhoto(fincaId: string, file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/profile-photo`, file);
+  async function uploadFincaPhoto(fincaId: string, file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, `fincas/${fincaId}/profile-photo`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const { error } = await supabase.from("fincas").update({ profile_photo_asset_id: result.assetId }).eq("id", fincaId);
     if (error) {
       showToast("No se pudo guardar la foto de la finca.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     const profilePhotoUrl = urlByAssetId.get(result.assetId) ?? null;
     setFincas((prev) => prev.map((f) => (f.id === fincaId ? { ...f, profilePhotoAssetId: result.assetId, profilePhotoUrl } : f)));
     showToast("Foto de la finca guardada ✓");
+    return true;
   }
 
-  async function uploadFincaVideo(fincaId: string, file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/video`, file);
+  async function uploadFincaVideo(fincaId: string, file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, `fincas/${fincaId}/video`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const { error } = await supabase.from("fincas").update({ video_asset_id: result.assetId }).eq("id", fincaId);
     if (error) {
       showToast("No se pudo guardar el video de la finca.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     const videoUrl = urlByAssetId.get(result.assetId) ?? null;
     setFincas((prev) => prev.map((f) => (f.id === fincaId ? { ...f, videoAssetId: result.assetId, videoUrl } : f)));
     showToast("Video de la finca guardado ✓");
+    return true;
   }
 
-  async function uploadFincaLegalDoc(fincaId: string, file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, `fincas/${fincaId}/legal-docs`, file);
+  async function uploadFincaLegalDoc(fincaId: string, file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, `fincas/${fincaId}/legal-docs`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const { error } = await supabase
       .from("fincas")
@@ -1245,7 +1254,7 @@ function Experience() {
       .eq("id", fincaId);
     if (error) {
       showToast("No se pudo guardar el documento de respaldo.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     const docUrl = urlByAssetId.get(result.assetId) ?? null;
@@ -1255,24 +1264,26 @@ function Experience() {
       )
     );
     showToast("Documento de respaldo guardado ✓");
+    return true;
   }
 
-  async function uploadLotVideo(lotId: string, file: File) {
-    if (!userId) return;
-    const result = await uploadKaffetalMedia(supabase, userId, `lots/${lotId}/video`, file);
+  async function uploadLotVideo(lotId: string, file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, `lots/${lotId}/video`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const { error } = await supabase.from("lots").update({ video_asset_id: result.assetId }).eq("id", lotId);
     if (error) {
       showToast("No se pudo guardar el video del café.");
-      return;
+      return false;
     }
     const urlByAssetId = await signedKaffetalMediaUrls(supabase, [result.assetId]);
     const videoUrl = urlByAssetId.get(result.assetId) ?? null;
     setLots((prev) => prev.map((l) => (l.id === lotId ? { ...l, videoAssetId: result.assetId, videoUrl } : l)));
     showToast("Video del café guardado ✓");
+    return true;
   }
 
   // Officializing the producer's own self-report: a pending claim with a real
@@ -1280,11 +1291,11 @@ function Experience() {
   // evaluationActions.ts's reviewEvaluationClaim). Snapshots the CURRENT
   // self-reported scores so what BCP reviews matches what the producer is
   // claiming at submission time.
-  async function submitOfficializationClaim(lotId: string, qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null) {
+  async function submitOfficializationClaim(lotId: string, qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: ProgressFn) {
     if (!userId) return;
     let referenceAssetId: string | null = null;
     if (file) {
-      const result = await uploadKaffetalMedia(supabase, userId, `lots/${lotId}/official-cupping`, file);
+      const result = await uploadKaffetalMediaWithProgress(supabase, userId, `lots/${lotId}/official-cupping`, file, onProgress);
       if ("error" in result) {
         showToast(result.error);
         return;
@@ -1423,10 +1434,10 @@ function Experience() {
             setFincaModalOpen(true);
           }}
           onUploadFile={uploadFile}
-          onUploadLotVideo={(file) => uploadLotVideo(curLot.id, file)}
+          onUploadLotVideo={(file, onProgress) => uploadLotVideo(curLot.id, file, onProgress)}
           onRequestHelp={(text) => requestLotHelp(curLot, text)}
-          onSubmitOfficializationClaim={(qGraderRef, file, scaTotal, factorRendimiento) =>
-            submitOfficializationClaim(curLot.id, qGraderRef, file, scaTotal, factorRendimiento)
+          onSubmitOfficializationClaim={(qGraderRef, file, scaTotal, factorRendimiento, onProgress) =>
+            submitOfficializationClaim(curLot.id, qGraderRef, file, scaTotal, factorRendimiento, onProgress)
           }
         />
       )}
@@ -1439,17 +1450,17 @@ function Experience() {
         gi={gi}
         onSave={saveFinca}
         onRequestHelp={requestFincaHelp}
-        onUploadPhoto={(file) => {
+        onUploadPhoto={(file, onProgress) => {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
-          if (editing) uploadFincaPhoto(editing.id, file);
+          return editing ? uploadFincaPhoto(editing.id, file, onProgress) : Promise.resolve(false);
         }}
-        onUploadVideo={(file) => {
+        onUploadVideo={(file, onProgress) => {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
-          if (editing) uploadFincaVideo(editing.id, file);
+          return editing ? uploadFincaVideo(editing.id, file, onProgress) : Promise.resolve(false);
         }}
-        onUploadLegalDoc={(file) => {
+        onUploadLegalDoc={(file, onProgress) => {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
-          if (editing) uploadFincaLegalDoc(editing.id, file);
+          return editing ? uploadFincaLegalDoc(editing.id, file, onProgress) : Promise.resolve(false);
         }}
       />
       <InfoModal

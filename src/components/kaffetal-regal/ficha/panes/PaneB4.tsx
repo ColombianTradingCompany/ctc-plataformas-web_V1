@@ -2,6 +2,7 @@
 
 import { useToast } from "@/components/Toast";
 import { checkFileSizeMb } from "@/lib/fileSize";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -24,6 +25,10 @@ const TIPS = [
 
 export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: PaneProps) {
   const { showToast } = useToast();
+  const mainUp = useUpload();
+  const extra0 = useUpload();
+  const extra1 = useUpload();
+  const extraUps = [extra0, extra1];
 
   function checkSize(file: File | undefined): file is File {
     if (!file) return false;
@@ -62,14 +67,17 @@ export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: Pane
       <div className={styles.fgrid} style={{ marginTop: 16 }}>
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Video 1 · principal (obligatorio)</label>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (checkSize(file)) onUploadLotVideo(file);
-            }}
-          />
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (checkSize(file)) void mainUp.run(() => onUploadLotVideo(file, mainUp.progress));
+              }}
+            />
+            <UploadProgressRing state={mainUp.state} />
+          </div>
           {lot.videoUrl && (
             <p className={styles.fexample} style={{ marginTop: 6 }}>
               ✓ Video actual: <a href={lot.videoUrl} target="_blank" rel="noopener noreferrer">ver</a> · para reemplazarlo, suba otro archivo.
@@ -79,14 +87,17 @@ export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: Pane
         {[0, 1].map((slot) => (
           <div className={styles.ff} key={slot}>
             <label>Video {slot + 2} · opcional</label>
-            <input
-              type="file"
-              accept="video/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (checkSize(file)) onUploadExtraVideo(slot, file);
-              }}
-            />
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (checkSize(file)) void extraUps[slot].run(() => onUploadExtraVideo(slot, file, extraUps[slot].progress));
+                }}
+              />
+              <UploadProgressRing state={extraUps[slot].state} size={26} label={false} />
+            </div>
             {extras[slot] && <p className={styles.fexample} style={{ marginTop: 6 }}>✓ {extras[slot].fileName} subido</p>}
           </div>
         ))}

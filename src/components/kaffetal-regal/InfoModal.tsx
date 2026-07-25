@@ -6,6 +6,7 @@ import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { DEP_MUNI } from "./ficha/fichaData";
 import { supplierCode, type GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
@@ -30,9 +31,9 @@ export function InfoModal({
   gi: GeneralInfo;
   userId: string | null;
   onSave: (gi: GeneralInfo, opts?: { silent?: boolean }) => void;
-  onUploadAvatar: (file: File) => void;
-  onUploadVideo: (file: File) => void;
-  onUploadGalleryPhoto: (index: number, file: File) => void;
+  onUploadAvatar: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadGalleryPhoto: (index: number, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onRemoveGalleryPhoto: (index: number) => void;
 }) {
   const { showToast } = useToast();
@@ -86,6 +87,14 @@ export function InfoModal({
     }, opts);
   }
 
+  const avatarUp = useUpload();
+  const videoUp = useUpload();
+  // One ring per fixed gallery slot (0,1,2). Hooks called unconditionally.
+  const gallery0 = useUpload();
+  const gallery1 = useUpload();
+  const gallery2 = useUpload();
+  const galleryUps = [gallery0, gallery1, gallery2];
+
   function handleAvatarFile(file: File | undefined) {
     if (!file) return;
     const { ok, mb } = checkFileSizeMb(file, 5);
@@ -93,7 +102,7 @@ export function InfoModal({
       showToast(`La foto pesa ${mb.toFixed(1)} MB — el máximo es 5 MB.`);
       return;
     }
-    onUploadAvatar(file);
+    void avatarUp.run(() => onUploadAvatar(file, avatarUp.progress));
   }
 
   function handleVideoFile(file: File | undefined) {
@@ -103,7 +112,7 @@ export function InfoModal({
       showToast(`El video pesa ${mb.toFixed(0)} MB — el máximo es 100 MB.`);
       return;
     }
-    onUploadVideo(file);
+    void videoUp.run(() => onUploadVideo(file, videoUp.progress));
   }
 
   // 5 MB per photo (same cap as the avatar) -- three of these plus the avatar
@@ -117,7 +126,8 @@ export function InfoModal({
       showToast(`La foto pesa ${mb.toFixed(1)} MB — el máximo es 5 MB.`);
       return;
     }
-    onUploadGalleryPhoto(index, file);
+    const up = galleryUps[index];
+    void up.run(() => onUploadGalleryPhoto(index, file, up.progress));
   }
 
   async function exportQr() {
@@ -180,7 +190,10 @@ export function InfoModal({
         </div>
         <div className={styles.wide}>
           <label>Foto de perfil <small>(máx. 5 MB)</small></label>
-          <input type="file" accept="image/*" onChange={(e) => handleAvatarFile(e.target.files?.[0])} />
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="file" accept="image/*" onChange={(e) => handleAvatarFile(e.target.files?.[0])} />
+            <UploadProgressRing state={avatarUp.state} />
+          </div>
           {gi.avatarUrl && (
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               ✓ Foto actual: <a href={gi.avatarUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
@@ -189,7 +202,10 @@ export function InfoModal({
         </div>
         <div className={styles.wide}>
           <label>Video del productor y su equipo <small>(máx. 100 MB)</small></label>
-          <input type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
+            <UploadProgressRing state={videoUp.state} />
+          </div>
           {gi.producerVideoUrl && (
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               ✓ Video actual: <a href={gi.producerVideoUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
@@ -217,6 +233,9 @@ export function InfoModal({
                     style={{ marginTop: 4, fontSize: 11, width: 130 }}
                     onChange={(e) => handleGalleryFile(i, e.target.files?.[0])}
                   />
+                  <div style={{ marginTop: 4 }}>
+                    <UploadProgressRing state={galleryUps[i].state} size={26} />
+                  </div>
                   {url && (
                     <button type="button" className="btn btn-sm" style={{ marginTop: 4, fontSize: 11, padding: "2px 8px" }} onClick={() => onRemoveGalleryPhoto(i)}>
                       Quitar

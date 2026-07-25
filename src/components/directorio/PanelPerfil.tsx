@@ -5,7 +5,8 @@ import { SelectorEspecialidades } from "./SelectorEspecialidades";
 import { BancoCertificaciones } from "./BancoCertificaciones";
 import { DEPARTAMENTOS, MOTIVOS, PLATAFORMA_LINKS, TIPOS_DOC, extension, iniciales, municipiosDe, pesoLegible } from "./data";
 import { createClient } from "@/lib/supabase/client";
-import { uploadKaffetalMedia } from "@/lib/kaffetalMedia";
+import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { abrirPerfilPdf } from "@/lib/directorio/perfilPrint";
 import type { MiFicha } from "@/lib/directorio/types";
@@ -61,6 +62,7 @@ export function PanelPerfil({
   const [error, setError] = useState<string | null>(null);
   const [autoEstado, setAutoEstado] = useState<"idle" | "guardando" | "guardado">("idle");
   const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarUp = useUpload();
   const avatarInput = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof typeof b>(k: K, v: (typeof b)[K]) => setB({ ...b, [k]: v });
@@ -126,11 +128,14 @@ export function PanelPerfil({
     if (!checkFileSizeMb(file, MAX_AVATAR_MB).ok) return setError(`La foto supera ${MAX_AVATAR_MB} MB.`);
     setError(null);
     setAvatarBusy(true);
-    const up = await uploadKaffetalMedia(createClient(), ficha.profileId, "directorio", file);
+    avatarUp.start();
+    const up = await uploadKaffetalMediaWithProgress(createClient(), ficha.profileId, "directorio", file, avatarUp.progress);
     if ("error" in up) {
       setAvatarBusy(false);
+      avatarUp.fail();
       return setError("No se pudo subir la foto.");
     }
+    avatarUp.done();
     const r = await guardarAvatarDirectorio(up.assetId);
     setAvatarBusy(false);
     if (!r.ok) return setError(r.error);
@@ -174,7 +179,7 @@ export function PanelPerfil({
                 <div style={{ display: "flex", gap: ".6rem", alignItems: "center", marginTop: ".35rem" }}>
                   <small style={{ margin: 0 }}>JPG, PNG o WebP · máx. {MAX_AVATAR_MB} MB.</small>
                   {ficha.avatarUrl ? <button type="button" className="enlace-btn" onClick={quitarAvatar} disabled={avatarBusy}>Quitar</button> : null}
-                  {avatarBusy ? <span className="aviso-linea" style={{ margin: 0 }}>Subiendo…</span> : null}
+                  <UploadProgressRing state={avatarUp.state} size={26} />
                 </div>
               </div>
             </div>
@@ -341,6 +346,7 @@ function DocumentosCard({ ficha, onRecargar }: { ficha: MiFicha; onRecargar: () 
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const docUp = useUpload();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const parseApoya = () => {
@@ -364,8 +370,10 @@ function DocumentosCard({ ficha, onRecargar }: { ficha: MiFicha; onRecargar: () 
     } else {
       if (!file) { setBusy(false); return setError("Elige un archivo."); }
       if (!checkFileSizeMb(file, MAX_MB).ok) { setBusy(false); return setError(`El archivo supera ${MAX_MB} MB.`); }
-      const up = await uploadKaffetalMedia(createClient(), ficha.profileId, "directorio", file);
-      if ("error" in up) { setBusy(false); return setError("No se pudo subir el archivo."); }
+      docUp.start();
+      const up = await uploadKaffetalMediaWithProgress(createClient(), ficha.profileId, "directorio", file, docUp.progress);
+      if ("error" in up) { setBusy(false); docUp.fail(); return setError("No se pudo subir el archivo."); }
+      docUp.done();
       r = await agregarDocumentoArchivo(up.assetId, meta);
     }
     setBusy(false);
@@ -402,8 +410,11 @@ function DocumentosCard({ ficha, onRecargar }: { ficha: MiFicha; onRecargar: () 
       ) : (
         <div className="campo">
           <label htmlFor="d-file">Archivo · máx. {MAX_MB} MB</label>
-          <input id="d-file" ref={inputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <input id="d-file" ref={inputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+            <UploadProgressRing state={docUp.state} size={26} />
+          </div>
         </div>
       )}
 

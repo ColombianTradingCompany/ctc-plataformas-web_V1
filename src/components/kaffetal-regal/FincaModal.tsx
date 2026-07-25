@@ -3,6 +3,7 @@
 import { useReducer, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
@@ -176,9 +177,9 @@ export function FincaModal({
   gi: GeneralInfo;
   onSave: (f: Finca) => Promise<boolean>;
   onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
-  onUploadPhoto: (file: File) => void;
-  onUploadVideo: (file: File) => void;
-  onUploadLegalDoc: (file: File) => void;
+  onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
 }) {
   return (
     <Modal open={open} onClose={onClose} ariaLabel="Identidad de la finca">
@@ -214,9 +215,9 @@ function FincaModalBody({
   gi: GeneralInfo;
   onSave: (f: Finca) => Promise<boolean>;
   onRequestHelp: (f: Finca, text: string) => Promise<boolean>;
-  onUploadPhoto: (file: File) => void;
-  onUploadVideo: (file: File) => void;
-  onUploadLegalDoc: (file: File) => void;
+  onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
 }) {
   const { showToast } = useToast();
   const veredaRef = useRef<HTMLInputElement>(null);
@@ -438,6 +439,10 @@ function FincaModalBody({
     save: () => save(false),
   });
 
+  const photoUp = useUpload();
+  const videoUp = useUpload();
+  const docUp = useUpload();
+
   function handlePhotoFile(file: File | undefined) {
     if (!file) return;
     const { ok, mb } = checkFileSizeMb(file, 5);
@@ -445,7 +450,7 @@ function FincaModalBody({
       showToast(`La foto pesa ${mb.toFixed(1)} MB — el máximo es 5 MB.`);
       return;
     }
-    onUploadPhoto(file);
+    void photoUp.run(() => onUploadPhoto(file, photoUp.progress));
   }
 
   function handleVideoFile(file: File | undefined) {
@@ -455,7 +460,7 @@ function FincaModalBody({
       showToast(`El video pesa ${mb.toFixed(0)} MB — el máximo es 100 MB.`);
       return;
     }
-    onUploadVideo(file);
+    void videoUp.run(() => onUploadVideo(file, videoUp.progress));
   }
 
   function handleDocFile(file: File | undefined) {
@@ -469,7 +474,7 @@ function FincaModalBody({
       showToast(`El documento pesa ${mb.toFixed(1)} MB — el máximo es 10 MB.`);
       return;
     }
-    onUploadLegalDoc(file);
+    void docUp.run(() => onUploadLegalDoc(file, docUp.progress));
   }
 
   return (
@@ -600,12 +605,13 @@ function FincaModalBody({
             <div className={styles.wide}>
               <label>Foto de perfil de la finca <small>(máx. 5 MB)</small></label>
               {finca ? (
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   {finca.profilePhotoUrl && (
                     // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
                     <img src={finca.profilePhotoUrl} alt={finca.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--line)" }} />
                   )}
                   <input type="file" accept="image/*" onChange={(e) => handlePhotoFile(e.target.files?.[0])} />
+                  <UploadProgressRing state={photoUp.state} />
                 </div>
               ) : (
                 <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder subir su foto.</p>
@@ -615,7 +621,10 @@ function FincaModalBody({
               <label>Video de la finca <small>(máx. 100 MB)</small></label>
               {finca ? (
                 <>
-                  <input type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    <input type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
+                    <UploadProgressRing state={videoUp.state} />
+                  </div>
                   {finca.videoUrl && (
                     <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
                       ✓ Video actual: <a href={finca.videoUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
@@ -685,7 +694,10 @@ function FincaModalBody({
             </div>
             {finca ? (
               <>
-                <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />
+                  <UploadProgressRing state={docUp.state} />
+                </div>
                 {eudr.eudrLegalDocsFilename && (
                   <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
                     ✓ {eudr.eudrLegalDocsFilename}

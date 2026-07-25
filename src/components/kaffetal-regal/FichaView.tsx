@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
+import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { fincaEudrStatus, lotEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
 import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, pendingCertProofs, stripUnprovenCerts, type FichaFormData } from "./ficha/fichaData";
@@ -24,6 +25,37 @@ import { OfficialScoreBanner } from "./ficha/OfficialScoreBanner";
 import styles from "./FichaView.module.css";
 
 export type { PaneProps } from "./ficha/panes/types";
+
+// A pending-certificate proof row with its own upload progress ring.
+function CertProofRow({
+  label,
+  rowClass,
+  onUpload,
+}: {
+  label: string;
+  rowClass: string;
+  onUpload: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+}) {
+  const up = useUpload();
+  return (
+    <div className={rowClass}>
+      <span style={{ fontWeight: 600 }}>{label}</span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          style={{ fontSize: 11.5 }}
+          aria-label={`Soporte para ${label}`}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void up.run(() => onUpload(file, up.progress));
+          }}
+        />
+        <UploadProgressRing state={up.state} size={26} label={false} />
+      </span>
+    </div>
+  );
+}
 
 // Which FichaNav pane opens by default for each intake_step (0-4) -- the
 // first not-yet-submitted pane in that sub-stage, or the final preview once
@@ -136,10 +168,10 @@ export function FichaView({
   // await this so success toasts / stage advances never fire on a failed save.
   onSave: (updates: FichaSaveUpdate) => Promise<boolean>;
   onOpenNewFinca: () => void;
-  onUploadFile: (subpath: string, file: File) => Promise<{ assetId: string } | { error: string }>;
-  onUploadLotVideo: (file: File) => void;
+  onUploadFile: (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
+  onUploadLotVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onRequestHelp: (text: string) => Promise<boolean>;
-  onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null) => void;
+  onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
 }) {
   const { showToast } = useToast();
   // Lots that predate the intake_step system (or that BCP moved along) can be
@@ -466,28 +498,30 @@ export function FichaView({
     }
   }
 
-  async function uploadCert(certKey: string, file: File) {
-    const result = await onUploadFile(`lots/${lot.id}/certs/${certKey}`, file);
+  async function uploadCert(certKey: string, file: File, onProgress?: (fraction: number) => void): Promise<boolean> {
+    const result = await onUploadFile(`lots/${lot.id}/certs/${certKey}`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     onChange({ cert_attachments: { ...data.cert_attachments, [certKey]: { assetId: result.assetId, fileName: file.name } } });
+    return true;
   }
 
   // Videos 2 y 3 de B4: van al mismo bucket (misma convención de ruta) pero se
   // registran en el datasheet, no en lots.video_asset_id (que sigue siendo el
   // video principal).
-  async function uploadExtraVideo(slot: number, file: File) {
-    const result = await onUploadFile(`lots/${lot.id}/video-extra-${slot + 1}`, file);
+  async function uploadExtraVideo(slot: number, file: File, onProgress?: (fraction: number) => void): Promise<boolean> {
+    const result = await onUploadFile(`lots/${lot.id}/video-extra-${slot + 1}`, file, onProgress);
     if ("error" in result) {
       showToast(result.error);
-      return;
+      return false;
     }
     const next = [...(data.extra_video_assets ?? [])];
     next[slot] = { assetId: result.assetId, fileName: file.name };
     onChange({ extra_video_assets: next });
     showToast(`Video ${slot + 2} subido ✓ · recuerde Guardar`);
+    return true;
   }
 
   async function sendHelp() {
@@ -598,7 +632,7 @@ export function FichaView({
                 selfEstimate={sca.total}
                 kind="sca"
                 defaultRef={[data.qgrader_name, data.qgrader_lab, data.qgrader_cert].filter(Boolean).join(" · ")}
-                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+                onSubmitClaim={(qGraderRef, file, onProgress) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder, onProgress)}
               />
             )}
             {active === "b3" && (
@@ -606,7 +640,7 @@ export function FichaView({
                 lot={lot}
                 selfEstimate={factor.remainder}
                 kind="factor"
-                onSubmitClaim={(qGraderRef, file) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder)}
+                onSubmitClaim={(qGraderRef, file, onProgress) => onSubmitOfficializationClaim(qGraderRef, file, sca.total, factor.remainder, onProgress)}
               />
             )}
           </div>
@@ -639,16 +673,7 @@ export function FichaView({
                   adjunte aquí y pulse Guardar.
                 </p>
                 {pendingCertProofs(data).map((p) => (
-                  <div key={p.key} className={styles.pendProofsRow}>
-                    <span style={{ fontWeight: 600 }}>{p.label}</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      style={{ fontSize: 11.5 }}
-                      aria-label={`Soporte para ${p.label}`}
-                      onChange={(e) => e.target.files?.[0] && uploadCert(p.key, e.target.files[0])}
-                    />
-                  </div>
+                  <CertProofRow key={p.key} label={p.label} rowClass={styles.pendProofsRow} onUpload={(file, onProgress) => uploadCert(p.key, file, onProgress)} />
                 ))}
               </div>
             )}

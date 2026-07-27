@@ -143,3 +143,23 @@ Formato:
   de las FILAS, no del log** — las postulaciones anteriores a la bitácora no tienen marca
   de matched/rendered y contarlas por eventos dibujaría un embudo que niega trabajo real.
 (commit: pending)
+
+## [2026-07-27] Calendario: la línea de tiempo pasa a ser un Gantt horizontal (V2.21)
+- El owner quería un eje de fechas horizontal (estilo Notion timeline), no la lista
+  vertical por día que se entregó en V2.20. `Timeline.tsx` la reemplaza: eje con bandas
+  de mes y numeración de día, fin de semana sombreado, **regla roja del hoy** con el
+  número en píldora roja, y UNA CALLE por postulación. La barra va del día de creación
+  al día de envío (o hasta hoy si sigue viva), coloreada por estado: en curso / enviada /
+  next steps / rechazada. Zoom Semana/Mes/Trimestre = píxeles por día; se renderiza todo
+  el rango y se hace scroll, así «Today» y las flechas son simples desplazamientos, sin
+  matemática de ventanas. Al abrir, centra en hoy.
+- **Los íconos de movimiento van en una franja PROPIA bajo la barra**, no encima: medido
+  en Chrome headless, montados sobre la barra tapaban el título del puesto. Las
+  entrevistas futuras aparecen como ⭐ a la derecha de la línea roja, que es justo lo que
+  una vista de calendario debe mostrar.
+- Contraste corregido en las barras (el ámbar y el gris no pasaban AA con texto blanco).
+- Verificación: además de tsc/eslint, se levantó una página temporal (borrada antes del
+  commit) con datos sintéticos y se midió el DOM real y una captura con Chrome headless:
+  posiciones de barra exactas al día, línea de hoy en el día 21 del rango, píldora roja
+  visible, 11 íconos, colores por estado correctos.
+(commit: pending)

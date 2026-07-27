@@ -1,31 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EVENT_META, type GvgApplication, type GvgEvent, type GvgEventKind } from "@/lib/gvg/cvData";
+import type { GvgApplication, GvgEvent } from "@/lib/gvg/cvData";
 import { ApplicationCard } from "./ApplicationCard";
+import { Timeline } from "./Timeline";
 import styles from "./cv.module.css";
-
-// ── helpers ─────────────────────────────────────────────────────────────────
-
-const dayKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
-
-function dayLabel(key: string): string {
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-  if (key === today) return "Today";
-  if (key === yesterday) return "Yesterday";
-  return new Date(`${key}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-}
-
-const time = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-
-/** Monday-anchored week key, used by the activity chart. */
-function weekStart(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-  return x;
-}
 
 // ── charts (hand-rolled SVG: no chart dependency in this repo) ──────────────
 
@@ -128,48 +107,24 @@ function ScoreChart({ buckets }: { buckets: { label: string; value: number }[] }
 
 type ChartTab = "activity" | "funnel" | "scores";
 
-/**
- * Calendar in timeline form: every board movement as an icon on the day it
- * happened, newest first, with a stats dashboard docked on the right. The
- * timeline reads from the event log rather than the rows' mutable timestamps,
- * so a card that moved three times shows three marks.
- */
+/** Gantt-style timeline of the whole search, with the stats dashboard docked
+ *  on the right. */
 export function CalendarTab({ applications, events }: { applications: GvgApplication[]; events: GvgEvent[] }) {
   const [chart, setChart] = useState<ChartTab>("activity");
   const [openApp, setOpenApp] = useState<GvgApplication | null>(null);
-  const [filter, setFilter] = useState<GvgEventKind | "all">("all");
-
-  const appById = useMemo(() => new Map(applications.map((a) => [a.id, a])), [applications]);
-
-  // Upcoming interviews are the one thing that looks FORWARD; everything else
-  // in the log is history, so they get their own strip at the top.
-  const upcoming = useMemo(
-    () =>
-      applications
-        .filter((a) => a.interview_date && a.interview_date >= new Date().toISOString().slice(0, 10))
-        .sort((a, b) => (a.interview_date! < b.interview_date! ? -1 : 1)),
-    [applications]
-  );
-
-  const days = useMemo(() => {
-    const shown = filter === "all" ? events : events.filter((e) => e.kind === filter);
-    const map = new Map<string, GvgEvent[]>();
-    for (const e of shown) {
-      const k = dayKey(e.at);
-      const list = map.get(k);
-      if (list) list.push(e);
-      else map.set(k, [e]);
-    }
-    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [events, filter]);
 
   // KPIs
   const total = applications.length;
   const sent = applications.filter((a) => a.status === "sent").length;
   const nextSteps = applications.filter((a) => a.followup_status === "next_steps").length;
 
-  // Charts
   const activity = useMemo(() => {
+    const weekStart = (d: Date) => {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+      return x;
+    };
     const weeks: { label: string; value: number }[] = [];
     const now = weekStart(new Date());
     for (let i = 7; i >= 0; i--) {
@@ -217,89 +172,10 @@ export function CalendarTab({ applications, events }: { applications: GvgApplica
     }));
   }, [applications]);
 
-  const kinds = useMemo(() => [...new Set(events.map((e) => e.kind))], [events]);
-
   return (
     <div className={styles.calWrap}>
       <div className={styles.calMain}>
-        {upcoming.length > 0 && (
-          <div className={styles.upcoming}>
-            <p className={styles.accLabel}>Upcoming</p>
-            {upcoming.map((a) => (
-              <button key={a.id} type="button" className={styles.upcomingRow} onClick={() => setOpenApp(a)}>
-                <span aria-hidden>⭐</span>
-                <b>{a.interview_date}</b>
-                <span>
-                  {a.job_title ?? "(untitled)"}
-                  {a.company ? ` · ${a.company}` : ""}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className={styles.calFilters}>
-          <button
-            type="button"
-            className={`${styles.filterChip} ${filter === "all" ? styles.filterChipOn : ""}`}
-            onClick={() => setFilter("all")}
-          >
-            All
-          </button>
-          {kinds.map((k) => (
-            <button
-              key={k}
-              type="button"
-              title={EVENT_META[k].label}
-              className={`${styles.filterChip} ${filter === k ? styles.filterChipOn : ""}`}
-              onClick={() => setFilter(k)}
-            >
-              <span aria-hidden>{EVENT_META[k].icon}</span>
-            </button>
-          ))}
-        </div>
-
-        {days.length === 0 && <p className={styles.accEmpty}>No activity yet.</p>}
-
-        <div className={styles.timeline}>
-          {days.map(([key, list]) => (
-            <div key={key} className={styles.tlDay}>
-              <p className={styles.tlDayHead}>
-                {dayLabel(key)} <span className={styles.colCount}>{list.length}</span>
-              </p>
-              {list.map((e) => {
-                const meta = EVENT_META[e.kind];
-                const app = appById.get(e.application_id);
-                return (
-                  <button
-                    key={e.id}
-                    type="button"
-                    className={styles.tlRow}
-                    onClick={() => app && setOpenApp(app)}
-                    disabled={!app}
-                    title={app ? "Open this application" : "This application was deleted"}
-                  >
-                    <span className={`${styles.tlIcon} ${styles[`tone_${meta.tone}` as const]}`} aria-hidden>
-                      {meta.icon}
-                    </span>
-                    <span className={styles.tlTime}>{time(e.at)}</span>
-                    <span className={styles.tlLabel}>
-                      <b>{meta.label}</b>
-                      {app ? (
-                        <span className={styles.tlApp}>
-                          {app.job_title ?? "(untitled)"}
-                          {app.company ? ` · ${app.company}` : ""}
-                        </span>
-                      ) : (
-                        <span className={styles.tlApp}>{e.detail ?? "deleted application"}</span>
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+        <Timeline applications={applications} events={events} onOpen={setOpenApp} />
       </div>
 
       <aside className={styles.dash}>

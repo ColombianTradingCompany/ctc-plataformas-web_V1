@@ -491,77 +491,188 @@
 .chartBox { min-height: 150px; }
 .chart { width: 100%; height: auto; display: block; }
 
-.upcoming { background: #fff8e6; border: 1px solid #f2d98c; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
-.upcomingRow {
+/* ── Gantt-style timeline ────────────────────────────────────────────────────
+   A horizontal date axis with one lane per application. Everything inside the
+   canvas is absolutely positioned by day offset, so the only scale knob is
+   pixels-per-day. */
+.gantt { border: 1px solid var(--gvg-line, #c9dbf8); border-radius: 12px; background: #fff; overflow: hidden; }
+.ganttBar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  background: none;
-  border: none;
-  font: inherit;
-  font-size: 12px;
-  color: #6b5410;
-  padding: 3px 0;
-  cursor: pointer;
-  text-align: left;
-}
-.upcomingRow:hover { text-decoration: underline; }
-
-.calFilters { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
-.filterChip {
-  border: 1px solid var(--gvg-line, #c9dbf8);
-  background: #fff;
-  border-radius: 99px;
-  padding: 4px 10px;
-  font: inherit;
-  font-size: 11px;
-  color: var(--gvg-muted, #4a608c);
-  cursor: pointer;
-  line-height: 1.4;
-}
-.filterChip:hover { border-color: var(--gvg-accent, #2e6be6); }
-.filterChipOn { background: var(--gvg-accent, #2e6be6); border-color: var(--gvg-accent, #2e6be6); color: #fff; }
-
-.timeline { position: relative; }
-.tlDay { margin-bottom: 14px; }
-.tlDayHead {
-  font-family: var(--font-spline-mono), monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--gvg-deep, #0d2f6e);
-  margin: 0 0 6px;
-  padding-bottom: 4px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--gvg-line, #c9dbf8);
+  flex-wrap: wrap;
 }
-.tlRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  width: 100%;
-  background: none;
-  border: none;
-  font: inherit;
-  text-align: left;
-  padding: 5px 6px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.tlRow:hover { background: #f4f8ff; }
-.tlRow:disabled { cursor: default; opacity: 0.65; }
-.tlIcon { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
-.tone_good { background: #e6f5ec; }
-.tone_bad { background: #fdecea; }
-.tone_star { background: #fff5d6; }
-.tone_neutral { background: var(--gvg-soft, #eaf1fe); }
-.tlTime {
-  flex: none;
+.ganttTitle {
   font-family: var(--font-spline-mono), monospace;
   font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--gvg-muted, #4a608c);
-  padding-top: 5px;
-  width: 34px;
 }
-.tlLabel { flex: 1; min-width: 0; font-size: 11.5px; color: var(--gvg-ink, #0f2247); line-height: 1.35; padding-top: 3px; }
-.tlApp { display: block; font-size: 10.5px; color: var(--gvg-muted, #4a608c); overflow-wrap: anywhere; }
+.ganttCtl { display: flex; align-items: center; gap: 6px; }
+.zoomSel {
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  border-radius: 7px;
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--gvg-ink, #0f2247);
+  background: #fff;
+  cursor: pointer;
+}
+.navBtn {
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  background: #fff;
+  border-radius: 7px;
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--gvg-ink, #0f2247);
+  cursor: pointer;
+}
+.navBtn:hover { border-color: var(--gvg-accent, #2e6be6); }
+.todayBtn {
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  background: #fff;
+  border-radius: 7px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gvg-ink, #0f2247);
+  cursor: pointer;
+}
+.todayBtn:hover { border-color: var(--gvg-accent, #2e6be6); }
+
+.ganttScroll { overflow-x: auto; overflow-y: hidden; }
+.ganttCanvas { position: relative; min-width: 100%; }
+
+.ganttMonths { position: relative; height: 26px; border-bottom: 1px solid var(--gvg-line, #c9dbf8); }
+.ganttMonth {
+  position: absolute;
+  top: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gvg-ink, #0f2247);
+  border-left: 1px solid var(--gvg-line, #c9dbf8);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ganttDays { position: relative; height: 22px; border-bottom: 1px solid var(--gvg-line, #c9dbf8); }
+.ganttDay {
+  position: absolute;
+  top: 0;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  color: var(--gvg-muted, #4a608c);
+  font-family: var(--font-spline-mono), monospace;
+}
+.ganttWeekend { background: #f5f7fc; }
+.ganttDay b { font-weight: inherit; display: grid; place-items: center; min-width: 17px; height: 17px; }
+/* the red pill around today's number — a real element, not a negative-z ::before */
+.ganttDayToday { background: #d93636; color: #fff; font-weight: 700; border-radius: 999px; padding: 0 3px; }
+
+.ganttBody { position: relative; padding: 10px 0 14px; min-height: 90px; }
+.ganttGrid { position: absolute; top: 0; bottom: 0; border-left: 1px solid #eef2fa; }
+.ganttGridWeekend { background: #f7f9fd; }
+.ganttToday { position: absolute; top: 0; bottom: 0; width: 2px; background: #d93636; z-index: 3; }
+
+/* Two rows per lane on purpose: the bar carries the title, the movement icons
+   get their own strip underneath. Sitting them ON the bar hid the job title. */
+.lane { position: relative; height: 42px; margin-bottom: 2px; }
+.laneBar {
+  position: absolute;
+  top: 3px;
+  height: 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font: inherit;
+  overflow: hidden;
+  z-index: 2;
+}
+.laneBarText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar_active { background: #2e6be6; }
+.bar_sent { background: #2f8f5b; }
+/* darkened so the white label clears AA on the bar */
+.bar_next { background: #b07d18; }
+.bar_rejected { background: #6b7d9c; }
+.laneBar:hover { filter: brightness(1.08); }
+
+.laneLabel {
+  position: absolute;
+  top: 4px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gvg-ink, #0f2247);
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 0;
+  z-index: 2;
+}
+.laneLabel:hover { text-decoration: underline; }
+.laneDates {
+  position: absolute;
+  top: 6px;
+  font-size: 9.5px;
+  color: var(--gvg-muted, #4a608c);
+  white-space: nowrap;
+  padding-left: 6px;
+}
+.laneIcon {
+  position: absolute;
+  top: 24px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(13, 47, 110, 0.18);
+  font-size: 8.5px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  z-index: 4;
+}
+.laneIcon:hover { transform: scale(1.18); }
+.laneStar { background: #fff5d6; }
+
+.ganttLegend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--gvg-line, #c9dbf8);
+  font-size: 10.5px;
+  color: var(--gvg-muted, #4a608c);
+}
+.ganttLegend span { display: inline-flex; align-items: center; gap: 5px; }
+.legendDot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.legendSep { flex: 1 1 auto; }

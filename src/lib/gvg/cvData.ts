@@ -138,12 +138,40 @@ export type MatchResult = {
     languages?: GvgLanguage[];
     experiences: {
       experience_id: string; // gvg_experiences.id this entry draws from
-      role_title: string; // headline for this CV entry
-      bullets: string[]; // 3-4 tailored bullets
+      /** ROLE ONLY — no company, no dates. Those render in their own slots. */
+      role_title: string;
+      /** Right-aligned context line, e.g. "Pixida · Mercedes-Benz Consultant · Munich". */
+      org_line?: string;
+      bullets: string[]; // up to 3 tailored bullets
     }[];
   };
   cover_letter_md: string;
 };
+
+/** Live step marker written by the server during matching / rendering. */
+export type GvgProgress = { step: number; total: number; label: string };
+
+// ── AI copy hygiene ─────────────────────────────────────────────────────────
+// The owner banned the "AI dash" outright: an em dash is the most recognisable
+// tell of machine-written copy, and this text goes to employers. The prompt
+// forbids it and this is the deterministic safety net. A spaced em dash becomes
+// a comma, a tight one a plain hyphen. EN dashes are left alone — the CV uses
+// them for date ranges and numeric spans.
+export function stripAiDash(s: string): string {
+  return s.replace(/\s*—\s*/g, (m) => (/^\s|\s$/.test(m) ? ", " : "-")).replace(/,\s*,/g, ",");
+}
+
+/** Deep-map stripAiDash over every string in a plain JSON value. */
+export function sanitizeStrings<T>(value: T): T {
+  if (typeof value === "string") return stripAiDash(value) as unknown as T;
+  if (Array.isArray(value)) return value.map(sanitizeStrings) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = sanitizeStrings(v);
+    return out as T;
+  }
+  return value;
+}
 
 export type GvgApplication = {
   id: string;
@@ -161,6 +189,16 @@ export type GvgApplication = {
   sent_at: string | null;
   notes: string | null;
   error: string | null;
+  progress: GvgProgress | null;
   created_at: string;
   updated_at: string;
 };
+
+/** The step scripts the transit columns render as a checklist. */
+export const MATCH_STEPS = [
+  "Reading the posting and your repository",
+  "Researching the company and matching",
+  "Writing the CV plan and cover letter",
+] as const;
+
+export const RENDER_STEPS = ["Loading your profile", "Embedding the photo", "Rendering CV and cover letter"] as const;

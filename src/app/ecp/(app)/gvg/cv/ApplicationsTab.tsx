@@ -1,14 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { putSignedUrlWithProgress } from "@/lib/kaffetalMedia";
 import { UploadProgressRing, useUpload } from "@/components/UploadProgress";
-import type { GvgApplication, GvgEducationEntry, GvgLanguage, MatchResult } from "@/lib/gvg/cvData";
+import {
+  MATCH_STEPS,
+  RENDER_STEPS,
+  type GvgApplication,
+  type GvgEducationEntry,
+  type GvgLanguage,
+  type GvgProgress,
+  type MatchResult,
+} from "@/lib/gvg/cvData";
 import { prepareGvgUpload } from "@/lib/gvg/cvActions";
 import {
   createGvgApplication,
   deleteGvgApplication,
+  getGvgLiveStatus,
   markGvgSent,
   renderGvgResources,
   runGvgMatch,
@@ -34,6 +43,27 @@ function downloadHtml(html: string, filename: string) {
 
 const safeName = (s: string | null) => (s ?? "application").replace(/[^a-zA-Z0-9-]+/g, "_").slice(0, 60);
 
+/** Checklist for a card sitting in a transit column: done / running / waiting. */
+function StepList({ steps, progress }: { steps: readonly string[]; progress: GvgProgress | null }) {
+  const current = progress?.step ?? 1;
+  return (
+    <ul className={styles.steps}>
+      {steps.map((label, i) => {
+        const n = i + 1;
+        const state = n < current ? "done" : n === current ? "running" : "waiting";
+        return (
+          <li key={label} className={styles[`step_${state}` as const]}>
+            <span className={styles.stepMark} aria-hidden>
+              {state === "done" ? "✓" : state === "running" ? <span className={styles.spinSm} /> : "○"}
+            </span>
+            <span>{label}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /** The process kanban: New Application → Matching → Analysis Ready →
  *  Rendering → Ready to Apply. The two transit columns self-advance. */
 export function ApplicationsTab({
@@ -49,41 +79,88 @@ export function ApplicationsTab({
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [analysisOf, setAnalysisOf] = useState<GvgApplication | null>(null);
-  // ids whose match/render call is in flight in THIS browser — drives the
-  // optimistic column move before the server confirms.
-  const [inFlight, setInFlight] = useState<Set<string>>(new Set());
+  // Server-side truth for cards mid-flight. The Server Action doesn't return
+  // until the whole match is done, so without this poll a card would sit in
+  // its old column for minutes; with it, the card moves into Matching /
+  // Rendering immediately and shows which step is running.
+  const [live, setLive] = useState<Record<string, { status: GvgApplication["status"]; progress: GvgProgress | null }>>({});
   const [error, setError] = useState<string | null>(null);
 
-  const cols = useMemo(() => {
-    const by = (s: GvgApplication["status"]) => applications.filter((a) => a.status === s);
-    return { nueva: by("nueva"), matching: by("matching"), analysis: by("analysis"), rendering: by("rendering"), ready: by("ready") };
-  }, [applications]);
+  /** Prop status, overridden by anything the poll has seen more recently. */
+  const merged = useMemo(
+    () => applications.map((a) => (live[a.id] ? { ...a, status: live[a.id].status, progress: live[a.id].progress } : a)),
+    [applications, live]
+  );
 
-  const interviews = applications.filter((a) => a.followup_status === "next_steps" && a.interview_date);
+  const transitIds = useMemo(
+    () => merged.filter((a) => a.status === "matching" || a.status === "rendering").map((a) => a.id),
+    [merged]
+  );
+
+  useEffect(() => {
+    if (!transitIds.length) return;
+    let stop = false;
+    const tick = () => {
+      getGvgLiveStatus(transitIds)
+        .then((rows) => {
+          if (stop) return;
+          setLive((prev) => {
+            const next = { ...prev };
+            let settled = false;
+            for (const r of rows) {
+              next[r.id] = { status: r.status, progress: r.progress };
+              if (r.status !== "matching" && r.status !== "rendering") settled = true;
+            }
+            // A card left a transit column: pull the real row (match, html…).
+            if (settled) router.refresh();
+            return next;
+          });
+        })
+        .catch(() => {});
+    };
+    const id = setInterval(tick, 2000);
+    tick();
+    return () => {
+      stop = true;
+      clearInterval(id);
+    };
+  }, [transitIds, router]);
+
+  const cols = useMemo(() => {
+    const by = (s: GvgApplication["status"]) => merged.filter((a) => a.status === s);
+    return { nueva: by("nueva"), matching: by("matching"), analysis: by("analysis"), rendering: by("rendering"), ready: by("ready") };
+  }, [merged]);
+
+  const interviews = merged.filter((a) => a.followup_status === "next_steps" && a.interview_date);
+
+  /** Move the card immediately, then let the poll take over. */
+  function optimistic(id: string, status: GvgApplication["status"], label: string) {
+    setLive((s) => ({ ...s, [id]: { status, progress: { step: 1, total: 3, label } } }));
+  }
 
   async function matchMe(app: GvgApplication) {
     setError(null);
-    setInFlight((s) => new Set(s).add(app.id));
+    optimistic(app.id, "matching", MATCH_STEPS[0]);
     const res = await runGvgMatch(app.id);
-    setInFlight((s) => {
-      const n = new Set(s);
-      n.delete(app.id);
+    if (!res.ok) setError(res.error);
+    setLive((s) => {
+      const n = { ...s };
+      delete n[app.id];
       return n;
     });
-    if (!res.ok) setError(res.error);
     router.refresh();
   }
 
   async function render(app: GvgApplication) {
     setError(null);
-    setInFlight((s) => new Set(s).add(app.id));
+    optimistic(app.id, "rendering", RENDER_STEPS[0]);
     const res = await renderGvgResources(app.id);
-    setInFlight((s) => {
-      const n = new Set(s);
-      n.delete(app.id);
+    if (!res.ok) setError(res.error);
+    setLive((s) => {
+      const n = { ...s };
+      delete n[app.id];
       return n;
     });
-    if (!res.ok) setError(res.error);
     router.refresh();
   }
 
@@ -107,27 +184,30 @@ export function ApplicationsTab({
       {a.company && <div className={styles.appCompany}>{a.company}</div>}
       {a.match && <span className={styles.scorePill}>{a.match.evaluation.overall_score}%</span>}
       {a.error && <div className={styles.error}>{a.error}</div>}
+      {a.status === "matching" && <StepList steps={MATCH_STEPS} progress={a.progress} />}
+      {a.status === "rendering" && <StepList steps={RENDER_STEPS} progress={a.progress} />}
       <div className={styles.appActions}>
-        {a.status === "nueva" &&
-          (inFlight.has(a.id) ? (
-            <span className={styles.appMeta}>
-              <span className={styles.spin} /> Matching…
-            </span>
-          ) : (
-            <>
-              <button type="button" className={styles.btn} onClick={() => void matchMe(a)}>
-                Match Me
-              </button>
-              <button type="button" className={styles.btnDanger} onClick={() => void remove(a)}>
-                ✕
-              </button>
-            </>
-          ))}
-        {a.status === "matching" && (
-          <span className={styles.appMeta}>
-            <span className={styles.spin} />{" "}
-            {inFlight.has(a.id) ? "AI matching…" : <button type="button" className={styles.btnGhost} onClick={() => void matchMe(a)}>Retry</button>}
-          </span>
+        {a.status === "nueva" && (
+          <>
+            <button type="button" className={styles.btn} onClick={() => void matchMe(a)}>
+              Match Me
+            </button>
+            <button type="button" className={styles.btnDanger} onClick={() => void remove(a)}>
+              ✕
+            </button>
+          </>
+        )}
+        {a.status === "matching" && !live[a.id] && (
+          // Reached from a reload while the run was in flight (or a crashed run):
+          // nothing is driving it in this tab, so offer to start it again.
+          <button type="button" className={styles.btnGhost} onClick={() => void matchMe(a)}>
+            Resume
+          </button>
+        )}
+        {a.status === "rendering" && !live[a.id] && (
+          <button type="button" className={styles.btnGhost} onClick={() => void render(a)}>
+            Resume
+          </button>
         )}
         {a.status === "analysis" && (
           <>
@@ -138,11 +218,6 @@ export function ApplicationsTab({
               ✕
             </button>
           </>
-        )}
-        {a.status === "rendering" && (
-          <span className={styles.appMeta}>
-            <span className={styles.spin} /> Rendering…
-          </span>
         )}
         {a.status === "ready" && (
           <>

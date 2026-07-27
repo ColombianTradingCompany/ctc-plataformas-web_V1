@@ -7,8 +7,12 @@ import { parseJobMhtml } from "./mhtml";
 import { renderCoverLetterHtml, renderCvHtml } from "./cvTemplate";
 import {
   EMPTY_PROFILE,
+  sanitizeStrings,
   type FollowupStatus,
   type GvgApplication,
+  type GvgEducationEntry,
+  type GvgLanguage,
+  type GvgProgress,
   type MatchResult,
 } from "./cvData";
 
@@ -35,9 +39,66 @@ function normalizeApplication(a: Record<string, unknown>): GvgApplication {
     sent_at: (a.sent_at as string | null) ?? null,
     notes: (a.notes as string | null) ?? null,
     error: (a.error as string | null) ?? null,
+    progress: (a.progress as GvgProgress | null) ?? null,
     created_at: (a.created_at as string) ?? "",
     updated_at: (a.updated_at as string) ?? "",
   };
+}
+
+/** Lightweight poll for the cards sitting in a transit column. */
+export async function getGvgLiveStatus(
+  ids: string[]
+): Promise<{ id: string; status: GvgApplication["status"]; progress: GvgProgress | null; error: string | null }[]> {
+  await requireGvgOwner();
+  if (!ids.length) return [];
+  const service = createServiceRoleClient();
+  const { data } = await service.from("gvg_applications").select("id, status, progress, error").in("id", ids);
+  return ((data as Record<string, unknown>[] | null) ?? []).map((r) => ({
+    id: r.id as string,
+    status: r.status as GvgApplication["status"],
+    progress: (r.progress as GvgProgress | null) ?? null,
+    error: (r.error as string | null) ?? null,
+  }));
+}
+
+/**
+ * The AI may CHOOSE and ORDER education/language entries, never author them.
+ * Match its picks back to the profile by name/title and take the profile's own
+ * strings — that is what stops "C2" turning into "Fluent (C2)" or a degree
+ * sprouting an invented description (both seen live 2026-07-27).
+ */
+function reconcileSidebar(
+  plan: MatchResult["cv_plan"],
+  profileEducation: GvgEducationEntry[],
+  profileLanguages: GvgLanguage[]
+): MatchResult["cv_plan"] {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 18);
+
+  const eduPicked = (plan.education ?? [])
+    .map((e) => profileEducation.find((p) => norm(p.title) === norm(e.title)))
+    .filter((e): e is GvgEducationEntry => !!e);
+  const education = eduPicked.length ? dedupeBy(eduPicked, (e) => e.title) : profileEducation;
+
+  const langPicked = (plan.languages ?? [])
+    .map((l) => profileLanguages.find((p) => norm(p.name) === norm(l.name)))
+    .filter((l): l is GvgLanguage => !!l);
+  // Any profile language the AI dropped is appended — the CV should never look
+  // like a language was lost, only reordered.
+  const languages = langPicked.length
+    ? dedupeBy([...langPicked, ...profileLanguages], (l) => l.name)
+    : profileLanguages;
+
+  return { ...plan, education, languages };
+}
+
+function dedupeBy<T>(items: T[], key: (t: T) => string): T[] {
+  const seen = new Set<string>();
+  return items.filter((i) => {
+    const k = key(i).toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 export async function loadGvgApplications(): Promise<GvgApplication[]> {
@@ -133,7 +194,7 @@ Then produce your full analysis as ONE JSON object in a \`\`\`json fenced block 
     "education": [{"title": "…", "sub": "…", "detail": "…"}],
     "languages": [{"name": "…", "level": "…"}],
     "experiences": [
-      {"experience_id": "id from the Master Experience", "role_title": "concise CV entry title", "bullets": ["3-4 bullets, 15-28 words each, drawn from that item's capabilities and skills, angled at this job"]}
+      {"experience_id": "id from the Master Experience", "role_title": "THE ROLE ONLY", "org_line": "Employer · client or function · city", "bullets": ["up to 3 bullets, 15-24 words each, drawn from that item's capabilities and skills, angled at this job"]}
     ]
   },
   "cover_letter_md": "the full cover letter in markdown, ≤ 320 words, one page"
@@ -144,8 +205,11 @@ Rules:
 - EVERY visible part of the CV is tailored to this job: the headline, the tagline, the About summary, the 9 core skills, and the order of the education and language blocks. The profile you receive is the BASELINE to select and reorder from.
 - cv_plan.education: reproduce entries from the profile's education list VERBATIM (same title/sub/detail strings) but choose which to include and in what order — most job-relevant first (e.g. lead with a certification the posting names). Include 4-5 of them. Never invent or reword a degree, institution or certification.
 - cv_plan.languages: the same profile languages, reordered by relevance to this posting (e.g. German first for a German-language role). Never change a level.
-- cv_plan.experiences: pick the 6 most relevant items of kind "job", in reverse chronological order (ids must be real). Bullets state facts from the repository — never invent employers, dates, metrics, or tools.
-- The cover letter must imitate the tone, structure and voice of the provided samples (direct opening, concrete evidence, warm close). Address the hiring contact by name if known, otherwise "Dear Hiring Team". Company-specific — mention something real about the company from your research.
+- cv_plan.experiences: pick the 6 most relevant items of kind "job", in reverse chronological order (ids must be real). Bullets state facts from the repository; never invent employers, dates, metrics, or tools.
+- role_title is THE ROLE AND NOTHING ELSE: "Project Manager, AI Initiative". Never append the employer, never append the dates. They are rendered in their own slots and repeating them looks broken. Put the employer, the client or function, and the city in org_line instead, separated by " · ".
+- The CV is ONE PAGE. Keep to 3 bullets per entry, 15-24 words each, and the About summary under 60 words.
+- The cover letter must imitate the tone, structure and voice of the provided samples (direct opening, concrete evidence, warm close). Address the hiring contact by name if known, otherwise "Dear Hiring Team". Be company-specific: mention something real about the company from your research.
+- NEVER use an em dash (—) anywhere in your output. Not in the headline, the tagline, the About text, a skill label, a bullet, or the cover letter. Use a comma, a full stop, a colon, or rewrite the sentence. This is the single most recognisable tell of AI-written copy and the owner has banned it outright.
 - Everything in English.`;
 
 type AnthropicBlock = { type: string; text?: string };
@@ -162,7 +226,21 @@ export async function runGvgMatch(applicationId: string): Promise<Result> {
   if (!app.job_text) return { ok: false, error: "This application has no extracted job text." };
   if (app.status === "sent") return { ok: false, error: "This application was already sent." };
 
-  await service.from("gvg_applications").update({ status: "matching", error: null, updated_at: new Date().toISOString() }).eq("id", applicationId);
+  const setProgress = (step: number, label: string) =>
+    service
+      .from("gvg_applications")
+      .update({ progress: { step, total: 3, label }, updated_at: new Date().toISOString() })
+      .eq("id", applicationId);
+
+  await service
+    .from("gvg_applications")
+    .update({
+      status: "matching",
+      error: null,
+      progress: { step: 1, total: 3, label: "Reading the posting and your repository" },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", applicationId);
   revalidatePath(CV_PATH);
 
   try {
@@ -193,6 +271,8 @@ ${JSON.stringify(exps ?? [], null, 1)}
 ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
   .map((l) => `### ${l.title}\n${l.extracted_text ?? ""}`)
   .join("\n\n")}`;
+
+    await setProgress(2, "Researching the company and matching");
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -225,12 +305,21 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
       .filter((b) => b.type === "text" && typeof b.text === "string")
       .map((b) => b.text)
       .join("\n");
+    await setProgress(3, "Writing the CV plan and cover letter");
+
     const fenceMatch = fullText.match(/```json\s*([\s\S]*?)```\s*$/) ?? fullText.match(/```json\s*([\s\S]*?)```/);
     if (!fenceMatch) throw new Error("The model returned no JSON block.");
-    const match = JSON.parse(fenceMatch[1]) as MatchResult;
-    if (!match.evaluation || !match.cv_plan || !match.cover_letter_md) {
+    const raw = JSON.parse(fenceMatch[1]) as MatchResult;
+    if (!raw.evaluation || !raw.cv_plan || !raw.cover_letter_md) {
       throw new Error("The model's JSON is missing required sections.");
     }
+
+    const match = sanitizeStrings(raw);
+    match.cv_plan = reconcileSidebar(
+      match.cv_plan,
+      Array.isArray(prof?.education) ? prof.education : [],
+      Array.isArray(prof?.languages) ? prof.languages : []
+    );
 
     await service
       .from("gvg_applications")
@@ -240,6 +329,7 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
         // The AI's read on title/company beats the <title> guess when present.
         job_title: app.job_title ?? null,
         error: null,
+        progress: null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", applicationId);
@@ -251,6 +341,7 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
       .update({
         status: "nueva",
         error: err instanceof Error ? err.message : "Unknown matching error.",
+        progress: null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", applicationId);
@@ -263,10 +354,12 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
 export async function saveGvgMatchEdits(applicationId: string, match: MatchResult, jobTitle: string, company: string): Promise<Result> {
   await requireGvgOwner();
   const service = createServiceRoleClient();
+  // Hand edits go through the same dash hygiene as generated copy — pasting a
+  // sentence back in from elsewhere is exactly how one slips through.
   const { error } = await service
     .from("gvg_applications")
     .update({
-      match,
+      match: sanitizeStrings(match),
       job_title: jobTitle.trim() || null,
       company: company.trim() || null,
       updated_at: new Date().toISOString(),
@@ -287,7 +380,20 @@ export async function renderGvgResources(applicationId: string): Promise<Result>
   if (!app || !app.match) return { ok: false, error: "No analysis to render." };
   if (app.status !== "analysis") return { ok: false, error: "This application is not in Analysis Ready." };
 
-  await service.from("gvg_applications").update({ status: "rendering", updated_at: new Date().toISOString() }).eq("id", applicationId);
+  const setProgress = (step: number, label: string) =>
+    service
+      .from("gvg_applications")
+      .update({ progress: { step, total: 3, label }, updated_at: new Date().toISOString() })
+      .eq("id", applicationId);
+
+  await service
+    .from("gvg_applications")
+    .update({
+      status: "rendering",
+      progress: { step: 1, total: 3, label: "Loading your profile" },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", applicationId);
   revalidatePath(CV_PATH);
 
   try {
@@ -308,6 +414,8 @@ export async function renderGvgResources(applicationId: string): Promise<Result>
         }
       : EMPTY_PROFILE;
 
+    await setProgress(2, "Embedding the photo");
+
     let photoDataUri: string | null = null;
     if (profile.photo_path) {
       const { data: blob } = await service.storage.from(BUCKET).download(profile.photo_path);
@@ -323,6 +431,8 @@ export async function renderGvgResources(applicationId: string): Promise<Result>
       )
     );
 
+    await setProgress(3, "Rendering CV and cover letter");
+
     const match = app.match as MatchResult;
     const cvHtml = renderCvHtml({ profile, photoDataUri, plan: match.cv_plan, expMeta, fullName: FULL_NAME });
     const clHtml = renderCoverLetterHtml({
@@ -335,14 +445,19 @@ export async function renderGvgResources(applicationId: string): Promise<Result>
 
     await service
       .from("gvg_applications")
-      .update({ status: "ready", cv_html: cvHtml, cl_html: clHtml, error: null, updated_at: new Date().toISOString() })
+      .update({ status: "ready", cv_html: cvHtml, cl_html: clHtml, error: null, progress: null, updated_at: new Date().toISOString() })
       .eq("id", applicationId);
     revalidatePath(CV_PATH);
     return { ok: true };
   } catch (err) {
     await service
       .from("gvg_applications")
-      .update({ status: "analysis", error: err instanceof Error ? err.message : "Render failed.", updated_at: new Date().toISOString() })
+      .update({
+        status: "analysis",
+        error: err instanceof Error ? err.message : "Render failed.",
+        progress: null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", applicationId);
     revalidatePath(CV_PATH);
     return { ok: false, error: err instanceof Error ? err.message : "Render failed." };

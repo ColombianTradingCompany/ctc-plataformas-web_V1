@@ -77,3 +77,40 @@ Formato:
 - Verificación: tsc + eslint limpios; 28/28 checks de QA (3 exports reales de
   LinkedIn, las 4 cartas, y el render con sidebar a medida + su fallback).
 (commit: pending)
+
+## [2026-07-27] CV App Manager — segunda tanda del owner (V2.19)
+- **Las columnas de tránsito ahora sirven de algo.** Antes la tarjeta se quedaba
+  en su columna con un spinner porque la Server Action no retorna hasta que
+  termina todo el match (minutos). Nueva columna `gvg_applications.progress`
+  (jsonb `{step,total,label}`): el servidor escribe cada paso, el cliente hace
+  poll cada 2 s con `getGvgLiveStatus` y la tarjeta se MUEVE a «Matching» /
+  «Rendering» mostrando una lista de verificación con ✓ / spinner / ○ por paso
+  (3 pasos cada etapa). Si se recarga la página a mitad de una corrida, la
+  tarjeta ofrece «Resume» en vez de quedarse colgada.
+- **Prohibida la raya larga (—) en todo lo que genera la IA.** Es la marca más
+  reconocible de texto escrito por máquina y va a un empleador. Regla explícita
+  en el prompt MÁS red de seguridad determinista (`stripAiDash`/`sanitizeStrings`
+  en `cvData.ts`, puras y testeadas): raya con espacios → coma, raya pegada →
+  guion; la raya corta (–) se respeta porque el CV la usa en rangos de fechas.
+  Se aplica también a las ediciones a mano.
+- **El CV se rehízo siguiendo la plantilla de referencia**, con la geometría
+  MEDIDA sobre el render de la plantilla, no estimada: banda azul marino a
+  TODO el ancho con nombre/headline/tagline/contactos, foto de 54 mm montada
+  sobre la banda y colgando ~10 mm dentro de la barra lateral, y la barra
+  lateral CLARA (#edf0f8) con texto oscuro donde solo los encabezados de
+  sección son bandas azules (la primera versión tenía toda la lateral azul).
+  En la columna derecha el título es SOLO EL ROL (nuevo `org_line` del plan
+  lleva «Pixida · Mercedes-Benz Consultant · Munich» alineado a la derecha);
+  antes la IA metía empresa y fechas dentro del título y salían duplicadas.
+- **Reconciliación servidor de la barra lateral**: la IA elige y ordena
+  educación e idiomas, pero los TEXTOS se toman del perfil por coincidencia de
+  nombre. En vivo la IA había reescrito «C2» como «Fluent (C2)» y había perdido
+  el italiano; ahora eso es imposible y ningún idioma se cae (los no elegidos se
+  añaden al final).
+- **Verificación real de impresión**: el entregable es un PDF impreso desde el
+  navegador, así que la QA ahora imprime de verdad con Chrome headless
+  (`--print-to-pdf`) y cuenta páginas con pypdf. Dos desbordes reales cazados y
+  corregidos así: los 6 puestos no cabían (tipografía apretada) y el 4º anillo
+  de idioma se envolvía a una segunda fila empujando todo a la página 2 (ahora
+  4 anillos de 14 mm en UNA fila, como la plantilla). Resultado: 1 página.
+(commit: pending)

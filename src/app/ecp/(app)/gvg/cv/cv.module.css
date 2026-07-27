@@ -259,8 +259,34 @@
   border-radius: 12px;
   padding: 12px;
 }
-/* the two transit columns (Matching / Rendering) are half as wide on purpose */
-.colNarrow { flex: 0.5 1 120px; min-width: 118px; }
+/* The two transit columns (Matching / Rendering) stay visibly narrower than the
+   action columns — they are a waiting room, not a workspace — but wide enough
+   for the step checklist to read. */
+.colNarrow { flex: 0.62 1 168px; min-width: 165px; }
+
+/* live step checklist inside a transit card */
+.steps { list-style: none; margin: 8px 0 0; padding: 0; }
+.steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  padding: 2.5px 0;
+}
+.stepMark { flex: none; width: 13px; display: inline-flex; justify-content: center; align-items: center; }
+.step_done { color: #17714b; }
+.step_running { color: var(--gvg-ink, #0f2247); font-weight: 700; }
+.step_waiting { color: #9aa8c2; }
+.spinSm {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--gvg-line, #c9dbf8);
+  border-top-color: var(--gvg-accent, #2e6be6);
+  border-radius: 50%;
+  animation: gvgspin 0.9s linear infinite;
+}
 .colHead {
   font-family: var(--font-spline-mono), monospace;
   font-size: 10px;

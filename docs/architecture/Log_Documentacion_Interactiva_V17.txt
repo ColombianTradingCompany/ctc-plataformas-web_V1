@@ -8,4 +8,52 @@ Formato:
 (commit: <sha corto o "pending">)
 
 ---
-(sin entradas todavía — V17.0 recién compilado)
+
+## [2026-07-27] EUDR: cuestionario de riesgo trasladado del lote a la finca + FincaModal 3 pestañas
+- La restructuración Pasaporte/Visa/Sello (V2.15, ya documentada en V17.0) solo movió
+  geo/tenencia/declaraciones a la finca; el cuestionario de riesgo (cadena de custodia,
+  riesgo del producto, indicios de ilegalidad, documentos disponibles, esquemas de
+  certificación, nivel de riesgo, mitigación) quedó huérfano en columnas muertas de `lots`.
+  Ahora vive en `fincas` (migración `fincas_eudr_risk_questionnaire`: `eudr_custody_stages/
+  method/notes`, `eudr_product_risk_factors`, `eudr_illegality_indicators`, `eudr_docs_available`,
+  `eudr_cert_scheme`, `eudr_mitigation_actions/responsible/effective`, `eudr_support_doc_type`
+  — este último admite documentación SICA/cédula cafetera).
+- `src/lib/eudr.ts`: nueva `deriveFincaRiskLevel()`; `fincaEudrStatus()` ahora retiene la Visa
+  ("Visa en trámite") hasta que el cuestionario está respondido Y el riesgo resuelve a
+  insignificante (o mitigado) — antes una finca podía obtener Visa sin evaluación de riesgo.
+  `lotEudrStatus()` sigue siendo herencia pura. Toca el DICT key `eudr` (actualizar el cuerpo:
+  ya no es solo geo/tenencia, ahora incluye el cuestionario de riesgo completo).
+- Cambio de nodo: `FincaModal.tsx` (panel "Mis fincas" del productor) pasó de un formulario
+  largo de una sola pestaña a **3 pestañas**: 1) Información general, 2) Ubicación y respaldo
+  (mapa + tenencia + documento de respaldo con selector de tipo SICA), 3) Cuestionario EUDR
+  (declaraciones + el cuestionario de riesgo trasladado, con nivel de riesgo derivado en vivo).
+- BCP: `FincaEudrEditor.tsx` ganó una 4ª sub-pestaña "Riesgo y Mitigación"; el gate de
+  aprobación (`actions.ts` approveFinca) y `missingChecks` en `fincas/page.tsx` ahora exigen
+  el cuestionario; `EudrDossierDoc.tsx` (el documento imprimible de Visa) ganó una sección
+  "Evaluación de riesgo (Art. 10-11)".
+- **Limpieza de base de datos (decisión del owner, ya ejecutada en producción)**: se
+  eliminaron TODOS los 15 lotes de TODOS los productores (con sus cascadas: 133 ficha
+  snapshots, 2 contratos → 3 releases, 2 inscripciones de arena, 1 evaluación), y se
+  reinició el EUDR de las 13 fincas existentes a vacío/`pending_review` — ninguna finca
+  tiene Visa todavía, todos vuelven a declarar con el cuestionario completo. Cuentas,
+  info general de fincas, e hilos de `producer_comm_log` (67) se preservaron intactos.
+(commit: 0406377)
+
+## [2026-07-27] Anillo de progreso real (%) en cada campo de subida de archivo
+- `supabase-js` storage `.upload()` no emite eventos de progreso. Nuevo
+  `uploadKaffetalMediaWithProgress()` + `putSignedUrlWithProgress()` en
+  `src/lib/kaffetalMedia.ts`: llevan el archivo a una signed upload URL
+  (`createSignedUploadUrl`) y hacen un PUT vía XHR crudo cuyo `upload.onprogress`
+  entrega una fracción 0..1 real — con fallback automático a la subida plana si el
+  camino de signed-URL falla, así el archivo siempre llega a destino.
+- Componente nuevo `src/components/UploadProgress.tsx`: hook `useUpload()` + anillo
+  `<UploadProgressRing>` (arco determinado → check al terminar → x en error).
+- Se conectó en TODOS los campos de subida de las 4 superficies: KR productor (foto/
+  video/documento de respaldo de finca, avatar/video/galería de perfil, video principal
+  + 2 extra del lote, soportes de certificados de origen/awards, reclamo de oficialización
+  de catación), BCP (evidencia/sostenibilidad EUDR con anillo agregado, prueba de bache y
+  resultado de sondeo en Nominados), Directorio del Café (avatar + documentos/soportes).
+  No introduce escenario ni concepto nuevo de negocio — es una mejora transversal de UX
+  sobre flujos de subida ya documentados; no requiere nueva entrada DICT dedicada, pero
+  si algún nodo describe explícitamente "sin feedback de progreso" debe corregirse.
+(commit: 8128208)

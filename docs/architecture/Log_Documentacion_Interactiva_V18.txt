@@ -192,3 +192,24 @@ Formato:
   cuadran por sección, periodo vacío sin NaN, escapado HTML, sin raya larga) y el
   documento impreso con Chrome headless (3 páginas A4, las 5 secciones, 5 SVG).
 (commit: pending)
+
+## [2026-07-27] Subida de .mhtml recortada en el cliente (V2.23)
+- El owner reportó que subir el .mhtml era «extremadamente lento». Medido sobre sus
+  propios archivos: un export de LinkedIn pesa **14,77 MB** y otro 6,05 MB, y ~95% de
+  eso son imágenes, CSS y fuentes incrustadas en base64 dentro del contenedor MIME.
+  **Nada aguas abajo las lee**: el parser toma la primera parte text/html y descarta el
+  resto. Se estaba esperando por bytes que nunca se usan.
+- `src/lib/gvg/trimMhtml.ts` recorta el archivo ANTES de subirlo: conserva el preámbulo
+  MIME y la primera parte text/html, descarta las demás y cierra el boundary, así el
+  resultado sigue siendo un multipart/related VÁLIDO y el parser del servidor no cambia
+  ni una línea. Trabaja sobre bytes crudos (nunca decodifica el cuerpo: un round-trip a
+  texto podría estropear una parte de 8 bits).
+- Resultado medido en los tres exports reales: **14,77 → 0,68 MB (4,6%)**, 6,05 → 0,25 MB
+  (4,1%), 6,06 → 0,24 MB (4,0%), en 29-86 ms. Texto extraído **idéntico byte a byte** en
+  los tres, mismo título y misma empresa.
+- Si algo del contenedor es inesperado (sin boundary, sin parte html, o el recorte no
+  ahorra al menos un 5%) devuelve null y se sube el archivo ORIGINAL intacto: achicar es
+  una optimización, nunca una forma de perder la vacante.
+- `putSignedUrlWithProgress` pasa a aceptar `Blob` en vez de `File` (un File ES un Blob,
+  así que ningún llamador existente cambia) para poder subir el cuerpo derivado.
+(commit: pending)

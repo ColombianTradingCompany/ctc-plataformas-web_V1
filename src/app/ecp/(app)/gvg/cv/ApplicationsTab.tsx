@@ -14,6 +14,7 @@ import {
   type MatchResult,
 } from "@/lib/gvg/cvData";
 import { prepareGvgUpload } from "@/lib/gvg/cvActions";
+import { trimMhtml } from "@/lib/gvg/trimMhtml";
 import {
   createGvgApplication,
   deleteGvgApplication,
@@ -25,6 +26,8 @@ import {
 } from "@/lib/gvg/matchActions";
 import { ApplicationCard, daysSince } from "./ApplicationCard";
 import styles from "./cv.module.css";
+
+const mb = (bytes: number) => `${(bytes / 1e6).toFixed(1)} MB`;
 
 /** Checklist for a card sitting in a transit column: done / running / waiting. */
 function StepList({ steps, progress }: { steps: readonly string[]; progress: GvgProgress | null }) {
@@ -318,6 +321,7 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
   const [fileName, setFileName] = useState<string | null>(null);
   /** Storage path of the already-uploaded file — set the moment it lands. */
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const [savedNote, setSavedNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const upload = useUpload();
@@ -325,17 +329,31 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
   // The file goes up as soon as it is picked, not on "Create application" —
   // a 6 MB LinkedIn export takes a moment, and hiding that behind the final
   // click made the button look broken.
+  //
+  // It is also TRIMMED first: these exports are ~95% embedded images and CSS
+  // that nothing downstream reads (measured 14.77 MB -> 0.68 MB), which is what
+  // made the upload feel endless. The trim is byte-lossless for parsing and
+  // falls back to the original file if anything about the container is unusual.
   async function onPicked(file: File) {
     setError(null);
     setUploadedPath(null);
+    setSavedNote(null);
     setFileName(file.name);
+
+    const trimmed = await trimMhtml(file);
+    const body: Blob = trimmed?.blob ?? file;
+    if (trimmed) {
+      const savedPct = Math.round((1 - trimmed.trimmedBytes / trimmed.originalBytes) * 100);
+      setSavedNote(`${mb(trimmed.originalBytes)} → ${mb(trimmed.trimmedBytes)} (${savedPct}% less to upload)`);
+    }
+
     const prep = await prepareGvgUpload("jobs", file.name);
     if (!prep.ok) {
       setError(prep.error);
       return;
     }
     const ok = await upload.run(async () => {
-      const put = await putSignedUrlWithProgress(prep.path, prep.token, file, upload.progress);
+      const put = await putSignedUrlWithProgress(prep.path, prep.token, body, upload.progress);
       return put.ok;
     });
     if (!ok) {
@@ -384,6 +402,7 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
           />
         </label>
         <UploadProgressRing state={upload.state} />
+        {savedNote && <p className={styles.cardHint} style={{ margin: "6px 0 0" }}>{savedNote}</p>}
         {uploadedPath && <p className={styles.okNote}>{fileName} uploaded — ready to create.</p>}
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.modalFoot}>

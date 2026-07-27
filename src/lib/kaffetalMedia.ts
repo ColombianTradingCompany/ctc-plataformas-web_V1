@@ -110,7 +110,10 @@ export async function uploadKaffetalMediaWithProgress(
 export async function putSignedUrlWithProgress(
   path: string,
   token: string,
-  file: File,
+  // Blob, not File: callers may hand over a derived body (GVG trims a saved
+  // .mhtml down to its html part before uploading). A File is a Blob, so every
+  // existing call site is unaffected; the object name comes from `path`.
+  file: Blob,
   onProgress?: (fraction: number) => void
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

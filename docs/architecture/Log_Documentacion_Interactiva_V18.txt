@@ -8,4 +8,41 @@ Formato:
 (commit: <sha corto o "pending">)
 
 ---
-(sin entradas todavía — V18.0 recién compilado)
+## [2026-07-27] GVG-Space: espacio personal del owner en el ECP + CV App Manager
+- Nuevo grupo de navegación owner-only al final del rail del ECP: "GVG-Space"
+  (`/ecp/gvg`), el espacio PERSONAL del owner dentro de la consola. Doble
+  compuerta: owner-only (requireConsoleAccess + isOwner) MÁS un candado propio
+  con contraseña (patrón Admin Lock: sha256 en `platform_settings.gvg_space_lock`)
+  que al verificarse acuña una cookie firmada HMAC(hash, userId) de 12 h con
+  path `/ecp/gvg` — cambiar la contraseña invalida toda sesión abierta. El área
+  de contenido se re-tematiza en AZUL a propósito (el rail queda morado) para
+  que nunca haya duda de en qué mundo se está (`gvg.module.css`).
+- Primer submódulo: **CV App Manager** (`/ecp/gvg/cv`) — el motor de aplicaciones
+  laborales personales del owner. 5 tablas nuevas service-role-only (RLS sin
+  políticas, patrón leads/arena): `gvg_profile` (fila única: foto, headline,
+  contacto, idiomas, educación del sidebar), `gvg_experiences` (Master Experience:
+  18 ítems sembrados desde el docx del owner, cada uno deconstruido en las 6
+  categorías strategic/operational/technical/hard/soft/tools), `gvg_career_paths`
+  (7 sembrados del PDF), `gvg_cover_letter_samples` (máx. 4, texto extraído como
+  muestra de estilo), `gvg_applications` (la tarjeta kanban completa).
+- Flujo: exportar la vacante de LinkedIn como .mhtml → subirla (signed-URL +
+  anillo de progreso) → `parseJobMhtml` (mailparser, mismo stack del Buzón)
+  extrae texto + título/empresa del <title> → "Match Me" dispara el agente:
+  Anthropic API (fetch crudo, convención del repo; claude-opus-5 con web_search
+  para investigar la empresa y fallbacks server-side) cruza el posting contra
+  el Master Experience + career paths activos + muestras de estilo y devuelve
+  un MatchResult JSON (evaluación por 5 ejes fijos, plan de CV por partes,
+  cover letter en markdown). Editable en "Analysis Ready"; "Render Resources"
+  es determinista: rellena la plantilla del CV (HTML A4 print-perfect, sidebar
+  azul marino, foto embebida como data-URI) y la carta (one-pager forzado);
+  PDF = imprimir desde el navegador. Kanban de proceso con columnas de tránsito
+  angostas que se auto-avanzan, y segundo kanban "Application Follow Up"
+  (Sent → Cold derivado a >10 días sin toque → Next Steps con fecha de
+  entrevista ⭐ visible en el tablero principal → Rejected; sin "Hired" a
+  propósito). `maxDuration = 300` en la page para la corrida larga del match.
+- Verificación: tsc + eslint limpios; 19/19 checks de un script QA que ejercita
+  parseJobMhtml (mhtml sintético quoted-printable) y los renders contra los
+  datos reales sembrados. Es cambio de nodo para `n-consoles`/ECP (nuevo grupo
+  de nav + candado) y posible entrada DICT nueva (`gvgspace`).
+(commit: bf23b46)
+

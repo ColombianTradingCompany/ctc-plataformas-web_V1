@@ -8,6 +8,31 @@ Formato:
 (commit: <sha corto o "pending">)
 
 ---
+## [2026-07-24] Directorio del Café: de maqueta a plataforma real (ENTRADA RETROACTIVA)
+> Se anota al hacer el Version Wrap V19 (2026-07-27): este trabajo NUNCA se registró
+> en su momento y por eso V18.0 siguió describiendo el Directorio como maqueta aunque
+> el respaldo real ya llevaba días en producción. Compilado en V19.0.
+- Tres commits: `e1f469b` (Stage 2 — backend real: auth independiente + compuerta de
+  verificación), `9a28760` (Stage 3 — documentos archivo/URL, exportar perfil a PDF,
+  "Mis plataformas", módulo del ECP) y `6d9c4f3` (tanda de mejoras del owner:
+  contraste, avatar, formularios del muro, merge de estado, autosave, kanban del ECP).
+- Nacen 6 tablas `directorio_*` (profiles/posts/post_comments/post_likes/messages/
+  documents), todas service-role-only (RLS activada, sin políticas — patrón leads/arena).
+  El navegador nunca las toca: cada Server Action reautentica con `auth.uid()` y recién
+  ahí usa el cliente service-role.
+- El ingreso usa la MISMA cuenta Supabase del ecosistema. El Directorio es ORTOGONAL al
+  modelo productor/comprador: se apoya en `profiles.id` y jamás lee ni escribe
+  `profiles.role`; el callback de Google del Directorio NO promueve la cuenta a ningún rol.
+- Compuerta de Verificado en UN solo lugar (`cargarDirectorio()`): sin `estado='verificado'`
+  el muro, el directorio y los mensajes directos llegan VACÍOS, no ocultos por CSS. Cada
+  mutación revalida por su cuenta y un mensaje directo exige también que el destinatario
+  esté verificado. Se administra en `/ecp/directorio` (Aceptar verifica directo desde el
+  2026-07-24; el paso de "ingresar código" se eliminó).
+- Cambio de nodo (`n-directorio`: dejan de ser válidas las notas de "nada persiste"),
+  cambio de escenario (`directorio`), entrada DICT nueva (`dcverificado`) y el wire
+  n-directorio→n-db pasa de punteado a sólido.
+(commits: e1f469b, 9a28760, 6d9c4f3)
+
 ## [2026-07-27] GVG-Space: espacio personal del owner en el ECP + CV App Manager
 - Nuevo grupo de navegación owner-only al final del rail del ECP: "GVG-Space"
   (`/ecp/gvg`), el espacio PERSONAL del owner dentro de la consola. Doble
@@ -76,7 +101,7 @@ Formato:
   se pintan como párrafos reales, no como un bloque `pre-wrap`.
 - Verificación: tsc + eslint limpios; 28/28 checks de QA (3 exports reales de
   LinkedIn, las 4 cartas, y el render con sidebar a medida + su fallback).
-(commit: pending)
+(commit: 5b765b1)
 
 ## [2026-07-27] CV App Manager — segunda tanda del owner (V2.19)
 - **Las columnas de tránsito ahora sirven de algo.** Antes la tarjeta se quedaba
@@ -113,7 +138,7 @@ Formato:
   corregidos así: los 6 puestos no cabían (tipografía apretada) y el 4º anillo
   de idioma se envolvía a una segunda fila empujando todo a la página 2 (ahora
   4 anillos de 14 mm en UNA fila, como la plantilla). Resultado: 1 página.
-(commit: pending)
+(commit: 425e059)
 
 ## [2026-07-27] CV App Manager — tarjetas compactas, documentos en todas partes y vista Calendario (V2.20)
 - **Bitácora de movimientos**: nueva tabla `gvg_application_events` (service-role-only,
@@ -142,7 +167,7 @@ Formato:
   (altas por semana, 8 semanas), Embudo y Distribución de puntajes. **El embudo se deriva
   de las FILAS, no del log** — las postulaciones anteriores a la bitácora no tienen marca
   de matched/rendered y contarlas por eventos dibujaría un embudo que niega trabajo real.
-(commit: pending)
+(commit: a557bd8)
 
 ## [2026-07-27] Calendario: la línea de tiempo pasa a ser un Gantt horizontal (V2.21)
 - El owner quería un eje de fechas horizontal (estilo Notion timeline), no la lista
@@ -162,7 +187,7 @@ Formato:
   commit) con datos sintéticos y se midió el DOM real y una captura con Chrome headless:
   posiciones de barra exactas al día, línea de hoy en el día 21 del rango, píldora roja
   visible, 11 íconos, colores por estado correctos.
-(commit: pending)
+(commit: dc3ce6f)
 
 ## [2026-07-27] CV App Manager — «Emit Report» (V2.22)
 - Nueva tabla `gvg_reports` (service-role-only): criterios elegidos, periodo, **las
@@ -191,7 +216,7 @@ Formato:
 - Verificación: tsc + eslint limpios; 25/25 checks de QA sobre los datos reales (sumas
   cuadran por sección, periodo vacío sin NaN, escapado HTML, sin raya larga) y el
   documento impreso con Chrome headless (3 páginas A4, las 5 secciones, 5 SVG).
-(commit: pending)
+(commit: ec8dde4)
 
 ## [2026-07-27] Subida de .mhtml recortada en el cliente (V2.23)
 - El owner reportó que subir el .mhtml era «extremadamente lento». Medido sobre sus
@@ -212,4 +237,4 @@ Formato:
   una optimización, nunca una forma de perder la vacante.
 - `putSignedUrlWithProgress` pasa a aceptar `Blob` en vez de `File` (un File ES un Blob,
   así que ningún llamador existente cambia) para poder subir el cuerpo derivado.
-(commit: pending)
+(commit: 4e0e9ab)

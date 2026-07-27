@@ -1,0 +1,14 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V19.0(4e0e9ab).html
+(CTC Web Platform V2.23, 2026-07-27). Cada entrada se compila al próximo Version Wrap (V20).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio aprendido en el wrap de V19: registrar la entrada AL TERMINAR el trabajo,
+no "después". El backend real del Directorio del Café (3 commits del 2026-07-24) nunca
+se anotó y V18.0 salió publicado describiéndolo como maqueta.
+
+---

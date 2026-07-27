@@ -8,9 +8,11 @@ import { SetupTab } from "./SetupTab";
 import { ApplicationsTab } from "./ApplicationsTab";
 import { FollowupTab } from "./FollowupTab";
 import { CalendarTab } from "./CalendarTab";
+import { ReportsTab } from "./ReportsTab";
+import type { GvgReport } from "@/lib/gvg/reportActions";
 import styles from "./cv.module.css";
 
-type TopTab = "setup" | "applications" | "followup" | "calendar";
+type TopTab = "setup" | "applications" | "followup" | "calendar" | "reports";
 
 /** CV App Manager shell: Setup (the profile that feeds the AI), Applications
  *  (the process kanban) and Follow-up (after "Application Sent"). */
@@ -18,10 +20,12 @@ export function CvManager({
   initialSetup,
   applications,
   events,
+  reports,
 }: {
   initialSetup: CvSetupData;
   applications: GvgApplication[];
   events: GvgEvent[];
+  reports: GvgReport[];
 }) {
   const [tab, setTab] = useState<TopTab>("applications");
   const activeCount = applications.filter((a) => a.status !== "sent").length;
@@ -36,6 +40,7 @@ export function CvManager({
             ["applications", `Applications · ${activeCount}`],
             ["followup", `Follow-up · ${sentCount}`],
             ["calendar", "Calendar"],
+            ["reports", `Reports · ${reports.length}`],
             ["setup", "Setup"],
           ] as [TopTab, string][]
         ).map(([key, label]) => (
@@ -61,7 +66,8 @@ export function CvManager({
         />
       )}
       {tab === "followup" && <FollowupTab applications={applications} />}
-      {tab === "calendar" && <CalendarTab applications={applications} events={events} />}
+      {tab === "calendar" && <CalendarTab applications={applications} events={events} reports={reports} />}
+      {tab === "reports" && <ReportsTab reports={reports} />}
     </div>
   );
 }

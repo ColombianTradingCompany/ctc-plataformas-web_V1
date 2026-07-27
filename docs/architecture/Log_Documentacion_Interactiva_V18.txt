@@ -163,3 +163,32 @@ Formato:
   posiciones de barra exactas al día, línea de hoy en el día 21 del rango, píldora roja
   visible, 11 íconos, colores por estado correctos.
 (commit: pending)
+
+## [2026-07-27] CV App Manager — «Emit Report» (V2.22)
+- Nueva tabla `gvg_reports` (service-role-only): criterios elegidos, periodo, **las
+  cifras CONGELADAS** tal como se calcularon al emitir (un informe no puede cambiar
+  cuando llegan datos posteriores), la interpretación del modelo y el documento HTML.
+- `src/lib/gvg/reportData.ts` es **puro** (sin clientes, sin secretos, sin React) para
+  que un script de QA lo ejecute y afirme sobre los números: 5 criterios —
+  pipeline/cadencia/calidad de match/respuestas/foco— cada uno con sus 3 KPIs. **La IA
+  nunca calcula una cifra**, solo la interpreta.
+- `reportTemplate.ts` arma el documento con CSS + SVG inline (sin dependencia de charts
+  ni motor de PDF): embudo, barras agrupadas creadas/enviadas, histograma de puntajes,
+  barra apilada de desenlaces y barras horizontales de career paths. Cada sección lleva
+  su propia lectura («Reading») y al final una síntesis del periodo COMPLETO — el pedido
+  de «interpretaciones juntas y por separado».
+- El informe declara su propio límite: si el periodo es anterior al inicio de la bitácora
+  de eventos, imprime una advertencia de que matched/rendered están sub-contados en vez
+  de insinuar que el trabajo no ocurrió.
+- Los informes aparecen en el Gantt como una **calle propia**: franja rayada por el
+  periodo cubierto y un pin 📊 el día de emisión, que abre el documento.
+- Si la interpretación falla, las cifras YA quedaron guardadas y el documento se emite
+  sin lectura, con un botón «Re-read» para reintentar solo esa parte.
+- Bug cazado en QA con datos reales: con 3 postulaciones puntuadas, «Strongest fits» y
+  «Weakest fits» mostraban las MISMAS tres filas (se tomaba el top-3 y el bottom-3 de una
+  lista de 3). Ahora «weakest» son estrictamente los que no están en «best», y con
+  muestra pequeña se imprime una sola lista ordenada.
+- Verificación: tsc + eslint limpios; 25/25 checks de QA sobre los datos reales (sumas
+  cuadran por sección, periodo vacío sin NaN, escapado HTML, sin raya larga) y el
+  documento impreso con Chrome headless (3 páginas A4, las 5 secciones, 5 SVG).
+(commit: pending)

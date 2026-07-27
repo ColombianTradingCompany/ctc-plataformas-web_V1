@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { GvgApplication, GvgEvent } from "@/lib/gvg/cvData";
+import type { GvgReport } from "@/lib/gvg/reportActions";
+import { openHtml } from "./ApplicationCard";
 import { ApplicationCard } from "./ApplicationCard";
 import { Timeline } from "./Timeline";
 import styles from "./cv.module.css";
@@ -109,7 +111,15 @@ type ChartTab = "activity" | "funnel" | "scores";
 
 /** Gantt-style timeline of the whole search, with the stats dashboard docked
  *  on the right. */
-export function CalendarTab({ applications, events }: { applications: GvgApplication[]; events: GvgEvent[] }) {
+export function CalendarTab({
+  applications,
+  events,
+  reports,
+}: {
+  applications: GvgApplication[];
+  events: GvgEvent[];
+  reports: GvgReport[];
+}) {
   const [chart, setChart] = useState<ChartTab>("activity");
   const [openApp, setOpenApp] = useState<GvgApplication | null>(null);
 
@@ -175,7 +185,13 @@ export function CalendarTab({ applications, events }: { applications: GvgApplica
   return (
     <div className={styles.calWrap}>
       <div className={styles.calMain}>
-        <Timeline applications={applications} events={events} onOpen={setOpenApp} />
+        <Timeline
+          applications={applications}
+          events={events}
+          reports={reports}
+          onOpen={setOpenApp}
+          onOpenReport={(r) => r.html && openHtml(r.html)}
+        />
       </div>
 
       <aside className={styles.dash}>

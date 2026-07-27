@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EVENT_META, type GvgApplication, type GvgEvent } from "@/lib/gvg/cvData";
+import type { GvgReport } from "@/lib/gvg/reportActions";
 import styles from "./cv.module.css";
 
 // ── Gantt-style timeline ─────────────────────────────────────────────────────
@@ -38,11 +39,17 @@ type Lane = {
 export function Timeline({
   applications,
   events,
+  reports = [],
   onOpen,
+  onOpenReport,
 }: {
   applications: GvgApplication[];
   events: GvgEvent[];
+  /** Emitted reports get their own lane: the span is the period covered, the
+   *  marker is the day it was emitted. */
+  reports?: GvgReport[];
   onOpen: (app: GvgApplication) => void;
+  onOpenReport?: (report: GvgReport) => void;
 }) {
   const [zoom, setZoom] = useState<Zoom>("month");
   const scroller = useRef<HTMLDivElement>(null);
@@ -87,12 +94,18 @@ export function Timeline({
   // include a scheduled interview.
   const { rangeStart, totalDays } = useMemo(() => {
     if (!lanes.length) return { rangeStart: addDays(today, -7), totalDays: 21 };
-    const mins = lanes.map((l) => l.start.getTime());
-    const maxs = lanes.flatMap((l) => [l.end.getTime(), l.interview?.getTime() ?? 0]);
+    const mins = [
+      ...lanes.map((l) => l.start.getTime()),
+      ...reports.map((r) => midnight(r.period_start).getTime()),
+    ];
+    const maxs = [
+      ...lanes.flatMap((l) => [l.end.getTime(), l.interview?.getTime() ?? 0]),
+      ...reports.map((r) => midnight(r.period_end).getTime()),
+    ];
     const s = addDays(new Date(Math.min(...mins)), -3);
     const e = addDays(new Date(Math.max(...maxs, today.getTime())), 7);
     return { rangeStart: s, totalDays: Math.max(daysBetween(s, e), 14) };
-  }, [lanes, today]);
+  }, [lanes, reports, today]);
 
   const x = (d: Date) => daysBetween(rangeStart, d) * dayPx;
   const width = totalDays * dayPx;
@@ -198,6 +211,31 @@ export function Timeline({
             ))}
             <span className={styles.ganttToday} style={{ left: todayX }} aria-hidden />
 
+            {reports.length > 0 && (
+              <div className={styles.lane}>
+                {reports.map((r) => {
+                  const rs = midnight(r.period_start);
+                  const re = midnight(r.period_end);
+                  const left = x(rs);
+                  const w = Math.max((daysBetween(rs, re) + 1) * dayPx, 6);
+                  return (
+                    <span key={r.id}>
+                      <span className={styles.reportSpan} style={{ left, width: w }} title={`${r.title} covers ${r.period_start} to ${r.period_end}`} />
+                      <button
+                        type="button"
+                        className={`${styles.laneIcon} ${styles.reportPin}`}
+                        style={{ left: x(midnight(r.created_at)) + dayPx / 2 - 8 }}
+                        title={`${r.title} · emitted ${new Date(r.created_at).toLocaleDateString("en-GB")}`}
+                        onClick={() => onOpenReport?.(r)}
+                      >
+                        📊
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
             {lanes.length === 0 && <p className={styles.accEmpty}>No applications yet.</p>}
 
             {lanes.map((l) => {
@@ -276,6 +314,9 @@ export function Timeline({
         </span>
         <span>
           <i className={`${styles.legendDot} ${styles.bar_rejected}`} /> Rejected
+        </span>
+        <span>
+          <span aria-hidden>📊</span> Report
         </span>
         <span className={styles.legendSep} />
         <span>{iso(today) === iso(new Date()) ? "Red line = today" : ""}</span>

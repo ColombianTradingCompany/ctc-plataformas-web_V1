@@ -118,6 +118,14 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ecp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
         ],
       },
+      {
+        // GVG-Space (2026-07-27): el espacio PERSONAL del owner dentro de la
+        // consola — submódulos propios (CV App Manager) tras su propio candado
+        // suave (patrón Admin Lock + cookie firmada). Owner-only y sin
+        // encabezado: un divisor lo separa del resto de la consola a propósito.
+        ownerOnly: true,
+        links: [{ href: "/ecp/gvg", label: "GVG-Space", ownerOnly: true }],
+      },
     ],
   },
   ocp: {

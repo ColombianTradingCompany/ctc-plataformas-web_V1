@@ -49,7 +49,13 @@ export function CvManager({
       </div>
 
       {tab === "setup" && <SetupTab initial={initialSetup} />}
-      {tab === "applications" && <ApplicationsTab applications={applications} />}
+      {tab === "applications" && (
+        <ApplicationsTab
+          applications={applications}
+          baselineEducation={initialSetup.profile.education}
+          baselineLanguages={initialSetup.profile.languages}
+        />
+      )}
       {tab === "followup" && <FollowupTab applications={applications} />}
     </div>
   );

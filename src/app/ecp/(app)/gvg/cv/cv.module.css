@@ -20,6 +20,28 @@
   color: #fff;
 }
 
+/* second-level tabs (Setup blocks) */
+.subTabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gvg-line, #c9dbf8);
+  margin-bottom: 16px;
+}
+.subTab {
+  border: none;
+  background: none;
+  padding: 8px 14px 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gvg-muted, #4a608c);
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+}
+.subTab:hover { color: var(--gvg-ink, #0f2247); }
+.subTabActive { color: var(--gvg-accent, #2e6be6); border-bottom-color: var(--gvg-accent, #2e6be6); }
+
 /* cards */
 .card {
   background: #fff;
@@ -298,15 +320,18 @@
 .axisScore { font-family: var(--font-spline-mono), monospace; font-weight: 700; color: var(--gvg-deep, #0d2f6e); }
 .expEdit { border: 1px solid var(--gvg-line, #c9dbf8); border-radius: 10px; padding: 12px; margin-bottom: 10px; background: #fbfdff; }
 
-/* cover letter preview */
+/* cover letter preview — rendered as real paragraphs, not a pre-wrap blob */
 .letterText {
-  white-space: pre-wrap;
   font-size: 12.5px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--gvg-ink, #0f2247);
-  background: var(--gvg-soft, #eaf1fe);
+  background: #fff;
+  border: 1px solid var(--gvg-line, #c9dbf8);
   border-radius: 8px;
-  padding: 12px 14px;
-  max-height: 260px;
+  padding: 14px 16px;
+  margin-top: 6px;
+  max-height: 320px;
   overflow-y: auto;
 }
+.letterText p { margin: 0 0 10px; }
+.letterText p:last-child { margin-bottom: 0; }

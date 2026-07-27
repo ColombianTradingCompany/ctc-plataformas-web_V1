@@ -49,7 +49,11 @@ export function renderCvHtml(input: CvRenderInput): string {
     .join("\n");
 
   const skills = plan.core_skills.map((s) => `<li>${esc(s)}</li>`).join("");
-  const education = profile.education
+  // The sidebar is tailored per application; the profile is only the fallback
+  // for rows whose match predates the tailored-sidebar plan (2026-07-27).
+  const educationList = plan.education?.length ? plan.education : profile.education;
+  const languageList = plan.languages?.length ? plan.languages : profile.languages;
+  const education = educationList
     .map(
       (ed) => `<div class="edu">
   <p class="eduTitle">${esc(ed.title)}</p>
@@ -58,7 +62,7 @@ export function renderCvHtml(input: CvRenderInput): string {
 </div>`
     )
     .join("");
-  const langs = profile.languages
+  const langs = languageList
     .map(
       (l) => `<div class="lang"><div class="langRing"><span class="langName">${esc(l.name)}</span><span class="langLevel">${esc(
         l.level

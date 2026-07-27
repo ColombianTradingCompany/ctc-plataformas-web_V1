@@ -130,6 +130,8 @@ Then produce your full analysis as ONE JSON object in a \`\`\`json fenced block 
     "tagline": "one line, the value proposition for THIS role",
     "about": "sidebar summary, 55-80 words, tailored",
     "core_skills": [exactly 9 short skill labels, most job-relevant first],
+    "education": [{"title": "…", "sub": "…", "detail": "…"}],
+    "languages": [{"name": "…", "level": "…"}],
     "experiences": [
       {"experience_id": "id from the Master Experience", "role_title": "concise CV entry title", "bullets": ["3-4 bullets, 15-28 words each, drawn from that item's capabilities and skills, angled at this job"]}
     ]
@@ -139,6 +141,9 @@ Then produce your full analysis as ONE JSON object in a \`\`\`json fenced block 
 
 Rules:
 - MORE RECENT experiences must always weigh more; never stretch far-back experience to force a match.
+- EVERY visible part of the CV is tailored to this job: the headline, the tagline, the About summary, the 9 core skills, and the order of the education and language blocks. The profile you receive is the BASELINE to select and reorder from.
+- cv_plan.education: reproduce entries from the profile's education list VERBATIM (same title/sub/detail strings) but choose which to include and in what order — most job-relevant first (e.g. lead with a certification the posting names). Include 4-5 of them. Never invent or reword a degree, institution or certification.
+- cv_plan.languages: the same profile languages, reordered by relevance to this posting (e.g. German first for a German-language role). Never change a level.
 - cv_plan.experiences: pick the 6 most relevant items of kind "job", in reverse chronological order (ids must be real). Bullets state facts from the repository — never invent employers, dates, metrics, or tools.
 - The cover letter must imitate the tone, structure and voice of the provided samples (direct opening, concrete evidence, warm close). Address the hiring contact by name if known, otherwise "Dear Hiring Team". Company-specific — mention something real about the company from your research.
 - Everything in English.`;

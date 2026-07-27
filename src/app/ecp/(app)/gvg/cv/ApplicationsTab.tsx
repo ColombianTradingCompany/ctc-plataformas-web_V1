@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { putSignedUrlWithProgress } from "@/lib/kaffetalMedia";
 import { UploadProgressRing, useUpload } from "@/components/UploadProgress";
-import type { GvgApplication, MatchResult } from "@/lib/gvg/cvData";
+import type { GvgApplication, GvgEducationEntry, GvgLanguage, MatchResult } from "@/lib/gvg/cvData";
 import { prepareGvgUpload } from "@/lib/gvg/cvActions";
 import {
   createGvgApplication,
@@ -36,7 +36,16 @@ const safeName = (s: string | null) => (s ?? "application").replace(/[^a-zA-Z0-9
 
 /** The process kanban: New Application → Matching → Analysis Ready →
  *  Rendering → Ready to Apply. The two transit columns self-advance. */
-export function ApplicationsTab({ applications }: { applications: GvgApplication[] }) {
+export function ApplicationsTab({
+  applications,
+  baselineEducation,
+  baselineLanguages,
+}: {
+  applications: GvgApplication[];
+  /** Setup's profile lists — the "reset to baseline" source in the analysis editor. */
+  baselineEducation: GvgEducationEntry[];
+  baselineLanguages: GvgLanguage[];
+}) {
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [analysisOf, setAnalysisOf] = useState<GvgApplication | null>(null);
@@ -240,6 +249,8 @@ export function ApplicationsTab({ applications }: { applications: GvgApplication
       {analysisOf && (
         <AnalysisModal
           app={analysisOf}
+          baselineEducation={baselineEducation}
+          baselineLanguages={baselineLanguages}
           onClose={() => setAnalysisOf(null)}
           onRendered={(app) => {
             setAnalysisOf(null);
@@ -255,23 +266,23 @@ export function ApplicationsTab({ applications }: { applications: GvgApplication
 
 function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [url, setUrl] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  /** Storage path of the already-uploaded file — set the moment it lands. */
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const upload = useUpload();
-  const fileInput = useRef<HTMLInputElement>(null);
 
-  async function create() {
-    if (!file) {
-      setError("Attach the .mhtml export of the job posting.");
-      return;
-    }
-    setBusy(true);
+  // The file goes up as soon as it is picked, not on "Create application" —
+  // a 6 MB LinkedIn export takes a moment, and hiding that behind the final
+  // click made the button look broken.
+  async function onPicked(file: File) {
     setError(null);
+    setUploadedPath(null);
+    setFileName(file.name);
     const prep = await prepareGvgUpload("jobs", file.name);
     if (!prep.ok) {
       setError(prep.error);
-      setBusy(false);
       return;
     }
     const ok = await upload.run(async () => {
@@ -279,11 +290,17 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
       return put.ok;
     });
     if (!ok) {
-      setError("The upload failed.");
-      setBusy(false);
+      setError("The upload failed — pick the file again.");
       return;
     }
-    const res = await createGvgApplication({ job_url: url, mhtml_path: prep.path });
+    setUploadedPath(prep.path);
+  }
+
+  async function create() {
+    if (!uploadedPath) return;
+    setBusy(true);
+    setError(null);
+    const res = await createGvgApplication({ job_url: url, mhtml_path: uploadedPath });
     if (!res.ok) {
       setError(res.error);
       setBusy(false);
@@ -301,23 +318,26 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
           <input className={styles.input} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://www.linkedin.com/jobs/view/…" />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>.mhtml export of the posting</span>
+          <span className={styles.label}>.mhtml export of the posting (uploads immediately)</span>
           <input
-            ref={fileInput}
             className={styles.input}
             type="file"
             accept=".mhtml,.mht,multipart/related"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void onPicked(f);
+            }}
           />
         </label>
         <UploadProgressRing state={upload.state} />
+        {uploadedPath && <p className={styles.okNote}>{fileName} uploaded — ready to create.</p>}
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.modalFoot}>
           <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>
             Cancel
           </button>
-          <button type="button" className={styles.btn} onClick={() => void create()} disabled={busy || !file}>
-            {busy ? "Creating…" : "Create application"}
+          <button type="button" className={styles.btn} onClick={() => void create()} disabled={busy || !uploadedPath}>
+            {busy ? "Reading the posting…" : "Create application"}
           </button>
         </div>
       </div>
@@ -329,10 +349,14 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
 
 function AnalysisModal({
   app,
+  baselineEducation,
+  baselineLanguages,
   onClose,
   onRendered,
 }: {
   app: GvgApplication;
+  baselineEducation: GvgEducationEntry[];
+  baselineLanguages: GvgLanguage[];
   onClose: () => void;
   onRendered: (app: GvgApplication) => void;
 }) {
@@ -429,7 +453,10 @@ function AnalysisModal({
 
         {tab === "cv" && (
           <div>
-            <p className={styles.cardHint}>Each CV part, editable before rendering. Bullets: one per line.</p>
+            <p className={styles.cardHint}>
+              Everything the CV shows is tailored to this job — header, sidebar and entries. Edit anything before rendering; bullets one per
+              line.
+            </p>
             <div className={styles.grid2}>
               <label className={styles.field}>
                 <span className={styles.label}>Headline</span>
@@ -452,6 +479,95 @@ function AnalysisModal({
                 onChange={(e) => setPlan({ ...plan, core_skills: e.target.value.split("\n") })}
               />
             </label>
+
+            <p className={styles.label} style={{ marginTop: 10 }}>
+              Sidebar · education &amp; certifications (selected and ordered for this job)
+            </p>
+            {(plan.education ?? baselineEducation).map((ed, i) => (
+              <div key={i} className={styles.eduRow}>
+                <input
+                  className={styles.input}
+                  value={ed.title}
+                  onChange={(e) =>
+                    setPlan({
+                      ...plan,
+                      education: (plan.education ?? baselineEducation).map((x, j) => (j === i ? { ...x, title: e.target.value } : x)),
+                    })
+                  }
+                />
+                <input
+                  className={styles.input}
+                  value={ed.sub}
+                  onChange={(e) =>
+                    setPlan({
+                      ...plan,
+                      education: (plan.education ?? baselineEducation).map((x, j) => (j === i ? { ...x, sub: e.target.value } : x)),
+                    })
+                  }
+                />
+                <input
+                  className={styles.input}
+                  value={ed.detail}
+                  onChange={(e) =>
+                    setPlan({
+                      ...plan,
+                      education: (plan.education ?? baselineEducation).map((x, j) => (j === i ? { ...x, detail: e.target.value } : x)),
+                    })
+                  }
+                />
+                <button
+                  type="button"
+                  className={styles.xBtn}
+                  aria-label={`Remove ${ed.title}`}
+                  onClick={() => setPlan({ ...plan, education: (plan.education ?? baselineEducation).filter((_, j) => j !== i) })}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button type="button" className={styles.btnGhost} onClick={() => setPlan({ ...plan, education: baselineEducation })}>
+              ↺ Reset to Setup baseline
+            </button>
+
+            <p className={styles.label} style={{ marginTop: 14 }}>
+              Sidebar · languages (order matters — lead with what the role speaks)
+            </p>
+            {(plan.languages ?? baselineLanguages).map((l, i) => (
+              <div key={i} className={styles.langRow}>
+                <input
+                  className={styles.input}
+                  value={l.name}
+                  onChange={(e) =>
+                    setPlan({
+                      ...plan,
+                      languages: (plan.languages ?? baselineLanguages).map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
+                    })
+                  }
+                />
+                <input
+                  className={styles.input}
+                  value={l.level}
+                  onChange={(e) =>
+                    setPlan({
+                      ...plan,
+                      languages: (plan.languages ?? baselineLanguages).map((x, j) => (j === i ? { ...x, level: e.target.value } : x)),
+                    })
+                  }
+                />
+                <button
+                  type="button"
+                  className={styles.xBtn}
+                  aria-label={`Remove ${l.name}`}
+                  onClick={() => setPlan({ ...plan, languages: (plan.languages ?? baselineLanguages).filter((_, j) => j !== i) })}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            <p className={styles.label} style={{ marginTop: 14 }}>
+              Experience entries
+            </p>
             {plan.experiences.map((exp, i) => (
               <div key={exp.experience_id + i} className={styles.expEdit}>
                 <label className={styles.field}>

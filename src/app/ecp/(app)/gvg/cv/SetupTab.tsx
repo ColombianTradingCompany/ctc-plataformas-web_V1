@@ -27,15 +27,42 @@ import {
 import { ExperienceModal } from "./ExperienceModal";
 import styles from "./cv.module.css";
 
+type SetupBlock = "profile" | "paths" | "experience" | "letters";
+
 /** Setup: the standing profile the AI matcher draws from — photo, identity,
- *  Master Experience, career paths and writing-style samples. */
+ *  Master Experience, career paths and writing-style samples. One sub-tab per
+ *  block: each is long, and stacking all four made the page a scroll marathon. */
 export function SetupTab({ initial }: { initial: CvSetupData }) {
+  const [block, setBlock] = useState<SetupBlock>("profile");
+
+  const blocks: [SetupBlock, string][] = [
+    ["profile", "Profile"],
+    ["paths", `Career Paths · ${initial.careerPaths.filter((p) => p.active).length}`],
+    ["experience", `Master Experience · ${initial.experiences.length}`],
+    ["letters", `Cover Letters · ${initial.coverLetters.length}`],
+  ];
+
   return (
     <div>
-      <ProfileCard initialProfile={initial.profile} photoUrl={initial.photoUrl} />
-      <CareerPathsCard initialPaths={initial.careerPaths} />
-      <ExperiencesCard initialExperiences={initial.experiences} />
-      <CoverLettersCard initialLetters={initial.coverLetters} />
+      <div className={styles.subTabs} role="tablist" aria-label="Setup blocks">
+        {blocks.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={block === key}
+            className={`${styles.subTab} ${block === key ? styles.subTabActive : ""}`}
+            onClick={() => setBlock(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {block === "profile" && <ProfileCard initialProfile={initial.profile} photoUrl={initial.photoUrl} />}
+      {block === "paths" && <CareerPathsCard initialPaths={initial.careerPaths} />}
+      {block === "experience" && <ExperiencesCard initialExperiences={initial.experiences} />}
+      {block === "letters" && <CoverLettersCard initialLetters={initial.coverLetters} />}
     </div>
   );
 }
@@ -82,7 +109,10 @@ function ProfileCard({ initialProfile, photoUrl }: { initialProfile: GvgProfileD
   return (
     <section className={styles.card}>
       <h2 className={styles.cardTitle}>Profile</h2>
-      <p className={styles.cardHint}>The identity block of every rendered CV: photo, headline, contact, languages and the sidebar education entries.</p>
+      <p className={styles.cardHint}>
+        The <b>baseline</b> the matcher tailors from. Photo and contact go on every CV as-is; the headline, the About summary, the education
+        list and the language order are re-picked per application (edit them in that application&rsquo;s analysis).
+      </p>
 
       <div className={styles.photoRow}>
         {photoUrl ? (
@@ -592,7 +622,14 @@ function CoverLettersCard({ initialLetters }: { initialLetters: GvgCoverLetterSa
                 </button>
               </div>
             </div>
-            {open === l.id && <div className={styles.letterText}>{l.extracted_text || "—"}</div>}
+            {open === l.id && (
+              <div className={styles.letterText}>
+                {(l.extracted_text ?? "").split(/\n{2,}/).filter(Boolean).map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+                {!l.extracted_text && "—"}
+              </div>
+            )}
           </div>
         ))}
       </div>

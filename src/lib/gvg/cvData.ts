@@ -120,12 +120,22 @@ export type MatchResult = {
     company_notes: string; // online-research digest
     hiring_contact: string | null;
   };
-  /** Content plan for each CV slot, keyed to the template. */
+  /**
+   * Content plan for each CV slot, keyed to the template. EVERYTHING the CV
+   * shows is tailored per application — the header (headline/tagline) and the
+   * whole sidebar (about, core skills, education, languages) included. The
+   * profile in Setup is the BASELINE the AI selects and reorders from; it is
+   * never rendered directly except as a fallback for pre-2026-07-27 rows.
+   */
   cv_plan: {
     headline: string;
     tagline: string;
     about: string;
     core_skills: string[]; // 9 sidebar highlights
+    /** Chosen and reordered from the profile's entries — never invented. */
+    education?: GvgEducationEntry[];
+    /** Reordered from the profile's languages (e.g. German first for a DE role). */
+    languages?: GvgLanguage[];
     experiences: {
       experience_id: string; // gvg_experiences.id this entry draws from
       role_title: string; // headline for this CV entry

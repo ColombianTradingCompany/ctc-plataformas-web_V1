@@ -46,3 +46,34 @@ Formato:
   de nav + candado) y posible entrada DICT nueva (`gvgspace`).
 (commit: bf23b46)
 
+
+## [2026-07-27] CV App Manager — tanda de correcciones del owner (V2.18)
+- **BUG que rompía el intake**: `parseJobMhtml` devolvía 165 caracteres ("Skip to
+  search / Recaptcha requires verification") para un export real de LinkedIn de
+  5.8 MB, así que toda alta fallaba con "The saved page has almost no text".
+  Dos causas, ambas anotadas ya en `mhtml.ts` para que no se repitan: (1) el
+  regex `<head[\s\S]*?</head>` también casaba `<header`, y como el siguiente
+  `</head>` literal pertenece al SIGUIENTE sub-documento, un solo `.replace()`
+  borraba ~215 KB — la oferta completa; (2) mailparser CONCATENA todas las
+  partes text/html, y una página guardada de LinkedIn trae el documento
+  principal más un sub-documento por iframe (anuncios, trackers). Arreglo:
+  límites de palabra en todos los strippers + recorte al primer `<body>…</body>`
+  (el documento principal) y, dentro, preferencia por `<main>`. Medido: 11.496 /
+  10.723 / 6.182 caracteres útiles en tres ofertas reales, con "About the job".
+- La subida del .mhtml ahora arranca **al elegir el archivo**, no al pulsar
+  "Create application" (un export de 6 MB detrás del clic final hacía parecer
+  que el botón estaba roto).
+- **Todo lo que se ve en el CV es ahora a medida de cada vacante**: `cv_plan`
+  ganó `education` y `languages`, que el agente SELECCIONA Y REORDENA del perfil
+  (nunca inventa ni reescribe un título) — p. ej. el alemán primero en una
+  vacante en alemán, o la certificación que nombra el anuncio arriba del todo.
+  El perfil de Setup pasa a ser explícitamente la LÍNEA BASE. Los renders viejos
+  siguen funcionando: si el plan no trae esos campos, cae al perfil.
+- Setup se dividió en 4 sub-pestañas (Perfil / Career Paths / Master Experience /
+  Cover Letters) y las muestras de carta se re-extrajeron con pypdf en modo
+  `layout` — la extracción anterior salía a una palabra por línea (artefacto de
+  PDF justificado) y se veía como un galimatías; ahora son párrafos corridos y
+  se pintan como párrafos reales, no como un bloque `pre-wrap`.
+- Verificación: tsc + eslint limpios; 28/28 checks de QA (3 exports reales de
+  LinkedIn, las 4 cartas, y el render con sidebar a medida + su fallback).
+(commit: pending)

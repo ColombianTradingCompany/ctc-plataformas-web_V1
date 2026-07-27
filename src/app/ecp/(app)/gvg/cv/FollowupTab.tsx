@@ -4,14 +4,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { FollowupStatus, GvgApplication } from "@/lib/gvg/cvData";
 import { deleteGvgApplication, updateGvgFollowup } from "@/lib/gvg/matchActions";
+import { ApplicationCard, daysSince } from "./ApplicationCard";
 import styles from "./cv.module.css";
 
 const COLD_AFTER_DAYS = 10;
-
-function daysSince(iso: string | null): number {
-  if (!iso) return 0;
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-}
 
 /** Sent cards with no update for >10 days show in Cold, without rewriting the
  *  row — the column is derived, so a card "recovers" the moment it's touched. */
@@ -28,8 +24,17 @@ const COLS: [FollowupStatus, string][] = [
   ["rejected", "Rejected"],
 ];
 
-/** Application Follow Up: everything that already went out. No "Hired" column
- *  on purpose — hired means the whole search is over. */
+const STATUS_CHIP: Record<FollowupStatus, string> = {
+  sent: "Sent",
+  cold: "Cold",
+  next_steps: "Next steps",
+  rejected: "Rejected",
+};
+
+/** Application Follow Up: everything that already went out. Same compact card,
+ *  accordion, documents and modals as the process board — the owner should not
+ *  lose access to a file just because the application moved on. No "Hired"
+ *  column on purpose: hired means the whole search is over. */
 export function FollowupTab({ applications }: { applications: GvgApplication[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<GvgApplication | null>(null);
@@ -38,10 +43,18 @@ export function FollowupTab({ applications }: { applications: GvgApplication[] }
   const sentApps = useMemo(() => applications.filter((a) => a.status === "sent"), [applications]);
   const byCol = (col: FollowupStatus) => sentApps.filter((a) => effectiveColumn(a) === col);
 
+  async function remove(app: GvgApplication) {
+    if (!window.confirm(`Delete "${app.job_title ?? "(untitled)"}" and its documents?`)) return;
+    const res = await deleteGvgApplication(app.id);
+    if (!res.ok) setError(res.error);
+    router.refresh();
+  }
+
   return (
     <div>
       <p className={styles.cardHint}>
-        Sent applications live here. A card with no update for more than {COLD_AFTER_DAYS} days slides to <b>Cold</b> on its own.
+        Sent applications live here. A card with no update for more than {COLD_AFTER_DAYS} days slides to <b>Cold</b> on its own. Open a
+        card for its match, its documents and its follow-up notes.
       </p>
       {error && <p className={styles.error}>{error}</p>}
       <div className={styles.board}>
@@ -51,29 +64,40 @@ export function FollowupTab({ applications }: { applications: GvgApplication[] }
               {label} <span className={styles.colCount}>{byCol(col).length}</span>
             </p>
             {byCol(col).map((a) => (
-              <div key={a.id} className={styles.appCard}>
-                <div className={styles.appTitle}>{a.job_title ?? "(untitled)"}</div>
-                {a.company && <div className={styles.appCompany}>{a.company}</div>}
-                <div className={styles.appMeta}>
-                  Sent {a.sent_at ? new Date(a.sent_at).toLocaleDateString("en-GB") : "?"} · {daysSince(a.sent_at)}d ago
-                  {a.interview_date && (
-                    <>
-                      <br />⭐ Interview {a.interview_date}
-                    </>
-                  )}
-                  {a.notes && (
-                    <>
-                      <br />
-                      {a.notes}
-                    </>
-                  )}
-                </div>
-                <div className={styles.appActions}>
-                  <button type="button" className={styles.btnGhost} onClick={() => setEditing(a)}>
-                    Update
-                  </button>
-                </div>
-              </div>
+              <ApplicationCard
+                key={a.id}
+                app={a}
+                chip={
+                  a.interview_date ? (
+                    <span className={styles.starPill} title={`Interview ${a.interview_date}`}>
+                      ⭐
+                    </span>
+                  ) : a.match ? (
+                    <span className={styles.scorePill}>{a.match.evaluation.overall_score}%</span>
+                  ) : undefined
+                }
+                meta={
+                  <>
+                    Sent {a.sent_at ? new Date(a.sent_at).toLocaleDateString("en-GB") : "?"} · {daysSince(a.sent_at)}d ago
+                    {a.interview_date ? ` · ⭐ ${a.interview_date}` : ""}
+                  </>
+                }
+                extra={
+                  a.notes ? <div className={styles.noteLine}>{a.notes}</div> : undefined
+                }
+                actions={
+                  <>
+                    <button type="button" className={styles.btn} onClick={() => setEditing(a)}>
+                      Update follow-up
+                    </button>
+                    <span className={styles.statusChip}>{STATUS_CHIP[effectiveColumn(a)]}</span>
+                    <span className={styles.actionsSpacer} />
+                    <button type="button" className={styles.btnDanger} onClick={() => void remove(a)}>
+                      Delete
+                    </button>
+                  </>
+                }
+              />
             ))}
           </div>
         ))}
@@ -112,29 +136,22 @@ function FollowupModal({
 
   async function save() {
     setBusy(true);
-    const res = await updateGvgFollowup(app.id, {
-      followup_status: status,
-      interview_date: status === "next_steps" && interviewDate ? interviewDate : null,
-      notes: notes.trim() || null,
-    });
-    setBusy(false);
-    if (!res.ok) {
-      onError(res.error);
-      return;
+    try {
+      const res = await updateGvgFollowup(app.id, {
+        followup_status: status,
+        interview_date: status === "next_steps" && interviewDate ? interviewDate : null,
+        notes: notes.trim() || null,
+      });
+      if (!res.ok) {
+        onError(res.error);
+        setBusy(false);
+        return;
+      }
+      onSaved();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "The update failed.");
+      setBusy(false);
     }
-    onSaved();
-  }
-
-  async function remove() {
-    if (!window.confirm("Delete this application entirely?")) return;
-    setBusy(true);
-    const res = await deleteGvgApplication(app.id);
-    setBusy(false);
-    if (!res.ok) {
-      onError(res.error);
-      return;
-    }
-    onSaved();
   }
 
   return (
@@ -154,7 +171,7 @@ function FollowupModal({
         </label>
         {status === "next_steps" && (
           <label className={styles.field}>
-            <span className={styles.label}>Interview date (shows on the main board with ⭐)</span>
+            <span className={styles.label}>Interview date (shows on the boards and the calendar with ⭐)</span>
             <input className={styles.input} type="date" value={interviewDate} onChange={(e) => setInterviewDate(e.target.value)} />
           </label>
         )}
@@ -163,9 +180,6 @@ function FollowupModal({
           <textarea className={styles.textarea} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
         <div className={styles.modalFoot}>
-          <button type="button" className={styles.btnDanger} onClick={() => void remove()} disabled={busy}>
-            Delete
-          </button>
           <button type="button" className={styles.btnGhost} onClick={onClose} disabled={busy}>
             Cancel
           </button>

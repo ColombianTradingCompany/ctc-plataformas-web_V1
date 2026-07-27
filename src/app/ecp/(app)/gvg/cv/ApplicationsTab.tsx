@@ -23,25 +23,8 @@ import {
   runGvgMatch,
   saveGvgMatchEdits,
 } from "@/lib/gvg/matchActions";
+import { ApplicationCard, daysSince } from "./ApplicationCard";
 import styles from "./cv.module.css";
-
-/** Open a rendered HTML document in a new tab (print → Save as PDF from there). */
-function openHtml(html: string) {
-  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-  window.open(url, "_blank", "noopener");
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
-function downloadHtml(html: string, filename: string) {
-  const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
-const safeName = (s: string | null) => (s ?? "application").replace(/[^a-zA-Z0-9-]+/g, "_").slice(0, 60);
 
 /** Checklist for a card sitting in a transit column: done / running / waiting. */
 function StepList({ steps, progress }: { steps: readonly string[]; progress: GvgProgress | null }) {
@@ -138,30 +121,42 @@ export function ApplicationsTab({
     setLive((s) => ({ ...s, [id]: { status, progress: { step: 1, total: 3, label } } }));
   }
 
+  const clearLive = (id: string) =>
+    setLive((s) => {
+      const n = { ...s };
+      delete n[id];
+      return n;
+    });
+
+  // Every call below is wrapped: a Server Action that THROWS (expired space
+  // cookie, dropped connection) must surface an error and release the card,
+  // never leave it spinning in a transit column with nothing on screen.
   async function matchMe(app: GvgApplication) {
     setError(null);
     optimistic(app.id, "matching", MATCH_STEPS[0]);
-    const res = await runGvgMatch(app.id);
-    if (!res.ok) setError(res.error);
-    setLive((s) => {
-      const n = { ...s };
-      delete n[app.id];
-      return n;
-    });
-    router.refresh();
+    try {
+      const res = await runGvgMatch(app.id);
+      if (!res.ok) setError(res.error);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The match failed. Try again.");
+    } finally {
+      clearLive(app.id);
+      router.refresh();
+    }
   }
 
   async function render(app: GvgApplication) {
     setError(null);
     optimistic(app.id, "rendering", RENDER_STEPS[0]);
-    const res = await renderGvgResources(app.id);
-    if (!res.ok) setError(res.error);
-    setLive((s) => {
-      const n = { ...s };
-      delete n[app.id];
-      return n;
-    });
-    router.refresh();
+    try {
+      const res = await renderGvgResources(app.id);
+      if (!res.ok) setError(res.error);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The render failed. Try again.");
+    } finally {
+      clearLive(app.id);
+      router.refresh();
+    }
   }
 
   async function sent(app: GvgApplication) {
@@ -179,84 +174,63 @@ export function ApplicationsTab({
   }
 
   const card = (a: GvgApplication) => (
-    <div key={a.id} className={styles.appCard}>
-      <div className={styles.appTitle}>{a.job_title ?? "(untitled posting)"}</div>
-      {a.company && <div className={styles.appCompany}>{a.company}</div>}
-      {a.match && <span className={styles.scorePill}>{a.match.evaluation.overall_score}%</span>}
-      {a.error && <div className={styles.error}>{a.error}</div>}
-      {a.status === "matching" && <StepList steps={MATCH_STEPS} progress={a.progress} />}
-      {a.status === "rendering" && <StepList steps={RENDER_STEPS} progress={a.progress} />}
-      <div className={styles.appActions}>
-        {a.status === "nueva" && (
-          <>
+    <ApplicationCard
+      key={a.id}
+      app={a}
+      chip={a.match ? <span className={styles.scorePill}>{a.match.evaluation.overall_score}%</span> : undefined}
+      meta={
+        <>
+          {daysSince(a.created_at)}d old
+          {a.match ? ` · ${a.match.evaluation.career_path}` : ""}
+        </>
+      }
+      extra={
+        <>
+          {a.status === "matching" && <StepList steps={MATCH_STEPS} progress={a.progress} />}
+          {a.status === "rendering" && <StepList steps={RENDER_STEPS} progress={a.progress} />}
+        </>
+      }
+      actions={
+        <>
+          {a.status === "nueva" && (
             <button type="button" className={styles.btn} onClick={() => void matchMe(a)}>
               Match Me
             </button>
-            <button type="button" className={styles.btnDanger} onClick={() => void remove(a)}>
-              ✕
+          )}
+          {/* Reached from a reload while a run was in flight (or a crashed run):
+              nothing is driving it in this tab, so offer to start it again. */}
+          {a.status === "matching" && !live[a.id] && (
+            <button type="button" className={styles.btnGhost} onClick={() => void matchMe(a)}>
+              Resume matching
             </button>
-          </>
-        )}
-        {a.status === "matching" && !live[a.id] && (
-          // Reached from a reload while the run was in flight (or a crashed run):
-          // nothing is driving it in this tab, so offer to start it again.
-          <button type="button" className={styles.btnGhost} onClick={() => void matchMe(a)}>
-            Resume
-          </button>
-        )}
-        {a.status === "rendering" && !live[a.id] && (
-          <button type="button" className={styles.btnGhost} onClick={() => void render(a)}>
-            Resume
-          </button>
-        )}
-        {a.status === "analysis" && (
-          <>
+          )}
+          {a.status === "rendering" && !live[a.id] && (
+            <button type="button" className={styles.btnGhost} onClick={() => void render(a)}>
+              Resume rendering
+            </button>
+          )}
+          {a.status === "analysis" && (
             <button type="button" className={styles.btn} onClick={() => setAnalysisOf(a)}>
               Review analysis
             </button>
-            <button type="button" className={styles.btnDanger} onClick={() => void remove(a)}>
-              ✕
-            </button>
-          </>
-        )}
-        {a.status === "ready" && (
-          <>
-            {a.cv_html && (
-              <button type="button" className={styles.btnGhost} onClick={() => openHtml(a.cv_html!)}>
-                CV
+          )}
+          {a.status === "ready" && (
+            <>
+              <button type="button" className={styles.btnGhost} onClick={() => setAnalysisOf(a)}>
+                Re-open analysis
               </button>
-            )}
-            {a.cl_html && (
-              <button type="button" className={styles.btnGhost} onClick={() => openHtml(a.cl_html!)}>
-                Letter
+              <button type="button" className={styles.btn} onClick={() => void sent(a)}>
+                Application Sent
               </button>
-            )}
-            {a.cv_html && (
-              <button type="button" className={styles.btnGhost} onClick={() => downloadHtml(a.cv_html!, `CV_GV_${safeName(a.company)}.html`)}>
-                ⬇ CV
-              </button>
-            )}
-            {a.cl_html && (
-              <button
-                type="button"
-                className={styles.btnGhost}
-                onClick={() => downloadHtml(a.cl_html!, `CoverLetter_GV_${safeName(a.company)}.html`)}
-              >
-                ⬇ Letter
-              </button>
-            )}
-            {a.job_url && (
-              <a className={styles.btnGhost} href={a.job_url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
-                Posting ↗
-              </a>
-            )}
-            <button type="button" className={styles.btn} onClick={() => void sent(a)}>
-              Application Sent
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+            </>
+          )}
+          <span className={styles.actionsSpacer} />
+          <button type="button" className={styles.btnDanger} onClick={() => void remove(a)}>
+            Delete
+          </button>
+        </>
+      }
+    />
   );
 
   return (
@@ -375,13 +349,18 @@ function NewApplicationModal({ onClose, onCreated }: { onClose: () => void; onCr
     if (!uploadedPath) return;
     setBusy(true);
     setError(null);
-    const res = await createGvgApplication({ job_url: url, mhtml_path: uploadedPath });
-    if (!res.ok) {
-      setError(res.error);
+    try {
+      const res = await createGvgApplication({ job_url: url, mhtml_path: uploadedPath });
+      if (!res.ok) {
+        setError(res.error);
+        setBusy(false);
+        return;
+      }
+      onCreated();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not create the application.");
       setBusy(false);
-      return;
     }
-    onCreated();
   }
 
   return (
@@ -449,14 +428,22 @@ function AnalysisModal({
     setBusy(true);
     setError(null);
     setSavedNote(false);
-    const res = await saveGvgMatchEdits(app.id, { ...match, cv_plan: plan, cover_letter_md: letterMd }, jobTitle, company);
-    setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
+    try {
+      const res = await saveGvgMatchEdits(app.id, { ...match, cv_plan: plan, cover_letter_md: letterMd }, jobTitle, company);
+      if (!res.ok) {
+        setError(res.error);
+        return false;
+      }
+      setSavedNote(true);
+      return true;
+    } catch (e) {
+      // A throwing Server Action (expired space cookie, network drop) used to
+      // leave this button stuck on "Working…" with nothing on screen.
+      setError(e instanceof Error ? e.message : "The save failed. Try again.");
       return false;
+    } finally {
+      setBusy(false);
     }
-    setSavedNote(true);
-    return true;
   }
 
   async function saveAndRender() {

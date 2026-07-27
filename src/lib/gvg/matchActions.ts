@@ -11,6 +11,8 @@ import {
   type FollowupStatus,
   type GvgApplication,
   type GvgEducationEntry,
+  type GvgEvent,
+  type GvgEventKind,
   type GvgLanguage,
   type GvgProgress,
   type MatchResult,
@@ -43,6 +45,49 @@ function normalizeApplication(a: Record<string, unknown>): GvgApplication {
     created_at: (a.created_at as string) ?? "",
     updated_at: (a.updated_at as string) ?? "",
   };
+}
+
+/** Record a board movement. Never throws: a lost timeline entry must not fail
+ *  the action that produced it. */
+async function logEvent(
+  service: ReturnType<typeof createServiceRoleClient>,
+  applicationId: string,
+  kind: GvgEventKind,
+  detail?: string | null
+): Promise<void> {
+  try {
+    await service.from("gvg_application_events").insert({ application_id: applicationId, kind, detail: detail ?? null });
+  } catch {
+    /* timeline is best-effort */
+  }
+}
+
+export async function loadGvgEvents(limit = 400): Promise<GvgEvent[]> {
+  await requireGvgOwner();
+  const service = createServiceRoleClient();
+  const { data } = await service
+    .from("gvg_application_events")
+    .select("id, application_id, kind, detail, at")
+    .order("at", { ascending: false })
+    .limit(limit);
+  return ((data as Record<string, unknown>[] | null) ?? []).map((e) => ({
+    id: e.id as string,
+    application_id: e.application_id as string,
+    kind: e.kind as GvgEventKind,
+    detail: (e.detail as string | null) ?? null,
+    at: e.at as string,
+  }));
+}
+
+/** Signed link to the saved job page. The rendered CV and letter live in the
+ *  row itself, so the card can open them without a round trip. */
+export async function getGvgSourceUrl(applicationId: string): Promise<{ url: string | null }> {
+  await requireGvgOwner();
+  const service = createServiceRoleClient();
+  const { data: app } = await service.from("gvg_applications").select("mhtml_path").eq("id", applicationId).maybeSingle();
+  if (!app?.mhtml_path) return { url: null };
+  const { data } = await service.storage.from(BUCKET).createSignedUrl(app.mhtml_path as string, 3600);
+  return { url: data?.signedUrl ?? null };
 }
 
 /** Lightweight poll for the cards sitting in a transit column. */
@@ -148,6 +193,7 @@ export async function createGvgApplication(input: {
     .select("id")
     .single();
   if (error || !data) return { ok: false, error: "Could not create the application." };
+  await logEvent(service, data.id as string, "created", jobTitleGuess);
   revalidatePath(CV_PATH);
   return { ok: true, id: data.id as string };
 }
@@ -241,6 +287,7 @@ export async function runGvgMatch(applicationId: string): Promise<Result> {
       updated_at: new Date().toISOString(),
     })
     .eq("id", applicationId);
+  await logEvent(service, applicationId, "match_started", app.job_title as string | null);
   revalidatePath(CV_PATH);
 
   try {
@@ -333,6 +380,7 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
         updated_at: new Date().toISOString(),
       })
       .eq("id", applicationId);
+    await logEvent(service, applicationId, "matched", `${match.evaluation.overall_score}% · ${app.job_title ?? ""}`.trim());
     revalidatePath(CV_PATH);
     return { ok: true };
   } catch (err) {
@@ -345,6 +393,7 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
         updated_at: new Date().toISOString(),
       })
       .eq("id", applicationId);
+    await logEvent(service, applicationId, "match_failed", err instanceof Error ? err.message.slice(0, 120) : null);
     revalidatePath(CV_PATH);
     return { ok: false, error: err instanceof Error ? err.message : "Unknown matching error." };
   }
@@ -447,6 +496,7 @@ export async function renderGvgResources(applicationId: string): Promise<Result>
       .from("gvg_applications")
       .update({ status: "ready", cv_html: cvHtml, cl_html: clHtml, error: null, progress: null, updated_at: new Date().toISOString() })
       .eq("id", applicationId);
+    await logEvent(service, applicationId, "rendered", app.job_title as string | null);
     revalidatePath(CV_PATH);
     return { ok: true };
   } catch (err) {
@@ -474,6 +524,7 @@ export async function markGvgSent(applicationId: string): Promise<Result> {
     .eq("id", applicationId)
     .eq("status", "ready");
   if (error) return { ok: false, error: "Could not mark as sent." };
+  await logEvent(service, applicationId, "sent");
   revalidatePath(CV_PATH);
   return { ok: true };
 }
@@ -495,6 +546,27 @@ export async function updateGvgFollowup(
     .eq("id", applicationId)
     .eq("status", "sent");
   if (error) return { ok: false, error: "Could not update the follow-up." };
+  // Only log a state the card actually moved INTO, so re-saving a note doesn't
+  // litter the timeline with duplicate "went cold" markers.
+  const { data: prev } = await service
+    .from("gvg_application_events")
+    .select("kind")
+    .eq("application_id", applicationId)
+    .order("at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (prev?.kind !== input.followup_status && input.followup_status !== "sent") {
+    await logEvent(service, applicationId, input.followup_status as GvgEventKind);
+  }
+  if (input.interview_date) {
+    const { count } = await service
+      .from("gvg_application_events")
+      .select("id", { count: "exact", head: true })
+      .eq("application_id", applicationId)
+      .eq("kind", "interview_set")
+      .eq("detail", input.interview_date);
+    if (!count) await logEvent(service, applicationId, "interview_set", input.interview_date);
+  }
   revalidatePath(CV_PATH);
   return { ok: true };
 }

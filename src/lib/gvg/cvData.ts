@@ -194,6 +194,42 @@ export type GvgApplication = {
   updated_at: string;
 };
 
+// ── Board events (the calendar timeline) ────────────────────────────────────
+
+export type GvgEventKind =
+  | "created"
+  | "match_started"
+  | "matched"
+  | "match_failed"
+  | "rendered"
+  | "sent"
+  | "cold"
+  | "next_steps"
+  | "rejected"
+  | "interview_set";
+
+export type GvgEvent = {
+  id: string;
+  application_id: string;
+  kind: GvgEventKind;
+  detail: string | null;
+  at: string;
+};
+
+/** Icon + wording per board movement, shared by the timeline and the legend. */
+export const EVENT_META: Record<GvgEventKind, { icon: string; label: string; tone: "neutral" | "good" | "bad" | "star" }> = {
+  created: { icon: "📄", label: "Application created", tone: "neutral" },
+  match_started: { icon: "🔎", label: "Matching started", tone: "neutral" },
+  matched: { icon: "🎯", label: "Analysis ready", tone: "good" },
+  match_failed: { icon: "⚠️", label: "Matching failed", tone: "bad" },
+  rendered: { icon: "🖨️", label: "Documents rendered", tone: "good" },
+  sent: { icon: "📤", label: "Application sent", tone: "good" },
+  cold: { icon: "🧊", label: "Went cold", tone: "bad" },
+  next_steps: { icon: "⭐", label: "Moved to next steps", tone: "star" },
+  rejected: { icon: "✖️", label: "Rejected", tone: "bad" },
+  interview_set: { icon: "📅", label: "Interview scheduled", tone: "star" },
+};
+
 /** The step scripts the transit columns render as a checklist. */
 export const MATCH_STEPS = [
   "Reading the posting and your repository",

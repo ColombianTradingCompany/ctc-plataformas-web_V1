@@ -114,3 +114,32 @@ Formato:
   de idioma se envolvía a una segunda fila empujando todo a la página 2 (ahora
   4 anillos de 14 mm en UNA fila, como la plantilla). Resultado: 1 página.
 (commit: pending)
+
+## [2026-07-27] CV App Manager — tarjetas compactas, documentos en todas partes y vista Calendario (V2.20)
+- **Bitácora de movimientos**: nueva tabla `gvg_application_events` (service-role-only,
+  `kind` ∈ created/match_started/matched/match_failed/rendered/sent/cold/next_steps/
+  rejected/interview_set). Cada acción de etapa la escribe con `logEvent()`, que NUNCA
+  lanza — perder una marca de la línea de tiempo no puede tumbar la acción que la
+  produjo. Se retro-llenó lo que las filas existentes podían probar (creación de todas,
+  el envío de las enviadas y su estado de seguimiento actual).
+- **Tarjetas compactas con acordeón** (`ApplicationCard.tsx`, compartido por los DOS
+  tableros): plegada es un título + una línea de meta, así que una columna muestra
+  muchas de un vistazo; desplegada trae el resumen del match (puntaje, veredicto, ejes,
+  path, contacto), TODOS los documentos y las acciones de la etapa. Los botones se
+  agruparon: primarios a la izquierda, destructivo empujado al extremo con un
+  `actionsSpacer`, en vez de una fila corrida de botones sueltos.
+- **Los documentos se alcanzan desde cualquier etapa** (`DocumentsBlock`): oferta
+  original, página guardada (.mhtml, URL firmada bajo demanda para no acuñar enlaces de
+  tarjetas que nadie abre), CV y carta — abrir o descargar. Antes solo existían en la
+  columna «Ready to Apply» y se perdían al enviar la postulación.
+- **El tablero de Follow-up recibe el mismo trato**: acordeón, documentos, chip de
+  estado, notas y el pop-up de actualización.
+- **Nueva pestaña Calendario**: línea de tiempo (no cuadrícula) agrupada por día, cada
+  movimiento con su ícono y tono; franja de «Upcoming» para entrevistas futuras; filtros
+  por tipo de evento; y clic en cualquier fila abre la ficha completa de esa postulación.
+  A la derecha, tablero fijo con 3 KPIs (postulaciones, enviadas + %, next steps) y 3
+  gráficos SVG a mano (sin dependencia de charts) conmutables por pestañas: Actividad
+  (altas por semana, 8 semanas), Embudo y Distribución de puntajes. **El embudo se deriva
+  de las FILAS, no del log** — las postulaciones anteriores a la bitácora no tienen marca
+  de matched/rendered y contarlas por eventos dibujaría un embudo que niega trabajo real.
+(commit: pending)

@@ -299,17 +299,101 @@
   gap: 6px;
 }
 .colCount { color: var(--gvg-muted, #4a608c); }
+/* Compact board card + accordion. Collapsed a card is a single title line plus
+   one meta line, so a column shows many at a glance; everything else lives
+   behind the caret. */
 .appCard {
   background: #fff;
   border: 1px solid var(--gvg-line, #c9dbf8);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  border-radius: 9px;
+  margin-bottom: 6px;
+  overflow: hidden;
 }
-.appTitle { font-weight: 700; font-size: 13px; color: var(--gvg-ink, #0f2247); line-height: 1.3; overflow-wrap: anywhere; }
-.appCompany { font-size: 11.5px; color: var(--gvg-muted, #4a608c); margin-top: 2px; }
+.appCardOpen { border-color: var(--gvg-accent, #2e6be6); box-shadow: 0 6px 18px -12px rgba(13, 47, 110, 0.5); }
+.appHead {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+.appHead:hover { background: #f7faff; }
+.caret { flex: none; color: var(--gvg-muted, #4a608c); font-size: 10px; line-height: 1.5; }
+.appHeadMain { flex: 1; min-width: 0; }
+.appTitle {
+  display: block;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--gvg-ink, #0f2247);
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+.appCompany { display: block; font-size: 11px; color: var(--gvg-muted, #4a608c); margin-top: 1px; }
+.appMetaLine { font-size: 10.5px; color: var(--gvg-muted, #4a608c); padding: 0 10px 8px 24px; line-height: 1.35; }
+.cardError { font-size: 10.5px; color: #b3261e; padding: 0 10px 8px 24px; line-height: 1.35; }
+.noteLine { font-size: 10.5px; color: var(--gvg-muted, #4a608c); padding: 0 10px 8px 24px; font-style: italic; }
 .appMeta { font-size: 10.5px; color: var(--gvg-muted, #4a608c); margin-top: 6px; }
+
+/* accordion body */
+.accBody { border-top: 1px solid var(--gvg-line, #c9dbf8); padding: 10px 12px 12px; background: #fbfdff; }
+.accSection { margin-bottom: 11px; }
+.accSection:last-child { margin-bottom: 0; }
+.accLabel {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--gvg-muted, #4a608c);
+  margin: 0 0 5px;
+}
+.accText { font-size: 11.5px; line-height: 1.45; color: var(--gvg-ink, #0f2247); margin: 0 0 6px; }
+.accMeta { font-size: 10.5px; color: var(--gvg-muted, #4a608c); line-height: 1.4; margin: 0; }
+.accHint { font-size: 9.5px; color: var(--gvg-muted, #4a608c); margin: 5px 0 0; }
+.accEmpty { font-size: 11px; color: #9aa8c2; margin: 0; }
+.axisMini { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.axisMini > div { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; color: var(--gvg-muted, #4a608c); }
+.axisMini b { color: var(--gvg-ink, #0f2247); font-family: var(--font-spline-mono), monospace; }
+
+/* documents: a wrapping grid of equal-weight links, never a button soup row */
+.docGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.docLink {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  background: #fff;
+  border-radius: 7px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--gvg-ink, #0f2247);
+  text-decoration: none;
+  cursor: pointer;
+  text-align: left;
+}
+.docLink:hover { border-color: var(--gvg-accent, #2e6be6); background: #f4f8ff; }
+.docLink:disabled { opacity: 0.6; cursor: default; }
+
+/* actions: primary first, destructive pushed to the far end */
+.accActions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.actionsSpacer { flex: 1 1 auto; }
 .appActions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+.statusChip {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gvg-muted, #4a608c);
+  border: 1px dashed var(--gvg-line, #c9dbf8);
+  border-radius: 99px;
+  padding: 3px 8px;
+}
+.starPill { font-size: 13px; line-height: 1; }
 .scorePill {
   display: inline-block;
   font-family: var(--font-spline-mono), monospace;
@@ -361,3 +445,123 @@
 }
 .letterText p { margin: 0 0 10px; }
 .letterText p:last-child { margin-bottom: 0; }
+
+
+/* ── calendar timeline + stats dashboard ─────────────────────────────────── */
+.calWrap { display: flex; gap: 16px; align-items: flex-start; }
+@media (max-width: 1000px) { .calWrap { flex-direction: column; } }
+.calMain { flex: 1; min-width: 0; }
+.dash {
+  flex: none;
+  width: 340px;
+  background: #fff;
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  border-radius: 12px;
+  padding: 14px;
+  position: sticky;
+  top: 12px;
+}
+@media (max-width: 1000px) { .dash { width: 100%; position: static; } }
+
+.kpiRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.kpi { background: var(--gvg-soft, #eaf1fe); border-radius: 9px; padding: 10px 8px; text-align: center; }
+.kpiValue {
+  display: block;
+  font-family: var(--font-fraunces), serif;
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--gvg-deep, #0d2f6e);
+  line-height: 1.1;
+}
+.kpiLabel { display: block; font-size: 9.5px; color: var(--gvg-muted, #4a608c); margin-top: 3px; line-height: 1.25; }
+.dashTabs { display: flex; gap: 4px; border-bottom: 1px solid var(--gvg-line, #c9dbf8); margin-bottom: 10px; }
+.dashTab {
+  border: none;
+  background: none;
+  padding: 6px 10px 7px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--gvg-muted, #4a608c);
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+}
+.dashTabOn { color: var(--gvg-accent, #2e6be6); border-bottom-color: var(--gvg-accent, #2e6be6); }
+.chartBox { min-height: 150px; }
+.chart { width: 100%; height: auto; display: block; }
+
+.upcoming { background: #fff8e6; border: 1px solid #f2d98c; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.upcomingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 12px;
+  color: #6b5410;
+  padding: 3px 0;
+  cursor: pointer;
+  text-align: left;
+}
+.upcomingRow:hover { text-decoration: underline; }
+
+.calFilters { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+.filterChip {
+  border: 1px solid var(--gvg-line, #c9dbf8);
+  background: #fff;
+  border-radius: 99px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--gvg-muted, #4a608c);
+  cursor: pointer;
+  line-height: 1.4;
+}
+.filterChip:hover { border-color: var(--gvg-accent, #2e6be6); }
+.filterChipOn { background: var(--gvg-accent, #2e6be6); border-color: var(--gvg-accent, #2e6be6); color: #fff; }
+
+.timeline { position: relative; }
+.tlDay { margin-bottom: 14px; }
+.tlDayHead {
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--gvg-deep, #0d2f6e);
+  margin: 0 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--gvg-line, #c9dbf8);
+}
+.tlRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  padding: 5px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.tlRow:hover { background: #f4f8ff; }
+.tlRow:disabled { cursor: default; opacity: 0.65; }
+.tlIcon { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+.tone_good { background: #e6f5ec; }
+.tone_bad { background: #fdecea; }
+.tone_star { background: #fff5d6; }
+.tone_neutral { background: var(--gvg-soft, #eaf1fe); }
+.tlTime {
+  flex: none;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 10px;
+  color: var(--gvg-muted, #4a608c);
+  padding-top: 5px;
+  width: 34px;
+}
+.tlLabel { flex: 1; min-width: 0; font-size: 11.5px; color: var(--gvg-ink, #0f2247); line-height: 1.35; padding-top: 3px; }
+.tlApp { display: block; font-size: 10.5px; color: var(--gvg-muted, #4a608c); overflow-wrap: anywhere; }

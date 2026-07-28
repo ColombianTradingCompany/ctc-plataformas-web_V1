@@ -43,6 +43,34 @@ export function useAutosave({
     saveRef.current = save;
   });
   const timerRef = useRef<number | null>(null);
+  // Lo último que se vio, leído por el flush de desmontaje (que corre una sola
+  // vez y por tanto no puede cerrar sobre los valores del render actual).
+  const latestRef = useRef({ serialized, enabled });
+  useEffect(() => {
+    latestRef.current = { serialized, enabled };
+  });
+
+  // FLUSH AL DESMONTAR. Sin esto, el temporizador pendiente se cancelaba y el
+  // trabajo se perdía EN SILENCIO: bug real reportado el 2026-07-28 — el
+  // productor elegía "Tipo de documento" en Ubicación y respaldo y cerraba la
+  // ficha antes de los 3,5 s, así que la selección no llegaba nunca a la base y
+  // al reabrir volvía a "Seleccione…". Elegir de un <select> es la interacción
+  // más rápida que existe, de modo que casi siempre le ganaba al debounce.
+  // Dep array vacío a propósito: el cleanup debe correr SOLO al desmontar, no en
+  // cada cambio del snapshot (ahí es donde debe seguir mandando el debounce).
+  useEffect(() => {
+    return () => {
+      if (timerRef.current != null) window.clearTimeout(timerRef.current);
+      const { serialized: last, enabled: on } = latestRef.current;
+      // savingRef: si hay un guardado en vuelo, se deja terminar — reintentar
+      // aquí solo abriría una carrera de dos escrituras sobre la misma fila.
+      if (!on || savingRef.current) return;
+      if (lastSavedRef.current === null || last === lastSavedRef.current) return;
+      // Sin await: el componente ya se está yendo. Quien recibe el guardado
+      // (el padre) sobrevive al desmontaje y completa la escritura.
+      void saveRef.current();
+    };
+  }, []);
 
   useEffect(() => {
     if (lastSavedRef.current === null) {

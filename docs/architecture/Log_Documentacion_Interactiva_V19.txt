@@ -12,6 +12,35 @@ no "después". El backend real del Directorio del Café (3 commits del 2026-07-2
 se anotó y V18.0 salió publicado describiéndolo como maqueta.
 
 ---
+## [2026-07-28] El autosave perdía en silencio el último cambio al cerrar
+- **Bug reportado por el owner**: en el Panel del Productor → Finca → "Ubicación y
+  respaldo", el selector "Tipo de documento" mostraba las opciones pero al elegir una
+  volvía a "Seleccione…". Confirmado en base: las 3 fincas de gabriel.vasquez92@gmail.com
+  (CTC-P-78337EC3) tenían `eudr_support_doc_type` en NULL y `eudr_producer_answers ->
+  supportDocType` en "" — el valor no llegaba nunca.
+- **No era el selector.** Reproducido con una ruta temporal que montaba `FincaModal`
+  con datos sintéticos: el `<select>` fija su valor y el borrador se actualiza bien.
+  Tampoco era la guarda `guard_finca_protected_columns` (solo congela declaraciones
+  con la finca `approved`, y las tres estaban en `pending_review`).
+- **La causa real está en `src/lib/useAutosave.tsx`**: el guardado corre 3,5 s después
+  del último cambio, y el cleanup del efecto CANCELABA el temporizador al desmontar.
+  Elegir de un desplegable es la interacción más rápida que existe, así que cerrar la
+  ficha enseguida le ganaba al debounce y el cambio se perdía sin ningún aviso. Afectaba
+  por igual a cualquier campo y a cualquier finca — solo que en los campos que se
+  escriben a mano el productor tarda más y el temporizador alcanzaba a disparar.
+- **Arreglo**: un efecto con dep array vacío cuyo cleanup corre SOLO al desmontar hace
+  *flush* del guardado pendiente si el snapshot difiere del último guardado. Lee de un
+  ref (no puede cerrar sobre el render actual), respeta `enabled`, y se abstiene si ya
+  hay un guardado en vuelo para no abrir una carrera de dos escrituras sobre la fila.
+- **Alcance**: `useAutosave` es compartido, así que la misma pérdida silenciosa existía
+  en la Ficha del lote, "Información general" del productor y el editor EUDR de fincas
+  del BCP. Quedan arregladas las cuatro.
+- Verificado en navegador, tres casos: (1) elegir y cerrar a los 800 ms ⇒ antes SIN
+  GUARDADOS, ahora guarda; (2) abrir y cerrar sin tocar nada ⇒ no guarda (sin escrituras
+  espurias); (3) elegir, esperar el debounce y luego cerrar ⇒ guarda UNA sola vez.
+- No es cambio de nodo ni de escenario del mapa: es una corrección de comportamiento.
+(commit: pending)
+
 ## [2026-07-28] Calculadora de Mermas · CTC — sube a V3
 - El owner subió `Calculadora_Mermas_Cafe_CTC_V3.html` a `reference_html_tools/` y
   reemplaza a `Calculadora_Mermas_Cafe_CTC.html` (borrado; la carpeta ya nombra cada

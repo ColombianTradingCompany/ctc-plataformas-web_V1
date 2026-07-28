@@ -12,3 +12,25 @@ no "después". El backend real del Directorio del Café (3 commits del 2026-07-2
 se anotó y V18.0 salió publicado describiéndolo como maqueta.
 
 ---
+## [2026-07-28] Calculadora de Mermas · CTC — sube a V3
+- El owner subió `Calculadora_Mermas_Cafe_CTC_V3.html` a `reference_html_tools/` y
+  reemplaza a `Calculadora_Mermas_Cafe_CTC.html` (borrado; la carpeta ya nombra cada
+  herramienta con su versión). La V3 cambia la interfaz a un **embudo de mermas**
+  interactivo (Cereza → Beneficio → Trilla → Tueste) con merma total y factor de
+  conversión en vivo, más carriles laterales de Configurar / Costos / Resultado.
+- El **nombre servido no cambia**: sigue siendo `public/tools/mermas-ctc.html`, que es
+  a lo que apunta la clave `mermas-ctc` de `src/lib/tools/catalog.ts` — así que ni el
+  catálogo, ni la tabla de Disponibilidad, ni los iconos, ni el hub de KR se tocan.
+- Se volvió a correr `node scripts/vendor-tool-assets.mjs` (el paso que la nota de
+  `herramientas` ya advertía: al actualizar una herramienta hay que recopiar y
+  revendorizar): bajó 10 woff2 y jsPDF 2.5.1 a `/tools/assets`. Sin esto la
+  herramienta pide fuentes a Google y jsPDF a cdnjs, y la CSP de la ruta interna
+  bloquea el script remoto.
+- Verificación en el navegador: 0 errores de consola, `window.jspdf` definido, 38
+  font-faces cargadas, y el único enlace externo que queda es el de lectura a
+  ctcexport.com. Aritmética del embudo comprobada de punta a punta (1.000 kg cereza
+  → 200 pergamino → 160 verde → 134,4 tostado; merma total 86,6%; factor 7,44:1).
+- No es cambio de nodo ni de escenario: la entrada DICT `herramientas` ya describe el
+  mecanismo y sigue siendo correcta.
+(commit: pending)
+

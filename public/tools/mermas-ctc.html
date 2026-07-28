@@ -542,11 +542,14 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
 .fband:hover .band-edit{opacity:1}
 
 /* side tabs */
-.sidetab{position:fixed;top:50%;transform:translateY(-50%);z-index:60;background:var(--purple);color:#fff;border:0;cursor:pointer;
-  padding:1.15rem .58rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;box-shadow:0 10px 30px -8px rgba(38,7,90,.6);transition:padding .2s,background .2s}
+.tabdock{position:fixed;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.tabdock.left{left:0}
+.tabdock.right{right:0;align-items:flex-end}
+.sidetab{position:relative;z-index:60;background:var(--purple);color:#fff;border:0;cursor:pointer;
+  padding:1rem .58rem;display:flex;flex-direction:column;align-items:center;gap:.55rem;box-shadow:0 10px 30px -8px rgba(38,7,90,.6);transition:padding .2s,background .2s}
 .sidetab:hover{background:#4d15a6}
-.sidetab.left{left:0;border-radius:0 20px 20px 0}
-.sidetab.right{right:0;border-radius:20px 0 0 20px}
+.sidetab.left{border-radius:0 20px 20px 0}
+.sidetab.right{border-radius:20px 0 0 20px}
 .sidetab.left:hover{padding-right:1rem}
 .sidetab.right:hover{padding-left:1rem}
 .sidetab svg{width:24px;height:24px;flex:none}
@@ -584,11 +587,89 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
 .stage-info.static{display:block;margin-top:.8rem}
 
 @media(max-width:720px){
-  .sidetab{top:auto;bottom:14px;transform:none;flex-direction:row;padding:.6rem .95rem;border-radius:999px;gap:.45rem}
-  .sidetab.left{left:12px;border-radius:999px} .sidetab.right{right:12px;border-radius:999px}
-  .sidetab .lbl{writing-mode:horizontal-tb;transform:none;font-size:.7rem}
+  .tabdock{top:auto;bottom:12px;transform:none;flex-direction:row;gap:8px}
+  .tabdock.left{left:10px} .tabdock.right{right:10px}
+  .sidetab{flex-direction:row;padding:.55rem .8rem;border-radius:999px;gap:.4rem}
+  .sidetab.left,.sidetab.right{border-radius:999px}
+  .sidetab svg{width:19px;height:19px}
+  .sidetab .lbl{writing-mode:horizontal-tb;transform:none;font-size:.66rem;letter-spacing:.1em}
+  .sidetab .pip{top:5px;right:6px}
   .funnel-card{padding:.7rem .3rem 1rem}
+  main.stage-main{padding-bottom:4.5rem}
 }
+@media(max-width:400px){
+  .sidetab{padding:.55rem .65rem}
+  #tabCost .lbl{display:none}
+}
+
+/* ===== costos de procesamiento ===== */
+#tabCost{background:var(--purple-deep)}
+#tabCost:hover{background:#3a0d7d}
+.sidetab .pip{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--yellow);opacity:0;transition:.2s}
+.sidetab.on .pip{opacity:1}
+
+.cost-master{display:flex;align-items:center;gap:.7rem;padding:.7rem .85rem;background:var(--lilac-soft);border:1px solid var(--lilac);border-radius:12px;margin-bottom:.9rem}
+.cost-master .tl{font-size:.9rem;font-weight:700;color:var(--purple-ink)}
+.cost-master .ts{font-size:.74rem;color:var(--muted)}
+
+.cgroup{border:1px solid var(--line);border-radius:14px;margin-bottom:.85rem;overflow:hidden;background:#fff}
+.cgroup-h{display:flex;align-items:center;gap:.6rem;padding:.7rem .8rem;background:var(--paper-2);border-bottom:1px solid var(--line)}
+.cgroup-h .gi{width:28px;height:28px;border-radius:8px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
+.cgroup-h .gi svg{width:17px;height:17px}
+.cgroup-h .gt{flex:1;min-width:0}
+.cgroup-h .gt b{display:block;font-size:.88rem;color:var(--purple-ink)}
+.cgroup-h .gt span{font-size:.68rem;color:var(--muted)}
+.cgroup-h .gv{font-family:'Anton',sans-serif;font-size:1.05rem;color:var(--purple);white-space:nowrap}
+.cgroup-off{padding:.9rem .8rem;font-size:.8rem;color:var(--muted)}
+
+.crow{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border-top:1px solid var(--line);cursor:pointer;transition:background .15s}
+.crow:first-child{border-top:0}
+.crow:hover{background:var(--paper)}
+.crow.off{opacity:.5}
+.crow .cdot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--green)}
+.crow .cn{flex:1;min-width:0}
+.crow .cn b{display:block;font-size:.83rem;font-weight:600;color:var(--purple-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .cn span{font-size:.66rem;color:var(--muted)}
+.crow .cv{text-align:right;flex:none}
+.crow .cv b{display:block;font-size:.85rem;font-weight:700;color:var(--purple-ink)}
+.crow .cv span{font-size:.65rem;color:var(--muted)}
+.crow .cx{flex:none;color:var(--muted);font-size:1rem;line-height:1}
+.mini-sw{position:relative;width:34px;height:19px;flex:none}
+.mini-sw input{opacity:0;width:0;height:0}
+.mini-sw i{position:absolute;inset:0;background:#cfc4e6;border-radius:999px;transition:.2s;cursor:pointer;display:block}
+.mini-sw i::before{content:"";position:absolute;height:14px;width:14px;left:2.5px;top:2.5px;background:#fff;border-radius:50%;transition:.2s}
+.mini-sw input:checked + i{background:var(--green)}
+.mini-sw input:checked + i::before{transform:translateX(15px)}
+
+.ctotal{margin-top:.4rem;border:1px solid var(--lilac);background:var(--lilac-soft);border-radius:14px;padding:.85rem .9rem}
+.ctotal .k{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);font-weight:700}
+.ctotal .big{font-family:'Anton',sans-serif;font-size:1.9rem;color:var(--purple-ink);line-height:1.05;margin:.1rem 0}
+.ctotal .sub{font-size:.76rem;color:#4a4360}
+.ceq{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-top:.7rem}
+.ceq div{background:#fff;border:1px solid var(--line);border-radius:9px;padding:.42rem .55rem}
+.ceq .k2{font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;display:block}
+.ceq .v2{font-size:.85rem;font-weight:700;color:var(--purple-ink)}
+
+.curve{width:100%;height:auto;display:block;margin:.5rem 0 .1rem}
+.curve-cap{font-size:.7rem;color:var(--muted);text-align:center;margin-top:-.1rem}
+.pop-num{display:flex;border:1.5px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;max-width:210px}
+.pop-num .pfx{background:var(--paper-2);padding:.5rem .55rem;font-weight:700;color:var(--purple);font-size:.85rem;border-right:1.5px solid var(--line)}
+.pop-num input{border:0;padding:.5rem .6rem;font-size:1rem;font-weight:700;color:var(--purple-ink);width:100%;outline:none;font-family:'Inter',sans-serif}
+.suggest-pill{display:inline-flex;align-items:center;gap:.35rem;background:var(--green-soft);color:#1d5c39;border:1px solid #b9dfc9;border-radius:999px;padding:.28rem .6rem;font-size:.72rem;font-weight:700;cursor:pointer}
+.suggest-pill:hover{background:#d5ecdd}
+.pack-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.6rem 0 .2rem}
+.pack-grid label{display:block;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:.25rem}
+.pack-grid .qty-in input{font-size:.95rem;padding:.55rem .6rem}
+.pack-grid .qty-in select{font-size:.8rem}
+.info-tbl{width:100%;border-collapse:collapse;font-size:.76rem;margin:.5rem 0}
+.info-tbl th,.info-tbl td{text-align:left;padding:.35rem .4rem;border-bottom:1px solid var(--line)}
+.info-tbl th{color:var(--purple);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em}
+.info-tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.6rem 0}
+.gallery figure{margin:0;border:1px solid var(--line);border-radius:11px;padding:.4rem;background:#fff}
+.gallery figcaption{font-size:.68rem;font-weight:700;color:var(--purple-ink);text-align:center;margin-top:.15rem}
+@media(max-width:520px){.gallery{grid-template-columns:1fr}}
+
 
 </style>
 </head>
@@ -614,18 +695,28 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
   <div class="funnel-foot">
     <div class="ff-item"><span class="k">Merma total</span><span class="v" id="ffMerma">—</span></div>
     <div class="ff-item"><span class="k">Factor de conversión</span><span class="v" id="ffFactor">—</span></div>
+    <div class="ff-item" id="ffCostWrap" style="display:none"><span class="k">Costo de proceso</span><span class="v" id="ffCost">—</span></div>
   </div>
   <div class="tap-hint"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11V6a2 2 0 114 0v5M9 11l-2 1 5 8 5-3-3-5-2 1M13 11V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Toca cualquier etapa del embudo para ajustar su merma</div>
 </main>
 
+<div class="tabdock left">
 <button class="sidetab left" id="tabConfig" aria-label="Configuración">
   <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#fff" stroke-width="1.8"/><path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.4L16.5 7a7 7 0 00-1.7-1L14.5 3h-4L10 6a7 7 0 00-1.7 1L5.9 5.6l-2 3.4L4 10.5a7 7 0 000 3L2 15l2 3.4 2.4-1.4a7 7 0 001.7 1l.5 2.6h4l.5-2.6a7 7 0 001.7-1l2.4 1.4 2-3.4-2-1.5a7 7 0 00.1-1z" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
   <span class="lbl">Configurar</span>
 </button>
+<button class="sidetab left" id="tabCost" aria-label="Costos de procesamiento">
+  <span class="pip"></span>
+  <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M15.5 7.5c-.6-1-2-1.6-3.5-1.6-2 0-3.4 1-3.4 2.5 0 3.6 7.2 2 7.2 5.7 0 1.6-1.6 2.6-3.8 2.6-1.8 0-3.2-.7-3.8-1.8" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
+  <span class="lbl">Costos</span>
+</button>
+</div>
+<div class="tabdock right">
 <button class="sidetab right" id="tabResult" aria-label="Resultado y reporte">
   <svg viewBox="0 0 24 24" fill="none"><path d="M6 20V10M12 20V4M18 20v-7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
   <span class="lbl">Resultado</span>
 </button>
+</div>
 
 <div class="sheet-backdrop" id="backdrop"></div>
 
@@ -656,9 +747,34 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
   <div class="health h-ok" id="health"><div class="hi" id="healthIco">✓</div><div><div class="ht" id="healthTitle">—</div><div class="hs" id="healthSub">—</div></div></div>
   <h2 class="sec" style="margin:1.2rem 0 .2rem">Resumen por etapa</h2>
   <div class="recap" id="recap"></div>
+  <div id="costRecap"></div>
   <div class="notes-field"><label>Notas para el reporte (opcional)</label><textarea id="notes" placeholder="Ej.: Lote Huila 2026, proceso lavado, tueste medio para cliente X…"></textarea></div>
   <button class="export-btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v11M12 14l-4-4M12 14l4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar reporte PDF</button>
 </aside>
+
+<aside class="sheet left" id="sheetCost" aria-hidden="true">
+  <div class="sheet-head">
+    <h2><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M15.5 7.5c-.6-1-2-1.6-3.5-1.6-2 0-3.4 1-3.4 2.5 0 3.6 7.2 2 7.2 5.7 0 1.6-1.6 2.6-3.8 2.6-1.8 0-3.2-.7-3.8-1.8" stroke="#3E0A8B" stroke-width="1.7" stroke-linecap="round"/></svg>Costos</h2>
+    <div style="display:flex;gap:.4rem;align-items:center">
+      <button class="sheet-close" id="costInfoBtn" title="Metodología y curvas de referencia" style="font-size:1rem;font-weight:800;color:var(--purple)">i</button>
+      <button class="sheet-close" data-close>&times;</button>
+    </div>
+  </div>
+  <p class="hint" style="margin-bottom:.8rem">Costo de maquila por subproceso, normalizado a <b>COP por kg</b>. Cada subproceso se compara con una curva de referencia que baja con el volumen: toca una fila para ajustarla.</p>
+  <div class="cost-master">
+    <label class="switch"><input type="checkbox" id="costMaster"><span class="slider-sw"></span></label>
+    <div><div class="tl">Incluir costos en el análisis</div><div class="ts">Se suman al embudo y al reporte PDF.</div></div>
+  </div>
+  <div id="costBody"></div>
+</aside>
+
+<div class="overlay" id="costInfoOv">
+  <div class="modal" style="max-width:680px">
+    <button class="xbtn" id="costInfoX" aria-label="Cerrar">&times;</button>
+    <div id="costInfoBody"></div>
+    <button class="tb-btn" style="background:var(--purple);color:#fff;margin-top:.8rem" id="costInfoClose">Entendido</button>
+  </div>
+</div>
 
 <div class="overlay" id="stageOverlay"><div class="modal" id="stageModal"><button class="xbtn" id="stageX" aria-label="Cerrar">×</button><div id="stageBody"></div></div></div>
 
@@ -811,7 +927,8 @@ function calc(){
   state._chain=chain; state._final=finalW; state._totalMerma=totalMerma; state._cf=cf; state._health={ht,hs,hc};
   return data;
 }
-function recompute(){ const d=calc(); renderFunnel(d); renderResults(d); refreshStagePopup(); }
+function recompute(){ const d=calc(); renderFunnel(d); renderResults(d); refreshStagePopup();
+  if(typeof renderCosts==='function'){ renderCosts(); refreshCostPopup(); } }
 
 function nodeLabel(cx,y,w,name,unit,half){
   let g=`<line x1="${(cx-half).toFixed(1)}" y1="${y}" x2="${(cx+half).toFixed(1)}" y2="${y}" stroke="#D9CEEE" stroke-width="1" stroke-dasharray="3 3"/>`;
@@ -878,7 +995,7 @@ function updateZ(s){ const z=zOf(s), info=zLabel(z);
 function updateIO(s){ const c=(DATA&&DATA.chain||[]).find(x=>x.stage&&x.stage.id===s.id); const unit=UNIT_LABEL[state.unit];
   const i=document.getElementById('io-in'), o=document.getElementById('io-out'); if(c&&i){i.textContent=fmtW(c.wFrom)+' '+unit;} if(c&&o){o.textContent=fmtW(c.wTo)+' '+unit;} }
 function openStage(s){
-  activeStageId=s.id;
+  activeStageId=s.id; if(typeof activeCostId!=='undefined') activeCostId=null;
   document.getElementById('stageBody').innerHTML=`
     <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.1rem">
       <span class="stage-ico"><svg viewBox="0 0 24 24">${ICONS[s.id]}</svg></span>
@@ -899,7 +1016,406 @@ function openStage(s){
 }
 function refreshStagePopup(){ if(!activeStageId)return; const s=STAGES.find(x=>x.id===activeStageId); if(!s)return;
   if(!document.getElementById('sl-'+s.id))return; updateMarker(s); updateZ(s); updateIO(s); }
-function closeStagePopup(){ document.getElementById('stageOverlay').classList.remove('open'); activeStageId=null; }
+function closeStagePopup(){ document.getElementById('stageOverlay').classList.remove('open'); activeStageId=null;
+  if(typeof activeCostId!=='undefined') activeCostId=null; }
+
+
+/* =========================================================
+   COSTOS DE PROCESAMIENTO
+   Modelo: C(Q) = v + F/Q   (COP por kg de la base del subproceso)
+     v = costo marginal de operación (piso al que tiende la curva)
+     F = costo fijo por lote (montaje, calibración, purga, análisis)
+     Q = kg procesados en el lote  ·  Qmín = lote mínimo operable
+   Referencias 2026 calibradas contra tarifas públicas de maquila en Colombia.
+   ========================================================= */
+
+const UNIT_KG = {kg:1, lb:0.45359237, ton:1000, saco:70, carga:125};
+const CARGA=125, ARROBA=12.5, SACO=70;
+const COP = v => '$' + nf0.format(Math.round(v||0));
+const COPk = v => v>=1e6 ? '$'+nf.format(v/1e6)+' M' : '$'+nf0.format(Math.round(v||0));
+
+const COSTG = [
+  {id:'beneficio', stage:'beneficio', name:'Beneficio', flow:'Cereza › Pergamino', ico:'beneficio', items:[
+    {id:'limpiado', name:'Limpiado', short:'Limpiado', base:1, opt:true,
+     v:130, F:30000, qmin:25, sig:0.30,
+     desc:'Recibo, clasificación por flotación, despulpado y retiro de pulpa.',
+     ctx:'Se cobra sobre el pergamino seco que sale del lote. El piso corresponde a beneficiaderos con despulpadora propia y flujo continuo; en lotes pequeños pesa el arranque, el agua y el lavado del equipo.'},
+    {id:'fermentacion', name:'Fermentación y lavado', short:'Fermentación', base:1, opt:true,
+     v:160, F:45000, qmin:25, sig:0.32,
+     desc:'Remoción de mucílago (fermentación natural, anaeróbica o desmucilaginado) y lavado.',
+     ctx:'Incluye tanques, control de pH y temperatura, agua y mano de obra. Las fermentaciones controladas o anaeróbicas se ubican en el extremo alto del rango (+1σ o más).'},
+    {id:'secado', name:'Secado', short:'Secado', base:1,
+     v:360, F:70000, qmin:25, sig:0.30,
+     desc:'Llevar el pergamino de ~53% a 10–12% de humedad, en marquesina o secador mecánico.',
+     ctx:'Es el rubro más pesado del beneficio: combustible, energía y el tiempo del patiero. Cenicafé estima ~0,7 galones de ACPM por arroba de c.p.s. en silo; con cisco como combustible el costo baja fuerte.'}
+  ]},
+  {id:'trilla', stage:'trilla', name:'Trilla', flow:'Pergamino › Verde', ico:'trilla', items:[
+    {id:'trillado', name:'Trillado', short:'Trillado', base:1,
+     v:180, F:45000, qmin:10, sig:0.28,
+     desc:'Retiro del cisco, clasificación por malla y densidad, separación de pasilla.',
+     ctx:'Piso calculado sobre una trilladora de ~1 t/h: máquina, dos operarios y energía dan ~$60/kg de costo directo; con gastos de planta y margen queda cerca de $180/kg. Encaja con ~$27.000 por carga en trilla comercial y con los ~$1.200/kg que cobran los microlotes de especialidad.'},
+    {id:'monitoreo', name:'Monitoreo y control de calidad', short:'Monitoreo', base:2,
+     v:30, F:140000, qmin:20, sig:0.30,
+     desc:'Análisis físico (humedad, densidad, factor, defectos) y perfil sensorial del lote.',
+     ctx:'Es un costo casi enteramente fijo por lote: el análisis completo físico + sensorial cuesta $120.000–$160.000 por muestra, se reparta entre 50 kg o entre 5 toneladas. Es la curva más pronunciada de todo el proceso.'},
+    {id:'selopt_v', name:'Selección óptica (verde)', short:'Sel. óptica verde', base:2, opt:true, def:false,
+     v:120, F:90000, qmin:50, sig:0.30,
+     desc:'Clasificación electrónica por color del café verde para retirar defectos.',
+     ctx:'Las seleccionadoras ópticas van de 200 kg/h a 18 t/h consumiendo 1–5 kW, así que el costo marginal es bajo: a 1,5 t/h la máquina, el aire comprimido y el operario suman ~$33/kg. Casi todo el costo de un lote pequeño es la calibración por perfil, no el procesamiento.'}
+  ]},
+  {id:'tostado', stage:'tueste', name:'Tostado', flow:'Verde › Tostado', ico:'tueste', items:[
+    {id:'tueste', name:'Tueste', short:'Tueste', base:2,
+     v:1100, F:120000, qmin:10, sig:0.35,
+     desc:'Perfilado y tostión del lote. Se cobra sobre el café verde que entra al tostador.',
+     ctx:'Piso estimado de abajo hacia arriba en una línea industrial: gas, amortización del tostador y operarios dan ~$300/kg de costo directo; con planta y margen queda cerca de $1.100/kg. Los ~$9.000/kg que cobran las maquilas de especialidad por baches de 20 kg quedan dentro de la banda alta (+1σ), no en el centro.'},
+    {id:'selopt_t', name:'Selección óptica (tostado)', short:'Sel. óptica tostado', base:3, opt:true, def:false,
+     v:180, F:70000, qmin:20, sig:0.30,
+     desc:'Clasificación electrónica del grano tostado (quakers, tueste disparejo).',
+     ctx:'Mismo equipo que en verde pero con menor rendimiento por hora y grano más frágil, así que el piso queda ~50% por encima del de la selección en verde. Es un servicio de nicho: pocas plantas lo ofrecen.'},
+    {id:'molienda', name:'Molienda', short:'Molienda', base:3, opt:true, def:false,
+     v:250, F:35000, qmin:5, sig:0.26,
+     desc:'Molido a la granulometría del método de preparación destino.',
+     ctx:'A 150 kg/h el molino y el operario cuestan ~$160/kg directos; con planta y margen el piso queda en ~$250/kg. La referencia publicada de ~$1.000/kg en lotes pequeños corresponde a la parte alta de la curva, no al piso.'},
+    {id:'empaque', name:'Empaque', short:'Empaque', base:3, opt:true, def:false, type:'pack',
+     sig:0.22,
+     desc:'Bolsa trilaminada con válvula desgasificadora y cierre. Se define por capacidad y precio unitario.',
+     ctx:'El costo por kg lo manda la capacidad de la bolsa: a $1.100 la unidad, 250 g cuestan $4.400/kg y 1.000 g cuestan $1.100/kg. Sobre eso pesa el tiraje: planchas y pedido mínimo se reparten entre las unidades del pedido.'}
+  ]}
+];
+
+const BASE_NAME = ['cereza','pergamino','verde','tostado'];
+const BASE_LONG = ['café cereza','café pergamino seco','café verde','café tostado'];
+
+/* ---------- state ---------- */
+state.costs = {on:false, opened:false, pack:{cap:250, price:1100}, items:{}};
+COSTG.forEach(g=>g.items.forEach(it=>{ state.costs.items[it.id] = {on: it.def!==false, val:null, auto:true}; }));
+
+/* ---------- modelo ---------- */
+function itV(it){
+  if(it.type==='pack'){ const cap=Math.max(50, state.costs.pack.cap||250); return 950*Math.pow(cap/250,0.2)*1000/cap; }
+  return it.v;
+}
+function itF(it){ return it.type==='pack' ? 150000 : it.F; }
+function itQmin(it){ return it.type==='pack' ? Math.max(10,(state.costs.pack.cap||250)*0.1) : it.qmin; }
+function cRef(it,q){ return itV(it) + itF(it)/Math.max(q||1, itQmin(it)); }
+function itemVal(it,q){
+  const st=state.costs.items[it.id];
+  if(it.type==='pack'){ const cap=Math.max(1,state.costs.pack.cap||250); return (state.costs.pack.price||0)*1000/cap; }
+  return st.auto ? cRef(it,q) : st.val;
+}
+function costZ(it,q,val){ const r=cRef(it,q); return r>0 ? (val-r)/(it.sig*r) : 0; }
+function costZLabel(z){
+  const az=Math.abs(z), dir = z>0 ? 'por encima' : 'por debajo';
+  if(az<0.15) return {cls:'ok', txt:'En la referencia'};
+  if(az<1)    return {cls:'ok', txt:'En rango de mercado ('+nf.format(az)+'σ '+dir+')'};
+  if(az<2)    return {cls:'mid', txt:'Atípico ('+nf.format(az)+'σ '+dir+')'};
+  return {cls:'ext', txt:'Extremo ('+nf.format(az)+'σ '+dir+')'};
+}
+
+/* masa en kg en cada nodo de la cadena */
+function nodeKg(){
+  const m={}, f=UNIT_KG[state.unit]||1;
+  if(!DATA||!DATA.chain||!DATA.chain.length) return m;
+  m[DATA.chain[0].node] = DATA.chain[0].w*f;
+  DATA.chain.slice(1).forEach(c=>{ m[c.node]=c.wTo*f; });
+  return m;
+}
+function groupActive(g){ return activeStages().some(s=>s.id===g.stage); }
+
+/* cálculo consolidado */
+function costCalc(){
+  const NK=nodeKg(), rows=[], groups=[];
+  let total=0;
+  COSTG.forEach(g=>{
+    if(!groupActive(g)) return;
+    const gr={g, items:[], total:0};
+    g.items.forEach(it=>{
+      const st=state.costs.items[it.id];
+      const Q=NK[it.base];
+      if(Q===undefined||!(Q>0)) return;
+      const ref=cRef(it,Q), val=itemVal(it,Q), tot=val*Q, z=costZ(it,Q,val);
+      const row={it,g,Q,ref,val,tot,z,on:st.on};
+      gr.items.push(row); rows.push(row);
+      if(st.on){ gr.total+=tot; total+=tot; }
+    });
+    groups.push(gr);
+  });
+  const finalKg=(state._final||0)*(UNIT_KG[state.unit]||1);
+  const NKk=NK;
+  const d={rows,groups,total,finalKg,NK:NKk,
+    perKgFinal: finalKg>0 ? total/finalKg : 0,
+    maxZ: rows.filter(r=>r.on).reduce((a,r)=>Math.max(a,Math.abs(r.z)),0)};
+  state._costs=d;
+  return d;
+}
+
+/* ---------- curva de costo (misma gramática visual que la campana) ---------- */
+function costCurveSVG(it, Q, val, W, H){
+  W=W||340; H=H||168;
+  const v=itV(it), F=itF(it), qmin=itQmin(it), sg=it.sig;
+  const padL=46, padR=12, padT=12, padB=28;
+  const ref=q=>v+F/Math.max(q,qmin);
+  const xmax=Math.max(Q*2.2, qmin*8);
+  const ymax=Math.max(ref(Q)*2.6, (val||0)*1.15, v*3);
+  const qStart=Math.max(qmin, ymax>v ? F/(ymax-v) : qmin);
+  const X=q=>padL+(Math.max(0,Math.min(q,xmax))/xmax)*(W-padL-padR);
+  const Y=c=>H-padB-(Math.max(0,Math.min(c,ymax))/ymax)*(H-padT-padB);
+  const N=54, qs=[]; for(let i=0;i<=N;i++) qs.push(qStart+(xmax-qStart)*i/N);
+  const ribbon=(lo,hi,fill)=>{
+    const up=qs.map(q=>X(q).toFixed(1)+','+Y(ref(q)*hi).toFixed(1));
+    const dn=qs.slice().reverse().map(q=>X(q).toFixed(1)+','+Y(ref(q)*lo).toFixed(1));
+    return '<polygon points="'+up.concat(dn).join(' ')+'" fill="'+fill+'"/>';
+  };
+  let s='<svg class="curve" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" data-cost="'+it.id+'">';
+  s+='<rect x="'+padL+'" y="'+padT+'" width="'+(W-padL-padR)+'" height="'+(H-padT-padB)+'" fill="#FBE0E4" opacity=".55"/>';
+  s+=ribbon(1-2*sg,1+2*sg,'#FFF3CC');
+  s+=ribbon(1-sg,1+sg,'#DDF0E5');
+  // asíntota (piso)
+  s+='<line x1="'+padL+'" y1="'+Y(v)+'" x2="'+(W-padR)+'" y2="'+Y(v)+'" stroke="#6B6280" stroke-width="1" stroke-dasharray="3 3"/>';
+  s+='<text x="'+(padL-5)+'" y="'+(Y(v)+3.5)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="8.5" font-weight="700" fill="#C8102E">mín</text>';
+  s+='<text x="'+(W-padR-2)+'" y="'+(Y(v)-3)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="8" fill="#6B6280">piso '+COP(v)+'/kg</text>';
+  // lote mínimo
+  s+='<line x1="'+X(qmin)+'" y1="'+padT+'" x2="'+X(qmin)+'" y2="'+(H-padB)+'" stroke="#C8102E" stroke-width="1.2"/>';
+  s+='<text x="'+X(qmin)+'" y="'+(H-padB+11)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" font-weight="700" fill="#C8102E">mín</text>';
+  // curva de referencia
+  s+='<path d="M'+qs.map(q=>X(q).toFixed(1)+','+Y(ref(q)).toFixed(1)).join(' L')+'" fill="none" stroke="var(--purple)" stroke-width="2"/>';
+  // ejes
+  s+='<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="#1A0B34" stroke-width="1.6"/>';
+  s+='<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="#1A0B34" stroke-width="1.6"/>';
+  s+='<text x="'+(padL-6)+'" y="'+(padT+9)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#1A0B34">$/kg</text>';
+  s+='<text x="'+(W-padR)+'" y="'+(H-6)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#1A0B34">kg</text>';
+  s+='<text x="'+(W-padR)+'" y="'+(H-padB+11)+'" text-anchor="end" font-family="Inter,sans-serif" font-size="8" fill="#6B6280">'+nf0.format(Math.round(xmax))+'</text>';
+  // punto de operación
+  const cx=X(Q), cyR=Y(ref(Q)), cyU=Y(val);
+  s+='<line x1="'+cx+'" y1="'+padT+'" x2="'+cx+'" y2="'+(H-padB)+'" stroke="#3E0A8B" stroke-width="1" stroke-dasharray="2 2" opacity=".6"/>';
+  s+='<circle cx="'+cx+'" cy="'+cyR+'" r="3.4" fill="#fff" stroke="var(--purple)" stroke-width="2"/>';
+  const zc=zClass(costZ(it,Q,val)), mc = zc==='ok'?'#2E8B57':zc==='mid'?'#C79A00':'#C8102E';
+  s+='<circle cx="'+cx+'" cy="'+cyU+'" r="5" fill="'+mc+'" stroke="#fff" stroke-width="1.6"/>';
+  s+='<text x="'+cx+'" y="'+(H-padB+11)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="8.5" font-weight="700" fill="#3E0A8B">'+nf0.format(Math.round(Q))+'</text>';
+  s+='</svg>';
+  return s;
+}
+
+/* ---------- panel lateral ---------- */
+function renderCosts(){
+  const host=document.getElementById('costBody'); if(!host) return;
+  const d=costCalc();
+  document.getElementById('costMaster').checked=state.costs.on;
+  document.getElementById('tabCost').classList.toggle('on',state.costs.on);
+
+  let h='';
+  if(!d.groups.length){
+    h='<p class="hint">No hay etapas de transformación activas. Elige una cadena en <b>Configurar</b> para costear.</p>';
+  }
+  d.groups.forEach(gr=>{
+    const g=gr.g;
+    h+='<div class="cgroup"><div class="cgroup-h"><span class="gi"><svg viewBox="0 0 24 24">'+ICONS[g.ico]+'</svg></span>'+
+       '<span class="gt"><b>'+g.name+'</b><span>'+g.flow+'</span></span>'+
+       '<span class="gv">'+COPk(gr.total)+'</span></div>';
+    if(!gr.items.length){ h+='<div class="cgroup-off">Sin subprocesos aplicables.</div>'; }
+    gr.items.forEach(r=>{
+      const it=r.it, st=state.costs.items[it.id], cls=zClass(r.z);
+      const col = !st.on ? '#B9B0C9' : cls==='ok'?'var(--green)':cls==='mid'?'#C79A00':'var(--red)';
+      h+='<div class="crow'+(st.on?'':' off')+'" data-cost="'+it.id+'">'+
+         '<span class="cdot" style="background:'+col+'"></span>'+
+         '<span class="cn"><b>'+it.name+'</b><span>'+nf0.format(Math.round(r.Q))+' kg '+BASE_NAME[it.base]+'</span></span>'+
+         '<span class="cv"><b>'+COP(r.val)+'/kg</b><span>'+COPk(r.tot)+'</span></span>'+
+         (it.opt
+           ? '<label class="mini-sw" data-stop="1"><input type="checkbox" data-toggle="'+it.id+'"'+(st.on?' checked':'')+'><i></i></label>'
+           : '<span class="cx">›</span>')+
+         '</div>';
+    });
+    h+='</div>';
+  });
+
+  if(d.groups.length){
+    const NK=d.NK;
+    const eq=[];
+    if(NK[0]!==undefined) eq.push(['Cereza', nf.format(NK[0]/CARGA)+' cargas']);
+    if(NK[1]!==undefined) eq.push(['Pergamino', nf.format(NK[1]/CARGA)+' cargas']);
+    if(NK[2]!==undefined) eq.push(['Verde', nf.format(NK[2]/SACO)+' sacos 70']);
+    if(NK[3]!==undefined) eq.push(['Tostado', nf0.format(NK[3])+' kg']);
+    h+='<div class="ctotal"><span class="k">Costo total de procesamiento</span>'+
+       '<div class="big">'+COP(d.total)+'</div>'+
+       '<div class="sub">'+COP(d.perKgFinal)+' por kg de '+NODES[state.end].toLowerCase()+
+       (d.finalKg>0?' · '+nf0.format(Math.round(d.finalKg))+' kg finales':'')+'</div>'+
+       '<div class="ceq">'+eq.map(e=>'<div><span class="k2">'+e[0]+'</span><span class="v2">'+e[1]+'</span></div>').join('')+'</div></div>';
+  }
+  host.innerHTML=h;
+  renderCostRecap(d);
+}
+
+/* ---------- resumen en el panel de resultado ---------- */
+function renderCostRecap(d){
+  const host=document.getElementById('costRecap'); if(!host) return;
+  const foot=document.getElementById('ffCostWrap');
+  if(!state.costs.on || !d.total){
+    host.innerHTML='';
+    if(foot) foot.style.display='none';
+    return;
+  }
+  if(foot){ foot.style.display='flex'; document.getElementById('ffCost').textContent=COP(d.perKgFinal); }
+  let h='<h2 class="sec" style="margin:1.2rem 0 .2rem">Costos de procesamiento</h2><div class="recap">';
+  d.groups.forEach(gr=>{
+    if(!gr.total) return;
+    h+='<div class="recap-item"><span class="recap-dot" style="background:var(--purple)"></span>'+
+       '<span class="recap-name">'+gr.g.name+'</span>'+
+       '<span class="recap-merma" style="color:var(--purple)">'+COPk(gr.total)+'</span></div>';
+  });
+  h+='</div><div class="mcard" style="margin-top:.7rem"><div class="k">Costo total · '+COP(d.perKgFinal)+'/kg final</div><div class="v">'+COP(d.total)+'</div></div>';
+  host.innerHTML=h;
+}
+
+/* ---------- popup de subproceso ---------- */
+let activeCostId=null;
+function openCostItem(it){
+  const NK=nodeKg(), Q=NK[it.base];
+  if(Q===undefined) return;
+  activeStageId=null; activeCostId=it.id;
+  const st=state.costs.items[it.id];
+  const ref=cRef(it,Q), val=itemVal(it,Q), z=costZ(it,Q,val), info=costZLabel(z);
+  const g=COSTG.find(x=>x.items.indexOf(it)>=0);
+  const smax=Math.max(ref*3, val*1.2);
+
+  let ctl;
+  if(it.type==='pack'){
+    ctl='<div class="pack-grid">'+
+      '<div><label>Capacidad</label><div class="qty-in"><input type="number" id="pkCap" min="25" step="5" value="'+state.costs.pack.cap+'"><span class="pfx" style="padding:.55rem .6rem;border:0;border-left:1.5px solid var(--line);background:var(--paper-2);color:var(--purple);font-weight:600">g</span></div></div>'+
+      '<div><label>Precio por unidad</label><div class="qty-in"><span class="pfx" style="padding:.55rem .6rem;border:0;border-right:1.5px solid var(--line);background:var(--paper-2);color:var(--purple);font-weight:700">$</span><input type="number" id="pkPrice" min="0" step="10" value="'+state.costs.pack.price+'"></div></div>'+
+      '</div>'+
+      '<div class="stage-out"><span class="lab">Unidades del lote</span><span class="wv">'+nf0.format(Math.floor(Q*1000/Math.max(1,state.costs.pack.cap)))+' bolsas</span></div>'+
+      '<div class="stage-out" style="border-top:0;padding-top:.2rem"><span class="lab">Precio unitario sugerido a este tiraje</span><span class="wv">'+COP(ref*state.costs.pack.cap/1000)+'</span></div>';
+  }else{
+    ctl='<div class="slider-row"><input type="range" class="mslider" id="cs-'+it.id+'" min="0" max="'+Math.round(smax)+'" step="'+Math.max(1,Math.round(smax/400))+'" value="'+Math.round(val)+'">'+
+      '<div class="slider-scale"><span>$0</span><span>'+COP(smax)+'</span></div></div>'+
+      '<div style="margin-top:.55rem"><span class="suggest-pill" id="cs-auto-'+it.id+'">↺ Usar sugerido '+COP(ref)+'/kg</span></div>';
+  }
+
+  document.getElementById('stageBody').innerHTML=
+    '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.1rem">'+
+      '<span class="stage-ico"><svg viewBox="0 0 24 24">'+ICONS[g.ico]+'</svg></span>'+
+      '<h3 style="margin:0;color:var(--purple);font-size:1.3rem">'+it.name+'</h3></div>'+
+    '<div class="pop-flow">'+g.name+' · base: <b>kg de '+BASE_LONG[it.base]+'</b></div>'+
+    '<div class="merma-readout"><div class="merma-val"><span id="cv-'+it.id+'">'+COP(val)+'</span><small>COP / kg</small></div>'+
+      '<span class="zbadge z-'+info.cls+'" id="cz-'+it.id+'"><span class="dot"></span><span id="czt-'+it.id+'">'+info.txt+'</span></span></div>'+
+    costCurveSVG(it,Q,val)+
+    '<div class="curve-cap">Curva de referencia: el costo por kg cae con el volumen del lote hasta el piso operativo.</div>'+
+    ctl+
+    '<div class="pop-io"><div><span class="io-k">Lote</span><span class="io-b" id="cio-q">'+nf0.format(Math.round(Q))+' kg '+BASE_NAME[it.base]+'</span></div>'+
+      '<div style="text-align:right"><span class="io-k">Costo del subproceso</span><span class="io-b" id="cio-t">'+COP(val*Q)+'</span></div></div>'+
+    '<div class="stage-info static"><b>'+it.desc+'</b><br>'+it.ctx+'</div>';
+
+  const sl=document.getElementById('cs-'+it.id);
+  if(sl){
+    sl.style.background=costSliderGrad(it,Q,smax);
+    sl.addEventListener('input',e=>{ const s2=state.costs.items[it.id]; s2.auto=false; s2.val=parseFloat(e.target.value)||0; state.costs.on=true; recompute(); });
+    document.getElementById('cs-auto-'+it.id).addEventListener('click',()=>{ const s2=state.costs.items[it.id]; s2.auto=true; state.costs.on=true; recompute(); refreshCostPopup(true); });
+  }
+  const cap=document.getElementById('pkCap'), pri=document.getElementById('pkPrice');
+  if(cap) cap.addEventListener('input',e=>{ state.costs.pack.cap=Math.max(10,parseFloat(e.target.value)||250); state.costs.on=true; recompute(); refreshCostPopup(true); });
+  if(pri) pri.addEventListener('input',e=>{ state.costs.pack.price=Math.max(0,parseFloat(e.target.value)||0); state.costs.on=true; recompute(); });
+
+  document.getElementById('stageOverlay').classList.add('open');
+}
+function costSliderGrad(it,Q,smax){
+  const r=cRef(it,Q), p=x=>Math.max(0,Math.min(100,(x/smax)*100));
+  const a=p(r*(1-2*it.sig)), b=p(r*(1-it.sig)), c=p(r*(1+it.sig)), dd=p(r*(1+2*it.sig));
+  return 'linear-gradient(90deg,#F3B7C0 0%,#F3B7C0 '+a+'%,#FCE28C '+a+'%,#FCE28C '+b+'%,#A9DBBE '+b+'%,#A9DBBE '+c+'%,#FCE28C '+c+'%,#FCE28C '+dd+'%,#F3B7C0 '+dd+'%,#F3B7C0 100%)';
+}
+function refreshCostPopup(full){
+  if(!activeCostId) return;
+  let it=null; COSTG.forEach(g=>g.items.forEach(x=>{ if(x.id===activeCostId) it=x; }));
+  if(!it) return;
+  const NK=nodeKg(), Q=NK[it.base];
+  if(Q===undefined) return;
+  if(full){ openCostItem(it); return; }
+  const val=itemVal(it,Q), z=costZ(it,Q,val), info=costZLabel(z);
+  const cv=document.getElementById('cv-'+it.id); if(cv) cv.textContent=COP(val);
+  const zb=document.getElementById('cz-'+it.id);
+  if(zb){ zb.className='zbadge z-'+info.cls; document.getElementById('czt-'+it.id).textContent=info.txt; }
+  const q=document.getElementById('cio-q'); if(q) q.textContent=nf0.format(Math.round(Q))+' kg '+BASE_NAME[it.base];
+  const t=document.getElementById('cio-t'); if(t) t.textContent=COP(val*Q);
+  const host=document.getElementById('stageBody');
+  const old=host?host.querySelector('.curve'):null;
+  if(old) old.outerHTML=costCurveSVG(it,Q,val);
+}
+function closeCostPopup(){ activeCostId=null; }
+
+/* ---------- modal "i": metodología y curvas de referencia ---------- */
+function buildCostInfo(){
+  const NK=nodeKg();
+  let h='<h3>Costos de procesamiento · metodología</h3>'+
+   '<p>Cada subproceso se modela con la curva <b>C(Q) = v + F / Q</b>, donde <b>C</b> es el costo en COP por kg, '+
+   '<b>Q</b> son los kg del lote, <b>v</b> es el costo marginal de operar (el piso al que tiende la curva) y <b>F</b> es el costo fijo del lote '+
+   '(montaje, calibración, purga, análisis). Por eso el costo por kg cae rápido al principio y luego se aplana: '+
+   'a partir de cierto volumen, procesar más café casi no cambia el costo unitario.</p>'+
+   '<p>La línea roja vertical marca el <b>lote mínimo</b> por debajo del cual el servicio no se presta o se cobra completo; '+
+   'la línea punteada horizontal es el <b>piso</b> del subproceso.</p>'+
+   '<p>El indicador <b>z</b> funciona igual que en las mermas: mide a cuántas desviaciones (σ) está tu costo de la referencia <i>para el volumen que estás procesando</i>. '+
+   'Dentro de ±1σ es rango de mercado; entre 1σ y 2σ es atípico; más allá de 2σ conviene revisar la cotización.</p>'+
+   '<h3 style="font-size:1.05rem;margin-top:1.1rem">De dónde salen los parámetros</h3>'+
+   '<p>El <b>piso v</b> se calibra de dos maneras. Donde hay tarifa pública (trilla, tueste, molienda, análisis, empaque) se ajusta la curva para que pase por esa tarifa al volumen que corresponde. '+
+   'Donde no la hay (selección óptica), se estima de abajo hacia arriba: amortización del equipo, energía, aire comprimido y mano de obra por hora, divididos entre el rendimiento de la máquina, más gastos de planta y margen.</p>'+
+   '<p>Conviene leer las tarifas de lista con cuidado: los $9.000/kg que cobra una maquila de especialidad por un bache de 20 kg <i>no</i> son el piso del tueste, son un punto alto de la curva en un servicio premium. '+
+   'En este modelo ese precio queda a +1,5σ de la referencia, que es exactamente lo que significa: caro para el volumen, razonable para el nivel de servicio.</p>'+
+   '<h3 style="font-size:1.05rem;margin-top:1.1rem">Parámetros de referencia · Colombia 2026</h3>'+
+   '<table class="info-tbl"><thead><tr><th>Subproceso</th><th>Base</th><th class="n">Piso v</th><th class="n">Fijo F</th><th class="n">Lote mín.</th><th class="n">σ</th></tr></thead><tbody>';
+  COSTG.forEach(g=>{
+    h+='<tr><td colspan="6" style="background:var(--paper-2);font-weight:700;color:var(--purple);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">'+g.name+' · '+g.flow+'</td></tr>';
+    g.items.forEach(it=>{
+      h+='<tr><td>'+it.name+(it.opt?' <span style="color:var(--muted)">(opcional)</span>':'')+'</td><td>'+BASE_NAME[it.base]+'</td>'+
+         '<td class="n">'+COP(itV(it))+'</td><td class="n">'+COP(itF(it))+'</td><td class="n">'+nf.format(itQmin(it))+' kg</td>'+
+         '<td class="n">'+Math.round(it.sig*100)+'%</td></tr>';
+    });
+  });
+  h+='</tbody></table>'+
+   '<p class="src">El empaque no usa un piso fijo: se deriva de la capacidad de la bolsa. Precio unitario de referencia = '+
+   '$950 × (capacidad/250 g)<sup>0,2</sup> + $150.000 / unidades del pedido. A 1.000 unidades da $1.100 (250 g), $1.240 (500 g) y $1.400 (1 kg), '+
+   'que es el orden de magnitud publicado por las plantas de maquila.</p>'+
+   '<h3 style="font-size:1.05rem;margin-top:1.1rem">Curvas de referencia</h3>'+
+   '<div class="gallery">';
+  COSTG.forEach(g=>g.items.forEach(it=>{
+    const Q = NK[it.base]!==undefined ? NK[it.base] : itQmin(it)*20;
+    h+='<figure>'+costCurveSVG(it,Q,cRef(it,Q),320,150)+'<figcaption>'+it.name+'</figcaption></figure>';
+  }));
+  h+='</div>'+
+   '<h3 style="font-size:1.05rem;margin-top:1.1rem">Equivalencias usadas</h3>'+
+   '<table class="info-tbl"><tbody>'+
+   '<tr><td>1 carga</td><td class="n">125 kg</td><td>1 arroba (@)</td><td class="n">12,5 kg</td></tr>'+
+   '<tr><td>1 saco de exportación</td><td class="n">70 kg</td><td>Factor de rendimiento 94</td><td class="n">94 kg c.p.s. → 70 kg excelso</td></tr>'+
+   '<tr><td>Cereza → pergamino</td><td class="n">≈ 5 : 1</td><td>Pergamino → verde</td><td class="n">≈ 1,25 : 1</td></tr>'+
+   '</tbody></table>'+
+   '<p class="src"><b>Fuentes.</b> Estructura de costos de beneficio en finca: <i>Costos de producción de café 2024</i>, Acuerdo Café, Bosque y Clima '+
+   '(1.283 fincas; beneficio $610/kg c.p.s. promedio, $480–$940 según tamaño de finca), ajustado a pesos de 2026. '+
+   'Secado: Cenicafé, <i>Aprovechamiento eficiente de la energía en el secado mecánico del café</i> (Avance Técnico 380). '+
+   'Tarifas de maquila publicadas: trilla, tueste, molienda y análisis de calidad de Speciality Coffee College (Medellín); '+
+   'empaques trilaminados con válvula de Tritocafé (Bogotá). Rendimientos de seleccionadoras ópticas (200 kg/h a 18 t/h, 1–5 kW): catálogo Xeltron. '+
+   'Precio interno de referencia y factor de rendimiento: Federación Nacional de Cafeteros.</p>'+
+   '<p class="src">Las cifras son referencias de mercado para orientar una cotización, no una oferta comercial. '+
+   'El costo real depende de la planta, la región, el combustible, la certificación y el nivel de servicio contratado.</p>';
+  return h;
+}
+
+/* ---------- eventos ---------- */
+document.getElementById('tabCost').addEventListener('click',()=>{
+  if(!state.costs.opened){ state.costs.opened=true; state.costs.on=true; }
+  openSheet('sheetCost');
+});
+document.getElementById('costMaster').addEventListener('change',e=>{ state.costs.on=e.target.checked; recompute(); });
+document.getElementById('costBody').addEventListener('click',e=>{
+  const tg=e.target.closest('[data-toggle]');
+  if(tg){ state.costs.items[tg.dataset.toggle].on=tg.checked; state.costs.on=true; recompute(); return; }
+  if(e.target.closest('[data-stop]')) return;
+  const row=e.target.closest('[data-cost]'); if(!row) return;
+  let it=null; COSTG.forEach(g=>g.items.forEach(x=>{ if(x.id===row.dataset.cost) it=x; }));
+  if(it){ state.costs.on=true; recompute(); openCostItem(it); }
+});
+const costOv=document.getElementById('costInfoOv');
+document.getElementById('costInfoBtn').addEventListener('click',()=>{ document.getElementById('costInfoBody').innerHTML=buildCostInfo(); costOv.classList.add('open'); });
+document.getElementById('costInfoX').addEventListener('click',()=>costOv.classList.remove('open'));
+document.getElementById('costInfoClose').addEventListener('click',()=>costOv.classList.remove('open'));
+costOv.addEventListener('click',e=>{ if(e.target===costOv) costOv.classList.remove('open'); });
+
 
 /* ---------- PDF report ---------- */
 function exportPDF(){
@@ -911,25 +1427,50 @@ function exportPDF(){
        doc.addFileToVFS('CTCb.ttf',FONT_B); doc.addFont('CTCb.ttf','CTC','bold');
        doc.setFont('CTC','normal'); FONT='CTC'; }catch(e){}
   const setF=(style)=>doc.setFont(FONT,style);
-  const P=62,PW=210,PH=297, M=16, purple=[62,10,139], ink=[26,11,52], muted=[107,98,128], line=[228,220,243];
-  // header band
-  doc.setFillColor(38,7,90); doc.rect(0,0,PW,32,'F');
-  // flag line
-  doc.setFillColor(255,205,0);doc.rect(0,32,PW*0.4,1.6,'F');
-  doc.setFillColor(0,48,135);doc.rect(PW*0.4,32,PW*0.26,1.6,'F');
-  doc.setFillColor(200,16,46);doc.rect(PW*0.66,32,PW*0.34,1.6,'F');
-  try{ doc.addImage(LOGO_URI,'PNG',M,8,16,16); }catch(e){}
-  doc.setTextColor(255,255,255); setF('bold'); doc.setFontSize(16);
-  doc.text('Reporte de Mermas · Café',M+20,15);
-  setF('normal'); doc.setFontSize(8.5); doc.setTextColor(255,205,0);
-  doc.text('COLOMBIAN TRADING COMPANY SAS · ctcexport.com',M+20,21);
-  doc.setTextColor(215,205,240);
+  const PW=210,PH=297, M=16, purple=[62,10,139], ink=[26,11,52], muted=[107,98,128], line=[228,220,243];
   const now=new Date();
-  doc.text('Generado: '+now.toLocaleDateString('es-CO')+' '+now.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}),M+20,26);
+  const withCost = !!(state.costs && state.costs.on && state._costs && state._costs.total>0);
+  const TITLE = withCost ? 'Reporte de Mermas y Costos · Café' : 'Reporte de Mermas · Café';
+  // el logo mide 560x308 px: se dibuja respetando su proporción
+  const LW=24, LH=LW*308/560;
+  const flag=(yy,hh)=>{ doc.setFillColor(255,205,0);doc.rect(0,yy,PW*0.4,hh,'F');
+    doc.setFillColor(0,48,135);doc.rect(PW*0.4,yy,PW*0.26,hh,'F');
+    doc.setFillColor(200,16,46);doc.rect(PW*0.66,yy,PW*0.34,hh,'F'); };
+  // portada
+  doc.setFillColor(38,7,90); doc.rect(0,0,PW,34,'F'); flag(34,1.8);
+  doc.setFillColor(255,255,255); doc.roundedRect(M,9,LW+5,LH+5.5,2.2,2.2,'F');
+  try{ doc.addImage(LOGO_URI,'PNG',M+2.5,11.7,LW,LH); }catch(e){}
+  const TX=M+LW+12;
+  doc.setTextColor(255,255,255); setF('bold'); doc.setFontSize(15);
+  doc.text(TITLE,TX,15);
+  setF('normal'); doc.setFontSize(8.2); doc.setTextColor(255,205,0);
+  doc.text('COLOMBIAN TRADING COMPANY SAS · ctcexport.com',TX,21);
+  doc.setTextColor(200,188,232); doc.setFontSize(7.8);
+  doc.text('Generado el '+now.toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})+
+    ' a las '+now.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}),TX,26.5);
 
-  let y=44;
-  doc.setTextColor.apply(doc,ink); setF('bold'); doc.setFontSize(11);
-  doc.text('Configuración',M,y); y+=6;
+  let y=46;
+  // encabezado delgado en las páginas de continuación
+  function newPage(){
+    doc.addPage();
+    doc.setFillColor(38,7,90); doc.rect(0,0,PW,15,'F'); flag(15,1.1);
+    doc.setFillColor(255,255,255); doc.roundedRect(M,3.2,18,10.6,1.6,1.6,'F');
+    try{ doc.addImage(LOGO_URI,'PNG',M+1.5,5,15,15*308/560); }catch(e){}
+    doc.setTextColor(255,255,255); setF('bold'); doc.setFontSize(9);
+    doc.text(TITLE,M+23,10);
+    setF('normal'); doc.setFontSize(7); doc.setTextColor(200,188,232);
+    doc.text('ctcexport.com',PW-M,10,{align:'right'});
+    doc.setTextColor.apply(doc,ink);
+    y=27;
+  }
+  // título de sección con la regla amarilla de la marca
+  function sect(t){
+    if(y>PH-42) newPage();
+    doc.setFillColor(255,205,0); doc.rect(M,y-3.4,7,1.5,'F');
+    setF('bold'); doc.setFontSize(11.5); doc.setTextColor.apply(doc,purple);
+    doc.text(t,M+10,y); y+=7; setF('normal'); doc.setTextColor.apply(doc,ink);
+  }
+  sect('Configuración');
   setF('normal'); doc.setFontSize(9.5); doc.setTextColor.apply(doc,muted);
   const unit=UNIT_LABEL[state.unit];
   doc.text('Cantidad inicial: '+fmtW(state.qty)+' '+unit+' de '+NODES[state.start].toLowerCase(),M,y); y+=5;
@@ -988,18 +1529,137 @@ function exportPDF(){
 
   // notes
   const notes=document.getElementById('notes').value.trim();
-  if(notes){ setF('bold');doc.setFontSize(9);doc.setTextColor.apply(doc,purple);doc.text('Notas',M,y);y+=5;
+  if(notes){ sect('Notas');
     setF('normal');doc.setFontSize(9);doc.setTextColor.apply(doc,ink);
     const lines=doc.splitTextToSize(notes,PW-2*M); doc.text(lines,M,y); y+=lines.length*4.6+4; }
 
-  // methodology footnote
-  doc.setDrawColor.apply(doc,line); doc.line(M,PH-24,PW-M,PH-24);
-  doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
-  doc.text(doc.splitTextToSize('Estimación basada en promedios de la industria (ICO, SCA, FNC). Beneficio+secado ~80% merma (≈5:1); trilla ~20% (factor ICO 0,80); tueste ~16% (rango 11–24%); almacenamiento ~1%. Los resultados reales dependen de variedad, proceso, humedad y equipo.',PW-2*M),M,PH-20);
-  doc.setTextColor.apply(doc,muted); doc.setFontSize(7);
-  doc.text('© '+now.getFullYear()+' Colombian Trading Company SAS · ctcexport.com · Todos los derechos reservados.',M,PH-8);
+  // ===== costos de procesamiento =====
+  if(state.costs && state.costs.on && state._costs && state._costs.total>0){
+    const C=state._costs, KGF=UNIT_KG[state.unit]||1, NKp=C.NK;
+    if(y>PH-96){ newPage(); }
+    sect('Costos de procesamiento');
+    setF('normal'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,muted);
+    doc.text('Costo de maquila por subproceso, normalizado a COP por kg de la base de cada uno. La referencia es la curva C(Q)=v+F/Q ajustada al volumen del lote.',M,y);
+    y+=6;
 
-  const fname='Reporte_Mermas_Cafe_'+now.toISOString().slice(0,10)+'.pdf';
+    const c1=M+1, c2=M+56, c3=M+104, c4=M+114, c5=PW-M;
+    const costHdr=()=>{
+      doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
+      doc.setTextColor.apply(doc,purple); setF('bold'); doc.setFontSize(8);
+      doc.text('Subproceso',c1,y);
+      doc.text('Lote',c2,y);
+      doc.text('COP/kg',c3,y,{align:'right'});
+      doc.text('Estado',c4,y);
+      doc.text('Costo',c5,y,{align:'right'});
+      y+=6; setF('normal');
+    };
+    const costPage=()=>{ newPage(); costHdr(); };
+    costHdr();
+
+    C.groups.forEach(gr=>{
+      const on=gr.items.filter(r=>r.on);
+      if(!on.length) return;
+      if(y>PH-40){ costPage(); }
+      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
+      doc.text(gr.g.name.toUpperCase()+'  ·  '+gr.g.flow,c1,y); y+=5;
+      on.forEach(r=>{
+        if(y>PH-32){ costPage(); }
+        const inf=costZLabel(r.z);
+        setF('normal'); doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
+        doc.text(r.it.name,c1+2,y);
+        doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
+        doc.text(nf0.format(Math.round(r.Q))+' kg '+BASE_NAME[r.it.base],c2,y);
+        doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
+        doc.text(COP(r.val),c3,y,{align:'right'});
+        const cc=inf.cls==='ok'?[46,139,87]:inf.cls==='mid'?[176,132,10]:[200,16,46];
+        doc.setTextColor.apply(doc,cc); setF('bold'); doc.setFontSize(7.4);
+        doc.text(inf.cls==='ok'?'En rango':inf.cls==='mid'?'Atípico':'Extremo',c4,y);
+        setF('normal'); doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
+        doc.text(COP(r.tot),c5,y,{align:'right'});
+        y+=4.2; doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
+        doc.text('referencia '+COP(r.ref)+'/kg a este volumen',c1+2,y);
+        y+=5.4; doc.setDrawColor(238,232,248); doc.line(M,y-3.2,PW-M,y-3.2);
+      });
+      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
+      doc.text('Subtotal '+gr.g.name,c1+2,y); doc.text(COP(gr.total),c5,y,{align:'right'});
+      setF('normal'); y+=8;
+    });
+
+    if(y>PH-58){ newPage(); }
+    // totales
+    const bw2=(PW-2*M-8)/3;
+    const tb=[['Costo total',COP(C.total)],
+              ['Por kg '+NODE_SHORT[state.end].toLowerCase(),COP(C.perKgFinal)],
+              ['Producto final', nf0.format(Math.round(C.finalKg))+' kg']];
+    tb.forEach((bx,i)=>{ const x=M+i*(bw2+4);
+      doc.setFillColor(239,231,253); doc.roundedRect(x,y,bw2,16,2,2,'F');
+      doc.setTextColor.apply(doc,muted); doc.setFontSize(6.8); setF('bold');
+      doc.text(String(bx[0]).toUpperCase(),x+3,y+5);
+      doc.setTextColor.apply(doc,purple); doc.setFontSize(12);
+      doc.text(String(bx[1]),x+3,y+12);
+    });
+    y+=22;
+
+    // equivalencias
+    if(y>PH-52){ newPage(); }
+    sect('Equivalencias del lote');
+    doc.setFillColor(248,245,253); doc.rect(M,y-4,PW-2*M,7,'F');
+    setF('bold'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,purple);
+    doc.text('Estado',c1,y); doc.text('Kilos',M+56,y,{align:'right'});
+    doc.text('Cargas 125 kg',M+92,y,{align:'right'});
+    doc.text('Arrobas',M+124,y,{align:'right'});
+    doc.text('Sacos 70 kg',M+158,y,{align:'right'});
+    doc.text('COP/kg',c5,y,{align:'right'});
+    y+=5.6; setF('normal'); doc.setFontSize(8);
+    [0,1,2,3].forEach(n=>{
+      if(NKp[n]===undefined) return;
+      const kgv=NKp[n];
+      doc.setTextColor.apply(doc,ink);
+      doc.text(NODES[n],c1,y);
+      doc.text(nf0.format(Math.round(kgv)),M+56,y,{align:'right'});
+      doc.text(nf2.format(kgv/CARGA),M+92,y,{align:'right'});
+      doc.text(nf.format(kgv/ARROBA),M+124,y,{align:'right'});
+      doc.text(nf2.format(kgv/SACO),M+158,y,{align:'right'});
+      doc.setTextColor.apply(doc,muted);
+      doc.text(COP(C.total/Math.max(1,kgv)),c5,y,{align:'right'});
+      y+=5; doc.setDrawColor(238,232,248); doc.line(M,y-3.4,PW-M,y-3.4);
+    });
+    y+=2;
+    doc.setFontSize(7); doc.setTextColor.apply(doc,muted);
+    doc.text(doc.splitTextToSize('La última columna reparte el costo total de procesamiento sobre la masa de cada estado, para comparar contra el precio de compra en cargas de cereza o de pergamino y contra el precio de venta del café verde o tostado.',PW-2*M),M,y);
+    y+=9;
+    if(state.costs.items.empaque && state.costs.items.empaque.on){
+      doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
+      doc.text('Empaque: bolsa de '+nf0.format(state.costs.pack.cap)+' g a '+COP(state.costs.pack.price)+' por unidad · '+
+        nf0.format(Math.floor((NKp[3]||0)*1000/Math.max(1,state.costs.pack.cap)))+' unidades.',M,y);
+      y+=6;
+    }
+  }
+
+  // nota metodológica
+  if(y>PH-46){ newPage(); }
+  y+=2;
+  doc.setDrawColor.apply(doc,line); doc.line(M,y,PW-M,y); y+=5;
+  setF('bold'); doc.setFontSize(7.2); doc.setTextColor.apply(doc,purple);
+  doc.text('Bases del cálculo',M,y); y+=4;
+  setF('normal'); doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
+  const mnotes=[];
+  mnotes.push('Mermas: promedios de la industria (ICO, SCA, FNC). Beneficio y secado ~80% (≈5:1); trilla ~20% (factor ICO 0,80); tueste ~16% (rango 11–24%); almacenamiento ~1%.');
+  if(withCost) mnotes.push('Costos: modelo C = v + F/Q sobre referencias de maquila en Colombia 2026 (Acuerdo Café, Bosque y Clima 2024; Cenicafé AVT 380; tarifas públicas de plantas de trilla, tueste, molienda, análisis y empaque). Son referencias de mercado para orientar una cotización, no una oferta comercial.');
+  mnotes.push('Los resultados reales dependen de variedad, proceso, humedad, equipo, región y nivel de servicio contratado.');
+  mnotes.forEach(t=>{ const ls=doc.splitTextToSize(t,PW-2*M); doc.text(ls,M,y); y+=ls.length*3+1.6; });
+
+  // pie uniforme en todas las páginas
+  const NP=doc.internal.getNumberOfPages();
+  for(let pg=1;pg<=NP;pg++){
+    doc.setPage(pg);
+    doc.setDrawColor.apply(doc,line); doc.line(M,PH-13,PW-M,PH-13);
+    setF('normal'); doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
+    doc.text('© '+now.getFullYear()+' Colombian Trading Company SAS · ctcexport.com',M,PH-8.5);
+    doc.text('Página '+pg+' de '+NP,PW-M,PH-8.5,{align:'right'});
+  }
+
+  const fname=(withCost?'Reporte_Mermas_Costos_Cafe_':'Reporte_Mermas_Cafe_')+now.toISOString().slice(0,10)+'.pdf';
   doc.save(fname);
   toast('Reporte PDF generado');
 }
@@ -1045,7 +1705,7 @@ ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
 // export
 document.getElementById('exportBtn').addEventListener('click',exportPDF);
 // esc
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ ov.classList.remove('open'); closeStagePopup(); closeSheets(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ ov.classList.remove('open'); costOv.classList.remove('open'); closeStagePopup(); closeSheets(); } });
 /* ---------- init ---------- */
 syncSegDisabled(); recompute();
 

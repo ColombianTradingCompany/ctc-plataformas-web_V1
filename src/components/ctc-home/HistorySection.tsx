@@ -7,21 +7,21 @@ import styles from "./HistorySection.module.css";
 const T: Record<Lang, { eyebrow: string; q1: string; qem: string; q2: string; by: string }> = {
   es: {
     eyebrow: "Quiénes somos · G&G",
-    q1: "“Somos un padre y un hijo: un ingeniero mecánico y un ingeniero agrónomo, caficultores. Uno conoce cada vereda; el otro, cada tostaduría. ",
+    q1: "“Somos un padre y un hijo: dos ingenieros mecánicos especialistas en procesos industriales y operaciones, caficultores. Uno conoce cada vereda; el otro, cada tostaduría. ",
     qem: "CTC es la mesa donde nos encontramos",
     q2: " — y a la que invitamos a todo el que cultive, tueste o sueñe un café extraordinario.”",
     by: "— G & G · Fundadores · Piedecuesta, Santander",
   },
   en: {
     eyebrow: "Who we are · G&G",
-    q1: "“We are a father and a son: a mechanical engineer and an agronomist, both coffee growers. One knows every vereda; the other, every roastery. ",
+    q1: "“We are a father and a son: two mechanical engineers specialised in industrial processes and operations, both coffee growers. One knows every vereda; the other, every roastery. ",
     qem: "CTC is the table where we meet",
     q2: " — and to which we invite everyone who grows, roasts or dreams an extraordinary coffee.”",
     by: "— G & G · Founders · Piedecuesta, Santander",
   },
   de: {
     eyebrow: "Wer wir sind · G&G",
-    q1: "„Wir sind Vater und Sohn: ein Maschinenbauingenieur und ein Agraringenieur, beide Kaffeebauern. Der eine kennt jede Vereda, der andere jede Rösterei. ",
+    q1: "„Wir sind Vater und Sohn: zwei Maschinenbauingenieure, spezialisiert auf industrielle Prozesse und Betriebsabläufe, beide Kaffeebauern. Der eine kennt jede Vereda, der andere jede Rösterei. ",
     qem: "CTC ist der Tisch, an dem wir uns treffen",
     q2: " — und an den wir alle einladen, die einen außergewöhnlichen Kaffee anbauen, rösten oder erträumen.“",
     by: "— G & G · Gründer · Piedecuesta, Santander",

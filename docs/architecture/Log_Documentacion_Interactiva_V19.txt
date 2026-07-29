@@ -12,6 +12,43 @@ no "después". El backend real del Directorio del Café (3 commits del 2026-07-2
 se anotó y V18.0 salió publicado describiéndolo como maqueta.
 
 ---
+## [2026-07-29] F3 de la reestructura EUDR: la DDS con snapshot congelado (+ cierre de arrastrados)
+- Tercera y última fase núcleo de docs/EUDR_RESTRUCTURE_PLAN.md (F4/blends queda
+  diferida hasta que existan). La DDS NO es un certificado: nadie la emite y no
+  vence — su artefacto es la referencia + código de verificación que genera el
+  Information System de la UE al presentar.
+- **Migración `f3_lot_dds_columns`**: `lots.dds_reference / dds_verification_code /
+  dds_filed_at / dds_snapshot` (jsonb). El snapshot congela lo que el Art. 12
+  obliga a poder explicar 5 años después: parcelas aportantes CON GEOMETRÍA,
+  claims derivados con cobertura, arquetipo, ventana de cosecha, custodia y el
+  nivel de riesgo país FECHADO al presentar (si el benchmarking cambia, el lote
+  archivado se explica solo).
+- **`registerLotDds(lotId, ref, code)`** (Server Action BCP): exige Sello listo
+  (lotEudrGate por aportes) y ventana de cosecha; congela el snapshot y deja
+  audit_log (`dds_registered`). El snapshot es INMUTABLE: si ya existe, la acción
+  solo corrige referencia/código (`dds_corrected`) — nunca recalcula lo declarado.
+  UI: botón "Registrar DDS" en la Lista de /bcp/lotes (lotes en el camino
+  post-intake); registrada muestra "DDS ✓ <ref>" y el clic corrige el typo.
+- **Sello imprimible**: nueva fila "Declaración de Diligencia Debida (DDS)" con
+  referencia, código y fecha de registro, cuando existen.
+- **Arrastrados cerrados**: `earthKml` (KML y GeoJSON) emite ahora UNA geometría
+  POR PARCELA (nota "un polígono no puede cubrir varias parcelas"; el formato por
+  Feature es el que acepta TRACES) con la geometría de la finca como respaldo
+  legacy; la ruta KML de BCP y la descarga GeoJSON del editor cargan las
+  parcelas. Y el contador "EUDR Aptas" del dashboard del productor usa la misma
+  regla por parcelas que el FincaModal y approveFinca (se retiró la regla legacy).
+- Verificación: tsc + eslint limpios; QA puro 26/26 sigue verde; panel del
+  productor cargado sin errores de consola ni de servidor. El botón de la DDS no
+  es navegable en automático (BCP = 2FA real, gotcha documentado): la acción se
+  verificó por revisión + tipos; la lógica del snapshot es el motor puro ya
+  testeado.
+- Con F1+F2+F3, el flujo pedido por el owner queda completo de punta a punta:
+  parcelas (Art. 9) → certificados con vigencia en la finca → aportes + arquetipo
+  y claims derivados en el lote → DDS registrada con registro congelado de 5 años.
+  Material para el wrap V20: nodos n-kaffetal/n-bcp/n-db y entradas DICT nuevas
+  (parcela, credencial/claim derivado, DDS/snapshot).
+(commit: pending)
+
 ## [2026-07-29] F2 de la reestructura EUDR: el lote como composición (aportes + claims derivados)
 - Segunda fase de docs/EUDR_RESTRUCTURE_PLAN.md. El lote pasa a ser un conjunto de
   APORTES PONDERADOS de fincas con VENTANA DE COSECHA; el arquetipo y los sellos se

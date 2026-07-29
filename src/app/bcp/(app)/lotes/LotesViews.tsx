@@ -14,6 +14,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { revertNoApto } from "../actions";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
+import { registerLotDds } from "../actions";
 import { GeoMap, type GeoMarker } from "@/components/bcp/GeoMap";
 import styles from "../shared.module.css";
 
@@ -36,6 +37,8 @@ export type ViewLot = {
   lng: number | null;
   postulated: boolean;
   reason: string | null;
+  /** F3: referencia de la DDS registrada (null = sin registrar). */
+  ddsReference: string | null;
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -384,6 +387,7 @@ export function LotesViews({
                       <td style={td}>{l.region || "—"}</td>
                       <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}>
                         {l.stage === "apto" && !l.postulated && <PostularOnBehalfButton lotId={l.id} />}
+                        {l.arenaPath && <RegisterDdsButton lotId={l.id} ddsReference={l.ddsReference} />}
                       </td>
                     </tr>
                   ))}
@@ -443,5 +447,39 @@ export function LotesViews({
         </div>
       )}
     </div>
+  );
+}
+
+
+// ── F3 · Registrar la DDS del embarque (docs/EUDR_RESTRUCTURE_PLAN.md) ───────
+// CTC presenta la DDS en el Information System de la UE y aquí pega su
+// artefacto: referencia + código de verificación. El primer registro CONGELA el
+// snapshot del Art. 12 (server-side); volver a usarlo solo corrige la
+// referencia — el snapshot nunca se recalcula.
+function RegisterDdsButton({ lotId, ddsReference }: { lotId: string; ddsReference: string | null }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  function run() {
+    const ref = window.prompt(
+      ddsReference
+        ? `Corregir la referencia de la DDS (actual: ${ddsReference}). El snapshot congelado NO se recalcula.`
+        : "Referencia de la DDS (la genera el Information System de la UE al presentar):",
+      ddsReference ?? ""
+    );
+    if (ref == null || !ref.trim()) return;
+    const code = window.prompt("Código de verificación (opcional):", "") ?? "";
+    startTransition(async () => {
+      const res = await registerLotDds(lotId, ref, code);
+      setError(res.ok ? null : res.error);
+    });
+  }
+  return (
+    <span style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end", gap: 2, marginLeft: 6 }}>
+      <button type="button" className="btn btn-sm" disabled={pending} onClick={run}
+        title={ddsReference ? "DDS registrada — clic para corregir la referencia (el snapshot no cambia)" : "Registrar la DDS presentada para este lote"}>
+        {pending ? "…" : ddsReference ? `DDS ✓ ${ddsReference}` : "Registrar DDS"}
+      </button>
+      {error && <span style={{ fontSize: 10.5, color: "var(--red)", maxWidth: 260, whiteSpace: "normal", textAlign: "right" }}>{error}</span>}
+    </span>
   );
 }

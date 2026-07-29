@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CONTRACT_STATUS_LABEL, GRADES, LOT_COMMITTED_STAGE, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type ProducerContract, type FeedbackNote } from "./data";
-import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus } from "@/lib/eudr";
+import { CONTRACT_STATUS_LABEL, GRADES, LOT_COMMITTED_STAGE, STAGES, ctcLotReference, ctcLotReferenceShort, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type FeedbackNote } from "./data";
+import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus, type ParcelaGeoFields } from "@/lib/eudr";
 import { ARENA_FEE_COP, formatCop, PHASE_LABEL } from "@/lib/arena/inscriptions";
 import { NEQUI, PAYMENT_EMAIL, nequiConfigured } from "@/lib/arena/payment";
 import { aplicarCodigoCampana, peekCampaignCodeAction, postularLote } from "@/lib/arena/producerActions";
@@ -122,6 +122,7 @@ export function AppDashboard({
   userName,
   lots,
   fincas,
+  parcelas,
   gi,
   contracts,
   feedback,
@@ -146,6 +147,9 @@ export function AppDashboard({
   userName: string;
   lots: Lot[];
   fincas: Finca[];
+  /** F3: parcelas de las fincas del productor — la aptitud EUDR se juzga por
+   *  parcelas (F1); sin este dato el contador usaba la regla legacy. */
+  parcelas: Parcela[];
   gi: GeneralInfo;
   contracts: ProducerContract[];
   feedback: FeedbackNote[];
@@ -236,7 +240,17 @@ export function AppDashboard({
   const totalDueCop = paymentsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? ARENA_FEE_COP), 0);
   const samplesToShip = lots.filter((l) => l.inscription?.phase === "postulacion" && !l.sampleShippedAt).length;
   const newCtcNotes = feedback.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
-  const aptFincas = fincas.filter((f) => fincaEudrStatus(f).code === "apta").length;
+  // F3: la misma regla por parcelas que usan el FincaModal y approveFinca.
+  const parcelaGeoOfFinca = (f: Finca): ParcelaGeoFields[] =>
+    parcelas
+      .filter((p) => p.fincaId === f.id)
+      .map((p) => ({
+        areaHa: p.areaHa.trim() ? Number(p.areaHa.replace(",", ".")) : null,
+        hasPoint: p.lat !== "" && p.lng !== "",
+        hasPolygon: (p.polygon?.length ?? 0) >= 3,
+      }));
+  const fincaStatusOf = (f: Finca) => fincaEudrStatus(f, parcelaGeoOfFinca(f));
+  const aptFincas = fincas.filter((f) => fincaStatusOf(f).code === "apta").length;
   const lotsInQueue = lots.filter((l) => l.stage === 6).length;
   const infoComplete = gi.razon !== "—" && gi.agri !== "—";
 
@@ -518,7 +532,7 @@ export function AppDashboard({
                   </div>
                   <div className={styles.fincaHead}>
                     <h5 style={{ margin: 0 }}>{f.name}</h5>
-                    <EudrStatusBadge status={fincaEudrStatus(f)} />
+                    <EudrStatusBadge status={fincaStatusOf(f)} />
                   </div>
                   <div className="mono" style={{ fontSize: 10, color: "var(--muted)", overflowWrap: "anywhere" }}>{fincaCode(f.id)}</div>
                   <div className={styles.sub}>
@@ -546,7 +560,7 @@ export function AppDashboard({
                       <a className={styles.certDownload} href={`/kaffetal-regal/certificacion/${f.id}`} target="_blank" rel="noopener noreferrer">
                         ⬇ Descargar Visa EUDR de {f.name}
                       </a>
-                    ) : fincaEudrStatus(f).code === "pendiente" ? (
+                    ) : fincaStatusOf(f).code === "pendiente" ? (
                       <span className={styles.certPending}>
                         Visa EUDR: en trámite — información incompleta
                         <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y áreas legales) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga la Visa EUDR, habilitará su descarga. Con la Visa vigente, todos los lotes de esta finca reciben su Sello EUDR automáticamente." />

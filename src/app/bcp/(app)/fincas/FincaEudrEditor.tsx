@@ -113,13 +113,15 @@ export type FincaEudrValues = {
 // GeoJSON estándar (RFC 7946) en vez del JSON casero de antes: es el formato
 // que acepta TRACES (el sistema de la UE para la declaración EUDR) y cualquier
 // SIG. El casero no tenía ningún consumidor, así que no se pierde nada.
-function downloadGeoJson(fincaId: string, fincaName: string, values: FincaEudrValues) {
+function downloadGeoJson(fincaId: string, fincaName: string, values: FincaEudrValues, parcelas: BcpParcela[]) {
   const payload = buildFincaGeoJson({
     name: fincaName,
     code: fincaCode(fincaId),
     lat: values.eudr_lat,
     lng: values.eudr_lng,
     polygon: values.eudr_polygon_geojson,
+    // F3: una Feature por parcela (formato que acepta TRACES).
+    parcelas: parcelas.map((p) => ({ name: p.name, areaHa: p.areaHa, lat: p.lat, lng: p.lng, polygon: p.polygon })),
   });
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/geo+json" });
   const url = URL.createObjectURL(blob);
@@ -178,6 +180,8 @@ export type BcpParcela = {
   lat: string;
   lng: string;
   polygonPoints: number;
+  /** F3: geometría completa — el GeoJSON/KML emite una Feature por parcela. */
+  polygon: { lat: number; lng: number }[] | null;
   position: number;
 };
 export type BcpCert = {
@@ -431,7 +435,7 @@ export function FincaEudrEditor({
             <a className="btn btn-sm" href={`/bcp/fincas/${fincaId}/kml`}>
               Archivo Google Earth (.kml) ⤓
             </a>
-            <button type="button" className="btn btn-sm" onClick={() => downloadGeoJson(fincaId, fincaName, values)}>
+            <button type="button" className="btn btn-sm" onClick={() => downloadGeoJson(fincaId, fincaName, values, parcelas)}>
               GeoJSON (.geojson) ⤓
             </button>
           </>

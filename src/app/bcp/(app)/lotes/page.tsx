@@ -180,12 +180,13 @@ export default async function BcpLotesPage() {
     grade: string | null;
     season_id: string | null;
     eva_no_apto_reason: string | null;
+    dds_reference: string | null;
     fincas: { name: string | null; departamento: string | null; eudr_lat: string | number | null; eudr_lng: string | number | null; eudr_polygon_geojson: { lat: number; lng: number }[] | null } | { name: string | null; departamento: string | null; eudr_lat: string | number | null; eudr_lng: string | number | null; eudr_polygon_geojson: { lat: number; lng: number }[] | null }[] | null;
   };
   const { data: passedRaw } = await service
     .from("lots")
     .select(
-      `id, name, producer_id, stage, grade, season_id, eva_no_apto_reason,
+      `id, name, producer_id, stage, grade, season_id, eva_no_apto_reason, dds_reference,
        fincas(name, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson)`
     )
     .order("created_at", { ascending: false });
@@ -301,6 +302,7 @@ export default async function BcpLotesPage() {
       lng: center?.ln ?? null,
       postulated: postulatedLots.has(l.id),
       reason: l.eva_no_apto_reason,
+      ddsReference: l.dds_reference,
     };
   };
   const viewLots = passedRows.filter((l) => l.stage !== "no_apto").map(toViewLot);

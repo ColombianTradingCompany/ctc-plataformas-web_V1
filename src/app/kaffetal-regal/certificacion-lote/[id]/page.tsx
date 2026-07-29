@@ -73,7 +73,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   const { data } = await service
     .from("lots")
     .select(
-      `id, name, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to,
+      `id, name, producer_id, ficha_variedad, ficha_proceso, ficha_altitud_m, harvest_from, harvest_to, dds_reference, dds_verification_code, dds_filed_at,
        eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
        eudr_product_risk, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme,
        eudr_risk_level, eudr_mitigation_actions, eudr_mitigation_effective, eudr_mitigation_responsible,
@@ -81,7 +81,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
     )
     .eq("id", id)
     .single();
-  const lot = data as (CertLot & { producer_id: string; eudr_mitigation_effective: boolean | null; harvest_from: string | null; harvest_to: string | null; fincas: FincaJoin }) | null;
+  const lot = data as (CertLot & { producer_id: string; eudr_mitigation_effective: boolean | null; harvest_from: string | null; harvest_to: string | null; dds_reference: string | null; dds_verification_code: string | null; dds_filed_at: string | null; fincas: FincaJoin }) | null;
 
   if (!lot || lot.producer_id !== user.id) return gate("No encontramos este lote en su cuenta.");
   // F2: el origen del lote son sus APORTES; fallback a la finca primaria para
@@ -146,6 +146,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
       derivedClaims={derivedClaims}
       archetypeLabel={archetype ? ARCHETYPE_LABEL[archetype] : null}
       harvestWindow={lot.harvest_from && lot.harvest_to ? `${lot.harvest_from} → ${lot.harvest_to}` : null}
+      dds={lot.dds_reference ? { reference: lot.dds_reference, verificationCode: lot.dds_verification_code, filedAt: lot.dds_filed_at } : null}
     />
   );
 }

@@ -28,7 +28,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     .maybeSingle();
   if (!finca) return new Response("Finca no encontrada.", { status: 404, headers: { "cache-control": "private, no-store" } });
 
-  const { data: producer } = await service.from("profiles").select("full_name").eq("id", finca.producer_id).maybeSingle();
+  const [{ data: producer }, { data: parcelaRows }] = await Promise.all([
+    service.from("profiles").select("full_name").eq("id", finca.producer_id).maybeSingle(),
+    // F3: el KML emite una geometría POR PARCELA (el átomo del Art. 9).
+    service.from("finca_parcelas").select("name, area_ha, lat, lng, polygon_geojson").eq("finca_id", id).order("position"),
+  ]);
 
   const kml = buildFincaKml({
     name: finca.name,
@@ -42,6 +46,13 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     lat: finca.eudr_lat,
     lng: finca.eudr_lng,
     polygon: (finca.eudr_polygon_geojson as { lat: number; lng: number }[] | null) ?? null,
+    parcelas: ((parcelaRows ?? []) as { name: string; area_ha: number | string | null; lat: number | string | null; lng: number | string | null; polygon_geojson: { lat: number; lng: number }[] | null }[]).map((p) => ({
+      name: p.name,
+      areaHa: p.area_ha,
+      lat: p.lat,
+      lng: p.lng,
+      polygon: p.polygon_geojson,
+    })),
   });
 
   const safeName = finca.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9_-]+/g, "_").toLowerCase();

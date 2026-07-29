@@ -54,6 +54,7 @@ export function LotEudrCertDoc({
   derivedClaims = [],
   archetypeLabel = null,
   harvestWindow = null,
+  dds = null,
 }: {
   lot: CertLot;
   fincas: CertFinca[];
@@ -65,6 +66,9 @@ export function LotEudrCertDoc({
   derivedClaims?: { label: string; verified: boolean }[];
   archetypeLabel?: string | null;
   harvestWindow?: string | null;
+  /** F3: el artefacto de la DDS presentada — referencia + código de
+   *  verificación del Information System de la UE (no es un certificado). */
+  dds?: { reference: string; verificationCode: string | null; filedAt: string | null } | null;
 }) {
   const row = (label: string, value: React.ReactNode) => (
     <tr>
@@ -190,6 +194,13 @@ export function LotEudrCertDoc({
                     : "ninguno con cobertura total del lote"
                 )}
                 {lot.eudr_cert_scheme ? row("Esquemas declarados (histórico)", lot.eudr_cert_scheme) : null}
+                {dds &&
+                  row(
+                    "Declaración de Diligencia Debida (DDS)",
+                    `Referencia ${dds.reference}${dds.verificationCode ? ` · verificación ${dds.verificationCode}` : ""}${
+                      dds.filedAt ? ` · registrada ${new Date(dds.filedAt).toLocaleDateString("es-CO")}` : ""
+                    }`
+                  )}
                 {row("Indicios de ilegalidad o deforestación", yesNo(lot.eudr_illegality_indicators))}
                 {row("Documentos disponibles y verificables", yesNo(lot.eudr_docs_available))}
                 {row(

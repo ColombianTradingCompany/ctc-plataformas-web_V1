@@ -1619,6 +1619,7 @@ function Experience() {
           userName={userName}
           lots={lots}
           fincas={fincas}
+          parcelas={parcelas}
           gi={gi}
           contracts={contracts}
           feedback={feedback}

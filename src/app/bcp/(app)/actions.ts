@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
+import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
@@ -190,6 +191,131 @@ export async function setFincaCertVerified(
     notes: `${cert.scheme}${cert.cert_number ? ` · N.º ${cert.cert_number}` : ""}`,
   });
   revalidatePath("/bcp/fincas");
+  return { ok: true };
+}
+
+// ── F3 · Registrar la DDS del lote (docs/EUDR_RESTRUCTURE_PLAN.md) ──────────
+// La DDS no es un certificado: CTC la presenta en el Information System de la
+// UE y aquí solo se REGISTRA su artefacto (referencia + código de verificación)
+// junto con el snapshot congelado del Art. 12 (5 años): parcelas con geometría,
+// claims derivados, arquetipo, cosecha, custodia y riesgo país fechado.
+// El snapshot es INMUTABLE: si el lote ya tiene uno, esta acción solo corrige
+// la referencia/código — nunca recalcula lo declarado.
+export async function registerLotDds(
+  lotId: string,
+  reference: string,
+  verificationCode: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const ref = reference.trim();
+  const code = verificationCode.trim();
+  if (!ref) return { ok: false, error: "Falta la referencia de la DDS (la genera el Information System al presentar)." };
+
+  const { data: lot } = await service
+    .from("lots")
+    .select("id, name, stage, harvest_from, harvest_to, dds_snapshot, finca_id")
+    .eq("id", lotId)
+    .single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  if (lot.dds_snapshot) {
+    // Corrección de un typo en la referencia — el registro congelado no se toca.
+    await service
+      .from("lots")
+      .update({ dds_reference: ref, dds_verification_code: code || null })
+      .eq("id", lotId);
+    await service.from("audit_log").insert({
+      entity_type: "lot",
+      entity_id: lotId,
+      action: "dds_corrected",
+      performed_by: adminId,
+      notes: `Referencia corregida a ${ref} (snapshot intacto).`,
+    });
+    revalidatePath("/bcp/lotes");
+    return { ok: true };
+  }
+
+  const gate = await lotEudrGate(service, lotId);
+  if (!gate.ready) {
+    return { ok: false, error: `El Sello EUDR del lote no está listo (${gate.label}) — no se puede registrar una DDS sobre un lote sin debida diligencia resuelta.` };
+  }
+  if (!lot.harvest_from || !lot.harvest_to) {
+    return { ok: false, error: "El lote no tiene ventana de recolección registrada (A2 de la Ficha) — la DDS exige la fecha o rango de producción." };
+  }
+
+  // Origen por aportes (fallback a la finca primaria para lotes pre-F2).
+  type CJoin = { weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null }[] | null };
+  const { data: contribRaw } = await service
+    .from("lot_contributions")
+    .select("weight_kg, fincas(id, name, municipio, departamento)")
+    .eq("lot_id", lotId);
+  type FincaMini = { id: string; name: string; municipio: string | null; departamento: string | null };
+  let joins: { f: FincaMini; kg: number | null }[] = (((contribRaw as CJoin[] | null) ?? []))
+    .map((r) => ({ f: (Array.isArray(r.fincas) ? r.fincas[0] : r.fincas) as FincaMini | null, kg: r.weight_kg != null ? Number(r.weight_kg) : null }))
+    .filter((x): x is { f: FincaMini; kg: number | null } => !!x.f);
+  if (!joins.length && lot.finca_id) {
+    const { data: f } = await service.from("fincas").select("id, name, municipio, departamento").eq("id", lot.finca_id).single();
+    if (f) joins = [{ f, kg: null }];
+  }
+  if (!joins.length) return { ok: false, error: "El lote no tiene fincas de origen registradas." };
+
+  const fincaIds = joins.map((x) => x.f.id);
+  const [{ data: parcelaRows }, { data: certRows }] = await Promise.all([
+    service.from("finca_parcelas").select("finca_id, name, area_ha, lat, lng, polygon_geojson, position").in("finca_id", fincaIds).order("position"),
+    service.from("finca_certificates").select("finca_id, scheme, cert_number, valid_from, valid_to, verified_by_ctc").in("finca_id", fincaIds),
+  ]);
+
+  const contribs: ContributionInput[] = joins.map((x) => ({
+    fincaId: x.f.id,
+    fincaName: x.f.name,
+    weightKg: x.kg,
+    municipio: x.f.municipio ?? "",
+    departamento: x.f.departamento ?? "",
+    pais: "Colombia",
+  }));
+  const claims = deriveClaims(
+    contribs,
+    ((certRows ?? []) as { finca_id: string; scheme: string; valid_from: string | null; valid_to: string | null; verified_by_ctc: boolean }[]).map((c) => ({
+      fincaId: c.finca_id, scheme: c.scheme, validFrom: c.valid_from, validTo: c.valid_to, verifiedByCtc: c.verified_by_ctc,
+    })),
+    { from: lot.harvest_from, to: lot.harvest_to }
+  );
+  const filedAt = new Date().toISOString();
+  const snapshot = {
+    version: 1,
+    filed_at: filedAt,
+    archetype: deriveArchetype(contribs),
+    harvest: { from: lot.harvest_from, to: lot.harvest_to },
+    custody: CUSTODY_MODEL,
+    // El nivel de riesgo país TAL COMO ESTABA al presentar (fechado): si el
+    // benchmarking cambia, este lote se explica solo en una auditoría a 5 años.
+    country_risk: { pais: "Colombia", tier: countryRiskFor("Colombia"), determined_at: filedAt },
+    contributions: joins.map((x) => ({
+      finca_id: x.f.id,
+      finca: x.f.name,
+      weight_kg: x.kg,
+      municipio: x.f.municipio,
+      departamento: x.f.departamento,
+      parcelas: ((parcelaRows ?? []) as { finca_id: string; name: string; area_ha: number | string | null; lat: number | string | null; lng: number | string | null; polygon_geojson: unknown; position: number }[])
+        .filter((p) => p.finca_id === x.f.id)
+        .map((p) => ({ name: p.name, area_ha: p.area_ha, lat: p.lat, lng: p.lng, polygon: p.polygon_geojson })),
+    })),
+    claims,
+  };
+
+  await service
+    .from("lots")
+    .update({ dds_reference: ref, dds_verification_code: code || null, dds_filed_at: filedAt, dds_snapshot: snapshot })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "dds_registered",
+    performed_by: adminId,
+    notes: `DDS ${ref} · ${joins.length} finca(s), ${snapshot.contributions.reduce((a, c) => a + c.parcelas.length, 0)} parcela(s).`,
+  });
+  revalidatePath("/bcp/lotes");
   return { ok: true };
 }
 

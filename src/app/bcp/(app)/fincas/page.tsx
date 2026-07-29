@@ -447,6 +447,7 @@ export default async function BcpFincasPage() {
                               lat: p.lat != null ? String(p.lat) : "",
                               lng: p.lng != null ? String(p.lng) : "",
                               polygonPoints: p.polygon_geojson?.length ?? 0,
+                              polygon: p.polygon_geojson ?? null,
                               position: p.position,
                             }))}
                             certificates={(certsByFinca.get(finca.id) ?? []).map((c) => ({

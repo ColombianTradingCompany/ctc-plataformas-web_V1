@@ -20,6 +20,11 @@ export type EarthKmlFinca = {
   lat: string | number | null;
   lng: string | number | null;
   polygon: { lat: number; lng: number }[] | null;
+  // F3 (2026-07-29): las PARCELAS del predio — el átomo probatorio del Art. 9.
+  // Cuando vienen, el KML/GeoJSON emite una geometría POR PARCELA (un polígono
+  // no puede cubrir varias); el punto/polígono de la finca queda como respaldo
+  // legacy para fincas sin parcelas registradas.
+  parcelas?: { name: string; areaHa: string | number | null; lat: string | number | null; lng: string | number | null; polygon: { lat: number; lng: number }[] | null }[];
 };
 
 function esc(s: string): string {
@@ -63,32 +68,39 @@ export function earthWebUrl(lat: string | number | null, lng: string | number | 
 // que acepta el sistema de la UE (TRACES) para la geolocalización de predios
 // EUDR, y lo abre cualquier SIG (QGIS, geojson.io). Coordenadas [lng, lat] y
 // anillo CERRADO, como manda el estándar.
-export function buildFincaGeoJson(f: Pick<EarthKmlFinca, "name" | "code" | "lat" | "lng" | "polygon">): object {
-  const la = num(f.lat);
-  const ln = num(f.lng);
-  const ring = (f.polygon ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+export function buildFincaGeoJson(f: Pick<EarthKmlFinca, "name" | "code" | "lat" | "lng" | "polygon" | "parcelas">): object {
   const features: object[] = [];
-  if (la != null && ln != null) {
-    features.push({
-      type: "Feature",
-      properties: { name: f.name, code: f.code, kind: "punto_referencia" },
-      geometry: { type: "Point", coordinates: [ln, la] },
-    });
-  }
-  if (ring.length >= 3) {
-    const closed = [...ring, ring[0]].map((p) => [p.lng, p.lat]);
-    features.push({
-      type: "Feature",
-      properties: { name: f.name, code: f.code, kind: "poligono_eudr" },
-      geometry: { type: "Polygon", coordinates: [closed] },
-    });
+  const pushGeoms = (label: string, kindPrefix: string, lat: EarthKmlFinca["lat"], lng: EarthKmlFinca["lng"], polygon: Ring) => {
+    const la = num(lat);
+    const ln = num(lng);
+    const ring = (polygon ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+    if (la != null && ln != null) {
+      features.push({
+        type: "Feature",
+        properties: { name: label, code: f.code, kind: `${kindPrefix}_punto` },
+        geometry: { type: "Point", coordinates: [ln, la] },
+      });
+    }
+    if (ring.length >= 3) {
+      const closed = [...ring, ring[0]].map((p) => [p.lng, p.lat]);
+      features.push({
+        type: "Feature",
+        properties: { name: label, code: f.code, kind: `${kindPrefix}_poligono` },
+        geometry: { type: "Polygon", coordinates: [closed] },
+      });
+    }
+  };
+  // F3: una Feature por PARCELA (lo que acepta TRACES); la geometría de la
+  // finca solo cuando no hay parcelas registradas (legacy).
+  if (f.parcelas?.length) {
+    for (const p of f.parcelas) pushGeoms(`${f.name} · ${p.name}`, "parcela", p.lat, p.lng, p.polygon);
+  } else {
+    pushGeoms(f.name, "predio", f.lat, f.lng, f.polygon);
   }
   return { type: "FeatureCollection", features };
 }
 
 export function buildFincaKml(f: EarthKmlFinca): string {
-  const la = num(f.lat);
-  const ln = num(f.lng);
   const ring = (f.polygon ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
 
   const rows: [string, string][] = [
@@ -106,18 +118,29 @@ export function buildFincaKml(f: EarthKmlFinca): string {
     .join("<br/>")}<br/><br/><i>Análisis EUDR: verifique con las imágenes históricas de Google Earth que el predio no presenta deforestación posterior al 31/12/2020.</i>]]>`;
 
   const placemarks: string[] = [];
-  if (la != null && ln != null) {
-    placemarks.push(
-      `<Placemark><name>${esc(f.name)} · punto de referencia</name><styleUrl>#ctcPoint</styleUrl><description>${description}</description><Point><coordinates>${ln},${la},0</coordinates></Point></Placemark>`
-    );
-  }
-  if (ring.length >= 3) {
-    // KML exige el anillo CERRADO (primer vértice repetido) y coordenadas lng,lat.
-    const closed = [...ring, ring[0]];
-    const coords = closed.map((p) => `${p.lng},${p.lat},0`).join(" ");
-    placemarks.push(
-      `<Placemark><name>${esc(f.name)} · polígono EUDR</name><styleUrl>#ctcPoly</styleUrl><description>${description}</description><Polygon><tessellate>1</tessellate><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>`
-    );
+  const pushPlacemarks = (label: string, plat: EarthKmlFinca["lat"], plng: EarthKmlFinca["lng"], ppoly: Ring) => {
+    const pla = num(plat);
+    const pln = num(plng);
+    const pring = (ppoly ?? []).filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+    if (pla != null && pln != null) {
+      placemarks.push(
+        `<Placemark><name>${esc(label)} · punto</name><styleUrl>#ctcPoint</styleUrl><description>${description}</description><Point><coordinates>${pln},${pla},0</coordinates></Point></Placemark>`
+      );
+    }
+    if (pring.length >= 3) {
+      // KML exige el anillo CERRADO (primer vértice repetido) y coordenadas lng,lat.
+      const closed = [...pring, pring[0]];
+      const coords = closed.map((p) => `${p.lng},${p.lat},0`).join(" ");
+      placemarks.push(
+        `<Placemark><name>${esc(label)} · polígono</name><styleUrl>#ctcPoly</styleUrl><description>${description}</description><Polygon><tessellate>1</tessellate><outerBoundaryIs><LinearRing><coordinates>${coords}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>`
+      );
+    }
+  };
+  // F3: un Placemark por PARCELA; la geometría de la finca como respaldo legacy.
+  if (f.parcelas?.length) {
+    for (const p of f.parcelas) pushPlacemarks(`${f.name} · ${p.name}`, p.lat, p.lng, p.polygon);
+  } else {
+    pushPlacemarks(f.name, f.lat, f.lng, f.polygon);
   }
 
   // LookAt inicial: el punto, o el centroide del polígono.

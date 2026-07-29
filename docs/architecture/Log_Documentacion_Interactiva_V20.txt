@@ -21,3 +21,59 @@ Contexto abierto al cerrar V20:
   manual del owner la primera vez que se registre una DDS de verdad.
 
 ---
+
+## [2026-07-29] FincaModal reordenado + el borrado silencioso del flush de autosave
+- **BUG DE PÉRDIDA DE DATOS (introducido el mismo 2026-07-29 por c484c63, en
+  producción unas horas).** El flush-al-desmontar del autosave arreglaba que una
+  selección rápida no llegara a la base, pero `save()` del FincaModal leía
+  vereda, municipio, departamento, historia y características desde REFS. React
+  suelta las refs ANTES de correr la limpieza de los efectos, así que el
+  guardado de salida leía `null` y escribía "—" (→ null) encima de datos buenos.
+  Reproducido en vivo con cuenta QA: abrir la finca, cambiar solo «Tipo de
+  documento», cerrar ⇒ las cuatro columnas BORRADAS en Postgres.
+  Arreglo: **todo el formulario pasa a estado controlado** (se elimina el
+  contador `rev`/`bumpRev` que espiaba los onInput). Verificado: la misma
+  secuencia ahora conserva los cuatro campos y guarda el tipo de documento.
+  Lección para el DICT `autosave`: un flush de desmontaje solo es seguro si el
+  snapshot que guarda NO depende de refs del DOM que ya se soltaron.
+- **Misma enfermedad en `InfoModal`** (auditados los 4 consumidores de
+  `useAutosave`): su `save()` leía 8 refs y habría escrito cédula cafetera,
+  celular, WhatsApp y departamento en blanco al desmontarse la página con
+  cambios pendientes. Además nunca se desmontaba al cerrar, así que el flush no
+  lo protegía: el último cambio se perdía igual. Ahora es shell + cuerpo montado
+  solo con `open` (patrón FincaModal) y estado controlado. `FichaView` ya usaba
+  estado (sano) y `FincaEudrEditor` lee un `formRef` que al desmontarse devuelve
+  false sin escribir (sano, no toca la base).
+- **Reorganización de las 4 pestañas** (petición del owner): «Área en café (ha)»
+  y «Altura (msnm)» bajan de la pestaña 1 a la 2, junto al mapa que las produce;
+  «Tenencia de la tierra» + «Documento de respaldo» suben de la 2 a la 1, y
+  «¿Documentos disponibles y verificables de inmediato?» pasa de la 3 a la 1 —
+  las tres son la misma conversación (quién es el dueño y qué puede mostrar),
+  bajo un nuevo subtítulo «Titularidad y documentos». La pestaña 2 se renombra
+  «Ubicación y medidas».
+- **Área derivada del polígono** — nuevo `src/lib/geo/area.ts` (`polygonAreaHa`,
+  exceso esférico, mismo modelo que google.maps.geometry) + botón «Calcular del
+  polígono 📐» junto al campo, gemelo del «Traer del mapa ⛰» de la altura;
+  también en cada cafetal adicional (ParcelaCard). No se auto-rellena nunca: el
+  área SEMBRADA puede ser menor que el predio dibujado. QA puro nuevo:
+  `scripts/qa-area-check.mjs` (10 checks, incluye la frontera de 4 ha).
+- **Fin de la doble captura de certificaciones**: el campo de texto libre
+  «Esquemas de certificación / verificación» del cuestionario EUDR desaparece;
+  ahora ese bloque MUESTRA las credenciales registradas en la pestaña 4 y
+  `eudr_cert_scheme` (lo que leen el dossier de la Visa y BCP) se DERIVA de
+  ellas al guardar. Una sola fuente de verdad, imposible contradecirse.
+- **Infraestructura local**: los 18 elementos dejan de ser una fila de chips
+  desbordada y pasan a tarjetas seleccionables agrupadas por etapa del proceso
+  (Vivero y campo · Beneficio húmedo · Secado · Trilla y clasificación ·
+  Almacenamiento y empaque · Transformación), con contador de marcados.
+- **Soporte de certificado subible desde la tarjeta**: el campo de archivo vivía
+  dentro del editor, así que había que registrar el certificado y volver a tocar
+  «Editar» para verlo — el owner reportó, con razón, que no podía adjuntar nada.
+  Verificado de extremo a extremo (Storage + `support_asset_id`).
+- **La vigencia sigue siendo opcional para registrar**, pero ahora se dice por
+  qué importa: sin las dos fechas el certificado no respalda sellos (F2,
+  `deriveClaims` exige que la cosecha caiga dentro de la vigencia). Aviso fijo en
+  la pestaña 4 + advertencia en línea mientras falte alguna fecha.
+- Plataforma **V2.24** (`src/lib/version.ts`) — V2.23 se había quedado sin subir
+  cuando salió la reestructura EUDR F1-F3.
+(commit: pending)

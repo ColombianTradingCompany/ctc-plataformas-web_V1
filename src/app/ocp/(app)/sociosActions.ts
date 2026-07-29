@@ -2,7 +2,7 @@
 
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { isPartnerSlug, type PartnerSlug } from "@/lib/partners/partners";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { buildPartnerInviteEmail, buildPartnerResetEmail } from "@/lib/email/partnerEmails";
@@ -12,7 +12,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 // Same owner gate as collaborator management: partner credentials are identity
 // work, so only a founder/owner issues or revokes them.
 async function requireOwner(): Promise<string> {
-  const session = await createSessionClient();
+  const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

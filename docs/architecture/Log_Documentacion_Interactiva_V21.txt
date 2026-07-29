@@ -88,3 +88,34 @@ Contexto abierto al cerrar V21:
   escenario nuevo "Un capítulo de Coffeed" (estudio produce → acepta →
   publica → KR/CP/DC lo leen).
 (commit: c385764)
+
+## [2026-07-29] El loop de login del BCP: la sesión interna gana cookie propia
+- **BUG EN PRODUCCIÓN, reportado por el owner**: password + OTP correctos en
+  ctcexport.com/login (dos códigos consumidos a las 21:05-21:06 UTC en
+  admin_otp_codes) y aun así rebotaba a pedir credenciales. Diagnóstico por
+  logs de Auth: una pestaña de Kaffetal Regal abierta, con un refresh token
+  ya rotado, reintentaba `/token` cada ~90 s desde la IP del owner (referer
+  kaffetal-regal.ctcexport.com), recibía `refresh_token_not_found` y BORRABA
+  la cookie compartida `sb-…-auth-token` (Domain=.ctcexport.com desde el
+  2026-07-24) — matando la sesión del BCP recién acuñada por el verify. Un
+  solo slot de cookie para todas las pestañas de todos los subdominios +
+  rotación de refresh tokens = race sin coordinación posible (navigator.locks
+  no cruza orígenes).
+- **Arreglo (V2.26)**: la sesión de las consolas internas vive ahora en SU
+  cookie, `ctc-panel-auth` (`PANEL_AUTH_COOKIE` + `createPanelSessionClient()`
+  en `lib/supabase/server.ts`, cookieOptions.name de @supabase/ssr). Cambiados
+  al cliente panel: verify/logout del master login, requireConsoleAccess,
+  requireActiveAdmin (⇒ todas las Server Actions del BCP/ECP/OCP y GVG),
+  /cambiar-contrasena y los requireOwner de ECP usuarios / OCP socios. El
+  proxy renueva AMBAS cookies (misma mecánica anti-caducidad de 1 h).
+- Colaterales deseados: entrar/salir del BCP ya no pisa la sesión pública
+  (productor/socio) del mismo navegador — ambas conviven; verificado en vivo
+  (QA admin + QA partner simultáneos, y borrado simulado de la cookie
+  compartida con el BCP intacto).
+- Bonus del mismo bug-hunt: en ResponseCookies de Next, un segundo `.set()`
+  del mismo nombre TRAGA un borrado previo (mapa por nombre, verificado
+  contra el Next instalado) — la migración host-only→Domain del proxy del
+  2026-07-24 nunca borró nada; ahora la expiración va como header crudo.
+- Nota post-deploy: las sesiones internas activas mueren con el cambio de
+  cookie — hay que iniciar sesión una vez más en /login. HANDOFF gotcha #13.
+(commit: pending)

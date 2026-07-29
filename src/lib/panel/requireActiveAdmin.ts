@@ -1,4 +1,4 @@
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 
 /**
  * Write-path gate shared by every BCP Server Action. Verifies the session user is
@@ -8,7 +8,7 @@ import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/ser
  * grandfathered. Throws on failure; returns the admin's user id.
  */
 export async function requireActiveAdmin(): Promise<string> {
-  const session = await createSessionClient();
+  const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

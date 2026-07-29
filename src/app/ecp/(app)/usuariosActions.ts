@@ -2,7 +2,7 @@
 
 import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { CONSOLE_ORDER, type PanelConsoleKey } from "@/lib/panel/consoles";
 import type { ConsoleLevel } from "@/lib/panel/panelUsers";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
@@ -14,7 +14,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 // read-path check in requireConsoleAccess. A bcp_admin with no panel_users row
 // is grandfathered as owner (predates the table); otherwise must be an ACTIVE owner.
 async function requireOwner(): Promise<string> {
-  const session = await createSessionClient();
+  const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

@@ -1,6 +1,6 @@
 "use server";
 
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 
 export type ChangePasswordResult = { ok: true } | { ok: false; error: string };
 
@@ -10,7 +10,7 @@ export type ChangePasswordResult = { ok: true } | { ok: false; error: string };
  * client; only the must_change_password flag clear + audit row use service role.
  */
 export async function changeOwnPassword(newPassword: string, confirm: string): Promise<ChangePasswordResult> {
-  const session = await createSessionClient();
+  const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

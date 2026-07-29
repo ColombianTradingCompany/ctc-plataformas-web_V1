@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
 
 // Maps a subdomain label to the internal route that should serve it.
@@ -38,6 +38,10 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
 // El proxy SÍ puede escribir cookies en la respuesta, así que la renovación va
 // aquí: es el patrón que documenta Supabase para SSR.
 const AUTH_COOKIE_HINT = /^sb-.*-auth-token/;
+// La sesión de las consolas internas vive en su propia cookie (2026-07-29,
+// PANEL_AUTH_COOKIE en lib/supabase/server.ts) — se renueva aparte, con la
+// misma mecánica, para que el BCP tampoco caduque a la hora.
+const PANEL_COOKIE_HINT = /^ctc-panel-auth/;
 
 export async function proxy(request: NextRequest) {
   // Read the Host header, not request.nextUrl.hostname: the dev server
@@ -63,7 +67,8 @@ export async function proxy(request: NextRequest) {
   // Sin cookie de sesión no hay nada que renovar: el visitante anónimo de la
   // web pública no paga ni una llamada extra a Supabase.
   const hasAuthCookie = request.cookies.getAll().some((c) => AUTH_COOKIE_HINT.test(c.name));
-  if (!hasAuthCookie) return build();
+  const hasPanelCookie = request.cookies.getAll().some((c) => PANEL_COOKIE_HINT.test(c.name));
+  if (!hasAuthCookie && !hasPanelCookie) return build();
 
   let response = build();
 
@@ -72,40 +77,55 @@ export async function proxy(request: NextRequest) {
   // host-only y saltar de subdominio aterrizaba en la landing "deslogueada".
   const cookieDomain = sharedCookieDomain(host);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookieOptions: { domain: cookieDomain, path: "/" },
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          // Dos pasos, como pide @supabase/ssr: primero al request (para que el
-          // render que sigue vea ya el token nuevo), y luego a una respuesta
-          // reconstruida a partir de ese request (para que viaje al navegador).
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = build();
-          cookiesToSet.forEach(({ name, value, options }) => {
-            // Migración: al escribir la variante compartida (Domain=…), se
-            // expira la vieja cookie host-only del mismo nombre en ESTE host —
-            // si quedara viva, el navegador enviaría ambas y la vieja podría
-            // "taparle" la sesión nueva al servidor.
-            if (cookieDomain) response.cookies.set({ name, value: "", path: "/", maxAge: 0 });
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
+  // Las escrituras de cookies se ACUMULAN y se aplican una sola vez al final:
+  // cada renovación reconstruye `response` (para que el render vea el request
+  // con el token nuevo), y aplicar dentro del setAll haría que la segunda
+  // renovación descartara los Set-Cookie de la primera.
+  type PendingCookie = { name: string; value: string; options: CookieOptions };
+  const pending: PendingCookie[] = [];
 
-  // Es la llamada que dispara la renovación si el access token venció. Se ignora
-  // el resultado a propósito: aquí NO se autoriza nada — de eso siguen
-  // encargándose requireConsoleAccess / requireActiveAdmin en cada ruta y acción.
-  try {
-    await supabase.auth.getUser();
-  } catch {
-    // Un fallo de red con el servidor de Auth no debe tumbar la navegación:
-    // se sirve la página y el guard de la ruta decidirá con lo que haya.
+  const renew = async (name: string | undefined) => {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookieOptions: { name, domain: cookieDomain, path: "/" },
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: (cookiesToSet) => {
+            // Dos pasos, como pide @supabase/ssr: primero al request (para que el
+            // render que sigue vea ya el token nuevo), y luego a una respuesta
+            // reconstruida a partir de ese request (para que viaje al navegador).
+            cookiesToSet.forEach(({ name: n, value }) => request.cookies.set(n, value));
+            response = build();
+            cookiesToSet.forEach((c) => pending.push(c));
+          },
+        },
+      }
+    );
+    // Es la llamada que dispara la renovación si el access token venció. Se ignora
+    // el resultado a propósito: aquí NO se autoriza nada — de eso siguen
+    // encargándose requireConsoleAccess / requireActiveAdmin en cada ruta y acción.
+    try {
+      await supabase.auth.getUser();
+    } catch {
+      // Un fallo de red con el servidor de Auth no debe tumbar la navegación:
+      // se sirve la página y el guard de la ruta decidirá con lo que haya.
+    }
+  };
+
+  if (hasAuthCookie) await renew(undefined); // cookie compartida sb-…-auth-token
+  if (hasPanelCookie) await renew("ctc-panel-auth"); // sesión de las consolas internas
+
+  for (const { name: n, value, options } of pending) {
+    // Migración: al escribir la variante compartida (Domain=…), se expira la
+    // vieja cookie host-only del mismo nombre en ESTE host — si quedara viva,
+    // el navegador enviaría ambas y la vieja podría "taparle" la sesión nueva
+    // al servidor. OJO (2026-07-29): tiene que ir como header crudo —
+    // ResponseCookies es un mapa por nombre y un segundo .set() del mismo
+    // nombre TRAGABA el borrado (verificado contra el Next instalado).
+    if (cookieDomain) response.headers.append("set-cookie", `${n}=; Path=/; Max-Age=0`);
+    response.cookies.set(n, value, options);
   }
 
   return response;

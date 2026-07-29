@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient } from "@/lib/supabase/server";
 import { getPanelUser } from "@/lib/panel/panelUsers";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 
@@ -7,7 +7,7 @@ import { ChangePasswordForm } from "./ChangePasswordForm";
 // guard redirects HERE while must_change_password is set, so routing this page
 // through that same guard would loop.
 export default async function CambiarContrasenaPage() {
-  const session = await createSessionClient();
+  const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

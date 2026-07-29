@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient } from "@/lib/supabase/server";
 import type { PanelConsoleKey } from "./consoles";
 import { getPanelUser, grantedConsoles, isPanelOwner } from "./panelUsers";
 
@@ -20,7 +20,7 @@ export type PanelIdentity = {
  * but is rejected here. Partner accounts are a separate tier — never here.
  */
 async function loadPanelIdentity(): Promise<PanelIdentity> {
-  const session = await createSessionClient();
+  const session = await createPanelSessionClient();
   const {
     data: { user },
   } = await session.auth.getUser();

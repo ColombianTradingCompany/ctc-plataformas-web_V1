@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { hashOtpCode } from "@/lib/bcp/otp";
 
 // ── Master login · step 2 (OTP) ─────────────────────────────────────────────
@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
 
   await service.from("admin_otp_codes").update({ consumed_at: new Date().toISOString() }).eq("id", otpRow.id);
 
-  const sessionClient = await createSessionClient();
+  // La sesión interna se acuña en SU cookie (PANEL_AUTH_COOKIE) — aislada de la
+  // compartida que las superficies públicas pueden pisar (loop del 2026-07-29).
+  const sessionClient = await createPanelSessionClient();
   const { error: setSessionError } = await sessionClient.auth.setSession({ access_token, refresh_token });
   if (setSessionError) {
     return NextResponse.json({ error: "No se pudo completar el inicio de sesión." }, { status: 500 });

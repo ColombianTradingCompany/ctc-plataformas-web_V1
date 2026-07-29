@@ -14,6 +14,7 @@ import { TyrianSection } from "./TyrianSection";
 import { MuestrasSection } from "./MuestrasSection";
 import { NarrativaSection } from "./NarrativaSection";
 import { CosechaSection } from "./CosechaSection";
+import { CoffeedSection } from "./CoffeedSection";
 import { ManifiestoSection } from "./ManifiestoSection";
 import { HistoriaSection } from "./HistoriaSection";
 import { GadgetsSection } from "./GadgetsSection";
@@ -39,9 +40,10 @@ const EN = {
     { id: "muestras", n: "05", label: "Samples", sub: "Harvest sample packs" },
     { id: "narrativa", n: "06", label: "Narrative", sub: "From the plot to your cup" },
     { id: "cosecha", n: "07", label: "The coffee year", sub: "Seen from your roastery" },
-    { id: "manifiesto", n: "08", label: "Manifesto", sub: "How we work" },
-    { id: "historia", n: "09", label: "Our story", sub: "Who we are" },
-    { id: "gadgets", n: "10", label: "Coffee Gadgets", sub: "Free tools, no sign-in" },
+    { id: "coffeed", n: "08", label: "Coffeed", sub: "The network's newsfeed, in chapters" },
+    { id: "manifiesto", n: "09", label: "Manifesto", sub: "How we work" },
+    { id: "historia", n: "10", label: "Our story", sub: "Who we are" },
+    { id: "gadgets", n: "11", label: "Coffee Gadgets", sub: "Free tools, no sign-in" },
   ] as QuickNavSection[],
   quickNavLabels: {
     homeSub: "Back to the mother house · Colombian Trading Company",
@@ -75,9 +77,10 @@ const T: Record<Lang, typeof EN> = {
       { id: "muestras", n: "05", label: "Muestras", sub: "Sample packs de la cosecha" },
       { id: "narrativa", n: "06", label: "Narrativa", sub: "Del predio a tu taza" },
       { id: "cosecha", n: "07", label: "El año cafetero", sub: "Visto desde tu tostaduría" },
-      { id: "manifiesto", n: "08", label: "Manifiesto", sub: "Cómo trabajamos" },
-      { id: "historia", n: "09", label: "Historia", sub: "Quiénes somos" },
-      { id: "gadgets", n: "10", label: "Coffee Gadgets", sub: "Herramientas libres, sin registro" },
+      { id: "coffeed", n: "08", label: "Coffeed", sub: "El noticiero de la red, en capítulos" },
+      { id: "manifiesto", n: "09", label: "Manifiesto", sub: "Cómo trabajamos" },
+      { id: "historia", n: "10", label: "Historia", sub: "Quiénes somos" },
+      { id: "gadgets", n: "11", label: "Coffee Gadgets", sub: "Herramientas libres, sin registro" },
     ],
     quickNavLabels: {
       homeSub: "Volver a la casa matriz · Colombian Trading Company",
@@ -108,9 +111,10 @@ const T: Record<Lang, typeof EN> = {
       { id: "muestras", n: "05", label: "Muster", sub: "Musterpakete der Ernte" },
       { id: "narrativa", n: "06", label: "Erzählung", sub: "Von der Parzelle in deine Tasse" },
       { id: "cosecha", n: "07", label: "Das Kaffeejahr", sub: "Aus deiner Rösterei gesehen" },
-      { id: "manifiesto", n: "08", label: "Manifest", sub: "Wie wir arbeiten" },
-      { id: "historia", n: "09", label: "Unsere Geschichte", sub: "Wer wir sind" },
-      { id: "gadgets", n: "10", label: "Coffee Gadgets", sub: "Freie Werkzeuge, ohne Anmeldung" },
+      { id: "coffeed", n: "08", label: "Coffeed", sub: "Der Newsfeed des Netzwerks, in Kapiteln" },
+      { id: "manifiesto", n: "09", label: "Manifest", sub: "Wie wir arbeiten" },
+      { id: "historia", n: "10", label: "Unsere Geschichte", sub: "Wer wir sind" },
+      { id: "gadgets", n: "11", label: "Coffee Gadgets", sub: "Freie Werkzeuge, ohne Anmeldung" },
     ],
     quickNavLabels: {
       homeSub: "Zurück zum Stammhaus · Colombian Trading Company",
@@ -466,6 +470,7 @@ function Experience() {
           <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
           <NarrativaSection lots={lots} />
           <CosechaSection />
+          <CoffeedSection />
           <ManifiestoSection />
           <HistoriaSection />
           <GadgetsSection />

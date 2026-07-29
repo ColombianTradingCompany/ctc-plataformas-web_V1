@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { LegalFooter } from "@/components/LegalFooter";
 import { PanelMuro } from "./PanelMuro";
+import { CoffeedWall } from "@/components/coffeed/CoffeedWall";
 import { PanelDirectorio } from "./PanelDirectorio";
 import { PanelMensajes } from "./PanelMensajes";
 import { PanelPerfil } from "./PanelPerfil";
@@ -21,7 +22,7 @@ import {
   type FichaInput,
 } from "@/lib/directorio/actions";
 
-type Pestana = "muro" | "directorio" | "mensajes" | "perfil";
+type Pestana = "muro" | "coffeed" | "directorio" | "mensajes" | "perfil";
 type GuardarInput = FichaInput & {
   mostrarTelefono: boolean;
   mostrarCorreo: boolean;
@@ -156,6 +157,7 @@ export function AppView({
           {verificado ? (
             <>
               <button className="tab" role="tab" aria-selected={pestana === "muro"} onClick={() => irA("muro")}>Muro</button>
+              <button className="tab" role="tab" aria-selected={pestana === "coffeed"} onClick={() => irA("coffeed")}>Coffeed</button>
               <button className="tab" role="tab" aria-selected={pestana === "directorio"} onClick={() => irA("directorio")}>
                 Directorio <span className="pill num">{directorio.length}</span>
               </button>
@@ -175,6 +177,18 @@ export function AppView({
               usuarioColor={ficha!.color} usuarioIni={ini} usuarioAvatar={ficha!.avatarUrl}
               onPublicar={publicar} onMeGusta={meGusta} onComentar={comentar} onAbrirFicha={abrirFicha} />
             <PanelDirectorio activo={pestana === "directorio"} fichas={directorio} onEnviarMensaje={escribirDesdeDirectorio} />
+            {/* Coffeed: el noticiero de la red, solo lectura. Mismo muro que
+                KR y Cherry Picked — lo produce el Estudio de Contenido. */}
+            <section className={`panel${pestana === "coffeed" ? " activo" : ""}`} role="tabpanel" aria-label="Coffeed">
+              <div className="panel__titulo con-cinta">
+                <div>
+                  <p className="eyebrow">Coffeed · el noticiero de la red</p>
+                  <h2>El mercado del café, en capítulos</h2>
+                </div>
+                <p>Episodios breves sobre precio, regulación, calidad y logística, producidos por el estudio de contenido de CTC.</p>
+              </div>
+              <CoffeedWall accent="var(--tinta, #a3241b)" />
+            </section>
           </>
         ) : null}
         <PanelMensajes activo={pestana === "mensajes"} hilos={hilos} activa={activaMsg}

@@ -32,3 +32,59 @@ Contexto abierto al cerrar V21:
   productor que entre estrena el formulario de 4 pestañas desde cero.
 
 ---
+
+## [2026-07-29] Coffeed: el módulo editorial del Estudio de Contenido + su muro en KR/CP/DC
+- **Módulo NUEVO completo** (V2.25), adaptado del prototipo `reference_coffeed/`
+  (coffeed.html v0.2 + schema.sql + edge function): el muro de noticias y
+  anuncios internos de CTC + la línea de producción editorial de 7 etapas
+  (ingesta manual → mesa de cata/triaje → extracción con claims trazables →
+  3 propuestas → revisión humana → borrador de 5-10 paneles → aceptación →
+  guion de vídeo). El nodo **Estudio de Contenido** (socio v3) deja de ser
+  puro scaffold: su primer módulo real vive en
+  `/socios/estudio-contenido/panel/coffeed` (page gated: slug exacto +
+  `requirePartner`; Server Actions re-gateadas por `estudioGate()` en
+  `src/lib/coffeed/requireEstudio.ts`).
+- **Esquema**: migración `coffeed_editorial_pipeline` — 13 tablas prefijadas
+  `coffeed_*` (sources, blocklist_patterns, items, extractions, claims,
+  threads [canon], cycles [capítulos], matrix_entries, proposals, drafts,
+  panels, video_scripts, announcements), TODAS service-role-only (RLS sin
+  policies, patrón Arena/leads). Las reglas del formato (5-10 paneles, máx.
+  3 por fuente, ninguno sin trazar) se validan TRES veces: cliente
+  (`validateCoffeedDraft`), server action y trigger `coffeed_guard_accept`
+  (+ `coffeed_update_canon` actualiza los hilos del canon al aceptar, y
+  draft→published exige pasar por accepted). Verificado por SQL en vivo.
+- **IA** (`src/lib/coffeed/aiActions.ts`, fetch crudo estilo GVG/advisor):
+  triaje con Haiku (`claude-haiku-4-5`), propuestas/expansión/guion con
+  Sonnet (`claude-sonnet-5`). ⚠️ Gotcha vivo 2026-07-29: **claude-sonnet-5
+  rechaza el prefill de assistant** («This model does not support assistant
+  message prefill», 400) que el prototipo usaba para forzar JSON — se quitó
+  el prefill y parseJson() rescata el primer bloque JSON. También se añadió
+  reintento (x3, backoff) para 529 Overloaded/429, vistos repetidamente en
+  vivo. `maxDuration=300` en la page (las actions heredan el segment config,
+  lección GVG). Todo el pipeline se corrió EN VIVO de punta a punta con la
+  credencial QA: triaje real, 3 propuestas válidas, expansión 6 paneles
+  trazados a claims, aceptación, guion de 6 escenas/26 s, publicación.
+- **El muro público**: `getCoffeedWall()` (curaduría estilo
+  public_lot_catalog: SOLO capítulos `published`, columnas de exhibición;
+  los anuncios internos nunca viajan) + componente compartido `CoffeedWall`
+  montado en TRES superficies: KR (módulo nuevo "coffeed" del hub del
+  productor, AppDashboard), Cherry Picked (CoffeedSection #coffeed con
+  QuickNav renumerado 08→11, cabecera EN/ES/DE, contenido en español a
+  propósito) y Directorio (pestaña "Coffeed" para miembros verificados,
+  AppView). KR y CP verificados en vivo con el capítulo QA; la pestaña del
+  DC comparte el mismo componente (no se navegó en vivo — requiere miembro
+  verificado).
+- Datos QA borrados tras la verificación (el dev apunta a la base real y el
+  capítulo de prueba llevaba cifras fabricadas): coffeed_* a cero, cuentas
+  QA eliminadas. La base Coffeed queda vacía esperando el primer ciclo real.
+- Fase 1 del spec (`reference_coffeed/coffeed-especificacion.md` §10) más
+  buena parte de fase 2/3: falta el barrido automático (RSS/YouTube + cron),
+  reacciones/comentarios del muro, y el render de paneles a PNG/publicación
+  en Instagram. Las listas blanca/negra ya son administrables pero hoy solo
+  documentan el criterio.
+- Nodos/DICT sugeridos para el wrap: nodo nuevo "Coffeed" colgado del
+  Estudio de Contenido; DICT `coffeed` (muro + pipeline + canon),
+  cross-link a `estudio-contenido` y al patrón `public catalog view`;
+  escenario nuevo "Un capítulo de Coffeed" (estudio produce → acepta →
+  publica → KR/CP/DC lo leen).
+(commit: pending)

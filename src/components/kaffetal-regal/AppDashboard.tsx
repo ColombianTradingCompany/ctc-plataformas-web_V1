@@ -20,6 +20,7 @@ import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { SideModuleFabs } from "./SideModuleFabs";
+import { CoffeedWall } from "@/components/coffeed/CoffeedWall";
 import { RetroalimentacionPanel } from "./RetroalimentacionPanel";
 import styles from "./AppDashboard.module.css";
 
@@ -66,7 +67,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios";
+export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios" | "coffeed";
 
 // Minimalist stroked line icons (one visual language, currentColor) — replaces
 // the multicolor emoji that clashed with the panel's editorial tone.
@@ -106,6 +107,10 @@ const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
   // Llave inglesa: las calculadoras y referencias de trabajo.
   herramientas: (
     <LineIcon><path d="M14.7 6.3a3.6 3.6 0 0 0 4.8 4.6l-8 8a2.3 2.3 0 0 1-3.3-3.3l8-8Z" /><path d="M6.5 17.5h.01" /></LineIcon>
+  ),
+  // Periódico: Coffeed, el noticiero de la red en capítulos.
+  coffeed: (
+    <LineIcon><path d="M4.5 5h12v14h-12z" /><path d="M16.5 8h3v9.5a1.5 1.5 0 0 1-1.5 1.5H6" /><path d="M7.5 8.5h6M7.5 12h6M7.5 15.5h3.5" /></LineIcon>
   ),
 };
 
@@ -317,6 +322,12 @@ export function AppDashboard({
       title: "Más allá de la exportación",
       fact: "CTC Tech · Varietales Registrados — solicítelos desde su panel",
     },
+    {
+      key: "coffeed",
+      icon: HUB_ICON.coffeed,
+      title: "Coffeed",
+      fact: "El noticiero de la red · capítulos sobre el mercado del café",
+    },
   ];
 
   // Looks up one tile's content by key and renders the standard hub button --
@@ -383,6 +394,7 @@ export function AppDashboard({
             </div>
             {renderTile("contratos")}
             {renderTile("servicios")}
+            {renderTile("coffeed")}
             {/* Puente a la capa de personas del ecosistema (2026-07-24): el
                 Directorio es OTRA plataforma (misma cuenta, perfil propio),
                 así que esta tarjeta navega, no abre un módulo. El puente
@@ -870,6 +882,17 @@ export function AppDashboard({
                 </form>
               )}
             </div>
+          </div>
+          )}
+
+          {module === "coffeed" && (
+          <div className={styles.acard}>
+            <span className={styles.k}>Coffeed · el noticiero de la red CTC</span>
+            <div className={styles.alist} style={{ margin: "6px 0 14px" }}>
+              Capítulos breves sobre el mercado del café — precio, regulación, calidad, logística — producidos por el
+              Estudio de Contenido de la red. Deslice cada carrusel para leer el capítulo panel a panel.
+            </div>
+            <CoffeedWall />
           </div>
           )}
           </div>

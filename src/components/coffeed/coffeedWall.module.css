@@ -1,0 +1,108 @@
+/* ── Coffeed · muro público (KR / Cherry Picked / Directorio) ────────────────
+   Solo lectura: capítulos publicados como carruseles de paneles. Neutro a
+   propósito — hereda tipografía y color de la superficie que lo monta y solo
+   aporta la retícula de papelería del Coffeed. Acento configurable vía
+   --cw-accent (cae al sello rojo del estudio). */
+
+.wall {
+  --cw-paper: var(--cw-bg, rgba(0, 0, 0, 0.03));
+  --cw-line: var(--cw-border, rgba(0, 0, 0, 0.18));
+  --cw-soft: var(--cw-muted, rgba(0, 0, 0, 0.55));
+  --cw-stamp: var(--cw-accent, #a3241b);
+  display: grid;
+  gap: 18px;
+}
+
+.eyebrow {
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cw-soft);
+}
+
+.post {
+  border: 1px solid var(--cw-line);
+  background: var(--cw-paper);
+}
+.postHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--cw-line);
+}
+.postHead .chapterNo { color: var(--cw-stamp); }
+.postTitle {
+  margin: 0;
+  padding: 14px 16px 4px;
+  font-family: var(--font-fraunces), serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 12px 16px 16px;
+  scroll-snap-type: x proximity;
+}
+.panel {
+  flex: 0 0 208px;
+  scroll-snap-align: start;
+  border: 1px solid var(--cw-line);
+  background: var(--cw-panel, #fff);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+.panelBar {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--cw-line);
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cw-soft);
+}
+.panelBody {
+  padding: 14px 12px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.panelText {
+  margin: 0;
+  font-family: var(--font-fraunces), serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.panelFirst .panelText { font-size: 1.05rem; }
+.panelLast {
+  background: var(--cw-last, #1c1c1c);
+  border-color: var(--cw-last, #1c1c1c);
+}
+.panelLast .panelText { color: #fff; }
+.panelLast .panelBar { color: rgba(255, 255, 255, 0.6); border-color: rgba(255, 255, 255, 0.2); }
+
+.empty {
+  border: 1px dashed var(--cw-line);
+  background: var(--cw-paper);
+  padding: 34px 22px;
+  text-align: center;
+  color: var(--cw-soft);
+}
+.empty h4 {
+  margin: 0 0 6px;
+  font-family: var(--font-fraunces), serif;
+  color: inherit;
+}
+.empty p { margin: 0 auto; max-width: 46ch; font-size: 0.9rem; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useRef } from "react";
+import { useState } from "react";
 import QRCode from "qrcode";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
@@ -15,19 +15,7 @@ const DEPARTMENTS = Object.keys(DEP_MUNI)
   .filter((d) => d !== "Multi-Origin")
   .sort();
 
-export function InfoModal({
-  open,
-  onClose,
-  gi,
-  userId,
-  onSave,
-  onUploadAvatar,
-  onUploadVideo,
-  onUploadGalleryPhoto,
-  onRemoveGalleryPhoto,
-}: {
-  open: boolean;
-  onClose: () => void;
+type InfoModalProps = {
   gi: GeneralInfo;
   userId: string | null;
   onSave: (gi: GeneralInfo, opts?: { silent?: boolean }) => void;
@@ -35,38 +23,53 @@ export function InfoModal({
   onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadGalleryPhoto: (index: number, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onRemoveGalleryPhoto: (index: number) => void;
-}) {
+};
+
+export function InfoModal({ open, onClose, ...props }: { open: boolean; onClose: () => void } & InfoModalProps) {
+  return (
+    <Modal open={open} onClose={onClose} ariaLabel="Información general">
+      {/* El cuerpo solo existe mientras el modal está abierto (mismo patrón que
+          FincaModal): así su estado se siembra del perfil ya cargado cada vez
+          que se abre, sin efectos de resiembra que pisen lo que se escribe. */}
+      {open && <InfoModalBody {...props} />}
+    </Modal>
+  );
+}
+
+function InfoModalBody({
+  gi,
+  userId,
+  onSave,
+  onUploadAvatar,
+  onUploadVideo,
+  onUploadGalleryPhoto,
+  onRemoveGalleryPhoto,
+}: InfoModalProps) {
   const { showToast } = useToast();
-  const razonRef = useRef<HTMLInputElement>(null);
-  const nitRef = useRef<HTMLInputElement>(null);
-  const agriRef = useRef<HTMLInputElement>(null);
-  const cedulaRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
-  const countryRef = useRef<HTMLSelectElement>(null);
-  const deptoRef = useRef<HTMLSelectElement>(null);
-  const whatsappRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    razonRef.current!.value = gi.razon === "—" ? "" : gi.razon;
-    nitRef.current!.value = gi.nit;
-    agriRef.current!.value = gi.agri === "—" ? "" : gi.agri;
-    cedulaRef.current!.value = gi.cedulaCafetera;
-    phoneRef.current!.value = gi.phone;
-    countryRef.current!.value = gi.country || "Colombia";
-    deptoRef.current!.value = gi.department || "";
-    whatsappRef.current!.checked = gi.whatsappConfirmed;
-  }, [open, gi]);
+  // Estado controlado, NO refs (2026-07-29). El autosave guarda también al
+  // desmontarse, y React suelta las refs antes de esa limpieza: un payload
+  // armado desde `xRef.current` se escribía vacío encima de datos buenos
+  // (cédula cafetera, celular, WhatsApp, departamento). Mismo arreglo que en
+  // FincaModal — ver gotcha 10b de docs/HANDOFF.md.
+  const [form, setForm] = useState({
+    razon: gi.razon === "—" ? "" : gi.razon,
+    nit: gi.nit === "—" ? "" : gi.nit,
+    agri: gi.agri === "—" ? "" : gi.agri,
+    cedula: gi.cedulaCafetera,
+    phone: gi.phone,
+    country: gi.country || "Colombia",
+    depto: gi.department || "",
+    whatsapp: gi.whatsappConfirmed,
+  });
+  const patch = (p: Partial<typeof form>) => setForm((f) => ({ ...f, ...p }));
 
-  // Autosave (2026-07-23): todos los campos de texto son refs (no re-renderizan
-  // al teclear), así que el contenedor sube un contador con onInput/onChange y
-  // el guardado arma el payload desde los refs al disparar. Los archivos
-  // (foto/video) siguen en sus flujos propios. Va en modo silent: persiste sin
-  // cerrar el modal ni lanzar el toast (el chip de aquí es el feedback).
-  const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
+  // Autosave (2026-07-23): cada pausa de escritura persiste. Va en modo silent:
+  // guarda sin cerrar el modal ni lanzar el toast (el chip de aquí es el
+  // feedback). Los archivos (foto/video) siguen en sus flujos propios.
   const { status: autosaveStatus } = useAutosave({
-    enabled: open,
-    snapshot: rev,
+    enabled: true,
+    snapshot: form,
     save: async () => {
       save({ silent: true });
       return true;
@@ -76,14 +79,14 @@ export function InfoModal({
   function save(opts?: { silent?: boolean }) {
     onSave({
       ...gi,
-      razon: razonRef.current?.value.trim() || gi.razon,
-      nit: nitRef.current?.value.trim() || gi.nit,
-      agri: agriRef.current?.value.trim() || gi.agri,
-      cedulaCafetera: cedulaRef.current?.value.trim() || "",
-      phone: phoneRef.current?.value.trim() || "",
-      whatsappConfirmed: whatsappRef.current?.checked ?? false,
-      country: countryRef.current?.value || "Colombia",
-      department: deptoRef.current?.value || "",
+      razon: form.razon.trim() || gi.razon,
+      nit: form.nit.trim() || gi.nit,
+      agri: form.agri.trim() || gi.agri,
+      cedulaCafetera: form.cedula.trim(),
+      phone: form.phone.trim(),
+      whatsappConfirmed: form.whatsapp,
+      country: form.country || "Colombia",
+      department: form.depto,
     }, opts);
   }
 
@@ -156,34 +159,34 @@ export function InfoModal({
   const code = userId ? supplierCode(userId) : "";
 
   return (
-    <Modal open={open} onClose={onClose} ariaLabel="Información general">
+    <>
       <h3 style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
         Información general
         <AutosaveChip status={autosaveStatus} />
       </h3>
       <p>Se registra una sola vez y aplica a todos sus lotes y fincas. Puede actualizarla cuando lo necesite.</p>
-      <div className={styles.grid} onInput={bumpRev} onChange={bumpRev}>
-        <div className={styles.wide}><label>Razón social del proveedor</label><input ref={razonRef} placeholder="Razón social legal del proveedor" /></div>
-        <div><label>N.º de identificación legal (NIT / CC)</label><input ref={nitRef} placeholder="N.º de identificación legal" /></div>
-        <div><label>Nombre del agricultor</label><input ref={agriRef} placeholder="Nombre del agricultor" /></div>
-        <div><label>Cédula Cafetera</label><input ref={cedulaRef} placeholder="N.º de cédula cafetera" /></div>
+      <div className={styles.grid}>
+        <div className={styles.wide}><label>Razón social del proveedor</label><input value={form.razon} onChange={(e) => patch({ razon: e.target.value })} placeholder="Razón social legal del proveedor" /></div>
+        <div><label>N.º de identificación legal (NIT / CC)</label><input value={form.nit} onChange={(e) => patch({ nit: e.target.value })} placeholder="N.º de identificación legal" /></div>
+        <div><label>Nombre del agricultor</label><input value={form.agri} onChange={(e) => patch({ agri: e.target.value })} placeholder="Nombre del agricultor" /></div>
+        <div><label>Cédula Cafetera</label><input value={form.cedula} onChange={(e) => patch({ cedula: e.target.value })} placeholder="N.º de cédula cafetera" /></div>
         <div>
           <label>Celular</label>
-          <input ref={phoneRef} type="tel" placeholder="+57 300 000 0000" />
+          <input value={form.phone} onChange={(e) => patch({ phone: e.target.value })} type="tel" placeholder="+57 300 000 0000" />
           <label style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, fontSize: 12.5, fontWeight: 400 }}>
-            <input type="checkbox" ref={whatsappRef} /> Este número tiene WhatsApp
+            <input type="checkbox" checked={form.whatsapp} onChange={(e) => patch({ whatsapp: e.target.checked })} /> Este número tiene WhatsApp
           </label>
         </div>
         <div>
           <label>País</label>
-          <select ref={countryRef} defaultValue="Colombia">
+          <select value={form.country} onChange={(e) => patch({ country: e.target.value })}>
             <option>Colombia</option>
             <option>Multi-Origin</option>
           </select>
         </div>
         <div>
           <label>Departamento base</label>
-          <select ref={deptoRef} defaultValue="">
+          <select value={form.depto} onChange={(e) => patch({ depto: e.target.value })}>
             <option value="">— Departamento —</option>
             {DEPARTMENTS.map((d) => <option key={d}>{d}</option>)}
           </select>
@@ -257,6 +260,6 @@ export function InfoModal({
         )}
       </div>
       <button className="btn btn-solid" onClick={() => save()}>Guardar información</button>
-    </Modal>
+    </>
   );
 }

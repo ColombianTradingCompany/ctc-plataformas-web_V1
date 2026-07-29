@@ -1,10 +1,11 @@
 "use client";
 
-import { useReducer, useRef, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
+import { polygonAreaHa } from "@/lib/geo/area";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS, type ParcelaGeoFields } from "@/lib/eudr";
@@ -55,6 +56,21 @@ const CUSTODY_STAGES: [string, string][] = [
   ["trilla", "Trilla"],
   ["almacenamiento", "Almacenamiento"],
   ["exportacion", "Exportación"],
+];
+
+// Infraestructura local, agrupada POR ETAPA del proceso (2026-07-29). Son 18
+// elementos: como una sola fila de chips era una mancha ilegible, se muestran
+// en tarjetas seleccionables agrupadas por el momento en que el café las toca —
+// así el productor recorre su propia finca de arriba abajo en vez de buscar
+// palabras sueltas. Las claves son las de LOCAL_INFRA (data.ts), que sigue
+// siendo la fuente única de etiquetas y explicaciones.
+const INFRA_GROUPS: [string, string, string[]][] = [
+  ["Vivero y campo", "🌱", ["semillero", "tractor"]],
+  ["Beneficio húmedo", "💧", ["flotado", "lavado", "beneficio", "fermentadores"]],
+  ["Secado", "☀️", ["patios", "marquesinas", "guardiolas", "silos"]],
+  ["Trilla y clasificación", "⚙️", ["trilladora", "monitor_mallas", "optica"]],
+  ["Almacenamiento y empaque", "📦", ["acopio", "vacio"]],
+  ["Transformación", "🔥", ["tostadora", "molino", "empacadora_consumible"]],
 ];
 
 // Textos guía anclados en la Guía de la Comisión Europea (Reglamento (UE) 2023/1115).
@@ -252,17 +268,24 @@ function FincaModalBody({
   onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
 } & FincaModalExtras) {
   const { showToast } = useToast();
-  const veredaRef = useRef<HTMLInputElement>(null);
-  const munRef = useRef<HTMLInputElement>(null);
-  const deptoRef = useRef<HTMLSelectElement>(null);
-  const histRef = useRef<HTMLTextAreaElement>(null);
-  const caracRef = useRef<HTMLInputElement>(null);
 
   const defaultDepto = finca?.depto && finca.depto !== "—" ? finca.depto : gi.department || "Santander";
 
-  // name/ha stay as controlled state (not refs, unlike the fields above) because
-  // the live EUDR status preview below needs to react to them as the producer types.
+  // TODOS los campos son estado controlado (2026-07-29). Vereda, municipio,
+  // departamento, historia y características vivían en refs para ahorrar
+  // re-renders, y eso causó una PÉRDIDA DE DATOS SILENCIOSA en cuanto se añadió
+  // el flush-al-desmontar del autosave: React suelta las refs ANTES de correr
+  // la limpieza de los efectos, así que el guardado de salida leía
+  // `veredaRef.current` = null y escribía "—" (→ null en la base) encima de lo
+  // que el productor ya tenía. Reproducido en vivo: abrir la finca, cambiar solo
+  // «Tipo de documento», cerrar ⇒ vereda, municipio, historia y características
+  // BORRADAS. Con estado no hay refs que soltar y el flush guarda lo que se ve.
   const [name, setName] = useState(finca?.name ?? "");
+  const [vereda, setVereda] = useState(finca?.vereda && finca.vereda !== "—" ? finca.vereda : "");
+  const [mun, setMun] = useState(finca?.mun && finca.mun !== "—" ? finca.mun : "");
+  const [depto, setDepto] = useState(defaultDepto);
+  const [hist, setHist] = useState(finca?.hist && finca.hist !== "—" ? finca.hist : "");
+  const [carac, setCarac] = useState(finca?.carac && finca.carac !== "—" ? finca.carac : "");
   const [ha, setHa] = useState(finca?.ha ?? "");
   // Altura (msnm): el productor la trae del mapa con un botón (centro del
   // polígono si lo hay; si no, el punto marcado) vía la Elevation API de
@@ -272,6 +295,11 @@ function FincaModalBody({
   const [altFrom, setAltFrom] = useState<"polygon" | "point" | null>(null);
   const [altBusy, setAltBusy] = useState(false);
   const [altErr, setAltErr] = useState(false);
+  // Área (ha): mismo trato que la altura — se calcula del polígono dibujado con
+  // un botón explícito, nunca sola. areaFromPoly marca que el valor que se ve
+  // salió de la geometría (y deja de marcarlo en cuanto el productor lo edita,
+  // porque el área SEMBRADA puede ser menor que el predio delimitado).
+  const [areaFromPoly, setAreaFromPoly] = useState(false);
   const [saving, setSaving] = useState(false);
   // Centered "Datos de Finca Actualizados" confirmation that fades on its own.
   const [flash, setFlash] = useState(false);
@@ -370,6 +398,15 @@ function FincaModalBody({
     setAltBusy(false);
   }
 
+  // Área desde el polígono: pura geometría, sin red (a diferencia de la altura,
+  // que sí consulta un servicio). Disponible en cuanto haya 3 vértices.
+  const polyArea = polygonAreaHa(eudr.eudrPolygon);
+  function pullArea() {
+    if (polyArea == null) return;
+    setHa(String(polyArea));
+    setAreaFromPoly(true);
+  }
+
   // Approximate live preview only -- vereda/mun/depto come from the finca prop
   // (not the refs above, which don't trigger re-renders as the producer types),
   // so this can lag slightly for the address-fallback geo path. The lat/lng
@@ -424,10 +461,16 @@ function FincaModalBody({
   const eudrStatus = fincaEudrStatus(previewFinca, previewParcelas);
   const needsPolygon = !isNaN(haNum) && haNum > 4;
 
-  // Which of the three tabs is showing. All three panels stay mounted (toggled
-  // by `display`) so the ref-based inputs in the general tab keep their values
-  // and never get read back as null on save.
+  // Which of the four tabs is showing. All four panels stay mounted (toggled by
+  // `display`) so nothing remounts —y por tanto nada se reinicia— al cambiar de
+  // pestaña con trabajo a medio hacer.
   const [tab, setTab] = useState<"general" | "ubicacion" | "eudr" | "certs">("general");
+
+  // Los esquemas de certificación ya NO se escriben a mano en el cuestionario:
+  // se derivan de las credenciales registradas en la pestaña 4 (una sola fuente
+  // de verdad). Este resumen es lo que viaja a `eudr_cert_scheme`, que es lo que
+  // leen el dossier de la Visa y el panel de BCP.
+  const certSchemeSummary = certificates.map((c) => SCHEME_LABEL[c.scheme] ?? c.scheme).join(", ");
 
   // Derived risk read-outs (país implícito = Colombia => estándar). Same pure
   // functions the lot used, now sourced from the finca's questionnaire.
@@ -459,13 +502,13 @@ function FincaModalBody({
       // (CTC-managed); the producer can't change their own review/share state.
       status: finca?.status ?? "pending_review",
       certShared: finca?.certShared ?? false,
-      vereda: veredaRef.current?.value.trim() || "—",
-      mun: munRef.current?.value.trim() || "—",
-      depto: deptoRef.current?.value ?? defaultDepto,
+      vereda: vereda.trim() || "—",
+      mun: mun.trim() || "—",
+      depto: depto || defaultDepto,
       alt: alt.trim() || "—",
       ha: ha.trim() || "—",
-      hist: histRef.current?.value.trim() || "—",
-      carac: caracRef.current?.value.trim() || "—",
+      hist: hist.trim() || "—",
+      carac: carac.trim() || "—",
       videoAssetId: finca?.videoAssetId ?? null,
       videoUrl: finca?.videoUrl ?? null,
       profilePhotoAssetId: finca?.profilePhotoAssetId ?? null,
@@ -474,6 +517,8 @@ function FincaModalBody({
       eudrLegalDocsUrl: finca?.eudrLegalDocsUrl ?? null,
       eudrProducerAnswers: finca?.eudrProducerAnswers ?? null,
       ...eudr,
+      // Derivado de la pestaña 4, nunca tecleado (ver certSchemeSummary).
+      eudrCertScheme: certSchemeSummary,
     });
     setSaving(false);
     // El autosave pasa showFlash=false: el overlay centrado "Datos de Finca
@@ -486,13 +531,13 @@ function FincaModalBody({
   }
 
   // Autosave (2026-07-23): SOLO para fincas ya existentes — autoguardar una
-  // finca nueva la crearía a medio escribir. Los campos con ref (vereda,
-  // municipio, historia…) no re-renderizan al teclear, así que el contenedor
-  // sube un contador con onInput/onChange; los controlados viajan en el snapshot.
-  const [rev, bumpRev] = useReducer((x: number) => x + 1, 0);
+  // finca nueva la crearía a medio escribir. Desde 2026-07-29 TODO el formulario
+  // es estado controlado, así que el snapshot es literalmente lo que se ve: ya
+  // no hace falta el contador `rev` que espiaba los onInput de los campos con
+  // ref, y el flush-al-desmontar guarda valores reales en vez de refs sueltas.
   const { status: autosaveStatus } = useAutosave({
     enabled: !!finca?.id,
-    snapshot: { rev, name, ha, alt, eudr },
+    snapshot: { name, vereda, mun, depto, hist, carac, ha, alt, eudr, certSchemeSummary },
     save: () => save(false),
   });
 
@@ -555,15 +600,17 @@ function FincaModalBody({
         </div>
       )}
 
-      {/* Pestañas: 1) info general · 2) ubicación y respaldo · 3) cuestionario EUDR.
-          Los tres paneles quedan MONTADOS (se ocultan con display) para que los
-          inputs con ref del panel 1 nunca se lean como null al guardar. */}
+      {/* Pestañas (reordenadas 2026-07-29, petición del owner): 1) identidad y
+          papeles del predio · 2) todo lo que sale del mapa (área, altura,
+          parcelas) · 3) el cuestionario de riesgo · 4) credenciales.
+          Los cuatro paneles quedan MONTADOS (se ocultan con display) para que
+          cambiar de pestaña nunca reinicie trabajo a medio hacer. */}
       <div className={styles.tabs} role="tablist">
         <button type="button" role="tab" aria-selected={tab === "general"} className={tab === "general" ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => setTab("general")}>
           1 · Información general
         </button>
         <button type="button" role="tab" aria-selected={tab === "ubicacion"} className={tab === "ubicacion" ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => setTab("ubicacion")}>
-          2 · Ubicación y respaldo
+          2 · Ubicación y medidas
         </button>
         <button type="button" role="tab" aria-selected={tab === "eudr"} className={tab === "eudr" ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => setTab("eudr")}>
           3 · Cuestionario EUDR {eudrTabPending && <span className={styles.tabDot} title="Faltan respuestas para determinar la Visa" />}
@@ -575,7 +622,7 @@ function FincaModalBody({
         </button>
       </div>
 
-      <div onInput={bumpRev} onChange={bumpRev}>
+      <div>
         {/* ── PANEL 1 · Información general ─────────────────────────────── */}
         <div style={{ display: tab === "general" ? undefined : "none" }}>
           <div className={styles.grid}>
@@ -583,64 +630,15 @@ function FincaModalBody({
               <label>Nombre de la finca</label>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. La Primavera" autoFocus />
             </div>
-            <div><label>Vereda</label><input ref={veredaRef} defaultValue={finca?.vereda ?? ""} placeholder="Ej. El Encanto" /></div>
-            <div><label>Municipio</label><input ref={munRef} defaultValue={finca?.mun ?? ""} placeholder="Ej. Piedecuesta" /></div>
-            <div>
+            <div><label>Vereda</label><input value={vereda} onChange={(e) => setVereda(e.target.value)} placeholder="Ej. El Encanto" /></div>
+            <div><label>Municipio</label><input value={mun} onChange={(e) => setMun(e.target.value)} placeholder="Ej. Piedecuesta" /></div>
+            <div className={styles.wide}>
               <label>Departamento</label>
-              <select ref={deptoRef} defaultValue={defaultDepto}>
+              <select value={depto} onChange={(e) => setDepto(e.target.value)}>
                 {["Santander", "Huila", "Cauca", "Nariño", "Tolima", "Antioquia", "Quindío", "Caldas", "Otro"].map((d) => (
                   <option key={d}>{d}</option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label>
-                Área en café (ha)
-                <FieldInfo text="Superficie sembrada en café de este predio. A partir de 4 ha el EUDR exige delimitar el terreno con un polígono (en la pestaña «Ubicación y respaldo»), no solo un punto." />
-              </label>
-              <input value={ha} onChange={(e) => setHa(e.target.value)} type="number" step="0.1" placeholder="3.5" />
-            </div>
-            <div>
-              <label>
-                Altura (msnm)
-                <FieldInfo text="Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado. Marque primero la ubicación en la pestaña «Ubicación y respaldo». También puede escribirla a mano si conoce el dato exacto." />
-              </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-                <input
-                  value={alt}
-                  onChange={(e) => {
-                    setAlt(e.target.value);
-                    setAltFrom(null); // editada a mano ⇒ ya no viene del mapa
-                    setAltErr(false);
-                  }}
-                  type="number"
-                  placeholder="1680"
-                  style={{ flex: 1, minWidth: 0 }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={pullAltitude}
-                  disabled={!refPoint || altBusy}
-                  title={refPoint ? "Traer la altura del punto/polígono registrado en el mapa" : "Marque primero la ubicación en «Ubicación y respaldo»"}
-                  style={{ flex: "none", whiteSpace: "nowrap" }}
-                >
-                  {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
-                </button>
-              </div>
-              <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
-                {altBusy
-                  ? "Consultando la altura del terreno…"
-                  : altErr
-                    ? "No se pudo obtener la altura; escríbala a mano."
-                    : altFrom === "polygon"
-                      ? "Traída del centro del polígono."
-                      : altFrom === "point"
-                        ? "Traída del punto marcado."
-                        : !refPoint
-                          ? "Marque la ubicación en «Ubicación y respaldo» para poder traerla, o escríbala a mano."
-                          : "Toque «Traer del mapa» o escríbala a mano."}
-              </p>
             </div>
             <div className={styles.wide}>
               <label>Sistema productivo</label>
@@ -658,12 +656,84 @@ function FincaModalBody({
                 ))}
               </div>
             </div>
-            <div>
+            <div className={styles.wide}>
               <label>Fecha de establecimiento del cultivo</label>
               <input type="date" value={eudr.eudrPlantingDate} onChange={(e) => patchEudr({ eudrPlantingDate: e.target.value })} />
             </div>
-            <div className={styles.wide}><label>Historia de la finca</label><textarea ref={histRef} defaultValue={finca?.hist ?? ""} placeholder="Historia, microclima, comunidad…" /></div>
-            <div className={styles.wide}><label>Características</label><input ref={caracRef} defaultValue={finca?.carac ?? ""} placeholder="Sombrío, variedades sembradas, beneficio propio…" /></div>
+
+            {/* ── Los papeles del predio (traídos de las pestañas 2 y 3 el
+                2026-07-29) ─────────────────────────────────────────────────
+                Tenencia, el documento que la respalda y la pregunta de si esos
+                documentos están a la mano son UNA sola conversación: quién es
+                el dueño y qué puede mostrar. Estaban repartidas entre el mapa y
+                el cuestionario de riesgo, donde nadie las leía juntas. */}
+            <div className={styles.wide}>
+              <hr className={styles.sep} />
+              <h4 className={styles.sectionTitle}>Titularidad y documentos</h4>
+            </div>
+            <div className={styles.wide}>
+              <label>Tenencia de la tierra</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {TENURE_OPTIONS.map(([key, label]) => (
+                  <label key={key} className={styles.chip}>
+                    <input
+                      type="radio"
+                      name="eudr_tenure"
+                      checked={eudr.eudrTenure === key}
+                      onChange={() => patchEudr({ eudrTenure: key })}
+                    />{" "}
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className={styles.wide}>
+              <label>
+                Tipo de documento de respaldo
+                <FieldInfo text="El documento que respalda la tenencia declarada arriba. Admite escritura, certificado de tradición y libertad, contrato de arrendamiento, acta de la asociación, o la documentación SICA (Registro SICA / cédula cafetera de la FNC). No es obligatorio para guardar la finca." />
+              </label>
+              <select value={eudr.eudrSupportDocType} onChange={(e) => patchEudr({ eudrSupportDocType: e.target.value })}>
+                <option value="">Seleccione…</option>
+                {SUPPORT_DOC_TYPES.map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.wide}>
+              <label>Documento de respaldo <small>(PDF, máx. 10 MB)</small></label>
+              {finca ? (
+                <>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />
+                    <UploadProgressRing state={docUp.state} />
+                  </div>
+                  {eudr.eudrLegalDocsFilename && (
+                    <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+                      ✓ {eudr.eudrLegalDocsFilename}
+                      {finca.eudrLegalDocsUrl && (
+                        <>
+                          {" · "}
+                          <a href={finca.eudrLegalDocsUrl} target="_blank" rel="noopener noreferrer">ver</a>
+                        </>
+                      )}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder adjuntar el documento.</p>
+              )}
+            </div>
+            <div className={styles.wide}>
+              <label>¿Documentos disponibles y verificables de inmediato?<FieldInfo text={EUDR_INFO.documentos} /></label>
+              <EudrYesNo value={eudr.eudrDocsAvailable} onChange={(v) => patchEudr({ eudrDocsAvailable: v })} />
+            </div>
+
+            <div className={styles.wide}>
+              <hr className={styles.sep} />
+              <h4 className={styles.sectionTitle}>Su finca, contada</h4>
+            </div>
+            <div className={styles.wide}><label>Historia de la finca</label><textarea value={hist} onChange={(e) => setHist(e.target.value)} placeholder="Historia, microclima, comunidad…" /></div>
+            <div className={styles.wide}><label>Características</label><input value={carac} onChange={(e) => setCarac(e.target.value)} placeholder="Sombrío, variedades sembradas, beneficio propio…" /></div>
             <div className={styles.wide}>
               <label>Foto de perfil de la finca <small>(máx. 5 MB)</small></label>
               {finca ? (
@@ -700,8 +770,92 @@ function FincaModalBody({
           </div>
         </div>
 
-        {/* ── PANEL 2 · Ubicación y respaldo ───────────────────────────── */}
+        {/* ── PANEL 2 · Ubicación y medidas ─────────────────────────────
+            Área y altura viven aquí desde el 2026-07-29 (petición del owner):
+            las dos SALEN del mapa que está justo debajo, y el área además
+            decide si el EUDR exige polígono. Tenerlas en la pestaña 1, a dos
+            clics de la geometría que las produce, obligaba a ir y volver. */}
         <div style={{ display: tab === "ubicacion" ? undefined : "none" }}>
+          <div className={styles.grid} style={{ marginBottom: 4 }}>
+            <div>
+              <label>
+                Área en café (ha)
+                <FieldInfo text="Superficie sembrada en café de este predio. Dibuje el polígono en el mapa de abajo y tóquele «Calcular del polígono» para traerla, o escríbala a mano: el área SEMBRADA puede ser menor que el predio delimitado. A partir de 4 ha el EUDR exige el polígono, no basta el punto." />
+              </label>
+              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                <input
+                  value={ha}
+                  onChange={(e) => {
+                    setHa(e.target.value);
+                    setAreaFromPoly(false); // editada a mano ⇒ ya no viene del polígono
+                  }}
+                  type="number"
+                  step="0.1"
+                  placeholder="3.5"
+                  style={{ flex: 1, minWidth: 0 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={pullArea}
+                  disabled={polyArea == null}
+                  title={polyArea != null ? "Calcular el área del polígono dibujado en el mapa" : "Dibuje primero el polígono en el mapa de abajo"}
+                  style={{ flex: "none", whiteSpace: "nowrap" }}
+                >
+                  Calcular del polígono 📐
+                </button>
+              </div>
+              <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
+                {polyArea == null
+                  ? "Dibuje el polígono en el mapa para poder calcularla, o escríbala a mano."
+                  : areaFromPoly
+                    ? `Calculada del polígono (${eudr.eudrPolygon?.length ?? 0} vértices). Ajústela si sembró menos.`
+                    : `El polígono dibujado mide ${polyArea} ha. Toque «Calcular del polígono» para usarla.`}
+              </p>
+            </div>
+            <div>
+              <label>
+                Altura (msnm)
+                <FieldInfo text="Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
+              </label>
+              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                <input
+                  value={alt}
+                  onChange={(e) => {
+                    setAlt(e.target.value);
+                    setAltFrom(null); // editada a mano ⇒ ya no viene del mapa
+                    setAltErr(false);
+                  }}
+                  type="number"
+                  placeholder="1680"
+                  style={{ flex: 1, minWidth: 0 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={pullAltitude}
+                  disabled={!refPoint || altBusy}
+                  title={refPoint ? "Traer la altura del punto/polígono registrado en el mapa" : "Marque primero la ubicación en el mapa de abajo"}
+                  style={{ flex: "none", whiteSpace: "nowrap" }}
+                >
+                  {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
+                </button>
+              </div>
+              <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
+                {altBusy
+                  ? "Consultando la altura del terreno…"
+                  : altErr
+                    ? "No se pudo obtener la altura; escríbala a mano."
+                    : altFrom === "polygon"
+                      ? "Traída del centro del polígono."
+                      : altFrom === "point"
+                        ? "Traída del punto marcado."
+                        : !refPoint
+                          ? "Marque la ubicación en el mapa de abajo para poder traerla, o escríbala a mano."
+                          : "Toque «Traer del mapa» o escríbala a mano."}
+              </p>
+            </div>
+          </div>
           <div className={styles.wide} style={{ margin: "14px 0" }}>
             <label>
               {extraParcelas.length > 0
@@ -745,63 +899,6 @@ function FincaModalBody({
             )}
           </div>
 
-          <div className={styles.wide} style={{ marginBottom: 14 }}>
-            <label>Tenencia de la tierra</label>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {TENURE_OPTIONS.map(([key, label]) => (
-                <label key={key} className={styles.chip}>
-                  <input
-                    type="radio"
-                    name="eudr_tenure"
-                    checked={eudr.eudrTenure === key}
-                    onChange={() => patchEudr({ eudrTenure: key })}
-                  />{" "}
-                  {label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Documento de respaldo (respalda la tenencia declarada arriba). Ahora
-              con un selector de tipo que admite documentación SICA / cédula cafetera. */}
-          <div className={styles.wide} style={{ marginBottom: 14 }}>
-            <label>
-              Documento de respaldo <small>(PDF, máx. 10 MB)</small>
-              <FieldInfo text="Adjunte, si lo tiene disponible, un documento que respalde la tenencia de la tierra declarada arriba. Admite escritura, certificado de tradición y libertad, contrato de arrendamiento, acta de la asociación, o la documentación SICA (Registro SICA / cédula cafetera de la FNC). No es obligatorio para guardar la finca." />
-            </label>
-            <div className={styles.grid} style={{ margin: "6px 0" }}>
-              <div className={styles.wide}>
-                <label>Tipo de documento</label>
-                <select value={eudr.eudrSupportDocType} onChange={(e) => patchEudr({ eudrSupportDocType: e.target.value })}>
-                  <option value="">Seleccione…</option>
-                  {SUPPORT_DOC_TYPES.map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {finca ? (
-              <>
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />
-                  <UploadProgressRing state={docUp.state} />
-                </div>
-                {eudr.eudrLegalDocsFilename && (
-                  <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-                    ✓ {eudr.eudrLegalDocsFilename}
-                    {finca.eudrLegalDocsUrl && (
-                      <>
-                        {" · "}
-                        <a href={finca.eudrLegalDocsUrl} target="_blank" rel="noopener noreferrer">ver</a>
-                      </>
-                    )}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder adjuntar el documento.</p>
-            )}
-          </div>
         </div>
 
         {/* ── PANEL 3 · Cuestionario EUDR ──────────────────────────────── */}
@@ -920,22 +1017,36 @@ function FincaModalBody({
           </div>
 
           <div className={styles.wide} style={{ marginBottom: 14 }}>
+            {/* Ya NO se teclea aquí (2026-07-29): la pestaña 4 registra cada
+                certificado con número y vigencia, así que preguntar otra vez
+                "¿qué esquemas tiene?" era pedir el mismo dato dos veces y
+                abrir la puerta a que las dos respuestas se contradijeran. Este
+                bloque muestra lo registrado y es lo que viaja al expediente. */}
             <label>Esquemas de certificación / verificación<FieldInfo text={EUDR_INFO.certificacion} /></label>
-            <input
-              value={eudr.eudrCertScheme}
-              onChange={(e) => patchEudr({ eudrCertScheme: e.target.value })}
-              placeholder="Ej. Rainforest Alliance, orgánico, Fairtrade… (opcional)"
-              style={{ width: "100%", padding: "10px 12px", border: "1.5px solid var(--line)", borderRadius: 8, fontFamily: "var(--font-spline-mono),monospace", fontSize: 13, background: "var(--paper)" }}
-            />
+            {certificates.length > 0 ? (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
+                {certificates.map((c) => (
+                  <span key={c.id} className={styles.readChip}>
+                    {SCHEME_LABEL[c.scheme] ?? c.scheme}
+                    {c.verifiedByCtc ? " ✓" : ""}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "4px 0 0" }}>Ninguno registrado.</p>
+            )}
+            <p style={{ fontSize: 12, color: "var(--muted)", margin: "6px 0 0" }}>
+              Se toman de la pestaña{" "}
+              <button type="button" className={styles.linkBtn} onClick={() => setTab("certs")}>
+                4 · Certificaciones
+              </button>
+              , donde cada uno lleva su número y su vigencia.
+            </p>
           </div>
 
           <div className={styles.wide} style={{ marginBottom: 14 }}>
             <label>¿Indicios de ilegalidad, deforestación o degradación en la cadena?<FieldInfo text={EUDR_INFO.indicios} /></label>
             <EudrYesNo value={eudr.eudrIllegalityIndicators} onChange={(v) => patchEudr({ eudrIllegalityIndicators: v })} siLabel="Sí, hay indicios" noLabel="No hay indicios" goodAnswer={false} />
-          </div>
-          <div className={styles.wide} style={{ marginBottom: 14 }}>
-            <label>¿Documentos disponibles y verificables de inmediato?<FieldInfo text={EUDR_INFO.documentos} /></label>
-            <EudrYesNo value={eudr.eudrDocsAvailable} onChange={(v) => patchEudr({ eudrDocsAvailable: v })} />
           </div>
 
           <div className={styles.wide} style={{ marginBottom: 14 }}>
@@ -945,7 +1056,18 @@ function FincaModalBody({
                 ? "Insignificante"
                 : fincaRiskLevel === "no_insignificante"
                 ? "No insignificante"
-                : "Pendiente — responda «indicios» y «documentos» arriba"}
+                : "Pendiente — falta responder alguna pregunta"}
+            </p>
+            {/* La disponibilidad de documentos se responde ahora en la pestaña 1
+                (junto al documento de respaldo), pero SIGUE pesando aquí: es uno
+                de los dos insumos de esta determinación. Se dice de dónde sale
+                para que nadie la busque en esta pantalla. */}
+            <p style={{ fontSize: 12, color: "var(--muted)", margin: "6px 0 0" }}>
+              Sale de «indicios» (arriba) y de{" "}
+              <button type="button" className={styles.linkBtn} onClick={() => setTab("general")}>
+                ¿Documentos disponibles y verificables de inmediato?
+              </button>{" "}
+              — hoy: {eudr.eudrDocsAvailable === true ? "sí" : eudr.eudrDocsAvailable === false ? "no" : "sin responder"}.
             </p>
           </div>
 
@@ -973,20 +1095,43 @@ function FincaModalBody({
               Infraestructura local
               <FieldInfo text="Marque la infraestructura y maquinaria propia disponible en esta finca o cerca de ella. Cada elemento tiene una ⓘ que explica para qué sirve. Ayuda a evidenciar la capacidad de procesamiento y la trazabilidad de sus cafés." />
             </label>
-            <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 6px" }}>Seleccione todo lo que tenga disponible.</p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {LOCAL_INFRA.map(([key, label, info]) => (
-                <label key={key} className={styles.chip}>
-                  <input
-                    type="checkbox"
-                    checked={eudr.eudrLocalInfra.includes(key)}
-                    onChange={(e) => patchEudr({ eudrLocalInfra: e.target.checked ? [...eudr.eudrLocalInfra, key] : eudr.eudrLocalInfra.filter((k) => k !== key) })}
-                  />{" "}
-                  {label}
-                  <FieldInfo text={info} />
-                </label>
-              ))}
-            </div>
+            <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 8px" }}>
+              Seleccione todo lo que tenga disponible · {eudr.eudrLocalInfra.length} de {LOCAL_INFRA.length} marcados.
+            </p>
+            {/* Tarjetas agrupadas por etapa en vez de 18 chips en una sola fila
+                (2026-07-29): el productor recorre su finca de arriba abajo. */}
+            {INFRA_GROUPS.map(([groupLabel, icon, keys]) => (
+              <div key={groupLabel} className={styles.infraGroup}>
+                <p className={styles.infraGroupTitle}>
+                  <span aria-hidden>{icon}</span> {groupLabel}
+                </p>
+                <div className={styles.infraGrid}>
+                  {keys.map((key) => {
+                    const entry = LOCAL_INFRA.find(([k]) => k === key);
+                    if (!entry) return null;
+                    const [, label, info] = entry;
+                    const on = eudr.eudrLocalInfra.includes(key);
+                    return (
+                      <label key={key} className={on ? `${styles.infraCard} ${styles.infraCardOn}` : styles.infraCard}>
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={(e) =>
+                            patchEudr({
+                              eudrLocalInfra: e.target.checked
+                                ? [...eudr.eudrLocalInfra, key]
+                                : eudr.eudrLocalInfra.filter((k) => k !== key),
+                            })
+                          }
+                        />
+                        <span className={styles.infraCardLabel}>{label}</span>
+                        <FieldInfo text={info} />
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           <p style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
@@ -1002,8 +1147,18 @@ function FincaModalBody({
               Con ellos, cada café que salga de esta finca podrá presumir el sello ante el comprador.
             </p>
             <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 12px", fontStyle: "italic" }}>
-              No tener certificados <b>no le impide exportar</b> — la normativa europea (EUDR) no los exige. Un certificado sin
-              fechas de vigencia queda registrado, pero no respalda sellos en sus cafés.
+              No tener certificados <b>no le impide exportar</b> — la normativa europea (EUDR) no los exige.
+            </p>
+            {/* La pregunta del owner (2026-07-29): ¿la vigencia es obligatoria?
+                Para REGISTRAR no — se puede guardar solo con el esquema. Para
+                que el certificado RESPALDE un sello en un café sí, porque la
+                prueba es temporal: la cosecha del lote tiene que caer dentro de
+                la vigencia (F2, deriveClaims). Se dice aquí en una frase en vez
+                de dejar al productor descubrirlo cuando su sello no aparece. */}
+            <p className={styles.noteBox}>
+              <b>Sobre las fechas:</b> puede registrar un certificado sin ellas y quedará guardado. Pero el sello solo viaja con
+              un café cuando la <b>cosecha de ese lote cae dentro de la vigencia</b> del certificado — sin fechas no hay forma de
+              probarlo, y el café sale sin sello. Si tiene el documento a la mano, cópielas ahora.
             </p>
             {finca ? (
               <FincaCerts
@@ -1178,14 +1333,31 @@ function ParcelaCard({
       </div>
       {open && (
         <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 130px", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 190px", gap: 10 }}>
             <div>
               <label>Nombre del cafetal</label>
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder={"Cafetal " + index} />
             </div>
             <div>
               <label>Área (ha)</label>
-              <input value={areaHa} onChange={(e) => setAreaHa(e.target.value)} type="number" step="0.1" placeholder="1.5" />
+              <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+                <input value={areaHa} onChange={(e) => setAreaHa(e.target.value)} type="number" step="0.1" placeholder="1.5" style={{ flex: 1, minWidth: 0 }} />
+                {/* Mismo gesto que en la finca: el polígono ya dibujado sabe
+                    cuánto mide, no hay por qué medirlo otra vez a ojo. */}
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => {
+                    const a = polygonAreaHa(polygon);
+                    if (a != null) setAreaHa(String(a));
+                  }}
+                  disabled={polygonAreaHa(polygon) == null}
+                  title={polygonAreaHa(polygon) != null ? "Calcular el área del polígono dibujado" : "Dibuje primero el polígono"}
+                  style={{ flex: "none" }}
+                >
+                  📐
+                </button>
+              </div>
             </div>
           </div>
           <div>
@@ -1330,29 +1502,35 @@ function CertCard({
               return ok;
             }}
           />
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
-            <label style={{ fontSize: 12 }}>Soporte (PDF, opcional):</label>
-            <input
-              type="file"
-              accept="application/pdf,image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void up.run(() => onUploadSupport(cert.id, fincaId, file, up.progress));
-              }}
-            />
-            <UploadProgressRing state={up.state} />
-            {cert.supportFilename && <span style={{ fontSize: 12, color: "var(--muted)" }}>✓ {cert.supportFilename}</span>}
-          </div>
-          {reg && (
-            <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "6px 0 0" }}>
-              CTC lo contrasta contra:{" "}
-              <a href={reg.url} target="_blank" rel="noopener noreferrer">
-                {reg.registry}
-              </a>
-              {reg.note ? " — " + reg.note : ""}
-            </p>
-          )}
         </div>
+      )}
+
+      {/* El soporte se sube SIEMPRE desde la tarjeta (2026-07-29). Antes vivía
+          dentro del editor, así que había que registrar el certificado, volver
+          a tocar «Editar» y recién ahí aparecía el campo — el productor decía,
+          con razón, que no podía adjuntar nada. El campo necesita que la fila
+          exista (la subida se cuelga de cert.id), y en la tarjeta ya existe. */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+        <label style={{ fontSize: 12, fontWeight: 600 }}>Soporte del certificado <small style={{ fontWeight: 400 }}>(PDF o imagen, opcional)</small></label>
+        <input
+          type="file"
+          accept="application/pdf,image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) void up.run(() => onUploadSupport(cert.id, fincaId, file, up.progress));
+          }}
+        />
+        <UploadProgressRing state={up.state} />
+        {cert.supportFilename && <span style={{ fontSize: 12, color: "#2E7D52" }}>✓ {cert.supportFilename}</span>}
+      </div>
+      {reg && (
+        <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "6px 0 0" }}>
+          CTC lo contrasta contra:{" "}
+          <a href={reg.url} target="_blank" rel="noopener noreferrer">
+            {reg.registry}
+          </a>
+          {reg.note ? " — " + reg.note : ""}
+        </p>
       )}
     </div>
   );
@@ -1414,7 +1592,10 @@ function CertEditor({
           <input value={certNumber} onChange={(e) => setCertNumber(e.target.value)} placeholder="Como aparece en el documento" />
         </div>
         <div>
-          <label>Vigente desde</label>
+          <label>
+            Vigente desde
+            <FieldInfo text="Fecha de emisión o inicio de vigencia que aparece en el certificado. Sin las dos fechas el certificado queda registrado, pero ningún café podrá presumir su sello: la prueba es temporal — la cosecha del lote debe caer dentro de esta ventana." />
+          </label>
           <input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
         </div>
         <div>
@@ -1422,6 +1603,11 @@ function CertEditor({
           <input type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
         </div>
       </div>
+      {(validFrom === "" || validTo === "") && (
+        <p style={{ fontSize: 11.5, color: "#B45309", margin: 0 }}>
+          Sin las dos fechas puede guardarlo, pero no respaldará sellos en sus cafés.
+        </p>
+      )}
       {entry?.level === "org" && (
         <div>
           <label>

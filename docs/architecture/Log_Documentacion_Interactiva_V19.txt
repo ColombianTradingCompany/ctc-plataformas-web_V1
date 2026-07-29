@@ -12,6 +12,54 @@ no "después". El backend real del Directorio del Café (3 commits del 2026-07-2
 se anotó y V18.0 salió publicado describiéndolo como maqueta.
 
 ---
+## [2026-07-29] F1 de la reestructura EUDR: la finca como titular (parcelas + certificados)
+- Primera fase de docs/EUDR_RESTRUCTURE_PLAN.md (aprobado por el owner el 2026-07-29,
+  a partir de sus dos notas de deep research "¿Finca o Lote?" y "Los cuatro
+  arquetipos"). Principio: el productor declara HECHOS; el sistema deriva
+  afirmaciones. Los certificados son CREDENCIALES de la finca (número + vigencia);
+  el lote solo derivará claims (F2).
+- **Migración `f1_finca_parcelas_and_certificates`**: tablas `finca_parcelas` (el
+  átomo probatorio del Art. 9 — punto siempre, polígono donde area>4 ha
+  [`requires_polygon` GENERATED]; geometría congelada con la finca aprobada, guard)
+  y `finca_certificates` (scheme del catálogo, número, vigencia, soporte,
+  `verified_by_ctc` solo-CTC — guard INSERT+UPDATE que además RESETEA la
+  verificación si el productor edita el contenido de un cert verificado). RLS
+  *_own vía dueño de la finca. Siembra: parcela 1 desde el punto/polígono actual.
+- **`certRegistry.ts`** ganó `level` (finca|org|lote|none) y `validate`
+  (number|upload|both) por esquema, según el inventario de la nota: IWCA→none
+  (membresía, no certificado), EUDR→lote (la DDS es del embarque, F3), BPA/DO/IGP
+  →number. `fincaLevelSchemes()` filtra lo registrable en la finca.
+- **La Visa se juzga por parcelas**: `fincaEudrStatus()` ganó el parámetro opcional
+  `parcelas` (todas localizadas, polígono donde >4 ha; los callers legacy conservan
+  la regla vieja) y `approveFinca()` lo re-impone server-side nombrando las
+  parcelas que faltan. Nuevos puros `parcelaGeoOk`/`parcelasGeoComplete`.
+- **FincaModal (productor), 3→4 pestañas**: la 2 pasa a editar la PARCELA 1 (el
+  mapa de siempre ES el cafetal principal — se espeja a `finca_parcelas` al
+  guardar, cero doble trabajo) + lista "¿Su café crece en varios cafetales
+  separados?" con editor por cafetal (un FincaMapPicker por tarjeta, guardado
+  inmediato por fila, FUERA del autosave). La 4 nueva "Certificaciones": esquema
+  + número + vigencia + PDF opcional, con la microcopy "no tenerlos no le impide
+  exportar"; sin vigencia el cert queda "declarado — no respalda sellos".
+- **BCP**: `FincaEudrEditor` ganó la 5ª sub-pestaña "Certificaciones" (declarado
+  vs verificado, enlace al registro público del esquema, botón Verificar →
+  `setFincaCertVerified`, que exige vigencia y deja audit_log) y la lista de
+  parcelas auditada contra el umbral de 4 ha en "Análisis y Evidencia".
+- **Dossier de la Visa** (ambas rutas, vía el nuevo `lib/dossierExtras.ts`): tabla
+  "Parcelas del predio (Art. 9)" y tabla "Certificaciones de la finca" con número,
+  vigencia y estado — citando que son información complementaria del Art. 10(2)(n).
+- Verificación: tsc + eslint limpios; e2e con cuenta QA de productor en la app
+  real (crear finca → clic real en el mapa → guardar ⇒ parcela 1 espejada en base
+  con coords idénticas → registrar Rainforest con número y vigencia ⇒ fila con
+  `verified_by_ctc=false` forzado por el guard); cascada FK verificada al borrar
+  la cuenta QA (0 huérfanos).
+- **Pendiente anotado para F2**: el KML/GeoJSON de `earthKml.ts` sigue exportando
+  la geometría de la finca (= parcela 1); el export parcela-por-parcela entra con
+  la composición del lote. `AppDashboard` cuenta "EUDR Aptas" por la regla legacy
+  (el modal y approveFinca ya usan parcelas).
+- Es cambio de nodo (`n-kaffetal`, `n-bcp`, `n-db`: +2 tablas) y semilla de las
+  futuras entradas DICT de F2 (claims derivados).
+(commit: pending)
+
 ## [2026-07-28] El autosave perdía en silencio el último cambio al cerrar
 - **Bug reportado por el owner**: en el Panel del Productor → Finca → "Ubicación y
   respaldo", el selector "Tipo de documento" mostraba las opciones pero al elegir una

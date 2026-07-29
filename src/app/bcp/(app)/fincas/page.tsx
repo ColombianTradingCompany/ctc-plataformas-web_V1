@@ -181,7 +181,7 @@ export default async function BcpFincasPage() {
     ...Object.values(f.eudr_evidence_files ?? {}).map((v) => v.assetId),
     ...Object.values(f.eudr_sustainability_files ?? {}).map((v) => v.assetId),
   ]);
-  const [signedUrls, producers, { data: comms }, { data: lotsRaw }] = await Promise.all([
+  const [signedUrls, producers, { data: comms }, { data: lotsRaw }, { data: parcelasRaw }, { data: certsRaw }] = await Promise.all([
     signedKaffetalMediaUrls(service, allAssetIds),
     fetchProducerContacts(service, fincaRows.map((f) => f.producer_id)),
     service
@@ -194,6 +194,17 @@ export default async function BcpFincasPage() {
       .select("id, name, finca_id, stage, intake_step")
       .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: false }),
+    // F1 (2026-07-29): parcelas y certificados de finca — ver EUDR_RESTRUCTURE_PLAN.md.
+    service
+      .from("finca_parcelas")
+      .select("id, finca_id, name, area_ha, lat, lng, polygon_geojson, position")
+      .in("finca_id", fincaRows.map((f) => f.id))
+      .order("position", { ascending: true }),
+    service
+      .from("finca_certificates")
+      .select("id, finca_id, scheme, cert_number, valid_from, valid_to, holder_note, support_asset_id, support_filename, verified_by_ctc")
+      .in("finca_id", fincaRows.map((f) => f.id))
+      .order("created_at", { ascending: true }),
   ]);
   const commsByFinca = new Map<string, CommRow[]>();
   for (const c of (comms as CommRow[] | null) ?? []) {
@@ -205,6 +216,22 @@ export default async function BcpFincasPage() {
     if (!l.finca_id) continue;
     lotsByFinca.set(l.finca_id, [...(lotsByFinca.get(l.finca_id) ?? []), l]);
   }
+  type BcpParcelaRow = { id: string; finca_id: string; name: string; area_ha: number | string | null; lat: number | string | null; lng: number | string | null; polygon_geojson: { lat: number; lng: number }[] | null; position: number };
+  type BcpCertRow = { id: string; finca_id: string; scheme: string; cert_number: string | null; valid_from: string | null; valid_to: string | null; holder_note: string | null; support_asset_id: string | null; support_filename: string | null; verified_by_ctc: boolean };
+  const parcelasByFinca = new Map<string, BcpParcelaRow[]>();
+  for (const p of (parcelasRaw as BcpParcelaRow[] | null) ?? []) {
+    parcelasByFinca.set(p.finca_id, [...(parcelasByFinca.get(p.finca_id) ?? []), p]);
+  }
+  const certsByFinca = new Map<string, BcpCertRow[]>();
+  for (const c of (certsRaw as BcpCertRow[] | null) ?? []) {
+    certsByFinca.set(c.finca_id, [...(certsByFinca.get(c.finca_id) ?? []), c]);
+  }
+  // Los soportes de certificado se firman en un segundo lote: su query corre en
+  // paralelo al primer lote de firmas, así que sus asset ids no estaban a mano.
+  const certUrls = await signedKaffetalMediaUrls(
+    service,
+    ((certsRaw as BcpCertRow[] | null) ?? []).map((c) => c.support_asset_id)
+  );
 
   return (
     <div>
@@ -413,6 +440,26 @@ export default async function BcpFincasPage() {
                                 : null
                             }
                             saveAction={saveEudr}
+                            parcelas={(parcelasByFinca.get(finca.id) ?? []).map((p) => ({
+                              id: p.id,
+                              name: p.name,
+                              areaHa: p.area_ha != null ? String(p.area_ha) : "",
+                              lat: p.lat != null ? String(p.lat) : "",
+                              lng: p.lng != null ? String(p.lng) : "",
+                              polygonPoints: p.polygon_geojson?.length ?? 0,
+                              position: p.position,
+                            }))}
+                            certificates={(certsByFinca.get(finca.id) ?? []).map((c) => ({
+                              id: c.id,
+                              scheme: c.scheme,
+                              certNumber: c.cert_number ?? "",
+                              validFrom: c.valid_from ?? "",
+                              validTo: c.valid_to ?? "",
+                              holderNote: c.holder_note ?? "",
+                              supportUrl: c.support_asset_id ? certUrls.get(c.support_asset_id) ?? null : null,
+                              supportFilename: c.support_filename,
+                              verifiedByCtc: c.verified_by_ctc,
+                            }))}
                           />
                         }
                         addComm={addComm}

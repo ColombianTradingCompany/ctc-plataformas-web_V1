@@ -7,13 +7,21 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
-import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
+import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS, type ParcelaGeoFields } from "@/lib/eudr";
+import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
-import { fincaCode, LOCAL_INFRA, type Finca, type GeneralInfo } from "./data";
+import { ORIGIN_CERTS, INTL_CERTS, CERT_INFO } from "./ficha/fichaData";
+import { fincaCode, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
 import styles from "./FincaModal.module.css";
+
+// Etiqueta humana de cada esquema del catálogo (A3 + A4 de la Ficha).
+const SCHEME_LABEL: Record<string, string> = Object.fromEntries([
+  ...ORIGIN_CERTS,
+  ...INTL_CERTS.map(([key, , label]) => [key, label] as [string, string]),
+]);
 
 const PRODUCTION_SYSTEMS: [Finca["eudrProductionSystem"], string][] = [
   ["sombra", "Café bajo sombra"],
@@ -160,6 +168,21 @@ const EMPTY_EUDR_DRAFT: EudrDraft = {
   eudrSustainabilityNotes: "",
 };
 
+// F1 (2026-07-29): parcelas y certificados viajan como props ya filtrados por
+// finca, con CRUD inmediato por fila (fuera del autosave — ver KaffetalExperience).
+type ParcelaDraft = { id?: string; fincaId: string; name: string; areaHa: string; lat: string; lng: string; polygon: { lat: number; lng: number }[] | null };
+type CertDraft = { id?: string; fincaId: string; scheme: string; certNumber: string; validFrom: string; validTo: string; holderNote: string };
+
+type FincaModalExtras = {
+  parcelas: Parcela[];
+  certificates: FincaCertificate[];
+  onSaveParcela: (draft: ParcelaDraft) => Promise<boolean>;
+  onDeleteParcela: (id: string) => Promise<boolean>;
+  onSaveCert: (draft: CertDraft) => Promise<boolean>;
+  onDeleteCert: (id: string) => Promise<boolean>;
+  onUploadCertSupport: (certId: string, fincaId: string, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+};
+
 export function FincaModal({
   open,
   onClose,
@@ -170,6 +193,7 @@ export function FincaModal({
   onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
+  ...extras
 }: {
   open: boolean;
   onClose: () => void;
@@ -180,7 +204,7 @@ export function FincaModal({
   onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-}) {
+} & FincaModalExtras) {
   return (
     <Modal open={open} onClose={onClose} ariaLabel="Identidad de la finca">
       {/* Keyed on the finca id (or "new") so switching what's being edited remounts
@@ -196,6 +220,7 @@ export function FincaModal({
           onUploadPhoto={onUploadPhoto}
           onUploadVideo={onUploadVideo}
           onUploadLegalDoc={onUploadLegalDoc}
+          {...extras}
         />
       )}
     </Modal>
@@ -210,6 +235,13 @@ function FincaModalBody({
   onUploadPhoto,
   onUploadVideo,
   onUploadLegalDoc,
+  parcelas,
+  certificates,
+  onSaveParcela,
+  onDeleteParcela,
+  onSaveCert,
+  onDeleteCert,
+  onUploadCertSupport,
 }: {
   finca: Finca | null;
   gi: GeneralInfo;
@@ -218,7 +250,7 @@ function FincaModalBody({
   onUploadPhoto: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onUploadLegalDoc: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-}) {
+} & FincaModalExtras) {
   const { showToast } = useToast();
   const veredaRef = useRef<HTMLInputElement>(null);
   const munRef = useRef<HTMLInputElement>(null);
@@ -342,6 +374,10 @@ function FincaModalBody({
   // (not the refs above, which don't trigger re-renders as the producer types),
   // so this can lag slightly for the address-fallback geo path. The lat/lng
   // path (the primary one) is always accurate since it's controlled state.
+  // F1: la completitud geográfica del preview se juzga por PARCELAS — la 1 sale
+  // del borrador (el mapa de este modal ES la parcela 1) y las demás de props.
+  const extraParcelas = parcelas.filter((p) => p.position > 0).sort((a, b) => a.position - b.position);
+
   const previewFinca: Finca = {
     id: finca?.id ?? "",
     name,
@@ -363,14 +399,35 @@ function FincaModalBody({
     eudrProducerAnswers: finca?.eudrProducerAnswers ?? null,
     ...eudr,
   };
-  const eudrStatus = fincaEudrStatus(previewFinca);
   const haNum = Number(ha.replace(",", "."));
+  // Con parcelas adicionales, el área de la parcela 1 es la suya propia (la
+  // finca guarda el TOTAL); con una sola, el área de la finca es la de la parcela.
+  const parcelaUno = parcelas.find((p) => p.position === 0);
+  const parcelaUnoArea =
+    extraParcelas.length > 0 && parcelaUno?.areaHa.trim()
+      ? Number(parcelaUno.areaHa.replace(",", "."))
+      : !isNaN(haNum) && ha.trim()
+        ? haNum
+        : null;
+  const previewParcelas: ParcelaGeoFields[] = [
+    {
+      areaHa: parcelaUnoArea,
+      hasPoint: eudr.lat.trim() !== "" && eudr.lng.trim() !== "",
+      hasPolygon: (eudr.eudrPolygon?.length ?? 0) >= 3,
+    },
+    ...extraParcelas.map((p) => ({
+      areaHa: p.areaHa.trim() ? Number(p.areaHa.replace(",", ".")) : null,
+      hasPoint: p.lat !== "" && p.lng !== "",
+      hasPolygon: (p.polygon?.length ?? 0) >= 3,
+    })),
+  ];
+  const eudrStatus = fincaEudrStatus(previewFinca, previewParcelas);
   const needsPolygon = !isNaN(haNum) && haNum > 4;
 
   // Which of the three tabs is showing. All three panels stay mounted (toggled
   // by `display`) so the ref-based inputs in the general tab keep their values
   // and never get read back as null on save.
-  const [tab, setTab] = useState<"general" | "ubicacion" | "eudr">("general");
+  const [tab, setTab] = useState<"general" | "ubicacion" | "eudr" | "certs">("general");
 
   // Derived risk read-outs (país implícito = Colombia => estándar). Same pure
   // functions the lot used, now sourced from the finca's questionnaire.
@@ -511,6 +568,11 @@ function FincaModalBody({
         <button type="button" role="tab" aria-selected={tab === "eudr"} className={tab === "eudr" ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => setTab("eudr")}>
           3 · Cuestionario EUDR {eudrTabPending && <span className={styles.tabDot} title="Faltan respuestas para determinar la Visa" />}
         </button>
+        {/* F1: los certificados son CREDENCIALES de la finca (número + vigencia),
+            no casillas del lote — nota "¿Finca o Lote?". Pestaña opcional. */}
+        <button type="button" role="tab" aria-selected={tab === "certs"} className={tab === "certs" ? `${styles.tab} ${styles.tabActive}` : styles.tab} onClick={() => setTab("certs")}>
+          4 · Certificaciones
+        </button>
       </div>
 
       <div onInput={bumpRev} onChange={bumpRev}>
@@ -641,11 +703,18 @@ function FincaModalBody({
         {/* ── PANEL 2 · Ubicación y respaldo ───────────────────────────── */}
         <div style={{ display: tab === "ubicacion" ? undefined : "none" }}>
           <div className={styles.wide} style={{ margin: "14px 0" }}>
-            <label>{needsPolygon ? "Polígono del predio (> 4 ha)" : "Ubicación del predio"}</label>
+            <label>
+              {extraParcelas.length > 0
+                ? `Parcela 1 · ${parcelaUno?.name ?? "Cafetal principal"}`
+                : needsPolygon
+                  ? "Polígono del cafetal (> 4 ha)"
+                  : "Ubicación del cafetal"}
+              <FieldInfo text="Para la UE, la unidad que cuenta es la PARCELA: cada cafetal (área continua de café) con su propia ubicación. Si todo su café crece en un solo cafetal, este mapa es todo lo que necesita. Un polígono no puede cubrir dos cafetales separados." />
+            </label>
             <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 6px" }}>
-              {needsPolygon
-                ? "Este predio supera las 4 ha: el EUDR exige delimitarlo con un polígono, no solo un punto."
-                : "Marque el punto del predio en el mapa. Es la evidencia principal de geolocalización EUDR."}
+              {needsPolygon && extraParcelas.length === 0
+                ? "Este cafetal supera las 4 ha: el EUDR exige delimitarlo con un polígono, no solo un punto."
+                : "Marque el punto del cafetal en el mapa. Es la evidencia principal de geolocalización EUDR."}
             </p>
             <FincaMapPicker
               lat={eudr.lat}
@@ -655,6 +724,25 @@ function FincaModalBody({
               onChangePoint={(lat, lng) => patchEudr({ lat, lng })}
               onChangePolygon={(polygon) => patchEudr({ eudrPolygon: polygon })}
             />
+          </div>
+
+          {/* F1: cafetales adicionales — una parcela por cada área de café
+              separada. La parcela 1 es el mapa de arriba (se espeja al guardar). */}
+          <div className={styles.wide} style={{ marginBottom: 14 }}>
+            <label>
+              ¿Su café crece en varios cafetales separados?
+              <FieldInfo text="Una finca puede tener varios cafetales que no se tocan entre sí (separados por potrero, bosque o carretera). La UE los cuenta uno a uno: cada cafetal separado necesita su propio punto — y su propio polígono si supera 4 ha." />
+            </label>
+            {finca ? (
+              <ParcelasExtra
+                fincaId={finca.id}
+                extras={extraParcelas}
+                onSave={onSaveParcela}
+                onDelete={onDeleteParcela}
+              />
+            ) : (
+              <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder marcar cafetales adicionales.</p>
+            )}
           </div>
 
           <div className={styles.wide} style={{ marginBottom: 14 }}>
@@ -905,6 +993,31 @@ function FincaModalBody({
             La evidencia de no deforestación, las áreas de legislación verificadas y el enfoque de sostenibilidad los completa CTC como parte de su propia revisión — no requieren acción suya aquí.
           </p>
         </div>
+
+        {/* ── PANEL 4 · Certificaciones (F1) ───────────────────────────── */}
+        <div style={{ display: tab === "certs" ? undefined : "none" }}>
+          <div className={styles.wide} style={{ margin: "14px 0" }}>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: "0 0 4px" }}>
+              Registre aquí los certificados que <b>su finca u organización ya tiene</b>: número y vigencia (y el PDF si lo tiene a mano).
+              Con ellos, cada café que salga de esta finca podrá presumir el sello ante el comprador.
+            </p>
+            <p style={{ fontSize: 12.5, color: "var(--muted)", margin: "0 0 12px", fontStyle: "italic" }}>
+              No tener certificados <b>no le impide exportar</b> — la normativa europea (EUDR) no los exige. Un certificado sin
+              fechas de vigencia queda registrado, pero no respalda sellos en sus cafés.
+            </p>
+            {finca ? (
+              <FincaCerts
+                fincaId={finca.id}
+                certificates={certificates}
+                onSave={onSaveCert}
+                onDelete={onDeleteCert}
+                onUploadSupport={onUploadCertSupport}
+              />
+            ) : (
+              <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder registrar sus certificados.</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Floating save: always visible bottom-right, a diskette that expands to
@@ -946,5 +1059,387 @@ function FincaModalBody({
         </div>
       )}
     </>
+  );
+}
+
+// ── F1 · Cafetales adicionales (parcelas 2..N) ───────────────────────────────
+// Un editor expandido a la vez: cada cafetal adicional tiene su propio borrador
+// y su propio FincaMapPicker, y se guarda INMEDIATO por fila (fuera del
+// autosave del modal, para no tejer dos ciclos de guardado).
+function ParcelasExtra({
+  fincaId,
+  extras,
+  onSave,
+  onDelete,
+}: {
+  fincaId: string;
+  extras: Parcela[];
+  onSave: (draft: ParcelaDraft) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null); // "new" | parcela id
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {extras.map((p, i) => (
+        <ParcelaCard
+          key={p.id}
+          index={i + 2}
+          parcela={p}
+          fincaId={fincaId}
+          open={openId === p.id}
+          onToggle={() => setOpenId(openId === p.id ? null : p.id)}
+          onSave={onSave}
+          onDelete={onDelete}
+        />
+      ))}
+      {openId === "new" ? (
+        <ParcelaCard
+          index={extras.length + 2}
+          parcela={null}
+          fincaId={fincaId}
+          open
+          onToggle={() => setOpenId(null)}
+          onSave={async (d) => {
+            const ok = await onSave(d);
+            if (ok) setOpenId(null);
+            return ok;
+          }}
+          onDelete={onDelete}
+        />
+      ) : (
+        <button type="button" className="btn btn-sm" style={{ justifySelf: "start" }} onClick={() => setOpenId("new")}>
+          + Agregar otro cafetal
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ParcelaCard({
+  index,
+  parcela,
+  fincaId,
+  open,
+  onToggle,
+  onSave,
+  onDelete,
+}: {
+  index: number;
+  parcela: Parcela | null; // null = nueva
+  fincaId: string;
+  open: boolean;
+  onToggle: () => void;
+  onSave: (draft: ParcelaDraft) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+}) {
+  const [name, setName] = useState(parcela?.name ?? "Cafetal " + index);
+  const [areaHa, setAreaHa] = useState(parcela?.areaHa ?? "");
+  const [lat, setLat] = useState(parcela?.lat ?? "");
+  const [lng, setLng] = useState(parcela?.lng ?? "");
+  const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | null>(parcela?.polygon ?? null);
+  const [busy, setBusy] = useState(false);
+  const areaNum = Number(areaHa.replace(",", "."));
+  const needsPolygon = !isNaN(areaNum) && areaNum > 4;
+  const located = (lat.trim() !== "" && lng.trim() !== "") || (polygon?.length ?? 0) >= 3;
+  const geoOk = located && (!needsPolygon || (polygon?.length ?? 0) >= 3);
+
+  async function save() {
+    if (busy) return;
+    setBusy(true);
+    await onSave({ id: parcela?.id, fincaId, name, areaHa, lat, lng, polygon });
+    setBusy(false);
+  }
+
+  return (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 13 }}>
+          Parcela {index} · {parcela?.name ?? name}
+        </b>
+        <span style={{ fontSize: 11.5, color: geoOk ? "#2E7D52" : "var(--muted)" }}>
+          {geoOk ? "✓ geolocalizada" : needsPolygon ? "falta el polígono (> 4 ha)" : located ? "revise el área" : "sin ubicar"}
+        </span>
+        <span style={{ flex: 1 }} />
+        <button type="button" className="btn btn-sm" onClick={onToggle}>
+          {open ? "Cerrar" : "Editar"}
+        </button>
+        {parcela && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{ color: "var(--red)", borderColor: "var(--red)" }}
+            onClick={() => {
+              if (window.confirm("¿Eliminar \"" + parcela.name + "\"? Su geometría se pierde.")) void onDelete(parcela.id);
+            }}
+          >
+            Eliminar
+          </button>
+        )}
+      </div>
+      {open && (
+        <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 130px", gap: 10 }}>
+            <div>
+              <label>Nombre del cafetal</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={"Cafetal " + index} />
+            </div>
+            <div>
+              <label>Área (ha)</label>
+              <input value={areaHa} onChange={(e) => setAreaHa(e.target.value)} type="number" step="0.1" placeholder="1.5" />
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 6px" }}>
+              {needsPolygon
+                ? "Este cafetal supera las 4 ha: delimítelo con su propio polígono."
+                : "Marque el punto de ESTE cafetal (no el de la casa ni el del cafetal principal)."}
+            </p>
+            <FincaMapPicker
+              lat={lat}
+              lng={lng}
+              polygon={polygon}
+              needsPolygon={needsPolygon}
+              onChangePoint={(la, lo) => {
+                setLat(la);
+                setLng(lo);
+              }}
+              onChangePolygon={setPolygon}
+            />
+          </div>
+          <div>
+            <button type="button" className="btn btn-sm btn-solid" onClick={save} disabled={busy}>
+              {busy ? "Guardando…" : parcela ? "Guardar cafetal" : "Agregar cafetal"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── F1 · Certificaciones de la finca ─────────────────────────────────────────
+// Credenciales con número + vigencia (nota "¿Finca o Lote?"): el catálogo sale
+// de certRegistry (solo niveles finca/org — la DDS EUDR y los premios son del
+// lote, y las membresías tipo IWCA son narrativa, no certificado).
+function FincaCerts({
+  fincaId,
+  certificates,
+  onSave,
+  onDelete,
+  onUploadSupport,
+}: {
+  fincaId: string;
+  certificates: FincaCertificate[];
+  onSave: (draft: CertDraft) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+  onUploadSupport: (certId: string, fincaId: string, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+}) {
+  const [adding, setAdding] = useState(false);
+  const schemes = fincaLevelSchemes();
+  const available = schemes.filter(([key]) => !certificates.some((c) => c.scheme === key));
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {certificates.map((c) => (
+        <CertCard key={c.id} cert={c} fincaId={fincaId} onSave={onSave} onDelete={onDelete} onUploadSupport={onUploadSupport} />
+      ))}
+      {certificates.length === 0 && !adding && (
+        <p style={{ fontSize: 12.5, color: "var(--muted)", margin: 0 }}>Aún no ha registrado certificados para esta finca.</p>
+      )}
+      {adding ? (
+        <CertEditor
+          fincaId={fincaId}
+          cert={null}
+          schemes={available}
+          onCancel={() => setAdding(false)}
+          onSave={async (d) => {
+            const ok = await onSave(d);
+            if (ok) setAdding(false);
+            return ok;
+          }}
+        />
+      ) : (
+        available.length > 0 && (
+          <button type="button" className="btn btn-sm" style={{ justifySelf: "start" }} onClick={() => setAdding(true)}>
+            + Registrar certificado
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
+function CertCard({
+  cert,
+  fincaId,
+  onSave,
+  onDelete,
+  onUploadSupport,
+}: {
+  cert: FincaCertificate;
+  fincaId: string;
+  onSave: (draft: CertDraft) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+  onUploadSupport: (certId: string, fincaId: string, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const up = useUpload();
+  const reg = CERT_REGISTRY[cert.scheme];
+  const label = SCHEME_LABEL[cert.scheme] ?? cert.scheme;
+  const hasValidity = cert.validFrom !== "" && cert.validTo !== "";
+  return (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 13 }}>{label}</b>
+        {cert.verifiedByCtc ? (
+          <span style={{ fontSize: 11.5, color: "#2E7D52" }}>✓ verificado por CTC</span>
+        ) : hasValidity ? (
+          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
+            declarado · vigencia {cert.validFrom} → {cert.validTo}
+          </span>
+        ) : (
+          <span style={{ fontSize: 11.5, color: "#B45309" }}>sin vigencia — no respalda sellos</span>
+        )}
+        <span style={{ flex: 1 }} />
+        <button type="button" className="btn btn-sm" onClick={() => setEditing((v) => !v)}>
+          {editing ? "Cerrar" : "Editar"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm"
+          style={{ color: "var(--red)", borderColor: "var(--red)" }}
+          onClick={() => {
+            if (window.confirm("¿Eliminar el certificado \"" + label + "\"?")) void onDelete(cert.id);
+          }}
+        >
+          Eliminar
+        </button>
+      </div>
+      {cert.certNumber !== "" && !editing && (
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>N.º {cert.certNumber}</p>
+      )}
+      {editing && (
+        <div style={{ marginTop: 10 }}>
+          <CertEditor
+            fincaId={fincaId}
+            cert={cert}
+            schemes={reg ? [[cert.scheme, reg]] : []}
+            onCancel={() => setEditing(false)}
+            onSave={async (d) => {
+              const ok = await onSave(d);
+              if (ok) setEditing(false);
+              return ok;
+            }}
+          />
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+            <label style={{ fontSize: 12 }}>Soporte (PDF, opcional):</label>
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void up.run(() => onUploadSupport(cert.id, fincaId, file, up.progress));
+              }}
+            />
+            <UploadProgressRing state={up.state} />
+            {cert.supportFilename && <span style={{ fontSize: 12, color: "var(--muted)" }}>✓ {cert.supportFilename}</span>}
+          </div>
+          {reg && (
+            <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "6px 0 0" }}>
+              CTC lo contrasta contra:{" "}
+              <a href={reg.url} target="_blank" rel="noopener noreferrer">
+                {reg.registry}
+              </a>
+              {reg.note ? " — " + reg.note : ""}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CertEditor({
+  fincaId,
+  cert,
+  schemes,
+  onSave,
+  onCancel,
+}: {
+  fincaId: string;
+  cert: FincaCertificate | null;
+  schemes: [string, (typeof CERT_REGISTRY)[string]][];
+  onSave: (draft: CertDraft) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const [scheme, setScheme] = useState(cert?.scheme ?? "");
+  const [certNumber, setCertNumber] = useState(cert?.certNumber ?? "");
+  const [validFrom, setValidFrom] = useState(cert?.validFrom ?? "");
+  const [validTo, setValidTo] = useState(cert?.validTo ?? "");
+  const [holderNote, setHolderNote] = useState(cert?.holderNote ?? "");
+  const [busy, setBusy] = useState(false);
+  const entry = scheme ? CERT_REGISTRY[scheme] : null;
+  const badOrder = validFrom !== "" && validTo !== "" && validTo < validFrom;
+
+  async function save() {
+    if (!scheme || busy || badOrder) return;
+    setBusy(true);
+    await onSave({ id: cert?.id, fincaId, scheme, certNumber, validFrom, validTo, holderNote });
+    setBusy(false);
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 10, border: cert ? undefined : "1px dashed var(--line)", borderRadius: 10, padding: cert ? 0 : "10px 12px" }}>
+      {!cert && (
+        <div>
+          <label>Certificado</label>
+          <select value={scheme} onChange={(e) => setScheme(e.target.value)}>
+            <option value="">Seleccione…</option>
+            {schemes.map(([key]) => (
+              <option key={key} value={key}>
+                {SCHEME_LABEL[key] ?? key}
+              </option>
+            ))}
+          </select>
+          {scheme && CERT_INFO[scheme] && <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 0" }}>{CERT_INFO[scheme]}</p>}
+        </div>
+      )}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        <div>
+          <label>
+            N.º de certificado
+            {entry && (entry.validate === "number" || entry.validate === "both") && (
+              <FieldInfo text={"Este esquema se verifica por número contra el registro público (" + entry.registry + "). Escríbalo tal como aparece en el documento."} />
+            )}
+          </label>
+          <input value={certNumber} onChange={(e) => setCertNumber(e.target.value)} placeholder="Como aparece en el documento" />
+        </div>
+        <div>
+          <label>Vigente desde</label>
+          <input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+        </div>
+        <div>
+          <label>Vigente hasta</label>
+          <input type="date" value={validTo} onChange={(e) => setValidTo(e.target.value)} />
+        </div>
+      </div>
+      {entry?.level === "org" && (
+        <div>
+          <label>
+            Titular (organización)
+            <FieldInfo text="Este esquema lo certifica una organización o grupo (cooperativa, asociación) y la finca participa como miembro. Escriba el nombre del titular del certificado." />
+          </label>
+          <input value={holderNote} onChange={(e) => setHolderNote(e.target.value)} placeholder="Ej. Cooperativa COOP-77" />
+        </div>
+      )}
+      {badOrder && <p style={{ fontSize: 12, color: "var(--red)", margin: 0 }}>La fecha final no puede ser anterior a la inicial.</p>}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" className="btn btn-sm btn-solid" onClick={save} disabled={!scheme || busy || badOrder}>
+          {busy ? "Guardando…" : cert ? "Guardar cambios" : "Registrar certificado"}
+        </button>
+        <button type="button" className="btn btn-sm" onClick={onCancel}>
+          Cancelar
+        </button>
+      </div>
+    </div>
   );
 }

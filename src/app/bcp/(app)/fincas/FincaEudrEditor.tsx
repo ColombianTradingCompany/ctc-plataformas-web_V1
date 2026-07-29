@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useRef, useState, type ReactNode } from "react";
+import { useReducer, useRef, useState, useTransition, type ReactNode } from "react";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { mapPreviewUrl, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS } from "@/lib/eudr";
 import { earthWebUrl, buildFincaGeoJson } from "@/lib/earthKml";
@@ -8,6 +8,9 @@ import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
+import { CERT_REGISTRY } from "@/lib/certRegistry";
+import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
+import { setFincaCertVerified } from "../actions";
 import styles from "../shared.module.css";
 
 const INFRA_DICT: [string, string][] = LOCAL_INFRA.map(([k, l]) => [k, l]);
@@ -164,7 +167,35 @@ const CUSTODY_STAGES: [string, string][] = [
 //   3. Atributos Complementarios — áreas de legislación y sostenibilidad.
 // En edición sigue habiendo UN solo <form>: los paneles inactivos se ocultan
 // con display:none (los campos siguen montados y viajan completos al guardar).
-type SubTab = "declaracion" | "analisis" | "atributos" | "riesgo";
+type SubTab = "declaracion" | "analisis" | "atributos" | "riesgo" | "certs";
+
+// F1 (2026-07-29): formas ya normalizadas por la page (server) — strings vacíos
+// en vez de nulls, URL de soporte ya firmada.
+export type BcpParcela = {
+  id: string;
+  name: string;
+  areaHa: string;
+  lat: string;
+  lng: string;
+  polygonPoints: number;
+  position: number;
+};
+export type BcpCert = {
+  id: string;
+  scheme: string;
+  certNumber: string;
+  validFrom: string;
+  validTo: string;
+  holderNote: string;
+  supportUrl: string | null;
+  supportFilename: string | null;
+  verifiedByCtc: boolean;
+};
+
+const SCHEME_LABEL: Record<string, string> = Object.fromEntries([
+  ...ORIGIN_CERTS,
+  ...INTL_CERTS.map(([key, , label]) => [key, label] as [string, string]),
+]);
 
 function SubTabIcon({ k }: { k: SubTab }) {
   const p: Record<SubTab, ReactNode> = {
@@ -176,6 +207,8 @@ function SubTabIcon({ k }: { k: SubTab }) {
     atributos: <><path d="M10 3 17 7l-7 4-7-4Z" /><path d="m3.5 10.5 6.5 3.7 6.5-3.7" /><path d="m3.5 14 6.5 3.7 6.5-3.7" /></>,
     // Escudo con check: evaluación de riesgo y mitigación.
     riesgo: <><path d="M10 2.5 16 5v5c0 4-2.8 6.4-6 7.5C6.8 16.4 4 14 4 10V5Z" /><path d="m7.5 10 2 2 3.5-3.5" /></>,
+    // Cinta de sello: certificaciones de la finca (F1).
+    certs: <><circle cx="10" cy="8" r="4.5" /><path d="m7.5 11.5-1.5 6 4-2 4 2-1.5-6" /></>,
   };
   return (
     <svg viewBox="0 0 20 20" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -190,6 +223,7 @@ function SubTabBar({ tab, setTab }: { tab: SubTab; setTab: (t: SubTab) => void }
     { key: "analisis", label: "Análisis y Evidencia" },
     { key: "atributos", label: "Atributos Complementarios" },
     { key: "riesgo", label: "Riesgo y Mitigación" },
+    { key: "certs", label: "Certificaciones" },
   ];
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 12px" }}>
@@ -227,6 +261,8 @@ export function FincaEudrEditor({
   fileUrls,
   producerAnswers,
   saveAction,
+  parcelas,
+  certificates,
 }: {
   fincaId: string;
   fincaName: string;
@@ -236,6 +272,10 @@ export function FincaEudrEditor({
   fileUrls: Record<string, string>;
   producerAnswers: ProducerAnswers;
   saveAction: (formData: FormData) => Promise<void>;
+  // F1 (2026-07-29): parcelas (solo lectura — las edita el productor) y
+  // certificados de la finca con su verificación CTC.
+  parcelas: BcpParcela[];
+  certificates: BcpCert[];
 }) {
   const [supabase] = useState(() => createClient());
   const [editing, setEditing] = useState(false);
@@ -454,8 +494,28 @@ export function FincaEudrEditor({
               <div>Evidencia: {labelsFor(values.eudr_evidence_types, EVIDENCE_TYPES)}</div>
               {values.eudr_evidence_notes && <div>Notas de evidencia: {values.eudr_evidence_notes}</div>}
             </div>
+            {/* F1: el Art. 9 cuenta PARCELAS — cada cafetal con su geometría.
+                Las edita el productor; aquí se auditan contra el umbral de 4 ha. */}
+            <div className={styles.meta} style={{ lineHeight: 1.9, marginTop: 8 }}>
+              <b style={{ fontSize: 12.5 }}>Parcelas ({parcelas.length})</b>
+              {parcelas.length === 0 && <div style={{ color: "var(--red)" }}>Sin parcelas registradas — la Visa no puede aprobarse.</div>}
+              {parcelas.map((p, i) => {
+                const area = p.areaHa.trim() ? Number(p.areaHa.replace(",", ".")) : null;
+                const needsPoly = (area ?? 0) > 4;
+                const ok = (p.lat !== "" && p.lng !== "" && (!needsPoly || p.polygonPoints >= 3)) || p.polygonPoints >= 3;
+                return (
+                  <div key={p.id}>
+                    {i + 1}. {p.name} · {p.areaHa ? `${p.areaHa} ha` : "área sin definir"} ·{" "}
+                    {p.polygonPoints >= 3 ? `polígono de ${p.polygonPoints} vértices` : p.lat && p.lng ? `punto ${p.lat}, ${p.lng}` : "sin ubicar"}{" "}
+                    <b style={{ color: ok ? "var(--green, #2E7D52)" : "var(--red)" }}>{ok ? "✓" : needsPoly ? "· falta polígono (>4 ha)" : "· incompleta"}</b>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
+
+        {subTab === "certs" && <FincaCertsPanel certificates={certificates} />}
 
         {subTab === "atributos" && (
           <div className={styles.meta} style={{ lineHeight: 1.9 }}>
@@ -820,11 +880,76 @@ export function FincaEudrEditor({
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ display: subTab === "certs" ? "none" : "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <button className="btn btn-solid" type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar Visa EUDR"}</button>
           <UploadProgressRing state={filesUp.state} />
         </div>
       </form>
+      {/* F1: los certificados viven FUERA del form de la Visa — su verificación
+          es una acción propia (setFincaCertVerified), no parte del guardado. */}
+      {subTab === "certs" && <FincaCertsPanel certificates={certificates} />}
+    </div>
+  );
+}
+
+// ── F1 · Certificaciones de la finca (vista BCP) ─────────────────────────────
+// Lo declarado por el productor (esquema, número, vigencia, soporte) + el botón
+// de verificación de CTC. El contraste es manual contra el registro público del
+// esquema (certRegistry); verificar exige vigencia registrada (la acción lo
+// re-impone en el servidor).
+function FincaCertsPanel({ certificates }: { certificates: BcpCert[] }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  if (!certificates.length) {
+    return <p className={styles.meta}>El productor no ha registrado certificados para esta finca.</p>;
+  }
+  return (
+    <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
+      {error && <p style={{ color: "var(--red)", fontSize: 12.5, margin: 0 }}>{error}</p>}
+      {certificates.map((c) => {
+        const reg = CERT_REGISTRY[c.scheme];
+        const hasValidity = c.validFrom !== "" && c.validTo !== "";
+        const lapsed = hasValidity && c.validTo < new Date().toISOString().slice(0, 10);
+        return (
+          <div key={c.id} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "9px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <b style={{ fontSize: 13 }}>{SCHEME_LABEL[c.scheme] ?? c.scheme}</b>
+              {c.verifiedByCtc ? (
+                <span style={{ fontSize: 11.5, color: "var(--green, #2E7D52)", fontWeight: 700 }}>✓ verificado</span>
+              ) : (
+                <span style={{ fontSize: 11.5, color: "var(--muted)" }}>declarado</span>
+              )}
+              {lapsed && <span style={{ fontSize: 11.5, color: "var(--red)", fontWeight: 700 }}>vencido {c.validTo}</span>}
+              <span style={{ flex: 1 }} />
+              <button
+                type="button"
+                className={`btn btn-sm ${c.verifiedByCtc ? "" : "btn-solid"}`}
+                disabled={pending}
+                onClick={() =>
+                  startTransition(async () => {
+                    const res = await setFincaCertVerified(c.id, !c.verifiedByCtc);
+                    setError(res.ok ? null : res.error);
+                  })
+                }
+              >
+                {c.verifiedByCtc ? "Retirar verificación" : "Marcar verificado"}
+              </button>
+            </div>
+            <div className={styles.meta} style={{ lineHeight: 1.8, marginTop: 4 }}>
+              <div>N.º: {c.certNumber || "sin número"} · Vigencia: {hasValidity ? `${c.validFrom} → ${c.validTo}` : <b style={{ color: "#B45309" }}>sin registrar — no respalda claims</b>}</div>
+              {c.holderNote && <div>Titular: {c.holderNote}</div>}
+              <div>
+                Soporte: {c.supportUrl ? <a href={c.supportUrl} target="_blank" rel="noopener noreferrer">{c.supportFilename ?? "ver"}</a> : "no adjuntado"}
+                {reg && (
+                  <>
+                    {" · "}Contrastar en: <a href={reg.url} target="_blank" rel="noopener noreferrer">{reg.registry}</a>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

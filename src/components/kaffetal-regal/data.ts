@@ -65,6 +65,39 @@ export type Finca = {
   eudrProducerAnswers: EudrProducerAnswers | null;
 };
 
+// ── F1 EUDR restructure (2026-07-29, docs/EUDR_RESTRUCTURE_PLAN.md) ─────────
+// Parcela = un cafetal: el átomo probatorio del Art. 9. La parcela en
+// position 0 es "el cafetal principal" y se mantiene ESPEJADA con la geometría
+// de la finca (eudr_lat/lng/polygon) para que todos los lectores legacy (mapas,
+// dossier, KML) sigan funcionando sin tocar. Las adicionales (1..N) solo viven
+// en finca_parcelas.
+export type Parcela = {
+  id: string;
+  fincaId: string;
+  name: string;
+  areaHa: string; // "" si no está definida (mismo trato string que Finca.ha)
+  lat: string;
+  lng: string;
+  polygon: { lat: number; lng: number }[] | null;
+  position: number;
+};
+
+// Credencial de la finca (nota "¿Finca o Lote?"): el certificado pertenece al
+// lugar y al periodo — el lote solo DERIVA claims (F2). Sin vigencia queda
+// "declarado" y no alimenta claims (fail closed).
+export type FincaCertificate = {
+  id: string;
+  fincaId: string;
+  scheme: string; // clave de CERT_REGISTRY (origin_cert_* | intl_*)
+  certNumber: string;
+  validFrom: string; // "YYYY-MM-DD" | ""
+  validTo: string;
+  holderNote: string;
+  supportAssetId: string | null;
+  supportFilename: string | null;
+  verifiedByCtc: boolean;
+};
+
 // The five categorical declarations + geolocation the producer submits; CTC
 // may confirm or override each. "Respuesta de Productor" in the BCP evaluator.
 export type EudrProducerAnswers = {

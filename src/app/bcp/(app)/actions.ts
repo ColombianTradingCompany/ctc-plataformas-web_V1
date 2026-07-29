@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
+import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
@@ -57,8 +57,31 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
     .single();
 
   if (!finca) return { ok: false, error: "Finca no encontrada." };
-  if (finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length) {
-    return { ok: false, error: "Esta finca supera 4 ha y necesita el polígono EUDR antes de poder aprobarse." };
+
+  // F1 (2026-07-29): la geolocalización del Art. 9 se juzga POR PARCELAS — el
+  // átomo probatorio es el cafetal, no la finca. Cada parcela necesita su punto,
+  // y polígono propio cuando supera 4 ha (un polígono no puede cubrir varias).
+  const { data: parcelaRows } = await service
+    .from("finca_parcelas")
+    .select("name, area_ha, lat, lng, polygon_geojson")
+    .eq("finca_id", fincaId);
+  const parcelas = (parcelaRows ?? []).map((p) => ({
+    areaHa: p.area_ha != null ? Number(p.area_ha) : null,
+    hasPoint: p.lat != null && p.lng != null,
+    hasPolygon: Array.isArray(p.polygon_geojson) && p.polygon_geojson.length >= 3,
+  }));
+  if (!parcelas.length) {
+    return { ok: false, error: "La finca no tiene parcelas registradas: marque al menos un cafetal en el mapa antes de aprobar." };
+  }
+  if (!parcelasGeoComplete(parcelas)) {
+    const faltantes = (parcelaRows ?? [])
+      .filter((p, i) => !parcelaGeoOk(parcelas[i]))
+      .map((p) => p.name)
+      .join(", ");
+    return {
+      ok: false,
+      error: `Parcelas sin geolocalizar según el umbral de 4 ha: ${faltantes}. Cada cafetal necesita su punto, y polígono propio si supera 4 ha.`,
+    };
   }
   // Solo se aprueban fincas cuya debida diligencia EUDR está completa ("Apta").
   // Aprobar una finca incompleta producía el estado contradictorio de una finca
@@ -82,7 +105,7 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
     eudrDocsAvailable: finca.eudr_docs_available,
     eudrMitigationEffective: finca.eudr_mitigation_effective,
   };
-  if (fincaEudrStatus(eudrFields).code !== "apta") {
+  if (fincaEudrStatus(eudrFields, parcelas).code !== "apta") {
     return {
       ok: false,
       error: "La debida diligencia EUDR de esta finca todavía está incompleta; complétela antes de aprobar.",
@@ -130,6 +153,42 @@ export async function setFincaCertShared(
       created_by: adminId,
     });
   }
+  revalidatePath("/bcp/fincas");
+  return { ok: true };
+}
+
+// F1 (2026-07-29): verificación de un certificado de finca. La marca es
+// determinación de CTC (guard: el productor no puede acuñarla, y editar el
+// contenido de un cert verificado la resetea solo). Contraste manual contra el
+// registro público del esquema (certRegistry) — no hay API que consultar.
+export async function setFincaCertVerified(
+  certId: string,
+  verified: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const { data: cert } = await service
+    .from("finca_certificates")
+    .select("id, finca_id, scheme, cert_number, valid_from, valid_to")
+    .eq("id", certId)
+    .single();
+  if (!cert) return { ok: false, error: "Certificado no encontrado." };
+  if (verified && (!cert.valid_from || !cert.valid_to)) {
+    // Sin vigencia no hay nada que verificar: la credencial no puede respaldar
+    // claims (la prueba temporal de F2 necesita las fechas).
+    return { ok: false, error: "El certificado no tiene vigencia registrada — pida al productor las fechas antes de verificarlo." };
+  }
+  await service
+    .from("finca_certificates")
+    .update({ verified_by_ctc: verified, verified_at: verified ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    .eq("id", certId);
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: cert.finca_id,
+    action: verified ? "cert_verified" : "cert_unverified",
+    performed_by: adminId,
+    notes: `${cert.scheme}${cert.cert_number ? ` · N.º ${cert.cert_number}` : ""}`,
+  });
   revalidatePath("/bcp/fincas");
   return { ok: true };
 }

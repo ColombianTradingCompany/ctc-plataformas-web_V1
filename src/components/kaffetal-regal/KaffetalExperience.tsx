@@ -22,6 +22,8 @@ import {
   STAGE_DB,
   type CompletionPoint,
   type Finca,
+  type FincaCertificate,
+  type Parcela,
   type EudrProducerAnswers,
   ctcLotReferenceShort,
   fincaSelfDeletable,
@@ -129,6 +131,57 @@ type LotRow = {
   eudr_mitigation_effective: boolean | null;
   eudr_mitigation_responsible: string | null;
 };
+
+// F1 (2026-07-29): filas de finca_parcelas / finca_certificates.
+type ParcelaRow = {
+  id: string;
+  finca_id: string;
+  name: string;
+  area_ha: number | string | null;
+  lat: number | string | null;
+  lng: number | string | null;
+  polygon_geojson: { lat: number; lng: number }[] | null;
+  position: number;
+};
+function dbParcelaToParcela(row: ParcelaRow): Parcela {
+  return {
+    id: row.id,
+    fincaId: row.finca_id,
+    name: row.name,
+    areaHa: row.area_ha != null ? String(row.area_ha) : "",
+    lat: row.lat != null ? String(row.lat) : "",
+    lng: row.lng != null ? String(row.lng) : "",
+    polygon: row.polygon_geojson ?? null,
+    position: row.position,
+  };
+}
+
+type FincaCertRow = {
+  id: string;
+  finca_id: string;
+  scheme: string;
+  cert_number: string | null;
+  valid_from: string | null;
+  valid_to: string | null;
+  holder_note: string | null;
+  support_asset_id: string | null;
+  support_filename: string | null;
+  verified_by_ctc: boolean;
+};
+function dbCertToCert(row: FincaCertRow): FincaCertificate {
+  return {
+    id: row.id,
+    fincaId: row.finca_id,
+    scheme: row.scheme,
+    certNumber: row.cert_number || "",
+    validFrom: row.valid_from || "",
+    validTo: row.valid_to || "",
+    holderNote: row.holder_note || "",
+    supportAssetId: row.support_asset_id,
+    supportFilename: row.support_filename,
+    verifiedByCtc: row.verified_by_ctc,
+  };
+}
 
 function dbFincaToFinca(
   row: FincaRow,
@@ -259,6 +312,10 @@ function Experience() {
 
   const [gi, setGi] = useState<GeneralInfo>(EMPTY_GI);
   const [fincas, setFincas] = useState<Finca[]>([]);
+  // F1 (2026-07-29): parcelas y certificados de finca — tablas propias con RLS
+  // por dueño de la finca; ver docs/EUDR_RESTRUCTURE_PLAN.md.
+  const [parcelas, setParcelas] = useState<Parcela[]>([]);
+  const [fincaCerts, setFincaCerts] = useState<FincaCertificate[]>([]);
   const [lots, setLots] = useState<Lot[]>([]);
   const [contracts, setContracts] = useState<ProducerContract[]>([]);
   const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
@@ -273,7 +330,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }, { data: parcelaRows }, { data: certRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -307,6 +364,9 @@ function Experience() {
             .select(
               "lot_id, status, amount_cop, discount_pct, amount_due_cop, phase, entry_code, sondeo_result, sondeo_result_notes, sondeo_score, mejoras_doc, cashback_cop, cashback_status"
             ),
+          // RLS (parcelas/finca_certs *_own) scopes both to the producer's fincas.
+          supabase.from("finca_parcelas").select("*").order("position", { ascending: true }),
+          supabase.from("finca_certificates").select("*").order("created_at", { ascending: true }),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -331,6 +391,8 @@ function Experience() {
       );
       const fincaNameById = new Map(fincaList.map((f) => [f.id, f.name]));
       setFincas(fincaList);
+      setParcelas(((parcelaRows as ParcelaRow[] | null) ?? []).map(dbParcelaToParcela));
+      setFincaCerts(((certRows as FincaCertRow[] | null) ?? []).map(dbCertToCert));
 
       const completionByLotId = new Map<string, CompletionPoint[]>();
       for (const s of (snapshotRows as { lot_id: string; completion_pct: number; recorded_at: string }[] | null) ?? []) {
@@ -803,6 +865,8 @@ function Experience() {
             : x
         )
       );
+      // F1: el mapa de la finca ES la parcela 1 — espejar su geometría.
+      void mirrorParcelaUno(editing.id, f);
       // Stay in the modal on an edit -- the floating save button + the centered
       // "Datos de Finca Actualizados" flash confirm the save, so the producer
       // can keep refining. (Creating a new finca still closes below.)
@@ -814,6 +878,7 @@ function Experience() {
       return false;
     }
     setFincas((prev) => [...prev, dbFincaToFinca(data as FincaRow)]);
+    void mirrorParcelaUno((data as FincaRow).id, f);
     setFincaModalOpen(false);
     showToast(`Finca "${f.name}" guardada ✓ · ya puede asociarle cafés`);
     return true;
@@ -1267,6 +1332,143 @@ function Experience() {
     return true;
   }
 
+  // ── F1 · Parcelas y certificados de finca (docs/EUDR_RESTRUCTURE_PLAN.md) ──
+  // Escrituras directas con el cliente del navegador (patrón KR): la seguridad
+  // vive en las policies *_own + los guards (geometría congelada al aprobar,
+  // verified_by_ctc solo-CTC). Guardado INMEDIATO por fila — deliberadamente
+  // fuera del autosave del FincaModal, para no tejer dos ciclos de guardado.
+
+  /** Espeja la geometría de la finca en su parcela 0 ("el cafetal principal").
+   *  Mantiene vivos a todos los lectores legacy (mapas, dossier, KML) sin
+   *  duplicar trabajo del productor: el mapa de siempre ES la parcela 1. */
+  async function mirrorParcelaUno(fincaId: string, f: Finca) {
+    if (f.status === "approved") return; // congelada — el guard la rechazaría igual
+    const hasPoint = f.lat.trim() !== "" && f.lng.trim() !== "";
+    const hasPoly = (f.eudrPolygon?.length ?? 0) >= 3;
+    if (!hasPoint && !hasPoly) return;
+    const own = parcelas.filter((p) => p.fincaId === fincaId);
+    const uno = own.find((p) => p.position === 0);
+    // Con parcelas adicionales, el área de la parcela 1 es suya propia (no el
+    // total de la finca); con una sola, el área de la finca ES la de la parcela.
+    const areaHa =
+      own.length > 1 && uno?.areaHa ? Number(uno.areaHa.replace(",", ".")) : f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : null;
+    const payload = {
+      finca_id: fincaId,
+      name: uno?.name ?? "Cafetal 1",
+      area_ha: areaHa != null && !isNaN(areaHa) ? areaHa : null,
+      lat: hasPoint ? Number(f.lat.replace(",", ".")) : null,
+      lng: hasPoint ? Number(f.lng.replace(",", ".")) : null,
+      polygon_geojson: hasPoly ? f.eudrPolygon : null,
+      position: 0,
+      updated_at: new Date().toISOString(),
+    };
+    const q = uno
+      ? supabase.from("finca_parcelas").update(payload).eq("id", uno.id).select("*").single()
+      : supabase.from("finca_parcelas").insert(payload).select("*").single();
+    const { data, error } = await q;
+    if (error || !data) return; // best-effort: la finca ya se guardó bien
+    const mapped = dbParcelaToParcela(data as ParcelaRow);
+    setParcelas((prev) => (uno ? prev.map((p) => (p.id === uno.id ? mapped : p)) : [...prev, mapped]));
+  }
+
+  async function saveParcela(draft: { id?: string; fincaId: string; name: string; areaHa: string; lat: string; lng: string; polygon: { lat: number; lng: number }[] | null }): Promise<boolean> {
+    const area = draft.areaHa.trim() ? Number(draft.areaHa.replace(",", ".")) : null;
+    const payload = {
+      finca_id: draft.fincaId,
+      name: draft.name.trim() || "Cafetal",
+      area_ha: area != null && !isNaN(area) ? area : null,
+      lat: draft.lat.trim() ? Number(draft.lat.replace(",", ".")) : null,
+      lng: draft.lng.trim() ? Number(draft.lng.replace(",", ".")) : null,
+      polygon_geojson: draft.polygon?.length ? draft.polygon : null,
+      updated_at: new Date().toISOString(),
+    };
+    if (draft.id) {
+      const { data, error } = await supabase.from("finca_parcelas").update(payload).eq("id", draft.id).select("*").single();
+      if (error || !data) {
+        showToast(error?.message?.includes("CTC") ? error.message : "No se pudo guardar el cafetal.");
+        return false;
+      }
+      const mapped = dbParcelaToParcela(data as ParcelaRow);
+      setParcelas((prev) => prev.map((p) => (p.id === draft.id ? mapped : p)));
+      return true;
+    }
+    const nextPos = Math.max(0, ...parcelas.filter((p) => p.fincaId === draft.fincaId).map((p) => p.position + 1));
+    const { data, error } = await supabase
+      .from("finca_parcelas")
+      .insert({ ...payload, position: nextPos })
+      .select("*")
+      .single();
+    if (error || !data) {
+      showToast(error?.message?.includes("CTC") ? error.message : "No se pudo agregar el cafetal.");
+      return false;
+    }
+    setParcelas((prev) => [...prev, dbParcelaToParcela(data as ParcelaRow)]);
+    return true;
+  }
+
+  async function deleteParcela(id: string): Promise<boolean> {
+    const { error } = await supabase.from("finca_parcelas").delete().eq("id", id);
+    if (error) {
+      showToast(error.message?.includes("CTC") ? error.message : "No se pudo eliminar el cafetal.");
+      return false;
+    }
+    setParcelas((prev) => prev.filter((p) => p.id !== id));
+    return true;
+  }
+
+  async function saveFincaCert(draft: { id?: string; fincaId: string; scheme: string; certNumber: string; validFrom: string; validTo: string; holderNote: string }): Promise<boolean> {
+    const payload = {
+      finca_id: draft.fincaId,
+      scheme: draft.scheme,
+      cert_number: draft.certNumber.trim() || null,
+      valid_from: draft.validFrom || null,
+      valid_to: draft.validTo || null,
+      holder_note: draft.holderNote.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
+    const q = draft.id
+      ? supabase.from("finca_certificates").update(payload).eq("id", draft.id).select("*").single()
+      : supabase.from("finca_certificates").insert(payload).select("*").single();
+    const { data, error } = await q;
+    if (error || !data) {
+      showToast(error?.message?.includes("CTC") ? error.message : "No se pudo guardar el certificado.");
+      return false;
+    }
+    const mapped = dbCertToCert(data as FincaCertRow);
+    setFincaCerts((prev) => (draft.id ? prev.map((c) => (c.id === draft.id ? mapped : c)) : [...prev, mapped]));
+    return true;
+  }
+
+  async function deleteFincaCert(id: string): Promise<boolean> {
+    const { error } = await supabase.from("finca_certificates").delete().eq("id", id);
+    if (error) {
+      showToast("No se pudo eliminar el certificado.");
+      return false;
+    }
+    setFincaCerts((prev) => prev.filter((c) => c.id !== id));
+    return true;
+  }
+
+  async function uploadCertSupport(certId: string, fincaId: string, file: File, onProgress?: ProgressFn): Promise<boolean> {
+    if (!userId) return false;
+    const result = await uploadKaffetalMediaWithProgress(supabase, userId, `fincas/${fincaId}/certs`, file, onProgress);
+    if ("error" in result) {
+      showToast(result.error);
+      return false;
+    }
+    const { error } = await supabase
+      .from("finca_certificates")
+      .update({ support_asset_id: result.assetId, support_filename: file.name, updated_at: new Date().toISOString() })
+      .eq("id", certId);
+    if (error) {
+      showToast("No se pudo guardar el soporte del certificado.");
+      return false;
+    }
+    setFincaCerts((prev) => prev.map((c) => (c.id === certId ? { ...c, supportAssetId: result.assetId, supportFilename: file.name } : c)));
+    showToast("Soporte del certificado guardado ✓");
+    return true;
+  }
+
   async function uploadLotVideo(lotId: string, file: File, onProgress?: ProgressFn): Promise<boolean> {
     if (!userId) return false;
     const result = await uploadKaffetalMediaWithProgress(supabase, userId, `lots/${lotId}/video`, file, onProgress);
@@ -1462,6 +1664,13 @@ function Experience() {
           const editing = editingFincaIdx >= 0 ? fincas[editingFincaIdx] : null;
           return editing ? uploadFincaLegalDoc(editing.id, file, onProgress) : Promise.resolve(false);
         }}
+        parcelas={editingFincaIdx >= 0 ? parcelas.filter((p) => p.fincaId === fincas[editingFincaIdx].id) : []}
+        certificates={editingFincaIdx >= 0 ? fincaCerts.filter((c) => c.fincaId === fincas[editingFincaIdx].id) : []}
+        onSaveParcela={saveParcela}
+        onDeleteParcela={deleteParcela}
+        onSaveCert={saveFincaCert}
+        onDeleteCert={deleteFincaCert}
+        onUploadCertSupport={uploadCertSupport}
       />
       <InfoModal
         open={infoModalOpen}

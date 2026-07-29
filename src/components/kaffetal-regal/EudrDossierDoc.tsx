@@ -79,6 +79,18 @@ const isImage = (name: string) => /\.(png|jpe?g|webp|gif)$/i.test(name);
 // Shared, presentational EUDR dossier. Rendered both on the BCP side
 // (/bcp/fincas/[id]/dossier) and the producer side (/kaffetal-regal/
 // certificacion/[id]); each route resolves the data with its own client.
+// F1 (2026-07-29): el dossier lista las PARCELAS (el átomo del Art. 9) y los
+// certificados de la finca con número + vigencia (nota "¿Finca o Lote?").
+export type DossierParcela = { name: string; areaHa: string; lat: string; lng: string; polygonPoints: number };
+export type DossierCert = {
+  schemeLabel: string;
+  certNumber: string;
+  validFrom: string;
+  validTo: string;
+  holderNote: string;
+  verifiedByCtc: boolean;
+};
+
 export function EudrDossierDoc({
   finca,
   producerName,
@@ -88,6 +100,8 @@ export function EudrDossierDoc({
   legalDocUrl,
   urlByAsset,
   comms,
+  parcelas = [],
+  certificates = [],
 }: {
   finca: DossierFinca;
   producerName: string;
@@ -97,6 +111,8 @@ export function EudrDossierDoc({
   legalDocUrl?: string;
   urlByAsset: Record<string, string>;
   comms: { id: string; note: string; created_at: string; author_role: string }[];
+  parcelas?: DossierParcela[];
+  certificates?: DossierCert[];
 }) {
   const evidenceFiles = finca.eudr_evidence_files ?? {};
   const sustainFiles = finca.eudr_sustainability_files ?? {};
@@ -203,6 +219,31 @@ export function EudrDossierDoc({
             ? `Punto: ${finca.eudr_lat}, ${finca.eudr_lng}.`
             : ""}
         </p>
+        {parcelas.length > 0 && (
+          <>
+            <h3 style={{ fontSize: 13, margin: "10px 0 4px" }}>Parcelas del predio (Art. 9 — Reglamento (UE) 2023/1115)</h3>
+            <table style={{ borderCollapse: "collapse", fontSize: 12.5, width: "100%" }}>
+              <tbody>
+                {parcelas.map((p, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: "4px 12px 4px 0", color: "#555", width: 220 }}>{i + 1}. {p.name}</td>
+                    <td style={{ padding: "4px 0", fontWeight: 600 }}>
+                      {p.areaHa ? `${p.areaHa} ha · ` : ""}
+                      {p.polygonPoints >= 3
+                        ? `polígono de ${p.polygonPoints} vértices`
+                        : p.lat && p.lng
+                          ? `punto ${p.lat}, ${p.lng}`
+                          : "sin geometría"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={{ fontSize: 11, color: "#777", margin: "4px 0 0" }}>
+              Una parcela es un área continua de cultivo dentro del predio; las de más de 4 ha se declaran con polígono propio.
+            </p>
+          </>
+        )}
 
         <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Declaraciones EUDR</h2>
         <table style={{ borderCollapse: "collapse", fontSize: 13, width: "100%" }}>
@@ -265,6 +306,39 @@ export function EudrDossierDoc({
             </table>
           );
         })()}
+
+        {certificates.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Certificaciones de la finca</h2>
+            <table style={{ borderCollapse: "collapse", fontSize: 12.5, width: "100%" }}>
+              <thead>
+                <tr style={{ color: "#555", textAlign: "left" }}>
+                  <th style={{ padding: "4px 12px 4px 0", fontWeight: 600 }}>Esquema</th>
+                  <th style={{ padding: "4px 12px 4px 0", fontWeight: 600 }}>N.º</th>
+                  <th style={{ padding: "4px 12px 4px 0", fontWeight: 600 }}>Vigencia</th>
+                  <th style={{ padding: "4px 0", fontWeight: 600 }}>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {certificates.map((c, i) => (
+                  <tr key={i}>
+                    <td style={{ padding: "4px 12px 4px 0", fontWeight: 600 }}>
+                      {c.schemeLabel}
+                      {c.holderNote ? <span style={{ fontWeight: 400, color: "#555" }}> · {c.holderNote}</span> : null}
+                    </td>
+                    <td style={{ padding: "4px 12px 4px 0" }}>{c.certNumber || "—"}</td>
+                    <td style={{ padding: "4px 12px 4px 0" }}>{c.validFrom && c.validTo ? `${c.validFrom} → ${c.validTo}` : "sin registrar"}</td>
+                    <td style={{ padding: "4px 0" }}>{c.verifiedByCtc ? "Verificado por CTC" : "Declarado"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p style={{ fontSize: 11, color: "#777", margin: "4px 0 0" }}>
+              Los certificados son credenciales del predio/organización y constituyen información complementaria de la evaluación
+              de riesgo (Art. 10(2)(n)) — no sustituyen la debida diligencia.
+            </p>
+          </>
+        )}
 
         <h2 style={{ fontSize: 15, marginTop: 22, borderBottom: "2px solid #3C0A86", paddingBottom: 4 }}>Registro de comunicación</h2>
         {comms.length === 0 ? (

@@ -4,6 +4,7 @@ import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { mapPreviewUrl } from "@/lib/eudr";
 import { daneCodeFor } from "@/lib/daneCodes";
 import { EudrDossierDoc, type DossierFinca } from "@/components/kaffetal-regal/EudrDossierDoc";
+import { dossierParcelasAndCerts } from "@/lib/dossierExtras";
 
 type CommRow = { id: string; note: string; created_at: string; author_role: string };
 
@@ -61,10 +62,13 @@ export default async function ProducerCertPage({ params }: { params: Promise<{ i
   ]);
   const producer = producers.get(finca.producer_id);
   const dane = daneCodeFor(finca.departamento, finca.municipio);
+  const { parcelas, certificates } = await dossierParcelasAndCerts(service, id);
 
   return (
     <EudrDossierDoc
       finca={finca}
+      parcelas={parcelas}
+      certificates={certificates}
       producerName={`${producer?.fullName ?? "—"}${producer?.companyName ? ` · ${producer.companyName}` : ""}`}
       producerContact={[producer?.phone, producer?.email].filter(Boolean).join(" · ")}
       daneText={dane ? `${dane.code} — ${dane.mun}, ${dane.dep} (depto ${dane.depCode})` : null}

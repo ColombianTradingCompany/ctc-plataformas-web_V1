@@ -53,24 +53,56 @@ function hasGeo(f: Pick<FincaEudrFields, "lat" | "lng" | "vereda" | "mun" | "dep
   return f.vereda !== "—" || f.mun !== "—" || f.depto !== "—";
 }
 
+// ── Parcelas (F1, 2026-07-29 — docs/EUDR_RESTRUCTURE_PLAN.md) ───────────────
+// El átomo probatorio del Art. 9 es la PARCELA (área continua dentro de una
+// propiedad), no la finca: una finca con tres cafetales separados son tres
+// parcelas en la DDS, y un polígono no puede cubrir varias. Regla de la
+// Comisión: ≤4 ha basta un punto; >4 ha exige polígono.
+export type ParcelaGeoFields = {
+  areaHa: number | null;
+  hasPoint: boolean;
+  hasPolygon: boolean;
+};
+
+export function parcelaGeoOk(p: ParcelaGeoFields): boolean {
+  if (!p.hasPoint && !p.hasPolygon) return false;
+  return (p.areaHa ?? 0) > 4 ? p.hasPolygon : true;
+}
+
+/** true = TODAS las parcelas están geolocalizadas según el umbral de 4 ha.
+ *  Una lista vacía es "sin parcelas": incompleta a propósito — sin parcelas no
+ *  hay conjunto de geometrías que declarar en una DDS. */
+export function parcelasGeoComplete(parcelas: ParcelaGeoFields[]): boolean {
+  return parcelas.length > 0 && parcelas.every(parcelaGeoOk);
+}
+
 // ── La narrativa de viaje (2026-07-24, decisión del owner) ──────────────────
 // La debida diligencia EUDR vive SOLO en la finca:
 //   · el PRODUCTOR porta su "Pasaporte" (su identidad de proveedor, CTC-P-…),
 //   · cada FINCA obtiene su "VISA" (la aptitud EUDR que otorga BCP),
 //   · cada LOTE recibe su "SELLO" — heredado por completo de la Visa de su(s)
 //     finca(s) de origen, sin debida diligencia propia del lote.
-export function fincaEudrStatus(f: FincaEudrFields | null | undefined): EudrStatus {
+// F1: cuando el caller tiene las parcelas a mano (FincaModal, approveFinca, el
+// editor de BCP), la completitud geográfica se juzga POR PARCELAS — todas
+// localizadas, con polígono donde el área supera 4 ha. Los callers legacy que
+// no pasan el parámetro conservan la regla anterior (punto/dirección de la
+// finca), para no romper listados que solo tienen la fila de `fincas`.
+export function fincaEudrStatus(
+  f: FincaEudrFields | null | undefined,
+  parcelas?: ParcelaGeoFields[]
+): EudrStatus {
   if (!f) return status("no_apta", "Sin Visa", "stop");
   if (f.eudrDeforestationFree === false || f.eudrLegalProduction === false) {
     return status("no_apta", "Sin Visa", "stop");
   }
   const haOk = f.ha !== "—" && f.ha.trim() !== "" && Number(f.ha.replace(",", ".")) > 0;
+  const geoOk = parcelas !== undefined ? parcelasGeoComplete(parcelas) : hasGeo(f);
   // Risk determination (transferred from the lot 2026-07-24). "" until the two
   // yes/no questions of the questionnaire are answered -> still en trámite.
   const risk = deriveFincaRiskLevel(f);
   const incomplete =
     !f.name ||
-    !hasGeo(f) ||
+    !geoOk ||
     !haOk ||
     f.eudrDeforestationFree !== true ||
     f.eudrLegalAreas.length === 0 ||
@@ -108,7 +140,9 @@ export function lotEudrStatus(lot: LotEudrInput, sourceFincas: FincaEudrFields[]
   void lot; // heredado: la determinación es 100 % de la finca
   if (!sourceFincas.length) return status("sin_origen", "Sin origen", "pend");
 
-  const fincaStatuses = sourceFincas.map(fincaEudrStatus);
+  // Lambda explícita: .map(fincaEudrStatus) pasaría el ÍNDICE como el nuevo
+  // parámetro opcional `parcelas`.
+  const fincaStatuses = sourceFincas.map((f) => fincaEudrStatus(f));
   if (fincaStatuses.some((s) => s.code === "no_apta")) {
     return status("bloqueado", "Sin Visa de finca", "stop");
   }

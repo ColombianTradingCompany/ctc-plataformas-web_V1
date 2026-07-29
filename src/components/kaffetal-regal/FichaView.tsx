@@ -4,10 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
-import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
-import { fincaEudrStatus, lotEudrStatus, resolveSourceFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
+import { fincaEudrStatus, lotEudrStatus, resolveContributionFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
-import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, pendingCertProofs, stripUnprovenCerts, type FichaFormData } from "./ficha/fichaData";
+import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, seedContributions, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
@@ -25,37 +24,6 @@ import { OfficialScoreBanner } from "./ficha/OfficialScoreBanner";
 import styles from "./FichaView.module.css";
 
 export type { PaneProps } from "./ficha/panes/types";
-
-// A pending-certificate proof row with its own upload progress ring.
-function CertProofRow({
-  label,
-  rowClass,
-  onUpload,
-}: {
-  label: string;
-  rowClass: string;
-  onUpload: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
-}) {
-  const up = useUpload();
-  return (
-    <div className={rowClass}>
-      <span style={{ fontWeight: 600 }}>{label}</span>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <input
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          style={{ fontSize: 11.5 }}
-          aria-label={`Soporte para ${label}`}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void up.run(() => onUpload(file, up.progress));
-          }}
-        />
-        <UploadProgressRing state={up.state} size={26} label={false} />
-      </span>
-    </div>
-  );
-}
 
 // Which FichaNav pane opens by default for each intake_step (0-4) -- the
 // first not-yet-submitted pane in that sub-stage, or the final preview once
@@ -151,6 +119,7 @@ function StageCelebration({ c, onDone }: { c: Celebration; onDone: () => void })
 export function FichaView({
   lot,
   fincas,
+  fincaCerts,
   gi,
   onBack,
   onSave,
@@ -162,6 +131,7 @@ export function FichaView({
 }: {
   lot: Lot;
   fincas: Finca[];
+  fincaCerts: import("./data").FincaCertificate[];
   gi: import("./data").GeneralInfo;
   onBack: () => void;
   // Resolves true only when the row actually persisted -- the buttons below
@@ -188,7 +158,9 @@ export function FichaView({
     // before a field existed in FichaFormData (e.g. cert_attachments, added
     // 2026-07-10) still gets that field's default instead of `undefined` --
     // reading `undefined[key]` in A3/A4 crashed the whole Ficha for old lots.
-    const base: FichaFormData = { ...EMPTY_FICHA, ...(lot.datasheet ?? {}) };
+    // F2: los datasheets pre-2026-07-29 no traen `contributions` — se siembran
+    // del viejo modelo estate/additional_estate_ids (idempotente).
+    const base: FichaFormData = seedContributions({ ...EMPTY_FICHA, ...(lot.datasheet ?? {}) }, fincas);
     // A few fields aren't independently editable inside the Ficha -- they're owned
     // elsewhere (the producer's profile, the lot record itself) and always win over
     // whatever was last saved in the datasheet, so the two can never drift apart.
@@ -223,9 +195,6 @@ export function FichaView({
     };
   });
   const [declared, setDeclared] = useState(false);
-  // Caja de soportes pendientes al pie: colapsada por defecto (el titular ya
-  // avisa), se abre para adjuntar sin salir del pane en el que se está.
-  const [proofsOpen, setProofsOpen] = useState(false);
   const [showDeclare, setShowDeclare] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   // Aviso de compuerta (centrado, con fade) y celebración de etapa completada.
@@ -249,17 +218,17 @@ export function FichaView({
   const sca = useMemo(() => computeSca(data), [data]);
   const vTotal = useMemo(() => varietyTotal(data), [data]);
 
-  const sourceFincas = useMemo(
-    () => resolveSourceFincas(data.origin_category, data.estate, data.additional_estate_ids, fincas),
-    [data.origin_category, data.additional_estate_ids, data.estate, fincas]
-  );
+  // F2: el origen del lote son los APORTES de A2.
+  const sourceFincas = useMemo(() => resolveContributionFincas(data.contributions, fincas), [data.contributions, fincas]);
 
   const completed = useMemo<Partial<Record<PaneId, boolean>>>(
     () => ({
       a1: !!data.product_name,
-      a2: !!data.estate || !!data.region_dep,
-      a3: data.origin_cert_dor || data.origin_cert_do || data.origin_cert_igp || data.origin_cert_fedecafe || !!data.awards,
-      a4: [data.intl_eudr, data.intl_rainforest, data.intl_organic, data.intl_fairtrade].some(Boolean),
+      a2: data.contributions.length > 0,
+      // F2: los certificados viven en la FINCA — A3 queda como narrativa del
+      // origen (premios + historia) y A4 como panel derivado de solo lectura.
+      a3: !!data.awards || !!data.about_origin,
+      a4: true,
       // 2026-07-24 (modelo Visa/Sello): la debida diligencia EUDR vive en la
       // FINCA; el lote hereda su Sello de la Visa de sus fincas de origen. La
       // sub-etapa A5 queda "completa" con el origen RESUELTO (≥1 finca real) —
@@ -414,17 +383,8 @@ export function FichaView({
         setNotice('Complete A3, A4, B2 y B3 — o marque "No lo sé / no aplica" en cada uno.');
         return;
       }
-      // Compuerta SUAVE de soportes: certificados marcados sin archivo no
-      // bloquean, pero el productor debe saber que sin prueba se desmarcarán
-      // al enviar la Ficha (afirmar una certificación exige confirmarla).
-      const pending = pendingCertProofs(data);
-      if (pending.length > 0) {
-        const msg =
-          "Estos certificados quedaron marcados SIN archivo de soporte:\n\n" +
-          pending.map((p) => `• ${p.label}`).join("\n") +
-          "\n\nPuede continuar y adjuntar los soportes hasta el envío final de la Ficha. Los que sigan sin prueba en ese momento se desmarcarán y el lote seguirá sin ellos.\n\n¿Continuar con FT2?";
-        if (!window.confirm(msg)) return;
-      }
+      // F2: los certificados viven en la FINCA (con número y vigencia) — la
+      // vieja compuerta suave de "marcado sin soporte" ya no existe aquí.
       setSaving(true);
       const ok = await onSave(buildUpdate(withRevisionDate(), 2));
       setSaving(false);
@@ -477,19 +437,9 @@ export function FichaView({
         setNotice("Marque la declaración de veracidad antes de continuar.");
         return;
       }
-      // ÚLTIMO recordatorio de soportes: lo que siga sin prueba se desmarca y
-      // la Ficha se envía sin esos certificados.
-      let source = withRevisionDate();
-      const pending = pendingCertProofs(source);
-      if (pending.length > 0) {
-        const msg =
-          "ÚLTIMO RECORDATORIO — certificados marcados sin soporte:\n\n" +
-          pending.map((p) => `• ${p.label}`).join("\n") +
-          "\n\nSi envía ahora, estas selecciones se DESMARCARÁN y la Ficha seguirá sin ellas. Cancele si prefiere adjuntar los soportes primero (A3/A4).\n\n¿Enviar la Ficha sin esos certificados?";
-        if (!window.confirm(msg)) return;
-        source = stripUnprovenCerts(source);
-        setData(source);
-      }
+      // F2: los certificados ya no se afirman en la Ficha (viven en la finca
+      // con número y vigencia) — el viejo desmarque de "sin soporte" se retiró.
+      const source = withRevisionDate();
       setSaving(true);
       const ok = await onSave(buildUpdate(source, 4));
       setSaving(false);
@@ -536,7 +486,7 @@ export function FichaView({
   }
 
   const viewingLocked = PANE_SUBSTAGE[active] < effectiveIntakeStep;
-  const paneProps = { data, onChange, fincas, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo, viewingLocked };
+  const paneProps = { data, onChange, fincas, fincaCerts, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo, viewingLocked };
   const STAGE_BUTTON_LABEL = [
     "Completar FT y continuar",
     "Completar FT2 y continuar",
@@ -646,40 +596,9 @@ export function FichaView({
           </div>
         </div>
 
-        {/* Soportes pendientes, al alcance del botón de envío. Antes esta caja
-            solo existía DENTRO de A3/A4, así que al toparse con el aviso de
-            "se van a desmarcar" había que navegar hacia atrás para adjuntar —
-            y encima el input de la tarjeta del certificado está deshabilitado
-            por el fieldset de la sección enviada. Aquí vive fuera del fieldset
-            y en cualquier pane: el aviso y la solución quedan en el mismo sitio. */}
-        {effectiveIntakeStep < 4 && pendingCertProofs(data).length > 0 && (
-          <div className={styles.pendProofs}>
-            <button
-              type="button"
-              className={styles.pendProofsHead}
-              aria-expanded={proofsOpen}
-              onClick={() => setProofsOpen((v) => !v)}
-            >
-              <span>
-                ⚠️ {pendingCertProofs(data).length} certificado{pendingCertProofs(data).length === 1 ? "" : "s"} sin soporte —
-                adjúntelo{pendingCertProofs(data).length === 1 ? "" : "s"} aquí antes de enviar
-              </span>
-              <span aria-hidden>{proofsOpen ? "▾" : "▸"}</span>
-            </button>
-            {proofsOpen && (
-              <div className={styles.pendProofsBody}>
-                <p className={styles.fexample} style={{ margin: "0 0 8px" }}>
-                  Si envía la Ficha sin la prueba, estas selecciones <b>se desmarcarán</b>. No hace falta volver a A3/A4:
-                  adjunte aquí y pulse Guardar.
-                </p>
-                {pendingCertProofs(data).map((p) => (
-                  <CertProofRow key={p.key} label={p.label} rowClass={styles.pendProofsRow} onUpload={(file, onProgress) => uploadCert(p.key, file, onProgress)} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
+        {/* F2: la caja de "certificados sin soporte" se retiró — los
+            certificados viven en la finca con número y vigencia (F1), y la
+            Ficha solo DERIVA sus claims en A4. */}
         <div className={styles.footer}>
           {showDeclare && (
             <label className={styles.chip}>

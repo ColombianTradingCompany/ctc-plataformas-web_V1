@@ -234,13 +234,19 @@ export type FichaFormData = {
   productor: string; species: string; revision_date: string; product_type: string;
   hs_code: string; harvest_year: string; harvest_season: string;
   // A2 — Origen
+  // F2 (2026-07-29, docs/EUDR_RESTRUCTURE_PLAN.md): el origen es un conjunto de
+  // APORTES PONDERADOS de fincas y una VENTANA DE COSECHA. El arquetipo
+  // (Single Estate / Single Origin / …) se CALCULA de los aportes — el viejo
+  // radio origin_category queda como dato legacy de lotes anteriores, la UI ya
+  // no lo escribe. Los aportes se espejan a la tabla lot_contributions al
+  // guardar (los lectores server — eudrGate, EVA, Sello — leen la tabla).
+  contributions: { finca_id: string; weight_kg: string }[];
+  harvest_from: string; // "YYYY-MM-DD" — inicio de recolección
+  harvest_to: string;
   origin_category: string; estate: string; country: string; region_dep: string;
   county_muni: string; county_muni_text: string; masl: string; geo_ref: string;
   plantation_age: string; multi_origin_specs: string;
-  // Only used when origin_category !== "Single Estate" -- lets a blend draw from
-  // more than one of the producer's own registered fincas. Stores real finca ids
-  // (not names) so each origin's EUDR status can actually be rolled up -- see
-  // src/lib/eudr.ts.
+  // Legacy (pre-F2): ids adicionales del viejo modelo de blend por casillas.
   additional_estate_ids: string[];
   // A3 — Certificados de Origen
   origin_cert_dor: boolean; origin_cert_do: boolean; origin_cert_igp: boolean; origin_cert_fedecafe: boolean;
@@ -320,6 +326,8 @@ export const EMPTY_FICHA: FichaFormData = {
   product_name: "", razon_social: "", nit_rut: "", ctc_uid: "",
   productor: "", species: "", revision_date: "", product_type: "",
   hs_code: "", harvest_year: "", harvest_season: "",
+  contributions: [],
+  harvest_from: "", harvest_to: "",
   origin_category: "", estate: "", country: "", region_dep: "",
   county_muni: "", county_muni_text: "", masl: "", geo_ref: "",
   plantation_age: "", multi_origin_specs: "",
@@ -397,3 +405,22 @@ export const num = (v: string) => {
   const n = parseFloat(v);
   return isNaN(n) ? 0 : n;
 };
+
+// ── F2 · Aportes del lote ───────────────────────────────────────────────────
+
+/** Siembra `contributions` en un datasheet legacy (pre-F2) a partir del viejo
+ *  modelo estate + additional_estate_ids. Idempotente: si ya hay aportes, se
+ *  respetan tal cual. */
+export function seedContributions(d: FichaFormData, fincas: { id: string; name: string }[]): FichaFormData {
+  if (d.contributions.length) return d;
+  const ids: string[] = [];
+  const multi = !!d.origin_category && d.origin_category !== "Single Estate";
+  if (multi) ids.push(...d.additional_estate_ids);
+  else {
+    const f = fincas.find((x) => x.name === d.estate);
+    if (f) ids.push(f.id);
+  }
+  const valid = ids.filter((id) => fincas.some((f) => f.id === id));
+  if (!valid.length) return d;
+  return { ...d, contributions: valid.map((finca_id) => ({ finca_id, weight_kg: "" })) };
+}

@@ -12,6 +12,54 @@ no "después". El backend real del Directorio del Café (3 commits del 2026-07-2
 se anotó y V18.0 salió publicado describiéndolo como maqueta.
 
 ---
+## [2026-07-29] F2 de la reestructura EUDR: el lote como composición (aportes + claims derivados)
+- Segunda fase de docs/EUDR_RESTRUCTURE_PLAN.md. El lote pasa a ser un conjunto de
+  APORTES PONDERADOS de fincas con VENTANA DE COSECHA; el arquetipo y los sellos se
+  DERIVAN — nadie vuelve a marcar una casilla de certificado en la Ficha.
+- **Migración `f2_lot_contributions_and_harvest_window`**: tabla `lot_contributions`
+  (UNIQUE lote+finca, peso opcional; guard: el productor solo la toca en
+  borrador/ficha_completa) y `lots.harvest_from/to`. Backfill desde `finca_id` +
+  `datasheet->additional_estate_ids`.
+- **`src/lib/lotComposition.ts`** (puro): `deriveArchetype` (conteos |F|/|M|/|D|/|R|/
+  |C| — el radio origin_category MUERE; municipio desconocido no se asume vecino;
+  tabla mínima de región cafetera para el Eje) y `deriveClaims` (prueba temporal
+  cosecha ⊆ vigencia — NO "hoy"; fail closed bajo 100%; finca bloqueante NOMBRADA
+  con razón; % incognoscible (null) si faltan pesos en cobertura parcial; custodia
+  IP como constante del proceso CTC — decisión del owner). QA:
+  `scripts/qa-claims-check.mjs`, 26/26 (incluye el ejemplo 420/380/200 ⇒ 80% del doc).
+- **Ficha A2 reescrita**: "¿De qué fincas sale este café?" (kg por finca cuando hay
+  más de una) + "¿Cuándo se recolectó?" + chip de arquetipo CALCULADO con ⓘ. La
+  finca primaria sigue alimentando estate/país/depto/msnm/geo (lectores legacy
+  intactos). `seedContributions` siembra datasheets pre-F2. `saveFicha` espeja a
+  columnas harvest_* y sincroniza lot_contributions (diff, no churn).
+- **A3/A4**: A3 = Reconocimientos & Narrativa (los premios SÍ son del lote — Cup of
+  Excellence es de un café en un año, no de una finca) con puntero a Mis fincas →
+  Certificaciones. A4 = "Sellos del Lote (derivados)": panel de solo lectura por
+  esquema — ✓ sello (verificado/declarado) o cobertura + finca bloqueante y razón.
+  Se retiraron `stripUnprovenCerts`, la compuerta suave de FT2 y la caja de
+  soportes pendientes (obsoletos: la prueba vive en la finca con vigencia).
+- **`eudrGate` (server)**: lee lot_contributions — TODAS las fincas aportantes deben
+  tener Visa, no solo la primaria (fallback finca_id para lotes pre-F2).
+- **EVA (BCP /bcp/lotes)**: filas nuevas por lote — "Tipo de lote (calculado)",
+  "Recolección" y "Sello X (derivado)" con cobertura y bloqueantes; nada que
+  digitar, solo contrastar. Los certItems legacy del datasheet siguen visibles.
+- **Sello imprimible (`LotEudrCertDoc`)**: imprime SOLO claims al 100% ("Sellos de
+  certificación (derivados)"), + tipo de lote calculado y ventana de recolección;
+  el texto legacy eudr_cert_scheme queda como "histórico". La ruta resuelve el
+  origen por aportes (fallback primaria).
+- Verificación: tsc + eslint limpios; 26/26 del QA puro; e2e con cuenta QA en la
+  app real (finca + punto en mapa + cert Rainforest con vigencia → lote → A2:
+  elegir finca ⇒ chip SINGLE ESTATE, fechas de cosecha → Guardar ⇒ SQL:
+  harvest_from/to en columnas y el aporte espejado en lot_contributions con la
+  finca correcta); cascada limpia al borrar la cuenta (0 huérfanos). A4 en vivo no
+  se pudo navegar (FT2 se abre al enviar FT — compuerta existente); su lógica es
+  el motor puro ya testeado y el mismo patrón de datos de A2.
+- Pendientes que siguen para F3: DDS (referencia + código + snapshot congelado),
+  KML por parcelas, conteo "EUDR Aptas" del dashboard (regla legacy).
+- Es cambio de nodo (`n-kaffetal`, `n-bcp`, `n-db` +1 tabla) y semillas DICT: el
+  arquetipo calculado y los claims derivados merecen entrada propia en el wrap V20.
+(commit: pending)
+
 ## [2026-07-29] F1 de la reestructura EUDR: la finca como titular (parcelas + certificados)
 - Primera fase de docs/EUDR_RESTRUCTURE_PLAN.md (aprobado por el owner el 2026-07-29,
   a partir de sus dos notas de deep research "¿Finca o Lote?" y "Los cuatro

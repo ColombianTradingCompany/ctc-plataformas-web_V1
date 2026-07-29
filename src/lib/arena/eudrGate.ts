@@ -47,20 +47,34 @@ function toFields(f: FincaJoinRow): FincaEudrFields {
 
 export type EudrGateResult = { ready: boolean; label: string };
 
+const FINCA_COLS =
+  "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective";
+
 export async function lotEudrGate(service: SupabaseClient, lotId: string): Promise<EudrGateResult> {
-  const { data: lot } = await service
-    .from("lots")
-    .select(
-      "eudr_risk_level, eudr_mitigation_effective, fincas(name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)"
-    )
-    .eq("id", lotId)
-    .maybeSingle();
+  // F2 (2026-07-29): el origen del lote son sus APORTES (lot_contributions) —
+  // TODAS las fincas aportantes deben tener Visa vigente, no solo la primaria.
+  // Fallback a lots.finca_id para lotes pre-F2 sin aportes espejados.
+  const [{ data: lot }, { data: contribRows }] = await Promise.all([
+    service
+      .from("lots")
+      .select(`eudr_risk_level, eudr_mitigation_effective, fincas(${FINCA_COLS})`)
+      .eq("id", lotId)
+      .maybeSingle(),
+    service.from("lot_contributions").select(`fincas(${FINCA_COLS})`).eq("lot_id", lotId),
+  ]);
   if (!lot) return { ready: false, label: "Lote no encontrado" };
 
   // PostgREST devuelve el join many-to-one como objeto, pero el tipo inferido
   // dice array — se aceptan ambas formas (mismo patrón que clubActions).
-  const fincaRaw = Array.isArray(lot.fincas) ? lot.fincas[0] : lot.fincas;
-  const fincas = fincaRaw ? [toFields(fincaRaw as FincaJoinRow)] : [];
+  const asOne = (raw: unknown) => (Array.isArray(raw) ? raw[0] : raw) as FincaJoinRow | null | undefined;
+  let fincas = ((contribRows ?? []) as { fincas: unknown }[])
+    .map((r) => asOne(r.fincas))
+    .filter((f): f is FincaJoinRow => !!f)
+    .map(toFields);
+  if (!fincas.length) {
+    const fincaRaw = asOne(lot.fincas);
+    fincas = fincaRaw ? [toFields(fincaRaw)] : [];
+  }
 
   const s = lotEudrStatus(
     { eudr_risk_level: lot.eudr_risk_level ?? null, eudr_mitigation_effective: lot.eudr_mitigation_effective ?? null },

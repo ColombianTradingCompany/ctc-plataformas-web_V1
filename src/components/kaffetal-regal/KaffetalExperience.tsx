@@ -671,12 +671,38 @@ function Experience() {
     showToast("Envío de muestra confirmado ✓ · CTC revisará su recibo");
   }
 
+  // F2 (2026-07-29): espejo de datasheet.contributions → lot_contributions.
+  // La tabla es lo que leen los consumidores server (eudrGate, EVA, Sello, y la
+  // DDS de F3); el datasheet sigue siendo la fuente de edición de la Ficha.
+  // Best-effort tras un guardado exitoso del lote — un fallo aquí no tumba el
+  // guardado (el próximo save re-sincroniza).
+  async function mirrorLotContributions(lotId: string, contribs: { finca_id: string; weight_kg: string }[]) {
+    const { data: existing } = await supabase.from("lot_contributions").select("id, finca_id, weight_kg").eq("lot_id", lotId);
+    const rows = existing ?? [];
+    const wanted = new Map(contribs.map((c) => [c.finca_id, c.weight_kg.trim() ? Number(c.weight_kg.replace(",", ".")) : null]));
+    const stale = rows.filter((r) => !wanted.has(r.finca_id));
+    if (stale.length) await supabase.from("lot_contributions").delete().in("id", stale.map((r) => r.id));
+    for (const [fincaId, kg] of wanted) {
+      const cur = rows.find((r) => r.finca_id === fincaId);
+      const curKg = cur?.weight_kg != null ? Number(cur.weight_kg) : null;
+      if (!cur) {
+        await supabase.from("lot_contributions").insert({ lot_id: lotId, finca_id: fincaId, weight_kg: kg });
+      } else if (curKg !== kg) {
+        await supabase.from("lot_contributions").update({ weight_kg: kg, updated_at: new Date().toISOString() }).eq("id", cur.id);
+      }
+    }
+  }
+
   async function saveFicha(updates: FichaSaveUpdate): Promise<boolean> {
     if (!curLotId) return false;
     const finca = updates.finca ? fincas.find((f) => f.name === updates.finca) : undefined;
     const current = lots.find((l) => l.id === curLotId);
 
     const patch: Record<string, unknown> = {
+      // F2: la ventana de cosecha vive también en columnas reales de `lots`
+      // (la prueba temporal de claims y la DDS de F3 las leen del lado server).
+      harvest_from: updates.datasheet.harvest_from || null,
+      harvest_to: updates.datasheet.harvest_to || null,
       datasheet: updates.datasheet,
       ficha_variedad: updates.summary.ficha_variedad,
       ficha_proceso: updates.summary.ficha_proceso,
@@ -701,6 +727,7 @@ function Experience() {
       showToast("No se pudo guardar la ficha. Intente de nuevo.");
       return false;
     }
+    void mirrorLotContributions(curLotId, updates.datasheet.contributions);
     // El autosave (skipSnapshot) no alimenta la sparkline: un punto cada pocos
     // segundos inundaría ficha_completion_snapshots sin contar nada nuevo.
     if (!updates.skipSnapshot) {
@@ -1628,6 +1655,7 @@ function Experience() {
           key={curLot.id}
           lot={curLot}
           fincas={fincas}
+          fincaCerts={fincaCerts}
           gi={gi}
           onBack={() => setView(userId ? "app" : "landing")}
           onSave={saveFicha}

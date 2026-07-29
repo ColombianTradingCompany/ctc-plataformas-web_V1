@@ -11,7 +11,7 @@
 // cuestionario viejo recogía quedan como histórico en la ficha — ya no se piden.
 
 import { useMemo } from "react";
-import { lotEudrStatus, fincaEudrStatus, resolveSourceFincas } from "@/lib/eudr";
+import { lotEudrStatus, fincaEudrStatus, resolveContributionFincas } from "@/lib/eudr";
 import { EudrStatusBadge } from "../../EudrStatusBadge";
 import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
@@ -23,10 +23,8 @@ const INFO = {
 };
 
 export function PaneA5Eudr({ data, fincas }: PaneProps) {
-  const sourceFincas = useMemo(
-    () => resolveSourceFincas(data.origin_category, data.estate, data.additional_estate_ids, fincas),
-    [data.origin_category, data.additional_estate_ids, data.estate, fincas]
-  );
+  // F2: el origen son los APORTES de A2 (FichaView siembra los legacy al abrir).
+  const sourceFincas = useMemo(() => resolveContributionFincas(data.contributions, fincas), [data.contributions, fincas]);
 
   const status = lotEudrStatus(data, sourceFincas);
 

@@ -7,6 +7,7 @@ import { fincaCenter } from "@/lib/earthKml";
 import { seasonLabel, type Season } from "@/lib/arena/seasons";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
+import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
 import type { EvaChecklist } from "./evaChecklist";
 import {
   fincaEudrStatus,
@@ -65,6 +66,9 @@ type LotRow = {
   id: string;
   name: string;
   producer_id: string;
+  // F2: la ventana de cosecha — la prueba temporal de los claims derivados.
+  harvest_from: string | null;
+  harvest_to: string | null;
   stage: string;
   intake_step: number;
   grade: string | null;
@@ -148,7 +152,7 @@ export default async function BcpLotesPage() {
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet,
+        `id, name, producer_id, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet, harvest_from, harvest_to,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -200,6 +204,54 @@ export default async function BcpLotesPage() {
     for (const v of lot.datasheet?.extra_video_assets ?? []) assetIds.push(v.assetId);
     for (const a of Object.values(lot.datasheet?.cert_attachments ?? {})) assetIds.push(a.assetId);
   }
+
+  // F2 (2026-07-29): aportes del lote + certificados de finca para los claims
+  // derivados que la EVA verifica (nada que digitar — solo contrastar).
+  const [{ data: contribRowsRaw }, { data: fincaCertRowsRaw }] = await Promise.all([
+    service
+      .from("lot_contributions")
+      .select("lot_id, weight_kg, fincas(id, name, municipio, departamento)")
+      .in("lot_id", lotRows.map((l) => l.id)),
+    service.from("finca_certificates").select("finca_id, scheme, cert_number, valid_from, valid_to, verified_by_ctc"),
+  ]);
+  type ContribRowJoin = { lot_id: string; weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null }[] | null };
+  const contribsByLot = new Map<string, ContributionInput[]>();
+  for (const r of ((contribRowsRaw as ContribRowJoin[] | null) ?? [])) {
+    const f = Array.isArray(r.fincas) ? r.fincas[0] : r.fincas;
+    if (!f) continue;
+    const list = contribsByLot.get(r.lot_id) ?? [];
+    list.push({
+      fincaId: f.id,
+      fincaName: f.name,
+      weightKg: r.weight_kg != null ? Number(r.weight_kg) : null,
+      municipio: f.municipio ?? "",
+      departamento: f.departamento ?? "",
+      pais: "Colombia",
+    });
+    contribsByLot.set(r.lot_id, list);
+  }
+  const allFincaCerts: CertInput[] = (((fincaCertRowsRaw as { finca_id: string; scheme: string; valid_from: string | null; valid_to: string | null; verified_by_ctc: boolean }[] | null) ?? [])).map((c) => ({
+    fincaId: c.finca_id, scheme: c.scheme, validFrom: c.valid_from, validTo: c.valid_to, verifiedByCtc: c.verified_by_ctc,
+  }));
+
+  const claimRowsFor = (lot: LotRow): { l: string; v: string }[] => {
+    const contribs = contribsByLot.get(lot.id) ?? [];
+    if (!contribs.length) return [];
+    const certs = allFincaCerts.filter((c) => contribs.some((x) => x.fincaId === c.fincaId));
+    const claims = deriveClaims(contribs, certs, { from: lot.harvest_from ?? null, to: lot.harvest_to ?? null });
+    return claims.map((c) => ({
+      l: `Sello ${CERT_KEY_LABEL[c.scheme] ?? c.scheme} (derivado)`,
+      v: c.claim
+        ? `✓ 100% del peso${c.fullyVerified ? " · certificados verificados por CTC" : " · declarado (verificar en la finca)"}`
+        : `${c.coveragePct != null ? `Cobertura ${c.coveragePct}% del peso` : "Cobertura incompleta (faltan kg por finca)"}${
+            c.blockers.length ? ` — bloquea ${c.blockers.map((b) => b.fincaName).join(", ")}` : ""
+          }`,
+    }));
+  };
+  const archetypeFor = (lot: LotRow): string | null => {
+    const a = deriveArchetype(contribsByLot.get(lot.id) ?? []);
+    return a ? ARCHETYPE_LABEL[a] : null;
+  };
 
   const [producers, { data: comms }, { data: inscriptionRows }, signedUrls] = await Promise.all([
     fetchProducerContacts(service, [...lotRows.map((l) => l.producer_id), ...passedRows.map((l) => l.producer_id)]),
@@ -341,6 +393,8 @@ export default async function BcpLotesPage() {
                       showConfirmReceipt={col.id === "eva" && lot.source === "bcp_manual_entry"}
                       showEvaVerdict={col.id === "eva" && lot.stage === "ficha_completa"}
                       inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
+                      derivedClaimRows={claimRowsFor(lot)}
+                      archetypeLabel={archetypeFor(lot)}
                     />
                   ))}
                 </div>
@@ -396,6 +450,8 @@ function LotCard({
   showConfirmReceipt,
   showEvaVerdict,
   inscriptionSettled,
+  derivedClaimRows,
+  archetypeLabel,
 }: {
   lot: LotRow;
   producer: ProducerContact | undefined;
@@ -404,6 +460,10 @@ function LotCard({
   showConfirmReceipt: boolean;
   showEvaVerdict: boolean;
   inscriptionSettled: boolean;
+  // F2: claims derivados (lot_contributions × finca_certificates × cosecha) y
+  // arquetipo calculado — la EVA los VERIFICA, no los digita.
+  derivedClaimRows: { l: string; v: string }[];
+  archetypeLabel: string | null;
 }) {
   const finca = toFincaEudrFields(lot.fincas);
   const eudrStatus: EudrStatus = lotEudrStatus(lot, finca ? [finca] : []);
@@ -424,7 +484,8 @@ function LotCard({
     row("Especie", ds.species),
     row("Tipo de producto", [ds.product_type, ds.hs_code].filter(Boolean).join(" · HS ")),
     row("Cosecha", [ds.harvest_year, ds.harvest_season].filter(Boolean).join(" · ")),
-    row("Categoría de origen", ds.origin_category),
+    row("Tipo de lote (calculado)", archetypeLabel ?? ds.origin_category),
+    row("Recolección", lot.harvest_from && lot.harvest_to ? `${lot.harvest_from} → ${lot.harvest_to}` : ""),
     row("Región", [ds.region_dep, ds.county_muni_text || ds.county_muni].filter(Boolean).join(" · ")),
     row("Altitud", ds.masl ? `${ds.masl} msnm` : lot.ficha_altitud_m ? `${lot.ficha_altitud_m} msnm` : ""),
     row("Edad del cultivo", ds.plantation_age),
@@ -476,7 +537,7 @@ function LotCard({
       });
     }
   }
-  const certExtraRows = rows(row("Premios y rankings", ds.awards), row("Sobre el origen", ds.about_origin));
+  const certExtraRows = rows(...derivedClaimRows.map((r) => row(r.l, r.v)), row("Premios y rankings", ds.awards), row("Sobre el origen", ds.about_origin));
 
   // ── FT2 · Análisis Físico: B2 completo (los 10 atributos SCA), «No lo sé»
   //    explícito y la referencia Q-Grader verificable contra el CQI. ──

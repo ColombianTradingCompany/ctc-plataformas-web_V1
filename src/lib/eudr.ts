@@ -293,6 +293,21 @@ export function mapPreviewUrl(
   return null;
 }
 
+// F2 (2026-07-29): el origen del lote son APORTES (lot_contributions /
+// datasheet.contributions) — este es el resolver nuevo; resolveSourceFincas
+// queda como fallback legacy para datasheets pre-F2 sin aportes sembrados.
+export function resolveContributionFincas(contribs: { finca_id: string }[], fincas: Finca[]): Finca[] {
+  const seen = new Set<string>();
+  const out: Finca[] = [];
+  for (const c of contribs) {
+    if (seen.has(c.finca_id)) continue;
+    seen.add(c.finca_id);
+    const f = fincas.find((x) => x.id === c.finca_id);
+    if (f) out.push(f);
+  }
+  return out;
+}
+
 export function resolveSourceFincas(
   originCategory: string,
   estate: string,

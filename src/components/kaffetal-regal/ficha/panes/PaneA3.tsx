@@ -1,56 +1,32 @@
 "use client";
 
-import { CERT_INFO, ORIGIN_CERTS, type FichaFormData } from "../fichaData";
-import { CertCheckbox } from "./CertCheckbox";
+// F2 (2026-07-29, docs/EUDR_RESTRUCTURE_PLAN.md): las casillas de certificados
+// salieron de la Ficha — un certificado es una CREDENCIAL de la finca (número +
+// vigencia, se registra en "Mis fincas" → Certificaciones) y el lote solo
+// DERIVA sus sellos (ver A4). Lo que se queda aquí es lo que de verdad es del
+// LOTE: los premios (un Cup of Excellence se gana un café concreto en un año
+// concreto, no una finca) y la narrativa del origen.
+
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
+import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
-export function PaneA3({ data, onChange, onUploadCertFile, viewingLocked }: PaneProps) {
+export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
   const awardsUp = useUpload();
   return (
     <div className={styles.fsec}>
-      <h3><span className={styles.fn}>A3</span> Certificados de Origen & Reconocimientos</h3>
+      <h3><span className={styles.fn}>A3</span> Reconocimientos & Narrativa del Origen</h3>
       <p className={styles.fexample} style={{ marginTop: 8 }}>
-        DO = Denominación de Origen Protegida. DOR = Denominación de Origen Regional. IGP = Indicación Geográfica Protegida.
+        Los certificados de su finca (DO, Rainforest, orgánico…) ya no se marcan aquí: se registran una sola vez en{" "}
+        <b>Mis fincas → Certificaciones</b>, con número y vigencia, y este lote los hereda automáticamente (véalos en A4).
       </p>
       <div className={styles.fgrid} style={{ marginTop: 14 }}>
         <div className={`${styles.ff} ${styles.fw}`}>
-          <label>Certificados de Origen</label>
-          <p className={styles.fexample} style={{ marginTop: 2 }}>
-            Puede marcar ahora y adjuntar el soporte más adelante — pero al enviar la Ficha, los certificados sin
-            prueba se desmarcan: afirmarlos es un asunto serio que debe confirmarse.
-          </p>
-          <div className={styles.certGrid}>
-            {ORIGIN_CERTS.map(([key, label]) => (
-              <CertCheckbox
-                key={key}
-                certKey={key}
-                label={label}
-                info={CERT_INFO[key]}
-                checked={data[key as keyof FichaFormData] as boolean}
-                onToggle={(checked) => onChange({ [key]: checked } as Partial<FichaFormData>)}
-                attachment={data.cert_attachments[key]}
-                locked={viewingLocked}
-                onUpload={onUploadCertFile}
-              />
-            ))}
-            <div className={`${styles.certCard} ${data.origin_cert_other ? styles.certCardChecked : ""}`}>
-              <label className={styles.certCardHead}>
-                <input type="checkbox" checked={data.origin_cert_other} onChange={(e) => onChange({ origin_cert_other: e.target.checked })} />
-                <span style={{ flex: 1 }}>Otro certificado</span>
-              </label>
-            </div>
-          </div>
-        </div>
-        {data.origin_cert_other && (
-          <div className={`${styles.ff} ${styles.fw}`}>
-            <label>Otro (especificar)</label>
-            <input value={data.origin_cert_other_text} onChange={(e) => onChange({ origin_cert_other_text: e.target.value })} placeholder="Otro certificado de origen…" />
-          </div>
-        )}
-        <div className={`${styles.ff} ${styles.fw}`}>
-          <label>Premios & Rankings (Awards)</label>
+          <label>
+            Premios & Rankings (Awards)
+            <FieldInfo text="Los premios sí son de ESTE café: un Cup of Excellence o un ranking se otorga a un lote concreto en un año concreto — no a la finca. Por eso viven aquí y no en el registro de certificados de la finca." />
+          </label>
           <textarea value={data.awards} onChange={(e) => onChange({ awards: e.target.value })} placeholder="Ej. Cup of Excellence 2024 · Top 10…" />
           {data.awards.trim() !== "" && (
             <div style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>

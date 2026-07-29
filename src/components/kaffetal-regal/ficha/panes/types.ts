@@ -1,10 +1,13 @@
-import type { Finca, GeneralInfo, Lot } from "../../data";
+import type { Finca, FincaCertificate, GeneralInfo, Lot } from "../../data";
 import type { FichaFormData } from "../fichaData";
 
 export type PaneProps = {
   data: FichaFormData;
   onChange: (patch: Partial<FichaFormData>) => void;
   fincas: Finca[];
+  /** F2: certificados de las fincas del productor (F1) — A4 deriva de aquí los
+   *  claims del lote; la Ficha nunca los edita. */
+  fincaCerts: FincaCertificate[];
   onOpenNewFinca: () => void;
   lot: Lot;
   gi: GeneralInfo;

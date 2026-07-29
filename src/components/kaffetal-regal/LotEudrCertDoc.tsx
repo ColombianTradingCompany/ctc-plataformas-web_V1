@@ -51,12 +51,20 @@ export function LotEudrCertDoc({
   producerName,
   producerContact,
   comms,
+  derivedClaims = [],
+  archetypeLabel = null,
+  harvestWindow = null,
 }: {
   lot: CertLot;
   fincas: CertFinca[];
   producerName: string;
   producerContact: string;
   comms: { id: string; note: string; created_at: string; author_role: string }[];
+  /** F2: sellos DERIVADOS al 100% de cobertura — lo único que un documento
+   *  puede afirmar. La cobertura parcial es dato interno, no afirmación. */
+  derivedClaims?: { label: string; verified: boolean }[];
+  archetypeLabel?: string | null;
+  harvestWindow?: string | null;
 }) {
   const row = (label: string, value: React.ReactNode) => (
     <tr>
@@ -173,7 +181,15 @@ export function LotEudrCertDoc({
                       ))}
                     </ul>
                   )}
-                {row("Esquemas de certificación / verificación", lot.eudr_cert_scheme || "ninguno declarado")}
+                {archetypeLabel && row("Tipo de lote (calculado)", archetypeLabel)}
+                {harvestWindow && row("Ventana de recolección", harvestWindow)}
+                {row(
+                  "Sellos de certificación (derivados)",
+                  derivedClaims.length
+                    ? derivedClaims.map((c) => `${c.label}${c.verified ? " · verificado por CTC" : " · declarado"}`).join(" · ")
+                    : "ninguno con cobertura total del lote"
+                )}
+                {lot.eudr_cert_scheme ? row("Esquemas declarados (histórico)", lot.eudr_cert_scheme) : null}
                 {row("Indicios de ilegalidad o deforestación", yesNo(lot.eudr_illegality_indicators))}
                 {row("Documentos disponibles y verificables", yesNo(lot.eudr_docs_available))}
                 {row(

@@ -76,4 +76,37 @@ Contexto abierto al cerrar V20:
   la pestaña 4 + advertencia en línea mientras falte alguna fecha.
 - Plataforma **V2.24** (`src/lib/version.ts`) — V2.23 se había quedado sin subir
   cuando salió la reestructura EUDR F1-F3.
+(commit: 1d2e388, mergeado a main en ad137a8 vía PR #1 — el primer PR del repo)
+
+## [2026-07-29] Reset de datos en producción tras la reestructura EUDR
+- **Borrado en producción**, decisión del owner: 13 fincas, 7 lotes (todos en
+  `borrador`, ninguno pasado de `intake_step` 1), 2 `lot_contributions`,
+  2 `finca_parcelas`, 3 `ficha_completion_snapshots`. Motivo: los datasheets
+  todavía cargaban `origin_category` («Single Estate», «Regional Blend»), que F2
+  abolió — el arquetipo se CALCULA — y `cert_attachments`, que F1 reemplazó por
+  credenciales de finca. Nada colgaba aguas abajo (0 evaluaciones, 0
+  inscripciones, 0 contratos, 0 listings), así que no hubo cascada.
+- **Intacto**: las 20 cuentas de productor y sus 21 `producer_profiles` (razón
+  social, NIT, cédula cafetera, celular, avatar, video, Kaffetal Club). Nadie
+  perdió acceso ni perfil; perdieron fincas y lotes.
+- **Respaldo fila a fila** en `CTC Web Platform/backup-reset-2026-07-29.json`
+  (FUERA del repo a propósito: lleva datos personales de productores). Permite
+  restaurar una finca suelta sin revivir el resto.
+- **Storage**: 12 media_assets huérfanos (4 videos de finca, 6 fotos, 2 PDF de
+  respaldo) y sus 12 objetos, **91,3 MB liberados**. Los ids salieron del
+  respaldo, no de una heurística, y el script rechazaba cualquier asset todavía
+  referenciado por un `producer_profiles`. `media_assets` quedó en 64 filas con
+  CERO apuntando a un archivo inexistente.
+- **Panel de BCP**: la única basura real del reset eran 13 filas de
+  `bcp_task_state` con clave `finca:<id>` de fincas ya borradas — eliminadas.
+  `producer_comm_log.finca_id`/`lot_id` se limpiaron solos (FK ON DELETE SET
+  NULL), así que no quedaron deep-links muertos. El Panel queda honesto: KPIs de
+  finca/lote en «0 de 0» y 10 tareas reales, todas leads sin responder.
+- **NO se tocó el Buzón** (306 correos desde 2025-03-01 + 295 adjuntos), ni
+  leads, ni `audit_log`, ni `producer_comm_log`, ni `panel_users`, ni socios,
+  ni club: nada de eso quedó inconsistente con la reestructura.
+- Hallazgo al medir: el bucket `kaffetal-media` está a **492 MB de 1 GB**, y 313
+  de sus 377 objetos no tienen fila en `media_assets` (Buzón 295 objetos/144 MB
+  y GVG 17/32,8 MB escriben directo a Storage, por diseño). La retención de 30
+  días poda Hostinger, no el bucket. Es el próximo techo que se va a tocar.
 (commit: pending)

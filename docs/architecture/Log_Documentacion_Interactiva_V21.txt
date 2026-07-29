@@ -87,4 +87,4 @@ Contexto abierto al cerrar V21:
   cross-link a `estudio-contenido` y al patrón `public catalog view`;
   escenario nuevo "Un capítulo de Coffeed" (estudio produce → acepta →
   publica → KR/CP/DC lo leen).
-(commit: pending)
+(commit: c385764)

@@ -47,7 +47,7 @@ se anotó y V18.0 salió publicado describiéndolo como maqueta.
   y claims derivados en el lote → DDS registrada con registro congelado de 5 años.
   Material para el wrap V20: nodos n-kaffetal/n-bcp/n-db y entradas DICT nuevas
   (parcela, credencial/claim derivado, DDS/snapshot).
-(commit: pending)
+(commit: c9fdab0)
 
 ## [2026-07-29] F2 de la reestructura EUDR: el lote como composición (aportes + claims derivados)
 - Segunda fase de docs/EUDR_RESTRUCTURE_PLAN.md. El lote pasa a ser un conjunto de
@@ -95,7 +95,7 @@ se anotó y V18.0 salió publicado describiéndolo como maqueta.
   KML por parcelas, conteo "EUDR Aptas" del dashboard (regla legacy).
 - Es cambio de nodo (`n-kaffetal`, `n-bcp`, `n-db` +1 tabla) y semillas DICT: el
   arquetipo calculado y los claims derivados merecen entrada propia en el wrap V20.
-(commit: pending)
+(commit: 68932ec)
 
 ## [2026-07-29] F1 de la reestructura EUDR: la finca como titular (parcelas + certificados)
 - Primera fase de docs/EUDR_RESTRUCTURE_PLAN.md (aprobado por el owner el 2026-07-29,
@@ -143,7 +143,7 @@ se anotó y V18.0 salió publicado describiéndolo como maqueta.
   (el modal y approveFinca ya usan parcelas).
 - Es cambio de nodo (`n-kaffetal`, `n-bcp`, `n-db`: +2 tablas) y semilla de las
   futuras entradas DICT de F2 (claims derivados).
-(commit: pending)
+(commit: fd7bbc5)
 
 ## [2026-07-28] El autosave perdía en silencio el último cambio al cerrar
 - **Bug reportado por el owner**: en el Panel del Productor → Finca → "Ubicación y
@@ -172,7 +172,7 @@ se anotó y V18.0 salió publicado describiéndolo como maqueta.
   GUARDADOS, ahora guarda; (2) abrir y cerrar sin tocar nada ⇒ no guarda (sin escrituras
   espurias); (3) elegir, esperar el debounce y luego cerrar ⇒ guarda UNA sola vez.
 - No es cambio de nodo ni de escenario del mapa: es una corrección de comportamiento.
-(commit: pending)
+(commit: c484c63)
 
 ## [2026-07-28] Calculadora de Mermas · CTC — sube a V3
 - El owner subió `Calculadora_Mermas_Cafe_CTC_V3.html` a `reference_html_tools/` y
@@ -194,5 +194,5 @@ se anotó y V18.0 salió publicado describiéndolo como maqueta.
   → 200 pergamino → 160 verde → 134,4 tostado; merma total 86,6%; factor 7,44:1).
 - No es cambio de nodo ni de escenario: la entrada DICT `herramientas` ya describe el
   mecanismo y sigue siendo correcta.
-(commit: pending)
+(commit: 710c1b7)
 

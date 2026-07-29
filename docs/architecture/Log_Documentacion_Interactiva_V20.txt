@@ -1,0 +1,23 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V20.0(c9fdab0).html
+(CTC Web Platform, 2026-07-29). Cada entrada se compila al próximo Version Wrap (V21).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19): registrar la entrada AL TERMINAR el trabajo,
+no "después". El backend real del Directorio del Café (3 commits del 2026-07-24) nunca
+se anotó y V18.0 salió publicado describiéndolo como maqueta.
+
+Contexto abierto al cerrar V20:
+- La reestructura EUDR quedó en F1+F2+F3. **F4 (blends) está DIFERIDA a propósito**
+  hasta que los arquetipos Regional/Multi-Origin tengan volumen real: tabla completa
+  municipio→región cafetera, recetas ponderadas con país y riesgo fechado, y split de
+  un lote en sub-lotes por cobertura. Ver docs/EUDR_RESTRUCTURE_PLAN.md §7 y §8.
+- Sin verificar en vivo: el botón "Registrar DDS" del BCP (2FA real impide navegarlo
+  en automático) — su lógica es el motor puro ya testeado, pero conviene un paso
+  manual del owner la primera vez que se registre una DDS de verdad.
+
+---

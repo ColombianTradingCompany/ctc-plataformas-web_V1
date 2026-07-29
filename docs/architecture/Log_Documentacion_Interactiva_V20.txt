@@ -109,4 +109,7 @@ Contexto abierto al cerrar V20:
   de sus 377 objetos no tienen fila en `media_assets` (Buzón 295 objetos/144 MB
   y GVG 17/32,8 MB escriben directo a Storage, por diseño). La retención de 30
   días poda Hostinger, no el bucket. Es el próximo techo que se va a tocar.
-(commit: pending)
+(commit: sin commit — es una operación de datos en producción, no de código)
+
+=== CERRADA. Compilada en Documentacion_Interactiva_V21.0(ad137a8).html el
+    2026-07-29. Lo pendiente continúa en Log_Documentacion_Interactiva_V21.txt. ===

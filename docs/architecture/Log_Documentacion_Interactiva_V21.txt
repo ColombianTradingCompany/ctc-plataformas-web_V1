@@ -1,0 +1,34 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V21.0(ad137a8).html
+(CTC Web Platform, 2026-07-29). Cada entrada se compila al próximo Version Wrap (V22).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19): registrar la entrada AL TERMINAR el trabajo,
+no "después". El backend real del Directorio del Café (3 commits del 2026-07-24) nunca
+se anotó y V18.0 salió publicado describiéndolo como maqueta.
+
+Contexto abierto al cerrar V21:
+- **F4 (blends) sigue DIFERIDA a propósito** hasta que los arquetipos Regional/
+  Multi-Origin tengan volumen real: tabla completa municipio→región cafetera, recetas
+  ponderadas con país y riesgo fechado, y split de un lote en sub-lotes por cobertura.
+  Ver docs/EUDR_RESTRUCTURE_PLAN.md §7 y §8.
+- Sin verificar en vivo: el botón "Registrar DDS" del BCP (2FA real impide navegarlo
+  en automático) — su lógica es el motor puro ya testeado, pero conviene un paso
+  manual del owner la primera vez que se registre una DDS de verdad.
+- **Decisión pendiente del owner**: las cuatro denominaciones de origen (DOR, DO, IGP,
+  Café de Colombia) están atadas a una región, no a una auditoría con vencimiento, pero
+  `deriveClaims` les exige vigencia igual que a los demás esquemas — hoy no pueden
+  respaldar un sello sin fechas inventadas. Eximirlas toca la semántica de claims de F2
+  y `scripts/qa-claims-check.mjs`.
+- **Techo a la vista**: el bucket `kaffetal-media` está en 492 MB de 1 GB. El Buzón
+  (295 objetos / 144 MB) crece con cada sincronización y la retención de 30 días poda
+  Hostinger, NO el bucket. Nadie lo está podando.
+- La base quedó SIN fincas ni lotes tras el reset del 2026-07-29 (respaldo fila a fila
+  en `CTC Web Platform/backup-reset-2026-07-29.json`, fuera del repo). El próximo
+  productor que entre estrena el formulario de 4 pestañas desde cero.
+
+---

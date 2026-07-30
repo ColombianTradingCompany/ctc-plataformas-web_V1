@@ -192,4 +192,4 @@ Contexto abierto al cerrar V21:
 - Nodos/DICT para el wrap: mover el nodo Coffeed bajo ECP; DICT `identidad de
   marca` y `medios de consulta`; el escenario «Un capítulo de Coffeed» cambia
   de actor (ECP produce → publica → KR/CP/DC lo leen).
-(commit: pending)
+(commit: cd25d8a)

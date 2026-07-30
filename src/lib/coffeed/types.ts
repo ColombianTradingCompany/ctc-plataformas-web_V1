@@ -1,13 +1,44 @@
 // ── Coffeed · tipos compartidos ──────────────────────────────────────────────
-// El muro interno + la línea de producción editorial del Estudio de Contenido
-// (reference_coffeed/). Los tipos viajan entre las Server Actions y los dos
-// clientes: CoffeedStudio (socio estudio-contenido) y CoffeedWall (KR/CP/DC).
+// El muro interno + la línea de producción editorial, que desde el 2026-07-30
+// vive en el ECP (dirección), no en el socio Estudio de Contenido.
+//
+// El pipeline es UNA sola secuencia, y el estado del ciclo la nombra:
+//   Medios de Consulta  → qué se puede consultar (lista blanca validada)
+//   Selección de Fuentes → barrido de 7 días + triaje + selección  (abierto)
+//   [extracción]         → proceso de backend                      (extrayendo → extraido)
+//   Propuestas           → 3 ángulos, se elige uno                 (propuestas)
+//   Posts en Fila        → se crea el post y se publica            (post → listo → publicado)
 
 export type CoffeedItemKind = "video" | "articulo";
 export type CoffeedItemOrigin = "auto" | "manual";
 export type CoffeedDecision = "pending" | "picked" | "dropped";
-export type CoffeedDraftState = "draft" | "accepted" | "published";
 export type CoffeedThreadState = "open" | "paused" | "closed";
+export type CoffeedSourceStatus = "pending" | "approved" | "rejected";
+export type CoffeedPostStatus = "pendiente" | "generando" | "listo" | "error";
+
+/** El estado del ciclo ES la columna del kanban donde aparece. */
+export type CoffeedCycleStatus =
+  | "abierto"
+  | "extrayendo"
+  | "extraido"
+  | "propuestas"
+  | "post"
+  | "listo"
+  | "publicado"
+  | "cerrado";
+
+export type CoffeedSource = {
+  id: string;
+  name: string;
+  kind: "youtube" | "outlet";
+  category: string | null;
+  list: "white" | "black";
+  url: string | null;
+  status: CoffeedSourceStatus;
+  validationNote: string | null;
+  lastSweptAt: string | null;
+  active: boolean;
+};
 
 export type CoffeedSample = {
   entryId: string;
@@ -17,7 +48,7 @@ export type CoffeedSample = {
   url: string;
   kind: CoffeedItemKind;
   origin: CoffeedItemOrigin;
-  ingestedAt: string;
+  publishedAt: string | null;
   axis: string | null;
   relevance: number | null;
   reason: string | null;
@@ -32,8 +63,10 @@ export type CoffeedClaim = { id: string; text: string; ref: string };
 
 export type CoffeedExtraction = {
   itemId: string;
+  title: string;
+  srcKey: string | null;
   format: "transcript" | "markdown";
-  body: string; // conserva los marcadores ⟦afirmación|ref⟧
+  body: string;
   claims: CoffeedClaim[];
 };
 
@@ -51,7 +84,7 @@ export type CoffeedProposal = {
   angle: string;
   title: string;
   hook: string | null;
-  panelMap: string[]; // ['a','a','b',...]
+  panelMap: string[];
   continuesId: string | null;
   continuesName: string | null;
   opens: string | null;
@@ -65,38 +98,39 @@ export type CoffeedPanel = {
   role: string | null;
   text: string;
   note: string | null;
-  itemId: string | null; // null = sin trazar (bloquea la aceptación)
-  srcKey: string | null; // derivada de la mesa de cata del ciclo
+  itemId: string | null;
+  srcKey: string | null;
   ref: string | null;
-  claimId: string | null;
 };
 
-export type CoffeedDraft = {
-  id: string;
+/** El post: lo que antes era "borrador" y ahora sale renderizado del backend. */
+export type CoffeedPost = {
+  draftId: string;
   title: string;
-  state: CoffeedDraftState;
+  excerpt: string | null;
+  state: "draft" | "accepted" | "published";
+  postStatus: CoffeedPostStatus;
+  postError: string | null;
+  hasHtml: boolean;
+  reeditPrompt: string | null;
   acceptedAt: string | null;
   publishedAt: string | null;
   panels: CoffeedPanel[];
 };
 
-export type CoffeedScene = { n: number; duration: number; voiceover: string; av: string; direction: string };
-
+/** Una sesión editorial completa — la tarjeta que viaja por los dos kanban. */
 export type CoffeedCycle = {
   id: string;
   date: string;
   chapterNo: number;
-  stage: number; // 1..7
-  closedEmpty: boolean;
-};
-
-export type CoffeedSource = {
-  id: string;
-  name: string;
-  kind: "youtube" | "outlet";
-  category: string | null;
-  list: "white" | "black";
-  active: boolean;
+  status: CoffeedCycleStatus;
+  title: string | null;
+  error: string | null;
+  sweptAt: string | null;
+  pickedCount: number;
+  extractionCount: number;
+  proposalCount: number;
+  post: CoffeedPost | null;
 };
 
 export type CoffeedAnnouncement = {
@@ -108,36 +142,68 @@ export type CoffeedAnnouncement = {
   publishedAt: string;
 };
 
-// Un capítulo ya en el muro (aceptado o publicado), con sus paneles.
+/** Un capítulo publicado, tal y como lo leen KR / Cherry Picked / Directorio. */
 export type CoffeedWallChapter = {
   draftId: string;
   chapterNo: number;
   title: string;
-  state: CoffeedDraftState;
+  excerpt: string | null;
   publishedAt: string | null;
-  acceptedAt: string | null;
   panels: { position: number; role: string | null; text: string }[];
 };
 
-// Todo lo que el estudio necesita para pintarse de una vez.
-export type CoffeedStudioBundle = {
-  cycle: CoffeedCycle | null;
-  nextChapterNo: number;
-  samples: CoffeedSample[];
-  extractions: CoffeedExtraction[];
-  threads: CoffeedThread[];
-  proposals: CoffeedProposal[];
-  draft: CoffeedDraft | null;
-  scenes: CoffeedScene[] | null;
+/** El muro público: capítulos + anuncios (2026-07-30: los anuncios TAMBIÉN viajan). */
+export type CoffeedWallBundle = {
+  chapters: CoffeedWallChapter[];
   announcements: CoffeedAnnouncement[];
-  chapters: CoffeedWallChapter[]; // muro interno: aceptados + publicados
+  brand: CoffeedBrandPublic;
+};
+
+/** La guía estética que fuerza que todos los outputs se vean de la misma familia. */
+export type CoffeedBrand = {
+  companyName: string;
+  slogan: string | null;
+  logoPath: string | null;
+  logoUrl: string | null; // firmada al leer
+  palette: string[]; // hasta 5; blanco y negro van implícitos
+  fontFamily: string;
+  artDirection: string | null;
+};
+
+export type CoffeedBrandPublic = Pick<CoffeedBrand, "companyName" | "slogan" | "palette" | "fontFamily">;
+
+/** Todo lo que la consola necesita para pintarse de una vez. */
+export type CoffeedConsoleBundle = {
+  openCycle: CoffeedCycle | null;
+  samples: CoffeedSample[]; // solo del ciclo abierto
+  cycles: CoffeedCycle[]; // el resto, para los dos kanban
+  threads: CoffeedThread[];
+  announcements: CoffeedAnnouncement[];
+  chapters: CoffeedWallChapter[];
   sources: CoffeedSource[];
+  brand: CoffeedBrand;
+  nextChapterNo: number;
 };
 
 export type CoffeedResult = { ok: true } | { ok: false; error: string };
 
-// Reglas de formato — las mismas tres capas: cliente, servidor y trigger.
+// Reglas de formato del carrusel — se validan en el cliente, en la action y en
+// el trigger `coffeed_guard_accept`. El prompt es una petición, no una garantía.
 export const COFFEED_RULES = { MIN: 5, MAX: 10, CAP_PER_SOURCE: 3 } as const;
+
+/** Tipografías ofrecidas para la marca. No fuerzan TODO el texto: solo los
+ *  bloques estándar del post (titular, paneles, pie). */
+export const COFFEED_FONTS = [
+  { id: "Fraunces", stack: "'Fraunces', Georgia, serif", label: "Fraunces · serif editorial (la de CTC)" },
+  { id: "Instrument Sans", stack: "'Instrument Sans', system-ui, sans-serif", label: "Instrument Sans · palo seco" },
+  { id: "Spline Sans Mono", stack: "'Spline Sans Mono', ui-monospace, monospace", label: "Spline Sans Mono · monoespaciada" },
+  { id: "Georgia", stack: "Georgia, 'Times New Roman', serif", label: "Georgia · serif clásica" },
+  { id: "Helvetica", stack: "'Helvetica Neue', Helvetica, Arial, sans-serif", label: "Helvetica · neutra" },
+] as const;
+
+export function coffeedFontStack(fontFamily: string): string {
+  return COFFEED_FONTS.find((f) => f.id === fontFamily)?.stack ?? COFFEED_FONTS[0].stack;
+}
 
 export type CoffeedDraftCheck = {
   count: number;
@@ -183,3 +249,7 @@ export function parseCoffeedClaims(body: string): { text: string; ref: string }[
   }
   return out;
 }
+
+/** Blanco y negro SIEMPRE están disponibles; la paleta guarda solo los 5 propios. */
+export const COFFEED_BASE_COLORS = ["#FFFFFF", "#000000"] as const;
+export const COFFEED_PALETTE_MAX = 5;

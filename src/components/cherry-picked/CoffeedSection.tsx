@@ -14,6 +14,8 @@ const EN = {
   labels: {
     chapter: "Chapter",
     panels: "panels",
+    announcement: "Announcement",
+    pinned: "pinned",
     emptyTitle: "The first chapter is in production",
     emptyBody: "Coffeed is the CTC network's newsfeed: short chapters on the coffee market, told in panels. Check back soon.",
     loading: "Loading the wall…",
@@ -29,6 +31,8 @@ const T: Record<Lang, typeof EN> = {
     labels: {
       chapter: "Capítulo",
       panels: "paneles",
+      announcement: "Anuncio",
+      pinned: "fijado",
       emptyTitle: "El primer capítulo está en producción",
       emptyBody: "Coffeed es el noticiero de la red CTC: capítulos breves sobre el mercado del café, en paneles. Vuelve pronto.",
       loading: "Cargando el muro…",
@@ -41,6 +45,8 @@ const T: Record<Lang, typeof EN> = {
     labels: {
       chapter: "Kapitel",
       panels: "Panels",
+      announcement: "Ankündigung",
+      pinned: "angeheftet",
       emptyTitle: "Das erste Kapitel ist in Produktion",
       emptyBody: "Coffeed ist der Newsfeed des CTC-Netzwerks: kurze Kapitel über den Kaffeemarkt, in Panels erzählt. Schau bald wieder vorbei.",
       loading: "Die Wand wird geladen…",

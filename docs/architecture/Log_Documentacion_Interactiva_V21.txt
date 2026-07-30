@@ -118,4 +118,78 @@ Contexto abierto al cerrar V21:
   2026-07-24 nunca borró nada; ahora la expiración va como header crudo.
 - Nota post-deploy: las sesiones internas activas mueren con el cambio de
   cookie — hay que iniciar sesión una vez más en /login. HANDOFF gotcha #13.
+(commit: 4bd10c0)
+
+## [2026-07-30] Coffeed v2: del socio al ECP, y un pipeline que sí es una secuencia
+- **CAMBIO DE NODO (decisión del owner, un día después de estrenarlo)**: Coffeed
+  sale del socio *Estudio de Contenido* y pasa al **ECP**, en `/ecp/coffeed`.
+  El argumento manda sobre lo ya construido: la narrativa de la red se DIRIGE
+  desde dentro; lo que se delega es su producción, no la decisión editorial.
+  Gate nuevo `coffeedGate()` (bcp_admin + panel_user activo + grant ecp, sobre
+  la sesión interna); se borran la ruta del socio, su tarjeta en el panel y
+  `requireEstudio.ts`. En el mapa: el nodo Coffeed cuelga del ECP, y el Estudio
+  de Contenido vuelve a ser scaffold puro.
+- **El pipeline se rehace para que sea UNA secuencia legible**, con el estado
+  del ciclo (`coffeed_cycles.status`, enum nuevo) como única fuente: es
+  literalmente la columna del kanban donde vive la tarjeta, así que una acción
+  larga que se corta (529, navegador cerrado) deja su tarjeta con botón de
+  reintento en vez de perderse. Migración `coffeed_v2_ecp_pipeline`.
+    · **Medios de Consulta** (sustituye Ingesta/Fuentes): se pega la URL de un
+      canal o medio y un AGENTE sale a mirarlo con búsqueda web — existencia,
+      publicación recurrente y materia. Si no sirve, lo RECHAZA con motivo y lo
+      deja en la lista negra (nadie lo vuelve a proponer sin saber por qué).
+      Anillo de progreso mientras valida. Lista blanca sembrada con 7 canales
+      de YouTube + 7 medios, como pidió el owner. La ingesta manual ya no vive
+      aquí.
+    · **Selección de Fuentes** (antes «Mesa de cata»): una sesión abierta a la
+      vez (índice parcial). Botón nuevo de **barrido de 7 días** que recorre la
+      lista blanca y trae titular + sumario + FECHA. Aquí sí entran las URLs
+      manuales. El último botón del panel dispara la extracción y salta a
+      Propuestas: la extracción es backend, ya no una pantalla.
+    · **Propuestas**: kanban de 3 columnas (En extracción · Extraídas ·
+      Propuestas). Se abre una tarjeta para leer el material extraído; las
+      listas esperan «Generar 3 propuestas (IA)»; de los 3 ángulos se elige uno
+      con **Crear Post**. La sección «Borrador» DESAPARECE.
+    · **Posts en Fila**: kanban de 2 columnas (Creando · Listos). La ficha del
+      post enlaza al render, descargable en **HTML** y **PDF**, con **Re-editar**
+      (prompt libre que rehace el post sobre las mismas fuentes) y **Publicar**.
+- **Identidad de marca** (tabla `coffeed_brand`, fila única): nombre, slogan,
+  logo, paleta de hasta 5 colores (blanco y negro implícitos), tipografía y
+  dirección de arte. No es decoración: `postTemplate.ts` la lee para maquetar
+  —la maqueta la decide una plantilla determinista, NO un modelo— el logo se
+  empotra en base64 para que el HTML descargado sea autosuficiente, y la
+  dirección de arte viaja como contexto en extracción, propuestas y redacción.
+- **Muro**: sale del grupo «Producción» y sube solo, primero; Canon e Identidad
+  quedan debajo. Y los **anuncios ahora VIAJAN** a KR/Cherry Picked/Directorio
+  junto a los capítulos: el muro es el mismo dondequiera que se muestre.
+- **Bug de contraste corregido**: `.page button { color: inherit }` (0,1,1)
+  ganaba a `.btn` (0,1,0), así que ningún botón se leía hasta el hover, que sí
+  ganaba con `.btn:hover` (0,2,0). Regla nueva en la hoja: ninguna declaración
+  de color por elemento. Medido en vivo: 5.2:1–16.7:1 en todos los botones.
+- **Verificado EN VIVO de punta a punta** con credencial QA (OTP inyectado por
+  SQL): validación de medio (Wikipedia RECHAZADA con motivo → lista negra),
+  barrido real (4 artículos de los últimos 7 días con URL, medio y fecha
+  correctos, de Daily Coffee News / Perfect Daily Grind / Global Coffee
+  Report), extracción (3 fuentes, 6 claims trazables), 3 propuestas
+  genuinamente distintas, post de 5 paneles con 5,4 KB de HTML de marca,
+  publicación, y el capítulo + el anuncio visibles en la sección de Cherry
+  Picked. Datos QA borrados después; se conservan los 4 artículos reales, la
+  sesión abierta y los 14 medios sembrados.
+- Gotchas nuevos verificados en vivo:
+  · `claude-sonnet-5` **no admite `fallbacks`** (400) — la cabecera de GVG usa
+    opus-5, no se copia a ciegas.
+  · En un módulo `"use server"` un `export type {…}` compila a export de
+    runtime y revienta el módulo entero al evaluarse.
+  · **El `fetch` de Node (undici) corta a los 300 s** y devuelve un escueto
+    «fetch failed». El barrido en UNA petición con 14 búsquedas web tardaba
+    5,1 min y moría ahí; en tandas de 4, igual. Medido aislado: una llamada
+    con 2 búsquedas tarda ~41 s. De ahí el diseño final: **una petición por
+    medio**, concurrencia 5, timeout explícito de 90 s y **un solo reintento
+    para los timeouts** (reintentarlos tres veces multiplicaba la espera sin
+    arreglar nada: la consulta lenta seguía siendo lenta).
+  · `stop_reason === "max_tokens"` se detecta y se nombra: antes salía como un
+    error críptico de posición en el JSON.
+- Nodos/DICT para el wrap: mover el nodo Coffeed bajo ECP; DICT `identidad de
+  marca` y `medios de consulta`; el escenario «Un capítulo de Coffeed» cambia
+  de actor (ECP produce → publica → KR/CP/DC lo leen).
 (commit: pending)

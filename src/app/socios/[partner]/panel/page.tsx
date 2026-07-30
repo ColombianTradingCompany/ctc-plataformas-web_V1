@@ -42,19 +42,6 @@ export default async function PartnerPanelPage({ params }: { params: Promise<{ p
             </p>
           </div>
         </div>
-        {p.slug === "estudio-contenido" && (
-          <div style={{ margin: "14px 0 18px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", border: "1px solid var(--p-accent)", padding: "14px 16px" }}>
-            <div style={{ flex: "1 1 260px" }}>
-              <strong style={{ display: "block" }}>Coffeed · línea de producción editorial</strong>
-              <small style={{ color: "var(--muted-foreground, #6b6b6b)" }}>
-                El muro de noticias y anuncios + las 7 etapas: mesa de cata, extracción, propuestas, borrador y guion de vídeo.
-              </small>
-            </div>
-            <a className="btn btn-sm" href={`/socios/${p.slug}/panel/coffeed`} style={{ background: "var(--p-accent)", color: "#fff", borderColor: "var(--p-accent)" }}>
-              Abrir Coffeed →
-            </a>
-          </div>
-        )}
         <span className={styles.soon}>Módulos en construcción — así se verá tu tramo del pasaporte</span>
 
         <div className={styles.screens}>

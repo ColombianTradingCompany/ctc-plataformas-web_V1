@@ -97,6 +97,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // se verifican las fichas (Aceptar/Revisar/Rechazar → Código de
           // Verificado) y se modera el muro.
           { href: "/ecp/directorio", label: "Directorio del Café" },
+          // Coffeed (2026-07-30): el muro de noticias de la red y su línea de
+          // producción editorial. Nació como módulo del socio Estudio de
+          // Contenido y se movió AQUÍ por decisión del owner: la narrativa se
+          // dirige desde dentro, y su producción es lo que se delega — no al
+          // revés. Lo que se publica aquí aparece en KR, Cherry Picked y el DC.
+          { href: "/ecp/coffeed", label: "Coffeed" },
         ],
       },
       {

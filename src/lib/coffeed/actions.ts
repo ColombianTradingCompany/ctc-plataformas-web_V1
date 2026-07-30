@@ -1,59 +1,55 @@
 "use server";
 
-// ── Coffeed · Server Actions del estudio ─────────────────────────────────────
-// Toda lectura y escritura del pipeline pasa por aquí con el service client
-// (las tablas coffeed_* son service-role-only). Cada action re-verifica la
-// credencial del Estudio de Contenido — patrón requireActiveAdmin, versión
-// socio. El cliente refresca su bundle tras cada mutación (patrón Directorio).
+// ── Coffeed · Server Actions de la consola (ECP) ─────────────────────────────
+// Toda lectura y escritura pasa por aquí con el service client (las tablas
+// coffeed_* son service-role-only). Cada action re-verifica el grant de ECP —
+// patrón requireActiveAdmin, versión por consola. El cliente refresca su
+// bundle tras cada mutación (patrón Directorio).
+//
+// ⚠️ En un módulo "use server" TODO export tiene que ser una función async: un
+// `export type { … }` al final compila a un export de runtime que no existe y
+// el módulo revienta al evaluarse ("X is not defined" en el loader de actions,
+// visto en vivo el 2026-07-30). Los tipos se importan desde ./types.
 
-import { createServiceRoleClient } from "@/lib/supabase/server";
-import { estudioGate } from "./requireEstudio";
+import { createSignedUrl } from "./storage";
+import { coffeedGate, coffeedServiceClient, COFFEED_BUCKET, COFFEED_PREFIX } from "./requireEcp";
 import {
-  parseCoffeedClaims,
+  COFFEED_PALETTE_MAX,
   type CoffeedAnnouncement,
+  type CoffeedBrand,
   type CoffeedCycle,
+  type CoffeedCycleStatus,
   type CoffeedDecision,
-  type CoffeedDraft,
   type CoffeedExtraction,
   type CoffeedItemKind,
+  type CoffeedPanel,
+  type CoffeedPost,
   type CoffeedProposal,
   type CoffeedResult,
   type CoffeedSample,
-  type CoffeedScene,
   type CoffeedSource,
-  type CoffeedStudioBundle,
   type CoffeedThread,
-  type CoffeedWallChapter,
+  type CoffeedConsoleBundle,
 } from "./types";
 
-const NO_AUTH: CoffeedResult = { ok: false, error: "Tu credencial del Estudio no está activa. Vuelve a iniciar sesión." };
+const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del ECP no está activa. Vuelve a iniciar sesión." };
 
-type Service = ReturnType<typeof createServiceRoleClient>;
+type Service = ReturnType<typeof coffeedServiceClient>;
 
 // La etiqueta corta de fuente dentro del capítulo ('a','b','c'…): se asigna al
 // seleccionar en la mesa y es lo que colorea paneles y panel_map.
 const SRC_KEYS = "abcdefghij";
 
-// ---------- Lectura: el bundle completo del estudio ----------
+// ---------- helpers de lectura ----------
 
-type EntryRow = {
+type CycleRow = {
   id: string;
-  axis: string | null;
-  relevance: number | null;
-  reason: string | null;
-  thread_id: string | null;
-  decision: CoffeedDecision;
-  src_key: string | null;
-  coffeed_items: {
-    id: string;
-    title: string;
-    outlet: string | null;
-    url: string;
-    kind: CoffeedItemKind;
-    origin: "auto" | "manual";
-    ingested_at: string;
-  };
-  coffeed_threads: { name: string } | null;
+  date: string;
+  chapter_no: number;
+  status: CoffeedCycleStatus;
+  title: string | null;
+  error: string | null;
+  swept_at: string | null;
 };
 
 type PanelRow = {
@@ -64,121 +60,276 @@ type PanelRow = {
   note: string | null;
   item_id: string | null;
   ref: string | null;
-  claim_id: string | null;
 };
 
-async function latestCycle(service: Service): Promise<CoffeedCycle | null> {
-  const { data } = await service
-    .from("coffeed_cycles")
-    .select("id, date, chapter_no, stage, closed_empty")
-    .order("date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!data) return null;
-  return { id: data.id, date: data.date, chapterNo: data.chapter_no, stage: data.stage, closedEmpty: data.closed_empty };
+type DraftRow = {
+  id: string;
+  cycle_id: string;
+  title: string;
+  excerpt: string | null;
+  state: "draft" | "accepted" | "published";
+  post_status: CoffeedPost["postStatus"];
+  post_error: string | null;
+  post_html: string | null;
+  reedit_prompt: string | null;
+  accepted_at: string | null;
+  published_at: string | null;
+  coffeed_panels: PanelRow[];
+};
+
+function toPost(d: DraftRow, keyByItem: Map<string, string | null>): CoffeedPost {
+  return {
+    draftId: d.id,
+    title: d.title,
+    excerpt: d.excerpt,
+    state: d.state,
+    postStatus: d.post_status,
+    postError: d.post_error,
+    hasHtml: Boolean(d.post_html),
+    reeditPrompt: d.reedit_prompt,
+    acceptedAt: d.accepted_at,
+    publishedAt: d.published_at,
+    panels: (d.coffeed_panels ?? [])
+      .sort((a, b) => a.position - b.position)
+      .map(
+        (p): CoffeedPanel => ({
+          id: p.id,
+          position: p.position,
+          role: p.role,
+          text: p.text,
+          note: p.note,
+          itemId: p.item_id,
+          srcKey: p.item_id ? (keyByItem.get(p.item_id) ?? null) : null,
+          ref: p.ref,
+        })
+      ),
+  };
 }
 
-export async function getCoffeedStudio(): Promise<CoffeedStudioBundle | null> {
-  const who = await estudioGate();
+async function loadBrand(service: Service): Promise<CoffeedBrand> {
+  const { data } = await service.from("coffeed_brand").select("*").eq("id", true).maybeSingle();
+  const palette = Array.isArray(data?.palette) ? (data.palette as string[]) : [];
+  return {
+    companyName: data?.company_name ?? "Colombian Trading Company",
+    slogan: data?.slogan ?? null,
+    logoPath: data?.logo_path ?? null,
+    logoUrl: data?.logo_path ? await createSignedUrl(service, data.logo_path as string) : null,
+    palette,
+    fontFamily: data?.font_family ?? "Fraunces",
+    artDirection: data?.art_direction ?? null,
+  };
+}
+
+// ---------- Lectura: el bundle completo de la consola ----------
+
+export async function getCoffeedConsole(): Promise<CoffeedConsoleBundle | null> {
+  const who = await coffeedGate();
   if (!who) return null;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
 
-  const cycle = await latestCycle(service);
-
-  const [{ data: maxChapter }, { data: threadRows }, { data: annRows }, { data: sourceRows }, { data: chapterRows }] =
+  const [{ data: cycleRows }, { data: threadRows }, { data: annRows }, { data: sourceRows }, { data: chapterRows }, brand] =
     await Promise.all([
-      service.from("coffeed_cycles").select("chapter_no").order("chapter_no", { ascending: false }).limit(1).maybeSingle(),
-      service
-        .from("coffeed_threads")
-        .select("id, name, state, opened_in, last_seen_in, summary")
-        .order("updated_at", { ascending: false }),
+      service.from("coffeed_cycles").select("id, date, chapter_no, status, title, error, swept_at").order("chapter_no", { ascending: false }),
+      service.from("coffeed_threads").select("id, name, state, opened_in, last_seen_in, summary").order("updated_at", { ascending: false }),
       service
         .from("coffeed_announcements")
         .select("id, title, body, area, pinned, published_at")
         .order("pinned", { ascending: false })
         .order("published_at", { ascending: false })
         .limit(50),
-      service.from("coffeed_sources").select("id, name, kind, category, list, active").order("created_at"),
+      service.from("coffeed_sources").select("id, name, kind, category, list, url, status, validation_note, last_swept_at, active").order("created_at"),
       service
         .from("coffeed_drafts")
-        .select("id, title, state, accepted_at, published_at, coffeed_cycles(chapter_no), coffeed_panels(position, role, text)")
-        .in("state", ["accepted", "published"])
-        .order("accepted_at", { ascending: false })
+        .select("id, title, excerpt, published_at, coffeed_cycles(chapter_no), coffeed_panels(position, role, text)")
+        .eq("state", "published")
+        .order("published_at", { ascending: false })
         .limit(30),
+      loadBrand(service),
     ]);
 
+  const allCycles = (cycleRows ?? []) as CycleRow[];
+  const cycleIds = allCycles.map((c) => c.id);
+
+  // Conteos y posts de TODOS los ciclos, en tres consultas — no una por tarjeta.
+  const [{ data: entryRows }, { data: extRows }, { data: propRows }, { data: draftRows }] = await Promise.all([
+    cycleIds.length
+      ? service.from("coffeed_matrix_entries").select("cycle_id, decision, item_id, src_key").in("cycle_id", cycleIds)
+      : { data: [] },
+    service.from("coffeed_extractions").select("item_id"),
+    cycleIds.length ? service.from("coffeed_proposals").select("cycle_id").in("cycle_id", cycleIds) : { data: [] },
+    cycleIds.length
+      ? service
+          .from("coffeed_drafts")
+          .select(
+            "id, cycle_id, title, excerpt, state, post_status, post_error, post_html, reedit_prompt, accepted_at, published_at, coffeed_panels(id, position, role, text, note, item_id, ref)"
+          )
+          .in("cycle_id", cycleIds)
+      : { data: [] },
+  ]);
+
+  type EntryCount = { cycle_id: string; decision: CoffeedDecision; item_id: string; src_key: string | null };
+  const entries = (entryRows ?? []) as EntryCount[];
+  const extractedItems = new Set(((extRows ?? []) as { item_id: string }[]).map((e) => e.item_id));
+  const propsByCycle = new Map<string, number>();
+  for (const p of (propRows ?? []) as { cycle_id: string }[]) {
+    propsByCycle.set(p.cycle_id, (propsByCycle.get(p.cycle_id) ?? 0) + 1);
+  }
+  const keyByItem = new Map<string, string | null>(entries.map((e) => [e.item_id, e.src_key]));
+  const draftByCycle = new Map<string, DraftRow>();
+  for (const d of (draftRows ?? []) as unknown as DraftRow[]) draftByCycle.set(d.cycle_id, d);
+
+  const toCycle = (c: CycleRow): CoffeedCycle => {
+    const mine = entries.filter((e) => e.cycle_id === c.id);
+    const picked = mine.filter((e) => e.decision === "picked");
+    const d = draftByCycle.get(c.id);
+    return {
+      id: c.id,
+      date: c.date,
+      chapterNo: c.chapter_no,
+      status: c.status,
+      title: c.title ?? d?.title ?? null,
+      error: c.error,
+      sweptAt: c.swept_at,
+      pickedCount: picked.length,
+      extractionCount: picked.filter((e) => extractedItems.has(e.item_id)).length,
+      proposalCount: propsByCycle.get(c.id) ?? 0,
+      post: d ? toPost(d, keyByItem) : null,
+    };
+  };
+
+  const openRow = allCycles.find((c) => c.status === "abierto") ?? null;
+  const openCycle = openRow ? toCycle(openRow) : null;
+
+  // Las muestras solo se cargan para el ciclo abierto (es el único que se tría).
   let samples: CoffeedSample[] = [];
-  let extractions: CoffeedExtraction[] = [];
-  let proposals: CoffeedProposal[] = [];
-  let draft: CoffeedDraft | null = null;
-  let scenes: CoffeedScene[] | null = null;
-
-  if (cycle) {
-    const { data: entryRows } = await service
-      .from("coffeed_matrix_entries")
-      .select(
-        "id, axis, relevance, reason, thread_id, decision, src_key, coffeed_items(id, title, outlet, url, kind, origin, ingested_at), coffeed_threads(name)"
-      )
-      .eq("cycle_id", cycle.id);
-
-    const entries = ((entryRows ?? []) as unknown as EntryRow[]).sort(
-      (a, b) => (b.relevance ?? -1) - (a.relevance ?? -1)
-    );
-    const itemIds = entries.map((e) => e.coffeed_items.id);
-
-    const { data: extRows } = itemIds.length
-      ? await service
-          .from("coffeed_extractions")
-          .select("item_id, format, body, coffeed_claims(id, text, ref)")
-          .in("item_id", itemIds)
-      : { data: [] };
-
-    type ExtRow = { item_id: string; format: "transcript" | "markdown"; body: string; coffeed_claims: { id: string; text: string; ref: string }[] };
-    extractions = ((extRows ?? []) as unknown as ExtRow[]).map((e) => ({
-      itemId: e.item_id,
-      format: e.format,
-      body: e.body,
-      claims: e.coffeed_claims,
-    }));
-    const extracted = new Set(extractions.map((e) => e.itemId));
-
-    samples = entries.map((e) => ({
-      entryId: e.id,
-      itemId: e.coffeed_items.id,
-      title: e.coffeed_items.title,
-      outlet: e.coffeed_items.outlet ?? "—",
-      url: e.coffeed_items.url,
-      kind: e.coffeed_items.kind,
-      origin: e.coffeed_items.origin,
-      ingestedAt: e.coffeed_items.ingested_at,
-      axis: e.axis,
-      relevance: e.relevance,
-      reason: e.reason,
-      threadId: e.thread_id,
-      threadName: e.coffeed_threads?.name ?? null,
-      decision: e.decision,
-      srcKey: e.src_key,
-      hasExtraction: extracted.has(e.coffeed_items.id),
-    }));
-
-    type ProposalRow = {
+  if (openRow) {
+    type EntryRow = {
       id: string;
-      angle: string;
-      title: string;
-      hook: string | null;
-      panel_map: string[];
-      continues: string | null;
-      opens: string | null;
-      chosen: boolean;
-      editor_notes: string | null;
+      axis: string | null;
+      relevance: number | null;
+      reason: string | null;
+      thread_id: string | null;
+      decision: CoffeedDecision;
+      src_key: string | null;
+      coffeed_items: { id: string; title: string; outlet: string | null; url: string; kind: CoffeedItemKind; origin: "auto" | "manual"; published_at: string | null };
       coffeed_threads: { name: string } | null;
     };
-    const { data: propRows } = await service
-      .from("coffeed_proposals")
-      .select("id, angle, title, hook, panel_map, continues, opens, chosen, editor_notes, coffeed_threads(name)")
-      .eq("cycle_id", cycle.id)
-      .order("created_at");
-    proposals = ((propRows ?? []) as unknown as ProposalRow[]).map((p) => ({
+    const { data: rows } = await service
+      .from("coffeed_matrix_entries")
+      .select(
+        "id, axis, relevance, reason, thread_id, decision, src_key, coffeed_items(id, title, outlet, url, kind, origin, published_at), coffeed_threads(name)"
+      )
+      .eq("cycle_id", openRow.id);
+    samples = ((rows ?? []) as unknown as EntryRow[])
+      .sort((a, b) => (b.relevance ?? -1) - (a.relevance ?? -1))
+      .map((e) => ({
+        entryId: e.id,
+        itemId: e.coffeed_items.id,
+        title: e.coffeed_items.title,
+        outlet: e.coffeed_items.outlet ?? "—",
+        url: e.coffeed_items.url,
+        kind: e.coffeed_items.kind,
+        origin: e.coffeed_items.origin,
+        publishedAt: e.coffeed_items.published_at,
+        axis: e.axis,
+        relevance: e.relevance,
+        reason: e.reason,
+        threadId: e.thread_id,
+        threadName: e.coffeed_threads?.name ?? null,
+        decision: e.decision,
+        srcKey: e.src_key,
+        hasExtraction: extractedItems.has(e.coffeed_items.id),
+      }));
+  }
+
+  type ChapterRow = {
+    id: string;
+    title: string;
+    excerpt: string | null;
+    published_at: string | null;
+    coffeed_cycles: { chapter_no: number } | null;
+    coffeed_panels: { position: number; role: string | null; text: string }[];
+  };
+
+  return {
+    openCycle,
+    samples,
+    cycles: allCycles.filter((c) => c.status !== "abierto").map(toCycle),
+    threads: ((threadRows ?? []) as { id: string; name: string; state: CoffeedThread["state"]; opened_in: number | null; last_seen_in: number | null; summary: string | null }[]).map(
+      (t) => ({ id: t.id, name: t.name, state: t.state, openedIn: t.opened_in, lastSeenIn: t.last_seen_in, summary: t.summary })
+    ),
+    announcements: ((annRows ?? []) as { id: string; title: string; body: string | null; area: string | null; pinned: boolean; published_at: string }[]).map(
+      (a): CoffeedAnnouncement => ({ id: a.id, title: a.title, body: a.body, area: a.area, pinned: a.pinned, publishedAt: a.published_at })
+    ),
+    chapters: ((chapterRows ?? []) as unknown as ChapterRow[]).map((c) => ({
+      draftId: c.id,
+      chapterNo: c.coffeed_cycles?.chapter_no ?? 0,
+      title: c.title,
+      excerpt: c.excerpt,
+      publishedAt: c.published_at,
+      panels: (c.coffeed_panels ?? []).sort((a, b) => a.position - b.position),
+    })),
+    sources: ((sourceRows ?? []) as {
+      id: string; name: string; kind: "youtube" | "outlet"; category: string | null; list: "white" | "black";
+      url: string | null; status: CoffeedSource["status"]; validation_note: string | null; last_swept_at: string | null; active: boolean;
+    }[]).map((s) => ({
+      id: s.id, name: s.name, kind: s.kind, category: s.category, list: s.list, url: s.url,
+      status: s.status, validationNote: s.validation_note, lastSweptAt: s.last_swept_at, active: s.active,
+    })),
+    brand,
+    nextChapterNo: (allCycles[0]?.chapter_no ?? 0) + 1,
+  };
+}
+
+/** El material extraído de un ciclo — se pide al abrir su tarjeta en Propuestas. */
+export async function getCycleDetail(
+  cycleId: string
+): Promise<{ extractions: CoffeedExtraction[]; proposals: CoffeedProposal[] } | null> {
+  const who = await coffeedGate();
+  if (!who) return null;
+  const service = coffeedServiceClient();
+
+  type PickedRow = { src_key: string | null; coffeed_items: { id: string; title: string } };
+  const { data: pickedRows } = await service
+    .from("coffeed_matrix_entries")
+    .select("src_key, coffeed_items(id, title)")
+    .eq("cycle_id", cycleId)
+    .eq("decision", "picked");
+  const picked = (pickedRows ?? []) as unknown as PickedRow[];
+  const itemIds = picked.map((p) => p.coffeed_items.id);
+
+  type ExtRow = { item_id: string; format: "transcript" | "markdown"; body: string; coffeed_claims: { id: string; text: string; ref: string }[] };
+  const { data: extRows } = itemIds.length
+    ? await service.from("coffeed_extractions").select("item_id, format, body, coffeed_claims(id, text, ref)").in("item_id", itemIds)
+    : { data: [] };
+  const byItem = new Map(((extRows ?? []) as unknown as ExtRow[]).map((e) => [e.item_id, e]));
+
+  type ProposalRow = {
+    id: string; angle: string; title: string; hook: string | null; panel_map: string[];
+    continues: string | null; opens: string | null; chosen: boolean; editor_notes: string | null;
+    coffeed_threads: { name: string } | null;
+  };
+  const { data: propRows } = await service
+    .from("coffeed_proposals")
+    .select("id, angle, title, hook, panel_map, continues, opens, chosen, editor_notes, coffeed_threads(name)")
+    .eq("cycle_id", cycleId)
+    .order("created_at");
+
+  return {
+    extractions: picked
+      .filter((p) => byItem.has(p.coffeed_items.id))
+      .map((p) => {
+        const e = byItem.get(p.coffeed_items.id)!;
+        return {
+          itemId: p.coffeed_items.id,
+          title: p.coffeed_items.title,
+          srcKey: p.src_key,
+          format: e.format,
+          body: e.body,
+          claims: e.coffeed_claims ?? [],
+        };
+      }),
+    proposals: ((propRows ?? []) as unknown as ProposalRow[]).map((p) => ({
       id: p.id,
       angle: p.angle,
       title: p.title,
@@ -189,97 +340,30 @@ export async function getCoffeedStudio(): Promise<CoffeedStudioBundle | null> {
       opens: p.opens,
       chosen: p.chosen,
       editorNotes: p.editor_notes,
-    }));
-
-    type DraftRow = { id: string; title: string; state: "draft" | "accepted" | "published"; accepted_at: string | null; published_at: string | null; coffeed_panels: PanelRow[] };
-    const { data: draftRow } = await service
-      .from("coffeed_drafts")
-      .select("id, title, state, accepted_at, published_at, coffeed_panels(id, position, role, text, note, item_id, ref, claim_id)")
-      .eq("cycle_id", cycle.id)
-      .maybeSingle();
-    if (draftRow) {
-      const d = draftRow as unknown as DraftRow;
-      const keyByItem = new Map(samples.map((s) => [s.itemId, s.srcKey]));
-      draft = {
-        id: d.id,
-        title: d.title,
-        state: d.state,
-        acceptedAt: d.accepted_at,
-        publishedAt: d.published_at,
-        panels: d.coffeed_panels
-          .sort((a, b) => a.position - b.position)
-          .map((p) => ({
-            id: p.id,
-            position: p.position,
-            role: p.role,
-            text: p.text,
-            note: p.note,
-            itemId: p.item_id,
-            srcKey: p.item_id ? (keyByItem.get(p.item_id) ?? null) : null,
-            ref: p.ref,
-            claimId: p.claim_id,
-          })),
-      };
-      const { data: scriptRow } = await service
-        .from("coffeed_video_scripts")
-        .select("scenes")
-        .eq("draft_id", d.id)
-        .maybeSingle();
-      scenes = (scriptRow?.scenes as CoffeedScene[] | undefined) ?? null;
-    }
-  }
-
-  type ChapterRow = {
-    id: string;
-    title: string;
-    state: "draft" | "accepted" | "published";
-    accepted_at: string | null;
-    published_at: string | null;
-    coffeed_cycles: { chapter_no: number } | null;
-    coffeed_panels: { position: number; role: string | null; text: string }[];
+    })),
   };
-  const chapters: CoffeedWallChapter[] = ((chapterRows ?? []) as unknown as ChapterRow[]).map((c) => ({
-    draftId: c.id,
-    chapterNo: c.coffeed_cycles?.chapter_no ?? 0,
-    title: c.title,
-    state: c.state,
-    publishedAt: c.published_at,
-    acceptedAt: c.accepted_at,
-    panels: c.coffeed_panels.sort((a, b) => a.position - b.position),
-  }));
+}
 
-  const threads: CoffeedThread[] = ((threadRows ?? []) as { id: string; name: string; state: "open" | "paused" | "closed"; opened_in: number | null; last_seen_in: number | null; summary: string | null }[]).map(
-    (t) => ({ id: t.id, name: t.name, state: t.state, openedIn: t.opened_in, lastSeenIn: t.last_seen_in, summary: t.summary })
-  );
-
-  return {
-    cycle,
-    nextChapterNo: (maxChapter?.chapter_no ?? 0) + 1,
-    samples,
-    extractions,
-    threads,
-    proposals,
-    draft,
-    scenes,
-    announcements: ((annRows ?? []) as { id: string; title: string; body: string | null; area: string | null; pinned: boolean; published_at: string }[]).map(
-      (a): CoffeedAnnouncement => ({ id: a.id, title: a.title, body: a.body, area: a.area, pinned: a.pinned, publishedAt: a.published_at })
-    ),
-    chapters,
-    sources: ((sourceRows ?? []) as CoffeedSource[]).map((s) => s),
-  };
+/** El HTML renderizado del post — para abrirlo, descargarlo o imprimirlo a PDF. */
+export async function getPostHtml(draftId: string): Promise<{ ok: true; html: string; title: string } | { ok: false; error: string }> {
+  const who = await coffeedGate();
+  if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
+  const service = coffeedServiceClient();
+  const { data } = await service.from("coffeed_drafts").select("post_html, title").eq("id", draftId).maybeSingle();
+  if (!data?.post_html) return { ok: false, error: "Este post aún no tiene versión renderizada." };
+  return { ok: true, html: data.post_html as string, title: data.title as string };
 }
 
 // ---------- Ciclos ----------
 
-/** Abre el ciclo de hoy (capítulo max+1) y barre a la mesa los ítems que aún no están en ningún ciclo. */
+/** Abre la sesión de selección. Solo puede haber UNA abierta (índice parcial). */
 export async function startCycle(): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
 
-  const today = new Date().toISOString().slice(0, 10);
-  const { data: existing } = await service.from("coffeed_cycles").select("id").eq("date", today).maybeSingle();
-  if (existing) return { ok: false, error: "El ciclo de hoy ya existe." };
+  const { data: open } = await service.from("coffeed_cycles").select("id").eq("status", "abierto").maybeSingle();
+  if (open) return { ok: false, error: "Ya hay una sesión abierta — ciérrala o continúala antes de abrir otra." };
 
   const { data: maxRow } = await service
     .from("coffeed_cycles")
@@ -288,39 +372,32 @@ export async function startCycle(): Promise<CoffeedResult> {
     .limit(1)
     .maybeSingle();
 
-  const { data: cycleRow, error } = await service
+  const { error } = await service
     .from("coffeed_cycles")
-    .insert({ date: today, chapter_no: (maxRow?.chapter_no ?? 0) + 1, stage: 2 })
-    .select("id")
-    .single();
-  if (error || !cycleRow) return { ok: false, error: error?.message ?? "No se pudo abrir el ciclo." };
-
-  // Barrido manual de arrastre: ítems sin entrada en ninguna mesa entran pendientes.
-  const { data: orphanItems } = await service.from("coffeed_items").select("id").order("ingested_at", { ascending: false }).limit(40);
-  const { data: used } = await service.from("coffeed_matrix_entries").select("item_id");
-  const usedSet = new Set(((used ?? []) as { item_id: string }[]).map((u) => u.item_id));
-  const fresh = ((orphanItems ?? []) as { id: string }[]).filter((i) => !usedSet.has(i.id));
-  if (fresh.length) {
-    await service.from("coffeed_matrix_entries").insert(fresh.map((i) => ({ cycle_id: cycleRow.id, item_id: i.id })));
-  }
-  return { ok: true };
-}
-
-export async function closeCycleEmpty(cycleId: string, closed: boolean): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { error } = await service.from("coffeed_cycles").update({ closed_empty: closed }).eq("id", cycleId);
+    .insert({ date: new Date().toISOString().slice(0, 10), chapter_no: (maxRow?.chapter_no ?? 0) + 1, status: "abierto" });
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-async function setCycleStage(service: Service, cycleId: string, stage: number) {
-  // La etapa solo avanza, nunca retrocede sola.
-  const { data } = await service.from("coffeed_cycles").select("stage").eq("id", cycleId).single();
-  if ((data?.stage ?? 0) < stage) await service.from("coffeed_cycles").update({ stage }).eq("id", cycleId);
+/** Un día sin material es una decisión válida, no un fallo del sistema. */
+export async function closeCycleEmpty(cycleId: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
+  if (!who) return NO_AUTH;
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_cycles").update({ status: "cerrado" }).eq("id", cycleId).eq("status", "abierto");
+  return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-// ---------- Etapa 1: ingesta manual ----------
+export async function reopenCycle(cycleId: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
+  if (!who) return NO_AUTH;
+  const service = coffeedServiceClient();
+  const { data: open } = await service.from("coffeed_cycles").select("id").eq("status", "abierto").maybeSingle();
+  if (open) return { ok: false, error: "Ya hay otra sesión abierta." };
+  const { error } = await service.from("coffeed_cycles").update({ status: "abierto", error: null }).eq("id", cycleId);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+// ---------- Selección de Fuentes: ingesta manual y triaje ----------
 
 export async function addManualItem(input: {
   url: string;
@@ -328,35 +405,47 @@ export async function addManualItem(input: {
   outlet: string;
   kind: CoffeedItemKind;
   summary: string;
+  publishedAt: string;
 }): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
   const url = input.url.trim();
   const title = input.title.trim();
   if (!url || !title) return { ok: false, error: "La URL y el titular son obligatorios." };
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
 
-  const cycle = await latestCycle(service);
-  if (!cycle) return { ok: false, error: "Abre primero el ciclo de hoy." };
+  const { data: cycle } = await service.from("coffeed_cycles").select("id").eq("status", "abierto").maybeSingle();
+  if (!cycle) return { ok: false, error: "Abre una sesión de selección antes de añadir material." };
 
-  const { data: item, error } = await service
-    .from("coffeed_items")
-    .insert({ url, title, outlet: input.outlet.trim() || null, summary: input.summary.trim() || null, kind: input.kind, origin: "manual" })
-    .select("id")
-    .single();
-  if (error || !item) {
-    return { ok: false, error: error?.code === "23505" ? "Esa URL ya está ingestada." : (error?.message ?? "No se pudo añadir.") };
+  const { data: existing } = await service.from("coffeed_items").select("id").eq("url", url).maybeSingle();
+  let itemId = existing?.id as string | undefined;
+  if (!itemId) {
+    const { data: item, error } = await service
+      .from("coffeed_items")
+      .insert({
+        url,
+        title,
+        outlet: input.outlet.trim() || null,
+        summary: input.summary.trim() || null,
+        kind: input.kind,
+        origin: "manual",
+        published_at: input.publishedAt ? new Date(input.publishedAt).toISOString() : null,
+      })
+      .select("id")
+      .single();
+    if (error || !item) return { ok: false, error: error?.message ?? "No se pudo añadir." };
+    itemId = item.id as string;
   }
-  const { error: e2 } = await service.from("coffeed_matrix_entries").insert({ cycle_id: cycle.id, item_id: item.id });
-  return e2 ? { ok: false, error: e2.message } : { ok: true };
+
+  const { error: e2 } = await service.from("coffeed_matrix_entries").insert({ cycle_id: cycle.id, item_id: itemId });
+  if (e2) return { ok: false, error: e2.code === "23505" ? "Ese material ya está en la mesa." : e2.message };
+  return { ok: true };
 }
 
-// ---------- Etapa 2: la mesa de cata ----------
-
 export async function setDecision(entryId: string, decision: CoffeedDecision): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
 
   let srcKey: string | null = null;
   if (decision === "picked") {
@@ -371,7 +460,7 @@ export async function setDecision(entryId: string, decision: CoffeedDecision): P
         .not("src_key", "is", null);
       const used = new Set(((taken ?? []) as { src_key: string }[]).map((t) => t.src_key));
       srcKey = [...SRC_KEYS].find((k) => !used.has(k)) ?? null;
-      if (!srcKey) return { ok: false, error: "El capítulo ya tiene 10 fuentes — más no caben en 10 paneles." };
+      if (!srcKey) return { ok: false, error: "La sesión ya tiene 10 fuentes — más no caben en 10 paneles." };
     }
   }
 
@@ -382,14 +471,13 @@ export async function setDecision(entryId: string, decision: CoffeedDecision): P
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-/** Ajuste manual del triaje (o corrección de lo que dijo Haiku). */
 export async function updateEntryTriage(
   entryId: string,
   patch: { axis: string | null; relevance: number | null; threadId: string | null }
 ): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
   const { error } = await service
     .from("coffeed_matrix_entries")
     .update({ axis: patch.axis, relevance: patch.relevance, thread_id: patch.threadId })
@@ -397,86 +485,27 @@ export async function updateEntryTriage(
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-// ---------- Etapa 3: extracción ----------
-
-/** Guarda el cuerpo (con marcadores ⟦…|ref⟧) y regenera sus claims trazables. */
-export async function saveExtraction(itemId: string, format: "transcript" | "markdown", body: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
+export async function removeEntry(entryId: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  if (!body.trim()) return { ok: false, error: "El cuerpo está vacío." };
-  const service = createServiceRoleClient();
-
-  const { data: ext, error } = await service
-    .from("coffeed_extractions")
-    .upsert({ item_id: itemId, format, body }, { onConflict: "item_id" })
-    .select("id")
-    .single();
-  if (error || !ext) return { ok: false, error: error?.message ?? "No se pudo guardar." };
-
-  // Regenerar claims: los paneles que apuntaban a un claim viejo quedan con
-  // claim_id null (FK on delete set null) pero conservan item_id + ref.
-  await service.from("coffeed_claims").delete().eq("extraction_id", ext.id);
-  const claims = parseCoffeedClaims(body);
-  if (claims.length) {
-    await service.from("coffeed_claims").insert(claims.map((c) => ({ extraction_id: ext.id, text: c.text, ref: c.ref })));
-  }
-  const cycle = await latestCycle(service);
-  if (cycle) await setCycleStage(service, cycle.id, 3);
-  return { ok: true };
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_matrix_entries").delete().eq("id", entryId);
+  return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-// ---------- Etapas 4–5: propuestas y revisión ----------
+// ---------- Propuestas ----------
 
-export async function createManualProposal(input: { angle: string; title: string; hook: string }): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  if (!input.title.trim()) return { ok: false, error: "La propuesta necesita un titular." };
-  const service = createServiceRoleClient();
-  const cycle = await latestCycle(service);
-  if (!cycle) return { ok: false, error: "No hay ciclo abierto." };
-  const { error } = await service.from("coffeed_proposals").insert({
-    cycle_id: cycle.id,
-    angle: input.angle.trim() || "Ángulo manual",
-    title: input.title.trim(),
-    hook: input.hook.trim() || null,
-  });
-  if (error) return { ok: false, error: error.message };
-  await setCycleStage(service, cycle.id, 5);
-  return { ok: true };
-}
-
-export async function updateProposal(
-  proposalId: string,
-  patch: { title: string; hook: string; editorNotes: string }
-): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { data: prop } = await service.from("coffeed_proposals").select("chosen, cycle_id").eq("id", proposalId).maybeSingle();
-  if (!prop) return { ok: false, error: "La propuesta no existe." };
-  const { error } = await service
-    .from("coffeed_proposals")
-    .update({ title: patch.title.trim() || undefined, hook: patch.hook.trim() || null, editor_notes: patch.editorNotes.trim() || null })
-    .eq("id", proposalId);
-  if (error) return { ok: false, error: error.message };
-  // Si era la elegida, el título del borrador la sigue.
-  if (prop.chosen && patch.title.trim()) {
-    await service.from("coffeed_drafts").update({ title: patch.title.trim() }).eq("cycle_id", prop.cycle_id).eq("state", "draft");
-  }
-  return { ok: true };
-}
-
-/** Elegir un ángulo crea (o retitula) el borrador del ciclo. Etapa 5 → 6. */
+/** Elegir un ángulo crea (o retitula) el post del ciclo. */
 export async function chooseProposal(proposalId: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
 
   const { data: prop } = await service.from("coffeed_proposals").select("id, cycle_id, title").eq("id", proposalId).maybeSingle();
   if (!prop) return { ok: false, error: "La propuesta no existe." };
 
   const { data: existing } = await service.from("coffeed_drafts").select("id, state").eq("cycle_id", prop.cycle_id).maybeSingle();
-  if (existing && existing.state !== "draft") return { ok: false, error: "El capítulo ya fue aceptado — no se puede cambiar de ángulo." };
+  if (existing && existing.state !== "draft") return { ok: false, error: "El capítulo ya fue publicado — no se puede cambiar de ángulo." };
 
   await service.from("coffeed_proposals").update({ chosen: false }).eq("cycle_id", prop.cycle_id).eq("chosen", true);
   const { error } = await service.from("coffeed_proposals").update({ chosen: true }).eq("id", proposalId);
@@ -488,197 +517,156 @@ export async function chooseProposal(proposalId: string): Promise<CoffeedResult>
     const { error: e2 } = await service.from("coffeed_drafts").insert({ cycle_id: prop.cycle_id, proposal_id: prop.id, title: prop.title });
     if (e2) return { ok: false, error: e2.message };
   }
-  await setCycleStage(service, prop.cycle_id, 6);
+  await service.from("coffeed_cycles").update({ title: prop.title }).eq("id", prop.cycle_id);
   return { ok: true };
 }
 
-// ---------- Etapa 6: paneles ----------
-
-export async function addPanel(
-  draftId: string,
-  input: { text: string; note: string; role: string; itemId: string | null; ref: string | null; claimId: string | null }
+export async function updateProposal(
+  proposalId: string,
+  patch: { title: string; hook: string; editorNotes: string }
 ): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { data: state } = await service.from("coffeed_drafts").select("state").eq("id", draftId).maybeSingle();
-  if (!state) return { ok: false, error: "El borrador no existe." };
-  if (state.state !== "draft") return { ok: false, error: "El capítulo ya fue aceptado." };
-
-  const { data: last } = await service
-    .from("coffeed_panels")
-    .select("position")
-    .eq("draft_id", draftId)
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const { error } = await service.from("coffeed_panels").insert({
-    draft_id: draftId,
-    position: (last?.position ?? 0) + 1,
-    text: input.text.trim() || "Panel sin texto",
-    note: input.note.trim() || null,
-    role: input.role.trim() || null,
-    item_id: input.itemId,
-    ref: input.itemId ? input.ref : null,
-    claim_id: input.claimId,
-  });
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-export async function patchPanel(
-  panelId: string,
-  patch: { text: string; note: string; role: string; itemId: string | null; ref: string | null }
-): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
   const { error } = await service
-    .from("coffeed_panels")
-    .update({
-      text: patch.text.trim() || "Panel sin texto",
-      note: patch.note.trim() || null,
-      role: patch.role.trim() || null,
-      item_id: patch.itemId,
-      ref: patch.itemId ? patch.ref : null,
-    })
-    .eq("id", panelId);
+    .from("coffeed_proposals")
+    .update({ title: patch.title.trim() || undefined, hook: patch.hook.trim() || null, editor_notes: patch.editorNotes.trim() || null })
+    .eq("id", proposalId);
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-export async function removePanel(panelId: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
+// ---------- Posts en Fila ----------
+
+/** Publicar mueve el post al muro — el de la consola y el de KR/CP/DC. */
+export async function publishPost(draftId: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { data: panel } = await service.from("coffeed_panels").select("draft_id").eq("id", panelId).maybeSingle();
-  if (!panel) return { ok: false, error: "El panel no existe." };
-  const { error } = await service.from("coffeed_panels").delete().eq("id", panelId);
-  if (error) return { ok: false, error: error.message };
-  await renumberPanels(service, panel.draft_id);
+  const service = coffeedServiceClient();
+
+  const { data: d } = await service.from("coffeed_drafts").select("cycle_id, state, post_status").eq("id", draftId).maybeSingle();
+  if (!d) return { ok: false, error: "El post no existe." };
+  if (d.post_status !== "listo") return { ok: false, error: "El post todavía no está renderizado." };
+
+  // El trigger coffeed_guard_accept re-valida las reglas del carrusel aquí.
+  if (d.state === "draft") {
+    const { error } = await service.from("coffeed_drafts").update({ state: "accepted", accepted_by: who.userId }).eq("id", draftId);
+    if (error) return { ok: false, error: error.message };
+  }
+  const { error: e2 } = await service.from("coffeed_drafts").update({ state: "published" }).eq("id", draftId);
+  if (e2) return { ok: false, error: e2.message };
+  await service.from("coffeed_cycles").update({ status: "publicado" }).eq("id", d.cycle_id);
   return { ok: true };
 }
 
-export async function movePanel(panelId: string, dir: -1 | 1): Promise<CoffeedResult> {
-  const who = await estudioGate();
+export async function unpublishPost(draftId: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { data: panel } = await service.from("coffeed_panels").select("draft_id").eq("id", panelId).maybeSingle();
-  if (!panel) return { ok: false, error: "El panel no existe." };
-
-  const { data: rows } = await service
-    .from("coffeed_panels")
-    .select("id, position")
-    .eq("draft_id", panel.draft_id)
-    .order("position");
-  const ordered = ((rows ?? []) as { id: string }[]).map((r) => r.id);
-  const i = ordered.indexOf(panelId);
-  const j = i + dir;
-  if (i < 0 || j < 0 || j >= ordered.length) return { ok: true };
-  [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
-  await renumberPanels(service, panel.draft_id, ordered);
-  return { ok: true };
-}
-
-// unique(draft_id, position): primero todo a posición+1000 (única igual),
-// luego cada panel a su posición final — sin transacción diferida.
-async function renumberPanels(service: Service, draftId: string, orderedIds?: string[]) {
-  let ids = orderedIds;
-  if (!ids) {
-    const { data } = await service.from("coffeed_panels").select("id").eq("draft_id", draftId).order("position");
-    ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
-  }
-  const { data: current } = await service.from("coffeed_panels").select("id, position").eq("draft_id", draftId);
-  for (const row of (current ?? []) as { id: string; position: number }[]) {
-    await service.from("coffeed_panels").update({ position: row.position + 1000 }).eq("id", row.id);
-  }
-  for (let k = 0; k < ids.length; k++) {
-    await service.from("coffeed_panels").update({ position: k + 1 }).eq("id", ids[k]);
-  }
-}
-
-// ---------- Aceptación y publicación ----------
-
-export async function acceptDraft(draftId: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
   const { data: d } = await service.from("coffeed_drafts").select("cycle_id").eq("id", draftId).maybeSingle();
-  if (!d) return { ok: false, error: "El borrador no existe." };
-  // El trigger coffeed_guard_accept re-valida las reglas — el mensaje llega tal cual.
-  const { error } = await service
-    .from("coffeed_drafts")
-    .update({ state: "accepted", accepted_by: who.userId })
-    .eq("id", draftId)
-    .eq("state", "draft");
-  if (error) return { ok: false, error: error.message };
-  await setCycleStage(service, d.cycle_id, 7);
-  return { ok: true };
-}
-
-/** Lo que ven KR/CP/DC: SOLO capítulos published. Aceptar ≠ publicar. */
-export async function publishChapter(draftId: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { error } = await service.from("coffeed_drafts").update({ state: "published" }).eq("id", draftId).eq("state", "accepted");
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-export async function unpublishChapter(draftId: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  if (!d) return { ok: false, error: "El post no existe." };
   const { error } = await service
     .from("coffeed_drafts")
     .update({ state: "accepted", published_at: null })
     .eq("id", draftId)
     .eq("state", "published");
-  return error ? { ok: false, error: error.message } : { ok: true };
+  if (error) return { ok: false, error: error.message };
+  await service.from("coffeed_cycles").update({ status: "listo" }).eq("id", d.cycle_id);
+  return { ok: true };
 }
 
-// ---------- Guion de vídeo (etapa 7, fallback determinista) ----------
+// ---------- Medios de Consulta ----------
 
-/** El mapeo determinista del prototipo — sin IA, mismo contenido, otro ritmo. */
-export async function buildScriptDeterministic(draftId: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
+export async function setSourceList(id: string, list: "white" | "black"): Promise<CoffeedResult> {
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { data: d } = await service
-    .from("coffeed_drafts")
-    .select("state, coffeed_panels(position, role, text)")
-    .eq("id", draftId)
-    .maybeSingle();
-  if (!d) return { ok: false, error: "El borrador no existe." };
-  if (d.state === "draft") return { ok: false, error: "El guion llega después de la aceptación." };
-
-  const panels = ((d.coffeed_panels ?? []) as { position: number; role: string | null; text: string }[]).sort(
-    (a, b) => a.position - b.position
-  );
-  const scenes: CoffeedScene[] = panels.map((p, i) => ({
-    n: i + 1,
-    duration: p.role === "apertura" ? 4 : p.role === "cierre" ? 5 : 3,
-    voiceover: p.text,
-    av:
-      p.role === "apertura"
-        ? "Rótulo sobre fondo plano, sin imagen."
-        : "Gráfico o documento en plano cerrado, según la fuente del panel.",
-    direction:
-      p.role === "cierre"
-        ? "Un segundo de silencio antes del texto. Corte a negro seco."
-        : p.role === "apertura"
-          ? "Sin música los dos primeros segundos. Entra el bajo con el corte."
-          : "Corte duro desde el panel anterior. El texto entra ya puesto, no se anima.",
-  }));
-  const { error } = await service.from("coffeed_video_scripts").upsert({ draft_id: draftId, scenes }, { onConflict: "draft_id" });
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_sources").update({ list }).eq("id", id);
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-// ---------- Muro: anuncios internos ----------
+export async function removeSource(id: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
+  if (!who) return NO_AUTH;
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_sources").delete().eq("id", id);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+// ---------- Identidad de marca ----------
+
+export async function saveBrand(input: {
+  companyName: string;
+  slogan: string;
+  palette: string[];
+  fontFamily: string;
+  artDirection: string;
+}): Promise<CoffeedResult> {
+  const who = await coffeedGate();
+  if (!who) return NO_AUTH;
+  if (!input.companyName.trim()) return { ok: false, error: "El nombre de la empresa no puede quedar vacío." };
+  const palette = input.palette
+    .map((c) => c.trim().toUpperCase())
+    .filter((c) => /^#[0-9A-F]{6}$/.test(c))
+    .slice(0, COFFEED_PALETTE_MAX);
+
+  const service = coffeedServiceClient();
+  const { error } = await service
+    .from("coffeed_brand")
+    .update({
+      company_name: input.companyName.trim(),
+      slogan: input.slogan.trim() || null,
+      palette,
+      font_family: input.fontFamily,
+      art_direction: input.artDirection.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", true);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+/** URL firmada de subida bajo coffeed/brand/ (service role, como gvg/). */
+export async function prepareBrandLogoUpload(
+  fileName: string
+): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
+  const who = await coffeedGate();
+  if (!who) return { ok: false, error: "No autorizado." };
+  const service = coffeedServiceClient();
+  const safe = fileName
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .slice(-100);
+  const path = `${COFFEED_PREFIX}/brand/${Date.now()}-${safe}`;
+  const { data, error } = await service.storage.from(COFFEED_BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: "No se pudo preparar la subida." };
+  return { ok: true, path, token: data.token };
+}
+
+export async function setBrandLogo(path: string): Promise<CoffeedResult> {
+  const who = await coffeedGate();
+  if (!who) return NO_AUTH;
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_brand").update({ logo_path: path, updated_at: new Date().toISOString() }).eq("id", true);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+export async function clearBrandLogo(): Promise<CoffeedResult> {
+  const who = await coffeedGate();
+  if (!who) return NO_AUTH;
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_brand").update({ logo_path: null }).eq("id", true);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
+// ---------- Muro: anuncios ----------
+// 2026-07-30: los anuncios YA NO son solo internos — viajan al muro de KR,
+// Cherry Picked y el Directorio junto a los capítulos (decisión del owner).
 
 export async function addAnnouncement(input: { title: string; body: string; area: string; pinned: boolean }): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
   if (!input.title.trim()) return { ok: false, error: "Un anuncio sin título no se puede publicar." };
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_announcements").insert({
     author_id: who.userId,
     title: input.title.trim(),
@@ -690,43 +678,17 @@ export async function addAnnouncement(input: { title: string; body: string; area
 }
 
 export async function toggleAnnouncementPinned(id: string, pinned: boolean): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_announcements").update({ pinned }).eq("id", id);
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
 export async function deleteAnnouncement(id: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
+  const who = await coffeedGate();
   if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
+  const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_announcements").delete().eq("id", id);
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-// ---------- Fuentes (etapa 1) ----------
-
-export async function addSource(input: {
-  name: string;
-  kind: "youtube" | "outlet";
-  category: string;
-  list: "white" | "black";
-}): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  if (!input.name.trim()) return { ok: false, error: "La fuente necesita un nombre." };
-  const service = createServiceRoleClient();
-  const { error } = await service
-    .from("coffeed_sources")
-    .insert({ name: input.name.trim(), kind: input.kind, category: input.category.trim() || null, list: input.list });
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-export async function removeSource(id: string): Promise<CoffeedResult> {
-  const who = await estudioGate();
-  if (!who) return NO_AUTH;
-  const service = createServiceRoleClient();
-  const { error } = await service.from("coffeed_sources").delete().eq("id", id);
   return error ? { ok: false, error: error.message } : { ok: true };
 }

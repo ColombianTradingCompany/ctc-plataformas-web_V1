@@ -257,4 +257,4 @@ Contexto abierto al cerrar V21:
 - APP_VERSION 2.29 → 2.30. Verificado en vivo: 4 fichas con sus enlaces, índice
   con 7 enlaces + 2 Pronto, contenido profundo ausente de Home y presente en
   la superficie, form general operativo, cero errores de consola.
-(commit: pending)
+(commit: 0276c96)

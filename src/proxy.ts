@@ -34,6 +34,10 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
   // pública del CTC Control Panel (el login maestro sigue en www/login).
   "coffeed": "/coffeed",
   "panel": "/control-panel",
+  // V4 · Fase 4: Herramientas del Café (reparto público del tools_config).
+  // OJO: los HTML viven en /tools (excluido del matcher) — la RUTA es
+  // /herramientas, los archivos siguen sirviéndose desde la raíz.
+  "herramientas": "/herramientas",
 };
 
 // ── Por qué el proxy renueva la sesión (2026-07-18) ─────────────────────────

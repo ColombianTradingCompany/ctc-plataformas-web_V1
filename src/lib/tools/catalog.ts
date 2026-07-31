@@ -85,31 +85,40 @@ export const ALL_TOOL_IDS: ToolId[] = [
 // superficie; "plus" solo quien tiene el estatus correspondiente (hoy:
 // Pasaporte del Kaffetal Club en el lado productor, membresía en Cherry Picked).
 export type ToolTier = "default" | "plus";
-export type ToolSurface = "kr" | "cp";
+// "web" (V4 · Fase 4) = la superficie pública Herramientas del Café
+// (herramientas.ctcexport.com). Ahí "default" lo ve el VISITANTE ANÓNIMO y
+// "plus" cualquier cuenta de la plataforma con sesión — la identidad única de
+// la red (la cookie viaja entre subdominios), no un login nuevo.
+export type ToolSurface = "kr" | "cp" | "web";
 
 export type ToolSetting = {
   /** Visible en Kaffetal Regal. */
   kr: boolean;
   /** Visible en Cherry Picked. */
   cp: boolean;
+  /** Visible en la superficie pública Herramientas del Café. */
+  web: boolean;
   tier: ToolTier;
 };
 
 export type ToolsConfig = Record<ToolId, ToolSetting>;
 
+// Arranque de `web`: las calculadoras del día a día + la rueda + el Agtron se
+// ofrecen al público; QR/fórmula/viaje/datasheet arrancan apagadas y el owner
+// las enciende desde Disponibilidad si quiere.
 export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
-  "mermas-rapida": { kr: true, cp: false, tier: "default" },
-  "mermas-detallada": { kr: true, cp: false, tier: "default" },
-  agtron: { kr: true, cp: true, tier: "default" },
+  "mermas-rapida": { kr: true, cp: false, web: true, tier: "default" },
+  "mermas-detallada": { kr: true, cp: false, web: true, tier: "default" },
+  agtron: { kr: true, cp: true, web: true, tier: "default" },
   // Internas del equipo: no se ofrecen en ninguna superficie pública.
-  qr: { kr: false, cp: false, tier: "plus" },
-  "formula-calidad": { kr: false, cp: false, tier: "default" },
-  "viaje-cafe": { kr: false, cp: false, tier: "default" },
+  qr: { kr: false, cp: false, web: false, tier: "plus" },
+  "formula-calidad": { kr: false, cp: false, web: false, tier: "default" },
+  "viaje-cafe": { kr: false, cp: false, web: false, tier: "default" },
   // Herramientas de trabajo del productor (como las de merma): visibles en KR.
   // El owner ajusta superficie/nivel desde Disponibilidad.
-  "mermas-ctc": { kr: true, cp: false, tier: "default" },
-  catacion: { kr: true, cp: false, tier: "default" },
-  "green-datasheet": { kr: true, cp: false, tier: "default" },
+  "mermas-ctc": { kr: true, cp: false, web: true, tier: "default" },
+  catacion: { kr: true, cp: false, web: true, tier: "default" },
+  "green-datasheet": { kr: true, cp: false, web: false, tier: "default" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

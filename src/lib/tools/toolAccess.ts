@@ -54,7 +54,7 @@ export async function saveToolsConfig(config: ToolsConfig): Promise<{ ok: true }
     action: "tools_config_changed",
     performed_by: adminId,
   });
-  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked"]) revalidatePath(p);
+  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked", "/herramientas"]) revalidatePath(p);
   return { ok: true };
 }
 
@@ -82,7 +82,12 @@ export async function loadToolAccess(surface: ToolSurface): Promise<ToolAccess> 
       data: { user },
     } = await session.auth.getUser();
     if (user) {
-      if (surface === "kr") {
+      if (surface === "web") {
+        // Superficie pública (V4 · Fase 4): Plus = cualquier cuenta de la
+        // plataforma con sesión. La cookie viaja entre subdominios
+        // (Domain=.ctcexport.com), así que entrar en KR/CP/Directorio basta.
+        isPlus = true;
+      } else if (surface === "kr") {
         const { data } = await service
           .from("producer_profiles")
           .select("club_member_since")

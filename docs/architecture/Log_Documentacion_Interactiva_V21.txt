@@ -301,3 +301,27 @@ Contexto abierto al cerrar V21:
   aplicada (SQL confirmó columnas y tabla vacía post-reset — se autopuebla con
   la primera jornada que gradúe un Black), ruta compila y gatea al login.
 (commit: fab20ad)
+
+## [2026-08-01] V4 Fase 4 · Herramientas del Café (superficie pública)
+- /herramientas (subdominio herramientas): las 10 herramientas embebidas
+  publicadas como producto SOBRE la matriz existente. ToolSurface ganó "web"
+  (ToolSetting.web; toToolsConfig lo mergea seguro en configs guardadas);
+  regla del tier: Default = visitante anónimo, Plus = cualquier cuenta de la
+  plataforma con sesión (loadToolAccess("web") — la cookie compartida
+  Domain=.ctcexport.com reconoce sesiones de KR/CP/Directorio, sin login
+  propio). Page force-dynamic.
+- Disponibilidad (ECP → Herramientas) ganó la columna "Herramientas (web)".
+  Arranque web: mermas-rapida/detallada, agtron, mermas-ctc, catación ON;
+  qr/formula-calidad/viaje-cafe/green-datasheet OFF.
+- TOOL_COPY se mudó a src/lib/tools/toolCopy.ts (fuente única — la página del
+  ECP y la landing la consumen; KR conserva su dict propio a propósito).
+- Índice de la red en CTC Home: la última loseta "Pronto" (Herramientas) pasó
+  a enlace — las 9 puertas del enrutador viven.
+- Caveat vigente: los HTML de public/tools/ son públicos por URL; la matriz es
+  curaduría, no secreto (documentado desde la revisión del plan).
+- Nodos/wires para el mapa: superficie herramientas-web (lee tools_config,
+  reconoce la sesión compartida). DICT candidato: "ToolSurface web".
+- APP_VERSION 2.32 → 2.33. Verificado en vivo: 5 herramientas para el anónimo,
+  iframe abre /tools/mermas-rapida.html, rewrite por Host correcto, el asset
+  /tools pasa limpio en el subdominio (exclusión del matcher), loseta enlazada.
+(commit: pending)

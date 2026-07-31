@@ -57,6 +57,7 @@ export function ToolsAdmin({
               <th style={th}>Herramienta</th>
               <th style={{ ...th, textAlign: "center", width: 120 }}>Kaffetal Regal</th>
               <th style={{ ...th, textAlign: "center", width: 120 }}>Cherry Picked</th>
+              <th style={{ ...th, textAlign: "center", width: 140 }}>Herramientas (web)</th>
               <th style={{ ...th, width: 130 }}>Nivel</th>
             </tr>
           </thead>
@@ -78,6 +79,16 @@ export function ToolsAdmin({
                     checked={config[id].cp}
                     onChange={(e) => patch(id, { cp: e.target.checked })}
                     aria-label={`${names[id]} en Cherry Picked`}
+                  />
+                </td>
+                <td style={{ ...td, textAlign: "center" }}>
+                  {/* V4 · Fase 4: la superficie pública. Default = visitante
+                      anónimo; Plus = cualquier cuenta con sesión. */}
+                  <input
+                    type="checkbox"
+                    checked={config[id].web}
+                    onChange={(e) => patch(id, { web: e.target.checked })}
+                    aria-label={`${names[id]} en Herramientas del Café (web)`}
                   />
                 </td>
                 <td style={td}>

@@ -401,7 +401,13 @@ Ninguna toca datos; son la tanda de bajo riesgo después del movimiento grande.
 
 ---
 
-### Fase 4 · Herramientas del Café *(Clase A — más barata de lo que este plan decía)*
+### Fase 4 · Herramientas del Café — ✔ CONSTRUIDA 2026-08-01
+*(V2.33. /herramientas, subdominio `herramientas`. Decisión del tier anónimo:
+la superficie es el ToolSurface `web` — Default = visitante anónimo, Plus =
+cualquier cuenta de la red con sesión (la cookie compartida la reconoce sola,
+sin login propio). Disponibilidad ganó la columna "Herramientas (web)". El
+índice de CTC Home quedó SIN "Pronto": las 9 puertas viven. Pendiente del
+owner: DNS de `herramientas`.)*
 **Corrección tras verificar el código (2026-07-29): la matriz de permisos YA
 EXISTE.** `platform_settings.tools_config` (service-role-only) reparte las 10
 herramientas por superficie con niveles **Default/Plus** (Plus = Pasaporte del

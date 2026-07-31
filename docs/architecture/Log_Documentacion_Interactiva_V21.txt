@@ -210,3 +210,32 @@ Contexto abierto al cerrar V21:
   (tools públicas de KR); no crea nodos ni wires. Si existe DICT/nodo de las
   herramientas, actualizar su descripción para mencionar precios FNC/ancla.
 (commit: 865be1b)
+
+## [2026-07-31] V4 Fase 1 · Tres superficies de captación Clase B + CRMs por consola
+- Reestructura V4 (plan: docs/V4_RED_RESTRUCTURE_ANALYSIS.md, reglas Fase 0
+  CONGELADAS incl. vocabulario canónico Specialty/Black). Tres superficies
+  públicas nuevas, subdominio + ruta cada una: /ctc-tech, /co-create,
+  /varietales (proxy.ts ampliado). Son "Clase B": landing + project form, SIN
+  login, SIN tablas nuevas — el form es el ContactModal existente con
+  googleAuth={false} (sin /auth/callback en esos subdominios) y deposita en
+  `leads` con su pilar de siempre.
+- Molde compartido src/components/services/ (SurfaceShell + CtcTechLanding +
+  CoCreateLanding + VarietalesLanding + surface.module.css). La copy NO se
+  duplicó: ServicesSection.tsx ahora exporta SERVICES_COPY/TECH_STATIC y las
+  landings la importan (Fase 2 la mudará del todo).
+- El tablero de leads se extrajo a src/components/panel/LeadsBoard.tsx
+  (parametrizado por pilar) y se repartió por la regla "el CRM vive en la
+  consola dueña del dominio": /ocp/leads queda SOLO con `general` (label nav
+  "Leads · Recepción"), /bcp/co-create = CRM Co-Create (nuevo nav BCP),
+  /ecp/ctc-tech + /ecp/varietales = CRMs de la capa estratégica (nuevo nav
+  ECP). Misma tabla leads, mismas server actions.
+- Nodos nuevos probables para el mapa: superficie ctc-tech, superficie
+  co-create, superficie varietales (satélites de captación); wires: cada una →
+  leads → su CRM de consola. Escenario nuevo posible: "proponer un proyecto
+  Co-Create" (form → cuenta buyer → CRM BCP → futuro Black Stock).
+- DICT candidatos: "Clase B / superficie de captación", "CRM por consola",
+  "vocabulario Specialty/Black" (canon en V4_RED_RESTRUCTURE_ANALYSIS.md §Fase 0).
+- APP_VERSION 2.27 → 2.28. Verificado en vivo: 3 rutas renderizan, forms abren
+  con todos los campos del pilar + honeypot y SIN botón Google; CTC Home
+  conserva el suyo; rewrites por Host verificados con curl.
+(commit: pending)

@@ -14,6 +14,9 @@ Colombian Trading Company (CTC) is a green-coffee exporter. This repo is a singl
 | **Cherry Picked Roast** | Roasted-fulfillment programme (scaffold) | `/cherry-picked-roast` | `cherry-picked-roast.*` |
 | **Cherry Picked X** | Small-format programme (scaffold) | `/cherry-picked-x` | `cherry-picked-x.*` |
 | **Directorio del Café** | Coffee professionals of Santander (people layer) | `/directorio` | `directoriodelcafe.*` |
+| **CTC Tech** | Producers seeking agronomic tech (capture-only) | `/ctc-tech` | `ctc-tech.*` |
+| **Co-Create** | Brands proposing US/EU projects (capture-only) | `/co-create` | `co-create.*` |
+| **Varietales** | Producers requesting seedling catalog (capture-only) | `/varietales` | `varietales.*` |
 | **BCP** (Business Control Panel) | CTC's own staff (2 founders) | `/bcp` | not on a public subdomain |
 
 The subdomain→path rewrite lives in `src/proxy.ts` (see Gotchas below for why it's not called `middleware.ts`).
@@ -172,6 +175,15 @@ Muro de noticias/anuncios + línea de producción editorial, en **`/ecp/coffeed`
 - **La maqueta del post NO la decide un modelo**: `postTemplate.ts` es puro y determinista (patrón `cvTemplate.ts` de GVG), lee la identidad de marca y empotra el logo en base64 para que el HTML descargado sea autosuficiente. El PDF es el "Imprimir" del navegador sobre ese mismo HTML.
 - **La identidad de marca viaja en los prompts** (`brandBrief`): la dirección de arte entra como contexto en extracción, propuestas y redacción.
 - **Los anuncios SÍ viajan** a KR/CP/DC junto a los capítulos (cambio del 2026-07-30; antes eran solo internos).
+
+## V4 · Superficies de captación Clase B + CRMs por consola (2026-07-31, Fase 1)
+
+The V4 restructure (`docs/V4_RED_RESTRUCTURE_ANALYSIS.md` — read it for the full model: CTC Home as router, three I/O classes, frozen Fase 0 rules incl. the canonical Specialty/Black vocabulary) shipped its Fase 1:
+
+- **Three capture-only surfaces** ("Clase B": landing + project form, NO login, NO new tables): `/ctc-tech`, `/co-create`, `/varietales` — subdomain-routed like everything else (`src/proxy.ts`). Shared mould in `src/components/services/` (`SurfaceShell` + one landing each + `surface.module.css`). They mount the existing `ContactModalProvider` with **`googleAuth={false}`** — these subdomains have no `/auth/callback` route and are not in Supabase's redirect allowlist, so the Google path is deliberately absent (Fase 1 "option a"; adding it later = per-surface callback route + allowlist entry, pattern in KR/CP/Directorio). Forms post to the unchanged `submitLeadPublic` with their pillar.
+- **Copy is NOT duplicated**: the landings import `SERVICES_COPY`/`TECH_STATIC`, exported from `src/components/ctc-home/ServicesSection.tsx` (see the comment at its foot). Fase 2 (CTC Home → router) will move the copy out of CTC Home for good; until then ServicesSection is the single source. **Varietales is content-minimal on purpose** — owner material pending; the landing takes it as a new section when it arrives.
+- **The leads board became `src/components/panel/LeadsBoard.tsx`** (parametrized by pillar; the old `/ocp/leads` page body verbatim) and split per the Fase 0 rule "the CRM lives in the console that owns the domain": `/ocp/leads` keeps ONLY `general` (Recepción de la red), `/bcp/co-create` = CRM Co-Create (core business; future link to Black Stock), `/ecp/ctc-tech` + `/ecp/varietales` = the strategic-layer CRMs. One `leads` table, unchanged actions (`src/app/ocp/(app)/leadsActions.ts`).
+- **DNS/Vercel pending (owner does DNS by hand)**: add `ctc-tech`, `co-create`, `varietales` as domains in Vercel + Hostinger CNAMEs → same target as every other subdomain; steps identical to `docs/PARTNER_DOMAINS_SETUP.md`. Until then the surfaces are reachable path-based on the root domain.
 
 ## Feature status per platform
 

@@ -369,7 +369,19 @@ function readFreshStash(): (LeadPayload & { ts: number }) | null {
   }
 }
 
-export function ContactModalProvider({ children }: { children: React.ReactNode }) {
+export function ContactModalProvider({
+  children,
+  googleAuth = true,
+}: {
+  children: React.ReactNode;
+  /**
+   * Las superficies de captación V4 (CTC Tech, Co-Create, Varietales) viven en
+   * subdominios SIN ruta /auth/callback ni entrada en la allowlist de Supabase,
+   * así que montan el modal sin el camino de Google (Fase 1, opción a): solo la
+   * cuenta provisionada con contraseña temporal. CTC Home mantiene los dos.
+   */
+  googleAuth?: boolean;
+}) {
   const t = T[useLang()];
   const [openKey, setOpenKey] = useState<FormKey | null>(null);
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
@@ -478,17 +490,21 @@ export function ContactModalProvider({ children }: { children: React.ReactNode }
       <button className="btn btn-solid" type="submit" disabled={submitting}>
         {submitting ? t.submitting : t.submit}
       </button>
-      <div className={styles.divider}>
-        <span>{t.or}</span>
-      </div>
-      <button
-        className={`btn ${styles.googleBtn}`}
-        type="button"
-        disabled={submitting}
-        onClick={(e) => continueWithGoogle(key, (e.currentTarget as HTMLButtonElement).form as HTMLFormElement)}
-      >
-        {t.google}
-      </button>
+      {googleAuth && (
+        <>
+          <div className={styles.divider}>
+            <span>{t.or}</span>
+          </div>
+          <button
+            className={`btn ${styles.googleBtn}`}
+            type="button"
+            disabled={submitting}
+            onClick={(e) => continueWithGoogle(key, (e.currentTarget as HTMLButtonElement).form as HTMLFormElement)}
+          >
+            {t.google}
+          </button>
+        </>
+      )}
       <span className={styles.hint}>{t.hint(PLATFORM_NAME[key])}</span>
     </>
   );

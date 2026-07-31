@@ -24,6 +24,12 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
   "master-roaster": "/socios/master-roaster",
   // Public-facing subdomain is "ctc-content" (2026-07-16); the internal slug stays.
   "ctc-content": "/socios/estudio-contenido",
+  // Superficies de captación Clase B (V4 · Fase 1): landing + project form,
+  // sin login propio — depositan en `leads`. DNS/Vercel: mismo patrón de
+  // docs/PARTNER_DOMAINS_SETUP.md.
+  "ctc-tech": "/ctc-tech",
+  "co-create": "/co-create",
+  "varietales": "/varietales",
 };
 
 // ── Por qué el proxy renueva la sesión (2026-07-18) ─────────────────────────

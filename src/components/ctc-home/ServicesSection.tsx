@@ -965,3 +965,12 @@ export function ServicesSection() {
     </section>
   );
 }
+
+// ── Reuso V4 · Fase 1 ────────────────────────────────────────────────────────
+// Las superficies de captación independientes (CTC Tech, Co-Create, Varietales)
+// reutilizan ESTA copy trilingüe en sus landings en vez de duplicarla. En la
+// Fase 2 (CTC Home → enrutador) la copy se mudará de aquí a esas superficies y
+// esta sección se reducirá a la ficha de ruta; hasta entonces, la fuente única
+// es este archivo.
+export { T as SERVICES_COPY, TECH_STATIC };
+export type { TechCopy, Dict as ServicesDict };

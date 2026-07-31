@@ -35,11 +35,13 @@ datos** tiene el Directorio con el hub.
 
 ## 2 · El reparto de dominios (lo que el board reorganiza)
 
-| Consola | Dominio del que es dueña | Satélites |
-|---|---|---|
-| **BCP** · Base | **Mercado del café** — identidad y pasaporte del lote | Kaffetal Regal → Cherry Picked · Co-Create |
-| **OCP** · Operación | **Los 5 nodos socios** — ejecución delegada | Centro de Calidad · Agente de Carga · Agente de Nacionalización · Master Roaster · Estudio de Contenido |
-| **ECP** · Dirección | **Servicios y productos de apoyo** | Directorio del Café · Herramientas del Café · Coffeed · CTC Tech · Varietales |
+**Misión por consola (refinada por el owner, 2026-07-31):**
+
+| Consola | Misión | Satélites | Módulos internos propios |
+|---|---|---|---|
+| **BCP** · Base | **El negocio núcleo** — encontrar el mejor productor, el mejor producto y el mejor cliente | Kaffetal Regal → Cherry Picked · Co-Create | **Black Stock** (compras de café Black, del embudo KRA) · **CRM Co-Create** |
+| **OCP** · Operación | **La rama operativa (no-admin)** — todo lo que debe pasar en el mundo real para que los flujos corran | Centro de Calidad · Agente de Carga · Agente de Nacionalización · Master Roaster · Estudio de Contenido | Leads `general` (recepción) |
+| **ECP** · Dirección | **El negocio estratégico** — la capa complementaria construida alrededor del núcleo para mejorarlo o facilitarlo | Directorio del Café · Herramientas del Café · Coffeed · CTC Tech · Varietales | **Gestión de Coffeed** · **CRM Tech** · **CRM Varietales** · IT y Plataforma · **Back Office** (placeholder, admin — para después) |
 
 Y la ecuación del board: **BCP + OCP = Orquestación Operacional**. Es decir, el
 mercado y la red de nodos no son dos cosas paralelas — juntos son *la máquina que
@@ -167,12 +169,20 @@ que hace hoy el pilar `cocreate` → rol buyer), y el proyecto lo opera CTC con 
 tostador. Las dos cosas son ciertas a la vez y hay que decirlas así en el copy
 para que nadie espere un carrito en Co-Create.
 
-**5.4 · Coffeed: ¿quién lo produce y quién lo publica?**
-El board lo pone bajo **ECP**; hoy se produce dentro del **nodo socio Estudio de
-Contenido** (que es OCP). No es contradicción si se separan los dos roles:
-**producción = nodo socio (OCP)**, **propiedad de la superficie = ECP**. Recomendado
-adoptar esa distinción como regla general de la red (quién opera ≠ quién publica),
-porque volverá a aparecer con Herramientas y Directorio.
+**5.4 · Coffeed — RESUELTO en contra de la recomendación (owner, 2026-07-31)**
+**El Estudio de Contenido NO alojará Coffeed. Coffeed se gestiona únicamente en
+el ECP.** La regla "quién opera ≠ quién publica" que este documento había
+recomendado queda **descartada** para este caso: gestión y publicación viven
+las dos en la consola de dirección.
+
+Consecuencia de migración (trabajo real, no solo copy): el `CoffeedStudio`
+completo — pipeline editorial de 7 etapas, hoy en
+`/socios/estudio-contenido/panel/coffeed` con gate `estudioGate()`/`requirePartner`
+— **se muda al ECP** (p. ej. `/ecp/coffeed`), y sus Server Actions cambian de
+gate de partner a gate de consola interna (`requireActiveAdmin`). Las 13 tablas
+`coffeed_*` no se tocan (ya son service-role-only, indiferentes a qué gate las
+invoca). El nodo Estudio de Contenido queda como credencial "solo login" para
+sus otras funciones de red; su panel pierde el módulo.
 
 **5.5 · ¿Una identidad para todo lo público?**
 Directorio ya promete en su paso 02 que es *la misma cuenta* que KR / Cherry
@@ -212,18 +222,58 @@ Una sola pasada de escritura para que ninguna superficie posterior improvise:
 
 - **El contrato de E/S por clase** (§3) como regla de diseño: si es Clase B no
   lleva login ni tabla propia — deposita en `leads` y punto.
-- **Quién opera ≠ quién publica** (§5.4) como regla general de la red.
+- **El CRM vive en la consola dueña del dominio** (owner, 2026-07-31): cada
+  superficie de captación alimenta un kanban simple en SU consola — Co-Create →
+  BCP, CTC Tech → ECP, Varietales → ECP; el pilar `general` ("Escríbenos") se
+  queda en el OCP como recepción de la red. El kanban da seguimiento y construye
+  el contexto local de ese cliente. (Esto reparte lo que hoy hace `/ocp/leads`
+  con sus 4 kanbans por pilar — la tabla `leads` sigue siendo una sola.)
 - **Una identidad de plataforma** para todo lo público (§5.5), con fila de perfil
   por superficie. El Directorio ya lo promete por escrito en su paso 02.
+- **Navegación cruzada entre las plataformas bidireccionales** (owner,
+  2026-07-31): como comparten cuenta (mismo Google login, cookie ya compartida
+  con `Domain=.ctcexport.com`), moverse entre KR / Cherry Picked / Directorio /
+  Herramientas debe ser fácil y visible. La sesión ya viaja; lo que falta es el
+  **afordance de UI** — extender `QuickNav` (que ya lleva la entrada "casa
+  matriz" en todas las superficies) a un conmutador de red que muestre las
+  superficies donde tu cuenta ya tiene perfil.
 - **El vocabulario Specialty / Black** (§5.3) redactado una vez y reutilizado
   idéntico en KR, Cherry Picked y Co-Create. Hoy cada superficie lo cuenta a su
   manera; es la clase de deriva que después cuesta caro.
 
-Entregable: esta sección de este documento, aprobada.
+**CONGELADO 2026-07-31** — las cuatro reglas de arriba + el vocabulario canónico
+de abajo quedan en vigor. Fase 1 arrancada sobre ellas.
+
+#### Vocabulario canónico Specialty / Black *(fuente única — las superficies lo traducen fiel, no lo reinterpretan)*
+
+> **El catálogo de Kaffetal Regal se compone de dos clases de café.**
+> **Specialty** son los lotes con nombre propio: microlotes graduados en la Arena
+> (Red, Blue, Gold y Tyrian), pagados por lo que hay en la taza.
+> **Black** es el café base de la temporada: limpio, dulce y constante, en
+> volumen (lotes de asociación o de finca, 2,5–4 toneladas), negociado
+> directamente con CTC a través del Black Stock.
+> **Ambas clases nacen del mismo embudo** (la Arena de Kaffetal Regal) **y ambas
+> se ofrecen a los dos outlets**: Cherry Picked (Green · Roast · X) y Co-Create.
+> Ninguna clase pertenece a un outlet; el outlet decide qué clase necesita.
+
+Matices que el canon fija y las superficies no pueden contradecir:
+- "Black" es una **clase de oferta**, no un insulto de calidad: es el grado de
+  entrada del sistema CTC (Black < Red < Blue < Gold < Tyrian) Y a la vez el
+  producto de volumen que sostiene la operación diaria de un tostador.
+- La pestaña Black de Cherry Picked Green vende el **inventario ya adquirido**
+  del Black Stock (on spot, Ámsterdam). La negociación de compra de ese
+  inventario es del BCP, invisible al comprador.
+- Co-Create puede coordinar una compra Black **para un proyecto específico**
+  (vía CRM Co-Create ↔ Black Stock), pero eso se narra como servicio del
+  proyecto, nunca como "carrito".
+
+Entregable: esta sección de este documento, aprobada. ✔
 
 ---
 
-### Fase 1 · El molde Clase B + las tres superficies de captación
+### Fase 1 · El molde Clase B + las tres superficies de captación — ✔ CONSTRUIDA 2026-07-31
+*(V2.28. Rutas /ctc-tech /co-create /varietales + CRMs repartidos. Pendiente del
+owner: DNS de los 3 subdominios en Hostinger+Vercel, y el material de Varietales.)*
 **CTC Tech, Varietales, Co-Create.** Las tres juntas y en este orden dentro de la
 fase, porque comparten un único molde: landing seccionada + *project form* →
 `leads` con su pilar → provisión de cuenta → triage en `/ocp/leads`.
@@ -270,7 +320,42 @@ Dos maneras de pagarlo, a elegir al arrancar la fase:
   owner al empezar la fase, y si no llega, esta superficie se separa y las otras dos
   no la esperan.
 
+**El otro lado de la fase: los CRMs en sus consolas (owner, 2026-07-31).** El
+form es la mitad; la otra mitad es dónde aterriza. Cada captación alimenta un
+**kanban simple en la consola dueña del dominio** — seguimiento + contexto local
+del cliente: **CRM Co-Create → BCP**, **CRM Tech → ECP**, **CRM Varietales →
+ECP**; `general` se queda en `/ocp/leads` como recepción. El material de
+construcción ya existe: los componentes del kanban de `/ocp/leads` (columnas por
+status, popup de lead con provisión de cuenta / conexiones / hilo de email /
+composer de respuesta) se reutilizan filtrando por pilar — es mover y filtrar,
+no diseñar de cero. La tabla `leads` sigue siendo una; cambia qué consola ve qué
+pilar.
+
 ---
+
+### Vía paralela · Black Stock *(BCP — módulo interno, sin peaje de subdominio)*
+**Nuevo alcance (owner, 2026-07-31).** Módulo del BCP que gestiona **las compras
+de café grado Black**: las potenciales (pipeline) y las ya adquiridas
+(inventario). Nace **del mismo embudo de la KRA** — no es un canal nuevo de
+entrada: cuando una jornada gradúa un lote como Black, hoy ya se crea una fila en
+`black_negotiations` que se decide suelta en `/bcp/contratos`
+(`decideBlackNegotiation`). Black Stock es **convertir esa fila huérfana en un
+módulo con dos caras**:
+
+1. **Pipeline de compra** — las negociaciones Black abiertas (lo que hoy es
+   `black_negotiations`, con estados de seguimiento).
+2. **Inventario adquirido** — lo comprado, que es literalmente lo que alimenta la
+   pestaña Black (spot, siempre disponible) de Cherry Picked Green.
+
+**Enlace futuro con el CRM Co-Create** (owner: "shall link at some point"): un
+cliente del kanban Co-Create podrá coordinarse con una compra específica del
+Black Stock — comprar Black *para* ese proyecto. Se diseña el módulo con ese
+enlace en mente (una FK opcional `lead_id` en la negociación basta como semilla),
+pero **no se construye el enlace en el primer corte**.
+
+Va como vía paralela porque no depende de ninguna fase (es maquinaria interna
+BCP, cero subdominios) y ninguna fase depende de él, salvo el enlace con el CRM
+Co-Create — que exige Fase 1 hecha.
 
 ### Fase 2 · CTC Home se convierte en el enrutador
 **Va después de la Fase 1 a propósito.** Si se vacía primero, CTC Home anuncia
@@ -293,8 +378,10 @@ Ninguna toca datos; son la tanda de bajo riesgo después del movimiento grande.
 - **Coffeed · Home** (Clase C) — `getCoffeedWall()` ya devuelve solo capítulos
   `published` con columnas de exhibición, y `CoffeedWall` ya está montado en KR /
   Cherry Picked / Directorio. La superficie propia es una **lectura más del mismo
-  dato**: sin login, sin captación, sin tabla nueva. Aquí se aplica §5.4 por primera
-  vez — la produce el nodo socio (OCP), la publica el ECP.
+  dato**: sin login, sin captación, sin tabla nueva. **Más la migración de §5.4**:
+  el `CoffeedStudio` se muda del panel del socio Estudio de Contenido al ECP
+  (`/ecp/coffeed`), cambiando el gate de partner por `requireActiveAdmin` — las
+  13 tablas `coffeed_*` no se tocan.
 - **CTC Control Panel · landing + login** — es la pieza que le da sentido al board.
   La landing explica las 3 consolas y entrega al `/login` maestro que ya existe
   (password + OTP, sesión única). No toca autenticación: solo le pone cara.

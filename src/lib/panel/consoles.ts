@@ -60,6 +60,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/bcp", label: "Panel", exact: true },
           { href: "/bcp/club", label: "Kaffetal Club" },
           { href: "/bcp/catalogo", label: "Catálogo Cherry Picked" },
+          // CRM Co-Create (V4 · Fase 1): el outlet Co-Create es negocio núcleo,
+          // así que su kanban vive aquí — no en el OCP como el resto de leads.
+          { href: "/bcp/co-create", label: "CRM Co-Create" },
         ],
       },
       {
@@ -103,6 +106,11 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // dirige desde dentro, y su producción es lo que se delega — no al
           // revés. Lo que se publica aquí aparece en KR, Cherry Picked y el DC.
           { href: "/ecp/coffeed", label: "Coffeed" },
+          // CRMs de captación (V4 · Fase 1): CTC Tech y Varietales son capa
+          // estratégica, así que sus kanbans viven aquí (regla Fase 0: el CRM
+          // vive en la consola dueña del dominio).
+          { href: "/ecp/ctc-tech", label: "CRM CTC Tech" },
+          { href: "/ecp/varietales", label: "CRM Varietales" },
         ],
       },
       {
@@ -146,9 +154,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "OCP · Operación",
         links: [
           { href: "/ocp", label: "Panel", exact: true },
-          // Leads CTC Home se movió del BCP a OCP (2026-07-21): la recepción y
-          // el triage de prospectos entrantes es operación de la red.
-          { href: "/ocp/leads", label: "Leads CTC Home" },
+          // Leads (2026-07-21 BCP→OCP; V4 Fase 1: solo queda `general`) — la
+          // recepción de la red. Los pilares de servicio viven en su consola
+          // dueña: cocreate → BCP, tech y varietales → ECP.
+          { href: "/ocp/leads", label: "Leads · Recepción" },
           // Los socios se administran donde se OPERAN (2026-07-20): el OCP es el
           // espejo de las interfaces de partner, así que dar de alta y de baja
           // una credencial de nodo pertenece aquí, no a la consola de dirección.

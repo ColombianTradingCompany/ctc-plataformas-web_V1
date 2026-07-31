@@ -228,11 +228,32 @@ Entregable: esta sección de este documento, aprobada.
 fase, porque comparten un único molde: landing seccionada + *project form* →
 `leads` con su pilar → provisión de cuenta → triage en `/ocp/leads`.
 
-Backend: **cero trabajo nuevo.** `src/lib/leads/actions.ts` ya valida los 4 pilares
-con sus campos (`tech`, `cocreate`, `varietales`), ya crea la cuenta con el rol
-correcto (`cocreate` → buyer; el resto → producer vía
-`promoteFreshBuyerToProducer.ts`) y ya manda el email de bienvenida por Resend.
-Lo único a añadir es el molde de landing y el punto de entrada por subdominio.
+Backend: **casi cero trabajo nuevo — con una salvedad verificada en código
+(2026-07-29).** `src/lib/leads/actions.ts` ya valida los 4 pilares con sus campos
+(`tech`, `cocreate`, `varietales`), ya crea la cuenta con el rol correcto
+(`cocreate` → buyer; el resto → producer vía `promoteFreshBuyerToProducer.ts`) y
+ya manda el email de bienvenida por Resend. Las Server Actions funcionan igual
+desde cualquier subdominio (misma app), y la cookie de sesión ya viaja con
+`Domain=.ctcexport.com` (el proxy la escribe así), o sea que un subdominio nuevo
+hereda el compartir-sesión gratis.
+
+**La salvedad es el botón "Continuar con Google".** `ContactModal` lanza el OAuth
+con `redirectTo: window.location.origin + "/auth/callback"` — en un subdominio
+nuevo eso apunta a una ruta que no existe (el proxy la reescribiría a
+`/ctc-tech/auth/callback`) y a una URL que Supabase Auth rechaza si no está en su
+allowlist de redirects. El patrón ya establecido lo confirma: KR, Cherry Picked y
+Directorio tienen **cada uno su propio `auth/callback`** + entrada en la
+allowlist. Además el flujo de reanudación aterriza en `/?lead=resume` — relativo
+a la raíz.
+
+Dos maneras de pagarlo, a elegir al arrancar la fase:
+- **(a) Barata y recomendada para el primer corte:** las superficies Clase B se
+  lanzan **sin botón de Google** — solo el camino de cuenta-provisionada-con-
+  contraseña-temporal, que no tiene round-trip de OAuth y es de verdad cero
+  backend. Google se añade después si los leads lo piden.
+- **(b) Completa:** un `auth/callback` por superficie (copiando el patrón de
+  Directorio) + 3 entradas en la allowlist de Supabase + reanudación por
+  superficie. Es mecánica conocida, pero son ~3 rutas y configuración, no cero.
 
 - **CTC Tech** — el contenido ya existe y está bueno: las 5 tecnologías con sus
   modales ⓘ viven hoy dentro de `ServicesSection` de CTC Home, y hay material
@@ -280,16 +301,27 @@ Ninguna toca datos; son la tanda de bajo riesgo después del movimiento grande.
 
 ---
 
-### Fase 4 · Herramientas del Café *(Clase A — la única con diseño nuevo)*
-Las 10 herramientas ya existen en `public/tools/` y ya están embebidas en
-`/ecp/herramientas` (interno). Publicarlas como producto exige lo que las otras
-fases no: **decidir qué herramienta ve quién** — visitante anónimo, productor de
-KR, comprador de Cherry Picked, socio de un nodo. Eso es una matriz de permisos
-nueva, aunque chica, y por eso va al final.
+### Fase 4 · Herramientas del Café *(Clase A — más barata de lo que este plan decía)*
+**Corrección tras verificar el código (2026-07-29): la matriz de permisos YA
+EXISTE.** `platform_settings.tools_config` (service-role-only) reparte las 10
+herramientas por superficie con niveles **Default/Plus** (Plus = Pasaporte del
+Club para productores, escalón pintón/maduro para compradores — `isPlusFor` en
+`src/lib/tools/toolAccess.ts`), se administra desde `/ecp/herramientas`
+(`ToolsAdmin`), y cada superficie recibe su lista **ya filtrada por server
+action** — nada se resuelve en el cliente.
 
-Se resuelve con el patrón ya establecido en la red: identidad única de plataforma
-(§5.5) + lectura por vista estrecha, no por RLS ancha
-(ver [[feedback-public-catalog-rls]]).
+El trabajo real de la fase se reduce a: la landing pública, registrar la
+superficie nueva como `ToolSurface` en `src/lib/tools/catalog.ts`, y **una sola
+decisión de producto**: qué ve el visitante anónimo (¿un tier "visitante" en la
+misma config, o la landing solo muestra el catálogo y las herramientas exigen
+cuenta?). La identidad es la única de plataforma (§5.5) — sin login nuevo.
+
+**Caveat que hay que decir en voz alta:** los HTML viven en `public/tools/` y el
+matcher del proxy los excluye — son **estáticos y públicos por definición**.
+El gating actual es *curaduría* (qué se lista y se embebe para quién), no
+*secreto*: quien tenga la URL directa puede bajar el HTML. Para calculadoras es
+aceptable y es el estado actual; si alguna herramienta futura fuera de verdad
+privada, tendría que servirse por route handler autenticado, no desde `public/`.
 
 ---
 

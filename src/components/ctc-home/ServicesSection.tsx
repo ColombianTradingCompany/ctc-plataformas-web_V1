@@ -686,8 +686,27 @@ function TechIcon({ item }: { item: (typeof TECH_STATIC)[number] }) {
   );
 }
 
+// Enlaces provisionales a las superficies independientes (V4 · Fase 1). En la
+// Fase 2 esta sección entera se reduce a la ficha de ruta del enrutador; hasta
+// entonces, cada bloque enlaza a su página propia además de abrir el form.
+const SURFACE_URL: Record<"tech" | "cocreate" | "varietales", string> =
+  process.env.NODE_ENV === "production"
+    ? {
+        tech: "https://ctc-tech.ctcexport.com",
+        cocreate: "https://co-create.ctcexport.com",
+        varietales: "https://varietales.ctcexport.com",
+      }
+    : { tech: "/ctc-tech", cocreate: "/co-create", varietales: "/varietales" };
+
+const SURFACE_LINK_LABEL: Record<Lang, string> = {
+  es: "Visitar la página completa →",
+  en: "Visit the full page →",
+  de: "Zur vollständigen Seite →",
+};
+
 export function ServicesSection() {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
   const [infoOpen, setInfoOpen] = useState<number | null>(null);
   const activeStatic = infoOpen !== null ? TECH_STATIC[infoOpen] : null;
   const activeCopy = infoOpen !== null ? t.tech[infoOpen] : null;
@@ -749,6 +768,9 @@ export function ServicesSection() {
                 <OpenFormButton formKey="tech" className="btn btn-sm btn-solid">
                   {t.techCta}
                 </OpenFormButton>
+                <a className="btn btn-sm" href={SURFACE_URL.tech}>
+                  {SURFACE_LINK_LABEL[lang]}
+                </a>
               </div>
             </div>
           </details>
@@ -797,6 +819,9 @@ export function ServicesSection() {
                 <OpenFormButton formKey="cocreate" className="btn btn-sm" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
                   {t.cocreateCta}
                 </OpenFormButton>
+                <a className="btn btn-sm" href={SURFACE_URL.cocreate}>
+                  {SURFACE_LINK_LABEL[lang]}
+                </a>
               </div>
             </div>
           </details>
@@ -903,6 +928,9 @@ export function ServicesSection() {
                 <OpenFormButton formKey="varietales" className="btn btn-sm" style={{ borderColor: "var(--red)", color: "var(--red)" }}>
                   {t.varCta}
                 </OpenFormButton>
+                <a className="btn btn-sm" href={SURFACE_URL.varietales}>
+                  {SURFACE_LINK_LABEL[lang]}
+                </a>
               </div>
             </div>
           </details>

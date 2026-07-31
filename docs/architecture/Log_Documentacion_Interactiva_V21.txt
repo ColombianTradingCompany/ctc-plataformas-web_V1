@@ -239,3 +239,22 @@ Contexto abierto al cerrar V21:
   con todos los campos del pilar + honeypot y SIN botón Google; CTC Home
   conserva el suyo; rewrites por Host verificados con curl.
 (commit: 7ed3542)
+
+## [2026-07-31] V4 Fase 2 · CTC Home = el enrutador de la red
+- La copy trilingüe de los servicios se mudó de ServicesSection a
+  src/components/services/servicesCopy.tsx (fuente única; la consumen las 3
+  landings y la ficha de ruta de CTC Home).
+- ServicesSection (CTC Home) dejó de desplegar los servicios completos: ahora
+  son 4 fichas de ruta (Tech/Co-Create/Directorio/Varietales) con enlace a su
+  superficie + fila "Escríbenos y te orientamos" (form general). Los modales
+  de las 5 tecnologías ya solo existen en ctc-tech.ctcexport.com.
+- EcosystemSection cierra con "El índice de la red": 9 losetas — 7 vivas
+  (Roast, X, Co-Create, CTC Tech, Varietales, Directorio, Control Panel→/login)
+  y 2 "Pronto" (Coffeed, Herramientas del Café) que se enlazan en Fase 3/4.
+- Nodo/mapa: CTC Home pasa de "marketing + captación" a "enrutador de la red";
+  wire nuevo CTC Home → cada superficie. DICT candidato: "enrutador (V4)".
+- Los 3 subdominios de captación quedaron vivos con TLS (DNS del owner).
+- APP_VERSION 2.29 → 2.30. Verificado en vivo: 4 fichas con sus enlaces, índice
+  con 7 enlaces + 2 Pronto, contenido profundo ausente de Home y presente en
+  la superficie, form general operativo, cero errores de consola.
+(commit: pending)

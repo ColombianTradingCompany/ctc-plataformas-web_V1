@@ -4,10 +4,41 @@ import Image from "next/image";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./EcosystemSection.module.css";
 
+// ── V4 · Fase 2: el índice del enrutador ─────────────────────────────────────
+// CTC Home es el enrutador de la red: esta sección, además de las dos tarjetas
+// insignia (Kaffetal Regal / Cherry Picked), cierra con el índice completo de
+// destinos — cada superficie viva enlazada, las que faltan marcadas "pronto".
+const NET_URL =
+  process.env.NODE_ENV === "production"
+    ? {
+        roast: "https://cherry-picked-roast.ctcexport.com",
+        x: "https://cherry-picked-x.ctcexport.com",
+        cocreate: "https://co-create.ctcexport.com",
+        tech: "https://ctc-tech.ctcexport.com",
+        varietales: "https://varietales.ctcexport.com",
+        directorio: "https://directoriodelcafe.ctcexport.com",
+        panel: "https://www.ctcexport.com/login",
+      }
+    : {
+        roast: "/cherry-picked-roast",
+        x: "/cherry-picked-x",
+        cocreate: "/co-create",
+        tech: "/ctc-tech",
+        varietales: "/varietales",
+        directorio: "/directorio",
+        panel: "/login",
+      };
+
+type NetTile = { name: string; sub: string; href?: string; soon?: boolean };
+
 type Dict = {
   eyebrow: string;
   h2: string;
   intro: string;
+  netMono: string;
+  netH3: string;
+  netSoon: string;
+  netTiles: NetTile[];
   krWho: string;
   krOneline: string;
   krSummary: string;
@@ -75,6 +106,20 @@ const T: Record<Lang, Dict> = {
       " La geolocalización que el productor registra en Kaffetal Regal se convierte en la declaración EUDR que CTC presenta en Bruselas; la catación de la Arena se convierte en el grado que se compra en Ámsterdam; y el contrato firmado en Piedecuesta se convierte —si el tostador lo activa— en el Transparency Credit que su cliente lee al escanear la taza. Nada se cuenta dos veces, nada se pierde en el camino.",
     capOrigin: "El origen · geolocalizado",
     capGrade: "El grado · que se compra",
+    netMono: "El índice de la red",
+    netH3: "Todas las puertas, desde aquí",
+    netSoon: "Pronto",
+    netTiles: [
+      { name: "Cherry Picked Roast", sub: "La oferta Green, tostada en Europa · 2027", href: NET_URL.roast },
+      { name: "Cherry Picked X", sub: "Cajas por temporada, desde 3 kg · 2027", href: NET_URL.x },
+      { name: "CTC Co-Create", sub: "Proyectos de marca en EE.UU. y Europa", href: NET_URL.cocreate },
+      { name: "CTC Tech", sub: "Tecnologías agrónomas en finca", href: NET_URL.tech },
+      { name: "Varietales Registrados", sub: "Chapolas de genética verificada", href: NET_URL.varietales },
+      { name: "Directorio del Café", sub: "Los especialistas del café de Colombia", href: NET_URL.directorio },
+      { name: "Coffeed", sub: "El muro de noticias de la red", soon: true },
+      { name: "Herramientas del Café", sub: "Calculadoras y utilidades del oficio", soon: true },
+      { name: "CTC Control Panel", sub: "Acceso interno del equipo CTC", href: NET_URL.panel },
+    ],
   },
   en: {
     eyebrow: "Two platforms, one thread",
@@ -123,6 +168,20 @@ const T: Record<Lang, Dict> = {
       " The geolocation a producer registers in Kaffetal Regal becomes the EUDR statement CTC files in Brussels; the Arena's cupping becomes the grade bought in Amsterdam; and the contract signed in Piedecuesta becomes — if the roaster activates it — the Transparency Credit their customer reads when scanning the cup. Nothing is told twice, nothing is lost along the way.",
     capOrigin: "The origin · geolocated",
     capGrade: "The grade · that gets bought",
+    netMono: "The network index",
+    netH3: "Every door, from here",
+    netSoon: "Soon",
+    netTiles: [
+      { name: "Cherry Picked Roast", sub: "The Green offer, roasted in Europe · 2027", href: NET_URL.roast },
+      { name: "Cherry Picked X", sub: "Per-season boxes, from 3 kg · 2027", href: NET_URL.x },
+      { name: "CTC Co-Create", sub: "Brand projects in the US and Europe", href: NET_URL.cocreate },
+      { name: "CTC Tech", sub: "On-farm agronomic technologies", href: NET_URL.tech },
+      { name: "Registered Varietals", sub: "Seedlings of verified genetics", href: NET_URL.varietales },
+      { name: "Coffee Directory", sub: "Colombia's coffee specialists", href: NET_URL.directorio },
+      { name: "Coffeed", sub: "The network's news wall", soon: true },
+      { name: "Coffee Tools", sub: "Calculators and trade utilities", soon: true },
+      { name: "CTC Control Panel", sub: "Internal access for the CTC team", href: NET_URL.panel },
+    ],
   },
   de: {
     eyebrow: "Zwei Plattformen, ein Faden",
@@ -171,6 +230,20 @@ const T: Record<Lang, Dict> = {
       " Die Geolokalisierung, die der Produzent in Kaffetal Regal registriert, wird zur EUDR-Erklärung, die CTC in Brüssel einreicht; die Verkostung der Arena wird zum Grad, der in Amsterdam gekauft wird; und der in Piedecuesta unterzeichnete Vertrag wird — wenn der Röster es aktiviert — zum Transparency Credit, den sein Kunde beim Scannen der Tasse liest. Nichts wird zweimal erzählt, nichts geht unterwegs verloren.",
     capOrigin: "Der Ursprung · geolokalisiert",
     capGrade: "Der Grad · der gekauft wird",
+    netMono: "Der Index des Netzwerks",
+    netH3: "Jede Tür, von hier aus",
+    netSoon: "Bald",
+    netTiles: [
+      { name: "Cherry Picked Roast", sub: "Das Green-Angebot, in Europa geröstet · 2027", href: NET_URL.roast },
+      { name: "Cherry Picked X", sub: "Saisonboxen, ab 3 kg · 2027", href: NET_URL.x },
+      { name: "CTC Co-Create", sub: "Markenprojekte in den USA und Europa", href: NET_URL.cocreate },
+      { name: "CTC Tech", sub: "Agrartechnologien auf der Finca", href: NET_URL.tech },
+      { name: "Registrierte Varietäten", sub: "Setzlinge verifizierter Genetik", href: NET_URL.varietales },
+      { name: "Kaffee-Verzeichnis", sub: "Kolumbiens Kaffeespezialisten", href: NET_URL.directorio },
+      { name: "Coffeed", sub: "Die Nachrichtenwand des Netzwerks", soon: true },
+      { name: "Kaffee-Werkzeuge", sub: "Rechner und Werkzeuge des Handwerks", soon: true },
+      { name: "CTC Control Panel", sub: "Interner Zugang für das CTC-Team", href: NET_URL.panel },
+    ],
   },
 };
 
@@ -300,6 +373,28 @@ export function EcosystemSection() {
               />
               <figcaption>{t.capGrade}</figcaption>
             </figure>
+          </div>
+        </div>
+
+        <div className={styles.net}>
+          <span className={styles.threadMono}>{t.netMono}</span>
+          <h3 className={styles.netH3}>{t.netH3}</h3>
+          <div className={styles.netGrid}>
+            {t.netTiles.map((tile) =>
+              tile.soon ? (
+                <div className={`${styles.netTile} ${styles.netTileSoon}`} key={tile.name}>
+                  <b>{tile.name}</b>
+                  <span>{tile.sub}</span>
+                  <em>{t.netSoon}</em>
+                </div>
+              ) : (
+                <a className={styles.netTile} href={tile.href} key={tile.name}>
+                  <b>{tile.name}</b>
+                  <span>{tile.sub}</span>
+                  <em>↗</em>
+                </a>
+              )
+            )}
           </div>
         </div>
       </div>

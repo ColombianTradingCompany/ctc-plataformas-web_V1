@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useContactModal } from "@/components/ctc-home/ContactModal";
-import { SERVICES_COPY, TECH_STATIC } from "@/components/ctc-home/ServicesSection";
+import { SERVICES_COPY, TECH_STATIC } from "@/components/services/servicesCopy";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";

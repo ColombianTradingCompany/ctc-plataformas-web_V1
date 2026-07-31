@@ -357,7 +357,10 @@ Va como vía paralela porque no depende de ninguna fase (es maquinaria interna
 BCP, cero subdominios) y ninguna fase depende de él, salvo el enlace con el CRM
 Co-Create — que exige Fase 1 hecha.
 
-### Fase 2 · CTC Home se convierte en el enrutador
+### Fase 2 · CTC Home se convierte en el enrutador — ✔ CONSTRUIDA 2026-07-31
+*(V2.30. ServicesSection = 4 fichas de ruta; EcosystemSection cierra con el
+índice de la red: 7 destinos vivos + Coffeed/Herramientas "Pronto" + acceso al
+Control Panel. La copy vive en src/components/services/servicesCopy.tsx.)*
 **Va después de la Fase 1 a propósito.** Si se vacía primero, CTC Home anuncia
 servicios que no tienen destino; si se hace después, el contenido se muda una sola
 vez y nunca vive duplicado en dos sitios.

@@ -67,3 +67,18 @@
 .techCta{margin:20px -32px -32px;padding:20px 32px;border-top:1px dashed var(--line);background:var(--paper);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .techCta p{margin:0;font-size:14px;color:var(--ink);font-weight:600;max-width:32ch}
 @media(max-width:520px){.techCta{flex-direction:column;align-items:stretch;text-align:center}}
+
+/* ── Fichas de ruta (V4 · Fase 2) ─────────────────────────────────────────────
+   La sección dejó de desplegar los servicios completos: cada tarjeta es la
+   ficha de ruta hacia la superficie independiente del servicio. */
+.routeGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+@media(max-width:860px){.routeGrid{grid-template-columns:1fr}}
+.routeCard{padding:26px 30px;display:flex;flex-direction:column;gap:12px}
+.routeH3{font-size:22px;margin:0}
+.routeSub{color:var(--sc);font-weight:600;font-size:13.5px;margin:0}
+.routeBody{color:var(--muted);font-size:14.5px;line-height:1.6;margin:0}
+.routeChips{display:flex;flex-wrap:wrap;gap:8px}
+.routeChip{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--muted);background:var(--paper)}
+.routeFoot{margin-top:auto;padding-top:6px}
+.routeAsk{margin-top:26px;text-align:center;color:var(--muted);font-size:14.5px}
+.routeAskBtn{background:none;border:none;padding:0;cursor:pointer;font:inherit;color:var(--primary);font-weight:600;text-decoration:underline;text-underline-offset:3px}

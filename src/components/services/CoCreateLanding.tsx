@@ -1,7 +1,7 @@
 "use client";
 
 import { useContactModal } from "@/components/ctc-home/ContactModal";
-import { SERVICES_COPY } from "@/components/ctc-home/ServicesSection";
+import { SERVICES_COPY } from "@/components/services/servicesCopy";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";

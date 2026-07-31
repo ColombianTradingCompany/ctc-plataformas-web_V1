@@ -238,4 +238,4 @@ Contexto abierto al cerrar V21:
 - APP_VERSION 2.27 → 2.28. Verificado en vivo: 3 rutas renderizan, forms abren
   con todos los campos del pilar + honeypot y SIN botón Google; CTC Home
   conserva el suyo; rewrites por Host verificados con curl.
-(commit: pending)
+(commit: 7ed3542)

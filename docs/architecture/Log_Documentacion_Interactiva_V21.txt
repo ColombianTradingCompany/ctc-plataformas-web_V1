@@ -275,4 +275,4 @@ Contexto abierto al cerrar V21:
 - APP_VERSION 2.30 → 2.31. Verificado en vivo: ambas rutas renderizan (el muro
   cargó el anuncio real "Bienvenidos a Coffeed!"), rewrites por Host correctos,
   cero errores de consola.
-(commit: pending)
+(commit: 3c35163)

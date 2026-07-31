@@ -375,7 +375,11 @@ vez y nunca vive duplicado en dos sitios.
 
 ---
 
-### Fase 3 · Las dos superficies baratas *(pueden ir en paralelo)*
+### Fase 3 · Las dos superficies baratas — ✔ CONSTRUIDA 2026-07-31
+*(V2.31. /coffeed = Home Clase C sobre el muro curado, subdominio `coffeed`;
+/control-panel = landing pública de las 3 consolas → /login, subdominio
+`panel`. Índice de CTC Home actualizado: solo Herramientas queda "Pronto".
+Pendiente del owner: DNS de `coffeed` y `panel`.)*
 Ninguna toca datos; son la tanda de bajo riesgo después del movimiento grande.
 
 - **Coffeed · Home** (Clase C) — `getCoffeedWall()` ya devuelve solo capítulos

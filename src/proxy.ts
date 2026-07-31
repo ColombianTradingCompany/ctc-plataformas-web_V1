@@ -30,6 +30,10 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
   "ctc-tech": "/ctc-tech",
   "co-create": "/co-create",
   "varietales": "/varietales",
+  // V4 · Fase 3: la Home de Coffeed (Clase C, solo difusión) y la landing
+  // pública del CTC Control Panel (el login maestro sigue en www/login).
+  "coffeed": "/coffeed",
+  "panel": "/control-panel",
 };
 
 // ── Por qué el proxy renueva la sesión (2026-07-18) ─────────────────────────

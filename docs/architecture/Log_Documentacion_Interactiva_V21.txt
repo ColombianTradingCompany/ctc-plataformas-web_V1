@@ -258,3 +258,21 @@ Contexto abierto al cerrar V21:
   con 7 enlaces + 2 Pronto, contenido profundo ausente de Home y presente en
   la superficie, form general operativo, cero errores de consola.
 (commit: 0276c96)
+
+## [2026-07-31] V4 Fase 3 · Coffeed Home + landing del CTC Control Panel
+- /coffeed (subdominio coffeed): la Home pública Clase C de Coffeed —
+  CoffeedHome (hero trilingüe) + el CoffeedWall existente (auto-carga
+  getCoffeedWall(), solo published + anuncios). Sin login, sin captación.
+- /control-panel (subdominio panel): landing pública del hub — explica las 3
+  consolas (datos de src/lib/panel/consoles.ts: código/nombre/acento; taglines
+  públicas trilingües propias) + la tesis del expediente + CTA al /login
+  maestro (URL absoluta a www en prod: el proxy reescribiría /login relativo).
+  La autenticación no cambió.
+- Índice de la red en CTC Home: Coffeed y CTC Control Panel pasaron de
+  "Pronto"/login directo a sus superficies; solo Herramientas queda "Pronto".
+- Nodos/wires para el mapa: superficie coffeed-home (lee coffeed_* published),
+  superficie control-panel-landing (→ login maestro).
+- APP_VERSION 2.30 → 2.31. Verificado en vivo: ambas rutas renderizan (el muro
+  cargó el anuncio real "Bienvenidos a Coffeed!"), rewrites por Host correctos,
+  cero errores de consola.
+(commit: pending)

@@ -17,7 +17,8 @@ const NET_URL =
         tech: "https://ctc-tech.ctcexport.com",
         varietales: "https://varietales.ctcexport.com",
         directorio: "https://directoriodelcafe.ctcexport.com",
-        panel: "https://www.ctcexport.com/login",
+        coffeed: "https://coffeed.ctcexport.com",
+        panel: "https://panel.ctcexport.com",
       }
     : {
         roast: "/cherry-picked-roast",
@@ -26,7 +27,8 @@ const NET_URL =
         tech: "/ctc-tech",
         varietales: "/varietales",
         directorio: "/directorio",
-        panel: "/login",
+        coffeed: "/coffeed",
+        panel: "/control-panel",
       };
 
 type NetTile = { name: string; sub: string; href?: string; soon?: boolean };
@@ -116,7 +118,7 @@ const T: Record<Lang, Dict> = {
       { name: "CTC Tech", sub: "Tecnologías agrónomas en finca", href: NET_URL.tech },
       { name: "Varietales Registrados", sub: "Chapolas de genética verificada", href: NET_URL.varietales },
       { name: "Directorio del Café", sub: "Los especialistas del café de Colombia", href: NET_URL.directorio },
-      { name: "Coffeed", sub: "El muro de noticias de la red", soon: true },
+      { name: "Coffeed", sub: "El muro de noticias de la red", href: NET_URL.coffeed },
       { name: "Herramientas del Café", sub: "Calculadoras y utilidades del oficio", soon: true },
       { name: "CTC Control Panel", sub: "Acceso interno del equipo CTC", href: NET_URL.panel },
     ],
@@ -178,7 +180,7 @@ const T: Record<Lang, Dict> = {
       { name: "CTC Tech", sub: "On-farm agronomic technologies", href: NET_URL.tech },
       { name: "Registered Varietals", sub: "Seedlings of verified genetics", href: NET_URL.varietales },
       { name: "Coffee Directory", sub: "Colombia's coffee specialists", href: NET_URL.directorio },
-      { name: "Coffeed", sub: "The network's news wall", soon: true },
+      { name: "Coffeed", sub: "The network's news wall", href: NET_URL.coffeed },
       { name: "Coffee Tools", sub: "Calculators and trade utilities", soon: true },
       { name: "CTC Control Panel", sub: "Internal access for the CTC team", href: NET_URL.panel },
     ],
@@ -240,7 +242,7 @@ const T: Record<Lang, Dict> = {
       { name: "CTC Tech", sub: "Agrartechnologien auf der Finca", href: NET_URL.tech },
       { name: "Registrierte Varietäten", sub: "Setzlinge verifizierter Genetik", href: NET_URL.varietales },
       { name: "Kaffee-Verzeichnis", sub: "Kolumbiens Kaffeespezialisten", href: NET_URL.directorio },
-      { name: "Coffeed", sub: "Die Nachrichtenwand des Netzwerks", soon: true },
+      { name: "Coffeed", sub: "Die Nachrichtenwand des Netzwerks", href: NET_URL.coffeed },
       { name: "Kaffee-Werkzeuge", sub: "Rechner und Werkzeuge des Handwerks", soon: true },
       { name: "CTC Control Panel", sub: "Interner Zugang für das CTC-Team", href: NET_URL.panel },
     ],

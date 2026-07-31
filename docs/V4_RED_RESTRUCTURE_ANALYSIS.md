@@ -333,7 +333,13 @@ pilar.
 
 ---
 
-### Vía paralela · Black Stock *(BCP — módulo interno, sin peaje de subdominio)*
+### Vía paralela · Black Stock — ✔ CONSTRUIDA 2026-07-31
+*(V2.32. /bcp/black-stock: pipeline kanban [nueva → en conversación → acuerdo
+cerca] con seguimiento de kg objetivo + decisión comprar/liberar, e inventario
+adquirido con la cadena contrato → releases → publicación en la pestaña Black de
+Green. `lead_id` sembrado en black_negotiations para el enlace Co-Create —
+columna sin UI, como se decidió. La cola salió de /bcp/contratos, que ahora solo
+señala cuántas esperan.)*
 **Nuevo alcance (owner, 2026-07-31).** Módulo del BCP que gestiona **las compras
 de café grado Black**: las potenciales (pipeline) y las ya adquiridas
 (inventario). Nace **del mismo embudo de la KRA** — no es un canal nuevo de

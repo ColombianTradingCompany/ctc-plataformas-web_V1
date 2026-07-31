@@ -276,3 +276,28 @@ Contexto abierto al cerrar V21:
   cargó el anuncio real "Bienvenidos a Coffeed!"), rewrites por Host correctos,
   cero errores de consola.
 (commit: 3c35163)
+
+## [2026-07-31] V4 vía paralela · Black Stock (BCP)
+- /bcp/black-stock: la fila huérfana black_negotiations se volvió módulo con
+  dos caras. Pipeline: kanban por `stage` (nueva → en_conversacion →
+  acuerdo_cerca, nueva columna) + `target_kg` + notas (blackStockActions.ts:
+  setBlackNegotiationStage / setBlackNegotiationTarget, ambas con audit_log);
+  la decisión comprar/liberar sigue siendo decideBlackNegotiation
+  (contractActions). Inventario: por lote comprado, la cadena contrato →
+  releases confirmadas (kg reales) → lot_listings (pestaña Black de Green,
+  kg vendidos), con enlaces a Contratos/Catálogo. KPIs arriba.
+- Migración `black_stock_module`: black_negotiations + stage (CHECK 3 valores,
+  default nueva), target_kg numeric, y **lead_id FK→leads ON DELETE SET NULL**
+  — la semilla del enlace CRM Co-Create ↔ Black Stock (columna sin UI, decisión
+  del plan: "comprar Black PARA un proyecto" es segundo corte).
+- /bcp/contratos perdió su bloque Black (BlackNegotiationCard eliminado,
+  sustituido por black-stock/BlackStockCard); ahora solo muestra el conteo de
+  abiertas con enlace al módulo. Nav BCP grupo comercial: "Black Stock".
+- Nodos/wires para el mapa: black_negotiations ya existe como nodo (e23 desde
+  gal); añadir el módulo BCP · Black Stock + wires a purchase_contracts /
+  contract_releases / lot_listings / leads (semilla). DICT candidato:
+  "Black Stock (dos caras)".
+- APP_VERSION 2.31 → 2.32. Verificación: tsc + eslint limpios, migración
+  aplicada (SQL confirmó columnas y tabla vacía post-reset — se autopuebla con
+  la primera jornada que gradúe un Black), ruta compila y gatea al login.
+(commit: pending)

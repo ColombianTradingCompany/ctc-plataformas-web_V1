@@ -193,3 +193,20 @@ Contexto abierto al cerrar V21:
   marca` y `medios de consulta`; el escenario «Un capítulo de Coffeed» cambia
   de actor (ECP produce → publica → KR/CP/DC lo leen).
 (commit: cd25d8a)
+
+## [2026-07-31] Calculadora de Mermas · CTC actualizada a V4 (módulo de precios)
+- `public/tools/mermas-ctc.html` reemplazada por la V4 del owner
+  (`reference_html_tools/Calculadora_Mermas_Cafe_CTC_V4.html`) y re-vendorizada
+  con `scripts/vendor-tool-assets.mjs` (fuentes + jsPDF locales; 0 assets de CDN).
+- Qué añade la V4 sobre la V3: un **módulo de precios** — referencia del precio
+  interno Fedecafé (intenta leer federaciondecafeteros.org vía proxies CORS y,
+  si el navegador lo bloquea, degrada a registro manual con historial), un
+  **precio ancla** por etapa/unidad, y tablas nuevas de **equivalencias por
+  estado** y **precio equivalente por estado** del café.
+- Nota CSP: en la ruta interna (`default-src 'self'`) el fetch a la FNC siempre
+  fallará y la herramienta lo comunica y pide el valor a mano — comportamiento
+  esperado, no bug.
+- Para el wrap: es un cambio de contenido de una herramienta ya documentada
+  (tools públicas de KR); no crea nodos ni wires. Si existe DICT/nodo de las
+  herramientas, actualizar su descripción para mencionar precios FNC/ancla.
+(commit: 865be1b)

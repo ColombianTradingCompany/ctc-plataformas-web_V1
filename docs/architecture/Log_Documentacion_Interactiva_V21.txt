@@ -300,4 +300,4 @@ Contexto abierto al cerrar V21:
 - APP_VERSION 2.31 → 2.32. Verificación: tsc + eslint limpios, migración
   aplicada (SQL confirmó columnas y tabla vacía post-reset — se autopuebla con
   la primera jornada que gradúe un Black), ruta compila y gatea al login.
-(commit: pending)
+(commit: fab20ad)

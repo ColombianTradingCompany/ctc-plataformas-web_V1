@@ -2,7 +2,7 @@ import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { LeadModalRow } from "@/app/ocp/(app)/leads/LeadModalRow";
-import { setJornadaEstadoAdmin, setPostulacionEstado } from "./actions";
+import { reenviarNotificacionLlamado, setJornadaEstadoAdmin, setPostulacionEstado } from "./actions";
 import styles from "@/app/bcp/(app)/shared.module.css";
 
 // ── Terratalento · el tablero de match del ECP ──────────────────────────────
@@ -31,6 +31,8 @@ type PostRow = {
   recolector_id: string;
   estado: string;
   created_at: string;
+  notificado_at: string | null;
+  notificacion_error: string | null;
 };
 
 type RecolectorRow = {
@@ -73,7 +75,7 @@ export default async function EcpTerratalentoPage() {
       .from("terratalento_jornadas")
       .select("id, finca_id, producer_id, fecha_inicio, fecha_fin, cupos, pago, condiciones, estado, created_at, fincas(name, municipio, vereda)")
       .order("created_at", { ascending: false }),
-    service.from("terratalento_postulaciones").select("id, jornada_id, recolector_id, estado, created_at"),
+    service.from("terratalento_postulaciones").select("id, jornada_id, recolector_id, estado, created_at, notificado_at, notificacion_error"),
     service.from("terratalento_recolectores").select("*").order("created_at", { ascending: false }),
   ]);
 
@@ -188,6 +190,27 @@ export default async function EcpTerratalentoPage() {
                             {r.whatsapp && " (WhatsApp)"} · {r.municipio}, {r.departamento}
                             {r.experiencia_anios !== null && ` · ${r.experiencia_anios} año${r.experiencia_anios === 1 ? "" : "s"} de experiencia`}
                             {!r.disponible && " · EN PAUSA"}
+                          </p>
+                        )}
+                        {["llamado", "confirmado"].includes(p.estado) && (
+                          <p className={styles.meta} style={{ margin: "3px 0 0", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                            {p.notificado_at ? (
+                              <span className={styles.badgeGood}>Correo enviado {fecha(p.notificado_at)}</span>
+                            ) : (
+                              <span className={styles.badgeBad}>
+                                Correo sin enviar{p.notificacion_error ? `: ${p.notificacion_error}` : ""}
+                              </span>
+                            )}
+                            <form
+                              action={async () => {
+                                "use server";
+                                await reenviarNotificacionLlamado(p.id);
+                              }}
+                            >
+                              <button className="btn btn-sm" type="submit">
+                                {p.notificado_at ? "Reenviar correo" : "Reintentar envío"}
+                              </button>
+                            </form>
                           </p>
                         )}
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>

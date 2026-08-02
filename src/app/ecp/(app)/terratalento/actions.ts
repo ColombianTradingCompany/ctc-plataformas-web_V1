@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { sendLlamadoEmail } from "@/lib/email/terratalentoEmails";
 
 // ── Terratalento · acciones del tablero de match (ECP) ──────────────────────
 // CTC empareja cada Jornada con sus recolectores: llama, confirma (sin pasar
@@ -52,8 +53,92 @@ export async function setPostulacionEstado(postulacionId: string, estado: string
     new_status: estado,
     performed_by: adminId,
   });
+
+  // La notificación del llamado: en "llamado" y "confirmado" el recolector
+  // recibe correo. El cambio de estado NUNCA se bloquea por el envío — el
+  // resultado se persiste en la fila (patrón leads) y el ECP puede reintentar.
+  if (estado === "llamado" || estado === "confirmado") {
+    await notificarPostulacion(service, postulacionId, estado);
+  }
+
   revalidatePath("/ecp/terratalento");
   return { ok: true };
+}
+
+// Arma el correo desde la fila (recolector + jornada + finca) y persiste el
+// resultado. Compartido por el envío automático y el reintento manual.
+async function notificarPostulacion(
+  service: ReturnType<typeof createServiceRoleClient>,
+  postulacionId: string,
+  tipo: "llamado" | "confirmado"
+): Promise<{ ok: boolean }> {
+  const { data: post } = await service
+    .from("terratalento_postulaciones")
+    .select(
+      "id, recolector_id, terratalento_jornadas(fecha_inicio, fecha_fin, pago, condiciones, fincas(name, municipio)), terratalento_recolectores(nombre)"
+    )
+    .eq("id", postulacionId)
+    .maybeSingle();
+  type Row = {
+    recolector_id: string;
+    terratalento_jornadas: {
+      fecha_inicio: string;
+      fecha_fin: string | null;
+      pago: string | null;
+      condiciones: string | null;
+      fincas: { name: string; municipio: string | null } | null;
+    } | null;
+    terratalento_recolectores: { nombre: string } | null;
+  };
+  const row = post as unknown as Row | null;
+  if (!row?.terratalento_jornadas) return { ok: false };
+
+  const { data: profile } = await service.from("profiles").select("email").eq("id", row.recolector_id).maybeSingle();
+  if (!profile?.email) {
+    await service
+      .from("terratalento_postulaciones")
+      .update({ notificacion_error: "La cuenta del recolector no tiene correo." })
+      .eq("id", postulacionId);
+    return { ok: false };
+  }
+
+  const result = await sendLlamadoEmail({
+    nombre: row.terratalento_recolectores?.nombre ?? "recolector",
+    email: String(profile.email),
+    tipo,
+    fincaNombre: row.terratalento_jornadas.fincas?.name ?? "una finca de la red",
+    municipio: row.terratalento_jornadas.fincas?.municipio ?? "",
+    fechaInicio: row.terratalento_jornadas.fecha_inicio,
+    fechaFin: row.terratalento_jornadas.fecha_fin,
+    pago: row.terratalento_jornadas.pago,
+    condiciones: row.terratalento_jornadas.condiciones,
+  });
+  await service
+    .from("terratalento_postulaciones")
+    .update(
+      result.ok
+        ? { notificado_at: new Date().toISOString(), notificacion_error: null }
+        : { notificacion_error: result.error }
+    )
+    .eq("id", postulacionId);
+  return { ok: result.ok };
+}
+
+/** Reintento manual del correo del llamado (el estado actual decide el texto). */
+export async function reenviarNotificacionLlamado(postulacionId: string): Promise<ActionResult> {
+  await requireActiveAdmin();
+  const service = createServiceRoleClient();
+  const { data: post } = await service
+    .from("terratalento_postulaciones")
+    .select("estado")
+    .eq("id", postulacionId)
+    .maybeSingle();
+  if (!post || !["llamado", "confirmado"].includes(String(post.estado))) {
+    return { ok: false, error: "Solo se notifica a postulaciones llamadas o confirmadas." };
+  }
+  const res = await notificarPostulacion(service, postulacionId, post.estado as "llamado" | "confirmado");
+  revalidatePath("/ecp/terratalento");
+  return res.ok ? { ok: true } : { ok: false, error: "El envío volvió a fallar — el detalle quedó en la fila." };
 }
 
 const ESTADOS_JORNADA = ["abierta", "en_gestion", "cerrada", "cancelada"] as const;

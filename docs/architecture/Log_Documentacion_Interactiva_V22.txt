@@ -78,3 +78,23 @@ Contexto abierto al cerrar V22:
   confirma). DICT candidato: "Terratalento / Jornada de Recolecta".
 - APP_VERSION 2.34 → 2.35.
 (commit: db8381d)
+
+## [2026-08-02] Terratalento: la notificación del llamado
+- Marcar una postulación como "llamado" o "confirmado" en el ECP ahora envía
+  correo al recolector (a su cuenta del ecosistema) vía Resend. Dos variantes
+  de texto: «¡Te llamaron!» (CTC te contactará al celular) y «Tu cupo quedó
+  CONFIRMADO» — con finca, municipio, rango de fechas, pago y condiciones,
+  y el enlace al panel.
+- El texto vive en src/lib/email/llamadoEmail.ts — módulo PURO sin imports
+  (patrón GVG), testeado por scripts/qa-llamado-email-check.mjs (8/8). El
+  envío (terratalentoEmails.ts) usa sendTransactionalEmail con el contrato
+  never-throw de leads.
+- El cambio de estado NUNCA se bloquea por el correo: el resultado se
+  persiste en la fila (notificado_at / notificacion_error — migración
+  terratalento_llamado_notification) y el popup del ECP muestra el chip
+  «Correo enviado <fecha>» / «Correo sin enviar: <error>» con botón
+  Reenviar/Reintentar (reenviarNotificacionLlamado).
+- Para el wrap: el escenario futuro "Una Jornada de Recolecta" gana el paso
+  Resend; wire n-third ya cubre el envío. Sin nodos nuevos.
+- APP_VERSION 2.35 → 2.36.
+(commit: pending)

@@ -115,6 +115,17 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // vive en la consola dueña del dominio).
           { href: "/ecp/ctc-tech", label: "CRM CTC Tech" },
           { href: "/ecp/varietales", label: "CRM Varietales" },
+          // Herramientas (2026-08-02): renombrada y movida de "IT y Plataforma"
+          // a Dirección — desde la Fase 4 de V4 es un PRODUCTO de la red
+          // (superficie pública propia), no tooling interno; aquí se administra
+          // su Disponibilidad.
+          { href: "/ecp/herramientas", label: "Herramientas del café" },
+          // Terratalento (2026-08-02, placeholder): el servicio del RECOLECTOR —
+          // landing + login propios para un nuevo tipo de usuario que crea su
+          // perfil y se postula; las fincas publican "Jornadas de Recolecta"
+          // desde Kaffetal Regal (módulo nuevo allá) y el ECP hace el match.
+          // Se desarrolla en una sesión aparte; hoy es scaffold.
+          { href: "/ecp/terratalento", label: "Terratalento" },
         ],
       },
       {
@@ -132,7 +143,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         links: [
           { href: "/ecp/documentacion", label: "Documentación del sistema" },
           { href: "/ecp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
-          { href: "/ecp/herramientas", label: "Herramientas internas" },
+          // "Herramientas internas" se renombró y subió al grupo de Dirección
+          // (2026-08-02) — ver el comentario allá.
           { href: "/ecp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
         ],
       },

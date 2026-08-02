@@ -22,3 +22,25 @@ Contexto abierto al cerrar V22:
 - black_negotiations está VACÍA tras el reset: el Black Stock se autopuebla con la
   primera jornada que gradúe un lote Black.
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+## [2026-08-02] ECP: diagrama "Estructura del sistema", Herramientas renombrada, Terratalento plantado
+- Documentación del sistema (/ecp/documentacion) ganó el botón **"Estructura del
+  sistema"**: popup con el diagrama V4 aprobado por el owner (la versión
+  corregida — enrutador, módulos internos por consola, 3 clases de E/S), como
+  SVG autocontenido en EstructuraModal.tsx (paleta corporativa; se actualiza a
+  mano cuando la red cambie). Verificado: 0 elementos fuera del viewBox, los 18
+  rótulos esperados presentes.
+- Nav del ECP: "Herramientas internas" se RENOMBRÓ a "Herramientas del café" y
+  se MOVIÓ de "IT y Plataforma" al grupo Dirección — desde la Fase 4 de V4 es
+  un producto de la red, no tooling interno.
+- **Terratalento** (nuevo, scaffold en /ecp/terratalento + entrada de nav):
+  el servicio del RECOLECTOR — nuevo tipo de usuario con superficie propia
+  (landing + login) que crea perfil y se postula; las fincas publicarán
+  "Jornadas de Recolecta" desde Kaffetal Regal (módulo nuevo allá) y el ECP
+  hace el match. SE DESARROLLA EN UNA SESIÓN APARTE — hoy solo ConsoleScaffold
+  con los 3 módulos planeados.
+- Para el wrap: nota en n-consoles (nav Dirección: Herramientas del café +
+  Terratalento); cuando Terratalento se construya será nodo/superficie propia
+  (Clase A) + módulo KR + tablero ECP.
+- APP_VERSION 2.33 → 2.34.
+(commit: pending)

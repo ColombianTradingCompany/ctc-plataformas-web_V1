@@ -1,5 +1,6 @@
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { listArchitectureDocs, type ArchitectureDoc } from "@/lib/panel/architectureDocs";
+import { EstructuraModal } from "./EstructuraModal";
 import styles from "@/app/bcp/(app)/shared.module.css";
 
 // ECP · IT y Plataforma → Documentación del sistema.
@@ -73,6 +74,8 @@ export default async function EcpDocumentacionPage() {
                     Ver la bitácora pendiente ↗
                   </a>
                 )}
+                {/* El diagrama V4 aprobado por el owner (popup, no navegación). */}
+                <EstructuraModal />
               </div>
             </div>
           )}

@@ -43,4 +43,4 @@ Contexto abierto al cerrar V22:
   Terratalento); cuando Terratalento se construya será nodo/superficie propia
   (Clase A) + módulo KR + tablero ECP.
 - APP_VERSION 2.33 → 2.34.
-(commit: pending)
+(commit: 52b8f6f)

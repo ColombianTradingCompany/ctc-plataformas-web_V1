@@ -42,4 +42,4 @@ Contexto abierto al cerrar V23:
 - PENDIENTE DEL OWNER para que el botón funcione: añadir la URL de callback a
   Supabase → Authentication → URL Configuration → Redirect URLs.
 - APP_VERSION 2.36 → 2.37.
-(commit: pending)
+(commit: 6386e3f)

@@ -1,0 +1,25 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V23.0(6968dc4).html
+(CTC Web Platform, 2026-08-02). Cada entrada se compila al próximo Version Wrap (V24).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19): registrar la entrada AL TERMINAR el trabajo,
+no "después".
+
+Contexto abierto al cerrar V23:
+- **F4 (blends) sigue DIFERIDA a propósito** — ver docs/EUDR_RESTRUCTURE_PLAN.md §7-8.
+- "Registrar DDS" del BCP sigue sin verificarse en vivo (la 2FA real lo impide).
+- Terratalento está COMPLETO y con TLS (17 subdominios en total) pero sus tablas
+  están en cero: el primer recolector y la primera Jornada reales aún no llegan.
+  Próximos cortes anotados: canal WhatsApp, login con Google (callback + allowlist)
+  e historial de jornadas del recolector.
+- Pendientes del owner: material de la landing de Varietales; decisión §5.2 (¿los
+  nodos socios pierden su landing pública?); pase de copy Specialty/Black sobre
+  KR (ProcessFlow) y Cherry Picked (BlackSection) con el canon de la Fase 0.
+- El enlace CRM Co-Create ↔ Black Stock tiene la FK (lead_id) pero no UI — espera
+  leads y negociaciones reales. black_negotiations sigue vacía (post-reset).
+- El bucket de Storage sigue sin poda automática del Buzón.

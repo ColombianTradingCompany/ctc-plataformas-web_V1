@@ -14,6 +14,7 @@ import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "./LotCompletionSparkline";
 import { LotKanbanStepper } from "./LotKanbanStepper";
 import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
+import { JornadasRecolectaModule } from "./JornadasRecolectaModule";
 import { ToolPanel } from "@/components/tools/ToolPanel";
 import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
@@ -67,7 +68,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios" | "coffeed";
+export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios" | "coffeed" | "jornadas";
 
 // Minimalist stroked line icons (one visual language, currentColor) — replaces
 // the multicolor emoji that clashed with the panel's editorial tone.
@@ -111,6 +112,10 @@ const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
   // Periódico: Coffeed, el noticiero de la red en capítulos.
   coffeed: (
     <LineIcon><path d="M4.5 5h12v14h-12z" /><path d="M16.5 8h3v9.5a1.5 1.5 0 0 1-1.5 1.5H6" /><path d="M7.5 8.5h6M7.5 12h6M7.5 15.5h3.5" /></LineIcon>
+  ),
+  // Canasta de recolección: las Jornadas de Recolecta (Terratalento).
+  jornadas: (
+    <LineIcon><path d="M5 10h14l-1.5 9h-11L5 10Z" /><path d="M8.5 10 12 4l3.5 6" /><path d="M9.5 13.5v3M12 13.5v3M14.5 13.5v3" /></LineIcon>
   ),
 };
 
@@ -328,6 +333,12 @@ export function AppDashboard({
       title: "Coffeed",
       fact: "El noticiero de la red · capítulos sobre el mercado del café",
     },
+    {
+      key: "jornadas",
+      icon: HUB_ICON.jornadas,
+      title: "Jornadas de Recolecta",
+      fact: "Publique su cosecha en Terratalento — CTC llama a los recolectores",
+    },
   ];
 
   // Looks up one tile's content by key and renders the standard hub button --
@@ -395,6 +406,7 @@ export function AppDashboard({
             {renderTile("contratos")}
             {renderTile("servicios")}
             {renderTile("coffeed")}
+            {renderTile("jornadas")}
             {/* Puente a la capa de personas del ecosistema (2026-07-24): el
                 Directorio es OTRA plataforma (misma cuenta, perfil propio),
                 así que esta tarjeta navega, no abre un módulo. El puente
@@ -893,6 +905,18 @@ export function AppDashboard({
               Estudio de Contenido de la red. Deslice cada carrusel para leer el capítulo panel a panel.
             </div>
             <CoffeedWall />
+          </div>
+          )}
+
+          {module === "jornadas" && (
+          <div className={styles.acard}>
+            <span className={styles.k}>Jornadas de Recolecta · Terratalento</span>
+            <div className={styles.alist} style={{ margin: "6px 0 14px" }}>
+              Publique cuándo necesita manos para su cosecha: fechas, cupos y condiciones. Los recolectores se postulan
+              en terratalento.ctcexport.com y el equipo de CTC hace el llamado — usted ve aquí los conteos de cada
+              jornada.
+            </div>
+            <JornadasRecolectaModule fincas={fincas} />
           </div>
           )}
           </div>

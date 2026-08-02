@@ -1,0 +1,213 @@
+/* ── Terratalento · la superficie del recolector ─────────────────────────────
+   Complementa el molde compartido (services/surface.module.css): formularios
+   y tarjetas del panel del recolector. Tema de la superficie:
+   data-theme="kaffetal-regal" (verde campo + dorado). */
+
+.panelWrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 40px) clamp(16px, 4vw, 32px) 60px;
+  width: 100%;
+}
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.panelHead h1 {
+  font-size: clamp(24px, 3.4vw, 32px);
+  color: var(--primary);
+  margin: 0;
+}
+.panelMail {
+  font-size: 12.5px;
+  color: var(--muted, #6b6459);
+}
+.salir {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--muted, #6b6459);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--line, #e5e0d8);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-top: 18px;
+}
+.card h2 {
+  font-size: 17px;
+  color: var(--primary);
+  margin: 0 0 4px;
+}
+.cardSub {
+  font-size: 13px;
+  color: var(--muted, #6b6459);
+  margin: 0 0 14px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.field.wide {
+  grid-column: 1 / -1;
+}
+.field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #333);
+}
+.field input,
+.field textarea,
+.field select {
+  border: 1px solid var(--line, #d8d2c8);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 14px;
+  background: #fff;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  padding-top: 20px;
+}
+
+.jorCard {
+  border: 1px solid var(--line, #e5e0d8);
+  border-left: 5px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  background: #fff;
+}
+.jorTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.jorTop b {
+  font-size: 15px;
+  color: var(--primary);
+}
+.jorMeta {
+  font-size: 12.5px;
+  color: var(--muted, #6b6459);
+  margin: 4px 0 0;
+}
+.jorCond {
+  font-size: 13px;
+  margin: 8px 0 0;
+  line-height: 1.55;
+}
+.jorFoot {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 4px 11px;
+  border: 1px solid var(--line, #d8d2c8);
+  color: var(--muted, #6b6459);
+  background: #fff;
+}
+.chipOk {
+  border-color: #2e7d32;
+  color: #2e7d32;
+  background: #edf7ee;
+}
+.chipWarn {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #fdf6e4;
+}
+.chipOff {
+  opacity: 0.65;
+}
+
+.aviso {
+  font-size: 13px;
+  border: 1px solid var(--accent);
+  background: #fdf6e4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+.error {
+  font-size: 13px;
+  border: 1px solid #b3261e;
+  background: #fdecea;
+  color: #8c1d18;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+
+/* Pantalla de acceso */
+.authWrap {
+  max-width: 430px;
+  margin: clamp(40px, 8vw, 90px) auto;
+  padding: 0 16px;
+  width: 100%;
+}
+.authCard {
+  background: #fff;
+  border: 1px solid var(--line, #e5e0d8);
+  border-top: 5px solid var(--accent);
+  border-radius: 12px;
+  padding: 26px 24px;
+}
+.authCard h2 {
+  color: var(--primary);
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+.authTabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+.authForm {
+  display: grid;
+  gap: 10px;
+}
+.volver {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--muted, #6b6459);
+}

@@ -120,11 +120,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // (superficie pública propia), no tooling interno; aquí se administra
           // su Disponibilidad.
           { href: "/ecp/herramientas", label: "Herramientas del café" },
-          // Terratalento (2026-08-02, placeholder): el servicio del RECOLECTOR —
-          // landing + login propios para un nuevo tipo de usuario que crea su
-          // perfil y se postula; las fincas publican "Jornadas de Recolecta"
-          // desde Kaffetal Regal (módulo nuevo allá) y el ECP hace el match.
-          // Se desarrolla en una sesión aparte; hoy es scaffold.
+          // Terratalento (CONSTRUIDO 2026-08-02): el servicio del RECOLECTOR —
+          // superficie propia (terratalento.ctcexport.com, identidad única del
+          // ecosistema, patrón Directorio) donde crea su perfil y se postula;
+          // las fincas publican "Jornadas de Recolecta" desde su hub de
+          // Kaffetal Regal, y aquí el ECP hace el MATCH (llamar / confirmar
+          // cupos / descartar) y ve el roster completo.
           { href: "/ecp/terratalento", label: "Terratalento" },
         ],
       },

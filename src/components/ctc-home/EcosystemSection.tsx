@@ -19,6 +19,7 @@ const NET_URL =
         directorio: "https://directoriodelcafe.ctcexport.com",
         coffeed: "https://coffeed.ctcexport.com",
         herramientas: "https://herramientas.ctcexport.com",
+        terratalento: "https://terratalento.ctcexport.com",
         panel: "https://panel.ctcexport.com",
       }
     : {
@@ -30,6 +31,7 @@ const NET_URL =
         directorio: "/directorio",
         coffeed: "/coffeed",
         herramientas: "/herramientas",
+        terratalento: "/terratalento",
         panel: "/control-panel",
       };
 
@@ -122,6 +124,7 @@ const T: Record<Lang, Dict> = {
       { name: "Directorio del Café", sub: "Los especialistas del café de Colombia", href: NET_URL.directorio },
       { name: "Coffeed", sub: "El muro de noticias de la red", href: NET_URL.coffeed },
       { name: "Herramientas del Café", sub: "Calculadoras y utilidades del oficio", href: NET_URL.herramientas },
+      { name: "Terratalento", sub: "Las manos que recogen la cosecha", href: NET_URL.terratalento },
       { name: "CTC Control Panel", sub: "Acceso interno del equipo CTC", href: NET_URL.panel },
     ],
   },
@@ -184,6 +187,7 @@ const T: Record<Lang, Dict> = {
       { name: "Coffee Directory", sub: "Colombia's coffee specialists", href: NET_URL.directorio },
       { name: "Coffeed", sub: "The network's news wall", href: NET_URL.coffeed },
       { name: "Coffee Tools", sub: "Calculators and trade utilities", href: NET_URL.herramientas },
+      { name: "Terratalento", sub: "The hands that pick the harvest", href: NET_URL.terratalento },
       { name: "CTC Control Panel", sub: "Internal access for the CTC team", href: NET_URL.panel },
     ],
   },
@@ -246,6 +250,7 @@ const T: Record<Lang, Dict> = {
       { name: "Kaffee-Verzeichnis", sub: "Kolumbiens Kaffeespezialisten", href: NET_URL.directorio },
       { name: "Coffeed", sub: "Die Nachrichtenwand des Netzwerks", href: NET_URL.coffeed },
       { name: "Kaffee-Werkzeuge", sub: "Rechner und Werkzeuge des Handwerks", href: NET_URL.herramientas },
+      { name: "Terratalento", sub: "Die Hände, die die Ernte pflücken", href: NET_URL.terratalento },
       { name: "CTC Control Panel", sub: "Interner Zugang für das CTC-Team", href: NET_URL.panel },
     ],
   },

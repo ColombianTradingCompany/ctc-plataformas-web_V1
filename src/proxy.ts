@@ -38,6 +38,9 @@ const SUBDOMAIN_ROUTES: Record<string, string> = {
   // OJO: los HTML viven en /tools (excluido del matcher) — la RUTA es
   // /herramientas, los archivos siguen sirviéndose desde la raíz.
   "herramientas": "/herramientas",
+  // Terratalento (2026-08-02): la superficie del recolector — identidad única
+  // del ecosistema, patrón Directorio.
+  "terratalento": "/terratalento",
 };
 
 // ── Por qué el proxy renueva la sesión (2026-07-18) ─────────────────────────

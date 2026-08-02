@@ -44,3 +44,37 @@ Contexto abierto al cerrar V22:
   (Clase A) + módulo KR + tablero ECP.
 - APP_VERSION 2.33 → 2.34.
 (commit: 52b8f6f)
+
+## [2026-08-02] Terratalento CONSTRUIDO — el servicio del recolector, de punta a punta
+- Las tres patas del concepto del owner, en un solo paquete (V2.35):
+  · SUPERFICIE PÚBLICA /terratalento (subdominio terratalento, DNS pendiente):
+    identidad patrón Directorio (misma cuenta del ecosistema, ortogonal a
+    profiles.role — verificado en vivo: una cuenta de productor entra y ve
+    "completa tu perfil"). Landing + acceso email/contraseña (sin Google: ese
+    subdominio no tiene callback) + panel del recolector: perfil (upsert),
+    pausa de disponibilidad, jornadas abiertas con postular/retirar y chips de
+    estado. Curaduría de lectura: de la finca solo viajan nombre/municipio/
+    vereda — nunca geolocalización ni EUDR.
+  · MÓDULO KR "Jornadas de Recolecta" (hub del productor, icono canasta,
+    JornadasRecolectaModule autocargante estilo CoffeedWall): publicar por
+    finca (fechas/cupos/pago/condiciones), cerrar/cancelar, y SOLO conteos —
+    el contacto del recolector no viaja al productor; CTC es el puente.
+  · TABLERO ECP /ecp/terratalento (sustituye el scaffold): KPIs, popup por
+    jornada (LeadModalRow) con roster de postulados + acciones llamar /
+    confirmar (tope de cupos) / descartar / volver, control de estado de la
+    jornada, y el roster completo de recolectores. audit_log en cada escritura.
+- Esquema: migración terratalento_core — terratalento_recolectores /
+  _jornadas / _postulaciones (UNIQUE jornada+recolector), service-role-only
+  (RLS sin políticas). Lógica en src/lib/terratalento/actions.ts.
+- Verificado EN VIVO con cuentas QA (borradas después, roster limpio):
+  productor publica jornada desde su hub → recolector entra, guarda perfil,
+  se postula → confirmación simulada por SQL (el ECP real es 2FA) → ambos
+  lados la reflejan (chip Confirmado + 1/8 cupos). tsc/eslint limpios.
+- CTC Home: loseta Terratalento en el índice de la red (10 puertas).
+  Nav ECP: la entrada dejó de ser scaffold.
+- Nodos/wires para el wrap: nodo nuevo superficie terratalento (Clase A,
+  identidad única) + módulo KR + tablero ECP; wires a db; escenario nuevo
+  "Una Jornada de Recolecta" (finca publica → recolector se postula → ECP
+  confirma). DICT candidato: "Terratalento / Jornada de Recolecta".
+- APP_VERSION 2.34 → 2.35.
+(commit: pending)

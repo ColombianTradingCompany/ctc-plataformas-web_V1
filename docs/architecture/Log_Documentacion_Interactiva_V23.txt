@@ -23,3 +23,23 @@ Contexto abierto al cerrar V23:
 - El enlace CRM Co-Create ↔ Black Stock tiene la FK (lead_id) pero no UI — espera
   leads y negociaciones reales. black_negotiations sigue vacía (post-reset).
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+## [2026-08-02] Terratalento V2 · plan + Google login (paso 1)
+- PLAN completo del V2 en docs/TERRATALENTO_V2_PLAN.md: kanban por frente
+  (ECP dos niveles, KR tablero de jornadas, superficie "mis postulaciones"),
+  Google login, e información contractual en tres capas (términos
+  estructurados → aceptación → snapshot congelado + constancia imprimible).
+  Incluye 4 decisiones abiertas del owner (§5): si la finca ve el roster de
+  confirmados, constancia vs contrato laboral, cuánto dato sensible se pide
+  (EPS), y pago numérico vs texto.
+- CONSTRUIDO el paso 1 (independiente de esas decisiones): Google login en la
+  superficie — ruta src/app/terratalento/auth/callback/route.ts (clon del
+  Directorio: exchangeCodeForSession, SIN promoción de rol) + botón
+  "Continuar con Google" con divisor en el acceso. El redirectTo lleva el
+  prefijo /terratalento a propósito: proxy.ts no reescribe una ruta que ya
+  empieza por la base, así que la misma URL sirve en dev y en el subdominio
+  (verificado con curl en ambos hosts: 307 → /terratalento).
+- PENDIENTE DEL OWNER para que el botón funcione: añadir la URL de callback a
+  Supabase → Authentication → URL Configuration → Redirect URLs.
+- APP_VERSION 2.36 → 2.37.
+(commit: pending)

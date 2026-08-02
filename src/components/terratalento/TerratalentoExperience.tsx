@@ -217,6 +217,18 @@ function Acceso({ modoInicial, onVolver }: { modoInicial: "entrar" | "crear"; on
     if (err) setError("Credenciales inválidas.");
   };
 
+  // El prefijo /terratalento va a propósito: proxy.ts no reescribe una ruta que
+  // ya empieza por la base, así que esta misma URL sirve en el subdominio y en
+  // dev. Debe estar en la allowlist de Supabase (Authentication → URL Config).
+  const conGoogle = async () => {
+    setError(null);
+    setAviso(null);
+    await createClient().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/terratalento/auth/callback` },
+    });
+  };
+
   return (
     <div className={styles.authWrap}>
       <div className={styles.authCard}>
@@ -252,6 +264,12 @@ function Acceso({ modoInicial, onVolver }: { modoInicial: "entrar" | "crear"; on
             {cargando ? "Un momento…" : modo === "crear" ? "Crear cuenta" : "Entrar"}
           </button>
         </form>
+        <div className={styles.divisor}>
+          <span>o</span>
+        </div>
+        <button className={`btn ${styles.googleBtn}`} type="button" disabled={cargando} onClick={conGoogle}>
+          Continuar con Google
+        </button>
         {aviso && <p className={styles.aviso}>{aviso}</p>}
         {error && <p className={styles.error}>{error}</p>}
         <button className={`${styles.volver} ${styles.salir}`} type="button" onClick={onVolver} style={{ marginLeft: 0 }}>

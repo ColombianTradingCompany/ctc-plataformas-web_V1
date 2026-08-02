@@ -97,4 +97,4 @@ Contexto abierto al cerrar V22:
 - Para el wrap: el escenario futuro "Una Jornada de Recolecta" gana el paso
   Resend; wire n-third ya cubre el envío. Sin nodos nuevos.
 - APP_VERSION 2.35 → 2.36.
-(commit: pending)
+(commit: 3c3d216)

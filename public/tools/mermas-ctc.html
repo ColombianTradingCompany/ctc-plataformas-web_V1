@@ -460,7 +460,7 @@ button{font-family:inherit}
 
 /* results panel */
 .results{position:sticky;top:76px}
-.metric-big{text-align:center;padding:.4rem 0 .2rem}
+.metric-big{text-align:center;padding:.9rem 0 .2rem}
 .metric-big .lbl{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .metric-big .num{font-family:'Anton',sans-serif;font-size:clamp(2.6rem,8vw,3.6rem);color:var(--purple);line-height:1;margin:.15rem 0}
 .metric-big .unit{font-size:1rem;color:var(--muted);font-weight:600}
@@ -651,6 +651,30 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
 .ceq .v2{font-size:.85rem;font-weight:700;color:var(--purple-ink)}
 
 .curve{width:100%;height:auto;display:block;margin:.5rem 0 .1rem}
+
+/* ===== kpis pie de embudo ===== */
+.ff-item .s{font-size:.64rem;color:var(--muted);font-weight:600;margin-top:1px}
+
+/* ===== acordeones del resultado ===== */
+.acc{border:1px solid var(--line);border-radius:12px;margin-top:.7rem;overflow:hidden;background:#fff}
+.acc-h{width:100%;border:0;background:var(--paper-2);display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.6rem .8rem;font-weight:400;font-size:.8rem;color:var(--purple);cursor:pointer;letter-spacing:.03em;text-transform:uppercase;font-family:'Anton',sans-serif;text-align:left}
+.acc-h .cnt{font-family:'Inter',sans-serif;font-size:.68rem;color:var(--muted);font-weight:600;text-transform:none;letter-spacing:0;margin-left:auto}
+.acc-h .ar{transition:transform .2s;font-size:.75rem;color:var(--muted)}
+.acc.open .acc-h .ar{transform:rotate(180deg)}
+.acc-b{display:none;padding:.35rem .8rem .8rem}
+.acc.open .acc-b{display:block}
+.eqviz-cap{font-size:.68rem;color:var(--muted);text-align:center;margin:.1rem 0 .2rem}
+/* ===== escalera de valor ===== */
+.lad{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.lad-s{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.55rem .75rem;background:var(--paper-2);border-top:1px solid var(--line)}
+.lad-s:first-child,.lad-p:first-child{border-top:0}
+.lad-s{font-weight:800;font-size:.82rem;color:var(--purple-ink)}
+.lad-s.anchor{background:#FFF7DB}
+.lad-s .pv{text-align:right;font-variant-numeric:tabular-nums;line-height:1.25}
+.lad-s .pv b{font-size:.92rem;color:var(--purple)}
+.lad-s .pv small{font-size:.66rem;color:var(--muted);font-weight:600}
+.lad-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.4rem;vertical-align:baseline}
+.lad-p{display:flex;justify-content:space-between;gap:.6rem;padding:.32rem .75rem .32rem 1.55rem;font-size:.74rem;font-weight:700;color:var(--purple);border-top:1px dashed var(--line);font-variant-numeric:tabular-nums}
 .curve-cap{font-size:.7rem;color:var(--muted);text-align:center;margin-top:-.1rem}
 .pop-num{display:flex;border:1.5px solid var(--line);border-radius:11px;overflow:hidden;background:#fff;max-width:210px}
 .pop-num .pfx{background:var(--paper-2);padding:.5rem .55rem;font-weight:700;color:var(--purple);font-size:.85rem;border-right:1.5px solid var(--line)}
@@ -670,43 +694,43 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
 .gallery figcaption{font-size:.68rem;font-weight:700;color:var(--purple-ink);text-align:center;margin-top:.15rem}
 @media(max-width:520px){.gallery{grid-template-columns:1fr}}
 
-/* ===== precio ancla · referencia Fedecafé ===== */
-.fl{display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted);margin:.8rem 0 .35rem}
-.qty-in .pfx2{background:var(--paper-2);padding:.7rem .6rem;font-weight:800;color:var(--purple);border-right:1.5px solid var(--line);display:flex;align-items:center;font-size:.95rem}
-.seg.four button{font-size:.78rem;padding:.5rem .2rem}
+/* ===== precio ancla ===== */
+.pblock{border:1px solid var(--lilac);background:var(--lilac-soft);border-radius:14px;padding:.8rem .85rem;margin-bottom:.9rem}
+.pblock .pk{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);font-weight:700}
+.seg.seg4 button{font-size:.78rem;padding:.45rem .15rem}
+.ptbl{width:100%;border-collapse:collapse;font-size:.76rem;margin:.5rem 0 .1rem;background:#fff;border-radius:10px;overflow:hidden}
+.ptbl th,.ptbl td{padding:.38rem .45rem;border-bottom:1px solid var(--line);text-align:left}
+.ptbl th{background:var(--paper-2);color:var(--purple);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.ptbl td.n,.ptbl th.n{text-align:right;font-variant-numeric:tabular-nums}
+.ptbl tr.anchor td{background:#FFF7DB;font-weight:700}
+.ptbl tr.perg td{background:var(--green-soft)}
+.ptbl tr:last-child td{border-bottom:0}
+.ptbl td b{color:var(--purple-ink)}
+.ptag{display:inline-block;font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#856400;background:var(--yellow);border-radius:4px;padding:0 .28rem;margin-left:.3rem;vertical-align:middle}
+.fnc-box{border:1px solid var(--line);border-radius:14px;padding:.75rem .8rem;background:#fff;margin-bottom:.9rem}
+.fnc-top{display:flex;align-items:flex-start;gap:.6rem}
+.fnc-top .fv{font-family:'Anton',sans-serif;font-size:1.45rem;color:var(--purple);line-height:1.05}
+.fnc-top .fk{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.fnc-top .fd{font-size:.7rem;color:var(--muted)}
+.fnc-btns{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}
+.fbtn{border:1px solid var(--lilac);background:var(--lilac-soft);color:var(--purple);border-radius:999px;padding:.32rem .65rem;font-size:.72rem;font-weight:700;cursor:pointer}
+.fbtn:hover{background:#e3d5fb}
+.fbtn.solid{background:var(--purple);color:#fff;border-color:transparent}
+.fbtn.solid:hover{background:#4d15a6}
+.fnc-log{margin-top:.6rem;font-size:.7rem;color:var(--muted)}
+.fnc-log table{width:100%;border-collapse:collapse}
+.fnc-log td{padding:.18rem .2rem;border-top:1px dashed var(--line)}
+.fnc-log td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--purple-ink);font-weight:600}
+.fnc-st{font-size:.7rem;margin-top:.45rem;color:var(--muted)}
+.fnc-st.err{color:#9a0f22}
+.fnc-st.ok{color:#1d5c39}
+.eq-note{font-size:.72rem;color:var(--muted);margin:.35rem 0 0}
+.big-carga{background:var(--purple);color:#fff;border-radius:12px;padding:.6rem .8rem;margin-top:.6rem;display:flex;justify-content:space-between;align-items:center;gap:.6rem}
+.big-carga .k{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;opacity:.8;font-weight:700}
+.big-carga .v{font-family:'Anton',sans-serif;font-size:1.35rem;line-height:1}
 
-.fnc{border:1px solid var(--lilac);background:var(--lilac-soft);border-radius:14px;padding:.75rem .8rem;margin-top:.9rem}
-.fnc-h{display:flex;align-items:center;gap:.5rem;margin-bottom:.1rem}
-.fnc-h .k{flex:1;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--purple)}
-.fnc-btn{background:#fff;border:1px solid var(--lilac);color:var(--purple);border-radius:999px;padding:.28rem .62rem;font-size:.68rem;font-weight:700;cursor:pointer;white-space:nowrap}
-.fnc-btn:hover{background:var(--paper-2)}
-.fnc-btn.solid{background:var(--purple);color:#fff;border-color:transparent}
-.fnc-btn.solid:hover{background:#4d15a6}
-.fnc-btn:disabled{opacity:.5;cursor:progress}
-.fnc-v{font-family:'Anton',sans-serif;font-size:1.6rem;color:var(--purple-ink);line-height:1.12}
-.fnc-v small{font-family:'Inter',sans-serif;font-size:.7rem;font-weight:600;color:var(--muted);margin-left:.15rem}
-.fnc-s{font-size:.68rem;color:var(--muted);display:block}
-.fnc-s a{color:var(--purple);font-weight:600}
-.fnc-row{display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap}
-.fnc-note{font-size:.68rem;margin-top:.45rem;padding:.35rem .5rem;border-radius:8px}
-.fnc-note.warn{background:#FBE0E4;color:#9a0f22}
-.fnc-note.ok{background:var(--green-soft);color:#1d5c39}
-.fnc-log{margin-top:.6rem}
-.fnc-log summary{cursor:pointer;font-weight:700;color:var(--purple);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase}
-.fnc-log table{width:100%;border-collapse:collapse;margin-top:.35rem;font-size:.7rem}
-.fnc-log td{padding:.2rem .25rem;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;color:#4a4360}
-.fnc-log td.n{text-align:right;font-weight:700;color:var(--purple-ink)}
-.fnc-man{display:none;margin-top:.5rem}
-.fnc-man.open{display:block}
 
-.eqhi td{background:var(--lilac-soft)}
-.pricebox{border:1px solid var(--lilac);background:var(--lilac-soft);border-radius:12px;padding:.62rem .75rem;margin-top:.6rem}
-.pricebox .k{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);font-weight:700;display:block}
-.pricebox .v{font-family:'Anton',sans-serif;font-size:1.45rem;color:var(--purple-ink);line-height:1.15;margin:.05rem 0}
-.anchor-star{color:var(--yellow);text-shadow:0 0 1px #C79A00}
-.tiny-note{font-size:.7rem;color:var(--muted);margin:.45rem 0 0}
 </style>
-
 </head>
 <body>
 <header class="topbar">
@@ -726,12 +750,13 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
     <h1>Embudo de <span class="accent">Mermas</span></h1>
     <p>Cada quiebre del embudo ajusta la <b>entrada</b> y la <b>salida</b> de una etapa. Toca una etapa para ajustar su merma; configura la entrada a la izquierda y revisa el resultado a la derecha.</p>
   </div>
-  <div class="funnel-card"><div id="funnel"></div></div>
+  <div class="funnel-card" style="margin-top:1.1rem"><div id="funnel"></div></div>
   <div class="funnel-foot">
     <div class="ff-item"><span class="k">Merma total</span><span class="v" id="ffMerma">—</span></div>
     <div class="ff-item"><span class="k">Factor de conversión</span><span class="v" id="ffFactor">—</span></div>
-    <div class="ff-item" id="ffCostWrap" style="display:none"><span class="k">Costo de proceso</span><span class="v" id="ffCost">—</span></div>
-    <div class="ff-item" id="ffValWrap" style="display:none"><span class="k">Valor del lote final</span><span class="v" id="ffVal">—</span></div>
+    <div class="ff-item" id="ffPergWrap" style="display:none"><span class="k">Pergamino · carga 125 kg</span><span class="v" id="ffPerg">—</span><span class="s" id="ffPergKg"></span></div>
+    <div class="ff-item" id="ffCostWrap" style="display:none"><span class="k">Costo de proceso</span><span class="v" id="ffCost">—</span><span class="s" id="ffCostT"></span></div>
+    <div class="ff-item" id="ffValWrap" style="display:none"><span class="k">Valor del lote final</span><span class="v" id="ffVal">—</span><span class="s" id="ffValKg"></span></div>
   </div>
   <div class="tap-hint"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11V6a2 2 0 114 0v5M9 11l-2 1 5 8 5-3-3-5-2 1M13 11V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Toca cualquier etapa del embudo para ajustar su merma</div>
 </main>
@@ -772,46 +797,61 @@ footer .legal{font-size:.68rem;color:#9086a8;margin-top:.5rem;max-width:600px;ma
   <div class="toggle-row" id="storageToggleRow"><label class="switch"><input type="checkbox" id="storageToggle"><span class="slider-sw"></span></label>
     <div><div class="tl">Merma de almacenamiento y transporte</div><div class="ts">Pérdida de humedad del café verde en bodega y tránsito (~1%).</div></div></div>
 
-  <h2 class="sec" style="margin:1.6rem 0 .1rem">Precio ancla</h2>
-  <p class="hint" style="margin-bottom:.7rem">Fija el precio de un estado y la calculadora deriva el precio equivalente de todos los demás, usando las mermas de la cadena y, si lo activas, los costos de procesamiento.</p>
+  <h2 class="sec" style="margin:1.5rem 0 .15rem">Precio ancla</h2>
+  <p class="hint" style="margin-bottom:.8rem">Fija el precio de <b>un</b> estado y la calculadora deriva el equivalente en todos los demás, usando las mermas de la cadena. Es la traducción de precios entre cereza, pergamino, verde y tostado.</p>
 
-  <div class="toggle-row"><label class="switch"><input type="checkbox" id="anchorOn" checked><span class="slider-sw"></span></label>
-    <div><div class="tl">Derivar precios por estado</div><div class="ts">Precios de paridad a lo largo del embudo.</div></div></div>
+  <div class="field-block">
+    <label style="display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:.35rem">Estado ancla</label>
+    <div class="seg seg4" id="segAnchor"><button data-i="0">Cereza</button><button data-i="1" class="active">Pergamino</button><button data-i="2">Verde</button><button data-i="3">Tostado</button></div>
+  </div>
+  <div class="field-block">
+    <label style="display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:.35rem">Precio del estado ancla</label>
+    <div class="qty-in">
+      <span class="pfx" style="padding:.7rem .6rem;background:var(--paper-2);color:var(--purple);font-weight:800;border-right:1.5px solid var(--line)">$</span>
+      <input type="number" id="priceIn" value="2210000" min="0" step="any" inputmode="decimal">
+      <select id="priceUnit">
+        <option value="carga">/ carga 125 kg</option>
+        <option value="kg">/ kg</option>
+        <option value="arroba">/ arroba 12,5 kg</option>
+        <option value="saco">/ saco 70 kg</option>
+        <option value="lb">/ lb</option>
+      </select>
+    </div>
+  </div>
+  <div class="field-block">
+    <label style="display:block;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:.35rem">Margen por etapa</label>
+    <div class="qty-in">
+      <input type="number" id="marginIn" value="0" min="0" max="50" step="0.5" inputmode="decimal">
+      <span class="pfx" style="padding:.7rem .8rem;background:var(--paper-2);color:var(--purple);font-weight:800;border-left:1.5px solid var(--line)">%</span>
+    </div>
+  </div>
+  <p class="hint" style="margin-bottom:.6rem">Los precios de mercado (como el FNC) ya traen márgenes: no son solo cereza + beneficio. Con 0% la escalera muestra precios de equilibrio; sube el margen para simular la intermediación de cada etapa.</p>
 
-  <label class="fl">Estado ancla</label>
-  <div class="seg four" id="segAnchor"><button data-i="0">Cereza</button><button data-i="1" class="active">Pergamino</button><button data-i="2">Verde</button><button data-i="3">Tostado</button></div>
-
-  <label class="fl">Precio del estado ancla</label>
-  <div class="qty-in"><span class="pfx2">$</span><input type="number" id="anchorVal" value="2350000" min="0" step="1000" inputmode="decimal">
-    <select id="anchorUnit">
-      <option value="carga">/ carga 125 kg</option>
-      <option value="kg">/ kg</option>
-      <option value="arroba">/ arroba 12,5 kg</option>
-      <option value="saco">/ saco 70 kg</option>
-      <option value="lb">/ libra</option>
-      <option value="ton">/ tonelada</option>
-    </select></div>
-
-  <div class="toggle-row" style="margin-top:.7rem"><label class="switch"><input type="checkbox" id="anchorCosts" checked><span class="slider-sw"></span></label>
-    <div><div class="tl">Sumar los costos de procesamiento</div><div class="ts">Aguas abajo el costo se suma al valor; aguas arriba se descuenta.</div></div></div>
-
-  <div class="fnc" id="fncCard"></div>
-  <div id="anchorPrev"></div>
+  <h2 class="sec" style="margin:1.5rem 0 .15rem">Moneda extranjera</h2>
+  <p class="hint" style="margin-bottom:.6rem">Convierte los puntos clave (carga de pergamino y valor del lote) a otra divisa. La tasa se busca automáticamente o se fija a mano.</p>
+  <div class="field-block">
+    <div class="qty-in">
+      <select id="fxCode" style="flex:1.2">
+        <option value="none">Sin conversión</option>
+      </select>
+      <input type="number" id="fxRate" min="0" step="any" inputmode="decimal" placeholder="COP por 1" style="flex:1">
+    </div>
+  </div>
+  <div class="fnc-btns" style="margin:0 0 .3rem">
+    <button class="fbtn" id="fxGo">↻ Buscar tasa de hoy</button>
+  </div>
+  <div class="fnc-st" id="fxSt"></div>
+  <p class="hint" style="margin-top:.7rem">La tabla de precios derivados por estado está en el panel <b>Resultado</b>, junto a las equivalencias.</p>
+  <div class="acc" id="accFnc"><button class="acc-h" type="button">Precio de Fedecafé hoy · pergamino seco<span class="cnt" id="accFncCnt"></span><span class="ar">▾</span></button><div class="acc-b"><div class="fnc-box" id="fncBox" style="border:0;padding:.2rem 0 0;margin:0;background:transparent"></div></div></div>
 </aside>
 
 <aside class="sheet right" id="sheetResult" aria-hidden="true">
   <div class="sheet-head"><h2><svg viewBox="0 0 24 24" fill="none"><path d="M6 20V10M12 20V4M18 20v-7" stroke="#3E0A8B" stroke-width="2" stroke-linecap="round"/></svg>Resultado</h2><button class="sheet-close" data-close>×</button></div>
-  <div class="metric-big"><div class="lbl">Peso final estimado</div><div class="num" id="finalNum">—</div><div class="unit" id="finalUnit"></div></div>
-  <div class="metric-grid">
-    <div class="mcard"><div class="k">Merma total</div><div class="v" id="totalMerma">—</div></div>
-    <div class="mcard"><div class="k">Factor de conversión</div><div class="v" id="convFactor">—</div></div>
-  </div>
-  <div class="health h-ok" id="health"><div class="hi" id="healthIco">✓</div><div><div class="ht" id="healthTitle">—</div><div class="hs" id="healthSub">—</div></div></div>
-  <h2 class="sec" style="margin:1.2rem 0 .2rem">Resumen por etapa</h2>
-  <div class="recap" id="recap"></div>
-  <div id="eqTable"></div>
-  <div id="costRecap"></div>
-  <div id="priceRecap"></div>
+  <div id="priceBlock"></div>
+  <div class="acc" id="accRecap"><button class="acc-h" type="button">Resumen por etapa<span class="cnt" id="accRecapCnt"></span><span class="ar">▾</span></button><div class="acc-b"><div class="recap" id="recap"></div></div></div>
+  <div class="acc" id="accEq"><button class="acc-h" type="button">Equivalencias por estado<span class="cnt">kg · cargas · @ · sacos</span><span class="ar">▾</span></button><div class="acc-b"><div id="eqViz"></div><div id="eqBlock"></div></div></div>
+  <div class="acc" id="accCost"><button class="acc-h" type="button">Costos de procesamiento<span class="cnt" id="accCostCnt"></span><span class="ar">▾</span></button><div class="acc-b" id="costRecap"></div></div>
+  <div class="health h-ok" id="health" style="margin-top:.9rem"><div class="hi" id="healthIco">✓</div><div><div class="ht" id="healthTitle">—</div><div class="hs" id="healthSub">—</div></div></div>
   <div class="notes-field"><label>Notas para el reporte (opcional)</label><textarea id="notes" placeholder="Ej.: Lote Huila 2026, proceso lavado, tueste medio para cliente X…"></textarea></div>
   <button class="export-btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v11M12 14l-4-4M12 14l4-4M5 19h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Exportar reporte PDF</button>
 </aside>
@@ -965,6 +1005,7 @@ function sliderGrad(s){
   return `linear-gradient(90deg,#F3B7C0 0%,#F3B7C0 ${a}%,#FCE28C ${a}%,#FCE28C ${b}%,#A9DBBE ${b}%,#A9DBBE ${c}%,#FCE28C ${c}%,#FCE28C ${d}%,#F3B7C0 ${d}%,#F3B7C0 100%)`;
 }
 const ICONS={
+ cultivo:'<path d="M12 21v-8M12 13c0-4-3-6-7-6 0 4 3 6 7 6zM12 13c0-4 3-6 7-6 0 4-3 6-7 6z" stroke="#3E0A8B" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
  beneficio:'<path d="M12 3c3 2 4 5 4 8a4 4 0 11-8 0c0-3 1-6 4-8z" stroke="#3E0A8B" stroke-width="1.6" fill="none"/>',
  trilla:'<path d="M5 8h14M5 12h14M5 16h14" stroke="#3E0A8B" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="8" r="1.3" fill="#3E0A8B"/><circle cx="14" cy="12" r="1.3" fill="#3E0A8B"/>',
  almacenamiento:'<path d="M4 9l8-4 8 4v9H4z" stroke="#3E0A8B" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M4 13h16" stroke="#3E0A8B" stroke-width="1.6"/>',
@@ -991,29 +1032,63 @@ function calc(){
   state._chain=chain; state._final=finalW; state._totalMerma=totalMerma; state._cf=cf; state._health={ht,hs,hc};
   return data;
 }
-function recompute(){ const d=calc(); renderFunnel(d); renderResults(d); refreshStagePopup();
+function recompute(){ const d=calc();
+  if(typeof costCalc==='function'){ try{ costCalc(); }catch(e){} }
+  renderFunnel(d); renderResults(d); refreshStagePopup();
   if(typeof renderCosts==='function'){ renderCosts(); refreshCostPopup(); }
-  if(typeof renderPrices==='function'){ renderPrices(); } }
+  if(typeof renderPriceUI==='function'){ renderPriceUI(); } }
 
-function nodeLabel(cx,y,w,name,unit,half){
+/* precio del estado n (raw / proceso / total) para las anotaciones del embudo */
+function funnelPrice(n){
+  if(typeof priceActive!=='function'||!priceActive()) return null;
+  return priceParts(n);
+}
+/* icono monolínea del estado n, centrado en (x,y), radio ~r */
+function miniIcon(n,x,y,r){
+  const st='fill="none" stroke="#3E0A8B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"';
+  if(n===0) return `<circle cx="${x}" cy="${y+r*0.15}" r="${r*0.78}" ${st}/><path d="M ${x} ${y-r*0.6} Q ${x+r*0.5} ${y-r*1.15} ${x+r*1.05} ${y-r*1.05}" ${st}/>`;
+  if(n===1) return `<ellipse cx="${x}" cy="${y}" rx="${r*0.68}" ry="${r*0.95}" ${st}/><line x1="${x}" y1="${y-r*0.6}" x2="${x}" y2="${y+r*0.6}" ${st}/>`;
+  const crease=`<path d="M ${x} ${y-r*0.62} C ${x-r*0.45} ${y-r*0.2} ${x+r*0.45} ${y+r*0.2} ${x} ${y+r*0.62}" ${st}/>`;
+  if(n===2) return `<ellipse cx="${x}" cy="${y}" rx="${r*0.68}" ry="${r*0.95}" ${st}/>`+crease;
+  return `<ellipse cx="${x}" cy="${y}" rx="${r*0.68}" ry="${r*0.95}" ${st} stroke-width="2.1"/>`+crease;
+}
+function nodeLabel(cx,y,w,nIdx,unit,half){
   let g=`<line x1="${(cx-half).toFixed(1)}" y1="${y}" x2="${(cx+half).toFixed(1)}" y2="${y}" stroke="#D9CEEE" stroke-width="1" stroke-dasharray="3 3"/>`;
-  g+=`<text x="${cx+140}" y="${y-1}" text-anchor="start" font-family="Inter,sans-serif" font-size="10.5" font-weight="700" fill="#1A0B34">${name}</text>`;
-  g+=`<text x="${cx+140}" y="${y+11}" text-anchor="start" font-family="Inter,sans-serif" font-size="10" fill="#6B6280">${fmtW(w)} ${unit}</text>`;
+  const pr=funnelPrice(nIdx);
+  const x0=cx+142;
+  /* bloque: [icono] Nombre · kg  /  precio  /  (carga)  /  solo mermas ∓ proceso */
+  const lines=[];
+  lines.push({t:NODE_SHORT[nIdx]+'  ·  '+fmtW(w)+' '+unit,fs:9.6,fw:700,col:'#1A0B34',icon:true});
+  if(pr){
+    lines.push({t:COP(pr.price)+'/kg',fs:11.5,fw:800,col:'#1A0B34'});
+    if(nIdx===1) lines.push({t:COP(pr.price*CARGA)+' la carga',fs:8.6,fw:700,col:'#3E0A8B'});
+    if(Math.abs(pr.adj)>0.5&&nIdx!==state.price.node){
+      const lbl=(state.price.margin>0)?'proc·margen':'proc';
+      lines.push({t:'mermas '+COP(pr.mass)+' '+(pr.adj<0?'−':'+')+' '+lbl+' '+COP(Math.abs(pr.adj)),fs:8.4,fw:700,col:'#6B46C1'});
+    }
+    if(nIdx===state.price.node) lines.push({t:'ancla',fs:8.2,fw:800,col:'#856400'});
+  }
+  const n=lines.length, sp=13;
+  lines.forEach((L,i)=>{
+    const yy=y+(i-(n-1)/2)*sp+3.6;
+    if(L.icon) g+=miniIcon(nIdx,x0+6,yy-3.6,5.8);
+    g+=`<text x="${x0+(L.icon?15:0)}" y="${yy.toFixed(1)}" text-anchor="start" font-family="Inter,sans-serif" font-size="${L.fs}" font-weight="${L.fw}" fill="${L.col}">${L.t}</text>`;
+  });
   return g;
 }
 function renderFunnel(d){
   const host=document.getElementById('funnel'); const unit=UNIT_LABEL[state.unit];
   const fm=document.getElementById('ffMerma'), ff=document.getElementById('ffFactor');
   if(d.act.length===0){ host.innerHTML='<div class="funnel-empty">Selecciona un producto final posterior a la etapa inicial.</div>'; fm.textContent='—'; ff.textContent='—'; return; }
-  const VW=460, cx=180, maxHalf=132, minHalf=22;
-  const bandH=Math.max(80, Math.min(108, 340/d.act.length)), padT=30, padB=32;
+  const VW=480, cx=165, maxHalf=132, minHalf=22;
+  const bandH=Math.max(96, Math.min(118, 372/d.act.length)), padT=38, padB=44;
   const H=Math.round(padT+d.act.length*bandH+padB);
   const init=d.chain[0].w||1;
   const sW=w=> Math.max(minHalf, maxHalf*Math.sqrt(Math.max(0,w)/init));
   let svg=`<svg viewBox="0 0 ${VW} ${H}" xmlns="http://www.w3.org/2000/svg">`;
   svg+=`<defs><linearGradient id="fg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5c22b0"/><stop offset="1" stop-color="#3E0A8B"/></linearGradient></defs>`;
   svg+=`<text x="${cx}" y="15" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" font-weight="700" letter-spacing="2.5" fill="#9086a8">ENTRADA</text>`;
-  svg+=nodeLabel(cx,padT,init,NODES[state.start],unit,sW(init));
+  svg+=nodeLabel(cx,padT,init,state.start,unit,sW(init));
   d.chain.slice(1).forEach((c,i)=>{
     const yT=padT+i*bandH, yB=yT+bandH, tH=sW(c.wFrom), bH=sW(c.wTo), s=c.stage;
     const cls=zClass(zOf(s)); const stCol=cls==='ok'?'#2E8B57':cls==='mid'?'#C79A00':'#C8102E';
@@ -1027,7 +1102,7 @@ function renderFunnel(d){
     svg+=`<g class="band-edit"><circle cx="${cx}" cy="${yB-13}" r="8" fill="#fff"/><path d="M${cx-3.2} ${yB-16.2} l3.2 3.2 -1 1 -3.2-3.2z M${cx-4.4} ${yB-11.6} l1.2-.3 .3-1.2" stroke="#3E0A8B" stroke-width="1.1" fill="#3E0A8B"/></g>`;
     svg+=`<rect class="band-hit" x="${(cx-tH).toFixed(1)}" y="${yT}" width="${(2*tH).toFixed(1)}" height="${bandH}"/>`;
     svg+=`</g>`;
-    svg+=nodeLabel(cx,yB,c.wTo,NODES[c.node],unit,bH);
+    svg+=nodeLabel(cx,yB,c.wTo,c.node,unit,bH);
   });
   svg+=`<text x="${cx}" y="${H-8}" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" font-weight="700" letter-spacing="2.5" fill="#3E0A8B">SALIDA</text>`;
   svg+=`</svg>`;
@@ -1038,19 +1113,32 @@ function renderFunnel(d){
 
 function renderResults(d){
   const unit=UNIT_LABEL[state.unit];
-  document.getElementById('finalNum').textContent=fmtW(d.finalW);
-  document.getElementById('finalUnit').textContent=unit+' de '+NODES[state.end].toLowerCase();
-  document.getElementById('totalMerma').innerHTML='−'+nf.format(d.totalMerma)+'<small>%</small>';
-  document.getElementById('convFactor').innerHTML= d.cf>0? nf2.format(d.cf)+'<small> : 1</small>':'—';
+  const _fn=document.getElementById('finalNum'); if(_fn) _fn.textContent=fmtW(d.finalW);
+  var _fu=document.getElementById('finalUnit'); if(_fu) _fu.textContent=unit+' de '+NODES[state.end].toLowerCase();
+  const _tm=document.getElementById('totalMerma'); if(_tm) _tm.innerHTML='−'+nf.format(d.totalMerma)+'<small>%</small>';
+  const _cfE=document.getElementById('convFactor'); if(_cfE) _cfE.innerHTML= d.cf>0? nf2.format(d.cf)+'<small> : 1</small>':'—';
   const h=d.health, hEl=document.getElementById('health'); hEl.className='health '+h.hc;
   document.getElementById('healthIco').textContent=h.hc==='h-ok'?'✓':'!';
   document.getElementById('healthTitle').textContent=h.ht; document.getElementById('healthSub').textContent=h.hs;
   const rc=document.getElementById('recap');
   if(d.act.length===0){ rc.innerHTML='<p class="hint">Sin etapas activas.</p>'; return; }
+  const rcCnt=document.getElementById('accRecapCnt'); if(rcCnt) rcCnt.textContent=d.act.length+' etapas · −'+nf.format(d.totalMerma)+'%';
   rc.innerHTML=d.chain.slice(1).map(c=>{ const s=c.stage; const cls=zClass(zOf(s));
     const col=cls==='ok'?'var(--green)':cls==='mid'?'#C79A00':'var(--red)';
     return `<div class="recap-item"><span class="recap-dot" style="background:${col}"></span><span class="recap-name">${s.name}</span><span class="recap-merma">−${nf.format(state.values[s.id])}%</span><span class="recap-w">${fmtW(c.wTo)} ${unit}</span></div>`;
   }).join('');
+}
+
+/* ---------- helpers de equivalencias (se usan en resumen y PDF) ---------- */
+function eqRows(){
+  const NK=(typeof nodeKg==='function')?nodeKg():{};
+  const rows=[0,1,2,3].filter(n=>NK[n]!==undefined&&NK[n]>0).map(n=>({n, kg:NK[n], est:false}));
+  /* el pergamino es la unidad comercial de referencia en Colombia: si no está en la cadena, se muestra su equivalente */
+  if(rows.length && !rows.some(r=>r.n===1) && typeof nodeFactors==='function'){
+    const f=nodeFactors(), k=rows[0].n;
+    if(f[1]>0 && f[k]>0){ rows.push({n:1, kg:rows[0].kg*f[1]/f[k], est:true}); rows.sort((a,b)=>a.n-b.n); }
+  }
+  return rows;
 }
 
 /* ---------- stage popup ---------- */
@@ -1100,6 +1188,12 @@ const COP = v => '$' + nf0.format(Math.round(v||0));
 const COPk = v => v>=1e6 ? '$'+nf.format(v/1e6)+' M' : '$'+nf0.format(Math.round(v||0));
 
 const COSTG = [
+  {id:'cultivo', stage:'cultivo', name:'Recolecta', flow:'› Cereza', ico:'cultivo', items:[
+    {id:'recolecta', name:'Recolecta', short:'Recolecta', base:0,
+     v:850, F:60000, qmin:100, sig:0.28,
+     desc:'Recolección manual selectiva del fruto maduro y transporte interno al beneficiadero. Separa el precio de la cereza recogida del «precio en árbol».',
+     ctx:'La recolección es el rubro individual más pesado de la cosecha (~40% del costo de producción): el kilo cogido se paga hoy $700–$1.000 según región y época. No es una etapa de transformación: define la referencia del fruto sin recolectar.'}
+  ]},
   {id:'beneficio', stage:'beneficio', name:'Beneficio', flow:'Cereza › Pergamino', ico:'beneficio', items:[
     {id:'limpiado', name:'Limpiado', short:'Limpiado', base:1, opt:true,
      v:130, F:30000, qmin:25, sig:0.30,
@@ -1152,7 +1246,7 @@ const BASE_NAME = ['cereza','pergamino','verde','tostado'];
 const BASE_LONG = ['café cereza','café pergamino seco','café verde','café tostado'];
 
 /* ---------- state ---------- */
-state.costs = {on:false, opened:false, pack:{cap:250, price:1100}, items:{}};
+state.costs = {on:true, opened:true, pack:{cap:250, price:1100}, items:{}};
 COSTG.forEach(g=>g.items.forEach(it=>{ state.costs.items[it.id] = {on: it.def!==false, val:null, auto:true}; }));
 
 /* ---------- modelo ---------- */
@@ -1185,7 +1279,10 @@ function nodeKg(){
   DATA.chain.slice(1).forEach(c=>{ m[c.node]=c.wTo*f; });
   return m;
 }
-function groupActive(g){ return activeStages().some(s=>s.id===g.stage); }
+function groupActive(g){
+  if(g.id==='cultivo') return state.start===0;   /* el cultivo aplica cuando la cadena parte de cereza */
+  return activeStages().some(s=>s.id===g.stage);
+}
 
 /* cálculo consolidado */
 function costCalc(){
@@ -1312,22 +1409,19 @@ function renderCosts(){
 
 /* ---------- resumen en el panel de resultado ---------- */
 function renderCostRecap(d){
-  const host=document.getElementById('costRecap'); if(!host) return;
-  const foot=document.getElementById('ffCostWrap');
-  if(!state.costs.on || !d.total){
-    host.innerHTML='';
-    if(foot) foot.style.display='none';
-    return;
-  }
-  if(foot){ foot.style.display='flex'; document.getElementById('ffCost').textContent=COP(d.perKgFinal); }
-  let h='<h2 class="sec" style="margin:1.2rem 0 .2rem">Costos de procesamiento</h2><div class="recap">';
+  const host=document.getElementById('costRecap');
+  const cnt=document.getElementById('accCostCnt');
+  if(cnt) cnt.textContent = (state.costs.on&&d.total)? COPk(d.total)+' · '+COP(d.perKgFinal)+'/kg' : 'desactivados';
+  if(!host) return;
+  if(!state.costs.on || !d.total){ host.innerHTML='<p class="hint">Costos desactivados o sin subprocesos aplicables.</p>'; return; }
+  let h='<div class="recap">';
   d.groups.forEach(gr=>{
     if(!gr.total) return;
     h+='<div class="recap-item"><span class="recap-dot" style="background:var(--purple)"></span>'+
        '<span class="recap-name">'+gr.g.name+'</span>'+
        '<span class="recap-merma" style="color:var(--purple)">'+COPk(gr.total)+'</span></div>';
   });
-  h+='</div><div class="mcard" style="margin-top:.7rem"><div class="k">Costo total · '+COP(d.perKgFinal)+'/kg final</div><div class="v">'+COP(d.total)+'</div></div>';
+  h+='</div><div class="mcard" style="margin-top:.6rem"><div class="k">Costo total · '+COP(d.perKgFinal)+'/kg final</div><div class="v">'+COP(d.total)+'</div></div>';
   host.innerHTML=h;
 }
 
@@ -1462,10 +1556,7 @@ function buildCostInfo(){
 }
 
 /* ---------- eventos ---------- */
-document.getElementById('tabCost').addEventListener('click',()=>{
-  if(!state.costs.opened){ state.costs.opened=true; state.costs.on=true; }
-  openSheet('sheetCost');
-});
+document.getElementById('tabCost').addEventListener('click',()=>{ openSheet('sheetCost'); });
 document.getElementById('costMaster').addEventListener('change',e=>{ state.costs.on=e.target.checked; recompute(); });
 document.getElementById('costBody').addEventListener('click',e=>{
   const tg=e.target.closest('[data-toggle]');
@@ -1483,274 +1574,480 @@ costOv.addEventListener('click',e=>{ if(e.target===costOv) costOv.classList.remo
 
 
 /* =========================================================
-   PRECIO ANCLA · PRECIOS DE PARIDAD POR ESTADO
-   Se fija el precio de un estado de la cadena y se derivan los demás:
-     aguas abajo  V[i+1] = (V[i]·kg[i] + Costo_i) / kg[i+1]
-     aguas arriba V[i]   = (V[i+1]·kg[i+1] − Costo_i) / kg[i]
-   El resultado es un precio de equivalencia (paridad), no un precio de mercado.
+   MONEDA EXTRANJERA
    ========================================================= */
-
-const PRICE_UNITS = {kg:1, carga:125, arroba:12.5, saco:70, lb:0.45359237, ton:1000};
-const PRICE_UNIT_LABEL = {kg:'kg', carga:'carga de 125 kg', arroba:'arroba de 12,5 kg', saco:'saco de 70 kg', lb:'libra', ton:'tonelada'};
-const PRICE_UNIT_SHORT = {kg:'kg', carga:'carga', arroba:'@', saco:'saco 70', lb:'lb', ton:'t'};
-
-state.anchor = {on:true, node:1, val:2350000, unit:'carga', useCosts:true};
-
-/* ---------- puntos de la cadena (un estado por quiebre del embudo) ---------- */
-function chainPoints(){
-  const f = UNIT_KG[state.unit]||1, pts=[];
-  if(!DATA || !DATA.chain || !DATA.chain.length) return pts;
-  pts.push({node:DATA.chain[0].node, kg:DATA.chain[0].w*f, label:NODES[DATA.chain[0].node], short:NODE_SHORT[DATA.chain[0].node], stageIn:null});
-  DATA.chain.slice(1).forEach(c=>{
-    const dup = pts.some(p=>p.node===c.node);
-    pts.push({node:c.node, kg:c.wTo*f,
-      label: NODES[c.node] + (dup?' (en destino)':''),
-      short: NODE_SHORT[c.node] + (dup?' dest.':''),
-      stageIn:c.stage});
-  });
-  return pts;
+const FX_LIST=[['USD','Dólar EE. UU.'],['EUR','Euro'],['CAD','Dólar canadiense'],['BRL','Real brasileño'],
+  ['GBP','Libra esterlina'],['JPY','Yen japonés'],['CHF','Franco suizo'],['CNY','Yuan chino'],
+  ['AUD','Dólar australiano'],['MXN','Peso mexicano'],['PEN','Sol peruano'],['CLP','Peso chileno'],['KRW','Won surcoreano']];
+/* tasas de respaldo (COP por unidad), referencia jul 2026 · editables */
+const FX_SEED={USD:4000,EUR:4360,CAD:2950,BRL:735,GBP:5080,JPY:27,CHF:4520,CNY:558,AUD:2660,MXN:214,PEN:1075,CLP:4.2,KRW:2.9};
+state.fx={code:'none', rate:0, auto:true, date:null, busy:false};
+function fxOn(){ return state.fx.code!=='none' && state.fx.rate>0; }
+function fmtFX(cop){
+  if(!fxOn()) return '';
+  try{ return new Intl.NumberFormat('es-CO',{style:'currency',currency:state.fx.code,maximumFractionDigits:2}).format(cop/state.fx.rate); }
+  catch(e){ return state.fx.code+' '+nf2.format(cop/state.fx.rate); }
 }
-function activeNodeSet(){ const st={}; chainPoints().forEach(p=>st[p.node]=true); return st; }
-
-/* costo total en COP de la transformación que produce un estado */
-function stageCostCOP(stageId){
-  if(!(state.costs && state.costs.on && state.anchor.useCosts)) return 0;
-  const C=state._costs; if(!C || !C.groups) return 0;
-  const gr=C.groups.find(g=>g.g.stage===stageId); if(!gr) return 0;
-  return gr.items.filter(r=>r.on).reduce((a,r)=>a+r.tot,0);
+function fxStatus(msg,cls){ const el=document.getElementById('fxSt'); if(el){ el.className='fnc-st '+(cls||''); el.textContent=msg||''; } }
+async function fxFetch(silent){
+  if(state.fx.code==='none') return;
+  if(state.fx.busy) return; state.fx.busy=true;
+  if(!silent) fxStatus('Consultando tasa de cambio…');
+  try{
+    const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),8000);
+    const r=await fetch('https://open.er-api.com/v6/latest/COP',{signal:ctl.signal}); clearTimeout(to);
+    const j=await r.json();
+    const per=j&&j.rates&&j.rates[state.fx.code];
+    if(per>0){
+      state.fx.rate=1/per; state.fx.auto=true;
+      state.fx.date=(j.time_last_update_utc||'').slice(5,16)||new Date().toISOString().slice(0,10);
+      const fi=document.getElementById('fxRate'); if(fi) fi.value=Math.round(state.fx.rate*100)/100;
+      fxStatus('Tasa de hoy: '+nf2.format(state.fx.rate)+' COP por '+state.fx.code+' (open.er-api.com).','ok');
+    } else throw new Error('sin dato');
+  }catch(e){
+    fxStatus('No se pudo consultar la tasa; se usa la referencia editable de '+nf2.format(state.fx.rate)+' COP/'+state.fx.code+'.','err');
+  }
+  state.fx.busy=false; recompute();
 }
-
-function priceCalc(){
-  const pts=chainPoints();
-  if(!pts.length){ state._price=null; return null; }
-  let k=-1; pts.forEach((p,i)=>{ if(p.node===state.anchor.node) k=i; });
-  if(k<0) k=0;
-  const perKg=(state.anchor.val||0)/(PRICE_UNITS[state.anchor.unit]||1);
-  const cost=pts.map(p=> p.stageIn ? stageCostCOP(p.stageIn.id) : 0);
-  const V=new Array(pts.length).fill(0); V[k]=perKg;
-  for(let i=k;i<pts.length-1;i++){ V[i+1]=(V[i]*pts[i].kg + cost[i+1])/Math.max(pts[i+1].kg,1e-9); }
-  for(let i=k-1;i>=0;i--){ V[i]=(V[i+1]*pts[i+1].kg - cost[i+1])/Math.max(pts[i].kg,1e-9); }
-  const rows=pts.map((p,i)=>({node:p.node,label:p.label,short:p.short,kg:p.kg,cop:V[i],lot:V[i]*p.kg,cost:cost[i],anchor:i===k}));
-  const d={rows, k, perKg, anchorNode:state.anchor.node,
-    negative: rows.some(r=>r.cop<0),
-    withCosts: !!(state.costs && state.costs.on && state.anchor.useCosts)};
-  state._price=d;
-  return d;
-}
-
-/* ---------- referencia: precio de Fedecafé hoy ---------- */
-const FNC_URL='https://federaciondecafeteros.org/estadisticas-cafeteras/';
-const FNC_PDF='https://federaciondecafeteros.org/wp-content/uploads/2026/03/precio_cafe.pdf';
-const FNC_FALLBACK=2350000;                 /* COP por carga de 125 kg, valor fijo de respaldo */
-const FNC_KEY='ctc_fnc_precio_log_v1';
-
-/* almacenamiento tolerante: si el navegador lo bloquea, el registro vive en memoria */
-const SAFE_STORE=(function(){
-  try{ localStorage.setItem('__ctc_t','1'); localStorage.removeItem('__ctc_t'); return localStorage; }
-  catch(e){ const m={}; return {getItem:k=>(k in m? m[k]:null), setItem:(k,v)=>{m[k]=String(v);}, removeItem:k=>{delete m[k];}}; }
+(function(){
+  const sel=document.getElementById('fxCode');
+  if(sel){ FX_LIST.forEach(c=>{ const o=document.createElement('option'); o.value=c[0]; o.textContent=c[0]+' · '+c[1]; sel.appendChild(o); });
+    sel.addEventListener('change',e=>{
+      state.fx.code=e.target.value;
+      if(state.fx.code==='none'){ state.fx.rate=0; fxStatus(''); recompute(); return; }
+      state.fx.rate=FX_SEED[state.fx.code]||0;
+      const fi=document.getElementById('fxRate'); if(fi) fi.value=state.fx.rate;
+      fxStatus('Referencia: '+nf2.format(state.fx.rate)+' COP/'+state.fx.code+' · pulsa «Buscar tasa de hoy» para actualizar.');
+      fxFetch(true); recompute();
+    }); }
+  const fi=document.getElementById('fxRate');
+  if(fi) fi.addEventListener('input',e=>{ const v=parseFloat(e.target.value)||0; if(v>0){ state.fx.rate=v; state.fx.auto=false; fxStatus('Tasa manual: '+nf2.format(v)+' COP/'+state.fx.code+'.'); recompute(); } });
+  const go=document.getElementById('fxGo'); if(go) go.addEventListener('click',()=>fxFetch(false));
 })();
-function fncLog(){ try{ const l=JSON.parse(SAFE_STORE.getItem(FNC_KEY)||'[]'); return Array.isArray(l)?l:[]; }catch(e){ return []; } }
-function fncSave(l){ try{ SAFE_STORE.setItem(FNC_KEY, JSON.stringify(l.slice(-60))); }catch(e){} }
-function today(){ return new Date().toISOString().slice(0,10); }
-function fncAdd(rec){
-  const l=fncLog(), last=l[l.length-1];
-  if(last && last.value===rec.value && last.date===rec.date){ last.seen=rec.seen; }
-  else l.push(rec);
-  fncSave(l); return l;
-}
-/* semilla verificada contra la página oficial */
-if(!fncLog().length) fncSave([{date:'2026-07-29', value:2210000, src:'FNC', seen:'2026-07-30'}]);
 
-const fncState={busy:false, msg:null, msgCls:'ok', manualOpen:false};
-function fncCurrent(){
-  const l=fncLog();
-  if(l.length) return l[l.length-1];
-  return {date:today(), value:FNC_FALLBACK, src:'Respaldo fijo', seen:today()};
+/* =========================================================
+   PRECIO ANCLA · deriva el precio de cada estado
+   + referencia "precio de Fedecafé hoy" con registro histórico
+   ========================================================= */
+const PRICE_UNIT_KG    = {kg:1, lb:0.45359237, arroba:12.5, carga:125, saco:70};
+const PRICE_UNIT_LBL   = {kg:'kg', lb:'lb', arroba:'arroba (12,5 kg)', carga:'carga (125 kg)', saco:'saco (70 kg)'};
+const FNC_PAGE = 'https://federaciondecafeteros.org/estadisticas-cafeteras/';
+const FNC_PDF  = 'https://federaciondecafeteros.org/wp-content/uploads/2026/03/precio_cafe.pdf';
+const FNC_FIJO = 2350000;                                            /* respaldo fijo si no hay información */
+const FNC_SEED = {value:2210000, date:'2026-07-29', src:'FNC'};      /* última lectura verificada de la página oficial */
+/* histórico 2026 del precio interno FNC por carga de 125 kg.
+   Fuentes: federaciondecafeteros.org (29 jul), El Colombiano (17 feb),
+   Agronegocios/La República (2 ene y 4 jun); los puntos «Aprox.» interpolan la tendencia. */
+const FNC_HIST=[
+  {value:2653000, date:'2026-01-02', src:'Prensa'},
+  {value:2080000, date:'2026-02-17', src:'Prensa'},
+  {value:2150000, date:'2026-03-16', src:'Aprox.'},
+  {value:2100000, date:'2026-04-15', src:'Aprox.'},
+  {value:2050000, date:'2026-05-15', src:'Aprox.'},
+  {value:2005000, date:'2026-06-04', src:'Prensa'},
+  FNC_SEED
+];
+
+state.price = {node:1, val:FNC_SEED.value, unit:'carga', withCost:true, margin:0};
+state.fnc   = {log:[], last:null, status:'', busy:false};
+
+/* almacenamiento tolerante: persiste en local, cae a memoria si el navegador lo bloquea */
+const STORE=(function(){ let mem={}, ok=false;
+  try{ localStorage.setItem('__ctc','1'); localStorage.removeItem('__ctc'); ok=true; }catch(e){}
+  return { ok:ok,
+    get(k){ try{ return ok?localStorage.getItem(k):(mem[k]||null); }catch(e){ return mem[k]||null; } },
+    set(k,v){ try{ if(ok) localStorage.setItem(k,v); else mem[k]=v; }catch(e){ mem[k]=v; } } };
+})();
+const FNC_KEY='ctc_fnc_precio_log';
+function fncLoad(){
+  let log=[]; try{ log=JSON.parse(STORE.get(FNC_KEY)||'[]')||[]; }catch(e){ log=[]; }
+  if(!Array.isArray(log)) log=[];
+  FNC_HIST.forEach(hh=>{ if(!log.some(x=>x&&x.date===hh.date)) log.push(Object.assign({},hh)); });
+  log=log.filter(x=>x&&x.value>0&&x.date);
+  log.sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
+  state.fnc.log=log.slice(0,24); state.fnc.last=state.fnc.log[0]||null;
+  return state.fnc.log;
 }
-function fncParse(txt){
-  const t=String(txt).replace(/<[^>]+>/g,' ').replace(/&nbsp;/gi,' ').replace(/\s+/g,' ');
-  const m=t.match(/Precio\s+interno\s+de\s+referencia[^0-9]{0,40}([0-9][0-9.,]{5,})/i);
+function fncSave(){ try{ STORE.set(FNC_KEY, JSON.stringify(state.fnc.log)); }catch(e){} }
+function fncRecord(e){
+  const log=state.fnc.log.filter(x=>!(x.date===e.date&&x.src===e.src));
+  log.unshift(e); log.sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
+  state.fnc.log=log.slice(0,24); state.fnc.last=state.fnc.log[0]; fncSave();
+}
+function fncParse(t){
+  if(!t) return null;
+  const txt=String(t).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
+  const m=txt.match(/[Pp]recio\s+interno\s+de\s+referencia[^0-9$]{0,60}\$?\s*([0-9][0-9.,\s]{5,14})/);
   if(!m) return null;
-  let raw=m[1].trim().replace(/[.,]$/,'');
-  raw = raw.indexOf('.')>=0 ? raw.replace(/\./g,'').replace(/,/g,'.') : raw.replace(/,/g,'');
-  const v=Math.round(parseFloat(raw));
-  if(!(v>300000 && v<20000000)) return null;
-  const after=t.slice(m.index, m.index+400);
-  const dm=after.match(/Fecha:?\s*(\d{4}-\d{2}-\d{2})/i);
-  return {value:v, date: dm? dm[1] : today(), src:'FNC', seen:today()};
+  const val=parseInt(m[1].replace(/[^0-9]/g,''),10);
+  if(!(val>500000&&val<20000000)) return null;
+  const d=txt.slice(m.index).match(/(20\d\d-\d\d-\d\d)/);
+  return {value:val, date:d?d[1]:new Date().toISOString().slice(0,10), src:'FNC'};
 }
+/* consulta la página oficial; si el navegador bloquea el origen cruzado, reintenta con espejos públicos */
 async function fncFetch(){
-  const wrap=[
-    u=>u,
-    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-    u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
-    u=>'https://r.jina.ai/'+u
-  ];
-  for(const w of wrap){
+  const u=encodeURIComponent(FNC_PAGE);
+  const targets=[FNC_PAGE,
+    'https://api.allorigins.win/raw?url='+u,
+    'https://corsproxy.io/?'+u,
+    'https://r.jina.ai/'+FNC_PAGE];
+  for(let i=0;i<targets.length;i++){
     try{
-      const r=await fetch(w(FNC_URL),{cache:'no-store'});
-      if(!r || !r.ok) continue;
-      const p=fncParse(await r.text());
-      if(p) return p;
+      const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(),9000);
+      const r=await fetch(targets[i],{signal:ctl.signal}); clearTimeout(to);
+      if(!r.ok) continue;
+      const parsed=fncParse(await r.text());
+      if(parsed) return parsed;
     }catch(e){}
   }
   return null;
 }
 async function fncUpdate(){
-  if(fncState.busy) return;
-  fncState.busy=true; fncState.msg='Consultando federaciondecafeteros.org…'; fncState.msgCls='ok'; renderFNC();
-  const p=await fncFetch();
-  fncState.busy=false;
-  if(p){
-    fncAdd(p);
-    fncState.msg='Precio actualizado desde la página oficial ('+p.date+').'; fncState.msgCls='ok';
-    toast('Precio Fedecafé actualizado');
-  }else{
-    fncState.msg='El navegador no pudo leer la página de la FNC (bloqueo CORS o sin conexión). Abre la fuente oficial y registra el valor a mano.';
-    fncState.msgCls='warn';
-  }
-  renderFNC(); renderPrices();
+  if(state.fnc.busy) return;
+  state.fnc.busy=true; state.fnc.status='Consultando federaciondecafeteros.org…'; renderFncBox();
+  const r=await fncFetch();
+  state.fnc.busy=false;
+  if(r){ fncRecord(r); state.fnc.status='ok:Precio tomado de la página oficial ('+r.date+').'; applyFncToAnchor(); }
+  else { state.fnc.status='err:No se pudo consultar la página oficial desde este navegador. Registra el valor a mano o usa el respaldo fijo.'; }
+  renderFncBox(); recompute();
 }
-function fncSetManual(v){
-  const val=Math.round(Math.max(0,v||0));
-  if(!val) return;
-  fncAdd({date:today(), value:val, src:'Manual', seen:today()});
-  fncState.msg='Valor registrado a mano.'; fncState.msgCls='ok';
-  fncState.manualOpen=false;
-  renderFNC(); renderPrices();
+function fncManual(v,src){
+  const val=Math.round(parseFloat(v)||0); if(!(val>0)) return;
+  fncRecord({value:val, date:new Date().toISOString().slice(0,10), src:src||'Manual'});
+  applyFncToAnchor(); state.fnc.status='ok:Registrado en el histórico.'; renderFncBox(); recompute();
 }
-function fncUseAsAnchor(){
-  const c=fncCurrent();
-  if(!activeNodeSet()[1]){
-    toast('El pergamino no está en esta cadena: ajusta la etapa inicial o el producto final');
-    return;
-  }
-  state.anchor.node=1; state.anchor.unit='carga'; state.anchor.val=c.value; state.anchor.on=true;
-  const el=document.getElementById('anchorVal'); if(el) el.value=c.value;
-  const u=document.getElementById('anchorUnit'); if(u) u.value='carga';
-  const o=document.getElementById('anchorOn'); if(o) o.checked=true;
-  recompute();
-  toast('Ancla: pergamino a '+COP(c.value)+'/carga');
-}
-function renderFNC(){
-  const host=document.getElementById('fncCard'); if(!host) return;
-  const c=fncCurrent(), log=fncLog().slice().reverse();
-  const isFallback = c.src==='Respaldo fijo';
-  let h='<div class="fnc-h"><span class="k">Precio de Fedecafé hoy</span>'+
-    '<button class="fnc-btn" id="fncGet"'+(fncState.busy?' disabled':'')+'>'+(fncState.busy?'Consultando…':'Actualizar')+'</button></div>'+
-    '<div class="fnc-v">'+COP(c.value)+'<small>/ carga 125 kg</small></div>'+
-    '<span class="fnc-s">'+(c.src==='FNC'?'Federación Nacional de Cafeteros':c.src==='Manual'?'Registrado a mano':'Valor de respaldo')+
-      ' · precio del '+c.date+(c.seen&&c.seen!==c.date?' · consultado el '+c.seen:'')+'</span>'+
-    '<span class="fnc-s">Precio interno de referencia para la compra de café pergamino seco. '+
-      '<a href="'+FNC_URL+'" target="_blank" rel="noopener">Ver fuente oficial</a> · <a href="'+FNC_PDF+'" target="_blank" rel="noopener">PDF diario</a></span>'+
-    (isFallback?'<span class="fnc-s">Sin dato consultado: se usa el respaldo fijo de '+COP(FNC_FALLBACK)+' por carga.</span>':'')+
-    '<div class="fnc-row"><button class="fnc-btn solid" id="fncUse">Usar como ancla</button>'+
-      '<button class="fnc-btn" id="fncMan">Registrar a mano</button></div>'+
-    '<div class="fnc-man'+(fncState.manualOpen?' open':'')+'" id="fncManBox">'+
-      '<div class="qty-in"><span class="pfx2">$</span><input type="number" id="fncManVal" min="0" step="1000" value="'+c.value+'">'+
-      '<span class="pfx2" style="border-right:0;border-left:1.5px solid var(--line);font-weight:600;font-size:.72rem">/carga</span></div>'+
-      '<div class="fnc-row"><button class="fnc-btn solid" id="fncManSave">Guardar en el registro</button></div></div>'+
-    (fncState.msg?'<div class="fnc-note '+fncState.msgCls+'">'+fncState.msg+'</div>':'');
-  if(log.length){
-    h+='<details class="fnc-log"'+'><summary>Registro de precios ('+log.length+')</summary><table><tbody>'+
-      log.map(r=>'<tr><td>'+r.date+'</td><td>'+(r.src||'')+'</td><td class="n">'+COP(r.value)+'</td></tr>').join('')+
-      '</tbody></table></details>';
-  }
-  host.innerHTML=h;
-  const g=document.getElementById('fncGet'); if(g) g.addEventListener('click',fncUpdate);
-  const u=document.getElementById('fncUse'); if(u) u.addEventListener('click',fncUseAsAnchor);
-  const m=document.getElementById('fncMan'); if(m) m.addEventListener('click',()=>{ fncState.manualOpen=!fncState.manualOpen; renderFNC(); });
-  const sv=document.getElementById('fncManSave');
-  if(sv) sv.addEventListener('click',()=>{ fncSetManual(parseFloat((document.getElementById('fncManVal')||{}).value)); });
+function applyFncToAnchor(){
+  if(!state.fnc.last) return;
+  state.price.node=1; state.price.unit='carga'; state.price.val=state.fnc.last.value;
+  const i=document.getElementById('priceIn'); if(i) i.value=state.fnc.last.value;
+  const u=document.getElementById('priceUnit'); if(u) u.value='carga';
+  document.querySelectorAll('#segAnchor button').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.i)===1));
 }
 
-/* ---------- render: ancla, equivalencias y precios ---------- */
-function syncAnchorSeg(){
-  const set=activeNodeSet(), btns=document.querySelectorAll('#segAnchor button');
-  if(!btns.length) return;
-  if(!set[state.anchor.node]){
-    const present=Object.keys(set).map(Number).sort((a,b)=>a-b);
-    state.anchor.node = set[1] ? 1 : (present.length? present[0] : 1);
-  }
-  btns.forEach(b=>{ const i=parseInt(b.dataset.i);
-    b.disabled=!set[i];
-    b.classList.toggle('active', i===state.anchor.node); });
+/* ---------- derivación ---------- */
+/* factor acumulado de masa: kg de cada estado que quedan por 1 kg de cereza */
+function nodeFactors(){
+  const v=state.values, f=[1,0,0,0];
+  f[1]=f[0]*(1-v.beneficio/100);
+  f[2]=f[1]*(1-v.trilla/100)*(state.storage?(1-v.almacenamiento/100):1);
+  f[3]=f[2]*(1-v.tueste/100);
+  return f;
 }
-function eqTableHTML(rows){
-  let h='<h2 class="sec" style="margin:1.3rem 0 .2rem">Equivalencias por estado</h2>'+
-    '<p class="tiny-note" style="margin:0 0 .3rem">Masa del mismo lote expresada en cada estado de la cadena.</p>'+
-    '<table class="info-tbl"><thead><tr><th>Estado</th><th class="n">kg</th><th class="n">Cargas<br>125 kg</th><th class="n">Arrobas<br>12,5 kg</th><th class="n">Sacos<br>70 kg</th></tr></thead><tbody>';
+function anchorKgPrice(){ return (state.price.val||0)/(PRICE_UNIT_KG[state.price.unit]||1); }
+
+/* etapas de transformación: beneficio produce 1, trilla 2, tueste 3 (la recolecta NO transforma) */
+const GROUP_NODE={beneficio:1, trilla:2, tostado:3};
+
+/* kg del estado n en este lote (usa la cadena; si el estado no está, lo deriva por factores) */
+function lotKg(n){
+  const NK=nodeKg(); if(NK[n]>0) return NK[n];
+  const keys=Object.keys(NK); if(!keys.length) return 0;
+  const f=nodeFactors(), k0=+keys[0];
+  return (f[n]>0&&f[k0]>0)? NK[k0]*f[n]/f[k0] : 0;
+}
+/* COP del proceso del paso que produce el estado j (beneficio→1, trilla→2, tueste→3) */
+function stepCost(j){
+  const C=state._costs;
+  if(!state.costs || !state.costs.on || !C || !C.groups) return 0;
+  let t=0; C.groups.forEach(gr=>{ if(GROUP_NODE[gr.g.id]===j) t+=gr.total; });
+  return t;
+}
+
+/* ================= LA EQUIVALENCIA RECTORA =================
+   Desde el ancla a (precio de mercado Pa):
+   · equivalente SOLO POR MERMAS del estado n: Pa · kg_a / kg_n
+   · hacia atrás (n<a) el proceso pendiente AÚN no está pagado → se RESTA
+   · hacia adelante (n>a) el proceso YA está pagado → se SUMA
+   Ej.: pergamino X=$17.680/kg, 5:1 → cereza = X/5 − p = $3.536 − $275 = $3.261 */
+function priceMass(n){
+  const a=state.price.node, ka=lotKg(a), kn=lotKg(n);
+  if(!(ka>0&&kn>0)) return 0;
+  return anchorKgPrice()*ka/kn;
+}
+/* valor del lote en el estado n, subiendo o bajando la escalera desde el ancla:
+   hacia adelante  V(k+1) = (V(k) + Proceso) · (1+margen)
+   hacia atrás     V(k)   =  V(k+1)/(1+margen) − Proceso            */
+function lotValue(n){
+  const a=state.price.node, ka=lotKg(a);
+  if(!(ka>0)) return 0;
+  const m=(state.price.margin||0)/100;
+  let v=anchorKgPrice()*ka;
+  if(n>a){ for(let j=a+1;j<=n;j++) v=(v+stepCost(j))*(1+m); }
+  else if(n<a){ for(let j=a;j>n;j--) v=v/(1+m)-stepCost(j); }
+  return v;
+}
+function priceOf(n){
+  const kn=lotKg(n);
+  return kn>0? lotValue(n)/kn : 0;
+}
+function priceRaw(n){ return priceOf(n); }
+function priceAt(n){ return priceOf(n); }
+/* price = precio equivalente · mass = solo mermas · adj = corrección por proceso (− atrás, + adelante) */
+function priceParts(n,kgIn){
+  const price=priceOf(n), mass=priceMass(n);
+  const kg=(kgIn!==undefined&&kgIn>0)?kgIn:lotKg(n);
+  return {price:price, mass:mass, adj:price-mass, kg:kg};
+}
+
+/* recolecta por kg de cereza y precio de referencia en árbol (no es un estado) */
+function recolectaKg(){
+  const C=state._costs;
+  if(!state.costs || !state.costs.on || !C || !C.groups) return 0;
+  const gr=C.groups.find(g=>g.g.id==='cultivo');
+  const k0=lotKg(0);
+  return (gr&&gr.total>0&&k0>0)? gr.total/k0 : 0;
+}
+function treePrice(){
+  if(state.start!==0) return 0;
+  const r=recolectaKg(); if(!(r>0)) return 0;
+  return priceOf(0)-r;
+}
+function priceActive(){ return (state.price.val||0)>0; }
+
+/* ---------- UI: caja FNC ---------- */
+function fncDate(d){ if(!d) return '—'; const p=d.split('-'); if(p.length!==3) return d;
+  const M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return parseInt(p[2],10)+' '+M[parseInt(p[1],10)-1]+' '+p[0]; }
+/* gráfica del histórico (SVG) */
+function fncChartSVG(){
+  const pts=state.fnc.log.slice().sort((a,b)=> a.date<b.date?-1:1);
+  if(pts.length<2) return '<p class="hint">Se necesitan al menos dos registros para graficar.</p>';
+  const W=340,H=150,L=14,R=12,T=14,B=26;
+  const tms=pts.map(p=>new Date(p.date+'T12:00:00').getTime());
+  const x0=Math.min.apply(null,tms), x1=Math.max.apply(null,tms);
+  const vs=pts.map(p=>p.value);
+  let v0=Math.min.apply(null,vs), v1=Math.max.apply(null,vs);
+  const pad=Math.max((v1-v0)*0.14, v1*0.02); v0-=pad; v1+=pad;
+  const X=t=> L+(W-L-R)*(x1===x0?0.5:(t-x0)/(x1-x0));
+  const Y=v=> T+(H-T-B)*(1-(v-v0)/(v1-v0));
+  let g='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">';
+  /* rejilla y ejes */
+  for(let i=0;i<=2;i++){ const vv=v0+(v1-v0)*i/2, yy=Y(vv);
+    g+='<line x1="'+L+'" y1="'+yy.toFixed(1)+'" x2="'+(W-R)+'" y2="'+yy.toFixed(1)+'" stroke="#EDE7FA" stroke-width="1"/>';
+    g+='<text x="'+(L+2)+'" y="'+(yy-3).toFixed(1)+'" font-family="Inter,sans-serif" font-size="7.5" font-weight="700" fill="#8A7FA8">'+COPk(vv)+'</text>'; }
+  /* línea */
+  const path=pts.map((p,i)=>(i?'L':'M')+X(tms[i]).toFixed(1)+' '+Y(p.value).toFixed(1)).join(' ');
+  g+='<path d="'+path+'" fill="none" stroke="#3E0A8B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  /* puntos + meses */
+  const MABR=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  pts.forEach((p,i)=>{ const cx=X(tms[i]), cy=Y(p.value);
+    const approx=p.src==='Aprox.';
+    g+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="3.4" fill="'+(approx?'#fff':'#3E0A8B')+'" stroke="#3E0A8B" stroke-width="1.6"/>';
+    const mm=parseInt(p.date.slice(5,7),10)-1;
+    g+='<text x="'+cx.toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.5" font-weight="700" fill="#6B6280">'+MABR[mm]+'</text>';
+  });
+  /* máx y mín */
+  const iMax=vs.indexOf(Math.max.apply(null,vs)), iMin=vs.indexOf(Math.min.apply(null,vs));
+  [[iMax,-7],[iMin,13]].forEach(pr=>{ const i=pr[0];
+    g+='<text x="'+X(tms[i]).toFixed(1)+'" y="'+(Y(vs[i])+pr[1]).toFixed(1)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.8" font-weight="800" fill="#1A0B34">'+COPk(vs[i])+'</text>'; });
+  g+='</svg>';
+  g+='<div class="eqviz-cap" style="text-align:left">● verificado (FNC / prensa) · ○ aproximado · COP por carga de 125 kg de pergamino seco, 2026.</div>';
+  return g;
+}
+function renderFncBox(){
+  const cnt=document.getElementById('accFncCnt');
+  if(cnt){ const L0=state.fnc.last||{value:FNC_FIJO}; cnt.textContent=COP(L0.value)+'/carga'; }
+  const host=document.getElementById('fncBox'); if(!host) return;
+  const L=state.fnc.last||{value:FNC_FIJO,date:'—',src:'Fijo'};
+  const st=state.fnc.status||'';
+  const cls=st.indexOf('ok:')===0?'ok':st.indexOf('err:')===0?'err':'';
+  const msg=st.replace(/^(ok|err):/,'');
+  let h='<div class="fnc-top"><div style="flex:1;min-width:0">'+
+    '<span class="fk">Precio de Fedecafé hoy · pergamino seco</span>'+
+    '<div class="fv">'+COP(L.value)+' <span style="font-size:.72rem;color:var(--muted);font-family:Inter,sans-serif;font-weight:600">/ carga 125 kg</span></div>'+
+    '<div class="fd">'+fncDate(L.date)+' · '+(L.src==='FNC'?'Federación Nacional de Cafeteros':L.src==='Fijo'?'Respaldo fijo':'Registro manual')+
+    ' · '+COP(L.value/125)+'/kg</div></div></div>'+
+    '<div class="fnc-btns">'+
+      '<button class="fbtn solid" id="fncGo"'+(state.fnc.busy?' disabled':'')+'>'+(state.fnc.busy?'Consultando…':'↻ Consultar precio de hoy')+'</button>'+
+      '<button class="fbtn" id="fncUse">Usar como ancla</button>'+
+      '<button class="fbtn" id="fncMan">Registrar a mano</button>'+
+      '<button class="fbtn" id="fncFix">Fijo '+COP(FNC_FIJO)+'</button>'+
+      '<button class="fbtn" id="fncChartBtn">'+(state.fnc.showChart?'Ocultar gráfica':'↗ Ver gráfica')+'</button>'+
+      '<a class="fbtn" href="'+FNC_PAGE+'" target="_blank" rel="noopener" style="text-decoration:none">Página oficial ↗</a>'+
+    '</div>';
+  if(msg) h+='<div class="fnc-st '+cls+'">'+msg+'</div>';
+  if(state.fnc.showChart) h+='<div style="margin-top:.6rem;border:1px solid var(--line);border-radius:12px;padding:.55rem .6rem;background:#fff">'+fncChartSVG()+'</div>';
+  if(state.fnc.log.length){
+    h+='<div class="fnc-log"><b style="color:var(--purple)">Histórico registrado</b><table>'+
+       state.fnc.log.slice(0,6).map(e=>'<tr><td>'+fncDate(e.date)+'</td><td style="color:var(--muted)">'+e.src+'</td><td class="n">'+COP(e.value)+'</td></tr>').join('')+
+       '</table>'+(state.fnc.log.length>6?'<div style="margin-top:.25rem">…y '+(state.fnc.log.length-6)+' más en la gráfica.</div>':'')+(STORE.ok?'':'<div style="margin-top:.3rem">El navegador no permite guardar: el histórico dura solo esta sesión.</div>')+'</div>';
+  }
+  host.innerHTML=h;
+  const g=document.getElementById('fncGo'); if(g) g.onclick=fncUpdate;
+  const u=document.getElementById('fncUse'); if(u) u.onclick=()=>{ applyFncToAnchor(); recompute(); toast('Ancla = precio FNC'); };
+  const m=document.getElementById('fncMan'); if(m) m.onclick=()=>{
+    const v=prompt('Precio interno FNC por carga de 125 kg (COP):', state.fnc.last?state.fnc.last.value:FNC_FIJO);
+    if(v!==null) fncManual(v,'Manual'); };
+  const f=document.getElementById('fncFix'); if(f) f.onclick=()=>{ fncManual(FNC_FIJO,'Fijo'); };
+  const ch=document.getElementById('fncChartBtn'); if(ch) ch.onclick=()=>{ state.fnc.showChart=!state.fnc.showChart; renderFncBox(); };
+}
+
+/* ---------- colores de estado ---------- */
+const NODE_COL=['#C8102E','#C79A00','#2E8B57','#3E0A8B'];
+
+
+
+/* ---------- kpis del pie de embudo ---------- */
+function renderFoot(){
+  const rows=eqRows(), withP=priceActive();
+  const C=state._costs||{};
+  const show=(id,on)=>{ const el=document.getElementById(id); if(el) el.style.display=on?'flex':'none'; return on; };
+  const perg=rows.find(r=>r.n===1);
+  if(show('ffPergWrap',!!(perg&&withP))){
+    const pr=priceOf(1);
+    document.getElementById('ffPerg').textContent=COPk(pr*CARGA);
+    document.getElementById('ffPergKg').textContent=COP(pr)+' /kg'+(fxOn()?' \u00b7 '+fmtFX(pr*CARGA):(perg.est?' \u00b7 equivalente':''));
+  }
+  const hasCost=!!(state.costs&&state.costs.on&&C.total>0);
+  if(show('ffCostWrap',hasCost)){
+    document.getElementById('ffCost').textContent=COP(C.perKgFinal);
+    document.getElementById('ffCostT').textContent=COPk(C.total)+' total \u00b7 /kg final';
+  }
+  const endRow=rows.find(r=>r.n===state.end);
+  if(show('ffValWrap',!!(endRow&&withP))){
+    const pr=priceOf(state.end), lot=pr*endRow.kg;
+    document.getElementById('ffVal').textContent=COPk(lot);
+    document.getElementById('ffValKg').textContent=fxOn()? fmtFX(lot)+' \u00b7 '+COP(pr)+'/kg' : COP(pr)+' /kg '+NODE_SHORT[state.end].toLowerCase();
+  }
+}
+
+/* ---------- orquestador ---------- */
+function renderPriceUI(){
+  renderFncBox();
+  renderFoot();
+  renderEqViz();
+  renderEqBlock();
+  renderPriceBlock();
+}
+
+/* ---------- visualización de áreas ---------- */
+function renderEqViz(){
+  const host=document.getElementById('eqViz'); if(!host) return;
+  const rows=eqRows();
+  if(!rows.length){ host.innerHTML=''; return; }
+  const maxKg=Math.max.apply(null,rows.map(r=>r.kg));
+  const SMAX=84, GAP=8, PT=22, PB=34, SLOT_MIN=92;
+  const sides=rows.map(r=>Math.max(12,SMAX*Math.sqrt(r.kg/maxKg)));
+  /* cada estado ocupa un carril de ancho fijo mínimo para que las etiquetas nunca se pisen */
+  const slots=sides.map(sd=>Math.max(sd+10,SLOT_MIN));
+  const W=slots.reduce((a,b)=>a+b,0)+GAP*(rows.length-1)+12;
+  const H=PT+SMAX+PB;
+  const base=PT+SMAX;
+  let x=6, svg='<svg viewBox="0 0 '+Math.round(W)+' '+H+'" style="width:100%;height:auto;display:block;margin:.4rem 0 0" xmlns="http://www.w3.org/2000/svg">';
+  svg+='<line x1="4" y1="'+base+'" x2="'+(W-4)+'" y2="'+base+'" stroke="#E4DCF3" stroke-width="1.5"/>';
+  rows.forEach((r,i)=>{
+    const sd=sides[i], slot=slots[i], col=NODE_COL[r.n], cx=x+slot/2;
+    svg+='<rect x="'+(cx-sd/2).toFixed(1)+'" y="'+(base-sd).toFixed(1)+'" width="'+sd.toFixed(1)+'" height="'+sd.toFixed(1)+'" rx="5" fill="'+col+'" opacity="'+(r.n===1?'1':'.82')+'"'+(r.est?' stroke="'+col+'" stroke-dasharray="4 3" fill-opacity=".22"':'')+'/>';
+    svg+='<text x="'+cx+'" y="'+(base-sd-6)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" font-weight="800" fill="#1A0B34">'+NODE_SHORT[r.n]+(r.est?' · eq.':'')+'</text>';
+    svg+='<text x="'+cx+'" y="'+(base+12)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="800" fill="#3E0A8B">'+fmtW(r.kg)+' kg</text>';
+    svg+='<text x="'+cx+'" y="'+(base+22)+'" text-anchor="middle" font-family="Inter,sans-serif" font-size="7.8" font-weight="600" fill="#6B6280">'+nf2.format(r.kg/CARGA)+' cargas · '+nf2.format(r.kg/SACO)+' sacos</text>';
+    x+=slot+GAP;
+  });
+  svg+='</svg>';
+  host.innerHTML=svg+'<div class="eqviz-cap">El área de cada cuadrado es proporcional a la masa del estado'+(rows.some(r=>r.est)?' · punteado = equivalente fuera de la cadena':'')+'.</div>';
+}
+
+/* ---------- tabla de equivalencias (acordeón) ---------- */
+function renderEqBlock(){
+  const host=document.getElementById('eqBlock'); if(!host) return;
+  const rows=eqRows();
+  if(!rows.length){ host.innerHTML=''; return; }
+  let h='<table class="ptbl"><thead><tr><th>Estado</th><th class="n">Kg</th><th class="n">Cargas 125</th><th class="n">Arrobas</th><th class="n">Sacos 70</th></tr></thead><tbody>';
   rows.forEach(r=>{
-    h+='<tr'+(r.node===1?' class="eqhi"':'')+'><td><b>'+r.label+'</b></td>'+
-       '<td class="n">'+nf0.format(Math.round(r.kg))+'</td>'+
-       '<td class="n"><b>'+nf2.format(r.kg/CARGA)+'</b></td>'+
+    const perg=r.n===1;
+    h+='<tr class="'+(perg?'perg':'')+'"><td>'+NODE_SHORT[r.n]+(r.est?' <span style="color:var(--muted);font-size:.62rem">equiv.</span>':'')+'</td>'+
+       '<td class="n">'+(perg?fmtW(r.kg):'<b>'+fmtW(r.kg)+'</b>')+'</td>'+
+       '<td class="n">'+(perg?'<b>'+nf2.format(r.kg/CARGA)+'</b>':nf2.format(r.kg/CARGA))+'</td>'+
        '<td class="n">'+nf.format(r.kg/ARROBA)+'</td>'+
        '<td class="n">'+nf2.format(r.kg/SACO)+'</td></tr>';
   });
-  h+='</tbody></table>';
-  const pg=rows.find(r=>r.node===1);
-  if(pg){
-    h+='<div class="pricebox"><span class="k">Pergamino seco · equivalente en carga</span>'+
-       '<div class="v">'+nf2.format(pg.kg/CARGA)+' cargas</div>'+
-       '<span class="fnc-s">'+nf0.format(Math.round(pg.kg))+' kg · '+nf.format(pg.kg/ARROBA)+' arrobas · 1 carga = 125 kg</span></div>';
-  }
-  return h;
-}
-function priceTableHTML(d){
-  let h='<h2 class="sec" style="margin:1.3rem 0 .2rem">Precio equivalente por estado</h2>'+
-    '<p class="tiny-note" style="margin:0 0 .3rem">Ancla: <b>'+NODES[state.anchor.node].toLowerCase()+'</b> a '+COP(state.anchor.val)+' por '+PRICE_UNIT_LABEL[state.anchor.unit]+
-    ' ('+COP(d.perKg)+'/kg). '+(d.withCosts?'Incluye los costos de procesamiento.':'Solo conversión de masa, sin costos.')+'</p>'+
-    '<table class="info-tbl"><thead><tr><th>Estado</th><th class="n">COP/kg</th><th class="n">COP/carga</th><th class="n">Valor del lote</th></tr></thead><tbody>';
-  d.rows.forEach(r=>{
-    h+='<tr'+(r.anchor?' class="eqhi"':'')+'><td>'+(r.anchor?'<span class="anchor-star">★</span> ':'')+'<b>'+r.label+'</b></td>'+
-       '<td class="n">'+COP(r.cop)+'</td>'+
-       '<td class="n">'+COP(r.cop*CARGA)+'</td>'+
-       '<td class="n">'+COPk(r.lot)+'</td></tr>';
-  });
-  h+='</tbody></table>';
-  if(d.negative) h+='<div class="fnc-note warn">Algún estado queda con precio negativo: el precio ancla no alcanza a cubrir los costos de procesamiento aguas arriba.</div>';
-  h+='<p class="tiny-note">Son precios de paridad: el valor del lote se mantiene constante a lo largo de la cadena, más o menos los costos de cada transformación. Sirven para comparar contra un precio de compra o de venta, no son una cotización.</p>';
-  return h;
-}
-function renderPrices(){
-  syncAnchorSeg();
-  const d=priceCalc();
-  const eq=document.getElementById('eqTable'), pr=document.getElementById('priceRecap'),
-        pv=document.getElementById('anchorPrev'), fw=document.getElementById('ffValWrap');
-  if(!d || !d.rows.length){
-    if(eq) eq.innerHTML=''; if(pr) pr.innerHTML=''; if(pv) pv.innerHTML='';
-    if(fw) fw.style.display='none';
-    return;
-  }
-  if(eq) eq.innerHTML=eqTableHTML(d.rows);
-  if(pr) pr.innerHTML = state.anchor.on ? priceTableHTML(d) : '';
-  if(pv){
-    pv.innerHTML = state.anchor.on
-      ? '<label class="fl">Precios derivados</label><table class="info-tbl"><tbody>'+
-        d.rows.map(r=>'<tr><td>'+(r.anchor?'<span class="anchor-star">★</span> ':'')+r.label+'</td>'+
-          '<td class="n">'+COP(r.cop)+'/kg</td><td class="n">'+COP(r.cop*CARGA)+'/carga</td></tr>').join('')+
-        '</tbody></table>'
-      : '';
-  }
-  const last=d.rows[d.rows.length-1];
-  if(fw){
-    if(state.anchor.on && last){ fw.style.display='flex'; document.getElementById('ffVal').textContent=COPk(last.lot); }
-    else fw.style.display='none';
-  }
+  h+='</tbody></table><p class="eq-note">1 carga = 125 kg · 1 arroba = 12,5 kg · 1 saco de exportación = 70 kg.</p>';
+  host.innerHTML=h;
 }
 
-/* ---------- eventos del bloque de precio ---------- */
-document.getElementById('anchorOn').addEventListener('change',e=>{ state.anchor.on=e.target.checked; recompute(); });
-document.getElementById('anchorCosts').addEventListener('change',e=>{ state.anchor.useCosts=e.target.checked; recompute(); });
-document.getElementById('anchorVal').addEventListener('input',e=>{ state.anchor.val=Math.max(0,parseFloat(e.target.value)||0); recompute(); });
-document.getElementById('anchorUnit').addEventListener('change',e=>{ state.anchor.unit=e.target.value; recompute(); });
-document.getElementById('segAnchor').addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b||b.disabled) return;
-  state.anchor.node=parseInt(b.dataset.i); state.anchor.on=true;
-  document.getElementById('anchorOn').checked=true;
-  recompute();
-});
-renderFNC();
+/* ---------- tabla de precios derivados (Resultado) ---------- */
+function renderPriceBlock(){
+  const host=document.getElementById('priceBlock'); if(!host) return;
+  const CH=eqRows().filter(r=>!r.est);
+  if(!CH.length||!priceActive()){ host.innerHTML=''; return; }
+  const withC=!!(state.costs&&state.costs.on&&state._costs&&state._costs.total>0);
+  const m=state.price.margin||0;
+  const STEP_NAME={1:'Beneficio',2:'Trilla',3:'Tueste'};
+  let h='<h2 class="sec" style="margin:1.1rem 0 .2rem">Escalera de valor</h2>'+
+    '<p class="hint" style="margin-bottom:.45rem">Cada estado acumula la merma y el proceso del anterior: <b>Estado = Estado anterior + Proceso'+(m>0?' + Margen':'')+'</b>. Ancla: '+NODE_SHORT[state.price.node]+' a '+COP(state.price.val)+' / '+PRICE_UNIT_LBL[state.price.unit]+(fxOn()?' ('+fmtFX(state.price.val)+')':'')+'.</p>'+
+    '<div class="lad">';
+  const tp=treePrice();
+  if(tp>0) h+='<div class="lad-p" style="color:#1D5C39;border-top:0"><span>En árbol (antes de recolecta '+COP(recolectaKg())+'/kg)</span><span>'+COP(tp)+'/kg</span></div>';
+  CH.forEach((r,i)=>{
+    const pr=priceOf(r.n), lot=lotValue(r.n);
+    const isA=r.n===state.price.node;
+    h+='<div class="lad-s'+(isA?' anchor':'')+'"><span><span class="lad-dot" style="background:'+NODE_COL[r.n]+'"></span>'+NODE_SHORT[r.n]+(isA?'<span class="ptag">ancla</span>':'')+' · '+fmtW(r.kg)+' kg</span>'+
+       '<span class="pv"><b>'+COP(pr)+'/kg</b><br><small>'+COPk(lot)+(r.n===1?' · '+COP(pr*CARGA)+'/carga':'')+'</small></span></div>';
+    const nx=CH[i+1];
+    if(nx){
+      const P=stepCost(nx.n);
+      if(withC&&P>0) h+='<div class="lad-p"><span>+ '+(STEP_NAME[nx.n]||'Proceso')+' (proceso)</span><span>+'+COP(P)+'</span></div>';
+      if(m>0){ const mg=lotValue(nx.n)-lotValue(r.n)-P; if(mg>0.5) h+='<div class="lad-p"><span>+ Margen '+nf.format(m)+'%</span><span>+'+COP(mg)+'</span></div>'; }
+    }
+  });
+  h+='</div>';
+  h+='<p class="eq-note">'+(m>0?'Margen del '+nf.format(m)+'% aplicado en cada paso.':'Precios de equilibrio (margen 0%): el margen real de cada actor — ya implícito en precios de mercado como el FNC — va encima.')+
+     ' Referencia FNC: '+(state.fnc.last?COP(state.fnc.last.value)+'/carga ('+fncDate(state.fnc.last.date)+')':'—')+'.</p>';
+  host.innerHTML=h;
+}
+
+/* ---------- frases de "Lo importante" (reporte) ---------- */
+/* ---------- frases de "Lo importante" (reporte) ---------- */
+/* ---------- frases de "Lo importante" (reporte) ---------- */
+function fraseImportantes(){
+  const ER=eqRows(); if(!ER.length||!priceActive()) return [];
+  const L=[];
+  const a=state.price.node, m=state.price.margin||0;
+  const pa=priceParts(a);
+  L.push('El ancla: '+NODE_SHORT[a].toLowerCase()+' a '+COP(pa.price)+' el kilo'+(a===1?' ('+COP(pa.price*CARGA)+' la carga)':'')+'.');
+  const s0=ER[0];
+  if(s0.n<a&&!s0.est){
+    const p0=priceParts(s0.n,s0.kg);
+    const ratio=s0.kg/lotKg(a);
+    L.push('Solo por mermas, '+nf.format(ratio)+' kilos de '+NODE_SHORT[s0.n].toLowerCase()+' hacen 1 de '+NODE_SHORT[a].toLowerCase()+': equivalen a '+COP(p0.mass)+' el kilo.');
+    if(p0.adj<-0.5) L.push('Precio equivalente de '+NODE_SHORT[s0.n].toLowerCase()+': '+COP(p0.mass)+' \u2212 '+COP(-p0.adj)+' de '+(m>0?'proceso y margen':'proceso pendiente')+' = '+COP(p0.price)+' el kilo.');
+  }
+  const tp=treePrice();
+  if(tp>0) L.push('En \u00e1rbol, antes de la recolecta ('+COP(recolectaKg())+'), la cereza vale '+COP(tp)+' el kilo.');
+  const dn=ER.filter(r=>r.n>a&&!r.est).pop();
+  if(dn){
+    const p1=priceParts(dn.n,dn.kg);
+    if(p1.adj>0.5) L.push('Escalera arriba cada estado suma su proceso'+(m>0?' y su margen':'')+': el '+NODE_SHORT[dn.n].toLowerCase()+' cierra en '+COP(p1.price)+' el kilo.');
+  }
+  if(m>0) L.push('Margen del '+nf.format(m)+'% aplicado en cada etapa de la escalera.');
+  else L.push('Son precios de equilibrio: el margen de cada actor, ya impl\u00edcito en el precio FNC, va encima.');
+  const endRow=ER.find(r=>r.n===state.end)||ER[ER.length-1];
+  L.push('El lote final vale '+COPk(priceOf(endRow.n)*endRow.kg)+': cada pelda\u00f1o acumula merma y proceso.');
+  return L.slice(0,7);
+}
+
+/* ---------- eventos de precio ---------- */
+/* ---------- eventos de precio ---------- */
+/* ---------- eventos de precio ---------- */
+document.getElementById('segAnchor').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+  const n=parseInt(b.dataset.i);
+  if(n!==state.price.node){
+    /* el precio se autocalcula con la regla: equivalente por mermas ∓ proceso pendiente */
+    const perKg=priceRaw(n);
+    state.price.node=n;
+    state.price.unit = n===1 ? 'carga' : 'kg';
+    if(perKg>0) state.price.val=Math.round(perKg*(PRICE_UNIT_KG[state.price.unit]||1)*10000)/10000;
+    const pi=document.getElementById('priceIn'); if(pi) pi.value=state.price.val;
+    const pu=document.getElementById('priceUnit'); if(pu) pu.value=state.price.unit;
+  }
+  document.querySelectorAll('#segAnchor button').forEach(x=>x.classList.toggle('active',x===b));
+  recompute(); });
+document.querySelectorAll('.acc-h').forEach(b=>b.addEventListener('click',()=>b.parentElement.classList.toggle('open')));
+document.getElementById('priceIn').addEventListener('input',e=>{ state.price.val=Math.max(0,parseFloat(e.target.value)||0); recompute(); });
+document.getElementById('priceUnit').addEventListener('change',e=>{ state.price.unit=e.target.value; recompute(); });
+document.getElementById('marginIn').addEventListener('input',e=>{ state.price.margin=Math.min(50,Math.max(0,parseFloat(e.target.value)||0)); recompute(); });
+fncLoad();
+if(state.fnc.last){ state.price.val=state.fnc.last.value; const pi=document.getElementById('priceIn'); if(pi) pi.value=state.fnc.last.value; }
 
 /* ---------- PDF report ---------- */
 function exportPDF(){
@@ -1762,6 +2059,9 @@ function exportPDF(){
        doc.addFileToVFS('CTCb.ttf',FONT_B); doc.addFont('CTCb.ttf','CTC','bold');
        doc.setFont('CTC','normal'); FONT='CTC'; }catch(e){}
   const setF=(style)=>doc.setFont(FONT,style);
+  const fitTxt=(t,w)=>{ let x=String(t); if(doc.getTextWidth(x)<=w) return x;
+    while(x.length>4 && doc.getTextWidth(x+'…')>w) x=x.slice(0,-1);
+    return x.replace(/[\s\-]+$/,'')+'…'; };
   const PW=210,PH=297, M=16, purple=[62,10,139], ink=[26,11,52], muted=[107,98,128], line=[228,220,243];
   const now=new Date();
   const withCost = !!(state.costs && state.costs.on && state._costs && state._costs.total>0);
@@ -1805,17 +2105,131 @@ function exportPDF(){
     setF('bold'); doc.setFontSize(11.5); doc.setTextColor.apply(doc,purple);
     doc.text(t,M+10,y); y+=7; setF('normal'); doc.setTextColor.apply(doc,ink);
   }
-  sect('Configuración');
+  const ER=(typeof eqRows==='function')?eqRows():[];
+  const hasPrice=(typeof priceActive==='function')&&priceActive();
+  const fxAct=(typeof fxOn==='function')&&fxOn();
+
+  /* iconos minimalistas por estado, dibujados en vector */
+  function stateIcon(n,x,yc,r){
+    doc.setDrawColor(62,10,139); doc.setLineWidth(0.55);
+    if(n===0){
+      doc.circle(x,yc+r*0.12,r*0.78,'S');
+      doc.lines([[ r*0.5,-r*0.55, r*0.85,-r*0.5, r*1.05,-r*0.45 ]], x, yc-r*0.6, [1,1], 'S');
+    }else{
+      if(n===3) doc.setLineWidth(0.9);
+      doc.ellipse(x,yc,r*0.68,r*0.95,'S');
+      if(n===1){ doc.line(x,yc-r*0.6,x,yc+r*0.6); }
+      else{ doc.lines([[ -r*0.45, r*0.42, r*0.45, r*0.82, 0, r*1.24 ]], x, yc-r*0.62, [1,1], 'S'); }
+    }
+    doc.setLineWidth(0.2); doc.setDrawColor.apply(doc,line);
+  }
+  const NODE_RGB=[[200,16,46],[199,154,0],[46,139,87],[62,10,139]];
+
+  sect('Configuraci\u00f3n');
   setF('normal'); doc.setFontSize(9.5); doc.setTextColor.apply(doc,muted);
   const unit=UNIT_LABEL[state.unit];
-  doc.text('Cantidad inicial: '+fmtW(state.qty)+' '+unit+' de '+NODES[state.start].toLowerCase(),M,y); y+=5;
-  doc.text('Cadena: '+NODES[state.start]+'  →  '+NODES[state.end],M,y); y+=5;
-  if(state.anchor && state.anchor.on){
-    doc.text('Precio ancla: '+NODES[state.anchor.node].toLowerCase()+' a '+COP(state.anchor.val)+' por '+PRICE_UNIT_LABEL[state.anchor.unit]+
-      ' ('+COP((state.anchor.val||0)/(PRICE_UNITS[state.anchor.unit]||1))+'/kg)',M,y); y+=5;
-  }
-  y+=3;
+  doc.text('Cantidad inicial: '+fmtW(state.qty)+' '+unit+' de '+NODES[state.start].toLowerCase()+'   \u00b7   Cadena: '+NODES[state.start]+'  \u2192  '+NODES[state.end],M,y); y+=6;
 
+  /* paneles por estado con icono */
+  if(ER.length){
+    const gp=4, cw=(PW-2*M-gp*(ER.length-1))/ER.length, chh=33;
+    ER.forEach((r,i)=>{
+      const x=M+i*(cw+gp);
+      const anc=hasPrice&&r.n===state.price.node;
+      if(anc){ doc.setFillColor(255,247,219); } else { doc.setFillColor(250,248,253); }
+      doc.roundedRect(x,y,cw,chh,2.2,2.2,'F');
+      doc.setFillColor.apply(doc,NODE_RGB[r.n]); doc.rect(x,y,cw,1.3,'F');
+      stateIcon(r.n,x+cw-8,y+8.6,3.6);
+      setF('bold'); doc.setFontSize(9.2); doc.setTextColor.apply(doc,ink);
+      doc.text(fitTxt(NODE_SHORT[r.n],cw-18),x+3,y+7.4);
+      setF('normal'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,muted);
+      doc.text(fmtW(r.kg)+' kg'+(r.est?' \u00b7 equiv.':''),x+3,y+12);
+      if(anc){ setF('bold'); doc.setFontSize(5.6); doc.setTextColor(133,100,0);
+        doc.text('ANCLA',x+3,y+15.6); setF('normal'); }
+      if(hasPrice){
+        const pp=priceParts(r.n,r.kg);
+        doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
+        doc.text((Math.abs(pp.adj)>0.5&&r.n!==state.price.node)?('mermas '+COP(pp.mass)+' '+(pp.adj<0?'\u2212':'+')+' '+COP(Math.abs(pp.adj))):'\u2014',x+3,y+20.4);
+        setF('bold'); doc.setFontSize(11); doc.setTextColor.apply(doc,purple);
+        doc.text(COP(pp.price)+'/kg',x+cw/2,y+28.2,{align:'center'});
+        setF('normal');
+      }
+    });
+    y+=chh+6;
+  }
+
+  doc.setFontSize(8.6); doc.setTextColor.apply(doc,muted);
+  if(hasPrice){
+    doc.text('Precio ancla: '+NODE_SHORT[state.price.node]+' a '+COP(state.price.val)+' / '+PRICE_UNIT_LBL[state.price.unit]+(fxAct?'  ('+fmtFX(state.price.val)+' \u00b7 '+nf2.format(state.fx.rate)+' COP/'+state.fx.code+')':'')+'  \u00b7  escalera: cada estado = anterior + proceso'+((state.price.margin||0)>0?' + margen '+nf.format(state.price.margin)+'%':'')+'.',M,y); y+=4.6;
+    if(state.fnc && state.fnc.last)
+      doc.text('Referencia FNC: precio interno de '+COP(state.fnc.last.value)+' por carga de 125 kg de pergamino seco \u00b7 '+fncDate(state.fnc.last.date)+' \u00b7 '+
+        (state.fnc.last.src==='FNC'?'federaciondecafeteros.org':state.fnc.last.src==='Fijo'?'respaldo fijo':state.fnc.last.src==='Prensa'?'prensa especializada':'registro manual'),M,y), y+=4.6;
+  }
+  doc.setFontSize(7.2);
+  doc.text('1 carga = 125 kg   \u00b7   1 arroba (@) = 12,5 kg   \u00b7   1 saco de exportaci\u00f3n = 70 kg',M,y); y+=8;
+
+  /* ===== lo importante ===== */
+  const IMP=(typeof fraseImportantes==='function')?fraseImportantes():[];
+  if(IMP.length){
+    if(y>PH-60){ newPage(); }
+    sect('Lo importante');
+    const wrapped=IMP.map(t=>doc.splitTextToSize(t,PW-2*M-14));
+    const nLines=wrapped.reduce((a,w)=>a+w.length,0);
+    const bh=nLines*4.6+IMP.length*1.2+7;
+    doc.setFillColor(250,248,253); doc.setDrawColor(228,220,243);
+    doc.roundedRect(M,y-2,PW-2*M,bh,2.2,2.2,'FD');
+    let yy=y+4;
+    setF('normal'); doc.setFontSize(9);
+    wrapped.forEach(w=>{
+      doc.setFillColor(255,205,0); doc.circle(M+5,yy-1.1,1.1,'F');
+      doc.setTextColor.apply(doc,ink);
+      doc.text(w,M+10,yy);
+      yy+=w.length*4.6+1.2;
+    });
+    y+=bh+5;
+  }
+
+  // health
+  const h=state._health||{}; const hcol=h.hc==='h-ok'?[46,139,87]:h.hc==='h-mid'?[176,132,10]:[200,16,46];
+  doc.setFillColor.apply(doc,hcol); doc.circle(M+3,y+2,2.6,'F');
+  doc.setTextColor.apply(doc,ink); setF('bold'); doc.setFontSize(10);
+  doc.text(h.ht||'',M+8,y+3); y+=6;
+  setF('normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,muted);
+  doc.text(doc.splitTextToSize(h.hs||'',PW-2*M),M+8,y); y+=10;
+
+
+  /* ===== equivalencias por estado ===== */
+  if(ER.length){
+    if(y>PH-52){ newPage(); }
+    sect('Equivalencias por estado');
+    const e1=M+1, e2=M+55, e3=M+95, e4=M+135, e5=PW-M;
+    doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
+    setF('bold'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,purple);
+    doc.text('Estado',e1,y);
+    doc.text('Kilos',e2,y,{align:'right'});
+    doc.text('Cargas 125 kg',e3,y,{align:'right'});
+    doc.text('Arrobas 12,5 kg',e4,y,{align:'right'});
+    doc.text('Sacos 70 kg',e5,y,{align:'right'});
+    y+=6; setF('normal');
+    ER.forEach(r=>{
+      if(y>PH-22){ newPage(); }
+      const perg=r.n===1;
+      if(perg){ doc.setFillColor(228,243,234); doc.rect(M,y-4,PW-2*M,6.6,'F'); }
+      doc.setTextColor.apply(doc,ink); doc.setFontSize(8.4); setF('normal');
+      doc.text(fitTxt(NODE_SHORT[r.n]+(r.est?' (equivalente)':''),e2-e1-12),e1,y);
+      /* negrita solo en la cifra comercial de cada estado: kilos, salvo pergamino donde manda la carga */
+      setF(perg?'normal':'bold'); doc.text(fmtW(r.kg),e2,y,{align:'right'}); setF('normal');
+      setF(perg?'bold':'normal'); doc.text(nf2.format(r.kg/CARGA),e3,y,{align:'right'}); setF('normal');
+      doc.text(nf.format(r.kg/ARROBA),e4,y,{align:'right'});
+      doc.text(nf2.format(r.kg/SACO),e5,y,{align:'right'});
+      y+=5.6; doc.setDrawColor(238,232,248); doc.line(M,y-3.6,PW-M,y-3.6);
+    });
+    y+=4;
+  }
+
+  /* ===== etapas de la cadena ===== */
+  if(y>PH-60){ newPage(); }
+  sect('Etapas de la cadena');
   // table header
   const cols=[M, M+66, M+92, M+120, PW-M];
   doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
@@ -1847,10 +2261,13 @@ function exportPDF(){
     y+=8; doc.setDrawColor.apply(doc,line); doc.line(M,y-3,PW-M,y-3);
   });
 
+
   y+=4;
-  // summary boxes
+  /* ===== kpis ===== */
   const bw=(PW-2*M-8)/3;
-  const boxes=[['Peso final',fmtW(state._final)+' '+unit],['Merma total','−'+nf.format(state._totalMerma)+'%'],['Factor conv.',nf2.format(state._cf)+' : 1']];
+  const boxes= withCost
+    ? [['Merma total','\u2212'+nf.format(state._totalMerma)+'%'],['Factor conv.',nf2.format(state._cf)+' : 1'],['Costo total de proc.',COP(state._costs.total)]]
+    : [['Peso final',fmtW(state._final)+' '+unit],['Merma total','\u2212'+nf.format(state._totalMerma)+'%'],['Factor conv.',nf2.format(state._cf)+' : 1']];
   boxes.forEach((bx,i)=>{ const x=M+i*(bw+4);
     doc.setFillColor(243,238,251); doc.roundedRect(x,y,bw,16,2,2,'F');
     doc.setTextColor.apply(doc,muted); doc.setFontSize(7); setF('bold');
@@ -1859,13 +2276,167 @@ function exportPDF(){
     doc.text(bx[1],x+3,y+12);
   });
   y+=22;
-  // health
-  const h=state._health||{}; const hcol=h.hc==='h-ok'?[46,139,87]:h.hc==='h-mid'?[176,132,10]:[200,16,46];
-  doc.setFillColor.apply(doc,hcol); doc.circle(M+3,y+2,2.6,'F');
-  doc.setTextColor.apply(doc,ink); setF('bold'); doc.setFontSize(10);
-  doc.text(h.ht||'',M+8,y+3); y+=6;
-  setF('normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,muted);
-  doc.text(doc.splitTextToSize(h.hs||'',PW-2*M),M+8,y); y+=10;
+
+  /* ===== escalera de valor ===== */
+  if(ER.length&&hasPrice){
+    newPage();
+    sect('Escalera de valor');
+    const mrg=state.price.margin||0;
+    setF('normal'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,muted);
+    doc.text(doc.splitTextToSize('Cada estado acumula la merma y el proceso del anterior: Estado = Estado anterior + Proceso'+(mrg>0?' + Margen del '+nf.format(mrg)+'%':'')+
+      '. Ancla: '+NODE_SHORT[state.price.node]+' a '+COP(state.price.val)+' / '+PRICE_UNIT_LBL[state.price.unit]+(fxAct?' ('+fmtFX(state.price.val)+')':'')+
+      (mrg>0?'.':'. Con margen 0% son precios de equilibrio: el margen real de cada actor — ya implícito en precios de mercado como el FNC — va encima.'),PW-2*M),M,y);
+    y+=11;
+    const CH=ER.filter(r=>!r.est);
+    const STEP_NAME={1:'Beneficio',2:'Trilla',3:'Tueste'};
+    const q1=M+1, q2=PW-M;
+    const tp=(typeof treePrice==='function')?treePrice():0;
+    if(tp>0){
+      setF('normal'); doc.setFontSize(7.8); doc.setTextColor(29,92,57);
+      doc.text('En árbol (antes de recolecta '+COP(recolectaKg())+'/kg)',q1+6,y);
+      doc.text(COP(tp)+' /kg',q2,y,{align:'right'});
+      y+=5.5;
+    }
+    CH.forEach((r,i)=>{
+      if(y>PH-26){ newPage(); }
+      const pr=priceOf(r.n), lot=lotValue(r.n);
+      const isA=r.n===state.price.node;
+      doc.setFillColor.apply(doc,isA?[255,247,219]:[243,238,251]);
+      doc.rect(M,y-4.2,PW-2*M,8.4,'F');
+      doc.setFillColor.apply(doc,NODE_RGB[r.n]); doc.circle(M+4,y-0.2,1.4,'F');
+      setF('bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,ink);
+      doc.text(NODE_SHORT[r.n]+(isA?'  (ancla)':'')+'  ·  '+fmtW(r.kg)+' kg',q1+7,y+0.8);
+      doc.setTextColor.apply(doc,purple);
+      doc.text(COP(pr)+' /kg',q2-42,y+0.8,{align:'right'});
+      doc.setFontSize(8); doc.setTextColor.apply(doc,ink);
+      doc.text(COPk(lot),q2,y+0.8,{align:'right'});
+      setF('normal'); y+=8.6;
+      const nx=CH[i+1];
+      if(nx){
+        const P=stepCost(nx.n);
+        if(withCost&&P>0){
+          doc.setFontSize(7.8); doc.setTextColor(107,70,193);
+          doc.text('+  '+(STEP_NAME[nx.n]||'Proceso')+' (proceso)',q1+10,y);
+          doc.text('+'+COP(P),q2,y,{align:'right'});
+          y+=5;
+        }
+        if(mrg>0){
+          const mg=lotValue(nx.n)-lotValue(r.n)-P;
+          if(mg>0.5){
+            doc.setFontSize(7.8); doc.setTextColor(107,70,193);
+            doc.text('+  Margen '+nf.format(mrg)+'%',q1+10,y);
+            doc.text('+'+COP(mg),q2,y,{align:'right'});
+            y+=5;
+          }
+        }
+      }
+    });
+    y+=2;
+    const endR=CH[CH.length-1];
+    if(endR){
+      doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
+      const perg=CH.find(r=>r.n===1);
+      let ln='Lote final: '+COP(lotValue(endR.n))+(fxAct?' ('+fmtFX(lotValue(endR.n))+')':'');
+      if(perg) ln+='   ·   pergamino '+COP(priceOf(1)*CARGA)+' la carga';
+      doc.text(ln,M,y); y+=5;
+    }
+    if(fxAct){
+      doc.setFontSize(7); doc.setTextColor.apply(doc,muted);
+      doc.text('Conversión: '+nf2.format(state.fx.rate)+' COP por '+state.fx.code+(state.fx.auto?' (tasa de mercado'+(state.fx.date?', '+state.fx.date:'')+')':' (tasa manual)')+'.',M,y); y+=4.6;
+    }
+    doc.setFontSize(7); doc.setTextColor.apply(doc,muted);
+    if(state.fnc && state.fnc.last){
+      doc.text(doc.splitTextToSize('Precio de Fedecafé hoy: '+COP(state.fnc.last.value)+' por carga de 125 kg de café pergamino seco (precio interno de referencia FNC, '+fncDate(state.fnc.last.date)+
+        ', '+(state.fnc.last.src==='FNC'?'consultado en federaciondecafeteros.org':state.fnc.last.src==='Fijo'?'valor fijo de respaldo':state.fnc.last.src==='Prensa'?'según prensa especializada':'registrado manualmente')+'). Equivale a '+COP(state.fnc.last.value/CARGA)+' por kg de pergamino.',PW-2*M),M,y);
+      y+=7;
+      const hist=(state.fnc.log||[]).slice(0,5);
+      if(hist.length>1){
+        doc.text('Histórico registrado: '+hist.map(function(e){ return fncDate(e.date)+' '+COP(e.value)+' ('+e.src+')'; }).join('  ·  '),M,y);
+        y+=6;
+      }
+    }
+  }
+
+  // ===== costos de procesamiento =====
+  if(state.costs && state.costs.on && state._costs && state._costs.total>0){
+    const C=state._costs, KGF=UNIT_KG[state.unit]||1, NKp=C.NK;
+    if(y>PH-96){ newPage(); }
+    sect('Costos de procesamiento detallados');
+    setF('normal'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,muted);
+    doc.text('Costo de maquila por subproceso, normalizado a COP por kg de la base de cada uno. La referencia es la curva C(Q)=v+F/Q ajustada al volumen del lote.',M,y);
+    y+=6;
+
+    const c1=M+1, c2=M+46, c3=M+92, c3b=M+122, c4=M+126, c5=PW-M;
+    const KGF_END=Math.max(1,C.finalKg||1);
+    const uc=r=>r.tot/KGF_END;   /* costo unitario normalizado a COP por kg de producto final: así sí se pueden sumar */
+    const costHdr=()=>{
+      doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
+      doc.setTextColor.apply(doc,purple); setF('bold'); doc.setFontSize(7.6);
+      doc.text('Subproceso',c1,y);
+      doc.text('Lote',c2,y);
+      doc.text('$/kg base',c3,y,{align:'right'});
+      doc.text('$/kg final',c3b,y,{align:'right'});
+      doc.text('Estado',c4,y);
+      doc.text('Costo',c5,y,{align:'right'});
+      y+=6; setF('normal');
+    };
+    const costPage=()=>{ newPage(); costHdr(); };
+    costHdr();
+
+    C.groups.forEach(gr=>{
+      const on=gr.items.filter(r=>r.on);
+      if(!on.length) return;
+      if(y>PH-40){ costPage(); }
+      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
+      doc.text(gr.g.name.toUpperCase()+'  ·  '+gr.g.flow,c1,y); y+=5;
+      on.forEach(r=>{
+        if(y>PH-32){ costPage(); }
+        const inf=costZLabel(r.z);
+        setF('normal'); doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
+        doc.text(fitTxt(r.it.name,c2-c1-4),c1+2,y);
+        doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
+        doc.text(nf0.format(Math.round(r.Q))+' kg '+BASE_NAME[r.it.base],c2,y);
+        doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
+        doc.text(COP(r.val),c3,y,{align:'right'});
+        setF('bold'); doc.text(COP(uc(r)),c3b,y,{align:'right'}); setF('normal');
+        const cc=inf.cls==='ok'?[46,139,87]:inf.cls==='mid'?[176,132,10]:[200,16,46];
+        doc.setTextColor.apply(doc,cc); setF('bold'); doc.setFontSize(7.4);
+        doc.text(inf.cls==='ok'?'En rango':inf.cls==='mid'?'Atípico':'Extremo',c4,y);
+        setF('normal'); doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
+        doc.text(COP(r.tot),c5,y,{align:'right'});
+        y+=4.2; doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
+        doc.text('referencia '+COP(r.ref)+'/kg a este volumen',c1+2,y);
+        y+=5.4; doc.setDrawColor(238,232,248); doc.line(M,y-3.2,PW-M,y-3.2);
+      });
+      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
+      doc.text('Subtotal '+gr.g.name,c1+2,y);
+      doc.text(COP(on.reduce((a,r)=>a+uc(r),0)),c3b,y,{align:'right'});
+      doc.text(COP(gr.total),c5,y,{align:'right'});
+      setF('normal'); y+=8;
+    });
+
+    /* suma explícita de los costos unitarios */
+    if(y>PH-26){ newPage(); }
+    const rowsOn=C.rows.filter(r=>r.on);
+    const sumU=rowsOn.reduce((a,r)=>a+uc(r),0);
+    doc.setFillColor(239,231,253); doc.rect(M,y-4.4,PW-2*M,8,'F');
+    setF('bold'); doc.setFontSize(8.4); doc.setTextColor.apply(doc,purple);
+    doc.text('SUMA DE COSTOS UNITARIOS  ·  '+rowsOn.length+' subprocesos',c1,y);
+    doc.text(COP(sumU),c3b,y,{align:'right'});
+    doc.text(COP(C.total),c5,y,{align:'right'});
+    y+=8; setF('normal'); doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
+    doc.text(doc.splitTextToSize('Cada subproceso se cobra sobre una base distinta (kg de cereza, de pergamino, de verde o de tostado), por lo que sus tarifas no son sumables entre sí. La columna «$/kg final» reexpresa cada tarifa sobre el mismo denominador — el kilo de '+NODE_SHORT[state.end].toLowerCase()+' que sale del proceso — y por eso sí es sumable: '+COP(sumU)+' por kg de '+NODE_SHORT[state.end].toLowerCase()+', que es el costo unitario total del proceso ('+COP(C.total)+' sobre '+nf0.format(Math.round(C.finalKg))+' kg finales).',PW-2*M),M,y);
+    y+=9;
+
+
+    if(state.costs.items.empaque && state.costs.items.empaque.on){
+      doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
+      doc.text('Empaque: bolsa de '+nf0.format(state.costs.pack.cap)+' g a '+COP(state.costs.pack.price)+' por unidad  \u00b7  '+
+        nf0.format(Math.floor((NKp[3]||0)*1000/Math.max(1,state.costs.pack.cap)))+' unidades.',M,y);
+      y+=6;
+    }
+  }
+
 
   // notes
   const notes=document.getElementById('notes').value.trim();
@@ -1873,195 +2444,6 @@ function exportPDF(){
     setF('normal');doc.setFontSize(9);doc.setTextColor.apply(doc,ink);
     const lines=doc.splitTextToSize(notes,PW-2*M); doc.text(lines,M,y); y+=lines.length*4.6+4; }
 
-  // ===== costos de procesamiento =====
-  if(state.costs && state.costs.on && state._costs && state._costs.total>0){
-    const C=state._costs;
-    const KGFIN=Math.max(1,C.finalKg||1);
-    const uFin=r=>r.tot/KGFIN;                       // costo unitario llevado al kg del producto final
-    if(y>PH-96){ newPage(); }
-    sect('Costos de procesamiento');
-    setF('normal'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,muted);
-    doc.text(doc.splitTextToSize('Costo de maquila por subproceso. La columna COP/kg base usa la masa propia de cada subproceso y por eso no es sumable; la columna COP/kg final lleva cada costo al kilo de '+NODE_SHORT[state.end].toLowerCase()+' y sí suma: sus subtotales y el total son la suma directa de los costos unitarios.',PW-2*M),M,y);
-    y+=8;
-
-    const c1=M+1, c2=M+52, c3=M+108, c4=M+140, c5=PW-M;
-    const costHdr=()=>{
-      doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
-      doc.setTextColor.apply(doc,purple); setF('bold'); doc.setFontSize(7.6);
-      doc.text('Subproceso',c1,y);
-      doc.text('Lote',c2,y);
-      doc.text('COP/kg base',c3,y,{align:'right'});
-      doc.text('COP/kg final',c4,y,{align:'right'});
-      doc.text('Costo total',c5,y,{align:'right'});
-      y+=6; setF('normal');
-    };
-    const costPage=()=>{ newPage(); costHdr(); };
-    costHdr();
-
-    let sumUnit=0;
-    C.groups.forEach(gr=>{
-      const on=gr.items.filter(r=>r.on);
-      if(!on.length) return;
-      if(y>PH-40){ costPage(); }
-      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
-      doc.text(gr.g.name.toUpperCase()+'  \u00b7  '+gr.g.flow,c1,y); y+=5;
-      let gUnit=0;
-      on.forEach(r=>{
-        if(y>PH-32){ costPage(); }
-        const inf=costZLabel(r.z), u=uFin(r); gUnit+=u; sumUnit+=u;
-        setF('normal'); doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
-        doc.text(r.it.name,c1+2,y);
-        doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
-        doc.text(nf0.format(Math.round(r.Q))+' kg '+BASE_NAME[r.it.base],c2,y);
-        doc.setFontSize(8.4); doc.setTextColor.apply(doc,ink);
-        doc.text(COP(r.val),c3,y,{align:'right'});
-        setF('bold'); doc.text(COP(u),c4,y,{align:'right'}); setF('normal');
-        doc.text(COP(r.tot),c5,y,{align:'right'});
-        y+=4.2; doc.setFontSize(6.8); doc.setTextColor.apply(doc,muted);
-        const cc=inf.cls==='ok'?[46,139,87]:inf.cls==='mid'?[176,132,10]:[200,16,46];
-        doc.text('referencia '+COP(r.ref)+'/kg a este volumen  \u00b7  ',c1+2,y);
-        doc.setTextColor.apply(doc,cc); setF('bold');
-        doc.text(inf.cls==='ok'?'en rango':inf.cls==='mid'?'at\u00edpico':'extremo',c1+2+doc.getTextWidth('referencia '+COP(r.ref)+'/kg a este volumen  \u00b7  '),y);
-        setF('normal'); doc.setTextColor.apply(doc,muted);
-        y+=5.4; doc.setDrawColor(238,232,248); doc.line(M,y-3.2,PW-M,y-3.2);
-      });
-      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
-      doc.text('Subtotal '+gr.g.name,c1+2,y);
-      doc.text(COP(gUnit),c4,y,{align:'right'});
-      doc.text(COP(gr.total),c5,y,{align:'right'});
-      setF('normal'); y+=8;
-    });
-
-    // fila de suma de los costos unitarios
-    if(y>PH-30){ costPage(); }
-    doc.setFillColor(38,7,90); doc.rect(M,y-4.6,PW-2*M,8,'F');
-    doc.setTextColor(255,255,255); setF('bold'); doc.setFontSize(8.4);
-    doc.text('SUMA DE COSTOS UNITARIOS',c1+2,y);
-    doc.text(COP(sumUnit)+'/kg',c4,y,{align:'right'});
-    doc.text(COP(C.total),c5,y,{align:'right'});
-    setF('normal'); doc.setTextColor.apply(doc,ink); y+=8;
-
-    if(y>PH-58){ newPage(); }
-    // totales
-    const bw2=(PW-2*M-8)/3;
-    const tb=[['Costo total',COP(C.total)],
-              ['Suma unitaria por kg '+NODE_SHORT[state.end].toLowerCase(),COP(C.perKgFinal)],
-              ['Producto final', nf0.format(Math.round(C.finalKg))+' kg']];
-    tb.forEach((bx,i)=>{ const x=M+i*(bw2+4);
-      doc.setFillColor(239,231,253); doc.roundedRect(x,y,bw2,16,2,2,'F');
-      doc.setTextColor.apply(doc,muted); doc.setFontSize(6.4); setF('bold');
-      doc.text(String(bx[0]).toUpperCase(),x+3,y+5);
-      doc.setTextColor.apply(doc,purple); doc.setFontSize(12);
-      doc.text(String(bx[1]),x+3,y+12);
-    });
-    y+=22;
-
-    if(state.costs.items.empaque && state.costs.items.empaque.on){
-      doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted); setF('normal');
-      doc.text('Empaque: bolsa de '+nf0.format(state.costs.pack.cap)+' g a '+COP(state.costs.pack.price)+' por unidad  \u00b7  '+
-        nf0.format(Math.floor(((C.NK||{})[3]||0)*1000/Math.max(1,state.costs.pack.cap)))+' unidades.',M,y);
-      y+=7;
-    }
-  }
-
-  // ===== equivalencias por estado (siempre) =====
-  const PTS=(typeof chainPoints==='function')? chainPoints() : [];
-  if(PTS.length){
-    if(y>PH-56){ newPage(); }
-    sect('Equivalencias por estado');
-    setF('normal'); doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
-    doc.text('La misma masa del lote expresada en cada estado de la cadena. 1 carga = 125 kg  \u00b7  1 arroba = 12,5 kg  \u00b7  1 saco de exportaci\u00f3n = 70 kg.',M,y);
-    y+=6;
-    const e1=M+1, e2=M+58, e3=M+94, e4=M+126, e5=M+160, e6=PW-M;
-    const eqHdr=()=>{
-      doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
-      setF('bold'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,purple);
-      doc.text('Estado',e1,y);
-      doc.text('Kilos',e2,y,{align:'right'});
-      doc.text('Cargas 125 kg',e3,y,{align:'right'});
-      doc.text('Arrobas',e4,y,{align:'right'});
-      doc.text('Sacos 70 kg',e5,y,{align:'right'});
-      doc.text('% del inicial',e6,y,{align:'right'});
-      y+=5.8; setF('normal');
-    };
-    eqHdr();
-    const kg0=PTS[0].kg||1;
-    PTS.forEach(p=>{
-      if(y>PH-26){ newPage(); eqHdr(); }
-      if(p.node===1){ doc.setFillColor(239,231,253); doc.rect(M,y-4,PW-2*M,6.6,'F'); }
-      doc.setFontSize(8); doc.setTextColor.apply(doc,ink);
-      setF(p.node===1?'bold':'normal');
-      doc.text(p.label,e1,y);
-      doc.text(nf0.format(Math.round(p.kg)),e2,y,{align:'right'});
-      doc.text(nf2.format(p.kg/CARGA),e3,y,{align:'right'});
-      setF('normal');
-      doc.text(nf.format(p.kg/ARROBA),e4,y,{align:'right'});
-      doc.text(nf2.format(p.kg/SACO),e5,y,{align:'right'});
-      doc.setTextColor.apply(doc,muted);
-      doc.text(nf.format(p.kg/kg0*100)+'%',e6,y,{align:'right'});
-      y+=5.2; doc.setDrawColor(238,232,248); doc.line(M,y-3.4,PW-M,y-3.4);
-    });
-    const PG=PTS.find(p=>p.node===1);
-    if(PG){
-      y+=1.5;
-      setF('bold'); doc.setFontSize(8.2); doc.setTextColor.apply(doc,purple);
-      doc.text('Pergamino seco: '+nf2.format(PG.kg/CARGA)+' cargas de 125 kg  ('+nf0.format(Math.round(PG.kg))+' kg  \u00b7  '+nf.format(PG.kg/ARROBA)+' arrobas)',M,y);
-      setF('normal'); y+=6;
-    }
-    y+=2;
-  }
-
-  // ===== precio por estado =====
-  const PRC=(typeof priceCalc==='function')? priceCalc() : null;
-  if(state.anchor && state.anchor.on && PRC && PRC.rows.length){
-    if(y>PH-62){ newPage(); }
-    sect('Precio equivalente por estado');
-    setF('normal'); doc.setFontSize(7.4); doc.setTextColor.apply(doc,muted);
-    doc.text(doc.splitTextToSize('Precios de paridad derivados del ancla: '+NODES[state.anchor.node].toLowerCase()+' a '+COP(state.anchor.val)+' por '+
-      PRICE_UNIT_LABEL[state.anchor.unit]+' ('+COP(PRC.perKg)+'/kg). '+
-      (PRC.withCosts?'La derivaci\u00f3n suma los costos de procesamiento aguas abajo y los descuenta aguas arriba.':'Derivaci\u00f3n solo por conversi\u00f3n de masa, sin costos de procesamiento.'),PW-2*M),M,y);
-    y+=8;
-    const p1=M+1, p2=M+64, p3=M+100, p4=M+142, p5=PW-M;
-    const prHdr=()=>{
-      doc.setFillColor(243,238,251); doc.rect(M,y-4,PW-2*M,7,'F');
-      setF('bold'); doc.setFontSize(7.6); doc.setTextColor.apply(doc,purple);
-      doc.text('Estado',p1,y);
-      doc.text('COP/kg',p2,y,{align:'right'});
-      doc.text('COP/arroba',p3,y,{align:'right'});
-      doc.text('COP/carga 125 kg',p4,y,{align:'right'});
-      doc.text('Valor del lote',p5,y,{align:'right'});
-      y+=5.8; setF('normal');
-    };
-    prHdr();
-    PRC.rows.forEach(r=>{
-      if(y>PH-26){ newPage(); prHdr(); }
-      if(r.anchor){ doc.setFillColor(255,246,214); doc.rect(M,y-4,PW-2*M,6.6,'F'); }
-      doc.setFontSize(8); doc.setTextColor.apply(doc,ink); setF(r.anchor?'bold':'normal');
-      doc.text((r.anchor?'\u25b8 ':'')+r.label,p1,y);
-      doc.text(COP(r.cop),p2,y,{align:'right'});
-      doc.text(COP(r.cop*ARROBA),p3,y,{align:'right'});
-      doc.text(COP(r.cop*CARGA),p4,y,{align:'right'});
-      doc.text(COP(r.lot),p5,y,{align:'right'});
-      setF('normal');
-      y+=5.2; doc.setDrawColor(238,232,248); doc.line(M,y-3.4,PW-M,y-3.4);
-    });
-    y+=2;
-    doc.setFontSize(7); doc.setTextColor.apply(doc,muted);
-    let pn='Son precios de equivalencia: el valor del lote se conserva a lo largo de la cadena, m\u00e1s o menos el costo de cada transformaci\u00f3n. Sirven para comparar contra un precio de compra o de venta; no son una cotizaci\u00f3n.';
-    if(PRC.negative) pn+=' Atenci\u00f3n: alg\u00fan estado queda con precio negativo, es decir que el precio ancla no cubre los costos de procesamiento aguas arriba.';
-    doc.text(doc.splitTextToSize(pn,PW-2*M),M,y);
-    y+=8;
-    if(typeof fncCurrent==='function'){
-      const fc=fncCurrent();
-      setF('bold'); doc.setFontSize(7.4); doc.setTextColor.apply(doc,purple);
-      doc.text('Referencia Fedecaf\u00e9',M,y); y+=4;
-      setF('normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,muted);
-      doc.text(doc.splitTextToSize('Precio interno de referencia de la Federaci\u00f3n Nacional de Cafeteros para la compra de caf\u00e9 pergamino seco: '+
-        COP(fc.value)+' por carga de 125 kg ('+COP(fc.value/CARGA)+'/kg), precio del '+fc.date+
-        ' \u00b7 origen del dato: '+(fc.src==='FNC'?'p\u00e1gina oficial federaciondecafeteros.org':fc.src==='Manual'?'registrado a mano en la herramienta':'valor de respaldo de la herramienta')+'.',PW-2*M),M,y);
-      y+=8;
-    }
-  }
 
   // nota metodológica
   if(y>PH-46){ newPage(); }
@@ -2073,7 +2455,7 @@ function exportPDF(){
   const mnotes=[];
   mnotes.push('Mermas: promedios de la industria (ICO, SCA, FNC). Beneficio y secado ~80% (≈5:1); trilla ~20% (factor ICO 0,80); tueste ~16% (rango 11–24%); almacenamiento ~1%.');
   if(withCost) mnotes.push('Costos: modelo C = v + F/Q sobre referencias de maquila en Colombia 2026 (Acuerdo Café, Bosque y Clima 2024; Cenicafé AVT 380; tarifas públicas de plantas de trilla, tueste, molienda, análisis y empaque). Son referencias de mercado para orientar una cotización, no una oferta comercial.');
-  if(state.anchor && state.anchor.on) mnotes.push('Precio ancla: los precios por estado se derivan de un solo precio fijado por el usuario, propagando la masa de la cadena y '+(PRC&&PRC.withCosts?'sumando/descontando los costos de procesamiento de cada transformación':'sin incluir costos de procesamiento')+'. Referencia de mercado: precio interno de la Federación Nacional de Cafeteros para café pergamino seco por carga de 125 kg.');
+  if(typeof priceActive==='function' && priceActive()) mnotes.push('Precios: regla de equivalencia desde el ancla — el valor se traslada por masa con las mermas de esta simulación y se corrige con el proceso: restando el pendiente hacia estados menos procesados y sumando el pagado hacia estados más procesados. La referencia de mercado es el precio interno de compra de café pergamino seco por carga de 125 kg que publica a diario la Federación Nacional de Cafeteros en federaciondecafeteros.org; la herramienta guarda un registro de las lecturas. La recolecta no es una etapa de la cadena: define el precio de referencia en árbol. No incluye bonificaciones por calidad, primas de especialidad, logística, financiación ni impuestos.');
   mnotes.push('Los resultados reales dependen de variedad, proceso, humedad, equipo, región y nivel de servicio contratado.');
   mnotes.forEach(t=>{ const ls=doc.splitTextToSize(t,PW-2*M); doc.text(ls,M,y); y+=ls.length*3+1.6; });
 

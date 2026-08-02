@@ -1,0 +1,24 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V22.0(388e043).html
+(CTC Web Platform, 2026-08-02). Cada entrada se compila al próximo Version Wrap (V23).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19): registrar la entrada AL TERMINAR el trabajo,
+no "después".
+
+Contexto abierto al cerrar V22:
+- **F4 (blends) sigue DIFERIDA a propósito** — ver docs/EUDR_RESTRUCTURE_PLAN.md §7-8.
+- "Registrar DDS" del BCP sigue sin verificarse en vivo (la 2FA real impide navegarlo).
+- La red V4 está COMPLETA y con TLS en los 16 subdominios; quedan pendientes del
+  owner: material de la landing de Varietales, la decisión §5.2 (¿los nodos socios
+  pierden su landing pública?), y el UI del enlace CRM Co-Create ↔ Black Stock
+  (la FK lead_id ya existe; espera leads y negociaciones reales).
+- El vocabulario canónico Specialty/Black (Fase 0) NO se retrofitteó aún a la copy
+  vieja de KR (ProcessFlow) y Cherry Picked (BlackSection) — pase de copy pendiente.
+- black_negotiations está VACÍA tras el reset: el Black Stock se autopuebla con la
+  primera jornada que gradúe un lote Black.
+- El bucket de Storage sigue sin poda automática del Buzón.

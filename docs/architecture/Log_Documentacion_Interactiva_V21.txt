@@ -211,6 +211,20 @@ Contexto abierto al cerrar V21:
   herramientas, actualizar su descripción para mencionar precios FNC/ancla.
 (commit: 865be1b)
 
+## [2026-07-31] Calculadora de Mermas · CTC — de V4 a V10 en el mismo día
+- `public/tools/mermas-ctc.html` reemplazada de nuevo por la V10 del owner
+  (V5–V9 nunca se integraron) y re-vendorizada con `vendor-tool-assets.mjs`.
+- La V10 rehace el módulo de precios de la V4 y añade: **escalera de valor**
+  por etapa, **embudo de precio**, **conversión a moneda extranjera** (selector
+  de divisa; consulta la tasa COP en open.er-api.com con timeout de 8 s y
+  degrada a tasa editable manual — bajo la CSP interna siempre degradará),
+  gráfico SVG del historial de precio Fedecafé, indicador de "salud" del
+  cálculo y reorganización en acordeones (costos, equivalencias, FNC, resumen).
+- Misma nota de wrap que la entrada anterior: contenido de herramienta ya
+  documentada, sin nodos/wires nuevos. Las dos entradas pueden compilarse
+  como una sola ("la calculadora de mermas ganó módulo de precios y FX").
+(commit: e7d94e4)
+
 ## [2026-07-31] V4 Fase 1 · Tres superficies de captación Clase B + CRMs por consola
 - Reestructura V4 (plan: docs/V4_RED_RESTRUCTURE_ANALYSIS.md, reglas Fase 0
   CONGELADAS incl. vocabulario canónico Specialty/Black). Tres superficies

@@ -153,27 +153,28 @@ Las tres siguen siendo **service-role-only**; no cambia el modelo de acceso.
 
 ## 5 · Decisiones del owner (bloquean partes del plan)
 
-### 5.1 · ¿La finca ve QUIÉN va a llegar? — **la más importante**
-Hoy la regla es "el productor ve SOLO conteos; CTC es el puente". Pero una jornada
-**ocurre físicamente en la finca**: alguien tiene que recibir a esas personas.
+### 5.1 · ¿La finca ve QUIÉN va a llegar? — **RESUELTO (owner, 2026-08-02)**
+**Sí, solo los confirmados.** La finca ve **nombre y celular únicamente de quienes
+CTC ya confirmó**; postulados y descartados siguen invisibles. La regla original
+("el productor ve solo conteos") se afina, no se abandona: lo que protegía era el
+**control de la selección**, y eso sigue siendo de CTC — lo que se abre es lo
+mínimo para que la jornada sea operable sin trabajo manual en cada evento.
 
-- **(a) Recomendada:** al **confirmar**, la finca ve nombre y celular de los
-  **confirmados** únicamente. Postulados y descartados siguen invisibles — CTC
-  conserva el control de la selección, que es lo que la regla protegía.
-- (b) Purista: la finca nunca ve datos; CTC manda el roster por fuera. Mantiene la
-  regla intacta a costa de trabajo manual de CTC en cada jornada.
+Implicación de implementación: `misJornadasRecolecta()` gana un roster de
+confirmados (nombre + celular, nada más — ni cédula, ni notas, ni experiencia), y
+la tarjeta del módulo KR lo muestra solo cuando `estado='confirmado'`.
 
-### 5.2 · ¿Constancia o contrato?
-CTC está **intermediando** entre finca y recolector. Emitir algo llamado
-"contrato" implica una relación laboral con consecuencias reales (jornaleros,
-prestaciones, y sobre todo **ARL/riesgos** en labor agrícola).
+### 5.2 · ¿Constancia o contrato? — **RESUELTO (owner, 2026-08-02)**
+**Constancia de acuerdo.** Un imprimible que deja por escrito lo pactado (finca,
+recolector, fechas, pago, qué incluye, fecha del acuerdo) y **dice explícitamente
+que CTC conecta a las partes** — no afirma relación laboral ni la sustituye.
 
-**Recomiendo emitir una «constancia de acuerdo»**: deja por escrito lo pactado y
-dice explícitamente que CTC conecta a las partes. **Si usted quiere que sea un
-contrato laboral de verdad, eso necesita abogado** — yo puedo estructurar los
-datos, no puedo decidir la figura legal ni redactar cláusulas que obliguen.
+Regla dura para quien lo construya: el documento **no puede** contener cláusulas
+que obliguen (prestaciones, ARL, terminación, exclusividad) ni llamarse
+"contrato" en ninguna parte. Si más adelante CTC quiere una figura laboral real,
+esa redacción la aporta un abogado y aquí solo se monta.
 
-### 5.3 · ¿Cuánto dato sensible pedimos?
+### 5.3 · ¿Cuánto dato sensible pedimos? — **por defecto, sin consultar**
 EPS/afiliación a salud y contacto de emergencia son útiles para una jornada real,
 pero **EPS es dato sensible** bajo la Ley 1581. Además sigue pendiente el punto ya
 anotado en el proyecto: **la plataforma todavía no tiene política de privacidad**.
@@ -181,7 +182,7 @@ Mi recomendación: **contacto de emergencia y medio de pago sí; EPS solo cuando
 exista la política** y con aviso explícito (el Directorio ya tiene el precedente
 del aviso Ley 1581).
 
-### 5.4 · ¿Pago con valor numérico o texto?
+### 5.4 · ¿Pago con valor numérico o texto? — **por defecto, sin consultar**
 Estructurar `pago_valor` como número permite ordenar y comparar jornadas — bueno
 para el recolector. Si prefiere no publicar cifras exactas en la superficie
 pública, se guarda estructurado y se muestra en rango. **Por defecto: numérico y

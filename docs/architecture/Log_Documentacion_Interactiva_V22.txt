@@ -77,4 +77,4 @@ Contexto abierto al cerrar V22:
   "Una Jornada de Recolecta" (finca publica → recolector se postula → ECP
   confirma). DICT candidato: "Terratalento / Jornada de Recolecta".
 - APP_VERSION 2.34 → 2.35.
-(commit: pending)
+(commit: db8381d)

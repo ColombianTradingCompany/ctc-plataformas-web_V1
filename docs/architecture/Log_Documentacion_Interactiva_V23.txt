@@ -111,4 +111,4 @@ Contexto abierto al cerrar V23:
 - Para el wrap: DICT "matriz de identidad" + "Herramientas Plus"; el nodo
   herramientas y el DC ganan la pestaña; escenario posible "Solicitar Plus".
 - APP_VERSION 2.38 → 2.39.
-(commit: pending)
+(commit: 54fb9ef)

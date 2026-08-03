@@ -18,13 +18,38 @@ Contexto abierto al cerrar V24:
   recolector de prueba en producción — TODO borrado de Terratalento va acotado
   por id, nunca por tabla (lección vivida).
 - Matriz de membresías activa con gates en KR/CP/Terratalento; PENDIENTE: socio
-  multi-nodo (exige cambiar el PK de partner_accounts) y la decisión §5.2 del
-  V4 (¿los nodos socios pierden su landing pública?).
+  multi-nodo (exige cambiar el PK de partner_accounts). La decisión §5.2 del V4
+  quedó RESUELTA el 2026-08-03 (ver entrada de esa fecha): las landings se quedan.
 - Herramientas Plus por solicitud operativo; el pago de la activación es futuro.
   Caveat vigente: los HTML de public/tools/ son públicos por URL — si Plus va a
   ser privilegio real, esa herramienta debe servirse autenticada.
 - Pendientes del owner: material de la landing de Varietales; pase de copy
-  Specialty/Black (canon Fase 0) sobre KR ProcessFlow y CP BlackSection;
-  comodín o URLs de Google en Supabase (el Directorio quedó confirmado
-  pendiente de verificar con un login real).
+  Specialty/Black (canon Fase 0) sobre KR ProcessFlow y CP BlackSection.
+  Las URLs de Google quedaron RESUELTAS el 2026-08-03: la allowlist de Supabase
+  ya contiene el comodín https://*.ctcexport.com/** (cubre Directorio y todo
+  subdominio futuro; solo falta http://localhost:3000/** si algún día se prueba
+  Google en dev).
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+## [2026-08-03] Estructura del sistema → revisión al día + §5.2 resuelta
+- EstructuraModal.tsx (ECP · Documentación): el diagrama del popup se redibujó a
+  la revisión 2026-08-03 de la red. Ahora incluye lo que faltaba desde el board
+  del 2026-07-31: Terratalento en las dos puntas (superficie azul con login
+  Google + módulo "Terratalento · matching" en el ECP), los módulos internos
+  nuevos del ECP (Gestión de Herramientas Default/Plus), Coffeed y Herramientas
+  del Café como módulos compartidos al centro con ganchos de color desde KR /
+  Cherry Picked / Directorio (dorado = muro Coffeed, naranja = panel de
+  Herramientas + Solicitar Plus), la fila de la Red de Socios (5 nodos "solo
+  login") y la franja de la matriz de identidad (productor ⊕ comprador, DC
+  compone, TT nunca productor/comprador, socios solo entre sí y con DC) con el
+  conmutador «Mi red». Verificado en dev por DOM (0 etiquetas faltantes, 0
+  desbordes de texto, 6 ganchos, contenido dentro del viewBox).
+- Decisión de arquitectura — §5.2 del V4 RESUELTA (owner): las landings de los
+  nodos socios SE QUEDAN como puerta de credenciales; evolucionarán cuando se
+  trabaje la funcionalidad de cada perfil. Actualizado en
+  docs/V4_RED_RESTRUCTURE_ANALYSIS.md (§5.2, §6 y "Fuera del plan").
+- Para el mapa interactivo (wrap V25): el nodo/anotación de la Estructura del
+  sistema debe reflejar que el popup ya trae la revisión completa; §5.2 sale de
+  la lista de decisiones abiertas.
+- APP_VERSION 2.40 → 2.41 en el mismo commit.
+(commit: pending)

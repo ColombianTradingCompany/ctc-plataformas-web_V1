@@ -145,11 +145,12 @@ inventarlo: la primera entrada de `QuickNav` ("casa matriz") ya apunta a
 Lo que **no** cede: el pilar `general` ("Escríbenos"), la historia, el manifiesto
 y la identidad corporativa. El enrutador sigue siendo un sitio, no un menú.
 
-**5.2 · ¿Los nodos socios pierden su landing?**
-El board les pone **solo Login**. Hoy cada uno tiene "pareja" landing + acceso
-(`docs/PARTNER_DOMAINS_SETUP.md`). ¿Es una decisión (los socios se consiguen por
-relación comercial, no por web) o es taquigrafía del board? Si es decisión, hay 5
-landings públicas que se retiran o se degradan a página de acceso.
+**5.2 · ¿Los nodos socios pierden su landing? — RESUELTO (owner, 2026-08-03)**
+**La landing SE QUEDA**: es el lugar donde cada socio entra sus credenciales — el
+"solo Login" del board era taquigrafía, no una orden de retirada. Sin cambios por
+ahora; cada página evolucionará cuando se trabaje la funcionalidad de ese perfil,
+no antes. (Contexto original: hoy cada nodo tiene "pareja" landing + acceso,
+`docs/PARTNER_DOMAINS_SETUP.md`.)
 
 **5.3 · Specialty vs. Black — RESUELTO: NO es un cambio de modelo (owner, 2026-07-29)**
 **Todo sigue igual.** La bifurcación del board es una **taxonomía de la oferta**, no
@@ -200,9 +201,10 @@ aparentaba**: no hay migración de catálogo, no hay cambio de precios, y el mot
 captación ya existe. Lo que queda es mayormente **contenido y superficies nuevas
 sobre mecánica probada**.
 
-Las tres decisiones abiertas (§5.2 landings de socios, §5.4 Coffeed opera≠publica,
-§5.5 una identidad pública) **no bloquean la Fase 1**. Se adoptan las
-recomendaciones como supuesto declarado y solo se revisitan al llegar a su fase.
+Las tres decisiones que estaban abiertas al arrancar quedaron resueltas después:
+§5.2 landings de socios (se quedan, 2026-08-03), §5.4 Coffeed opera≠publica
+(descartada: todo en el ECP, 2026-07-31) y §5.5 una identidad pública (la matriz
+de membresías, 2026-08-02). Ninguna bloqueó la Fase 1.
 
 ### Peaje común de toda superficie nueva
 Se paga igual en cada una, y conviene hacerlo de memoria:
@@ -433,6 +435,6 @@ privada, tendría que servirse por route handler autenticado, no desde `public/`
 
 ### Fuera del plan
 - **Specialty / Black** — resuelto como vocabulario en Fase 0. Sin fase propia.
-- **Landings de los nodos socios** (§5.2) — decisión pendiente que no bloquea nada;
-  si el owner confirma "solo login", es una retirada de 5 páginas, no una
-  construcción.
+- **Landings de los nodos socios** (§5.2) — RESUELTO 2026-08-03: se quedan como
+  puerta de credenciales; evolucionan cuando se trabaje cada perfil. Nada que
+  retirar.

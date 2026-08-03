@@ -52,4 +52,4 @@ Contexto abierto al cerrar V24:
   sistema debe reflejar que el popup ya trae la revisión completa; §5.2 sale de
   la lista de decisiones abiertas.
 - APP_VERSION 2.40 → 2.41 en el mismo commit.
-(commit: pending)
+(commit: 982fd47)

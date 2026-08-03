@@ -133,4 +133,4 @@ Contexto abierto al cerrar V23:
 - Para el wrap: DICT "conmutador de red" (o extender "identidades"); las
   cuatro superficies ganan la nota del conmutador.
 - APP_VERSION 2.39 → 2.40.
-(commit: pending)
+(commit: 055f918)

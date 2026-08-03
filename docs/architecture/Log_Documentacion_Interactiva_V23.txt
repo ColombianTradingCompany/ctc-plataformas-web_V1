@@ -79,4 +79,4 @@ Contexto abierto al cerrar V23:
   producción. Un UPDATE sin WHERE por id tocó una postulación colgada de su
   jornada (revertida). Todo borrado de Terratalento va SIEMPRE acotado por id.
 - APP_VERSION 2.37 → 2.38.
-(commit: pending)
+(commit: 2fdb52d)

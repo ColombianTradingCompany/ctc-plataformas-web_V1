@@ -53,3 +53,32 @@ Contexto abierto al cerrar V24:
   la lista de decisiones abiertas.
 - APP_VERSION 2.40 → 2.41 en el mismo commit.
 (commit: 982fd47)
+
+## [2026-08-03] Estructura del sistema → DOS diagramas (corrige la entrada anterior)
+- El dibujo del commit 982fd47 mezclaba dos lógicas en un solo lienzo y no era
+  fiel al board del owner. Rehecho con él en la sesión y aprobado: ahora el
+  popup tiene DOS diagramas separados por encabezado y divisor, y el modal se
+  ensanchó a min(1180px, 96vw) para que se lean (el .modal ya scrollea solo).
+  1. "La red pública" — el board del owner tal cual: los tres formularios de
+     captación que alimentan Kaffetal Regal, Cherry Picked → Co-Create, el
+     Control Panel al centro con Posting (↑ Coffeed) y Manage Default/Plus
+     (↓ Herramientas), la línea de Screening del ECP sobre la que sube el login
+     de Terratalento, los lazos dorados hacia Coffeed y los naranjas hacia
+     Herramientas desde KR / Cherry Picked / Directorio, y la fila de socios.
+  2. "Dentro del Control Panel" — el árbol de las tres consolas con sus módulos
+     REALES (espejo de src/lib/panel/consoles.ts, no solo los de V4): comercial,
+     cadena del lote y competencia en el BCP; leads y socios en el OCP;
+     dirección, IT y Plataforma y GVG-Space en el ECP.
+- El puente entre los dos: la caja "CTC Control Panel" aparece en ambos, y cada
+  módulo del segundo lleva un cuadrito de color (azul = plataforma con login,
+  ámbar = formulario de captación, gris = módulo compartido) que dice a qué
+  bloque del primero atiende. Sin cuadrito = uso interno.
+- REGLA para el futuro: si cambia el nav de consoles.ts, este dibujo miente.
+  Actualizar los dos a la vez.
+- Verificado en dev: tsc + eslint limpios; chequeo geométrico por DOM (0
+  etiquetas faltantes, 0 desbordes de texto, 0 cruces de línea sobre cajas —
+  dos lazos naranjas hubo que reenrutar porque cortaban Varietales y el
+  Directorio), captura headless de los dos diagramas, y el modal abierto con
+  sus 2 SVG, 3 encabezados y el divisor.
+- APP_VERSION 2.41 → 2.42.
+(commit: pending)

@@ -158,7 +158,33 @@ arriba es mi propuesta, no un hecho.
 
 ---
 
-## 6 · Orden sugerido
+## 6 · RESUELTO Y CONSTRUIDO (owner, 2026-08-02 · V2.39)
+
+**La matriz quedó fijada y en código** (`src/lib/identidad/matriz.ts` — única
+fuente, con la explicación lista por combinación):
+
+| Puede ser… | productor | comprador | DC | recolector | socio |
+|---|---|---|---|---|---|
+| **productor** | — | ✕ | ✓ | ✕ | ✕ |
+| **comprador** | ✕ | — | ✓ | ✕ | ✕ |
+| **recolector** | ✕ | ✕ | ✓ | — | ✕ |
+| **socio** | ✕ | ✕ | ✓ | ✕ | (multi-nodo: pendiente, exige PK nuevo) |
+
+"Comprador" = comprador REAL (pedidos, reservas, puntos o escalón > verde) — el
+default inerte de handle_new_user no cuenta y puede convertirse en cualquier
+cosa. Gates montados: KR y Cherry Picked al detectar sesión (toast con el motivo
++ signOut), Terratalento al crear el perfil, y la emisión de socios ya venía
+blindada (guía a la credencial-etiqueta).
+
+**"Activa como tal" = Herramientas Plus por SOLICITUD** (`tools_plus_grants` +
+`src/lib/tools/plusGrants.ts`): el productor/comprador/experto DC la pide desde
+su plataforma (botón estado-consciente `SolicitarPlus`), y el ECP → Herramientas
+del café la activa o rechaza en el sub-tablero compacto por audiencia
+(`PlusBoard`). A futuro se ata a pago. La regla derivada (Club/pintón) quedó
+retirada. La Disponibilidad ganó la columna **Directorio** y el DC su pestaña
+de Herramientas.
+
+## 6b · Orden sugerido (lo restante)
 
 1. Confirmar la definición de "activa como tal" (§3.3).
 2. Apretar la regla Plus + montar Herramientas en el Directorio (§3.2, §3.3).

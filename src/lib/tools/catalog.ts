@@ -89,7 +89,7 @@ export type ToolTier = "default" | "plus";
 // (herramientas.ctcexport.com). Ahí "default" lo ve el VISITANTE ANÓNIMO y
 // "plus" cualquier cuenta de la plataforma con sesión — la identidad única de
 // la red (la cookie viaja entre subdominios), no un login nuevo.
-export type ToolSurface = "kr" | "cp" | "web";
+export type ToolSurface = "kr" | "cp" | "web" | "dc";
 
 export type ToolSetting = {
   /** Visible en Kaffetal Regal. */
@@ -98,6 +98,8 @@ export type ToolSetting = {
   cp: boolean;
   /** Visible en la superficie pública Herramientas del Café. */
   web: boolean;
+  /** Visible en el Directorio del Café (pestaña Herramientas). */
+  dc: boolean;
   tier: ToolTier;
 };
 
@@ -107,18 +109,18 @@ export type ToolsConfig = Record<ToolId, ToolSetting>;
 // ofrecen al público; QR/fórmula/viaje/datasheet arrancan apagadas y el owner
 // las enciende desde Disponibilidad si quiere.
 export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
-  "mermas-rapida": { kr: true, cp: false, web: true, tier: "default" },
-  "mermas-detallada": { kr: true, cp: false, web: true, tier: "default" },
-  agtron: { kr: true, cp: true, web: true, tier: "default" },
+  "mermas-rapida": { kr: true, cp: false, web: true, dc: false, tier: "default" },
+  "mermas-detallada": { kr: true, cp: false, web: true, dc: false, tier: "default" },
+  agtron: { kr: true, cp: true, web: true, dc: false, tier: "default" },
   // Internas del equipo: no se ofrecen en ninguna superficie pública.
-  qr: { kr: false, cp: false, web: false, tier: "plus" },
-  "formula-calidad": { kr: false, cp: false, web: false, tier: "default" },
-  "viaje-cafe": { kr: false, cp: false, web: false, tier: "default" },
+  qr: { kr: false, cp: false, web: false, dc: false, tier: "plus" },
+  "formula-calidad": { kr: false, cp: false, web: false, dc: false, tier: "default" },
+  "viaje-cafe": { kr: false, cp: false, web: false, dc: false, tier: "default" },
   // Herramientas de trabajo del productor (como las de merma): visibles en KR.
   // El owner ajusta superficie/nivel desde Disponibilidad.
-  "mermas-ctc": { kr: true, cp: false, web: true, tier: "default" },
-  catacion: { kr: true, cp: false, web: true, tier: "default" },
-  "green-datasheet": { kr: true, cp: false, web: false, tier: "default" },
+  "mermas-ctc": { kr: true, cp: false, web: true, dc: false, tier: "default" },
+  catacion: { kr: true, cp: false, web: true, dc: false, tier: "default" },
+  "green-datasheet": { kr: true, cp: false, web: false, dc: false, tier: "default" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

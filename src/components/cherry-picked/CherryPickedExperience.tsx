@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
+import { puedoSer } from "@/lib/identidad/matriz";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { createClient } from "@/lib/supabase/client";
@@ -304,21 +305,39 @@ function Experience() {
     [supabase]
   );
 
+  // La matriz de membresías (owner, 2026-08-02): un productor o un recolector
+  // no puede comprar con el mismo correo. Se le explica y se cierra la sesión.
+  const gateMatriz = useCallback(async (): Promise<boolean> => {
+    const v = await puedoSer("comprador");
+    if (v.permitido) return true;
+    showToast(v.motivo);
+    await supabase.auth.signOut();
+    return false;
+  }, [supabase, showToast]);
+
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       loadCatalog();
       if (!data.session?.user) return;
-      setUserId(data.session.user.id);
-      loadBuyerData(data.session.user.id);
+      const uid = data.session.user.id;
+      gateMatriz().then((ok) => {
+        if (!ok || !active) return;
+        setUserId(uid);
+        loadBuyerData(uid);
+      });
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        setUserId(session.user.id);
-        setLoginOpen(false);
-        loadBuyerData(session.user.id);
+        const uid = session.user.id;
+        gateMatriz().then((ok) => {
+          if (!ok) return;
+          setUserId(uid);
+          setLoginOpen(false);
+          loadBuyerData(uid);
+        });
       } else if (event === "SIGNED_OUT") {
         setUserId(null);
         setUserName("");
@@ -336,7 +355,7 @@ function Experience() {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [supabase, loadCatalog, loadBuyerData]);
+  }, [supabase, loadCatalog, loadBuyerData, gateMatriz]);
 
   function toggleOpen(id: string, open: boolean) {
     setOpenLots((prev) => ({ ...prev, [id]: open }));

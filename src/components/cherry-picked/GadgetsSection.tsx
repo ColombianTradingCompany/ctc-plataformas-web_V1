@@ -1,6 +1,7 @@
 "use client";
 
 import { ToolPanel } from "@/components/tools/ToolPanel";
+import { SolicitarPlus } from "@/components/tools/SolicitarPlus";
 import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
 import { useLang, type Lang } from "./i18n";
@@ -151,6 +152,8 @@ export function GadgetsSection() {
             framePrefix: t.framePrefix,
           }}
         />
+
+        {!toolAccess.isPlus && <SolicitarPlus audiencia="buyer" />}
 
         <p className={styles.note}>{t.note}</p>
       </div>

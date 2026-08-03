@@ -1,5 +1,6 @@
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { ToolPanel } from "@/components/tools/ToolPanel";
+import { PlusBoard } from "./PlusBoard";
 import { ToolsAdmin } from "./ToolsAdmin";
 import { getToolsConfig } from "@/lib/tools/toolAccess";
 import { ALL_TOOL_IDS, type ToolId } from "@/lib/tools/catalog";
@@ -35,6 +36,8 @@ export default async function EcpHerramientasPage() {
         initial={config}
         names={Object.fromEntries(ALL_TOOL_IDS.map((id) => [id, TOOL_COPY[id].name])) as Record<ToolId, string>}
       />
+
+      <PlusBoard />
 
       <ToolPanel
         tools={ALL_TOOL_IDS.map((id) => ({ id, ...TOOL_COPY[id] }))}

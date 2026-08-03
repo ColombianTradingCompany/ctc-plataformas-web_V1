@@ -16,6 +16,7 @@ import { LotKanbanStepper } from "./LotKanbanStepper";
 import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
 import { JornadasRecolectaModule } from "./JornadasRecolectaModule";
 import { ToolPanel } from "@/components/tools/ToolPanel";
+import { SolicitarPlus } from "@/components/tools/SolicitarPlus";
 import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
@@ -783,14 +784,15 @@ export function AppDashboard({
                   framePrefix: "Herramienta",
                 }}
               />
-              {/* Nivel Plus: se dice qué falta, no se esconde en silencio. */}
+              {/* Nivel Plus (2026-08-02): activación por SOLICITUD, decidida en
+                  el ECP — se dice qué falta, no se esconde en silencio. */}
               {toolAccess.lockedCount > 0 && (
                 <div className={styles.alist} style={{ marginTop: 12 }}>
                   Hay {toolAccess.lockedCount} herramienta{toolAccess.lockedCount === 1 ? "" : "s"} más reservada
-                  {toolAccess.lockedCount === 1 ? "" : "s"} para miembros del <b>Kaffetal Club</b> — el Pasaporte se
-                  gana compitiendo un lote en la Arena.
+                  {toolAccess.lockedCount === 1 ? "" : "s"} para <b>Herramientas Plus</b>.
                 </div>
               )}
+              {!toolAccess.isPlus && <SolicitarPlus audiencia="producer" />}
             </div>
           )}
 

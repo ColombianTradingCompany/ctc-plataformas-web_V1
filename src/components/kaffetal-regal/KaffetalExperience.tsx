@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
+import { puedoSer } from "@/lib/identidad/matriz";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMediaWithProgress, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 
@@ -564,21 +565,40 @@ function Experience() {
     [supabase]
   );
 
+  // La matriz de membresías (owner, 2026-08-02): un comprador real o un
+  // recolector de Terratalento no puede volverse productor con el mismo
+  // correo. Se le EXPLICA y se cierra la sesión — sin dejarlo a medio panel.
+  const gateMatriz = useCallback(async (): Promise<boolean> => {
+    const v = await puedoSer("productor");
+    if (v.permitido) return true;
+    showToast(v.motivo);
+    await supabase.auth.signOut();
+    return false;
+  }, [supabase, showToast]);
+
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!active || !data.session?.user) return;
-      setUserId(data.session.user.id);
-      setView((v) => (v === "landing" ? "app" : v));
-      loadData(data.session.user.id);
+      const uid = data.session.user.id;
+      gateMatriz().then((ok) => {
+        if (!ok || !active) return;
+        setUserId(uid);
+        setView((v) => (v === "landing" ? "app" : v));
+        loadData(uid);
+      });
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        setUserId(session.user.id);
-        setLoginOpen(false);
-        setView((v) => (v === "landing" ? "app" : v));
-        loadData(session.user.id);
+        const uid = session.user.id;
+        gateMatriz().then((ok) => {
+          if (!ok) return;
+          setUserId(uid);
+          setLoginOpen(false);
+          setView((v) => (v === "landing" ? "app" : v));
+          loadData(uid);
+        });
       } else if (event === "SIGNED_OUT") {
         setUserId(null);
         setFincas([]);
@@ -595,7 +615,7 @@ function Experience() {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [supabase, loadData]);
+  }, [supabase, loadData, gateMatriz]);
 
   async function logout() {
     await supabase.auth.signOut();

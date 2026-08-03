@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { puedeSer } from "@/lib/identidad/matriz";
 import type { ConstanciaInput } from "./constanciaPrint";
 
 // ── Terratalento · server actions ────────────────────────────────────────────
@@ -191,6 +192,20 @@ export type PerfilInput = {
 export async function guardarPerfilRecolector(input: PerfilInput): Promise<ActionResult> {
   const user = await sessionUser();
   if (!user) return { ok: false, error: "Tu sesión expiró. Entra de nuevo." };
+
+  // La matriz de membresías (owner, 2026-08-02): un productor o un comprador
+  // real no puede ser también recolector — se le explica el porqué. Solo aplica
+  // al CREAR el perfil; editar uno existente nunca se bloquea.
+  const service0 = createServiceRoleClient();
+  const { data: yaExiste } = await service0
+    .from("terratalento_recolectores")
+    .select("profile_id")
+    .eq("profile_id", user.id)
+    .maybeSingle();
+  if (!yaExiste) {
+    const veredicto = await puedeSer(user.id, "recolector");
+    if (!veredicto.permitido) return { ok: false, error: veredicto.motivo };
+  }
 
   const nombre = clamp(input.nombre, 120);
   const celular = clamp(input.celular, 40);

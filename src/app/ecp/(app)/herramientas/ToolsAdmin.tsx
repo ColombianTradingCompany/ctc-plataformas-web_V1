@@ -45,9 +45,10 @@ export function ToolsAdmin({
     <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: "var(--radius)", padding: 20, marginBottom: 26 }}>
       <h2 style={{ fontSize: 16, margin: 0 }}>Disponibilidad</h2>
       <p className={styles.subtitle} style={{ marginTop: 6 }}>
-        Dónde se ofrece cada herramienta y con qué nivel. <b>Default</b>: la ve cualquier cuenta de esa superficie.{" "}
-        <b>Plus</b>: solo con Pasaporte del Kaffetal Club (productores) o membresía por encima de «verde» (Cherry
-        Picked). Las herramientas internas del equipo se ven siempre aquí, sin importar esta tabla.
+        Dónde se ofrece cada herramienta y con qué nivel. <b>Default</b>: la ve cualquier cuenta de esa superficie (en
+        la web, cualquier visitante). <b>Plus</b>: solo con la activación de <b>Herramientas Plus</b> aprobada — se
+        solicita desde la plataforma propia y se decide en el tablero de solicitudes de abajo. Las herramientas
+        internas del equipo se ven siempre aquí, sin importar esta tabla.
       </p>
 
       <div style={{ overflowX: "auto" }}>
@@ -58,6 +59,7 @@ export function ToolsAdmin({
               <th style={{ ...th, textAlign: "center", width: 120 }}>Kaffetal Regal</th>
               <th style={{ ...th, textAlign: "center", width: 120 }}>Cherry Picked</th>
               <th style={{ ...th, textAlign: "center", width: 140 }}>Herramientas (web)</th>
+              <th style={{ ...th, textAlign: "center", width: 110 }}>Directorio</th>
               <th style={{ ...th, width: 130 }}>Nivel</th>
             </tr>
           </thead>
@@ -83,12 +85,21 @@ export function ToolsAdmin({
                 </td>
                 <td style={{ ...td, textAlign: "center" }}>
                   {/* V4 · Fase 4: la superficie pública. Default = visitante
-                      anónimo; Plus = cualquier cuenta con sesión. */}
+                      anónimo; Plus = activación aprobada por el ECP. */}
                   <input
                     type="checkbox"
                     checked={config[id].web}
                     onChange={(e) => patch(id, { web: e.target.checked })}
                     aria-label={`${names[id]} en Herramientas del Café (web)`}
+                  />
+                </td>
+                <td style={{ ...td, textAlign: "center" }}>
+                  {/* Directorio del Café (2026-08-02): pestaña Herramientas. */}
+                  <input
+                    type="checkbox"
+                    checked={config[id].dc}
+                    onChange={(e) => patch(id, { dc: e.target.checked })}
+                    aria-label={`${names[id]} en el Directorio del Café`}
                   />
                 </td>
                 <td style={td}>

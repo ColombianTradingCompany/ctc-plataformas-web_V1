@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { tienePlusActivo } from "./plusGrants";
 import {
   toToolsConfig,
   toolsForSurface,
@@ -18,13 +19,11 @@ import {
 // superficie pide su lista con una server action y recibe ya filtrada la que
 // le corresponde a ESE usuario.
 //
-// QUÉ DA EL NIVEL "PLUS" (decisión por defecto, reversible en UN solo sitio —
-// la función isPlusFor de abajo). El owner no alcanzó a definir la regla:
-//   · productor: tener el Pasaporte del Kaffetal Club
-//     (producer_profiles.club_member_since — se gana compitiendo en la Arena).
-//   · comprador: estar POR ENCIMA del escalón base. La escala es
-//     verde → pinton → maduro y TODOS arrancan en 'verde', así que "tiene
-//     membresía" no distingue a nadie; Plus = pinton o maduro.
+// QUÉ DA EL NIVEL "PLUS" (regla del owner, 2026-08-02): una ACTIVACIÓN
+// explícita en tools_plus_grants — el productor, el comprador o el experto del
+// DC la solicita desde su plataforma y el ECP la aprueba o rechaza (a futuro,
+// con pago). Ver src/lib/tools/plusGrants.ts. La regla derivada anterior
+// (Pasaporte del Club / escalón pintón) quedó RETIRADA.
 
 const KEY = "tools_config";
 
@@ -54,7 +53,7 @@ export async function saveToolsConfig(config: ToolsConfig): Promise<{ ok: true }
     action: "tools_config_changed",
     performed_by: adminId,
   });
-  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked", "/herramientas"]) revalidatePath(p);
+  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked", "/herramientas", "/directorio"]) revalidatePath(p);
   return { ok: true };
 }
 
@@ -75,6 +74,10 @@ export async function loadToolAccess(surface: ToolSurface): Promise<ToolAccess> 
   const service = createServiceRoleClient();
   const config = await readConfig(service);
 
+  // Plus por ACTIVACIÓN (owner, 2026-08-02): ya no se deriva del Club ni del
+  // escalón de membresía — el usuario lo SOLICITA desde su plataforma y el ECP
+  // lo activa (tools_plus_grants). kr→producer, cp→buyer, dc→dc; la superficie
+  // web acepta cualquier activación (la cookie compartida la reconoce sola).
   let isPlus = false;
   try {
     const session = await createSessionClient();
@@ -82,27 +85,8 @@ export async function loadToolAccess(surface: ToolSurface): Promise<ToolAccess> 
       data: { user },
     } = await session.auth.getUser();
     if (user) {
-      if (surface === "web") {
-        // Superficie pública (V4 · Fase 4): Plus = cualquier cuenta de la
-        // plataforma con sesión. La cookie viaja entre subdominios
-        // (Domain=.ctcexport.com), así que entrar en KR/CP/Directorio basta.
-        isPlus = true;
-      } else if (surface === "kr") {
-        const { data } = await service
-          .from("producer_profiles")
-          .select("club_member_since")
-          .eq("profile_id", user.id)
-          .maybeSingle();
-        isPlus = !!data?.club_member_since;
-      } else {
-        const { data } = await service
-          .from("buyer_profiles")
-          .select("membership_tier")
-          .eq("profile_id", user.id)
-          .maybeSingle();
-        // 'verde' es el escalón base con el que nace toda cuenta — no cuenta.
-        isPlus = data?.membership_tier === "pinton" || data?.membership_tier === "maduro";
-      }
+      const audiencia = surface === "kr" ? "producer" : surface === "cp" ? "buyer" : surface === "dc" ? "dc" : undefined;
+      isPlus = await tienePlusActivo(user.id, audiencia);
     }
   } catch {
     // Sin sesión válida se queda en Default — nunca es motivo para romper la página.

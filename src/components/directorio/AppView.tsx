@@ -7,6 +7,7 @@ import { PanelMuro } from "./PanelMuro";
 import { CoffeedWall } from "@/components/coffeed/CoffeedWall";
 import { PanelDirectorio } from "./PanelDirectorio";
 import { PanelMensajes } from "./PanelMensajes";
+import { PanelHerramientas } from "./PanelHerramientas";
 import { PanelPerfil } from "./PanelPerfil";
 import { iniciales } from "./data";
 import type { DirectorioBundle, DirectorioEstado, Ficha } from "@/lib/directorio/types";
@@ -22,7 +23,7 @@ import {
   type FichaInput,
 } from "@/lib/directorio/actions";
 
-type Pestana = "muro" | "coffeed" | "directorio" | "mensajes" | "perfil";
+type Pestana = "muro" | "coffeed" | "herramientas" | "directorio" | "mensajes" | "perfil";
 type GuardarInput = FichaInput & {
   mostrarTelefono: boolean;
   mostrarCorreo: boolean;
@@ -158,6 +159,7 @@ export function AppView({
             <>
               <button className="tab" role="tab" aria-selected={pestana === "muro"} onClick={() => irA("muro")}>Muro</button>
               <button className="tab" role="tab" aria-selected={pestana === "coffeed"} onClick={() => irA("coffeed")}>Coffeed</button>
+              <button className="tab" role="tab" aria-selected={pestana === "herramientas"} onClick={() => irA("herramientas")}>Herramientas</button>
               <button className="tab" role="tab" aria-selected={pestana === "directorio"} onClick={() => irA("directorio")}>
                 Directorio <span className="pill num">{directorio.length}</span>
               </button>
@@ -189,6 +191,7 @@ export function AppView({
               </div>
               <CoffeedWall accent="var(--tinta, #a3241b)" />
             </section>
+            <PanelHerramientas activo={pestana === "herramientas"} />
           </>
         ) : null}
         <PanelMensajes activo={pestana === "mensajes"} hilos={hilos} activa={activaMsg}

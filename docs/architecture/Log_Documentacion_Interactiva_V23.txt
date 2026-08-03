@@ -80,3 +80,35 @@ Contexto abierto al cerrar V23:
   jornada (revertida). Todo borrado de Terratalento va SIEMPRE acotado por id.
 - APP_VERSION 2.37 → 2.38.
 (commit: 2fdb52d)
+
+## [2026-08-02] La matriz de membresías + Herramientas Plus por solicitud
+- **Matriz de identidad** (reglas del owner): productor ⊕ comprador; DC compone
+  con uno de los dos, con recolector y con socios; recolector nunca productor/
+  comprador; socio nunca productor/comprador/recolector. Única fuente:
+  src/lib/identidad/matriz.ts (membresiasDe + puedeSer/puedoSer con el MOTIVO
+  redactado por combinación). Matiz clave documentado: handle_new_user pone
+  role='buyer' + buyer_profiles inerte a todo registro no-producer, así que
+  "comprador" = comprador REAL (pedidos/reservas/puntos/escalón > verde).
+- Gates montados: KR y Cherry Picked al detectar sesión (gateMatriz: toast con
+  la explicación + signOut — verificado EN VIVO en ambos sentidos con un QA
+  productor: Terratalento lo rechazó con el motivo exacto y Cherry Picked lo
+  expulsó solo al cargar); Terratalento al CREAR el perfil (editar nunca se
+  bloquea); la emisión de socios ya bloqueaba toda cuenta existente (más
+  estricta que la matriz — guía a la credencial-etiqueta). Multi-nodo de socio:
+  pendiente (exige cambiar el PK de partner_accounts).
+- **Herramientas Plus por SOLICITUD** (sustituye la regla derivada Club/pintón):
+  tabla tools_plus_grants (profile+audiencia producer|buyer|dc, pendiente→
+  activo|rechazado) + src/lib/tools/plusGrants.ts (solicitar idempotente,
+  reabrir tras rechazo, decidir con audit_log). Botón estado-consciente
+  SolicitarPlus montado en KR (módulo herramientas), Cherry Picked (Gadgets) y
+  la pestaña NUEVA "Herramientas" del Directorio (PanelHerramientas, reparto
+  `dc`). El ECP → Herramientas del café ganó el sub-tablero PlusBoard:
+  solicitudes pendientes en listas COMPACTAS por audiencia (activar/rechazar) +
+  decididas con revocar. Disponibilidad ganó la columna Directorio (ToolSurface
+  "dc" + merge seguro en configs guardadas).
+- Verificado en vivo: solicitud desde KR → fila pendiente → activación
+  (simulada por SQL, el ECP es 2FA) → el acceso la reconoce. QA borrado.
+- Para el wrap: DICT "matriz de identidad" + "Herramientas Plus"; el nodo
+  herramientas y el DC ganan la pestaña; escenario posible "Solicitar Plus".
+- APP_VERSION 2.38 → 2.39.
+(commit: pending)

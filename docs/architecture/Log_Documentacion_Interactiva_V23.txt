@@ -112,3 +112,25 @@ Contexto abierto al cerrar V23:
   herramientas y el DC ganan la pestaña; escenario posible "Solicitar Plus".
 - APP_VERSION 2.38 → 2.39.
 (commit: 54fb9ef)
+
+## [2026-08-02] El conmutador de red ("Mi red")
+- El hueco §3.1 del análisis de identidad, cerrado: RedSwitcher
+  (src/components/RedSwitcher.tsx) montado en las cabeceras de las cuatro
+  superficies azules — KR (junto a «← Inicio»), Cherry Picked (junto a «Mi
+  cuenta»), Directorio (junto a «Salir») y Terratalento (cabecera del panel).
+- Detector: misPlataformasRed() en src/lib/identidad/matriz.ts — generaliza el
+  misPlataformas() del Directorio con la MISMA vara de la matriz ("comprador"
+  = comprador real; el default inerte no muestra una tienda a la que no
+  pertenece). El menú lista las OTRAS membresías + los módulos abiertos
+  (Herramientas del Café, Coffeed) y, para bcp_admin, el Control Panel.
+  El salto no pide login: la cookie compartida viaja sola.
+- Con una sola membresía el conmutador NO pinta (verificado): el índice de
+  CTC Home ya es la puerta general.
+- Verificado EN VIVO con un QA productor+Directorio: en KR el menú mostró
+  «Directorio del Café + Herramientas + Coffeed» (y NO Cherry Picked ni
+  Terratalento — sin membresía); en el Directorio mostró «Kaffetal Regal»;
+  al quitarle la ficha del DC, el botón desapareció de KR. QA borrado.
+- Para el wrap: DICT "conmutador de red" (o extender "identidades"); las
+  cuatro superficies ganan la nota del conmutador.
+- APP_VERSION 2.39 → 2.40.
+(commit: pending)

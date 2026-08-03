@@ -8,6 +8,7 @@ import { CoffeedWall } from "@/components/coffeed/CoffeedWall";
 import { PanelDirectorio } from "./PanelDirectorio";
 import { PanelMensajes } from "./PanelMensajes";
 import { PanelHerramientas } from "./PanelHerramientas";
+import { RedSwitcher } from "@/components/RedSwitcher";
 import { PanelPerfil } from "./PanelPerfil";
 import { iniciales } from "./data";
 import type { DirectorioBundle, DirectorioEstado, Ficha } from "@/lib/directorio/types";
@@ -146,6 +147,7 @@ export function AppView({
             ) : (
               <span className="avatar" style={{ background: ficha!.color }}>{ini}</span>
             )}
+            <RedSwitcher actual="dc" compact />
             <button className="salir" type="button" onClick={onSalir}>Salir</button>
           </div>
         </div>

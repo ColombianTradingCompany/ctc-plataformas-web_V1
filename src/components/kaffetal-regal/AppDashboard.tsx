@@ -17,6 +17,7 @@ import { openShipmentInstructions } from "./ficha/shipmentInstructionsPrint";
 import { JornadasRecolectaModule } from "./JornadasRecolectaModule";
 import { ToolPanel } from "@/components/tools/ToolPanel";
 import { SolicitarPlus } from "@/components/tools/SolicitarPlus";
+import { RedSwitcher } from "@/components/RedSwitcher";
 import { type ToolId } from "@/lib/tools/catalog";
 import { useToolAccess } from "@/components/tools/useToolAccess";
 import { LegalFooter } from "@/components/LegalFooter";
@@ -382,6 +383,7 @@ export function AppDashboard({
           </a>
           <div className={styles.navActions}>
             <button className="btn btn-sm" onClick={onBackHome}>← Inicio</button>
+            <RedSwitcher actual="kr" compact />
             <button className="btn btn-sm" onClick={onLogout}>Cerrar sesión</button>
           </div>
         </div>

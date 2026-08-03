@@ -9,6 +9,7 @@ import {
   type TerratalentoBundle,
 } from "@/lib/terratalento/actions";
 import { JornadaCard } from "./JornadaCard";
+import { RedSwitcher } from "@/components/RedSwitcher";
 import { SurfaceShell } from "@/components/services/SurfaceShell";
 import surface from "@/components/services/surface.module.css";
 import styles from "./terratalento.module.css";
@@ -321,6 +322,7 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
       <div className={styles.panelHead}>
         <h1>{p ? `Hola, ${p.nombre.split(" ")[0]}` : "Completa tu perfil"}</h1>
         <span className={styles.panelMail}>{bundle.correo}</span>
+        <RedSwitcher actual="tt" compact />
         <button className={styles.salir} type="button" onClick={onSalir}>
           Cerrar sesion
         </button>

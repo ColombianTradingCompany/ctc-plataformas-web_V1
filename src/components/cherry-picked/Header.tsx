@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useLang, type Lang } from "./i18n";
 import styles from "./Header.module.css";
+import { RedSwitcher } from "@/components/RedSwitcher";
 
 // Family and language switching live in the floating bubble column
 // (FamilyBubble / LangBubble, bottom-left) — not in this header.
@@ -79,9 +80,12 @@ export function Header({
           <a href="#historia">{t.historia}</a>
         </nav>
         {loggedIn ? (
-          <button className="btn btn-sm btn-solid" onClick={onShowProfile}>
-            {t.account}
-          </button>
+          <span style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+            <RedSwitcher actual="cp" compact />
+            <button className="btn btn-sm btn-solid" onClick={onShowProfile}>
+              {t.account}
+            </button>
+          </span>
         ) : (
           <button className="btn btn-sm" onClick={onLogin}>
             {t.login}

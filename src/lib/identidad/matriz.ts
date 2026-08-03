@@ -140,3 +140,32 @@ export async function puedoSer(objetivo: ObjetivoMembresia): Promise<VeredictoMa
   if (!user) return { permitido: true }; // sin sesión no hay conflicto que explicar
   return puedeSer(user.id, objetivo);
 }
+
+// ── El conmutador de red (owner, 2026-08-02 · §3.1 del análisis) ─────────────
+// Generaliza el misPlataformas() del Directorio: a qué superficies pertenece
+// ESTA identidad, para que el conmutador ofrezca el salto. "Comprador" usa la
+// misma vara de la matriz (comprador REAL), así el default inerte no muestra
+// una tienda a la que en realidad no pertenece.
+export type MisPlataformasRed = {
+  kr: boolean;
+  cp: boolean;
+  dc: boolean;
+  tt: boolean;
+  interno: boolean;
+};
+
+export async function misPlataformasRed(): Promise<MisPlataformasRed | null> {
+  const session = await createSessionClient();
+  const {
+    data: { user },
+  } = await session.auth.getUser();
+  if (!user) return null;
+  const m = await membresiasDe(user.id);
+  return {
+    kr: m.productor,
+    cp: m.compradorReal,
+    dc: m.directorio,
+    tt: m.recolector,
+    interno: m.admin,
+  };
+}

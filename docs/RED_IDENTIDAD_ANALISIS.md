@@ -80,7 +80,14 @@ varias Visas.** Una identidad, muchas membresías.
 
 ## 3 · Lo que falta de verdad (tres cosas, todas contenidas)
 
-### 3.1 · El submenú de navegación interna — **el hueco real**
+### 3.1 · El submenú de navegación interna — **CONSTRUIDO (V2.40)**
+`RedSwitcher` ("Mi red") montado en las cabeceras de KR, Cherry Picked, el
+Directorio y Terratalento: lista las OTRAS membresías de la identidad (vara de
+la matriz — el default inerte no muestra tienda) + los módulos abiertos
+(Herramientas, Coffeed). Con una sola membresía no pinta. Detector:
+`misPlataformasRed()` en matriz.ts.
+
+#### Lo que decía el análisis original:
 No existe como componente general. **Pero el patrón ya está probado**: el
 Directorio tiene `misPlataformas()` (`src/lib/directorio/actions.ts`), que mira
 el mismo `profile.id` y responde a qué otras superficies pertenece.

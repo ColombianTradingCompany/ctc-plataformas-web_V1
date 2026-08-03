@@ -1,0 +1,35 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V25.0(bc6fbae).html
+(CTC Web Platform, 2026-08-03). Cada entrada se compila al próximo Version Wrap (V26).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19): registrar la entrada AL TERMINAR el trabajo,
+no "después".
+
+Contexto abierto al cerrar V25:
+- **F4 (blends) sigue DIFERIDA a propósito** — ver docs/EUDR_RESTRUCTURE_PLAN.md §7-8.
+- "Registrar DDS" del BCP sigue sin verificarse en vivo (la 2FA real lo impide).
+- Terratalento V2 completo; sus tablas siguen en cero (el primer recolector y la
+  primera Jornada reales no llegan aún). El owner tiene SU jornada y ficha de
+  recolector de prueba en producción — TODO borrado de Terratalento va acotado
+  por id, nunca por tabla (lección vivida).
+- Matriz de membresías activa con gates en KR/CP/Terratalento. Único pendiente
+  del tier de socios: el **socio multi-nodo**, que exige cambiar el PK de
+  partner_accounts. (La §5.2 del V4 quedó resuelta: las landings se quedan.)
+- Herramientas Plus por solicitud operativo; el pago de la activación es futuro.
+  Caveat vigente: los HTML de public/tools/ son públicos por URL — si Plus va a
+  ser privilegio real, esa herramienta debe servirse autenticada.
+- El popup "Estructura del sistema" son DOS diagramas y el segundo es el espejo
+  dibujado de src/lib/panel/consoles.ts: **si cambia ese nav, el dibujo miente**.
+  Actualizar los dos a la vez (EstructuraModal.tsx).
+- Pendientes del owner: material de la landing de Varietales (la página existe
+  con copy de relleno); pase de copy Specialty/Black (canon Fase 0) sobre
+  KR ProcessFlow y CP BlackSection — acordado para la próxima sesión.
+- La allowlist de Google quedó CERRADA con el comodín https://*.ctcexport.com/**
+  (cubre cualquier subdominio). Lo único fuera: localhost, donde solo hay
+  entradas de dev para Kaffetal Regal y Cherry Picked.
+- El bucket de Storage sigue sin poda automática del Buzón.

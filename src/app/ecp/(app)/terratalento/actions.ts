@@ -43,7 +43,34 @@ export async function setPostulacionEstado(postulacionId: string, estado: string
     }
   }
 
-  const { error } = await service.from("terratalento_postulaciones").update({ estado }).eq("id", postulacionId);
+  // Al CONFIRMAR se congelan los términos (patrón arena_inscriptions/DDS): si la
+  // finca edita la jornada después, lo acordado no se reescribe. Solo la primera
+  // vez — reconfirmar no vuelve a mover la foto ni la fecha del acuerdo.
+  const patch: Record<string, unknown> = { estado };
+  if (estado === "confirmado") {
+    const { data: previo } = await service
+      .from("terratalento_postulaciones")
+      .select("terminos_snapshot")
+      .eq("id", postulacionId)
+      .maybeSingle();
+    if (!previo?.terminos_snapshot) {
+      const { data: jornada } = await service
+        .from("terratalento_jornadas")
+        .select(
+          "pago, condiciones, pago_modalidad, pago_valor, pago_unidad, pago_forma, pago_frecuencia, " +
+            "alojamiento, alojamiento_detalle, alimentacion, alimentacion_detalle, transporte, transporte_detalle, " +
+            "horario, duracion_estimada_dias, requisitos"
+        )
+        .eq("id", post.jornada_id)
+        .maybeSingle();
+      if (jornada) {
+        patch.terminos_snapshot = jornada;
+        patch.acuerdo_emitido_at = new Date().toISOString();
+      }
+    }
+  }
+
+  const { error } = await service.from("terratalento_postulaciones").update(patch).eq("id", postulacionId);
   if (error) return { ok: false, error: "No se pudo actualizar la postulación." };
 
   await service.from("audit_log").insert({

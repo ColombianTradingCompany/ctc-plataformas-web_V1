@@ -232,3 +232,98 @@
   width: 100%;
   justify-content: center;
 }
+
+/* ── Tablero del recolector (V2) ─────────────────────────────────────────────
+   Su propio embudo: Postulado → Te llamaron → Confirmado. Se apila en móvil
+   a propósito: esta superficie se usa en el campo, en teléfono. */
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+@media (max-width: 760px) {
+  .tablero {
+    grid-template-columns: 1fr;
+  }
+}
+.col {
+  background: color-mix(in srgb, var(--primary) 4%, #fff);
+  border: 1px solid var(--line, #e5e0d8);
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 70px;
+}
+.colHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.colHead h3 {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted, #6b6459);
+  margin: 0;
+}
+.colCount {
+  font-size: 11px;
+  background: var(--line, #e5e0d8);
+  border-radius: 999px;
+  padding: 1px 8px;
+  color: var(--muted, #6b6459);
+}
+.colEmpty {
+  font-size: 12.5px;
+  color: var(--muted, #6b6459);
+  margin: 0;
+}
+
+/* Bloque de términos — el trato, legible de un vistazo */
+.terminos {
+  border: 1px solid var(--line, #e5e0d8);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 6%, #fff);
+  padding: 10px 12px;
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+.terminoLinea {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+@media (max-width: 520px) {
+  .terminoLinea {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+.terminoLabel {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 2px;
+}
+.aceptar {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  background: #fff;
+}
+.aceptar input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}

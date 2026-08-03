@@ -43,3 +43,40 @@ Contexto abierto al cerrar V23:
   Supabase → Authentication → URL Configuration → Redirect URLs.
 - APP_VERSION 2.36 → 2.37.
 (commit: 6386e3f)
+
+## [2026-08-02] Terratalento V2 · términos contractuales, tres kanbans y constancia
+- Plan en docs/TERRATALENTO_V2_PLAN.md; su §5 lleva las decisiones CONGELADAS
+  del owner: (5.1) la finca ve nombre+celular SOLO de los confirmados; (5.2) se
+  emite una CONSTANCIA de acuerdo, nunca un contrato (sin cláusulas obligantes,
+  la palabra no aparece); (5.3) sin EPS mientras no haya política de privacidad;
+  (5.4) pago numérico.
+- Migración `terratalento_terminos_contractuales`: jornadas gana pago
+  modalidad/valor/unidad/forma/frecuencia, alojamiento/alimentación/transporte
+  (+detalle), horario, duración, requisitos (pago/condiciones se CONSERVAN como
+  notas); postulaciones gana terminos_aceptados_at, terminos_snapshot,
+  acuerdo_emitido_at; recolectores gana contacto de emergencia y medio de pago.
+- **src/lib/terratalento/terminos.ts** — módulo PURO que interpreta un trato
+  (terminosFromRow / formatPago / incluye / resumenTerminos). Lo consumen los
+  TRES frentes, así el trato se lee igual en todas partes. QA:
+  scripts/qa-terminos-check.mjs (19/19, incluye jornadas viejas del V1 que solo
+  tienen los dos textos libres — no rompen ni inventan).
+- Tres kanbans: recolector (Postulado/Te llamaron/Confirmado, apilado en móvil),
+  KR (jornadas por estado + medidor de cupos + roster §5.1), ECP (dos niveles:
+  jornadas × postulaciones, + filtros por municipio y disponibilidad).
+- Aceptación y congelado: postularse EXIGE marcar los términos (botón deshabilitado
+  si no); confirmar congela terminos_snapshot y sella acuerdo_emitido_at.
+  constanciaPrint.ts arma la constancia imprimible desde el SNAPSHOT.
+- Verificado EN VIVO (cuentas QA, borradas después): publicación con los 4 grupos
+  del formulario; términos renderizados por el módulo puro en las 3 superficies;
+  gate de aceptación (botón deshabilitado → habilitado al marcar); kanban del
+  recolector 1/0/0 → 0/0/1; **la prueba del congelado: la finca bajó el pago de
+  800 a 500 y cambió el horario DESPUÉS del acuerdo, y el snapshot siguió
+  diciendo 800 y el horario original**; roster §5.1 en KR mostrando nombre y
+  celular SIN filtrar cédula ni contacto de emergencia.
+- Google login (V2.37): ruta /terratalento/auth/callback + botón. PENDIENTE del
+  owner: añadir esa URL a la allowlist de Supabase.
+- ⚠ APRENDIZAJE DE QA: el owner tiene SU PROPIA jornada y ficha de recolector en
+  producción. Un UPDATE sin WHERE por id tocó una postulación colgada de su
+  jornada (revertida). Todo borrado de Terratalento va SIEMPRE acotado por id.
+- APP_VERSION 2.37 → 2.38.
+(commit: pending)

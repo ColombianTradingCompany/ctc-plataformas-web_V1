@@ -1,18 +1,28 @@
 "use server";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import type { ConstanciaInput } from "./constanciaPrint";
 
 // ── Terratalento · server actions ────────────────────────────────────────────
-// El servicio del RECOLECTOR. Patrón Directorio calcado: las tablas
-// terratalento_* son service-role-only (RLS activada, cero políticas); el
-// cliente NUNCA las toca directo — cada acción reautentica la sesión
-// (auth.uid()) y luego opera con el cliente service-role. La identidad es la
-// MISMA cuenta del ecosistema y es ORTOGONAL a profiles.role: un recolector
-// puede ser también productor o comprador sin que nada se pise.
+// El servicio del RECOLECTOR. Patrón Directorio: las tablas terratalento_* son
+// service-role-only (RLS activada, cero políticas); el cliente NUNCA las toca
+// directo — cada acción reautentica la sesión (auth.uid()) y luego opera con el
+// cliente service-role. La identidad es la MISMA cuenta del ecosistema y es
+// ORTOGONAL a profiles.role.
 //
-// Curaduría de lectura (regla public-catalog): lo que el recolector ve de una
-// finca son SOLO columnas de exhibición (nombre, municipio, vereda) — nunca
-// geolocalización ni expediente EUDR.
+// Curaduría de lectura (regla public-catalog): de la finca solo viajan
+// nombre/municipio/vereda — nunca geolocalización ni expediente EUDR.
+//
+// V2 · §5.1 (owner, 2026-08-02): el productor ve nombre y celular SOLO de los
+// recolectores CONFIRMADOS. Postulados y descartados siguen invisibles para él
+// — el control de la selección sigue siendo de CTC.
+
+// Las columnas de términos que viajan tal cual y se interpretan con el módulo
+// puro `terminos.ts` (única fuente de verdad para leer un trato).
+const TERMINOS_COLS =
+  "pago, condiciones, pago_modalidad, pago_valor, pago_unidad, pago_forma, pago_frecuencia, " +
+  "alojamiento, alojamiento_detalle, alimentacion, alimentacion_detalle, transporte, transporte_detalle, " +
+  "horario, duracion_estimada_dias, requisitos";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -26,6 +36,9 @@ export type RecolectorPerfil = {
   experienciaAnios: number | null;
   disponible: boolean;
   notas: string;
+  contactoEmergenciaNombre: string;
+  contactoEmergenciaCelular: string;
+  medioPago: string;
 };
 
 export type JornadaPublica = {
@@ -37,17 +50,22 @@ export type JornadaPublica = {
   fechaFin: string | null;
   cupos: number;
   confirmados: number;
-  pago: string | null;
-  condiciones: string | null;
   estado: string;
-  miPostulacion: string | null; // estado de la postulación propia, si existe
+  miPostulacion: string | null;
+  /** Columnas crudas de términos — se leen con `terminosFromRow()`. */
+  terminos: Record<string, unknown>;
 };
 
 export type TerratalentoBundle = {
   correo: string;
   perfil: RecolectorPerfil | null;
-  jornadas: JornadaPublica[];
+  /** Jornadas abiertas a las que TODAVÍA no me postulé. */
+  abiertas: JornadaPublica[];
+  /** Mi propio embudo: las jornadas donde ya tengo postulación. */
+  misPostulaciones: JornadaPublica[];
 };
+
+export type ConfirmadoLite = { nombre: string; celular: string };
 
 export type ProducerJornada = {
   id: string;
@@ -56,12 +74,13 @@ export type ProducerJornada = {
   fechaInicio: string;
   fechaFin: string | null;
   cupos: number;
-  pago: string | null;
-  condiciones: string | null;
   estado: string;
   postulados: number;
   llamados: number;
   confirmados: number;
+  /** §5.1: solo los confirmados, y solo nombre + celular. */
+  rosterConfirmados: ConfirmadoLite[];
+  terminos: Record<string, unknown>;
 };
 
 async function sessionUser() {
@@ -74,6 +93,12 @@ async function sessionUser() {
 
 const clamp = (s: unknown, n: number) => String(s ?? "").trim().slice(0, n);
 
+function pickTerminos(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of TERMINOS_COLS.split(",").map((c) => c.trim())) out[k] = row[k];
+  return out;
+}
+
 // ── Lado recolector ──────────────────────────────────────────────────────────
 
 export async function cargarTerratalento(): Promise<TerratalentoBundle | null> {
@@ -85,13 +110,13 @@ export async function cargarTerratalento(): Promise<TerratalentoBundle | null> {
     service.from("terratalento_recolectores").select("*").eq("profile_id", user.id).maybeSingle(),
     service
       .from("terratalento_jornadas")
-      .select("id, fecha_inicio, fecha_fin, cupos, pago, condiciones, estado, fincas(name, municipio, vereda)")
+      .select(`id, fecha_inicio, fecha_fin, cupos, estado, ${TERMINOS_COLS}, fincas(name, municipio, vereda)`)
       .in("estado", ["abierta", "en_gestion"])
       .order("fecha_inicio", { ascending: true }),
     service.from("terratalento_postulaciones").select("jornada_id, estado").eq("recolector_id", user.id),
   ]);
 
-  const jornadaIds = (jornadaRows ?? []).map((j) => j.id as string);
+  const jornadaIds = (jornadaRows ?? []).map((j) => (j as Record<string, unknown>).id as string);
   const confirmadosByJornada = new Map<string, number>();
   if (jornadaIds.length) {
     const { data: confRows } = await service
@@ -106,16 +131,25 @@ export async function cargarTerratalento(): Promise<TerratalentoBundle | null> {
   }
   const miEstado = new Map(((misRows ?? []) as { jornada_id: string; estado: string }[]).map((r) => [r.jornada_id, r.estado]));
 
-  type Row = {
-    id: string;
-    fecha_inicio: string;
-    fecha_fin: string | null;
-    cupos: number;
-    pago: string | null;
-    condiciones: string | null;
-    estado: string;
-    fincas: { name: string; municipio: string | null; vereda: string | null } | null;
+  const mapJornada = (raw: Record<string, unknown>): JornadaPublica => {
+    const finca = raw.fincas as { name: string; municipio: string | null; vereda: string | null } | null;
+    const id = raw.id as string;
+    return {
+      id,
+      fincaNombre: finca?.name ?? "Finca de la red",
+      fincaMunicipio: finca?.municipio ?? "",
+      fincaVereda: finca?.vereda ?? "",
+      fechaInicio: raw.fecha_inicio as string,
+      fechaFin: (raw.fecha_fin as string | null) ?? null,
+      cupos: Number(raw.cupos),
+      confirmados: confirmadosByJornada.get(id) ?? 0,
+      estado: raw.estado as string,
+      miPostulacion: miEstado.get(id) ?? null,
+      terminos: pickTerminos(raw),
+    };
   };
+
+  const todas = ((jornadaRows ?? []) as unknown as Record<string, unknown>[]).map(mapJornada);
 
   return {
     correo: user.email,
@@ -130,22 +164,13 @@ export async function cargarTerratalento(): Promise<TerratalentoBundle | null> {
           experienciaAnios: perfilRow.experiencia_anios === null ? null : Number(perfilRow.experiencia_anios),
           disponible: !!perfilRow.disponible,
           notas: String(perfilRow.notas ?? ""),
+          contactoEmergenciaNombre: String(perfilRow.contacto_emergencia_nombre ?? ""),
+          contactoEmergenciaCelular: String(perfilRow.contacto_emergencia_celular ?? ""),
+          medioPago: String(perfilRow.medio_pago ?? ""),
         }
       : null,
-    jornadas: ((jornadaRows ?? []) as unknown as Row[]).map((j) => ({
-      id: j.id,
-      fincaNombre: j.fincas?.name ?? "Finca de la red",
-      fincaMunicipio: j.fincas?.municipio ?? "",
-      fincaVereda: j.fincas?.vereda ?? "",
-      fechaInicio: j.fecha_inicio,
-      fechaFin: j.fecha_fin,
-      cupos: Number(j.cupos),
-      confirmados: confirmadosByJornada.get(j.id) ?? 0,
-      pago: j.pago,
-      condiciones: j.condiciones,
-      estado: j.estado,
-      miPostulacion: miEstado.get(j.id) ?? null,
-    })),
+    abiertas: todas.filter((j) => !j.miPostulacion || j.miPostulacion === "retirado"),
+    misPostulaciones: todas.filter((j) => j.miPostulacion && j.miPostulacion !== "retirado"),
   };
 }
 
@@ -158,6 +183,9 @@ export type PerfilInput = {
   municipio: string;
   experienciaAnios: string;
   notas: string;
+  contactoEmergenciaNombre: string;
+  contactoEmergenciaCelular: string;
+  medioPago: string;
 };
 
 export async function guardarPerfilRecolector(input: PerfilInput): Promise<ActionResult> {
@@ -189,6 +217,9 @@ export async function guardarPerfilRecolector(input: PerfilInput): Promise<Actio
       municipio,
       experiencia_anios: experiencia,
       notas: clamp(input.notas, 600) || null,
+      contacto_emergencia_nombre: clamp(input.contactoEmergenciaNombre, 120) || null,
+      contacto_emergencia_celular: clamp(input.contactoEmergenciaCelular, 40) || null,
+      medio_pago: clamp(input.medioPago, 120) || null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "profile_id" }
@@ -209,9 +240,11 @@ export async function setDisponibleRecolector(disponible: boolean): Promise<Acti
   return { ok: true };
 }
 
-export async function postularJornada(jornadaId: string): Promise<ActionResult> {
+/** V2: postularse EXIGE aceptar los términos publicados de la jornada. */
+export async function postularJornada(jornadaId: string, aceptaTerminos: boolean): Promise<ActionResult> {
   const user = await sessionUser();
   if (!user) return { ok: false, error: "Tu sesión expiró. Entra de nuevo." };
+  if (!aceptaTerminos) return { ok: false, error: "Debes marcar que entiendes los términos de la jornada." };
   const service = createServiceRoleClient();
 
   const { data: perfil } = await service
@@ -230,6 +263,7 @@ export async function postularJornada(jornadaId: string): Promise<ActionResult> 
     return { ok: false, error: "Esta jornada ya no recibe postulaciones." };
   }
 
+  const aceptado = new Date().toISOString();
   const { data: existing } = await service
     .from("terratalento_postulaciones")
     .select("id, estado")
@@ -240,17 +274,20 @@ export async function postularJornada(jornadaId: string): Promise<ActionResult> 
   if (!existing) {
     const { error } = await service
       .from("terratalento_postulaciones")
-      .insert({ jornada_id: jornadaId, recolector_id: user.id });
+      .insert({ jornada_id: jornadaId, recolector_id: user.id, terminos_aceptados_at: aceptado });
     if (error) return { ok: false, error: "No se pudo registrar tu postulación." };
     return { ok: true };
   }
   if (existing.estado === "retirado") {
-    const { error } = await service.from("terratalento_postulaciones").update({ estado: "postulado" }).eq("id", existing.id);
+    const { error } = await service
+      .from("terratalento_postulaciones")
+      .update({ estado: "postulado", terminos_aceptados_at: aceptado })
+      .eq("id", existing.id);
     if (error) return { ok: false, error: "No se pudo registrar tu postulación." };
     return { ok: true };
   }
   if (existing.estado === "descartado") return { ok: false, error: "Esta jornada ya no está disponible para ti." };
-  return { ok: true }; // ya postulado/llamado/confirmado — idempotente
+  return { ok: true };
 }
 
 export async function retirarPostulacion(jornadaId: string): Promise<ActionResult> {
@@ -267,6 +304,49 @@ export async function retirarPostulacion(jornadaId: string): Promise<ActionResul
   return { ok: true };
 }
 
+/** Los datos de MI constancia (solo si mi cupo está confirmado). */
+export async function miConstancia(jornadaId: string): Promise<ConstanciaInput | null> {
+  const user = await sessionUser();
+  if (!user) return null;
+  const service = createServiceRoleClient();
+
+  const { data: post } = await service
+    .from("terratalento_postulaciones")
+    .select("id, estado, terminos_snapshot, acuerdo_emitido_at, created_at")
+    .eq("jornada_id", jornadaId)
+    .eq("recolector_id", user.id)
+    .maybeSingle();
+  if (!post || post.estado !== "confirmado") return null;
+
+  const [{ data: jornada }, { data: yo }] = await Promise.all([
+    service
+      .from("terratalento_jornadas")
+      .select(`id, fecha_inicio, fecha_fin, producer_id, ${TERMINOS_COLS}, fincas(name, municipio, vereda)`)
+      .eq("id", jornadaId)
+      .maybeSingle(),
+    service.from("terratalento_recolectores").select("nombre, cedula, celular").eq("profile_id", user.id).maybeSingle(),
+  ]);
+  if (!jornada || !yo) return null;
+
+  const j = jornada as unknown as Record<string, unknown>;
+  const finca = j.fincas as { name: string; municipio: string | null; vereda: string | null } | null;
+  const { data: productor } = await service.from("profiles").select("full_name").eq("id", j.producer_id as string).maybeSingle();
+
+  return {
+    folio: `TT-${jornadaId.slice(0, 8).toUpperCase()}`,
+    fincaNombre: finca?.name ?? "Finca de la red",
+    fincaUbicacion: [finca?.vereda, finca?.municipio].filter(Boolean).join(", "),
+    productorNombre: String(productor?.full_name ?? "Responsable de la finca"),
+    recolectorNombre: String(yo.nombre ?? ""),
+    recolectorCedula: (yo.cedula as string | null) ?? null,
+    recolectorCelular: String(yo.celular ?? ""),
+    fechaInicio: j.fecha_inicio as string,
+    fechaFin: (j.fecha_fin as string | null) ?? null,
+    acordadoEl: String(post.acuerdo_emitido_at ?? post.created_at),
+    terminos: (post.terminos_snapshot as Record<string, unknown>) ?? pickTerminos(j),
+  };
+}
+
 // ── Lado productor (Kaffetal Regal) ─────────────────────────────────────────
 
 export async function misJornadasRecolecta(): Promise<ProducerJornada[]> {
@@ -276,40 +356,62 @@ export async function misJornadasRecolecta(): Promise<ProducerJornada[]> {
 
   const { data: rows } = await service
     .from("terratalento_jornadas")
-    .select("id, finca_id, fecha_inicio, fecha_fin, cupos, pago, condiciones, estado, fincas(name)")
+    .select(`id, finca_id, fecha_inicio, fecha_fin, cupos, estado, ${TERMINOS_COLS}, fincas(name)`)
     .eq("producer_id", user.id)
     .order("created_at", { ascending: false });
-  const jornadas = (rows ?? []) as unknown as {
-    id: string; finca_id: string; fecha_inicio: string; fecha_fin: string | null; cupos: number;
-    pago: string | null; condiciones: string | null; estado: string; fincas: { name: string } | null;
-  }[];
+  const jornadas = (rows ?? []) as unknown as Record<string, unknown>[];
   if (!jornadas.length) return [];
 
+  const ids = jornadas.map((j) => j.id as string);
   const { data: postRows } = await service
     .from("terratalento_postulaciones")
-    .select("jornada_id, estado")
-    .in("jornada_id", jornadas.map((j) => j.id));
+    .select("jornada_id, estado, recolector_id")
+    .in("jornada_id", ids);
+  const posts = (postRows ?? []) as { jornada_id: string; estado: string; recolector_id: string }[];
+
+  // §5.1 · el roster que ve la finca: SOLO confirmados, SOLO nombre y celular.
+  const confirmadosIds = [...new Set(posts.filter((p) => p.estado === "confirmado").map((p) => p.recolector_id))];
+  const contactos = new Map<string, ConfirmadoLite>();
+  if (confirmadosIds.length) {
+    const { data: recs } = await service
+      .from("terratalento_recolectores")
+      .select("profile_id, nombre, celular")
+      .in("profile_id", confirmadosIds);
+    for (const r of recs ?? []) {
+      contactos.set(r.profile_id as string, { nombre: String(r.nombre ?? ""), celular: String(r.celular ?? "") });
+    }
+  }
+
   const counts = new Map<string, { postulados: number; llamados: number; confirmados: number }>();
-  for (const p of (postRows ?? []) as { jornada_id: string; estado: string }[]) {
+  const roster = new Map<string, ConfirmadoLite[]>();
+  for (const p of posts) {
     const c = counts.get(p.jornada_id) ?? { postulados: 0, llamados: 0, confirmados: 0 };
     if (p.estado === "postulado") c.postulados += 1;
     if (p.estado === "llamado") c.llamados += 1;
-    if (p.estado === "confirmado") c.confirmados += 1;
+    if (p.estado === "confirmado") {
+      c.confirmados += 1;
+      const contacto = contactos.get(p.recolector_id);
+      if (contacto) roster.set(p.jornada_id, [...(roster.get(p.jornada_id) ?? []), contacto]);
+    }
     counts.set(p.jornada_id, c);
   }
 
-  return jornadas.map((j) => ({
-    id: j.id,
-    fincaId: j.finca_id,
-    fincaNombre: j.fincas?.name ?? "—",
-    fechaInicio: j.fecha_inicio,
-    fechaFin: j.fecha_fin,
-    cupos: Number(j.cupos),
-    pago: j.pago,
-    condiciones: j.condiciones,
-    estado: j.estado,
-    ...(counts.get(j.id) ?? { postulados: 0, llamados: 0, confirmados: 0 }),
-  }));
+  return jornadas.map((j) => {
+    const id = j.id as string;
+    const finca = j.fincas as { name: string } | null;
+    return {
+      id,
+      fincaId: j.finca_id as string,
+      fincaNombre: finca?.name ?? "—",
+      fechaInicio: j.fecha_inicio as string,
+      fechaFin: (j.fecha_fin as string | null) ?? null,
+      cupos: Number(j.cupos),
+      estado: j.estado as string,
+      ...(counts.get(id) ?? { postulados: 0, llamados: 0, confirmados: 0 }),
+      rosterConfirmados: roster.get(id) ?? [],
+      terminos: pickTerminos(j),
+    };
+  });
 }
 
 export type JornadaInput = {
@@ -317,7 +419,24 @@ export type JornadaInput = {
   fechaInicio: string;
   fechaFin: string;
   cupos: string;
-  pago: string;
+  // Pago
+  pagoModalidad: string;
+  pagoValor: string;
+  pagoUnidad: string;
+  pagoForma: string;
+  pagoFrecuencia: string;
+  pagoNota: string;
+  // Qué incluye
+  alojamiento: boolean;
+  alojamientoDetalle: string;
+  alimentacion: boolean;
+  alimentacionDetalle: string;
+  transporte: boolean;
+  transporteDetalle: string;
+  // Trabajo
+  horario: string;
+  duracionEstimadaDias: string;
+  requisitos: string;
   condiciones: string;
 };
 
@@ -341,13 +460,42 @@ export async function crearJornadaRecolecta(input: JornadaInput): Promise<Action
   const cupos = Number(clamp(input.cupos, 4));
   if (!Number.isInteger(cupos) || cupos < 1 || cupos > 200) return { ok: false, error: "Los cupos deben ser un número entre 1 y 200." };
 
+  const modalidad = clamp(input.pagoModalidad, 20);
+  if (modalidad && !["por_kilo", "jornal", "mixto"].includes(modalidad)) {
+    return { ok: false, error: "Modalidad de pago inválida." };
+  }
+  const valorRaw = clamp(input.pagoValor, 12);
+  const pagoValor = valorRaw === "" ? null : Number(valorRaw);
+  if (pagoValor !== null && (!Number.isFinite(pagoValor) || pagoValor < 0)) {
+    return { ok: false, error: "El valor del pago debe ser un número positivo." };
+  }
+  const duracionRaw = clamp(input.duracionEstimadaDias, 4);
+  const duracion = duracionRaw === "" ? null : Number(duracionRaw);
+  if (duracion !== null && (!Number.isInteger(duracion) || duracion < 1 || duracion > 365)) {
+    return { ok: false, error: "La duración estimada debe ser un número de días entre 1 y 365." };
+  }
+
   const { error } = await service.from("terratalento_jornadas").insert({
     finca_id: finca.id,
     producer_id: user.id,
     fecha_inicio: fechaInicio,
     fecha_fin: fechaFin,
     cupos,
-    pago: clamp(input.pago, 200) || null,
+    pago_modalidad: modalidad || null,
+    pago_valor: pagoValor,
+    pago_unidad: clamp(input.pagoUnidad, 20) || null,
+    pago_forma: clamp(input.pagoForma, 20) || null,
+    pago_frecuencia: clamp(input.pagoFrecuencia, 20) || null,
+    pago: clamp(input.pagoNota, 200) || null,
+    alojamiento: !!input.alojamiento,
+    alojamiento_detalle: clamp(input.alojamientoDetalle, 200) || null,
+    alimentacion: !!input.alimentacion,
+    alimentacion_detalle: clamp(input.alimentacionDetalle, 200) || null,
+    transporte: !!input.transporte,
+    transporte_detalle: clamp(input.transporteDetalle, 200) || null,
+    horario: clamp(input.horario, 200) || null,
+    duracion_estimada_dias: duracion,
+    requisitos: clamp(input.requisitos, 500) || null,
     condiciones: clamp(input.condiciones, 800) || null,
   });
   if (error) return { ok: false, error: "No se pudo publicar la jornada. Intenta de nuevo." };

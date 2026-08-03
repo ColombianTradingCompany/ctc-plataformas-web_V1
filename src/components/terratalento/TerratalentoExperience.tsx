@@ -5,12 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import {
   cargarTerratalento,
   guardarPerfilRecolector,
-  postularJornada,
-  retirarPostulacion,
   setDisponibleRecolector,
-  type JornadaPublica,
   type TerratalentoBundle,
 } from "@/lib/terratalento/actions";
+import { JornadaCard } from "./JornadaCard";
 import { SurfaceShell } from "@/components/services/SurfaceShell";
 import surface from "@/components/services/surface.module.css";
 import styles from "./terratalento.module.css";
@@ -20,17 +18,6 @@ import styles from "./terratalento.module.css";
 // ecosistema, ortogonal a profiles.role); con sesión sin perfil → completa tu
 // perfil; con perfil → panel (jornadas abiertas + mis postulaciones +
 // disponibilidad). Español a propósito — es la superficie del campo.
-
-const ESTADO_CHIP: Record<string, { label: string; cls: "ok" | "warn" | "off" }> = {
-  postulado: { label: "Postulado", cls: "warn" },
-  llamado: { label: "Te llamaron", cls: "warn" },
-  confirmado: { label: "Confirmado", cls: "ok" },
-  descartado: { label: "No disponible", cls: "off" },
-  retirado: { label: "Retirado", cls: "off" },
-};
-
-const fecha = (iso: string | null) =>
-  iso ? new Date(iso + "T12:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short" }) : null;
 
 export function TerratalentoExperience() {
   const [cargando, setCargando] = useState(true);
@@ -280,7 +267,13 @@ function Acceso({ modoInicial, onVolver }: { modoInicial: "entrar" | "crear"; on
   );
 }
 
-// ── Panel del recolector ─────────────────────────────────────────────────────
+// -- Panel del recolector ----------------------------------------------------
+
+const COLUMNAS: { key: string; label: string }[] = [
+  { key: "postulado", label: "Postulado" },
+  { key: "llamado", label: "Te llamaron" },
+  { key: "confirmado", label: "Confirmado" },
+];
 
 function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; onRecargar: () => void; onSalir: () => void }) {
   const p = bundle.perfil;
@@ -293,6 +286,9 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
   const [municipio, setMunicipio] = useState(p?.municipio ?? "");
   const [experiencia, setExperiencia] = useState(p?.experienciaAnios?.toString() ?? "");
   const [notas, setNotas] = useState(p?.notas ?? "");
+  const [emerNombre, setEmerNombre] = useState(p?.contactoEmergenciaNombre ?? "");
+  const [emerCelular, setEmerCelular] = useState(p?.contactoEmergenciaCelular ?? "");
+  const [medioPago, setMedioPago] = useState(p?.medioPago ?? "");
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -301,6 +297,7 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
     setError(null);
     const res = await guardarPerfilRecolector({
       nombre, cedula, celular, whatsapp, departamento, municipio, experienciaAnios: experiencia, notas,
+      contactoEmergenciaNombre: emerNombre, contactoEmergenciaCelular: emerCelular, medioPago,
     });
     setOcupado(false);
     if (!res.ok) {
@@ -325,7 +322,7 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
         <h1>{p ? `Hola, ${p.nombre.split(" ")[0]}` : "Completa tu perfil"}</h1>
         <span className={styles.panelMail}>{bundle.correo}</span>
         <button className={styles.salir} type="button" onClick={onSalir}>
-          Cerrar sesión
+          Cerrar sesion
         </button>
       </div>
 
@@ -333,7 +330,7 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
         <div className={styles.card}>
           <h2>Tu perfil de recolector</h2>
           <p className={styles.cardSub}>
-            Con esto las fincas y CTC saben a quién llamar. Se llena una sola vez; lo puedes editar cuando quieras.
+            Con esto las fincas y CTC saben a quien llamar. Se llena una sola vez; lo puedes editar cuando quieras.
           </p>
           <div className={styles.formGrid}>
             <div className={styles.field}>
@@ -341,7 +338,7 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
               <input id="pf-nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label htmlFor="pf-cedula">Cédula</label>
+              <label htmlFor="pf-cedula">Cedula</label>
               <input id="pf-cedula" value={cedula} onChange={(e) => setCedula(e.target.value)} />
             </div>
             <div className={styles.field}>
@@ -361,18 +358,30 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
               <input id="pf-mun" value={municipio} onChange={(e) => setMunicipio(e.target.value)} />
             </div>
             <div className={styles.field}>
-              <label htmlFor="pf-exp">Años de experiencia recolectando</label>
+              <label htmlFor="pf-exp">Anos de experiencia recolectando</label>
               <input id="pf-exp" type="number" min={0} max={80} value={experiencia} onChange={(e) => setExperiencia(e.target.value)} />
             </div>
+            <div className={styles.field}>
+              <label htmlFor="pf-pago">Como prefieres que te paguen?</label>
+              <input id="pf-pago" value={medioPago} onChange={(e) => setMedioPago(e.target.value)} placeholder="Nequi, efectivo, cuenta..." />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="pf-emer">Contacto de emergencia</label>
+              <input id="pf-emer" value={emerNombre} onChange={(e) => setEmerNombre(e.target.value)} placeholder="Nombre" />
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="pf-emer-cel">Celular de ese contacto</label>
+              <input id="pf-emer-cel" value={emerCelular} onChange={(e) => setEmerCelular(e.target.value)} />
+            </div>
             <div className={`${styles.field} ${styles.wide}`}>
-              <label htmlFor="pf-notas">Algo más que deban saber (opcional)</label>
-              <textarea id="pf-notas" rows={3} value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Cultivos que conoces, cuadrilla, disponibilidad de viaje…" />
+              <label htmlFor="pf-notas">Algo mas que deban saber (opcional)</label>
+              <textarea id="pf-notas" rows={3} value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Cultivos que conoces, cuadrilla, disponibilidad de viaje..." />
             </div>
           </div>
           {error && <p className={styles.error}>{error}</p>}
           <div className={styles.jorFoot}>
             <button className="btn btn-solid" type="button" disabled={ocupado} onClick={guardar}>
-              {ocupado ? "Guardando…" : "Guardar perfil"}
+              {ocupado ? "Guardando..." : "Guardar perfil"}
             </button>
             {p && (
               <button className="btn" type="button" onClick={() => setEditando(false)}>
@@ -387,9 +396,9 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
         <div className={styles.card}>
           <h2>Tu perfil</h2>
           <p className={styles.cardSub}>
-            {p.nombre} · {p.celular}
-            {p.whatsapp && " (WhatsApp)"} · {p.municipio}, {p.departamento}
-            {p.experienciaAnios !== null && ` · ${p.experienciaAnios} año${p.experienciaAnios === 1 ? "" : "s"} de experiencia`}
+            {p.nombre} - {p.celular}
+            {p.whatsapp && " (WhatsApp)"} - {p.municipio}, {p.departamento}
+            {p.experienciaAnios !== null && ` - ${p.experienciaAnios} ano${p.experienciaAnios === 1 ? "" : "s"} de experiencia`}
           </p>
           <div className={styles.jorFoot}>
             <span className={`${styles.chip} ${p.disponible ? styles.chipOk : styles.chipOff}`}>
@@ -405,73 +414,52 @@ function Panel({ bundle, onRecargar, onSalir }: { bundle: TerratalentoBundle; on
         </div>
       )}
 
-      {p && (
+      {p && bundle.misPostulaciones.length > 0 && (
         <div className={styles.card}>
-          <h2>Jornadas de Recolecta</h2>
-          <p className={styles.cardSub}>
-            Las jornadas abiertas de las fincas de la red. Postúlate y CTC hace el llamado — tu estado se actualiza aquí
-            mismo.
-          </p>
-          {bundle.jornadas.length === 0 ? (
-            <p className={styles.cardSub} style={{ marginBottom: 0 }}>
-              No hay jornadas abiertas en este momento. Tu perfil ya queda visible para la próxima.
+          <h2>Mis postulaciones</h2>
+          <p className={styles.cardSub}>Tu propio proceso: donde va cada jornada a la que te postulaste.</p>
+          <div className={styles.tablero}>
+            {COLUMNAS.map((c) => {
+              const col = bundle.misPostulaciones.filter((j) => j.miPostulacion === c.key);
+              return (
+                <div className={styles.col} key={c.key}>
+                  <div className={styles.colHead}>
+                    <h3>{c.label}</h3>
+                    <span className={styles.colCount}>{col.length}</span>
+                  </div>
+                  {col.length === 0 ? (
+                    <p className={styles.colEmpty}>-</p>
+                  ) : (
+                    col.map((j) => <JornadaCard key={j.id} j={j} onRecargar={onRecargar} compacta />)
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {bundle.misPostulaciones.some((j) => j.miPostulacion === "descartado") && (
+            <p className={styles.cardSub} style={{ marginTop: 12, marginBottom: 0 }}>
+              Alguna de tus postulaciones no siguio esta vez. Sigue disponible: entran jornadas nuevas cada cosecha.
             </p>
-          ) : (
-            bundle.jornadas.map((j) => <Jornada key={j.id} j={j} onRecargar={onRecargar} />)
           )}
         </div>
       )}
-    </div>
-  );
-}
 
-function Jornada({ j, onRecargar }: { j: JornadaPublica; onRecargar: () => void }) {
-  const [ocupado, setOcupado] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const chip = j.miPostulacion ? ESTADO_CHIP[j.miPostulacion] : null;
-  const lleno = j.confirmados >= j.cupos;
-
-  const accion = async (fn: () => Promise<{ ok: boolean }>) => {
-    setOcupado(true);
-    setError(null);
-    const res = (await fn()) as { ok: true } | { ok: false; error: string };
-    setOcupado(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-    onRecargar();
-  };
-
-  return (
-    <div className={styles.jorCard}>
-      <div className={styles.jorTop}>
-        <b>{j.fincaNombre}</b>
-        <span className={styles.jorMeta}>
-          {[j.fincaVereda, j.fincaMunicipio].filter(Boolean).join(" · ")}
-        </span>
-      </div>
-      <p className={styles.jorMeta}>
-        {fecha(j.fechaInicio)}
-        {j.fechaFin && ` – ${fecha(j.fechaFin)}`} · {j.cupos} cupo{j.cupos === 1 ? "" : "s"}
-        {j.confirmados > 0 && ` (${j.confirmados} confirmado${j.confirmados === 1 ? "" : "s"})`}
-        {j.pago && ` · ${j.pago}`}
-      </p>
-      {j.condiciones && <p className={styles.jorCond}>{j.condiciones}</p>}
-      <div className={styles.jorFoot}>
-        {chip && <span className={`${styles.chip} ${chip.cls === "ok" ? styles.chipOk : chip.cls === "warn" ? styles.chipWarn : styles.chipOff}`}>{chip.label}</span>}
-        {(!j.miPostulacion || j.miPostulacion === "retirado") && (
-          <button className="btn btn-sm btn-solid" type="button" disabled={ocupado || lleno} onClick={() => accion(() => postularJornada(j.id))}>
-            {lleno ? "Cupos completos" : ocupado ? "Un momento…" : "Postularme"}
-          </button>
-        )}
-        {j.miPostulacion && ["postulado", "llamado"].includes(j.miPostulacion) && (
-          <button className="btn btn-sm" type="button" disabled={ocupado} onClick={() => accion(() => retirarPostulacion(j.id))}>
-            Retirarme
-          </button>
-        )}
-      </div>
-      {error && <p className={styles.error}>{error}</p>}
+      {p && (
+        <div className={styles.card}>
+          <h2>Jornadas abiertas</h2>
+          <p className={styles.cardSub}>
+            Las jornadas de las fincas de la red. Revisa los terminos, marca que los entiendes y postulate - CTC hace
+            el llamado.
+          </p>
+          {bundle.abiertas.length === 0 ? (
+            <p className={styles.cardSub} style={{ marginBottom: 0 }}>
+              No hay jornadas abiertas en este momento. Tu perfil ya queda visible para la proxima.
+            </p>
+          ) : (
+            bundle.abiertas.map((j) => <JornadaCard key={j.id} j={j} onRecargar={onRecargar} />)
+          )}
+        </div>
+      )}
     </div>
   );
 }

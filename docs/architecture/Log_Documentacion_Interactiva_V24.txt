@@ -81,4 +81,4 @@ Contexto abierto al cerrar V24:
   Directorio), captura headless de los dos diagramas, y el modal abierto con
   sus 2 SVG, 3 encabezados y el divisor.
 - APP_VERSION 2.41 → 2.42.
-(commit: pending)
+(commit: 34dd992)

@@ -112,4 +112,4 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   comprobaciones del trigger, la consulta REAL del muro contra PostgREST (el
   embed anidado resuelve) y 26/26 del guardián de incrustados. Datos de QA
   borrados; `coffeed_deliverables` queda en cero.
-(commit: pending)
+(commit: be50e6a · rama coffeed-estudio-split)

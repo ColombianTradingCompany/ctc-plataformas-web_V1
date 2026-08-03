@@ -54,7 +54,7 @@ src/
     ecp/(app)/                        ECP · Executive Control Panel (direction) — parallel tree, scaffold
     ocp/(app)/                        OCP · Operational Control Panel (partner mirror) — parallel tree, scaffold
     socios/[partner]/                 the 5 partner "couples" (landing + /acceso login + /panel scaffold), config-driven
-      panel/coffeed/                  Coffeed studio — SOLO estudio-contenido (404 for any other slug)
+      panel/source-wrapper/, panel/datawave/   las apps del Estudio (404 for any other slug)
     api/socios/auth/{login,logout}/   partner single-factor auth (role partner + node-exact partner_accounts row)
     api/
       panel/auth/{password,verify,logout}/route.ts  master-login 2FA endpoints (was api/bcp/auth/*)
@@ -62,14 +62,16 @@ src/
       kaffetal-regal/next-step/route.ts             Anthropic advisor endpoint
   components/
     ctc-home/, kaffetal-regal/, cherry-picked/       one folder per platform
-    coffeed/                                         CoffeedStudio (producción, socio) + CoffeedWall (muro público KR/CP/DC)
+    coffeed/                                         CoffeedConsole (ECP: entregas+muro) + StudioConsole (taller) + CanonView (las dos) + CoffeedWall (muro público KR/CP/DC) + StudioAppShell
+    coffeed/datawave/                                app #2: model.ts (puro) + DatawaveChart + datawaveCard (canvas/PDF) + DatawaveStudio + DatawaveStyles
     panel/                                           shared console shell: PanelShell, PanelSidebar (+console switcher), ConsoleScaffold, auth.module.css
     kaffetal-regal/ficha/                            Ficha Técnica: 8 panes + preview + AI widget
     kaffetal-regal/ficha/panes/CertCheckbox.tsx       shared A3/A4 cert row: info toggle + attachment upload
     ui/                                               shadcn primitives (BCP only)
   lib/
     supabase/{client,server}.ts        3 client factories — see below
-    coffeed/                           types + estudioGate + actions (pipeline) + aiActions (4 llamadas) + wallActions
+    coffeed/                           types + studioGate/requireEcp (los DOS gates) + actions (taller) + ecpActions (dirección)
+                                       + deliverableActions (la cola) + aiActions + datawaveActions + claude.ts (cliente compartido) + wallActions + studioApps
     panel/{consoles,requireConsoleAccess}.ts   console config (single source) + internal read-path gate
     bcp/{otp,sendOtpEmail}.ts
     arena/jornada.ts                   Jornada de Arena: script, run_state shape, gates, majorityGrade
@@ -103,7 +105,7 @@ Full table list, RLS policies, and triggers were audited 2026-07-10 (see Audit F
 - **Kaffetal Club — "Pasaportes" (2026-07-14, passport model same day)**: `club_member_codes` (`code` unique; `kind` `estandar`/`campana` + `campaign` label; `assigned_to`/`assigned_at` for per-producer emission; `email_sent_at`/`email_error` leads-style send tracking; `redeemed_by`/`redeemed_at`, `revoked_at`; all profile FKs `ON DELETE SET NULL` **on purpose** — the first QA teardown proved a plain FK blocks deleting any profile that ever redeemed a code) — **service-role-only by design** (RLS enabled, zero policies, like Arena/leads). Narrative: membership = the producer's **"Pasaporte del Kaffetal Club"**, the code = **"Número de Pasaporte"**. Two kinds: **estándar** (`KC-` prefix) is emitted per-producer from the /bcp/club kanban, server-gated on having a `galardonado` lot; **campaña** (`KCX-` prefix — the prefix meaning is internal, never explained to producers) bypasses the Arena gate for marketing occasions and can be assigned to anyone or left unassigned to hand out (first account to redeem wins). Campaigns are **first-class rows** in `club_campaigns` (service-role-only; `name` unique; codes carry `campaign_id ON DELETE SET NULL` — the old `campaign` text column was dropped): created at the top of /bcp/club, each campaign card links to `/bcp/club/campanas/[id]`, which has **two separate emission forms on purpose** — "Emitir a un productor" (exactly one, delivered by email + panel note, only he can activate it) and "Generar códigos para entregar en mano" (N anonymous codes, up to 50, no email, first account to redeem wins). A single combined form with a `cantidad` field that silently only applied to the unassigned case was confusing; `emitCampaignPassports` still backs both and ignores `cantidad` in assigned mode. Assigned emission sends a passport email (`src/lib/email/clubEmails.ts`, via the shared Resend sender exported from `leadEmails.ts`) + a `producer_comm_log` note carrying the número; an **assigned code can only be redeemed by its assignee**. Membership itself is `producer_profiles.club_member_since` (null = not a member), guard-protected; set only via the producer redemption action (`src/lib/club/actions.ts`, which also writes `audit_log` + a welcome note) and cleared via BCP's `revokeClubMembership`. Producers can also **request** their passport ("Solicitar mi Pasaporte" → a deduplicated producer-authored comm-log note). **Being a member gates**: producer-side "Mis contratos" module (locked tile + passport gate with redemption form in `AppDashboard.tsx`), BCP `signContract`, and BCP `publishLot` (defense in depth). Contracts are still auto-created at grading for everyone; it's *signing* that requires membership. `/bcp/club` is a 3-column kanban (Elegibles: ≥1 lot past Muestras, grayed until a galardón → Pendiente de confirmación: emitted+sent, with email-retry/revoke → Miembros activos), plus campaign-passport creation and a full ledger (`clubActions.ts`).
 - **Leads (2026-07-13)**: `leads` (CTC Home "Escríbenos"/servicios submissions; pillar general/tech/cocreate/varietales, status pipeline nuevo→en_conversacion→convertido→cerrado, `fields` jsonb per-pillar, `profile_id` link to the auto-provisioned account, `account_provisioning` created_password/created_google/existing, `temp_password` — plaintext by explicit product decision, delivered in BCP's first reply email then cleared, unreachable from any user JWT) and `lead_replies` (BCP's outbound emails; body stored WITHOUT the password). Both are **service-role-only by design** (RLS enabled, zero policies, like the Arena tables); all writes go through server actions (`src/lib/leads/actions.ts` public intake, `src/app/bcp/(app)/leadsActions.ts` BCP). Emails via Resend in `src/lib/email/leadEmails.ts` — sender from `EMAIL_FROM` env; **until ctcexport.com is verified in Resend, sends to arbitrary addresses fail** and are captured on the row (`welcome_error`/`send_error`) with retry buttons in /bcp/leads. Residual spam risk accepted: a stranger can trigger account creation for an email they don't own — they never learn the password and the account is inert. The conversation is BIDIRECTIONAL for producer-role leads: `producer_comm_log.lead_id` links mirrored notes (welcome + BCP replies) into the producer's in-app "Retroalimentación y ayuda" feed, and the producer's in-app thread replies surface back inside the BCP lead card ("Conversación en la plataforma", resolved via lead_id + parent_id).
 - **Partners (2026-07-15)**: `partner_accounts` (**service-role-only** — the v3 partner tier: `profile_id` PK→profiles, `node_type` checked against the 5 partner slugs, `org_name`/`contact_name`, invited/active/suspended lifecycle, invite-email tracking). A partner is `profiles.role='partner'` + an active row for exactly one node — **never `bcp_admin`**. Issued/revoked in `/bcp/socios`; logs in at `/socios/<node>/acceso` (single factor); panel gated by `requirePartner()` (`src/lib/partners/`). **`delivery_email` (2026-07-20)** — mismo desdoblamiento que `panel_users`: el correo de ACCESO es la identidad (fila en `auth.users`, única en toda la plataforma, puede ser una etiqueta sin buzón como `estudio-contenido@ctcexport.com`) y el **buzón real** es a dónde se entregan invitación y restablecimientos. El buzón SÍ se repite entre credenciales y puede coincidir con una cuenta de productor/comprador — es una bandeja, no una identidad. El correo de invitación dice explícitamente cuál es el usuario cuando difieren, si no el socio intenta entrar con la dirección donde lo recibió.
-- **Coffeed (2026-07-29)**: 13 tablas `coffeed_*` (**service-role-only**, migración `coffeed_editorial_pipeline`) — el muro interno + pipeline editorial de 7 etapas del Estudio de Contenido. Reglas de formato (5-10 paneles, máx. 3 por fuente, ninguno sin trazar) en trigger `coffeed_guard_accept`; el canon se actualiza solo (`coffeed_update_canon`); draft→published exige pasar por accepted. Ver la sección Coffeed más abajo.
+- **Coffeed (2026-07-29, ampliado 2026-08-03)**: 15 tablas `coffeed_*` (**service-role-only**, migraciones `coffeed_editorial_pipeline` + `coffeed_polymorphic_deliverables`) — el muro + el pipeline editorial + **`coffeed_deliverables`** (la cola polimórfica que reciben del Estudio) y **`coffeed_datawave_episodes`** (la biblioteca de Datawave). Reglas de formato (5-10 paneles, máx. 3 por fuente, ninguno sin trazar) en trigger `coffeed_guard_accept` Y de nuevo en `coffeed_guard_deliverable` al aceptar; el canon se actualiza solo (`coffeed_update_canon`). Ver la sección Coffeed más abajo.
 - **Two `SECURITY DEFINER` views** for public catalog reads without broadening base-table RLS: `public_lot_catalog` (published/sold-out lots only, curated columns — no raw Ficha datasheet, no geolocation) and `public_transparency_pricing` (locked vs. reference price, only for listings with `transparency_credit_enabled`). Both reviewed 2026-07-10 — column scope is correctly narrow. This pattern exists *because* a naive broad RLS policy on `lots`/`fincas` would have exposed the full private Ficha and exact finca geolocation to any buyer — don't "simplify" these back into RLS policies without re-deriving that constraint.
 
 ### The "ironclad guard" trigger model
@@ -151,21 +153,57 @@ The intake→Arena flow was rebuilt around one principle: **documentation evalua
 
 **BCP owner-feedback pass (2026-07-20, after the first live walkthrough attempt)**: besides the Nominados/Arena changes above — kanban columns now GROW to fill the board width (`shared.module.css` `.column{flex:1 1 260px}`); "Tareas pendientes de CTC" deep-links to the exact element (`#lot-/#finca-/#lead-<id>` hashes auto-open the target modal via `anchorId` on FincaModalRow/LeadModalRow); the EVA panels got: FT "Finca declarada" chip (Apta/No Apta/Pendiente from the joined finca status), FT2 certs as per-cert rows (attachment inline + public registry link from `src/lib/certRegistry.ts` [researched 2026-07-20] + **Confirmado/No confirmado** verdicts persisted in `lots.cert_verifications` jsonb via `setCertVerification` — column producer-protected by `guard_lot_protected_columns`), FT2 físico shows ALL 10 SCA attributes + explicit «No lo sé» callouts + CQI Q-Grader directory link, EUDR panel reordered (Complejidad right under custody stages; cert-schemes chip cross-opens the FT2 certs panel; mitigation-effective is a direct BCP field labeled "evaluación de BCP"; Responsable at the bottom without Corregir). Nav: Club sits below Nominados. The unused "Fundadores" campaign was deleted (its 1 unissued code too).
 
-## Coffeed — el noticiero de la red (ECP, 2026-07-30)
+## Coffeed + el Estudio de Contenido — producir vs. publicar (reparto 2026-08-03)
 
-Muro de noticias/anuncios + línea de producción editorial, en **`/ecp/coffeed`**. Nació el 2026-07-29 como módulo del socio *Estudio de Contenido* y se movió al **ECP al día siguiente, por decisión del owner**: la narrativa se DIRIGE desde dentro; lo que se delega es su producción. Gate: `requireConsoleAccess("ecp")` en la page + `coffeedGate()` (bcp_admin + panel_user activo + grant `ecp`) en cada action, leyendo la sesión interna (`createPanelSessionClient`, ver gotcha 13).
+**La regla que gobierna todo este bloque: el socio *Estudio de Contenido* PRODUCE; el ECP RECIBE, da luz verde y PUBLICA.** Es un afinado de la decisión del 2026-07-30 (que se había llevado el módulo entero al ECP): la narrativa se sigue dirigiendo desde dentro — lo que se delega es su producción, y ahora la delegación tiene sitio propio.
 
-**El pipeline es UNA secuencia, y el `status` del ciclo (`coffeed_cycles.status`, enum) ES la columna del kanban donde aparece la tarjeta** — no hay estado de UI que se pueda desincronizar, y una acción larga que se corta deja su tarjeta con botón de reintento:
-
-| Vista | Qué hace | Estado del ciclo |
+| Dónde | Qué vive ahí | Gate |
 |---|---|---|
-| **Muro** (solo, arriba) | capítulos publicados + anuncios; es el MISMO muro que ven KR/CP/DC | `publicado` |
-| **Canon** | hilos narrativos; se actualizan solos al publicar (`coffeed_update_canon`) | — |
-| **Identidad de marca** | nombre, slogan, logo, paleta (≤5 + blanco/negro implícitos), tipografía, dirección de arte | — |
-| **Medios de Consulta** | lista blanca/negra de canales y medios; añadir = un agente valida la URL (existe, publica recurrentemente, toca el café) y **rechaza con motivo a la lista negra** | — |
-| **Selección de Fuentes** | UNA sesión abierta a la vez (índice parcial `coffeed_cycles_one_open`); botón de **barrido de 7 días** sobre la lista blanca (titular+sumario+fecha), ingesta manual de URLs, triaje (IA o a mano) y selección; el ÚLTIMO botón dispara la extracción | `abierto` |
-| **Propuestas** | kanban 3 columnas: *En extracción* → *Extraídas* (se ve el material) → *Propuestas* (3 ángulos, se elige uno → **Crear Post**) | `extrayendo` → `extraido` → `propuestas` |
-| **Posts en Fila** | kanban 2 columnas: *Creando* → *Listos* (ficha + descarga **HTML** y **PDF**, **Re-editar** con prompt, **Publicar**) | `post` → `listo` |
+| **Taller** `/socios/estudio-contenido/panel/...` | las apps de creación + el Canon (aquí SE ESCRIBE) | `studioGate()` |
+| **ECP** `/ecp/coffeed` | Entregas, Muro, Identidad de marca, Canon en espejo | `coffeedGate()` |
+
+- **`studioGate()`** (`src/lib/coffeed/studioGate.ts`) abre para **dos** identidades: el socio `estudio-contenido` (cookie PÚBLICA, `createSessionClient`) **o** un operador interno con grant de `ecp` (cookie del panel). Son cookies distintas y se prueban en orden — nunca se mezclan (gotcha 13). El segundo caso no es un atajo: sin él, suspender la credencial del socio deja a CTC fuera del taller que opera. **Publicar sigue siendo solo del ECP.**
+- Reparto de archivos: `actions.ts` + `aiActions.ts` = taller (studioGate); `ecpActions.ts` = dirección (marca, anuncios, bundle del ECP); `deliverableActions.ts` = la cola, con el gate que toca en cada extremo. El cliente de Claude vive en `claude.ts` (compartido; `claudeSourced()` devuelve además las fuentes de la búsqueda).
+
+### El Estudio es un taller de apps
+
+`/socios/estudio-contenido/panel` dejó de ser el scaffold de los otros 4 socios: es un **lanzador**, y el registro de apps es `src/lib/coffeed/studioApps.ts` (añadir una app = una entrada ahí + su ruta bajo `panel/<id>`; cualquier otro slug de socio da 404 en esas rutas).
+
+| App | Qué produce | Entrega |
+|---|---|---|
+| **Source Wrapper** (`panel/source-wrapper`) | el pipeline editorial de siempre | un carrusel trazado |
+| **Datawave** (`panel/datawave`) | episodios de carrera de barras, escenario 9:16 grabable | un video (archivo o enlace) |
+| **Identity Value Creation** | *en construcción* — contenido de finca/lote desde su pasaporte | — |
+
+⚠️ **Identity Value Creation no está bloqueada por UI sino por permisos**: leer finca/lote desde el tier de socios exige vistas `SECURITY DEFINER` estrechas campo a campo (la matriz de permisos del v3), no un grant ancho — misma regla que `public_lot_catalog`. Diséñalo antes de escribir la app.
+
+**Datawave** (`src/components/coffeed/datawave/`) es el puerto de `reference_coffeed/Datawave/datawave.jsx`. Dos muletas del artifact están sustituidas y no deben volver: `window.storage` → tabla `coffeed_datawave_episodes`; `fetch` a `api.anthropic.com` **desde el navegador y sin clave** → Server Actions (`datawaveActions.ts`). El guion NO sale a la web a propósito — los giros los calcula `findBeats()` de la serie, y la IA solo los redacta. El video se graba fuera (pantalla) y se entrega como archivo o enlace ya publicado. `DatawaveStyles.tsx` mantiene la hoja del prototipo verbatim en un `<style>`: desviación consciente de la convención CSS Modules, explicada en el propio archivo.
+
+### Entregas — una cola para todas las apps
+
+**`coffeed_deliverables`** (migración `coffeed_polymorphic_deliverables`, service-role-only) es el sobre polimórfico donde desembocan TODAS las apps del Estudio:
+
+- `kind`: `carrusel` (apunta a su `coffeed_drafts`) · `video` · `embed` (Instagram/YouTube) · `identidad` (futuro). `app` dice qué app la produjo; `payload` jsonb lleva lo específico del tipo.
+- Ciclo: **entregado → aceptado → publicado**, más **devuelto** (rebota al taller con la nota del ECP, sin borrar nada; el taller la re-entrega corregida).
+- Trigger `coffeed_guard_deliverable`: nadie nace publicado, no se publica sin aceptar antes, despublicar limpia `published_at`, y **aceptar un carrusel RE-VALIDA en la base** las reglas 5-10 / máx. 3 por fuente / ninguno sin trazar (reusa `coffeed_check_draft`).
+- **`coffeed_drafts.state` se queda en `draft → accepted`** (el trigger del canon sigue colgado de ahí). El valor `published` quedó muerto: publicar es cosa de la entrega, no del borrador.
+- **El muro cambió de fuente**: `getCoffeedWall()` lee `coffeed_deliverables` publicadas, no `coffeed_drafts`. Es un feed MIXTO y el bundle expone `.items` (`CoffeedWallItem`, con `kind`), no `.chapters`. Afecta a los 4 montajes del muro (hub de KR, Cherry Picked, Directorio, `/coffeed`).
+- Incrustados: `resolveEmbed()` en `types.ts` normaliza lo que se pega del navegador (youtu.be, `watch?v=`, shorts, `/p/`, `/reel/`, `/tv/`) a URL de iframe, y **rechaza un perfil o un canal** — el error fácil al pegar. Guardián: `node --experimental-strip-types scripts/qa-coffeed-embed-check.mjs`.
+
+### El pipeline del Source Wrapper
+
+**Es UNA secuencia, y el `status` del ciclo (`coffeed_cycles.status`, enum) ES la columna del kanban donde aparece la tarjeta** — no hay estado de UI que se pueda desincronizar, y una acción larga que se corta deja su tarjeta con botón de reintento:
+
+| Vista | Dónde | Qué hace | Estado del ciclo |
+|---|---|---|---|
+| **Entregas** | ECP | la cola de las 3 apps: *dar luz verde* / *devolver con nota* / *publicar*; también se comparte un Instagram/YouTube desde aquí | — |
+| **Muro** | ECP | lo publicado + anuncios; es el MISMO muro que ven KR/CP/DC | `publicado` |
+| **Identidad de marca** | ECP | nombre, slogan, logo, paleta (≤5 + blanco/negro implícitos), tipografía, dirección de arte — **la obedecen todas las apps del taller**, que la leen pero no la cambian | — |
+| **Canon** | ECP (espejo) · taller (escritura) | hilos narrativos; se actualizan solos al ACEPTAR un borrador (`coffeed_update_canon`) | — |
+| **Medios de Consulta** | taller | lista blanca/negra de canales y medios; añadir = un agente valida la URL (existe, publica recurrentemente, toca el café) y **rechaza con motivo a la lista negra** | — |
+| **Selección de Fuentes** | taller | UNA sesión abierta a la vez (índice parcial `coffeed_cycles_one_open`); botón de **barrido de 7 días** sobre la lista blanca (titular+sumario+fecha), ingesta manual de URLs, triaje (IA o a mano) y selección; el ÚLTIMO botón dispara la extracción | `abierto` |
+| **Propuestas** | taller | kanban 3 columnas: *En extracción* → *Extraídas* (se ve el material) → *Propuestas* (3 ángulos, se elige uno → **Crear Post**) | `extrayendo` → `extraido` → `propuestas` |
+| **Posts en Fila** | taller | kanban 2 columnas: *Creando* → *Listos* (ficha + descarga **HTML** y **PDF**, **Re-editar** con prompt, **Entregar al ECP**) | `post` → `listo` |
 
 **Lo que ya NO existe**: el riel de 7 etapas, la pantalla de Extracción (es backend), el editor de Borrador panel-a-panel y el guion de vídeo. La extracción y la redacción siguen produciendo paneles trazados — pero como proceso, no como pantalla.
 

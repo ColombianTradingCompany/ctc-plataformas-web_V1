@@ -11,14 +11,51 @@
 
 import { useEffect, useState } from "react";
 import { getCoffeedWall } from "@/lib/coffeed/wallActions";
-import { coffeedFontStack, type CoffeedWallBundle } from "@/lib/coffeed/types";
+import { coffeedFontStack, type CoffeedMedia, type CoffeedWallBundle } from "@/lib/coffeed/types";
 import styles from "./coffeedWall.module.css";
+
+/** "9:16" → "9 / 16". Cada proveedor trae su proporción natural por defecto. */
+function aspectOf(media: CoffeedMedia): string {
+  const m = media.aspect?.match(/^(\d+)\s*[:/]\s*(\d+)$/);
+  if (m) return `${m[1]} / ${m[2]}`;
+  if (media.provider === "youtube") return "16 / 9";
+  if (media.provider === "instagram") return "4 / 5";
+  return "9 / 16"; // el escenario de Datawave
+}
+
+/** El medio del muro: iframe para lo incrustado, <video> para el archivo propio. */
+function WallMedia({ media, title }: { media: CoffeedMedia; title: string }) {
+  const style = { ["--cw-aspect" as string]: aspectOf(media) } as React.CSSProperties;
+  const cls = [styles.media, media.provider === "instagram" ? styles.mediaInstagram : ""].join(" ");
+
+  if (media.embedUrl) {
+    return (
+      <div className={cls} style={style}>
+        <iframe
+          src={media.embedUrl}
+          title={title}
+          loading="lazy"
+          allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  return (
+    <div className={cls} style={style}>
+      <video src={media.url} poster={media.poster ?? undefined} controls preload="metadata" playsInline />
+    </div>
+  );
+}
 
 export type CoffeedWallLabels = {
   chapter: string;
   panels: string;
   announcement: string;
   pinned: string;
+  video: string;
+  shared: string;
   emptyTitle: string;
   emptyBody: string;
   loading: string;
@@ -29,10 +66,14 @@ const ES: CoffeedWallLabels = {
   panels: "paneles",
   announcement: "Anuncio",
   pinned: "fijado",
+  video: "Video",
+  shared: "Compartido",
   emptyTitle: "El primer capítulo está en producción",
   emptyBody: "Coffeed es el noticiero de la red CTC: capítulos breves sobre el mercado del café, en paneles. Vuelve pronto.",
   loading: "Cargando el muro…",
 };
+
+const fmtDay = (iso: string) => new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
 
 export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabels; accent?: string }) {
   const [data, setData] = useState<CoffeedWallBundle | null>(null);
@@ -61,9 +102,9 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
   // La tipografía de marca solo viste los bloques estándar del muro (titulares
   // y paneles), no el texto de la superficie que lo hospeda.
   const brandFont = coffeedFontStack(data.brand.fontFamily);
-  const items: ({ kind: "ann"; id: string } | { kind: "ch"; id: string })[] = [
+  const items: ({ kind: "ann"; id: string } | { kind: "item"; id: string })[] = [
     ...data.announcements.filter((a) => a.pinned).map((a) => ({ kind: "ann" as const, id: a.id })),
-    ...data.chapters.map((c) => ({ kind: "ch" as const, id: c.draftId })),
+    ...data.items.map((c) => ({ kind: "item" as const, id: c.id })),
     ...data.announcements.filter((a) => !a.pinned).map((a) => ({ kind: "ann" as const, id: a.id })),
   ];
 
@@ -79,7 +120,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
   }
 
   const annById = new Map(data.announcements.map((a) => [a.id, a]));
-  const chById = new Map(data.chapters.map((c) => [c.draftId, c]));
+  const itemById = new Map(data.items.map((c) => [c.id, c]));
 
   return (
     <div className={styles.wall} style={style}>
@@ -95,7 +136,7 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
                 </span>
                 <span className={styles.eyebrow}>
                   {a.area ?? data.brand.companyName}
-                  {a.publishedAt ? ` · ${new Date(a.publishedAt).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}` : ""}
+                  {a.publishedAt ? ` · ${fmtDay(a.publishedAt)}` : ""}
                 </span>
               </div>
               <h3 className={styles.postTitle} style={{ fontFamily: brandFont }}>
@@ -105,36 +146,55 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
             </article>
           );
         }
-        const c = chById.get(it.id)!;
+        const c = itemById.get(it.id)!;
+        // El carrusel numera capítulo; el video y el incrustado no entran en
+        // esa serie — llevan su propia etiqueta.
+        const stamp =
+          c.kind === "carrusel"
+            ? `${labels.chapter} ${c.chapterNo ?? ""}`.trim()
+            : c.kind === "video"
+              ? labels.video
+              : labels.shared;
+        const meta =
+          c.kind === "carrusel"
+            ? `${c.panels.length} ${labels.panels}`
+            : (c.media?.provider === "youtube" ? "YouTube" : c.media?.provider === "instagram" ? "Instagram" : data.brand.companyName);
+
         return (
-          <article key={`c-${c.draftId}`} className={styles.post}>
+          <article key={`c-${c.id}`} className={styles.post}>
             <div className={styles.postHead}>
-              <span className={`${styles.eyebrow} ${styles.chapterNo}`}>
-                {labels.chapter} {c.chapterNo}
-              </span>
+              <span className={`${styles.eyebrow} ${styles.chapterNo}`}>{stamp}</span>
               <span className={styles.eyebrow}>
-                {c.panels.length} {labels.panels}
-                {c.publishedAt ? ` · ${new Date(c.publishedAt).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}` : ""}
+                {meta}
+                {c.publishedAt ? ` · ${fmtDay(c.publishedAt)}` : ""}
               </span>
             </div>
             <h3 className={styles.postTitle} style={{ fontFamily: brandFont }}>
               {c.title}
             </h3>
-            <div className={styles.strip}>
-              {c.panels.map((p, i) => (
-                <div key={p.position} className={[styles.panel, i === 0 ? styles.panelFirst : "", i === c.panels.length - 1 ? styles.panelLast : ""].join(" ")}>
-                  <span className={styles.panelBar}>
-                    {String(i + 1).padStart(2, "0")}
-                    {p.role ? ` · ${p.role}` : ""}
-                  </span>
-                  <span className={styles.panelBody}>
-                    <p className={styles.panelText} style={{ fontFamily: brandFont }}>
-                      {p.text}
-                    </p>
-                  </span>
-                </div>
-              ))}
-            </div>
+
+            {c.kind === "carrusel" && (
+              <div className={styles.strip}>
+                {c.panels.map((p, i) => (
+                  <div key={p.position} className={[styles.panel, i === 0 ? styles.panelFirst : "", i === c.panels.length - 1 ? styles.panelLast : ""].join(" ")}>
+                    <span className={styles.panelBar}>
+                      {String(i + 1).padStart(2, "0")}
+                      {p.role ? ` · ${p.role}` : ""}
+                    </span>
+                    <span className={styles.panelBody}>
+                      <p className={styles.panelText} style={{ fontFamily: brandFont }}>
+                        {p.text}
+                      </p>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {(c.kind === "video" || c.kind === "embed") && c.media && <WallMedia media={c.media} title={c.title} />}
+
+            {c.excerpt && c.kind !== "carrusel" && <p className={styles.caption}>{c.excerpt}</p>}
+            {c.media?.caption && <p className={styles.caption}>{c.media.caption}</p>}
           </article>
         );
       })}

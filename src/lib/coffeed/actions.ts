@@ -1,10 +1,15 @@
 "use server";
 
-// ── Coffeed · Server Actions de la consola (ECP) ─────────────────────────────
-// Toda lectura y escritura pasa por aquí con el service client (las tablas
-// coffeed_* son service-role-only). Cada action re-verifica el grant de ECP —
-// patrón requireActiveAdmin, versión por consola. El cliente refresca su
-// bundle tras cada mutación (patrón Directorio).
+// ── Coffeed · Server Actions del TALLER (Source Wrapper) ─────────────────────
+// Reparto del 2026-08-03: este archivo es la línea de PRODUCCIÓN y vive en el
+// Estudio de Contenido. Lo de DIRECCIÓN —muro, identidad de marca, cola de
+// entregas— se fue a ./ecpActions y ./deliverableActions.
+//
+// El gate es `studioGate()`: el socio `estudio-contenido` O un operador interno
+// con grant de ECP (ver ./studioGate para por qué son dos). Toda lectura y
+// escritura pasa por el service client (las tablas coffeed_* son
+// service-role-only). El cliente refresca su bundle tras cada mutación
+// (patrón Directorio).
 //
 // ⚠️ En un módulo "use server" TODO export tiene que ser una función async: un
 // `export type { … }` al final compila a un export de runtime que no existe y
@@ -12,10 +17,9 @@
 // visto en vivo el 2026-07-30). Los tipos se importan desde ./types.
 
 import { createSignedUrl } from "./storage";
-import { coffeedGate, coffeedServiceClient, COFFEED_BUCKET, COFFEED_PREFIX } from "./requireEcp";
+import { coffeedServiceClient } from "./requireEcp";
+import { studioGate } from "./studioGate";
 import {
-  COFFEED_PALETTE_MAX,
-  type CoffeedAnnouncement,
   type CoffeedBrand,
   type CoffeedCycle,
   type CoffeedCycleStatus,
@@ -28,11 +32,11 @@ import {
   type CoffeedResult,
   type CoffeedSample,
   type CoffeedSource,
+  type CoffeedStudioBundle,
   type CoffeedThread,
-  type CoffeedConsoleBundle,
 } from "./types";
 
-const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del ECP no está activa. Vuelve a iniciar sesión." };
+const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
 
 type Service = ReturnType<typeof coffeedServiceClient>;
 
@@ -120,32 +124,21 @@ async function loadBrand(service: Service): Promise<CoffeedBrand> {
   };
 }
 
-// ---------- Lectura: el bundle completo de la consola ----------
+// ---------- Lectura: el bundle completo del taller ----------
 
-export async function getCoffeedConsole(): Promise<CoffeedConsoleBundle | null> {
-  const who = await coffeedGate();
+export async function getStudioConsole(): Promise<CoffeedStudioBundle | null> {
+  const who = await studioGate();
   if (!who) return null;
   const service = coffeedServiceClient();
 
-  const [{ data: cycleRows }, { data: threadRows }, { data: annRows }, { data: sourceRows }, { data: chapterRows }, brand] =
-    await Promise.all([
-      service.from("coffeed_cycles").select("id, date, chapter_no, status, title, error, swept_at").order("chapter_no", { ascending: false }),
-      service.from("coffeed_threads").select("id, name, state, opened_in, last_seen_in, summary").order("updated_at", { ascending: false }),
-      service
-        .from("coffeed_announcements")
-        .select("id, title, body, area, pinned, published_at")
-        .order("pinned", { ascending: false })
-        .order("published_at", { ascending: false })
-        .limit(50),
-      service.from("coffeed_sources").select("id, name, kind, category, list, url, status, validation_note, last_swept_at, active").order("created_at"),
-      service
-        .from("coffeed_drafts")
-        .select("id, title, excerpt, published_at, coffeed_cycles(chapter_no), coffeed_panels(position, role, text)")
-        .eq("state", "published")
-        .order("published_at", { ascending: false })
-        .limit(30),
-      loadBrand(service),
-    ]);
+  const [{ data: cycleRows }, { data: threadRows }, { data: sourceRows }, { data: deliveredRows }, brand] = await Promise.all([
+    service.from("coffeed_cycles").select("id, date, chapter_no, status, title, error, swept_at").order("chapter_no", { ascending: false }),
+    service.from("coffeed_threads").select("id, name, state, opened_in, last_seen_in, summary").order("updated_at", { ascending: false }),
+    service.from("coffeed_sources").select("id, name, kind, category, list, url, status, validation_note, last_swept_at, active").order("created_at"),
+    // Qué borradores ya viajaron al ECP: lo devuelto NO cuenta, se re-entrega.
+    service.from("coffeed_deliverables").select("draft_id").not("draft_id", "is", null).neq("state", "devuelto"),
+    loadBrand(service),
+  ]);
 
   const allCycles = (cycleRows ?? []) as CycleRow[];
   const cycleIds = allCycles.map((c) => c.id);
@@ -242,15 +235,6 @@ export async function getCoffeedConsole(): Promise<CoffeedConsoleBundle | null> 
       }));
   }
 
-  type ChapterRow = {
-    id: string;
-    title: string;
-    excerpt: string | null;
-    published_at: string | null;
-    coffeed_cycles: { chapter_no: number } | null;
-    coffeed_panels: { position: number; role: string | null; text: string }[];
-  };
-
   return {
     openCycle,
     samples,
@@ -258,17 +242,8 @@ export async function getCoffeedConsole(): Promise<CoffeedConsoleBundle | null> 
     threads: ((threadRows ?? []) as { id: string; name: string; state: CoffeedThread["state"]; opened_in: number | null; last_seen_in: number | null; summary: string | null }[]).map(
       (t) => ({ id: t.id, name: t.name, state: t.state, openedIn: t.opened_in, lastSeenIn: t.last_seen_in, summary: t.summary })
     ),
-    announcements: ((annRows ?? []) as { id: string; title: string; body: string | null; area: string | null; pinned: boolean; published_at: string }[]).map(
-      (a): CoffeedAnnouncement => ({ id: a.id, title: a.title, body: a.body, area: a.area, pinned: a.pinned, publishedAt: a.published_at })
-    ),
-    chapters: ((chapterRows ?? []) as unknown as ChapterRow[]).map((c) => ({
-      draftId: c.id,
-      chapterNo: c.coffeed_cycles?.chapter_no ?? 0,
-      title: c.title,
-      excerpt: c.excerpt,
-      publishedAt: c.published_at,
-      panels: (c.coffeed_panels ?? []).sort((a, b) => a.position - b.position),
-    })),
+    deliveredDraftIds: ((deliveredRows ?? []) as { draft_id: string | null }[]).flatMap((d) => (d.draft_id ? [d.draft_id] : [])),
+    identity: { displayName: who.displayName, via: who.via },
     sources: ((sourceRows ?? []) as {
       id: string; name: string; kind: "youtube" | "outlet"; category: string | null; list: "white" | "black";
       url: string | null; status: CoffeedSource["status"]; validation_note: string | null; last_swept_at: string | null; active: boolean;
@@ -285,7 +260,7 @@ export async function getCoffeedConsole(): Promise<CoffeedConsoleBundle | null> 
 export async function getCycleDetail(
   cycleId: string
 ): Promise<{ extractions: CoffeedExtraction[]; proposals: CoffeedProposal[] } | null> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return null;
   const service = coffeedServiceClient();
 
@@ -346,7 +321,7 @@ export async function getCycleDetail(
 
 /** El HTML renderizado del post — para abrirlo, descargarlo o imprimirlo a PDF. */
 export async function getPostHtml(draftId: string): Promise<{ ok: true; html: string; title: string } | { ok: false; error: string }> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
   const service = coffeedServiceClient();
   const { data } = await service.from("coffeed_drafts").select("post_html, title").eq("id", draftId).maybeSingle();
@@ -358,7 +333,7 @@ export async function getPostHtml(draftId: string): Promise<{ ok: true; html: st
 
 /** Abre la sesión de selección. Solo puede haber UNA abierta (índice parcial). */
 export async function startCycle(): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
 
@@ -380,7 +355,7 @@ export async function startCycle(): Promise<CoffeedResult> {
 
 /** Un día sin material es una decisión válida, no un fallo del sistema. */
 export async function closeCycleEmpty(cycleId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_cycles").update({ status: "cerrado" }).eq("id", cycleId).eq("status", "abierto");
@@ -388,7 +363,7 @@ export async function closeCycleEmpty(cycleId: string): Promise<CoffeedResult> {
 }
 
 export async function reopenCycle(cycleId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { data: open } = await service.from("coffeed_cycles").select("id").eq("status", "abierto").maybeSingle();
@@ -407,7 +382,7 @@ export async function addManualItem(input: {
   summary: string;
   publishedAt: string;
 }): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const url = input.url.trim();
   const title = input.title.trim();
@@ -443,7 +418,7 @@ export async function addManualItem(input: {
 }
 
 export async function setDecision(entryId: string, decision: CoffeedDecision): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
 
@@ -475,7 +450,7 @@ export async function updateEntryTriage(
   entryId: string,
   patch: { axis: string | null; relevance: number | null; threadId: string | null }
 ): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { error } = await service
@@ -486,7 +461,7 @@ export async function updateEntryTriage(
 }
 
 export async function removeEntry(entryId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_matrix_entries").delete().eq("id", entryId);
@@ -497,7 +472,7 @@ export async function removeEntry(entryId: string): Promise<CoffeedResult> {
 
 /** Elegir un ángulo crea (o retitula) el post del ciclo. */
 export async function chooseProposal(proposalId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
 
@@ -525,7 +500,7 @@ export async function updateProposal(
   proposalId: string,
   patch: { title: string; hook: string; editorNotes: string }
 ): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { error } = await service
@@ -535,49 +510,10 @@ export async function updateProposal(
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
-// ---------- Posts en Fila ----------
-
-/** Publicar mueve el post al muro — el de la consola y el de KR/CP/DC. */
-export async function publishPost(draftId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  const service = coffeedServiceClient();
-
-  const { data: d } = await service.from("coffeed_drafts").select("cycle_id, state, post_status").eq("id", draftId).maybeSingle();
-  if (!d) return { ok: false, error: "El post no existe." };
-  if (d.post_status !== "listo") return { ok: false, error: "El post todavía no está renderizado." };
-
-  // El trigger coffeed_guard_accept re-valida las reglas del carrusel aquí.
-  if (d.state === "draft") {
-    const { error } = await service.from("coffeed_drafts").update({ state: "accepted", accepted_by: who.userId }).eq("id", draftId);
-    if (error) return { ok: false, error: error.message };
-  }
-  const { error: e2 } = await service.from("coffeed_drafts").update({ state: "published" }).eq("id", draftId);
-  if (e2) return { ok: false, error: e2.message };
-  await service.from("coffeed_cycles").update({ status: "publicado" }).eq("id", d.cycle_id);
-  return { ok: true };
-}
-
-export async function unpublishPost(draftId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  const service = coffeedServiceClient();
-  const { data: d } = await service.from("coffeed_drafts").select("cycle_id").eq("id", draftId).maybeSingle();
-  if (!d) return { ok: false, error: "El post no existe." };
-  const { error } = await service
-    .from("coffeed_drafts")
-    .update({ state: "accepted", published_at: null })
-    .eq("id", draftId)
-    .eq("state", "published");
-  if (error) return { ok: false, error: error.message };
-  await service.from("coffeed_cycles").update({ status: "listo" }).eq("id", d.cycle_id);
-  return { ok: true };
-}
-
 // ---------- Medios de Consulta ----------
 
 export async function setSourceList(id: string, list: "white" | "black"): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_sources").update({ list }).eq("id", id);
@@ -585,110 +521,9 @@ export async function setSourceList(id: string, list: "white" | "black"): Promis
 }
 
 export async function removeSource(id: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = coffeedServiceClient();
   const { error } = await service.from("coffeed_sources").delete().eq("id", id);
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-// ---------- Identidad de marca ----------
-
-export async function saveBrand(input: {
-  companyName: string;
-  slogan: string;
-  palette: string[];
-  fontFamily: string;
-  artDirection: string;
-}): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  if (!input.companyName.trim()) return { ok: false, error: "El nombre de la empresa no puede quedar vacío." };
-  const palette = input.palette
-    .map((c) => c.trim().toUpperCase())
-    .filter((c) => /^#[0-9A-F]{6}$/.test(c))
-    .slice(0, COFFEED_PALETTE_MAX);
-
-  const service = coffeedServiceClient();
-  const { error } = await service
-    .from("coffeed_brand")
-    .update({
-      company_name: input.companyName.trim(),
-      slogan: input.slogan.trim() || null,
-      palette,
-      font_family: input.fontFamily,
-      art_direction: input.artDirection.trim() || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", true);
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-/** URL firmada de subida bajo coffeed/brand/ (service role, como gvg/). */
-export async function prepareBrandLogoUpload(
-  fileName: string
-): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
-  const who = await coffeedGate();
-  if (!who) return { ok: false, error: "No autorizado." };
-  const service = coffeedServiceClient();
-  const safe = fileName
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9._-]+/g, "_")
-    .slice(-100);
-  const path = `${COFFEED_PREFIX}/brand/${Date.now()}-${safe}`;
-  const { data, error } = await service.storage.from(COFFEED_BUCKET).createSignedUploadUrl(path);
-  if (error || !data) return { ok: false, error: "No se pudo preparar la subida." };
-  return { ok: true, path, token: data.token };
-}
-
-export async function setBrandLogo(path: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  const service = coffeedServiceClient();
-  const { error } = await service.from("coffeed_brand").update({ logo_path: path, updated_at: new Date().toISOString() }).eq("id", true);
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-export async function clearBrandLogo(): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  const service = coffeedServiceClient();
-  const { error } = await service.from("coffeed_brand").update({ logo_path: null }).eq("id", true);
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-// ---------- Muro: anuncios ----------
-// 2026-07-30: los anuncios YA NO son solo internos — viajan al muro de KR,
-// Cherry Picked y el Directorio junto a los capítulos (decisión del owner).
-
-export async function addAnnouncement(input: { title: string; body: string; area: string; pinned: boolean }): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  if (!input.title.trim()) return { ok: false, error: "Un anuncio sin título no se puede publicar." };
-  const service = coffeedServiceClient();
-  const { error } = await service.from("coffeed_announcements").insert({
-    author_id: who.userId,
-    title: input.title.trim(),
-    body: input.body.trim() || null,
-    area: input.area.trim() || null,
-    pinned: input.pinned,
-  });
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-export async function toggleAnnouncementPinned(id: string, pinned: boolean): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  const service = coffeedServiceClient();
-  const { error } = await service.from("coffeed_announcements").update({ pinned }).eq("id", id);
-  return error ? { ok: false, error: error.message } : { ok: true };
-}
-
-export async function deleteAnnouncement(id: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
-  if (!who) return NO_AUTH;
-  const service = coffeedServiceClient();
-  const { error } = await service.from("coffeed_announcements").delete().eq("id", id);
   return error ? { ok: false, error: error.message } : { ok: true };
 }

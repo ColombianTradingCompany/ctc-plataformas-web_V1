@@ -101,6 +101,40 @@
 .panelLast .panelText { color: #fff; }
 .panelLast .panelBar { color: rgba(255, 255, 255, 0.6); border-color: rgba(255, 255, 255, 0.2); }
 
+/* Un video o un incrustado: el medio manda y ocupa el ancho del post.
+   `aspect-ratio` sobre el contenedor evita el salto de layout al cargar el
+   iframe, que en Instagram tarda. 9:16 por defecto (el escenario de Datawave);
+   el payload puede pedir otra proporción. */
+.media {
+  position: relative;
+  margin: 12px 16px 16px;
+  border: 1px solid var(--cw-line);
+  background: #000;
+  overflow: hidden;
+  aspect-ratio: var(--cw-aspect, 9 / 16);
+  max-height: 70vh;
+}
+.mediaWide { aspect-ratio: var(--cw-aspect, 16 / 9); }
+.media iframe,
+.media video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.caption {
+  margin: 0;
+  padding: 0 16px 16px;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--cw-soft);
+  white-space: pre-wrap;
+}
+/* Instagram sirve su propio marco con fondo blanco: sin letterbox negro. */
+.mediaInstagram { background: #fff; }
+
 .empty {
   border: 1px dashed var(--cw-line);
   background: var(--cw-paper);

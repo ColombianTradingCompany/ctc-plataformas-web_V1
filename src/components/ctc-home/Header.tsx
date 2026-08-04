@@ -4,48 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useContactModal } from "./ContactModal";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { PAGE_INDEX } from "./pageIndex";
 import styles from "./Header.module.css";
 
-type IndexLink = { n: string; href: string; title: string; sub: string };
-
-const T: Record<Lang, { write: string; idxAria: string; links: IndexLink[] }> = {
-  es: {
-    write: "Escríbenos",
-    idxAria: "Índice de la página",
-    links: [
-      { n: "01", href: "#ecosistema", title: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked, integrados" },
-      { n: "02", href: "#momento", title: "El momento del café", sub: "Olas, diáspora y terruño" },
-      { n: "03", href: "#tech", title: "CTC Tech", sub: "Tecnologías agrónomas en finca" },
-      { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Proyectos en EE.UU. y Europa" },
-      { n: "05", href: "#varietales", title: "Varietales Registrados", sub: "Genética verificada, desde la chapola" },
-    ],
-  },
-  en: {
-    write: "Write to us",
-    idxAria: "Page index",
-    links: [
-      { n: "01", href: "#ecosistema", title: "The ecosystem", sub: "Kaffetal Regal + Cherry Picked, integrated" },
-      { n: "02", href: "#momento", title: "Coffee's moment", sub: "Waves, diaspora and terroir" },
-      { n: "03", href: "#tech", title: "CTC Tech", sub: "Agronomic technology on the farm" },
-      { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Projects in the US and Europe" },
-      { n: "05", href: "#varietales", title: "Registered Varietals", sub: "Verified genetics, from the seedling" },
-    ],
-  },
-  de: {
-    write: "Schreiben Sie uns",
-    idxAria: "Seitenindex",
-    links: [
-      { n: "01", href: "#ecosistema", title: "Das Ökosystem", sub: "Kaffetal Regal + Cherry Picked, integriert" },
-      { n: "02", href: "#momento", title: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
-      { n: "03", href: "#tech", title: "CTC Tech", sub: "Agrartechnologie auf der Finca" },
-      { n: "04", href: "#cocreate", title: "CTC Co-Create", sub: "Projekte in den USA und Europa" },
-      { n: "05", href: "#varietales", title: "Registrierte Varietäten", sub: "Verifizierte Genetik, vom Sämling an" },
-    ],
-  },
+const T: Record<Lang, { write: string; idxAria: string }> = {
+  es: { write: "Escríbenos", idxAria: "Índice de la página" },
+  en: { write: "Write to us", idxAria: "Page index" },
+  de: { write: "Schreiben Sie uns", idxAria: "Seitenindex" },
 };
 
 export function Header() {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
+  // El MISMO índice que la burbuja «Navegar» (./pageIndex).
+  const links = PAGE_INDEX[lang];
   const [hidden, setHidden] = useState(false);
   const [idxOpen, setIdxOpen] = useState(false);
   const lastY = useRef(0);
@@ -104,11 +76,11 @@ export function Header() {
             </svg>
           </summary>
           <div className={styles.idxMenu}>
-            {t.links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setIdxOpen(false)}>
-                <span className={styles.n}>{l.n}</span>
+            {links.map((l, i) => (
+              <a key={l.id} href={`#${l.id}`} onClick={() => setIdxOpen(false)}>
+                <span className={styles.n}>{String(i + 1).padStart(2, "0")}</span>
                 <span>
-                  {l.title}
+                  {l.label}
                   <small>{l.sub}</small>
                 </span>
               </a>

@@ -182,6 +182,18 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/socios", label: "Socios de la red", ownerOnly: true },
         ],
       },
+      {
+        // Cotizadores (2026-08-04): cotizar es operación —se hace contra un
+        // productor o un cliente concreto, con números que salen de la cadena
+        // real— así que viven en el OCP y no en el ECP, que fija la política de
+        // precios. Dos módulos sobre UNA tabla `quotes` con `kind` de
+        // discriminador; comparten destinatario, código, vigencia e historial.
+        label: "OCP · Cotizadores",
+        links: [
+          { href: "/ocp/cotizador-lotes", label: "Lotes de café" },
+          { href: "/ocp/cotizador-logistico", label: "Logístico" },
+        ],
+      },
     ],
   },
 };

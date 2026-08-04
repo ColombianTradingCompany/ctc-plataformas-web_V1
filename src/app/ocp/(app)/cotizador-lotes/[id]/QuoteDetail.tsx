@@ -10,6 +10,7 @@ import { decideQuote, duplicateQuote, getQuote, saveQuoteDraft } from "@/lib/cot
 import { QUOTE_STATUS_LABEL, effectiveStatus, type Quote } from "@/lib/cotizador/types";
 import { CounterpartyPicker } from "@/components/cotizador/CounterpartyPicker";
 import { LoteEditor } from "@/components/cotizador/LoteEditor";
+import { LogisticoEditor } from "@/components/cotizador/LogisticoEditor";
 import styles from "@/app/bcp/(app)/shared.module.css";
 
 export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) {
@@ -89,10 +90,7 @@ export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) 
       {quote.kind === "lote" ? (
         <LoteEditor quote={quote} onSaved={refresh} />
       ) : (
-        <div className={styles.empty}>
-          <h3>El cotizador logístico todavía no tiene su motor</h3>
-          <p>Falta el HTML de referencia del owner en <code>reference_ocp_modules/</code>. La cotización ya se puede crear, nombrar y asignar a un cliente; el cálculo entra cuando llegue.</p>
-        </div>
+        <LogisticoEditor quote={quote} onSaved={refresh} />
       )}
 
       <div className={styles.card}>

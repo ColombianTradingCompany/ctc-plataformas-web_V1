@@ -6,12 +6,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { decideQuote, duplicateQuote, getQuote, saveQuoteDraft } from "@/lib/cotizador/actions";
+import { decideQuote, duplicateQuote, getQuote } from "@/lib/cotizador/actions";
 import { QUOTE_STATUS_LABEL, effectiveStatus, type Quote } from "@/lib/cotizador/types";
 import { CounterpartyPicker } from "@/components/cotizador/CounterpartyPicker";
-import { LoteEditor } from "@/components/cotizador/LoteEditor";
-import { LogisticoEditor } from "@/components/cotizador/LogisticoEditor";
-import { InfoDot } from "@/components/cotizador/InfoDot";
+import { AppFrame } from "@/components/cotizador/AppFrame";
 import styles from "@/app/bcp/(app)/shared.module.css";
 
 export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) {
@@ -63,45 +61,14 @@ export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) 
 
       <CounterpartyPicker quoteId={quote.id} current={quote.counterparty} locked={locked} onChanged={refresh} />
 
-      <div className={styles.card}>
-        <div className={styles.sectionHead}>
-          <strong>Condiciones</strong>
-        </div>
-        <div className={styles.formGrid}>
-          <div className={styles.field} style={{ minWidth: 180 }}>
-            <label htmlFor="vu">Vigente hasta</label>
-            <input
-              id="vu" type="date" defaultValue={quote.validUntil ?? ""} disabled={busy}
-              onBlur={(e) => void run(() => saveQuoteDraft(quote.id, { validUntil: e.target.value || null }))}
-            />
-          </div>
-          {/* «Observaciones», no «Notas»: es el MISMO nombre que lleva en el
-              documento del cliente. En la V19 se llamaba distinto en cada sitio
-              y confundía (marcado por el owner, 2026-08-04). */}
-          <div className={styles.field} style={{ flex: 1, minWidth: 260 }}>
-            <label htmlFor="nt">
-              Observaciones
-              <InfoDot
-                label="las observaciones"
-                text="Observaciones comerciales y de logística relacionadas con la cotización. Salen tal cual en el documento del cliente, bajo este mismo título."
-              />
-            </label>
-            <input
-              id="nt" defaultValue={quote.notes ?? ""} disabled={busy} placeholder="Condiciones, supuestos, qué NO incluye…"
-              onBlur={(e) => void run(() => saveQuoteDraft(quote.id, { notes: e.target.value }))}
-            />
-          </div>
-        </div>
-        {/* La vigencia y las notas se pueden tocar después de emitir a propósito:
-            no cambian el número, y una cotización viva necesita poder prorrogarse. */}
-        <p className={styles.meta}>La vigencia y las notas se pueden ajustar aunque esté emitida: no alteran el cálculo.</p>
-      </div>
+      {/* La vigencia y las observaciones NO se piden aquí: las lleva la propia
+          calculadora, en su cabecera de cotización. Pedirlas dos veces es
+          exactamente la confusión de nombres que marcó el owner. La vigencia se
+          copia a la fila al guardar, para que el tablero pueda marcar «vencida». */}
 
-      {quote.kind === "lote" ? (
-        <LoteEditor quote={quote} onSaved={refresh} />
-      ) : (
-        <LogisticoEditor quote={quote} onSaved={refresh} />
-      )}
+      {/* La calculadora del owner, íntegra. Ver AppFrame: lo único que cambia
+          respecto al HTML original es cómo se guarda y se recupera. */}
+      <AppFrame quote={quote} onSaved={refresh} />
 
       <div className={styles.card}>
         <div className={styles.sectionHead}>

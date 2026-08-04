@@ -1,0 +1,35 @@
+/* La app del owner ocupa el ancho entero de la consola: son calculadoras densas,
+   pensadas para pantalla completa. La barra de guardado va encima, fija a la
+   vista, para no tener que subir hasta arriba después de trastear. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #d6d3e6);
+  border-radius: 9px;
+  background: var(--card, #fff);
+}
+
+.frame {
+  width: 100%;
+  /* Alto de la ventana menos la cabecera de la consola y la barra. */
+  height: calc(100vh - 210px);
+  min-height: 620px;
+  border: 1px solid var(--line, #d6d3e6);
+  border-radius: 9px;
+  background: #fff;
+  display: block;
+}

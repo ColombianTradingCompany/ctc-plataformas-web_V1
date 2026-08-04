@@ -24,7 +24,8 @@ export type ToolId =
   | "catacion"
   | "green-datasheet"
   | "formula-calidad"
-  | "viaje-cafe";
+  | "viaje-cafe"
+  | "cogs-verde";
 
 export type ToolDef = {
   id: ToolId;
@@ -54,6 +55,7 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   "mermas-ctc": { id: "mermas-ctc", src: "/tools/mermas-ctc.html", lang: "es" },
   catacion: { id: "catacion", src: "/tools/rueda-catacion.html", lang: "es" },
   "green-datasheet": { id: "green-datasheet", src: "/tools/green-coffee-datasheet.html", lang: "en" },
+  "cogs-verde": { id: "cogs-verde", src: "/tools/cogs-cafe-verde.html", lang: "es" },
 };
 
 /** Todas las herramientas, en el orden en que se listan en el panel interno. */
@@ -62,6 +64,7 @@ export const ALL_TOOL_IDS: ToolId[] = [
   "mermas-detallada",
   "agtron",
   "mermas-ctc",
+  "cogs-verde",
   "catacion",
   "green-datasheet",
   "qr",
@@ -121,6 +124,10 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   "mermas-ctc": { kr: true, cp: false, web: true, dc: false, tier: "default" },
   catacion: { kr: true, cp: false, web: true, dc: false, tier: "default" },
   "green-datasheet": { kr: true, cp: false, web: false, dc: false, tier: "default" },
+  // CoGS de café verde: la cuenta de costos hasta la cotización EXW/FOB/CIF.
+  // Arranca como Plus (petición del owner, 2026-08-04); superficie/nivel se
+  // ajustan desde Disponibilidad.
+  "cogs-verde": { kr: true, cp: false, web: true, dc: false, tier: "plus" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

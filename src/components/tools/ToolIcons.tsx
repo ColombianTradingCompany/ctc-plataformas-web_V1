@@ -87,6 +87,15 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8 15h8" />
     </LineIcon>
   ),
+  // CoGS de café verde: una etiqueta de precio con el signo peso — el costo
+  // real por kg que la herramienta desglosa hasta la cotización.
+  "cogs-verde": (
+    <LineIcon>
+      <path d="M13.2 3.5 20.5 10.8a1.8 1.8 0 0 1 0 2.55l-7.15 7.15a1.8 1.8 0 0 1-2.55 0L3.5 13.2V5.3a1.8 1.8 0 0 1 1.8-1.8h7.9Z" />
+      <circle cx="7.6" cy="7.6" r="1.1" />
+      <path d="M14.8 10.2c-.6-.6-2.3-.7-2.9.3-.5.9.2 1.7 1.5 2 1.3.3 2 1.1 1.5 2-.6 1-2.3.9-2.9.3M13.9 9.3l-2 5.4" />
+    </LineIcon>
+  ),
   // El viaje del café: un camino serpenteante con origen y destino marcados.
   "viaje-cafe": (
     <LineIcon>

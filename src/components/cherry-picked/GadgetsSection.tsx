@@ -56,6 +56,7 @@ const EN: Copy = {
     "green-datasheet": { name: "Green coffee datasheet", desc: "Internal tool." },
     "formula-calidad": { name: "The quality formula", desc: "Internal tool." },
     "viaje-cafe": { name: "The coffee's journey", desc: "Internal tool." },
+    "cogs-verde": { name: "Green coffee CoGS calculator", desc: "Internal tool." },
   },
 };
 
@@ -90,6 +91,7 @@ const T: Record<Lang, Copy> = {
       "green-datasheet": { name: "Ficha de café verde", desc: "Herramienta interna." },
       "formula-calidad": { name: "La fórmula de calidad", desc: "Herramienta interna." },
       "viaje-cafe": { name: "El viaje del café", desc: "Herramienta interna." },
+      "cogs-verde": { name: "Calculadora CoGS · Café verde", desc: "Herramienta interna." },
     },
   },
   de: {
@@ -121,6 +123,7 @@ const T: Record<Lang, Copy> = {
       "green-datasheet": { name: "Rohkaffee-Datenblatt", desc: "Internes Werkzeug." },
       "formula-calidad": { name: "Die Qualitätsformel", desc: "Internes Werkzeug." },
       "viaje-cafe": { name: "Die Reise des Kaffees", desc: "Internes Werkzeug." },
+      "cogs-verde": { name: "Rohkaffee-CoGS-Rechner", desc: "Internes Werkzeug." },
     },
   },
 };

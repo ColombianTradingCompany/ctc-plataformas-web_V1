@@ -113,3 +113,33 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   embed anidado resuelve) y 26/26 del guardián de incrustados. Datos de QA
   borrados; `coffeed_deliverables` queda en cero.
 (commit: be50e6a · rama coffeed-estudio-split)
+---
+
+## [2026-08-04] Calculadora de Mermas · CTC actualizada a V14 (análisis escrito)
+- `public/tools/mermas-ctc.html` reemplazada por la V14 del owner (V11–V13 nunca
+  se integraron) y re-vendorizada con `scripts/vendor-tool-assets.mjs` (fuentes +
+  jsPDF locales, 0 assets de CDN).
+- Qué añade sobre la V10: `equivAnalysisParagraphs()` genera párrafos de análisis
+  por etapa de transformación (equivalente bruto por mermas vs costo del proceso,
+  y el precio máximo pagable por la materia prima para igualar el precio de la
+  etapa superior), visibles en la sección de equivalencias y también incluidos en
+  la exportación PDF; además, grupos de costos colapsables en la UI.
+- Cambio de contenido de una herramienta ya documentada (tools públicas): sin
+  nodos/wires/DICT nuevos para el wrap.
+(commit: db26ac0)
+
+## [2026-08-04] Mermas V15 + herramienta nueva: Calculadora CoGS · Café verde (Plus)
+- `mermas-ctc.html` actualizada a la V15 del owner: costos que varían según
+  distancia/ruta (no solo curva por volumen) y personalización por ítem de costo.
+  (commit: 352dd63)
+- **Herramienta NUEVA** `cogs-verde` (`public/tools/cogs-cafe-verde.html`, V18 del
+  owner): el costo real del café verde partida por partida hasta la cotización
+  EXW/FOB/CIF, con el precio Fedecafé como pivote y cotización imprimible.
+  Registrada en `src/lib/tools/catalog.ts` (+ copy en toolCopy/KR/CP e icono en
+  ToolIcons): KR + web encendidas, **tier Plus por decisión del owner** —
+  ajustable desde Herramientas → Disponibilidad como todas. Vendorizada offline.
+  Verificado en dev: la superficie pública anónima la cuenta en el aviso Plus
+  («1 herramienta más con tu cuenta de la red»).
+- Para el wrap: la lista de herramientas del banco crece a 10; si el mapa
+  enumera las tools o el nivel Plus, añadir cogs-verde como ejemplo de Plus.
+(commit: c75cc76)

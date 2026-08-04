@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { PAGE_INDEX, SECTION_IDS } from "./pageIndex";
 import styles from "./QuickMenu.module.css";
 
 // Floating quick-nav: same shape as the Finca panel's save FAB (round, fixed
@@ -15,51 +16,18 @@ import styles from "./QuickMenu.module.css";
 // varTag), which is a separate thing from this list. This list carries no
 // numbering of its own at all (no "00/01/02…" badges) -- the id="tech" anchor
 // on the outer <section> scrolls to the top of the whole services block.
-const SECTION_IDS = ["hero", "ecosistema", "tech", "momento", "historia"] as const;
 
-type Entry = { id: (typeof SECTION_IDS)[number]; label: string; sub: string };
-
-const T: Record<Lang, { fab: string; panelAria: string; fabAria: string; sections: Entry[] }> = {
-  es: {
-    fab: "Navegar",
-    panelAria: "Índice de la página",
-    fabAria: "Navegación rápida",
-    sections: [
-      { id: "hero", label: "Inicio", sub: "Casa matriz · Piedecuesta" },
-      { id: "ecosistema", label: "El ecosistema", sub: "Kaffetal Regal + Cherry Picked" },
-      { id: "tech", label: "Más allá de la exportación", sub: "CTC Tech · Co-Create · Directorio · Varietales" },
-      { id: "momento", label: "El momento del café", sub: "Olas, diáspora y terruño" },
-      { id: "historia", label: "Quiénes somos", sub: "G&G · Fundadores" },
-    ],
-  },
-  en: {
-    fab: "Navigate",
-    panelAria: "Page index",
-    fabAria: "Quick navigation",
-    sections: [
-      { id: "hero", label: "Home", sub: "Headquarters · Piedecuesta" },
-      { id: "ecosistema", label: "The ecosystem", sub: "Kaffetal Regal + Cherry Picked" },
-      { id: "tech", label: "Beyond the export", sub: "CTC Tech · Co-Create · Directory · Varietals" },
-      { id: "momento", label: "Coffee's moment", sub: "Waves, diaspora and terroir" },
-      { id: "historia", label: "Who we are", sub: "G&G · Founders" },
-    ],
-  },
-  de: {
-    fab: "Navigieren",
-    panelAria: "Seitenindex",
-    fabAria: "Schnellnavigation",
-    sections: [
-      { id: "hero", label: "Start", sub: "Stammsitz · Piedecuesta" },
-      { id: "ecosistema", label: "Das Ökosystem", sub: "Kaffetal Regal + Cherry Picked" },
-      { id: "tech", label: "Über den Export hinaus", sub: "CTC Tech · Co-Create · Verzeichnis · Varietäten" },
-      { id: "momento", label: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
-      { id: "historia", label: "Wer wir sind", sub: "G&G · Gründer" },
-    ],
-  },
+const T: Record<Lang, { fab: string; panelAria: string; fabAria: string }> = {
+  es: { fab: "Navegar", panelAria: "Índice de la página", fabAria: "Navegación rápida" },
+  en: { fab: "Navigate", panelAria: "Page index", fabAria: "Quick navigation" },
+  de: { fab: "Navigieren", panelAria: "Seitenindex", fabAria: "Schnellnavigation" },
 };
 
 export function QuickMenu() {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
+  // El MISMO índice que el desplegable de la cabecera (./pageIndex).
+  const sections = PAGE_INDEX[lang];
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("hero");
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -103,7 +71,7 @@ export function QuickMenu() {
     <div className={styles.wrap} ref={wrapRef}>
       {open && (
         <nav className={styles.panel} aria-label={t.panelAria}>
-          {t.sections.map((s) => (
+          {sections.map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}

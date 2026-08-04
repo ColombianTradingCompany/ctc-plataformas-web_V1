@@ -214,6 +214,8 @@ export type LogisticoMeta = {
   /** Cualidades del lote: variedad, proceso, perfil, finca y región.
    *  En el documento SÍ lleva encabezado propio (en la V19 se colaba sin título). */
   lotDescription: string;
+  /** Quién arma la cotización. Va firmada en el documento del cliente. */
+  preparedBy: string;
 };
 
 export function defaultLogisticoMeta(): LogisticoMeta {
@@ -225,6 +227,7 @@ export function defaultLogisticoMeta(): LogisticoMeta {
     destCity: "",
     qualityGrade: "Gold",
     lotDescription: "",
+    preparedBy: "",
   };
 }
 

@@ -200,6 +200,17 @@ export function LogisticoEditor({ quote, onSaved }: { quote: Quote; onSaved: () 
           />
         </div>
 
+        <div className={styles.field} style={{ marginTop: 10 }}>
+          <label htmlFor="prepby">Cotización preparada por</label>
+          <input
+            id="prepby"
+            value={inp.meta.preparedBy}
+            disabled={locked}
+            placeholder="Nombre y cargo de quien la arma"
+            onChange={(e) => setMeta({ preparedBy: e.target.value })}
+          />
+        </div>
+
         <div className={styles.digestGrid}>
           {[
             ["Verde necesario", `${nf.format(res.kgVerdeNecesario)} kg`],

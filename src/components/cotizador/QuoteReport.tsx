@@ -51,7 +51,7 @@ export function QuoteReport({ quote, inp, res }: { quote: Quote; inp: LogisticoI
       <header className={styles.head}>
         <div>
           <p className={styles.brand}>Colombian Trading Company</p>
-          <p className={styles.sub}>NIT 901.483.425-7 · Piedecuesta, Santander, Colombia</p>
+          <p className={styles.sub}>Piedecuesta, Santander, Colombia · Exportadores de café de especialidad</p>
         </div>
         <div className={styles.headRight}>
           <p className={styles.code}>{quote.code}</p>
@@ -131,12 +131,37 @@ export function QuoteReport({ quote, inp, res }: { quote: Quote; inp: LogisticoI
         </div>
       )}
 
+      {m.preparedBy.trim() && (
+        <div className={styles.block}>
+          <h2>Cotización preparada por</h2>
+          <p>{m.preparedBy}</p>
+        </div>
+      )}
+
       <footer className={styles.foot}>
         <p>
           Café seleccionado y preparado para exportación, con certificado de origen OIC y documentación fitosanitaria ICA.
           Precio sujeto a confirmación de disponibilidad y a la tasa de cambio vigente al cierre.
         </p>
-        <p className={styles.sub}>{quote.code} · Colombian Trading Company · info@ctcexport.com</p>
+        {/* La franja de la empresa (2026-08-04): sustituye al bloque de «documento
+            generado el…» que el owner tachó. Datos de contacto, no jerga legal. */}
+        <div className={styles.company}>
+          <span>
+            <strong>Colombian Trading Company S.A.S.</strong>
+            <br />
+            NIT: 901.483.425-7
+          </span>
+          <span>
+            <a href="https://ctcexport.com">ctcexport.com</a>
+            <br />
+            <a href="mailto:info@ctcexport.com">info@ctcexport.com</a>
+          </span>
+          <span>
+            <a href="tel:+573152948371">+57 315 294 8371</a>
+            <br />
+            <a href="tel:+4917642020585">+49 176 4202 0585</a>
+          </span>
+        </div>
       </footer>
     </article>
   );

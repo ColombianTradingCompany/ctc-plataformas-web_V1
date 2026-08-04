@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { PartnerSlug } from "@/lib/partners/partners";
 import styles from "../socios.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 export function PartnerLoginForm({ slug, name }: { slug: PartnerSlug; name: string }) {
   const router = useRouter();
@@ -43,7 +44,7 @@ export function PartnerLoginForm({ slug, name }: { slug: PartnerSlug; name: stri
         </div>
         <div className={styles.field}>
           <label htmlFor="ppass">Contraseña</label>
-          <input id="ppass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+          <PasswordField id="ppass" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
         </div>
         <button className="btn btn-solid" style={{ width: "100%", padding: 12 }} type="submit" disabled={loading}>
           {loading ? "Verificando…" : "Entrar"}

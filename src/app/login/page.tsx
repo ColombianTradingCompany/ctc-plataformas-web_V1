@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/components/panel/auth.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 export default function PanelLoginPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function PanelLoginPage() {
           </div>
           <div className={styles.field}>
             <label htmlFor="password">Contraseña</label>
-            <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+            <PasswordField id="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
           </div>
           <button className="btn btn-solid" style={{ width: "100%", padding: 12 }} type="submit" disabled={loading}>
             {loading ? "Verificando…" : "Continuar"}

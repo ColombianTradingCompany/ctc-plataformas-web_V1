@@ -7,6 +7,7 @@
 
 import { useState, useTransition } from "react";
 import { setAdminLockPassword } from "@/app/bcp/(app)/adminLockActions";
+import { PasswordField } from "@/components/PasswordField";
 
 export function AdminLockCard() {
   const [current, setCurrent] = useState("");
@@ -37,19 +38,19 @@ export function AdminLockCard() {
         lo que el flujo quiere mantener tapado.
       </p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <input
-          type="password"
+        <PasswordField
           placeholder="Contraseña actual"
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
-          style={{ maxWidth: 200, padding: "9px 11px", border: "1.5px solid var(--line)", borderRadius: 8, background: "var(--paper)" }}
+          wrapStyle={{ maxWidth: 200 }}
+          style={{ width: "100%", padding: "9px 11px", border: "1.5px solid var(--line)", borderRadius: 8, background: "var(--paper)" }}
         />
-        <input
-          type="password"
+        <PasswordField
           placeholder="Nueva contraseña"
           value={next}
           onChange={(e) => setNext(e.target.value)}
-          style={{ maxWidth: 200, padding: "9px 11px", border: "1.5px solid var(--line)", borderRadius: 8, background: "var(--paper)" }}
+          wrapStyle={{ maxWidth: 200 }}
+          style={{ width: "100%", padding: "9px 11px", border: "1.5px solid var(--line)", borderRadius: 8, background: "var(--paper)" }}
         />
         <button className="btn btn-sm btn-solid" disabled={pending || !current || !next} onClick={save}>
           {pending ? "Guardando…" : "Cambiar contraseña"}

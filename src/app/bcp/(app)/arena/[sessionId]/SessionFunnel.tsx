@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { revealSessionIdentities, type RevealedIdentity } from "../../adminLockActions";
 import styles from "../../shared.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 export type FunnelCup = {
   lotId: string;
@@ -113,13 +114,13 @@ export function SessionFunnel({
       </div>
       {unlockOpen && !identities && (
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
-          <input
-            type="password"
+          <PasswordField
             placeholder="Contraseña del Admin Lock"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && unlock()}
-            style={{ maxWidth: 220 }}
+            wrapStyle={{ maxWidth: 220 }}
+            style={{ width: "100%" }}
           />
           <button className="btn btn-sm btn-solid" disabled={pending || !password} onClick={unlock}>
             {pending ? "Verificando…" : "Desbloquear"}

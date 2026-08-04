@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Modal } from "@/components/Modal";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./LoginModal.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 export function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -109,9 +110,8 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       </div>
       <div className={styles.field}>
         <label htmlFor="kr-pass">Contraseña</label>
-        <input
+        <PasswordField
           id="kr-pass"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"

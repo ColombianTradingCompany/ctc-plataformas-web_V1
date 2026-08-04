@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { LegalFooter } from "@/components/LegalFooter";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordField } from "@/components/PasswordField";
 
 // Ingreso PROPIO del Directorio del Café (ya no depende de Kaffetal Regal ni de
 // Cherry Picked). Es la misma Supabase Auth del ecosistema, así que entrar con
@@ -121,7 +122,7 @@ export function Login({
               </div>
               <div className="campo">
                 <label htmlFor="l-pass">Contraseña</label>
-                <input id="l-pass" type="password" required value={pass}
+                <PasswordField id="l-pass" required value={pass}
                   autoComplete={modo === "crear" ? "new-password" : "current-password"}
                   placeholder="••••••••" onChange={(e) => setPass(e.target.value)} />
               </div>

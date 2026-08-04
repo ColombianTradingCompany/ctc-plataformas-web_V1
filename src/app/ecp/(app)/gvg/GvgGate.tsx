@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { unlockGvgSpace } from "@/lib/gvg/lockActions";
 import styles from "./gvg.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 /** Password gate for the GVG-Space. On success the server sets the unlock
  *  cookie, so a refresh re-renders the layout with the space open. */
@@ -40,9 +41,8 @@ export function GvgGate() {
         </div>
         <h1 className={styles.gateTitle}>GVG-Space</h1>
         <p className={styles.gateSub}>Personal workspace. Enter the space password to continue.</p>
-        <input
+        <PasswordField
           className={styles.gateInput}
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"

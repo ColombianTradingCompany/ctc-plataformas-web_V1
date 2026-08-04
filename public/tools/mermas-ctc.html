@@ -436,6 +436,10 @@ button{font-family:inherit}
 .merma-readout{display:flex;align-items:baseline;justify-content:space-between;margin:.85rem 0 .2rem;gap:.6rem;flex-wrap:wrap}
 .merma-val{font-family:'Anton',sans-serif;font-size:1.9rem;color:var(--purple);line-height:1}
 .merma-val small{font-size:.8rem;color:var(--muted);font-family:'Inter',sans-serif;font-weight:600;margin-left:.2rem}
+.dial-num{font-family:'Anton',sans-serif;font-size:1.9rem;color:var(--purple);line-height:1;border:none;border-bottom:2px dashed transparent;background:transparent;width:4.4rem;padding:0 0 1px;text-align:left;-moz-appearance:textfield}
+.dial-num:focus{outline:none;border-bottom-color:var(--purple)}
+.dial-num::-webkit-outer-spin-button,.dial-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.dial-pfx{font-family:'Anton',sans-serif;font-size:1.9rem;color:var(--purple);line-height:1;margin-right:.05rem}
 .zbadge{font-size:.72rem;font-weight:700;padding:.32rem .6rem;border-radius:999px;letter-spacing:.02em;display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
 .zbadge.z-ok{background:var(--green-soft);color:#1d5c39}
 .zbadge.z-mid{background:#FFF3CC;color:#856400}
@@ -1150,7 +1154,7 @@ function eqRows(){
 
 /* ---------- stage popup ---------- */
 function updateZ(s){ const z=zOf(s), info=zLabel(z);
-  const mv=document.getElementById('mv-'+s.id); if(mv)mv.textContent=nf.format(state.values[s.id]);
+  const mv=document.getElementById('mv-'+s.id); if(mv&&document.activeElement!==mv) mv.value=state.values[s.id];
   const zb=document.getElementById('zb-'+s.id); if(zb){ zb.className='zbadge z-'+info.cls; document.getElementById('zt-'+s.id).textContent=info.txt; } }
 function updateIO(s){ const c=(DATA&&DATA.chain||[]).find(x=>x.stage&&x.stage.id===s.id); const unit=UNIT_LABEL[state.unit];
   const i=document.getElementById('io-in'), o=document.getElementById('io-out'); if(c&&i){i.textContent=fmtW(c.wFrom)+' '+unit;} if(c&&o){o.textContent=fmtW(c.wTo)+' '+unit;} }
@@ -1161,7 +1165,7 @@ function openStage(s){
       <span class="stage-ico"><svg viewBox="0 0 24 24">${ICONS[s.id]}</svg></span>
       <h3 style="margin:0;color:var(--purple);font-size:1.35rem">${s.name}</h3></div>
     <div class="pop-flow"><b>${NODE_SHORT[s.a]}</b> › <b>${NODE_SHORT[s.b]}</b></div>
-    <div class="merma-readout"><div class="merma-val"><span id="mv-${s.id}">${nf.format(state.values[s.id])}</span>%<small>de merma</small></div>
+    <div class="merma-readout"><div class="merma-val"><input type="number" id="mv-${s.id}" class="dial-num" style="width:3.4rem" value="${state.values[s.id]}" min="${s.min}" max="${s.max}" step="0.1">%<small>de merma</small></div>
       <span class="zbadge z-ok" id="zb-${s.id}"><span class="dot"></span><span id="zt-${s.id}"></span></span></div>
     ${bellSVG(s)}
     <div class="slider-row"><input type="range" class="mslider" id="sl-${s.id}" min="${s.min}" max="${s.max}" step="0.1" value="${state.values[s.id]}">
@@ -1171,6 +1175,13 @@ function openStage(s){
     <div class="stage-info static"><b>${s.desc}</b><br>${s.ctx}</div>`;
   const sl=document.getElementById('sl-'+s.id); sl.style.background=sliderGrad(s);
   sl.addEventListener('input',e=>{ state.values[s.id]=parseFloat(e.target.value); recompute(); });
+  const mvIn=document.getElementById('mv-'+s.id);
+  mvIn.addEventListener('input',e=>{
+    let v=parseFloat(e.target.value); if(isNaN(v)) return;
+    v=Math.min(s.max,Math.max(s.min,v));
+    state.values[s.id]=v; sl.value=v; recompute();
+  });
+  mvIn.addEventListener('blur',()=>{ mvIn.value=state.values[s.id]; });
   updateMarker(s); updateZ(s); updateIO(s);
   document.getElementById('stageOverlay').classList.add('open');
 }
@@ -1200,10 +1211,10 @@ const COSTG = [
      v:850, F:60000, qmin:100, sig:0.28,
      desc:'Recolección manual selectiva del fruto maduro y transporte interno al beneficiadero. Separa el precio de la cereza recogida del «precio en árbol».',
      ctx:'La recolección es el rubro individual más pesado de la cosecha (~40% del costo de producción): el kilo cogido se paga hoy $700–$1.000 según región y época. No es una etapa de transformación: define la referencia del fruto sin recolectar.'},
-    {id:'transp_c', name:'Transporte', short:'Transp.', base:0, opt:true, def:false,
+    {id:'transp_c', name:'Transporte', short:'Transp.', base:0, opt:true, def:false, noCurve:true,
      v:40, F:30000, qmin:200, sig:0.35,
      desc:'Flete del lote de cereza desde el punto de recolección hasta el beneficiadero.',
-     ctx:'En finca suele hacerse a lomo de mula o en el jeep de la vereda; cobra sentido cuando el beneficiadero es comunitario o de terceros. Distancias largas o vías malas lo empujan sobre +1σ.'}
+     ctx:'En finca suele hacerse a lomo de mula o en el jeep de la vereda; cobra sentido cuando el beneficiadero es comunitario o de terceros. El costo real depende de la distancia y la vía, no solo del peso: ajusta la cifra a tu ruta.'}
   ]},
   {id:'beneficio', stage:'beneficio', name:'Beneficio', flow:'Cereza › Pergamino', ico:'beneficio', items:[
     {id:'limpiado', name:'Limpiado', short:'Limpiado', base:0, opt:true,
@@ -1218,10 +1229,10 @@ const COSTG = [
      v:360, F:70000, qmin:25, sig:0.30,
      desc:'Llevar el pergamino de ~53% a 10–12% de humedad, en marquesina o secador mecánico. Se cobra sobre el pergamino seco que sale.',
      ctx:'Es el rubro más pesado del beneficio: combustible, energía y el tiempo del patiero. Cenicafé estima ~0,7 galones de ACPM por arroba de c.p.s. en silo; con cisco como combustible el costo baja fuerte.'},
-    {id:'transp_p', name:'Transporte', short:'Transp.', base:1, opt:true, def:false,
+    {id:'transp_p', name:'Transporte', short:'Transp.', base:1, opt:true, def:false, noCurve:true,
      v:70, F:35000, qmin:50, sig:0.35,
      desc:'Flete del pergamino seco desde la finca hasta el punto de compra o la trilladora.',
-     ctx:'El viaje típico finca–cooperativa cuesta $8.000–$15.000 por carga según distancia; llevarlo directo a trilladora en cabecera municipal puede doblarlo.'}
+     ctx:'El viaje típico finca–cooperativa cuesta $8.000–$15.000 por carga según distancia; llevarlo directo a trilladora en cabecera municipal puede doblarlo. Depende de la ruta, no de un promedio fijo: ajusta la cifra a tu caso.'}
   ]},
   {id:'trilla', stage:'trilla', name:'Trilla', flow:'Pergamino › Verde', ico:'trilla', items:[
     {id:'trillado', name:'Trillado', short:'Trillado', base:1,
@@ -1236,10 +1247,10 @@ const COSTG = [
      v:120, F:90000, qmin:50, sig:0.30,
      desc:'Clasificación electrónica por color del café verde para retirar defectos.',
      ctx:'Las seleccionadoras ópticas van de 200 kg/h a 18 t/h consumiendo 1–5 kW, así que el costo marginal es bajo: a 1,5 t/h la máquina, el aire comprimido y el operario suman ~$33/kg. Casi todo el costo de un lote pequeño es la calibración por perfil, no el procesamiento.'},
-    {id:'transp_v', name:'Transporte', short:'Transp.', base:2, opt:true, def:false,
+    {id:'transp_v', name:'Transporte', short:'Transp.', base:2, opt:true, def:false, noCurve:true,
      v:60, F:45000, qmin:50, sig:0.35,
      desc:'Flete del café verde desde la trilladora hacia bodega, puerto o tostador.',
-     ctx:'En sacos de 70 kg y viajes consolidados el flete nacional ronda $50–$90 por kilo; lotes pequeños sin consolidar pagan mucho más por kilo.'}
+     ctx:'En sacos de 70 kg y viajes consolidados el flete nacional ronda $50–$90 por kilo; lotes pequeños sin consolidar pagan mucho más por kilo. Depende de la distancia y el modo de envío: ajusta la cifra a tu ruta.'}
   ]},
   {id:'tostado', stage:'tueste', name:'Tostado', flow:'Verde › Tostado', ico:'tueste', items:[
     {id:'tueste', name:'Tueste', short:'Tueste', base:2,
@@ -1264,10 +1275,10 @@ const COSTG = [
      v:90, F:25000, qmin:20, sig:0.28,
      desc:'Operarios de pesado, sellado, etiquetado y paletizado del producto ya tostado.',
      ctx:'A un operario empacando ~25–30 kg/hora, el costo directo de mano de obra queda cerca de $60–$90/kg; lotes chicos cargan el arranque de línea y el reetiquetado manual, empujando el costo sobre +1σ.'},
-    {id:'transp_t', name:'Transporte', short:'Transp.', base:3, opt:true, def:false,
+    {id:'transp_t', name:'Transporte', short:'Transp.', base:3, opt:true, def:false, noCurve:true,
      v:110, F:55000, qmin:20, sig:0.35,
      desc:'Distribución del café ya empacado hasta el cliente final.',
-     ctx:'La última milla es el flete más caro por kilo: paqueteo nacional de 1–5 kg cuesta $10.000–$18.000 por envío, así que consolidar pedidos baja el costo rápidamente.'}
+     ctx:'La última milla es el flete más caro por kilo: paqueteo nacional de 1–5 kg cuesta $10.000–$18.000 por envío, así que consolidar pedidos baja el costo rápidamente. Depende del destino y el operador, no de un promedio fijo: ajusta la cifra a tu caso.'}
   ]}
 ];
 
@@ -1335,7 +1346,7 @@ function costCalc(){
   const NKk=NK;
   const d={rows,groups,total,finalKg,NK:NKk,
     perKgFinal: finalKg>0 ? total/finalKg : 0,
-    maxZ: rows.filter(r=>r.on).reduce((a,r)=>Math.max(a,Math.abs(r.z)),0)};
+    maxZ: rows.filter(r=>r.on&&!r.it.noCurve).reduce((a,r)=>Math.max(a,Math.abs(r.z)),0)};
   state._costs=d;
   return d;
 }
@@ -1407,7 +1418,7 @@ function renderCosts(){
     if(!gr.items.length){ h+='<div class="cgroup-off">Sin subprocesos aplicables.</div>'; }
     gr.items.forEach(r=>{
       const it=r.it, st=state.costs.items[it.id], cls=zClass(r.z);
-      const col = !st.on ? '#B9B0C9' : cls==='ok'?'var(--green)':cls==='mid'?'#C79A00':'var(--red)';
+      const col = !st.on ? '#B9B0C9' : it.noCurve ? '#8A7FA8' : cls==='ok'?'var(--green)':cls==='mid'?'#C79A00':'var(--red)';
       h+='<div class="crow'+(st.on?'':' off')+'" data-cost="'+it.id+'">'+
          '<span class="cdot" style="background:'+col+'"></span>'+
          '<span class="cn"><b>'+it.name+'</b><span>'+nf0.format(Math.round(r.Q))+' kg '+BASE_NAME[it.base]+'</span></span>'+
@@ -1477,7 +1488,7 @@ function openCostItem(it){
   }else{
     ctl='<div class="slider-row"><input type="range" class="mslider" id="cs-'+it.id+'" min="0" max="'+Math.round(smax)+'" step="'+Math.max(1,Math.round(smax/400))+'" value="'+Math.round(val)+'">'+
       '<div class="slider-scale"><span>$0</span><span>'+COP(smax)+'</span></div></div>'+
-      '<div style="margin-top:.55rem"><span class="suggest-pill" id="cs-auto-'+it.id+'">↺ Usar sugerido '+COP(ref)+'/kg</span></div>';
+      (it.noCurve ? '' : '<div style="margin-top:.55rem"><span class="suggest-pill" id="cs-auto-'+it.id+'">↺ Usar sugerido '+COP(ref)+'/kg</span></div>');
   }
 
   document.getElementById('stageBody').innerHTML=
@@ -1485,20 +1496,34 @@ function openCostItem(it){
       '<span class="stage-ico"><svg viewBox="0 0 24 24">'+ICONS[g.ico]+'</svg></span>'+
       '<h3 style="margin:0;color:var(--purple);font-size:1.3rem">'+it.name+'</h3></div>'+
     '<div class="pop-flow">'+g.name+' · base: <b>kg de '+BASE_LONG[it.base]+'</b></div>'+
-    '<div class="merma-readout"><div class="merma-val"><span id="cv-'+it.id+'">'+COP(val)+'</span><small>COP / kg</small></div>'+
-      '<span class="zbadge z-'+info.cls+'" id="cz-'+it.id+'"><span class="dot"></span><span id="czt-'+it.id+'">'+info.txt+'</span></span></div>'+
-    costCurveSVG(it,Q,val)+
-    '<div class="curve-cap">Curva de referencia: el costo por kg cae con el volumen del lote hasta el piso operativo.</div>'+
+    '<div class="merma-readout"><div class="merma-val"><span class="dial-pfx">$</span><input type="number" id="cv-'+it.id+'" class="dial-num" value="'+Math.round(val)+'" min="0" max="'+Math.round(smax)+'" step="1"></div><small style="color:var(--muted);font-size:.72rem;font-weight:600">COP / kg</small></div>'+
+      (it.noCurve
+        ? '<span class="zbadge" style="background:var(--lilac-soft);color:var(--purple)"><span class="dot" style="background:var(--purple)"></span><span>Variable según distancia</span></span></div>'
+        : '<span class="zbadge z-'+info.cls+'" id="cz-'+it.id+'"><span class="dot"></span><span id="czt-'+it.id+'">'+info.txt+'</span></span></div>')+
+    (it.noCurve
+      ? '<p class="hint" style="margin:.3rem 0 .6rem">Este costo depende de la distancia y la ruta, no solo del peso del lote: no hay un promedio fijo de mercado contra el cual compararlo. Escribe o desliza el valor real de tu caso.</p>'
+      : costCurveSVG(it,Q,val)+'<div class="curve-cap">Curva de referencia: el costo por kg cae con el volumen del lote hasta el piso operativo.</div>')+
     ctl+
     '<div class="pop-io"><div><span class="io-k">Lote</span><span class="io-b" id="cio-q">'+nf0.format(Math.round(Q))+' kg '+BASE_NAME[it.base]+'</span></div>'+
       '<div style="text-align:right"><span class="io-k">Costo del subproceso</span><span class="io-b" id="cio-t">'+COP(val*Q)+'</span></div></div>'+
     '<div class="stage-info static"><b>'+it.desc+'</b><br>'+it.ctx+'</div>';
 
   const sl=document.getElementById('cs-'+it.id);
+  const cvIn=document.getElementById('cv-'+it.id);
   if(sl){
-    sl.style.background=costSliderGrad(it,Q,smax);
-    sl.addEventListener('input',e=>{ const s2=state.costs.items[it.id]; s2.auto=false; s2.val=parseFloat(e.target.value)||0; state.costs.on=true; recompute(); });
-    document.getElementById('cs-auto-'+it.id).addEventListener('click',()=>{ const s2=state.costs.items[it.id]; s2.auto=true; state.costs.on=true; recompute(); refreshCostPopup(true); });
+    sl.style.background = it.noCurve ? 'var(--lilac-soft)' : costSliderGrad(it,Q,smax);
+    sl.addEventListener('input',e=>{ const s2=state.costs.items[it.id]; s2.auto=false; s2.val=parseFloat(e.target.value)||0; state.costs.on=true; if(cvIn) cvIn.value=Math.round(s2.val); recompute(); });
+    const autoBtn=document.getElementById('cs-auto-'+it.id);
+    if(autoBtn) autoBtn.addEventListener('click',()=>{ const s2=state.costs.items[it.id]; s2.auto=true; state.costs.on=true; recompute(); refreshCostPopup(true); });
+  }
+  if(cvIn){
+    cvIn.addEventListener('input',e=>{
+      let v=parseFloat(e.target.value); if(isNaN(v)||v<0) return;
+      const s2=state.costs.items[it.id]; s2.auto=false; s2.val=v; state.costs.on=true;
+      if(sl) sl.value=Math.min(parseFloat(sl.max),v);
+      recompute();
+    });
+    cvIn.addEventListener('blur',()=>{ const s2=state.costs.items[it.id]; if(s2&&s2.val!=null) cvIn.value=Math.round(s2.val); });
   }
   const cap=document.getElementById('pkCap'), pri=document.getElementById('pkPrice');
   if(cap) cap.addEventListener('input',e=>{ state.costs.pack.cap=Math.max(10,parseFloat(e.target.value)||250); state.costs.on=true; recompute(); refreshCostPopup(true); });
@@ -1519,9 +1544,9 @@ function refreshCostPopup(full){
   if(Q===undefined) return;
   if(full){ openCostItem(it); return; }
   const val=itemVal(it,Q), z=costZ(it,Q,val), info=costZLabel(z);
-  const cv=document.getElementById('cv-'+it.id); if(cv) cv.textContent=COP(val);
+  const cv=document.getElementById('cv-'+it.id); if(cv&&document.activeElement!==cv) cv.value=Math.round(val);
   const zb=document.getElementById('cz-'+it.id);
-  if(zb){ zb.className='zbadge z-'+info.cls; document.getElementById('czt-'+it.id).textContent=info.txt; }
+  if(zb&&!it.noCurve){ zb.className='zbadge z-'+info.cls; document.getElementById('czt-'+it.id).textContent=info.txt; }
   const q=document.getElementById('cio-q'); if(q) q.textContent=nf0.format(Math.round(Q))+' kg '+BASE_NAME[it.base];
   const t=document.getElementById('cio-t'); if(t) t.textContent=COP(val*Q);
   const host=document.getElementById('stageBody');
@@ -2476,11 +2501,18 @@ function exportPDF(){
         doc.text(COP(r.val),c3,y,{align:'right'});
         setF('normal');
         doc.text(COP(r.tot),c4,y,{align:'right'});
-        const cc=inf.cls==='ok'?[46,139,87]:inf.cls==='mid'?[176,132,10]:[200,16,46];
-        doc.setTextColor.apply(doc,cc); setF('bold'); doc.setFontSize(7.2);
-        doc.text(inf.cls==='ok'?'En rango':inf.cls==='mid'?'At\u00edpico':'Extremo',c5,y);
-        setF('normal'); doc.setTextColor.apply(doc,muted); doc.setFontSize(6.6);
-        doc.text('referencia '+COP(r.ref)+'/kg a este volumen',c1+2,y+3.4);
+        if(it.noCurve){
+          doc.setTextColor(107,98,128); setF('bold'); doc.setFontSize(7.2);
+          doc.text('Variable',c5,y);
+          setF('normal'); doc.setTextColor.apply(doc,muted); doc.setFontSize(6.6);
+          doc.text('depende de la distancia y la ruta, no del peso',c1+2,y+3.4);
+        }else{
+          const cc=inf.cls==='ok'?[46,139,87]:inf.cls==='mid'?[176,132,10]:[200,16,46];
+          doc.setTextColor.apply(doc,cc); setF('bold'); doc.setFontSize(7.2);
+          doc.text(inf.cls==='ok'?'En rango':inf.cls==='mid'?'At\u00edpico':'Extremo',c5,y);
+          setF('normal'); doc.setTextColor.apply(doc,muted); doc.setFontSize(6.6);
+          doc.text('referencia '+COP(r.ref)+'/kg a este volumen',c1+2,y+3.4);
+        }
         y+=7.6;
         doc.setDrawColor(240,236,248); doc.line(M,y-2.6,c5+30,y-2.6);
       });

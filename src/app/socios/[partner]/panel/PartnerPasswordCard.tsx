@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { changePartnerPassword } from "./actions";
 import styles from "../socios.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 export function PartnerPasswordCard() {
   const [open, setOpen] = useState(false);
@@ -42,11 +43,11 @@ export function PartnerPasswordCard() {
         <form onSubmit={submit}>
           <div className={styles.field}>
             <label htmlFor="npw">Nueva contraseña (mín. 10)</label>
-            <input id="npw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} minLength={10} autoComplete="new-password" required />
+            <PasswordField id="npw" value={pw} onChange={(e) => setPw(e.target.value)} minLength={10} autoComplete="new-password" required />
           </div>
           <div className={styles.field}>
             <label htmlFor="npw2">Confírmala</label>
-            <input id="npw2" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={10} autoComplete="new-password" required />
+            <PasswordField id="npw2" value={confirm} onChange={(e) => setConfirm(e.target.value)} minLength={10} autoComplete="new-password" required />
           </div>
           <button className="btn btn-solid" type="submit" disabled={loading}>
             {loading ? "Guardando…" : "Guardar"}

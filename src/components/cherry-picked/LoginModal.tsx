@@ -6,6 +6,7 @@ import { Modal } from "@/components/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { useLang, type Lang } from "./i18n";
 import styles from "./LoginModal.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 const EN = {
   aria: "Sign in to Cherry Picked",
@@ -191,9 +192,8 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       </div>
       <div className={styles.field}>
         <label htmlFor="cp-pass">{t.password}</label>
-        <input
+        <PasswordField
           id="cp-pass"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"

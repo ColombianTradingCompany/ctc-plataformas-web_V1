@@ -13,6 +13,7 @@ import { RedSwitcher } from "@/components/RedSwitcher";
 import { SurfaceShell } from "@/components/services/SurfaceShell";
 import surface from "@/components/services/surface.module.css";
 import styles from "./terratalento.module.css";
+import { PasswordField } from "@/components/PasswordField";
 
 // ── Terratalento · la superficie del RECOLECTOR ──────────────────────────────
 // Patrón Directorio: sin sesión → landing / acceso (la MISMA cuenta del
@@ -246,7 +247,7 @@ function Acceso({ modoInicial, onVolver }: { modoInicial: "entrar" | "crear"; on
           </div>
           <div className={styles.field}>
             <label htmlFor="tt-pass">Contraseña</label>
-            <input id="tt-pass" type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Mínimo 6 caracteres" />
+            <PasswordField id="tt-pass" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Mínimo 6 caracteres" />
           </div>
           <button className="btn btn-solid" type="submit" disabled={cargando}>
             {cargando ? "Un momento…" : modo === "crear" ? "Crear cuenta" : "Entrar"}

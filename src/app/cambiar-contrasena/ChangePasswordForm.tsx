@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/components/panel/auth.module.css";
 import { changeOwnPassword } from "./actions";
+import { PasswordField } from "@/components/PasswordField";
 
 export function ChangePasswordForm() {
   const router = useRouter();
@@ -34,9 +35,8 @@ export function ChangePasswordForm() {
           {error && <span className={styles.err}>{error}</span>}
           <div className={styles.field}>
             <label htmlFor="pw">Nueva contraseña</label>
-            <input
+            <PasswordField
               id="pw"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
@@ -46,9 +46,8 @@ export function ChangePasswordForm() {
           </div>
           <div className={styles.field}>
             <label htmlFor="pw2">Confírmala</label>
-            <input
+            <PasswordField
               id="pw2"
-              type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"

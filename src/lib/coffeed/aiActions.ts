@@ -17,109 +17,15 @@
 // petición, no una garantía.
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { coffeedGate } from "./requireEcp";
+import { claude, parseJson, MODEL_CHEAP, MODEL_WRITE } from "./claude";
+
+const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
+
+type Service = ReturnType<typeof createServiceRoleClient>;
+import { studioGate } from "./studioGate";
 import { createSignedUrl } from "./storage";
 import { postExcerpt, renderCoffeedPost, type PostPanel, type PostSource } from "./postTemplate";
 import { COFFEED_RULES, parseCoffeedClaims, type CoffeedResult } from "./types";
-
-const API = "https://api.anthropic.com/v1/messages";
-const MODEL_CHEAP = "claude-haiku-4-5-20251001";
-const MODEL_WRITE = "claude-sonnet-5";
-
-const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del ECP no está activa. Vuelve a iniciar sesión." };
-const NO_KEY = "ANTHROPIC_API_KEY no está configurada en el servidor.";
-
-type AnthropicBlock = { type: string; text?: string };
-type Service = ReturnType<typeof createServiceRoleClient>;
-
-// Dos cosas que este modelo NO admite, ambas verificadas en vivo contra la API:
-//   · el prefill de assistant del prototipo (empezar la respuesta en "[") →
-//     400 «This model does not support assistant message prefill» (2026-07-29).
-//     El no-preámbulo se pide en el system y parseJson() rescata el primer
-//     bloque JSON si el modelo igual antepone texto.
-//   · el parámetro `fallbacks` que sí usa GVG con claude-opus-5 → 400
-//     «'claude-sonnet-5' does not support the `fallbacks` parameter» (2026-07-30).
-//     No copiar la cabecera de GVG a ciegas: el fallback es cosa de opus.
-// ⚠️ TIEMPO (2026-07-30, medido en vivo): el `fetch` de Node (undici) corta a
-// los 300 s de headersTimeout y el error que sale es un escueto «fetch failed».
-// Un barrido de 14 medios en UNA petición con búsqueda web tardaba 5,1 min y
-// moría justo ahí. La regla: cada petición tiene que caber MUY por debajo de
-// ese techo — de ahí una llamada por medio y este timeout explícito, que falla
-// rápido y deja que el reintento haga su trabajo.
-// Una llamada con dos búsquedas web tarda ~40 s medidos (2026-07-30). 90 s da
-// margen de sobra y acota el peor caso del barrido entero.
-const REQUEST_TIMEOUT_MS = 90_000;
-
-async function claude(opts: {
-  model: string;
-  system: string;
-  user: string;
-  maxTokens?: number;
-  /** Búsqueda web del lado del servidor — solo donde hace falta salir a mirar. */
-  webSearch?: number;
-  timeoutMs?: number;
-}): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error(NO_KEY);
-
-  // 529 (overloaded) y 429 son transitorios y frecuentes — visto en vivo el
-  // 2026-07-29. Dos reintentos con espera; cualquier otro error corta ya.
-  let lastErr = "";
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 3000));
-    let res: Response;
-    try {
-      res = await fetch(API, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({
-          model: opts.model,
-          max_tokens: opts.maxTokens ?? 2000,
-          system: opts.system,
-          ...(opts.webSearch ? { tools: [{ type: "web_search_20260209", name: "web_search", max_uses: opts.webSearch }] } : {}),
-          messages: [{ role: "user", content: opts.user }],
-        }),
-        signal: AbortSignal.timeout(opts.timeoutMs ?? REQUEST_TIMEOUT_MS),
-      });
-    } catch (e) {
-      const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
-      lastErr = timedOut ? "La petición tardó más de lo permitido y se abortó." : `Fallo de red: ${(e as Error).message}`;
-      // Un timeout se reintenta UNA sola vez. Reintentarlo tres veces multiplica
-      // la espera por tres sin cambiar nada (la consulta lenta sigue siendo
-      // lenta) y es lo que hacía que un barrido se fuera a diez minutos.
-      if (timedOut && attempt >= 1) break;
-      continue;
-    }
-    if (res.ok) {
-      const data = (await res.json()) as { content?: AnthropicBlock[]; stop_reason?: string };
-      // Un JSON cortado a la mitad falla en parseJson con un error críptico de
-      // posición; aquí se nombra la causa real (2026-07-30, visto en vivo con
-      // las 3 propuestas y max_tokens corto).
-      if (data.stop_reason === "max_tokens") {
-        throw new Error("La respuesta se cortó por longitud (max_tokens). Reintenta: si se repite, hay que subir el tope de este paso.");
-      }
-      return (data.content ?? [])
-        .filter((b) => b.type === "text" && typeof b.text === "string")
-        .map((b) => b.text)
-        .join("");
-    }
-    lastErr = `Claude ${res.status}: ${(await res.text()).slice(0, 300)}`;
-    if (res.status !== 529 && res.status !== 429) break;
-  }
-  throw new Error(lastErr);
-}
-
-function parseJson<T>(raw: string): T {
-  const clean = raw.replace(/```json|```/g, "").trim();
-  try {
-    return JSON.parse(clean) as T;
-  } catch {
-    // Rescate: quedarse con el primer bloque {...} o [...]
-    const m = clean.match(/[[{][\s\S]*[\]}]/);
-    if (!m) throw new Error("Claude no devolvió JSON parseable");
-    return JSON.parse(m[0]) as T;
-  }
-}
 
 function logFail(where: string, err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
@@ -180,7 +86,7 @@ type ValidateOut = {
  * entra a la lista blanca a ensuciar el barrido.
  */
 export async function validateSourceUrl(rawUrl: string): Promise<{ ok: true; verdict: ValidateOut } | { ok: false; error: string }> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
   const url = rawUrl.trim();
   if (!/^https?:\/\/.+\..+/.test(url)) return { ok: false, error: "Pega una URL completa (https://…)." };
@@ -276,7 +182,7 @@ async function mapWithLimit<T, R>(items: T[], limit: number, worker: (item: T) =
  * fase 2 del spec: el owner decide cuándo se barre.
  */
 export async function sweepSources(): Promise<{ ok: true; added: number; found: number } | { ok: false; error: string }> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
   const service = createServiceRoleClient();
 
@@ -388,7 +294,7 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
 type TriageOut = { id: string; axis: string; relevance: number; thread_id: string | null; reason: string };
 
 export async function runTriage(): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
 
@@ -470,7 +376,7 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
  * la memoria del cliente.
  */
 export async function runExtraction(cycleId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
 
@@ -565,7 +471,7 @@ Devuelve SOLO un objeto JSON, sin texto antes ni después:
 type ProposalOut = { angle: string; title: string; hook: string; panel_map: string[]; continues: string | null; opens: string | null };
 
 export async function runProposals(cycleId: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
 
@@ -696,7 +602,7 @@ type PanelOut = { position: number; role: string; text: string; note: string; sr
  * instrucción del editor por encima de todo lo demás.
  */
 export async function createPost(cycleId: string, reeditPrompt?: string): Promise<CoffeedResult> {
-  const who = await coffeedGate();
+  const who = await studioGate();
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
 

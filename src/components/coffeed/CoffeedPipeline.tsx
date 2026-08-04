@@ -7,7 +7,8 @@
 // columna con su botón de reintento, en vez de perderse.
 
 import { useState } from "react";
-import { chooseProposal, getCycleDetail, getPostHtml, publishPost, updateProposal } from "@/lib/coffeed/actions";
+import { chooseProposal, getCycleDetail, getPostHtml, updateProposal } from "@/lib/coffeed/actions";
+import { submitCarruselDeliverable } from "@/lib/coffeed/deliverableActions";
 import { createPost, runExtraction, runProposals } from "@/lib/coffeed/aiActions";
 import type { CoffeedCycle, CoffeedExtraction, CoffeedProposal, CoffeedResult } from "@/lib/coffeed/types";
 import styles from "./coffeedConsole.module.css";
@@ -334,12 +335,16 @@ export function PostsView({
   busy,
   run,
   showToast,
+  deliveredDraftIds,
 }: {
   cycles: CoffeedCycle[];
   busy: boolean;
   run: RunFn;
   showToast: (k: string, m: string) => void;
+  /** Los que ya viajaron al ECP: el botón cambia a "Entregado" y se apaga. */
+  deliveredDraftIds: string[];
 }) {
+  const delivered = new Set(deliveredDraftIds);
   const [reediting, setReediting] = useState<CoffeedCycle | null>(null);
   const [prompt, setPrompt] = useState("");
 
@@ -440,12 +445,19 @@ export function PostsView({
                 >
                   Re-editar
                 </button>
+                {/* El taller ya no publica: ENTREGA. La luz verde y el muro son
+                    del ECP (reparto 2026-08-03). */}
                 <button
                   className={`${styles.btn} ${styles.btnSm} ${styles.btnGo}`}
-                  disabled={busy}
-                  onClick={() => run(() => publishPost(c.post!.draftId), ["Publicado", "El capítulo ya está en el muro de la red."])}
+                  disabled={busy || delivered.has(c.post!.draftId)}
+                  onClick={() =>
+                    run(() => submitCarruselDeliverable(c.post!.draftId), [
+                      "Entregado",
+                      "El capítulo está en la cola del ECP, a la espera de luz verde.",
+                    ])
+                  }
                 >
-                  Publicar
+                  {delivered.has(c.post!.draftId) ? "Entregado" : "Entregar al ECP"}
                 </button>
               </div>
             </div>

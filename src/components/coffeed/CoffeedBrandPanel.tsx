@@ -9,7 +9,7 @@
 
 import { useRef, useState } from "react";
 import { putSignedUrlWithProgress } from "@/lib/kaffetalMedia";
-import { clearBrandLogo, prepareBrandLogoUpload, saveBrand, setBrandLogo } from "@/lib/coffeed/actions";
+import { clearBrandLogo, prepareBrandLogoUpload, saveBrand, setBrandLogo } from "@/lib/coffeed/ecpActions";
 import { COFFEED_BASE_COLORS, COFFEED_FONTS, COFFEED_PALETTE_MAX, coffeedFontStack, type CoffeedBrand, type CoffeedResult } from "@/lib/coffeed/types";
 import styles from "./coffeedConsole.module.css";
 import { Ring } from "./Ring";

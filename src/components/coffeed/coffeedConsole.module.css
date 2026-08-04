@@ -79,6 +79,32 @@
 }
 .navRule { border: 0; border-top: 1px solid var(--rule-hard); margin: 10px 0 2px; }
 
+/* Nota al pie del rail: en el taller recuerda de quién es la marca; en el ECP,
+   de quién es la producción. Cada consola sabe lo que NO le toca. */
+.railNote {
+  margin-top: 18px; padding: 10px; border: 1px dashed var(--rule-hard); background: var(--card);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.railNote b { font-size: 13px; color: var(--ink); }
+.railNote small { font-size: 11px; line-height: 1.4; color: var(--ink-soft); }
+.railNote .swatches i { width: 14px; height: 14px; border: 1px solid var(--rule-hard); display: block; }
+
+/* ---------- PREVISUALIZACIÓN DE UNA ENTREGA ---------- */
+/* El sobre es uno; el contenido no. Cada tipo se revisa como se va a ver. */
+.previewStrip { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 2px; }
+.previewPanel {
+  flex: 0 0 150px; border: 1px solid var(--rule); background: #fff; padding: 8px;
+  display: flex; flex-direction: column; gap: 6px; min-height: 120px;
+}
+.previewPanel p { margin: 0; font-size: 12px; line-height: 1.35; font-weight: 600; }
+.previewMedia {
+  position: relative; aspect-ratio: 9 / 16; max-height: 340px; max-width: 200px;
+  border: 1px solid var(--rule); background: #000; overflow: hidden;
+}
+.previewMedia iframe, .previewMedia video {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block;
+}
+
 /* ---------- CABECERAS ---------- */
 .viewhead { margin-bottom: 22px; max-width: 68ch; }
 .viewhead h1 {

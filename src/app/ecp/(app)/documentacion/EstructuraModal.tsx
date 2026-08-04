@@ -104,7 +104,10 @@ export function RedPublicaDiagram() {
       <Box x={290} y={640} w={200} h={46} kind="bi" title="Agente de Carga" sub="solo login" />
       <Box x={520} y={640} w={200} h={46} kind="bi" title="Nacionalización" sub="solo login" />
       <Box x={750} y={640} w={200} h={46} kind="bi" title="Master Roaster" sub="solo login" />
-      <Box x={980} y={640} w={200} h={46} kind="bi" title="Estudio de Contenido" sub="solo login" />
+      {/* El Estudio dejó de ser una puerta y pasó a ser un TALLER (2026-08-03):
+          produce con varias apps y entrega a la cola del ECP. Los otros cuatro
+          socios siguen siendo credencial + scaffold. */}
+      <Box x={980} y={640} w={200} h={46} kind="bi" title="Estudio de Contenido" sub="taller · produce y entrega" />
 
       <line x1={60} y1={708} x2={88} y2={708} stroke={HOOK_TOOLS} strokeWidth={1.6} />
       <text x={96} y={712} fontSize={12} fill={MUTED}>monta el panel de Herramientas</text>

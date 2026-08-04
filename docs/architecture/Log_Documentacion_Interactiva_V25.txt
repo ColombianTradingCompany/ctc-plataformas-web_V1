@@ -34,6 +34,85 @@ Contexto abierto al cerrar V25:
   entradas de dev para Kaffetal Regal y Cherry Picked.
 - El bucket de Storage sigue sin poda automática del Buzón.
 
+## [2026-08-03] Coffeed se parte en dos: el Estudio PRODUCE, el ECP PUBLICA
+Decisión del owner que revierte parcialmente el movimiento del 2026-07-30 (que
+llevó CoffeedStudio del socio al ECP). La regla nueva, más fina que la anterior:
+**producir es del socio, dirigir y publicar es de CTC**. El "quién opera ≠ quién
+publica" que se había descartado vuelve, pero acotado a la producción.
+
+- **CAMBIO DE ARQUITECTURA + NODOS NUEVOS.** El módulo Coffeed del ECP tenía 7
+  vistas; se parten:
+  · al TALLER (socio Estudio de Contenido): Medios de Consulta, Selección de
+    Fuentes, Propuestas, Posts en Fila + Canon (donde SE ESCRIBE).
+  · se quedan en el ECP: Muro, Identidad de marca, Canon EN ESPEJO (solo
+    lectura) y una vista nueva, **Entregas**.
+- `src/components/coffeed/CoffeedConsole.tsx` reescrito = consola del ECP.
+  `StudioConsole.tsx` (nuevo) = el taller. `CanonView.tsx` extraído: lo montan
+  las dos, con prop `mirror` en el ECP.
+- Gate nuevo `src/lib/coffeed/studioGate.ts`: abre para el socio
+  `estudio-contenido` (cookie PÚBLICA) **O** un operador interno con grant de
+  `ecp` (cookie del panel). Son dos cookies distintas y se prueban en orden.
+  Razón: sin el segundo caso, suspender la credencial del socio deja a CTC
+  fuera de su propio taller. `coffeedGate` (requireEcp) sigue mandando en
+  publicar. `actions.ts` + `aiActions.ts` pasaron a studioGate (29 llamadas);
+  `ecpActions.ts` (nuevo) se queda con marca + anuncios + el bundle del ECP.
+- El cliente de Claude salió a `src/lib/coffeed/claude.ts` (lo comparten Source
+  Wrapper y Datawave) y ganó `claudeSourced()`, que además devuelve las fuentes
+  de la búsqueda web — Datawave las cita.
+
+## [2026-08-03] Entregas polimórficas: UNA cola para todas las apps del Estudio
+- **TABLA NUEVA `coffeed_deliverables`** (migración `coffeed_polymorphic_deliverables`,
+  service-role-only como el resto de coffeed_*): `kind` (carrusel|video|embed|
+  identidad) + `app` (source_wrapper|datawave|identity) + `payload` jsonb +
+  `draft_id` FK→coffeed_drafts. Ciclo: entregado → aceptado → publicado, con
+  **devuelto** (rebote al taller con nota, sin borrar la entrega).
+- Trigger `coffeed_guard_deliverable`: nadie nace publicado, no se publica sin
+  aceptar antes, un carrusel RE-VALIDA en la base las reglas 5-10 / máx. 3 por
+  fuente / ninguno sin trazar (reusa `coffeed_check_draft`), y despublicar
+  limpia `published_at`. 8/8 comprobaciones en vivo.
+- **El muro cambió de fuente**: `getCoffeedWall()` ya NO lee `coffeed_drafts`,
+  lee `coffeed_deliverables` state='publicado'. Es un feed MIXTO — carrusel,
+  video e incrustado. `CoffeedWallBundle.chapters` → `.items` (tipo
+  `CoffeedWallItem` con `kind`). Afecta a los 4 montajes del muro (KR hub,
+  Cherry Picked, Directorio, /coffeed) — las etiquetas trilingües de CP
+  ganaron `video` y `shared`.
+- `coffeed_drafts.state` se queda en draft→accepted (el trigger del canon sigue
+  colgado de ahí); `published` deja de usarse: publicar es de la entrega.
+- **NUEVO DICT sugerido**: "Entrega" (el sobre polimórfico) y "Taller vs
+  Dirección" (el reparto). Escenario nuevo sugerido: *"Del barrido al muro"* —
+  barrido → selección → propuesta → post → **entregar al ECP** → luz verde →
+  publicado en las 4 superficies.
+- Incrustados de Instagram/YouTube: `resolveEmbed()` en types.ts normaliza la
+  url del navegador (youtu.be, watch?v=, shorts, /p/, /reel/, /tv/) a url de
+  iframe. Guardián nuevo `scripts/qa-coffeed-embed-check.mjs`, 26/26.
+
+## [2026-08-03] El Estudio de Contenido deja de ser scaffold: es un taller de apps
+- `/socios/estudio-contenido/panel` ya no muestra las 5 pantallas de maqueta:
+  es un **lanzador de apps** (`src/lib/coffeed/studioApps.ts` es el registro).
+  Los otros 4 socios siguen con el scaffold de siempre.
+- Rutas nuevas: `panel/source-wrapper` y `panel/datawave` (404 para cualquier
+  otro slug). Marco común `StudioAppShell.tsx`.
+- **NODO NUEVO: Datawave**, app #2 (`src/components/coffeed/datawave/`), puerto
+  de `reference_coffeed/Datawave/datawave.jsx`. Convierte una serie de datos en
+  un episodio de carrera de barras con escenario 9:16 grabable. Dos muletas del
+  artifact sustituidas: `window.storage` → tabla **`coffeed_datawave_episodes`**;
+  `fetch` a api.anthropic desde el navegador SIN clave → Server Actions
+  (`datawaveActions.ts`: buildEpisode/lookupWhy/lookupList/writeScript). El
+  guion NO sale a la web a propósito: los giros los calcula `findBeats` de la
+  serie. El video se graba fuera y se entrega como archivo o enlace.
+- App #3 **Identity Value Creation** queda declarada y visible como "en
+  construcción". Su pendiente real no es UI: leer finca/lote desde un socio
+  exige vistas SECURITY DEFINER estrechas por campo (la matriz de permisos),
+  no un grant ancho — misma regla que public_lot_catalog.
+- Desviación consciente: `DatawaveStyles.tsx` mantiene la hoja del prototipo
+  verbatim en un `<style>` (clases `dw-*` ya namespaceadas bajo `.dw`) en vez
+  de pasar a CSS Modules. Renombrar ~250 usos no daba nada y rompía el diff
+  contra el prototipo.
+- Verificación: tsc + eslint limpios, `next build` OK con las dos rutas, las 8
+  comprobaciones del trigger, la consulta REAL del muro contra PostgREST (el
+  embed anidado resuelve) y 26/26 del guardián de incrustados. Datos de QA
+  borrados; `coffeed_deliverables` queda en cero.
+(commit: be50e6a · rama coffeed-estudio-split)
 ---
 
 ## [2026-08-04] Calculadora de Mermas · CTC actualizada a V14 (análisis escrito)

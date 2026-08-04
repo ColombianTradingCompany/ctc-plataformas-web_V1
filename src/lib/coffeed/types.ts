@@ -142,22 +142,130 @@ export type CoffeedAnnouncement = {
   publishedAt: string;
 };
 
-/** Un capítulo publicado, tal y como lo leen KR / Cherry Picked / Directorio. */
-export type CoffeedWallChapter = {
-  draftId: string;
-  chapterNo: number;
+// ── Entregas · el sobre polimórfico (2026-08-03) ─────────────────────────────
+// El Estudio de Contenido produce con VARIAS apps y deposita en UNA cola que el
+// ECP revisa y publica. `kind` dice qué lleva el sobre; `app` de dónde viene.
+//
+//   carrusel  → apunta a su borrador (paneles + reglas 5-10 / cap 3 / trazado)
+//   video     → una pieza de Datawave: archivo subido o url externa
+//   embed     → contenido ajeno incrustado (Instagram, YouTube)
+//   identidad → Identity Value Creation, app #3, aún sin construir
+
+export type CoffeedDeliverableKind = "carrusel" | "video" | "embed" | "identidad";
+export type CoffeedDeliverableState = "entregado" | "aceptado" | "publicado" | "devuelto";
+export type CoffeedStudioApp = "source_wrapper" | "datawave" | "identity";
+export type CoffeedMediaProvider = "youtube" | "instagram" | "archivo";
+
+export type CoffeedMedia = {
+  provider: CoffeedMediaProvider;
+  /** La url tal y como la pegó el estudio (o la firmada, si es archivo). */
+  url: string;
+  /** La url lista para un <iframe>; null en `archivo` (va en <video>). */
+  embedUrl: string | null;
+  poster: string | null;
+  aspect: string | null;
+  caption: string | null;
+};
+
+export type CoffeedDeliverable = {
+  id: string;
+  kind: CoffeedDeliverableKind;
+  app: CoffeedStudioApp;
+  title: string;
+  excerpt: string | null;
+  state: CoffeedDeliverableState;
+  draftId: string | null;
+  chapterNo: number | null;
+  submittedAt: string;
+  submittedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+  /** Resuelto solo para `carrusel`. */
+  panels: { position: number; role: string | null; text: string }[];
+  /** Resuelto para `video` / `embed`. */
+  media: CoffeedMedia | null;
+};
+
+export const COFFEED_APP_LABEL: Record<CoffeedStudioApp, string> = {
+  source_wrapper: "Source Wrapper",
+  datawave: "Datawave",
+  identity: "Identity Value Creation",
+};
+
+export const COFFEED_KIND_LABEL: Record<CoffeedDeliverableKind, string> = {
+  carrusel: "Carrusel",
+  video: "Video",
+  embed: "Incrustado",
+  identidad: "Identidad",
+};
+
+/** Un ítem publicado, tal y como lo leen KR / Cherry Picked / Directorio. */
+export type CoffeedWallItem = {
+  id: string;
+  kind: CoffeedDeliverableKind;
+  /** Solo los carruseles llevan número de capítulo. */
+  chapterNo: number | null;
   title: string;
   excerpt: string | null;
   publishedAt: string | null;
   panels: { position: number; role: string | null; text: string }[];
+  media: CoffeedMedia | null;
 };
 
-/** El muro público: capítulos + anuncios (2026-07-30: los anuncios TAMBIÉN viajan). */
+/** El muro público: entregas publicadas + anuncios (2026-07-30: los anuncios
+ *  TAMBIÉN viajan). Desde el 2026-08-03 los ítems son de varios tipos. */
 export type CoffeedWallBundle = {
-  chapters: CoffeedWallChapter[];
+  items: CoffeedWallItem[];
   announcements: CoffeedAnnouncement[];
   brand: CoffeedBrandPublic;
 };
+
+// ── Incrustados · normalizar la url que pega el estudio ──────────────────────
+// Se pega la url del navegador (youtu.be/…, /watch?v=…, /shorts/…, un post o un
+// reel de Instagram) y aquí sale la de <iframe>. Devuelve null si no se
+// reconoce: la action rechaza antes que guardar algo que no va a montar.
+
+export function youtubeEmbedUrl(raw: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  const host = u.hostname.replace(/^www\./, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = u.pathname.slice(1).split("/")[0] || null;
+  else if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+    if (u.pathname === "/watch") id = u.searchParams.get("v");
+    else if (u.pathname.startsWith("/shorts/")) id = u.pathname.split("/")[2] || null;
+    else if (u.pathname.startsWith("/embed/")) id = u.pathname.split("/")[2] || null;
+  }
+  if (!id || !/^[A-Za-z0-9_-]{6,20}$/.test(id)) return null;
+  return `https://www.youtube-nocookie.com/embed/${id}`;
+}
+
+export function instagramEmbedUrl(raw: string): string | null {
+  let u: URL;
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  if (u.hostname.replace(/^www\./, "") !== "instagram.com") return null;
+  const m = u.pathname.match(/^\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  return `https://www.instagram.com/${m[1]}/${m[2]}/embed`;
+}
+
+/** Detecta el proveedor y devuelve su url de incrustación, o null. */
+export function resolveEmbed(raw: string): { provider: "youtube" | "instagram"; embedUrl: string } | null {
+  const yt = youtubeEmbedUrl(raw);
+  if (yt) return { provider: "youtube", embedUrl: yt };
+  const ig = instagramEmbedUrl(raw);
+  if (ig) return { provider: "instagram", embedUrl: ig };
+  return null;
+}
 
 /** La guía estética que fuerza que todos los outputs se vean de la misma familia. */
 export type CoffeedBrand = {
@@ -172,17 +280,32 @@ export type CoffeedBrand = {
 
 export type CoffeedBrandPublic = Pick<CoffeedBrand, "companyName" | "slogan" | "palette" | "fontFamily">;
 
-/** Todo lo que la consola necesita para pintarse de una vez. */
-export type CoffeedConsoleBundle = {
+/** Todo lo que el TALLER necesita para pintarse de una vez.
+ *  (Source Wrapper, dentro del Estudio de Contenido — antes era la consola
+ *  entera del ECP; el 2026-08-03 se partió en dos.) */
+export type CoffeedStudioBundle = {
   openCycle: CoffeedCycle | null;
   samples: CoffeedSample[]; // solo del ciclo abierto
   cycles: CoffeedCycle[]; // el resto, para los dos kanban
-  threads: CoffeedThread[];
-  announcements: CoffeedAnnouncement[];
-  chapters: CoffeedWallChapter[];
+  threads: CoffeedThread[]; // el canon: aquí se ESCRIBE
   sources: CoffeedSource[];
+  /** La marca la define el ECP; el taller la lee para no salirse de la familia. */
   brand: CoffeedBrand;
   nextChapterNo: number;
+  /** Borradores ya entregados al ECP, por id — para no entregar dos veces. */
+  deliveredDraftIds: string[];
+  identity: { displayName: string; via: "partner" | "ecp" };
+};
+
+/** Todo lo que la consola de DIRECCIÓN necesita (ECP · Coffeed):
+ *  la cola de entregas, el muro, la identidad de marca y el canon en espejo. */
+export type CoffeedEcpBundle = {
+  deliverables: CoffeedDeliverable[];
+  announcements: CoffeedAnnouncement[];
+  /** Canon en SOLO LECTURA: quien da luz verde necesita ver qué hilo continúa
+   *  una pieza, pero el canon se escribe en el taller. */
+  threads: CoffeedThread[];
+  brand: CoffeedBrand;
 };
 
 export type CoffeedResult = { ok: true } | { ok: false; error: string };

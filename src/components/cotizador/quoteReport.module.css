@@ -1,0 +1,102 @@
+/* ── El documento del cliente ────────────────────────────────────────────────
+   Papelería sobria: sirve igual en pantalla y en papel. `@media print` deja
+   solo el documento, para que "Imprimir → Guardar como PDF" salga limpio. */
+
+.doc {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid var(--line, #d6d3e6);
+  border-radius: 10px;
+  padding: 30px 34px;
+  max-width: 820px;
+  margin: 0 auto;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #3c0a86;
+}
+.headRight { text-align: right; }
+.brand { margin: 0; font-family: var(--font-fraunces), Georgia, serif; font-size: 16px; font-weight: 700; color: #3c0a86; }
+.code { margin: 0; font-family: var(--font-spline-mono), ui-monospace, monospace; font-size: 15px; font-weight: 700; }
+.sub { margin: 2px 0 0; font-size: 11px; color: #6b7280; }
+
+.title {
+  margin: 18px 0 4px;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1a1a1a;
+}
+.route { margin: 0 0 18px; font-size: 12.5px; color: #4b5563; }
+
+.block { margin-bottom: 16px; }
+.block h2 {
+  margin: 0 0 5px;
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #3c0a86;
+}
+.block p { margin: 0; }
+.block ul { margin: 0; padding-left: 17px; }
+.block li { margin-bottom: 2px; }
+.pre { white-space: pre-wrap; }
+.product strong { font-size: 14px; }
+
+.priceBox {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  padding: 16px 18px;
+  border: 1px solid #d6d3e6;
+  border-radius: 8px;
+  background: #faf9fd;
+}
+.priceTotal { text-align: right; }
+.k {
+  display: block;
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+.big { margin: 3px 0 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #3c0a86; }
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+
+.foot {
+  margin-top: 22px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e3ee;
+  font-size: 11px;
+  color: #6b7280;
+}
+.foot p { margin: 0 0 4px; }
+
+@media (max-width: 620px) {
+  .doc { padding: 20px 18px; }
+  .cols { grid-template-columns: 1fr; }
+  .priceTotal { text-align: left; }
+}
+
+/* Al imprimir, solo el documento. */
+@media print {
+  .doc { border: 0; border-radius: 0; padding: 0; max-width: none; }
+  :global(body *) { visibility: hidden; }
+  .doc, .doc * { visibility: visible; }
+  .doc { position: absolute; inset: 0; }
+}

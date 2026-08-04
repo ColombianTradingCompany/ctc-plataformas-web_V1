@@ -23,6 +23,9 @@ import {
   type TransportMode,
 } from "@/lib/cotizador/logistico/model";
 import { issueQuote, saveQuoteDraft } from "@/lib/cotizador/actions";
+import { LogisticoBanner } from "./LogisticoBanner";
+import { QuoteReport } from "./QuoteReport";
+import { InfoDot } from "./InfoDot";
 import type { Quote } from "@/lib/cotizador/types";
 import { money } from "./QuotesBoard";
 import styles from "@/app/bcp/(app)/shared.module.css";
@@ -33,7 +36,7 @@ const usdF = (v: number) => `US$ ${v.toFixed(2)}`;
 function hydrate(raw: Record<string, unknown>): LogisticoInputs {
   const d = defaultLogisticoInputs();
   const r = raw as Partial<LogisticoInputs>;
-  return { ...d, ...r, rows: { ...d.rows, ...(r.rows ?? {}) } };
+  return { ...d, ...r, meta: { ...d.meta, ...(r.meta ?? {}) }, rows: { ...d.rows, ...(r.rows ?? {}) } };
 }
 
 export function LogisticoEditor({ quote, onSaved }: { quote: Quote; onSaved: () => void }) {
@@ -41,10 +44,15 @@ export function LogisticoEditor({ quote, onSaved }: { quote: Quote; onSaved: () 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<"calculo" | "documento">("calculo");
   const locked = quote.status !== "borrador";
 
   const res = useMemo(() => computeLogistico(inp), [inp]);
   const set = useCallback((patch: Partial<LogisticoInputs>) => setInp((s) => ({ ...s, ...patch })), []);
+  const setMeta = useCallback(
+    (patch: Partial<LogisticoInputs["meta"]>) => setInp((s) => ({ ...s, meta: { ...s.meta, ...patch } })),
+    []
+  );
 
   /** Cambiar de Incoterm o de modo RE-APLICA la cobertura sobre las filas. */
   const setIncoterm = useCallback((incoterm: Incoterm, transportMode: TransportMode) => {
@@ -75,6 +83,34 @@ export function LogisticoEditor({ quote, onSaved }: { quote: Quote; onSaved: () 
 
   return (
     <>
+      <LogisticoBanner
+        inp={inp}
+        res={res}
+        locked={locked}
+        onMeta={setMeta}
+        onMargen={(v) => set({ margenPct: v })}
+        onTariff={(t) => set({ tariff: t })}
+        onFormato={(f) => set({ purchaseFormat: f })}
+      />
+
+      <div className={styles.tabs}>
+        <button type="button" className={tab === "calculo" ? styles.tabActive : undefined} onClick={() => setTab("calculo")}>
+          Cálculo
+        </button>
+        <button type="button" className={tab === "documento" ? styles.tabActive : undefined} onClick={() => setTab("documento")}>
+          Documento del cliente
+        </button>
+      </div>
+
+      {tab === "documento" ? (
+        <>
+          <p className={styles.meta}>
+            Esto es lo que ve el cliente. No lleva margen ni desglose de costos — eso se queda en la barra de arriba.
+          </p>
+          <QuoteReport quote={quote} inp={inp} res={res} />
+        </>
+      ) : (
+      <>
       {/* ── Términos de entrega: lo que gobierna todo ── */}
       <div className={styles.card}>
         <div className={styles.sectionHead}>
@@ -147,6 +183,23 @@ export function LogisticoEditor({ quote, onSaved }: { quote: Quote; onSaved: () 
               onChange={(e) => set({ precioProductorPorCarga: Number(e.target.value), sobreOn: false })} />
           </div>
         </div>
+        <div className={styles.field} style={{ marginTop: 10 }}>
+          <label htmlFor="lotdesc">
+            Descripción del lote
+            <InfoDot
+              label="la descripción del lote"
+              text="Cualidades del lote en su variedad, proceso y perfil, además de referencias de finca y la región. Aparece con su propio encabezado en el documento del cliente."
+            />
+          </label>
+          <input
+            id="lotdesc"
+            value={inp.meta.lotDescription}
+            disabled={locked}
+            placeholder="Ej: Caturra lavado, finca El Paraíso (Santander), cosecha 2025, 86 SCA, humedad 10,5%"
+            onChange={(e) => setMeta({ lotDescription: e.target.value })}
+          />
+        </div>
+
         <div className={styles.digestGrid}>
           {[
             ["Verde necesario", `${nf.format(res.kgVerdeNecesario)} kg`],
@@ -238,6 +291,8 @@ export function LogisticoEditor({ quote, onSaved }: { quote: Quote; onSaved: () 
         {msg && <p className={styles.meta}>{msg}</p>}
         {error && <p className={styles.warn}>{error}</p>}
       </div>
+      </>
+      )}
     </>
   );
 }

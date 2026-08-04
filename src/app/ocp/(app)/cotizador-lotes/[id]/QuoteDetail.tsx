@@ -11,6 +11,7 @@ import { QUOTE_STATUS_LABEL, effectiveStatus, type Quote } from "@/lib/cotizador
 import { CounterpartyPicker } from "@/components/cotizador/CounterpartyPicker";
 import { LoteEditor } from "@/components/cotizador/LoteEditor";
 import { LogisticoEditor } from "@/components/cotizador/LogisticoEditor";
+import { InfoDot } from "@/components/cotizador/InfoDot";
 import styles from "@/app/bcp/(app)/shared.module.css";
 
 export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) {
@@ -74,8 +75,17 @@ export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) 
               onBlur={(e) => void run(() => saveQuoteDraft(quote.id, { validUntil: e.target.value || null }))}
             />
           </div>
+          {/* «Observaciones», no «Notas»: es el MISMO nombre que lleva en el
+              documento del cliente. En la V19 se llamaba distinto en cada sitio
+              y confundía (marcado por el owner, 2026-08-04). */}
           <div className={styles.field} style={{ flex: 1, minWidth: 260 }}>
-            <label htmlFor="nt">Notas</label>
+            <label htmlFor="nt">
+              Observaciones
+              <InfoDot
+                label="las observaciones"
+                text="Observaciones comerciales y de logística relacionadas con la cotización. Salen tal cual en el documento del cliente, bajo este mismo título."
+              />
+            </label>
             <input
               id="nt" defaultValue={quote.notes ?? ""} disabled={busy} placeholder="Condiciones, supuestos, qué NO incluye…"
               onBlur={(e) => void run(() => saveQuoteDraft(quote.id, { notes: e.target.value }))}

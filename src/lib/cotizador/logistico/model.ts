@@ -34,6 +34,16 @@ export const INCO_DATA: Record<Incoterm, { name: string; sellerPct: number; poin
   DDP: { name: "Delivered Duty Paid", sellerPct: 96, point: "Instalaciones del comprador, importado y despachado. Máxima obligación.", modes: ["aereo"] },
 };
 
+// Grados de calidad de CTC. «Mix» (2026-08-04, pedido del owner) es para el lote
+// que combina grados y por eso no lleva color propio: no es un grado de la Arena,
+// es una mezcla.
+export const QUALITY_GRADES = ["Black", "Red", "Blue", "Gold", "Tyrian", "Mix"] as const;
+export type QualityGrade = (typeof QUALITY_GRADES)[number];
+
+export const GRADE_COLORS: Record<QualityGrade, string> = {
+  Black: "#1a1816", Red: "#C8102F", Blue: "#003087", Gold: "#b8860b", Tyrian: "#66023C", Mix: "#6b7280",
+};
+
 export const TARIFF_LABELS = {
   verde: "Café Verde (0901.11.00)",
   tostado: "Café Tostado (0901.21.10.00)",
@@ -192,7 +202,34 @@ export const ROW_BY_ID = new Map(ROWS.map((r) => [r.id, r]));
 
 export type ManoObra = { jornal: number; dias: number; on: boolean };
 
+/** La cabecera de la cotización: identifica el lote y la ruta, no calcula nada.
+ *  Viaja al documento que se le manda al cliente. */
+export type LogisticoMeta = {
+  quoteName: string;
+  originCountry: string;
+  originCity: string;
+  destCountry: string;
+  destCity: string;
+  qualityGrade: QualityGrade;
+  /** Cualidades del lote: variedad, proceso, perfil, finca y región.
+   *  En el documento SÍ lleva encabezado propio (en la V19 se colaba sin título). */
+  lotDescription: string;
+};
+
+export function defaultLogisticoMeta(): LogisticoMeta {
+  return {
+    quoteName: "Cotización Café",
+    originCountry: "Colombia",
+    originCity: "",
+    destCountry: "",
+    destCity: "",
+    qualityGrade: "Gold",
+    lotDescription: "",
+  };
+}
+
 export type LogisticoInputs = {
+  meta: LogisticoMeta;
   /** kg del PRODUCTO FINAL que se cotizan. */
   kgFinal: number;
   /** kg de pergamino por cada 70 kg de verde — el factor de rendimiento FNC. */
@@ -238,6 +275,7 @@ export function defaultLogisticoInputs(): LogisticoInputs {
   const rows: LogisticoInputs["rows"] = {};
   for (const r of ROWS) rows[r.id] = { on: r.on, val: r.def, unit: r.unit };
   return {
+    meta: defaultLogisticoMeta(),
     kgFinal: 500,
     kgPergPor70: 94,
     mermaAdicionalPct: 0,
@@ -366,6 +404,8 @@ export type LogisticoResults = {
   precioVentaPorKg: number;
   precioVentaUsdPorKg: number;
   precioVentaUsdPorLb: number;
+  /** Las tajadas del reparto del costo. Suman EXACTAMENTE el CoGS. */
+  phases: { key: string; label: string; val: number; color: string }[];
   coverage: IncotermCoverage;
   warnings: string[];
 };
@@ -381,7 +421,7 @@ const BLOCK_LABEL: Record<BlockId, string> = {
 
 export function computeLogistico(raw: LogisticoInputs): LogisticoResults {
   const d = defaultLogisticoInputs();
-  const inp: LogisticoInputs = { ...d, ...raw, rows: { ...d.rows, ...raw.rows } };
+  const inp: LogisticoInputs = { ...d, ...raw, meta: { ...d.meta, ...(raw.meta ?? {}) }, rows: { ...d.rows, ...raw.rows } };
   const warnings: string[] = [];
 
   const kgFinal = Math.max(0, num(inp.kgFinal, 500));
@@ -587,6 +627,17 @@ export function computeLogistico(raw: LogisticoInputs): LogisticoResults {
     precioVentaPorKg: kgFinal > 0 ? precioVentaTotal / kgFinal : 0,
     precioVentaUsdPorKg: kgFinal > 0 && usd > 0 ? precioVentaTotal / kgFinal / usd : 0,
     precioVentaUsdPorLb: kgFinal > 0 && usd > 0 ? precioVentaTotal / kgFinal / usd / 2.2 : 0,
+    // ⚠️ En la V19 la tajada «Destino & last mile» solo llevaba `destTotal`: la
+    // última milla se quedaba fuera y por eso la torta no sumaba el CoGS (en su
+    // pantalla daba 98%). Aquí la tajada hace honor a su nombre y las tajadas
+    // suman el total exacto.
+    phases: [
+      { key: "materiaPrima", label: "Materia prima", val: materiaPrimaTotal, color: "#2d5a27" },
+      { key: "empaque", label: "Empaque", val: empaqueTotal, color: "#1a4a7a" },
+      { key: "origen", label: "Exportación origen", val: origenTotal, color: "#92520a" },
+      { key: "internacional", label: "Transporte int.", val: internacionalTotal, color: "#7a1a4a" },
+      { key: "destino", label: "Destino & last mile", val: destinoTotal + lastmileTotal, color: "#3a1a7a" },
+    ],
     coverage, warnings,
   };
 }

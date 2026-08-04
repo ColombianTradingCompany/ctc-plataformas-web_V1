@@ -33,3 +33,18 @@ Contexto abierto al cerrar V25:
   (cubre cualquier subdominio). Lo único fuera: localhost, donde solo hay
   entradas de dev para Kaffetal Regal y Cherry Picked.
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+---
+
+## [2026-08-04] Calculadora de Mermas · CTC actualizada a V14 (análisis escrito)
+- `public/tools/mermas-ctc.html` reemplazada por la V14 del owner (V11–V13 nunca
+  se integraron) y re-vendorizada con `scripts/vendor-tool-assets.mjs` (fuentes +
+  jsPDF locales, 0 assets de CDN).
+- Qué añade sobre la V10: `equivAnalysisParagraphs()` genera párrafos de análisis
+  por etapa de transformación (equivalente bruto por mermas vs costo del proceso,
+  y el precio máximo pagable por la materia prima para igualar el precio de la
+  etapa superior), visibles en la sección de equivalencias y también incluidos en
+  la exportación PDF; además, grupos de costos colapsables en la UI.
+- Cambio de contenido de una herramienta ya documentada (tools públicas): sin
+  nodos/wires/DICT nuevos para el wrap.
+(commit: db26ac0)

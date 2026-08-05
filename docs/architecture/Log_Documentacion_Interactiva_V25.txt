@@ -143,3 +143,102 @@ publica" que se había descartado vuelve, pero acotado a la producción.
 - Para el wrap: la lista de herramientas del banco crece a 10; si el mapa
   enumera las tools o el nivel Plus, añadir cogs-verde como ejemplo de Plus.
 (commit: c75cc76)
+
+## [2026-08-04] Ver la contraseña que se escribe, en toda la plataforma
+- `src/components/PasswordField.tsx` (+ su módulo CSS): UN componente en los 16
+  campos de contraseña de 11 ficheros — login maestro, acceso de socios, KR,
+  Cherry Picked, Directorio, Terratalento, cambio de contraseña forzado, cambio
+  del socio, y los tres candados del ECP (Admin Lock, GVG-Space, «mirar bajo el
+  capó» de la Arena).
+- Detalle que importa para el DICT: el botón es `type="button"` porque dentro de
+  un <form> un <button> sin type es submit — mirar la contraseña habría enviado
+  el formulario.
+- Regresión propia corregida en V2.45: el envoltorio cambiaba QUIÉN es el
+  elemento flex y en Terratalento (único `.field` en columna que no fijaba el
+  ancho del input) el ojo quedaba 114px fuera del campo.
+- Sin nodos ni escenarios nuevos: es transversal a todas las superficies con
+  login. Sugerido para el DICT: nada nuevo; a lo sumo una nota en el concepto de
+  identidad/login.
+(commit: 439419e + 2b4d42b)
+
+## [2026-08-04] Los dos menús de CTC Home salen ahora de la MISMA lista
+- `src/components/ctc-home/pageIndex.ts` es la única fuente del índice de la
+  página; la montan el desplegable de la cabecera (Header.tsx) y la burbuja
+  «Navegar» (QuickMenu.tsx), que se habían desincronizado: la cabecera seguía
+  listando CTC Tech, Co-Create y Varietales como entradas sueltas mientras la
+  burbuja ya los agrupaba bajo «Más allá de la exportación» (lo que refleja la
+  página desde la Fase 2 del V4).
+- CORRECCIÓN registrada: sospeché que `#cocreate` y `#varietales` eran enlaces
+  muertos; NO lo eran — ServicesSection los pinta con `id={c.id}` en cada
+  tarjeta. Era consistencia, no un bug.
+(commit: bba6e22)
+
+## [2026-08-04] NODOS NUEVOS: los dos cotizadores del OCP + tabla `quotes`
+- **TABLA NUEVA `quotes`** (migración `ocp_cotizador_quotes`, service-role-only):
+  `kind` lote|logistico de discriminador — mismo patrón que coffeed_deliverables.
+  Código por SECUENCIA (`COT-L-…`/`COT-G-…`, no max()+1: dos altas simultáneas se
+  pisarían), `inputs`/`results` jsonb, `total` desnormalizado para listar.
+- Destinatario polimórfico: productor | comprador | lead | externo. FKs
+  `ON DELETE SET NULL` y el nombre se COPIA al cotizar — borrar un perfil no
+  puede llevarse el historial, y el papel que se envió decía el nombre de
+  entonces.
+- Trigger `quotes_guard`: nadie nace emitida, no se emite sin total, no se decide
+  sin emitir, y una emitida no se recalcula.
+- **Por qué en el OCP y no en el ECP**: cotizar es operación (se hace contra un
+  productor o cliente concreto, con números de la cadena real); el ECP fija la
+  política de precios.
+- **NODOS NUEVOS**: `/ocp/cotizador-lotes` y `/ocp/cotizador-logistico`.
+- **LECCIÓN GRANDE, para el DICT**: primero porté solo la MATEMÁTICA de las dos
+  calculadoras del owner y escribí una interfaz propia encima. El owner abrió el
+  OCP y no reconoció nada. Se revirtió entero: ahora las apps van TAL CUAL en
+  `public/ocp-apps/` (Mermas V15 y CoGS V19) y lo único que cambia es cómo se
+  conectan. `AppFrame` es el puente: iframe del MISMO origen, se leen y escriben
+  sus propios inputs y se llama a su `recalc()`. Actualizar una calculadora =
+  reemplazar un archivo. Concepto para el DICT: «la app es el motor, el marco
+  solo la conecta».
+- Los seis cambios del owner van DENTRO de la app: Observaciones con un solo
+  nombre, Descripción del lote con título en el documento, grado «Mix»,
+  «Cotización preparada por», datos de la empresa al pie, y el margen que se ve
+  en la barra pero NUNCA en el documento del cliente.
+(commit: 9179ea9 → bdaadd2, mezclado en 553f527)
+
+## [2026-08-04] Cotizaciones: lista en tabla y reapertura con bitácora
+- La lista pasa de tarjetas a TABLA: Consecutivo · Referencia · Estatus ·
+  Destinatario · Total · Fecha, con las tres acciones. Renombrar en sitio
+  mientras sea borrador; borrar cualquiera —también emitidas— con aviso que
+  nombra código y estado.
+- **`quotes.change_log` jsonb + `reopenQuote`**: una emitida se puede REABRIR
+  para corregirla, y el trigger RECHAZA la reapertura si la bitácora no creció —
+  no se puede reabrir en silencio. El marco pasa la bitácora a la app en
+  `window.CTC_CHANGELOG` y todo documento generado después la lleva impresa al
+  final, con fecha, motivo y responsable.
+- Arreglo: los botones de Exportar volvían a funcionar. No los apagaba la app;
+  los apagaba mi marco, que deshabilitaba TODOS los controles del iframe al
+  emitir.
+- **ESCENARIO NUEVO sugerido**: «Cotizar un lote» — crear borrador → elegir
+  destinatario → trastear la calculadora → guardar → emitir (congela) →
+  reabrir deja rastro → el documento nuevo lleva la bitácora.
+(commit: 693ad3f)
+
+## [2026-08-04] NODO NUEVO: Anclas de mercado (tercer módulo del OCP) + cron diario
+- **TABLA NUEVA `market_anchors`** (service-role-only): `kind` (hoy solo
+  `fnc_carga`), `as_of`, `value`, `unit`, `source`, `automatic`. Único
+  (kind, as_of): el cron corre a diario y corrige en vez de duplicar.
+- El precio interno FNC SALE de la Configuración de la Calculadora de Mermas y
+  pasa a módulo propio: antes vivía en el localStorage del navegador de quien
+  abriera la herramienta —se perdía al limpiar caché y no lo veía nadie más—.
+  La herramienta SIGUE usándolo: el marco se lo pasa llamando a su propia
+  `fncRecord()`.
+- **NODO NUEVO** `/ocp/anclas-mercado`: serie, KPIs, alta manual, «Consultar
+  precio de hoy». Sembrado con el histórico que la calculadora traía cableado.
+- **RUTA NUEVA + INFRAESTRUCTURA NUEVA**: `/api/cron/market-anchors` y el primer
+  `vercel.json` del repo (cron 11:10 UTC ≈ 06:10 en Colombia). Autenticado con
+  `CRON_SECRET`; **503 si la variable falta** — una url pública que escribe en la
+  base es una invitación. El owner ya la configuró: el endpoint responde 401 sin
+  cabecera, que es la señal de que el guardián está armado.
+- El lector prefiere `null` a adivinar: si la Federación cambia el formato, no
+  anota nada (mejor un hueco en la serie que un número inventado). Guardián
+  `scripts/qa-anclas-check.mjs`, 13/13, sobre todo de lo que NO debe tragarse.
+- **DICT sugerido**: «Ancla de mercado» — la referencia con la que se cotiza,
+  común a las dos calculadoras.
+(commit: 693ad3f, mezclado en 5496144)

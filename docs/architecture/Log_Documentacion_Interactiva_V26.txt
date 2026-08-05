@@ -63,3 +63,36 @@ Contexto abierto al cerrar V26:
 - Para el TODO de GDPR: la política de privacidad tendrá que declarar a Resend,
   Notion, Google y Make como subprocesadores.
 (commit: pending)
+
+## [2026-08-05] F0 + F1 del plan de integraciones: la espina y el registro
+- **TABLAS NUEVAS** (migración `integraciones_espina_y_registro`, ambas
+  service-role-only): `integration_events` (dominio, tipo, payload, estado
+  pendiente|enviado|fallido|descartado, intentos, destino) y `automations`
+  (nombre, propósito OBLIGATORIO, dominio, disparador, sistemas[], criticidad,
+  etapa propuesta→piloto→activa→pausada→deprecada, make_scenario_id).
+- **ENUM NUEVO `integration_domain`** — el vocabulario compartido, que NO se
+  inventó: es la taxonomía de las etiquetas de Gmail y los hubs de Notion.
+  Espejo en `src/lib/integraciones/dominios.ts` con su etiqueta de Gmail al lado.
+- **La regla de la espina**: las Server Actions NO llaman webhooks; insertan una
+  fila (`emitEvent`, que nunca lanza) y el despachador la envía. Si Make está
+  caído, un fetch dentro de una action revienta la operación del usuario; una
+  fila pendiente se reintenta sola. Mismo criterio que el correo de Terratalento.
+- **RUTAS NUEVAS**: `/api/integraciones/[canal]` (entrada, secreto POR CANAL,
+  503 si falta) y `/api/cron/integraciones` (el despachador, cada 15 min en
+  vercel.json). Reintento con techo de 5: un webhook mal configurado no puede
+  quemar el presupuesto de operaciones de Make.
+- **NODO/MÓDULO NUEVO `/ecp/automatizaciones`** en IT y Plataforma: registro con
+  propósito y criticidad (que se contesta con «si esto se cae, ¿qué pasa?») +
+  el pulso de la cola de eventos, con ping de prueba y reintento de fallidos.
+  El trigger exige `make_scenario_id` para marcar activa/pausada: el registro no
+  puede afirmar que algo corre si no existe donde corre.
+- **BUG CAZADO EN LA PRUEBA DE VIDA, no leyendo**: el despachador reenviaba a
+  Make los eventos ENTRANTES, dejando un bucle. Arreglado filtrando
+  `destino is null` — lo entrante nace con el destino sellado.
+- Guardián `scripts/qa-integraciones-check.mjs` (11/11): sobre todo que el
+  vocabulario de TS y el enum de Postgres no se desalineen en silencio.
+- **DICT sugerido**: «Espina de integración» y «Vocabulario compartido».
+- PENDIENTE del owner: `INTEGRACIONES_SECRET_MAKE` y `MAKE_WEBHOOK_URL` en
+  Vercel; sin ellos la puerta responde 503 y el despachador no manda nada (los
+  eventos esperan, no se pierden).
+(commit: pending)

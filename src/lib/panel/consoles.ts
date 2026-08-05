@@ -143,6 +143,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // colaboradores y socios sigue siendo cosa de owner.
         links: [
           { href: "/ecp/documentacion", label: "Documentación del sistema" },
+          // Automatizaciones (2026-08-05): el registro de lo que corre en Make y
+          // el pulso de la espina de integración. Va aquí porque es
+          // infraestructura, no operación. Ver docs/INTEGRACIONES_PLAN.md.
+          { href: "/ecp/automatizaciones", label: "Automatizaciones" },
           { href: "/ecp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
           // "Herramientas internas" se renombró y subió al grupo de Dirección
           // (2026-08-02) — ver el comentario allá.

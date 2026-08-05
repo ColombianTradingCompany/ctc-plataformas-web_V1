@@ -1,0 +1,126 @@
+/* ── Tabla de cotizaciones ───────────────────────────────────────────────────
+   Documentos numerados: se buscan y se comparan, así que van en filas. La tabla
+   scrollea dentro de su caja para que la consola nunca desborde a lo ancho. */
+
+.scroll {
+  margin-top: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--line, #d6d3e6);
+  border-radius: 9px;
+  background: var(--card, #fff);
+}
+
+.t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 860px;
+}
+
+.t thead th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 9px 12px;
+  background: var(--paper, #faf9fd);
+  border-bottom: 1px solid var(--line, #d6d3e6);
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+  white-space: nowrap;
+}
+
+.t tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line, #ece9f5);
+  vertical-align: top;
+}
+.t tbody tr:last-child td { border-bottom: 0; }
+.t tbody tr:hover { background: var(--paper, #faf9fd); }
+
+.t small {
+  display: block;
+  margin-top: 1px;
+  font-size: 10.5px;
+  color: var(--muted, #6b7280);
+}
+
+.num {
+  width: 40px;
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  color: var(--muted, #6b7280);
+}
+.r { text-align: right; }
+.strong { font-weight: 600; }
+.muted { color: var(--muted, #6b7280); }
+
+.code {
+  display: block;
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--primary, #3c0a86);
+  text-decoration: none;
+}
+.code:hover { text-decoration: underline; }
+
+/* El nombre es un botón: mientras sea borrador, un clic lo hace editable. */
+.name {
+  display: block;
+  margin-top: 1px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink, #111827);
+  text-align: left;
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+}
+.name:hover:not(:disabled) { border-bottom-color: var(--line, #d6d3e6); }
+.name:disabled { cursor: default; color: var(--muted, #6b7280); }
+
+.rename { margin-top: 1px; }
+.rename input {
+  width: 100%;
+  min-width: 160px;
+  padding: 3px 6px;
+  border: 1px solid var(--primary, #3c0a86);
+  border-radius: 5px;
+  font: inherit;
+  background: var(--card, #fff);
+  color: var(--ink, #111827);
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--paper, #f3f2f8);
+  border: 1px solid var(--line, #d6d3e6);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+  vertical-align: middle;
+}
+
+.acts {
+  white-space: nowrap;
+  text-align: right;
+}
+.acts > * { margin-left: 5px; }
+
+/* Serie del precio en Anclas de mercado. */
+.spark {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 170px;
+  margin: 6px 0 4px;
+  color: var(--ink, #111827);
+}

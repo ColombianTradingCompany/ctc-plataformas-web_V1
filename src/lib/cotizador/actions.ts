@@ -25,13 +25,13 @@ type Row = {
   currency: string; total: string | number | null; unit_label: string | null;
   notes: string | null; valid_until: string | null;
   created_by: string | null; created_at: string; updated_at: string;
-  issued_at: string | null; decided_at: string | null;
+  issued_at: string | null; decided_at: string | null; change_log: unknown;
   profiles?: { full_name: string | null; email: string | null } | null;
 };
 
 const LIST_COLS =
   "id, kind, code, title, status, counterparty_kind, profile_id, lead_id, contact_name, contact_email, " +
-  "currency, total, unit_label, notes, valid_until, created_by, created_at, updated_at, issued_at, decided_at, " +
+  "currency, total, unit_label, notes, valid_until, created_by, created_at, updated_at, issued_at, decided_at, change_log, " +
   "profiles:profile_id(full_name, email)";
 
 function toCounterparty(r: Row): Counterparty {
@@ -54,6 +54,7 @@ function toSummary(r: Row): QuoteSummary {
     unitLabel: r.unit_label, notes: r.notes, validUntil: r.valid_until,
     createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at,
     issuedAt: r.issued_at, decidedAt: r.decided_at,
+    changeLog: Array.isArray(r.change_log) ? (r.change_log as QuoteSummary["changeLog"]) : [],
   };
 }
 
@@ -153,6 +154,48 @@ export async function setQuoteCounterparty(
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
+/** Renombrar. Solo mientras sea borrador: el nombre viaja en el documento y en
+ *  el código que se citó fuera, así que una emitida no cambia de nombre — se
+ *  reabre primero. */
+export async function renameQuote(id: string, title: string): Promise<QuoteResult> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return NO_AUTH;
+  if (!title.trim()) return { ok: false, error: "El nombre no puede quedar vacío." };
+  const service = quoteServiceClient();
+  const { data: q } = await service.from("quotes").select("status, kind").eq("id", id).maybeSingle();
+  if (!q) return { ok: false, error: "La cotización no existe." };
+  if (q.status !== "borrador") return { ok: false, error: "Reábrela para poder cambiarle el nombre." };
+  const { error } = await service.from("quotes").update({ title: title.trim() }).eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(q.kind === "lote" ? "/ocp/cotizador-lotes" : "/ocp/cotizador-logistico");
+  return { ok: true };
+}
+
+/** Reabrir una cotización ya emitida para corregirla. Deja rastro SIEMPRE — el
+ *  trigger rechaza la reapertura si la bitácora no creció — y ese rastro se
+ *  imprime al final de los documentos que se generen después. */
+export async function reopenQuote(id: string, note: string): Promise<QuoteResult> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return NO_AUTH;
+  const service = quoteServiceClient();
+
+  const { data: q } = await service.from("quotes").select("status, change_log, code").eq("id", id).maybeSingle();
+  if (!q) return { ok: false, error: "La cotización no existe." };
+  if (q.status === "borrador") return { ok: false, error: "Ya está en borrador." };
+
+  const { data: me } = await service.from("profiles").select("full_name, email").eq("id", who.userId).maybeSingle();
+  const log = Array.isArray(q.change_log) ? (q.change_log as unknown[]) : [];
+  const entry = {
+    at: new Date().toISOString(),
+    action: `Reabierta desde «${q.status}»`,
+    note: note.trim() || null,
+    by: (me?.full_name as string | null) ?? (me?.email as string | null) ?? null,
+  };
+
+  const { error } = await service.from("quotes").update({ status: "borrador", change_log: [...log, entry] }).eq("id", id);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
 // ---------- Ciclo de vida ----------
 
 export async function issueQuote(id: string): Promise<QuoteResult> {
@@ -207,14 +250,16 @@ export async function duplicateQuote(id: string): Promise<QuoteResult> {
   return { ok: true, id: data.id as string };
 }
 
-/** Solo borradores. Una cotización emitida es historial: se rechaza, no se borra. */
-export async function deleteQuoteDraft(id: string): Promise<QuoteResult> {
+/** Borrar cualquiera (decisión del owner, 2026-08-04). El aviso lo da la
+ *  interfaz; aquí se exige confirmación explícita para que una llamada suelta a
+ *  la action no pueda borrar una cotización emitida por accidente. */
+export async function deleteQuote(id: string, confirm: true): Promise<QuoteResult> {
   const who = await requireConsoleWrite("ocp");
   if (!who) return NO_AUTH;
+  if (confirm !== true) return { ok: false, error: "Falta la confirmación." };
   const service = quoteServiceClient();
-  const { data: q } = await service.from("quotes").select("status, kind").eq("id", id).maybeSingle();
+  const { data: q } = await service.from("quotes").select("kind").eq("id", id).maybeSingle();
   if (!q) return { ok: false, error: "La cotización no existe." };
-  if (q.status !== "borrador") return { ok: false, error: "Una cotización emitida no se borra: recházala para cerrarla." };
   const { error } = await service.from("quotes").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidatePath(q.kind === "lote" ? "/ocp/cotizador-lotes" : "/ocp/cotizador-logistico");

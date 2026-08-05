@@ -192,6 +192,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         links: [
           { href: "/ocp/cotizador-lotes", label: "Lotes de café" },
           { href: "/ocp/cotizador-logistico", label: "Logístico" },
+          // Las referencias con las que cotizan las dos calculadoras. Salió de la
+          // Configuración de Mermas para poder consultarse y crecer por su cuenta.
+          { href: "/ocp/anclas-mercado", label: "Anclas de mercado" },
         ],
       },
     ],

@@ -584,4 +584,4 @@ Contexto abierto al cerrar V26:
   quotes intactas. `qa-guard-check` requiere cuenta QA de productor (no es
   regresión). Las 15 marcas «(commit: pending)» de la bitácora, selladas por
   `git blame`. Pendientes de la próxima sesión: `docs/PROXIMA_SESION.md`.
-(commit: pending)
+(commit: 909a096)

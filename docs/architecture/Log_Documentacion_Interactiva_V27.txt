@@ -1,0 +1,33 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V27.0(5496144).html
+(CTC Web Platform, 2026-08-05). Cada entrada se compila al próximo Version Wrap (V27).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19): registrar la entrada AL TERMINAR el trabajo,
+no "después". En el arco de V27 se me acumularon cinco entradas sin registrar y hubo
+que reconstruirlas antes de compilar.
+
+Contexto abierto al cerrar V27:
+- **Los dos cotizadores y Anclas de mercado NO se han conducido en navegador**: el
+  OCP tiene 2FA con OTP por correo. Los motores SÍ están verificados (las apps son
+  las del owner; el lector FNC contra la página real). Lo que falta por comprobar a
+  mano: guardar un borrador, recargar y ver que la calculadora vuelve donde estaba;
+  y la tabla de la lista y el módulo de Anclas pintados.
+- `CRON_SECRET` YA está configurado en Vercel (el endpoint responde 401 sin
+  cabecera, que es la señal correcta). La primera corrida automática del precio
+  cae el 2026-08-06 ~06:10 en Colombia — conviene mirar Settings → Cron Jobs.
+- El owner tiene 3 cotizaciones de prueba en producción (COT-G-000001,
+  COT-L-000001 y una tercera). Las secuencias quedaron por encima del máximo; NO
+  reiniciarlas sin volver a comprobarlo o el siguiente código choca contra el
+  índice único de `code`.
+- Identity Value Creation (app #3 del Estudio) sigue declarada y sin construir. Su
+  pendiente real no es UI: leer finca/lote desde el tier de socios exige vistas
+  SECURITY DEFINER estrechas por campo, no un grant ancho.
+- Sigue pendiente del owner: material de la landing de Varietales; pase de copy
+  Specialty/Black sobre KR ProcessFlow y CP BlackSection.
+- El socio multi-nodo sigue exigiendo cambiar el PK de `partner_accounts`.
+- El bucket de Storage sigue sin poda automática del Buzón.

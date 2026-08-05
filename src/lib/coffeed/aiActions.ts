@@ -27,6 +27,7 @@ import { createSignedUrl } from "./storage";
 import { postExcerpt, renderCoffeedPost, type PostPanel, type PostSource } from "./postTemplate";
 import { COFFEED_RULES, parseCoffeedClaims, type CoffeedResult } from "./types";
 import { dentroDeVentana, parseFeed } from "./feeds";
+import { geminiDisponible, geminiVideo } from "./gemini";
 import { bajarFeed } from "./feedActions";
 
 function logFail(where: string, err: unknown): string {
@@ -516,7 +517,42 @@ export async function runExtraction(cycleId: string): Promise<CoffeedResult> {
       }
 
       try {
-      const raw = await claude({
+      // ── Vídeo: Gemini VE la pieza; la búsqueda web no ─────────────────────
+      // Sin esto, la extracción de un vídeo trabajaba de oídas con el titular,
+      // y las marcas de tiempo que escribía no estaban ancladas en nada — que
+      // aquí es descalificante: cada afirmación tiene que señalar su fuente.
+      // Si Gemini falla por lo que sea, se cae al camino de texto de siempre:
+      // la pieza sale peor, pero sale.
+      let raw: string | null = null;
+      if (item.kind === "video" && geminiDisponible()) {
+        try {
+          raw = await geminiVideo({
+            videoUrl: item.url,
+            system: `${VOZ}
+${brief ? `
+${brief}
+` : ""}
+Extraes el material de UN VÍDEO (adjunto) para que un editor pueda trabajarlo.
+
+MIRA el vídeo. Escribe el cuerpo en español, en párrafos separados por una
+línea en blanco, fiel a lo que se dice — resumen denso, no transcripción.
+
+Marca TODA afirmación con dato (cifras, fechas, decisiones, declaraciones)
+con la notación ⟦texto de la afirmación|MM:SS⟧, usando la marca de tiempo
+REAL del momento del vídeo donde se dice. Sin esas marcas el editor no puede
+construir un panel trazado: son obligatorias, y tienen que ser de verdad.
+
+Devuelve SOLO un objeto JSON, sin texto antes ni después:
+{"format":"transcript","body":"párrafo 1 con ⟦una afirmación|08:41⟧…\n\npárrafo 2…"}`,
+            user: JSON.stringify({ title: item.title, url: item.url, outlet: item.outlet }),
+          });
+        } catch (err) {
+          logFail(`extract:gemini:${item.title}`, err);
+          raw = null;
+        }
+      }
+
+      if (raw === null) raw = await claude({
         model: MODEL_WRITE,
         // 3000 se quedaba corto y cortaba el JSON a media cadena (visto en vivo
         // el 2026-07-30, ciclo 1). El cuerpo es un resumen denso CON las marcas

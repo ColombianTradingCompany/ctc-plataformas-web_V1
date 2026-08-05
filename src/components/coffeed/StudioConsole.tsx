@@ -86,13 +86,24 @@ export function StudioConsole() {
       // el botón no basta: parece que no ha pasado nada y se vuelve a hacer clic.
       // Este aviso NO se va solo — se va cuando el paso termina.
       if (trabajando) setWorking(trabajando);
-      const r = await fn((texto) => setWorking(texto));
-      if (r.ok) await refresh();
-      setWorking(null);
-      setBusy(false);
-      if (!r.ok) showToast("No se pudo", r.error);
-      else if (okMsg) showToast(okMsg[0], okMsg[1]);
-      return r.ok;
+      try {
+        const r = await fn((texto) => setWorking(texto));
+        if (r.ok) await refresh();
+        if (!r.ok) showToast("No se pudo", r.error);
+        else if (okMsg) showToast(okMsg[0], okMsg[1]);
+        return r.ok;
+      } catch (e) {
+        // Una Server Action puede LANZAR en vez de devolver {ok:false}: corte de
+        // red, o un redespliegue a mitad («Failed to find Server Action», visto
+        // en vivo el 2026-08-05 al añadir una variable con el barrido corriendo).
+        // Sin este catch, el aviso de «Trabajando» se quedaba para siempre.
+        console.error("[coffeed:run]", e);
+        showToast("Se perdió la conexión con el servidor", "Suele ser un redespliegue a mitad de la operación. Recarga la página y reintenta: el progreso guardado no se pierde.");
+        return false;
+      } finally {
+        setWorking(null);
+        setBusy(false);
+      }
     },
     [refresh, showToast]
   );

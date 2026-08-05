@@ -82,14 +82,23 @@ export function CoffeedConsole() {
   const run = useCallback<RunFn>(
     async (fn, okMsg) => {
       setBusy(true);
-      // Esta consola no aloja pasos de IA largos —solo aceptar, devolver y
-      // publicar entregas—, así que no hay progreso que ir contando.
-      const r = await fn(() => {});
-      if (r.ok) await refresh();
-      setBusy(false);
-      if (!r.ok) showToast("No se pudo", r.error);
-      else if (okMsg) showToast(okMsg[0], okMsg[1]);
-      return r.ok;
+      try {
+        // Esta consola no aloja pasos de IA largos —solo aceptar, devolver y
+        // publicar entregas—, así que no hay progreso que ir contando.
+        const r = await fn(() => {});
+        if (r.ok) await refresh();
+        if (!r.ok) showToast("No se pudo", r.error);
+        else if (okMsg) showToast(okMsg[0], okMsg[1]);
+        return r.ok;
+      } catch (e) {
+        // Mismo catch que el Estudio: una action que LANZA (red, redespliegue a
+        // mitad) no puede dejar la consola bloqueada en `busy`.
+        console.error("[coffeed:run]", e);
+        showToast("Se perdió la conexión con el servidor", "Recarga la página y reintenta.");
+        return false;
+      } finally {
+        setBusy(false);
+      }
     },
     [refresh, showToast]
   );

@@ -159,7 +159,7 @@ Contexto abierto al cerrar V26:
   sigue votando el GRADO. Con la regla 1, lo que el comité aporta es el PUNTAJE y
   el grado se deriva. No se ha tocado. Sigue pendiente también actualizar las dos
   páginas de Notion DESDE la plataforma.
-(commit: pending)
+(commit: 5d6cd1f)
 
 ## [2026-08-05] El plan es Hobby: el evento sale en el acto, el cron es la red
 - **HALLAZGO**: la cuenta de Vercel es **Hobby**, que NO admite un cron más
@@ -225,7 +225,7 @@ Contexto abierto al cerrar V26:
   ninguna fila, y así es como un manejador dice «aplicado» sin haber hecho nada.
 - PENDIENTE de F2: la base en Notion y los dos escenarios de Make. Son escrituras
   en cuentas del owner y esperan su visto bueno.
-(commit: pending)
+(commit: 61abaec)
 
 ## [2026-08-05] F2 · La mitad de fuera: base de Notion y los dos escenarios
 - **BASE `Cotizaciones CTC`** en Notion, bajo Go To Market (data source
@@ -261,7 +261,7 @@ Contexto abierto al cerrar V26:
   asistente, como todos los demás.
 - Quedan TRES filas de prueba en la base de Notion («PRUEBA DE VIDA F2 —
   borrar»). El conector de Notion no expone borrado y borrar no es del asistente.
-(commit: pending)
+(commit: 9c9e12a)
 
 ## [2026-08-05] F2 · La vuelta completa, cerrada
 - **PROBADO DE EXTREMO A EXTREMO, 14:41 UTC**: evento → webhook de Make → página
@@ -285,7 +285,7 @@ Contexto abierto al cerrar V26:
   una cotización que enlaza a una página muerta es peor que una sin enlace.
 - SIN PROBAR: la vuelta de `cotizacion.nota`. Hace falta escribir una Nota
   comercial en una página real de Notion y esperar al barrido de 15 minutos.
-(commit: pending)
+(commit: ab7e315)
 
 ## [2026-08-05] F3 · Las jornadas al calendario: la mitad de la plataforma
 - **DECISIONES DEL OWNER**: (1) en Gmail, Make solo CLASIFICA Y ETIQUETA — el
@@ -313,7 +313,7 @@ Contexto abierto al cerrar V26:
   `recolecta:<id>` para saber a qué tabla escribir con un solo caso.
 - BLOQUEADO igual que F2 en su día: no hay conexión de Google en Make. Hace falta
   el OAuth del owner para Calendar (y para Gmail, en la parte de etiquetas).
-(commit: pending)
+(commit: 60f9a51)
 
 ## [2026-08-05] F3 · Calendar en marcha, y UN escenario para todo lo que sale
 - **UN SOLO ESCENARIO CON ROUTER**, no uno por tipo. Razón dura, no estética: el
@@ -345,7 +345,7 @@ Contexto abierto al cerrar V26:
 - **COSTE CONOCIDO**: editar el blueprint por API BORRA el secreto de las
   cabeceras `Authorization`. Son dos módulos HTTP y hay que volver a pegarlo cada
   vez que yo toque el escenario. Anotado en el registro del ECP.
-(commit: pending)
+(commit: 336949e)
 
 ## [2026-08-05] F3 · Gmail: construido, bloqueado por un permiso de escritura
 - **NO HACE FALTA API KEY DE GEMINI.** `gemini-ai:simpleTextPrompt` no declara
@@ -369,7 +369,7 @@ Contexto abierto al cerrar V26:
 - La sonda temporal (escenario) también sirvió para descartar tres sintaxis de
   variable personalizada de Make: `{{CTC_SECRET}}`, `{{var.CTC_SECRET}}` y
   `{{organization.CTC_SECRET}}` dan las tres 401. Falta la buena.
-(commit: pending)
+(commit: 92fceb1)
 
 ## [2026-08-05] F3 CERRADO · Gmail clasificando, Calendar agendando
 - **PROBADO 15:51 UTC**: 11 operaciones, status 1, CINCO correos etiquetados
@@ -396,7 +396,7 @@ Contexto abierto al cerrar V26:
   contenía el token y no el secreto. Ese es justo el beneficio: los tres módulos
   HTTP usan ahora la variable, así que **editar un escenario ya no borra nada** y
   los blueprints son seguros de leer.
-(commit: pending)
+(commit: 54bc3fd)
 
 ## [2026-08-05] El secreto sale de los blueprints
 - **`{{var.organization.CTC_SECRET}}`**. Variable de organización de Make (Pro+).
@@ -412,7 +412,7 @@ Contexto abierto al cerrar V26:
 - El `ifempty` de la fecha final también quedó probado: una jornada sin
   `fecha_fin` sale como 2026-10-05 ~ 2026-10-06, un día suelto.
 - Calendario limpio, escenarios temporales borrados.
-(commit: pending)
+(commit: ac12ccf)
 
 ## [2026-08-05] Por qué Coffeed nunca produjo nada
 - Al ir a montar F4 (publicar en redes) salió el dato que lo cambia todo:
@@ -439,7 +439,7 @@ Contexto abierto al cerrar V26:
 - Los otros tres pasos (`runTriage`, `runProposals`, `createPost`) son UNA
   llamada, no bucles: si fallan, el reintento empieza limpio. No se les tocó el
   tope sin motivo.
-(commit: pending)
+(commit: f12b02e)
 
 ## [2026-08-05] Coffeed: el listón, movido en los DOS pasos, y un aviso de que trabaja
 - **EL ARREGLO DE LA V2.59 ESTABA A MEDIAS.** La extracción ya perdonaba a la
@@ -463,7 +463,7 @@ Contexto abierto al cerrar V26:
   aviso se quedaba en «Trabajando» a secas.
 - Verificado con `tsc`, `eslint` y un `next build` completo. NO verificado en
   pantalla: el Source Wrapper está detrás del gate del Estudio.
-(commit: pending)
+(commit: 0b22096)
 
 ## [2026-08-05] COFFEED DIO LA VUELTA COMPLETA · y el barrido, por tandas
 - **PRIMERA PIEZA PUBLICADA.** El owner recorrió el circuito entero: entregar al
@@ -491,7 +491,7 @@ Contexto abierto al cerrar V26:
 - El aviso de «Trabajando» ahora cuenta el avance: «Van 8 medios revisados y
   quedan 6. 3 piezas nuevas hasta ahora».
 - Verificado con `tsc`, `eslint` y `next build`. NO verificado en pantalla.
-(commit: pending)
+(commit: 039c2ba)
 
 ## [2026-08-05] El barrido trajo cero, y por qué
 - El troceado FUNCIONÓ (14 medios marcados, `swept_at` puesto) pero no entró ni
@@ -516,7 +516,7 @@ Contexto abierto al cerrar V26:
   owner): las piezas van apareciendo en vez de salir todas al final.
 - Se limpió `last_swept_at` de los 14 medios: la corrida vieja no trajo nada y
   se quedaban marcados, así que el siguiente barrido no habría hecho nada.
-(commit: pending)
+(commit: c460313)
 
 ## [2026-08-05] El techo por llamada se multiplica por el reintento
 - Segundo 504 a los 300 s, ahora con tandas de TRES. La causa es un error mío de
@@ -532,7 +532,7 @@ Contexto abierto al cerrar V26:
   se le marca. Peor caso de una tanda: 150 s.
 - Anotado en el propio tipo, que es donde hay que leerlo antes de volver a tocar
   un `timeoutMs`: el peor caso real es `timeoutMs × (1 + timeoutRetries)`.
-(commit: pending)
+(commit: 428d807)
 
 ## [2026-08-05] El barrido deja de preguntarle a un modelo qué se publicó
 - **EL DIAGNÓSTICO, con datos**: de los 14 medios, 3 outlets trajeron 5 piezas,
@@ -560,4 +560,28 @@ Contexto abierto al cerrar V26:
 - Dos bucles infinitos evitados por el mismo motivo: lo que falla queda sin
   marcar para poder reintentarlo MÁS TARDE, así que dentro de la misma vuelta
   hay que pasarlo como `saltar` o `pendientes` no baja nunca.
+(commit: d2b035f)
+
+## [2026-08-05] Cierre de sesión: el catch que faltaba, Gemini para vídeo, y auditoría
+- **EL «ATASCADO» ERA UN BUG DE LA CONSOLA, no del barrido**: `run` no capturaba
+  excepciones. El owner redesplegó (añadiendo GEMINI_API_KEY) con el bucle del
+  barrido corriendo; el cliente viejo llamó a una Server Action que ya no existe
+  («Failed to find Server Action», 18:33 en los logs) → excepción → el aviso de
+  «Trabajando» se quedaba para siempre. Ahora try/catch/finally en los `run` de
+  las DOS consolas, con un mensaje que dice qué recargar.
+- El barrido por feeds SÍ funcionó: 12 piezas hoy, 5 en la mesa del ciclo 2,
+  9/14 feeds resueltos (6 con channel_id). Los 5 sin feed (FNC, PDG, Coffee ad
+  Astra —que ES YouTube y no resolvió—, Comunicaffe, ICO) van por el agente.
+- **GEMINI PARA VÍDEO** (`gemini.ts` + ruta en `runExtraction`): un vídeo va a
+  la Interactions API con su URL y Gemini lo VE — audio e imagen — y ancla las
+  marcas ⟦…|MM:SS⟧ en tiempo real del vídeo. La clave vive en Vercel
+  (GEMINI_API_KEY), NO en Make: la extracción ocurre en la plataforma. ⚠️ La
+  forma de la respuesta REST no está clara en la doc; el parser prueba las
+  formas conocidas y si falla SE CAE al camino de texto — sin probar en vivo.
+- **AUDITORÍA AL CIERRE**: 8 guardianes en verde (feeds 25/25, grados 44/44,
+  integraciones 9/9, docs 14/14, claims 26/26, embed 26/26, anclas 13/13,
+  espejo 9/9); cola de integraciones a cero; 3 escenarios de Make activos;
+  quotes intactas. `qa-guard-check` requiere cuenta QA de productor (no es
+  regresión). Las 15 marcas «(commit: pending)» de la bitácora, selladas por
+  `git blame`. Pendientes de la próxima sesión: `docs/PROXIMA_SESION.md`.
 (commit: pending)

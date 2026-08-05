@@ -389,6 +389,27 @@ Contexto abierto al cerrar V26:
   ese mensaje», no «tengo permiso para escribir».
 - **F3 COMPLETO**: Calendar (3 ramas probadas) + Gmail (probado). Las tres
   automatizaciones del registro del ECP están en «activa».
-- SIGUE ABIERTO: la sintaxis de la variable personalizada de Make. Descartadas
-  `{{CTC_SECRET}}`, `{{var.CTC_SECRET}}` y `{{organization.CTC_SECRET}}`.
+- **RESUELTO — la sintaxis es `{{var.organization.CTC_SECRET}}`**: las dos
+  mitades que probé por separado, juntas. No se podía leer en la interfaz porque
+  Make pinta la variable como una PASTILLA, no como texto; el owner la insertó
+  con el selector y entonces sí se pudo leer por API, porque el blueprint ya
+  contenía el token y no el secreto. Ese es justo el beneficio: los tres módulos
+  HTTP usan ahora la variable, así que **editar un escenario ya no borra nada** y
+  los blueprints son seguros de leer.
+(commit: pending)
+
+## [2026-08-05] El secreto sale de los blueprints
+- **`{{var.organization.CTC_SECRET}}`**. Variable de organización de Make (Pro+).
+  Los tres módulos HTTP la usan; ningún blueprint contiene ya el secreto.
+- **Por qué costó**: la interfaz de Make pinta una variable mapeada como una
+  PASTILLA, no como texto, así que la sintaxis no se puede leer mirando. Y yo no
+  podía leer el blueprint porque contenía el secreto literal. El círculo se rompe
+  al revés de lo que parece: **primero** se mete la variable por el selector en
+  UN módulo, y **entonces** ese blueprint ya es seguro de leer.
+- Probado de punta a punta: 3 ejecuciones en verde, la llamada de vuelta llega y
+  `aplicar.ts` responde `descartado` porque los `ref` de prueba no existen — que
+  es lo correcto: prefiere no escribir a inventarse una fila.
+- El `ifempty` de la fecha final también quedó probado: una jornada sin
+  `fecha_fin` sale como 2026-10-05 ~ 2026-10-06, un día suelto.
+- Calendario limpio, escenarios temporales borrados.
 (commit: pending)

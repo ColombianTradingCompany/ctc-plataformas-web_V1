@@ -28,6 +28,7 @@ import {
   updateEntryTriage,
 } from "@/lib/coffeed/actions";
 import { runTriage, sweepSources, validateSourceUrl } from "@/lib/coffeed/aiActions";
+import { resolverFeeds } from "@/lib/coffeed/feedActions";
 import { runExtraction } from "@/lib/coffeed/aiActions";
 import type {
   CoffeedItemKind,
@@ -375,6 +376,23 @@ function SeleccionView({
     const fallidos: { id: string; name: string }[] = [];
     const ok = await run(
       async (avisar) => {
+        // PRIMERO los feeds. Un medio con feed se lee en segundos y con fecha
+        // exacta; solo los que no tengan pasan por el agente, que es lento y
+        // se equivoca. Esto se hace una vez por medio y queda guardado.
+        const sinFeed: { id: string; name: string }[] = [];
+        for (;;) {
+          avisar(`Buscando el feed de cada medio. ${sinFeed.length ? `${sinFeed.length} sin feed hasta ahora.` : ""}`);
+          const r = await resolverFeeds(sinFeed.map((f) => f.id));
+          if (!r.ok) return { ok: false, error: r.error };
+          sinFeed.push(...r.sinFeed);
+          if (!r.pendientes) break;
+        }
+        if (sinFeed.length) {
+          // No es un fallo: hay medios que sencillamente no publican feed. Se
+          // dice para que se sepa cuáles van por el camino lento.
+          avisar(`${sinFeed.length} medio(s) sin feed, irán por el agente: ${sinFeed.map((f) => f.name).join(", ")}.`);
+        }
+
         // POR TANDAS. Los 14 medios de una vez pasaban de 300 s y Vercel mataba
         // la función sin dejar rastro; cada tanda cabe de sobra y el progreso
         // queda guardado, así que esto continúa donde lo dejó.
@@ -394,7 +412,7 @@ function SeleccionView({
         return { ok: true };
       },
       undefined,
-      "Buscando en cada medio de consulta lo publicado en los últimos 7 días."
+      "Preparando los medios de consulta."
     );
     setSweeping(false);
     if (ok) {

@@ -533,3 +533,31 @@ Contexto abierto al cerrar V26:
 - Anotado en el propio tipo, que es donde hay que leerlo antes de volver a tocar
   un `timeoutMs`: el peor caso real es `timeoutMs × (1 + timeoutRetries)`.
 (commit: pending)
+
+## [2026-08-05] El barrido deja de preguntarle a un modelo qué se publicó
+- **EL DIAGNÓSTICO, con datos**: de los 14 medios, 3 outlets trajeron 5 piezas,
+  6 expiraron y **0 de 5 canales de YouTube** trajeron nada. No era la fuente:
+  era que la búsqueda web no es un índice de «todo lo que sacó este medio esta
+  semana», y desde luego no ve un canal de vídeo.
+- **`coffeed_sources.feed_url` y `channel_id` existían desde el principio y
+  estaban a 0 de 14.** El esquema ya anticipaba esto; nadie lo conectó.
+- **`feeds.ts`, PURO** (ni red ni base) para poder probarlo con XML de verdad:
+  Atom de YouTube, RSS con CDATA, entidades, `<link/>` vacío, atributos en otro
+  orden, fechas basura y feeds rotos. Guardián `qa-feeds-check.mjs`, 25/25.
+  Misma decisión que con `parseFnc.ts`, y por la misma razón: parsear XML con
+  expresiones regulares es frágil, así que las formas que rompen están escritas.
+- Una prueba falló y era LA PRUEBA, no el código: había escrito `&amp;quot;`
+  esperando una comilla. Decodificar una sola vez es lo correcto — y demuestra
+  que resolver `&amp;` al final no deshace un escapado legítimo. Se dejó
+  comprobando las dos cosas.
+- **`feedActions.ts`** descubre el feed: autodescubrimiento por `<link
+  rel=alternate>` y, si no, las rutas habituales; en YouTube resuelve el `UC…`
+  desde el HTML del `@handle`. SIEMPRE comprueba que lo que encuentra parsea y
+  trae entradas — una ruta que devuelve una página de error con 200 es común.
+- **El barrido nunca mezcla feeds y agente en la misma llamada**: una tanda de
+  feeds dura segundos y una de agente ~150 s, y sumarlas era volver a rozar los
+  300 s de los que veníamos. Feeds en tandas de 8, agente en tandas de 3.
+- Dos bucles infinitos evitados por el mismo motivo: lo que falla queda sin
+  marcar para poder reintentarlo MÁS TARDE, así que dentro de la misma vuelta
+  hay que pasarlo como `saltar` o `pendientes` no baja nunca.
+(commit: pending)

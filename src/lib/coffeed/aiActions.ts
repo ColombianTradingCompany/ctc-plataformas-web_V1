@@ -26,6 +26,8 @@ import { studioGate } from "./studioGate";
 import { createSignedUrl } from "./storage";
 import { postExcerpt, renderCoffeedPost, type PostPanel, type PostSource } from "./postTemplate";
 import { COFFEED_RULES, parseCoffeedClaims, type CoffeedResult } from "./types";
+import { dentroDeVentana, parseFeed } from "./feeds";
+import { bajarFeed } from "./feedActions";
 
 function logFail(where: string, err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
@@ -184,6 +186,12 @@ async function mapWithLimit<T, R>(items: T[], limit: number, worker: (item: T) =
  *  puede continuar — incluso si se cierra la pestaña. */
 const SWEEP_CHUNK = 3;
 
+/** Los medios CON feed van en tandas mucho más grandes: leer un XML son
+ *  segundos, no minutos. Nunca se mezclan feeds y agente en la misma llamada —
+ *  una tanda de feeds dura ~40 s y una de agente ~150 s, y sumarlas era volver a
+ *  rozar el techo de 300 s del que venimos. */
+const FEED_CHUNK = 8;
+
 /** Techo por medio DENTRO de una tanda. El global de `claude()` son 90 s, que se
  *  eligieron para acotar el barrido entero cuando iba de una sentada; troceado
  *  esa razón desaparece y 90 s se quedaban cortos — el 2026-08-05 se abortaron
@@ -223,12 +231,13 @@ export async function sweepSources(
 
   const { data: sourceRows } = await service
     .from("coffeed_sources")
-    .select("id, name, kind, url, category, last_swept_at")
+    .select("id, name, kind, url, category, last_swept_at, feed_url")
     .eq("list", "white")
     .eq("status", "approved")
     .eq("active", true);
   const todos = (sourceRows ?? []) as {
-    id: string; name: string; kind: string; url: string | null; category: string | null; last_swept_at: string | null;
+    id: string; name: string; kind: string; url: string | null; category: string | null;
+    last_swept_at: string | null; feed_url: string | null;
   }[];
   if (!todos.length) return { ok: false, error: "No hay medios aprobados en la lista blanca." };
 
@@ -241,7 +250,11 @@ export async function sweepSources(
   if (!pendientesTodos.length) {
     return { ok: true, added: 0, found: 0, pendientes: 0, revisados: 0, fallidos: [] };
   }
-  const sources = pendientesTodos.slice(0, SWEEP_CHUNK);
+  // Los que tienen feed primero, y solos. Son rápidos y exactos; el agente es el
+  // recurso para los que no tienen, no el camino por defecto.
+  const conFeed = pendientesTodos.filter((s) => s.feed_url);
+  const sources = conFeed.length ? conFeed.slice(0, FEED_CHUNK) : pendientesTodos.slice(0, SWEEP_CHUNK);
+  const porFeed = Boolean(conFeed.length);
 
   const today = new Date();
   const since = new Date(today.getTime() - 7 * 24 * 3600 * 1000);
@@ -271,6 +284,32 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
   const fallidos: { id: string; name: string }[] = [];
   try {
     const results = await mapWithLimit(sources, SWEEP_CONCURRENCY, async (s) => {
+      // ── Camino del feed: exacto, en segundos y sin gastar un token ──────
+      if (porFeed && s.feed_url) {
+        try {
+          const xml = await bajarFeed(s.feed_url);
+          if (xml === null) throw new Error("el feed no respondió");
+          const enVentana = dentroDeVentana(parseFeed(xml), since, today);
+          // El tope de 2 por medio es el mismo que se le pide al agente: la mesa
+          // de triaje se vuelve inmanejable si un medio prolífico la copa.
+          return enVentana.slice(0, 2).map<SweepItem>((i) => ({
+            source: s.name,
+            title: i.title,
+            // El feed no trae sumario fiable —a veces es el post entero en
+            // HTML—, así que se deja vacío. El triaje trabaja con el titular,
+            // y la extracción ya irá a la pieza cuando se seleccione.
+            summary: "",
+            url: i.url,
+            published_at: (i.publishedAt ?? "").slice(0, 10),
+            kind: s.kind === "youtube" ? "video" : "articulo",
+          }));
+        } catch (err) {
+          logFail(`feed:${s.name}`, err);
+          fallidos.push({ id: s.id, name: s.name });
+          return [] as SweepItem[];
+        }
+      }
+
       try {
         const raw = await claude({
           model: MODEL_WRITE,

@@ -54,6 +54,8 @@ export function StudioConsole() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("seleccion");
   const [busy, setBusy] = useState(false);
+  /** Qué paso está corriendo ahora mismo, para poder decirlo en pantalla. */
+  const [working, setWorking] = useState<string | null>(null);
   const [toast, setToast] = useState<{ kicker: string; msg: string } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,10 +79,15 @@ export function StudioConsole() {
   }, []);
 
   const run = useCallback(
-    async (fn: () => Promise<CoffeedResult>, okMsg?: [string, string]): Promise<boolean> => {
+    async (fn: () => Promise<CoffeedResult>, okMsg?: [string, string], trabajando?: string): Promise<boolean> => {
       setBusy(true);
+      // Los pasos de IA tardan de treinta segundos a varios minutos. Deshabilitar
+      // el botón no basta: parece que no ha pasado nada y se vuelve a hacer clic.
+      // Este aviso NO se va solo — se va cuando el paso termina.
+      if (trabajando) setWorking(trabajando);
       const r = await fn();
       if (r.ok) await refresh();
+      setWorking(null);
       setBusy(false);
       if (!r.ok) showToast("No se pudo", r.error);
       else if (okMsg) showToast(okMsg[0], okMsg[1]);
@@ -178,7 +185,14 @@ export function StudioConsole() {
         )}
       </main>
 
-      {toast && (
+      {working && (
+        <div className={`${styles.toast} ${styles.working}`} role="status" aria-live="polite">
+          <b>Trabajando<span className={styles.dots} aria-hidden /></b>
+          {working}
+          <small className={styles.workingHint}>Estos pasos llaman a la IA y pueden tardar varios minutos. No cierres la pestaña.</small>
+        </div>
+      )}
+      {toast && !working && (
         <div className={styles.toast} role="status" aria-live="polite">
           <b>{toast.kicker}</b>
           {toast.msg}
@@ -188,7 +202,13 @@ export function StudioConsole() {
   );
 }
 
-type RunFn = (fn: () => Promise<CoffeedResult>, okMsg?: [string, string]) => Promise<boolean>;
+type RunFn = (
+  fn: () => Promise<CoffeedResult>,
+  okMsg?: [string, string],
+  /** Qué decir mientras corre. Los pasos de IA tardan minutos y el botón
+   *  deshabilitado no comunica nada. */
+  trabajando?: string
+) => Promise<boolean>;
 
 // ============================================================
 // MEDIOS DE CONSULTA
@@ -340,15 +360,26 @@ function SeleccionView({
   const dropped = samples.filter((s) => s.decision === "dropped");
 
   const sweep = async () => {
+    // El barrido es el paso MÁS largo (14 medios, minutos), así que pasa por
+    // `run` como los demás para que salga el aviso de «Trabajando». Antes tenía
+    // su propio estado y no avisaba de nada.
     setSweeping(true);
-    const res = await sweepSources();
+    let hecho: { added: number; found: number } | null = null;
+    const ok = await run(
+      async () => {
+        const res = await sweepSources();
+        if (!res.ok) return { ok: false, error: res.error };
+        hecho = { added: res.added, found: res.found };
+        return { ok: true };
+      },
+      undefined,
+      "Buscando en cada medio de consulta lo publicado en los últimos 7 días."
+    );
     setSweeping(false);
-    if (!res.ok) {
-      showToast("No se pudo barrer", res.error);
-      return;
+    if (ok && hecho) {
+      const { added, found } = hecho as { added: number; found: number };
+      showToast("Barrido hecho", `${added} piezas nuevas de las ${found} encontradas en los últimos 7 días.`);
     }
-    await run(async () => ({ ok: true }));
-    showToast("Barrido hecho", `${res.added} piezas nuevas de las ${res.found} encontradas en los últimos 7 días.`);
   };
 
   if (!openCycle) {
@@ -493,7 +524,7 @@ function SeleccionView({
               disabled={busy || picked.length < 2}
               title={picked.length < 2 ? "Hacen falta al menos dos fuentes: con el tope de 3 paneles por fuente, una sola no llega a 5" : ""}
               onClick={() =>
-                run(() => runExtraction(openCycle.id), ["Extracción lista", "El material ya está en Propuestas."]).then((ok) => ok && onExtracted())
+                run(() => runExtraction(openCycle.id), ["Extracción lista", "El material ya está en Propuestas."], "Leyendo cada pieza y marcando sus afirmaciones.").then((ok) => ok && onExtracted())
               }
             >
               Extraer y continuar →

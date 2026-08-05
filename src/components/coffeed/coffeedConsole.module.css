@@ -334,3 +334,25 @@ select.input { color: var(--ink); }
 @media (prefers-reduced-motion: reduce) {
   .page *, .ringHead { transition: none !important; animation: none !important; }
 }
+
+/* ---------- TRABAJANDO ---------- */
+/* Los pasos de IA tardan minutos. El botón deshabilitado no comunica nada, así
+   que mientras corre uno se queda este aviso — y no se va solo, se va cuando
+   el paso termina. Los puntos animados son la única señal de que sigue vivo. */
+.working { border-left: 3px solid #e8c37d; }
+.working b { color: #e8c37d; }
+.workingHint { display: block; margin-top: 6px; opacity: 0.72; font-size: 12px; line-height: 1.35; }
+/* Los puntos se ESCRIBEN siempre y solo late la opacidad. Animar `content` por
+   keyframes solo funciona en algunos navegadores, y donde no, el aviso se
+   quedaba en «Trabajando» a secas — peor que no animar nada. */
+.dots::after {
+  content: "...";
+  animation: coffeedPulse 1.4s ease-in-out infinite;
+}
+@keyframes coffeedPulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dots::after { animation: none; opacity: 1; }
+}

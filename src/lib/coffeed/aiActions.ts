@@ -522,8 +522,17 @@ export async function runProposals(cycleId: string): Promise<CoffeedResult> {
   const itemIds = picked.map((p) => p.coffeed_items.id);
   const { data: extRows } = await service.from("coffeed_extractions").select("item_id, body").in("item_id", itemIds);
   const bodyByItem = new Map(((extRows ?? []) as { item_id: string; body: string }[]).map((e) => [e.item_id, e.body]));
-  const missing = picked.filter((p) => !bodyByItem.has(p.coffeed_items.id));
-  if (missing.length) return { ok: false, error: `Falta la extracción de ${missing.length} fuente(s). Reintenta la extracción.` };
+  // Se trabaja con lo que TIENE material, no con lo que se eligió. La extracción
+  // ya perdona a la pieza que no se deja leer; exigir aquí el pleno dejaba el
+  // ciclo igual de bloqueado, solo que un paso más adelante — que es justo lo
+  // que pasó al desatascar el capítulo 1.
+  const conMaterial = picked.filter((p) => bodyByItem.has(p.coffeed_items.id));
+  if (conMaterial.length < 2) {
+    return {
+      ok: false,
+      error: `Solo hay material de ${conMaterial.length} fuente(s) y hacen falta dos: con el tope de ${COFFEED_RULES.CAP_PER_SOURCE} paneles por fuente, una sola no llega a ${COFFEED_RULES.MIN}. Reintenta la extracción o elige otra fuente.`,
+    };
+  }
 
   const { data: threadRows } = await service
     .from("coffeed_threads")
@@ -572,7 +581,7 @@ Devuelve SOLO un array JSON de tres objetos, sin texto antes ni después:
 [{"angle":"...","title":"...","hook":"...","panel_map":[],"continues":null,"opens":null}]`,
       user: JSON.stringify({
         chapter: cycle.chapter_no,
-        sources: picked.map((p) => ({
+        sources: conMaterial.map((p) => ({
           key: p.src_key,
           title: p.coffeed_items.title,
           outlet: p.coffeed_items.outlet ?? "—",
@@ -586,7 +595,7 @@ Devuelve SOLO un array JSON de tres objetos, sin texto antes ni después:
     });
 
     const out = parseJson<ProposalOut[]>(raw);
-    const validKeys = new Set(picked.map((p) => p.src_key));
+    const validKeys = new Set(conMaterial.map((p) => p.src_key));
     // Validar aquí, no confiar en el prompt.
     const valid = out.filter((p) => {
       const n = p.panel_map?.length ?? 0;

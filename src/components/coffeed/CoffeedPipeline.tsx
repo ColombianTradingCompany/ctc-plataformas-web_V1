@@ -14,7 +14,13 @@ import type { CoffeedCycle, CoffeedExtraction, CoffeedProposal, CoffeedResult } 
 import styles from "./coffeedConsole.module.css";
 import { Ring } from "./Ring";
 
-type RunFn = (fn: () => Promise<CoffeedResult>, okMsg?: [string, string]) => Promise<boolean>;
+type RunFn = (
+  fn: () => Promise<CoffeedResult>,
+  okMsg?: [string, string],
+  /** Qué decir mientras corre. Los pasos de IA tardan minutos y el botón
+   *  deshabilitado no comunica nada. */
+  trabajando?: string
+) => Promise<boolean>;
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
@@ -100,7 +106,7 @@ export function PropuestasView({
                 <button
                   className={`${styles.btn} ${styles.btnSm} ${styles.btnQuiet}`}
                   disabled={busy}
-                  onClick={() => run(() => runExtraction(c.id), ["Extracción lista", "El material ya se puede convertir en propuestas."])}
+                  onClick={() => run(() => runExtraction(c.id), ["Extracción lista", "El material ya se puede convertir en propuestas."], "Leyendo cada pieza y marcando sus afirmaciones.")}
                 >
                   {c.error ? "Reintentar extracción" : "Continuar extracción"}
                 </button>
@@ -125,7 +131,7 @@ export function PropuestasView({
                 <button
                   className={`${styles.btn} ${styles.btnSm} ${styles.btnPrimary}`}
                   disabled={busy}
-                  onClick={() => run(() => runProposals(c.id), ["Tres ángulos listos", "El sistema propone; tú decides."])}
+                  onClick={() => run(() => runProposals(c.id), ["Tres ángulos listos", "El sistema propone; tú decides."], "Buscando tres ángulos distintos sobre el material.")}
                 >
                   Generar 3 propuestas (IA)
                 </button>
@@ -214,7 +220,7 @@ export function PropuestasView({
                           const ok = await run(() => chooseProposal(p.id));
                           if (!ok) return;
                           setDetail(null);
-                          run(() => createPost(detail.cycle.id), ["Post creado", "Ya está en «Posts en Fila», listo para revisar y publicar."]);
+                          run(() => createPost(detail.cycle.id), ["Post creado", "Ya está en «Posts en Fila», listo para revisar y publicar."], "Redactando los paneles y trazando cada uno a su fuente.");
                         }}
                       >
                         Crear Post
@@ -409,7 +415,7 @@ export function PostsView({
                 <button
                   className={`${styles.btn} ${styles.btnSm} ${styles.btnQuiet}`}
                   disabled={busy}
-                  onClick={() => run(() => createPost(c.id), ["Post creado", "Listo para revisar y publicar."])}
+                  onClick={() => run(() => createPost(c.id), ["Post creado", "Listo para revisar y publicar."], "Redactando los paneles y trazando cada uno a su fuente.")}
                 >
                   {c.post?.postError ? "Reintentar" : "Continuar"}
                 </button>
@@ -502,7 +508,7 @@ export function PostsView({
                 onClick={() => {
                   const cycle = reediting;
                   setReediting(null);
-                  run(() => createPost(cycle.id, prompt), ["Post rehecho", "Se aplicó tu instrucción sobre las mismas fuentes."]);
+                  run(() => createPost(cycle.id, prompt), ["Post rehecho", "Se aplicó tu instrucción sobre las mismas fuentes."], "Rehaciendo los paneles con tu instrucción.");
                 }}
               >
                 Rehacer post

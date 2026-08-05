@@ -440,3 +440,27 @@ Contexto abierto al cerrar V26:
   llamada, no bucles: si fallan, el reintento empieza limpio. No se les tocó el
   tope sin motivo.
 (commit: pending)
+
+## [2026-08-05] Coffeed: el listón, movido en los DOS pasos, y un aviso de que trabaja
+- **EL ARREGLO DE LA V2.59 ESTABA A MEDIAS.** La extracción ya perdonaba a la
+  pieza que no se deja leer, pero `runProposals` seguía exigiendo el pleno:
+  «Falta la extracción de 1 fuente(s)». El ciclo quedaba bloqueado igual, solo
+  que un paso más adelante. Lo vio el owner al pulsar el botón, no yo al leer.
+- Ahora las propuestas trabajan con `conMaterial` —las fuentes que SÍ tienen
+  extracción— y el listón es el mismo que el código exige al empezar: **dos**.
+  Con el tope de 3 paneles por fuente, una sola no llega a 5. Ese filtro alimenta
+  tanto lo que ve el modelo como las claves que se le aceptan, así que no puede
+  citar una fuente de la que no tiene cuerpo.
+- **AVISO DE «TRABAJANDO»** (lo pidió el owner): estos pasos tardan de treinta
+  segundos a varios minutos y el botón deshabilitado no comunica nada — parece
+  que no ha pasado nada y se vuelve a hacer clic. `run` acepta ahora una
+  etiqueta y mientras corre se ve un aviso que NO se va solo, con lo que está
+  haciendo («Leyendo cada pieza y marcando sus afirmaciones», «Buscando tres
+  ángulos distintos…», «Redactando los paneles…»). El barrido, que es el más
+  largo, tenía su propio estado y no avisaba: ahora pasa por `run` como el resto.
+- Los puntos suspensivos se ESCRIBEN siempre y solo late la opacidad: animar
+  `content` por keyframes solo va en algunos navegadores, y donde no iba, el
+  aviso se quedaba en «Trabajando» a secas.
+- Verificado con `tsc`, `eslint` y un `next build` completo. NO verificado en
+  pantalla: el Source Wrapper está detrás del gate del Estudio.
+(commit: pending)

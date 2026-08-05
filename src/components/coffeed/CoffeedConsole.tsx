@@ -43,7 +43,13 @@ function fmtDate(iso: string | null): string {
   return new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
 }
 
-type RunFn = (fn: () => Promise<CoffeedResult>, okMsg?: [string, string]) => Promise<boolean>;
+type RunFn = (
+  fn: () => Promise<CoffeedResult>,
+  okMsg?: [string, string],
+  /** Qué decir mientras corre. Los pasos de IA tardan minutos y el botón
+   *  deshabilitado no comunica nada. */
+  trabajando?: string
+) => Promise<boolean>;
 
 export function CoffeedConsole() {
   const [bundle, setBundle] = useState<CoffeedEcpBundle | null>(null);

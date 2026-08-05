@@ -182,7 +182,14 @@ async function mapWithLimit<T, R>(items: T[], limit: number, worker: (item: T) =
  *  sin dejar ni rastro del fallo. Con cuatro por tanda cada llamada dura menos
  *  de dos minutos y el progreso queda guardado en `last_swept_at`, así que se
  *  puede continuar — incluso si se cierra la pestaña. */
-const SWEEP_CHUNK = 4;
+const SWEEP_CHUNK = 3;
+
+/** Techo por medio DENTRO de una tanda. El global de `claude()` son 90 s, que se
+ *  eligieron para acotar el barrido entero cuando iba de una sentada; troceado
+ *  esa razón desaparece y 90 s se quedaban cortos — el 2026-08-05 se abortaron
+ *  así la Federación Nacional de Cafeteros y SCA News. Con tres en paralelo, el
+ *  peor caso de una tanda sigue siendo un solo tiempo de espera. */
+const SWEEP_TIMEOUT_MS = 150_000;
 
 /**
  * Recorre la lista blanca y trae titulares + sumarios + FECHA de los últimos
@@ -193,8 +200,14 @@ const SWEEP_CHUNK = 4;
  * aún no se han visto en esta sesión, y devuelve cuántos quedan. Quien llama
  * repite hasta que `pendientes` sea 0.
  */
-export async function sweepSources(): Promise<
-  { ok: true; added: number; found: number; pendientes: number; revisados: number } | { ok: false; error: string }
+export async function sweepSources(
+  /** Ids que YA fallaron en esta misma vuelta. No se marcan como barridos —para
+   *  que un barrido posterior los reintente— pero tampoco se repiten aquí, que
+   *  si no, un medio que siempre expira se llevaría 150 s de cada tanda. */
+  saltar: string[] = []
+): Promise<
+  | { ok: true; added: number; found: number; pendientes: number; revisados: number; fallidos: { id: string; name: string }[] }
+  | { ok: false; error: string }
 > {
   const who = await studioGate();
   if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
@@ -217,9 +230,11 @@ export async function sweepSources(): Promise<
   // Pendiente = no se ha visto DESDE que se abrió esta sesión. Así reabrir una
   // sesión nueva vuelve a barrerlos todos, pero reintentar la misma continúa
   // donde se quedó en vez de empezar de cero.
-  const pendientesTodos = todos.filter((s) => !s.last_swept_at || s.last_swept_at < cycle.created_at);
+  const pendientesTodos = todos
+    .filter((s) => !s.last_swept_at || s.last_swept_at < cycle.created_at)
+    .filter((s) => !saltar.includes(s.id));
   if (!pendientesTodos.length) {
-    return { ok: true, added: 0, found: 0, pendientes: 0, revisados: 0 };
+    return { ok: true, added: 0, found: 0, pendientes: 0, revisados: 0, fallidos: [] };
   }
   const sources = pendientesTodos.slice(0, SWEEP_CHUNK);
 
@@ -242,25 +257,31 @@ Reglas:
 - "kind": "video" para YouTube, "articulo" para el resto.
 - "source": el nombre EXACTO del medio tal y como te lo paso.
 - "published_at": formato YYYY-MM-DD.
-- Sé rápido: como mucho dos búsquedas. Si no aparece nada, devuelve [].
+- Hasta tres búsquedas si te hacen falta para CONFIRMAR la fecha. Si aun así no
+  aparece nada dentro de la ventana, devuelve [] — es una respuesta válida.
 
 Devuelve SOLO un array JSON, sin texto antes ni después:
 [{"source":"...","title":"...","summary":"...","url":"https://...","published_at":"YYYY-MM-DD","kind":"articulo"}]`;
 
+  const fallidos: { id: string; name: string }[] = [];
   try {
     const results = await mapWithLimit(sources, SWEEP_CONCURRENCY, async (s) => {
       try {
         const raw = await claude({
           model: MODEL_WRITE,
           maxTokens: 1500,
-          webSearch: 2,
+          webSearch: 3,
+          timeoutMs: SWEEP_TIMEOUT_MS,
           system: SWEEP_SYSTEM,
           user: JSON.stringify({ ventana: { desde: fmt(since), hasta: fmt(today) }, medio: { name: s.name, kind: s.kind, url: s.url } }),
         });
         return parseJson<SweepItem[]>(raw);
       } catch (err) {
-        // Un medio que falla no tumba el barrido: se pierde ESE medio.
+        // Un medio que falla no tumba el barrido: se pierde ESE medio. Pero se
+        // DEVUELVE su nombre, porque «no encontró nada» y «no llegó a mirar» se
+        // veían igual desde fuera, y no son lo mismo en absoluto.
         logFail(`sweep:${s.name}`, err);
+        fallidos.push({ id: s.id, name: s.name });
         return [] as SweepItem[];
       }
     });
@@ -306,10 +327,17 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
     // Se marcan DESPUÉS de guardar sus piezas: si algo revienta a mitad, esos
     // medios siguen pendientes y la siguiente tanda vuelve a por ellos. Es
     // preferible repetir un medio a saltárselo en silencio.
-    await service
-      .from("coffeed_sources")
-      .update({ last_swept_at: now })
-      .in("id", sources.map((s) => s.id));
+    //
+    // Y NO se marca el que falló. Un medio que se abortó por tiempo no se ha
+    // consultado: dejarlo pendiente es lo que hace que «vuelve a barrer para
+    // reintentarlos» sea verdad y no un consuelo.
+    const vistos = sources.filter((s) => !fallidos.some((f) => f.id === s.id));
+    if (vistos.length) {
+      await service
+        .from("coffeed_sources")
+        .update({ last_swept_at: now })
+        .in("id", vistos.map((s) => s.id));
+    }
 
     return {
       ok: true,
@@ -317,6 +345,7 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
       found: found.length,
       pendientes: pendientesTodos.length - sources.length,
       revisados: sources.length,
+      fallidos,
     };
   } catch (err) {
     return { ok: false, error: logFail("sweep", err) };

@@ -492,3 +492,28 @@ Contexto abierto al cerrar V26:
   quedan 6. 3 piezas nuevas hasta ahora».
 - Verificado con `tsc`, `eslint` y `next build`. NO verificado en pantalla.
 (commit: pending)
+
+## [2026-08-05] El barrido trajo cero, y por qué
+- El troceado FUNCIONÓ (14 medios marcados, `swept_at` puesto) pero no entró ni
+  una pieza. Los logs de Vercel separan las dos causas, que desde la pantalla se
+  veían igual:
+  1. **Dos medios expiraron** (Federación Nacional de Cafeteros, SCA News). El
+     techo por llamada eran 90 s, elegidos cuando el barrido iba de una sentada
+     para acotar el total; troceado esa razón desaparece. Ahora 150 s, y con tres
+     en paralelo el peor caso de una tanda sigue siendo UNA espera.
+  2. **Los otros doce devolvieron `[]`** — con `webSearch: 2` y un prompt que
+     exige confirmar la fecha («si no puedes confirmar la fecha, omite la
+     pieza») más «como mucho dos búsquedas», casi nada sobrevive al filtro.
+     Subido a 3 búsquedas y reescrita esa línea para que las gaste en CONFIRMAR.
+- **«No publicó nada» y «no llegué a mirarlo» ya no se ven igual.** El barrido
+  devuelve los medios que fallaron y el aviso final los nombra. Antes las dos
+  cosas eran una mesa vacía sin explicación.
+- **Los fallidos NO se marcan como barridos**, así que un barrido posterior los
+  reintenta de verdad — y para que eso no cueste 150 s en cada tanda de la misma
+  vuelta, el cliente los pasa como `saltar`. Estado en el cliente, servidor sin
+  memoria entre llamadas.
+- Tandas de 4 → **3** y la mesa se refresca DESPUÉS DE CADA TANDA (lo pidió el
+  owner): las piezas van apareciendo en vez de salir todas al final.
+- Se limpió `last_swept_at` de los 14 medios: la corrida vieja no trajo nada y
+  se quedaban marcados, así que el siguiente barrido no habría hecho nada.
+(commit: pending)

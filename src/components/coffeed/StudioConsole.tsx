@@ -175,6 +175,7 @@ export function StudioConsole() {
             bundle={bundle}
             busy={busy}
             run={run}
+            refresh={refresh}
             showToast={showToast}
             onExtracted={() => setView("propuestas")}
           />
@@ -343,12 +344,15 @@ function SeleccionView({
   bundle,
   busy,
   run,
+  refresh,
   showToast,
   onExtracted,
 }: {
   bundle: CoffeedStudioBundle;
   busy: boolean;
   run: RunFn;
+  /** Para pintar lo que va entrando tanda a tanda, no solo al final. */
+  refresh: () => Promise<void>;
   showToast: (k: string, m: string) => void;
   onExtracted: () => void;
 }) {
@@ -368,17 +372,22 @@ function SeleccionView({
     let added = 0;
     let found = 0;
     let revisados = 0;
+    const fallidos: { id: string; name: string }[] = [];
     const ok = await run(
       async (avisar) => {
         // POR TANDAS. Los 14 medios de una vez pasaban de 300 s y Vercel mataba
         // la función sin dejar rastro; cada tanda cabe de sobra y el progreso
         // queda guardado, así que esto continúa donde lo dejó.
         for (;;) {
-          const res = await sweepSources();
+          const res = await sweepSources(fallidos.map((f) => f.id));
           if (!res.ok) return { ok: false, error: res.error };
           added += res.added;
           found += res.found;
           revisados += res.revisados;
+          fallidos.push(...res.fallidos);
+          // Se pinta lo que ya entró ANTES de pedir la siguiente tanda: así la
+          // mesa se va llenando a la vista en vez de aparecer entera al final.
+          await refresh();
           if (!res.pendientes) break;
           avisar(`Van ${revisados} medios revisados y quedan ${res.pendientes}. ${added} piezas nuevas hasta ahora.`);
         }
@@ -389,11 +398,16 @@ function SeleccionView({
     );
     setSweeping(false);
     if (ok) {
+      // «No publicó nada» y «no llegué a mirarlo» no son lo mismo, y antes se
+      // veían igual: una mesa vacía sin explicación.
+      const nota = fallidos.length
+        ? ` No se pudo consultar ${fallidos.length} medio(s) (${fallidos.map((f) => f.name).join(", ")}): siguen pendientes, vuelve a barrer para reintentarlos.`
+        : "";
       showToast(
         "Barrido hecho",
         found
-          ? `${added} piezas nuevas de las ${found} encontradas en ${revisados} medios.`
-          : `Ninguno de los ${revisados} medios publicó nada en los últimos 7 días. Es una respuesta válida: añade una URL a mano o cierra la sesión sin producir.`
+          ? `${added} piezas nuevas de las ${found} encontradas en ${revisados} medios.${nota}`
+          : `Ninguno de los ${revisados} medios revisados publicó algo con fecha confirmada en los últimos 7 días.${nota || " Es una respuesta válida: añade una URL a mano o cierra la sesión sin producir."}`
       );
     }
   };

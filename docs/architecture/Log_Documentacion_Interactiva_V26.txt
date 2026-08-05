@@ -286,3 +286,31 @@ Contexto abierto al cerrar V26:
 - SIN PROBAR: la vuelta de `cotizacion.nota`. Hace falta escribir una Nota
   comercial en una página real de Notion y esperar al barrido de 15 minutos.
 (commit: pending)
+
+## [2026-08-05] F3 · Las jornadas al calendario: la mitad de la plataforma
+- **DECISIONES DEL OWNER**: (1) en Gmail, Make solo CLASIFICA Y ETIQUETA — el
+  Buzón del ECP sigue leyendo por IMAP (`imapflow`, `BUZON_IMAP_*`) y ve las
+  etiquetas. Nada se duplica y no se toca un camino que funciona. (2) Las
+  jornadas caen en un calendario NUEVO, «CTC · Operación», no en la agenda
+  personal: se puede compartir, y se puede vaciar sin tocar nada del owner.
+- **MIGRACIÓN `f3_calendario_jornadas`**: `calendar_event_id`, `calendar_url` y
+  `calendar_synced_at` en `arena_sessions` Y en `terratalento_jornadas`, con
+  índice único parcial en cada una. Dos tablas porque son dos cosas distintas:
+  una catación en el laboratorio y gente yendo a una finca solo comparten que se
+  agendan.
+- **POR QUÉ VUELVE EL ID**: sin él, cambiar la fecha de una jornada deja DOS
+  eventos en el calendario y nadie sabe cuál rige. El id no es un adorno.
+- **TRES EMISORES**: `createArenaSession` → `jornada.creada` (con el nombre de la
+  temporada en el título); `crearJornadaRecolecta` → `jornada.creada` (finca,
+  municipio, cupos); `cerrarJornadaRecolecta` → `jornada.cerrada` /
+  `jornada.cancelada`, y SOLO si de verdad cambió una fila — sus filtros pueden
+  no casar con ninguna (jornada ajena, o ya cerrada) y un update sin `.select()`
+  no distingue ese caso del éxito.
+- **CAZADO**: en `createArenaSession` el emisor tiene que ir ANTES del
+  `redirect()`. `redirect()` de Next LANZA para desviar el flujo, así que
+  cualquier cosa escrita después no se ejecuta nunca.
+- Manejador de entrada `jornada.agendada`, con `ref` = `arena:<id>` o
+  `recolecta:<id>` para saber a qué tabla escribir con un solo caso.
+- BLOQUEADO igual que F2 en su día: no hay conexión de Google en Make. Hace falta
+  el OAuth del owner para Calendar (y para Gmail, en la parte de etiquetas).
+(commit: pending)

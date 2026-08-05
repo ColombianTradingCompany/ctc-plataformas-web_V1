@@ -1,6 +1,7 @@
 "use server";
 
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
+import { emitEvent } from "@/lib/integraciones/emit";
 import { puedeSer } from "@/lib/identidad/matriz";
 import type { ConstanciaInput } from "./constanciaPrint";
 
@@ -463,7 +464,7 @@ export async function crearJornadaRecolecta(input: JornadaInput): Promise<Action
   // La finca tiene que ser SUYA — misma regla de propiedad que todo KR.
   const { data: finca } = await service
     .from("fincas")
-    .select("id, producer_id")
+    .select("id, producer_id, name, municipio, departamento")
     .eq("id", clamp(input.fincaId, 60))
     .maybeSingle();
   if (!finca || finca.producer_id !== user.id) return { ok: false, error: "Esa finca no está registrada a tu nombre." };
@@ -490,7 +491,7 @@ export async function crearJornadaRecolecta(input: JornadaInput): Promise<Action
     return { ok: false, error: "La duración estimada debe ser un número de días entre 1 y 365." };
   }
 
-  const { error } = await service.from("terratalento_jornadas").insert({
+  const { data: creada, error } = await service.from("terratalento_jornadas").insert({
     finca_id: finca.id,
     producer_id: user.id,
     fecha_inicio: fechaInicio,
@@ -512,8 +513,30 @@ export async function crearJornadaRecolecta(input: JornadaInput): Promise<Action
     duracion_estimada_dias: duracion,
     requisitos: clamp(input.requisitos, 500) || null,
     condiciones: clamp(input.condiciones, 800) || null,
+  }).select("id").single();
+  if (error || !creada) return { ok: false, error: "No se pudo publicar la jornada. Intenta de nuevo." };
+
+  // Al calendario (F3). La jornada ya está publicada: si Make o Google están
+  // caídos, el recolector la ve igual — el calendario es una comodidad para
+  // CTC, no parte del trato con el productor.
+  const donde = [finca.name, finca.municipio, finca.departamento].filter(Boolean).join(", ");
+  await emitEvent({
+    dominio: "origen_suministro",
+    tipo: "jornada.creada",
+    payload: {
+      ref: `recolecta:${creada.id}`,
+      clase: "recolecta",
+      titulo: `Recolecta · ${finca.name ?? "finca"}`,
+      fecha: fechaInicio,
+      // Sin fecha final es un día suelto; con ella, un rango. Se manda tal cual
+      // y que Calendar decida — no inventamos una duración que el productor
+      // no escribió.
+      fecha_fin: fechaFin,
+      todo_el_dia: true,
+      detalle: `${cupos} cupo(s). ${donde}`,
+      url: "https://terratalento.ctcexport.com",
+    },
   });
-  if (error) return { ok: false, error: "No se pudo publicar la jornada. Intenta de nuevo." };
   return { ok: true };
 }
 
@@ -521,12 +544,28 @@ export async function cerrarJornadaRecolecta(jornadaId: string, cancelar = false
   const user = await sessionUser();
   if (!user) return { ok: false, error: "Tu sesión expiró. Entra de nuevo." };
   const service = createServiceRoleClient();
-  const { error } = await service
+  const { data: filas, error } = await service
     .from("terratalento_jornadas")
     .update({ estado: cancelar ? "cancelada" : "cerrada" })
     .eq("id", jornadaId)
     .eq("producer_id", user.id)
-    .in("estado", ["abierta", "en_gestion"]);
+    .in("estado", ["abierta", "en_gestion"])
+    .select("id, calendar_event_id");
   if (error) return { ok: false, error: "No se pudo actualizar la jornada." };
+
+  // Solo se avisa si de verdad cambió algo: los filtros de arriba pueden no
+  // casar con ninguna fila (jornada ajena, o ya cerrada) y un update sin
+  // `.select()` no distingue ese caso del éxito.
+  const fila = filas?.[0];
+  if (fila?.calendar_event_id) {
+    await emitEvent({
+      dominio: "origen_suministro",
+      tipo: cancelar ? "jornada.cancelada" : "jornada.cerrada",
+      payload: {
+        ref: `recolecta:${fila.id}`,
+        calendar_event_id: fila.calendar_event_id,
+      },
+    });
+  }
   return { ok: true };
 }

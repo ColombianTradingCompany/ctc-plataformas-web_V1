@@ -41,6 +41,8 @@ export async function aplicarEntrante(
         return await cotizacionEspejada(payload);
       case "cotizacion.nota":
         return await cotizacionNota(payload);
+      case "jornada.agendada":
+        return await jornadaAgendada(payload);
       default:
         // No es un error. Un evento sin manejador se queda registrado y ya:
         // sirve para ver qué está mandando Make antes de decidir si merece uno.
@@ -74,6 +76,42 @@ async function cotizacionEspejada(p: Record<string, unknown>): Promise<Aplicacio
   if (error) return { estado: "fallido", detalle: error.message };
   if (!data?.length) return { estado: "descartado", detalle: `no existe la cotización ${code}` };
   return { estado: "aplicado", detalle: `${code} ← ${pageId}` };
+}
+
+/** Dónde quedó el evento del calendario (F3). El `ref` dice de qué jornada
+ *  hablamos —`arena:<uuid>` o `recolecta:<uuid>`—, porque son dos tablas
+ *  distintas: una catación en el laboratorio y gente yendo a una finca no son
+ *  la misma cosa aunque las dos se agenden.
+ *
+ *  Guardar el id NO es un adorno: sin él, cambiar la fecha de una jornada deja
+ *  dos eventos en el calendario y nadie sabe cuál rige. */
+async function jornadaAgendada(p: Record<string, unknown>): Promise<Aplicacion> {
+  const ref = texto(p.ref);
+  const eventId = texto(p.calendar_event_id);
+  if (!ref) return { estado: "fallido", detalle: "falta `ref`" };
+  if (!eventId) return { estado: "fallido", detalle: "falta `calendar_event_id`" };
+
+  const [clase, id] = ref.split(":");
+  const tabla =
+    clase === "arena" ? "arena_sessions" : clase === "recolecta" ? "terratalento_jornadas" : null;
+  if (!tabla || !id) {
+    return { estado: "fallido", detalle: `ref no reconocido: «${ref}» (espera arena:<id> o recolecta:<id>)` };
+  }
+
+  const service = createServiceRoleClient();
+  const { data, error } = await service
+    .from(tabla)
+    .update({
+      calendar_event_id: eventId,
+      calendar_url: texto(p.calendar_url),
+      calendar_synced_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("id");
+
+  if (error) return { estado: "fallido", detalle: error.message };
+  if (!data?.length) return { estado: "descartado", detalle: `no existe ${ref}` };
+  return { estado: "aplicado", detalle: `${ref} ← ${eventId}` };
 }
 
 /** La nota comercial que se escribió en Notion, de vuelta. Es EL campo que

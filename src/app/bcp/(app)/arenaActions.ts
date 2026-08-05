@@ -20,6 +20,8 @@ import {
   type JornadaState,
 } from "@/lib/arena/jornada";
 import { labEvaluationHasData, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { seasonLabel } from "@/lib/arena/seasons";
+import { emitEvent } from "@/lib/integraciones/emit";
 
 async function requireAdmin() {
   // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
@@ -66,6 +68,31 @@ export async function createArenaSession(formData: FormData) {
     action: "created",
     new_status: "scheduled",
     performed_by: adminId,
+  });
+
+  // Al calendario (F3). Va ANTES del redirect a propósito: `redirect()` lanza
+  // para desviar el flujo, así que nada escrito después de él se ejecuta.
+  const seasonId = String(formData.get("harvest_season_id"));
+  const { data: temporada } = await service
+    .from("harvest_seasons")
+    .select("kind, year")
+    .eq("id", seasonId)
+    .maybeSingle();
+
+  await emitEvent({
+    dominio: "origen_suministro",
+    tipo: "jornada.creada",
+    payload: {
+      ref: `arena:${session.id}`,
+      clase: "arena",
+      titulo: `Jornada de Arena · ${seasonLabel(temporada)}`,
+      // Una jornada de Arena ocupa el día: se manda como evento de día
+      // completo, que es lo que Calendar entiende sin hora de fin.
+      fecha: String(formData.get("session_date")),
+      todo_el_dia: true,
+      detalle: `Catación en el laboratorio. Capacidad: ${capacity} tazas.`,
+      url: `https://panel.ctcexport.com/bcp/arena/${session.id}`,
+    },
   });
 
   revalidatePath("/bcp/arena");

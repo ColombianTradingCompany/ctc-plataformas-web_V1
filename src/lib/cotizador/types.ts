@@ -39,6 +39,10 @@ export type Counterparty = {
   currentName?: string | null;
 };
 
+/** Una anotación de la bitácora. Se imprime al final de los documentos que se
+ *  generen después de la primera emisión. */
+export type QuoteChange = { at: string; action: string; note?: string | null; by?: string | null };
+
 export type Quote = {
   id: string;
   kind: QuoteKind;
@@ -58,9 +62,11 @@ export type Quote = {
   updatedAt: string;
   issuedAt: string | null;
   decidedAt: string | null;
+  changeLog: QuoteChange[];
 };
 
-/** Una fila de la lista — sin los jsonb, que pueden ser grandes. */
+/** Una fila de la lista — sin los jsonb pesados. La bitácora sí viaja: es corta
+ *  y el tablero marca con ella las cotizaciones que se reabrieron. */
 export type QuoteSummary = Omit<Quote, "inputs" | "results">;
 
 export type QuoteResult = { ok: true; id?: string } | { ok: false; error: string };

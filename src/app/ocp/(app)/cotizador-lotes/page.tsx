@@ -12,7 +12,7 @@ export default function CotizadorLotesPage() {
       basePath="/ocp/cotizador-lotes"
       title="Cotizador de Lotes de Café"
       subtitle="Cuánto cuesta llevar un lote de un estado del café a otro, y a qué precio se cotiza. Las mermas por etapa y las curvas de costo salen de la Calculadora de Mermas; aquí se guardan contra un productor o un cliente y quedan como historial."
-      totalLabel="Total"
+
     />
   );
 }

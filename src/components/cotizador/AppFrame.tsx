@@ -15,7 +15,8 @@
 // ni de tocar su código para que "hable" con nosotros.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { issueQuote, saveQuoteDraft } from "@/lib/cotizador/actions";
+import { issueQuote, reopenQuote, saveQuoteDraft } from "@/lib/cotizador/actions";
+import { latestAnchor } from "@/lib/anclas/actions";
 import type { Quote } from "@/lib/cotizador/types";
 import styles from "./appFrame.module.css";
 import panel from "@/app/bcp/(app)/shared.module.css";
@@ -179,18 +180,55 @@ export function AppFrame({ quote, onSaved }: { quote: Quote; onSaved: () => void
     restored.current = true;
   }, [quote.inputs, win]);
 
-  // Una cotización emitida se mira, no se toca.
+  // Emitida = no se guarda encima, pero la app queda VIVA: exportar, imprimir y
+  // trastear con los números tienen que seguir funcionando. Antes se apagaban
+  // todos los controles del iframe y eso mataba los botones de Exportar.
+  // Para volver a guardar hay que reabrirla, y reabrir deja rastro.
+
+  // El ancla de mercado entra en la Calculadora de Mermas por su PROPIA función
+  // (`fncRecord`), no escribiéndole el estado por dentro: así el precio queda
+  // registrado como una lectura más y la herramienta lo pinta como siempre.
+  // El precio se sigue usando en la herramienta; lo que se mudó a «Anclas de
+  // mercado» es dónde se consulta y se acumula.
   useEffect(() => {
-    if (!ready || !locked) return;
+    if (!ready || quote.kind !== "lote") return;
+    let alive = true;
+    latestAnchor("fnc_carga").then((a) => {
+      if (!alive || !a) return;
+      const w = win() as unknown as { fncRecord?: (e: { value: number; date: string; src: string }) => void; recalc?: () => void } | null;
+      if (!w?.fncRecord) return;
+      w.fncRecord({ value: a.value, date: a.asOf, src: a.source === "fnc" ? "FNC" : "Anclas" });
+      w.recalc?.();
+    });
+    return () => { alive = false; };
+  }, [ready, quote.kind, win]);
+
+  // La bitácora viaja a la app para que salga al final de los documentos que
+  // genere a partir de ahora.
+  useEffect(() => {
+    if (!ready) return;
     const w = win();
     if (!w) return;
     const t = setTimeout(() => {
-      w.document.querySelectorAll("input, select, textarea, button").forEach((el) => {
-        (el as HTMLInputElement).disabled = true;
-      });
-    }, 500);
+      (w as unknown as Record<string, unknown>).CTC_CHANGELOG = quote.changeLog ?? [];
+    }, 300);
     return () => clearTimeout(t);
-  }, [ready, locked, win]);
+  }, [ready, quote.changeLog, win]);
+
+  async function reopen() {
+    const note = window.prompt("¿Por qué se reabre? Queda en la bitácora y se imprime al final de los documentos que generes después.", "");
+    if (note === null) return; // canceló
+    setBusy(true);
+    setError("");
+    setMsg("");
+    const r = await reopenQuote(quote.id, note);
+    setBusy(false);
+    if (!r.ok) setError(r.error);
+    else {
+      setMsg("Reabierta. El cambio quedó anotado.");
+      onSaved();
+    }
+  }
 
   async function save(alsoIssue: boolean) {
     const w = win();
@@ -240,19 +278,25 @@ export function AppFrame({ quote, onSaved }: { quote: Quote; onSaved: () => void
       <div className={styles.bar}>
         <span className={panel.meta}>
           {locked
-            ? "Cotización emitida — la calculadora está en solo lectura. Duplícala para rehacerla."
+            ? "Cotización emitida — puedes consultarla y exportarla. Para cambiar los números, reábrela: queda anotado en la bitácora y sale al final de los documentos nuevos."
             : "La calculadora es la del owner, íntegra. Al guardar se archiva su estado completo en esta cotización."}
         </span>
-        {!locked && (
-          <span className={panel.actions}>
-            <button className="btn btn-sm" type="button" disabled={busy || !ready} onClick={() => save(false)}>
-              Guardar borrador
+        <span className={panel.actions}>
+          {locked ? (
+            <button className="btn btn-sm btn-solid" type="button" disabled={busy} onClick={reopen}>
+              Reabrir para corregir
             </button>
-            <button className="btn btn-sm btn-solid" type="button" disabled={busy || !ready} onClick={() => save(true)}>
-              Emitir cotización
-            </button>
-          </span>
-        )}
+          ) : (
+            <>
+              <button className="btn btn-sm" type="button" disabled={busy || !ready} onClick={() => save(false)}>
+                Guardar borrador
+              </button>
+              <button className="btn btn-sm btn-solid" type="button" disabled={busy || !ready} onClick={() => save(true)}>
+                Emitir cotización
+              </button>
+            </>
+          )}
+        </span>
       </div>
       {msg && <p className={panel.meta}>{msg}</p>}
       {error && <p className={panel.warn}>{error}</p>}

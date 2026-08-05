@@ -14,7 +14,7 @@ export default function CotizadorLogisticoPage() {
       basePath="/ocp/cotizador-logistico"
       title="Cotizador Logístico"
       subtitle="Cotizaciones de transporte y logística contra un cliente o un productor. El andamiaje ya guarda, numera y archiva; el motor de cálculo entra cuando llegue el HTML de referencia."
-      totalLabel="Total"
+
     />
   );
 }

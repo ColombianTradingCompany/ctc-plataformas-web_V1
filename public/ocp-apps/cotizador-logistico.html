@@ -1146,7 +1146,7 @@ input.inco-range::-moz-range-thumb {
       Observaciones
       <span class="info-i">i<span class="tip">Observaciones comerciales y de logística relacionadas con la cotización. Salen con este mismo título en el documento del cliente.</span></span>
     </div>
-    <textarea id="quote-notes" rows="4" oninput="recalc()" placeholder="Ej: Lote cosecha 2025, finca El Paraíso, perfil 86 SCA, disponibilidad inmediata..." style="width:100%;margin-top:6px;font-family:'Inter',sans-serif;font-size:11px;padding:7px 9px;border:1px solid var(--border);border-radius:6px;resize:vertical;background:var(--bg);color:var(--text);min-height:72px;line-height:1.5"></textarea>
+    <textarea id="quote-notes" rows="4" oninput="recalc()" placeholder="Ej: pago 50% anticipado y 50% contra BL, tránsito estimado 22 días, consolidación con otro lote, no incluye almacenaje en destino más allá de 7 días..." style="width:100%;margin-top:6px;font-family:'Inter',sans-serif;font-size:11px;padding:7px 9px;border:1px solid var(--border);border-radius:6px;resize:vertical;background:var(--bg);color:var(--text);min-height:72px;line-height:1.5"></textarea>
     <button class="ss-export-btn" onclick="openExportModal()">⤓ Ver resumen y exportar</button>
   </div>
 </aside>
@@ -4830,6 +4830,12 @@ body{font-family:'Inter',Arial,sans-serif;color:#1a1816;background:#fff;font-siz
 .narr{font-size:10px;line-height:1.65;color:#2a2520}
 .narr p{margin-bottom:6px}
 .narr strong{color:#3C0A86}
+.chlog{margin:14px 10mm 0;padding:10px 12px;border:1px solid #d6d3e6;border-radius:6px;background:#faf9fd;page-break-inside:avoid}
+.chlog-t{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:#3C0A86;margin-bottom:6px}
+.chlog-tb{width:100%;border-collapse:collapse;font-size:8.5px}
+.chlog-tb th{text-align:left;color:#8a7fa5;font-weight:700;text-transform:uppercase;letter-spacing:.07em;font-size:7.5px;padding:2px 6px 3px 0;border-bottom:1px solid #e5e3ee}
+.chlog-tb td{padding:3px 6px 3px 0;vertical-align:top;border-bottom:1px solid #f0eef7;color:#4b4560}
+.chlog-n{margin-top:6px;font-size:7.5px;color:#8a7fa5}
 .ftr{background:#1a1816;padding:7px 18px;display:flex;align-items:center;justify-content:space-between;margin-top:auto}
 .fb{font-size:9.5px;font-weight:600;color:#FFCD00}
 .fb small{display:block;font-size:7.5px;color:#666;font-weight:400;margin-top:1px}
@@ -5029,6 +5035,26 @@ function updateQuoteHeader(){
 }
 
 /* ─────────── Documento de cotización dirigido al cliente ─────────── */
+/* ── Bitácora de cambios ──────────────────────────────────────────────────
+   La cotización se puede REABRIR después de emitida; cuando eso pasa, el marco
+   del OCP deja la lista en `window.CTC_CHANGELOG` y todo documento que se genere
+   a partir de entonces la lleva al final. Corriendo la app suelta no hay
+   bitácora y el bloque no aparece. */
+function changelogBlock(){
+  var log = (typeof CTC_CHANGELOG !== 'undefined' && Array.isArray(CTC_CHANGELOG)) ? CTC_CHANGELOG : [];
+  if(!log.length) return '';
+  var rows = log.map(function(e){
+    var d = e && e.at ? new Date(e.at) : null;
+    var when = d && !isNaN(d) ? d.toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'}) : '';
+    return '<tr><td style="white-space:nowrap">'+when+'</td><td>'+(e.action||'')+
+           (e.note ? ' — '+e.note : '')+'</td><td style="white-space:nowrap">'+(e.by||'')+'</td></tr>';
+  }).join('');
+  return '<div class="chlog"><div class="chlog-t">Bitácora de cambios</div>'+
+         '<table class="chlog-tb"><thead><tr><th>Fecha</th><th>Cambio</th><th>Responsable</th></tr></thead>'+
+         '<tbody>'+rows+'</tbody></table>'+
+         '<div class="chlog-n">Esta cotización se reabrió después de su primera emisión. Las cifras vigentes son las de este documento.</div></div>';
+}
+
 function buildQuoteDocument(){
   recalc();
   const annex = buildAnnexReport();
@@ -5310,6 +5336,7 @@ td.r,th.r{text-align:right}
     <div class="fb">Colombian Trading Company S.A.S.<small>${c.originCity}, Colombia · Exportadores de café de especialidad</small></div>
     <div class="fn"><b>NIT:</b> 901.483.425-7 &nbsp;·&nbsp; ctcexport.com &nbsp;·&nbsp; info@ctcexport.com &nbsp;·&nbsp; +57 315 294 8371 / +49 176 4202 0585</div>
   </div>
+  ${changelogBlock()}
 </div>`;
 
   const annexPart = q.annex

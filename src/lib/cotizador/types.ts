@@ -63,6 +63,13 @@ export type Quote = {
   issuedAt: string | null;
   decidedAt: string | null;
   changeLog: QuoteChange[];
+  /** El espejo de Notion (F2). La plataforma manda sobre la cotización; lo
+   *  único que vuelve de Notion es `notaComercial` — la conversación que hubo
+   *  alrededor del número, que es justo lo que la plataforma no sabe. */
+  notaComercial: string | null;
+  notaComercialAt: string | null;
+  notionUrl: string | null;
+  notionSyncedAt: string | null;
 };
 
 /** Una fila de la lista — sin los jsonb pesados. La bitácora sí viaja: es corta

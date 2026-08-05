@@ -205,6 +205,23 @@ export function QuotesBoard({
                       {q.changeLog.length > 0 && (
                         <span className={table.tag} title={`${q.changeLog.length} cambio(s) en la bitácora`}>reabierta</span>
                       )}
+                      {/* El espejo de Notion. Se marca solo cuando Make ha
+                          confirmado la página: si no aparece, es que el
+                          escenario no llegó a completarse. */}
+                      {q.notionUrl && (
+                        <a
+                          className={table.tag}
+                          href={q.notionUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Abrir la página espejo en Notion"
+                        >
+                          Notion ↗
+                        </a>
+                      )}
+                      {q.notaComercial && (
+                        <span className={table.tag} title={q.notaComercial}>nota comercial</span>
+                      )}
                     </td>
                     <td>
                       {q.counterparty.name ? (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { DOMINIOS, type Dominio } from "@/lib/integraciones/dominios";
+import { aplicarEntrante } from "@/lib/integraciones/aplicar";
 
 // ── Integraciones · la puerta de entrada ─────────────────────────────────────
 // UNA ruta para todo lo que entra de fuera (Make, y a través de él Notion,
@@ -11,10 +12,12 @@ import { DOMINIOS, type Dominio } from "@/lib/integraciones/dominios";
 // Una url pública que escribe en la base es una invitación, así que sin secreto
 // no se abre — falla ruidosamente en vez de quedar accesible.
 //
-// Qué hace hoy: registra el evento entrante. Es deliberadamente tonta: enrutar
-// a acciones concretas viene en F2, y cada acción se añadirá una por una con su
-// propia validación. Una puerta que ya sabe hacer demasiado es una puerta que no
-// se puede razonar.
+// Qué hace: autentica, REGISTRA el evento, y luego lo aplica. El registro va
+// primero y a propósito — si el manejador falla, la fila sigue ahí con el
+// motivo escrito, y se puede ver qué mandó Make sin tener que pedírselo.
+//
+// La ruta no decide nada por sí misma: qué puede tocar un evento entrante vive
+// en `aplicar.ts`, como lista blanca. Aquí no se añaden casos.
 
 export const dynamic = "force-dynamic";
 
@@ -77,5 +80,23 @@ export async function POST(request: Request, ctx: { params: Promise<{ canal: str
     .single();
 
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, id: data.id });
+
+  // Ya está registrado; a partir de aquí nada puede perder el evento. Se aplica
+  // en la misma petición para que Make reciba en la respuesta si su llamada
+  // sirvió de algo — un 200 «lo recibí» que en realidad no hizo nada es cómo se
+  // construye un escenario que parece funcionar durante meses.
+  const resultado = await aplicarEntrante(tipo, body.payload ?? {});
+  await service
+    .from("integration_events")
+    .update({
+      estado: resultado.estado,
+      aplicado_at: new Date().toISOString(),
+      ultimo_error: resultado.estado === "fallido" ? resultado.detalle : null,
+    })
+    .eq("id", data.id);
+
+  return NextResponse.json(
+    { ok: resultado.estado !== "fallido", id: data.id, estado: resultado.estado, detalle: resultado.detalle },
+    { status: resultado.estado === "fallido" ? 422 : 200 }
+  );
 }

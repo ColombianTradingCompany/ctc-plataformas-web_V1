@@ -13,6 +13,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireConsoleWrite, quoteServiceClient } from "@/lib/panel/requireConsoleWrite";
+import { emitEvent } from "@/lib/integraciones/emit";
 import type { Counterparty, CounterpartyKind, CounterpartyOption, Quote, QuoteKind, QuoteResult, QuoteStatus, QuoteSummary } from "./types";
 
 const NO_AUTH: QuoteResult = { ok: false, error: "Tu sesión del OCP no está activa. Vuelve a iniciar sesión." };
@@ -26,12 +27,15 @@ type Row = {
   notes: string | null; valid_until: string | null;
   created_by: string | null; created_at: string; updated_at: string;
   issued_at: string | null; decided_at: string | null; change_log: unknown;
+  nota_comercial: string | null; nota_comercial_at: string | null;
+  notion_url: string | null; notion_synced_at: string | null;
   profiles?: { full_name: string | null; email: string | null } | null;
 };
 
 const LIST_COLS =
   "id, kind, code, title, status, counterparty_kind, profile_id, lead_id, contact_name, contact_email, " +
   "currency, total, unit_label, notes, valid_until, created_by, created_at, updated_at, issued_at, decided_at, change_log, " +
+  "nota_comercial, nota_comercial_at, notion_url, notion_synced_at, " +
   "profiles:profile_id(full_name, email)";
 
 function toCounterparty(r: Row): Counterparty {
@@ -55,6 +59,12 @@ function toSummary(r: Row): QuoteSummary {
     createdBy: r.created_by, createdAt: r.created_at, updatedAt: r.updated_at,
     issuedAt: r.issued_at, decidedAt: r.decided_at,
     changeLog: Array.isArray(r.change_log) ? (r.change_log as QuoteSummary["changeLog"]) : [],
+    // El espejo de Notion. Se lee aquí, no se escribe: lo pone `aplicar.ts`
+    // cuando Make devuelve la página o la nota del comercial.
+    notaComercial: r.nota_comercial,
+    notaComercialAt: r.nota_comercial_at,
+    notionUrl: r.notion_url,
+    notionSyncedAt: r.notion_synced_at,
   };
 }
 
@@ -203,8 +213,42 @@ export async function issueQuote(id: string): Promise<QuoteResult> {
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
   // El trigger exige total y congela el cálculo a partir de aquí.
-  const { error } = await service.from("quotes").update({ status: "emitida" }).eq("id", id).eq("status", "borrador");
-  return error ? { ok: false, error: error.message } : { ok: true };
+  const { data, error } = await service
+    .from("quotes")
+    .update({ status: "emitida" })
+    .eq("id", id)
+    .eq("status", "borrador")
+    .select("code, kind, title, currency, total, unit_label, valid_until, issued_at, contact_name, contact_email, counterparty_kind")
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+
+  // Emitir es lo que dispara el espejo de Notion (F2). Va DESPUÉS de que el
+  // update haya ido bien y no puede tumbarlo: `emitEvent` nunca lanza, y si
+  // Notion o Make están caídos la cotización ya está emitida igual.
+  if (data) {
+    await emitEvent({
+      dominio: "ventas_marketing",
+      tipo: "cotizacion.emitida",
+      payload: {
+        // El código es el `ctc_id` del espejo: único, estable y legible en
+        // Notion sin tener que mirar un uuid.
+        ctc_id: data.code,
+        kind: data.kind,
+        title: data.title,
+        counterparty_kind: data.counterparty_kind,
+        contact_name: data.contact_name,
+        contact_email: data.contact_email,
+        currency: data.currency,
+        total: data.total === null ? null : Number(data.total),
+        unit_label: data.unit_label,
+        valid_until: data.valid_until,
+        issued_at: data.issued_at,
+        // Para poder volver del espejo al original de un clic.
+        url: `https://www.ctcexport.com/ocp/${data.kind === "lote" ? "cotizador-lotes" : "cotizador-logistico"}`,
+      },
+    });
+  }
+  return { ok: true };
 }
 
 export async function decideQuote(id: string, decision: "aceptada" | "rechazada"): Promise<QuoteResult> {

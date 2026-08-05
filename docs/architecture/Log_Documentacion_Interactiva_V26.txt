@@ -193,3 +193,36 @@ Contexto abierto al cerrar V26:
   un secreto incorrecto también da 401, y un canal inventado da «Canal
   desconocido».
 (commit: 42ad8ec)
+
+## [2026-08-05] F2 · El espejo de Notion: la mitad de la plataforma
+- **MIGRACIÓN `f2_espejo_notion_cotizaciones`**: `quotes` gana `nota_comercial`,
+  `nota_comercial_at`, `notion_page_id`, `notion_url`, `notion_synced_at`, con
+  índice único parcial sobre `notion_page_id` (una página espeja UNA cotización).
+  `integration_event_state` gana `aplicado` y `integration_events` gana
+  `aplicado_at`: un evento ENTRANTE no se «envía», se aplica, y las filas de
+  entrada se quedaban en «pendiente» para siempre.
+- **`code` ES el `ctc_id`**. Ya era único (`quotes_code_key`), es estable desde el
+  insert y se lee en Notion sin mirar un uuid. No se inventó una clave nueva.
+- **SALIDA**: `issueQuote` emite `cotizacion.emitida` (dominio `ventas_marketing`)
+  con el código, destinatario, moneda, total, vigencia y un enlace de vuelta.
+  Va DESPUÉS del update y no puede tumbarlo — si Make o Notion están caídos, la
+  cotización queda emitida igual.
+- **ENTRADA · `src/lib/integraciones/aplicar.ts`**, lista blanca de DOS casos:
+  `cotizacion.espejada` (Make dice dónde quedó la página) y `cotizacion.nota`
+  (vuelve la nota del comercial, tope 4.000 caracteres). NO hay un manejador
+  genérico de «aplica este jsonb a la cotización»: Notion no puede cambiar un
+  total, un estado, un destinatario ni una vigencia. Todo lo que el exterior
+  puede provocar aquí dentro se ve en un archivo de 120 líneas.
+- La puerta registra ANTES de aplicar y devuelve el resultado en la respuesta.
+  Un 200 «lo recibí» que en realidad no hizo nada es como se construye un
+  escenario de Make que parece funcionar durante meses.
+- El guardián de `quotes` solo congela `inputs`/`results`, así que anotar una
+  emitida está permitido — comprobado, no supuesto. Anotar la conversación
+  DESPUÉS de emitir es justo para lo que sirve.
+- Guardián `scripts/qa-espejo-notion.mjs` (9/9) contra la base REAL, y deja las
+  cotizaciones como estaban. Lo que de verdad prueba: que un `code` inexistente
+  **no escribe nada** — un update sin `.select()` devuelve éxito aunque no toque
+  ninguna fila, y así es como un manejador dice «aplicado» sin haber hecho nada.
+- PENDIENTE de F2: la base en Notion y los dos escenarios de Make. Son escrituras
+  en cuentas del owner y esperan su visto bueno.
+(commit: pending)

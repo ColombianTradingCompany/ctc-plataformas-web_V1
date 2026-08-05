@@ -31,3 +31,35 @@ Contexto abierto al cerrar V26:
   Specialty/Black sobre KR ProcessFlow y CP BlackSection.
 - El socio multi-nodo sigue exigiendo cambiar el PK de `partner_accounts`.
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+## [2026-08-05] Plan de integraciones: Notion, Google y Make
+- `docs/INTEGRACIONES_PLAN.md` — plan, sin código todavía. Comprobado con acceso
+  real a los cuatro sistemas (Notion, Gmail, Drive y Make, todos bajo
+  ctcexportmain@gmail.com).
+- Make: plan **Pro activo** con cupón — 750.000 ops/mes, intervalo 1 min, 250 MB
+  por archivo, data stores, BYO-LLM-key. Zona **eu2** (UE). Escenarios: cero (se
+  borró el único, un "Integration ClickUp" de marzo 2025 con 0 ejecuciones).
+- **Hallazgo que ordena todo**: las etiquetas de Gmail y los hubs de Notion son
+  la MISMA taxonomía del negocio (0. Admin y Estrategia · 1. Origen y Suministro ·
+  2. Tránsito e Importación · 3. Tostadores e Inventario · 4. Ventas y Marketing ·
+  5. IT · 6. I+D). Se propone como enum compartido de toda la integración.
+- **Regla de arquitectura propuesta**: cada dominio tiene UN dueño y la copia
+  viaja en una sola dirección. Postgres manda en lotes/fincas/contratos/
+  cotizaciones (ya tienen triggers, RLS y audit_log que Notion no puede honrar);
+  Notion manda en doctrina, papers, reuniones y tareas; la frontera se resuelve
+  con ESPEJO + `ctc_id`, no con sincronización bidireccional.
+- **CONFLICTO YA EXISTENTE, pendiente de decisión del owner**: «Grados de Calidad
+  CTC» está definido en Notion (umbrales SCA) y en la plataforma (`lots.grade`,
+  otorgado en la Jornada). Hoy coinciden; en cuanto uno se mueva habrá dos
+  verdades. Igual con el pitch CaaS y la jerarquía Papagayo Beans, duplicados
+  entre Notion y `servicesCopy.tsx`.
+- **NODO/MÓDULO NUEVO propuesto**: `/ecp/automatizaciones` en IT y Plataforma —
+  registro de escenarios por propósito, dominio, criticidad y ciclo de vida
+  (propuesta→piloto→activa→deprecada), con última corrida y ops consumidas
+  leídas del API de Make.
+- **DICT sugerido**: «Espina de integración» (tabla `integration_events` +
+  despachador + una sola puerta `/api/integraciones/[canal]` con secreto por
+  canal) y «Make es el bus, no el cerebro».
+- Para el TODO de GDPR: la política de privacidad tendrá que declarar a Resend,
+  Notion, Google y Make como subprocesadores.
+(commit: pending)

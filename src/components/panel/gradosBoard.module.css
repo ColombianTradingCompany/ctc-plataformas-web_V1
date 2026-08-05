@@ -1,0 +1,102 @@
+/* ── La escalera de grados ───────────────────────────────────────────────────
+   De Tyrian abajo hacia Black: se lee como una jerarquía, no como una lista.
+   Cada tarjeta lleva su color en el borde izquierdo — el mismo token que usan
+   las tres superficies públicas. */
+
+.escalera {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.grado {
+  border: 1px solid var(--line, #d6d3e6);
+  border-left: 4px solid var(--g, #999);
+  border-radius: 9px;
+  background: var(--card, #fff);
+  padding: 12px 16px;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.chip {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  align-self: center;
+  flex: 0 0 auto;
+}
+.nombre {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.rango {
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted, #6b7280);
+}
+
+.lema {
+  margin: 3px 0 8px;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--muted, #6b7280);
+}
+
+.criterios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.criterios li {
+  padding: 2px 9px;
+  border: 1px solid var(--line, #d6d3e6);
+  border-radius: 999px;
+  background: var(--paper, #faf9fd);
+  font-size: 11.5px;
+  color: var(--ink, #111827);
+}
+
+.resultado {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.resultado small {
+  display: block;
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted, #6b7280);
+}
+
+/* El `.card` compartido es flex con space-between: está pensado para una fila
+   de cabecera con acciones, no para contenido apilado — sus hijos se reparten a
+   lo ancho y el texto se va al lado del título. Aquí hace falta un bloque, así
+   que se define uno con la misma piel. */
+.panel {
+  display: block;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #d6d3e6);
+  border-radius: var(--radius, 10px);
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.panelHead strong { font-size: 15px; }

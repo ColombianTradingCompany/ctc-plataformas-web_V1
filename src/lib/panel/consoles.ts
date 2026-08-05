@@ -97,6 +97,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "ECP · Dirección",
         links: [
           { href: "/ecp", label: "Panel", exact: true },
+          // Grados de Calidad (2026-08-05): LA definición. Estaban en tres
+          // sitios con tres respuestas distintas —dos de ellas material de
+          // cliente—; ahora se miran aquí y lo demás copia.
+          { href: "/ecp/grados", label: "Grados de Calidad" },
           // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
           // material de dirección, no operación diaria.
           { href: "/ecp/buzon", label: "Buzón de entrada" },

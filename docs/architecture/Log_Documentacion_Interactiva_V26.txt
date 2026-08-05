@@ -96,3 +96,37 @@ Contexto abierto al cerrar V26:
   Vercel; sin ellos la puerta responde 503 y el despachador no manda nada (los
   eventos esperan, no se pierden).
 (commit: pending)
+
+## [2026-08-05] Grados de Calidad: UNA definición, en el Control Panel
+- **El problema**: los grados estaban definidos en TRES sitios con TRES
+  respuestas distintas, y dos de ellas eran material que se le enseña a un
+  cliente. Notion «Conceptos Fundamentales» decía Black 80+ / Red 84+ / Blue 85+
+  / Gold 87+ / Tyrian 89+; el pitch de Go To Market decía Blue 86+ / Gold 88+ /
+  Tyrian 91+; la plataforma no tenía umbrales (el comité asignaba el grado).
+  Las dos páginas de Notion se contradecían ENTRE SÍ.
+- **El owner fijó los rangos definitivos (2026-08-05)** y ninguna de las
+  versiones anteriores coincidía: Black 80–82.99 · Red 83–84.99 · Blue 85–86.99
+  · Gold 87–87.99 · Tyrian 88–100. Rangos CERRADOS y CONTIGUOS, sin huecos ni
+  solapes. Cada grado lleva además criterios cualitativos: clase de lote
+  (nanolote/microlote/macrolote/cosecha), rareza de variedad, y disponibilidad
+  por malla (solo de Blue hacia arriba).
+- **FUENTE ÚNICA `src/lib/grados/definicion.ts`** — cualquier sitio que hable de
+  grados sale de ahí. `bandaPorPuntaje()` se llama así a propósito: el puntaje da
+  la BANDA, no el grado entero, porque los criterios cualitativos son parte de la
+  definición (un 88 en macrolote de variedad común cumple la banda de Tyrian pero
+  no su descripción).
+- **NODO/MÓDULO NUEVO `/ecp/grados`** en Dirección: la escalera con sus
+  criterios, consulta por puntaje, y una tabla de PROCEDENCIA que enseña las tres
+  definiciones viejas junto a la oficial — para que se vea qué se corrigió.
+- Guardián `scripts/qa-grados-check.mjs` (33/33): sobre todo la CONTINUIDAD de la
+  escala. Un hueco (un café de 82.995) o un solape (dos grados reclamando el 87)
+  no da error en ninguna parte: devuelve el grado equivocado y nadie se entera.
+- Cazado al verlo: el `.card` compartido es flex con space-between —pensado para
+  una fila de cabecera con acciones— y apilar contenido dentro reparte los hijos
+  a lo ancho. La página usa su propio bloque.
+- **PENDIENTE DEL OWNER, anotado en la propia página**: (1) ¿el puntaje ES el
+  grado o solo la banda y el comité decide dentro? (2) «Mix» existe solo en el
+  Cotizador Logístico, no en `lot_grade` — ¿grado, empaque, o comodidad de
+  cotización? (3) las dos páginas de Notion siguen diciendo lo viejo y hay que
+  actualizarlas DESDE aquí.
+(commit: pending)

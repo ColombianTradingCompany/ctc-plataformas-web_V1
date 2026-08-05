@@ -413,3 +413,30 @@ Contexto abierto al cerrar V26:
   `fecha_fin` sale como 2026-10-05 ~ 2026-10-06, un día suelto.
 - Calendario limpio, escenarios temporales borrados.
 (commit: pending)
+
+## [2026-08-05] Por qué Coffeed nunca produjo nada
+- Al ir a montar F4 (publicar en redes) salió el dato que lo cambia todo:
+  **`coffeed_deliverables` está VACÍA**. 15 fuentes activas, 4 ítems, 2 ciclos,
+  y CERO propuestas, borradores, entregas y episodios. F4 automatizaba el último
+  paso de una cadena que no ha llegado a dar una vuelta completa.
+- **La causa, en la base**: el ciclo 1 (2026-07-30) está en `extrayendo` con
+  `error = «La respuesta se cortó por longitud (max_tokens)… (2/3 extraídas)»`.
+  Lleva ahí desde entonces. El ciclo 2 ni se ha barrido.
+- **DOS FALLOS, no uno**:
+  1. `maxTokens: 3000` para un resumen denso CON marcas ⟦…|…⟧ escapado dentro de
+     una cadena JSON, y con `webSearch: 4` gastando del mismo presupuesto. Se
+     cortaba a media cadena y el JSON quedaba inservible. Subido a 8000, que es
+     lo que ya usa Datawave para escribir.
+  2. **El `throw` estaba DENTRO del bucle.** La primera pieza que fallaba abortaba
+     el resto; y como el reintento salta las ya extraídas y vuelve a chocar con
+     la misma, el ciclo quedaba bloqueado PARA SIEMPRE. Una URL inaccesible
+     bastaba para matar Coffeed entero. Ahora una pieza que falla se anota y se
+     sigue — el mismo criterio que ya usaba el barrido con los medios que no
+     responden — y el paso solo falla de verdad si quedan menos de dos fuentes,
+     que es el listón que el propio código exige al empezar.
+- Se avanza aunque falte alguna, pero el ciclo guarda en `error` qué se quedó
+  fuera: el editor tiene que saber con cuántas fuentes trabaja de verdad.
+- Los otros tres pasos (`runTriage`, `runProposals`, `createPost`) son UNA
+  llamada, no bucles: si fallan, el reintento empieza limpio. No se les tocó el
+  tope sin motivo.
+(commit: pending)

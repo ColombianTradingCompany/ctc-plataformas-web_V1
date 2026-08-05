@@ -395,6 +395,7 @@ export async function runExtraction(cycleId: string): Promise<CoffeedResult> {
 
   const brief = await brandBrief(service);
   let done = 0;
+  const fallidas: string[] = [];
   try {
     for (const p of picked) {
       const item = p.coffeed_items;
@@ -404,9 +405,15 @@ export async function runExtraction(cycleId: string): Promise<CoffeedResult> {
         continue;
       }
 
+      try {
       const raw = await claude({
         model: MODEL_WRITE,
-        maxTokens: 3000,
+        // 3000 se quedaba corto y cortaba el JSON a media cadena (visto en vivo
+        // el 2026-07-30, ciclo 1). El cuerpo es un resumen denso CON las marcas
+        // ⟦…|…⟧ y va escapado dentro de un string JSON, así que ocupa bastante
+        // más de lo que parece; encima las búsquedas web gastan de este mismo
+        // presupuesto. 8000 es lo que ya usa Datawave para escribir.
+        maxTokens: 8000,
         webSearch: 4,
         system: `${VOZ}
 ${brief ? `\n${brief}\n` : ""}
@@ -453,9 +460,34 @@ Devuelve SOLO un objeto JSON, sin texto antes ni después:
         await service.from("coffeed_claims").insert(claims.map((c) => ({ extraction_id: ext.id, text: c.text, ref: c.ref })));
       }
       done++;
+      } catch (err) {
+        // Una pieza que falla NO tumba la extracción — mismo criterio que el
+        // barrido, que ya perdona al medio que no responde.
+        //
+        // Antes el throw estaba aquí dentro y abortaba el bucle entero. Como el
+        // reintento salta las ya extraídas y vuelve a chocar con la misma pieza,
+        // una URL inaccesible dejaba el ciclo bloqueado PARA SIEMPRE. Le pasó al
+        // ciclo 1 el 2026-07-30 y por eso Coffeed nunca produjo nada.
+        logFail(`extract:${item.title}`, err);
+        fallidas.push(item.title);
+      }
     }
 
-    await service.from("coffeed_cycles").update({ status: "extraido" }).eq("id", cycleId);
+    // El listón real es el del principio: con menos de dos fuentes no salen 5
+    // paneles. Por debajo de eso sí es un fallo del paso.
+    if (done < 2) {
+      const detalle = fallidas.length ? ` Fallaron: ${fallidas.join("; ")}.` : "";
+      const msg = `Solo se extrajeron ${done} de ${picked.length} piezas, y hacen falta al menos dos.${detalle}`;
+      await service.from("coffeed_cycles").update({ error: msg }).eq("id", cycleId);
+      return { ok: false, error: msg };
+    }
+
+    await service.from("coffeed_cycles").update({
+      status: "extraido",
+      // Se avanza igualmente, pero queda dicho qué se quedó fuera: el editor
+      // tiene que saber con cuántas fuentes está trabajando de verdad.
+      error: fallidas.length ? `Se siguió sin ${fallidas.length} pieza(s): ${fallidas.join("; ")}.` : null,
+    }).eq("id", cycleId);
     return { ok: true };
   } catch (err) {
     const msg = logFail("extract", err);

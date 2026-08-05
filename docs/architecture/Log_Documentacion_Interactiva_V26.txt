@@ -370,3 +370,25 @@ Contexto abierto al cerrar V26:
   variable personalizada de Make: `{{CTC_SECRET}}`, `{{var.CTC_SECRET}}` y
   `{{organization.CTC_SECRET}}` dan las tres 401. Falta la buena.
 (commit: pending)
+
+## [2026-08-05] F3 CERRADO · Gmail clasificando, Calendar agendando
+- **PROBADO 15:51 UTC**: 11 operaciones, status 1, CINCO correos etiquetados
+  (3 TRÁNSITO, 1 ORIGEN, 1 ADMIN, 0 OTROS). Verificado contra los contadores de
+  etiquetas de Gmail antes/después, no contra el log de Make: +5 exactos, que es
+  el `limit` que puse. Escenario 9622256, activo cada 15 minutos.
+- La conexión anterior había que REHACERLA marcando todos los permisos: la
+  pantalla de Google trae casillas sueltas y algunas vienen desmarcadas. La
+  conexión se crea igual, parece sana, y falla solo al escribir.
+- **FILTRO QUE FALTABA, visto al mirar la primera corrida**: sin él, el escenario
+  le añade una segunda etiqueta de dominio a correos que YA tienes clasificados a
+  mano — y si discrepa, el correo queda con dos. Ahora salta cualquier mensaje
+  que ya lleve una de las 7. Se vio ejecutándolo, no leyéndolo.
+- **REGLA QUE ME COSTÓ DOS RONDAS**: para probar un permiso hay que ejecutar la
+  acción que lo necesita. Di por buena la reautorización porque un RPC pasó de
+  403 a 404, pero ese RPC solo LEE. Un 404 con un id inventado dice «no existe
+  ese mensaje», no «tengo permiso para escribir».
+- **F3 COMPLETO**: Calendar (3 ramas probadas) + Gmail (probado). Las tres
+  automatizaciones del registro del ECP están en «activa».
+- SIGUE ABIERTO: la sintaxis de la variable personalizada de Make. Descartadas
+  `{{CTC_SECRET}}`, `{{var.CTC_SECRET}}` y `{{organization.CTC_SECRET}}`.
+(commit: pending)

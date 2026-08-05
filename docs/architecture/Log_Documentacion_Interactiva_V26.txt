@@ -62,7 +62,7 @@ Contexto abierto al cerrar V26:
   canal) y «Make es el bus, no el cerebro».
 - Para el TODO de GDPR: la política de privacidad tendrá que declarar a Resend,
   Notion, Google y Make como subprocesadores.
-(commit: pending)
+(commit: cd7ade8)
 
 ## [2026-08-05] F0 + F1 del plan de integraciones: la espina y el registro
 - **TABLAS NUEVAS** (migración `integraciones_espina_y_registro`, ambas
@@ -95,7 +95,7 @@ Contexto abierto al cerrar V26:
 - PENDIENTE del owner: `INTEGRACIONES_SECRET_MAKE` y `MAKE_WEBHOOK_URL` en
   Vercel; sin ellos la puerta responde 503 y el despachador no manda nada (los
   eventos esperan, no se pierden).
-(commit: pending)
+(commit: 999ee4e)
 
 ## [2026-08-05] Grados de Calidad: UNA definición, en el Control Panel
 - **El problema**: los grados estaban definidos en TRES sitios con TRES
@@ -129,4 +129,34 @@ Contexto abierto al cerrar V26:
   Cotizador Logístico, no en `lot_grade` — ¿grado, empaque, o comodidad de
   cotización? (3) las dos páginas de Notion siguen diciendo lo viejo y hay que
   actualizarlas DESDE aquí.
+(commit: 5d6cd1f)
+
+## [2026-08-05] Grados de Calidad: las tres reglas del owner, y «Mix» no es un grado
+- **EL PUNTAJE MANDA.** Cerrada la duda que quedó anotada en `/ecp/grados`: el
+  grado se LEE del puntaje SCA y no se negocia. `bandaPorPuntaje()` pasa a
+  llamarse `gradoPorPuntaje()` — el nombre viejo decía justo lo contrario de la
+  regla, y era la única función del sistema que decide un grado.
+- **LOS CRITERIOS CUALITATIVOS SON GUÍA, NO PUERTA.** Clase de lote, rareza de
+  variedad y disponibilidad por malla no cambian el grado: orientan el VALOR
+  dentro del rango. Un 88 en macrolote de variedad común es Tyrian —se cotiza en
+  la parte baja de Tyrian—. La descripción de cada grado deja de ser un requisito
+  de entrada y pasa a ser lo que ayuda a mover el precio dentro de la franja.
+- **DOS DECIMALES COMO MÁXIMO.** No existe un puntaje de 82.995. Esta regla no es
+  cosmética: es LA que sostiene la continuidad de la escala. Las bandas cierran
+  en `.99`, así que un tercer decimal caería entre dos grados. `puntajeValido()`
+  lo valida antes de guardar; `gradoPorPuntaje()` redondea a propósito, para que
+  un dato mal capturado no devuelva "sin grado".
+- **«MIX» NO ES UN GRADO.** Significa que la carga cotizada no proviene de un
+  solo grado. Por eso vive en el Cotizador Logístico y no en el enum `lot_grade`:
+  un lote tiene un puntaje, y un puntaje tiene un grado; una cotización puede
+  cubrir varias calidades a la vez. `esGradoValido()` devuelve false para «Mix»,
+  para que nadie lo escriba en una columna de lote. En la app el desplegable ya
+  lo dice: «Mix (varios grados)», y la «i» del campo cita los cinco rangos.
+- Guardián `scripts/qa-grados-check.mjs` sube de 33 a 44: la regla de los dos
+  decimales (incluido que 82.995 NO cae en el hueco) y que «Mix» no entra en
+  `lot_grade`.
+- **PENDIENTE, y es un cambio de flujo, no de definición**: la Jornada de Arena
+  sigue votando el GRADO. Con la regla 1, lo que el comité aporta es el PUNTAJE y
+  el grado se deriva. No se ha tocado. Sigue pendiente también actualizar las dos
+  páginas de Notion DESDE la plataforma.
 (commit: pending)

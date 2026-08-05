@@ -11,7 +11,9 @@
 // vigilando que la escala siga siendo continua.
 
 import { useState } from "react";
-import { GRADOS, SCA_MAXIMO, SCA_MINIMO, bandaPorPuntaje, escalaEsContinua } from "@/lib/grados/definicion";
+import {
+  GRADOS, SCA_MAXIMO, SCA_MINIMO, gradoPorPuntaje, escalaEsContinua, puntajeValido, redondeaPuntaje,
+} from "@/lib/grados/definicion";
 import styles from "@/app/bcp/(app)/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import grados from "./gradosBoard.module.css";
@@ -19,8 +21,11 @@ import grados from "./gradosBoard.module.css";
 export function GradosBoard() {
   const [sca, setSca] = useState("");
   const n = parseFloat(sca.replace(",", "."));
-  const banda = sca.trim() === "" ? null : bandaPorPuntaje(n);
-  const fuera = sca.trim() !== "" && banda === null;
+  const grado = sca.trim() === "" ? null : gradoPorPuntaje(n);
+  const fuera = sca.trim() !== "" && grado === null;
+  // Se aceptó el puntaje pero hubo que redondearlo: hay que decirlo, porque el
+  // grado que se muestra no es el del número que se escribió.
+  const redondeado = grado !== null && !puntajeValido(n);
 
   return (
     <>
@@ -49,23 +54,23 @@ export function GradosBoard() {
 
       {/* ── Consulta rápida ── */}
       <div className={grados.panel}>
-        <div className={grados.panelHead}><strong>¿Qué banda le toca a un puntaje?</strong></div>
+        <div className={grados.panelHead}><strong>¿Qué grado le toca a un puntaje?</strong></div>
         <div className={styles.formGrid}>
           <div className={styles.field} style={{ minWidth: 160 }}>
             <label htmlFor="sca">Puntaje SCA</label>
             <input id="sca" inputMode="decimal" value={sca} placeholder="86.5" onChange={(e) => setSca(e.target.value)} />
           </div>
-          {banda && (
+          {grado && (
             <div className={styles.field}>
-              <label>Banda</label>
-              <span className={grados.resultado} style={{ color: banda.hex }}>
-                ⬤ {banda.nombre} <small>SCA {banda.scaMin}–{banda.scaMax}</small>
+              <label>Grado</label>
+              <span className={grados.resultado} style={{ color: grado.hex }}>
+                ⬤ {grado.nombre} <small>SCA {grado.scaMin}–{grado.scaMax}</small>
               </span>
             </div>
           )}
           {fuera && (
             <div className={styles.field}>
-              <label>Banda</label>
+              <label>Grado</label>
               <span className={styles.warn}>
                 Fuera de la escala. Por debajo de {SCA_MINIMO} no hay grado: no es que sea peor que Black, es que no
                 entra como café de especialidad.
@@ -73,11 +78,16 @@ export function GradosBoard() {
             </div>
           )}
         </div>
-        {/* La advertencia importa más que la calculadora. */}
+        {redondeado && (
+          <p className={styles.warn}>
+            Los puntajes de la casa llevan <b>dos decimales como máximo</b>. Se ha tomado {redondeaPuntaje(n)}.
+          </p>
+        )}
+        {/* Lo que hay que entender de esta calculadora: no propone, decide. */}
         <p className={styles.meta}>
-          El puntaje da la <b>banda</b>, no el grado entero. Los criterios cualitativos son parte de la definición: un
-          café de 88 en un macrolote de variedad común cumple la banda de Tyrian pero no su descripción. Hoy el grado lo
-          otorga el comité en la Jornada de Arena; esto orienta.
+          El puntaje <b>manda</b>: determina el grado y no se negocia. Los criterios cualitativos de cada grado —clase de
+          lote, rareza de variedad, disponibilidad por malla— son guía de <b>valor dentro del rango</b>, no requisitos de
+          entrada: un café de 88 en un macrolote de variedad común es Tyrian, y se cotiza en la parte baja de Tyrian.
         </p>
       </div>
 
@@ -123,15 +133,41 @@ export function GradosBoard() {
           correcta del espejo (ver el plan de integraciones).
         </p>
 
-        <div className={grados.panelHead} style={{ marginTop: 16 }}><strong>Decisiones abiertas</strong></div>
+        <div className={grados.panelHead} style={{ marginTop: 16 }}><strong>Las tres reglas</strong></div>
         <ul className={styles.auditList}>
           <li>
-            <b>¿El puntaje ES el grado, o solo la banda?</b> Los criterios cualitativos sugieren que el comité decide
-            dentro de la banda, y la Jornada está construida sobre voto de comité. Mientras no se cierre, manda la Jornada.
+            <b>El puntaje manda.</b> El grado se lee del puntaje SCA y no se negocia. No es una banda dentro de la cual
+            alguien elija después: es el grado.
           </li>
           <li>
-            <b>«Mix»</b> existe hoy solo en el Cotizador Logístico, no en el enum <code>lot_grade</code>. Falta decidir
-            si es un grado, un concepto de empaque, o una comodidad de cotización que nunca debe llegar a un lote.
+            <b>Los criterios cualitativos son guía, no puerta.</b> Clase de lote, rareza de variedad y disponibilidad por
+            malla no cambian el grado — orientan el valor <i>dentro</i> del rango. Un Blue de variedad exótica se cotiza
+            arriba en Blue; sigue siendo Blue.
+          </li>
+          <li>
+            <b>Dos decimales como máximo.</b> No existe un puntaje de 82.995. Es la regla que hace que la escala no tenga
+            huecos: las bandas cierran en <code>.99</code>, así que un tercer decimal caería entre dos grados.
+          </li>
+        </ul>
+
+        <div className={grados.panelHead} style={{ marginTop: 16 }}><strong>«Mix» no es un grado</strong></div>
+        <p className={styles.meta}>
+          El Cotizador Logístico ofrece «Mix» junto a los cinco grados: significa que la carga cotizada <b>no proviene de
+          un solo grado</b>. Por eso no está en el enum <code>lot_grade</code> y no debe llegar nunca a un lote — un lote
+          tiene un puntaje, y un puntaje tiene un grado. Vive donde tiene sentido: en una cotización, que puede cubrir
+          varias calidades a la vez.
+        </p>
+
+        <div className={grados.panelHead} style={{ marginTop: 16 }}><strong>Lo que falta alinear</strong></div>
+        <ul className={styles.auditList}>
+          <li>
+            <b>La Jornada de Arena.</b> Hoy el comité vota el grado directamente. Con la regla 1, lo que el comité aporta
+            es el <i>puntaje</i> y el grado se deriva. No se ha tocado todavía: es un cambio en el flujo de la Jornada,
+            no en esta definición.
+          </li>
+          <li>
+            <b>Las dos páginas de Notion.</b> Siguen publicando umbrales viejos y contradictorios, y son material de
+            cliente. Se actualizan desde aquí.
           </li>
         </ul>
       </div>

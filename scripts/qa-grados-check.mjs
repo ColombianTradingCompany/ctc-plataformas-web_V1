@@ -11,7 +11,8 @@
 // ninguno, y nadie se entera hasta que sale en una cotización.
 
 import {
-  GRADOS, GRADO_POR_ID, SCA_MINIMO, SCA_MAXIMO, bandaPorPuntaje, escalaEsContinua,
+  GRADOS, GRADO_POR_ID, SCA_MINIMO, SCA_MAXIMO, SCA_DECIMALES,
+  gradoPorPuntaje, escalaEsContinua, puntajeValido, redondeaPuntaje, esGradoValido, MIX,
 } from "../src/lib/grados/definicion.ts";
 
 let pass = 0;
@@ -54,16 +55,37 @@ const casos = [
   [88, "tyrian"], [91, "tyrian"], [100, "tyrian"],
 ];
 for (const [sca, esperado] of casos) {
-  const g = bandaPorPuntaje(sca);
+  const g = gradoPorPuntaje(sca);
   check(`${sca} → ${esperado}`, g?.id === esperado, g ? g.id : "null");
 }
 
 // ── Fuera de la escala ──────────────────────────────────────────────────────
-check("79.99 no tiene grado", bandaPorPuntaje(79.99) === null);
-check("0 no tiene grado", bandaPorPuntaje(0) === null);
-check("100.01 no tiene grado", bandaPorPuntaje(100.01) === null);
-check("NaN no revienta", bandaPorPuntaje(NaN) === null);
-check("undefined no revienta", bandaPorPuntaje(undefined) === null);
+check("79.99 no tiene grado", gradoPorPuntaje(79.99) === null);
+check("0 no tiene grado", gradoPorPuntaje(0) === null);
+check("100.01 no tiene grado", gradoPorPuntaje(100.01) === null);
+check("NaN no revienta", gradoPorPuntaje(NaN) === null);
+check("undefined no revienta", gradoPorPuntaje(undefined) === null);
+
+// ── La regla de los dos decimales (owner, 2026-08-05) ───────────────────────
+// Es la que sostiene la continuidad de la escala: las bandas cierran en .99, y
+// sin esta regla un 82.995 se queda entre Black y Red sin ser ninguno.
+check("la casa trabaja con 2 decimales", SCA_DECIMALES === 2, `${SCA_DECIMALES}`);
+check("86.5 es un puntaje válido", puntajeValido(86.5));
+check("86.55 es un puntaje válido", puntajeValido(86.55));
+check("86.555 NO es un puntaje válido", !puntajeValido(86.555));
+check("79 no es válido aunque tenga 0 decimales", !puntajeValido(79));
+check("82.995 se redondea a 83", redondeaPuntaje(82.995) === 83, `${redondeaPuntaje(82.995)}`);
+check("82.995 no cae en el hueco: da red", gradoPorPuntaje(82.995)?.id === "red",
+  gradoPorPuntaje(82.995)?.id ?? "null");
+check("82.991 redondea hacia abajo: sigue siendo black", gradoPorPuntaje(82.991)?.id === "black",
+  gradoPorPuntaje(82.991)?.id ?? "null");
+
+// ── «Mix» no es un grado ────────────────────────────────────────────────────
+// Vive en el Cotizador Logístico y significa "la carga no es de un solo grado".
+// Si algún día entra en el enum `lot_grade`, esto salta.
+check("«Mix» no es un grado válido", !esGradoValido(MIX));
+check("«Mix» no está en GRADOS", !GRADOS.some(g => g.nombre === MIX || g.id === "mix"));
+check("los cinco grados sí pasan esGradoValido", GRADOS.every(g => esGradoValido(g.id)));
 
 // ── Contenido ───────────────────────────────────────────────────────────────
 check("cada grado tiene lema", GRADOS.every(g => g.lema.length > 3));

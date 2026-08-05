@@ -13,6 +13,17 @@
 // de abajo: **ninguna de las dos versiones anteriores era correcta**.
 //
 // Notion debe MIRAR a esto, no al revés (ver docs/INTEGRACIONES_PLAN.md, §1).
+//
+// ── LAS TRES REGLAS (owner, 2026-08-05) ─────────────────────────────────────
+// 1. EL PUNTAJE MANDA. El grado se lee del puntaje SCA y no se negocia. No es
+//    una banda dentro de la cual alguien elige después: es el grado.
+// 2. LOS CRITERIOS CUALITATIVOS SON GUÍA, NO PUERTA. Clase de lote, rareza de
+//    variedad y disponibilidad por malla no cambian el grado — orientan el
+//    VALOR dentro del rango. Un Blue de variedad exótica se cotiza en la parte
+//    alta de Blue; sigue siendo Blue.
+// 3. DOS DECIMALES COMO MÁXIMO. No existe un puntaje de 82.995. Esta regla es
+//    la que hace que la escala no tenga huecos: las bandas cierran en .99, así
+//    que un tercer decimal caería entre dos grados. Ver `puntajeValido`.
 
 export type GradoId = "black" | "red" | "blue" | "gold" | "tyrian";
 
@@ -126,20 +137,57 @@ export const GRADO_POR_ID: Record<GradoId, Grado> = Object.fromEntries(
 export const SCA_MINIMO = GRADOS[0].scaMin;
 export const SCA_MAXIMO = GRADOS[GRADOS.length - 1].scaMax;
 
-/** El grado que le corresponde a un puntaje, o null si está fuera de la escala.
- *
- *  ⚠️ ATENCIÓN — el puntaje da la BANDA, no el grado entero. Los criterios
- *  cualitativos (clase de lote, rareza de variedad, disponibilidad por malla)
- *  son parte de la definición: un café de 88 en un macrolote de variedad común
- *  cumple la banda de Tyrian pero no su descripción. Por eso esto se llama
- *  `bandaPorPuntaje` y no `gradoPorPuntaje`: decide la Jornada, esto orienta.
- *  Ver la nota de decisión pendiente al final del archivo. */
-export function bandaPorPuntaje(sca: number): Grado | null {
-  if (!Number.isFinite(sca)) return null;
-  return GRADOS.find((g) => sca >= g.scaMin && sca <= g.scaMax) ?? null;
+/** Los decimales que admite un puntaje de la casa. Regla 3 del owner. */
+export const SCA_DECIMALES = 2;
+
+/** Redondea a la precisión de la casa. Un puntaje con más decimales es un error
+ *  de captura, no un puntaje distinto: 82.995 se registra como 83. */
+export function redondeaPuntaje(sca: number): number {
+  return Math.round(sca * 100) / 100;
 }
 
-/** ¿La escala cubre 80–100 sin huecos ni solapes? Lo comprueba el guardián
+/** ¿Es un puntaje que la casa puede escribir? Dentro de escala y con dos
+ *  decimales como mucho. Sirve para VALIDAR una entrada antes de guardarla;
+ *  `gradoPorPuntaje` es más indulgente a propósito (redondea). */
+export function puntajeValido(sca: number): boolean {
+  if (!Number.isFinite(sca)) return false;
+  if (sca < SCA_MINIMO || sca > SCA_MAXIMO) return false;
+  return redondeaPuntaje(sca) === sca;
+}
+
+/** EL grado de un puntaje, o null si está fuera de la escala.
+ *
+ *  El puntaje MANDA (regla 1 del owner, 2026-08-05): esto no propone un grado
+ *  para que alguien lo confirme después — lo determina. Los criterios
+ *  cualitativos de cada grado son guía de VALOR dentro del rango, no requisitos
+ *  de entrada: un café de 88 en un macrolote de variedad común es Tyrian, y se
+ *  cotizará en la parte baja de Tyrian.
+ *
+ *  Redondea a dos decimales antes de buscar, para que un tercer decimal —que no
+ *  debería existir— no caiga en el hueco entre dos bandas. */
+export function gradoPorPuntaje(sca: number): Grado | null {
+  if (!Number.isFinite(sca)) return null;
+  const p = redondeaPuntaje(sca);
+  return GRADOS.find((g) => p >= g.scaMin && p <= g.scaMax) ?? null;
+}
+
+// ── «Mix» ───────────────────────────────────────────────────────────────────
+// El Cotizador Logístico ofrece «Mix» junto a los cinco grados. NO es un sexto
+// grado: significa que la carga cotizada no proviene de un solo grado. Por eso
+// no está en el enum `lot_grade` de Postgres y no debe llegar nunca a un lote —
+// un lote tiene un puntaje, y un puntaje tiene un grado. Vive donde tiene
+// sentido: en una cotización, que puede cubrir varias calidades a la vez.
+export const MIX = "Mix" as const;
+
+/** ¿Es un grado de verdad? Devuelve false para «Mix». Úsalo antes de escribir
+ *  cualquier cosa en una columna `lot_grade`. */
+export function esGradoValido(v: string): v is GradoId {
+  return v in GRADO_POR_ID;
+}
+
+/** ¿La escala cubre 80–100 sin huecos ni solapes? Cierto SOLO bajo la regla de
+ *  los dos decimales: el "hueco" entre 82.99 y 83 mide justo un centésimo, que
+ *  es la resolución de la escala. Lo comprueba el guardián
  *  `scripts/qa-grados-check.mjs`; se expone para poder afirmarlo en la UI. */
 export function escalaEsContinua(): boolean {
   for (let i = 1; i < GRADOS.length; i++) {
@@ -151,11 +199,14 @@ export function escalaEsContinua(): boolean {
   return true;
 }
 
-// ── DECISIONES PENDIENTES DEL OWNER ─────────────────────────────────────────
-// 1. ¿El puntaje ES el grado, o es la banda y el comité decide dentro de ella?
-//    Los criterios cualitativos sugieren lo segundo, y la Jornada está
-//    construida sobre voto de comité. Mientras no se cierre, la Jornada sigue
-//    mandando y esto es orientación.
-// 2. «Mix» existe hoy SOLO en el Cotizador Logístico, no en el enum `lot_grade`.
-//    Falta decidir si es un grado, un concepto de empaque, o una comodidad de
-//    cotización que no debe llegar nunca a un lote.
+// ── LO QUE QUEDA POR ALINEAR ────────────────────────────────────────────────
+// Las dudas de este archivo están cerradas (las tres reglas de arriba). Lo que
+// sigue abierto es lo que TODAVÍA NO CITA esta definición:
+//
+// · LA JORNADA DE ARENA. Hoy el comité vota el grado directamente. Con la regla
+//   1, lo que el comité aporta es el PUNTAJE; el grado se deriva. Cambiar eso
+//   toca el flujo de la Jornada, así que no se ha tocado aquí: cuando se haga,
+//   `gradoPorPuntaje` es la única función que debe decidirlo.
+// · LAS DOS PÁGINAS DE NOTION («Conceptos Fundamentales» y «Pitch Go To
+//   Market»). Siguen publicando umbrales viejos y contradictorios. Se
+//   actualizan DESDE aquí (docs/INTEGRACIONES_PLAN.md, §1).

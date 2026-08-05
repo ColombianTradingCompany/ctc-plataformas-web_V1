@@ -907,7 +907,7 @@ input.inco-range::-moz-range-thumb {
   <div class="th-meta">
     <div class="th-meta-field">
       <label>Grado de calidad
-        <span class="info-i">i<span class="tip">Clasificación interna de calidad del lote, de menor a mayor: Black, Red, Blue, Gold, Tyrian. Útil para diferenciar cotizaciones del mismo origen con distinta calidad de grano.</span></span>
+        <span class="info-i">i<span class="tip">Grado de calidad CTC, determinado por el puntaje SCA: Black 80–82.99 · Red 83–84.99 · Blue 85–86.99 · Gold 87–87.99 · Tyrian 88–100. «Mix» no es un grado: indica que la carga cotizada no proviene de un solo grado.</span></span>
       </label>
       <div class="grade-select-wrap">
         <select id="quality-grade" onchange="updateGradeDot(); recalc()">
@@ -916,7 +916,8 @@ input.inco-range::-moz-range-thumb {
           <option value="Blue" style="color:#003087">⬤ Blue</option>
           <option value="Gold" selected style="color:#b8860b">⬤ Gold</option>
           <option value="Tyrian" style="color:#66023C">⬤ Tyrian</option>
-          <option value="Mix" style="color:#6b7280">⬤ Mix</option>
+          <!-- «Mix» no es un sexto grado: la carga no es de un solo grado. -->
+          <option value="Mix" style="color:#6b7280">⬤ Mix (varios grados)</option>
         </select>
       </div>
     </div>

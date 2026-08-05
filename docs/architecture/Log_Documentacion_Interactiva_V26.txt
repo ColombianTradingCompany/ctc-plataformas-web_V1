@@ -314,3 +314,35 @@ Contexto abierto al cerrar V26:
 - BLOQUEADO igual que F2 en su día: no hay conexión de Google en Make. Hace falta
   el OAuth del owner para Calendar (y para Gmail, en la parte de etiquetas).
 (commit: pending)
+
+## [2026-08-05] F3 · Calendar en marcha, y UN escenario para todo lo que sale
+- **UN SOLO ESCENARIO CON ROUTER**, no uno por tipo. Razón dura, no estética: el
+  despachador manda TODO lo saliente a `MAKE_WEBHOOK_URL`, que es una sola url.
+  Un segundo escenario con su propio webhook no recibiría nada. El 9621729 pasa
+  a llamarse «CTC · Eventos de la plataforma» y enruta por `tipo`.
+- Calendario **CTC · Operación** creado desde Make
+  (`98323d43…@group.calendar.google.com`), con zona America/Bogota.
+- **TRES RAMAS, LAS TRES PROBADAS EN VIVO**: cotización → página de Notion;
+  jornada creada → evento; jornada cerrada/cancelada → borra el evento. La
+  tercera se probó borrando los eventos de prueba de las otras, así que la
+  limpieza fue la prueba.
+- **DOS TRAMPAS NUEVAS**:
+  1. En `google-calendar:createAnEvent`, `transparency` y `visibility` están
+     marcados «advanced» pero son `required`. Misma familia que los 7 booleanos
+     del módulo HTTP: la interfaz los rellena, un blueprint por API no.
+  2. Un `"2026-09-14"` NO es una fecha para Make: `Function 'dateParameter'
+     finished with error`. Hay que envolverlo en `parseDate(...; "YYYY-MM-DD")`.
+     El fin de un evento de día completo en Google es EXCLUSIVO, así que va
+     `addDays(...; 1)` — comprobado: 14→17 se guarda como 14 ~ 18.
+- **BUG MÍO DE F2, CAZADO AL RELEER**: en un filtro de Make el array exterior de
+  `conditions` es **OR** y el interior **AND**. El filtro del vigía de Notion
+  decía `[[nota],[ctc_id]]` — o sea nota **O** ctc_id, no las dos. Habría mandado
+  una nota vacía por cada fila con ctc_id, cada 15 minutos. Corregido a un solo
+  grupo con dos condiciones.
+- `cerrarJornadaRecolecta` suelta las columnas del calendario ÉL MISMO en vez de
+  esperar una llamada de vuelta: borrar un evento no devuelve nada que guardar, y
+  así el borrado no necesita credencial ni ruta de entrada.
+- **COSTE CONOCIDO**: editar el blueprint por API BORRA el secreto de las
+  cabeceras `Authorization`. Son dos módulos HTTP y hay que volver a pegarlo cada
+  vez que yo toque el escenario. Anotado en el registro del ECP.
+(commit: pending)

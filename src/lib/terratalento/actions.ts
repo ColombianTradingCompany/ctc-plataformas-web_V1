@@ -566,6 +566,15 @@ export async function cerrarJornadaRecolecta(jornadaId: string, cancelar = false
         calendar_event_id: fila.calendar_event_id,
       },
     });
+    // Se sueltan las columnas del calendario AQUÍ, no esperando una llamada de
+    // vuelta: borrar un evento no devuelve nada que valga la pena guardar, y
+    // así el borrado no necesita credencial ni ruta de entrada. Si Make no
+    // llegara a borrarlo, queda un evento huérfano en el calendario — molesto,
+    // pero mejor que una jornada apuntando a un evento que ya no existe.
+    await service
+      .from("terratalento_jornadas")
+      .update({ calendar_event_id: null, calendar_url: null, calendar_synced_at: null })
+      .eq("id", fila.id);
   }
   return { ok: true };
 }

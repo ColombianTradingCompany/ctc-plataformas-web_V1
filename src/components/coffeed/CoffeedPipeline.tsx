@@ -15,7 +15,8 @@ import styles from "./coffeedConsole.module.css";
 import { Ring } from "./Ring";
 
 type RunFn = (
-  fn: () => Promise<CoffeedResult>,
+  /** Recibe `avisar` para ir contando el progreso de un paso largo. */
+  fn: (avisar: (texto: string) => void) => Promise<CoffeedResult>,
   okMsg?: [string, string],
   /** Qué decir mientras corre. Los pasos de IA tardan minutos y el botón
    *  deshabilitado no comunica nada. */

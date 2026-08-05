@@ -44,7 +44,8 @@ function fmtDate(iso: string | null): string {
 }
 
 type RunFn = (
-  fn: () => Promise<CoffeedResult>,
+  /** Recibe `avisar` para ir contando el progreso de un paso largo. */
+  fn: (avisar: (texto: string) => void) => Promise<CoffeedResult>,
   okMsg?: [string, string],
   /** Qué decir mientras corre. Los pasos de IA tardan minutos y el botón
    *  deshabilitado no comunica nada. */
@@ -81,7 +82,9 @@ export function CoffeedConsole() {
   const run = useCallback<RunFn>(
     async (fn, okMsg) => {
       setBusy(true);
-      const r = await fn();
+      // Esta consola no aloja pasos de IA largos —solo aceptar, devolver y
+      // publicar entregas—, así que no hay progreso que ir contando.
+      const r = await fn(() => {});
       if (r.ok) await refresh();
       setBusy(false);
       if (!r.ok) showToast("No se pudo", r.error);

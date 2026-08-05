@@ -78,14 +78,14 @@ export function StudioConsole() {
     });
   }, []);
 
-  const run = useCallback(
-    async (fn: () => Promise<CoffeedResult>, okMsg?: [string, string], trabajando?: string): Promise<boolean> => {
+  const run = useCallback<RunFn>(
+    async (fn, okMsg, trabajando) => {
       setBusy(true);
       // Los pasos de IA tardan de treinta segundos a varios minutos. Deshabilitar
       // el botón no basta: parece que no ha pasado nada y se vuelve a hacer clic.
       // Este aviso NO se va solo — se va cuando el paso termina.
       if (trabajando) setWorking(trabajando);
-      const r = await fn();
+      const r = await fn((texto) => setWorking(texto));
       if (r.ok) await refresh();
       setWorking(null);
       setBusy(false);
@@ -203,7 +203,8 @@ export function StudioConsole() {
 }
 
 type RunFn = (
-  fn: () => Promise<CoffeedResult>,
+  /** Recibe `avisar` para ir contando el progreso de un paso largo. */
+  fn: (avisar: (texto: string) => void) => Promise<CoffeedResult>,
   okMsg?: [string, string],
   /** Qué decir mientras corre. Los pasos de IA tardan minutos y el botón
    *  deshabilitado no comunica nada. */
@@ -364,21 +365,36 @@ function SeleccionView({
     // `run` como los demás para que salga el aviso de «Trabajando». Antes tenía
     // su propio estado y no avisaba de nada.
     setSweeping(true);
-    let hecho: { added: number; found: number } | null = null;
+    let added = 0;
+    let found = 0;
+    let revisados = 0;
     const ok = await run(
-      async () => {
-        const res = await sweepSources();
-        if (!res.ok) return { ok: false, error: res.error };
-        hecho = { added: res.added, found: res.found };
+      async (avisar) => {
+        // POR TANDAS. Los 14 medios de una vez pasaban de 300 s y Vercel mataba
+        // la función sin dejar rastro; cada tanda cabe de sobra y el progreso
+        // queda guardado, así que esto continúa donde lo dejó.
+        for (;;) {
+          const res = await sweepSources();
+          if (!res.ok) return { ok: false, error: res.error };
+          added += res.added;
+          found += res.found;
+          revisados += res.revisados;
+          if (!res.pendientes) break;
+          avisar(`Van ${revisados} medios revisados y quedan ${res.pendientes}. ${added} piezas nuevas hasta ahora.`);
+        }
         return { ok: true };
       },
       undefined,
       "Buscando en cada medio de consulta lo publicado en los últimos 7 días."
     );
     setSweeping(false);
-    if (ok && hecho) {
-      const { added, found } = hecho as { added: number; found: number };
-      showToast("Barrido hecho", `${added} piezas nuevas de las ${found} encontradas en los últimos 7 días.`);
+    if (ok) {
+      showToast(
+        "Barrido hecho",
+        found
+          ? `${added} piezas nuevas de las ${found} encontradas en ${revisados} medios.`
+          : `Ninguno de los ${revisados} medios publicó nada en los últimos 7 días. Es una respuesta válida: añade una URL a mano o cierra la sesión sin producir.`
+      );
     }
   };
 

@@ -464,3 +464,31 @@ Contexto abierto al cerrar V26:
 - Verificado con `tsc`, `eslint` y un `next build` completo. NO verificado en
   pantalla: el Source Wrapper está detrás del gate del Estudio.
 (commit: pending)
+
+## [2026-08-05] COFFEED DIO LA VUELTA COMPLETA · y el barrido, por tandas
+- **PRIMERA PIEZA PUBLICADA.** El owner recorrió el circuito entero: entregar al
+  ECP → devolver → reentregar → luz verde → publicar. `coffeed_deliverables` deja
+  de estar vacía. Con esto, F4 ya tiene contra qué probarse.
+- **EL BARRIDO SE QUEDABA COLGADO.** Diagnóstico por los logs de Vercel, no por
+  deducción — y CORRIGIÓ mi hipótesis: yo di por hecho que el plan Hobby
+  recortaba `maxDuration` a 60 s. No lo hace. El log dice
+  `Vercel Runtime Timeout Error: Task timed out after 300 seconds`: los 300 s
+  declarados SÍ estaban en vigor, y los 14 medios simplemente no caben. El
+  comentario del propio código ya lo medía en 5,1 min.
+- Como la función muere sin llegar al `catch`, no quedaba ni error ni
+  `swept_at`: desde fuera parecía que no había pasado nada. Esa es la firma de
+  un timeout de plataforma, y conviene reconocerla.
+- **ARREGLO: POR TANDAS DE 4** (`SWEEP_CHUNK`), reusando la columna que ya
+  existía, `coffeed_sources.last_swept_at`. Pendiente = no visto DESDE que se
+  abrió la sesión, así que reabrir barre todo de nuevo pero reintentar continúa
+  donde se quedó — incluso si se cerró la pestaña. Los medios se marcan DESPUÉS
+  de guardar sus piezas: mejor repetir un medio que saltárselo en silencio.
+- **UNA TANDA VACÍA YA NO ES UN ERROR.** Antes «no encontró nada» abortaba el
+  barrido entero; con tandas habría parado en cuanto cuatro medios callados
+  cayeran juntos, que es justo lo que el prompt les pide hacer. Ahora el total lo
+  suma quien llama, y solo si al final no hubo NADA se dice — sin tratarlo como
+  fallo, porque un día sin material es una decisión válida.
+- El aviso de «Trabajando» ahora cuenta el avance: «Van 8 medios revisados y
+  quedan 6. 3 piezas nuevas hasta ahora».
+- Verificado con `tsc`, `eslint` y `next build`. NO verificado en pantalla.
+(commit: pending)

@@ -176,27 +176,52 @@ async function mapWithLimit<T, R>(items: T[], limit: number, worker: (item: T) =
   return out;
 }
 
+/** Cuántos medios se revisan por llamada. El barrido entero NO cabe en una:
+ *  medido el 2026-08-05, los 14 medios tardaron más de 300 s y Vercel mató la
+ *  función («Task timed out after 300 seconds»), sin llegar al catch y por tanto
+ *  sin dejar ni rastro del fallo. Con cuatro por tanda cada llamada dura menos
+ *  de dos minutos y el progreso queda guardado en `last_swept_at`, así que se
+ *  puede continuar — incluso si se cierra la pestaña. */
+const SWEEP_CHUNK = 4;
+
 /**
  * Recorre la lista blanca y trae titulares + sumarios + FECHA de los últimos
  * 7 días a la sesión abierta. Es el disparo manual que sustituye al cron de la
  * fase 2 del spec: el owner decide cuándo se barre.
+ *
+ * Va POR TANDAS: cada llamada revisa como mucho `SWEEP_CHUNK` medios de los que
+ * aún no se han visto en esta sesión, y devuelve cuántos quedan. Quien llama
+ * repite hasta que `pendientes` sea 0.
  */
-export async function sweepSources(): Promise<{ ok: true; added: number; found: number } | { ok: false; error: string }> {
+export async function sweepSources(): Promise<
+  { ok: true; added: number; found: number; pendientes: number; revisados: number } | { ok: false; error: string }
+> {
   const who = await studioGate();
   if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
   const service = createServiceRoleClient();
 
-  const { data: cycle } = await service.from("coffeed_cycles").select("id").eq("status", "abierto").maybeSingle();
+  const { data: cycle } = await service.from("coffeed_cycles").select("id, created_at").eq("status", "abierto").maybeSingle();
   if (!cycle) return { ok: false, error: "Abre una sesión de selección antes de barrer." };
 
   const { data: sourceRows } = await service
     .from("coffeed_sources")
-    .select("id, name, kind, url, category")
+    .select("id, name, kind, url, category, last_swept_at")
     .eq("list", "white")
     .eq("status", "approved")
     .eq("active", true);
-  const sources = (sourceRows ?? []) as { id: string; name: string; kind: string; url: string | null; category: string | null }[];
-  if (!sources.length) return { ok: false, error: "No hay medios aprobados en la lista blanca." };
+  const todos = (sourceRows ?? []) as {
+    id: string; name: string; kind: string; url: string | null; category: string | null; last_swept_at: string | null;
+  }[];
+  if (!todos.length) return { ok: false, error: "No hay medios aprobados en la lista blanca." };
+
+  // Pendiente = no se ha visto DESDE que se abrió esta sesión. Así reabrir una
+  // sesión nueva vuelve a barrerlos todos, pero reintentar la misma continúa
+  // donde se quedó en vez de empezar de cero.
+  const pendientesTodos = todos.filter((s) => !s.last_swept_at || s.last_swept_at < cycle.created_at);
+  if (!pendientesTodos.length) {
+    return { ok: true, added: 0, found: 0, pendientes: 0, revisados: 0 };
+  }
+  const sources = pendientesTodos.slice(0, SWEEP_CHUNK);
 
   const today = new Date();
   const since = new Date(today.getTime() - 7 * 24 * 3600 * 1000);
@@ -241,9 +266,11 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
     });
 
     const found = results.flat().filter((i) => i?.url && i?.title);
-    if (!found.length) {
-      return { ok: false, error: "El barrido no encontró nada publicado en los últimos 7 días (o ninguna tanda respondió). Reintenta o añade una URL a mano." };
-    }
+    // Que una tanda no traiga nada es NORMAL y esperable — el propio prompt se
+    // lo dice a los medios: «si no publicó nada en la ventana, devuelve []».
+    // Antes esto era un error que abortaba el barrido entero; con tandas habría
+    // parado a la primera de cuatro medios callados. Se marcan como vistos y se
+    // sigue; quien llama ya sumará el total y dirá si al final no hubo nada.
     const byName = new Map(sources.map((s) => [s.name.trim().toLowerCase(), s.id]));
     let added = 0;
 
@@ -276,12 +303,21 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
 
     const now = new Date().toISOString();
     await service.from("coffeed_cycles").update({ swept_at: now }).eq("id", cycle.id);
+    // Se marcan DESPUÉS de guardar sus piezas: si algo revienta a mitad, esos
+    // medios siguen pendientes y la siguiente tanda vuelve a por ellos. Es
+    // preferible repetir un medio a saltárselo en silencio.
     await service
       .from("coffeed_sources")
       .update({ last_swept_at: now })
       .in("id", sources.map((s) => s.id));
 
-    return { ok: true, added, found: found.length };
+    return {
+      ok: true,
+      added,
+      found: found.length,
+      pendientes: pendientesTodos.length - sources.length,
+      revisados: sources.length,
+    };
   } catch (err) {
     return { ok: false, error: logFail("sweep", err) };
   }

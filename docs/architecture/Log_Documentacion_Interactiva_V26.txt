@@ -160,3 +160,24 @@ Contexto abierto al cerrar V26:
   el grado se deriva. No se ha tocado. Sigue pendiente también actualizar las dos
   páginas de Notion DESDE la plataforma.
 (commit: pending)
+
+## [2026-08-05] El plan es Hobby: el evento sale en el acto, el cron es la red
+- **HALLAZGO**: la cuenta de Vercel es **Hobby**, que NO admite un cron más
+  frecuente que una vez al día. El `*/15 * * * *` del despachador (V2.52) no
+  habría degradado el cron: habría **tumbado el despliegue entero**. Nunca llegó
+  a construirse, así que el fallo estaba esperando al primer build bueno.
+- **CAMBIO DE CAMINO**: `emitEvent` despacha AHORA, con `after()` de next/server
+  — la tarea corre cuando la respuesta ya salió, dentro de la misma invocación.
+  El usuario no espera al webhook y el evento no espera al cron. Sigue sin haber
+  un `fetch` bloqueando una Server Action, que era la regla original.
+- El cron diario (`35 11 * * *`) deja de ser el camino normal y pasa a ser la
+  **red de seguridad**: recoge lo que quedó pendiente porque Make estaba caído.
+  Los reintentos con techo siguen siendo suyos.
+- `after` no sirve para trabajo que deba sobrevivir a la invocación. Aquí da
+  igual: la fila ya está en la base de datos antes de programar el despacho.
+- **PRODUCCIÓN LLEVA DESDE LAS 12:39 UTC SIN CONSTRUIR** cuatro commits
+  (`cd7ade8`, `999ee4e`, `5d6cd1f`, `eb3ada4`). GitHub los tiene; Vercel no creó
+  deployment para ninguno y no hay check-runs. El primero que falló era SOLO
+  documentación, así que no es el repo. El "redespliegue" de las 12:40 reconstruyó
+  `cf83d90` —Redeploy rehace el MISMO commit—, por eso el sitio volvió como V2.51.
+(commit: pending)

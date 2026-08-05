@@ -180,4 +180,16 @@ Contexto abierto al cerrar V26:
   deployment para ninguno y no hay check-runs. El primero que falló era SOLO
   documentación, así que no es el repo. El "redespliegue" de las 12:40 reconstruyó
   `cf83d90` —Redeploy rehace el MISMO commit—, por eso el sitio volvió como V2.51.
-(commit: pending)
+- **RESUELTO a las 13:16 UTC**: la conexión de Git se recuperó SOLA. El push de
+  la V2.55 disparó su build automático (Vercel anota `repoPushedAt` 13:16:03,
+  build a las 13:16:05) sin tocar la configuración. El hueco fue 12:39–13:16 UTC:
+  entrega de webhooks caída, no una desconexión. NO hizo falta desconectar y
+  reconectar el repositorio — el diálogo estaba abierto y se canceló a tiempo.
+  Los cuatro commits saltados no se recuperan uno a uno y no hace falta: la punta
+  de `main` los contiene a todos.
+- Verificado en producción: V2.55 viva; `/api/cron/integraciones`,
+  `/api/cron/market-anchors` y `/api/integraciones/make` responden **401** sin
+  credencial (no 503 → los secretos SÍ están puestos; no 200 → están cerradas),
+  un secreto incorrecto también da 401, y un canal inventado da «Canal
+  desconocido».
+(commit: 42ad8ec)

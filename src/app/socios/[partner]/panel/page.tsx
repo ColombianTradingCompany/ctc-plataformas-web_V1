@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PARTNERS, isPartnerSlug } from "@/lib/partners/partners";
@@ -75,7 +76,10 @@ export default async function PartnerPanelPage({ params }: { params: Promise<{ p
 
         <div className={styles.foot}>
           <span>Red orquestada · Colombian Trading Company</span>
-          <span>Soporte: info@ctcexport.com</span>
+          <span>
+          Soporte: info@ctcexport.com ·{" "}
+          <span title={`Versión ${VERSION_LABEL} · build ${BUILD_SHA}`}>{VERSION_LABEL}</span>
+        </span>
         </div>
       </div>
     </div>
@@ -153,7 +157,10 @@ async function StudioFloor() {
 
         <div className={styles.foot}>
           <span>Red orquestada · Colombian Trading Company</span>
-          <span>Soporte: info@ctcexport.com</span>
+          <span>
+          Soporte: info@ctcexport.com ·{" "}
+          <span title={`Versión ${VERSION_LABEL} · build ${BUILD_SHA}`}>{VERSION_LABEL}</span>
+        </span>
         </div>
       </div>
     </div>

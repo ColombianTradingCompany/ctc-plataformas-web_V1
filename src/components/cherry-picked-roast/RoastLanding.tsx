@@ -7,6 +7,7 @@ import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
+import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./RoastLanding.module.css";
 
 const FEE_EUR_KG = 9.5;
@@ -356,6 +357,7 @@ function Landing() {
           <SocialLinks />
         </div>
       </footer>
+      <LegalFooter lang={lang} />
 
       {/* No QuickNav on the scaffolds, so the bubble column starts at 24. */}
       <FamilyBubble active="roast" bottom={24} />

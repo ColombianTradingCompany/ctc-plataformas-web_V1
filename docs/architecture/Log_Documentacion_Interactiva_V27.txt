@@ -31,3 +31,37 @@ Contexto abierto al cerrar V27:
   Specialty/Black sobre KR ProcessFlow y CP BlackSection.
 - El socio multi-nodo sigue exigiendo cambiar el PK de `partner_accounts`.
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+## [2026-08-05] V3.0 · hito de generación, y la insignia en todas partes
+- **V2.65 → V3.0**, declarado por el owner. Es exactamente lo que
+  `src/lib/version.ts` define como MAYOR: no exige reescritura, marca un estado
+  estable del todo. Motivo del hito: la plataforma deja de estar sola — espina
+  de integración con Notion, Google y Make; los Grados de Calidad con UNA
+  definición; y Coffeed produciendo de principio a fin por primera vez.
+- **Una sola fuente**: `APP_VERSION` en `version.ts`. Nada más en el repo cita
+  un número de versión a mano (comprobado por grep), así que el bump es una
+  línea y las 15 superficies lo heredan.
+- **AUDITORÍA DE PIES, cinco huecos cerrados** (la petición del owner era que
+  toda plataforma o herramienta con pie lo tuviera):
+  1. **Cherry Picked Roast** y 2. **Cherry Picked X** — tenían `<footer>` propio
+     con redes, pero NO el pie legal: eran las dos únicas superficies públicas
+     sin versión ni aviso legal. Ahora montan `LegalFooter` como sus hermanas.
+  3. y 4. **Source Wrapper** y **Datawave** (vía `StudioAppShell`) — el Estudio
+     es un socio EXTERNO trabajando en una consola nuestra; cuando reporta que
+     algo falla, lo primero que hace falta saber es qué build está viendo, y era
+     la única superficie con sesión donde no había forma de averiguarlo.
+  5. **Hub del socio** (`/socios/[partner]/panel`) — tenía pie propio sin
+     versión; los DOS estados de la página la llevan ahora.
+- Ya la tenían y se confirmó en vivo: CTC Home, Kaffetal Regal, Cherry Picked,
+  Terratalento, Coffeed, Herramientas, Varietales, CTC Tech, Co-Create, Control
+  Panel, login, verify, panel, cambiar-contraseña (vía `SurfaceShell` /
+  `InternalAuthShell`), las tres consolas (`PanelSidebar`) y el Directorio.
+  **Verificado sirviendo las 15 y leyendo la insignia del HTML: 14 dicen V3.0 y
+  el Directorio pinta «Cargando…» en servidor** — su pie llega al hidratar, y
+  las tres vistas (Landing, Login, AppView) montan `LegalFooter`.
+- **DICT nueva `versionado`** (81) explicando la convención, los dos sitios donde
+  se pinta y qué significa el SHA del `title`; enlazada desde el CTX de
+  `n-consoles` y con nota nueva en esa tarjeta. Deja dicho lo que más se
+  confunde: la documentación interactiva numera SNAPSHOTS y no sigue este
+  número — que las dos digan «V27» a la vez sería coincidencia.
+(commit: pending)

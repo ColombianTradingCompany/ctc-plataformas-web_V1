@@ -1,7 +1,8 @@
-# Pendientes · escrito al cierre del 2026-08-05 (V2.65)
+# Pendientes · escrito al cierre del 2026-08-05 (V3.0)
 
-La sesión del 5 de agosto dejó vivas las fases F0–F3 de integraciones, Coffeed
-dando la vuelta completa por primera vez, y el barrido leyendo feeds. Esto es lo
+La sesión del 5 de agosto cerró con el hito **V3.0**: las fases F0–F3 de
+integraciones vivas, Coffeed dando la vuelta completa por primera vez, y el
+barrido leyendo feeds. Esto es lo
 que quedó abierto, en orden de valor.
 
 ## Coffeed

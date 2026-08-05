@@ -226,3 +226,39 @@ Contexto abierto al cerrar V26:
 - PENDIENTE de F2: la base en Notion y los dos escenarios de Make. Son escrituras
   en cuentas del owner y esperan su visto bueno.
 (commit: pending)
+
+## [2026-08-05] F2 · La mitad de fuera: base de Notion y los dos escenarios
+- **BASE `Cotizaciones CTC`** en Notion, bajo Go To Market (data source
+  `d6053a61-e67b-4e36-aa8c-a6745e189b13`). Doce propiedades, cada una con su
+  descripción escrita: `ctc_id` dice «no editar», `Estado` dice «cambiarlo aquí
+  no cambia nada allí», y `Nota comercial` dice que es el campo que vuelve.
+- **CONEXIÓN de Notion en Make**: `Notion Public` (OAuth), id 14491825. Se
+  descartó `Notion Internal` — habría metido un token de larga vida en dos
+  sitios a cambio de un cambio de alcance más cómodo. Comprobado con el RPC
+  `listDataSources` que la conexión VE la base: el paso del selector de páginas
+  es el que falla en silencio, y la conexión parece sana igualmente.
+- **ESCENARIO 9621729** (salida): webhook → `notion:createDataSourceItem` →
+  llamada de vuelta con `cotizacion.espejada`. Filtro por `tipo` porque el
+  despachador manda TODO lo saliente al mismo webhook.
+- **ESCENARIO 9621737** (entrada): `watchDatabaseItems` cada 15 min →
+  `json:TransformToJSON` → HTTP. El JSON lo arma el módulo, NO una plantilla a
+  mano: la nota comercial es prosa, y una comilla o un salto de línea romperían
+  un cuerpo escrito a mano. Filtra a que existan nota Y `ctc_id`.
+- **LA TRAMPA, y costó tres ejecuciones**: `http:ActionSendData` tiene SIETE
+  booleanos `required` marcados como «advanced» (`serializeUrl`, `shareCookies`,
+  `rejectUnauthorized`, `followRedirect`, `useQuerystring`, `gzip`, `useMtls`).
+  La interfaz de Make los rellena sola; un blueprint por API, no. El error era
+  «Validation failed for 7 parameter(s)» y apuntaba a ningún sitio — parecía que
+  fallaba el mapeo de los campos de Notion. Lo que lo resolvió fue MIRAR NOTION:
+  las páginas estaban creadas y correctas, así que el fallo estaba después.
+- **PRUEBA DE VIDA COMPLETA** de la salida: webhook → página en Notion con todos
+  los campos (incluido `Total` como número) → la llamada de vuelta SALE y llega a
+  `/api/integraciones/make`, que responde **401** al secreto de relleno. Es
+  exactamente el final correcto: prueba el cableado entero y prueba que la puerta
+  no se abre sin credencial.
+- Los dos escenarios quedan INACTIVOS: falta pegar `INTEGRACIONES_SECRET_MAKE` en
+  la cabecera `Authorization` de sus módulos HTTP. El secreto no pasa por el
+  asistente, como todos los demás.
+- Quedan TRES filas de prueba en la base de Notion («PRUEBA DE VIDA F2 —
+  borrar»). El conector de Notion no expone borrado y borrar no es del asistente.
+(commit: pending)

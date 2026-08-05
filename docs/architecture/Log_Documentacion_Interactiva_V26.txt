@@ -517,3 +517,19 @@ Contexto abierto al cerrar V26:
 - Se limpió `last_swept_at` de los 14 medios: la corrida vieja no trajo nada y
   se quedaban marcados, así que el siguiente barrido no habría hecho nada.
 (commit: pending)
+
+## [2026-08-05] El techo por llamada se multiplica por el reintento
+- Segundo 504 a los 300 s, ahora con tandas de TRES. La causa es un error mío de
+  la V2.62: `claudeSourced` **reintenta un timeout una vez** —lo dice un
+  comentario tres líneas más abajo del sitio que toqué—, así que el peor caso de
+  una llamada no es `timeoutMs`, es `timeoutMs × 2`.
+- Con 90 s eso daba 180 s y cabía. Al subirlo a 150 s «porque troceado hay
+  margen», el peor caso pasó a 300 s: **exactamente** el límite de la función.
+  Subí el techo sin mirar por cuánto se multiplicaba.
+- Arreglo: `claude()` acepta `timeoutRetries` (por defecto 1, como hasta ahora) y
+  el barrido pasa **0**. Un medio lento no deja de serlo por preguntárselo dos
+  veces; se queda pendiente y lo reintenta el siguiente barrido, que para eso no
+  se le marca. Peor caso de una tanda: 150 s.
+- Anotado en el propio tipo, que es donde hay que leerlo antes de volver a tocar
+  un `timeoutMs`: el peor caso real es `timeoutMs × (1 + timeoutRetries)`.
+(commit: pending)

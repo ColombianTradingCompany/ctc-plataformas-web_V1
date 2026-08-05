@@ -48,6 +48,13 @@ export type ClaudeOpts = {
   /** Búsqueda web del lado del servidor — solo donde hace falta salir a mirar. */
   webSearch?: number;
   timeoutMs?: number;
+  /** Cuántas veces se reintenta un TIMEOUT (los 529/429 tienen su propia
+   *  cuenta). Por defecto 1. Ponerlo a 0 cuando quien llama ya tiene su propio
+   *  presupuesto de tiempo y no puede permitirse el doble: el peor caso real de
+   *  una llamada es `timeoutMs × (1 + timeoutRetries)`, y esa multiplicación es
+   *  fácil de olvidar al subir el techo — pasó el 2026-08-05, subir de 90 a
+   *  150 s puso el peor caso en 300 s, justo el límite de la función. */
+  timeoutRetries?: number;
 };
 
 /** El texto Y las fuentes que la búsqueda web consultó.
@@ -79,10 +86,10 @@ export async function claudeSourced(opts: ClaudeOpts): Promise<{ text: string; s
     } catch (e) {
       const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
       lastErr = timedOut ? "La petición tardó más de lo permitido y se abortó." : `Fallo de red: ${(e as Error).message}`;
-      // Un timeout se reintenta UNA sola vez. Reintentarlo tres veces multiplica
-      // la espera por tres sin cambiar nada (la consulta lenta sigue siendo
-      // lenta) y es lo que hacía que un barrido se fuera a diez minutos.
-      if (timedOut && attempt >= 1) break;
+      // Un timeout se reintenta UNA sola vez por defecto. Reintentarlo tres
+      // veces multiplica la espera sin cambiar nada (la consulta lenta sigue
+      // siendo lenta) y es lo que hacía que un barrido se fuera a diez minutos.
+      if (timedOut && attempt >= (opts.timeoutRetries ?? 1)) break;
       continue;
     }
     if (res.ok) {

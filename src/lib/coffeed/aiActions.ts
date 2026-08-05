@@ -187,8 +187,13 @@ const SWEEP_CHUNK = 3;
 /** Techo por medio DENTRO de una tanda. El global de `claude()` son 90 s, que se
  *  eligieron para acotar el barrido entero cuando iba de una sentada; troceado
  *  esa razón desaparece y 90 s se quedaban cortos — el 2026-08-05 se abortaron
- *  así la Federación Nacional de Cafeteros y SCA News. Con tres en paralelo, el
- *  peor caso de una tanda sigue siendo un solo tiempo de espera. */
+ *  así la Federación Nacional de Cafeteros y SCA News.
+ *
+ *  Va con `timeoutRetries: 0`, y eso es lo que hace que la cuenta salga. Subirlo
+ *  a 150 s CON el reintento por defecto puso el peor caso en 2 × 150 = 300 s,
+ *  que es exactamente el límite de la función: la tanda de tres volvió a morir
+ *  de 504. Un medio lento no deja de serlo por preguntárselo dos veces; se deja
+ *  pendiente y se reintenta en el siguiente barrido, que para eso no se marca. */
 const SWEEP_TIMEOUT_MS = 150_000;
 
 /**
@@ -272,6 +277,7 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
           maxTokens: 1500,
           webSearch: 3,
           timeoutMs: SWEEP_TIMEOUT_MS,
+          timeoutRetries: 0,
           system: SWEEP_SYSTEM,
           user: JSON.stringify({ ventana: { desde: fmt(since), hasta: fmt(today) }, medio: { name: s.name, kind: s.kind, url: s.url } }),
         });

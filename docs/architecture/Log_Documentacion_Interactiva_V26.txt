@@ -346,3 +346,27 @@ Contexto abierto al cerrar V26:
   cabeceras `Authorization`. Son dos módulos HTTP y hay que volver a pegarlo cada
   vez que yo toque el escenario. Anotado en el registro del ECP.
 (commit: pending)
+
+## [2026-08-05] F3 · Gmail: construido, bloqueado por un permiso de escritura
+- **NO HACE FALTA API KEY DE GEMINI.** `gemini-ai:simpleTextPrompt` no declara
+  conexión: corre con los créditos de IA que ya trae el plan Pro de Make.
+  Comprobado con una sonda: status 1 a la primera. Un secreto menos que guardar.
+- **EL CUERPO DEL CORREO NUNCA ENTRA AL ESCENARIO.** El trigger usa
+  `format: "metadata"`, que trae solo cabeceras. A Gemini van `fromName`,
+  `fromEmail` y `subject`, y nada más. La decisión del owner («solo remitente y
+  asunto») queda garantizada por la estructura, no por una promesa del prompt.
+- Clasificador: `gemini-3.5-flash` devuelve UNA palabra de una lista cerrada, y
+  un `switch()` la traduce al id de etiqueta. Auditable de un vistazo, y ante la
+  duda responde OTROS — «mejor no clasificar que clasificar mal», que además es
+  la única etiqueta que ya usaban para eso.
+- **BLOQUEADO**: `updateEmailLabels` devuelve **403 insufficient scopes**. La
+  conexión de Gmail lee pero no escribe.
+- **ERROR MÍO DE DIAGNÓSTICO, anotado porque volverá a pasar**: di por buena la
+  reautorización porque el RPC `parametersUpdateEmailLabels` pasó de 403 a 404.
+  Ese RPC solo LEE las etiquetas; nunca probó la escritura. Un 404 con un id
+  inventado dice «el mensaje no existe», no «tengo permiso». Para probar un
+  permiso hay que ejecutar la acción que lo necesita, no una que se le parece.
+- La sonda temporal (escenario) también sirvió para descartar tres sintaxis de
+  variable personalizada de Make: `{{CTC_SECRET}}`, `{{var.CTC_SECRET}}` y
+  `{{organization.CTC_SECRET}}` dan las tres 401. Falta la buena.
+(commit: pending)

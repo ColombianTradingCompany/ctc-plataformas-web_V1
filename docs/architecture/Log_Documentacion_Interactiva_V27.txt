@@ -337,7 +337,7 @@ Contexto abierto al cerrar V27:
   una línea en su descripción al wrap.
 - Archivos: FincaModal.tsx, FincaModal.module.css, FincaMapPicker.tsx.
 (commit: 81a3ab6 la mayor parte — barrida por el commit de RT-Scriptor de otra
- sesión; el ajuste fino del CSS quedó pending)
+ sesión; el ajuste fino del CSS quedó en bc29603)
 
 ## [2026-08-06] La Visa EUDR deja de exigirle al productor lo que solo CTC puede contestar
 - Bug de lógica reportado por el owner: «Áreas de legislación verificadas» es un
@@ -367,7 +367,7 @@ Contexto abierto al cerrar V27:
   bloqueando; deforestación ⇒ no_apta; mitigación efectiva rescata).
 - Nodos: FincaModal / tablero Fincas del BCP — al wrap, actualizar la
   descripción de la Visa (qué la determina y qué solo la documenta).
-(commit: pending)
+(commit: bc29603)
 
 ## [2026-08-06] «Calcular del polígono» reescribe el Área en café — también con varios cafetales
 - Corrección sobre la entrada de esta mañana: deshabilitar el botón cuando hay
@@ -384,4 +384,4 @@ Contexto abierto al cerrar V27:
   temporal, borrada): reescritura 5→7.58 (5.08 del polígono + 2.5 del extra),
   caso de un solo cafetal 12→5.08 tras edición manual, tooltips por modo.
 - Archivos: FincaModal.tsx (solo — la clase .fieldRow y el picker no cambian).
-(commit: pending)
+(commit: bc29603)

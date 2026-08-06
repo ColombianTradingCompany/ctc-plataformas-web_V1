@@ -18,7 +18,6 @@ type FincaJoin = {
   eudr_lng: string | number | null;
   eudr_deforestation_free: boolean | null;
   eudr_legal_production: boolean | null;
-  eudr_legal_areas: string[] | null;
   eudr_tenure: string | null;
   eudr_illegality_indicators: boolean | null;
   eudr_docs_available: boolean | null;
@@ -36,7 +35,6 @@ function toFincaEudrFields(f: NonNullable<FincaJoin>): FincaEudrFields {
     depto: f.departamento || "—",
     eudrDeforestationFree: f.eudr_deforestation_free,
     eudrLegalProduction: f.eudr_legal_production,
-    eudrLegalAreas: f.eudr_legal_areas || [],
     eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
     eudrIllegalityIndicators: f.eudr_illegality_indicators,
     eudrDocsAvailable: f.eudr_docs_available,
@@ -77,7 +75,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
        eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
        eudr_product_risk, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme,
        eudr_risk_level, eudr_mitigation_actions, eudr_mitigation_effective, eudr_mitigation_responsible,
-       fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)`
+       fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)`
     )
     .eq("id", id)
     .single();
@@ -89,7 +87,7 @@ export default async function LotEudrCertPage({ params }: { params: Promise<{ id
   type ContribJoin = { weight_kg: number | string | null; fincas: FincaJoin | FincaJoin[] | null };
   const { data: contribRaw } = await service
     .from("lot_contributions")
-    .select("weight_kg, fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)")
+    .select("weight_kg, fincas(id, name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)")
     .eq("lot_id", id);
   const contribJoins = (((contribRaw as ContribJoin[] | null) ?? []))
     .map((r) => ({ f: (Array.isArray(r.fincas) ? r.fincas[0] : r.fincas) as FincaJoin | null, kg: r.weight_kg != null ? Number(r.weight_kg) : null }))

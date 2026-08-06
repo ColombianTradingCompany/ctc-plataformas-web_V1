@@ -119,8 +119,10 @@ function RiskPill({ level }: { level: string }) {
 // enfoque social are BCP-only fields now (filled in by CTC staff on
 // /bcp/fincas as part of their own review, not self-declared by the
 // producer) -- see EudrDraft below, which only covers what the producer
-// still edits here. Their existing values still feed fincaEudrStatus() and
-// round-trip on save; the producer just can't see or change them from here.
+// still edits here. Their values round-trip on save; the producer can't see
+// or change them from here. Since 2026-08-06 they no longer feed
+// fincaEudrStatus() either: they document CTC's review, they don't gate the
+// Visa (a BCP-only field can't count as a gap in the producer's declaration).
 type EudrDraft = Pick<
   Finca,
   | "lat"
@@ -398,15 +400,6 @@ function FincaModalBody({
     setAltBusy(false);
   }
 
-  // Área desde el polígono: pura geometría, sin red (a diferencia de la altura,
-  // que sí consulta un servicio). Disponible en cuanto haya 3 vértices.
-  const polyArea = polygonAreaHa(eudr.eudrPolygon);
-  function pullArea() {
-    if (polyArea == null) return;
-    setHa(String(polyArea));
-    setAreaFromPoly(true);
-  }
-
   // Approximate live preview only -- vereda/mun/depto come from the finca prop
   // (not the refs above, which don't trigger re-renders as the producer types),
   // so this can lag slightly for the address-fallback geo path. The lat/lng
@@ -414,12 +407,25 @@ function FincaModalBody({
   // F1: la completitud geográfica del preview se juzga por PARCELAS — la 1 sale
   // del borrador (el mapa de este modal ES la parcela 1) y las demás de props.
   const extraParcelas = parcelas.filter((p) => p.position > 0).sort((a, b) => a.position - b.position);
-  // Con cafetales adicionales, «Área en café» pasa a ser el TOTAL de la finca,
-  // mientras que el mapa de esta pestaña sigue siendo solo el del Cafetal 1:
-  // traer el área de ESE polígono al total lo dejaría corto (y el total es lo
-  // que decide la frontera de 4 ha del EUDR). Con un solo cafetal, finca y
-  // parcela son la misma superficie y el botón sí aplica.
-  const areaIsTotal = extraParcelas.length > 0;
+
+  // Área desde la geometría: pura geometría, sin red (a diferencia de la altura,
+  // que sí consulta un servicio). El campo guarda el TOTAL de la finca, así que
+  // el cálculo es: polígono del Cafetal 1 (el mapa de esta pestaña) + las áreas
+  // declaradas de los cafetales adicionales. Con un solo cafetal, finca y
+  // parcela son la misma superficie y el total ES el polígono. Igual que la
+  // altura, el botón REESCRIBE el campo (2026-08-06, pedido del owner — la
+  // versión anterior lo deshabilitaba con cafetales adicionales y se leía como
+  // roto); el productor puede ajustar el número después si sembró menos.
+  const polyArea = polygonAreaHa(eudr.eudrPolygon);
+  const extrasAreas = extraParcelas.map((p) => (p.areaHa.trim() ? Number(p.areaHa.replace(",", ".")) : NaN));
+  const extrasArea = Math.round(extrasAreas.reduce((s, n) => s + (isNaN(n) ? 0 : n), 0) * 100) / 100;
+  const extrasSinArea = extrasAreas.filter((n) => isNaN(n)).length;
+  const totalPolyArea = polyArea != null ? Math.round((polyArea + extrasArea) * 100) / 100 : null;
+  function pullArea() {
+    if (totalPolyArea == null) return;
+    setHa(String(totalPolyArea));
+    setAreaFromPoly(true);
+  }
 
   const previewFinca: Finca = {
     id: finca?.id ?? "",
@@ -803,13 +809,15 @@ function FincaModalBody({
                   type="button"
                   className="btn btn-sm"
                   onClick={pullArea}
-                  disabled={polyArea == null || areaIsTotal}
+                  disabled={totalPolyArea == null}
                   title={
-                    areaIsTotal
-                      ? "Con varios cafetales, este campo es el área TOTAL de la finca — el polígono de abajo es solo el del Cafetal 1"
-                      : polyArea != null
-                        ? "Calcular el área del polígono dibujado en el mapa"
-                        : "Termine el polígono en el mapa de abajo para poder calcularla"
+                    totalPolyArea != null
+                      ? extraParcelas.length > 0
+                        ? "Reescribir el campo con el total: polígono del Cafetal 1 + cafetales adicionales"
+                        : "Reescribir el campo con el área del polígono dibujado en el mapa"
+                      : needsPolygon
+                        ? "Termine el polígono en el mapa de abajo para poder calcularla"
+                        : "Escríbala a mano — con más de 4 ha el mapa le pedirá el polígono y podrá calcularla de ahí"
                   }
                 >
                   Calcular del polígono 📐
@@ -820,12 +828,16 @@ function FincaModalBody({
                     está TERMINADO: mientras se dibuja, la forma ya se ve en el
                     mapa pero aún no es la geometría de la finca. Decirlo aquí
                     evita el «no funciona» de tocar un botón deshabilitado. */}
-                {areaIsTotal
-                  ? "Con varios cafetales, escriba aquí el área TOTAL en café de la finca. El área de cada cafetal se calcula en su propia tarjeta, más abajo."
-                  : polyArea == null
+                {totalPolyArea == null
+                  ? needsPolygon
                     ? "Dibuje el polígono en el mapa y toque «Terminar polígono» para poder calcularla, o escríbala a mano."
-                    : areaFromPoly
-                      ? `Calculada del polígono (${eudr.eudrPolygon?.length ?? 0} vértices). Ajústela si sembró menos.`
+                    : "Escríbala a mano. Con más de 4 ha, el mapa le pedirá delimitar el polígono y podrá calcularla de ahí."
+                  : areaFromPoly
+                    ? extraParcelas.length > 0
+                      ? `Calculada: Cafetal 1 (${polyArea} ha del polígono) + ${extraParcelas.length} cafetal(es) adicional(es) (${extrasArea} ha)${extrasSinArea > 0 ? ` — ${extrasSinArea} sin área definida, no incluido(s)` : ""}. Ajústela si sembró menos.`
+                      : `Calculada del polígono (${eudr.eudrPolygon?.length ?? 0} vértices). Ajústela si sembró menos.`
+                    : extraParcelas.length > 0
+                      ? `El total medido es ${totalPolyArea} ha (polígono del Cafetal 1 + cafetales adicionales). Toque «Calcular del polígono» para usarla.`
                       : `El polígono dibujado mide ${polyArea} ha. Toque «Calcular del polígono» para usarla.`}
               </p>
             </div>

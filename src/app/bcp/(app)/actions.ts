@@ -52,7 +52,7 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
   const { data: finca } = await service
     .from("fincas")
     .select(
-      "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_legal_areas, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, requires_eudr_polygon, eudr_polygon_geojson, status"
+      "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, requires_eudr_polygon, eudr_polygon_geojson, status"
     )
     .eq("id", fincaId)
     .single();
@@ -100,7 +100,6 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
     depto: finca.departamento || "—",
     eudrDeforestationFree: finca.eudr_deforestation_free,
     eudrLegalProduction: finca.eudr_legal_production,
-    eudrLegalAreas: finca.eudr_legal_areas || [],
     eudrTenure: (finca.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
     eudrIllegalityIndicators: finca.eudr_illegality_indicators,
     eudrDocsAvailable: finca.eudr_docs_available,

@@ -23,6 +23,13 @@ function status(code: EudrStatus["code"], label: string, tone: EudrTone): EudrSt
 // list directly, without going through Kaffetal Regal's client-side row mapper)
 // can build a lightweight object that satisfies this instead of faking unrelated
 // fields like `hist`/`carac`/`videoUrl`.
+// 2026-08-06 (owner): `eudrLegalAreas` salió de este pick. Las «Áreas de
+// legislación verificadas» —igual que «Sostenibilidad y enfoque social» y la
+// «Evidencia disponible»— son material de la PROPIA revisión de CTC (se llenan
+// en /bcp/fincas, el productor ni las ve ni puede contestar «No lo sé»), así
+// que no pueden contar como vacío de la declaración del productor: tenían la
+// Visa clavada en «en trámite» sin que el productor tuviera nada que hacer.
+// Documentan la revisión en el dossier; no determinan la Visa.
 export type FincaEudrFields = Pick<
   Finca,
   | "name"
@@ -34,7 +41,6 @@ export type FincaEudrFields = Pick<
   | "depto"
   | "eudrDeforestationFree"
   | "eudrLegalProduction"
-  | "eudrLegalAreas"
   | "eudrTenure"
   // Risk questionnaire (2026-07-24) -- moved onto the finca from the lot in the
   // Pasaporte/Visa/Sello restructure. The two yes/no answers below are what the
@@ -105,7 +111,6 @@ export function fincaEudrStatus(
     !geoOk ||
     !haOk ||
     f.eudrDeforestationFree !== true ||
-    f.eudrLegalAreas.length === 0 ||
     !f.eudrTenure ||
     risk === "";
   if (incomplete) return status("pendiente", "Visa en trámite", "pend");

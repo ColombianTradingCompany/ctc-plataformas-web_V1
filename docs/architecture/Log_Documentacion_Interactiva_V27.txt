@@ -315,3 +315,73 @@ Contexto abierto al cerrar V27:
 - APP_VERSION 3.3 → 3.4. Guardián en 82 comprobaciones (sin cambios: la fase 2
   es red y no lógica pura, y lo que se puede comprobar sin red ya está).
 (commit: b164d74)
+
+## [2026-08-06] Fincas · pestaña «Ubicación y medidas»: el área se ve, y el cálculo del polígono se explica
+- UI: el input «Área en café (ha)» quedaba aplastado a ~50 px por el botón
+  «Calcular del polígono» (nowrap dentro de una columna de 241 px del modal):
+  nueva clase `.fieldRow` en `FincaModal.module.css` (flex-wrap; basis 90 px /
+  min 84 px, medidos en vivo) — el botón largo baja a su propia línea y el
+  campo queda a ancho completo; «Traer del mapa» (más corto) se queda en línea.
+  Misma fila aplicada a Altura (msnm).
+- El cálculo del área SÍ funciona (`polygonAreaHa` verificada numéricamente:
+  100 ha exactas para cuadrados de 1 km², independiente del sentido de dibujo),
+  pero solo se habilita con el polígono TERMINADO. Ahora `FincaMapPicker`
+  muestra el área medida EN VIVO («N vértices · X ha», tanto del borrador como
+  del polígono guardado) y los mensajes dicen explícitamente que hay que tocar
+  «Terminar polígono» para que la geometría viaje al formulario.
+- Con cafetales adicionales (parcelas 2..N) el botón se deshabilita con
+  explicación: el campo es el área TOTAL de la finca y el mapa de la pestaña es
+  solo el Cafetal 1 — traer ese polígono al total lo dejaría corto, y el total
+  es lo que decide la frontera EUDR de 4 ha (`requires_eudr_polygon`).
+- No toca nodos ni WIRES: es afinado del nodo FincaModal existente; si acaso,
+  una línea en su descripción al wrap.
+- Archivos: FincaModal.tsx, FincaModal.module.css, FincaMapPicker.tsx.
+(commit: 81a3ab6 la mayor parte — barrida por el commit de RT-Scriptor de otra
+ sesión; el ajuste fino del CSS quedó pending)
+
+## [2026-08-06] La Visa EUDR deja de exigirle al productor lo que solo CTC puede contestar
+- Bug de lógica reportado por el owner: «Áreas de legislación verificadas» es un
+  campo BCP-only (pestaña Atributos de /bcp/fincas; el productor ni lo ve ni
+  puede decir «No lo sé») pero contaba como vacío en `fincaEudrStatus` y en el
+  `missingChecks` del tablero de Fincas — toda finca quedaba clavada en «Visa
+  en trámite» / «EUDR incompleta» sin que el productor tuviera nada pendiente,
+  y `approveFinca` (que exige status "apta") tampoco podía aprobar hasta que
+  BCP se llenara a sí mismo el campo.
+- Fix central en `src/lib/eudr.ts`: `eudrLegalAreas` salió del pick
+  `FincaEudrFields` y del check de completitud. La Visa ahora se determina SOLO
+  con la declaración del productor (geo por parcelas, área, no-deforestación,
+  tenencia, cuestionario de riesgo). Mapeos/selects podados en: bcp/actions
+  (approveFinca), bcp/fincas/page (missingChecks + toEudrFields),
+  bcp/lotes/page, certificacion-lote/[id], lib/arena/eudrGate.
+- «Sostenibilidad y enfoque social» NUNCA gateó en código (solo display), pero
+  la pestaña Atributos del FincaEudrEditor ahora lo dice explícitamente:
+  «documenta la revisión de CTC, no bloquea la Visa ni la aprobación».
+- KR: el FieldInfo del certRow (AppDashboard) ya no menciona «áreas legales»
+  como tarea del productor; la nota del panel 3 del FincaModal ya lo decía y
+  ahora es verdad también en la lógica.
+- Efecto inmediato sin migración: fincas con lo suyo completo pasan de
+  «EUDR incompleta» a «Lista para veredicto» en el tablero BCP, y el productor
+  ve «a la espera de la revisión de CTC» en vez de «información incompleta».
+- Verificado: tsc + eslint limpios; `fincaEudrStatus` ejercitada con node
+  (8 escenarios: sin áreas legales ⇒ apta; tenencia/riesgo/parcelas siguen
+  bloqueando; deforestación ⇒ no_apta; mitigación efectiva rescata).
+- Nodos: FincaModal / tablero Fincas del BCP — al wrap, actualizar la
+  descripción de la Visa (qué la determina y qué solo la documenta).
+(commit: pending)
+
+## [2026-08-06] «Calcular del polígono» reescribe el Área en café — también con varios cafetales
+- Corrección sobre la entrada de esta mañana: deshabilitar el botón cuando hay
+  cafetales adicionales se leía como roto (el owner lo reportó como «no
+  funciona»). Regla nueva, espejo de la Altura: el botón SIEMPRE reescribe el
+  campo cuando hay polígono terminado. Con varios cafetales calcula el TOTAL =
+  polígono del Cafetal 1 + suma de las áreas declaradas de los adicionales
+  (los que no tienen área definida se excluyen y el hint lo dice: «N sin área
+  definida, no incluido(s)»).
+- Hint para fincas ≤ 4 ha sin polígono: ya no pide dibujar un polígono que el
+  mapa en modo punto no ofrece — dice «escríbala a mano; con más de 4 ha el
+  mapa le pedirá el polígono y podrá calcularla de ahí».
+- Verificado EN VIVO montando el FincaModal real con props simulados (ruta
+  temporal, borrada): reescritura 5→7.58 (5.08 del polígono + 2.5 del extra),
+  caso de un solo cafetal 12→5.08 tras edición manual, tooltips por modo.
+- Archivos: FincaModal.tsx (solo — la clase .fieldRow y el picker no cambian).
+(commit: pending)

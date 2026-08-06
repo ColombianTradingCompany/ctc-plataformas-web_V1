@@ -594,7 +594,7 @@ export function AppDashboard({
                     ) : fincaStatusOf(f).code === "pendiente" ? (
                       <span className={styles.certPending}>
                         Visa EUDR: en trámite — información incompleta
-                        <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y áreas legales) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga la Visa EUDR, habilitará su descarga. Con la Visa vigente, todos los lotes de esta finca reciben su Sello EUDR automáticamente." />
+                        <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y el cuestionario de riesgo) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga la Visa EUDR, habilitará su descarga. Con la Visa vigente, todos los lotes de esta finca reciben su Sello EUDR automáticamente." />
                       </span>
                     ) : (
                       <span className={styles.certPending}>Visa EUDR: en trámite (a la espera de la revisión de CTC)</span>

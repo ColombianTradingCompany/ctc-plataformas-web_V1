@@ -10,9 +10,13 @@
    El botón lleva etiqueta larga y `nowrap`: sin un ancho mínimo en el input,
    el flex se lo comía hasta dejar dos caracteres visibles —el productor no
    veía la cifra que acababa de escribir—. Con `flex-wrap`, en columnas
-   estrechas el botón baja a su propia línea en vez de aplastar el campo. */
+   estrechas el botón baja a su propia línea en vez de aplastar el campo.
+   Medido en la columna real (241 px): el botón «Calcular del polígono» ocupa
+   183 px y dejaba el input en 50 px —dos caracteres—; ahora baja de línea y el
+   campo se queda con los 241. «Traer del mapa» (138 px) sí cabe al lado y se
+   mantiene en línea, igual que antes. */
 .fieldRow{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
-.fieldRow input{flex:1 1 110px;min-width:100px}
+.fieldRow input{flex:1 1 90px;min-width:84px}
 .fieldRow button{flex:0 1 auto;white-space:nowrap}
 
 .chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer;background:var(--paper)}

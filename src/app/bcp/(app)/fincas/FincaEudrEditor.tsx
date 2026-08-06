@@ -726,6 +726,15 @@ export function FincaEudrEditor({
         </div>
 
         <div style={{ display: subTab === "atributos" ? "block" : "none" }}>
+          {/* 2026-08-06: estos atributos DOCUMENTAN la revisión de CTC, no la
+              condicionan — el productor no los ve ni puede contestarlos, así
+              que dejaron de contar en fincaEudrStatus/missingChecks (tenían
+              fincas completas clavadas en «EUDR incompleta» sin que el
+              productor tuviera nada pendiente). */}
+          <p className={styles.meta} style={{ margin: "0 0 10px" }}>
+            Registro de la revisión propia de CTC — enriquece el dossier de la Visa, pero <b>no bloquea</b> la
+            aptitud EUDR ni la aprobación de la finca.
+          </p>
           <div className={styles.field}>
             <label>Áreas de legislación verificadas</label>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>

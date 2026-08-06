@@ -81,7 +81,6 @@ function toEudrFields(f: FincaRow): FincaEudrFields {
     depto: f.departamento || "—",
     eudrDeforestationFree: f.eudr_deforestation_free,
     eudrLegalProduction: f.eudr_legal_production,
-    eudrLegalAreas: f.eudr_legal_areas || [],
     eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
     eudrIllegalityIndicators: f.eudr_illegality_indicators,
     eudrDocsAvailable: f.eudr_docs_available,
@@ -95,7 +94,9 @@ function missingChecks(f: FincaEudrFields): string[] {
   if (!((f.lat && f.lng) || f.vereda !== "—" || f.mun !== "—" || f.depto !== "—")) gaps.push("geolocalización o dirección");
   if (!(f.ha !== "—" && Number(f.ha.replace(",", ".")) > 0)) gaps.push("área cultivada");
   if (f.eudrDeforestationFree !== true) gaps.push("declaración de no deforestación");
-  if (f.eudrLegalAreas.length === 0) gaps.push("áreas de legislación verificadas");
+  // Las «áreas de legislación verificadas» YA NO cuentan como vacío (2026-08-06):
+  // son revisión propia de CTC (pestaña Atributos del editor), no un pendiente
+  // del productor — tenían fincas completas clavadas en «EUDR incompleta».
   if (!f.eudrTenure) gaps.push("tenencia de la tierra");
   // Risk questionnaire: the two yes/no answers gate the risk determination.
   if (f.eudrIllegalityIndicators == null || f.eudrDocsAvailable == null) gaps.push("cuestionario de riesgo (indicios / documentos)");

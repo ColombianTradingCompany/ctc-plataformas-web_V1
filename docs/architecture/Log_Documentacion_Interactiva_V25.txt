@@ -279,3 +279,29 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   instante), pero el cambio NO queda registrado en la auditoría — si importa
   que quede, repetir el toggle desde el tablero.
 (sin commit: cambio de datos, no de código)
+
+## [2026-08-06] Costo de empaque v3.2 (seis mejoras pedidas por el owner)
+- `public/tools/costo-empaque.html` pasa de la v3.1 del owner a una **v3.2
+  escrita aquí** (original conservado en reference_html_tools/CTC-costo-empaque
+  -v3.1.html; la nueva se guardó como -v3.2.html para que el owner siga versionando).
+- Los seis cambios: peso por bolsa dentro del recuadro de la bolsa · llenado
+  derivado del peso (misma cifra, dos puertas, manda la última tocada, con tope
+  y aviso si no cabe) · la oferta de bolsas dentro de la sección Bolsa (dos
+  listas independientes, sin conmutador) · elegir de la lista solo rellena y
+  todo sigue editable (las cámaras pasan a campo propio en vez de forzar el
+  override) · la ficha nombra máquina y bolsa elegidas con proveedor · y el
+  diagrama de bolsas por ciclo rehecho como **vista en planta con cotas**.
+- **Por qué el diagrama era "inútil"**: el isométrico dibujaba su propia fila de
+  bolsas y cortaba al primer estorbo, así que al elegir una máquina de barra
+  corta (ALFA-25, 25 cm) con la bolsa de 27 cm rotulaba «2 bolsas / ciclo» sobre
+  una cámara vacía — el número venía del override que el propio selector activaba
+  solo. Ahora dibujo y rótulo salen del mismo cálculo.
+- Gotcha nuevo (vale para cualquier campo de doble entrada): `kgBag` estaba a la
+  vez en el bucle genérico `NUMS.forEach(... 'input', calc)` y en su oyente
+  propio; el genérico corría PRIMERO, calc() no sabía aún quién mandaba y
+  reescribía el campo recién tecleado, así que escribir 6 kg daba 99,7 % de
+  llenado. Los campos que se derivan entre sí deben salir del bucle genérico.
+- Verificado con Chrome sin cabeza (screenshots por estado + PDF a imagen) y en
+  el dev server: 0 errores de consola, 0 assets externos, la ficha vuelve a caber
+  en UNA página (se fijó el ancho del rótulo en `.sheet td:first-child`).
+(commit: 01de16c)

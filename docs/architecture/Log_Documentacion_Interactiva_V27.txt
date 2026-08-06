@@ -213,4 +213,4 @@ Contexto abierto al cerrar V27:
 - **PENDIENTE del encargo del owner y NO hecho todavía**: la pestaña
   «Escenarios» que sustituye a Localización, y la fase 2 de imagen real por
   Make (Gemini + Canva). Ver docs/PROXIMA_SESION.md.
-(commit: pending)
+(commit: 8401b4f)

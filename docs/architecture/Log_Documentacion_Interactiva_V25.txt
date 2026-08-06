@@ -305,3 +305,38 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   el dev server: 0 errores de consola, 0 assets externos, la ficha vuelve a caber
   en UNA página (se fijó el ancho del rótulo en `.sheet td:first-child`).
 (commit: 01de16c)
+
+## [2026-08-06] Costo de empaque se muda al OCP: memoria + Cuadro de evaluación
+- **CAMBIO DE NODO**: la calculadora deja de ser solo una herramienta del banco;
+  su casa PRINCIPAL es `OCP · Cotizadores` (`/ocp/cotizador-empaque`), como
+  tercer módulo junto a Lotes y Logístico. Sigue publicada en el banco (KR + web)
+  desde el mismo archivo — el iframe del OCP apunta a `public/tools/
+  costo-empaque.html`, no a una copia en `/ocp-apps`, para que no se quede atrás.
+- **Reusa la tabla `quotes`** con `kind='empaque'` (migración `quotes_kind_empaque`:
+  valor de enum, `quote_seq_empaque` y el trigger del código pasado a CASE —el
+  `else` daba prefijo logístico a todo lo que no fuera 'lote'). Códigos COT-E-.
+  Gana gratis destinatario, estatus, vigencia, duplicar, bitácora y reapertura.
+- **Puente propio de la herramienta** (`window.CTC_TOOL`: getState/setState/
+  getHeadline). Gotcha que lo obligó: el puente genérico de `AppFrame` raspa los
+  `<input>` y lee globals de window, pero el estado de esta herramienta vive en
+  `let` de ámbito de script (bagType, picked, weightDriven) — que NO son
+  propiedades de window—, así que restauraba a medias. AppFrame ahora prefiere el
+  puente cuando la app lo expone; las otras dos calculadoras siguen igual.
+- **Cuadro de evaluación** (`/ocp/cotizador-empaque/evaluacion`): superpone las
+  configuraciones guardadas y las lee por cuatro lentes (costo por kilo apilado
+  en bolsa/mano de obra/amortización · costo por bolsa · capacidad kg/día ·
+  inversión), mejor arriba, con selección de cuáles entran (al desmarcar una sale
+  también de la ESCALA) y enlace a cada cotización. `listQuoteMetrics` trae las
+  cifras de todas en una sola consulta.
+- Colores validados con el validador del skill `dataviz`: la terna de marca
+  (#FFCD00/#C8102E/#003087) FALLA la banda de luminosidad, así que se usaron
+  pasos de los mismos tonos (#D9A400/#C8102E/#3A6FD0) que pasan CVD y visión
+  normal. El ámbar no alcanza 3:1 contra el fondo ⇒ valor siempre escrito + tabla.
+- Gotcha de UI reutilizable: `shared.module.css .card` es una FILA flex centrada
+  con wrap (tarjeta de una línea). Usarla como contenedor de un gráfico encoge la
+  pista de las barras y manda la lista al lado del título — hace falta un bloque
+  propio. Se vio renderizando la página con datos sintéticos en una ruta temporal.
+- Sin verificar en vivo: guardar/reabrir DENTRO del OCP (2FA real). Sí verificado:
+  ida y vuelta exacta del puente sobre la herramienta servida, la descarga del
+  archivo real, y las cuatro lentes con su orden y su reescalado.
+(commit: a20e4fd)

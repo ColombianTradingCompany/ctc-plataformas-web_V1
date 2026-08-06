@@ -26,6 +26,9 @@ import { studioGate } from "./studioGate";
 import { coffeedServiceClient } from "./requireEcp";
 import { claude, parseJson, MODEL_WRITE } from "./claude";
 import { previsFrame, frameTimes, stageProps } from "./rtsPrevis";
+import { geminiImagen, geminiImagenDisponible } from "./geminiImage";
+import { emitEvent } from "@/lib/integraciones/emit";
+
 import {
   camLabel,
   checkProject,
@@ -60,6 +63,7 @@ import type {
   ProposalOp,
   RenderConfig,
   RenderJob,
+  RenderProvider,
   SceneDraft,
   Series,
 } from "@/components/coffeed/rtscriptor/model";
@@ -72,6 +76,19 @@ const ROOT = "coffeed/rts";
 const SIGNED_TTL = 60 * 60;
 
 type Service = ReturnType<typeof coffeedServiceClient>;
+
+/** El PNG que rasterizó el navegador, de data-URL a bytes. Con techo: una
+ *  referencia es una miniatura, no un póster, y aceptar cualquier tamaño desde
+ *  el cliente es abrir la puerta a que alguien suba 40 MB por fotograma. */
+const REF_MAX_BYTES = 2 * 1024 * 1024;
+
+function decodeRefPng(dataUrl: string | undefined): Uint8Array | null {
+  if (!dataUrl) return null;
+  const m = dataUrl.match(/^data:image\/png;base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) return null;
+  const buf = Buffer.from(m[1], "base64");
+  return buf.length && buf.length <= REF_MAX_BYTES ? new Uint8Array(buf) : null;
+}
 
 export type Workshop = {
   projects: ProjectCard[];
@@ -236,9 +253,10 @@ type RenderRow = {
   error: string | null;
   created_at: string;
   config: RenderConfig | null;
+  canva_url: string | null;
 };
 
-const RENDER_COLS = "id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at, config";
+const RENDER_COLS = "id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at, config, canva_url";
 
 const toRender = (r: RenderRow): RenderJob => ({
   id: r.id,
@@ -254,6 +272,7 @@ const toRender = (r: RenderRow): RenderJob => ({
   createdAt: r.created_at,
   // Los revelados de antes de la V3.3 no la tienen: se dice, no se inventa.
   config: r.config && Object.keys(r.config).length ? r.config : null,
+  canvaUrl: r.canva_url,
 });
 
 /* ─────────────────────────── escritura del proyecto ─────────────────────── */
@@ -620,7 +639,20 @@ REGLAS
 
 /* ─────────────────────── «Acción»: revelar fotogramas ─────────────────────── */
 
-export async function renderTake(input: { projectId: string; takeId: string; frames: number }): Promise<RtsResult<RenderJob>> {
+export async function renderTake(input: {
+  projectId: string;
+  takeId: string;
+  frames: number;
+  /** "previs" dibuja (instantáneo, gratis). "imagen" además pide una fotografía
+   *  a Gemini por cada fotograma, usando el dibujo como referencia de encuadre. */
+  provider?: RenderProvider;
+  /** Los dibujos rasterizados en el navegador, en PNG base64, uno por fotograma.
+   *  Se rasteriza ALLÍ porque aquí no hay rasterizador: `sharp` no es una
+   *  dependencia declarada de este proyecto (llega de rebote con Next) y
+   *  añadirla por esto sería cargar 30 MB de binarios para una conversión que
+   *  el navegador ya sabe hacer con un canvas. */
+  refs?: string[];
+}): Promise<RtsResult<RenderJob>> {
   const who = await studioGate();
   if (!who) return { ok: false, error: NO_AUTH };
 
@@ -676,18 +708,67 @@ export async function renderTake(input: { projectId: string; takeId: string; fra
   const times = frameTimes(take.dur, n);
   const props = stageProps(project, scene, take);
 
+  const quiereImagen = input.provider === "imagen";
+
   try {
-    const frames = [];
+    const frames: RenderJob["frames"] = [];
     for (let i = 0; i < times.length; i++) {
       const prompt = framePrompt({ project, scene, take, deck, n: i + 1, frames: n });
       const svg = previsFrame({ project, scene, take, deck, props, n: i + 1, frames: n, at: times[i], sceneNo });
-      const path = `${ROOT}/${project.id}/frames/${jobId}/${String(i + 1).padStart(2, "0")}.svg`;
-      const { error } = await service.storage.from(BUCKET).upload(path, new Blob([svg], { type: "image/svg+xml" }), {
+      const base = `${ROOT}/${project.id}/frames/${jobId}/${String(i + 1).padStart(2, "0")}`;
+
+      // El DIBUJO se compone y se guarda SIEMPRE, también cuando se ha pedido
+      // fotografía: es lo que garantiza que un revelado nunca se quede sin nada
+      // que mirar, y es la referencia de encuadre que se le manda al modelo.
+      const { error } = await service.storage.from(BUCKET).upload(`${base}.svg`, new Blob([svg], { type: "image/svg+xml" }), {
         contentType: "image/svg+xml",
         upsert: true,
       });
       if (error) throw new Error(error.message);
-      frames.push({ n: i + 1, at: times[i], path, prompt });
+
+      const frame: RenderJob["frames"][number] = { n: i + 1, at: times[i], path: `${base}.svg`, ref: `${base}.svg`, prompt, real: false };
+
+      if (quiereImagen) {
+        // Falla BLANDO, uno a uno: que el fotograma 3 no salga no puede tumbar
+        // los otros siete ni el trabajo entero.
+        try {
+          if (!geminiImagenDisponible()) throw new Error("GEMINI_API_KEY sin configurar en el servidor.");
+          const ref = decodeRefPng(input.refs?.[i]);
+          const img = await geminiImagen({ prompt, referenciaPng: ref, aspect: project.aspect });
+          const ext = img.mime === "image/jpeg" ? "jpg" : "png";
+          const up = await service.storage.from(BUCKET).upload(`${base}.${ext}`, new Blob([new Uint8Array(img.bytes)], { type: img.mime }), {
+            contentType: img.mime,
+            upsert: true,
+          });
+          if (up.error) throw new Error(up.error.message);
+          frame.path = `${base}.${ext}`;
+          frame.real = true;
+        } catch (e) {
+          frame.error = (e as Error).message.slice(0, 240);
+          console.error("[rts:imagen]", frame.error);
+        }
+      }
+
+      frames.push(frame);
+    }
+
+    // La entrega a Canva (vía Make) solo tiene sentido si hay fotografías: un
+    // tablero de marca con dibujos de palo no es una pieza, es un storyboard.
+    if (quiereImagen && frames.some((f) => f.real)) {
+      await emitEvent({
+        dominio: "ventas_marketing",
+        tipo: "rts.tablero",
+        payload: {
+          jobId,
+          projectId: project.id,
+          projectTitle: project.title,
+          scene: sceneHeading(project, scene).slug,
+          take: take.no,
+          aspect: project.aspect,
+          // Firmadas a 1 h: Canva las descarga al subirlas a la biblioteca.
+          frames: (await signAll(service, frames.filter((f) => f.real).map((f) => f.path!) )) as Record<string, string>,
+        },
+      });
     }
 
     const { data: done, error } = await service
@@ -695,6 +776,7 @@ export async function renderTake(input: { projectId: string; takeId: string; fra
       .update({
         state: "complete",
         progress: 100,
+        provider: quiereImagen ? "imagen" : "previs",
         frames,
         // El prompt maestro es el del primer fotograma sin la coletilla del
         // muestreo: es el que describe la toma, no el instante.

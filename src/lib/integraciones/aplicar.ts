@@ -43,6 +43,8 @@ export async function aplicarEntrante(
         return await cotizacionNota(payload);
       case "jornada.agendada":
         return await jornadaAgendada(payload);
+      case "rts.tablero":
+        return await rtsTablero(payload);
       default:
         // No es un error. Un evento sin manejador se queda registrado y ya:
         // sirve para ver qué está mandando Make antes de decidir si merece uno.
@@ -112,6 +114,32 @@ async function jornadaAgendada(p: Record<string, unknown>): Promise<Aplicacion> 
   if (error) return { estado: "fallido", detalle: error.message };
   if (!data?.length) return { estado: "descartado", detalle: `no existe ${ref}` };
   return { estado: "aplicado", detalle: `${ref} ← ${eventId}` };
+}
+
+/** RT-Scriptor · fase 2. La plataforma genera las fotografías con Gemini (su
+ *  clave, su cuota) y le pasa a Make lo único que Make sabe hacer y nosotros no:
+ *  montarlas en un tablero de marca con Canva, donde vive ese OAuth.
+ *
+ *  Lo único que vuelve es DÓNDE quedó el diseño. Nada de tocar el trabajo de
+ *  revelado en sí: los fotogramas son de la plataforma y tienen su historial.
+ *  Misma regla que el espejo de Notion — vuelve la referencia, no el contenido. */
+async function rtsTablero(p: Record<string, unknown>): Promise<Aplicacion> {
+  const jobId = texto(p.jobId) ?? texto(p.job_id);
+  const url = texto(p.canva_url) ?? texto(p.url);
+  if (!jobId) return { estado: "fallido", detalle: "falta `jobId`" };
+  if (!url) return { estado: "descartado", detalle: "sin url del tablero" };
+  if (!/^https:\/\//i.test(url)) return { estado: "fallido", detalle: "la url del tablero tiene que ser https" };
+
+  const service = createServiceRoleClient();
+  const { data, error } = await service
+    .from("coffeed_rts_renders")
+    .update({ canva_url: url, canva_design_id: texto(p.design_id), canva_synced_at: new Date().toISOString() })
+    .eq("id", jobId)
+    .select("id");
+
+  if (error) return { estado: "fallido", detalle: error.message };
+  if (!data?.length) return { estado: "descartado", detalle: `no existe el revelado ${jobId}` };
+  return { estado: "aplicado", detalle: `${jobId} ← ${url}` };
 }
 
 /** La nota comercial que se escribió en Notion, de vuelta. Es EL campo que

@@ -266,3 +266,52 @@ Contexto abierto al cerrar V27:
   plan está en docs/PROXIMA_SESION.md y ahora es más fácil: el prompt ya
   describe el decorado además de la cámara.
 (commit: bd17a80)
+
+## [2026-08-06] RT-Scriptor V3.4 · fase 2 — el fotograma como fotografía
+- **EL PLAN DECÍA «GEMINI VÍA MAKE» Y ESO NO SE PUEDE.** Al ir a montarlo se
+  miraron las conexiones REALES del equipo de Make: ClickUp, Canva, Gmail,
+  Google, Notion y OpenAI. **No hay conexión de Gemini.** Y la plataforma sí
+  tiene su clave (`GEMINI_API_KEY` en Vercel, la de Coffeed) con una nota ya
+  escrita en el registro del ECP que dice justamente eso. Así que el reparto
+  correcto era el que ya existía en la casa:
+  **Gemini → la plataforma** (tenemos la clave) · **Canva → Make** (allí vive
+  ese OAuth y aquí no). Meter Gemini en Make habría exigido dar de alta una
+  conexión inexistente y mover una clave que ya está bien donde está.
+  Análisis completo en `docs/MAKE_RTS_CANVA.md`.
+- **`geminiImage.ts`** (hermano de `gemini.ts`): pide una imagen a partir del
+  prompt del fotograma Y del DIBUJO como referencia de encuadre. El dibujo no
+  se tira: es el encuadre exacto —quién está dónde, con qué óptica, desde qué
+  altura— que el modelo tiene que respetar. Sin él, «primer plano de Ana a
+  175 cm» es una frase; con él, es un encuadre.
+- **«Acción · imagen»**, botón nuevo al lado de «Acción». El primero dibuja
+  (instantáneo, gratis); el segundo dibuja Y ADEMÁS pide una fotografía por
+  fotograma. Cada fotograma dice a la vista si es **foto** o **dibujo**, y si
+  se intentó y falló, el motivo está en el título. **Falla blando y uno a uno**:
+  que el fotograma 3 no salga no tumba los otros siete ni el trabajo.
+- **`raster.ts`: el navegador rasteriza el encuadre a PNG** con un canvas. Se
+  hace ahí y no en el servidor porque `sharp` NO es dependencia declarada de
+  este proyecto (llega de rebote con Next) y añadirla sería cargar 30 MB de
+  binarios nativos para una conversión que el navegador ya sabe hacer. **Efecto
+  secundario que conviene recordar: esto deja resuelto el paso que la F4 de
+  integraciones tiene pendiente desde julio** — «carrusel→Instagram exige
+  render a imagen». El mismo helper vale.
+- **El tablero de Canva, por la espina de siempre**: al terminar un revelado
+  con fotografías, `emitEvent('rts.tablero')` con las urls firmadas; el
+  escenario de Make sube cada fotograma a Canva (`uploadAsset`), monta el
+  diseño (`createADesign`) y devuelve por `/api/integraciones/make` dónde
+  quedó. Manejador entrante `rtsTablero` en `aplicar.ts` — lista blanca
+  estrecha: guarda SOLO la url del diseño, no toca los fotogramas. Misma regla
+  que el espejo de Notion. Columnas nuevas `canva_url`/`canva_design_id`/
+  `canva_synced_at` (migración `rt_scriptor_canva_board`).
+- Registrado en `/ecp/automatizaciones` en etapa **propuesta** con el contrato
+  entero en las notas. **El escenario de Make NO está montado**: el blueprint y
+  los gotchas (secreto por variable de organización, OR-no-AND en los filtros,
+  campos «avanzados» obligatorios) están escritos en `docs/MAKE_RTS_CANVA.md`.
+- ⚠️ **DOS COSAS SIN PROBAR, y hay que decirlo**: la llamada a Gemini nunca se
+  ha ejecutado —la clave vive solo en Vercel, desde local no se puede—, y el
+  identificador del modelo es una apuesta. Por eso es configurable
+  (`GEMINI_IMAGE_MODEL`, por defecto `gemini-3-pro-image`): si el log dice que
+  el modelo no existe, se cambia la variable y no hace falta desplegar.
+- APP_VERSION 3.3 → 3.4. Guardián en 82 comprobaciones (sin cambios: la fase 2
+  es red y no lógica pura, y lo que se puede comprobar sin red ya está).
+(commit: pending)

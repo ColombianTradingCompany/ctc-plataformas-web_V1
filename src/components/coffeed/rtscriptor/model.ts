@@ -171,7 +171,23 @@ export type ProjectCard = {
   threads: { id: string; color: string; sceneIds: string[] }[];
 };
 
-export type Frame = { n: number; at: number; path: string | null; url?: string | null; prompt: string };
+export type Frame = {
+  n: number;
+  at: number;
+  /** Lo que se enseña. En fase 1 es el dibujo; en fase 2, la fotografía. */
+  path: string | null;
+  url?: string | null;
+  prompt: string;
+  /** El DIBUJO, siempre. Aunque haya fotografía, el encuadre exacto se guarda:
+   *  es la referencia de composición y lo que permite comparar. */
+  ref?: string | null;
+  /** true = es una imagen generada; false/ausente = es el dibujo. */
+  real?: boolean;
+  /** Por qué este fotograma se quedó en dibujo, si se intentó la imagen. */
+  error?: string | null;
+};
+
+export type RenderProvider = "previs" | "imagen";
 export type RenderState = "queued" | "rendering" | "complete" | "failed" | "cancelled";
 
 /** La instantánea de la toma en el momento de revelar. Sin ella, mover un
@@ -201,6 +217,8 @@ export type RenderJob = {
   error: string | null;
   createdAt: string;
   config: RenderConfig | null;
+  /** El tablero de marca que montó Canva con estos fotogramas, si se montó. */
+  canvaUrl?: string | null;
 };
 
 /* ───────────────────────────── constantes ───────────────────────────── */

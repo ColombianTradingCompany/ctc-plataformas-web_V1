@@ -1,22 +1,33 @@
 # Pendientes
 
-## RT-Scriptor · lo único que queda del encargo (V3.3, 2026-08-06)
+## RT-Scriptor · fase 2 entregada, y lo que falta por PROBAR (V3.4, 2026-08-06)
 
-Las pestañas **Escenarios** y **Props** ya están, la composición de escena va
-antes de los encuadres, los fotogramas recuerdan su configuración y el control
-de tratamiento se explica solo. Del encargo del owner queda **una cosa**:
+El encargo entero está dentro. Lo que queda no es construir: es **probar dos
+cosas que solo se pueden probar en producción**.
 
-**Fase 2: imagen real por Make (Gemini + Canva).** La espina ya existe
-(`src/lib/integraciones/`: emit → dispatch → `/api/integraciones/[canal]`),
-`coffeed_rts_renders` ya tiene `provider` y `config`, y cada fotograma ya
-guarda su PROMPT compuesto — que ahora describe también el decorado, no solo la
-cámara. El camino: `renderTake` con `provider:'gemini'` emite un evento con el
-prompt y el previs; un escenario de Make llama a Gemini, pasa por Canva para la
-composición de marca, y devuelve la imagen por la puerta de entrada; el
-fotograma cambia de ruta y el estado pasa a `complete`. Registrar en
-`/ecp/automatizaciones`.
-**Ojo**: el previs NO se tira — es el encuadre exacto que el modelo debe
-respetar, y va como referencia de composición.
+1. **La llamada a Gemini nunca se ha ejecutado.** `GEMINI_API_KEY` vive solo en
+   Vercel, así que desde local es imposible. El primer «Acción · imagen» en el
+   Estudio ES la prueba de vida. Si falla, no se rompe nada: el fotograma se
+   queda en dibujo con el motivo escrito en el título de la miniatura, y en los
+   logs sale `[rts:imagen]`.
+2. **El identificador del modelo es una apuesta.** Es configurable a propósito:
+   `GEMINI_IMAGE_MODEL` en Vercel, por defecto `gemini-3-pro-image`. Si el log
+   dice «El modelo … no existe o no admite imagen», se cambia la variable y NO
+   hace falta desplegar.
+3. **El escenario de Canva no está montado en Make.** Ya está registrado en
+   `/ecp/automatizaciones` en etapa «propuesta» con el contrato completo; el
+   blueprint, los módulos exactos (`uploadAsset` → `createADesign` →
+   `exportDesign`) y los gotchas están en **`docs/MAKE_RTS_CANVA.md`**. Al
+   montarlo: pegar el `scenarioId` en el registro y pasarlo a «piloto».
+
+**Por qué Gemini NO va por Make**: el equipo de Make tiene Canva, Gmail,
+Google, Notion, OpenAI y ClickUp conectados — **no hay conexión de Gemini** — y
+la plataforma sí tiene la clave. El reparto quedó: Gemini en la plataforma,
+Canva en Make.
+
+**Regalo aparte**: `raster.ts` rasteriza un cuadro a PNG en el navegador, sin
+`sharp`. Eso desbloquea el paso que la **F4 de integraciones** (carrusel →
+Instagram) tiene pendiente desde julio.
 
 ## RT-Scriptor · escrito al cierre de la sesión nocturna del 2026-08-06 (V3.1)
 

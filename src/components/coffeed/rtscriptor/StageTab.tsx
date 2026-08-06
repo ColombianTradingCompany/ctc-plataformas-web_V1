@@ -16,6 +16,7 @@ import { NewScene } from "./StoryTab";
 import { StageView } from "./StageView";
 import { VoiceOverEditor } from "./VoiceOver";
 import { renderTake } from "@/lib/coffeed/rtScriptorActions";
+import { stageRefs } from "./raster";
 import {
   camLabel,
   camLabelOf,
@@ -43,6 +44,7 @@ import {
   type Deck,
   type Project,
   type RenderJob,
+  type RenderProvider,
   type Take,
   type Treatment,
 } from "./model";
@@ -73,7 +75,7 @@ export function StageTab({
   const takes = takesOfScene(project, scene.id);
   const [takeId, setTakeId] = useState<string | undefined>(takes[0]?.id);
   const take = takes.find((t) => t.id === takeId) || takes[0];
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<RenderProvider | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [frames, setFrames] = useState<number>(FRAMES_PER_TAKE.def);
   const [addScene, setAddScene] = useState(false);
@@ -128,12 +130,15 @@ export function StageTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [take, scene, project.characters, project.props, project.escenarios, palette, project.aspect]);
 
-  const runRender = async () => {
-    if (!take) return;
-    setBusy(true);
+  const runRender = async (provider: RenderProvider) => {
+    if (!take || !stageInput) return;
+    setBusy(provider);
     setErr(null);
-    const r = await renderTake({ projectId: project.id, takeId: take.id, frames });
-    setBusy(false);
+    // Para pedir fotografía hay que mandar el encuadre: se rasteriza aquí el
+    // mismo cuadro que está en pantalla y viaja como referencia.
+    const refs = provider === "imagen" ? await stageRefs(stageInput, frames) : undefined;
+    const r = await renderTake({ projectId: project.id, takeId: take.id, frames, provider, refs });
+    setBusy(null);
     if (!r.ok) {
       setErr(r.error);
       return;
@@ -236,13 +241,23 @@ export function StageTab({
             />
           </span>
 
-          <button type="button" className="rt-btn" data-tone="go" disabled={flags.some((f) => f.kind === "block") || busy} onClick={runRender}>
-            {busy ? <Spinner label="Revelando" /> : "Acción"}
+          <button type="button" className="rt-btn" data-tone="go" disabled={flags.some((f) => f.kind === "block") || !!busy} onClick={() => runRender("previs")}>
+            {busy === "previs" ? <Spinner label="Revelando" /> : "Acción"}
+          </button>
+          <button
+            type="button"
+            className="rt-btn"
+            data-on="1"
+            disabled={flags.some((f) => f.kind === "block") || !!busy}
+            onClick={() => runRender("imagen")}
+            title="Genera una FOTOGRAFÍA por fotograma con Gemini, usando este encuadre como referencia. Tarda y consume cuota."
+          >
+            {busy === "imagen" ? <Spinner label="Fotografiando" /> : "Acción · imagen"}
           </button>
           <Info
-            title="Acción"
+            title="Los dos botones"
             side="right"
-            text="Revela los fotogramas de esta toma: congela en archivos exactamente el cuadro que estás viendo, muestreado a lo largo de la duración. Se bloquea mientras haya una bandera de continuidad sin resolver — revelar es la parte cara, así que la comprobación va antes."
+            text="«Acción» dibuja: congela en archivos el cuadro que estás viendo, al instante y sin coste. «Acción · imagen» hace lo mismo y ADEMÁS le pide a Gemini una fotografía de cada fotograma, mandándole el dibujo como referencia para que respete el encuadre — tarda, gasta cuota, y si falla te quedas con el dibujo y el motivo escrito. Los dos se bloquean mientras haya una bandera de continuidad sin resolver: revelar es la parte cara, así que la comprobación va antes."
           />
         </div>
       </div>
@@ -359,10 +374,20 @@ export function StageTab({
           {job ? (
             <div className="rt-photos" style={{ marginTop: 8 }}>
               {job.frames.map((f) => (
-                <button type="button" key={f.n} className="rt-photo" data-on={shown?.n === f.n ? "1" : "0"} onClick={() => setShownFrame(f.path)} title={f.prompt.slice(0, 240)}>
+                <button
+                  type="button"
+                  key={f.n}
+                  className="rt-photo"
+                  data-on={shown?.n === f.n ? "1" : "0"}
+                  onClick={() => setShownFrame(f.path)}
+                  title={f.error ? `Se quedó en dibujo: ${f.error}` : f.prompt.slice(0, 240)}
+                >
                   {f.path && assets[f.path] ? <img src={assets[f.path]} alt={`Fotograma ${f.n}`} /> : <div style={{ aspectRatio: "16/9", background: "#0E1213" }} />}
                   <u>
                     {String(f.n).padStart(2, "0")} · {tc(f.at)}
+                    {/* Qué estás mirando: una fotografía o el dibujo. Si se
+                        pidió imagen y no salió, se dice — no se disimula. */}
+                    {f.real ? <b style={{ color: "var(--ok)" }}> · foto</b> : f.error ? <b style={{ color: "var(--grease)" }}> · dibujo</b> : null}
                   </u>
                 </button>
               ))}

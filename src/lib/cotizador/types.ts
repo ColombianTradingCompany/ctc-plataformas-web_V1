@@ -3,13 +3,23 @@
 // matemática: código, destinatario, estado, vigencia, historial. Lo que cambia
 // vive en `inputs`/`results` y lo interpreta cada módulo.
 
-export type QuoteKind = "lote" | "logistico";
+export type QuoteKind = "lote" | "logistico" | "empaque";
 export type QuoteStatus = "borrador" | "emitida" | "aceptada" | "rechazada" | "vencida";
 export type CounterpartyKind = "productor" | "comprador" | "lead" | "externo";
 
 export const QUOTE_KIND_LABEL: Record<QuoteKind, string> = {
   lote: "Lotes de café",
   logistico: "Logístico",
+  empaque: "Costo de empaque",
+};
+
+/** Dónde vive el tablero de cada módulo. Antes esto era un ternario repetido en
+ *  cinco sitios de actions.ts, que al añadir un tercer módulo habría mandado
+ *  `empaque` al cotizador logístico. */
+export const QUOTE_BASE_PATH: Record<QuoteKind, string> = {
+  lote: "/ocp/cotizador-lotes",
+  logistico: "/ocp/cotizador-logistico",
+  empaque: "/ocp/cotizador-empaque",
 };
 
 export const QUOTE_STATUS_LABEL: Record<QuoteStatus, string> = {

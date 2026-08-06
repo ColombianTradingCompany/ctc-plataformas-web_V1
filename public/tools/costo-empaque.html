@@ -338,6 +338,11 @@ body{background:var(--ash);color:var(--ink);font-family:"Archivo",-apple-system,
   font-family:"Anton",Impact,sans-serif;text-transform:uppercase;letter-spacing:.04em;font-size:15px;
   padding:12px 22px;cursor:pointer}
 .pdf-btn:hover{filter:brightness(1.07)}
+/* Descargar el propio archivo: secundario, no compite con el PDF. */
+.code-btn{margin-top:10px;display:block;border:1px solid rgba(255,255,255,.35);border-radius:var(--r);
+  background:transparent;color:#fff;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  padding:8px 14px;cursor:pointer}
+.code-btn:hover{border-color:#fff;background:rgba(255,255,255,.08)}
 
 /* accordions */
 details.block{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
@@ -530,6 +535,7 @@ footer{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);
         </div>
         <p class="total-note" id="perBag">—</p>
         <button class="pdf-btn" type="button" id="pdfBtn" data-i18n="pdf"></button>
+        <button class="code-btn" type="button" id="codeBtn" data-i18n="getCode"></button>
       </div>
       <div>
         <div class="bar" role="img" aria-label="split">
@@ -980,6 +986,8 @@ es:{
  kCycle:"Por ciclo", kHour:"Por hora", kDay:"Por día", kLife:"En toda la vida útil",
  kCostDay:"Costo / día", kCostBag:"Costo por bolsa",
  pdf:"Generar PDF de una página",
+ getCode:"↓ Descargar el código de esta herramienta (.html)",
+ codeErr:"No se pudo leer el archivo; se descargó una copia de la página tal como está.",
  footRight:"Calculadora de costo de empaque · v3.2",
  sheetTitle:"Costo de empaque por kilo",
  pCost:"Costo por kilo", pOut:"Producción", pSpec:"Ficha técnica",
@@ -1045,6 +1053,8 @@ en:{
  kCycle:"Per cycle", kHour:"Per hour", kDay:"Per day", kLife:"Over machine life",
  kCostDay:"Cost / day", kCostBag:"Cost per bag",
  pdf:"Generate one-page PDF",
+ getCode:"↓ Download this tool's code (.html)",
+ codeErr:"Could not read the file; downloaded a copy of the page as it stands.",
  footRight:"Packing cost calculator · v3.2",
  sheetTitle:"Packing cost per kilo",
  pCost:"Cost per kilo", pOut:"Output", pSpec:"Specification",
@@ -1094,6 +1104,8 @@ const picked = {mach:null, machLabel:'', machVendor:'', bag:null, bagLabel:'', b
 /* Peso por bolsa y llenado son la MISMA cifra vista de dos maneras. Esta bandera
    dice cuál escribió el usuario de último, que es la que manda. */
 let weightDriven = false;
+/* Lo último que calculó calc(). Lo lee `CTC_TOOL.getHeadline()`. */
+const LAST = {};
 
 /* ---- reference UID: CTC_vacuumsealer-########-ddmmyy, random on every load ---- */
 function newUID(){
@@ -1455,6 +1467,16 @@ function calc(){
     [t('spCycle'),dec(v.cycleMin,1)+' min'],[t('spHours'),dec(v.hours,1)+' h'],
     [t('spWage'),money(v.wage)+' × '+dec(v.people,0)],[t('spPrice'),money(v.price)],
     [t('spLife'),F.format(v.days)+' '+t('daysUnit')]]);
+  /* Lo que la herramienta acaba de calcular, para quien la embeba (el OCP la
+     monta en un iframe y guarda esto como resultado de la cotización). Se
+     PUBLICA lo ya calculado; nadie recalcula por su cuenta. */
+  LAST.total = total; LAST.cBag = cBag; LAST.cLabor = cLabor; LAST.cMachine = cMachine;
+  LAST.kgPerBag = kgPerBag; LAST.kgPerCycle = kgPerCycle; LAST.kgPerHour = kgPerHour;
+  LAST.kgPerDay = kgPerDay; LAST.kgLife = kgLife; LAST.bpc = bpc; LAST.perChamber = perChamber;
+  LAST.chambers = chambers; LAST.fillPct = fillPct; LAST.volL = volL; LAST.capMax = capMax;
+  LAST.bagGross = bagGross; LAST.costDay = total*kgPerDay; LAST.costBag = total*kgPerBag;
+  LAST.machinePrice = v.price; LAST.days = v.days; LAST.warn = warn || overMsg || '';
+
   $('pTotal').textContent = total>0 ? F.format(Math.round(total)) : '—';
   $('pName').textContent = $('mName').value || '—';
   $('pVendor').textContent = $('mVendor').value || '—';
@@ -1499,7 +1521,87 @@ $('uidBtn').addEventListener('click', () => { $('mRef').value = newUID(); calc()
 $('mPhotoIn').addEventListener('change', e => loadPhoto(e.target.files && e.target.files[0]));
 $('photoDel').addEventListener('click', clearPhoto);
 $('pdfBtn').addEventListener('click', () => { calc(); window.print(); });
+/* Descarga el ARCHIVO tal como está publicado, no el DOM ya manipulado: se pide
+   la propia URL. Abierta como file:// el fetch puede estar bloqueado, y ahí sí
+   se salva el documento actual, avisando de la diferencia. */
+$('codeBtn').addEventListener('click', async () => {
+  const name = (location.pathname.split('/').pop() || 'costo-empaque.html').replace(/\.html?$/,'') + '-v3.2.html';
+  const save = (text, note) => {
+    const url = URL.createObjectURL(new Blob([text], {type:'text/html;charset=utf-8'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    if(note) alert(note);
+  };
+  try{
+    const r = await fetch(location.href, {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    save(await r.text());
+  }catch(e){
+    save('<!doctype html>\n' + document.documentElement.outerHTML, t('codeErr'));
+  }
+});
 window.addEventListener('beforeprint', calc);
+
+/* ============ puente para quien la embeba (OCP · Cotizadores) ============
+   La herramienta sigue siendo autónoma: esto solo EXPONE lo que ya sabe. Hace
+   falta porque su estado vive en `let` de ámbito de script (bagType, picked,
+   weightDriven…), que no son propiedades de window y por tanto nadie de fuera
+   puede leerlas ni restaurarlas leyendo los <input>. */
+const META_KEYS = ['mName','mVendor','mRef','mDate','mNotes'];
+window.CTC_TOOL = {
+  id: 'costo-empaque',
+  version: '3.2',
+  getState(){
+    const nums = {}; NUMS.forEach(k => nums[k] = $(k).value);
+    const meta = {}; META_KEYS.forEach(k => meta[k] = $(k).value);
+    return {
+      tool:'costo-empaque', version:'3.2', lang, nums, meta, bagType, weightDriven,
+      bagsManualOn: $('bagsManualOn').checked,
+      picked: {...picked},
+      photo: photoData || null,
+    };
+  },
+  setState(s){
+    if(!s || typeof s !== 'object') return false;
+    if(s.nums) NUMS.forEach(k => { if(s.nums[k] !== undefined && s.nums[k] !== '') $(k).value = s.nums[k]; });
+    if(s.meta) META_KEYS.forEach(k => { if(s.meta[k] !== undefined) $(k).value = s.meta[k]; });
+    if(s.bagType){ bagType = s.bagType;
+      document.querySelectorAll('[data-bagtype]').forEach(x =>
+        x.setAttribute('aria-pressed', x.dataset.bagtype===bagType?'true':'false')); }
+    if(typeof s.bagsManualOn === 'boolean'){ $('bagsManualOn').checked = s.bagsManualOn; $('bagsManual').disabled = !s.bagsManualOn; }
+    if(s.picked) Object.assign(picked, s.picked);
+    weightDriven = !!s.weightDriven;
+    if(s.photo){ photoData = s.photo; $('photoImg').src = s.photo; $('photoPrev').hidden = false; }
+    renderDB('mach'); renderDB('bag'); calc();
+    return true;
+  },
+  /* Las cifras que el OCP guarda como resultado y compara entre configuraciones.
+     Salen de calc(), no se recalculan aquí. */
+  getHeadline(){
+    calc();
+    return {
+      costoPorKilo: Math.round(LAST.total||0),
+      costoBolsa: Math.round(LAST.cBag||0),
+      costoManoObra: Math.round(LAST.cLabor||0),
+      costoAmortizacion: Math.round(LAST.cMachine||0),
+      costoPorBolsa: Math.round(LAST.costBag||0),
+      costoPorDia: Math.round(LAST.costDay||0),
+      kgPorBolsa: LAST.kgPerBag||0,
+      kgPorCiclo: LAST.kgPerCycle||0,
+      kgPorDia: LAST.kgPerDay||0,
+      kgVidaUtil: LAST.kgLife||0,
+      bolsasPorCiclo: LAST.bpc||0,
+      llenadoPct: LAST.fillPct||0,
+      precioMaquina: LAST.machinePrice||0,
+      precioBolsaConIVA: Math.round(LAST.bagGross||0),
+      tipoBolsa: bagType,
+      maquinaElegida: picked.machLabel || null,
+      bolsaElegida: picked.bagLabel || null,
+      aviso: LAST.warn || null,
+    };
+  },
+};
 
 /* ============ init ============ */
 NUMS.forEach(k => $(k).value = DEFAULTS[k]);

@@ -200,6 +200,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         links: [
           { href: "/ocp/cotizador-lotes", label: "Lotes de café" },
           { href: "/ocp/cotizador-logistico", label: "Logístico" },
+          // Costo de empaque (2026-08-06): la calculadora del banco público, con
+          // memoria. Su casa PRINCIPAL es esta, no la lista de herramientas.
+          { href: "/ocp/cotizador-empaque", label: "Costo de empaque" },
           // Las referencias con las que cotizan las dos calculadoras. Salió de la
           // Configuración de Mermas para poder consultarse y crecer por su cuenta.
           { href: "/ocp/anclas-mercado", label: "Anclas de mercado" },

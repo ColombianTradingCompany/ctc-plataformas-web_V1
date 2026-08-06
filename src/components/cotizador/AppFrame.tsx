@@ -35,6 +35,22 @@ const GLOBAL_KEYS = [
   "state", // la V15 guarda TODO su modelo aquí
 ];
 
+/* Una herramienta puede traer su PROPIO puente. La de empaque lo necesita: su
+   estado vive en `let` de ámbito de script (tipo de bolsa, lo elegido de las
+   listas, quién manda entre peso y llenado), que no son propiedades de window,
+   así que raspar los <input> la restauraría a medias. Cuando existe, manda. */
+type ToolBridge = {
+  id?: string;
+  version?: string;
+  getState: () => Record<string, unknown>;
+  setState: (s: Record<string, unknown>) => boolean;
+  getHeadline: () => Record<string, unknown>;
+};
+function bridgeOf(win: Window): ToolBridge | null {
+  const b = (win as unknown as { CTC_TOOL?: ToolBridge }).CTC_TOOL;
+  return b && typeof b.getState === "function" && typeof b.getHeadline === "function" ? b : null;
+}
+
 function readState(win: Window): AppState {
   const doc = win.document;
   const values: Record<string, string> = {};
@@ -99,6 +115,22 @@ function writeState(win: Window, st: AppState) {
 function readHeadline(win: Window, kind: Quote["kind"]) {
   const doc = win.document;
   const w = win as unknown as Record<string, unknown>;
+
+  if (kind === "empaque") {
+    // La herramienta publica sus propias cifras ya calculadas.
+    const h = (bridgeOf(win)?.getHeadline() ?? {}) as Record<string, number | string | null>;
+    const porKilo = Number(h.costoPorKilo);
+    const kgDia = Number(h.kgPorDia);
+    return {
+      currency: "COP",
+      validUntil: null as string | null,
+      // El "total" de una configuración de empaque es su COSTO POR KILO: es la
+      // cifra con la que se compara una máquina contra otra, no un importe.
+      total: Number.isFinite(porKilo) && porKilo > 0 ? porKilo : null,
+      unitLabel: Number.isFinite(kgDia) && kgDia > 0 ? `COP/kg · ${Math.round(kgDia)} kg/día` : "COP/kg",
+      headline: h,
+    };
+  }
   const txt = (id: string) => doc.getElementById(id)?.textContent?.trim() ?? "";
   const val = (id: string) => (doc.getElementById(id) as HTMLInputElement | null)?.value ?? "";
   const round2 = (v: number) => Math.round(v * 100) / 100;
@@ -150,7 +182,13 @@ function readHeadline(win: Window, kind: Quote["kind"]) {
 }
 
 export function AppFrame({ quote, onSaved }: { quote: Quote; onSaved: () => void }) {
-  const src = quote.kind === "logistico" ? "/ocp-apps/cotizador-logistico.html" : "/ocp-apps/cotizador-lotes.html";
+  // La de empaque se sirve desde el banco de herramientas en vez de copiarse a
+  // /ocp-apps: es la MISMA que ven el productor y el público, y una copia se
+  // quedaría atrás en cuanto el owner publique una versión nueva.
+  const src =
+    quote.kind === "empaque" ? "/tools/costo-empaque.html"
+    : quote.kind === "logistico" ? "/ocp-apps/cotizador-logistico.html"
+    : "/ocp-apps/cotizador-lotes.html";
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -166,12 +204,14 @@ export function AppFrame({ quote, onSaved }: { quote: Quote; onSaved: () => void
     setReady(true);
     const w = win();
     if (!w || restored.current) return;
-    const saved = quote.inputs as unknown as AppState;
-    if (saved && (saved.values || saved.globals)) {
+    const saved = quote.inputs as unknown as AppState & { tool?: string };
+    if (saved && (saved.values || saved.globals || saved.tool)) {
       // Un tick: la app termina su primer recalc antes de que le escribamos.
       setTimeout(() => {
         try {
-          writeState(w, saved);
+          const b = bridgeOf(w);
+          if (b && saved.tool) b.setState(saved as unknown as Record<string, unknown>);
+          else writeState(w, saved);
         } catch (e) {
           setError(`No se pudo restaurar el estado guardado: ${(e as Error).message}`);
         }
@@ -237,7 +277,8 @@ export function AppFrame({ quote, onSaved }: { quote: Quote; onSaved: () => void
     setError("");
     setMsg("");
     try {
-      const st = readState(w);
+      const b = bridgeOf(w);
+      const st = b ? (b.getState() as unknown as AppState) : readState(w);
       const head = readHeadline(w, quote.kind);
       const r = await saveQuoteDraft(quote.id, {
         inputs: st as unknown as Record<string, unknown>,

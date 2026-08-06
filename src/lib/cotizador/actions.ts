@@ -14,6 +14,7 @@
 import { revalidatePath } from "next/cache";
 import { requireConsoleWrite, quoteServiceClient } from "@/lib/panel/requireConsoleWrite";
 import { emitEvent } from "@/lib/integraciones/emit";
+import { QUOTE_BASE_PATH } from "./types";
 import type { Counterparty, CounterpartyKind, CounterpartyOption, Quote, QuoteKind, QuoteResult, QuoteStatus, QuoteSummary } from "./types";
 
 const NO_AUTH: QuoteResult = { ok: false, error: "Tu sesión del OCP no está activa. Vuelve a iniciar sesión." };
@@ -78,6 +79,40 @@ export async function listQuotes(kind: QuoteKind): Promise<QuoteSummary[] | null
   return ((data ?? []) as unknown as Row[]).map(toSummary);
 }
 
+/** Las cifras guardadas de cada cotización de un módulo, en UNA consulta.
+ *  Para el Cuadro de evaluación: `listQuotes` deja fuera los jsonb pesados a
+ *  propósito, y pedir `getQuote` de cada fila serían N viajes para pintar una
+ *  comparación. Aquí solo viaja `results`, que son las cifras del titular. */
+export async function listQuoteMetrics(
+  kind: QuoteKind,
+): Promise<{ id: string; code: string; title: string; status: QuoteStatus; total: number | null; createdAt: string; results: Record<string, unknown> }[] | null> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return null;
+  const service = quoteServiceClient();
+  const { data } = await service
+    .from("quotes")
+    .select("id, code, title, status, total, valid_until, created_at, results")
+    .eq("kind", kind)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return ((data ?? []) as unknown as (Row & { results: Record<string, unknown> | null })[]).map((r) => ({
+    id: r.id,
+    code: r.code,
+    title: r.title,
+    status: effectiveStatusOf(r.status, r.valid_until),
+    total: r.total === null ? null : Number(r.total),
+    createdAt: r.created_at,
+    results: r.results ?? {},
+  }));
+}
+
+/** La misma regla que `effectiveStatus` del cliente, aplicada al leer. */
+function effectiveStatusOf(status: QuoteStatus, validUntil: string | null): QuoteStatus {
+  if (status !== "emitida" || !validUntil) return status;
+  const d = new Date(`${validUntil}T23:59:59`);
+  return Number.isFinite(d.getTime()) && d < new Date() ? "vencida" : status;
+}
+
 export async function getQuote(id: string): Promise<Quote | null> {
   const who = await requireConsoleWrite("ocp");
   if (!who) return null;
@@ -99,7 +134,7 @@ export async function createQuote(kind: QuoteKind, title: string): Promise<Quote
   // El código lo pone el trigger `quotes_assign_code`, no la app.
   const { data, error } = await service.from("quotes").insert({ kind, title: title.trim(), created_by: who.userId }).select("id").single();
   if (error) return { ok: false, error: error.message };
-  revalidatePath(kind === "lote" ? "/ocp/cotizador-lotes" : "/ocp/cotizador-logistico");
+  revalidatePath(QUOTE_BASE_PATH[kind]);
   return { ok: true, id: data.id as string };
 }
 
@@ -177,7 +212,7 @@ export async function renameQuote(id: string, title: string): Promise<QuoteResul
   if (q.status !== "borrador") return { ok: false, error: "Reábrela para poder cambiarle el nombre." };
   const { error } = await service.from("quotes").update({ title: title.trim() }).eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath(q.kind === "lote" ? "/ocp/cotizador-lotes" : "/ocp/cotizador-logistico");
+  revalidatePath(QUOTE_BASE_PATH[q.kind as QuoteKind]);
   return { ok: true };
 }
 
@@ -244,7 +279,7 @@ export async function issueQuote(id: string): Promise<QuoteResult> {
         valid_until: data.valid_until,
         issued_at: data.issued_at,
         // Para poder volver del espejo al original de un clic.
-        url: `https://www.ctcexport.com/ocp/${data.kind === "lote" ? "cotizador-lotes" : "cotizador-logistico"}`,
+        url: `https://www.ctcexport.com${QUOTE_BASE_PATH[data.kind as QuoteKind]}`,
       },
     });
   }
@@ -290,7 +325,7 @@ export async function duplicateQuote(id: string): Promise<QuoteResult> {
     .select("id")
     .single();
   if (error) return { ok: false, error: error.message };
-  revalidatePath(src.kind === "lote" ? "/ocp/cotizador-lotes" : "/ocp/cotizador-logistico");
+  revalidatePath(QUOTE_BASE_PATH[src.kind as QuoteKind]);
   return { ok: true, id: data.id as string };
 }
 
@@ -306,7 +341,7 @@ export async function deleteQuote(id: string, confirm: true): Promise<QuoteResul
   if (!q) return { ok: false, error: "La cotización no existe." };
   const { error } = await service.from("quotes").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath(q.kind === "lote" ? "/ocp/cotizador-lotes" : "/ocp/cotizador-logistico");
+  revalidatePath(QUOTE_BASE_PATH[q.kind as QuoteKind]);
   return { ok: true };
 }
 

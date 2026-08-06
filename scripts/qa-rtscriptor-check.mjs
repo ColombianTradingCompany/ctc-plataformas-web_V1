@@ -42,9 +42,16 @@ const P = {
     { id: "A", name: "Ana", role: "Protagonista", bio: "", color: "#E4472C", traits: [], pics: { profile: null, body: null, detail: null } },
     { id: "B", name: "Beto", role: "Apoyo", bio: "", color: "#4DD0C4", traits: [], pics: { profile: null, body: null, detail: null } },
   ],
+  escenarios: [
+    { id: "e1", name: "El patio", int: "EXT", location: "PATIO DE SECADO", tod: "AMANECER", note: "", palette: [], props: [{ propId: "pr1", x: 60, z: 90 }] },
+  ],
+  props: [
+    { id: "pr1", name: "Marquesina", note: "", color: "#E0A73C", w: 200, h: 90, d: 120, ownerId: null },
+    { id: "pr2", name: "Libro de cuentas", note: "", color: "#4DD0C4", w: 25, h: 4, d: 18, ownerId: "A" },
+  ],
   scenes: [
-    { id: "s1", title: "Patio", int: "EXT", location: "PATIO DE SECADO", tod: "AMANECER", cast: ["A", "B"], synopsis: "El café se voltea." },
-    { id: "s2", title: "Bodega", int: "INT", location: "BODEGA", tod: "DÍA", cast: ["A"], synopsis: "Se pesa el lote." },
+    { id: "s1", title: "Patio", escenarioId: "e1", int: "EXT", location: "PATIO DE SECADO", tod: "AMANECER", cast: ["A", "B"], synopsis: "El café se voltea." },
+    { id: "s2", title: "Bodega", escenarioId: null, int: "INT", location: "BODEGA", tod: "DÍA", cast: ["A"], synopsis: "Se pesa el lote." },
   ],
   storylines: [{ id: "sl1", name: "El lote", color: "#E4472C", note: "", cast: ["A"], sceneIds: ["s1", "s2"], keys: {} }],
   takes: [
@@ -222,6 +229,37 @@ check("el prompt describe la cámara en palabras", prompt.includes("Cámara de f
 check("el prompt lleva la óptica y la distancia", prompt.includes("mm") && prompt.includes("cm del sujeto"));
 check("el prompt lleva la baraja", prompt.includes("Patio y sol") && prompt.includes("luz dura"));
 check("el prompt nombra a quien está en cuadro y dónde", prompt.includes("Ana") && prompt.includes("Beto") && prompt.includes("profundidad"));
+
+/* ── escenarios y props (V3.3) ───────────────────────────────────────────── */
+check("el encabezado sale del ESCENARIO cuando lo hay", m.sceneHeading(P, P.scenes[0]).location === "PATIO DE SECADO" && m.sceneHeading(P, P.scenes[0]).int === "EXT");
+check("sin escenario, sale de la escena", m.sceneHeading(P, P.scenes[1]).location === "BODEGA");
+check("el momento del día es de la ESCENA aunque el escenario proponga otro", m.sceneHeading({ ...P, escenarios: [{ ...P.escenarios[0], tod: "NOCHE" }] }, P.scenes[0]).tod === "AMANECER");
+check("cambiar el escenario cambia el encabezado de todas sus escenas", m.sceneHeading({ ...P, escenarios: [{ ...P.escenarios[0], location: "OTRO SITIO" }] }, P.scenes[0]).location === "OTRO SITIO");
+
+const sp = m.sceneProps(P, P.scenes[0], ["A", "B"]);
+check("el decorado del escenario entra en la escena", sp.some((x) => x.prop.id === "pr1" && x.x === 60 && x.z === 90));
+check("lo que es de alguien viaja con esa persona", sp.some((x) => x.prop.id === "pr2"));
+check("y NO entra si su dueño no está en cuadro", !m.sceneProps(P, P.scenes[0], ["B"]).some((x) => x.prop.id === "pr2"));
+check("una escena sin escenario solo trae lo del reparto", m.sceneProps(P, P.scenes[1], ["A"]).every((x) => x.prop.id === "pr2"));
+
+const withProps = stageOf(camOf({ dist: 400 }), [{ id: "A", color: "#E4472C", mark: { x: 0, z: 0 }, height: 172 }]);
+const withBox = m.composeStage({
+  cam: camOf({ dist: 400 }), treatment: "normal",
+  actors: [{ id: "A", color: "#E4472C", mark: { x: 0, z: 0 }, height: 172 }],
+  props: [{ id: "pr1", label: "Marquesina", x: 60, z: 90, w: 200, h: 90, d: 120, color: "#E0A73C" }],
+  palette: { sky: "#1B2A33", ground: "#141A1B", ink: "#C9C6BD" }, aspect: "16:9", width: 640,
+});
+check("un objeto se dibuja en el cuadro", withBox.prims.length > withProps.prims.length);
+check("y se puede señalar", withBox.hits.some((h) => h.kind === "prop" && h.label === "Marquesina"));
+check("los personajes siguen siendo señalables", withBox.hits.some((h) => h.kind === "actor" && h.id === "A"));
+
+check("hydrateDoc rellena escenarios y props que faltan", (() => {
+  const d = m.hydrateDoc({ scenes: [{ id: "x", title: "t", int: "INT", location: "L", tod: "", cast: [], synopsis: "" }] });
+  return Array.isArray(d.escenarios) && Array.isArray(d.props) && d.scenes[0].escenarioId === null;
+})());
+check("un prop viejo sin medidas gana unas por defecto", m.hydrateDoc({ props: [{ id: "p", name: "x", color: "#fff" }] }).props[0].w === 40);
+check("camLabelOf lee una configuración guardada", m.camLabelOf({ cam: m.applyShot(m.CAMERA_DEFAULT, "cu"), treatment: "handheld" }).includes("Primer plano"));
+check("y marca el tratamiento", m.camLabelOf({ cam: m.CAMERA_DEFAULT, treatment: "pov" }).includes("subjetivo"));
 
 /* ── muestras para mirar ─────────────────────────────────────────────────── */
 const outArg = process.argv.indexOf("--out");

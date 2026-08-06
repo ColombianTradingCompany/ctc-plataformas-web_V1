@@ -16,7 +16,7 @@ import "server-only";
 // Make— no tenga que rehacer el trabajo caro.
 
 import type { Deck, Project, Scene, Take } from "@/components/coffeed/rtscriptor/model";
-import { camLabel, marksOf, tc } from "@/components/coffeed/rtscriptor/model";
+import { camLabel, marksOf, sceneHeading, sceneProps, tc } from "@/components/coffeed/rtscriptor/model";
 import { composeStage, stageToSvg, type StageActor, type StageProp } from "@/components/coffeed/rtscriptor/stage";
 
 /** Los instantes que se muestrean de una toma: repartidos, extremos incluidos. */
@@ -36,8 +36,29 @@ export function stageActors(project: Project, take: Take): StageActor[] {
     .filter(Boolean) as StageActor[];
 }
 
-export function stagePalette(deck: Deck | null) {
-  const pal = deck?.palette?.length ? deck.palette : ["#141A1B", "#1B2A33", "#C9C6BD"];
+/** Los objetos que hay que dibujar: el decorado del escenario más lo que lleva
+ *  encima quien esté en cuadro — eso último se coloca en la marca de su dueño,
+ *  que es donde de verdad está. */
+export function stageProps(project: Project, scene: Scene, take: Take): StageProp[] {
+  const marks = marksOf(take);
+  return sceneProps(project, scene, take.cast).map(({ prop, x, z }) => {
+    const owner = prop.ownerId && take.cast.includes(prop.ownerId) ? marks[prop.ownerId] : null;
+    return {
+      id: prop.id,
+      label: prop.name,
+      x: owner ? owner.x + 25 : x,
+      z: owner ? owner.z + 25 : z,
+      w: prop.w,
+      h: prop.h,
+      d: prop.d,
+      color: prop.color,
+    };
+  });
+}
+
+/** La paleta manda del ESCENARIO si la tiene; si no, de la baraja del vídeo. */
+export function stagePalette(deck: Deck | null, escenarioPalette?: string[]) {
+  const pal = escenarioPalette?.length && escenarioPalette.length >= 3 ? escenarioPalette : deck?.palette?.length ? deck.palette : ["#141A1B", "#1B2A33", "#C9C6BD"];
   return { ground: pal[0] ?? "#141A1B", sky: pal[1] ?? "#1B2A33", ink: pal[2] ?? "#C9C6BD" };
 }
 
@@ -53,13 +74,14 @@ export function previsFrame(input: {
   sceneNo: number;
 }): string {
   const { project, scene, take, deck, n, frames, at, sceneNo } = input;
+  const esc = scene.escenarioId ? project.escenarios.find((e) => e.id === scene.escenarioId) : null;
 
   const draw = composeStage({
     cam: take.cam,
     treatment: take.treatment,
     actors: stageActors(project, take),
-    props: input.props ?? [],
-    palette: stagePalette(deck),
+    props: input.props ?? stageProps(project, scene, take),
+    palette: stagePalette(deck, esc?.palette),
     aspect: project.aspect,
     // La fase dentro de la toma: solo la usa la cámara en mano, que no está
     // quieta. Determinista, para que revelar dos veces dé lo mismo.
@@ -68,8 +90,8 @@ export function previsFrame(input: {
 
   return stageToSvg(draw, {
     slate: `SC${String(sceneNo).padStart(2, "0")} · T${String(take.no).padStart(2, "0")} · ${camLabel(take)}`,
-    foot: `${project.code || project.title.slice(0, 12).toUpperCase()} · ${scene.int}. ${scene.location} — ${scene.tod}`,
+    foot: `${project.code || project.title.slice(0, 12).toUpperCase()} · ${sceneHeading(project, scene).slug}`,
     right: `${tc(at)} · ${n}/${frames}`,
-    ink: stagePalette(deck).ink,
+    ink: stagePalette(deck, esc?.palette).ink,
   });
 }

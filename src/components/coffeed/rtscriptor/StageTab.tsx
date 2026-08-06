@@ -18,10 +18,13 @@ import { VoiceOverEditor } from "./VoiceOver";
 import { renderTake } from "@/lib/coffeed/rtScriptorActions";
 import {
   camLabel,
+  camLabelOf,
   checkTake,
   marksOf,
   newTake,
+  sceneHeading,
   sceneLength,
+  sceneProps,
   takesOfScene,
   tc,
   uid,
@@ -76,6 +79,7 @@ export function StageTab({
   const [addScene, setAddScene] = useState(false);
   const [addChar, setAddChar] = useState(false);
   const [shownFrame, setShownFrame] = useState<string | null>(null);
+  const [shotId, setShotId] = useState<string | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [guides, setGuides] = useState(true);
 
@@ -83,13 +87,22 @@ export function StageTab({
   const L = sceneLength(takes);
   const patchTake = (id: string, u: Partial<Take>) => patch((p) => ({ ...p, takes: p.takes.map((t) => (t.id === id ? { ...t, ...u } : t)) }));
   const flags = checkTake(project, take);
-  const job = take ? renders.find((r) => r.takeId === take.id && r.state === "complete" && r.frames.length) : undefined;
+  // Todos los revelados de esta toma, del más nuevo al más viejo. Cada uno es
+  // un encuadre que se probó y que se puede recuperar entero.
+  const shots = take ? renders.filter((r) => r.takeId === take.id && r.state === "complete" && r.frames.length) : [];
+  const job = shots.find((r) => r.id === shotId) ?? shots[0];
   const shown = job?.frames.find((f) => f.path === shownFrame) ?? job?.frames[0];
+  const sameAsNow =
+    !!job?.config && !!take && JSON.stringify({ c: job.config.cam, t: job.config.treatment, d: job.config.dur }) === JSON.stringify({ c: take.cam, t: take.treatment, d: take.dur });
+
+  const escenario = scene.escenarioId ? project.escenarios.find((e) => e.id === scene.escenarioId) : null;
+  const heading = sceneHeading(project, scene);
 
   const palette = useMemo(() => {
-    const pal = deck?.palette?.length ? deck.palette : ["#141A1B", "#1B2A33", "#C9C6BD"];
+    // La paleta manda del ESCENARIO si la tiene; si no, de la baraja del vídeo.
+    const pal = escenario?.palette?.length && escenario.palette.length >= 3 ? escenario.palette : deck?.palette?.length ? deck.palette : ["#141A1B", "#1B2A33", "#C9C6BD"];
     return { ground: pal[0] ?? "#141A1B", sky: pal[1] ?? "#1B2A33", ink: pal[2] ?? "#C9C6BD" };
-  }, [deck]);
+  }, [deck, escenario]);
 
   const stageInput = useMemo(() => {
     if (!take) return null;
@@ -103,14 +116,17 @@ export function StageTab({
           return c ? { id: c.id, color: c.color, mark: marks[cid], height: 172 } : null;
         })
         .filter(Boolean) as { id: string; color: string; mark: { x: number; z: number }; height: number }[],
-      props: [],
+      props: sceneProps(project, scene, take.cast).map(({ prop, x, z }) => {
+        const owner = prop.ownerId && take.cast.includes(prop.ownerId) ? marks[prop.ownerId] : null;
+        return { id: prop.id, label: prop.name, x: owner ? owner.x + 25 : x, z: owner ? owner.z + 25 : z, w: prop.w, h: prop.h, d: prop.d, color: prop.color };
+      }),
       palette,
       aspect: project.aspect,
       phase: 0.5,
       width: 960,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [take, project.characters, palette, project.aspect]);
+  }, [take, scene, project.characters, project.props, project.escenarios, palette, project.aspect]);
 
   const runRender = async () => {
     if (!take) return;
@@ -123,6 +139,7 @@ export function StageTab({
       return;
     }
     onRender(r.data);
+    setShotId(r.data.id);
     setShownFrame(r.data.frames[0]?.path ?? null);
   };
 
@@ -183,9 +200,12 @@ export function StageTab({
 
       <div className="rt-card">
         <div className="rt-head">
-          <h2>
-            {scene.int}. {scene.location} — {scene.tod}
-          </h2>
+          <h2>{heading.slug}</h2>
+          {escenario && (
+            <span className="rt-chip" style={{ borderColor: "var(--signal)", color: "var(--signal)" }} title={escenario.note || undefined}>
+              {escenario.name}
+            </span>
+          )}
           <span className="rt-chip" style={{ borderColor: L.provisional ? "var(--amber)" : "var(--edge)", color: L.provisional ? "var(--amber)" : "var(--mute)" }}>
             {tc(L.seconds)}
             {L.provisional ? " provisional" : ` · ${L.printed} buena(s)`}
@@ -320,6 +340,22 @@ export function StageTab({
             </label>
           </div>
 
+          {/* Cada revelado es una TIRA con su propia configuración guardada.
+              Sin eso, tocar un mando convertía la tira en una mentira: seguía
+              enseñando imágenes de una cámara que ya no existía. */}
+          {shots.length > 1 && (
+            <div className="rt-row" style={{ marginTop: 8, gap: 4 }}>
+              <span className="rt-mono" style={{ fontSize: 9.5, color: "var(--faint)", letterSpacing: ".1em", textTransform: "uppercase" }}>
+                Revelados
+              </span>
+              {shots.map((r, i) => (
+                <button type="button" key={r.id} className="rt-shot" data-on={r.id === job?.id ? "1" : "0"} onClick={() => setShotId(r.id)} title={r.config ? camLabelOf(r.config) : "sin configuración guardada"}>
+                  {shots.length - i}
+                </button>
+              ))}
+            </div>
+          )}
+
           {job ? (
             <div className="rt-photos" style={{ marginTop: 8 }}>
               {job.frames.map((f) => (
@@ -334,6 +370,27 @@ export function StageTab({
           ) : (
             <p className="rt-note" style={{ marginTop: 8 }}>Sin revelar. «Acción» congela este cuadro en archivos.</p>
           )}
+
+          {job?.config && (
+            <div className="rt-shotcfg">
+              <span>
+                Revelado con <b>{camLabelOf(job.config)}</b> · {Math.round(job.config.cam.dist)}cm · {job.config.cam.lens}mm · {job.config.cast.join(" ") || "sin reparto"}
+                {job.config.escenarioName ? ` · ${job.config.escenarioName}` : ""} · {tc(job.config.dur)}
+              </span>
+              {!sameAsNow && (
+                <button
+                  type="button"
+                  className="rt-btn"
+                  onClick={() => patchTake(take.id, { cam: { ...job.config!.cam }, treatment: job.config!.treatment, marks: { ...job.config!.marks }, dur: job.config!.dur })}
+                  title="Devuelve la toma exactamente a la cámara con la que se reveló esta tira"
+                >
+                  Volver a este encuadre
+                </button>
+              )}
+              {sameAsNow && <span className="rt-mono" style={{ color: "var(--ok)", fontSize: 9.5 }}>= lo que ves ahora</span>}
+            </div>
+          )}
+
           {shown && (
             <details className="rt-prompt">
               <summary>Ver el prompt del fotograma {shown.n}</summary>
@@ -344,7 +401,55 @@ export function StageTab({
 
         {/* ── los mandos ── */}
         <section className="rt-rig">
+          {/* Antes de decidir DÓNDE se pone la cámara hay que decidir QUÉ está
+              mirando: en qué sitio pasa y qué hay dentro. */}
           <p className="rt-label">
+            Composición de la escena
+            <Info
+              title="Composición"
+              text="Primero el sitio, luego el encuadre. El escenario trae su decorado —los objetos con sus medidas, puestos donde se pusieron— y su paleta, y todo eso aparece dentro del cuadro. Los objetos de un personaje viajan con él sin colocarlos aquí. Se crean y se visten en las pestañas Escenarios y Props."
+            />
+          </p>
+          <select
+            className="rt-in"
+            value={scene.escenarioId ?? ""}
+            onChange={(e) => patch((p) => ({ ...p, scenes: p.scenes.map((s) => (s.id === scene.id ? { ...s, escenarioId: e.target.value || null } : s)) }))}
+          >
+            <option value="">Sin escenario — «{scene.location}» a secas</option>
+            {project.escenarios.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.int}. {e.name}
+              </option>
+            ))}
+          </select>
+          {!project.escenarios.length && (
+            <p className="rt-note" style={{ marginTop: 6 }}>
+              Todavía no hay escenarios. Sin uno, el cuadro no tiene nada alrededor: solo suelo.
+            </p>
+          )}
+          {escenario && (
+            <div className="rt-row" style={{ marginTop: 6, gap: 5 }}>
+              <span className="rt-note">
+                {escenario.props.length} objeto(s) en el decorado
+                {project.props.filter((x) => x.ownerId && take.cast.includes(x.ownerId)).length > 0 &&
+                  ` · ${project.props.filter((x) => x.ownerId && take.cast.includes(x.ownerId)).length} que trae el reparto`}
+              </span>
+            </div>
+          )}
+          <div className="rt-dial" style={{ marginTop: 8 }}>
+            <label title="El momento del día es de la ESCENA aunque el escenario proponga uno: la misma bodega es otra cosa de noche.">
+              Momento del día<b>{heading.tod || "—"}</b>
+            </label>
+            <input
+              className="rt-in"
+              style={{ padding: "4px 8px", fontSize: 12 }}
+              value={scene.tod}
+              placeholder={escenario?.tod || "NOCHE"}
+              onChange={(e) => patch((p) => ({ ...p, scenes: p.scenes.map((s) => (s.id === scene.id ? { ...s, tod: e.target.value.toUpperCase() } : s)) }))}
+            />
+          </div>
+
+          <p className="rt-label" style={{ marginTop: 14 }}>
             Encuadres
             <Info
               title="Encuadres"
@@ -359,9 +464,15 @@ export function StageTab({
             ))}
           </div>
 
+          {/* Qué ES el plano, que no es lo mismo que dónde está la cámara. La
+              explicación va A LA VISTA y no detrás de un icono: escondida no
+              la leyó nadie, y las etiquetas solas no significan nada. */}
           <p className="rt-label" style={{ marginTop: 14 }}>
-            Tratamiento
-            <Info title="Tratamiento" text="No es dónde está la cámara, es qué ES el plano. Cámara: alguien filmando. POV: el cuadro es lo que ve un personaje. En mano: la cámara no está quieta y el temblor se ve en cada fotograma." />
+            ¿Qué es este plano?
+            <Info
+              title="¿Qué es este plano?"
+              text="Los mandos de arriba dicen DÓNDE se planta la cámara. Esto dice qué estamos viendo: si hay una cámara filmando la escena (normal), si el cuadro son los ojos de un personaje (subjetivo) o si la cámara va sujeta a mano y por tanto no está quieta. Son tres cosas distintas, no tres posiciones."
+            />
           </p>
           <div className="rt-seg" style={{ width: "100%" }}>
             {TREATMENTS.map((t) => (
@@ -370,6 +481,9 @@ export function StageTab({
               </button>
             ))}
           </div>
+          <p className="rt-note" style={{ marginTop: 5 }}>
+            {TREATMENTS.find((t) => t.key === take.treatment)?.sub} — {TREATMENTS.find((t) => t.key === take.treatment)?.hint}
+          </p>
 
           <p className="rt-label" style={{ marginTop: 14 }}>
             Cámara <span>{Math.round(cam.dist)}cm · {cam.lens}mm</span>

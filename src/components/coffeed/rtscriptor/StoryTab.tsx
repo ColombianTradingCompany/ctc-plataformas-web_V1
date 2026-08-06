@@ -16,6 +16,7 @@ import {
   checkProject,
   geometry,
   newTake,
+  sceneHeading,
   sceneLength,
   takesOfScene,
   tc,
@@ -478,6 +479,7 @@ function SceneEditor({
   const idx = project.scenes.findIndex((s) => s.id === scene.id);
   const takes = takesOfScene(project, scene.id);
   const L = sceneLength(takes);
+  const heading = sceneHeading(project, scene);
   const up = (u: Partial<Scene>) => patch((p) => ({ ...p, scenes: p.scenes.map((s) => (s.id === scene.id ? { ...s, ...u } : s)) }));
   const move = (d: number) =>
     patch((p) => {
@@ -530,28 +532,44 @@ function SceneEditor({
               <input className="rt-in" value={scene.title} onChange={(e) => up({ title: e.target.value })} />
             </Field>
           </div>
-          <div style={{ flex: "0 0 92px" }}>
-            <Field label="Int / Ext">
-              <div className="rt-seg">
-                {(["INT", "EXT"] as const).map((v) => (
-                  <button type="button" key={v} data-on={scene.int === v ? "1" : "0"} onClick={() => up({ int: v })}>
-                    {v}
-                  </button>
+          <div style={{ flex: "1 1 200px" }}>
+            <Field label="Escenario" info="Dónde pasa. Trae el encabezado del guion y el decorado que se ve en el cuadro. Sin escenario, la localización se escribe a mano y el cuadro queda sin nada alrededor.">
+              <select className="rt-in" value={scene.escenarioId ?? ""} onChange={(e) => up({ escenarioId: e.target.value || null })}>
+                <option value="">Sin escenario</option>
+                {project.escenarios.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.int}. {e.name}
+                  </option>
                 ))}
-              </div>
-            </Field>
-          </div>
-          <div style={{ flex: "1 1 160px" }}>
-            <Field label="Localización">
-              <input className="rt-in" value={scene.location} onChange={(e) => up({ location: e.target.value.toUpperCase() })} />
+              </select>
             </Field>
           </div>
           <div style={{ flex: "0 0 120px" }}>
-            <Field label="Momento del día">
-              <input className="rt-in" value={scene.tod} onChange={(e) => up({ tod: e.target.value.toUpperCase() })} />
+            <Field label="Momento del día" info="Es de la ESCENA aunque el escenario proponga uno: la misma bodega es otra cosa de noche.">
+              <input className="rt-in" value={scene.tod} placeholder={heading.tod} onChange={(e) => up({ tod: e.target.value.toUpperCase() })} />
             </Field>
           </div>
         </div>
+        {!scene.escenarioId && (
+          <div className="rt-row" style={{ alignItems: "flex-start", gap: 12 }}>
+            <div style={{ flex: "0 0 92px" }}>
+              <Field label="Int / Ext">
+                <div className="rt-seg">
+                  {(["INT", "EXT"] as const).map((v) => (
+                    <button type="button" key={v} data-on={scene.int === v ? "1" : "0"} onClick={() => up({ int: v })}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
+            <div style={{ flex: "1 1 200px" }}>
+              <Field label="Localización">
+                <input className="rt-in" value={scene.location} onChange={(e) => up({ location: e.target.value.toUpperCase() })} />
+              </Field>
+            </div>
+          </div>
+        )}
 
         {/* nota 1: la duración se lee, no se teclea */}
         <Field
@@ -713,6 +731,7 @@ export function NewScene({
   onDone?: (id: string) => void;
 }) {
   const [title, setTitle] = useState("");
+  const [escenarioId, setEscenarioId] = useState<string>(project.escenarios[0]?.id ?? "");
   const [int, setInt] = useState<"INT" | "EXT">("INT");
   const [loc, setLoc] = useState("");
   const [tod, setTod] = useState("NOCHE");
@@ -738,7 +757,17 @@ export function NewScene({
               const id = uid("s");
               patch((p) => {
                 const scenes = [...p.scenes];
-                scenes.splice(after, 0, { id, title: title.trim(), int, location: loc.toUpperCase() || "LOCALIZACIÓN", tod, cast, synopsis: "" });
+                const esc = project.escenarios.find((e) => e.id === escenarioId);
+                scenes.splice(after, 0, {
+                  id,
+                  title: title.trim(),
+                  escenarioId: escenarioId || null,
+                  int: esc?.int ?? int,
+                  location: esc?.location ?? (loc.toUpperCase() || "LOCALIZACIÓN"),
+                  tod,
+                  cast,
+                  synopsis: "",
+                });
                 return {
                   ...p,
                   scenes,
@@ -761,23 +790,37 @@ export function NewScene({
       <Field label="Título">
         <input className="rt-in" autoFocus value={title} placeholder="Puertas retenidas" onChange={(e) => setTitle(e.target.value)} />
       </Field>
+      <Field label="Escenario" info="Dónde pasa. Un escenario trae su encabezado Y su decorado: los objetos que hay, con sus medidas y su sitio. Se crean en la pestaña Escenarios.">
+        <select className="rt-in" value={escenarioId} onChange={(e) => setEscenarioId(e.target.value)}>
+          <option value="">Sin escenario — escribo la localización</option>
+          {project.escenarios.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.int}. {e.name} — {e.location}
+            </option>
+          ))}
+        </select>
+      </Field>
       <div className="rt-row" style={{ alignItems: "flex-start", gap: 12 }}>
-        <div style={{ flex: "0 0 92px" }}>
-          <Field label="Int / Ext">
-            <div className="rt-seg">
-              {(["INT", "EXT"] as const).map((v) => (
-                <button type="button" key={v} data-on={int === v ? "1" : "0"} onClick={() => setInt(v)}>
-                  {v}
-                </button>
-              ))}
+        {!escenarioId && (
+          <>
+            <div style={{ flex: "0 0 92px" }}>
+              <Field label="Int / Ext">
+                <div className="rt-seg">
+                  {(["INT", "EXT"] as const).map((v) => (
+                    <button type="button" key={v} data-on={int === v ? "1" : "0"} onClick={() => setInt(v)}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </Field>
             </div>
-          </Field>
-        </div>
-        <div style={{ flex: "1 1 180px" }}>
-          <Field label="Localización">
-            <input className="rt-in" value={loc} placeholder="AUTOBÚS — PUERTAS" onChange={(e) => setLoc(e.target.value)} />
-          </Field>
-        </div>
+            <div style={{ flex: "1 1 180px" }}>
+              <Field label="Localización">
+                <input className="rt-in" value={loc} placeholder="AUTOBÚS — PUERTAS" onChange={(e) => setLoc(e.target.value)} />
+              </Field>
+            </div>
+          </>
+        )}
         <div style={{ flex: "0 0 120px" }}>
           <Field label="Momento del día">
             <input className="rt-in" value={tod} onChange={(e) => setTod(e.target.value.toUpperCase())} />

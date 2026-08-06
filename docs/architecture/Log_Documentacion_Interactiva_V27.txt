@@ -214,3 +214,55 @@ Contexto abierto al cerrar V27:
   «Escenarios» que sustituye a Localización, y la fase 2 de imagen real por
   Make (Gemini + Canva). Ver docs/PROXIMA_SESION.md.
 (commit: 8401b4f)
+
+## [2026-08-06] RT-Scriptor V3.3 · Escenarios, Props y el cuadro deja de estar en el vacío
+- **DOS PESTAÑAS NUEVAS, al mismo nivel que Personajes** (el owner tuvo que
+  pedirlo dos veces: en la V3.2 lo aplacé y no tocaba). Son 7 pestañas:
+  Hilos · Personajes · **Escenarios** · **Props** · Escena+Toma · Guion · Serie.
+  ⚠️ CAMBIO DE NODO en la doc: la app ya no tiene 5 pestañas.
+- **Escenario** no es una etiqueta de sitio: es el ESPACIO. Lleva el encabezado
+  del guion (INT/EXT + localización), una paleta propia que pisa a la baraja
+  del vídeo, y sobre todo el DECORADO — qué objetos hay y dónde. Se viste una
+  vez y toda escena que pase ahí lo hereda. Se dirige con una vista de PLANTA
+  que es el mismo `composeStage` con la cámara puesta arriba: no es otro
+  dibujo, es el mismo. Concepto para el DICT: **escenario**.
+- **`scenes.location` deja de ser la fuente**: `sceneHeading()` deriva el
+  encabezado del escenario cuando lo hay y cae a lo escrito cuando no. UN solo
+  sitio, y lo leen el guion, la claqueta del fotograma, la cabecera de la mesa
+  y la entrega al ECP. En el guion el encabezado con escenario es de SOLO
+  LECTURA: editarlo sería escribir en un campo que ya nadie lee.
+  **El momento del día se queda en la ESCENA** aunque el escenario proponga
+  uno — la misma bodega es otra cosa de noche.
+- **Prop**: existe UNA vez en el vídeo con medidas de verdad en cm, y se usa
+  donde haga falta. Puede ser DE un personaje —y entonces viaja con él a
+  cualquier escena en la que salga, sin colocarlo escenario por escenario— y/o
+  estar PUESTO en un escenario. Las dos cosas a la vez es lo normal. Se dibuja
+  como caja de alambre a escala: una mesa de 90 cm tapa a quien está detrás, y
+  eso se ve antes de rodar. Concepto para el DICT: **prop**.
+- Los dos se **importan de otro vídeo de la misma serie**, igual que los
+  personajes (`seriesSets`). Un escenario viaja CON sus objetos, y los que ya
+  existan por nombre se reutilizan en vez de duplicarse. Se copian, no se
+  enlazan.
+- **Composición de la escena, ANTES de los encuadres** (petición del owner):
+  primero se decide QUÉ está mirando la cámara —en qué sitio pasa y qué hay
+  dentro— y luego dónde se pone. Bloque nuevo en la mesa de tomas con el
+  selector de escenario, el recuento del decorado y el momento del día.
+- **Los fotogramas RECUERDAN su configuración** (`coffeed_rts_renders.config`,
+  migración `rt_scriptor_render_config`): cada revelado guarda cam, tratamiento,
+  marcas, reparto, duración y escenario. Sin esto, tocar un mando convertía la
+  tira en una mentira — seguía enseñando imágenes de una cámara que ya no
+  existía. Con esto la toma tiene HISTORIAL de encuadres probados: se cambia
+  entre revelados y hay un botón «Volver a este encuadre» que devuelve la toma
+  entera a esa cámara. Los revelados anteriores a la V3.3 lo dicen en vez de
+  inventárselo.
+- **«Cámara / POV / En mano» → «Normal / Subjetivo / En mano»**, con la
+  explicación A LA VISTA bajo el control y no detrás de un icono. El owner dijo
+  dos veces que no lo entendía y las dos veces la culpa era del nombre:
+  «Cámara» como etiqueta de una opción no dice nada, y la pregunta que responde
+  el control es «¿qué ES este plano?», no «¿dónde está la cámara?».
+- Guardián: de 67 a **82 comprobaciones** (encabezado derivado, decorado, props
+  de personaje, hidratación de lo viejo, `camLabelOf`). APP_VERSION 3.2 → 3.3.
+- **SIGUE PENDIENTE**: la fase 2 de imagen real por Make (Gemini + Canva). El
+  plan está en docs/PROXIMA_SESION.md y ahora es más fácil: el prompt ya
+  describe el decorado además de la cámara.
+(commit: pending)

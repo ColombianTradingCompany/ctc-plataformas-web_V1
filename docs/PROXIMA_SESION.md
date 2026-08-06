@@ -1,30 +1,22 @@
 # Pendientes
 
-## RT-Scriptor · lo que el owner pidió y AÚN NO está (V3.2, 2026-08-06)
+## RT-Scriptor · lo único que queda del encargo (V3.3, 2026-08-06)
 
-La V3.2 arregló lo gordo —el «Ajuste de cámara» ahora mueve una cámara de
-verdad y «Acción» congela el cuadro que ves— y los cuatro arreglos pequeños.
-De la misma lista quedan **dos cosas sin empezar**:
+Las pestañas **Escenarios** y **Props** ya están, la composición de escena va
+antes de los encuadres, los fotogramas recuerdan su configuración y el control
+de tratamiento se explica solo. Del encargo del owner queda **una cosa**:
 
-1. **Pestaña «Escenarios», que sustituye a Localización.** Hoy la localización
-   es una cadena de texto en la escena. La forma correcta —y la razón de que
-   valga la pena hacerla ahora y no antes— es que un Escenario sea la
-   ENTIDAD QUE LLEVA EL ESPACIO: suelo, fondo y objetos con medidas. El
-   compositor (`stage.ts`) ya sabe dibujar `StageProp[]`; hoy siempre recibe
-   una lista vacía. Un escenario reutilizable llenaría esa lista y el cuadro
-   dejaría de estar en un vacío. Tabla nueva `coffeed_rts_escenarios` +
-   `scenes.escenario_id`, con la localización de texto como caída para lo ya
-   escrito.
-2. **Fase 2: imagen real por Make (Gemini + Canva).** La espina ya existe
-   (`src/lib/integraciones/`: emit → dispatch → `/api/integraciones/[canal]`),
-   `coffeed_rts_renders` ya tiene `provider` y cada fotograma ya guarda su
-   PROMPT compuesto — que es el trabajo caro. El camino: `renderTake` con
-   `provider:'gemini'` emite un evento con el prompt y el previs; un escenario
-   de Make llama a Gemini, pasa por Canva para la composición de marca, y
-   devuelve la imagen por la puerta de entrada; el fotograma cambia de ruta y
-   el estado pasa a `complete`. Registrar en `/ecp/automatizaciones`.
-   **Ojo**: el previs no se tira — es el encuadre exacto que el modelo debe
-   respetar, y va como referencia de composición.
+**Fase 2: imagen real por Make (Gemini + Canva).** La espina ya existe
+(`src/lib/integraciones/`: emit → dispatch → `/api/integraciones/[canal]`),
+`coffeed_rts_renders` ya tiene `provider` y `config`, y cada fotograma ya
+guarda su PROMPT compuesto — que ahora describe también el decorado, no solo la
+cámara. El camino: `renderTake` con `provider:'gemini'` emite un evento con el
+prompt y el previs; un escenario de Make llama a Gemini, pasa por Canva para la
+composición de marca, y devuelve la imagen por la puerta de entrada; el
+fotograma cambia de ruta y el estado pasa a `complete`. Registrar en
+`/ecp/automatizaciones`.
+**Ojo**: el previs NO se tira — es el encuadre exacto que el modelo debe
+respetar, y va como referencia de composición.
 
 ## RT-Scriptor · escrito al cierre de la sesión nocturna del 2026-08-06 (V3.1)
 

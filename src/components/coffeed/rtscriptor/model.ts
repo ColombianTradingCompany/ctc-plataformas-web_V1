@@ -39,11 +39,52 @@ export type Character = {
 export type Scene = {
   id: string;
   title: string;
+  /** Dónde pasa. Desde la V3.3 la localización NO es una cadena suelta: es un
+   *  ESCENARIO, que además lleva el espacio (suelo, fondo, objetos) que el
+   *  cuadro necesita para no estar en el vacío. `int`/`location` se quedan como
+   *  caída para las escenas escritas antes y para las que aún no tienen uno. */
+  escenarioId: string | null;
   int: IntExt;
   location: string;
   tod: string;
   cast: string[];
   synopsis: string;
+};
+
+/** Un objeto: existe una vez en el vídeo y se usa donde haga falta. Puede ser
+ *  DE alguien (el libro de cuentas de Mara) y/o estar PUESTO en un escenario
+ *  (la mesa de la oficina) — las dos cosas a la vez, que es lo normal. */
+export type Prop = {
+  id: string;
+  name: string;
+  note: string;
+  color: string;
+  /** Centímetros. Lo que hace que ocupe sitio de verdad en el cuadro. */
+  w: number;
+  h: number;
+  d: number;
+  /** De quién es, si es de alguien. */
+  ownerId: string | null;
+};
+
+export type PlacedProp = { propId: string; x: number; z: number };
+
+/** Un sitio donde pasan escenas. Lo que lo hace útil no es el nombre: es que
+ *  lleva el ESPACIO, y por eso el cuadro deja de estar en un vacío. */
+export type Escenario = {
+  id: string;
+  name: string;
+  int: IntExt;
+  /** El encabezado que sale en el guion: «BODEGA», «PATIO DE SECADO». */
+  location: string;
+  /** Momento del día por defecto; la escena puede pisarlo. */
+  tod: string;
+  note: string;
+  /** Suelo, fondo y tinta. Si está vacía, manda la baraja del vídeo. */
+  palette: string[];
+  /** El decorado: qué objetos hay y dónde. Se viste una vez y todas las
+   *  escenas que pasan aquí lo heredan. */
+  props: PlacedProp[];
 };
 
 export type Take = {
@@ -84,6 +125,11 @@ export type Storyline = {
 /** El documento que se guarda en `coffeed_rts_projects.doc`. */
 export type ProjectDoc = {
   characters: Character[];
+  /** Escenarios y props viven en el VÍDEO, igual que los personajes, y se
+   *  importan de otro vídeo de la misma serie cuando hace falta. Se copian, no
+   *  se enlazan: un decorado cambia entre episodios. */
+  escenarios: Escenario[];
+  props: Prop[];
   scenes: Scene[];
   storylines: Storyline[];
   takes: Take[];
@@ -127,6 +173,21 @@ export type ProjectCard = {
 
 export type Frame = { n: number; at: number; path: string | null; url?: string | null; prompt: string };
 export type RenderState = "queued" | "rendering" | "complete" | "failed" | "cancelled";
+
+/** La instantánea de la toma en el momento de revelar. Sin ella, mover un
+ *  mando convierte la tira de fotogramas en una mentira: enseña imágenes de
+ *  una cámara que ya no existe. Con ella, la tira es el historial de encuadres
+ *  probados y se puede volver a cualquiera. */
+export type RenderConfig = {
+  cam: Camera;
+  treatment: Treatment;
+  marks: Record<string, Mark>;
+  cast: string[];
+  dur: number;
+  escenarioId: string | null;
+  escenarioName: string | null;
+};
+
 export type RenderJob = {
   id: string;
   projectId: string;
@@ -139,6 +200,7 @@ export type RenderJob = {
   prompt: string | null;
   error: string | null;
   createdAt: string;
+  config: RenderConfig | null;
 };
 
 /* ───────────────────────────── constantes ───────────────────────────── */
@@ -156,10 +218,28 @@ export const STATUSES: { key: TakeStatus; label: string; color: string; hint: st
   { key: "ng", label: "NG", color: "#E4472C", hint: "No sirve («no good»). Se guarda para saber qué se probó, pero no cuenta para nada." },
 ];
 
-export const TREATMENTS: { key: Treatment; label: string; hint: string }[] = [
-  { key: "normal", label: "Cámara", hint: "Una cámara mirando la escena desde donde la pongas." },
-  { key: "pov", label: "POV", hint: "El cuadro es lo que VE un personaje, no lo que ve una cámara. Se marca con bandas arriba y abajo." },
-  { key: "handheld", label: "En mano", hint: "La cámara no está quieta ni recta: tiembla a lo largo de la toma. El temblor es el mismo cada vez que reveles." },
+/** QUÉ ES el plano, que no es lo mismo que DÓNDE está la cámara.
+ *  Los mandos de arriba dicen dónde se planta; esto dice qué estamos viendo.
+ *  («Cámara» como etiqueta de una opción no decía nada — V3.3.) */
+export const TREATMENTS: { key: Treatment; label: string; sub: string; hint: string }[] = [
+  {
+    key: "normal",
+    label: "Normal",
+    sub: "alguien filma la escena",
+    hint: "Lo de siempre: hay una cámara montada mirando lo que pasa. El espectador está fuera, mirando.",
+  },
+  {
+    key: "pov",
+    label: "Subjetivo",
+    sub: "vemos por los ojos de alguien",
+    hint: "El cuadro NO es lo que ve una cámara: es lo que ve un personaje. El espectador está dentro de él. Se marca con bandas arriba y abajo para que no se confunda con un plano normal.",
+  },
+  {
+    key: "handheld",
+    label: "En mano",
+    sub: "la cámara va sujeta, no montada",
+    hint: "Nadie sostiene una cámara completamente quieta: el encuadre respira y el horizonte se mueve a lo largo de la toma. El temblor es el mismo cada vez que reveles, así que dos revelados de la misma toma se pueden comparar.",
+  },
 ];
 
 export const GRADIENTS = [
@@ -199,6 +279,17 @@ export function camLabel(t: Take): string {
   const base = preset ? preset.label : `${Math.round(t.cam.dist)}cm · ${t.cam.lens}mm`;
   const treat = t.treatment === "pov" ? " · POV" : t.treatment === "handheld" ? " · en mano" : "";
   return base + treat;
+}
+
+/** El mismo nombre de encuadre, pero de una configuración guardada — la que
+ *  lleva un revelado. Se lee igual que la de la toma viva. */
+export function camLabelOf(cfg: { cam: Camera; treatment: Treatment }): string {
+  const preset = SHOTS.find((s) => {
+    const keys = Object.keys(s.cam) as (keyof Camera)[];
+    return keys.every((k) => Math.abs((cfg.cam[k] ?? 0) - (s.cam[k] ?? 0)) < 0.5);
+  });
+  const base = preset ? preset.label : `${Math.round(cfg.cam.dist)}cm · ${cfg.cam.lens}mm`;
+  return base + (cfg.treatment === "pov" ? " · subjetivo" : cfg.treatment === "handheld" ? " · en mano" : "");
 }
 
 /** Dónde se planta cada personaje en una toma: lo marcado, y si no, en fila. */
@@ -768,7 +859,39 @@ export function newTake(input: { id: string; sceneId: string; no: number; cast: 
 }
 
 export function emptyDoc(): ProjectDoc {
-  return { characters: [], scenes: [], storylines: [], takes: [], dialogue: {}, voiceovers: {} };
+  return { characters: [], escenarios: [], props: [], scenes: [], storylines: [], takes: [], dialogue: {}, voiceovers: {} };
+}
+
+/** El encabezado de una escena. Sale del ESCENARIO si lo tiene; si no, de lo
+ *  que la escena lleve escrito. Un solo sitio, porque lo leen el guion, la
+ *  claqueta del fotograma, la cabecera de la mesa y la entrega. */
+export function sceneHeading(p: Pick<Project, "escenarios">, s: Scene): { int: IntExt; location: string; tod: string; slug: string } {
+  const e = s.escenarioId ? p.escenarios.find((x) => x.id === s.escenarioId) : null;
+  const int = e?.int ?? s.int;
+  const location = e?.location ?? s.location;
+  // El momento del día es de la ESCENA aunque el escenario proponga uno: la
+  // misma bodega es otra cosa de noche, y eso pasa dentro del mismo decorado.
+  const tod = s.tod || e?.tod || "";
+  return { int, location, tod, slug: `${int}. ${location}${tod ? ` — ${tod}` : ""}` };
+}
+
+/** Los objetos que hay que dibujar en una escena: los del decorado del
+ *  escenario más los que lleva encima quien esté en la toma. */
+export function sceneProps(p: Pick<Project, "escenarios" | "props">, s: Scene, cast: string[]): { prop: Prop; x: number; z: number }[] {
+  const out: { prop: Prop; x: number; z: number }[] = [];
+  const e = s.escenarioId ? p.escenarios.find((x) => x.id === s.escenarioId) : null;
+  for (const pl of e?.props ?? []) {
+    const prop = p.props.find((x) => x.id === pl.propId);
+    if (prop) out.push({ prop, x: pl.x, z: pl.z });
+  }
+  // Lo que es de alguien viaja con esa persona: si está en cuadro, su objeto
+  // también. Sin esto habría que colocar la misma taza en cada escenario.
+  for (const prop of p.props) {
+    if (!prop.ownerId || !cast.includes(prop.ownerId)) continue;
+    if (out.some((o) => o.prop.id === prop.id)) continue;
+    out.push({ prop, x: 0, z: 0 });
+  }
+  return out;
 }
 
 /** Rellena lo que falte de un `doc` guardado antes de que existiera un campo.
@@ -785,7 +908,9 @@ export function hydrateDoc(raw: unknown): ProjectDoc {
       traits: c.traits ?? [],
       pics: { profile: c.pics?.profile ?? null, body: c.pics?.body ?? null, detail: c.pics?.detail ?? null },
     })),
-    scenes: (d.scenes ?? []).map((s) => ({ ...s, cast: s.cast ?? [], synopsis: s.synopsis ?? "" })),
+    escenarios: (d.escenarios ?? []).map((e) => ({ ...e, palette: e.palette ?? [], props: e.props ?? [], note: e.note ?? "", tod: e.tod ?? "" })),
+    props: (d.props ?? []).map((x) => ({ ...x, note: x.note ?? "", ownerId: x.ownerId ?? null, w: x.w ?? 40, h: x.h ?? 40, d: x.d ?? 40 })),
+    scenes: (d.scenes ?? []).map((s) => ({ ...s, cast: s.cast ?? [], synopsis: s.synopsis ?? "", escenarioId: s.escenarioId ?? null })),
     storylines: (d.storylines ?? []).map((s) => ({ ...s, cast: s.cast ?? [], sceneIds: s.sceneIds ?? [], keys: s.keys ?? {} })),
     takes: (d.takes ?? []).map(migrateTake),
     dialogue: d.dialogue ?? {},

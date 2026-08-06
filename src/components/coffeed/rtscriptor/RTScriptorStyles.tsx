@@ -348,6 +348,13 @@ textarea.rt-ed{resize:vertical;min-height:52px;}
 .rt-statusrow em{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
   text-transform:uppercase;color:var(--faint);margin-right:2px;}
 
+/* la configuración con la que se revelo una tira */
+.rt-shotcfg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;padding:7px 10px;
+  border:1px solid var(--edge);border-left:2px solid var(--amber);background:#11181A;}
+.rt-shotcfg span{font-family:var(--mono);font-size:10px;color:var(--mute);letter-spacing:.04em;}
+.rt-shotcfg span b{color:var(--bone);font-weight:500;}
+.rt-shotcfg button{margin-left:auto;}
+
 .rt-prompt{margin-top:8px;border:1px solid var(--edge);background:#11181A;}
 .rt-prompt summary{cursor:pointer;padding:6px 10px;font-family:var(--mono);font-size:10px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--mute);}

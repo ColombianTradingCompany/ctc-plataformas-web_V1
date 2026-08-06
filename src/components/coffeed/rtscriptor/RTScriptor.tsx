@@ -22,6 +22,7 @@ import { RTScriptorStyles } from "./RTScriptorStyles";
 import { Field, Info, ProjectArt, Sheet, Spinner, Toggles } from "./parts";
 import { StoryTab } from "./StoryTab";
 import { CastTab } from "./CastTab";
+import { EscenariosTab, PropsTab } from "./SetTabs";
 import { StageTab } from "./StageTab";
 import { ScriptTab } from "./ScriptTab";
 import { SeriesTab } from "./SeriesTab";
@@ -53,7 +54,7 @@ import {
 } from "./model";
 
 type Save = "idle" | "saving" | "saved" | "error";
-type Tab = "story" | "cast" | "stage" | "script" | "series";
+type Tab = "story" | "cast" | "sets" | "props" | "stage" | "script" | "series";
 
 export function RTScriptor({ initial }: { initial: Workshop }) {
   const [cards, setCards] = useState<ProjectCard[]>(initial.projects);
@@ -99,6 +100,8 @@ export function RTScriptor({ initial }: { initial: Workshop }) {
         deckId: p.deckId,
         doc: {
           characters: p.characters,
+          escenarios: p.escenarios,
+          props: p.props,
           scenes: p.scenes,
           storylines: p.storylines,
           takes: p.takes,
@@ -192,10 +195,14 @@ export function RTScriptor({ initial }: { initial: Workshop }) {
   };
 
   const total = project ? projectDuration(project) : 0;
+  /** Hay de dónde importar solo si el vídeo está en una serie con hermanos. */
+  const inSeries = Boolean(project?.seriesId && (series.find((s) => s.id === project.seriesId)?.videoIds.length ?? 0) > 1);
   const TABS: [Tab, string, string][] = project
     ? [
         ["story", "Hilos narrativos", String(project.storylines.length).padStart(2, "0")],
         ["cast", "Personajes", String(project.characters.length).padStart(2, "0")],
+        ["sets", "Escenarios", String(project.escenarios.length).padStart(2, "0")],
+        ["props", "Props", String(project.props.length).padStart(2, "0")],
         ["stage", "Escena + Toma", String(project.scenes.length).padStart(2, "0")],
         ["script", "Guion y dirección", ""],
         ["series", "Serie", series.find((s) => s.id === project.seriesId) ? "SET" : "—"],
@@ -307,9 +314,11 @@ export function RTScriptor({ initial }: { initial: Workshop }) {
               patch={patch}
               assets={assets}
               onAsset={(p, u) => addAssets({ [p]: u })}
-              inSeries={Boolean(project.seriesId && (series.find((s) => s.id === project.seriesId)?.videoIds.length ?? 0) > 1)}
+              inSeries={inSeries}
             />
           )}
+          {tab === "sets" && <EscenariosTab project={project} patch={patch} inSeries={inSeries} />}
+          {tab === "props" && <PropsTab project={project} patch={patch} inSeries={inSeries} />}
           {tab === "stage" &&
             (project.scenes.length ? (
               <StageTab

@@ -29,6 +29,7 @@ import {
   draftOfProject,
   camLabel,
   leadTake,
+  sceneHeading,
   uid,
   type DialogueLine,
   type Project,
@@ -58,7 +59,7 @@ export function ScriptTab({ project, patch }: { project: Project; patch: Patch }
       scenes
         .map((s) => {
           const t = leadTake(project, s.id);
-          const head = `${s.int}. ${s.location} — ${s.tod}`;
+          const head = sceneHeading(project, s).slug;
           const vo = (project.voiceovers[s.id] ?? []).map((v) => `${(chOf(v.c ?? "")?.name ?? "NARRACIÓN").toUpperCase()} (V.O.)\n${v.text}`).join("\n\n");
           const dlg = (project.dialogue[t?.id ?? ""] || [])
             .map((x) => `${chOf(x.c)?.name.toUpperCase() ?? x.c}\n${x.line ?? x.dir ?? ""}`)
@@ -192,7 +193,12 @@ export function ScriptTab({ project, patch }: { project: Project; patch: Patch }
                       <s key={th.id} style={{ background: th.color, top: 2 + k * 4, left: -30 - k * 7, height: 14 }} />
                     ))}
                     {String(n).padStart(2, "0")}.{" "}
-                    {editing && dr ? (
+                    {/* Con escenario el encabezado se DERIVA: editarlo aquí
+                        sería escribir en un campo que nadie lee. Se cambia
+                        eligiendo otro escenario, o en la pestaña Escenarios. */}
+                    {s.escenarioId ? (
+                      <span title="Viene del escenario — se cambia en Escena + Toma o en la pestaña Escenarios">{sceneHeading(project, s).slug}</span>
+                    ) : editing && dr ? (
                       <span style={{ display: "inline-flex", gap: 4 }}>
                         <input className="rt-ed" style={{ width: 52, display: "inline-block" }} value={dr.int} onChange={(e) => upDraft(s.id, { int: e.target.value.toUpperCase() === "EXT" ? "EXT" : "INT" })} />
                         <input className="rt-ed" style={{ width: 190, display: "inline-block" }} value={dr.location} onChange={(e) => upDraft(s.id, { location: e.target.value.toUpperCase() })} />

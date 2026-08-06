@@ -118,8 +118,9 @@ export type Mark = { x: number; z: number };
 
 export type StageActor = { id: string; color: string; mark: Mark; height: number };
 
-/** Un objeto del escenario: una mesa, un reloj, una puerta. Caja simple —
- *  suficiente para componer, y no hace falta más para decidir un encuadre. */
+/** Un objeto puesto en el espacio: una mesa, un reloj, una puerta. Se dibuja
+ *  como una caja de alambre a escala — suficiente para decidir un encuadre, y
+ *  bastante para ver que la mesa te tapa a quien está detrás. */
 export type StageProp = { id: string; label: string; x: number; z: number; w: number; h: number; d: number; color: string };
 
 export const MARK_DEFAULT = (i: number, n: number): Mark => ({ x: (i - (n - 1) / 2) * 90, z: 0 });
@@ -200,8 +201,8 @@ export type StageDraw = {
   w: number;
   h: number;
   prims: Prim[];
-  /** Dónde cayó cada personaje en pantalla — para poder señalarlo o pulsarlo. */
-  hits: { id: string; x: number; y: number; r: number; onScreen: boolean }[];
+  /** Dónde cayó cada elemento en pantalla — para señalarlo o pulsarlo. */
+  hits: { id: string; kind: "actor" | "prop"; label: string; x: number; y: number; r: number; onScreen: boolean }[];
   /** Avisos de composición: lo que un operador vería por el visor. */
   notes: string[];
 };
@@ -273,6 +274,8 @@ export function composeStage(input: StageInput): StageDraw {
     seg({ x: -R, y: 0, z }, { x: R, y: 0, z }, input.palette.ink, major ? 1.4 : 0.8, major ? 0.5 : 0.22);
   }
 
+  const hits: StageDraw["hits"] = [];
+
   // ── objetos del escenario ──
   for (const pr of [...input.props].sort((a, b) => b.z - a.z)) {
     const x0 = pr.x - pr.w / 2, x1 = pr.x + pr.w / 2;
@@ -287,13 +290,21 @@ export function composeStage(input: StageInput): StageDraw {
       [{ x: x1, y: 0, z: z0 }, { x: x1, y: top, z: z0 }],
       [{ x: x1, y: 0, z: z1 }, { x: x1, y: top, z: z1 }],
       [{ x: x0, y: 0, z: z1 }, { x: x0, y: top, z: z1 }],
+      // La base cerrada: sin ella una caja de alambre no se apoya en nada.
+      [{ x: x0, y: 0, z: z0 }, { x: x1, y: 0, z: z0 }],
+      [{ x: x1, y: 0, z: z0 }, { x: x1, y: 0, z: z1 }],
+      [{ x: x1, y: 0, z: z1 }, { x: x0, y: 0, z: z1 }],
+      [{ x: x0, y: 0, z: z1 }, { x: x0, y: 0, z: z0 }],
     ];
     for (const [a, b] of corners) seg(a, b, pr.color, 1.3, 0.75);
+
+    const c = P({ x: pr.x, y: top, z: pr.z });
+    const edge = P({ x: x1, y: top, z: pr.z });
+    hits.push({ id: pr.id, kind: "prop", label: pr.label, x: c.x, y: c.y, r: Math.max(Math.abs(edge.x - c.x), 8), onScreen: c.z > NEAR });
   }
 
   // ── la gente ──
   // De lejos a cerca, para que quien está delante tape a quien está detrás.
-  const hits: StageDraw["hits"] = [];
   const ordered = [...input.actors]
     .map((a) => ({ a, d: Math.hypot(a.mark.x - Math.sin(rad(cam.orbit)) * cam.dist, a.mark.z - Math.cos(rad(cam.orbit)) * cam.dist) }))
     .sort((p, q) => q.d - p.d);
@@ -328,7 +339,7 @@ export function composeStage(input: StageInput): StageDraw {
       prims.push({ k: "circle", x: feet.x, y: feet.y, r: Math.max(rHead * 1.4, 2), fill: a.color, opacity: 0.14 });
     }
 
-    hits.push({ id: a.id, x: headC.x, y: headC.y, r: Math.max(rHead, 6), onScreen });
+    hits.push({ id: a.id, kind: "actor", label: a.id, x: headC.x, y: headC.y, r: Math.max(rHead, 6), onScreen });
     if (!onScreen && input.actors.length) notes.push(`${a.id} está fuera de cuadro`);
   }
 

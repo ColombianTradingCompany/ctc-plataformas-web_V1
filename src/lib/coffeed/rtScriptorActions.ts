@@ -25,7 +25,7 @@
 import { studioGate } from "./studioGate";
 import { coffeedServiceClient } from "./requireEcp";
 import { claude, parseJson, MODEL_WRITE } from "./claude";
-import { previsFrame, frameTimes } from "./rtsPrevis";
+import { previsFrame, frameTimes, stageProps } from "./rtsPrevis";
 import {
   camLabel,
   checkProject,
@@ -34,7 +34,9 @@ import {
   framePrompt,
   hydrateDoc,
   leadTake,
+  marksOf,
   matchShot,
+  sceneHeading,
   projectDuration,
   sceneLength,
   slugify,
@@ -49,11 +51,14 @@ import type {
   Character,
   Deck,
   DeckImage,
+  Escenario,
   Project,
+  Prop,
   ProjectCard,
   ProjectDoc,
   Proposal,
   ProposalOp,
+  RenderConfig,
   RenderJob,
   SceneDraft,
   Series,
@@ -205,7 +210,7 @@ export async function loadProject(id: string): Promise<OpenProject | null> {
 
   const { data: rj } = await service
     .from("coffeed_rts_renders")
-    .select("id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at")
+    .select(RENDER_COLS)
     .eq("project_id", id)
     .order("created_at", { ascending: false })
     .limit(120);
@@ -230,7 +235,10 @@ type RenderRow = {
   prompt: string | null;
   error: string | null;
   created_at: string;
+  config: RenderConfig | null;
 };
+
+const RENDER_COLS = "id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at, config";
 
 const toRender = (r: RenderRow): RenderJob => ({
   id: r.id,
@@ -244,6 +252,8 @@ const toRender = (r: RenderRow): RenderJob => ({
   prompt: r.prompt,
   error: r.error,
   createdAt: r.created_at,
+  // Los revelados de antes de la V3.3 no la tienen: se dice, no se inventa.
+  config: r.config && Object.keys(r.config).length ? r.config : null,
 });
 
 /* ─────────────────────────── escritura del proyecto ─────────────────────── */
@@ -332,25 +342,54 @@ export async function deleteProject(id: string): Promise<RtsResult> {
 // sincronizarlos sería inventarse una regla que nadie pidió.
 
 export type BorrowedCharacter = { videoId: string; videoTitle: string; character: Character };
+export type BorrowedEscenario = { videoId: string; videoTitle: string; escenario: Escenario; props: Prop[] };
+export type BorrowedProp = { videoId: string; videoTitle: string; prop: Prop };
+
+/** Los vídeos HERMANOS: los otros del mismo conjunto. */
+async function siblingDocs(service: Service, projectId: string) {
+  const { data: me } = await service.from("coffeed_rts_projects").select("series_id").eq("id", projectId).maybeSingle();
+  if (!me?.series_id) return [];
+  const { data: set } = await service.from("coffeed_rts_series").select("video_ids").eq("id", me.series_id).maybeSingle();
+  const siblings = ((set?.video_ids as string[] | null) ?? []).filter((id) => id !== projectId);
+  if (!siblings.length) return [];
+  const { data: rows } = await service.from("coffeed_rts_projects").select("id, title, doc").in("id", siblings);
+  return ((rows ?? []) as { id: string; title: string; doc: unknown }[]).map((r) => ({ id: r.id, title: r.title, doc: hydrateDoc(r.doc) }));
+}
 
 export async function seriesCharacters(projectId: string): Promise<{ list: BorrowedCharacter[]; assets: Record<string, string> }> {
   const who = await studioGate();
   if (!who) return { list: [], assets: {} };
   const service = coffeedServiceClient();
 
-  const { data: me } = await service.from("coffeed_rts_projects").select("series_id").eq("id", projectId).maybeSingle();
-  if (!me?.series_id) return { list: [], assets: {} };
-
-  const { data: set } = await service.from("coffeed_rts_series").select("video_ids").eq("id", me.series_id).maybeSingle();
-  const siblings = ((set?.video_ids as string[] | null) ?? []).filter((id) => id !== projectId);
-  if (!siblings.length) return { list: [], assets: {} };
-
-  const { data: rows } = await service.from("coffeed_rts_projects").select("id, title, doc").in("id", siblings);
   const list: BorrowedCharacter[] = [];
-  for (const r of (rows ?? []) as { id: string; title: string; doc: unknown }[]) {
-    for (const c of hydrateDoc(r.doc).characters) list.push({ videoId: r.id, videoTitle: r.title, character: c });
+  for (const r of await siblingDocs(service, projectId)) {
+    for (const c of r.doc.characters) list.push({ videoId: r.id, videoTitle: r.title, character: c });
   }
   return { list, assets: await signAll(service, list.flatMap((b) => [b.character.pics?.profile, b.character.pics?.body, b.character.pics?.detail].filter(Boolean) as string[])) };
+}
+
+/** Escenarios y props prestados. Un escenario viaja CON los objetos que tiene
+ *  puestos: importar una bodega sin su mesa no traería el decorado, que es lo
+ *  único que hacía útil importarla. */
+export async function seriesSets(projectId: string): Promise<{ escenarios: BorrowedEscenario[]; props: BorrowedProp[] }> {
+  const who = await studioGate();
+  if (!who) return { escenarios: [], props: [] };
+  const service = coffeedServiceClient();
+
+  const escenarios: BorrowedEscenario[] = [];
+  const props: BorrowedProp[] = [];
+  for (const r of await siblingDocs(service, projectId)) {
+    for (const e of r.doc.escenarios) {
+      escenarios.push({
+        videoId: r.id,
+        videoTitle: r.title,
+        escenario: e,
+        props: e.props.map((pl) => r.doc.props.find((x) => x.id === pl.propId)).filter(Boolean) as Prop[],
+      });
+    }
+    for (const p of r.doc.props) props.push({ videoId: r.id, videoTitle: r.title, prop: p });
+  }
+  return { escenarios, props };
 }
 
 /* ─────────────────────────── barajas y series ─────────────────────────── */
@@ -602,6 +641,20 @@ export async function renderTake(input: { projectId: string; takeId: string; fra
   const n = Math.min(Math.max(Math.round(input.frames) || FRAMES_PER_TAKE.def, FRAMES_PER_TAKE.min), FRAMES_PER_TAKE.max);
   const service = coffeedServiceClient();
 
+  // La instantánea de la toma viaja CON el trabajo. Es lo que impide que la
+  // tira de fotogramas mienta en cuanto se toca un mando: cada revelado
+  // recuerda con qué cámara se hizo, y se puede volver a él.
+  const escenario = scene.escenarioId ? project.escenarios.find((e) => e.id === scene.escenarioId) : null;
+  const config: RenderConfig = {
+    cam: { ...take.cam },
+    treatment: take.treatment,
+    marks: marksOf(take),
+    cast: [...take.cast],
+    dur: take.dur,
+    escenarioId: scene.escenarioId,
+    escenarioName: escenario?.name ?? null,
+  };
+
   const { data: job, error: jobErr } = await service
     .from("coffeed_rts_renders")
     .insert({
@@ -611,6 +664,7 @@ export async function renderTake(input: { projectId: string; takeId: string; fra
       state: "rendering",
       provider: "previs",
       requested_by: who.userId,
+      config,
     })
     .select("id")
     .single();
@@ -620,12 +674,13 @@ export async function renderTake(input: { projectId: string; takeId: string; fra
   const deck = project.deckId ? await readDeck(service, project.deckId) : null;
   const sceneNo = project.scenes.findIndex((s) => s.id === scene.id) + 1;
   const times = frameTimes(take.dur, n);
+  const props = stageProps(project, scene, take);
 
   try {
     const frames = [];
     for (let i = 0; i < times.length; i++) {
       const prompt = framePrompt({ project, scene, take, deck, n: i + 1, frames: n });
-      const svg = previsFrame({ project, scene, take, deck, n: i + 1, frames: n, at: times[i], sceneNo });
+      const svg = previsFrame({ project, scene, take, deck, props, n: i + 1, frames: n, at: times[i], sceneNo });
       const path = `${ROOT}/${project.id}/frames/${jobId}/${String(i + 1).padStart(2, "0")}.svg`;
       const { error } = await service.storage.from(BUCKET).upload(path, new Blob([svg], { type: "image/svg+xml" }), {
         contentType: "image/svg+xml",
@@ -646,7 +701,7 @@ export async function renderTake(input: { projectId: string; takeId: string; fra
         prompt: framePrompt({ project, scene, take, deck, n: 1, frames: 1 }),
       })
       .eq("id", jobId)
-      .select("id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at")
+      .select(RENDER_COLS)
       .single();
     if (error || !done) throw new Error(error?.message ?? "No se pudo cerrar el trabajo.");
     return { ok: true, data: toRender(done as RenderRow) };
@@ -669,7 +724,7 @@ export async function listRenders(projectId: string): Promise<RenderJob[]> {
   const service = coffeedServiceClient();
   const { data } = await service
     .from("coffeed_rts_renders")
-    .select("id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at")
+    .select(RENDER_COLS)
     .eq("project_id", projectId)
     .order("created_at", { ascending: false })
     .limit(120);
@@ -716,7 +771,7 @@ export async function submitGuion(input: {
     const no = project.scenes.findIndex((x) => x.id === s.id) + 1;
     const take = leadTake(project, s.id);
     const L = sceneLength(takesOfScene(project, s.id));
-    scenes.push({ no, slug: `${s.int}. ${s.location} — ${s.tod}`, synopsis: s.synopsis, duration: L.seconds, provisional: L.provisional });
+    scenes.push({ no, slug: sceneHeading(project, s).slug, synopsis: s.synopsis, duration: L.seconds, provisional: L.provisional });
     const job = take ? renders.find((r) => r.takeId === take.id && r.state === "complete" && r.frames.length) : undefined;
     if (!job) {
       missing.push(`SC${String(no).padStart(2, "0")} ${s.title}`);

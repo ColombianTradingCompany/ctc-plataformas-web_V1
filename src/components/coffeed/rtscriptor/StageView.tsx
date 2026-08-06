@@ -62,13 +62,21 @@ export function StageView({
         {/* Los personajes se pueden pulsar en el propio cuadro para elegirlos:
             señalar a quien quieres mover es más rápido que buscarlo en una lista. */}
         {draw.hits.map((hit) => (
-          <g key={hit.id} style={{ cursor: onSelect ? "pointer" : "default" }} onClick={() => onSelect?.(hit.id)}>
+          <g key={`${hit.kind}-${hit.id}`} style={{ cursor: onSelect ? "pointer" : "default" }} onClick={() => onSelect?.(hit.id)}>
             <circle cx={hit.x} cy={hit.y} r={Math.max(hit.r * 1.9, 16)} fill="transparent" />
             {selected === hit.id && (
               <circle cx={hit.x} cy={hit.y} r={Math.max(hit.r * 1.7, 14)} fill="none" stroke="#4DD0C4" strokeWidth="2" strokeDasharray="4 4" />
             )}
-            <text x={hit.x} y={hit.y - Math.max(hit.r * 1.9, 18)} textAnchor="middle" fontSize={Math.round(draw.h * 0.03)} fill="#EDE9DF" opacity=".75" fontFamily="ui-monospace, monospace">
-              {hit.id}
+            <text
+              x={hit.x}
+              y={hit.y - Math.max(hit.r * 1.9, 18)}
+              textAnchor="middle"
+              fontSize={Math.round(draw.h * (hit.kind === "prop" ? 0.024 : 0.03))}
+              fill="#EDE9DF"
+              opacity={hit.kind === "prop" ? 0.5 : 0.75}
+              fontFamily="ui-monospace, monospace"
+            >
+              {hit.label}
             </text>
           </g>
         ))}

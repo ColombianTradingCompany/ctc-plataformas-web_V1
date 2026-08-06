@@ -16,8 +16,10 @@
 
 /* ───────────────────────────── tipos ───────────────────────────── */
 
+import { CAMERA_DEFAULT, MARK_DEFAULT, SHOTS, applyShot, matchShot, type Camera, type Mark, type Treatment } from "./stage";
+export * from "./stage";
+
 export type TakeStatus = "open" | "held" | "printed" | "ng";
-export type LensMode = "POV" | "Primera persona" | "Tercera" | "Cenital" | "Cámara en mano";
 export type IntExt = "INT" | "EXT";
 
 /** Las tres imágenes de un personaje (nota 3). Guardan RUTAS de Storage; la
@@ -50,12 +52,17 @@ export type Take = {
   no: number;
   status: TakeStatus;
   cast: string[];
-  shot: string;
-  lens: LensMode;
   direction: string;
   /** Segundos. Es LA fuente de la duración: la escena suma, no al revés. */
   dur: number;
-  params: Record<string, number[]> | null;
+  /** La cámara de ESTA toma. Desde la V3.2 los mandos mueven una cámara de
+   *  verdad y el previo se recompone al instante — ver `stage.ts`. */
+  cam: Camera;
+  treatment: Treatment;
+  /** Dónde se planta cada personaje en ESTA toma. Volver a marcar es media
+   *  razón por la que se repite un plano, así que va en la toma, no en la
+   *  escena. Sin entrada = la posición por defecto en fila. */
+  marks: Record<string, Mark>;
 };
 
 export type DialogueLine = { c: string; line?: string; dir?: string };
@@ -139,30 +146,20 @@ export type RenderJob = {
 export const PALETTE = ["#E4472C", "#4DD0C4", "#E0A73C", "#9B8CE8", "#6FBF6A", "#E86FA6", "#7FA8D9", "#C9C6BD"];
 export const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-/** `key` existe para que una propuesta pueda apuntar a un mando por NOMBRE y no
- *  por índice: los presets comparten "lens" y "hold" pero no en la misma
- *  posición mental, y un índice mal contado es un cambio silencioso. */
-export type ShotParam = { key: string; label: string; def: number; unit: string; max: number };
-export type ShotPreset = { key: string; label: string; params: ShotParam[] };
-
-const P = (key: string, label: string, def: number, unit: string, max: number): ShotParam => ({ key, label, def, unit, max });
-
-export const SHOT_PRESETS: ShotPreset[] = [
-  { key: "two", label: "Plano a dos", params: [P("lens", "Óptica", 35, "mm", 135), P("sep", "Separación", 40, "%", 100), P("head", "Aire", 55, "%", 100), P("hold", "Sostener", 4, "s", 12)] },
-  { key: "cu", label: "Primer plano", params: [P("lens", "Óptica", 85, "mm", 135), P("dist", "Distancia", 22, "%", 100), P("eye", "Eje de mirada", 62, "%", 100), P("hold", "Sostener", 3, "s", 12)] },
-  { key: "ots", label: "Sobre el hombro", params: [P("lens", "Óptica", 50, "mm", 135), P("mass", "Masa de hombro", 33, "%", 100), P("split", "Reparto de foco", 70, "%", 100), P("hold", "Sostener", 5, "s", 12)] },
-  { key: "hands", label: "Inserto · manos", params: [P("lens", "Óptica", 60, "mm", 135), P("height", "Altura", 18, "%", 100), P("table", "Luz de mesa", 45, "%", 100), P("hold", "Sostener", 2, "s", 12)] },
-  { key: "eye", label: "Primerísimo · ojo", params: [P("lens", "Óptica", 100, "mm", 135), P("dist", "Distancia", 8, "%", 100), P("catch", "Brillo de ojo", 80, "%", 100), P("hold", "Sostener", 2, "s", 12)] },
-  { key: "clock", label: "Recurso · reloj", params: [P("lens", "Óptica", 40, "mm", 135), P("angle", "Ángulo", 25, "%", 100), P("tick", "Sinc. del tic", 100, "%", 100), P("hold", "Sostener", 3, "s", 12)] },
+/** El estado de una toma, con lo que significa a la vista. Son las cuatro
+ *  palabras de una claqueta y no se explican solas: BUENA es la única que
+ *  cuenta metraje, y esa es toda la razón de que exista la lista. */
+export const STATUSES: { key: TakeStatus; label: string; color: string; hint: string }[] = [
+  { key: "open", label: "Abierta", color: "#8E9793", hint: "Todavía se está montando. Es el estado en el que nace toda toma." },
+  { key: "held", label: "Espera", color: "#E0A73C", hint: "Puede que sirva; se decide más tarde. No cuenta metraje." },
+  { key: "printed", label: "Buena", color: "#6FBF6A", hint: "Ésta es la que va al montaje. SOLO las buenas suman la duración de la escena, y son las que llegan al guion." },
+  { key: "ng", label: "NG", color: "#E4472C", hint: "No sirve («no good»). Se guarda para saber qué se probó, pero no cuenta para nada." },
 ];
 
-export const LENSES: LensMode[] = ["POV", "Primera persona", "Tercera", "Cenital", "Cámara en mano"];
-
-export const STATUSES: { key: TakeStatus; label: string; color: string }[] = [
-  { key: "open", label: "Abierta", color: "#8E9793" },
-  { key: "held", label: "Espera", color: "#E0A73C" },
-  { key: "printed", label: "Buena", color: "#6FBF6A" },
-  { key: "ng", label: "NG", color: "#E4472C" },
+export const TREATMENTS: { key: Treatment; label: string; hint: string }[] = [
+  { key: "normal", label: "Cámara", hint: "Una cámara mirando la escena desde donde la pongas." },
+  { key: "pov", label: "POV", hint: "El cuadro es lo que VE un personaje, no lo que ve una cámara. Se marca con bandas arriba y abajo." },
+  { key: "handheld", label: "En mano", hint: "La cámara no está quieta ni recta: tiembla a lo largo de la toma. El temblor es el mismo cada vez que reveles." },
 ];
 
 export const GRADIENTS = [
@@ -192,19 +189,25 @@ export const slugify = (s: string) =>
   String(s).toLowerCase().normalize("NFD").replace(DIACRITICS, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "video";
 
-export function shotPreset(key: string): ShotPreset {
-  return SHOT_PRESETS.find((p) => p.key === key) ?? SHOT_PRESETS[0];
+/** Cómo se describe la cámara de una toma en una línea, para el guion técnico
+ *  y la claqueta del fotograma. */
+export function camLabel(t: Take): string {
+  const preset = SHOTS.find((s) => {
+    const keys = Object.keys(s.cam) as (keyof Camera)[];
+    return keys.every((k) => Math.abs((t.cam[k] ?? 0) - (s.cam[k] ?? 0)) < 0.5);
+  });
+  const base = preset ? preset.label : `${Math.round(t.cam.dist)}cm · ${t.cam.lens}mm`;
+  const treat = t.treatment === "pov" ? " · POV" : t.treatment === "handheld" ? " · en mano" : "";
+  return base + treat;
 }
 
-/** Los valores vigentes de una toma para su preset actual. */
-export function takeParams(take: Take): number[] {
-  const preset = shotPreset(take.shot);
-  const saved = take.params?.[take.shot];
-  return preset.params.map((p, i) => (typeof saved?.[i] === "number" ? saved[i] : p.def));
-}
-
-export function paramIndex(shot: string, key: string): number {
-  return shotPreset(shot).params.findIndex((p) => p.key === key);
+/** Dónde se planta cada personaje en una toma: lo marcado, y si no, en fila. */
+export function marksOf(take: Take): Record<string, Mark> {
+  const out: Record<string, Mark> = {};
+  take.cast.forEach((id, i) => {
+    out[id] = take.marks?.[id] ?? MARK_DEFAULT(i, take.cast.length);
+  });
+  return out;
 }
 
 /* ─────────────────────── duración derivada (nota 1) ─────────────────────── */
@@ -389,9 +392,9 @@ export function checkTake(p: Project, take: Take | undefined): Flag[] {
 
 export type ProposalOp =
   | { op: "scene.field"; sceneId: string; field: "title" | "int" | "location" | "tod" | "synopsis"; value: string }
-  | { op: "take.lens"; takeId: string; value: LensMode }
+  | { op: "take.treatment"; takeId: string; value: Treatment }
   | { op: "take.shot"; takeId: string; value: string }
-  | { op: "take.param"; takeId: string; shot: string; key: string; value: number }
+  | { op: "take.cam"; takeId: string; key: keyof Camera; value: number }
   | { op: "take.direction"; takeId: string; value: string }
   | { op: "dialogue.set"; takeId: string; lines: DialogueLine[] }
   | { op: "vo.set"; sceneId: string; items: VoiceOver[] };
@@ -444,20 +447,28 @@ export function leadTake(p: Pick<Project, "takes">, sceneId: string): Take | und
   return ts.find((t) => t.status === "printed") ?? ts.find((t) => t.status === "held") ?? ts[0];
 }
 
-const LENS_RULES: { re: RegExp; lens: LensMode }[] = [
-  { re: /\b(c[áa]mara en mano|handheld|al hombro)\b/i, lens: "Cámara en mano" },
-  { re: /\b(pov|punto de vista|subjetiv[oa])\b/i, lens: "POV" },
-  { re: /\b(primera persona|first person)\b/i, lens: "Primera persona" },
-  { re: /\b(cenital|overhead|picad[oa] total|desde arriba)\b/i, lens: "Cenital" },
+const TREAT_RULES: { re: RegExp; t: Treatment }[] = [
+  { re: /\b(c[áa]mara en mano|handheld|al hombro|temblor)\b/i, t: "handheld" },
+  { re: /\b(pov|punto de vista|subjetiv[oa]|primera persona|lo que ve)\b/i, t: "pov" },
 ];
 
+/** Las reglas apuntan a un PRESET, que ahora es una posición de cámara: la
+ *  propuesta mueve la cámara de verdad, no cambia una etiqueta. */
 const SHOT_RULES: { re: RegExp; shot: string }[] = [
   { re: /\b(primer[íi]simo|extremo|el ojo|macro)\b/i, shot: "eye" },
   { re: /\b(primer plano|close[- ]?up|cerrad[oa] sobre)\b/i, shot: "cu" },
   { re: /\b(sobre el hombro|over[- ]?shoulder|ots)\b/i, shot: "ots" },
   { re: /\b(inserto|las manos|detalle de manos)\b/i, shot: "hands" },
-  { re: /\b(recurso|cutaway|el reloj)\b/i, shot: "clock" },
-  { re: /\b(plano a dos|two[- ]?shot|plano general|abiert[oa])\b/i, shot: "two" },
+  { re: /\b(cenital|overhead|desde arriba|a vista de p[áa]jaro)\b/i, shot: "cenital" },
+  { re: /\b(contrapicad[oa]|desde abajo|a ras de suelo)\b/i, shot: "contrapicado" },
+  { re: /\bpicad[oa]\b/i, shot: "picado" },
+  { re: /\b(de espaldas|por detr[áa]s|la nuca)\b/i, shot: "espalda" },
+  { re: /\b(de perfil|su perfil)\b/i, shot: "perfil" },
+  { re: /\b(holand[ée]s|horizonte torcid[oa]|inclinad[oa])\b/i, shot: "holandes" },
+  { re: /\b(plano general|plano abiert[oa]|gran angular de conjunto)\b/i, shot: "general" },
+  { re: /\b(plano americano)\b/i, shot: "americano" },
+  { re: /\b(plano medio)\b/i, shot: "medio" },
+  { re: /\b(plano a dos|two[- ]?shot)\b/i, shot: "two" },
 ];
 
 const VO_MARK = /\(\s*v\.?\s*o\.?\s*\)/i;
@@ -522,61 +533,59 @@ export function deriveProposals(p: Project, draft: SceneDraft[]): Proposal[] {
       });
     }
 
-    // ── inferidas: la prosa de dirección mueve los mandos ──
+    // ── inferidas: la prosa de dirección mueve la CÁMARA ──
     const prose = `${d.direction}\n${d.synopsis}`;
-    const lensHit = LENS_RULES.find((r) => r.re.test(prose));
-    if (lensHit && lensHit.lens !== take.lens) {
+    const treatHit = TREAT_RULES.find((r) => r.re.test(prose));
+    if (treatHit && treatHit.t !== take.treatment) {
       push({
         sceneId: scene.id,
         source: "regla",
-        label: `${name} · punto de vista`,
-        from: take.lens,
-        to: lensHit.lens,
+        label: `${name} · tratamiento`,
+        from: TREATMENTS.find((t) => t.key === take.treatment)?.label ?? take.treatment,
+        to: TREATMENTS.find((t) => t.key === treatHit.t)!.label,
         confidence: 0.72,
-        op: { op: "take.lens", takeId: take.id, value: lensHit.lens },
+        op: { op: "take.treatment", takeId: take.id, value: treatHit.t },
       });
     }
     const shotHit = SHOT_RULES.find((r) => r.re.test(prose));
-    if (shotHit && shotHit.shot !== take.shot) {
+    if (shotHit && matchShot(take.cam) !== shotHit.shot) {
       push({
         sceneId: scene.id,
         source: "regla",
-        label: `${name} · tipo de plano`,
-        from: shotPreset(take.shot).label,
-        to: shotPreset(shotHit.shot).label,
+        label: `${name} · encuadre`,
+        from: camLabel(take),
+        to: SHOTS.find((s) => s.key === shotHit.shot)!.label,
         confidence: 0.7,
         op: { op: "take.shot", takeId: take.id, value: shotHit.shot },
       });
     }
     const mm = prose.match(/\b(\d{2,3})\s*mm\b/);
     if (mm) {
-      const value = Math.min(Number(mm[1]), 135);
-      const i = paramIndex(take.shot, "lens");
-      if (i >= 0 && takeParams(take)[i] !== value) {
+      const value = Math.min(Math.max(Number(mm[1]), 12), 200);
+      if (take.cam.lens !== value) {
         push({
           sceneId: scene.id,
           source: "regla",
           label: `${name} · óptica`,
-          from: `${takeParams(take)[i]}mm`,
+          from: `${take.cam.lens}mm`,
           to: `${value}mm`,
           confidence: 0.9,
-          op: { op: "take.param", takeId: take.id, shot: take.shot, key: "lens", value },
+          op: { op: "take.cam", takeId: take.id, key: "lens", value },
         });
       }
     }
     const hold = beatsToSeconds(prose);
     if (hold !== null) {
-      const i = paramIndex(take.shot, "hold");
       const value = Math.min(hold, 12);
-      if (i >= 0 && takeParams(take)[i] !== value) {
+      if (take.cam.hold !== value) {
         push({
           sceneId: scene.id,
           source: "regla",
           label: `${name} · sostener`,
-          from: `${takeParams(take)[i]}s`,
+          from: `${take.cam.hold}s`,
           to: `${value}s`,
           confidence: 0.75,
-          op: { op: "take.param", takeId: take.id, shot: take.shot, key: "hold", value },
+          op: { op: "take.cam", takeId: take.id, key: "hold", value },
         });
       }
     }
@@ -632,24 +641,14 @@ export function applyProposal(p: Project, op: ProposalOp): Project {
   switch (op.op) {
     case "scene.field":
       return { ...p, scenes: p.scenes.map((s) => (s.id === op.sceneId ? { ...s, [op.field]: op.value } : s)) };
-    case "take.lens":
-      return { ...p, takes: p.takes.map((t) => (t.id === op.takeId ? { ...t, lens: op.value } : t)) };
+    case "take.treatment":
+      return { ...p, takes: p.takes.map((t) => (t.id === op.takeId ? { ...t, treatment: op.value } : t)) };
     case "take.shot":
-      return { ...p, takes: p.takes.map((t) => (t.id === op.takeId ? { ...t, shot: op.value } : t)) };
+      return { ...p, takes: p.takes.map((t) => (t.id === op.takeId ? { ...t, cam: applyShot(t.cam, op.value) } : t)) };
     case "take.direction":
       return { ...p, takes: p.takes.map((t) => (t.id === op.takeId ? { ...t, direction: op.value } : t)) };
-    case "take.param": {
-      const i = paramIndex(op.shot, op.key);
-      if (i < 0) return p;
-      return {
-        ...p,
-        takes: p.takes.map((t) => {
-          if (t.id !== op.takeId) return t;
-          const vals = takeParams(t).map((v, k) => (k === i ? op.value : v));
-          return { ...t, params: { ...(t.params ?? {}), [op.shot]: vals } };
-        }),
-      };
-    }
+    case "take.cam":
+      return { ...p, takes: p.takes.map((t) => (t.id === op.takeId ? { ...t, cam: { ...t.cam, [op.key]: op.value } } : t)) };
     case "dialogue.set":
       return { ...p, dialogue: { ...p.dialogue, [op.takeId]: op.lines } };
     case "vo.set":
@@ -675,29 +674,98 @@ export function framePrompt(input: {
   frames: number;
 }): string {
   const { project, scene, take, deck, n, frames } = input;
-  const preset = shotPreset(take.shot);
-  const vals = takeParams(take);
+  const c = take.cam;
+  const marks = marksOf(take);
   const cast = take.cast
-    .map((cid) => project.characters.find((c) => c.id === cid))
-    .filter(Boolean)
-    .map((c) => `${c!.name} (${c!.role || "sin rol"}${c!.traits.length ? "; " + c!.traits.join(", ") : ""})`);
-  const knobs = preset.params.map((prm, i) => `${prm.label} ${vals[i]}${prm.unit}`).join(", ");
+    .map((cid) => ({ ch: project.characters.find((x) => x.id === cid), m: marks[cid] }))
+    .filter((x) => x.ch)
+    .map(
+      (x) =>
+        `${x.ch!.name} (${x.ch!.role || "sin rol"}${x.ch!.traits.length ? "; " + x.ch!.traits.join(", ") : ""})` +
+        ` a ${Math.round(x.m.x)} cm del eje y ${Math.round(x.m.z)} cm de profundidad`
+    );
+  // La cámara se describe como se describiría a un operador, no como una lista
+  // de campos: es lo que un modelo de imagen sabe leer.
+  const angle =
+    Math.abs(c.orbit) < 25 ? "de frente" : Math.abs(c.orbit) > 150 ? "por detrás" : Math.abs(c.orbit) > 65 ? "de perfil" : "en tres cuartos";
+  const level = c.height <= 60 ? "a ras de suelo, en contrapicado" : c.height >= 400 ? "muy por encima, casi cenital" : c.height >= 220 ? "en picado" : "a la altura de los ojos";
   const beat = frames > 1 ? `Fotograma ${n} de ${frames} — ${Math.round(((n - 1) / (frames - 1)) * 100)}% de la toma.` : "Fotograma único.";
 
   return [
     `${scene.int}. ${scene.location} — ${scene.tod}.`,
     scene.synopsis,
-    `Plano: ${preset.label}. Punto de vista: ${take.lens}. ${knobs}.`,
+    `Encuadre: ${camLabel(take)}. Cámara ${angle}, ${level}, a ${Math.round(c.dist)} cm del sujeto, óptica de ${c.lens} mm` +
+      `${Math.abs(c.roll) >= 4 ? `, horizonte inclinado ${Math.round(c.roll)}°` : ""}${Math.abs(c.pan) >= 6 ? `, sujeto descentrado ${Math.round(c.pan)}°` : ""}.`,
+    take.treatment === "pov" ? "Es un plano subjetivo: el cuadro es lo que ve el personaje." : "",
+    take.treatment === "handheld" ? "Cámara en mano: encuadre inestable, horizonte vivo." : "",
     cast.length ? `En cuadro: ${cast.join(" · ")}.` : "Sin nadie en cuadro.",
     take.direction ? `Dirección: ${take.direction.replace(/\s+/g, " ").trim()}` : "",
     deck ? `Estilo: ${deck.name}${deck.descriptors.length ? " — " + deck.descriptors.join(", ") : ""}${deck.palette.length ? ". Paleta: " + deck.palette.join(" ") : ""}.` : "",
-    `Relación de aspecto ${project.aspect}. ${beat}`,
+    `Relación de aspecto ${project.aspect}. Sostener ${c.hold} s. ${beat}`,
   ]
     .filter(Boolean)
     .join("\n");
 }
 
 /* ───────────────────────────── proyecto vacío ───────────────────────────── */
+
+/** Antes de la V3.2 una toma guardaba `shot` (una etiqueta), `lens` (un modo) y
+ *  `params` (cuatro números por preset). Ahora guarda una CÁMARA. Esto traduce
+ *  lo viejo en vez de tirarlo: un proyecto guardado ayer se abre hoy en la
+ *  posición de cámara equivalente, no en la de por defecto. */
+type LegacyTake = Partial<Take> & { shot?: string; lens?: string; params?: Record<string, number[]> | null };
+
+const LEGACY_SHOT: Record<string, string> = { two: "two", cu: "cu", ots: "ots", hands: "hands", eye: "eye", clock: "medio" };
+
+function migrateTake(raw: LegacyTake): Take {
+  const t = raw as Take;
+  if (t.cam && typeof t.cam.dist === "number") {
+    return { ...t, cast: t.cast ?? [], dur: typeof t.dur === "number" ? t.dur : 45, marks: t.marks ?? {}, treatment: t.treatment ?? "normal" };
+  }
+
+  let cam = applyShot(CAMERA_DEFAULT, LEGACY_SHOT[raw.shot ?? "two"] ?? "two");
+  let treatment: Treatment = "normal";
+  if (raw.lens === "POV" || raw.lens === "Primera persona") treatment = "pov";
+  else if (raw.lens === "Cámara en mano") treatment = "handheld";
+  else if (raw.lens === "Cenital") cam = applyShot(cam, "cenital");
+
+  // Los dos únicos números viejos que significaban lo mismo que ahora.
+  const vals = raw.params?.[raw.shot ?? "two"];
+  if (Array.isArray(vals)) {
+    if (typeof vals[0] === "number" && vals[0] >= 12) cam = { ...cam, lens: Math.min(vals[0], 200) };
+    if (typeof vals[3] === "number") cam = { ...cam, hold: Math.min(Math.max(vals[3], 0), 12) };
+  }
+
+  return {
+    id: t.id,
+    sceneId: t.sceneId,
+    no: t.no,
+    status: t.status ?? "open",
+    cast: t.cast ?? [],
+    direction: t.direction ?? "",
+    dur: typeof t.dur === "number" ? t.dur : 45,
+    cam,
+    treatment,
+    marks: t.marks ?? {},
+  };
+}
+
+export function newTake(input: { id: string; sceneId: string; no: number; cast: string[]; dur: number; from?: Take }): Take {
+  return {
+    id: input.id,
+    sceneId: input.sceneId,
+    no: input.no,
+    status: "open",
+    cast: input.cast,
+    direction: "",
+    dur: input.dur,
+    // Una toma nueva hereda la cámara de la anterior: cubrir una escena es
+    // variar sobre lo que ya está puesto, no volver a montar el trípode.
+    cam: input.from ? { ...input.from.cam } : { ...CAMERA_DEFAULT },
+    treatment: input.from?.treatment ?? "normal",
+    marks: input.from ? { ...input.from.marks } : {},
+  };
+}
 
 export function emptyDoc(): ProjectDoc {
   return { characters: [], scenes: [], storylines: [], takes: [], dialogue: {}, voiceovers: {} };
@@ -719,7 +787,7 @@ export function hydrateDoc(raw: unknown): ProjectDoc {
     })),
     scenes: (d.scenes ?? []).map((s) => ({ ...s, cast: s.cast ?? [], synopsis: s.synopsis ?? "" })),
     storylines: (d.storylines ?? []).map((s) => ({ ...s, cast: s.cast ?? [], sceneIds: s.sceneIds ?? [], keys: s.keys ?? {} })),
-    takes: (d.takes ?? []).map((t) => ({ ...t, cast: t.cast ?? [], dur: typeof t.dur === "number" ? t.dur : 45, params: t.params ?? null })),
+    takes: (d.takes ?? []).map(migrateTake),
     dialogue: d.dialogue ?? {},
     voiceovers: d.voiceovers ?? {},
   };

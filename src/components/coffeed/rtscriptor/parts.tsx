@@ -9,27 +9,51 @@ import { useRef, useState } from "react";
 import { uploadRtsImage } from "@/lib/coffeed/rtScriptorActions";
 import { PALETTE, tc, type Character, type CharPics, type ProjectCard } from "./model";
 
-export function Info({ title, text, side = "left" }: { title: string; text: string; side?: "left" | "right" }) {
+/** El globo de ayuda. Se VOLTEA solo cuando no cabe: en la V3.1 los de la
+ *  columna derecha se salían de la pantalla y había que acordarse de pasarles
+ *  `side="right"` a mano — es decir, se olvidaba. Ahora se mide al abrir. */
+export function Info({ title, text, side }: { title: string; text: string; side?: "left" | "right" }) {
   const [open, setOpen] = useState(false);
+  const [flip, setFlip] = useState<"left" | "right">(side ?? "left");
+  const ref = useRef<HTMLButtonElement>(null);
+
+  const toggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!open && !side) {
+      const r = ref.current?.getBoundingClientRect();
+      // 290 = el ancho del globo más un respiro. Si no cabe a la derecha, se
+      // ancla por el otro lado.
+      setFlip(r && r.left + 290 > window.innerWidth ? "right" : "left");
+    }
+    setOpen((o) => !o);
+  };
+
   return (
     <span className="rt-infowrap">
-      <button
-        type="button"
-        className="rt-info"
-        aria-label={`Sobre ${title}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((o) => !o);
-        }}
-      >
+      <button type="button" ref={ref} className="rt-info" aria-label={`Sobre ${title}`} onClick={toggle}>
         i
       </button>
       {open && (
-        <span className="rt-pop" data-side={side} onClick={(e) => e.stopPropagation()}>
+        <span className="rt-pop" data-side={side ?? flip} onClick={(e) => e.stopPropagation()}>
           <b>{title}</b>
           {text}
         </span>
       )}
+    </span>
+  );
+}
+
+/** El indicador de «está pasando algo». Existe porque sin él un botón
+ *  deshabilitado no comunica nada y se vuelve a hacer clic — la misma lección
+ *  que dejó escrita Coffeed con su aviso de «Trabajando». */
+export function Spinner({ label }: { label?: string }) {
+  return (
+    <span className="rt-spin">
+      <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+        <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="2" opacity=".25" />
+        <path d="M8 2 a6 6 0 0 1 6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+      {label && <span>{label}…</span>}
     </span>
   );
 }
@@ -205,7 +229,7 @@ export function PicSlots({
                 style={{ position: "absolute", inset: 0, background: "none", border: 0, padding: 0, cursor: "pointer" }}
                 aria-label={`Subir ${s.label.toLowerCase()}`}
               >
-                {url ? <img src={url} alt={s.label} /> : <i>{busy === s.key ? "…" : "+"}</i>}
+                {url ? <img src={url} alt={s.label} /> : busy === s.key ? <Spinner /> : <i>+</i>}
               </button>
               <u>{s.label}</u>
             </div>

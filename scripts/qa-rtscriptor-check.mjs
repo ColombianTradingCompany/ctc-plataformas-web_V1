@@ -23,7 +23,18 @@ const check = (name, cond) => {
   }
 };
 
-const take = (o) => ({ id: o.id, sceneId: o.sceneId, no: o.no ?? 1, status: o.status ?? "open", cast: o.cast ?? ["A"], shot: o.shot ?? "two", lens: o.lens ?? "Tercera", direction: o.direction ?? "", dur: o.dur ?? 30, params: o.params ?? null });
+const take = (o) => ({
+  id: o.id,
+  sceneId: o.sceneId,
+  no: o.no ?? 1,
+  status: o.status ?? "open",
+  cast: o.cast ?? ["A"],
+  direction: o.direction ?? "",
+  dur: o.dur ?? 30,
+  cam: { ...m.CAMERA_DEFAULT, ...(o.shot ? m.applyShot(m.CAMERA_DEFAULT, o.shot) : {}), ...(o.cam ?? {}) },
+  treatment: o.treatment ?? "normal",
+  marks: o.marks ?? {},
+});
 
 const P = {
   id: "p1", slug: "p1", title: "Prueba", code: "PR", aspect: "16:9", seriesId: null, deckId: null, updatedAt: "",
@@ -82,12 +93,12 @@ check("la toma que representa la escena es la BUENA", m.leadTake(P, "s1").id ===
 // justo eso eligiendo un número distinto del que ya hay.
 const d2 = draft.map((d) => (d.sceneId === "s1" ? { ...d, direction: "Cámara en mano, cerrada sobre sus manos. 85mm. Sostener cuatro tiempos." } : d));
 const props = m.deriveProposals(P, d2);
-const has = (op, to) => props.some((p) => p.op.op === op && (to === undefined || String(p.to) === String(to)));
-check("«cámara en mano» → punto de vista", has("take.lens", "Cámara en mano"));
+const has = (op) => props.some((p) => p.op.op === op);
+check("«cámara en mano» → tratamiento", props.some((p) => p.op.op === "take.treatment" && p.op.value === "handheld"));
 check("«cerrada sobre» → primer plano", props.some((p) => p.op.op === "take.shot" && p.op.value === "cu"));
-check("«85mm» → óptica", props.some((p) => p.op.op === "take.param" && p.op.key === "lens" && p.op.value === 85));
-check("«sostener cuatro tiempos» → 8 s", props.some((p) => p.op.op === "take.param" && p.op.key === "hold" && p.op.value === 8));
-check("un valor que ya está NO se propone", m.deriveProposals(P, draft.map((d) => (d.sceneId === "s1" ? { ...d, direction: "Sostener dos tiempos." } : d))).every((p) => !(p.op.op === "take.param" && p.op.key === "hold")));
+check("«85mm» → óptica", props.some((p) => p.op.op === "take.cam" && p.op.key === "lens" && p.op.value === 85));
+check("«sostener cuatro tiempos» → 8 s", props.some((p) => p.op.op === "take.cam" && p.op.key === "hold" && p.op.value === 8));
+check("un valor que ya está NO se propone", m.deriveProposals(P, draft.map((d) => (d.sceneId === "s1" ? { ...d, direction: "Sostener cuatro segundos." } : d))).every((p) => !(p.op.op === "take.cam" && p.op.key === "hold")));
 check("la dirección literal también se propone", has("take.direction"));
 check("todas las propuestas de regla vienen etiquetadas", props.every((p) => p.source === "regla"));
 
@@ -97,10 +108,11 @@ check("un borrador idéntico no propone nada", m.deriveProposals(P, draft).lengt
 // Aplicar es puro y no toca lo que no le toca.
 let applied = P;
 for (const p of props) applied = m.applyProposal(applied, p.op);
-check("aplicar cambió el punto de vista de t1", applied.takes.find((t) => t.id === "t1").lens === "Cámara en mano");
-check("aplicar dejó t4 intacta", applied.takes.find((t) => t.id === "t4").lens === "Tercera");
-check("aplicar no tocó el original", P.takes.find((t) => t.id === "t1").lens === "Tercera");
-check("la óptica quedó guardada por plano", m.takeParams(applied.takes.find((t) => t.id === "t1"))[m.paramIndex("cu", "lens")] !== undefined);
+check("aplicar cambió el tratamiento de t1", applied.takes.find((t) => t.id === "t1").treatment === "handheld");
+check("aplicar dejó t4 intacta", applied.takes.find((t) => t.id === "t4").treatment === "normal");
+check("aplicar no tocó el original", P.takes.find((t) => t.id === "t1").treatment === "normal");
+check("la óptica quedó en la cámara", applied.takes.find((t) => t.id === "t1").cam.lens === 85);
+check("el encuadre movió la cámara de verdad", applied.takes.find((t) => t.id === "t1").cam.dist === m.SHOTS.find((s) => s.key === "cu").cam.dist);
 
 // Una línea marcada (V.O.) sale del diálogo y entra en la voz en off.
 const withDlg = { ...P, dialogue: { t1: [{ c: "A", line: "Hola." }] } };
@@ -113,11 +125,73 @@ const pv = m.deriveProposals(withDlg, dv);
 check("la línea (V.O.) se propone como voz en off", pv.some((p) => p.op.op === "vo.set" && p.op.items.some((i) => i.text === "Yo ya no estaba.")));
 check("y NO se queda en el diálogo", pv.some((p) => p.op.op === "dialogue.set" && p.op.lines.length === 2 && p.op.lines.every((l) => !l.line.includes("V.O."))));
 
-/* ── hidratación defensiva ───────────────────────────────────────────────── */
-const old = m.hydrateDoc({ characters: [{ id: "A", name: "Ana", role: "", bio: "", color: "#fff" }], takes: [{ id: "t", sceneId: "s", no: 1, status: "open", shot: "two", lens: "Tercera", direction: "" }] });
+/* ── hidratación defensiva y migración de la cámara (V3.1 → V3.2) ────────── */
+const old = m.hydrateDoc({
+  characters: [{ id: "A", name: "Ana", role: "", bio: "", color: "#fff" }],
+  takes: [
+    { id: "t", sceneId: "s", no: 1, status: "open", shot: "cu", lens: "Cámara en mano", direction: "", params: { cu: [110, 20, 60, 6] } },
+    { id: "u", sceneId: "s", no: 2, status: "open", shot: "two", lens: "Cenital", direction: "" },
+  ],
+});
 check("un personaje viejo gana sus tres huecos de foto", old.characters[0].pics.profile === null && "detail" in old.characters[0].pics);
 check("una toma vieja gana una duración por defecto", old.takes[0].dur === 45);
 check("hydrateDoc rellena las colecciones que faltan", Array.isArray(old.scenes) && typeof old.voiceovers === "object");
+check("el `shot` viejo se traduce a una posición de cámara", old.takes[0].cam.dist === m.SHOTS.find((s) => s.key === "cu").cam.dist);
+check("el modo «Cámara en mano» pasa a tratamiento", old.takes[0].treatment === "handheld");
+check("la óptica guardada sobrevive a la migración", old.takes[0].cam.lens === 110);
+check("el sostener guardado sobrevive", old.takes[0].cam.hold === 6);
+check("el modo «Cenital» pasa a ser un encuadre", old.takes[1].cam.height === m.SHOTS.find((s) => s.key === "cenital").cam.height);
+check("una toma ya migrada no se vuelve a migrar", m.hydrateDoc({ takes: [old.takes[0]] }).takes[0].cam.lens === 110);
+
+/* ── la cámara ───────────────────────────────────────────────────────────── */
+const camOf = (o) => ({ ...m.CAMERA_DEFAULT, ...o });
+const stageOf = (cam, actors = [{ id: "A", color: "#E4472C", mark: { x: 0, z: 0 }, height: 172 }], treatment = "normal") =>
+  m.composeStage({ cam, treatment, actors, props: [], palette: { sky: "#1B2A33", ground: "#141A1B", ink: "#C9C6BD" }, aspect: "16:9", width: 640 });
+
+// El encuadre por defecto: la cámara APUNTA al pecho, así que el pecho cae en
+// el centro y la cabeza queda por encima. Sin esta comprobación un signo
+// cambiado en la inclinación pasa por «le falta encuadre» y no por un bug.
+const framed = stageOf(camOf({ dist: 340, height: 160, lens: 35 }));
+check("el sujeto queda dentro del cuadro", framed.hits[0].x > 0 && framed.hits[0].x < framed.w && framed.hits[0].y > 0 && framed.hits[0].y < framed.h);
+check("la cabeza cae por encima del centro", framed.hits[0].y < framed.h / 2);
+check("y el sujeto está centrado horizontalmente", Math.abs(framed.hits[0].x - framed.w / 2) < 1);
+// Inclinar la cámara HACIA ABAJO deja al sujeto por encima del eje óptico, así
+// que sube en el cuadro. Es contraintuitivo al escribirlo y por eso se fija.
+check("inclinar hacia abajo sube al sujeto en el cuadro", stageOf(camOf({ dist: 340, height: 160, lens: 35, tilt: -20 })).hits[0].y < framed.hits[0].y);
+check("inclinar hacia arriba lo baja", stageOf(camOf({ dist: 340, height: 160, lens: 35, tilt: 20 })).hits[0].y > framed.hits[0].y);
+check("subir la cámara sin tocar nada más mantiene al sujeto encuadrado", (() => {
+  const s = stageOf(camOf({ dist: 340, height: 420, lens: 35 })).hits[0];
+  return s.y > 0 && s.y < 720 * 0.9;
+})());
+
+const near = stageOf(camOf({ dist: 120 })).hits[0];
+const far = stageOf(camOf({ dist: 900 })).hits[0];
+check("acercarse agranda al sujeto", near.r > far.r * 2);
+
+const front = stageOf(camOf({ orbit: 0 })).hits[0];
+const side = stageOf(camOf({ orbit: 90, dist: 320 })).hits[0];
+check("orbitar no cambia el tamaño de quien está en el centro", Math.abs(front.r - side.r) < 0.5);
+
+const twoA = stageOf(camOf({ orbit: 0, dist: 320 }), [
+  { id: "A", color: "#E4472C", mark: { x: -80, z: 0 }, height: 172 },
+  { id: "B", color: "#4DD0C4", mark: { x: 80, z: 0 }, height: 172 },
+]);
+const twoB = stageOf(camOf({ orbit: 90, dist: 320 }), [
+  { id: "A", color: "#E4472C", mark: { x: -80, z: 0 }, height: 172 },
+  { id: "B", color: "#4DD0C4", mark: { x: 80, z: 0 }, height: 172 },
+]);
+const spread = (s) => Math.abs(s.hits[0].x - s.hits[1].x);
+check("de perfil, dos personas en línea se solapan", spread(twoB) < spread(twoA) / 3);
+
+check("un tele encuadra más cerrado que un angular", stageOf(camOf({ lens: 135 })).hits[0].r > stageOf(camOf({ lens: 18 })).hits[0].r * 3);
+check("la rodadura avisa", stageOf(camOf({ roll: 20 })).notes.some((n) => n.includes("torcido")));
+check("el POV pone bandas", stageOf(camOf({}), undefined, "pov").prims.filter((p) => p.k === "rect").length >= 3);
+check("el desvío saca al sujeto del centro", Math.abs(stageOf(camOf({ pan: 40 })).hits[0].x - 320) > 80);
+check("un preset es una posición de cámara", m.applyShot(m.CAMERA_DEFAULT, "cenital").height === 620);
+check("matchShot reconoce el preset aplicado", m.matchShot(m.applyShot(m.CAMERA_DEFAULT, "ots")) === "ots");
+check("y deja de reconocerlo si mueves un mando", m.matchShot({ ...m.applyShot(m.CAMERA_DEFAULT, "ots"), dist: 999 }) === null);
+check("la cámara en mano tiembla de forma DETERMINISTA", JSON.stringify(stageOf(camOf({}), undefined, "handheld").prims) === JSON.stringify(stageOf(camOf({}), undefined, "handheld").prims));
+check("y de verdad tiembla", JSON.stringify(stageOf(camOf({}), undefined, "handheld").prims) !== JSON.stringify(stageOf(camOf({}), undefined, "normal").prims));
 
 /* ── nota 6 · fotogramas ─────────────────────────────────────────────────── */
 check("frameTimes reparte e incluye los extremos", JSON.stringify(frameTimes(60, 4)) === JSON.stringify([0, 20, 40, 60]));
@@ -129,12 +203,25 @@ check("el fotograma es un SVG", svg.startsWith("<svg") && svg.endsWith("</svg>")
 check("lleva quemado el pie de escena", svg.includes("PATIO DE SECADO"));
 check("lleva el timecode del instante", svg.includes("00:20"));
 check("usa la paleta de la baraja", svg.includes("#7A5B34"));
-check("lleva un cuadrito por personaje en cuadro", svg.includes(">A<") && svg.includes(">B<"));
+
+// Lo que de verdad importa de la unificación: el archivo revelado y el cuadro
+// que se ve en la app salen de la MISMA composición.
+const live = m.composeStage({
+  cam: P.takes[0].cam,
+  treatment: P.takes[0].treatment,
+  actors: P.takes[0].cast.map((cid, i) => ({ id: cid, color: P.characters.find((c) => c.id === cid).color, mark: m.MARK_DEFAULT(i, P.takes[0].cast.length), height: 172 })),
+  props: [],
+  palette: { ground: deck.palette[0], sky: deck.palette[1], ink: deck.palette[2] },
+  aspect: P.aspect,
+  phase: 1 / 3,
+});
+check("el fotograma revelado ES el cuadro de la app", svg.includes(live.prims.filter((p) => p.k === "poly").length ? live.prims.find((p) => p.k === "poly").pts[0][0].toFixed(1) : ""));
 
 const prompt = m.framePrompt({ project: P, scene: P.scenes[0], take: P.takes[0], deck, n: 1, frames: 1 });
-check("el prompt nombra el plano y el punto de vista", prompt.includes("Plano a dos") && prompt.includes("Tercera"));
+check("el prompt describe la cámara en palabras", prompt.includes("Cámara de frente") || prompt.includes("de frente"));
+check("el prompt lleva la óptica y la distancia", prompt.includes("mm") && prompt.includes("cm del sujeto"));
 check("el prompt lleva la baraja", prompt.includes("Patio y sol") && prompt.includes("luz dura"));
-check("el prompt nombra a quien está en cuadro", prompt.includes("Ana") && prompt.includes("Beto"));
+check("el prompt nombra a quien está en cuadro y dónde", prompt.includes("Ana") && prompt.includes("Beto") && prompt.includes("profundidad"));
 
 /* ── muestras para mirar ─────────────────────────────────────────────────── */
 const outArg = process.argv.indexOf("--out");
@@ -142,10 +229,14 @@ if (outArg > -1 && process.argv[outArg + 1]) {
   const dir = process.argv[outArg + 1];
   mkdirSync(dir, { recursive: true });
   const samples = [
-    ["01-plano-a-dos", P.takes[0]],
-    ["02-primer-plano", take({ id: "z1", sceneId: "s1", shot: "cu", lens: "Tercera", cast: ["A"], dur: 30 })],
-    ["03-camara-en-mano-ots", take({ id: "z2", sceneId: "s1", shot: "ots", lens: "Cámara en mano", cast: ["A", "B"], dur: 30 })],
-    ["04-cenital", take({ id: "z3", sceneId: "s1", shot: "two", lens: "Cenital", cast: ["A", "B"], dur: 30 })],
+    ["01-a-dos", take({ id: "z0", sceneId: "s1", shot: "two", cast: ["A", "B"], dur: 30 })],
+    ["02-primer-plano", take({ id: "z1", sceneId: "s1", shot: "cu", cast: ["A"], dur: 30 })],
+    ["03-sobre-el-hombro-en-mano", take({ id: "z2", sceneId: "s1", shot: "ots", treatment: "handheld", cast: ["A", "B"], dur: 30 })],
+    ["04-cenital", take({ id: "z3", sceneId: "s1", shot: "cenital", cast: ["A", "B"], dur: 30 })],
+    ["05-contrapicado", take({ id: "z4", sceneId: "s1", shot: "contrapicado", cast: ["A", "B"], dur: 30 })],
+    ["06-general-angular", take({ id: "z5", sceneId: "s1", shot: "general", cast: ["A", "B"], dur: 30, marks: { A: { x: -150, z: 120 }, B: { x: 160, z: -90 } } })],
+    ["07-perfil-tele", take({ id: "z6", sceneId: "s1", shot: "perfil", cam: { lens: 135 }, cast: ["A", "B"], dur: 30 })],
+    ["08-holandes-pov", take({ id: "z7", sceneId: "s1", shot: "holandes", treatment: "pov", cast: ["A", "B"], dur: 30 })],
   ];
   samples.forEach(([name, t], i) => {
     writeFileSync(join(dir, `${name}.svg`), previsFrame({ project: P, scene: P.scenes[0], take: t, deck, n: i + 1, frames: 4, at: i * 13, sceneNo: 1 }));

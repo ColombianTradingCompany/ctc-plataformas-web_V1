@@ -148,3 +148,69 @@ Contexto abierto al cerrar V27:
   trilla») para que el taller no se abra vacío. Se borra desde la sala.
 - APP_VERSION 3.0 → 3.1.
 (commit: ebf4261)
+
+## [2026-08-06] RT-Scriptor V3.2 · el «Ajuste de cámara» ahora ajusta la cámara
+- **EL BUG DE FONDO DE LA V3.1**: los mandos no movían nada. Escribían números
+  en la toma, el previo de la app era un dibujo decorativo fijo, y el servidor
+  componía el fotograma con OTRA rutina distinta. Tres representaciones de la
+  misma toma y ninguna de acuerdo. El owner lo dijo en una línea: «lo que se
+  selecciona tiene que traducirse al espacio de la toma».
+- **`components/coffeed/rtscriptor/stage.ts` (NUEVO)** — módulo puro con una
+  cámara ESTENOPEICA de verdad sobre un espacio en centímetros: personajes de
+  pie sobre un suelo, proyección en perspectiva, sensor de 36 mm para que los
+  milímetros de óptica signifiquen lo que significan. Mandos: órbita,
+  distancia, altura, punto de mira, inclinación, desvío, rodadura, óptica y
+  sostener. Devuelve PRIMITIVAS, no SVG.
+- **Una sola composición para los dos lados**: la app pinta las primitivas como
+  elementos de React (`StageView.tsx`, se recompone mientras arrastras) y el
+  servidor las serializa a archivo (`stageToSvg`). «Acción» dejó de ser «genera
+  algo parecido» y pasó a ser **congelar el cuadro que estás mirando**.
+  Concepto para el DICT: **espacio de la toma**.
+- **Los presets pasaron de 6 dibujos a 14 POSICIONES DE CÁMARA** (general, a
+  dos, americano, medio, primer plano, primerísimo, sobre el hombro, perfil, de
+  espaldas, contrapicado, picado, cenital, inserto·manos, holandés). Un preset
+  ya no es una rutina: planta la cámara y a partir de ahí los mandos siguen
+  vivos. `matchShot` apaga el chip en cuanto te separas — la señal de que el
+  encuadre ya es tuyo. La UI adelgazó: los seis mosaicos grandes son ahora una
+  fila de chips y una rejilla densa de mandos.
+- **`lens` (5 modos) se partió en dos conceptos que estaban mezclados**: la
+  POSICIÓN es la cámara (cenital y primera persona eran posiciones) y el
+  TRATAMIENTO es qué es el plano — Cámara / POV / En mano. El temblor de la
+  cámara en mano es determinista: revelar dos veces da el mismo tablero.
+- **Personajes con MARCA en el suelo** (`Take.marks`, x/z en cm). Se eligen
+  pulsándolos en el propio cuadro y se mueven con dos mandos. La marca es de la
+  TOMA, porque volver a marcar es media razón por la que se repite un plano.
+- **DOS BUGS DE MATEMÁTICAS cazados por las pruebas, no a ojo**: (1) la matriz
+  de guiñada tenía los signos invertidos y a 45° de órbita el mundo caía detrás
+  de la cámara — los puntos se iban a cuarenta millones de píxeles; (2) la
+  inclinación usaba `-pitch` donde tocaba `+pitch` y el sujeto se caía por
+  debajo del borde inferior, que a simple vista parece «le falta encuadre» y no
+  un signo cambiado. Las dos las fijó una comprobación de invariantes
+  («orbitar no cambia el tamaño de quien está en el centro», «el pecho cae en
+  el centro»). Tercer arreglo: los presets no deben llevar `tilt` encima de lo
+  que ya hace la altura — el cenital se volcaba del todo y salía el cuadro
+  vacío; y el grosor de trazo se topa, que en un primer plano era una brocha de
+  40 px.
+- **Punto de mira** (`aim`): mando nuevo y necesario — sin él un primer plano
+  encuadraba el pecho y se comía la cabeza.
+- **Los cuatro estados de la toma, explicados en pantalla**: el owner dijo «no
+  entiendo Abierta, Espera, Buena, NG, Acción». Ahora llevan encabezado
+  («Estado de la toma»), `title` en cada botón y un popover que dice lo que
+  importa: **BUENA es la única que cuenta metraje**, y Acción es el verbo.
+- **Cuatro arreglos pedidos**: crear un personaje SIN salir de la mesa (entra
+  de una vez en la escena y en la toma abierta); indicadores de carga en cada
+  subida y cada acción larga (`Spinner`); la duración de la toma arranca en 1 s
+  (era 5); e **importar un personaje de otro vídeo de la MISMA serie**
+  (`seriesCharacters`) — copia la ficha, no la enlaza, porque un personaje
+  cambia entre episodios.
+- El globo de ayuda se voltea solo cuando no cabe: en la V3.1 los de la columna
+  derecha se salían de la pantalla y había que acordarse de un prop a mano.
+- Migración silenciosa: `migrateTake` traduce las tomas viejas (shot + lens +
+  params) a la cámara equivalente. Un proyecto guardado ayer se abre hoy en su
+  sitio, no en el de por defecto. Cubierto por pruebas.
+- Guardián `qa-rtscriptor-check.mjs`: de 41 a **67 comprobaciones**, con un
+  bloque nuevo de invariantes de cámara. APP_VERSION 3.1 → 3.2.
+- **PENDIENTE del encargo del owner y NO hecho todavía**: la pestaña
+  «Escenarios» que sustituye a Localización, y la fase 2 de imagen real por
+  Make (Gemini + Canva). Ver docs/PROXIMA_SESION.md.
+(commit: pending)

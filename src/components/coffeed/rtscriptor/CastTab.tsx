@@ -9,8 +9,9 @@
 // una figura dibujada: la fila de reparto, los chips de la toma y la columna de
 // la escena. Es lo que convierte una letra en una cara.
 
-import { useState } from "react";
-import { Field, Info, PicSlots, Portrait, Sheet, Toggles } from "./parts";
+import { useEffect, useState } from "react";
+import { Field, Info, PicSlots, Portrait, Sheet, Spinner, Toggles } from "./parts";
+import { seriesCharacters, type BorrowedCharacter } from "@/lib/coffeed/rtScriptorActions";
 import { LETTERS, PALETTE, uid, type CharPics, type Character, type Project } from "./model";
 
 type Patch = (fn: (p: Project) => Project) => void;
@@ -20,15 +21,25 @@ export function CastTab({
   patch,
   assets,
   onAsset,
+  inSeries,
 }: {
   project: Project;
   patch: Patch;
   assets: Record<string, string>;
   onAsset: (path: string, url: string) => void;
+  inSeries: boolean;
 }) {
   const [add, setAdd] = useState(false);
+  const [borrow, setBorrow] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
   const ch = project.characters.find((c) => c.id === sel);
+
+  /** Copia la ficha con una letra libre de ESTE vídeo. */
+  const importCharacter = (c: Character) => {
+    const used = project.characters.map((x) => x.id);
+    const code = LETTERS.split("").find((l) => !used.includes(l)) || uid("c");
+    patch((p) => ({ ...p, characters: [...p.characters, { ...c, id: code }] }));
+  };
 
   const upChar = (id: string, u: Partial<Character>) =>
     patch((p) => ({ ...p, characters: p.characters.map((c) => (c.id === id ? { ...c, ...u } : c)) }));
@@ -43,6 +54,11 @@ export function CastTab({
         />
         <p style={{ marginLeft: 8 }}>{project.characters.length} en la compañía</p>
         <div className="rt-sp" />
+        {inSeries && (
+          <button type="button" className="rt-btn" onClick={() => setBorrow(true)} title="Traer un personaje de otro vídeo de esta serie">
+            Importar de la serie
+          </button>
+        )}
         <button type="button" className="rt-btn" onClick={() => setAdd(true)}>
           + Personaje
         </button>
@@ -186,7 +202,89 @@ export function CastTab({
       )}
 
       {add && <NewCharacter project={project} patch={patch} onClose={() => setAdd(false)} />}
+      {borrow && <BorrowSheet projectId={project.id} have={project.characters} onPick={importCharacter} onClose={() => setBorrow(false)} />}
     </section>
+  );
+}
+
+/** Los personajes de los OTROS vídeos de la serie. Importar copia la ficha —
+ *  no la enlaza: un personaje cambia entre episodios, y sincronizarlos sería
+ *  una regla que nadie pidió y que se rompería el primer día. */
+function BorrowSheet({
+  projectId,
+  have,
+  onPick,
+  onClose,
+}: {
+  projectId: string;
+  have: Character[];
+  onPick: (c: Character) => void;
+  onClose: () => void;
+}) {
+  const [list, setList] = useState<BorrowedCharacter[] | null>(null);
+  const [assets, setAssets] = useState<Record<string, string>>({});
+  const [taken, setTaken] = useState<string[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    seriesCharacters(projectId).then((r) => {
+      if (!alive) return;
+      setList(r.list);
+      setAssets(r.assets);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [projectId]);
+
+  const names = new Set(have.map((c) => c.name.toLowerCase()));
+
+  return (
+    <Sheet
+      title="Importar de la serie"
+      onClose={onClose}
+      info="La continuidad de reparto es lo que convierte una carpeta de vídeos en una serie: que sea la MISMA persona en los tres episodios. Se copia la ficha —nombre, rol, rasgos, color y fotos— y a partir de ahí este vídeo la lleva por su cuenta."
+      footer={
+        <>
+          <button type="button" className="rt-btn" onClick={onClose}>
+            Cerrar
+          </button>
+          {taken.length > 0 && <span className="rt-note rt-sp">{taken.length} importado(s)</span>}
+        </>
+      }
+    >
+      {list === null && <p className="rt-note"><Spinner label="Buscando en la serie" /></p>}
+      {list !== null && list.length === 0 && (
+        <p className="rt-note">Los otros vídeos de la serie no tienen personajes todavía — o este vídeo es el único del conjunto.</p>
+      )}
+      {(list ?? []).map((b, i) => {
+        const already = names.has(b.character.name.toLowerCase()) || taken.includes(`${b.videoId}:${b.character.id}`);
+        const url = b.character.pics?.profile ? assets[b.character.pics.profile] : null;
+        return (
+          <div key={`${b.videoId}-${b.character.id}-${i}`} className="rt-castrow" style={{ borderLeftColor: b.character.color, cursor: "default" }}>
+            <div className="rt-port">{url ? <img src={url} alt={b.character.name} /> : <div style={{ height: 72 }} />}</div>
+            <div className="rt-castmeta" style={{ flex: 1 }}>
+              <h3>{b.character.name}</h3>
+              <p className="rt-role" style={{ color: b.character.color }}>
+                {b.character.role || "sin rol"} · de «{b.videoTitle}»
+              </p>
+              <p>{b.character.bio}</p>
+              <button
+                type="button"
+                className="rt-btn"
+                disabled={already}
+                onClick={() => {
+                  onPick(b.character);
+                  setTaken((t) => [...t, `${b.videoId}:${b.character.id}`]);
+                }}
+              >
+                {already ? "Ya está en este vídeo" : "Importar"}
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </Sheet>
   );
 }
 

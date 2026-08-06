@@ -98,7 +98,7 @@ export function RTScriptorStyles() {
   color:var(--mute);font-family:var(--mono);font-size:9px;line-height:1;cursor:pointer;
   display:grid;place-items:center;padding:0;flex:0 0 15px;}
 .rt-info:hover{border-color:var(--signal);color:var(--signal);}
-.rt-pop{position:absolute;top:21px;left:-6px;width:270px;background:#0E1213;border:1px solid var(--signal);
+.rt-pop{position:absolute;top:21px;left:-6px;width:270px;max-width:calc(100vw - 32px);background:#0E1213;border:1px solid var(--signal);
   padding:11px 13px 12px;font-size:12px;line-height:1.55;color:var(--dim);z-index:60;
   box-shadow:0 12px 32px rgba(0,0,0,.55);text-transform:none;letter-spacing:0;font-weight:400;
   font-family:var(--sans);text-align:left;}
@@ -304,6 +304,60 @@ textarea.rt-ed{resize:vertical;min-height:52px;}
 
 /* filtro de series en la sala (nota 5) */
 .rt-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+
+/* ══════ V3.2 · el espacio de la toma y sus mandos ════════════════════════ */
+
+.rt-spin{display:inline-flex;align-items:center;gap:6px;}
+.rt-spin svg{animation:rt-spin .8s linear infinite;}
+@keyframes rt-spin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){.rt-spin svg{animation-duration:2.4s;}}
+
+.rt-stage{border:1px solid var(--edge);background:#0E1213;overflow:hidden;}
+.rt-stagenotes{display:flex;flex-wrap:wrap;gap:6px;padding:6px 8px;border-top:1px solid var(--edge);
+  background:#11181A;}
+.rt-stagenotes span{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--amber);
+  border:1px solid #3A3222;padding:2px 6px;}
+
+.rt-stagewrap{display:grid;grid-template-columns:1fr;gap:16px;}
+.rt-rig{min-width:0;}
+
+/* los encuadres: catorce chips que caben, no seis mosaicos que no */
+.rt-shots{display:flex;flex-wrap:wrap;gap:4px;}
+.rt-shot{background:#171D1E;border:1px solid var(--edge);color:var(--mute);cursor:pointer;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:5px 8px;white-space:nowrap;}
+.rt-shot:hover{border-color:var(--mute);color:var(--bone);}
+.rt-shot[data-on="1"]{border-color:var(--signal);color:var(--signal);background:#132022;}
+
+/* los mandos, densos: dos columnas y sin aire de sobra */
+.rt-dials{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+.rt-dial{margin-bottom:4px;}
+.rt-dial label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:2px;cursor:help;}
+.rt-dial label b{color:var(--bone);font-weight:500;}
+.rt-dial input{width:100%;accent-color:var(--signal);height:14px;}
+
+.rt-mini-row{display:flex;flex-wrap:wrap;gap:6px;}
+.rt-mini-add{display:grid;place-items:center;border-style:dashed;color:var(--mute);}
+.rt-mini-add span{font-size:20px;line-height:44px;display:block;}
+.rt-mini-add:hover{border-color:var(--signal);color:var(--signal);}
+
+.rt-markbox{border:1px solid var(--edge);border-left:2px solid var(--signal);padding:9px 11px;margin-top:10px;
+  background:#11181A;}
+
+.rt-statusrow{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.rt-statusrow em{font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);margin-right:2px;}
+
+.rt-prompt{margin-top:8px;border:1px solid var(--edge);background:#11181A;}
+.rt-prompt summary{cursor:pointer;padding:6px 10px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--mute);}
+.rt-prompt summary:hover{color:var(--bone);}
+.rt-prompt pre{margin:0;padding:0 10px 10px;font-family:var(--mono);font-size:11px;line-height:1.6;
+  color:var(--dim);white-space:pre-wrap;}
+
+@media (min-width:1000px){
+  .rt-stagewrap{grid-template-columns:minmax(0,1fr) 340px;}
+}
 
 @media (min-width:900px){
   .rt-cast{grid-template-columns:1fr 1fr;}

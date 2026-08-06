@@ -27,8 +27,8 @@ import { analyseScript } from "@/lib/coffeed/rtScriptorActions";
 import {
   applyProposal,
   draftOfProject,
+  camLabel,
   leadTake,
-  shotPreset,
   uid,
   type DialogueLine,
   type Project,
@@ -207,7 +207,7 @@ export function ScriptTab({ project, patch }: { project: Project; patch: Patch }
 
                   {mode === "shooting" && t && (
                     <p className="rt-anno">
-                      Toma {t.no} · {shotPreset(t.shot).label} · {t.lens} · {t.cast.join(", ") || "sin reparto"}
+                      Toma {t.no} · {camLabel(t)} · {t.cast.join(", ") || "sin reparto"}
                     </p>
                   )}
 

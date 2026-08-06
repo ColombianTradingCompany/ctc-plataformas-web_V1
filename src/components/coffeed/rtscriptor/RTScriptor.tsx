@@ -19,7 +19,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RTScriptorStyles } from "./RTScriptorStyles";
-import { Field, Info, ProjectArt, Sheet, Toggles } from "./parts";
+import { Field, Info, ProjectArt, Sheet, Spinner, Toggles } from "./parts";
 import { StoryTab } from "./StoryTab";
 import { CastTab } from "./CastTab";
 import { StageTab } from "./StageTab";
@@ -301,7 +301,15 @@ export function RTScriptor({ initial }: { initial: Workshop }) {
               }}
             />
           )}
-          {tab === "cast" && <CastTab project={project} patch={patch} assets={assets} onAsset={(p, u) => addAssets({ [p]: u })} />}
+          {tab === "cast" && (
+            <CastTab
+              project={project}
+              patch={patch}
+              assets={assets}
+              onAsset={(p, u) => addAssets({ [p]: u })}
+              inSeries={Boolean(project.seriesId && (series.find((s) => s.id === project.seriesId)?.videoIds.length ?? 0) > 1)}
+            />
+          )}
           {tab === "stage" &&
             (project.scenes.length ? (
               <StageTab
@@ -309,6 +317,7 @@ export function RTScriptor({ initial }: { initial: Workshop }) {
                 patch={patch}
                 assets={assets}
                 renders={renders}
+                deck={decks.find((d) => d.id === project.deckId) ?? null}
                 onRender={(job) => {
                   setRenders((rs) => [job, ...rs.filter((r) => r.id !== job.id)]);
                   // Los fotogramas recién revelados vienen con ruta, no con url:
@@ -441,7 +450,11 @@ function Hub({
         </button>
       </div>
 
-      {loading && <p className="rt-note" style={{ marginBottom: 10 }}>Abriendo…</p>}
+      {loading && (
+        <p className="rt-note" style={{ marginBottom: 10 }}>
+          <Spinner label="Abriendo el vídeo" />
+        </p>
+      )}
 
       <div className="rt-hubgrid">
         {shown.map((p) => {

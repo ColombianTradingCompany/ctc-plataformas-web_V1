@@ -15,6 +15,7 @@ import { VoiceOverEditor } from "./VoiceOver";
 import {
   checkProject,
   geometry,
+  newTake,
   sceneLength,
   takesOfScene,
   tc,
@@ -741,10 +742,7 @@ export function NewScene({
                 return {
                   ...p,
                   scenes,
-                  takes: [
-                    ...p.takes,
-                    { id: uid("tk"), sceneId: id, no: 1, status: "open", cast: cast.slice(0, 2), shot: "two", lens: "Tercera", direction: "", dur, params: null },
-                  ],
+                  takes: [...p.takes, newTake({ id: uid("tk"), sceneId: id, no: 1, cast: cast.slice(0, 2), dur })],
                   storylines: p.storylines.map((sl) => (lines.includes(sl.id) ? { ...sl, sceneIds: [...sl.sceneIds, id] } : sl)),
                 };
               });

@@ -27,28 +27,28 @@ import { coffeedServiceClient } from "./requireEcp";
 import { claude, parseJson, MODEL_WRITE } from "./claude";
 import { previsFrame, frameTimes } from "./rtsPrevis";
 import {
+  camLabel,
   checkProject,
   checkTake,
   deriveProposals,
   framePrompt,
   hydrateDoc,
   leadTake,
-  paramIndex,
+  matchShot,
   projectDuration,
   sceneLength,
-  shotPreset,
   slugify,
   takesOfScene,
   tc,
   uid,
+  DIALS,
   FRAMES_PER_TAKE,
-  LENSES,
-  SHOT_PRESETS,
+  SHOTS,
 } from "@/components/coffeed/rtscriptor/model";
 import type {
+  Character,
   Deck,
   DeckImage,
-  LensMode,
   Project,
   ProjectCard,
   ProjectDoc,
@@ -322,6 +322,37 @@ export async function deleteProject(id: string): Promise<RtsResult> {
   return { ok: true, data: null };
 }
 
+/* ──────────────── personajes prestados de la misma serie ──────────────── */
+//
+// Un personaje se crea a nivel de VÍDEO, y eso está bien: es de ese vídeo. Pero
+// una serie es «un cuerpo de trabajo», y la continuidad de reparto es
+// precisamente lo que la hace serie — que Miriam sea la misma Miriam en los
+// tres episodios. Importarlo copia la ficha; a partir de ahí cada vídeo la
+// evoluciona por su cuenta, porque un personaje cambia entre episodios y
+// sincronizarlos sería inventarse una regla que nadie pidió.
+
+export type BorrowedCharacter = { videoId: string; videoTitle: string; character: Character };
+
+export async function seriesCharacters(projectId: string): Promise<{ list: BorrowedCharacter[]; assets: Record<string, string> }> {
+  const who = await studioGate();
+  if (!who) return { list: [], assets: {} };
+  const service = coffeedServiceClient();
+
+  const { data: me } = await service.from("coffeed_rts_projects").select("series_id").eq("id", projectId).maybeSingle();
+  if (!me?.series_id) return { list: [], assets: {} };
+
+  const { data: set } = await service.from("coffeed_rts_series").select("video_ids").eq("id", me.series_id).maybeSingle();
+  const siblings = ((set?.video_ids as string[] | null) ?? []).filter((id) => id !== projectId);
+  if (!siblings.length) return { list: [], assets: {} };
+
+  const { data: rows } = await service.from("coffeed_rts_projects").select("id, title, doc").in("id", siblings);
+  const list: BorrowedCharacter[] = [];
+  for (const r of (rows ?? []) as { id: string; title: string; doc: unknown }[]) {
+    for (const c of hydrateDoc(r.doc).characters) list.push({ videoId: r.id, videoTitle: r.title, character: c });
+  }
+  return { list, assets: await signAll(service, list.flatMap((b) => [b.character.pics?.profile, b.character.pics?.body, b.character.pics?.detail].filter(Boolean) as string[])) };
+}
+
 /* ─────────────────────────── barajas y series ─────────────────────────── */
 
 export async function saveDeck(deck: { id?: string | null; name: string; descriptors: string[]; palette: string[]; images: DeckImage[] }): Promise<RtsResult<string>> {
@@ -430,7 +461,7 @@ export async function uploadRtsImage(form: FormData): Promise<RtsResult<{ path: 
 
 const SYSTEM_JSON = "Responde ÚNICAMENTE con un objeto JSON válido. Sin vallas de código, sin preámbulo, sin explicación.";
 
-type RawSuggestion = { sceneId?: string; kind?: string; value?: string | number; key?: string; why?: string; confidence?: number };
+type RawSuggestion = { sceneId?: string; kind?: string; value?: string | number; key?: keyof import("@/components/coffeed/rtscriptor/model").Camera; why?: string; confidence?: number };
 
 export async function analyseScript(input: { projectId: string; draft: SceneDraft[] }): Promise<RtsResult<Proposal[]>> {
   const who = await studioGate();
@@ -458,24 +489,23 @@ export async function analyseScript(input: { projectId: string; draft: SceneDraf
       const sc = project.scenes.find((s) => s.id === d.sceneId)!;
       const tk = d.takeId ? project.takes.find((t) => t.id === d.takeId) : undefined;
       return `ESCENA ${d.sceneId} — «${sc.title}»
-  plano actual: ${tk ? shotPreset(tk.shot).label : "sin toma"} · punto de vista: ${tk?.lens ?? "—"}
+  encuadre actual: ${tk ? camLabel(tk) : "sin toma"}${tk ? ` (${Math.round(tk.cam.dist)} cm, ${tk.cam.lens} mm, órbita ${Math.round(tk.cam.orbit)}°, altura ${Math.round(tk.cam.height)} cm)` : ""}
   acción: ${d.synopsis}
   dirección: ${d.direction || "(vacía)"}`;
     })
     .join("\n\n");
 
-  const user = `Eres el ayudante de dirección de un corto. El guionista reescribió la prosa de estas escenas; tu trabajo es decir qué MANDOS DE CÁMARA deberían cambiar por lo que ahora dice el texto — nada más.
+  const user = `Eres el ayudante de dirección de un corto. El guionista reescribió la prosa de estas escenas; tu trabajo es decir qué debería cambiar de la CÁMARA por lo que ahora dice el texto — nada más.
 
 ${brief}
 
 VOCABULARIO PERMITIDO (no inventes ninguno):
-- tipo de plano (kind "shot"): ${SHOT_PRESETS.map((s) => `${s.key} = ${s.label}`).join(" · ")}
-- punto de vista (kind "lens"): ${LENSES.join(" · ")}
-- óptica en mm (kind "lens_mm"): entero entre 12 y 135
-- sostener en segundos (kind "hold"): entero entre 0 y 12
+- encuadre (kind "shot"): ${SHOTS.map((s) => `${s.key} = ${s.label}`).join(" · ")}
+- tratamiento (kind "treatment"): normal · pov · handheld
+- un mando suelto (kind "cam"), con "key" entre: ${DIALS.map((d) => `${d.key} (${d.label}, ${d.min}..${d.max} ${d.unit})`).join(" · ")}
 
 Devuelve:
-{"suggestions":[{"sceneId":"el id tal cual","kind":"shot|lens|lens_mm|hold","value":"la clave, el nombre exacto o el número","why":"menos de 14 palabras: qué frase del texto lo pide","confidence":0.0}]}
+{"suggestions":[{"sceneId":"el id tal cual","kind":"shot|treatment|cam","key":"solo si kind es cam","value":"la clave, el nombre exacto o el número","why":"menos de 14 palabras: qué frase del texto lo pide","confidence":0.0}]}
 
 REGLAS
 - Solo propón un cambio si el texto lo pide de forma reconocible. Ante la duda, no propongas.
@@ -509,33 +539,34 @@ REGLAS
     let to = "";
     let label = "";
 
+    // Todo lo que devuelve el modelo se normaliza contra el vocabulario REAL
+    // antes de llegar a la pantalla: un encuadre inventado o un mando fuera de
+    // rango no puede convertirse en una propuesta.
     if (s.kind === "shot") {
-      const hit = SHOT_PRESETS.find((p) => p.key === s.value || p.label === s.value);
-      if (!hit || hit.key === take.shot) continue;
+      const hit = SHOTS.find((p) => p.key === s.value || p.label === s.value);
+      if (!hit || matchShot(take.cam) === hit.key) continue;
       op = { op: "take.shot", takeId: take.id, value: hit.key };
-      from = shotPreset(take.shot).label;
+      from = camLabel(take);
       to = hit.label;
-      label = `${scene.title} · tipo de plano`;
-    } else if (s.kind === "lens") {
-      const hit = LENSES.find((l) => l === s.value);
-      if (!hit || hit === take.lens) continue;
-      op = { op: "take.lens", takeId: take.id, value: hit as LensMode };
-      from = take.lens;
+      label = `${scene.title} · encuadre`;
+    } else if (s.kind === "treatment") {
+      const hit = (["normal", "pov", "handheld"] as const).find((t) => t === s.value);
+      if (!hit || hit === take.treatment) continue;
+      op = { op: "take.treatment", takeId: take.id, value: hit };
+      from = take.treatment;
       to = hit;
-      label = `${scene.title} · punto de vista`;
-    } else if (s.kind === "lens_mm" || s.kind === "hold") {
-      const key = s.kind === "hold" ? "hold" : "lens";
-      const i = paramIndex(take.shot, key);
-      if (i < 0) continue;
-      const max = shotPreset(take.shot).params[i].max;
+      label = `${scene.title} · tratamiento`;
+    } else if (s.kind === "cam") {
+      const dial = DIALS.find((d) => d.key === s.key);
+      if (!dial) continue;
       const n = Math.round(Number(s.value));
-      if (!Number.isFinite(n) || n < 0 || n > max) continue;
-      const current = (take.params?.[take.shot]?.[i] ?? shotPreset(take.shot).params[i].def) as number;
+      if (!Number.isFinite(n) || n < dial.min || n > dial.max) continue;
+      const current = Math.round(take.cam[dial.key]);
       if (current === n) continue;
-      op = { op: "take.param", takeId: take.id, shot: take.shot, key, value: n };
-      from = `${current}${shotPreset(take.shot).params[i].unit}`;
-      to = `${n}${shotPreset(take.shot).params[i].unit}`;
-      label = `${scene.title} · ${shotPreset(take.shot).params[i].label.toLowerCase()}`;
+      op = { op: "take.cam", takeId: take.id, key: dial.key, value: n };
+      from = `${current}${dial.unit}`;
+      to = `${n}${dial.unit}`;
+      label = `${scene.title} · ${dial.label.toLowerCase()}`;
     }
 
     if (!op) continue;

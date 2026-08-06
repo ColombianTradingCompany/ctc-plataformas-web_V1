@@ -1,4 +1,67 @@
-# Pendientes · escrito al cierre del 2026-08-05 (V3.0)
+# Pendientes
+
+## RT-Scriptor · escrito al cierre de la sesión nocturna del 2026-08-06 (V3.1)
+
+RT-Scriptor entró como **app #3 del Estudio de Contenido**
+(`/socios/estudio-contenido/panel/rt-scriptor`) con las seis mejoras de
+«Temporal - improvement notes for V1» dentro. Detalle completo en
+`docs/HANDOFF.md` (sección del Estudio) y en el log V27 de la doc interactiva.
+
+**Lo primero al despertar, en orden:**
+
+1. **NADA ESTÁ DESPLEGADO.** El código está en el árbol de trabajo, sin commit y
+   sin push, a propósito: desplegar a producción de madrugada sin que nadie mire
+   no me tocaba. Revisa, commitea y empuja cuando lo hayas visto.
+2. **La BASE DE DATOS SÍ está aplicada en producción** (hacía falta para
+   construir contra ella): 2 migraciones, `coffeed_deliverable_kind_guion` y
+   `rt_scriptor_module`. Ambas son ADITIVAS — 4 tablas nuevas, un valor de enum
+   nuevo y una rama nueva en `coffeed_guard_deliverable`; ningún camino existente
+   cambia. Con el código sin desplegar no pasa nada raro.
+3. **Recórrelo tú.** El Estudio está detrás de la credencial del socio y no se
+   puede conducir en un navegador automatizado (mismo caso que el BCP con su
+   2FA): esto se verificó con `tsc`, `eslint`, `next build`, SQL y un guardián
+   nuevo de 41 comprobaciones, pero **nadie ha pulsado un botón todavía**. Hay
+   sembrado un proyecto «DEMO · La ruta del lote» para que no se abra vacío —
+   ábrelo, pulsa «Acción» en una toma y mira la tira de fotogramas.
+4. **La pasada de IA del guion está sin probar en vivo.** Las reglas
+   deterministas sí (están en el guardián); lo que no se ha ejercitado contra la
+   API real es `analyseScript`. Si falla, cae de pie: devuelve solo las
+   propuestas de regla y lo dice en la consola (`[rts:analyse]`).
+5. **Borra la demo** cuando ya no te sirva: botón «Borrar» en la tarjeta de la
+   sala de vídeos.
+
+**Decisiones que tomé y conviene que confirmes o revoques:**
+
+- **No adopté el esquema `rts` ni el subdominio `scriptor.`** que pedía la guía
+  de integración del paquete. Traía su propia tenencia por organización
+  (`rts.orgs` + `rts.org_members`), que habría sido un segundo padrón de
+  identidades dentro de la plataforma. Fui por `coffeed_rts_*` de service-role,
+  como Coffeed y Datawave. Si querías de verdad un despliegue independiente en
+  `scriptor.ctcexport.com`, esto es lo que hay que rehacer — y es caro.
+- **No hay Realtime**, aunque la referencia lo llamaba «el producto»: exigiría
+  abrir esas tablas al JWT del navegador.
+- **No hice ningún escenario de Make.** El espinazo de esta app es interno
+  (Server Actions + Storage + la cola del ECP); un escenario no habría hecho
+  nada que la plataforma no haga ya.
+- **La fase 1 dibuja los fotogramas, no los pide a una IA de imagen.** No hay
+  clave de ningún proveedor de imagen en la plataforma y darla de alta —con
+  coste— no era decisión mía. El prompt de cada fotograma YA se compone y se
+  guarda, así que enchufar un proveedor es cambiar `provider`, no rehacer nada.
+  **Ésta es la decisión que más me interesa que revises.**
+
+**Deuda propia de RT-Scriptor:**
+
+- El guion editable no permite reordenar líneas de diálogo (solo añadir, editar
+  y quitar).
+- La sala no tiene búsqueda; con veinte vídeos hará falta.
+- `coffeed_rts_renders` no tiene política de reintento ni purga: los fotogramas
+  viejos se quedan en Storage. Decidir junto con el proveedor de la fase 2.
+- Los fotogramas se guardan como SVG. Si algún día hay que publicarlos fuera del
+  muro (Instagram), harán falta PNG — el mismo paso que ya bloquea F4.
+
+---
+
+## Pendientes · escrito al cierre del 2026-08-05 (V3.0)
 
 La sesión del 5 de agosto cerró con el hito **V3.0**: las fases F0–F3 de
 integraciones vivas, Coffeed dando la vuelta completa por primera vez, y el

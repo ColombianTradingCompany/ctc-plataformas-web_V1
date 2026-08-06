@@ -203,6 +203,37 @@ function DeliverablePreview({ d }: { d: CoffeedDeliverable }) {
       </div>
     );
   }
+  // RT-Scriptor: la tira de fotogramas y, debajo, los encabezados de escena.
+  // Quien da luz verde tiene que poder leer la escena, no solo mirarla.
+  if (d.kind === "guion" && d.guion) {
+    const g = d.guion;
+    return (
+      <div>
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6 }}>
+          {g.frames.slice(0, 24).map((f, i) => (
+            <figure key={i} style={{ flex: "0 0 156px", margin: 0 }}>
+              <img src={f.url} alt={f.label} style={{ width: "100%", display: "block", border: "1px solid var(--line)", borderRadius: 4 }} />
+              <figcaption className={styles.eyebrow} style={{ marginTop: 3 }}>
+                {f.label}
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+        <p className={styles.postExcerpt} style={{ marginTop: 8 }}>
+          <b>{g.projectTitle}</b> · {g.scenes.length} escena(s) · metraje {Math.floor(g.runtime / 60)}:{String(g.runtime % 60).padStart(2, "0")} ·{" "}
+          {g.aspect}
+        </p>
+        {g.scenes.map((s) => (
+          <p key={s.no} className={styles.postExcerpt} style={{ marginTop: 4 }}>
+            <b>
+              {String(s.no).padStart(2, "0")}. {s.slug}
+            </b>
+            {s.provisional ? " (duración provisional)" : ""} — {s.synopsis}
+          </p>
+        ))}
+      </div>
+    );
+  }
   if (d.media?.embedUrl) {
     return (
       <div className={styles.previewMedia}>

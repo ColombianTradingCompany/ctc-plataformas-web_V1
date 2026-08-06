@@ -18,7 +18,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createSignedUrl } from "./storage";
-import type { CoffeedAnnouncement, CoffeedMedia, CoffeedMediaProvider, CoffeedWallBundle, CoffeedWallItem } from "./types";
+import type { CoffeedAnnouncement, CoffeedGuion, CoffeedMedia, CoffeedMediaProvider, CoffeedWallBundle, CoffeedWallItem } from "./types";
 
 type WallRow = {
   id: string;
@@ -72,6 +72,28 @@ export async function getCoffeedWall(): Promise<CoffeedWallBundle> {
           };
         }
       }
+      // RT-Scriptor: la tira de fotogramas. Se firma en lote por entrega —
+      // pueden ser treinta rutas y una a una serían treinta viajes por muro.
+      let guion: CoffeedGuion | null = null;
+      if (r.kind === "guion" && r.payload && typeof r.payload.projectId === "string") {
+        const p = r.payload;
+        const raw = Array.isArray(p.frames) ? (p.frames as { path?: string; label?: string }[]) : [];
+        const paths = raw.map((f) => f.path).filter((x): x is string => typeof x === "string" && !!x);
+        const signed: Record<string, string> = {};
+        if (paths.length) {
+          const { data } = await service.storage.from("kaffetal-media").createSignedUrls(paths, 60 * 60);
+          for (const row of data ?? []) if (row.signedUrl && row.path) signed[row.path] = row.signedUrl;
+        }
+        guion = {
+          projectId: p.projectId as string,
+          projectTitle: typeof p.projectTitle === "string" ? p.projectTitle : "",
+          aspect: typeof p.aspect === "string" ? p.aspect : "16:9",
+          runtime: typeof p.runtime === "number" ? p.runtime : 0,
+          scenes: Array.isArray(p.scenes) ? (p.scenes as CoffeedGuion["scenes"]) : [],
+          frames: raw.map((f) => ({ url: f.path ? (signed[f.path] ?? "") : "", label: f.label ?? "" })).filter((f) => f.url),
+        };
+      }
+
       return {
         id: r.id,
         kind: r.kind,
@@ -81,6 +103,7 @@ export async function getCoffeedWall(): Promise<CoffeedWallBundle> {
         publishedAt: r.published_at,
         panels: (r.coffeed_drafts?.coffeed_panels ?? []).slice().sort((a, b) => a.position - b.position),
         media,
+        guion,
       };
     })
   );

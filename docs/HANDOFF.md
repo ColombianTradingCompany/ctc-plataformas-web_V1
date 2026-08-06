@@ -64,6 +64,7 @@ src/
     ctc-home/, kaffetal-regal/, cherry-picked/       one folder per platform
     coffeed/                                         CoffeedConsole (ECP: entregas+muro) + StudioConsole (taller) + CanonView (las dos) + CoffeedWall (muro público KR/CP/DC) + StudioAppShell
     coffeed/datawave/                                app #2: model.ts (puro) + DatawaveChart + datawaveCard (canvas/PDF) + DatawaveStudio + DatawaveStyles
+    coffeed/rtscriptor/                              app #3: model.ts (puro: duración derivada, reglas, propuestas) + RTScriptor (armazón) + Story/Cast/Stage/Script/Series + parts + VoiceOver + RTScriptorStyles
     panel/                                           shared console shell: PanelShell, PanelSidebar (+console switcher), ConsoleScaffold, auth.module.css
     kaffetal-regal/ficha/                            Ficha Técnica: 8 panes + preview + AI widget
     kaffetal-regal/ficha/panes/CertCheckbox.tsx       shared A3/A4 cert row: info toggle + attachment upload
@@ -71,7 +72,7 @@ src/
   lib/
     supabase/{client,server}.ts        3 client factories — see below
     coffeed/                           types + studioGate/requireEcp (los DOS gates) + actions (taller) + ecpActions (dirección)
-                                       + deliverableActions (la cola) + aiActions + datawaveActions + claude.ts (cliente compartido) + wallActions + studioApps
+                                       + deliverableActions (la cola) + aiActions + datawaveActions + rtScriptorActions + rtsPrevis (fotogramas fase 1) + claude.ts (cliente compartido) + wallActions + studioApps
     panel/{consoles,requireConsoleAccess}.ts   console config (single source) + internal read-path gate
     bcp/{otp,sendOtpEmail}.ts
     arena/jornada.ts                   Jornada de Arena: script, run_state shape, gates, majorityGrade
@@ -81,6 +82,8 @@ src/
 scripts/
     create-qa-producer.mjs, create-qa-buyer.mjs, seed-bcp-admin.mjs,
     qa-guard-check.mjs, qa-checkout-check.mjs        disposable QA account + regression helpers
+    ts-resolve.mjs                                   resolutor para los QA que corren src/ con node (alias @/, .ts, server-only)
+    qa-rtscriptor-check.mjs                          RT-Scriptor: duración derivada, reglas, propuestas, fotogramas (41)
 ```
 
 ## Supabase client factories (`src/lib/supabase/server.ts`)
@@ -173,17 +176,30 @@ The intake→Arena flow was rebuilt around one principle: **documentation evalua
 |---|---|---|
 | **Source Wrapper** (`panel/source-wrapper`) | el pipeline editorial de siempre | un carrusel trazado |
 | **Datawave** (`panel/datawave`) | episodios de carrera de barras, escenario 9:16 grabable | un video (archivo o enlace) |
+| **RT-Scriptor** (`panel/rt-scriptor`) | un vídeo construido una toma cada vez: hilos, personajes, escenas, tomas y el guion que sale solo | un `guion` — la tira de fotogramas de unas escenas |
 | **Identity Value Creation** | *en construcción* — contenido de finca/lote desde su pasaporte | — |
 
 ⚠️ **Identity Value Creation no está bloqueada por UI sino por permisos**: leer finca/lote desde el tier de socios exige vistas `SECURITY DEFINER` estrechas campo a campo (la matriz de permisos del v3), no un grant ancho — misma regla que `public_lot_catalog`. Diséñalo antes de escribir la app.
 
 **Datawave** (`src/components/coffeed/datawave/`) es el puerto de `reference_coffeed/Datawave/datawave.jsx`. Dos muletas del artifact están sustituidas y no deben volver: `window.storage` → tabla `coffeed_datawave_episodes`; `fetch` a `api.anthropic.com` **desde el navegador y sin clave** → Server Actions (`datawaveActions.ts`). El guion NO sale a la web a propósito — los giros los calcula `findBeats()` de la serie, y la IA solo los redacta. El video se graba fuera (pantalla) y se entrega como archivo o enlace ya publicado. `DatawaveStyles.tsx` mantiene la hoja del prototipo verbatim en un `<style>`: desviación consciente de la convención CSS Modules, explicada en el propio archivo.
 
+**RT-Scriptor** (`src/components/coffeed/rtscriptor/` + `src/lib/coffeed/rtScriptorActions.ts` + `rtsPrevis.ts`) es el puerto de `reference_coffeed/RT-Scriptor/`. **Lee esto antes de tocarlo: el paquete de referencia traía su propia arquitectura y NO se adoptó.**
+
+- El paquete pedía un esquema `rts` con tenencia propia (`rts.orgs` + `rts.org_members` + RLS por membresía) y un subdominio `scriptor.`. Habría sido un segundo padrón de identidades dentro de una plataforma cuya regla es *una identidad, muchas membresías*, y que ninguna consola administra. En su lugar: 4 tablas `coffeed_rts_*` **service-role-only** (RLS activa, cero políticas) + `studioGate()` en cada action, igual que Coffeed y Datawave.
+- Por lo mismo **no hay Realtime**, aunque la referencia lo llamaba «el producto»: suscribir el navegador exigiría abrir esas tablas al JWT del usuario, y el taller lo operan una o dos personas. Si algún día compensa, el sitio donde entra es `rtScriptorActions.ts`, no los componentes.
+- **El proyecto entero se guarda como UN `doc` jsonb** (`coffeed_rts_projects.doc`), mismo patrón que `coffeed_datawave_episodes.spec`: personajes, escenas, hilos, tomas, diálogo y voces en off se editan juntos y se validan juntos. `hydrateDoc()` mezcla siempre sobre un vacío — misma disciplina que `EMPTY_FICHA` en Kaffetal Regal, y por la misma razón: un proyecto viejo no puede reventar por un campo nuevo.
+- **La duración de una escena no se teclea: se deriva de sus tomas** (suma de las marcadas `printed`; si no hay ninguna, la más larga, marcada `provisional` en toda la UI). Todo lo que dibuja tiempo pasa por `withDur()` en `model.ts` y por ningún otro sitio. Si añades una superficie que muestre minutaje, úsala.
+- **Las reglas viven en `model.ts` y las corren los dos lados**: el taller avisa (`checkProject` / `checkTake`), el servidor decide — `renderTake` y `submitGuion` re-ejecutan la validación y rechazan con bandera de bloqueo. Es el equivalente de los triggers guardián en un módulo cuyo estado es un jsonb.
+- **«Acción» produce FOTOGRAMAS, no movimiento** (fase 1, declarado en pantalla con una insignia). `rtsPrevis.ts` compone SVG a partir del ajuste real de la toma y los sube a Storage bajo `coffeed/rts/<project>/frames/`; la fila vive en `coffeed_rts_renders` con forma de cola de render (estado, progreso, proveedor, coste, prompt) **desde el primer día**, para que enchufar un proveedor de imagen en la fase 2 sea cambiar `provider`, no rehacer el módulo. Cada fotograma guarda su prompt compuesto (`framePrompt()`), que es el trabajo caro. Se dibuja en vez de pedirlo a una IA porque la plataforma no tiene clave de ningún proveedor de imagen.
+- **El guion es editable y se empuja de vuelta a los mandos** (`ScriptTab`): reglas deterministas primero (`deriveProposals`), una pasada de Claude después (`analyseScript`), y **todo lo que devuelve el modelo se normaliza contra el vocabulario real** antes de llegar a la pantalla. Las propuestas son DATOS (`ProposalOp`), no closures — tienen que cruzar la frontera del servidor; `applyProposal()` es el único sitio que las convierte en cambios.
+- Regresión: `node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-rtscriptor-check.mjs` (41 comprobaciones). `scripts/ts-resolve.mjs` es reutilizable: enseña a Node el alias `@/`, las extensiones `.ts` y los centinelas `server-only`/`client-only`, así que un script de QA ya no está limitado a módulos que no importen a nadie. Con `--out DIR` escribe fotogramas de muestra para mirarlos.
+- **El Estudio no se puede conducir en un navegador automatizado** (credencial de socio, como el BCP con su 2FA): esta app se verificó con `tsc` + `eslint` + `next build` + ese guardián + SQL.
+
 ### Entregas — una cola para todas las apps
 
 **`coffeed_deliverables`** (migración `coffeed_polymorphic_deliverables`, service-role-only) es el sobre polimórfico donde desembocan TODAS las apps del Estudio:
 
-- `kind`: `carrusel` (apunta a su `coffeed_drafts`) · `video` · `embed` (Instagram/YouTube) · `identidad` (futuro). `app` dice qué app la produjo; `payload` jsonb lleva lo específico del tipo.
+- `kind`: `carrusel` (apunta a su `coffeed_drafts`) · `video` · `embed` (Instagram/YouTube) · `guion` (RT-Scriptor: `payload` lleva `projectId` + `scenes[]` + `frames[]` con RUTAS de Storage, firmadas al leer) · `identidad` (futuro). `app` dice qué app la produjo; `payload` jsonb lleva lo específico del tipo.
 - Ciclo: **entregado → aceptado → publicado**, más **devuelto** (rebota al taller con la nota del ECP, sin borrar nada; el taller la re-entrega corregida).
 - Trigger `coffeed_guard_deliverable`: nadie nace publicado, no se publica sin aceptar antes, despublicar limpia `published_at`, y **aceptar un carrusel RE-VALIDA en la base** las reglas 5-10 / máx. 3 por fuente / ninguno sin trazar (reusa `coffeed_check_draft`).
 - **`coffeed_drafts.state` se queda en `draft → accepted`** (el trigger del canon sigue colgado de ahí). El valor `published` quedó muerto: publicar es cosa de la entrega, no del borrador.

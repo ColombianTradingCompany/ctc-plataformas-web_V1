@@ -7,7 +7,7 @@
 // Añadir una app = una entrada aquí + su ruta bajo panel/<id>. El lanzador y el
 // encabezado del taller se dibujan solos desde esta lista.
 
-export type StudioAppId = "source-wrapper" | "datawave" | "identity";
+export type StudioAppId = "source-wrapper" | "datawave" | "rt-scriptor" | "identity";
 
 export type StudioApp = {
   id: StudioAppId;
@@ -35,6 +35,14 @@ export const STUDIO_APPS: StudioApp[] = [
     tagline: "Convierte una serie de datos en un episodio de carrera de barras, listo para grabar.",
     delivers: "Un video vertical, o su enlace ya publicado.",
     accent: "#0E7C86",
+    built: true,
+  },
+  {
+    id: "rt-scriptor",
+    name: "RT-Scriptor",
+    tagline: "Construye un vídeo una toma cada vez: hilos, personajes, escenas y el guion que sale solo.",
+    delivers: "El tablero de fotogramas de una escena, con su guion.",
+    accent: "#E4472C",
     built: true,
   },
   {

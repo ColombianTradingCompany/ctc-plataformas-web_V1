@@ -56,6 +56,9 @@ export type CoffeedWallLabels = {
   pinned: string;
   video: string;
   shared: string;
+  /** RT-Scriptor. Opcional a propósito: las superficies que ya traen su propio
+   *  juego de etiquetas (Cherry Picked en inglés) no se rompen al añadirla. */
+  storyboard?: string;
   emptyTitle: string;
   emptyBody: string;
   loading: string;
@@ -68,6 +71,7 @@ const ES: CoffeedWallLabels = {
   pinned: "fijado",
   video: "Video",
   shared: "Compartido",
+  storyboard: "Guion",
   emptyTitle: "El primer capítulo está en producción",
   emptyBody: "Coffeed es el noticiero de la red CTC: capítulos breves sobre el mercado del café, en paneles. Vuelve pronto.",
   loading: "Cargando el muro…",
@@ -154,11 +158,15 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
             ? `${labels.chapter} ${c.chapterNo ?? ""}`.trim()
             : c.kind === "video"
               ? labels.video
-              : labels.shared;
+              : c.kind === "guion"
+                ? (labels.storyboard ?? "Guion")
+                : labels.shared;
         const meta =
           c.kind === "carrusel"
             ? `${c.panels.length} ${labels.panels}`
-            : (c.media?.provider === "youtube" ? "YouTube" : c.media?.provider === "instagram" ? "Instagram" : data.brand.companyName);
+            : c.kind === "guion"
+              ? `${c.guion?.frames.length ?? 0} · ${data.brand.companyName}`
+              : (c.media?.provider === "youtube" ? "YouTube" : c.media?.provider === "instagram" ? "Instagram" : data.brand.companyName);
 
         return (
           <article key={`c-${c.id}`} className={styles.post}>
@@ -192,6 +200,24 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
             )}
 
             {(c.kind === "video" || c.kind === "embed") && c.media && <WallMedia media={c.media} title={c.title} />}
+
+            {/* RT-Scriptor: la tira de fotogramas se lee como se leería un
+                tablero — de izquierda a derecha, con el pie de cada cuadro. */}
+            {c.kind === "guion" && c.guion && (
+              <div className={styles.strip}>
+                {c.guion.frames.map((f, i) => (
+                  <div
+                    key={i}
+                    className={[styles.panel, i === 0 ? styles.panelFirst : "", i === c.guion!.frames.length - 1 ? styles.panelLast : ""].join(" ")}
+                  >
+                    <span className={styles.panelBar}>{f.label}</span>
+                    <span className={styles.panelBody}>
+                      <img src={f.url} alt={f.label} style={{ width: "100%", display: "block" }} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {c.excerpt && c.kind !== "carrusel" && <p className={styles.caption}>{c.excerpt}</p>}
             {c.media?.caption && <p className={styles.caption}>{c.media.caption}</p>}

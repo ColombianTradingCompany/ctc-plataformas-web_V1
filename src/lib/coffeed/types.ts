@@ -149,11 +149,12 @@ export type CoffeedAnnouncement = {
 //   carrusel  → apunta a su borrador (paneles + reglas 5-10 / cap 3 / trazado)
 //   video     → una pieza de Datawave: archivo subido o url externa
 //   embed     → contenido ajeno incrustado (Instagram, YouTube)
-//   identidad → Identity Value Creation, app #3, aún sin construir
+//   guion     → RT-Scriptor: la tira de fotogramas de unas escenas + su guion
+//   identidad → Identity Value Creation, aún sin construir
 
-export type CoffeedDeliverableKind = "carrusel" | "video" | "embed" | "identidad";
+export type CoffeedDeliverableKind = "carrusel" | "video" | "embed" | "guion" | "identidad";
 export type CoffeedDeliverableState = "entregado" | "aceptado" | "publicado" | "devuelto";
-export type CoffeedStudioApp = "source_wrapper" | "datawave" | "identity";
+export type CoffeedStudioApp = "source_wrapper" | "datawave" | "rt_scriptor" | "identity";
 export type CoffeedMediaProvider = "youtube" | "instagram" | "archivo";
 
 export type CoffeedMedia = {
@@ -165,6 +166,18 @@ export type CoffeedMedia = {
   poster: string | null;
   aspect: string | null;
   caption: string | null;
+};
+
+/** El sobre de RT-Scriptor: lo que se ve de un guion sin abrir el proyecto.
+ *  Las urls de los fotogramas se firman al leer, como el resto del medio. */
+export type CoffeedGuion = {
+  projectId: string;
+  projectTitle: string;
+  aspect: string;
+  /** Segundos del vídeo completo, no solo de las escenas entregadas. */
+  runtime: number;
+  scenes: { no: number; slug: string; synopsis: string; duration: number; provisional: boolean }[];
+  frames: { url: string; label: string }[];
 };
 
 export type CoffeedDeliverable = {
@@ -185,11 +198,14 @@ export type CoffeedDeliverable = {
   panels: { position: number; role: string | null; text: string }[];
   /** Resuelto para `video` / `embed`. */
   media: CoffeedMedia | null;
+  /** Resuelto solo para `guion`. */
+  guion: CoffeedGuion | null;
 };
 
 export const COFFEED_APP_LABEL: Record<CoffeedStudioApp, string> = {
   source_wrapper: "Source Wrapper",
   datawave: "Datawave",
+  rt_scriptor: "RT-Scriptor",
   identity: "Identity Value Creation",
 };
 
@@ -197,6 +213,7 @@ export const COFFEED_KIND_LABEL: Record<CoffeedDeliverableKind, string> = {
   carrusel: "Carrusel",
   video: "Video",
   embed: "Incrustado",
+  guion: "Guion",
   identidad: "Identidad",
 };
 
@@ -211,6 +228,7 @@ export type CoffeedWallItem = {
   publishedAt: string | null;
   panels: { position: number; role: string | null; text: string }[];
   media: CoffeedMedia | null;
+  guion: CoffeedGuion | null;
 };
 
 /** El muro público: entregas publicadas + anuncios (2026-07-30: los anuncios

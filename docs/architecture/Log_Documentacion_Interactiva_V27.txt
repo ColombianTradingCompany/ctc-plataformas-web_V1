@@ -65,3 +65,86 @@ Contexto abierto al cerrar V27:
   confunde: la documentación interactiva numera SNAPSHOTS y no sigue este
   número — que las dos digan «V27» a la vez sería coincidencia.
 (commit: pending)
+
+## [2026-08-06] RT-Scriptor · app #3 del Estudio de Contenido
+- **Puerto de `reference_coffeed/RT-Scriptor/`** a la plataforma como TERCERA app
+  del taller: `/socios/estudio-contenido/panel/rt-scriptor`, tras `studioGate()`
+  y dentro de `StudioAppShell`. Registrada en `src/lib/coffeed/studioApps.ts`
+  (`StudioAppId` gana `rt-scriptor`; Identity pasa a ser la cuarta y sigue sin
+  construir). ⚠️ CAMBIO DE NODO: el taller ya no tiene 2 apps construidas + 1
+  pendiente, tiene 3 + 1.
+- Qué es: se construye un vídeo UNA TOMA CADA VEZ. Cinco pestañas — Hilos
+  narrativos (el eje X es el vídeo, no una lista de escenas; dos lecturas,
+  «Compases» y «Tiempo real», con cabezal), Personajes, Escena + Toma, Guion y
+  dirección, Serie — más una Sala de vídeos con filtro por serie.
+- **DECISIÓN DE ARQUITECTURA (la que hay que recordar)**: el paquete de
+  referencia traía su PROPIO esquema `rts` con tenencia por organización
+  (`rts.orgs` + `rts.org_members` + RLS por membresía) y su propio subdominio.
+  NO se adoptó. Habría sido un segundo padrón de identidades dentro de una
+  plataforma cuya regla es «UNA identidad, muchas membresías» (matriz del
+  2026-08-02) y que ninguna consola administraría. En su lugar, el patrón ya
+  probado de Coffeed/Datawave: 4 tablas `coffeed_rts_*` de SERVICE-ROLE (RLS
+  activa, cero políticas) y el permiso comprobado en cada Server Action.
+  Por lo mismo se dejó fuera el Realtime que la referencia llamaba «el
+  producto»: exigiría abrir esas tablas al JWT del navegador, y el taller lo
+  operan una o dos personas.
+- **Tablas nuevas** (migración `rt_scriptor_module`): `coffeed_rts_projects`
+  (el proyecto entero como UN `doc` jsonb, igual que
+  `coffeed_datawave_episodes.spec`), `coffeed_rts_decks` (barajas de estilo),
+  `coffeed_rts_series`, `coffeed_rts_renders` (la cola de fotogramas).
+  Migración aparte `coffeed_deliverable_kind_guion` para el valor de enum.
+- **Sobre nuevo en la cola compartida: `guion`.** `coffeed_deliverables` gana el
+  tipo y el `app` «rt_scriptor»; `coffeed_guard_deliverable` gana su rama de
+  forma mínima (tiene que apuntar a un proyecto y llevar al menos un fotograma).
+  Se pinta en ECP · Coffeed → Entregas (tira de fotogramas + encabezados de
+  escena) y, si el ECP lo publica, en el muro de KR / Cherry Picked / Directorio.
+  ⚠️ ESCENARIO NUEVO para el wrap: «un guion sale del taller y llega al muro»
+  (RT-Scriptor → coffeed_deliverables → ECP acepta → publica → CoffeedWall),
+  hermano del que ya existe para el carrusel y el vídeo de Datawave.
+- **Las seis mejoras del owner** («Temporal - improvement notes for V1»), todas
+  dentro:
+  1. La duración de una escena SE DERIVA de sus tomas: suma de las marcadas
+     BUENA; si no hay ninguna, la más larga y marcada PROVISIONAL en toda la
+     app. Ya no hay control de duración de escena en ningún sitio — se cambia
+     en la toma. Concepto para el DICT: **duración derivada**.
+  2. Voces en off de la ESCENA, transversales a las tomas, con ancla opcional a
+     una toma. Mismo editor en la ficha de escena y en la mesa de tomas.
+  3. Tres imágenes por personaje (perfil / cuerpo entero / detalle). Van a
+     Storage bajo `coffeed/rts/chars/…`, no como data-URL dentro del `doc`. La
+     de perfil viaja a las filas de reparto, los chips de toma y la escena.
+  4. **El guion se edita y se EMPUJA de vuelta a los mandos.** Dos motores y se
+     distinguen a la vista: REGLAS deterministas (cámara en mano → punto de
+     vista, «cerrada sobre» → primer plano, «85mm» → óptica, «sostener dos
+     tiempos» → 4 s, líneas marcadas (V.O.) → voz en off) e IA (una pasada de
+     Claude por `claude.ts`, normalizada contra el vocabulario real antes de
+     enseñarse). Nada se aplica solo: propone y el usuario marca. Concepto para
+     el DICT: **empujón al guion**.
+  5. Filtro por serie en la sala de vídeos (Todos / cada serie / Sueltos).
+  6. **La fase 1 produce FOTOGRAMAS, no movimiento**, y así lo dice una insignia
+     en pantalla. «Acción» ya no simula: escribe una fila en
+     `coffeed_rts_renders` y compone N fotogramas SVG con el ajuste REAL de la
+     toma (tipo de plano, los cuatro mandos, punto de vista, colores del
+     reparto, paleta de la baraja), los sube a Storage y los devuelve. Cada
+     fotograma guarda además su PROMPT compuesto: el día que haya proveedor de
+     imagen, el trabajo caro ya está hecho y solo cambia `provider`. Concepto
+     para el DICT: **fotograma (fase 1)**.
+- **Por qué se dibuja en vez de pedírselo a una IA de imagen**: la plataforma no
+  tiene hoy clave de ningún proveedor de imagen (ni Anthropic ni Gemini generan
+  imagen aquí) y dar de alta un proveedor de pago no era una decisión mía. El
+  storyboard dibujado no es un marcador de posición: se lee lo bastante como
+  para decir «esa separación está mal».
+- Archivos: `src/components/coffeed/rtscriptor/` (model.ts puro + RTScriptor.tsx
+  + 5 pestañas + parts + VoiceOver + RTScriptorStyles), `src/lib/coffeed/
+  rtScriptorActions.ts` y `rtsPrevis.ts`, ruta en
+  `src/app/socios/[partner]/panel/rt-scriptor/`.
+- **Regresión nueva**: `scripts/qa-rtscriptor-check.mjs` (41 comprobaciones
+  contra el código real: duración derivada, banderas, propuestas, hidratación
+  defensiva, fotogramas) + `scripts/ts-resolve.mjs`, un resolutor reutilizable
+  que enseña a Node el alias `@/`, las extensiones .ts y los centinelas
+  `server-only`/`client-only`. Los futuros scripts de QA ya no están limitados a
+  módulos que no importen a nadie.
+- Sembrado UN proyecto de demostración en producción («DEMO · La ruta del lote»,
+  3 escenas / 4 tomas / 2 hilos, con serie «El pasaporte» y baraja «Amanecer y
+  trilla») para que el taller no se abra vacío. Se borra desde la sala.
+- APP_VERSION 3.0 → 3.1.
+(commit: pending)

@@ -1,0 +1,720 @@
+"use server";
+
+// ── RT-Scriptor · app #3 del Estudio de Contenido ────────────────────────────
+// Puerto de `reference_coffeed/RT-Scriptor/`. Tres cosas del paquete de
+// referencia NO se adoptan, y conviene que quede escrito por qué:
+//
+//   esquema `rts` + `rts.org_members`  → tablas `coffeed_rts_*` de service-role.
+//     La referencia traía su propia tenencia por organización. Aquí ya hay UNA
+//     identidad con muchas membresías (matriz del 2026-08-02); un segundo padrón
+//     sería un sistema de identidad que ninguna consola administra.
+//
+//   RLS por membresía                  → `studioGate()` en cada action.
+//     Es el patrón de todo Coffeed: RLS activa, cero políticas, y el permiso se
+//     comprueba en el servidor antes de tocar nada.
+//
+//   Realtime en seis tablas            → fuera, de momento.
+//     "La RT es el producto" solo se sostiene si el navegador puede suscribirse,
+//     y eso exigiría abrir estas tablas al JWT del usuario. El taller lo operan
+//     una o dos personas: el precio no compensa. La forma del adaptador se
+//     conserva por si el día de mañana sí compensa.
+//
+// ⚠️ En un módulo "use server" TODO export tiene que ser async (lección del
+// 2026-07-30): los tipos y las funciones puras viven en el modelo.
+
+import { studioGate } from "./studioGate";
+import { coffeedServiceClient } from "./requireEcp";
+import { claude, parseJson, MODEL_WRITE } from "./claude";
+import { previsFrame, frameTimes } from "./rtsPrevis";
+import {
+  checkProject,
+  checkTake,
+  deriveProposals,
+  framePrompt,
+  hydrateDoc,
+  leadTake,
+  paramIndex,
+  projectDuration,
+  sceneLength,
+  shotPreset,
+  slugify,
+  takesOfScene,
+  tc,
+  uid,
+  FRAMES_PER_TAKE,
+  LENSES,
+  SHOT_PRESETS,
+} from "@/components/coffeed/rtscriptor/model";
+import type {
+  Deck,
+  DeckImage,
+  LensMode,
+  Project,
+  ProjectCard,
+  ProjectDoc,
+  Proposal,
+  ProposalOp,
+  RenderJob,
+  SceneDraft,
+  Series,
+} from "@/components/coffeed/rtscriptor/model";
+
+export type RtsResult<T = null> = { ok: true; data: T } | { ok: false; error: string };
+
+const NO_AUTH = "Tu sesión del Estudio no está activa. Vuelve a entrar.";
+const BUCKET = "kaffetal-media";
+const ROOT = "coffeed/rts";
+const SIGNED_TTL = 60 * 60;
+
+type Service = ReturnType<typeof coffeedServiceClient>;
+
+export type Workshop = {
+  projects: ProjectCard[];
+  decks: Deck[];
+  series: Series[];
+  /** ruta de Storage → url firmada. La `doc` guarda rutas, nunca urls. */
+  assets: Record<string, string>;
+};
+
+/* ─────────────────────────── firmas de Storage ─────────────────────────── */
+
+async function signAll(service: Service, paths: string[]): Promise<Record<string, string>> {
+  const clean = [...new Set(paths.filter(Boolean))];
+  if (!clean.length) return {};
+  const { data } = await service.storage.from(BUCKET).createSignedUrls(clean, SIGNED_TTL);
+  const out: Record<string, string> = {};
+  for (const row of data ?? []) {
+    // `path` viene en la respuesta; si el objeto no existe, trae error y se omite.
+    if (row.signedUrl && row.path) out[row.path] = row.signedUrl;
+  }
+  return out;
+}
+
+const deckPaths = (decks: Deck[]) => decks.flatMap((d) => d.images.map((i) => i.path).filter(Boolean) as string[]);
+
+const docPaths = (doc: ProjectDoc) =>
+  doc.characters.flatMap((c) => [c.pics?.profile, c.pics?.body, c.pics?.detail].filter(Boolean) as string[]);
+
+/* ─────────────────────────── lectura ─────────────────────────── */
+
+type DeckRow = { id: string; name: string; descriptors: string[] | null; palette: string[] | null; images: DeckImage[] | null };
+type SeriesRow = { id: string; name: string; glue: string; cadence: string; deck_id: string | null; video_ids: string[] | null };
+type ProjectRow = {
+  id: string;
+  slug: string;
+  title: string;
+  code: string | null;
+  aspect: string;
+  series_id: string | null;
+  deck_id: string | null;
+  doc: unknown;
+  updated_at: string;
+};
+
+const toDeck = (r: DeckRow): Deck => ({
+  id: r.id,
+  name: r.name,
+  descriptors: r.descriptors ?? [],
+  palette: r.palette ?? [],
+  images: (r.images ?? []).map((i) => ({ id: i.id, label: i.label, path: i.path ?? null, grad: i.grad })),
+});
+
+const toSeries = (r: SeriesRow): Series => ({
+  id: r.id,
+  name: r.name,
+  glue: r.glue,
+  cadence: r.cadence,
+  deckId: r.deck_id,
+  videoIds: r.video_ids ?? [],
+});
+
+const toProject = (r: ProjectRow): Project => ({
+  ...hydrateDoc(r.doc),
+  id: r.id,
+  slug: r.slug,
+  title: r.title,
+  code: r.code ?? "",
+  aspect: r.aspect,
+  seriesId: r.series_id,
+  deckId: r.deck_id,
+  updatedAt: r.updated_at,
+});
+
+function toCard(p: Project): ProjectCard {
+  const total = projectDuration(p) || 1;
+  let acc = 0;
+  const spark = p.scenes.map((s) => {
+    const dur = sceneLength(takesOfScene(p, s.id)).seconds;
+    const x = acc / total;
+    acc += dur;
+    return { id: s.id, x, w: dur / total };
+  });
+  return {
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    code: p.code,
+    seriesId: p.seriesId,
+    deckId: p.deckId,
+    updatedAt: p.updatedAt,
+    scenes: p.scenes.length,
+    storylines: p.storylines.length,
+    characters: p.characters.length,
+    duration: projectDuration(p),
+    spark,
+    threads: p.storylines.map((sl) => ({ id: sl.id, color: sl.color, sceneIds: sl.sceneIds })),
+  };
+}
+
+/** La sala de vídeos: todo lo que se pinta antes de abrir un proyecto. */
+export async function loadWorkshop(): Promise<Workshop | null> {
+  const who = await studioGate();
+  if (!who) return null;
+  const service = coffeedServiceClient();
+
+  const [{ data: pr }, { data: dk }, { data: sr }] = await Promise.all([
+    service.from("coffeed_rts_projects").select("id, slug, title, code, aspect, series_id, deck_id, doc, updated_at").order("updated_at", { ascending: false }).limit(80),
+    service.from("coffeed_rts_decks").select("id, name, descriptors, palette, images").order("created_at"),
+    service.from("coffeed_rts_series").select("id, name, glue, cadence, deck_id, video_ids").order("created_at"),
+  ]);
+
+  const decks = ((dk ?? []) as DeckRow[]).map(toDeck);
+  const projects = ((pr ?? []) as ProjectRow[]).map((r) => toCard(toProject(r)));
+  return {
+    projects,
+    decks,
+    series: ((sr ?? []) as SeriesRow[]).map(toSeries),
+    assets: await signAll(service, deckPaths(decks)),
+  };
+}
+
+export type OpenProject = { project: Project; renders: RenderJob[]; assets: Record<string, string> };
+
+export async function loadProject(id: string): Promise<OpenProject | null> {
+  const who = await studioGate();
+  if (!who) return null;
+  const service = coffeedServiceClient();
+
+  const { data } = await service
+    .from("coffeed_rts_projects")
+    .select("id, slug, title, code, aspect, series_id, deck_id, doc, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (!data) return null;
+  const project = toProject(data as ProjectRow);
+
+  const { data: rj } = await service
+    .from("coffeed_rts_renders")
+    .select("id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  const renders = ((rj ?? []) as RenderRow[]).map(toRender);
+  return {
+    project,
+    renders,
+    assets: await signAll(service, [...docPaths(project), ...renders.flatMap((r) => r.frames.map((f) => f.path).filter(Boolean) as string[])]),
+  };
+}
+
+type RenderRow = {
+  id: string;
+  project_id: string;
+  scene_id: string;
+  take_id: string;
+  state: RenderJob["state"];
+  progress: number;
+  provider: string;
+  frames: RenderJob["frames"] | null;
+  prompt: string | null;
+  error: string | null;
+  created_at: string;
+};
+
+const toRender = (r: RenderRow): RenderJob => ({
+  id: r.id,
+  projectId: r.project_id,
+  sceneId: r.scene_id,
+  takeId: r.take_id,
+  state: r.state,
+  progress: r.progress,
+  provider: r.provider,
+  frames: r.frames ?? [],
+  prompt: r.prompt,
+  error: r.error,
+  createdAt: r.created_at,
+});
+
+/* ─────────────────────────── escritura del proyecto ─────────────────────── */
+
+export async function createProject(title: string): Promise<RtsResult<string>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const clean = title.trim() || "Vídeo sin título";
+  const service = coffeedServiceClient();
+
+  // El slug es único en la tabla: se desempata con un sufijo antes de insertar.
+  const base = slugify(clean);
+  const { data: taken } = await service.from("coffeed_rts_projects").select("slug").like("slug", `${base}%`);
+  const used = new Set(((taken ?? []) as { slug: string }[]).map((r) => r.slug));
+  let slug = base;
+  for (let i = 2; used.has(slug); i++) slug = `${base}-${i}`;
+
+  const { data, error } = await service
+    .from("coffeed_rts_projects")
+    .insert({
+      slug,
+      title: clean,
+      code: clean.slice(0, 2).toUpperCase(),
+      doc: { characters: [], scenes: [], storylines: [], takes: [], dialogue: {}, voiceovers: {} },
+      created_by: who.userId,
+    })
+    .select("id")
+    .single();
+  if (error || !data) return { ok: false, error: error?.message ?? "No se pudo crear el vídeo." };
+  return { ok: true, data: data.id as string };
+}
+
+export async function saveProject(input: {
+  id: string;
+  title: string;
+  code: string;
+  aspect: string;
+  seriesId: string | null;
+  deckId: string | null;
+  doc: ProjectDoc;
+}): Promise<RtsResult<string>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const service = coffeedServiceClient();
+  const { error, data } = await service
+    .from("coffeed_rts_projects")
+    .update({
+      title: input.title.trim() || "Vídeo sin título",
+      code: input.code.trim().slice(0, 6).toUpperCase() || null,
+      aspect: input.aspect,
+      series_id: input.seriesId,
+      deck_id: input.deckId,
+      doc: hydrateDoc(input.doc),
+    })
+    .eq("id", input.id)
+    .select("updated_at")
+    .single();
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: (data?.updated_at as string) ?? new Date().toISOString() };
+}
+
+export async function deleteProject(id: string): Promise<RtsResult> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_rts_projects").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  // La serie que lo listaba se queda con un hueco: se limpia a mano porque
+  // `video_ids` es un arreglo, no una clave ajena que Postgres pueda cascar.
+  const { data: sets } = await service.from("coffeed_rts_series").select("id, video_ids");
+  for (const s of ((sets ?? []) as { id: string; video_ids: string[] | null }[])) {
+    if ((s.video_ids ?? []).includes(id)) {
+      await service.from("coffeed_rts_series").update({ video_ids: (s.video_ids ?? []).filter((v) => v !== id) }).eq("id", s.id);
+    }
+  }
+  return { ok: true, data: null };
+}
+
+/* ─────────────────────────── barajas y series ─────────────────────────── */
+
+export async function saveDeck(deck: { id?: string | null; name: string; descriptors: string[]; palette: string[]; images: DeckImage[] }): Promise<RtsResult<string>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const service = coffeedServiceClient();
+  const row = {
+    name: deck.name.trim() || "Baraja sin nombre",
+    descriptors: deck.descriptors,
+    palette: deck.palette,
+    // Se guardan RUTAS: una url firmada caduca en una hora y guardarla sería
+    // guardar basura con fecha.
+    images: deck.images.slice(0, 10).map((i) => ({ id: i.id, label: i.label, path: i.path ?? null, grad: i.grad ?? null })),
+  };
+  if (deck.id) {
+    const { error } = await service.from("coffeed_rts_decks").update(row).eq("id", deck.id);
+    return error ? { ok: false, error: error.message } : { ok: true, data: deck.id };
+  }
+  const { data, error } = await service.from("coffeed_rts_decks").insert({ ...row, created_by: who.userId }).select("id").single();
+  if (error || !data) return { ok: false, error: error?.message ?? "No se pudo guardar la baraja." };
+  return { ok: true, data: data.id as string };
+}
+
+export async function deleteDeck(id: string): Promise<RtsResult> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_rts_decks").delete().eq("id", id);
+  return error ? { ok: false, error: error.message } : { ok: true, data: null };
+}
+
+export async function saveSeries(set: {
+  id?: string | null;
+  name: string;
+  glue: string;
+  cadence: string;
+  deckId: string | null;
+  videoIds: string[];
+}): Promise<RtsResult<string>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const service = coffeedServiceClient();
+  const row = {
+    name: set.name.trim() || "Serie sin nombre",
+    glue: set.glue,
+    cadence: set.cadence,
+    deck_id: set.deckId,
+    video_ids: set.videoIds,
+  };
+  if (set.id) {
+    const { error } = await service.from("coffeed_rts_series").update(row).eq("id", set.id);
+    return error ? { ok: false, error: error.message } : { ok: true, data: set.id };
+  }
+  const { data, error } = await service.from("coffeed_rts_series").insert({ ...row, created_by: who.userId }).select("id").single();
+  if (error || !data) return { ok: false, error: error?.message ?? "No se pudo guardar la serie." };
+  return { ok: true, data: data.id as string };
+}
+
+export async function deleteSeries(id: string): Promise<RtsResult> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+  const service = coffeedServiceClient();
+  await service.from("coffeed_rts_projects").update({ series_id: null }).eq("series_id", id);
+  const { error } = await service.from("coffeed_rts_series").delete().eq("id", id);
+  return error ? { ok: false, error: error.message } : { ok: true, data: null };
+}
+
+/* ─────────────────────────── imágenes ─────────────────────────── */
+//
+// Las tres fotos de un personaje (nota 3) y las referencias de una baraja. El
+// prototipo las metía como data-URL dentro del estado: en memoria da igual, pero
+// en una `doc` de Postgres serían megabytes de base64 en cada guardado.
+
+const MAX_MB = 8;
+const OK_TYPES = ["image/png", "image/jpeg", "image/webp", "image/avif"];
+
+export async function uploadRtsImage(form: FormData): Promise<RtsResult<{ path: string; url: string }>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+
+  const file = form.get("file");
+  const scope = String(form.get("scope") ?? ""); // "deck" | "character"
+  const owner = String(form.get("owner") ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
+  if (!(file instanceof File)) return { ok: false, error: "No llegó ningún archivo." };
+  if (!OK_TYPES.includes(file.type)) return { ok: false, error: "Formato no admitido. Usa PNG, JPG, WebP o AVIF." };
+  if (file.size > MAX_MB * 1024 * 1024) return { ok: false, error: `La imagen pesa más de ${MAX_MB} MB.` };
+  if (!owner) return { ok: false, error: "Falta a quién pertenece la imagen." };
+
+  const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+  const path = `${ROOT}/${scope === "deck" ? "decks" : "chars"}/${owner}/${uid("img")}.${ext}`;
+
+  const service = coffeedServiceClient();
+  const { error } = await service.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+  if (error) return { ok: false, error: error.message };
+  const { data } = await service.storage.from(BUCKET).createSignedUrl(path, SIGNED_TTL);
+  return { ok: true, data: { path, url: data?.signedUrl ?? "" } };
+}
+
+/* ───────────── guion → mandos: la pasada de IA sobre las reglas ───────────── */
+//
+// Las reglas deterministas corren SIEMPRE y son las que mandan: son gratis,
+// instantáneas y explicables. La IA solo añade lo que una regla no ve —una
+// intención de cámara escrita sin ninguna de las palabras clave— y todo lo que
+// devuelve se normaliza contra el vocabulario real antes de enseñarlo. Un
+// modelo que se invente un tipo de plano no puede llegar a la pantalla.
+
+const SYSTEM_JSON = "Responde ÚNICAMENTE con un objeto JSON válido. Sin vallas de código, sin preámbulo, sin explicación.";
+
+type RawSuggestion = { sceneId?: string; kind?: string; value?: string | number; key?: string; why?: string; confidence?: number };
+
+export async function analyseScript(input: { projectId: string; draft: SceneDraft[] }): Promise<RtsResult<Proposal[]>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+
+  const open = await loadProject(input.projectId);
+  if (!open) return { ok: false, error: "El vídeo no existe o tu sesión caducó." };
+  const project = open.project;
+
+  // 1 · Las reglas. Esto no falla nunca y no cuesta nada.
+  const rules = deriveProposals(project, input.draft);
+
+  // 2 · La IA, solo sobre las escenas cuya prosa cambió de verdad.
+  const changed = input.draft.filter((d) => {
+    const sc = project.scenes.find((s) => s.id === d.sceneId);
+    const tk = d.takeId ? project.takes.find((t) => t.id === d.takeId) : undefined;
+    return sc && ((tk && d.direction.trim() !== tk.direction.trim()) || d.synopsis.trim() !== sc.synopsis.trim());
+  });
+  if (!changed.length) return { ok: true, data: rules };
+
+  const already = new Set(rules.map((r) => `${r.sceneId}:${r.op.op}`));
+  const brief = changed
+    .slice(0, 8)
+    .map((d) => {
+      const sc = project.scenes.find((s) => s.id === d.sceneId)!;
+      const tk = d.takeId ? project.takes.find((t) => t.id === d.takeId) : undefined;
+      return `ESCENA ${d.sceneId} — «${sc.title}»
+  plano actual: ${tk ? shotPreset(tk.shot).label : "sin toma"} · punto de vista: ${tk?.lens ?? "—"}
+  acción: ${d.synopsis}
+  dirección: ${d.direction || "(vacía)"}`;
+    })
+    .join("\n\n");
+
+  const user = `Eres el ayudante de dirección de un corto. El guionista reescribió la prosa de estas escenas; tu trabajo es decir qué MANDOS DE CÁMARA deberían cambiar por lo que ahora dice el texto — nada más.
+
+${brief}
+
+VOCABULARIO PERMITIDO (no inventes ninguno):
+- tipo de plano (kind "shot"): ${SHOT_PRESETS.map((s) => `${s.key} = ${s.label}`).join(" · ")}
+- punto de vista (kind "lens"): ${LENSES.join(" · ")}
+- óptica en mm (kind "lens_mm"): entero entre 12 y 135
+- sostener en segundos (kind "hold"): entero entre 0 y 12
+
+Devuelve:
+{"suggestions":[{"sceneId":"el id tal cual","kind":"shot|lens|lens_mm|hold","value":"la clave, el nombre exacto o el número","why":"menos de 14 palabras: qué frase del texto lo pide","confidence":0.0}]}
+
+REGLAS
+- Solo propón un cambio si el texto lo pide de forma reconocible. Ante la duda, no propongas.
+- Nada de propuestas que solo repitan lo que ya está configurado.
+- Como mucho dos propuestas por escena. Si no hay ninguna, devuelve la lista vacía.`;
+
+  let raw: RawSuggestion[] = [];
+  try {
+    // Sin búsqueda web a propósito: esto se decide leyendo el texto del guion,
+    // no consultando nada fuera.
+    const text = await claude({ model: MODEL_WRITE, system: SYSTEM_JSON, user, maxTokens: 1400, timeoutRetries: 0 });
+    const d = parseJson<{ suggestions?: RawSuggestion[] }>(text);
+    raw = Array.isArray(d.suggestions) ? d.suggestions : [];
+  } catch (e) {
+    console.error("[rts:analyse]", e);
+    // La pasada de IA es un extra. Si se cae, las reglas ya hicieron su trabajo
+    // y el usuario no se queda sin nada.
+    return { ok: true, data: rules };
+  }
+
+  const ai: Proposal[] = [];
+  for (const s of raw.slice(0, 16)) {
+    const scene = project.scenes.find((x) => x.id === s.sceneId);
+    if (!scene) continue;
+    const take = leadTake(project, scene.id);
+    if (!take) continue;
+    const conf = Math.min(Math.max(Number(s.confidence) || 0.5, 0.1), 0.95);
+    const why = String(s.why ?? "").slice(0, 90);
+    let op: ProposalOp | null = null;
+    let from = "";
+    let to = "";
+    let label = "";
+
+    if (s.kind === "shot") {
+      const hit = SHOT_PRESETS.find((p) => p.key === s.value || p.label === s.value);
+      if (!hit || hit.key === take.shot) continue;
+      op = { op: "take.shot", takeId: take.id, value: hit.key };
+      from = shotPreset(take.shot).label;
+      to = hit.label;
+      label = `${scene.title} · tipo de plano`;
+    } else if (s.kind === "lens") {
+      const hit = LENSES.find((l) => l === s.value);
+      if (!hit || hit === take.lens) continue;
+      op = { op: "take.lens", takeId: take.id, value: hit as LensMode };
+      from = take.lens;
+      to = hit;
+      label = `${scene.title} · punto de vista`;
+    } else if (s.kind === "lens_mm" || s.kind === "hold") {
+      const key = s.kind === "hold" ? "hold" : "lens";
+      const i = paramIndex(take.shot, key);
+      if (i < 0) continue;
+      const max = shotPreset(take.shot).params[i].max;
+      const n = Math.round(Number(s.value));
+      if (!Number.isFinite(n) || n < 0 || n > max) continue;
+      const current = (take.params?.[take.shot]?.[i] ?? shotPreset(take.shot).params[i].def) as number;
+      if (current === n) continue;
+      op = { op: "take.param", takeId: take.id, shot: take.shot, key, value: n };
+      from = `${current}${shotPreset(take.shot).params[i].unit}`;
+      to = `${n}${shotPreset(take.shot).params[i].unit}`;
+      label = `${scene.title} · ${shotPreset(take.shot).params[i].label.toLowerCase()}`;
+    }
+
+    if (!op) continue;
+    // Si una regla ya propuso lo mismo para esta escena, gana la regla.
+    if (already.has(`${scene.id}:${op.op}`)) continue;
+    already.add(`${scene.id}:${op.op}`);
+    ai.push({ id: uid("pr"), sceneId: scene.id, source: "ia", label: why ? `${label} — ${why}` : label, from, to, confidence: conf, op });
+  }
+
+  return { ok: true, data: [...rules, ...ai] };
+}
+
+/* ─────────────────────── «Acción»: revelar fotogramas ─────────────────────── */
+
+export async function renderTake(input: { projectId: string; takeId: string; frames: number }): Promise<RtsResult<RenderJob>> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+
+  const open = await loadProject(input.projectId);
+  if (!open) return { ok: false, error: "El vídeo no existe o tu sesión caducó." };
+  const project = open.project;
+
+  const take = project.takes.find((t) => t.id === input.takeId);
+  if (!take) return { ok: false, error: "Esa toma ya no existe. Guarda el vídeo y vuelve a intentarlo." };
+  const scene = project.scenes.find((s) => s.id === take.sceneId);
+  if (!scene) return { ok: false, error: "La escena de esa toma ya no existe." };
+
+  // La misma comprobación que enseña el taller, re-hecha aquí: la cola es la
+  // parte cara, así que se valida ANTES de entrar, no después.
+  const blocked = checkTake(project, take).filter((f) => f.kind === "block");
+  if (blocked.length) return { ok: false, error: blocked[0].text };
+
+  const n = Math.min(Math.max(Math.round(input.frames) || FRAMES_PER_TAKE.def, FRAMES_PER_TAKE.min), FRAMES_PER_TAKE.max);
+  const service = coffeedServiceClient();
+
+  const { data: job, error: jobErr } = await service
+    .from("coffeed_rts_renders")
+    .insert({
+      project_id: project.id,
+      scene_id: scene.id,
+      take_id: take.id,
+      state: "rendering",
+      provider: "previs",
+      requested_by: who.userId,
+    })
+    .select("id")
+    .single();
+  if (jobErr || !job) return { ok: false, error: jobErr?.message ?? "No se pudo abrir el trabajo." };
+
+  const jobId = job.id as string;
+  const deck = project.deckId ? await readDeck(service, project.deckId) : null;
+  const sceneNo = project.scenes.findIndex((s) => s.id === scene.id) + 1;
+  const times = frameTimes(take.dur, n);
+
+  try {
+    const frames = [];
+    for (let i = 0; i < times.length; i++) {
+      const prompt = framePrompt({ project, scene, take, deck, n: i + 1, frames: n });
+      const svg = previsFrame({ project, scene, take, deck, n: i + 1, frames: n, at: times[i], sceneNo });
+      const path = `${ROOT}/${project.id}/frames/${jobId}/${String(i + 1).padStart(2, "0")}.svg`;
+      const { error } = await service.storage.from(BUCKET).upload(path, new Blob([svg], { type: "image/svg+xml" }), {
+        contentType: "image/svg+xml",
+        upsert: true,
+      });
+      if (error) throw new Error(error.message);
+      frames.push({ n: i + 1, at: times[i], path, prompt });
+    }
+
+    const { data: done, error } = await service
+      .from("coffeed_rts_renders")
+      .update({
+        state: "complete",
+        progress: 100,
+        frames,
+        // El prompt maestro es el del primer fotograma sin la coletilla del
+        // muestreo: es el que describe la toma, no el instante.
+        prompt: framePrompt({ project, scene, take, deck, n: 1, frames: 1 }),
+      })
+      .eq("id", jobId)
+      .select("id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at")
+      .single();
+    if (error || !done) throw new Error(error?.message ?? "No se pudo cerrar el trabajo.");
+    return { ok: true, data: toRender(done as RenderRow) };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Fallo desconocido revelando la toma.";
+    await service.from("coffeed_rts_renders").update({ state: "failed", error: msg }).eq("id", jobId);
+    console.error("[rts:render]", e);
+    return { ok: false, error: msg };
+  }
+}
+
+async function readDeck(service: Service, id: string): Promise<Deck | null> {
+  const { data } = await service.from("coffeed_rts_decks").select("id, name, descriptors, palette, images").eq("id", id).maybeSingle();
+  return data ? toDeck(data as DeckRow) : null;
+}
+
+export async function listRenders(projectId: string): Promise<RenderJob[]> {
+  const who = await studioGate();
+  if (!who) return [];
+  const service = coffeedServiceClient();
+  const { data } = await service
+    .from("coffeed_rts_renders")
+    .select("id, project_id, scene_id, take_id, state, progress, provider, frames, prompt, error, created_at")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(120);
+  return ((data ?? []) as RenderRow[]).map(toRender);
+}
+
+/* ─────────────────────── la entrega al ECP ─────────────────────── */
+//
+// RT-Scriptor deposita en la MISMA cola que el Source Wrapper y Datawave. El
+// sobre es de tipo `guion`: la tira de fotogramas de las escenas elegidas más
+// su guion. El ECP la revisa, le da luz verde y la publica en Coffeed.
+
+export async function submitGuion(input: {
+  projectId: string;
+  sceneIds: string[];
+  title: string;
+  excerpt: string;
+}): Promise<RtsResult> {
+  const who = await studioGate();
+  if (!who) return { ok: false, error: NO_AUTH };
+
+  const open = await loadProject(input.projectId);
+  if (!open) return { ok: false, error: "El vídeo no existe o tu sesión caducó." };
+  const { project, renders } = open;
+
+  const title = input.title.trim();
+  if (!title) return { ok: false, error: "La entrega necesita un título." };
+
+  const chosen = project.scenes.filter((s) => input.sceneIds.includes(s.id));
+  if (!chosen.length) return { ok: false, error: "Elige al menos una escena para entregar." };
+
+  // Nada con una bandera de bloqueo sale del taller. El taller ya lo avisa; aquí
+  // se decide, que es la diferencia entre un aviso y una regla.
+  const blocked = checkProject(project).filter((f) => f.kind === "block");
+  if (blocked.length) return { ok: false, error: `Resuelve antes esto: ${blocked[0].text}` };
+
+  // Por cada escena elegida, los fotogramas del último revelado COMPLETO de su
+  // toma representativa. Sin fotogramas no hay entrega — lo re-valida el trigger.
+  const frames: { path: string; label: string }[] = [];
+  const scenes: { no: number; slug: string; synopsis: string; duration: number; provisional: boolean }[] = [];
+  const missing: string[] = [];
+
+  for (const s of chosen) {
+    const no = project.scenes.findIndex((x) => x.id === s.id) + 1;
+    const take = leadTake(project, s.id);
+    const L = sceneLength(takesOfScene(project, s.id));
+    scenes.push({ no, slug: `${s.int}. ${s.location} — ${s.tod}`, synopsis: s.synopsis, duration: L.seconds, provisional: L.provisional });
+    const job = take ? renders.find((r) => r.takeId === take.id && r.state === "complete" && r.frames.length) : undefined;
+    if (!job) {
+      missing.push(`SC${String(no).padStart(2, "0")} ${s.title}`);
+      continue;
+    }
+    job.frames.forEach((f) => {
+      if (f.path) frames.push({ path: f.path, label: `SC${String(no).padStart(2, "0")} · ${s.title} · ${tc(f.at)}` });
+    });
+  }
+
+  if (missing.length) {
+    return { ok: false, error: `Faltan fotogramas por revelar en: ${missing.join(", ")}. Pulsa «Acción» en esas escenas antes de entregar.` };
+  }
+
+  const service = coffeedServiceClient();
+  const { error } = await service.from("coffeed_deliverables").insert({
+    kind: "guion",
+    app: "rt_scriptor",
+    title,
+    excerpt: input.excerpt.trim() || null,
+    submitted_by: who.userId,
+    payload: {
+      projectId: project.id,
+      projectTitle: project.title,
+      aspect: project.aspect,
+      runtime: projectDuration(project),
+      scenes,
+      frames,
+    },
+  });
+  return error ? { ok: false, error: error.message } : { ok: true, data: null };
+}

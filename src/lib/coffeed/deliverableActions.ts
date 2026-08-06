@@ -18,6 +18,7 @@ import { studioGate } from "./studioGate";
 import { createSignedUrl } from "./storage";
 import {
   resolveEmbed,
+  type CoffeedGuion,
   type CoffeedDeliverable,
   type CoffeedDeliverableKind,
   type CoffeedDeliverableState,
@@ -78,6 +79,32 @@ async function toMedia(service: Service, payload: Record<string, unknown> | null
   };
 }
 
+/** El sobre de RT-Scriptor. Los fotogramas viajan como RUTAS y se firman aquí,
+ *  en lote: una entrega puede llevar treinta y firmarlas de una en una serían
+ *  treinta viajes por cada vez que alguien abre la cola. */
+async function toGuion(service: Service, payload: Record<string, unknown> | null): Promise<CoffeedGuion | null> {
+  if (!payload || typeof payload.projectId !== "string") return null;
+  const raw = Array.isArray(payload.frames) ? (payload.frames as { path?: string; label?: string }[]) : [];
+  const paths = raw.map((f) => f.path).filter((p): p is string => typeof p === "string" && !!p);
+
+  const signed: Record<string, string> = {};
+  if (paths.length) {
+    const { data } = await service.storage.from("kaffetal-media").createSignedUrls(paths, 60 * 60);
+    for (const row of data ?? []) if (row.signedUrl && row.path) signed[row.path] = row.signedUrl;
+  }
+
+  return {
+    projectId: payload.projectId,
+    projectTitle: typeof payload.projectTitle === "string" ? payload.projectTitle : "",
+    aspect: typeof payload.aspect === "string" ? payload.aspect : "16:9",
+    runtime: typeof payload.runtime === "number" ? payload.runtime : 0,
+    scenes: Array.isArray(payload.scenes) ? (payload.scenes as CoffeedGuion["scenes"]) : [],
+    frames: raw
+      .map((f) => ({ url: f.path ? (signed[f.path] ?? "") : "", label: f.label ?? "" }))
+      .filter((f) => f.url),
+  };
+}
+
 async function toDeliverable(service: Service, r: DeliverableRow): Promise<CoffeedDeliverable> {
   const who = r.profiles;
   return {
@@ -96,6 +123,7 @@ async function toDeliverable(service: Service, r: DeliverableRow): Promise<Coffe
     publishedAt: r.published_at,
     panels: (r.coffeed_drafts?.coffeed_panels ?? []).slice().sort((a, b) => a.position - b.position),
     media: r.kind === "video" || r.kind === "embed" ? await toMedia(service, r.payload) : null,
+    guion: r.kind === "guion" ? await toGuion(service, r.payload) : null,
   };
 }
 

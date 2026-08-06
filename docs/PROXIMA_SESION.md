@@ -20,15 +20,13 @@ RT-Scriptor entró como **app #3 del Estudio de Contenido**
 3. **Recórrelo tú.** El Estudio está detrás de la credencial del socio y no se
    puede conducir en un navegador automatizado (mismo caso que el BCP con su
    2FA): esto se verificó con `tsc`, `eslint`, `next build`, SQL y un guardián
-   nuevo de 41 comprobaciones, pero **nadie ha pulsado un botón todavía**. Hay
-   sembrado un proyecto «DEMO · La ruta del lote» para que no se abra vacío —
-   ábrelo, pulsa «Acción» en una toma y mira la tira de fotogramas.
+   nuevo de 41 comprobaciones, pero **nadie ha pulsado un botón todavía**.
+   Crea un vídeo, dale un par de escenas con sus tomas, pulsa «Acción» y mira
+   la tira de fotogramas.
 4. **La pasada de IA del guion está sin probar en vivo.** Las reglas
    deterministas sí (están en el guardián); lo que no se ha ejercitado contra la
    API real es `analyseScript`. Si falla, cae de pie: devuelve solo las
    propuestas de regla y lo dice en la consola (`[rts:analyse]`).
-5. **Borra la demo** cuando ya no te sirva: botón «Borrar» en la tarjeta de la
-   sala de vídeos.
 
 **Decisiones que tomé y conviene que confirmes o revoques:**
 

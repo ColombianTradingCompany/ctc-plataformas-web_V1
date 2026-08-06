@@ -314,4 +314,4 @@ Contexto abierto al cerrar V27:
   el modelo no existe, se cambia la variable y no hace falta desplegar.
 - APP_VERSION 3.3 → 3.4. Guardián en 82 comprobaciones (sin cambios: la fase 2
   es red y no lógica pura, y lo que se puede comprobar sin red ya está).
-(commit: pending)
+(commit: b164d74)

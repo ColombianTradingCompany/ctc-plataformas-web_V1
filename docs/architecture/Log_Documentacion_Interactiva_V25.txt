@@ -242,3 +242,23 @@ publica" que se había descartado vuelve, pero acotado a la producción.
 - **DICT sugerido**: «Ancla de mercado» — la referencia con la que se cotiza,
   común a las dos calculadoras.
 (commit: 693ad3f, mezclado en 5496144)
+
+## [2026-08-06] Herramienta nueva: Costo de empaque por kilo
+- `costo-empaque` (`public/tools/costo-empaque.html`, CTC-costo-empaque-v3.1 del
+  owner): cuánto cuesta empacar al vacío un kilo — bolsa + mano de obra +
+  amortización de la máquina—, con la oferta de proveedores del mercado 2026
+  dentro (16 enlaces a listas de precios reales) y ficha imprimible de una
+  página. Bilingüe ES/EN con conmutador propio. Vendorizada (21 woff2: Archivo
+  + IBM Plex Mono; 0 CDN).
+- Registrada igual que cogs-verde: catalog.ts + toolCopy + KR_TOOL_COPY +
+  GadgetsSection (3 idiomas) + icono en ToolIcons. El banco llega a 11.
+- **Arranca con `web:false`** — al registrarla se leyó `platform_settings.
+  tools_config` y la superficie pública está deliberadamente reducida al disco
+  Agtron (todo lo demás en false, incl. cogs-verde, que quedó KR-only Plus). Una
+  herramienta nueva no debe publicarse sola al visitante anónimo; el owner la
+  enciende desde Disponibilidad. Verificado en dev: /herramientas sigue
+  mostrando solo el Agtron.
+- Recordatorio que esto deja claro: el arranque de DEFAULT_TOOLS_CONFIG solo
+  aplica a ids que NO estén en tools_config — para las ya guardadas manda la
+  base, así que el seed nuevo es la única decisión real que se toma en código.
+(commit: 1902757)

@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { GoogleMap, Marker, Polygon, useJsApiLoader } from "@react-google-maps/api";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
+import { polygonAreaHa } from "@/lib/geo/area";
 
 // Piedecuesta, Santander -- CTC's home region, used only as the map's default
 // center before a finca has any coordinates yet.
@@ -57,6 +58,12 @@ export function FincaMapPicker({
   const hasPoint = lat.trim() !== "" && lng.trim() !== "" && !isNaN(parsedLat) && !isNaN(parsedLng);
   const markerPos = hasPoint ? { lat: parsedLat, lng: parsedLng } : null;
   const shownPolygon = drawing ? draftPoints : polygon;
+  // Superficie medida, en vivo, de lo que se está viendo en el mapa — la misma
+  // fórmula que usa el botón «Calcular del polígono» del formulario. Verla aquí
+  // mientras se marcan las esquinas es lo que hace evidente que el cálculo SÍ
+  // corre, y de paso deja comparar con el área declarada antes de guardar.
+  const draftArea = polygonAreaHa(draftPoints);
+  const committedArea = polygonAreaHa(polygon);
 
   // Initial-only center/zoom: passing a fresh `center` object on every render
   // makes GoogleMap snap the viewport back on every state change -- each
@@ -296,7 +303,7 @@ export function FincaMapPicker({
               )}
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
                 {polygon?.length
-                  ? `${polygon.length} vértices — arrastre los puntos para ajustar`
+                  ? `${polygon.length} vértices${committedArea != null ? ` · ${committedArea} ha` : ""} — arrastre los puntos para ajustar`
                   : "Predio > 4 ha: haga clic en el mapa para marcar el primer vértice del terreno"}
               </p>
             </>
@@ -315,9 +322,13 @@ export function FincaMapPicker({
                 Cancelar
               </button>
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
+                {/* Mientras se dibuja, la forma ya se ve pero TODAVÍA NO es la
+                    geometría de la finca: hasta «Terminar polígono» no viaja al
+                    formulario, y por eso «Calcular del polígono» sigue apagado
+                    allá arriba. Se dice aquí, junto al botón que lo resuelve. */}
                 {(draftPoints?.length ?? 0) < 3
                   ? `Marque cada esquina del terreno en el mapa (${draftPoints?.length ?? 0} de mínimo 3).`
-                  : `${draftPoints?.length} vértices marcados — puede seguir agregando o terminar.`}
+                  : `${draftPoints?.length} vértices marcados${draftArea != null ? ` · ${draftArea} ha` : ""} — toque «Terminar polígono» para guardarlo en la finca.`}
               </p>
             </>
           )}

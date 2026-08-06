@@ -414,6 +414,12 @@ function FincaModalBody({
   // F1: la completitud geográfica del preview se juzga por PARCELAS — la 1 sale
   // del borrador (el mapa de este modal ES la parcela 1) y las demás de props.
   const extraParcelas = parcelas.filter((p) => p.position > 0).sort((a, b) => a.position - b.position);
+  // Con cafetales adicionales, «Área en café» pasa a ser el TOTAL de la finca,
+  // mientras que el mapa de esta pestaña sigue siendo solo el del Cafetal 1:
+  // traer el área de ESE polígono al total lo dejaría corto (y el total es lo
+  // que decide la frontera de 4 ha del EUDR). Con un solo cafetal, finca y
+  // parcela son la misma superficie y el botón sí aplica.
+  const areaIsTotal = extraParcelas.length > 0;
 
   const previewFinca: Finca = {
     id: finca?.id ?? "",
@@ -782,7 +788,7 @@ function FincaModalBody({
                 Área en café (ha)
                 <FieldInfo text="Superficie sembrada en café de este predio. Dibuje el polígono en el mapa de abajo y tóquele «Calcular del polígono» para traerla, o escríbala a mano: el área SEMBRADA puede ser menor que el predio delimitado. A partir de 4 ha el EUDR exige el polígono, no basta el punto." />
               </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+              <div className={styles.fieldRow}>
                 <input
                   value={ha}
                   onChange={(e) => {
@@ -792,25 +798,35 @@ function FincaModalBody({
                   type="number"
                   step="0.1"
                   placeholder="3.5"
-                  style={{ flex: 1, minWidth: 0 }}
                 />
                 <button
                   type="button"
                   className="btn btn-sm"
                   onClick={pullArea}
-                  disabled={polyArea == null}
-                  title={polyArea != null ? "Calcular el área del polígono dibujado en el mapa" : "Dibuje primero el polígono en el mapa de abajo"}
-                  style={{ flex: "none", whiteSpace: "nowrap" }}
+                  disabled={polyArea == null || areaIsTotal}
+                  title={
+                    areaIsTotal
+                      ? "Con varios cafetales, este campo es el área TOTAL de la finca — el polígono de abajo es solo el del Cafetal 1"
+                      : polyArea != null
+                        ? "Calcular el área del polígono dibujado en el mapa"
+                        : "Termine el polígono en el mapa de abajo para poder calcularla"
+                  }
                 >
                   Calcular del polígono 📐
                 </button>
               </div>
               <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
-                {polyArea == null
-                  ? "Dibuje el polígono en el mapa para poder calcularla, o escríbala a mano."
-                  : areaFromPoly
-                    ? `Calculada del polígono (${eudr.eudrPolygon?.length ?? 0} vértices). Ajústela si sembró menos.`
-                    : `El polígono dibujado mide ${polyArea} ha. Toque «Calcular del polígono» para usarla.`}
+                {/* El área del polígono solo se puede traer cuando el polígono
+                    está TERMINADO: mientras se dibuja, la forma ya se ve en el
+                    mapa pero aún no es la geometría de la finca. Decirlo aquí
+                    evita el «no funciona» de tocar un botón deshabilitado. */}
+                {areaIsTotal
+                  ? "Con varios cafetales, escriba aquí el área TOTAL en café de la finca. El área de cada cafetal se calcula en su propia tarjeta, más abajo."
+                  : polyArea == null
+                    ? "Dibuje el polígono en el mapa y toque «Terminar polígono» para poder calcularla, o escríbala a mano."
+                    : areaFromPoly
+                      ? `Calculada del polígono (${eudr.eudrPolygon?.length ?? 0} vértices). Ajústela si sembró menos.`
+                      : `El polígono dibujado mide ${polyArea} ha. Toque «Calcular del polígono» para usarla.`}
               </p>
             </div>
             <div>
@@ -818,7 +834,7 @@ function FincaModalBody({
                 Altura (msnm)
                 <FieldInfo text="Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
               </label>
-              <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+              <div className={styles.fieldRow}>
                 <input
                   value={alt}
                   onChange={(e) => {
@@ -828,7 +844,6 @@ function FincaModalBody({
                   }}
                   type="number"
                   placeholder="1680"
-                  style={{ flex: 1, minWidth: 0 }}
                 />
                 <button
                   type="button"
@@ -836,7 +851,6 @@ function FincaModalBody({
                   onClick={pullAltitude}
                   disabled={!refPoint || altBusy}
                   title={refPoint ? "Traer la altura del punto/polígono registrado en el mapa" : "Marque primero la ubicación en el mapa de abajo"}
-                  style={{ flex: "none", whiteSpace: "nowrap" }}
                 >
                   {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
                 </button>

@@ -396,6 +396,16 @@ export function StageTab({
             <p className="rt-note" style={{ marginTop: 8 }}>Sin revelar. «Acción» congela este cuadro en archivos.</p>
           )}
 
+          {/* Si se pidió fotografía y NINGUNA salió, el motivo no puede vivir
+              escondido en el title de una miniatura: es lo único que explica
+              por qué estás mirando dibujos. */}
+          {job && job.frames.some((f) => f.error) && !job.frames.some((f) => f.real) && (
+            <div className="rt-flag" data-kind="block" style={{ marginTop: 8 }}>
+              <b>se quedó en dibujo</b>
+              <span>{job.frames.find((f) => f.error)?.error}</span>
+            </div>
+          )}
+
           {job?.config && (
             <div className="rt-shotcfg">
               <span>

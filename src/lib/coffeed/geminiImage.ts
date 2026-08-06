@@ -72,6 +72,38 @@ function imagenDe(data: Nodo): { mime: string; b64: string } | null {
 
 export type ImagenGenerada = { mime: string; bytes: Uint8Array };
 
+/** Un error de Gemini que NO se arregla reintentando: falta cuota, falta clave
+ *  o el modelo no existe. Sirve para no machacar la API ocho veces seguidas
+ *  con la misma llamada condenada. */
+export class GeminiParaTodo extends Error {}
+
+/** El titular, por código de estado, dicho como algo que se puede hacer. */
+function etiqueta(status: number, modelo: string): string {
+  if (status === 429) {
+    return (
+      `Gemini dice que la clave NO TIENE CUOTA para generar imagen (429). ` +
+      `No es el modelo ni el prompt: la generación de imagen no entra en el nivel gratuito. ` +
+      `Hay que activar facturación en el proyecto de Google AI de esa clave, o apuntar GEMINI_IMAGE_MODEL a un modelo que sí cubra tu plan. `
+    );
+  }
+  if (status === 404) return `El modelo «${modelo}» no existe o no admite imagen. Cambia GEMINI_IMAGE_MODEL en Vercel. `;
+  if (status === 401 || status === 403) return `Gemini rechazó la clave (${status}). Revisa GEMINI_API_KEY en Vercel. `;
+  return `Gemini respondió ${status}. `;
+}
+
+/** Lo accionable del cuerpo de error de Google: el mensaje y, sobre todo, el
+ *  `details[]`, que nombra la métrica de cuota concreta. */
+function detalleDe(crudo: string): string {
+  try {
+    const j = JSON.parse(crudo) as { error?: { message?: string; status?: string; details?: unknown[] } };
+    const msg = j.error?.message ?? "";
+    const quota = JSON.stringify(j.error?.details ?? []).slice(0, 400);
+    return `— ${msg}${quota && quota !== "[]" ? ` · detalles: ${quota}` : ""}`;
+  } catch {
+    return `— ${crudo.slice(0, 300)}`;
+  }
+}
+
 /**
  * Una imagen a partir del prompt del fotograma y, si se le da, del dibujo de
  * previsualización como referencia de encuadre. Lanza con un mensaje nombrable;
@@ -103,12 +135,15 @@ export async function geminiImagen(opts: { prompt: string; referenciaPng?: Uint8
   });
 
   if (!res.ok) {
-    const cuerpo = (await res.text().catch(() => "")).slice(0, 300);
-    // El 404 es el error que va a pasar de verdad, y merece decir qué hacer.
-    if (res.status === 404) {
-      throw new Error(`El modelo «${modelo}» no existe o no admite imagen. Cambia GEMINI_IMAGE_MODEL en Vercel. (${cuerpo})`);
-    }
-    throw new Error(`Gemini respondió ${res.status}: ${cuerpo}`);
+    const crudo = await res.text().catch(() => "");
+    // Los errores de Google traen la parte accionable en `details[]` —el nombre
+    // exacto de la métrica de cuota y el modelo—, y eso vive DESPUÉS del
+    // `message`. Recortar el cuerpo a 300 caracteres se la comía entera: el
+    // primer 429 real (2026-08-06) llegó diciendo «revisa tu plan» sin decir
+    // de qué. Se extrae lo que importa en vez de truncar por longitud.
+    const msg = `${etiqueta(res.status, modelo)}${detalleDe(crudo)}`;
+    // 401/403/404/429 no cambian por reintentar con el fotograma siguiente.
+    throw [401, 403, 404, 429].includes(res.status) ? new GeminiParaTodo(msg) : new Error(msg);
   }
 
   const data = (await res.json()) as Nodo;

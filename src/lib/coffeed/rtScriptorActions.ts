@@ -26,7 +26,7 @@ import { studioGate } from "./studioGate";
 import { coffeedServiceClient } from "./requireEcp";
 import { claude, parseJson, MODEL_WRITE } from "./claude";
 import { previsFrame, frameTimes, stageProps } from "./rtsPrevis";
-import { geminiImagen, geminiImagenDisponible } from "./geminiImage";
+import { geminiImagen, geminiImagenDisponible, GeminiParaTodo } from "./geminiImage";
 import { emitEvent } from "@/lib/integraciones/emit";
 
 import {
@@ -709,6 +709,8 @@ export async function renderTake(input: {
   const props = stageProps(project, scene, take);
 
   const quiereImagen = input.provider === "imagen";
+  /** Motivo por el que ya no tiene sentido pedir más imágenes en este trabajo. */
+  let paraTodo: string | null = null;
 
   try {
     const frames: RenderJob["frames"] = [];
@@ -728,11 +730,11 @@ export async function renderTake(input: {
 
       const frame: RenderJob["frames"][number] = { n: i + 1, at: times[i], path: `${base}.svg`, ref: `${base}.svg`, prompt, real: false };
 
-      if (quiereImagen) {
+      if (quiereImagen && !paraTodo) {
         // Falla BLANDO, uno a uno: que el fotograma 3 no salga no puede tumbar
         // los otros siete ni el trabajo entero.
         try {
-          if (!geminiImagenDisponible()) throw new Error("GEMINI_API_KEY sin configurar en el servidor.");
+          if (!geminiImagenDisponible()) throw new GeminiParaTodo("GEMINI_API_KEY sin configurar en el servidor.");
           const ref = decodeRefPng(input.refs?.[i]);
           const img = await geminiImagen({ prompt, referenciaPng: ref, aspect: project.aspect });
           const ext = img.mime === "image/jpeg" ? "jpg" : "png";
@@ -744,9 +746,16 @@ export async function renderTake(input: {
           frame.path = `${base}.${ext}`;
           frame.real = true;
         } catch (e) {
-          frame.error = (e as Error).message.slice(0, 240);
+          frame.error = (e as Error).message.slice(0, 600);
           console.error("[rts:imagen]", frame.error);
+          // Sin cuota, sin clave o sin modelo NO cambia nada por intentarlo
+          // otras siete veces: se marcan los que faltan con el mismo motivo y
+          // se para. El primer 429 real (2026-08-06) gastó cuatro llamadas
+          // condenadas y cuatro esperas para decir lo mismo cuatro veces.
+          if (e instanceof GeminiParaTodo) paraTodo = frame.error;
         }
+      } else if (quiereImagen && paraTodo) {
+        frame.error = paraTodo;
       }
 
       frames.push(frame);

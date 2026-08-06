@@ -64,6 +64,10 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "El viaje del café",
     desc: "El recorrido del café CTC, de la finca al destino, paso a paso.",
   },
+  "costo-empaque": {
+    name: "Costo de empaque por kilo",
+    desc: "Lo que cuesta empacar al vacío un kilo de su café: bolsa, jornal y la máquina amortizada, con precios de proveedores del mercado.",
+  },
   "cogs-verde": {
     name: "Calculadora CoGS · Café verde",
     desc: "Cuánto cuesta de verdad su café verde: costos partida por partida hasta la cotización EXW/FOB/CIF, con el precio Fedecafé como referencia.",

@@ -42,6 +42,10 @@ export const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "El viaje del café",
     desc: "El recorrido del café CTC, de la finca al destino, paso a paso. Se ofrece a productores.",
   },
+  "costo-empaque": {
+    name: "Costo de empaque por kilo",
+    desc: "Cuánto cuesta empacar un kilo al vacío: bolsa, mano de obra y amortización de la máquina, con la oferta de proveedores de 2026 y ficha imprimible de una página.",
+  },
   "cogs-verde": {
     name: "Calculadora CoGS · Café verde",
     desc: "El costo real del café verde, partida por partida, hasta la cotización EXW/FOB/CIF con el precio Fedecafé como pivote. Genera la cotización imprimible.",

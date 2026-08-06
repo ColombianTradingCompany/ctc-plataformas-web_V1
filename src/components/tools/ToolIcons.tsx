@@ -87,6 +87,15 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8 15h8" />
     </LineIcon>
   ),
+  // Costo de empaque: una bolsa sellada por arriba — lo que la herramienta
+  // costea, con la línea de sellado marcada.
+  "costo-empaque": (
+    <LineIcon>
+      <path d="M7 7.5h10l-.9 12a1.6 1.6 0 0 1-1.6 1.5H9.5a1.6 1.6 0 0 1-1.6-1.5L7 7.5Z" />
+      <path d="M8.6 4.5h6.8l.6 3H8L8.6 4.5Z" />
+      <path d="M9.6 11h4.8M9.6 14.2h4.8" />
+    </LineIcon>
+  ),
   // CoGS de café verde: una etiqueta de precio con el signo peso — el costo
   // real por kg que la herramienta desglosa hasta la cotización.
   "cogs-verde": (

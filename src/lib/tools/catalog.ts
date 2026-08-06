@@ -25,7 +25,8 @@ export type ToolId =
   | "green-datasheet"
   | "formula-calidad"
   | "viaje-cafe"
-  | "cogs-verde";
+  | "cogs-verde"
+  | "costo-empaque";
 
 export type ToolDef = {
   id: ToolId;
@@ -56,6 +57,8 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   catacion: { id: "catacion", src: "/tools/rueda-catacion.html", lang: "es" },
   "green-datasheet": { id: "green-datasheet", src: "/tools/green-coffee-datasheet.html", lang: "en" },
   "cogs-verde": { id: "cogs-verde", src: "/tools/cogs-cafe-verde.html", lang: "es" },
+  // Trae su propio conmutador ES/EN dentro; se marca "es" porque arranca en español.
+  "costo-empaque": { id: "costo-empaque", src: "/tools/costo-empaque.html", lang: "es" },
 };
 
 /** Todas las herramientas, en el orden en que se listan en el panel interno. */
@@ -65,6 +68,7 @@ export const ALL_TOOL_IDS: ToolId[] = [
   "agtron",
   "mermas-ctc",
   "cogs-verde",
+  "costo-empaque",
   "catacion",
   "green-datasheet",
   "qr",
@@ -128,6 +132,12 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   // Arranca como Plus (petición del owner, 2026-08-04); superficie/nivel se
   // ajustan desde Disponibilidad.
   "cogs-verde": { kr: true, cp: false, web: true, dc: false, tier: "plus" },
+  // Costo de empaque por kilo: cuenta de taller del productor que empaca, con la
+  // oferta de proveedores de 2026 dentro. Nivel normal (el owner no pidió Plus).
+  // `web` ARRANCA APAGADA a propósito: hoy la superficie pública solo ofrece el
+  // disco Agtron (tools_config, 2026-08-06) — una herramienta nueva no debe
+  // publicarse sola al visitante anónimo. Se enciende desde Disponibilidad.
+  "costo-empaque": { kr: true, cp: false, web: false, dc: false, tier: "default" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

@@ -265,4 +265,4 @@ Contexto abierto al cerrar V27:
 - **SIGUE PENDIENTE**: la fase 2 de imagen real por Make (Gemini + Canva). El
   plan está en docs/PROXIMA_SESION.md y ahora es más fácil: el prompt ya
   describe el decorado además de la cámara.
-(commit: pending)
+(commit: bd17a80)

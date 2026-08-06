@@ -134,9 +134,10 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   "cogs-verde": { kr: true, cp: false, web: true, dc: false, tier: "plus" },
   // Costo de empaque por kilo: cuenta de taller del productor que empaca, con la
   // oferta de proveedores de 2026 dentro. Nivel normal (el owner no pidió Plus).
-  // `web` ARRANCA APAGADA a propósito: hoy la superficie pública solo ofrece el
-  // disco Agtron (tools_config, 2026-08-06) — una herramienta nueva no debe
-  // publicarse sola al visitante anónimo. Se enciende desde Disponibilidad.
+  // `web` arranca apagada a propósito (una herramienta nueva no se publica sola
+  // al visitante anónimo). OJO: este arranque ya NO manda — el owner la encendió
+  // en Disponibilidad el 2026-08-06, así que en producción es pública junto al
+  // disco Agtron; lo guardado en tools_config pisa esta línea.
   "costo-empaque": { kr: true, cp: false, web: false, dc: false, tier: "default" },
 };
 

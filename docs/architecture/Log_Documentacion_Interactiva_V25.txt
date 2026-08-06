@@ -262,3 +262,20 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   aplica a ids que NO estén en tools_config — para las ya guardadas manda la
   base, así que el seed nuevo es la única decisión real que se toma en código.
 (commit: 1902757)
+
+## [2026-08-06] Costo de empaque: encendida en la superficie pública
+- A petición del owner se activó `web` para `costo-empaque` en Disponibilidad.
+  Como el BCP/ECP no se puede navegar en automático (2FA real), el cambio se
+  hizo por SQL sobre `platform_settings.tools_config` con la MISMA forma que
+  escribe `saveToolsConfig` (objeto completo {kr,cp,web,dc,tier}); el id no
+  existía en la fila, así que se añadió: la config pasa de 10 a 11 entradas y
+  ninguna otra se tocó.
+- Estado público resultante: herramientas.ctcexport.com ofrece al visitante
+  anónimo DOS herramientas — disco Agtron y Costo de empaque por kilo.
+  Verificado en producción: la tarjeta aparece y el iframe carga
+  /tools/costo-empaque.html.
+- Salvedad: el SQL no dispara el `revalidatePath` ni el apunte en `audit_log`
+  que sí hace el tablero. /herramientas es force-dynamic (se vio el cambio al
+  instante), pero el cambio NO queda registrado en la auditoría — si importa
+  que quede, repetir el toggle desde el tablero.
+(sin commit: cambio de datos, no de código)

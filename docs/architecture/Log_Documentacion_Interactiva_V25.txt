@@ -385,3 +385,15 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   dispara `revalidatePath`; /herramientas es force-dynamic, así que el cambio se
   ve al instante.
 (sin commit: cambio de datos, no de código)
+
+## [2026-08-07] CoGS de café verde encendida en la superficie pública (nivel Plus)
+- A petición del owner, `web:true` para `cogs-verde` en `tools_config` (por SQL,
+  como las anteriores). Conserva su `tier:"plus"`, que NO se tocó.
+- Efecto real, verificado en vivo: el visitante ANÓNIMO sigue viendo tres
+  tarjetas (Agtron, Costo de empaque, Cool PDF) y ahora el aviso «1 herramienta
+  más con tu cuenta de la red» — la CoGS se abre al iniciar sesión con cualquier
+  cuenta de la plataforma, porque en la superficie pública "plus" significa eso
+  (no el Pasaporte del Club, que es lo que significa en Kaffetal Regal).
+- Si el owner quiere que la vea cualquiera sin cuenta, hay que bajarla a
+  `tier:"default"`, no volver a tocar `web`.
+(sin commit: cambio de datos, no de código)

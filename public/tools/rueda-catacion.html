@@ -3267,10 +3267,10 @@ function ensurePdfLibs(){
   if(!pdfLibsPromise){
     pdfLibsPromise = (async ()=>{
       if(!window.html2canvas){
-        await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+        await loadExternalScript('/tools/assets/1.4.1-html2canvas.min.js');
       }
       if(!(window.jspdf && window.jspdf.jsPDF)){
-        await loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await loadExternalScript('/tools/assets/2.5.1-jspdf.umd.min.js');
       }
     })();
   }

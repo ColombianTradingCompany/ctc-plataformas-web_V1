@@ -42,6 +42,10 @@ export const TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "El viaje del café",
     desc: "El recorrido del café CTC, de la finca al destino, paso a paso. Se ofrece a productores.",
   },
+  "cool-pdf": {
+    name: "Cool PDF · dale cuerpo a un PDF",
+    desc: "Convierte un PDF (o un montón de imágenes) en algo que se hojea: libro encuadernado, sólido que gira, collage, rollo y otros formatos. Corre entero en el navegador —no sube nada— y exporta a HTML y a video.",
+  },
   "costo-empaque": {
     name: "Costo de empaque por kilo",
     desc: "Cuánto cuesta empacar un kilo al vacío: bolsa, mano de obra y amortización de la máquina, con la oferta de proveedores de 2026 y ficha imprimible de una página.",

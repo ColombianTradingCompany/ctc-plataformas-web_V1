@@ -87,6 +87,22 @@ async function processFile(fullPath) {
     notes.push(file);
   }
 
+  // ── 4. URLs de CDN sueltas DENTRO del JavaScript ───────────────────────────
+  // No todo lo remoto entra por un <script src>. Cool PDF fija el worker de
+  // pdf.js con `GlobalWorkerOptions.workerSrc='https://cdnjs…/pdf.worker.min.js'`,
+  // una cadena que los pasos de arriba no ven: la herramienta quedaba mirando al
+  // CDN, la CSP de la ruta interna (default-src 'self') bloqueaba el worker y en
+  // una finca sin señal no abría un PDF. Se bajan igual y se reescriben.
+  const bareRe =
+    /["'](https:\/\/(?:cdnjs\.cloudflare\.com|unpkg\.com|cdn\.jsdelivr\.net)\/[^"']+\.(?:js|mjs|css|wasm))["']/g;
+  for (const [, url] of [...html.matchAll(bareRe)]) {
+    const file = safeName(url);
+    const bytes = await get(url, false);
+    await writeFile(path.join(VENDOR_DIR, file), bytes);
+    html = html.split(url).join(`${ASSETS_REL}/${file}`);
+    notes.push(file);
+  }
+
   if (html === before) {
     console.log(`  ${name.padEnd(26)} sin cambios (ya offline)`);
     return;

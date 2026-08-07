@@ -58,6 +58,7 @@ const EN: Copy = {
     "viaje-cafe": { name: "The coffee's journey", desc: "Internal tool." },
     "cogs-verde": { name: "Green coffee CoGS calculator", desc: "Internal tool." },
     "costo-empaque": { name: "Packing cost per kilo", desc: "Internal tool." },
+    "cool-pdf": { name: "Cool PDF", desc: "Internal tool." },
   },
 };
 
@@ -94,6 +95,7 @@ const T: Record<Lang, Copy> = {
       "viaje-cafe": { name: "El viaje del café", desc: "Herramienta interna." },
       "cogs-verde": { name: "Calculadora CoGS · Café verde", desc: "Herramienta interna." },
       "costo-empaque": { name: "Costo de empaque por kilo", desc: "Herramienta interna." },
+      "cool-pdf": { name: "Cool PDF", desc: "Herramienta interna." },
     },
   },
   de: {
@@ -127,6 +129,7 @@ const T: Record<Lang, Copy> = {
       "viaje-cafe": { name: "Die Reise des Kaffees", desc: "Internes Werkzeug." },
       "cogs-verde": { name: "Rohkaffee-CoGS-Rechner", desc: "Internes Werkzeug." },
       "costo-empaque": { name: "Verpackungskosten pro Kilo", desc: "Internes Werkzeug." },
+      "cool-pdf": { name: "Cool PDF", desc: "Internes Werkzeug." },
     },
   },
 };

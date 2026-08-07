@@ -26,7 +26,8 @@ export type ToolId =
   | "formula-calidad"
   | "viaje-cafe"
   | "cogs-verde"
-  | "costo-empaque";
+  | "costo-empaque"
+  | "cool-pdf";
 
 export type ToolDef = {
   id: ToolId;
@@ -59,6 +60,8 @@ export const TOOLS: Record<ToolId, ToolDef> = {
   "cogs-verde": { id: "cogs-verde", src: "/tools/cogs-cafe-verde.html", lang: "es" },
   // Trae su propio conmutador ES/EN dentro; se marca "es" porque arranca en español.
   "costo-empaque": { id: "costo-empaque", src: "/tools/costo-empaque.html", lang: "es" },
+  // Trae conmutador ES/EN, pero arranca en inglés.
+  "cool-pdf": { id: "cool-pdf", src: "/tools/cool-pdf.html", lang: "en" },
 };
 
 /** Todas las herramientas, en el orden en que se listan en el panel interno. */
@@ -69,6 +72,7 @@ export const ALL_TOOL_IDS: ToolId[] = [
   "mermas-ctc",
   "cogs-verde",
   "costo-empaque",
+  "cool-pdf",
   "catacion",
   "green-datasheet",
   "qr",
@@ -139,6 +143,10 @@ export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
   // en Disponibilidad el 2026-08-06, así que en producción es pública junto al
   // disco Agtron; lo guardado en tools_config pisa esta línea.
   "costo-empaque": { kr: true, cp: false, web: false, dc: false, tier: "default" },
+  // Cool PDF: no calcula nada de café — sirve para ENSEÑAR lo que la plataforma
+  // ya genera en PDF (dossier de finca, certificado de lote, cotizaciones). Por
+  // eso arranca en KR y con la superficie pública apagada, como las demás nuevas.
+  "cool-pdf": { kr: true, cp: false, web: false, dc: false, tier: "default" },
 };
 
 /** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */

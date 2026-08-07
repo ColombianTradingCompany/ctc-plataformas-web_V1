@@ -64,6 +64,10 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
     name: "El viaje del café",
     desc: "El recorrido del café CTC, de la finca al destino, paso a paso.",
   },
+  "cool-pdf": {
+    name: "Cool PDF · dale cuerpo a un PDF",
+    desc: "Vuelva hojeable cualquier PDF suyo —el dossier de su finca, el certificado de un lote— como libro, collage o rollo. Todo pasa en su navegador; no se sube nada.",
+  },
   "costo-empaque": {
     name: "Costo de empaque por kilo",
     desc: "Lo que cuesta empacar al vacío un kilo de su café: bolsa, jornal y la máquina amortizada, con precios de proveedores del mercado.",

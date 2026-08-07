@@ -87,6 +87,14 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
       <path d="M8 15h8" />
     </LineIcon>
   ),
+  // Cool PDF: una hoja plana que se abre como libro — la página con cuerpo.
+  "cool-pdf": (
+    <LineIcon>
+      <path d="M12 6.5v14" />
+      <path d="M12 6.5C10.2 5.2 7.9 4.6 5 4.6v13c2.9 0 5.2.6 7 1.9" />
+      <path d="M12 6.5c1.8-1.3 4.1-1.9 7-1.9v13c-2.9 0-5.2.6-7 1.9" />
+    </LineIcon>
+  ),
   // Costo de empaque: una bolsa sellada por arriba — lo que la herramienta
   // costea, con la línea de sellado marcada.
   "costo-empaque": (

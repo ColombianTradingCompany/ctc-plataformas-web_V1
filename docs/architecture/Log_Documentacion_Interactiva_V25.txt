@@ -368,3 +368,20 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   `task._worker._webWorker`) y abre un PDF; las dos librerías de la rueda
   responden 200 desde /tools/assets y su HTML ya no menciona cdnjs.
 (commit: 1bcf70a)
+
+## [2026-08-07] Cool PDF encendida en la superficie pública
+- A petición del owner se activó `web` para `cool-pdf` en Disponibilidad, por SQL
+  sobre `platform_settings.tools_config` (el tablero exige 2FA y no se navega en
+  automático), con la misma forma que escribe `saveToolsConfig`. La config pasa a
+  12 entradas; ninguna otra se tocó.
+- Estado público: herramientas.ctcexport.com ofrece al visitante anónimo TRES
+  herramientas — disco Agtron, Costo de empaque por kilo y Cool PDF.
+- Se comprobó ANTES de encender que el despliegue ya tuviera el archivo y el
+  worker en producción (200), para no publicar una tarjeta que abriera un 404.
+  Verificado después en vivo: la tarjeta aparece, el iframe carga desde
+  herramientas.ctcexport.com, sin recursos externos, y pdf.js abre un PDF con un
+  web worker real servido desde /tools/assets.
+- Misma salvedad que la vez anterior: el SQL no deja rastro en `audit_log` ni
+  dispara `revalidatePath`; /herramientas es force-dynamic, así que el cambio se
+  ve al instante.
+(sin commit: cambio de datos, no de código)

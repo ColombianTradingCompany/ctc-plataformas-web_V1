@@ -340,3 +340,31 @@ publica" que se había descartado vuelve, pero acotado a la producción.
   ida y vuelta exacta del puente sobre la herramienta servida, la descarga del
   archivo real, y las cuatro lentes con su orden y su reescalado.
 (commit: a20e4fd)
+
+## [2026-08-07] Cool PDF + el vendorizador ve dentro del JavaScript
+- Herramienta nueva `cool-pdf` (`public/tools/cool-pdf.html`, cool-pdf_V3 del
+  owner): un PDF o un montón de imágenes se vuelven hojeables —libro, sólido que
+  gira, collage, rollo y más—, todo en el navegador, con exportación a HTML y a
+  video. Bilingüe EN/ES, arranca en inglés. El banco llega a 12.
+- Registro estándar (catalog + toolCopy + KR + CP en 3 idiomas + icono). Arranca
+  kr:true, tier normal, `web:false` — misma política que las últimas dos. Está en
+  KR porque el productor ya tiene PDFs de la plataforma que enseñar (dossier de
+  finca, certificado de lote).
+- **`scripts/vendor-tool-assets.mjs` gana un paso 4**: URLs de CDN sueltas dentro
+  del JS (cadenas entre comillas hacia cdnjs/unpkg/jsDelivr). Los pasos 1-3 solo
+  miraban `<link>` de fuentes y `<script src>`, y eso dejaba pasar dos casos:
+  · Cool PDF fija el worker de pdf.js con `GlobalWorkerOptions.workerSrc='https://
+    cdnjs…'` — habría quedado mirando al CDN, bloqueada por la CSP interna y
+    muerta sin señal justo al abrir un PDF.
+  · **Bug preexistente descubierto**: la Rueda de Catación carga html2canvas y
+    jsPDF con `loadExternalScript('https://cdnjs…')` AL EXPORTAR. Su exportación
+    llevaba tiempo rota dentro de la plataforma y sin conexión, aunque la
+    herramienta abriera bien. Arreglada de paso.
+- Lección para el mapa: "está vendorizada" no es lo mismo que "no tiene enlaces
+  externos en el HTML" — lo que se carga en tiempo de ejecución desde una cadena
+  de JS no aparece en el recuento de `Enlaces externos restantes`.
+- Verificado en dev: el worker local arranca un web worker DE VERDAD (pdf.js
+  degrada callado al de hilo principal si falla, así que se comprobó
+  `task._worker._webWorker`) y abre un PDF; las dos librerías de la rueda
+  responden 200 desde /tools/assets y su HTML ya no menciona cdnjs.
+(commit: 1bcf70a)

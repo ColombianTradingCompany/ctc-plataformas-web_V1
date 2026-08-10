@@ -97,10 +97,15 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "ECP · Dirección",
         links: [
           { href: "/ecp", label: "Panel", exact: true },
-          // Grados de Calidad (2026-08-05): LA definición. Estaban en tres
-          // sitios con tres respuestas distintas —dos de ellas material de
-          // cliente—; ahora se miran aquí y lo demás copia.
-          { href: "/ecp/grados", label: "Grados de Calidad" },
+          // Direccionamiento (2026-08-10): qué dice la casa y con qué cifras.
+          // Pestaña 1 = «Definición de contexto», la ficha viva de realineación
+          // de GTM y comunicación (CTCX · KR · CHP), con redacción asistida.
+          // Pestaña 2 = «Grados de Calidad» (2026-08-05), LA definición —
+          // estaba en tres sitios con tres respuestas distintas, dos de ellas
+          // material de cliente. Se metió aquí dentro porque es exactamente la
+          // cifra que el contenido no puede inventarse; /ecp/grados sigue vivo
+          // como redirección.
+          { href: "/ecp/direccionamiento", label: "Direccionamiento" },
           // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
           // material de dirección, no operación diaria.
           { href: "/ecp/buzon", label: "Buzón de entrada" },

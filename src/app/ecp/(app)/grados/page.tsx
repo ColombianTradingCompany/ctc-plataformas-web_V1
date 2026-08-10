@@ -1,11 +1,8 @@
-import type { Metadata } from "next";
-import { GradosBoard } from "@/components/panel/GradosBoard";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Grados de Calidad · ECP", robots: { index: false, follow: false } };
-
-// Grados de Calidad CTC (2026-08-05). LA página de referencia: los grados
-// estaban definidos en tres sitios con tres respuestas distintas, dos de ellas
-// material de cliente. Fuente única en src/lib/grados/definicion.ts.
-export default function GradosPage() {
-  return <GradosBoard />;
+// Grados de Calidad se mudó dentro del módulo Direccionamiento (2026-08-10).
+// La URL vieja se queda viva: está enlazada desde fuera de la consola y no
+// cuesta nada mantenerla (mismo patrón que /bcp/login → /login).
+export default function GradosRedirect() {
+  redirect("/ecp/direccionamiento/grados");
 }

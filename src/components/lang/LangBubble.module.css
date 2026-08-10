@@ -4,6 +4,11 @@
    FAB (QuickMenu / QuickNav own the bottom-right corner, so the bubble lives
    bottom-left). */
 .wrap{position:fixed;left:24px;bottom:var(--fb-bottom,24px);z-index:60}
+/* Variante derecha (CTC Home, 2026-08-11): el idioma se queda con el suelo de
+   la esquina y «Navegar» se sube encima. El panel también cambia de lado, o se
+   saldría de la pantalla al abrirse hacia la derecha. */
+.right{left:auto;right:24px}
+.right .panel{left:auto;right:0}
 
 .fab{
   display:inline-flex;align-items:center;justify-content:center;
@@ -49,4 +54,4 @@
 .code{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted,#5a6472);flex:none;width:24px}
 .entryActive .code{color:rgba(255,255,255,.85)}
 
-@media(max-width:520px){.wrap{left:16px}}
+@media(max-width:520px){.wrap{left:16px}.right{left:auto;right:16px}}

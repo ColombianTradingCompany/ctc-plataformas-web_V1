@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useContactModal } from "./ContactModal";
 import { useLang, type Lang } from "@/components/lang/i18n";
-import { PAGE_INDEX } from "./pageIndex";
+import { PAGE_GROUPS, PAGE_INDEX, PAGE_JUMPS } from "./pageIndex";
 import styles from "./Header.module.css";
 
 const T: Record<Lang, { write: string; idxAria: string }> = {
@@ -18,6 +18,8 @@ export function Header() {
   const t = T[lang];
   // El MISMO índice que la burbuja «Navegar» (./pageIndex).
   const links = PAGE_INDEX[lang];
+  const jumps = PAGE_JUMPS[lang];
+  const groups = PAGE_GROUPS[lang];
   const [hidden, setHidden] = useState(false);
   const [idxOpen, setIdxOpen] = useState(false);
   const lastY = useRef(0);
@@ -76,12 +78,27 @@ export function Header() {
             </svg>
           </summary>
           <div className={styles.idxMenu}>
+            <p className={styles.group}>{groups.page}</p>
             {links.map((l, i) => (
               <a key={l.id} href={`#${l.id}`} onClick={() => setIdxOpen(false)}>
                 <span className={styles.n}>{String(i + 1).padStart(2, "0")}</span>
                 <span>
                   {l.label}
                   <small>{l.sub}</small>
+                </span>
+              </a>
+            ))}
+            {/* Las dos puertas de verdad. Un menú que solo mueve el scroll no
+                lleva a nadie a ninguna parte. */}
+            <p className={`${styles.group} ${styles.groupGo}`}>{groups.go}</p>
+            {jumps.map((j) => (
+              <a className={styles.jump} key={j.href} href={j.href} onClick={() => setIdxOpen(false)}>
+                <span className={styles.n} aria-hidden>
+                  ↗
+                </span>
+                <span>
+                  {j.label}
+                  <small>{j.sub}</small>
                 </span>
               </a>
             ))}

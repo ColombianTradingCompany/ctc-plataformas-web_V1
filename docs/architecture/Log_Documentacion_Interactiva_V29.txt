@@ -49,3 +49,181 @@ Contexto abierto al cerrar V29:
 - **Terratalento está construido pero su puerta pública sigue en gris** por
   decisión del owner («Modelo en desarrollo»). Cuando se encienda: quitarle
   `soon: true` en EcosystemSection, nada más.
+
+## [2026-08-11] ctcexport.com: el hero se desnuda, la Oferta 3 se vuelve ventana y entra la cinta de mercado
+
+Pasada de UX sobre CTC Home pedida por el owner, con la conversión como criterio:
+que la primera pantalla haga UNA pregunta (¿vendes o compras?) y que todo lo demás
+se lea a golpe corto. No cambia ninguna ruta, permiso, tabla ni superficie.
+
+**Hero (`components/ctc-home/Hero.tsx` + su CSS)**
+- Se fue la línea «Casa matriz · Piedecuesta» y entran TRES afirmaciones con
+  explicación al pasar por encima (o al tocarlas: llevan `tabIndex`): «Café 100%
+  de Origen» · «Calidad, Trazabilidad y Perfilamiento» · «Global SupplyWave 4.0».
+  La burbuja se dibuja con `content:attr(data-tip)` — sin estado de React.
+  CONCEPTO NUEVO PARA EL DICT: **Global SupplyWave 4.0** = Global Supply (gestionar
+  flujos comerciales internacionales y logística compleja) + Wave (guiño a la
+  cuarta ola sin decir «café») + 4.0 (datos y automatización). Es el nombre del
+  componente logístico de la casa.
+- Se retiró el párrafo de posicionamiento del hero: decía lo mismo que la
+  entradilla de «Las tres ofertas» y empujaba los botones fuera del primer vistazo.
+- Los dos CTA son ahora las dos orillas en primera persona: «Produzco un gran café,
+  ¡quiero venderlo!» (oro de Kaffetal Regal → kaffetal-regal.ctcexport.com) y
+  «Necesito un gran café, ¡quiero comprarlo!» (azul → cherry-picked.ctcexport.com).
+- La tira de datos sueltos («3 ofertas · 2 orillas…») se sustituye por CUATRO
+  botones en una sola línea, cada uno con su ventana: Catálogo de dos cosechas
+  anuales · Cumplimiento EU/USA · Logística Internacional · Grados de calidad.
+
+**Cinta de mercado (NUEVO — `components/ctc-home/MarketTicker.tsx`,
+`lib/market/ticker.ts`, `app/api/home/ticker/route.ts`)**
+- Barra morada a lo ancho, pegada al borde inferior del hero. Tres procedencias,
+  ninguna tumba a las otras: bolsas y divisas del endpoint de gráficos de Yahoo
+  (NY-C arábica, USD/COP, EUR/USD, USD/BRL — sin clave); el precio interno de la
+  FNC leído de `market_anchors` (ya lo llena el cron diario del OCP); y titulares
+  de los medios aprobados de `coffeed_sources` con feed resuelto, parseados con el
+  `parseFeed` del barrido de Coffeed. Caché de 15 min (precios) y 30 min (prensa)
+  por la caché de datos de Next, más `s-maxage=300` en el CDN.
+- HALLAZGO QUE CONVIENE NO REDESCUBRIR: **el robusta de Londres y los inventarios
+  certificados de ICE no tienen fuente pública gratuita** (probados RC=F, RM=F,
+  LRC=F, el buscador de Yahoo y Stooq). Quedan declarados como anclas
+  (`robusta_londres`, `ice_certificados` en `lib/anclas/types.ts`) y la cinta los
+  dibuja SOLA en cuanto `market_anchors` tenga una lectura suya. El tablero del
+  OCP sigue administrando solo `fnc_carga` — ahí queda la deuda.
+
+**La sección «Oferta 3 · Value Ecosystem» DESAPARECE (nodo/wire a corregir)**
+- `ServicesSection.tsx`, su CSS y `OpenFormButton.tsx` se borraron; `#tech` ya no
+  existe como ancla de la página.
+- Sus cuatro paneles se abren ahora como VENTANA desde la puerta que les toca en
+  el índice de la red (`EcosystemSection`). La copy no se duplicó: sale de
+  `components/services/servicesCopy.tsx`, la misma fuente que las cuatro landings.
+  Las otras siete puertas (KR, Cherry Picked, Roast, X, Coffeed, Herramientas,
+  Terratalento) también tienen ficha; las cinco que no tenían copy en ningún sitio
+  se escribieron en las tres lenguas dentro de `EcosystemSection`.
+- Las baldosas siguen siendo `<a href>` de verdad (el buscador las indexa y
+  Ctrl/⌘/rueda navegan); lo que cambia es que el clic normal abre la ficha.
+  Terratalento, apagada, ahora TAMBIÉN se abre para contar qué será — antes tenía
+  `pointer-events:none` y era muda.
+
+**Contexto (`MomentSection.tsx`)**
+- Se quedó en los huesos: encabezado, gráfico y las dos frases. Fuera la foto
+  lateral, las tres tarjetas de prosa y el bloque de cierre.
+- El gráfico es responsive de verdad: por debajo de ~600 px se arrastra en
+  horizontal en vez de aplastarse (aplastado dejaba los rótulos del eje en 5 px).
+  Encima lleva CUATRO PUNTOS en HTML (no dentro del SVG, para conservar área de
+  toque y foco de teclado) sobre el ápice de cada curva; cada uno abre la ficha de
+  su ola.
+- Debajo, CINCO FIGURAS del mismo lienzo, trazo, tipografía y tamaño — Las olas ·
+  La Diáspora · El Terruño · La Trazabilidad · El Perfil — cada una con su ventana
+  en frases cortas y viñetas. CONCEPTOS PARA EL DICT: los tres primeros ya existían
+  como prosa en la sección; «La Trazabilidad» y «El Perfil» son nuevos y recogen,
+  respectivamente, el hilo único de dato (geolocalización→DDS→grado→QR) y el acta
+  sensorial (catación ciega, protocolo SCA, grado).
+
+**Navegación y pie**
+- `pageIndex.ts` pierde `tech`: quedan hero · ecosistema · momento · historia. Y
+  deja de ser solo un índice de anclas — los DOS menús (desplegable de cabecera y
+  burbuja «Navegar») cierran con las dos puertas de verdad, Kaffetal Regal y
+  Cherry Picked, bajo su propio encabezado.
+- La burbuja de idioma se muda a la esquina de abajo a la DERECHA, bajo «Navegar»
+  (`LangBubble` gana `align="right"`; el resto de superficies no se entera).
+- La placa del logo del pie se achica (300→220 px) y gana `margin-bottom`: la
+  barra legal vive DENTRO del `<footer>`, así que el relleno inferior caía por
+  debajo de ella y no separaba las dos piezas.
+- Arreglo de móvil de rebote: en la cabecera, `gap:30px` + `padding:32px` echaban
+  el botón del índice fuera de la pantalla — quedaba «Escríbenos» pegado al borde
+  y el menú sin existir.
+
+APP_VERSION 3.13 → 3.14.
+(commit: pending)
+
+## [2026-08-11 · segunda pasada] La sección del ecosistema queda en tres gestos, y Cherry Picked pasa a ser plataforma
+
+Repaso del owner sobre la pasada anterior, más un cambio de MODELO en el lado de
+la demanda que sí afecta a la arquitectura.
+
+**Retoques del hero**
+- La burbuja de las tres afirmaciones se pintaba DEBAJO del titular: `.claims`
+  tenía z-index 2, igual que la rejilla, y siendo la rejilla hermano posterior
+  ganaba ella. Ahora `.claims` va a z-index 4 y el aire pasó de 22 a 52 px
+  (compensado bajando el relleno superior del hero de 76 a 58, para no perder el
+  pliegue). La burbuja también se hizo más compacta (12 px, hasta 390 de ancho).
+- Los dos botones usan ahora la MISMA tipografía que la cinta de afirmaciones
+  (`--font-spline-mono`) y van en dos líneas: la situación arriba y la petición
+  abajo, más grande. La de texto corrido no pegaba con nada de esa pantalla.
+
+**La sección «Las tres ofertas» pierde tres bloques (NODOS/WIRES a corregir)**
+- Fuera el raíl numerado 1·2·3: repetía en lista lo que las dos tarjetas ya
+  numeran y lo que la banda de abajo dice con su propia cara.
+- Fuera la segunda mitad de la entradilla (la que enumeraba KR / Cherry Picked /
+  Co-Create): la sección entera es esa enumeración.
+- La barra «El puente · Lo que pasa en el medio» y sus CINCO celdas se convierte
+  en la banda **«El puente · Para la industria del café / Ecosistema de Valor
+  CTC»**, y debajo van sus SEIS módulos (CTC Tech · Varietales · Directorio ·
+  Coffeed · Herramientas · Terratalento). Las cinco celdas que se retiran ya las
+  cuentan las cuatro cualidades del hero.
+- Fuera «El hilo de integración». Su copy se folió, con nombres propios
+  incluidos (Bruselas, Ámsterdam, Piedecuesta, Transparency Credit), dentro de
+  la ficha **La Trazabilidad** del Contexto, que decía exactamente lo mismo a
+  media pantalla de distancia. SE PIERDEN de la página dos imágenes: el mapa de
+  regiones cafeteras y los sellos de grado (siguen en public/images).
+- Fuera el «Índice de la red» entero con sus once puertas agrupadas por familia:
+  con los seis módulos arriba y las dos insignias como tarjetas, era una tercera
+  lista de lo mismo. **La captación de correo (`NetNewsletter`) NO se perdió** —
+  se movió al cierre de la sección.
+
+**CAMBIO DE MODELO · el lado de la demanda (esto es arquitectura, no forma)**
+Decisión del owner: **Cherry Picked deja de ser «la vitrina» y pasa a ser la
+PLATAFORMA de compra**, con cuatro programas dentro:
+  1. **Cherry Picked Co-Create** — la primera puerta: se construye la proveeduría
+     con la marca. Incorpora el modelo **Master Roaster**: un tostador de
+     referencia que lo implementa con CTC en su propio mercado. (Ojo: esto NO da
+     más protagonismo al login del socio Master Roaster en ctcexport.com; sí lo
+     tiene dentro de Co-Create.)
+  2. **Cherry Picked Green** — el verde por fracciones. Se habilita **un mercado
+     a la vez**, no de golpe.
+  3. **Cherry Picked Roast** — 2027.
+  4. **Cherry Picked X** — 2027.
+En la home ya está contado así: la tarjeta 2 describe la plataforma y sus cuatro
+programas, y suma un segundo botón directo a Co-Create. Co-Create dejó de ser una
+loseta suelta del índice (ahora vive dentro de Cherry Picked) y Roast/X dejaron
+de tener loseta propia por lo mismo.
+
+**LO QUE FALTA DE ESTE CAMBIO (no se hizo en esta tanda, pendiente de decisión):**
+`cherry-picked.ctcexport.com` sigue sirviendo la TIENDA Green, no el hub. Para
+partirlo hacen falta: una landing-hub nueva en `/cherry-picked`; mover
+`CherryPickedExperience` a `/cherry-picked-green` con su propio
+`auth/callback` (el actual redirige a `/cherry-picked` y `LoginModal` compone la
+ruta a mano); una entrada en `SUBDOMAIN_ROUTES`; el repaso de 21 referencias a la
+URL en 15 archivos (RedSwitcher, matriz de identidad, plusGrants, toolAccess,
+QuickNav, footers de KR…); y DNS + dominio en Vercel para
+`cherry-picked-green`, que solo puede hacer el owner.
+
+APP_VERSION 3.14 (misma tanda).
+(commit: pending)
+
+## [2026-08-11 · tercera pasada] Cuatro retoques del owner sobre la banda y las tarjetas
+
+- **Fuera los círculos 1 y 2** de las tarjetas insignia: respondían al raíl de
+  tres pasos que se retiró en la pasada anterior, así que señalaban a nada.
+- **«Lo que ofrece al productor» reescrito** (5 → 6 puntos, cada uno abriendo con
+  lo que el productor GANA, no con el nombre del módulo). CORRECCIÓN DE FONDO,
+  no de estilo: el punto «Certificación CTC gratis para todos los participantes»
+  se había quedado viejo desde que la Arena tiene inscripción (COP 80.000/lote,
+  2026-07-16). Ahora lo gratuito se nombra donde sí lo es —registro y evaluación
+  documental— y entra un punto nuevo por el **Pasaporte del Kaffetal Club**, que
+  es lo que de verdad habilita firmar contrato y publicar en Cherry Picked.
+- **El Directorio del Café y Coffeed llevan su LOGOTIPO**, no una fotografía:
+  `NET_IS_LOGO` cambia el recorte a `contain` sobre plato blanco, en la loseta y
+  en la cabecera de su ventana (`InfoEntry.imageContain`). El logo de Coffeed no
+  estaba en el proyecto — se trajo de `reference_logos/Coffeed Logo.png` a
+  `public/images/shared/coffeed-logo.png` (sharp, 700 px).
+- **La insignia «Modelo en desarrollo» se sustituye por un ACORDEÓN** en la misma
+  banda: «Qué es el Ecosistema de Valor». Explica que los seis módulos son la
+  infraestructura que CTC construyó para su propio trabajo y abrió a la
+  industria, que sirven a las dos orillas, que ninguno exige comprar ni vender
+  café, y —último punto— que el modelo está en desarrollo. **El aviso no se
+  perdió: cambió de insignia a frase**, que es lo que conviene recordar si
+  alguien pregunta por qué ya no está el sello.
+
+APP_VERSION 3.14 (misma tanda).
+(commit: pending)

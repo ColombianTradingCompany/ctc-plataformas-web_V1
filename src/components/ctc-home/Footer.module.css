@@ -19,8 +19,11 @@
 .partnersLinks a{font-size:12.5px;color:#B9C6D4;text-decoration:none;border-bottom:1px solid transparent;transition:all .15s}
 .partnersLinks a:hover{color:var(--accent-soft);border-bottom-color:var(--accent-soft)}
 
-/* Sign-off: the full logo closes the page. */
-.signoff{margin-top:40px;padding-top:32px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:16px}
+/* Sign-off: the full logo closes the page. El `margin-bottom` es lo que impide
+   que la placa del logo quede pegada a la barra legal — la barra vive DENTRO
+   del footer, así que el relleno inferior del footer cae por debajo de ella y
+   no separaba estas dos piezas (2026-08-11). */
+.signoff{margin-top:40px;margin-bottom:36px;padding-top:32px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:16px}
 /* Last window into the origin (the Piedecuesta shot that used to live in the
    hero aside) — framed like it was there, sized as a closing vignette. */
 .closingShot{
@@ -30,9 +33,9 @@
 }
 .closingShot img{width:100%;height:auto;display:block}
 .logoPlate{
-  background:#fff;border-radius:16px;padding:22px 30px;
+  background:#fff;border-radius:14px;padding:16px 24px;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 22px 50px -26px rgba(0,0,0,.6);
 }
-.logoPlate img{width:100%;max-width:300px;height:auto;display:block}
+.logoPlate img{width:100%;max-width:220px;height:auto;display:block}
 .copy{font-size:11px;letter-spacing:.06em;color:#8FA0B2;text-align:center}

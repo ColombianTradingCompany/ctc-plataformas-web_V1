@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
-import { PAGE_INDEX, SECTION_IDS } from "./pageIndex";
+import { PAGE_GROUPS, PAGE_INDEX, PAGE_JUMPS, SECTION_IDS } from "./pageIndex";
 import styles from "./QuickMenu.module.css";
 
 // Floating quick-nav: same shape as the Finca panel's save FAB (round, fixed
@@ -28,6 +28,8 @@ export function QuickMenu() {
   const t = T[lang];
   // El MISMO índice que el desplegable de la cabecera (./pageIndex).
   const sections = PAGE_INDEX[lang];
+  const jumps = PAGE_JUMPS[lang];
+  const groups = PAGE_GROUPS[lang];
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("hero");
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -71,6 +73,7 @@ export function QuickMenu() {
     <div className={styles.wrap} ref={wrapRef}>
       {open && (
         <nav className={styles.panel} aria-label={t.panelAria}>
+          <p className={styles.group}>{groups.page}</p>
           {sections.map((s) => (
             <a
               key={s.id}
@@ -82,6 +85,17 @@ export function QuickMenu() {
               <span>
                 {s.label}
                 <small>{s.sub}</small>
+              </span>
+            </a>
+          ))}
+          {/* Las mismas dos salidas que el desplegable de la cabecera: los dos
+              menús son el mismo menú en dos sitios. */}
+          <p className={`${styles.group} ${styles.groupGo}`}>{groups.go}</p>
+          {jumps.map((j) => (
+            <a className={styles.jump} key={j.href} href={j.href} onClick={() => setOpen(false)}>
+              <span>
+                {j.label} <i aria-hidden>↗</i>
+                <small>{j.sub}</small>
               </span>
             </a>
           ))}

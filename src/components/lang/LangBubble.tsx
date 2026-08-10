@@ -17,7 +17,15 @@ const ARIA: Record<Lang, string> = {
   de: "Sprache wechseln",
 };
 
-export function LangBubble({ bottom = 24 }: { bottom?: number }) {
+export function LangBubble({
+  bottom = 24,
+  align = "left",
+}: {
+  bottom?: number;
+  /** Por defecto abajo a la izquierda, que es donde la esperan las superficies
+   *  que ya la tenían. CTC Home la pide a la derecha, bajo «Navegar». */
+  align?: "left" | "right";
+}) {
   const { lang, setLang } = useContext(LangContext);
   const [open, setOpen] = useState(false);
   const bouncing = useRandomBounce();
@@ -41,7 +49,7 @@ export function LangBubble({ bottom = 24 }: { bottom?: number }) {
 
   return (
     <div
-      className={styles.wrap}
+      className={`${styles.wrap}${align === "right" ? ` ${styles.right}` : ""}`}
       style={{ ["--fb-bottom" as string]: `${bottom}px` } as React.CSSProperties}
       ref={wrapRef}
       onMouseEnter={() => setOpen(true)}

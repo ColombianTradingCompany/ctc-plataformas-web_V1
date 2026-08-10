@@ -1,33 +1,70 @@
-.vizGrid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:22px;align-items:stretch}
-@media(max-width:860px){.vizGrid{grid-template-columns:1fr}}
-.viz{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 14px}
-.viz svg{width:100%;height:auto;display:block}
+/* Contexto · el gráfico de las cuatro olas y los cinco conceptos.
+   Lo que había antes (foto lateral, tres tarjetas de prosa y bloque de cierre)
+   se retiró el 2026-08-11 — su contenido vive ahora dentro de los puntos de la
+   curva y de las cinco figuras. */
+
+.chartCard{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px 22px 14px;
+}
 .vt{
   font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
 }
 .vt b{color:var(--accent)}
-.vizPhoto{position:relative;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);min-height:220px}
-.vizPhoto span{
-  position:absolute;left:12px;bottom:12px;background:rgba(14,44,72,.87);color:#F2E7C8;
-  font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.08em;padding:5px 11px;
-  border-radius:6px;text-transform:uppercase;z-index:2;max-width:calc(100% - 24px);
+
+/* El gráfico nunca se aplasta: por debajo de ~600 px se arrastra en horizontal.
+   Aplastarlo dejaría los rótulos del eje en cinco píxeles, que es no tenerlos.
+   En escritorio la envoltura da de sobra y la barra no llega a aparecer. */
+.scroller{overflow-x:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.canvas{position:relative;min-width:600px}
+.canvas svg{width:100%;height:auto;display:block}
+
+/* ── Los puntos sobre la curva ───────────────────────────────────────────────
+   En HTML y no dentro del SVG: así el área de toque es de botón de verdad y no
+   encoge con el lienzo, y el foco del teclado se ve. */
+.dot{
+  position:absolute;transform:translate(-50%,-50%);cursor:pointer;
+  width:26px;height:26px;border-radius:50%;
+  background:#fff;border:2.5px solid var(--dc);color:var(--dc);
+  font-family:var(--font-spline-mono),monospace;font-size:11px;font-weight:700;line-height:1;
+  display:grid;place-items:center;
+  box-shadow:0 3px 10px rgba(14,44,72,.22);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+/* El área de toque real: 44 px, sin que el círculo se vea más grande. */
+.dot::after{content:"";position:absolute;inset:-9px;border-radius:50%}
+.dot:hover,.dot:focus-visible{transform:translate(-50%,-50%) scale(1.22);box-shadow:0 6px 18px rgba(14,44,72,.32)}
+
+/* Las dos frases, debajo del gráfico: leen el dibujo, así que van después de él. */
+.intro{
+  margin:20px auto 0;max-width:78ch;text-align:center;
+  font-size:15.5px;line-height:1.75;color:var(--muted);
 }
 
-.waves{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:900px){.waves{grid-template-columns:1fr}}
-.wave{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;border-top:5px solid var(--wc)}
-.wn{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--wc)}
-.wave h3{font-size:19px;margin:8px 0 10px}
-.wave p{font-size:13.5px;color:var(--muted);line-height:1.65}
-.wave b{color:var(--ink)}
-
-.momentClose{
-  margin-top:22px;background:var(--primary-deep);color:#C9D4E2;border-radius:var(--radius);padding:28px 30px;
-  display:grid;grid-template-columns:1.25fr .75fr;gap:26px;align-items:center;
+/* ── Las cinco figuras ───────────────────────────────────────────────────────
+   Misma caja, mismo lienzo de 48×48, mismo grosor de trazo, misma tipografía y
+   el mismo tamaño de rótulo. Lo único distinto entre ellas es el dibujo. */
+.concepts{
+  margin-top:34px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;
 }
-@media(max-width:820px){.momentClose{grid-template-columns:1fr}}
-.momentClose p{font-size:15px;line-height:1.75}
-.momentClose b{color:#fff}
-.momentClose em{color:var(--accent-soft);font-style:italic}
-.momentClose img{width:100%;height:auto;border-radius:11px;border:1px solid rgba(255,255,255,.2)}
+@media(max-width:820px){.concepts{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.concepts{grid-template-columns:repeat(2,1fr)}}
+
+.concept{
+  cursor:pointer;background:none;border:1px solid transparent;border-radius:var(--radius);
+  padding:16px 10px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  color:var(--cc);transition:border-color .16s ease,background .16s ease,transform .16s ease;
+}
+.concept svg{width:48px;height:48px;display:block}
+.concept span{
+  font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink);text-align:center;line-height:1.4;
+}
+.concept:hover,.concept:focus-visible{background:var(--card);border-color:var(--line);transform:translateY(-3px)}
+
+@media(prefers-reduced-motion:reduce){
+  .dot,.dot:hover,.concept,.concept:hover{transition:none}
+  .dot:hover,.dot:focus-visible{transform:translate(-50%,-50%)}
+  .concept:hover,.concept:focus-visible{transform:none}
+}

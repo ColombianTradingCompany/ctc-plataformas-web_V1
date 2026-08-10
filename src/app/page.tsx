@@ -7,7 +7,6 @@ import { Hero } from "@/components/ctc-home/Hero";
 import { HomeBand } from "@/components/ctc-home/HomeBand";
 import { EcosystemSection } from "@/components/ctc-home/EcosystemSection";
 import { MomentSection } from "@/components/ctc-home/MomentSection";
-import { ServicesSection } from "@/components/ctc-home/ServicesSection";
 import { HistorySection } from "@/components/ctc-home/HistorySection";
 import { QuickMenu } from "@/components/ctc-home/QuickMenu";
 import { Footer } from "@/components/ctc-home/Footer";
@@ -23,11 +22,17 @@ export default function CtcHomePage() {
             <EcosystemSection />
             <HomeBand band="feria" />
             <MomentSection />
-            <ServicesSection />
+            {/* La sección «Oferta 3 · Value Ecosystem» se retiró el 2026-08-11:
+                sus cuatro paneles se abren ahora como ventana desde la puerta
+                que les toca en el índice de la red (EcosystemSection). La copy
+                sigue viviendo en `components/services/servicesCopy`, que es de
+                donde también beben las cuatro landings propias. */}
             <HomeBand band="patio" />
             <HistorySection />
             <QuickMenu />
-            <LangBubble />
+            {/* Las dos burbujas comparten la esquina de abajo a la derecha: el
+                idioma en el suelo, «Navegar» encima (QuickMenu.module.css). */}
+            <LangBubble align="right" />
             <Footer />
           </ContactModalProvider>
         </LangProvider>

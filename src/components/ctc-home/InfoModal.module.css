@@ -1,0 +1,40 @@
+/* La ventana compartida de CTC Home. El `.modal` global ya pone caja, sombra y
+   botón de cerrar; aquí solo va lo de dentro. */
+.box{max-width:560px}
+
+.inner{--ia:var(--accent)}
+
+/* La foto de cabecera se sale del padding de la caja a propósito: ocupa el
+   ancho entero y la ventana empieza por una imagen, no por un margen. */
+.shot{
+  display:block;width:calc(100% + 56px);margin:-28px -28px 18px;height:150px;object-fit:cover;
+  border-radius:var(--radius) var(--radius) 0 0;
+}
+@media(max-width:560px){.shot{width:calc(100% + 40px);margin:-20px -20px 16px;height:120px}}
+/* Un logotipo no se recorta: se dibuja entero, centrado, sobre su propio plato. */
+.shotLogo{object-fit:contain;background:#fff;padding:14px}
+
+.eyebrow{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ia);margin:0 0 6px;
+}
+
+/* El `.modal h3` global ya trae tamaño y color; se conserva y solo se le añade
+   la línea de acento que identifica de qué puerta o cualidad se está hablando. */
+.title{padding-left:12px;border-left:4px solid var(--ia);line-height:1.25}
+
+/* `.modal p` global lleva `margin-bottom:20px`, que aquí separaría demasiado la
+   entradilla de sus propios puntos. */
+.lead{margin:14px 0 0 !important;font-size:14.5px;line-height:1.7;color:var(--muted)}
+
+.bullets{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:9px}
+.bullets li{
+  position:relative;padding-left:20px;font-size:13.5px;line-height:1.6;color:var(--muted);
+}
+.bullets li::before{
+  content:"";position:absolute;left:2px;top:.55em;width:7px;height:7px;border-radius:50%;
+  background:var(--ia);
+}
+.bullets b{color:var(--ink)}
+
+.foot{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}

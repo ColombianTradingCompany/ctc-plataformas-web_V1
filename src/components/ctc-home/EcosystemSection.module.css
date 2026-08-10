@@ -23,83 +23,85 @@
 .details ul{list-style:none;display:grid;gap:8px;font-size:13.5px;color:var(--muted);padding:2px 16px 15px}
 .details li{padding-left:18px;position:relative}
 .details li::before{content:"—";position:absolute;left:0;color:var(--ec);font-weight:700}
+.details b{color:var(--ink)}
 .foot{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap}
 
+/* Las tarjetas insignia ya no llevan número (2026-08-11): el raíl 1·2·3 al que
+   respondían se retiró, así que el círculo se quedó señalando a nada. */
+
+/* ── La banda del Ecosistema de Valor ────────────────────────────────────────
+   Era la barra «Lo que pasa en el medio» con cinco celdas de prosa. Ahora es
+   solo el encabezado de la tercera oferta: sus módulos son las losetas de
+   debajo, que es donde de verdad se puede entrar. */
 .midbar{margin-top:18px;background:var(--primary-deep);color:#E7EDF4;border-radius:var(--radius);overflow:hidden}
-.midbarHead{display:flex;align-items:center;gap:14px;padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.14)}
+.midbarHead{display:flex;align-items:center;gap:14px;padding:18px 24px}
 .midbarHead img{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.6)}
 .midbarHead h3{color:#fff;font-size:20px}
 .midbarHead .who{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-soft);display:block}
-.midgrid{display:grid;grid-template-columns:repeat(5,1fr)}
-@media(max-width:960px){.midgrid{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.midgrid{grid-template-columns:1fr}}
-.midcell{padding:16px 18px;border-right:1px solid rgba(255,255,255,.12);font-size:12.5px;color:#B9C6D4;line-height:1.55}
-.midcell b{color:#fff;display:block;margin-bottom:4px;font-size:13px}
-.midgrid .midcell:last-child{border-right:none}
+@media(max-width:640px){.midbarHead{flex-wrap:wrap;gap:10px 14px}}
 
-.thread{
-  margin-top:22px;background:var(--card);border:1px dashed var(--accent);border-radius:var(--radius);
-  padding:24px 28px;display:grid;grid-template-columns:1fr 300px;gap:28px;align-items:center;
+/* El acordeón de la banda. Sustituye a la insignia «Modelo en desarrollo», que
+   avisaba sin explicar; el aviso sobrevive como último punto de la lista.
+   Mismo gesto que los `.details` de las tarjetas, repintado para fondo oscuro. */
+.bandFold{border-top:1px solid rgba(255,255,255,.16)}
+.bandFold summary{
+  list-style:none;cursor:pointer;padding:12px 24px;
+  font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent-soft);display:flex;justify-content:space-between;align-items:center;gap:12px;
 }
-@media(max-width:860px){.thread{grid-template-columns:1fr}}
-.thread p{font-size:14.5px;color:var(--muted);line-height:1.7}
-.thread b{color:var(--ink)}
-.threadMono{font-family:var(--font-spline-mono),monospace;color:var(--accent);font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:8px}
+.bandFold summary::-webkit-details-marker{display:none}
+.bandFold summary:hover{color:#fff;background:rgba(255,255,255,.05)}
+.bandFold[open] summary{color:#fff}
+.bandFold[open] .ch{transform:rotate(180deg);animation:none}
+.bandFold:not([open]) .ch{animation:ctcChevPulse 1.8s ease-in-out infinite}
+.bandBody{padding:2px 24px 20px;display:grid;gap:12px}
+.bandBody p{font-size:13.5px;line-height:1.7;color:#C9D4E2;max-width:78ch}
+.bandBody ul{list-style:none;display:grid;gap:8px;margin:0;padding:0}
+.bandBody li{position:relative;padding-left:18px;font-size:13px;line-height:1.6;color:#B9C6D4}
+.bandBody li::before{content:"—";position:absolute;left:0;color:var(--accent);font-weight:700}
 
-/* The two ends of the thread, side by side: origin (map) → grade (seals). */
-.threadShots{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}
-.threadShots figure{display:flex;flex-direction:column;gap:7px;min-width:0}
-.threadShots img{width:100%;height:auto;border-radius:9px;display:block}
-.threadShots figure:first-child img{border:1px solid var(--line)}
-/* The grade seals are a transparent PNG — a border would box the artwork, so it
-   gets a drop-shadow instead (same treatment the old illustration had). */
-.threadShots figure:last-child img{filter:drop-shadow(0 8px 16px rgba(14,44,72,.28));padding:2px}
-.threadShots figcaption{
-  font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--muted);text-align:center;
-}
-
-/* ── El índice de la red (V4 · Fase 2) ────────────────────────────────────────
-   El cierre de la sección: una loseta por destino de la red. Las superficies
-   vivas enlazan; las que faltan (Coffeed, Herramientas) van marcadas "Pronto". */
-.net{margin-top:34px}
-.netH3{font-size:22px;margin:6px 0 16px}
-.netGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+/* ── Los seis módulos ───────────────────────────────────────────────────────
+   Cada uno con una foto real de la casa y su ficha detrás. */
+.netGrid{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media(max-width:960px){.netGrid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.netGrid{grid-template-columns:1fr}}
-.netTile{display:flex;flex-direction:column;gap:4px;position:relative;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 18px;text-decoration:none;color:inherit;transition:border-color .15s ease,transform .15s ease}
-a.netTile:hover{border-color:var(--accent);transform:translateY(-2px)}
-.netTile b{font-size:14.5px}
-.netTile span{font-size:12.5px;color:var(--muted);line-height:1.5}
-.netTile em{position:absolute;top:12px;right:14px;font-style:normal;font-size:12px;color:var(--accent)}
+/* Desde 2026-08-11 hay DOS marcados detrás de esta misma tarjeta: un enlace
+   (puerta viva) y un botón (puerta que aún no abre, que sí cuenta lo que será).
+   Los reinicios de abajo son lo que hace que el botón no se note. */
+.netTile{display:flex;flex-direction:column;gap:4px;position:relative;background:var(--card);border:1px solid var(--line);border-radius:11px;
+  padding:12px 12px 15px;text-decoration:none;color:inherit;transition:border-color .15s ease,transform .15s ease;
+  font:inherit;text-align:left;width:100%;cursor:pointer}
+.netTile:hover{border-color:var(--accent);transform:translateY(-2px)}
+.netTile b{font-size:14.5px;padding-inline:5px}
+.netTile span{font-size:12.5px;color:var(--muted);line-height:1.5;padding-inline:5px}
+.netTile em{position:absolute;bottom:15px;right:16px;font-style:normal;font-size:12px;color:var(--accent)}
 .netTileSoon{opacity:.62}
 .netTileSoon em{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted)}
 
-/* ── El índice de la red, con cara (2026-08-10) ─────────────────────────────
-   Cada puerta lleva una foto real de la casa. La rejilla pasó de ser una lista
-   de enlaces a un mosaico: mismo contenido, mucha más ganas de pulsarlo.       */
-.netHead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-/* «Modelo en desarrollo»: se dice una vez, arriba, en lugar de repetir un aviso
-   en cada tarjeta. La red se está construyendo y eso no es letra pequeña.      */
-.netDev{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
-
 .netThumb{position:relative;display:block;width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;
   background:var(--line);margin-bottom:10px}
-.netThumb img{object-fit:cover}
-.netTile{padding:12px 12px 15px}
-a.netTile:hover .netThumb img{transform:scale(1.04)}
-.netThumb img{transition:transform .35s ease}
-.netTile b,.netTile span{padding-inline:5px}
-.netTile em{top:auto;bottom:15px;right:16px}
+.netThumb img{object-fit:cover;transition:transform .35s ease}
+.netTile:hover .netThumb img{transform:scale(1.04)}
+/* El Directorio y Coffeed traen logotipo, no fotografía: recortarlo a 16/9 le
+   comía la marca. Plato claro + `contain` (el object-fit va inline, porque
+   next/image lo escribe en el style del propio <img>). */
+.netThumbLogo{background:#fff;border:1px solid var(--line)}
+.netThumbLogo img{padding:10px}
 
-/* Una puerta apagada: gris, sin relieve y sin ratón. `pointer-events:none` es
-   lo que la hace de verdad no pulsable — bajar la opacidad solo la disimula.   */
-.netTileSoon{cursor:default;pointer-events:none}
+/* Apagada, pero NO muda: se puede abrir para leer qué va a ser. Antes tenía
+   `pointer-events:none`, que es justo lo que hubo que quitar. */
 .netTileSoon .netThumb img{filter:grayscale(1);opacity:.75}
+.netTileSoon:hover .netThumb img{filter:grayscale(.35)}
+
+/* La instrucción de uso: sin ella, un clic que abre una ventana en vez de
+   navegar se lee como que la página se rompió. */
+.netHint{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin:10px 0 0;
+}
 
 /* ── Captación de correo, donde estaba la puerta del Control Panel ───────── */
-.netNews{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;
+.netNews{margin-top:22px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;
   background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
 .netNewsText{display:flex;flex-direction:column;gap:3px;max-width:46ch}
 .netNewsText b{font-size:14.5px}
@@ -112,30 +114,3 @@ a.netTile:hover .netThumb img{transform:scale(1.04)}
 .netNewsDone{margin:0;font-size:13px;color:var(--accent)}
 .netNewsErr{margin:0;flex-basis:100%;font-size:12.5px;color:#8C2130}
 @media(max-width:560px){.netNews{flex-direction:column;align-items:stretch}.netNewsRow input[type="email"]{min-width:0;flex:1}}
-
-/* ── Las tres ofertas (2026-08-10) ──────────────────────────────────────────
-   La casa se lee en tres: la oferta, la demanda y lo que sostiene a las dos.
-   No cambia ninguna ruta — es la forma, no el fondo.                          */
-.offerRail{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media(max-width:760px){.offerRail{grid-template-columns:1fr}}
-.offerStep{display:flex;align-items:flex-start;gap:12px;background:var(--card);border:1px solid var(--line);
-  border-radius:11px;padding:14px 16px}
-.offerNum{flex:none;width:26px;height:26px;border-radius:999px;background:var(--accent);color:#1B1614;
-  display:grid;place-items:center;font-family:var(--font-spline-mono),monospace;font-size:12px;font-weight:700}
-.offerText{display:flex;flex-direction:column;gap:2px;min-width:0}
-.offerText b{font-size:14.5px}
-.offerText span{font-size:12.5px;color:var(--muted);line-height:1.45}
-
-/* La misma numeración en las dos tarjetas insignia, para que el raíl de arriba
-   y las tarjetas de abajo se reconozcan entre sí.                             */
-.ecoNum{flex:none;width:24px;height:24px;border-radius:999px;background:var(--ec);color:#fff;
-  display:grid;place-items:center;font-family:var(--font-spline-mono),monospace;font-size:11.5px;font-weight:700}
-
-/* El índice, agrupado por oferta en vez de en una lista plana. */
-.netFamily{margin-top:16px}
-.netFamilyHead{display:flex;align-items:baseline;gap:9px;margin:0 0 9px;flex-wrap:wrap}
-.netFamilyHead b{font-size:14px}
-.netFamilyHead span:last-child{font-size:12px;color:var(--muted)}
-.netFamilyNum{flex:none;width:20px;height:20px;border-radius:999px;border:1px solid var(--line);
-  display:inline-grid;place-items:center;font-family:var(--font-spline-mono),monospace;font-size:10.5px;
-  color:var(--muted);align-self:center}

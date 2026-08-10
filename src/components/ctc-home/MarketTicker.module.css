@@ -1,0 +1,63 @@
+/* La cinta de mercado. Cierra el hero por abajo, a todo el ancho y pegada al
+   borde: es el suelo de la primera pantalla.
+
+   El morado corporativo (#3C0A86) es deliberado — separa la cinta del azul del
+   hero sin introducir un color nuevo en la casa. */
+.bar{
+  position:relative;z-index:3;
+  background:linear-gradient(90deg,#3C0A86 0%,#2A0760 55%,#3C0A86 100%);
+  border-top:1px solid rgba(255,255,255,.16);
+  overflow:hidden;
+}
+
+/* Altura reservada mientras llega la respuesta, para que el hero no dé un salto
+   cuando la cinta aparece. */
+.loading{height:38px}
+
+.track{display:flex;width:max-content;animation:slide 70s linear infinite}
+.track:hover{animation-play-state:paused}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.strip{display:flex;align-items:center}
+.item{display:flex;align-items:center}
+
+.cell{
+  display:inline-flex;align-items:baseline;gap:8px;white-space:nowrap;
+  padding:9px 4px;font-size:12.5px;color:#EFE8FB;
+  border-bottom:1px solid transparent;
+}
+.cell:hover{color:#fff;border-bottom-color:var(--accent)}
+
+.label{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:#C2A9F2;
+}
+.value{font-weight:800;letter-spacing:.01em}
+.value i{font-style:normal;font-size:10.5px;font-weight:600;color:#C2A9F2;margin-left:3px}
+
+.up{color:#6EE7A8;font-size:11px;font-weight:700}
+.down{color:#FF9E92;font-size:11px;font-weight:700}
+
+/* Un titular no compite con una cifra: va en redonda y se corta si es larguísimo. */
+.news .headline{font-weight:500;max-width:52ch;overflow:hidden;text-overflow:ellipsis}
+
+/* El guacamayo separa cada dato. La imagen viene con fondo blanco, así que el
+   plato redondo blanco es lo que le quita el borde cuadrado. */
+.sep{
+  width:20px;height:20px;border-radius:50%;background:#fff;object-fit:cover;
+  margin:0 16px;flex:none;opacity:.9;
+}
+
+@media(max-width:640px){
+  .cell{font-size:12px;gap:6px}
+  .sep{margin:0 11px}
+  .news .headline{max-width:30ch}
+}
+
+@media(prefers-reduced-motion:reduce){
+  /* Sin desplazamiento automático: la cinta se convierte en una tira que se
+     arrastra con el dedo. La segunda copia sobraría, pero es aria-hidden y no
+     estorba a nadie que la lea. */
+  .track{animation:none;width:auto;overflow-x:auto;scrollbar-width:none}
+  .track::-webkit-scrollbar{display:none}
+}

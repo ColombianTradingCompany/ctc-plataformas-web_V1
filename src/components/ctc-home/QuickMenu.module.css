@@ -1,4 +1,7 @@
-.wrap{position:fixed;right:24px;bottom:24px;z-index:60}
+/* La esquina de abajo a la derecha la comparten dos burbujas desde el
+   2026-08-11: el idioma se quedó con el suelo y «Navegar» se subió encima.
+   44 px de la burbuja de idioma + 12 de aire + los 24 del margen. */
+.wrap{position:fixed;right:24px;bottom:80px;z-index:60}
 
 /* Same shape/behaviour as the Finca panel's save FAB: circular, expands to its
    label on hover/focus. Kept in sync with FincaModal.module.css .fab. */
@@ -43,7 +46,18 @@
 /* The section you're currently in. */
 .panel a.active{background:var(--paper);color:var(--primary)}
 
+/* Los dos grupos del menú: lo que mueve el scroll y lo que sale de la página. */
+.group{
+  font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin:4px 0 3px;padding:0 14px;
+}
+.groupGo{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.jump{color:var(--primary-deep)}
+.jump i{font-style:normal;color:var(--accent);font-size:12px}
+.panel a.jump:hover{background:var(--primary);color:#fff}
+.panel a.jump:hover small,.panel a.jump:hover i{color:rgba(255,255,255,.85)}
+
 @media(max-width:520px){
-  .wrap{right:16px;bottom:16px}
+  .wrap{right:16px;bottom:72px}
   .panel{min-width:0;width:min(320px,84vw)}
 }

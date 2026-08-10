@@ -1,7 +1,12 @@
 /* Dynamic hero: the guacamayo/finca loop runs behind the copy. Everything here
    is built around one rule — the text has to stay readable over a bright, moving
-   image, so the scrim does the heavy lifting and the copy is light-on-dark. */
-.hero{position:relative;isolation:isolate;padding:96px 0 84px;overflow:hidden;background:var(--primary-deep)}
+   image, so the scrim does the heavy lifting and the copy is light-on-dark.
+
+   2026-08-11: el bloque subió. Se fue el párrafo de posicionamiento y el relleno
+   inferior pasó a cero, porque ahora la sección termina en la cinta de mercado,
+   que va pegada al borde. Lo que se gana es que los dos botones caben en el
+   primer vistazo incluso en un portátil de 768 px de alto. */
+.hero{position:relative;isolation:isolate;padding:58px 0 0;overflow:hidden;background:var(--primary-deep)}
 
 .heroBg{position:absolute;inset:0;z-index:0}
 .heroBg img{
@@ -46,26 +51,112 @@
 }
 @media(max-width:900px){.heroAside{position:sticky;top:96px}}
 
-/* Hero-local gold: var(--accent-soft) (#F2C464) drops under 4.5:1 on the
-   lightened scrim for the small mono text; this brighter shade clears it. */
-.eyebrow{
-  font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.16em;
-  text-transform:uppercase;color:#F7D287;
+/* ── Las tres afirmaciones ──────────────────────────────────────────────────
+   Hero-local gold: var(--accent-soft) (#F2C464) drops under 4.5:1 on the
+   lightened scrim for small mono text; this brighter shade clears it. */
+.claims{
+  /* z-index 4, por encima de la rejilla (2): la burbuja de explicación nace
+     debajo de la afirmación y, siendo la rejilla un hermano POSTERIOR, el
+     titular se pintaba encima de ella. Y el margen bajó la línea lo bastante
+     para que la burbuja abierta no se le monte al titular. */
+  position:relative;z-index:4;margin-bottom:52px;
+  font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:#F7D287;display:flex;flex-wrap:wrap;align-items:center;
 }
-.h1{font-size:clamp(36px,5.2vw,62px);margin:18px 0 22px;color:#fff;text-shadow:0 2px 24px rgba(6,18,32,.45)}
+.claims i{font-style:normal;opacity:.55;margin:0 10px}
+
+.claim{
+  position:relative;cursor:help;
+  /* El subrayado punteado es lo único que anuncia que hay algo que leer. */
+  border-bottom:1px dashed rgba(247,210,135,.45);padding-bottom:2px;
+}
+.claim:hover,.claim:focus-visible{color:#fff;border-bottom-color:#fff}
+
+/* La explicación. Se dibuja con `attr()` desde el marcado, así que no hay estado
+   de React que mantener por tres textos que solo se leen. */
+.claim::after{
+  content:attr(data-tip);
+  position:absolute;top:calc(100% + 13px);left:0;z-index:5;
+  width:max-content;max-width:min(390px,74vw);
+  background:#0B2136;color:#E9EEF5;border:1px solid rgba(247,210,135,.35);
+  border-radius:10px;padding:8px 12px;
+  font-family:var(--font-body),system-ui,sans-serif;font-size:12px;letter-spacing:0;
+  text-transform:none;line-height:1.5;font-weight:500;
+  box-shadow:0 14px 30px rgba(4,14,26,.45);
+  opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .16s,transform .16s;
+}
+.claim:hover::after,.claim:focus-visible::after{opacity:1;transform:translateY(0)}
+/* La última afirmación se sale por la derecha si la burbuja nace en su borde
+   izquierdo; en pantallas anchas se ancla por el otro lado. */
+.claims span:last-child .claim::after{left:auto;right:0}
+@media(max-width:900px){.claims span:last-child .claim::after{left:0;right:auto}}
+/* Apiladas en tres renglones, los puntos de separación quedaban abriendo línea
+   —«· CALIDAD…»— que se lee como una viñeta suelta. Se retiran y separa el aire. */
+@media(max-width:620px){
+  .claims{flex-direction:column;align-items:flex-start;gap:7px}
+  .claims i{display:none}
+}
+@media(prefers-reduced-motion:reduce){.claim::after{transition:none}}
+
+.h1{font-size:clamp(36px,5.2vw,62px);margin:0;color:#fff;text-shadow:0 2px 24px rgba(6,18,32,.45)}
 .h1 em{font-style:italic;color:#F7D287}
-.lead{font-size:17.5px;color:#E9EEF5;max-width:56ch;line-height:1.65;text-shadow:0 1px 14px rgba(6,18,32,.5)}
 
-.heroCta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap}
-/* The global .btn outline is dark-on-light and would vanish here. */
-.ghost{border-color:rgba(255,255,255,.72);color:#fff;background:rgba(255,255,255,.06)}
-.ghost:hover{background:#fff;color:var(--primary-deep);border-color:#fff}
-
-.heroFacts{
-  display:flex;gap:22px;flex-wrap:wrap;margin-top:34px;
-  font-family:var(--font-spline-mono),monospace;font-size:11px;color:#DDE4EE;
+/* ── Las dos orillas ────────────────────────────────────────────────────────
+   Dos botones del mismo peso: ninguna de las dos orillas es la principal. */
+.heroCta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+.big{
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  /* Reparten la fila en dos: sin el `flex:1` cada uno pedía sus 340 px y los dos
+     juntos no cabían en la columna de texto, así que se apilaban. */
+  flex:1 1 0;min-width:240px;max-width:310px;gap:2px;
+  padding:14px 22px;border-radius:12px;
+  /* La misma tipografía de la cinta de afirmaciones de arriba. La de texto
+     corrido no pegaba con nada más de esta pantalla. */
+  font-family:var(--font-spline-mono),monospace;
+  font-weight:700;font-size:13.5px;line-height:1.45;letter-spacing:.02em;
+  text-decoration:none; /* son enlaces: sin esto salen subrayados */
+  border:1.5px solid transparent;box-shadow:0 10px 26px rgba(4,14,26,.4);
+  transition:transform .16s,box-shadow .16s,filter .16s;
 }
-.heroFacts b{color:#F7D287}
+/* La segunda línea es la que pide la acción: va más grande y en versalita. */
+.bigAsk{font-size:15px;font-weight:800;letter-spacing:.01em}
+.big:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(4,14,26,.5)}
+.big:active{transform:translateY(0)}
+/* Vender = el oro de Kaffetal Regal, con tinta oscura (blanco sobre oro no
+   llega a 4.5:1). Comprar = el azul corporativo #003087 aclarado: el original
+   es casi el mismo tono que el velo del hero y el botón desaparecía dentro. */
+.bigSell{background:var(--accent);color:#1B2430}
+.bigSell:hover{filter:brightness(1.06)}
+.bigBuy{background:#2340B8;color:#fff;border-color:rgba(255,255,255,.25)}
+.bigBuy:hover{filter:brightness(1.12)}
+@media(prefers-reduced-motion:reduce){.big,.big:hover{transform:none;transition:none}}
+@media(max-width:560px){.big{flex:1 1 100%;max-width:none;font-size:15px;padding:14px 20px}}
+
+/* ── Las cuatro cualidades ──────────────────────────────────────────────────
+   UNA sola línea, como pidió el encargo. En pantallas estrechas la línea no se
+   parte: se desliza, que es la única forma honesta de mantener «una línea» sin
+   que en un teléfono queden cuatro palabras por renglón. */
+.qualityWrap{position:relative;z-index:2;margin-top:38px;padding-bottom:20px}
+.quality{
+  display:flex;gap:10px;align-items:center;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  scroll-snap-type:x proximity;padding-bottom:2px;
+}
+.quality::-webkit-scrollbar{display:none}
+/* En estrecho la fila se corta por la derecha; el degradado es lo que dice que
+   hay más y que se puede arrastrar. Sin él, el corte parece un error. */
+@media(max-width:760px){
+  .quality{mask-image:linear-gradient(90deg,#000 86%,transparent 100%)}
+}
+.qbtn{
+  flex:none;scroll-snap-align:start;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);color:#EAF0F7;
+  border-radius:999px;padding:9px 17px;font-size:13px;font-weight:600;white-space:nowrap;
+  transition:background .16s,border-color .16s,color .16s;
+}
+.qbtn::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--qa);flex:none}
+.qbtn:hover,.qbtn:focus-visible{background:#fff;border-color:#fff;color:var(--primary-deep)}
 
 @media(prefers-reduced-motion:reduce){
   /* CSS can't pause an animated WebP, but a calmer, softer backdrop keeps it

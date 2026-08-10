@@ -1,0 +1,26 @@
+/* ── ECP · Direccionamiento · el cortafuegos del módulo vendorizado ──────────
+   `DefinicionDeContexto.jsx` trae TODOS sus estilos consigo, con prefijo .dc- y
+   sin tocar nada de fuera. El problema es el revés: lo de fuera sí lo tocaba a
+   él. `app/globals.css` lleva `section{padding:78px 0;border-top:...}` —una
+   regla pensada para las franjas de las landings públicas— y el módulo dibuja
+   cada acordeón como un <section>. Resultado: cada bloque plegado media unos
+   200 px de alto, casi todo aire, y el owner lo vio como "altísimos sin
+   necesidad".
+
+   No es un ajuste de gusto: los .dc- ya traen su propio padding (11-14 px). Lo
+   único que hace falta es que la regla global no entre. Con `.host section`
+   (0,1,1) gana al `section` suelto (0,0,1) sin subir a !important.
+
+   SOLO el padding. El `border-top` de esa misma regla global NUNCA llegó a
+   aplicarse —`.dc-block`/`.dc-brief` ya declaran `border:1px solid` y con
+   (0,1,0) le ganan al `section` suelto—, así que anularlo aquí no arreglaba
+   nada: le quitaba el borde de arriba a las cajas del módulo, que sí lo
+   quieren. Medido con getComputedStyle antes de dejarlo escrito.
+
+   Si algún día se añade otra regla de elemento a globals.css que se cuele aquí,
+   este es el sitio donde se neutraliza — no dentro del .jsx, que se mantiene
+   verbatim para poder resincronizarlo. */
+
+.host :global(section) {
+  padding: 0;
+}

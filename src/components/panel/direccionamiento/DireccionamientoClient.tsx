@@ -15,6 +15,7 @@
 
 import { useMemo } from "react";
 import DefinicionDeContexto from "./DefinicionDeContexto";
+import styles from "./direccionamiento.module.css";
 import {
   cargarContexto,
   guardarContexto,
@@ -36,12 +37,16 @@ export function DireccionamientoClient({ initialRecord }: { initialRecord: Recor
   const aiComplete = useMemo(() => (prompt: string) => redactarContexto(prompt), []);
   const memory = useMemo(() => () => memoriaContexto(), []);
 
+  // El envoltorio no es decorativo: aísla al módulo de las reglas de ELEMENTO
+  // de globals.css (ver direccionamiento.module.css).
   return (
-    <DefinicionDeContexto
-      adapter={adapter}
-      aiComplete={aiComplete}
-      memory={memory}
-      initialData={initialRecord}
-    />
+    <div className={styles.host}>
+      <DefinicionDeContexto
+        adapter={adapter}
+        aiComplete={aiComplete}
+        memory={memory}
+        initialData={initialRecord}
+      />
+    </div>
   );
 }

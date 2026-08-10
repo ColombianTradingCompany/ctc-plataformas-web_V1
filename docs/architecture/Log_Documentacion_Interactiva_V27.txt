@@ -435,3 +435,24 @@ Contexto abierto al cerrar V27:
 - Al wrap: nodo nuevo en la consola ECP + entrada DICT del sistema de piezas de
   video, cruzada con la entrada de Grados de Calidad.
 (commit: fc7c874)
+
+## [2026-08-10] Los acordeones de Direccionamiento median 200 px de aire — culpa de globals.css
+- El owner reporto los bloques plegados "altisimos sin necesidad". No era el
+  modulo: `src/app/globals.css` lleva `section{padding:78px 0}` —regla de las
+  franjas de las landings publicas— y DefinicionDeContexto dibuja cada acordeon
+  como un <section>. Cada bloque heredaba 78 px arriba Y abajo.
+- Arreglo: `direccionamiento.module.css` con `.host :global(section){padding:0}`
+  y un <div> envoltorio en DireccionamientoClient. Especificidad (0,1,1) contra
+  (0,0,1), sin !important, y el .jsx sigue verbatim.
+- SOLO el padding. El `border-top` de la misma regla global nunca llego a
+  aplicarse (`.dc-block` ya declara `border:1px solid` y gana con (0,1,0)), asi
+  que anularlo no arreglaba nada: le quitaba el borde de arriba a las cajas.
+  Se detecto AL MEDIR, no al leer.
+- Medido con getComputedStyle sobre una pagina de prueba servida desde public/
+  (borrada despues), con globals.css y el CSS del modulo reales:
+  Contexto general 201 -> 45 px, "Cual es el producto" 214 -> 58 px, y los
+  cuatro bordes de la caja intactos.
+- GOTCHA para el proximo modulo vendorizado: cualquier HTML de tercero que use
+  <section> dentro de una consola hereda esos 78 px. El sitio de neutralizarlo
+  es un module.css envoltorio, no el archivo del autor.
+(commit: d0754f6)

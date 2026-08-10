@@ -178,3 +178,46 @@ Contexto abierto al cerrar V28:
   aunque la superficie este construida.
 - APP_VERSION 3.10 -> 3.11.
 (commit: 61d3f15)
+
+## [2026-08-10] ctcexport.com se reordena en TRES ofertas
+- Peticion del owner, con diagrama: la casa se lee en tres y no en dos.
+  1 · LA OFERTA (Kaffetal Regal, el origen que produce)
+  2 · LA DEMANDA (Cherry Picked + Co-Create, quien compra)
+  3 · VALUE PLATFORMS (todos los modulos de soporte)
+  «No hay cambio esencial, es de forma»: NINGUNA ruta, permiso, tabla ni
+  superficie se toca. Cambia como se lee la pagina.
+- EcosystemSection: eyebrow «Dos plataformas» -> «Tres ofertas, un solo hilo»;
+  intro reescrita; RAIL nuevo de tres pasos numerados (offerRail) justo bajo la
+  cabecera — el dibujo del owner hecho pagina; y las dos tarjetas insignia
+  llevan ahora el numero de su oferta, para que el rail y las tarjetas se
+  reconozcan entre si.
+- EL INDICE DEJA DE SER UNA LISTA PLANA: mapa `NET_OFERTA` (url -> 1|2|3) y el
+  indice se pinta agrupado por oferta, con encabezado por familia. Mismo
+  contenido, mismas rutas.
+- Entran al indice las DOS plataformas insignia, que no estaban: Kaffetal Regal
+  (familia 1) y Cherry Picked (familia 2). Sin ellas las familias 1 y 2 quedaban
+  cojas y la estructura de tres no se leia. Once puertas en total.
+- ServicesSection pasa a ser la tercera oferta: eyebrow «Oferta 3 · Value
+  Platforms» y h2 propio. El titulo se define en el CHROME de CTC Home, NO en
+  `servicesCopy` — ahi vive la copy que comparten las landings, y «Oferta 3» es
+  lenguaje de esta pagina.
+- pageIndex (los dos menus): «El ecosistema» -> «Las tres ofertas»; «Mas alla de
+  la exportacion» -> «Value Platforms». En las tres lenguas.
+- DOS COSAS QUE SOLO SE VIERON MIRANDO LA PAGINA RENDERIZADA:
+  · Cherry Picked y Coffeed compartian encuadre (misma mesa de catacion, misma
+    persona): en la rejilla parecian la misma foto repetida. Cherry Picked pasa
+    a `29-cerezas-la-ceiba.jpg`.
+  · El HERO seguia anunciando «2 plataformas · 2 orillas» — contradecia el
+    encabezado nuevo tres lineas mas abajo. Ahora «3 ofertas · 2 orillas», en
+    las tres lenguas.
+- Verificado con Chrome headless a 1440px: el rail de tres, las tarjetas
+  numeradas, las tres familias del indice con sus once puertas, Terratalento
+  sigue en gris y el bloque de correo intacto. tsc + eslint limpios y next build
+  con las 78 paginas.
+- GOTCHA de herramienta: matar el dev server a mitad deja `.next/dev/types/*`
+  truncado y tsc/build fallan senalando esos archivos GENERADOS, no el codigo.
+  Se arregla con `rm -rf .next/dev`; no perseguir errores ahi dentro.
+- Al wrap: nodos n-home / n-redv4 — CTC Home ya no se presenta como «dos
+  plataformas» sino como tres ofertas, y el indice esta agrupado por ellas.
+- APP_VERSION 3.11 -> 3.12.
+(commit: 9832821)

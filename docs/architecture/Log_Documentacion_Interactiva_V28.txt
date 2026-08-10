@@ -56,3 +56,34 @@ Contexto abierto al cerrar V28:
 - Sigue pendiente del owner: material de la landing de Varietales; pase de copy
   Specialty/Black sobre KR ProcessFlow y CP BlackSection.
 - El bucket de Storage sigue sin poda automática del Buzón.
+
+## [2026-08-10] La memoria de Direccionamiento, probada contra la API real
+- El boton «Dame una mano» no se puede pulsar en automatico (login maestro con
+  OTP), asi que se hizo probable lo que hay DETRAS. La composicion del texto de
+  la memoria y el system prompt salieron del Server Action a un modulo PURO
+  nuevo, `src/lib/direccionamiento/memoria.ts` (`textoMemoria`,
+  `escalaCanonica`, `SISTEMA_REDACCION`); el action se queda con la compuerta.
+  Patron de la casa: modulo puro + guardian (terminos.ts, llamadoEmail.ts,
+  model.ts de RT-Scriptor).
+- Guardian nuevo `scripts/qa-direccionamiento-check.mjs`, 20 comprobaciones.
+  Lo que lo hace util: LEE EL PARRAFO EN CONFLICTO DEL .jsx REAL —el que cita
+  los grados como indice de precio sobre base 100— y lo mete en el prompt tal
+  cual, igual que hace el componente. No es un conflicto de laboratorio.
+  Con `--live` hace la llamada REAL al modelo.
+- RESULTADO DE LA CORRIDA EN VIVO (2026-08-10, 13 s): la memoria GANA. Las tres
+  redacciones citaron la escala SCA (Black 80–82.99, Gold 87–87.99, Tyrian
+  88–100) y NINGUNA cito el indice de precio que tenia delante en el mismo
+  prompt. El contrato de vuelta tambien: parseJson, array, cada item con
+  titulo y texto.
+- Tres comprobaciones vigilan el acuerdo con el autor: que el .jsx SIGA
+  trayendo su parrafo, que siga estando mal, y que NADIE lo haya editado para
+  arreglarlo (si aparece «82.99» ahi dentro, alguien toco el archivo del autor
+  en vez de la memoria). Si el autor publica una version nueva y el conflicto
+  cambia, el guardian se entera.
+- Lo que SIGUE sin probarse: `requireActiveAdmin()` (hace falta cookie de panel)
+  y el viaje completo por el navegador. La persistencia si esta confirmada en
+  vivo por el owner.
+- Nodo/DICT al wrap: una linea en `direccionamiento` — la memoria ya no es una
+  promesa, esta medida contra la API real.
+- APP_VERSION 3.8 -> 3.9.
+(commit: e43f272)

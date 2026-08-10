@@ -385,3 +385,53 @@ Contexto abierto al cerrar V27:
   caso de un solo cafetal 12→5.08 tras edición manual, tooltips por modo.
 - Archivos: FincaModal.tsx (solo — la clase .fieldRow y el picker no cambian).
 (commit: bc29603)
+
+## [2026-08-10] ECP · Direccionamiento — módulo nuevo, y Grados de Calidad se muda dentro
+- NODO/NAV NUEVO: entrada «Direccionamiento» en ECP · Dirección, justo bajo
+  Panel (`src/lib/panel/consoles.ts`). La entrada suelta «Grados de Calidad»
+  DESAPARECE del rail: ahora es la segunda pestaña del módulo. La vieja URL
+  `/ecp/grados` queda como redirección permanente a
+  `/ecp/direccionamiento/grados` (patrón /bcp/login → /login).
+- Pestaña 1 · «Definición de contexto»: ficha viva de realineación de GTM y
+  comunicación para las TRES unidades de negocio (CTCX · Kaffetal Regal ·
+  Cherry Picked). Módulo vendorizado del autor
+  (`src/components/panel/direccionamiento/DefinicionDeContexto.jsx`, 1619
+  líneas, se mantiene VERBATIM salvo la directiva "use client" — todo el
+  cableado vive fuera, en `DireccionamientoClient.tsx`).
+- CONCEPTO NUEVO para el DICT — el sistema de piezas de video: LARGO (5-6 min,
+  pieza madre, se rueda completa) · CORTO PLUS (máx. 40% derivado del largo) ·
+  CORTO FAST (mín. 60% derivado del largo). El porcentaje se calcula sobre 12
+  elementos derivables: «se reutiliza» pesa 1, «se adapta» 0,5, «no se usa»
+  queda fuera, y cada elemento nuevo suma al denominador con peso 0. El módulo
+  hace cumplir la regla y marca el umbral en la barra.
+- ESQUEMA: tabla nueva `direccionamiento_context` (migración
+  `direccionamiento_context`) — SINGLETON por ámbito, PK `scope` ∈
+  {record, assets}, `data` jsonb, `updated_at`, `updated_by`. Service-role-only
+  por diseño (RLS activo, CERO políticas), como Arena/leads/Coffeed. `record` =
+  la ficha (values planos con llave `unidad|pieza|seccion|campo`, conteos,
+  enlaces); `assets` = las imágenes del moodboard, aparte a propósito para no
+  inflar el registro principal.
+- ENGANCHES (`src/app/ecp/(app)/direccionamientoActions.ts`): `cargarContexto` /
+  `guardarContexto` (persistencia), `redactarContexto` (IA — cliente Claude
+  compartido `lib/coffeed/claude.ts`, MODEL_WRITE, valida el JSON en el
+  servidor con `parseJson` y lo reserializa) y `memoriaContexto` (la memoria
+  del sistema que entra en CADA prompt).
+- LA CORRECCIÓN QUE JUSTIFICA EL MÓDULO: el contexto de compañía que el .jsx
+  trae embebido cita los grados como ÍNDICE DE PRECIO sobre base 100 (Black
+  105-110, Red 110-125, Blue 125-135, Gold 135-150, Tyrian 150-200) — que NO es
+  la definición de la casa. `memoriaContexto` inyecta la escala SCA canónica de
+  `src/lib/grados/definicion.ts` y le dice al modelo que prevalece. Por eso
+  Grados de Calidad vive en este mismo módulo: es la cifra que el contenido no
+  puede inventarse.
+- Config: `experimental.serverActions.bodySizeLimit = "8mb"` en next.config.ts —
+  el objeto `assets` viaja entero en cada guardado y el tope por defecto (1 MB)
+  lo revienta con tres o cuatro referencias JPEG. Y un override de eslint para
+  el archivo vendorizado (`react-hooks/set-state-in-effect` off, solo ahí).
+- Verificado: tsc + eslint (0 errores) + `next build` (las 3 rutas registradas:
+  /ecp/direccionamiento, /ecp/direccionamiento/grados, /ecp/grados) + SQL (RLS
+  activo, 0 políticas, ida y vuelta del upsert probada y limpiada). NADIE HA
+  PULSADO UN BOTÓN: el ECP está tras el login maestro con OTP por correo y no
+  se puede conducir en navegador automatizado.
+- Al wrap: nodo nuevo en la consola ECP + entrada DICT del sistema de piezas de
+  video, cruzada con la entrada de Grados de Calidad.
+(commit: fc7c874)

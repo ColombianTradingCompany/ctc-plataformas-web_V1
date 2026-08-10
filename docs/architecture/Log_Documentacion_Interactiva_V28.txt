@@ -87,3 +87,54 @@ Contexto abierto al cerrar V28:
   promesa, esta medida contra la API real.
 - APP_VERSION 3.8 -> 3.9.
 (commit: e43f272)
+
+## [2026-08-10] El libro de consumo de IA: tokens y dolares, por fin visibles
+- PETICION DEL OWNER: llevar la cuenta de lo que cuestan las llamadas a modelos.
+  Lo primero fue un censo, y salieron SIETE vias de gasto, no una:
+  lib/coffeed/claude.ts (el cliente compartido — Direccionamiento, Coffeed,
+  Datawave, RT-Scriptor), api/kaffetal-regal/next-step (el asesor de la Ficha),
+  lib/arena/mejoras.ts, lib/gvg/matchActions.ts, lib/gvg/reportActions.ts,
+  lib/coffeed/gemini.ts y lib/coffeed/geminiImage.ts. Las siete quedan anotadas.
+- ESQUEMA: tabla `ai_usage` (migracion `ai_usage_ledger`) — una fila por
+  llamada: proveedor, modelo, superficie, los CUATRO contadores de token
+  (entrada, salida, cache escrita, cache leida), costo_usd, ok/error, duracion,
+  actor. Service-role-only, RLS activo y cero politicas. Mas la vista
+  `ai_usage_resumen` (migracion `ai_usage_resumen_view`), que agrega por dia x
+  proveedor x modelo x superficie para que el tablero no arrastre filas crudas.
+- EL COSTE SE CONGELA AL INSERTAR, como `arena_inscriptions.amount_cop` congela
+  el precio de lista. Si se recalculara al leer, cambiar una tarifa reescribiria
+  la historia. Tarifas en `src/lib/ai/precios.ts` (modulo PURO, fuente unica).
+- CONCEPTO PARA EL DICT — «coste congelado» y la cache como palanca: leer de la
+  cache de prompt cuesta la decima parte de la entrada, escribirla un 25% mas.
+  Por eso los contadores van separados: si «cache leida» sube y el coste no,
+  esta funcionando.
+- LO QUE NO SE INVENTA: Gemini no tiene tarifa publicada en el codigo. Sus
+  TOKENS si se guardan; el coste queda en NULL y el tablero lo muestra aparte
+  («N llamadas sin tarifa») diciendo que el total es un SUELO, no la factura.
+  Un hueco honesto antes que una cifra inventada.
+- HALLAZGO CON FECHA: Sonnet 5 —el modelo de MODEL_WRITE, o sea el que pagan
+  Direccionamiento, Coffeed, Datawave y RT-Scriptor— esta a precio de
+  lanzamiento ($2/$10 por millon) hasta el 2026-08-31. El 1 de septiembre la
+  misma llamada cuesta un 50% mas sin que nadie toque una linea. Codificado en
+  `precios.ts` con su ventana y avisado en el tablero.
+- NODO/NAV NUEVO: ECP · IT y Plataforma → «Consumo de IA» (/ecp/consumo).
+  Va ahi y no en Direccion porque es el hermano de Automatizaciones: aquella
+  dice QUE corre, esta dice CUANTO cuesta.
+- REGLA DE ORO, impuesta en codigo y comprobada: anotar el gasto NUNCA puede
+  tumbar la operacion que lo genero. `registrarConsumo` es try/catch entero, no
+  relanza, y se llama con `void` (sin await) — misma regla que `emitEvent()`.
+- Guardian nuevo `scripts/qa-consumo-check.mjs`, 21 comprobaciones. La que
+  justifica el guardian: TODO modelo citado en las siete vias tiene que tener
+  tarifa o estar declarado sin ella. Sin eso, cambiar MODEL_WRITE a un modelo
+  nuevo pondria el coste en NULL en silencio y el tablero ensenaria cero
+  mientras la factura sube.
+- Verificado: 21/21 del guardian (incluida la aritmetica de la promo y de la
+  cache), tsc + eslint limpios, next build con /ecp/consumo registrada, y la
+  vista probada en SQL con la fila EXACTA que escribe el registrador (una de
+  Anthropic con coste 0.001813 y una de Gemini que queda sin tarifa sin romper
+  la agregacion); filas de prueba borradas.
+- NO PROBADO: el insert real desde dentro de Next. `next/headers` solo existe en
+  el runtime de Next, asi que la sonda por node no puede montar el cliente de
+  Supabase. La primera llamada real a un modelo en produccion es la prueba.
+- APP_VERSION 3.9 -> 3.10.
+(commit: 57beb53)

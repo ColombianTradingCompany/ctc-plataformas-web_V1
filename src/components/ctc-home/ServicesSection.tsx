@@ -25,6 +25,10 @@ const SURFACE_URL: Record<"tech" | "cocreate" | "directorio" | "varietales", str
     : { tech: "/ctc-tech", cocreate: "/co-create", directorio: "/directorio", varietales: "/varietales" };
 
 type Chrome = {
+  // El título de la sección lo pone CTC Home, no `servicesCopy`: ahí vive la
+  // copy que comparten las landings, y «Oferta 3» es lenguaje de esta página.
+  eyebrow: string;
+  h2: string;
   intro: string;
   visit: string;
   askLead: string;
@@ -33,6 +37,8 @@ type Chrome = {
 
 const CHROME: Record<Lang, Chrome> = {
   es: {
+    eyebrow: "Oferta 3 · Value Platforms",
+    h2: "Las plataformas que sostienen a las dos",
     intro:
       "La misma ingeniería que sostiene nuestro ecosistema, al servicio de fincas, asociaciones y marcas. Cada servicio tiene su propia página — entra a la que te corresponde.",
     visit: "Visitar la página →",
@@ -40,6 +46,8 @@ const CHROME: Record<Lang, Chrome> = {
     askCta: "Escríbenos y te orientamos",
   },
   en: {
+    eyebrow: "Offer 3 · Value Platforms",
+    h2: "The platforms that hold both up",
     intro:
       "The same engineering that powers our ecosystem, at the service of farms, associations and brands. Each service has its own page — enter the one that fits you.",
     visit: "Visit the page →",
@@ -47,6 +55,8 @@ const CHROME: Record<Lang, Chrome> = {
     askCta: "Write to us and we'll point the way",
   },
   de: {
+    eyebrow: "Angebot 3 · Value Platforms",
+    h2: "Die Plattformen, die beide tragen",
     intro:
       "Dieselbe Ingenieursarbeit, die unser Ökosystem trägt, im Dienst von Fincas, Verbänden und Marken. Jeder Service hat seine eigene Seite — treten Sie dort ein, wo Sie hingehören.",
     visit: "Zur Seite →",
@@ -122,8 +132,8 @@ export function ServicesSection() {
       <div className="wrap">
         <div className="sec-head">
           <div>
-            <p className="eyebrow">{t.eyebrow}</p>
-            <h2>{t.h2}</h2>
+            <p className="eyebrow">{chrome.eyebrow}</p>
+            <h2>{chrome.h2}</h2>
           </div>
           <p>{chrome.intro}</p>
         </div>

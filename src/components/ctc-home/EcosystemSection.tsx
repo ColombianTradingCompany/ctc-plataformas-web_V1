@@ -12,6 +12,8 @@ import styles from "./EcosystemSection.module.css";
 const NET_URL =
   process.env.NODE_ENV === "production"
     ? {
+        kaffetal: "https://kaffetal-regal.ctcexport.com",
+        cherry: "https://cherry-picked.ctcexport.com",
         roast: "https://cherry-picked-roast.ctcexport.com",
         x: "https://cherry-picked-x.ctcexport.com",
         cocreate: "https://co-create.ctcexport.com",
@@ -24,6 +26,8 @@ const NET_URL =
         panel: "https://panel.ctcexport.com",
       }
     : {
+        kaffetal: "/kaffetal-regal",
+        cherry: "/cherry-picked",
         roast: "/cherry-picked-roast",
         x: "/cherry-picked-x",
         cocreate: "/co-create",
@@ -41,6 +45,10 @@ const NET_URL =
 // Todas son fotos reales de la casa y todas se recortan igual (`cover`) — una
 // mezcla de logotipos y fotografías hacía que la rejilla se viera desordenada.
 const NET_IMG: Record<string, string> = {
+  [NET_URL.kaffetal]: "/images/ctc-home/21-secado-marquesina-real.jpg",
+  // Cherry Picked llevaba «24-catacion-3», que es casi el mismo encuadre que
+  // la de Coffeed: en la rejilla parecian la misma foto repetida.
+  [NET_URL.cherry]: "/images/ctc-home/29-cerezas-la-ceiba.jpg",
   [NET_URL.roast]: "/images/ctc-home/26-tostaduria-gabriel-jr-anna.jpg",
   [NET_URL.x]: "/images/ctc-home/25-mesa-catacion-ctc.jpg",
   [NET_URL.cocreate]: "/images/ctc-home/22-papa-en-feria.jpg",
@@ -55,6 +63,26 @@ const NET_IMG: Record<string, string> = {
   [NET_URL.terratalento]: "/images/ctc-home/20-atardecer-cafetal-real.jpg",
 };
 
+// ── Las tres ofertas ────────────────────────────────────────────────────────
+// El owner reordenó la casa en tres: la OFERTA (Kaffetal Regal, el origen), la
+// DEMANDA (Cherry Picked y Co-Create, quien compra) y las VALUE PLATFORMS (todo
+// lo que sostiene a las dos). No cambia ninguna ruta ni ningún permiso — cambia
+// cómo se lee la página. Cada puerta declara aquí a qué oferta pertenece.
+type Oferta = 1 | 2 | 3;
+const NET_OFERTA: Record<string, Oferta> = {
+  [NET_URL.kaffetal]: 1,
+  [NET_URL.cherry]: 2,
+  [NET_URL.roast]: 2,
+  [NET_URL.x]: 2,
+  [NET_URL.cocreate]: 2,
+  [NET_URL.tech]: 3,
+  [NET_URL.varietales]: 3,
+  [NET_URL.directorio]: 3,
+  [NET_URL.coffeed]: 3,
+  [NET_URL.herramientas]: 3,
+  [NET_URL.terratalento]: 3,
+};
+
 type NetTile = { name: string; sub: string; href?: string; soon?: boolean };
 
 type Dict = {
@@ -66,6 +94,7 @@ type Dict = {
   netSoon: string;
   netDev: string;
   netTiles: NetTile[];
+  offers: { n: string; label: string; sub: string }[];
   krWho: string;
   krOneline: string;
   krSummary: string;
@@ -87,10 +116,10 @@ type Dict = {
 
 const T: Record<Lang, Dict> = {
   es: {
-    eyebrow: "Dos plataformas, un solo hilo",
+    eyebrow: "Tres ofertas, un solo hilo",
     h2: "Del cafetal a la taza, sin intermediarios anónimos",
     intro:
-      "Kaffetal Regal recoge lo mejor de Colombia. Cherry Picked lo reparte en Europa. En el medio, CTC convierte confianza en contratos: evaluación a ciegas, certificación, cumplimiento y logística.",
+      "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y las plataformas de valor que sostienen a las dos. Kaffetal Regal recoge lo mejor de Colombia; Cherry Picked y Co-Create lo colocan en Europa y EE.UU.; en el medio, CTC convierte confianza en contratos.",
     krWho: "En Colombia · Para el productor",
     krOneline:
       "El portal donde los caficultores registran sus fincas y lotes, compiten en la Cupping Arena y firman tratos blindados con primas indexadas.",
@@ -134,10 +163,17 @@ const T: Record<Lang, Dict> = {
     capOrigin: "El origen · geolocalizado",
     capGrade: "El grado · que se compra",
     netMono: "El índice de la red",
-    netH3: "Todas las puertas, desde aquí",
+    netH3: "Todas las puertas, por oferta",
     netSoon: "Pronto",
     netDev: "Modelo en desarrollo",
+    offers: [
+      { n: "1", label: "La oferta", sub: "Kaffetal Regal · el origen que produce" },
+      { n: "2", label: "La demanda", sub: "Cherry Picked y Co-Create · quien compra" },
+      { n: "3", label: "Value Platforms", sub: "Los módulos que sostienen a las dos" },
+    ],
     netTiles: [
+      { name: "Kaffetal Regal", sub: "El portal del productor · fincas, lotes y Arena", href: NET_URL.kaffetal },
+      { name: "Cherry Picked", sub: "La vitrina del tostador europeo · Green", href: NET_URL.cherry },
       { name: "Cherry Picked Roast", sub: "La oferta Green, tostada en Europa · 2027", href: NET_URL.roast },
       { name: "Cherry Picked X", sub: "Cajas por temporada, desde 3 kg · 2027", href: NET_URL.x },
       { name: "CTC Co-Create", sub: "Proyectos de marca en EE.UU. y Europa", href: NET_URL.cocreate },
@@ -150,10 +186,10 @@ const T: Record<Lang, Dict> = {
     ],
   },
   en: {
-    eyebrow: "Two platforms, one thread",
+    eyebrow: "Three offers, one thread",
     h2: "From the coffee field to the cup, with no anonymous middlemen",
     intro:
-      "Kaffetal Regal gathers the best of Colombia. Cherry Picked distributes it across Europe. In between, CTC turns trust into contracts: blind evaluation, certification, compliance and logistics.",
+      "Everything CTC does fits into three offers: the one that brings the coffee, the one that buys it, and the value platforms holding both up. Kaffetal Regal gathers the best of Colombia; Cherry Picked and Co-Create place it in Europe and the US; in between, CTC turns trust into contracts.",
     krWho: "In Colombia · For the producer",
     krOneline:
       "The portal where coffee growers register their farms and lots, compete in the Cupping Arena and sign armored deals with indexed premiums.",
@@ -197,10 +233,17 @@ const T: Record<Lang, Dict> = {
     capOrigin: "The origin · geolocated",
     capGrade: "The grade · that gets bought",
     netMono: "The network index",
-    netH3: "Every door, from here",
+    netH3: "Every door, by offer",
     netSoon: "Soon",
     netDev: "Model in development",
+    offers: [
+      { n: "1", label: "Supply", sub: "Kaffetal Regal · the origin that produces" },
+      { n: "2", label: "Demand", sub: "Cherry Picked and Co-Create · who buys" },
+      { n: "3", label: "Value Platforms", sub: "The modules that hold both up" },
+    ],
     netTiles: [
+      { name: "Kaffetal Regal", sub: "The producer's portal · farms, lots and Arena", href: NET_URL.kaffetal },
+      { name: "Cherry Picked", sub: "The European roaster's storefront · Green", href: NET_URL.cherry },
       { name: "Cherry Picked Roast", sub: "The Green offer, roasted in Europe · 2027", href: NET_URL.roast },
       { name: "Cherry Picked X", sub: "Per-season boxes, from 3 kg · 2027", href: NET_URL.x },
       { name: "CTC Co-Create", sub: "Brand projects in the US and Europe", href: NET_URL.cocreate },
@@ -213,10 +256,10 @@ const T: Record<Lang, Dict> = {
     ],
   },
   de: {
-    eyebrow: "Zwei Plattformen, ein Faden",
+    eyebrow: "Drei Angebote, ein Faden",
     h2: "Vom Kaffeefeld bis zur Tasse, ohne anonyme Zwischenhändler",
     intro:
-      "Kaffetal Regal sammelt das Beste Kolumbiens. Cherry Picked verteilt es in Europa. Dazwischen verwandelt CTC Vertrauen in Verträge: Blindverkostung, Zertifizierung, Compliance und Logistik.",
+      "Alles, was CTC tut, passt in drei Angebote: das, was den Kaffee bringt, das, was ihn kauft, und die Value Platforms, die beide tragen. Kaffetal Regal sammelt das Beste Kolumbiens; Cherry Picked und Co-Create platzieren ihn in Europa und den USA; dazwischen verwandelt CTC Vertrauen in Verträge.",
     krWho: "In Kolumbien · Für den Produzenten",
     krOneline:
       "Das Portal, in dem Kaffeebauern ihre Fincas und Lots registrieren, in der Cupping Arena antreten und abgesicherte Verträge mit indexierten Prämien unterzeichnen.",
@@ -260,10 +303,17 @@ const T: Record<Lang, Dict> = {
     capOrigin: "Der Ursprung · geolokalisiert",
     capGrade: "Der Grad · der gekauft wird",
     netMono: "Der Index des Netzwerks",
-    netH3: "Jede Tür, von hier aus",
+    netH3: "Jede Tür, nach Angebot",
     netSoon: "Bald",
     netDev: "Modell in Entwicklung",
+    offers: [
+      { n: "1", label: "Das Angebot", sub: "Kaffetal Regal · der Ursprung, der produziert" },
+      { n: "2", label: "Die Nachfrage", sub: "Cherry Picked und Co-Create · wer kauft" },
+      { n: "3", label: "Value Platforms", sub: "Die Module, die beide tragen" },
+    ],
     netTiles: [
+      { name: "Kaffetal Regal", sub: "Das Portal des Produzenten · Fincas, Lots und Arena", href: NET_URL.kaffetal },
+      { name: "Cherry Picked", sub: "Die Vitrine des europäischen Rösters · Green", href: NET_URL.cherry },
       { name: "Cherry Picked Roast", sub: "Das Green-Angebot, in Europa geröstet · 2027", href: NET_URL.roast },
       { name: "Cherry Picked X", sub: "Saisonboxen, ab 3 kg · 2027", href: NET_URL.x },
       { name: "CTC Co-Create", sub: "Markenprojekte in den USA und Europa", href: NET_URL.cocreate },
@@ -290,9 +340,25 @@ export function EcosystemSection() {
           <p>{t.intro}</p>
         </div>
 
+        {/* El raíl de las tres ofertas: el índice de la casa antes de entrar en
+            detalle. Es el dibujo del owner —tres círculos numerados— hecho
+            página. No enlaza a ninguna ruta nueva: ordena las que ya había. */}
+        <ol className={styles.offerRail}>
+          {t.offers.map((o) => (
+            <li className={styles.offerStep} key={o.n}>
+              <span className={styles.offerNum}>{o.n}</span>
+              <span className={styles.offerText}>
+                <b>{o.label}</b>
+                <span>{o.sub}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+
         <div className={styles.eco2}>
           <div className={styles.ecoCard} style={{ "--ec": "var(--accent)" } as React.CSSProperties}>
             <div className={styles.ecoTop}>
+              <span className={styles.ecoNum}>{t.offers[0].n}</span>
               <Image
                 className={styles.logo}
                 src="/images/shared/kaffetal-regal-logo.png"
@@ -325,6 +391,7 @@ export function EcosystemSection() {
 
           <div className={styles.ecoCard} style={{ "--ec": "var(--green)" } as React.CSSProperties}>
             <div className={styles.ecoTop}>
+              <span className={styles.ecoNum}>{t.offers[1].n}</span>
               <Image
                 className={styles.logo}
                 src="/images/shared/cherry-picked-logo.png"
@@ -412,8 +479,21 @@ export function EcosystemSection() {
             <h3 className={styles.netH3}>{t.netH3}</h3>
             <span className={styles.netDev}>{t.netDev}</span>
           </div>
-          <div className={styles.netGrid}>
-            {t.netTiles.map((tile) => {
+          {/* El índice deja de ser una lista plana: cada puerta se pinta bajo la
+              oferta a la que pertenece (NET_OFERTA). Mismo contenido, misma
+              ruta — lo que cambia es que ahora se entiende de qué es cada cosa. */}
+          {t.offers.map((o) => {
+            const delGrupo = t.netTiles.filter((tile) => String(NET_OFERTA[tile.href ?? ""]) === o.n);
+            if (delGrupo.length === 0) return null;
+            return (
+              <div className={styles.netFamily} key={o.n}>
+                <p className={styles.netFamilyHead}>
+                  <span className={styles.netFamilyNum}>{o.n}</span>
+                  <b>{o.label}</b>
+                  <span>{o.sub}</span>
+                </p>
+                <div className={styles.netGrid}>
+                  {delGrupo.map((tile) => {
               // La foto va en las dos ramas: una puerta apagada se distingue por
               // estar en gris y no responder al ratón, no por quedarse sin cara.
               const thumb = (
@@ -436,8 +516,11 @@ export function EcosystemSection() {
                   <em>↗</em>
                 </a>
               );
-            })}
-          </div>
+                  })}
+                </div>
+              </div>
+            );
+          })}
           <NetNewsletter />
         </div>
       </div>

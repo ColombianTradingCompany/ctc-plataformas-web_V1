@@ -23,7 +23,7 @@ const T: Record<
     ctaEco: "Conocer el ecosistema",
     ctaSvc: "Servicios de acompañamiento",
     facts: [
-      ["2", "plataformas · 2 orillas"],
+      ["3", "ofertas · 2 orillas"],
       ["2", "cosechas al año"],
       ["EUDR", "resuelto en cada despacho"],
       ["QR", "del predio a la taza"],
@@ -37,7 +37,7 @@ const T: Record<
     ctaEco: "Explore the ecosystem",
     ctaSvc: "Advisory services",
     facts: [
-      ["2", "platforms · 2 shores"],
+      ["3", "offers · 2 shores"],
       ["2", "harvests a year"],
       ["EUDR", "resolved on every shipment"],
       ["QR", "from the plot to the cup"],
@@ -51,7 +51,7 @@ const T: Record<
     ctaEco: "Das Ökosystem kennenlernen",
     ctaSvc: "Begleitende Services",
     facts: [
-      ["2", "Plattformen · 2 Ufer"],
+      ["3", "Angebote · 2 Ufer"],
       ["2", "Ernten pro Jahr"],
       ["EUDR", "bei jeder Lieferung gelöst"],
       ["QR", "vom Grundstück bis zur Tasse"],

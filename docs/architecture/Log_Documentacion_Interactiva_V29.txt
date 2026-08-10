@@ -1,0 +1,51 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V29.0(597b69b).html
+(CTC Web Platform, 2026-08-10). Cada entrada se compila al próximo Version Wrap (V30).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit.
+
+Lección heredada del wrap de V28: **una entrada del log puede estar ya compilada**
+si se registró y se envolvió el mismo día. Antes de compilar, comprobar en el HTML
+base si ya está (buscar la clave de DICT o la nota que pedía).
+
+Contexto abierto al cerrar V29:
+
+- **RT-Scriptor · la imagen real sigue sin salir.** El cableado funciona: el primer
+  «Acción · imagen» en producción (2026-08-06) compuso el dibujo, lo rasterizó,
+  viajó como referencia y Google contestó **429 — la clave no tiene cuota de
+  generación de IMAGEN**. Se resuelve activando facturación en ese proyecto de
+  Google AI o apuntando GEMINI_IMAGE_MODEL a un modelo que cubra el plan.
+- **El escenario de Canva NO está montado en Make** (registrado en
+  /ecp/automatizaciones en etapa «propuesta»; blueprint en docs/MAKE_RTS_CANVA.md).
+- **Direccionamiento**: la persistencia está confirmada en vivo por el owner y la
+  memoria está medida contra la API real (guardián con --live). Lo que sigue sin
+  ejercitarse es `requireActiveAdmin()` y el viaje completo por el navegador.
+- **El libro de consumo de IA**: el insert real desde dentro de Next NO se ha
+  probado (next/headers solo existe en su runtime). La primera llamada a un modelo
+  en producción es la prueba. Y **Gemini sigue sin tarifa** en `precios.ts`: sus
+  tokens se cuentan, su coste no — el total del tablero es un SUELO.
+- 📌 **FECHA QUE IMPORTA: el 2026-08-31 caduca el precio de lanzamiento de
+  Sonnet 5** ($2/$10 por millón). El 1 de septiembre la misma llamada cuesta un
+  50% más sin tocar una línea, y es el modelo de Direccionamiento, Coffeed,
+  Datawave y RT-Scriptor. Está codificado en `precios.ts` y avisado en el tablero.
+- **Coffeed**: 5 medios sin feed; calidad editorial por afinar; el muro casi vacío.
+- **Integraciones F4 (redes) y F5 (WhatsApp)** sin empezar. F4 ya no está
+  bloqueada por el render a imagen: `raster.ts` lo resolvió de rebote.
+- **GDPR**: la política de privacidad sigue sin escribirse; la lista de
+  subprocesadores es Resend, Notion, Google, Make, Anthropic y Gemini.
+- `qa-guard-check.mjs` no corre: necesita una cuenta QA de productor.
+- **Identity Value Creation** (4ª app del taller) declarada y sin construir.
+- El **socio multi-nodo** sigue exigiendo cambiar el PK de `partner_accounts`.
+- Los **dos cotizadores y Anclas de mercado** sin conducir en navegador (2FA).
+- Pendiente del owner: material de la landing de Varietales; pase de copy
+  Specialty/Black sobre KR ProcessFlow y CP BlackSection.
+- El bucket de Storage sigue sin poda automática del Buzón.
+- **Terratalento está construido pero su puerta pública sigue en gris** por
+  decisión del owner («Modelo en desarrollo»). Cuando se encienda: quitarle
+  `soon: true` en EcosystemSection, nada más.

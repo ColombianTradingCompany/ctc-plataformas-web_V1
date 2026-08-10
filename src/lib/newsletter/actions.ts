@@ -7,7 +7,11 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 // so CTC can write when the 2027 programmes open. newsletter_subscribers is
 // service-role-only (RLS, zero policies); this action is its only writer.
 
-const SOURCES = ["roast", "x"] as const;
+// "ctc-home" (2026-08-10): el índice de la red de CTC Home dejó de anunciar la
+// puerta del Control Panel y ofrece esto en su lugar mientras el modelo está en
+// desarrollo. Mismo mecanismo, fuente distinta — la clave única es (email,
+// source), así que alguien puede estar en la lista de Roast y en ésta.
+const SOURCES = ["roast", "x", "ctc-home"] as const;
 type Source = (typeof SOURCES)[number];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

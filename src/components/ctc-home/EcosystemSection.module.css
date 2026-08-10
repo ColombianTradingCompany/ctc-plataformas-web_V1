@@ -74,3 +74,41 @@ a.netTile:hover{border-color:var(--accent);transform:translateY(-2px)}
 .netTile em{position:absolute;top:12px;right:14px;font-style:normal;font-size:12px;color:var(--accent)}
 .netTileSoon{opacity:.62}
 .netTileSoon em{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--muted)}
+
+/* ── El índice de la red, con cara (2026-08-10) ─────────────────────────────
+   Cada puerta lleva una foto real de la casa. La rejilla pasó de ser una lista
+   de enlaces a un mosaico: mismo contenido, mucha más ganas de pulsarlo.       */
+.netHead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+/* «Modelo en desarrollo»: se dice una vez, arriba, en lugar de repetir un aviso
+   en cada tarjeta. La red se está construyendo y eso no es letra pequeña.      */
+.netDev{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
+
+.netThumb{position:relative;display:block;width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;
+  background:var(--line);margin-bottom:10px}
+.netThumb img{object-fit:cover}
+.netTile{padding:12px 12px 15px}
+a.netTile:hover .netThumb img{transform:scale(1.04)}
+.netThumb img{transition:transform .35s ease}
+.netTile b,.netTile span{padding-inline:5px}
+.netTile em{top:auto;bottom:15px;right:16px}
+
+/* Una puerta apagada: gris, sin relieve y sin ratón. `pointer-events:none` es
+   lo que la hace de verdad no pulsable — bajar la opacidad solo la disimula.   */
+.netTileSoon{cursor:default;pointer-events:none}
+.netTileSoon .netThumb img{filter:grayscale(1);opacity:.75}
+
+/* ── Captación de correo, donde estaba la puerta del Control Panel ───────── */
+.netNews{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;
+  background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px 18px}
+.netNewsText{display:flex;flex-direction:column;gap:3px;max-width:46ch}
+.netNewsText b{font-size:14.5px}
+.netNewsText span{font-size:12.5px;color:var(--muted);line-height:1.5}
+.netNewsRow{display:flex;gap:8px;flex-wrap:wrap}
+.netNewsRow input[type="email"]{font:inherit;font-size:13px;padding:9px 11px;border:1px solid var(--line);
+  border-radius:8px;background:var(--paper,#fff);color:inherit;min-width:230px}
+.netNewsRow input[type="email"]:focus{outline:none;border-color:var(--accent)}
+.netNewsHp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.netNewsDone{margin:0;font-size:13px;color:var(--accent)}
+.netNewsErr{margin:0;flex-basis:100%;font-size:12.5px;color:#8C2130}
+@media(max-width:560px){.netNews{flex-direction:column;align-items:stretch}.netNewsRow input[type="email"]{min-width:0;flex:1}}

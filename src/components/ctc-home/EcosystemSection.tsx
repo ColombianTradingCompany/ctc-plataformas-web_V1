@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { NetNewsletter } from "./NetNewsletter";
 import styles from "./EcosystemSection.module.css";
 
 // ── V4 · Fase 2: el índice del enrutador ─────────────────────────────────────
@@ -35,6 +36,25 @@ const NET_URL =
         panel: "/control-panel",
       };
 
+// La imagen de cada puerta, indexada por su URL: así las tres lenguas comparten
+// la misma foto sin repetirla tres veces, y añadir un destino es una línea.
+// Todas son fotos reales de la casa y todas se recortan igual (`cover`) — una
+// mezcla de logotipos y fotografías hacía que la rejilla se viera desordenada.
+const NET_IMG: Record<string, string> = {
+  [NET_URL.roast]: "/images/ctc-home/26-tostaduria-gabriel-jr-anna.jpg",
+  [NET_URL.x]: "/images/ctc-home/25-mesa-catacion-ctc.jpg",
+  [NET_URL.cocreate]: "/images/ctc-home/22-papa-en-feria.jpg",
+  [NET_URL.tech]: "/images/ctc-home/tech/tech-optica-sorter.jpg",
+  [NET_URL.varietales]: "/images/ctc-home/28-flor-de-azahar.jpg",
+  [NET_URL.directorio]: "/images/ctc-home/23-papa-en-cooperativa.jpg",
+  [NET_URL.coffeed]: "/images/ctc-home/10-catador-evaluando-en-la-arena.png",
+  [NET_URL.herramientas]: "/images/ctc-home/tech/tech-instrumentacion-1.jpg",
+  // El cafetal, que es donde trabaja el recolector. La foto «29-cerezas» que
+  // el nombre prometía resultó ser un bodegón de sombrero y pocillos: se vio al
+  // mirar la página renderizada, no al leer el nombre del archivo.
+  [NET_URL.terratalento]: "/images/ctc-home/20-atardecer-cafetal-real.jpg",
+};
+
 type NetTile = { name: string; sub: string; href?: string; soon?: boolean };
 
 type Dict = {
@@ -44,6 +64,7 @@ type Dict = {
   netMono: string;
   netH3: string;
   netSoon: string;
+  netDev: string;
   netTiles: NetTile[];
   krWho: string;
   krOneline: string;
@@ -115,6 +136,7 @@ const T: Record<Lang, Dict> = {
     netMono: "El índice de la red",
     netH3: "Todas las puertas, desde aquí",
     netSoon: "Pronto",
+    netDev: "Modelo en desarrollo",
     netTiles: [
       { name: "Cherry Picked Roast", sub: "La oferta Green, tostada en Europa · 2027", href: NET_URL.roast },
       { name: "Cherry Picked X", sub: "Cajas por temporada, desde 3 kg · 2027", href: NET_URL.x },
@@ -124,8 +146,7 @@ const T: Record<Lang, Dict> = {
       { name: "Directorio del Café", sub: "Los especialistas del café de Colombia", href: NET_URL.directorio },
       { name: "Coffeed", sub: "El muro de noticias de la red", href: NET_URL.coffeed },
       { name: "Herramientas del Café", sub: "Calculadoras y utilidades del oficio", href: NET_URL.herramientas },
-      { name: "Terratalento", sub: "Las manos que recogen la cosecha", href: NET_URL.terratalento },
-      { name: "CTC Control Panel", sub: "Acceso interno del equipo CTC", href: NET_URL.panel },
+      { name: "Terratalento", sub: "Las manos que recogen la cosecha", href: NET_URL.terratalento, soon: true },
     ],
   },
   en: {
@@ -178,6 +199,7 @@ const T: Record<Lang, Dict> = {
     netMono: "The network index",
     netH3: "Every door, from here",
     netSoon: "Soon",
+    netDev: "Model in development",
     netTiles: [
       { name: "Cherry Picked Roast", sub: "The Green offer, roasted in Europe · 2027", href: NET_URL.roast },
       { name: "Cherry Picked X", sub: "Per-season boxes, from 3 kg · 2027", href: NET_URL.x },
@@ -187,8 +209,7 @@ const T: Record<Lang, Dict> = {
       { name: "Coffee Directory", sub: "Colombia's coffee specialists", href: NET_URL.directorio },
       { name: "Coffeed", sub: "The network's news wall", href: NET_URL.coffeed },
       { name: "Coffee Tools", sub: "Calculators and trade utilities", href: NET_URL.herramientas },
-      { name: "Terratalento", sub: "The hands that pick the harvest", href: NET_URL.terratalento },
-      { name: "CTC Control Panel", sub: "Internal access for the CTC team", href: NET_URL.panel },
+      { name: "Terratalento", sub: "The hands that pick the harvest", href: NET_URL.terratalento, soon: true },
     ],
   },
   de: {
@@ -241,6 +262,7 @@ const T: Record<Lang, Dict> = {
     netMono: "Der Index des Netzwerks",
     netH3: "Jede Tür, von hier aus",
     netSoon: "Bald",
+    netDev: "Modell in Entwicklung",
     netTiles: [
       { name: "Cherry Picked Roast", sub: "Das Green-Angebot, in Europa geröstet · 2027", href: NET_URL.roast },
       { name: "Cherry Picked X", sub: "Saisonboxen, ab 3 kg · 2027", href: NET_URL.x },
@@ -250,8 +272,7 @@ const T: Record<Lang, Dict> = {
       { name: "Kaffee-Verzeichnis", sub: "Kolumbiens Kaffeespezialisten", href: NET_URL.directorio },
       { name: "Coffeed", sub: "Die Nachrichtenwand des Netzwerks", href: NET_URL.coffeed },
       { name: "Kaffee-Werkzeuge", sub: "Rechner und Werkzeuge des Handwerks", href: NET_URL.herramientas },
-      { name: "Terratalento", sub: "Die Hände, die die Ernte pflücken", href: NET_URL.terratalento },
-      { name: "CTC Control Panel", sub: "Interner Zugang für das CTC-Team", href: NET_URL.panel },
+      { name: "Terratalento", sub: "Die Hände, die die Ernte pflücken", href: NET_URL.terratalento, soon: true },
     ],
   },
 };
@@ -387,24 +408,37 @@ export function EcosystemSection() {
 
         <div className={styles.net}>
           <span className={styles.threadMono}>{t.netMono}</span>
-          <h3 className={styles.netH3}>{t.netH3}</h3>
+          <div className={styles.netHead}>
+            <h3 className={styles.netH3}>{t.netH3}</h3>
+            <span className={styles.netDev}>{t.netDev}</span>
+          </div>
           <div className={styles.netGrid}>
-            {t.netTiles.map((tile) =>
-              tile.soon ? (
-                <div className={`${styles.netTile} ${styles.netTileSoon}`} key={tile.name}>
+            {t.netTiles.map((tile) => {
+              // La foto va en las dos ramas: una puerta apagada se distingue por
+              // estar en gris y no responder al ratón, no por quedarse sin cara.
+              const thumb = (
+                <span className={styles.netThumb}>
+                  <Image src={NET_IMG[tile.href ?? ""]} alt="" fill sizes="(max-width:560px) 100vw, 33vw" />
+                </span>
+              );
+              return tile.soon ? (
+                <div className={`${styles.netTile} ${styles.netTileSoon}`} key={tile.name} aria-disabled="true">
+                  {thumb}
                   <b>{tile.name}</b>
                   <span>{tile.sub}</span>
                   <em>{t.netSoon}</em>
                 </div>
               ) : (
                 <a className={styles.netTile} href={tile.href} key={tile.name}>
+                  {thumb}
                   <b>{tile.name}</b>
                   <span>{tile.sub}</span>
                   <em>↗</em>
                 </a>
-              )
-            )}
+              );
+            })}
           </div>
+          <NetNewsletter />
         </div>
       </div>
     </section>

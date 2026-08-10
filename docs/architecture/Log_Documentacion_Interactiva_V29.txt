@@ -134,7 +134,7 @@ se lea a golpe corto. No cambia ninguna ruta, permiso, tabla ni superficie.
   y el menú sin existir.
 
 APP_VERSION 3.13 → 3.14.
-(commit: pending)
+(commit: c4fb902)
 
 ## [2026-08-11 · segunda pasada] La sección del ecosistema queda en tres gestos, y Cherry Picked pasa a ser plataforma
 
@@ -199,7 +199,7 @@ QuickNav, footers de KR…); y DNS + dominio en Vercel para
 `cherry-picked-green`, que solo puede hacer el owner.
 
 APP_VERSION 3.14 (misma tanda).
-(commit: pending)
+(commit: c4fb902)
 
 ## [2026-08-11 · tercera pasada] Cuatro retoques del owner sobre la banda y las tarjetas
 
@@ -226,4 +226,4 @@ APP_VERSION 3.14 (misma tanda).
   alguien pregunta por qué ya no está el sello.
 
 APP_VERSION 3.14 (misma tanda).
-(commit: pending)
+(commit: c4fb902)

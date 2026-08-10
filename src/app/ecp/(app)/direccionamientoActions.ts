@@ -18,7 +18,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { claude, parseJson, MODEL_WRITE } from "@/lib/coffeed/claude";
-import { GRADOS, SCA_MINIMO, SCA_MAXIMO } from "@/lib/grados/definicion";
+import { SISTEMA_REDACCION, textoMemoria } from "@/lib/direccionamiento/memoria";
 
 export type ContextoScope = "record" | "assets";
 
@@ -67,11 +67,8 @@ export async function guardarContexto(scope: string, data: unknown): Promise<voi
 // Aquí se valida que sea JSON antes de devolverlo —`parseJson` rescata el primer
 // bloque si el modelo antepone preámbulo— y se devuelve reserializado: el
 // `JSON.parse` del navegador ya no puede fallar por una valla de markdown.
-const SISTEMA_REDACCION =
-  "Eres el estratega de contenido y copy de Colombian Trading Company. " +
-  "Respondes ÚNICAMENTE con el JSON que se te pide, sin preámbulo, sin explicación " +
-  "y sin vallas de markdown. Escribes en español de Colombia.";
-
+// El system prompt vive en el módulo puro para que el guardián pruebe la misma
+// cadena que se manda en producción.
 export async function redactarContexto(prompt: string): Promise<string> {
   await requireActiveAdmin();
   if (!prompt || prompt.length > 60_000) throw new Error("Petición no válida.");
@@ -89,30 +86,10 @@ export async function redactarContexto(prompt: string): Promise<string> {
 // «Es lo que convierte la herramienta en parte del sistema»: este texto entra en
 // CADA prompt dentro de <memoria_del_sistema>, ANTES del brief.
 //
-// Lo primero que se le enseña son los Grados de Calidad, y no es un adorno: el
-// contexto de compañía que el .jsx trae embebido cita los grados como índice de
-// PRECIO sobre base 100 (Black 105–110, Red 110–125…), que es otra cosa. La
-// definición de la casa —la única— es la escala SCA de src/lib/grados/definicion.ts,
-// y aquí se impone. Por eso Grados de Calidad vive en este mismo módulo.
-//
-// Espacio para crecer: piezas ya publicadas en Coffeed, ángulos ya usados,
-// métricas de rendimiento. Cuando existan, se añaden a este array.
+// El texto vive en `@/lib/direccionamiento/memoria` — módulo PURO, para que el
+// guardián pueda comprobarlo sin levantar la consola y sin probar una copia.
+// Aquí solo queda la compuerta.
 export async function memoriaContexto(): Promise<string> {
   await requireActiveAdmin();
-
-  const escala = GRADOS.map(
-    (g) => `${g.nombre} (SCA ${g.scaMin}–${g.scaMax}) — «${g.lema}» · ${g.claseLote} · ${g.variedad}`
-  ).join("\n");
-
-  return [
-    "GRADOS DE CALIDAD CTC — ESTA es la definición de la casa y prevalece sobre",
-    "cualquier otra cifra que aparezca en el contexto de compañía. Los grados se",
-    `leen del PUNTAJE SCA (escala continua de ${SCA_MINIMO} a ${SCA_MAXIMO}, dos decimales como máximo),`,
-    "no de un índice de precio. El puntaje manda y no se negocia; los criterios",
-    "cualitativos orientan el VALOR dentro del rango, no cambian el grado.",
-    escala,
-    "",
-    "Nunca inventes ni redondees un umbral de grado en una pieza de contenido:",
-    "si hace falta un número, es uno de los de arriba.",
-  ].join("\n");
+  return textoMemoria();
 }

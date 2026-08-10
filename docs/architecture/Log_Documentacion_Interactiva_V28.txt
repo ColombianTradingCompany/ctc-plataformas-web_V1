@@ -138,3 +138,43 @@ Contexto abierto al cerrar V28:
   Supabase. La primera llamada real a un modelo en produccion es la prueba.
 - APP_VERSION 3.9 -> 3.10.
 (commit: 57beb53)
+
+## [2026-08-10] El indice de la red de CTC Home: con cara, sin puerta interna
+- Peticion del owner sobre la seccion «Todas las puertas, desde aqui»
+  (EcosystemSection). Cuatro cambios:
+  1. FUERA la tarjeta «CTC Control Panel». La red publica deja de anunciar su
+     acceso interno. El login NO se toca: /control-panel, /login y /panel siguen
+     en pie y respondiendo (200/200/307 comprobados). NET_URL.panel se queda en
+     el codigo — lo que se retiro es el anuncio, no la puerta.
+  2. TERRATALENTO en gris y no pulsable. Es `soon: true`, o sea <div> en vez de
+     <a> y `pointer-events:none` en el CSS — bajar la opacidad sola lo
+     disimula pero se sigue pudiendo pulsar.
+  3. «MODELO EN DESARROLLO»: insignia junto al titulo, una vez, en las tres
+     lenguas (netDev). Se dice arriba en lugar de repetir un aviso por tarjeta.
+  4. CAPTACION DE CORREO donde estaba el Control Panel: componente nuevo
+     `NetNewsletter.tsx` sobre `subscribeNewsletter` con fuente nueva
+     'ctc-home'. Sin cuenta y sin correo de vuelta, como Roast y X.
+- IMAGENES: mapa `NET_IMG` indexado por URL, asi las tres lenguas comparten
+  foto sin repetirla. Todas son fotos reales de la casa y todas se recortan con
+  `cover` — mezclar sellos de marca y fotografias dejaba la rejilla desordenada.
+- DOS COSAS QUE SOLO APARECIERON AL MIRAR/PROBAR, no al leer el codigo:
+  · El CHECK de `newsletter_subscribers.source` seguia limitado a ('roast','x')
+    y rechazaba 'ctc-home': el formulario compilaba, la accion validaba, y el
+    visitante veia «no se pudo guardar». Migracion
+    `newsletter_source_ctc_home`. LECCION: la lista de fuentes vive en DOS
+    sitios (el array SOURCES y el CHECK); anadir una exige tocar los dos.
+  · La foto de Terratalento (`29-cerezas-la-ceiba.jpg`) resulto ser un bodegon
+    de sombrero y pocillos, no manos recogiendo. Cambiada al cafetal
+    (`20-atardecer-cafetal-real.jpg`). El nombre del archivo mentia.
+- Verificado con Chrome headless (el panel de vista previa no sirve aqui:
+  window.innerWidth es 0, asi que las imagenes `loading=lazy` nunca entran en
+  el viewport y parecen rotas cuando no lo estan — los archivos daban 200).
+  Captura revisada a 1440px: rejilla 3x3, las 9 fotos cargadas, Terratalento en
+  gris con PRONTO, insignia de modelo en desarrollo y el bloque de correo.
+  Formulario enviado DE VERDAD: fila en newsletter_subscribers con
+  source='ctc-home' y lang='es'; fila de prueba borrada.
+- Al wrap: nodo n-redv4 / n-home — el indice ya no lista el Control Panel y
+  ofrece boletin; Terratalento aparece como «pronto» en la puerta publica
+  aunque la superficie este construida.
+- APP_VERSION 3.10 -> 3.11.
+(commit: 61d3f15)

@@ -1,0 +1,58 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V28.0(e7627dd).html
+(CTC Web Platform, 2026-08-10). Cada entrada se compila al próximo Version Wrap (V29).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio (lección del wrap de V19, repetida en el de V28): registrar la entrada
+AL TERMINAR el trabajo, no "después". Y sellar el sha en cuanto exista el commit —
+en V27 hubo que reconstruir varias con git blame.
+
+Lección propia del wrap de V28: **una entrada del log puede estar ya compilada**.
+La del hito V3.0 se registró y se envolvió el mismo día, y al llegar aquí parecía
+pendiente. Antes de compilar una entrada, comprobar en el HTML base si ya está
+(se comprobó buscando la clave de DICT y la nota que pedía). Compilar dos veces
+lo mismo es cómo el mapa empieza a contradecirse.
+
+Contexto abierto al cerrar V28:
+
+- **RT-Scriptor · la imagen real sigue sin salir.** El cableado entero funciona: el
+  primer «Acción · imagen» en producción (2026-08-06) compuso el dibujo, lo
+  rasterizó, viajó como referencia y Google contestó **429 — la clave no tiene
+  cuota de generación de IMAGEN**. No es el modelo ni el prompt: el nivel gratuito
+  de Gemini no la incluye. Se resuelve activando facturación en ese proyecto de
+  Google AI o apuntando GEMINI_IMAGE_MODEL a un modelo que sí cubra el plan.
+- **El escenario de Canva NO está montado en Make** — registrado en
+  /ecp/automatizaciones en etapa «propuesta» con el contrato entero; blueprint y
+  gotchas en docs/MAKE_RTS_CANVA.md. Al montarlo: pegar el scenarioId y pasarlo a
+  piloto.
+- **Direccionamiento: nadie ha pulsado «Dame una mano».** La persistencia sí está
+  confirmada en vivo por el owner (la insignia «Guardado»); la llamada a Claude y
+  —lo más importante— la corrección de la memoria (que el modelo cite la escala SCA
+  y no el índice de precio embebido) siguen sin ejercitarse contra la API real.
+- **Coffeed**: 5 medios sin feed (FNC, Perfect Daily Grind, Coffee ad Astra —es
+  YouTube y no resolvió el channel_id—, Comunicaffe, ICO); calidad editorial por
+  afinar; el muro sigue casi vacío (falta producir 2-3 capítulos reales).
+- **Integraciones F4 (redes) y F5 (WhatsApp)** sin empezar. F4 ya no está bloqueada
+  por el render a imagen: `raster.ts` lo resolvió de rebote.
+- **GDPR**: la política de privacidad sigue sin escribirse y la lista de
+  subprocesadores no para de crecer (Resend, Notion, Google, Make, Anthropic,
+  Gemini). Cada día es más urgente.
+- `qa-guard-check.mjs` no corre: necesita una cuenta QA de productor (procedimiento
+  en la memoria del roster). Crear Prueba, correr, borrar.
+- **Identity Value Creation** (4ª app del taller) sigue declarada y sin construir.
+  Su pendiente real no es UI: leer finca/lote desde el tier de socios exige vistas
+  SECURITY DEFINER estrechas por campo, no un grant ancho.
+- El **socio multi-nodo** sigue exigiendo cambiar el PK de `partner_accounts`.
+- Los **dos cotizadores y Anclas de mercado** siguen sin conducirse en navegador
+  (el OCP tiene 2FA). Falta a mano: guardar un borrador, recargar y ver que la
+  calculadora vuelve donde estaba.
+- El owner tiene 3 cotizaciones de prueba en producción; las secuencias quedaron
+  por encima del máximo — NO reiniciarlas sin volver a comprobarlo o el siguiente
+  código choca contra el índice único de `code`.
+- Sigue pendiente del owner: material de la landing de Varietales; pase de copy
+  Specialty/Black sobre KR ProcessFlow y CP BlackSection.
+- El bucket de Storage sigue sin poda automática del Buzón.

@@ -37,7 +37,7 @@ type Chrome = {
 
 const CHROME: Record<Lang, Chrome> = {
   es: {
-    eyebrow: "Oferta 3 · Value Platforms",
+    eyebrow: "Oferta 3 · Value Ecosystem",
     h2: "Las plataformas que sostienen a las dos",
     intro:
       "La misma ingeniería que sostiene nuestro ecosistema, al servicio de fincas, asociaciones y marcas. Cada servicio tiene su propia página — entra a la que te corresponde.",
@@ -46,7 +46,7 @@ const CHROME: Record<Lang, Chrome> = {
     askCta: "Escríbenos y te orientamos",
   },
   en: {
-    eyebrow: "Offer 3 · Value Platforms",
+    eyebrow: "Offer 3 · Value Ecosystem",
     h2: "The platforms that hold both up",
     intro:
       "The same engineering that powers our ecosystem, at the service of farms, associations and brands. Each service has its own page — enter the one that fits you.",
@@ -55,7 +55,7 @@ const CHROME: Record<Lang, Chrome> = {
     askCta: "Write to us and we'll point the way",
   },
   de: {
-    eyebrow: "Angebot 3 · Value Platforms",
+    eyebrow: "Angebot 3 · Value Ecosystem",
     h2: "Die Plattformen, die beide tragen",
     intro:
       "Dieselbe Ingenieursarbeit, die unser Ökosystem trägt, im Dienst von Fincas, Verbänden und Marken. Jeder Service hat seine eigene Seite — treten Sie dort ein, wo Sie hingehören.",

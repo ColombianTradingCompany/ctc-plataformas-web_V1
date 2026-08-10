@@ -65,7 +65,7 @@ const NET_IMG: Record<string, string> = {
 
 // ── Las tres ofertas ────────────────────────────────────────────────────────
 // El owner reordenó la casa en tres: la OFERTA (Kaffetal Regal, el origen), la
-// DEMANDA (Cherry Picked y Co-Create, quien compra) y las VALUE PLATFORMS (todo
+// DEMANDA (Cherry Picked y Co-Create, quien compra) y el VALUE ECOSYSTEM (todo
 // lo que sostiene a las dos). No cambia ninguna ruta ni ningún permiso — cambia
 // cómo se lee la página. Cada puerta declara aquí a qué oferta pertenece.
 type Oferta = 1 | 2 | 3;
@@ -119,7 +119,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Tres ofertas, un solo hilo",
     h2: "Del cafetal a la taza, sin intermediarios anónimos",
     intro:
-      "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y las plataformas de valor que sostienen a las dos. Kaffetal Regal recoge lo mejor de Colombia; Cherry Picked y Co-Create lo colocan en Europa y EE.UU.; en el medio, CTC convierte confianza en contratos.",
+      "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y el Value Ecosystem que sostiene a las dos. Kaffetal Regal recoge lo mejor de Colombia; Cherry Picked y Co-Create lo colocan en Europa y EE.UU.; en el medio, CTC convierte confianza en contratos.",
     krWho: "En Colombia · Para el productor",
     krOneline:
       "El portal donde los caficultores registran sus fincas y lotes, compiten en la Cupping Arena y firman tratos blindados con primas indexadas.",
@@ -169,7 +169,7 @@ const T: Record<Lang, Dict> = {
     offers: [
       { n: "1", label: "La oferta", sub: "Kaffetal Regal · el origen que produce" },
       { n: "2", label: "La demanda", sub: "Cherry Picked y Co-Create · quien compra" },
-      { n: "3", label: "Value Platforms", sub: "Los módulos que sostienen a las dos" },
+      { n: "3", label: "Value Ecosystem", sub: "Los módulos que sostienen a las dos" },
     ],
     netTiles: [
       { name: "Kaffetal Regal", sub: "El portal del productor · fincas, lotes y Arena", href: NET_URL.kaffetal },
@@ -189,7 +189,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Three offers, one thread",
     h2: "From the coffee field to the cup, with no anonymous middlemen",
     intro:
-      "Everything CTC does fits into three offers: the one that brings the coffee, the one that buys it, and the value platforms holding both up. Kaffetal Regal gathers the best of Colombia; Cherry Picked and Co-Create place it in Europe and the US; in between, CTC turns trust into contracts.",
+      "Everything CTC does fits into three offers: the one that brings the coffee, the one that buys it, and the Value Ecosystem holding both up. Kaffetal Regal gathers the best of Colombia; Cherry Picked and Co-Create place it in Europe and the US; in between, CTC turns trust into contracts.",
     krWho: "In Colombia · For the producer",
     krOneline:
       "The portal where coffee growers register their farms and lots, compete in the Cupping Arena and sign armored deals with indexed premiums.",
@@ -239,7 +239,7 @@ const T: Record<Lang, Dict> = {
     offers: [
       { n: "1", label: "Supply", sub: "Kaffetal Regal · the origin that produces" },
       { n: "2", label: "Demand", sub: "Cherry Picked and Co-Create · who buys" },
-      { n: "3", label: "Value Platforms", sub: "The modules that hold both up" },
+      { n: "3", label: "Value Ecosystem", sub: "The modules that hold both up" },
     ],
     netTiles: [
       { name: "Kaffetal Regal", sub: "The producer's portal · farms, lots and Arena", href: NET_URL.kaffetal },
@@ -259,7 +259,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Drei Angebote, ein Faden",
     h2: "Vom Kaffeefeld bis zur Tasse, ohne anonyme Zwischenhändler",
     intro:
-      "Alles, was CTC tut, passt in drei Angebote: das, was den Kaffee bringt, das, was ihn kauft, und die Value Platforms, die beide tragen. Kaffetal Regal sammelt das Beste Kolumbiens; Cherry Picked und Co-Create platzieren ihn in Europa und den USA; dazwischen verwandelt CTC Vertrauen in Verträge.",
+      "Alles, was CTC tut, passt in drei Angebote: das, was den Kaffee bringt, das, was ihn kauft, und das Value Ecosystem, das beide trägt. Kaffetal Regal sammelt das Beste Kolumbiens; Cherry Picked und Co-Create platzieren ihn in Europa und den USA; dazwischen verwandelt CTC Vertrauen in Verträge.",
     krWho: "In Kolumbien · Für den Produzenten",
     krOneline:
       "Das Portal, in dem Kaffeebauern ihre Fincas und Lots registrieren, in der Cupping Arena antreten und abgesicherte Verträge mit indexierten Prämien unterzeichnen.",
@@ -309,7 +309,7 @@ const T: Record<Lang, Dict> = {
     offers: [
       { n: "1", label: "Das Angebot", sub: "Kaffetal Regal · der Ursprung, der produziert" },
       { n: "2", label: "Die Nachfrage", sub: "Cherry Picked und Co-Create · wer kauft" },
-      { n: "3", label: "Value Platforms", sub: "Die Module, die beide tragen" },
+      { n: "3", label: "Value Ecosystem", sub: "Die Module, die beide tragen" },
     ],
     netTiles: [
       { name: "Kaffetal Regal", sub: "Das Portal des Produzenten · Fincas, Lots und Arena", href: NET_URL.kaffetal },

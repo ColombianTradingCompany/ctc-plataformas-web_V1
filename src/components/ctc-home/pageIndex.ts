@@ -22,22 +22,22 @@ export type PageIndexEntry = {
 export const PAGE_INDEX: Record<Lang, PageIndexEntry[]> = {
   es: [
     { id: "hero", label: "Inicio", sub: "Casa matriz · Piedecuesta" },
-    { id: "ecosistema", label: "Las tres ofertas", sub: "Oferta · Demanda · Value Platforms" },
-    { id: "tech", label: "Value Platforms", sub: "CTC Tech · Co-Create · Directorio · Varietales" },
+    { id: "ecosistema", label: "Las tres ofertas", sub: "Oferta · Demanda · Value Ecosystem" },
+    { id: "tech", label: "Value Ecosystem", sub: "CTC Tech · Co-Create · Directorio · Varietales" },
     { id: "momento", label: "El momento del café", sub: "Olas, diáspora y terruño" },
     { id: "historia", label: "Quiénes somos", sub: "G&G · Fundadores" },
   ],
   en: [
     { id: "hero", label: "Home", sub: "Headquarters · Piedecuesta" },
-    { id: "ecosistema", label: "The three offers", sub: "Supply · Demand · Value Platforms" },
-    { id: "tech", label: "Value Platforms", sub: "CTC Tech · Co-Create · Directory · Varietals" },
+    { id: "ecosistema", label: "The three offers", sub: "Supply · Demand · Value Ecosystem" },
+    { id: "tech", label: "Value Ecosystem", sub: "CTC Tech · Co-Create · Directory · Varietals" },
     { id: "momento", label: "Coffee's moment", sub: "Waves, diaspora and terroir" },
     { id: "historia", label: "Who we are", sub: "G&G · Founders" },
   ],
   de: [
     { id: "hero", label: "Start", sub: "Stammsitz · Piedecuesta" },
-    { id: "ecosistema", label: "Die drei Angebote", sub: "Angebot · Nachfrage · Value Platforms" },
-    { id: "tech", label: "Value Platforms", sub: "CTC Tech · Co-Create · Verzeichnis · Varietäten" },
+    { id: "ecosistema", label: "Die drei Angebote", sub: "Angebot · Nachfrage · Value Ecosystem" },
+    { id: "tech", label: "Value Ecosystem", sub: "CTC Tech · Co-Create · Verzeichnis · Varietäten" },
     { id: "momento", label: "Der Moment des Kaffees", sub: "Wellen, Diaspora und Terroir" },
     { id: "historia", label: "Wer wir sind", sub: "G&G · Gründer" },
   ],

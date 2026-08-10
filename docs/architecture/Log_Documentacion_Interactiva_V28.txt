@@ -221,3 +221,25 @@ Contexto abierto al cerrar V28:
   plataformas» sino como tres ofertas, y el indice esta agrupado por ellas.
 - APP_VERSION 3.11 -> 3.12.
 (commit: 9832821)
+
+## [2026-08-10] La tercera oferta se llama «Value Ecosystem»
+- Renombre pedido por el owner: «Value Platforms» -> «Value Ecosystem». 15
+  ocurrencias en las TRES lenguas y en los tres sitios donde vivia el nombre:
+  las etiquetas de la tercera oferta (EcosystemSection), los dos menus
+  (pageIndex, etiqueta y subtitulo) y el eyebrow de ServicesSection.
+- Se cambio tambien la PROSA de los tres intros, que describia el concepto a
+  mano con el nombre viejo: «las plataformas de valor que sostienen a las dos»
+  -> «el Value Ecosystem que sostiene a las dos»; en aleman el articulo pasa a
+  neutro singular («und das Value Ecosystem, das beide tragt»). Renombrar solo
+  las etiquetas habria dejado el nombre viejo escrito en el parrafo de entrada.
+- La insignia «Modelo en desarrollo» SE QUEDA (confirmado por el owner).
+- Verificado en el navegador (ES): rail, familias del indice y eyebrow dicen
+  «Value Ecosystem», cero rastros del nombre viejo en el texto renderizado, y la
+  insignia sigue ahi. EN y DE comprobados por codigo: los tres diccionarios los
+  pinta el MISMO componente, asi que la ruta de render ya esta ejercitada.
+- GOTCHA de verificacion: el proveedor de idioma guarda la cadena CRUDA en
+  localStorage (`ctc-lang`), no JSON. Escribir '"en"' con comillas no cambia
+  nada y la pagina se queda en espanol — parece que el cambio de idioma no
+  funciona cuando lo que falla es la sonda. Clave limpiada despues.
+- APP_VERSION 3.12 -> 3.13.
+(commit: f78ee3b)

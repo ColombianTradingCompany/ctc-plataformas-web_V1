@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { registrarConsumo, usoDesdeAnthropic, USOS } from "@/lib/ai/consumo";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireGvgOwner } from "./requireGvgOwner";
 import { parseJobMhtml } from "./mhtml";
@@ -344,6 +345,9 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
       throw new Error(`Anthropic API error ${res.status}: ${errText.slice(0, 400)}`);
     }
     const json = (await res.json()) as { stop_reason?: string; content?: AnthropicBlock[] };
+    void registrarConsumo({ proveedor: "anthropic", modelo: "claude-opus-5", superficie: USOS.gvgMatch,
+      uso: usoDesdeAnthropic((json as { usage?: unknown }).usage), ok: json.stop_reason !== "refusal",
+      error: json.stop_reason === "refusal" ? "refusal" : null });
     if (json.stop_reason === "refusal") {
       throw new Error("The model declined this request (safety classifier). Try again or adjust the posting text.");
     }

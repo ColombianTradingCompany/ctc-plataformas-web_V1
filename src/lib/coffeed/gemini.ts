@@ -18,6 +18,8 @@
 // una caída al camino de texto: si esto falla, la extracción sale peor, no
 // se rompe.
 
+import { registrarConsumo, usoDesdeGemini, USOS } from "@/lib/ai/consumo";
+
 const API = "https://generativelanguage.googleapis.com/v1beta/interactions";
 const MODELO = "gemini-3.5-flash";
 const TIMEOUT_MS = 150_000;
@@ -79,6 +81,8 @@ export async function geminiVideo(opts: { videoUrl: string; system: string; user
   }
   const data = (await res.json()) as Nodo;
   const texto = textoDe(data).trim();
+  void registrarConsumo({ proveedor: "gemini", modelo: MODELO, superficie: USOS.coffeedVideo,
+    uso: usoDesdeGemini((data as { usageMetadata?: unknown }).usageMetadata) });
   if (!texto) {
     // La forma de la respuesta cambió o vino vacía. Se nombra la causa para el
     // log; la extracción caerá al camino de texto y la pieza no se pierde.

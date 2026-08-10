@@ -1,3 +1,5 @@
+import { registrarConsumo, usoDesdeGemini, USOS } from "@/lib/ai/consumo";
+
 import "server-only";
 
 // ── RT-Scriptor · fase 2: el fotograma como IMAGEN ───────────────────────────
@@ -148,6 +150,8 @@ export async function geminiImagen(opts: { prompt: string; referenciaPng?: Uint8
 
   const data = (await res.json()) as Nodo;
   const img = imagenDe(data);
+  void registrarConsumo({ proveedor: "gemini", modelo, superficie: USOS.rtScriptorImagen,
+    uso: usoDesdeGemini((data as { usageMetadata?: unknown }).usageMetadata) });
   if (!img) throw new Error("Gemini respondió sin ninguna imagen reconocible.");
   return { mime: img.mime, bytes: Buffer.from(img.b64, "base64") };
 }

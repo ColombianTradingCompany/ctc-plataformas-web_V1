@@ -18,6 +18,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { claude, parseJson, MODEL_WRITE } from "@/lib/coffeed/claude";
+import { USOS } from "@/lib/ai/consumo";
 import { SISTEMA_REDACCION, textoMemoria } from "@/lib/direccionamiento/memoria";
 
 export type ContextoScope = "record" | "assets";
@@ -73,7 +74,7 @@ export async function redactarContexto(prompt: string): Promise<string> {
   await requireActiveAdmin();
   if (!prompt || prompt.length > 60_000) throw new Error("Petición no válida.");
   const raw = await claude({
-    model: MODEL_WRITE,
+    model: MODEL_WRITE, superficie: USOS.direccionamiento,
     system: SISTEMA_REDACCION,
     user: prompt,
     maxTokens: 2000,

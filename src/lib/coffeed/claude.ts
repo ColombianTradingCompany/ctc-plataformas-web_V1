@@ -14,6 +14,8 @@ import "server-only";
 type SearchResult = { type?: string; url?: string; title?: string };
 type AnthropicBlock = { type: string; text?: string; content?: SearchResult[] };
 
+import { registrarConsumo, usoDesdeAnthropic } from "@/lib/ai/consumo";
+
 const API = "https://api.anthropic.com/v1/messages";
 export const MODEL_CHEAP = "claude-haiku-4-5-20251001";
 export const MODEL_WRITE = "claude-sonnet-5";
@@ -55,6 +57,11 @@ export type ClaudeOpts = {
    *  fácil de olvidar al subir el techo — pasó el 2026-08-05, subir de 90 a
    *  150 s puso el peor caso en 300 s, justo el límite de la función. */
   timeoutRetries?: number;
+  /** Qué parte de la plataforma está gastando, para el libro de consumo
+   *  (`lib/ai/consumo.ts`). Opcional a propósito: sin él la llamada funciona
+   *  igual y se anota como "desconocido" — anotar el gasto nunca puede ser
+   *  requisito para poder gastar. Usa las constantes de `USOS`. */
+  superficie?: string;
 };
 
 /** El texto Y las fuentes que la búsqueda web consultó.
@@ -63,6 +70,7 @@ export type ClaudeOpts = {
 export async function claudeSourced(opts: ClaudeOpts): Promise<{ text: string; sources: ClaudeSource[] }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error(NO_KEY);
+  const t0 = Date.now();
 
   // 529 (overloaded) y 429 son transitorios y frecuentes — visto en vivo el
   // 2026-07-29. Dos reintentos con espera; cualquier otro error corta ya.
@@ -93,7 +101,19 @@ export async function claudeSourced(opts: ClaudeOpts): Promise<{ text: string; s
       continue;
     }
     if (res.ok) {
-      const data = (await res.json()) as { content?: AnthropicBlock[]; stop_reason?: string };
+      const data = (await res.json()) as { content?: AnthropicBlock[]; stop_reason?: string; usage?: unknown };
+      // El gasto se anota ANTES de cualquier salida por error: una respuesta
+      // cortada por max_tokens ya se pagó entera, y si se anotara después del
+      // `throw` sería justo el gasto caro el que no quedaría registrado.
+      void registrarConsumo({
+        proveedor: "anthropic",
+        modelo: opts.model,
+        superficie: opts.superficie ?? "desconocido",
+        uso: usoDesdeAnthropic(data.usage),
+        ok: data.stop_reason !== "max_tokens",
+        error: data.stop_reason === "max_tokens" ? "cortada por max_tokens" : null,
+        duracionMs: Date.now() - t0,
+      });
       // Un JSON cortado a la mitad falla en parseJson con un error críptico de
       // posición; aquí se nombra la causa real (2026-07-30, visto en vivo con
       // las 3 propuestas y max_tokens corto).
@@ -122,6 +142,18 @@ export async function claudeSourced(opts: ClaudeOpts): Promise<{ text: string; s
     lastErr = `Claude ${res.status}: ${(await res.text()).slice(0, 300)}`;
     if (res.status !== 529 && res.status !== 429) break;
   }
+  // Una llamada que nunca llegó a responder no gastó tokens, pero SÍ gastó
+  // tiempo — y un patrón de fallos es justo lo que hay que poder ver en el
+  // tablero cuando la factura no cuadra con lo que se produjo.
+  void registrarConsumo({
+    proveedor: "anthropic",
+    modelo: opts.model,
+    superficie: opts.superficie ?? "desconocido",
+    uso: { tokens_entrada: 0, tokens_salida: 0 },
+    ok: false,
+    error: lastErr.slice(0, 300),
+    duracionMs: Date.now() - t0,
+  });
   throw new Error(lastErr);
 }
 

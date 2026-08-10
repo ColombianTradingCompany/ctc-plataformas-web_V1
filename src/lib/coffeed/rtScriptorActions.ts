@@ -25,6 +25,7 @@
 import { studioGate } from "./studioGate";
 import { coffeedServiceClient } from "./requireEcp";
 import { claude, parseJson, MODEL_WRITE } from "./claude";
+import { USOS } from "@/lib/ai/consumo";
 import { previsFrame, frameTimes, stageProps } from "./rtsPrevis";
 import { geminiImagen, geminiImagenDisponible, GeminiParaTodo } from "./geminiImage";
 import { emitEvent } from "@/lib/integraciones/emit";
@@ -574,7 +575,7 @@ REGLAS
   try {
     // Sin búsqueda web a propósito: esto se decide leyendo el texto del guion,
     // no consultando nada fuera.
-    const text = await claude({ model: MODEL_WRITE, system: SYSTEM_JSON, user, maxTokens: 1400, timeoutRetries: 0 });
+    const text = await claude({ model: MODEL_WRITE, superficie: USOS.rtScriptor, system: SYSTEM_JSON, user, maxTokens: 1400, timeoutRetries: 0 });
     const d = parseJson<{ suggestions?: RawSuggestion[] }>(text);
     raw = Array.isArray(d.suggestions) ? d.suggestions : [];
   } catch (e) {

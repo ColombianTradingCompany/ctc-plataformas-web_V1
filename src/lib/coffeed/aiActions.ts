@@ -18,6 +18,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { claude, parseJson, MODEL_CHEAP, MODEL_WRITE } from "./claude";
+import { USOS } from "@/lib/ai/consumo";
 
 const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
 
@@ -100,7 +101,7 @@ export async function validateSourceUrl(rawUrl: string): Promise<{ ok: true; ver
 
   try {
     const raw = await claude({
-      model: MODEL_WRITE,
+      model: MODEL_WRITE, superficie: USOS.coffeedBarrido,
       maxTokens: 1200,
       webSearch: 5,
       system: `Evalúas si una URL sirve como MEDIO DE CONSULTA recurrente para el feed de
@@ -313,7 +314,7 @@ Devuelve SOLO un array JSON, sin texto antes ni después:
 
       try {
         const raw = await claude({
-          model: MODEL_WRITE,
+          model: MODEL_WRITE, superficie: USOS.coffeedBarrido,
           maxTokens: 1500,
           webSearch: 3,
           timeoutMs: SWEEP_TIMEOUT_MS,
@@ -426,7 +427,7 @@ export async function runTriage(): Promise<CoffeedResult> {
 
   try {
     const raw = await claude({
-      model: MODEL_CHEAP,
+      model: MODEL_CHEAP, superficie: USOS.coffeedRedaccion,
       maxTokens: 2000,
       system: `${VOZ}
 
@@ -553,7 +554,7 @@ Devuelve SOLO un objeto JSON, sin texto antes ni después:
       }
 
       if (raw === null) raw = await claude({
-        model: MODEL_WRITE,
+        model: MODEL_WRITE, superficie: USOS.coffeedRedaccion,
         // 3000 se quedaba corto y cortaba el JSON a media cadena (visto en vivo
         // el 2026-07-30, ciclo 1). El cuerpo es un resumen denso CON las marcas
         // ⟦…|…⟧ y va escapado dentro de un string JSON, así que ocupa bastante
@@ -698,7 +699,7 @@ export async function runProposals(cycleId: string): Promise<CoffeedResult> {
 
   try {
     const raw = await claude({
-      model: MODEL_WRITE,
+      model: MODEL_WRITE, superficie: USOS.coffeedRedaccion,
       maxTokens: 6000,
       system: `${VOZ}
 ${brief ? `\n${brief}\n` : ""}
@@ -851,7 +852,7 @@ export async function createPost(cycleId: string, reeditPrompt?: string): Promis
   try {
     const notes = (prop.editor_notes as string | null) ?? "";
     const raw = await claude({
-      model: MODEL_WRITE,
+      model: MODEL_WRITE, superficie: USOS.coffeedRedaccion,
       maxTokens: 6000,
       system: `${VOZ}
 ${brief ? `\n${brief}\n` : ""}

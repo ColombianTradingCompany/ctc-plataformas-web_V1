@@ -9,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // mejoras_doc en null y BCP puede reintentar con regenerateMejoras).
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+import { registrarConsumo, usoDesdeAnthropic, USOS } from "@/lib/ai/consumo";
 const MODEL = "claude-sonnet-5";
 
 type MejorasInput = {
@@ -98,6 +99,8 @@ export async function generateMejorasDoc(service: SupabaseClient, lotId: string)
     });
     if (!res.ok) return false;
     const json = (await res.json()) as { content?: { type: string; text?: string }[] };
+    void registrarConsumo({ proveedor: "anthropic", modelo: MODEL, superficie: USOS.arenaMejoras,
+      uso: usoDesdeAnthropic((json as { usage?: unknown }).usage) });
     const text = json.content?.find((c) => c.type === "text")?.text?.trim();
     if (!text) return false;
 

@@ -156,6 +156,11 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // el pulso de la espina de integración. Va aquí porque es
           // infraestructura, no operación. Ver docs/INTEGRACIONES_PLAN.md.
           { href: "/ecp/automatizaciones", label: "Automatizaciones" },
+          // Consumo de IA (2026-08-10): lo que cuestan los modelos, en tokens y
+          // en dólares. Va aquí y no en Dirección porque es infraestructura —
+          // el hermano de Automatizaciones: aquélla dice QUÉ corre, ésta dice
+          // CUÁNTO cuesta. Ver src/lib/ai/precios.ts para las tarifas.
+          { href: "/ecp/consumo", label: "Consumo de IA" },
           { href: "/ecp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
           // "Herramientas internas" se renombró y subió al grupo de Dirección
           // (2026-08-02) — ver el comentario allá.

@@ -21,6 +21,7 @@
 import { studioGate } from "./studioGate";
 import { coffeedServiceClient } from "./requireEcp";
 import { claude, claudeSourced, parseJson, MODEL_WRITE, type ClaudeSource } from "./claude";
+import { USOS } from "@/lib/ai/consumo";
 
 export type DatawaveEpisodeRow = {
   id: string;
@@ -140,7 +141,7 @@ REGLAS
 - En points solo números — sin cadenas, sin comas de millares, sin unidades dentro del arreglo.`;
 
   try {
-    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, system: SYSTEM_JSON, user, maxTokens: 8000, webSearch: 6, timeoutMs: 240_000 });
+    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, superficie: USOS.datawave, system: SYSTEM_JSON, user, maxTokens: 8000, webSearch: 6, timeoutMs: 240_000 });
     const raw = parseJson<Record<string, unknown>>(text);
     if (!Array.isArray(raw.items) || raw.items.length < 3) {
       return { ok: false, error: "Volvió demasiado flaco para construir encima. Acota el tema, o di qué cifras usar." };
@@ -174,7 +175,7 @@ Devuelve:
 Cada viñeta bajo 22 palabras, factual, y empieza con un sustantivo concreto o una fecha — sin relleno.`;
 
   try {
-    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, system: SYSTEM_JSON, user, maxTokens: 1600, webSearch: 4 });
+    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, superficie: USOS.datawave, system: SYSTEM_JSON, user, maxTokens: 1600, webSearch: 4 });
     const d = parseJson<{ intro?: string; now?: string[]; before?: string[]; caveat?: string }>(text);
     return {
       ok: true,
@@ -206,7 +207,7 @@ Devuelve:
 Da el top 10 verdadero, en orden. Si la cifra oficial de ${input.tick} no existe, usa el año más cercano y dilo en la nota.`;
 
   try {
-    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, system: SYSTEM_JSON, user, maxTokens: 1600, webSearch: 4 });
+    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, superficie: USOS.datawave, system: SYSTEM_JSON, user, maxTokens: 1600, webSearch: 4 });
     const d = parseJson<{ rows?: { label: string; value: string }[]; note?: string }>(text);
     return { ok: true, data: { rows: Array.isArray(d.rows) ? d.rows : [], note: d.note ?? "", sources } };
   } catch (e) {
@@ -244,7 +245,7 @@ De 6 a 9 líneas. Registro hablado: llano, concreto, sin carraspeo de narrador, 
 
   try {
     // Sin búsqueda web a propósito: los giros salen de la serie, no del modelo.
-    const text = await claude({ model: MODEL_WRITE, system: SYSTEM_JSON, user, maxTokens: 1600 });
+    const text = await claude({ model: MODEL_WRITE, superficie: USOS.datawave, system: SYSTEM_JSON, user, maxTokens: 1600 });
     const d = parseJson<{
       hook?: string;
       lines?: { cue: string; say: string }[];

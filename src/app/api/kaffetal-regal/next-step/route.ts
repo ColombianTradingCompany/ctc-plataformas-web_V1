@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { registrarConsumo, usoDesdeAnthropic, USOS } from "@/lib/ai/consumo";
 import type { NextRequest } from "next/server";
 import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { stableStringify } from "@/lib/stableStringify";
@@ -82,6 +83,8 @@ Paneles de la ficha aún incompletos: ${pendingPanes.length ? pendingPanes.join(
     }
 
     const json = await res.json();
+    void registrarConsumo({ proveedor: "anthropic", modelo: "claude-sonnet-5", superficie: USOS.krAsesor,
+      uso: usoDesdeAnthropic((json as { usage?: unknown }).usage) });
     const advice: string = json.content?.[0]?.text?.trim() || "No se pudo generar una recomendación.";
 
     const service = createServiceRoleClient();

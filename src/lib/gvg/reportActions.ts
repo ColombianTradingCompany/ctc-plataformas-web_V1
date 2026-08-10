@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { registrarConsumo, usoDesdeAnthropic, USOS } from "@/lib/ai/consumo";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireGvgOwner } from "./requireGvgOwner";
 import { sanitizeStrings, type GvgApplication, type GvgEvent, type MatchResult } from "./cvData";
@@ -97,6 +98,9 @@ async function interpret(metrics: ReportMetrics, criteria: ReportCriterionId[]):
 
   if (!res.ok) throw new Error(`Anthropic API error ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const json = (await res.json()) as { stop_reason?: string; content?: AnthropicBlock[] };
+  void registrarConsumo({ proveedor: "anthropic", modelo: "claude-opus-5", superficie: USOS.gvgReporte,
+    uso: usoDesdeAnthropic((json as { usage?: unknown }).usage), ok: json.stop_reason !== "refusal",
+    error: json.stop_reason === "refusal" ? "refusal" : null });
   if (json.stop_reason === "refusal") throw new Error("The model declined to write this report.");
 
   const text = (json.content ?? [])

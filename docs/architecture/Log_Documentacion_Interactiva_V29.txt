@@ -769,4 +769,4 @@ Cambios pieza a pieza:
   logueado y la landing no se ve: abrir la barra Blue devuelve «SCA 85–86,99»
   leído de la definición, y el factor «La trazabilidad» abre su ficha.
 - APP_VERSION 3.25 -> 3.26.
-(commit: PENDIENTE)
+(commit: 76dc458)

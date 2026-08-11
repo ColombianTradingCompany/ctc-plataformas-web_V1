@@ -6,7 +6,7 @@ import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { LangProvider, useLang, type Lang } from "@/components/lang/i18n";
 import { LangBubble } from "@/components/lang/LangBubble";
 import { Header } from "./Header";
-import { Hero } from "./Hero";
+import { Hero, HeroPromesa } from "./Hero";
 import { OportunidadSection } from "./OportunidadSection";
 import { PorQueSection } from "./PorQueSection";
 import { ParticiparSection } from "./ParticiparSection";
@@ -32,10 +32,10 @@ const T: Record<Lang, Dict> = {
   es: {
     sections: [
       { id: "oportunidad", n: "01", label: "La oportunidad", sub: "En números: prima y diferencial" },
-      { id: "porque", n: "02", label: "Por qué vale la pena", sub: "El dato es suyo · la red fija su prima" },
-      { id: "participar", n: "03", label: "Cómo participar", sub: "Cinco pasos entre su lote y la Arena" },
-      { id: "arena", n: "04", label: "La Arena", sub: "Cupping en vivo y grados CTC" },
-      { id: "calendario", n: "05", label: "El calendario", sub: "Dos cosechas, dos Arenas" },
+      { id: "calendario", n: "02", label: "El calendario", sub: "Dos cosechas, dos Arenas" },
+      { id: "porque", n: "03", label: "Por qué vale la pena", sub: "El dato es suyo · la red fija su prima" },
+      { id: "participar", n: "04", label: "Cómo participar", sub: "Cinco pasos entre su lote y la Arena" },
+      { id: "arena", n: "05", label: "La Arena", sub: "Cupping en vivo y grados CTC" },
       { id: "trato", n: "06", label: "El trato", sub: "Para los galardonados, por escrito" },
       { id: "gyg", n: "07", label: "Quiénes somos", sub: "G&G · Fundadores" },
     ],
@@ -56,16 +56,16 @@ const T: Record<Lang, Dict> = {
       eyebrow: "La cadena completa, a la vista",
       head: "Del patio de secado a la bodega de exportación, ",
       em: "sin perder su nombre en el camino.",
-      caption: "Bodega · trilla y consolidación",
+      caption: "Paisaje cafetero · Santander",
     },
   },
   en: {
     sections: [
       { id: "oportunidad", n: "01", label: "The opportunity", sub: "In numbers: premium and differential" },
-      { id: "porque", n: "02", label: "Why it's worth it", sub: "The data is yours · the network sets your premium" },
-      { id: "participar", n: "03", label: "How to participate", sub: "Five steps between your lot and the Arena" },
-      { id: "arena", n: "04", label: "The Arena", sub: "Live cupping and CTC grades" },
-      { id: "calendario", n: "05", label: "The calendar", sub: "Two harvests, two Arenas" },
+      { id: "calendario", n: "02", label: "The calendar", sub: "Two harvests, two Arenas" },
+      { id: "porque", n: "03", label: "Why it's worth it", sub: "The data is yours · the network sets your premium" },
+      { id: "participar", n: "04", label: "How to participate", sub: "Five steps between your lot and the Arena" },
+      { id: "arena", n: "05", label: "The Arena", sub: "Live cupping and CTC grades" },
       { id: "trato", n: "06", label: "The deal", sub: "For the awarded, in writing" },
       { id: "gyg", n: "07", label: "Who we are", sub: "G&G · Founders" },
     ],
@@ -86,16 +86,16 @@ const T: Record<Lang, Dict> = {
       eyebrow: "The whole chain, in plain sight",
       head: "From the drying patio to the export warehouse, ",
       em: "without losing your name along the way.",
-      caption: "Warehouse · milling and consolidation",
+      caption: "Coffee landscape · Santander",
     },
   },
   de: {
     sections: [
       { id: "oportunidad", n: "01", label: "Die Chance", sub: "In Zahlen: Prämie und Differenzial" },
-      { id: "porque", n: "02", label: "Warum es sich lohnt", sub: "Die Daten gehören Ihnen · das Netzwerk setzt Ihre Prämie" },
-      { id: "participar", n: "03", label: "So nehmen Sie teil", sub: "Fünf Schritte zwischen Ihrem Lot und der Arena" },
-      { id: "arena", n: "04", label: "Die Arena", sub: "Live-Cupping und CTC-Grade" },
-      { id: "calendario", n: "05", label: "Der Kalender", sub: "Zwei Ernten, zwei Arenas" },
+      { id: "calendario", n: "02", label: "Der Kalender", sub: "Zwei Ernten, zwei Arenas" },
+      { id: "porque", n: "03", label: "Warum es sich lohnt", sub: "Die Daten gehören Ihnen · das Netzwerk setzt Ihre Prämie" },
+      { id: "participar", n: "04", label: "So nehmen Sie teil", sub: "Fünf Schritte zwischen Ihrem Lot und der Arena" },
+      { id: "arena", n: "05", label: "Die Arena", sub: "Live-Cupping und CTC-Grade" },
       { id: "trato", n: "06", label: "Der Vertrag", sub: "Für die Prämierten, schriftlich" },
       { id: "gyg", n: "07", label: "Wer wir sind", sub: "G&G · Gründer" },
     ],
@@ -116,7 +116,7 @@ const T: Record<Lang, Dict> = {
       eyebrow: "Die ganze Kette, offen sichtbar",
       head: "Vom Trockenhof bis zum Exportlager, ",
       em: "ohne unterwegs Ihren Namen zu verlieren.",
-      caption: "Lager · Schälung und Konsolidierung",
+      caption: "Kaffeelandschaft · Santander",
     },
   },
 };
@@ -127,8 +127,26 @@ function LandingInner({ onLogin }: { onLogin: () => void }) {
     <div>
       <Header onLogin={onLogin} />
       <Hero onLogin={onLogin} onGo={(id) => document.getElementById(id)?.scrollIntoView()} />
+
+      {/* El orden lo fijó el owner el 2026-08-11, y es un argumento, no una
+          lista: primero se ve la cadena entera, después lo que puede valer su
+          carga, después dónde se gana esa diferencia, y solo entonces el año en
+          que todo eso ocurre. Lo demás —cómo participar, la Arena, el trato,
+          quiénes somos— va detrás de «Por qué vale la pena», que es donde la
+          página deja de convencer y empieza a explicar. */}
+      <Band
+        image="/images/kaffetal-regal/30-hero-paisaje.jpg"
+        eyebrow={t.band2.eyebrow}
+        heading={
+          <>
+            {t.band2.head}
+            <em>{t.band2.em}</em>
+          </>
+        }
+        caption={t.band2.caption}
+      />
+
       <OportunidadSection />
-      <PorQueSection onLogin={onLogin} />
 
       <Band
         image="/images/kaffetal-regal/31-marquesinas-secado.jpg"
@@ -142,22 +160,11 @@ function LandingInner({ onLogin }: { onLogin: () => void }) {
         caption={t.band1.caption}
       />
 
+      <CalendarioSection />
+      <PorQueSection onLogin={onLogin} />
+      <HeroPromesa />
       <ParticiparSection onLogin={onLogin} />
       <ArenaSection />
-      <CalendarioSection />
-
-      <Band
-        image="/images/ctc-home/23-papa-en-cooperativa.jpg"
-        eyebrow={t.band2.eyebrow}
-        heading={
-          <>
-            {t.band2.head}
-            <em>{t.band2.em}</em>
-          </>
-        }
-        caption={t.band2.caption}
-      />
-
       <TratoSection />
       <GygSection />
       <Footer />

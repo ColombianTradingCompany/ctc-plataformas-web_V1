@@ -1,16 +1,17 @@
 "use client";
 
 import { Modal } from "@/components/Modal";
-import styles from "./InfoModal.module.css";
+import styles from "./InfoPanel.module.css";
 
-// ── CTC Home · la ventana de información compartida ──────────────────────────
-// UNA sola ventana para las tres familias de botones que se abren en la página:
-// las cuatro cualidades del hero, las puertas del índice de la red (que antes
-// eran la sección «Oferta 3» entera) y los cinco conceptos del Contexto.
+// ── La ventana de información, compartida ────────────────────────────────────
+// UNA sola ventana para todos los botones que explican algo sin sacar al lector
+// de la página: las cualidades del hero de CTC Home, las puertas del índice de
+// la red, los conceptos del Contexto y —desde el 2026-08-11— los grados de
+// calidad y los tres factores de Kaffetal Regal.
 //
-// Se hizo compartida a propósito: son tres sitios distintos con el mismo gesto
-// —clic corto, información breve, una salida— y tenerlas separadas habría
-// significado tres maquetados que se van despegando con el tiempo.
+// Vivía en `ctc-home/` y subió aquí el día que Kaffetal Regal necesitó el mismo
+// gesto: clic corto, información breve, una salida. Tener dos habría sido tener
+// dos maquetados que se despegan con el tiempo.
 
 export type InfoEntry = {
   /** Identifica la entrada abierta. No se muestra. */
@@ -38,7 +39,7 @@ export type InfoEntry = {
   wide?: boolean;
 };
 
-export function InfoModal({ entry, onClose }: { entry: InfoEntry | null; onClose: () => void }) {
+export function InfoPanel({ entry, onClose }: { entry: InfoEntry | null; onClose: () => void }) {
   return (
     <Modal
       open={!!entry}

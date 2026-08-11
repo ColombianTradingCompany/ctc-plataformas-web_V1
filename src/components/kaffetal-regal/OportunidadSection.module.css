@@ -1,17 +1,72 @@
-.opp{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:start}
-@media(max-width:880px){.opp{grid-template-columns:1fr}}
-.chart{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
-.chart h4{font-size:18px;margin-bottom:4px}
-.sub{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.7}
-.crow{display:grid;grid-template-columns:82px 1fr 118px;gap:10px;align-items:center;margin-bottom:10px}
-.cl{font-family:var(--font-spline-mono),monospace;font-size:12px;font-weight:600}
-.cbar{height:22px;border-radius:5px;background:var(--bc);min-width:8px}
+/* El gráfico ocupa el ancho entero desde el 2026-08-11: era media columna con
+   las cifras al lado, y las barras salían tan cortas que la escalera —que es
+   lo único que este bloque tiene que decir— no se veía. */
+.chart{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px}
+.chart h4{font-size:19px;margin-bottom:4px}
+.sub{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7}
+.hint{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:14px;
+}
+
+/* Cada fila es un BOTÓN: abre la ficha de ese grado. De ahí los reinicios de
+   fuente, fondo y borde — sin ellos hereda el aspecto de control del navegador. */
+.crow{
+  display:grid;grid-template-columns:96px 1fr 132px;gap:12px;align-items:center;
+  width:100%;background:none;border:none;padding:5px 6px;margin:0 0 4px;border-radius:8px;
+  font:inherit;color:inherit;text-align:left;cursor:pointer;
+  transition:background .15s,transform .15s;
+}
+.crow:hover{background:var(--paper);transform:translateX(2px)}
+.crow:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.cl{font-family:var(--font-spline-mono),monospace;font-size:12.5px;font-weight:700}
+.ctrack{position:relative;display:block;min-width:0}
+.cbar{height:30px;border-radius:6px;background:var(--bc);min-width:8px;display:block}
 .cbar.auction{background:repeating-linear-gradient(45deg,var(--bc),var(--bc) 6px,#8A2456 6px,#8A2456 12px)}
+/* El rango SCA va DENTRO de la barra, en crema: es el dato que convierte una
+   escalera de precios en una escalera de calidad, y fuera de la barra habría
+   necesitado una cuarta columna que no cabe en un teléfono. */
+.csca{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.04em;
+  color:#F4EFE1;opacity:.92;pointer-events:none;white-space:nowrap;
+}
 .cv{font-family:var(--font-spline-mono),monospace;font-size:11.5px;text-align:right;color:var(--ink);font-weight:600}
-.cbase{border-top:1px dashed var(--line);margin:12px 0 8px;padding-top:8px;font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);line-height:1.7}
-.stats{display:grid;gap:14px}
-.stat{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:var(--radius);padding:20px}
-.n{font-family:var(--font-fraunces),serif;font-weight:800;font-size:32px;color:var(--primary-deep)}
-.stat p{font-size:14px;color:var(--muted);margin-top:4px;max-width:48ch}
+.cbase{border-top:1px dashed var(--line);margin:14px 0 4px;padding-top:9px;font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);line-height:1.7}
+
+@media(max-width:640px){
+  .chart{padding:20px 16px}
+  .crow{grid-template-columns:74px 1fr 92px;gap:8px}
+  .cl{font-size:11px}
+  .csca{font-size:9.5px;left:8px}
+  .cv{font-size:10.5px}
+}
+
+/* ── ¿De qué depende? ─────────────────────────────────────────────────────── */
+.depende{margin-top:34px;text-align:center}
+.depende h3{font-size:clamp(24px,3vw,32px);color:var(--primary-deep)}
+.dependeSub{font-size:16px;color:var(--muted);margin-top:8px;max-width:62ch;margin-inline:auto}
+.depende .hint{margin-top:12px;margin-bottom:0}
+
+.factors{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px}
+.factor{
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  background:none;border:1px solid transparent;border-radius:var(--radius);padding:18px 12px;
+  font-family:var(--font-spline-mono),monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;transition:border-color .15s,background .15s,color .15s,transform .15s;
+}
+.factor svg{width:56px;height:60px;fill:none;stroke:var(--fc);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.factor:hover{border-color:var(--line);background:var(--card);color:var(--ink);transform:translateY(-2px)}
+.factor:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media(max-width:640px){.factors{grid-template-columns:1fr;gap:6px}.factor{flex-direction:row;justify-content:flex-start;gap:16px}.factor svg{width:40px;height:44px}}
+
+/* ── Las cuatro cifras ────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
+@media(max-width:980px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:var(--radius);padding:18px}
+.n{font-family:var(--font-fraunces),serif;font-weight:800;font-size:30px;color:var(--primary-deep)}
+.stat p{font-size:13.5px;color:var(--muted);margin-top:4px}
+
 .tag3{display:inline-flex;gap:6px;margin-top:14px;flex-wrap:wrap}
 .tag3 span{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:4px 10px}

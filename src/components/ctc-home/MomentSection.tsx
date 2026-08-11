@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
-import { InfoModal, type InfoEntry } from "./InfoModal";
+import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
 import styles from "./MomentSection.module.css";
 
 // ── Contexto · por qué ahora (reescrito 2026-08-11) ──────────────────────────
@@ -534,7 +534,7 @@ export function MomentSection() {
           })}
         </div>
 
-        <InfoModal entry={open} onClose={() => setOpen(null)} />
+        <InfoPanel entry={open} onClose={() => setOpen(null)} />
       </div>
     </section>
   );

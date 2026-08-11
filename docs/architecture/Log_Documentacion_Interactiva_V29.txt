@@ -707,3 +707,66 @@ Tres decisiones que no estaban en la maqueta pero que se seguían de ella:
   pega al borde de la pantalla.
 - APP_VERSION 3.24 -> 3.25.
 (commit: 1acf44f)
+
+
+## [2026-08-11 · decimoquinta pasada] Kaffetal Regal, reordenada y didáctica
+
+Segunda tanda del repaso de Kaffetal Regal. El owner mandó una maqueta con la
+página ya montada en el orden que quiere, y ese orden es un ARGUMENTO, no una
+lista:
+
+    portada → «La cadena completa, a la vista» → La oportunidad →
+    «Donde se gana la prima» → Dos cosechas → Por qué vale la pena → el resto
+
+Primero se ve la cadena entera, después lo que puede valer su carga, después
+dónde se gana esa diferencia, y solo entonces el año en que todo eso ocurre.
+Detrás de «Por qué vale la pena» va lo que explica en vez de convencer: la
+promesa, cómo participar, la Arena, el trato y quiénes somos. El índice flotante
+se renumeró solo con el orden nuevo (01 oportunidad · 02 calendario · 03 porqué…).
+
+Cambios pieza a pieza:
+
+- LA FRANJA «La cadena completa» cambia su foto de bodega por el PAISAJE
+  CAFETERO —la que se quedó sin sitio cuando la portada pasó a ser el bucle— y
+  con ella su pie de foto, que seguía diciendo «bodega · trilla y consolidación».
+- LA PROMESA SALE DE LA PORTADA. El bloque que bajé ayer al pie del hero
+  («Su cosecha puede ser la mejor taza…» + el párrafo + el camino del café + lo
+  que hace CTC) se separó en un componente propio, `HeroPromesa`, y bajó detrás
+  de «Por qué vale la pena». Sigue en `Hero.tsx` a propósito: comparte el
+  diccionario de tres lenguas con la portada, y partirlo en dos archivos era
+  duplicar rótulos para nada.
+- LA OPORTUNIDAD se vuelve didáctica. Fuera el párrafo de entrada; el gráfico
+  pasa a ocupar el ancho entero (era media columna, y las barras salían tan
+  cortas que la escalera —lo único que ese bloque tiene que decir— no se veía);
+  cada barra es ahora un BOTÓN que abre la ficha de su grado, y dentro de cada
+  barra se lee su rango SCA. Las cuatro cifras pasaron de columna lateral a
+  rejilla de cuatro debajo.
+- LOS RANGOS SCA NO SE ESCRIBIERON A MANO: salen de `lib/grados/definicion`, que
+  es LA definición de la casa. El día que se mueva un umbral, esta página se
+  entera sola. Lo que sí vive en el componente es la prosa, porque es distinta en
+  cada superficie y va en tres lenguas.
+- BLOQUE NUEVO «¿De qué depende?», con las tres figuras de ctcexport.com
+  —terruño, trazabilidad, perfil, que son tres de los cinco conceptos del
+  Contexto de la casa matriz— expandidas a ficha propia y contadas en voz de
+  productor: allá cuentan el mercado, aquí cuentan lo que él sí decide. Lo
+  encabeza la segunda mitad del párrafo que se retiró; la primera mitad («el café
+  corriente se paga al precio del día») es ahora la ficha de la barra
+  «Corriente». El párrafo no se perdió: se repartió donde cada mitad se entiende.
+- LA VENTANITA DE INFORMACIÓN SUBE A COMPARTIDA. `ctc-home/InfoModal` pasa a
+  `components/InfoPanel` y se renombra: la usaban las cualidades del hero, las
+  puertas de la red y los conceptos del Contexto, y ahora también los grados y
+  los factores de Kaffetal Regal. Se renombró para no chocar con el `InfoModal`
+  de Kaffetal Regal, que es otra cosa (el formulario de información general).
+
+- Para el próximo Version Wrap: el orden de la landing de KR cambia entero;
+  `TopBanner` ya no existe y `HeroPromesa` sí; `ctc-home/InfoModal` se mueve a
+  `components/InfoPanel` (FILETREE + las tres referencias de ctc-home); la
+  sección Oportunidad pasa a citar `lib/grados/definicion` — es un consumidor
+  nuevo de la fuente única de grados.
+- Verificación: tsc, eslint y `next build` limpios. Orden comprobado en el HTML
+  servido (los siete `id` en secuencia). Los paneles se probaron en una ruta
+  desechable (`/lab/opp`, ya borrada) porque el navegador de la sesión está
+  logueado y la landing no se ve: abrir la barra Blue devuelve «SCA 85–86,99»
+  leído de la definición, y el factor «La trazabilidad» abre su ficha.
+- APP_VERSION 3.25 -> 3.26.
+(commit: PENDIENTE)

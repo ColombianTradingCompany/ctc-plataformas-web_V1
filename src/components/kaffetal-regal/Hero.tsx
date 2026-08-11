@@ -184,12 +184,6 @@ const T: Record<Lang, Dict> = {
 
 export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string) => void }) {
   const t = T[useLang()];
-  const PIPE_ICONS = [
-    <svg key="1" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z" /><path d="M15 3v4h4" /><path d="M10 12h6M10 16h6" /></svg>,
-    <svg key="2" viewBox="0 0 24 24"><path d="M5 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" /><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2" /><path d="M8 4c0 1-1 1.5 0 3M12 4c0 1-1 1.5 0 3" /></svg>,
-    <svg key="3" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.5" /><path d="M9.5 9l1.8 1.8L14.8 7.4" /><path d="M9 13.5 7.5 21l4.5-2.4L16.5 21 15 13.5" /></svg>,
-    <svg key="4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c3 2.6 3 14.4 0 17-3-2.6-3-14.4 0-17z" /></svg>,
-  ];
 
   return (
     <>
@@ -259,12 +253,30 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
           </div>
         </div>
       </section>
+    </>
+  );
+}
 
-      <section className={styles.after}>
+// ── La promesa · lo que Kaffetal Regal es, por escrito ───────────────────────
+// Vivía dentro de la portada y sale de ella el 2026-08-11: el owner puso el
+// separador «La cadena completa» pegado al primer vistazo, así que esto bajó
+// con el resto de lo que explica, detrás de «Por qué vale la pena».
+//
+// Sigue en ESTE archivo y no en uno propio porque comparte el diccionario `T`
+// con la portada — la promesa es literalmente la frase que la portada dejó de
+// decir, y separarlas en dos archivos era duplicar tres lenguas para nada.
+export function HeroPromesa() {
+  const t = T[useLang()];
+  const PIPE_ICONS = [
+    <svg key="1" viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z" /><path d="M15 3v4h4" /><path d="M10 12h6M10 16h6" /></svg>,
+    <svg key="2" viewBox="0 0 24 24"><path d="M5 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z" /><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2" /><path d="M8 4c0 1-1 1.5 0 3M12 4c0 1-1 1.5 0 3" /></svg>,
+    <svg key="3" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.5" /><path d="M9.5 9l1.8 1.8L14.8 7.4" /><path d="M9 13.5 7.5 21l4.5-2.4L16.5 21 15 13.5" /></svg>,
+    <svg key="4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c3 2.6 3 14.4 0 17-3-2.6-3-14.4 0-17z" /></svg>,
+  ];
+
+  return (
+    <section className={styles.after}>
         <div className="wrap">
-          {/* La promesa y el párrafo que explicaban Kaffetal Regal vivían en la
-              portada. Bajaron aquí enteros: la portada quedó para mirar, esto
-              es para leer. */}
           <h2 className={styles.introHead}>
             {t.introHead}
             <em>{t.introEm}</em>
@@ -317,7 +329,6 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
             </div>
           </div>
         </div>
-      </section>
-    </>
+    </section>
   );
 }

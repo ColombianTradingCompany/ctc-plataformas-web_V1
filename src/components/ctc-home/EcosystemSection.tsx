@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { SERVICES_COPY } from "@/components/services/servicesCopy";
-import { InfoModal, type InfoEntry } from "./InfoModal";
+import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
 import { NetNewsletter } from "./NetNewsletter";
 import styles from "./EcosystemSection.module.css";
 
@@ -672,7 +672,7 @@ export function EcosystemSection() {
         <NetNewsletter />
       </div>
 
-      <InfoModal entry={open} onClose={() => setOpen(null)} />
+      <InfoPanel entry={open} onClose={() => setOpen(null)} />
     </section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
-import { InfoModal, type InfoEntry } from "./InfoModal";
+import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
 import { MarketTicker } from "./MarketTicker";
 import styles from "./Hero.module.css";
 
@@ -374,7 +374,7 @@ export function Hero() {
 
       <MarketTicker />
 
-      <InfoModal entry={open} onClose={() => setOpen(null)} />
+      <InfoPanel entry={open} onClose={() => setOpen(null)} />
     </section>
   );
 }

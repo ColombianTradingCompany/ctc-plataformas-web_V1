@@ -434,4 +434,4 @@ atenuado funcionaba desde el principio. Se confirmó fotografiando el componente
 aislado en una ruta desechable con Chrome headless. Ver la memoria del panel.
 
 APP_VERSION 3.18 -> 3.19.
-(commit: pending)
+(commit: dd36ad9)

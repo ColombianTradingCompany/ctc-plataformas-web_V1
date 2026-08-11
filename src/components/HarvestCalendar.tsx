@@ -22,6 +22,7 @@ export type CalCss =
   | "cbHarvest"
   | "cbArena"
   | "cbSamples"
+  | "cbBlack"
   | "cbPack"
   | "cbLiq"
   | "cbShip"
@@ -32,6 +33,10 @@ export type CalSegment = {
   start: number; // grid column start (1-13)
   end: number; // grid column end (1-13)
   text: string;
+  /** La etapa no empieza de golpe: su primer mes se solapa con la anterior. El
+   *  borde izquierdo se difumina en vez de cortar, que es la única forma
+   *  honesta de dibujar «empieza despacio» en una rejilla de meses enteros. */
+  ramp?: boolean;
 };
 
 export type CalBlock = {
@@ -68,43 +73,57 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
       lead: "Recolección selectiva y separación del lote. Aquí se gana o se pierde la taza.",
       points: [
         "Solo cereza madura: la recolección selectiva es la diferencia entre un lote de especialidad y una carga corriente.",
+        "Cuadrillas de recolectores que pasan varias veces por el mismo cafeto, no una sola.",
         "El lote se separa y se documenta — variedad, proceso, secado — en la ficha técnica.",
-        "Terratalento conecta a las fincas con recolectores para estas semanas.",
+        "El pergamino se guarda BIEN desde el primer día: bodega fresca, seca, ventilada y sin olores. Un buen lote se pierde en la bodega de la finca más veces que en el patio.",
       ],
     },
     cbArena: {
-      title: "Cupping Arena",
+      title: "Muestreo & Arena",
       when: "Una por cosecha: dos al año",
-      lead: "La taza habla a ciegas. Un panel de Q-Graders invitados califica sin saber de quién es cada muestra.",
+      lead: "El momento de mandar la muestra. Aquí el productor envía sus 2 kg de pergamino y la taza habla a ciegas.",
       points: [
-        "Se cata a ciegas: compite el café, no el nombre ni el tamaño de la finca.",
+        "Cada lote inscrito manda a CTC una muestra de 2 kg de pergamino seco — sin ella no hay Arena.",
+        "Se cata a ciegas ante Q-Graders invitados: compite el café, no el nombre ni el tamaño de la finca.",
         "De ahí sale el grado —Black, Red, Blue, Gold o Tyrian— y con él la prima.",
         "Todo participante recibe su acta y la retroalimentación del panel, gane o no.",
       ],
     },
     cbSamples: {
-      title: "Muestras y preorden",
-      when: "Justo después de cada Arena",
-      lead: "Las muestras viajan a Europa y el catálogo abre para reservar antes de que el café embarque.",
+      title: "Sample Pack, preorden y contratos",
+      when: "La ventana que sigue a cada Arena",
+      lead: "La ventana en la que CTC ofrece activamente los grados de especialidad —no el Black— para preordenar en destino a precio fijo.",
       points: [
-        "Los tostadores catan la muestra antes de comprometerse.",
-        "La preorden por grados se asegura con un 30% de prepago reembolsable.",
-        "Es lo que permite que el café salga ya vendido y no a buscar comprador.",
+        "El Sample Pack viaja a destino: el tostador cata antes de comprometerse a nada.",
+        "Durante la ventana el precio es FIJO: lo que se preordena queda a ese precio, no al del día en que llegue.",
+        "La preorden se cierra con el contrato de cantidades congeladas y liberadas: lo congelado queda reservado para ese comprador y se libera según la escalera pactada.",
+        "Mientras tanto el café espera EN LA FINCA. El almacenamiento corre por cuenta del productor y tiene condiciones y estándares que CTC especifica: humedad, empaque, bodega y control periódico.",
+      ],
+    },
+    cbBlack: {
+      title: "Compras de Black",
+      when: "Justo al cerrar las jornadas de la Arena",
+      lead: "Cerrada la Arena, se abre la compra del grado Black: el volumen con respaldo, por la vía directa.",
+      points: [
+        "Arranca cuando terminan las jornadas, con los lotes ya calificados sobre la mesa.",
+        "El Black no va por preorden ni por ventana de precio fijo: se negocia y se compra.",
+        "Alimenta el inventario que Cherry Picked Green tiene disponible toda la temporada.",
       ],
     },
     cbPack: {
-      title: "Acopio, trilla, empaque y consolidación",
-      when: "Aproximadamente un mes, después de cada cosecha",
-      lead: "El paso de pergamino a café verde listo para cruzar el Atlántico.",
+      title: "Acopio, proceso y empaque",
+      when: "Dos meses, empezando dentro del último mes de cosecha",
+      lead: "El paso de pergamino a café verde listo para cruzar el Atlántico. No arranca de golpe: se solapa con el final de la recolección.",
       points: [
-        "Acopio del lote, trilla y empaque con la identidad del lote intacta.",
-        "Consolidación del contenedor: varios lotes viajan juntos sin mezclarse.",
+        "Empieza despacio, mientras todavía se cosecha, y toma ritmo cuando el patio se vacía.",
+        "Acopio del lote, trilla, empaque y consolidación del contenedor con la identidad del lote intacta.",
+        "Varios lotes viajan juntos sin mezclarse: cada uno mantiene su código y su ficha.",
         "CTC presenta aquí la declaración EUDR; su referencia acompaña al despacho.",
       ],
     },
     cbShip: {
       title: "Embarque marítimo",
-      when: "Una vez por cosecha",
+      when: "Una vez por cosecha: julio y marzo",
       lead: "El contenedor sale hacia Ámsterdam, que es donde vive el inventario europeo.",
       points: [
         "Tránsito atlántico, nacionalización y entrada a bodega.",
@@ -113,21 +132,21 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
     },
     cbSeason: {
       title: "Entrega y venta spot",
-      when: "Dos temporadas de cinco meses: marzo–julio y agosto–diciembre",
-      lead: "El café ya está en Europa y se despacha contra pedido, por fracciones.",
+      when: "Dos temporadas que cubren el año entero: abril–julio y agosto–marzo",
+      lead: "El café ya está en destino y se despacha contra pedido, por fracciones.",
       points: [
-        "La preorden se entrega y lo que queda se vende spot desde bodega.",
+        "Se entrega lo preordenado y lo que queda se vende spot desde bodega.",
+        "Las dos temporadas se tocan: no hay un mes del año sin café de CTC disponible en destino.",
         "Última milla por zonas concéntricas, con tarifa fija por kilo.",
-        "Dos temporadas al año significan dos oportunidades de cobrar prima, no una.",
       ],
     },
     cbLiq: {
       title: "Liquidación",
-      when: "Enero y febrero",
-      lead: "Se cierran cuentas del año: lo entregado, lo vendido y lo que corresponde a cada quien.",
+      when: "Marzo, al cerrar la temporada larga",
+      lead: "Se cierran cuentas: lo entregado, lo vendido y lo que corresponde a cada quien.",
       points: [
         "Cuentas y pagos de la temporada que termina.",
-        "Es la ventana tranquila del año: ni cosecha ni Arena, y se planifica la siguiente.",
+        "Cae junto al cierre de la temporada de agosto a marzo, no en un hueco muerto del año.",
       ],
     },
   },
@@ -143,48 +162,62 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
       ],
     },
     cbHarvest: {
-      title: "Harvest and selection",
+      title: "Harvest and scrutiny",
       when: "The bulk of each of the two harvests",
       lead: "Selective picking and lot separation. The cup is won or lost here.",
       points: [
         "Ripe cherry only: selective picking is the difference between a specialty lot and an ordinary load.",
+        "Picking crews that pass over the same tree several times, not once.",
         "The lot is kept apart and documented — variety, process, drying — in the technical datasheet.",
-        "Terratalento connects farms with pickers for these weeks.",
+        "The parchment is stored properly from day one: a cool, dry, ventilated store with no odours. More good lots are lost in the farm's own store than on the drying patio.",
       ],
     },
     cbArena: {
-      title: "Cupping Arena",
+      title: "Sampling & Arena",
       when: "One per harvest: twice a year",
-      lead: "The cup speaks blind. A panel of guest Q-Graders scores without knowing whose sample is whose.",
+      lead: "Time to send the sample. The grower ships their 2 kg of parchment and the cup speaks blind.",
       points: [
-        "Cupped blind: the coffee competes, not the name or the size of the farm.",
+        "Every admitted lot sends CTC a 2 kg sample of dry parchment — without it there is no Arena.",
+        "Cupped blind before guest Q-Graders: the coffee competes, not the name or the size of the farm.",
         "The grade comes out of it — Black, Red, Blue, Gold or Tyrian — and the premium with it.",
         "Every participant gets their record and the panel's feedback, win or not.",
       ],
     },
     cbSamples: {
-      title: "Samples and preorder",
-      when: "Right after each Arena",
-      lead: "Samples travel to Europe and the catalogue opens for booking before the coffee ships.",
+      title: "Sample Pack, preorder and contracts",
+      when: "The window that follows each Arena",
+      lead: "The window in which CTC actively offers the specialty grades — not Black — for preorder at destination at a fixed price.",
       points: [
-        "Roasters cup the sample before committing.",
-        "Preorder by grade is secured with a 30% refundable prepayment.",
-        "It is what lets the coffee leave already sold instead of looking for a buyer.",
+        "The Sample Pack travels to destination: the roaster cups before committing to anything.",
+        "Through the window the price is FIXED: what is preordered stays at that price, not the price of the day it lands.",
+        "The preorder closes with the frozen-and-released quantities contract: what is frozen is reserved for that buyer and released along the agreed ladder.",
+        "Meanwhile the coffee waits ON THE FARM. Storage is the producer's responsibility and comes with conditions and standards CTC specifies: moisture, packaging, warehouse and periodic checks.",
+      ],
+    },
+    cbBlack: {
+      title: "Black purchasing",
+      when: "Right as the Arena sessions close",
+      lead: "With the Arena closed, buying opens for the Black grade: backed volume, bought directly.",
+      points: [
+        "It starts when the sessions end, with the graded lots already on the table.",
+        "Black does not go through preorder or a fixed-price window: it is negotiated and bought.",
+        "It feeds the inventory Cherry Picked Green keeps available all season long.",
       ],
     },
     cbPack: {
-      title: "Collection, milling, packing and consolidation",
-      when: "About a month, after each harvest",
-      lead: "From parchment to green coffee ready to cross the Atlantic.",
+      title: "Collection, processing and packing",
+      when: "Two months, starting inside the last month of the harvest",
+      lead: "From parchment to green coffee ready to cross the Atlantic. It does not start all at once: it overlaps the end of picking.",
       points: [
-        "Lot collection, milling and packing with the lot's identity intact.",
-        "Container consolidation: several lots travel together without being blended.",
+        "It begins slowly, while picking is still going on, and picks up pace as the patio empties.",
+        "Collection, milling, packing and container consolidation with the lot's identity intact.",
+        "Several lots travel together without being blended: each keeps its code and its datasheet.",
         "CTC files the EUDR statement here; its reference travels with the shipment.",
       ],
     },
     cbShip: {
-      title: "Ocean shipping",
-      when: "Once per harvest",
+      title: "Sea shipping",
+      when: "Once per harvest: July and March",
       lead: "The container leaves for Amsterdam, where the European inventory lives.",
       points: [
         "Atlantic transit, customs clearance and entry into the warehouse.",
@@ -193,21 +226,21 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
     },
     cbSeason: {
       title: "Delivery and spot sales",
-      when: "Two five-month seasons: March–July and August–December",
-      lead: "The coffee is already in Europe and ships against orders, in fractions.",
+      when: "Two seasons covering the whole year: April–July and August–March",
+      lead: "The coffee is already at destination and ships against orders, in fractions.",
       points: [
         "Preorders are delivered and what remains sells spot from the warehouse.",
+        "The two seasons touch: there is no month of the year without CTC coffee available at destination.",
         "Last mile by concentric zones, at a flat rate per kilo.",
-        "Two seasons a year means two chances to earn a premium, not one.",
       ],
     },
     cbLiq: {
       title: "Settlement",
-      when: "January and February",
-      lead: "The year's accounts close: what was delivered, what was sold, and what each party is owed.",
+      when: "March, as the long season closes",
+      lead: "Accounts close: what was delivered, what was sold, and what each party is owed.",
       points: [
         "Accounts and payments for the season that ends.",
-        "It is the quiet window of the year: no harvest, no Arena, and the next one gets planned.",
+        "It falls with the close of the August-to-March season, not in a dead gap of the year.",
       ],
     },
   },
@@ -228,43 +261,57 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
       lead: "Selektives Pflücken und Trennung des Lots. Hier wird die Tasse gewonnen oder verloren.",
       points: [
         "Nur reife Kirsche: selektives Pflücken ist der Unterschied zwischen Spezialität und gewöhnlicher Ladung.",
+        "Pflückertrupps, die denselben Baum mehrmals abgehen, nicht nur einmal.",
         "Das Lot wird getrennt gehalten und dokumentiert — Varietät, Prozess, Trocknung — im Datenblatt.",
-        "Terratalento verbindet Fincas und Pflücker für diese Wochen.",
+        "Der Pergamino wird von Tag eins richtig gelagert: kühles, trockenes, belüftetes Lager ohne Fremdgerüche. Mehr gute Lots gehen im Lager der Finca verloren als auf dem Trockenhof.",
       ],
     },
     cbArena: {
-      title: "Cupping Arena",
+      title: "Musterung & Arena",
       when: "Eine pro Ernte: zweimal im Jahr",
-      lead: "Die Tasse spricht blind. Ein Panel eingeladener Q-Grader bewertet, ohne zu wissen, wessen Muster es ist.",
+      lead: "Der Moment, das Muster zu schicken. Der Produzent sendet seine 2 kg Pergamino, und die Tasse spricht blind.",
       points: [
-        "Blind verkostet: es tritt der Kaffee an, nicht der Name oder die Größe der Finca.",
+        "Jedes zugelassene Lot schickt CTC ein 2-kg-Muster trockenen Pergaminos — ohne das keine Arena.",
+        "Blind verkostet vor eingeladenen Q-Gradern: es tritt der Kaffee an, nicht der Name oder die Größe der Finca.",
         "Daraus entsteht der Grad — Black, Red, Blue, Gold oder Tyrian — und mit ihm die Prämie.",
         "Jeder Teilnehmer erhält sein Protokoll und das Feedback des Panels, ob er gewinnt oder nicht.",
       ],
     },
     cbSamples: {
-      title: "Muster und Vorbestellung",
-      when: "Direkt nach jeder Arena",
-      lead: "Die Muster reisen nach Europa und der Katalog öffnet zur Reservierung, bevor der Kaffee verschifft wird.",
+      title: "Sample Pack, Vorbestellung und Verträge",
+      when: "Das Fenster nach jeder Arena",
+      lead: "Das Fenster, in dem CTC die Spezialitätsgrade — nicht Black — aktiv zur Vorbestellung am Zielort zu festem Preis anbietet.",
       points: [
-        "Röster verkosten das Muster, bevor sie sich festlegen.",
-        "Die Vorbestellung nach Graden wird mit 30 % erstattbarer Anzahlung gesichert.",
-        "Deshalb kann der Kaffee bereits verkauft ablegen, statt einen Käufer zu suchen.",
+        "Das Sample Pack reist ans Ziel: der Röster verkostet, bevor er sich zu irgendetwas verpflichtet.",
+        "Im Fenster ist der Preis FEST: was vorbestellt wird, bleibt zu diesem Preis, nicht zum Preis des Ankunftstags.",
+        "Die Vorbestellung wird mit dem Vertrag über eingefrorene und freigegebene Mengen geschlossen: das Eingefrorene ist für diesen Käufer reserviert und wird nach der vereinbarten Treppe freigegeben.",
+        "Währenddessen wartet der Kaffee AUF DER FINCA. Die Lagerung liegt beim Produzenten und hat Bedingungen und Standards, die CTC vorgibt: Feuchte, Verpackung, Lager und regelmäßige Kontrolle.",
+      ],
+    },
+    cbBlack: {
+      title: "Black-Einkauf",
+      when: "Direkt zum Abschluss der Arena-Tage",
+      lead: "Mit dem Ende der Arena öffnet der Einkauf des Black-Grades: abgesichertes Volumen, auf direktem Weg.",
+      points: [
+        "Er beginnt, wenn die Sitzungen enden, mit den bereits bewerteten Lots auf dem Tisch.",
+        "Black läuft nicht über Vorbestellung oder ein Festpreisfenster: es wird verhandelt und gekauft.",
+        "Er speist den Bestand, den Cherry Picked Green die ganze Saison über verfügbar hält.",
       ],
     },
     cbPack: {
-      title: "Sammlung, Schälung, Verpackung und Konsolidierung",
-      when: "Etwa ein Monat, nach jeder Ernte",
-      lead: "Von Pergamino zu Rohkaffee, bereit für den Atlantik.",
+      title: "Sammlung, Verarbeitung und Verpackung",
+      when: "Zwei Monate, beginnend im letzten Erntemonat",
+      lead: "Von Pergamino zu Rohkaffee, bereit für den Atlantik. Es beginnt nicht abrupt: es überlappt das Ende der Ernte.",
       points: [
-        "Sammlung, Schälung und Verpackung, mit unversehrter Identität des Lots.",
-        "Containerkonsolidierung: mehrere Lots reisen zusammen, ohne vermischt zu werden.",
+        "Es fängt langsam an, während noch gepflückt wird, und nimmt Fahrt auf, wenn sich der Trockenhof leert.",
+        "Sammlung, Schälung, Verpackung und Containerkonsolidierung mit unversehrter Identität des Lots.",
+        "Mehrere Lots reisen zusammen, ohne vermischt zu werden: jedes behält seinen Code und sein Datenblatt.",
         "CTC reicht hier die EUDR-Erklärung ein; ihre Referenz begleitet die Lieferung.",
       ],
     },
     cbShip: {
       title: "Seeverschiffung",
-      when: "Einmal pro Ernte",
+      when: "Einmal pro Ernte: Juli und März",
       lead: "Der Container fährt nach Amsterdam, wo das europäische Lager liegt.",
       points: [
         "Atlantiküberquerung, Verzollung und Einlagerung.",
@@ -273,21 +320,21 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
     },
     cbSeason: {
       title: "Lieferung und Spotverkauf",
-      when: "Zwei Saisons zu fünf Monaten: März–Juli und August–Dezember",
-      lead: "Der Kaffee ist bereits in Europa und wird auf Bestellung in Fraktionen ausgeliefert.",
+      when: "Zwei Saisons, die das ganze Jahr abdecken: April–Juli und August–März",
+      lead: "Der Kaffee ist bereits am Zielort und wird auf Bestellung in Fraktionen ausgeliefert.",
       points: [
-        "Vorbestellungen werden geliefert, der Rest wird ab Lager spot verkauft.",
+        "Vorbestelltes wird geliefert, der Rest wird ab Lager spot verkauft.",
+        "Die beiden Saisons berühren sich: es gibt keinen Monat ohne verfügbaren CTC-Kaffee am Zielort.",
         "Letzte Meile nach konzentrischen Zonen, zum Festpreis pro Kilo.",
-        "Zwei Saisons im Jahr heißt zwei Gelegenheiten für eine Prämie, nicht eine.",
       ],
     },
     cbLiq: {
       title: "Abrechnung",
-      when: "Januar und Februar",
-      lead: "Die Jahresrechnung wird geschlossen: was geliefert, was verkauft und wem was zusteht.",
+      when: "März, zum Abschluss der langen Saison",
+      lead: "Die Rechnung wird geschlossen: was geliefert, was verkauft und wem was zusteht.",
       points: [
         "Abrechnung und Zahlungen der endenden Saison.",
-        "Das ruhige Fenster des Jahres: keine Ernte, keine Arena — die nächste wird geplant.",
+        "Sie fällt mit dem Ende der Saison von August bis März zusammen, nicht in eine tote Lücke des Jahres.",
       ],
     },
   },
@@ -358,7 +405,7 @@ export function HarvestCalendar({
                       // El estado se pinta con UNA clase por barra en vez de un
                       // `.calFocused .calBar` desde el contenedor: es una regla
                       // menos que leer y no depende de la estructura del árbol.
-                      className={`${styles.calBar} ${styles[seg.css]} ${
+                      className={`${styles.calBar} ${styles[seg.css]} ${seg.ramp ? styles.barRamp : ""} ${
                         sel ? (sel === seg.css ? styles.barOn : styles.barOff) : ""
                       }`}
                       style={{ gridColumn: `${seg.start}/${seg.end}` }}

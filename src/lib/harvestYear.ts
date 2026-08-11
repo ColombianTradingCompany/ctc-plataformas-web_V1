@@ -1,211 +1,243 @@
 // ── El año del café, en datos ────────────────────────────────────────────────
 // Extraído de `CalendarioSection` el 2026-08-11, cuando CTC Home pasó a enseñar
-// el mismo calendario dentro de la ventana de «Catálogo de dos cosechas
-// anuales». Vivía dentro del componente de Kaffetal Regal y allí no lo podía
-// leer nadie más.
+// el mismo calendario. Es la mirada del PRODUCTOR —el año visto desde el
+// cafetal— y por eso la comparten Kaffetal Regal y CTC Home. Cherry Picked
+// mantiene su propia versión en `components/cherry-picked/CosechaSection`: al
+// tostador el mismo año se le cuenta desde la bodega de Ámsterdam.
 //
-// Es la mirada del PRODUCTOR —el año visto desde el cafetal— y por eso la
-// comparten Kaffetal Regal y CTC Home. Cherry Picked mantiene su propia versión
-// en `components/cherry-picked/CosechaSection`: al tostador el mismo año se le
-// cuenta desde la bodega de Ámsterdam, no desde la finca.
+// LA GEOMETRÍA VIVE UNA SOLA VEZ (`buildBlocks`) y las tres lenguas solo ponen
+// rótulos. Antes estaba escrita tres veces y un cambio de fechas obligaba a
+// tocar los mismos números en tres sitios — con la reestructuración de columnas
+// del owner (2026-08-11) eso era un error garantizado.
+//
+// Columnas: 1..13, donde 1 = enero y el final es EXCLUSIVO (start 3, end 6 =
+// marzo, abril y mayo).
 
 import type { CalBlock, CalLegendItem } from "@/components/HarvestCalendar";
 import type { Lang } from "@/components/lang/i18n";
 
+export type YearLabels = {
+  bMitaca: string;
+  bS2: string;
+  bMain: string;
+  bS1: string;
+  admision: string;
+  harvest: string;
+  arena: string;
+  samples: string;
+  black: string;
+  pack: string;
+  ship: string;
+  seasonS2: string;
+  seasonS2Tail: string;
+  seasonS1: string;
+  liq: string;
+};
+
+// El calendario, tal como quedó tras la revisión del owner del 2026-08-11:
+//
+//  · El acopio dura DOS meses y arranca ya dentro del último mes de cosecha —
+//    de ahí el `ramp`, que difumina su borde izquierdo: no empieza de golpe.
+//  · Las compras de Black arrancan justo al cerrar las jornadas de la Arena.
+//  · El embarque de la principal pasó de febrero a MARZO, así que su temporada
+//    de venta empieza en abril y dura cuatro meses (abr–jul).
+//  · La otra temporada se estira hasta marzo del año siguiente, con lo que las
+//    dos tiñen el año entero sin dejar hueco: abr–jul y ago–mar. Como la
+//    rejilla es de doce meses, la cola de esa temporada se dibuja al principio
+//    del año, que es donde de verdad cae.
+//  · La liquidación se corre a marzo, al cierre de esa temporada larga.
+export function buildBlocks(L: YearLabels): CalBlock[] {
+  return [
+    {
+      label: L.bMitaca,
+      rows: [
+        [
+          { css: "cbAdmision", start: 1, end: 3, text: L.admision },
+          { css: "cbHarvest", start: 3, end: 6, text: L.harvest },
+        ],
+        [
+          { css: "cbArena", start: 3, end: 4, text: L.arena },
+          { css: "cbSamples", start: 4, end: 6, text: L.samples },
+          { css: "cbShip", start: 7, end: 8, text: L.ship },
+        ],
+        [{ css: "cbPack", start: 5, end: 7, text: L.pack, ramp: true }],
+        [{ css: "cbBlack", start: 4, end: 6, text: L.black }],
+      ],
+    },
+    {
+      label: L.bS2,
+      rows: [
+        [
+          { css: "cbSeason", start: 1, end: 4, text: L.seasonS2Tail },
+          { css: "cbSeason", start: 8, end: 13, text: L.seasonS2 },
+        ],
+        [{ css: "cbLiq", start: 3, end: 4, text: L.liq }],
+      ],
+    },
+    {
+      label: L.bMain,
+      rows: [
+        [
+          { css: "cbAdmision", start: 7, end: 9, text: L.admision },
+          { css: "cbHarvest", start: 9, end: 13, text: L.harvest },
+        ],
+        [
+          { css: "cbShip", start: 3, end: 4, text: L.ship },
+          { css: "cbArena", start: 9, end: 10, text: L.arena },
+          { css: "cbSamples", start: 10, end: 13, text: L.samples },
+        ],
+        // El acopio de la principal cruza el fin de año: arranca en diciembre
+        // (con rampa, dentro del último mes de cosecha) y termina en enero.
+        [
+          { css: "cbPack", start: 1, end: 2, text: L.pack },
+          { css: "cbPack", start: 12, end: 13, text: L.pack, ramp: true },
+        ],
+        [{ css: "cbBlack", start: 10, end: 12, text: L.black }],
+      ],
+    },
+    {
+      label: L.bS1,
+      rows: [[{ css: "cbSeason", start: 4, end: 8, text: L.seasonS1 }]],
+    },
+  ];
+}
+
+export type LegendLabels = {
+  admision: string;
+  harvest: string;
+  arena: string;
+  samples: string;
+  black: string;
+  pack: string;
+  ship: string;
+  season: string;
+  liq: string;
+};
+
+export function buildLegend(L: LegendLabels): CalLegendItem[] {
+  return [
+    { color: "#7A8C6E", text: L.admision, css: "cbAdmision" },
+    { color: "var(--primary)", text: L.harvest, css: "cbHarvest" },
+    { color: "var(--t-tyrian)", text: L.arena, css: "cbArena" },
+    { color: "var(--accent)", text: L.samples, css: "cbSamples" },
+    { color: "var(--t-black)", text: L.black, css: "cbBlack" },
+    { color: "#8A5A2B", text: L.pack, css: "cbPack" },
+    { color: "var(--ink)", text: L.ship, css: "cbShip" },
+    { color: "#33373B", text: L.season, css: "cbSeason" },
+    { color: "#55607A", text: L.liq, css: "cbLiq" },
+  ];
+}
+
 export type HarvestYearDict = {
   eyebrow: string;
   h2: string;
-  intro: string;
   months: string[];
   blocks: CalBlock[];
   legend: CalLegendItem[];
 };
 
+const ES_MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+const EN_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const DE_MONTHS = ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"];
+
 export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
   es: {
     eyebrow: "Dos cosechas, dos Arenas, dos temporadas de venta",
     h2: "El año, visto desde el cafetal",
-    intro:
-      "La Arena abre con cada cosecha y las muestras vuelan enseguida. Tras el escrutinio, un mes completo de acopio, trilla, empaque y consolidación — y solo entonces embarca. En Europa, su café se vende en dos bloques independientes de 5 meses (marzo–julio y agosto–diciembre); enero y febrero son los meses de liquidación: cuentas cerradas, pagos hechos.",
-    months: ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"],
-    blocks: [
-      {
-        label: "Cosecha de mitaca · en su finca",
-        rows: [
-          [
-            { css: "cbAdmision", start: 1, end: 3, text: "Admisión de lotes" },
-            { css: "cbHarvest", start: 3, end: 6, text: "Cosecha y escrutinio" },
-            { css: "cbPack", start: 6, end: 7, text: "📦 Acopio" },
-          ],
-          [
-            { css: "cbArena", start: 3, end: 4, text: "🏆 Arena" },
-            { css: "cbSamples", start: 4, end: 6, text: "✈ Muestras + preorden" },
-            { css: "cbShip", start: 7, end: 8, text: "⚓ Embarque" },
-          ],
-        ],
-      },
-      {
-        label: "Su café en Europa · Temporada S2 · venta ago–dic",
-        rows: [
-          [
-            { css: "cbLiq", start: 1, end: 3, text: "Liquidación · cuentas y pagos" },
-            { css: "cbSeason", start: 8, end: 13, text: "Entrega + venta spot · ago–dic" },
-          ],
-        ],
-      },
-      {
-        label: "Cosecha principal · en su finca",
-        rows: [
-          [
-            { css: "cbPack", start: 1, end: 2, text: "📦 Acopio" },
-            { css: "cbAdmision", start: 7, end: 9, text: "Admisión de lotes" },
-            { css: "cbHarvest", start: 9, end: 13, text: "Cosecha y escrutinio" },
-          ],
-          [
-            { css: "cbShip", start: 2, end: 3, text: "⚓ Embarque" },
-            { css: "cbArena", start: 9, end: 10, text: "🏆 Arena" },
-            { css: "cbSamples", start: 10, end: 13, text: "✈ Muestras + preorden" },
-          ],
-        ],
-      },
-      {
-        label: "Su café en Europa · Temporada S1 · venta mar–jul",
-        rows: [[{ css: "cbSeason", start: 3, end: 8, text: "Entrega + venta spot · mar–jul" }]],
-      },
-    ],
-    legend: [
-      { color: "#7A8C6E", text: "Admisión de lotes de temporada", css: "cbAdmision" },
-      { color: "var(--primary)", text: "Cosecha y escrutinio", css: "cbHarvest" },
-      { color: "var(--t-tyrian)", text: "Cupping Arena", css: "cbArena" },
-      { color: "var(--accent)", text: "Muestras y preorden", css: "cbSamples" },
-      { color: "#8A5A2B", text: "Acopio · trilla · empaque · consolidación (1 mes)", css: "cbPack" },
-      { color: "var(--ink)", text: "Embarque marítimo", css: "cbShip" },
-      { color: "#33373B", text: "Entrega y venta spot (bloques de 5 meses)", css: "cbSeason" },
-      { color: "#55607A", text: "Liquidación · ene–feb", css: "cbLiq" },
-    ],
+    months: ES_MONTHS,
+    blocks: buildBlocks({
+      bMitaca: "Cosecha de mitaca · en su finca",
+      bS2: "Su café en Europa · Temporada S2 · venta ago–mar",
+      bMain: "Cosecha principal · en su finca",
+      bS1: "Su café en Europa · Temporada S1 · venta abr–jul",
+      admision: "Admisión de lotes",
+      harvest: "Cosecha y escrutinio",
+      arena: "🏆 Muestreo & Arena",
+      samples: "✈ Sample Pack, preorden y contratos",
+      black: "Compras de Black",
+      pack: "📦 Acopio, proceso y empaque",
+      ship: "⚓ Embarque",
+      seasonS2: "Entrega + venta spot · ago–mar",
+      seasonS2Tail: "…sigue la S2 · ene–mar",
+      seasonS1: "Entrega + venta spot · abr–jul",
+      liq: "Liquidación · cuentas y pagos",
+    }),
+    legend: buildLegend({
+      admision: "Admisión de lotes de temporada",
+      harvest: "Cosecha y escrutinio",
+      arena: "Muestreo & Arena · muestras de 2 kg",
+      samples: "Sample Pack, preorden y contratos",
+      black: "Compras de Black",
+      pack: "Acopio, proceso y empaque (2 meses)",
+      ship: "Embarque marítimo",
+      season: "Entrega y venta spot en destino",
+      liq: "Liquidación · marzo",
+    }),
   },
   en: {
     eyebrow: "Two harvests, two Arenas, two sales seasons",
     h2: "The year, seen from the coffee field",
-    intro:
-      "The Arena opens with each harvest and the samples fly right away. After the scrutiny, a full month of collection, milling, packing and consolidation — and only then does it ship. In Europe, your coffee sells in two independent 5-month blocks (March–July and August–December); January and February are the settlement months: accounts closed, payments made.",
-    months: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"],
-    blocks: [
-      {
-        label: "Mitaca harvest · on your farm",
-        rows: [
-          [
-            { css: "cbAdmision", start: 1, end: 3, text: "Lot admission" },
-            { css: "cbHarvest", start: 3, end: 6, text: "Harvest and scrutiny" },
-            { css: "cbPack", start: 6, end: 7, text: "📦 Collection" },
-          ],
-          [
-            { css: "cbArena", start: 3, end: 4, text: "🏆 Arena" },
-            { css: "cbSamples", start: 4, end: 6, text: "✈ Samples + preorder" },
-            { css: "cbShip", start: 7, end: 8, text: "⚓ Shipping" },
-          ],
-        ],
-      },
-      {
-        label: "Your coffee in Europe · Season S2 · sales Aug–Dec",
-        rows: [
-          [
-            { css: "cbLiq", start: 1, end: 3, text: "Settlement · accounts and payments" },
-            { css: "cbSeason", start: 8, end: 13, text: "Delivery + spot sales · Aug–Dec" },
-          ],
-        ],
-      },
-      {
-        label: "Main harvest · on your farm",
-        rows: [
-          [
-            { css: "cbPack", start: 1, end: 2, text: "📦 Collection" },
-            { css: "cbAdmision", start: 7, end: 9, text: "Lot admission" },
-            { css: "cbHarvest", start: 9, end: 13, text: "Harvest and scrutiny" },
-          ],
-          [
-            { css: "cbShip", start: 2, end: 3, text: "⚓ Shipping" },
-            { css: "cbArena", start: 9, end: 10, text: "🏆 Arena" },
-            { css: "cbSamples", start: 10, end: 13, text: "✈ Samples + preorder" },
-          ],
-        ],
-      },
-      {
-        label: "Your coffee in Europe · Season S1 · sales Mar–Jul",
-        rows: [[{ css: "cbSeason", start: 3, end: 8, text: "Delivery + spot sales · Mar–Jul" }]],
-      },
-    ],
-    legend: [
-      { color: "#7A8C6E", text: "Season lot admission", css: "cbAdmision" },
-      { color: "var(--primary)", text: "Harvest and scrutiny", css: "cbHarvest" },
-      { color: "var(--t-tyrian)", text: "Cupping Arena", css: "cbArena" },
-      { color: "var(--accent)", text: "Samples and preorder", css: "cbSamples" },
-      { color: "#8A5A2B", text: "Collection · milling · packing · consolidation (1 month)", css: "cbPack" },
-      { color: "var(--ink)", text: "Sea shipping", css: "cbShip" },
-      { color: "#33373B", text: "Delivery and spot sales (5-month blocks)", css: "cbSeason" },
-      { color: "#55607A", text: "Settlement · Jan–Feb", css: "cbLiq" },
-    ],
+    months: EN_MONTHS,
+    blocks: buildBlocks({
+      bMitaca: "Mitaca harvest · on your farm",
+      bS2: "Your coffee in Europe · Season S2 · sales Aug–Mar",
+      bMain: "Main harvest · on your farm",
+      bS1: "Your coffee in Europe · Season S1 · sales Apr–Jul",
+      admision: "Lot admission",
+      harvest: "Harvest and scrutiny",
+      arena: "🏆 Sampling & Arena",
+      samples: "✈ Sample Pack, preorder and contracts",
+      black: "Black purchasing",
+      pack: "📦 Collection, processing and packing",
+      ship: "⚓ Shipping",
+      seasonS2: "Delivery + spot sales · Aug–Mar",
+      seasonS2Tail: "…S2 continues · Jan–Mar",
+      seasonS1: "Delivery + spot sales · Apr–Jul",
+      liq: "Settlement · accounts and payments",
+    }),
+    legend: buildLegend({
+      admision: "Season lot admission",
+      harvest: "Harvest and scrutiny",
+      arena: "Sampling & Arena · 2 kg samples",
+      samples: "Sample Pack, preorder and contracts",
+      black: "Black purchasing",
+      pack: "Collection, processing and packing (2 months)",
+      ship: "Sea shipping",
+      season: "Delivery and spot sales at destination",
+      liq: "Settlement · March",
+    }),
   },
   de: {
-    eyebrow: "Zwei Ernten, zwei Arenas, zwei Verkaufssaisons",
+    eyebrow: "Zwei Ernten, zwei Arenen, zwei Verkaufssaisons",
     h2: "Das Jahr, vom Kaffeefeld aus gesehen",
-    intro:
-      "Die Arena öffnet mit jeder Ernte, und die Muster fliegen sofort. Nach der Prüfung ein voller Monat für Sammlung, Schälung, Verpackung und Konsolidierung — und erst dann wird verschifft. In Europa verkauft sich Ihr Kaffee in zwei unabhängigen 5-Monats-Blöcken (März–Juli und August–Dezember); Januar und Februar sind die Abrechnungsmonate: Konten geschlossen, Zahlungen geleistet.",
-    months: ["JAN", "FEB", "MÄR", "APR", "MAI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ"],
-    blocks: [
-      {
-        label: "Mitaca-Ernte · auf Ihrer Finca",
-        rows: [
-          [
-            { css: "cbAdmision", start: 1, end: 3, text: "Lot-Zulassung" },
-            { css: "cbHarvest", start: 3, end: 6, text: "Ernte und Prüfung" },
-            { css: "cbPack", start: 6, end: 7, text: "📦 Sammlung" },
-          ],
-          [
-            { css: "cbArena", start: 3, end: 4, text: "🏆 Arena" },
-            { css: "cbSamples", start: 4, end: 6, text: "✈ Muster + Vorbestellung" },
-            { css: "cbShip", start: 7, end: 8, text: "⚓ Verschiffung" },
-          ],
-        ],
-      },
-      {
-        label: "Ihr Kaffee in Europa · Saison S2 · Verkauf Aug–Dez",
-        rows: [
-          [
-            { css: "cbLiq", start: 1, end: 3, text: "Abrechnung · Konten und Zahlungen" },
-            { css: "cbSeason", start: 8, end: 13, text: "Lieferung + Spotverkauf · Aug–Dez" },
-          ],
-        ],
-      },
-      {
-        label: "Haupternte · auf Ihrer Finca",
-        rows: [
-          [
-            { css: "cbPack", start: 1, end: 2, text: "📦 Sammlung" },
-            { css: "cbAdmision", start: 7, end: 9, text: "Lot-Zulassung" },
-            { css: "cbHarvest", start: 9, end: 13, text: "Ernte und Prüfung" },
-          ],
-          [
-            { css: "cbShip", start: 2, end: 3, text: "⚓ Verschiffung" },
-            { css: "cbArena", start: 9, end: 10, text: "🏆 Arena" },
-            { css: "cbSamples", start: 10, end: 13, text: "✈ Muster + Vorbestellung" },
-          ],
-        ],
-      },
-      {
-        label: "Ihr Kaffee in Europa · Saison S1 · Verkauf Mär–Jul",
-        rows: [[{ css: "cbSeason", start: 3, end: 8, text: "Lieferung + Spotverkauf · Mär–Jul" }]],
-      },
-    ],
-    legend: [
-      { color: "#7A8C6E", text: "Lot-Zulassung der Saison", css: "cbAdmision" },
-      { color: "var(--primary)", text: "Ernte und Prüfung", css: "cbHarvest" },
-      { color: "var(--t-tyrian)", text: "Cupping Arena", css: "cbArena" },
-      { color: "var(--accent)", text: "Muster und Vorbestellung", css: "cbSamples" },
-      { color: "#8A5A2B", text: "Sammlung · Schälung · Verpackung · Konsolidierung (1 Monat)", css: "cbPack" },
-      { color: "var(--ink)", text: "Seeverschiffung", css: "cbShip" },
-      { color: "#33373B", text: "Lieferung und Spotverkauf (5-Monats-Blöcke)", css: "cbSeason" },
-      { color: "#55607A", text: "Abrechnung · Jan–Feb", css: "cbLiq" },
-    ],
+    months: DE_MONTHS,
+    blocks: buildBlocks({
+      bMitaca: "Mitaca-Ernte · auf Ihrer Finca",
+      bS2: "Ihr Kaffee in Europa · Saison S2 · Verkauf Aug–Mär",
+      bMain: "Haupternte · auf Ihrer Finca",
+      bS1: "Ihr Kaffee in Europa · Saison S1 · Verkauf Apr–Jul",
+      admision: "Lot-Zulassung",
+      harvest: "Ernte und Auslese",
+      arena: "🏆 Musterung & Arena",
+      samples: "✈ Sample Pack, Vorbestellung und Verträge",
+      black: "Black-Einkauf",
+      pack: "📦 Sammlung, Verarbeitung und Verpackung",
+      ship: "⚓ Verschiffung",
+      seasonS2: "Lieferung + Spotverkauf · Aug–Mär",
+      seasonS2Tail: "…S2 läuft weiter · Jan–Mär",
+      seasonS1: "Lieferung + Spotverkauf · Apr–Jul",
+      liq: "Abrechnung · Konten und Zahlungen",
+    }),
+    legend: buildLegend({
+      admision: "Lot-Zulassung der Saison",
+      harvest: "Ernte und Auslese",
+      arena: "Musterung & Arena · 2-kg-Muster",
+      samples: "Sample Pack, Vorbestellung und Verträge",
+      black: "Black-Einkauf",
+      pack: "Sammlung, Verarbeitung und Verpackung (2 Monate)",
+      ship: "Seeverschiffung",
+      season: "Lieferung und Spotverkauf am Zielort",
+      liq: "Abrechnung · März",
+    }),
   },
 };

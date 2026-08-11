@@ -557,3 +557,55 @@ nombrando una búsqueda que ya no existe.
 
 APP_VERSION 3.21 -> 3.22.
 (commit: 74f7019)
+
+
+## [2026-08-11 · duodécima pasada] El año del café, reordenado por el owner
+
+Siete correcciones del owner sobre el calendario «Dos cosechas al año». Ya no es
+un retoque de rótulos: cambian FECHAS, y con ellas la forma del año comercial.
+
+- El embarque de la cosecha principal pasa de febrero a MARZO. Como consecuencia
+  su temporada de venta arranca en abril y dura cuatro meses (abr–jul), y la otra
+  se estira hasta marzo del año siguiente (ago–mar). Las dos juntas cubren el año
+  entero sin dejar hueco — que era el punto. La liquidación se corre a marzo, al
+  cierre de esa temporada larga.
+- Como la rejilla es de doce meses y esa temporada cruza el fin de año, su cola
+  (ene–mar) se dibuja al principio del año, que es donde de verdad cae. Es la
+  misma temporada partida en dos barras, no dos temporadas.
+- «Acopio» pasa a ser **«Acopio, proceso y empaque»**, dura dos meses y arranca
+  ya DENTRO del último mes de la cosecha correspondiente. El owner pidió una
+  forma creativa de superponerlo: la barra lleva ahora una máscara de degradado
+  en su borde izquierdo (`.barRamp`), así que no empieza de golpe — se va
+  encendiendo sobre el mes de cosecha en vez de partirlo con un corte seco.
+- «Muestras + Preorden» pasa a ser **«Sample Pack, Preorden y Contratos»**. Es
+  término de destino: la ventana en que CTC ofrece activamente los grados
+  especiales —no el Black— para preorden a precio fijo, contra el contrato de
+  Cantidades Congeladas/Liberadas.
+- «Arena» pasa a ser **«Muestreo & Arena»**, y su ficha especifica que el
+  productor envía sus muestras de 2 kg.
+- Etapa nueva: **«Compras de Black»**, que arranca justo al cerrar las jornadas
+  de la Arena (`cbBlack`, sobre `--t-black`).
+- En «Cosecha y escrutinio» sale Terratalento —sigue existiendo, pero no es lo
+  que esta etapa cuenta— y entra el almacenamiento del pergamino en la finca,
+  que es donde de verdad se pierde calidad. El requisito de almacenamiento del
+  Sample Pack (condiciones y estándares que especifica CTC, a cargo del
+  productor) quedó dentro de la ficha de esa etapa, no en su rótulo.
+
+LA GEOMETRÍA AHORA VIVE UNA SOLA VEZ. Antes las columnas estaban escritas tres
+veces (una por lengua) en `lib/harvestYear` y otra vez más en Cherry Picked:
+cuatro copias de los mismos números. Con una reestructuración de fechas de este
+tamaño eso era un error garantizado, así que `buildBlocks(labels)` /
+`buildLegend(labels)` construyen la rejilla y las lenguas solo ponen rótulos.
+Cherry Picked importa las mismas funciones y conserva únicamente su voz de
+tostador. Los dos calendarios ya no pueden discrepar en una fecha.
+
+- Para el próximo Version Wrap: la etapa nueva `cbBlack` y los rótulos nuevos en
+  el DICT del calendario; nota de que `lib/harvestYear` es fuente única de la
+  geometría del año para las TRES superficies públicas.
+- Verificación: tsc limpio, eslint limpio, `next build` limpio. La rejilla se
+  fotografió aislada en una ruta desechable (`/lab/cal`, ya borrada) porque el
+  panel de vista previa no pinta fotogramas de una sección tan abajo en la
+  página; se confirmaron las cuatro filas por bloque sin colisión, el degradado
+  del acopio en sus dos apariciones (may–jun y dic–ene) y la cola de la S2.
+- APP_VERSION 3.22 -> 3.23.
+(commit: 3f766a0)

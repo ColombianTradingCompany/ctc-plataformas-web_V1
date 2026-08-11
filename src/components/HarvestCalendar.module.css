@@ -31,6 +31,16 @@
    esa etapa a lo largo de los doce meses, que es lo que un gantt plano esconde.
    Las dos clases las pone React barra a barra: una regla menos que leer que un
    `.calFocused .calBar` colgando del contenedor. */
+/* «Empieza despacio»: el primer mes de la barra se desvanece hacia la izquierda
+   en vez de cortar en seco, porque la etapa arranca dentro del último mes de la
+   anterior. La máscara actúa sobre la caja entera, así que el texto se mete a
+   la derecha para no quedar dentro del degradado. */
+.barRamp{
+  mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.55) 7%,#000 26%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.55) 7%,#000 26%);
+  padding-left:26px;
+}
+
 .barOff{opacity:.28}
 .barOn{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--primary-deep);z-index:4}
 
@@ -40,6 +50,7 @@
    identificador se renombró con ella para que no siga mintiendo. */
 .cbAdmision{background:#7A8C6E}
 .cbHarvest{background:var(--primary)}
+.cbBlack{background:var(--t-black)}
 .cbArena{background:var(--t-tyrian)}
 .cbSamples{background:var(--accent)}
 .cbPack{background:#8A5A2B}

@@ -47,8 +47,8 @@ const T: Record<Lang, Dict> = {
     ],
     h1: "Un ecosistema para que el café colombiano viaje ",
     h1em: "con nombre propio.",
-    ctaSell: ["Produzco un gran café,", "¡Quiero venderlo!"],
-    ctaBuy: ["Necesito un gran café,", "¡Quiero comprarlo!"],
+    ctaSell: ["Produzco un gran café", "¡Quiero venderlo!"],
+    ctaBuy: ["Necesito un gran café", "¡Quiero comprarlo!"],
     quality: [
       {
         key: "cosechas",
@@ -125,8 +125,8 @@ const T: Record<Lang, Dict> = {
     ],
     h1: "An ecosystem so Colombian coffee travels ",
     h1em: "under its own name.",
-    ctaSell: ["I grow great coffee,", "I want to sell it!"],
-    ctaBuy: ["I need great coffee,", "I want to buy it!"],
+    ctaSell: ["I grow great coffee", "I want to sell it!"],
+    ctaBuy: ["I need great coffee", "I want to buy it!"],
     quality: [
       {
         key: "cosechas",
@@ -203,8 +203,8 @@ const T: Record<Lang, Dict> = {
     ],
     h1: "Ein Ökosystem, damit kolumbianischer Kaffee ",
     h1em: "unter eigenem Namen reist.",
-    ctaSell: ["Ich baue großartigen Kaffee an,", "Ich will ihn verkaufen!"],
-    ctaBuy: ["Ich brauche großartigen Kaffee,", "Ich will ihn kaufen!"],
+    ctaSell: ["Ich baue großartigen Kaffee an", "Ich will ihn verkaufen!"],
+    ctaBuy: ["Ich brauche großartigen Kaffee", "Ich will ihn kaufen!"],
     quality: [
       {
         key: "cosechas",
@@ -314,13 +314,23 @@ export function Hero() {
 
           {/* Las dos orillas, dichas por quien llega. */}
           <div className={styles.heroCta}>
-            <a className={`${styles.big} ${styles.bigSell}`} href={KR_URL} target="_blank" rel="noopener">
-              <span>{t.ctaSell[0]}</span>
-              <span className={styles.bigAsk}>{t.ctaSell[1]}</span>
+            <a className={`ctcb ctcb-costal ctcb-gold ${styles.big}`} href={KR_URL} target="_blank" rel="noopener">
+              <span className="ctcb-txt">
+                <span className="ctcb-lead">{t.ctaSell[0]}</span>
+                <span className="ctcb-ask">{t.ctaSell[1]}</span>
+              </span>
+              <span className="ctcb-arw" aria-hidden>
+                →
+              </span>
             </a>
-            <a className={`${styles.big} ${styles.bigBuy}`} href={CP_URL} target="_blank" rel="noopener">
-              <span>{t.ctaBuy[0]}</span>
-              <span className={styles.bigAsk}>{t.ctaBuy[1]}</span>
+            <a className={`ctcb ctcb-costal ctcb-blue ${styles.big}`} href={CP_URL} target="_blank" rel="noopener">
+              <span className="ctcb-txt">
+                <span className="ctcb-lead">{t.ctaBuy[0]}</span>
+                <span className="ctcb-ask">{t.ctaBuy[1]}</span>
+              </span>
+              <span className="ctcb-arw" aria-hidden>
+                →
+              </span>
             </a>
           </div>
         </div>

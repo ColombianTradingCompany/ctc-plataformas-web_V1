@@ -295,3 +295,43 @@ Co-Create), la deuda de la tanda y las lecciones de herramienta.
 
 **AL HACER EL WRAP: volcar ese archivo aquí y BORRARLO.** Si sigue existiendo
 después del wrap, algo se quedó sin compilar.
+
+## [2026-08-11 · quinta pasada] Los botones se vuelven familia, y entra el laboratorio del titular
+
+**EL OWNER ELIGIÓ «COSTAL»** entre los cuatro tratamientos con cuerpo, y pidió
+algo más: **conservar los cuatro y reutilizarlos como sistema de botones**.
+
+**FAMILIA `.ctcb` EN `globals.css`** (no en un module: tienen que estar
+disponibles en cualquier superficie sin importar nada). Dos ejes independientes:
+
+- **Tratamiento** — `.ctcb-sello` (anillo, grano, disco que gira),
+  `.ctcb-tecla` (canto SÓLIDO `0 6px 0`, se hunde 5 px al pulsar),
+  `.ctcb-placa` (metal cepillado, remaches, texto grabado, barrido especular),
+  `.ctcb-costal` (yute en dos direcciones, pespunte, letra de plantilla).
+- **Tono** — `.ctcb-gold`, `.ctcb-blue`, `.ctcb-green`, `.ctcb-ink`: SOLO declaran
+  seis variables de color. Un tono nuevo son seis líneas y sirve para los cuatro
+  tratamientos; un tratamiento nuevo hereda los cuatro tonos gratis.
+
+Marcado común (`.ctcb-txt` > `.ctcb-lead` + `.ctcb-ask`, más `.ctcb-arw`; Sello
+usa `.ctcb-disc`). El hero de CTC Home ya va con Costal en oro y azul, y
+`Hero.module.css` se quedó SOLO con el reparto de la fila: cambiar de
+tratamiento es cambiar una clase. Se quitaron las comas finales de la primera
+línea de los CTA, que sobraban al separarse en dos registros tipográficos.
+
+**NODO NUEVO `n-lab-tipografia`** — `/lab/tipografia`, sin enlazar y excluida en
+`robots.ts`. Mesa de pruebas del titular del hero: ocho familias reales
+(Fraunces, Playfair Display, Instrument Serif, DM Serif Display, Bodoni Moda,
+Cormorant Garamond, Zilla Slab, Archivo Black), tamaño, grosor, espaciado,
+interlínea, conmutador de lengua con los titulares REALES de las tres, y
+tratamientos sueltos para la palabra «café» / «coffee» / «Kaffee».
+
+POR QUÉ ES UNA RUTA Y NO UNA MAQUETA: `next/font` solo carga familias declaradas
+en compilación, así que ver las candidatas con su tipografía de verdad —y no una
+sustituta del sistema— exige que vivan en el proyecto. Las ocho se cargan SOLO
+en esa ruta. No guarda nada, no llama a nada, no toca la base.
+
+DEUDA: el velo del escenario del laboratorio está COPIADO de `Hero.module.css`.
+Si allí se retoca y aquí no, el laboratorio miente. Está avisado en el CSS.
+
+APP_VERSION 3.15 -> 3.16.
+(commit: pending)

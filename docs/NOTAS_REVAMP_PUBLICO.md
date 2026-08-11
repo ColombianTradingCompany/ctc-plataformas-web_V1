@@ -57,15 +57,22 @@ nuevas se construyeron sobre materiales y relieve de verdad:
    negocio: trama de yute en las dos direcciones, pespunte por dentro y letra de
    plantilla con la tinta ligeramente corrida.
 
-Está dicho que se pueden mezclar (p. ej. el cuerpo de Tecla con el grabado de
-Placa). **Pendiente: que elija.** Al montarlo, tocar `Hero.module.css` (`.big`,
-`.bigSell`, `.bigBuy`, `.bigAsk`) y, si la forma cambia el marcado, `Hero.tsx` —
-las tres nuevas necesitan un `<span>` de etiqueta y otro de flecha, así que el
-marcado SÍ cambia.
+**RESUELTO: el owner eligió COSTAL**, y pidió conservar los cuatro para
+reutilizarlos. Ya no es una decisión abierta — es un sistema:
 
-Las seis están implementadas en CSS puro (sin imágenes) en el mock, así que
-portarlas es copiar el bloque y renombrar las variables. El mock vive fuera del
-repo, en el artifact de la conversación.
+- Los cuatro tratamientos viven en `globals.css` como la familia **`.ctcb`**,
+  con **tratamiento** y **tono** en ejes independientes. Un tono nuevo son seis
+  variables y funciona con los cuatro; un tratamiento nuevo hereda los cuatro
+  tonos. Marcado y ejemplo, en el comentario del propio bloque.
+- Tonos listos: `ctcb-gold`, `ctcb-blue`, `ctcb-green`, `ctcb-ink`.
+- El hero va con **Costal** en oro (vender) y azul (comprar). `Hero.module.css`
+  se quedó solo con el reparto de la fila: **cambiar de tratamiento es cambiar
+  una clase en `Hero.tsx`**.
+
+Al reutilizarlos en otras superficies, ojo con dos cosas: Costal pone la segunda
+línea en VERSALITA (`text-transform:uppercase`), así que la copia tiene que
+aguantarlo; y las cuatro variantes asumen fondo oscuro o medio — sobre `--paper`
+el relieve casi no se ve.
 
 ### 2. Co-Create está renombrado a medias
 El hub de Cherry Picked ya lo llama **«Cherry Picked Co-Create»**, porque el
@@ -88,6 +95,22 @@ mía:
 El subdominio `co-create.ctcexport.com` no hace falta cambiarlo en ningún caso.
 
 ---
+
+### 3. La tipografía del titular del hero
+El owner quiere probar familias y tamaños. Se montó **`/lab/tipografia`** — sin
+enlazar, excluida en `robots.ts`, no guarda nada. Ocho familias reales cargadas
+con `next/font` solo en esa ruta, más tamaño, grosor, espaciado, interlínea,
+conmutador de lengua con los titulares REALES y tratamientos sueltos para la
+palabra «café».
+
+**Pendiente: que elija familia y números.** Al montarlo hay que llevar la familia
+elegida a `src/app/layout.tsx` (donde vive `Fraunces` hoy) y traducir el tamaño
+del laboratorio, que es fijo, al `clamp()` del hero, que crece con la pantalla.
+Después: **borrar `src/app/lab/` y las siete fuentes que no se usen**, o se
+quedan cargando para siempre.
+
+⚠️ El velo del escenario del laboratorio está COPIADO de `Hero.module.css`. Si
+allí se retoca y aquí no, el laboratorio deja de decir la verdad.
 
 ## Deuda que dejó esta tanda
 

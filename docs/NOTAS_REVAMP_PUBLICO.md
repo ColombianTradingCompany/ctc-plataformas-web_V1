@@ -96,21 +96,23 @@ El subdominio `co-create.ctcexport.com` no hace falta cambiarlo en ningún caso.
 
 ---
 
-### 3. La tipografía del titular del hero
-El owner quiere probar familias y tamaños. Se montó **`/lab/tipografia`** — sin
-enlazar, excluida en `robots.ts`, no guarda nada. Ocho familias reales cargadas
-con `next/font` solo en esa ruta, más tamaño, grosor, espaciado, interlínea,
-conmutador de lengua con los titulares REALES y tratamientos sueltos para la
-palabra «café».
+### 3. La tipografía del titular del hero — RESUELTA: se queda como está
+Se montó **`/lab/tipografia`** para probarlo (sin enlazar, excluida en
+`robots.ts`, no guarda nada): texto editable en cuatro trozos, color/negrita/
+cursiva por trozo, familia y tamaño de la palabra destacada, ocho familias del
+proyecto + las detectadas en el equipo, y mandos en acordeón.
 
-**Pendiente: que elija familia y números.** Al montarlo hay que llevar la familia
-elegida a `src/app/layout.tsx` (donde vive `Fraunces` hoy) y traducir el tamaño
-del laboratorio, que es fijo, al `clamp()` del hero, que crece con la pantalla.
-Después: **borrar `src/app/lab/` y las siete fuentes que no se usen**, o se
-quedan cargando para siempre.
+**Decisión del owner (2026-08-11): el titular NO se cambia.** Sigue en Fraunces,
+con el cierre en oro y cursiva. No hay nada que montar.
 
-⚠️ El velo del escenario del laboratorio está COPIADO de `Hero.module.css`. Si
-allí se retoca y aquí no, el laboratorio deja de decir la verdad.
+**Lo que queda es una limpieza, no una decisión de diseño**: el laboratorio se
+puede borrar (`src/app/lab/`, `src/components/lab/`, la entrada de `robots.ts` y
+las ocho familias de `next/font`) o dejarse como mesa de pruebas para la próxima
+vez. No estorba —no está enlazado y sus fuentes solo se cargan en su ruta— pero
+tampoco se usa. **Preguntar antes de borrarlo.**
+
+⚠️ Mientras siga vivo: el velo de su escenario está COPIADO de
+`Hero.module.css`. Si allí se retoca y aquí no, el laboratorio miente.
 
 ## Deuda que dejó esta tanda
 

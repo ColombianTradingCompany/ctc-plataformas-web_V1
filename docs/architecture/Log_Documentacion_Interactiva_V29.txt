@@ -335,3 +335,36 @@ Si allí se retoca y aquí no, el laboratorio miente. Está avisado en el CSS.
 
 APP_VERSION 3.15 -> 3.16.
 (commit: dfe2edb)
+
+## [2026-08-11 · sexta pasada] El laboratorio, rehecho a lo que se pidió
+
+La primera versión permitía cambiar el TITULAR ENTERO. No era eso: el owner
+quiere la frase EXACTAMENTE donde está —su tipografía, su tamaño, su sitio— y
+poder tocar **solo la palabra «café»**. Rehecho.
+
+- La frase hereda `h1` de globals.css (Fraunces 700) y el mismo `clamp(36px,
+  5.2vw,62px)` del hero, sobre el mismo fondo y el mismo velo. No tiene mandos:
+  no se va a cambiar, así que no se toca.
+- La palabra se parte aparte en el diccionario (`before` / `word` / `after`) y es
+  lo único con estilo propio: familia, tamaño **en múltiplos** (`em`, no px —
+  el titular crece con la pantalla y la palabra tiene que crecer con él),
+  grosor, cursiva y oro.
+- Familias en tres bloques: las **ocho del proyecto** (cargadas de verdad), las
+  **del equipo** —30 candidatas de Windows/Office, con DETECCIÓN REAL midiendo
+  el ancho del texto contra tres genéricas: se ofrecen solo las que existen, 29
+  de 30 en la máquina del owner— y una **a mano** para escribir cualquier
+  nombre. Avisado en la propia página: una fuente del equipo no la tiene quien
+  visita la web.
+- Abajo, la receta en una línea para pedir el montaje.
+
+**BUG QUE VALE POR TODA LA PASADA**: los botones salían sin fondo y sin borde,
+con el radio y el relleno bien puestos. Causa: los tokens de color viven bajo
+`[data-theme="…"]` en globals.css y NO en `:root`, y la ruta del laboratorio no
+tenía el atributo. Sin él, `background:var(--card)` y `border:1px solid
+var(--line)` son declaraciones INVÁLIDAS y el navegador las tira ENTERAS,
+mientras las propiedades sin variable de la misma regla sobreviven — que es
+exactamente lo que despista. **Cualquier ruta nueva fuera de las cuatro
+superficies necesita su `data-theme`.**
+
+APP_VERSION 3.16 -> 3.17.
+(commit: pending)

@@ -66,8 +66,14 @@ export default function LabTipografiaPage() {
     archivo.variable,
   ].join(" ");
 
+  // `data-theme` NO es decorativo: los tokens de color (--card, --line, --paper…)
+  // están declarados bajo `[data-theme="…"]` en globals.css, no en `:root`. Sin
+  // el atributo, `background:var(--card)` y `border:1px solid var(--line)` son
+  // declaraciones INVÁLIDAS y el navegador las tira enteras — los botones salían
+  // sin fondo y sin borde, con el radio y el relleno puestos. Es el tema de CTC
+  // Home porque el titular que se está probando es el suyo.
   return (
-    <div className={shell}>
+    <div className={shell} data-theme="ctc-home">
       <TipografiaLab fonts={FONTS} />
     </div>
   );

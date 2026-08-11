@@ -24,14 +24,6 @@
    del footer, así que el relleno inferior del footer cae por debajo de ella y
    no separaba estas dos piezas (2026-08-11). */
 .signoff{margin-top:40px;margin-bottom:36px;padding-top:32px;border-top:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:16px}
-/* Last window into the origin (the Piedecuesta shot that used to live in the
-   hero aside) — framed like it was there, sized as a closing vignette. */
-.closingShot{
-  width:100%;max-width:720px;border-radius:16px;overflow:hidden;
-  border:1px solid rgba(255,255,255,.22);
-  box-shadow:0 30px 70px -28px rgba(4,14,26,.85);
-}
-.closingShot img{width:100%;height:auto;display:block}
 .logoPlate{
   background:#fff;border-radius:14px;padding:16px 24px;
   display:flex;align-items:center;justify-content:center;

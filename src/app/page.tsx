@@ -7,6 +7,7 @@ import { Hero } from "@/components/ctc-home/Hero";
 import { HomeBand } from "@/components/ctc-home/HomeBand";
 import { EcosystemSection } from "@/components/ctc-home/EcosystemSection";
 import { MomentSection } from "@/components/ctc-home/MomentSection";
+import { CosechasSection } from "@/components/ctc-home/CosechasSection";
 import { HistorySection } from "@/components/ctc-home/HistorySection";
 import { QuickMenu } from "@/components/ctc-home/QuickMenu";
 import { Footer } from "@/components/ctc-home/Footer";
@@ -28,6 +29,10 @@ export default function CtcHomePage() {
                 sigue viviendo en `components/services/servicesCopy`, que es de
                 donde también beben las cuatro landings propias. */}
             <HomeBand band="patio" />
+            <CosechasSection />
+            {/* La franja del mirador separa el calendario de «Quiénes somos» —
+                y es la foto que antes cerraba el pie, que allí no decía nada. */}
+            <HomeBand band="mirador" />
             <HistorySection />
             <QuickMenu />
             {/* Las dos burbujas comparten la esquina de abajo a la derecha: el

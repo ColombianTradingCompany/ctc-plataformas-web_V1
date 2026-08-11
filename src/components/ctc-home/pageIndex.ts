@@ -20,7 +20,7 @@ import type { Lang } from "@/components/lang/i18n";
 
 export type PageIndexEntry = {
   /** El ancla real de la sección en la página. */
-  id: "hero" | "ecosistema" | "momento" | "historia";
+  id: "hero" | "ecosistema" | "momento" | "cosechas" | "historia";
   label: string;
   sub: string;
 };
@@ -38,18 +38,21 @@ export const PAGE_INDEX: Record<Lang, PageIndexEntry[]> = {
     { id: "hero", label: "Inicio", sub: "Vender o comprar café" },
     { id: "ecosistema", label: "Las tres ofertas", sub: "Oferta · Demanda · Value Ecosystem" },
     { id: "momento", label: "El momento del café", sub: "Las olas, el terruño, el perfil" },
+    { id: "cosechas", label: "El año del café", sub: "Dos cosechas, dos Arenas, dos temporadas" },
     { id: "historia", label: "Quiénes somos", sub: "G&G · Fundadores" },
   ],
   en: [
     { id: "hero", label: "Home", sub: "Sell or buy coffee" },
     { id: "ecosistema", label: "The three offers", sub: "Supply · Demand · Value Ecosystem" },
     { id: "momento", label: "Coffee's moment", sub: "The waves, terroir, the profile" },
+    { id: "cosechas", label: "The coffee year", sub: "Two harvests, two Arenas, two seasons" },
     { id: "historia", label: "Who we are", sub: "G&G · Founders" },
   ],
   de: [
     { id: "hero", label: "Start", sub: "Kaffee verkaufen oder kaufen" },
     { id: "ecosistema", label: "Die drei Angebote", sub: "Angebot · Nachfrage · Value Ecosystem" },
     { id: "momento", label: "Der Moment des Kaffees", sub: "Die Wellen, das Terroir, das Profil" },
+    { id: "cosechas", label: "Das Kaffeejahr", sub: "Zwei Ernten, zwei Arenen, zwei Saisons" },
     { id: "historia", label: "Wer wir sind", sub: "G&G · Gründer" },
   ],
 };

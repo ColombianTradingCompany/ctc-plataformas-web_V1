@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
-import { HarvestCalendar } from "@/components/HarvestCalendar";
-import { HARVEST_YEAR } from "@/lib/harvestYear";
 import { InfoModal, type InfoEntry } from "./InfoModal";
 import { MarketTicker } from "./MarketTicker";
 import styles from "./Hero.module.css";
@@ -67,6 +65,7 @@ const T: Record<Lang, Dict> = {
           </>,
           <>Enero y febrero se reservan para liquidaciones y cierre de balances.</>,
         ],
+        cta: { href: "#cosechas", label: "Ver el año completo ↓" },
       },
       {
         key: "cumplimiento",
@@ -145,6 +144,7 @@ const T: Record<Lang, Dict> = {
           </>,
           <>January and February are kept for settlements and closing balances.</>,
         ],
+        cta: { href: "#cosechas", label: "See the whole year ↓" },
       },
       {
         key: "cumplimiento",
@@ -223,6 +223,7 @@ const T: Record<Lang, Dict> = {
           </>,
           <>Januar und Februar bleiben für Abrechnungen und Bilanzabschlüsse.</>,
         ],
+        cta: { href: "#cosechas", label: "Das ganze Jahr ansehen ↓" },
       },
       {
         key: "cumplimiento",
@@ -275,23 +276,13 @@ const T: Record<Lang, Dict> = {
 };
 
 export function Hero() {
-  const lang = useLang();
-  const t = T[lang];
+  const t = T[useLang()];
   const [open, setOpen] = useState<InfoEntry | null>(null);
 
-  // La cualidad de las dos cosechas enseña el CALENDARIO, no solo la lista: es
-  // el mismo del que vive en Kaffetal Regal (`lib/harvestYear`), con sus barras
-  // abribles. Por eso su ventana va en ancho: doce meses no caben en 560 px.
-  const year = HARVEST_YEAR[lang];
-  const entryFor = (q: InfoEntry, i: number): InfoEntry =>
-    q.key === "cosechas"
-      ? {
-          ...q,
-          accent: Q_ACCENT[i],
-          wide: true,
-          node: <HarvestCalendar blocks={year.blocks} legend={year.legend} months={year.months} lang={lang} />,
-        }
-      : { ...q, accent: Q_ACCENT[i] };
+  // El calendario del año YA NO va dentro de esta ventana: desde el 2026-08-11
+  // es una sección propia de la página (`CosechasSection`), así que la cualidad
+  // de las dos cosechas se queda en su lista corta y ofrece bajar a verlo. Un
+  // gantt de doce meses dos veces en la misma página es una vez de más.
 
   return (
     <section id="hero" className={styles.hero}>
@@ -373,7 +364,7 @@ export function Hero() {
               role="listitem"
               className={styles.qbtn}
               style={{ "--qa": Q_ACCENT[i] } as React.CSSProperties}
-              onClick={() => setOpen(entryFor(q, i))}
+              onClick={() => setOpen({ ...q, accent: Q_ACCENT[i] })}
             >
               {q.title}
             </button>

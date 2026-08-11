@@ -7,7 +7,11 @@ import { useLang, type Lang } from "@/components/lang/i18n";
 // a server component and can't read the client language state — so the copy
 // moved here, next to a per-band trilingual dictionary.
 
-type BandKey = "feria" | "patio";
+// `mirador` entró el 2026-08-11 para separar el calendario del año de «Quiénes
+// somos»: la foto que cerraba el pie sube aquí, donde sí tiene una frase que
+// decir. Ojo con el nombre del archivo: dice «atardecer» y es un mediodía — el
+// pie la rotulaba como puesta de sol y era falso.
+type BandKey = "feria" | "patio" | "mirador";
 
 const T: Record<Lang, Record<BandKey, { eyebrow: string; head: string; em: string; caption: string }>> = {
   es: {
@@ -23,6 +27,12 @@ const T: Record<Lang, Record<BandKey, { eyebrow: string; head: string; em: strin
       em: "y se demuestra con números.",
       caption: "Pergamino en secado · control de humedad",
     },
+    mirador: {
+      eyebrow: "Dónde pasa todo",
+      head: "Doce meses de trabajo caben en ",
+      em: "un solo paisaje.",
+      caption: "Vista desde la finca · Santander",
+    },
   },
   en: {
     feria: {
@@ -36,6 +46,12 @@ const T: Record<Lang, Record<BandKey, { eyebrow: string; head: string; em: strin
       head: "Quality is built on the patio ",
       em: "and proven with numbers.",
       caption: "Parchment drying · moisture control",
+    },
+    mirador: {
+      eyebrow: "Where all of it happens",
+      head: "Twelve months of work fit into ",
+      em: "a single landscape.",
+      caption: "The view from the farm · Santander",
     },
   },
   de: {
@@ -51,12 +67,19 @@ const T: Record<Lang, Record<BandKey, { eyebrow: string; head: string; em: strin
       em: "und wird mit Zahlen belegt.",
       caption: "Pergamino beim Trocknen · Feuchtekontrolle",
     },
+    mirador: {
+      eyebrow: "Wo das alles geschieht",
+      head: "Zwölf Monate Arbeit passen in ",
+      em: "eine einzige Landschaft.",
+      caption: "Blick von der Finca · Santander",
+    },
   },
 };
 
 const IMAGES: Record<BandKey, string> = {
   feria: "/images/ctc-home/22-papa-en-feria.jpg",
   patio: "/images/ctc-home/31-patio-de-cafe.jpg",
+  mirador: "/images/ctc-home/20-atardecer-cafetal-real.jpg",
 };
 
 export function HomeBand({ band }: { band: BandKey }) {

@@ -77,6 +77,10 @@ export function InfoModal({ entry, onClose }: { entry: InfoEntry | null; onClose
                 className="btn btn-sm btn-solid"
                 href={entry.cta.href}
                 {...(entry.cta.external ? { target: "_blank", rel: "noopener" } : {})}
+                // Un enlace a un ancla de ESTA página tiene que cerrar la ventana
+                // al saltar: si no, el navegador baja a la sección y la deja
+                // tapada con el velo del modal encima.
+                onClick={entry.cta.href.startsWith("#") ? onClose : undefined}
               >
                 {entry.cta.label}
               </a>

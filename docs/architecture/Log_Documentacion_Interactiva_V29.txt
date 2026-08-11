@@ -435,3 +435,26 @@ aislado en una ruta desechable con Chrome headless. Ver la memoria del panel.
 
 APP_VERSION 3.18 -> 3.19.
 (commit: dd36ad9)
+
+## [2026-08-11 · novena pasada] El calendario sube a sección de CTC Home, y la foto del pie encuentra su sitio
+
+- **NODO/ORDEN A CORREGIR EN EL MAPA**: CTC Home gana la sección **`#cosechas`**
+  («El año, visto desde el cafetal») entre la franja del patio y «Quiénes
+  somos». Reusa `lib/harvestYear` y el mismo componente que Kaffetal Regal: una
+  etapa que cambie, cambia en las dos superficies a la vez.
+- **Franja nueva `mirador`** entre el calendario y «Quiénes somos»: «Doce meses
+  de trabajo caben en un solo paisaje». La foto es la que cerraba el pie, donde
+  no decía nada; aquí sostiene una frase y hace de bisagra entre el año y la
+  gente. **De paso se corrigió su rótulo**: el pie la llamaba «atardecer sobre
+  las montañas» y es un mediodía — el nombre del archivo
+  (`20-atardecer-cafetal-real.jpg`) engaña, como pasó con «29-cerezas».
+- **El pie pierde su foto de cierre** y queda en la placa del logotipo.
+- **La ventana de la cualidad ya NO lleva el calendario**: un gantt de doce
+  meses dos veces en la misma página es una vez de más. Ahora ofrece «Ver el año
+  completo ↓», y `InfoModal` cierra la ventana cuando el enlace es un ancla de
+  la propia página — si no, el navegador baja a la sección y la deja tapada por
+  el velo.
+- Los dos menús listan la sección nueva (`pageIndex`).
+
+APP_VERSION 3.19 -> 3.20.
+(commit: pending)

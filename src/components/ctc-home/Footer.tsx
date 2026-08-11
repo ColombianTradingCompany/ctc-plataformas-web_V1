@@ -91,19 +91,13 @@ export function Footer() {
         </nav>
       </div>
 
-      {/* Closing mark: the Piedecuesta photo (moved here from the hero aside) as
-          a last window into the origin, then the full logo on a light plate —
-          the colorful wordmark is dark-inked, so it needs a light backing to
-          read on the navy footer. */}
+      {/* Closing mark: el logotipo completo sobre plato claro — la marca es de
+          tinta oscura y necesita fondo claro para leerse sobre el pie navy.
+          La foto del mirador que cerraba aquí SUBIÓ a su propia franja, entre
+          el calendario del año y «Quiénes somos» (2026-08-11): abajo no decía
+          nada y allí sostiene una frase. De paso se corrigió su rótulo, que la
+          llamaba atardecer cuando es un mediodía. */}
       <div className={`wrap ${styles.signoff}`}>
-        <figure className={styles.closingShot}>
-          <Image
-            src="/images/ctc-home/20-atardecer-cafetal-real.jpg"
-            alt="Atardecer sobre las montañas cafeteras de Santander"
-            width={900}
-            height={678}
-          />
-        </figure>
         <div className={styles.logoPlate}>
           <Image
             src="/images/shared/ctc-logo-full.png"

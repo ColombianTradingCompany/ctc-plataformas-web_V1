@@ -33,21 +33,39 @@ commit. **Este archivo no las repite**: recoge lo que NO cabe en el log.
 ## Decisiones abiertas, esperando al owner
 
 ### 1. El estilo de los botones del hero
-El owner los encontró «bland y power-pointy». Se le pasaron **tres tratamientos**
-en un artifact, los tres dibujados encima del hero real:
+El owner los encontró «bland y power-pointy». Van dos rondas de propuestas, todas
+dibujadas encima del hero real (mismo fotograma, mismo velo, mismos colores).
 
+**Ronda 1 — descartadas 2 y 3:**
 1. **Sello** — del sello de grado (Papagayo Beans): anillo grueso, grano de
-   papel, disco con la flecha que gira 45° al pasar por encima.
-2. **Ficha** — del expediente, que es la tesis de la casa: etiqueta de saco con
-   esquina cortada, ojal y filete interior; el filete de puntos se extiende al
-   pasar.
-3. **Cinta** — de Global SupplyWave 4.0 y de la cinta de mercado de abajo: panel
-   translúcido con canto de color que engorda.
+   papel, disco con la flecha que gira 45°. **SIGUE EN PIE.**
+2. ~~Ficha~~ — etiqueta de saco con esquina cortada y ojal. Descartada.
+3. ~~Cinta~~ — panel translúcido estilo cinta de mercado. Descartada.
 
-Está dicho que se pueden mezclar (la forma de uno con el movimiento de otro).
-**Pendiente: que elija.** Al montarlo, tocar `Hero.module.css` (`.big`,
-`.bigSell`, `.bigBuy`, `.bigAsk`) y, si la forma cambia el marcado, `Hero.tsx`.
-El mock vive fuera del repo, en el artifact de la conversación.
+**Ronda 2 — el owner pidió «realismo, quizá con algo de 3D»**, así que las tres
+nuevas se construyeron sobre materiales y relieve de verdad:
+
+4. **Tecla** — la más física. El canto es un `box-shadow` SÓLIDO (`0 6px 0`), no
+   una sombra difuminada: eso es lo que la hace leerse como un cuerpo con
+   altura. Al pulsar baja 5 px y el canto se reduce a 1 — el recorrido real de
+   una tecla.
+5. **Placa** — del mundo de la instrumentación (sorter óptico, Koffee Senser):
+   metal cepillado, bisel, dos remaches y el texto GRABADO (luz debajo de la
+   letra, sombra encima — al revés que un relieve). Un brillo especular cruza en
+   diagonal al pasar.
+6. **Costal** — el saco de exportación, que es literalmente el objeto del
+   negocio: trama de yute en las dos direcciones, pespunte por dentro y letra de
+   plantilla con la tinta ligeramente corrida.
+
+Está dicho que se pueden mezclar (p. ej. el cuerpo de Tecla con el grabado de
+Placa). **Pendiente: que elija.** Al montarlo, tocar `Hero.module.css` (`.big`,
+`.bigSell`, `.bigBuy`, `.bigAsk`) y, si la forma cambia el marcado, `Hero.tsx` —
+las tres nuevas necesitan un `<span>` de etiqueta y otro de flecha, así que el
+marcado SÍ cambia.
+
+Las seis están implementadas en CSS puro (sin imágenes) en el mock, así que
+portarlas es copiar el bloque y renombrar las variables. El mock vive fuera del
+repo, en el artifact de la conversación.
 
 ### 2. Co-Create está renombrado a medias
 El hub de Cherry Picked ya lo llama **«Cherry Picked Co-Create»**, porque el

@@ -650,3 +650,60 @@ entera. Alto total del gráfico: de ~1000 px a ~500.
   en `/lab/cal` (ya borrada) y cotejada contra la captura anotada del owner.
 - APP_VERSION 3.23 -> 3.24.
 (commit: f734dce)
+
+
+## [2026-08-11 · decimocuarta pasada] La portada de Kaffetal Regal
+
+Empieza el repaso de Kaffetal Regal, y empieza por arriba. La entrada eran DOS
+cosas apiladas: una cinta cinematográfica con el bucle de la cereza y el nombre
+«Kaffetal Regal», y debajo un hero claro con foto de paisaje a la derecha,
+párrafo largo y dos botones de sistema. Se funden en UNA franja, siguiendo la
+maqueta anotada del owner.
+
+Lo que hay ahora:
+
+- FONDO: el zoom infinito del logo de CTC corriendo en bucle, atenuado. El
+  original es un GIF de 5,7 MB; se convirtió a WebP animado (1,8 MB, misma
+  fuente de 400x225 que el bucle de CTC Home). Como en la casa matriz, NO pasa
+  por next/image —lo congelaría en un fotograma— y va oculto a lectores de
+  pantalla.
+- La frase del owner arriba a la izquierda, los dos botones debajo y el logo
+  COMPLETO de Kaffetal Regal a la derecha, con «Portal del Productor» encima.
+- Los botones son los de ctcexport.com: el sistema `.ctcb` de globals.css,
+  tratamiento costal. Oro el que abre cuenta —el mismo oro con el que la casa
+  matriz nombra a Kaffetal Regal— y tinta el que baja a «¿Por qué especialidad?».
+  Apilados, no en fila: la columna es estrecha y dos costales lado a lado se
+  estrujan hasta partir su rótulo.
+
+Tres decisiones que no estaban en la maqueta pero que se seguían de ella:
+
+1. LA CINTA SUPERIOR SE BORRA (`TopBanner`). Repetía el nombre que ahora dice el
+   logo y ponía un segundo bucle encima del primero. Su imagen
+   (`hero-zoom-cereza.webp`) queda en el repositorio sin usar, por si el owner la
+   quiere en otro sitio.
+2. EL LOGO VA EN CREMA CON ALFA. El archivo de marca es verde oscuro sobre
+   blanco OPACO: sobre esta franja habría aparecido como un cuadro blanco, y si
+   se le quitaba el blanco, la tinta verde se perdía en el verde del fondo. Se
+   generó `kaffetal-regal-logo-cream.webp` —silueta crema, fondo transparente,
+   recortada a la caja del dibujo— y el original se queda para donde el fondo es
+   claro. Al pasar por `format=yuva444p` el blanco cae en 235, no en 255: si el
+   umbral se pone por encima queda un halo cuadrado casi invisible en pantalla
+   pero visible en cuanto el fondo es oscuro.
+3. EL PÁRRAFO Y LA PROMESA NO SE PIERDEN, BAJAN. «Su cosecha puede ser la mejor
+   taza...» y el párrafo que explica Kaffetal Regal abren ahora la sección
+   siguiente, ya sobre papel. La portada quedó para mirar; eso es para leer.
+   También se fue el sobretítulo «Cafés de Colombia, para el mundo»: es
+   exactamente el lema que ya trae el logo debajo del nombre.
+
+- Para el próximo Version Wrap: la portada de KR cambia de naturaleza (de hero
+  claro con foto a franja oscura con bucle); `TopBanner` desaparece del FILETREE;
+  archivos nuevos `hero-zoom-logo.webp` y `kaffetal-regal-logo-cream.webp`.
+- Verificación: tsc, eslint y `next build` limpios. Fotografiado a 1280 y a 820
+  px (una columna): el logo pasa arriba y los botones a ancho completo.
+- Gotcha nuevo: `globals.css` da `padding:78px 0` a TODA `section`, y `.wrap`
+  lleva 24px laterales. Una franja a sangre necesita `padding:0` en la sección, y
+  dentro hay que usar `padding-block` — un atajo `padding` en el mismo elemento
+  que lleva `.wrap` le borra los laterales y por debajo de 1180px el texto se
+  pega al borde de la pantalla.
+- APP_VERSION 3.24 -> 3.25.
+(commit: PENDIENTE)

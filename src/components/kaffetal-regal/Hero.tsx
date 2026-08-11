@@ -5,13 +5,16 @@ import { useLang, type Lang } from "@/components/lang/i18n";
 import styles from "./Hero.module.css";
 
 type Dict = {
-  eyebrow: string;
+  portal: string;
   h1: string;
   h1em: string;
+  introHead: string;
+  introEm: string;
   lead: React.ReactNode;
   ctaRegister: string;
+  ctaRegisterLead: string;
   ctaWhy: string;
-  photoTag: string;
+  ctaWhyLead: string;
   pipeAria: string;
   pipeHead: string;
   pipeSub: string;
@@ -27,9 +30,11 @@ type Dict = {
 
 const T: Record<Lang, Dict> = {
   es: {
-    eyebrow: "Cafés de Colombia, para el mundo",
-    h1: "Su cosecha puede ser la mejor taza que alguien pruebe este año. ",
-    h1em: "Que se pague como tal.",
+    portal: "Portal del Productor",
+    h1: "¡Reconocemos el valor de un trabajo sobresaliente, ",
+    h1em: "que logra un grano extraordinario!",
+    introHead: "Su cosecha puede ser la mejor taza que alguien pruebe este año. ",
+    introEm: "Que se pague como tal.",
     lead: (
       <>
         Durante generaciones, el café colombiano salió al mundo sin el nombre de quien lo hizo posible. Kaffetal
@@ -41,8 +46,9 @@ const T: Record<Lang, Dict> = {
       </>
     ),
     ctaRegister: "Registrar mi primer lote",
+    ctaRegisterLead: "Su finca y su lote, sin costo",
     ctaWhy: "¿Por qué especialidad?",
-    photoTag: "PAISAJE CAFETERO · SANTANDER",
+    ctaWhyLead: "Antes de empezar",
     pipeAria: "El camino de su café",
     pipeHead: "El camino de su café",
     pipeSub: "2 cosechas al año · 2 oportunidades",
@@ -74,9 +80,11 @@ const T: Record<Lang, Dict> = {
     cpBtn: "Conocer Cherry Picked ↗",
   },
   en: {
-    eyebrow: "Coffees of Colombia, for the world",
-    h1: "Your harvest could be the best cup someone tastes this year. ",
-    h1em: "Let it be paid as such.",
+    portal: "Producer Portal",
+    h1: "We recognise the value of outstanding work, ",
+    h1em: "the kind that yields an extraordinary bean.",
+    introHead: "Your harvest could be the best cup someone tastes this year. ",
+    introEm: "Let it be paid as such.",
     lead: (
       <>
         For generations, Colombian coffee went out into the world without the name of the person who made it
@@ -88,8 +96,9 @@ const T: Record<Lang, Dict> = {
       </>
     ),
     ctaRegister: "Register my first lot",
+    ctaRegisterLead: "Your farm and your lot, at no cost",
     ctaWhy: "Why specialty?",
-    photoTag: "COFFEE LANDSCAPE · SANTANDER",
+    ctaWhyLead: "Before you start",
     pipeAria: "Your coffee's journey",
     pipeHead: "Your coffee's journey",
     pipeSub: "2 harvests a year · 2 opportunities",
@@ -121,9 +130,11 @@ const T: Record<Lang, Dict> = {
     cpBtn: "Discover Cherry Picked ↗",
   },
   de: {
-    eyebrow: "Kaffees aus Kolumbien, für die Welt",
-    h1: "Ihre Ernte könnte die beste Tasse sein, die jemand dieses Jahr probiert. ",
-    h1em: "Sie soll auch so bezahlt werden.",
+    portal: "Produzentenportal",
+    h1: "Wir würdigen den Wert herausragender Arbeit, ",
+    h1em: "die eine außergewöhnliche Bohne hervorbringt.",
+    introHead: "Ihre Ernte könnte die beste Tasse sein, die jemand dieses Jahr probiert. ",
+    introEm: "Sie soll auch so bezahlt werden.",
     lead: (
       <>
         Über Generationen ging kolumbianischer Kaffee ohne den Namen derer in die Welt, die ihn möglich machten.
@@ -136,8 +147,9 @@ const T: Record<Lang, Dict> = {
       </>
     ),
     ctaRegister: "Mein erstes Lot registrieren",
+    ctaRegisterLead: "Ihre Finca und Ihr Lot, kostenlos",
     ctaWhy: "Warum Spezialität?",
-    photoTag: "KAFFEELANDSCHAFT · SANTANDER",
+    ctaWhyLead: "Bevor Sie anfangen",
     pipeAria: "Der Weg Ihres Kaffees",
     pipeHead: "Der Weg Ihres Kaffees",
     pipeSub: "2 Ernten pro Jahr · 2 Chancen",
@@ -180,89 +192,132 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
   ];
 
   return (
-    <section className={styles.hero}>
-      <div className="wrap">
-        <div className={styles.heroGrid}>
-          <div>
-            <p className="eyebrow">
-              {t.eyebrow}{" "}
-              <span className={styles.coldots}>
-                <i /><i /><i /><i />
-              </span>
-            </p>
+    <>
+      {/* ── La franja de entrada ───────────────────────────────────────────────
+          Antes era una foto de paisaje a la derecha y el texto a la izquierda,
+          sobre papel. Ahora la portada es el zoom infinito del logo de CTC
+          corriendo de fondo, atenuado, y encima solo tres cosas: la frase, los
+          dos botones y el logo completo de Kaffetal Regal.
+
+          El bucle NO pasa por next/image a propósito: lo rasterizaría a un solo
+          fotograma. Y no decora nada que el texto no diga, así que va oculto a
+          los lectores de pantalla; quien garantiza que la frase se lea es el
+          velo, no la suerte del fotograma. */}
+      <section className={styles.hero}>
+        <div className={styles.heroBg} aria-hidden>
+          {/* eslint-disable-next-line @next/next/no-img-element -- WebP animado, no debe pasar por next/image */}
+          <img src="/images/kaffetal-regal/hero-zoom-logo.webp" alt="" />
+        </div>
+        <div className={styles.scrim} aria-hidden />
+
+        <div className={`wrap ${styles.band}`}>
+          <div className={styles.bandCopy}>
             <h1 className={styles.h1}>
               {t.h1}
               <em>{t.h1em}</em>
             </h1>
-            <p className={styles.lead}>{t.lead}</p>
+            {/* Los mismos botones de ctcexport.com — el sistema `.ctcb` de
+                globals.css. El que abre la cuenta lleva el oro con el que la
+                casa matriz nombra a Kaffetal Regal; el otro va en tinta para
+                que se lea como lo que es: el paso previo, no la puerta. */}
             <div className={styles.heroCta}>
-              <button className="btn btn-solid-accent" onClick={onLogin}>
-                {t.ctaRegister}
+              <button className={`ctcb ctcb-costal ctcb-gold ${styles.big}`} onClick={onLogin}>
+                <span className="ctcb-txt">
+                  <span className="ctcb-lead">{t.ctaRegisterLead}</span>
+                  <span className="ctcb-ask">{t.ctaRegister}</span>
+                </span>
+                <span className="ctcb-arw" aria-hidden>
+                  →
+                </span>
               </button>
-              <button className="btn" onClick={() => onGo("oportunidad")}>
-                {t.ctaWhy}
+              <button className={`ctcb ctcb-costal ctcb-ink ${styles.big}`} onClick={() => onGo("oportunidad")}>
+                <span className="ctcb-txt">
+                  <span className="ctcb-lead">{t.ctaWhyLead}</span>
+                  <span className="ctcb-ask">{t.ctaWhy}</span>
+                </span>
+                <span className="ctcb-arw" aria-hidden>
+                  ↓
+                </span>
               </button>
             </div>
           </div>
-          <div className={styles.heroVisual}>
+
+          {/* El logo COMPLETO, no la insignia redonda que llevaba el pie de la
+              foto: monograma, palabra y lema. Va en la versión crema con alfa
+              —el original es verde oscuro sobre blanco y sobre este fondo
+              desaparecería dos veces: por el plato blanco y por la tinta. */}
+          <div className={styles.bandMark}>
+            <span className={styles.portal}>{t.portal}</span>
             <Image
-              className={styles.photo}
-              src="/images/kaffetal-regal/30-hero-paisaje.jpg"
-              alt="Montañas cafeteras de Santander"
-              width={900}
-              height={678}
+              className={styles.krfull}
+              src="/images/shared/kaffetal-regal-logo-cream.webp"
+              alt="Kaffetal Regal · cafés de Colombia, para el mundo"
+              width={874}
+              height={718}
+              priority
             />
-            <span className={styles.tag}>{t.photoTag}</span>
-            <Image className={styles.krlogo} src="/images/shared/kaffetal-regal-logo.png" alt="Kaffetal Regal" width={1254} height={1254} />
           </div>
         </div>
+      </section>
 
-        <div className={styles.pipeline} role="group" aria-label={t.pipeAria}>
-          <div className={styles.pipelineHead}>
-            <span>{t.pipeHead}</span>
-            <span>{t.pipeSub}</span>
-          </div>
-          <div className={styles.pipelineGrid}>
-            {t.pipeCells.map(([k, v], i) => (
-              <div className={styles.pipelineCell} key={k}>
-                <div className={styles.pic}>{PIPE_ICONS[i]}</div>
-                <span className={styles.k}>{k}</span>
-                <div className={styles.v}>{v}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <section className={styles.after}>
+        <div className="wrap">
+          {/* La promesa y el párrafo que explicaban Kaffetal Regal vivían en la
+              portada. Bajaron aquí enteros: la portada quedó para mirar, esto
+              es para leer. */}
+          <h2 className={styles.introHead}>
+            {t.introHead}
+            <em>{t.introEm}</em>
+          </h2>
+          <p className={styles.lead}>{t.lead}</p>
 
-        <div className={styles.ctcdo} role="group" aria-label={t.doAria}>
-          <div className={styles.ctcdoHead}>
-            <span>{t.doHead}</span>
-            <span>{t.doSub}</span>
-          </div>
-          <div className={styles.ctcdoGrid}>
-            {t.doCells.map((c, i) => (
-              <div className={styles.ctcdoCell} key={i}>
-                <span className={styles.gd}>—</span>
-                <span>{c}</span>
-              </div>
-            ))}
-          </div>
-          <div className={styles.ctcdoFoot}>
-            <div className={styles.ftxt}>
-              <Image className={styles.cplogo} src="/images/shared/cherry-picked-logo.png" alt="Cherry Picked" width={852} height={858} />
-              <p>{t.cpQ}</p>
+          <div className={styles.pipeline} role="group" aria-label={t.pipeAria}>
+            <div className={styles.pipelineHead}>
+              <span>{t.pipeHead}</span>
+              <span>{t.pipeSub}</span>
             </div>
-            <a
-              className="btn btn-sm"
-              href="https://cherry-picked-green.ctcexport.com"
-              target="_blank"
-              rel="noopener"
-              style={{ borderColor: "var(--t-tyrian)", color: "var(--t-tyrian)" }}
-            >
-              {t.cpBtn}
-            </a>
+            <div className={styles.pipelineGrid}>
+              {t.pipeCells.map(([k, v], i) => (
+                <div className={styles.pipelineCell} key={k}>
+                  <div className={styles.pic}>{PIPE_ICONS[i]}</div>
+                  <span className={styles.k}>{k}</span>
+                  <div className={styles.v}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.ctcdo} role="group" aria-label={t.doAria}>
+            <div className={styles.ctcdoHead}>
+              <span>{t.doHead}</span>
+              <span>{t.doSub}</span>
+            </div>
+            <div className={styles.ctcdoGrid}>
+              {t.doCells.map((c, i) => (
+                <div className={styles.ctcdoCell} key={i}>
+                  <span className={styles.gd}>—</span>
+                  <span>{c}</span>
+                </div>
+              ))}
+            </div>
+            <div className={styles.ctcdoFoot}>
+              <div className={styles.ftxt}>
+                <Image className={styles.cplogo} src="/images/shared/cherry-picked-logo.png" alt="Cherry Picked" width={852} height={858} />
+                <p>{t.cpQ}</p>
+              </div>
+              <a
+                className="btn btn-sm"
+                href="https://cherry-picked-green.ctcexport.com"
+                target="_blank"
+                rel="noopener"
+                style={{ borderColor: "var(--t-tyrian)", color: "var(--t-tyrian)" }}
+              >
+                {t.cpBtn}
+              </a>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

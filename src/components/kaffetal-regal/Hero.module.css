@@ -1,23 +1,76 @@
-.hero{padding:44px 0 56px;border-top:none}
-.heroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center}
-@media(max-width:880px){.heroGrid{grid-template-columns:1fr}}
-.coldots{display:inline-flex;gap:6px;vertical-align:middle}
-.coldots i{width:8px;height:8px;border-radius:50%;display:inline-block}
-.coldots i:nth-child(1){background:#E8B10E}
-.coldots i:nth-child(2){background:#1F4FB0}
-.coldots i:nth-child(3){background:#B01F24}
-.coldots i:nth-child(4){background:#1A1C1E}
-.h1{font-size:clamp(35px,4.8vw,58px);font-weight:800;color:var(--primary-deep);margin-top:14px}
-.h1 em{font-style:italic;color:var(--accent)}
-.lead{max-width:56ch;margin-top:20px;font-size:17.5px;color:var(--muted)}
-.heroCta{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;align-items:center}
-.heroVisual{position:relative}
-.photo{border-radius:16px;box-shadow:0 24px 60px -28px rgba(14,32,26,.5);border:1px solid var(--line);width:100%;height:auto}
-.krlogo{position:absolute;left:-28px;bottom:-38px;width:min(40%,190px);height:auto;border-radius:50%;box-shadow:0 14px 34px -12px rgba(14,32,26,.45);border:3px solid var(--card)}
-.tag{position:absolute;bottom:14px;right:14px;background:rgba(14,32,26,.85);color:var(--paper);font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.08em;padding:6px 11px;border-radius:6px}
-@media(max-width:880px){.heroVisual{margin-bottom:24px}}
+/* ── La portada ───────────────────────────────────────────────────────────────
+   Texto claro sobre oscuro: el fondo es el bucle del zoom infinito del logo de
+   CTC, que en su vuelta pasa por fotogramas casi BLANCOS y por otros con el
+   logotipo morado a pantalla completa. Por eso el verde de la casa va abajo del
+   todo y el bucle encima a un quinto de opacidad: así ni el blanco se come el
+   texto ni las letras del logotipo compiten con el titular. Si algún día se
+   sube esa opacidad, hay que volver a medir contra el fotograma BLANCO, no
+   contra el promedio del bucle. */
+/* `padding:0` a propósito: globals.css le da 78px arriba y abajo a TODA
+   `section`, y aquí el aire lo reparte `.band`. Sin este reinicio la portada
+   arrastraba 156px de vacío que no se veían en el código. */
+.hero{position:relative;isolation:isolate;overflow:hidden;background:var(--primary-deep);padding:0;border-top:none}
+.heroBg{position:absolute;inset:0;z-index:0}
+.heroBg img{
+  width:100%;height:100%;object-fit:cover;display:block;opacity:.2;
+  /* El origen es de 400x225: se amplía muchísimo. El desenfoque convierte esa
+     blandura en ambiente deliberado en vez de pixelado a la vista, y de paso
+     calma un fondo que se mueve detrás de un texto que hay que leer. */
+  filter:blur(2.5px) saturate(.9);
+  transform:scale(1.08); /* tapa los bordes blandos del desenfoque */
+}
+/* Velo en dos capas: uno horizontal para que la columna del texto sea la parte
+   más oscura del cuadro, y otro vertical para el contraste general. */
+.scrim{
+  position:absolute;inset:0;z-index:1;
+  background:
+    linear-gradient(90deg, rgba(9,28,18,.90) 0%, rgba(9,28,18,.78) 44%, rgba(9,28,18,.42) 78%, rgba(9,28,18,.34) 100%),
+    linear-gradient(180deg, rgba(6,20,13,.46) 0%, rgba(6,20,13,.12) 45%, rgba(6,20,13,.58) 100%);
+}
+@media(max-width:880px){
+  .scrim{background:linear-gradient(180deg, rgba(9,28,18,.86) 0%, rgba(9,28,18,.76) 55%, rgba(9,28,18,.9) 100%)}
+}
 
-.pipeline{margin-top:58px;border:1px solid var(--primary);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+.band{
+  position:relative;z-index:2;display:grid;grid-template-columns:1.02fr .98fr;
+  /* `padding-block`, no `padding`: este mismo elemento lleva `.wrap`, y un
+     atajo `padding` le borraría los 24px laterales — por debajo de 1180px la
+     franja se pegaba al borde de la pantalla. */
+  gap:40px;align-items:center;padding-block:48px 54px;
+}
+.bandCopy{min-width:0}
+.h1{font-size:clamp(28px,3.5vw,43px);font-weight:800;color:#F4EFE1;line-height:1.16;max-width:20ch;
+  text-shadow:0 2px 18px rgba(4,14,9,.55)}
+.h1 em{font-style:italic;color:var(--accent-soft)}
+
+/* Apilados, no en fila: la columna es estrecha porque el logo se lleva la otra
+   mitad, y dos costales lado a lado se estrujarían hasta partir su rótulo. */
+.heroCta{display:flex;flex-direction:column;align-items:flex-start;gap:13px;margin-top:32px}
+.big{width:min(100%,370px)}
+
+.bandMark{display:flex;flex-direction:column;align-items:flex-end;gap:16px;min-width:0}
+.portal{
+  font-family:var(--font-spline-mono),monospace;font-size:12px;letter-spacing:.16em;
+  text-transform:uppercase;color:#EFE7D3;opacity:.9;
+}
+.krfull{width:min(100%,450px);height:auto;filter:drop-shadow(0 14px 36px rgba(3,12,8,.5))}
+
+@media(max-width:880px){
+  .band{grid-template-columns:1fr;gap:26px;padding-block:34px 42px}
+  /* El logo primero: es lo que dice dónde está uno antes de leer nada. */
+  .bandMark{order:-1;align-items:flex-start;gap:10px}
+  .krfull{width:min(72%,300px)}
+  .h1{max-width:none}
+  .big{width:100%}
+}
+
+/* ── Lo que sigue, ya sobre papel ─────────────────────────────────────────── */
+.after{padding:52px 0 56px;border-top:none}
+.introHead{font-size:clamp(26px,3.4vw,40px);font-weight:800;color:var(--primary-deep);line-height:1.18}
+.introHead em{font-style:italic;color:var(--accent)}
+.lead{max-width:66ch;margin-top:18px;font-size:17px;color:var(--muted)}
+
+.pipeline{margin-top:44px;border:1px solid var(--primary);border-radius:var(--radius);overflow:hidden;background:var(--card)}
 .pipelineHead{padding:12px 18px;background:var(--primary);color:#F1EBD8;font-family:var(--font-spline-mono),monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .pipelineGrid{display:grid;grid-template-columns:repeat(4,1fr)}
 .pipelineCell{padding:18px;border-right:1px solid var(--line)}

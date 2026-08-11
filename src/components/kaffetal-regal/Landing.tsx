@@ -6,7 +6,6 @@ import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { LangProvider, useLang, type Lang } from "@/components/lang/i18n";
 import { LangBubble } from "@/components/lang/LangBubble";
 import { Header } from "./Header";
-import { TopBanner } from "./TopBanner";
 import { Hero } from "./Hero";
 import { OportunidadSection } from "./OportunidadSection";
 import { PorQueSection } from "./PorQueSection";
@@ -127,7 +126,6 @@ function LandingInner({ onLogin }: { onLogin: () => void }) {
   return (
     <div>
       <Header onLogin={onLogin} />
-      <TopBanner />
       <Hero onLogin={onLogin} onGo={(id) => document.getElementById(id)?.scrollIntoView()} />
       <OportunidadSection />
       <PorQueSection onLogin={onLogin} />

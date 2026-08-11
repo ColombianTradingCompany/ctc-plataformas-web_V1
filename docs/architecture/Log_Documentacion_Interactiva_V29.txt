@@ -457,4 +457,4 @@ APP_VERSION 3.18 -> 3.19.
 - Los dos menús listan la sección nueva (`pageIndex`).
 
 APP_VERSION 3.19 -> 3.20.
-(commit: pending)
+(commit: a00858f)

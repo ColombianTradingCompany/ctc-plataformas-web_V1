@@ -608,4 +608,4 @@ tostador. Los dos calendarios ya no pueden discrepar en una fecha.
   página; se confirmaron las cuatro filas por bloque sin colisión, el degradado
   del acopio en sus dos apariciones (may–jun y dic–ene) y la cola de la S2.
 - APP_VERSION 3.22 -> 3.23.
-(commit: 3f766a0)
+(commit: 8f7c805)

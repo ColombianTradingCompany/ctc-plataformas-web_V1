@@ -334,4 +334,4 @@ DEUDA: el velo del escenario del laboratorio está COPIADO de `Hero.module.css`.
 Si allí se retoca y aquí no, el laboratorio miente. Está avisado en el CSS.
 
 APP_VERSION 3.15 -> 3.16.
-(commit: pending)
+(commit: dfe2edb)

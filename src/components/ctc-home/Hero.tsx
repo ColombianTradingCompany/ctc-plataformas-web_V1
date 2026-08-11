@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { HarvestCalendar } from "@/components/HarvestCalendar";
+import { HARVEST_YEAR } from "@/lib/harvestYear";
 import { InfoModal, type InfoEntry } from "./InfoModal";
 import { MarketTicker } from "./MarketTicker";
 import styles from "./Hero.module.css";
@@ -273,8 +275,23 @@ const T: Record<Lang, Dict> = {
 };
 
 export function Hero() {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
   const [open, setOpen] = useState<InfoEntry | null>(null);
+
+  // La cualidad de las dos cosechas enseña el CALENDARIO, no solo la lista: es
+  // el mismo del que vive en Kaffetal Regal (`lib/harvestYear`), con sus barras
+  // abribles. Por eso su ventana va en ancho: doce meses no caben en 560 px.
+  const year = HARVEST_YEAR[lang];
+  const entryFor = (q: InfoEntry, i: number): InfoEntry =>
+    q.key === "cosechas"
+      ? {
+          ...q,
+          accent: Q_ACCENT[i],
+          wide: true,
+          node: <HarvestCalendar blocks={year.blocks} legend={year.legend} months={year.months} lang={lang} />,
+        }
+      : { ...q, accent: Q_ACCENT[i] };
 
   return (
     <section id="hero" className={styles.hero}>
@@ -356,7 +373,7 @@ export function Hero() {
               role="listitem"
               className={styles.qbtn}
               style={{ "--qa": Q_ACCENT[i] } as React.CSSProperties}
-              onClick={() => setOpen({ ...q, accent: Q_ACCENT[i] })}
+              onClick={() => setOpen(entryFor(q, i))}
             >
               {q.title}
             </button>

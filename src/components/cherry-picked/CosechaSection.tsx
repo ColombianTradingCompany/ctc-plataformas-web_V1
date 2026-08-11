@@ -142,14 +142,14 @@ function blocksFor(t: typeof EN): CalBlock[] {
 
 function legendFor(t: typeof EN): CalLegendItem[] {
   return [
-    { color: "#7A8C6E", text: t.lSearch },
-    { color: "var(--primary)", text: t.lHarvest },
-    { color: "var(--t-tyrian)", text: t.lArena },
-    { color: "var(--t-gold)", text: t.lSamples },
-    { color: "#8A5A2B", text: t.lPack },
-    { color: "var(--ink)", text: t.lShip },
-    { color: "#33373B", text: t.lSeason },
-    { color: "#55607A", text: t.lLiq },
+    { color: "#7A8C6E", text: t.lSearch, css: "cbSearch" },
+    { color: "var(--primary)", text: t.lHarvest, css: "cbHarvest" },
+    { color: "var(--t-tyrian)", text: t.lArena, css: "cbArena" },
+    { color: "var(--t-gold)", text: t.lSamples, css: "cbSamples" },
+    { color: "#8A5A2B", text: t.lPack, css: "cbPack" },
+    { color: "var(--ink)", text: t.lShip, css: "cbShip" },
+    { color: "#33373B", text: t.lSeason, css: "cbSeason" },
+    { color: "#55607A", text: t.lLiq, css: "cbLiq" },
   ];
 }
 
@@ -159,14 +159,15 @@ export function CosechaSection() {
   return (
     <section id="cosecha">
       <div className="wrap">
+        {/* Sin párrafo de entrada (2026-08-11): cada barra del calendario abre
+            su etapa, así que el resumen de arriba sobraba. */}
         <div className="sec-head">
           <div>
             <p className="eyebrow">{t.eyebrow}</p>
             <h2>{t.h2}</h2>
           </div>
-          <p>{t.headP}</p>
         </div>
-        <HarvestCalendar blocks={blocksFor(t)} legend={legendFor(t)} months={MONTHS[lang]} />
+        <HarvestCalendar blocks={blocksFor(t)} legend={legendFor(t)} months={MONTHS[lang]} lang={lang} />
       </div>
     </section>
   );

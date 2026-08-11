@@ -1,6 +1,11 @@
 /* La ventana compartida de CTC Home. El `.modal` global ya pone caja, sombra y
    botón de cerrar; aquí solo va lo de dentro. */
 .box{max-width:560px}
+/* Un calendario de doce meses no cabe en 560 px. Se queda por debajo del ancho
+   de la envoltura del sitio para que siga leyéndose como una ventana. */
+.boxWide{max-width:min(1020px,94vw)}
+
+.node{margin-top:18px}
 
 .inner{--ia:var(--accent)}
 

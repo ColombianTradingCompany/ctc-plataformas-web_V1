@@ -31,11 +31,21 @@ export type InfoEntry = {
   /** true cuando esa cara es un LOGOTIPO: se dibuja entero sobre plato claro
    *  en vez de recortarse a la franja, que le cortaría la mitad. */
   imageContain?: boolean;
+  /** Contenido libre bajo los puntos: un gráfico, una tabla. Lo usa la cualidad
+   *  «Catálogo de dos cosechas anuales», que enseña el calendario del año. */
+  node?: React.ReactNode;
+  /** Ventana ancha. Un calendario de doce meses no cabe en 560 px. */
+  wide?: boolean;
 };
 
 export function InfoModal({ entry, onClose }: { entry: InfoEntry | null; onClose: () => void }) {
   return (
-    <Modal open={!!entry} onClose={onClose} ariaLabel={entry?.title} className={styles.box}>
+    <Modal
+      open={!!entry}
+      onClose={onClose}
+      ariaLabel={entry?.title}
+      className={`${styles.box}${entry?.wide ? ` ${styles.boxWide}` : ""}`}
+    >
       {entry && (
         <div
           className={styles.inner}
@@ -60,6 +70,7 @@ export function InfoModal({ entry, onClose }: { entry: InfoEntry | null; onClose
               ))}
             </ul>
           )}
+          {entry.node && <div className={styles.node}>{entry.node}</div>}
           {entry.cta && (
             <div className={styles.foot}>
               <a

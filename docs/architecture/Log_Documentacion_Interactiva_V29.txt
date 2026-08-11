@@ -393,3 +393,45 @@ espacio separador pasa a ser hermano del `<span>`, no hijo.
 
 APP_VERSION 3.17 -> 3.18.
 (commit: 2b646c6)
+
+## [2026-08-11 · octava pasada] Los cuatro logotipos, y el calendario del año se vuelve interactivo
+
+**LOGOTIPOS.** El owner entregó las marcas de CTC Tech, Varietales Registrados,
+Herramientas del Café y Terratalento. Se recortan (venían con una tira de iconos
+de pie ilegible a tamaño de loseta; el corte se hizo por el hueco de blanco,
+medido fila a fila) y entran en `public/images/shared`. Se ven en el índice del
+Ecosistema de Valor —las SEIS puertas llevan ya su marca— y en la barra superior
+de cada superficie: `SurfaceShell` acepta un `logo` opcional que sustituye al
+nombre escrito. Co-Create sigue en texto: aún no tiene logotipo.
+**PENDIENTE DEL OWNER: el logotipo del «Ecosistema de Valor»**, que mencionó pero
+no está entre los archivos; esa banda sigue con el guacamayo.
+
+**NODO A ACTUALIZAR EN EL MAPA: el calendario del año dejó de ser un dibujo.**
+`HarvestCalendar` era un gantt mudo con leyenda. Ahora:
+- Cada barra es un BOTÓN y abre su etapa: qué es, cuándo pasa y qué hace cada
+  parte. Ocho etapas descritas en las tres lenguas, dentro del propio componente
+  — Kaffetal Regal y Cherry Picked rotulan sus barras distinto (productor vs.
+  tostador) pero lo que ocurre en cada etapa es un solo hecho.
+- La leyenda dejó de ser una lista de colores: es el índice de etapas y abre lo
+  mismo que las barras.
+- Con una etapa elegida, el resto del año baja a un 28%: se ve DÓNDE cae esa
+  etapa en los doce meses, que es lo que un gantt plano esconde.
+- El detalle sale EN LÍNEA y no en ventana, porque el calendario se monta DENTRO
+  de una ventana en CTC Home y una ventana dentro de otra no se entiende.
+- **Fuera los párrafos** de entrada en las dos secciones que lo montaban.
+
+**DATOS EXTRAÍDOS**: el año del productor vivía dentro de `CalendarioSection` y
+ahora es `src/lib/harvestYear.ts`, compartido por Kaffetal Regal y CTC Home.
+Cherry Picked mantiene el suyo: al tostador el año se le cuenta desde Ámsterdam.
+
+**CTC HOME lo estrena** dentro de la cualidad «Catálogo de dos cosechas anuales»:
+`InfoEntry` gana `node` (contenido libre) y `wide` (doce meses no caben en 560px).
+
+⚠️ LECCIÓN DE INSTRUMENTO, no de código: se persiguió durante un buen rato un
+falso fallo de CSS porque `getComputedStyle(...).opacity` devuelve SIEMPRE "1" en
+el panel de vista previa — incluso con un `style.opacity` puesto a mano. El
+atenuado funcionaba desde el principio. Se confirmó fotografiando el componente
+aislado en una ruta desechable con Chrome headless. Ver la memoria del panel.
+
+APP_VERSION 3.18 -> 3.19.
+(commit: pending)

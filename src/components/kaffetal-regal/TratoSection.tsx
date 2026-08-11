@@ -28,9 +28,9 @@ type Dict = {
 
 const T: Record<Lang, Dict> = {
   es: {
-    eyebrow: "Para los galardonados · Claro y por escrito",
-    h2: "Tres meses, reglas simples, ",
-    h2em: "pago completo.",
+    eyebrow: "El trato · Para los galardonados, por escrito",
+    h2: "Moderar antes que ",
+    h2em: "intermediar.",
     intro:
       "Si su lote gana un grado, la oferta de Cherry Picked se pone sobre la mesa con todas las cartas boca arriba. Usted conserva el control de su café en todo momento — estas son las reglas del juego.",
     ctcH3: "Lo que hace CTC",
@@ -81,9 +81,9 @@ const T: Record<Lang, Dict> = {
     cpBtn: "Conocer Cherry Picked ↗",
   },
   en: {
-    eyebrow: "For the awarded · Clear and in writing",
-    h2: "Three months, simple rules, ",
-    h2em: "full payment.",
+    eyebrow: "The deal · For the awarded, in writing",
+    h2: "Moderating rather than ",
+    h2em: "brokering.",
     intro:
       "If your lot wins a grade, Cherry Picked's offer goes on the table with every card face up. You keep control of your coffee at all times — these are the rules of the game.",
     ctcH3: "What CTC does",
@@ -134,9 +134,9 @@ const T: Record<Lang, Dict> = {
     cpBtn: "Discover Cherry Picked ↗",
   },
   de: {
-    eyebrow: "Für die Prämierten · Klar und schriftlich",
-    h2: "Drei Monate, einfache Regeln, ",
-    h2em: "volle Zahlung.",
+    eyebrow: "Der Vertrag · Für die Prämierten, schriftlich",
+    h2: "Moderieren statt ",
+    h2em: "vermitteln.",
     intro:
       "Gewinnt Ihr Lot einen Grad, kommt das Angebot von Cherry Picked mit allen Karten offen auf den Tisch. Sie behalten jederzeit die Kontrolle über Ihren Kaffee — das sind die Spielregeln.",
     ctcH3: "Was CTC macht",

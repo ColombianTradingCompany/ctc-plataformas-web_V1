@@ -13,8 +13,6 @@ type Reason = { k: string; title: string; lead: string; body: React.ReactNode };
 
 type Dict = {
   eyebrow: string;
-  h2: string;
-  h2em: string;
   intro: string;
   reasons: Reason[];
   closeBody: React.ReactNode;
@@ -24,8 +22,6 @@ type Dict = {
 const T: Record<Lang, Dict> = {
   es: {
     eyebrow: "Por qué vale la pena",
-    h2: "Aquí el productor no vende café: ",
-    h2em: "compite.",
     intro:
       "Y en cada paso deja un dato que la red reutiliza y que ningún actor tendría solo. Por eso lo que gana no se acaba con el lote: se acumula.",
     reasons: [
@@ -98,8 +94,6 @@ const T: Record<Lang, Dict> = {
   },
   en: {
     eyebrow: "Why it's worth it",
-    h2: "Here the producer doesn't sell coffee: ",
-    h2em: "they compete.",
     intro:
       "And at every step they leave a piece of data the network reuses — one no single actor would have alone. That's why what you earn doesn't end with the lot: it accumulates.",
     reasons: [
@@ -173,8 +167,6 @@ const T: Record<Lang, Dict> = {
   },
   de: {
     eyebrow: "Warum es sich lohnt",
-    h2: "Hier verkauft der Produzent keinen Kaffee: ",
-    h2em: "er tritt an.",
     intro:
       "Und bei jedem Schritt hinterlässt er ein Datum, das das Netzwerk wiederverwendet — eines, das kein Akteur allein hätte. Deshalb endet das, was Sie gewinnen, nicht mit dem Lot: Es akkumuliert sich.",
     reasons: [
@@ -259,10 +251,6 @@ export function PorQueSection({ onLogin }: { onLogin: () => void }) {
         <div className="sec-head">
           <div>
             <p className="eyebrow">{t.eyebrow}</p>
-            <h2>
-              {t.h2}
-              <em>{t.h2em}</em>
-            </h2>
           </div>
           <p>{t.intro}</p>
         </div>

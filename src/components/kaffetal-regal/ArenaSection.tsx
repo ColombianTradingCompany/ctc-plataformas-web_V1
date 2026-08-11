@@ -17,9 +17,9 @@ type Dict = {
 
 const T: Record<Lang, Dict> = {
   es: {
-    eyebrow: "Kaffetal Regal Arena · Formato de creación de contenido",
-    h2: "Aquí no gana el que más grita. ",
-    h2em: "Gana la taza.",
+    eyebrow: "El tiquete de entrada",
+    h2: "Aquí el productor no vende café: ",
+    h2em: "compite.",
     p: (
       <>
         La Arena es nuestro formato primario de contenido para el mercado de especialidad: un espacio en vivo, de
@@ -43,9 +43,9 @@ const T: Record<Lang, Dict> = {
     cap: "Protocolo oficial · Evaluación a ciegas · Q-Graders invitados",
   },
   en: {
-    eyebrow: "Kaffetal Regal Arena · A content-creation format",
-    h2: "Here the loudest voice doesn't win. ",
-    h2em: "The cup wins.",
+    eyebrow: "The entry ticket",
+    h2: "Here the producer doesn't sell coffee: ",
+    h2em: "they compete.",
     p: (
       <>
         The Arena is our primary content format for the specialty market: a live, minimally scripted space where we
@@ -70,9 +70,9 @@ const T: Record<Lang, Dict> = {
     cap: "Official protocol · Blind evaluation · Guest Q-Graders",
   },
   de: {
-    eyebrow: "Kaffetal Regal Arena · Ein Content-Format",
-    h2: "Hier gewinnt nicht, wer am lautesten ruft. ",
-    h2em: "Die Tasse gewinnt.",
+    eyebrow: "Die Eintrittskarte",
+    h2: "Hier verkauft der Produzent keinen Kaffee: ",
+    h2em: "er tritt an.",
     p: (
       <>
         Die Arena ist unser primäres Content-Format für den Spezialitätenmarkt: ein Live-Raum mit minimalem

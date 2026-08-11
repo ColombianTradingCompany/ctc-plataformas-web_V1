@@ -1,0 +1,28 @@
+.hint{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:14px;
+}
+
+/* Cuatro columnas de preguntas agrupadas por tema. Agrupadas y no en una lista
+   larga porque la lista larga es justamente lo que la reforma quitó de en medio:
+   así se ve de un vistazo QUÉ tipo de duda se resuelve aquí. */
+.groups{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+@media(max-width:980px){.groups{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.groups{grid-template-columns:1fr}}
+
+.group{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.groupLabel{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line);
+}
+.list{list-style:none;display:grid;gap:4px;margin:0;padding:0}
+
+.q{
+  display:flex;align-items:flex-start;gap:10px;width:100%;
+  background:none;border:none;border-radius:8px;padding:9px 8px;margin:0;
+  font:inherit;font-size:14px;line-height:1.4;color:var(--ink);text-align:left;cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.q i{margin-left:auto;flex:none;font-style:normal;font-weight:700;color:var(--accent);line-height:1.4}
+.q:hover{background:var(--paper);color:var(--primary-deep)}
+.q:focus-visible{outline:3px solid var(--accent);outline-offset:2px}

@@ -8,10 +8,10 @@ const T: Record<Lang, { nav: [string, string][]; login: string; signup: string; 
   es: {
     nav: [
       ["#oportunidad", "La oportunidad"],
-      ["#participar", "Cómo participar"],
       ["#calendario", "Calendario"],
-      ["#arena", "La Arena"],
       ["#trato", "El trato"],
+      ["#arena", "La Arena"],
+      ["#faq", "Preguntas"],
       ["#gyg", "G&G"],
     ],
     login: "Ingresar",
@@ -21,10 +21,10 @@ const T: Record<Lang, { nav: [string, string][]; login: string; signup: string; 
   en: {
     nav: [
       ["#oportunidad", "The opportunity"],
-      ["#participar", "How to participate"],
       ["#calendario", "Calendar"],
-      ["#arena", "The Arena"],
       ["#trato", "The deal"],
+      ["#arena", "The Arena"],
+      ["#faq", "Questions"],
       ["#gyg", "G&G"],
     ],
     login: "Sign in",
@@ -34,10 +34,10 @@ const T: Record<Lang, { nav: [string, string][]; login: string; signup: string; 
   de: {
     nav: [
       ["#oportunidad", "Die Chance"],
-      ["#participar", "Teilnehmen"],
       ["#calendario", "Kalender"],
-      ["#arena", "Die Arena"],
       ["#trato", "Der Vertrag"],
+      ["#arena", "Die Arena"],
+      ["#faq", "Fragen"],
       ["#gyg", "G&G"],
     ],
     login: "Anmelden",

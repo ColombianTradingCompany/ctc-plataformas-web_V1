@@ -1,0 +1,21 @@
+/* Los dos conceptos, dentro de la franja. El texto de una franja va en claro
+   sobre foto, así que aquí NO valen los tokens de tinta del tema: todo se dibuja
+   en crema y el contorno del botón hace de plato. */
+.wrapper{margin-top:22px}
+.hint{
+  font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent-soft);margin-bottom:10px;
+}
+.figures{display:flex;gap:14px;flex-wrap:wrap}
+.figure{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(8,20,14,.42);border:1px solid rgba(244,239,225,.28);border-radius:var(--radius);
+  padding:12px 18px 12px 14px;cursor:pointer;
+  font-family:var(--font-spline-mono),monospace;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:#F4EFE1;backdrop-filter:blur(3px);
+  transition:border-color .15s,background .15s,transform .15s;
+}
+.figure svg{width:38px;height:42px;flex:none;fill:none;stroke:var(--fc);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.figure:hover{border-color:var(--accent-soft);background:rgba(8,20,14,.62);transform:translateY(-2px)}
+.figure:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+@media(max-width:560px){.figures{flex-direction:column}.figure{width:100%}}

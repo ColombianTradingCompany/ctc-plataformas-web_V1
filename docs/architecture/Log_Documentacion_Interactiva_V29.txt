@@ -770,3 +770,61 @@ Cambios pieza a pieza:
   leído de la definición, y el factor «La trazabilidad» abre su ficha.
 - APP_VERSION 3.25 -> 3.26.
 (commit: 76dc458)
+
+
+## [2026-08-11 · decimosexta pasada] Kaffetal Regal: franjas, y un FAQ que recoge
+
+Tercera y última tanda del repaso. El owner mandó la página maquetada a mano con
+recuadros verdes marcando dónde quiere franjas, y una instrucción que ordena
+todo lo demás: «al final, una sección de FAQ que recopile y explique todos los
+aspectos que estamos dejando por fuera con estas reformas».
+
+LOS TITULARES SUBEN UNA GRADA. Es el gesto que explica casi todos los cambios:
+la afirmación grande de cada bloque sale a sangre, sobre foto, y la sección de
+abajo se queda con el titular de la que venía después.
+
+- Franja nueva del MERCADO, con los dos conceptos que faltaban de ctcexport.com
+  —las olas y la diáspora—. Son los dos que hablan del mercado y no de la finca;
+  los otros tres viven en «¿De qué depende?». Es la única franja que además de
+  afirmar algo deja tocar, así que `Band` estrena `children` (opcional: las
+  franjas que ya existían no se enteran). Reutiliza la foto de la cooperativa,
+  que se quedó sin sitio ayer al cambiar la franja de la cadena.
+- EL TRATO estrena titular: «Moderar antes que intermediar».
+- Franja nueva de la ARENA con el titular que la Arena tenía («Aquí no gana el
+  que más grita. Gana la taza»), y la sección se queda con el que era de «Por qué
+  vale la pena» («Aquí el productor no vende café: compite»). «Por qué vale la
+  pena» se queda solo con su sobretítulo: viene detrás de dos franjas que ya lo
+  anunciaron de sobra.
+- LA OPORTUNIDAD pierde las cuatro cifras (2×, $80.000, 15 kg, 100%) y el
+  acordeón del contrato. Se queda en lo que el owner quiere que sea: el gráfico
+  y los tres factores.
+
+EL FAQ NO ES CONTENIDO NUEVO: es el desagüe de la reforma. Doce fichas en cuatro
+grupos (Empezar · El dinero · La red · Los papeles) que se abren al tocarlas y
+que dicen, con las palabras de los bloques originales y no un resumen: qué es
+Kaffetal Regal, los cinco pasos para participar, cuánto cuesta, cómo se pacta el
+precio, si CTC compra el café, cuántas oportunidades hay al año, qué hace CTC,
+qué es Cherry Picked, el camino del café, qué es el EUDR, qué pasa si no gana y
+qué garantiza que lo pactado se cumpla. Quien viene a mirar recorre la página sin
+tropezar con letra pequeña; quien viene a decidir la encuentra toda junta.
+
+Orden final: portada · «La cadena completa» · La oportunidad · «Donde se gana la
+prima» · Dos cosechas · franja del mercado · El trato · franja de la Arena · La
+Arena · Por qué vale la pena · FAQ · Quiénes somos.
+
+- QUEDA CÓDIGO SIN USAR, a propósito: `ParticiparSection` (con su `ProcessFlow`
+  y su acordeón del EUDR) y `HeroPromesa` ya no se montan en ninguna parte —su
+  contenido vive ahora en el FAQ—. No se borran porque son dos bloques grandes y
+  bien escritos que el owner puede querer de vuelta; si en el próximo repaso
+  siguen sin usarse, se retiran.
+- Para el próximo Version Wrap: la landing de KR cambia de orden OTRA VEZ (esta
+  es la buena); nodos nuevos `MercadoBand` y `FaqSection`; `Band` acepta
+  `children`; `ParticiparSection`/`ProcessFlow`/`HeroPromesa` quedan huérfanos;
+  la barra superior y el índice flotante pierden «Cómo participar» y ganan
+  «Preguntas».
+- Verificación: tsc, eslint y `next build` limpios; el orden de los siete `id`
+  comprobado en el HTML servido; las fichas del FAQ probadas en una ruta
+  desechable (`/lab/faq`, ya borrada): doce preguntas, la ventana abre con el
+  texto completo.
+- APP_VERSION 3.26 -> 3.27.
+(commit: PENDIENTE)

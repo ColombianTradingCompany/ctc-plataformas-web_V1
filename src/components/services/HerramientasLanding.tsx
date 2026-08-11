@@ -89,7 +89,7 @@ export function HerramientasLanding({
   const chrome = CHROME[lang];
 
   return (
-    <SurfaceShell name="Herramientas del Café">
+    <SurfaceShell name="Herramientas del Café" logo="/images/shared/herramientas-logo.png">
       <section className={styles.hero}>
         <span className={styles.tag}>Herramientas del Café</span>
         <h1>{chrome.h1}</h1>

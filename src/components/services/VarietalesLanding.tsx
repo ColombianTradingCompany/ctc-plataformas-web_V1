@@ -102,7 +102,7 @@ export function VarietalesLanding() {
   const { openForm } = useContactModal();
 
   return (
-    <SurfaceShell name="Varietales Registrados">
+    <SurfaceShell name="Varietales Registrados" logo="/images/shared/varietales-logo.png">
       <section className={styles.hero}>
         <span className={styles.tag}>Varietales Registrados</span>
         <h1>{t.varH3}</h1>

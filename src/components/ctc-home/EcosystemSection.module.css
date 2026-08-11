@@ -82,9 +82,11 @@
   background:var(--line);margin-bottom:10px}
 .netThumb img{object-fit:cover;transition:transform .35s ease}
 .netTile:hover .netThumb img{transform:scale(1.04)}
-/* El Directorio y Coffeed traen logotipo, no fotografía: recortarlo a 16/9 le
-   comía la marca. Plato claro + `contain` (el object-fit va inline, porque
-   next/image lo escribe en el style del propio <img>). */
+/* Seis de las seis puertas traen logotipo propio (2026-08-11): recortarlo a 16/9
+   le comería la marca, así que van enteros sobre plato claro con `contain` — el
+   object-fit va inline, porque next/image lo escribe en el style del <img>.
+   Los logotipos ya vienen recortados sin su tira de iconos de pie, que a este
+   tamaño era ruido ilegible (ver el script del commit). */
 .netThumbLogo{background:#fff;border:1px solid var(--line)}
 .netThumbLogo img{padding:10px}
 

@@ -49,7 +49,7 @@ export function CtcTechLanding() {
   const { openForm } = useContactModal();
 
   return (
-    <SurfaceShell name="CTC Tech">
+    <SurfaceShell name="CTC Tech" logo="/images/shared/ctc-tech-logo.png">
       <section className={styles.hero}>
         <span className={styles.tag}>CTC Tech</span>
         <h1>{t.techH3}</h1>

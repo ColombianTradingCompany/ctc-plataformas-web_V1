@@ -52,22 +52,22 @@ const NET_URL =
 // la misma foto sin repetirla tres veces, y añadir un destino es una línea.
 // Todas son fotos reales de la casa y todas se recortan igual (`cover`) — una
 // mezcla de logotipos y fotografías hacía que la rejilla se viera desordenada.
+// Las SEIS puertas son marcas con logotipo propio (2026-08-11: el owner entregó
+// los cuatro que faltaban). Antes cuatro de ellas llevaban una fotografía de la
+// casa, que competía con la marca y no la enseñaba.
 const NET_IMG: Record<string, string> = {
-  [NET_URL.tech]: "/images/ctc-home/tech/tech-optica-sorter.jpg",
-  [NET_URL.varietales]: "/images/ctc-home/28-flor-de-azahar.jpg",
-  // El Directorio y Coffeed son MARCAS con logotipo propio, no fotos de la casa:
-  // se dibujan enteros sobre plato claro (`contain`), no recortados a 16:9.
+  [NET_URL.tech]: "/images/shared/ctc-tech-logo.png",
+  [NET_URL.varietales]: "/images/shared/varietales-logo.png",
   [NET_URL.directorio]: "/images/shared/directorio-logo.png",
   [NET_URL.coffeed]: "/images/shared/coffeed-logo.png",
-  [NET_URL.herramientas]: "/images/ctc-home/tech/tech-instrumentacion-1.jpg",
-  // El cafetal, que es donde trabaja el recolector. La foto «29-cerezas» que
-  // el nombre prometía resultó ser un bodegón de sombrero y pocillos: se vio al
-  // mirar la página renderizada, no al leer el nombre del archivo.
-  [NET_URL.terratalento]: "/images/ctc-home/20-atardecer-cafetal-real.jpg",
+  [NET_URL.herramientas]: "/images/shared/herramientas-logo.png",
+  [NET_URL.terratalento]: "/images/shared/terratalento-logo.png",
 };
 
-/** Las puertas cuya imagen es un logotipo. Cambian el recorte y el fondo. */
-const NET_IS_LOGO = new Set([NET_URL.directorio, NET_URL.coffeed]);
+/** Todas llevan logotipo, así que todas cambian el recorte y el fondo. Se deja
+ *  el conjunto (y no un booleano suelto) porque el día que una puerta vuelva a
+ *  tener foto, sale de aquí y nada más. */
+const NET_IS_LOGO = new Set(Object.keys(NET_IMG));
 
 // El acento de cada puerta: el color con el que se dibuja su ventana. Los tres
 // servicios llevan el mismo que llevaban sus tarjetas en la vieja «Oferta 3».

@@ -33,6 +33,15 @@
   color: var(--primary);
   letter-spacing: 0.02em;
 }
+/* El logotipo propio de la superficie. Se limita por ALTURA y no por anchura:
+   los cuatro tienen proporciones distintas y fijando el ancho la barra crecía
+   con el más alto. */
+.topbarBrand {
+  height: 40px;
+  width: auto;
+  max-width: min(240px, 46vw);
+  object-fit: contain;
+}
 .topbarSpacer {
   flex: 1;
 }

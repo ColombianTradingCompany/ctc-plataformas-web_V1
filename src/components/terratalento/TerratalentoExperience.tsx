@@ -59,7 +59,7 @@ export function TerratalentoExperience() {
   }, []);
 
   return (
-    <SurfaceShell name="Terratalento">
+    <SurfaceShell name="Terratalento" logo="/images/shared/terratalento-logo.png">
       {cargando ? (
         <div className={styles.authWrap}>
           <p style={{ textAlign: "center", color: "var(--muted, #6b6459)" }}>Cargando…</p>

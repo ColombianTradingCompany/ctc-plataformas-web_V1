@@ -19,7 +19,19 @@ const HOME_LABEL = {
   de: "← Colombian Trading Company",
 } as const;
 
-export function SurfaceShell({ name, children }: { name: string; children: React.ReactNode }) {
+export function SurfaceShell({
+  name,
+  logo,
+  children,
+}: {
+  name: string;
+  /** El logotipo de la propia superficie, si lo tiene (2026-08-11). Sustituye al
+   *  nombre en texto: la marca se reconoce antes que se lee. El guacamayo de la
+   *  izquierda se queda — es la vuelta a la casa matriz, no la marca de esta
+   *  página. Sin logotipo, la barra sigue mostrando el nombre escrito. */
+  logo?: string;
+  children: React.ReactNode;
+}) {
   const lang = useLang();
   return (
     <div className={styles.page}>
@@ -33,7 +45,11 @@ export function SurfaceShell({ name, children }: { name: string; children: React
             height={268}
           />
         </a>
-        <span className={styles.topbarName}>{name}</span>
+        {logo ? (
+          <Image className={styles.topbarBrand} src={logo} alt={name} width={720} height={560} priority />
+        ) : (
+          <span className={styles.topbarName}>{name}</span>
+        )}
         <span className={styles.topbarSpacer} />
         <a className={styles.homeLink} href={HOME_URL}>
           {HOME_LABEL[lang]}

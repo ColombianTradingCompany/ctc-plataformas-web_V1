@@ -368,3 +368,28 @@ superficies necesita su `data-theme`.**
 
 APP_VERSION 3.16 -> 3.17.
 (commit: aeab199)
+
+## [2026-08-11 · séptima pasada] El laboratorio: texto editable, vestido por trozo y mandos en acordeón
+
+- **La frase son CUATRO trozos** —inicio, palabra destacada, continuación y
+  cierre— y los cuatro se pueden REESCRIBIR. Se guardan sin espacios en los
+  bordes y se unen con uno al pintar, así que nadie tiene que acordarse del
+  espacio final; un trozo vacío desaparece sin dejar hueco (el alemán lo usa:
+  su «continuación» va vacía).
+- **Vestido POR TROZO**: color (muestras de la casa + selector libre), negrita y
+  cursiva, con un selector de «qué trozo estoy vistiendo». El cierre arranca en
+  oro y cursiva porque así está hoy en la web.
+- **Los mandos son un ACORDEÓN de una sola sección abierta** (Texto · Familia ·
+  Tamaño · Color/negrita/cursiva · Lengua). Con los cinco grupos desplegados a
+  la vez, la vista previa se iba de la pantalla — que es justo lo que hay que
+  estar mirando. Cada cabecera cerrada resume lo que lleva dentro.
+- El texto se guarda POR LENGUA: cambiar de idioma no borra lo escrito antes.
+
+**BUG DE CSS QUE CONVIENE RECORDAR**: la frase salía «que elcafé». La palabra
+destacada llevaba `display:inline-block` para aislar su tamaño, y un elemento en
+línea de bloque SE COME el espacio en blanco que lo precede si ese espacio está
+DENTRO de su caja. Arreglado por partida doble: fuera el `inline-block` y el
+espacio separador pasa a ser hermano del `<span>`, no hijo.
+
+APP_VERSION 3.17 -> 3.18.
+(commit: pending)

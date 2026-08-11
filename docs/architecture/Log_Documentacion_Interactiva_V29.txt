@@ -649,4 +649,4 @@ entera. Alto total del gráfico: de ~1000 px a ~500.
 - Verificación: tsc, eslint y `next build` limpios; rejilla fotografiada aislada
   en `/lab/cal` (ya borrada) y cotejada contra la captura anotada del owner.
 - APP_VERSION 3.23 -> 3.24.
-(commit: PENDIENTE)
+(commit: f734dce)

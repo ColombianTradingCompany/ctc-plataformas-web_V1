@@ -1,6 +1,6 @@
 .hint{
-  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted);margin:0 0 10px;
+  font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 8px;
 }
 
 .calWrap{overflow-x:auto;padding-bottom:8px}
@@ -8,19 +8,25 @@
 .calMonths{
   display:grid;grid-template-columns:repeat(12,1fr);font-family:var(--font-spline-mono),monospace;
   font-size:10.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;
-  border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px;
+  border-bottom:1px solid var(--line);padding-bottom:5px;margin-bottom:6px;
 }
 .calMonths span{text-align:center}
-.calRow{display:grid;grid-template-columns:repeat(12,1fr);align-items:stretch;min-height:46px;position:relative}
-.calRow + .calRow{margin-top:6px}
-.calLabel{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px}
+/* COMPACTO (2026-08-11, segunda revisión del owner). El año tiene que caber de
+   un vistazo: si hay que hacer scroll para ver de enero a diciembre, el gráfico
+   deja de contar lo único que sabe contar —que las dos cosechas y las dos
+   temporadas encajan sin hueco— y vuelve a ser una lista de barras. Las alturas
+   de aquí son ese ajuste; el otro medio ajuste fue juntar filas en
+   `lib/harvestYear`. */
+.calRow{display:grid;grid-template-columns:repeat(12,1fr);align-items:stretch;min-height:32px;position:relative}
+.calRow + .calRow{margin-top:3px}
+.calLabel{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:12px 0 3px}
 
 /* La barra es un BOTÓN desde 2026-08-11 — de ahí los reinicios de fuente y
    borde: sin ellos hereda el aspecto de control del navegador. */
 .calBar{
-  min-height:36px;height:auto;border-radius:8px;display:flex;align-items:center;gap:7px;padding:6px 10px;
-  font-family:var(--font-spline-mono),monospace;font-size:10px;font-weight:600;letter-spacing:.02em;
-  white-space:normal;line-height:1.25;color:#fff;position:relative;z-index:2;margin:2px 0;
+  min-height:28px;height:auto;border-radius:7px;display:flex;align-items:center;gap:6px;padding:4px 9px;
+  font-family:var(--font-spline-mono),monospace;font-size:9.5px;font-weight:600;letter-spacing:.02em;
+  white-space:normal;line-height:1.2;color:#fff;position:relative;z-index:2;margin:1px 0;
   border:none;text-align:left;cursor:pointer;width:100%;
   transition:opacity .18s,transform .18s,box-shadow .18s;
 }
@@ -38,7 +44,7 @@
 .barRamp{
   mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.55) 7%,#000 26%);
   -webkit-mask-image:linear-gradient(90deg,transparent 0,rgba(0,0,0,.55) 7%,#000 26%);
-  padding-left:26px;
+  padding-left:22px;
 }
 
 .barOff{opacity:.28}
@@ -62,7 +68,7 @@
 .calGridLines i{border-left:1px dashed #E0DCCB}
 
 /* ── La leyenda, ahora índice de etapas ───────────────────────────────────── */
-.calLegend{display:flex;gap:10px 16px;flex-wrap:wrap;margin-top:20px;
+.calLegend{display:flex;gap:7px 14px;flex-wrap:wrap;margin-top:14px;
   font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted)}
 .legendBtn{
   display:inline-flex;align-items:center;gap:6px;font:inherit;color:inherit;

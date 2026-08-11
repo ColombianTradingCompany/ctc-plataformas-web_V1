@@ -609,3 +609,44 @@ tostador. Los dos calendarios ya no pueden discrepar en una fecha.
   del acopio en sus dos apariciones (may–jun y dic–ene) y la cola de la S2.
 - APP_VERSION 3.22 -> 3.23.
 (commit: 8f7c805)
+
+
+## [2026-08-11 · decimotercera pasada] El calendario, compacto
+
+El owner devolvió el calendario recién reestructurado con una anotación sobre la
+captura: más compacto. Once filas para doce meses obligaban a hacer scroll, y un
+gráfico del año que no cabe en una pantalla deja de contar lo único que sabe
+contar —que las dos cosechas y las dos temporadas encajan sin dejar hueco— y
+vuelve a ser una lista de barras.
+
+Bajó a OCHO filas sin perder una sola etapa, juntando en una misma fila las que
+no se solapan en el tiempo:
+
+- El EMBARQUE salió del bloque de cosecha y encabeza la banda de venta que abre.
+  El owner lo dibujó con dos flechas a mano en la captura, y tiene más razón de
+  la que pedía: el embarque es lo que lleva ese café a Europa, así que su sitio
+  es el principio de su temporada, no el final de la cosecha. El de la mitaca
+  (julio) abre la S2; el de la principal (marzo) abre la S1.
+- La LIQUIDACIÓN cierra en línea la cola de la temporada larga en vez de colgar
+  de una fila propia — que es literalmente lo que hace: marzo la termina.
+- BLACK y ACOPIO comparten fila porque van seguidos, no a la vez.
+
+Consecuencia de esa última fusión: en la mitaca las compras de Black pasan de
+dos meses a UNO (abril), porque el acopio arranca en mayo y dos barras no caben
+a la vez en la misma casilla. En la principal siguen siendo dos (oct–nov), que
+es lo que muestra la captura del owner. La ficha de la etapa no lo contradice:
+solo fija el ARRANQUE («justo al cerrar las jornadas de la Arena»), nunca la
+duración.
+
+Lo demás fue apretar: barra de 36→28 px, fila de 46→32, separación entre filas
+de 6→3, cuerpo de 10→9,5 px y márgenes de rótulo y leyenda a juego. El rótulo
+de la liquidación se acortó a «Liquidación» (la leyenda ya dice «· marzo»)
+porque en una casilla de un mes se partía en tres líneas y estiraba la fila
+entera. Alto total del gráfico: de ~1000 px a ~500.
+
+- Para el próximo Version Wrap: nada nuevo que documentar más allá de la entrada
+  anterior — es la misma etapa, mejor dibujada.
+- Verificación: tsc, eslint y `next build` limpios; rejilla fotografiada aislada
+  en `/lab/cal` (ya borrada) y cotejada contra la captura anotada del owner.
+- APP_VERSION 3.23 -> 3.24.
+(commit: PENDIENTE)

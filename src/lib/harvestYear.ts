@@ -46,6 +46,17 @@ export type YearLabels = {
 //    rejilla es de doce meses, la cola de esa temporada se dibuja al principio
 //    del año, que es donde de verdad cae.
 //  · La liquidación se corre a marzo, al cierre de esa temporada larga.
+//
+// COMPACTO (2026-08-11, segunda revisión del owner): once filas eran demasiadas
+// para leer el año de un vistazo. Se bajó a ocho SIN quitar información, juntando
+// en una misma fila etapas que no se solapan en el tiempo:
+//   · El EMBARQUE salió del bloque de cosecha y encabeza la banda de venta que
+//     abre. No es una pérdida de sitio, es más exacto: el embarque es lo que
+//     lleva ese café a Europa, así que pertenece al principio de su temporada y
+//     no al final de la cosecha.
+//   · La LIQUIDACIÓN cierra en línea la cola de la temporada larga, que es
+//     literalmente lo que hace: marzo la termina.
+//   · BLACK y ACOPIO comparten fila porque van seguidos, no a la vez.
 export function buildBlocks(L: YearLabels): CalBlock[] {
   return [
     {
@@ -58,20 +69,22 @@ export function buildBlocks(L: YearLabels): CalBlock[] {
         [
           { css: "cbArena", start: 3, end: 4, text: L.arena },
           { css: "cbSamples", start: 4, end: 6, text: L.samples },
-          { css: "cbShip", start: 7, end: 8, text: L.ship },
         ],
-        [{ css: "cbPack", start: 5, end: 7, text: L.pack, ramp: true }],
-        [{ css: "cbBlack", start: 4, end: 6, text: L.black }],
+        [
+          { css: "cbBlack", start: 4, end: 5, text: L.black },
+          { css: "cbPack", start: 5, end: 7, text: L.pack, ramp: true },
+        ],
       ],
     },
     {
       label: L.bS2,
       rows: [
         [
-          { css: "cbSeason", start: 1, end: 4, text: L.seasonS2Tail },
+          { css: "cbSeason", start: 1, end: 3, text: L.seasonS2Tail },
+          { css: "cbLiq", start: 3, end: 4, text: L.liq },
+          { css: "cbShip", start: 7, end: 8, text: L.ship },
           { css: "cbSeason", start: 8, end: 13, text: L.seasonS2 },
         ],
-        [{ css: "cbLiq", start: 3, end: 4, text: L.liq }],
       ],
     },
     {
@@ -82,7 +95,6 @@ export function buildBlocks(L: YearLabels): CalBlock[] {
           { css: "cbHarvest", start: 9, end: 13, text: L.harvest },
         ],
         [
-          { css: "cbShip", start: 3, end: 4, text: L.ship },
           { css: "cbArena", start: 9, end: 10, text: L.arena },
           { css: "cbSamples", start: 10, end: 13, text: L.samples },
         ],
@@ -90,14 +102,19 @@ export function buildBlocks(L: YearLabels): CalBlock[] {
         // (con rampa, dentro del último mes de cosecha) y termina en enero.
         [
           { css: "cbPack", start: 1, end: 2, text: L.pack },
+          { css: "cbBlack", start: 10, end: 12, text: L.black },
           { css: "cbPack", start: 12, end: 13, text: L.pack, ramp: true },
         ],
-        [{ css: "cbBlack", start: 10, end: 12, text: L.black }],
       ],
     },
     {
       label: L.bS1,
-      rows: [[{ css: "cbSeason", start: 4, end: 8, text: L.seasonS1 }]],
+      rows: [
+        [
+          { css: "cbShip", start: 3, end: 4, text: L.ship },
+          { css: "cbSeason", start: 4, end: 8, text: L.seasonS1 },
+        ],
+      ],
     },
   ];
 }
@@ -160,7 +177,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
       seasonS2: "Entrega + venta spot · ago–mar",
       seasonS2Tail: "…sigue la S2 · ene–mar",
       seasonS1: "Entrega + venta spot · abr–jul",
-      liq: "Liquidación · cuentas y pagos",
+      liq: "Liquidación",
     }),
     legend: buildLegend({
       admision: "Admisión de lotes de temporada",
@@ -193,7 +210,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
       seasonS2: "Delivery + spot sales · Aug–Mar",
       seasonS2Tail: "…S2 continues · Jan–Mar",
       seasonS1: "Delivery + spot sales · Apr–Jul",
-      liq: "Settlement · accounts and payments",
+      liq: "Settlement",
     }),
     legend: buildLegend({
       admision: "Season lot admission",
@@ -226,7 +243,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
       seasonS2: "Lieferung + Spotverkauf · Aug–Mär",
       seasonS2Tail: "…S2 läuft weiter · Jan–Mär",
       seasonS1: "Lieferung + Spotverkauf · Apr–Jul",
-      liq: "Abrechnung · Konten und Zahlungen",
+      liq: "Abrechnung",
     }),
     legend: buildLegend({
       admision: "Lot-Zulassung der Saison",

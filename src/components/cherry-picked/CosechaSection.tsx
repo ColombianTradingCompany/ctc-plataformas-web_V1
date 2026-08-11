@@ -37,7 +37,7 @@ const T: Record<Lang, Dict> = {
       seasonS2: "Arrival + spot sales · Aug–Mar",
       seasonS2Tail: "…S2 continues · Jan–Mar",
       seasonS1: "Arrival + spot sales · Apr–Jul",
-      liq: "Balance settlement",
+      liq: "Settlement",
     },
     legend: {
       admision: "Season lot admission",
@@ -69,7 +69,7 @@ const T: Record<Lang, Dict> = {
       seasonS2: "Arribo + venta spot · ago–mar",
       seasonS2Tail: "…sigue la S2 · ene–mar",
       seasonS1: "Arribo + venta spot · abr–jul",
-      liq: "Liquidación de saldos",
+      liq: "Liquidación",
     },
     legend: {
       admision: "Admisión de lotes de temporada",
@@ -101,7 +101,7 @@ const T: Record<Lang, Dict> = {
       seasonS2: "Ankunft + Spot-Verkauf · Aug–Mär",
       seasonS2Tail: "…S2 läuft weiter · Jan–Mär",
       seasonS1: "Ankunft + Spot-Verkauf · Apr–Jul",
-      liq: "Saldenabrechnung",
+      liq: "Abrechnung",
     },
     legend: {
       admision: "Lot-Zulassung der Saison",

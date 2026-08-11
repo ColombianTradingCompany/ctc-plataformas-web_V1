@@ -499,6 +499,26 @@ body{background:#F2EFF7}
 
 
 /* ============================================================
+   VERIFICACIÓN DE CERTIFICADOS
+   Insignia de un soporte ligado a una certificación:
+   gris "en revisión" al subir → azul "verificado por CTC" al aprobar →
+   gris "no aceptado" + aviso al rechazar. Azul = --azul (cinta tricolor).
+   ============================================================ */
+.doc-verif{display:inline-flex; align-items:center; gap:.28rem; font-family:var(--mono); font-size:.56rem;
+  font-weight:600; letter-spacing:.09em; text-transform:uppercase; padding:.18rem .46rem; border-radius:999px;
+  white-space:nowrap; border:1px solid transparent}
+.doc-verif--pend{background:rgba(110,100,128,.14); color:var(--gris); border-color:var(--linea-fuerte)}
+.doc-verif--ok{background:rgba(18,64,140,.12); color:var(--azul); border-color:rgba(18,64,140,.35)}
+.doc-verif--no{background:rgba(110,100,128,.14); color:var(--gris); border-color:var(--linea-fuerte)}
+.doc-verif__aviso{font-size:.8rem; line-height:1.45; color:var(--rojo); margin:.3rem 0 0}
+.doc-verif__aviso b{color:var(--rojo)}
+
+/* Sello azul ✓ junto a una certificación cuyo soporte CTC ya verificó,
+   en la tarjeta pública, la ficha ampliada y la vista previa del perfil. */
+.tag--cert-ok{border-color:var(--azul); color:var(--azul); background:rgba(18,64,140,.06)}
+.cert-check{color:var(--azul); font-weight:700; margin-left:.18rem; line-height:1}
+
+/* ============================================================
    SELECTOR DE ESPECIALIDADES CON EXPLICACIÓN
    ============================================================ */
 .opciones{display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem}

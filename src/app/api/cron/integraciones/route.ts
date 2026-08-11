@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { dispatchPending } from "@/lib/integraciones/dispatch";
+import { barrerCertificadosVencidos } from "@/lib/directorio/sweep";
 
 // ── Cron · vaciar la cola de eventos salientes ───────────────────────────────
 // Mismo gate que /api/cron/market-anchors: CRON_SECRET, y 503 si falta.
 // Corre cada 15 minutos; los eventos no son urgentes por diseño — si algo tiene
 // que ser inmediato, no debería pasar por esta cola.
+//
+// De paso barre los soportes de certificación rechazados y vencidos (10 días):
+// se cuelga aquí para no añadir un tercer cron (límite del plan Hobby).
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -18,7 +22,15 @@ export async function GET(request: Request) {
     }
   }
   try {
-    return NextResponse.json({ ok: true, ...(await dispatchPending()) });
+    const dispatched = await dispatchPending();
+    // Best-effort: un fallo del barrido no debe tumbar el vaciado de la cola.
+    let directorio = { retirados: 0 };
+    try {
+      directorio = await barrerCertificadosVencidos();
+    } catch {
+      /* se reintenta en la próxima corrida */
+    }
+    return NextResponse.json({ ok: true, ...dispatched, directorio });
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
   }

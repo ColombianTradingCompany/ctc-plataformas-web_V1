@@ -34,7 +34,11 @@
 .barOff{opacity:.28}
 .barOn{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--primary-deep);z-index:4}
 
-.cbSearch{background:#7A8C6E}
+/* `cbAdmision` se llamaba `cbSearch` cuando la etapa era «búsqueda y floración»
+   (2026-08-11): el owner la redefinió como la ADMISIÓN DE LOTES de temporada —
+   ya no es un hecho del cafeto, es la ventana en que se inscriben los lotes. El
+   identificador se renombró con ella para que no siga mintiendo. */
+.cbAdmision{background:#7A8C6E}
 .cbHarvest{background:var(--primary)}
 .cbArena{background:var(--t-tyrian)}
 .cbSamples{background:var(--accent)}

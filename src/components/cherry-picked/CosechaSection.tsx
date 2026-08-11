@@ -17,7 +17,7 @@ const EN = {
   bS2: "In your roastery · Season S2 · sales Aug–Dec",
   bMain: "At origin · main harvest",
   bS1: "In your roastery · Season S1 · sales Mar–Jul",
-  search: "Scouting + flowering",
+  search: "Lot admission",
   harvest: "Harvest and scrutiny",
   pack: "📦 Consolidation",
   arena: "🏆 Arena",
@@ -26,7 +26,7 @@ const EN = {
   liq: "Balance settlement",
   seasonS2: "Arrival + spot sales · Aug–Dec",
   seasonS1: "Arrival + spot sales · Mar–Jul",
-  lSearch: "Scouting and flowering",
+  lSearch: "Season lot admission",
   lHarvest: "Harvest and scrutiny",
   lArena: "Kaffetal Regal Arena",
   lSamples: "Samples and pre-order",
@@ -46,7 +46,7 @@ const T: Record<Lang, typeof EN> = {
     bS2: "En tu tostaduría · Temporada S2 · venta ago–dic",
     bMain: "En origen · cosecha principal",
     bS1: "En tu tostaduría · Temporada S1 · venta mar–jul",
-    search: "Búsqueda + floración",
+    search: "Admisión de lotes",
     harvest: "Cosecha y escrutinio",
     pack: "📦 Acopio",
     arena: "🏆 Arena",
@@ -55,7 +55,7 @@ const T: Record<Lang, typeof EN> = {
     liq: "Liquidación de saldos",
     seasonS2: "Arribo + venta spot · ago–dic",
     seasonS1: "Arribo + venta spot · mar–jul",
-    lSearch: "Búsqueda y floración",
+    lSearch: "Admisión de lotes de temporada",
     lHarvest: "Cosecha y escrutinio",
     lArena: "Kaffetal Regal Arena",
     lSamples: "Muestras y preorden",
@@ -72,7 +72,7 @@ const T: Record<Lang, typeof EN> = {
     bS2: "In deiner Rösterei · Saison S2 · Verkauf Aug–Dez",
     bMain: "Im Ursprung · Haupternte",
     bS1: "In deiner Rösterei · Saison S1 · Verkauf Mär–Jul",
-    search: "Suche + Blüte",
+    search: "Lot-Zulassung",
     harvest: "Ernte und Auslese",
     pack: "📦 Sammlung",
     arena: "🏆 Arena",
@@ -81,7 +81,7 @@ const T: Record<Lang, typeof EN> = {
     liq: "Saldenabrechnung",
     seasonS2: "Ankunft + Spot-Verkauf · Aug–Dez",
     seasonS1: "Ankunft + Spot-Verkauf · Mär–Jul",
-    lSearch: "Suche und Blüte",
+    lSearch: "Lot-Zulassung der Saison",
     lHarvest: "Ernte und Auslese",
     lArena: "Kaffetal Regal Arena",
     lSamples: "Muster und Vorbestellung",
@@ -98,7 +98,7 @@ function blocksFor(t: typeof EN): CalBlock[] {
       label: t.bMitaca,
       rows: [
         [
-          { css: "cbSearch", start: 1, end: 3, text: t.search },
+          { css: "cbAdmision", start: 1, end: 3, text: t.search },
           { css: "cbHarvest", start: 3, end: 6, text: t.harvest },
           { css: "cbPack", start: 6, end: 7, text: t.pack },
         ],
@@ -123,7 +123,7 @@ function blocksFor(t: typeof EN): CalBlock[] {
       rows: [
         [
           { css: "cbPack", start: 1, end: 2, text: t.pack },
-          { css: "cbSearch", start: 7, end: 9, text: t.search },
+          { css: "cbAdmision", start: 7, end: 9, text: t.search },
           { css: "cbHarvest", start: 9, end: 13, text: t.harvest },
         ],
         [
@@ -142,7 +142,7 @@ function blocksFor(t: typeof EN): CalBlock[] {
 
 function legendFor(t: typeof EN): CalLegendItem[] {
   return [
-    { color: "#7A8C6E", text: t.lSearch, css: "cbSearch" },
+    { color: "#7A8C6E", text: t.lSearch, css: "cbAdmision" },
     { color: "var(--primary)", text: t.lHarvest, css: "cbHarvest" },
     { color: "var(--t-tyrian)", text: t.lArena, css: "cbArena" },
     { color: "var(--t-gold)", text: t.lSamples, css: "cbSamples" },

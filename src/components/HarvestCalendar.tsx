@@ -18,7 +18,7 @@ import styles from "./HarvestCalendar.module.css";
 // justamente lo que un gantt esconde cuando está todo al mismo peso.
 
 export type CalCss =
-  | "cbSearch"
+  | "cbAdmision"
   | "cbHarvest"
   | "cbArena"
   | "cbSamples"
@@ -52,14 +52,14 @@ type StageInfo = { title: string; when: string; lead: string; points: string[] }
 // llaman igual a lo mismo— pero lo que pasa en cada etapa es un solo hecho.
 const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
   es: {
-    cbSearch: {
-      title: "Búsqueda y floración",
-      when: "Dos veces al año, unos siete meses antes de cada cosecha",
-      lead: "La flor decide la cosecha. Lo que se abre ahora es lo que se recoge dos estaciones después.",
+    cbAdmision: {
+      title: "Admisión de lotes",
+      when: "Al abrir cada temporada, antes de la cosecha",
+      lead: "La ventana en la que se inscriben los lotes que van a competir en la Arena de esa cosecha.",
       points: [
-        "El caficultor identifica qué lotes van a competir y empieza a separarlos.",
-        "Es el momento de registrar la finca y armar la ficha del lote: no cuesta nada y no compromete a nada.",
-        "CTC recorre y acompaña: de aquí salen los lotes que llegan a la Arena.",
+        "El caficultor registra su finca y arma la ficha técnica del lote: el registro y la evaluación documental no cuestan nada.",
+        "CTC revisa el predio y los papeles antes de aceptar el lote — primero la documentación, después la taza.",
+        "Aceptado el lote, entra a la fila de la Arena de esa temporada.",
       ],
     },
     cbHarvest: {
@@ -132,14 +132,14 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
     },
   },
   en: {
-    cbSearch: {
-      title: "Scouting and flowering",
-      when: "Twice a year, some seven months before each harvest",
-      lead: "The blossom decides the harvest. What opens now is what gets picked two seasons later.",
+    cbAdmision: {
+      title: "Lot admission",
+      when: "As each season opens, before the harvest",
+      lead: "The window in which lots are entered for that harvest's Arena.",
       points: [
-        "The grower identifies which lots will compete and starts keeping them apart.",
-        "This is when to register the farm and fill in the lot's datasheet: it costs nothing and commits to nothing.",
-        "CTC walks the farms: this is where the lots that reach the Arena come from.",
+        "The grower registers the farm and fills in the lot's datasheet: registration and the document review cost nothing.",
+        "CTC reviews the plot and the paperwork before accepting the lot — documents first, cup second.",
+        "Once accepted, the lot joins the queue for that season's Arena.",
       ],
     },
     cbHarvest: {
@@ -212,14 +212,14 @@ const STAGE: Record<CalLang, Record<CalCss, StageInfo>> = {
     },
   },
   de: {
-    cbSearch: {
-      title: "Sichtung und Blüte",
-      when: "Zweimal im Jahr, etwa sieben Monate vor jeder Ernte",
-      lead: "Die Blüte entscheidet die Ernte. Was jetzt aufgeht, wird zwei Jahreszeiten später gepflückt.",
+    cbAdmision: {
+      title: "Lot-Zulassung",
+      when: "Zu Beginn jeder Saison, vor der Ernte",
+      lead: "Das Zeitfenster, in dem die Lots für die Arena dieser Ernte eingereicht werden.",
       points: [
-        "Der Produzent bestimmt, welche Lots antreten, und trennt sie ab.",
-        "Jetzt wird die Finca registriert und das Datenblatt des Lots ausgefüllt: kostenlos und unverbindlich.",
-        "CTC begleitet vor Ort: von hier kommen die Lots, die in die Arena gelangen.",
+        "Der Produzent registriert die Finca und füllt das Datenblatt des Lots aus: Registrierung und Dokumentenprüfung kosten nichts.",
+        "CTC prüft Grundstück und Unterlagen, bevor das Lot angenommen wird — zuerst die Papiere, dann die Tasse.",
+        "Ist das Lot angenommen, reiht es sich in die Arena der Saison ein.",
       ],
     },
     cbHarvest: {

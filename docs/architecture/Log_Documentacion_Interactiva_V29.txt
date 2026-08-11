@@ -484,3 +484,76 @@ entrar solo le cuesta un día.
 
 APP_VERSION 3.20 -> 3.21.
 (commit: 25890c2)
+
+## [2026-08-11] Directorio — verificación de certificados (insignia gris→azul + cola ECP)
+- NUEVO flujo sobre "Documentos y soportes" del Directorio del Café. Cuando un
+  especialista sube un soporte (archivo o enlace) y en "¿A qué apoya?" lo liga a
+  una CERTIFICACIÓN de su ficha, ese soporte entra a una cola de verificación de
+  CTC y luce una insignia: gris "En revisión" al subir → azul "Verificado por CTC"
+  al aprobar → gris "No aceptado" + aviso al rechazar. Solo los ligados a
+  certificación llevan insignia; especialidad / general / sin enlace, no.
+- MIGRACIÓN `directorio_documents_cert_verification`: columnas nuevas en
+  `directorio_documents` — `verificacion` (null | pendiente | aprobado | rechazado,
+  con CHECK), `verdicto_por` uuid, `verdicto_at`, `verdicto_nota`,
+  `remover_despues_de`. Backfill de cert-docs previos a 'pendiente'. Dos índices
+  parciales (cola de pendientes; barrido de vencidos). Postgres pasa de N a N tablas
+  (mismas tablas, solo columnas). La tabla sigue service-role-only.
+- DISPARADOR en la subida (`src/lib/directorio/actions.ts`, `sanitizeDoc`): un doc
+  con `enlaza_a='certificacion'` nace con `verificacion='pendiente'` (la insignia
+  gris). `mapDoc` acarrea los 3 campos nuevos a `FichaDoc`.
+- SELLO AZUL PÚBLICO: una certificación cuyo soporte CTC aprobó se pinta con ✓ azul
+  en la tarjeta pública del directorio, en la ficha ampliada y en la vista previa
+  del propio perfil. `loadDirectorio` calcula `certsVerificadas` por miembro (una
+  consulta); nuevo campo en el tipo `Ficha`. Los documentos siguen sin publicarse
+  — lo público es SOLO el hecho "esta certificación está verificada".
+- COLA ECP (`/ecp/directorio`, pestaña nueva "Certificados"): lista los soportes de
+  certificación (pendientes primero), cada uno con autor, la certificación, el
+  documento y Aprobar / Rechazar(+nota). Acciones nuevas en `directorioActions.ts`:
+  `aprobarCertificado` (→ azul, mensaje al usuario, audit) y `rechazarCertificado`
+  (→ gris, `remover_despues_de = now()+10d`, mensaje "no aceptado, revísalo, se
+  retira el <fecha>", audit). Ambas `requireActiveAdmin` + service-role, con
+  `audit_log` de `entity_type='directorio_document'`. La insignia también sale en
+  la lista de documentos del modal de ficha existente.
+- RETIRO A 10 DÍAS sin tercer cron (límite Hobby): barrido perezoso en
+  `cargarDirectorio` (borra los rechazados vencidos del propio usuario al entrar) +
+  backstop global `barrerCertificadosVencidos()` (`src/lib/directorio/sweep.ts`)
+  colgado del cron diario de integraciones. "Corregir" = borrar el rechazado y
+  volver a subir (nuevo pendiente); el que se deja intacto se retira.
+- Para el próximo Version Wrap: entrada DICT nueva `certverif` (el ciclo
+  gris→azul→rechazo+retiro, cert-only, el sello azul público); reescribir el nodo
+  `n-directorio` / DICT `directorio` (los documentos ya no son 100% privados: el
+  estado de verificación de una certificación es público); ampliar `n-ecp`/su DICT
+  con la pestaña Certificados; escenario nuevo `certverif` (subir soporte de cert →
+  cola ECP → aprobar[azul] | rechazar[mensaje+10d] → barrido). FILETREE: archivo
+  nuevo `ctc-platform/src/lib/directorio/sweep.ts`; ANN para él + `directorioActions.ts`.
+- Verificación: migración aplicada y columnas confirmadas por
+  information_schema; tsc limpio; eslint limpio en los archivos tocados (las 27
+  advertencias del árbol son de trabajo en curso de otra sesión — coffeed/,
+  direccionamiento/ — no de este cambio). Lado productor probado en navegador
+  (subir cert-doc → insignia gris "En revisión"); ECP y barrido verificados por SQL
+  (2FA no automatizable): aprobar → azul, rechazar → gris + nota + fecha + mensaje
+  en la conversación, y borrado del vencido.
+- APP_VERSION 3.21 -> 3.22.
+(commit: pending)
+
+## [2026-08-11 · undécima pasada] La primera etapa del año deja de ser la floración
+
+Corrección del owner sobre el calendario: la etapa que abría cada temporada era
+«Búsqueda + floración» y pasa a ser **«Admisión de lotes» (de temporada)**.
+
+No es un cambio de rótulo: es un cambio de NATURALEZA. Dejó de nombrar un hecho
+del cafeto —la flor que decide la cosecha— y pasa a nombrar un hecho de la
+plataforma: la ventana en la que se inscriben los lotes que competirán en la
+Arena de esa cosecha. Por eso se reescribió también su ficha, que hablaba de
+floración y de recorrer fincas, y ahora cuenta el registro de la finca, la ficha
+técnica, la evaluación documental gratuita y la entrada a la fila de la Arena —
+que es como funciona el embudo desde la reestructuración de julio.
+
+Cambiado en las TRES lenguas y en los DOS calendarios (Kaffetal Regal + CTC Home
+comparten `lib/harvestYear`; Cherry Picked tiene el suyo). El identificador
+interno `cbSearch` se renombró a `cbAdmision` —incluida su clase de color en el
+module.css, que si se olvida deja la barra sin fondo— para que no siga
+nombrando una búsqueda que ya no existe.
+
+APP_VERSION 3.21 -> 3.22.
+(commit: pending)

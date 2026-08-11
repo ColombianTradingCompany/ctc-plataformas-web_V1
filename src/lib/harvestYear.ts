@@ -33,7 +33,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
         label: "Cosecha de mitaca · en su finca",
         rows: [
           [
-            { css: "cbSearch", start: 1, end: 3, text: "Búsqueda + floración" },
+            { css: "cbAdmision", start: 1, end: 3, text: "Admisión de lotes" },
             { css: "cbHarvest", start: 3, end: 6, text: "Cosecha y escrutinio" },
             { css: "cbPack", start: 6, end: 7, text: "📦 Acopio" },
           ],
@@ -58,7 +58,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
         rows: [
           [
             { css: "cbPack", start: 1, end: 2, text: "📦 Acopio" },
-            { css: "cbSearch", start: 7, end: 9, text: "Búsqueda + floración" },
+            { css: "cbAdmision", start: 7, end: 9, text: "Admisión de lotes" },
             { css: "cbHarvest", start: 9, end: 13, text: "Cosecha y escrutinio" },
           ],
           [
@@ -74,7 +74,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
       },
     ],
     legend: [
-      { color: "#7A8C6E", text: "Búsqueda y floración", css: "cbSearch" },
+      { color: "#7A8C6E", text: "Admisión de lotes de temporada", css: "cbAdmision" },
       { color: "var(--primary)", text: "Cosecha y escrutinio", css: "cbHarvest" },
       { color: "var(--t-tyrian)", text: "Cupping Arena", css: "cbArena" },
       { color: "var(--accent)", text: "Muestras y preorden", css: "cbSamples" },
@@ -95,7 +95,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
         label: "Mitaca harvest · on your farm",
         rows: [
           [
-            { css: "cbSearch", start: 1, end: 3, text: "Scouting + flowering" },
+            { css: "cbAdmision", start: 1, end: 3, text: "Lot admission" },
             { css: "cbHarvest", start: 3, end: 6, text: "Harvest and scrutiny" },
             { css: "cbPack", start: 6, end: 7, text: "📦 Collection" },
           ],
@@ -120,7 +120,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
         rows: [
           [
             { css: "cbPack", start: 1, end: 2, text: "📦 Collection" },
-            { css: "cbSearch", start: 7, end: 9, text: "Scouting + flowering" },
+            { css: "cbAdmision", start: 7, end: 9, text: "Lot admission" },
             { css: "cbHarvest", start: 9, end: 13, text: "Harvest and scrutiny" },
           ],
           [
@@ -136,7 +136,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
       },
     ],
     legend: [
-      { color: "#7A8C6E", text: "Scouting and flowering", css: "cbSearch" },
+      { color: "#7A8C6E", text: "Season lot admission", css: "cbAdmision" },
       { color: "var(--primary)", text: "Harvest and scrutiny", css: "cbHarvest" },
       { color: "var(--t-tyrian)", text: "Cupping Arena", css: "cbArena" },
       { color: "var(--accent)", text: "Samples and preorder", css: "cbSamples" },
@@ -157,7 +157,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
         label: "Mitaca-Ernte · auf Ihrer Finca",
         rows: [
           [
-            { css: "cbSearch", start: 1, end: 3, text: "Suche + Blüte" },
+            { css: "cbAdmision", start: 1, end: 3, text: "Lot-Zulassung" },
             { css: "cbHarvest", start: 3, end: 6, text: "Ernte und Prüfung" },
             { css: "cbPack", start: 6, end: 7, text: "📦 Sammlung" },
           ],
@@ -182,7 +182,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
         rows: [
           [
             { css: "cbPack", start: 1, end: 2, text: "📦 Sammlung" },
-            { css: "cbSearch", start: 7, end: 9, text: "Suche + Blüte" },
+            { css: "cbAdmision", start: 7, end: 9, text: "Lot-Zulassung" },
             { css: "cbHarvest", start: 9, end: 13, text: "Ernte und Prüfung" },
           ],
           [
@@ -198,7 +198,7 @@ export const HARVEST_YEAR: Record<Lang, HarvestYearDict> = {
       },
     ],
     legend: [
-      { color: "#7A8C6E", text: "Suche und Blüte", css: "cbSearch" },
+      { color: "#7A8C6E", text: "Lot-Zulassung der Saison", css: "cbAdmision" },
       { color: "var(--primary)", text: "Ernte und Prüfung", css: "cbHarvest" },
       { color: "var(--t-tyrian)", text: "Cupping Arena", css: "cbArena" },
       { color: "var(--accent)", text: "Muster und Vorbestellung", css: "cbSamples" },

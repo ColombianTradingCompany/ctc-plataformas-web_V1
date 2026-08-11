@@ -53,10 +53,32 @@ export type AdminPost = {
   esCtc: boolean;
 };
 
+// Un soporte de certificación en la cola de verificación de CTC: quién lo subió,
+// qué certificación respalda, el documento en sí y el veredicto actual.
+export type AdminCertificado = {
+  docId: string;
+  profileId: string;
+  autor: string;
+  codigo: string;
+  ini: string;
+  color: string;
+  avatarUrl: string | null;
+  certificacion: string; // enlace_valor
+  docNombre: string;
+  docTipo: string;
+  docUrl: string | null;
+  docKind: "file" | "url";
+  verificacion: "pendiente" | "aprobado" | "rechazado";
+  verdictoNota: string | null;
+  removerDespuesDe: string | null;
+  creado: string; // relativo
+};
+
 export type DirectorioAdminData = {
   usuarios: AdminUsuario[];
   kpis: { total: number; pendientes: number; enRevision: number; verificados: number; rechazados: number };
   posts: AdminPost[];
+  certificados: AdminCertificado[];
 };
 
 type Row = Record<string, unknown>;
@@ -135,7 +157,60 @@ export async function listarDirectorioAdmin(): Promise<DirectorioAdminData> {
     };
   });
 
-  return { usuarios, kpis, posts };
+  const certificados = await loadCertificados(service);
+
+  return { usuarios, kpis, posts, certificados };
+}
+
+// Cola de verificación de certificados: pendientes primero (accionables), luego
+// los ya resueltos como referencia. Ordena por antigüedad dentro de cada grupo.
+async function loadCertificados(service: ReturnType<typeof createServiceRoleClient>): Promise<AdminCertificado[]> {
+  const { data } = await service
+    .from("directorio_documents")
+    .select("*")
+    .eq("enlaza_a", "certificacion")
+    .not("verificacion", "is", null)
+    .order("created_at", { ascending: true });
+  const docs = data ?? [];
+  if (!docs.length) return [];
+
+  const ownerIds = [...new Set(docs.map((d) => String(d.profile_id)))];
+  const { data: owners } = await service
+    .from("directorio_profiles")
+    .select("profile_id, nombre, color, avatar_asset_id")
+    .in("profile_id", ownerIds);
+  const byId = new Map((owners ?? []).map((o) => [String(o.profile_id), o]));
+  const fileIds = docs.filter((d) => d.kind === "file" && d.asset_id).map((d) => String(d.asset_id));
+  const avatarIds = (owners ?? []).map((o) => o.avatar_asset_id).filter(Boolean).map(String);
+  const signed = await signedKaffetalMediaUrls(service, [...fileIds, ...avatarIds]);
+
+  const items = docs.map((d): AdminCertificado => {
+    const owner = byId.get(String(d.profile_id));
+    const nombre = owner ? String(owner.nombre ?? "") : "(sin nombre)";
+    const kind = d.kind === "url" ? "url" : "file";
+    return {
+      docId: String(d.id),
+      profileId: String(d.profile_id),
+      autor: nombre,
+      codigo: codigoDirectorio(String(d.profile_id)),
+      ini: iniciales(nombre),
+      color: owner ? String(owner.color ?? "#2A0A55") : "#2A0A55",
+      avatarUrl: owner?.avatar_asset_id ? signed.get(String(owner.avatar_asset_id)) ?? null : null,
+      certificacion: String(d.enlace_valor ?? ""),
+      docNombre: String(d.nombre ?? ""),
+      docTipo: String(d.tipo ?? ""),
+      docUrl: kind === "url" ? ((d.url as string) ?? null) : d.asset_id ? signed.get(String(d.asset_id)) ?? null : null,
+      docKind: kind,
+      verificacion: (d.verificacion as AdminCertificado["verificacion"]) ?? "pendiente",
+      verdictoNota: (d.verdicto_nota as string) ?? null,
+      removerDespuesDe: (d.remover_despues_de as string) ?? null,
+      creado: hace(String(d.created_at)),
+    };
+  });
+
+  // Pendientes primero (los que hay que atender), luego resueltos.
+  const rank = (v: string) => (v === "pendiente" ? 0 : 1);
+  return items.sort((a, b) => rank(a.verificacion) - rank(b.verificacion));
 }
 
 export async function cargarFichaAdmin(profileId: string): Promise<AdminFicha | null> {
@@ -160,6 +235,9 @@ export async function cargarFichaAdmin(profileId: string): Promise<AdminFicha | 
     enlazaA: (d.enlaza_a as FichaDoc["enlazaA"]) ?? null,
     enlaceValor: (d.enlace_valor as string) ?? null,
     tam: null,
+    verificacion: (d.verificacion as FichaDoc["verificacion"]) ?? null,
+    verdictoNota: (d.verdicto_nota as string) ?? null,
+    removerDespuesDe: (d.remover_despues_de as string) ?? null,
   }));
 
   const { data: msgs } = await service
@@ -195,9 +273,13 @@ async function postCtc(service: ReturnType<typeof createServiceRoleClient>, admi
   });
 }
 
-async function logVerdicto(service: ReturnType<typeof createServiceRoleClient>, adminId: string, ownerId: string, action: string, prev: string, next: string, nota: string | null) {
+async function logVerdicto(
+  service: ReturnType<typeof createServiceRoleClient>,
+  adminId: string, ownerId: string, action: string, prev: string, next: string, nota: string | null,
+  entityType = "directorio_profile", entityId = ownerId
+) {
   await service.from("audit_log").insert({
-    entity_type: "directorio_profile", entity_id: ownerId, action, previous_status: prev, new_status: next, performed_by: adminId, notes: nota,
+    entity_type: entityType, entity_id: entityId, action, previous_status: prev, new_status: next, performed_by: adminId, notes: nota,
   });
 }
 
@@ -262,6 +344,68 @@ export async function responderEcp(profileId: string, texto: string): Promise<Ad
   if (!t) return { ok: false, error: "Escribe un mensaje." };
   const service = createServiceRoleClient();
   await postCtc(service, adminId, profileId, t);
+  revalidatePath("/ecp/directorio");
+  return { ok: true };
+}
+
+// ── Verificación de certificados (soportes ligados a una certificación) ────────
+// Días que un soporte rechazado sigue visible antes de retirarse si no se corrige.
+const DIAS_PARA_RETIRAR = 10;
+const fechaLarga = (d: Date) => d.toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+
+async function cargarCertDoc(service: ReturnType<typeof createServiceRoleClient>, docId: string) {
+  const { data } = await service
+    .from("directorio_documents")
+    .select("id, profile_id, enlaza_a, enlace_valor, verificacion")
+    .eq("id", docId)
+    .maybeSingle();
+  return data;
+}
+
+export async function aprobarCertificado(docId: string): Promise<AdminResult> {
+  const adminId = await requireActiveAdmin();
+  const service = createServiceRoleClient();
+  const doc = await cargarCertDoc(service, docId);
+  if (!doc || doc.enlaza_a !== "certificacion") return { ok: false, error: "Ese soporte no existe o no liga una certificación." };
+  const ownerId = String(doc.profile_id);
+  const cert = String(doc.enlace_valor ?? "tu certificación");
+
+  const { error } = await service
+    .from("directorio_documents")
+    .update({ verificacion: "aprobado", verdicto_por: adminId, verdicto_at: new Date().toISOString(), verdicto_nota: null, remover_despues_de: null })
+    .eq("id", docId);
+  if (error) return { ok: false, error: "No se pudo aprobar el soporte." };
+
+  await postCtc(service, adminId, ownerId, `Verificamos el soporte de tu certificación «${cert}». Ahora aparece con el sello azul de CTC en tu ficha.`);
+  await logVerdicto(service, adminId, ownerId, "cert_aprobar", String(doc.verificacion ?? ""), "aprobado", cert, "directorio_document", docId);
+  revalidatePath("/ecp/directorio");
+  return { ok: true };
+}
+
+export async function rechazarCertificado(docId: string, nota: string): Promise<AdminResult> {
+  const adminId = await requireActiveAdmin();
+  const service = createServiceRoleClient();
+  const doc = await cargarCertDoc(service, docId);
+  if (!doc || doc.enlaza_a !== "certificacion") return { ok: false, error: "Ese soporte no existe o no liga una certificación." };
+  const ownerId = String(doc.profile_id);
+  const cert = String(doc.enlace_valor ?? "tu certificación");
+  const notaLimpia = clamp(nota, 2000);
+
+  const remover = new Date(Date.now() + DIAS_PARA_RETIRAR * 24 * 60 * 60 * 1000);
+  const { error } = await service
+    .from("directorio_documents")
+    .update({ verificacion: "rechazado", verdicto_por: adminId, verdicto_at: new Date().toISOString(), verdicto_nota: notaLimpia || null, remover_despues_de: remover.toISOString() })
+    .eq("id", docId);
+  if (error) return { ok: false, error: "No se pudo rechazar el soporte." };
+
+  // Mensaje al usuario: no aceptado + revisar + se retira en 10 días. Se añade la
+  // nota del admin si la escribió.
+  const base =
+    `El soporte de tu certificación «${cert}» no fue aceptado por CTC. ` +
+    `Por favor revísalo y vuelve a subir el documento correcto. ` +
+    `Si no se corrige, se retirará el ${fechaLarga(remover)} (en ${DIAS_PARA_RETIRAR} días).`;
+  await postCtc(service, adminId, ownerId, notaLimpia ? `${base}\n\nNota de CTC: ${notaLimpia}` : base);
+  await logVerdicto(service, adminId, ownerId, "cert_rechazar", String(doc.verificacion ?? ""), "rechazado", notaLimpia || cert, "directorio_document", docId);
   revalidatePath("/ecp/directorio");
   return { ok: true };
 }

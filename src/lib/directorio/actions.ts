@@ -89,6 +89,9 @@ function mapDoc(r: DirRow, signed: Map<string, string>, sizes: Map<string, numbe
     enlazaA: (r.enlaza_a as FichaDoc["enlazaA"]) ?? null,
     enlaceValor: (r.enlace_valor as string) ?? null,
     tam: assetId ? sizes.get(assetId) ?? null : null,
+    verificacion: (r.verificacion as FichaDoc["verificacion"]) ?? null,
+    verdictoNota: (r.verdicto_nota as string) ?? null,
+    removerDespuesDe: (r.remover_despues_de as string) ?? null,
   };
 }
 
@@ -120,7 +123,7 @@ function mapMiFicha(r: DirRow, correo: string, documentos: FichaDoc[], avatarUrl
   };
 }
 
-function mapFicha(r: DirRow, correo: string | null, avatarUrl: string | null): Ficha {
+function mapFicha(r: DirRow, correo: string | null, avatarUrl: string | null, certsVerificadas: string[]): Ficha {
   const id = String(r.profile_id);
   const nombre = String(r.nombre ?? "");
   return {
@@ -140,6 +143,7 @@ function mapFicha(r: DirRow, correo: string | null, avatarUrl: string | null): F
     color: String(r.color ?? colorPara(id)),
     avatarUrl,
     iniciales: iniciales(nombre),
+    certsVerificadas,
   };
 }
 
@@ -151,6 +155,17 @@ export async function cargarDirectorio(): Promise<DirectorioBundle | null> {
 
   const service = createServiceRoleClient();
   const correo = user.email ?? "";
+
+  // Barrido perezoso: al cargar su propia ficha, se retiran los soportes que CTC
+  // rechazó y que ya pasaron los 10 días sin corregir. Es la mitad visible de la
+  // promesa ("se retirará en 10 días"); el backstop del cron cubre a quien no
+  // vuelve a entrar. Best-effort: un fallo aquí no debe tumbar la carga.
+  await service
+    .from("directorio_documents")
+    .delete()
+    .eq("profile_id", user.id)
+    .eq("verificacion", "rechazado")
+    .lt("remover_despues_de", new Date().toISOString());
 
   const { data: fichaRow } = await service
     .from("directorio_profiles")
@@ -235,14 +250,36 @@ async function loadDirectorio(service: Service, me: string): Promise<Ficha[]> {
     .eq("estado", "verificado")
     .neq("profile_id", me);
   const rows = data ?? [];
-  const emails = await emailsFor(service, rows.map((r) => String(r.profile_id)));
+  const ids = rows.map((r) => String(r.profile_id));
+  const emails = await emailsFor(service, ids);
   const avatarIds = rows.map((r) => r.avatar_asset_id).filter(Boolean).map(String);
   const avatarUrls = await signedKaffetalMediaUrls(service, avatarIds);
+
+  // Sello azul público: qué certificaciones de cada miembro tienen un soporte ya
+  // aprobado por CTC. Una sola consulta para todos los listados.
+  const verificadasPorMiembro = new Map<string, Set<string>>();
+  if (ids.length) {
+    const { data: aprobadas } = await service
+      .from("directorio_documents")
+      .select("profile_id, enlace_valor")
+      .eq("enlaza_a", "certificacion")
+      .eq("verificacion", "aprobado")
+      .in("profile_id", ids);
+    for (const d of aprobadas ?? []) {
+      const pid = String(d.profile_id);
+      const val = d.enlace_valor ? String(d.enlace_valor) : "";
+      if (!val) continue;
+      if (!verificadasPorMiembro.has(pid)) verificadasPorMiembro.set(pid, new Set());
+      verificadasPorMiembro.get(pid)!.add(val);
+    }
+  }
+
   return rows.map((r) =>
     mapFicha(
       r,
       emails.get(String(r.profile_id)) ?? null,
-      r.avatar_asset_id ? avatarUrls.get(String(r.avatar_asset_id)) ?? null : null
+      r.avatar_asset_id ? avatarUrls.get(String(r.avatar_asset_id)) ?? null : null,
+      [...(verificadasPorMiembro.get(String(r.profile_id)) ?? [])]
     )
   );
 }
@@ -639,6 +676,9 @@ function sanitizeDoc(d: DocInput) {
     tipo: clamp(d.tipo, 60) || "Certificado",
     enlaza_a: enlazaA,
     enlace_valor: enlazaA ? clamp(d.enlaceValor, 200) || null : null,
+    // La insignia gris nace aquí: un soporte ligado a una CERTIFICACIÓN entra a
+    // la cola de revisión de CTC (pendiente). Lo demás no lleva insignia.
+    verificacion: enlazaA === "certificacion" ? "pendiente" : null,
   };
 }
 

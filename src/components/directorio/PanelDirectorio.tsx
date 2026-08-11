@@ -170,7 +170,14 @@ export function PanelDirectorio({
                 </div>
                 <div className="grupo-tags brecha">
                   {x.esp.map((e) => <span className="tag tag--esp" key={e}>{e}</span>)}
-                  {x.cert.map((c) => <span className="tag tag--cert" key={c}>{c}</span>)}
+                  {x.cert.map((c) => {
+                    const ok = x.certsVerificadas.includes(c);
+                    return (
+                      <span className={`tag tag--cert${ok ? " tag--cert-ok" : ""}`} key={c}>
+                        {c}{ok ? <span className="cert-check" title="Verificado por CTC">✓</span> : null}
+                      </span>
+                    );
+                  })}
                 </div>
                 <p className="ficha__bio">{x.bio}</p>
                 {x.motivoTxt ? <p className="ficha__busca"><b>Busca:</b> {x.motivoTxt}</p> : null}
@@ -221,7 +228,20 @@ export function PanelDirectorio({
             <p>{fichaAbierta.bio}</p>
             <ul className="datos brecha">
               <li><b>Especialidad</b><span>{fichaAbierta.esp.join(" · ") || "—"}</span></li>
-              <li><b>Certificaciones</b><span>{fichaAbierta.cert.join(" · ") || "—"}</span></li>
+              <li>
+                <b>Certificaciones</b>
+                <span>
+                  {fichaAbierta.cert.length
+                    ? fichaAbierta.cert.map((c, i) => (
+                        <span key={c}>
+                          {i > 0 ? " · " : ""}
+                          {c}
+                          {fichaAbierta.certsVerificadas.includes(c) ? <span className="cert-check" title="Verificado por CTC">✓</span> : null}
+                        </span>
+                      ))
+                    : "—"}
+                </span>
+              </li>
               {fichaAbierta.motivoTxt ? <li><b>Busca en el directorio</b><span>{fichaAbierta.motivoTxt}</span></li> : null}
               {fichaAbierta.telefono ? <li><b>Teléfono</b><span>{fichaAbierta.telefono}</span></li> : null}
               {fichaAbierta.correo ? <li><b>Correo</b><span>{fichaAbierta.correo}</span></li> : null}

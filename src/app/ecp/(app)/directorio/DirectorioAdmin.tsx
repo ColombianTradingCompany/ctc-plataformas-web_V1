@@ -5,18 +5,32 @@ import { useRouter } from "next/navigation";
 import shared from "@/app/bcp/(app)/shared.module.css";
 import {
   aceptarFicha,
+  aprobarCertificado,
   cargarFichaAdmin,
   crearAnuncioCtc,
   fijarPost,
   moderarPost,
+  rechazarCertificado,
   rechazarFicha,
   responderEcp,
   revisarFicha,
+  type AdminCertificado,
   type AdminFicha,
   type AdminResult,
   type AdminUsuario,
   type DirectorioAdminData,
 } from "../directorioActions";
+
+const VERIF_BADGE: Record<AdminCertificado["verificacion"], string> = {
+  pendiente: shared.badgeWarn,
+  aprobado: shared.badgeGood,
+  rechazado: shared.badgeBad,
+};
+const VERIF_LABEL: Record<AdminCertificado["verificacion"], string> = {
+  pendiente: "En revisión",
+  aprobado: "Verificado",
+  rechazado: "Rechazado",
+};
 
 const BADGE: Record<AdminUsuario["estado"], string> = {
   pendiente: shared.badgeWarn,
@@ -52,9 +66,74 @@ function MiniAvatar({ url, nombre, size = 30 }: { url: string | null; nombre: st
   );
 }
 
+const fechaCorta = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : "";
+
+// Una tarjeta de la cola de verificación de certificados. Aprobar es directo;
+// Rechazar despliega una nota opcional que viaja al usuario junto al aviso de
+// los 10 días.
+function CertCard({
+  c, pending, onAprobar, onRechazar,
+}: {
+  c: AdminCertificado;
+  pending: boolean;
+  onAprobar: () => void;
+  onRechazar: (nota: string) => void;
+}) {
+  const [rechazando, setRechazando] = useState(false);
+  const [nota, setNota] = useState("");
+  return (
+    <div style={{ padding: "11px 13px", border: "1px solid #e5e7eb", borderRadius: 10, background: "#fff", opacity: c.verificacion === "pendiente" ? 1 : 0.82 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <MiniAvatar url={c.avatarUrl} nombre={c.autor} />
+        <span style={{ minWidth: 0, flex: 1 }}>
+          <b style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{c.autor || "(sin nombre)"}</b>
+          <span style={{ fontSize: 11.5, color: "#6b7280" }}>{c.codigo} · subido {c.creado}</span>
+        </span>
+        <span className={`${shared.badge} ${VERIF_BADGE[c.verificacion]}`}>{VERIF_LABEL[c.verificacion]}</span>
+      </div>
+
+      <p style={{ margin: "9px 0 4px", fontSize: 13.5 }}><b>Certificación:</b> {c.certificacion || "—"}</p>
+      <p style={{ margin: "0 0 6px", fontSize: 13 }}>
+        <span style={{ color: "#6b7280" }}>{c.docKind === "url" ? "Enlace" : "Archivo"} · {c.docTipo} · </span>
+        {c.docUrl ? <a href={c.docUrl} target="_blank" rel="noopener noreferrer">{c.docNombre || "Abrir documento"}</a> : (c.docNombre || "—")}
+      </p>
+
+      {c.verificacion === "rechazado" && c.removerDespuesDe ? (
+        <p style={{ margin: "2px 0 6px", fontSize: 12.5, color: "#991B1B" }}>
+          Se retira el {fechaCorta(c.removerDespuesDe)} si el usuario no lo corrige.{c.verdictoNota ? ` · Nota: ${c.verdictoNota}` : ""}
+        </p>
+      ) : null}
+
+      {c.verificacion === "pendiente" ? (
+        rechazando ? (
+          <div style={{ marginTop: 6 }}>
+            <textarea value={nota} onChange={(e) => setNota(e.target.value)} rows={2}
+              placeholder="Motivo del rechazo (opcional; se envía al usuario)…"
+              style={{ width: "100%", padding: 8, borderRadius: 8, border: "1px solid #e5e7eb", marginBottom: 6 }} />
+            <div className={shared.actions} style={{ gap: 8 }}>
+              <button disabled={pending} onClick={() => onRechazar(nota)}
+                style={{ background: "#C8102F", color: "#fff", border: "none", borderRadius: 8, padding: "7px 12px" }}>Confirmar rechazo</button>
+              <button disabled={pending} onClick={() => { setRechazando(false); setNota(""); }}>Cancelar</button>
+            </div>
+          </div>
+        ) : (
+          <div className={shared.actions} style={{ gap: 8, marginTop: 6 }}>
+            <button disabled={pending} onClick={onAprobar}
+              style={{ background: "#1B7A3A", color: "#fff", border: "none", borderRadius: 8, padding: "7px 12px" }}>Aprobar (sello azul)</button>
+            <button disabled={pending} onClick={() => setRechazando(true)}>Rechazar</button>
+          </div>
+        )
+      ) : c.verificacion === "aprobado" ? (
+        <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "#166534" }}>✓ Verificado — luce el sello azul en la ficha pública.</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
   const router = useRouter();
-  const [tab, setTab] = useState<"usuarios" | "muro">("usuarios");
+  const [tab, setTab] = useState<"usuarios" | "certificados" | "muro">("usuarios");
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busca, setBusca] = useState("");
@@ -62,6 +141,8 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
   const [nota, setNota] = useState("");
   const [respuesta, setRespuesta] = useState("");
   const [anuncio, setAnuncio] = useState("");
+
+  const certPendientes = data.certificados.filter((c) => c.verificacion === "pendiente").length;
 
   const flash = (r: AdminResult, okText: string) => setMsg(r.ok ? { ok: true, text: okText } : { ok: false, text: r.error });
 
@@ -110,6 +191,9 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
 
       <div className={shared.tabs}>
         <button className={tab === "usuarios" ? shared.tabActive : ""} onClick={() => setTab("usuarios")}>Usuarios</button>
+        <button className={tab === "certificados" ? shared.tabActive : ""} onClick={() => setTab("certificados")}>
+          Certificados{certPendientes ? ` · ${certPendientes}` : ""}
+        </button>
         <button className={tab === "muro" ? shared.tabActive : ""} onClick={() => setTab("muro")}>Muro</button>
       </div>
 
@@ -150,6 +234,27 @@ export function DirectorioAdmin({ data }: { data: DirectorioAdminData }) {
             })}
           </div>
         </>
+      ) : tab === "certificados" ? (
+        <div style={{ display: "grid", gap: 12 }}>
+          <p style={{ fontSize: 13, color: "#6b7280", margin: "2px 0 6px" }}>
+            Soportes que los especialistas ligaron a una <b>certificación</b>. Al aprobar, la certificación
+            luce el sello azul en la ficha pública; al rechazar, el usuario recibe un mensaje y el soporte se
+            retira en 10 días si no lo corrige.
+          </p>
+          {data.certificados.length ? (
+            data.certificados.map((c) => (
+              <CertCard
+                key={c.docId}
+                c={c}
+                pending={pending}
+                onAprobar={() => act(() => aprobarCertificado(c.docId), "Certificado verificado.")}
+                onRechazar={(n) => act(() => rechazarCertificado(c.docId, n), "Soporte rechazado.")}
+              />
+            ))
+          ) : (
+            <p className={shared.empty}>No hay soportes de certificaciones todavía.</p>
+          )}
+        </div>
       ) : (
         <div style={{ display: "grid", gap: 18 }}>
           <div className={shared.card}>
@@ -254,6 +359,7 @@ function FichaDetalle({
             <li key={d.id} style={{ marginBottom: 4 }}>
               {d.url ? <a href={d.url} target="_blank" rel="noopener noreferrer">{d.nombre}</a> : d.nombre}{" "}
               <span style={{ color: "#6b7280" }}>· {d.tipo}{d.enlazaA ? ` · ${d.enlazaA === "certificacion" ? "Cert." : "Esp."}: ${d.enlaceValor}` : ""}</span>
+              {d.verificacion ? <span className={`${shared.badge} ${VERIF_BADGE[d.verificacion]}`} style={{ marginLeft: 6 }}>{VERIF_LABEL[d.verificacion]}</span> : null}
             </li>
           ))}
         </ul>

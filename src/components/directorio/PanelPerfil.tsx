@@ -9,7 +9,7 @@ import { uploadKaffetalMediaWithProgress } from "@/lib/kaffetalMedia";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { abrirPerfilPdf } from "@/lib/directorio/perfilPrint";
-import type { MiFicha } from "@/lib/directorio/types";
+import type { FichaDoc, MiFicha } from "@/lib/directorio/types";
 import {
   agregarDocumentoArchivo,
   agregarDocumentoUrl,
@@ -68,6 +68,14 @@ export function PanelPerfil({
   const set = <K extends keyof typeof b>(k: K, v: (typeof b)[K]) => setB({ ...b, [k]: v });
   const ini = iniciales(b.nombre);
   const municipios = municipiosDe(b.departamento);
+
+  // Certificaciones propias cuyo soporte CTC ya aprobó → sello azul ✓ en la
+  // vista previa pública (mismo criterio que ven los demás miembros).
+  const certsVerificadas = new Set(
+    ficha.documentos
+      .filter((d) => d.enlazaA === "certificacion" && d.verificacion === "aprobado" && d.enlaceValor)
+      .map((d) => d.enlaceValor as string)
+  );
 
   const partes = [
     b.nombre.trim().length > 3, !!b.departamento, !!b.municipio, !!b.telefono,
@@ -286,7 +294,11 @@ export function PanelPerfil({
                 </div>
                 <div className="grupo-tags brecha">
                   {b.esp.map((e) => <span className="tag tag--esp" key={e}>{e}</span>)}
-                  {b.cert.map((c) => <span className="tag tag--cert" key={c}>{c}</span>)}
+                  {b.cert.map((c) => (
+                    <span className={`tag tag--cert${certsVerificadas.has(c) ? " tag--cert-ok" : ""}`} key={c}>
+                      {c}{certsVerificadas.has(c) ? <span className="cert-check" title="Verificado por CTC">✓</span> : null}
+                    </span>
+                  ))}
                 </div>
                 <p className="ficha__bio">{b.bio}</p>
                 {b.motivoTxt ? <p className="linea-motivo">“{b.motivoTxt}”</p> : null}
@@ -456,6 +468,7 @@ function DocumentosCard({ ficha, onRecargar }: { ficha: MiFicha; onRecargar: () 
                   {d.enlazaA ? ` · ${d.enlazaA === "certificacion" ? "Cert." : "Esp."}: ${d.enlaceValor}` : " · General"}
                   {d.tam ? ` · ${pesoLegible(d.tam)}` : ""}
                 </span>
+                <DocVerifBadge doc={d} />
               </span>
               <button type="button" className="docs__quitar" aria-label={`Quitar ${d.nombre}`} onClick={() => quitar(d.id)}>×</button>
             </li>
@@ -465,6 +478,36 @@ function DocumentosCard({ ficha, onRecargar }: { ficha: MiFicha; onRecargar: () 
         )}
       </ul>
     </div>
+  );
+}
+
+// ── Insignia de verificación de un soporte de certificación ───────────────────
+// Solo los soportes ligados a una certificación la llevan. Gris "En revisión"
+// al subir → azul "Verificado por CTC" al aprobar CTC → gris "No aceptado" +
+// aviso de retiro en 10 días al rechazar.
+const VERIF: Record<NonNullable<FichaDoc["verificacion"]>, { txt: string; cls: string }> = {
+  pendiente: { txt: "En revisión", cls: "doc-verif--pend" },
+  aprobado: { txt: "Verificado por CTC", cls: "doc-verif--ok" },
+  rechazado: { txt: "No aceptado", cls: "doc-verif--no" },
+};
+const fmtFechaLarga = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+
+function DocVerifBadge({ doc }: { doc: FichaDoc }) {
+  if (!doc.verificacion) return null;
+  const v = VERIF[doc.verificacion];
+  return (
+    <>
+      <span style={{ display: "block", marginTop: ".4rem" }}>
+        <span className={`doc-verif ${v.cls}`}>{doc.verificacion === "aprobado" ? "✓ " : ""}{v.txt}</span>
+      </span>
+      {doc.verificacion === "rechazado" ? (
+        <span className="doc-verif__aviso">
+          {doc.verdictoNota ? <>{doc.verdictoNota} </> : "El soporte no fue aceptado. Revísalo y vuelve a subir el documento correcto. "}
+          {doc.removerDespuesDe ? <b>Se retirará el {fmtFechaLarga(doc.removerDespuesDe)} si no lo corriges.</b> : null}
+        </span>
+      ) : null}
+    </>
   );
 }
 

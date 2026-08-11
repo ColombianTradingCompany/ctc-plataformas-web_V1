@@ -13,6 +13,12 @@ export type DirectorioEstado =
 export type DocKind = "file" | "url";
 export type DocEnlace = "certificacion" | "especialidad";
 
+// Estado de verificación de un soporte. Solo los documentos ligados a una
+// CERTIFICACIÓN (enlazaA='certificacion') lo llevan; el resto queda en null (sin
+// insignia). pendiente = insignia gris al subir · aprobado = insignia azul ·
+// rechazado = gris + mensaje al usuario + cuenta atrás de 10 días.
+export type DocVerificacion = "pendiente" | "aprobado" | "rechazado";
+
 export type FichaDoc = {
   id: string;
   kind: DocKind;
@@ -22,6 +28,9 @@ export type FichaDoc = {
   enlazaA: DocEnlace | null;
   enlaceValor: string | null;
   tam: number | null; // bytes, when known (files)
+  verificacion: DocVerificacion | null; // null ⇒ no aplica (no liga certificación)
+  verdictoNota: string | null; // motivo del rechazo, mostrado al usuario
+  removerDespuesDe: string | null; // ISO; solo cuando verificacion='rechazado'
 };
 
 /** The signed-in user's own ficha — everything, editable. */
@@ -68,6 +77,9 @@ export type Ficha = {
   color: string;
   avatarUrl: string | null;
   iniciales: string;
+  // Certificaciones (valores de `cert`) cuyo soporte CTC ya verificó: se pintan
+  // con el sello azul ✓ en la tarjeta pública y en la ficha ampliada.
+  certsVerificadas: string[];
 };
 
 export type Comentario = {

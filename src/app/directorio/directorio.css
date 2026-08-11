@@ -504,14 +504,18 @@ body{background:#F2EFF7}
    gris "en revisión" al subir → azul "verificado por CTC" al aprobar →
    gris "no aceptado" + aviso al rechazar. Azul = --azul (cinta tricolor).
    ============================================================ */
-.doc-verif{display:inline-flex; align-items:center; gap:.28rem; font-family:var(--mono); font-size:.56rem;
+/* Prefijadas con `.docs__meta` a propósito: ahí vive la insignia, y la regla
+   existente `.docs__meta span` (color gris-2, tamaño .6rem) le ganaba por
+   especificidad y pintaba el texto de gris — el sello azul no se veía. Con el
+   prefijo la insignia manda sobre su propio color y tamaño. */
+.docs__meta .doc-verif{display:inline-flex; align-items:center; gap:.28rem; font-family:var(--mono); font-size:.56rem;
   font-weight:600; letter-spacing:.09em; text-transform:uppercase; padding:.18rem .46rem; border-radius:999px;
   white-space:nowrap; border:1px solid transparent}
-.doc-verif--pend{background:rgba(110,100,128,.14); color:var(--gris); border-color:var(--linea-fuerte)}
-.doc-verif--ok{background:rgba(18,64,140,.12); color:var(--azul); border-color:rgba(18,64,140,.35)}
-.doc-verif--no{background:rgba(110,100,128,.14); color:var(--gris); border-color:var(--linea-fuerte)}
-.doc-verif__aviso{font-size:.8rem; line-height:1.45; color:var(--rojo); margin:.3rem 0 0}
-.doc-verif__aviso b{color:var(--rojo)}
+.docs__meta .doc-verif--pend{background:rgba(110,100,128,.14); color:var(--gris); border-color:var(--linea-fuerte)}
+.docs__meta .doc-verif--ok{background:rgba(18,64,140,.12); color:var(--azul); border-color:rgba(18,64,140,.35)}
+.docs__meta .doc-verif--no{background:rgba(110,100,128,.14); color:var(--gris); border-color:var(--linea-fuerte)}
+.docs__meta .doc-verif__aviso{font-size:.8rem; line-height:1.45; letter-spacing:0; text-transform:none; color:var(--rojo); margin:.3rem 0 0}
+.docs__meta .doc-verif__aviso b{color:var(--rojo)}
 
 /* Sello azul ✓ junto a una certificación cuyo soporte CTC ya verificó,
    en la tarjeta pública, la ficha ampliada y la vista previa del perfil. */

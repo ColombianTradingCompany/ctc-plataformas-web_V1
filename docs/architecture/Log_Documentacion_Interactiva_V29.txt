@@ -534,7 +534,7 @@ APP_VERSION 3.20 -> 3.21.
   (2FA no automatizable): aprobar → azul, rechazar → gris + nota + fecha + mensaje
   en la conversación, y borrado del vencido.
 - APP_VERSION 3.21 -> 3.22.
-(commit: pending)
+(commit: 74f7019)
 
 ## [2026-08-11 · undécima pasada] La primera etapa del año deja de ser la floración
 
@@ -556,4 +556,4 @@ module.css, que si se olvida deja la barra sin fondo— para que no siga
 nombrando una búsqueda que ya no existe.
 
 APP_VERSION 3.21 -> 3.22.
-(commit: pending)
+(commit: 74f7019)

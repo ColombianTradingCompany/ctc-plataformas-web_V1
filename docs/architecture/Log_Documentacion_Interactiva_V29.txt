@@ -483,4 +483,4 @@ se puede escribir igual. Mandar a alguien a redactar un correo cuando puede
 entrar solo le cuesta un día.
 
 APP_VERSION 3.20 -> 3.21.
-(commit: pending)
+(commit: 25890c2)

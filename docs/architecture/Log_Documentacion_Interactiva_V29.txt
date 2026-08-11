@@ -827,4 +827,4 @@ Arena · Por qué vale la pena · FAQ · Quiénes somos.
   desechable (`/lab/faq`, ya borrada): doce preguntas, la ventana abre con el
   texto completo.
 - APP_VERSION 3.26 -> 3.27.
-(commit: PENDIENTE)
+(commit: 38dfb90)

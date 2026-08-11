@@ -10,6 +10,27 @@ import styles from "./ContactModal.module.css";
 
 type FormKey = "general" | "tech" | "cocreate" | "varietales";
 
+// Los ÚNICOS temas que cambian de formulario y de pilar. Los demás se quedan en
+// «general»: `leads.pillar` tiene un CHECK con estos cuatro valores y cada uno
+// tiene su tablero en una consola distinta, así que un pilar nuevo no es una
+// línea de copy — es una migración más un tablero que alguien tiene que mirar.
+const PILLAR_TOPICS = new Set<string>(["tech", "cocreate", "varietales"]);
+
+// Temas que se resuelven solos en otra superficie. En producción son
+// subdominios; en desarrollo, rutas. NODE_ENV es constante de compilación, así
+// que no genera desajuste de hidratación.
+const PROD = process.env.NODE_ENV === "production";
+const U = (sub: string, path: string) => (PROD ? `https://${sub}.ctcexport.com` : path);
+const DOORS: Record<string, { href: string; label: string }[]> = {
+  vender: [{ href: U("kaffetal-regal", "/kaffetal-regal"), label: "Kaffetal Regal" }],
+  comprar: [{ href: U("cherry-picked-green", "/cherry-picked-green"), label: "Cherry Picked Green" }],
+  red: [
+    { href: U("directoriodelcafe", "/directorio"), label: "Directorio del Café" },
+    { href: U("terratalento", "/terratalento"), label: "Terratalento" },
+    { href: U("herramientas", "/herramientas"), label: "Herramientas del Café" },
+  ],
+};
+
 // The in-progress form survives the Google OAuth redirect here; the resume
 // effect below picks it up once the session exists. 30-minute freshness so an
 // abandoned attempt never resurrects days later.
@@ -47,9 +68,20 @@ type Dict = {
   gOrgPh: string;
   gTema: string;
   temaGeneral: string;
+  temaVender: string;
+  temaComprar: string;
   temaTech: string;
   temaCocreate: string;
   temaVarietales: string;
+  temaLogistica: string;
+  temaRed: string;
+  temaPrensa: string;
+  /** Aviso bajo el selector cuando el tema tiene puerta propia: escribir no es
+   *  el camino corto, registrarse sí. */
+  doorVender: string;
+  doorComprar: string;
+  doorRed: string;
+  doorGo: string;
   gMsg: string;
   gMsgPh: string;
   tH3: string;
@@ -121,9 +153,18 @@ const T: Record<Lang, Dict> = {
     gOrgPh: "Empresa, finca o marca",
     gTema: "Tema",
     temaGeneral: "Consulta general",
+    temaVender: "Quiero vender mi café",
+    temaComprar: "Quiero comprar café verde",
     temaTech: "CTC Tech · tecnologías agrónomas",
-    temaCocreate: "CTC Co-Create · proyecto EE.UU./Europa",
+    temaCocreate: "Co-Create · proyecto de marca en EE.UU. y Europa",
     temaVarietales: "Varietales Registrados · chapolas",
+    temaLogistica: "Logística y exportación",
+    temaRed: "Directorio, Terratalento o Herramientas",
+    temaPrensa: "Prensa y alianzas",
+    doorVender: "Puede registrar su finca y sus lotes usted mismo, gratis y sin compromiso:",
+    doorComprar: "El catálogo con los microlotes disponibles está abierto:",
+    doorRed: "Los tres son de acceso libre y se entra directamente:",
+    doorGo: "Escríbanos igual si prefiere que lo acompañemos.",
     gMsg: "Mensaje",
     gMsgPh: "¿En qué podemos ayudarte?",
     tH3: "CTC Tech · Agendar diagnóstico",
@@ -193,9 +234,18 @@ const T: Record<Lang, Dict> = {
     gOrgPh: "Company, farm or brand",
     gTema: "Topic",
     temaGeneral: "General inquiry",
+    temaVender: "I want to sell my coffee",
+    temaComprar: "I want to buy green coffee",
     temaTech: "CTC Tech · agronomic technologies",
-    temaCocreate: "CTC Co-Create · US/Europe project",
+    temaCocreate: "Co-Create · brand project in the US and Europe",
     temaVarietales: "Registered Varietals · seedlings",
+    temaLogistica: "Logistics and export",
+    temaRed: "Directory, Terratalento or Coffee Tools",
+    temaPrensa: "Press and partnerships",
+    doorVender: "You can register your farm and lots yourself, free and with no commitment:",
+    doorComprar: "The catalogue of available microlots is open:",
+    doorRed: "All three are open access — you can go straight in:",
+    doorGo: "Write to us anyway if you would rather we walk you through it.",
     gMsg: "Message",
     gMsgPh: "How can we help you?",
     tH3: "CTC Tech · Book a diagnosis",
@@ -265,9 +315,18 @@ const T: Record<Lang, Dict> = {
     gOrgPh: "Unternehmen, Finca oder Marke",
     gTema: "Thema",
     temaGeneral: "Allgemeine Anfrage",
+    temaVender: "Ich möchte meinen Kaffee verkaufen",
+    temaComprar: "Ich möchte Rohkaffee kaufen",
     temaTech: "CTC Tech · Agrartechnologien",
-    temaCocreate: "CTC Co-Create · Projekt USA/Europa",
+    temaCocreate: "Co-Create · Markenprojekt in den USA und Europa",
     temaVarietales: "Registrierte Varietäten · Setzlinge",
+    temaLogistica: "Logistik und Export",
+    temaRed: "Verzeichnis, Terratalento oder Kaffee-Werkzeuge",
+    temaPrensa: "Presse und Partnerschaften",
+    doorVender: "Sie können Finca und Lots selbst registrieren, kostenlos und unverbindlich:",
+    doorComprar: "Der Katalog der verfügbaren Microlots ist offen:",
+    doorRed: "Alle drei sind frei zugänglich — Sie können direkt hinein:",
+    doorGo: "Schreiben Sie uns trotzdem, wenn Sie lieber begleitet werden möchten.",
     gMsg: "Nachricht",
     gMsgPh: "Womit können wir helfen?",
     tH3: "CTC Tech · Diagnose vereinbaren",
@@ -384,6 +443,9 @@ export function ContactModalProvider({
 }) {
   const t = T[useLang()];
   const [openKey, setOpenKey] = useState<FormKey | null>(null);
+  // El tema elegido en el formulario general. Es estado y no `defaultValue`
+  // porque el aviso de puerta que va debajo depende de él.
+  const [tema, setTema] = useState("general");
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
   // What the visitor already typed in the general form survives a "Tema"
   // switch: switching used to unmount the form and silently discard
@@ -403,7 +465,11 @@ export function ContactModalProvider({
     setOpenKey(key);
   };
 
+  // Al cambiar de pilar el selector se queda atrás, así que se devuelve a
+  // «general»: si el visitante vuelve al formulario general, lo encuentra limpio
+  // en vez de mostrando el tema que ya lo sacó de ahí.
   function switchTema(nextKey: FormKey, select: HTMLSelectElement) {
+    setTema("general");
     const form = select.closest("form");
     if (form) {
       const fd = new FormData(form);
@@ -547,19 +613,48 @@ export function ContactModalProvider({
               </div>
               <div>
                 <label htmlFor="g-tema">{t.gTema}</label>
+                {/* Sólo TRES temas tienen formulario y tablero propios (los tres
+                    pilares de `leads`). El resto se quedan en «general» y viajan
+                    en `fields.tema`, que es texto libre y ya se muestra en la
+                    ficha del lead — así el menú puede contar toda la oferta sin
+                    inventar pilares que nadie vigilaría. */}
                 <select
                   id="g-tema"
                   name="tema"
-                  defaultValue="general"
+                  value={tema}
                   onChange={(e) => {
-                    if (e.target.value !== "general") switchTema(e.target.value as FormKey, e.target);
+                    const v = e.target.value;
+                    setTema(v);
+                    if (PILLAR_TOPICS.has(v)) switchTema(v as FormKey, e.target);
                   }}
                 >
                   <option value="general">{t.temaGeneral}</option>
+                  <option value="vender">{t.temaVender}</option>
+                  <option value="comprar">{t.temaComprar}</option>
                   <option value="tech">{t.temaTech}</option>
-                  <option value="cocreate">{t.temaCocreate}</option>
                   <option value="varietales">{t.temaVarietales}</option>
+                  <option value="cocreate">{t.temaCocreate}</option>
+                  <option value="logistica">{t.temaLogistica}</option>
+                  <option value="red">{t.temaRed}</option>
+                  <option value="prensa">{t.temaPrensa}</option>
                 </select>
+
+                {/* Tres temas tienen puerta propia: mandarlos a escribir un
+                    correo cuando pueden entrar solos es hacerles perder un día. */}
+                {DOORS[tema] && (
+                  <p className={styles.door}>
+                    {tema === "vender" ? t.doorVender : tema === "comprar" ? t.doorComprar : t.doorRed}{" "}
+                    {DOORS[tema].map((d, i) => (
+                      <span key={d.href}>
+                        {i > 0 && " · "}
+                        <a href={d.href} target="_blank" rel="noopener">
+                          {d.label}
+                        </a>
+                      </span>
+                    ))}
+                    <em>{t.doorGo}</em>
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="g-msg">{t.gMsg}</label>

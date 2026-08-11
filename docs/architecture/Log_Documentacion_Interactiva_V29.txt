@@ -458,3 +458,29 @@ APP_VERSION 3.18 -> 3.19.
 
 APP_VERSION 3.19 -> 3.20.
 (commit: a00858f)
+
+## [2026-08-11 · décima pasada] «Escríbenos»: el selector de Tema cuenta ya toda la oferta
+
+El menú tenía CUATRO temas —general, CTC Tech, Co-Create, Varietales— y la red
+ofrece bastante más. Ahora tiene NUEVE, sin tocar la base de datos.
+
+**LA CLAVE, que conviene no re-derivar:** sólo TRES temas cambian de formulario
+y de pilar (`tech`, `cocreate`, `varietales`). `leads.pillar` tiene un CHECK con
+cuatro valores y cada pilar tiene su tablero en una consola distinta
+(general→OCP, cocreate→BCP, tech y varietales→ECP), así que **un pilar nuevo no
+es una línea de copy: es una migración más un tablero que alguien tiene que
+vigilar.** Los temas nuevos se quedan en `general` y viajan en `fields.tema`,
+que ya es texto libre y ya se pinta en la ficha del lead. Coste: cero.
+
+Temas: consulta general · vender café · comprar café verde · CTC Tech ·
+Varietales · Co-Create · logística y exportación · Directorio/Terratalento/
+Herramientas · prensa y alianzas.
+
+**Aviso de puerta**: tres de ellos se resuelven solos en otra superficie, así que
+al elegirlos aparece debajo un recuadro con el enlace directo (Kaffetal Regal /
+Cherry Picked Green / los tres módulos abiertos) y una línea que deja claro que
+se puede escribir igual. Mandar a alguien a redactar un correo cuando puede
+entrar solo le cuesta un día.
+
+APP_VERSION 3.20 -> 3.21.
+(commit: pending)

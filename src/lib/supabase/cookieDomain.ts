@@ -1,5 +1,6 @@
 // One login, every subdomain (2026-07-24). In production each platform lives
-// on its own subdomain (www, kaffetal-regal, cherry-picked, directoriodelcafe,
+// on its own subdomain (www, kaffetal-regal, cherry-picked, cherry-picked-green,
+// directoriodelcafe,
 // socios…). A host-only session cookie is invisible to the sibling subdomains,
 // so hopping platforms landed on the destination's logged-out landing page.
 // Scoping the cookie to the PARENT domain makes the one session visible

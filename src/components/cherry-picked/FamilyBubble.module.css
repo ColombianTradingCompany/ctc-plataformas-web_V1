@@ -47,6 +47,9 @@
 .entry:hover{background:var(--paper)}
 .entryActive{background:var(--fbc,var(--primary));color:#fff}
 .entryActive small{color:rgba(255,255,255,.78)}
+/* La vuelta al hub: es de otra clase que los tres escaparates —es la casa, no
+   un hermano— así que se separa con un filete en vez de mezclarse en la lista. */
+.entryHub{border-bottom:1px dashed var(--line);border-radius:11px 11px 0 0;padding-bottom:12px;margin-bottom:2px}
 .dot{width:12px;height:12px;border-radius:50%;background:var(--fbc,var(--primary));flex:none}
 .entryActive .dot{background:#fff}
 .code{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted);flex:none;width:24px}

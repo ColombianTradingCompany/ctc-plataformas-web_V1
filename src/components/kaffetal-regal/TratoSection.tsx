@@ -264,7 +264,7 @@ export function TratoSection() {
             <p className="eyebrow" style={{ color: "#E9B7D2" }}>{t.cpEyebrow}</p>
             <h3>{t.cpH3}</h3>
             <p>{t.cpBody}</p>
-            <a className="btn" href="https://cherry-picked.ctcexport.com" target="_blank" rel="noopener">
+            <a className="btn" href="https://cherry-picked-green.ctcexport.com" target="_blank" rel="noopener">
               {t.cpBtn}
             </a>
           </div>

@@ -14,7 +14,9 @@ import { misPlataformasRed, type MisPlataformasRed } from "@/lib/identidad/matri
 const PROD = process.env.NODE_ENV === "production";
 const URLS = {
   kr: PROD ? "https://kaffetal-regal.ctcexport.com" : "/kaffetal-regal",
-  cp: PROD ? "https://cherry-picked.ctcexport.com" : "/cherry-picked",
+  // Green, no el hub: «Mi red» lleva a donde la cuenta HACE algo (su tienda),
+  // no a la portada que presenta los cuatro programas.
+  cp: PROD ? "https://cherry-picked-green.ctcexport.com" : "/cherry-picked-green",
   dc: PROD ? "https://directoriodelcafe.ctcexport.com" : "/directorio",
   tt: PROD ? "https://terratalento.ctcexport.com" : "/terratalento",
   herramientas: PROD ? "https://herramientas.ctcexport.com" : "/herramientas",

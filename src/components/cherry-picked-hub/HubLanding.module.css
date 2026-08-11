@@ -1,0 +1,62 @@
+/* Cherry Picked · el hub. Hereda el tema `cherry-picked` del div raíz, así que
+   usa los mismos tokens que la tienda y los dos programas hermanos. */
+
+.hero{padding:70px 0 64px;background:var(--paper);border-bottom:1px solid var(--line)}
+.heroGrid{display:grid;grid-template-columns:1.25fr .75fr;gap:44px;align-items:center}
+@media(max-width:860px){.heroGrid{grid-template-columns:1fr;gap:28px}}
+.h1{font-size:clamp(34px,4.8vw,56px);margin:16px 0 18px;color:var(--primary-deep);line-height:1.08}
+.h1 em{font-style:italic;color:var(--accent)}
+.lead{font-size:16.5px;line-height:1.7;color:var(--muted);max-width:60ch}
+.heroCta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.heroVisual{display:flex;justify-content:center}
+.heroVisual img{width:100%;max-width:240px;height:auto;border-radius:50%;
+  box-shadow:0 26px 60px -30px rgba(14,44,72,.75)}
+
+/* ── Los cuatro programas ─────────────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  border-top:5px solid var(--pc);padding:24px;display:flex;flex-direction:column;gap:13px;
+}
+/* Un programa que aún no abre se lee en gris, pero se puede leer entero: no se
+   apaga el texto, solo el sello y el color de la cabecera. */
+.cardSoon .seal{filter:grayscale(1);opacity:.6}
+.cardSoon .state{color:var(--muted);border-color:var(--line)}
+
+.cardTop{display:flex;align-items:center;gap:15px}
+.seal{width:62px;height:auto;flex:none}
+/* Co-Create no tiene sello propio (no es un escaparate): lleva un disco del
+   color del programa, para que la fila de cabeceras no baile. */
+.sealDot{width:62px;height:62px;border-radius:50%;flex:none;background:var(--pc);opacity:.9}
+.card h3{font-size:20px;color:var(--primary-deep);line-height:1.2}
+.card h3 em{font-style:normal;color:var(--pc)}
+.state{
+  display:inline-block;margin-bottom:5px;
+  font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--pc);border:1px solid var(--pc);border-radius:999px;padding:2px 9px;
+}
+
+.oneline{font-size:14.5px;line-height:1.65;color:var(--ink)}
+.points{list-style:none;display:grid;gap:8px;margin:0;padding:0}
+.points li{position:relative;padding-left:18px;font-size:13.5px;line-height:1.6;color:var(--muted)}
+.points li::before{content:"—";position:absolute;left:0;color:var(--pc);font-weight:700}
+.cardFoot{margin-top:auto;padding-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* ── Lo que comparten los cuatro ──────────────────────────────────────────── */
+.oneBand{background:var(--paper)}
+.oneGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:900px){.oneGrid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.oneGrid{grid-template-columns:1fr}}
+.oneCell{
+  background:var(--card);border:1px solid var(--line);border-radius:11px;padding:18px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.oneCell b{font-size:14.5px;color:var(--primary-deep)}
+.oneCell span{font-size:13px;line-height:1.6;color:var(--muted)}
+
+/* ── Pie ──────────────────────────────────────────────────────────────────── */
+.footer{border-top:1px solid var(--line);padding:34px 0 0;background:var(--card)}
+.footRow{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  padding-bottom:26px;font-size:13px;color:var(--muted)}

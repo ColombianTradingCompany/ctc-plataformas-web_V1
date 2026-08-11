@@ -253,7 +253,7 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
             </div>
             <a
               className="btn btn-sm"
-              href="https://cherry-picked.ctcexport.com"
+              href="https://cherry-picked-green.ctcexport.com"
               target="_blank"
               rel="noopener"
               style={{ borderColor: "var(--t-tyrian)", color: "var(--t-tyrian)" }}

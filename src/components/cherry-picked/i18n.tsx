@@ -16,15 +16,29 @@ export const LANGS: readonly Lang[] = ["en", "es", "de"] as const;
 // continental 1.234,56 style; English gets 1,234.56.
 export const LOCALE: Record<Lang, string> = { en: "en-GB", es: "es-ES", de: "de-DE" };
 
-// The three storefronts live on sibling subdomains in production
-// (src/proxy.ts) and on path routes in dev. NODE_ENV is a compile-time
-// constant on both server and client, so this cannot hydration-mismatch —
-// same pattern as QuickNav's casa-matriz link.
+// The programmes live on sibling subdomains in production (src/proxy.ts) and on
+// path routes in dev. NODE_ENV is a compile-time constant on both server and
+// client, so this cannot hydration-mismatch — same pattern as QuickNav's
+// casa-matriz link.
+//
+// 2026-08-11 · `hub` es nuevo y `green` CAMBIÓ de sitio. Cherry Picked pasó a
+// ser la plataforma de compra y `cherry-picked.ctcexport.com` sirve el hub que
+// reparte sus cuatro programas; la tienda de café verde se mudó a
+// `cherry-picked-green`. Si algo tiene que llevar a COMPRAR, va a `green`; si
+// tiene que presentar la casa, va a `hub`.
 export const FAMILY_LINKS =
   process.env.NODE_ENV === "development"
-    ? { green: "/cherry-picked", roast: "/cherry-picked-roast", x: "/cherry-picked-x" }
+    ? {
+        hub: "/cherry-picked",
+        cocreate: "/co-create",
+        green: "/cherry-picked-green",
+        roast: "/cherry-picked-roast",
+        x: "/cherry-picked-x",
+      }
     : {
-        green: "https://cherry-picked.ctcexport.com",
+        hub: "https://cherry-picked.ctcexport.com",
+        cocreate: "https://co-create.ctcexport.com",
+        green: "https://cherry-picked-green.ctcexport.com",
         roast: "https://cherry-picked-roast.ctcexport.com",
         x: "https://cherry-picked-x.ctcexport.com",
       };

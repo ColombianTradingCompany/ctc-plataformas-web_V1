@@ -227,3 +227,60 @@ APP_VERSION 3.14 (misma tanda).
 
 APP_VERSION 3.14 (misma tanda).
 (commit: c4fb902)
+
+## [2026-08-11 · cuarta pasada] Cherry Picked se parte en hub + Green (NODOS NUEVOS)
+
+El corte de verdad del cambio de modelo anterior. Cherry Picked deja de ser una
+tienda con tres hermanos y pasa a ser la PLATAFORMA de compra con cuatro
+programas dentro; la tienda de café verde se muda a su propia puerta.
+
+**NODO NUEVO `n-cp-hub`** — `/cherry-picked` (subdominio `cherry-picked`) es
+ahora el repartidor: `components/cherry-picked-hub/HubLanding.tsx`, cuatro
+tarjetas de programa (Co-Create abierto y primero, Green abierto, Roast y X en
+2027) más una banda «lo que comparten los cuatro» (un origen, un puntaje, un
+expediente, una cuenta). Trilingüe con el runtime de la familia, tema
+`cherry-picked`, cabecera `FamilyHeader` con el nuevo modo `hub` (nombre a
+secas, sin sufijo de programa). NO lleva FamilyBubble: la página ES el selector.
+
+**NODO `n-cp` (la tienda) CAMBIA DE RUTA** — `/cherry-picked-green`, subdominio
+`cherry-picked-green`. El componente `CherryPickedExperience` no cambió ni una
+línea; lo que cambió es dónde se monta.
+
+**EL DETALLE QUE COSTARÍA UN DÍA REDESCUBRIR**: el callback de Google tuvo que
+mudarse con la tienda. El proxy antepone la base del subdominio a cualquier
+camino que no la lleve ya, así que un `/cherry-picked/auth/callback` pedido
+desde `cherry-picked-green.*` se reescribe a
+`/cherry-picked-green/cherry-picked/auth/callback` y es 404. `LoginModal` compone
+la ruta nueva. El callback VIEJO se conservó redirigiendo a Green, para que un
+consentimiento de Google abierto antes del despliegue no se quede en el aire.
+
+**`FAMILY_LINKS` es la fuente única** de la familia (i18n.tsx de cherry-picked):
+gana `hub` y `cocreate`, y `green` cambia de subdominio. Regla para el futuro: lo
+que signifique COMPRAR va a `green`; lo que signifique presentar la casa va a
+`hub`. La FamilyBubble gana una fila de vuelta al hub, separada por un filete
+porque es la casa, no un hermano.
+
+**Barrido de enlaces** (21 referencias, 15 archivos). A Green, porque significan
+«la tienda»: RedSwitcher, PLATAFORMA_LINKS del Directorio, Footer/Hero/
+TratoSection de Kaffetal Regal, HerramientasLanding, y —esto importa— las listas
+de `revalidatePath` de `plusGrants.ts` y `toolAccess.ts`, o la pestaña de
+Herramientas dentro de la tienda se queda vieja. Se QUEDAN en el hub, a
+propósito: el CTA del hero de CTC Home, su tarjeta del ecosistema, `pageIndex` y
+`leadEmails.platformFor("cocreate")`.
+
+**Sin captación de correo en el hub**, a propósito: `newsletter_subscribers`
+tiene un CHECK que solo admite roast | x | ctc-home, y añadir una fuente es una
+migración en producción por una comodidad que nadie pidió. Roast y X ya tienen
+su formulario donde toca esperar turno.
+
+**PENDIENTE DEL OWNER**: dar de alta `cherry-picked-green` como dominio en Vercel
+y crear el CNAME en Hostinger (patrón de docs/PARTNER_DOMAINS_SETUP.md). Hasta
+entonces la tienda vive en www.ctcexport.com/cherry-picked-green, pero todos los
+enlaces de producción ya apuntan al subdominio.
+
+Verificado con Host headers contra el servidor de desarrollo: el subdominio
+`cherry-picked` sirve el hub, `cherry-picked-green` sirve la tienda, y los DOS
+callbacks (el nuevo y el viejo) aterrizan en Green. tsc, eslint y build limpios.
+
+APP_VERSION 3.14 -> 3.15.
+(commit: pending)

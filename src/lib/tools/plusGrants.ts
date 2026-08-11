@@ -149,6 +149,6 @@ export async function decidirPlus(grantId: string, decision: "activo" | "rechaza
     new_status: decision,
     performed_by: adminId,
   });
-  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked", "/directorio", "/herramientas"]) revalidatePath(p);
+  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked-green", "/directorio", "/herramientas"]) revalidatePath(p);
   return { ok: true };
 }

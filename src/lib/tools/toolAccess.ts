@@ -53,7 +53,7 @@ export async function saveToolsConfig(config: ToolsConfig): Promise<{ ok: true }
     action: "tools_config_changed",
     performed_by: adminId,
   });
-  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked", "/herramientas", "/directorio"]) revalidatePath(p);
+  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked-green", "/herramientas", "/directorio"]) revalidatePath(p);
   return { ok: true };
 }
 

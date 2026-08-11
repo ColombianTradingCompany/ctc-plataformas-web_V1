@@ -6,7 +6,9 @@ import Image from "next/image";
 // live in the floating bubble column (FamilyBubble / LangBubble), not here.
 import styles from "./Header.module.css";
 
-export function FamilyHeader({ active }: { active: "roast" | "x" }) {
+/** `hub` (2026-08-11) es la portada de la plataforma: lleva el nombre a secas,
+ *  sin sufijo de programa, porque no es uno de ellos — es la casa. */
+export function FamilyHeader({ active }: { active: "roast" | "x" | "hub" }) {
   return (
     <header className={styles.header}>
       <div className={`wrap ${styles.nav}`}>
@@ -14,7 +16,8 @@ export function FamilyHeader({ active }: { active: "roast" | "x" }) {
           <Image src="/images/shared/cherry-picked-logo.png" alt="Cherry Picked" width={852} height={858} />
           <span>
             <span className={styles.name}>
-              Cherry Picked <em className={styles.green}>{active === "roast" ? "Roast" : "X"}</em>
+              Cherry Picked
+              {active !== "hub" && <em className={styles.green}> {active === "roast" ? "Roast" : "X"}</em>}
             </span>
             <span className={styles.by}>
               by CTC <Image src="/images/shared/ctc-logo-parrot.jpg" alt="CTC" width={1484} height={1662} />

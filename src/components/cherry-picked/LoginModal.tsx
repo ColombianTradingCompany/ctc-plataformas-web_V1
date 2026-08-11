@@ -154,7 +154,10 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/cherry-picked/auth/callback` },
+      // La tienda vive en /cherry-picked-green desde el 2026-08-11; el callback
+      // TIENE que colgar de ese mismo prefijo o el proxy del subdominio lo
+      // reescribe a una ruta que no existe. Ver app/cherry-picked-green/auth/.
+      options: { redirectTo: `${window.location.origin}/cherry-picked-green/auth/callback` },
     });
   }
 

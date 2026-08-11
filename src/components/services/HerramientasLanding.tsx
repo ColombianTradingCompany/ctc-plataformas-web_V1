@@ -17,8 +17,8 @@ import styles from "./surface.module.css";
 
 const LOGIN_URLS =
   process.env.NODE_ENV === "production"
-    ? { kr: "https://kaffetal-regal.ctcexport.com", cp: "https://cherry-picked.ctcexport.com" }
-    : { kr: "/kaffetal-regal", cp: "/cherry-picked" };
+    ? { kr: "https://kaffetal-regal.ctcexport.com", cp: "https://cherry-picked-green.ctcexport.com" }
+    : { kr: "/kaffetal-regal", cp: "/cherry-picked-green" };
 
 const CHROME: Record<
   Lang,

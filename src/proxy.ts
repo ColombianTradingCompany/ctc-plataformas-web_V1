@@ -6,10 +6,15 @@ import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
 // Maps a subdomain label to the internal route that should serve it.
 const SUBDOMAIN_ROUTES: Record<string, string> = {
   "kaffetal-regal": "/kaffetal-regal",
+  // Cherry Picked es la PLATAFORMA de compra (owner, 2026-08-11): este
+  // subdominio sirve el HUB que reparte sus cuatro programas — Co-Create,
+  // Green, Roast y X. Hasta esa fecha servía la tienda Green, que se mudó al
+  // subdominio de abajo. DNS/Vercel de `cherry-picked-green`: mismo patrón de
+  // docs/PARTNER_DOMAINS_SETUP.md.
   "cherry-picked": "/cherry-picked",
-  // The Cherry Picked family: Green lives on the original subdomain above;
-  // Roast and X are its sibling programmes (scaffolds until their ordering
-  // logic connects to the Green catalog).
+  "cherry-picked-green": "/cherry-picked-green",
+  // Roast y X son los otros dos programas (andamiaje hasta que su lógica de
+  // pedido se conecte al catálogo de Green).
   "cherry-picked-roast": "/cherry-picked-roast",
   "cherry-picked-x": "/cherry-picked-x",
   // Directorio de Especialistas del Café · Santander — la capa de PERSONAS

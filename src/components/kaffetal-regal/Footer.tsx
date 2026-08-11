@@ -9,7 +9,7 @@ import styles from "./Footer.module.css";
 // Cherry Picked is live: subdomain in prod, path in dev (same compile-time
 // NODE_ENV pattern as QuickNav's casa-matriz link).
 const CHERRY_PICKED_HREF =
-  process.env.NODE_ENV === "development" ? "/cherry-picked" : "https://cherry-picked.ctcexport.com";
+  process.env.NODE_ENV === "development" ? "/cherry-picked-green" : "https://cherry-picked-green.ctcexport.com";
 
 const T: Record<Lang, { line1: React.ReactNode; line2: React.ReactNode; know: string }> = {
   es: {

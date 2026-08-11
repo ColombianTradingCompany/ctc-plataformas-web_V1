@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createSessionClient } from "@/lib/supabase/server";
 
+// El callback de Google de la TIENDA. Se mudó con ella (2026-08-11): la ruta
+// tiene que empezar por el mismo prefijo que sirve el subdominio, porque el
+// proxy antepone la base a cualquier camino que no la lleve ya — desde
+// `cherry-picked-green.ctcexport.com`, un `/cherry-picked/auth/callback` se
+// reescribiría a `/cherry-picked-green/cherry-picked/auth/callback` y sería 404.
+
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const origin = request.nextUrl.origin;
@@ -14,9 +20,5 @@ export async function GET(request: NextRequest) {
     await sessionClient.auth.exchangeCodeForSession(code);
   }
 
-  // La tienda se mudó a /cherry-picked-green (2026-08-11) y su callback con
-  // ella. Esta ruta se queda como red de seguridad: un consentimiento de Google
-  // que salió con la URL vieja —una pestaña abierta desde antes del despliegue—
-  // sigue canjeando su código y aterriza donde ahora vive la tienda.
   return NextResponse.redirect(`${origin}/cherry-picked-green`);
 }

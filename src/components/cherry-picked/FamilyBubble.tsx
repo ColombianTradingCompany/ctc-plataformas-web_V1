@@ -15,6 +15,7 @@ const NAME: Record<FamilyKey, string> = { green: "Green", roast: "Roast", x: "X"
 
 const EN = {
   aria: "Switch Cherry Picked storefront",
+  hub: "All four programmes",
   subs: {
     green: "Green coffee · live now",
     roast: "Roasted · coming 2027",
@@ -26,6 +27,7 @@ const T: Record<Lang, typeof EN> = {
   en: EN,
   es: {
     aria: "Cambiar de tienda Cherry Picked",
+    hub: "Los cuatro programas",
     subs: {
       green: "Café verde · en vivo",
       roast: "Tostado · llega en 2027",
@@ -34,6 +36,7 @@ const T: Record<Lang, typeof EN> = {
   },
   de: {
     aria: "Cherry-Picked-Storefront wechseln",
+    hub: "Alle vier Programme",
     subs: {
       green: "Rohkaffee · jetzt live",
       roast: "Geröstet · ab 2027",
@@ -80,6 +83,21 @@ export function FamilyBubble({ active, bottom }: { active: FamilyKey; bottom: nu
     >
       {open && (
         <nav className={styles.panel} aria-label={t.aria}>
+          {/* La vuelta al hub. Desde que Cherry Picked es la plataforma y no la
+              tienda (2026-08-11), esta burbuja no puede ser solo un conmutador
+              entre tres escaparates: tiene que dejar volver a la casa, donde
+              además vive Co-Create, que no es un escaparate. */}
+          <a
+            className={`${styles.entry} ${styles.entryHub}`}
+            href={FAMILY_LINKS.hub}
+            style={{ ["--fbc" as string]: "var(--primary-deep)" } as React.CSSProperties}
+          >
+            <span className={styles.dot} />
+            <span>
+              Cherry Picked
+              <small>{t.hub}</small>
+            </span>
+          </a>
           {ORDER.map((key) =>
             key === active ? (
               <span

@@ -706,4 +706,4 @@ Tres decisiones que no estaban en la maqueta pero que se seguían de ella:
   que lleva `.wrap` le borra los laterales y por debajo de 1180px el texto se
   pega al borde de la pantalla.
 - APP_VERSION 3.24 -> 3.25.
-(commit: PENDIENTE)
+(commit: 1acf44f)

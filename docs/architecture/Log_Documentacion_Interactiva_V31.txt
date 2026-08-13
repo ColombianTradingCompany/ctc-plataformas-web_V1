@@ -1,0 +1,83 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V31.0(c172849).html
+(CTC Web Platform, desde 2026-08-13). Cada entrada se compila al próximo Version Wrap (V32).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit.
+
+Lección heredada del wrap de V28: **una entrada del log puede estar ya compilada**
+si se registró y se envolvió el mismo día. Antes de compilar, comprobar en el HTML
+base si ya está (buscar la clave de DICT o la nota que pedía).
+
+⚠️ LECCIÓN NUEVA DEL WRAP DE V31 — cómo se buscan las claves del DICT.
+El DICT tiene DOS estilos de escritura conviviendo: `clave:{k:"…"` (compacto, una
+línea) y `clave: {` (con espacio, en varias líneas). Buscar con `^  clave:{` SOLO
+encuentra las del primer estilo — en este wrap eso hizo creer que `cotizadores`,
+`anclas` y `appmotor` no existían, y estuvieron a punto de quedar DUPLICADAS en el
+archivo (JS se queda con la última y la ficha habría sido la vieja, en silencio).
+Se detectó porque el cajón mostró un texto distinto del recién escrito. Busca
+siempre con espaciado flexible, p. ej.:
+    grep -nE '^[[:space:]]*"?clave"?[[:space:]]*:[[:space:]]*\{'
+y confirma en el navegador que `Object.keys(DICT).length` sube EXACTAMENTE lo que
+esperas.
+
+Contexto abierto al cerrar V31 (2026-08-13):
+
+- **La cola de la auditoría, ya sin pendientes accionables.** Todo lo del informe
+  `Auditoria_Estructura_Estabilidad_V30.html` está aplicado, en espera declarada o
+  diferido con umbral escrito. Lo que sigue vivo como deuda consciente:
+  · los 83 índices de clave foránea (revisar cuando una tabla pase de ~10.000
+    filas; hoy la mayor tiene 306 y el total ronda 1.200),
+  · la poda del Buzón en Storage (~550 MB de 1 GB, `buzon/` con 144 MB),
+  · las carreras de `useAutosave` (cambio durante un guardado en vuelo) y el
+    `InfoModal` que no espera su guardado,
+  · los tableros que leen histórico completo sin tope (LeadsBoard, /bcp/lotes,
+    ECP·Terratalento, nominados),
+  · `run_state` de las jornadas se lee sin merge de hidratación (deuda, no bug:
+    no hay filas anteriores a v2),
+  · el presupuesto de tiempo por trabajo de `renderTake` (RT-Scriptor) — es lo
+    único de EST-3 que quedó sin aplicar.
+- **`/api/kaffetal-regal/next-step` no tiene llamador y SE QUEDA ASÍ** (decisión
+  del owner): la fontanería del asesor «¿Y ahora qué?» (gate, propiedad del lote,
+  caché en `lots.ai_next_step_*`, registro de consumo) espera a que se rediseñe
+  dónde vive el consejo dentro de la Ficha. El aviso está en la cabecera de la
+  ruta; retirarla sería retirar la feature, decisión de producto.
+- **`/lab` es ahora un taller** (decisión del owner) para estilos y piezas
+  reutilizables. Si crece: vistas hermanas bajo `app/lab/`.
+- **Co-Create sigue renombrado a medias**: el hub dice «Cherry Picked Co-Create»,
+  su landing (Clase B) sigue diciendo «CTC Co-Create». Dos decisiones del owner:
+  renombrar en landing + CRM del BCP, y si pasa al armazón de la familia.
+- **La cinta de mercado**: robusta de Londres e inventarios ICE declarados como
+  anclas sin fuente gratuita — anotarlos a mano exige hacer multi-tipo el tablero
+  AnclasBoard del OCP (hoy solo administra fnc_carga).
+- **El hub de Cherry Picked no captura correo**: el CHECK de
+  newsletter_subscribers solo admite roast | x | ctc-home.
+- **Pendiente del owner**: logotipo del «Ecosistema de Valor» y de Co-Create;
+  material de la landing de Varietales; pase de copy Specialty/Black sobre CP
+  BlackSection (el de KR ProcessFlow murió con el componente).
+- **RT-Scriptor · la imagen real sigue sin salir**: Google contesta 429 (la clave
+  no tiene cuota de generación de imagen).
+- **El escenario de Canva NO está montado en Make** (blueprint en
+  docs/MAKE_RTS_CANVA.md; registrado en /ecp/automatizaciones como «propuesta»).
+- **El libro de consumo de IA**: Gemini sigue sin tarifa en precios.ts (el total
+  del tablero es un SUELO). 📌 El 2026-08-31 caduca el precio de lanzamiento de
+  Sonnet 5 — el 1 de septiembre la misma llamada cuesta un 50% más.
+- **Coffeed**: 5 medios sin feed; calidad editorial por afinar; el muro casi
+  vacío. Integraciones F4 (redes) y F5 (WhatsApp) sin empezar.
+- **GDPR**: la política de privacidad sigue sin escribirse; subprocesadores:
+  Resend, Notion, Google, Make, Anthropic, Gemini.
+- `qa-guard-check.mjs` no corre: necesita una cuenta QA de productor.
+- **Identity Value Creation** (4ª app del taller) declarada y sin construir.
+- El **socio multi-nodo** sigue exigiendo cambiar el PK de partner_accounts.
+- Los **tres cotizadores y Anclas de mercado** sin conducir en navegador (2FA).
+- **Terratalento construido, puerta pública en gris** por decisión del owner.
+  Para encenderla: quitar `soon: true` en EcosystemSection, nada más.
+- **Deuda de estilo** al reutilizar la familia .ctcb: costal pone la segunda
+  línea en versalita y los cuatro tratamientos asumen fondo oscuro o medio.
+- **La protección de contraseñas filtradas** sigue bloqueada por plan (Supabase
+  Free); lo que SÍ se puede hoy es subir longitud mínima y tipos de carácter.

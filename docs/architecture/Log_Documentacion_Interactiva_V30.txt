@@ -45,11 +45,16 @@ Contexto abierto al cerrar V30 (2026-08-13):
   Dos decisiones del owner pendientes: renombrar la marca en landing + CRM del
   BCP, y si pasa al armazón de la familia (dejaría de ser Clase B — toca la regla
   de las tres clases de V4).
-- **/lab/tipografia**: el titular NO se cambia (decisión 2026-08-11). El
-  laboratorio queda como mesa de pruebas; borrarlo es una limpieza (ruta,
-  componentes, robots.ts y las 8 familias de next/font) — PREGUNTAR antes.
-  Mientras viva: su velo está copiado de Hero.module.css y si allí se retoca,
-  el laboratorio miente.
+- **/lab/tipografia SE QUEDA — y asciende a taller** (decisión del owner,
+  2026-08-13; deroga el «PREGUNTAR antes de borrar» que abrió este log). El
+  titular no se cambia (Fraunces, decisión 2026-08-11), así que la pregunta
+  que lo hizo nacer está respondida — pero el owner quiere conservar la ruta
+  como **taller para probar estilos y piezas reutilizables** sin que cada
+  prueba sea un despliegue. Dejó de ser limpieza pendiente: es infraestructura
+  de trabajo, y así está anotado en la cabecera de la propia página. Si crece,
+  el patrón es añadir vistas hermanas bajo `app/lab/` (la ruta paga sus
+  dependencias y nada llega al bundle público). Mientras viva: su velo está
+  copiado de Hero.module.css y si allí se retoca, el laboratorio miente.
 - **La cinta de mercado**: robusta de Londres e inventarios ICE declarados como
   anclas sin fuente gratuita — para anotarlos a mano falta hacer multi-tipo el
   tablero AnclasBoard del OCP (hoy solo administra fnc_carga).
@@ -115,3 +120,36 @@ La lección quedó impuesta desde entonces: **los commits se arman con rutas
 explícitas, nunca con `git add -A`**, porque puede haber otra sesión trabajando
 en el mismo árbol.
 (commit: 60c07df)
+
+## [2026-08-13] Cola de la auditoría V30 · compuerta de leads + barrido de huérfanos
+
+- **ESTR-4 resuelto**: las 4 acciones de leads (replyToLead/setLeadStatus/
+  retryWelcomeEmail/retryReplyEmail en ocp/(app)/leadsActions.ts) ganan
+  compuerta fina por consola — la consola dueña se deriva del PILAR del lead
+  (general→OCP, cocreate→BCP, tech→ECP, varietales→ECP, regla V4 Fase 0) y se
+  contrasta contra grantedConsoles() con el grandfathering de siempre. La
+  revalidación ahora apunta al tablero de la consola dueña (antes siempre
+  /ocp/leads: los tableros de BCP/ECP quedaban con caché vieja). Afecta al
+  escenario `leads` del mapa: el paso de gate ya no es solo requireActiveAdmin.
+  (commit: 7b3f40e)
+- **ESTR-5 ejecutado — los huérfanos anotados al abrir este log quedaron
+  retirados**, por la regla que este mismo log dejó escrita («si en el próximo
+  repaso siguen sin usarse, se retiran»): ParticiparSection + ProcessFlow (con
+  sus CSS y sus 2 imágenes; con ellos muere el pase de copy Specialty/Black
+  sobre ProcessFlow que estaba condicionado a su regreso), HeroPromesa (cirugía
+  en Hero.tsx: componente + 14 claves trilingües + 18 clases CSS), InfoDot,
+  ToastButton, NextStepWidget, fichaCsv, CertCheckbox, la cadena shadcn
+  (ui/button → lib/utils → fuera clsx/tailwind-merge/class-variance-authority
+  de package.json), lib/club/actions.ts y 15 imágenes (~2,9 MB, incl.
+  hero-zoom-cereza.webp y las dos thread-*). Identidad legal unificada en
+  src/lib/legal.ts (NIT/razón/sede/correo; LegalFooter + 3 imprimibles la
+  importan). Nodo n-kaffetal: la landing ya no tiene componentes huérfanos.
+  ⚠ /api/kaffetal-regal/next-step quedó SIN llamador al retirar NextStepWidget.
+  **RESUELTO el mismo día: la fontanería SE CONSERVA** (decisión del owner) —
+  gate de sesión, comprobación de propiedad, caché en `lots.ai_next_step_*` y
+  registro de consumo quedan intactos para cuando se rediseñe dónde vive el
+  consejo dentro de la Ficha. Queda un aviso en la cabecera de la ruta para que
+  el próximo barrido no la confunda con código muerto: retirarla sería retirar
+  la feature entera, y eso es decisión de producto, no de limpieza.
+  /lab/tipografia tampoco se tocó — y el owner decidió conservarlo como taller
+  (ver el contexto abierto, arriba). (commit: 092f013)

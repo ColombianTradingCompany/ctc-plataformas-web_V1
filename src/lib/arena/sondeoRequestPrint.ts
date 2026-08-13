@@ -4,7 +4,9 @@
 // shipmentInstructionsPrint.ts. La cata es a ciegas: cada muestra viaja
 // identificada SOLO por su código de lote — el documento lo dice explícito.
 
-const CTC_LINE = "Colombian Trading Company · NIT 901.483.425-7 · Piedecuesta, Santander, Colombia · info@ctcexport.com";
+import { CTC_LEGAL_LINE } from "@/lib/legal";
+
+const CTC_LINE = CTC_LEGAL_LINE;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 

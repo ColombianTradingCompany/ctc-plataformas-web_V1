@@ -106,4 +106,4 @@ por separado en el Log V29 («Directorio — verificación de certificados» y l
 La lección quedó impuesta desde entonces: **los commits se arman con rutas
 explícitas, nunca con `git add -A`**, porque puede haber otra sesión trabajando
 en el mismo árbol.
-(commit: bc2c0aa)
+(commit: 60c07df)

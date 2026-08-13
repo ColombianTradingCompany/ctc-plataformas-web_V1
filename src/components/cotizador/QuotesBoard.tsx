@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createQuote, deleteQuote, duplicateQuote, listQuotes, renameQuote } from "@/lib/cotizador/actions";
 import {
   COUNTERPARTY_LABEL,
@@ -50,6 +51,7 @@ export function QuotesBoard({
   title: string;
   subtitle: string;
 }) {
+  const router = useRouter();
   const [rows, setRows] = useState<QuoteSummary[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -127,7 +129,7 @@ export function QuotesBoard({
             if (!r.ok) setError(r.error);
             else {
               setNewTitle("");
-              if (r.id) window.location.href = `${basePath}/${r.id}`;
+              if (r.id) router.push(`${basePath}/${r.id}`);
             }
           }}
         >

@@ -60,7 +60,7 @@ export function Header() {
             alt="Colombian Trading Company · Cafés de Colombia, para el mundo"
             width={2234}
             height={1231}
-            priority
+            preload
           />
         </div>
         <button className="btn btn-sm btn-solid" onClick={() => openForm("general")}>

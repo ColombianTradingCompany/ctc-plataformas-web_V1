@@ -46,7 +46,7 @@ export function SurfaceShell({
           />
         </a>
         {logo ? (
-          <Image className={styles.topbarBrand} src={logo} alt={name} width={720} height={560} priority />
+          <Image className={styles.topbarBrand} src={logo} alt={name} width={720} height={560} preload />
         ) : (
           <span className={styles.topbarName}>{name}</span>
         )}

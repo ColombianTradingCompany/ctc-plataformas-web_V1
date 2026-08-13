@@ -81,3 +81,29 @@ Contexto abierto al cerrar V30 (2026-08-13):
 - **Deuda de estilo** al reutilizar la familia .ctcb: costal pone la segunda
   línea en versalita (la copy tiene que aguantarlo) y los cuatro tratamientos
   asumen fondo oscuro o medio — sobre --paper el relieve casi no se ve.
+
+## [2026-08-13] NOTA CORRECTIVA · el commit 74f7019 contiene DOS trabajos
+
+Decisión del owner (2026-08-13): la historia publicada se queda como está; esto
+la documenta.
+
+El mensaje de `74f7019` («La primera etapa del año deja de ser la floración: es
+la admisión de lotes») describe SOLO el renombre del calendario. Pero el commit
+contiene además, completa, la **verificación de certificados del Directorio** de
+una sesión paralela que trabajaba en la misma carpeta — 10 archivos que un
+`git add -A` barrió sin querer: `api/cron/integraciones/route.ts`,
+`app/directorio/directorio.css`, `ecp/(app)/directorio/DirectorioAdmin.tsx`,
+`ecp/(app)/directorioActions.ts`, `components/directorio/PanelDirectorio.tsx`,
+`components/directorio/PanelPerfil.tsx` y `lib/directorio/{actions,sweep,types}.ts`
+(más el asiento de ambos trabajos en el Log V29).
+
+No hubo nada que revertir: los dos trabajos eran correctos, tsc/eslint/build
+salieron limpios y la migración `directorio_documents_cert_verification` ya
+estaba aplicada — código y base quedaron en sincronía. Los DOS están documentados
+por separado en el Log V29 («Directorio — verificación de certificados» y la
+«undécima pasada»), y el mapa V30 los compila a ambos.
+
+La lección quedó impuesta desde entonces: **los commits se arman con rutas
+explícitas, nunca con `git add -A`**, porque puede haber otra sesión trabajando
+en el mismo árbol.
+(commit: bc2c0aa)

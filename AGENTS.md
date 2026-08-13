@@ -23,3 +23,11 @@ Operational caveats to know before touching email/BCP:
 
 Docs: the versioned interactive system map lives in `docs/architecture/` (managed by the `architecture-doc-versioning` skill — log changes, don't hand-edit the HTML; wrap on request).
 
+# Working rules (learned the hard way — don't rediscover them)
+
+- **The gate before calling anything done**: `npx tsc --noEmit` clean, `npx eslint src` at or below its current warning baseline, `npm run build` exit 0. This has held all project long; don't lower it. Note `npm run build` can flake on a `next/font` Google fetch (`/lab`) — re-run before blaming your change.
+- **Commits stage explicit paths, never `git add -A`.** Another session may be working in the same tree; a `git add -A` once swept an unrelated feature into an unrelated commit.
+- **Bump `APP_VERSION` (`src/lib/version.ts`) in the same commit that deploys a batch of work** — the badge is how you tell, from any screen, whether you're looking at the latest deploy. Minor per batch; the owner declares majors.
+- **Keep `npm audit` at 0.** It got there on 2026-08-13 and the three high-severity ones that mattered sat exactly on this repo's hot paths (proxy routing, Server Actions).
+- **If you keep something that looks dead, write why in the file itself**, not only in the log — the next sweep greps, and a bitácora entry won't reach it. Live examples: `/api/kaffetal-regal/next-step` (plumbing kept on purpose, no caller) and `/lab` (a workshop, not pending cleanup).
+

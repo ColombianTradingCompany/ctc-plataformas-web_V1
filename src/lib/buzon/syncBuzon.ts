@@ -131,18 +131,33 @@ export async function syncBuzon(): Promise<BuzonSyncResult> {
         }
 
         // Attachments → Storage (they must survive mailbox cleanup).
+        // Regla #1 del módulo: NUNCA perder correo. Antes (auditoría 2026-08-13,
+        // EST-2) un upload fallido se ignoraba en silencio y el correo se
+        // insertaba igual; como el dedupe es por message_id NUNCA se reintentaba,
+        // y la retención de 30 días borraba el original de Hostinger — una factura
+        // PDF podía desaparecer sin rastro. Ahora, si algún adjunto falla al subir,
+        // NO se inserta el mensaje: sin fila, el próximo run (idempotente) lo
+        // reintenta entero. Perder el cuerpo Y el adjunto es peor que reintentar.
         const attachmentsMeta: { filename: string; content_type: string | null; size: number | null; storage_path: string }[] = [];
         const folder = `buzon/${randomUUID()}`;
+        let attachmentFailed = false;
         for (let i = 0; i < (parsed.attachments?.length ?? 0); i++) {
           const att = parsed.attachments[i];
           const path = `${folder}/${safeFilename(att.filename, i)}`;
           const { error: upErr } = await service.storage
             .from(STORAGE_BUCKET)
             .upload(path, att.content, { contentType: att.contentType || "application/octet-stream" });
-          if (!upErr) {
-            attachmentsMeta.push({ filename: safeFilename(att.filename, i), content_type: att.contentType ?? null, size: att.size ?? null, storage_path: path });
+          if (upErr) {
+            // Los adjuntos ya subidos de ESTE mensaje quedan huérfanos bajo `folder`
+            // (el próximo run usa un UUID nuevo); es un leak menor y raro, aceptable
+            // frente a perder el correo. Se deja constancia y se salta el mensaje.
+            console.error(`[buzon] adjunto no subió (uid ${uid}): ${upErr.message} — mensaje pospuesto al próximo run`);
+            attachmentFailed = true;
+            break;
           }
+          attachmentsMeta.push({ filename: safeFilename(att.filename, i), content_type: att.contentType ?? null, size: att.size ?? null, storage_path: path });
         }
+        if (attachmentFailed) continue;
 
         const fromText = addressToText(parsed.from);
         const { error: insErr } = await service.from("inbound_emails").insert({

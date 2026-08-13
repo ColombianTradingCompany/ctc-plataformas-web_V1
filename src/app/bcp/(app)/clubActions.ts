@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { insertEntryCode } from "@/lib/arena/entryCodes";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import type { ActionResult } from "./ActionForm";
 
 // Kaffetal Club, modelo 2026-07-17: la membresía se otorga AUTOMÁTICAMENTE
 // cuando un lote del productor compite en una jornada de Arena (ver
@@ -20,17 +21,23 @@ async function requireAdmin() {
 
 // Una campaña ("Fundadores", ...) agrupa los códigos de descuento emitidos bajo
 // ella y fija su porcentaje. Se crea aquí, se gestiona en /bcp/club/campanas/[id].
-export async function createCampaign(formData: FormData) {
+// Devuelve un resultado en vez de `throw` (auditoría 2026-08-13, ESTR-1): un
+// throw en una acción enlazada a `<form action>` revienta la página entera y en
+// producción Next redacta el mensaje. Crear una campaña con un nombre repetido
+// (23505) es un rechazo ALCANZABLE con un clic — el mismo patrón que la
+// auditoría V14 arregló en publishLot/signContract/approveFinca. El motivo
+// aparece inline bajo el botón vía <ActionForm>.
+export async function createCampaign(formData: FormData): Promise<ActionResult> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) throw new Error("La campaña necesita un nombre (ej. Fundadores).");
+  if (!name) return { ok: false, error: "La campaña necesita un nombre (ej. Fundadores)." };
   const discountPct = Math.min(Math.max(Math.trunc(Number(formData.get("discount_pct") || 0)), 0), 100);
 
   const { data, error } = await service.from("club_campaigns").insert({ name, discount_pct: discountPct, created_by: adminId }).select("id").single();
   if (error) {
-    throw new Error(error.code === "23505" ? "Ya existe una campaña con ese nombre." : "No se pudo crear la campaña: " + error.message);
+    return { ok: false, error: error.code === "23505" ? "Ya existe una campaña con ese nombre." : "No se pudo crear la campaña: " + error.message };
   }
 
   await service.from("audit_log").insert({
@@ -42,6 +49,7 @@ export async function createCampaign(formData: FormData) {
   });
 
   revalidatePath("/bcp/club");
+  return { ok: true };
 }
 
 // Emite códigos de entrada (KRX-) con el descuento de la campaña. Dos modos:
@@ -88,7 +96,9 @@ export async function emitCampaignCodes(campaignId: string, formData: FormData) 
   revalidatePath(`/bcp/club/campanas/${campaignId}`);
 }
 
-export async function revokeCampaignCode(codeId: string) {
+// Resultado en vez de throw (ESTR-1): revocar un código que otra pestaña/estado
+// viejo ya usó o revocó es una carrera alcanzable, no debe tumbar la página.
+export async function revokeCampaignCode(codeId: string): Promise<ActionResult> {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
 
@@ -99,7 +109,7 @@ export async function revokeCampaignCode(codeId: string) {
     .is("redeemed_at", null)
     .is("revoked_at", null)
     .select("id, code");
-  if (!revoked?.length) throw new Error("Este código ya fue usado o revocado.");
+  if (!revoked?.length) return { ok: false, error: "Este código ya fue usado o revocado." };
 
   await service.from("audit_log").insert({
     entity_type: "arena_entry_code",
@@ -110,6 +120,7 @@ export async function revokeCampaignCode(codeId: string) {
   });
 
   revalidatePath("/bcp/club");
+  return { ok: true };
 }
 
 export async function revokeClubMembership(producerId: string) {

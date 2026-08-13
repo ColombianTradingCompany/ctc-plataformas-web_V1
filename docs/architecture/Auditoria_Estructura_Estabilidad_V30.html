@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoría estructural y de estabilidad · CTC Web Platform · sobre V30.0</title>
+<style>
+  :root{
+    --ink:#1c2733; --muted:#5a6472; --line:#dde1e7; --paper:#f7f6f2; --card:#fff;
+    --crit:#b3261e; --high:#c4402f; --med:#9c6f15; --low:#3a6ea5; --ok:#2c7a4b;
+    --mono:ui-monospace,SFMono-Regular,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{margin:0;background:var(--paper);color:var(--ink);
+       font:15px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  p,li,td,th,h1,h2,h3{overflow-wrap:anywhere}
+  .wrap{max-width:1080px;margin:0 auto;padding:44px 26px 90px}
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:34px}
+  .kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-size:31px;line-height:1.18;margin:0 0 10px;letter-spacing:-.015em}
+  .sub{color:var(--muted);margin:0;font-size:15.5px;max-width:80ch}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:14px}
+  .meta b{color:var(--ink)}
+
+  h2{font-size:20px;margin:44px 0 6px;padding-bottom:7px;border-bottom:1px solid var(--line);letter-spacing:-.01em}
+  h3{font-size:15.5px;margin:26px 0 6px}
+  p{margin:9px 0}
+  code{font-family:var(--mono);font-size:12.6px;background:#eceff3;padding:1.5px 5px;border-radius:4px}
+  a{color:var(--low)}
+
+  .scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:22px 0 6px}
+  .sc{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 15px}
+  .sc .n{font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.02em}
+  .sc .l{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+  .sc.fixed .n{color:var(--ok)} .sc.open .n{color:var(--med)} .sc.acc .n{color:var(--muted)} .sc.bad .n{color:var(--high)}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.6px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#eef1f5;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  td code{font-size:12px}
+  .scroll{overflow-x:auto}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;
+       padding:2.5px 8px;border-radius:999px;color:#fff;white-space:nowrap;text-transform:uppercase}
+  .t-crit{background:var(--crit)} .t-high{background:var(--high)} .t-med{background:var(--med)}
+  .t-low{background:var(--low)} .t-ok{background:var(--ok)} .t-acc{background:#7a8592}
+
+  .finding{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);
+           border-radius:9px;padding:16px 18px;margin:16px 0}
+  .finding.f-crit{border-left-color:var(--crit)}
+  .finding.f-high{border-left-color:var(--high)}
+  .finding.f-med{border-left-color:var(--med)}
+  .finding.f-ok{border-left-color:var(--ok)}
+  .finding.f-acc{border-left-color:#7a8592}
+  .finding h3{margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .finding .lbl{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+
+  pre{background:#1c2733;color:#e8edf3;padding:13px 15px;border-radius:9px;overflow-x:auto;
+      font-family:var(--mono);font-size:12.2px;line-height:1.55;margin:11px 0}
+  pre .c{color:#8fa3b8}
+  pre .del{color:#ff9f95} pre .add{color:#9be2b4}
+
+  blockquote{margin:12px 0;padding:11px 15px;background:#eef3f8;border-left:3px solid var(--low);
+             border-radius:0 8px 8px 0;font-size:14px}
+  blockquote.warn{background:#fdf3e7;border-left-color:var(--med)}
+  ul,ol{margin:9px 0;padding-left:22px} li{margin:4px 0}
+  .toc{columns:2;column-gap:26px;font-size:13.5px;margin:10px 0}
+  .toc a{display:block;padding:2px 0}
+  .foot{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);
+        font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  @media print{body{background:#fff}.wrap{padding:0}.finding,.sc,table{break-inside:avoid}}
+  @media(max-width:640px){.toc{columns:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">CTC Web Platform · Informe de auditoría</p>
+  <h1>Auditoría estructural y de estabilidad</h1>
+  <p class="sub">Revisión completa del código, la base de datos de producción, las integraciones externas
+  y las dependencias, con comparación explícita contra la auditoría anterior (<b>sobre V14.0</b>) para
+  ver qué se mantuvo y qué se volvió a torcer. Pedida por el owner al cerrar el wrap V30.
+  <b>La mayoría de las correcciones se aplicaron en esta misma sesión</b> — las de base de datos ya están
+  vivas en producción, las de código viven en la rama <code>fix/audit-v30-remediations</code> (sin
+  desplegar); el estado exacto de cada hallazgo está en <a href="#estado">el cuadro de estado</a> más abajo.
+  Dos quedan en espera de tu decisión.</p>
+  <p class="meta">
+    Fecha: <b>2026-08-13</b> ·
+    Repo: <b>ctc-plataformas-web_V1</b> · rama <b>main</b> ·
+    Base: <b>0276141</b> (plataforma <b>V3.27</b> / doc <b>V30.0</b>) ·
+    Proyecto Supabase: <b>sjznkzvefqfcysczllli</b> (Postgres 17)
+  </p>
+</header>
+
+<h2>1 · Resumen ejecutivo</h2>
+
+<div class="scorecards">
+  <div class="sc fixed"><div class="n">SANO</div><div class="l">tsc + build limpios; modelo de seguridad coherente</div></div>
+  <div class="sc fixed"><div class="n">2</div><div class="l">correcciones de BD ya vivas en producción</div></div>
+  <div class="sc fixed"><div class="n">7</div><div class="l">correcciones de código listas en la rama</div></div>
+  <div class="sc fixed"><div class="n">11→3</div><div class="l">vulnerabilidades npm tras el fix seguro</div></div>
+  <div class="sc open"><div class="n">2</div><div class="l">decisiones en espera (bump de next · gate OCP)</div></div>
+  <div class="sc acc"><div class="n">~2.9&nbsp;MB</div><div class="l">huérfanos por barrer (pendiente)</div></div>
+</div>
+
+<p>El sistema sigue <b>estructuralmente sano</b>: <code>tsc --noEmit</code> pasa limpio, <code>next build</code>
+compila las 98 rutas sin error, el modelo de seguridad (RLS + triggers guarda + service-role) es coherente
+y la corrección estrella de la auditoría V14 — <b>envolver <code>auth.*()</code> en las políticas RLS</b> —
+<b>se mantuvo intacta a lo largo de 40 migraciones nuevas</b> (0 de 54 políticas sin envolver). No hay
+ruta de escritura sin autenticar en el panel, ni fuga de datos entre productores.</p>
+
+<p>Dicho eso, la auditoría encontró un puñado de problemas <b>reales</b>. Ninguno tumba producción hoy;
+dos exponen datos a un visitante anónimo, dos rompen en silencio la promesa de "nunca perder correo",
+cuatro pueden colgar una acción de IA hasta que Vercel la mate a los 5 minutos, y las dependencias npm
+acumulan 11 vulnerabilidades (incluida una del propio Next.js que toca el enrutado por <code>proxy.ts</code>).</p>
+
+<blockquote>
+<b>Calibración de escala, igual que en V14:</b> la base de datos sigue diminuta — <b>~1.200 filas en total</b>
+across 88 tablas, la más grande (<code>inbound_emails</code>) con <b>306 filas</b>, la misma que hace un mes.
+Por eso este informe vuelve a <b>rechazar deliberadamente</b> las recomendaciones automáticas de escala
+(83 índices de FK, 9 índices "sin uso"): a este tamaño cuestan escritura y espacio sin comprar ninguna
+lectura. Se documentan con su umbral de revisión en §9.
+</blockquote>
+
+<h2 id="estado">Estado de las correcciones (2026-08-13)</h2>
+<p>La auditoría corrió y se remedió en la misma sesión. Las dos correcciones de <b>base de datos</b> se
+aplicaron directo a producción por migración (no dependen de un despliegue) y se verificaron en vivo con
+la clave anónima; las de <b>código</b> están commiteadas en la rama <code>fix/audit-v30-remediations</code>
+(<code>tsc</code>/<code>eslint</code>/<code>build</code> limpios) y llegan a producción al fusionar el PR.</p>
+<div class="scroll"><table>
+  <tr><th>Hallazgo</th><th>Estado</th><th>Dónde</th></tr>
+  <tr><td>SEG-1 · <code>ai_usage_resumen</code> revocada de anon</td><td><span class="tag t-ok">Aplicado</span></td><td>Migración en prod · verificado anon→401</td></tr>
+  <tr><td>SEG-4 · <code>search_path</code> de <code>quotes_assign_code</code> + revocar <code>producer_owns_comm</code> de anon</td><td><span class="tag t-ok">Aplicado</span></td><td>Migración en prod · verificado</td></tr>
+  <tr><td>SEG-2 · <code>bajarFeed</code> deja de ser acción (SSRF)</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama · nuevo <code>feedFetch.ts</code></td></tr>
+  <tr><td>EST-1 · el OTP del panel comprueba su envío</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama</td></tr>
+  <tr><td>EST-2 · el Buzón no pierde adjuntos</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama</td></tr>
+  <tr><td>EST-3 · techo de tiempo en las llamadas de IA</td><td><span class="tag t-med">Parcial</span></td><td>Rama · 5 sitios (buildEpisode + next-step/mejoras/gvg/ticker); falta el presupuesto de <code>renderTake</code></td></tr>
+  <tr><td>ESTR-1 · <code>createCampaign</code>/<code>revokeCampaignCode</code> → patrón resultado</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama · vía <code>ActionForm</code></td></tr>
+  <tr><td>ESTR-3 · frontera de segmento en el proxy + <code>robots.txt</code></td><td><span class="tag t-ok">Aplicado</span></td><td>Rama</td></tr>
+  <tr><td>DEP-1 · vulnerabilidades npm (parte segura)</td><td><span class="tag t-ok">11 → 3</span></td><td>Rama · <code>npm audit fix</code> sin <code>--force</code></td></tr>
+  <tr><td>DEP-1 · las 3 restantes exigen <code>next@16.3.0</code></td><td><span class="tag t-med">En espera</span></td><td>Decisión del owner (§7)</td></tr>
+  <tr><td>ESTR-4 · gate de OCP·Leads</td><td><span class="tag t-med">En espera</span></td><td>No es de una línea — rompería el tablero compartido (§6)</td></tr>
+  <tr><td>EST-4/5/6 · carreras de <code>useAutosave</code>, tableros sin tope, deuda de patrón</td><td><span class="tag t-acc">Pendiente</span></td><td>No aplicado; sin urgencia a volumen actual</td></tr>
+  <tr><td>SEG-3 · <code>membresiasDe</code>/<code>puedeSer</code> a <code>server-only</code></td><td><span class="tag t-acc">Pendiente</span></td><td>Menor; sin aplicar aún</td></tr>
+  <tr><td>ESTR-2 · redibujar el <code>PanelDiagram</code></td><td><span class="tag t-acc">Pendiente</span></td><td>Cosmético; para el próximo wrap</td></tr>
+  <tr><td>ESTR-5 · barrido de huérfanos (~2,9 MB)</td><td><span class="tag t-acc">Pendiente</span></td><td>Decisión del owner sobre ParticiparSection/HeroPromesa</td></tr>
+  <tr><td>§9 · índices de FK y poda del Buzón</td><td><span class="tag t-acc">Diferido a escala</span></td><td>Umbrales en §9</td></tr>
+</table></div>
+<p class="lbl">Nota: los bloques «Corrección» dentro de cada hallazgo (§4–§7) describen exactamente lo que se
+implementó. La sección §12 conserva el orden de prioridad como registro.</p>
+
+<div class="toc">
+  <a href="#s2">2 · Alcance y método</a>
+  <a href="#s3">3 · Comparación con la auditoría V14</a>
+  <a href="#s4">4 · Seguridad</a>
+  <a href="#s5">5 · Estabilidad y resiliencia</a>
+  <a href="#s6">6 · Estructura y código muerto</a>
+  <a href="#s7">7 · Dependencias (npm)</a>
+  <a href="#s8">8 · Revisados y aceptados</a>
+  <a href="#s9">9 · Higiene de BD diferida</a>
+  <a href="#s10">10 · Lo que NO se encontró</a>
+  <a href="#s11">11 · Acción pendiente del owner</a>
+  <a href="#s12">12 · Recomendaciones priorizadas</a>
+</div>
+
+<h2 id="s2">2 · Alcance y método</h2>
+<table>
+  <tr><th>Frente</th><th>Qué se ejecutó realmente</th><th>Resultado</th></tr>
+  <tr><td>Compilación</td><td><code>npx tsc --noEmit</code></td><td><span class="tag t-ok">limpio</span></td></tr>
+  <tr><td>Lint</td><td><code>npx eslint src</code> (repo completo)</td><td><span class="tag t-med">27 warnings</span></td></tr>
+  <tr><td>Build</td><td><code>npm run build</code> — 98 rutas, Turbopack</td><td><span class="tag t-ok">exit 0</span></td></tr>
+  <tr><td>Enrutado y superficies</td><td>Inventario de las 98 rutas vs. los 18 subdominios de <code>src/proxy.ts</code></td><td>1 fuga de host, 2 huecos SEO</td></tr>
+  <tr><td>Compuertas de Server Actions</td><td>~280 acciones en 44 módulos <code>"use server"</code>, cada una cruzada contra su gate y su punto de llamada</td><td>2 sin gate · 1 regresión throw</td></tr>
+  <tr><td>Estabilidad / integraciones</td><td>Anthropic·Gemini·Resend·IMAP·Yahoo: timeouts, retries, degradación; <code>useAutosave</code>; hidratación jsonb; consultas sin tope</td><td>2 pérdidas silenciosas · 4 timeouts</td></tr>
+  <tr><td>Código muerto</td><td>Barrido de 191 componentes + 70 imágenes + 25 scripts; deriva de fuente única</td><td>~2,9 MB huérfano · 1 diagrama miente</td></tr>
+  <tr><td>Seguridad BD</td><td>Supabase advisors + <b>sondas REST reales con la clave anon</b> + inventario de funciones/políticas/triggers</td><td>1 vista con fuga · hygiene menor</td></tr>
+  <tr><td>Dependencias</td><td><code>npm audit</code></td><td>11 vulns (9 altas)</td></tr>
+</table>
+<p class="lbl">El barrido lo ejecutaron cuatro auditores en paralelo (rutas · huérfanos · compuertas · estabilidad),
+y cada hallazgo de severidad ALTA se re-verificó a mano contra el código fuente antes de entrar aquí. Las
+sondas REST se lanzaron contra <code>sjznkzvefqfcysczllli.supabase.co/rest/v1</code> con la clave publicable anon.</p>
+
+<h2 id="s3">3 · Comparación con la auditoría V14 (¿qué se torció desde entonces?)</h2>
+<p>La pregunta explícita del owner. Respuesta corta: <b>las correcciones de V14 aguantaron; lo que se
+torció es nuevo y vino con el crecimiento</b> (40 migraciones, ~15 módulos de acciones y 6 apps nuevas
+desde entonces).</p>
+<div class="scroll"><table>
+  <tr><th>Corrección de V14</th><th>Estado hoy</th></tr>
+  <tr><td><b>P-1</b> · 40 políticas RLS envueltas en <code>(select auth.*())</code></td><td><span class="tag t-ok">SE MANTUVO</span> 0 de 54 políticas sin envolver (las 14 nuevas nacieron bien)</td></tr>
+  <tr><td><b>SEC-2</b> · <code>place_order</code> revocado de <code>anon</code>/PUBLIC</td><td><span class="tag t-ok">SE MANTUVO</span> hoy solo <code>authenticated</code> lo ejecuta (grant explícito intacto)</td></tr>
+  <tr><td><b>SEC-1</b> · <code>search_path</code> fijo en 4 funciones</td><td><span class="tag t-med">PARCIAL</span> las 4 siguen fijas, pero la nueva <code>quotes_assign_code</code> nació sin fijarlo (§4)</td></tr>
+  <tr><td><b>S-1</b> · patrón resultado en vez de <code>throw</code> en acciones de <code>&lt;form&gt;</code></td><td><span class="tag t-med">REGRESIÓN</span> <code>clubActions.createCampaign</code> (archivo posterior) reintrodujo un throw de negocio alcanzable (§6)</td></tr>
+  <tr><td><b>S-2</b> · <code>.maybeSingle()</code> en las lecturas de compuerta</td><td><span class="tag t-ok">SE MANTUVO</span> las acciones nuevas usan <code>.maybeSingle()</code>; los gates ignoran el error y caen a "no autorizado"</td></tr>
+  <tr><td><b>SEC-4</b> · 2 vistas SECURITY DEFINER (catálogo público)</td><td><span class="tag t-high">EMPEORÓ</span> apareció una TERCERA, <code>ai_usage_resumen</code>, que sí filtra datos internos a <code>anon</code> (§4)</td></tr>
+  <tr><td>—</td><td><span class="tag t-high">NUEVO FRENTE</span> dependencias npm: 11 vulnerabilidades (V14 no auditó esto)</td></tr>
+</table></div>
+
+<h2 id="s4">4 · Seguridad</h2>
+
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> SEG-1 · La vista <code>ai_usage_resumen</code> es legible por Internet anónimo</h3>
+  <p class="lbl">migración <code>ai_usage_resumen_view</code> (2026-08-10) · lint <code>security_definer_view</code> (nivel ERROR)</p>
+  <p>La vista del libro de consumo de IA se creó <code>SECURITY DEFINER</code> y con <code>GRANT</code> por
+  defecto a <code>anon</code>/<code>authenticated</code>. La tabla base <code>ai_usage</code> está bien
+  cerrada (RLS deny-all, service-role), pero la vista la salta. <b>Confirmado en vivo</b> con la clave anon:</p>
+  <pre><span class="c">GET /rest/v1/ai_usage_resumen?select=*  → HTTP 200</span>
+[{"dia":"2026-08-10","proveedor":"anthropic","modelo":"claude-sonnet-5",
+  "superficie":"direccionamiento","llamadas":4,"fallidas":1,
+  "costo_usd":0.090976}, {"superficie":"gvg:match", ...}]</pre>
+  <p>Un desconocido puede leer, día a día, cuánta IA gasta CTC, con qué modelos, en qué superficies
+  (incluida <code>gvg:match</code>, el espacio personal del owner) y el costo en USD. No es PII ni credenciales
+  — es inteligencia operativa que no debería ser pública. Es exactamente el patrón que V14 aceptó a
+  propósito para <code>public_lot_catalog</code>, pero aquí <b>no hay razón de negocio</b> para exponerlo:
+  la vista solo la consume el tablero interno <code>/ecp/consumo</code>.</p>
+  <blockquote class="warn"><b>Corrección.</b> <code>REVOKE ALL ON public.ai_usage_resumen FROM anon, authenticated;</code>
+  (el tablero del ECP lee con service-role, así que no se rompe nada). Opcionalmente recrearla como
+  <code>security_invoker=on</code>. Es una migración de una línea y es la <b>prioridad #1</b> de seguridad.</blockquote>
+</div>
+
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> SEG-2 · <code>bajarFeed</code> es una primitiva SSRF sin compuerta</h3>
+  <p class="lbl">src/lib/coffeed/feedActions.ts:163</p>
+  <p>Todo <code>export</code> de un módulo <code>"use server"</code> es un endpoint POST invocable por
+  cualquier cliente, tenga o no la UI un botón para él. <code>bajarFeed</code> acepta una URL arbitraria,
+  hace <code>fetch(url, {redirect:"follow"})</code> y <b>devuelve el cuerpo</b> — sin <code>studioGate()</code>,
+  sin allowlist de host, sin bloqueo de IP privada. Su hermana <code>resolverFeeds</code> (mismo archivo)
+  sí llama al gate; ésta no.</p>
+  <pre><span class="del">export async function bajarFeed(feedUrl: string): Promise&lt;string | null&gt; {</span>
+<span class="del">  return bajar(feedUrl, 20_000);  // fetch(url,{redirect:"follow"}) → devuelve res.text()</span>
+<span class="del">}</span></pre>
+  <p>Sirve como proxy abierto y para alcanzar servicios internos (localhost, endpoints de metadatos)
+  y leer la respuesta. En Vercel serverless no hay el IMDS clásico de EC2, así que el impacto es menor
+  que en una VM, pero sigue siendo una SSRF real que devuelve cuerpo a un anónimo. Su único uso legítimo
+  es interno, desde el barrido ya gated (<code>aiActions.ts</code>).</p>
+  <blockquote class="warn"><b>Corrección.</b> No exportarla desde el módulo <code>"use server"</code>: renombrar
+  a <code>bajar</code> (helper interno) y que el barrido la importe como función normal, no como acción.
+  Si debe ser acción, envolver con <code>studioGate()</code> + allowlist de esquema/host + <code>redirect:"manual"</code>.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> SEG-3 · <code>membresiasDe</code>/<code>puedeSer</code> revelan la membresía de cualquier usuario sin sesión</h3>
+  <p class="lbl">src/lib/identidad/matriz.ts:30 y :63</p>
+  <p>Ambas son acciones <code>"use server"</code> que aceptan un <code>profileId</code> <b>arbitrario</b> y,
+  con el cliente service-role, devuelven si esa identidad es productor / comprador-real / directorio /
+  recolector / socio / admin (consultando <code>orders</code>, <code>lot_reservations</code>,
+  <code>buyer_profiles</code>). No hay verificación de sesión. Las variantes correctas para superficies
+  públicas son las de sesión (<code>puedoSer</code>, <code>misPlataformasRed</code>), que sacan el id del
+  usuario logueado. Mitigante real: el <code>profileId</code> es un UUID (no enumerable a ciegas) y la
+  salida son booleanos, no PII.</p>
+  <blockquote class="warn"><b>Corrección.</b> Dejar exportadas solo las variantes de sesión; convertir
+  <code>membresiasDe</code>/<code>puedeSer</code> en helpers <code>server-only</code> (el único llamador
+  legítimo, <code>terratalento/actions.ts</code>, ya pasa <code>user.id</code>).</blockquote>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Baja</span> SEG-4 · Higiene menor de funciones (regresiones pequeñas vs. V14)</h3>
+  <ul>
+    <li><b><code>quotes_assign_code</code> con <code>search_path</code> mutable</b> (nueva, de <code>ocp_cotizador_quotes</code>).
+    No es <code>SECURITY DEFINER</code>, así que el riesgo es el mismo bajo que tenían las 4 de V14 antes del fix;
+    fijar a <code>public, pg_temp</code> por consistencia.</li>
+    <li><b><code>producer_owns_comm(uuid,uuid)</code> ejecutable por <code>anon</code></b> — es la función
+    <code>SECURITY DEFINER</code> que rompió el bucle de recursión RLS (gotcha 11b). Devuelve un booleano,
+    utilizable como oráculo de "¿existe esta nota?"; riesgo bajo, pero <code>authenticated</code> la necesita
+    y <code>anon</code> no — revocar de <code>anon</code>.</li>
+    <li>Las 17 funciones de trigger siguen expuestas por RPC (lints 0028/0029). <b>Aceptado igual que en V14</b>
+    (SEC-3): Postgres las rechaza en compilación con <code>"trigger functions can only be called as triggers"</code>;
+    explotabilidad nula. Sin cambio.</li>
+  </ul>
+</div>
+
+<h2 id="s5">5 · Estabilidad y resiliencia</h2>
+
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> EST-1 · El envío del OTP del panel no comprueba su resultado</h3>
+  <p class="lbl">src/lib/bcp/sendOtpEmail.ts:22 · src/app/api/panel/auth/password/route.ts</p>
+  <p><code>resend.emails.send()</code> devuelve <code>{error}</code> sin lanzar, y aquí se descarta con un
+  <code>await</code> pelado. Si Resend falla, la ruta responde <code>{ok:true}</code>, el usuario espera un
+  código que nunca llega, y cada reintento quema uno de los <b>3 códigos por ventana de 15 min</b>. Con el
+  historial de fallos de login del BCP, es un modo de fallo invisible que puede bloquear la única puerta
+  del panel. <b>Es el único sender del sistema que no persiste su resultado</b> — todos los demás
+  (<code>invite_email_error</code>, <code>welcome_error</code>, <code>notificacion_error</code>) sí lo hacen.</p>
+  <blockquote class="warn"><b>Corrección.</b> Que <code>sendOtpEmail</code> devuelva el <code>SendResult</code>;
+  la ruta responde error (y compensa el slot de rate-limit) cuando el envío falla. Envolver el
+  <code>send()</code> para que un throw de red no escape del try/catch de la ruta.</blockquote>
+</div>
+
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> EST-2 · Un adjunto que falla al subir se pierde para siempre, en silencio</h3>
+  <p class="lbl">src/lib/buzon/syncBuzon.ts:136-145</p>
+  <p>El módulo del Buzón declara como regla #1 "NEVER lose mail". Se cumple para el cuerpo, no para los
+  adjuntos: la subida a Storage hace <code>if (!upErr) attachmentsMeta.push(...)</code> — si falla, no hay
+  retry, no se anota nada en la fila, y el insert del correo procede igual. Como el dedupe es por
+  <code>message_id</code>, ese mensaje nunca se re-importa; y la limpieza de retención (30 días) borra el
+  original de Hostinger porque la fila SÍ quedó archivada. Una factura PDF puede desaparecer sin rastro.</p>
+  <pre>const { error: upErr } = await service.storage.from(BUCKET).upload(path, att.content, ...);
+<span class="del">if (!upErr) { attachmentsMeta.push({...}); }   // si falla: se ignora y el correo entra igual</span></pre>
+  <blockquote class="warn"><b>Corrección.</b> Si algún upload falla, abortar el insert de ESE mensaje
+  (queda sin fila → se reintenta en el próximo run, que es idempotente), o registrar
+  <code>attachment_error</code> en la fila y excluir ese <code>message_id</code> del cleanup de retención.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media–Alta</span> EST-3 · Cuatro acciones de IA pueden dar un 504 mudo al superar los 300 s</h3>
+  <p class="lbl">datawaveActions.ts:144 · rtScriptorActions.ts:718 · gvg/matchActions.ts:325 · (patrón)</p>
+  <p>La lección del 2026-08-05 (el <code>fetch</code> de Node corta a los 300 s y Vercel mata la función a
+  los <code>maxDuration=300</code>) no se aplicó de forma uniforme en las apps nuevas. Cuando la función
+  muere a mitad, el <code>catch</code> de la acción <b>nunca corre</b>, así que ni se ve el mensaje amable
+  ni se limpia el estado — la fila queda clavada.</p>
+  <div class="scroll"><table>
+    <tr><th>Acción</th><th>Peor caso</th><th>Consecuencia</th></tr>
+    <tr><td><code>buildEpisode</code> (Datawave)</td><td>240 s + <b>reintento de timeout olvidado</b> = 483 s &gt; 300</td><td>504 mudo; el catch no corre</td></tr>
+    <tr><td><code>renderTake</code> (RT-Scriptor)</td><td>hasta 8 fotogramas × 120 s <b>sin techo de suma</b></td><td><code>coffeed_rts_renders.state='rendering'</code> eterno</td></tr>
+    <tr><td><code>runGvgMatch</code> (GVG)</td><td>Opus + 6 búsquedas web, <b>sin <code>AbortSignal</code></b> (corte a 300 s de undici)</td><td>fila clavada en <code>status='matching'</code></td></tr>
+    <tr><td>KR next-step · Arena mejoras · ticker</td><td><code>fetch</code> sin timeout explícito</td><td>degradan bien, pero cuelgan hasta el corte de undici</td></tr>
+  </table></div>
+  <blockquote class="warn"><b>Corrección.</b> <code>buildEpisode</code>: añadir <code>timeoutRetries:0</code>.
+  <code>renderTake</code>: presupuesto de tiempo por trabajo (si <code>Date.now()-t0 &gt; 200s</code>, cerrar
+  los restantes con error) o bajar el timeout por imagen a ~45 s. <code>runGvgMatch</code>/next-step/mejoras/ticker:
+  <code>AbortSignal.timeout()</code> por debajo del <code>maxDuration</code> para que el catch existente haga su trabajo.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> EST-4 · Dos carreras de <code>useAutosave</code> que reportan "Guardado ✓" sin guardar</h3>
+  <p class="lbl">src/lib/useAutosave.tsx:87 · src/components/kaffetal-regal/InfoModal.tsx:70</p>
+  <p>La corrupción original de <code>useAutosave</code> (leer refs del DOM que React ya soltó, gotcha 10b)
+  <b>está bien resuelta</b> — todos los consumidores son estado controlado. Pero quedan dos carreras más
+  suaves:</p>
+  <ul>
+    <li><b>Cambio durante un guardado en vuelo</b> (<code>useAutosave.tsx:87</code>): si el save A tarda &gt;3,5 s
+    (cold start) y llega un cambio B, el timer de B dispara con <code>savingRef===true</code> y hace
+    <code>return</code> sin re-agendar; el efecto solo se relanza al cambiar <code>serialized</code>, así que
+    B queda sin persistir mientras el chip dice "guardado". Se pierde si el usuario cierra la pestaña.</li>
+    <li><b><code>InfoModal</code> no espera su guardado</b> (<code>:70</code>): <code>save({silent:true}); return true;</code>
+    sin <code>await</code> — reporta éxito aunque el write falle y permite dos writes solapados de la misma fila.</li>
+  </ul>
+  <blockquote class="warn"><b>Corrección.</b> Al terminar el vuelo, comparar el snapshot vigente contra el
+  último guardado y re-agendar si difieren; en <code>InfoModal</code>, <code>return await onSave(...)</code>.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> EST-5 · Tableros del panel que leen histórico completo sin tope</h3>
+  <p class="lbl">LeadsBoard.tsx:115 · bcp/lotes/page.tsx:184 · ecp/terratalento/page.tsx:100 · bcp/nominados/page.tsx:53 · directorio/actions.ts:209</p>
+  <p>Los tableros que el equipo abre a diario cargan TODO su histórico y lo renderizan entero: todos los
+  leads del pilar + todo el hilo de <code>lead_replies</code> de cada uno; el histórico completo de
+  <code>lots</code> + <code>producer_comm_log</code> de todos los lotes del kanban; jornadas + postulaciones
+  (con <code>terminos_snapshot</code> jsonb) + <code>select("*")</code> de recolectores; la fase
+  <code>retirado</code> que acumula indefinidamente. Hoy es invisible (volumen bajo), pero crece para siempre.</p>
+  <blockquote class="warn"><b>Corrección.</b> <code>.limit()</code> + "ver más", o al menos un tope generoso
+  (500) como ya hace el Buzón. No urgente; anotar el umbral.</blockquote>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Nota</span> EST-6 · Deuda de patrón (hoy no muerde)</h3>
+  <ul>
+    <li><b><code>arena_sessions.run_state</code> se lee con cast directo</b>, sin merge de hidratación (a
+    diferencia de <code>hydrateDoc</code>/<code>EMPTY_FICHA</code>/<code>toLabEvaluationList</code>). No hay
+    filas pre-v2 hoy, pero si <code>JornadaState</code> crece, las sesiones viejas (que se leen para siempre
+    en la página de detalle) romperían. Añadir <code>hydrateRunState()</code> cuando toque.</li>
+    <li><b><code>DefinicionDeContexto.jsx:540</code></b> conserva un fallback que llama a
+    <code>api.anthropic.com</code> desde el navegador sin clave (400/CORS). Hoy es código muerto (el wrapper
+    siempre inyecta la acción endurecida); el archivo no se toca por contrato (se resincroniza con el autor).</li>
+    <li><b>Awaits secuenciales evitables</b> en <code>cargarDirectorio</code> (~2-3 RTT), <code>bcp/lotes</code>
+    (+1), <code>LeadsBoard</code> (+1), <code>runTriage</code> (N updates → 1 upsert). Micro-optimización; el
+    grueso (<code>KaffetalExperience.loadData</code>) ya paraleliza 12 consultas bien.</li>
+    <li><b><code>registrarConsumo</code> con <code>void</code></b>: contrato "anotar el gasto nunca tumba la
+    operación" verificado en los 7 puntos de gasto; el único costo es un hueco ocasional en el libro si la
+    promesa huérfana no completa en serverless. Aceptado por diseño; <code>waitUntil()</code> si duele.</li>
+  </ul>
+</div>
+
+<h2 id="s6">6 · Estructura y código muerto</h2>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> ESTR-1 · Regresión throw-vs-result: <code>createCampaign</code> revienta <code>/bcp/club</code></h3>
+  <p class="lbl">src/app/bcp/(app)/clubActions.ts:33 · enlazada en club/page.tsx:57 como <code>&lt;form action={createCampaign}&gt;</code></p>
+  <p>La métrica titular de regresión frente a V14. Crear una campaña con un nombre ya existente (rechazo de
+  negocio <b>alcanzable con un clic normal</b>) hace <code>throw</code> dentro de una acción enlazada a
+  <code>&lt;form action&gt;</code> — el patrón exacto que V14 arregló en <code>publishLot</code>/<code>signContract</code>/
+  <code>approveFinca</code>. En producción Next redacta el mensaje: el usuario ve un crash genérico de todo
+  <code>/bcp/club</code>. <code>clubActions.ts</code> es posterior a V14.</p>
+  <pre>if (error) throw new Error(error.code === "23505"
+  ? "Ya existe una campaña con ese nombre." : "No se pudo crear…");</pre>
+  <p>Menor y del mismo archivo: <code>revokeCampaignCode</code> lanza "ya usado o revocado" (alcanzable por
+  estado viejo/carrera). Persisten además los throws que V14 anotó como "solo alcanzables en estados
+  improbables" en <code>arenaActions</code> (<code>startJornada</code>), <code>leadsActions</code>
+  (<code>replyToLead</code>, evasión del <code>required</code> con un espacio) y <code>commActions</code>
+  (<code>logProducerComm</code>). No son nuevos; siguen ahí.</p>
+  <blockquote class="warn"><b>Corrección.</b> Devolver <code>{ok:false,error}</code> vía el componente
+  <code>ActionForm</code> que V14 creó justo para esto.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> ESTR-2 · El diagrama <code>PanelDiagram</code> ya no espeja <code>consoles.ts</code> — le faltan 7 módulos</h3>
+  <p class="lbl">src/app/ecp/(app)/documentacion/EstructuraModal.tsx:142</p>
+  <p>El propio archivo declara la regla ("espejo de <code>consoles.ts</code>; si cambia el nav, cambia este
+  dibujo") y el DICT <code>docsistema</code> del doc interactivo la repite. El nav cambió (2026-08-04 →
+  08-10) y el dibujo no: lleva ~6 versiones menores mintiendo. Faltan <b>Direccionamiento</b>,
+  <b>Automatizaciones</b> y <b>Consumo de IA</b> (ECP) y el <b>grupo entero "OCP · Cotizadores"</b> (Lotes,
+  Logístico, Empaque, Anclas). Además <code>RedPublicaDiagram</code> es anterior al split hub/green del
+  2026-08-11 (dice "Cherry Picked · Green·Roast·X" cuando la tienda ya vive en <code>cherry-picked-green.*</code>).</p>
+  <blockquote class="warn"><b>Corrección.</b> Añadir los 7 módulos al SVG (el grupo OCP necesita un
+  <code>Grupo</code> nuevo) y corregir el subtítulo de Cherry Picked. Es el diagrama que el equipo abre para
+  entender la red — que mienta es peor que no tenerlo.</blockquote>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> ESTR-3 · El proxy fuga contenido por comparar con <code>startsWith</code>, y no hay <code>robots.txt</code>/canonical en subdominios</h3>
+  <p class="lbl">src/proxy.ts:78 y :162 · sin sitemap.ts · sin metadataBase</p>
+  <ul>
+    <li><b>Fuga de host:</b> como <code>/cherry-picked</code> es prefijo de <code>/cherry-picked-green|roast|x</code>,
+    el host del hub sirve las tres superficies hermanas con 200 — incluido el callback OAuth de Green
+    <b>funcionando en el host equivocado</b>. La UI nunca genera esos enlaces (<code>FAMILY_LINKS</code> es
+    absoluto en prod), así que el daño es contenido duplicado + un bucle de OAuth si se teclea la URL.
+    Arreglo de una línea: comparar por frontera de segmento (<code>pathname===base || pathname.startsWith(base+"/")</code>).</li>
+    <li><b><code>robots.txt</code> da 404 en los 18 subdominios</b> — el matcher no lo excluye, así que el proxy
+    lo reescribe a una ruta inexistente. Los crawlers lo leen como "permitir todo". Hoy no expone nada
+    sensible (las consolas llevan <code>noindex</code> de respaldo y viven en www, donde el disallow sí
+    aplica), pero es higiene SEO rota. Añadir <code>robots.txt</code> (y <code>sitemap.xml</code>) a las
+    exclusiones del matcher.</li>
+    <li><b>Sin canonicals:</b> cada superficie es alcanzable en 2-3 URLs (www/base, sub/, sub/base) sin
+    <code>alternates.canonical</code>. Sitio B2B de tráfico bajo → señal repartida, no penalización. Un
+    canonical estático por superficie lo cierra.</li>
+    <li><b>Footgun latente:</b> el lookahead del matcher (<code>api|_next|images|docs|tools</code>) no está
+    acotado por <code>/</code>, así que una ruta futura como <code>/toolshed</code> o <code>/apis</code>
+    escaparía del proxy en silencio. Acotar con <code>/</code>.</li>
+  </ul>
+</div>
+
+<div class="finding f-med">
+  <h3><span class="tag t-med">Media</span> ESTR-4 · La compuerta de OCP·Leads no verifica el grant de consola</h3>
+  <p class="lbl">src/app/ocp/(app)/leadsActions.ts:8</p>
+  <p>Las 4 acciones (<code>replyToLead</code>, <code>setLeadStatus</code>, <code>retryWelcomeEmail</code>,
+  <code>retryReplyEmail</code>) llaman <code>requireActiveAdmin()</code>, que verifica <code>bcp_admin</code>
+  activo pero <b>no</b> el grant de consola — justo el footgun que <code>requireConsoleWrite</code> se creó
+  para cerrar. Los módulos hermanos del OCP (<code>cotizador</code>, <code>anclas</code>) sí usan
+  <code>requireConsoleWrite("ocp")</code>; <code>leadsActions</code> quedó inconsistente. Un colaborador con
+  grant de otra consola podría operar leads del OCP invocando la acción a mano.</p>
+  <blockquote class="warn"><b>Corrección.</b> Cambiar a <code>requireConsoleWrite("ocp")</code>. Matiz:
+  <code>LeadsBoard</code> se monta también en BCP/ECP para otros pilares — el gate fino debe parametrizarse
+  por consola donde se monta.</blockquote>
+</div>
+
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Baja</span> ESTR-5 · Código e imágenes huérfanos: ~2,9 MB borrables</h3>
+  <p>Todo verificado con doble grep. Nada de esto rompe nada; es peso muerto y deriva.</p>
+  <ul>
+    <li><b>Huérfanos deliberados del rebuild 2026-08-11</b> (decisión pendiente del owner): <code>ParticiparSection</code>
+    (+<code>ProcessFlow</code>, ~1.065 líneas + 2 CSS), <code>HeroPromesa</code> (dentro de <code>Hero.tsx</code>,
+    cirugía in-situ), + 2 imágenes solo suyas (275 KB). El pase de copy Specialty/Black sobre KR ProcessFlow
+    queda condicionado a si vuelve o se retira.</li>
+    <li><b>7 componentes huérfanos NO deliberados</b> (~450 L): <code>cotizador/InfoDot.tsx</code>,
+    <code>kaffetal-regal/ToastButton.tsx</code>, <code>ficha/NextStepWidget.tsx</code> (+css),
+    <code>ficha/fichaCsv.ts</code>, <code>ficha/panes/CertCheckbox.tsx</code>, <code>ui/button.tsx</code>.</li>
+    <li><b>Cadena muerta shadcn:</b> <code>ui/button.tsx</code> → <code>lib/utils.ts</code> (<code>cn()</code>) →
+    permite quitar <b>3 dependencias npm</b> (<code>clsx</code>, <code>tailwind-merge</code>, <code>class-variance-authority</code>).</li>
+    <li><b>13 imágenes muertas · 2,69 MB</b> (0 referencias en <code>src/</code> ni <code>public/</code>),
+    incluidas las 3 que la sesión anterior ya sospechaba (<code>hero-zoom-cereza.webp</code>,
+    <code>thread-regiones-cafeteras.jpg</code>, <code>thread-grados-ctc.png</code>).</li>
+    <li><b><code>lib/club/actions.ts</code></b>: 7 líneas <code>export {}</code>, borrable por su propio contrato.</li>
+    <li><b>NIT + dirección legal cableados en 4 archivos</b> (3 de ellos documentos imprimibles = material de
+    cliente): exportar <code>NIT</code>/<code>CTC_LEGAL_LINE</code> desde un módulo puro.</li>
+    <li><b>27 warnings de eslint</b> (el repo tiene estándar <code>--max-warnings=0</code>): 18 en el
+    <code>DefinicionDeContexto.jsx</code> vendido (no se toca) y 9 <code>&lt;img&gt;</code> en Coffeed/RT-Scriptor.
+    Rompen el estándar histórico de "limpio"; conviene o suprimirlos con motivo o arreglarlos.</li>
+  </ul>
+  <p class="lbl">Nota sobre <code>evaluado</code>: es un tercer valor legacy de facto (nadie lo escribe, se
+  maneja como lectura defensiva) pero un comentario en <code>arenaActions.ts:244</code> aún dice
+  "descartadas → evaluado" cuando el código grada a todos como <code>galardonado</code>. Comentario obsoleto,
+  no bug.</p>
+</div>
+
+<h2 id="s7">7 · Dependencias (npm) — frente nuevo que V14 no auditó</h2>
+<div class="finding f-high">
+  <h3><span class="tag t-high">Alta</span> DEP-1 · 11 vulnerabilidades (9 altas), todas con fix disponible</h3>
+  <p class="lbl"><code>npm audit</code> · <code>npm audit fix</code> resuelve la mayoría sin cambio mayor</p>
+  <div class="scroll"><table>
+    <tr><th>Paquete</th><th>Sev.</th><th>Qué es</th><th>Relevancia para CTC</th></tr>
+    <tr><td><code>next</code> (directo)</td><td>alta</td><td>bypass de Middleware/Proxy en App Router; DoS en Server Actions; SSRF en Server Actions</td><td><b>El enrutado entero vive en <code>proxy.ts</code></b> y toda mutación es Server Action — el frente más relevante</td></tr>
+    <tr><td><code>undici</code></td><td>alta</td><td>desincronización de respuesta; fuga entre usuarios vía cache; CRLF injection</td><td>Es el <code>fetch</code> de Node que usan todos los clientes de IA/feeds</td></tr>
+    <tr><td><code>sharp</code></td><td>alta</td><td>CVEs heredadas de libvips</td><td>Solo se usa en scripts de resize offline, no en runtime</td></tr>
+    <tr><td><code>ip-address</code>, <code>fast-uri</code></td><td>alta</td><td>bypass SSRF / host confusion</td><td>Transitivas; suman al frente SSRF junto a SEG-2</td></tr>
+    <tr><td><code>postcss</code>, <code>nanoid</code>, <code>js-yaml</code>, <code>brace-expansion</code></td><td>alta</td><td>XSS/path-traversal/DoS varios</td><td>Build-time y transitivas; riesgo bajo en runtime</td></tr>
+    <tr><td><code>hono</code>, <code>@hono/node-server</code></td><td>moderada</td><td>ReDoS CORS · path traversal Windows</td><td>Transitivas (tooling), no en la superficie de la app</td></tr>
+  </table></div>
+  <blockquote class="warn"><b>Corrección.</b> Correr <code>npm audit fix</code> (no <code>--force</code>) y
+  re-verificar <code>tsc</code>/<code>build</code>. La actualización de <code>next</code> puede necesitar un
+  bump de versión menor — hacerlo en una rama, dado que este Next es más nuevo que el training-data y tiene
+  APIs propias (leer <code>node_modules/next/dist/docs/</code> antes). Es la deuda de seguridad más grande
+  por volumen, aunque cada CVE individual sea de explotabilidad baja en Vercel serverless.</blockquote>
+</div>
+
+<h2 id="s8">8 · Revisados y aceptados (sin cambio, con motivo)</h2>
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aceptado</span> A-1 · 63 tablas con RLS activo y sin políticas</h3>
+  <p>Es el modelo <i>deny-all salvo service-role</i> del sistema, por diseño (Arena, leads, coffeed_*, gvg_*,
+  terratalento_*, directorio_*, panel_users…). <b>Verificado en vivo:</b> <code>GET /rest/v1/ai_usage</code>
+  y <code>/rest/v1/leads</code> con la clave anon devuelven <code>[]</code>. RLS activo sin políticas ES la
+  denegación. No es un hallazgo (salvo la vista <code>ai_usage_resumen</code> que lo salta — SEG-1).</p>
+</div>
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aceptado</span> A-2 · Las 2 vistas de catálogo público (<code>public_lot_catalog</code>, <code>public_transparency_pricing</code>)</h3>
+  <p><code>SECURITY DEFINER</code> a propósito, proyección estrecha y curada — reconfirmado. No exponen ficha
+  ni geolocalización. Igual que V14.</p>
+</div>
+<div class="finding f-acc">
+  <h3><span class="tag t-acc">Aceptado</span> A-3 · Los 14 triggers guarda, la cookie de panel y la hidratación jsonb</h3>
+  <p>Los 14 triggers guarda (funciones <code>guard_*</code>/<code>coffeed_guard_*</code>) están todos atados
+  a su tabla y coinciden con el modelo documentado. Ninguna
+  acción de panel lee la cookie compartida ni viceversa (el patrón dual de <code>studioGate</code> es
+  deliberado). La hidratación jsonb (<code>hydrateDoc</code>, <code>toLabEvaluationList</code>,
+  <code>EMPTY_FICHA</code>, Datawave) protege filas viejas — solo <code>run_state</code> queda fuera (EST-6).
+  El contrato never-throw del correo se cumple en 6 de 7 senders (la excepción es EST-1).</p>
+</div>
+
+<h2 id="s9">9 · Higiene de BD diferida (deliberadamente NO aplicada)</h2>
+<p>Un linter no conoce la escala. Igual que en V14, estas recomendaciones automáticas se rechazan por ahora:</p>
+<ul>
+  <li><b>83 claves foráneas sin índice</b> — correcto en abstracto, prematuro con ~1.200 filas totales (la
+  mayor tabla, 306). Umbral de revisión: cuando cualquier tabla pase de <b>~10.000 filas</b>, priorizando
+  las FK que se usan en <code>JOIN</code>/filtro (<code>lots.finca_id</code>, <code>arena_inscriptions.lot_id</code>,
+  <code>producer_comm_log.lot_id</code>).</li>
+  <li><b>9 índices "sin uso"</b> — aparecen sin uso porque la base es joven, no porque sobren; borrarlos ahora
+  es tocar tablas en transición (club, quotes, directorio, rts, ai_usage) por nada.</li>
+  <li><b>Storage a ~550 MB de 1 GB</b>, con <code>buzon/</code> en 144 MB (295 archivos) y sin poda automática.
+  La retención de 30 días del Buzón solo borra de Hostinger, no de Storage. No urgente, pero el bucket es
+  finito — anotar una poda de adjuntos del Buzón cuando pase de ~800 MB.</li>
+  <li><b>Crons de Vercel: 2 de 2 usados</b> (Hobby). No queda slot para un tercer cron; cualquier tarea
+  periódica nueva tiene que colgarse de <code>after()</code> o de uno de los dos sweeps existentes.</li>
+</ul>
+
+<h2 id="s10">10 · Lo que NO se encontró</h2>
+<p>Acota el alcance de lo revisado:</p>
+<ul>
+  <li>Ninguna ruta de escritura sin autenticar en las consolas: cada Server Action reautentica; ningún
+  formulario inline depende solo del gate del layout; ningún componente <code>"use client"</code> importa
+  <code>supabase/server</code> ni <code>server-only</code>.</li>
+  <li>Ninguna política RLS sin envolver <code>auth.*()</code> (0 de 54) — la corrección estrella de V14
+  aguantó 40 migraciones.</li>
+  <li>Ninguna fuga de datos entre productores/compradores; el scoping de ownership en clientes de sesión es
+  consistente (nadie hace <code>update</code>/<code>delete</code> por id sin filtro de propiedad; RLS es el backstop).</li>
+  <li>Ningún secreto en el cliente; <code>service_role</code> solo en <code>createServiceRoleClient()</code>,
+  siempre en servidor.</li>
+  <li>Higiene de logs limpia: 3 <code>console.log</code> en todo <code>src/</code> (los tres fallbacks de dev
+  sin <code>RESEND_API_KEY</code>).</li>
+  <li><code>tsc</code> y <code>next build</code> limpios; las 98 rutas compilan.</li>
+</ul>
+
+<h2 id="s11">11 · Acción pendiente del owner</h2>
+<div class="finding f-med">
+  <h3><span class="tag t-med">Bloqueado por plan</span> Protección de contraseñas filtradas</h3>
+  <p>Sigue deshabilitada, como en V14, y sigue <b>bloqueada tras el plan Pro</b> (la organización está en
+  Free). <code>Supabase → Authentication → Providers → Email</code>. Mientras tanto, sin costo, se puede subir
+  la longitud mínima (≥12) y exigir tipos de carácter — no depende del plan. El panel además exige 2FA por OTP.</p>
+</div>
+
+<h2 id="s12">12 · Recomendaciones priorizadas</h2>
+<p>El orden en que se atacó (y el registro de por qué). Los puntos 1–8 <b>ya están hechos</b> salvo lo
+anotado; el <b>Estado de las correcciones</b> arriba dice dónde vive cada uno. 9–11 siguen pendientes.</p>
+<ol>
+  <li><span class="tag t-ok">Hecho</span> <b>Cerrar <code>ai_usage_resumen</code> a <code>anon</code></b> (SEG-1) — 1 línea, era una fuga real y en vivo. Aplicado en prod.</li>
+  <li><b>Desexportar <code>bajarFeed</code></b> (SEG-2) — quitar la SSRF anónima.</li>
+  <li><b>Persistir el resultado del OTP</b> (EST-1) y <b>no perder adjuntos del Buzón</b> (EST-2) — los dos
+  fallos silenciosos que contradicen su propia promesa.</li>
+  <li><b><code>npm audit fix</code></b> en una rama (DEP-1), re-verificando <code>tsc</code>/<code>build</code>
+  — sobre todo el bump de <code>next</code>.</li>
+  <li><b>Poner techo de tiempo a las 4 acciones de IA</b> (EST-3) para que el catch amable corra en vez del 504 mudo.</li>
+  <li><b><code>createCampaign</code> → patrón resultado</b> (ESTR-1) y <b>OCP·Leads → <code>requireConsoleWrite</code></b> (ESTR-4).</li>
+  <li><b>Segment-boundary en el proxy + <code>robots.txt</code> en subdominios</b> (ESTR-3) — arreglos de pocas líneas.</li>
+  <li><b>Actualizar el <code>PanelDiagram</code></b> (ESTR-2) para que deje de mentir, junto al próximo Version Wrap.</li>
+  <li><b>Barrido de huérfanos</b> (ESTR-5) — decisión del owner sobre ParticiparSection/HeroPromesa; borrar
+  las 13 imágenes muertas, los 7 componentes, la cadena shadcn y unificar el NIT.</li>
+  <li><b>Higiene de funciones</b> (SEG-4): fijar <code>search_path</code> en <code>quotes_assign_code</code>,
+  revocar <code>producer_owns_comm</code> de <code>anon</code>.</li>
+  <li><b>Diferido a escala</b> (§9): índices de FK y poda del Buzón cuando los umbrales lleguen.</li>
+</ol>
+
+<p class="foot">
+  Auditoría estructural y de estabilidad · CTC Web Platform · 2026-08-13 · sobre V30.0 (plataforma V3.27)<br>
+  Método: 4 auditores en paralelo (rutas · huérfanos · compuertas · estabilidad) + Supabase advisors + sondas
+  REST reales + <code>npm audit</code>; cada ALTA re-verificada a mano contra el código.<br>
+  Archivo autocontenido: se abre en cualquier navegador y se imprime a PDF sin dependencias.<br>
+  Correcciones aplicadas en esta misma sesión (ver el cuadro de estado): BD en producción, código en la
+  rama <b>fix/audit-v30-remediations</b> (commit e03ea8f).
+</p>
+
+</div>
+</body>
+</html>

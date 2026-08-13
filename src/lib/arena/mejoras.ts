@@ -77,6 +77,11 @@ export async function generateMejorasDoc(service: SupabaseClient, lotId: string)
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
+      // Timeout explícito (auditoría 2026-08-13, EST-3): recordSondeoResult hace
+      // `await generateMejorasDoc()` y sin techo el fetch retendría el veredicto
+      // hasta el corte de undici. 60 s sobra para 900 tokens sin búsqueda web;
+      // un fallo degrada a `mejoras_doc` null + botón de regenerar.
+      signal: AbortSignal.timeout(60_000),
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 900,

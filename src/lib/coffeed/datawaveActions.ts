@@ -141,7 +141,11 @@ REGLAS
 - En points solo números — sin cadenas, sin comas de millares, sin unidades dentro del arreglo.`;
 
   try {
-    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, superficie: USOS.datawave, system: SYSTEM_JSON, user, maxTokens: 8000, webSearch: 6, timeoutMs: 240_000 });
+    // timeoutRetries:0 a propósito (auditoría 2026-08-13, EST-3): con el default
+    // de 1 reintento el peor caso sería 240 + 240 = 483 s, por encima del
+    // maxDuration=300 de la página — Vercel mataría la función antes de que el
+    // catch de abajo corra, y el usuario vería un 504 mudo en vez del mensaje.
+    const { text, sources } = await claudeSourced({ model: MODEL_WRITE, superficie: USOS.datawave, system: SYSTEM_JSON, user, maxTokens: 8000, webSearch: 6, timeoutMs: 240_000, timeoutRetries: 0 });
     const raw = parseJson<Record<string, unknown>>(text);
     if (!Array.isArray(raw.items) || raw.items.length < 3) {
       return { ok: false, error: "Volvió demasiado flaco para construir encima. Acota el tema, o di qué cifras usar." };

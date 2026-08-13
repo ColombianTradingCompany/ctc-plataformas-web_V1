@@ -29,7 +29,7 @@ import { postExcerpt, renderCoffeedPost, type PostPanel, type PostSource } from 
 import { COFFEED_RULES, parseCoffeedClaims, type CoffeedResult } from "./types";
 import { dentroDeVentana, parseFeed } from "./feeds";
 import { geminiDisponible, geminiVideo } from "./gemini";
-import { bajarFeed } from "./feedActions";
+import { bajarFeed } from "./feedFetch";
 
 function logFail(where: string, err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);

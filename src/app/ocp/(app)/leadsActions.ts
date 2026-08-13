@@ -4,11 +4,49 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendLeadWelcomeEmail, sendLeadReplyEmail, PILLAR_LABEL, type LeadEmailInput, type ThreadMessage } from "@/lib/email/leadEmails";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { getPanelUser, grantedConsoles } from "@/lib/panel/panelUsers";
+import type { PanelConsoleKey } from "@/lib/panel/consoles";
 
 async function requireAdmin() {
   // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
   // so suspending a collaborator revokes Server Actions instantly.
   return requireActiveAdmin();
+}
+
+// ── Compuerta fina por consola (auditoría 2026-08-13, ESTR-4) ────────────────
+// Estas acciones las comparten CUATRO tableros (regla V4 Fase 0: "el CRM vive
+// en la consola dueña del dominio"): general→OCP, cocreate→BCP, tech→ECP,
+// varietales→ECP. `requireActiveAdmin` solo mira el rol, no el grant de
+// consola — un colaborador con grant solo de BCP podía operar leads del OCP
+// invocando la acción a mano. La consola dueña se deriva del pilar DEL LEAD
+// (dato del servidor, no del cliente) y se contrasta contra los grants, con el
+// mismo grandfathering que requireConsoleWrite (sin fila = las tres consolas).
+const PILLAR_CONSOLE: Record<string, PanelConsoleKey> = {
+  general: "ocp",
+  cocreate: "bcp",
+  tech: "ecp",
+  varietales: "ecp",
+};
+
+// El tablero que hay que revalidar es el de la consola dueña — antes se
+// revalidaba solo /ocp/leads y los otros tres tableros quedaban con caché vieja.
+const PILLAR_BOARD_PATH: Record<string, string> = {
+  general: "/ocp/leads",
+  cocreate: "/bcp/co-create",
+  tech: "/ecp/ctc-tech",
+  varietales: "/ecp/varietales",
+};
+
+async function requireLeadConsole(adminId: string, lead: LeadRow): Promise<void> {
+  const consoleKey = PILLAR_CONSOLE[lead.pillar] ?? "ocp";
+  const row = await getPanelUser(adminId);
+  if (!grantedConsoles(row).includes(consoleKey)) {
+    throw new Error("Tu credencial no tiene acceso a la consola que administra este lead.");
+  }
+}
+
+function leadBoardPath(lead: LeadRow): string {
+  return PILLAR_BOARD_PATH[lead.pillar] ?? "/ocp/leads";
 }
 
 const STATUSES = ["nuevo", "en_conversacion", "convertido", "cerrado"] as const;
@@ -119,6 +157,7 @@ export async function replyToLead(leadId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
+  await requireLeadConsole(adminId, lead);
 
   const subject = String(formData.get("subject") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -148,13 +187,14 @@ export async function replyToLead(leadId: string, formData: FormData) {
     performed_by: adminId,
     notes: subject,
   });
-  revalidatePath("/ocp/leads");
+  revalidatePath(leadBoardPath(lead));
 }
 
 export async function setLeadStatus(leadId: string, formData: FormData) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
+  await requireLeadConsole(adminId, lead);
 
   const status = String(formData.get("status") ?? "");
   if (!STATUSES.includes(status as (typeof STATUSES)[number])) throw new Error("Estado inválido.");
@@ -169,13 +209,14 @@ export async function setLeadStatus(leadId: string, formData: FormData) {
     new_status: status,
     performed_by: adminId,
   });
-  revalidatePath("/ocp/leads");
+  revalidatePath(leadBoardPath(lead));
 }
 
 export async function retryWelcomeEmail(leadId: string) {
   const adminId = await requireAdmin();
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
+  await requireLeadConsole(adminId, lead);
 
   const result = await sendLeadWelcomeEmail(lead);
   await service
@@ -189,7 +230,7 @@ export async function retryWelcomeEmail(leadId: string) {
     performed_by: adminId,
     notes: result.ok ? "Enviado" : result.error,
   });
-  revalidatePath("/ocp/leads");
+  revalidatePath(leadBoardPath(lead));
 }
 
 export async function retryReplyEmail(replyId: string) {
@@ -203,6 +244,7 @@ export async function retryReplyEmail(replyId: string) {
     .single();
   if (!reply) throw new Error("Respuesta no encontrada.");
   const lead = await getLead(service, reply.lead_id);
+  await requireLeadConsole(adminId, lead);
 
   // Re-append the password only if this reply was its designated carrier and
   // it hasn't been delivered (cleared) by a successful send yet.
@@ -223,5 +265,5 @@ export async function retryReplyEmail(replyId: string) {
     performed_by: adminId,
     notes: result.ok ? "Enviado" : result.error,
   });
-  revalidatePath("/ocp/leads");
+  revalidatePath(leadBoardPath(lead));
 }

@@ -115,3 +115,32 @@ La lección quedó impuesta desde entonces: **los commits se arman con rutas
 explícitas, nunca con `git add -A`**, porque puede haber otra sesión trabajando
 en el mismo árbol.
 (commit: 60c07df)
+
+## [2026-08-13] Cola de la auditoría V30 · compuerta de leads + barrido de huérfanos
+
+- **ESTR-4 resuelto**: las 4 acciones de leads (replyToLead/setLeadStatus/
+  retryWelcomeEmail/retryReplyEmail en ocp/(app)/leadsActions.ts) ganan
+  compuerta fina por consola — la consola dueña se deriva del PILAR del lead
+  (general→OCP, cocreate→BCP, tech→ECP, varietales→ECP, regla V4 Fase 0) y se
+  contrasta contra grantedConsoles() con el grandfathering de siempre. La
+  revalidación ahora apunta al tablero de la consola dueña (antes siempre
+  /ocp/leads: los tableros de BCP/ECP quedaban con caché vieja). Afecta al
+  escenario `leads` del mapa: el paso de gate ya no es solo requireActiveAdmin.
+  (commit: 7b3f40e)
+- **ESTR-5 ejecutado — los huérfanos anotados al abrir este log quedaron
+  retirados**, por la regla que este mismo log dejó escrita («si en el próximo
+  repaso siguen sin usarse, se retiran»): ParticiparSection + ProcessFlow (con
+  sus CSS y sus 2 imágenes; con ellos muere el pase de copy Specialty/Black
+  sobre ProcessFlow que estaba condicionado a su regreso), HeroPromesa (cirugía
+  en Hero.tsx: componente + 14 claves trilingües + 18 clases CSS), InfoDot,
+  ToastButton, NextStepWidget, fichaCsv, CertCheckbox, la cadena shadcn
+  (ui/button → lib/utils → fuera clsx/tailwind-merge/class-variance-authority
+  de package.json), lib/club/actions.ts y 15 imágenes (~2,9 MB, incl.
+  hero-zoom-cereza.webp y las dos thread-*). Identidad legal unificada en
+  src/lib/legal.ts (NIT/razón/sede/correo; LegalFooter + 3 imprimibles la
+  importan). Nodo n-kaffetal: la landing ya no tiene componentes huérfanos.
+  ⚠ Deuda nueva anotada: /api/kaffetal-regal/next-step quedó SIN llamador al
+  retirar NextStepWidget — retirar la ruta es retirar la feature «¿Y ahora
+  qué?» entera (columnas ai_next_step_* en lots incluidas): decisión de
+  producto pendiente del owner. /lab/tipografia NO se tocó (preguntar antes
+  sigue vigente). (commit: 092f013)

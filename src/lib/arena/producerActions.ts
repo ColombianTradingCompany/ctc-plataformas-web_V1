@@ -7,7 +7,7 @@ import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/
 
 // ── Postulación a la Kaffetal Regal Arena (lado productor) ──────────────────
 // arena_inscriptions y arena_entry_codes son service-role-only en escritura,
-// así que la postulación vive aquí (mismo patrón que club/actions.ts: cliente
+// así que la postulación vive aquí (mismo patrón del resto de actions: cliente
 // de sesión para la identidad + cliente service-role para la escritura).
 // Todas devuelven resultado — nunca lanzan.
 

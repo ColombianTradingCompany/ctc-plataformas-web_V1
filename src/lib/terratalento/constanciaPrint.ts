@@ -1,4 +1,5 @@
 import { resumenTerminos, terminosFromRow } from "./terminos";
+import { CTC_EMAIL, CTC_RAZON, NIT } from "@/lib/legal";
 
 // ── Constancia de acuerdo · Jornada de Recolecta ────────────────────────────
 // Imprimible que deja por escrito lo pactado, generado desde el SNAPSHOT
@@ -123,7 +124,7 @@ export function buildConstanciaHtml(input: ConstanciaInput): string {
   </div>
 
   <footer>
-    Terratalento · Colombian Trading Company · NIT 901.483.425-7 · info@ctcexport.com<br />
+    Terratalento · ${CTC_RAZON} · ${NIT} · ${CTC_EMAIL}<br />
     Generado el ${esc(fecha(new Date().toISOString()))} desde terratalento.ctcexport.com
   </footer>
 </body></html>`;

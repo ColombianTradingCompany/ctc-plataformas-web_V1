@@ -1,4 +1,5 @@
 import type { MiFicha } from "./types";
+import { CTC_RAZON, NIT } from "@/lib/legal";
 
 // Perfil del Directorio como HTML imprimible → PDF. Mismo patrón que las
 // instrucciones de envío de Kaffetal Regal (Blob URL + window.open, con
@@ -74,7 +75,7 @@ function perfilHtml(f: MiFicha): string {
   ${f.motivoTxt ? `<p class="quote">“${esc(f.motivoTxt)}”</p>` : ""}
   <h2>Documentos y soportes</h2>${docs}
 
-  <footer>Directorio de Especialistas del Café · Colombian Trading Company · NIT 901.483.425-7 · ctcexport.com</footer>
+  <footer>Directorio de Especialistas del Café · ${CTC_RAZON} · ${NIT} · ctcexport.com</footer>
 </body></html>`;
 }
 

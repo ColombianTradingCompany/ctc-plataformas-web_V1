@@ -1,0 +1,83 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V30.0(8efd44f).html
+(CTC Web Platform, 2026-08-13). Cada entrada se compila al próximo Version Wrap (V31).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit.
+
+Lección heredada del wrap de V28: **una entrada del log puede estar ya compilada**
+si se registró y se envolvió el mismo día. Antes de compilar, comprobar en el HTML
+base si ya está (buscar la clave de DICT o la nota que pedía).
+
+Contexto abierto al cerrar V30 (2026-08-13):
+
+- 📌 **LO PRIMERO DE LA PRÓXIMA SESIÓN, pedido por el owner al cerrar ésta: un
+  ANÁLISIS ESTRUCTURAL Y DE ESTABILIDAD COMPLETO de todo el sistema.** Punto de
+  partida sugerido: docs/HANDOFF.md + este snapshot V30 + el precedente de
+  Auditoria_Estabilidad_Eficiencia_V14.html (la auditoría de V15, para comparar
+  qué se volvió a torcer desde entonces). Insumos frescos de esta tanda que esa
+  auditoría debería mirar: los componentes huérfanos a propósito
+  (ParticiparSection/ProcessFlow/HeroPromesa, TopBanner ya borrado), el laboratorio
+  /lab/tipografia vivo con 8 familias de next/font cargadas solo ahí, el proxy
+  comparando con startsWith (cherry-picked.* sirve también /cherry-picked-green),
+  y las advertencias de eslint de coffeed/ y direccionamiento/ que quedaron de
+  otra sesión.
+- **KR: código huérfano a propósito** (2026-08-11): `ParticiparSection` (con
+  `ProcessFlow` y su acordeón EUDR) y `HeroPromesa` ya no se montan — su contenido
+  vive en el FAQ. Si en el próximo repaso siguen sin usarse, se retiran. OJO: el
+  pase de copy Specialty/Black sobre KR ProcessFlow que estaba pendiente del owner
+  queda condicionado a si ProcessFlow vuelve o se retira.
+- **Co-Create sigue renombrado a medias**: el hub dice «Cherry Picked Co-Create»,
+  su landing (`co-create.ctcexport.com`, Clase B) sigue diciendo «CTC Co-Create».
+  Dos decisiones del owner pendientes: renombrar la marca en landing + CRM del
+  BCP, y si pasa al armazón de la familia (dejaría de ser Clase B — toca la regla
+  de las tres clases de V4).
+- **/lab/tipografia**: el titular NO se cambia (decisión 2026-08-11). El
+  laboratorio queda como mesa de pruebas; borrarlo es una limpieza (ruta,
+  componentes, robots.ts y las 8 familias de next/font) — PREGUNTAR antes.
+  Mientras viva: su velo está copiado de Hero.module.css y si allí se retoca,
+  el laboratorio miente.
+- **La cinta de mercado**: robusta de Londres e inventarios ICE declarados como
+  anclas sin fuente gratuita — para anotarlos a mano falta hacer multi-tipo el
+  tablero AnclasBoard del OCP (hoy solo administra fnc_carga).
+- **El hub de Cherry Picked no captura correo**: el CHECK de
+  newsletter_subscribers solo admite roast | x | ctc-home. Lista de espera por
+  mercado para Green = migración + campo de país.
+- **Dos imágenes sin sitio** tras retirar «El hilo de integración»:
+  thread-regiones-cafeteras.jpg y thread-grados-ctc.png (siguen en
+  public/images/ctc-home/). También quedó sin uso hero-zoom-cereza.webp (la cinta
+  del TopBanner borrado de KR).
+- **El proxy compara con startsWith**: cherry-picked.ctcexport.com sirve también
+  /cherry-picked-green|roast|x. Anterior a esta tanda; si algún día importa el
+  contenido duplicado, comparar el segmento completo.
+- **Pendiente del owner**: el logotipo del «Ecosistema de Valor» (la banda sigue
+  con el guacamayo); el logotipo de Co-Create; material de la landing de
+  Varietales; pase de copy Specialty/Black sobre CP BlackSection.
+- **RT-Scriptor · la imagen real sigue sin salir**: Google contestó 429 (la clave
+  no tiene cuota de generación de imagen). Se resuelve con facturación en ese
+  proyecto o apuntando GEMINI_IMAGE_MODEL a un modelo del plan.
+- **El escenario de Canva NO está montado en Make** (blueprint en
+  docs/MAKE_RTS_CANVA.md; registrado en /ecp/automatizaciones como «propuesta»).
+- **El libro de consumo de IA**: el insert real desde dentro de Next sigue sin
+  probarse; Gemini sigue sin tarifa en precios.ts (el total del tablero es un
+  SUELO). 📌 El 2026-08-31 caduca el precio de lanzamiento de Sonnet 5 — el 1 de
+  septiembre la misma llamada cuesta un 50% más.
+- **Coffeed**: 5 medios sin feed; calidad editorial por afinar; el muro casi
+  vacío. Integraciones F4 (redes) y F5 (WhatsApp) sin empezar.
+- **GDPR**: la política de privacidad sigue sin escribirse; subprocesadores:
+  Resend, Notion, Google, Make, Anthropic, Gemini.
+- `qa-guard-check.mjs` no corre: necesita una cuenta QA de productor.
+- **Identity Value Creation** (4ª app del taller) declarada y sin construir.
+- El **socio multi-nodo** sigue exigiendo cambiar el PK de partner_accounts.
+- Los **dos cotizadores y Anclas de mercado** sin conducir en navegador (2FA).
+- El bucket de Storage sigue sin poda automática del Buzón.
+- **Terratalento construido, puerta pública en gris** por decisión del owner.
+  Para encenderla: quitar `soon: true` en EcosystemSection, nada más.
+- **Deuda de estilo** al reutilizar la familia .ctcb: costal pone la segunda
+  línea en versalita (la copy tiene que aguantarlo) y los cuatro tratamientos
+  asumen fondo oscuro o medio — sobre --paper el relieve casi no se ve.

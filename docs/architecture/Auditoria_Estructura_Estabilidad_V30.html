@@ -82,7 +82,10 @@
   <p class="sub">Revisión completa del código, la base de datos de producción, las integraciones externas
   y las dependencias, con comparación explícita contra la auditoría anterior (<b>sobre V14.0</b>) para
   ver qué se mantuvo y qué se volvió a torcer. Pedida por el owner al cerrar el wrap V30.
-  <b>Ningún hallazgo se aplicó todavía</b> — es un diagnóstico; las correcciones esperan tu visto bueno.</p>
+  <b>La mayoría de las correcciones se aplicaron en esta misma sesión</b> — las de base de datos ya están
+  vivas en producción, las de código viven en la rama <code>fix/audit-v30-remediations</code> (sin
+  desplegar); el estado exacto de cada hallazgo está en <a href="#estado">el cuadro de estado</a> más abajo.
+  Dos quedan en espera de tu decisión.</p>
   <p class="meta">
     Fecha: <b>2026-08-13</b> ·
     Repo: <b>ctc-plataformas-web_V1</b> · rama <b>main</b> ·
@@ -95,11 +98,11 @@
 
 <div class="scorecards">
   <div class="sc fixed"><div class="n">SANO</div><div class="l">tsc + build limpios; modelo de seguridad coherente</div></div>
-  <div class="sc bad"><div class="n">2</div><div class="l">exposiciones reales alcanzables sin auth</div></div>
-  <div class="sc open"><div class="n">2</div><div class="l">fallos de correo/adjuntos silenciosos</div></div>
-  <div class="sc open"><div class="n">4</div><div class="l">acciones de IA que pueden dar 504 mudo</div></div>
-  <div class="sc bad"><div class="n">11</div><div class="l">vulnerabilidades npm (9 altas), todas con fix</div></div>
-  <div class="sc acc"><div class="n">~2.9&nbsp;MB</div><div class="l">código/imágenes huérfanos borrables</div></div>
+  <div class="sc fixed"><div class="n">2</div><div class="l">correcciones de BD ya vivas en producción</div></div>
+  <div class="sc fixed"><div class="n">7</div><div class="l">correcciones de código listas en la rama</div></div>
+  <div class="sc fixed"><div class="n">11→3</div><div class="l">vulnerabilidades npm tras el fix seguro</div></div>
+  <div class="sc open"><div class="n">2</div><div class="l">decisiones en espera (bump de next · gate OCP)</div></div>
+  <div class="sc acc"><div class="n">~2.9&nbsp;MB</div><div class="l">huérfanos por barrer (pendiente)</div></div>
 </div>
 
 <p>El sistema sigue <b>estructuralmente sano</b>: <code>tsc --noEmit</code> pasa limpio, <code>next build</code>
@@ -114,12 +117,39 @@ cuatro pueden colgar una acción de IA hasta que Vercel la mate a los 5 minutos,
 acumulan 11 vulnerabilidades (incluida una del propio Next.js que toca el enrutado por <code>proxy.ts</code>).</p>
 
 <blockquote>
-<b>Calibración de escala, igual que en V14:</b> la base de datos sigue diminuta — <b>1.201 filas en total</b>
+<b>Calibración de escala, igual que en V14:</b> la base de datos sigue diminuta — <b>~1.200 filas en total</b>
 across 88 tablas, la más grande (<code>inbound_emails</code>) con <b>306 filas</b>, la misma que hace un mes.
 Por eso este informe vuelve a <b>rechazar deliberadamente</b> las recomendaciones automáticas de escala
 (83 índices de FK, 9 índices "sin uso"): a este tamaño cuestan escritura y espacio sin comprar ninguna
 lectura. Se documentan con su umbral de revisión en §9.
 </blockquote>
+
+<h2 id="estado">Estado de las correcciones (2026-08-13)</h2>
+<p>La auditoría corrió y se remedió en la misma sesión. Las dos correcciones de <b>base de datos</b> se
+aplicaron directo a producción por migración (no dependen de un despliegue) y se verificaron en vivo con
+la clave anónima; las de <b>código</b> están commiteadas en la rama <code>fix/audit-v30-remediations</code>
+(<code>tsc</code>/<code>eslint</code>/<code>build</code> limpios) y llegan a producción al fusionar el PR.</p>
+<div class="scroll"><table>
+  <tr><th>Hallazgo</th><th>Estado</th><th>Dónde</th></tr>
+  <tr><td>SEG-1 · <code>ai_usage_resumen</code> revocada de anon</td><td><span class="tag t-ok">Aplicado</span></td><td>Migración en prod · verificado anon→401</td></tr>
+  <tr><td>SEG-4 · <code>search_path</code> de <code>quotes_assign_code</code> + revocar <code>producer_owns_comm</code> de anon</td><td><span class="tag t-ok">Aplicado</span></td><td>Migración en prod · verificado</td></tr>
+  <tr><td>SEG-2 · <code>bajarFeed</code> deja de ser acción (SSRF)</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama · nuevo <code>feedFetch.ts</code></td></tr>
+  <tr><td>EST-1 · el OTP del panel comprueba su envío</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama</td></tr>
+  <tr><td>EST-2 · el Buzón no pierde adjuntos</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama</td></tr>
+  <tr><td>EST-3 · techo de tiempo en las llamadas de IA</td><td><span class="tag t-med">Parcial</span></td><td>Rama · 5 sitios (buildEpisode + next-step/mejoras/gvg/ticker); falta el presupuesto de <code>renderTake</code></td></tr>
+  <tr><td>ESTR-1 · <code>createCampaign</code>/<code>revokeCampaignCode</code> → patrón resultado</td><td><span class="tag t-ok">Aplicado</span></td><td>Rama · vía <code>ActionForm</code></td></tr>
+  <tr><td>ESTR-3 · frontera de segmento en el proxy + <code>robots.txt</code></td><td><span class="tag t-ok">Aplicado</span></td><td>Rama</td></tr>
+  <tr><td>DEP-1 · vulnerabilidades npm (parte segura)</td><td><span class="tag t-ok">11 → 3</span></td><td>Rama · <code>npm audit fix</code> sin <code>--force</code></td></tr>
+  <tr><td>DEP-1 · las 3 restantes exigen <code>next@16.3.0</code></td><td><span class="tag t-med">En espera</span></td><td>Decisión del owner (§7)</td></tr>
+  <tr><td>ESTR-4 · gate de OCP·Leads</td><td><span class="tag t-med">En espera</span></td><td>No es de una línea — rompería el tablero compartido (§6)</td></tr>
+  <tr><td>EST-4/5/6 · carreras de <code>useAutosave</code>, tableros sin tope, deuda de patrón</td><td><span class="tag t-acc">Pendiente</span></td><td>No aplicado; sin urgencia a volumen actual</td></tr>
+  <tr><td>SEG-3 · <code>membresiasDe</code>/<code>puedeSer</code> a <code>server-only</code></td><td><span class="tag t-acc">Pendiente</span></td><td>Menor; sin aplicar aún</td></tr>
+  <tr><td>ESTR-2 · redibujar el <code>PanelDiagram</code></td><td><span class="tag t-acc">Pendiente</span></td><td>Cosmético; para el próximo wrap</td></tr>
+  <tr><td>ESTR-5 · barrido de huérfanos (~2,9 MB)</td><td><span class="tag t-acc">Pendiente</span></td><td>Decisión del owner sobre ParticiparSection/HeroPromesa</td></tr>
+  <tr><td>§9 · índices de FK y poda del Buzón</td><td><span class="tag t-acc">Diferido a escala</span></td><td>Umbrales en §9</td></tr>
+</table></div>
+<p class="lbl">Nota: los bloques «Corrección» dentro de cada hallazgo (§4–§7) describen exactamente lo que se
+implementó. La sección §12 conserva el orden de prioridad como registro.</p>
 
 <div class="toc">
   <a href="#s2">2 · Alcance y método</a>
@@ -475,8 +505,9 @@ desde entonces).</p>
   ni geolocalización. Igual que V14.</p>
 </div>
 <div class="finding f-acc">
-  <h3><span class="tag t-acc">Aceptado</span> A-3 · Los 17 triggers guarda, la cookie de panel y la hidratación jsonb</h3>
-  <p>Los 17 triggers guarda están todos atados a su tabla y coinciden con el modelo documentado. Ninguna
+  <h3><span class="tag t-acc">Aceptado</span> A-3 · Los 14 triggers guarda, la cookie de panel y la hidratación jsonb</h3>
+  <p>Los 14 triggers guarda (funciones <code>guard_*</code>/<code>coffeed_guard_*</code>) están todos atados
+  a su tabla y coinciden con el modelo documentado. Ninguna
   acción de panel lee la cookie compartida ni viceversa (el patrón dual de <code>studioGate</code> es
   deliberado). La hidratación jsonb (<code>hydrateDoc</code>, <code>toLabEvaluationList</code>,
   <code>EMPTY_FICHA</code>, Datawave) protege filas viejas — solo <code>run_state</code> queda fuera (EST-6).
@@ -486,7 +517,7 @@ desde entonces).</p>
 <h2 id="s9">9 · Higiene de BD diferida (deliberadamente NO aplicada)</h2>
 <p>Un linter no conoce la escala. Igual que en V14, estas recomendaciones automáticas se rechazan por ahora:</p>
 <ul>
-  <li><b>83 claves foráneas sin índice</b> — correcto en abstracto, prematuro con 1.201 filas totales (la
+  <li><b>83 claves foráneas sin índice</b> — correcto en abstracto, prematuro con ~1.200 filas totales (la
   mayor tabla, 306). Umbral de revisión: cuando cualquier tabla pase de <b>~10.000 filas</b>, priorizando
   las FK que se usan en <code>JOIN</code>/filtro (<code>lots.finca_id</code>, <code>arena_inscriptions.lot_id</code>,
   <code>producer_comm_log.lot_id</code>).</li>
@@ -525,8 +556,10 @@ desde entonces).</p>
 </div>
 
 <h2 id="s12">12 · Recomendaciones priorizadas</h2>
+<p>El orden en que se atacó (y el registro de por qué). Los puntos 1–8 <b>ya están hechos</b> salvo lo
+anotado; el <b>Estado de las correcciones</b> arriba dice dónde vive cada uno. 9–11 siguen pendientes.</p>
 <ol>
-  <li><b>Cerrar <code>ai_usage_resumen</code> a <code>anon</code></b> (SEG-1) — 1 línea, es una fuga real y en vivo.</li>
+  <li><span class="tag t-ok">Hecho</span> <b>Cerrar <code>ai_usage_resumen</code> a <code>anon</code></b> (SEG-1) — 1 línea, era una fuga real y en vivo. Aplicado en prod.</li>
   <li><b>Desexportar <code>bajarFeed</code></b> (SEG-2) — quitar la SSRF anónima.</li>
   <li><b>Persistir el resultado del OTP</b> (EST-1) y <b>no perder adjuntos del Buzón</b> (EST-2) — los dos
   fallos silenciosos que contradicen su propia promesa.</li>
@@ -547,7 +580,9 @@ desde entonces).</p>
   Auditoría estructural y de estabilidad · CTC Web Platform · 2026-08-13 · sobre V30.0 (plataforma V3.27)<br>
   Método: 4 auditores en paralelo (rutas · huérfanos · compuertas · estabilidad) + Supabase advisors + sondas
   REST reales + <code>npm audit</code>; cada ALTA re-verificada a mano contra el código.<br>
-  Archivo autocontenido: se abre en cualquier navegador y se imprime a PDF sin dependencias. Ningún hallazgo aplicado.
+  Archivo autocontenido: se abre en cualquier navegador y se imprime a PDF sin dependencias.<br>
+  Correcciones aplicadas en esta misma sesión (ver el cuadro de estado): BD en producción, código en la
+  rama <b>fix/audit-v30-remediations</b> (commit e03ea8f).
 </p>
 
 </div>

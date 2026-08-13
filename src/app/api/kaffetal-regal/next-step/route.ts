@@ -4,6 +4,21 @@ import type { NextRequest } from "next/server";
 import { createSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { stableStringify } from "@/lib/stableStringify";
 
+// ── El asesor «¿Y ahora qué?» de la Ficha Técnica ────────────────────────────
+// ⚠️ HOY ESTA RUTA NO TIENE NINGÚN LLAMADOR, y es a propósito (decisión del
+// owner, 2026-08-13). Su único cliente era `NextStepWidget`, retirado en el
+// barrido de huérfanos de la auditoría V30. La FONTANERÍA se conserva entera
+// —el gate de sesión, la comprobación de propiedad del lote, la caché en
+// `lots.ai_next_step_advice`/`_context` y el registro de consumo— porque la
+// función volverá a montarse cuando se rediseñe dónde vive el consejo dentro
+// de la Ficha.
+//
+// Para quien haga el próximo barrido: esto NO es código muerto por descuido.
+// Antes de retirarlo hay que decidir el producto (la feature entera, columnas
+// de caché incluidas), no solo constatar que nadie la importa.
+// Para volver a encenderla basta con un cliente que haga POST aquí con el
+// contexto del lote; el endpoint sigue siendo el mismo contrato.
+
 type NextStepContext = {
   lotId: string;
   lotCode: string;

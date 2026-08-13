@@ -21,9 +21,18 @@ import { TipografiaLab, type FontOption } from "@/components/lab/TipografiaLab";
 // vivan en el proyecto. Las ocho de abajo se cargan SOLO en esta ruta; ninguna
 // entra en el bundle de las páginas públicas.
 //
-// No está enlazada desde ningún sitio y `robots.ts` la excluye. Cuando el owner
-// elija, esta carpeta y las ocho fuentes que no se usen se pueden borrar de un
-// tirón: lo único que hay que llevarse es la familia elegida a `app/layout.tsx`.
+// No está enlazada desde ningún sitio y `robots.ts` la excluye.
+//
+// ⚠️ NO BORRAR (decisión del owner, 2026-08-13). Nació para una pregunta
+// concreta —qué familia lleva el titular— y esa pregunta ya se respondió (se
+// queda Fraunces). Pero el owner decidió CONSERVAR la ruta y convertirla en un
+// pequeño taller para probar estilos y piezas reutilizables sin que cada prueba
+// sea un despliegue. Es decir: dejó de ser un laboratorio de un solo uso
+// pendiente de limpieza, y pasó a ser infraestructura de trabajo.
+//
+// Si algún día se amplía, el sitio natural es añadir vistas hermanas bajo
+// `app/lab/` reusando este mismo patrón: la ruta paga el coste de compilar sus
+// dependencias (aquí, ocho familias) y ninguna llega al bundle público.
 
 export const metadata: Metadata = {
   title: "Laboratorio de tipografía · CTC",

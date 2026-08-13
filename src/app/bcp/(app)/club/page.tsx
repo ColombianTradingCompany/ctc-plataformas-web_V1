@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { supplierCode } from "@/components/kaffetal-regal/data";
 import { createCampaign, revokeCampaignCode, revokeClubMembership } from "../clubActions";
+import { ActionForm, type ActionResult } from "../ActionForm";
 import styles from "../shared.module.css";
 
 // Kaffetal Club (2026-07-17): la membresía se otorga AUTOMÁTICAMENTE al competir
@@ -54,7 +55,12 @@ export default async function BcpClubPage() {
           Cada campaña fija un % de descuento sobre la inscripción de Arena y emite códigos (KRX-) que el productor aplica
           al postular un lote. Haga clic en una para emitir y gestionar sus códigos.
         </p>
-        <form action={createCampaign} style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <ActionForm
+          action={createCampaign}
+          submitLabel="Crear campaña"
+          pendingLabel="Creando…"
+          style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}
+        >
           <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 200 }}>
             <label>Nueva campaña</label>
             <input name="name" required placeholder="Ej. Fundadores" />
@@ -63,10 +69,7 @@ export default async function BcpClubPage() {
             <label>Descuento %</label>
             <input name="discount_pct" type="number" min={0} max={100} defaultValue={50} style={{ width: 90 }} />
           </div>
-          <button className="btn btn-sm btn-solid" type="submit">
-            Crear campaña
-          </button>
-        </form>
+        </ActionForm>
 
         {campaigns.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 10, marginTop: 16 }}>
@@ -124,9 +127,9 @@ export default async function BcpClubPage() {
         </summary>
         <div style={{ marginTop: 10 }}>
           {codes.map((c) => {
-            async function revoke() {
+            async function revoke(): Promise<ActionResult> {
               "use server";
-              await revokeCampaignCode(c.id);
+              return revokeCampaignCode(c.id);
             }
             return (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 0", borderTop: "1px solid var(--line)" }}>
@@ -140,9 +143,7 @@ export default async function BcpClubPage() {
                 )}
                 <span className={styles.meta} style={{ flex: 1 }}>Emitido {fecha(c.created_at)}</span>
                 {!c.redeemed_at && !c.revoked_at && (
-                  <form action={revoke}>
-                    <button className="btn btn-sm" type="submit">Revocar</button>
-                  </form>
+                  <ActionForm action={revoke} submitLabel="Revocar" pendingLabel="Revocando…" buttonClassName="btn btn-sm" />
                 )}
               </div>
             );

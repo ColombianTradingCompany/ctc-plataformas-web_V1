@@ -90,7 +90,18 @@ export async function POST(request: NextRequest) {
 
   // Per-user OTP: the code goes to the user's delivery inbox when set (the login
   // email may be a mailbox-less @ctcexport.com label), else to the login email.
-  await sendOtpEmail(code, panelUser?.delivery_email || signInData.user.email);
+  const sent = await sendOtpEmail(code, panelUser?.delivery_email || signInData.user.email);
+  if (!sent.ok) {
+    // El envío falló: NO reportar éxito (dejaría al usuario esperando un código
+    // que nunca llega) y liberar el slot de rate-limit borrando la fila OTP recién
+    // creada, para que un reintento no cuente doble contra el tope de 3/ventana.
+    console.error("[panel:otp] envío falló:", sent.error);
+    await service.from("admin_otp_codes").delete().eq("pending_login_token", otpRow.pending_login_token);
+    return NextResponse.json(
+      { error: "No pudimos enviar el código de confirmación. Intenta de nuevo en un momento." },
+      { status: 502 }
+    );
+  }
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(

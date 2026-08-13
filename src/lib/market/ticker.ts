@@ -64,7 +64,11 @@ async function yahoo(symbol: string): Promise<YahooReading | null> {
   try {
     const res = await fetch(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=5d`,
-      { headers: { "user-agent": UA, accept: "application/json" }, next: { revalidate: TTL_QUOTES } }
+      // Timeout explícito (auditoría 2026-08-13, EST-3): el módulo degrada por
+      // fuente (nunca lanza), pero un socket colgado estancaría el Promise.all
+      // hasta el maxDuration=20 de la ruta y convertiría la degradación elegante
+      // en un 504. 8 s corta el hueco.
+      { headers: { "user-agent": UA, accept: "application/json" }, signal: AbortSignal.timeout(8000), next: { revalidate: TTL_QUOTES } }
     );
     if (!res.ok) return null;
     const json = (await res.json()) as {
@@ -193,6 +197,9 @@ async function coffeeNews(limit: number): Promise<TickerNews[]> {
         try {
           const res = await fetch(s.feed_url, {
             headers: { "user-agent": UA, accept: "application/rss+xml, application/xml, text/xml" },
+            // Timeout explícito (auditoría 2026-08-13, EST-3): mismo motivo que el
+            // fetch de Yahoo — un feed colgado no debe estancar la cinta entera.
+            signal: AbortSignal.timeout(8000),
             next: { revalidate: TTL_NEWS },
           });
           if (!res.ok) return [];

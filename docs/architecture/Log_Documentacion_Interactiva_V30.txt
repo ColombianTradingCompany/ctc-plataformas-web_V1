@@ -16,17 +16,25 @@ base si ya está (buscar la clave de DICT o la nota que pedía).
 
 Contexto abierto al cerrar V30 (2026-08-13):
 
-- 📌 **LO PRIMERO DE LA PRÓXIMA SESIÓN, pedido por el owner al cerrar ésta: un
-  ANÁLISIS ESTRUCTURAL Y DE ESTABILIDAD COMPLETO de todo el sistema.** Punto de
-  partida sugerido: docs/HANDOFF.md + este snapshot V30 + el precedente de
-  Auditoria_Estabilidad_Eficiencia_V14.html (la auditoría de V15, para comparar
-  qué se volvió a torcer desde entonces). Insumos frescos de esta tanda que esa
-  auditoría debería mirar: los componentes huérfanos a propósito
-  (ParticiparSection/ProcessFlow/HeroPromesa, TopBanner ya borrado), el laboratorio
-  /lab/tipografia vivo con 8 familias de next/font cargadas solo ahí, el proxy
-  comparando con startsWith (cherry-picked.* sirve también /cherry-picked-green),
-  y las advertencias de eslint de coffeed/ y direccionamiento/ que quedaron de
-  otra sesión.
+- ✅ **AUDITORÍA HECHA (2026-08-13).** El análisis estructural y de estabilidad
+  completo que pedía el owner se produjo:
+  `docs/architecture/Auditoria_Estructura_Estabilidad_V30.html` (autocontenida,
+  patrón del informe V14, sin aplicar ningún cambio). Método: 4 auditores en
+  paralelo + Supabase advisors + sondas REST reales con la clave anon + npm audit;
+  cada ALTA re-verificada a mano. Las correcciones de V14 aguantaron (RLS initplan
+  0/54, place_order sigue revocado de anon). Hallazgos nuevos por severidad:
+  (SEG) la vista ai_usage_resumen es legible por anon en producción — confirmado
+  en vivo; bajarFeed es SSRF sin gate. (EST) el OTP del panel no comprueba el
+  envío de Resend; un adjunto del Buzón que falla al subir se pierde en silencio;
+  4 acciones de IA pueden dar 504 mudo (buildEpisode/renderTake/gvg match/ticker).
+  (ESTR) createCampaign reintrodujo el throw-vs-form (regresión de V14);
+  OCP·Leads usa requireActiveAdmin en vez de requireConsoleWrite; el PanelDiagram
+  de EstructuraModal ya no espeja consoles.ts (faltan 7 módulos); el proxy fuga
+  por startsWith y robots.txt da 404 en los subdominios. (DEP) 11 vulnerabilidades
+  npm (9 altas) incl. el propio next, todas con fix. Diferido a escala: 83 FK sin
+  índice, poda del Buzón. **Los arreglos esperan luz verde del owner** —
+  priorización en la §12 del informe. Cuando se apliquen, cada tanda entra en este
+  log y el informe se puede adjuntar al próximo wrap (como se hizo con el V14).
 - **KR: código huérfano a propósito** (2026-08-11): `ParticiparSection` (con
   `ProcessFlow` y su acordeón EUDR) y `HeroPromesa` ya no se montan — su contenido
   vive en el FAQ. Si en el próximo repaso siguen sin usarse, se retiran. OJO: el

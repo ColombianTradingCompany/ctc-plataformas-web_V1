@@ -69,6 +69,10 @@ Paneles de la ficha aún incompletos: ${pendingPanes.length ? pendingPanes.join(
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
+      // Timeout explícito (auditoría 2026-08-13, EST-3): sin él el fetch cuelga
+      // hasta el corte de undici (~300 s) y Vercel mata la función antes de que
+      // el catch responda 502. 60 s sobra para 120 tokens sin búsqueda web.
+      signal: AbortSignal.timeout(60_000),
       body: JSON.stringify({
         model: "claude-sonnet-5",
         max_tokens: 120,

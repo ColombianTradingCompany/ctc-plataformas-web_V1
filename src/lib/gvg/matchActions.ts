@@ -330,6 +330,11 @@ ${((letters as { title: string; extracted_text: string | null }[] | null) ?? [])
         "anthropic-version": "2023-06-01",
         "anthropic-beta": "server-side-fallback-2026-07-01",
       },
+      // Timeout explícito (auditoría 2026-08-13, EST-3): sin él, si la llamada
+      // roza el techo de undici (~300 s = maxDuration), Vercel mata la función
+      // ANTES de que el catch resetee la fila a "nueva" y quedaría clavada en
+      // "matching". 240 s deja margen para que el catch corra.
+      signal: AbortSignal.timeout(240_000),
       body: JSON.stringify({
         model: "claude-opus-5",
         max_tokens: 16000,

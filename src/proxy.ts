@@ -74,8 +74,17 @@ export async function proxy(request: NextRequest) {
   const sub = host.split(":")[0].split(".")[0];
   const base = SUBDOMAIN_ROUTES[sub];
 
+  // Comparación por FRONTERA DE SEGMENTO, no por prefijo de cadena (auditoría
+  // 2026-08-13, ESTR-3). Con `startsWith` puro, como `/cherry-picked` es prefijo
+  // de `/cherry-picked-green|roast|x`, el host del hub servía las tres
+  // superficies hermanas con 200 — incluido el callback OAuth de Green
+  // funcionando en el host equivocado. `pathname===base || startsWith(base+"/")`
+  // deja pasar el callback legado `/cherry-picked/auth/callback` (empieza por
+  // `/cherry-picked/`) y corta la fuga de las hermanas.
+  const path = request.nextUrl.pathname;
+  const alreadyInBase = base ? path === base || path.startsWith(base + "/") : false;
   const rewriteUrl =
-    base && !request.nextUrl.pathname.startsWith(base)
+    base && !alreadyInBase
       ? (() => {
           const url = request.nextUrl.clone();
           url.pathname = `${base}${request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname}`;
@@ -159,5 +168,11 @@ export const config = {
   // `images`: otherwise on a subdomain host the rewrite turns /tools/x.html
   // into /kaffetal-regal/tools/x.html, which 404s. Static public assets
   // should always be served from the root, never proxied to a platform path.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images|docs|tools).*)"],
+  //
+  // Exclusiones acotadas por `/` (auditoría 2026-08-13, ESTR-3): sin la barra,
+  // `images` también excluiría un futuro `/imagesx` y `tools` un `/toolshed`, que
+  // se servirían sin reescribir en los subdominios. `robots.txt`/`sitemap.xml` se
+  // excluyen para que se sirvan desde la raíz en todos los hosts (si no, el proxy
+  // los reescribe a una ruta inexistente y dan 404 en los 18 subdominios).
+  matcher: ["/((?!api/|_next/static/|_next/image/|favicon.ico|robots.txt|sitemap.xml|images/|docs/|tools/).*)"],
 };

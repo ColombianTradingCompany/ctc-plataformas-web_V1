@@ -11,28 +11,10 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { studioGate } from "./studioGate";
 import { canalIdDesdeHtml, feedDeCanal, feedDesdeHtml, parseFeed } from "./feeds";
+import { bajar } from "./feedFetch";
 import type { CoffeedResult } from "./types";
 
 const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
-
-/** Un navegador cualquiera. Sin esto, bastantes medios devuelven 403 a un
- *  cliente sin `user-agent` y el feed parecería no existir. */
-const UA =
-  "Mozilla/5.0 (compatible; CoffeedBot/1.0; +https://www.ctcexport.com) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
-
-async function bajar(url: string, timeoutMs = 15_000): Promise<string | null> {
-  try {
-    const res = await fetch(url, {
-      headers: { "user-agent": UA, accept: "application/rss+xml, application/atom+xml, text/xml, text/html;q=0.8" },
-      signal: AbortSignal.timeout(timeoutMs),
-      redirect: "follow",
-    });
-    if (!res.ok) return null;
-    return await res.text();
-  } catch {
-    return null;
-  }
-}
 
 /** Rutas que prueban casi todos los gestores de contenido, por si la página no
  *  declara su feed en el `<head>`. Se prueban DESPUÉS del autodescubrimiento,
@@ -157,9 +139,4 @@ export async function resolverFeeds(
   // salir en la próxima llamada. Se descuentan aquí para que el bucle termine:
   // quien llama repite mientras `pendientes` sea mayor que cero.
   return { ok: true, resueltos, sinFeed, pendientes: todosPendientes.length - pendientes.length };
-}
-
-/** Lee el feed de un medio y devuelve el XML crudo, o null. La usa el barrido. */
-export async function bajarFeed(feedUrl: string): Promise<string | null> {
-  return bajar(feedUrl, 20_000);
 }

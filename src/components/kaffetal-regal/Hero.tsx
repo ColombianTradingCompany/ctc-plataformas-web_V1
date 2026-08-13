@@ -248,7 +248,7 @@ export function Hero({ onLogin, onGo }: { onLogin: () => void; onGo: (id: string
               alt="Kaffetal Regal · cafés de Colombia, para el mundo"
               width={874}
               height={718}
-              priority
+              preload
             />
           </div>
         </div>

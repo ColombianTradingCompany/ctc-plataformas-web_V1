@@ -317,7 +317,7 @@ function Hub() {
                 alt="Cherry Picked"
                 width={852}
                 height={858}
-                priority
+                preload
               />
             </div>
           </div>

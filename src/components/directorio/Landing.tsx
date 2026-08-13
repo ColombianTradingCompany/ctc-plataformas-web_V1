@@ -36,7 +36,7 @@ export function Landing({
         <div className="wrap topbar__in">
           <a className="marca" href="#top">
             <span className="marca__logo">
-              <Image src={LOGOS.directorio} alt="Directorio del Café" width={900} height={900} priority />
+              <Image src={LOGOS.directorio} alt="Directorio del Café" width={900} height={900} preload />
             </span>
             <span className="marca__txt">
               Directorio del Café

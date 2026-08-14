@@ -35,11 +35,28 @@
   .scrim{background:linear-gradient(180deg, rgba(14,44,72,.84) 0%, rgba(14,44,72,.75) 60%, rgba(14,44,72,.88) 100%)}
 }
 
-.heroGrid{position:relative;z-index:2;display:grid;grid-template-columns:1.12fr .88fr;gap:56px;align-items:center}
+/* 2026-08-14 (owner): el loop de iconos ocupa ~1/3 del ancho junto al titular
+   — antes era una vitrina de 210 px que en un teléfono quedaba en 80-150 px y
+   apenas se veía. La columna del texto sigue mandando con 2/3.
+   Las ÁREAS (copy/aside/cta) son lo que permite que en móvil los botones bajen
+   a su propia fila: su ancho mínimo (252 px cada uno) dentro de la columna del
+   titular era lo que empujaba el loop fuera de la pantalla. El loop abarca las
+   dos filas en escritorio, así que queda centrado contra titular + botones,
+   exactamente como cuando eran una sola celda. */
+.heroGrid{
+  position:relative;z-index:2;display:grid;
+  grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+  grid-template-areas:"copy aside" "cta aside";
+  column-gap:48px;align-items:center;
+}
+.heroCopy{grid-area:copy;min-width:0}
+.heroAside{grid-area:aside}
 /* Narrow viewports keep TWO columns on purpose (2026-07-15): the icon loop
-   stays in its own right column and the copy/CTAs stay in the first, instead
-   of stacking. The animation column just gets progressively slimmer. */
-@media(max-width:900px){.heroGrid{grid-template-columns:1fr clamp(80px,16vw,150px);gap:24px;align-items:start}}
+   stays in its own right column beside the title; only the CTA row spans. */
+@media(max-width:900px){
+  .heroGrid{grid-template-columns:minmax(0,2fr) minmax(96px,1fr);grid-template-areas:"copy aside" "cta cta";column-gap:20px}
+  .heroAside{align-self:start;position:sticky;top:96px}
+}
 
 /* Sketchbook icon loop (CTC_Loading_Icons_V3, 2026-08-14): el WebP trae alfa
    real EN TODOS los fotogramas, así que se posa sobre la foto del hero y la
@@ -73,12 +90,16 @@
    240 px sigue por encima de los 210 px a los que como mucho se dibuja aquí.
    Los dos pies que montan el mismo loop lo cargan con `loading="lazy"`; solo el
    hero lo paga en la primera pintura. */
+/* La colocación de .heroAside (área, sticky móvil) vive arriba con la rejilla;
+   aquí solo el centrado del dibujo dentro de su columna. */
 .heroAside{display:flex;justify-content:center}
 .heroAnim{
-  width:100%;max-width:210px;aspect-ratio:1/1;display:block;
+  /* Sin `max-width` fijo: el ancho lo dicta la columna (1/3 de la rejilla),
+     que es exactamente lo que pidió el owner. El tope de 340 px solo evita que
+     en un monitor muy ancho el dibujo supere su codificación (240 px + margen). */
+  width:100%;max-width:340px;aspect-ratio:1/1;display:block;
   filter:drop-shadow(0 12px 26px rgba(4,14,26,.55));
 }
-@media(max-width:900px){.heroAside{position:sticky;top:96px}}
 
 /* ── Las tres afirmaciones ──────────────────────────────────────────────────
    Hero-local gold: var(--accent-soft) (#F2C464) drops under 4.5:1 on the
@@ -127,12 +148,19 @@
 }
 @media(prefers-reduced-motion:reduce){.claim::after{transition:none}}
 
-.h1{font-size:clamp(36px,5.2vw,62px);margin:0;color:#fff;text-shadow:0 2px 24px rgba(6,18,32,.45)}
+/* Un punto menos de techo y de pendiente que antes (62px/5.2vw): la columna
+   del titular cedió ancho al loop de iconos y el tamaño viejo partía «con
+   nombre propio» en tres renglones. */
+.h1{font-size:clamp(32px,4.6vw,56px);margin:0;color:#fff;text-shadow:0 2px 24px rgba(6,18,32,.45)}
+/* En un teléfono la columna del titular mide ~195 px (2/3 del ancho menos el
+   loop): a 32 px «colombiano» no cabe y el titular caía a una palabra por
+   renglón. El ajuste de tamaño lo autorizó el owner junto con el 1/3 del loop. */
+@media(max-width:560px){.h1{font-size:clamp(23px,7vw,30px)}}
 .h1 em{font-style:italic;color:#F7D287}
 
 /* ── Las dos orillas ────────────────────────────────────────────────────────
    Dos botones del mismo peso: ninguna de las dos orillas es la principal. */
-.heroCta{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap}
+.heroCta{grid-area:cta;display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;align-self:start}
 /* El ASPECTO de los dos botones vive en `globals.css`, en la familia `.ctcb`
    (variante **Costal** — el saco de exportación —, elegida por el owner el
    2026-08-11 entre cuatro tratamientos con cuerpo). Aquí solo queda el reparto

@@ -1,0 +1,35 @@
+/* El vestíbulo: video a la izquierda, los seis pasos a la derecha — el orden
+   del boceto del owner. Menos aire vertical que una sección normal (es una
+   antesala, no un capítulo), de ahí el padding propio sobre el de `section`. */
+.sec{padding:54px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:40px 56px;align-items:center}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+/* En una pantalla estrecha el TEXTO va primero (order): el titular es quien
+   presenta al video, no al revés. */
+@media(max-width:860px){.video{order:2}.copy{order:1}}
+
+.copy h2{font-size:clamp(26px,3.2vw,36px);font-weight:800;color:var(--primary-deep);margin:10px 0 0;line-height:1.2}
+.copy h2 em{font-style:italic;color:var(--accent)}
+.lead{margin:14px 0 0;color:var(--muted);font-size:14.5px}
+
+/* Los seis pasos, numerados con el disco de la casa. Dos columnas donde caben:
+   seis renglones seguidos parecían un formulario. */
+.steps{
+  list-style:none;counter-reset:paso;margin:16px 0 0;padding:0;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;
+}
+@media(max-width:560px){.steps{grid-template-columns:1fr}}
+.steps li{
+  counter-increment:paso;position:relative;padding-left:36px;font-size:14px;line-height:1.5;color:var(--ink);
+  min-height:26px;display:flex;align-items:center;
+}
+.steps li::before{
+  content:counter(paso);position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  background:var(--primary);color:#fff;font-family:var(--font-spline-mono),monospace;font-size:12px;
+}
+
+.closing{
+  margin:18px 0 0;font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--accent);
+}

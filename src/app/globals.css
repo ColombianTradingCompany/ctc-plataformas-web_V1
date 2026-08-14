@@ -81,6 +81,9 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .sec-head h2{font-size:clamp(28px,4vw,42px);font-weight:800;max-width:24ch;color:var(--primary-deep)}
 .sec-head h2 em{font-style:italic;color:var(--accent)}
 .sec-head p{max-width:50ch;color:var(--muted)}
+/* Texto solo para lectores de pantalla y buscadores (2026-08-14: los h3 de las
+   tarjetas insignia, cuyo nombre visible ES su logotipo). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
 /* ============================================================
    Buttons

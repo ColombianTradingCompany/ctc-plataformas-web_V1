@@ -313,42 +313,49 @@ export function Hero() {
         ))}
       </p>
 
+      {/* Tres hijos DIRECTOS de la rejilla (2026-08-14): el titular, el loop y
+          la fila de botones — colocados por `grid-template-areas`. Antes los
+          botones vivían dentro de la columna del titular, y su ancho mínimo
+          (252 px por botón) empujaba la columna: en un teléfono el loop quedaba
+          41 px FUERA de la pantalla, recortado en silencio por el
+          overflow-x:hidden del body. Sueltos, en móvil bajan a su propia fila a
+          lo ancho y las dos columnas de arriba pueden repartirse 2/3–1/3 de
+          verdad. */}
       <div className={`wrap ${styles.heroGrid}`}>
-        <div>
+        <div className={styles.heroCopy}>
           <h1 className={styles.h1}>
             {t.h1}
             <em>{t.h1em}</em>
           </h1>
-
-          {/* Las dos orillas, dichas por quien llega. */}
-          <div className={styles.heroCta}>
-            <a className={`ctcb ctcb-costal ctcb-gold ${styles.big}`} href={KR_URL} target="_blank" rel="noopener">
-              <span className="ctcb-txt">
-                <span className="ctcb-lead">{t.ctaSell[0]}</span>
-                <span className="ctcb-ask">{t.ctaSell[1]}</span>
-              </span>
-              <span className="ctcb-arw" aria-hidden>
-                →
-              </span>
-            </a>
-            <a className={`ctcb ctcb-costal ctcb-blue ${styles.big}`} href={CP_URL} target="_blank" rel="noopener">
-              <span className="ctcb-txt">
-                <span className="ctcb-lead">{t.ctaBuy[0]}</span>
-                <span className="ctcb-ask">{t.ctaBuy[1]}</span>
-              </span>
-              <span className="ctcb-arw" aria-hidden>
-                →
-              </span>
-            </a>
-          </div>
         </div>
 
-        {/* Sketchbook loop of the CTC icons (logo mark, cafeto, taza…) on a
-            white plate, framed like the Piedecuesta photo that used to live
-            here (that one now closes the page in the Footer's sign-off). */}
+        {/* Sketchbook loop of the CTC icons (logo mark, cafeto, taza…) — real
+            alpha since V3, floating straight on the hero photo. */}
         <div className={styles.heroAside} aria-hidden>
           {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
           <img className={styles.heroAnim} src="/images/shared/ctc-loading-icons.webp" alt="" />
+        </div>
+
+        {/* Las dos orillas, dichas por quien llega. */}
+        <div className={styles.heroCta}>
+          <a className={`ctcb ctcb-costal ctcb-gold ${styles.big}`} href={KR_URL} target="_blank" rel="noopener">
+            <span className="ctcb-txt">
+              <span className="ctcb-lead">{t.ctaSell[0]}</span>
+              <span className="ctcb-ask">{t.ctaSell[1]}</span>
+            </span>
+            <span className="ctcb-arw" aria-hidden>
+              →
+            </span>
+          </a>
+          <a className={`ctcb ctcb-costal ctcb-blue ${styles.big}`} href={CP_URL} target="_blank" rel="noopener">
+            <span className="ctcb-txt">
+              <span className="ctcb-lead">{t.ctaBuy[0]}</span>
+              <span className="ctcb-ask">{t.ctaBuy[1]}</span>
+            </span>
+            <span className="ctcb-arw" aria-hidden>
+              →
+            </span>
+          </a>
         </div>
       </div>
 

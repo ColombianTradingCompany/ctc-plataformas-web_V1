@@ -181,3 +181,53 @@ Contexto abierto al cerrar V31 (2026-08-13):
 - Relacionado y NO hecho: no existe `sitemap.ts`, asi que `/sitemap.xml` da 404.
   No es de una linea - los sitemaps son por host y aqui hay 18 subdominios.
 (commit: pending)
+
+## [2026-08-14] Sitemap por host + robots como route handler
+- NUEVAS RUTAS: `src/app/sitemap.xml/route.ts` y `src/app/robots.txt/route.ts`
+  (robots.ts BORRADO). Los sitemaps son POR HOST y hay 18 subdominios en un
+  deploy: los archivos estaticos de Next se generan en build sin Host que leer,
+  asi que ambos son handlers que leen la cabecera Host en la peticion.
+- Llegan a todos los hosts porque el proxy EXCLUYE ambos archivos del matcher;
+  si ese matcher cambia, se rompen juntos (anotado en los dos archivos).
+- Cada host anuncia su portada y su propia linea `Sitemap:`; www anuncia solo
+  la casa matriz (el canonical manda las superficies a su subdominio).
+- Verificado con Host header: robots y sitemap correctos en www y en
+  kaffetal-regal; localhost lista todas las superficies por ruta (dev).
+(commit: pending)
+
+## [2026-08-14] CTC Home: tres ofertas al desnudo + video + CTAs por seccion
+- «Tres ofertas» (EcosystemSection): las dos tarjetas insignia quedaron en
+  procedencia + LOGOTIPO GRANDE + un boton punteado (boceto del owner); la
+  entradilla, los puntos y las salidas viven en la ventana del boton
+  (InfoPanel, que gano `ctas` MULTIPLES para hub+Co-Create). El acordeon
+  <details> de las tarjetas murio.
+- NetNewsletter ya no cierra la seccion: era el aviso de Terratalento y vive
+  dentro de SU ficha (la unica puerta en «Pronto»).
+- NUEVO COMPONENTE COMPARTIDO: `src/components/YtEmbed.tsx` — patron lite
+  (miniatura estatica de i.ytimg.com, iframe youtube-nocookie SOLO al clic,
+  enlace «YouTube ↗» siempre). Cambiar el video = cambiar el id constante
+  (`OFERTAS_VIDEO_ID` en EcosystemSection). Montado pequeno en la cabecera de
+  la seccion, junto a la entradilla.
+- El loop de iconos del hero ocupa ~1/3 junto al titular (peticion del owner).
+  Rejilla por grid-template-areas: en MOVIL los botones bajan a su propia fila
+  — su min-width (252 px x2) dentro de la columna del titular empujaba el loop
+  41 px FUERA de pantalla, recortado en silencio por el overflow-x oculto.
+  Titular a 23-30 px bajo 560 px (ajuste autorizado por el owner).
+- `SellBuyCtas` (nuevo): la pareja vender/comprar del hero repetida al pie del
+  Contexto y del calendario de cosechas — mismo sistema .ctcb, mismas URLs.
+- Verificado en Chrome real: popups con logo+puntos+salidas, newsletter dentro
+  de la ficha de Terratalento, 4 botones .ctcb en las dos secciones, loop a 27%
+  del viewport en 375 px SIN desbordar (antes 41 px fuera).
+(commit: pending)
+
+## [2026-08-14] KR: velo mas abierto + «Bienvenidos al Kaffetal Regal»
+- El velo del hero se aligero (owner: «apenas se ve que hay algo detras»):
+  loop del zoom-logo a opacidad .32 (era .2) y gradientes abiertos sobre todo a
+  la derecha. La columna del titular sigue >10:1 contra el fotograma BLANCO del
+  bucle — el margen que exige el comentario del archivo se re-estimo.
+- NUEVA SECCION `BienvenidosSection` (entre la portada y la franja del
+  paisaje): video de bienvenida (YtEmbed compartido, `BIENVENIDA_VIDEO_ID`) +
+  los 6 pasos numerados del boceto del owner + cierre en mono. NO esta en el
+  QuickNav a proposito: es un vestibulo, no una seccion a la que se vuelve.
+- Verificado en Chrome real a 1280 y 375.
+(commit: pending)

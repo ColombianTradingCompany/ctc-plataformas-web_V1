@@ -1,0 +1,82 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V33.0(c70573b).html
+(CTC Web Platform, desde 2026-08-14). Cada entrada se compila al próximo Version Wrap (V34).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit.
+
+Lección heredada del wrap de V28: **una entrada del log puede estar ya compilada**
+si se registró y se envolvió el mismo día. Antes de compilar, comprobar en el HTML
+base si ya está (buscar la clave de DICT o la nota que pedía).
+
+⚠️ LECCIÓN DEL WRAP DE V31 — cómo se buscan las claves del DICT.
+El DICT tiene DOS estilos de escritura conviviendo: `clave:{k:"…"` (compacto, una
+línea) y `clave: {` (con espacio, en varias líneas). Buscar con `^  clave:{` SOLO
+encuentra las del primer estilo — eso hizo creer que tres claves no existían y
+estuvieron a punto de quedar DUPLICADAS (JS se queda con la última y la ficha
+habría sido la vieja, en silencio). Busca siempre con espaciado flexible:
+    grep -nE '^[[:space:]]*"?clave"?[[:space:]]*:[[:space:]]*\{'
+y confirma en el navegador que `Object.keys(DICT).length` sube EXACTAMENTE lo que
+esperas. En V32 fue 95 → 99 y en V33, 99 → 102: cuadra las dos veces.
+
+⚠️ LECCIÓN DEL WRAP DE V32 — el mapa de archivos delata los borrados.
+Al regenerar FILETREE, la comprobación de ANN huérfanos encontró
+`src/app/robots.ts`, que ese mismo pase había borrado. El script lee el disco,
+pero ANN es a mano: **cuando un wrap borra o renombra un archivo anotado, hay que
+repuntar su ANN**. La comprobación que lo caza:
+    orphanAnn = Object.keys(ANN).filter(k => !pathsDeFILETREE.has(k))
+debe volver VACÍA antes de guardar.
+
+⚠️ LECCIÓN NUEVA DEL WRAP DE V33 — el selector de trazas va por ÍNDICE.
+Comprobar que un escenario nuevo llegó al desplegable buscando su `id` entre los
+`option.value` da SIEMPRE falso: los value son "0","1","2"… La comprobación buena
+es que `select.options.length` sea igual a `SCENARIOS.length` y que el `id` esté
+en `SCENARIOS.at(-1)`. Se estuvo a punto de «arreglar» un escenario que ya estaba
+perfectamente montado.
+
+Y una del renombrado, que vale para el próximo: **este documento guarda historia,
+no solo estado**. Al renombrar Co-Create → CaaS se cambió únicamente el texto en
+PRESENTE (los `sub`, las fichas del DICT, los pasos de las trazas, las ANN); las
+notas fechadas «V17 · …», «V22 · …», «V29 · …», «V30 · …» conservan el nombre de
+entonces a propósito. Reescribirlas habría falseado justo lo que el archivo
+existe para conservar. Donde una nota vieja nombra una RUTA que ya se movió, se
+anota entre guiones («—hoy CRM CaaS, en /bcp/caas—») en vez de sustituir.
+
+Contexto abierto al cerrar V33 (2026-08-14):
+
+- **El pilar del lead sigue siendo `cocreate`** aunque la marca sea CaaS, y es
+  deliberado: CHECK de Postgres con filas reales. Si algún día se migra, son
+  `leads.pillar`, `FIELD_KEYS`, `PILLAR_LABEL` y los tres comentarios que lo
+  explican — no antes de que haya una razón de negocio, no por pulcritud.
+- **Search Console sigue sin tocarse, y es lo único que mueve la aguja del
+  cacao**: el código ya está limpio y el JSON-LD juega a favor, pero el índice y
+  el copy viejo fuera de la web (LinkedIn de empresa, directorios, pitches
+  subidos) son cuenta del owner.
+- **Candidato inmediato de UNA línea**: añadir `gradosLd()` a Cherry Picked
+  Green, que es la tienda donde el grado ES la taxonomía del producto.
+- **Del plan SEO sigue sin decidir**: el canonical (subdominio vs dominio raíz) y
+  el módulo «Manejo de Plataformas» bajo ECP → IT y Plataforma, que el owner pidió
+  para gobernar SEO y enlaces por superficie. El argumento más concreto a su favor
+  ya está medido: de los 12 tools indexables solo DOS llevan meta description y
+  sus títulos son inconsistentes.
+- **Los dos vídeos siguen apuntando al MISMO id provisional** (`Yird1_j6yqo`):
+  cabecera de «Tres ofertas» y «Bienvenidos al Kaffetal Regal». Cuando exista el
+  vídeo real de KR es cambiar `BIENVENIDA_VIDEO_ID`.
+- **Los sitemaps no se anuncian solos** y **la deuda del loop de iconos** (~2,6 MB)
+  siguen igual que al cerrar V32.
+- Todo lo demás heredado de V31/V32 sigue vivo: la cola diferida de la auditoría
+  (83 índices FK, poda del Buzón, carreras de `useAutosave`, tableros sin tope),
+  `/api/kaffetal-regal/next-step` sin llamador POR DECISIÓN, la robusta de Londres
+  y los inventarios ICE sin fuente gratuita, el hub de Cherry Picked sin captación
+  de correo, el escenario de Canva sin montar en Make, Gemini sin tarifa en
+  `precios.ts` (📌 el 2026-08-31 caduca el precio de lanzamiento de Sonnet 5),
+  Coffeed con 5 medios sin feed, la política de privacidad GDPR sin escribir,
+  `qa-guard-check.mjs` sin cuenta QA, Identity Value Creation declarada y sin
+  construir, el socio multi-nodo pendiente del PK de `partner_accounts`, los tres
+  cotizadores sin conducir por 2FA, y la protección de contraseñas filtradas
+  bloqueada por plan.

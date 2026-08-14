@@ -110,7 +110,7 @@ Contexto abierto al cerrar V32 (2026-08-14):
   canonical (subdominio vs dominio raiz) y Search Console — las dos son del
   owner. Candidato inmediato de UNA linea: anadir gradosLd() a Cherry Picked
   Green, que es la tienda donde el grado ES la taxonomia del producto.
-(commit: pending)
+(commit: c70573b)
 
 ## [2026-08-14] El rastro del cacao: venia del indice, no del codigo
 - SINTOMA: buscar «Colombian Trading Company» devolvia a CTC descrita como
@@ -154,7 +154,7 @@ Contexto abierto al cerrar V32 (2026-08-14):
   meta description y sus titulos son inconsistentes (uno dice «Cool PDF — give
   your pages a body»). Superficie SEO que nadie gobierna — es el argumento mas
   concreto a favor del modulo «Manejo de Plataformas».
-(commit: pending)
+(commit: c70573b)
 
 ## [2026-08-14] «Co-Create» pasa a llamarse CaaS · Coffee as a Service
 - ENCARGO DEL OWNER: cambiar el TERMINO, no lo que representa. El subdominio
@@ -212,4 +212,4 @@ Contexto abierto al cerrar V32 (2026-08-14):
   casi identicos, insertar por indice es apostar; hay que anclar en una cadena
   UNICA de cada idioma.
 - Gate: tsc limpio, eslint 27 warnings (base), build exit 0. APP_VERSION 4.4 → 4.5.
-(commit: pending)
+(commit: c70573b)

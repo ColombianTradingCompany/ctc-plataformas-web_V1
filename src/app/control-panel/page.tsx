@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { LangProvider } from "@/components/lang/i18n";
 import { ControlPanelLanding } from "@/components/services/ControlPanelLanding";
 
@@ -17,6 +18,7 @@ export const metadata = metadatosDeSuperficie({
 export default function ControlPanelPage() {
   return (
     <div data-theme="ctc-home">
+      <OrganizationLd />
       <LangProvider storageKey="ctc-lang">
         <ControlPanelLanding />
       </LangProvider>

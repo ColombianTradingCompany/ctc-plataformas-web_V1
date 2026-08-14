@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { ToastProvider } from "@/components/Toast";
 import { LangProvider } from "@/components/lang/i18n";
 import { ContactModalProvider } from "@/components/ctc-home/ContactModal";
@@ -21,6 +22,7 @@ export const metadata = metadatosDeSuperficie({
 export default function CtcTechPage() {
   return (
     <div data-theme="ctc-home">
+      <OrganizationLd />
       <ToastProvider>
         <LangProvider storageKey="ctc-lang">
           <ContactModalProvider googleAuth={false}>

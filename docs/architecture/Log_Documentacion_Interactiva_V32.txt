@@ -99,7 +99,15 @@ Contexto abierto al cerrar V32 (2026-08-14):
   (parseado, no grepeado), 0 referencias `@id` colgantes, 12 preguntas, los
   cinco grados con su rango leido de definicion.ts, y el FAQ sigue pintando sus
   12 fichas tras la extraccion.
+- COBERTURA COMPLETA el mismo dia: las 19 superficies publicas emiten
+  Organization. Las 16 restantes via el componente de conveniencia
+  <OrganizationLd /> (una linea por pagina; el dinamico socios/[partner] cubre
+  los 5 nodos de golpe). En los socios se declara a CTC, NO al socio: los cinco
+  nodos son puertas de esta casa, y la ficha del socio como organizacion propia
+  no la podemos afirmar nosotros. Verificado 19/19 contra el HTML del servidor,
+  con JSON parseado y taxID correcto en cada una.
 - PENDIENTE del plan SEO (artifact «Visibilidad de la red CTC»): la decision del
-  canonical (subdominio vs dominio raiz), Search Console, y las 16 superficies
-  restantes — que ahora son UNA linea cada una.
+  canonical (subdominio vs dominio raiz) y Search Console — las dos son del
+  owner. Candidato inmediato de UNA linea: anadir gradosLd() a Cherry Picked
+  Green, que es la tienda donde el grado ES la taxonomia del producto.
 (commit: pending)

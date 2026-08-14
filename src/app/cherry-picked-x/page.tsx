@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { XLanding } from "@/components/cherry-picked-x/XLanding";
 
 export const metadata = metadatosDeSuperficie({
@@ -14,5 +15,10 @@ export const metadata = metadatosDeSuperficie({
 });
 
 export default function CherryPickedXPage() {
-  return <XLanding />;
+  return (
+    <>
+      <OrganizationLd />
+      <XLanding />
+    </>
+  );
 }

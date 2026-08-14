@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { CherryPickedExperience } from "@/components/cherry-picked/CherryPickedExperience";
 
 // ── Cherry Picked Green · la tienda ─────────────────────────────────────────
@@ -21,5 +22,10 @@ export const metadata = metadatosDeSuperficie({
 });
 
 export default function CherryPickedGreenPage() {
-  return <CherryPickedExperience />;
+  return (
+    <>
+      <OrganizationLd />
+      <CherryPickedExperience />
+    </>
+  );
 }

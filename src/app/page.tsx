@@ -1,4 +1,6 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { graphLd, organizationLd, webSiteLd } from "@/lib/seo/jsonLd";
+import { JsonLd } from "@/components/JsonLd";
 import { ToastProvider } from "@/components/Toast";
 import { LangProvider } from "@/components/lang/i18n";
 import { LangBubble } from "@/components/lang/LangBubble";
@@ -29,6 +31,9 @@ export const metadata = metadatosDeSuperficie({
 export default function CtcHomePage() {
   return (
     <div data-theme="ctc-home">
+      {/* La casa matriz es la que DECLARA la empresa y el sitio: es la ficha a
+          la que apuntan por `@id` las de las demás superficies. */}
+      <JsonLd data={graphLd([organizationLd(), webSiteLd()])} />
       <ToastProvider>
         <LangProvider storageKey="ctc-lang">
           <ContactModalProvider>

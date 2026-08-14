@@ -1,4 +1,6 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { graphLd, organizationLd, gradosLd } from "@/lib/seo/jsonLd";
+import { JsonLd } from "@/components/JsonLd";
 import { HubLanding } from "@/components/cherry-picked-hub/HubLanding";
 
 // ── Cherry Picked · el hub de la plataforma de compra ───────────────────────
@@ -25,5 +27,13 @@ export const metadata = metadatosDeSuperficie({
 });
 
 export default function CherryPickedHubPage() {
-  return <HubLanding />;
+  return (
+    <>
+      {/* El hub lleva la empresa y el vocabulario de grados: es la superficie
+          donde un tostador europeo pregunta «¿qué significa Blue?» — y es
+          exactamente el hecho que un modelo puede citar sin inventarse nada. */}
+      <JsonLd data={graphLd([organizationLd(), gradosLd()])} />
+      <HubLanding />
+    </>
+  );
 }

@@ -60,3 +60,46 @@ Contexto abierto al cerrar V32 (2026-08-14):
   Identity Value Creation declarada y sin construir, el socio multi-nodo pendiente
   del PK de `partner_accounts`, los tres cotizadores sin conducir por 2FA, y la
   protección de contraseñas filtradas bloqueada por plan.
+
+## [2026-08-14] Datos estructurados (JSON-LD) en las tres superficies clave
+- La red no declaraba NINGUN schema.org — cero en todo el repo. Es lo que
+  convierte una pagina en ficha para Google, y lo mas parecido a hablarle en su
+  idioma a un modelo de lenguaje: un hecho declarado sin ambiguedad.
+- NUEVO: `src/lib/seo/jsonLd.ts` — constructores de las fichas. REGLA: aqui no
+  se escribe ningun dato. Todo sale de la fuente unica que ya lo posee:
+  `lib/legal.ts` (razon social, NIT, sede, correo), `lib/grados/definicion.ts`
+  (los cinco grados y sus rangos SCA) y `lib/kaffetal/faq.ts` (las 12 preguntas).
+- NUEVO: `src/components/JsonLd.tsx` — componente de SERVIDOR (sin "use client"
+  a proposito: el rastreador tiene que verlo en la primera respuesta). Escapa
+  `<` a \u003c POR CONSTRUCCION: dentro de un <script> el navegador busca el
+  cierre en texto crudo, asi que un dato con `</script>` cerraria la etiqueta
+  antes de tiempo. Hoy todo sale de constantes de la casa, pero la garantia
+  tiene que sobrevivir al dia que un campo sea administrable desde el panel.
+- REFACTOR HABILITANTE: el diccionario de las 12 preguntas SALIO de
+  `FaqSection.tsx` a `src/lib/kaffetal/faq.ts` (modulo puro, patron de
+  `harvestYear.ts`/`definicion.ts`). Ahora tiene DOS lectores —la seccion que
+  las pinta y el constructor de FAQPage— y duplicarlas habria garantizado que
+  la respuesta publicada y la visible se separaran al primer cambio de cifra.
+  Habilita ademas el paso siguiente del plan: URL propia por pregunta.
+- QUE EMITE CADA SUPERFICIE (un solo `@graph` por pagina, para que las
+  referencias por `@id` resuelvan dentro del documento):
+  · CTC Home    → Organization + WebSite. Es la que DECLARA la empresa.
+  · Kaffetal Regal → Organization + FAQPage (12) + DefinedTermSet (5 grados).
+  · Cherry Picked  → Organization + DefinedTermSet.
+  La Organization se repite en cada subdominio A PROPOSITO: Google los trata
+  como sitios aparte, asi que una referencia `@id` suelta a otro dominio se
+  quedaria sin nada a lo que apuntar.
+- DECISION: los grados son `DefinedTermSet`, NO `Product`/`Offer`. No son cinco
+  cosas a la venta con precio: son los cinco terminos de una escala que la casa
+  define. Es la figura que schema.org tiene para un vocabulario propio y la que
+  un modelo puede citar sin inventarse un precio.
+- `organizationLd()` lleva `knowsAbout` (7 temas) — la propiedad que mas rinde
+  de cara a un modelo: la lista explicita de en que es competente esta empresa.
+- Verificado en vivo: las tres emiten JSON valido en el HTML del servidor
+  (parseado, no grepeado), 0 referencias `@id` colgantes, 12 preguntas, los
+  cinco grados con su rango leido de definicion.ts, y el FAQ sigue pintando sus
+  12 fichas tras la extraccion.
+- PENDIENTE del plan SEO (artifact «Visibilidad de la red CTC»): la decision del
+  canonical (subdominio vs dominio raiz), Search Console, y las 16 superficies
+  restantes — que ahora son UNA linea cada una.
+(commit: pending)

@@ -1,0 +1,62 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V32.0(5f8163e).html
+(CTC Web Platform, desde 2026-08-14). Cada entrada se compila al próximo Version Wrap (V33).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit.
+
+Lección heredada del wrap de V28: **una entrada del log puede estar ya compilada**
+si se registró y se envolvió el mismo día. Antes de compilar, comprobar en el HTML
+base si ya está (buscar la clave de DICT o la nota que pedía).
+
+⚠️ LECCIÓN DEL WRAP DE V31 — cómo se buscan las claves del DICT.
+El DICT tiene DOS estilos de escritura conviviendo: `clave:{k:"…"` (compacto, una
+línea) y `clave: {` (con espacio, en varias líneas). Buscar con `^  clave:{` SOLO
+encuentra las del primer estilo — eso hizo creer que tres claves no existían y
+estuvieron a punto de quedar DUPLICADAS (JS se queda con la última y la ficha
+habría sido la vieja, en silencio). Busca siempre con espaciado flexible:
+    grep -nE '^[[:space:]]*"?clave"?[[:space:]]*:[[:space:]]*\{'
+y confirma en el navegador que `Object.keys(DICT).length` sube EXACTAMENTE lo que
+esperas. En el wrap de V32 se hizo así: 95 → 99, cuatro claves nuevas, cuadra.
+
+⚠️ LECCIÓN NUEVA DEL WRAP DE V32 — el mapa de archivos delata los borrados.
+Al regenerar FILETREE, la comprobación de ANN huérfanos encontró
+`src/app/robots.ts`, que este mismo pase había borrado. El script de FILETREE lee
+el disco, pero ANN es a mano: **cuando un wrap borra o renombra un archivo
+anotado, hay que repuntar su ANN** o el mapa apunta a un fichero que ya no está.
+La comprobación que lo caza:
+    orphanAnn = Object.keys(ANN).filter(k => !pathsDeFILETREE.has(k))
+debe volver VACÍA antes de guardar.
+
+Contexto abierto al cerrar V32 (2026-08-14):
+
+- **Los dos vídeos apuntan al MISMO id provisional** (`Yird1_j6yqo`): el de la
+  cabecera de «Tres ofertas» en CTC Home y el de «Bienvenidos al Kaffetal Regal».
+  Cuando exista el vídeo real de KR, es cambiar `BIENVENIDA_VIDEO_ID`.
+- **Los sitemaps no se anuncian solos**: los buscadores no sabrán que existen
+  hasta que vuelvan a leer el `robots.txt` de cada subdominio. Enviarlos a mano
+  en Search Console es cuenta del owner, no código.
+- **La deuda del loop de iconos**: ~2,6 MB por 240 px y 8 fps. Si hay que
+  adelgazarlo más, lo que queda es recortar la duración o el número de iconos —
+  decisión de contenido, no de codificación. Receta anti-fantasma en
+  `components/ctc-home/Hero.module.css` y en la ficha «WebP animado con alfa».
+- **Co-Create sigue renombrado a medias**: el hub dice «Cherry Picked Co-Create»,
+  su landing (Clase B) sigue diciendo «CTC Co-Create». La tarjeta de enlace dice
+  lo que dice la página, no lo que dirá — si se adelanta, el enlace compartido y
+  la página a la que lleva se llamarían distinto.
+- Todo lo demás heredado de V31 sigue vivo: la cola diferida de la auditoría (83
+  índices FK, poda del Buzón, carreras de `useAutosave`, tableros sin tope),
+  `/api/kaffetal-regal/next-step` sin llamador POR DECISIÓN, la robusta de
+  Londres y los inventarios ICE sin fuente gratuita, el hub de Cherry Picked sin
+  captación de correo (el CHECK solo admite roast|x|ctc-home), el escenario de
+  Canva sin montar en Make, Gemini sin tarifa en `precios.ts` (📌 el 2026-08-31
+  caduca el precio de lanzamiento de Sonnet 5), Coffeed con 5 medios sin feed,
+  la política de privacidad GDPR sin escribir, `qa-guard-check.mjs` sin cuenta QA,
+  Identity Value Creation declarada y sin construir, el socio multi-nodo pendiente
+  del PK de `partner_accounts`, los tres cotizadores sin conducir por 2FA, y la
+  protección de contraseñas filtradas bloqueada por plan.

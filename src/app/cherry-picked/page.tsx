@@ -1,3 +1,4 @@
+import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
 import { HubLanding } from "@/components/cherry-picked-hub/HubLanding";
 
 // ── Cherry Picked · el hub de la plataforma de compra ───────────────────────
@@ -9,11 +10,19 @@ import { HubLanding } from "@/components/cherry-picked-hub/HubLanding";
 // Un marcador viejo a cherry-picked.ctcexport.com aterriza aquí y encuentra el
 // selector con Green en primera fila: se pierde un clic, no el camino.
 
-export const metadata = {
+export const metadata = metadatosDeSuperficie({
+  route: "/cherry-picked",
   title: "Cherry Picked by CTC · The buying platform: Co-Create, Green, Roast and X",
   description:
     "One traced Colombian origin, four ways to buy it: Co-Create to build your own supply, Green for microlots in fractions from Amsterdam, Roast and X from 2027 — Colombian Trading Company",
-};
+  siteName: "Cherry Picked by CTC",
+  image: "cherry-picked.jpg",
+  imageAlt: "Cherry Picked by CTC logo on a deep green background",
+  // La familia Cherry Picked es trilingüe (components/cherry-picked/i18n.tsx) y
+  // habla inglés por defecto: su lector es el tostador europeo.
+  locale: "en_GB",
+  alternateLocale: ["es_CO", "de_DE"],
+});
 
 export default function CherryPickedHubPage() {
   return <HubLanding />;

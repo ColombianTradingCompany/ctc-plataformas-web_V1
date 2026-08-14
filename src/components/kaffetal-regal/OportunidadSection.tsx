@@ -444,6 +444,13 @@ export function OportunidadSection() {
         </>,
       ],
       accent: grade ? grade.hex : "#9AA294",
+      // El sello del grado encabeza la ficha (2026-08-13). Sale de
+      // `definicion.ts`, que es LA definición de la casa: la cara y el rango
+      // SCA de un grado se leen del mismo sitio o acaban contradiciéndose.
+      // «Corriente» no lleva sello a propósito — no es un grado, es el punto
+      // de partida, y darle uno lo metería en la escala.
+      image: grade?.logo,
+      imageContain: true,
     });
   }
 

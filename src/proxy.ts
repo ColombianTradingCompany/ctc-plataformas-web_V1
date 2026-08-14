@@ -2,51 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { sharedCookieDomain } from "@/lib/supabase/cookieDomain";
-
-// Maps a subdomain label to the internal route that should serve it.
-const SUBDOMAIN_ROUTES: Record<string, string> = {
-  "kaffetal-regal": "/kaffetal-regal",
-  // Cherry Picked es la PLATAFORMA de compra (owner, 2026-08-11): este
-  // subdominio sirve el HUB que reparte sus cuatro programas — Co-Create,
-  // Green, Roast y X. Hasta esa fecha servía la tienda Green, que se mudó al
-  // subdominio de abajo. DNS/Vercel de `cherry-picked-green`: mismo patrón de
-  // docs/PARTNER_DOMAINS_SETUP.md.
-  "cherry-picked": "/cherry-picked",
-  "cherry-picked-green": "/cherry-picked-green",
-  // Roast y X son los otros dos programas (andamiaje hasta que su lógica de
-  // pedido se conecte al catálogo de Green).
-  "cherry-picked-roast": "/cherry-picked-roast",
-  "cherry-picked-x": "/cherry-picked-x",
-  // Directorio de Especialistas del Café · Santander — la capa de PERSONAS
-  // sobre el ecosistema (las otras superficies son de lotes y de café).
-  // DNS/Vercel: docs/DIRECTORIO_DOMAIN_SETUP.md
-  "directoriodelcafe": "/directorio",
-  // Partner-node "couples" (landing + login), one subdomain per v3 node.
-  // DNS/Vercel steps: docs/PARTNER_DOMAINS_SETUP.md
-  "centro-calidad": "/socios/centro-calidad",
-  "agente-carga": "/socios/agente-carga",
-  "agente-nacionalizacion": "/socios/agente-nacionalizacion",
-  "master-roaster": "/socios/master-roaster",
-  // Public-facing subdomain is "ctc-content" (2026-07-16); the internal slug stays.
-  "ctc-content": "/socios/estudio-contenido",
-  // Superficies de captación Clase B (V4 · Fase 1): landing + project form,
-  // sin login propio — depositan en `leads`. DNS/Vercel: mismo patrón de
-  // docs/PARTNER_DOMAINS_SETUP.md.
-  "ctc-tech": "/ctc-tech",
-  "co-create": "/co-create",
-  "varietales": "/varietales",
-  // V4 · Fase 3: la Home de Coffeed (Clase C, solo difusión) y la landing
-  // pública del CTC Control Panel (el login maestro sigue en www/login).
-  "coffeed": "/coffeed",
-  "panel": "/control-panel",
-  // V4 · Fase 4: Herramientas del Café (reparto público del tools_config).
-  // OJO: los HTML viven en /tools (excluido del matcher) — la RUTA es
-  // /herramientas, los archivos siguen sirviéndose desde la raíz.
-  "herramientas": "/herramientas",
-  // Terratalento (2026-08-02): la superficie del recolector — identidad única
-  // del ecosistema, patrón Directorio.
-  "terratalento": "/terratalento",
-};
+// El mapa subdominio → ruta se mudó a `@/lib/red/subdominios` el 2026-08-13:
+// los metadatos Open Graph necesitan el mismo mapa al revés para firmar cada
+// tarjeta de enlace con su origen absoluto, y tenerlo dos veces era garantizar
+// que un subdominio nuevo se enrutara bien y se compartiera mal. Ver ese
+// archivo para la lista y sus comentarios.
+import { SUBDOMAIN_ROUTES } from "@/lib/red/subdominios";
 
 // ── Por qué el proxy renueva la sesión (2026-07-18) ─────────────────────────
 // Los usuarios tenían que volver a iniciar sesión cada ~1 hora. La causa no era

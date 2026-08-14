@@ -81,3 +81,103 @@ Contexto abierto al cerrar V31 (2026-08-13):
   línea en versalita y los cuatro tratamientos asumen fondo oscuro o medio.
 - **La protección de contraseñas filtradas** sigue bloqueada por plan (Supabase
   Free); lo que SÍ se puede hoy es subir longitud mínima y tipos de carácter.
+
+## [2026-08-14] Open Graph en las 19 superficies públicas
+- La red NO declaraba Open Graph en ninguna parte: pegar cualquiera de los 18
+  subdominios en WhatsApp/LinkedIn/Slack daba una línea gris con la URL. Con un
+  negocio que se mueve por WhatsApp, era la primera impresión de la plataforma.
+- NUEVO NODO/ARCHIVO: `src/lib/seo/openGraph.ts` — `metadatosDeSuperficie()`,
+  puerta ÚNICA por la que una superficie declara su tarjeta (título, descripción,
+  canonical, openGraph, twitter). Ninguna página escribe `og:*` a mano.
+- CAMBIO DE ARQUITECTURA (afecta a WIRES): el mapa `SUBDOMAIN_ROUTES` SALIÓ de
+  `src/proxy.ts` a **`src/lib/red/subdominios.ts`**, que además deriva
+  `ROUTE_SUBDOMAIN` y `origenDeSuperficie()`. El proxy ahora IMPORTA de esa
+  librería. Motivo: Open Graph necesita el mapa al revés (ruta → subdominio)
+  para firmar cada tarjeta con su origen absoluto; duplicarlo garantizaba que un
+  subdominio nuevo se enrutara bien y se compartiera mal. Una superficie nueva =
+  UNA línea en ese archivo y ya la conocen el enrutado y las tarjetas.
+- `metadataBase` es el SUBDOMINIO de cada superficie, no www; el canonical
+  apunta al subdominio y con eso se resuelve un duplicado que ya existía (toda
+  superficie responde 200 por dos URLs: su subdominio y su ruta bajo www).
+- NUEVO SCRIPT: `scripts/build-og-cards.mjs` → `public/images/og/*.jpg`
+  (19 tarjetas, 1200×630, ~50 KB cada una, 1,0 MB en total). Se corre A MANO y
+  el resultado se comitea: lee `reference_logos/`, que vive FUERA del repo.
+  JPEG y no WebP porque WhatsApp no previsualiza WebP de forma fiable.
+- Cubre: CTC Home, Kaffetal Regal, Cherry Picked (hub/Green/Roast/X), Co-Create,
+  Directorio, CTC Tech, Varietales, Coffeed, Herramientas, Control Panel,
+  Terratalento y los 5 nodos socios (vía generateMetadata sobre PARTNERS).
+  Las consolas internas no llevan tarjeta a propósito.
+- DICT: concepto nuevo candidato — «Tarjeta de enlace (Open Graph)», cruzado con
+  los nodos de superficie y con el proxy.
+- Verificado: og:title/type/image/url + site_name + twitter:card presentes en /,
+  /kaffetal-regal, /cherry-picked-green y /socios/estudio-contenido; las
+  imágenes sirven 200 image/jpeg; y el enrutado por subdominio sigue intacto
+  tras mover el mapa (7 hosts probados con Host header, incluido el desajuste
+  ctc-content → /socios/estudio-contenido).
+- PENDIENTE ANOTADO, no hecho: `src/app/robots.ts` solo prohíbe /bcp y /lab —
+  /ecp y /ocp nunca se añadieron. Es anterior a este trabajo.
+(commit: pending)
+
+## [2026-08-14] Los sellos de los Grados de Calidad entran en la definición
+- `GRADOS` (`src/lib/grados/definicion.ts`) gana el campo **`logo`**: el sello de
+  cada grado, en `public/images/shared/grados/{black,red,blue,gold,tyrian}.webp`.
+  Origen: `reference_logos/Grados CTC/` (material de marca del owner),
+  normalizado a 420×420 sobre blanco porque los cinco PNG venían con recortes
+  distintos y sin alfa — sin cuadrarlos el sello saltaba de sitio al cambiar de
+  grado en la ventana.
+- Va en la DEFINICIÓN y no en cada superficie por la misma razón que los rangos
+  SCA: es LA cara del grado. La cara y el rango salen del mismo sitio o acaban
+  contradiciéndose. Actualiza el nodo «Grados de Calidad» y su DICT.
+- Primer consumidor: los popups de «La oportunidad, en números»
+  (`OportunidadSection.tsx`), por los campos `image`/`imageContain` que
+  `InfoPanel` ya tenía — sin tocar el componente compartido.
+- «Corriente» NO lleva sello a propósito: no es un grado, es el punto de partida.
+- Verificado en navegador: Gold y Tyrian abren con su sello (420×420, contain);
+  Corriente abre sin imagen. qa-grados-check.mjs sigue en 44/44.
+(commit: pending)
+
+## [2026-08-14] El loop de iconos pasa al V3 (y el fantasma que escondia el V2)
+- `public/images/shared/ctc-loading-icons.webp` sale ahora de
+  `reference_gifs/CTC_Loading_Icons_V3.gif` (800x800, ~510 fotogramas, 45,9 s,
+  ALFA REAL EN TODOS LOS FOTOGRAMAS). Los gif V1 y V2 se borraron. Afecta a los
+  3 sitios que lo montan: hero de CTC Home y pies de Kaffetal Regal y Cherry
+  Picked.
+- **El arte cambio de naturaleza**: V1 = 63 estampas FIJAS de tinta maciza a
+  810 ms; V2/V3 = ~35 iconos que se FUNDEN unos en otros.
+- El V2 llego mal exportado (alfa solo en el primer icono, el resto opaco = un
+  cuadro blanco sobre la foto del hero). Se documento, se probo recortar el
+  blanco por clave de color -NO sirve para este arte: sin su papel los costales
+  y la taza quedan en contorno fantasma- y el owner reexporto. El V3 es el mismo
+  arte con la transparencia puesta, asi que el loop VUELVE A FLOTAR sobre la
+  foto y no lleva ni caja ni border-radius (el remate de lamina que se habia
+  puesto como paliativo se retiro).
+- HALLAZGO QUE VALE PARA CUALQUIER WEBP ANIMADO CON ALFA DE ESTA CASA: al
+  convertir con `-c:v libwebp` + `-q:v`, y tambien re-codificando con sharp, el
+  resultado sale CON FANTASMAS - cada icono arrastra restos del anterior. El
+  codificador mezcla cada fotograma sobre el lienzo previo en vez de
+  reemplazarlo, y como el arte es transparente alrededor del dibujo, lo de antes
+  se sigue viendo. Con el V2 NO se notaba porque sus fotogramas opacos tapaban
+  el rastro: el bug ya estaba y la opacidad lo escondia. Receta correcta,
+  verificada fotograma a fotograma contra el GIF a los mismos instantes:
+  `-c:v libwebp_anim -pix_fmt bgra -quality N` (con `-quality`, no `-q:v`).
+  Queda escrita en components/ctc-home/Hero.module.css.
+- PESO ~2,6 MB (el V1 pesaba 310 KB). No es grasa: son ~370 fotogramas casi
+  todos distintos y con alfa no hay reaprovechamiento entre ellos. La CALIDAD
+  casi no mueve la aguja (q45 y q55 pesan igual); las palancas son la TASA DE
+  FOTOGRAMAS y el TAMANO - de ahi 240 px y 8 fps (a 300 px y 12,5 fps son
+  5,1 MB, y 240 px sigue por encima de los 210 px a los que se dibuja).
+  Los dos PIES van con loading="lazy": solo el hero paga en la primera pintura.
+(commit: pending)
+
+## [2026-08-14] robots.txt: /ecp y /ocp
+- `src/app/robots.ts` prohibia solo `/bcp` y `/lab`; `/ecp` y `/ocp` nacieron
+  con el login maestro del 2026-07-15 y llevaban desde entonces fuera. Anadidas.
+- Es ORDEN, no seguridad, y el comentario del archivo lo dice: quien protege esas
+  rutas es `requireConsoleAccess()` + el re-chequeo de cada Server Action; este
+  archivo es publico y pedir que no se rastree una ruta es anunciar que existe.
+- Anotado tambien en el archivo: el proxy excluye `robots.txt` de su matcher, asi
+  que el MISMO robots.txt se sirve en los 18 subdominios (verificado con Host
+  header). Hoy no hay forma de darle reglas propias a un subdominio.
+- Relacionado y NO hecho: no existe `sitemap.ts`, asi que `/sitemap.xml` da 404.
+  No es de una linea - los sitemaps son por host y aqui hay 18 subdominios.
+(commit: pending)

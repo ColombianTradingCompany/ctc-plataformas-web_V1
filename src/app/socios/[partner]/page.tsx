@@ -2,11 +2,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PARTNERS, PARTNER_SLUGS, isPartnerSlug } from "@/lib/partners/partners";
+import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
 import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./socios.module.css";
 
 export function generateStaticParams() {
   return PARTNER_SLUGS.map((partner) => ({ partner }));
+}
+
+// Los cinco nodos comparten una sola página, así que su tarjeta de enlace se
+// firma por nodo desde `PARTNERS` — que ya es la fuente única de su nombre, su
+// papel y su descripción. El slug interno y el subdominio público NO siempre
+// coinciden (`estudio-contenido` se sirve en `ctc-content`), pero eso lo
+// resuelve el mapa de la red: aquí basta con dar la ruta.
+export async function generateMetadata({ params }: { params: Promise<{ partner: string }> }) {
+  const { partner } = await params;
+  if (!isPartnerSlug(partner)) return {};
+  const p = PARTNERS[partner];
+  return metadatosDeSuperficie({
+    route: `/socios/${p.slug}`,
+    title: `${p.name} · Nodo socio de la red CTC · ${p.role}`,
+    description: p.what,
+    siteName: `${p.name} · Red CTC`,
+    image: `socio-${p.slug}.jpg`,
+    imageAlt: `Logotipo de ${p.name}, nodo socio de la red CTC`,
+  });
 }
 
 // Public landing of a partner node — the first half of its "couple". Copy comes

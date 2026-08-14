@@ -1,3 +1,4 @@
+import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
 import { ToastProvider } from "@/components/Toast";
 import { LangProvider } from "@/components/lang/i18n";
 import { LangBubble } from "@/components/lang/LangBubble";
@@ -11,6 +12,19 @@ import { CosechasSection } from "@/components/ctc-home/CosechasSection";
 import { HistorySection } from "@/components/ctc-home/HistorySection";
 import { QuickMenu } from "@/components/ctc-home/QuickMenu";
 import { Footer } from "@/components/ctc-home/Footer";
+
+// La casa matriz es la única superficie que hasta hoy no declaraba ni título
+// propio: heredaba el del layout raíz. Ahora firma su tarjeta como las demás.
+export const metadata = metadatosDeSuperficie({
+  route: "/",
+  title: "Colombian Trading Company · Cafés de Colombia, para el mundo",
+  description:
+    "Exportador colombiano de café verde con trazabilidad de finca a taza: producimos el pasaporte de cada lote, lo calificamos en la Arena con protocolo SCA y lo llevamos a Europa con la declaración EUDR resuelta. Kaffetal Regal para el productor, Cherry Picked para el tostador.",
+  siteName: "Colombian Trading Company",
+  image: "ctc-home.jpg",
+  imageAlt: "Logotipo de Colombian Trading Company sobre fondo azul corporativo",
+  alternateLocale: ["en_GB", "de_DE"],
+});
 
 export default function CtcHomePage() {
   return (

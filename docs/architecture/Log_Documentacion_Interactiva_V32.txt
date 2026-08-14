@@ -111,3 +111,39 @@ Contexto abierto al cerrar V32 (2026-08-14):
   owner. Candidato inmediato de UNA linea: anadir gradosLd() a Cherry Picked
   Green, que es la tienda donde el grado ES la taxonomia del producto.
 (commit: pending)
+
+## [2026-08-14] El rastro del CACAO: no era una cadena, era un modo entero
+- El owner reporto cacao llegando al SEO. Es de una iteracion temprana de la
+  compania y ya no es producto. El rastro estaba en `public/tools/`, que es
+  material INDEXABLE: esos HTML se sirven por URL propia (el matcher del proxy
+  excluye /tools), no llevan noindex, y robots.txt no cubre /tools — solo
+  /bcp /ecp /ocp /lab. Ademas la herramienta es `web: true, tier: default`, o
+  sea visible para visitante anonimo en herramientas.ctcexport.com, que es
+  justo como un buscador la descubre.
+- NO era una cadena suelta: `mermas-rapida.html` tenia un MODO CACAO COMPLETO —
+  titulo «Calculadora de Rendimiento para Café y Cacao» (lo que Google enseña
+  como titular del resultado), conmutador ☕Café/🍫Cacao, seccion «Diferencias
+  Clave: Café vs. Cacao», bloque «Proceso del Cacao» y su propia configuracion
+  de etapas en JS (baba → seco → tostado → nibs).
+- Retirado entero: titulo, subtitulo, el selector de producto (con un solo
+  producto un conmutador de una opcion es ruido), el bloque del modal, la
+  config de etapas y las SEIS lineas JS que referenciaban los botones. Ojo con
+  esto ultimo: dejar una sola referencia habria dado null al arrancar y habria
+  tumbado la calculadora entera.
+- Verificado A/B contra el archivo previo al cambio, mismo guion en los dos:
+  resumen identico (1000 kg → 505 pergamino → 255 verde → 128.8 tostado),
+  mismas tarjetas, mismos 3 rangos, 0 errores de consola. La herramienta hace
+  exactamente lo mismo que antes, menos el cacao.
+- Tambien corregido `AppDashboard.tsx` («Rendimiento de café y cacao» en la
+  tarjeta del hub del productor). Esta detras del login, asi que no era SEO,
+  pero es el mismo residuo.
+- LO QUE NO SE TOCA, A PROPOSITO: las menciones de cacao/cocoa que quedan en
+  `rueda-catacion.html` y `viaje-cafe.html` son VOCABULARIO DE CATA — «Frutos
+  secos / Cacao» es una categoria de la rueda de sabores de la SCA, y las notas
+  achocolatadas de `fichaData.ts` describen variedades. Quitarlas romperia la
+  rueda y seria ademas falso: el cacao como NOTA es lenguaje estandar del cafe.
+  El producto se fue; el descriptor se queda.
+- HALLAZGO COLATERAL, no arreglado: los 12 HTML de `public/tools/` son URLs
+  indexables y solo DOS llevan meta description. Son superficie SEO que nadie
+  esta gobernando — candidatos naturales del modulo «Manejo de Plataformas».
+(commit: pending)

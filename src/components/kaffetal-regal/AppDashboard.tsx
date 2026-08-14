@@ -33,7 +33,7 @@ import styles from "./AppDashboard.module.css";
 const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
   "mermas-rapida": {
     name: "Calculadora rápida de mermas",
-    desc: "Rendimiento de café y cacao: cuánto le queda al pasar de cereza a pergamino y a excelso.",
+    desc: "Rendimiento del café: cuánto le queda al pasar de cereza a pergamino y a excelso.",
   },
   "mermas-detallada": {
     name: "Calculadora detallada de mermas",

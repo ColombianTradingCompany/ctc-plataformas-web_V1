@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Rendimiento para Café y Cacao</title>
+    <title>Calculadora de Rendimiento del Café · CTC</title>
     <script src="/tools/assets/tailwind.js"></script>
     <style>/* fuentes locales (vendor-tool-assets.mjs) */
 /* cyrillic-ext */
@@ -343,15 +343,10 @@
 
         <header class="text-center mb-8">
             <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Calculadora de Rendimiento</h1>
-            <p class="text-lg text-gray-600 mt-2">Modela la merma del café y cacao desde el grano crudo hasta el producto final.</p>
+            <p class="text-lg text-gray-600 mt-2">Modela la merma del café desde la cereza hasta el grano tostado.</p>
         </header>
 
 
-        <!-- Product Selector -->
-        <div class="flex justify-center mb-8 bg-gray-200 rounded-xl p-1 max-w-sm mx-auto">
-            <button id="cafe-btn" class="product-btn w-1/2 py-2 px-4 rounded-lg transition-all duration-300">☕ Café</button>
-            <button id="cacao-btn" class="product-btn w-1/2 py-2 px-4 rounded-lg transition-all duration-300">🍫 Cacao</button>
-        </div>
 
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -376,7 +371,7 @@
         <div id="info-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
             <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full relative">
                 <button id="close-modal-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h2 class="text-2xl font-bold mb-4">Diferencias Clave: Café vs. Cacao</h2>
+                <h2 class="text-2xl font-bold mb-4">El proceso del café, etapa por etapa</h2>
                 <div class="space-y-4 text-gray-700">
                     <div>
                         <h3 class="font-semibold text-lg text-indigo-600">☕ Proceso del Café</h3>
@@ -384,14 +379,6 @@
                             <li><strong>Beneficio Húmedo (Cereza → Pergamino):</strong> Es la mayor pérdida de peso. La pulpa se retira con agua, perdiendo hasta un 80% del peso inicial.</li>
                             <li><strong>Trillado (Pergamino → Verde):</strong> Se retira la capa protectora (pergamino) del grano seco. Es una merma mecánica menor.</li>
                             <li><strong>Tostado (Verde → Tostado):</strong> Se pierde la humedad restante del grano verde. La merma depende del nivel de tueste.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-lg text-amber-700">🍫 Proceso del Cacao</h3>
-                        <ul class="list-disc list-inside mt-2 space-y-1">
-                            <li><strong>Fermentación y Secado (Baba → Seco):</strong> La pulpa (mucílago) se descompone y escurre, seguido del secado. La pérdida de peso es masiva (~60%) pero por fermentación y evaporación, no por lavado.</li>
-                            <li><strong>Tostado (Seco → Grano Tostado):</strong> Similar al café, se tuesta para desarrollar sabor y se pierde humedad.</li>
-                            <li><strong>Descacarillado (Grano Tostado → Nibs):</strong> Etapa clave que no existe en el café. Se parte el grano tostado y se retira la cáscara para obtener los "nibs". Representa una pérdida de peso significativa post-tueste.</li>
                         </ul>
                     </div>
                 </div>
@@ -412,15 +399,6 @@
                         { id: 'stage3', label: 'Remanente Tostado', standardPercentage: 84, color: '#78350f', info: 'Pérdida de humedad por tueste. La merma es del 12-18%, con un rendimiento del 82-88%.' }
                     ],
                     summaryLabels: ['Crudo', 'Pergamino', 'Verde', 'Tostado']
-                },
-                cacao: {
-                    stages: [
-                        { id: 'initial', label: 'Peso Inicial (en Baba)', color: '#4c1d95' },
-                        { id: 'stage1', label: 'Remanente Fermentación y Secado', standardPercentage: 40, color: '#7f1d1d', info: 'El mucílago escurre y el grano se seca. Merma del 55-65%, con un rendimiento del 35-45%.' },
-                        { id: 'stage2', label: 'Remanente Tostado', standardPercentage: 92, color: '#a16207', info: 'Pérdida de humedad por tueste. Merma del 5-10%, con un rendimiento del 90-95%.' },
-                        { id: 'stage3', label: 'Remanente Descacarillado', standardPercentage: 80, color: '#f59e0b', info: 'Se retira la cáscara para obtener nibs. Merma del 15-25%, con un rendimiento del 75-85%.' }
-                    ],
-                    summaryLabels: ['Crudo', 'Seco', 'Grano Tostado', 'Nibs']
                 }
             };
 
@@ -435,8 +413,6 @@
 
 
             // --- REFERENCIAS AL DOM ---
-            const cafeBtn = document.getElementById('cafe-btn');
-            const cacaoBtn = document.getElementById('cacao-btn');
             const calculatorStagesContainer = document.getElementById('calculator-stages');
             const summaryContainer = document.getElementById('summary-container');
             const infoBtn = document.getElementById('info-btn');
@@ -503,8 +479,6 @@
                     stagesDisplayContainer.innerHTML += createStageCard(stage.id, stage.label, stage.info);
                 });
                
-                cafeBtn.classList.toggle('active', state.product === 'cafe');
-                cacaoBtn.classList.toggle('active', state.product === 'cacao');
             }
 
 
@@ -742,8 +716,6 @@
 
 
             // --- EVENT LISTENERS INICIALES ---
-            cafeBtn.addEventListener('click', () => initializeProduct('cafe'));
-            cacaoBtn.addEventListener('click', () => initializeProduct('cacao'));
             infoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
             closeModalBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
             infoModal.addEventListener('click', (e) => {

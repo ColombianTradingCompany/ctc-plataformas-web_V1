@@ -27,7 +27,7 @@
 
 .cardTop{display:flex;align-items:center;gap:15px}
 .seal{width:62px;height:auto;flex:none}
-/* Co-Create no tiene sello propio (no es un escaparate): lleva un disco del
+/* CaaS no tiene sello propio (no es un escaparate): lleva un disco del
    color del programa, para que la fila de cabeceras no baile. */
 .sealDot{width:62px;height:62px;border-radius:50%;flex:none;background:var(--pc);opacity:.9}
 .card h3{font-size:20px;color:var(--primary-deep);line-height:1.2}

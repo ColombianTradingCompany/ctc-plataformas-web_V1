@@ -3,7 +3,7 @@
 // ── OCP · Cotizaciones · a quién va dirigida ─────────────────────────────────
 // Busca a la vez en productores, compradores y leads. NO impone quién puede
 // recibir qué: el cotizador de lotes suele apuntar a un productor y el logístico
-// a un cliente, pero la vía Co-Create cotiza logística para un productor y eso
+// a un cliente, pero la vía CaaS cotiza logística para un productor y eso
 // tiene que caber.
 //
 // El nombre se COPIA a la cotización al elegirlo. Si el perfil cambia de razón

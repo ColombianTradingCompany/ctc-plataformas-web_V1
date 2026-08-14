@@ -26,7 +26,7 @@ export type InfoEntry = {
   /** El pie: a dónde lleva esto, si lleva a alguna parte. */
   cta?: { href: string; label: string; external?: boolean };
   /** Salidas adicionales, cuando una sola no basta (2026-08-14: la ficha de
-   *  Cherry Picked lleva el hub Y Co-Create). Se pintan tras `cta`, con el
+   *  Cherry Picked lleva el hub Y CaaS). Se pintan tras `cta`, con el
    *  estilo secundario — la primera salida sigue siendo la principal. */
   ctas?: { href: string; label: string; external?: boolean }[];
   /** Color de acento de la ventana (el de la puerta, el del grado…). */

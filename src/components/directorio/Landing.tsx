@@ -399,7 +399,7 @@ export function Landing({
                 <li>Kaffetal Regal — portal del productor</li>
                 <li>Cherry Picked — vitrina en Europa</li>
                 <li>CTC Tech — tecnologías agrónomas en finca</li>
-                <li>CTC Co-Create — proyectos en EE.UU. y Europa</li>
+                <li>CTC CaaS — proyectos en EE.UU. y Europa</li>
                 <li>Varietales registrados — genética verificada</li>
               </ul>
             </div>

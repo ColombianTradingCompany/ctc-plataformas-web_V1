@@ -83,7 +83,7 @@ Black (base, 105–110) · Red (110–125) · Blue (125–135) · Gold (135–15
 bono de subasta). Base 100 = precio interno de referencia del día para pergamino corriente.
 
 MÁS ALLÁ DE LA EXPORTACIÓN (servicios y red): CTC Tech (ozono+UVC, fermentación, selección
-óptica, cromatografía de suelos, instrumentación), CTC Co-Create (proyectos de marca en EE.UU.
+óptica, cromatografía de suelos, instrumentación), CTC CaaS (proyectos de marca en EE.UU.
 y Europa), Directorio del Café (DC — ficha pública gratuita para caficultores, baristas,
 tostadores, catadores y formadores de Colombia, Ley 1581 de 2012), Varietales Registrados
 (chapolas con genética verificada, mín. 100, $150–300 COP c/u), Coffeed (muro de noticias),

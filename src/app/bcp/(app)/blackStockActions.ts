@@ -8,7 +8,7 @@ import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 // La DECISIÓN (comprar/liberar) sigue siendo decideBlackNegotiation en
 // contractActions.ts — aquí solo vive el SEGUIMIENTO de la negociación
 // abierta: etapa del kanban y volumen objetivo. El enlace con el CRM
-// Co-Create (lead_id) tiene columna pero todavía no UI, a propósito.
+// CaaS (lead_id) tiene columna pero todavía no UI, a propósito.
 
 const STAGES = ["nueva", "en_conversacion", "acuerdo_cerca"] as const;
 export type BlackStage = (typeof STAGES)[number];

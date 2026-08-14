@@ -7,7 +7,7 @@ import { createSessionClient } from "@/lib/supabase/server";
 // ContactModal resumes the stashed lead. NO role logic here -- the pillar isn't
 // trustworthy in a URL; all role decisions happen server-side in
 // submitLeadAuthed, which knows the pillar. (This is also what keeps a
-// Co-Create lead from being promoted to producer by the Kaffetal callback.)
+// CaaS lead from being promoted to producer by the Kaffetal callback.)
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const origin = request.nextUrl.origin;

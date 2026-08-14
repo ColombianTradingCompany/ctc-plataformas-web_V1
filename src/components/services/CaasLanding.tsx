@@ -6,11 +6,11 @@ import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";
 
-// CTC Co-Create · superficie de captación Clase B (V4 · Fase 1). En términos
+// CTC CaaS · superficie de captación Clase B (V4 · Fase 1). En términos
 // de negocio es un OUTLET (junto a Cherry Picked); en términos web es una
 // superficie de captación: aquí se PROPONE un proyecto, no se compra — la
 // regla del vocabulario canónico (Fase 0) que el copy de abajo hace explícita.
-// El form es el pilar `cocreate` (→ leads → CRM Co-Create en el BCP, que a
+// El form es el pilar `cocreate` (→ leads → CRM CaaS en el BCP, que a
 // futuro coordina compras con el Black Stock).
 
 const CHROME: Record<
@@ -23,6 +23,13 @@ const CHROME: Record<
     offerH2: string;
     offerBody: string;
     noCart: string;
+    /** «Modelos de oferta»: dónde encaja CaaS. Le faltaba a la superficie —
+     *  quien llega entiende QUÉ es después de los tres pasos, pero no si sirve
+     *  para SU caso. Cada modelo desactiva una objeción distinta. */
+    modelosTag: string;
+    modelosH2: string;
+    modelosLead: string;
+    modelos: { t: string; d: string }[];
     closingH2: string;
     closingP: string;
   }
@@ -50,7 +57,25 @@ const CHROME: Record<
     offerBody:
       "El catálogo de Kaffetal Regal se compone de dos clases de café, y ambas se ofrecen a tu proyecto: Specialty — microlotes con nombre propio, graduados en la Arena (Red, Blue, Gold y Tyrian), pagados por lo que hay en la taza — y Black — el café base de la temporada: limpio, dulce y constante, en volumen, negociado directamente con CTC. Tu proyecto decide qué clase necesita; ninguna clase pertenece a un solo canal.",
     noCart:
-      "Aquí no hay carrito: Co-Create es la puerta a un proyecto acompañado. La compra ocurre dentro del proyecto, coordinada con CTC.",
+      "Aquí no hay carrito: CaaS es la puerta a un proyecto acompañado. La compra ocurre dentro del proyecto, coordinada con CTC.",
+    modelosTag: "Dónde encaja",
+    modelosH2: "Modelos de oferta comunes",
+    modelosLead:
+      "CaaS no es un catálogo: es una mesa. Estos son los modelos que más veces se arman en ella — si el tuyo no está, se diseña.",
+    modelos: [
+      {
+        t: "«Lujo del Origen»",
+        d: "Preséntales cómo una línea «100% Colombia Specialty» complementa su portafolio sin canibalizar a las marcas actuales, atrayendo a los puristas del café de tercera ola.",
+      },
+      {
+        t: "«Piso Firme»",
+        d: "Preséntales cómo asegurar el café base de toda la temporada con Black —limpio, dulce y constante— bajo contrato y con entregas pactadas, para que su costo deje de moverse con el mercado y su tostión no dependa de lo que aparezca ese mes.",
+      },
+      {
+        t: "«La Historia Completa»",
+        d: "Preséntales cómo cada lote llega con su expediente puesto —finca georreferenciada, puntaje de la Arena y declaración EUDR resuelta—, de modo que el equipo de marca tenga qué contar y el de compras con qué cumplir, sin pedir dos veces el mismo dato.",
+      },
+    ],
     closingH2: "¿Tu marca ya tiene el funnel? Nosotros ponemos la proveeduría.",
     closingP:
       "Tostaduría, cadena, marca privada o e-commerce: si tu demanda existe, la mesa se puede armar. Propón tu proyecto y te respondemos por correo.",
@@ -78,7 +103,25 @@ const CHROME: Record<
     offerBody:
       "The Kaffetal Regal catalogue is made of two classes of coffee, and both are offerable to your project: Specialty — microlots with a name of their own, graded in the Arena (Red, Blue, Gold and Tyrian), paid for what's in the cup — and Black — the season's base coffee: clean, sweet and consistent, in volume, negotiated directly with CTC. Your project decides which class it needs; neither class belongs to a single channel.",
     noCart:
-      "There is no cart here: Co-Create is the door to an accompanied project. Purchasing happens inside the project, coordinated with CTC.",
+      "There is no cart here: CaaS is the door to an accompanied project. Purchasing happens inside the project, coordinated with CTC.",
+    modelosTag: "Where it fits",
+    modelosH2: "Common offer models",
+    modelosLead:
+      "CaaS is not a catalogue: it is a table. These are the models most often built on it — if yours isn't here, it gets designed.",
+    modelos: [
+      {
+        t: "“Origin Luxury”",
+        d: "Show them how a “100% Colombia Specialty” line complements their portfolio without cannibalising their current brands, drawing in third-wave purists.",
+      },
+      {
+        t: "“Solid Floor”",
+        d: "Show them how to secure the whole season's base coffee with Black — clean, sweet and consistent — under contract and on agreed deliveries, so their cost stops moving with the market and their roast no longer depends on whatever turns up that month.",
+      },
+      {
+        t: "“The Whole Story”",
+        d: "Show them how every lot arrives with its file already attached — georeferenced farm, Arena score and EUDR declaration resolved — so the brand team has something to tell and the buying team something to comply with, without asking twice for the same data.",
+      },
+    ],
     closingH2: "Your brand has the funnel? We bring the supply.",
     closingP:
       "Roastery, chain, private label or e-commerce: if your demand exists, the table can be set. Propose your project and we reply by email.",
@@ -106,23 +149,41 @@ const CHROME: Record<
     offerBody:
       "Der Katalog von Kaffetal Regal besteht aus zwei Kaffeeklassen, und beide stehen Ihrem Projekt offen: Specialty — Mikrolots mit eigenem Namen, in der Arena graduiert (Red, Blue, Gold und Tyrian), bezahlt für das, was in der Tasse ist — und Black — der Basiskaffee der Saison: sauber, süß und konstant, im Volumen, direkt mit CTC verhandelt. Ihr Projekt entscheidet, welche Klasse es braucht; keine Klasse gehört einem einzigen Kanal.",
     noCart:
-      "Hier gibt es keinen Warenkorb: Co-Create ist die Tür zu einem begleiteten Projekt. Der Kauf geschieht innerhalb des Projekts, koordiniert mit CTC.",
+      "Hier gibt es keinen Warenkorb: CaaS ist die Tür zu einem begleiteten Projekt. Der Kauf geschieht innerhalb des Projekts, koordiniert mit CTC.",
+    modelosTag: "Wo es passt",
+    modelosH2: "Gängige Angebotsmodelle",
+    modelosLead:
+      "CaaS ist kein Katalog, sondern ein Tisch. Das sind die Modelle, die am häufigsten daran entstehen — fehlt Ihres, wird es entworfen.",
+    modelos: [
+      {
+        t: "„Luxus des Ursprungs“",
+        d: "Zeigen Sie ihnen, wie eine Linie „100 % Colombia Specialty“ ihr Portfolio ergänzt, ohne die bestehenden Marken zu kannibalisieren, und Puristen der dritten Welle anzieht.",
+      },
+      {
+        t: "„Fester Boden“",
+        d: "Zeigen Sie ihnen, wie sie den Basiskaffee der ganzen Saison mit Black sichern — sauber, süß und konstant —, vertraglich und mit vereinbarten Lieferungen, damit ihre Kosten nicht mehr mit dem Markt schwanken und ihre Röstung nicht davon abhängt, was in dem Monat gerade auftaucht.",
+      },
+      {
+        t: "„Die ganze Geschichte“",
+        d: "Zeigen Sie ihnen, wie jedes Lot mit seiner Akte ankommt — georeferenzierte Finca, Arena-Punktzahl und gelöste EUDR-Erklärung —, damit das Markenteam etwas zu erzählen und der Einkauf etwas zum Nachweisen hat, ohne dieselbe Angabe zweimal zu erfragen.",
+      },
+    ],
     closingH2: "Ihre Marke hat den Funnel? Wir bringen die Lieferung.",
     closingP:
       "Rösterei, Kette, Eigenmarke oder E-Commerce: Wenn Ihre Nachfrage existiert, lässt sich der Tisch aufstellen. Schlagen Sie Ihr Projekt vor und wir antworten per E-Mail.",
   },
 };
 
-export function CoCreateLanding() {
+export function CaasLanding() {
   const lang = useLang();
   const t = SERVICES_COPY[lang];
   const chrome = CHROME[lang];
   const { openForm } = useContactModal();
 
   return (
-    <SurfaceShell name="CTC Co-Create">
+    <SurfaceShell name="CaaS · Coffee as a Service">
       <section className={styles.hero}>
-        <span className={styles.tag}>CTC Co-Create</span>
+        <span className={styles.tag}>CaaS · Coffee as a Service</span>
         <h1>{t.cocreateH3}</h1>
         <p className={styles.heroSub}>{t.cocreateSub}</p>
         <p className={styles.heroBody}>{t.cocreateBody}</p>
@@ -173,6 +234,32 @@ export function CoCreateLanding() {
                 <li key={i}>{p}</li>
               ))}
             </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Modelos de oferta ────────────────────────────────────────────────
+          Lo que le faltaba a esta superficie: quien llega entiende QUÉ es CaaS
+          tras los tres pasos, pero no si sirve para SU caso. Los tres modelos
+          desactivan tres objeciones distintas de un comprador de marca —
+          canibalizar el portafolio, quedar expuesto al vaivén del mercado, y
+          no tener con qué contar la historia. */}
+      <section className={`${styles.section} ${styles.sectionAlt}`}>
+        <div className={`${styles.sectionInner} ${styles.single}`}>
+          <div>
+            <p className={styles.sectionTagline}>{chrome.modelosTag}</p>
+            <h2>{chrome.modelosH2}</h2>
+            <p className={styles.sectionLead} style={{ maxWidth: 780 }}>
+              {chrome.modelosLead}
+            </p>
+            <div className={styles.points}>
+              {chrome.modelos.map((m) => (
+                <div className={styles.point} key={m.t}>
+                  <p className={styles.pointT}>{m.t}</p>
+                  <p className={styles.pointD}>{m.d}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

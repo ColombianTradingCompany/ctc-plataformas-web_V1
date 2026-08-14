@@ -30,14 +30,14 @@ export const FAMILY_LINKS =
   process.env.NODE_ENV === "development"
     ? {
         hub: "/cherry-picked",
-        cocreate: "/co-create",
+        cocreate: "/caas",
         green: "/cherry-picked-green",
         roast: "/cherry-picked-roast",
         x: "/cherry-picked-x",
       }
     : {
         hub: "https://cherry-picked.ctcexport.com",
-        cocreate: "https://co-create.ctcexport.com",
+        cocreate: "https://caas.ctcexport.com",
         green: "https://cherry-picked-green.ctcexport.com",
         roast: "https://cherry-picked-roast.ctcexport.com",
         x: "https://cherry-picked-x.ctcexport.com",

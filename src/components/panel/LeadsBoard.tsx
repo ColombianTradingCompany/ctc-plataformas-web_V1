@@ -8,7 +8,7 @@ import styles from "@/app/bcp/(app)/shared.module.css";
 // Era la página completa de /ocp/leads; ahora es el componente compartido que
 // cada consola monta con SUS pilares (regla Fase 0: "el CRM vive en la consola
 // dueña del dominio") — general → OCP (recepción), cocreate → BCP (CRM
-// Co-Create), tech y varietales → ECP. Una sola tabla `leads`; cambia qué
+// CaaS), tech y varietales → ECP. Una sola tabla `leads`; cambia qué
 // consola ve qué pilar. Las Server Actions siguen viviendo en
 // src/app/ocp/(app)/leadsActions.ts y re-verifican admin activo por su cuenta.
 
@@ -48,7 +48,7 @@ export type LeadPillarKey = "general" | "tech" | "cocreate" | "varietales";
 const PILLAR_DEFS: Record<LeadPillarKey, { label: string; color: string; icon: string }> = {
   general: { label: "Escríbenos · Consulta general", color: "#3C0A86", icon: "✉️" },
   tech: { label: "CTC Tech", color: "#003087", icon: "🔬" },
-  cocreate: { label: "CTC Co-Create", color: "#A87A14", icon: "🤝" },
+  cocreate: { label: "CTC CaaS", color: "#A87A14", icon: "🤝" },
   varietales: { label: "Varietales Registrados", color: "#C8102F", icon: "🌱" },
 };
 

@@ -30,7 +30,7 @@ const ENTITY_HREF: Record<string, string> = {
 const LEAD_PILLAR_LABEL: Record<string, string> = {
   general: "Escríbenos",
   tech: "CTC Tech",
-  cocreate: "Co-Create",
+  cocreate: "CaaS",
   varietales: "Varietales",
 };
 

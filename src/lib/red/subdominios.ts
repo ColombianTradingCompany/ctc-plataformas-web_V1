@@ -22,7 +22,7 @@ export const WWW_ORIGIN = `https://www.${ROOT_DOMAIN}`;
 export const SUBDOMAIN_ROUTES: Record<string, string> = {
   "kaffetal-regal": "/kaffetal-regal",
   // Cherry Picked es la PLATAFORMA de compra (owner, 2026-08-11): este
-  // subdominio sirve el HUB que reparte sus cuatro programas — Co-Create,
+  // subdominio sirve el HUB que reparte sus cuatro programas — CaaS,
   // Green, Roast y X. Hasta esa fecha servía la tienda Green, que se mudó al
   // subdominio de abajo. DNS/Vercel de `cherry-picked-green`: mismo patrón de
   // docs/PARTNER_DOMAINS_SETUP.md.
@@ -48,6 +48,15 @@ export const SUBDOMAIN_ROUTES: Record<string, string> = {
   // sin login propio — depositan en `leads`. DNS/Vercel: mismo patrón de
   // docs/PARTNER_DOMAINS_SETUP.md.
   "ctc-tech": "/ctc-tech",
+  // CaaS · Coffee as a Service. Se llamó «Co-Create» hasta el 2026-08-14; el
+  // owner cambió el TÉRMINO, no lo que representa. El subdominio viejo sigue
+  // enrutando a su propia ruta —que reenvía a /caas con un 308— para que ningún
+  // enlace ya compartido, ni las tarjetas de enlace ya indexadas, caigan en un
+  // 404. Las DOS entradas apuntan a rutas DISTINTAS a propósito: si las dos
+  // apuntaran a `/caas`, el mapa inverso `ROUTE_SUBDOMAIN` —que se deriva de
+  // este objeto— se quedaría con la última y el canonical podría acabar
+  // firmando el subdominio viejo.
+  "caas": "/caas",
   "co-create": "/co-create",
   "varietales": "/varietales",
   // V4 · Fase 3: la Home de Coffeed (Clase C, solo difusión) y la landing

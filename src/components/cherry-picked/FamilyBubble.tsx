@@ -86,7 +86,7 @@ export function FamilyBubble({ active, bottom }: { active: FamilyKey; bottom: nu
           {/* La vuelta al hub. Desde que Cherry Picked es la plataforma y no la
               tienda (2026-08-11), esta burbuja no puede ser solo un conmutador
               entre tres escaparates: tiene que dejar volver a la casa, donde
-              además vive Co-Create, que no es un escaparate. */}
+              además vive CaaS, que no es un escaparate. */}
           <a
             className={`${styles.entry} ${styles.entryHub}`}
             href={FAMILY_LINKS.hub}

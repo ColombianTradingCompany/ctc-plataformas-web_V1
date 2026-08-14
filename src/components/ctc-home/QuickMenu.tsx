@@ -10,7 +10,7 @@ import styles from "./QuickMenu.module.css";
 // index; the entry matching the section you're currently in is highlighted,
 // resolved with an IntersectionObserver rather than scroll math.
 //
-// "Más allá de la exportación" (CTC Tech / Co-Create / Directorio / Varietales)
+// "Más allá de la exportación" (CTC Tech / CaaS / Directorio / Varietales)
 // is ONE combined entry here, in third place -- the four cards keep their own
 // 01-04 numbering inside ServicesSection itself (techTag/cocreateTag/dirTag/
 // varTag), which is a separate thing from this list. This list carries no

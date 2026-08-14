@@ -241,11 +241,11 @@ const T: Record<Lang, Dict> = {
     benchCap: "Nuestro banco de pruebas · Piedecuesta",
     techCta: "Agendar diagnóstico",
     sep1: "De la finca a la tostaduría · proyectos con destino",
-    cocreateTag: "02 · CTC Co-Create",
+    cocreateTag: "02 · CTC CaaS",
     cocreateH3: "Mesa de trabajo para proyectos de café en EE.UU. y Europa",
     cocreateSub: "Tú pones el funnel de demanda · Nosotros, la proveeduría con calidades respaldadas",
     cocreateBody:
-      "¿Tu marca desarrolla su propio funnel de demanda —una tostaduría, una cadena, una marca privada, un e-commerce— y necesita proveeduría seria detrás? Co-Create es la mesa donde lo habilitamos juntos, con partners comerciales en las dos orillas del Atlántico.",
+      "¿Tu marca desarrolla su propio funnel de demanda —una tostaduría, una cadena, una marca privada, un e-commerce— y necesita proveeduría seria detrás? CaaS es la mesa donde lo habilitamos juntos, con partners comerciales en las dos orillas del Atlántico.",
     cocreatePoints: [
       <><b>Capacidad de proveeduría con calidades respaldadas:</b> cada café con su evaluación de la Arena, su ficha técnica y su trazabilidad EUDR verificable</>,
       <><b>Café verde y tostado disponible</b>, según la etapa y el canal de tu proyecto</>,
@@ -426,11 +426,11 @@ const T: Record<Lang, Dict> = {
     benchCap: "Our test bench · Piedecuesta",
     techCta: "Book a diagnosis",
     sep1: "From the farm to the roastery · projects with a destination",
-    cocreateTag: "02 · CTC Co-Create",
+    cocreateTag: "02 · CTC CaaS",
     cocreateH3: "A working table for coffee projects in the US and Europe",
     cocreateSub: "You bring the demand funnel · We bring supply with backed qualities",
     cocreateBody:
-      "Does your brand run its own demand funnel — a roastery, a chain, a private label, an e-commerce — and need serious supply behind it? Co-Create is the table where we enable it together, with commercial partners on both shores of the Atlantic.",
+      "Does your brand run its own demand funnel — a roastery, a chain, a private label, an e-commerce — and need serious supply behind it? CaaS is the table where we enable it together, with commercial partners on both shores of the Atlantic.",
     cocreatePoints: [
       <><b>Supply capacity with backed qualities:</b> every coffee with its Arena evaluation, its technical datasheet and its verifiable EUDR traceability</>,
       <><b>Green and roasted coffee available</b>, depending on your project&apos;s stage and channel</>,
@@ -613,11 +613,11 @@ const T: Record<Lang, Dict> = {
     benchCap: "Unser Prüfstand · Piedecuesta",
     techCta: "Diagnose vereinbaren",
     sep1: "Von der Finca zur Rösterei · Projekte mit Ziel",
-    cocreateTag: "02 · CTC Co-Create",
+    cocreateTag: "02 · CTC CaaS",
     cocreateH3: "Ein Arbeitstisch für Kaffeeprojekte in den USA und Europa",
     cocreateSub: "Sie bringen den Nachfrage-Funnel · Wir die Versorgung mit belegten Qualitäten",
     cocreateBody:
-      "Ihre Marke betreibt ihren eigenen Nachfrage-Funnel — eine Rösterei, eine Kette, eine Eigenmarke, ein E-Commerce — und braucht seriöse Versorgung dahinter? Co-Create ist der Tisch, an dem wir das gemeinsam ermöglichen, mit Handelspartnern an beiden Ufern des Atlantiks.",
+      "Ihre Marke betreibt ihren eigenen Nachfrage-Funnel — eine Rösterei, eine Kette, eine Eigenmarke, ein E-Commerce — und braucht seriöse Versorgung dahinter? CaaS ist der Tisch, an dem wir das gemeinsam ermöglichen, mit Handelspartnern an beiden Ufern des Atlantiks.",
     cocreatePoints: [
       <><b>Versorgungskapazität mit belegten Qualitäten:</b> jeder Kaffee mit seiner Arena-Bewertung, seinem technischen Datenblatt und verifizierbarer EUDR-Rückverfolgbarkeit</>,
       <><b>Roh- und Röstkaffee verfügbar</b>, je nach Phase und Kanal Ihres Projekts</>,

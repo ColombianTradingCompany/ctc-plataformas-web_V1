@@ -349,7 +349,7 @@ export async function deleteQuote(id: string, confirm: true): Promise<QuoteResul
 
 /** Busca en productores, compradores y leads a la vez. Un cotizador de lotes
  *  suele apuntar a un productor y el logístico a un comprador, pero ninguno de
- *  los dos lo impone: la vía Co-Create cotiza logística para un productor. */
+ *  los dos lo impone: la vía CaaS cotiza logística para un productor. */
 export async function searchCounterparties(term: string): Promise<CounterpartyOption[]> {
   const who = await requireConsoleWrite("ocp");
   if (!who) return [];

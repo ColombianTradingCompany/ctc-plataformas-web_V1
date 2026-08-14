@@ -111,3 +111,47 @@ Contexto abierto al cerrar V32 (2026-08-14):
   owner. Candidato inmediato de UNA linea: anadir gradosLd() a Cherry Picked
   Green, que es la tienda donde el grado ES la taxonomia del producto.
 (commit: pending)
+
+## [2026-08-14] El rastro del cacao: venia del indice, no del codigo
+- SINTOMA: buscar «Colombian Trading Company» devolvia a CTC descrita como
+  exportadora de «specialty coffee or cocoa». El cacao fue producto en una
+  iteracion temprana de la compania y ya no lo es.
+- DIAGNOSTICO (investigado, no supuesto): el sitio VIVO esta limpio — se
+  descargo ctcexport.com y no tiene ni una mencion de cacao/cocoa/chocolate.
+  Pero los buscadores siguen sirviendo copy de posicionamiento ANTIGUO de la
+  propia casa: «transforma en origen, reduce intermediarios y entrega cafe y
+  cacao premium al mundo», atribuido a ctcexport.com en dos busquedas
+  independientes. La pagina cambio; el indice no. Y si esa frase entro al
+  entrenamiento de un modelo, ahi no hay boton de borrar.
+  El titubeo del propio resultado —«coffee or cocoa, DEPENDING ON the specific
+  agricultural assessments»— es un modelo reconciliando una fuente vieja que
+  dice cacao con una nueva que dice cafe.
+- LO UNICO QUE SE TOCO: el <title> de public/tools/mermas-rapida.html, que
+  decia «Calculadora de Rendimiento para Cafe y Cacao». Esos 12 HTML son URLs
+  INDEXABLES (el matcher del proxy excluye /tools y robots.txt no lo cubre) y
+  la herramienta es web:true/tier:default, o sea visible para anonimo — asi que
+  ese titulo sembraba la palabra desde el propio dominio. Ahora dice
+  «Calculadora de Rendimiento · CTC», igual que su propio <h1>.
+- LO QUE NO SE TOCA, Y ES UNA REGLA: la HERRAMIENTA conserva su modo cacao
+  ENTERO y funcionando (verificado: se pulsa 🍫 Cacao, se meten 1000 kg y da
+  Crudo 1000 → Seco 505 → Grano Tostado 255 → Nibs 128.8, 0 errores). Y las
+  menciones de cacao/cocoa/chocolate en rueda-catacion.html, viaje-cafe.html y
+  fichaData.ts son VOCABULARIO DE CATA — «Frutos secos / Cacao» es categoria de
+  la rueda SCA y las notas achocolatadas describen variedades. Son
+  INDEPENDIENTES del producto y no se tocan jamas. El producto se fue; el
+  descriptor se queda.
+- LECCION DE PROCESO (mia, vale anotarla): el encargo era AVERIGUAR de donde
+  venia la mencion. La primera pasada retiro el modo cacao entero de la
+  herramienta — mucho mas de lo pedido. Se cerro sin fusionar (PR #18) y se
+  rehizo como el cambio de una linea que era. Investigar != amputar.
+- QUE SI PUEDE MOVER LA AGUJA, y no es codigo: (1) Search Console, para que se
+  re-rastree y se reemplace la descripcion cacheada; (2) el JSON-LD ya juega a
+  favor — `knowsAbout` nombra cafe, trazabilidad, EUDR y SCA, y NO nombra
+  cacao; (3) buscar donde mas vive ese copy viejo fuera de la web (LinkedIn de
+  empresa, ProColombia, directorios, algun pitch subido) — eso si es
+  actualizable por el owner.
+- HALLAZGO COLATERAL, no arreglado: de los 12 tools indexables solo DOS llevan
+  meta description y sus titulos son inconsistentes (uno dice «Cool PDF — give
+  your pages a body»). Superficie SEO que nadie gobierna — es el argumento mas
+  concreto a favor del modulo «Manejo de Plataformas».
+(commit: pending)

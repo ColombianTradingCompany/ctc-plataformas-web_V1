@@ -4,7 +4,7 @@ import { CherryPickedExperience } from "@/components/cherry-picked/CherryPickedE
 
 // ── Cherry Picked Green · la tienda ─────────────────────────────────────────
 // Vivía en `/cherry-picked` hasta el 2026-08-11. Se mudó aquí cuando el owner
-// definió Cherry Picked como PLATAFORMA con cuatro programas dentro (Co-Create,
+// definió Cherry Picked como PLATAFORMA con cuatro programas dentro (CaaS,
 // Green, Roast y X): `/cherry-picked` pasó a ser el hub que los reparte, y el
 // verde por fracciones —que es lo que ese nombre significaba— se quedó con su
 // propia puerta. El componente no cambió ni una línea.

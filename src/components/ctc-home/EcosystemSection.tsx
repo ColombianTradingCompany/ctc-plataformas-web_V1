@@ -34,7 +34,7 @@ const NET_URL =
     ? {
         kaffetal: "https://kaffetal-regal.ctcexport.com",
         cherry: "https://cherry-picked.ctcexport.com",
-        cocreate: "https://co-create.ctcexport.com",
+        cocreate: "https://caas.ctcexport.com",
         tech: "https://ctc-tech.ctcexport.com",
         varietales: "https://varietales.ctcexport.com",
         directorio: "https://directoriodelcafe.ctcexport.com",
@@ -45,7 +45,7 @@ const NET_URL =
     : {
         kaffetal: "/kaffetal-regal",
         cherry: "/cherry-picked",
-        cocreate: "/co-create",
+        cocreate: "/caas",
         tech: "/ctc-tech",
         varietales: "/varietales",
         directorio: "/directorio",
@@ -167,11 +167,11 @@ const T: Record<Lang, Dict> = {
     krCta: "Entrar a Kaffetal Regal ↗",
     cpWho: "En Europa y EE.UU. · Para quien compra",
     cpOneline:
-      "La plataforma de compra de CTC: cuatro programas sobre el mismo origen trazado. Se entra por Co-Create para construir la proveeduría, o por Green para comprar microlotes por fracciones.",
+      "La plataforma de compra de CTC: cuatro programas sobre el mismo origen trazado. Se entra por CaaS para construir la proveeduría, o por Green para comprar microlotes por fracciones.",
     cpSummary: "Los cuatro programas",
     cpPoints: [
       <>
-        <b>Cherry Picked Co-Create</b> · La mesa donde habilitamos tu proveeduría, con partners comerciales en las dos
+        <b>Cherry Picked CaaS</b> · La mesa donde habilitamos tu proveeduría, con partners comerciales en las dos
         orillas. Incluye el modelo <b>Master Roaster</b>: un tostador de referencia que lo implementa con CTC en su
         propio mercado.
       </>,
@@ -278,11 +278,11 @@ const T: Record<Lang, Dict> = {
     krCta: "Enter Kaffetal Regal ↗",
     cpWho: "In Europe and the US · For the buyer",
     cpOneline:
-      "CTC's buying platform: four programmes over the same traced origin. Come in through Co-Create to build your supply, or through Green to buy microlots in fractions.",
+      "CTC's buying platform: four programmes over the same traced origin. Come in through CaaS to build your supply, or through Green to buy microlots in fractions.",
     cpSummary: "The four programmes",
     cpPoints: [
       <>
-        <b>Cherry Picked Co-Create</b> · The table where we enable your supply, with commercial partners on both shores.
+        <b>Cherry Picked CaaS</b> · The table where we enable your supply, with commercial partners on both shores.
         It includes the <b>Master Roaster</b> model: a reference roaster who implements it with CTC in their own market.
       </>,
       <>
@@ -388,11 +388,11 @@ const T: Record<Lang, Dict> = {
     krCta: "Zu Kaffetal Regal ↗",
     cpWho: "In Europa und den USA · Für den Käufer",
     cpOneline:
-      "Die Einkaufsplattform von CTC: vier Programme auf demselben rückverfolgten Ursprung. Über Co-Create baut man die Beschaffung auf, über Green kauft man Microlots in Fraktionen.",
+      "Die Einkaufsplattform von CTC: vier Programme auf demselben rückverfolgten Ursprung. Über CaaS baut man die Beschaffung auf, über Green kauft man Microlots in Fraktionen.",
     cpSummary: "Die vier Programme",
     cpPoints: [
       <>
-        <b>Cherry Picked Co-Create</b> · Der Tisch, an dem wir Ihre Beschaffung aufbauen, mit Handelspartnern an beiden
+        <b>Cherry Picked CaaS</b> · Der Tisch, an dem wir Ihre Beschaffung aufbauen, mit Handelspartnern an beiden
         Ufern. Enthält das <b>Master-Roaster</b>-Modell: eine Referenzrösterei, die es mit CTC im eigenen Markt umsetzt.
       </>,
       <>
@@ -537,8 +537,8 @@ export function EcosystemSection() {
     cta: { href: NET_URL.kaffetal, label: t.krCta, external: true },
   };
   // Cherry Picked ya no es «la vitrina»: es la PLATAFORMA de compra que
-  // contiene cuatro programas (Co-Create, Green, Roast y X). La salida
-  // principal lleva al hub; Co-Create conserva su puerta directa.
+  // contiene cuatro programas (CaaS, Green, Roast y X). La salida
+  // principal lleva al hub; CaaS conserva su puerta directa.
   const cpEntry: InfoEntry = {
     key: "cherry-picked",
     eyebrow: t.cpWho,
@@ -549,7 +549,7 @@ export function EcosystemSection() {
     image: "/images/shared/cherry-picked-logo.png",
     imageContain: true,
     cta: { href: NET_URL.cherry, label: t.cpCta, external: true },
-    ctas: [{ href: NET_URL.cocreate, label: "Co-Create ↗" }],
+    ctas: [{ href: NET_URL.cocreate, label: "CaaS ↗" }],
   };
 
   return (

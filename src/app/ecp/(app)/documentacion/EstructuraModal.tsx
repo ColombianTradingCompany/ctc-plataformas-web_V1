@@ -90,7 +90,7 @@ export function RedPublicaDiagram() {
 
       <Box x={405} y={50} w={210} h={52} kind="bi" title="Kaffetal Regal" sub="catálogo: Specialty + Black" />
       <Box x={760} y={50} w={200} h={52} kind="bi" title="Cherry Picked" sub="Green · Roast · X" />
-      <Box x={880} y={130} w={200} h={46} kind="cap" title="Co-Create" sub="form → CRM en BCP" />
+      <Box x={880} y={130} w={200} h={46} kind="cap" title="CaaS" sub="form → CRM en BCP" />
       <Box x={210} y={120} w={200} h={46} kind="cap" title="Varietales" sub="form → CRM en ECP" />
       <Box x={210} y={176} w={200} h={46} kind="cap" title="CTC Tech" sub="form → CRM en ECP" />
       <Box x={210} y={232} w={200} h={46} kind="cap" title="Terratalento" sub="form → CRM en ECP" />
@@ -168,7 +168,7 @@ export function PanelDiagram() {
       <Modulo x={80} y={304} label="Kaffetal Club" dot={AZUL} />
       <Modulo x={80} y={340} label="Catálogo Cherry Picked" dot={AZUL} />
       <Modulo x={80} y={376} label="Black Stock" dot={AZUL} />
-      <Modulo x={80} y={412} label="CRM Co-Create" dot={AMBAR} />
+      <Modulo x={80} y={412} label="CRM CaaS" dot={AMBAR} />
 
       <Grupo x={68} y={468} h={142} label="Cadena del lote · lo que escribe Kaffetal Regal" />
       <Modulo x={80} y={496} label="Productores" />

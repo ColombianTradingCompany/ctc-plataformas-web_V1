@@ -1,7 +1,7 @@
 // ── CTC Home · el índice de la página, UNA sola vez ──────────────────────────
 // Lo montan los DOS menús: el desplegable de la cabecera y la burbuja «Navegar».
 // Estaban escritos por separado y se habían desincronizado (2026-08-04): la
-// cabecera seguía listando CTC Tech, Co-Create y Varietales como si fueran
+// cabecera seguía listando CTC Tech, CaaS y Varietales como si fueran
 // secciones de la página, cuando la Fase 2 del V4 los convirtió en superficies
 // propias y los agrupó bajo `#tech`. Sus enlaces `#cocreate` y `#varietales`
 // apuntaban a anclas que YA NO EXISTEN — no era solo que los menús se vieran

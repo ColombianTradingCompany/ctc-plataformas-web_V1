@@ -52,11 +52,11 @@ function passwordBlock(lead: LeadEmailInput, tempPassword: string): string {
 export const PILLAR_LABEL: Record<string, string> = {
   general: "Consulta general",
   tech: "CTC Tech",
-  cocreate: "CTC Co-Create",
+  cocreate: "CTC CaaS",
   varietales: "Varietales Registrados",
 };
 
-// Co-Create leads are demand-side (brands/roasters) -> Cherry Picked buyer
+// CaaS leads are demand-side (brands/roasters) -> Cherry Picked buyer
 // accounts; every other pillar is supply-side -> Kaffetal Regal producer.
 export function platformFor(pillar: string): { name: string; url: string } {
   return pillar === "cocreate"

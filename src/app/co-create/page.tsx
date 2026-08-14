@@ -1,41 +1,26 @@
-import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
-import { OrganizationLd } from "@/components/JsonLd";
-import { ToastProvider } from "@/components/Toast";
-import { LangProvider } from "@/components/lang/i18n";
-import { ContactModalProvider } from "@/components/ctc-home/ContactModal";
-import { CoCreateLanding } from "@/components/services/CoCreateLanding";
+import { permanentRedirect } from "next/navigation";
+import { origenDeSuperficie } from "@/lib/red/subdominios";
 
-// OJO: el nombre. El hub ya la llama «Cherry Picked Co-Create» pero esta landing
-// sigue firmando «CTC Co-Create» — el renombrado está a medias y es una decisión
-// pendiente del owner (ver docs/HANDOFF.md). La tarjeta dice lo que dice la
-// página, no lo que dirá: si se adelanta, el enlace compartido y la página a la
-// que lleva se llamarían distinto.
-export const metadata = metadatosDeSuperficie({
-  route: "/co-create",
-  title: "CTC Co-Create · Proyectos de café en EE.UU. y Europa · Colombian Trading Company",
-  description:
-    "Tu marca pone el funnel de demanda; CTC pone la proveeduría con calidades respaldadas por la Arena — café verde y tostado, Specialty y Black, contratos por temporada y logística a tu puerta. Propón tu proyecto.",
-  siteName: "CTC Co-Create",
-  image: "co-create.jpg",
-  imageAlt: "Logotipo de Cherry Picked Co-Create sobre fondo azul corporativo",
-  alternateLocale: ["en_GB"],
-});
-
-// Superficie de captación Clase B (V4 · Fase 1). Outlet en términos de negocio,
-// captación en términos web: aquí se propone un proyecto, no se compra. El
-// pilar `cocreate` provisiona cuenta de comprador (Cherry Picked) y alimenta
-// el CRM Co-Create del BCP. googleAuth={false}: sin /auth/callback aquí.
-export default function CoCreatePage() {
-  return (
-    <div data-theme="ctc-home">
-      <OrganizationLd />
-      <ToastProvider>
-        <LangProvider storageKey="ctc-lang">
-          <ContactModalProvider googleAuth={false}>
-            <CoCreateLanding />
-          </ContactModalProvider>
-        </LangProvider>
-      </ToastProvider>
-    </div>
-  );
+// ── La puerta vieja de CaaS ──────────────────────────────────────────────────
+// «Co-Create» pasó a llamarse **CaaS · Coffee as a Service** el 2026-08-14. El
+// término cambió; lo que representa, no. Esta ruta se queda viva SOLO para no
+// romper lo que ya salió al mundo:
+//   · enlaces compartidos y marcadores de co-create.ctcexport.com,
+//   · la tarjeta Open Graph `co-create.jpg`, que ya está indexada,
+//   · cualquier enlace interno viejo que se nos escape.
+//
+// Es un **308 permanente**, no un 307: le dice al buscador que mueva la
+// autoridad a la URL nueva en vez de tratar esto como un desvío temporal.
+//
+// ⚠️ EL DESTINO ES ABSOLUTO EN PRODUCCIÓN, y no es un capricho. En el host
+// `co-create.ctcexport.com` el proxy antepone la base del subdominio a toda
+// ruta que no empiece ya por ella: un `redirect("/caas")` relativo se
+// reescribiría a `/co-create/caas` y daría 404 — exactamente el fallo que este
+// archivo existe para evitar. En desarrollo no hay subdominios y la ruta basta.
+//
+// Y el destino es el SUBDOMINIO de CaaS, no la ruta bajo www: es donde
+// `metadatosDeSuperficie` pone el canonical, así que es ahí donde queremos que
+// el buscador acumule la autoridad que traía la puerta vieja.
+export default function CoCreateRedirectPage() {
+  permanentRedirect(process.env.NODE_ENV === "production" ? origenDeSuperficie("/caas") : "/caas");
 }

@@ -77,6 +77,11 @@ const TARJETAS = [
   { out: "cherry-picked-green", logo: "Cherry Picked - Green.png", tema: "verdeCP" },
   { out: "cherry-picked-roast", logo: "Cherry Picked - Roast.png", tema: "cafe" },
   { out: "cherry-picked-x", logo: "Cherry Picked - X.png", tema: "tyrian" },
+  // CaaS · Coffee as a Service. Conserva el logotipo de Co-Create porque el
+  // owner cambió el término, no la marca gráfica. La tarjeta vieja se mantiene
+  // generada: `co-create.jpg` sigue indexada y su ruta responde con un 308,
+  // así que hasta que los buscadores la reemplacen conviene que exista.
+  { out: "caas", logo: "Cherry Picked - CoCreate.png", tema: "azul" },
   { out: "co-create", logo: "Cherry Picked - CoCreate.png", tema: "azul" },
   { out: "directorio", logo: "Directorio del Cafe - Logo (Full).png", tema: "violeta" },
   { out: "ctc-tech", logo: "CTC Tech - Logo.png", tema: "azul" },

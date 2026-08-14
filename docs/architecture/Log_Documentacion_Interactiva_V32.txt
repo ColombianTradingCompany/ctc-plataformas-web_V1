@@ -155,3 +155,61 @@ Contexto abierto al cerrar V32 (2026-08-14):
   your pages a body»). Superficie SEO que nadie gobierna — es el argumento mas
   concreto a favor del modulo «Manejo de Plataformas».
 (commit: pending)
+
+## [2026-08-14] «Co-Create» pasa a llamarse CaaS · Coffee as a Service
+- ENCARGO DEL OWNER: cambiar el TERMINO, no lo que representa. El subdominio
+  caas.ctcexport.com ya estaba creado en Hostinger y en Vercel antes de tocar
+  codigo. De paso se cerro un renombrado a MEDIAS que la casa arrastraba desde
+  hacia tiempo: el hub de Cherry Picked decia «Cherry Picked Co-Create» y la
+  landing decia «CTC Co-Create». Ahora las dos dicen CaaS.
+- RUTAS: la nueva es /caas (git mv de app/co-create → app/caas, para que el
+  historial siga al archivo). La vieja /co-create SIGUE VIVA y reenvia con un
+  308 permanente — hay enlaces sueltos, tarjetas OG ya indexadas y un
+  subdominio que el owner no quiere apagar. La consola interna tambien se
+  movio: /bcp/co-create → /bcp/caas.
+- SUBDOMINIOS (src/lib/red/subdominios.ts): las DOS entradas —«caas» y
+  «co-create»— quedan, y apuntan a rutas DISTINTAS a proposito. El mapa inverso
+  ROUTE_SUBDOMAIN se DERIVA de ese objeto, asi que si las dos apuntaran a
+  /caas la ultima ganaria y las tarjetas OG de la superficie se firmarian con
+  el dominio viejo. Queda anotado en el archivo mismo, no solo aqui.
+- EL REDIRECT ES ABSOLUTO EN PRODUCCION, y esto es la trampa: en
+  co-create.ctcexport.com el proxy antepone la base del subdominio, asi que un
+  redirect("/caas") relativo se resuelve a /co-create/caas → 404. En dev si es
+  relativo. Verificado en local: 308 → /caas.
+- ⚠️ LO QUE NO SE RENOMBRO, Y ES DELIBERADO: el pilar del lead sigue siendo
+  `cocreate`, en minuscula. Es la clave interna de leads.pillar, vive bajo un
+  CHECK de Postgres ('general','tech','cocreate','varietales') y ya tiene
+  filas reales. Renombrarla exigiria migracion + reescritura de historico para
+  cambiar algo que ningun usuario ve. LA MARCA ES CaaS; LA CLAVE ES cocreate.
+  Anotado en los tres archivos que lo tocan (app/caas/page.tsx,
+  lib/leads/actions.ts, lib/email/leadEmails.ts) para que la proxima sesion no
+  «arregle» la inconsistencia.
+- FORMULARIO (components/ctc-home/ContactModal.tsx), tres cosas nuevas:
+  (1) «Otros» en Mercado — al elegirlo aparece un campo de texto libre
+  (mercadoOtro); (2) acordeon «Necesidades particulares», opcional y plegado:
+  Incoterm (En Colombia / En destino), Periodicidad (Mensual, Bi-Mensual,
+  Trimestral, Semestral, Anual) y Certificaciones en seleccion MULTIPLE
+  (Organico, Fairtrade, Rainforest Alliance, UTZ, Bird Friendly, Kosher, Halal,
+  Denominacion de origen, Sin certificacion). Todos viajan en el mismo `fields`
+  JSON del lead: no hubo migracion. Lo unico que decide que se guarda es la
+  lista blanca FIELD_KEYS.cocreate en lib/leads/actions.ts — un campo que no
+  este ahi se descarta en silencio, asi que ese array es el sitio a tocar.
+- LANDING: seccion nueva «Modelos de oferta comunes» (components/services/
+  CaasLanding.tsx, ex CoCreateLanding.tsx), trilingue. Tres arquetipos que
+  desactivan tres objeciones distintas de un comprador de marca: «Lujo del
+  Origen» (no canibalizar el portafolio actual), «Piso Firme» (dejar de estar
+  expuesto al vaiven del mercado) y «La Historia Completa» (tener con que
+  contar la historia y con que cumplir EUDR sin pedir dos veces el dato). El
+  primero lo redacto el owner; los otros dos se escribieron aqui.
+- DOC: nueva seccion en HANDOFF.md y la fila de la tabla de superficies pasa a
+  «CaaS · Coffee as a Service | /caas (/co-create → 308) | caas.* (+
+  co-create.*)». Para el mapa interactivo: el nodo de la superficie cambia de
+  nombre y de ruta, y el DICT gana la distincion marca-vs-clave.
+- LECCION DE PROCESO: un script de insercion POR INDICE metio el bloque
+  castellano DENTRO de la definicion del tipo y corrio los idiomas (el ingles
+  cayo en el dict `es`). tsc lo caso al vuelo (TS2300/TS2717/TS2322) y se
+  recupero con `git show HEAD:...`. En un Record<Lang, Dict> con tres bloques
+  casi identicos, insertar por indice es apostar; hay que anclar en una cadena
+  UNICA de cada idioma.
+- Gate: tsc limpio, eslint 27 warnings (base), build exit 0. APP_VERSION 4.4 → 4.5.
+(commit: pending)

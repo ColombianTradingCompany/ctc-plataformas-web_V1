@@ -64,9 +64,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // negociaciones Black + inventario adquirido que alimenta la pestaña
           // Black de Cherry Picked Green.
           { href: "/bcp/black-stock", label: "Black Stock" },
-          // CRM Co-Create (V4 · Fase 1): el outlet Co-Create es negocio núcleo,
+          // CRM CaaS (V4 · Fase 1): el outlet CaaS es negocio núcleo,
           // así que su kanban vive aquí — no en el OCP como el resto de leads.
-          { href: "/bcp/co-create", label: "CRM Co-Create" },
+          { href: "/bcp/caas", label: "CRM CaaS" },
         ],
       },
       {

@@ -11,7 +11,7 @@ import styles from "../shared.module.css";
 //      gradúa un lote Black), con seguimiento por etapa y volumen objetivo.
 //   2. INVENTARIO — lo comprado: contrato → firma → releases (kg reales) →
 //      publicación en la pestaña Black de Cherry Picked Green.
-// El enlace con el CRM Co-Create (comprar Black PARA un proyecto) tiene su
+// El enlace con el CRM CaaS (comprar Black PARA un proyecto) tiene su
 // columna (lead_id) pero aún no UI — segundo corte, a propósito.
 
 type NegRow = {
@@ -103,7 +103,7 @@ export default async function BlackStockPage() {
       <p className={styles.subtitle}>
         La clase de volumen del catálogo: las negociaciones nacen solas cuando la Arena gradúa un lote Black. Aquí se les
         hace seguimiento, se compran (contrato por firmar) o se liberan — y lo comprado alimenta la pestaña Black de
-        Cherry Picked Green. La coordinación con proyectos Co-Create llegará sobre este módulo.
+        Cherry Picked Green. La coordinación con proyectos CaaS llegará sobre este módulo.
       </p>
 
       <div className={styles.kpiGrid}>

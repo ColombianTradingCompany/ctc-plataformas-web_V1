@@ -8,7 +8,7 @@ import { sendLeadWelcomeEmail, PILLAR_LABEL } from "@/lib/email/leadEmails";
 
 // Public lead intake for CTC Home's "Escríbenos" + the "Más allá de la
 // exportación" service CTAs. Every lead becomes a platform account:
-// Co-Create (demand side) -> Cherry Picked buyer; everything else ->
+// CaaS (demand side) -> Cherry Picked buyer; everything else ->
 // Kaffetal Regal producer. Both tables are service-role-only (RLS, no
 // policies), so all writes happen here.
 
@@ -19,7 +19,12 @@ type Pillar = (typeof PILLARS)[number];
 const FIELD_KEYS: Record<Pillar, string[]> = {
   general: ["org", "tema"],
   tech: ["finca", "ubicacion", "interes"],
-  cocreate: ["marca", "mercado", "canal", "formato", "vol"],
+  // CaaS (la marca) sigue viajando bajo el pilar `cocreate` (la clave): son
+  // filas reales bajo un CHECK de Postgres y renombrarlas exigiría migrar
+  // histórico para cambiar algo que ningún usuario ve.
+  // `mercadoOtro` acompaña a `mercado` cuando se eligió «Otros»; los tres
+  // últimos son el acordeón de necesidades particulares y son opcionales.
+  cocreate: ["marca", "mercado", "mercadoOtro", "canal", "formato", "vol", "incoterm", "periodicidad", "certificaciones"],
   varietales: ["finca", "ubicacion", "varietal", "cantidad"],
 };
 

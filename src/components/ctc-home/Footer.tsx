@@ -52,7 +52,7 @@ export function Footer() {
             <strong>Colombian Trading Company</strong> · {t.tagline}
             <br />
             <span className="mono" style={{ fontSize: 11.5 }}>
-              Kaffetal Regal · Cherry Picked · CTC Tech · Co-Create · Varietales Registrados
+              Kaffetal Regal · Cherry Picked · CTC Tech · CaaS · Varietales Registrados
             </span>
           </span>
         </div>

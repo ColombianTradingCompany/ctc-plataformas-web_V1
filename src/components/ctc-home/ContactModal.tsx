@@ -100,12 +100,27 @@ type Dict = {
   cMarcaPh: string;
   cMercado: string;
   cMercadoOpts: string[];
+  /** El valor de «Otros» en cMercadoOpts. Se compara contra la selección para
+   *  decidir si se abre el campo libre, así que vive aparte y NO se deduce por
+   *  índice: mover una opción de sitio no puede romper la comparación. */
+  cMercadoOtroValor: string;
+  cMercadoOtroPh: string;
   cCanal: string;
   cCanalOpts: string[];
   cFormato: string;
   cFormatoOpts: string[];
   cVol: string;
   cVolPh: string;
+  /** El acordeón «Necesidades particulares»: lo que convierte una propuesta en
+   *  algo cotizable sin una llamada previa. */
+  cNecesidades: string;
+  cNecesidadesNota: string;
+  cIncoterm: string;
+  cIncotermOpts: string[];
+  cPeriod: string;
+  cPeriodOpts: string[];
+  cCerts: string;
+  cCertsOpts: string[];
   cMsg: string;
   cMsgPh: string;
   vH3: string;
@@ -156,7 +171,7 @@ const T: Record<Lang, Dict> = {
     temaVender: "Quiero vender mi café",
     temaComprar: "Quiero comprar café verde",
     temaTech: "CTC Tech · tecnologías agrónomas",
-    temaCocreate: "Co-Create · proyecto de marca en EE.UU. y Europa",
+    temaCocreate: "CaaS · proyecto de marca en EE.UU. y Europa",
     temaVarietales: "Varietales Registrados · chapolas",
     temaLogistica: "Logística y exportación",
     temaRed: "Directorio, Terratalento o Herramientas",
@@ -177,18 +192,28 @@ const T: Record<Lang, Dict> = {
     tOptions: ["Ozono + UVC", "Técnicas de fermentación", "Selección óptica", "Cromatografía de suelos", "Instrumentación de medición"],
     tMsg: "Cuéntenos de su proceso actual",
     tMsgPh: "Volumen, beneficio actual, retos…",
-    cH3: "CTC Co-Create · Proponer un proyecto",
+    cH3: "CTC CaaS · Proponer un proyecto",
     cIntro: "Cuéntanos de tu funnel de demanda y armamos la mesa de trabajo.",
     cMarca: "Empresa / marca",
     cMarcaPh: "Nombre de la marca",
     cMercado: "Mercado",
-    cMercadoOpts: ["Estados Unidos", "Europa", "Ambos"],
+    cMercadoOpts: ["Estados Unidos", "Europa", "Ambos", "Otros"],
+    cMercadoOtroValor: "Otros",
+    cMercadoOtroPh: "¿Cuál mercado?",
     cCanal: "Canal",
     cCanalOpts: ["Tostaduría", "Cadena / retail", "Marca privada", "E-commerce", "Otro"],
     cFormato: "Formato",
     cFormatoOpts: ["Café verde", "Café tostado", "Verde + tostado"],
     cVol: "Volumen estimado (kg/año)",
     cVolPh: "Ej. 6000",
+    cNecesidades: "Necesidades particulares",
+    cNecesidadesNota: "Opcional — pero entre más nos cuentes aquí, más concreta es la propuesta que te devolvemos.",
+    cIncoterm: "Incoterm",
+    cIncotermOpts: ["En Colombia", "En destino"],
+    cPeriod: "Periodicidad",
+    cPeriodOpts: ["Mensual", "Bi-Mensual", "Trimestral", "Semestral", "Anual"],
+    cCerts: "Certificaciones",
+    cCertsOpts: ["Orgánico", "Fairtrade", "Rainforest Alliance", "UTZ", "Bird Friendly", "Kosher", "Halal", "Denominación de origen", "Sin certificación"],
     cMsg: "El proyecto",
     cMsgPh: "Etapa del funnel, calidades buscadas, tiempos…",
     vH3: "Varietales Registrados · Solicitar catálogo",
@@ -237,7 +262,7 @@ const T: Record<Lang, Dict> = {
     temaVender: "I want to sell my coffee",
     temaComprar: "I want to buy green coffee",
     temaTech: "CTC Tech · agronomic technologies",
-    temaCocreate: "Co-Create · brand project in the US and Europe",
+    temaCocreate: "CaaS · brand project in the US and Europe",
     temaVarietales: "Registered Varietals · seedlings",
     temaLogistica: "Logistics and export",
     temaRed: "Directory, Terratalento or Coffee Tools",
@@ -258,18 +283,28 @@ const T: Record<Lang, Dict> = {
     tOptions: ["Ozone + UVC", "Fermentation techniques", "Optical sorting", "Soil chromatography", "Measurement instrumentation"],
     tMsg: "Tell us about your current process",
     tMsgPh: "Volume, current mill, challenges…",
-    cH3: "CTC Co-Create · Propose a project",
+    cH3: "CTC CaaS · Propose a project",
     cIntro: "Tell us about your demand funnel and we'll set the working table.",
     cMarca: "Company / brand",
     cMarcaPh: "Brand name",
     cMercado: "Market",
-    cMercadoOpts: ["United States", "Europe", "Both"],
+    cMercadoOpts: ["United States", "Europe", "Both", "Other"],
+    cMercadoOtroValor: "Other",
+    cMercadoOtroPh: "Which market?",
     cCanal: "Channel",
     cCanalOpts: ["Roastery", "Chain / retail", "Private label", "E-commerce", "Other"],
     cFormato: "Format",
     cFormatoOpts: ["Green coffee", "Roasted coffee", "Green + roasted"],
     cVol: "Estimated volume (kg/year)",
     cVolPh: "E.g. 6000",
+    cNecesidades: "Particular needs",
+    cNecesidadesNota: "Optional — but the more you tell us here, the more concrete the proposal we send back.",
+    cIncoterm: "Incoterm",
+    cIncotermOpts: ["In Colombia", "At destination"],
+    cPeriod: "Frequency",
+    cPeriodOpts: ["Monthly", "Bi-monthly", "Quarterly", "Biannual", "Annual"],
+    cCerts: "Certifications",
+    cCertsOpts: ["Organic", "Fairtrade", "Rainforest Alliance", "UTZ", "Bird Friendly", "Kosher", "Halal", "Denomination of origin", "No certification"],
     cMsg: "The project",
     cMsgPh: "Funnel stage, qualities sought, timing…",
     vH3: "Registered Varietals · Request the catalogue",
@@ -318,7 +353,7 @@ const T: Record<Lang, Dict> = {
     temaVender: "Ich möchte meinen Kaffee verkaufen",
     temaComprar: "Ich möchte Rohkaffee kaufen",
     temaTech: "CTC Tech · Agrartechnologien",
-    temaCocreate: "Co-Create · Markenprojekt in den USA und Europa",
+    temaCocreate: "CaaS · Markenprojekt in den USA und Europa",
     temaVarietales: "Registrierte Varietäten · Setzlinge",
     temaLogistica: "Logistik und Export",
     temaRed: "Verzeichnis, Terratalento oder Kaffee-Werkzeuge",
@@ -339,18 +374,28 @@ const T: Record<Lang, Dict> = {
     tOptions: ["Ozon + UVC", "Fermentationstechniken", "Optische Sortierung", "Bodenchromatografie", "Messinstrumente"],
     tMsg: "Erzählen Sie uns von Ihrem aktuellen Prozess",
     tMsgPh: "Volumen, aktuelle Aufbereitung, Herausforderungen…",
-    cH3: "CTC Co-Create · Ein Projekt vorschlagen",
+    cH3: "CTC CaaS · Ein Projekt vorschlagen",
     cIntro: "Erzählen Sie uns von Ihrem Nachfrage-Funnel und wir stellen den Arbeitstisch auf.",
     cMarca: "Unternehmen / Marke",
     cMarcaPh: "Name der Marke",
     cMercado: "Markt",
-    cMercadoOpts: ["USA", "Europa", "Beide"],
+    cMercadoOpts: ["Vereinigte Staaten", "Europa", "Beide", "Andere"],
+    cMercadoOtroValor: "Andere",
+    cMercadoOtroPh: "Welcher Markt?",
     cCanal: "Kanal",
     cCanalOpts: ["Rösterei", "Kette / Einzelhandel", "Eigenmarke", "E-Commerce", "Andere"],
     cFormato: "Format",
     cFormatoOpts: ["Rohkaffee", "Röstkaffee", "Roh + geröstet"],
     cVol: "Geschätztes Volumen (kg/Jahr)",
     cVolPh: "z. B. 6000",
+    cNecesidades: "Besondere Anforderungen",
+    cNecesidadesNota: "Optional — aber je mehr Sie hier angeben, desto konkreter ist unser Vorschlag.",
+    cIncoterm: "Incoterm",
+    cIncotermOpts: ["In Kolumbien", "Am Zielort"],
+    cPeriod: "Häufigkeit",
+    cPeriodOpts: ["Monatlich", "Zweimonatlich", "Vierteljährlich", "Halbjährlich", "Jährlich"],
+    cCerts: "Zertifizierungen",
+    cCertsOpts: ["Bio", "Fairtrade", "Rainforest Alliance", "UTZ", "Bird Friendly", "Koscher", "Halal", "Herkunftsbezeichnung", "Ohne Zertifizierung"],
     cMsg: "Das Projekt",
     cMsgPh: "Funnel-Phase, gesuchte Qualitäten, Zeitplan…",
     vH3: "Registrierte Varietäten · Katalog anfragen",
@@ -395,9 +440,18 @@ function collectPayload(key: FormKey, form: HTMLFormElement): LeadPayload {
   } else if (key === "cocreate") {
     fields.marca = s("marca");
     fields.mercado = s("mercado");
+    // Solo viaja si de verdad hay algo escrito: un campo vacío en el expediente
+    // se lee como «lo dejó en blanco», no como «no aplicaba».
+    if (s("mercadoOtro")) fields.mercadoOtro = s("mercadoOtro");
     fields.canal = s("canal");
     fields.formato = s("formato");
     fields.vol = s("vol");
+    // Necesidades particulares. Son OPCIONALES: el acordeón puede quedarse
+    // cerrado y el proyecto se propone igual.
+    if (s("incoterm")) fields.incoterm = s("incoterm");
+    if (s("periodicidad")) fields.periodicidad = s("periodicidad");
+    const certs = fd.getAll("certificaciones").map(String);
+    if (certs.length) fields.certificaciones = certs;
   } else {
     fields.finca = s("finca");
     fields.ubicacion = s("ubicacion");
@@ -434,7 +488,7 @@ export function ContactModalProvider({
 }: {
   children: React.ReactNode;
   /**
-   * Las superficies de captación V4 (CTC Tech, Co-Create, Varietales) viven en
+   * Las superficies de captación V4 (CTC Tech, CaaS, Varietales) viven en
    * subdominios SIN ruta /auth/callback ni entrada en la allowlist de Supabase,
    * así que montan el modal sin el camino de Google (Fase 1, opción a): solo la
    * cuenta provisionada con contraseña temporal. CTC Home mantiene los dos.
@@ -446,6 +500,10 @@ export function ContactModalProvider({
   // El tema elegido en el formulario general. Es estado y no `defaultValue`
   // porque el aviso de puerta que va debajo depende de él.
   const [tema, setTema] = useState("general");
+  // Qué mercado eligió en el formulario de CaaS. Solo existe para decidir si se
+  // abre el campo de texto libre de «Otros»; el valor que se envía lo sigue
+  // leyendo el FormData del propio <select>, no este estado.
+  const [mercado, setMercado] = useState("");
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
   // What the visitor already typed in the general form survives a "Tema"
   // switch: switching used to unmount the form and silently discard
@@ -733,11 +791,28 @@ export function ContactModalProvider({
               <div className={styles.row2}>
                 <div>
                   <label htmlFor="c-mercado">{t.cMercado}</label>
-                  <select id="c-mercado" name="mercado" defaultValue={t.cMercadoOpts[0]}>
+                  <select
+                    id="c-mercado"
+                    name="mercado"
+                    defaultValue={t.cMercadoOpts[0]}
+                    onChange={(e) => setMercado(e.target.value)}
+                  >
                     {t.cMercadoOpts.map((o) => (
                       <option key={o}>{o}</option>
                     ))}
                   </select>
+                  {/* El campo libre solo existe cuando hace falta. Se compara
+                      contra `cMercadoOtroValor` y no contra el índice de la
+                      opción: reordenar la lista no puede romper esto. */}
+                  {mercado === t.cMercadoOtroValor && (
+                    <input
+                      className={styles.subField}
+                      name="mercadoOtro"
+                      placeholder={t.cMercadoOtroPh}
+                      aria-label={t.cMercadoOtroPh}
+                      autoFocus
+                    />
+                  )}
                 </div>
                 <div>
                   <label htmlFor="c-canal">{t.cCanal}</label>
@@ -762,6 +837,51 @@ export function ContactModalProvider({
                   <input id="c-vol" name="vol" type="number" placeholder={t.cVolPh} />
                 </div>
               </div>
+              {/* ── Necesidades particulares ──────────────────────────────
+                  Cerrado por defecto a propósito: el formulario tiene que
+                  seguir leyéndose corto para quien solo quiere proponer. Quien
+                  ya sabe cómo compra, abre y lo deja resuelto de una — y ahí
+                  se ahorra la llamada de ida y vuelta que costaba antes. */}
+              <details className={styles.needs}>
+                <summary>
+                  {t.cNecesidades} <span aria-hidden>+</span>
+                </summary>
+                <div className={styles.needsBody}>
+                  <p className={styles.needsNote}>{t.cNecesidadesNota}</p>
+                  <div className={styles.row2}>
+                    <div>
+                      <label htmlFor="c-incoterm">{t.cIncoterm}</label>
+                      <select id="c-incoterm" name="incoterm" defaultValue="">
+                        <option value="">—</option>
+                        {t.cIncotermOpts.map((o) => (
+                          <option key={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="c-periodicidad">{t.cPeriod}</label>
+                      <select id="c-periodicidad" name="periodicidad" defaultValue="">
+                        <option value="">—</option>
+                        {t.cPeriodOpts.map((o) => (
+                          <option key={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label>{t.cCerts}</label>
+                    {/* Mismo patrón de casillas que «Tecnologías de interés»
+                        del pilar tech: selección múltiple sin inventar control. */}
+                    <div className={styles.chips}>
+                      {t.cCertsOpts.map((o) => (
+                        <label className={styles.chip} key={o}>
+                          <input type="checkbox" name="certificaciones" value={o} /> {o}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </details>
               <div>
                 <label htmlFor="c-msg">{t.cMsg}</label>
                 <textarea id="c-msg" name="msg" placeholder={t.cMsgPh} defaultValue={carry.msg} />

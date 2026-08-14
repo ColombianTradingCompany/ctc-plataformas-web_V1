@@ -16,7 +16,7 @@ Colombian Trading Company (CTC) is a green-coffee exporter. This repo is a singl
 | **Cherry Picked X** | Small-format programme (scaffold) | `/cherry-picked-x` | `cherry-picked-x.*` |
 | **Directorio del Café** | Coffee professionals of Santander (people layer) | `/directorio` | `directoriodelcafe.*` |
 | **CTC Tech** | Producers seeking agronomic tech (capture-only) | `/ctc-tech` | `ctc-tech.*` |
-| **Co-Create** | Brands proposing US/EU projects (capture-only) | `/co-create` | `co-create.*` |
+| **CaaS · Coffee as a Service** | Brands proposing US/EU projects (capture-only) | `/caas` (`/co-create` → 308) | `caas.*` (+ `co-create.*`) |
 | **Varietales** | Producers requesting seedling catalog (capture-only) | `/varietales` | `varietales.*` |
 | **BCP** (Business Control Panel) | CTC's own staff (2 founders) | `/bcp` | not on a public subdomain |
 
@@ -373,6 +373,15 @@ Hasta esta fecha la red **no declaraba Open Graph en ninguna parte**: pegar cual
 - **Peso: ~2,6 MB** (el V1 pesaba 310 KB). No es grasa de codificación: son ~370 fotogramas casi todos distintos, y con alfa el codificador no puede reaprovechar el anterior. **La calidad casi no mueve la aguja** (q45 y q55 pesan lo mismo); las palancas reales son la **tasa de fotogramas** y el **tamaño**. Por eso va a **240 px y 8 fps** — a 300 px y 12,5 fps son 5,1 MB, y 240 px sigue por encima de los 210 px a los que como mucho se dibuja. Los dos pies que lo montan (Kaffetal Regal, Cherry Picked) usan **`loading="lazy"`**: están bajo el pliegue, así que solo el hero de CTC Home lo paga en la primera pintura.
 - ⚠️ **EL COMANDO DE CONVERSIÓN IMPORTA MÁS QUE LA CALIDAD.** Con `-c:v libwebp` + `-q:v`, y también re-codificando con **sharp**, el WebP animado sale con **fantasmas**: cada icono arrastra restos del anterior detrás. El codificador MEZCLA cada fotograma sobre el lienzo anterior en vez de reemplazarlo, y como este arte es transparente alrededor del dibujo, lo de antes se sigue viendo. Con el V2 no se notaba porque sus fotogramas opacos tapaban el rastro — es decir, **el bug ya estaba ahí y la opacidad lo escondía**. La receta correcta (verificada fotograma a fotograma contra el GIF a los mismos instantes) está en `components/ctc-home/Hero.module.css`; la clave es **`-c:v libwebp_anim -pix_fmt bgra`** y usar **`-quality`**, no `-q:v`.
 - Se probó también recortar el blanco del V2 por clave de color: **no sirve** para este arte. Sin su papel, los costales, la taza y la tostadora quedan en contorno fantasma ilegible sobre el azul, porque el sombreado a lápiz *es* gris claro. Queda anotado por si alguien lo intenta con un arte parecido.
+
+## «Co-Create» pasó a llamarse **CaaS · Coffee as a Service** (2026-08-14)
+
+El owner cambió el TÉRMINO, no lo que representa: sigue siendo la superficie Clase B donde una marca con demanda propia (tostaduría, cadena, marca privada, e-commerce) propone un proyecto y CTC pone la proveeduría. Subdominio `caas.ctcexport.com` ya creado en Hostinger y Vercel. De paso se cerró un renombrado a medias que la casa arrastraba: el hub decía «Cherry Picked Co-Create» y la landing «CTC Co-Create»; ahora las dos dicen CaaS.
+
+- **La ruta nueva es `/caas`; la vieja `/co-create` sigue viva y reenvía con 308** (`src/app/co-create/page.tsx`). Los dos subdominios están en `src/lib/red/subdominios.ts` y apuntan a rutas DISTINTAS a propósito: el mapa inverso `ROUTE_SUBDOMAIN` se deriva de ese objeto y, si las dos entradas apuntaran a `/caas`, la última ganaría y las tarjetas OG se firmarían con el dominio viejo. La consola interna también se movió: `/bcp/co-create` → `/bcp/caas`.
+- ⚠️ **El pilar del lead sigue siendo `cocreate`, en minúscula, y NO se renombró.** Es la clave interna de `leads.pillar`, que vive bajo un CHECK de Postgres `('general','tech','cocreate','varietales')` y ya tiene filas reales. Renombrarla exigiría migración + reescritura de histórico para cambiar algo que ningún usuario ve. **La MARCA es CaaS; la CLAVE es cocreate** — está anotado en los tres archivos que lo tocan (`app/caas/page.tsx`, `lib/leads/actions.ts`, `lib/email/leadEmails.ts`).
+- El redirect apunta a un destino **ABSOLUTO en producción**: en `co-create.ctcexport.com` el proxy antepone la base del subdominio, así que un `redirect("/caas")` relativo se resolvería a `/co-create/caas` → 404. En dev sí es relativo.
+- El formulario ganó tres cosas en la misma tanda: **«Otros» en Mercado** (revela un campo de texto libre), el acordeón **«Necesidades particulares»** (Incoterm · Periodicidad · Certificaciones en selección múltiple) y la sección **«Modelos de oferta comunes»** en la landing, con los tres arquetipos que desactivan las tres objeciones típicas de un comprador de marca. Los campos nuevos son OPCIONALES y viajan en el mismo `fields` JSON del lead — están en la lista blanca de `FIELD_KEYS.cocreate`, que es lo único que decide qué se guarda.
 
 ## Dev workflow
 

@@ -1,4 +1,6 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { graphLd, organizationLd, faqPageLd, gradosLd } from "@/lib/seo/jsonLd";
+import { JsonLd } from "@/components/JsonLd";
 import { KaffetalExperience } from "@/components/kaffetal-regal/KaffetalExperience";
 
 export const metadata = metadatosDeSuperficie({
@@ -15,5 +17,17 @@ export const metadata = metadatosDeSuperficie({
 });
 
 export default function KaffetalRegalPage() {
-  return <KaffetalExperience />;
+  return (
+    <>
+      {/* Las 12 preguntas y los cinco grados, publicados como datos. El
+          rastreador siempre llega sin sesión, así que lo que ve es la landing:
+          describir la landing aquí es describir lo que de verdad se indexa.
+          Las dos fichas apuntan a la empresa por `@id`, declarada en la casa
+          matriz — de ahí que aquí vaya también `organizationLd()`: en un
+          subdominio, que Google trata como sitio aparte, la referencia sola se
+          quedaría sin nada a lo que apuntar. */}
+      <JsonLd data={graphLd([organizationLd(), faqPageLd(), gradosLd()])} />
+      <KaffetalExperience />
+    </>
+  );
 }

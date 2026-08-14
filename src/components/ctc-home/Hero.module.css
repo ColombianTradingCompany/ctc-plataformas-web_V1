@@ -41,9 +41,38 @@
    of stacking. The animation column just gets progressively slimmer. */
 @media(max-width:900px){.heroGrid{grid-template-columns:1fr clamp(80px,16vw,150px);gap:24px;align-items:start}}
 
-/* Sketchbook icon loop (CTC_Loading_Icons): the WebP carries real alpha (white
-   keyed out at conversion time — see HANDOFF), so it floats straight on the
-   hero loop; the drop-shadow follows the ink and keeps it readable. */
+/* Sketchbook icon loop (CTC_Loading_Icons_V3, 2026-08-14): el WebP trae alfa
+   real EN TODOS los fotogramas, así que se posa sobre la foto del hero y la
+   sombra sigue el trazo, sin caja ni recorte. El V2 llegó con alfa solo en el
+   primer icono (el resto opaco = cuadro blanco sobre la foto); el owner
+   reexportó y el V3 vino correcto.
+
+   ⚠️ SI ALGUIEN VUELVE A CONVERTIR ESTE GIF, LEA ESTO PRIMERO.
+   El comando importa más que la calidad. Con `-c:v libwebp` + `-q:v`, y también
+   re-codificando con sharp, el WebP animado sale con FANTASMAS: cada icono se
+   ve con restos del anterior detrás. La causa es que el codificador mezcla cada
+   fotograma sobre el lienzo anterior (alpha-blend) en vez de reemplazarlo, y
+   como este arte es transparente alrededor del dibujo, lo de antes se sigue
+   viendo. Con el V2 no se notaba porque sus fotogramas eran opacos y tapaban.
+   La receta que SÍ funciona, verificada fotograma a fotograma contra el GIF
+   original a los mismos instantes:
+
+     ffmpeg -i CTC_Loading_Icons_V3.gif \
+       -vf "fps=8,scale=240:240:flags=lanczos" \
+       -c:v libwebp_anim -pix_fmt bgra -lossless 0 -quality 62 -loop 0 -an \
+       public/images/shared/ctc-loading-icons.webp
+
+   `libwebp_anim` + `-pix_fmt bgra` es lo que quita los fantasmas; `-quality`
+   (no `-q:v`) es lo que de verdad regula la calidad.
+
+   PESO: ~2,6 MB. El V1 pesaba 310 KB porque eran 63 estampas fijas; esto son
+   ~370 fotogramas casi todos distintos (las fundidos), y con alfa el codificador
+   no puede reaprovechar el fotograma anterior. La calidad casi no mueve la
+   aguja (q45 y q55 dan lo mismo): las palancas reales son la TASA DE FOTOGRAMAS
+   y el TAMAÑO. Por eso va a 240 px y 8 fps — a 300 px y 12,5 fps son 5,1 MB, y
+   240 px sigue por encima de los 210 px a los que como mucho se dibuja aquí.
+   Los dos pies que montan el mismo loop lo cargan con `loading="lazy"`; solo el
+   hero lo paga en la primera pintura. */
 .heroAside{display:flex;justify-content:center}
 .heroAnim{
   width:100%;max-width:210px;aspect-ratio:1/1;display:block;

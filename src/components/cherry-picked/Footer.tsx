@@ -54,8 +54,10 @@ export function Footer() {
       {/* Loop de iconos CTC (sketch, alfa real) — la misma marca animada del
           hero de ctcexport.com, centrado como sello de cierre de la página. */}
       <div className={styles.loopRow}>
+        {/* `lazy` desde el V2 (2026-08-13): ver el mismo comentario en el pie de
+            Kaffetal Regal — el loop pesa ~2,3 MB y el pie está bajo el pliegue. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, must not go through next/image */}
-        <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden />
+        <img className={styles.iconLoop} src="/images/shared/ctc-loading-icons.webp" alt="" aria-hidden loading="lazy" decoding="async" />
       </div>
 
       <LegalFooter lang={lang} />

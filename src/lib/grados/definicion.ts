@@ -38,6 +38,13 @@ export type Grado = {
   /** Token de color del sistema de diseño (globals.css). */
   colorVar: string;
   hex: string;
+  /** El sello del grado (public/images/shared/grados/). Los cinco vienen del
+   *  material de marca del owner y se sirven cuadrados sobre blanco: el arte
+   *  original llega con recortes distintos (228×227, 237×219…) y sin fondo
+   *  transparente, así que se normalizó a 420×420 para que el sello no salte
+   *  de sitio al pasar de un grado a otro. Va aquí, y no en cada superficie,
+   *  por la misma razón que los rangos SCA: es LA cara del grado. */
+  logo: string;
   /** Clase de lote típica de este grado. */
   claseLote: string;
   /** Qué se espera de la variedad. */
@@ -57,6 +64,7 @@ export const GRADOS: Grado[] = [
     scaMax: 82.99,
     colorVar: "--t-black",
     hex: "#1A1C1E",
+    logo: "/images/shared/grados/black.webp",
     claseLote: "Cosechas de temporada verificadas",
     variedad: "Variedades comunes",
     criterios: ["Cosechas de temporada verificadas", "Calidad buena habitual", "Variedades comunes"],
@@ -69,6 +77,7 @@ export const GRADOS: Grado[] = [
     scaMax: 84.99,
     colorVar: "--t-red",
     hex: "#B01F24",
+    logo: "/images/shared/grados/red.webp",
     claseLote: "Cosechas de temporada verificadas",
     variedad: "Variedades comunes o exóticas",
     criterios: ["Cosechas de temporada verificadas", "Calidad sobresaliente", "Variedades comunes o exóticas"],
@@ -81,6 +90,7 @@ export const GRADOS: Grado[] = [
     scaMax: 86.99,
     colorVar: "--t-blue",
     hex: "#1F4FB0",
+    logo: "/images/shared/grados/blue.webp",
     claseLote: "Macrolotes de origen único",
     variedad: "Variedades comunes o exóticas",
     criterios: [
@@ -98,6 +108,7 @@ export const GRADOS: Grado[] = [
     scaMax: 87.99,
     colorVar: "--t-gold",
     hex: "#A87A14",
+    logo: "/images/shared/grados/gold.webp",
     claseLote: "Microlotes exclusivos",
     variedad: "Variedades raras o exóticas",
     criterios: [
@@ -116,6 +127,7 @@ export const GRADOS: Grado[] = [
     scaMax: 100,
     colorVar: "--t-tyrian",
     hex: "#66023C",
+    logo: "/images/shared/grados/tyrian.webp",
     claseLote: "Nanolotes raros",
     variedad: "Variedades raras",
     criterios: [

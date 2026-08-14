@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { LangProvider } from "@/components/lang/i18n";
 import { loadToolAccess } from "@/lib/tools/toolAccess";
 import { HerramientasLanding } from "@/components/services/HerramientasLanding";
@@ -23,6 +24,7 @@ export default async function HerramientasPage() {
   const access = await loadToolAccess("web");
   return (
     <div data-theme="ctc-home">
+      <OrganizationLd />
       <LangProvider storageKey="ctc-lang">
         <HerramientasLanding ids={access.ids} isPlus={access.isPlus} lockedCount={access.lockedCount} />
       </LangProvider>

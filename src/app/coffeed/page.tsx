@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { LangProvider } from "@/components/lang/i18n";
 import { CoffeedHome } from "@/components/coffeed/CoffeedHome";
 
@@ -17,6 +18,7 @@ export const metadata = metadatosDeSuperficie({
 export default function CoffeedPage() {
   return (
     <div data-theme="ctc-home">
+      <OrganizationLd />
       <LangProvider storageKey="ctc-lang">
         <CoffeedHome />
       </LangProvider>

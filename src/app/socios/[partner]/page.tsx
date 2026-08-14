@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PARTNERS, PARTNER_SLUGS, isPartnerSlug } from "@/lib/partners/partners";
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./socios.module.css";
 
@@ -38,6 +39,12 @@ export default async function PartnerLandingPage({ params }: { params: Promise<{
 
   return (
     <div className={styles.page} style={{ "--p-accent": p.accent } as React.CSSProperties}>
+      {/* La empresa que emite la credencial es CTC, no el socio: los cinco
+          nodos son puertas de ESTA casa, y así es como debe leerse la página
+          desde fuera. La ficha del socio como organización propia sería otra
+          cosa — y hoy no la declaramos porque no somos nosotros quienes la
+          podemos afirmar. */}
+      <OrganizationLd />
       <div className={styles.stripe} />
       <div className={styles.wrap}>
         <div className={styles.topbar}>

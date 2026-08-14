@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { LangProvider } from "@/components/lang/i18n";
 import { TerratalentoExperience } from "@/components/terratalento/TerratalentoExperience";
 
@@ -18,6 +19,7 @@ export const metadata = metadatosDeSuperficie({
 export default function TerratalentoPage() {
   return (
     <div data-theme="kaffetal-regal">
+      <OrganizationLd />
       <LangProvider storageKey="ctc-lang">
         <TerratalentoExperience />
       </LangProvider>

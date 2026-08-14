@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { RoastLanding } from "@/components/cherry-picked-roast/RoastLanding";
 
 export const metadata = metadatosDeSuperficie({
@@ -14,5 +15,10 @@ export const metadata = metadatosDeSuperficie({
 });
 
 export default function CherryPickedRoastPage() {
-  return <RoastLanding />;
+  return (
+    <>
+      <OrganizationLd />
+      <RoastLanding />
+    </>
+  );
 }

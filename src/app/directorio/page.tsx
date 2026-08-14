@@ -1,4 +1,5 @@
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { OrganizationLd } from "@/components/JsonLd";
 import { DirectorioExperience } from "@/components/directorio/DirectorioExperience";
 
 export const metadata = metadatosDeSuperficie({
@@ -12,5 +13,10 @@ export const metadata = metadatosDeSuperficie({
 });
 
 export default function DirectorioPage() {
-  return <DirectorioExperience />;
+  return (
+    <>
+      <OrganizationLd />
+      <DirectorioExperience />
+    </>
+  );
 }

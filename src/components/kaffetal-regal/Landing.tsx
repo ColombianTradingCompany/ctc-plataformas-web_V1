@@ -7,6 +7,7 @@ import { LangProvider, useLang, type Lang } from "@/components/lang/i18n";
 import { LangBubble } from "@/components/lang/LangBubble";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
+import { BienvenidosSection } from "./BienvenidosSection";
 import { OportunidadSection } from "./OportunidadSection";
 import { PorQueSection } from "./PorQueSection";
 import { ArenaSection } from "./ArenaSection";
@@ -147,6 +148,11 @@ function LandingInner({ onLogin }: { onLogin: () => void }) {
     <div>
       <Header onLogin={onLogin} />
       <Hero onLogin={onLogin} onGo={(id) => document.getElementById(id)?.scrollIntoView()} />
+
+      {/* El vestíbulo (boceto del owner, 2026-08-14): el video de bienvenida y
+          los seis pasos, ANTES de que empiece el argumento. No está en el
+          QuickNav a propósito — se pasa por él, no se vuelve a él. */}
+      <BienvenidosSection />
 
       {/* El orden lo fijó el owner el 2026-08-11, y es un argumento, no una
           lista: primero se ve la cadena entera, después lo que puede valer su

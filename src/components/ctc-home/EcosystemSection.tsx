@@ -5,24 +5,30 @@ import Image from "next/image";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { SERVICES_COPY } from "@/components/services/servicesCopy";
 import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
+import { YtEmbed } from "@/components/YtEmbed";
 import { NetNewsletter } from "./NetNewsletter";
 import styles from "./EcosystemSection.module.css";
 
-// ── La sección se reordena (2026-08-11) ──────────────────────────────────────
+// ── La sección se reordena (2026-08-11 · simplificada 2026-08-14) ────────────
 // Antes eran SEIS bloques encadenados: raíl de las tres ofertas, las dos
 // tarjetas insignia, la barra «Lo que pasa en el medio», «El hilo de
 // integración» y el «Índice de la red» con sus once puertas agrupadas por
-// familia. La mitad decía lo mismo dos veces —el raíl repetía lo que ya
-// numeraban las tarjetas, y el índice repetía en lista lo que la barra del
-// medio contaba en prosa— así que la sección quedó en TRES gestos:
+// familia. La mitad decía lo mismo dos veces, así que la sección quedó en TRES
+// gestos: las dos plataformas insignia, la banda «Ecosistema de Valor CTC» con
+// sus seis módulos, y el video de presentación.
 //
-//   1 · las dos plataformas insignia (la oferta y la demanda),
-//   2 · la banda «Ecosistema de Valor CTC» con sus seis módulos,
-//   3 · la captación de correo.
-//
-// Lo que se retiró NO se perdió: las cinco celdas del medio ya las cuentan las
-// cuatro cualidades del hero, y «El hilo de integración» es literalmente la
-// ficha «La Trazabilidad» del Contexto, donde se folió su cierre.
+// 2026-08-14, sobre el boceto del owner: las dos tarjetas insignia se
+// DESNUDARON — quedaron en procedencia, logotipo grande y UN botón; la
+// entradilla, el acordeón de puntos y los enlaces de entrada viven ahora en la
+// VENTANA que abre ese botón (el mismo InfoPanel de los módulos, que para esto
+// ganó `ctas` múltiples). El acordeón `<details>` que tenían encima murió aquí.
+// Y la captación de correo dejó de cerrar la sección: era en realidad el aviso
+// de Terratalento («te avisamos cuando abra»), así que vive DENTRO de la ficha
+// de Terratalento, que es la única puerta en «Pronto».
+
+/** El video de presentación de la sección. CAMBIARLO = cambiar este id (lo que
+ *  va tras `watch?v=` en la URL del video). */
+const OFERTAS_VIDEO_ID = "Yird1_j6yqo";
 const NET_URL =
   process.env.NODE_ENV === "production"
     ? {
@@ -91,6 +97,8 @@ type Dict = {
   eyebrow: string;
   h2: string;
   intro: string;
+  /** El pie del video de presentación (el título que ve el lector). */
+  videoTitle: string;
   krWho: string;
   krOneline: string;
   krSummary: string;
@@ -121,6 +129,7 @@ const T: Record<Lang, Dict> = {
     h2: "Del cafetal a la taza, sin intermediarios anónimos",
     intro:
       "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y el Value Ecosystem que sostiene a las dos.",
+    videoTitle: "CTC, en un minuto",
     krWho: "En Colombia · Para el productor",
     krOneline:
       "El portal donde los caficultores registran sus fincas y lotes, compiten en la Cupping Arena y firman tratos blindados con primas indexadas.",
@@ -235,6 +244,7 @@ const T: Record<Lang, Dict> = {
     h2: "From the coffee field to the cup, with no anonymous middlemen",
     intro:
       "Everything CTC does fits into three offers: the one that brings the coffee, the one that buys it, and the Value Ecosystem holding both up.",
+    videoTitle: "CTC, in one minute",
     krWho: "In Colombia · For the producer",
     krOneline:
       "The portal where coffee growers register their farms and lots, compete in the Cupping Arena and sign armored deals with indexed premiums.",
@@ -344,6 +354,7 @@ const T: Record<Lang, Dict> = {
     h2: "Vom Kaffeefeld bis zur Tasse, ohne anonyme Zwischenhändler",
     intro:
       "Alles, was CTC tut, passt in drei Angebote: das, was den Kaffee bringt, das, was ihn kauft, und das Value Ecosystem, das beide trägt.",
+    videoTitle: "CTC, in einer Minute",
     krWho: "In Kolumbien · Für den Produzenten",
     krOneline:
       "Das Portal, in dem Kaffeebauern ihre Fincas und Lots registrieren, in der Cupping Arena antreten und abgesicherte Verträge mit indexierten Prämien unterzeichnen.",
@@ -477,6 +488,10 @@ export function EcosystemSection() {
       title: tile.name,
       lead: t.netInfo[slug].lead,
       bullets: t.netInfo[slug].bullets,
+      // La captación de correo era en realidad el aviso de Terratalento — la
+      // única puerta en «Pronto» — así que vive dentro de SU ficha (2026-08-14),
+      // no cerrando la sección como si avisara de toda la red.
+      node: slug === "terratalento" ? <NetNewsletter /> : undefined,
     });
 
     switch (href) {
@@ -507,87 +522,75 @@ export function EcosystemSection() {
     }
   };
 
+  // ── Las fichas de las dos insignias ────────────────────────────────────────
+  // Todo lo que la tarjeta enseñaba en línea (entradilla, puntos, salidas) vive
+  // aquí: la tarjeta quedó en logotipo + botón, y el botón abre esto.
+  const krEntry: InfoEntry = {
+    key: "kaffetal-regal",
+    eyebrow: t.krWho,
+    title: "Kaffetal Regal",
+    lead: t.krOneline,
+    bullets: t.krPoints,
+    accent: "var(--accent)",
+    image: "/images/shared/kaffetal-regal-logo.png",
+    imageContain: true,
+    cta: { href: NET_URL.kaffetal, label: t.krCta, external: true },
+  };
+  // Cherry Picked ya no es «la vitrina»: es la PLATAFORMA de compra que
+  // contiene cuatro programas (Co-Create, Green, Roast y X). La salida
+  // principal lleva al hub; Co-Create conserva su puerta directa.
+  const cpEntry: InfoEntry = {
+    key: "cherry-picked",
+    eyebrow: t.cpWho,
+    title: "Cherry Picked",
+    lead: t.cpOneline,
+    bullets: t.cpPoints,
+    accent: "var(--green)",
+    image: "/images/shared/cherry-picked-logo.png",
+    imageContain: true,
+    cta: { href: NET_URL.cherry, label: t.cpCta, external: true },
+    ctas: [{ href: NET_URL.cocreate, label: "Co-Create ↗" }],
+  };
+
   return (
     <section id="ecosistema">
       <div className="wrap">
-        <div className="sec-head">
+        {/* El video de presentación comparte cabecera con la entradilla: la
+            columna del texto sigue mandando y el reproductor queda pequeño a
+            propósito — ampliarlo es tocarlo (pantalla completa o YouTube). */}
+        <div className={`sec-head ${styles.headGrid}`}>
           <div>
             <p className="eyebrow">{t.eyebrow}</p>
             <h2>{t.h2}</h2>
+            <p className={styles.headIntro}>{t.intro}</p>
           </div>
-          <p>{t.intro}</p>
+          <div className={styles.headVideo}>
+            <YtEmbed videoId={OFERTAS_VIDEO_ID} title={t.videoTitle} />
+          </div>
         </div>
 
         <div className={styles.eco2}>
-          <div className={styles.ecoCard} style={{ "--ec": "var(--accent)" } as React.CSSProperties}>
-            <div className={styles.ecoTop}>
-              <Image
-                className={styles.logo}
-                src="/images/shared/kaffetal-regal-logo.png"
-                alt="Kaffetal Regal"
-                width={1254}
-                height={1254}
-              />
-              <div>
-                <span className={styles.who}>{t.krWho}</span>
-                <h3>Kaffetal Regal</h3>
-              </div>
+          {/* Las dos insignias, al desnudo (boceto del owner, 2026-08-14):
+              procedencia, el logotipo COMO cara —los dos llevan su nombre
+              dentro, por eso el h3 es solo para lectores y buscadores— y un
+              botón que abre la ficha completa. */}
+          {(
+            [
+              { entry: krEntry, who: t.krWho, open: t.krSummary, ec: "var(--accent)", logo: "/images/shared/kaffetal-regal-logo.png", w: 1254, h: 1254 },
+              { entry: cpEntry, who: t.cpWho, open: t.cpSummary, ec: "var(--green)", logo: "/images/shared/cherry-picked-logo.png", w: 852, h: 858 },
+            ] as const
+          ).map((c) => (
+            <div key={c.entry.key} className={styles.ecoCard} style={{ "--ec": c.ec } as React.CSSProperties}>
+              <span className={styles.who}>{c.who}</span>
+              <h3 className="sr-only">{c.entry.title}</h3>
+              <button type="button" className={styles.ecoLogoBtn} onClick={() => setOpen(c.entry)} aria-label={c.entry.title}>
+                <Image className={styles.bigLogo} src={c.logo} alt="" width={c.w} height={c.h} />
+              </button>
+              <button type="button" className={styles.ecoOpen} onClick={() => setOpen(c.entry)}>
+                {c.open} <span aria-hidden>+</span>
+              </button>
             </div>
-            <p className={styles.oneline}>{t.krOneline}</p>
-            <details className={styles.details}>
-              <summary>
-                {t.krSummary} <span className={styles.ch}>▾</span>
-              </summary>
-              <ul>
-                {t.krPoints.map((p, i) => (
-                  <li key={i}>{p}</li>
-                ))}
-              </ul>
-            </details>
-            <div className={styles.foot}>
-              <a className="btn btn-sm btn-accent" href={NET_URL.kaffetal} target="_blank" rel="noopener">
-                {t.krCta}
-              </a>
-            </div>
-          </div>
-
-          {/* Cherry Picked ya no es «la vitrina»: es la PLATAFORMA de compra que
-              contiene cuatro programas (Co-Create, Green, Roast y X). El enlace
-              lleva a cherry-picked.ctcexport.com, que es el hub de los cuatro. */}
-          <div className={styles.ecoCard} style={{ "--ec": "var(--green)" } as React.CSSProperties}>
-            <div className={styles.ecoTop}>
-              <Image
-                className={styles.logo}
-                src="/images/shared/cherry-picked-logo.png"
-                alt="Cherry Picked"
-                width={852}
-                height={858}
-              />
-              <div>
-                <span className={styles.who}>{t.cpWho}</span>
-                <h3>Cherry Picked</h3>
-              </div>
-            </div>
-            <p className={styles.oneline}>{t.cpOneline}</p>
-            <details className={styles.details}>
-              <summary>
-                {t.cpSummary} <span className={styles.ch}>▾</span>
-              </summary>
-              <ul>
-                {t.cpPoints.map((p, i) => (
-                  <li key={i}>{p}</li>
-                ))}
-              </ul>
-            </details>
-            <div className={styles.foot}>
-              <a className="btn btn-sm" href={NET_URL.cherry} target="_blank" rel="noopener">
-                {t.cpCta}
-              </a>
-              <a className="btn btn-sm btn-accent" href={NET_URL.cocreate}>
-                Co-Create ↗
-              </a>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* La tercera oferta, ahora como banda + sus seis módulos. Sustituye a la
@@ -668,8 +671,6 @@ export function EcosystemSection() {
           })}
         </div>
         <p className={styles.netHint}>{t.netHint}</p>
-
-        <NetNewsletter />
       </div>
 
       <InfoPanel entry={open} onClose={() => setOpen(null)} />

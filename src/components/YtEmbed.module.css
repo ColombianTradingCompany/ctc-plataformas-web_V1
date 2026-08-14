@@ -1,0 +1,24 @@
+/* El reproductor lite de YouTube. Solo tokens genéricos (--card/--line/--ink…):
+   tiene que verse bien bajo cualquiera de los data-theme de la red. */
+.box{margin:0;display:flex;flex-direction:column;gap:6px}
+.frame{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000;
+  border:1px solid var(--line);box-shadow:0 10px 28px -14px rgba(10,16,24,.5)}
+.iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+.poster{display:block;width:100%;height:100%;padding:0;border:0;background:#000;cursor:pointer;position:relative}
+/* La miniatura hqdefault trae franjas negras arriba y abajo (es 4:3): el zoom
+   del 135% las recorta y deja el cuadro 16/9 lleno. */
+.poster img{width:100%;height:100%;object-fit:cover;transform:scale(1.35);opacity:.92;transition:opacity .2s,transform .3s}
+.poster:hover img{opacity:1;transform:scale(1.38)}
+
+.play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;
+  background:rgba(16,20,26,.78);color:#fff;display:grid;place-items:center;transition:background .2s,transform .2s}
+.play svg{width:26px;height:26px;margin-left:2px}
+.poster:hover .play{background:var(--accent,#E3A32C);transform:translate(-50%,-50%) scale(1.08)}
+.poster:focus-visible{outline:3px solid var(--accent,#E3A32C);outline-offset:2px}
+
+.caption{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-size:12px;color:var(--muted);padding-inline:2px}
+.caption a{color:var(--accent);text-decoration:none;white-space:nowrap;
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+.caption a:hover{text-decoration:underline}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
+import { SellBuyCtas } from "./SellBuyCtas";
 import styles from "./MomentSection.module.css";
 
 // ── Contexto · por qué ahora (reescrito 2026-08-11) ──────────────────────────
@@ -533,6 +534,11 @@ export function MomentSection() {
             );
           })}
         </div>
+
+        {/* Las dos orillas cierran el Contexto (2026-08-14): el lector acaba de
+            ver POR QUÉ ahora — este es el sitio donde decide desde cuál orilla
+            entra. */}
+        <SellBuyCtas />
 
         <InfoPanel entry={open} onClose={() => setOpen(null)} />
       </div>

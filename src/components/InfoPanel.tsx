@@ -25,6 +25,10 @@ export type InfoEntry = {
   bullets?: React.ReactNode[];
   /** El pie: a dónde lleva esto, si lleva a alguna parte. */
   cta?: { href: string; label: string; external?: boolean };
+  /** Salidas adicionales, cuando una sola no basta (2026-08-14: la ficha de
+   *  Cherry Picked lleva el hub Y Co-Create). Se pintan tras `cta`, con el
+   *  estilo secundario — la primera salida sigue siendo la principal. */
+  ctas?: { href: string; label: string; external?: boolean }[];
   /** Color de acento de la ventana (el de la puerta, el del grado…). */
   accent?: string;
   /** Imagen de cabecera, si la entrada tiene cara propia. */
@@ -72,19 +76,22 @@ export function InfoPanel({ entry, onClose }: { entry: InfoEntry | null; onClose
             </ul>
           )}
           {entry.node && <div className={styles.node}>{entry.node}</div>}
-          {entry.cta && (
+          {(entry.cta || entry.ctas?.length) && (
             <div className={styles.foot}>
-              <a
-                className="btn btn-sm btn-solid"
-                href={entry.cta.href}
-                {...(entry.cta.external ? { target: "_blank", rel: "noopener" } : {})}
-                // Un enlace a un ancla de ESTA página tiene que cerrar la ventana
-                // al saltar: si no, el navegador baja a la sección y la deja
-                // tapada con el velo del modal encima.
-                onClick={entry.cta.href.startsWith("#") ? onClose : undefined}
-              >
-                {entry.cta.label}
-              </a>
+              {[...(entry.cta ? [entry.cta] : []), ...(entry.ctas ?? [])].map((cta, i) => (
+                <a
+                  key={cta.href}
+                  className={`btn btn-sm ${i === 0 ? "btn-solid" : ""}`}
+                  href={cta.href}
+                  {...(cta.external ? { target: "_blank", rel: "noopener" } : {})}
+                  // Un enlace a un ancla de ESTA página tiene que cerrar la ventana
+                  // al saltar: si no, el navegador baja a la sección y la deja
+                  // tapada con el velo del modal encima.
+                  onClick={cta.href.startsWith("#") ? onClose : undefined}
+                >
+                  {cta.label}
+                </a>
+              ))}
             </div>
           )}
         </div>

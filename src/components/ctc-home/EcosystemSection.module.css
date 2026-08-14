@@ -1,33 +1,44 @@
+/* ── La cabecera con el video de presentación (2026-08-14) ──────────────────
+   El texto manda (2 partes) y el reproductor queda pequeño (1 parte): ampliarlo
+   es tocarlo. Bajo 860 px el video baja debajo del texto, a media anchura para
+   que no grite. */
+.headGrid{display:grid;grid-template-columns:2fr minmax(260px,1fr);gap:20px 36px;align-items:end}
+.headIntro{margin-top:12px}
+@media(max-width:860px){
+  .headGrid{grid-template-columns:1fr}
+  .headVideo{max-width:420px}
+}
+
+/* ── Las dos insignias, al desnudo (boceto del owner, 2026-08-14) ────────────
+   Procedencia, logotipo grande y UN botón. La entradilla, los puntos y las
+   salidas que estas tarjetas enseñaban en línea (con un acordeón `<details>`)
+   viven ahora en la ventana que abre el botón — si busca ese acordeón, ya no
+   existe: es `krEntry`/`cpEntry` en el TSX. */
 .eco2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:860px){.eco2{grid-template-columns:1fr}}
 .ecoCard{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;
-  display:flex;flex-direction:column;gap:14px;border-top:5px solid var(--ec);
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 26px 24px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;border-top:5px solid var(--ec);text-align:center;
 }
-.ecoTop{display:flex;align-items:center;gap:16px}
-.logo{width:64px;height:64px;border-radius:50%;object-fit:contain;background:#fff;border:2px solid #fff;box-shadow:0 6px 16px -8px rgba(27,36,48,.35);flex:none}
 .who{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ec)}
-.ecoCard h3{font-size:22px}
-.oneline{font-size:14px;color:var(--muted)}
-.details{border:1px dashed var(--line);border-radius:10px;overflow:hidden}
-.details summary{
-  list-style:none;cursor:pointer;padding:11px 16px;font-family:var(--font-spline-mono),monospace;font-size:11px;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--ec);display:flex;justify-content:space-between;align-items:center;
+/* El logotipo ES la cara y también una puerta: los dos insignias llevan su
+   nombre dentro del arte, así que el h3 va en `.sr-only` y aquí solo se dibuja. */
+.ecoLogoBtn{border:0;background:none;padding:0;cursor:pointer;border-radius:12px}
+.ecoLogoBtn:focus-visible{outline:3px solid var(--ec);outline-offset:4px}
+.bigLogo{width:min(220px,58%);height:auto;display:block;margin-inline:auto;transition:transform .2s ease}
+.ecoLogoBtn:hover .bigLogo{transform:scale(1.04)}
+.ecoOpen{
+  font-family:var(--font-spline-mono),monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ec);background:none;border:1.5px dashed var(--ec);border-radius:10px;padding:12px 22px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:10px;transition:background .15s ease,color .15s ease,transform .15s ease;
 }
-.details summary::-webkit-details-marker{display:none}
-.ch{display:inline-block;font-size:22px;line-height:1;vertical-align:-3px;transition:transform .2s}
-.details:not([open]) .ch{animation:ctcChevPulse 1.8s ease-in-out infinite}
-.details[open] .ch{transform:rotate(180deg);animation:none}
-@media (prefers-reduced-motion:reduce){.details:not([open]) .ch{animation:none}}
-@keyframes ctcChevPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.35);opacity:1}}
-.details ul{list-style:none;display:grid;gap:8px;font-size:13.5px;color:var(--muted);padding:2px 16px 15px}
-.details li{padding-left:18px;position:relative}
-.details li::before{content:"—";position:absolute;left:0;color:var(--ec);font-weight:700}
-.details b{color:var(--ink)}
-.foot{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap}
+.ecoOpen span{font-size:16px;line-height:1}
+.ecoOpen:hover{background:var(--ec);color:#fff;transform:translateY(-1px)}
+.ecoOpen:focus-visible{outline:3px solid var(--ec);outline-offset:3px}
 
-/* Las tarjetas insignia ya no llevan número (2026-08-11): el raíl 1·2·3 al que
-   respondían se retiró, así que el círculo se quedó señalando a nada. */
+.ch{display:inline-block;font-size:22px;line-height:1;vertical-align:-3px;transition:transform .2s}
+@media (prefers-reduced-motion:reduce){.bandFold:not([open]) .ch{animation:none}}
+@keyframes ctcChevPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.35);opacity:1}}
 
 /* ── La banda del Ecosistema de Valor ────────────────────────────────────────
    Era la barra «Lo que pasa en el medio» con cinco celdas de prosa. Ahora es

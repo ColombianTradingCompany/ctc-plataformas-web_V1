@@ -1,0 +1,6 @@
+/* La pareja de orillas al pie de una sección: centrada — cierra el argumento
+   de la sección, no compite con él. El aspecto de los botones vive en la
+   familia `.ctcb` de globals.css; aquí solo va el reparto de la fila. */
+.row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:40px}
+.btn{flex:0 1 300px;min-width:252px}
+@media(max-width:560px){.btn{flex:1 1 100%}}

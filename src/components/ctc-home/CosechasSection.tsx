@@ -3,6 +3,7 @@
 import { HarvestCalendar } from "@/components/HarvestCalendar";
 import { HARVEST_YEAR } from "@/lib/harvestYear";
 import { useLang } from "@/components/lang/i18n";
+import { SellBuyCtas } from "./SellBuyCtas";
 
 // ── El año del café, como sección de CTC Home (2026-08-11) ───────────────────
 // Estaba solo dentro de la ventana de «Catálogo de dos cosechas anuales», es
@@ -27,6 +28,9 @@ export function CosechasSection() {
           </div>
         </div>
         <HarvestCalendar blocks={t.blocks} legend={t.legend} months={t.months} lang={lang} />
+        {/* Las dos orillas cierran el calendario (2026-08-14): quien acaba de
+            ver en qué ventana cae su cosecha —o su compra— decide aquí. */}
+        <SellBuyCtas />
       </div>
     </section>
   );

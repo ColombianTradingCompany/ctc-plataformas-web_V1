@@ -12,7 +12,11 @@
 .hero{position:relative;isolation:isolate;overflow:hidden;background:var(--primary-deep);padding:0;border-top:none}
 .heroBg{position:absolute;inset:0;z-index:0}
 .heroBg img{
-  width:100%;height:100%;object-fit:cover;display:block;opacity:.2;
+  /* `.32` desde el 2026-08-14 (owner: al quinto de opacidad «apenas se ve que
+     hay algo detrás»). Medido contra el fotograma BLANCO con el velo nuevo: la
+     columna del titular queda en ~rgb(22,41,31), que contra el marfil del h1 da
+     >10:1 — el margen sigue sobrado, lo que cambió es que el bucle EXISTE. */
+  width:100%;height:100%;object-fit:cover;display:block;opacity:.32;
   /* El origen es de 400x225: se amplía muchísimo. El desenfoque convierte esa
      blandura en ambiente deliberado en vez de pixelado a la vista, y de paso
      calma un fondo que se mueve detrás de un texto que hay que leer. */
@@ -20,15 +24,17 @@
   transform:scale(1.08); /* tapa los bordes blandos del desenfoque */
 }
 /* Velo en dos capas: uno horizontal para que la columna del texto sea la parte
-   más oscura del cuadro, y otro vertical para el contraste general. */
+   más oscura del cuadro, y otro vertical para el contraste general. Aligerado
+   junto con la subida de opacidad del bucle (2026-08-14): la mitad derecha —
+   donde vive el logotipo de KR y no hay texto pequeño— es la que más abre. */
 .scrim{
   position:absolute;inset:0;z-index:1;
   background:
-    linear-gradient(90deg, rgba(9,28,18,.90) 0%, rgba(9,28,18,.78) 44%, rgba(9,28,18,.42) 78%, rgba(9,28,18,.34) 100%),
-    linear-gradient(180deg, rgba(6,20,13,.46) 0%, rgba(6,20,13,.12) 45%, rgba(6,20,13,.58) 100%);
+    linear-gradient(90deg, rgba(9,28,18,.82) 0%, rgba(9,28,18,.68) 44%, rgba(9,28,18,.26) 78%, rgba(9,28,18,.18) 100%),
+    linear-gradient(180deg, rgba(6,20,13,.36) 0%, rgba(6,20,13,.08) 45%, rgba(6,20,13,.48) 100%);
 }
 @media(max-width:880px){
-  .scrim{background:linear-gradient(180deg, rgba(9,28,18,.86) 0%, rgba(9,28,18,.76) 55%, rgba(9,28,18,.9) 100%)}
+  .scrim{background:linear-gradient(180deg, rgba(9,28,18,.78) 0%, rgba(9,28,18,.66) 55%, rgba(9,28,18,.82) 100%)}
 }
 
 .band{

@@ -135,4 +135,4 @@ Contexto abierto al cerrar V33 (2026-08-14):
   los dibuja a 190 como mucho. Sin `sizes` Next servia la variante de 1200 px,
   cuatro veces, en una seccion decorativa. Con `sizes="190px"` se acabo.
 - Gate: tsc limpio, eslint 27 warnings (base), build exit 0. APP_VERSION 4.5 → 4.6.
-(commit: pending)
+(commit: 0931345)

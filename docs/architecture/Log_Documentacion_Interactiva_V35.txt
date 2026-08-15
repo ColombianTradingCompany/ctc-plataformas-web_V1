@@ -1,0 +1,134 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V35.0(10c9016).html
+(CTC Web Platform, desde 2026-08-15). Cada entrada se compila al próximo Version Wrap (V36).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+⚠️ LA BATERÍA SE CORRE EN NODE, NO EN LA CONSOLA DEL NAVEGADOR (lección de V35).
+El panel de vista previa de esta máquina NO navega a un archivo suelto servido en
+localhost (la navegación se deniega), así que la validación vive en un script que
+lee el HTML, extrae los literales `WIRES`/`SCENARIOS`/`DICT`/`CTX`/`ANN`/
+`FILETREE` casando corchetes y los evalúa con `new Function`. Ventajas sobre
+pegar en la consola: se puede correr contra el snapshot ANTERIOR como control
+—si el validador pasa en los dos, no es que sea permisivo— y no depende de que
+el navegador colabore. El script vivió en el scratchpad de la sesión; si hace
+falta otra vez, se reescribe en diez minutos con esta descripción.
+
+Las OCHO comprobaciones, y las ocho tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — ⚠️ SOLO sobre el marcado ANTERIOR a `<script>`: pasado
+     ese punto están las plantillas que GENERAN chips (`data-info="${k}"`), que no
+     son datos y siempre saldrían como falso positivo.
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (lección de V34). La
+comprobación se venía corriendo envuelta en `if (typeof NODEDICT !== 'undefined')`
+y por tanto NUNCA se ejecutó: informaba de un aprobado que nadie verificó.
+**Ningún chequeo de un wrap debe ir envuelto en un guard de existencia**: si el
+símbolo no existe, tiene que romper.
+
+⚠️ UN OBJETO LITERAL PUEDE TENER LA MISMA CLAVE DOS VECES Y NADIE AVISA (lección
+de V35, y es la misma familia que la del DICT en V31). `CTX` traía `"n-consoles"`
+declarado DOS veces; JS se quedaba en silencio con el de abajo, así que la lista
+de arriba —más corta, con "auditoria"— no se pintó nunca. V35 las fusionó. Si
+añade una clave a CTX o a DICT, busque antes si ya está: el navegador no lo dirá.
+
+⚠️ EL SELECTOR DE TRAZAS VA POR ÍNDICE (lección de V33). Buscar el `id` de un
+escenario nuevo entre los `option.value` da siempre falso: los value son
+"0","1","2"… La comprobación buena es `select.options.length === SCENARIOS.length`
+y que el `id` esté en `SCENARIOS.at(-1)`.
+
+⚠️ EL DICT TIENE DOS ESTILOS DE ESCRITURA conviviendo (lección de V31):
+`clave:{k:"…"` y `clave: {` en varias líneas. Buscar con `^  clave:{` solo
+encuentra las del primer estilo y estuvo a punto de dejar tres claves DUPLICADAS
+(JS se queda con la última, en silencio). Busca siempre con espaciado flexible:
+    grep -nE '^[[:space:]]*"?clave"?[[:space:]]*:[[:space:]]*\{'
+Y NO se fíe de un conteo por regex: en V35 una regex «flexible» contó 101 de 104.
+El número bueno es `Object.keys(DICT).length` evaluado de verdad.
+
+⚠️ EL MAPA DE ARCHIVOS DELATA LOS BORRADOS (lección de V32). `gen_filemap_tree`
+lee el disco, pero ANN es a mano: cuando un wrap borra o renombra un archivo
+anotado, hay que repuntar su ANN o el mapa apunta a un fichero que ya no está.
+Pasó en V35 con `src/lib/tools/toolCopy.ts`, borrado en la misma tanda.
+
+⚠️ ESTE DOCUMENTO GUARDA HISTORIA, NO SOLO ESTADO (lección de V33). Al renombrar
+algo se cambia solo el texto en PRESENTE —los `sub`, las fichas, los pasos de
+las trazas, las ANN—; las notas fechadas «V17 · …», «V30 · …» conservan el
+nombre de entonces a propósito. Donde una nota vieja cita una RUTA que ya se
+movió, se anota entre guiones en vez de sustituir.
+
+Y la de V28: una entrada del log puede estar YA compilada si se registró y se
+envolvió el mismo día. Antes de compilar, comprobar en el HTML base si ya está.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V35 (2026-08-15):
+
+- ✅ **RESUELTO el mismo día: el sha del nombre ya es el de verdad.** Al envolver,
+  la tanda estaba sin comitear y el archivo salió como `V35.0(791128a)` — el sha
+  del wrap de V34. Se comiteó el trabajo (`10c9016`) y se renombró a
+  `V35.0(10c9016)`, que es el commit al que corresponde el CONTENIDO. Queda
+  anotado como procedimiento para el próximo wrap: **si la tanda no está
+  comiteada, envuelve igual, pero renombra después** — y ojo, el `FILETREE` del
+  propio snapshot se lista a sí mismo, así que tras renombrar hay que **volver a
+  correr `gen_filemap_tree.mjs`** contra el nombre nuevo o el mapa de archivos se
+  queda apuntando al viejo. Un `git mv` no vale cuando el archivo aún no está
+  seguido por git: ahí es `Rename-Item` y luego `git add`.
+- **Search Console sigue sin tocarse, y es lo único que mueve la aguja del
+  cacao**: el código está limpio y el JSON-LD juega a favor, pero el índice y el
+  copy viejo fuera de la web (LinkedIn de empresa, directorios, pitches subidos)
+  son cuenta del owner. Ver la ficha «El índice no es la página».
+  ⚠️ Y AHORA CORRE PRISA MÁS QUE ANTES: al invertir el canonical a `www`, lo que
+  el buscador tiene indexado por subdominio hay que dejar que lo reconsolide.
+  Registrar www como propiedad en Search Console y mandarle el sitemap nuevo es
+  el gesto que acelera eso.
+- **De las dos preguntas abiertas del plan SEO, las DOS se cerraron en V35**: el
+  canonical (manda `www` + la ruta) y «Manejo de Plataformas» (tercera pestaña de
+  Direccionamiento, no módulo aparte). Lo que queda vivo del tema: los `<title>`
+  y las meta descriptions de las **12 herramientas de `public/tools/`** siguen
+  DENTRO de cada archivo — el panel las inventaria y avisa de cuáles faltan, pero
+  no puede escribirlas ahí; se corrigen editando el HTML (o subiendo la
+  herramienta como versión, que entonces la sirve la plataforma).
+- **El pilar del lead sigue siendo `cocreate`** aunque la marca sea CaaS, y es
+  deliberado: CHECK de Postgres con filas reales.
+- **El hub sigue SIN captación de correo** a propósito: `newsletter_subscribers`
+  tiene un CHECK que solo admite roast|x|ctc-home.
+- **Los dos vídeos de YouTube siguen apuntando al MISMO id provisional**
+  (`Yird1_j6yqo`): cabecera de «Tres ofertas» y «Bienvenidos al Kaffetal Regal».
+  Ojo, esto es independiente del vídeo de fondo del hub, que es un MP4 propio.
+- **La deuda del loop de iconos** (~2,6 MB) sigue igual, conviviendo con los
+  826 KB del vídeo del hub: ~3,4 MB de animación en dos portadas distintas.
+- **Riesgo aceptado y anotado del registro de herramientas**: una subida corre en
+  el iframe con `allow-same-origin`, igual que las de siempre — pero el listón
+  para meter un archivo bajó de «commit + deploy» a «subirlo en el panel». Vale
+  mientras el owner sea el único que sube. Si algún día sube alguien más, la
+  palanca es servirlas con CSP `sandbox` (y entonces `/tools/assets/` necesita
+  CORS para las tipografías).
+- Todo lo demás heredado de V31/V32/V33/V34 sigue vivo: la cola diferida de la
+  auditoría (83 índices FK, poda del Buzón, carreras de `useAutosave`, tableros
+  sin tope), `/api/kaffetal-regal/next-step` sin llamador POR DECISIÓN, la
+  robusta de Londres y los inventarios ICE sin fuente gratuita, el escenario de
+  Canva sin montar en Make, Gemini sin tarifa en `precios.ts` (📌 el 2026-08-31
+  caduca el precio de lanzamiento de Sonnet 5), Coffeed con 5 medios sin feed, la
+  política de privacidad GDPR sin escribir, `qa-guard-check.mjs` sin cuenta QA,
+  Identity Value Creation declarada y sin construir, el socio multi-nodo
+  pendiente del PK de `partner_accounts`, los tres cotizadores sin conducir por
+  2FA, y la protección de contraseñas filtradas bloqueada por plan.

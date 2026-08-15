@@ -65,6 +65,136 @@ envolvió el mismo día. Antes de compilar, comprobar en el HTML base si ya est�
 
 ════════════════════════════════════════════════════════════════════════════════
 
+## [2026-08-15] El canonical pasa a la casa matriz (V4.7)
+
+- Decisión del OWNER, y cierra una de las dos preguntas que V34 dejó abiertas.
+  Toda superficie responde 200 por dos URLs (su subdominio y su ruta bajo www).
+  Mandaba el subdominio; ahora manda **www + la ruta**.
+- El motivo, medido: Google trata cada subdominio como un SITIO APARTE, así que
+  con 18 subdominios la reputación se repartía en 18 montones y cada superficie
+  empezaba de cero. Consolidando, cada enlace alimenta UN dominio.
+- `src/lib/seo/openGraph.ts`: `metadataBase` deja de ser el subdominio y pasa a
+  `WWW_ORIGIN`; el canonical pasa de `"/"` a la ruta de la superficie. og:url y
+  og:image viajan con él — se comparte y se indexa la MISMA dirección.
+- ⚠️ **ARRASTRÓ EL SITEMAP, y por poco se queda descuadrado.** `sitemap.xml`
+  llevaba escrita la regla contraria en un comentario («anunciar en www lo que el
+  canonical manda al subdominio sería pedirle al buscador dos cosas
+  contrarias»). Invertida: **www lista las 19 rutas canónicas**; un subdominio
+  lista solo su portada, que es su puerta de descubrimiento. Se excluye
+  `/co-create` porque es un 308 y un sitemap no anuncia redirecciones.
+  LECCIÓN: una decisión de SEO nunca vive en un solo archivo — el canonical, el
+  sitemap y og:url son tres declaraciones sobre la misma cosa.
+- `gradosLd()` añadido a **Cherry Picked Green**, la tienda donde el grado ES la
+  taxonomía del producto (el candidato de una línea que V34 dejó anotado).
+  Verificado: `DefinedTermSet` presente en Green, hub y KR; ausente en Directorio.
+(commit: pending)
+
+## [2026-08-15] Las Herramientas del Café dejan de ser código (V4.7)
+
+Petición del owner: poder subir versiones nuevas de una herramienta desde el ECP,
+elegir cuál está publicada y marcar cuáles son de uso interno de CTC.
+
+- **Registro en la base**: tablas `tools` + `tool_versions` (migraciones
+  `tools_registry_and_versions` y `tools_registry_seed_existing_twelve`),
+  service-role-only. Sustituyen al union `ToolId`, al mapa `TOOLS`, a
+  `DEFAULT_TOOLS_CONFIG` y a `TOOL_COPY` (borrado). `platform_settings.tools_config`
+  queda de respaldo histórico y **ya no se lee** — no sirve para diagnosticar.
+- Sembrado desde lo que estaba VIVO en `tools_config`, no desde los arranques del
+  código: llevaban tiempo sin coincidir (p. ej. `mermas-rapida` estaba apagada en
+  las cuatro superficies y `catacion` no estaba en la web, al revés que el código).
+- **Subir ≠ publicar**, dos gestos a propósito. Publicar una versión anterior es
+  la misma acción — así el «volver atrás» no es un camino aparte que se oxida.
+- **`interna` vs `compartible`, con consecuencia real.** El guardián
+  `guard_tools_clase` no deja marcar interna una herramienta cuya versión
+  publicada sea un fichero de `public/tools/`: ese archivo lo sirve la CDN sin
+  pasar por la aplicación, es una URL pública por construcción y ninguna
+  compuerta puede taparlo. Marcarla interna sería mentir en la pantalla. Para
+  volverla interna hay que subir una versión (que vive en Storage) y publicarla.
+  Es la gotcha 12 —el mecanismo «privado» viejo protegía la PÁGINA y dejaba el
+  ARCHIVO abierto— convertida en invariante de la base. Volverse interna además
+  apaga sus cuatro superficies sola.
+- **El entregador es `/tools/h/<slug>`** (`src/app/tools/h/[slug]/route.ts`), y
+  cuelga de `/tools` A PROPÓSITO: ese prefijo está excluido del matcher del
+  proxy, así que la misma URL vale en los 18 hosts. El mecanismo anterior servía
+  desde `/ecp/herramientas/<key>` y por eso 404 fuera de la consola. Si alguien
+  toca ese matcher, se rompen juntos.
+- **Consolidación de mermas** (owner: «una Rápida y una Detallada»). Las tres NO
+  eran versiones una de otra: comparten **1 línea de ~1.600**. Rápida =
+  `mermas-rapida`; Detallada = `mermas-ctc` (cereza→tostado, precio ancla, tasa
+  del día, costos, PDF; la más nueva y la de marca). Archivada
+  `mermas-detallada`: su seña era una ficha de lote con productor/finca/variedad,
+  y eso ya lo hace la Ficha Técnica de verdad de KR, respaldada por la base.
+  Archivar ≠ borrar. **Ojo**: `mermas-rapida` estaba apagada en todas partes; se
+  encendió en KR para que la pareja exista de cara al productor.
+- Los diccionarios de copy de KR y Cherry Picked pasan a ser mapas de
+  EXCEPCIONES con reserva en el registro: siguen mandando donde existen (voz de
+  productor, trilingüe), pero una herramienta subida ya no necesita que alguien
+  toque un archivo para poder ofrecerse.
+- Verificado en vivo (11/11, guardián desechable): objeto a Storage → servido
+  200 con su cuerpo real → `X-Robots-Tag: noindex` → marcada interna → **404 sin
+  sesión** → superficies apagadas solas → rechazo de publicar una versión del
+  repositorio siendo interna. Más: `/tools/h/agtron` redirige 307 al estático,
+  una archivada da 404 y la superficie web lista las 3 Default y retiene la Plus.
+(commit: pending)
+
+## [2026-08-15] Manejo de Plataformas: la red se deja gobernar desde dentro (V4.7)
+
+Tercera pestaña de `/ecp/direccionamiento`, **no** un módulo nuevo bajo IT y
+Plataforma: decisión del owner, «tiene que estar fusionado en uno». Sostiene
+sola — es la misma pregunta que las otras dos pestañas (qué dice la casa de sí
+misma), y tenerla en dos módulos habría acabado con dos respuestas, que es
+exactamente el problema que los Grados vinieron a arreglar.
+
+- **Tabla `platform_surfaces`** (migración `platform_surfaces_seo_governance`,
+  service-role-only), una fila por superficie con la **RUTA INTERNA** de clave —
+  la misma que usan `SUBDOMAIN_ROUTES`, el proxy y las tarjetas OG, para no
+  inventar un tercer padrón de superficies. Gobierna título, descripción y si
+  entra en el sitemap. **NO gobierna el canonical** a propósito: es una decisión
+  de red, una sola para las 19, y un interruptor por superficie sería la forma
+  de deshacerla sin darse cuenta.
+- **Capa de EXCEPCIONES, no copia.** Fila vacía = manda el `page.tsx`. El campo
+  enseña el valor del código como marca de agua en lugar de precargarlo:
+  precargarlo convertiría cada visita a la pantalla en una bifurcación silenciosa
+  del texto.
+- ⚠️ **`unstable_cache` NO es opcional aquí.** 14 de estas superficies se rinden
+  ESTÁTICAS en el build; una consulta a Postgres dentro de `generateMetadata` las
+  volvería dinámicas a todas — un viaje a la base por visita para pintar dos
+  etiquetas `<meta>`. Se lee por `unstable_cache` con etiqueta `seo-superficies`
+  (la primitiva correcta en este repo: el flag `cacheComponents` de Next 16 NO
+  está activado). **Comprobado en el build tras el cambio: siguen `○` con
+  revalidate de 1 h, y los 5 nodos socios siguen `●`.** Si alguien mueve esto a
+  una lectura directa, mire esa columna antes y después.
+- ⚠️ **Y NUNCA LANZA**: esa lectura corre DURANTE EL BUILD. Un throw ahí no deja
+  una superficie sin descripción — tumba el despliegue. Ante cualquier fallo
+  devuelve un mapa vacío, que significa «manda el código», que es el estado bueno.
+- ⚠️ **`revalidateTag(tag)` a secas YA NO COMPILA en este Next**: la firma es
+  `(tag, profile)` y la de un argumento está deprecada. Se usa `"max"`
+  (stale-while-revalidate). Existe además `updateTag`, que expira al instante
+  pero **solo vale dentro de una Server Action** y está atada al cache handler
+  nuevo. No hace falta: el panel lee directo de la base, así que quien guarda
+  siempre se ve a sí mismo; lo único que puede ir una petición atrasado es la
+  superficie pública.
+- **La migración de las 14 páginas fue de una línea cada una**, y la forma se
+  eligió para eso: `superficieConOverrides(entrada)` DEVUELVE la función que Next
+  espera, así que el cambio fue `export const metadata =` →
+  `export const generateMetadata =`, mismo argumento y sin tocar ningún texto.
+  `socios/[partner]` ya tenía su propio `generateMetadata` y pasa por
+  `metadatosDeSuperficieAsync`.
+- El **sitemap** lee `en_sitemap`: sacar una superficie sin deploy es lo que hace
+  que el módulo gobierne y no solo describa.
+- Abajo, el **inventario que abrió el tema**: qué herramientas son URL indexable
+  y cuáles no llevan descripción. Con el matiz honesto en pantalla — la
+  descripción del panel manda sobre las versiones SUBIDAS (las sirve la
+  plataforma); sobre un HTML de `public/tools/` no puede mandar, porque ese
+  archivo lo entrega la CDN tal como está escrito y su `<title>` vive dentro.
+- Verificado en vivo: override puesto en `/varietales` → el HTML servido cambia
+  título y descripción; `/kaffetal-regal` sin override sigue con lo del código;
+  `/cherry-picked-x` apagado → el sitemap baja de 19 a 18 URLs. Datos de prueba
+  revertidos (0 overrides, 0 fuera del sitemap).
+(commit: pending)
+
+════════════════════════════════════════════════════════════════════════════════
+
 Contexto abierto al cerrar V34 (2026-08-15):
 
 - **Search Console sigue sin tocarse, y es lo único que mueve la aguja del

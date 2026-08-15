@@ -80,3 +80,59 @@ Contexto abierto al cerrar V33 (2026-08-14):
   construir, el socio multi-nodo pendiente del PK de `partner_accounts`, los tres
   cotizadores sin conducir por 2FA, y la protección de contraseñas filtradas
   bloqueada por plan.
+
+## [2026-08-15] El hub de Cherry Picked: cara para CaaS, vídeo de fondo y dos bandas
+- SELLO DE CaaS: llego «Cherry Picked CaaS - Logos.png» y con el CaaS dejo de
+  ser el unico programa de la familia sin cara — en el hub llevaba un disco de
+  color de relleno, y en su propia landing la barra escribia el nombre mientras
+  CTC Tech, Varietales, Herramientas y Terratalento ya entregaban logotipo.
+  UN solo archivo (public/images/shared/cherry-picked-caas-seal.webp, 600x635,
+  60 KB) sirve a los tres sitios: tarjeta del hub, barra de la landing y adorno
+  de su hero.
+- COMO SE RECORTO, que importa: el original venia SOBRE BLANCO y la familia
+  lleva alfa. Un umbral a secas habria agujereado los blancos de DENTRO del
+  arte (los brillos de la mano, el dorado de «CHERRY PICKED»). Se hizo con
+  relleno por inundacion DESDE EL BORDE —solo es fondo el blanco que se alcanza
+  desde fuera— y alfa GRADUAL en esa zona, para que el halo rosa del «CaaS» se
+  desvanezca en vez de cortarse. Verificado componiendo sobre crema y sobre
+  magenta, que delata cualquier fleco.
+- ⚠️ EL VIDEO DE FONDO Y LA DECISION QUE IMPORTA: «Visit ctcexport.com.gif»
+  pesa 149 MB (1080x1080, 651 fotogramas, 43,9 s; flor → cereza → grano →
+  molido → taza → tarjeta final). Se probo como WebP animado siguiendo la
+  receta anti-fantasma de la casa y NO BAJA DE 2,6 MB ni recortado a 480 px y
+  8 fps. Es FOTOGRAFIA EN MOVIMIENTO: el codificador de imagenes no tiene con
+  que comprimirla. En H.264 son 826 KB a 800x600 y 20 fps — un tercio del peso,
+  mas nitido y con mas fotogramas. LECCION GENERAL: la receta de libwebp_anim
+  es para el LOOP DE ICONOS (dibujo, alfa, fondos planos); para metraje
+  fotografico el formato correcto es video, y confundirlos cuesta 3x de peso.
+    ffmpeg -i "Visit ctcexport.com.gif" -t 35.1 \
+      -vf "crop=1080:810:0:135,fps=20,scale=800:600:flags=lanczos" \
+      -c:v libx264 -profile:v main -pix_fmt yuv420p -crf 36 \
+      -preset slow -movflags +faststart -an visita-ctc.mp4
+- SE CORTA EN EL SEGUNDO 35,1 A PROPOSITO: ahi entra la tarjeta blanca final
+  que invita a ctcexport.com. Detras de un titular haria un fogonazo blanco, y
+  ademas anunciar la casa matriz no es asunto de esta pagina.
+- EL VIDEO NO LLEVA `autoPlay` EN EL MARCADO: se arranca desde un efecto. Asi
+  el HTML del servidor y el del cliente son identicos (nada que hidratar mal)
+  y, sobre todo, quien pidio menos movimiento en su sistema no recibe la
+  llamada a play() y se queda con el poster (17 KB). Un autoPlay en el JSX
+  habria arrancado antes de poder preguntarselo.
+- LOS CUATRO PROGRAMAS, AL DESNUDO (peticion del owner: «que se vean similar a
+  lo que hicimos en ctcexport.com»). La tarjeta queda en estado + sello grande
+  pulsable + boton punteado; la entradilla, los tres puntos y la salida se
+  mudaron DENTRO de la ficha que abre ese boton. Se reusa `InfoPanel`, la
+  ventana compartida — no se escribio una segunda. La copy NO se duplico: sale
+  del mismo diccionario del componente. El h3 va en .sr-only porque los cuatro
+  sellos llevan su nombre dentro del arte. Roast y X (2027) abren ficha pero
+  SIN boton de salida: una puerta que no abre no ofrece un enlace que no lleva.
+- DOS BANDAS ILUSTRADAS nuevas, a sangre, con velo y una frase trilingue. Cada
+  una PRESENTA al bloque que viene detras, que es lo que la separa de un
+  adorno: la cuchara verde+tostado abre los cuatro programas («el mismo lote,
+  cuatro maneras de recibirlo»), el paisaje abre el pasaporte («antes de ser un
+  programa, cada lote fue una finca con nombre, altura y coordenada»). Las
+  fuentes miden 635 px; salen a 1000 con lanczos y quedan en ~60 KB.
+- DETALLE DE PESO que casi se cuela: los sellos se declaran a 600 px y el CSS
+  los dibuja a 190 como mucho. Sin `sizes` Next servia la variante de 1200 px,
+  cuatro veces, en una seccion decorativa. Con `sizes="190px"` se acabo.
+- Gate: tsc limpio, eslint 27 warnings (base), build exit 0. APP_VERSION 4.5 → 4.6.
+(commit: pending)

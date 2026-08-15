@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
+import { hrefActivoDelRail } from "@/lib/panel/navActivo";
 import { BUILD_SHA, VERSION_LABEL } from "@/lib/version";
 import styles from "./panel.module.css";
 
@@ -35,6 +36,12 @@ export function PanelSidebar({
     .filter((g) => !g.ownerOnly || isOwner)
     .map((g) => ({ ...g, links: g.links.filter((l) => !l.ownerOnly || isOwner) }))
     .filter((g) => g.links.length > 0);
+
+  // Cuál se pinta activo: gana la coincidencia MÁS LARGA. La regla vive en un
+  // módulo puro (`lib/panel/navActivo.ts`) porque el rail está detrás de 2FA y
+  // no se puede conducir en un navegador — allí está explicado el porqué, y un
+  // guardián de QA lo comprueba con los datos reales de CONSOLES.
+  const hrefActivo = hrefActivoDelRail(navGroups.flatMap((g) => g.links), pathname);
 
   return (
     <nav className={styles.sidebar}>
@@ -77,7 +84,7 @@ export function PanelSidebar({
           {group.label && <p className={styles.groupLabel}>{group.label}</p>}
           <ul className={styles.links}>
             {group.links.map((link) => {
-              const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);
+              const isActive = link.href === hrefActivo;
               return (
                 <li key={link.href}>
                   <Link href={link.href} className={isActive ? styles.active : undefined}>

@@ -161,6 +161,15 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // el hermano de Automatizaciones: aquélla dice QUÉ corre, ésta dice
           // CUÁNTO cuesta. Ver src/lib/ai/precios.ts para las tarifas.
           { href: "/ecp/consumo", label: "Consumo de IA" },
+          // Manejo de Plataformas (2026-08-16) — ATAJO, no un módulo.
+          // La página VIVE dentro de Direccionamiento, como su tercera pestaña
+          // (decisión del owner: «tiene que estar fusionado en uno»), y este
+          // enlace apunta exactamente ahí. Está en este grupo porque es donde el
+          // owner la buscó primero — gobernar cómo se presenta cada superficie
+          // se siente infraestructura, aunque la pregunta de fondo sea la misma
+          // que la de las otras dos pestañas. Duplicar el DESTINO es barato;
+          // duplicar el MÓDULO habría sido el error que la regla evitaba.
+          { href: "/ecp/direccionamiento/plataformas", label: "Manejo de Plataformas" },
           { href: "/ecp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
           // "Herramientas internas" se renombró y subió al grupo de Dirección
           // (2026-08-02) — ver el comentario allá.

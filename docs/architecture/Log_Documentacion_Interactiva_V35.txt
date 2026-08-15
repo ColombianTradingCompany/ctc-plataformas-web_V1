@@ -80,6 +80,37 @@ envolvió el mismo día. Antes de compilar, comprobar en el HTML base si ya est�
 
 ════════════════════════════════════════════════════════════════════════════════
 
+## [2026-08-16] Un ATAJO a Manejo de Plataformas en el rail del ECP
+
+El owner no la encontraba: la página vive como tercera pestaña de
+Direccionamiento (regla suya: «tiene que estar fusionado en uno»), así que no
+tenía entrada propia en el menú. Se añade el atajo SIN duplicar el módulo.
+
+- `consoles.ts`: un enlace nuevo en el grupo **ECP · IT y Plataforma** que apunta
+  a `/ecp/direccionamiento/plataformas` — la misma página, ningún módulo nuevo.
+  Va en ese grupo porque es donde el owner la buscó primero. Duplicar el DESTINO
+  es barato; duplicar el MÓDULO era el error que la regla evitaba.
+- ⚠️ **Y destapó un fallo del rail.** `PanelSidebar` decidía el enlace activo con
+  un `startsWith` POR ENLACE, que funcionaba solo mientras ninguna ruta del rail
+  fuera prefijo de otra. Ésta lo es (`/ecp/direccionamiento` ya estaba), así que
+  los DOS se pintaban activos para una sola página. La regla se sacó a un módulo
+  PURO —`src/lib/panel/navActivo.ts`— y ahora **gana la coincidencia más larga**,
+  que es siempre la más específica. De paso se corrigió el mismo fallo de LÍMITE
+  DE SEGMENTO que la auditoría (ESTR-3) arregló en el matcher del proxy:
+  `startsWith("/ecp/varietales")` también casaba un futuro `/ecp/varietalesx`.
+- Guardián nuevo: `scripts/qa-nav-check.mjs` (18 comprobaciones, corre con
+  `--experimental-strip-types --import ./scripts/ts-resolve.mjs`) contra los
+  datos REALES de `CONSOLES`. Existe porque el rail está tras el login maestro
+  con OTP y no se puede conducir en un navegador — mismo motivo que los
+  guardianes de la jornada y de RT-Scriptor. Comprueba además que ninguna
+  consola tenga hrefs repetidos y que cada enlace se encienda en su propia ruta.
+- Para la doc: la ficha `manejoplataformas` y la de `direccionamiento` dicen que
+  la página es la tercera pestaña — sigue siendo cierto y NO hay que cambiarlo;
+  lo que hay que añadir en V36 es que además tiene atajo en el rail.
+(commit: pending)
+
+════════════════════════════════════════════════════════════════════════════════
+
 Contexto abierto al cerrar V35 (2026-08-15):
 
 - ✅ **RESUELTO el mismo día: el sha del nombre ya es el de verdad.** Al envolver,

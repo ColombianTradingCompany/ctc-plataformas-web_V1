@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { origenDeSuperficie } from "@/lib/red/subdominios";
+import { WWW_ORIGIN } from "@/lib/red/subdominios";
+import { overridesDeSuperficies } from "./superficies";
 
 // ── Open Graph · la tarjeta con la que cada superficie viaja ─────────────────
 // (2026-08-13) Hasta hoy la red compartía enlaces DESNUDOS: WhatsApp, LinkedIn
@@ -15,21 +16,33 @@ import { origenDeSuperficie } from "@/lib/red/subdominios";
 //
 // ── LAS TRES DECISIONES QUE NO SON OBVIAS ───────────────────────────────────
 //
-// 1. `metadataBase` ES EL SUBDOMINIO, NO LA CASA MATRIZ. Cada superficie vive
-//    en su propio origen (src/lib/red/subdominios.ts) y ahí es donde tiene que
-//    resolver su og:image y su canonical. Si todas heredaran www, la tarjeta de
-//    Cherry Picked pediría la imagen a ctcexport.com y el canonical mandaría el
-//    posicionamiento de la tienda a la home. En desarrollo el origen es
-//    localhost y las rutas son de ruta, no de subdominio — mismo desdoblamiento
-//    que FAMILY_LINKS, y por la misma razón: NODE_ENV es constante de
-//    compilación en servidor y cliente, así que no puede desincronizar la
-//    hidratación.
+// 1. EL CANONICAL ES LA CASA MATRIZ (decisión del owner, 2026-08-15). Toda
+//    superficie responde 200 por DOS URLs: su subdominio y su ruta bajo www
+//    (www.ctcexport.com/cherry-picked-green existe). Alguien tiene que mandar, o
+//    los buscadores ven dos páginas idénticas y parten la autoridad entre las
+//    dos.
 //
-// 2. EL CANONICAL RESUELVE EL CONTENIDO DUPLICADO QUE YA TENÍAMOS. Toda
-//    superficie es alcanzable por DOS URLs: su subdominio y su ruta bajo www
-//    (www.ctcexport.com/cherry-picked-green existe y responde 200). Sin
-//    canonical, los buscadores ven dos páginas idénticas y reparten la
-//    autoridad entre las dos. Con él, la del subdominio manda.
+//    Hasta hoy mandaba el SUBDOMINIO. Se invirtió: **manda `www` y la ruta**.
+//    El motivo es que Google trata cada subdominio como un SITIO APARTE, así que
+//    con dieciocho subdominios la reputación se repartía en dieciocho montones
+//    pequeños y cada superficie tenía que ganársela desde cero. Consolidando,
+//    cada enlace que reciba cualquier superficie alimenta UN dominio. Para un
+//    dominio joven y con pocos enlaces entrantes, ésa es la palanca grande.
+//
+//    Lo que NO cambia: los subdominios siguen sirviendo, siguen siendo la
+//    dirección amable que se pone en una tarjeta y siguen enrutando igual. Solo
+//    dejan de competir con el padre por el crédito.
+//
+// 2. POR ESO `metadataBase` ES `WWW_ORIGIN`. Antes era el subdominio, para que
+//    cada superficie resolviera su og:image y su canonical en su propio origen.
+//    Con el canonical en www eso se da la vuelta solo: la tarjeta, el og:url y
+//    el canonical tienen que decir todos la MISMA dirección, o se comparte una
+//    URL y se indexa otra. `origenDeSuperficie()` sigue existiendo y sigue
+//    siendo la fuente del mapa — simplemente ya no la usa este archivo.
+//    En desarrollo el origen es localhost y se llega por la ruta: mismo
+//    desdoblamiento que FAMILY_LINKS, y por la misma razón — NODE_ENV es
+//    constante de compilación en servidor y cliente, así que no puede
+//    desincronizar la hidratación.
 //
 // 3. LAS TARJETAS SON JPEG, NO WEBP. WhatsApp —el canal por el que de verdad
 //    circulan estos enlaces en Colombia— no previsualiza WebP de forma fiable y
@@ -64,10 +77,12 @@ const DEV = process.env.NODE_ENV === "development";
 /** Los metadatos completos de una superficie pública: título, descripción,
  *  canonical, Open Graph y la tarjeta de Twitter/X, todo coherente entre sí. */
 export function metadatosDeSuperficie(e: Entrada): Metadata {
-  const origen = DEV ? "http://localhost:3000" : origenDeSuperficie(e.route);
-  // En producción la superficie ES la raíz de su subdominio; en desarrollo se
-  // llega por la ruta. La barra suelta para `/` evita un canonical "" vacío.
-  const canonical = DEV ? e.route : "/";
+  const origen = DEV ? "http://localhost:3000" : WWW_ORIGIN;
+  // La ruta interna ES la dirección canónica bajo la casa matriz: `/directorio`
+  // resuelve a https://www.ctcexport.com/directorio. CTC Home tiene `route: "/"`
+  // y resuelve a la raíz. En desarrollo la ruta es la misma, colgada de
+  // localhost, así que esta línea no necesita desdoblarse.
+  const canonical = e.route;
   const imagen = `/images/og/${e.image}`;
 
   return {
@@ -102,4 +117,33 @@ export function metadatosDeSuperficie(e: Entrada): Metadata {
       images: [imagen],
     },
   };
+}
+
+// ── La capa de Manejo de Plataformas (2026-08-15) ────────────────────────────
+// Lo de arriba sigue siendo la ficha que declara el CÓDIGO. Lo de abajo la pasa
+// por las excepciones que el owner haya escrito en ECP → Direccionamiento →
+// Manejo de Plataformas antes de entregarla.
+//
+// La forma es deliberada: `superficieConOverrides(entrada)` devuelve la FUNCIÓN
+// que Next espera en `generateMetadata`, así que convertir una superficie fue
+// cambiar `export const metadata =` por `export const generateMetadata =` y
+// nada más — mismo argumento, mismo sitio, sin tocar el contenido de ninguna
+// ficha. Una migración de catorce archivos que no puede equivocarse de dato.
+
+/** Aplica las excepciones del panel sobre la ficha declarada en el código. */
+export async function metadatosDeSuperficieAsync(e: Entrada): Promise<Metadata> {
+  const overrides = await overridesDeSuperficies();
+  const o = overrides[e.route];
+  // Cadena vacía cuenta como «no escrito»: guardar un título en blanco no debe
+  // dejar la superficie sin título, debe devolverla a lo que dice el código.
+  return metadatosDeSuperficie({
+    ...e,
+    title: o?.title?.trim() || e.title,
+    description: o?.description?.trim() || e.description,
+  });
+}
+
+/** Lo que una `page.tsx` exporta como `generateMetadata`. */
+export function superficieConOverrides(e: Entrada): () => Promise<Metadata> {
+  return () => metadatosDeSuperficieAsync(e);
 }

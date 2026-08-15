@@ -1,65 +1,86 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { tienePlusActivo } from "./plusGrants";
 import {
-  toToolsConfig,
-  toolsForSurface,
-  type ToolId,
-  type ToolsConfig,
+  seOfreceEn,
+  srcDeVersion,
+  type ToolAdmin,
+  type ToolPublico,
   type ToolSurface,
+  type ToolVersion,
 } from "./catalog";
 
-// ── Acceso a las herramientas embebidas (2026-07-20) ─────────────────────────
-// El reparto por superficie y el nivel (Default/Plus) se administran desde la
-// consola interna y viven en platform_settings.tools_config — tabla
-// service-role-only, así que NADA de esto se resuelve en el cliente: la
-// superficie pide su lista con una server action y recibe ya filtrada la que
-// le corresponde a ESE usuario.
+// ── Acceso a las herramientas embebidas ──────────────────────────────────────
+// El reparto por superficie, el nivel (Default/Plus) y ahora también la CLASE y
+// la VERSIÓN PUBLICADA viven en la tabla `tools` — service-role-only, así que
+// NADA de esto se resuelve en el cliente: la superficie pide su lista con una
+// server action y recibe ya filtrada la que le corresponde a ESE usuario, con el
+// `src` del iframe ya resuelto.
+//
+// (2026-08-15) Antes esto leía `platform_settings.tools_config`. Esa clave se
+// quedó en la base como respaldo histórico de lo que había el día de la
+// migración, pero YA NO SE LEE NI SE ESCRIBE: si alguien la edita a mano no pasa
+// nada, y por eso no debe usarse para diagnosticar.
 //
 // QUÉ DA EL NIVEL "PLUS" (regla del owner, 2026-08-02): una ACTIVACIÓN
 // explícita en tools_plus_grants — el productor, el comprador o el experto del
 // DC la solicita desde su plataforma y el ECP la aprueba o rechaza (a futuro,
-// con pago). Ver src/lib/tools/plusGrants.ts. La regla derivada anterior
-// (Pasaporte del Club / escalón pintón) quedó RETIRADA.
+// con pago). Ver src/lib/tools/plusGrants.ts.
 
-const KEY = "tools_config";
+type FilaTool = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  lang: "es" | "en";
+  clase: "interna" | "compartible";
+  familia: string | null;
+  kr: boolean;
+  cp: boolean;
+  web: boolean;
+  dc: boolean;
+  tier: "default" | "plus";
+  orden: number;
+  meta_description: string | null;
+  archivado_at: string | null;
+  version_publicada: string | null;
+};
 
-async function readConfig(service: ReturnType<typeof createServiceRoleClient>): Promise<ToolsConfig> {
-  const { data } = await service.from("platform_settings").select("value").eq("key", KEY).maybeSingle();
-  return toToolsConfig(data?.value);
-}
+type FilaVersion = {
+  id: string;
+  tool_id: string;
+  numero: number;
+  origen: "repo" | "subida";
+  src_publico: string | null;
+  storage_path: string | null;
+  bytes: number | null;
+  notas: string;
+  subido_at: string;
+  subido_por: string | null;
+};
 
-/** La configuración completa — solo para la consola interna. */
-export async function getToolsConfig(): Promise<ToolsConfig> {
-  await requireActiveAdmin();
-  return readConfig(createServiceRoleClient());
-}
+const COLS_TOOL =
+  "id, nombre, descripcion, lang, clase, familia, kr, cp, web, dc, tier, orden, meta_description, archivado_at, version_publicada";
+const COLS_VERSION = "id, tool_id, numero, origen, src_publico, storage_path, bytes, notas, subido_at, subido_por";
 
-/** Guarda la configuración completa desde el tablero de disponibilidad. */
-export async function saveToolsConfig(config: ToolsConfig): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
-  const service = createServiceRoleClient();
-  const clean = toToolsConfig(config); // normaliza: nunca se guarda basura
-  const { error } = await service
-    .from("platform_settings")
-    .upsert({ key: KEY, value: clean, updated_at: new Date().toISOString(), updated_by: adminId }, { onConflict: "key" });
-  if (error) return { ok: false, error: "No se pudo guardar la configuración." };
-  await service.from("audit_log").insert({
-    entity_type: "platform_setting",
-    entity_id: adminId,
-    action: "tools_config_changed",
-    performed_by: adminId,
-  });
-  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked-green", "/herramientas", "/directorio"]) revalidatePath(p);
-  return { ok: true };
+function aVersion(v: FilaVersion): ToolVersion {
+  return {
+    id: v.id,
+    numero: v.numero,
+    origen: v.origen,
+    srcPublico: v.src_publico,
+    storagePath: v.storage_path,
+    bytes: v.bytes,
+    notas: v.notas ?? "",
+    subidoAt: v.subido_at,
+    subidoPor: v.subido_por,
+  };
 }
 
 export type ToolAccess = {
-  /** Los ids que este usuario puede abrir en esta superficie. */
-  ids: ToolId[];
+  /** Las herramientas que este usuario puede abrir en esta superficie, ya
+   *  resueltas (nombre, descripción y `src` del iframe). */
+  tools: ToolPublico[];
   /** ¿Tiene el nivel Plus? (para explicar lo que le falta, no para ocultar) */
   isPlus: boolean;
   /** Cuántas herramientas Plus existen en la superficie y no está viendo. */
@@ -72,12 +93,9 @@ export type ToolAccess = {
  */
 export async function loadToolAccess(surface: ToolSurface): Promise<ToolAccess> {
   const service = createServiceRoleClient();
-  const config = await readConfig(service);
 
-  // Plus por ACTIVACIÓN (owner, 2026-08-02): ya no se deriva del Club ni del
-  // escalón de membresía — el usuario lo SOLICITA desde su plataforma y el ECP
-  // lo activa (tools_plus_grants). kr→producer, cp→buyer, dc→dc; la superficie
-  // web acepta cualquier activación (la cookie compartida la reconoce sola).
+  // Plus por ACTIVACIÓN: kr→producer, cp→buyer, dc→dc; la superficie web acepta
+  // cualquier activación (la cookie compartida la reconoce sola).
   let isPlus = false;
   try {
     const session = await createSessionClient();
@@ -92,7 +110,89 @@ export async function loadToolAccess(surface: ToolSurface): Promise<ToolAccess> 
     // Sin sesión válida se queda en Default — nunca es motivo para romper la página.
   }
 
-  const ids = toolsForSurface(config, surface, isPlus);
-  const all = toolsForSurface(config, surface, true);
-  return { ids, isPlus, lockedCount: all.length - ids.length };
+  // Una `interna` ni siquiera sale de la base hacia una superficie: el filtro va
+  // en la consulta, no solo en el render.
+  const { data: filas } = await service
+    .from("tools")
+    .select(COLS_TOOL)
+    .eq("clase", "compartible")
+    .is("archivado_at", null)
+    .eq(surface, true)
+    .order("orden");
+
+  const tools = (filas ?? []) as FilaTool[];
+  if (!tools.length) return { tools: [], isPlus, lockedCount: 0 };
+
+  const publicadas = tools.map((t) => t.version_publicada).filter((x): x is string => !!x);
+  const { data: vs } = publicadas.length
+    ? await service.from("tool_versions").select(COLS_VERSION).in("id", publicadas)
+    : { data: [] };
+  const porId = new Map(((vs ?? []) as FilaVersion[]).map((v) => [v.id, aVersion(v)]));
+
+  const visibles: ToolPublico[] = [];
+  let lockedCount = 0;
+
+  for (const t of tools) {
+    const version = t.version_publicada ? porId.get(t.version_publicada) ?? null : null;
+    const src = srcDeVersion(t.id, version);
+    // Una herramienta SIN versión publicada no se ofrece: no hay nada que abrir.
+    // Tampoco cuenta como "bloqueada" — no es que le falte nivel al usuario.
+    if (!src) continue;
+
+    if (!seOfreceEn({ ...t, archivada: false }, surface, isPlus)) {
+      if (t.tier === "plus") lockedCount += 1;
+      continue;
+    }
+    visibles.push({
+      id: t.id,
+      nombre: t.nombre,
+      descripcion: t.descripcion,
+      lang: t.lang,
+      src,
+      familia: t.familia,
+    });
+  }
+
+  return { tools: visibles, isPlus, lockedCount };
+}
+
+/** El registro COMPLETO con todo su historial — solo para la consola interna.
+ *  Lo consume el tablero del ECP; el gate lo pone quien lo llama. */
+export async function cargarToolsAdmin(): Promise<ToolAdmin[]> {
+  const service = createServiceRoleClient();
+  const [{ data: filas }, { data: vs }] = await Promise.all([
+    service.from("tools").select(COLS_TOOL).order("orden"),
+    service.from("tool_versions").select(COLS_VERSION).order("numero", { ascending: false }),
+  ]);
+
+  const versionesPorTool = new Map<string, ToolVersion[]>();
+  for (const v of (vs ?? []) as FilaVersion[]) {
+    const lista = versionesPorTool.get(v.tool_id) ?? [];
+    lista.push(aVersion(v));
+    versionesPorTool.set(v.tool_id, lista);
+  }
+
+  return ((filas ?? []) as FilaTool[]).map((t) => {
+    const versiones = versionesPorTool.get(t.id) ?? [];
+    const publicada = versiones.find((v) => v.id === t.version_publicada) ?? null;
+    return {
+      id: t.id,
+      nombre: t.nombre,
+      descripcion: t.descripcion,
+      lang: t.lang,
+      src: srcDeVersion(t.id, publicada) ?? "",
+      familia: t.familia,
+      clase: t.clase,
+      tier: t.tier,
+      kr: t.kr,
+      cp: t.cp,
+      web: t.web,
+      dc: t.dc,
+      orden: t.orden,
+      metaDescription: t.meta_description,
+      archivada: t.archivado_at !== null,
+      versionPublicadaId: t.version_publicada,
+      versiones,
+    };
+  });
 }

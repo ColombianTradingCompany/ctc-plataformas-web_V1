@@ -4,6 +4,12 @@ import type { ToolId } from "@/lib/tools/catalog";
 // del hub del productor (LineIcon en AppDashboard): trazo de 1.6, currentColor,
 // viewBox de 24, sin relleno. Así el icono se ve nativo en las tres superficies
 // —cada una le da su propio color— y no aparece un segundo estilo gráfico.
+//
+// (2026-08-15) Este mapa dejó de ser exhaustivo. Desde que se pueden SUBIR
+// herramientas por el ECP, el conjunto no se conoce al compilar: una recién
+// subida no tiene icono dibujado y no puede esperar a que alguien se lo dibuje
+// para poder usarse. Por eso se accede con `iconoDe()`, que cae en un genérico.
+// Dibujarle el suyo después es añadir una entrada aquí, y nada más.
 
 function LineIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -123,3 +129,18 @@ export const TOOL_ICON: Record<ToolId, React.ReactNode> = {
     </LineIcon>
   ),
 };
+
+/** El genérico: una llave de ajuste. Se usa para toda herramienta subida que
+ *  todavía no tiene icono propio. */
+const ICONO_GENERICO = (
+  <LineIcon>
+    <path d="M15.5 3.5a5 5 0 0 0-4.4 7.35L3.9 18.1a2 2 0 0 0 2.83 2.83l7.25-7.25A5 5 0 1 0 15.5 3.5Z" />
+    <path d="M6.2 17.6h.01" />
+  </LineIcon>
+);
+
+/** El icono de una herramienta, con red de seguridad. NUNCA indexe `TOOL_ICON`
+ *  directamente: el mapa ya no cubre todos los ids posibles. */
+export function iconoDe(id: ToolId): React.ReactNode {
+  return TOOL_ICON[id] ?? ICONO_GENERICO;
+}

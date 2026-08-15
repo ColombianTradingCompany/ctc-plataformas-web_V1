@@ -1,8 +1,15 @@
 "use client";
 
-// Las dos caras de Direccionamiento. Van juntas a propósito: la ficha de
-// contexto redacta material de cliente, y los Grados de Calidad son la cifra
-// que ese material NO puede inventarse (ver la memoria en direccionamientoActions).
+// Las TRES caras de Direccionamiento. Van juntas a propósito: la ficha de
+// contexto redacta material de cliente, los Grados de Calidad son la cifra que
+// ese material NO puede inventarse (ver la memoria en direccionamientoActions),
+// y Manejo de Plataformas es cómo se presenta cada superficie hacia afuera.
+//
+// Manejo de Plataformas se pidió al principio bajo ECP → IT y Plataforma y el
+// owner lo movió aquí (2026-08-15): «tiene que estar fusionado en uno». La
+// razón se sostiene sola — son la misma pregunta, qué dice la casa de sí misma;
+// tenerlo en dos módulos habría acabado con dos respuestas distintas, que es
+// exactamente el problema que los Grados vinieron a arreglar.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,6 +18,7 @@ import styles from "@/app/bcp/(app)/shared.module.css";
 const TABS = [
   { href: "/ecp/direccionamiento", label: "Definición de contexto", exact: true },
   { href: "/ecp/direccionamiento/grados", label: "Grados de Calidad" },
+  { href: "/ecp/direccionamiento/plataformas", label: "Manejo de Plataformas" },
 ];
 
 export function DireccionamientoTabs() {

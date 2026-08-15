@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PARTNERS, PARTNER_SLUGS, isPartnerSlug } from "@/lib/partners/partners";
-import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+import { metadatosDeSuperficieAsync } from "@/lib/seo/openGraph";
 import { OrganizationLd } from "@/components/JsonLd";
 import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./socios.module.css";
@@ -20,7 +20,9 @@ export async function generateMetadata({ params }: { params: Promise<{ partner: 
   const { partner } = await params;
   if (!isPartnerSlug(partner)) return {};
   const p = PARTNERS[partner];
-  return metadatosDeSuperficie({
+  // Los cinco nodos pasan por las mismas excepciones de Manejo de Plataformas
+  // que las demás superficies: cada uno tiene su fila, con su ruta por clave.
+  return metadatosDeSuperficieAsync({
     route: `/socios/${p.slug}`,
     title: `${p.name} · Nodo socio de la red CTC · ${p.role}`,
     description: p.what,

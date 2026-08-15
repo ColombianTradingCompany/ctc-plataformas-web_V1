@@ -1,18 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { TOOLS, type ToolId } from "@/lib/tools/catalog";
-import { TOOL_ICON } from "./ToolIcons";
+import { type ToolId } from "@/lib/tools/catalog";
+import { iconoDe } from "./ToolIcons";
 import styles from "./ToolPanel.module.css";
 
-// Panel de opciones + visor. Lo comparten las tres superficies (Kaffetal Regal,
-// Cherry Picked y el ECP): cada una le pasa su lista de herramientas y sus
-// textos ya traducidos, así que el componente no sabe nada de idiomas.
+// Panel de opciones + visor. Lo comparten las cuatro superficies (Kaffetal
+// Regal, Cherry Picked, el Directorio y el ECP): cada una le pasa su lista de
+// herramientas y sus textos ya traducidos, así que el componente no sabe nada de
+// idiomas.
+//
+// (2026-08-15) `src` y `lang` VIAJAN EN LA LISTA. Antes el panel los buscaba él
+// mismo en el mapa `TOOLS`, que era una constante del código; desde que la
+// versión publicada de una herramienta la decide el registro de la base, ese
+// mapa ya no existe y quien carga la lista es quien sabe qué archivo toca. El
+// panel se quedó sin ninguna fuente de verdad propia, que es lo correcto: solo
+// pinta lo que le dan.
 
 export type ToolCopy = {
   id: ToolId;
   name: string;
   desc: string;
+  /** La URL ya resuelta del iframe: `/tools/x.html` si la versión viva viene del
+   *  repositorio, `/tools/h/<id>` si es una subida. */
+  src: string;
+  lang: "es" | "en";
 };
 
 // OJO: TODO lo que entra aquí tiene que ser SERIALIZABLE. Este componente es
@@ -44,7 +56,6 @@ export function ToolPanel({
 }) {
   const [active, setActive] = useState<ToolId | null>(initial ?? null);
   const activeCopy = tools.find((t) => t.id === active) ?? null;
-  const activeDef = active ? TOOLS[active] : null;
 
   return (
     <div className={styles.wrap}>
@@ -61,10 +72,10 @@ export function ToolPanel({
             >
               <span className={styles.optionTop}>
                 <span className={styles.optionIcon} aria-hidden>
-                  {TOOL_ICON[t.id]}
+                  {iconoDe(t.id)}
                 </span>
                 <span className={styles.optionName}>{t.name}</span>
-                <span className={styles.langTag}>{TOOLS[t.id].lang.toUpperCase()}</span>
+                <span className={styles.langTag}>{t.lang.toUpperCase()}</span>
               </span>
               <span className={styles.optionDesc}>{t.desc}</span>
             </button>
@@ -72,12 +83,12 @@ export function ToolPanel({
         })}
       </div>
 
-      {activeCopy && activeDef ? (
+      {activeCopy ? (
         <>
           <div className={styles.viewerHead}>
             <span className={styles.viewerTitle}>{activeCopy.name}</span>
             <div className={styles.viewerActions}>
-              <a className="btn btn-sm" href={activeDef.src} target="_blank" rel="noopener noreferrer">
+              <a className="btn btn-sm" href={activeCopy.src} target="_blank" rel="noopener noreferrer">
                 {labels.openInTab}
               </a>
             </div>
@@ -86,9 +97,9 @@ export function ToolPanel({
             {/* key: fuerza un iframe nuevo al cambiar de herramienta, para que
                 cada una arranque limpia en vez de heredar el estado anterior. */}
             <iframe
-              key={activeDef.id}
+              key={activeCopy.id}
               className={styles.frame}
-              src={activeDef.src}
+              src={activeCopy.src}
               title={`${labels.framePrefix}: ${activeCopy.name}`}
               loading="lazy"
               // Las herramientas son nuestras y autocontenidas, pero se les

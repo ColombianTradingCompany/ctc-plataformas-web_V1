@@ -1,4 +1,4 @@
-// ── Las herramientas embebidas ───────────────────────────────────────────────
+// ── El registro de herramientas ──────────────────────────────────────────────
 // Son páginas HTML/CSS/JS AUTOCONTENIDAS que se muestran dentro de un <iframe>.
 // No se portan a React a propósito: son ~900 KB de HTML artesanal con su propio
 // CSS y su propia lógica; reescribirlas sería mucho trabajo y la garantía de
@@ -6,165 +6,140 @@
 // que el archivo original, y el iframe además aísla su CSS del de la plataforma
 // (ninguna de las dos hojas puede pisar a la otra).
 //
-// FUNCIONAN SIN INTERNET: scripts/vendor-tool-assets.mjs bajó a disco las
-// tipografías y el CDN de Tailwind y reescribió los enlaces a rutas locales.
-// Importa de verdad — la calculadora rápida sacaba TODO su CSS del CDN, así que
-// una finca sin señal la veía sin un solo estilo.
+// ⚠️ ESTE ARCHIVO YA NO ES LA FUENTE DE VERDAD (2026-08-15). Antes tenía dentro
+// el union `ToolId`, el mapa `TOOLS` con la ruta de cada una y
+// `DEFAULT_TOOLS_CONFIG` con el reparto; añadir una herramienta era un deploy y
+// cambiar su reparto, otro. Ahora el registro vive en la tabla `tools` y el
+// historial en `tool_versions`, para que el ECP pueda SUBIR una versión nueva y
+// publicarla sin tocar el repositorio. Aquí quedan solo los tipos y las
+// funciones PURAS que las dos orillas comparten — sin `server-only`, para que un
+// guardián de QA pueda importarlas con `--experimental-strip-types`.
 //
-// OJO: proxy.ts EXCLUYE /tools del matcher. Sin eso, en un subdominio
-// (kaffetal-regal.ctcexport.com) la reescritura convertiría /tools/x.html en
-// /kaffetal-regal/tools/x.html y daría 404.
+// Lo que NO cambió y sigue mandando:
+//   · proxy.ts EXCLUYE `/tools` de su matcher. Sin eso, en un subdominio
+//     (kaffetal-regal.ctcexport.com) la reescritura convertiría /tools/x.html en
+//     /kaffetal-regal/tools/x.html y daría 404. Es también la razón de que el
+//     route handler de las versiones subidas cuelgue de /tools y no de /ecp:
+//     ése fue exactamente el error que retiró el mecanismo «privado» anterior.
+//   · FUNCIONAN SIN INTERNET: scripts/vendor-tool-assets.mjs bajó a disco las
+//     tipografías y el CDN de Tailwind y reescribió los enlaces a rutas locales
+//     bajo /tools/assets/. Esa carpeta se queda en public/ pase lo que pase con
+//     los HTML: las versiones subidas también apuntan ahí.
 
-export type ToolId =
-  | "agtron"
-  | "mermas-rapida"
-  | "mermas-detallada"
-  | "qr"
-  | "mermas-ctc"
-  | "catacion"
-  | "green-datasheet"
-  | "formula-calidad"
-  | "viaje-cafe"
-  | "cogs-verde"
-  | "costo-empaque"
-  | "cool-pdf";
+/** El identificador de una herramienta. Es un slug LIBRE, no un union cerrado:
+ *  desde que se pueden subir herramientas por el panel, el conjunto no se
+ *  conoce en tiempo de compilación. */
+export type ToolId = string;
 
-export type ToolDef = {
-  id: ToolId;
-  /** De dónde se sirve. Las privadas pasan por un route handler autenticado. */
-  src: string;
-  /** Idioma en el que está escrita la herramienta (no se traduce su interior). */
-  lang: "es" | "en";
-};
-
-export const TOOLS: Record<ToolId, ToolDef> = {
-  agtron: { id: "agtron", src: "/tools/agtron-dial.html", lang: "en" },
-  "mermas-rapida": { id: "mermas-rapida", src: "/tools/mermas-rapida.html", lang: "es" },
-  "mermas-detallada": { id: "mermas-detallada", src: "/tools/mermas-detallada.html", lang: "es" },
-  // 2026-07-24: el mecanismo de herramientas "privadas" (/ecp/herramientas/<key>,
-  // HTML embebido) se RETIRÓ — el owner activó qr/formula-calidad/viaje-cafe para
-  // Kaffetal Regal en Disponibilidad y una herramienta servida por la consola no
-  // puede abrirse fuera de ella (404, segunda vez que pasa). Ahora TODAS viven en
-  // public/tools/ y la tabla de Disponibilidad es el único control: no contienen
-  // datos ni secretos — lo que se protege son las PÁGINAS, no los archivos.
-  qr: { id: "qr", src: "/tools/generador-qr.html", lang: "en" },
-  "formula-calidad": { id: "formula-calidad", src: "/tools/formula-calidad.html", lang: "es" },
-  "viaje-cafe": { id: "viaje-cafe", src: "/tools/viaje-cafe.html", lang: "es" },
-  // Públicas (public/tools/): se ofrecen a productores/compradores igual que las
-  // calculadoras de merma y el Agtron. DEBEN ser públicas para funcionar en
-  // Kaffetal Regal — una herramienta servida por /ecp/herramientas/ no se puede
-  // abrir fuera de la consola (auth de ECP + la reescritura de subdominio de proxy.ts).
-  "mermas-ctc": { id: "mermas-ctc", src: "/tools/mermas-ctc.html", lang: "es" },
-  catacion: { id: "catacion", src: "/tools/rueda-catacion.html", lang: "es" },
-  "green-datasheet": { id: "green-datasheet", src: "/tools/green-coffee-datasheet.html", lang: "en" },
-  "cogs-verde": { id: "cogs-verde", src: "/tools/cogs-cafe-verde.html", lang: "es" },
-  // Trae su propio conmutador ES/EN dentro; se marca "es" porque arranca en español.
-  "costo-empaque": { id: "costo-empaque", src: "/tools/costo-empaque.html", lang: "es" },
-  // Trae conmutador ES/EN, pero arranca en inglés.
-  "cool-pdf": { id: "cool-pdf", src: "/tools/cool-pdf.html", lang: "en" },
-};
-
-/** Todas las herramientas, en el orden en que se listan en el panel interno. */
-export const ALL_TOOL_IDS: ToolId[] = [
-  "mermas-rapida",
-  "mermas-detallada",
-  "agtron",
-  "mermas-ctc",
-  "cogs-verde",
-  "costo-empaque",
-  "cool-pdf",
-  "catacion",
-  "green-datasheet",
-  "qr",
-  "formula-calidad",
-  "viaje-cafe",
-];
-
-// ── El reparto por superficie, ahora CONFIGURABLE ────────────────────────────
-// Antes eran tres listas fijas en este archivo. Desde 2026-07-20 el reparto se
-// administra desde la consola interna (Herramientas → Disponibilidad) y vive en
-// platform_settings.tools_config; lo de aquí abajo es solo el ARRANQUE, que
-// reproduce exactamente el reparto que había:
-//   · las calculadoras de merma son la matemática diaria del CAFICULTOR (y
-//     están en español) ⇒ solo Kaffetal Regal;
-//   · el disco Agtron va en LAS DOS: es el instrumento del tostador, pero
-//     también el idioma con el que el comprador le hablará al productor de su
-//     tueste — por eso el productor necesita poder mirarlo;
-//   · el generador de QR nació interno pero el owner lo activó para KR (2026-07-24).
-//
-// DOS NIVELES (petición del owner): "default" la ve cualquiera con cuenta en esa
-// superficie; "plus" solo quien tiene el estatus correspondiente (hoy:
-// Pasaporte del Kaffetal Club en el lado productor, membresía en Cherry Picked).
-export type ToolTier = "default" | "plus";
-// "web" (V4 · Fase 4) = la superficie pública Herramientas del Café
-// (herramientas.ctcexport.com). Ahí "default" lo ve el VISITANTE ANÓNIMO y
-// "plus" cualquier cuenta de la plataforma con sesión — la identidad única de
-// la red (la cookie viaja entre subdominios), no un login nuevo.
+/** Dónde se puede ofrecer una herramienta.
+ *  "web" (V4 · Fase 4) = la superficie pública Herramientas del Café
+ *  (herramientas.ctcexport.com). Ahí "default" lo ve el VISITANTE ANÓNIMO y
+ *  "plus" cualquier cuenta de la plataforma con sesión — la identidad única de
+ *  la red (la cookie viaja entre subdominios), no un login nuevo. */
 export type ToolSurface = "kr" | "cp" | "web" | "dc";
 
-export type ToolSetting = {
-  /** Visible en Kaffetal Regal. */
-  kr: boolean;
-  /** Visible en Cherry Picked. */
-  cp: boolean;
-  /** Visible en la superficie pública Herramientas del Café. */
-  web: boolean;
-  /** Visible en el Directorio del Café (pestaña Herramientas). */
-  dc: boolean;
+/** DOS NIVELES: "default" la ve cualquiera con cuenta en esa superficie; "plus"
+ *  solo quien tiene el estatus. Plus es una ACTIVACIÓN explícita que el ECP
+ *  concede (tools_plus_grants), no algo derivado — ver plusGrants.ts. */
+export type ToolTier = "default" | "plus";
+
+/** La CLASE de una herramienta (owner, 2026-08-15).
+ *
+ *  `interna`     — solo para CTC. No se lista en ninguna superficie y su archivo
+ *                  solo se sirve a una sesión de consola interna.
+ *  `compartible` — se puede ofrecer a productores, compradores y al público.
+ *
+ *  ⚠️ La clase NO es una etiqueta cosmética, y el guardián `guard_tools_clase`
+ *  en la base lo impone: una herramienta cuya versión publicada vive en
+ *  `public/tools/` NO puede ser interna, porque ese fichero lo sirve el CDN sin
+ *  pasar por la aplicación y ninguna compuerta puede cubrirlo. Para volverla
+ *  interna hay que subir una versión por el panel primero. Es la lección de la
+ *  gotcha 12 —el mecanismo «privado» anterior protegía la PÁGINA y dejaba el
+ *  ARCHIVO abierto— convertida en invariante de la base. */
+export type ToolClase = "interna" | "compartible";
+
+/** De dónde sale el archivo de una versión.
+ *
+ *  `repo`   — un fichero de `public/tools/`. Estático, servido por el CDN,
+ *             URL pública e indexable. Es la versión 1 de las que ya existían.
+ *  `subida` — subido por el ECP; vive en Storage y lo sirve el route handler
+ *             `/tools/h/<slug>`. Es la única que admite compuerta. */
+export type VersionOrigen = "repo" | "subida";
+
+export type ToolVersion = {
+  id: string;
+  numero: number;
+  origen: VersionOrigen;
+  /** Solo cuando `origen === "repo"`. */
+  srcPublico: string | null;
+  /** Solo cuando `origen === "subida"`. */
+  storagePath: string | null;
+  bytes: number | null;
+  notas: string;
+  subidoAt: string;
+  subidoPor: string | null;
+};
+
+/** Una herramienta tal y como la ve una SUPERFICIE: ya resuelta, sin nada que
+ *  buscar en un diccionario aparte. */
+export type ToolPublico = {
+  id: ToolId;
+  nombre: string;
+  descripcion: string;
+  lang: "es" | "en";
+  /** La URL que va en el `src` del iframe, ya resuelta. */
+  src: string;
+  /** Agrupa variantes bajo UNA tarjeta (hoy: "mermas"). Null = va sola. */
+  familia: string | null;
+};
+
+/** La herramienta completa, como la ve la consola interna. */
+export type ToolAdmin = ToolPublico & {
+  clase: ToolClase;
   tier: ToolTier;
+  kr: boolean;
+  cp: boolean;
+  web: boolean;
+  dc: boolean;
+  orden: number;
+  metaDescription: string | null;
+  archivada: boolean;
+  versionPublicadaId: string | null;
+  versiones: ToolVersion[];
 };
 
-export type ToolsConfig = Record<ToolId, ToolSetting>;
-
-// Arranque de `web`: las calculadoras del día a día + la rueda + el Agtron se
-// ofrecen al público; QR/fórmula/viaje/datasheet arrancan apagadas y el owner
-// las enciende desde Disponibilidad si quiere.
-export const DEFAULT_TOOLS_CONFIG: ToolsConfig = {
-  "mermas-rapida": { kr: true, cp: false, web: true, dc: false, tier: "default" },
-  "mermas-detallada": { kr: true, cp: false, web: true, dc: false, tier: "default" },
-  agtron: { kr: true, cp: true, web: true, dc: false, tier: "default" },
-  // Internas del equipo: no se ofrecen en ninguna superficie pública.
-  qr: { kr: false, cp: false, web: false, dc: false, tier: "plus" },
-  "formula-calidad": { kr: false, cp: false, web: false, dc: false, tier: "default" },
-  "viaje-cafe": { kr: false, cp: false, web: false, dc: false, tier: "default" },
-  // Herramientas de trabajo del productor (como las de merma): visibles en KR.
-  // El owner ajusta superficie/nivel desde Disponibilidad.
-  "mermas-ctc": { kr: true, cp: false, web: true, dc: false, tier: "default" },
-  catacion: { kr: true, cp: false, web: true, dc: false, tier: "default" },
-  "green-datasheet": { kr: true, cp: false, web: false, dc: false, tier: "default" },
-  // CoGS de café verde: la cuenta de costos hasta la cotización EXW/FOB/CIF.
-  // Arranca como Plus (petición del owner, 2026-08-04); superficie/nivel se
-  // ajustan desde Disponibilidad.
-  "cogs-verde": { kr: true, cp: false, web: true, dc: false, tier: "plus" },
-  // Costo de empaque por kilo: cuenta de taller del productor que empaca, con la
-  // oferta de proveedores de 2026 dentro. Nivel normal (el owner no pidió Plus).
-  // `web` arranca apagada a propósito (una herramienta nueva no se publica sola
-  // al visitante anónimo). OJO: este arranque ya NO manda — el owner la encendió
-  // en Disponibilidad el 2026-08-06, así que en producción es pública junto al
-  // disco Agtron; lo guardado en tools_config pisa esta línea.
-  "costo-empaque": { kr: true, cp: false, web: false, dc: false, tier: "default" },
-  // Cool PDF: no calcula nada de café — sirve para ENSEÑAR lo que la plataforma
-  // ya genera en PDF (dossier de finca, certificado de lote, cotizaciones). Por
-  // eso arranca en KR y con la superficie pública apagada, como las demás nuevas.
-  "cool-pdf": { kr: true, cp: false, web: false, dc: false, tier: "default" },
-};
-
-/** Merge sobre el arranque: una herramienta nueva nunca queda sin configuración. */
-export function toToolsConfig(raw: unknown): ToolsConfig {
-  const stored = (raw ?? {}) as Partial<Record<ToolId, Partial<ToolSetting>>>;
-  const out = {} as ToolsConfig;
-  for (const id of ALL_TOOL_IDS) {
-    out[id] = { ...DEFAULT_TOOLS_CONFIG[id], ...(stored[id] ?? {}) };
-  }
-  return out;
+/** La URL con la que se sirve una versión SUBIDA. Vive bajo `/tools` a
+ *  propósito: ese prefijo está excluido del matcher del proxy, así que la misma
+ *  URL funciona en los 18 subdominios sin que la reescritura la rompa. */
+export function srcDeVersionSubida(id: ToolId): string {
+  return `/tools/h/${id}`;
 }
 
-/** Las herramientas visibles en una superficie para una audiencia dada. */
-export function toolsForSurface(config: ToolsConfig, surface: ToolSurface, isPlus: boolean): ToolId[] {
-  return ALL_TOOL_IDS.filter((id) => config[id][surface] && (config[id].tier === "default" || isPlus));
+/** Resuelve el `src` del iframe para la versión publicada de una herramienta.
+ *  Pura: la usan el servidor, el cliente y el guardián de QA. */
+export function srcDeVersion(id: ToolId, v: Pick<ToolVersion, "origen" | "srcPublico"> | null): string | null {
+  if (!v) return null;
+  return v.origen === "repo" ? v.srcPublico : srcDeVersionSubida(id);
 }
 
-/** Las que existen en la superficie pero están reservadas al nivel Plus. */
-export function plusOnlyForSurface(config: ToolsConfig, surface: ToolSurface): ToolId[] {
-  return ALL_TOOL_IDS.filter((id) => config[id][surface] && config[id].tier === "plus");
+/** ¿Esta herramienta se puede ofrecer en esta superficie a esta audiencia?
+ *  Una `interna` nunca — el guardián de la base ya le apaga las superficies,
+ *  y esto es la segunda vuelta de la misma regla en el lado del código. */
+export function seOfreceEn(
+  t: Pick<ToolAdmin, "clase" | "tier" | "kr" | "cp" | "web" | "dc" | "archivada">,
+  surface: ToolSurface,
+  isPlus: boolean
+): boolean {
+  if (t.clase === "interna" || t.archivada) return false;
+  if (!t[surface]) return false;
+  return t.tier === "default" || isPlus;
 }
+
+/** El límite de una subida. Las que ya existen van de 33 KB a 3 MB (el viaje del
+ *  café), así que 8 MB deja margen sin abrir la puerta a que alguien empuje un
+ *  video dentro de un HTML. */
+export const MAX_TOOL_MB = 8;
+
+/** Lo que se acepta subir. Una herramienta es UN html autocontenido: sus
+ *  tipografías y librerías ya están vendorizadas bajo /tools/assets/. */
+export const TOOL_ACCEPT = ".html,.htm";

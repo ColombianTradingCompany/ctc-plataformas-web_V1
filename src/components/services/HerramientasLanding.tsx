@@ -1,8 +1,7 @@
 "use client";
 
 import { ToolPanel } from "@/components/tools/ToolPanel";
-import type { ToolId } from "@/lib/tools/catalog";
-import { TOOL_COPY } from "@/lib/tools/toolCopy";
+import type { ToolPublico } from "@/lib/tools/catalog";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";
@@ -77,11 +76,11 @@ const CHROME: Record<
 };
 
 export function HerramientasLanding({
-  ids,
+  tools,
   isPlus,
   lockedCount,
 }: {
-  ids: ToolId[];
+  tools: ToolPublico[];
   isPlus: boolean;
   lockedCount: number;
 }) {
@@ -96,9 +95,9 @@ export function HerramientasLanding({
         <p className={styles.heroSub}>{chrome.sub}</p>
         <p className={styles.heroBody}>{chrome.body}</p>
         <div className={styles.chips}>
-          {ids.map((id) => (
-            <span className={styles.chip} key={id}>
-              {TOOL_COPY[id].name}
+          {tools.map((t) => (
+            <span className={styles.chip} key={t.id}>
+              {t.nombre}
             </span>
           ))}
         </div>
@@ -120,7 +119,10 @@ export function HerramientasLanding({
 
       <section className={`${styles.section} ${styles.sectionAlt}`}>
         <div className={`${styles.sectionInner} ${styles.single}`}>
-          <ToolPanel tools={ids.map((id) => ({ id, ...TOOL_COPY[id] }))} labels={chrome.panelLabels} />
+          <ToolPanel
+            tools={tools.map((t) => ({ id: t.id, name: t.nombre, desc: t.descripcion, src: t.src, lang: t.lang }))}
+            labels={chrome.panelLabels}
+          />
         </div>
       </section>
     </SurfaceShell>

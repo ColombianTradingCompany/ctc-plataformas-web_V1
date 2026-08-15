@@ -24,7 +24,11 @@ type Copy = {
   choose: string;
   groupAria: string;
   framePrefix: string;
-  tools: Record<ToolId, { name: string; desc: string }>;
+  /** Mapa de EXCEPCIONES traducidas, no el catálogo (2026-08-15). Cherry Picked
+   *  es trilingüe y por eso guarda su propio copy; lo que no esté aquí cae en el
+   *  nombre y la descripción del registro, para que una herramienta subida por el
+   *  ECP se pueda ofrecer sin esperar a que alguien la traduzca. */
+  tools: Record<ToolId, { name: string; desc: string } | undefined>;
 };
 
 const EN: Copy = {
@@ -153,7 +157,13 @@ export function GadgetsSection() {
         </div>
 
         <ToolPanel
-          tools={toolAccess.ids.map((id) => ({ id, ...t.tools[id] }))}
+          tools={toolAccess.tools.map((x) => ({
+            id: x.id,
+            name: t.tools[x.id]?.name ?? x.nombre,
+            desc: t.tools[x.id]?.desc ?? x.descripcion,
+            src: x.src,
+            lang: x.lang,
+          }))}
           labels={{
             openInTab: t.openInTab,
             choose: t.choose,

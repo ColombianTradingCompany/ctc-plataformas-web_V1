@@ -30,7 +30,14 @@ import styles from "./AppDashboard.module.css";
 // Copy en español de las herramientas para el productor. El INTERIOR de cada
 // herramienta queda en su idioma original (las de mermas están en español, el
 // disco Agtron en inglés) — se marca con la etiqueta de idioma en la tarjeta.
-const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string }> = {
+//
+// (2026-08-15) Esto es un mapa de EXCEPCIONES, no el catálogo. Kaffetal Regal le
+// habla al productor con sus palabras y por eso conserva su propio diccionario
+// —decisión vieja y sigue en pie—, pero desde que se pueden subir herramientas
+// por el ECP no puede ser la única fuente: una recién subida no tendría nombre y
+// no se podría ofrecer hasta que alguien tocara este archivo. Lo que no esté
+// aquí cae en el nombre y la descripción del registro.
+const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string } | undefined> = {
   "mermas-rapida": {
     name: "Calculadora rápida de mermas",
     desc: "Rendimiento de café y cacao: cuánto le queda al pasar de cereza a pergamino y a excelso.",
@@ -790,7 +797,13 @@ export function AppDashboard({
                 Elija una y se abre aquí mismo.
               </div>
               <ToolPanel
-                tools={toolAccess.ids.map((id) => ({ id, ...KR_TOOL_COPY[id] }))}
+                tools={toolAccess.tools.map((t) => ({
+                  id: t.id,
+                  name: KR_TOOL_COPY[t.id]?.name ?? t.nombre,
+                  desc: KR_TOOL_COPY[t.id]?.desc ?? t.descripcion,
+                  src: t.src,
+                  lang: t.lang,
+                }))}
                 labels={{
                   openInTab: "Abrir en pestaña nueva ↗",
                   choose: "Elija una herramienta para abrirla aquí.",

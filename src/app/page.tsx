@@ -1,4 +1,4 @@
-import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
+﻿import { superficieConOverrides } from "@/lib/seo/openGraph";
 import { graphLd, organizationLd, webSiteLd } from "@/lib/seo/jsonLd";
 import { JsonLd } from "@/components/JsonLd";
 import { ToastProvider } from "@/components/Toast";
@@ -15,13 +15,13 @@ import { HistorySection } from "@/components/ctc-home/HistorySection";
 import { QuickMenu } from "@/components/ctc-home/QuickMenu";
 import { Footer } from "@/components/ctc-home/Footer";
 
-// La casa matriz es la única superficie que hasta hoy no declaraba ni título
-// propio: heredaba el del layout raíz. Ahora firma su tarjeta como las demás.
-export const metadata = metadatosDeSuperficie({
+// La casa matriz es la Ãºnica superficie que hasta hoy no declaraba ni tÃ­tulo
+// propio: heredaba el del layout raÃ­z. Ahora firma su tarjeta como las demÃ¡s.
+export const generateMetadata = superficieConOverrides({
   route: "/",
-  title: "Colombian Trading Company · Cafés de Colombia, para el mundo",
+  title: "Colombian Trading Company Â· CafÃ©s de Colombia, para el mundo",
   description:
-    "Exportador colombiano de café verde con trazabilidad de finca a taza: producimos el pasaporte de cada lote, lo calificamos en la Arena con protocolo SCA y lo llevamos a Europa con la declaración EUDR resuelta. Kaffetal Regal para el productor, Cherry Picked para el tostador.",
+    "Exportador colombiano de cafÃ© verde con trazabilidad de finca a taza: producimos el pasaporte de cada lote, lo calificamos en la Arena con protocolo SCA y lo llevamos a Europa con la declaraciÃ³n EUDR resuelta. Kaffetal Regal para el productor, Cherry Picked para el tostador.",
   siteName: "Colombian Trading Company",
   image: "ctc-home.jpg",
   imageAlt: "Logotipo de Colombian Trading Company sobre fondo azul corporativo",
@@ -32,7 +32,7 @@ export default function CtcHomePage() {
   return (
     <div data-theme="ctc-home">
       {/* La casa matriz es la que DECLARA la empresa y el sitio: es la ficha a
-          la que apuntan por `@id` las de las demás superficies. */}
+          la que apuntan por `@id` las de las demÃ¡s superficies. */}
       <JsonLd data={graphLd([organizationLd(), webSiteLd()])} />
       <ToastProvider>
         <LangProvider storageKey="ctc-lang">
@@ -42,20 +42,20 @@ export default function CtcHomePage() {
             <EcosystemSection />
             <HomeBand band="feria" />
             <MomentSection />
-            {/* La sección «Oferta 3 · Value Ecosystem» se retiró el 2026-08-11:
+            {/* La secciÃ³n Â«Oferta 3 Â· Value EcosystemÂ» se retirÃ³ el 2026-08-11:
                 sus cuatro paneles se abren ahora como ventana desde la puerta
-                que les toca en el índice de la red (EcosystemSection). La copy
+                que les toca en el Ã­ndice de la red (EcosystemSection). La copy
                 sigue viviendo en `components/services/servicesCopy`, que es de
-                donde también beben las cuatro landings propias. */}
+                donde tambiÃ©n beben las cuatro landings propias. */}
             <HomeBand band="patio" />
             <CosechasSection />
-            {/* La franja del mirador separa el calendario de «Quiénes somos» —
-                y es la foto que antes cerraba el pie, que allí no decía nada. */}
+            {/* La franja del mirador separa el calendario de Â«QuiÃ©nes somosÂ» â€”
+                y es la foto que antes cerraba el pie, que allÃ­ no decÃ­a nada. */}
             <HomeBand band="mirador" />
             <HistorySection />
             <QuickMenu />
             {/* Las dos burbujas comparten la esquina de abajo a la derecha: el
-                idioma en el suelo, «Navegar» encima (QuickMenu.module.css). */}
+                idioma en el suelo, Â«NavegarÂ» encima (QuickMenu.module.css). */}
             <LangBubble align="right" />
             <Footer />
           </ContactModalProvider>

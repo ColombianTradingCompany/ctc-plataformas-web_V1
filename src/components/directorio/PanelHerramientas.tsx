@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { ToolPanel } from "@/components/tools/ToolPanel";
 import { SolicitarPlus } from "@/components/tools/SolicitarPlus";
 import { loadToolAccess, type ToolAccess } from "@/lib/tools/toolAccess";
-import { TOOL_COPY } from "@/lib/tools/toolCopy";
 
 // ── Herramientas del Café · pestaña del Directorio (2026-08-02) ─────────────
 // El mismo kit embebido de KR/Cherry Picked, con el reparto `dc` de la tabla
@@ -34,14 +33,14 @@ export function PanelHerramientas({ activo }: { activo: boolean }) {
       </div>
       {!access ? (
         <p style={{ color: "var(--gris, #6b6459)", fontSize: 14 }}>Cargando las herramientas…</p>
-      ) : access.ids.length === 0 && access.lockedCount === 0 ? (
+      ) : access.tools.length === 0 && access.lockedCount === 0 ? (
         <p style={{ color: "var(--gris, #6b6459)", fontSize: 14 }}>
           CTC todavía no habilitó herramientas para el Directorio — pronto.
         </p>
       ) : (
         <>
           <ToolPanel
-            tools={access.ids.map((id) => ({ id, ...TOOL_COPY[id] }))}
+            tools={access.tools.map((t) => ({ id: t.id, name: t.nombre, desc: t.descripcion, src: t.src, lang: t.lang }))}
             labels={{
               openInTab: "Abrir en pestaña nueva ↗",
               choose: "Elige una herramienta para abrirla aquí.",

@@ -181,25 +181,36 @@ export function CaasLanding() {
   const { openForm } = useContactModal();
 
   return (
-    <SurfaceShell name="CaaS · Coffee as a Service">
-      <section className={styles.hero}>
-        <span className={styles.tag}>CaaS · Coffee as a Service</span>
-        <h1>{t.cocreateH3}</h1>
-        <p className={styles.heroSub}>{t.cocreateSub}</p>
-        <p className={styles.heroBody}>{t.cocreateBody}</p>
-        <div className={styles.ctaRow}>
-          <button className="btn btn-solid" type="button" onClick={() => openForm("cocreate")}>
-            {t.cocreateCta}
-          </button>
-          <span className={styles.ctaNote}>{chrome.heroNote}</span>
+    // El sello llegó el 2026-08-15 y con él CaaS dejó de ser la única puerta de
+    // la familia sin cara propia — CTC Tech, Varietales, Herramientas y
+    // Terratalento ya entregaban el suyo a la barra. Es EL MISMO archivo que
+    // usa la tarjeta del hub: una cara, un fichero.
+    <SurfaceShell name="CaaS · Coffee as a Service" logo="/images/shared/cherry-picked-caas-seal.webp">
+      <section className={`${styles.hero} ${styles.heroGrid}`}>
+        <div>
+          <span className={styles.tag}>CaaS · Coffee as a Service</span>
+          <h1>{t.cocreateH3}</h1>
+          <p className={styles.heroSub}>{t.cocreateSub}</p>
+          <p className={styles.heroBody}>{t.cocreateBody}</p>
+          <div className={styles.ctaRow}>
+            <button className="btn btn-solid" type="button" onClick={() => openForm("cocreate")}>
+              {t.cocreateCta}
+            </button>
+            <span className={styles.ctaNote}>{chrome.heroNote}</span>
+          </div>
+          <div className={styles.chips}>
+            {t.cocreateSpecs.map((s) => (
+              <span className={styles.chip} key={s}>
+                {s}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className={styles.chips}>
-          {t.cocreateSpecs.map((s) => (
-            <span className={styles.chip} key={s}>
-              {s}
-            </span>
-          ))}
-        </div>
+        {/* Decorativo: el nombre ya está escrito en el <h1> y en la etiqueta de
+            arriba, así que repetirlo en el alt sería decirlo tres veces a quien
+            usa lector de pantalla. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- adorno del hero, medido por CSS */}
+        <img className={styles.heroSeal} src="/images/shared/cherry-picked-caas-seal.webp" alt="" aria-hidden />
       </section>
 
       <section className={`${styles.section} ${styles.sectionAlt}`}>

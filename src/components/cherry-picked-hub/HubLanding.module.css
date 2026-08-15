@@ -1,7 +1,26 @@
 /* Cherry Picked · el hub. Hereda el tema `cherry-picked` del div raíz, así que
    usa los mismos tokens que la tienda y los dos programas hermanos. */
 
-.hero{padding:70px 0 64px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hero{position:relative;isolation:isolate;padding:70px 0 64px;background:var(--paper);
+  border-bottom:1px solid var(--line);overflow:hidden}
+/* El vídeo del viaje del café, detrás del titular. Va MUY tapado a propósito:
+   es fondo, no contenido — si compite con el texto, el texto pierde y la
+   página deja de leerse. El velo es doble: un lavado del papel del tema por
+   encima de todo, y un degradado lateral que protege la columna del titular,
+   que es donde de verdad hay que poder leer. */
+.heroBg{position:absolute;inset:0;z-index:-1}
+.heroBg::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--paper) 0%,color-mix(in srgb,var(--paper) 88%,transparent) 48%,
+    color-mix(in srgb,var(--paper) 62%,transparent) 100%),
+    color-mix(in srgb,var(--paper) 34%,transparent);
+}
+.heroVideo{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85)}
+/* En móvil la columna es una sola y el texto cae ENCIMA del centro del vídeo,
+   así que ahí el velo tiene que ser parejo y más denso. */
+@media(max-width:860px){
+  .heroBg::after{background:color-mix(in srgb,var(--paper) 84%,transparent)}
+}
 .heroGrid{display:grid;grid-template-columns:1.25fr .75fr;gap:44px;align-items:center}
 @media(max-width:860px){.heroGrid{grid-template-columns:1fr;gap:28px}}
 .h1{font-size:clamp(34px,4.8vw,56px);margin:16px 0 18px;color:var(--primary-deep);line-height:1.08}
@@ -18,31 +37,59 @@
 
 .card{
   background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  border-top:5px solid var(--pc);padding:24px;display:flex;flex-direction:column;gap:13px;
+  border-top:5px solid var(--pc);padding:22px 26px 24px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;
 }
 /* Un programa que aún no abre se lee en gris, pero se puede leer entero: no se
    apaga el texto, solo el sello y el color de la cabecera. */
-.cardSoon .seal{filter:grayscale(1);opacity:.6}
+/* Un programa que aún no abre se lee en gris, pero sigue pudiéndose abrir: se
+   apaga el sello y el color del estado, no el acceso a lo que cuenta. */
+.cardSoon .bigSeal{filter:grayscale(1);opacity:.6}
 .cardSoon .state{color:var(--muted);border-color:var(--line)}
 
-.cardTop{display:flex;align-items:center;gap:15px}
-.seal{width:62px;height:auto;flex:none}
-/* CaaS no tiene sello propio (no es un escaparate): lleva un disco del
-   color del programa, para que la fila de cabeceras no baile. */
-.sealDot{width:62px;height:62px;border-radius:50%;flex:none;background:var(--pc);opacity:.9}
-.card h3{font-size:20px;color:var(--primary-deep);line-height:1.2}
-.card h3 em{font-style:normal;color:var(--pc)}
+/* El sello ES la cara y también la puerta: los cuatro llevan su nombre dentro
+   del arte, por eso el h3 va en .sr-only y aquí solo se dibuja. */
+.sealBtn{border:0;background:none;padding:0;cursor:pointer;border-radius:12px}
+.sealBtn:focus-visible{outline:3px solid var(--pc);outline-offset:4px}
+.bigSeal{width:min(190px,62%);height:auto;display:block;margin-inline:auto;transition:transform .2s ease}
+.sealBtn:hover .bigSeal{transform:scale(1.04)}
+@media(prefers-reduced-motion:reduce){.bigSeal{transition:none}.sealBtn:hover .bigSeal{transform:none}}
+/* Reserva por si algún programa futuro entra sin sello: el disco del color
+   evita que la fila baile mientras llega su arte. */
+.sealDot{width:150px;height:150px;border-radius:50%;background:var(--pc);opacity:.9;display:block}
 .state{
-  display:inline-block;margin-bottom:5px;
+  display:inline-block;
   font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--pc);border:1px solid var(--pc);border-radius:999px;padding:2px 9px;
 }
+.cardOpen{
+  margin-top:auto;
+  font-family:var(--font-spline-mono),monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--pc);background:none;border:1.5px dashed var(--pc);border-radius:10px;padding:12px 22px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:10px;transition:background .15s ease,color .15s ease,transform .15s ease;
+}
+.cardOpen span{font-size:16px;line-height:1}
+.cardOpen:hover{background:var(--pc);color:#fff;transform:translateY(-1px)}
+.cardOpen:focus-visible{outline:3px solid var(--pc);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.cardOpen:hover{transform:none}}
 
-.oneline{font-size:14.5px;line-height:1.65;color:var(--ink)}
-.points{list-style:none;display:grid;gap:8px;margin:0;padding:0}
-.points li{position:relative;padding-left:18px;font-size:13.5px;line-height:1.6;color:var(--muted)}
-.points li::before{content:"—";position:absolute;left:0;color:var(--pc);font-weight:700}
-.cardFoot{margin-top:auto;padding-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+/* ── Las bandas ilustradas ────────────────────────────────────────────────── */
+.banda{
+  position:relative;isolation:isolate;padding:64px 0;
+  background:var(--bg) center/cover no-repeat,var(--primary-deep);
+}
+/* El velo es lo que hace legible la frase sobre una foto que no controlamos:
+   sin él, el paisaje tiene cielo claro arriba y hoja oscura abajo, y el texto
+   se pierde en una de las dos mitades. */
+.banda::after{content:"";position:absolute;inset:0;z-index:-1;background:rgba(11,32,22,.62)}
+.bandaK{
+  font-family:var(--font-spline-mono),monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#F0D9A8;margin-bottom:12px;
+}
+.bandaT{
+  font-size:clamp(19px,2.5vw,27px);line-height:1.45;color:#FFF;max-width:32ch;
+  text-shadow:0 2px 14px rgba(0,0,0,.35);
+}
 
 /* ── Lo que comparten los cuatro ──────────────────────────────────────────── */
 .oneBand{background:var(--paper)}

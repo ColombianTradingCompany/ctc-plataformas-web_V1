@@ -42,12 +42,22 @@ const REDIRECCIONES = new Set(["/co-create"]);
  *
  *  `fuera` son las que el owner apagó desde ECP → Direccionamiento → Manejo de
  *  Plataformas: poder sacar una superficie del sitemap sin un deploy es lo que
- *  hace que ese módulo gobierne de verdad y no solo describa. */
+ *  hace que ese módulo gobierne de verdad y no solo describa.
+ *
+ *  ⚠️ LA CASA MATRIZ VA SIN BARRA FINAL, y no es capricho. Next normaliza el
+ *  canonical de la raíz a `https://www.ctcexport.com` (sin barra), así que
+ *  anunciar aquí `…/` dejaba a la casa diciendo DOS direcciones distintas para
+ *  la misma página: una en el `<link rel="canonical">` y otra en el sitemap.
+ *  Un buscador las reconcilia sin problema, pero el sitemap y el canonical son
+ *  dos declaraciones nuestras sobre lo mismo — y la lección de esta tanda fue
+ *  justamente que tienen que decir lo mismo. Manda el canonical, que es la
+ *  declaración fuerte; el sitemap se ajusta a él. Si algún día Next cambia esa
+ *  normalización, este es el sitio que hay que mover con ella. */
 function rutasCanonicas(origin: string, fuera: Set<string>): string[] {
   const rutas = [...new Set(Object.values(SUBDOMAIN_ROUTES))]
     .filter((r) => !REDIRECCIONES.has(r) && !fuera.has(r))
     .sort();
-  return [`${origin}/`, ...rutas.map((r) => `${origin}${r}`)];
+  return [origin, ...rutas.map((r) => `${origin}${r}`)];
 }
 
 /** Las URLs que anuncia un host dado. */

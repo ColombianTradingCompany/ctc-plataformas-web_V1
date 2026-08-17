@@ -186,6 +186,44 @@ export function parseToolJson(raw: unknown): ParseOk | ParseErr {
   };
 }
 
+// ---------------------------------------------------- AssemblyAI (transcripción en la nube)
+/** "A" → "SPEAKER_00", "B" → "SPEAKER_01"… para que la nube y el equipo local hablen igual. */
+export function assemblySpeakerKey(label: unknown, seen: Map<string, string>): string {
+  const raw = typeof label === "string" && label.trim() ? label.trim() : "";
+  if (!raw) return UNKNOWN_SPEAKER;
+  const known = seen.get(raw);
+  if (known) return known;
+  const key = `SPEAKER_${String(seen.size).padStart(2, "0")}`;
+  seen.set(raw, key);
+  return key;
+}
+
+/**
+ * `utterances` de AssemblyAI → los mismos segmentos que produce la herramienta local.
+ * Ellos dan milisegundos y hablantes "A"/"B"/"C"; aquí se pasa a segundos y a
+ * SPEAKER_00/01/… en orden de aparición, que es lo que el resto del módulo espera.
+ */
+export function mapAssemblyUtterances(utterances: unknown): TranscriptSegment[] {
+  if (!Array.isArray(utterances)) return [];
+  const seen = new Map<string, string>();
+  const out: TranscriptSegment[] = [];
+  for (const u of utterances) {
+    if (!u || typeof u !== "object") continue;
+    const o = u as Record<string, unknown>;
+    const text = typeof o.text === "string" ? o.text.trim() : "";
+    if (!text) continue;
+    const start = typeof o.start === "number" ? o.start / 1000 : 0;
+    const end = typeof o.end === "number" ? o.end / 1000 : start;
+    out.push({
+      speaker: assemblySpeakerKey(o.speaker, seen),
+      start: Math.round(start * 1000) / 1000,
+      end: Math.round(Math.max(end, start) * 1000) / 1000,
+      text,
+    });
+  }
+  return out;
+}
+
 /**
  * Texto pegado a mano (sin JSON): cada párrafo pasa a ser un segmento sin tiempos.
  * Si las líneas empiezan por "Nombre:" se respeta como hablante.

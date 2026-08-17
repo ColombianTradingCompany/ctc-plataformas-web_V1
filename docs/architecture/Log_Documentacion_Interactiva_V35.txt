@@ -579,3 +579,52 @@ el fallo es SILENCIOSO y se nota tarde.
   ni rutas absolutas del owner ni claves en el código.
 Sin cambio de APP_VERSION: no cambia nada de la aplicación.
 (commit: f8f800c)
+
+## [2026-08-16] El sitemap de la casa matriz decía dos direcciones para la misma página
+(Asiento escrito el 2026-08-17: este commit salió sin registrarse en la bitácora.)
+
+- `src/app/sitemap.xml/route.ts`: la entrada raíz de www salía con barra final
+  mientras el canonical (V4.7) la declara sin ella — dos URLs para una página, que
+  es justo lo que la inversión del canonical quería evitar. Ahora la raíz se lista
+  exactamente como su canonical.
+- ⚠️ Salió SIN subir APP_VERSION (igual que `b3f96e6`, el atajo del rail, el mismo
+  día): V4.7 cubre por tanto TRES estados desplegados. No se retro-numeran — el sha
+  del pie legal (`NEXT_PUBLIC_BUILD_SHA`) sigue distinguiéndolos — pero conste la
+  falta contra la regla de AGENTS.md.
+Sin cambio de APP_VERSION.
+(commit: f3265e2)
+
+## [2026-08-17] Barrido de documentación tras la revisión de estado (sin código)
+
+Origen: el owner pidió, tras varias sesiones enredadas, una revisión completa del
+estado + una lista de preguntas para desambiguar. La revisión y las respuestas
+del owner viven en `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md`. Lo aprobado y hecho:
+
+- `docs/PROXIMA_SESION.md` → `docs/archive/PROXIMA_SESION_2026-08-06.md` con aviso
+  al frente: era del 2026-08-06 (V3.4) y decía «NADA ESTÁ DESPLEGADO» y «Version
+  Wrap V27 pendiente», las dos cosas falsas desde hace días. Se archiva, no se
+  borra. Efecto para V36: la ANN de ese path del FILETREE cambia de ruta.
+- `docs/HANDOFF.md`: cabecera (ya no «four surfaces» ni «last updated 2026-07-10»),
+  BCP = **Base** Control Panel (expansión canónica, owner 2026-08-17), la línea
+  de Co-Create «a medias» marcada SUPERADA (renombrado a CaaS el 08-14), la ruta
+  del transcriptor (`tools/transcriptor/`), el tope de 300 s ya como nota
+  histórica (Vercel Pro), 50/58 comprobaciones del guardián de Transcripciones
+  (eran 38 en V4.8), gotcha 1 (`dweizejazqeqpiguecxw` BORRADO por el owner el
+  08-17; `commaas` movido a su propio org), y la protección de contraseñas
+  filtradas ya no está bloqueada por plan — el owner acordó activarla.
+- `docs/TRANSCRIPCIONES_NUBE.md`: se retiró la CADENA LITERAL que aparecía como
+  ejemplo de `ASSEMBLYAI_WEBHOOK_SECRET` (llevaba en un repo PÚBLICO desde
+  `cb2b4b8`, V4.10). El owner la rotó el mismo día. Regla que queda escrita ahí:
+  nunca un valor de ejemplo con pinta de secreto en este repo. Y la ruta muerta
+  del worker (`reference_html_tools/...`) → `tools/transcriptor/`.
+- Bitácoras: Log V32 tenía DOS asientos sellados con el sha equivocado (`c70573b`
+  para JSON-LD y para el título del cacao — sellado en bloque en el wrap V33) →
+  corregidos a `59e3524 + 3f2be94` y `4a7e1e2`; Log V34 tenía sus TRES asientos
+  en `pending` → sellados con `10c9016`. Y el asiento de `f3265e2` (arriba) que
+  faltaba.
+- Para V36 (además de lo ya listado en las entradas del día): la ficha `bcp` debe
+  decir «Base Control Panel»; el DICT debe distinguir CaaS (Coffee as a Service,
+  programa de Cherry Picked) de CommaaS (el hub personal del owner, otro
+  workspace) — son casi homónimos y ya se han cruzado en conversación.
+Sin cambio de APP_VERSION: solo documentación.
+(commit: pending)

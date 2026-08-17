@@ -87,7 +87,7 @@ envolvió el mismo día. Antes de compilar, comprobar en el HTML base si ya est�
 - `gradosLd()` añadido a **Cherry Picked Green**, la tienda donde el grado ES la
   taxonomía del producto (el candidato de una línea que V34 dejó anotado).
   Verificado: `DefinedTermSet` presente en Green, hub y KR; ausente en Directorio.
-(commit: pending)
+(commit: 10c9016 — sellado 2026-08-17; los tres asientos de este log salieron en ese único commit, V4.7)
 
 ## [2026-08-15] Las Herramientas del Café dejan de ser código (V4.7)
 
@@ -135,7 +135,7 @@ elegir cuál está publicada y marcar cuáles son de uso interno de CTC.
   sesión** → superficies apagadas solas → rechazo de publicar una versión del
   repositorio siendo interna. Más: `/tools/h/agtron` redirige 307 al estático,
   una archivada da 404 y la superficie web lista las 3 Default y retiene la Plus.
-(commit: pending)
+(commit: 10c9016 — sellado 2026-08-17)
 
 ## [2026-08-15] Manejo de Plataformas: la red se deja gobernar desde dentro (V4.7)
 
@@ -191,7 +191,7 @@ exactamente el problema que los Grados vinieron a arreglar.
   título y descripción; `/kaffetal-regal` sin override sigue con lo del código;
   `/cherry-picked-x` apagado → el sitemap baja de 19 a 18 URLs. Datos de prueba
   revertidos (0 overrides, 0 fuera del sitemap).
-(commit: pending)
+(commit: 10c9016 — sellado 2026-08-17)
 
 ════════════════════════════════════════════════════════════════════════════════
 

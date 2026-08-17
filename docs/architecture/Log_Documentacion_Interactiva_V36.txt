@@ -1,0 +1,121 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V36.0(48bac75).html
+(CTC Web Platform, desde 2026-08-17). Cada entrada se compila al próximo Version Wrap (V37).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit — de UNO en UNO, no en bloque al final (en V33 se
+sellaron tres asientos con el sha equivocado por hacerlo en bloque, y en V35 tres se
+quedaron en «pending»; los dos fallos se corrigieron a mano el 2026-08-17).
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA YA ES UN ARCHIVO (lección de V36): `docs/architecture/validate_snapshot.mjs`.
+Se corre en NODE, no en la consola del navegador (el panel de vista previa de esta
+máquina no navega a un archivo suelto). Lee el HTML, extrae los literales
+`DICT`/`WIRES`/`SCENARIOS`/`CTX`/`ANN`/`FILETREE` casando corchetes y los evalúa
+con `new Function`. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo, para
+comprobar que suben EXACTAMENTE lo esperado; `--dump` lista nodos, claves de DICT,
+ids de escenarios y CTX. Correrlo también contra el snapshot ANTERIOR como control:
+si pasa en los dos, no es que sea permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>` (después
+     están las plantillas que GENERAN chips y siempre saldrían como falso positivo)
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio;
+     lección de V31 y V35) — la novena, nueva en V36
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (lección de V34). **Ningún
+chequeo de un wrap debe ir envuelto en un guard de existencia**: si el símbolo no
+existe, tiene que romper.
+
+⚠️ EL SELECTOR DE TRAZAS VA POR ÍNDICE (lección de V33): los `option.value` son
+"0","1","2"…; la comprobación buena es `select.options.length === SCENARIOS.length`
+y que el `id` esté en `SCENARIOS.at(-1)`.
+
+⚠️ EL DICT TIENE DOS ESTILOS DE ESCRITURA conviviendo (lección de V31):
+`clave:{k:"…"` y `clave: {` en varias líneas. Nunca contar por regex: el número
+bueno es `Object.keys(DICT).length` evaluado de verdad (el validador lo hace).
+
+⚠️ EL MAPA DE ARCHIVOS DELATA LOS BORRADOS (lección de V32): `gen_filemap_tree`
+lee el disco, pero ANN es a mano — al borrar o mover un archivo anotado hay que
+repuntar su ANN (en V36: `docs/PROXIMA_SESION.md` → `docs/archive/…`).
+
+⚠️ ESTE DOCUMENTO GUARDA HISTORIA, NO SOLO ESTADO (lección de V33): al renombrar
+algo se cambia solo el texto en PRESENTE; las notas fechadas conservan el nombre de
+entonces. Donde una nota vieja cita una RUTA que ya se movió, se anota entre guiones.
+
+Y la de V28: una entrada del log puede estar YA compilada si se registró y se
+envolvió el mismo día. Antes de compilar, comprobar en el HTML base si ya está.
+
+⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (lección de V35): si la tanda no está
+comiteada, envuelve igual con HEAD y renombra después; tras renombrar, VOLVER a
+correr `gen_filemap_tree.mjs` (el snapshot se lista a sí mismo) y el validador.
+V36 salió con `48bac75` = HEAD al envolver; el commit del propio wrap + el barrido
+de docs de ese día quedan como los primeros asientos de este log.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V36 (2026-08-17):
+
+- **Lo que V36 compiló**: el módulo OCP · Transcripciones entero (V4.8→V4.15: archivo,
+  cola de audio, nube AssemblyAI probada, latido/tirón, .bat, instalador, herramienta en
+  el repo) como nodo `n-transcripciones` + nodo `n-transcriptor` (la herramienta local,
+  en la zona de Clientes: es lo único del sistema que corre en un PC), escenario
+  `notavoz` con la bifurcación equipo|nube, seis fichas nuevas (`transcripciones`,
+  `transcriptor`, `modelotiron`, `transcribirnube`, `repopublico`, `infrapro`), el atajo
+  del rail en `direccionamiento`/`manejoplataformas`, BCP = **Base** Control Panel,
+  CaaS ≠ CommaaS en la ficha `caas`, Vercel a 19 subdominios + Pro, la máquina local
+  con sus guardianes y `navActivo.ts`, y la batería como archivo.
+- **La reorganización de consolas del board del owner (2026-08-17) NO está en el mapa
+  como estado — está como aviso** en `direccionamiento` y en la ANN del PDF: es
+  PLANEADA. Cuando se construya, cambian `PanelDiagram` (EstructuraModal.tsx), la ficha
+  `panels`, la de `bcp`/`consoles`, y este mapa entero de módulos por consola. Plan y
+  preguntas abiertas: `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md` (§2.2, §5).
+- **Pendientes del owner que este log arrastra**: Search Console (www + sitemap nuevo,
+  urgente desde el canonical), política GDPR (subprocesadores: Resend, AssemblyAI,
+  Anthropic, Google), número Nequi de la Arena, material de Varietales, la puerta gris
+  de Terratalento, los dos vídeos con id provisional `Yird1_j6yqo`, Gemini sin tarifa
+  (📌 2026-08-31 caduca el precio de lanzamiento de Sonnet 5), Canva en Make, Coffeed
+  con 5 medios sin feed, y activar la protección de contraseñas filtradas (ya no
+  bloqueada por plan).
+- **Deuda consciente que sigue viva**: la cola diferida de la auditoría (83 índices FK,
+  poda del Buzón, carreras de `useAutosave`, tableros sin tope); `/api/kaffetal-regal/
+  next-step` sin llamador POR DECISIÓN; robusta de Londres e inventarios ICE sin fuente
+  gratuita; `qa-guard-check.mjs` sin cuenta QA; Identity Value Creation declarada y sin
+  construir; socio multi-nodo pendiente del PK de `partner_accounts`; los cotizadores
+  sin conducir por 2FA; la credencial estrecha del worker (RPC con token propio) en el
+  backlog hasta que alguien que no sea el owner corra uno; los `<title>`/meta de las 12
+  herramientas de `public/tools/` dentro de cada archivo; el riesgo aceptado del
+  registro de herramientas (`allow-same-origin`); el loop de iconos ~2,6 MB + vídeo del
+  hub 826 KB; el pilar del lead sigue `cocreate` (marca CaaS) y el hub sin captación de
+  correo, los dos a propósito.
+- **Infra**: $45/mes (Supabase Pro CTC $25 + Vercel Pro $20; el hub de CommaaS sigue en
+  Free). Repo PÚBLICO por decisión hasta que se arregle el acceso de la GitHub App de
+  Vercel. Vercel y Supabase bajo ctcexportmain@gmail.com.
+- **Siguiente en el orden acordado**: (2) la mudanza del workspace fuera de OneDrive
+  (`_WORKSPACE-MOVE-PLAN.md`, sesión fresca) → (3) la reorganización de consolas con
+  plan propio → hub CommaaS en sus propias sesiones.

@@ -2,10 +2,12 @@
 
 Cómo dejar de depender de que el equipo con GPU esté encendido. **Cinco minutos, una sola vez.**
 
-El módulo funciona sin esto: el worker local (`.\worker.ps1` en
-`reference_html_tools/_whatsapp-transcript-html`) sigue siendo la vía gratis y la de mejor
-calidad. Lo de aquí añade un botón **«Transcribir en la nube»** para cuando el PC está apagado
-o hay prisa. Mientras no se configure, el botón **no aparece** — nada se rompe.
+El módulo funciona sin esto: el worker local (`Iniciar transcriptor.bat` en
+`ctc-platform/tools/transcriptor/`, desde V4.15 — antes vivía fuera del repo) sigue siendo la
+vía gratis, y en conversación normal la calidad es equivalente (ver §4: la nube acierta casi lo
+mismo y a veces menos en tecnicismos). Lo de aquí añade un botón **«Transcribir en la nube»**
+para cuando el PC está apagado o hay prisa. Mientras no se configure, el botón **no aparece**
+— nada se rompe.
 
 ---
 
@@ -27,7 +29,7 @@ si quieres probar allí):
 | Variable | Valor |
 |---|---|
 | `ASSEMBLYAI_API_KEY` | la clave del paso 1 |
-| `ASSEMBLYAI_WEBHOOK_SECRET` | `Zn6Q_xbuLVKlHhmLuAvG5iouVu2haXGLYZYGPhMdlFI` (o cualquier cadena larga que generes tú) |
+| `ASSEMBLYAI_WEBHOOK_SECRET` | una cadena larga y aleatoria que generes tú (p. ej. `openssl rand -base64 32`). **Nunca la escribas en este repo: es público.** (La cadena de ejemplo que hubo aquí se rotó el 2026-08-17.) |
 
 Después hay que **redeplegar** para que el build las tome (Deployments → ⋯ → Redeploy).
 

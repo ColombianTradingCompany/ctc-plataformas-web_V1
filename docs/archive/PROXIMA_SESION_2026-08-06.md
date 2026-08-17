@@ -1,4 +1,11 @@
-# Pendientes
+# Pendientes — ARCHIVADO (estado del 2026-08-06, V3.4)
+
+> ⚠️ **Documento histórico, archivado el 2026-08-17.** Describe el estado al cierre del
+> 2026-08-06 y quedó sin actualizar mientras se desplegaban V3.4 → V4.15. En particular:
+> «NADA ESTÁ DESPLEGADO» (§RT-Scriptor V3.1) dejó de ser cierto ese mismo día (`ebf4261`),
+> y «Version Wrap V27» ya se hizo (existen V27–V35). Lo que sigue abierto de aquí se
+> arrastra en la sección «lo que sigue abierto» de `docs/architecture/Log_..._V35.txt` y en
+> `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md`. No lo tomes como lista de tareas.
 
 ## RT-Scriptor · fase 2 entregada, y lo que falta por PROBAR (V3.4, 2026-08-06)
 

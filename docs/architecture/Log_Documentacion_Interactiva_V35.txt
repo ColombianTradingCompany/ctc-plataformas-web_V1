@@ -627,4 +627,4 @@ del owner viven en `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md`. Lo aprobado y hecho:
   programa de Cherry Picked) de CommaaS (el hub personal del owner, otro
   workspace) — son casi homónimos y ya se han cruzado en conversación.
 Sin cambio de APP_VERSION: solo documentación.
-(commit: pending)
+(commit: e526708 — el mismo commit lleva el wrap V36)

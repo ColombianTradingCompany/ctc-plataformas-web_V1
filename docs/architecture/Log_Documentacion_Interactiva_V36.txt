@@ -119,3 +119,20 @@ Contexto abierto al cerrar V36 (2026-08-17):
 - **Siguiente en el orden acordado**: (2) la mudanza del workspace fuera de OneDrive
   (`_WORKSPACE-MOVE-PLAN.md`, sesión fresca) → (3) la reorganización de consolas con
   plan propio → hub CommaaS en sus propias sesiones.
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V36 y el barrido de docs, comiteados; el owner cierra la segunda ronda de preguntas
+- `e526708` lleva el snapshot `Documentacion_Interactiva_V36.0(48bac75).html`, el Log V36, el
+  validador, el barrido de HANDOFF/logs/NUBE, el archivo de PROXIMA_SESION y
+  `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md`. El sha del nombre (`48bac75`) es el HEAD al envolver
+  = el último commit de CONTENIDO (todo lo de hoy es doc); no se renombra.
+- El owner respondió «defaults on all follow-ups»: F1–F14 quedan decididas como sus valores por
+  defecto (registro en §0 del doc de estado). Para la doc, cuando se construya: ECP sigue siendo
+  *Executive*; las URLs se mueven con los módulos; «hub» se reserva para CommaaS (la portada de
+  Cherry Picked y el selector de consolas dejan de llamarse así — repuntar las fichas `cphub`,
+  `panels` y `masterlogin` cuando toque); HC pasa a membresía con concha propia y grants por
+  herramienta; CTC Selection = paraguas, Black Stock = su rama Black.
+- Nada de eso está construido: este asiento solo deja constancia de la decisión.
+Sin cambio de APP_VERSION.
+(commit: pending)

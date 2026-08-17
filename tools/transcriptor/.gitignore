@@ -1,0 +1,13 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+# transcripts you generate next to your audio
+*.transcript.*
+# generated audio scratch (the checked-in fixture is tests/fixtures/two_speakers.ogg)
+tests/fixtures/_scratch/

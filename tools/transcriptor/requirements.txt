@@ -1,0 +1,14 @@
+# Runtime stack (Python 3.10-3.12). Pinned to the combination verified on 2026-08-17.
+# GPU (NVIDIA): install with the CUDA index so torch is the cu128 build:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
+# CPU only:
+#   pip install -r requirements.txt
+whisperx==3.8.6
+torch==2.8.0
+torchaudio==2.8.0
+torchvision==0.23.0
+python-dotenv>=1.0
+requests>=2.31          # the OCP worker (already pulled in by huggingface_hub; pinned here on purpose)
+
+# tests
+pytest>=8

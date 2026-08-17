@@ -1,6 +1,6 @@
 # CTC Web Platform — Handoff & Architecture
 
-Living continuation document (started 2026-07-10, maintained continuously — the dated headings inside are the change record). Read this first in a new session, before re-deriving context from git history. **State-of-play snapshot + open questions as of 2026-08-17: `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md`** (the owner's answers are recorded at its top; the console re-org it describes is PLANNED, not built).
+Living continuation document (started 2026-07-10, maintained continuously — the dated headings inside are the change record). Read this first in a new session, before re-deriving context from git history. **State-of-play snapshot + open questions as of 2026-08-17: `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md`** (the owner's answers are recorded at its top; the console re-org it describes is PLANNED, not built). **The re-org's ordered plan — PR by PR, with the «Active Catalogue Sneak Peek» module + 7 mock lotes as step 0 — is `docs/V5_CONSOLAS_PLAN.md`** (written 2026-08-17 evening from the new workspace `C:\dev\ctc-platforms`; nothing in it is built yet).
 
 ## What this is
 

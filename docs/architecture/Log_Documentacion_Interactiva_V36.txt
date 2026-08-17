@@ -139,3 +139,46 @@ Contexto abierto al cerrar V36 (2026-08-17):
   rotado está configurado en producción (F11 cerrada).
 Sin cambio de APP_VERSION.
 (commit: aa7e521)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] Plan de la reorganización escrito: `docs/V5_CONSOLAS_PLAN.md` (+ el módulo «Sneak Peek» al frente)
+- Paso (i) de F14 cumplido: el plan PR por PR de la reorganización de consolas ya existe como
+  documento propio. Se escribió desde el workspace nuevo (`C:\dev\ctc-platforms`) y se contrastó
+  contra el código real, no contra el recuerdo: `consoles.ts`, el árbol de rutas de las tres
+  consolas, `qa-nav-check.mjs` + `navActivo.ts`, las tres compuertas de `lib/panel/`,
+  `next.config.ts`, el esquema vivo de Supabase (definición de la vista `public_lot_catalog`,
+  columnas de `lots`/`lot_listings`/`fincas`, enums) y `MarketTicker` como patrón de cinta.
+- **Novedad del owner del 2026-08-17**: un módulo reutilizable nuevo, la **«Active Catalogue Sneak
+  Peek»** — cinta pública de tarjetas de lote SIN datos comerciales para Home y las landings — pasa
+  al FRENTE de la lista, antes de la reorganización, con **7 lotes mock** rotulados «Temporada
+  anterior» mientras ningún lote ha terminado el camino KR → Arena (hoy: 3 lotes en borrador, 0
+  galardonados, 0 publicaciones, 0 filas en `public_lot_catalog`).
+- El owner aceptó **todos los defaults D0.1–D0.8** y precisó que el módulo es **el mismo en todas
+  las landings de Cherry Picked y REEMPLAZA el catálogo directo** que hoy se ve sin sesión: el
+  Catálogo Activo completo queda solo detrás del login (D0.5 opción (a), extendida a la familia CP).
+  Consecuencia: la parrilla de Green deja de ser rastreable y los precios salen de la internet
+  pública — que es justamente lo que se buscaba.
+- Los 7 mock se construyeron con **referencias REALES** de la base de Notion «📋 Fichas Técnicas de
+  Café» (11 fichas, 7 con datos), con origen desde su base «Fincas» y la escalera desde «Grados».
+  **El grado se DERIVA del puntaje SCA, no se copia de Notion**: la relación `Grado CTC` de Notion
+  contradice su propia columna `SCA` en 6 de 7 fichas (84.25 → «Tiryan», 87.0 → «Black»…), y la
+  regla 1 de `grados/definicion.ts` es que el puntaje manda. Queda registrado en el §9 del plan
+  como higiene de datos pendiente del owner, junto con «Tiryan» mal escrito y su `Definicion` que
+  dice SCA+89 mientras su propio `Min SCA` dice 88.
+- El «Borbón Rosado - Natural [La Pradera]» (SCA 88.5 → **Tyrian**) queda FUERA de la cinta: Tyrian
+  es solo de subasta y `publishLot` lo rechaza en el catálogo. La escalera final es 2 Gold · 2 Blue
+  · 2 Red · 1 Black, lo que sustituye a la inventada del default D0.7.
+- Los mock quedan marcados para poder borrarlos de un tirón (petición del owner): un solo archivo
+  `sneakPeekMock.ts` con receta de retirada en su cabecera, `mock: true` en cada entrada, ids en el
+  espacio reservado `mock-lote-NN`, el rótulo de temporada guiado por el dato y un guardián nuevo
+  (`qa-sneak-peek-check.mjs`) que falla si algo de eso se rompe. Además se retiran solos: en cuanto
+  haya 7 lotes vivos, los mock dejan de aparecer.
+- Nada de esto está construido — el plan es documento. El orden queda: paso 0 Sneak Peek (V4.16) →
+  (i) congelar nombres (4.17) → (ii) mudanza de rutas PR-A/B/C (4.18/4.19/4.20) + **Wrap V37** →
+  (iii) módulos nuevos (4.21–4.25) → (iv) HC → (v) submódulos en KR → el owner declara **V5.0**.
+- `docs/HANDOFF.md` apunta al plan desde su cabecera. Radio de la mudanza ya medido para no
+  descubrirlo tarde: 127 rutas `/bcp/` + 57 `/ecp/` + 34 `/ocp/` escritas a mano y 20 archivos con
+  `revalidatePath` de consola.
+Sin cambio de APP_VERSION (documentación).
+(commit: pending)

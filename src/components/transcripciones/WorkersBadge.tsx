@@ -12,7 +12,7 @@
 // mismo vale CUALQUIER equipo donde se arranque el worker, no uno en concreto.
 
 import { useCallback, useEffect, useState } from "react";
-import { listTranscriptWorkers } from "@/lib/transcripciones/actions";
+import { getTranscriberDownload, listTranscriptWorkers } from "@/lib/transcripciones/actions";
 import type { TranscriptWorker } from "@/lib/transcripciones/types";
 import styles from "@/app/bcp/(app)/shared.module.css";
 import css from "./transcripciones.module.css";
@@ -46,32 +46,73 @@ export function useTranscriptWorkers() {
 const TOOL_FOLDER = "reference_html_tools\\_whatsapp-transcript-html";
 
 /** Las instrucciones que faltaban: «enciende worker.ps1» daba por supuesto que
- *  quien lo lee sabe abrir PowerShell en una carpeta. Aquí es un doble clic. */
+ *  quien lo lee sabe abrir PowerShell en una carpeta. Aquí es un doble clic —
+ *  y en un equipo nuevo, una descarga. */
 function HowToStart() {
+  const [pack, setPack] = useState<{ url: string; sizeKb: number; updatedAt: string | null } | null>(null);
+  useEffect(() => {
+    getTranscriberDownload().then(setPack).catch(() => setPack(null));
+  }, []);
+
   return (
     <details className={css.howto}>
       <summary>¿Cómo enciendo un equipo?</summary>
+
+      <p className={css.howtoHead}>Si es ESTE equipo, o uno donde ya esté instalada</p>
       <ol>
         <li>
-          En el equipo que quieras usar (el que tiene la tarjeta gráfica), abre la carpeta{" "}
-          <code>{TOOL_FOLDER}</code>, dentro de la carpeta <strong>CTC Web Platform</strong>.
+          Abre la carpeta <code>{TOOL_FOLDER}</code> (dentro de <strong>CTC Web Platform</strong>).
         </li>
         <li>
           Doble clic en <strong><code>Iniciar transcriptor.bat</code></strong>. Se abre una ventana negra:{" "}
           <strong>déjala abierta</strong> mientras quieras que ese equipo trabaje.
         </li>
         <li>
-          En menos de un minuto esta misma línea dirá que el equipo está en línea, y las
-          transcripciones pendientes se irán haciendo solas.
+          En menos de un minuto esta misma línea dirá que está en línea, y lo pendiente se irá haciendo solo.
         </li>
       </ol>
       <p>
-        Para pararlo, cierra esa ventana. Si quieres que arranque solo cada vez que enciendas el PC,
-        doble clic (una única vez) en <code>Arranque automatico.bat</code> y elige «Activar».
+        Para pararlo, cierra la ventana. Para que arranque solo al encender el PC, doble clic (una vez) en{" "}
+        <code>Arranque automatico.bat</code> → «Activar».
+      </p>
+
+      <p className={css.howtoHead}>Si es un equipo NUEVO</p>
+      <ol>
+        <li>
+          {pack ? (
+            <>
+              <a className={css.dl} href={pack.url} download>Descargar el transcriptor</a>{" "}
+              <span className={styles.meta}>
+                ({pack.sizeKb} KB{pack.updatedAt ? ` · ${new Date(pack.updatedAt).toLocaleDateString("es-CO")}` : ""})
+              </span>{" "}
+              y descomprímelo donde quieras.
+            </>
+          ) : (
+            <>
+              Copia la carpeta <code>{TOOL_FOLDER}</code> a ese equipo. (Aún no hay paquete de descarga: se
+              genera con <code>Empaquetar.ps1</code>.)
+            </>
+          )}
+        </li>
+        <li>
+          Clic derecho en <code>setup.ps1</code> → «Ejecutar con PowerShell». Instala Python y los modelos:{" "}
+          <strong>descarga varios GB</strong>, así que tarda un rato y solo se hace una vez.
+        </li>
+        <li>
+          Doble clic en <strong><code>Configurar credenciales.bat</code></strong> y pega la dirección del
+          proyecto y la clave. Las comprueba contra el servidor antes de guardarlas.
+        </li>
+        <li>Ya está: <code>Iniciar transcriptor.bat</code> como en el caso de arriba.</li>
+      </ol>
+      <p className={css.aviso}>
+        ⚠️ Esa clave abre la base de datos entera, no solo las transcripciones. Instálalo únicamente en
+        equipos que controles tú. El paquete que se descarga <strong>no lleva ninguna credencial</strong>:
+        se escriben en cada equipo.
       </p>
       <p>
-        La primera vez en un equipo nuevo hay que instalar la herramienta: clic derecho en{" "}
-        <code>setup.ps1</code> → «Ejecutar con PowerShell». Descarga varios GB, así que tarda.
+        Sin tarjeta gráfica también funciona, pero transcribir tarda más o menos lo que dura el audio;
+        con GPU es unas cinco veces más rápido. Para algo urgente, «Transcribir en la nube» no necesita
+        ningún equipo.
       </p>
     </details>
   );

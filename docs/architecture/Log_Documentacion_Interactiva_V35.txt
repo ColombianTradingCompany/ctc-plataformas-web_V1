@@ -482,3 +482,44 @@ de conocimiento que un panel no debería exigir.
 - Para la doc (V36): la ficha de Transcripciones debe mencionar los dos .bat como
   la vía normal de encender un equipo. APP_VERSION 4.13.
 (commit: pending)
+
+## [2026-08-17] Instalar el transcriptor en OTRO equipo: botón de descarga (V4.14)
+
+Pregunta del owner: «si quiero usar el método local en otra máquina, ¿descargo un
+programa? ¿Y cómo se asegura de quedar donde lo pueda usar? Ahora mismo yo tengo
+la ruta fijada en mi laptop, pero el código completo existe en el mismo».
+
+Las dos partes de la pregunta eran ciertas y las dos eran problemas:
+
+- **La ruta estaba fijada.** `C:\dev\_venvs\whatsapp-transcript` escrito a mano en
+  cuatro archivos: en otro equipo apunta a una carpeta que no existe. Ahora
+  `_venv-path.ps1` lo decide en UN solo sitio — variable de entorno, instalación
+  heredada, y si no `%LOCALAPPDATA%\ctc-transcriptor\venv` (jamás dentro de
+  OneDrive: son 9 GB de librerías).
+- **Las credenciales venían del repo.** El worker las leía de
+  `ctc-platform/.env.local`, que en otro equipo no existe. `Configurar
+  credenciales.bat` las pide una vez y —esto es lo que importa— **las comprueba
+  contra el servidor ANTES de guardarlas**: una clave mal pegada que solo falla
+  tres horas después, al subir un audio, es peor que un error inmediato.
+- **Botón «Descargar el transcriptor»** en el desplegable del OCP. El ZIP (145 KB)
+  lo sube a mano `Empaquetar.ps1` a `kaffetal-media/tools/transcriptor/` y el OCP
+  lo sirve firmado 1 h; si nadie ha empaquetado, el botón NO aparece en vez de dar
+  un enlace roto.
+- ⚠️ **El empaquetador ABORTA si encuentra una credencial dentro** (tokens `hf_`,
+  JWT, `sb_secret_`). Se probó metiendo una clave falsa a propósito: abortó. Y se
+  afinó para ignorar marcadores como `hf_xxxxxxxx`, que salen en la documentación:
+  un guardián que siempre grita se acaba desactivando, y eso es peor que no
+  tenerlo.
+- ⚠️ **Lo que el paquete NO resuelve, y hay que decirlo**: la credencial que se
+  escribe en el equipo nuevo es la `service_role`, que abre la base ENTERA, no
+  solo las transcripciones. El aviso está en pantalla. La vía limpia sería una
+  credencial estrecha (una RPC dedicada con su propio token) — no construida.
+- ⚠️ **Y la respuesta honesta a la segunda pregunta**: la herramienta NO está en
+  ningún repo. Vive solo en la carpeta del owner, sincronizada por OneDrive. No
+  hay historial ni forma de volver a una versión anterior. El ZIP en Storage es
+  distribución, no control de versiones. Meterla en el repo es lo correcto, pero
+  el repo es PÚBLICO y esa decisión es del owner.
+- Para la doc (V36): el nodo de la herramienta local pasa a tener dos flechas —
+  una hacia el OCP (los trabajos) y otra desde el OCP (el paquete de instalación).
+  APP_VERSION 4.14.
+(commit: pending)

@@ -126,3 +126,32 @@
   .tools, .chips button { display: none; }
   .block { break-inside: avoid; }
 }
+
+/* Los dos casos del «¿cómo enciendo un equipo?»: este equipo / uno nuevo */
+.howtoHead {
+  margin: 12px 0 0 !important;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+}
+.dl {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--primary, #3c0a86);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.dl:hover { background: var(--primary-deep, #2a0660); }
+.aviso {
+  margin-top: 10px !important;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  color: #92400E !important;
+}

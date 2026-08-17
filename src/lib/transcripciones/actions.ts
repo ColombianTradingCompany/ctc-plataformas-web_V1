@@ -25,12 +25,12 @@ const AUDIO_PREFIX = "transcripts";
 // Un solo literal a propósito: supabase-js tipa el resultado a partir del texto del
 // select y una concatenación lo deja en GenericStringError.
 const SUMMARY_COLS =
-  "id, subject, recorded_on, notes, source_name, language, duration_seconds, speakers, speaker_names, segment_count, status, audio_path, audio_size_bytes, job_options, error, worker, claimed_at, processed_at, created_at, updated_at";
+  "id, subject, recorded_on, notes, source_name, language, duration_seconds, speakers, speaker_names, segment_count, status, provider, audio_path, audio_size_bytes, job_options, error, worker, claimed_at, processed_at, created_at, updated_at";
 
 type SummaryRow = {
   id: string; subject: string; recorded_on: string; notes: string | null; source_name: string | null;
   language: string | null; duration_seconds: string | number | null; speakers: unknown; speaker_names: unknown;
-  segment_count: number; status: string; audio_path: string | null; audio_size_bytes: string | number | null;
+  segment_count: number; status: string; provider: string; audio_path: string | null; audio_size_bytes: string | number | null;
   job_options: unknown; error: string | null; worker: string | null; claimed_at: string | null; processed_at: string | null;
   created_at: string; updated_at: string;
 };
@@ -66,6 +66,7 @@ const toSummary = (r: SummaryRow): TranscriptSummary => ({
   speakerNames: asNames(r.speaker_names),
   segmentCount: r.segment_count,
   status: asStatus(r.status),
+  provider: r.provider === "assemblyai" ? "assemblyai" : "local",
   audioPath: r.audio_path,
   audioSizeBytes: r.audio_size_bytes == null ? null : Number(r.audio_size_bytes),
   jobOptions: asJobOptions(r.job_options),
@@ -322,6 +323,39 @@ export async function retryTranscript(id: string): Promise<TranscriptResult> {
   revalidatePath(LIST_PATH);
   revalidatePath(`${LIST_PATH}/${id}`);
   return { ok: true, id };
+}
+
+/** Mandar este trabajo a la nube (AssemblyAI) en vez de esperar al equipo con GPU. */
+export async function sendTranscriptToCloud(id: string): Promise<TranscriptResult> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return NO_AUTH;
+  const { submitToAssembly } = await import("./cloud");
+  const r = await submitToAssembly(id);
+  if (!r.ok) return { ok: false, error: r.error };
+  revalidatePath(LIST_PATH);
+  revalidatePath(`${LIST_PATH}/${id}`);
+  return { ok: true, id };
+}
+
+/** ¿Está configurada la nube? La interfaz esconde el botón si no lo está. */
+export async function isCloudConfigured(): Promise<boolean> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return false;
+  const { cloudConfigured } = await import("./cloud");
+  return cloudConfigured();
+}
+
+/**
+ * Red de seguridad del sondeo del detalle: si el trabajo está en la nube y sigue
+ * `processing`, se le pregunta al proveedor. Cubre un webhook perdido y el
+ * desarrollo en local (donde AssemblyAI no puede llamar a localhost).
+ */
+export async function refreshCloudStatus(id: string): Promise<TranscriptResult> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return NO_AUTH;
+  const { pollAssemblyJob } = await import("./cloud");
+  const r = await pollAssemblyJob(id);
+  return r.ok ? { ok: true, id } : { ok: false, error: r.error };
 }
 
 /** Enlace firmado (1 h) para escuchar/descargar el audio original desde el detalle. */

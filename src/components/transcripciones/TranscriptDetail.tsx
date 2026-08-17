@@ -10,7 +10,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  deleteTranscript, getAudioUrl, getTranscript, renameSpeaker, retryTranscript, updateTranscriptInfo,
+  deleteTranscript, getAudioUrl, getTranscript, isCloudConfigured, refreshCloudStatus, renameSpeaker,
+  retryTranscript, sendTranscriptToCloud, updateTranscriptInfo,
 } from "@/lib/transcripciones/actions";
 import { collapseBlocks, fmtDuration, fmtTs, speakerLabel, transcriptToText } from "@/lib/transcripciones/model";
 import type { Transcript } from "@/lib/transcripciones/types";
@@ -38,15 +39,26 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
     if (fresh) setT(fresh);
   }, [t.id]);
 
-  // Mientras el worker no termine, la página se pone al día sola cada 10 s.
+  // Mientras no termine, la página se pone al día sola cada 10 s. Si el trabajo
+  // está en la nube, ese mismo latido le pregunta al proveedor — así un webhook
+  // perdido (o el desarrollo en local, donde no puede llegar) no lo deja colgado.
   const inFlight = t.status === "pending" || t.status === "processing";
+  const inCloud = t.provider === "assemblyai";
   useEffect(() => {
     if (!inFlight) return;
-    const h = window.setInterval(() => {
-      getTranscript(t.id).then((fresh) => { if (fresh) setT(fresh); });
-    }, POLL_MS);
+    const tick = () => {
+      const first = inCloud ? refreshCloudStatus(t.id).catch(() => null) : Promise.resolve(null);
+      first.then(() => getTranscript(t.id)).then((fresh) => { if (fresh) setT(fresh); });
+    };
+    const h = window.setInterval(tick, POLL_MS);
     return () => window.clearInterval(h);
-  }, [inFlight, t.id]);
+  }, [inFlight, inCloud, t.id]);
+
+  // El botón de la nube solo aparece si hay clave configurada en el entorno.
+  const [cloudOn, setCloudOn] = useState(false);
+  useEffect(() => {
+    isCloudConfigured().then(setCloudOn).catch(() => setCloudOn(false));
+  }, []);
 
   const blocks = useMemo(() => collapseBlocks(t.segments), [t.segments]);
   const colorOf = useMemo(
@@ -144,6 +156,7 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
                 {t.status === "ready" && <span>{t.speakers.length} hablante{t.speakers.length === 1 ? "" : "s"}</span>}
                 {t.sourceName && <span>Archivo {t.sourceName}</span>}
                 {model && <span>Modelo {model}</span>}
+                {t.status === "ready" && <span>{inCloud ? "Transcrita en la nube" : "Transcrita en el equipo"}</span>}
                 {t.audioPath && (
                   <button type="button" className={css.linkBtn} onClick={() => void openAudio()}>Escuchar / descargar audio</button>
                 )}
@@ -180,14 +193,26 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
                 {t.jobOptions.language ? ` Idioma: ${t.jobOptions.language}.` : ""}
                 {t.jobOptions.num_speakers ? ` Voces: ${t.jobOptions.num_speakers}.` : ""}
               </span>
+              {cloudOn && (
+                <span className={styles.actions}>
+                  <button className="btn btn-sm btn-solid" type="button" disabled={busy}
+                    onClick={() => void run(() => sendTranscriptToCloud(t.id), "Mandada a la nube; vuelve en un par de minutos.")}>
+                    Transcribir en la nube
+                  </button>
+                  <span className={styles.meta}>
+                    Sin esperar al PC (~US$0,17 por hora de audio). El audio sale a AssemblyAI por un enlace firmado.
+                  </span>
+                </span>
+              )}
             </>
           )}
           {t.status === "processing" && (
             <>
               <strong><span className={css.pulse} />Transcribiendo{t.worker ? ` en ${t.worker}` : ""}…</strong>
               <span className={styles.meta}>
-                Reclamada {when(t.claimedAt)}. Una llamada de 20 min tarda unos 4 min en la GPU. Si el equipo se apagó a mitad,
-                a las 2 h vuelve sola a la cola.
+                {inCloud
+                  ? `En la nube desde ${when(t.claimedAt)}. Suele tardar uno o dos minutos; esta página se actualiza sola.`
+                  : `Reclamada ${when(t.claimedAt)}. Una llamada de 20 min tarda unos 4 min en la GPU. Si el equipo se apagó a mitad, a las 2 h vuelve sola a la cola.`}
               </span>
             </>
           )}
@@ -197,10 +222,16 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
               <pre>{t.error ?? "Sin detalle."}</pre>
               <span className={styles.actions}>
                 <button className="btn btn-sm btn-solid" type="button" disabled={busy}
-                  onClick={() => void run(() => retryTranscript(t.id), "De vuelta en la cola.")}>
-                  Reintentar
+                  onClick={() => void run(() => retryTranscript(t.id), "De vuelta en la cola del equipo.")}>
+                  Reintentar en el equipo
                 </button>
-                <span className={styles.meta}>Corrige la causa en el equipo (token de Hugging Face, GPU, archivo) y reintenta.</span>
+                {cloudOn && t.audioPath && (
+                  <button className="btn btn-sm" type="button" disabled={busy}
+                    onClick={() => void run(() => sendTranscriptToCloud(t.id), "Mandada a la nube.")}>
+                    Transcribir en la nube
+                  </button>
+                )}
+                <span className={styles.meta}>Corrige la causa en el equipo (token de Hugging Face, GPU, archivo) y reintenta — o mándala a la nube.</span>
               </span>
             </>
           )}

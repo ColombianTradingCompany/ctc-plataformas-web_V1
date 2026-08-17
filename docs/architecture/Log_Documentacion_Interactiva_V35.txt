@@ -276,3 +276,51 @@ plano. La plataforma sigue SIN transcribir — solo pone la cola y guarda.
   apagado las subidas ESPERAN como Pendiente — es el diseño. `scripts/
   qa-transcripciones-check.mjs` sube a 50 comprobaciones. APP_VERSION 4.9.
 (commit: pending)
+
+## [2026-08-17] Transcripciones: se puede transcribir en la NUBE, y el OOM de la GPU (V4.10)
+
+El owner subió su primera nota real («Javier CQI», 10 min, 3 voces) y preguntó lo
+obvio: si la gracia de meterlo en la plataforma era no depender del portátil,
+¿por qué hay que encender el portátil? Tenía razón. Se añade la vía en la nube
+SIN quitar la local, y de paso se arregla un fallo que destapó esa misma nota.
+
+- ⚠️ **EL FALLO DE VRAM (arreglado)**. La nota de 10 min salió en CPU: `CUDA
+  failed with error out of memory` → 525 s en vez de ~150. La causa era una
+  decisión MÍA de la mañana: cargaba el pipeline de pyannote ANTES del ASR para
+  fallar rápido si el token de Hugging Face estaba mal, y se quedaba ocupando
+  VRAM durante toda la pasada de Whisper. En 8 GB (RTX 4070 portátil) con un
+  audio de 10 min no cabe. Ahora el acceso se comprueba con UNA llamada HTTP
+  (`huggingface_hub.auth_check`, sin VRAM) y el modelo se carga DESPUÉS, con el
+  ASR y el alineador ya fuera de memoria. Mismo audio: **147 s en GPU, sin
+  fallback**. Guardián nuevo `test_diarizer_loads_only_after_asr` que comprueba
+  el ORDEN de carga, más el fallback a CPU del propio diarizador por si acaso.
+  Lección general: «fallar rápido» no puede costar el recurso escaso.
+- **La nube: AssemblyAI** (migración `ocp_transcripts_cloud_provider`: `provider`
+  local|assemblyai + `provider_job_id`). Botón «Transcribir en la nube» en un
+  trabajo pendiente o en error → se firma el audio 6 h, se manda con
+  `speaker_labels` + idioma + nº de voces → webhook a
+  `/api/transcripciones/callback` (cabecera secreta, `timingSafeEqual`; sin
+  secreto configurado responde 503 y no procesa) → `ingestAssemblyResult` trae
+  el resultado con nuestra clave. Sus `utterances` (ms, hablantes A/B/C) se
+  traducen a los mismos segmentos que la vía local (`mapAssemblyUtterances`,
+  puro). Coste US$0,17/hora de audio (~3 centavos la nota de 10 min).
+- **Nada espera dentro de una función**: el tope de Vercel Hobby es 300 s y ni
+  el envío ni el webhook llegan al segundo. El sondeo de 10 s del detalle hace
+  además de red de seguridad (`refreshCloudStatus`) para un webhook perdido y
+  para el desarrollo en local, donde AssemblyAI no puede llamar a localhost.
+- ⚠️ `claim_transcript_job` ahora filtra `provider = 'local'`: si no, el worker
+  del equipo reclamaría un trabajo que ya está en la nube y el rescate de 2 h se
+  lo llevaría por delante.
+- **Make.com se descartó, y conviene que quede escrito**: Make NO transcribe. Su
+  módulo de OpenAI envuelve Whisper, que no tiene diarización ninguna — daría un
+  muro de texto sin saber quién habla, justo lo único que este módulo aporta. Y
+  sería un relevo entre Supabase y una API que la plataforma llama sola.
+- El botón solo aparece si `ASSEMBLYAI_API_KEY` está en el entorno; mientras no
+  lo esté, el módulo funciona exactamente como hasta ahora. Puesta en marcha:
+  `docs/TRANSCRIPCIONES_NUBE.md` (incluye lo que hay que saber ANTES de pulsar:
+  el audio sale a un tercero, y con el worker local no sale).
+- Para la doc (V36): el escenario de la nota de voz gana una bifurcación (equipo
+  con GPU | nube), y hace falta una entrada de DICT sobre por qué la plataforma
+  no transcribe ella misma pero sí puede pagar a quien lo haga. QA sube a 58
+  comprobaciones; la herramienta, a 64. APP_VERSION 4.10.
+(commit: pending)

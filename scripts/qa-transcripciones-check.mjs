@@ -82,6 +82,28 @@ check("status labels", m.STATUS_LABEL.pending === "Pendiente" && m.STATUS_LABEL.
 check("MAX_AUDIO_BYTES = 100 MB", m.MAX_AUDIO_BYTES === 100 * 1024 * 1024);
 check("languages: detectar primero", m.LANGUAGE_OPTIONS[0].code === "" && m.LANGUAGE_OPTIONS.some((o) => o.code === "es"));
 
+// ---- AssemblyAI: sus `utterances` tienen que quedar como los de la herramienta local
+const utt = [
+  { speaker: "A", start: 130, end: 4670, text: "Buenos días, le llamo por las muestras." },
+  { speaker: "B", start: 6290, end: 12740, text: "Sí, los dos lotes de Huila." },
+  { speaker: "A", start: 14400, end: 21100, text: "El lavado dio 86 puntos." },
+  { speaker: "C", start: 22000, end: 23000, text: "   " },
+  { speaker: "C", start: 24000, end: 25000, text: "Perfecto." },
+];
+const mapped = m.mapAssemblyUtterances(utt);
+check("assembly: descarta vacíos", mapped.length === 4);
+check("assembly: ms → s", mapped[0].start === 0.13 && mapped[0].end === 4.67);
+check("assembly: A→SPEAKER_00 en orden de aparición", mapped.map((s) => s.speaker).join(",") === "SPEAKER_00,SPEAKER_01,SPEAKER_00,SPEAKER_02");
+check("assembly: texto intacto", mapped[1].text === "Sí, los dos lotes de Huila.");
+check("assembly: no-array", m.mapAssemblyUtterances(null).length === 0 && m.mapAssemblyUtterances(undefined).length === 0);
+check("assembly: sin speaker → SPEAKER", m.mapAssemblyUtterances([{ start: 0, end: 1000, text: "hola" }])[0].speaker === "SPEAKER");
+check("assembly: bloques por hablante", m.collapseBlocks(mapped).length === 4);
+{
+  // el mapeo tiene que ser estable: la misma etiqueta siempre da la misma clave
+  const seen = new Map();
+  check("assembly: clave estable", m.assemblySpeakerKey("B", seen) === "SPEAKER_00" && m.assemblySpeakerKey("B", seen) === "SPEAKER_00");
+}
+
 // ---- el JSON real de la herramienta, si se pasa por argumento
 const real = process.argv[2];
 if (real && existsSync(real)) {

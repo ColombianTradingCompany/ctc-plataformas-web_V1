@@ -24,6 +24,9 @@ export type TranscriptBlock = { speaker: string; start: number; end: number; tex
  */
 export type TranscriptStatus = "pending" | "processing" | "ready" | "error";
 
+/** local = worker del equipo con GPU (gratis, nada sale) · assemblyai = servicio en la nube. */
+export type TranscriptProvider = "local" | "assemblyai";
+
 /** Pistas que el owner da al subir el audio; el worker se las pasa a la herramienta. */
 export type TranscriptJobOptions = {
   language?: string;      // "es", "en"... (vacío = detectar)
@@ -47,6 +50,8 @@ export type TranscriptSummary = {
   speakerNames: Record<string, string>;
   segmentCount: number;
   status: TranscriptStatus;
+  /** Quién la transcribe: el equipo con GPU del owner o el servicio en la nube. */
+  provider: TranscriptProvider;
   /** Ruta del audio en el bucket (null cuando entró por JSON/texto). */
   audioPath: string | null;
   audioSizeBytes: number | null;

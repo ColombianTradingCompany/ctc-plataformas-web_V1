@@ -35,7 +35,7 @@ plus the two-box "CTC Platforms | CommaaS Hub" image sent with it).
 - **D22** "What 3 projects? All stay on the ctcexportmain@gmail.com account" → Vercel (Pro team) is under ctcexportmain; the hub plan's "Vercel stays under contacto@ Hobby" is **outdated** (fix in the hub session, F12).
 
 **Workspace move & order**
-- **E23** Move to `C:\dev\ctc-platforms` + `C:\dev\commaas-hub`: "I guess so" → planned for the next fresh session, with the checklist in `_WORKSPACE-MOVE-PLAN.md`.
+- **E23** Move to `C:\dev\ctc-platforms` + `C:\dev\commaas-hub`: **executed the same evening** (see §1).
 - **E24** Display names "CTC Platforms" / "CommaaS Hub", hyphenated folders — confirmed.
 - **F25** Order confirmed: (1) housekeeping + V36 wrap → (2) workspace move → (3) the re-org → (4) hub in its own sessions → (5) owner-owed items.
 
@@ -67,7 +67,7 @@ plus the two-box "CTC Platforms | CommaaS Hub" image sent with it).
 | Infra | Supabase **Pro** ($25/mo, project `sjznkzvefqfcysczllli`, only project in the CTC org) + Vercel **Pro** ($20/mo, team under ctcexportmain). CommaaS project moved to its own Free org "CommaaS Hub" |
 | Docs of record | `AGENTS.md` (V4.0 snapshot + rules) → `docs/HANDOFF.md` (living) → `docs/architecture/` snapshot **V36.0(48bac75)** (wrapped 2026-08-17 evening) + open **Log V36** |
 | Second workspace | CommaaS Hub at `C:\dev\commaas\commaas-blueprint` — pivoted 2026-08-16 to the owner's personal deployment hub; plan `docs/HUB-PIVOT-PLAN.md`, §9 decisions answered 2026-08-17. Live DB paused (not deleted). First tenant: Tuki Take |
-| Workspace move | Planned (`_WORKSPACE-MOVE-PLAN.md`), **not executed** — must run in a fresh session |
+| Workspace move | **DONE 2026-08-17 evening** — workspace is `C:\dev\ctc-platforms`, hub root `C:\dev\commaas-hub` (repo at `commaas/`, loose CaaS files at `reference_commaas-og/`); repo verified clean + `tsc` clean from the new home; memory key renamed. Lessons in the memory note (Move-Item out of OneDrive copies instead of renaming; git's read-only files; an empty pre-created target nests) |
 
 ### What shipped since the V4.0 baseline (2026-08-13)
 - **4.1–4.4** Open Graph, robots/sitemap per host, JSON-LD on 19 surfaces (`b362921`, `f1118f3`, `59e3524`, `3f2be94`).

@@ -47,6 +47,13 @@
 .bar { height: 6px; margin-top: 10px; border-radius: 999px; background: var(--line, #e5e0d5); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--primary, #3c0a86); transition: width .2s; }
 
+/* Equipos que corren el worker: el led dice si hay alguien escuchando */
+.workers { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.5; }
+.led { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; background: var(--muted, #6b7280); }
+.ledOn { background: #16A34A; box-shadow: 0 0 0 3px rgba(22, 163, 74, .16); }
+.ledBusy { background: #B45309; box-shadow: 0 0 0 3px rgba(180, 83, 9, .16); animation: pulse 1.4s ease-in-out infinite; }
+.ledOff { background: #9CA3AF; }
+
 /* Estado en el detalle (pendiente / transcribiendo / error) */
 .status { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--line, #d6d3e6); background: var(--paper, #faf9fd); margin: 14px 0; }
 .statusErr { border-color: #FCA5A5; background: #FEF2F2; }

@@ -50,7 +50,7 @@ plus the two-box "CTC Platforms | CommaaS Hub" image sent with it).
 - **F8** HC tools open inside a **shell** (← back to KR/CP, tool name, Plus/locked badge; tool HTML untouched at `/tools/h/<slug>`); activation becomes **per user per tool** (payment trigger later on that same row); locked tools stay visible with «Solicitar».
 - **F9** "hub" reserved for **CommaaS**; Cherry Picked's front page = **portada de Cherry Picked**; `/panel` = **selector de consolas**.
 - **F10** Worker narrow credential → **backlog** until a second person/machine runs a worker.
-- **F11** Rotated webhook secret must be in **Vercel → Production** + redeploy — owner to confirm (unverified as of this note; a POST without header to `/api/transcripciones/callback` answering 401 means a secret is configured, 503 means none).
+- **F11** Rotated webhook secret in **Vercel → Production**: **verified 2026-08-17 evening** — a POST without header to `https://www.ctcexport.com/api/transcripciones/callback` answers **401** (secret configured; 503 would mean none), and Vercel shows a manual redeploy of `48bac75` ~50 min after the rotation. Closed.
 - **F12** Vercel under ctcexportmain (Pro team, 3 projects); hub plan §0.3 to be corrected in the hub session.
 - **F13** GVG-Space stays owner-only in place; re-hung under BCP → Configuración del Sistema at re-org time; migrates to CommaaS later.
 - **F14** Re-org order: (i) freeze names + plan doc `docs/V5_CONSOLAS_PLAN.md` → (ii) nav + route moves console by console with redirects → (iii) new modules (CRM CP ×3, CTC Selection, partner cards, Definición rework) → (iv) HC as membership + shell + per-tool grants → (v) CTC Tech/Varietales sub-module in KR + Cherry Picked CaaS → OCP. One PR + `APP_VERSION` bump per step.

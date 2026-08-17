@@ -134,5 +134,8 @@ Contexto abierto al cerrar V36 (2026-08-17):
   `panels` y `masterlogin` cuando toque); HC pasa a membresía con concha propia y grants por
   herramienta; CTC Selection = paraguas, Black Stock = su rama Black.
 - Nada de eso está construido: este asiento solo deja constancia de la decisión.
+- Verificado tras el push: Vercel construyó `aa7e521` en producción (la tubería sigue sana tras
+  el incidente del repo privado) y la sonda del callback de AssemblyAI responde 401 → el secreto
+  rotado está configurado en producción (F11 cerrada).
 Sin cambio de APP_VERSION.
-(commit: pending)
+(commit: aa7e521)

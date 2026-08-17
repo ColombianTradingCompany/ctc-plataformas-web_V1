@@ -400,6 +400,8 @@ El owner cambió el TÉRMINO, no lo que representa: sigue siendo la superficie C
 
 ## OCP · Transcripciones — el archivo de las conversaciones (2026-08-17)
 
+> **Traspaso**: `docs/SESION_2026-08-17_TRANSCRIPCIONES.md` resume la sesión entera (V4.8→V4.15), qué necesita el Version Wrap V36 y la deuda consciente. Las 10 entradas de ese día en `docs/architecture/Log_Documentacion_Interactiva_V35.txt` están **selladas con su sha**.
+
 Cuarto módulo del grupo **OCP · Cotizadores** (`/ocp/transcripciones`, nav en `consoles.ts`). Cotizar es operación y las conversaciones con productores, clientes y aliados también: por eso viven juntos.
 
 - **La plataforma NO transcribe.** El modelo (faster-whisper large-v3 + pyannote, vía WhisperX) necesita GPU y ~9 GB de dependencias: corre en el equipo del owner como herramienta local — `reference_html_tools/_whatsapp-transcript-html` (README ahí). Vercel no podría ni debería. El módulo del OCP **guarda el resultado** y le añade lo que la máquina no sabe: **asunto, fecha de la conversación, notas** y **el nombre de cada voz** (clic en el chip → `renameSpeaker`, persiste en `speaker_names`).

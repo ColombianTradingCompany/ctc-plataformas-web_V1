@@ -523,3 +523,32 @@ Las dos partes de la pregunta eran ciertas y las dos eran problemas:
   una hacia el OCP (los trabajos) y otra desde el OCP (el paquete de instalación).
   APP_VERSION 4.14.
 (commit: pending)
+
+## [2026-08-17] La herramienta entra al repo, y el ZIP se arma solo (V4.15)
+
+El owner respondió que sí a meterla en el repo. Con eso se cierra el agujero que
+él mismo detectó: el código existía SOLO en su portátil, sin historial.
+
+- **`ctc-platform/tools/transcriptor/`**. Se movió entera, incluido su `.env`
+  local (que git sigue ignorando), y se comprobó que arranca y que sus 76 tests
+  pasan desde la nueva ubicación ANTES de borrar la carpeta vieja.
+- ⚠️ **La mudanza rompió una ruta relativa escrita a mano** y el worker se quedó
+  diciendo «este equipo no sabe a qué plataforma conectarse», sin más pista.
+  `platform_env_candidates()` ahora BUSCA hacia arriba por los ancestros en vez
+  de fijar `../../ctc-platform/.env.local`. Lección: una ruta relativa a mano es
+  una bomba de relojería que estalla el día que alguien mueve una carpeta.
+- **El ZIP se arma AL VUELO** en `/api/transcripciones/descargar` leyendo la
+  carpeta del despliegue (jszip, +11 paquetes, `npm audit` sigue en 0; la carpeta
+  se traza en `next.config.ts` como ya se hacía con `docs/architecture`). Se
+  retiró `Empaquetar.ps1` y la subida a Storage: un paso manual se olvida, y
+  entonces alguien instala una versión vieja sin enterarse. Con una sola fuente
+  no hay nada que pueda divergir. Excluye `.env`, venv y cachés; comprobado:
+  30 archivos, 143 KB, sin secretos.
+- **Se auditó el repo público de paso** (la otra pregunta del owner). En 457
+  commits NO hay ninguna credencial: `.env*` ignorado desde el principio, cero
+  `.env` en la historia, y los únicos `hf_`/`sb_secret_` son marcadores de
+  documentación. Lo único expuesto es el código. 0 forks, 0 estrellas.
+- Para la doc (V36): el nodo de la herramienta local deja de estar «fuera del
+  repo» y pasa a ser parte de él, con dos flechas: los trabajos hacia el OCP y
+  el paquete de instalación desde el OCP. APP_VERSION 4.15.
+(commit: pending)

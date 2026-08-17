@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/ecp/documentacion": ["./docs/architecture/**"],
     "/ecp/documentacion/[file]": ["./docs/architecture/**"],
+    // El botón «Descargar el transcriptor» del OCP arma el ZIP leyendo esta
+    // carpeta del disco en tiempo de ejecución. Sin esta línea la carpeta no
+    // existiría en el servidor y la descarga saldría vacía.
+    "/api/transcripciones/descargar": ["./tools/transcriptor/**"],
     // NOTA histórica: las herramientas "internas" (leídas del disco y luego
     // embebidas) ya no existen — desde 2026-07-24 TODAS las herramientas viven
     // en public/tools/ y se sirven estáticas, así que no hay nada que trazar.

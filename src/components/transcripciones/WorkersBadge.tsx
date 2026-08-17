@@ -12,7 +12,7 @@
 // mismo vale CUALQUIER equipo donde se arranque el worker, no uno en concreto.
 
 import { useCallback, useEffect, useState } from "react";
-import { getTranscriberDownload, listTranscriptWorkers } from "@/lib/transcripciones/actions";
+import { listTranscriptWorkers } from "@/lib/transcripciones/actions";
 import type { TranscriptWorker } from "@/lib/transcripciones/types";
 import styles from "@/app/bcp/(app)/shared.module.css";
 import css from "./transcripciones.module.css";
@@ -49,11 +49,6 @@ const TOOL_FOLDER = "reference_html_tools\\_whatsapp-transcript-html";
  *  quien lo lee sabe abrir PowerShell en una carpeta. Aquí es un doble clic —
  *  y en un equipo nuevo, una descarga. */
 function HowToStart() {
-  const [pack, setPack] = useState<{ url: string; sizeKb: number; updatedAt: string | null } | null>(null);
-  useEffect(() => {
-    getTranscriberDownload().then(setPack).catch(() => setPack(null));
-  }, []);
-
   return (
     <details className={css.howto}>
       <summary>¿Cómo enciendo un equipo?</summary>
@@ -79,20 +74,8 @@ function HowToStart() {
       <p className={css.howtoHead}>Si es un equipo NUEVO</p>
       <ol>
         <li>
-          {pack ? (
-            <>
-              <a className={css.dl} href={pack.url} download>Descargar el transcriptor</a>{" "}
-              <span className={styles.meta}>
-                ({pack.sizeKb} KB{pack.updatedAt ? ` · ${new Date(pack.updatedAt).toLocaleDateString("es-CO")}` : ""})
-              </span>{" "}
-              y descomprímelo donde quieras.
-            </>
-          ) : (
-            <>
-              Copia la carpeta <code>{TOOL_FOLDER}</code> a ese equipo. (Aún no hay paquete de descarga: se
-              genera con <code>Empaquetar.ps1</code>.)
-            </>
-          )}
+          <a className={css.dl} href="/api/transcripciones/descargar">Descargar el transcriptor</a>{" "}
+          <span className={styles.meta}>(unos 150 KB)</span> y descomprímelo donde quieras.
         </li>
         <li>
           Clic derecho en <code>setup.ps1</code> → «Ejecutar con PowerShell». Instala Python y los modelos:{" "}

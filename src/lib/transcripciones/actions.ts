@@ -369,38 +369,6 @@ export async function listTranscriptWorkers(): Promise<TranscriptWorker[]> {
   });
 }
 
-/**
- * El paquete de la herramienta, para instalarla en OTRO equipo.
- *
- * Lo sube a mano `Empaquetar.ps1` desde la carpeta de la herramienta (bucket
- * privado, enlace firmado de 1 h — no queda público). El ZIP **no lleva
- * credenciales**: quien lo instale las escribe en su equipo. Si nadie lo ha
- * empaquetado todavía, se devuelve null y el botón no aparece, en vez de dar un
- * enlace roto.
- */
-export async function getTranscriberDownload(): Promise<
-  { url: string; sizeKb: number; updatedAt: string | null } | null
-> {
-  const who = await requireConsoleWrite("ocp");
-  if (!who) return null;
-  const service = createServiceRoleClient();
-  const dir = "tools/transcriptor";
-  const file = "transcriptor-ctc-ultimo.zip";
-  const { data: listed } = await service.storage.from(BUCKET).list(dir, { search: file, limit: 5 });
-  const obj = listed?.find((o) => o.name === file);
-  if (!obj) return null;
-  const { data, error } = await service.storage.from(BUCKET).createSignedUrl(`${dir}/${file}`, 3600, {
-    download: "transcriptor-ctc.zip",
-  });
-  if (error || !data?.signedUrl) return null;
-  const size = (obj.metadata as { size?: number } | null)?.size ?? 0;
-  return {
-    url: data.signedUrl,
-    sizeKb: Math.max(1, Math.round(size / 1024)),
-    updatedAt: (obj as { updated_at?: string }).updated_at ?? null,
-  };
-}
-
 /** Mandar este trabajo a la nube (AssemblyAI) en vez de esperar al equipo con GPU. */
 export async function sendTranscriptToCloud(id: string): Promise<TranscriptResult> {
   const who = await requireConsoleWrite("ocp");

@@ -81,3 +81,21 @@ export type TranscriptPayload = {
 };
 
 export type TranscriptResult = { ok: true; id?: string } | { ok: false; error: string };
+
+/**
+ * Un equipo que corre el worker (`python -m ogg_transcriber.worker`) y late.
+ * La plataforma NUNCA llama a esa máquina: es ella la que pregunta y la que se
+ * anuncia, por eso funciona detrás de un router doméstico sin abrir nada.
+ * `online` se deriva del latido: si no se sabe de él, se le da por apagado.
+ */
+export type TranscriptWorker = {
+  worker: string;
+  online: boolean;
+  status: "idle" | "busy";
+  /** Segundos desde el último latido. */
+  secondsAgo: number;
+  device: string | null;
+  gpu: string | null;
+  toolVersion: string | null;
+  currentJob: string | null;
+};

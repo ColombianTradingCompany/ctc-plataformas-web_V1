@@ -386,3 +386,42 @@ El owner puso la clave de AssemblyAI en Vercel y redeplegó. Al ir a comprobarlo
 - Para la doc (V36): la ficha de Transcripciones ya puede decir que la nube está
   PROBADA, no solo construida. APP_VERSION 4.11.
 (commit: pending)
+
+## [2026-08-17] «¿Espera a MI equipo o a cualquiera?» — el latido de los workers (V4.12)
+
+Pregunta del owner viendo una fila en Pendiente: cuando dice «esperando al equipo
+con GPU», ¿se refiere a cualquier máquina donde corra el OCP, o busca la SUYA por
+internet? Y si es lo segundo, ¿no haría falta que su equipo fuera alcanzable?
+
+La respuesta —ninguna de las dos— es lo que había que poner en la interfaz:
+
+- **Es un modelo de TIRÓN.** La plataforma NUNCA llama a ninguna máquina. Es el
+  worker el que pregunta (`claim_transcript_job`) cada `--poll` segundos. De ahí
+  tres consecuencias que la interfaz ahora dice en voz alta: (a) funciona detrás
+  de un router doméstico, SIN IP fija ni puertos abiertos — al equipo le basta
+  salida a internet; (b) NO está atado a una máquina concreta: vale cualquiera
+  donde se arranque el worker con las credenciales, y varias a la vez se reparten
+  el trabajo sin pisarse (`FOR UPDATE SKIP LOCKED`); (c) el `worker` que se guarda
+  en la fila es el hostname de QUIEN LA COGIÓ, un registro a posteriori, no un
+  destinatario.
+- **Tabla `transcript_workers`** (migración `ocp_transcript_workers_heartbeat`,
+  service-role-only): hostname PK, `status` idle/busy, `current_job`, `device`,
+  `gpu`, `tool_version`, `poll_seconds`, `last_seen_at`. Es la ÚNICA forma que
+  tiene el OCP de saber que un equipo existe, precisamente porque no puede
+  preguntarle.
+- **El latido va en un HILO APARTE**, y esa es la decisión que importa: una
+  transcripción de 22 min bloquea 4 minutos: sin hilo, el panel declararía muerta
+  la máquina en mitad de cada trabajo largo. Comprobado en vivo con el «Test 2»
+  del owner: 11 minutos ocupado y el latido con 15 s de antigüedad.
+- ⚠️ **Describir la máquina importa torch (~20 s)**, así que va DENTRO del hilo:
+  la primera versión lo hacía antes de arrancar el bucle y retrasaba el primer
+  `claim` esos 20 s — el worker tardaba en ponerse a trabajar solo para poder
+  decir bonito qué tarjeta tiene. Primero se anuncia, luego se describe.
+- **`WorkersBadge`** en la lista y en el detalle: led verde/ámbar/gris,
+  «The-Beast-GV (RTX 4070) — libre / transcribiendo, hace 12 s» o «Ningún equipo
+  conectado» con qué hacer. Y se cambió la copy: ya no dice «esperando al equipo
+  con GPU» sino «en cola», con la explicación de quién pregunta a quién.
+- Para la doc (V36): hace falta una entrada de DICT sobre el modelo de tirón —
+  es el concepto que hacía falta explicar y que ninguna pantalla explicaba.
+  Tests de la herramienta 64 → 69. APP_VERSION 4.12.
+(commit: pending)

@@ -20,6 +20,7 @@ import {
 } from "@/lib/transcripciones/model";
 import type { TranscriptJobOptions, TranscriptPayload, TranscriptStatus, TranscriptSummary } from "@/lib/transcripciones/types";
 import { putSignedUrlWithProgress } from "@/lib/kaffetalMedia";
+import { WorkersBadge, useTranscriptWorkers } from "./WorkersBadge";
 import styles from "@/app/bcp/(app)/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import css from "./transcripciones.module.css";
@@ -54,6 +55,7 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
   const [pasted, setPasted] = useState("");
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const workers = useTranscriptWorkers();
 
   const refresh = useCallback(async () => setRows((await listTranscripts()) ?? []), []);
 
@@ -179,9 +181,11 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
         <div className={styles.kpiCard}>
           <span className={styles.kpiTop}><span className={styles.kpiK}>En cola</span></span>
           <span className={styles.kpiV} style={{ display: "block" }}>{waiting}</span>
-          <span className={styles.kpiSub}>{waiting ? "esperando al equipo con GPU" : "nada pendiente"}</span>
+          <span className={styles.kpiSub}>{waiting ? "esperando a un equipo o a la nube" : "nada pendiente"}</span>
         </div>
       </div>
+
+      <p style={{ margin: "14px 0 0" }}><WorkersBadge workers={workers} /></p>
 
       <div className={css.panel}>
         <div className={styles.sectionHead}>Nueva transcripción</div>

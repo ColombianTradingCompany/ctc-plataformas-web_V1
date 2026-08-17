@@ -16,6 +16,7 @@ import {
 import { collapseBlocks, fmtDuration, fmtTs, speakerLabel, transcriptToText } from "@/lib/transcripciones/model";
 import type { Transcript } from "@/lib/transcripciones/types";
 import { StatusBadge } from "./TranscriptsBoard";
+import { WorkersBadge, useTranscriptWorkers } from "./WorkersBadge";
 import styles from "@/app/bcp/(app)/shared.module.css";
 import css from "./transcripciones.module.css";
 
@@ -53,6 +54,10 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
     const h = window.setInterval(tick, POLL_MS);
     return () => window.clearInterval(h);
   }, [inFlight, inCloud, t.id]);
+
+  // ¿Hay algún equipo con el worker encendido? Es lo que convierte «Pendiente» en
+  // una espera con sentido o en una espera que no va a terminar nunca.
+  const workers = useTranscriptWorkers();
 
   // El botón de la nube solo aparece si hay clave configurada en el entorno.
   const [cloudOn, setCloudOn] = useState(false);
@@ -186,13 +191,15 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
         <div className={`${css.status} ${t.status === "error" ? css.statusErr : ""}`}>
           {t.status === "pending" && (
             <>
-              <strong><span className={css.pulse} />Pendiente — esperando al equipo con GPU</strong>
+              <strong><span className={css.pulse} />Pendiente — en cola</strong>
               <span className={styles.meta}>
-                El audio ya está guardado. La transcribe el worker local cuando esté encendido
-                (<code>.\worker.ps1</code> en la carpeta de la herramienta); esta página se actualiza sola.
+                El audio ya está guardado. Lo recoge el primer equipo que tenga el worker encendido
+                (<code>.\worker.ps1</code>): la plataforma no llama a ninguna máquina, son ellas las que
+                preguntan cada pocos segundos. Esta página se actualiza sola.
                 {t.jobOptions.language ? ` Idioma: ${t.jobOptions.language}.` : ""}
                 {t.jobOptions.num_speakers ? ` Voces: ${t.jobOptions.num_speakers}.` : ""}
               </span>
+              <WorkersBadge workers={workers} verbose />
               {cloudOn && (
                 <span className={styles.actions}>
                   <button className="btn btn-sm btn-solid" type="button" disabled={busy}

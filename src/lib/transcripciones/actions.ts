@@ -13,8 +13,14 @@ import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { MAX_AUDIO_BYTES, collapseBlocks, isAudioName, speakerOrder, storageSafeName } from "./model";
 import type {
-  Transcript, TranscriptJobOptions, TranscriptPayload, TranscriptResult, TranscriptSegment, TranscriptStatus, TranscriptSummary,
+  Transcript, TranscriptJobOptions, TranscriptPayload, TranscriptResult, TranscriptSegment, TranscriptStatus,
+  TranscriptSummary, TranscriptWorker,
 } from "./types";
+
+type WorkerRow = {
+  worker: string; status: string; current_job: string | null; device: string | null; gpu: string | null;
+  tool_version: string | null; poll_seconds: number | null; last_seen_at: string;
+};
 
 const NO_AUTH = { ok: false as const, error: "Tu sesión del OCP no está activa. Vuelve a iniciar sesión." };
 const LIST_PATH = "/ocp/transcripciones";
@@ -323,6 +329,44 @@ export async function retryTranscript(id: string): Promise<TranscriptResult> {
   revalidatePath(LIST_PATH);
   revalidatePath(`${LIST_PATH}/${id}`);
   return { ok: true, id };
+}
+
+/**
+ * Los equipos que corren el worker y siguen vivos.
+ *
+ * La plataforma no puede preguntarle a una máquina si está encendida —no la
+ * alcanza, y no hace falta que la alcance— así que se fía del latido que el
+ * propio worker deja cada ~15 s. Sin latido reciente, se le da por apagado:
+ * es la lectura prudente, y es justo lo que el owner necesita saber antes de
+ * dejar una nota esperando toda la noche.
+ */
+export async function listTranscriptWorkers(): Promise<TranscriptWorker[]> {
+  const who = await requireConsoleWrite("ocp");
+  if (!who) return [];
+  const service = createServiceRoleClient();
+  const { data } = await service
+    .from("transcript_workers")
+    .select("worker, status, current_job, device, gpu, tool_version, poll_seconds, last_seen_at")
+    .order("last_seen_at", { ascending: false })
+    .limit(20);
+  const now = Date.now();
+  return ((data ?? []) as WorkerRow[]).map((r) => {
+    const secondsAgo = Math.max(0, Math.round((now - new Date(r.last_seen_at).getTime()) / 1000));
+    // Tres latidos perdidos = apagado. El worker late cada 15 s y pregunta cada
+    // `poll_seconds`; se toma el mayor de los dos para no declarar muerto a uno
+    // que solo va lento.
+    const beat = Math.max(15, r.poll_seconds ?? 20);
+    return {
+      worker: r.worker,
+      online: secondsAgo <= beat * 3,
+      status: r.status === "busy" ? "busy" : "idle",
+      secondsAgo,
+      device: r.device,
+      gpu: r.gpu,
+      toolVersion: r.tool_version,
+      currentJob: r.current_job,
+    };
+  });
 }
 
 /** Mandar este trabajo a la nube (AssemblyAI) en vez de esperar al equipo con GPU. */

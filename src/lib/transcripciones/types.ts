@@ -17,6 +17,21 @@ export type TranscriptSegment = {
 /** Un bloque = segmentos consecutivos del mismo hablante, ya juntos. Se deriva, no se guarda. */
 export type TranscriptBlock = { speaker: string; start: number; end: number; text: string };
 
+/**
+ * pending: audio subido, esperando al worker del equipo con GPU ·
+ * processing: reclamado por el worker · ready: transcrita · error: ver `error`.
+ * Las que entran por JSON o texto nacen `ready`.
+ */
+export type TranscriptStatus = "pending" | "processing" | "ready" | "error";
+
+/** Pistas que el owner da al subir el audio; el worker se las pasa a la herramienta. */
+export type TranscriptJobOptions = {
+  language?: string;      // "es", "en"... (vacío = detectar)
+  num_speakers?: number;  // exacto, si se sabe
+  min_speakers?: number;
+  max_speakers?: number;
+};
+
 export type TranscriptSummary = {
   id: string;
   subject: string;
@@ -31,6 +46,15 @@ export type TranscriptSummary = {
   /** Nombres puestos a mano: {"SPEAKER_00": "Don Luis"}. */
   speakerNames: Record<string, string>;
   segmentCount: number;
+  status: TranscriptStatus;
+  /** Ruta del audio en el bucket (null cuando entró por JSON/texto). */
+  audioPath: string | null;
+  audioSizeBytes: number | null;
+  jobOptions: TranscriptJobOptions;
+  error: string | null;
+  worker: string | null;
+  claimedAt: string | null;
+  processedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

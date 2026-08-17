@@ -6,17 +6,22 @@
 // imprime el texto. El contenido transcrito no se edita: es lo que dijo la
 // máquina, con sus tiempos.
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { deleteTranscript, getTranscript, renameSpeaker, updateTranscriptInfo } from "@/lib/transcripciones/actions";
+import {
+  deleteTranscript, getAudioUrl, getTranscript, renameSpeaker, retryTranscript, updateTranscriptInfo,
+} from "@/lib/transcripciones/actions";
 import { collapseBlocks, fmtDuration, fmtTs, speakerLabel, transcriptToText } from "@/lib/transcripciones/model";
 import type { Transcript } from "@/lib/transcripciones/types";
+import { StatusBadge } from "./TranscriptsBoard";
 import styles from "@/app/bcp/(app)/shared.module.css";
 import css from "./transcripciones.module.css";
 
 const PALETTE = ["#2f6f5e", "#b0592a", "#3b5b8f", "#8a4d7a", "#6f7a2f", "#a1541c", "#5b8def", "#7a3b3b"];
+const POLL_MS = 10_000;
 const day = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString("es-CO", { day: "2-digit", month: "long", year: "numeric" });
+const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
 
 export function TranscriptDetail({ initial }: { initial: Transcript }) {
   const router = useRouter();
@@ -32,6 +37,16 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
     const fresh = await getTranscript(t.id);
     if (fresh) setT(fresh);
   }, [t.id]);
+
+  // Mientras el worker no termine, la página se pone al día sola cada 10 s.
+  const inFlight = t.status === "pending" || t.status === "processing";
+  useEffect(() => {
+    if (!inFlight) return;
+    const h = window.setInterval(() => {
+      getTranscript(t.id).then((fresh) => { if (fresh) setT(fresh); });
+    }, POLL_MS);
+    return () => window.clearInterval(h);
+  }, [inFlight, t.id]);
 
   const blocks = useMemo(() => collapseBlocks(t.segments), [t.segments]);
   const colorOf = useMemo(
@@ -77,6 +92,12 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
   const meta = t.meta ?? {};
   const model = typeof meta.model === "string" ? meta.model : null;
 
+  async function openAudio() {
+    const r = await getAudioUrl(t.id);
+    if (!r.ok) { setError(r.error); return; }
+    window.open(r.url, "_blank", "noopener");
+  }
+
   return (
     <>
       <Link href="/ocp/transcripciones" className={styles.backLink}>← Transcripciones</Link>
@@ -115,14 +136,17 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
             </form>
           ) : (
             <>
-              <h1>{t.subject}</h1>
+              <h1>{t.subject} {t.status !== "ready" && <StatusBadge status={t.status} />}</h1>
               <div className={css.metaRow}>
                 <span>{day(t.recordedOn)}</span>
                 <span>Duración {fmtDuration(t.durationSeconds)}</span>
                 {t.language && <span>Idioma {t.language}</span>}
-                <span>{t.speakers.length} hablante{t.speakers.length === 1 ? "" : "s"}</span>
+                {t.status === "ready" && <span>{t.speakers.length} hablante{t.speakers.length === 1 ? "" : "s"}</span>}
                 {t.sourceName && <span>Archivo {t.sourceName}</span>}
                 {model && <span>Modelo {model}</span>}
+                {t.audioPath && (
+                  <button type="button" className={css.linkBtn} onClick={() => void openAudio()}>Escuchar / descargar audio</button>
+                )}
               </div>
               {t.notes ? <p className={css.notes}>{t.notes}</p> : <p className={styles.meta}>Sin notas. «Editar datos» para añadirlas.</p>}
             </>
@@ -145,6 +169,44 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
         )}
       </div>
 
+      {t.status !== "ready" && (
+        <div className={`${css.status} ${t.status === "error" ? css.statusErr : ""}`}>
+          {t.status === "pending" && (
+            <>
+              <strong><span className={css.pulse} />Pendiente — esperando al equipo con GPU</strong>
+              <span className={styles.meta}>
+                El audio ya está guardado. La transcribe el worker local cuando esté encendido
+                (<code>.\worker.ps1</code> en la carpeta de la herramienta); esta página se actualiza sola.
+                {t.jobOptions.language ? ` Idioma: ${t.jobOptions.language}.` : ""}
+                {t.jobOptions.num_speakers ? ` Voces: ${t.jobOptions.num_speakers}.` : ""}
+              </span>
+            </>
+          )}
+          {t.status === "processing" && (
+            <>
+              <strong><span className={css.pulse} />Transcribiendo{t.worker ? ` en ${t.worker}` : ""}…</strong>
+              <span className={styles.meta}>
+                Reclamada {when(t.claimedAt)}. Una llamada de 20 min tarda unos 4 min en la GPU. Si el equipo se apagó a mitad,
+                a las 2 h vuelve sola a la cola.
+              </span>
+            </>
+          )}
+          {t.status === "error" && (
+            <>
+              <strong>La transcripción falló{t.worker ? ` en ${t.worker}` : ""} ({when(t.processedAt)})</strong>
+              <pre>{t.error ?? "Sin detalle."}</pre>
+              <span className={styles.actions}>
+                <button className="btn btn-sm btn-solid" type="button" disabled={busy}
+                  onClick={() => void run(() => retryTranscript(t.id), "De vuelta en la cola.")}>
+                  Reintentar
+                </button>
+                <span className={styles.meta}>Corrige la causa en el equipo (token de Hugging Face, GPU, archivo) y reintenta.</span>
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       <div className={css.chips}>
         {t.speakers.map((k) => (
           <button key={k} type="button" className={css.chip} style={{ ["--c" as string]: colorOf[k] }} disabled={busy}
@@ -155,9 +217,11 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
           </button>
         ))}
       </div>
-      <p className={styles.meta}>Clic en una voz para ponerle nombre; se aplica a toda la conversación y queda guardado.</p>
+      {t.speakers.length > 0 && (
+        <p className={styles.meta}>Clic en una voz para ponerle nombre; se aplica a toda la conversación y queda guardado.</p>
+      )}
 
-      <div className={css.tools}>
+      <div className={css.tools} style={t.status !== "ready" ? { display: "none" } : undefined}>
         <button className="btn btn-sm" type="button" onClick={() => setShowTs((v) => !v)}>{showTs ? "Ocultar tiempos" : "Mostrar tiempos"}</button>
         <button className="btn btn-sm" type="button" onClick={() => void copy()}>Copiar</button>
         <button className="btn btn-sm" type="button" onClick={download}>Descargar .txt</button>
@@ -167,7 +231,7 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
       </div>
 
       <div className={`${css.blocks} ${showTs ? "" : css.hideTs}`}>
-        {blocks.length === 0 && <p className={styles.empty}>Sin habla detectada.</p>}
+        {blocks.length === 0 && t.status === "ready" && <p className={styles.empty}>Sin habla detectada.</p>}
         {blocks.map((b, i) => (
           <div key={`${b.start}-${i}`} className={css.block} style={{ ["--c" as string]: colorOf[b.speaker] ?? "var(--primary)" }}>
             <span className={css.who}>{speakerLabel(b.speaker, t.speakerNames)}</span>

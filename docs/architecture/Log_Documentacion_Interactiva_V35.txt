@@ -227,3 +227,52 @@ por eso viven juntos. Nació de una nota de voz REAL de WhatsApp: una llamada de
   como los HTML de public/tools pero corriendo en el equipo, no en el navegador).
   APP_VERSION 4.8.
 (commit: eab949c)
+
+## [2026-08-17] OCP · Transcripciones — subir el AUDIO al OCP; el worker local lo transcribe (V4.9)
+
+El mismo día, la segunda mitad: el owner ya no tiene que correr la CLI a mano.
+Sube la nota de voz en el OCP y la transcribe su equipo con GPU en segundo
+plano. La plataforma sigue SIN transcribir — solo pone la cola y guarda.
+
+- **Cola en la misma tabla** (migración `ocp_transcripts_audio_jobs`):
+  `status` pending/processing/ready/error, `audio_path` (bucket privado
+  `kaffetal-media`, prefijo `transcripts/<uuid>/<nombre>` — ningún JWT de
+  usuario lo alcanza), `audio_size_bytes`, `audio_mime`, `job_options` (idioma,
+  nº de voces), `error`, `worker`, `claimed_at`, `processed_at`; índice parcial
+  sobre la cola. RPC **`claim_transcript_job(p_worker)`**: reclama el trabajo
+  pendiente más antiguo con `FOR UPDATE SKIP LOCKED` (varios workers no se
+  pisan), rescata un `processing` de más de 2 h (worker caído), EXECUTE
+  revocado a anon/authenticated y concedido a service_role — comprobado: anon
+  recibe 401.
+- **Subida**: el navegador PUT-ea directo a Storage con URL firmada
+  (`prepareAudioUpload` la acuña con el service role; el PUT es el
+  `putSignedUrlWithProgress` de la casa, con barra de progreso), y luego
+  `createAudioTranscript` crea la fila `pending` sin segmentos — antes comprueba
+  que el objeto exista. Así una llamada de una hora no pasa por la Server
+  Action. Tope 100 MB (el del bucket); una nota de 22 min son 3 MB.
+- **Worker local**: `python -m ogg_transcriber.worker` / `.\worker.ps1` en la
+  carpeta de la herramienta (`ogg_transcriber/worker.py`, sin SDK: PostgREST +
+  Storage con `requests`). Bucle: claim → descarga → `transcribe_ogg()` con las
+  pistas de `job_options` → PATCH del resultado (`ready`) o del error (`error`,
+  con el MISMO mensaje que imprime la CLI: token de HF, GPU…). Ctrl+C a mitad
+  devuelve el trabajo a la cola. Credenciales: `.env` de la herramienta o, sin
+  configurar nada, `ctc-platform/.env.local` (la clave no sale del equipo).
+  Probado de punta a punta contra el proyecto real: siembra → claim → 106 s →
+  fila `ready` con 15 segmentos y 2 voces → limpieza.
+- **Interfaz**: una sola zona de archivo acepta el audio o el JSON; con audio
+  aparecen las dos pistas (idioma, ¿cuántas voces?). Lista con badge de estado
+  y KPI «En cola». Detalle: panel de estado (Pendiente / Transcribiendo en
+  <equipo> / Error con el texto y **Reintentar**), polling cada 10 s hasta
+  `ready`, «Escuchar / descargar audio» (URL firmada 1 h); borrar se lleva
+  también el objeto.
+- **La herramienta acepta más formatos**: `.m4a/.aac/.mp3/.wav/.flac/.amr/…`
+  además de `.ogg/.opus` — ffmpeg los decodifica todos; el filtro por extensión
+  solo existe para dar un mensaje claro ante un PDF. Y el gotcha de PS 5.1
+  volvió a morder en el QA: `$ErrorActionPreference = "Stop"` mata el script en
+  cuanto python escribe en stderr — `Continue` alrededor del proceso nativo.
+- Para la doc (V36): completar el escenario «Nota de voz → transcripción
+  archivada» con la vía nueva (OCP sube audio → cola → worker en el equipo →
+  fila lista), y en la ficha del módulo decir explícitamente que si el PC está
+  apagado las subidas ESPERAN como Pendiente — es el diseño. `scripts/
+  qa-transcripciones-check.mjs` sube a 50 comprobaciones. APP_VERSION 4.9.
+(commit: pending)

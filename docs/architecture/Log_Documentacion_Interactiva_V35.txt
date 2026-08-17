@@ -226,4 +226,4 @@ por eso viven juntos. Nació de una nota de voz REAL de WhatsApp: una llamada de
   voces → txt/impresión); wire OCP ↔ herramienta local (fuera de la plataforma,
   como los HTML de public/tools pero corriendo en el equipo, no en el navegador).
   APP_VERSION 4.8.
-(commit: pending)
+(commit: eab949c)

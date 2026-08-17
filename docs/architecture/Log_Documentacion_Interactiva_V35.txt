@@ -163,3 +163,67 @@ Contexto abierto al cerrar V35 (2026-08-15):
   Identity Value Creation declarada y sin construir, el socio multi-nodo
   pendiente del PK de `partner_accounts`, los tres cotizadores sin conducir por
   2FA, y la protección de contraseñas filtradas bloqueada por plan.
+
+## [2026-08-17] OCP · Transcripciones — el archivo de las conversaciones (V4.8)
+
+Cuarto módulo del grupo **OCP · Cotizadores** (`/ocp/transcripciones`). Cotizar
+es operación y las conversaciones con productores, clientes y aliados también:
+por eso viven juntos. Nació de una nota de voz REAL de WhatsApp: una llamada de
+22 min con el parque tecnológico sobre la rueda de catación, transcrita con
+3 voces en 4 min de GPU.
+
+- **La plataforma NO transcribe** — decisión de arquitectura, no limitación
+  temporal. El modelo (faster-whisper large-v3 + pyannote diarización, vía
+  WhisperX; ~9 GB de dependencias, CUDA) corre en el equipo del owner como
+  herramienta local: `reference_html_tools/_whatsapp-transcript-html`
+  (paquete Python `ogg_transcriber`, `.\transcribe.ps1 nota.ogg --json -o
+  nota.transcript.json`; README ahí, con el paso de Hugging Face que traba a
+  todo el mundo). Vercel no podría ni debería. El OCP GUARDA el resultado y le
+  añade lo humano: asunto, fecha de la conversación, notas y el nombre de cada
+  voz (clic en el chip → `renameSpeaker`, persiste en `speaker_names`).
+- **Tabla nueva `transcripts`** (migración `ocp_transcripts`; service-role-only,
+  RLS activo y cero políticas, como `quotes` y `market_anchors`): `subject`,
+  `recorded_on` (fecha de la conversación, no de la carga), `notes`,
+  `source_name`, `language`, `duration_seconds`, `speakers` (orden de aparición),
+  `speaker_names` jsonb, `segments` jsonb tal cual los da la herramienta
+  (`{speaker,start,end,text[,flags]}`), `segment_count`, `full_text` (para
+  buscar), `meta` (modelo, dispositivo, tiempos), `created_by` → profiles ON
+  DELETE SET NULL. Comprobado por PostgREST con el service role: insert de la
+  llamada real (208 segmentos, 50 KB) → anon ve 0 filas → lectura íntegra →
+  rename → delete.
+- **Dos entradas en el formulario de alta**: el `.transcript.json` de la
+  herramienta (validado en el navegador por `parseToolJson`: solo exige
+  `segments` con texto, lo demás se toma o se deriva; se descarta `meta.path`,
+  la ruta local del owner) o **texto pegado** (`parsePlainText`: párrafos →
+  segmentos sin tiempos; «Nombre: …» al inicio se toma como hablante). Sin JSON
+  de la herramienta no hay diarización real, y la interfaz lo dice.
+- **Archivos**: `src/lib/transcripciones/{types,model,actions}.ts` (`model.ts`
+  es PURO — `collapseBlocks` es el `collapse_blocks` de la herramienta portado,
+  `speakerLabel` traduce `SPEAKER_00` → «Hablante 1» o el nombre puesto);
+  `src/components/transcripciones/{TranscriptsBoard,TranscriptDetail}.tsx` +
+  `transcripciones.module.css`; pages en `src/app/ocp/(app)/transcripciones/`
+  (`page.tsx` lista+alta, `[id]/page.tsx` detalle con `notFound()`); enlace en
+  `consoles.ts` bajo OCP · Cotizadores. Actions detrás de
+  `requireConsoleWrite("ocp")` sobre el service role, como Anclas.
+- **Guardián**: `scripts/qa-transcripciones-check.mjs` (38 comprobaciones del
+  modelo puro; con el JSON real: 208 segmentos, 32 bloques, 3 voces). Existe
+  porque el OCP está tras el master login con OTP y no se conduce en un
+  navegador. ⚠️ Lección: `process.exit()` al final de un QA con el resolutor
+  `ts-resolve.mjs` dispara un assert de libuv en Windows — usar `process.exitCode`.
+  ⚠️ Otra: los secret keys nuevos de Supabase rechazan peticiones con
+  User-Agent de navegador («Forbidden use of secret API key in browser»);
+  `Invoke-RestMethod` necesita `-UserAgent` de servidor.
+- **La herramienta local, en dos frases para la doc**: pipeline validar → ffmpeg
+  → Whisper → alineación wav2vec2 (sin ella WhisperX da UN hablante por trozo
+  de 30 s) → pyannote → hablante por palabra → suavizado (una voz minoritaria de
+  ≤3 palabras dentro de una frase se pliega a la mayoritaria; los «no, no,
+  no…» alucinados se colapsan a `(…×N)`) → bloques. Modelo de diarización por
+  defecto `pyannote/speaker-diarization-community-1` (UN repo gated, no dos).
+- Para la doc (V36): módulo nuevo en la zona OCP junto a los tres cotizadores y
+  Anclas; entrada de DICT «transcripciones» (qué guarda, qué NO hace, de dónde
+  sale el JSON); escenario nuevo «Nota de voz → transcripción archivada» (audio
+  en el equipo del owner → herramienta local → JSON → OCP alta → nombres a las
+  voces → txt/impresión); wire OCP ↔ herramienta local (fuera de la plataforma,
+  como los HTML de public/tools pero corriendo en el equipo, no en el navegador).
+  APP_VERSION 4.8.
+(commit: pending)

@@ -324,3 +324,65 @@ SIN quitar la local, y de paso se arregla un fallo que destapó esa misma nota.
   no transcribe ella misma pero sí puede pagar a quien lo haga. QA sube a 58
   comprobaciones; la herramienta, a 64. APP_VERSION 4.10.
 (commit: pending)
+
+## [2026-08-17] Infraestructura: Supabase y Vercel pasan a Pro; el org de CTC queda solo con ctc-platform
+- **Supabase — org `bihcajbdxvfgtmsyhsng` ("ColombianTradingCompany's Org") ahora en Pro
+  ($25/mes).** Motivo verificado en el panel de uso: la organización superó la cuota Free
+  del ciclo anterior en **egress — 8,495 GB frente a 5 GB** (todo lo demás holgado: 39 MAU
+  de 50.000, base de datos 74 MB de 500). El egress lo explica el bucket `kaffetal-media`
+  (410 objetos, 549 MB): **19 vídeos MP4 suman 299 MB (55 %)**, ~16 MB cada uno; unas 540
+  reproducciones agotan la cuota. No es un bucle ni un fallo: es contenido de vídeo servido
+  desde Storage. Pro aporta 250 GB de egress, **copias de seguridad diarias (7 días) —
+  antes no había NINGUNA copia de producción —**, 8 GB de disco y sin pausa por inactividad.
+- Antes de subir a Pro se **movió el proyecto huérfano `commaas` (`togwpmprggfvhwwxfzlh`)
+  fuera del org de CTC** a un org nuevo "CommaaS Hub" (Free): el cómputo se factura por
+  proyecto (~$10/mes por instancia; el crédito incluido cubre una), así que ctc-platform
+  queda como único proyecto y la factura es $25 y no $35. El proyecto pausado
+  `dweizejazqeqpiguecxw` (mayo 2025) fue borrado por el dueño.
+- **Vercel — la cuenta pasa a Pro ($20/mes).** Dos razones: (1) licencia — Hobby es "for
+  personal, non-commercial use" y ctcexport.com es un negocio con productores e
+  importadores; (2) el cron de Hobby es **una vez al día ±59 min** (verificado en la doc de
+  Vercel) — en Pro pasa a una vez por minuto, y el tope de función deja de ser el de Hobby.
+  Transferencia 1 TB. Sin asientos extra (los despliegues salen de GitHub).
+- **Consecuencia para la doc**: la restricción "un cron al día" que aparece en notas y
+  gotchas de Vercel Hobby **deja de aplicar**; conviene revisar la entrada de DICT sobre
+  hosting/límites y la nota de infraestructura. Coste total de infraestructura: **$45/mes**
+  (Supabase Pro CTC $25 + Vercel Pro $20; el hub de CommaaS sigue en Free).
+- Pendiente de decidir (no urgente): servir los vídeos con caché/CDN o desde otro sitio si
+  el egress sigue creciendo; hoy 2,27 GB en el ciclo actual, dentro de cuota incluso en Free.
+(commit: n/a — cambios de infraestructura, no de código)
+
+## [2026-08-17] La nube quedó probada de verdad, y el webhook apuntaba al apex (V4.11)
+
+El owner puso la clave de AssemblyAI en Vercel y redeplegó. Al ir a comprobarlo
+—en vez de darlo por bueno— salieron dos cosas.
+
+- ⚠️ **EL WEBHOOK APUNTABA AL APEX**. `siteUrl()` caía a `https://ctcexport.com`
+  cuando `NEXT_PUBLIC_SITE_URL` no está puesta (no lo está), y ese host responde
+  **308** hacia `www`. Un emisor de webhooks no tiene por qué seguir un redirect
+  en un POST: el aviso se habría perdido EN SILENCIO. No habría sido visible como
+  avería —el sondeo de respaldo termina el trabajo igual— sino como «la nube va
+  lenta». Ahora `webhookBaseUrl()` canonicaliza el apex a www y respeta cualquier
+  otro dominio. Lección: una red de seguridad que funciona demasiado bien ESCONDE
+  el fallo que debería delatar.
+- **Probado de punta a punta, con dinero real** (US$0,002):
+  `scripts/qa-transcripciones-nube.mjs` importa el `cloud.ts` REAL, siembra una
+  fila con el fixture de 43 s, la manda a AssemblyAI, espera y comprueba. La
+  primera corrida buena: 6 segmentos, 2 voces, texto correcto y **aviso por
+  WEBHOOK** (no por sondeo) — o sea, el secreto de Vercel y el del envío coinciden
+  y la vía rápida funciona. Fila y audio borrados al terminar.
+- **Sonda no invasiva del despliegue**: un POST sin cabecera a
+  `/api/transcripciones/callback` distingue los tres estados sin tocar nada —
+  **503** = falta el secreto en ese entorno, **401** = está y rechaza bien,
+  cualquier otra cosa = mirar. Sirve para comprobar un despliegue sin entrar al
+  OCP (que pide OTP).
+- ⚠️ **`ts-resolve.mjs` ahora también dobla `next/headers`**. `lib/supabase/
+  server.ts` lo importa solo para el cliente con cookies, pero eso tumbaba
+  CUALQUIER QA que llegara a él por la cadena de imports. El doble explota con un
+  mensaje claro si alguien intenta usar cookies de verdad, en vez de devolver una
+  sesión vacía y fingir. Y ojo con el ORDEN: el .env se carga ANTES de importar
+  el módulo (import dinámico), porque `server.ts` lee la URL al evaluarse y un
+  import estático se hoistea y la captura vacía.
+- Para la doc (V36): la ficha de Transcripciones ya puede decir que la nube está
+  PROBADA, no solo construida. APP_VERSION 4.11.
+(commit: pending)

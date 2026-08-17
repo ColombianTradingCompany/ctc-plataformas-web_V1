@@ -39,8 +39,16 @@ export function cloudConfigured(): boolean {
   return !!assemblyApiKey();
 }
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://ctcexport.com").replace(/\/$/, "");
+/**
+ * De dónde cuelga el webhook. Ojo con el apex: `https://ctcexport.com/...` responde
+ * **308** hacia `www`, y un emisor de webhooks no tiene por qué seguir un redirect
+ * en un POST — el aviso se perdería en silencio (lo salvaría el sondeo, pero la vía
+ * rápida quedaría rota sin que nadie lo note). Se canonicaliza a `www`, que es
+ * además lo que Next declara como canónico.
+ */
+export function webhookBaseUrl(raw: string | undefined = process.env.NEXT_PUBLIC_SITE_URL): string {
+  const base = (raw || "https://www.ctcexport.com").trim().replace(/\/+$/, "");
+  return base.replace(/^https?:\/\/ctcexport\.com/i, "https://www.ctcexport.com");
 }
 
 const MISSING_KEY =
@@ -113,7 +121,7 @@ export async function submitToAssembly(id: string): Promise<CloudResult> {
   const body = assemblyBody(
     signed.signedUrl,
     opts,
-    secret ? { url: `${siteUrl()}/api/transcripciones/callback`, header: WEBHOOK_HEADER, value: secret } : undefined
+    secret ? { url: `${webhookBaseUrl()}/api/transcripciones/callback`, header: WEBHOOK_HEADER, value: secret } : undefined
   );
 
   let res: Response;

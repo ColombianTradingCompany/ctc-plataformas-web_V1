@@ -73,7 +73,31 @@ está apagado; equipo para lo demás y para lo sensible.
 - **Los hablantes se renombran igual**: sus etiquetas A/B/C se traducen a `SPEAKER_00/01/02`,
   así que el resto del módulo (chips, nombres, exportar) no nota la diferencia.
 
-## 6 · Si algo falla
+## 6 · Comprobar que quedó bien puesto (sin entrar al OCP)
+
+Un POST **sin** cabecera secreta al webhook distingue los tres estados:
+
+```bash
+curl -s -o - -w "\n%{http_code}\n" -X POST https://www.ctcexport.com/api/transcripciones/callback -H "content-type: application/json" -d "{}"
+```
+
+| Respuesta | Qué significa |
+|---|---|
+| **401** `unauthorized` | ✅ el secreto está puesto y el endpoint rechaza a los desconocidos |
+| **503** `webhook not configured` | falta `ASSEMBLYAI_WEBHOOK_SECRET` en ese entorno (o el deploy es anterior a añadirla) |
+| otra cosa | mirar los logs del deploy |
+
+Y la prueba completa —manda un audio de verdad y espera el webhook, ~US$0,002—:
+
+```bash
+node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-transcripciones-nube.mjs
+```
+
+Siembra una fila de prueba, la manda, comprueba el resultado y **borra fila y audio** al terminar.
+Dice además si el aviso llegó **por webhook** (vía rápida) o **por sondeo** (el webhook no llegó:
+mirar el secreto).
+
+## 7 · Si algo falla
 
 | Síntoma | Causa | Qué hacer |
 |---|---|---|

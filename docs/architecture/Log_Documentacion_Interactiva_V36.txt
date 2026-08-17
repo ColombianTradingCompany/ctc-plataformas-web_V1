@@ -236,4 +236,4 @@ Sin cambio de APP_VERSION (documentación).
   `html-to-text` ← `mailparser` (dependencia directa del Buzón). El arreglo que ofrece npm es una
   bajada rompedora de `mailparser`, así que se deja anotado para decisión del owner, no se fuerza.
 APP_VERSION 4.15 → 4.16.
-(commit: pending)
+(commit: 62cb377)

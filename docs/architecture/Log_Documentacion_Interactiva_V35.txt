@@ -552,3 +552,30 @@ El owner respondió que sí a meterla en el repo. Con eso se cierra el agujero q
   repo» y pasa a ser parte de él, con dos flechas: los trabajos hacia el OCP y
   el paquete de instalación desde el OCP. APP_VERSION 4.15.
 (commit: pending)
+
+## [2026-08-17] Poner el repo en privado rompe los despliegues (revertido)
+
+El owner pidió cerrar el repositorio. Se hizo, y hay que dejarlo escrito porque
+el fallo es SILENCIOSO y se nota tarde.
+
+- Con el repo en privado, **Vercel dejó de poder leerlo**: ningún push desplegó
+  en los ~12 minutos que estuvo cerrado. Forzando un despliegue desde la API de
+  Vercel, la respuesta fue `incorrect_git_source_info — the repository does not
+  contain the requested branch or commit reference`, que NO significa que falte
+  la rama: significa que quien pregunta no ve el repo.
+- ⚠️ **La web NO se cae**: el último despliegue sigue sirviendo. Lo que se para
+  es la tubería. Por eso el fallo pasa desapercibido hasta que alguien se
+  pregunta por qué su cambio no sale.
+- Se revirtió a público y el commit pendiente desplegó solo. Después hizo falta
+  volver a enlazar el proyecto para que el enganche automático se recuperara del
+  todo.
+- Para intentarlo otra vez hay que arreglar ANTES el acceso de la GitHub App de
+  Vercel al repo privado (Vercel → Settings → Git, o GitHub → Settings →
+  Applications → Vercel), y comprobarlo con un commit de prueba antes de dar el
+  cambio por bueno.
+- La auditoría previa sí sirvió y queda como dato: 457 commits sin NINGUNA
+  credencial (`.env*` ignorado desde el primer commit), 0 forks, 0 estrellas.
+  O sea: mientras siga público no hay nada que rotar, pero la higiene sigue —
+  ni rutas absolutas del owner ni claves en el código.
+Sin cambio de APP_VERSION: no cambia nada de la aplicación.
+(commit: pending)

@@ -425,3 +425,31 @@ La respuesta —ninguna de las dos— es lo que había que poner en la interfaz:
   es el concepto que hacía falta explicar y que ninguna pantalla explicaba.
   Tests de la herramienta 64 → 69. APP_VERSION 4.12.
 (commit: pending)
+
+## [2026-08-17] Addendum: el out-of-memory NO era lo que yo creía (herramienta)
+
+Mientras se probaba el latido, el mismo audio de 609 s que por la mañana había
+corrido en GPU en 147 s volvió a caer a CPU (1019 s). Dos hipótesis mías y las
+dos equivocadas, hasta mirar los números:
+
+1. Culpé al latido (llamaba a `torch.cuda.*` desde su hilo, lo que SÍ reserva
+   ~0,5 GB de contexto justo mientras el hilo principal cargaba el modelo). Se
+   corrigió —ahora pregunta a `nvidia-smi`, que no reserva nada— pero el fallo
+   SIGUIÓ. Corregir algo real no lo convierte en la causa.
+2. La causa era el **LOTE FIJO DE 16**. En 8 GB está al borde: el mismo archivo
+   entra unas veces y otras no. Y no depende de la duración —uno de 22 min pasó
+   y uno de 10 min falló— sino de la VRAM libre en ese instante y de cuán llenos
+   salgan los trozos del detector de voz. Por eso parecía aleatorio.
+
+Lo que quedó:
+- `default_batch_size` MIDE la VRAM libre (con nvidia-smi, no con torch: pedírselo
+  a torch inicializaría el contexto que se quiere medir) y elige 16/8/4/2.
+- `_asr_with_fallback` baja por una ESCALERA `cuda/N → cuda/N//4 → cuda/1 → cpu`.
+  Un OOM no significa que la GPU no sirva, significa que el lote es grande; la CPU
+  es el último recurso, no el primero (132 s contra 1019 s en el mismo audio).
+- `_free_asr_model` suelta las referencias internas: `empty_cache()` NO libera lo
+  de ctranslate2 y un intento fallido dejaba ~4 GB retenidos (medido), con lo que
+  el reintento chocaba contra la memoria del intento anterior.
+- Tests de la herramienta 69 → 76, incluida la escalera y el dimensionado.
+Sin cambio de APP_VERSION: todo esto vive en la herramienta, fuera del repo.
+(commit: pending)

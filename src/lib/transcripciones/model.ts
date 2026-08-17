@@ -4,10 +4,55 @@
 // hablante (el mismo `collapse_blocks` de la herramienta, portado) y los
 // formatos de salida (texto para copiar/descargar).
 
-import type { TranscriptBlock, TranscriptPayload, TranscriptSegment } from "./types";
+import type { TranscriptBlock, TranscriptPayload, TranscriptSegment, TranscriptStatus } from "./types";
 
 export const MAX_PAYLOAD_SEGMENTS = 20_000; // ~10 h de conversación; más es un error de archivo, no un uso real
 export const UNKNOWN_SPEAKER = "SPEAKER";
+
+// ---------------------------------------------------------- audio (subida al OCP)
+/** Mismo conjunto que `ALLOWED_EXTENSIONS` de la herramienta (ogg_transcriber/audio.py). */
+export const AUDIO_EXTENSIONS = [
+  ".ogg", ".oga", ".opus",                    // WhatsApp
+  ".m4a", ".aac", ".mp3", ".wav", ".flac",    // grabadoras
+  ".amr", ".3gp", ".wma", ".webm", ".mp4",    // teléfonos / otras apps
+] as const;
+/** Tope del bucket kaffetal-media (100 MB/archivo). Una nota de WhatsApp de 22 min son 3 MB. */
+export const MAX_AUDIO_BYTES = 100 * 1024 * 1024;
+
+export function fileExt(name: string): string {
+  const m = /\.[^./\\]+$/.exec(name || "");
+  return m ? m[0].toLowerCase() : "";
+}
+export const isAudioName = (name: string) => (AUDIO_EXTENSIONS as readonly string[]).includes(fileExt(name));
+export const isJsonName = (name: string) => fileExt(name) === ".json";
+
+/** Nombre seguro para Storage (misma receta que gvg/coffeed): ASCII, sin espacios raros, ≤120. */
+export function storageSafeName(name: string): string {
+  return (name || "audio")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "") // quita las tildes que NFKD separo (rango de diacriticos combinantes)
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(-120) || "audio";
+}
+
+export const STATUS_LABEL: Record<TranscriptStatus, string> = {
+  pending: "Pendiente",
+  processing: "Transcribiendo",
+  ready: "Lista",
+  error: "Error",
+};
+
+/** Idiomas que ofrece el formulario (código Whisper). Vacío = detectar. */
+export const LANGUAGE_OPTIONS = [
+  { code: "", label: "Detectar" },
+  { code: "es", label: "Español" },
+  { code: "en", label: "Inglés" },
+  { code: "pt", label: "Portugués" },
+  { code: "fr", label: "Francés" },
+  { code: "de", label: "Alemán" },
+  { code: "it", label: "Italiano" },
+] as const;
 
 /** 0 → "00:00", 75.4 → "01:15", 3725 → "1:02:05" (igual que la herramienta). */
 export function fmtTs(seconds: number): string {

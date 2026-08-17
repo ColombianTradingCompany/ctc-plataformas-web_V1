@@ -68,6 +68,20 @@ if (pt.ok) {
 }
 check("plain: vacío", !m.parsePlainText("  \n ").ok);
 
+// ---- audio subido al OCP: extensiones, nombre seguro, etiquetas de estado
+check("audio: .opus", m.isAudioName("PTT-20260817-WA0001.opus"));
+check("audio: .OGG mayúsculas", m.isAudioName("nota.OGG"));
+check("audio: .m4a", m.isAudioName("grabación llamada.m4a"));
+check("audio: .json NO es audio", !m.isAudioName("x.transcript.json") && m.isJsonName("x.transcript.json"));
+check("audio: .pdf no", !m.isAudioName("doc.pdf") && !m.isJsonName("doc.pdf"));
+check("audio: sin extensión no", !m.isAudioName("audio"));
+check("safeName: tildes y espacios", m.storageSafeName("Grabación de la llamada 16-08.m4a") === "Grabacion_de_la_llamada_16-08.m4a");
+check("safeName: vacío", m.storageSafeName("") === "audio");
+check("safeName: recorta a 120", m.storageSafeName("a".repeat(200) + ".ogg").length === 120);
+check("status labels", m.STATUS_LABEL.pending === "Pendiente" && m.STATUS_LABEL.processing === "Transcribiendo" && m.STATUS_LABEL.ready === "Lista" && m.STATUS_LABEL.error === "Error");
+check("MAX_AUDIO_BYTES = 100 MB", m.MAX_AUDIO_BYTES === 100 * 1024 * 1024);
+check("languages: detectar primero", m.LANGUAGE_OPTIONS[0].code === "" && m.LANGUAGE_OPTIONS.some((o) => o.code === "es"));
+
 // ---- el JSON real de la herramienta, si se pasa por argumento
 const real = process.argv[2];
 if (real && existsSync(real)) {

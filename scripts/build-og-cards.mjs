@@ -25,7 +25,12 @@
 import sharp from "sharp";
 import { mkdir } from "node:fs/promises";
 
-const LOGOS = "C:/Users/gabri/OneDrive/Desktop/CTC Web Platform/reference_logos";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+// Los logos viven FUERA del repo (carpeta de referencia del workspace, hermana de
+// ctc-platform/). Ruta relativa a este script, nunca absoluta: el workspace se mudó
+// de OneDrive a C:\dev el 2026-08-17 y una ruta fija habría quedado muerta.
+const LOGOS = resolve(dirname(fileURLToPath(import.meta.url)), "../../reference_logos");
 const OUT = "public/images/og";
 
 const W = 1200;

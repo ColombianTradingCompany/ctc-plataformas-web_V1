@@ -40,6 +40,43 @@ export function useTranscriptWorkers() {
   return workers;
 }
 
+/** Carpeta de la herramienta, RELATIVA a la carpeta del proyecto.
+ *  A propósito sin ruta absoluta: este repo es público y la ruta lleva el nombre
+ *  de usuario. Además cambia de un equipo a otro. */
+const TOOL_FOLDER = "reference_html_tools\\_whatsapp-transcript-html";
+
+/** Las instrucciones que faltaban: «enciende worker.ps1» daba por supuesto que
+ *  quien lo lee sabe abrir PowerShell en una carpeta. Aquí es un doble clic. */
+function HowToStart() {
+  return (
+    <details className={css.howto}>
+      <summary>¿Cómo enciendo un equipo?</summary>
+      <ol>
+        <li>
+          En el equipo que quieras usar (el que tiene la tarjeta gráfica), abre la carpeta{" "}
+          <code>{TOOL_FOLDER}</code>, dentro de la carpeta <strong>CTC Web Platform</strong>.
+        </li>
+        <li>
+          Doble clic en <strong><code>Iniciar transcriptor.bat</code></strong>. Se abre una ventana negra:{" "}
+          <strong>déjala abierta</strong> mientras quieras que ese equipo trabaje.
+        </li>
+        <li>
+          En menos de un minuto esta misma línea dirá que el equipo está en línea, y las
+          transcripciones pendientes se irán haciendo solas.
+        </li>
+      </ol>
+      <p>
+        Para pararlo, cierra esa ventana. Si quieres que arranque solo cada vez que enciendas el PC,
+        doble clic (una única vez) en <code>Arranque automatico.bat</code> y elige «Activar».
+      </p>
+      <p>
+        La primera vez en un equipo nuevo hay que instalar la herramienta: clic derecho en{" "}
+        <code>setup.ps1</code> → «Ejecutar con PowerShell». Descarga varios GB, así que tarda.
+      </p>
+    </details>
+  );
+}
+
 /** Una línea: «Equipo GABRIEL-PC en línea» / «Ningún equipo conectado». */
 export function WorkersBadge({ workers, verbose = false }: { workers: TranscriptWorker[] | null; verbose?: boolean }) {
   if (workers === null) return <span className={styles.meta}>Comprobando equipos…</span>;
@@ -48,27 +85,30 @@ export function WorkersBadge({ workers, verbose = false }: { workers: Transcript
   if (!online.length) {
     const last = workers[0];
     return (
-      <span className={css.workers}>
+      <div className={css.workers}>
         <span className={`${css.led} ${css.ledOff}`} />
-        <span>
+        {/* div, no span: dentro van <details>/<ol>/<p>, que son bloques. */}
+        <div>
           <strong>Ningún equipo conectado.</strong>{" "}
           {last && last.secondsAgo < 60 * 60 * 24 * 7
             ? `El último («${last.worker}») se vio ${ago(last.secondsAgo)}. `
             : ""}
-          {verbose && (
+          {verbose ? (
             <>
-              Enciende <code>.\worker.ps1</code> en la carpeta de la herramienta y la cola se vacía sola
-              —o manda el trabajo a la nube, que no depende de ningún equipo.
+              El trabajo espera hasta que enciendas uno —o mándalo a la nube, que no depende de ninguno.
+              <HowToStart />
             </>
+          ) : (
+            <>Las transcripciones pendientes esperan.</>
           )}
-        </span>
-      </span>
+        </div>
+      </div>
     );
   }
 
   const busy = online.filter((w) => w.status === "busy");
   return (
-    <span className={css.workers}>
+    <div className={css.workers}>
       <span className={`${css.led} ${busy.length ? css.ledBusy : css.ledOn}`} />
       <span>
         {online.map((w, i) => (
@@ -90,6 +130,6 @@ export function WorkersBadge({ workers, verbose = false }: { workers: Transcript
           </>
         )}
       </span>
-    </span>
+    </div>
   );
 }

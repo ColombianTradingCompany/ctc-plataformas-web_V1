@@ -453,3 +453,32 @@ Lo que quedó:
 - Tests de la herramienta 69 → 76, incluida la escalera y el dimensionado.
 Sin cambio de APP_VERSION: todo esto vive en la herramienta, fuera del repo.
 (commit: pending)
+
+## [2026-08-17] «No entiendo cómo encender eso» — el paso que faltaba (V4.13)
+
+El panel decía «Enciende `.\worker.ps1` en la carpeta de la herramienta» y el
+owner lo dijo claro: no sabe cómo. Con razón — esa frase da por supuesto que
+quien la lee sabe abrir PowerShell EN una carpeta concreta, que es justo el tipo
+de conocimiento que un panel no debería exigir.
+
+- **`Iniciar transcriptor.bat`** en la carpeta de la herramienta: doble clic y
+  listo. Explica en su propia ventana qué hace, que hay que dejarla abierta y
+  cómo pararla; si falta el entorno de Python no se cierra de golpe, dice que
+  hay que correr `setup.ps1` y espera. (Un `.bat` que se cierra solo al fallar
+  es peor que no tenerlo: no da tiempo a leer el error.)
+- **`Arranque automatico.bat`**: menú de tres opciones para registrar —o quitar—
+  una tarea de Windows al iniciar sesión. Nadie tiene que aprender `schtasks`, y
+  se puede deshacer desde el mismo sitio.
+- **En el OCP**, un desplegable «¿Cómo enciendo un equipo?» con los tres pasos,
+  qué hacer la primera vez en un equipo nuevo y cómo dejarlo automático. Sale
+  solo cuando hace falta: si no hay equipo Y hay algo esperando.
+- ⚠️ **La ruta NO se pone en el código**: este repo es público y la ruta absoluta
+  lleva el nombre de usuario. Se nombra la carpeta relativa al proyecto.
+- ⚠️ Un `<details>` con `<ol>`/`<p>` dentro de un `<span>` metido en un `<p>` es
+  HTML inválido: el navegador cierra el `<p>` por su cuenta y el maquetado se
+  rompe. `WorkersBadge` pasó a `<div>`. Se vio ANTES de desplegar replicando el
+  panel en un HTML suelto con el mismo CSS y fotografiándolo con Chrome sin
+  interfaz — el OCP no se puede conducir en un navegador por el OTP.
+- Para la doc (V36): la ficha de Transcripciones debe mencionar los dos .bat como
+  la vía normal de encender un equipo. APP_VERSION 4.13.
+(commit: pending)

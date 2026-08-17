@@ -193,9 +193,9 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
             <>
               <strong><span className={css.pulse} />Pendiente — en cola</strong>
               <span className={styles.meta}>
-                El audio ya está guardado. Lo recoge el primer equipo que tenga el worker encendido
-                (<code>.\worker.ps1</code>): la plataforma no llama a ninguna máquina, son ellas las que
-                preguntan cada pocos segundos. Esta página se actualiza sola.
+                El audio ya está guardado. Lo recoge el primer equipo que tenga el transcriptor
+                encendido: la plataforma no llama a ninguna máquina, son ellas las que preguntan cada
+                pocos segundos. Esta página se actualiza sola.
                 {t.jobOptions.language ? ` Idioma: ${t.jobOptions.language}.` : ""}
                 {t.jobOptions.num_speakers ? ` Voces: ${t.jobOptions.num_speakers}.` : ""}
               </span>

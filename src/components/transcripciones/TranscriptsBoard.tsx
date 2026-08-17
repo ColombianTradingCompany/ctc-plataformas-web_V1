@@ -185,7 +185,8 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
         </div>
       </div>
 
-      <p style={{ margin: "14px 0 0" }}><WorkersBadge workers={workers} /></p>
+      {/* div, no p: el badge puede contener bloques (los pasos de «¿cómo enciendo un equipo?»). */}
+      <div style={{ margin: "14px 0 0" }}><WorkersBadge workers={workers} verbose={waiting > 0} /></div>
 
       <div className={css.panel}>
         <div className={styles.sectionHead}>Nueva transcripción</div>

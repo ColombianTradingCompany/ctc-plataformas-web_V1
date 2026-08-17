@@ -225,6 +225,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // Las referencias con las que cotizan las dos calculadoras. Salió de la
           // Configuración de Mermas para poder consultarse y crecer por su cuenta.
           { href: "/ocp/anclas-mercado", label: "Anclas de mercado" },
+          // Transcripciones (2026-08-17): las conversaciones de operación —notas
+          // de voz de WhatsApp, llamadas— transcritas con hablantes por la
+          // herramienta local (GPU) y archivadas aquí con asunto, fecha y notas.
+          { href: "/ocp/transcripciones", label: "Transcripciones" },
         ],
       },
     ],

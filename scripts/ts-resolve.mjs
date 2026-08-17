@@ -23,12 +23,31 @@ const SRC = resolvePath(fileURLToPath(import.meta.url), "..", "..", "src");
 const EXTS = [".ts", ".tsx", "/index.ts", "/index.tsx"];
 const SENTINELS = new Set(["server-only", "client-only"]);
 
+// `next/headers` no existe como módulo resolvible fuera del servidor de Next, así
+// que CUALQUIER módulo de src/ que lo importe —por ejemplo lib/supabase/server.ts,
+// que lo necesita solo para el cliente con cookies— tumbaba el script entero antes
+// de llegar a lo que se quería probar (2026-08-17, QA de la nube de Transcripciones).
+// Se sustituye por un doble que EXPLOTA con un mensaje claro si alguien lo usa de
+// verdad: un QA que necesite cookies de sesión no se puede correr así, y es mejor
+// decirlo que devolver una sesión vacía y fingir que todo va bien.
+const NEXT_HEADERS_STUB =
+  "data:text/javascript," +
+  encodeURIComponent(
+    `const nope = (name) => () => { throw new Error(\`[ts-resolve] next/headers.\${name}() no existe fuera de Next: este QA no puede usar la sesión por cookies (usa el cliente de service role).\`); };
+     export const cookies = nope("cookies");
+     export const headers = nope("headers");
+     export const draftMode = nope("draftMode");`
+  );
+
 const firstThatExists = (base) => EXTS.map((e) => base + e).find((p) => existsSync(p));
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (SENTINELS.has(specifier)) {
       return { url: "data:text/javascript,export{}", shortCircuit: true };
+    }
+    if (specifier === "next/headers") {
+      return { url: NEXT_HEADERS_STUB, shortCircuit: true };
     }
 
     if (specifier.startsWith("@/")) {

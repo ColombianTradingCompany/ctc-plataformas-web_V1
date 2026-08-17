@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
+import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
@@ -315,16 +316,26 @@ function Experience() {
     return false;
   }, [supabase, showToast]);
 
+  // ── El catálogo SOLO con sesión (owner, 2026-08-17) ────────────────────────
+  // Antes `loadCatalog()` corría para cualquier visitante, así que los lotes y
+  // SUS PRECIOS eran públicos y solo reservar pedía entrar. La decisión del
+  // owner invierte eso: el Catálogo Activo completo se ve dentro de las
+  // plataformas de Cherry Picked, y lo que ve quien no ha entrado es la cinta
+  // «Sneak Peek» —los mismos lotes sin nada comercial— más la puerta.
+  // Consecuencia asumida: la parrilla deja de ser rastreable por buscadores (la
+  // portada, las fichas de grado y la propia cinta siguen siéndolo) y los
+  // precios salen de la internet pública, que era el objetivo.
+  // Ver docs/V5_CONSOLAS_PLAN.md §1 (D0.5).
   useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
-      loadCatalog();
       if (!data.session?.user) return;
       const uid = data.session.user.id;
       gateMatriz().then((ok) => {
         if (!ok || !active) return;
         setUserId(uid);
+        loadCatalog();
         loadBuyerData(uid);
       });
     });
@@ -336,11 +347,14 @@ function Experience() {
           if (!ok) return;
           setUserId(uid);
           setLoginOpen(false);
+          loadCatalog();
           loadBuyerData(uid);
         });
       } else if (event === "SIGNED_OUT") {
         setUserId(null);
         setUserName("");
+        // Los lotes se vacían al salir: son el dato que la sesión autorizaba.
+        setLots([]);
         setMyKg({});
         setPackInCart(false);
         setOrders([]);
@@ -471,23 +485,33 @@ function Experience() {
           <Header loggedIn={!!userId} onLogin={() => setLoginOpen(true)} onShowProfile={() => setView("profile")} />
           <Hero />
           {/* The product leads, right below the hero's manifest board: first
-              the graded harvest (the flagship), then the Black workhorse. */}
-          <GradosSection
-            lots={lots}
-            myKg={myKg}
-            openLots={openLots}
-            loggedIn={!!userId}
-            activeGrade={activeGrade}
-            onSetGrade={setActiveGrade}
-            onToggleOpen={toggleOpen}
-            onChangeQty={changeQty}
-          />
-          <BlackSection lots={lots} myKg={myKg} openLots={openLots} loggedIn={!!userId} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
+              the graded harvest (the flagship), then the Black workhorse —
+              **for a signed-in buyer**. A visitor gets the Sneak Peek band in
+              that same slot (owner, 2026-08-17): the same lots, no prices, no
+              MOQ, no kilos, and a door. It inherits the `grados` anchor because
+              it occupies the catalogue's place in the page and in the QuickNav. */}
+          {userId ? (
+            <>
+              <GradosSection
+                lots={lots}
+                myKg={myKg}
+                openLots={openLots}
+                loggedIn={!!userId}
+                activeGrade={activeGrade}
+                onSetGrade={setActiveGrade}
+                onToggleOpen={toggleOpen}
+                onChangeQty={changeQty}
+              />
+              <BlackSection lots={lots} myKg={myKg} openLots={openLots} loggedIn={!!userId} onToggleOpen={toggleOpen} onChangeQty={changeQty} />
+            </>
+          ) : (
+            <SneakPeek lang={lang} variant="cp" onOpenLogin={() => setLoginOpen(true)} id="grados" />
+          )}
           <EnviosSection />
           <VisitCtcBand />
           <TyrianSection loggedIn={!!userId} bidA={bidA} bidB={bidB} onBid={bid} />
           <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
-          <NarrativaSection lots={lots} />
+          <NarrativaSection lots={lots} loggedIn={!!userId} />
           <CosechaSection />
           <CoffeedSection />
           <ManifiestoSection />
@@ -498,7 +522,7 @@ function Experience() {
               bottom-right corner. QuickNav FAB at 24, family at 92,
               language at 148. */}
           <QuickNav
-            sections={t.quickNav}
+            sections={userId ? t.quickNav : t.quickNav.filter((s) => s.id !== "black")}
             side="left"
             labels={t.quickNavLabels}
             extraLinks={[{ href: DIRECTORIO_HREF, code: "DC", label: "Directorio del Café", sub: t.dcSub }]}

@@ -182,3 +182,58 @@ Sin cambio de APP_VERSION.
   `revalidatePath` de consola.
 Sin cambio de APP_VERSION (documentación).
 (commit: 00c9721)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V4.16 — «Active Catalogue Sneak Peek»: la cinta del catálogo, y el catálogo detrás del login
+- Paso 0 del plan (`docs/V5_CONSOLAS_PLAN.md` §1) CONSTRUIDO. Módulo reutilizable nuevo
+  `components/catalogo/SneakPeek.tsx` (+ su hoja): una cinta de tarjetas de lote SIN nada
+  comercial, montada en SEIS superficies — CTC Home (tras el hero), la landing de Kaffetal
+  Regal, la portada de Cherry Picked, la tienda Green, Roast y X.
+- **Cambio de cara pública** (decisión del owner, D0.5 extendida a toda la familia CP): en la
+  tienda Green la cinta SUSTITUYE a la parrilla para quien no ha entrado. `loadCatalog()` ya no
+  corre sin sesión, así que los lotes y sus precios dejan de ser públicos; `GradosSection` y
+  `BlackSection` solo se pintan con sesión y la cinta hereda el ancla `grados`. Al cerrar sesión
+  se vacían los lotes. El índice rápido deja de ofrecer «Black Selection» a quien no ha entrado
+  (esa sección no existe sin sesión). Consecuencia asumida: la parrilla deja de ser rastreable;
+  la portada, las fichas de grado y la propia cinta siguen siéndolo.
+- El dato sale SOLO de la vista estrecha `public_lot_catalog` (la de la tienda) cruzada con los
+  `lot_listings` en `published` — la vista incluye `sold_out` y un teaser no debe anunciar lo
+  agotado. El tipo `SneakPeekLot` NO TIENE dónde poner precio, MOQ, kilos, anticipo ni fecha de
+  llegada: la garantía es estructural, y el guardián nuevo la comprueba campo por campo.
+- `api/catalogo/sneak-peek` con el mismo montaje que la cinta de mercado (`force-dynamic` +
+  `s-maxage=900`): las seis páginas siguen siendo ESTÁTICAS y un lote publicado aparece sin
+  desplegar. Si la petición falla, la cinta no se dibuja.
+- **7 lotes mock** (`lib/catalogo/sneakPeekMock.ts`) con referencias REALES de la base de Notion
+  «📋 Fichas Técnicas de Café» del owner: 11 fichas, 7 con datos. Escalera 2 Gold · 2 Blue ·
+  2 Red · 1 Black. El grado se DERIVA del puntaje (`gradoPorPuntaje`), porque la relación
+  `Grado CTC` de Notion contradice su propia columna `SCA` en 6 de las 7 fichas — anotado en el
+  §9 del plan como higiene pendiente del owner. El lote de 88.5 (Tyrian) queda fuera: es solo de
+  subasta. Dos huecos rellenados por mí y dos discrepancias de la fuente van marcados en el
+  archivo (`// GAP:` y `// ⚠`), no arreglados en silencio.
+- Retirada de un tirón, como pidió el owner: un solo archivo con la receta en su cabecera,
+  `mock: true` en cada entrada, ids en el espacio reservado `mock-lote-NN`, rótulo de temporada
+  en el DATO (no en el componente) y un guardián que falla si algo de eso se rompe. Y se retiran
+  SOLOS: el relleno solo llega a siete tarjetas, así que cada lote real desplaza a un mock.
+- Guardián nuevo `scripts/qa-sneak-peek-check.mjs` — **56 comprobaciones**: nada comercial en el
+  tipo, solo la vista pública, Tyrian fuera, la cinta no se cae ni se pinta vacía, movimiento
+  reducido respetado, los 7 mock marcados/rotulados/coherentes con su puntaje, un solo sitio con
+  datos mock, y la compuerta de la tienda (`loadCatalog` después de la guarda de sesión).
+- `NarrativaSection` recibe `loggedIn`: su vacío tenía UNA causa («aún no hay lotes publicados») y
+  ahora tiene dos. Decirle eso a quien no ha entrado sería mentirle, así que el rótulo se elige.
+- Verificado además con Chrome headless, que es lo que destapó dos cosas que ninguna aserción
+  habría visto: el sello del grado de 420×420 reducido a 36 px era una mancha gris ilegible (se
+  sustituyó por el nombre del grado sobre su color oficial) y el puntaje aparecía sin escala (se
+  le puso la etiqueta «SCA»). El rótulo largo de temporada se partía cortando el año por el
+  guion: se acortó a «Temporada anterior · 2025-26».
+- Compuerta: `tsc` limpio · `eslint src` 0 errores y 27 avisos, TODOS preexistentes (los archivos
+  nuevos no añaden ninguno) · `npm run build` exit 0 con las seis superficies aún estáticas ·
+  guardianes `qa-sneak-peek-check` 56/56, `qa-nav-check` 18/18, `qa-grados-check` 44/44.
+- ⚠️ **Encontrado al correr la compuerta, NO introducido aquí**: `node_modules/pino` estaba como
+  carpeta VACÍA (daño de la mudanza desde OneDrive) y tumbaba el build desde `imapflow` →
+  `lib/buzon/mailClient.ts`; se reparó con `npm install` sin tocar los manifiestos. Y `npm audit`
+  ya no está en 0: 3 vulnerabilidades altas por un aviso NUEVO sobre `deepmerge-ts` ←
+  `html-to-text` ← `mailparser` (dependencia directa del Buzón). El arreglo que ofrece npm es una
+  bajada rompedora de `mailparser`, así que se deja anotado para decisión del owner, no se fuerza.
+APP_VERSION 4.15 → 4.16.
+(commit: pending)

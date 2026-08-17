@@ -4,6 +4,7 @@ import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
@@ -231,6 +232,13 @@ function Landing() {
           </div>
         </div>
       </section>
+
+      {/* El vistazo al Catálogo Activo (2026-08-17): el MISMO módulo en las
+          cuatro superficies de Cherry Picked, por decisión del owner. Aquí y en
+          la X es una incorporación —no había catálogo en estas dos landings—; en
+          Green sustituye a la parrilla para quien no ha entrado. Sin precios: el
+          catálogo completo está detrás del login. */}
+      <SneakPeek lang={lang} variant="cp" />
 
       <section id="pricing">
         <div className="wrap">

@@ -1,6 +1,7 @@
 "use client";
 
 import { Band } from "@/components/Band";
+import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
 import { LangProvider, useLang, type Lang } from "@/components/lang/i18n";
@@ -143,11 +144,18 @@ const T: Record<Lang, Dict> = {
 };
 
 function LandingInner({ onLogin }: { onLogin: () => void }) {
-  const t = T[useLang()];
+  const lang = useLang();
+  const t = T[lang];
   return (
     <div>
       <Header onLogin={onLogin} />
       <Hero onLogin={onLogin} onGo={(id) => document.getElementById(id)?.scrollIntoView()} />
+
+      {/* El vistazo al Catálogo Activo (2026-08-17). Aquí no es un anzuelo de
+          venta: al productor le enseña DÓNDE TERMINA el camino que esta página
+          le está proponiendo — así se ven los lotes que llegan al catálogo, con
+          su grado, su puntaje y su finca por delante. */}
+      <SneakPeek lang={lang} variant="kr" />
 
       {/* El vestíbulo (boceto del owner, 2026-08-14): el video de bienvenida y
           los seis pasos, ANTES de que empiece el argumento. No está en el

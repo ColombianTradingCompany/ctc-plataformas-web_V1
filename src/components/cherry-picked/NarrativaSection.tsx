@@ -36,6 +36,7 @@ const EN = {
   qr1: "Print the QR on your packaging:",
   qr2: "your customer scans, the story speaks.",
   empty: "No lots published yet to preview their public page.",
+  emptyAnon: "Sign in to preview this with a real lot from the catalogue.",
 };
 
 const T: Record<Lang, typeof EN> = {
@@ -71,6 +72,7 @@ const T: Record<Lang, typeof EN> = {
     qr1: "Imprime el QR en tu empaque:",
     qr2: "tu cliente escanea, la historia habla.",
     empty: "Aún no hay lotes publicados para previsualizar su página pública.",
+    emptyAnon: "Entra para ver esta vista previa con un lote real del catálogo.",
   },
   de: {
     eyebrow: "Marketing-Material · Plug & play · Bei jedem Lot inklusive",
@@ -103,10 +105,15 @@ const T: Record<Lang, typeof EN> = {
     qr1: "Druck den QR auf deine Verpackung:",
     qr2: "dein Gast scannt, die Geschichte spricht.",
     empty: "Noch keine Lots veröffentlicht, um ihre öffentliche Seite anzuzeigen.",
+    emptyAnon: "Melde dich an, um diese Vorschau mit einem echten Lot zu sehen.",
   },
 };
 
-export function NarrativaSection({ lots }: { lots: Lot[] }) {
+// `loggedIn` (2026-08-17): desde que el catálogo completo vive detrás del login,
+// una lista vacía tiene DOS causas distintas — no hay lotes publicados, o no se
+// han pedido porque no hay sesión. Decir «aún no hay lotes publicados» a quien
+// no ha entrado sería mentirle, así que el vacío se rotula según el caso.
+export function NarrativaSection({ lots, loggedIn }: { lots: Lot[]; loggedIn: boolean }) {
   const lang = useLang();
   const t = T[lang];
   const [videos, setVideos] = useState(true);
@@ -221,7 +228,7 @@ export function NarrativaSection({ lots }: { lots: Lot[] }) {
                 </div>
               </>
             ) : (
-              <p className={styles.porig}>{t.empty}</p>
+              <p className={styles.porig}>{loggedIn ? t.empty : t.emptyAnon}</p>
             )}
           </div>
         </div>

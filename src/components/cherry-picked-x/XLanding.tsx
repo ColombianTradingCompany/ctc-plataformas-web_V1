@@ -4,6 +4,7 @@ import Image from "next/image";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyBubble } from "@/components/cherry-picked/FamilyBubble";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { NewsletterForm } from "@/components/cherry-picked/NewsletterForm";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
@@ -145,6 +146,13 @@ function Landing() {
           </div>
         </div>
       </section>
+
+      {/* El vistazo al Catálogo Activo (2026-08-17): el MISMO módulo en las
+          cuatro superficies de Cherry Picked, por decisión del owner. Ojo con lo
+          que enseña aquí: la X es «la oferta completa SIN Black», así que si
+          algún día la cinta se filtra por programa, este es el sitio donde el
+          filtro importa (hoy enseña el catálogo entero, como las demás). */}
+      <SneakPeek lang={lang} variant="cp" />
 
       <section id="how">
         <div className="wrap">

@@ -8,6 +8,7 @@ import { ContactModalProvider } from "@/components/ctc-home/ContactModal";
 import { Header } from "@/components/ctc-home/Header";
 import { Hero } from "@/components/ctc-home/Hero";
 import { HomeBand } from "@/components/ctc-home/HomeBand";
+import { SneakPeekHome } from "@/components/ctc-home/SneakPeekHome";
 import { EcosystemSection } from "@/components/ctc-home/EcosystemSection";
 import { MomentSection } from "@/components/ctc-home/MomentSection";
 import { CosechasSection } from "@/components/ctc-home/CosechasSection";
@@ -39,6 +40,11 @@ export default function CtcHomePage() {
           <ContactModalProvider>
             <Header />
             <Hero />
+            {/* El vistazo al Catálogo Activo (2026-08-17): lo segundo que se ve,
+                justo debajo del hero, porque es la respuesta más corta a «¿y
+                qué café tienen?». Sin precios — el catálogo completo vive
+                dentro de Cherry Picked. Ver docs/V5_CONSOLAS_PLAN.md §1. */}
+            <SneakPeekHome />
             <EcosystemSection />
             <HomeBand band="feria" />
             <MomentSection />

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { InfoPanel, type InfoEntry } from "@/components/InfoPanel";
 import { SocialLinks } from "@/components/SocialLinks";
 import { FamilyHeader } from "@/components/cherry-picked/FamilyHeader";
+import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { LangBubble } from "@/components/cherry-picked/LangBubble";
 import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/cherry-picked/i18n";
 import { LegalFooter } from "@/components/LegalFooter";
@@ -516,6 +517,13 @@ function Hub() {
           </div>
         </div>
       </section>
+
+      {/* El vistazo al Catálogo Activo (2026-08-17): detrás de las tarjetas de
+          los programas —primero se entiende la familia, después se ve la
+          mercancía— y antes de la franja del paisaje, que es la que presenta el
+          bloque siguiente. Sin precios: el catálogo completo está detrás del
+          login. Ver docs/V5_CONSOLAS_PLAN.md §1. */}
+      <SneakPeek lang={lang} variant="cp" />
 
       <Banda img="/images/cherry-picked/sep-paisaje.webp" k={t.sepPaisaje.k} t={t.sepPaisaje.t} />
 

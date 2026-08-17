@@ -1,0 +1,163 @@
+/* ── La cinta del Catálogo Activo ───────────────────────────────────────────
+   Mecánica calcada de `ctc-home/MarketTicker.module.css`, que ya resolvió en
+   producción las tres cosas difíciles de una cinta: el bucle sin costura (dos
+   copias y un desplazamiento del 50 %), la pausa al pasar el ratón, y el respeto
+   a `prefers-reduced-motion` convirtiéndola en una tira que se arrastra.
+   Lo que cambia es la carga: aquí no son cifras de una línea sino tarjetas, así
+   que la altura la fija la tarjeta y el paso es mucho más lento — un catálogo se
+   lee, no se consulta de reojo.
+
+   SOLO TOKENS DE TEMA, ningún color propio. Las tres superficies donde se monta
+   son de fondo CLARO y cada una con su marca (`--paper/--card/--ink/--muted/
+   --line/--accent`, globals.css), así que la misma hoja se ve en casa en las
+   seis superficies sin una regla por tema. Los únicos colores literales son los
+   de los grados, que son compartidos y oficiales (`--t-black … --t-gold`). */
+
+.wrapSection{
+  position:relative;
+  background:var(--paper);
+  border-top:1px solid var(--line);
+  padding:clamp(38px,6vw,72px) 0 clamp(30px,5vw,56px);
+  overflow:hidden;
+}
+
+/* La variante no cambia el color —lo pone el tema— sino el peso con el que la
+   cinta entra en su página: en Home y KR es un anzuelo dentro de una página que
+   habla de otra cosa (y le basta el fondo de papel de arriba); en la familia
+   Cherry Picked OCUPA EL SITIO del catálogo, así que se levanta sobre el fondo
+   de tarjeta para que se lea como el bloque principal que es.
+   Solo existe la clase de la variante que hace algo: una regla vacía la borraría
+   el minificador y `styles.home` llegaría como `undefined` al className. */
+.cp{background:var(--card)}
+
+.eyebrow{
+  font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 10px;
+}
+.head{
+  margin:0 0 clamp(20px,3vw,34px);max-width:46ch;line-height:1.15;
+  font-size:clamp(24px,3.4vw,38px);font-weight:800;color:var(--primary-deep);
+}
+.head em{
+  display:block;font-style:normal;font-weight:400;
+  font-size:.56em;margin-top:9px;color:var(--muted);
+}
+
+/* Altura reservada mientras llega la respuesta, para que la página no salte
+   cuando la cinta aparece (mismo motivo que en la cinta de mercado). */
+.loading{height:212px}
+
+.track{display:flex;width:max-content;animation:sp-slide 120s linear infinite}
+.track:hover,.track:focus-within{animation-play-state:paused}
+@keyframes sp-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+.strip{display:flex;align-items:stretch}
+
+.card{
+  display:block;text-align:left;
+  width:330px;flex:none;margin:0 8px;padding:16px 18px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius,12px);
+  color:var(--ink);text-decoration:none;
+  font:inherit;cursor:pointer;
+  transition:border-color .18s,box-shadow .18s,transform .18s;
+}
+.card:hover,.card:focus-visible{
+  border-color:var(--accent);
+  box-shadow:0 6px 20px rgba(0,0,0,.07);
+  transform:translateY(-2px);
+}
+
+/* La línea que identifica el lote: el GRADO con su color oficial y el puntaje
+   que lo determina, juntos porque uno se deriva del otro (regla 1 de
+   `lib/grados/definicion.ts`: el puntaje manda).
+   Aquí NO va el sello de 420×420 de cada grado: reducido a 36 px quedaba en una
+   mancha gris ilegible —se vio en la primera verificación con Chrome— y encima
+   no decía QUÉ grado era. El sello es para las fichas de grado; en una tarjeta
+   de catálogo manda la palabra. */
+.line{display:flex;align-items:center;gap:9px;margin:3px 0 1px}
+.grade{
+  font-family:var(--font-spline-mono),monospace;
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#fff;padding:3px 8px;border-radius:999px;flex:none;
+  /* Los cinco colores de grado son oscuros por definición, así que el blanco
+     siempre contrasta; el color lo pone el componente con `--t-<grado>`. */
+}
+
+.body{display:flex;flex-direction:column;min-width:0;gap:3px}
+
+.top{display:flex;align-items:baseline;gap:8px;min-width:0}
+.name{
+  font-size:14.5px;font-weight:800;letter-spacing:.005em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.code{
+  font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.08em;
+  color:var(--muted);flex:none;
+}
+
+/* El puntaje es el dato que ordena el catálogo: se lee antes que nada. Lleva la
+   etiqueta «SCA» delante porque fuera de Cherry Picked un número suelto de dos
+   decimales no dice de qué escala habla. */
+.score{
+  display:inline-flex;align-items:baseline;gap:5px;
+  font-size:19px;font-weight:800;line-height:1.05;letter-spacing:-.01em;color:var(--primary);
+}
+.score i{font-style:normal}
+.sca{
+  font-family:var(--font-spline-mono),monospace;
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;color:var(--muted);
+}
+/* «est.» = puntaje declarado por el productor, sin contrastar. Nunca puede
+   parecer un puntaje verificado. */
+.est{
+  font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);
+}
+
+.origin{font-size:12px;color:var(--ink)}
+.specs{
+  font-size:11px;color:var(--muted);
+  font-family:var(--font-spline-mono),monospace;letter-spacing:.02em;
+}
+.cup{
+  font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:2px;
+  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+.season{
+  margin-top:6px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+  font-family:var(--font-spline-mono),monospace;color:var(--muted);
+}
+/* Un lote de la temporada pasada lo DICE, y con contraste suficiente para que se
+   lea: es la diferencia entre enseñar un ejemplo y aparentar existencias. */
+.seasonPast{
+  margin-top:7px;align-self:flex-start;white-space:nowrap;
+  font-family:var(--font-spline-mono),monospace;
+  font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:999px;
+  background:var(--paper);border:1px solid var(--line);color:var(--muted);
+}
+
+.cta{
+  display:inline-flex;align-items:center;gap:8px;margin-top:clamp(18px,3vw,28px);
+  font-size:13px;font-weight:700;letter-spacing:.02em;
+  color:var(--accent);text-decoration:none;
+  border-bottom:1px solid transparent;padding-bottom:2px;
+}
+.cta:hover{border-bottom-color:var(--accent)}
+
+@media(max-width:640px){
+  .card{width:282px;padding:14px 15px}
+  .loading{height:200px}
+  .name{font-size:13.5px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  /* Sin desplazamiento automático: la cinta pasa a ser una tira que se arrastra
+     con el dedo. La segunda copia sobra visualmente pero es aria-hidden y no
+     estorba a nadie que la lea. */
+  .track{animation:none;width:auto;overflow-x:auto;scrollbar-width:none}
+  .track::-webkit-scrollbar{display:none}
+}

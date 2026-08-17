@@ -86,7 +86,8 @@ VIEW and only the view, never `lots`/`fincas`/`lot_listings` (memory `feedback_p
 ```ts
 // src/lib/catalogo/sneakPeek.ts — the ONE shape every surface renders
 export type SneakPeekLot = {
-  id: string;                    // lot_id (live) or "mock-<n>" (mock)
+  id: string;                    // lot_id (live) or the reserved `mock-lote-NN` (mock)
+  code: string;                  // short buyer-facing code (GD-…), never the UUID
   name: string;                  // lots.name
   grade: "black" | "red" | "blue" | "gold";  // tyrian excluded: auction-only, never in the catalogue
   score: string;                 // official avg of accepted lot_evaluations, else the producer's estimate
@@ -147,9 +148,11 @@ Tyrian is auction-only and `publishLot` refuses it in the catalogue, so it canno
 and the ladder becomes **2 Gold · 2 Blue · 2 Red · 1 Black** — this **supersedes the D0.7 default ladder**:
 real data beats an invented one.
 
-Season tag (D0.8, unchanged): «Temporada anterior · cosecha principal 2025-26» · EN «Last season · 2025-26 main
-harvest» · DE «Vorsaison · Haupternte 2025-26». Notion's own `Harvest Season` agrees — `2025-Q4` for six of
-them, `2026-Q1` for the Gesha — and is carried in the data as `harvestQuarter` for reference.
+Season tag (D0.8), as shipped: the **visible** label is the short form — «Temporada anterior · 2025-26» ·
+EN «Last season · 2025-26» · DE «Vorsaison · 2025-26». The longer «cosecha principal 2025-26» broke onto two
+lines in a 330 px card and split the year at the hyphen («2025-» / «26»), which is the one datum that cannot be
+left ambiguous; the harvest itself is documented here instead. Notion's own `Harvest Season` agrees with the
+season — `2025-Q4` for six of them, `2026-Q1` for the Gesha — and is carried in the data as `harvestQuarter`.
 
 | # | Grade ← SCA | Card name | Finca · municipio, depto | Alt. | Variety | Process | Cup notes on the card (≤ 90 chars) | Notion ficha |
 |---|---|---|---|---|---|---|---|---|

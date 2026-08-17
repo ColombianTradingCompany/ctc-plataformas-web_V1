@@ -107,7 +107,7 @@ tenía entrada propia en el menú. Se añade el atajo SIN duplicar el módulo.
 - Para la doc: la ficha `manejoplataformas` y la de `direccionamiento` dicen que
   la página es la tercera pestaña — sigue siendo cierto y NO hay que cambiarlo;
   lo que hay que añadir en V36 es que además tiene atajo en el rail.
-(commit: pending)
+(commit: b3f96e6)
 
 ════════════════════════════════════════════════════════════════════════════════
 
@@ -275,7 +275,7 @@ plano. La plataforma sigue SIN transcribir — solo pone la cola y guarda.
   fila lista), y en la ficha del módulo decir explícitamente que si el PC está
   apagado las subidas ESPERAN como Pendiente — es el diseño. `scripts/
   qa-transcripciones-check.mjs` sube a 50 comprobaciones. APP_VERSION 4.9.
-(commit: pending)
+(commit: eaf8dd7)
 
 ## [2026-08-17] Transcripciones: se puede transcribir en la NUBE, y el OOM de la GPU (V4.10)
 
@@ -323,7 +323,7 @@ SIN quitar la local, y de paso se arregla un fallo que destapó esa misma nota.
   con GPU | nube), y hace falta una entrada de DICT sobre por qué la plataforma
   no transcribe ella misma pero sí puede pagar a quien lo haga. QA sube a 58
   comprobaciones; la herramienta, a 64. APP_VERSION 4.10.
-(commit: pending)
+(commit: cb2b4b8)
 
 ## [2026-08-17] Infraestructura: Supabase y Vercel pasan a Pro; el org de CTC queda solo con ctc-platform
 - **Supabase — org `bihcajbdxvfgtmsyhsng` ("ColombianTradingCompany's Org") ahora en Pro
@@ -385,7 +385,7 @@ El owner puso la clave de AssemblyAI en Vercel y redeplegó. Al ir a comprobarlo
   import estático se hoistea y la captura vacía.
 - Para la doc (V36): la ficha de Transcripciones ya puede decir que la nube está
   PROBADA, no solo construida. APP_VERSION 4.11.
-(commit: pending)
+(commit: e5d7800)
 
 ## [2026-08-17] «¿Espera a MI equipo o a cualquiera?» — el latido de los workers (V4.12)
 
@@ -424,7 +424,7 @@ La respuesta —ninguna de las dos— es lo que había que poner en la interfaz:
 - Para la doc (V36): hace falta una entrada de DICT sobre el modelo de tirón —
   es el concepto que hacía falta explicar y que ninguna pantalla explicaba.
   Tests de la herramienta 64 → 69. APP_VERSION 4.12.
-(commit: pending)
+(commit: 8e0e0f1)
 
 ## [2026-08-17] Addendum: el out-of-memory NO era lo que yo creía (herramienta)
 
@@ -452,7 +452,7 @@ Lo que quedó:
   el reintento chocaba contra la memoria del intento anterior.
 - Tests de la herramienta 69 → 76, incluida la escalera y el dimensionado.
 Sin cambio de APP_VERSION: todo esto vive en la herramienta, fuera del repo.
-(commit: pending)
+(commit: 0e45fa8)
 
 ## [2026-08-17] «No entiendo cómo encender eso» — el paso que faltaba (V4.13)
 
@@ -481,7 +481,7 @@ de conocimiento que un panel no debería exigir.
   interfaz — el OCP no se puede conducir en un navegador por el OTP.
 - Para la doc (V36): la ficha de Transcripciones debe mencionar los dos .bat como
   la vía normal de encender un equipo. APP_VERSION 4.13.
-(commit: pending)
+(commit: 94cb130)
 
 ## [2026-08-17] Instalar el transcriptor en OTRO equipo: botón de descarga (V4.14)
 
@@ -522,7 +522,7 @@ Las dos partes de la pregunta eran ciertas y las dos eran problemas:
 - Para la doc (V36): el nodo de la herramienta local pasa a tener dos flechas —
   una hacia el OCP (los trabajos) y otra desde el OCP (el paquete de instalación).
   APP_VERSION 4.14.
-(commit: pending)
+(commit: cd533f2)
 
 ## [2026-08-17] La herramienta entra al repo, y el ZIP se arma solo (V4.15)
 
@@ -551,7 +551,7 @@ El owner respondió que sí a meterla en el repo. Con eso se cierra el agujero q
 - Para la doc (V36): el nodo de la herramienta local deja de estar «fuera del
   repo» y pasa a ser parte de él, con dos flechas: los trabajos hacia el OCP y
   el paquete de instalación desde el OCP. APP_VERSION 4.15.
-(commit: pending)
+(commit: 6f3e6b7)
 
 ## [2026-08-17] Poner el repo en privado rompe los despliegues (revertido)
 
@@ -578,4 +578,4 @@ el fallo es SILENCIOSO y se nota tarde.
   O sea: mientras siga público no hay nada que rotar, pero la higiene sigue —
   ni rutas absolutas del owner ni claves en el código.
 Sin cambio de APP_VERSION: no cambia nada de la aplicación.
-(commit: pending)
+(commit: f8f800c)

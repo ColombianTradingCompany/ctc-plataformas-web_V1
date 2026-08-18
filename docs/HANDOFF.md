@@ -53,8 +53,13 @@ src/
                                         Uno por módulo, cubre sus sub-rutas. Destino: lib/panel/rutasMovidas.ts
       (app)/                          everything behind the internal session
         layout.tsx                     requireConsoleAccess("bcp") + shared <PanelShell>
-        page.tsx                       scaffold de dirección (el tablero de KPIs se fue al OCP con el pasaporte)
-        adminLockActions.ts            la cerradura de administrador (se queda: PR-B le trae Usuarios al lado)
+        page.tsx                       índice de la consola (aún sin KPIs propios: los que había medían la operación)
+        direccionamiento/              ⬅ ECP (V4.25) · qué dice la casa (+ grados). Plataformas NO vino: sigue en el ECP
+        usuarios/, documentacion/, mapa/, consumo/, automatizaciones/
+                                        ⬅ ECP (V4.25) · Configuración del Sistema
+        socios/                        ⬅ OCP (V4.25) · Red de Socios: se credencialan aquí, se operan allá
+        gvg/                           ⬅ ECP (V4.25) · el espacio personal del owner, con su propio candado
+        adminLockActions.ts            la cerradura de administrador (ahora junto a Usuarios, que es su pareja)
     ocp/                              OCP · Operational Control Panel — «Operation»: del productor al catálogo
       (app)/
         layout.tsx                     requireConsoleAccess("ocp") + shared <PanelShell>
@@ -532,6 +537,35 @@ previsto y está avisado dentro de `consoles.ts` y de su propia `page.tsx`.
   era una señal falsa de propiedad.
 - El radio real de la mudanza, re-medido antes de empezar, está en el §3.2 del plan — los números originales
   se habían quedado cortos, y el dato que faltaba era el útil: **47 rutas distintas en 66 archivos**.
+
+## La reorganización V5 · PR-B: el BCP recibe dirección y configuración (2026-08-18, V4.25)
+
+Segunda de las tres mudanzas. **Ocho módulos entran al BCP**: Direccionamiento (+grados), Usuarios y
+credenciales, Documentación del sistema, Mapa de Trabajo, Consumo de IA, Automatizaciones y GVG-Space desde el
+ECP, y la Red de Socios desde el OCP. Con esto el BCP deja de estar vacío y su rail dice lo que su tagline
+prometía desde el paso (i). Diez rutas nuevas en `rutasMovidas.ts` (22 en total) y el guardián en 213 checks.
+
+- ⚠️ **`git mv` de un módulo se lleva a sus hijos, incluidos los que no se mudan.** `direccionamiento/` viajó
+  con `plataformas/` dentro, que debía quedarse en el ECP (F6, se vuelve `/ecp/plataformas` en PR-C). Hubo que
+  devolverlo a mano.
+- ⚠️ **Cuando una sub-ruta se queda, el talón del padre NO puede ser un `[[...resto]]`**: chocaría con la
+  página viva. El de `/ecp/direccionamiento` es explícito, y la excepción se declara en **`NO_SE_MOVIERON`**
+  dentro de `rutasMovidas.ts` — de donde la lee también el guardián, para no denunciar como muerta una ruta que
+  respira. Verificado en servidor real: `/ecp/direccionamiento` → 308 al BCP y
+  `/ecp/direccionamiento/plataformas` → 307 a `/login`, o sea que llega a su página.
+- **Un talón viejo se REAPUNTA, nunca se encadena.** `/ecp/grados` (de 2026-08-10) ya apuntaba a
+  Direccionamiento; ahora va directo al destino final. De paso subió de `redirect` (307) a `permanentRedirect`
+  (308) y salió del grupo `(app)`, como todos los demás.
+- ⚠️ **La reescritura masiva de rutas también toca los GUARDIANES y los comentarios con fecha — y ahí cambia
+  el SIGNIFICADO, no solo el texto.** En `qa-nav-check.mjs` dejó tres aserciones comprobando el rail de una
+  consola contra rutas de otra (una «pasaba» por accidente), y en `navActivo.ts` fechó un fallo de 2026-08-16
+  en la consola equivocada. Tras un `sed` masivo, **relea a mano `scripts/qa-*.mjs` y todo comentario con
+  fecha que haya cambiado**.
+- **`next.config.ts` `outputFileTracingIncludes` lleva RUTAS como claves** y se repuntaron a
+  `/bcp/documentacion*`. Sin eso, `docs/architecture/**` no se traza dentro de la función y el módulo sale
+  VACÍO en producción — sin error, y sin reproducirse en local.
+- «Manejo de Plataformas» salió de la tira de pestañas de Direccionamiento: una tira no puede cruzar dos
+  consolas. Sigue en el rail del ECP hasta PR-C.
 
 ## Audit findings — 2026-07-10 deep review
 

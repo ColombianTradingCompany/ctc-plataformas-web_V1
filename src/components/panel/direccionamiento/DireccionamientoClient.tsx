@@ -21,7 +21,7 @@ import {
   guardarContexto,
   redactarContexto,
   memoriaContexto,
-} from "@/app/ecp/(app)/direccionamientoActions";
+} from "@/app/bcp/(app)/direccionamientoActions";
 
 export function DireccionamientoClient({ initialRecord }: { initialRecord: Record<string, unknown> | null }) {
   const adapter = useMemo(

@@ -107,7 +107,7 @@ export async function saveAutomation(input: {
     : await service.from("automations").insert({ ...row, created_by: who.userId });
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ecp/automatizaciones");
+  revalidatePath("/bcp/automatizaciones");
   return { ok: true };
 }
 
@@ -117,7 +117,7 @@ export async function deleteAutomation(id: string): Promise<AutomationResult> {
   const service = createServiceRoleClient();
   const { error } = await service.from("automations").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ecp/automatizaciones");
+  revalidatePath("/bcp/automatizaciones");
   return { ok: true };
 }
 
@@ -131,7 +131,7 @@ export async function retryFailedEvents(): Promise<AutomationResult> {
     .update({ estado: "pendiente", intentos: 0, ultimo_error: null })
     .eq("estado", "fallido");
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ecp/automatizaciones");
+  revalidatePath("/bcp/automatizaciones");
   return { ok: true };
 }
 
@@ -146,6 +146,6 @@ export async function emitPing(): Promise<AutomationResult> {
     payload: { emitidoPor: who.userId, at: new Date().toISOString() },
   });
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ecp/automatizaciones");
+  revalidatePath("/bcp/automatizaciones");
   return { ok: true };
 }

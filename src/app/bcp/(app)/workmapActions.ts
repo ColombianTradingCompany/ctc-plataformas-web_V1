@@ -77,7 +77,7 @@ export async function saveProposal(input: {
       .eq("id", input.id);
     if (error) return { ok: false, error: "No se pudo guardar la propuesta." };
     await audit(service, adminId, "work_map_proposal_updated", input.id);
-    revalidatePath("/ecp/mapa");
+    revalidatePath("/bcp/mapa");
     return { ok: true, id: input.id };
   }
 
@@ -88,7 +88,7 @@ export async function saveProposal(input: {
     .single();
   if (error || !data) return { ok: false, error: "No se pudo crear la propuesta." };
   await audit(service, adminId, "work_map_proposal_created", data.id);
-  revalidatePath("/ecp/mapa");
+  revalidatePath("/bcp/mapa");
   return { ok: true, id: data.id };
 }
 
@@ -100,6 +100,6 @@ export async function deleteProposal(id: string): Promise<{ ok: true } | { ok: f
   const { error } = await service.from("work_map_proposals").delete().eq("id", id);
   if (error) return { ok: false, error: "No se pudo borrar la propuesta." };
   await audit(service, adminId, "work_map_proposal_deleted", id);
-  revalidatePath("/ecp/mapa");
+  revalidatePath("/bcp/mapa");
   return { ok: true };
 }

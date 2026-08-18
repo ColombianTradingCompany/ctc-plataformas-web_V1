@@ -68,7 +68,7 @@ export async function setAdminLockPassword(current: string, next: string): Promi
     action: "admin_lock_changed",
     performed_by: adminId,
   });
-  revalidatePath("/ecp/usuarios");
+  revalidatePath("/bcp/usuarios");
   return { ok: true };
 }
 

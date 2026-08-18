@@ -27,16 +27,27 @@ check(
   "solo UN enlace del rail cubre-y-gana esa ruta",
   links("ecp").filter((l) => l.href === activo("ecp", "/ecp/direccionamiento/plataformas")).length === 1
 );
+// Direccionamiento se mudó al BCP el 2026-08-18 (PR-B del paso (ii)), así que
+// esta comprobación cambió de consola: son las pestañas del BCP las que ahora
+// encienden su módulo. En el ECP ya no hay nada que encender.
 check(
-  "las otras pestañas siguen encendiendo Direccionamiento",
-  activo("ecp", "/ecp/direccionamiento/grados") === "/ecp/direccionamiento" &&
-    activo("ecp", "/ecp/direccionamiento") === "/ecp/direccionamiento"
+  "en el BCP, las pestañas de Direccionamiento encienden su módulo",
+  activo("bcp", "/bcp/direccionamiento/grados") === "/bcp/direccionamiento" &&
+    activo("bcp", "/bcp/direccionamiento") === "/bcp/direccionamiento"
+);
+check(
+  "y el rail del ECP ya no enciende nada en esa ruta",
+  activo("ecp", "/bcp/direccionamiento") === null
 );
 
 // ── El atajo existe y apunta a la página que VIVE en Direccionamiento ────────
 const atajo = links("ecp").find((l) => l.label === "Manejo de Plataformas");
 check("el atajo está en el rail del ECP", !!atajo);
-check("el atajo apunta dentro de Direccionamiento", atajo?.href === "/ecp/direccionamiento/plataformas");
+// Sigue anidado bajo la ruta que Direccionamiento tenía en el ECP, aunque el módulo padre se fuera
+// al BCP: es una ruta huérfana a propósito hasta PR-C, que la vuelve
+// `/ecp/plataformas` (F6). La página está en ecp/(app)/direccionamiento/plataformas/,
+// y el talón del padre es EXPLÍCITO —no catch-all— justamente para no comérsela.
+check("el atajo apunta a la página que sigue viva en el ECP", atajo?.href === "/ecp/direccionamiento/plataformas");
 check(
   "el atajo vive en el grupo de IT y Plataforma",
   CONSOLES.ecp.nav.some((g) => g.label?.includes("IT y Plataforma") && g.links.some((l) => l === atajo))
@@ -55,7 +66,7 @@ check("pero la propia ruta sí", enlaceCubre({ href: "/ecp/varietales" }, "/ecp/
 check("y sus hijas también", enlaceCubre({ href: "/ecp/varietales" }, "/ecp/varietales/algo"));
 
 // ── `exact` sigue significando exacto ────────────────────────────────────────
-check("el Panel (exact) no se enciende en una subruta", activo("ecp", "/ecp/consumo") !== "/ecp");
+check("el Panel (exact) no se enciende en una subruta", activo("ecp", "/ecp/buzon") !== "/ecp");
 check("el Panel (exact) sí se enciende en su propia ruta", activo("ecp", "/ecp") === "/ecp");
 
 // ── Ninguna consola tiene hrefs repetidos en su rail ─────────────────────────

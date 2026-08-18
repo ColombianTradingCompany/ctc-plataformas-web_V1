@@ -1,5 +1,5 @@
 // ── Mapa de Trabajo · modelo de datos ────────────────────────────────────────
-// El mapa interactivo del ECP (/ecp/mapa): cómo se construyen las tablas unas
+// El mapa interactivo del ECP (/bcp/mapa): cómo se construyen las tablas unas
 // sobre otras a través de las compuertas del proceso (FT → FT2 → EUDR → EVA →
 // MUE → Sondeo → Arena → GAL, más comercio / club / leads), y EN QUÉ UI(s) se
 // muestra cada tabla. La estructura es real (semilla curada abajo); el owner la

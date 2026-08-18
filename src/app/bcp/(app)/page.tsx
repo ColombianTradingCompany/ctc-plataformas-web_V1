@@ -2,22 +2,18 @@ import { ConsoleScaffold } from "@/components/panel/ConsoleScaffold";
 import { CONSOLES } from "@/lib/panel/consoles";
 
 // ── BCP · Panel ──────────────────────────────────────────────────────────────
-// El BCP dejó de ser la consola del pasaporte del lote el 2026-08-18: PR-A del
-// paso (ii) (V4.24) se llevó al OCP productores, fincas, lotes, nominados,
-// arena, galardonados, club, catálogo, black stock y el CRM de CaaS — y con
-// ellos el tablero de KPIs que vivía en esta ruta, que ahora es el panel del OCP.
+// El BCP dejó de ser la consola del pasaporte del lote el 2026-08-18. PR-A del
+// paso (ii) (V4.24) se llevó al OCP productores, fincas, lotes, arena, catálogo
+// y compañía —con el tablero de KPIs que vivía en esta ruta— y PR-B (V4.25) le
+// trajo a cambio lo suyo: dirección, configuración del sistema y red de socios.
 //
-// ⚠️ ESTA CONSOLA ESTÁ MOMENTÁNEAMENTE CASI VACÍA, Y ES LO ESPERADO. Lo que le
-// toca —Direccionamiento, Usuarios y credenciales, Documentación del sistema,
-// Mapa de Trabajo, Consumo de IA, Automatizaciones, GVG-Space y la Red de
-// Socios— está hoy repartido entre el ECP y el OCP, y llega en PR-B. El plan lo
-// anticipa y lo acepta (§3.3): «entre PR-A y PR-B el rail del BCP es solo
-// Panel», porque el único operador es el owner.
-//
-// Por eso este scaffold marca `built: true` con `href` a la ruta donde el módulo
-// vive HOY: decir «construido» y dejar al operador buscándolo es peor que no
-// decir nada (es la regla que documenta `ConsoleScaffold`). Cuando PR-B los
-// mueva, estos href pasan a `/bcp/*` y dejan de cruzar de consola.
+// Todos los módulos de abajo EXISTEN y están en el rail de esta consola. El
+// scaffold sigue siendo la forma correcta de este panel mientras el BCP no
+// tenga cifras propias que enseñar: su tablero de mando es una tarea abierta,
+// porque las que había medían la operación y se fueron con ella al OCP. Cuando
+// haya KPIs de negocio que valga la pena mirar de un vistazo —salud de la red
+// de socios, consumo, estado de las automatizaciones— este archivo se convierte
+// en ese tablero y deja de ser un índice.
 export default function BcpHomePage() {
   const c = CONSOLES.bcp;
   return (
@@ -25,55 +21,55 @@ export default function BcpHomePage() {
       code={c.code}
       name={c.name}
       accent={c.accent}
-      intro="La consola del NEGOCIO: qué dice la casa, cómo está configurado el sistema y quién forma la red de socios. El pasaporte del lote —del productor al catálogo— se opera desde el OCP; aquí se decide el marco dentro del cual esa operación ocurre. Los módulos de abajo ya existen y funcionan: siguen alojados en su consola de origen hasta que la segunda tanda de la reorganización los traiga a esta."
+      intro="La consola del NEGOCIO: qué dice la casa, cómo está configurado el sistema y quién forma la red de socios. El pasaporte del lote —del productor al catálogo— se opera desde el OCP; aquí se decide el marco dentro del cual esa operación ocurre."
       modules={[
         {
           name: "Direccionamiento",
-          desc: "Qué dice la casa y con qué cifras: definición de contexto por unidad (CTCX · KR · CHP) y los Grados de Calidad con UNA sola definición. Hoy en el ECP.",
+          desc: "Qué dice la casa y con qué cifras: la definición de contexto por unidad (CTCX · KR · CHP) y los Grados de Calidad, con UNA sola definición de la que todo lo demás cita.",
           built: true,
-          href: "/ecp/direccionamiento",
+          href: "/bcp/direccionamiento",
         },
         {
           name: "Usuarios y credenciales",
-          desc: "Quién entra, a qué consola y con qué permisos. La matriz de permisos hecha software. Hoy en el ECP.",
+          desc: "Quién entra, a qué consola y con qué permisos. La matriz de permisos hecha software.",
           built: true,
-          href: "/ecp/usuarios",
+          href: "/bcp/usuarios",
         },
         {
           name: "Documentación del sistema",
-          desc: "El mapa interactivo de la plataforma y sus versiones selladas. Hoy en el ECP.",
+          desc: "El mapa interactivo de la plataforma y sus versiones selladas, navegables desde aquí.",
           built: true,
-          href: "/ecp/documentacion",
+          href: "/bcp/documentacion",
         },
         {
           name: "Mapa de Trabajo",
-          desc: "El estado de los frentes abiertos, para el owner. Hoy en el ECP.",
+          desc: "El estado de los frentes abiertos, para el owner.",
           built: true,
-          href: "/ecp/mapa",
+          href: "/bcp/mapa",
         },
         {
           name: "Consumo de IA",
-          desc: "Qué gasta cada integración y en qué modelo. Hoy en el ECP.",
+          desc: "Qué gasta cada integración, en qué modelo y con qué tendencia.",
           built: true,
-          href: "/ecp/consumo",
+          href: "/bcp/consumo",
         },
         {
           name: "Automatizaciones",
-          desc: "Los escenarios de Make y su salud. Hoy en el ECP.",
+          desc: "Los escenarios de Make que sostienen la espina de integración, y su salud.",
           built: true,
-          href: "/ecp/automatizaciones",
+          href: "/bcp/automatizaciones",
         },
         {
           name: "Red de Socios",
-          desc: "Alta, baja y reenvío de credenciales de cada nodo partner. Hoy en el OCP; en el paso (iii) gana una ficha por socio.",
+          desc: "Alta, baja y reenvío de credenciales de cada nodo partner. En el paso (iii) gana una ficha por socio.",
           built: true,
-          href: "/ocp/socios",
+          href: "/bcp/socios",
         },
         {
           name: "GVG-Space",
-          desc: "El espacio personal del owner, con su propia cerradura. Hoy en el ECP; sale hacia CommaaS más adelante.",
+          desc: "El espacio personal del owner, tras su propio candado. Sale hacia CommaaS más adelante.",
           built: true,
-          href: "/ecp/gvg",
+          href: "/bcp/gvg",
         },
       ]}
     />

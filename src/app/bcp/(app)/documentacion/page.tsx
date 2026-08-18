@@ -25,7 +25,7 @@ export default async function EcpDocumentacionPage() {
   const logs = docs.filter((d) => d.kind === "log");
   const pendingLog = logs[0] ?? null;
 
-  const href = (d: ArchitectureDoc) => `/ecp/documentacion/${encodeURIComponent(d.file)}`;
+  const href = (d: ArchitectureDoc) => `/bcp/documentacion/${encodeURIComponent(d.file)}`;
 
   const row = (d: ArchitectureDoc) => (
     <li key={d.file} style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", padding: "7px 0", borderBottom: "1px dashed var(--line)" }}>

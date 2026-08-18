@@ -62,19 +62,49 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     tagline: "El negocio: dirección, configuración y red de socios",
     accent: "#D3B8FA", // corporate lavender
     home: "/bcp",
-    // ⚠️ EL RAIL DEL BCP ESTÁ MOMENTÁNEAMENTE VACÍO — es lo esperado.
-    // PR-A del paso (ii) (V4.24, 2026-08-18) se llevó al OCP el pasaporte del
-    // lote entero: Club, Catálogo, Black Stock, CRM CaaS, Productores, Fincas,
-    // Lotes, Nominados, Arena y Galardonados. Lo que le toca al BCP —
-    // Direccionamiento, Usuarios, Documentación, Mapa, Consumo,
-    // Automatizaciones, GVG-Space y Socios de la red — llega en PR-B, que los
-    // trae del ECP y del OCP. El plan lo dice y lo acepta (§3.3): «entre PR-A y
-    // PR-B el rail del BCP es solo Panel», porque el único operador es el owner.
-    // NO rellene esto con enlaces a /ocp/*: el rail de una consola apunta a SU
-    // propio árbol de rutas, y el selector de consolas es el que cruza.
+    // El rail del BCP, ya con su reparto (PR-B del paso (ii), V4.25). Los
+    // bloques son las tres cosas que el BCP ES: qué dice la casa
+    // (Direccionamiento), cómo está configurado el sistema, y quién forma la
+    // red de socios. El pasaporte del lote se opera desde el OCP desde PR-A.
     nav: [
       {
-        links: [{ href: "/bcp", label: "Panel", exact: true }],
+        label: "BCP · Business Core",
+        links: [
+          { href: "/bcp", label: "Panel", exact: true },
+          // Direccionamiento (← ECP, PR-B): qué dice la casa y con qué cifras.
+          // «Manejo de Plataformas» NO vino: F6 lo convierte en módulo suelto
+          // del ECP en PR-C, y hasta entonces sigue en /bcp/direccionamiento/…
+          { href: "/bcp/direccionamiento", label: "Direccionamiento" },
+        ],
+      },
+      {
+        label: "BCP · Configuración del Sistema",
+        links: [
+          { href: "/bcp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
+          { href: "/bcp/documentacion", label: "Documentación del sistema" },
+          { href: "/bcp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
+          { href: "/bcp/consumo", label: "Consumo de IA" },
+          { href: "/bcp/automatizaciones", label: "Automatizaciones" },
+        ],
+      },
+      {
+        label: "BCP · Red de Socios",
+        links: [
+          // Los socios se administran donde se CREDENCIALAN. Estuvieron en el
+          // OCP desde 2026-07-20 con el argumento de que se OPERAN allí; la
+          // reorganización V5 se queda con el otro: dar de alta una credencial
+          // es configurar la red, y eso es el BCP. En el paso (iii) este módulo
+          // gana una ficha por nodo partner (F3).
+          { href: "/bcp/socios", label: "Socios de la red", ownerOnly: true },
+        ],
+      },
+      {
+        // GVG-Space (← ECP, PR-B): el espacio PERSONAL del owner, con su propio
+        // candado suave además del login maestro. Owner-only y sin encabezado:
+        // un divisor lo separa del resto a propósito. Sale hacia CommaaS más
+        // adelante (F13).
+        ownerOnly: true,
+        links: [{ href: "/bcp/gvg", label: "GVG-Space", ownerOnly: true }],
       },
     ],
   },
@@ -96,9 +126,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // Pestaña 2 = «Grados de Calidad» (2026-08-05), LA definición —
           // estaba en tres sitios con tres respuestas distintas, dos de ellas
           // material de cliente. Se metió aquí dentro porque es exactamente la
-          // cifra que el contenido no puede inventarse; /ecp/grados sigue vivo
+          // cifra que el contenido no puede inventarse; /bcp/direccionamiento/grados sigue vivo
           // como redirección.
-          { href: "/ecp/direccionamiento", label: "Direccionamiento" },
           // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
           // material de dirección, no operación diaria.
           { href: "/ecp/buzon", label: "Buzón de entrada" },
@@ -144,16 +173,13 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // con acceso a una consola gana entendiéndola. Emitir credenciales de
         // colaboradores y socios sigue siendo cosa de owner.
         links: [
-          { href: "/ecp/documentacion", label: "Documentación del sistema" },
           // Automatizaciones (2026-08-05): el registro de lo que corre en Make y
           // el pulso de la espina de integración. Va aquí porque es
           // infraestructura, no operación. Ver docs/INTEGRACIONES_PLAN.md.
-          { href: "/ecp/automatizaciones", label: "Automatizaciones" },
           // Consumo de IA (2026-08-10): lo que cuestan los modelos, en tokens y
           // en dólares. Va aquí y no en Dirección porque es infraestructura —
           // el hermano de Automatizaciones: aquélla dice QUÉ corre, ésta dice
           // CUÁNTO cuesta. Ver src/lib/ai/precios.ts para las tarifas.
-          { href: "/ecp/consumo", label: "Consumo de IA" },
           // Manejo de Plataformas (2026-08-16) — ATAJO, no un módulo.
           // La página VIVE dentro de Direccionamiento, como su tercera pestaña
           // (decisión del owner: «tiene que estar fusionado en uno»), y este
@@ -163,19 +189,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // que la de las otras dos pestañas. Duplicar el DESTINO es barato;
           // duplicar el MÓDULO habría sido el error que la regla evitaba.
           { href: "/ecp/direccionamiento/plataformas", label: "Manejo de Plataformas" },
-          { href: "/ecp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
           // "Herramientas internas" se renombró y subió al grupo de Dirección
           // (2026-08-02) — ver el comentario allá.
-          { href: "/ecp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
         ],
-      },
-      {
-        // GVG-Space (2026-07-27): el espacio PERSONAL del owner dentro de la
-        // consola — submódulos propios (CV App Manager) tras su propio candado
-        // suave (patrón Admin Lock + cookie firmada). Owner-only y sin
-        // encabezado: un divisor lo separa del resto de la consola a propósito.
-        ownerOnly: true,
-        links: [{ href: "/ecp/gvg", label: "GVG-Space", ownerOnly: true }],
       },
     ],
   },
@@ -196,11 +212,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // dueña: cocreate/CaaS aquí mismo (CRM CP CaaS, desde PR-A), tech y
           // varietales → ECP. Este módulo se va al ECP en PR-C.
           { href: "/ocp/leads", label: "Leads · Recepción" },
-          // Los socios se administran donde se OPERAN (2026-07-20): el OCP es el
-          // espejo de las interfaces de partner, así que dar de alta y de baja
-          // una credencial de nodo pertenece aquí, no a la consola de dirección.
-          // Sigue siendo owner-only, y la page lo impone aparte del nav.
-          { href: "/ocp/socios", label: "Socios de la red", ownerOnly: true },
         ],
       },
       {

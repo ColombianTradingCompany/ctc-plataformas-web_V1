@@ -2,7 +2,7 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> still plan. **Step (i) is DONE (V4.23) and step (ii) PR-A is DONE (V4.24). Next: §3, PR-B.**
+> still plan. **Step (i) DONE (V4.23); step (ii) PR-A (V4.24) and PR-B (V4.25) DONE. Next: §3, PR-C.**
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -512,7 +512,7 @@ Two things this section did NOT say, now settled as D2.2: identifiers stay, and 
 
 ---
 
-## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ← IN PROGRESS (PR-A done)
+## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ← IN PROGRESS (PR-A + PR-B done)
 
 ### 3.1 The target map (exact hrefs from `consoles.ts` and the route tree)
 
@@ -605,8 +605,8 @@ the guardian in §3.4 exists.
 | PR | Version | Receives | From | Size |
 |---|---|---|---|---|
 | **PR-A «OCP recibe el pasaporte»** ✅ | **4.24, DONE 2026-08-18** | Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo (+Contratos, Subastas), Black Stock, CRM CaaS (→ `/ocp/crm/caas`); the KPI dashboard | BCP | biggest — 12 modules, 154 route literals, 66 files |
-| **PR-B «BCP recibe dirección y configuración»** ← next | **4.25** | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
-| **PR-C «ECP recibe contacto y toolbox»** | **4.26** | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
+| **PR-B «BCP recibe dirección y configuración»** ✅ | **4.25, DONE 2026-08-18** | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
+| **PR-C «ECP recibe contacto y toolbox»** ← next | **4.26** | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
 
 Between PR-A and PR-B the BCP rail is briefly just «Panel» — acceptable, the owner is the only operator; the
 alternative order B → A → C ("no console ever empty") is fine too if preferred. **After PR-C: Version Wrap V37**
@@ -654,6 +654,29 @@ Cuatro cosas que el checklist no decía y que PR-B y PR-C van a necesitar:
 4. **`adminLockActions.ts` se QUEDA en el BCP** aunque su llamador (`arena/[sessionId]/SessionFunnel.tsx`) se
    fuera al OCP: es la cerradura de administrador, y PR-B le trae Usuarios al lado. Import cruzado por alias,
    que es lo que ya hacían 29 archivos.
+
+### 3.4 ter — Lo que PR-B añadió a la receta (2026-08-18)
+
+1. **Un `git mv` de un módulo se lleva a sus hijos, incluidos los que NO se mudan.** `direccionamiento/` viajó
+   entero al BCP con `plataformas/` dentro, que debía quedarse en el ECP (F6). Hubo que devolverlo. Antes de
+   mover un módulo con sub-módulos, mire si TODOS viajan.
+2. **Cuando una sub-ruta se queda, el talón del padre NO puede ser un `[[...resto]]`** — chocaría con la página
+   que sigue viva. Va explícito, y la excepción se declara en `NO_SE_MOVIERON` dentro de `rutasMovidas.ts`,
+   que es también de donde la lee el guardián. Verificado en servidor real: `/ecp/direccionamiento` → 308 al
+   BCP, y `/ecp/direccionamiento/plataformas` → 307 a `/login`, o sea que llega a su página y no al talón.
+3. **Un talón viejo se REAPUNTA, no se encadena.** `/ecp/grados` (2026-08-10) ya apuntaba a Direccionamiento;
+   ahora va directo a `/bcp/direccionamiento/grados`. Además pasó de `redirect` (307) a `permanentRedirect`
+   (308) y salió de `(app)`, como todos los demás.
+4. **Una tira de pestañas no puede cruzar dos consolas.** «Manejo de Plataformas» salió de
+   `DireccionamientoTabs`: su módulo se fue al BCP y él se quedó en el ECP. Sigue en el rail del ECP y en PR-C
+   se vuelve módulo suelto.
+5. ⚠️ **La reescritura masiva de rutas también reescribe los GUARDIANES y los comentarios históricos, y ahí
+   cambia el significado, no solo el texto.** En `qa-nav-check.mjs` convirtió tres aserciones en afirmaciones
+   sobre una consola que ya no las tiene (una pasó a comprobar el rail del ECP contra una ruta del BCP), y en
+   `navActivo.ts` dejó un comentario que fechaba un fallo de 2026-08-16 en la consola equivocada. **Revise a
+   mano todo `scripts/qa-*.mjs` y todo comentario con fecha que la reescritura haya tocado.**
+6. **`next.config.ts` `outputFileTracingIncludes` lleva RUTAS como claves.** Se repuntaron a `/bcp/documentacion*`.
+   Si se olvida, el módulo sale vacío en producción — sin error y sin reproducirse en local.
 
 ### 3.5 The guardian: `scripts/qa-rutas-consolas.mjs` (new; `qa-nav-check` stays as is)
 
@@ -725,7 +748,7 @@ the rule is one bump per deployed batch.
 | **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
 | — | *(unplanned)* encoding fix of the 14 public portadas + `qa-encoding-check` | ✅ **V4.22, DONE** |
 | **Step (i)** | Freeze names (§2) | ✅ **V4.23, DONE** |
-| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B · PR-C | ✅ **V4.24** · **V4.25** ← next · V4.26 → **Version Wrap V37** |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B ✅ · PR-C | ✅ **V4.24** · ✅ **V4.25** · **V4.26** ← next → **Version Wrap V37** |
 | **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.27 – V4.31 |
 | **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.32+ |
 | **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.33+ → **owner declares V5.0** → Version Wrap V38 |

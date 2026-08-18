@@ -15,10 +15,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "@/components/panel/shared.module.css";
 
+// «Manejo de Plataformas» SALIÓ de esta tira el 2026-08-18 (PR-B del paso (ii)).
+// Direccionamiento se mudó al BCP y Plataformas se quedó en el ECP, así que la
+// tira habría cruzado dos consolas — y una pestaña que salta de consola no es
+// una pestaña. Sigue alcanzable desde el rail del ECP, y en PR-C se convierte
+// en módulo suelto (`/ecp/plataformas`, decisión F6).
 const TABS = [
-  { href: "/ecp/direccionamiento", label: "Definición de contexto", exact: true },
-  { href: "/ecp/direccionamiento/grados", label: "Grados de Calidad" },
-  { href: "/ecp/direccionamiento/plataformas", label: "Manejo de Plataformas" },
+  { href: "/bcp/direccionamiento", label: "Definición de contexto", exact: true },
+  { href: "/bcp/direccionamiento/grados", label: "Grados de Calidad" },
 ];
 
 export function DireccionamientoTabs() {

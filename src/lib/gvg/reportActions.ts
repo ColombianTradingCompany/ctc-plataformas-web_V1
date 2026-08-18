@@ -8,7 +8,7 @@ import { sanitizeStrings, type GvgApplication, type GvgEvent, type MatchResult }
 import { REPORT_CRITERIA, computeReportMetrics, type ReportCriterionId, type ReportMetrics } from "./reportData";
 import { renderReportHtml, type ReportInterpretation } from "./reportTemplate";
 
-const CV_PATH = "/ecp/gvg/cv";
+const CV_PATH = "/bcp/gvg/cv";
 
 type Result = { ok: true } | { ok: false; error: string };
 

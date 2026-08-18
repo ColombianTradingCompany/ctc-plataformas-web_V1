@@ -9,7 +9,7 @@ export default function GvgHomePage() {
     <div>
       <GvgMasthead />
       <div className={styles.grid}>
-        <Link href="/ecp/gvg/cv" className={styles.card}>
+        <Link href="/bcp/gvg/cv" className={styles.card}>
           <span className={styles.cardName}>CV App Manager</span>
           <span className={styles.cardDesc}>
             The job-application engine: master experience repository, career paths, AI job matching, tailored CV +

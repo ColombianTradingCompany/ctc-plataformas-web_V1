@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Grados de Calidad · ECP", robots: {
 // material de cliente. Fuente única en src/lib/grados/definicion.ts.
 //
 // Vive dentro de Direccionamiento desde el 2026-08-10 — la vieja URL
-// (/ecp/grados) sigue viva como redirección.
+// (/bcp/direccionamiento/grados) sigue viva como redirección.
 export default function GradosPage() {
   return <GradosBoard />;
 }

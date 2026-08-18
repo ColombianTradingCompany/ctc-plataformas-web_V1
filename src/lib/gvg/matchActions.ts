@@ -20,7 +20,7 @@ import {
 } from "./cvData";
 
 const BUCKET = "kaffetal-media";
-const CV_PATH = "/ecp/gvg/cv";
+const CV_PATH = "/bcp/gvg/cv";
 const FULL_NAME = "Gabriel Vasquez";
 
 type Result = { ok: true } | { ok: false; error: string };

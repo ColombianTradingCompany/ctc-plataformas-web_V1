@@ -23,8 +23,13 @@ const nextConfig: NextConfig = {
   // no existiría en el servidor de producción y el módulo saldría vacío.
   // Se declara solo para las dos rutas que la leen — no infla el resto.
   outputFileTracingIncludes: {
-    "/ecp/documentacion": ["./docs/architecture/**"],
-    "/ecp/documentacion/[file]": ["./docs/architecture/**"],
+    // ⚠️ ESTAS CLAVES SON RUTAS, y se mudaron con el módulo: Documentación pasó
+    // del ECP al BCP el 2026-08-18 (PR-B del paso (ii), V4.25). Si se quedan
+    // apuntando a la ruta vieja, `docs/architecture/**` no se traza dentro de la
+    // función y el módulo sale VACÍO en producción — sin error, sin aviso, y sin
+    // reproducirse en local, donde el disco entero está ahí.
+    "/bcp/documentacion": ["./docs/architecture/**"],
+    "/bcp/documentacion/[file]": ["./docs/architecture/**"],
     // El botón «Descargar el transcriptor» del OCP arma el ZIP leyendo esta
     // carpeta del disco en tiempo de ejecución. Sin esta línea la carpeta no
     // existiría en el servidor y la descarga saldría vacía.

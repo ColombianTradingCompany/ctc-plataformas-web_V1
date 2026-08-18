@@ -29,7 +29,7 @@ export async function unlockGvgSpace(password: string): Promise<Result> {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: "/ecp/gvg",
+    path: "/bcp/gvg",
     maxAge: GVG_COOKIE_MAX_AGE,
   });
   return { ok: true };
@@ -39,6 +39,6 @@ export async function unlockGvgSpace(password: string): Promise<Result> {
 export async function lockGvgSpace(): Promise<Result> {
   await requireActiveAdmin();
   const store = await cookies();
-  store.set(GVG_COOKIE, "", { httpOnly: true, sameSite: "lax", path: "/ecp/gvg", maxAge: 0 });
+  store.set(GVG_COOKIE, "", { httpOnly: true, sameSite: "lax", path: "/bcp/gvg", maxAge: 0 });
   return { ok: true };
 }

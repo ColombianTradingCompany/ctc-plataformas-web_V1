@@ -316,3 +316,31 @@ APP_VERSION 4.30 → 4.31.
   qa-crm-green 21/21 · qa-crm-interes 17/17 · qa-sneak-peek 182/182 · qa-docs 14/14 · qa-encoding 712/0.
 APP_VERSION 4.31 → 4.32.
 (commit: 9028ed7)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.33 · Paso (iv-a): Herramientas del Café gana su modelo de acceso
+- **Primera de las dos tandas del paso (iv)**: quién puede abrir qué. La concha in-app con vuelta segura (A5)
+  es la segunda, V4.34.
+- **`herramientas` es un OBJETIVO de la matriz de identidad, no una identidad nueva.** Se entra con la cuenta
+  que ya se tiene: productor de KR **o** comprador de CP. Crear una tercera identidad habría roto la exclusión
+  productor ⊕ comprador sobre la que se sostiene `identidad/matriz.ts` entera. Merece línea en el DICT de la
+  matriz: es la primera entrada de esa lista que no es una identidad sino una PUERTA.
+- **Permisos por PERSONA y por HERRAMIENTA** (`tool_user_grants`). Antes `tools_plus_grants` concedía por
+  AUDIENCIA y abría todas las Plus de golpe — lo que vaciaba de sentido el nivel Plus, cuya gracia es que una
+  herramienta esté visible pero bloqueada. `source` (manual|payment) sobre la misma tabla, para que el
+  disparador de pago no obligue a migrar nada.
+- ⚠️ **`tools_plus_grants` NO se retiró**: 3 filas vivas, se lee como **comodín heredado**. El veredicto de
+  acceso dice POR QUÉ se abrió (`via: "permiso"` vs `"comodin-heredado"`) — sin ese dato no hay forma de saber
+  a quién migrar antes de retirar la tabla. `quienDependeDelComodin()` es esa lista.
+- ⚠️ **Trampa anotada, de la familia «no falla»**: la caducidad se filtra en código y no con un
+  `.lt("expires_at", …)`. `expires_at` nulo = no caduca, y un filtro por fecha en SQL se comería esas filas
+  salvo que se escriba el `or(...is.null)`. Quitaría permisos **en silencio**.
+- Guardián nuevo `qa-herramientas-acceso-check.mjs` (**26**), verificado saboteando la regla para confirmar que
+  una Plus sin permiso deja de abrirse. Los tres rechazos conservan texto propio: entrar, registrarse y
+  solicitar son tres salidas distintas.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-herramientas-acceso 26/26 · qa-terminos 19/19 · qa-definicion 33/33 · qa-rutas-consolas 263/263 ·
+  qa-nav 16/16 · qa-direccionamiento 14/14 · qa-docs 14/14 · qa-encoding 719/0.
+APP_VERSION 4.32 → 4.33.
+(commit: pending)

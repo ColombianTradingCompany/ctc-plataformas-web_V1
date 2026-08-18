@@ -4,9 +4,9 @@
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
-> **EL PASO (iii) ESTÁ COMPLETO** (V4.27 → V4.32). Con él quedan hechos los pasos (i), (ii) y (iii).
-> Next: **paso (iv), HC como módulo de login → V4.33+** (§5), y después el (v), tras el cual el owner
-> declara **V5.0**.
+> Pasos (i), (ii) y (iii) COMPLETOS. **El paso (iv) va por su primera tanda: el MODELO DE ACCESO está
+> hecho (V4.33)** — membresía HC + permisos por usuario y herramienta. Falta su segunda tanda, **la
+> concha in-app con vuelta segura (§5) → V4.34**, y después el paso (v) y el V5.0 del owner.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -730,19 +730,32 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 5. Step (iv) — HC as a login module + in-app shell + per-tool grants (A2 · A5 · A6 · F8)  → V4.31+
+## 5. Step (iv) — HC as a login module + in-app shell + per-tool grants (A2 · A5 · A6 · F8)  ← IN PROGRESS
 
-- **Membership** (`src/lib/identidad/matriz.ts`): `herramientas` requires an account that is a KR producer **or** a
-  CP buyer (same producer ⊕ buyer exclusion as today); no third identity is created. `/herramientas` landing stays
-  public (Class B-like) but the tools open only after login.
+> **Se parte en dos tandas, porque son dos cosas distintas y la segunda se apoya en la primera:**
+> **(iv-a) el modelo de acceso** — quién puede abrir qué — ✅ **V4.33**; y
+> **(iv-b) la concha in-app** — cómo se abre, con la vuelta segura que el owner subrayó (A5) — ← next, V4.34.
+
+- ✅ **Membership — HECHO en V4.33** (`src/lib/identidad/matriz.ts`): `herramientas` requires an account that is
+  a KR producer **or** a CP buyer (same producer ⊕ buyer exclusion as today); no third identity is created.
+  `/herramientas` landing stays public but the tools open only after login.
+  **Cómo quedó**: `herramientas` es un OBJETIVO de la matriz, no una identidad — la pregunta que responde es
+  «¿puedo entrar?», y se contesta con lo que la persona ya es. Crear una tercera identidad habría roto la
+  exclusión productor ⊕ comprador sobre la que se sostiene toda la matriz.
 - **Shell**: every tool opens inside `/kaffetal-regal/herramientas/<slug>` or `/cherry-picked-green/herramientas/<slug>`
   (surface-owned routes → the proxy prefix is right by construction) with header «← Volver a Kaffetal Regal /
   Cherry Picked», tool name, Plus/locked badge, help; the tool HTML is untouched at `/tools/h/<slug>` (public,
   outside the proxy matcher — keep it there). **"Safe" back-navigation** = the shell keeps the previous panel URL
   and returns to it (owner's A5 emphasis).
-- **Grants per user per tool**: new table `tool_user_grants(user_id, tool_id, granted_at, granted_by, source
-  'manual'|'payment', expires_at null)`; `tools_plus_grants` (per user, all Plus tools) is read as a legacy
-  wildcard until migrated, then dropped. Locked tools stay **visible** with «Solicitar» → a request row the ECP ·
+- ✅ **Grants per user per tool — HECHOS en V4.33**: tabla `tool_user_grants(user_id, tool_id, granted_at,
+  granted_by, source 'manual'|'payment', expires_at null)`, service-role-only; `tools_plus_grants` **se sigue
+  leyendo como comodín heredado** — tiene 3 filas vivas y retirarla hoy le quitaría el acceso a tres personas
+  sin avisar. `quienDependeDelComodin()` es la lista de trabajo de esa migración.
+  ⚠️ **El veredicto dice POR QUÉ se abrió** (`via: "permiso"` vs `"comodin-heredado"`): sin eso no habría forma
+  de saber a quién falta migrar antes de retirar la tabla vieja.
+  ⚠️ La caducidad se filtra **en código, no con un `.lt()`**: `expires_at` nulo significa «no caduca», y un
+  filtro por fecha en SQL descartaría esas filas salvo que se escriba el `or(...is.null)` — el tipo de detalle
+  que se olvida y quita permisos en silencio. Locked tools stay **visible** with «Solicitar» → a request row the ECP ·
   Herramientas module lists; the payment trigger later writes `source='payment'` on the same row.
 - Verification: `qa-terminos-check`-style guardian for the access rule; drive KR/CP as QA producer/buyer.
 - Decision D4.1: does the request («Solicitar») also email `info@` (via Resend, like leads)? Default: yes, one

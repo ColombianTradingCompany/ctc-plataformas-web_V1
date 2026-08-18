@@ -55,7 +55,21 @@ export async function membresiasDe(profileId: string): Promise<Membresias> {
   };
 }
 
-export type ObjetivoMembresia = "productor" | "comprador" | "directorio" | "recolector" | "socio";
+/**
+ * `herramientas` (A2/A5, V4.33) NO es una identidad nueva: es una PUERTA que se
+ * abre con una de las que ya existen. Por eso vive en esta lista aunque nadie
+ * «se registre como herramientas» — la pregunta que responde es «¿puedo entrar
+ * a Herramientas del Café?», y la respuesta se calcula con lo que la persona ya
+ * es. Añadir una identidad propia habría roto la exclusión productor ⊕ comprador
+ * que sostiene toda esta matriz.
+ */
+export type ObjetivoMembresia =
+  | "productor"
+  | "comprador"
+  | "directorio"
+  | "recolector"
+  | "socio"
+  | "herramientas";
 
 export type VeredictoMatriz = { permitido: true } | { permitido: false; motivo: string };
 
@@ -80,6 +94,29 @@ export async function puedeSer(profileId: string, objetivo: ObjetivoMembresia): 
       if (m.socio)
         return { permitido: false, motivo: "Este correo opera un nodo de la Red de Socios y no puede ser también productor." };
       return { permitido: true };
+
+    case "herramientas":
+      // Herramientas del Café se entra con la cuenta que YA se tiene: productor
+      // de Kaffetal Regal o comprador de Cherry Picked. Es un O real y no un
+      // caso a medias, porque la exclusión de arriba impide ser las dos.
+      if (m.productor || m.compradorReal) return { permitido: true };
+      if (m.recolector)
+        return {
+          permitido: false,
+          motivo:
+            "Las Herramientas del Café son para productores de Kaffetal Regal y compradores de Cherry Picked. Una cuenta de recolector de Terratalento no las abre.",
+        };
+      if (m.socio)
+        return {
+          permitido: false,
+          motivo:
+            "Las Herramientas del Café son para productores y compradores. Una credencial de nodo de la Red de Socios no las abre.",
+        };
+      return {
+        permitido: false,
+        motivo:
+          "Las Herramientas del Café son para productores de Kaffetal Regal y compradores de Cherry Picked. Regístrese en una de las dos y quedan disponibles.",
+      };
 
     case "comprador":
       if (m.productor)

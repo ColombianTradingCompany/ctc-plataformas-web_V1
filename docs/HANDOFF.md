@@ -752,6 +752,33 @@ Económico y Mercado Global.
   su sección 2 comprobaba que el `.jsx` siguiera trayendo un párrafo que ya no traía. Vigilaba una premisa que
   había dejado de ser cierta y nadie lo miró: **un guardián que falla y se ignora enseña a ignorar los fallos.**
 
+## Herramientas del Café — el modelo de acceso (2026-08-18, V4.33)
+
+Primera de las dos tandas del paso (iv): **quién puede abrir qué**. La segunda —cómo se abre, con la concha
+in-app y la vuelta segura— llega en V4.34.
+
+- **`herramientas` es un OBJETIVO de la matriz de identidad, no una identidad.** Se entra con la cuenta que ya
+  se tiene: productor de Kaffetal Regal **o** comprador de Cherry Picked. Crear una tercera identidad habría
+  roto la exclusión productor ⊕ comprador sobre la que se sostiene toda `identidad/matriz.ts`. La landing
+  `/herramientas` sigue siendo pública; lo que exige cuenta es **abrir** una herramienta.
+- **Los permisos pasan a ser por PERSONA y por HERRAMIENTA** (`tool_user_grants`, service-role-only). Antes
+  `tools_plus_grants` concedía por AUDIENCIA y abría todas las Plus de golpe — lo que vaciaba de sentido tener
+  herramientas «visibles pero bloqueadas para crear deseo», que es justo para lo que existe el nivel Plus.
+  `source` distingue `manual` de `payment`, sobre la misma tabla, para que el día que se cobre no haya que
+  migrar nada.
+- ⚠️ **`tools_plus_grants` NO se retiró.** Tiene 3 filas vivas y se sigue leyendo como **comodín heredado**:
+  quitarla hoy le quitaría el acceso a tres personas sin avisar. `quienDependeDelComodin()` es la lista de
+  trabajo de esa migración, y el veredicto de acceso **dice por qué se abrió** (`via: "permiso"` frente a
+  `"comodin-heredado"`) — sin ese dato no habría forma de saber a quién falta migrar antes de retirar la tabla.
+- ⚠️ **La caducidad se filtra en código, no con un `.lt("expires_at", …)`.** `expires_at` nulo significa «no
+  caduca»; un filtro por fecha en SQL descartaría esas filas salvo que se escriba el `or(...is.null)`. Es el
+  tipo de detalle que se olvida y **quita permisos en silencio** — misma familia que el `revalidatePath` muerto.
+- **La regla vive en un módulo puro** (`lib/tools/accesoHerramienta.ts`) y la comprueba
+  `qa-herramientas-acceso-check.mjs` (**26**), verificado saboteando la regla para confirmar que una Plus sin
+  permiso deja de abrirse. Los tres rechazos —sin cuenta · sin membresía · sin permiso— tienen texto propio a
+  propósito: entrar, registrarse y solicitar son tres salidas distintas, y un «no puede» genérico deja a la
+  persona sin saber cuál le toca.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

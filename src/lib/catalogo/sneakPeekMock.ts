@@ -41,6 +41,16 @@
 // admite. Por eso la séptima tarjeta se construye sobre la ficha «Cenicafe 1»,
 // y la escalera queda 2 Gold · 2 Blue · 2 Red · 1 Black.
 //
+// ⚠️ LOS DIEZ ATRIBUTOS DEL FORMULARIO SCA (`intrinseco`) SON INVENTADOS, por
+// encargo del owner (2026-08-17, «make it up for the sake of completeness»): sin
+// ellos la telaraña del reverso queda vacía. Están hechos para ser PLAUSIBLES,
+// no ciertos — suman EXACTAMENTE el puntaje real del lote, que es lo único que
+// un catador comprueba de un vistazo; uniformidad, taza limpia y dulzor van a 10
+// como en una taza sin defectos; y el reparto del resto sigue el carácter del
+// lote. Lo generó `scripts/lib/analisis-intrinseco.mjs` y aquí quedan fijos para
+// que la tarjeta y la ficha PDF digan lo mismo. Cuando la Arena llene
+// `lot_evaluations`, los lotes vivos traerán los suyos de verdad.
+//
 // LO QUE NUNCA SE COPIÓ de esas fichas: los precios pre-acordados (COP/Carga),
 // los kg disponibles, `Supplier Name` (lleva el nombre de una persona, y la
 // vista pública expone la FINCA, nunca al productor), densidad, factor de
@@ -86,6 +96,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     harvestQuarter: "2025-Q4",
     image: "/images/catalogo/sneak-peek/mock-lote-01.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-01-mini.svg",
+    intrinseco: { fragancia: 8.25, sabor: 8.25, residual: 8.5, acidez: 7.5, cuerpo: 8.5, balance: 7.75, uniformidad: 10, limpia: 10, dulzor: 10, catador: 8.25 },
     datasheetUrl: "/docs/fichas-mock/GD-4C1A.pdf",
     mock: true,
   },
@@ -111,6 +122,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     harvestQuarter: "2025-Q4",
     image: "/images/catalogo/sneak-peek/mock-lote-02.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-02-mini.svg",
+    intrinseco: { fragancia: 8.25, sabor: 8, residual: 8.25, acidez: 8.5, cuerpo: 7.5, balance: 8.25, uniformidad: 10, limpia: 10, dulzor: 10, catador: 8.25 },
     datasheetUrl: "/docs/fichas-mock/GD-9E33.pdf",
     mock: true,
   },
@@ -142,6 +154,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     harvestQuarter: "2026-Q1",
     image: "/images/catalogo/sneak-peek/mock-lote-03.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-03-mini.svg",
+    intrinseco: { fragancia: 8.5, sabor: 8.25, residual: 8, acidez: 8.75, cuerpo: 7.25, balance: 7.5, uniformidad: 10, limpia: 10, dulzor: 10, catador: 8 },
     datasheetUrl: "/docs/fichas-mock/CTCX-0326005.pdf",
     mock: true,
   },
@@ -166,6 +179,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     harvestQuarter: "2025-Q4",
     image: "/images/catalogo/sneak-peek/mock-lote-04.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-04-mini.svg",
+    intrinseco: { fragancia: 7.5, sabor: 8.5, residual: 8.25, acidez: 8.25, cuerpo: 7.75, balance: 7, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
     datasheetUrl: "/docs/fichas-mock/BL-2F70.pdf",
     mock: true,
   },
@@ -187,6 +201,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     harvestQuarter: "2025-Q4",
     image: "/images/catalogo/sneak-peek/mock-lote-05.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-05-mini.svg",
+    intrinseco: { fragancia: 7.25, sabor: 8.25, residual: 7.75, acidez: 7, cuerpo: 8.5, balance: 8, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
     datasheetUrl: "/docs/fichas-mock/RD-8B15.pdf",
     mock: true,
   },
@@ -208,6 +223,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     harvestQuarter: "2025-Q4",
     image: "/images/catalogo/sneak-peek/mock-lote-06.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-06-mini.svg",
+    intrinseco: { fragancia: 7.5, sabor: 7.75, residual: 8, acidez: 7, cuerpo: 8, balance: 8.25, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
     datasheetUrl: "/docs/fichas-mock/RD-3D62.pdf",
     mock: true,
   },
@@ -235,6 +251,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     season: TEMPORADA_ANTERIOR,
     image: "/images/catalogo/sneak-peek/mock-lote-07.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-07-mini.svg",
+    intrinseco: { fragancia: 7.25, sabor: 7.25, residual: 7, acidez: 7, cuerpo: 8, balance: 7.75, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.25 },
     datasheetUrl: "/docs/fichas-mock/BK-6A08.pdf",
     mock: true,
   },

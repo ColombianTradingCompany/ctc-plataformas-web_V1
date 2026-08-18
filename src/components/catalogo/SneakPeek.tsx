@@ -6,6 +6,7 @@ import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
 import type { SneakPeekLang, SneakPeekLot, SneakPeekPayload } from "@/lib/catalogo/sneakPeek";
 import { CatalogoPopup } from "./CatalogoPopup";
+import { RadarIntrinseco } from "./RadarIntrinseco";
 import styles from "./SneakPeek.module.css";
 
 // ── «Active Catalogue Sneak Peek» · el módulo reutilizable ───────────────────
@@ -16,10 +17,15 @@ import styles from "./SneakPeek.module.css";
 // 2026-08-17) y lo que lo anuncia en CTC Home, en Kaffetal Regal y en CaaS.
 // Plan: docs/V5_CONSOLAS_PLAN.md §1.
 //
-// LA TARJETA SE VOLTEA. Delante: foto, nombre, grado y variedad — lo que hace
-// que alguien quiera mirar. Detrás: el puntaje, el origen completo, el proceso,
-// las notas de cata, la rueda de catación y el botón que abre la FICHA TÉCNICA.
-// Es el criterio de siempre: la cara pública enseña el café, no el negocio.
+// LAS DOS CARAS (maquetas del owner, 2026-08-17). DELANTE va la FICHA del lote:
+// la foto con «Ver detalle» encima y el rótulo de temporada, el nombre, variedad
+// y altitud, las notas de cata y, abajo, el sello del grado frente al puntaje SCA
+// con la finca y el municipio. DETRÁS va el ANÁLISIS: la telaraña de los diez
+// atributos del formulario SCA, el botón de la ficha técnica en el medio y el
+// extracto de la rueda de catación al pie.
+// El reparto no es estético: delante va lo que identifica y hace querer mirar,
+// detrás lo que explica POR QUÉ ese café puntúa lo que puntúa. Y en ninguna de
+// las dos hay un dato comercial — la cara pública enseña el café, no el negocio.
 //
 // Y AL PULSARLA, LA CINTA LA CENTRA ANTES DE VOLTEARLA (owner, 2026-08-17): la
 // tarjeta se lleva al medio, crece un 15 % y solo entonces gira. Abrir el
@@ -141,7 +147,7 @@ function Tarjeta({
   const t = T[lang];
   const grado = GRADO_POR_ID[lot.grade];
   const origen = [lot.municipio, lot.departamento].filter(Boolean).join(", ");
-  const specs = [lot.process, lot.altitudeM != null ? `${lot.altitudeM} m` : null].filter(Boolean).join(" · ");
+  const specs = [lot.variety, lot.altitudeM != null ? `${lot.altitudeM} m` : null].filter(Boolean).join("  ·  ");
   const inerte = duplicada || !volteada ? -1 : undefined;
   const cajaRef = useRef<HTMLDivElement | null>(null);
   const pulsar = () => cajaRef.current && onVoltear(cajaRef.current);
@@ -149,7 +155,7 @@ function Tarjeta({
   return (
     <div className={`${styles.card} ${volteada ? styles.flipped : ""}`} ref={cajaRef}>
       <div className={styles.inner}>
-        {/* ── La cara: foto, nombre, grado y variedad ──────────────────────── */}
+        {/* ── La cara: la ficha del lote ───────────────────────────────────── */}
         <button
           type="button"
           className={`${styles.face} ${styles.front}`}
@@ -160,32 +166,53 @@ function Tarjeta({
         >
           <span className={styles.photo}>
             {lot.image ? (
-              <Image src={lot.image} alt="" width={660} height={440} sizes="300px" />
+              <Image src={lot.image} alt="" width={660} height={440} sizes="320px" />
             ) : (
-              // Sin foto, el sello del grado: es la cara oficial de cada grado y
-              // nunca falta. Aquí sí cabe a tamaño legible, al revés que en la
-              // línea de datos, donde a 36 px quedaba en una mancha.
+              // Sin foto, el sello del grado a lo grande: es la cara oficial de
+              // cada grado y nunca falta.
               <span className={styles.photoFallback} style={{ background: grado.hex }}>
-                <Image src={grado.logo} alt="" width={420} height={420} sizes="120px" />
+                <Image src={grado.logo} alt="" width={420} height={420} sizes="140px" />
               </span>
             )}
+            {/* «Ver detalle» va SOBRE la foto, arriba a la derecha: es la única
+                acción de esta cara y ahí no le quita sitio a ningún dato. */}
+            <span className={styles.verDetalle} aria-hidden>
+              {t.verMas} +
+            </span>
             {lot.mock && <span className={styles.seasonTag}>{lot.season[lang]}</span>}
           </span>
+
           <span className={styles.frontBody}>
             <b className={styles.name}>{lot.name}</b>
-            <span className={styles.line}>
-              <span className={styles.grade} style={{ background: `var(--t-${lot.grade})` }}>
-                {grado.nombre}
+            {specs && <span className={styles.specs}>{specs}</span>}
+            {lot.cup && <span className={styles.cup}>{lot.cup}</span>}
+
+            {/* El pie de la cara: el sello del grado frente al puntaje y al
+                origen. Aquí el sello SÍ cabe a tamaño legible — el que quedaba
+                en una mancha gris era el de 36 px de la primera versión. */}
+            <span className={styles.frontFoot}>
+              <Image
+                className={styles.sello}
+                src={grado.logo}
+                alt={grado.nombre}
+                width={420}
+                height={420}
+                sizes="72px"
+              />
+              <span className={styles.frontFootDatos}>
+                <span className={styles.score}>
+                  <i className={styles.sca}>{t.sca}</i>
+                  {lot.score}
+                  {lot.scoreEstimated && <i className={styles.est}>{t.est}</i>}
+                </span>
+                <span className={styles.finca}>{lot.finca}</span>
+                {origen && <span className={styles.origin}>{origen}</span>}
               </span>
-              {lot.variety && <span className={styles.variety}>{lot.variety}</span>}
-            </span>
-            <span className={styles.more} aria-hidden>
-              {t.verMas} +
             </span>
           </span>
         </button>
 
-        {/* ── El reverso: el resto del lote, su rueda y su ficha ───────────── */}
+        {/* ── El reverso: el análisis ──────────────────────────────────────── */}
         <div className={`${styles.face} ${styles.back}`} aria-hidden={!volteada}>
           <button type="button" className={styles.backTop} onClick={pulsar} tabIndex={inerte}>
             <span className={styles.backName}>{lot.name}</span>
@@ -193,36 +220,31 @@ function Tarjeta({
               ×
             </span>
           </button>
-          <span className={styles.scoreRow}>
-            <span className={styles.score}>
-              <i className={styles.sca}>{t.sca}</i>
-              {lot.score}
-              {lot.scoreEstimated && <i className={styles.est}>{t.est}</i>}
+
+          {/* La telaraña de los diez atributos del formulario SCA. */}
+          {lot.intrinseco && (
+            <span className={styles.radarBox}>
+              <RadarIntrinseco valores={lot.intrinseco} lang={lang} />
             </span>
-            {/* La ficha solo existe si el lote la tiene. Hoy la traen los mock;
-                los lotes vivos, cuando la plataforma tenga dónde guardarla. */}
-            {lot.datasheetUrl && (
-              <a
-                className={styles.ficha}
-                href={lot.datasheetUrl}
-                target="_blank"
-                rel="noopener"
-                tabIndex={inerte}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t.ficha} <span aria-hidden>↗</span>
-              </a>
-            )}
-          </span>
-          <span className={styles.origin}>
-            {lot.finca}
-            {origen && <> · {origen}</>}
-          </span>
-          {specs && <span className={styles.specs}>{specs}</span>}
-          {lot.cup && <span className={styles.cup}>{lot.cup}</span>}
-          {/* El extracto de la rueda de catación: los sectores del lote
-              encendidos sobre la rueda SCA, el resto atenuado. Sin rótulos —
-              a este tamaño serían ruido; los lleva la ficha en PDF. */}
+          )}
+
+          {/* La ficha, en el medio y a lo ancho: es la acción del reverso. */}
+          {lot.datasheetUrl && (
+            <a
+              className={styles.ficha}
+              href={lot.datasheetUrl}
+              target="_blank"
+              rel="noopener"
+              tabIndex={inerte}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t.ficha} <span aria-hidden>↗</span>
+            </a>
+          )}
+
+          {/* Y al pie, el extracto de la rueda de catación: los sectores del
+              lote encendidos sobre la rueda SCA, el resto atenuado. Sin rótulos
+              — a este tamaño serían ruido; los lleva la ficha en PDF. */}
           {lot.wheel && (
             <span className={styles.wheelBox}>
               <Image src={lot.wheel} alt="" width={520} height={520} sizes="230px" unoptimized />

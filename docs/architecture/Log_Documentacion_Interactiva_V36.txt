@@ -400,3 +400,39 @@ Cinco correcciones del owner sobre lo de V4.19:
   17 al soltar, −159 px/s con la flecha izquierda, desviación del centro 0 px y escala 1.15.
 APP_VERSION 4.19 → 4.20.
 (commit: c82a87d)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V4.21 — las dos caras de la tarjeta, según las maquetas del owner
+- El owner mandó las maquetas de cara y reverso: lo que faltaba de la tanda anterior era la
+  TARJETA en sí. Reconstruida, y el reparto no es estético — delante IDENTIFICA, detrás EXPLICA.
+- **CARA**: la foto con «Ver detalle +» ENCIMA, arriba a la derecha (antes vivía abajo, robándole
+  una línea a los datos) y el rótulo de temporada abajo a la izquierda; el nombre; variedad ·
+  altitud; las notas de cata; y un pie con el **sello del grado a 72 px** enfrentado al puntaje
+  SCA, la finca y el municipio. El sello VUELVE porque a ese tamaño se lee: la mancha gris
+  ilegible era la de 36 px de la primera versión.
+- **REVERSO**: nombre y ×, la telaraña del **Análisis Intrínseco** (los diez atributos del
+  formulario SCA), el botón «Ver ficha técnica» CENTRADO entre las dos figuras, y el extracto de
+  la **rueda de catación** al pie. El puntaje, el origen y las notas se fueron a la cara.
+- Los diez atributos VIAJAN ahora en el payload (`SneakPeekLot.intrinseco`) para que la telaraña
+  se dibuje en el navegador. Son datos de CATA, no comerciales.
+- La telaraña se dibuja **en React** y no como SVG generado (al contrario que la rueda) porque sus
+  rótulos son texto y la tarjeta habla tres idiomas: un SVG estático serían 21 archivos que habría
+  que rehacer al tocar una palabra. Comparte `ATRIBUTOS_SCA` con la versión del PDF, que es lo que
+  hace que las dos figuras sean la misma.
+- ⚠️ **LA TRAMPA QUE ESTO DESTAPÓ, y conviene no volver a pisarla**: `RadarIntrinseco` es un
+  componente de CLIENTE, e importar de `lib/catalogo/sneakPeek.ts` un VALOR —esa lista— metió
+  `server-only`, `supabase/server` y `next/headers` en el paquete del navegador y tumbó la página
+  entera con un 500. Importar un TIPO de ahí es gratis (se borra al compilar); importar un VALOR,
+  no. La lista vive ahora en `src/lib/catalogo/atributosSca.ts`, sin `server-only`.
+  **`tsc --noEmit` NO lo ve** —para TypeScript el import es válido—: lo cazó el servidor de
+  desarrollo. El guardián ahora lo vigila.
+- Dos ajustes de dibujo: el lienzo de la telaraña es más ancho que alto (con uno cuadrado
+  «Residual» y «Taza limpia» se cortaban contra el borde de la tarjeta) y la tarjeta crece a
+  318×520 px para que quepa todo sin apretar.
+- Guardián de 153 a **177**: la anatomía de las dos caras, que los diez atributos sumen el puntaje
+  de su lote, y que la lista de atributos siga viviendo fuera de `server-only`.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build`
+  exit 0 · guardián 177/177 · las dos caras verificadas en Chrome real.
+APP_VERSION 4.20 → 4.21.
+(commit: pending)

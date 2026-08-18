@@ -2,6 +2,7 @@ import "server-only";
 
 import { createEphemeralClient } from "@/lib/supabase/server";
 import { esGradoValido, GRADO_POR_ID, SCA_DECIMALES, type GradoId } from "@/lib/grados/definicion";
+import type { AtributoSCA } from "./atributosSca";
 import { SNEAK_PEEK_MOCK } from "./sneakPeekMock";
 
 // ── «Active Catalogue Sneak Peek» · el dato ──────────────────────────────────
@@ -36,6 +37,12 @@ export type SneakPeekLang = "es" | "en" | "de";
  *  rechaza en el catálogo, así que no puede aparecer en un teaser del catálogo. */
 export type SneakPeekGrade = Exclude<GradoId, "tyrian">;
 
+// Los diez atributos viven en `atributosSca.ts`, SIN `server-only`, para que un
+// componente de cliente pueda importarlos como VALOR (ver la cabecera de aquel
+// archivo: importar un valor desde aquí arrastraba Supabase al navegador). Aquí
+// se reexportan para que quien ya lee este módulo no tenga que saberlo.
+export { ATRIBUTOS_SCA, type AtributoSCA } from "./atributosSca";
+
 export type SneakPeekLot = {
   /** `lot_id` de la vista, o un id del espacio `mock-lote-NN`. */
   id: string;
@@ -64,6 +71,13 @@ export type SneakPeekLot = {
   /** La foto de la cara frontal de la tarjeta. Sin ella, la tarjeta cae al sello
    *  del grado, que nunca falta. */
   image?: string;
+  /** Los diez atributos del formulario SCA. El reverso los dibuja como telaraña
+   *  («Análisis Intrínseco»). Son datos de CATA, no comerciales: el puntaje ya
+   *  se enseña, y su desglose es lo que un tostador mira para saber POR QUÉ ese
+   *  café puntúa lo que puntúa. En los lotes mock están inventados por encargo
+   *  del owner (ver `sneakPeekMock.ts`); los vivos los traerán de
+   *  `lot_evaluations` cuando la Arena los llene. */
+  intrinseco?: Record<AtributoSCA, number>;
   /** El extracto de la RUEDA DE CATACIÓN del lote (SVG), que el reverso enseña
    *  bajo las notas. La dibuja `scripts/build-ruedas-mock.mjs` con la propia
    *  herramienta de la casa (`public/tools/rueda-catacion.html`), no con una

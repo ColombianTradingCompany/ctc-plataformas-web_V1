@@ -47,7 +47,7 @@
 
 /* Altura reservada mientras llega la respuesta, para que la página no salte
    cuando la cinta aparece (mismo motivo que en la cinta de mercado). */
-.loading{height:530px}
+.loading{height:588px}
 
 /* La pista NO lleva animación CSS: la mueve el componente con rAF sobre
    `translate3d`. Con `@keyframes` no se puede cambiar velocidad ni sentido sin
@@ -67,7 +67,7 @@
    Altura FIJA y las dos caras superpuestas: es lo que permite el giro sin que
    la cinta dé un salto cuando el reverso es más alto que la cara. */
 .card{
-  width:300px;height:462px;flex:none;margin:0 9px;
+  width:318px;height:520px;flex:none;margin:0 9px;
   perspective:1200px;
 }
 .inner{
@@ -92,15 +92,16 @@
 .card:hover .front,.front:focus-visible{border-color:var(--accent)}
 .back{
   transform:rotateY(180deg);
-  padding:14px 16px 15px;gap:3px;
+  padding:14px 16px 16px;gap:4px;
   border-color:var(--accent);
+  align-items:center;
 }
 
 /* ── La cara ───────────────────────────────────────────────────────────────
    La foto manda: es lo que hace que alguien quiera mirar el lote. Debajo, lo
    justo para identificarlo — nombre, grado y variedad. */
 .photo{
-  position:relative;display:block;width:100%;height:250px;flex:none;
+  position:relative;display:block;width:100%;height:258px;flex:none;
   background:var(--paper);overflow:hidden;
 }
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -122,7 +123,14 @@
 /* `flex:1` es lo que hace que «Ver detalle» se pegue ABAJO en vez de quedar
    flotando a media tarjeta: sin ella el cuerpo no se estira y el `margin-top:
    auto` del pie no tiene contra qué empujar. */
-.frontBody{display:flex;flex-direction:column;flex:1;gap:7px;padding:14px 16px 0;min-width:0}
+.frontBody{display:flex;flex-direction:column;flex:1;gap:6px;padding:15px 17px 15px;min-width:0}
+
+/* El pie de la cara: el sello del grado a la izquierda y, enfrente, el puntaje
+   con la finca y el municipio. Es la línea que identifica el lote de un vistazo. */
+.frontFoot{display:flex;align-items:center;gap:12px;margin-top:auto;padding-top:12px}
+.sello{width:72px;height:72px;flex:none;object-fit:contain;border-radius:50%}
+.frontFootDatos{display:flex;flex-direction:column;align-items:flex-end;text-align:right;margin-left:auto;min-width:0}
+.finca{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:3px}
 .name{
   font-size:15px;font-weight:800;letter-spacing:.005em;line-height:1.25;
   display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
@@ -139,15 +147,20 @@
   font-size:12px;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.more{
-  margin-top:auto;padding:10px 0 12px;
+/* «Ver detalle» va SOBRE la foto, arriba a la derecha (maqueta del owner): es la
+   única acción de la cara y ahí no le roba una línea a los datos. */
+.verDetalle{
+  position:absolute;top:10px;right:10px;
   font-family:var(--font-spline-mono),monospace;
-  font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);background:rgba(255,255,255,.94);
+  border:1px solid var(--accent);border-radius:6px;padding:5px 9px;
+  box-shadow:0 2px 8px rgba(0,0,0,.14);
 }
 
 /* ── El reverso ────────────────────────────────────────────────────────────── */
 .backTop{
-  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
   background:none;border:0;padding:0 0 6px;margin:0;
   font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;
 }
@@ -161,8 +174,8 @@
    Lleva la etiqueta «SCA» delante porque fuera de Cherry Picked un número suelto
    de dos decimales no dice de qué escala habla. */
 .score{
-  display:inline-flex;align-items:baseline;gap:5px;margin-top:2px;
-  font-size:27px;font-weight:800;line-height:1;letter-spacing:-.015em;color:var(--primary);
+  display:inline-flex;align-items:baseline;gap:5px;
+  font-size:26px;font-weight:800;line-height:1;letter-spacing:-.015em;color:var(--primary);
 }
 .score i{font-style:normal}
 .sca{
@@ -176,22 +189,23 @@
   color:var(--muted);
 }
 
-.origin{font-size:12.5px;color:var(--ink);margin-top:9px;line-height:1.35}
+.origin{font-size:11.5px;color:var(--muted);line-height:1.35}
 .specs{
-  font-size:11px;color:var(--muted);margin-top:3px;
+  font-size:11.5px;color:var(--muted);
   font-family:var(--font-spline-mono),monospace;letter-spacing:.02em;
 }
 .cup{
-  font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:9px;
-  display:-webkit-box;-webkit-line-clamp:4;line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:11.5px;color:var(--muted);line-height:1.45;margin-top:2px;
+  display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
 }
 
 .backFoot{margin-top:auto;padding-top:10px}
 .ficha{
-  display:inline-flex;align-items:center;gap:7px;
-  font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  margin:10px auto 4px;
+  font-size:12.5px;font-weight:700;letter-spacing:.02em;
   color:var(--accent);text-decoration:none;
-  border:1px solid var(--accent);border-radius:999px;padding:7px 13px;
+  border:1.5px solid var(--accent);border-radius:999px;padding:9px 20px;
   transition:background .16s,color .16s;
 }
 .ficha:hover{background:var(--accent);color:#fff}
@@ -205,9 +219,9 @@
 .cta:hover{border-bottom-color:var(--accent)}
 
 @media(max-width:640px){
-  .card{width:268px;height:436px}
-  .loading{height:436px}
-  .photo{height:228px}
+  .card{width:284px;height:494px}
+  .loading{height:560px}
+  .photo{height:236px}
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -247,16 +261,27 @@
 .cp .flechaDer{background:linear-gradient(270deg,var(--card) 18%,transparent)}
 
 /* ── El reverso: puntaje y ficha en la misma línea ─────────────────────────── */
-.scoreRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px}
-
 /* La rueda de catación del lote: ocupa el pie del reverso y se centra. Va con
    `unoptimized` en el componente porque es un SVG — el optimizador de Next no
    los toca y pedírselo solo añade un rodeo. */
-.wheelBox{
-  margin-top:auto;padding-top:8px;
-  display:flex;align-items:center;justify-content:center;
+/* ── El reverso, de arriba abajo: telaraña · ficha · rueda ────────────────── */
+.radarBox{display:flex;align-items:center;justify-content:center;width:100%;margin-top:0}
+.radar{width:100%;max-width:100%;height:auto;display:block}
+.radarAnillo{fill:none;stroke:var(--line);stroke-width:1}
+.radarBorde{fill:none;stroke:var(--muted);stroke-width:1.2;opacity:.55}
+.radarEje{stroke:var(--line);stroke-width:1}
+.radarFigura{fill:#3b3357;fill-opacity:.82;stroke:#cbbef2;stroke-width:1.6;stroke-linejoin:round}
+.radarPunto{fill:#FFCD00}
+.radarRotulo{
+  font-family:var(--font-spline-mono),monospace;
+  font-size:7px;letter-spacing:.03em;fill:var(--muted);
 }
-.wheelBox img{width:100%;height:auto;max-width:222px;display:block}
+
+.wheelBox{
+  margin-top:auto;
+  display:flex;align-items:center;justify-content:center;width:100%;
+}
+.wheelBox img{width:100%;height:auto;max-width:186px;display:block}
 
 /* ── La ventana del catálogo ───────────────────────────────────────────────── */
 .popup{max-width:560px}

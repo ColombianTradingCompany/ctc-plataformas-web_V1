@@ -283,6 +283,43 @@ check(
     CAAS.indexOf("<SneakPeek") < CAAS.indexOf("{chrome.modelosH2}")
 );
 
+// ── 15. Las dos caras, según las maquetas del owner (2026-08-17) ────────────
+// CARA: foto con «Ver detalle» encima, nombre, variedad·altitud, notas y el pie
+// con el sello del grado frente al puntaje, la finca y el municipio.
+check(
+  "«Ver detalle» va sobre la foto",
+  COMPONENTE.includes("styles.verDetalle") && /\.verDetalle\{\s*position:absolute/.test(CSS)
+);
+check("la cara lleva el sello del grado a tamaño legible", COMPONENTE.includes("styles.sello") && /\.sello\{width:7\d px?|\.sello\{width:72px/.test(CSS));
+check("la cara lleva el puntaje, la finca y el municipio", COMPONENTE.includes("styles.frontFoot") && COMPONENTE.includes("styles.finca"));
+check("la cara lleva variedad y altitud", COMPONENTE.includes("lot.variety, lot.altitudeM != null"));
+// REVERSO: telaraña, ficha en el medio, rueda al pie.
+check("el reverso lleva la telaraña", COMPONENTE.includes("<RadarIntrinseco"));
+check("y la ficha centrada entre la telaraña y la rueda", CSS.includes(".ficha{") && CSS.includes("margin:10px auto 4px"));
+check("el reverso ya no repite el puntaje ni las notas", !/styles\.scoreRow/.test(COMPONENTE));
+
+// ── 16. Los diez atributos, sin arrastrar `server-only` al navegador ─────────
+// ⚠️ Importar un VALOR desde `lib/catalogo/sneakPeek.ts` (que es `server-only`)
+// mete Supabase en el paquete del cliente y tumba la página con un 500 que
+// `tsc --noEmit` NO ve. Por eso la lista vive en un archivo puro.
+const ATRIB_SRC = lee("src/lib/catalogo/atributosSca.ts");
+const RADAR_SRC = lee("src/components/catalogo/RadarIntrinseco.tsx");
+check(
+  "los atributos viven en un archivo SIN server-only",
+  !/^\s*import "server-only"/m.test(ATRIB_SRC)
+);
+check("y son los diez del formulario", (ATRIB_SRC.match(/^  "/gm) || []).length === 10);
+check(
+  "el radar toma el VALOR del archivo puro, no del módulo server-only",
+  RADAR_SRC.includes('from "@/lib/catalogo/atributosSca"') &&
+    /import type \{ SneakPeekLang \} from "@\/lib\/catalogo\/sneakPeek"/.test(RADAR_SRC)
+);
+for (const l of SNEAK_PEEK_MOCK) {
+  check(`${l.id}: trae los diez atributos`, !!l.intrinseco && Object.keys(l.intrinseco).length === 10);
+  const suma = l.intrinseco ? Object.values(l.intrinseco).reduce((a, b) => a + b, 0) : 0;
+  check(`${l.id}: los diez suman su puntaje (${l.score})`, Math.abs(suma - Number(l.score)) < 0.01);
+}
+
 console.log(`${ok} comprobaciones OK, ${fallos.length} fallos`);
 for (const f of fallos) console.log("  FALLO:", f);
 process.exit(fallos.length ? 1 : 0);

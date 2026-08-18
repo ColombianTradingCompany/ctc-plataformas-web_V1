@@ -303,6 +303,27 @@ Mechanics that matter:
   cup, and the rest is distributed by the lot's character. What is NOT invented: the total score, variety,
   process, farm and cup notes — those come from Notion. The MUESTRA stamp is what keeps the difference legible.
 
+### 1.5.4 The two faces, as the owner drew them (2026-08-17, V4.21)
+
+The owner sent front/back mockups; the card was rebuilt to match, and the split is not decorative — **the
+front identifies the lot, the back explains it**.
+
+- **Front** = the lot's ficha: the photo with **«Ver detalle +» laid over its top-right corner** and the
+  season tag bottom-left; the name; `variedad · altitud`; the cup notes; and a foot line with the **grade
+  seal at 72 px** facing the **SCA score, the finca and the municipio** right-aligned. The seal is back
+  because at that size it reads — the illegible grey blob was the 36 px one of the first version.
+- **Back** = the analysis: name + ×, the **«Análisis Intrínseco» radar** (the ten SCA form attributes), the
+  **«Ver ficha técnica» button centred** between the two graphics, and the **cupping wheel** at the foot.
+  Score, origin and cup notes are gone from here — they live on the front now.
+- The radar is drawn **in React** (`RadarIntrinseco.tsx`), not generated as an SVG like the wheel, because its
+  labels are text and the card speaks three languages: a static SVG would mean 21 files (7 lots × 3 languages)
+  regenerated on every wording change. It shares `ATRIBUTOS_SCA` with the PDF version so both figures match.
+- ⚠️ **The trap this cost:** `RadarIntrinseco` is a client component and importing a **value** from
+  `lib/catalogo/sneakPeek.ts` (which is `server-only`) dragged Supabase and `next/headers` into the browser
+  bundle — the whole page 500'd. Type-only imports are free; value imports are not. The list now lives in
+  `src/lib/catalogo/atributosSca.ts` with no `server-only`, and the guardian checks it stays that way.
+  **`tsc --noEmit` does not catch this** — the dev server did.
+
 ### 1.5.1 The datasheets («Ver ficha técnica»)
 
 `SneakPeekLot.datasheetUrl` is optional and the button only exists when it is set.

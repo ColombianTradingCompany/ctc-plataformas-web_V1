@@ -80,8 +80,8 @@ The steps are meant to be executed **one per session** by someone starting cold.
 3. **Do the work**, keeping the step's scope. If you find something out of scope, write it into §9 as a
    dev to-do; do not widen the step.
 4. **Bump `APP_VERSION`** (`src/lib/version.ts`) in the same commit.
-5. **Run the gate**: `npx tsc --noEmit` · `npx eslint src` (0 errors; 27 pre-existing warnings is the
-   baseline) · `npm run build` (exit 0) · every `qa-*.mjs` that touches what you moved.
+5. **Run the gate**: `npx tsc --noEmit` · `npx eslint src` (0 errors; **8** pre-existing warnings is the
+   baseline; era 27 hasta que V4.32 retiró el módulo vendorizado) · `npm run build` (exit 0) · every `qa-*.mjs` that touches what you moved.
    ⚠️ `tsc` does **not** catch a client component importing a value from a `server-only` module — that lands
    as a runtime 500. If you touch imports across the client/server line, load the page in a dev server.
 6. **Verify what changed**, the way the thing can be verified: consoles are behind 2FA and cannot be driven
@@ -789,10 +789,11 @@ the rule is one bump per deployed batch.
 | **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
 | — | *(unplanned)* encoding fix of the 14 public portadas + `qa-encoding-check` | ✅ **V4.22, DONE** |
 | **Step (i)** | Freeze names (§2) | ✅ **V4.23, DONE** |
-| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B ✅ · PR-C ✅ | ✅ **V4.24 · V4.25 · V4.26** → **Version Wrap V37** ← next |
-| **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.27 – V4.31 |
-| **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.32+ |
-| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.33+ → **owner declares V5.0** → Version Wrap V38 |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B ✅ · PR-C ✅ | ✅ **V4.24 · V4.25 · V4.26** |
+| **Version Wrap V37** | El mapa interactivo, al día tras 14 entradas de bitácora | ✅ **DONE** — `Documentacion_Interactiva_V37.0(a3cfe82).html` |
+| **Step (iii)** | New modules (§4): CTC Selection ✅ · CRM CP Green ✅ · CRM CP Roast/X ✅ · socio cards ✅ · Definición rework ✅ | ✅ **V4.27 → V4.32, COMPLETO** |
+| **Step (iv)** | HC (§5), partido en dos: **(iv-a)** modelo de acceso ✅ · **(iv-b)** concha in-app | ✅ **V4.33** · **V4.34** ← next |
+| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | **V4.35+** → **owner declares V5.0** → Version Wrap V38 |
 
 Every PR: Log entry sealed with sha · HANDOFF touched · DICT touched · memory note `project_structure_reorg_2026_08_17`
 updated with "done through step X".

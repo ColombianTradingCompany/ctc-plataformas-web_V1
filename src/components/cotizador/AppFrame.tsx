@@ -19,7 +19,7 @@ import { issueQuote, reopenQuote, saveQuoteDraft } from "@/lib/cotizador/actions
 import { latestAnchor } from "@/lib/anclas/actions";
 import type { Quote } from "@/lib/cotizador/types";
 import styles from "./appFrame.module.css";
-import panel from "@/app/bcp/(app)/shared.module.css";
+import panel from "@/components/panel/shared.module.css";
 
 /** El estado de la app: el valor de cada control con id, más su marca. */
 type AppState = {

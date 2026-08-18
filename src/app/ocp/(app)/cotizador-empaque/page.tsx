@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { QuotesBoard } from "@/components/cotizador/QuotesBoard";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 export const metadata: Metadata = { title: "Costo de empaque · OCP", robots: { index: false, follow: false } };
 

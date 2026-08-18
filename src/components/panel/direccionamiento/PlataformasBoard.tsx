@@ -15,7 +15,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { guardarSuperficie, type FilaHerramienta, type FilaSuperficie } from "@/app/ecp/(app)/direccionamiento/plataformasActions";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 const LARGO_IDEAL = { min: 120, max: 160 };
 

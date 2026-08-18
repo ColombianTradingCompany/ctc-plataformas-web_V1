@@ -21,7 +21,7 @@ import {
 import type { TranscriptJobOptions, TranscriptPayload, TranscriptStatus, TranscriptSummary } from "@/lib/transcripciones/types";
 import { putSignedUrlWithProgress } from "@/lib/kaffetalMedia";
 import { WorkersBadge, useTranscriptWorkers } from "./WorkersBadge";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import css from "./transcripciones.module.css";
 

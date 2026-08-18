@@ -4,7 +4,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { TARIFAS, SIN_TARIFA_CONOCIDA, formatoUSD, tarifaVigente } from "@/lib/ai/precios";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 
 type Fila = {

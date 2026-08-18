@@ -25,7 +25,7 @@ import {
   subirVersion,
   type FichaTool,
 } from "./toolsActions";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 type Msg = { ok: boolean; text: string } | null;
 

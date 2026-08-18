@@ -20,7 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { listQuoteMetrics } from "@/lib/cotizador/actions";
 import { QUOTE_STATUS_LABEL, type QuoteStatus } from "@/lib/cotizador/types";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import ev from "./evaluacion.module.css";
 
 type MetricRow = {

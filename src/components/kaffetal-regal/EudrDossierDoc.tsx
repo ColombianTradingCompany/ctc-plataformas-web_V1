@@ -77,7 +77,7 @@ const yesNo = (v: boolean | null) => (v === true ? "Sí" : v === false ? "No" : 
 const isImage = (name: string) => /\.(png|jpe?g|webp|gif)$/i.test(name);
 
 // Shared, presentational EUDR dossier. Rendered both on the BCP side
-// (/bcp/fincas/[id]/dossier) and the producer side (/kaffetal-regal/
+// (/ocp/fincas/[id]/dossier) and the producer side (/kaffetal-regal/
 // certificacion/[id]); each route resolves the data with its own client.
 // F1 (2026-07-29): el dossier lista las PARCELAS (el átomo del Art. 9) y los
 // certificados de la finca con número + vigencia (nota "¿Finca o Lote?").

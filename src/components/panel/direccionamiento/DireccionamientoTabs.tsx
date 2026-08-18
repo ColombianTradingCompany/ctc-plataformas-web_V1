@@ -13,7 +13,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 const TABS = [
   { href: "/ecp/direccionamiento", label: "Definición de contexto", exact: true },

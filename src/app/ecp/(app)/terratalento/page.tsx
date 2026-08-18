@@ -7,7 +7,7 @@ import { resumenTerminos, terminosFromRow } from "@/lib/terratalento/terminos";
 import type { ConstanciaInput } from "@/lib/terratalento/constanciaPrint";
 import { ConstanciaButton } from "./ConstanciaButton";
 import { reenviarNotificacionLlamado, setJornadaEstadoAdmin, setPostulacionEstado } from "./actions";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 // ── Terratalento · el tablero de match del ECP (V2) ─────────────────────────
 // Dos niveles: arriba las JORNADAS por estado; dentro de cada una, las

@@ -17,7 +17,7 @@ import { collapseBlocks, fmtDuration, fmtTs, speakerLabel, transcriptToText } fr
 import type { Transcript } from "@/lib/transcripciones/types";
 import { StatusBadge } from "./TranscriptsBoard";
 import { WorkersBadge, useTranscriptWorkers } from "./WorkersBadge";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import css from "./transcripciones.module.css";
 
 const PALETTE = ["#2f6f5e", "#b0592a", "#3b5b8f", "#8a4d7a", "#6f7a2f", "#a1541c", "#5b8def", "#7a3b3b"];

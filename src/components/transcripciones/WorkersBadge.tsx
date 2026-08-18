@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { listTranscriptWorkers } from "@/lib/transcripciones/actions";
 import type { TranscriptWorker } from "@/lib/transcripciones/types";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import css from "./transcripciones.module.css";
 
 const REFRESH_MS = 20_000;

@@ -2,7 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { BuzonSyncBar } from "./BuzonSyncBar";
 import { BuzonMail, type InboundRow } from "./BuzonMail";
-import shared from "@/app/bcp/(app)/shared.module.css";
+import shared from "@/components/panel/shared.module.css";
 
 // Batched imports + IMAP round-trips need headroom on serverless.
 export const maxDuration = 60;

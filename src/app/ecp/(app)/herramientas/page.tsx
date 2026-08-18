@@ -3,7 +3,7 @@ import { ToolPanel } from "@/components/tools/ToolPanel";
 import { PlusBoard } from "./PlusBoard";
 import { ToolsAdmin } from "./ToolsAdmin";
 import { cargarToolsAdmin } from "@/lib/tools/toolAccess";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 // Consola interna → Herramientas del café.
 // Desde 2026-07-20 aquí se ve TODO el instrumental de la plataforma, no solo lo

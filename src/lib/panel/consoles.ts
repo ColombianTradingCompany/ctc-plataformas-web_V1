@@ -62,39 +62,19 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     tagline: "El negocio: dirección, configuración y red de socios",
     accent: "#D3B8FA", // corporate lavender
     home: "/bcp",
-    // Tres submenús (2026-07-21), sin encabezado — separados por un divisor:
-    //   comercial (Panel · Club · Catálogo) · cadena (Productores/Fincas/Lotes)
-    //   · competencia (Nominados · Arena · Galardonados).
-    // Contratos y Subastas Tyrian ya no son entradas propias: viven como
-    // pestañas dentro del Catálogo Cherry Picked. Leads → OCP, Buzón → ECP.
+    // ⚠️ EL RAIL DEL BCP ESTÁ MOMENTÁNEAMENTE VACÍO — es lo esperado.
+    // PR-A del paso (ii) (V4.24, 2026-08-18) se llevó al OCP el pasaporte del
+    // lote entero: Club, Catálogo, Black Stock, CRM CaaS, Productores, Fincas,
+    // Lotes, Nominados, Arena y Galardonados. Lo que le toca al BCP —
+    // Direccionamiento, Usuarios, Documentación, Mapa, Consumo,
+    // Automatizaciones, GVG-Space y Socios de la red — llega en PR-B, que los
+    // trae del ECP y del OCP. El plan lo dice y lo acepta (§3.3): «entre PR-A y
+    // PR-B el rail del BCP es solo Panel», porque el único operador es el owner.
+    // NO rellene esto con enlaces a /ocp/*: el rail de una consola apunta a SU
+    // propio árbol de rutas, y el selector de consolas es el que cruza.
     nav: [
       {
-        links: [
-          { href: "/bcp", label: "Panel", exact: true },
-          { href: "/bcp/club", label: "Kaffetal Club" },
-          { href: "/bcp/catalogo", label: "Catálogo Cherry Picked" },
-          // Black Stock (V4 · vía paralela): la clase de volumen — pipeline de
-          // negociaciones Black + inventario adquirido que alimenta la pestaña
-          // Black de Cherry Picked Green.
-          { href: "/bcp/black-stock", label: "Black Stock" },
-          // CRM CaaS (V4 · Fase 1): el outlet CaaS es negocio núcleo,
-          // así que su kanban vive aquí — no en el OCP como el resto de leads.
-          { href: "/bcp/caas", label: "CRM CaaS" },
-        ],
-      },
-      {
-        links: [
-          { href: "/bcp/productores", label: "Productores" },
-          { href: "/bcp/fincas", label: "Fincas" },
-          { href: "/bcp/lotes", label: "Lotes" },
-        ],
-      },
-      {
-        links: [
-          { href: "/bcp/nominados", label: "Nominados" },
-          { href: "/bcp/arena", label: "Arena" },
-          { href: "/bcp/galardonados", label: "Galardonados" },
-        ],
+        links: [{ href: "/bcp", label: "Panel", exact: true }],
       },
     ],
   },
@@ -213,7 +193,8 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp", label: "Panel", exact: true },
           // Leads (2026-07-21 BCP→OCP; V4 Fase 1: solo queda `general`) — la
           // recepción de la red. Los pilares de servicio viven en su consola
-          // dueña: cocreate → BCP, tech y varietales → ECP.
+          // dueña: cocreate/CaaS aquí mismo (CRM CP CaaS, desde PR-A), tech y
+          // varietales → ECP. Este módulo se va al ECP en PR-C.
           { href: "/ocp/leads", label: "Leads · Recepción" },
           // Los socios se administran donde se OPERAN (2026-07-20): el OCP es el
           // espejo de las interfaces de partner, así que dar de alta y de baja
@@ -221,6 +202,49 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // Sigue siendo owner-only, y la page lo impone aparte del nav.
           { href: "/ocp/socios", label: "Socios de la red", ownerOnly: true },
         ],
+      },
+      {
+        // Kaffetal Regal (← BCP, PR-A del paso (ii), 2026-08-18): el origen del
+        // lote. Es la cadena tal y como la ve el operador — quién produce, dónde
+        // y qué. Antes vivía en el BCP porque el BCP era el dueño del pasaporte;
+        // desde la reorganización V5 el pasaporte ES la operación.
+        label: "OCP · Kaffetal Regal",
+        links: [
+          { href: "/ocp/productores", label: "Productores" },
+          { href: "/ocp/fincas", label: "Fincas" },
+          { href: "/ocp/lotes", label: "Lotes" },
+        ],
+      },
+      {
+        // KR Arena (← BCP): la calificación. Nominados es la fila de espera,
+        // Arena la sesión de cata y Galardonados el resultado sellado. El Club
+        // viaja con ellos: es la membresía que la Arena alimenta.
+        label: "OCP · KR Arena",
+        links: [
+          { href: "/ocp/nominados", label: "Nominados" },
+          { href: "/ocp/arena", label: "Arena" },
+          { href: "/ocp/galardonados", label: "Galardonados" },
+          { href: "/ocp/club", label: "Kaffetal Club" },
+        ],
+      },
+      {
+        // Catálogo (← BCP): la salida comercial del lote. Contratos y Subastas
+        // Tyrian NO son entradas propias — son pestañas dentro del Catálogo, y
+        // siguen sin serlo tras la mudanza.
+        label: "OCP · Catálogo",
+        links: [
+          { href: "/ocp/catalogo", label: "Catálogo Cherry Picked (Contratos Vigentes)" },
+          // Black Stock: la clase de volumen. En el paso (iii) se convierte en
+          // una pestaña de «CTC Selection» (F4) y esta ruta se reapunta ALLÍ,
+          // en `rutasMovidas.ts` — no encadenando un talón contra otro.
+          { href: "/ocp/black-stock", label: "Black Stock" },
+        ],
+      },
+      {
+        // CRM CP (← BCP el de CaaS): un tablero por embudo de Cherry Picked.
+        // Hoy solo existe CaaS; Green, Roast y X nacen en el paso (iii) (F5).
+        label: "OCP · Cherry Picked",
+        links: [{ href: "/ocp/crm/caas", label: "CRM CP CaaS" }],
       },
       {
         // Cotizadores (2026-08-04): cotizar es operación —se hace contra un

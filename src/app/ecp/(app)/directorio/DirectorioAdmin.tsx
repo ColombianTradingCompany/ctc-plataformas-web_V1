@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import shared from "@/app/bcp/(app)/shared.module.css";
+import shared from "@/components/panel/shared.module.css";
 import {
   aceptarFicha,
   aprobarCertificado,

@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { searchCounterparties, setQuoteCounterparty } from "@/lib/cotizador/actions";
 import { COUNTERPARTY_LABEL, type Counterparty, type CounterpartyOption } from "@/lib/cotizador/types";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 export function CounterpartyPicker({
   quoteId,

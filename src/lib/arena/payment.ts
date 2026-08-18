@@ -1,7 +1,7 @@
 // ── Cómo se paga la inscripción de Arena ─────────────────────────────────────
 // NO hay pasarela de pago: el productor paga por Nequi (billetera móvil
 // colombiana, se transfiere a un número de celular) y CTC confirma manualmente
-// en /bcp/club. Estos datos son públicos de cara al productor — no son secreto,
+// en /ocp/club. Estos datos son públicos de cara al productor — no son secreto,
 // por eso viven en código y no en una env var.
 //
 // ⚠️ PENDIENTE: falta la cuenta Nequi real de CTC. Mientras NEQUI.number esté

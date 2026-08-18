@@ -1,5 +1,5 @@
 import { decidirPlus, listarSolicitudesPlus, type SolicitudPlus } from "@/lib/tools/plusGrants";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 // ── Solicitudes de Herramientas Plus (owner, 2026-08-02) ─────────────────────
 // Sub-tablero del ECP → Herramientas del café: un listado COMPACTO por

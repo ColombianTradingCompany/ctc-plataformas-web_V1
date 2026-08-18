@@ -2,7 +2,7 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> still plan. **Step (i) is DONE (V4.23). The next thing to do is §3, step (ii): the route moves.**
+> still plan. **Step (i) is DONE (V4.23) and step (ii) PR-A is DONE (V4.24). Next: §3, PR-B.**
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -512,7 +512,7 @@ Two things this section did NOT say, now settled as D2.2: identifiers stay, and 
 
 ---
 
-## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ← THE NEXT STEP
+## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ← IN PROGRESS (PR-A done)
 
 ### 3.1 The target map (exact hrefs from `consoles.ts` and the route tree)
 
@@ -575,7 +575,26 @@ change (segment-boundary + longest-wins already handles `/ocp/crm` vs `/ocp/crm/
 ### 3.2 Blast radius (measured 2026-08-17)
 
 Hard-coded console paths outside `consoles.ts`: **`/bcp/` 127 · `/ecp/` 57 · `/ocp/` 34** occurrences in
-`src/**/*.{ts,tsx}`; **20 files** call `revalidatePath("/bcp|/ecp|/ocp…")`. Plus: the three console dashboards,
+`src/**/*.{ts,tsx}`; **20 files** call `revalidatePath("/bcp|/ecp|/ocp…")`.
+
+> **⚠️ RE-MEDIDO EL 2026-08-18, antes de PR-A — los números de arriba se quedaron CORTOS.** Se dejan como
+> estaban para que se vea la diferencia. Lo real, contando solo rutas dentro de literales de cadena:
+>
+> | | plan (2026-08-17) | real (2026-08-18) |
+> |---|---|---|
+> | ocurrencias `/bcp/` · `/ecp/` · `/ocp/` | 127 · 57 · 34 = **218** | 189 · 69 · 46 = **304** |
+> | archivos con `revalidatePath` de consola | 20 | **29** |
+>
+> Y el número que de verdad importa para la mudanza no estaba: **solo hay 47 rutas DISTINTAS** repartidas en
+> **66 archivos**. Eso es el tamaño del mapa de destinos; las ~300 ocurrencias son repetición. El reparto por
+> tipo de uso explica dónde está el riesgo: **`revalidatePath` 108** (casi la mitad), `consoles.ts` 40,
+> `href=` 27, `redirect()` 5, `router.push()` 1, y ~53 en mapas y arreglos de rutas (`ENTITY_HREF`, `PATHS`).
+>
+> **La lección, para PR-B y PR-C**: el grueso NO son enlaces, son `revalidatePath`. Un enlace roto se ve al
+> primer clic; un `revalidatePath` a una ruta que ya no existe **no lanza, no avisa y no rompe el build** —
+> deja al operador mirando datos rancios después de guardar. Ese es exactamente el fallo que la comprobación
+> (c) de `qa-rutas-consolas.mjs` existe para cazar, y por qué el guardián corre en la compuerta y no "cuando
+> haga falta". Plus: the three console dashboards,
 `EstructuraModal.tsx` (`PanelDiagram`), `qa-nav-check.mjs`, `next.config.ts` (documentación), any email template
 that links into a console (grep `ctcexport.com/bcp` and `"/bcp/` in `src/lib/email`), the KR next-step API,
 and the docs DICT/FILETREE. It is mechanical but wide — which is exactly why each console is its own PR and why
@@ -585,9 +604,9 @@ the guardian in §3.4 exists.
 
 | PR | Version | Receives | From | Size |
 |---|---|---|---|---|
-| **PR-A «OCP recibe el pasaporte»** | 4.23 | Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo (+Contratos, Subastas), Black Stock, CRM CaaS; the KPI dashboard | BCP | biggest (the 127) |
-| **PR-B «BCP recibe dirección y configuración»** | 4.24 | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
-| **PR-C «ECP recibe contacto y toolbox»** | 4.25 | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
+| **PR-A «OCP recibe el pasaporte»** ✅ | **4.24, DONE 2026-08-18** | Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo (+Contratos, Subastas), Black Stock, CRM CaaS (→ `/ocp/crm/caas`); the KPI dashboard | BCP | biggest — 12 modules, 154 route literals, 66 files |
+| **PR-B «BCP recibe dirección y configuración»** ← next | **4.25** | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
+| **PR-C «ECP recibe contacto y toolbox»** | **4.26** | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
 
 Between PR-A and PR-B the BCP rail is briefly just «Panel» — acceptable, the owner is the only operator; the
 alternative order B → A → C ("no console ever empty") is fine too if preferred. **After PR-C: Version Wrap V37**
@@ -615,6 +634,26 @@ of the interactive docs (the FILETREE and node map change shape).
 9. `qa-nav-check.mjs`: update the Manejo de Plataformas assertions in PR-C (the module *is* standalone now).
 10. Docs: Log V36 entry (sha), HANDOFF map, DICT; `EstructuraModal` diagram; robots rules unchanged (`/bcp|/ecp|/ocp` are already disallowed).
 11. Gate (§0) + `qa-guard-check`, `qa-boards-check` (leads), `qa-transcripciones-check` (PR-C), `qa-anclas-check` (PR-C), `qa-consumo-check`/`qa-direccionamiento-check`/`qa-docs-check` (PR-B).
+
+### 3.4 bis — Lo que PR-A añadió a la receta (2026-08-18)
+
+Cuatro cosas que el checklist no decía y que PR-B y PR-C van a necesitar:
+
+1. **Los talones van FUERA del grupo `(app)`.** Dentro, el `layout.tsx` corre `requireConsoleAccess("<vieja>")`
+   y quien llegue por un marcador viejo se come un «no tiene acceso» sobre una URL que ya no existe. Fuera del
+   grupo redirigen primero y deja que la consola destino haga de portero. Y **un `[[...resto]]` opcional por
+   módulo basta**: cubre la ruta y todas sus sub-rutas con UN archivo, con `destinoDe()` reconstruyendo la cola
+   (verificado en servidor real: `/bcp/arena/abc123` → 308 → `/ocp/arena/abc123`).
+2. **Un `git mv` de módulo deja imports relativos rotos que `tsc` NO ve**: los `*.module.css` no se
+   type-chequean, así que un `../shared.module.css` que ya no existe pasa `tsc --noEmit` limpio y muere en el
+   build. Tras cada `git mv`, buscar imports relativos que crucen el límite del módulo movido.
+3. **`shared.module.css` salió de `bcp/(app)/` a `src/components/panel/`** (62 imports reapuntados). No era un
+   activo del BCP: lo importan las tres consolas y `src/components/`. Dejarlo en una consola que se estaba
+   vaciando era una señal falsa de propiedad. Si PR-B o PR-C encuentran otro archivo compartido aparcado
+   dentro de una consola, mismo trato.
+4. **`adminLockActions.ts` se QUEDA en el BCP** aunque su llamador (`arena/[sessionId]/SessionFunnel.tsx`) se
+   fuera al OCP: es la cerradura de administrador, y PR-B le trae Usuarios al lado. Import cruzado por alias,
+   que es lo que ya hacían 29 archivos.
 
 ### 3.5 The guardian: `scripts/qa-rutas-consolas.mjs` (new; `qa-nav-check` stays as is)
 
@@ -686,7 +725,7 @@ the rule is one bump per deployed batch.
 | **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
 | — | *(unplanned)* encoding fix of the 14 public portadas + `qa-encoding-check` | ✅ **V4.22, DONE** |
 | **Step (i)** | Freeze names (§2) | ✅ **V4.23, DONE** |
-| **Step (ii)** | Route moves, one console per PR (§3): PR-A · PR-B · PR-C | **V4.24** ← next · V4.25 · V4.26 → **Version Wrap V37** |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B · PR-C | ✅ **V4.24** · **V4.25** ← next · V4.26 → **Version Wrap V37** |
 | **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.27 – V4.31 |
 | **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.32+ |
 | **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.33+ → **owner declares V5.0** → Version Wrap V38 |

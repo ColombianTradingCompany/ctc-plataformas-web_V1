@@ -32,7 +32,7 @@ const PILLAR_CONSOLE: Record<string, PanelConsoleKey> = {
 // revalidaba solo /ocp/leads y los otros tres tableros quedaban con caché vieja.
 const PILLAR_BOARD_PATH: Record<string, string> = {
   general: "/ocp/leads",
-  cocreate: "/bcp/caas",
+  cocreate: "/ocp/crm/caas",
   tech: "/ecp/ctc-tech",
   varietales: "/ecp/varietales",
 };

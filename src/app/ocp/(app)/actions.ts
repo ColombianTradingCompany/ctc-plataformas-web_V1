@@ -1,0 +1,967 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
+import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
+import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
+import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
+import { lotEudrGate } from "@/lib/arena/eudrGate";
+import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./lotes/evaChecklist";
+import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+
+type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
+
+// Rebuilds a per-key supporting-file map for an EUDR checkbox group. Keeps only
+// currently-checked keys; for each, records a newly-uploaded attachment or
+// carries the existing entry over. The file itself never travels through this
+// server action: FincaEudrEditor uploads it straight from the browser to
+// Supabase Storage (Next actions cap bodies at 1 MB; Vercel at ~4.5 MB -- raw
+// 5 MB files through here silently never arrived) and submits only
+// "{group}_asset_{key}" / "{group}_name_{key}".
+function collectKeyedAttachments(
+  formData: FormData,
+  group: "evidence" | "sustainability",
+  checkedKeys: string[],
+  existing: KeyedFiles
+): KeyedFiles {
+  const out: KeyedFiles = {};
+  for (const key of checkedKeys) {
+    const assetId = textOrNull(formData, `${group}_asset_${key}`);
+    const fileName = textOrNull(formData, `${group}_name_${key}`);
+    if (assetId && fileName) out[key] = { assetId, fileName };
+    else if (existing[key]) out[key] = existing[key];
+  }
+  return out;
+}
+
+async function requireAdmin() {
+  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
+  // so suspending a collaborator revokes Server Actions instantly.
+  return requireActiveAdmin();
+}
+
+// Devuelve resultado en vez de lanzar: "falta el polígono" y "EUDR incompleta"
+// son rechazos alcanzables desde el botón Aprobar (la UI lo deshabilita, pero el
+// formulario igual se envía si el estado quedó viejo), y un throw en una form
+// action revienta la página (ver ActionForm.tsx).
+export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: finca } = await service
+    .from("fincas")
+    .select(
+      "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, requires_eudr_polygon, eudr_polygon_geojson, status"
+    )
+    .eq("id", fincaId)
+    .single();
+
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
+
+  // F1 (2026-07-29): la geolocalización del Art. 9 se juzga POR PARCELAS — el
+  // átomo probatorio es el cafetal, no la finca. Cada parcela necesita su punto,
+  // y polígono propio cuando supera 4 ha (un polígono no puede cubrir varias).
+  const { data: parcelaRows } = await service
+    .from("finca_parcelas")
+    .select("name, area_ha, lat, lng, polygon_geojson")
+    .eq("finca_id", fincaId);
+  const parcelas = (parcelaRows ?? []).map((p) => ({
+    areaHa: p.area_ha != null ? Number(p.area_ha) : null,
+    hasPoint: p.lat != null && p.lng != null,
+    hasPolygon: Array.isArray(p.polygon_geojson) && p.polygon_geojson.length >= 3,
+  }));
+  if (!parcelas.length) {
+    return { ok: false, error: "La finca no tiene parcelas registradas: marque al menos un cafetal en el mapa antes de aprobar." };
+  }
+  if (!parcelasGeoComplete(parcelas)) {
+    const faltantes = (parcelaRows ?? [])
+      .filter((p, i) => !parcelaGeoOk(parcelas[i]))
+      .map((p) => p.name)
+      .join(", ");
+    return {
+      ok: false,
+      error: `Parcelas sin geolocalizar según el umbral de 4 ha: ${faltantes}. Cada cafetal necesita su punto, y polígono propio si supera 4 ha.`,
+    };
+  }
+  // Solo se aprueban fincas cuya debida diligencia EUDR está completa ("Apta").
+  // Aprobar una finca incompleta producía el estado contradictorio de una finca
+  // "aprobada" que sigue mostrando el distintivo EUDR "Pendiente"
+  // (fincaEudrStatus) -- exactamente el bug reportado con La Ceiba. Desde
+  // 2026-07-24 el gate también exige el cuestionario de riesgo (indicios /
+  // documentos) y que el riesgo determinado sea insignificante.
+  const eudrFields: FincaEudrFields = {
+    name: finca.name,
+    ha: finca.hectares != null ? String(finca.hectares) : "—",
+    lat: finca.eudr_lat != null ? String(finca.eudr_lat) : "",
+    lng: finca.eudr_lng != null ? String(finca.eudr_lng) : "",
+    vereda: finca.vereda || "—",
+    mun: finca.municipio || "—",
+    depto: finca.departamento || "—",
+    eudrDeforestationFree: finca.eudr_deforestation_free,
+    eudrLegalProduction: finca.eudr_legal_production,
+    eudrTenure: (finca.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
+    eudrIllegalityIndicators: finca.eudr_illegality_indicators,
+    eudrDocsAvailable: finca.eudr_docs_available,
+    eudrMitigationEffective: finca.eudr_mitigation_effective,
+  };
+  if (fincaEudrStatus(eudrFields, parcelas).code !== "apta") {
+    return {
+      ok: false,
+      error: "La debida diligencia EUDR de esta finca todavía está incompleta; complétela antes de aprobar.",
+    };
+  }
+
+  await service.from("fincas").update({ status: "approved" }).eq("id", fincaId);
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: fincaId,
+    action: "approved",
+    previous_status: finca.status,
+    new_status: "approved",
+    performed_by: adminId,
+  });
+
+  revalidatePath("/ocp/fincas");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+// Release (or un-release) the EUDR certification dossier to the producer. Until
+// this is on, the producer's certificate page stays gated -- sharing is an
+// explicit CTC step, not always-available.
+export async function setFincaCertShared(
+  fincaId: string,
+  shared: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const { data: finca } = await service.from("fincas").select("name, producer_id, status").eq("id", fincaId).single();
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
+  if (shared && finca.status !== "approved") {
+    return { ok: false, error: "Apruebe la finca antes de compartir su certificación." };
+  }
+
+  await service.from("fincas").update({ eudr_cert_shared: shared }).eq("id", fincaId);
+  if (shared) {
+    // Let the producer know the certificate is available, in their feed.
+    await service.from("producer_comm_log").insert({
+      producer_id: finca.producer_id,
+      context_label: `Finca ${finca.name}`,
+      finca_id: fincaId,
+      note: "Su Certificación EUDR está disponible para descargar en el panel de la finca.",
+      created_by: adminId,
+    });
+  }
+  revalidatePath("/ocp/fincas");
+  return { ok: true };
+}
+
+// F1 (2026-07-29): verificación de un certificado de finca. La marca es
+// determinación de CTC (guard: el productor no puede acuñarla, y editar el
+// contenido de un cert verificado la resetea solo). Contraste manual contra el
+// registro público del esquema (certRegistry) — no hay API que consultar.
+export async function setFincaCertVerified(
+  certId: string,
+  verified: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const { data: cert } = await service
+    .from("finca_certificates")
+    .select("id, finca_id, scheme, cert_number, valid_from, valid_to")
+    .eq("id", certId)
+    .single();
+  if (!cert) return { ok: false, error: "Certificado no encontrado." };
+  if (verified && (!cert.valid_from || !cert.valid_to)) {
+    // Sin vigencia no hay nada que verificar: la credencial no puede respaldar
+    // claims (la prueba temporal de F2 necesita las fechas).
+    return { ok: false, error: "El certificado no tiene vigencia registrada — pida al productor las fechas antes de verificarlo." };
+  }
+  await service
+    .from("finca_certificates")
+    .update({ verified_by_ctc: verified, verified_at: verified ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    .eq("id", certId);
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: cert.finca_id,
+    action: verified ? "cert_verified" : "cert_unverified",
+    performed_by: adminId,
+    notes: `${cert.scheme}${cert.cert_number ? ` · N.º ${cert.cert_number}` : ""}`,
+  });
+  revalidatePath("/ocp/fincas");
+  return { ok: true };
+}
+
+// ── F3 · Registrar la DDS del lote (docs/EUDR_RESTRUCTURE_PLAN.md) ──────────
+// La DDS no es un certificado: CTC la presenta en el Information System de la
+// UE y aquí solo se REGISTRA su artefacto (referencia + código de verificación)
+// junto con el snapshot congelado del Art. 12 (5 años): parcelas con geometría,
+// claims derivados, arquetipo, cosecha, custodia y riesgo país fechado.
+// El snapshot es INMUTABLE: si el lote ya tiene uno, esta acción solo corrige
+// la referencia/código — nunca recalcula lo declarado.
+export async function registerLotDds(
+  lotId: string,
+  reference: string,
+  verificationCode: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+  const ref = reference.trim();
+  const code = verificationCode.trim();
+  if (!ref) return { ok: false, error: "Falta la referencia de la DDS (la genera el Information System al presentar)." };
+
+  const { data: lot } = await service
+    .from("lots")
+    .select("id, name, stage, harvest_from, harvest_to, dds_snapshot, finca_id")
+    .eq("id", lotId)
+    .single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  if (lot.dds_snapshot) {
+    // Corrección de un typo en la referencia — el registro congelado no se toca.
+    await service
+      .from("lots")
+      .update({ dds_reference: ref, dds_verification_code: code || null })
+      .eq("id", lotId);
+    await service.from("audit_log").insert({
+      entity_type: "lot",
+      entity_id: lotId,
+      action: "dds_corrected",
+      performed_by: adminId,
+      notes: `Referencia corregida a ${ref} (snapshot intacto).`,
+    });
+    revalidatePath("/ocp/lotes");
+    return { ok: true };
+  }
+
+  const gate = await lotEudrGate(service, lotId);
+  if (!gate.ready) {
+    return { ok: false, error: `El Sello EUDR del lote no está listo (${gate.label}) — no se puede registrar una DDS sobre un lote sin debida diligencia resuelta.` };
+  }
+  if (!lot.harvest_from || !lot.harvest_to) {
+    return { ok: false, error: "El lote no tiene ventana de recolección registrada (A2 de la Ficha) — la DDS exige la fecha o rango de producción." };
+  }
+
+  // Origen por aportes (fallback a la finca primaria para lotes pre-F2).
+  type CJoin = { weight_kg: number | string | null; fincas: { id: string; name: string; municipio: string | null; departamento: string | null } | { id: string; name: string; municipio: string | null; departamento: string | null }[] | null };
+  const { data: contribRaw } = await service
+    .from("lot_contributions")
+    .select("weight_kg, fincas(id, name, municipio, departamento)")
+    .eq("lot_id", lotId);
+  type FincaMini = { id: string; name: string; municipio: string | null; departamento: string | null };
+  let joins: { f: FincaMini; kg: number | null }[] = (((contribRaw as CJoin[] | null) ?? []))
+    .map((r) => ({ f: (Array.isArray(r.fincas) ? r.fincas[0] : r.fincas) as FincaMini | null, kg: r.weight_kg != null ? Number(r.weight_kg) : null }))
+    .filter((x): x is { f: FincaMini; kg: number | null } => !!x.f);
+  if (!joins.length && lot.finca_id) {
+    const { data: f } = await service.from("fincas").select("id, name, municipio, departamento").eq("id", lot.finca_id).single();
+    if (f) joins = [{ f, kg: null }];
+  }
+  if (!joins.length) return { ok: false, error: "El lote no tiene fincas de origen registradas." };
+
+  const fincaIds = joins.map((x) => x.f.id);
+  const [{ data: parcelaRows }, { data: certRows }] = await Promise.all([
+    service.from("finca_parcelas").select("finca_id, name, area_ha, lat, lng, polygon_geojson, position").in("finca_id", fincaIds).order("position"),
+    service.from("finca_certificates").select("finca_id, scheme, cert_number, valid_from, valid_to, verified_by_ctc").in("finca_id", fincaIds),
+  ]);
+
+  const contribs: ContributionInput[] = joins.map((x) => ({
+    fincaId: x.f.id,
+    fincaName: x.f.name,
+    weightKg: x.kg,
+    municipio: x.f.municipio ?? "",
+    departamento: x.f.departamento ?? "",
+    pais: "Colombia",
+  }));
+  const claims = deriveClaims(
+    contribs,
+    ((certRows ?? []) as { finca_id: string; scheme: string; valid_from: string | null; valid_to: string | null; verified_by_ctc: boolean }[]).map((c) => ({
+      fincaId: c.finca_id, scheme: c.scheme, validFrom: c.valid_from, validTo: c.valid_to, verifiedByCtc: c.verified_by_ctc,
+    })),
+    { from: lot.harvest_from, to: lot.harvest_to }
+  );
+  const filedAt = new Date().toISOString();
+  const snapshot = {
+    version: 1,
+    filed_at: filedAt,
+    archetype: deriveArchetype(contribs),
+    harvest: { from: lot.harvest_from, to: lot.harvest_to },
+    custody: CUSTODY_MODEL,
+    // El nivel de riesgo país TAL COMO ESTABA al presentar (fechado): si el
+    // benchmarking cambia, este lote se explica solo en una auditoría a 5 años.
+    country_risk: { pais: "Colombia", tier: countryRiskFor("Colombia"), determined_at: filedAt },
+    contributions: joins.map((x) => ({
+      finca_id: x.f.id,
+      finca: x.f.name,
+      weight_kg: x.kg,
+      municipio: x.f.municipio,
+      departamento: x.f.departamento,
+      parcelas: ((parcelaRows ?? []) as { finca_id: string; name: string; area_ha: number | string | null; lat: number | string | null; lng: number | string | null; polygon_geojson: unknown; position: number }[])
+        .filter((p) => p.finca_id === x.f.id)
+        .map((p) => ({ name: p.name, area_ha: p.area_ha, lat: p.lat, lng: p.lng, polygon: p.polygon_geojson })),
+    })),
+    claims,
+  };
+
+  await service
+    .from("lots")
+    .update({ dds_reference: ref, dds_verification_code: code || null, dds_filed_at: filedAt, dds_snapshot: snapshot })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "dds_registered",
+    performed_by: adminId,
+    notes: `DDS ${ref} · ${joins.length} finca(s), ${snapshot.contributions.reduce((a, c) => a + c.parcelas.length, 0)} parcela(s).`,
+  });
+  revalidatePath("/ocp/lotes");
+  return { ok: true };
+}
+
+export async function createLot(formData: FormData) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const fincaId = String(formData.get("finca_id"));
+  const { data: finca } = await service.from("fincas").select("producer_id").eq("id", fincaId).single();
+  if (!finca) throw new Error("Finca no encontrada.");
+
+  const { data: lot, error } = await service
+    .from("lots")
+    .insert({
+      finca_id: fincaId,
+      producer_id: finca.producer_id,
+      name: String(formData.get("name")),
+      source: "bcp_manual_entry",
+      ficha_variedad: String(formData.get("ficha_variedad") || "") || null,
+      ficha_proceso: String(formData.get("ficha_proceso") || "") || null,
+      ficha_altitud_m: formData.get("ficha_altitud_m") ? Number(formData.get("ficha_altitud_m")) : null,
+      ficha_notas_cata: String(formData.get("ficha_notas_cata") || "") || null,
+      ficha_peso_muestra_kg: formData.get("ficha_peso_muestra_kg") ? Number(formData.get("ficha_peso_muestra_kg")) : null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !lot) throw new Error("No se pudo crear el lote.");
+
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lot.id,
+    action: "created",
+    new_status: "borrador",
+    performed_by: adminId,
+    notes: "Creado por BCP en nombre del productor (source=bcp_manual_entry)",
+  });
+
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+}
+
+// The 2kg-sample handoff is a deliberate two-sided confirmation, not a side effect
+// of picking a stage from the dropdown: the producer confirms shipment (Kaffetal
+// Regal sets lots.sample_shipped_at), and only then can BCP confirm receipt here --
+// which is what actually advances the lot into the Arena queue (fila_arena).
+// Devuelve resultado en vez de lanzar: un throw en una Server Action invocada
+// desde un <form> revienta la página entera con el error boundary de Next — fue
+// el "crash" reportado al confirmar con la compuerta sin cumplir. Los rechazos
+// son estados de negocio esperables y se muestran inline (ConfirmReceiptButton).
+// Orden del intake (decidido 2026-07-16): EUDR resuelto → inscripción saldada →
+// muestra recibida → recién ahí la fila de la Arena.
+export async function confirmSampleReceived(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage, sample_shipped_at, source").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  // 1. EUDR primero: sin la debida diligencia resuelta no hay pago ni recibo.
+  const eudr = await lotEudrGate(service, lotId);
+  if (!eudr.ready) {
+    return { ok: false, error: `La debida diligencia EUDR del lote sigue "${eudr.label}" — resuélvala (finca apta + nivel de riesgo determinado) antes de confirmar pagos o muestras.` };
+  }
+  // 2. Luego la inscripción de Arena (COP 80.000, descontable/eximible).
+  if (!(await lotInscriptionSettled(service, lotId))) {
+    return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /ocp/club." };
+  }
+  // 3. Y la muestra tiene que haber salido de la finca.
+  if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {
+    return { ok: false, error: "El productor todavía no ha confirmado el envío de la muestra." };
+  }
+
+  await service
+    .from("lots")
+    .update({ sample_2kg_confirmed_at: new Date().toISOString(), stage: "fila_arena" })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "sample_received",
+    previous_status: lot.stage,
+    new_status: "fila_arena",
+    performed_by: adminId,
+  });
+
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+// ── EVA: el veredicto documental (2026-07-17) ───────────────────────────────
+// Tras FT/FT2/EUDR/VID (todo gratis), CTC revisa la documentación y declara el
+// lote Apto o No Apto. Apto es la puerta de entrada al tramo pagado (postular →
+// pagar → sondeo → Arena); resolver el EUDR del lote es PARTE de esta revisión,
+// por eso markLotApto exige lotEudrGate listo. Mismo patrón resultado-no-throw
+// que confirmSampleReceived.
+
+export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id, eva_checklist").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa") {
+    return { ok: false, error: "Solo un lote con la ficha completa (en evaluación) puede declararse Apto." };
+  }
+  // La EVA es una checklist explícita (2026-07-18): cada bloque de la Ficha debe
+  // quedar marcado como revisado antes del veredicto — la UI deshabilita el botón,
+  // pero la regla vive aquí.
+  const missing = missingEvaItems(lot.eva_checklist as EvaChecklist);
+  if (missing.length) {
+    return { ok: false, error: `Faltan bloques por revisar en la checklist EVA: ${missing.join(" · ")}.` };
+  }
+  // Modelo Visa/Sello (2026-07-24): el Sello del lote se hereda de la Visa EUDR
+  // de su(s) finca(s) de origen — la compuerta ya no exige determinación propia
+  // del lote, solo que la finca tenga su Visa vigente.
+  const eudr = await lotEudrGate(service, lotId);
+  if (!eudr.ready) {
+    return { ok: false, error: `El Sello EUDR del lote sigue "${eudr.label}" — otorgue la Visa EUDR de la finca de origen (en Fincas) antes del veredicto.` };
+  }
+
+  await service
+    .from("lots")
+    .update({ stage: "apto", eva_verdict_at: new Date().toISOString(), eva_no_apto_reason: null })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eva_apto",
+    previous_status: lot.stage,
+    new_status: "apto",
+    performed_by: adminId,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: "¡Su lote fue declarado APTO tras la evaluación documental! Ya puede postularlo a la Kaffetal Regal Arena desde su panel.",
+    created_by: adminId,
+  });
+
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+// Marca/desmarca un bloque de la checklist EVA. Merge sobre el jsonb existente
+// (no reemplaza el objeto entero) para que dos revisores no se pisen entre sí.
+export async function setEvaChecklistItem(
+  lotId: string,
+  key: string,
+  checked: boolean
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin();
+  const service = createServiceRoleClient();
+
+  if (!isEvaChecklistKey(key)) return { ok: false, error: "Bloque de checklist desconocido." };
+  const { data: lot } = await service.from("lots").select("stage, eva_checklist").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa") {
+    return { ok: false, error: "La checklist EVA solo aplica a un lote en evaluación (ficha completa)." };
+  }
+
+  const next = { ...((lot.eva_checklist as EvaChecklist) ?? {}), [key]: checked };
+  const { error } = await service.from("lots").update({ eva_checklist: next }).eq("id", lotId);
+  if (error) return { ok: false, error: "No se pudo guardar la checklist." };
+
+  revalidatePath("/ocp/lotes");
+  return { ok: true };
+}
+
+/**
+ * Verificación individual de un certificado A3/A4 (2026-07-20): BCP contrasta
+ * el certificado contra su registro público y lo marca Confirmado / No
+ * confirmado. El certificado permanece en la lista con su etiqueta — nunca se
+ * borra — y el veredicto puede corregirse en cualquier momento. Se persiste en
+ * lots.cert_verifications (jsonb {certKey: {status, at, by}}), columna
+ * protegida del productor por guard_lot_protected_columns.
+ */
+export async function setCertVerification(
+  lotId: string,
+  certKey: string,
+  status: "confirmado" | "no_confirmado" | null
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("id, cert_verifications").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+
+  const current = { ...((lot.cert_verifications as Record<string, unknown>) ?? {}) };
+  if (status === null) delete current[certKey];
+  else current[certKey] = { status, at: new Date().toISOString(), by: adminId };
+
+  const { error } = await service.from("lots").update({ cert_verifications: current }).eq("id", lotId);
+  if (error) return { ok: false, error: "No se pudo guardar la verificación." };
+
+  revalidatePath("/ocp/lotes");
+  return { ok: true };
+}
+
+export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const cleanReason = reason.trim();
+  if (!cleanReason) return { ok: false, error: "Escriba la razón del No Apto — el productor la verá en su panel." };
+
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "ficha_completa" && lot.stage !== "apto") {
+    return { ok: false, error: "Solo un lote en evaluación (o Apto sin postular) puede declararse No Apto." };
+  }
+  if (lot.stage === "apto") {
+    // Un Apto ya postulado está en el tramo pagado — no se revierte por aquí.
+    const { data: ins } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
+    if (ins) return { ok: false, error: "Este lote ya fue postulado a la Arena — gestione su retiro desde Nominados, no desde el veredicto EVA." };
+  }
+
+  await service
+    .from("lots")
+    .update({ stage: "no_apto", eva_verdict_at: new Date().toISOString(), eva_no_apto_reason: cleanReason })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eva_no_apto",
+    previous_status: lot.stage,
+    new_status: "no_apto",
+    performed_by: adminId,
+    notes: cleanReason,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: `Su lote fue declarado No Apto en la evaluación documental. Motivo: ${cleanReason}. Puede escribirnos por este medio — si se corrige lo señalado, CTC puede reabrir la evaluación.`,
+    created_by: adminId,
+  });
+
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+export async function revertNoApto(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "no_apto") return { ok: false, error: "Este lote no está en No Apto." };
+
+  await service
+    .from("lots")
+    .update({ stage: "ficha_completa", eva_verdict_at: null, eva_no_apto_reason: null })
+    .eq("id", lotId);
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eva_reopened",
+    previous_status: "no_apto",
+    new_status: "ficha_completa",
+    performed_by: adminId,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: "CTC reabrió la evaluación documental de su lote — está nuevamente en revisión.",
+    created_by: adminId,
+  });
+
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+// Tri-state yes/no/unset fields render as a <select> with "si"/"no"/"" values
+// in the BCP "aided by BCP" forms (see fincas/page.tsx, lotes/page.tsx) --
+// this is the single place that string turns into the boolean|null the
+// eudr_* columns and src/lib/eudr.ts expect.
+function triState(formData: FormData, key: string): boolean | null {
+  const v = formData.get(key);
+  if (v === "si") return true;
+  if (v === "no") return false;
+  return null;
+}
+
+function textOrNull(formData: FormData, key: string): string | null {
+  const v = String(formData.get(key) ?? "").trim();
+  return v || null;
+}
+
+// BCP filling in a finca's EUDR fields on the producer's behalf -- same spirit as
+// createLot's source: "bcp_manual_entry", but for the due-diligence dossier rather
+// than a whole new lot. Unlike the producer's own edit path (RLS-gated to
+// status = 'pending_review'), this uses the service-role client so BCP can still
+// help complete a finca even if it's already been approved.
+const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
+  hectares: "Área cultivada (ha)",
+  eudr_lat: "Latitud",
+  eudr_lng: "Longitud",
+  eudr_planting_date: "Fecha de siembra",
+  eudr_production_system: "Sistema productivo",
+  eudr_deforestation_free: "Libre de deforestación",
+  eudr_legal_production: "Producción legal",
+  eudr_evidence_types: "Evidencia disponible",
+  eudr_evidence_notes: "Notas de evidencia",
+  eudr_legal_areas: "Áreas legales verificadas",
+  eudr_tenure: "Tenencia de la tierra",
+  eudr_sustainability_tags: "Sostenibilidad",
+  eudr_sustainability_notes: "Notas de sostenibilidad",
+  eudr_google_earth_url: "URL de Google Earth",
+  eudr_custody_stages: "Cadena de custodia",
+  eudr_custody_method: "Método de separación",
+  eudr_custody_notes: "Notas de custodia",
+  eudr_product_risk_factors: "Riesgo del producto",
+  eudr_illegality_indicators: "Indicios de ilegalidad",
+  eudr_docs_available: "Documentos disponibles",
+  eudr_cert_scheme: "Esquemas de certificación",
+  eudr_mitigation_actions: "Acciones de mitigación",
+  eudr_mitigation_effective: "Mitigación efectiva",
+  eudr_mitigation_responsible: "Responsable de mitigación",
+};
+
+function valuesDiffer(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return JSON.stringify([...((a as string[]) ?? [])].sort()) !== JSON.stringify([...((b as string[]) ?? [])].sort());
+  }
+  return (a ?? null) !== (b ?? null);
+}
+
+export async function updateFincaEudr(fincaId: string, formData: FormData) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: before } = await service
+    .from("fincas")
+    .select(
+      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective"
+    )
+    .eq("id", fincaId)
+    .single();
+  if (!before) throw new Error("Finca no encontrada.");
+
+  const evidenceTypes = formData.getAll("eudr_evidence_types").map(String);
+  const sustainabilityTags = formData.getAll("eudr_sustainability_tags").map(String);
+  // Rebuild the per-key supporting-file maps: keep only currently-checked keys,
+  // record any newly-uploaded attachment, otherwise carry the existing one over.
+  const evidenceFiles = collectKeyedAttachments(formData, "evidence", evidenceTypes, (before.eudr_evidence_files as KeyedFiles) ?? {});
+  const sustainabilityFiles = collectKeyedAttachments(formData, "sustainability", sustainabilityTags, (before.eudr_sustainability_files as KeyedFiles) ?? {});
+
+  // Cuestionario de riesgo (trasladado del lote a la finca 2026-07-24). El
+  // "Responsable" lleva el mismo sello nombre · fecha que el lote: se estampa la
+  // fecha al enviar, y se conserva la original si el nombre no cambió.
+  const fincaResponsableName = textOrNull(formData, "eudr_mitigation_responsible");
+  const fincaPrevResponsible = (before.eudr_mitigation_responsible as string | null) ?? null;
+  const fincaPrevName = fincaPrevResponsible?.split(" · ")[0] ?? null;
+  const eudr_mitigation_responsible = !fincaResponsableName
+    ? null
+    : fincaResponsableName === fincaPrevName
+      ? fincaPrevResponsible
+      : `${fincaResponsableName} · ${new Date().toLocaleDateString("es-CO")}`;
+
+  const patch = {
+    // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
+    // productor -- es requisito para que la finca llegue a "Apta". "" -> null.
+    hectares: formData.get("hectares") !== null && String(formData.get("hectares")).trim() !== "" ? Number(formData.get("hectares")) : null,
+    eudr_lat: formData.get("eudr_lat") ? Number(formData.get("eudr_lat")) : null,
+    eudr_lng: formData.get("eudr_lng") ? Number(formData.get("eudr_lng")) : null,
+    eudr_planting_date: textOrNull(formData, "eudr_planting_date"),
+    eudr_production_system: textOrNull(formData, "eudr_production_system"),
+    eudr_deforestation_free: triState(formData, "eudr_deforestation_free"),
+    eudr_legal_production: triState(formData, "eudr_legal_production"),
+    eudr_evidence_types: evidenceTypes,
+    eudr_evidence_notes: textOrNull(formData, "eudr_evidence_notes"),
+    eudr_evidence_files: evidenceFiles,
+    eudr_legal_areas: formData.getAll("eudr_legal_areas").map(String),
+    eudr_tenure: textOrNull(formData, "eudr_tenure"),
+    // eudr_legal_docs_asset_id/filename are NOT set here -- that's the
+    // producer's own PDF upload (uploadFincaLegalDoc in KaffetalExperience.tsx),
+    // not something BCP fills in on their behalf.
+    eudr_sustainability_tags: sustainabilityTags,
+    eudr_sustainability_notes: textOrNull(formData, "eudr_sustainability_notes"),
+    eudr_sustainability_files: sustainabilityFiles,
+    // Placeholder field for a future Google Earth Engine integration -- just
+    // stored and linked for now, nothing reads it yet.
+    eudr_google_earth_url: textOrNull(formData, "eudr_google_earth_url"),
+    // Cuestionario de riesgo. chain_complexity / product_risk se DERIVAN al leer
+    // (deriveChainComplexity / deriveProductRisk sobre estos campos) y no se
+    // almacenan en la finca; el nivel de riesgo se deriva de indicios+documentos.
+    eudr_custody_stages: formData.getAll("eudr_custody_stages").map(String),
+    eudr_custody_method: textOrNull(formData, "eudr_custody_method"),
+    eudr_custody_notes: textOrNull(formData, "eudr_custody_method") === "custom" ? textOrNull(formData, "eudr_custody_notes") : null,
+    eudr_product_risk_factors: formData.getAll("eudr_product_risk_factors").map(String),
+    eudr_illegality_indicators: triState(formData, "eudr_illegality_indicators"),
+    eudr_docs_available: triState(formData, "eudr_docs_available"),
+    eudr_cert_scheme: textOrNull(formData, "eudr_cert_scheme"),
+    eudr_mitigation_actions: textOrNull(formData, "eudr_mitigation_actions"),
+    eudr_mitigation_effective: triState(formData, "eudr_mitigation_effective"),
+    eudr_mitigation_responsible,
+  };
+
+  const { error } = await service.from("fincas").update(patch).eq("id", fincaId);
+  if (error) throw new Error("No se pudo guardar la información EUDR de la finca.");
+
+  const changedFields = Object.keys(patch).filter((key) =>
+    valuesDiffer((before as Record<string, unknown>)[key], (patch as Record<string, unknown>)[key])
+  );
+
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: fincaId,
+    action: "eudr_updated_by_bcp",
+    performed_by: adminId,
+    notes: "Campos EUDR completados/editados por BCP en nombre del productor",
+  });
+
+  // Auto-log every EUDR edit BCP makes on a producer's behalf so there's
+  // always a record of what changed and when -- visible to the producer
+  // themselves under "Retroalimentación y ayuda".
+  if (changedFields.length > 0) {
+    const summary = changedFields.map((k) => FINCA_EUDR_FIELD_LABEL[k] ?? k).join(", ");
+    await service.from("producer_comm_log").insert({
+      producer_id: before.producer_id,
+      context_label: `Finca ${before.name}`,
+      finca_id: fincaId,
+      note: `CTC actualizó la información EUDR: ${summary}.`,
+      created_by: adminId,
+    });
+  }
+
+  revalidatePath("/ocp/fincas");
+  revalidatePath("/ocp/productores");
+  revalidatePath("/bcp");
+}
+
+// Same "aided by BCP" pattern as updateFincaEudr, for the lot-level custody
+// chain / risk assessment / mitigation fields.
+// ⚠ LEGADO (2026-07-24, modelo Visa/Sello): la debida diligencia vive en la
+// finca y NINGUNA UI llama esto ya — se conserva solo para correcciones de
+// datos históricos por consola.
+export async function updateLotEudr(lotId: string, formData: FormData) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  // País lo declara BCP; la clasificación de riesgo se deriva de él. Complejidad,
+  // riesgo de producto y esquemas de certificación también son derivados (mismas
+  // funciones puras que el pane del productor) y se persisten ya calculados.
+  const eudr_country = textOrNull(formData, "eudr_country");
+  const eudr_country_risk = countryRiskFor(eudr_country);
+  const eudr_custody_stages = formData.getAll("eudr_custody_stages").map(String);
+  const eudr_product_risk_factors = formData.getAll("eudr_product_risk_factors").map(String);
+  const eudr_illegality_indicators = triState(formData, "eudr_illegality_indicators");
+  const eudr_docs_available = triState(formData, "eudr_docs_available");
+  const eudr_mitigation_effective = triState(formData, "eudr_mitigation_effective");
+
+  // Cert schemes come from A3/A4 in the lot's datasheet, not from this form.
+  const { data: lotRow } = await service.from("lots").select("datasheet, eudr_mitigation_responsible").eq("id", lotId).single();
+  const eudr_cert_scheme = deriveCertSchemes(lotRow?.datasheet ?? {}).join(", ") || null;
+
+  // "Nivel de riesgo determinado" is BCP's explicit call (Art. 10-11), aided
+  // by the derived suggestion shown in the form -- not auto-written anymore.
+  const riskRaw = textOrNull(formData, "eudr_risk_level");
+  const eudr_risk_level = riskRaw === "insignificante" || riskRaw === "no_insignificante" ? riskRaw : null;
+
+  // "Responsable": BCP only types the name; the date is stamped here at
+  // submission time. If the name didn't change, the original stamp is kept.
+  const responsableName = textOrNull(formData, "eudr_mitigation_responsible");
+  const prevResponsible = (lotRow?.eudr_mitigation_responsible as string | null) ?? null;
+  const prevName = prevResponsible?.split(" · ")[0] ?? null;
+  const eudr_mitigation_responsible = !responsableName
+    ? null
+    : responsableName === prevName
+      ? prevResponsible
+      : `${responsableName} · ${new Date().toLocaleDateString("es-CO")}`;
+
+  const patch = {
+    eudr_custody_stages,
+    eudr_custody_method: textOrNull(formData, "eudr_custody_method"),
+    eudr_custody_notes: textOrNull(formData, "eudr_custody_notes"),
+    eudr_country,
+    eudr_country_risk,
+    eudr_chain_complexity: deriveChainComplexity(eudr_custody_stages) || null,
+    eudr_product_risk: deriveProductRisk(eudr_product_risk_factors),
+    eudr_product_risk_factors,
+    eudr_illegality_indicators,
+    eudr_docs_available,
+    eudr_cert_scheme,
+    eudr_risk_level,
+    // eudr_mitigation_actions is NOT set here: the acciones de mitigación are
+    // the producer's declaration (Ficha A5); BCP reads them and rules on
+    // effectiveness + risk level.
+    eudr_mitigation_effective,
+    eudr_mitigation_responsible,
+  };
+
+  const { error } = await service.from("lots").update(patch).eq("id", lotId);
+  if (error) throw new Error("No se pudo guardar la información EUDR del lote.");
+
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "eudr_updated_by_bcp",
+    performed_by: adminId,
+    notes: "Campos EUDR completados/editados por BCP en nombre del productor",
+  });
+
+  revalidatePath("/ocp/lotes");
+}
+
+// ── Limpieza de abandonados (V2.0, pedido del owner) ─────────────────────────
+// BCP puede ELIMINAR lotes y fincas "dejados atrás": sin actividad por más de
+// 10 días. Interpretación documentada (regla del owner: "no activity >10 days"):
+//   · LOTE abandonado  = stage='borrador' (nunca completó su ficha) y
+//     lots.updated_at hace más de 10 días. Un lote más allá de borrador ya
+//     entró al proceso — no se considera abandonado por esta vía.
+//   · FINCA abandonada = status='pending_review', SIN lotes más allá de
+//     borrador, y sin actividad >10 días. fincas no tiene updated_at, así que
+//     "última actividad" = MAX(creación de la finca, updated_at de sus lotes,
+//     comm log de la finca). Eliminarla arrastra sus lotes borrador (FK CASCADE).
+// Ambas dejan rastro en audit_log y avisan al productor por su feed (el comm se
+// inserta DESPUÉS del delete, sin FK al elemento borrado — sobrevive limpio).
+
+const ABANDONED_DAYS = 10;
+
+export async function deleteAbandonedLot(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service
+    .from("lots")
+    .select("id, name, stage, producer_id, updated_at")
+    .eq("id", lotId)
+    .maybeSingle();
+  if (!lot) return { ok: false, error: "Lote no encontrado." };
+  if (lot.stage !== "borrador") {
+    return { ok: false, error: "Solo un lote en borrador se considera abandonado — este ya entró al proceso." };
+  }
+  const idleDays = (Date.now() - Date.parse(lot.updated_at)) / 86_400_000;
+  if (idleDays <= ABANDONED_DAYS) {
+    return { ok: false, error: `Este borrador tuvo actividad hace ${Math.floor(idleDays)} día(s) — el mínimo para eliminarlo es ${ABANDONED_DAYS}.` };
+  }
+
+  const { error } = await service.from("lots").delete().eq("id", lotId);
+  if (error) return { ok: false, error: "No se pudo eliminar el lote." };
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lotId,
+    action: "deleted_abandoned",
+    previous_status: "borrador",
+    performed_by: adminId,
+    notes: `Sin actividad por ${Math.floor(idleDays)} días (${lot.name})`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    note: `CTC retiró el borrador de lote "${lot.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarlo de nuevo cuando quiera retomarlo.`,
+    created_by: adminId,
+  });
+
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+export async function deleteAbandonedFinca(fincaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: finca } = await service
+    .from("fincas")
+    .select("id, name, status, producer_id, created_at")
+    .eq("id", fincaId)
+    .maybeSingle();
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
+  if (finca.status !== "pending_review") {
+    return { ok: false, error: "Solo una finca pendiente de revisión se considera abandonada." };
+  }
+  const { data: lots } = await service.from("lots").select("id, stage, updated_at").eq("finca_id", fincaId);
+  if ((lots ?? []).some((l) => l.stage !== "borrador")) {
+    return { ok: false, error: "Esta finca tiene lotes que ya entraron al proceso — no se puede eliminar por abandono." };
+  }
+  const { data: lastComm } = await service
+    .from("producer_comm_log")
+    .select("created_at")
+    .eq("finca_id", fincaId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const lastActivity = Math.max(
+    Date.parse(finca.created_at),
+    ...(lots ?? []).map((l) => Date.parse(l.updated_at)),
+    lastComm ? Date.parse(lastComm.created_at) : 0
+  );
+  const idleDays = (Date.now() - lastActivity) / 86_400_000;
+  if (idleDays <= ABANDONED_DAYS) {
+    return { ok: false, error: `Esta finca tuvo actividad hace ${Math.floor(idleDays)} día(s) — el mínimo para eliminarla es ${ABANDONED_DAYS}.` };
+  }
+
+  // El delete arrastra los lotes borrador (lots.finca_id ON DELETE CASCADE);
+  // el comm log conserva su historia (finca_id pasa a NULL).
+  const { error } = await service.from("fincas").delete().eq("id", fincaId);
+  if (error) return { ok: false, error: "No se pudo eliminar la finca." };
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: fincaId,
+    action: "deleted_abandoned",
+    previous_status: "pending_review",
+    performed_by: adminId,
+    notes: `Sin actividad por ${Math.floor(idleDays)} días (${finca.name}); ${lots?.length ?? 0} borrador(es) arrastrado(s)`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: finca.producer_id,
+    context_label: `Finca ${finca.name}`,
+    note: `CTC retiró el registro de la finca "${finca.name}" por inactividad (más de ${ABANDONED_DAYS} días sin avances). Puede registrarla de nuevo cuando quiera retomarla.`,
+    created_by: adminId,
+  });
+
+  revalidatePath("/ocp/fincas");
+  revalidatePath("/ocp/lotes");
+  revalidatePath("/bcp");
+  return { ok: true };
+}
+
+export async function rejectFinca(fincaId: string, notes: string) {
+  const adminId = await requireAdmin();
+  const service = createServiceRoleClient();
+
+  const { data: finca } = await service.from("fincas").select("status").eq("id", fincaId).single();
+  if (!finca) throw new Error("Finca no encontrada.");
+
+  // Revoking also withdraws the certification release: if the finca is later
+  // re-approved, sharing must be an explicit decision again, not a leftover.
+  await service.from("fincas").update({ status: "rejected", eudr_cert_shared: false }).eq("id", fincaId);
+  await service.from("audit_log").insert({
+    entity_type: "finca",
+    entity_id: fincaId,
+    action: "rejected",
+    previous_status: finca.status,
+    new_status: "rejected",
+    performed_by: adminId,
+    notes,
+  });
+
+  revalidatePath("/ocp/fincas");
+  revalidatePath("/bcp");
+}

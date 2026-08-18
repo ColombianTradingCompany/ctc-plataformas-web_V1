@@ -139,7 +139,7 @@ const NODES: MapNode[] = [
   t("producer_profiles", "producer_profiles", "producer_profiles", ["KR · Información general", "BCP · Productores"], "cuenta", 145, 320),
   t("buyer_profiles", "buyer_profiles", "buyer_profiles", ["CP · Cuenta"], "cuenta", 145, 470),
   // FT · Finca + VISA EUDR (modelo Pasaporte/Visa/Sello, 2026-07-24): la debida
-  // diligencia vive SOLO en la finca — BCP revisa y otorga su VISA en /bcp/fincas
+  // diligencia vive SOLO en la finca — BCP revisa y otorga su VISA en /ocp/fincas
   // (fincaEudrStatus: Visa vigente / en trámite / sin Visa) y produce el dossier.
   t("fincas", "fincas", "fincas", ["KR · Mis Fincas", "BCP · Fincas"], "ft", 375, 250),
   t("media_assets", "media_assets", "media_assets", ["KR · Fincas/Lotes", "BCP · Arena (jornada)"], "ft", 200, 395),

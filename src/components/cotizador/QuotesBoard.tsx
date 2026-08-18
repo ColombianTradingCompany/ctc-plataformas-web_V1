@@ -21,7 +21,7 @@ import {
   type QuoteStatus,
   type QuoteSummary,
 } from "@/lib/cotizador/types";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import table from "./quotesTable.module.css";
 
 export const money = (v: number | null, currency = "COP") =>

@@ -6,7 +6,7 @@
 // análisis de imágenes satelitales (Earth web incluye imágenes históricas, que
 // es exactamente lo que pide la fecha de corte EUDR del 31/12/2020: comparar
 // el predio antes y después). Función pura — la ruta autenticada
-// /bcp/fincas/[id]/kml la sirve.
+// /ocp/fincas/[id]/kml la sirve.
 
 export type EarthKmlFinca = {
   name: string;

@@ -2,7 +2,7 @@ import { LeadsBoard } from "@/components/panel/LeadsBoard";
 
 // Leads · Recepción de la red (V4 · Fase 1): el OCP conserva SOLO el pilar
 // `general` ("Escríbenos"). Los pilares de servicio se mudaron a la consola
-// dueña de su dominio — cocreate (marca: CaaS) → /bcp/caas, tech → /ecp/ctc-tech,
+// dueña de su dominio — cocreate (marca: CaaS) → /ocp/crm/caas, tech → /ecp/ctc-tech,
 // varietales → /ecp/varietales (regla Fase 0, docs/V4_RED_RESTRUCTURE_ANALYSIS.md).
 export default function OcpLeadsPage() {
   return (

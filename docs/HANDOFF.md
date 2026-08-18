@@ -46,17 +46,29 @@ src/
     login/, verify/                   MASTER LOGIN (platform-level, password+OTP) — one door for all internal consoles
     cambiar-contrasena/               forced password-change step (must_change_password; own light auth to avoid guard loop)
     panel/                            post-login console selector (chooser; auto-forwards if only 1 console)
-    bcp/                              BCP · Base Control Panel (identity + lot passport)
+    bcp/                              BCP · Base Control Panel — «Business»: el negocio
       login/, verify/                 thin redirects → /login, /verify (old URLs kept alive)
+      <modulo>/[[...resto]]/          ⬅ los TALONES 308 de la mudanza (V4.24). Fuera de (app) a propósito:
+                                        redirigen ANTES del portero, así un marcador viejo no da "sin acceso".
+                                        Uno por módulo, cubre sus sub-rutas. Destino: lib/panel/rutasMovidas.ts
       (app)/                          everything behind the internal session
         layout.tsx                     requireConsoleAccess("bcp") + shared <PanelShell>
-        page.tsx                       dashboard digest
-        fincas/, arena/, contratos/, catalogo/, subastas/, leads/, usuarios/
-        arena/[sessionId]/run/                 Jornada de Arena live runner (JornadaRunner.tsx)
-        actions.ts, arenaActions.ts, contractActions.ts, catalogActions.ts
-                                        Server Actions — each re-verifies bcp_admin itself
-    ecp/(app)/                        ECP · Executive Control Panel (direction) — parallel tree, scaffold
-    ocp/(app)/                        OCP · Operational Control Panel (partner mirror) — parallel tree, scaffold
+        page.tsx                       scaffold de dirección (el tablero de KPIs se fue al OCP con el pasaporte)
+        adminLockActions.ts            la cerradura de administrador (se queda: PR-B le trae Usuarios al lado)
+    ocp/                              OCP · Operational Control Panel — «Operation»: del productor al catálogo
+      (app)/
+        layout.tsx                     requireConsoleAccess("ocp") + shared <PanelShell>
+        page.tsx                       el tablero de KPIs que era del BCP hasta V4.24
+        productores/, fincas/, lotes/          ⬅ BCP (V4.24) · Kaffetal Regal: el origen del lote
+        nominados/, arena/, galardonados/, club/  ⬅ BCP (V4.24) · KR Arena: la calificación
+        catalogo/, contratos/, subastas/, black-stock/  ⬅ BCP (V4.24) · la salida comercial
+        crm/caas/                      ⬅ BCP /bcp/caas (V4.24) · el 1.º de los 4 CRM de Cherry Picked
+        arena/[sessionId]/run/         Jornada de Arena live runner (JornadaRunner.tsx)
+        actions.ts, arenaActions.ts, contractActions.ts, catalogActions.ts, …
+                                        Server Actions — each re-verifies its console itself
+        leads/, socios/, cotizador-*/, anclas-mercado/, transcripciones/
+                                        se van al ECP/BCP en PR-B y PR-C
+    ecp/(app)/                        ECP · Executive Control Panel — «Execution»: plataformas, contacto, toolbox
     socios/[partner]/                 the 5 partner "couples" (landing + /acceso login + /panel scaffold), config-driven
       panel/source-wrapper/, panel/datawave/   las apps del Estudio (404 for any other slug)
     api/socios/auth/{login,logout}/   partner single-factor auth (role partner + node-exact partner_accounts row)
@@ -486,6 +498,40 @@ Módulo **reutilizable** (`src/components/catalogo/SneakPeek.tsx` + `SneakPeek.m
     - **Se arregla tramo a tramo, no archivo a archivo.** Tres de los catorce estaban PARCIALMENTE corruptos (commits posteriores les añadieron texto sano); un pase global de `cp1252 → UTF-8` sobre el archivo entero los habría roto. Verificación usada: 89 de las 96 líneas no-ASCII vuelven a ser idénticas byte a byte a su versión en `10c9016^`.
     - **Guardián: `node scripts/qa-encoding-check.mjs`** (sin `ts-resolve`). No busca caracteres «raros» —eso daría falsos positivos en todo el español del repo— sino tramos que **se dejan deshacer** y cuyo resultado cae en el repertorio que este repo escribe. Ojo al falso positivo que obligó a añadir ese repertorio: `AQUÍ»` da bytes UTF-8 válidos (una letra griega). Y **no pegue mojibake de ejemplo en un `.ts`/`.md`**: el guardián se lee a sí mismo y a los docs, y cantaría sobre su propia documentación.
     - **Regla que deja**: cuando una tanda toca metadatos públicos, verifíquelos en el **HTML construido** (`.next/server/app/<ruta>.html`) o en producción con `curl`, mirando los bytes — no en el fuente, que es justo donde el fallo se ve «bien» si el editor lo re-decodifica al pintarlo.
+
+## La reorganización de consolas V5 · PR-A: el OCP recibe el pasaporte (2026-08-18, V4.24)
+
+Primera de las tres mudanzas del paso (ii) de `docs/V5_CONSOLAS_PLAN.md`. **Doce módulos dejaron el BCP y
+pasaron al OCP** — Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo, Contratos,
+Subastas, Black Stock y el CRM de CaaS (que además se anida: `/bcp/caas` → **`/ocp/crm/caas`**, primero de los
+cuatro tableros de Cherry Picked). El tablero de KPIs que vivía en `/bcp` viajó con ellos y es hoy el panel del
+OCP; el BCP estrena un scaffold de dirección y **su rail se queda solo con «Panel» hasta PR-B**, que es lo
+previsto y está avisado dentro de `consoles.ts` y de su propia `page.tsx`.
+
+- **`src/lib/panel/rutasMovidas.ts` es la FUENTE ÚNICA de las mudanzas.** Los talones leen de ahí, el guardián
+  la comprueba y este documento la nombra en vez de listar rutas. Si un módulo se vuelve a mover —Black Stock
+  se convierte en pestaña de CTC Selection en el paso (iii)— **se reapunta su entrada allí**, nunca se encadena
+  un talón contra otro. `destinoDe()` compara por frontera de segmento, no por prefijo: la lección del proxy.
+- **Los talones viven FUERA del grupo `(app)`.** Dentro, el layout corre `requireConsoleAccess("bcp")` y quien
+  llegara por un marcador viejo recibiría un «no tiene acceso» sobre una URL que ya no existe. Un
+  `[[...resto]]` opcional por módulo cubre la ruta y todas sus sub-rutas con un archivo. Verificado en un
+  servidor de producción real, no solo en el build: `/bcp/arena/abc123` → **308** → `/ocp/arena/abc123`, y
+  `/bcp/caas` → 308 → `/ocp/crm/caas`.
+- **Guardián nuevo: `scripts/qa-rutas-consolas.mjs`** (164 comprobaciones). Verifica que cada enlace del rail
+  tenga página, que cada ruta movida tenga talón y destino, que no haya colisiones de prefijo ni cadenas de
+  talones, y —la que importa— **que no sobreviva ni un literal de ruta vieja en `src/`**.
+- ⚠️ **Por qué esa última comprobación es la importante.** El grueso de las rutas escritas a mano no son
+  enlaces: son **`revalidatePath()`, 108 de ~300**. Un enlace roto se ve al primer clic. Un `revalidatePath` a
+  una ruta que ya no existe **no lanza, no avisa y no rompe el build**: deja al operador mirando datos rancios
+  después de guardar. Es invisible hasta que alguien dice «guardé y no se actualizó».
+- ⚠️ **Un `git mv` de módulo rompe imports que `tsc` NO ve.** Los `*.module.css` no se type-chequean: un
+  `../shared.module.css` que ya no existe pasa `tsc --noEmit` limpio y muere en el build. Tras cada `git mv`,
+  buscar imports relativos que crucen el límite de lo movido.
+- **`shared.module.css` se mudó a `src/components/panel/`** (62 imports reapuntados). Nunca fue un activo del
+  BCP: lo importan las tres consolas y `src/components/`. Dejarlo dentro de una consola que se estaba vaciando
+  era una señal falsa de propiedad.
+- El radio real de la mudanza, re-medido antes de empezar, está en el §3.2 del plan — los números originales
+  se habían quedado cortos, y el dato que faltaba era el útil: **47 rutas distintas en 66 archivos**.
 
 ## Audit findings — 2026-07-10 deep review
 

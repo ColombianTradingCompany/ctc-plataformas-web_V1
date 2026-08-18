@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { consultFncNow, deleteAnchor, listAnchors, recordAnchor } from "@/lib/anclas/actions";
 import { ANCHOR_KINDS, SOURCE_LABEL, type MarketAnchor } from "@/lib/anclas/types";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import table from "./quotesTable.module.css";
 
 const cop = (v: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);

@@ -16,7 +16,7 @@ import {
   CRITICIDADES, CRITICIDAD_HINT, CRITICIDAD_LABEL, DOMINIOS, DOMINIO_LABEL, ETAPAS, SISTEMAS,
 } from "@/lib/integraciones/dominios";
 import type { Automation, IntegrationEvent } from "@/lib/integraciones/types";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 
 const VACIA = {

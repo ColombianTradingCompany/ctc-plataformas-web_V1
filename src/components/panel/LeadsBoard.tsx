@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { replyToLead, setLeadStatus, retryWelcomeEmail, retryReplyEmail } from "@/app/ocp/(app)/leadsActions";
 import { LeadModalRow } from "@/app/ocp/(app)/leads/LeadModalRow";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 // ── El tablero de leads, parametrizado por pilar (V4 · Fase 1) ───────────────
 // Era la página completa de /ocp/leads; ahora es el componente compartido que
@@ -393,9 +393,9 @@ function LeadCard({
       {sectionHead("Conexiones")}
       {profile?.role === "producer" ? (
         <p className={styles.meta} style={{ margin: 0 }}>
-          <Link href="/bcp/fincas">{fincaCount} finca{fincaCount === 1 ? "" : "s"}</Link> ·{" "}
-          <Link href="/bcp/lotes">{lotCount} lote{lotCount === 1 ? "" : "s"}</Link> ·{" "}
-          <Link href="/bcp/productores">ver productor</Link>
+          <Link href="/ocp/fincas">{fincaCount} finca{fincaCount === 1 ? "" : "s"}</Link> ·{" "}
+          <Link href="/ocp/lotes">{lotCount} lote{lotCount === 1 ? "" : "s"}</Link> ·{" "}
+          <Link href="/ocp/productores">ver productor</Link>
         </p>
       ) : profile?.role === "buyer" ? (
         <p className={styles.meta} style={{ margin: 0 }}>

@@ -7,7 +7,7 @@ import { invitePartner, setPartnerStatus, resendPartnerCredential } from "../soc
 // El stylesheet compartido de las consolas vive bajo bcp/(app) por historia;
 // es de la CAPA de panel, no exclusivo del BCP. Se importa por ruta absoluta en
 // vez de renombrarlo (lo importan 29 archivos del BCP que no tienen por qué moverse).
-import shared from "@/app/bcp/(app)/shared.module.css";
+import shared from "@/components/panel/shared.module.css";
 import styles from "@/components/panel/credentials.module.css";
 
 export type PartnerRow = {

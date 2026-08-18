@@ -26,7 +26,7 @@ function status(code: EudrStatus["code"], label: string, tone: EudrTone): EudrSt
 // 2026-08-06 (owner): `eudrLegalAreas` salió de este pick. Las «Áreas de
 // legislación verificadas» —igual que «Sostenibilidad y enfoque social» y la
 // «Evidencia disponible»— son material de la PROPIA revisión de CTC (se llenan
-// en /bcp/fincas, el productor ni las ve ni puede contestar «No lo sé»), así
+// en /ocp/fincas, el productor ni las ve ni puede contestar «No lo sé»), así
 // que no pueden contar como vacío de la declaración del productor: tenían la
 // Visa clavada en «en trámite» sin que el productor tuviera nada que hacer.
 // Documentan la revisión en el dossier; no determinan la Visa.

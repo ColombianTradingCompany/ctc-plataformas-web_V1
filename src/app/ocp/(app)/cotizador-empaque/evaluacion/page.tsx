@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EvaluationBoard } from "./EvaluationBoard";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 export const metadata: Metadata = { title: "Evaluación de empaque · OCP", robots: { index: false, follow: false } };
 

@@ -1,7 +1,7 @@
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { listArchitectureDocs, type ArchitectureDoc } from "@/lib/panel/architectureDocs";
 import { EstructuraModal } from "./EstructuraModal";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 // ECP · IT y Plataforma → Documentación del sistema.
 // El mapa vivo del sistema (docs/architecture/) deja de vivir solo en el repo y

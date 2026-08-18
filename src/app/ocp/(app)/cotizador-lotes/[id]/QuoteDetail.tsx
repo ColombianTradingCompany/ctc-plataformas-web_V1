@@ -11,7 +11,7 @@ import { decideQuote, duplicateQuote, getQuote } from "@/lib/cotizador/actions";
 import { QUOTE_STATUS_LABEL, effectiveStatus, type Quote } from "@/lib/cotizador/types";
 import { CounterpartyPicker } from "@/components/cotizador/CounterpartyPicker";
 import { AppFrame } from "@/components/cotizador/AppFrame";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 
 export function QuoteDetail({ id, basePath }: { id: string; basePath: string }) {
   const [quote, setQuote] = useState<Quote | null | "missing">(null);

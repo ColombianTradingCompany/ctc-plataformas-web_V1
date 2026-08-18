@@ -14,7 +14,7 @@ import { useState } from "react";
 import {
   GRADOS, SCA_MAXIMO, SCA_MINIMO, gradoPorPuntaje, escalaEsContinua, puntajeValido, redondeaPuntaje,
 } from "@/lib/grados/definicion";
-import styles from "@/app/bcp/(app)/shared.module.css";
+import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import grados from "./gradosBoard.module.css";
 

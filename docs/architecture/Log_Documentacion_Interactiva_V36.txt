@@ -461,4 +461,4 @@ APP_VERSION 4.20 → 4.21.
   cabecera del HANDOFF: qué se hizo, las tres trampas que costaron un ciclo cada una, el estado de
   la compuerta y los seis frentes abiertos.
 Sin cambio de APP_VERSION (documentación).
-(commit: pending)
+(commit: 582269a)

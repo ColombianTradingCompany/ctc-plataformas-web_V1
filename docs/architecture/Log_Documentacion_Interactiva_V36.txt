@@ -435,4 +435,4 @@ APP_VERSION 4.19 → 4.20.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build`
   exit 0 · guardián 177/177 · las dos caras verificadas en Chrome real.
 APP_VERSION 4.20 → 4.21.
-(commit: pending)
+(commit: b8e2673)

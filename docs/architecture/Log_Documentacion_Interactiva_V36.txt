@@ -311,4 +311,4 @@ APP_VERSION 4.16 → 4.17.
   `viaje-cafe.html` y `ficha/fichaData.ts`. **Eso no se toca nunca.** Anotado en el archivo mismo.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build` exit 0.
 APP_VERSION 4.17 → 4.18.
-(commit: pending)
+(commit: 2a599d8)

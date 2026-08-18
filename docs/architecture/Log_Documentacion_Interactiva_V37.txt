@@ -176,4 +176,4 @@ LO QUE EL WRAP V37 ENSEÑÓ (léase antes del V38)
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build` exit 0 ·
   qa-rutas-consolas **253/253** (30 rutas mudadas) · qa-nav 16/16 · qa-encoding limpio.
 APP_VERSION 4.26 → 4.27.
-(commit: pending)
+(commit: cdc7b22)

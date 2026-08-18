@@ -84,6 +84,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     cup: "Chocolate, clavo de olor, frutos rojos, arándano; acidez y cuerpo medios, residual dulce",
     season: TEMPORADA_ANTERIOR,
     harvestQuarter: "2025-Q4",
+    image: "/images/catalogo/sneak-peek/mock-lote-01.webp",
+    datasheetUrl: "/docs/fichas-mock/GD-4C1A.pdf",
     mock: true,
   },
   {
@@ -106,6 +108,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     cup: "Floral, mandarina, cardamomo; acidez cítrica equilibrada, cuerpo redondo, residual dulce",
     season: TEMPORADA_ANTERIOR,
     harvestQuarter: "2025-Q4",
+    image: "/images/catalogo/sneak-peek/mock-lote-02.webp",
+    datasheetUrl: "/docs/fichas-mock/GD-9E33.pdf",
     mock: true,
   },
   {
@@ -134,6 +138,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     cup: "Limonaria, té de rosas, miel, manzana; acidez cítrica media a lima, cuerpo delicado",
     season: TEMPORADA_ANTERIOR,
     harvestQuarter: "2026-Q1",
+    image: "/images/catalogo/sneak-peek/mock-lote-03.webp",
+    datasheetUrl: "/docs/fichas-mock/CTCX-0326005.pdf",
     mock: true,
   },
   {
@@ -155,6 +161,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     cup: "Frutos rojos en fermento, cacao, acidez vínica media, cuerpo cremoso, residual dulce",
     season: TEMPORADA_ANTERIOR,
     harvestQuarter: "2025-Q4",
+    image: "/images/catalogo/sneak-peek/mock-lote-04.webp",
+    datasheetUrl: "/docs/fichas-mock/BL-2F70.pdf",
     mock: true,
   },
   {
@@ -173,6 +181,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     cup: "Chocolate, especias, cítricos, avellana; acidez media, cuerpo medio ligero, residual dulce",
     season: TEMPORADA_ANTERIOR,
     harvestQuarter: "2025-Q4",
+    image: "/images/catalogo/sneak-peek/mock-lote-05.webp",
+    datasheetUrl: "/docs/fichas-mock/RD-8B15.pdf",
     mock: true,
   },
   {
@@ -191,6 +201,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     cup: "Caramelo, especias, cítricos, melao; acidez media, cuerpo medio cremoso, residual dulce",
     season: TEMPORADA_ANTERIOR,
     harvestQuarter: "2025-Q4",
+    image: "/images/catalogo/sneak-peek/mock-lote-06.webp",
+    datasheetUrl: "/docs/fichas-mock/RD-3D62.pdf",
     mock: true,
   },
   {
@@ -215,6 +227,8 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     // GAP: notas escritas por mí, en el registro de un Black lavado de 1400 m.
     cup: "Chocolate, nuez, panela; acidez baja, cuerpo pleno, taza limpia y dulce",
     season: TEMPORADA_ANTERIOR,
+    image: "/images/catalogo/sneak-peek/mock-lote-07.webp",
+    datasheetUrl: "/docs/fichas-mock/BK-6A08.pdf",
     mock: true,
   },
 ];

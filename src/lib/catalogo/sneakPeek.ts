@@ -61,7 +61,14 @@ export type SneakPeekLot = {
   mock: boolean;
   /** Referencia interna del trimestre de cosecha (Notion `Harvest Season`). */
   harvestQuarter?: string;
+  /** La foto de la cara frontal de la tarjeta. Sin ella, la tarjeta cae al sello
+   *  del grado, que nunca falta. */
   image?: string;
+  /** La ficha técnica del lote, que abre el botón del reverso. Los lotes VIVOS
+   *  todavía no tienen dónde guardarla —no hay columna para ella en
+   *  `lot_listings` ni en `lots`— así que hoy solo la traen los mock; sin ella,
+   *  el reverso no dibuja el botón. Ver docs/V5_CONSOLAS_PLAN.md §9. */
+  datasheetUrl?: string;
 };
 
 export type SneakPeekPayload = {

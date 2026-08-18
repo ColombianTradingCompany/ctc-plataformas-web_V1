@@ -46,8 +46,17 @@ Same rules as `AGENTS.md`, restated because this plan is wide and mechanical —
    commit sha; `docs/HANDOFF.md` directory map + feature status; the DICT gets the new names. Never hand-edit
    the interactive HTML — the `architecture-doc-versioning` skill (workspace root `.claude/skills/`) says when a
    Version Wrap happens (`validate_snapshot.mjs`, nine checks, `--prev`).
-5. **`npm audit` stays at 0.** Nothing here needs a new dependency.
-6. **Vocabulary is frozen by §2** — use it in code comments, nav labels, docs and commit messages from step (i) on.
+5. **The house definitions override any external source** (owner, 2026-08-17). When data that comes from
+   outside the repo — Notion above all, but also a spreadsheet, a PDF or a partner's export — contradicts a
+   definition that lives in code, **the code wins and the external source is the thing that gets corrected**.
+   The canonical case is `src/lib/grados/definicion.ts` (rule 1: *el puntaje manda*), which is why every mock
+   lot derives its grade from its SCA score instead of copying Notion's `Grado CTC`. Applies to anything with
+   a single source in the repo: the grade scale, `harvestYear.ts`, `legal.ts`, `subdominios.ts`. Never
+   "fix" the discrepancy by bending the definition to the imported value — flag it and correct it upstream.
+6. **`npm audit`**: it was at 0 from 2026-08-13 until a new advisory landed on 2026-08-17 (§9, dev to-do 1).
+   Do not let a *new* dependency add to it, and do not force a breaking downgrade to clear it either — that
+   one is a tracked to-do with the owner.
+7. **Vocabulary is frozen by §2** — use it in code comments, nav labels, docs and commit messages from step (i) on.
 
 ---
 
@@ -224,24 +233,54 @@ time comes"*. Four layers, so removal is never archaeology:
    If the mocks ever graduate to the DB (D0.6), the table carries `is_mock boolean not null default false` and
    removal is one `DELETE … WHERE is_mock`.
 
-### 1.5 The component
+### 1.5 The component — a FLIP card (owner, 2026-08-17)
 
-`src/components/catalogo/SneakPeek.tsx` (+ `SneakPeek.module.css`), a **client** component:
+`src/components/catalogo/SneakPeek.tsx` (+ `SneakPeek.module.css`), a **client** component. The card has two
+faces and turns on click:
 
-- Props: `lang: Lang` (passed by the surface — Home and KR use `components/lang/i18n`, the Cherry Picked family
-  uses `components/cherry-picked/i18n`; both define the same `"es"|"en"|"de"` union, so the module takes the value
-  and hooks neither provider), `variant?: "home" | "kr" | "cp"` (only accent/CTA copy), `ctaHref` (D0.4).
-- Marquee mechanics copied from `MarketTicker`: a strip + an `aria-hidden` duplicate for a seamless loop, CSS
-  animation, **pause on hover/focus**, `prefers-reduced-motion` → static row with horizontal scroll, keyboard
-  reachable, `role="region"` with a trilingual `aria-label`.
-- A card: grade seal/colour (`--t-<grade>` tokens) · name · SCA with «est.» when `scoreEstimated` · finca ·
-  municipio, departamento · altitude · variety · process · one line of cup · the season tag (mocks). Whole
-  card = one link (D0.4).
-- Header line above the band (trilingual): ES «Un vistazo al Catálogo Activo — el catálogo completo se ve dentro
-  de Cherry Picked» · EN «A sneak peek at the Active Catalogue — the full catalogue lives inside Cherry Picked»
-  · DE «Ein Blick in den aktiven Katalog — der vollständige Katalog liegt in Cherry Picked». Copy is a
-  per-component dictionary like `HomeBand`'s.
-- Empty/failed → renders nothing (never an empty bar).
+**Front — what makes someone look.** The photo (the card leads with it), the lot name, the grade as a chip in
+its official colour, and the variety. The season tag sits **on the photo** for mock lots, so "last season" is
+read before anything else. A quiet «Ver detalle +» pinned at the bottom says the card opens.
+
+**Back — the rest, plus the file.** Name + a close ×, the **SCA** score (labelled, with «est.» when the score
+is the producer's own), finca · municipio, departamento, process · altitude, the cup notes, and a
+**«Ver ficha técnica ↗»** button that opens the lot's datasheet in a new tab.
+
+Mechanics that matter:
+- **The band stops while a card is open.** Otherwise the detail someone just opened slides off the screen.
+  Hover and keyboard focus already paused it; an open card pauses it outright.
+- **The loop's second copy stays clickable but unfocusable** (`tabIndex={-1}`, inside the `aria-hidden`
+  clone). Making it inert would leave half the band dead to the mouse; leaving it focusable would put
+  focusable content inside `aria-hidden`, which is an accessibility fault. Both copies share one flip state
+  keyed by lot id, so a card and its clone turn together.
+- **Escape closes** the open card, and the ficha link `stopPropagation`s so opening the PDF does not flip the
+  card back.
+- `prefers-reduced-motion`: the band becomes a draggable strip **and** the turn loses its animation — the
+  faces just swap. Same outcome, no movement.
+- Props: `lang` (the value, not a hook — see below), `variant` (`home`/`kr`/`cp`), `onOpenLogin` (CP
+  surfaces), `id` (the store passes `grados`, the anchor it inherits from the grid).
+- The language arrives **as a prop** because Home/KR and the Cherry Picked family have different providers
+  with the same union; that is what makes the module mountable on all six surfaces.
+- Empty or failed → renders nothing. Never an empty bar.
+
+### 1.5.1 The datasheets («Ver ficha técnica»)
+
+`SneakPeekLot.datasheetUrl` is optional and the button only exists when it is set.
+
+- **Mock lots**: one A4 PDF each, generated by **`scripts/build-fichas-mock.mjs`** (same spirit as
+  `build-og-cards.mjs`: a workshop script that makes a static asset and is re-run when the data changes).
+  It renders the *same* fields the card shows — nothing commercial — plus a **«Documento de referencia»**
+  notice stating the lot is from a past season and is not a commercial offer. Output:
+  `public/docs/fichas-mock/<code>.pdf`.
+- **Where they live is not cosmetic**: `public/docs/` is one of the three prefixes the proxy matcher excludes
+  (`images/`, `docs/`, `tools/`). A new top-level folder would 404 on all 18 subdomains — the classic trap of
+  this house. The guardian asserts every `datasheetUrl` starts with `/docs/`.
+- **Live lots have no datasheet yet**: neither `lots` nor `lot_listings` has a column for one, so the button
+  simply does not render for them. Giving real lots a datasheet is dev to-do 2 in §9.
+- Card photos live in `public/images/catalogo/sneak-peek/mock-lote-NN.webp` (660×440, ~55 KB each, 382 KB the
+  set). They are CTC's own photographs illustrating the process or the landscape — **not** photographs of that
+  particular lot, which do not exist; the whole card is flagged as last season. A lot with no photo falls back
+  to its grade seal, which never fails.
 
 ### 1.6 Decisions for step 0 — ALL ACCEPTED by the owner on 2026-08-17 ("defaults on all D0.x")
 
@@ -516,6 +555,25 @@ landing material · Terratalento grey door (`soon: true`) · two YouTube embeds 
 in `precios.ts` · Canva scenario in Make · Coffeed 5 media without feed · Supabase leaked-password toggle (D21) ·
 worker narrow credential (F10, backlog).
 
+### Dev to-dos (owner's call, tracked here)
+
+1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
+   stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,
+   `src/lib/buzon/mailClient.ts` + `src/app/ecp/(app)/buzonActions.ts`). It was **not** introduced by a
+   dependency change here — `package-lock.json` is unchanged and the advisory is new (the repo was at 0 on
+   2026-08-13). `npm audit fix --force` would install `mailparser@3.9.8`, which npm flags as **breaking**.
+   Look first for a non-breaking path (an `overrides` pin of `deepmerge-ts` to ≥8, or a newer mailparser that
+   already bumped it), then verify the Buzón still parses real messages **including attachments** (there is a
+   past bug about Buzón attachment loss). Do not force the downgrade without the owner.
+2. **Real lots have no datasheet.** `SneakPeekLot.datasheetUrl` exists and the flip card renders the button
+   whenever it is set, but nothing in `lots`/`lot_listings` stores one, so only the mock lots have it today.
+   When the Ficha Técnica becomes a publishable artifact, add the column (or generate the PDF from
+   `lots.datasheet`) and the button lights up for the whole catalogue with no component change.
+3. **The empty OneDrive folder stays.** `…/OneDrive/Desktop/CTC Web Platform` is empty since the migration and
+   **is not going to be deleted** — Claude Code has it locked as this session's working directory and the owner
+   confirmed (2026-08-17) it cannot be removed from the chat. It is inert; ignore it. The workspace is
+   `C:\dev\ctc-platforms`.
+
 **Found in Notion while collecting the mock references (2026-08-17) — data hygiene in «📋 Fichas Técnicas de
 Café», owner's call, nothing changed by me** (I only read the database; the platform stays the source of truth
 for grades):
@@ -542,10 +600,10 @@ Found today while reading the schema (small, safe, owner's call before any migra
   migration. Same check for `public_transparency_pricing`.
 - Once PR-A lands: tighten the passport Server Actions from `requireActiveAdmin` to `requireConsoleWrite("ocp")`
   (behaviour change → its own small PR).
-- The former workspace folder on the OneDrive Desktop is now empty but still there (this session was rooted in
-  it) — delete it once no session is rooted there, together with the transcript leftover in the old Claude
-  memory key (see the `project_workspace_move` memory note for both paths; they are not written here because
-  **this repo is public and those paths carry the owner's Windows username**).
+- The former workspace folder on the OneDrive Desktop stays empty and stays put (dev to-do 3 above). The
+  transcript leftover in the old Claude memory key can still be tidied — see the `project_workspace_move`
+  memory note for the paths; they are not written here because **this repo is public and those paths carry
+  the owner's Windows username**.
 - **Pre-existing, same reason:** `docs/HANDOFF.md` and `docs/RED_IDENTIDAD_ANALISIS.md` already contain that
   username inside example paths. Harmless in itself, but the repo is public and the standing rule is that no
   user-named path goes in — worth a scrub pass in one of the PRs below (docs-only, no code).

@@ -6,7 +6,11 @@
 //   1. Que por la cinta no pueda salir NADA comercial. La cinta se enseña sin
 //      sesión en seis superficies; el día que alguien añada un precio «solo para
 //      la tarjeta», esto falla.
-//   2. Que los lotes mock estén marcados y se puedan retirar de un tirón —
+//   2. Que LAS DEFINICIONES DE LA CASA MANDEN SOBRE LA FUENTE EXTERNA (regla del
+//      owner, 2026-08-17): si el dato que viene de Notion contradice lo que
+//      define este repo, gana el repo. Hoy eso se traduce en el grado (que sale
+//      del puntaje) y en la validez del propio puntaje.
+//   3. Que los lotes mock estén marcados y se puedan retirar de un tirón —
 //      rotulados como temporada anterior, con id del espacio reservado, en UN
 //      solo archivo y con el grado que su puntaje manda (su origen, Notion, tiene
 //      el grado mal en 6 de 7 fichas: ver docs/V5_CONSOLAS_PLAN.md §9).
@@ -16,9 +20,9 @@
 // que `qa-nav-check.mjs`, por el mismo motivo — lo que hay que proteger es una
 // regla, y una regla se comprueba aquí y no a ojo.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { SNEAK_PEEK_MOCK, MOCK_ID_PREFIX } from "../src/lib/catalogo/sneakPeekMock.ts";
-import { gradoPorPuntaje } from "../src/lib/grados/definicion.ts";
+import { gradoPorPuntaje, puntajeValido, GRADO_POR_ID } from "../src/lib/grados/definicion.ts";
 
 let ok = 0;
 const fallos = [];
@@ -183,6 +187,34 @@ check(
   "sin sesión el índice no ofrece la sección Black, que no existe",
   TIENDA.includes('t.quickNav.filter((s) => s.id !== "black")')
 );
+
+// ── 7. Las definiciones de la casa mandan sobre la fuente externa ───────────
+// Regla del owner (2026-08-17): si Notion contradice una definición del repo,
+// gana el repo. Lo del grado ya se comprueba arriba; aquí, que el puntaje sea
+// válido en la escala (dos decimales como máximo, dentro de 80–100) y que el
+// grado exista en la definición única.
+for (const l of SNEAK_PEEK_MOCK) {
+  check(`${l.id}: el puntaje ${l.score} es válido en la escala`, puntajeValido(Number(l.score)));
+  check(`${l.id}: el grado existe en la definición única`, !!GRADO_POR_ID[l.grade]);
+}
+
+// ── 8. La tarjeta que se voltea: foto, ficha y accesibilidad ────────────────
+for (const l of SNEAK_PEEK_MOCK) {
+  check(`${l.id}: declara foto`, typeof l.image === "string" && l.image.startsWith("/images/catalogo/sneak-peek/"));
+  check(`${l.id}: la foto existe en el disco`, !!l.image && existsSync(new URL(`../public${l.image}`, import.meta.url)));
+  check(`${l.id}: declara ficha técnica`, typeof l.datasheetUrl === "string");
+  check(`${l.id}: la ficha existe en el disco`, !!l.datasheetUrl && existsSync(new URL(`../public${l.datasheetUrl}`, import.meta.url)));
+  // El proxy antepone la base del subdominio a todo lo que no esté excluido del
+  // matcher: una ficha fuera de `docs/` daría 404 en los 18 subdominios.
+  check(`${l.id}: la ficha cuelga de /docs/ (excluida del proxy)`, !!l.datasheetUrl && l.datasheetUrl.startsWith("/docs/"));
+}
+check("la cara delantera es un botón con aria-expanded", COMPONENTE.includes("aria-expanded={volteada}"));
+check("Escape cierra la tarjeta abierta", COMPONENTE.includes('e.key === "Escape"'));
+check("la cinta se para con una tarjeta abierta", COMPONENTE.includes("volteada ? styles.paused"));
+check("la copia del bucle no recibe foco", COMPONENTE.includes("tabIndex={duplicada ? -1 : undefined}"));
+check("el enlace de la ficha no voltea la tarjeta al pulsarlo", COMPONENTE.includes("e.stopPropagation()"));
+check("la ficha se abre en otra pestaña sin ceder la ventana", COMPONENTE.includes('rel="noopener"'));
+check("el volteo respeta prefers-reduced-motion", CSS.includes(".inner{transition:none}"));
 
 console.log(`${ok} comprobaciones OK, ${fallos.length} fallos`);
 for (const f of fallos) console.log("  FALLO:", f);

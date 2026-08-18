@@ -237,3 +237,50 @@ Sin cambio de APP_VERSION (documentación).
   bajada rompedora de `mailparser`, así que se deja anotado para decisión del owner, no se fuerza.
 APP_VERSION 4.15 → 4.16.
 (commit: 62cb377)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V4.17 — la tarjeta del Sneak Peek se voltea y abre su ficha técnica
+- Petición del owner sobre lo construido en V4.16: que la tarjeta sea de VOLTEO. Delante,
+  **foto, nombre, grado y variedad**; al pulsarla, el reverso con el puntaje, el origen
+  completo, el proceso, las notas de cata y un botón **«Ver ficha técnica»** que abre el
+  archivo del lote.
+- **Regla de casa que el owner fijó explícitamente y que ahora está escrita donde se aplica**:
+  si el dato que viene de fuera —Notion, una hoja, un PDF de un socio— contradice una
+  DEFINICIÓN del repo, manda el repo y lo que se corrige es la fuente. Queda como regla 5 del
+  §0 del plan, en la cabecera de `sneakPeekMock.ts` y comprobada por el guardián (el grado sale
+  del puntaje, y el puntaje tiene que ser válido en la escala de `grados/definicion.ts`).
+- **Las fichas técnicas**: `scripts/build-fichas-mock.mjs` (mismo espíritu que
+  `build-og-cards.mjs`) arma un PDF A4 por lote con los MISMOS datos de la tarjeta, sin nada
+  comercial, y con un aviso de «documento de referencia» que dice que es de una temporada
+  anterior y no es oferta. Salida en `public/docs/fichas-mock/`.
+  ⚠️ Van bajo `docs/` A PROPÓSITO: es una de las tres carpetas que el matcher del proxy excluye
+  (`images/`, `docs/`, `tools/`). Una carpeta nueva en la raíz habría dado 404 en los 18
+  subdominios — el error clásico de esta casa, evitado por lectura y no por suerte.
+- **Los lotes vivos todavía no tienen ficha**: no hay columna para ella en `lots` ni en
+  `lot_listings`, así que `datasheetUrl` viene vacío y el botón no se dibuja. Anotado como
+  to-do de desarrollo 2 en el §9 del plan; el día que exista, el botón se enciende solo.
+- **Las fotos**: siete `.webp` de 660×440 (382 KB el conjunto) sacadas de `reference_images` con
+  Pillow —`sharp` no carga en este equipo— y elegidas para que ninguna se repita. NO son fotos de
+  ese lote (no existen): son fotos de CTC que ilustran el proceso o el paisaje, y la tarjeta
+  entera va rotulada como temporada anterior. Sin foto, la tarjeta cae al sello del grado.
+- Detalles de la mecánica que importan: la cinta **se para** con una tarjeta abierta (si no, el
+  detalle recién abierto se va de la pantalla); la copia del bucle sigue siendo pulsable con el
+  ratón pero no recibe foco ni la lee un lector (media cinta inerte sería peor, y contenido
+  enfocable dentro de `aria-hidden` es un fallo de accesibilidad); Escape cierra; el enlace de la
+  ficha no voltea la tarjeta al pulsarlo; con `prefers-reduced-motion` el giro desaparece y las
+  caras simplemente se cambian.
+- Guardián ampliado a **112 comprobaciones** (de 56): además de lo anterior, que cada mock declare
+  foto y ficha Y QUE AMBAS EXISTAN EN EL DISCO, que la ficha cuelgue de `/docs/`, que el puntaje
+  sea válido en la escala, que el grado exista en la definición única, y las cinco de la mecánica
+  del volteo (aria-expanded, Escape, pausa, copia sin foco, stopPropagation, noopener).
+- ⚠️ **El panel de vista previa no sirve para verificar un volteo 3D**: además de no pintar
+  fotogramas, devuelve el valor INICIAL de una transición, así que `getComputedStyle(...).transform`
+  dice «identidad» aunque la tarjeta esté volteada — y un `transform` en línea tampoco cambia la
+  lectura. Se verificó con Chrome headless conducido por CDP (receta de la memoria), que sí
+  compone: el reverso se ve entero y legible. Cuesta tiempo descubrirlo dos veces; queda escrito.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, todos preexistentes) ·
+  `npm run build` exit 0 con las seis superficies aún estáticas · guardián 112/112 ·
+  las fichas y las fotos responden 200 en el servidor de desarrollo.
+APP_VERSION 4.16 → 4.17.
+(commit: pending)

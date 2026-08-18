@@ -1,17 +1,17 @@
 /* ── La cinta del Catálogo Activo ───────────────────────────────────────────
-   Mecánica calcada de `ctc-home/MarketTicker.module.css`, que ya resolvió en
-   producción las tres cosas difíciles de una cinta: el bucle sin costura (dos
+   Mecánica de cinta calcada de `ctc-home/MarketTicker.module.css`, que ya
+   resolvió en producción las tres cosas difíciles: el bucle sin costura (dos
    copias y un desplazamiento del 50 %), la pausa al pasar el ratón, y el respeto
    a `prefers-reduced-motion` convirtiéndola en una tira que se arrastra.
-   Lo que cambia es la carga: aquí no son cifras de una línea sino tarjetas, así
-   que la altura la fija la tarjeta y el paso es mucho más lento — un catálogo se
-   lee, no se consulta de reojo.
+   Lo que cambia es la carga: aquí no son cifras de una línea sino TARJETAS QUE
+   SE VOLTEAN, así que la altura es fija (las dos caras se superponen) y el paso
+   es mucho más lento — un catálogo se lee, no se consulta de reojo.
 
-   SOLO TOKENS DE TEMA, ningún color propio. Las tres superficies donde se monta
-   son de fondo CLARO y cada una con su marca (`--paper/--card/--ink/--muted/
-   --line/--accent`, globals.css), así que la misma hoja se ve en casa en las
-   seis superficies sin una regla por tema. Los únicos colores literales son los
-   de los grados, que son compartidos y oficiales (`--t-black … --t-gold`). */
+   SOLO TOKENS DE TEMA, ningún color propio. Las superficies donde se monta son
+   de fondo CLARO y cada una con su marca (`--paper/--card/--ink/--muted/--line/
+   --accent`, globals.css), así que la misma hoja se ve en casa en las seis sin
+   una regla por tema. Los únicos colores literales son los de los grados, que
+   son compartidos y oficiales (`--t-black … --t-gold`). */
 
 .wrapSection{
   position:relative;
@@ -45,38 +45,82 @@
 
 /* Altura reservada mientras llega la respuesta, para que la página no salte
    cuando la cinta aparece (mismo motivo que en la cinta de mercado). */
-.loading{height:212px}
+.loading{height:344px}
 
-.track{display:flex;width:max-content;animation:sp-slide 120s linear infinite}
+.track{display:flex;width:max-content;animation:sp-slide 150s linear infinite}
 .track:hover,.track:focus-within{animation-play-state:paused}
+/* Con una tarjeta abierta la cinta se PARA del todo: si siguiera andando, el
+   detalle que alguien acaba de abrir se le iría de la pantalla. */
+.paused{animation-play-state:paused}
 @keyframes sp-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 .strip{display:flex;align-items:stretch}
 
+/* ── La tarjeta que se voltea ───────────────────────────────────────────────
+   Altura FIJA y las dos caras superpuestas: es lo que permite el giro sin que
+   la cinta dé un salto cuando el reverso es más alto que la cara. */
 .card{
-  display:block;text-align:left;
-  width:330px;flex:none;margin:0 8px;padding:16px 18px;
+  width:300px;height:344px;flex:none;margin:0 9px;
+  perspective:1200px;
+}
+.inner{
+  position:relative;width:100%;height:100%;
+  transform-style:preserve-3d;
+  transition:transform .55s cubic-bezier(.2,.7,.2,1);
+}
+.flipped .inner{transform:rotateY(180deg)}
+
+.face{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;text-align:left;
   background:var(--card);
   border:1px solid var(--line);
   border-radius:var(--radius,12px);
-  color:var(--ink);text-decoration:none;
-  font:inherit;cursor:pointer;
-  transition:border-color .18s,box-shadow .18s,transform .18s;
+  color:var(--ink);text-decoration:none;font:inherit;
+  overflow:hidden;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
 }
-.card:hover,.card:focus-visible{
+.front{cursor:pointer;padding:0}
+.card:hover .front,.front:focus-visible{border-color:var(--accent)}
+.back{
+  transform:rotateY(180deg);
+  padding:14px 16px 15px;gap:3px;
   border-color:var(--accent);
-  box-shadow:0 6px 20px rgba(0,0,0,.07);
-  transform:translateY(-2px);
 }
 
-/* La línea que identifica el lote: el GRADO con su color oficial y el puntaje
-   que lo determina, juntos porque uno se deriva del otro (regla 1 de
-   `lib/grados/definicion.ts`: el puntaje manda).
-   Aquí NO va el sello de 420×420 de cada grado: reducido a 36 px quedaba en una
-   mancha gris ilegible —se vio en la primera verificación con Chrome— y encima
-   no decía QUÉ grado era. El sello es para las fichas de grado; en una tarjeta
-   de catálogo manda la palabra. */
-.line{display:flex;align-items:center;gap:9px;margin:3px 0 1px}
+/* ── La cara ───────────────────────────────────────────────────────────────
+   La foto manda: es lo que hace que alguien quiera mirar el lote. Debajo, lo
+   justo para identificarlo — nombre, grado y variedad. */
+.photo{
+  position:relative;display:block;width:100%;height:202px;flex:none;
+  background:var(--paper);overflow:hidden;
+}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photoFallback{
+  display:flex;align-items:center;justify-content:center;width:100%;height:100%;
+}
+.photoFallback img{width:118px;height:118px;object-fit:contain;border-radius:50%}
+
+/* El rótulo de temporada va SOBRE la foto: se ve antes de leer nada, que es
+   justo lo que hace falta cuando el lote es de la temporada pasada. */
+.seasonTag{
+  position:absolute;left:10px;bottom:10px;
+  font-family:var(--font-spline-mono),monospace;
+  font-size:9px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;
+  padding:4px 9px;border-radius:999px;
+  background:rgba(12,14,12,.72);color:#fff;backdrop-filter:blur(3px);
+}
+
+/* `flex:1` es lo que hace que «Ver detalle» se pegue ABAJO en vez de quedar
+   flotando a media tarjeta: sin ella el cuerpo no se estira y el `margin-top:
+   auto` del pie no tiene contra qué empujar. */
+.frontBody{display:flex;flex-direction:column;flex:1;gap:7px;padding:14px 16px 0;min-width:0}
+.name{
+  font-size:15px;font-weight:800;letter-spacing:.005em;line-height:1.25;
+  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.line{display:flex;align-items:center;gap:9px;min-width:0}
 .grade{
   font-family:var(--font-spline-mono),monospace;
   font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
@@ -84,25 +128,34 @@
   /* Los cinco colores de grado son oscuros por definición, así que el blanco
      siempre contrasta; el color lo pone el componente con `--t-<grado>`. */
 }
-
-.body{display:flex;flex-direction:column;min-width:0;gap:3px}
-
-.top{display:flex;align-items:baseline;gap:8px;min-width:0}
-.name{
-  font-size:14.5px;font-weight:800;letter-spacing:.005em;
+.variety{
+  font-size:12px;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.code{
-  font-family:var(--font-spline-mono),monospace;font-size:9.5px;letter-spacing:.08em;
-  color:var(--muted);flex:none;
+.more{
+  margin-top:auto;padding:10px 0 12px;
+  font-family:var(--font-spline-mono),monospace;
+  font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);
 }
 
-/* El puntaje es el dato que ordena el catálogo: se lee antes que nada. Lleva la
-   etiqueta «SCA» delante porque fuera de Cherry Picked un número suelto de dos
-   decimales no dice de qué escala habla. */
+/* ── El reverso ────────────────────────────────────────────────────────────── */
+.backTop{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+  background:none;border:0;padding:0 0 6px;margin:0;
+  font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;
+}
+.backName{
+  font-size:12.5px;font-weight:800;line-height:1.3;min-width:0;
+  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.backClose{font-size:19px;line-height:1;color:var(--muted);flex:none}
+
+/* El puntaje es el dato que ordena el catálogo: en el reverso se lee primero.
+   Lleva la etiqueta «SCA» delante porque fuera de Cherry Picked un número suelto
+   de dos decimales no dice de qué escala habla. */
 .score{
-  display:inline-flex;align-items:baseline;gap:5px;
-  font-size:19px;font-weight:800;line-height:1.05;letter-spacing:-.01em;color:var(--primary);
+  display:inline-flex;align-items:baseline;gap:5px;margin-top:2px;
+  font-size:27px;font-weight:800;line-height:1;letter-spacing:-.015em;color:var(--primary);
 }
 .score i{font-style:normal}
 .sca{
@@ -116,29 +169,25 @@
   color:var(--muted);
 }
 
-.origin{font-size:12px;color:var(--ink)}
+.origin{font-size:12.5px;color:var(--ink);margin-top:9px;line-height:1.35}
 .specs{
-  font-size:11px;color:var(--muted);
+  font-size:11px;color:var(--muted);margin-top:3px;
   font-family:var(--font-spline-mono),monospace;letter-spacing:.02em;
 }
 .cup{
-  font-size:11.5px;color:var(--muted);line-height:1.35;margin-top:2px;
-  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:9px;
+  display:-webkit-box;-webkit-line-clamp:4;line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
 }
 
-.season{
-  margin-top:6px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
-  font-family:var(--font-spline-mono),monospace;color:var(--muted);
+.backFoot{margin-top:auto;padding-top:10px}
+.ficha{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  color:var(--accent);text-decoration:none;
+  border:1px solid var(--accent);border-radius:999px;padding:7px 13px;
+  transition:background .16s,color .16s;
 }
-/* Un lote de la temporada pasada lo DICE, y con contraste suficiente para que se
-   lea: es la diferencia entre enseñar un ejemplo y aparentar existencias. */
-.seasonPast{
-  margin-top:7px;align-self:flex-start;white-space:nowrap;
-  font-family:var(--font-spline-mono),monospace;
-  font-size:9px;letter-spacing:.08em;text-transform:uppercase;
-  padding:3px 8px;border-radius:999px;
-  background:var(--paper);border:1px solid var(--line);color:var(--muted);
-}
+.ficha:hover{background:var(--accent);color:#fff}
 
 .cta{
   display:inline-flex;align-items:center;gap:8px;margin-top:clamp(18px,3vw,28px);
@@ -149,9 +198,9 @@
 .cta:hover{border-bottom-color:var(--accent)}
 
 @media(max-width:640px){
-  .card{width:282px;padding:14px 15px}
-  .loading{height:200px}
-  .name{font-size:13.5px}
+  .card{width:264px;height:338px}
+  .loading{height:338px}
+  .photo{height:168px}
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -160,4 +209,7 @@
      estorba a nadie que la lea. */
   .track{animation:none;width:auto;overflow-x:auto;scrollbar-width:none}
   .track::-webkit-scrollbar{display:none}
+  /* Y el volteo deja de ser un giro: las caras se cambian sin movimiento. El
+     resultado es el mismo, que es lo que importa. */
+  .inner{transition:none}
 }

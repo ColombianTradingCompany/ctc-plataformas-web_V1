@@ -208,4 +208,4 @@ APP_VERSION 4.26 → 4.27.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos) · `npm run build` exit 0 · qa-sneak-peek 182/182 ·
   qa-rutas-consolas 253/253 · qa-nav 16/16 · qa-docs 14/14 · qa-encoding 700/0.
 APP_VERSION 4.27 → 4.28.
-(commit: pending)
+(commit: 4de00ab)

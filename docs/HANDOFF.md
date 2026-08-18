@@ -779,6 +779,34 @@ in-app y la vuelta segura— llega en V4.34.
   propósito: entrar, registrarse y solicitar son tres salidas distintas, y un «no puede» genérico deja a la
   persona sin saber cuál le toca.
 
+## Herramientas del Café — la concha in-app y la vuelta segura (2026-08-18, V4.34)
+
+Segunda tanda del paso (iv), **que queda completo**. Cada herramienta se abre ahora **dentro de la webapp**, en
+una ruta de su propia superficie: `/kaffetal-regal/herramientas/<slug>` y su gemela en Cherry Picked Green.
+
+- **La ruta pertenece a la SUPERFICIE, no a una consola**, y eso es lo que la hace funcionar: bajo
+  `kaffetal-regal.ctcexport.com` el proxy antepone la base del subdominio, así que una ruta de esa superficie
+  es correcta por construcción — mientras que cualquier cosa colgada de `/ecp/…` se reescribiría y daría 404.
+  Es la gotcha 12, la que condenó al mecanismo de herramientas «privadas». El HTML de la herramienta **no se
+  toca**: sigue en `/tools/h/<slug>`, fuera del matcher del proxy.
+- ⚠️ **LA VUELTA SEGURA ES SEGURIDAD, NO COMODIDAD.** El owner la pidió como usabilidad —«que pueda volver a lo
+  que estaba haciendo» (A5)— y para eso la concha recibe la URL de origen en `?volver=`. Obedecerla a ciegas
+  sería un **redirect abierto**: `…/herramientas/agtron?volver=https://sitio-falso/login` pondría, **dentro del
+  dominio de CTC**, un botón «Volver a Kaffetal Regal» que lleva a una copia del login. Phishing servido por la
+  casa, y sin que falle nada.
+  `vueltaSegura()` (módulo puro) es lista blanca estrecha: solo rutas relativas de ESA superficie, rechazando
+  `//host`, esquemas, barras invertidas, saltos de línea y prefijos parecidos —comparando por frontera de
+  segmento, la misma lección del proxy y del rail—. **Nunca devuelve vacío**: una concha sin salida es justo lo
+  que A5 quería evitar. Guardián `qa-concha-herramientas-check.mjs` (**42**), con once vectores de ataque, y
+  verificado en servidor real.
+- **Pedir no es poder**: las solicitudes viven en `tool_access_requests`, **tabla aparte** de
+  `tool_user_grants`. Una fila de grants significa «puede abrir» sin más lectura; si las peticiones vivieran
+  ahí con un `status`, un filtro olvidado convertiría una petición en un permiso **sin que nada fallara**. La
+  tabla vieja `tools_plus_grants` sí mezcla ambas cosas — es exactamente lo que no se replicó.
+- **D4.1 con su default**: «Solicitar» avisa a `info@`, y **el resultado del envío se guarda en la fila**. Un
+  aviso que falla en silencio es una solicitud que nadie atiende — lección del OTP del BCP. La solicitud queda
+  registrada aunque el correo no salga: el aviso es comodidad, no el registro.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

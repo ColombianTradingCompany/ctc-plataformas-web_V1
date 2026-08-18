@@ -4,9 +4,8 @@
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
-> Pasos (i), (ii) y (iii) COMPLETOS. **El paso (iv) va por su primera tanda: el MODELO DE ACCESO está
-> hecho (V4.33)** — membresía HC + permisos por usuario y herramienta. Falta su segunda tanda, **la
-> concha in-app con vuelta segura (§5) → V4.34**, y después el paso (v) y el V5.0 del owner.
+> Pasos (i), (ii), (iii) y **(iv) COMPLETOS** (V4.23 → V4.34). Queda **el paso (v)** (§6) → V4.35+,
+> y después el owner declara **V5.0** y se hace el Version Wrap V38.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -730,11 +729,9 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 5. Step (iv) — HC as a login module + in-app shell + per-tool grants (A2 · A5 · A6 · F8)  ← IN PROGRESS
+## 5. Step (iv) — HC as a login module + in-app shell + per-tool grants (A2 · A5 · A6 · F8)  ✅ COMPLETO
 
-> **Se parte en dos tandas, porque son dos cosas distintas y la segunda se apoya en la primera:**
-> **(iv-a) el modelo de acceso** — quién puede abrir qué — ✅ **V4.33**; y
-> **(iv-b) la concha in-app** — cómo se abre, con la vuelta segura que el owner subrayó (A5) — ← next, V4.34.
+> Se hizo en dos tandas: **(iv-a) el modelo de acceso** ✅ V4.33 y **(iv-b) la concha in-app** ✅ V4.34.
 
 - ✅ **Membership — HECHO en V4.33** (`src/lib/identidad/matriz.ts`): `herramientas` requires an account that is
   a KR producer **or** a CP buyer (same producer ⊕ buyer exclusion as today); no third identity is created.
@@ -742,11 +739,17 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
   **Cómo quedó**: `herramientas` es un OBJETIVO de la matriz, no una identidad — la pregunta que responde es
   «¿puedo entrar?», y se contesta con lo que la persona ya es. Crear una tercera identidad habría roto la
   exclusión productor ⊕ comprador sobre la que se sostiene toda la matriz.
-- **Shell**: every tool opens inside `/kaffetal-regal/herramientas/<slug>` or `/cherry-picked-green/herramientas/<slug>`
-  (surface-owned routes → the proxy prefix is right by construction) with header «← Volver a Kaffetal Regal /
-  Cherry Picked», tool name, Plus/locked badge, help; the tool HTML is untouched at `/tools/h/<slug>` (public,
-  outside the proxy matcher — keep it there). **"Safe" back-navigation** = the shell keeps the previous panel URL
-  and returns to it (owner's A5 emphasis).
+- ✅ **Shell — HECHA en V4.34**: cada herramienta se abre en `/kaffetal-regal/herramientas/<slug>` o
+  `/cherry-picked-green/herramientas/<slug>` (rutas de la SUPERFICIE → el prefijo del proxy es correcto por
+  construcción) con cabecera «← Volver a …», nombre, insignia Plus/bloqueada; el HTML sigue intacto en
+  `/tools/h/<slug>`, fuera del matcher del proxy.
+  ⚠️ **La vuelta segura resultó ser una cuestión de SEGURIDAD, no de comodidad.** Obedecer el `?volver=` a
+  ciegas es un **redirect abierto**: `…/herramientas/agtron?volver=https://sitio-falso/login` pondría, dentro
+  del dominio de CTC, un botón «Volver a Kaffetal Regal» que lleva a una copia del login. `vueltaSegura()` es
+  lista blanca estrecha —solo rutas relativas de ESA superficie, comparando por frontera de segmento— y todo lo
+  demás cae al inicio. **Nunca devuelve vacío**: una concha sin salida es justo lo que A5 quería evitar.
+  Comprobado en servidor real: con destino hostil el botón apunta a `/kaffetal-regal`; con destino legítimo,
+  a `/kaffetal-regal?m=lotes`.
 - ✅ **Grants per user per tool — HECHOS en V4.33**: tabla `tool_user_grants(user_id, tool_id, granted_at,
   granted_by, source 'manual'|'payment', expires_at null)`, service-role-only; `tools_plus_grants` **se sigue
   leyendo como comodín heredado** — tiene 3 filas vivas y retirarla hoy le quitaría el acceso a tres personas
@@ -755,11 +758,18 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
   de saber a quién falta migrar antes de retirar la tabla vieja.
   ⚠️ La caducidad se filtra **en código, no con un `.lt()`**: `expires_at` nulo significa «no caduca», y un
   filtro por fecha en SQL descartaría esas filas salvo que se escriba el `or(...is.null)` — el tipo de detalle
-  que se olvida y quita permisos en silencio. Locked tools stay **visible** with «Solicitar» → a request row the ECP ·
-  Herramientas module lists; the payment trigger later writes `source='payment'` on the same row.
+  que se olvida y quita permisos en silencio. ✅ **Hecho en V4.34**: las bloqueadas siguen **visibles** con «Solicitar» → fila en
+  `tool_access_requests`, que el ECP lista.
+  ⚠️ **Tabla APARTE de `tool_user_grants`, y a propósito**: una fila de grants significa «puede abrir», sin más
+  lectura. Si las peticiones vivieran ahí con un `status`, cualquier consulta que olvidara filtrarlo convertiría
+  una PETICIÓN en un PERMISO **sin que nada fallara** — la misma familia de fallo mudo que persigue toda esta
+  reorganización. Pedir y poder son dos tablas. El disparador de pago escribirá `source='payment'` en la fila de
+  GRANTS, que es donde vive el permiso.
 - Verification: `qa-terminos-check`-style guardian for the access rule; drive KR/CP as QA producer/buyer.
-- Decision D4.1: does the request («Solicitar») also email `info@` (via Resend, like leads)? Default: yes, one
-  line, same sender rules as leads (never swallow the send result).
+- ✅ **D4.1 aplicada con su default (V4.34)**: la solicitud avisa a `info@` por correo, una línea, con las mismas
+  reglas que los leads — y **el resultado del envío se guarda en la fila** (`aviso_email_at` / `aviso_email_error`).
+  Un aviso que falla en silencio es una solicitud que nadie atiende; es la lección del OTP del BCP, que se tragaba
+  su propio fallo. La solicitud queda registrada aunque el correo no salga: el aviso es comodidad, no el registro.
 
 ---
 
@@ -792,8 +802,8 @@ the rule is one bump per deployed batch.
 | **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B ✅ · PR-C ✅ | ✅ **V4.24 · V4.25 · V4.26** |
 | **Version Wrap V37** | El mapa interactivo, al día tras 14 entradas de bitácora | ✅ **DONE** — `Documentacion_Interactiva_V37.0(a3cfe82).html` |
 | **Step (iii)** | New modules (§4): CTC Selection ✅ · CRM CP Green ✅ · CRM CP Roast/X ✅ · socio cards ✅ · Definición rework ✅ | ✅ **V4.27 → V4.32, COMPLETO** |
-| **Step (iv)** | HC (§5), partido en dos: **(iv-a)** modelo de acceso ✅ · **(iv-b)** concha in-app | ✅ **V4.33** · **V4.34** ← next |
-| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | **V4.35+** → **owner declares V5.0** → Version Wrap V38 |
+| **Step (iv)** | HC (§5), en dos tandas: **(iv-a)** modelo de acceso ✅ · **(iv-b)** concha in-app ✅ | ✅ **V4.33 · V4.34, COMPLETO** |
+| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | **V4.35+** ← next → **owner declares V5.0** → Version Wrap V38 |
 
 Every PR: Log entry sealed with sha · HANDOFF touched · DICT touched · memory note `project_structure_reorg_2026_08_17`
 updated with "done through step X".
@@ -813,7 +823,7 @@ updated with "done through step X".
 | D3.2 ✅ **APLICADA V4.29** | CRM CP Green stage rule | 0/1/≥2 orders, manual override — **con un giro que conviene repetir en iii-3: la etapa deducida NO se persiste.** En `buyer_profiles.crm_stage` solo vive el anulado manual, y `null` significa «sigue la regla». Guardar la etapa calculada la dejaría rancia en cuanto entrara un pedido. La regla vive en `lib/crm/etapaComprador.ts`, módulo puro, y la comprueba `qa-crm-green-check.mjs` (21) |
 | D3.3 ✅ **RESUELTA V4.32** | Direccionamiento moodboard data | **Estaba VACÍO** — la fila `assets` pesaba 28 bytes, no había un solo data-URI que exportar. Se retiró y `bodySizeLimit` volvió al defecto de Next. **La decisión real resultó ser otra**: qué hacer con las respuestas guardadas dentro de la rama «Video largo» (§9, punto 8). Owner: *«Strip it, I'll rescue the text»* |
 | D3.4 | PR order A → B → C vs B → A → C | A → B → C |
-| D4.1 | «Solicitar» emails info@ | Yes |
+| D4.1 ✅ **APLICADA V4.34** | «Solicitar» emails info@ | **Sí, con su default** — una línea, mismas reglas que los leads, y el resultado del envío guardado en la fila (`aviso_email_at` / `aviso_email_error`). La solicitud queda registrada aunque el correo falle: el aviso es comodidad, no el registro |
 | D5.1 | Lead ↔ profile linking rule | verified-email match at login + explicit «vincular» |
 | D7.1 | When is V5.0 declared | end of step (v) |
 

@@ -1,0 +1,68 @@
+/* La concha de una herramienta dentro de KR / Cherry Picked (V4.34).
+   Sobria a propósito: lo que tiene que verse es la herramienta, no el marco. */
+
+.concha { display: flex; flex-direction: column; min-height: 78vh; }
+
+.barra {
+  padding: 14px 0 12px;
+  border-bottom: 1px solid var(--line, #e6ddd1);
+  margin-bottom: 14px;
+}
+
+.volver {
+  display: inline-block;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 6px;
+}
+.volver:hover { text-decoration: underline; }
+
+.titulo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.titulo h1 { margin: 0; font-size: 21px; }
+
+.plusAbierta, .plusCerrada {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.plusAbierta { background: #e2efe8; color: #2f6b4f; }
+.plusCerrada { background: #f3e3d6; color: #8c4a1f; }
+
+.desc { margin: 4px 0 0; font-size: 13.5px; color: var(--muted, #7d6c5d); }
+
+/* El marco crece con la ventana: una herramienta encajada en 400 px fijos es
+   inservible en un portátil y ridícula en un monitor. */
+.marco {
+  flex: 1;
+  width: 100%;
+  min-height: 68vh;
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.bloqueada {
+  border: 1px dashed var(--line, #e6ddd1);
+  border-radius: 10px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.motivo { margin: 0; font-size: 14.5px; line-height: 1.6; max-width: 62ch; }
+.bloqueada textarea {
+  font: inherit;
+  font-size: 13.5px;
+  width: 100%;
+  max-width: 46ch;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 8px;
+  resize: vertical;
+}
+.bloqueada label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }

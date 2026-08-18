@@ -344,3 +344,32 @@ APP_VERSION 4.31 → 4.32.
   qa-nav 16/16 · qa-direccionamiento 14/14 · qa-docs 14/14 · qa-encoding 719/0.
 APP_VERSION 4.32 → 4.33.
 (commit: 266fc9f)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.34 · Paso (iv-b): la concha in-app y la vuelta segura — PASO (iv) COMPLETO
+- **Módulos nuevos**: `/kaffetal-regal/herramientas/<slug>` y `/cherry-picked-green/herramientas/<slug>`. Cada
+  herramienta se abre DENTRO de la webapp, en una ruta de su propia superficie. Cambio para el nodo de las
+  Herramientas: deja de ser «un panel con iframes» y gana conchas propias por superficie.
+- **Por qué la ruta es de la SUPERFICIE y no de una consola**: bajo `kaffetal-regal.ctcexport.com` el proxy
+  antepone la base del subdominio, así que la ruta es correcta por construcción; cualquier cosa colgada de
+  `/ecp/…` se reescribiría y daría 404. Es la gotcha 12 otra vez. El HTML sigue intacto en `/tools/h/<slug>`.
+- ⚠️ **PARA EL DICT — merece entrada propia: «la vuelta segura».** El owner la pidió como USABILIDAD (A5:
+  «botones seguros que le permitan volver a lo que estaba haciendo») y resultó ser SEGURIDAD. Obedecer el
+  `?volver=` a ciegas es un **redirect abierto**: `…?volver=https://sitio-falso/login` pondría, dentro del
+  dominio de CTC, un botón «Volver a Kaffetal Regal» que lleva a una copia del login — phishing servido por la
+  casa, sin que falle nada. `vueltaSegura()` es lista blanca estrecha (solo rutas relativas de ESA superficie,
+  por frontera de segmento) y **nunca devuelve vacío**. Guardián `qa-concha-herramientas-check.mjs` (**42**),
+  once vectores de ataque, verificado en servidor real: destino hostil → `/kaffetal-regal`; destino legítimo →
+  `/kaffetal-regal?m=lotes`.
+- **«Pedir no es poder»**, y también merece DICT: las solicitudes viven en `tool_access_requests`, **tabla
+  aparte** de `tool_user_grants`. Una fila de grants significa «puede abrir» sin más lectura; con un `status`
+  compartido, un filtro olvidado convertiría una petición en un permiso **sin fallar**. La tabla vieja
+  `tools_plus_grants` sí mezcla las dos cosas — es justo lo que no se replicó.
+- **D4.1 con su default**: «Solicitar» avisa a `info@` y **el resultado del envío se guarda en la fila**
+  (`aviso_email_at` / `aviso_email_error`). Lección del OTP del BCP: ningún remitente se traga un fallo.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-concha-herramientas 42/42 · qa-herramientas-acceso 26/26 · qa-terminos 19/19 · qa-rutas-consolas 263/263 ·
+  qa-nav 16/16 · qa-definicion 33/33 · qa-direccionamiento 14/14 · qa-docs 14/14 · qa-encoding 722/0.
+APP_VERSION 4.33 → 4.34.
+(commit: pending)

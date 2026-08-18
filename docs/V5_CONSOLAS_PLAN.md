@@ -1,8 +1,14 @@
 # V5 · Plan de consolas — the CTC Platforms re-org (written 2026-08-17)
 
-**Status: PLAN. Nothing in here is built.** This is step (i) of F14 in
-`docs/ESTADO_Y_PREGUNTAS_2026-08-17.md` ("freeze names + write the plan doc"), written from
-the new workspace (`C:\dev\ctc-platforms`, repo `main` at `e4da7ed`, production **V4.15**).
+> ## ▶ EMPIEZA AQUÍ
+> **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
+> still plan. **The next thing to do is §2, step (i): freeze the names.**
+> Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
+> `APP_VERSION` bump; do not start the next step until the previous one is pushed and green.
+
+**Status: written 2026-08-17, step 0 BUILT (V4.21 in production), steps (i)–(v) still PLAN.**
+This document is step (i) of F14 in `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md` ("freeze names + write the plan
+doc"), written from the new workspace (`C:\dev\ctc-platforms`).
 
 It turns the owner's 3-page PDF (`reference_html-vision-board/ctc-platforms-structure-2026-08-17.pdf`)
 plus the decision record (ESTADO §0: A1–A9, B10–B12, D18–D22, F1–F14 — all decided, defaults taken)
@@ -58,9 +64,53 @@ Same rules as `AGENTS.md`, restated because this plan is wide and mechanical —
    one is a tracked to-do with the owner.
 7. **Vocabulary is frozen by §2** — use it in code comments, nav labels, docs and commit messages from step (i) on.
 
+### 0.1 How to run one step (the loop, every time)
+
+The steps are meant to be executed **one per session** by someone starting cold. The loop:
+
+1. **Read three things**: `AGENTS.md` (always loaded), the step's section here, and §7 for the version number.
+2. **Branch or not**: docs-only steps commit straight to `main` (that is this repo's precedent); code steps
+   too, since the owner pushes. The classifier blocks direct pushes — the owner runs `git push`.
+3. **Do the work**, keeping the step's scope. If you find something out of scope, write it into §9 as a
+   dev to-do; do not widen the step.
+4. **Bump `APP_VERSION`** (`src/lib/version.ts`) in the same commit.
+5. **Run the gate**: `npx tsc --noEmit` · `npx eslint src` (0 errors; 27 pre-existing warnings is the
+   baseline) · `npm run build` (exit 0) · every `qa-*.mjs` that touches what you moved.
+   ⚠️ `tsc` does **not** catch a client component importing a value from a `server-only` module — that lands
+   as a runtime 500. If you touch imports across the client/server line, load the page in a dev server.
+6. **Verify what changed**, the way the thing can be verified: consoles are behind 2FA and cannot be driven
+   in a browser (SQL + guardians instead); public surfaces get a real Chrome check — the preview pane paints
+   no frames and cannot measure transforms or animation.
+7. **Write it down**: an entry in the open `Log_Documentacion_Interactiva_V36.txt` sealed with the commit sha
+   (commit first, then seal in a second commit), the HANDOFF section, and the memory note.
+8. **Stop.** One step per PR. Do not start the next.
+
 ---
 
-## 1. Step 0 — «Active Catalogue Sneak Peek» + the 7 mock lotes  ← FIRST
+## 1. Step 0 — «Active Catalogue Sneak Peek» + the 7 mock lotes  ✅ BUILT (V4.16–V4.21)
+
+### 1.0 What shipped (closing the step)
+
+Built across **V4.16 → V4.21**, all pushed. The design notes below (§1.1–§1.7) are kept as the record of
+*why* each decision was taken; this is *what exists*:
+
+| Piece | Where |
+|---|---|
+| The band | `src/components/catalogo/SneakPeek.tsx` + `.module.css` — rAF engine, edge arrows, centre-then-flip, 15 % pop |
+| The radar | `src/components/catalogo/RadarIntrinseco.tsx` (React, trilingual) |
+| The popup | `src/components/catalogo/CatalogoPopup.tsx` |
+| Data + type | `src/lib/catalogo/sneakPeek.ts` (`server-only`), `atributosSca.ts` (pure), `sneakPeekMock.ts` (the 7 mocks) |
+| API | `src/app/api/catalogo/sneak-peek/route.ts` |
+| Assets | `public/images/catalogo/sneak-peek/` (7 photos, 7+7 wheels) · `public/docs/fichas-mock/` (7 × 3-page PDFs) |
+| Workshop scripts | `scripts/build-ruedas-mock.mjs` · `scripts/build-fichas-mock.mjs` · `scripts/lib/analisis-intrinseco.mjs` |
+| Guardian | `scripts/qa-sneak-peek-check.mjs` — **177 checks** |
+| Mounted on **7 surfaces** | CTC Home · KR landing · CP portada · CP Green (replacing the anonymous grid) · CP Roast · CP X · CaaS |
+
+**Still open on step 0 — two owner questions, neither blocking** (both ship with a value and a `⚠` comment
+in `sneakPeekMock.ts`): **D0.9** card #2's variety (title says «Bourbon», Notion's field says `Castillo`) and
+**D0.10** card #3's finca (Notion's relation says La Floresta, its title and supplier say La Fortaleza ·
+Ragonvalia — the plan uses La Fortaleza). Answer them and it is a one-file edit plus a re-run of the two
+workshop scripts.
 
 ### 1.1 What it is
 
@@ -394,7 +444,7 @@ the **mis-linked finca** on card #3 (La Floresta vs La Fortaleza).
 
 ---
 
-## 2. Step (i) — Freeze names (F1 · F9 · A7 · A1)  → V4.17
+## 2. Step (i) — Freeze names (F1 · F9 · A7 · A1)  → V4.22  ← THE NEXT STEP
 
 A small PR that changes **strings and docs only** — no route moves, no file renames.
 
@@ -412,8 +462,33 @@ A small PR that changes **strings and docs only** — no route moves, no file re
 | **Active Catalogue Sneak Peek** | §1 | DICT (step 0) |
 | **Value Ecosystem** | the six ECP platforms (CTC Tech, Varietales, Directorio, Coffeed, Herramientas, Terratalento) as the 4th unit of Definición de contexto (F7) | DICT; code in step (iii) |
 
-Also in this PR: the "planned" warnings in the architecture map (`direccionamiento`, the PDF's ANN) get a
-pointer to this file; `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md` §0 gets a line "F14(i) done → V5_CONSOLAS_PLAN.md".
+### 2.1 What to actually edit (measured 2026-08-17)
+
+1. **`src/lib/panel/consoles.ts` — the three taglines.** They still carry the old one-liners. Replace:
+   - BCP `"Identidad y pasaporte del lote"` → **`"El negocio: dirección, configuración y red de socios"`**
+   - ECP `"Dirección: precios, primas, finanzas, salud de la red"` → **`"La ejecución: plataformas, contacto y caja de herramientas"`**
+   - OCP `"Operación: despacho, seguimiento, excepciones, relevos"` → **`"La operación: del productor al catálogo"`**
+   ⚠️ The taglines describe the **target** layout, so after this PR they describe modules that have not moved
+   yet (§3 moves them). That is deliberate and worth one line of comment in the file — otherwise the next
+   reader "fixes" them back.
+   `ControlPanelLanding` reads `consoles.ts`, so the public console landing follows for free.
+2. **The word «hub»** — reserved for CommaaS (F9). **58 occurrences in `src/**/*.ts(x)`** (excluding
+   `HubLanding`/`cherry-picked-hub`/`github`) and **48 in `docs/*.md`**. Nearly all are comments and copy.
+   The two meanings to rewrite: the Cherry Picked front page → **«portada de Cherry Picked»**, and `/panel` →
+   **«selector de consolas»**. `HubLanding.tsx` **keeps its filename** (D2.1) — renaming a component is a
+   different PR and would collide with §3.
+3. **The DICT** of the interactive docs gets the frozen terms: CaaS vs CommaaS vs CommaaS-OG, CTC Selection
+   vs Black Stock, «Catálogo Cherry Picked (Contratos Vigentes)», «Active Catalogue Sneak Peek», Value
+   Ecosystem. ⚠️ Read `reference_dict_wrap_gotcha` first — the DICT mixes `clave:{` and `clave: {`, and a
+   naive grep "proves" an entry is missing and you add a silent duplicate (JS keeps the last).
+4. **The «planned» warnings** in the architecture map (`direccionamiento`, the PDF's ANN) get a pointer to
+   this file, and `docs/ESTADO_Y_PREGUNTAS_2026-08-17.md` §0 gets a line: "F14(i) done → V5_CONSOLAS_PLAN.md".
+
+### 2.2 Definition of done for step (i)
+
+`grep -rn "hub" src docs` returns only CommaaS references (plus the untouched filenames) · the three
+taglines read as above · `qa-nav-check` still 18/18 (it reads `consoles.ts`) · gate green · `APP_VERSION`
+4.22 · Log entry sealed · this file's §7 ticked.
 
 ---
 
@@ -490,9 +565,9 @@ the guardian in §3.4 exists.
 
 | PR | Version | Receives | From | Size |
 |---|---|---|---|---|
-| **PR-A «OCP recibe el pasaporte»** | 4.18 | Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo (+Contratos, Subastas), Black Stock, CRM CaaS; the KPI dashboard | BCP | biggest (the 127) |
-| **PR-B «BCP recibe dirección y configuración»** | 4.19 | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
-| **PR-C «ECP recibe contacto y toolbox»** | 4.20 | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
+| **PR-A «OCP recibe el pasaporte»** | 4.23 | Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo (+Contratos, Subastas), Black Stock, CRM CaaS; the KPI dashboard | BCP | biggest (the 127) |
+| **PR-B «BCP recibe dirección y configuración»** | 4.24 | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
+| **PR-C «ECP recibe contacto y toolbox»** | 4.25 | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
 
 Between PR-A and PR-B the BCP rail is briefly just «Panel» — acceptable, the owner is the only operator; the
 alternative order B → A → C ("no console ever empty") is fine too if preferred. **After PR-C: Version Wrap V37**
@@ -531,7 +606,7 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 4. Step (iii) — New modules (F3 · F4 · F5 · F6 · F7)  → V4.21 … V4.25 (one PR each)
+## 4. Step (iii) — New modules (F3 · F4 · F5 · F6 · F7)  → V4.26 … V4.30 (one PR each)
 
 | # | Module | Where | What (default design) | Data | Open point (default) |
 |---|---|---|---|---|---|
@@ -545,7 +620,7 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 5. Step (iv) — HC as a login module + in-app shell + per-tool grants (A2 · A5 · A6 · F8)  → V4.26+
+## 5. Step (iv) — HC as a login module + in-app shell + per-tool grants (A2 · A5 · A6 · F8)  → V4.31+
 
 - **Membership** (`src/lib/identidad/matriz.ts`): `herramientas` requires an account that is a KR producer **or** a
   CP buyer (same producer ⊕ buyer exclusion as today); no third identity is created. `/herramientas` landing stays
@@ -565,7 +640,7 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 6. Step (v) — CTC Tech / Varietales inside KR + «Cherry Picked CaaS» → OCP (A3)  → V4.27+
+## 6. Step (v) — CTC Tech / Varietales inside KR + «Cherry Picked CaaS» → OCP (A3)  → V4.32+
 
 - **CTC Tech / Varietales sub-modules in KR**: the producer continues the conversation started on the landing
   inside the KR hub. Requires linking a `leads` row to a `profiles` row (today leads are anonymous captures).
@@ -580,14 +655,20 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ## 7. Cadence, versions, wraps
 
-| When | What |
-|---|---|
-| Step 0 | V4.16 (Sneak Peek + mocks) |
-| Step (i) | V4.17 (names) |
-| Step (ii) | V4.18 / 4.19 / 4.20 (PR-A/B/C) → **Version Wrap V37** of the docs |
-| Step (iii) | V4.21–4.25 |
-| Step (iv) | V4.26+ |
-| Step (v) | V4.27+ → **owner declares V5.0** ("the consoles re-org is complete") → Version Wrap V38 |
+⚠️ **Rebased on 2026-08-17.** The first version map in this document assumed step 0 would take one bump.
+It took six (V4.16 the band, 4.17 the flip card, 4.18 the cacao leftover, 4.19 arrows + wheel + 3-page ficha
++ popup + CaaS, 4.20 the rAF engine, 4.21 the two faces). **Production is at V4.21**, so everything below is
+renumbered from there. If a step takes more bumps than planned, renumber again — the map is a convenience,
+the rule is one bump per deployed batch.
+
+| When | What | Version |
+|---|---|---|
+| **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
+| **Step (i)** | Freeze names (§2) | **V4.22** ← next |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A · PR-B · PR-C | V4.23 · V4.24 · V4.25 → **Version Wrap V37** |
+| **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.26 – V4.30 |
+| **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.31+ |
+| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.32+ → **owner declares V5.0** → Version Wrap V38 |
 
 Every PR: Log entry sealed with sha · HANDOFF touched · DICT touched · memory note `project_structure_reorg_2026_08_17`
 updated with "done through step X".

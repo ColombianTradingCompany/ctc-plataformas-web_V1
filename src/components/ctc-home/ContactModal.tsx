@@ -37,6 +37,20 @@ const DOORS: Record<string, { href: string; label: string }[]> = {
 const STASH_KEY = "ctc_lead_stash";
 const STASH_TTL_MS = 30 * 60e3;
 
+// A dónde ENTRAR después de enviar. El formulario ya crea la cuenta (o la
+// vincula a una existente), así que el estado de éxito terminaba en un botón
+// «Entendido» que solo cerraba: la persona acababa de recibir un acceso y se
+// quedaba sin puerta. Desde V4.35 hay una (paso (v) del plan V5, A3).
+//
+// Rutas RELATIVAS a propósito: en producción el proxy antepone la base del
+// subdominio, así que una ruta de superficie es correcta en los 18 hosts.
+const PLATFORM_HREF: Record<FormKey, string> = {
+  general: "/kaffetal-regal",
+  tech: "/kaffetal-regal",
+  varietales: "/kaffetal-regal",
+  cocreate: "/cherry-picked-green",
+};
+
 const PLATFORM_NAME: Record<FormKey, string> = {
   general: "Kaffetal Regal",
   tech: "Kaffetal Regal",
@@ -57,6 +71,7 @@ type Dict = {
   successCreated: (platform: string) => React.ReactNode;
   successExisting: string;
   successOk: string;
+  successEntrar: (platform: string) => string;
   errSend: string;
   errName: string;
   errGoogle: string;
@@ -157,6 +172,7 @@ const T: Record<Lang, Dict> = {
     successExisting:
       "Vinculamos tu solicitud a tu cuenta existente y te enviamos un correo de confirmación. Nuestro equipo te responderá pronto.",
     successOk: "Entendido",
+    successEntrar: (p) => `Entrar a ${p}`,
     errSend: "No pudimos enviar tu solicitud. Intenta de nuevo.",
     errName: "Escribe tu nombre antes de continuar con Google.",
     errGoogle: "No pudimos iniciar sesión con Google. Intenta con tu correo.",
@@ -248,6 +264,7 @@ const T: Record<Lang, Dict> = {
     successExisting:
       "We linked your request to your existing account and sent you a confirmation email. Our team will reply soon.",
     successOk: "Got it",
+    successEntrar: (p) => `Go to ${p}`,
     errSend: "We couldn't send your request. Please try again.",
     errName: "Write your name before continuing with Google.",
     errGoogle: "We couldn't sign you in with Google. Try with your email instead.",
@@ -339,6 +356,7 @@ const T: Record<Lang, Dict> = {
     successExisting:
       "Wir haben Ihre Anfrage mit Ihrem bestehenden Konto verknüpft und Ihnen eine Bestätigungs-E-Mail geschickt. Unser Team antwortet bald.",
     successOk: "Verstanden",
+    successEntrar: (p) => `Zu ${p}`,
     errSend: "Wir konnten Ihre Anfrage nicht senden. Bitte versuchen Sie es erneut.",
     errName: "Schreiben Sie Ihren Namen, bevor Sie mit Google fortfahren.",
     errGoogle: "Anmeldung mit Google fehlgeschlagen. Versuchen Sie es mit Ihrer E-Mail.",
@@ -637,9 +655,14 @@ export function ContactModalProvider({
     <div className={styles.success}>
       <h3>{t.successH3}</h3>
       {phase.outcome === "created" ? <p>{t.successCreated(PLATFORM_NAME[phase.pillar])}</p> : <p>{t.successExisting}</p>}
-      <button className="btn btn-solid" type="button" onClick={close}>
-        {t.successOk}
-      </button>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <a className="btn btn-solid" href={PLATFORM_HREF[phase.pillar]}>
+          {t.successEntrar(PLATFORM_NAME[phase.pillar])}
+        </a>
+        <button className="btn" type="button" onClick={close}>
+          {t.successOk}
+        </button>
+      </div>
     </div>
   );
 

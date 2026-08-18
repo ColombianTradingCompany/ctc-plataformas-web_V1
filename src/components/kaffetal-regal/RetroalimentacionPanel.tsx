@@ -44,8 +44,17 @@ export function RetroalimentacionPanel({
   onCreateThread,
   onOpenFicha,
   onOpenFincaModal,
+  tituloLista,
+  vacio,
 }: {
   feedback: FeedbackNote[];
+  /** Cabecera de la lista. Por defecto, la de Retroalimentación de siempre.
+   *  Desde V4.35 el mismo panel sirve a DOS módulos —las notas de finca/lote y
+   *  las solicitudes de servicio— porque el hilo es idéntico: cambia de qué
+   *  habla, no cómo se lee. Dos copias del componente habrían divergido. */
+  tituloLista?: string;
+  vacio?: string;
+
   fincas: Finca[];
   lots: Lot[];
   contracts: ProducerContract[];
@@ -95,11 +104,13 @@ export function RetroalimentacionPanel({
       <div className={styles.wrap}>
         <div className={`${styles.list} ${listOpen ? "" : styles.listClosed}`}>
           <div className={styles.listHead}>
-            <span>Retroalimentación y ayuda · notas de CTC</span>
+            <span>{tituloLista ?? "Retroalimentación y ayuda · notas de CTC"}</span>
           </div>
           <div className={styles.listBody}>
             {threads.length === 0 ? (
-              <div className={styles.empty}>Sin notas todavía. Cree su primer hilo con «Nuevo hilo».</div>
+              <div className={styles.empty}>
+                {vacio ?? "Sin notas todavía. Cree su primer hilo con «Nuevo hilo»."}
+              </div>
             ) : (
               threads.map((t) => {
                 const target = t.notes.find((n) => n.lotId || n.fincaId);

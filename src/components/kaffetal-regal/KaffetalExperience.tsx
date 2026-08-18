@@ -355,7 +355,7 @@ function Experience() {
             .select("id, lot_id, source, status, sca_total, sca_data, factor_rendimiento, q_grader_reference, created_at")
             .order("created_at", { ascending: true }),
           // RLS (producer_comm_log_select_own) scopes this to the producer's own notes.
-          supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id").order("created_at", { ascending: false }),
+          supabase.from("producer_comm_log").select("id, context_label, finca_id, lot_id, note, created_at, author_role, parent_id, lead_id").order("created_at", { ascending: false }),
           // RLS (producer_comm_ack_select_own) scopes this to the producer's own acks.
           supabase.from("producer_comm_ack").select("comm_id, acknowledged_at"),
           // RLS (arena_inscriptions_select_own) scopes this to the producer's own
@@ -547,6 +547,7 @@ function Experience() {
                 created_at: string;
                 author_role: "bcp" | "producer";
                 parent_id: string | null;
+                lead_id: string | null;
               }[]
             | null) ?? []
         ).map((c) => ({
@@ -559,6 +560,7 @@ function Experience() {
           authorRole: c.author_role,
           parentId: c.parent_id,
           acknowledgedAt: ackByCommId.get(c.id) ?? null,
+          leadId: c.lead_id,
         }))
       );
     },
@@ -1000,6 +1002,9 @@ function Experience() {
         authorRole: data.author_role as "bcp" | "producer",
         parentId: data.parent_id,
         acknowledgedAt: null,
+        // Nota creada desde la app sobre una finca o un lote: nunca viene de un
+        // servicio, así que no lleva lead y se queda en Retroalimentación.
+        leadId: null,
       },
       ...prev,
     ]);
@@ -1040,6 +1045,9 @@ function Experience() {
         authorRole: data.author_role as "bcp" | "producer",
         parentId: data.parent_id,
         acknowledgedAt: null,
+        // Nota creada desde la app sobre una finca o un lote: nunca viene de un
+        // servicio, así que no lleva lead y se queda en Retroalimentación.
+        leadId: null,
       },
       ...prev,
     ]);
@@ -1104,6 +1112,9 @@ function Experience() {
         authorRole: data.author_role as "bcp" | "producer",
         parentId: data.parent_id,
         acknowledgedAt: null,
+        // Nota creada desde la app sobre una finca o un lote: nunca viene de un
+        // servicio, así que no lleva lead y se queda en Retroalimentación.
+        leadId: null,
       },
       ...prev,
     ]);
@@ -1158,6 +1169,9 @@ function Experience() {
         authorRole: data.author_role as "bcp" | "producer",
         parentId: data.parent_id,
         acknowledgedAt: null,
+        // Nota creada desde la app sobre una finca o un lote: nunca viene de un
+        // servicio, así que no lleva lead y se queda en Retroalimentación.
+        leadId: null,
       },
       ...prev,
     ]);

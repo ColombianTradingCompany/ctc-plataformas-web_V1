@@ -4,8 +4,8 @@
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
-> Pasos (i), (ii), (iii) y **(iv) COMPLETOS** (V4.23 → V4.34). Queda **el paso (v)** (§6) → V4.35+,
-> y después el owner declara **V5.0** y se hace el Version Wrap V38.
+> **LOS CINCO PASOS ESTÁN COMPLETOS** (V4.23 → V4.35). Lo que queda no es trabajo de plan:
+> **el owner declara V5.0** y se hace el **Version Wrap V38** del mapa interactivo.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -773,16 +773,29 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 6. Step (v) — CTC Tech / Varietales inside KR + «Cherry Picked CaaS» → OCP (A3)  → V4.32+
+## 6. Step (v) — CTC Tech / Varietales inside KR + «Cherry Picked CaaS» → OCP (A3)  ✅ **V4.35, COMPLETO**
 
-- **CTC Tech / Varietales sub-modules in KR**: the producer continues the conversation started on the landing
-  inside the KR hub. Requires linking a `leads` row to a `profiles` row (today leads are anonymous captures).
-  Default D5.1: match on verified email at KR login (lead.email = auth email → offer «vincular»), then a «Mis
-  conversaciones» module in the KR producer panel reading the linked leads + their ECP replies. Landings keep depositing into
-  `leads` (`pillar` `tech` / `varietales` — CHECK-constrained, do not rename).
-- **«Cherry Picked CaaS» landing → OCP CRM CP CaaS**: `/caas` already deposits `pillar='cocreate'` (the key stays
-  `cocreate`, the brand is CaaS); after PR-A the kanban is `/ocp/crm/caas`. New: the thank-you state prompts the
-  creation of a Cherry Picked login (CTA → portada login modal), and a lead that later logs in is linked as in D5.1.
+- ✅ **CTC Tech / Varietales sub-modules in KR — HECHO en V4.35**, pero **no como el plan suponía**.
+  ⚠️ **La premisa era falsa: los leads NO son capturas anónimas.** Ya se vinculan a un perfil EN EL MOMENTO DE
+  LA CAPTURA (`leads.profile_id` + `account_provisioning`, creando la cuenta o atándola a una existente): 13 de
+  15 leads estaban vinculados antes de empezar. Y las respuestas de CTC **ya llegaban al productor dentro de
+  KR** — `mirrorReplyToProducerFeed` las espeja en `producer_comm_log` desde hace tiempo.
+  **Así que D5.1 quedó sin objeto** (no hay nada que emparejar en el login) y la tanda fue de PRESENTACIÓN: las
+  respuestas aterrizaban mezcladas entre las notas de las fincas y no había forma de encontrarlas.
+  **Lo construido**: módulo **«Mis solicitudes»** en el panel del productor, con su tarjeta junto a «Más allá
+  de la exportación», su contador de respuestas sin leer y su propio icono. Mismo componente que
+  Retroalimentación —el hilo se lee igual— con la copy parametrizada.
+  ⚠️ **Y un fallo encontrado con datos reales antes de salir**: partir el feed por `leadId` a secas dejaba la
+  RESPUESTA DEL PRODUCTOR en el otro módulo — solo la nota de CTC lleva el lead; la respuesta lleva `parentId`.
+  La conversación habría aparecido partida en dos pantallas **sin un solo error**. La partición mira ahora
+  también el padre.
+- ✅ **«Cherry Picked CaaS» landing → OCP CRM CP CaaS — HECHO en V4.35**, también más pequeño de lo previsto.
+  El depósito en `pillar='cocreate'` y el kanban en `/ocp/crm/caas` ya funcionaban desde PR-A. Y el formulario
+  **ya CREA la cuenta de Cherry Picked** — así que «el estado de gracias promueve crear un login» no aplicaba:
+  la cuenta ya existe cuando ese panel se pinta.
+  **Lo que faltaba era la puerta**: el panel terminaba en un «Entendido» que solo cerraba, de modo que la
+  persona acababa de recibir un acceso y se quedaba sin forma de usarlo. Ahora hay un CTA **«Entrar a …»** por
+  pilar (CaaS → Cherry Picked Green; tech/varietales/general → Kaffetal Regal), en los tres idiomas.
 
 ---
 
@@ -803,7 +816,7 @@ the rule is one bump per deployed batch.
 | **Version Wrap V37** | El mapa interactivo, al día tras 14 entradas de bitácora | ✅ **DONE** — `Documentacion_Interactiva_V37.0(a3cfe82).html` |
 | **Step (iii)** | New modules (§4): CTC Selection ✅ · CRM CP Green ✅ · CRM CP Roast/X ✅ · socio cards ✅ · Definición rework ✅ | ✅ **V4.27 → V4.32, COMPLETO** |
 | **Step (iv)** | HC (§5), en dos tandas: **(iv-a)** modelo de acceso ✅ · **(iv-b)** concha in-app ✅ | ✅ **V4.33 · V4.34, COMPLETO** |
-| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | **V4.35+** ← next → **owner declares V5.0** → Version Wrap V38 |
+| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | ✅ **V4.35, COMPLETO** → **owner declares V5.0** → Version Wrap V38 ← next |
 
 Every PR: Log entry sealed with sha · HANDOFF touched · DICT touched · memory note `project_structure_reorg_2026_08_17`
 updated with "done through step X".
@@ -824,7 +837,7 @@ updated with "done through step X".
 | D3.3 ✅ **RESUELTA V4.32** | Direccionamiento moodboard data | **Estaba VACÍO** — la fila `assets` pesaba 28 bytes, no había un solo data-URI que exportar. Se retiró y `bodySizeLimit` volvió al defecto de Next. **La decisión real resultó ser otra**: qué hacer con las respuestas guardadas dentro de la rama «Video largo» (§9, punto 8). Owner: *«Strip it, I'll rescue the text»* |
 | D3.4 | PR order A → B → C vs B → A → C | A → B → C |
 | D4.1 ✅ **APLICADA V4.34** | «Solicitar» emails info@ | **Sí, con su default** — una línea, mismas reglas que los leads, y el resultado del envío guardado en la fila (`aviso_email_at` / `aviso_email_error`). La solicitud queda registrada aunque el correo falle: el aviso es comodidad, no el registro |
-| D5.1 | Lead ↔ profile linking rule | verified-email match at login + explicit «vincular» |
+| D5.1 ⚠️ **SIN OBJETO** | Lead ↔ profile linking rule | **La premisa era falsa.** El plan suponía que los leads eran capturas anónimas y había que emparejarlos por correo al entrar. Ya se vinculan **en la captura** (`leads.profile_id` + `account_provisioning`): 13 de 15 lo estaban antes de empezar. No hubo nada que decidir ni que construir |
 | D7.1 | When is V5.0 declared | end of step (v) |
 
 ---

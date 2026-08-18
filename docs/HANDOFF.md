@@ -807,6 +807,39 @@ una ruta de su propia superficie: `/kaffetal-regal/herramientas/<slug>` y su gem
   aviso que falla en silencio es una solicitud que nadie atiende — lección del OTP del BCP. La solicitud queda
   registrada aunque el correo no salga: el aviso es comodidad, no el registro.
 
+## «Mis solicitudes» en el panel del productor — y el cierre del plan V5 (2026-08-19, V4.35)
+
+Último paso de la reorganización. **Con V4.35 los cinco pasos del plan V5 están completos**; lo que queda es
+que el owner declare V5.0 y el Version Wrap V38.
+
+- ⚠️ **La premisa del plan era falsa, y leer la base antes de construir lo destapó.** El §6 decía que los leads
+  son «capturas anónimas» y que había que emparejarlos con una cuenta al entrar (D5.1). **Ya se vinculan en el
+  momento de la captura** (`leads.profile_id` + `account_provisioning`, creando la cuenta o atándola a una
+  existente): 13 de 15 leads estaban vinculados. Y las respuestas de CTC **ya llegaban al productor dentro de
+  KR**, espejadas en `producer_comm_log`. D5.1 quedó sin objeto.
+- **Lo que faltaba era encontrarlas.** Aterrizaban mezcladas entre las notas de las fincas. Ahora hay un módulo
+  **«Mis solicitudes»** (CTC Tech · Varietales · CaaS) con tarjeta propia junto a «Más allá de la exportación»,
+  contador de respuestas sin leer e icono de sobre. Reusa `RetroalimentacionPanel` con la copy parametrizada:
+  el hilo se lee igual, cambia de qué habla.
+- ⚠️ **EL FALLO QUE CASI SALE, encontrado con datos reales.** Partir el feed por `leadId` a secas parecía
+  correcto — pero **solo la nota de CTC lleva el lead**; la RESPUESTA del productor a ese mismo hilo se guarda
+  con `parentId` y `leadId` nulo. La conversación habría quedado partida en dos pantallas: el mensaje de CTC en
+  «Mis solicitudes» y la respuesta del productor en «Retroalimentación», **sin un solo error**. Eran 2 de 15
+  notas. La partición mira ahora el `parentId` además del `leadId`, y `qa-solicitudes-kr-check.mjs` (23) lo
+  vigila.
+- **La partición es por CAMPO, no por el texto de la etiqueta**, y eso es deliberado: una partición basada en
+  copy se rompe el día que alguien mejore el texto, y se rompe en silencio.
+- **Dos migraciones de etiqueta, cosméticas pero necesarias**: `context_label` es lo que AGRUPA los hilos, así
+  que cambiar el texto solo en el código habría partido conversaciones vivas en dos. Se recortó el prefijo
+  «Solicitud CTC Home ·» —falso para quien entra por la landing de un servicio— y se normalizó «CTC Co-Create»
+  a «CTC CaaS», que es la marca desde 2026-08-14 (la CLAVE sigue siendo `cocreate`; eso no se toca).
+- **El formulario de contacto gana su puerta**: creaba la cuenta y terminaba en un «Entendido» que solo
+  cerraba. Ahora ofrece **«Entrar a …»** según el pilar (CaaS → Cherry Picked Green; el resto → Kaffetal
+  Regal), en español, inglés y alemán.
+- ℹ️ **Los COMPRADORES siguen fuera, por diseño de A3**: el espejo solo dispara cuando el perfil vinculado es
+  productor, así que un comprador de Cherry Picked que proponga un proyecto CaaS recibe las respuestas por
+  correo pero no dentro de la app. Es el reflejo exacto de lo que se acaba de construir, y está anotado.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

@@ -373,3 +373,34 @@ APP_VERSION 4.32 → 4.33.
   qa-nav 16/16 · qa-definicion 33/33 · qa-direccionamiento 14/14 · qa-docs 14/14 · qa-encoding 722/0.
 APP_VERSION 4.33 → 4.34.
 (commit: c2519d8)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.35 · Paso (v): «Mis solicitudes» en el panel del productor — EL PLAN V5 QUEDA COMPLETO
+- **Módulo nuevo en Kaffetal Regal**: «Mis solicitudes» (CTC Tech · Varietales · CaaS), con tarjeta propia
+  junto a «Más allá de la exportación», contador de respuestas sin leer e icono de sobre. Cambio del nodo de KR
+  en el mapa: el panel del productor pasa de un módulo de conversación a dos.
+- ⚠️ **PARA EL DICT — la premisa del plan era falsa, y merece decirse**: el §6 daba por hecho que los leads son
+  «capturas anónimas» y que había que emparejarlos con una cuenta al entrar (D5.1). **Ya se vinculan en la
+  CAPTURA** (`leads.profile_id` + `account_provisioning`): 13 de 15 lo estaban. Y las respuestas ya llegaban al
+  productor, espejadas en `producer_comm_log`. La tanda fue de PRESENTACIÓN, no de fontanería, y D5.1 murió.
+- ⚠️ **EL FALLO QUE CASI SALE, y es el mejor ejemplo de la familia muda**: partir el feed por `leadId` a secas
+  parecía correcto, pero **solo la nota de CTC lleva el lead** — la RESPUESTA del productor se guarda con
+  `parentId` y `leadId` nulo. La conversación habría salido partida en dos pantallas (el mensaje en «Mis
+  solicitudes», la respuesta en «Retroalimentación») **sin un solo error**. Eran 2 de 15 notas. Encontrado
+  consultando los datos reales antes de dar la tanda por hecha.
+- **La partición es por CAMPO y no por el texto de la etiqueta**: una partición basada en copy se rompe cuando
+  alguien mejora el texto, y se rompe en silencio.
+- **Dos migraciones de `context_label`**, cosméticas pero necesarias porque esa cadena AGRUPA los hilos: se
+  recortó «Solicitud CTC Home ·» (falso para quien entra por la landing de un servicio) y se normalizó
+  «CTC Co-Create» → «CTC CaaS». La CLAVE `cocreate` no se toca.
+- **El formulario de contacto gana su puerta**: creaba la cuenta y terminaba en «Entendido», que solo cerraba.
+  Ahora ofrece «Entrar a …» por pilar (CaaS → Cherry Picked Green; resto → Kaffetal Regal), en es/en/de.
+- ℹ️ Los COMPRADORES siguen fuera por diseño de A3 (el espejo solo dispara para perfiles productor).
+- **EL PLAN V5 QUEDA COMPLETO** (V4.23 → V4.35). Lo siguiente NO es trabajo de plan: el owner declara **V5.0** y
+  toca el **Version Wrap V38**, que tendrá que compilar todo el Log V37 — es largo y trae muchos nodos nuevos.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · qa-solicitudes-kr 23/23 ·
+  qa-rutas-consolas 263/263 · qa-concha-herramientas 42/42 · qa-herramientas-acceso 26/26 · qa-nav 16/16 ·
+  qa-boards 27/27 · qa-definicion 33/33 · qa-direccionamiento 14/14 · qa-docs 14/14 · qa-encoding 731/0.
+APP_VERSION 4.34 → 4.35.
+(commit: pending)

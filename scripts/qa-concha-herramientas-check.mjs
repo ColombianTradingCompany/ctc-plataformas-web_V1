@@ -40,7 +40,10 @@ const ATAQUES = [
   ["con barra invertida", "/kaffetal-regal\\@sitio-falso"],
   ["con salto de línea", "/kaffetal-regal\nhttps://sitio-falso"],
   ["ruta de OTRA superficie", "/cherry-picked-green/catalogo"],
-  ["ruta de una consola interna", "/bcp/fincas"],
+  // Se usa la RAÍZ de la consola y no un módulo suyo: los módulos se mudaron
+  // en el paso (ii), y nombrar una ruta mudada aquí haría que el guardián de
+  // rutas la denunciara como literal muerto. La raíz `/bcp` no se movió nunca.
+  ["ruta de una consola interna", "/bcp"],
   ["prefijo parecido pero distinto", "/kaffetal-regal-falso/login"],
   ["relativa suelta", "fincas"],
   ["vacía", ""],

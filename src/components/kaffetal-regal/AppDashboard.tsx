@@ -97,7 +97,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string } | undefined> =
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
-export type DashboardModule = "info" | "arena" | "retro" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios" | "coffeed" | "jornadas";
+export type DashboardModule = "info" | "arena" | "retro" | "solicitudes" | "fincas" | "lotes" | "cert" | "contratos" | "herramientas" | "servicios" | "coffeed" | "jornadas";
 
 // Minimalist stroked line icons (one visual language, currentColor) — replaces
 // the multicolor emoji that clashed with the panel's editorial tone.
@@ -124,6 +124,12 @@ const HUB_ICON: Record<DashboardModule, React.ReactNode> = {
   ),
   retro: (
     <LineIcon><path d="M20 12a7.2 7.2 0 0 1-9.9 6.7L5 20l1.3-4.4A7.2 7.2 0 1 1 20 12Z" /></LineIcon>
+  ),
+  // Solicitudes: un sobre. Distinto del bocadillo de Retroalimentación a
+  // propósito — una es correspondencia con un servicio, la otra es la
+  // conversación sobre las fincas.
+  solicitudes: (
+    <LineIcon><path d="M3.5 6.5h17v11h-17z" /><path d="m3.5 7 8.5 6 8.5-6" /></LineIcon>
   ),
   cert: (
     <LineIcon><circle cx="12" cy="10" r="5" /><path d="M8.7 14.3 7 21l5-2.4L17 21l-1.7-6.7" /></LineIcon>
@@ -278,7 +284,29 @@ export function AppDashboard({
   const paymentsDue = lots.filter((l) => l.inscription && l.inscription.status === "pendiente" && l.inscription.phase === "postulacion");
   const totalDueCop = paymentsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? ARENA_FEE_COP), 0);
   const samplesToShip = lots.filter((l) => l.inscription?.phase === "postulacion" && !l.sampleShippedAt).length;
-  const newCtcNotes = feedback.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
+  // La partición del feed (V4.35). Una nota con `leadId` nació de un servicio
+  // —CTC Tech, Varietales, CaaS— y va a «Mis solicitudes»; el resto es
+  // retroalimentación sobre fincas y lotes. Se parte por el CAMPO y no por el
+  // texto de la etiqueta: el label es copy y el día que alguien lo mejore, una
+  // partición basada en él se rompe sin que nada falle.
+  //
+  // ⚠️ Y NO BASTA CON MIRAR `leadId` EN CADA NOTA. Solo la nota de CTC lleva el
+  // lead; la RESPUESTA del productor a ese mismo hilo se guarda con `parentId`
+  // apuntando a ella y `leadId` nulo. Partiendo solo por `leadId`, la mitad de
+  // cada conversación —justo lo que escribió el productor— se habría quedado en
+  // Retroalimentación: el hilo partido en dos pantallas, sin un solo error.
+  // Encontrado con datos reales antes de salir (2 respuestas de 15 notas).
+  const idsDeServicio = new Set(feedback.filter((n) => n.leadId !== null).map((n) => n.id));
+  const esDeServicio = (n: FeedbackNote) => n.leadId !== null || (n.parentId !== null && idsDeServicio.has(n.parentId));
+
+  const solicitudes = feedback.filter(esDeServicio);
+  const retroalimentacion = feedback.filter((n) => !esDeServicio(n));
+
+  const newCtcNotes = retroalimentacion.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
+  const newSolicitudes = solicitudes.filter((n) => n.authorRole === "bcp" && !n.acknowledgedAt).length;
+  // Hilos, no notas: al productor le importa con cuántas cosas está hablando,
+  // no cuántos mensajes hay dentro.
+  const hilosSolicitud = new Set(solicitudes.map((n) => n.contextLabel ?? n.id)).size;
   // F3: la misma regla por parcelas que usan el FincaModal y approveFinca.
   const parcelaGeoOfFinca = (f: Finca): ParcelaGeoFields[] =>
     parcelas
@@ -355,6 +383,21 @@ export function AppDashboard({
       icon: HUB_ICON.servicios,
       title: "Más allá de la exportación",
       fact: "CTC Tech · Varietales Registrados — solicítelos desde su panel",
+    },
+    {
+      // Va PEGADA a «Más allá de la exportación» a propósito: una tarjeta
+      // ofrece los servicios y la siguiente enseña en qué quedaron. Antes de
+      // V4.35 la respuesta de CTC llegaba igual, pero aterrizaba mezclada entre
+      // las notas de las fincas y no había forma de buscarla.
+      key: "solicitudes",
+      icon: HUB_ICON.solicitudes,
+      title: "Mis solicitudes",
+      fact: newSolicitudes
+        ? `${newSolicitudes} respuesta${newSolicitudes === 1 ? "" : "s"} de CTC sin leer`
+        : solicitudes.length
+          ? `${hilosSolicitud} conversación${hilosSolicitud === 1 ? "" : "es"} con CTC`
+          : "Lo que pida por CTC Tech, Varietales o CaaS aparece aquí",
+      alert: newSolicitudes > 0,
     },
     {
       key: "coffeed",
@@ -435,6 +478,7 @@ export function AppDashboard({
             </div>
             {renderTile("contratos")}
             {renderTile("servicios")}
+            {renderTile("solicitudes")}
             {renderTile("coffeed")}
             {renderTile("jornadas")}
             {/* Puente a la capa de personas del ecosistema (2026-07-24): el
@@ -549,9 +593,31 @@ export function AppDashboard({
           </div>
           )}
 
+          {/* Dos módulos, UN componente y UNA fuente: el hilo de una solicitud
+              de servicio se lee igual que el de una nota de finca. Lo que
+              cambia es de qué habla, y eso lo decide `leadId` — no el texto de
+              la etiqueta, que es copy y cambiará. */}
+          {module === "solicitudes" && (
+            <RetroalimentacionPanel
+              feedback={solicitudes}
+              tituloLista="Mis solicitudes · CTC Tech · Varietales · CaaS"
+              vacio="Todavía no ha enviado ninguna solicitud. Se abren desde la página del servicio; aquí aparece la conversación."
+              fincas={fincas}
+              lots={lots}
+              contracts={contracts}
+              composeOpen={false}
+              onCloseCompose={() => {}}
+              onReplyToFeedback={onReplyToFeedback}
+              onAcknowledgeNote={onAcknowledgeNote}
+              onCreateThread={onCreateThread}
+              onOpenFicha={onOpenFicha}
+              onOpenFincaModal={onOpenFincaModal}
+            />
+          )}
+
           {module === "retro" && (
             <RetroalimentacionPanel
-              feedback={feedback}
+              feedback={retroalimentacion}
               fincas={fincas}
               lots={lots}
               contracts={contracts}

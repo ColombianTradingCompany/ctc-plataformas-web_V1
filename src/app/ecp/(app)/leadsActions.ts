@@ -129,7 +129,12 @@ async function mirrorReplyToProducerFeed(
   await service.from("producer_comm_log").insert({
     producer_id: lead.profile_id,
     lead_id: lead.id,
-    context_label: `Solicitud CTC Home · ${PILLAR_LABEL[lead.pillar] ?? lead.pillar}`,
+    // La etiqueta es el TÍTULO del hilo en el panel del productor, y desde
+    // V4.35 también lo que agrupa las conversaciones en «Mis solicitudes».
+    // Decía «Solicitud CTC Home · …», que solo era cierto para el pilar
+    // `general`: CTC Tech, Varietales y CaaS tienen su propia landing y el
+    // productor nunca pasó por CTC Home. Ahora dice el servicio, a secas.
+    context_label: PILLAR_LABEL[lead.pillar] ?? lead.pillar,
     note: body,
     created_by: adminId,
   });

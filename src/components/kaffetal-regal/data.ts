@@ -293,6 +293,14 @@ export type FeedbackNote = {
   parentId: string | null;
   // When the producer has ticked "Entendido" on this note (producer_comm_ack).
   acknowledgedAt: string | null;
+  // El lead que originó esta nota, si vino de un servicio (CTC Tech,
+  // Varietales, CaaS). `null` = nota sobre la finca o el lote.
+  //
+  // Es lo que PARTE el feed en dos módulos desde V4.35, y se distingue por
+  // este campo y no por el texto de `contextLabel`: el label es copy, cambia
+  // cuando alguien lo mejora, y una partición que dependa de una cadena se
+  // rompe el día que se reescriba sin que nada falle.
+  leadId: string | null;
 };
 
 export type ProducerContract = {

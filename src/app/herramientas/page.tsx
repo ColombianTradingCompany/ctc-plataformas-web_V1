@@ -6,18 +6,18 @@ import { HerramientasLanding } from "@/components/services/HerramientasLanding";
 
 export const generateMetadata = superficieConOverrides({
   route: "/herramientas",
-  title: "Herramientas del CafÃ© Â· Calculadoras y utilidades del oficio Â· Colombian Trading Company",
+  title: "Herramientas del Café · Calculadoras y utilidades del oficio · Colombian Trading Company",
   description:
-    "Las herramientas de trabajo de la red CTC, abiertas al gremio: calculadoras de mermas y factor de rendimiento, la rueda del sabor, el disco Agtron y mÃ¡s. Gratis, sin instalaciÃ³n y funcionan sin internet.",
-  siteName: "Herramientas del CafÃ© Â· CTC",
+    "Las herramientas de trabajo de la red CTC, abiertas al gremio: calculadoras de mermas y factor de rendimiento, la rueda del sabor, el disco Agtron y más. Gratis, sin instalación y funcionan sin internet.",
+  siteName: "Herramientas del Café · CTC",
   image: "herramientas.jpg",
-  imageAlt: "Logotipo de Herramientas del CafÃ© sobre fondo azul corporativo",
+  imageAlt: "Logotipo de Herramientas del Café sobre fondo azul corporativo",
 });
 
-// La lista llega YA FILTRADA por el servidor: quÃ© herramienta ve un visitante
-// anÃ³nimo (Default) y cuÃ¡les se suman con una cuenta de la red (Plus) lo decide
-// el registro `tools`, administrado en ECP â†’ Herramientas del cafÃ©. Se rinde por
-// request a propÃ³sito (la sesiÃ³n cambia el reparto, y publicar una versiÃ³n nueva
+// La lista llega YA FILTRADA por el servidor: qué herramienta ve un visitante
+// anónimo (Default) y cuáles se suman con una cuenta de la red (Plus) lo decide
+// el registro `tools`, administrado en ECP → Herramientas del café. Se rinde por
+// request a propósito (la sesión cambia el reparto, y publicar una versión nueva
 // tiene que verse sin esperar a un deploy).
 export const dynamic = "force-dynamic";
 

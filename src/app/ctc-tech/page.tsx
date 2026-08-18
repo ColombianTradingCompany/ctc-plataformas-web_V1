@@ -7,18 +7,18 @@ import { CtcTechLanding } from "@/components/services/CtcTechLanding";
 
 export const generateMetadata = superficieConOverrides({
   route: "/ctc-tech",
-  title: "CTC Tech Â· TecnologÃ­as agrÃ³nomas aplicadas al cafÃ© Â· Colombian Trading Company",
+  title: "CTC Tech · Tecnologías agrónomas aplicadas al café · Colombian Trading Company",
   description:
-    "Ozono + UVC, fermentaciÃ³n controlada, selecciÃ³n Ã³ptica, cromatografÃ­a de suelos e instrumentaciÃ³n de mediciÃ³n: diagnÃ³stico, implementaciÃ³n y capacitaciÃ³n en finca. Agende su diagnÃ³stico â€” Colombian Trading Company.",
+    "Ozono + UVC, fermentación controlada, selección óptica, cromatografía de suelos e instrumentación de medición: diagnóstico, implementación y capacitación en finca. Agende su diagnóstico — Colombian Trading Company.",
   siteName: "CTC Tech",
   image: "ctc-tech.jpg",
   imageAlt: "Logotipo de CTC Tech sobre fondo azul corporativo",
 });
 
-// Superficie de captaciÃ³n Clase B (V4 Â· Fase 1): sin login propio â€” el form
+// Superficie de captación Clase B (V4 · Fase 1): sin login propio — el form
 // del pilar `tech` deposita en `leads` y provisiona la cuenta Kaffetal Regal.
-// googleAuth={false}: este subdominio no tiene ruta /auth/callback (opciÃ³n a
-// de la Fase 1 â€” ver docs/V4_RED_RESTRUCTURE_ANALYSIS.md).
+// googleAuth={false}: este subdominio no tiene ruta /auth/callback (opción a
+// de la Fase 1 — ver docs/V4_RED_RESTRUCTURE_ANALYSIS.md).
 export default function CtcTechPage() {
   return (
     <div data-theme="ctc-home">

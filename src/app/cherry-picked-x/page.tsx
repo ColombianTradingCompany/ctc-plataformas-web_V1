@@ -4,9 +4,9 @@ import { XLanding } from "@/components/cherry-picked-x/XLanding";
 
 export const generateMetadata = superficieConOverrides({
   route: "/cherry-picked-x",
-  title: "Cherry Picked X by CTC Â· The whole harvest, in small boxes Â· Coming 2027",
+  title: "Cherry Picked X by CTC · The whole harvest, in small boxes · Coming 2027",
   description:
-    "Coming 2027: the full Cherry Picked offer without Black, in per-season boxes from 3 kg â€” Red, Blue, Gold and Tyrian at discovery scale. Follow the build-up â€” Colombian Trading Company",
+    "Coming 2027: the full Cherry Picked offer without Black, in per-season boxes from 3 kg — Red, Blue, Gold and Tyrian at discovery scale. Follow the build-up — Colombian Trading Company",
   siteName: "Cherry Picked X",
   image: "cherry-picked-x.jpg",
   imageAlt: "Cherry Picked X seal on a Tyrian purple background",

@@ -355,3 +355,48 @@ Cinco peticiones del owner sobre el módulo, todas construidas:
   entre las dos secciones).
 APP_VERSION 4.18 → 4.19.
 (commit: 60bc834)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V4.20 — la cinta cambia de motor, y la ficha gana su Análisis Intrínseco
+Cinco correcciones del owner sobre lo de V4.19:
+- **El sentido por defecto es hacia la DERECHA.**
+- **Y la cinta ya no es una animación CSS.** Era la causa del segundo defecto que reportó: al
+  pasar el ratón por una flecha, la cinta «volvía a empezar». Con `@keyframes` no se puede
+  cambiar duración ni sentido sin que el navegador REINICIE la animación. Ahora la posición la
+  lleva un bucle de `requestAnimationFrame` sobre `translate3d`, con la velocidad PERSIGUIENDO a
+  su objetivo (17 px/s en reposo, 155 con flecha, negativa hacia la izquierda): acelerar y soltar
+  son continuos y el bucle no tiene costura.
+- **Al pulsar una tarjeta, la cinta la CENTRA antes de voltearla y la tarjeta crece un 15 %.** El
+  motor acepta un destino en vez de una velocidad, elige la copia más cercana (la tira está
+  duplicada) y solo entonces voltea.
+  ⚠️ Trampa que costó un ciclo: el envoltorio del bucle (mantener la posición en [-w, 0]) PELEABA
+  con el centrado — envolvía mientras se perseguía el destino, la tarjeta no llegaba nunca y por
+  tanto no se volteaba. El envoltorio ahora se salta mientras hay destino.
+- **Página 2 de la ficha: «Análisis Intrínseco»**, la telaraña de los diez atributos del
+  formulario SCA, con los atributos físicos compactados en dos columnas encima.
+- **Los datos que faltaban se rellenaron POR ENCARGO del owner** («make it up for the sake of
+  completeness»): humedad, actividad de agua, densidad, factor, malla, defectos y los diez
+  atributos, en `scripts/lib/analisis-intrinseco.mjs`. La cabecera de ese archivo dice que son
+  INVENTADOS y por qué se puede: los diez suman EXACTAMENTE el puntaje real del lote —lo único
+  que un catador comprueba de un vistazo—, uniformidad/taza limpia/dulzor van a 10 como en una
+  taza sin defectos, y el resto se reparte según el carácter del lote. No inventado: puntaje
+  total, variedad, proceso, finca y notas de cata. El sello MUESTRA es lo que mantiene la
+  diferencia legible, y la página lo dice con todas las letras.
+- Dos arreglos de dibujo que salieron al verificar: los rótulos de la telaraña se cortaban contra
+  el panel (lienzo ahora más ancho que alto) y la cinta roja se salía de la hoja y se leía a
+  medias («…A · NO ES OFERTA COMER»); geometría recalculada y texto acortado.
+- ⚠️ Y una trampa del lenguaje, anotada donde toca: los comentarios CSS dentro del template
+  literal del generador de fichas NO pueden llevar tildes invertidas — una sola cierra la cadena
+  y el script deja de parsear.
+- Guardián de 140 a **153**: que no vuelva a haber `@keyframes` para la cinta, que la mueva rAF
+  con la velocidad persiguiendo, sentido por defecto a la derecha, la izquierda invirtiendo, el
+  centrado con su copia más cercana y su volteo AL LLEGAR, que el bucle no envuelva mientras
+  centra, el 15 % y el z-index, los diez atributos del formulario y que el archivo de datos
+  inventados AVISE de que lo son.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build`
+  exit 0 · guardián 153/153 · medido en Chrome real (el panel de vista previa ni siquiera corre
+  rAF, así que ahí todo salía a cero): sentido DERECHA, base 17 px/s, rampa sin salto, vuelta a
+  17 al soltar, −159 px/s con la flecha izquierda, desviación del centro 0 px y escala 1.15.
+APP_VERSION 4.19 → 4.20.
+(commit: pending)

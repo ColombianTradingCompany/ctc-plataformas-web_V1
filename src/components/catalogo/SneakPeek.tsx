@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
@@ -13,24 +13,36 @@ import styles from "./SneakPeek.module.css";
 // fuera vea de un golpe qué hay y de dónde viene. El catálogo completo —precios,
 // MOQ, kilos, reservas— vive detrás del login de Cherry Picked; esta cinta es lo
 // que lo REEMPLAZA en las landings de la familia CP (decisión del owner,
-// 2026-08-17) y lo que lo anuncia en CTC Home y en la landing de Kaffetal Regal.
+// 2026-08-17) y lo que lo anuncia en CTC Home, en Kaffetal Regal y en CaaS.
 // Plan: docs/V5_CONSOLAS_PLAN.md §1.
 //
-// LA TARJETA SE VOLTEA (owner, 2026-08-17). Delante: foto, nombre, grado y
-// variedad — lo que hace que alguien quiera mirar. Detrás, al pulsarla: el
-// puntaje, el origen completo, el proceso, las notas de cata y el botón que abre
-// la FICHA TÉCNICA del lote. Es el mismo criterio de siempre: la cara pública
-// enseña el café, no el negocio.
+// LA TARJETA SE VOLTEA. Delante: foto, nombre, grado y variedad — lo que hace
+// que alguien quiera mirar. Detrás: el puntaje, el origen completo, el proceso,
+// las notas de cata, la rueda de catación y el botón que abre la FICHA TÉCNICA.
+// Es el criterio de siempre: la cara pública enseña el café, no el negocio.
+//
+// Y AL PULSARLA, LA CINTA LA CENTRA ANTES DE VOLTEARLA (owner, 2026-08-17): la
+// tarjeta se lleva al medio, crece un 15 % y solo entonces gira. Abrir el
+// detalle de algo que está saliéndose por el borde no hay quien lo lea.
+//
+// ⚠️ LA CINTA NO ES UNA ANIMACIÓN CSS, y no es un capricho. Con `@keyframes` no
+// se puede cambiar la velocidad ni el sentido sin que el navegador REINICIE la
+// animación — que es exactamente lo que se veía al pasar el ratón por una
+// flecha: la cinta saltaba al principio. Aquí la posición la lleva un
+// `requestAnimationFrame` sobre un `translate3d` propio: la velocidad se
+// persigue con suavidad, el sentido se invierte sin costura, y centrar una
+// tarjeta es mover esa misma variable. Es más código, y es el único modo de que
+// no dé el salto.
 //
 // Se pide desde el navegador (`/api/catalogo/sneak-peek`) por la misma razón que
 // la cinta de mercado: así la página sigue siendo estática y un lote nuevo
 // aparece sin volver a construir el sitio. Si la petición falla, la cinta NO se
 // dibuja — una portada no se cae por un vistazo.
 //
-// EL IDIOMA LLEGA COMO PROP. Home y KR usan `components/lang/i18n`; la familia
-// Cherry Picked usa `components/cherry-picked/i18n`. Son dos proveedores con la
-// misma unión de idiomas, así que este módulo no se engancha a ninguno: recibe
-// el valor y ya. Es lo que lo hace reutilizable en las seis superficies.
+// EL IDIOMA LLEGA COMO PROP. Home, KR y CaaS usan `components/lang/i18n`; la
+// familia Cherry Picked usa `components/cherry-picked/i18n`. Son dos proveedores
+// con la misma unión de idiomas, así que este módulo no se engancha a ninguno:
+// recibe el valor y ya. Es lo que lo hace montable en las siete superficies.
 
 type Variant = "home" | "kr" | "cp";
 
@@ -118,7 +130,9 @@ function Tarjeta({
   lot: SneakPeekLot;
   lang: SneakPeekLang;
   volteada: boolean;
-  onVoltear: () => void;
+  /** Recibe el elemento de la tarjeta: la cinta necesita saber DÓNDE está para
+   *  poder centrarla antes de voltearla. */
+  onVoltear: (elemento: HTMLElement) => void;
   /** La copia que hace el bucle sin costura. Se puede pulsar con el ratón (si no,
    *  media cinta sería inerte), pero no recibe foco ni la lee un lector: la
    *  primera copia ya está anunciada. */
@@ -129,15 +143,17 @@ function Tarjeta({
   const origen = [lot.municipio, lot.departamento].filter(Boolean).join(", ");
   const specs = [lot.process, lot.altitudeM != null ? `${lot.altitudeM} m` : null].filter(Boolean).join(" · ");
   const inerte = duplicada || !volteada ? -1 : undefined;
+  const cajaRef = useRef<HTMLDivElement | null>(null);
+  const pulsar = () => cajaRef.current && onVoltear(cajaRef.current);
 
   return (
-    <div className={`${styles.card} ${volteada ? styles.flipped : ""}`}>
+    <div className={`${styles.card} ${volteada ? styles.flipped : ""}`} ref={cajaRef}>
       <div className={styles.inner}>
         {/* ── La cara: foto, nombre, grado y variedad ──────────────────────── */}
         <button
           type="button"
           className={`${styles.face} ${styles.front}`}
-          onClick={onVoltear}
+          onClick={pulsar}
           aria-label={t.tarjetaAria(lot.name)}
           aria-expanded={volteada}
           tabIndex={duplicada ? -1 : undefined}
@@ -169,9 +185,9 @@ function Tarjeta({
           </span>
         </button>
 
-        {/* ── El reverso: el resto del lote y su ficha ─────────────────────── */}
+        {/* ── El reverso: el resto del lote, su rueda y su ficha ───────────── */}
         <div className={`${styles.face} ${styles.back}`} aria-hidden={!volteada}>
-          <button type="button" className={styles.backTop} onClick={onVoltear} tabIndex={inerte}>
+          <button type="button" className={styles.backTop} onClick={pulsar} tabIndex={inerte}>
             <span className={styles.backName}>{lot.name}</span>
             <span className={styles.backClose} aria-label={t.volver}>
               ×
@@ -239,6 +255,18 @@ export function SneakPeek({
   const [impulso, setImpulso] = useState<null | "izq" | "der">(null);
   const [popup, setPopup] = useState(false);
 
+  const cintaRef = useRef<HTMLDivElement | null>(null);
+  const pistaRef = useRef<HTMLDivElement | null>(null);
+  /** Posición de la cinta, en píxeles de `translateX`. Vive en un ref y no en el
+   *  estado: cambia sesenta veces por segundo y no debe repintar React. */
+  const posRef = useRef(0);
+  const velRef = useRef(0);
+  /** A dónde queremos ir: una velocidad objetivo, o una posición cuando estamos
+   *  centrando una tarjeta. La una excluye a la otra. */
+  const objetivoVelRef = useRef(0);
+  const destinoRef = useRef<number | null>(null);
+  const alLlegarRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     let alive = true;
     fetch("/api/catalogo/sneak-peek")
@@ -249,6 +277,103 @@ export function SneakPeek({
       alive = false;
     };
   }, []);
+
+  // ── El motor de la cinta ──────────────────────────────────────────────────
+  // Un solo bucle mientras el módulo está montado. La velocidad PERSIGUE a su
+  // objetivo (no salta a él), así que acelerar con una flecha o soltarla es un
+  // cambio continuo; y cuando hay un destino —centrar una tarjeta— es la
+  // posición la que persigue, y avisa al llegar.
+  useEffect(() => {
+    if (!data) return;
+    const reducido =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    let anterior = performance.now();
+
+    const paso = (ahora: number) => {
+      const dt = Math.min(0.064, (ahora - anterior) / 1000); // volver a la pestaña no dispara la cinta
+      anterior = ahora;
+      const pista = pistaRef.current;
+      if (pista) {
+        // El ancho de UNA copia: la pista lleva la tira dos veces, y es esa
+        // mitad la que hace que el bucle no tenga costura.
+        const w = pista.scrollWidth / 2 || 1;
+
+        if (destinoRef.current !== null) {
+          const d = destinoRef.current - posRef.current;
+          if (Math.abs(d) < 0.6 || reducido) {
+            posRef.current = destinoRef.current;
+            destinoRef.current = null;
+            velRef.current = 0;
+            const cb = alLlegarRef.current;
+            alLlegarRef.current = null;
+            cb?.();
+          } else {
+            posRef.current += d * Math.min(1, dt * 9);
+          }
+        } else if (!reducido) {
+          velRef.current += (objetivoVelRef.current - velRef.current) * Math.min(1, dt * 5);
+          posRef.current += velRef.current * dt;
+        }
+
+        // El bucle: la posición vive en [-w, 0) y al salirse se envuelve.
+        // ⚠️ SOLO cuando no estamos centrando. El destino de un centrado puede
+        // caer fuera de ese rango, y envolver mientras se persigue lo aleja de
+        // su objetivo en cada vuelta: la tarjeta no llegaba nunca al centro y
+        // por tanto no se volteaba. Al terminar el centrado se envuelve otra vez.
+        if (destinoRef.current === null) {
+          if (posRef.current > 0) posRef.current -= w;
+          if (posRef.current < -w) posRef.current += w;
+        }
+        pista.style.transform = `translate3d(${posRef.current}px,0,0)`;
+      }
+      raf = requestAnimationFrame(paso);
+    };
+    raf = requestAnimationFrame(paso);
+    return () => cancelAnimationFrame(raf);
+  }, [data]);
+
+  // La velocidad que toca en cada momento. POSITIVA = la cinta corre hacia la
+  // DERECHA, que es el sentido por defecto (owner, 2026-08-17). Con una tarjeta
+  // abierta la cinta se para: el detalle recién abierto no puede irse solo.
+  useEffect(() => {
+    const BASE = 17;
+    const RAPIDO = 155;
+    objetivoVelRef.current = volteada
+      ? 0
+      : impulso === "izq"
+      ? -RAPIDO
+      : impulso === "der"
+      ? RAPIDO
+      : BASE;
+  }, [impulso, volteada]);
+
+  /** Lleva la tarjeta al centro de la cinta y, al llegar, la voltea. */
+  const centrarYVoltear = useCallback(
+    (elemento: HTMLElement, idLote: string) => {
+      if (volteada === idLote) {
+        setVolteada(null);
+        return;
+      }
+      const cinta = cintaRef.current;
+      const pista = pistaRef.current;
+      if (!cinta || !pista) {
+        setVolteada(idLote);
+        return;
+      }
+      const w = pista.scrollWidth / 2 || 1;
+      // `offsetLeft` es relativo a la pista, así que no arrastra el error de
+      // dónde esté la cinta ahora mismo — justo lo que hace falta.
+      const centroTarjeta = elemento.offsetLeft + elemento.offsetWidth / 2;
+      let destino = cinta.clientWidth / 2 - centroTarjeta;
+      // La tarjeta está dos veces (la tira y su copia): se va a la más cercana.
+      while (destino - posRef.current > w / 2) destino -= w;
+      while (posRef.current - destino > w / 2) destino += w;
+      destinoRef.current = destino;
+      alLlegarRef.current = () => setVolteada(idLote);
+    },
+    [volteada]
+  );
 
   // Escape cierra la tarjeta abierta: si algo se despliega, tiene que poder
   // cerrarse sin buscar el sitio exacto donde volver a pulsar.
@@ -276,7 +401,7 @@ export function SneakPeek({
             lang={lang}
             duplicada={duplicada}
             volteada={volteada === lot.id}
-            onVoltear={() => setVolteada((v) => (v === lot.id ? null : lot.id))}
+            onVoltear={(el) => centrarYVoltear(el, lot.id)}
           />
         ))}
       </div>
@@ -297,12 +422,12 @@ export function SneakPeek({
       {!data ? (
         <div className={styles.loading} aria-hidden />
       ) : (
-        <div className={styles.cinta}>
+        <div className={styles.cinta} ref={cintaRef}>
           {/* Las dos flechas no navegan: ACELERAN el paso hacia su lado mientras
-              el ratón (o el foco) está encima — la izquierda invirtiendo el
-              sentido. Al soltar, la cinta vuelve a su ritmo de lectura. Con
-              movimiento reducido la cinta es una tira que se arrastra, así que
-              ahí además empujan el scroll al pulsarlas. */}
+              el ratón (o el foco) está encima. Al soltar, la cinta vuelve a su
+              ritmo de lectura SIN dar un salto — la velocidad se persigue, no se
+              reinicia. Con movimiento reducido no hay marcha que acelerar, así
+              que ahí además empujan el scroll al pulsarlas. */}
           {(["izq", "der"] as const).map((lado) => (
             <button
               key={lado}
@@ -313,30 +438,19 @@ export function SneakPeek({
               onMouseLeave={() => setImpulso(null)}
               onFocus={() => setImpulso(lado)}
               onBlur={() => setImpulso(null)}
-              onClick={(e) => {
-                const pista = e.currentTarget.parentElement?.querySelector(`.${styles.track}`);
-                pista?.scrollBy({ left: lado === "izq" ? -640 : 640, behavior: "smooth" });
+              onClick={() => {
+                pistaRef.current?.scrollBy({ left: lado === "izq" ? -640 : 640, behavior: "smooth" });
               }}
             >
               <span aria-hidden>{lado === "izq" ? "‹" : "›"}</span>
             </button>
           ))}
-          {/* Con una tarjeta abierta la cinta SE PARA: si siguiera andando, el
-              detalle que alguien acaba de abrir se le iría de la pantalla. */}
-          <div
-            className={[
-            styles.track,
-            volteada ? styles.paused : "",
-            impulso === "der" ? styles.rapido : "",
-            impulso === "izq" ? styles.rapidoAtras : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {tira(false)}
-          {/* La segunda copia es lo que hace que el bucle no tenga costura. Es
-              aria-hidden: quien usa lector de pantalla ya leyó la primera. */}
-          <div aria-hidden>{tira(true)}</div>
+          {/* La pista lleva la tira DOS veces: es lo que hace que el bucle no
+              tenga costura. La segunda copia es aria-hidden — quien usa lector
+              de pantalla ya leyó la primera. */}
+          <div className={styles.track} ref={pistaRef}>
+            {tira(false)}
+            <div aria-hidden>{tira(true)}</div>
           </div>
         </div>
       )}

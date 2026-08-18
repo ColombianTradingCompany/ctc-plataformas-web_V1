@@ -95,7 +95,12 @@ check(
 );
 const CSS = lee("src/components/catalogo/SneakPeek.module.css");
 check("respeta prefers-reduced-motion", CSS.includes("prefers-reduced-motion"));
-check("se pausa al pasar el ratón o al recibir el foco", CSS.includes(":hover") && CSS.includes(":focus-within"));
+// La cinta ya NO es una animación CSS (V4.20): con `@keyframes` el navegador
+// reinicia la animación al cambiar velocidad o sentido, que era el salto que se
+// veía al pasar el ratón por una flecha. Lo que se vigila ahora es el motor.
+check("la cinta no vuelve a depender de una animación CSS", !CSS.includes("@keyframes sp-slide"));
+check("la mueve un bucle de rAF sobre translate3d", COMPONENTE.includes("requestAnimationFrame") && COMPONENTE.includes("translate3d"));
+check("la velocidad se PERSIGUE, no se asigna de golpe", COMPONENTE.includes("velRef.current +="));
 
 // ── 5. Los mock: marcados, rotulados y retirables ───────────────────────────
 check("hay exactamente 7 lotes mock", SNEAK_PEEK_MOCK.length === 7);
@@ -212,7 +217,10 @@ for (const l of SNEAK_PEEK_MOCK) {
 }
 check("la cara delantera es un botón con aria-expanded", COMPONENTE.includes("aria-expanded={volteada}"));
 check("Escape cierra la tarjeta abierta", COMPONENTE.includes('e.key === "Escape"'));
-check("la cinta se para con una tarjeta abierta", COMPONENTE.includes("volteada ? styles.paused"));
+check("la cinta se para con una tarjeta abierta", /objetivoVelRef.current = volteada[\s\S]{0,40}\? 0/.test(COMPONENTE));
+// El sentido por defecto es hacia la DERECHA (owner, 2026-08-17): velocidad base
+// POSITIVA, que es como el motor expresa ese sentido.
+check("el sentido por defecto es hacia la derecha", /const BASE = \d+;/.test(COMPONENTE) && !/const BASE = -/.test(COMPONENTE));
 check("la copia del bucle no recibe foco", COMPONENTE.includes("tabIndex={duplicada ? -1 : undefined}"));
 check("el enlace de la ficha no voltea la tarjeta al pulsarlo", COMPONENTE.includes("e.stopPropagation()"));
 check("la ficha se abre en otra pestaña sin ceder la ventana", COMPONENTE.includes('rel="noopener"'));
@@ -234,7 +242,27 @@ check(
 check("hay flecha a cada lado", COMPONENTE.includes("styles.flechaIzq") && COMPONENTE.includes("styles.flechaDer"));
 check("aceleran con el ratón Y con el foco", COMPONENTE.includes("onMouseEnter") && COMPONENTE.includes("onFocus"));
 check("y sueltan al salir", COMPONENTE.includes("onMouseLeave") && COMPONENTE.includes("onBlur"));
-check("la izquierda invierte el sentido", CSS.includes("animation-direction:reverse"));
+check("la flecha izquierda invierte el sentido", COMPONENTE.includes('impulso === "izq"') && COMPONENTE.includes("-RAPIDO"));
+
+// ── 13. Centrar y crecer al abrir (owner, 2026-08-17) ───────────────────────
+check("al pulsar se centra la tarjeta antes de voltearla", COMPONENTE.includes("centrarYVoltear"));
+check("el destino se calcula con el centro de la cinta", COMPONENTE.includes("cinta.clientWidth / 2 - centroTarjeta"));
+check("se elige la copia más cercana de la tarjeta", COMPONENTE.includes("while (destino - posRef.current > w / 2)"));
+check("y se voltea solo AL LLEGAR", COMPONENTE.includes("alLlegarRef.current = () => setVolteada"));
+// El envoltorio del bucle no puede pelearse con el centrado: si envuelve
+// mientras se persigue un destino, la tarjeta no llega nunca y no se voltea.
+check("el bucle no envuelve mientras centra", COMPONENTE.includes("if (destinoRef.current === null) {"));
+check("la tarjeta abierta crece un 15 %", CSS.includes(".flipped{transform:scale(1.15)"));
+check("y se pone por encima de sus vecinas", /\.flipped\{[^}]*z-index/.test(CSS));
+
+// ── 14. El Análisis Intrínseco de la ficha ──────────────────────────────────
+const ANALISIS_SRC = lee("scripts/lib/analisis-intrinseco.mjs");
+check("la ficha lleva el análisis intrínseco", lee("scripts/build-fichas-mock.mjs").includes("radarSVG"));
+check("son los diez atributos del formulario SCA", (ANALISIS_SRC.match(/clave: "/g) || []).length === 10);
+check(
+  "y el archivo AVISA de que esos números son inventados por encargo",
+  /INVENTADOS, POR ENCARGO/.test(ANALISIS_SRC)
+);
 check("las flechas llevan rótulo accesible", COMPONENTE.includes("t.flechaAnterior") && COMPONENTE.includes("t.flechaSiguiente"));
 
 // ── 11. La ventana del catálogo ─────────────────────────────────────────────

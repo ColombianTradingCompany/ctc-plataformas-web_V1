@@ -282,6 +282,27 @@ Mechanics that matter:
   create an account, or sign in (on CP surfaces the second opens the login without navigating). The link keeps
   a real `href` so it can still be opened in a new tab and followed by a crawler.
 
+### 1.5.3 Third round (2026-08-17, V4.20)
+
+- **The band runs to the RIGHT by default** and its engine is no longer a CSS animation. With `@keyframes`
+  the browser restarts the animation whenever duration or direction change — that was the jump on hovering an
+  arrow. The position is now driven by `requestAnimationFrame` over a `translate3d`: the speed **chases** its
+  target (17 px/s at rest, 155 while an arrow is hovered, negative to the left), so accelerating and releasing
+  are continuous. Measured in real Chrome, not in the preview pane, which does not even run rAF.
+- **Clicking a card centres it first, then flips it, and it pops 15 %.** The engine takes a target position
+  instead of a speed, picks the nearer of the card's two copies (the strip is duplicated), and only calls the
+  flip on arrival. ⚠️ The loop must **not** wrap the position while it is chasing a target — wrapping fought
+  the chase and the card never arrived, so it never flipped. Verified: 0 px off centre, scale 1.15.
+- **Page 2 of the ficha gained the «Análisis Intrínseco»**: the ten SCA form attributes as a radar, with the
+  physical attributes compacted into two columns above it.
+- **The missing analytical data is now filled in** (owner: *"make it up for the sake of completeness"*).
+  Humidity, water activity, density, yield factor, screen, defects and the ten attributes live in
+  `scripts/lib/analisis-intrinseco.mjs`, which states in its header that they are **invented on purpose**.
+  They are built to be plausible, not true: the ten attributes **sum exactly** to the lot's real SCA score
+  (the one thing a Q-grader checks at a glance), uniformity/clean cup/sweetness sit at 10 as in a defect-free
+  cup, and the rest is distributed by the lot's character. What is NOT invented: the total score, variety,
+  process, farm and cup notes — those come from Notion. The MUESTRA stamp is what keeps the difference legible.
+
 ### 1.5.1 The datasheets («Ver ficha técnica»)
 
 `SneakPeekLot.datasheetUrl` is optional and the button only exists when it is set.

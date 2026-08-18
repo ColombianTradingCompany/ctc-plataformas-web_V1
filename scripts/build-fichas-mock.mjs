@@ -10,8 +10,12 @@
 //
 // LAS TRES PÁGINAS (owner, 2026-08-17)
 //   1. Resumen del lote — lo que la tarjeta enseña, en grande.
-//   2. Ficha de café verde — los atributos físicos y analíticos que lleva una
-//      ficha de verde de la casa. Lo que no se sabe dice «—» y no se inventa.
+//   2. Ficha de café verde — los atributos físicos y analíticos, compactos
+//      arriba, y debajo el ANÁLISIS INTRÍNSECO: la telaraña de los diez
+//      atributos del formulario SCA. ⚠️ Esos números son INVENTADOS por encargo
+//      del owner (2026-08-17) para que la ficha de muestra esté completa; son
+//      plausibles y suman el puntaje real del lote, pero no son de laboratorio.
+//      Por eso las tres páginas van selladas. Ver `lib/analisis-intrinseco.mjs`.
 //   3. Rueda de catación — la rueda SCA del lote, generada por
 //      `build-ruedas-mock.mjs` a partir de la herramienta de la casa.
 //
@@ -39,6 +43,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { SNEAK_PEEK_MOCK } from "../src/lib/catalogo/sneakPeekMock.ts";
 import { GRADO_POR_ID } from "../src/lib/grados/definicion.ts";
 import { CTC_LEGAL_LINE } from "../src/lib/legal.ts";
+import { ANALISIS, ATRIBUTOS, radarSVG } from "./lib/analisis-intrinseco.mjs";
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SALIDA = `${RAIZ}/public/docs/fichas-mock`;
@@ -53,23 +58,6 @@ const url = (ruta) => pathToFileURL(ruta).href;
 const esc = (s) =>
   String(s ?? "—").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-// ── Lo analítico, SOLO para estas fichas de muestra ──────────────────────────
-// No vive en `SneakPeekLot` a propósito: ese tipo viaja al navegador en cada
-// visita y no tiene por qué cargar con la densidad de un lote. Lo que hay aquí
-// salió de la base de Notion del owner; lo que Notion tenía vacío se queda vacío
-// y la ficha lo dice con «—». No se inventa un número analítico: una humedad
-// inventada en un documento con pinta de oficial es exactamente la clase de dato
-// que después alguien cita.
-const ANALITICO = {
-  "mock-lote-01": { tipo: "Macro Lote", densidad: null, factor: null, humedad: null, aw: null },
-  "mock-lote-02": { tipo: "Micro Lote", densidad: null, factor: null, humedad: null, aw: null },
-  "mock-lote-03": { tipo: "Micro Lote", densidad: 900, factor: 88, humedad: null, aw: null },
-  "mock-lote-04": { tipo: "Micro Lote", densidad: null, factor: null, humedad: null, aw: null },
-  "mock-lote-05": { tipo: "Macro Lote", densidad: null, factor: null, humedad: null, aw: null },
-  "mock-lote-06": { tipo: "Macro Lote", densidad: null, factor: null, humedad: null, aw: null },
-  "mock-lote-07": { tipo: null, densidad: null, factor: null, humedad: null, aw: null },
-};
-
 const ESTILO = (grado) => `
   @page{size:A4;margin:0}
   *{box-sizing:border-box}
@@ -80,9 +68,14 @@ const ESTILO = (grado) => `
   /* ── El sello «red taped» ──────────────────────────────────────────────────
      Una cinta en diagonal arriba a la derecha y una marca de agua girada. Va en
      las TRES páginas: una ficha suelta no puede circular sin decir lo que es. */
-  .cinta{position:absolute;top:9mm;right:-34mm;width:120mm;transform:rotate(38deg);
+  /* La geometría está calculada para que la cinta quepa ENTERA en la esquina:
+     con 120 mm y un desplazamiento de -34 mm el texto se salía por el borde y se
+     leía a medias («…A · NO ES OFERTA COMER»).
+     OJO: nada de tildes invertidas en estos comentarios — todo este bloque es un
+     template literal de JS y una sola cerraría la cadena. */
+  .cinta{position:absolute;top:17mm;right:-15mm;width:102mm;transform:rotate(38deg);
          background:#C8102F;color:#fff;text-align:center;padding:3.5mm 0;
-         font-size:9.5pt;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+         font-size:8.5pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
          box-shadow:0 1mm 3mm rgba(0,0,0,.18);z-index:5}
   .marca{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
          transform:rotate(-27deg);z-index:0;pointer-events:none}
@@ -115,6 +108,17 @@ const ESTILO = (grado) => `
   td.v em{font-style:normal;color:#9А94A8}
   .cata p{font-size:11.5pt;line-height:1.5;margin:0;max-width:150mm}
 
+  /* La ficha de verde va COMPACTA arriba —dos columnas, sin bordes gruesos—
+     para dejarle la mitad de la página a la telaraña. */
+  .compacta{display:grid;grid-template-columns:1fr 1fr;gap:0 12mm}
+  .compacta div{display:flex;justify-content:space-between;gap:4mm;padding:2.2mm 0;border-bottom:1px solid #ECE9F3}
+  .compacta dt{color:#5A5568;font-size:8pt;letter-spacing:.08em;text-transform:uppercase;margin:0}
+  .compacta dd{margin:0;font-size:9.5pt;font-weight:600;text-align:right}
+  .radarCaja{display:flex;gap:8mm;align-items:center;margin-top:2mm}
+  .radarCaja .leyenda{font-size:8.5pt;line-height:1.55;color:#3A3548;max-width:62mm}
+  .radarCaja .leyenda b{display:block;font-size:9.5pt;margin-bottom:2mm}
+  .radarCaja svg{flex:none}
+
   .aviso{margin-top:auto;background:#FDF3F5;border:1px solid #F3D3DA;border-left:4px solid #C8102F;padding:5mm 6mm;font-size:8.5pt;line-height:1.5;color:#3A3548}
   .aviso b{display:block;margin-bottom:1.5mm;letter-spacing:.1em;text-transform:uppercase;font-size:8pt;color:#C8102F}
   .pie{margin-top:5mm;border-top:1px solid #E4E1EC;padding-top:3.5mm;font-size:7.5pt;color:#5A5568;display:flex;justify-content:space-between}
@@ -125,7 +129,7 @@ const ESTILO = (grado) => `
   .notas span{border:1px solid #E4E1EC;border-radius:999px;padding:1.8mm 4mm;font-size:9pt;color:#3A3548}
 `;
 
-const SELLO_TEXTO = "Muestra · no es oferta comercial";
+const SELLO_TEXTO = "Muestra · no es oferta";
 
 function cabecera(sub) {
   return `<div class="cab">
@@ -176,34 +180,46 @@ function paginaResumen(lote, grado) {
 }
 
 function paginaVerde(lote) {
-  const a = ANALITICO[lote.id] || {};
-  const dato = (v, unidad = "") => (v == null || v === "" ? '<em>— sin dato</em>' : esc(v + unidad));
+  const a = ANALISIS[lote.id] || {};
   const filas = [
-    ["Variedad", esc(lote.variety)],
-    ["Proceso (beneficio)", esc(lote.process)],
-    ["Altitud", lote.altitudeM != null ? esc(`${lote.altitudeM} m s. n. m.`) : dato(null)],
-    ["Finca", esc(lote.finca)],
-    ["Municipio", esc([lote.municipio, lote.departamento].filter(Boolean).join(", "))],
-    ["Clase de lote", dato(a.tipo)],
-    ["Cosecha", esc(lote.harvestQuarter || lote.season.es)],
-    ["Densidad", dato(a.densidad, " g/L")],
-    ["Factor de rendimiento", dato(a.factor)],
-    ["Humedad", dato(a.humedad, " %")],
-    ["Actividad de agua", dato(a.aw)],
-    ["Granulometría (malla)", dato(null)],
-    ["Puntaje SCA", esc(lote.score) + (lote.scoreEstimated ? " <em>(estimado)</em>" : "")],
+    ["Variedad", lote.variety],
+    ["Proceso", lote.process],
+    ["Finca", lote.finca],
+    ["Municipio", [lote.municipio, lote.departamento].filter(Boolean).join(", ")],
+    ["Altitud", lote.altitudeM != null ? lote.altitudeM + " m s. n. m." : "—"],
+    ["Clase de lote", a.tipo],
+    ["Cosecha", lote.harvestQuarter || lote.season.es],
+    ["Humedad", a.humedad],
+    ["Actividad de agua", a.aw],
+    ["Densidad", a.densidad ? a.densidad + " g/L" : "—"],
+    ["Factor de rendimiento", a.factor],
+    ["Granulometría (malla)", a.malla],
+    ["Defectos", a.defectos],
+    ["Puntaje SCA", lote.score],
   ];
+  const total = ATRIBUTOS.reduce((s, at) => s + (a.sca ? a.sca[at.clave] : 0), 0);
   return `<div class="hoja">${sellos}<div class="contenido">
     ${cabecera("Ficha de café verde")}
-    <h1 class="nombre" style="font-size:19pt">${esc(lote.name)}</h1>
+    <h1 class="nombre" style="font-size:17pt;margin-top:7mm">${esc(lote.name)}</h1>
     <div class="codigo">${esc(lote.code)}</div>
-    <h2 class="sec">Atributos físicos y analíticos</h2>
-    <table>${filas.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td class="v">${v}</td></tr>`).join("")}</table>
-    <h2 class="sec">Sobre los campos vacíos</h2>
-    <p style="font-size:9.5pt;line-height:1.5;color:#3A3548;margin:0;max-width:150mm">
-      Los campos marcados «sin dato» no se rellenan con estimaciones: en una ficha de café verde un número
-      inventado es peor que un hueco. Los lotes de la temporada vigente traen estos valores del laboratorio.
-    </p>
+    <h2 class="sec" style="margin-top:6mm">Atributos físicos y analíticos</h2>
+    <dl class="compacta">${filas
+      .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`)
+      .join("")}</dl>
+    <h2 class="sec">Análisis intrínseco · formulario SCA</h2>
+    <div class="radarCaja">
+      ${a.sca ? radarSVG(a.sca, { size: 330 }) : ""}
+      <div class="leyenda">
+        <b>${total.toFixed(2)} puntos</b>
+        Los diez atributos del formulario SCA, cada uno de 6 a 10. Uniformidad, taza limpia y dulzor
+        puntúan 10 en una taza sin defectos; el carácter del lote se lee en el resto — dónde se abre la
+        figura es dónde destaca este café.
+        <br><br>
+        <strong>Valores de muestra.</strong> Este documento es una MUESTRA: los datos analíticos y el
+        reparto de atributos son representativos, no lecturas de laboratorio de un lote real. El puntaje
+        total, la variedad, el proceso, la finca y las notas de cata sí son los del lote.
+      </div>
+    </div>
     ${avisoLegal(lote)}${pie(2)}
   </div></div>`;
 }

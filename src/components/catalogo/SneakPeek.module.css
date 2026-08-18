@@ -17,6 +17,8 @@
   position:relative;
   background:var(--paper);
   border-top:1px solid var(--line);
+  /* El aire de más arriba y abajo es para que el 15 % de la tarjeta abierta no
+     se recorte contra el borde de la sección. */
   padding:clamp(38px,6vw,72px) 0 clamp(30px,5vw,56px);
   overflow:hidden;
 }
@@ -45,14 +47,19 @@
 
 /* Altura reservada mientras llega la respuesta, para que la página no salte
    cuando la cinta aparece (mismo motivo que en la cinta de mercado). */
-.loading{height:462px}
+.loading{height:530px}
 
-.track{display:flex;width:max-content;animation:sp-slide 150s linear infinite}
-.track:hover,.track:focus-within{animation-play-state:paused}
-/* Con una tarjeta abierta la cinta se PARA del todo: si siguiera andando, el
-   detalle que alguien acaba de abrir se le iría de la pantalla. */
-.paused{animation-play-state:paused}
-@keyframes sp-slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* La pista NO lleva animación CSS: la mueve el componente con rAF sobre
+   `translate3d`. Con `@keyframes` no se puede cambiar velocidad ni sentido sin
+   que el navegador reinicie la animación — el salto que se veía al pasar el
+   ratón por una flecha. `will-change` la deja en su propia capa. */
+.track{display:flex;width:max-content;will-change:transform}
+
+/* El pop de la tarjeta abierta: un 15 % más grande y por encima de sus vecinas.
+   Va en la CAJA y el giro en el interior, que son dos transformaciones
+   distintas y no se pisan. */
+.flipped{transform:scale(1.15);z-index:6}
+.card{transition:transform .32s cubic-bezier(.2,.7,.2,1)}
 
 .strip{display:flex;align-items:stretch}
 
@@ -204,11 +211,12 @@
 }
 
 @media(prefers-reduced-motion:reduce){
-  /* Sin desplazamiento automático: la cinta pasa a ser una tira que se arrastra
-     con el dedo. La segunda copia sobra visualmente pero es aria-hidden y no
-     estorba a nadie que la lea. */
-  .track{animation:none;width:auto;overflow-x:auto;scrollbar-width:none}
+  /* Sin desplazamiento automático (el motor tampoco lo mueve): la cinta pasa a
+     ser una tira que se arrastra con el dedo. La segunda copia sobra
+     visualmente pero es aria-hidden y no estorba a nadie que la lea. */
+  .track{width:auto;overflow-x:auto;scrollbar-width:none}
   .track::-webkit-scrollbar{display:none}
+  .card{transition:none}
   /* Y el volteo deja de ser un giro: las caras se cambian sin movimiento. El
      resultado es el mismo, que es lo que importa. */
   .inner{transition:none}
@@ -219,7 +227,10 @@
    encima (la izquierda, invirtiendo el sentido). Es un acelerador, no un
    carrusel — la cinta nunca deja de ser una cinta. El degradado de debajo es lo
    que evita que las tarjetas parezcan cortadas a cuchillo en el borde. */
-.cinta{position:relative}
+/* `overflow:hidden` aquí y no en la sección: es lo que recorta la cinta por los
+   lados sin cortar el pop de la tarjeta por arriba. El relleno vertical le da
+   sitio a ese 15 %. */
+.cinta{position:relative;overflow:hidden;padding:34px 0}
 .flecha{
   position:absolute;top:0;bottom:0;z-index:3;
   width:74px;border:0;padding:0;cursor:pointer;
@@ -234,11 +245,6 @@
    que el degradado tiene que salir de ESE color o se ve un rectángulo pegado. */
 .cp .flechaIzq{background:linear-gradient(90deg,var(--card) 18%,transparent)}
 .cp .flechaDer{background:linear-gradient(270deg,var(--card) 18%,transparent)}
-
-/* El acelerón: misma animación, mucho menos tiempo por vuelta. Cambiar solo la
-   duración (y el sentido) mantiene el bucle sin costura tal cual. */
-.rapido{animation-duration:24s}
-.rapidoAtras{animation-duration:24s;animation-direction:reverse}
 
 /* ── El reverso: puntaje y ficha en la misma línea ─────────────────────────── */
 .scoreRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px}

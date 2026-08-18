@@ -233,3 +233,30 @@ APP_VERSION 4.27 → 4.28.
   qa-rutas-consolas 256/256 · qa-nav 16/16 · qa-sneak-peek 182/182 · qa-boards 27/27 · qa-encoding 700/0.
 APP_VERSION 4.28 → 4.29.
 (commit: 71bd712)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.30 · Paso (iii)-3: CRM CP Roast y X — los cuatro tableros de Cherry Picked ya existen
+- **Módulos nuevos** `/ocp/crm/roast` y `/ocp/crm/x`. Con ellos el grupo «OCP · Cherry Picked» queda completo:
+  CaaS · Green · Roast · X. Para el nodo/DICT: los cuatro NO son la misma cosa — CaaS y Green son embudos
+  reales (proyectos y compradores), Roast y X son **listas de espera** de programas que abren en 2027.
+- **Un componente para los dos** (`InteresBoard`), parametrizado por fuente sobre `newsletter_subscribers`.
+- **Solo se persiste lo que no se puede deducir** (la regla que dejó CRM CP Green): aquí, `contacted_at`, y
+  nada más. Idioma, antigüedad, «este mes» y recuentos se calculan al leer. Se puede **desmarcar**, porque en
+  una jornada de envíos marcar de más es tan fácil como marcar de menos.
+- ⚠️ **TRAMPA NUEVA, y merece DICT propio junto a las otras del mismo tipo (las que no fallan): una clase de
+  CSS module que no existe sale `undefined`.** `styles.btn` sobre un `shared.module.css` que no define `.btn`
+  pinta el botón SIN estilo, y ni `tsc`, ni `eslint`, ni `next build` dicen una palabra. Los botones de las
+  consolas usan las clases GLOBALES `btn btn-sm`. Guardián nuevo `qa-crm-interes-check.mjs` (**17**), que
+  compara las clases usadas contra las declaradas — y al que hubo que enseñarle a **ignorar los comentarios**,
+  porque se delató a sí mismo sobre el comentario que explica la trampa.
+- La acción revalida **los dos** tableros: una fila es de una sola fuente, pero saber cuál exige leerla.
+  Revalidar de menos deja el otro rancio sin avisar — mismo fallo mudo que persigue `qa-rutas-consolas`.
+- ⚠️ **Anotado en el §9 del plan**: `newsletter_subscribers` tiene una TERCERA fuente, `ctc-home` (desde
+  2026-08-10), que **no tiene tablero**. Hoy 0 filas, pero es una lista que se recoge y nadie mira. El
+  componente ya está parametrizado; falta decidir en qué consola vive (el ECP parece su sitio).
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos) · `npm run build` exit 0 · qa-crm-interes 17/17 ·
+  qa-crm-green 21/21 · qa-rutas-consolas 262/262 · qa-nav 16/16 · qa-sneak-peek 182/182 · qa-boards 27/27 ·
+  qa-docs 14/14 · qa-encoding 705/0.
+APP_VERSION 4.29 → 4.30.
+(commit: pending)

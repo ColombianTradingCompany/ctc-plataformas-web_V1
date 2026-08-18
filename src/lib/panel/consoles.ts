@@ -284,6 +284,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // leads. Su etapa se deduce de los pedidos y solo se guarda cuando
           // alguien la fija a mano (D3.2). Roast y X llegan después.
           { href: "/ocp/crm/green", label: "CRM CP Green" },
+          // Roast y X (paso (iii)-3) son LISTAS DE ESPERA, no embudos: sus
+          // programas abren en 2027 y lo único que recogen hoy es un correo.
+          { href: "/ocp/crm/roast", label: "CRM CP Roast" },
+          { href: "/ocp/crm/x", label: "CRM CP X" },
         ],
       },
     ],

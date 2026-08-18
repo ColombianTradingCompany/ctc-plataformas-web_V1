@@ -4,7 +4,8 @@
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
-> **iii-2 «CRM CP Green» está hecho (V4.29)**. Next: **iii-3, los tableros de Roast y X → V4.30**.
+> **iii-3 «CRM CP Roast · X» está hecho (V4.30)** — con esto **los cuatro tableros de Cherry Picked existen**.
+> Next: **iii-4, las fichas de la Red de Socios → V4.31**.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -720,8 +721,8 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 |---|---|---|---|---|---|
 | iii-1 ✅ **V4.27** | **CTC Selection** umbrella | `/ocp/ctc-selection` with tabs «Black Stock» (today's module, moved under it; `/ocp/black-stock` and `/bcp/black-stock` stubs → final) and «Selección» (pipeline for Red/Blue/Gold bought outright + acquired inventory) | Generalise `black_negotiations` with a `grade` column (default `black`) instead of a second table; publication: Black → Green's Black tab as today; other grades → Green catalogue **with CTC as the producer name** | `black_negotiations`, `lot_listings`, `purchase_contracts` | "CTC as the producer" needs a CTC-owned producer profile + finca rows for `public_lot_catalog` to join through — **decision D3.1**: create the «CTC · Selection» producer identity (default yes, one row, owner-only) |
 | iii-2 ✅ **V4.29** | **CRM CP Green** | `/ocp/crm/green` | kanban over buyers: nuevo → activo → recurrente; card = profile, tier/points, reservations, orders; `LeadsBoard` pattern parametrised | `buyer_profiles` (+ new `crm_stage` column with an auto-suggestion from `orders`) | D3.2 stage rule (default: 0 orders = nuevo, 1 = activo, ≥ 2 = recurrente; manual override) |
-| iii-3 ← next | **CRM CP Roast · CRM CP X** | `/ocp/crm/roast`, `/ocp/crm/x` | «interés» boards over `newsletter_subscribers` (source roast / x) + future leads | `newsletter_subscribers` | none — F5 default |
-| iii-4 | **Red de Socios cards** | `/bcp/socios/<nodo>` ×5 | placeholder page per node with the credential state from `partner_accounts` (invited/active/suspended, last login) and the node's landing/login links; built out one partner profile at a time | `partner_accounts` | F3 default (c) |
+| iii-3 ✅ **V4.30** | **CRM CP Roast · CRM CP X** | `/ocp/crm/roast`, `/ocp/crm/x` | «interés» boards over `newsletter_subscribers` (source roast / x) + future leads | `newsletter_subscribers` | none — F5 default |
+| iii-4 ← next | **Red de Socios cards** | `/bcp/socios/<nodo>` ×5 | placeholder page per node with the credential state from `partner_accounts` (invited/active/suspended, last login) and the node's landing/login links; built out one partner profile at a time | `partner_accounts` | F3 default (c) |
 | iii-5 | **Definición de contexto rework** | `/bcp/direccionamiento` tab 1 | keep the 3 questions per unit; units CTCx / KR / CP / **Value Ecosystem**; strip FORMATS/DERIVABLES/moodboard/referencias; three placeholder subtabs «Misión y Visión», «Modelo Económico», «Contexto de Mercado Global»; keep stored answers to the three kept questions, drop video-only fields | the direccionamiento table (**read it before touching**; owner: "I can check the table") | D3.3 what to do with the moodboard data-URIs (default: export once to `docs/archive/`, then drop; the 8 MB `serverActions.bodySizeLimit` in `next.config.ts` can come back down afterwards) |
 
 `Manejo de Plataformas` standalone (F6) is a route move → it ships in **PR-C**, not here.
@@ -841,6 +842,14 @@ worker narrow credential (F10, backlog).
    no en la **tarjeta**. Si la promesa se lee como «en la ficha», no hay nada que cambiar; si se lee como «en
    todas partes», el copy necesita un matiz. No bloquea nada — es una revisión de redacción.
 
+
+6. **La lista de espera de CTC Home no tiene tablero.** `newsletter_subscribers` tiene TRES fuentes —`roast`,
+   `x` y `ctc-home`— y el paso (iii)-3 construyó tablero para las dos primeras, que es lo que pedía el plan.
+   La tercera nació el 2026-08-10, cuando el índice de CTC Home dejó de anunciar la puerta del Control Panel y
+   ofreció esta suscripción en su lugar. **Hoy son 0 filas, así que no urge**, pero es una lista que se está
+   recogiendo y que nadie puede mirar. El componente (`InteresBoard`) ya está parametrizado por fuente: darle
+   tablero es una página de tres líneas más su entrada en el rail. Decidir dónde vive — el ECP, junto a los
+   otros CRM de captación, parece más su sitio que el OCP.
 
 1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
    stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,

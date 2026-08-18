@@ -663,6 +663,33 @@ recurrente). Es el segundo de los cuatro CRM del OCP; Roast y X llegan en iii-3.
 - No se toca `membership_tier` (verde/pinton/maduro): eso es el Club y sus puntos. Un comprador puede ser
   «recurrente» en el CRM y «verde» en el Club sin contradicción.
 
+## CRM CP Roast y X — las listas de espera de 2027 (2026-08-18, V4.30)
+
+`/ocp/crm/roast` y `/ocp/crm/x`. Con estos dos, **los cuatro tableros de Cherry Picked existen** (CaaS, Green,
+Roast, X) y el grupo «OCP · Cherry Picked» del rail queda completo.
+
+- **No son embudos, son listas de espera.** Roast y X abren en 2027 y lo único que recogen hoy es un correo de
+  alguien que pidió que se le avise (`newsletter_subscribers`, escrito por `lib/newsletter/actions.ts`). El
+  tablero está hecho para la única tarea real que tendrán: el día que el programa abra, escribirle a la lista
+  entera a lo largo de varios días **sin perder la cuenta de por dónde se iba**.
+- **Un componente para los dos** (`InteresBoard`), parametrizado por fuente — misma tabla, misma forma, misma
+  tarea. Dos copias habrían divergido a la primera.
+- **Solo se persiste lo que no se puede deducir**, la regla que dejó CRM CP Green: aquí es un único dato,
+  `contacted_at`. Idioma, antigüedad, «este mes» y los recuentos se calculan al leer. Y se puede **desmarcar**:
+  en una jornada de envíos masivos marcar de más es tan fácil como marcar de menos, y un tablero del que no se
+  puede volver atrás acaba siendo un tablero en el que nadie confía.
+- ⚠️ **Trampa nueva, y cara porque no falla: una clase de CSS module que no existe sale `undefined`.** Escribí
+  `styles.btn` y `shared.module.css` no define `.btn` — el botón se habría pintado sin estilo, y ni `tsc` ni
+  `eslint` ni el build dicen una palabra. Los botones de las consolas usan las clases **globales** `btn btn-sm`.
+  El guardián nuevo `qa-crm-interes-check.mjs` (17) compara ahora las clases usadas contra las del `.module.css`
+  — y hubo que enseñarle a ignorar los comentarios, porque se delató a sí mismo sobre el comentario que explica
+  la trampa.
+- **La acción revalida los DOS tableros**: una fila pertenece a una sola fuente, pero saber cuál exige leerla.
+  Revalidar de más no cuesta nada; revalidar de menos deja el otro tablero rancio **sin avisar** — el mismo
+  fallo mudo que persigue `qa-rutas-consolas`.
+- ⚠️ `newsletter_subscribers` tiene una **tercera fuente sin tablero**, `ctc-home` (desde 2026-08-10). Hoy son
+  0 filas; anotado en el §9 del plan.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

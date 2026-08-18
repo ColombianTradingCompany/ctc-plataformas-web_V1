@@ -632,3 +632,46 @@ APP_VERSION 4.23 → 4.24.
   qa-grados 44/44 · qa-encoding 681/0.
 APP_VERSION 4.24 → 4.25.
 (commit: 747725a)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.26 · Paso (ii), PR-C: el ECP recibe contacto y caja de herramientas — PASO (ii) COMPLETO
+- **La mudanza**: al ECP entran **Leads · Recepción** (desde el OCP), los **tres cotizadores**, **Anclas de
+  mercado** y **Transcripciones**; y **«Manejo de Plataformas» deja de colgar de Direccionamiento** para ser
+  módulo suelto en **`/ecp/plataformas`** (F6), cerrando el interinato que PR-B dejó abierto.
+- **Con esto el paso (ii) está COMPLETO**: 29 rutas mudadas en tres versiones (V4.24 · V4.25 · V4.26), guardián
+  en 248 comprobaciones. El OCP queda siendo solo el pasaporte del lote, el BCP el negocio y el ECP la
+  ejecución — cada consola dice por fin lo que su tagline prometía desde el paso (i).
+- ⚠️ **UN MAPA DE PERMISOS NO ES UNA RUTA, y ninguna reescritura masiva lo toca.** `PILLAR_CONSOLE`
+  (`leadsActions.ts`) dice qué consola manda sobre cada pilar de lead. No lleva barras, así que sobrevivió
+  intacto a las TRES pasadas — **y estaba mal desde PR-A**: `cocreate` apuntaba al BCP con su tablero ya en el
+  OCP. No falla de forma visible: le pide al operador el grant de la consola equivocada, y quien tiene el
+  correcto se queda fuera. Corregido junto con `general` (→ `ecp`).
+- Las compuertas de escritura viajaron con sus módulos: **34 `requireConsoleWrite("ocp")` → `"ecp"`** en
+  `lib/transcripciones/actions.ts` (15), `lib/cotizador/actions.ts` (14), `lib/anclas/actions.ts` (4) y
+  `/api/transcripciones/descargar` (1). El §3.1 del plan estimaba anclas ×4 + cotizador ×15 + la ruta ×1 y
+  **no mencionaba transcripciones**, que resultó ser el mayor de los cuatro.
+- **Un talón de padre con catch-all sirve a sus hijos y cada uno va a SU destino**: hoy
+  `/ecp/direccionamiento/[[...resto]]` manda el padre y `grados` al BCP y `plataformas` al propio ECP, con un
+  solo archivo y sin encadenar. Verificado en servidor real, los tres.
+- `qa-nav-check` **invierte su aserción histórica**: `/ecp/plataformas` ya no es una ruta prohibida sino el
+  módulo, y ahora se comprueba que ningún otro enlace del rail la cubra.
+- `NO_SE_MOVIERON` queda **vacío pero montado**; y `qa-rutas-consolas` ya no revienta con ENOENT sobre archivos
+  borrados sin `git rm` — un guardián que se cae a mitad no guarda nada.
+- **AHORA TOCA EL VERSION WRAP V37**, y es el más grande desde hace tiempo. Lo acumulado en esta bitácora:
+  · el FILETREE de las TRES consolas cambió por completo (V4.24 · V4.25 · V4.26);
+  · `EstructuraModal.tsx` sigue dibujando el reparto viejo («BCP · Base — identidad y pasaporte del lote»,
+    «OCP · Operación — despacho, relevos, recepción», «ECP · Dirección — precios, primas, salud de la red»):
+    hay que redibujar los tres nodos con Business / Operation / Execution;
+  · DICT nuevo: `rutasMovidas`, «talón»/stub 308, `NO_SE_MOVIERON`, **selector de consolas**, **portada de
+    Cherry Picked**, **CTC Selection** vs **Black Stock**, **Catálogo Cherry Picked (Contratos Vigentes)**,
+    **Active Catalogue Sneak Peek**, **Value Ecosystem**, **CaaS vs CommaaS vs CommaaS-OG**;
+  · la Red de Socios cambió de consola por un cambio de ARGUMENTO (se credencialan en el BCP aunque se operen
+    en el OCP) — la decisión de 2026-07-20 está documentada con el razonamiento contrario y hay que decirlo;
+  · los avisos «planned» del mapa deben apuntar a `docs/V5_CONSOLAS_PLAN.md`.
+  ⚠️ Al tocar el DICT, leer antes `reference_dict_wrap_gotcha`.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build` exit 0 ·
+  qa-rutas-consolas 248/248 · qa-nav 16/16 · qa-transcripciones 50/50 · qa-anclas 13/13 · qa-boards 27/27 ·
+  qa-consumo 21/21 · qa-grados 44/44 · qa-sneak-peek 177/177 · qa-docs 14/14 · qa-encoding 696/0.
+APP_VERSION 4.25 → 4.26.
+(commit: adbcf3a)

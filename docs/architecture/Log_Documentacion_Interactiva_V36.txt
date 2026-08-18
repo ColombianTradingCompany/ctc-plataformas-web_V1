@@ -283,4 +283,4 @@ APP_VERSION 4.15 → 4.16.
   `npm run build` exit 0 con las seis superficies aún estáticas · guardián 112/112 ·
   las fichas y las fotos responden 200 en el servidor de desarrollo.
 APP_VERSION 4.16 → 4.17.
-(commit: pending)
+(commit: dd57675)

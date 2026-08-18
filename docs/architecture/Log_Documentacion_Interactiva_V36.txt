@@ -548,3 +548,47 @@ APP_VERSION 4.21 → 4.22.
   corriéndolo sobre el árbol limpio) — no los introdujo el paso (i).
 APP_VERSION 4.22 → 4.23.
 (commit: 38f5799)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.24 · Paso (ii), PR-A: el OCP recibe el pasaporte del lote
+- **La mudanza**: doce módulos dejan el BCP y pasan al OCP — Productores, Fincas, Lotes, Nominados, Arena,
+  Galardonados, Club, Catálogo, Contratos, Subastas, Black Stock y el CRM de CaaS, que además **se anida**:
+  `/bcp/caas` → **`/ocp/crm/caas`**, el primero de los cuatro tableros de Cherry Picked (los otros tres nacen
+  en el paso (iii), F5). El tablero de KPIs de `/bcp` viaja con ellos y es ya el panel del OCP; el BCP estrena
+  un scaffold de dirección que enlaza, marcados como construidos, los módulos que PR-B le traerá.
+- **El rail del BCP se queda solo con «Panel» hasta PR-B.** Previsto por el §3.3 del plan y avisado DENTRO de
+  `consoles.ts` y de `bcp/(app)/page.tsx`, para que no se lea como avería ni se rellene con enlaces a `/ocp/*`.
+- **Nodo nuevo del mapa: `src/lib/panel/rutasMovidas.ts`**, fuente única de las mudanzas (`RUTAS_MOVIDAS` +
+  `destinoDe()`). Los talones leen de ahí, el guardián la comprueba, el HANDOFF la nombra. Regla F2 hecha
+  código: si un módulo se vuelve a mover se **reapunta** su entrada, nunca se encadena un talón contra otro —
+  y el guardián rechaza que un `de` sea también el `a` de otra entrada.
+- **Los talones van FUERA del grupo `(app)`.** Dentro, el layout corre `requireConsoleAccess("bcp")` y un
+  marcador viejo daría «no tiene acceso» sobre una URL que ya no existe. Un `[[...resto]]` opcional por módulo
+  cubre la ruta y todas sus sub-rutas. **Verificado en servidor de producción real**, no solo en el build:
+  `/bcp/fincas` → 308 → `/ocp/fincas` · `/bcp/arena/abc123` → 308 → `/ocp/arena/abc123` ·
+  `/bcp/caas` → 308 → `/ocp/crm/caas` · `/bcp/club/campanas/7` → 308 → `/ocp/club/campanas/7`.
+- **Guardián nuevo `scripts/qa-rutas-consolas.mjs`** (164 comprobaciones, se queda para PR-B y PR-C): rail →
+  página, mudanza → talón + destino, sin colisiones de prefijo, sin cadenas, y **sin un solo literal de ruta
+  vieja vivo en `src/`**. Probado inyectando uno: canta y sale con 1.
+  ⚠️ Esa última es la que importa: de las ~300 rutas escritas a mano, **108 son `revalidatePath`**. Un enlace
+  roto se ve al primer clic; un `revalidatePath` a una ruta muerta **no lanza, no avisa y no rompe el build**,
+  y deja al operador mirando datos rancios después de guardar.
+- **Radio re-medido antes de empezar** (§3.2 del plan): los números de 2026-08-17 se habían quedado cortos —
+  **304 ocurrencias reales** (no 218) y **29 archivos con `revalidatePath`** (no 20). El dato que faltaba era
+  el útil: **47 rutas DISTINTAS en 66 archivos**; el resto es repetición.
+- **Dos trampas nuevas, ya en el §3.4 bis del plan**: (1) un `git mv` de módulo rompe imports que `tsc` NO ve
+  —los `*.module.css` no se type-chequean, así que un `../shared.module.css` inexistente pasa `tsc --noEmit`
+  limpio y muere en el build—; (2) `shared.module.css` salió de `bcp/(app)/` a **`src/components/panel/`**
+  (62 imports reapuntados): lo importan las tres consolas y `src/components/`, y dejarlo en una consola que se
+  vaciaba era una señal falsa de propiedad. `adminLockActions.ts` sí se queda en el BCP — PR-B le trae Usuarios
+  al lado.
+- **Para el DICT y el mapa (Version Wrap V37, tras PR-C)**: cambia el FILETREE entero de `bcp/` y `ocp/`;
+  `EstructuraModal.tsx` sigue dibujando «BCP · Base — identidad y pasaporte del lote» y «OCP · Operación —
+  despacho, relevos, recepción», que ya no es cierto; y hace falta una entrada de DICT para **`rutasMovidas`**
+  (la fuente única de las mudanzas) y otra para **«talón»/stub 308**.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build` exit 0 ·
+  qa-rutas-consolas 164/164 · qa-nav 18/18 · qa-grados 44/44 · qa-sneak-peek 177/177 · qa-docs 14/14 ·
+  qa-boards 27/27 · qa-guard OK · qa-encoding 667/0.
+APP_VERSION 4.23 → 4.24.
+(commit: 486d160)

@@ -399,4 +399,4 @@ Cinco correcciones del owner sobre lo de V4.19:
   rAF, así que ahí todo salía a cero): sentido DERECHA, base 17 px/s, rampa sin salto, vuelta a
   17 al soltar, −159 px/s con la flecha izquierda, desviación del centro 0 px y escala 1.15.
 APP_VERSION 4.19 → 4.20.
-(commit: pending)
+(commit: c82a87d)

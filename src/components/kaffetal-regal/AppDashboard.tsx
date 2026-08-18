@@ -39,8 +39,16 @@ import styles from "./AppDashboard.module.css";
 // aquí cae en el nombre y la descripción del registro.
 const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string } | undefined> = {
   "mermas-rapida": {
+    // El cacao salió de la DESCRIPCIÓN (2026-08-17), no de la herramienta: como
+    // PRODUCTO dejó de ser de la casa hace tiempo y esto era el último residuo de
+    // aquella iteración —el `<title>` del HTML ya se había corregido el 2026-08-14
+    // (`4a7e1e2`), pero esta tarjeta seguía anunciándolo—. La calculadora conserva
+    // su modo cacao entero y funcionando, a propósito.
+    // ⚠️ Y no confundir: `cacao` como NOTA DE CATA es vocabulario estándar del café
+    // («Frutos secos / Cacao» es categoría de la rueda SCA) y vive legítimamente en
+    // `rueda-catacion.html`, `viaje-cafe.html` y `ficha/fichaData.ts`. Eso no se toca.
     name: "Calculadora rápida de mermas",
-    desc: "Rendimiento de café y cacao: cuánto le queda al pasar de cereza a pergamino y a excelso.",
+    desc: "Rendimiento del café: cuánto le queda al pasar de cereza a pergamino y a excelso.",
   },
   "mermas-detallada": {
     name: "Calculadora detallada de mermas",

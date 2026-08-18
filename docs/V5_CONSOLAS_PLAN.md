@@ -569,10 +569,31 @@ worker narrow credential (F10, backlog).
    whenever it is set, but nothing in `lots`/`lot_listings` stores one, so only the mock lots have it today.
    When the Ficha Técnica becomes a publishable artifact, add the column (or generate the PDF from
    `lots.datasheet`) and the button lights up for the whole catalogue with no component change.
-3. **The empty OneDrive folder stays.** `…/OneDrive/Desktop/CTC Web Platform` is empty since the migration and
+3. **The 12 tool pages are ungoverned SEO surface.** `public/tools/*.html` are **indexable** URLs — the proxy
+   matcher excludes `/tools/` and `robots.txt` only covers `/bcp /ecp /ocp /lab` — so each file's `<title>` is
+   what a search engine prints as the result headline. **Only 2 of the 12 carry a `meta description`.** Nobody
+   owns this today; it is the natural remit of the **«Manejo de Plataformas»** module (which already governs
+   `platform_surfaces`: route, title, description, `en_sitemap`). Finding salvaged from the abandoned branch
+   `fix/rastro-cacao` (see the note below) before deleting it.
+   ⚠️ When editing these files: they are vendored tools with live JS. Removing a control without removing its
+   JS references leaves a `null` that takes the whole calculator down on load — verify A/B against the previous
+   file, same script, same numbers.
+4. **The empty OneDrive folder stays.** `…/OneDrive/Desktop/CTC Web Platform` is empty since the migration and
    **is not going to be deleted** — Claude Code has it locked as this session's working directory and the owner
    confirmed (2026-08-17) it cannot be removed from the chat. It is inert; ignore it. The workspace is
    `C:\dev\ctc-platforms`.
+
+**Branch `fix/rastro-cacao` — rejected and deleted (2026-08-17).** It existed on the remote since 2026-08-14
+(`6ff5f5b`) and proposed removing the **entire cacao mode** from `public/tools/mermas-rapida.html` (toggle,
+comparison modal, stage config, its JS). It was the *other* answer to the same problem, and the one that did
+**not** ship: `main` fixed it on the same day with `4a7e1e2` — **one line, the `<title>`, tool untouched** —
+after the owner stopped the deletion («Wow wow no!!!! ten mucho cuidado»). The real cause was stale positioning
+copy cached in the search index, so amputating the tool would not have fixed the symptom. Two things were
+cherry-picked out of it before deletion (the KR dashboard copy and dev to-do 3 above); the rest is superseded.
+**The standing domain rule from that episode:** in this house `cacao`/`cocoa`/`chocolate` mean two different
+things — as a **product** it is gone, as a **tasting note** it is standard coffee vocabulary («Frutos secos /
+Cacao» is an SCA flavour-wheel category) and lives legitimately in `rueda-catacion.html`, `viaje-cafe.html` and
+`ficha/fichaData.ts`. **Those are never touched.**
 
 **Found in Notion while collecting the mock references (2026-08-17) — data hygiene in «📋 Fichas Técnicas de
 Café», owner's call, nothing changed by me** (I only read the database; the platform stays the source of truth

@@ -284,3 +284,31 @@ APP_VERSION 4.15 → 4.16.
   las fichas y las fotos responden 200 en el servidor de desarrollo.
 APP_VERSION 4.16 → 4.17.
 (commit: dd57675)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V4.18 — el último residuo del cacao-producto, y la rama `fix/rastro-cacao` cerrada
+- **Rescatado de la rama y aplicado**: la tarjeta de «Calculadora rápida de mermas» en el hub del
+  productor (`AppDashboard.tsx`) seguía diciendo «Rendimiento de café **y cacao**». Es copy de
+  producto, no nota de cata, y era el último resto de aquella iteración temprana que el arreglo del
+  `<title>` (`4a7e1e2`, 2026-08-14) no alcanzó — está detrás del login, así que no era SEO.
+  La CALCULADORA NO SE TOCA: conserva su modo cacao entero y funcionando, como decidió el owner.
+- **Rescatado también como to-do**: de los 12 HTML de `public/tools/` —que son URLs INDEXABLES,
+  porque el matcher del proxy excluye `/tools/` y `robots.txt` solo cubre `/bcp /ecp /ocp /lab`—
+  **solo DOS llevan `meta description`**. Superficie SEO que nadie gobierna; queda como to-do de
+  desarrollo 3 en el §9 del plan y candidata natural del módulo «Manejo de Plataformas», que ya
+  administra `platform_surfaces` (ruta, título, descripción, `en_sitemap`).
+- **Rama `fix/rastro-cacao` (`6ff5f5b`) BORRADA, local y remota, por decisión del owner.** Era la
+  OTRA respuesta al mismo problema —quitar el modo cacao entero de `mermas-rapida.html`— y es la que
+  NO se desplegó: `main` lo resolvió el mismo día con una línea de `<title>` y la herramienta intacta,
+  después de que el owner parara el borrado («Wow wow no!!!! ten mucho cuidado»). La causa real estaba
+  fuera del código (copy de posicionamiento viejo cacheado en el índice), así que amputar la
+  herramienta no habría arreglado el síntoma. Queda constancia en el §9 del plan para que nadie
+  repita el análisis; el commit se conserva en el reflog local mientras no se recoja la basura.
+- **La regla de dominio que salió de aquello sigue siendo la de la casa**: `cacao`/`cocoa`/`chocolate`
+  como PRODUCTO ya no existe; como NOTA DE CATA es vocabulario estándar del café («Frutos secos /
+  Cacao» es categoría de la rueda SCA) y vive legítimamente en `rueda-catacion.html`,
+  `viaje-cafe.html` y `ficha/fichaData.ts`. **Eso no se toca nunca.** Anotado en el archivo mismo.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build` exit 0.
+APP_VERSION 4.17 → 4.18.
+(commit: pending)

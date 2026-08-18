@@ -3,6 +3,7 @@
 import { useContactModal } from "@/components/ctc-home/ContactModal";
 import { SERVICES_COPY } from "@/components/services/servicesCopy";
 import { useLang, type Lang } from "@/components/lang/i18n";
+import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";
 
@@ -248,6 +249,14 @@ export function CaasLanding() {
           </div>
         </div>
       </section>
+
+      {/* El vistazo al Catálogo Activo (owner, 2026-08-17): va justo DESPUÉS de
+          «Las dos clases de café» y ANTES de «Dónde encaja». El orden es el
+          argumento: primero se explica que hay Specialty y Black, después se
+          enseñan lotes de verdad —con su grado, su puntaje y su finca— y solo
+          entonces se pasa a los modelos de oferta. Sin precios: el catálogo
+          completo vive dentro de Cherry Picked. */}
+      <SneakPeek lang={lang} variant="cp" />
 
       {/* ── Modelos de oferta ────────────────────────────────────────────────
           Lo que le faltaba a esta superficie: quien llega entiende QUÉ es CaaS

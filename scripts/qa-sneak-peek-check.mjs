@@ -35,6 +35,8 @@ const MOCK_SRC = lee("src/lib/catalogo/sneakPeekMock.ts");
 const RUTA_API = lee("src/app/api/catalogo/sneak-peek/route.ts");
 const COMPONENTE = lee("src/components/catalogo/SneakPeek.tsx");
 const TIENDA = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
+const POPUP = lee("src/components/catalogo/CatalogoPopup.tsx");
+const CAAS = lee("src/components/services/CaasLanding.tsx");
 
 // ── 1. Nada comercial en el tipo que viaja al navegador ──────────────────────
 // La garantía es estructural: si el tipo no tiene dónde meter un precio, no hay
@@ -215,6 +217,43 @@ check("la copia del bucle no recibe foco", COMPONENTE.includes("tabIndex={duplic
 check("el enlace de la ficha no voltea la tarjeta al pulsarlo", COMPONENTE.includes("e.stopPropagation()"));
 check("la ficha se abre en otra pestaña sin ceder la ventana", COMPONENTE.includes('rel="noopener"'));
 check("el volteo respeta prefers-reduced-motion", CSS.includes(".inner{transition:none}"));
+
+// ── 9. La rueda de catación en el reverso ───────────────────────────────────
+for (const l of SNEAK_PEEK_MOCK) {
+  check(`${l.id}: declara rueda`, typeof l.wheel === "string" && l.wheel.includes("rueda-"));
+  check(`${l.id}: la rueda existe en el disco`, !!l.wheel && existsSync(new URL(`../public${l.wheel}`, import.meta.url)));
+}
+check("el reverso pinta la rueda", COMPONENTE.includes("styles.wheelBox"));
+// La rueda sale de la herramienta de la casa, no de una segunda rueda paralela.
+check(
+  "la rueda la genera la herramienta de catación de la casa",
+  lee("scripts/build-ruedas-mock.mjs").includes("public/tools/rueda-catacion.html")
+);
+
+// ── 10. Las flechas de los extremos ─────────────────────────────────────────
+check("hay flecha a cada lado", COMPONENTE.includes("styles.flechaIzq") && COMPONENTE.includes("styles.flechaDer"));
+check("aceleran con el ratón Y con el foco", COMPONENTE.includes("onMouseEnter") && COMPONENTE.includes("onFocus"));
+check("y sueltan al salir", COMPONENTE.includes("onMouseLeave") && COMPONENTE.includes("onBlur"));
+check("la izquierda invierte el sentido", CSS.includes("animation-direction:reverse"));
+check("las flechas llevan rótulo accesible", COMPONENTE.includes("t.flechaAnterior") && COMPONENTE.includes("t.flechaSiguiente"));
+
+// ── 11. La ventana del catálogo ─────────────────────────────────────────────
+check("el pie abre la ventana en vez de navegar", COMPONENTE.includes("setPopup(true)"));
+check("la ventana explica que el catálogo vive en Cherry Picked", /Cherry Picked/.test(POPUP));
+check("y que registrarse es GRATIS", /gratis|free|kostenlos/i.test(POPUP));
+check("la ventana está en los tres idiomas", ["es:", "en:", "de:"].every((k) => POPUP.includes(k)));
+check("en las superficies CP el botón abre el login sin navegar", POPUP.includes("onOpenLogin"));
+
+// ── 12. La landing de CaaS monta el módulo ──────────────────────────────────
+check("CaaS monta la cinta", CAAS.includes("<SneakPeek"));
+// Se miden los USOS en el JSX, no la primera aparición del nombre: las claves
+// aparecen antes en la declaración del tipo y en los tres diccionarios, así que
+// un `indexOf` a secas comparaba con la línea equivocada.
+check(
+  "y la monta ENTRE «las dos clases» y «Dónde encaja»",
+  CAAS.indexOf("{chrome.offerH2}") < CAAS.indexOf("<SneakPeek") &&
+    CAAS.indexOf("<SneakPeek") < CAAS.indexOf("{chrome.modelosH2}")
+);
 
 console.log(`${ok} comprobaciones OK, ${fallos.length} fallos`);
 for (const f of fallos) console.log("  FALLO:", f);

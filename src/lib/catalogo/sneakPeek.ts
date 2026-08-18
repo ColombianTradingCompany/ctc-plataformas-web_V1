@@ -64,6 +64,12 @@ export type SneakPeekLot = {
   /** La foto de la cara frontal de la tarjeta. Sin ella, la tarjeta cae al sello
    *  del grado, que nunca falta. */
   image?: string;
+  /** El extracto de la RUEDA DE CATACIÓN del lote (SVG), que el reverso enseña
+   *  bajo las notas. La dibuja `scripts/build-ruedas-mock.mjs` con la propia
+   *  herramienta de la casa (`public/tools/rueda-catacion.html`), no con una
+   *  rueda paralela. Los lotes vivos aún no la traen — misma historia que la
+   *  ficha: falta dónde guardarla. */
+  wheel?: string;
   /** La ficha técnica del lote, que abre el botón del reverso. Los lotes VIVOS
    *  todavía no tienen dónde guardarla —no hay columna para ella en
    *  `lot_listings` ni en `lots`— así que hoy solo la traen los mock; sin ella,

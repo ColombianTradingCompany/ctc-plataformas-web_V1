@@ -312,3 +312,46 @@ APP_VERSION 4.16 → 4.17.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build` exit 0.
 APP_VERSION 4.17 → 4.18.
 (commit: 2a599d8)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-17] V4.19 — la cinta gana flechas, rueda de catación, ficha de 3 páginas y ventana; y entra en CaaS
+Cinco peticiones del owner sobre el módulo, todas construidas:
+- **Flechas en los extremos**: al pasar el ratón (o al recibir el foco) aceleran la cinta hacia
+  ese lado —150 s a 24 s por vuelta—, la izquierda invirtiendo el sentido. Es un ACELERADOR, no
+  un carrusel. Al pulsarlas además empujan el scroll, que es lo que las hace útiles con
+  `prefers-reduced-motion`, donde no hay animación que acelerar.
+- **La rueda de catación en el reverso**: el extracto del Reporte de Catación del lote, con sus
+  descriptores encendidos sobre la rueda SCA y el resto atenuado al 10 %.
+  ⚠️ La dibuja `scripts/build-ruedas-mock.mjs` CONDUCIENDO la herramienta de la casa
+  (`public/tools/rueda-catacion.html`), no una rueda paralela: una segunda rueda se separaría de
+  la primera al primer cambio de taxonomía — el mismo error que costó meter los grados en un solo
+  archivo. Dos variantes por lote: con rótulos para la ficha, sin una letra para la tarjeta (a
+  222 px un rótulo de 11 px es ruido).
+  Nota para quien vuelva: las funciones internas de la herramienta (`toggleNeedle`,
+  `buildSearchIndex`) NO son globales, así que desde CDP no se ven; se trabaja sobre el SVG ya
+  dibujado, donde cada gajo es un `.wedge` con `data-level|fam|sub|leaf`.
+- **La ficha técnica pasa a TRES páginas y va «red taped»**: resumen · Ficha de café verde ·
+  Rueda de catación, las tres con cinta roja diagonal («Muestra · no es oferta comercial») y
+  marca de agua MUESTRA. Lo que no se sabe dice «— sin dato» y NO se inventa: una humedad
+  inventada en un documento con pinta de oficial es justo el número que alguien acaba citando.
+- **«Ver el catálogo completo» abre una ventana** en vez de navegar sin más: explica que la cinta
+  es un vistazo, que el catálogo entero vive dentro de Cherry Picked y que **registrarse es
+  gratis**. Dos acciones —crear cuenta o entrar—; en las superficies CP la segunda abre el login
+  sin navegar. El enlace conserva `href` real para que se pueda abrir en otra pestaña y para que
+  un buscador lo siga.
+- **La landing de CaaS monta el módulo**, entre «Las dos clases de café» y «Dónde encaja». El
+  orden es el argumento: primero qué son Specialty y Black, después lotes de verdad, y solo
+  entonces los modelos de oferta. Séptima superficie del módulo.
+- La tarjeta crece a 462 px de alto para que quepa la rueda sin apretar el resto.
+- Guardián de 112 a **140** comprobaciones: rueda declarada Y EXISTENTE en disco para cada mock,
+  que la rueda salga de la herramienta de la casa, flechas con rótulo accesible que aceleran con
+  ratón Y foco y sueltan al salir, la izquierda invirtiendo, la ventana en tres idiomas diciendo
+  que es gratis, y que CaaS la monte ENTRE las dos secciones (medido sobre los usos del JSX, no
+  sobre la primera aparición del nombre — la declaración del tipo aparece antes y engañaba).
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos preexistentes) · `npm run build`
+  exit 0 · guardián 140/140 · verificado en Chrome headless (el volteo, la rueda) y en el DOM
+  vivo (flechas 150s→24s y `reverse`, ventana con sus tres botones, `/caas` con una sola banda
+  entre las dos secciones).
+APP_VERSION 4.18 → 4.19.
+(commit: pending)

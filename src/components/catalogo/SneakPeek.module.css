@@ -45,7 +45,7 @@
 
 /* Altura reservada mientras llega la respuesta, para que la página no salte
    cuando la cinta aparece (mismo motivo que en la cinta de mercado). */
-.loading{height:344px}
+.loading{height:462px}
 
 .track{display:flex;width:max-content;animation:sp-slide 150s linear infinite}
 .track:hover,.track:focus-within{animation-play-state:paused}
@@ -60,7 +60,7 @@
    Altura FIJA y las dos caras superpuestas: es lo que permite el giro sin que
    la cinta dé un salto cuando el reverso es más alto que la cara. */
 .card{
-  width:300px;height:344px;flex:none;margin:0 9px;
+  width:300px;height:462px;flex:none;margin:0 9px;
   perspective:1200px;
 }
 .inner{
@@ -93,7 +93,7 @@
    La foto manda: es lo que hace que alguien quiera mirar el lote. Debajo, lo
    justo para identificarlo — nombre, grado y variedad. */
 .photo{
-  position:relative;display:block;width:100%;height:202px;flex:none;
+  position:relative;display:block;width:100%;height:250px;flex:none;
   background:var(--paper);overflow:hidden;
 }
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -198,9 +198,9 @@
 .cta:hover{border-bottom-color:var(--accent)}
 
 @media(max-width:640px){
-  .card{width:264px;height:338px}
-  .loading{height:338px}
-  .photo{height:168px}
+  .card{width:268px;height:436px}
+  .loading{height:436px}
+  .photo{height:228px}
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -212,4 +212,68 @@
   /* Y el volteo deja de ser un giro: las caras se cambian sin movimiento. El
      resultado es el mismo, que es lo que importa. */
   .inner{transition:none}
+}
+
+/* ── Las flechas de los extremos ────────────────────────────────────────────
+   No navegan: aceleran el paso hacia su lado mientras el ratón o el foco están
+   encima (la izquierda, invirtiendo el sentido). Es un acelerador, no un
+   carrusel — la cinta nunca deja de ser una cinta. El degradado de debajo es lo
+   que evita que las tarjetas parezcan cortadas a cuchillo en el borde. */
+.cinta{position:relative}
+.flecha{
+  position:absolute;top:0;bottom:0;z-index:3;
+  width:74px;border:0;padding:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;line-height:1;color:var(--primary-deep);
+  opacity:.55;transition:opacity .18s;
+}
+.flecha:hover,.flecha:focus-visible{opacity:1}
+.flechaIzq{left:0;background:linear-gradient(90deg,var(--paper) 18%,transparent)}
+.flechaDer{right:0;background:linear-gradient(270deg,var(--paper) 18%,transparent)}
+/* En la familia Cherry Picked la cinta se levanta sobre el fondo de tarjeta, así
+   que el degradado tiene que salir de ESE color o se ve un rectángulo pegado. */
+.cp .flechaIzq{background:linear-gradient(90deg,var(--card) 18%,transparent)}
+.cp .flechaDer{background:linear-gradient(270deg,var(--card) 18%,transparent)}
+
+/* El acelerón: misma animación, mucho menos tiempo por vuelta. Cambiar solo la
+   duración (y el sentido) mantiene el bucle sin costura tal cual. */
+.rapido{animation-duration:24s}
+.rapidoAtras{animation-duration:24s;animation-direction:reverse}
+
+/* ── El reverso: puntaje y ficha en la misma línea ─────────────────────────── */
+.scoreRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px}
+
+/* La rueda de catación del lote: ocupa el pie del reverso y se centra. Va con
+   `unoptimized` en el componente porque es un SVG — el optimizador de Next no
+   los toca y pedírselo solo añade un rodeo. */
+.wheelBox{
+  margin-top:auto;padding-top:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.wheelBox img{width:100%;height:auto;max-width:222px;display:block}
+
+/* ── La ventana del catálogo ───────────────────────────────────────────────── */
+.popup{max-width:560px}
+.popupEyebrow{
+  font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 8px;
+}
+.popupTitle{font-size:clamp(20px,2.6vw,27px);font-weight:800;line-height:1.2;margin:0 0 12px;color:var(--primary-deep)}
+.popupLead{font-size:14px;line-height:1.6;color:var(--muted);margin:0 0 16px}
+.popupList{margin:0 0 22px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+.popupList li{position:relative;padding-left:20px;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.popupList li::before{content:"◆";position:absolute;left:0;top:1px;color:var(--accent);font-size:10px}
+.popupCtas{display:flex;flex-wrap:wrap;gap:10px}
+.popupPrimary,.popupSecondary{
+  display:inline-flex;align-items:center;justify-content:center;
+  font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+  padding:11px 18px;border-radius:999px;text-decoration:none;
+}
+.popupPrimary{background:var(--accent);border:1px solid var(--accent);color:#fff}
+.popupPrimary:hover{filter:brightness(.94)}
+.popupSecondary{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.popupSecondary:hover{border-color:var(--accent);color:var(--accent)}
+.popupCerrar{
+  display:block;margin-top:14px;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;font-size:12px;color:var(--muted);text-decoration:underline;
 }

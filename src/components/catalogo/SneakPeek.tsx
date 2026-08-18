@@ -5,6 +5,7 @@ import Image from "next/image";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
 import type { SneakPeekLang, SneakPeekLot, SneakPeekPayload } from "@/lib/catalogo/sneakPeek";
+import { CatalogoPopup } from "./CatalogoPopup";
 import styles from "./SneakPeek.module.css";
 
 // ── «Active Catalogue Sneak Peek» · el módulo reutilizable ───────────────────
@@ -46,6 +47,8 @@ const T: Record<
     ficha: string;
     verMas: string;
     volver: string;
+    flechaAnterior: string;
+    flechaSiguiente: string;
     tarjetaAria: (n: string) => string;
   }
 > = {
@@ -60,6 +63,8 @@ const T: Record<
     ficha: "Ver ficha técnica",
     verMas: "Ver detalle",
     volver: "Volver",
+    flechaAnterior: "Ver lotes anteriores",
+    flechaSiguiente: "Ver más lotes",
     tarjetaAria: (n) => `${n} — ver el detalle del lote`,
   },
   en: {
@@ -73,6 +78,8 @@ const T: Record<
     ficha: "See datasheet",
     verMas: "See detail",
     volver: "Back",
+    flechaAnterior: "Previous lots",
+    flechaSiguiente: "More lots",
     tarjetaAria: (n) => `${n} — see the lot detail`,
   },
   de: {
@@ -86,6 +93,8 @@ const T: Record<
     ficha: "Datenblatt ansehen",
     verMas: "Details ansehen",
     volver: "Zurück",
+    flechaAnterior: "Vorherige Lots",
+    flechaSiguiente: "Weitere Lots",
     tarjetaAria: (n) => `${n} — Details des Lots ansehen`,
   },
 };
@@ -168,18 +177,12 @@ function Tarjeta({
               ×
             </span>
           </button>
-          <span className={styles.score}>
-            <i className={styles.sca}>{t.sca}</i>
-            {lot.score}
-            {lot.scoreEstimated && <i className={styles.est}>{t.est}</i>}
-          </span>
-          <span className={styles.origin}>
-            {lot.finca}
-            {origen && <> · {origen}</>}
-          </span>
-          {specs && <span className={styles.specs}>{specs}</span>}
-          {lot.cup && <span className={styles.cup}>{lot.cup}</span>}
-          <span className={styles.backFoot}>
+          <span className={styles.scoreRow}>
+            <span className={styles.score}>
+              <i className={styles.sca}>{t.sca}</i>
+              {lot.score}
+              {lot.scoreEstimated && <i className={styles.est}>{t.est}</i>}
+            </span>
             {/* La ficha solo existe si el lote la tiene. Hoy la traen los mock;
                 los lotes vivos, cuando la plataforma tenga dónde guardarla. */}
             {lot.datasheetUrl && (
@@ -195,6 +198,20 @@ function Tarjeta({
               </a>
             )}
           </span>
+          <span className={styles.origin}>
+            {lot.finca}
+            {origen && <> · {origen}</>}
+          </span>
+          {specs && <span className={styles.specs}>{specs}</span>}
+          {lot.cup && <span className={styles.cup}>{lot.cup}</span>}
+          {/* El extracto de la rueda de catación: los sectores del lote
+              encendidos sobre la rueda SCA, el resto atenuado. Sin rótulos —
+              a este tamaño serían ruido; los lleva la ficha en PDF. */}
+          {lot.wheel && (
+            <span className={styles.wheelBox}>
+              <Image src={lot.wheel} alt="" width={520} height={520} sizes="230px" unoptimized />
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -218,6 +235,9 @@ export function SneakPeek({
   const [data, setData] = useState<SneakPeekPayload | null>(null);
   const [failed, setFailed] = useState(false);
   const [volteada, setVolteada] = useState<string | null>(null);
+  /** Qué flecha está bajo el ratón o el foco: acelera la cinta hacia ese lado. */
+  const [impulso, setImpulso] = useState<null | "izq" | "der">(null);
+  const [popup, setPopup] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -277,31 +297,72 @@ export function SneakPeek({
       {!data ? (
         <div className={styles.loading} aria-hidden />
       ) : (
-        // Con una tarjeta abierta la cinta SE PARA: si siguiera andando, el
-        // detalle que alguien acaba de abrir se le iría de la pantalla.
-        <div className={`${styles.track} ${volteada ? styles.paused : ""}`}>
+        <div className={styles.cinta}>
+          {/* Las dos flechas no navegan: ACELERAN el paso hacia su lado mientras
+              el ratón (o el foco) está encima — la izquierda invirtiendo el
+              sentido. Al soltar, la cinta vuelve a su ritmo de lectura. Con
+              movimiento reducido la cinta es una tira que se arrastra, así que
+              ahí además empujan el scroll al pulsarlas. */}
+          {(["izq", "der"] as const).map((lado) => (
+            <button
+              key={lado}
+              type="button"
+              className={`${styles.flecha} ${lado === "izq" ? styles.flechaIzq : styles.flechaDer}`}
+              aria-label={lado === "izq" ? t.flechaAnterior : t.flechaSiguiente}
+              onMouseEnter={() => setImpulso(lado)}
+              onMouseLeave={() => setImpulso(null)}
+              onFocus={() => setImpulso(lado)}
+              onBlur={() => setImpulso(null)}
+              onClick={(e) => {
+                const pista = e.currentTarget.parentElement?.querySelector(`.${styles.track}`);
+                pista?.scrollBy({ left: lado === "izq" ? -640 : 640, behavior: "smooth" });
+              }}
+            >
+              <span aria-hidden>{lado === "izq" ? "‹" : "›"}</span>
+            </button>
+          ))}
+          {/* Con una tarjeta abierta la cinta SE PARA: si siguiera andando, el
+              detalle que alguien acaba de abrir se le iría de la pantalla. */}
+          <div
+            className={[
+            styles.track,
+            volteada ? styles.paused : "",
+            impulso === "der" ? styles.rapido : "",
+            impulso === "izq" ? styles.rapidoAtras : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {tira(false)}
           {/* La segunda copia es lo que hace que el bucle no tenga costura. Es
               aria-hidden: quien usa lector de pantalla ya leyó la primera. */}
           <div aria-hidden>{tira(true)}</div>
+          </div>
         </div>
       )}
       <div className="wrap">
+        {/* El enlace sigue siendo un <a> con href real —para que se pueda abrir
+            en otra pestaña y para que un buscador lo siga— pero el clic normal
+            abre la ventana que explica dónde está el catálogo y que registrarse
+            es gratis (owner, 2026-08-17). */}
         <a
           className={styles.cta}
           href={CHERRY_PICKED_HREF}
-          onClick={
-            onOpenLogin
-              ? (e) => {
-                  e.preventDefault();
-                  onOpenLogin();
-                }
-              : undefined
-          }
+          onClick={(e) => {
+            e.preventDefault();
+            setPopup(true);
+          }}
         >
           {t.cta} <span aria-hidden>→</span>
         </a>
       </div>
+      <CatalogoPopup
+        open={popup}
+        onClose={() => setPopup(false)}
+        lang={lang}
+        href={CHERRY_PICKED_HREF}
+        onOpenLogin={onOpenLogin}
+      />
     </section>
   );
 }

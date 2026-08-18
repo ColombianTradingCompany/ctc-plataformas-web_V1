@@ -17,7 +17,7 @@ const PRODUCTION_SYSTEM_LABEL: Record<string, string> = {
 };
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  await requireConsoleAccess("bcp");
+  await requireConsoleAccess("ocp");
 
   const { id } = await ctx.params;
   const service = createServiceRoleClient();

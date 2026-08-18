@@ -5,10 +5,10 @@ import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 // a propósito: los snapshots describen el modelo de permisos completo, el esquema
 // y los flujos internos — no es material público.
 //
-// requireConsoleAccess("ecp") redirige (no lanza) si la sesión no vale, así que
+// requireConsoleAccess("bcp") redirige (no lanza) si la sesión no vale, así que
 // el handler nunca devuelve el archivo sin identidad válida.
 export async function GET(_req: Request, ctx: { params: Promise<{ file: string }> }) {
-  await requireConsoleAccess("ecp");
+  await requireConsoleAccess("bcp");
 
   const { file } = await ctx.params;
   // El nombre llega URL-encoded (los snapshots tienen paréntesis en el nombre).

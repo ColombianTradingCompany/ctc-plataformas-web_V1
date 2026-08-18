@@ -260,3 +260,28 @@ APP_VERSION 4.28 → 4.29.
   qa-docs 14/14 · qa-encoding 705/0.
 APP_VERSION 4.29 → 4.30.
 (commit: 9890659)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.31 · Paso (iii)-4: una ficha por nodo partner, y 13 compuertas mal apuntadas
+- **Módulo nuevo** `/bcp/socios/<nodo>` (×5). Cambia el nodo `n-socios` del mapa: la Red de Socios deja de ser
+  solo un tablero de credenciales y gana una ficha por nodo — estado de cada credencial, último acceso, sus
+  tres puertas (landing · acceso · panel) y lo que sella en el pasaporte, tomado de `partners.ts`.
+- **Es ficha de ESTADO, no panel de operación**: no escribe nada. Alta, baja y reenvío siguen en el tablero.
+  Lo que cada nodo HACE se construirá nodo a nodo en su propia interfaz de socio.
+- **KPI propio para las invitaciones fallidas**: un correo de invitación que no sale es el fallo mudo de este
+  módulo — la credencial existe, el socio no sabe que existe. Sacarlo del detalle de la fila a la cabecera es
+  la diferencia entre descubrirlo y no descubrirlo.
+- ⚠️ **HALLAZGO DE LA TANDA, y merece nota en el DICT junto a las otras «no fallan»: 13 compuertas apuntaban a
+  la consola equivocada.** Siete módulos que PR-B trajo al BCP seguían llamando `requireConsoleAccess("ecp")`,
+  dos redirigían a `/ecp`, y uno del OCP pedía `"bcp"`. Lo dejó la mudanza del paso (ii): **las claves de
+  consola no llevan barras**, así que la reescritura masiva de rutas no las tocó. Mismo agujero que
+  `PILLAR_CONSOLE` — tercera vez que esta familia aparece en la reorganización.
+  **No habría fallado nunca para el owner** (tiene las tres consolas); habría esperado a un colaborador con
+  una sola credencial. Cerrado con la comprobación **(f)** de `qa-rutas-consolas.mjs` (263), verificada
+  saboteando un archivo.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos) · `npm run build` exit 0 ·
+  qa-rutas-consolas 263/263 · qa-nav 16/16 · qa-crm-green 21/21 · qa-crm-interes 17/17 ·
+  qa-sneak-peek 182/182 · qa-boards 27/27 · qa-docs 14/14 · qa-encoding 711/0.
+APP_VERSION 4.30 → 4.31.
+(commit: pending)

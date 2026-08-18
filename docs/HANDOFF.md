@@ -690,6 +690,36 @@ Roast, X) y el grupo «OCP · Cherry Picked» del rail queda completo.
 - ⚠️ `newsletter_subscribers` tiene una **tercera fuente sin tablero**, `ctc-home` (desde 2026-08-10). Hoy son
   0 filas; anotado en el §9 del plan.
 
+## Red de Socios — una ficha por nodo (2026-08-18, V4.31)
+
+`/bcp/socios/<nodo>`, una por cada uno de los cinco nodos partner. Responde de un vistazo a la pregunta que
+antes obligaba a cruzar tres pantallas: **¿cómo está este socio ahora mismo?** — quién tiene credencial, en
+qué estado, cuándo entró por última vez, por dónde entra y qué sella en el pasaporte.
+
+- **Es una ficha de ESTADO, no un panel de operación.** Lo que cada nodo *hace* se construirá nodo a nodo y
+  vivirá en su propia interfaz de socio. Aquí se mira la CREDENCIAL, que es lo que el BCP posee desde PR-B.
+  La página **no escribe nada**: alta, baja y reenvío siguen en el tablero de `/bcp/socios`, donde ya
+  funcionaban. Se llega desde el chip del nodo en ese tablero, que era decorativo y ahora es el enlace.
+- **KPI propio para las invitaciones fallidas**, y no es decoración: un correo de invitación que no sale es el
+  fallo mudo de este módulo — la credencial existe, el socio no sabe que existe, y nadie se entera salvo que
+  alguien mire esta pantalla. Sacarlo del detalle de la fila y ponerlo arriba es la diferencia entre
+  descubrirlo y no descubrirlo.
+
+### ⚠️ Y un defecto que esta tanda destapó: 13 compuertas apuntaban a la consola equivocada
+
+Al abrir el módulo apareció que `/bcp/socios/page.tsx` seguía llamando `requireConsoleAccess("ocp")` y
+redirigiendo a `/ocp`. El barrido encontró **13 casos en 8 archivos**: siete módulos que PR-B trajo al BCP
+seguían pidiendo la compuerta del ECP, y uno del OCP pedía la del BCP.
+
+- **Lo dejó la mudanza del paso (ii)**: las claves de consola **no llevan barras**, así que la reescritura
+  masiva de rutas no las tocó. Es el mismo agujero que `PILLAR_CONSOLE` en `leadsActions.ts`, y es la tercera
+  vez que la misma familia de fallo aparece en esta reorganización.
+- **No habría fallado nunca para el owner**, que tiene grant de las tres consolas. Habría esperado a que un
+  colaborador con una sola credencial se topara con «no tiene acceso» en su propio módulo.
+- Cerrado con la comprobación **(f)** de `qa-rutas-consolas.mjs`: cada página bajo `/bcp|/ecp|/ocp` debe
+  protegerse con la compuerta de SU consola y no redirigir a otra. Verificada saboteando un archivo a
+  propósito. **La regla para la próxima mudanza**: buscar los identificadores de permiso, no solo las rutas.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

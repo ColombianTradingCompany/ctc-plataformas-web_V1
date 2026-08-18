@@ -9,7 +9,7 @@ import styles from "./mapa.module.css";
 // guardan en work_map_proposals y las trae de vuelta para que CTC las implemente.
 
 export default async function EcpMapaPage() {
-  const identity = await requireConsoleAccess("ecp");
+  const identity = await requireConsoleAccess("bcp");
   const [base, proposals] = await Promise.all([getBaseMap(), listProposals()]);
   return (
     <div>

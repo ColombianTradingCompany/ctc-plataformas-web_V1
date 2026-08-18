@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PARTNERS, PARTNER_SLUGS } from "@/lib/partners/partners";
@@ -147,9 +148,16 @@ export function SociosClient({ partners }: { partners: PartnerRow[] }) {
               <div className={styles.userMain}>
                 <div className={styles.userTop}>
                   <span className={styles.userName}>{u.org_name}</span>
-                  <span className={styles.chip} style={{ borderColor: p?.accent }}>
-                    {p?.name ?? u.node_type}
-                  </span>
+                  {/* El chip del nodo lleva a su FICHA (V4.31): el estado de
+                      sus credenciales, sus puertas y lo que sella. Es el único
+                      camino hasta ella, así que no puede ser solo decorativo. */}
+                  <Link
+                    href={`/bcp/socios/${u.node_type}`}
+                    className={styles.chip}
+                    style={{ borderColor: p?.accent, textDecoration: "none" }}
+                  >
+                    {p?.name ?? u.node_type} →
+                  </Link>
                   <span className={`${shared.badge} ${STATUS_BADGE[u.status]}`}>{STATUS_LABEL[u.status]}</span>
                 </div>
                 <div className={styles.userEmail}>

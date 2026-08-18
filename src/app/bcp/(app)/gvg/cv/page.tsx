@@ -14,8 +14,8 @@ export const maxDuration = 300;
 // the space is locked — but Next still evaluates this page in parallel, so it
 // must guard itself too (returning null keeps the gate as the only thing shown).
 export default async function CvManagerPage() {
-  const identity = await requireConsoleAccess("ecp");
-  if (!identity.isOwner) redirect("/ecp");
+  const identity = await requireConsoleAccess("bcp");
+  if (!identity.isOwner) redirect("/bcp");
   if (!(await isGvgUnlocked(identity.userId))) return null;
   const [setup, applications, events, reports] = await Promise.all([
     loadCvSetup(),

@@ -10,8 +10,8 @@ import styles from "./gvg.module.css";
 // owner-only nav entry) and then the space's own soft password, which mints a
 // 12h cookie scoped to /bcp/gvg. Everything inside renders on the blue theme.
 export default async function GvgLayout({ children }: { children: React.ReactNode }) {
-  const identity = await requireConsoleAccess("ecp");
-  if (!identity.isOwner) redirect("/ecp");
+  const identity = await requireConsoleAccess("bcp");
+  if (!identity.isOwner) redirect("/bcp");
   const unlocked = await isGvgUnlocked(identity.userId);
   return <div className={styles.space}>{unlocked ? children : <GvgGate />}</div>;
 }

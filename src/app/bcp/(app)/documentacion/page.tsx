@@ -15,7 +15,7 @@ const KIND_LABEL: Record<ArchitectureDoc["kind"], string> = {
 };
 
 export default async function EcpDocumentacionPage() {
-  await requireConsoleAccess("ecp");
+  await requireConsoleAccess("bcp");
   const docs = await listArchitectureDocs();
 
   const snapshots = docs.filter((d) => d.kind === "snapshot");

@@ -19,7 +19,7 @@ import {
 } from "@/lib/terratalento/terminos";
 import type { Finca } from "./data";
 
-// ── Jornadas de Recolecta (Terratalento) · módulo del hub del productor ─────
+// ── Jornadas de Recolecta (Terratalento) · módulo del panel del productor ─────
 // La finca publica su necesidad de manos para la cosecha con TÉRMINOS reales
 // (pago, qué incluye, horario, requisitos) — no dos textos sueltos. Tablero por
 // estado, y en cada jornada el conteo del embudo.

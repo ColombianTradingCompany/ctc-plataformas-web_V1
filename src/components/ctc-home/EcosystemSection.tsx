@@ -538,7 +538,7 @@ export function EcosystemSection() {
   };
   // Cherry Picked ya no es «la vitrina»: es la PLATAFORMA de compra que
   // contiene cuatro programas (CaaS, Green, Roast y X). La salida
-  // principal lleva al hub; CaaS conserva su puerta directa.
+  // principal lleva a la portada; CaaS conserva su puerta directa.
   const cpEntry: InfoEntry = {
     key: "cherry-picked",
     eyebrow: t.cpWho,

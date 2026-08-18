@@ -93,7 +93,7 @@ const KR_TOOL_COPY: Record<ToolId, { name: string; desc: string } | undefined> =
   },
 };
 
-// The producer panel is a HUB: a landing of big module tiles (each with its
+// The producer panel is a TILE LANDING: big module tiles (each with its
 // key facts) that open one module at a time, instead of one endless page.
 // The active module lives in KaffetalExperience so the phone's Back button
 // closes it like any other layer.
@@ -269,7 +269,7 @@ export function AppDashboard({
   }
   const certified = lots.filter((l) => l.stage >= 7);
 
-  // Key facts for the hub tiles: enough to know whether a module needs
+  // Key facts for the tiles: enough to know whether a module needs
   // attention without opening it. `alert` facts render highlighted.
   // El módulo "Kaffetal Regal Arena" (2026-07-17) fusiona muestras +
   // inscripciones en un solo tracker por lote del tramo pagado.
@@ -370,8 +370,8 @@ export function AppDashboard({
     },
   ];
 
-  // Looks up one tile's content by key and renders the standard hub button --
-  // used to compose the grouped/divided hub layout below instead of a blind
+  // Looks up one tile's content by key and renders the standard tile button --
+  // used to compose the grouped/divided tile layout below instead of a blind
   // .map over the whole array (Retroalimentación/Herramientas moved out of
   // the grid entirely, into the two side FABs).
   function renderTile(key: DashboardModule) {
@@ -962,7 +962,7 @@ export function AppDashboard({
       </div>
 
       {/* Retroalimentación (izquierda) y Herramientas (derecha) viven fuera de
-          la rejilla del hub, como atajos ambientales alcanzables desde
+          la rejilla del panel, como atajos ambientales alcanzables desde
           cualquier vista del panel -- no solo la portada. */}
       <SideModuleFabs onSelect={onSelectModule} retroCount={newCtcNotes} />
 

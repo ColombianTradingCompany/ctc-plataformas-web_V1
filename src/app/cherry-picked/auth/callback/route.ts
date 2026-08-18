@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { createSessionClient } from "@/lib/supabase/server";
 
 // A dónde vive la tienda. En producción es su subdominio propio, no un camino
-// del subdominio del hub: `${origin}/cherry-picked-green` desde
+// del subdominio de la portada: `${origin}/cherry-picked-green` desde
 // `cherry-picked.ctcexport.com` TAMBIÉN sirve la tienda —el proxy compara el
 // camino con `startsWith('/cherry-picked')` y `/cherry-picked-green` pasa el
 // filtro por puro prefijo de cadena— pero deja al comprador en el hostname

@@ -50,7 +50,7 @@ async function loadPanelIdentity(): Promise<PanelIdentity> {
 
 /**
  * Read-path gate for a specific console shell (BCP / ECP / OCP). Redirects to the
- * master login if not an active internal operator, or to the hub if authenticated
+ * master login if not an active internal operator, or to the selector if authenticated
  * but without a grant for THIS console. Does NOT replace the independent
  * `requireAdmin()` re-check inside every Server Action.
  */
@@ -60,7 +60,7 @@ export async function requireConsoleAccess(consoleKey: PanelConsoleKey): Promise
   return identity;
 }
 
-/** Identity-only variant for the neutral console hub (`/panel`). No console gate. */
+/** Identity-only variant for the neutral console selector (`/panel`). No console gate. */
 export async function requirePanelIdentity(): Promise<PanelIdentity> {
   return loadPanelIdentity();
 }

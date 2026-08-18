@@ -3,7 +3,7 @@ import { graphLd, organizationLd, gradosLd } from "@/lib/seo/jsonLd";
 import { JsonLd } from "@/components/JsonLd";
 import { HubLanding } from "@/components/cherry-picked-hub/HubLanding";
 
-// ── Cherry Picked · el hub de la plataforma de compra ───────────────────────
+// ── Cherry Picked · la portada de la plataforma de compra ───────────────────────
 // Esta ruta servía la TIENDA de café verde hasta el 2026-08-11. El owner definió
 // Cherry Picked como la PLATAFORMA con cuatro programas dentro (CaaS,
 // Green, Roast y X), así que aquí queda el repartidor y la tienda se mudó a
@@ -29,7 +29,7 @@ export const generateMetadata = superficieConOverrides({
 export default function CherryPickedHubPage() {
   return (
     <>
-      {/* El hub lleva la empresa y el vocabulario de grados: es la superficie
+      {/* La portada lleva la empresa y el vocabulario de grados: es la superficie
           donde un tostador europeo pregunta «¿qué significa Blue?» — y es
           exactamente el hecho que un modelo puede citar sin inventarse nada. */}
       <JsonLd data={graphLd([organizationLd(), gradosLd()])} />

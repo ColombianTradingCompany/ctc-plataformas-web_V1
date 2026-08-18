@@ -4,17 +4,20 @@
 // own route tree and shell — NOT tabs inside one panel. See the vision board
 // (`reference_html-vision-board/ctc-arquitectura-v3.html`, tab "BCP · credenciales"):
 //
-//   BCP · Base Control Panel        — identity root + the lot passport. Creates
-//                                     every credentialed account and defines what
-//                                     each credential reaches. "La matriz de
-//                                     permisos hecha software."
-//   ECP · Executive Control Panel   — direction: pricing, primas, finances, the
-//                                     reservations book, partner on/off-boarding,
-//                                     network-health KPIs. The only place the whole
-//                                     model is visible at once.
-//   OCP · Operational Control Panel — the mirror of every partner interface:
-//                                     dispatch, tracking, exceptions, relevos.
-//                                     What the ECP directs, the OCP executes.
+//   BCP · Base Control Panel        — «Business». El negocio: dirección,
+//                                     configuración del sistema y red de socios.
+//   OCP · Operational Control Panel — «Operation». La operación: del productor
+//                                     al catálogo — el pasaporte del lote entero
+//                                     y los tableros CRM de Cherry Picked.
+//   ECP · Executive Control Panel   — «Execution». La ejecución: plataformas,
+//                                     contacto y caja de herramientas interna.
+//                                     (La sigla conserva *Executive*: es la
+//                                     decisión F1 del owner, 2026-08-17.)
+//
+// ⚠️ Ese es el reparto al que VAMOS. Las palabras se congelaron el 2026-08-18
+// (paso (i) de docs/V5_CONSOLAS_PLAN.md) ANTES de mover un solo módulo, y solo
+// serán ciertas al terminar el paso (ii). Lo que hay HOY en cada consola está
+// en su `nav`, más abajo, y todavía no coincide.
 //
 // External PARTNER interfaces (Centro de Calidad, Agente de Carga, Agente de
 // Nacionalización, Master Roaster, Estudio de Contenido) are a SEPARATE identity
@@ -41,12 +44,22 @@ export type PanelConsole = {
   nav: PanelNavGroup[];
 };
 
+// ⚠️ LOS TRES `tagline` DESCRIBEN LA CASA A LA QUE VAMOS, NO LA DE HOY
+// (congelados el 2026-08-18, paso (i) de `docs/V5_CONSOLAS_PLAN.md`, V4.23).
+// El owner fijó una palabra de misión por consola —Business, Execution,
+// Operation— y los taglines son su traducción. Pero la MUDANZA de módulos que
+// los hace ciertos es el paso (ii), que todavía no ha ocurrido: hoy el
+// pasaporte del lote sigue en el BCP y los cotizadores en el OCP, así que si
+// lee un tagline y luego el `nav` de debajo, no van a cuadrar.
+// Es a propósito. NO los "corrija" de vuelta a lo que hace el rail hoy: el
+// vocabulario se congela ANTES de mover nada, justamente para que la mudanza
+// tenga un destino escrito al que apuntar.
 export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
   bcp: {
     key: "bcp",
     code: "BCP",
     name: "Base Control Panel",
-    tagline: "Identidad y pasaporte del lote",
+    tagline: "El negocio: dirección, configuración y red de socios",
     accent: "#D3B8FA", // corporate lavender
     home: "/bcp",
     // Tres submenús (2026-07-21), sin encabezado — separados por un divisor:
@@ -89,7 +102,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     key: "ecp",
     code: "ECP",
     name: "Executive Control Panel",
-    tagline: "Dirección: precios, primas, finanzas, salud de la red",
+    tagline: "La ejecución: plataformas, contacto y caja de herramientas",
     accent: "#FFCD00", // corporate gold
     home: "/ecp",
     nav: [
@@ -132,7 +145,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // Terratalento (CONSTRUIDO 2026-08-02): el servicio del RECOLECTOR —
           // superficie propia (terratalento.ctcexport.com, identidad única del
           // ecosistema, patrón Directorio) donde crea su perfil y se postula;
-          // las fincas publican "Jornadas de Recolecta" desde su hub de
+          // las fincas publican "Jornadas de Recolecta" desde su panel de
           // Kaffetal Regal, y aquí el ECP hace el MATCH (llamar / confirmar
           // cupos / descartar) y ve el roster completo.
           { href: "/ecp/terratalento", label: "Terratalento" },
@@ -190,7 +203,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     key: "ocp",
     code: "OCP",
     name: "Operational Control Panel",
-    tagline: "Operación: despacho, seguimiento, excepciones, relevos",
+    tagline: "La operación: del productor al catálogo",
     accent: "#5B8DEF", // corporate blue
     home: "/ocp",
     nav: [

@@ -14,7 +14,7 @@ function Icon({ children }: { children: React.ReactNode }) {
 
 // Ambient shortcuts to two modules that used to live as grid tiles: pulled out
 // to the page's side margins so they're reachable from anywhere in the panel
-// (hub or an open module), not just the landing screen. Each FAB calls its OWN
+// (the tile landing or an open module), not just the landing screen. Each FAB calls its OWN
 // useRandomBounce() instance -- that's what keeps the two hops independent
 // instead of ticking in lockstep.
 export function SideModuleFabs({

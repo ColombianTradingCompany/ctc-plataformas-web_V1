@@ -13,7 +13,7 @@ export const generateMetadata = superficieConOverrides({
   imageAlt: "Logotipo del Ecosistema de Valor CTC sobre fondo morado corporativo",
 });
 
-// Landing pública del hub (V4 · Fase 3). Solo presenta y enlaza al login
+// Landing pública del selector de consolas (V4 · Fase 3). Solo presenta y enlaza al login
 // maestro existente — la autenticación no cambia.
 export default function ControlPanelPage() {
   return (

@@ -135,7 +135,7 @@ export const TIPOS_DOC = [
 // Enlaces a las otras superficies del ecosistema, para el panel "Mis plataformas".
 // NODE_ENV es constante en compilación (cliente y servidor), así que no genera
 // hydration mismatch — mismo patrón que FAMILY_LINKS en Cherry Picked.
-// `cp` apunta a GREEN, no al hub: este panel lista dónde tiene cuenta esta
+// `cp` apunta a GREEN, no a la portada: este panel lista dónde tiene cuenta esta
 // identidad, y la cuenta de comprador vive en la tienda (2026-08-11).
 export const PLATAFORMA_LINKS =
   process.env.NODE_ENV === "development"

@@ -22,7 +22,7 @@ export const WWW_ORIGIN = `https://www.${ROOT_DOMAIN}`;
 export const SUBDOMAIN_ROUTES: Record<string, string> = {
   "kaffetal-regal": "/kaffetal-regal",
   // Cherry Picked es la PLATAFORMA de compra (owner, 2026-08-11): este
-  // subdominio sirve el HUB que reparte sus cuatro programas — CaaS,
+  // subdominio sirve la PORTADA que reparte sus cuatro programas — CaaS,
   // Green, Roast y X. Hasta esa fecha servía la tienda Green, que se mudó al
   // subdominio de abajo. DNS/Vercel de `cherry-picked-green`: mismo patrón de
   // docs/PARTNER_DOMAINS_SETUP.md.

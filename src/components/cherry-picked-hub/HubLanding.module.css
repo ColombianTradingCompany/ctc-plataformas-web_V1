@@ -1,4 +1,4 @@
-/* Cherry Picked · el hub. Hereda el tema `cherry-picked` del div raíz, así que
+/* Cherry Picked · la portada. Hereda el tema `cherry-picked` del div raíz, así que
    usa los mismos tokens que la tienda y los dos programas hermanos. */
 
 .hero{position:relative;isolation:isolate;padding:70px 0 64px;background:var(--paper);

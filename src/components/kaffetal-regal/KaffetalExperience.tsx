@@ -325,7 +325,7 @@ function Experience() {
   const [fincaModalOpen, setFincaModalOpen] = useState(false);
   const [editingFincaIdx, setEditingFincaIdx] = useState(-1);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  // Which dashboard module is open (null = the hub landing). Lives here, not
+  // Which dashboard module is open (null = the tile landing). Lives here, not
   // in AppDashboard, so it participates in the Back-button layer stack below.
   const [activeModule, setActiveModule] = useState<DashboardModule | null>(null);
 
@@ -1587,7 +1587,7 @@ function Experience() {
   const closeTopLayer = useCallback(() => {
     // Orden de cierre: los modales están por encima de la ficha (un modal
     // puede abrirse desde dentro de la ficha), la ficha por encima del módulo
-    // del panel, y el módulo por encima del hub.
+    // del panel, y el módulo por encima de la rejilla.
     if (loginOpen) setLoginOpen(false);
     else if (fincaModalOpen) setFincaModalOpen(false);
     else if (infoModalOpen) setInfoModalOpen(false);

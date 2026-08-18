@@ -185,7 +185,7 @@ export function CaasLanding() {
     // El sello llegó el 2026-08-15 y con él CaaS dejó de ser la única puerta de
     // la familia sin cara propia — CTC Tech, Varietales, Herramientas y
     // Terratalento ya entregaban el suyo a la barra. Es EL MISMO archivo que
-    // usa la tarjeta del hub: una cara, un fichero.
+    // usa la tarjeta de la portada de Cherry Picked: una cara, un fichero.
     <SurfaceShell name="CaaS · Coffee as a Service" logo="/images/shared/cherry-picked-caas-seal.webp">
       <section className={`${styles.hero} ${styles.heroGrid}`}>
         <div>

@@ -2,7 +2,7 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> still plan. **The next thing to do is §2, step (i): freeze the names — now V4.23.**
+> still plan. **Step (i) is DONE (V4.23). The next thing to do is §3, step (ii): the route moves.**
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -446,7 +446,7 @@ the **mis-linked finca** on card #3 (La Floresta vs La Fortaleza).
 
 ---
 
-## 2. Step (i) — Freeze names (F1 · F9 · A7 · A1)  → V4.23  ← THE NEXT STEP
+## 2. Step (i) — Freeze names (F1 · F9 · A7 · A1)  → V4.23  ✅ DONE 2026-08-18
 
 A small PR that changes **strings and docs only** — no route moves, no file renames.
 
@@ -488,13 +488,31 @@ A small PR that changes **strings and docs only** — no route moves, no file re
 
 ### 2.2 Definition of done for step (i)
 
-`grep -rn "hub" src docs` returns only CommaaS references (plus the untouched filenames) · the three
+`grep -rn «hub» src docs` returns only CommaaS references (plus the untouched filenames) · the three
 taglines read as above · `qa-nav-check` still 18/18 (it reads `consoles.ts`) · gate green · `APP_VERSION`
 4.23 · Log entry sealed · this file's §7 ticked.
 
+**✅ Met on 2026-08-18, with the scope sharpened by what the measurement actually found (D2.2 below).**
+The «58 in src / 48 in docs» estimate counted three things that are not the word: the Spanish `hubo`
+(from «haber»), the substring inside `github`, and — the big one — **code identifiers**. The real work
+was **39 rewrites in `src/`** and **30 in `docs/`**, and the word turned out to carry **five** distinct
+senses, not the two the table above anticipated:
+
+| Sense | Was | Now |
+|---|---|---|
+| Cherry Picked's front page | «el hub» | **«la portada de Cherry Picked»** |
+| `/panel` after the master login | «the console hub» | **«el selector de consolas»** |
+| Kaffetal Regal's producer dashboard | «el hub del productor» | **«el panel del productor»** (its tiles are «la rejilla») |
+| CTC Home as the centre of the network | «el hub» | **«la casa matriz»** — the term `src/app/page.tsx` already used |
+| Notion's own top-level spaces | «los hubs de Notion» | **«los espacios de Notion»** |
+| CommaaS | «hub» | **«hub»** — the reserved meaning, untouched |
+
+Two things this section did NOT say, now settled as D2.2: identifiers stay, and the sealed
+`Log_Documentacion_Interactiva_V*.txt` stay.
+
 ---
 
-## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)
+## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ← THE NEXT STEP
 
 ### 3.1 The target map (exact hrefs from `consoles.ts` and the route tree)
 
@@ -647,7 +665,7 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 - **CTC Tech / Varietales sub-modules in KR**: the producer continues the conversation started on the landing
   inside the KR hub. Requires linking a `leads` row to a `profiles` row (today leads are anonymous captures).
   Default D5.1: match on verified email at KR login (lead.email = auth email → offer «vincular»), then a «Mis
-  conversaciones» module in the KR hub reading the linked leads + their ECP replies. Landings keep depositing into
+  conversaciones» module in the KR producer panel reading the linked leads + their ECP replies. Landings keep depositing into
   `leads` (`pillar` `tech` / `varietales` — CHECK-constrained, do not rename).
 - **«Cherry Picked CaaS» landing → OCP CRM CP CaaS**: `/caas` already deposits `pillar='cocreate'` (the key stays
   `cocreate`, the brand is CaaS); after PR-A the kanban is `/ocp/crm/caas`. New: the thank-you state prompts the
@@ -667,8 +685,8 @@ the rule is one bump per deployed batch.
 |---|---|---|
 | **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
 | — | *(unplanned)* encoding fix of the 14 public portadas + `qa-encoding-check` | ✅ **V4.22, DONE** |
-| **Step (i)** | Freeze names (§2) | **V4.23** ← next |
-| **Step (ii)** | Route moves, one console per PR (§3): PR-A · PR-B · PR-C | V4.24 · V4.25 · V4.26 → **Version Wrap V37** |
+| **Step (i)** | Freeze names (§2) | ✅ **V4.23, DONE** |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A · PR-B · PR-C | **V4.24** ← next · V4.25 · V4.26 → **Version Wrap V37** |
 | **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.27 – V4.31 |
 | **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.32+ |
 | **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.33+ → **owner declares V5.0** → Version Wrap V38 |
@@ -686,6 +704,7 @@ updated with "done through step X".
 | D0.9 | Card #2: variety «Bourbon» (title) vs `Castillo` (field) | ships as **Bourbon**, flagged in code; owner confirms later |
 | D0.10 | Card #3: finca relation «La Floresta» vs title/supplier «La Fortaleza · Ragonvalia» | ships as **La Fortaleza · Ragonvalia · 1 700 m**, flagged in code; owner confirms later |
 | D2.1 | Rename `HubLanding.tsx` → `PortadaLanding.tsx`? | **No** in step (i); vocabulary only. Rename opportunistically in step (v). |
+| D2.2 | Do IDENTIFIERS (`styles.hubTile`, `HUB_ICON`, `kind="hub"`, the `hub` i18n key, `hub.module.css`, `backToHub`) and the SEALED `Log_Documentacion_Interactiva_V*.txt` count as «the word hub»? | **No — taken 2026-08-18.** Step (i) freezes *vocabulary*: prose, copy, comments, docs. Renaming identifiers is refactor, not vocabulary — it moves files and would collide with step (ii) — so it follows D2.1's logic and waits for step (v). The sealed logs are the historical record: rewriting them would falsify what was said on the day. A note saying *why* the identifiers stay is written into `HubLanding.tsx` and `AppDashboard.module.css` themselves, so the next sweep does not "fix" them. |
 | D3.1 | Create a CTC-owned producer identity for CTC Selection lots | Yes, one owner-only row |
 | D3.2 | CRM CP Green stage rule | 0/1/≥2 orders, manual override |
 | D3.3 | Direccionamiento moodboard data | export to `docs/archive/`, then drop |

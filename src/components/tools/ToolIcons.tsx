@@ -1,7 +1,7 @@
 import type { ToolId } from "@/lib/tools/catalog";
 
 // Iconos de línea para las herramientas. Mismo lenguaje visual que los iconos
-// del hub del productor (LineIcon en AppDashboard): trazo de 1.6, currentColor,
+// del panel del productor (LineIcon en AppDashboard): trazo de 1.6, currentColor,
 // viewBox de 24, sin relleno. Así el icono se ve nativo en las tres superficies
 // —cada una le da su propio color— y no aparece un segundo estilo gráfico.
 //

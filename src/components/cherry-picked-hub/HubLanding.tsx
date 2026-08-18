@@ -11,7 +11,16 @@ import { FAMILY_LINKS, LangProvider, useLang, type Lang } from "@/components/che
 import { LegalFooter } from "@/components/LegalFooter";
 import styles from "./HubLanding.module.css";
 
-// ── Cherry Picked · el hub de la plataforma de compra (2026-08-11) ───────────
+// ── Cherry Picked · la portada de la plataforma de compra (2026-08-11) ───────
+//
+// ⚠️ EL NOMBRE DEL ARCHIVO Y DEL COMPONENTE SIGUEN DICIENDO «Hub» A PROPÓSITO.
+// El 2026-08-18 (paso (i) del plan V5) la palabra «hub» quedó RESERVADA para
+// CommaaS, y en toda la prosa de este repo esta superficie pasó a llamarse
+// «la portada de Cherry Picked». Los IDENTIFICADORES no se tocaron: renombrar
+// `HubLanding` + su carpeta + su .module.css es un cambio de otra naturaleza
+// —mueve archivos, no palabras— y chocaría con la mudanza de rutas del paso
+// (ii). Es la decisión D2.1 del plan, y se rehará cuando toque (paso (v)).
+// No lo "arregle" a medias: o se renombra todo el conjunto, o ninguno.
 // Esta ruta servía la TIENDA de café verde. El owner definió Cherry Picked como
 // la plataforma de compra con cuatro programas dentro, así que aquí queda el
 // repartidor y la tienda se mudó a /cherry-picked-green.

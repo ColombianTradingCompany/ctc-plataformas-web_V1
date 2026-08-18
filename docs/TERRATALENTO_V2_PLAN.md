@@ -12,7 +12,7 @@ antes de construir.
 | Frente | Qué hay hoy | Por qué se siente crudo |
 |---|---|---|
 | **Superficie** (recolector) | Landing + acceso email/contraseña + panel con perfil y lista de jornadas | **Sin Google** (el resto de la red sí lo tiene); las jornadas son una lista plana; el recolector no ve su propio proceso ni a qué se está comprometiendo |
-| **KR** (la finca) | Módulo del hub: publicar por finca + lista con conteos | Lista plana sin estado visual; el formulario reduce TODO el trato a **dos campos de texto libre** (`pago`, `condiciones`) |
+| **KR** (la finca) | Módulo del panel del productor: publicar por finca + lista con conteos | Lista plana sin estado visual; el formulario reduce TODO el trato a **dos campos de texto libre** (`pago`, `condiciones`) |
 | **ECP** (el match) | Popup por jornada con roster y botones de estado | Es una **lista**, no un tablero: no se ve el embudo, no hay filtros de emparejamiento, y no queda constancia de lo acordado |
 
 La raíz común de lo contractual: en la base, todo el trato son dos `text` sueltos

@@ -37,7 +37,7 @@ export async function proxy(request: NextRequest) {
 
   // Comparación por FRONTERA DE SEGMENTO, no por prefijo de cadena (auditoría
   // 2026-08-13, ESTR-3). Con `startsWith` puro, como `/cherry-picked` es prefijo
-  // de `/cherry-picked-green|roast|x`, el host del hub servía las tres
+  // de `/cherry-picked-green|roast|x`, el host de la portada servía las tres
   // superficies hermanas con 200 — incluido el callback OAuth de Green
   // funcionando en el host equivocado. `pathname===base || startsWith(base+"/")`
   // deja pasar el callback legado `/cherry-picked/auth/callback` (empieza por

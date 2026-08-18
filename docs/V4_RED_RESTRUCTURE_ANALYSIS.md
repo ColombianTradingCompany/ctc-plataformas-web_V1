@@ -11,8 +11,8 @@ Antecedente: el board v3 (`reference_html-vision-board/ctc-arquitectura-v3.html`
 ver [[reference-vision-board-v3]] en memoria) ya estableció la tesis —
 *"CTC no es dueño de ninguna máquina, es dueño del expediente"* — y las tres
 capas de identidad. **El board V4 no la contradice: la extiende.** Lo nuevo es
-que ahora hay un *hub con cara pública* y que cada satélite tiene un **contrato
-de entrada/salida distinto** con ese hub.
+que ahora hay una *casa matriz con cara pública* y que cada satélite tiene un **contrato
+de entrada/salida distinto** con esa casa.
 
 ---
 
@@ -29,7 +29,7 @@ Y el corolario que el owner nombra explícitamente:
 
 Eso segundo es lo que convierte el board en arquitectura y no en organigrama: no
 basta decir "el ECP es dueño del Directorio", hay que decir **qué contrato de
-datos** tiene el Directorio con el hub.
+datos** tiene el Directorio con la casa.
 
 ---
 
@@ -78,7 +78,7 @@ socios son el caso especial ya construido: tier `partner`, un nodo exacto,
 **CTC Tech, Varietales, Co-Create.**
 
 No hay sesión ni panel. La superficie **captura una intención** y la convierte en
-algo que ya existe dentro del hub. El board lo dibuja literalmente:
+algo que ya existe dentro de la casa. El board lo dibuja literalmente:
 `CTC Tech → KR`, `Varietales → KR`, y Co-Create colgando del Mercado.
 
 **Esto ya está implementado, solo mal empaquetado.** Hoy los cuatro pilares de
@@ -92,7 +92,7 @@ autoprovisionada (`cocreate` → buyer/Cherry Picked, el resto → producer/KR, 
 ### Clase C — Solo difusión (sin login, sin captación)
 **Coffeed.**
 
-El hub escribe, el mundo lee. Ya construido con esa forma exacta:
+La casa escribe, el mundo lee. Ya construido con esa forma exacta:
 `getCoffeedWall()` devuelve **solo capítulos `published`** con columnas de
 exhibición curadas (patrón `public_lot_catalog`), y los anuncios internos nunca
 viajan. El board le da lo único que le falta: **una Home propia** en vez de vivir

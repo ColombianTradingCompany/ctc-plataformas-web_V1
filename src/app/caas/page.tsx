@@ -9,7 +9,7 @@ import { CaasLanding } from "@/components/services/CaasLanding";
 // Se llamó «Co-Create» hasta el 2026-08-14. El owner cambió el TÉRMINO, no lo
 // que representa: sigue siendo la mesa donde una marca con demanda propia arma
 // su proveeduría con CTC. Con esto se cerró de paso el renombrado a medias que
-// arrastraba la casa —el hub decía «Cherry Picked Co-Create» y esta landing
+// arrastraba la casa —la portada decía «Cherry Picked Co-Create» y esta landing
 // «CTC Co-Create»—: ahora las dos dicen CaaS.
 //
 // La puerta vieja (`/co-create` y su subdominio) sigue viva y reenvía aquí con

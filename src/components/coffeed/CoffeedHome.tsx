@@ -5,7 +5,7 @@ import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "@/components/services/SurfaceShell";
 import styles from "@/components/services/surface.module.css";
 
-// Coffeed · Home propia (V4 · Fase 3, Clase C — SOLO difusión). El hub
+// Coffeed · Home propia (V4 · Fase 3, Clase C — SOLO difusión). La red
 // escribe, el mundo lee: sin login, sin captación, sin tablas nuevas. Es una
 // lectura más del mismo dato curado que ya montan KR / Cherry Picked / el
 // Directorio (`getCoffeedWall()` — solo capítulos published + anuncios). El

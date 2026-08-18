@@ -2,7 +2,7 @@
 
 // ── Coffeed · el muro en las superficies ─────────────────────────────────────
 // El mismo componente de solo-lectura montado en Kaffetal Regal (módulo del
-// hub), Cherry Picked (sección) y el Directorio (pestaña).
+// panel del productor), Cherry Picked (sección) y el Directorio (pestaña).
 //
 // 2026-07-30 (decisión del owner): el muro es EL MISMO dondequiera que se
 // muestre Coffeed — capítulos publicados Y anuncios, mezclados por fecha con

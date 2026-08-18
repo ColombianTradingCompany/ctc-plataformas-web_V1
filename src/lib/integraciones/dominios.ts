@@ -1,6 +1,6 @@
 // ── Integraciones · el vocabulario compartido ────────────────────────────────
 // NO se inventó una taxonomía: esta es la que el negocio YA usa. Las etiquetas
-// de Gmail (`0. ADMIN Y ESTRATEGIA`, `1. ORIGEN Y SUMINISTRO`, …) y los hubs del
+// de Gmail (`0. ADMIN Y ESTRATEGIA`, `1. ORIGEN Y SUMINISTRO`, …) y los espacios del
 // Notion de CTC son la misma lista. Todo lo que cruce sistemas —un evento, un
 // escenario de Make, un correo clasificado, una página espejada— se etiqueta
 // con ESTO, para que las tres herramientas hablen el mismo idioma.

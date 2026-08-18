@@ -9,14 +9,14 @@ sistemas con acceso real, no de oídas.
 
 | Sistema | Estado | Lo que se vio |
 |---|---|---|
-| **Notion** | conectado · CTC Main | Workspace desarrollado: 8 hubs, bases reales (Tareas Administrativas, Conceptos Fundamentales, Papers CTC, Hilos de I+D, Recursos de GTM, Documentación CTC Tech, Referencias de Información) |
+| **Notion** | conectado · CTC Main | Workspace desarrollado: 8 espacios, bases reales (Tareas Administrativas, Conceptos Fundamentales, Papers CTC, Hilos de I+D, Recursos de GTM, Documentación CTC Tech, Referencias de Información) |
 | **Gmail** | conectado | 469 en bandeja, y una taxonomía de etiquetas que YA es el esqueleto del negocio |
 | **Drive** | conectado | DOCUMENTOS LEGALES CTCX, ESTADOS FINANCIEROS CTCX (compartida con la CFO), Carpetas Auxiliares |
 | **Make** | Pro activo · eu2 | 750.000 ops/mes, intervalo 1 min, 250 MB por archivo, data stores, BYO-LLM-key. Cero escenarios (limpio) |
 
 ### El activo que ya existe y no habíamos visto
 
-Las etiquetas de Gmail y los hubs de Notion son **la misma taxonomía**:
+Las etiquetas de Gmail y los espacios de Notion son **la misma taxonomía**:
 
 ```
 0. ADMIN Y ESTRATEGIA        ↔ Administración y Estrategia

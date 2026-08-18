@@ -14,7 +14,12 @@
 @media(max-width:520px){.main{padding:26px 18px 64px}}
 .h1{font-size:clamp(26px,3.6vw,40px);color:var(--primary-deep);margin-top:8px}
 
-/* Hub landing: full-width tiles + two paired rows, separated by thin rules --
+/* Las clases `hub*` de aquí abajo conservan ese nombre a propósito: desde el
+   2026-08-18 «hub» está reservada para CommaaS y en la prosa esto es «el panel
+   del productor», pero renombrar clases CSS es refactor, no vocabulario (D2.1
+   del plan V5). Se renombran enteras o no se renombran.
+
+   Tile landing: full-width tiles + two paired rows, separated by thin rules --
    Información general / divider / Fincas+Lotes / divider / Arena+Certificación
    / Mis contratos / Más allá de la exportación. Retroalimentación y
    Herramientas moved OUT of this grid entirely, into the side FABs. */

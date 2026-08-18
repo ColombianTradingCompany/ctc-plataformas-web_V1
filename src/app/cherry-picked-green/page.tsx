@@ -6,7 +6,7 @@ import { CherryPickedExperience } from "@/components/cherry-picked/CherryPickedE
 // ── Cherry Picked Green · la tienda ─────────────────────────────────────────
 // Vivía en `/cherry-picked` hasta el 2026-08-11. Se mudó aquí cuando el owner
 // definió Cherry Picked como PLATAFORMA con cuatro programas dentro (CaaS,
-// Green, Roast y X): `/cherry-picked` pasó a ser el hub que los reparte, y el
+// Green, Roast y X): `/cherry-picked` pasó a ser la portada que los reparte, y el
 // verde por fracciones —que es lo que ese nombre significaba— se quedó con su
 // propia puerta. El componente no cambió ni una línea.
 
@@ -25,7 +25,7 @@ export const generateMetadata = superficieConOverrides({
 export default function CherryPickedGreenPage() {
   return (
     <>
-      {/* Los grados van AQUÍ y no solo en el hub (2026-08-15): en la tienda el
+      {/* Los grados van AQUÍ y no solo en la portada (2026-08-15): en la tienda el
           grado ES la taxonomía del producto —el catálogo se navega por pestañas
           Black/Red/Blue/Gold/Tyrian—, así que ésta es la página donde declarar
           el vocabulario tiene el respaldo más fuerte. Mismo grafo que

@@ -5,7 +5,7 @@ import { hashOtpCode } from "@/lib/bcp/otp";
 
 // ── Master login · step 2 (OTP) ─────────────────────────────────────────────
 // Consumes the 6-digit code, and only then promotes the parked tokens into a
-// real session cookie. On success the client routes to /panel (the console hub).
+// real session cookie. On success the client routes to /panel (the console selector).
 
 const GENERIC_ERROR = "Código inválido o expirado.";
 const MAX_ATTEMPTS = 5;

@@ -10,6 +10,12 @@ plus the two-box "CTC Platforms | CommaaS Hub" image sent with it).
 
 ## 0. Decision record (owner, 2026-08-17 — answers to §4)
 
+> **Estado de F14 (actualizado 2026-08-18).** El plan que pedía el paso (i) está escrito y en marcha:
+> **`docs/V5_CONSOLAS_PLAN.md`**. **F14(i) — congelar los nombres — HECHO** (V4.23, 2026-08-18): los tres
+> taglines de `consoles.ts`, la palabra «hub» reservada para CommaaS y el vocabulario de este documento
+> llevado a código y docs. Lo siguiente es **F14(ii)**, la mudanza de rutas, en el §3 de ese plan.
+> Antes, y sin planear, se gastó la V4.22 en arreglar la codificación rota de las 14 portadas públicas.
+
 **Structure & memberships**
 - **A1** BCP = **Base Control Panel** (canonical expansion). *(The PDF's BCP box says "Business" — see follow-up F1: mission word vs. expansion.)*
 - **A2** **HC (Herramientas del Café) becomes a login module** with the same rule as DC: entered with the same credentials as either KR or CP.

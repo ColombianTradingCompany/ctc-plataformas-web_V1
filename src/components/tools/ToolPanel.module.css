@@ -22,7 +22,7 @@
 
 .optionTop{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 
-/* Misma pastilla de icono que los mosaicos del hub del productor, un punto más
+/* Misma pastilla de icono que los mosaicos del panel del productor, un punto más
    pequeña: el icono hereda el color de acento de la superficie donde se monte. */
 .optionIcon{
   display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;

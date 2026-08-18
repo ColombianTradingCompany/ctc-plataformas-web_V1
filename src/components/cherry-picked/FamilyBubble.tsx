@@ -83,7 +83,7 @@ export function FamilyBubble({ active, bottom }: { active: FamilyKey; bottom: nu
     >
       {open && (
         <nav className={styles.panel} aria-label={t.aria}>
-          {/* La vuelta al hub. Desde que Cherry Picked es la plataforma y no la
+          {/* La vuelta a la portada. Desde que Cherry Picked es la plataforma y no la
               tienda (2026-08-11), esta burbuja no puede ser solo un conmutador
               entre tres escaparates: tiene que dejar volver a la casa, donde
               además vive CaaS, que no es un escaparate. */}

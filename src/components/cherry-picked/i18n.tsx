@@ -22,7 +22,7 @@ export const LOCALE: Record<Lang, string> = { en: "en-GB", es: "es-ES", de: "de-
 // casa-matriz link.
 //
 // 2026-08-11 · `hub` es nuevo y `green` CAMBIÓ de sitio. Cherry Picked pasó a
-// ser la plataforma de compra y `cherry-picked.ctcexport.com` sirve el hub que
+// ser la plataforma de compra y `cherry-picked.ctcexport.com` sirve la portada que
 // reparte sus cuatro programas; la tienda de café verde se mudó a
 // `cherry-picked-green`. Si algo tiene que llevar a COMPRAR, va a `green`; si
 // tiene que presentar la casa, va a `hub`.

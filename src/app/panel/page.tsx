@@ -5,7 +5,7 @@ import { requirePanelIdentity } from "@/lib/panel/requireConsoleAccess";
 import { ConsoleGlyph } from "@/components/panel/ConsoleGlyph";
 import styles from "./hub.module.css";
 
-// The console hub: the neutral landing after the master login. Presents the
+// The console selector: the neutral landing after the master login. Presents the
 // three internal consoles as parallel surfaces. If the operator can reach only
 // one, we forward straight into it.
 export default async function PanelHubPage() {

@@ -5,7 +5,7 @@ import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";
 
-// CTC Control Panel · landing pública (V4 · Fase 3). El board V4 le da al hub
+// CTC Control Panel · landing pública (V4 · Fase 3). El board V4 le da al selector de consolas
 // una cara: esta página explica las tres consolas y entrega al login maestro
 // que YA existe (/login, password + OTP, sesión única). No toca autenticación
 // — solo le pone puerta con nombre. Los datos de las consolas (código, nombre,

@@ -12,7 +12,7 @@ Estado por pieza:
   que abre las tres consolas internas con la misma sesión. Ver "Login maestro".
 - **Consolas paralelas BCP / ECP / OCP** — **SCAFFOLD CONSTRUIDO (2026-07-15).**
   Árboles de ruta propios (`/bcp`, `/ecp`, `/ocp`), shell compartido con conmutador
-  de consola, hub en `/panel`. ECP/OCP con módulos por construir.
+  de consola, selector de consolas en `/panel`. ECP/OCP con módulos por construir.
 - **Tier de colaboradores internos (`panel_users`)** — **FASE 1 COMPLETA (2026-07-15).**
   Tabla `panel_users` (service-role-only) + seed del fundador como owner activo con las
   tres consolas; OTP por usuario; guard `requireConsoleAccess` lee grants + status;
@@ -111,7 +111,7 @@ sola fuente (`src/lib/panel/consoles.ts`):
 > **ECP = Executive** (dirección), **OCP = Operational** (ejecución/espejo de partners).
 
 El conmutador de consola (arriba de la sidebar) permite saltar entre las consolas que
-la identidad alcanza — paralelas, no anidadas. `/panel` es el hub neutro post-login.
+la identidad alcanza — paralelas, no anidadas. `/panel` es el selector de consolas neutro post-login.
 
 ## Tier interno · `panel_users` (plan)
 
@@ -188,7 +188,7 @@ Modelo propuesto (a refinar antes de construir):
 1. **Fase 1 — Colaboradores internos**: migración `panel_users` + seed de los dos
    fundadores como `is_owner` con las tres consolas; OTP por usuario; `/bcp/usuarios`
    con invitar/suspender/reactivar + email de invitación con retry; `requireConsoleAccess`
-   lee los grants por consola; sidebar/hub filtran por grants; cambio de contraseña
+   lee los grants por consola; sidebar/selector filtran por grants; cambio de contraseña
    forzado al primer login.
 2. **Fase 2 — Un partner de punta a punta**: elegir el nodo más simple (probablemente
    Centro de Calidad), construir `partner_accounts` + `requirePartner`, su superficie,

@@ -150,3 +150,30 @@ LO QUE EL WRAP V37 ENSEÑÓ (léase antes del V38)
   `npx serve . -l 4311` y abrirla; las capturas no funcionan en este panel, pero el
   DOM sí se puede interrogar.
 
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.27 · Paso (iii)-1: «CTC Selection», el paraguas de lo comprado en firme
+- **Black Stock deja de ser módulo suelto** y pasa a ser la pestaña Black de **«CTC Selection»**
+  (`/ocp/ctc-selection`), el paraguas de todo lote que CTC compra EN FIRME para venderlo como productor. La
+  segunda pestaña, **«Selección»**, lleva Red · Blue · Gold. Cambio de nodo: el rail del OCP pierde «Black
+  Stock» y gana «CTC Selection».
+- **Una columna, no una segunda tabla** (F4): `black_negotiations.grade` (`lot_grade`, not null default
+  `'black'`, índice `(grade, status)`), más un CHECK que **rechaza `tyrian`** — va a subasta, no se compra en
+  firme, y eso vive en la BASE y no en la interfaz. La tabla estaba vacía: el default no reescribió nada.
+- **Primer uso real de la regla F2 de reapuntado**: el talón de `/bcp/black-stock` se cambió para apuntar
+  directo a `/ocp/ctc-selection`, en un solo salto, en vez de encadenarse contra `/ocp/black-stock`.
+  Comprobado en servidor real. Es exactamente el caso que `rutasMovidas.ts` anticipaba en su cabecera.
+- ⚠️ **PARA EL DICT / LA FICHA DEL NODO — la mitad que NO se construyó, y por qué.** La rama «Selección» no
+  publica: `public_lot_catalog` entra por `JOIN fincas` sobre `lots.finca_id`, así que el catálogo público
+  enseña el nombre de la **finca real de origen**. El plan daba por hecho que bastaba crear una identidad de
+  productor de CTC «+ fincas para que la vista una», pero aplicarlo obligaría a repuntar `lots.finca_id` a una
+  finca ficticia — y eso **borra el origen del lote, su pasaporte y su rastro EUDR**, que son el activo del
+  negocio. Es la decisión **D3.1**, devuelta al owner con una recomendación (separar la cara COMERCIAL del
+  origen: un indicador en `lot_listings` + un nombre a mostrar calculado en la vista, dejando el pasaporte
+  intacto). Cuando se resuelva, esto merece entrada propia de DICT: es la primera vez que el proyecto tiene
+  que distinguir **quién cultivó** de **quién vende**.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build` exit 0 ·
+  qa-rutas-consolas **253/253** (30 rutas mudadas) · qa-nav 16/16 · qa-encoding limpio.
+APP_VERSION 4.26 → 4.27.
+(commit: pending)

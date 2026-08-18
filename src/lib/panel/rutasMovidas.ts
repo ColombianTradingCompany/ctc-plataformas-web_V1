@@ -53,7 +53,11 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/bcp/catalogo", a: "/ocp/catalogo", desde: "V4.24" },
   { de: "/bcp/contratos", a: "/ocp/contratos", desde: "V4.24" },
   { de: "/bcp/subastas", a: "/ocp/subastas", desde: "V4.24" },
-  { de: "/bcp/black-stock", a: "/ocp/black-stock", desde: "V4.24" },
+  // ⚠️ REAPUNTADA en V4.27: Black Stock dejó de ser módulo suelto y es la
+  // pestaña Black de «CTC Selection». El destino se cambia AQUÍ, no se encadena
+  // un talón contra otro — es justo el caso que la regla F2 anticipaba, y el
+  // guardián (e) rechaza la cadena si alguien lo intenta.
+  { de: "/bcp/black-stock", a: "/ocp/ctc-selection", desde: "V4.24 · reapuntada V4.27" },
   // Cherry Picked — el primero de los cuatro CRM (los otros tres nacen en el paso (iii))
   { de: "/bcp/caas", a: "/ocp/crm/caas", desde: "V4.24" },
 
@@ -88,6 +92,9 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // módulo suelto del ECP (decisión F6). Se quedó huérfano en PR-B, cuando su
   // módulo padre se mudó al BCP; esto cierra aquel interinato.
   { de: "/ecp/direccionamiento/plataformas", a: "/ecp/plataformas", desde: "V4.26" },
+
+  // ── Paso (iii)-1 «CTC Selection» (V4.27, 2026-08-18) ───────────────────────
+  { de: "/ocp/black-stock", a: "/ocp/ctc-selection", desde: "V4.27" },
 ];
 
 /**

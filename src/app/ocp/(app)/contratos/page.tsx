@@ -41,7 +41,7 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
       {(blackOpenCount ?? 0) > 0 && (
         <p className={styles.subtitle} style={{ marginBottom: 20 }}>
           {blackOpenCount} negociación{(blackOpenCount ?? 0) === 1 ? "" : "es"} Black abierta
-          {(blackOpenCount ?? 0) === 1 ? "" : "s"} esperando en el <Link href="/ocp/black-stock">Black Stock →</Link>
+          {(blackOpenCount ?? 0) === 1 ? "" : "s"} esperando en el <Link href="/ocp/ctc-selection">Black Stock →</Link>
         </p>
       )}
 

@@ -266,10 +266,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "OCP · Catálogo",
         links: [
           { href: "/ocp/catalogo", label: "Catálogo Cherry Picked (Contratos Vigentes)" },
-          // Black Stock: la clase de volumen. En el paso (iii) se convierte en
-          // una pestaña de «CTC Selection» (F4) y esta ruta se reapunta ALLÍ,
-          // en `rutasMovidas.ts` — no encadenando un talón contra otro.
-          { href: "/ocp/black-stock", label: "Black Stock" },
+          // CTC Selection (F4, paso (iii)-1): el paraguas de todo lote que CTC
+          // compra EN FIRME para venderlo como productor. Black Stock ya no es
+          // entrada propia — es su pestaña Black, la rama de volumen; la otra
+          // pestaña, «Selección», lleva Red/Blue/Gold. Tyrian no cabe en
+          // ninguna: va a subasta, y lo impide el CHECK de la base.
+          { href: "/ocp/ctc-selection", label: "CTC Selection" },
         ],
       },
       {

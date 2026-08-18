@@ -2,8 +2,9 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> **Step (ii) is COMPLETE** — PR-A (V4.24), PR-B (V4.25), PR-C (V4.26). **Next: the Version Wrap V37**
-> (§7), and then §4, step (iii): the new modules.
+> **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and step (iii) has started:
+> **iii-1 «CTC Selection» shipped as V4.27**, minus its publication path — see **D3.1 below, which is back
+> with the owner and is the one thing blocking that half**. Next: **iii-2, CRM CP Green → V4.28**.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -717,8 +718,8 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 | # | Module | Where | What (default design) | Data | Open point (default) |
 |---|---|---|---|---|---|
-| iii-1 | **CTC Selection** umbrella | `/ocp/ctc-selection` with tabs «Black Stock» (today's module, moved under it; `/ocp/black-stock` and `/bcp/black-stock` stubs → final) and «Selección» (pipeline for Red/Blue/Gold bought outright + acquired inventory) | Generalise `black_negotiations` with a `grade` column (default `black`) instead of a second table; publication: Black → Green's Black tab as today; other grades → Green catalogue **with CTC as the producer name** | `black_negotiations`, `lot_listings`, `purchase_contracts` | "CTC as the producer" needs a CTC-owned producer profile + finca rows for `public_lot_catalog` to join through — **decision D3.1**: create the «CTC · Selection» producer identity (default yes, one row, owner-only) |
-| iii-2 | **CRM CP Green** | `/ocp/crm/green` | kanban over buyers: nuevo → activo → recurrente; card = profile, tier/points, reservations, orders; `LeadsBoard` pattern parametrised | `buyer_profiles` (+ new `crm_stage` column with an auto-suggestion from `orders`) | D3.2 stage rule (default: 0 orders = nuevo, 1 = activo, ≥ 2 = recurrente; manual override) |
+| iii-1 ✅ **V4.27** | **CTC Selection** umbrella | `/ocp/ctc-selection` with tabs «Black Stock» (today's module, moved under it; `/ocp/black-stock` and `/bcp/black-stock` stubs → final) and «Selección» (pipeline for Red/Blue/Gold bought outright + acquired inventory) | Generalise `black_negotiations` with a `grade` column (default `black`) instead of a second table; publication: Black → Green's Black tab as today; other grades → Green catalogue **with CTC as the producer name** | `black_negotiations`, `lot_listings`, `purchase_contracts` | "CTC as the producer" needs a CTC-owned producer profile + finca rows for `public_lot_catalog` to join through — **decision D3.1**: create the «CTC · Selection» producer identity (default yes, one row, owner-only) |
+| iii-2 ← next | **CRM CP Green** | `/ocp/crm/green` | kanban over buyers: nuevo → activo → recurrente; card = profile, tier/points, reservations, orders; `LeadsBoard` pattern parametrised | `buyer_profiles` (+ new `crm_stage` column with an auto-suggestion from `orders`) | D3.2 stage rule (default: 0 orders = nuevo, 1 = activo, ≥ 2 = recurrente; manual override) |
 | iii-3 | **CRM CP Roast · CRM CP X** | `/ocp/crm/roast`, `/ocp/crm/x` | «interés» boards over `newsletter_subscribers` (source roast / x) + future leads | `newsletter_subscribers` | none — F5 default |
 | iii-4 | **Red de Socios cards** | `/bcp/socios/<nodo>` ×5 | placeholder page per node with the credential state from `partner_accounts` (invited/active/suspended, last login) and the node's landing/login links; built out one partner profile at a time | `partner_accounts` | F3 default (c) |
 | iii-5 | **Definición de contexto rework** | `/bcp/direccionamiento` tab 1 | keep the 3 questions per unit; units CTCx / KR / CP / **Value Ecosystem**; strip FORMATS/DERIVABLES/moodboard/referencias; three placeholder subtabs «Misión y Visión», «Modelo Económico», «Contexto de Mercado Global»; keep stored answers to the three kept questions, drop video-only fields | the direccionamiento table (**read it before touching**; owner: "I can check the table") | D3.3 what to do with the moodboard data-URIs (default: export once to `docs/archive/`, then drop; the 8 MB `serverActions.bodySizeLimit` in `next.config.ts` can come back down afterwards) |
@@ -792,7 +793,7 @@ updated with "done through step X".
 | D0.10 | Card #3: finca relation «La Floresta» vs title/supplier «La Fortaleza · Ragonvalia» | ships as **La Fortaleza · Ragonvalia · 1 700 m**, flagged in code; owner confirms later |
 | D2.1 | Rename `HubLanding.tsx` → `PortadaLanding.tsx`? | **No** in step (i); vocabulary only. Rename opportunistically in step (v). |
 | D2.2 | Do IDENTIFIERS (`styles.hubTile`, `HUB_ICON`, `kind="hub"`, the `hub` i18n key, `hub.module.css`, `backToHub`) and the SEALED `Log_Documentacion_Interactiva_V*.txt` count as «the word hub»? | **No — taken 2026-08-18.** Step (i) freezes *vocabulary*: prose, copy, comments, docs. Renaming identifiers is refactor, not vocabulary — it moves files and would collide with step (ii) — so it follows D2.1's logic and waits for step (v). The sealed logs are the historical record: rewriting them would falsify what was said on the day. A note saying *why* the identifiers stay is written into `HubLanding.tsx` and `AppDashboard.module.css` themselves, so the next sweep does not "fix" them. |
-| D3.1 | Create a CTC-owned producer identity for CTC Selection lots | Yes, one owner-only row |
+| D3.1 ⚠️ **REABIERTA 2026-08-18** | Create a CTC-owned producer identity for CTC Selection lots | ~~Yes, one owner-only row~~ — **el default no se puede aplicar tal cual: rompería el pasaporte.** Ver §9, punto 5. Decisión del owner pendiente; hasta entonces la rama «Selección» negocia y compra pero no publica |
 | D3.2 | CRM CP Green stage rule | 0/1/≥2 orders, manual override |
 | D3.3 | Direccionamiento moodboard data | export to `docs/archive/`, then drop |
 | D3.4 | PR order A → B → C vs B → A → C | A → B → C |
@@ -821,6 +822,24 @@ worker narrow credential (F10, backlog).
    `eslint` and `next build` all pass on corrupted text, so nothing in the definition of done looks at the
    bytes production actually serves. The guardian closes this one case; consider whether other public-metadata
    properties deserve the same treatment (see to-do 3, the 12 ungoverned tool pages — same blind spot).
+
+5. ⚠️ **D3.1 — «CTC como productor» no se puede hacer como estaba escrito, y hace falta que el owner elija.**
+   El plan daba por hecho que bastaba con crear una identidad de productor propia de CTC «+ finca rows para que
+   `public_lot_catalog` pueda unir». Al ir a construirlo se ve que **la vista entra por `JOIN fincas` sobre
+   `lots.finca_id`**, así que el nombre que enseña el catálogo público es el de la **finca real de origen**.
+   Hacer que diga «CTC» por esa vía obliga a una de dos cosas, y las dos son malas:
+   **(a)** repuntar `lots.finca_id` a una finca ficticia de CTC → el lote **pierde su origen**, y con él su
+   rastro EUDR y su pasaporte, que son el activo del negocio; **(b)** duplicar el lote → dos filas para un
+   mismo café físico, que es peor.
+   **Mi recomendación es una tercera: separar la cara COMERCIAL del origen.** Un indicador en `lot_listings`
+   (por ejemplo `sold_as_ctc`) y una columna calculada en la vista que devuelva «CTC» como nombre a mostrar
+   cuando esté activo, dejando `lots.finca_id` intacto. El pasaporte sigue diciendo la verdad —que es lo que
+   exige la EUDR— y el catálogo enseña a quien vende. Es un cambio de vista más un `boolean`, no una migración
+   de datos.
+   **Lo que hace falta del owner**: confirmar que un comprador de Cherry Picked Green **no debe** ver la finca
+   de origen de un lote que CTC compró en firme. Si sí puede verla, esto no hace falta y la rama publica como
+   cualquier otro lote. Mientras tanto, «Selección» hace seguimiento y compra; publicar sigue haciéndose desde
+   el Catálogo, a nombre de la finca.
 
 1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
    stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,

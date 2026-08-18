@@ -4,7 +4,16 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
-// ── Black Stock · acciones del pipeline (V4 · vía paralela) ──────────────────
+// ── CTC Selection · acciones del pipeline ────────────────────────────────────
+// Sirven a las DOS ramas del paraguas (Black Stock y Selección): la etapa del
+// kanban y el volumen objetivo son los mismos campos para un Black que para un
+// Gold — de ahí que la mesa ganara una columna `grade` en vez de duplicarse.
+//
+// Se revalidan las dos pestañas a la vez a propósito: los KPI de la cabecera se
+// calculan por rama, pero una negociación puede cambiar de sitio si alguien
+// corrige su grado, y revalidar solo la pestaña actual dejaría la otra rancia.
+// (Regla de la casa: un `revalidatePath` a una ruta que no existe NO avisa —
+// ver el guardián `qa-rutas-consolas.mjs`.)
 // La DECISIÓN (comprar/liberar) sigue siendo decideBlackNegotiation en
 // contractActions.ts — aquí solo vive el SEGUIMIENTO de la negociación
 // abierta: etapa del kanban y volumen objetivo. El enlace con el CRM
@@ -36,7 +45,8 @@ export async function setBlackNegotiationStage(
     new_status: stage,
     performed_by: adminId,
   });
-  revalidatePath("/ocp/black-stock");
+  revalidatePath("/ocp/ctc-selection");
+  revalidatePath("/ocp/ctc-selection/seleccion");
   return { ok: true };
 }
 
@@ -68,6 +78,7 @@ export async function setBlackNegotiationTarget(
     performed_by: adminId,
     notes: targetKg ? `${targetKg} kg` : null,
   });
-  revalidatePath("/ocp/black-stock");
+  revalidatePath("/ocp/ctc-selection");
+  revalidatePath("/ocp/ctc-selection/seleccion");
   return { ok: true };
 }

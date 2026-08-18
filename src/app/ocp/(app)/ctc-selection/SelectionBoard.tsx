@@ -2,20 +2,38 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { BlackStockCard } from "./BlackStockCard";
+import { SelectionTabs } from "./SelectionTabs";
+import { GRADO_POR_ID, type GradoId } from "@/lib/grados/definicion";
 import styles from "@/components/panel/shared.module.css";
 
-// ── Black Stock (V4 · vía paralela) ──────────────────────────────────────────
-// El módulo con dos caras del café grado Black — la clase de volumen del
-// vocabulario canónico (Fase 0):
-//   1. PIPELINE — las negociaciones abiertas (nacen solas cuando una jornada
-//      gradúa un lote Black), con seguimiento por etapa y volumen objetivo.
-//   2. INVENTARIO — lo comprado: contrato → firma → releases (kg reales) →
-//      publicación en la pestaña Black de Cherry Picked Green.
-// El enlace con el CRM CaaS (comprar Black PARA un proyecto) tiene su
-// columna (lead_id) pero aún no UI — segundo corte, a propósito.
+// ── CTC Selection · el tablero, parametrizado por GRADO ──────────────────────
+// «CTC Selection» (paso (iii)-1 del plan V5, V4.27) es el paraguas de todo lote
+// que CTC compra EN FIRME para venderlo como productor. Tiene dos ramas y este
+// archivo sirve a las dos: **Black Stock** (la histórica, la clase de volumen) y
+// **Selección** (Red · Blue · Gold).
+//
+// UN SOLO TABLERO Y NO DOS COPIAS, porque es el mismo objeto: la negociación de
+// un Gold comprado en firme tiene el mismo pipeline, el mismo contrato y los
+// mismos releases que la de un Black. Lo único que cambia es el grado — por eso
+// la mesa ganó UNA columna (`black_negotiations.grade`) en vez de una segunda
+// tabla que habría divergido desde el primer día (decisión F4).
+//
+// ⚠️ `tyrian` no puede llegar aquí, y lo impide el CHECK de la base, no esta
+// pantalla: un Tyrian va a SUBASTA y no se compra en firme.
+//
+// ⚠️ LO QUE ESTA TANDA NO PUBLICA, a propósito. La rama Black ya tiene su salida
+// (la pestaña Black de Cherry Picked Green). La rama Selección NO: publicar un
+// lote comprado en firme «con CTC como productor» choca con que
+// `public_lot_catalog` entra por `JOIN fincas`, así que el nombre que enseña el
+// catálogo es el de la finca REAL. Cambiarlo repuntando `lots.finca_id` a una
+// finca ficticia de CTC borraría el origen del lote — es decir, el pasaporte y
+// su rastro EUDR, que son el activo. Es la decisión D3.1 y está devuelta al
+// owner en el §9 del plan; hasta que se resuelva, Selección hace seguimiento y
+// compra, pero no publica.
 
 type NegRow = {
   id: string;
+  grade: GradoId;
   status: string;
   stage: string;
   target_kg: number | null;
@@ -47,12 +65,13 @@ const CONTRACT_LABEL: Record<string, string> = {
 
 const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
 
-export default async function BlackStockPage() {
+export async function SelectionBoard({ grados }: { grados: GradoId[] }) {
   const service = createServiceRoleClient();
 
   const { data: negsData } = await service
     .from("black_negotiations")
-    .select("id, status, stage, target_kg, agreed_price_per_kg, notes, contract_id, decided_at, created_at, lots(id, name, producer_id, fincas(name))")
+    .select("id, grade, status, stage, target_kg, agreed_price_per_kg, notes, contract_id, decided_at, created_at, lots(id, name, producer_id, fincas(name))")
+    .in("grade", grados)
     .order("created_at", { ascending: false });
   const negs = (negsData as unknown as NegRow[] | null) ?? [];
 
@@ -90,21 +109,43 @@ export default async function BlackStockPage() {
   const kgAdquiridos = [...releasedByContract.values()].reduce((a, b) => a + b, 0);
   const kgVendidos = [...listingByLot.values()].reduce((sum, l) => sum + (l.sold_kg ? Number(l.sold_kg) : 0), 0);
 
+  const esBlack = grados.length === 1 && grados[0] === "black";
+
   const kpis: { k: string; v: string; sub: string }[] = [
     { k: "Negociaciones abiertas", v: String(abiertas.length), sub: `${kgEnNegociacion || "—"} kg en conversación` },
     { k: "Lotes comprados", v: String(compradas.length), sub: `${contractIds.length} contrato${contractIds.length === 1 ? "" : "s"}` },
     { k: "Kg liberados (adquiridos)", v: kgAdquiridos ? kgAdquiridos.toFixed(0) : "0", sub: "releases confirmadas" },
-    { k: "Kg vendidos en Green", v: kgVendidos ? kgVendidos.toFixed(0) : "0", sub: "pestaña Black · on spot" },
+    { k: "Kg vendidos en Green", v: kgVendidos ? kgVendidos.toFixed(0) : "0", sub: esBlack ? "pestaña Black · on spot" : "publicación pendiente (D3.1)" },
   ];
 
   return (
     <div>
-      <h1 className={styles.title}>Black Stock</h1>
+      <h1 className={styles.title}>CTC Selection</h1>
+      <SelectionTabs />
+      <h2 className={styles.title} style={{ fontSize: 20, marginTop: 4 }}>{esBlack ? "Black Stock" : "Selección"}</h2>
       <p className={styles.subtitle}>
-        La clase de volumen del catálogo: las negociaciones nacen solas cuando la Arena gradúa un lote Black. Aquí se les
-        hace seguimiento, se compran (contrato por firmar) o se liberan — y lo comprado alimenta la pestaña Black de
-        Cherry Picked Green. La coordinación con proyectos CaaS llegará sobre este módulo.
+        {esBlack ? (
+          <>
+            La clase de volumen del catálogo: las negociaciones nacen solas cuando la Arena gradúa un lote Black. Aquí se
+            les hace seguimiento, se compran (contrato por firmar) o se liberan — y lo comprado alimenta la pestaña Black
+            de Cherry Picked Green. La coordinación con proyectos CaaS llegará sobre este módulo.
+          </>
+        ) : (
+          <>
+            Los lotes <b>Red, Blue y Gold que CTC compra en firme</b> para venderlos como productor — a diferencia de los
+            «Contratos Vigentes», que se colocan pre-vendidos. Mismo pipeline y mismo contrato que Black; lo que cambia es
+            el grado y, cuando se resuelva, la salida al catálogo.
+          </>
+        )}
       </p>
+      {!esBlack && (
+        <p className={styles.empty} style={{ marginTop: 0 }}>
+          ⚠️ <b>La publicación de esta rama está pendiente de una decisión del owner (D3.1).</b> El catálogo público
+          enseña el nombre de la finca de origen, y hacer que diga «CTC» exigiría desligar el lote de su finca real — lo
+          que borraría su pasaporte y su rastro EUDR. Hasta resolverlo, aquí se negocia y se compra; publicar sigue
+          haciéndose desde el Catálogo, a nombre de la finca.
+        </p>
+      )}
 
       <div className={styles.kpiGrid}>
         {kpis.map((kpi) => (
@@ -123,7 +164,7 @@ export default async function BlackStockPage() {
           <h2>Pipeline de compra ({abiertas.length})</h2>
         </div>
         {abiertas.length === 0 ? (
-          <p className={styles.empty}>Sin negociaciones abiertas — la próxima nace cuando una jornada gradúe un lote Black.</p>
+          <p className={styles.empty}>{esBlack ? "Sin negociaciones abiertas — la próxima nace cuando una jornada gradúe un lote Black." : "Sin negociaciones abiertas en esta rama."}</p>
         ) : (
           <div className={styles.board}>
             {STAGES.map((s) => {
@@ -160,7 +201,7 @@ export default async function BlackStockPage() {
           <h2>Inventario adquirido ({compradas.length})</h2>
         </div>
         {compradas.length === 0 ? (
-          <p className={styles.empty}>Todavía no se ha comprado ningún lote Black.</p>
+          <p className={styles.empty}>{esBlack ? "Todavía no se ha comprado ningún lote Black." : "Todavía no se ha comprado ningún lote de esta rama."}</p>
         ) : (
           <div className={styles.list}>
             {compradas.map((n) => {
@@ -178,7 +219,7 @@ export default async function BlackStockPage() {
                         {n.agreed_price_per_kg && <> · ${Number(n.agreed_price_per_kg).toLocaleString("es-CO")}/kg acordado</>}
                       </p>
                     </div>
-                    <span className={styles.badge}>Black</span>
+                    <span className={styles.badge}>{GRADO_POR_ID[n.grade]?.nombre ?? n.grade}</span>
                   </div>
                   <p className={styles.meta} style={{ margin: "8px 0 0" }}>
                     Contrato:{" "}

@@ -600,6 +600,31 @@ El OCP queda siendo solo el pasaporte del lote, el BCP el negocio y el ECP la ej
 - **Un guardián que revienta a mitad no guarda nada**: `qa-rutas-consolas` leía `git ls-files` y moría con
   ENOENT sobre archivos borrados sin `git rm`. Ahora filtra por existencia antes de leer.
 
+## CTC Selection — el paraguas de lo comprado en firme (2026-08-18, V4.27)
+
+Primer módulo del paso (iii). **Black Stock dejó de ser una entrada del rail** y es la pestaña Black de
+**«CTC Selection»** (`/ocp/ctc-selection`), el paraguas de todo lote que CTC compra **en firme** para venderlo
+como productor — lo contrario de los «Contratos Vigentes», que se colocan pre-vendidos. La otra pestaña,
+**«Selección»**, lleva Red · Blue · Gold.
+
+- **Una columna, no una segunda tabla** (F4): `black_negotiations` ganó `grade` (`lot_grade`, `not null
+  default 'black'`, índice `(grade, status)`). La negociación de un Gold comprado en firme es el MISMO objeto
+  que la de un Black — mismo pipeline, mismo contrato, mismos releases —, así que dos tablas habrían sido dos
+  copias del mismo código divergiendo desde el primer día. La tabla estaba **vacía**, así que el default no
+  reescribió nada.
+- **`tyrian` no cabe, y lo impide la BASE**: `black_negotiations_grade_check` lo rechaza. Un Tyrian va a
+  subasta y no se compra en firme; dejarlo como regla de interfaz habría sido dejarlo como sugerencia.
+- **El talón de `/bcp/black-stock` se REAPUNTÓ**, no se encadenó: apunta directo a `/ocp/ctc-selection` en un
+  solo salto. Es el primer uso real de la regla F2 que `rutasMovidas.ts` existía para sostener, y se comprobó
+  en servidor real (`/bcp/black-stock` → 308 → `/ocp/ctc-selection`, sin escala).
+- ⚠️ **LA RAMA «SELECCIÓN» NO PUBLICA TODAVÍA, y es una decisión del owner pendiente (D3.1).**
+  `public_lot_catalog` entra por `JOIN fincas` sobre `lots.finca_id`, así que el catálogo público enseña el
+  nombre de la **finca real**. Hacer que diga «CTC» repuntando `finca_id` a una finca ficticia **borraría el
+  origen del lote** — su pasaporte y su rastro EUDR, que son el activo. La salida recomendada está en el §9
+  del plan: separar la cara comercial del origen con un indicador en `lot_listings` y un nombre a mostrar
+  calculado en la vista, dejando el pasaporte intacto. Hasta que se decida, la rama negocia y compra; publicar
+  se sigue haciendo desde el Catálogo, a nombre de la finca.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

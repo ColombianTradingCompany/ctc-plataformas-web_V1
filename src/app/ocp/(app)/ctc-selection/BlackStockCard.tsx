@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { decideBlackNegotiation } from "../contractActions";
-import { setBlackNegotiationStage, setBlackNegotiationTarget } from "../blackStockActions";
+import { setBlackNegotiationStage, setBlackNegotiationTarget } from "../ctcSelectionActions";
 import styles from "@/components/panel/shared.module.css";
 
 // La tarjeta del pipeline Black Stock: seguimiento (etapa + volumen objetivo +

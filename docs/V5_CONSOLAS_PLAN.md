@@ -2,7 +2,9 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> still plan. **The next thing to do is §2, step (i): freeze the names.**
+> still plan. **The next thing to do is §2, step (i): freeze the names — now V4.23.**
+> (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
+> production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
 > `APP_VERSION` bump; do not start the next step until the previous one is pushed and green.
 
@@ -444,7 +446,7 @@ the **mis-linked finca** on card #3 (La Floresta vs La Fortaleza).
 
 ---
 
-## 2. Step (i) — Freeze names (F1 · F9 · A7 · A1)  → V4.22  ← THE NEXT STEP
+## 2. Step (i) — Freeze names (F1 · F9 · A7 · A1)  → V4.23  ← THE NEXT STEP
 
 A small PR that changes **strings and docs only** — no route moves, no file renames.
 
@@ -488,7 +490,7 @@ A small PR that changes **strings and docs only** — no route moves, no file re
 
 `grep -rn "hub" src docs` returns only CommaaS references (plus the untouched filenames) · the three
 taglines read as above · `qa-nav-check` still 18/18 (it reads `consoles.ts`) · gate green · `APP_VERSION`
-4.22 · Log entry sealed · this file's §7 ticked.
+4.23 · Log entry sealed · this file's §7 ticked.
 
 ---
 
@@ -664,11 +666,12 @@ the rule is one bump per deployed batch.
 | When | What | Version |
 |---|---|---|
 | **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
-| **Step (i)** | Freeze names (§2) | **V4.22** ← next |
-| **Step (ii)** | Route moves, one console per PR (§3): PR-A · PR-B · PR-C | V4.23 · V4.24 · V4.25 → **Version Wrap V37** |
-| **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.26 – V4.30 |
-| **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.31+ |
-| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.32+ → **owner declares V5.0** → Version Wrap V38 |
+| — | *(unplanned)* encoding fix of the 14 public portadas + `qa-encoding-check` | ✅ **V4.22, DONE** |
+| **Step (i)** | Freeze names (§2) | **V4.23** ← next |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A · PR-B · PR-C | V4.24 · V4.25 · V4.26 → **Version Wrap V37** |
+| **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.27 – V4.31 |
+| **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.32+ |
+| **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.33+ → **owner declares V5.0** → Version Wrap V38 |
 
 Every PR: Log entry sealed with sha · HANDOFF touched · DICT touched · memory note `project_structure_reorg_2026_08_17`
 updated with "done through step X".
@@ -702,6 +705,16 @@ in `precios.ts` · Canva scenario in Make · Coffeed 5 media without feed · Sup
 worker narrow credential (F10, backlog).
 
 ### Dev to-dos (owner's call, tracked here)
+
+0. **✅ DONE 2026-08-18 (V4.22) — the 14 public portadas had a broken text encoding.** Found while measuring
+   the «hub» occurrences for step (i): commit `10c9016` (2026-08-15, V4.7) re-saved fourteen
+   `src/app/**/page.tsx` with their UTF-8 read as cp1252, corrupting the `<title>`, meta description and
+   `siteName` of **every public surface at once** — live in production for three days. Fixed run by run and
+   verified byte-identical against `10c9016^`; new guardian `scripts/qa-encoding-check.mjs` (233 on the
+   corrupt tree, 0 on the fixed one). **The lesson is a hole in the gate, and it is still open**: `tsc`,
+   `eslint` and `next build` all pass on corrupted text, so nothing in the definition of done looks at the
+   bytes production actually serves. The guardian closes this one case; consider whether other public-metadata
+   properties deserve the same treatment (see to-do 3, the 12 ungoverned tool pages — same blind spot).
 
 1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
    stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,

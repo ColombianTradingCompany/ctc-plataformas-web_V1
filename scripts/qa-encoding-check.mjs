@@ -4,11 +4,15 @@
 //
 // Nació el 2026-08-18. El commit 10c9016 (2026-08-15, V4.7) guardó CATORCE
 // portadas públicas con su UTF-8 leído como cp1252 y vuelto a guardar como
-// UTF-8: «máquinas» quedó «mÃ¡quinas» y «—» quedó «â€”». No lo vio nadie
-// durante tres días porque NO rompe nada — `tsc`, `eslint` y `next build`
-// pasan felices con la mojibake dentro, y el daño sale por donde no se mira:
-// el <title> de la pestaña, la meta description y las tarjetas de Open Graph
-// de las 14 superficies públicas a la vez.
+// UTF-8. El daño NO estaba en los comentarios: estaba en el <title>, la meta
+// description y el siteName de las catorce superficies públicas.
+//
+// El ejemplo no se escribe aquí tal cual A PROPÓSITO: este guardián se lee a
+// sí mismo, y pegar la mojibake de muestra lo hace fallar sobre su propia
+// documentación. En bytes, que es como se mira: la «á» de «máquinas» viajó de
+//     c3 a1                 (UTF-8 correcto)
+// a   c3 83 c2 a1           (esos dos bytes re-leídos como cp1252 y re-escritos)
+// y la «·» de c2 b7 a c3 82 c2 b7. Eso es todo lo que pasó, 234 veces.
 //
 // CÓMO SE DETECTA: la corrupción deja siempre una FIRMA. Un carácter no-ASCII
 // original (·, á, —) se convierte en 2-4 caracteres que, si se vuelven a

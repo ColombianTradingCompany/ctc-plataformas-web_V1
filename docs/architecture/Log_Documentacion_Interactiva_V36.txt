@@ -462,3 +462,39 @@ APP_VERSION 4.20 → 4.21.
   la compuerta y los seis frentes abiertos.
 Sin cambio de APP_VERSION (documentación).
 (commit: 582269a)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.22 · Las catorce portadas públicas recuperan su codificación
+- **Lo que estaba roto, y llevaba tres días en producción.** El commit `10c9016` (2026-08-15, V4.7)
+  guardó catorce `src/app/**/page.tsx` con su UTF-8 leído como cp1252 y vuelto a escribir como
+  UTF-8. No es un problema de comentarios: lo que se sirvió roto fue el **`<title>`, la meta
+  description y el `siteName`** de las **catorce superficies públicas a la vez** — la pestaña del
+  navegador, el resultado de Google y la tarjeta de Open Graph de cada enlace compartido.
+  Comprobado en producción antes de tocar nada:
+      `CTC Control Panel Â· La sala de mÃ¡quinas de la red`   (bytes c3 83 c2 a1)
+- **Por qué no lo vio nadie.** Porque no rompe nada. `tsc`, `eslint` y `next build` pasan felices
+  con la mojibake dentro: para el compilador «mÃ¡quinas» es una cadena tan válida como «máquinas».
+  El daño sale exactamente por donde la compuerta no mira. Es el tipo de fallo que solo aparece si
+  se leen los BYTES de lo que sirve producción, y por eso ahora hay un guardián.
+- **Cómo se arregló.** Deshaciendo la doble codificación **tramo a tramo** (cp1252 → UTF-8), no
+  archivo a archivo: tres de los catorce estaban PARCIALMENTE corruptos —commits posteriores les
+  añadieron texto sano— y un pase global sobre el archivo entero los habría roto. Verificación
+  contra el original: **89 de las 96 líneas no-ASCII vuelven a ser idénticas byte a byte** a su
+  versión en `10c9016^`; las 7 restantes son líneas que ese mismo commit escribió de nuevas y
+  quedan en español correcto.
+- **Guardián nuevo: `scripts/qa-encoding-check.mjs`.** No busca caracteres «raros» —eso daría
+  falsos positivos en todo el español del repo—: busca tramos que se **dejan deshacer** y cuyo
+  resultado cae en el repertorio que este repo realmente escribe. Sobre el árbol corrupto canta
+  **233**; sobre el arreglado, **0** en 667 archivos. El repertorio hubo que añadirlo por un falso
+  positivo real: «AQUÍ»» en `docs/HANDOFF.md`, donde la Í pegada a la » da bytes UTF-8 válidos (la
+  letra griega ͻ). Corre sin `ts-resolve`: `node scripts/qa-encoding-check.mjs`.
+- **Alcance medido, no supuesto**: la corrupción estaba confinada a esos 14 archivos. Los 38
+  snapshots `Documentacion_Interactiva_*.html` y el resto de `docs/` y `public/` se escanearon con
+  el mismo criterio y dan **0** — incluido `V35.0(10c9016)`, el snapshot del propio commit culpable.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build`
+  exit 0 · qa-nav 18/18 · qa-grados 44/44 · qa-sneak-peek 177/177 · qa-docs 14/14 · qa-encoding
+  667/0. Verificado en el HTML **construido**, no solo en el fuente: el `<title>` de
+  `/control-panel` ya sale `c2 b7` / `c3 a1`.
+APP_VERSION 4.21 → 4.22.
+(commit: bde465d)

@@ -592,3 +592,43 @@ APP_VERSION 4.22 → 4.23.
   qa-boards 27/27 · qa-guard OK · qa-encoding 667/0.
 APP_VERSION 4.23 → 4.24.
 (commit: 486d160)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.25 · Paso (ii), PR-B: el BCP recibe dirección y configuración
+- **La mudanza**: ocho módulos entran al BCP — Direccionamiento (+grados), Usuarios y credenciales,
+  Documentación del sistema, Mapa de Trabajo, Consumo de IA, Automatizaciones y GVG-Space **desde el ECP**, y
+  la Red de Socios **desde el OCP**. El BCP deja de estar vacío y su rail dice por fin lo que su tagline
+  prometía desde el paso (i): el negocio, la configuración del sistema y la red de socios.
+- **Los socios cambian de consola por un cambio de ARGUMENTO, no de código.** Estaban en el OCP desde
+  2026-07-20 porque allí se OPERAN; la reorganización V5 se queda con el otro lado: dar de alta una credencial
+  es configurar la red, y eso es el BCP. Vale la pena que el DICT lo recoja, porque la decisión de 07-20 está
+  documentada con el argumento contrario.
+- **10 rutas nuevas en `rutasMovidas.ts`** (22 en total); el guardián pasa de 164 a **213** comprobaciones.
+- ⚠️ **`git mv` de un módulo se lleva a sus HIJOS, incluidos los que no se mudan.** `direccionamiento/` viajó
+  entero con `plataformas/` dentro, que debía quedarse en el ECP (F6). Devuelto a mano.
+- ⚠️ **Cuando una sub-ruta se queda, el talón del padre NO puede ser un `[[...resto]]`**: chocaría con la
+  página viva. El de `/ecp/direccionamiento` es explícito, y la excepción vive en **`NO_SE_MOVIERON`** dentro
+  de `rutasMovidas.ts` — de donde la lee también el guardián, para no denunciar como muerta una ruta que
+  respira. Verificado en servidor real: `/ecp/direccionamiento` → 308 → `/bcp/direccionamiento`, y
+  `/ecp/direccionamiento/plataformas` → 307 → `/login`, o sea que llega a SU página y no al talón.
+- **Un talón viejo se REAPUNTA, jamás se encadena**: `/ecp/grados` (2026-08-10) ya apuntaba a Direccionamiento
+  y ahora va directo a `/bcp/direccionamiento/grados`. De paso subió de `redirect` (307) a `permanentRedirect`
+  (308) y salió del grupo `(app)`, como el resto.
+- ⚠️ **La reescritura masiva de rutas también toca los GUARDIANES y los comentarios con fecha, y ahí cambia el
+  SIGNIFICADO y no solo el texto.** En `qa-nav-check.mjs` dejó tres aserciones comprobando el rail de una
+  consola contra rutas de otra (una «pasaba» por accidente) y en `navActivo.ts` fechó un fallo de 2026-08-16 en
+  la consola equivocada. Corregidos a mano. **Tras un reemplazo masivo hay que releer los `qa-*.mjs`.**
+- **`next.config.ts` `outputFileTracingIncludes` lleva RUTAS como claves**, repuntadas a `/bcp/documentacion*`.
+  Sin eso, `docs/architecture/**` no se traza dentro de la función y el módulo sale VACÍO en producción — sin
+  error y sin reproducirse en local.
+- «Manejo de Plataformas» sale de la tira de pestañas de Direccionamiento: una tira no puede cruzar dos
+  consolas. Sigue en el rail del ECP hasta PR-C, que lo vuelve módulo suelto (`/ecp/plataformas`, F6).
+- **Para el Wrap V37 (tras PR-C)**: el FILETREE de las tres consolas cambia otra vez; `EstructuraModal.tsx`
+  sigue describiendo el reparto viejo; y el DICT necesita **`rutasMovidas`**, **«talón»/stub 308**,
+  **`NO_SE_MOVIERON`** y la nueva ubicación de **Red de Socios** con su argumento.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build` exit 0 ·
+  qa-rutas-consolas 213/213 · qa-nav 19/19 · qa-docs 14/14 · qa-consumo 21/21 · qa-boards 27/27 ·
+  qa-grados 44/44 · qa-encoding 681/0.
+APP_VERSION 4.24 → 4.25.
+(commit: 747725a)

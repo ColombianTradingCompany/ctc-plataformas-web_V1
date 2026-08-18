@@ -6,6 +6,7 @@ import { puedoSer } from "@/lib/identidad/matriz";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
 import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
+import { CTC_RAZON } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -161,7 +162,8 @@ type CatalogRow = {
   ficha_puntaje_estimado: number | null;
   official_score: number | null;
   ficha_notas_cata: string | null;
-  finca_name: string;
+  finca_name: string | null;
+  ctc_selection: boolean;
   municipio: string | null;
   departamento: string | null;
 };
@@ -178,7 +180,11 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
     grade,
     tc: `var(--t-${catalog.grade})`,
     name: catalog.name,
-    origin: `${catalog.finca_name} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
+    // Un lote que CTC compró en firme se muestra a nombre de CTC (D3.1): el
+    // REGISTRO conserva la finca real —pasaporte y rastro EUDR intactos—,
+    // la VITRINA enseña a quien vende. La vista ya no devuelve el nombre de
+    // la finca en ese caso, así que aquí solo se pone el rótulo.
+    origin: `${catalog.ctc_selection ? CTC_RAZON : catalog.finca_name ?? "—"} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
     variety: catalog.ficha_variedad || "—",
     process: catalog.ficha_proceso || "—",
     // Prefer the real official average (accepted lot_evaluations) over the
@@ -243,7 +249,7 @@ function Experience() {
       supabase
         .from("public_lot_catalog")
         .select(
-          "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento"
+          "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection"
         ),
       supabase.from("public_transparency_pricing").select("lot_listing_id, price_per_kg_locked, reference_price_snapshot"),
       supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),

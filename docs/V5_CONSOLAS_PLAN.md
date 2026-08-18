@@ -2,9 +2,9 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and step (iii) has started:
-> **iii-1 «CTC Selection» shipped as V4.27**, minus its publication path — see **D3.1 below, which is back
-> with the owner and is the one thing blocking that half**. Next: **iii-2, CRM CP Green → V4.28**.
+> **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
+> COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
+> Next: **iii-2, CRM CP Green → V4.29**.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -793,7 +793,7 @@ updated with "done through step X".
 | D0.10 | Card #3: finca relation «La Floresta» vs title/supplier «La Fortaleza · Ragonvalia» | ships as **La Fortaleza · Ragonvalia · 1 700 m**, flagged in code; owner confirms later |
 | D2.1 | Rename `HubLanding.tsx` → `PortadaLanding.tsx`? | **No** in step (i); vocabulary only. Rename opportunistically in step (v). |
 | D2.2 | Do IDENTIFIERS (`styles.hubTile`, `HUB_ICON`, `kind="hub"`, the `hub` i18n key, `hub.module.css`, `backToHub`) and the SEALED `Log_Documentacion_Interactiva_V*.txt` count as «the word hub»? | **No — taken 2026-08-18.** Step (i) freezes *vocabulary*: prose, copy, comments, docs. Renaming identifiers is refactor, not vocabulary — it moves files and would collide with step (ii) — so it follows D2.1's logic and waits for step (v). The sealed logs are the historical record: rewriting them would falsify what was said on the day. A note saying *why* the identifiers stay is written into `HubLanding.tsx` and `AppDashboard.module.css` themselves, so the next sweep does not "fix" them. |
-| D3.1 ⚠️ **REABIERTA 2026-08-18** | Create a CTC-owned producer identity for CTC Selection lots | ~~Yes, one owner-only row~~ — **el default no se puede aplicar tal cual: rompería el pasaporte.** Ver §9, punto 5. Decisión del owner pendiente; hasta entonces la rama «Selección» negocia y compra pero no publica |
+| D3.1 ✅ **RESUELTA 2026-08-18** | Create a CTC-owned producer identity for CTC Selection lots | **No hace falta ninguna identidad falsa.** Palabras del owner: *«All the lots that CTC buys will be first registered in KR, which means that the real farm is shown in the documentation but is replaced as the Finca in the showcase cards (Not changing the official finca, just how it looks in the UI)»*. Implementado en V4.28: el REGISTRO conserva la finca real, la VITRINA enseña a CTC. Ver §9, punto 5 |
 | D3.2 | CRM CP Green stage rule | 0/1/≥2 orders, manual override |
 | D3.3 | Direccionamiento moodboard data | export to `docs/archive/`, then drop |
 | D3.4 | PR order A → B → C vs B → A → C | A → B → C |
@@ -823,23 +823,24 @@ worker narrow credential (F10, backlog).
    bytes production actually serves. The guardian closes this one case; consider whether other public-metadata
    properties deserve the same treatment (see to-do 3, the 12 ungoverned tool pages — same blind spot).
 
-5. ⚠️ **D3.1 — «CTC como productor» no se puede hacer como estaba escrito, y hace falta que el owner elija.**
-   El plan daba por hecho que bastaba con crear una identidad de productor propia de CTC «+ finca rows para que
-   `public_lot_catalog` pueda unir». Al ir a construirlo se ve que **la vista entra por `JOIN fincas` sobre
-   `lots.finca_id`**, así que el nombre que enseña el catálogo público es el de la **finca real de origen**.
-   Hacer que diga «CTC» por esa vía obliga a una de dos cosas, y las dos son malas:
-   **(a)** repuntar `lots.finca_id` a una finca ficticia de CTC → el lote **pierde su origen**, y con él su
-   rastro EUDR y su pasaporte, que son el activo del negocio; **(b)** duplicar el lote → dos filas para un
-   mismo café físico, que es peor.
-   **Mi recomendación es una tercera: separar la cara COMERCIAL del origen.** Un indicador en `lot_listings`
-   (por ejemplo `sold_as_ctc`) y una columna calculada en la vista que devuelva «CTC» como nombre a mostrar
-   cuando esté activo, dejando `lots.finca_id` intacto. El pasaporte sigue diciendo la verdad —que es lo que
-   exige la EUDR— y el catálogo enseña a quien vende. Es un cambio de vista más un `boolean`, no una migración
-   de datos.
-   **Lo que hace falta del owner**: confirmar que un comprador de Cherry Picked Green **no debe** ver la finca
-   de origen de un lote que CTC compró en firme. Si sí puede verla, esto no hace falta y la rama publica como
-   cualquier otro lote. Mientras tanto, «Selección» hace seguimiento y compra; publicar sigue haciéndose desde
-   el Catálogo, a nombre de la finca.
+5. ✅ **D3.1 RESUELTA (2026-08-18) — el lote tiene dos caras, y ninguna miente.** El default original
+   («crear una identidad de productor de CTC + fincas para que la vista una») se descartó: la vista entra por
+   `JOIN fincas` sobre `lots.finca_id`, así que aplicarlo habría obligado a repuntar el lote a una finca
+   ficticia y **borrar su origen** — pasaporte y rastro EUDR incluidos.
+   **Lo que decidió el owner**, literal: *«All the lots that CTC buys will be first registered in KR, which
+   means that the real farm is shown in the documentation but is replaced as the Finca in the showcase cards
+   (Not changing the official finca, just how it looks in the UI)»*.
+   **Cómo quedó** (V4.28): `public_lot_catalog` deja de devolver `finca_name` cuando el lote está comprado y
+   expone `ctc_selection`; el rótulo lo pone la aplicación desde `CTC_RAZON` (`lib/legal.ts`), su fuente única.
+   Se **deriva de la compra** (`black_negotiations.status = 'comprar'`) — no hay interruptor que olvidar. Ni una
+   fila de `lots` o `fincas` cambia. Se anula en la VISTA y no en el componente porque la vista la lee `anon`:
+   taparlo en la interfaz habría dejado el nombre a un `curl` de distancia.
+   **Queda una consecuencia que el owner debería mirar**: el Manifiesto público promete «finca, personas,
+   proceso y evaluación, **verificables lote a lote**» y la Historia habla de no perder «el nombre de quien los
+   cultivó». Con la decisión aplicada, para un lote de CTC Selection eso es cierto en la **documentación** pero
+   no en la **tarjeta**. Si la promesa se lee como «en la ficha», no hay nada que cambiar; si se lee como «en
+   todas partes», el copy necesita un matiz. No bloquea nada — es una revisión de redacción.
+
 
 1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
    stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,

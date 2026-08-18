@@ -21,15 +21,16 @@ import styles from "@/components/panel/shared.module.css";
 // ⚠️ `tyrian` no puede llegar aquí, y lo impide el CHECK de la base, no esta
 // pantalla: un Tyrian va a SUBASTA y no se compra en firme.
 //
-// ⚠️ LO QUE ESTA TANDA NO PUBLICA, a propósito. La rama Black ya tiene su salida
-// (la pestaña Black de Cherry Picked Green). La rama Selección NO: publicar un
-// lote comprado en firme «con CTC como productor» choca con que
-// `public_lot_catalog` entra por `JOIN fincas`, así que el nombre que enseña el
-// catálogo es el de la finca REAL. Cambiarlo repuntando `lots.finca_id` a una
-// finca ficticia de CTC borraría el origen del lote — es decir, el pasaporte y
-// su rastro EUDR, que son el activo. Es la decisión D3.1 y está devuelta al
-// owner en el §9 del plan; hasta que se resuelva, Selección hace seguimiento y
-// compra, pero no publica.
+// CÓMO SE PUBLICA UN LOTE COMPRADO EN FIRME (D3.1, resuelta por el owner el
+// 2026-08-18). Un lote que CTC compra se registra PRIMERO en Kaffetal Regal con
+// su finca real, y desde ahí lleva dos caras que no se contradicen:
+//   · el REGISTRO —pasaporte, ficha, rastro EUDR— conserva la finca real;
+//   · la VITRINA —tarjetas del catálogo y cinta del Sneak Peek— enseña a CTC.
+// No se toca `lots.finca_id`: repuntarlo a una finca ficticia habría borrado el
+// origen, que es el activo. Lo resuelve `public_lot_catalog`, que deja de
+// devolver el nombre de la finca cuando el lote está comprado y expone
+// `ctc_selection` para que la aplicación ponga el rótulo desde `legal.ts`.
+// Se DERIVA de la compra (`status = 'comprar'`): no hay interruptor que olvidar.
 
 type NegRow = {
   id: string;
@@ -115,7 +116,7 @@ export async function SelectionBoard({ grados }: { grados: GradoId[] }) {
     { k: "Negociaciones abiertas", v: String(abiertas.length), sub: `${kgEnNegociacion || "—"} kg en conversación` },
     { k: "Lotes comprados", v: String(compradas.length), sub: `${contractIds.length} contrato${contractIds.length === 1 ? "" : "s"}` },
     { k: "Kg liberados (adquiridos)", v: kgAdquiridos ? kgAdquiridos.toFixed(0) : "0", sub: "releases confirmadas" },
-    { k: "Kg vendidos en Green", v: kgVendidos ? kgVendidos.toFixed(0) : "0", sub: esBlack ? "pestaña Black · on spot" : "publicación pendiente (D3.1)" },
+    { k: "Kg vendidos en Green", v: kgVendidos ? kgVendidos.toFixed(0) : "0", sub: esBlack ? "pestaña Black · on spot" : "catálogo · a nombre de CTC" },
   ];
 
   return (
@@ -140,10 +141,9 @@ export async function SelectionBoard({ grados }: { grados: GradoId[] }) {
       </p>
       {!esBlack && (
         <p className={styles.empty} style={{ marginTop: 0 }}>
-          ⚠️ <b>La publicación de esta rama está pendiente de una decisión del owner (D3.1).</b> El catálogo público
-          enseña el nombre de la finca de origen, y hacer que diga «CTC» exigiría desligar el lote de su finca real — lo
-          que borraría su pasaporte y su rastro EUDR. Hasta resolverlo, aquí se negocia y se compra; publicar sigue
-          haciéndose desde el Catálogo, a nombre de la finca.
+          Al comprarse, el lote se publica desde el <b>Catálogo</b> como cualquier otro — pero su tarjeta sale a nombre
+          de <b>CTC</b>, no de la finca. El <b>registro</b> (pasaporte, ficha y rastro EUDR) conserva la finca real: lo
+          que cambia es la vitrina, no el origen.
         </p>
       )}
 

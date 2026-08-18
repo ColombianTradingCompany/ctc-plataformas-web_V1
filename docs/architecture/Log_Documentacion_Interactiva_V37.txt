@@ -177,3 +177,35 @@ LO QUE EL WRAP V37 ENSEÑÓ (léase antes del V38)
   qa-rutas-consolas **253/253** (30 rutas mudadas) · qa-nav 16/16 · qa-encoding limpio.
 APP_VERSION 4.26 → 4.27.
 (commit: cdc7b22)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.28 · D3.1 resuelta: el lote comprado en firme tiene DOS caras
+- **La decisión del owner**, literal: «All the lots that CTC buys will be first registered in KR, which means
+  that the real farm is shown in the documentation but is replaced as the Finca in the showcase cards (Not
+  changing the official finca, just how it looks in the UI)». Con eso, la rama «Selección» de CTC Selection ya
+  publica y el módulo del paso (iii)-1 queda COMPLETO.
+- **Cambio de arquitectura, y merece entrada propia de DICT** («la vitrina y el registro», o similar): es la
+  primera vez que la plataforma distingue **quién CULTIVÓ** de **quién VENDE**. El REGISTRO —pasaporte, ficha,
+  rastro EUDR— conserva la finca real; la VITRINA —tarjetas del catálogo y cinta del Sneak Peek— enseña a CTC.
+- **Cómo**: `public_lot_catalog` deja de devolver `finca_name` cuando el lote está comprado y expone
+  `ctc_selection`. Tres decisiones que conviene que la ficha explique:
+  · **Se anula en la VISTA, no en el componente** — la vista la lee `anon`, así que taparlo en la interfaz
+    habría dejado el nombre de la finca a un `curl` de distancia.
+  · **El rótulo lo pone la app** desde `CTC_RAZON` (`lib/legal.ts`), no el SQL: una segunda definición de la
+    razón social sería una contradicción esperando su turno.
+  · **Se DERIVA de la compra** (`black_negotiations.status = 'comprar'`), sin interruptor manual que olvidar.
+- **Ni una fila de `lots`/`fincas` cambia.** El default original del plan (crear una identidad de productor de
+  CTC y repuntar `finca_id`) se descartó porque borraba el origen del lote.
+- Guardián `qa-sneak-peek-check` 177 → **182**: comprueba que las dos superficies pidan `ctc_selection` y que
+  el rótulo salga de `legal.ts` y no esté escrito a mano en ningún sitio.
+- Verificado en una transacción con ROLLBACK sobre datos reales: antes de comprar, `finca_name = "Palmas"` y
+  `ctc_selection = false`; después, `finca_name = null` y `ctc_selection = true`. Nada quedó escrito.
+- ⚠️ **Para el copy público (anotado, no urgente)**: el Manifiesto promete «finca, personas, proceso y
+  evaluación, verificables lote a lote» y la Historia, no perder «el nombre de quien los cultivó». Para un lote
+  de CTC Selection eso sigue siendo cierto en la FICHA pero no en la TARJETA. Si el próximo wrap toca los nodos
+  de Cherry Picked, conviene decidir si el texto necesita un matiz.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos) · `npm run build` exit 0 · qa-sneak-peek 182/182 ·
+  qa-rutas-consolas 253/253 · qa-nav 16/16 · qa-docs 14/14 · qa-encoding 700/0.
+APP_VERSION 4.27 → 4.28.
+(commit: pending)

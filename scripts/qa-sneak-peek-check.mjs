@@ -320,6 +320,43 @@ for (const l of SNEAK_PEEK_MOCK) {
   check(`${l.id}: los diez suman su puntaje (${l.score})`, Math.abs(suma - Number(l.score)) < 0.01);
 }
 
+// ── D3.1 · la vitrina de un lote comprado en firme (V4.28) ───────────────────
+// El owner decidió el 2026-08-18 que un lote que CTC compra sale en las
+// tarjetas a nombre de CTC, SIN tocar su finca real. La regla tiene dos mitades
+// y las dos se comprueban aquí, porque cada una falla de forma distinta:
+//
+//   1. Que la vista NO devuelva el nombre de la finca cuando el lote está
+//      comprado. `public_lot_catalog` la lee `anon`: si devolviera el nombre y
+//      lo tapáramos solo en el componente, cualquiera lo leería por la API.
+//   2. Que el rótulo salga de `legal.ts` y no esté escrito a mano en la vista
+//      ni en el componente — una segunda definición de la razón social es una
+//      contradicción esperando su turno.
+{
+  const sneak = lee("src/lib/catalogo/sneakPeek.ts");
+  const tienda = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
+
+  check(
+    "la cinta pide ctc_selection a la vista",
+    sneak.includes("ctc_selection")
+  );
+  check(
+    "la tienda pide ctc_selection a la vista",
+    tienda.includes("ctc_selection")
+  );
+  check(
+    "el rótulo de CTC sale de legal.ts en la cinta, no escrito a mano",
+    sneak.includes("CTC_RAZON") && !/finca:\s*["'`]C(TC|olombian)/.test(sneak)
+  );
+  check(
+    "el rótulo de CTC sale de legal.ts en la tienda, no escrito a mano",
+    tienda.includes("CTC_RAZON")
+  );
+  check(
+    "ningún componente escribe la razón social a mano",
+    !sneak.includes('"Colombian Trading Company"') && !tienda.includes('"Colombian Trading Company"')
+  );
+}
+
 console.log(`${ok} comprobaciones OK, ${fallos.length} fallos`);
 for (const f of fallos) console.log("  FALLO:", f);
 process.exit(fallos.length ? 1 : 0);

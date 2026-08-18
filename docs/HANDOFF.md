@@ -617,13 +617,29 @@ como productor — lo contrario de los «Contratos Vigentes», que se colocan pr
 - **El talón de `/bcp/black-stock` se REAPUNTÓ**, no se encadenó: apunta directo a `/ocp/ctc-selection` en un
   solo salto. Es el primer uso real de la regla F2 que `rutasMovidas.ts` existía para sostener, y se comprobó
   en servidor real (`/bcp/black-stock` → 308 → `/ocp/ctc-selection`, sin escala).
-- ⚠️ **LA RAMA «SELECCIÓN» NO PUBLICA TODAVÍA, y es una decisión del owner pendiente (D3.1).**
-  `public_lot_catalog` entra por `JOIN fincas` sobre `lots.finca_id`, así que el catálogo público enseña el
-  nombre de la **finca real**. Hacer que diga «CTC» repuntando `finca_id` a una finca ficticia **borraría el
-  origen del lote** — su pasaporte y su rastro EUDR, que son el activo. La salida recomendada está en el §9
-  del plan: separar la cara comercial del origen con un indicador en `lot_listings` y un nombre a mostrar
-  calculado en la vista, dejando el pasaporte intacto. Hasta que se decida, la rama negocia y compra; publicar
-  se sigue haciendo desde el Catálogo, a nombre de la finca.
+- ✅ **CÓMO SE PUBLICA UN LOTE COMPRADO EN FIRME (D3.1, resuelta por el owner el 2026-08-18, V4.28).**
+  Un lote que CTC compra se registra **primero en Kaffetal Regal** con su finca real, y desde ahí lleva **dos
+  caras que no se contradicen**: el **REGISTRO** —pasaporte, ficha, rastro EUDR— conserva la finca real, y la
+  **VITRINA** —las tarjetas del catálogo y la cinta del Sneak Peek— enseña a **CTC**, que es quien vende.
+  Palabras del owner: *«the real farm is shown in the documentation but is replaced as the Finca in the
+  showcase cards (Not changing the official finca, just how it looks in the UI)»*.
+  - **Ni una fila de `lots` o `fincas` cambia.** La idea original de repuntar `finca_id` a una finca ficticia
+    de CTC se descartó porque habría borrado el origen del lote, que es el activo y la obligación EUDR.
+  - **Se anula en la VISTA, no en el componente**: `public_lot_catalog` deja de devolver `finca_name` cuando el
+    lote está comprado y expone `ctc_selection`. La vista la lee `anon` — taparlo en la interfaz habría dejado
+    el nombre de la finca a un `curl` de distancia.
+  - **El rótulo lo pone la aplicación** desde `CTC_RAZON` (`src/lib/legal.ts`), su fuente única; escribirlo
+    también en el SQL habría sido una segunda definición esperando a divergir.
+  - **Se DERIVA de la compra** (`black_negotiations.status = 'comprar'`): no hay interruptor manual que se
+    pueda olvidar de marcar. `municipio` y `departamento` se mantienen — el owner dijo «la Finca», y la región
+    no identifica a un proveedor como el nombre del predio.
+  - Comprobado en una transacción con ROLLBACK sobre datos reales: antes de comprar la vista devuelve
+    `finca_name = "Palmas"` con `ctc_selection = false`; después, `finca_name = null` con `ctc_selection = true`.
+  - ⚠️ **Consecuencia para el copy público, no bloqueante**: el Manifiesto promete «finca, personas, proceso y
+    evaluación, verificables lote a lote» y la Historia habla de no perder «el nombre de quien los cultivó».
+    Para un lote de CTC Selection eso sigue siendo cierto en la **ficha**, pero no en la **tarjeta**. Si la
+    promesa se lee como «en la documentación», no hay nada que cambiar; si se lee como «en todas partes», el
+    texto necesita un matiz. Está anotado en el §9 del plan.
 
 ## Audit findings — 2026-07-10 deep review
 

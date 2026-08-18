@@ -4,6 +4,7 @@ import { createEphemeralClient } from "@/lib/supabase/server";
 import { esGradoValido, GRADO_POR_ID, SCA_DECIMALES, type GradoId } from "@/lib/grados/definicion";
 import type { AtributoSCA } from "./atributosSca";
 import { SNEAK_PEEK_MOCK } from "./sneakPeekMock";
+import { CTC_RAZON } from "@/lib/legal";
 
 // ── «Active Catalogue Sneak Peek» · el dato ──────────────────────────────────
 // El vistazo al Catálogo Activo que se enseña SIN sesión: en CTC Home y en la
@@ -126,7 +127,8 @@ type FilaCatalogo = {
   ficha_puntaje_estimado: number | null;
   official_score: number | null;
   ficha_notas_cata: string | null;
-  finca_name: string;
+  finca_name: string | null;
+  ctc_selection: boolean;
   municipio: string | null;
   departamento: string | null;
 };
@@ -151,7 +153,11 @@ function aTarjeta(fila: FilaCatalogo): SneakPeekLot | null {
     grade,
     score: puntaje != null ? Number(puntaje).toFixed(SCA_DECIMALES) : "—",
     scoreEstimated: oficial == null && estimado != null,
-    finca: fila.finca_name,
+    // La vitrina de un lote que CTC compró en firme lleva a CTC, no a la
+    // finca (decisión del owner, D3.1). La vista ya NO devuelve el nombre
+    // real en ese caso —es legible por `anon`, taparlo aquí no serviría de
+    // nada—, así que esto pone el RÓTULO desde su fuente única.
+    finca: fila.ctc_selection ? CTC_RAZON : fila.finca_name ?? "—",
     municipio: fila.municipio,
     departamento: fila.departamento,
     altitudeM: fila.ficha_altitud_m,
@@ -173,7 +179,7 @@ async function leeCatalogoVivo(): Promise<SneakPeekLot[]> {
     supabase
       .from("public_lot_catalog")
       .select(
-        "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento"
+        "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection"
       ),
   ]);
 

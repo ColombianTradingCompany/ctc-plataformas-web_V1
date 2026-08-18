@@ -354,4 +354,4 @@ Cinco peticiones del owner sobre el módulo, todas construidas:
   vivo (flechas 150s→24s y `reverse`, ventana con sus tres botones, `/caas` con una sola banda
   entre las dos secciones).
 APP_VERSION 4.18 → 4.19.
-(commit: pending)
+(commit: 60bc834)

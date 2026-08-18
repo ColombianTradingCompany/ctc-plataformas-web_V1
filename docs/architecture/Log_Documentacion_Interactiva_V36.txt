@@ -498,3 +498,53 @@ Sin cambio de APP_VERSION (documentación).
   `/control-panel` ya sale `c2 b7` / `c3 a1`.
 APP_VERSION 4.21 → 4.22.
 (commit: bde465d)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.23 · Paso (i) del plan V5: se congela el vocabulario
+- **Qué cambió**: palabras, no comportamiento. Ni una ruta movida, ni un archivo renombrado.
+  **39 reescrituras en `src/` y 30 en `docs/`**. Los tres `tagline` de `src/lib/panel/consoles.ts` pasan a
+  las frases del owner (BCP «El negocio: dirección, configuración y red de socios» · OCP «La operación: del
+  productor al catálogo» · ECP «La ejecución: plataformas, contacto y caja de herramientas») y la cabecera
+  del archivo al reparto **Business / Operation / Execution**. La sigla del ECP conserva *Executive* (F1).
+- ⚠️ **Los taglines describen la casa del final del paso (ii), no la de hoy.** Quien lea un tagline y luego
+  el `nav` de esa misma consola verá que no cuadran. Está avisado dentro del archivo para que el siguiente
+  lector no los "corrija" de vuelta.
+- **La palabra «hub» queda reservada para CommaaS.** Medirla destapó dos cosas que el plan no sabía:
+  el conteo «58 en `src/` / 48 en `docs/`» estaba inflado (contaba el «hubo» de *haber*, el «github» y, sobre
+  todo, IDENTIFICADORES), y la palabra no tenía dos sentidos sino **cinco**: la **portada de Cherry Picked**,
+  el **selector de consolas** (`/panel`), el **panel del productor** de Kaffetal Regal (su rejilla pasa a ser
+  «la rejilla»), la **casa matriz** (CTC Home como centro de la red, término que `src/app/page.tsx` ya usaba)
+  y los **espacios de Notion**. El sexto, CommaaS, es el que se queda.
+- **Lo que NO se tocó, y por qué** (decisión **D2.2**, nueva en el §8 del plan): los IDENTIFICADORES
+  (`styles.hubTile`, `HUB_ICON`, `kind="hub"`, la clave i18n `hub`, `hub.module.css`, `backToHub`) siguen la
+  lógica de D2.1 —renombrarlos es refactor, mueve archivos y chocaría con el paso (ii)— y esperan al paso (v);
+  y los `Log_Documentacion_Interactiva_V*.txt` **sellados** no se reescriben, porque son el registro histórico.
+  La razón de lo primero queda escrita DENTRO de `HubLanding.tsx` y `AppDashboard.module.css`, que es donde la
+  buscará el próximo barrido — no solo en esta bitácora.
+- **Para el DICT (pendiente del Version Wrap V37, que el §7 sitúa tras el paso (ii)).** No se edita el HTML a
+  mano. Términos a añadir/ajustar, con su definición congelada:
+  · **BCP · Base Control Panel** — «Business». El negocio: dirección, configuración y red de socios.
+  · **OCP · Operational Control Panel** — «Operation». La operación: del productor al catálogo.
+  · **ECP · Executive Control Panel** — «Execution». La ejecución: plataformas, contacto y toolbox interna.
+  · **selector de consolas** — `/panel`, la landing neutra tras el login maestro (antes «hub»).
+  · **portada de Cherry Picked** — `/cherry-picked` (antes «hub»); `HubLanding.tsx` conserva su nombre.
+  · **hub** — reservado a **CommaaS** y a nada más.
+  · **CaaS · Coffee as a Service** vs **CommaaS** vs **CommaaS-OG** — el outlet de CTC · el hub personal del
+    owner · la app original como tenant.
+  · **CTC Selection** (paraguas: todo lote comprado en firme) vs **Black Stock** (su rama de grado Black).
+  · **Catálogo Cherry Picked (Contratos Vigentes)** — los lotes pre-vendidos que alimentan la tienda Green.
+  · **Active Catalogue Sneak Peek** — la cinta pública del paso 0.
+  · **Value Ecosystem** — las seis plataformas del ECP como 4.ª unidad de Definición de contexto (F7).
+  ⚠️ Al aplicarlos, leer antes `reference_dict_wrap_gotcha`: el DICT mezcla `clave:{` y `clave: {`, y un grep
+  ingenuo "demuestra" que una entrada falta y acaba metiendo un duplicado silencioso (JS se queda con el último).
+- **Aviso para el paso (ii)**: los avisos «planned» del mapa de arquitectura (`direccionamiento`, el ANN del
+  PDF) siguen sin apuntar a `docs/V5_CONSOLAS_PLAN.md`. Es edición del HTML, así que va también al Wrap V37.
+- De paso: el §2.2 del plan arrastraba caracteres de control (`\x08`) pegados a la palabra «hub» desde que se
+  escribió el documento. Fuera.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos, la línea base) · `npm run build` exit 0 ·
+  qa-nav 18/18 · qa-grados 44/44 · qa-sneak-peek 177/177 · qa-docs 14/14 · qa-encoding 668/0.
+  `qa-direccionamiento` sigue en 13 ok / 2 fail, **idénticos a los de antes de esta tanda** (comprobado
+  corriéndolo sobre el árbol limpio) — no los introdujo el paso (i).
+APP_VERSION 4.22 → 4.23.
+(commit: 38f5799)

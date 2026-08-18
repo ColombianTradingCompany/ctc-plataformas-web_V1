@@ -23,6 +23,12 @@ import styles from "@/components/panel/shared.module.css";
 const TABS = [
   { href: "/bcp/direccionamiento", label: "Definición de contexto", exact: true },
   { href: "/bcp/direccionamiento/grados", label: "Grados de Calidad" },
+  // Las tres que el rework de F7 dejó preparadas (V4.32). Están vacías y lo
+  // dicen: son doctrina que el owner tiene que escribir, no funcionalidad
+  // pendiente de construir.
+  { href: "/bcp/direccionamiento/mision-vision", label: "Misión y Visión" },
+  { href: "/bcp/direccionamiento/modelo-economico", label: "Modelo Económico" },
+  { href: "/bcp/direccionamiento/mercado-global", label: "Mercado Global" },
 ];
 
 export function DireccionamientoTabs() {

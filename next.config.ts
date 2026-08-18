@@ -9,15 +9,19 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_SHA: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || "dev",
   },
-  // El moodboard de ECP · Direccionamiento guarda sus imágenes como data-URI
-  // dentro de UN solo objeto `assets` (todas las unidades y piezas juntas), y
-  // ese objeto viaja entero en cada guardado por Server Action. El tope por
-  // defecto es 1 MB — que con tres o cuatro referencias JPEG a 1100 px ya se
-  // pasa, y el fallo sería un guardado que revienta sin decir por qué. 8 MB da
-  // aire de sobra sin abrir la puerta de par en par.
-  experimental: {
-    serverActions: { bodySizeLimit: "8mb" },
-  },
+  // ⚠️ EL TOPE VOLVIÓ A SU SITIO EN V4.32, y conviene saber por qué estuvo alto.
+  // El moodboard de Direccionamiento guardaba sus imágenes como data-URI dentro
+  // de UN solo objeto `assets` que viajaba entero en cada guardado por Server
+  // Action, así que el tope de 1 MB por defecto se quedaba corto y el fallo era
+  // un guardado que reventaba sin decir por qué. Se subió a 8 MB por eso.
+  //
+  // El rework de F7 retiró el moodboard —nunca llegó a guardar una sola imagen:
+  // la fila `assets` pesaba 28 bytes— así que ya no hay nada que mande megas
+  // por una Server Action. Se vuelve al DEFECTO de Next (1 MB) simplemente no
+  // declarándolo: un tope alto que ningún caso necesita es superficie de más.
+  //
+  // Si algún módulo futuro vuelve a necesitar subir binarios, el camino no es
+  // volver a levantar esto: es Storage, que para eso está.
   // El módulo ECP · Documentación lee docs/architecture/ del disco en tiempo de
   // ejecución. Next solo empaqueta lo que se IMPORTA, así que sin esto la carpeta
   // no existiría en el servidor de producción y el módulo saldría vacío.

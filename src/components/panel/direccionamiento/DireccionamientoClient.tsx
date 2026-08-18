@@ -1,9 +1,11 @@
 "use client";
 
-// ── ECP · Direccionamiento · el envoltorio ───────────────────────────────────
-// `DefinicionDeContexto.jsx` llega tal cual del autor y NO se edita (salvo la
-// directiva "use client" de su primera línea). Todo el cableado con la
-// plataforma vive aquí, en las props que el propio módulo documenta:
+// ── BCP · Direccionamiento · el envoltorio ───────────────────────────────────
+// ⚠️ EL MÓDULO YA NO ES VENDORIZADO (V4.32). Hasta V4.31 `DefinicionDeContexto`
+// llegaba tal cual de su autor y no se editaba, para poder resincronizarlo. El
+// rework de F7 retiró justo lo que lo hacía suyo —formatos de vídeo, derivables
+// y moodboard—, así que la pantalla se reescribió como componente de la casa.
+// El envoltorio se queda porque las props siguen siendo el contrato correcto:
 //
 //   adapter     persistencia por ámbito ("record" | "assets")
 //   aiComplete  redacción — recibe el prompt armado, devuelve el texto

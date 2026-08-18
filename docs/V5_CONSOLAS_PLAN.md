@@ -4,9 +4,9 @@
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
-> **iii-4 «fichas de la Red de Socios» hecho (V4.31)**. Queda **un solo item del paso (iii)**:
-> **iii-5, el rework de Definición de contexto → V4.32** — el único que BORRA datos (D3.3, el moodboard),
-> así que se enseña al owner lo que hay antes de tocarlo.
+> **EL PASO (iii) ESTÁ COMPLETO** (V4.27 → V4.32). Con él quedan hechos los pasos (i), (ii) y (iii).
+> Next: **paso (iv), HC como módulo de login → V4.33+** (§5), y después el (v), tras el cual el owner
+> declara **V5.0**.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -724,7 +724,7 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 | iii-2 ✅ **V4.29** | **CRM CP Green** | `/ocp/crm/green` | kanban over buyers: nuevo → activo → recurrente; card = profile, tier/points, reservations, orders; `LeadsBoard` pattern parametrised | `buyer_profiles` (+ new `crm_stage` column with an auto-suggestion from `orders`) | D3.2 stage rule (default: 0 orders = nuevo, 1 = activo, ≥ 2 = recurrente; manual override) |
 | iii-3 ✅ **V4.30** | **CRM CP Roast · CRM CP X** | `/ocp/crm/roast`, `/ocp/crm/x` | «interés» boards over `newsletter_subscribers` (source roast / x) + future leads | `newsletter_subscribers` | none — F5 default |
 | iii-4 ✅ **V4.31** | **Red de Socios cards** | `/bcp/socios/<nodo>` ×5 | placeholder page per node with the credential state from `partner_accounts` (invited/active/suspended, last login) and the node's landing/login links; built out one partner profile at a time | `partner_accounts` | F3 default (c) |
-| iii-5 ← next | **Definición de contexto rework** | `/bcp/direccionamiento` tab 1 | keep the 3 questions per unit; units CTCx / KR / CP / **Value Ecosystem**; strip FORMATS/DERIVABLES/moodboard/referencias; three placeholder subtabs «Misión y Visión», «Modelo Económico», «Contexto de Mercado Global»; keep stored answers to the three kept questions, drop video-only fields | the direccionamiento table (**read it before touching**; owner: "I can check the table") | D3.3 what to do with the moodboard data-URIs (default: export once to `docs/archive/`, then drop; the 8 MB `serverActions.bodySizeLimit` in `next.config.ts` can come back down afterwards) |
+| iii-5 ✅ **V4.32** | **Definición de contexto rework** | `/bcp/direccionamiento` tab 1 | keep the 3 questions per unit; units CTCx / KR / CP / **Value Ecosystem**; strip FORMATS/DERIVABLES/moodboard/referencias; three placeholder subtabs «Misión y Visión», «Modelo Económico», «Contexto de Mercado Global»; keep stored answers to the three kept questions, drop video-only fields | the direccionamiento table (**read it before touching**; owner: "I can check the table") | D3.3 what to do with the moodboard data-URIs (default: export once to `docs/archive/`, then drop; the 8 MB `serverActions.bodySizeLimit` in `next.config.ts` can come back down afterwards) |
 
 `Manejo de Plataformas` standalone (F6) is a route move → it ships in **PR-C**, not here.
 
@@ -797,7 +797,7 @@ updated with "done through step X".
 | D2.2 | Do IDENTIFIERS (`styles.hubTile`, `HUB_ICON`, `kind="hub"`, the `hub` i18n key, `hub.module.css`, `backToHub`) and the SEALED `Log_Documentacion_Interactiva_V*.txt` count as «the word hub»? | **No — taken 2026-08-18.** Step (i) freezes *vocabulary*: prose, copy, comments, docs. Renaming identifiers is refactor, not vocabulary — it moves files and would collide with step (ii) — so it follows D2.1's logic and waits for step (v). The sealed logs are the historical record: rewriting them would falsify what was said on the day. A note saying *why* the identifiers stay is written into `HubLanding.tsx` and `AppDashboard.module.css` themselves, so the next sweep does not "fix" them. |
 | D3.1 ✅ **RESUELTA 2026-08-18** | Create a CTC-owned producer identity for CTC Selection lots | **No hace falta ninguna identidad falsa.** Palabras del owner: *«All the lots that CTC buys will be first registered in KR, which means that the real farm is shown in the documentation but is replaced as the Finca in the showcase cards (Not changing the official finca, just how it looks in the UI)»*. Implementado en V4.28: el REGISTRO conserva la finca real, la VITRINA enseña a CTC. Ver §9, punto 5 |
 | D3.2 ✅ **APLICADA V4.29** | CRM CP Green stage rule | 0/1/≥2 orders, manual override — **con un giro que conviene repetir en iii-3: la etapa deducida NO se persiste.** En `buyer_profiles.crm_stage` solo vive el anulado manual, y `null` significa «sigue la regla». Guardar la etapa calculada la dejaría rancia en cuanto entrara un pedido. La regla vive en `lib/crm/etapaComprador.ts`, módulo puro, y la comprueba `qa-crm-green-check.mjs` (21) |
-| D3.3 | Direccionamiento moodboard data | export to `docs/archive/`, then drop |
+| D3.3 ✅ **RESUELTA V4.32** | Direccionamiento moodboard data | **Estaba VACÍO** — la fila `assets` pesaba 28 bytes, no había un solo data-URI que exportar. Se retiró y `bodySizeLimit` volvió al defecto de Next. **La decisión real resultó ser otra**: qué hacer con las respuestas guardadas dentro de la rama «Video largo» (§9, punto 8). Owner: *«Strip it, I'll rescue the text»* |
 | D3.4 | PR order A → B → C vs B → A → C | A → B → C |
 | D4.1 | «Solicitar» emails info@ | Yes |
 | D5.1 | Lead ↔ profile linking rule | verified-email match at login + explicit «vincular» |
@@ -863,6 +863,23 @@ worker narrow credential (F10, backlog).
    compuerta de SU consola. **Lo que queda abierto es el hábito**: al mover un módulo, buscar SIEMPRE los
    identificadores de permiso además de las rutas — `requireConsole*`, `PILLAR_CONSOLE`, cualquier
    `Record<string, PanelConsoleKey>`.
+
+8. ✅ **iii-5 · lo que el rework encontró de verdad (2026-08-18).** El plan preguntaba por el moodboard. El
+   moodboard estaba **vacío** — 28 bytes. La decisión real solo apareció al leer la tabla: **las respuestas de
+   Producto y Contexto estaban guardadas DENTRO de la rama del formato «Video largo»**
+   (`ctcx|largo|producto|promesa`…), porque era la pestaña en la que el owner escribía. Ahí dentro había texto
+   de marca de primer orden — la promesa «lo que usted registra en su finca llega intacto hasta la taza que se
+   cata en Ámsterdam», el CTA y el objetivo. **Un borrado por prefijo se habría llevado 3.000 caracteres de
+   trabajo real.**
+   Ejecutado: respaldo de los 20 campos en `docs/archive/direccionamiento_context_2026-08-18.json`, migración
+   que **levanta** las respuestas fuera de la rama de vídeo, y retirada solo de los cinco campos que describían
+   planos de cámara. Quedan **15 campos, 4.202 caracteres**.
+   ⚠️ **Consecuencia que conviene tener presente**: el módulo **dejó de ser vendorizado**. Se mantenía verbatim
+   para resincronizarlo con su autor, pero el rework retiraba justo lo que lo hacía suyo, y el archivo ya traía
+   dentro las unidades, colores y dominios de CTC — la resincronización era teórica. La pantalla es ahora de la
+   casa. La herramienta de guion sigue existiendo **fuera** de la plataforma.
+   **Efecto lateral bueno**: al retirar el `.jsx` (1.619 líneas) la línea base de `eslint` bajó de **27 avisos
+   a 8** — 19 eran suyos.
 
 1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
    stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,

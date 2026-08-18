@@ -720,6 +720,38 @@ seguían pidiendo la compuerta del ECP, y uno del OCP pedía la del BCP.
   protegerse con la compuerta de SU consola y no redirigir a otra. Verificada saboteando un archivo a
   propósito. **La regla para la próxima mudanza**: buscar los identificadores de permiso, no solo las rutas.
 
+## Definición de contexto — deja de ser una herramienta de guion (2026-08-18, V4.32)
+
+Último módulo del paso (iii), y con él **el paso (iii) queda completo**. `/bcp/direccionamiento` pasa a ser
+las **tres preguntas** —Producto · Cliente · Contexto— por cada una de **cuatro** unidades (CTCX · KR · CHP ·
+**Value Ecosystem**, la nueva), más tres campos globales y tres pestañas placeholder: Misión y Visión, Modelo
+Económico y Mercado Global.
+
+- ⚠️ **La decisión que el plan no había visto.** D3.3 preguntaba qué hacer con el moodboard; el moodboard
+  estaba **vacío** (28 bytes). El problema real solo apareció al leer la tabla: **las respuestas de Producto y
+  Contexto vivían DENTRO de la rama del formato «Video largo»** —`ctcx|largo|producto|promesa`…— porque era la
+  pestaña en la que el owner escribía. Ahí estaba la promesa de marca, el CTA y el objetivo. Un borrado por
+  prefijo se habría llevado **3.000 caracteres de trabajo real**.
+- **Cómo se resolvió** (owner: *«Strip it, I'll rescue the text»*): respaldo completo de los 20 campos en
+  `docs/archive/direccionamiento_context_2026-08-18.json`, migración que **levanta** las respuestas fuera de la
+  rama de vídeo (`unidad|largo|bloque|campo` → `unidad|bloque|campo`), y retirada solo de los cinco campos que
+  describían planos de cámara. Quedan **15 campos y 4.202 caracteres**.
+- ⚠️ **EL MÓDULO DEJÓ DE SER VENDORIZADO.** `DefinicionDeContexto.jsx` (1.619 líneas) se mantenía verbatim para
+  resincronizarlo con su autor. El rework retiraba justo lo que lo hacía suyo —formatos de vídeo, derivables,
+  moodboard— y el archivo ya traía dentro las unidades, colores y dominios de CTC, así que la resincronización
+  era teórica. La pantalla es ahora un componente de la casa (`.tsx`). **La herramienta de guion no desapareció
+  del mundo**: vive fuera de la plataforma, y el owner la estaba usando el mismo día.
+- **La estructura vive en `src/lib/direccionamiento/definicion.ts`**, módulo puro, y los `id` de campo se
+  conservan EXACTAMENTE como estaban. Renombrar uno deja su texto huérfano en la base **sin que nada falle**:
+  la clave deja de casar y el campo sale vacío. Lo vigila `qa-definicion-check.mjs` (33), que lista las 15
+  claves ya escritas y exige que sigan teniendo casilla.
+- **`serverActions.bodySizeLimit` volvió al defecto** (era 8 MB por los data-URI del moodboard). Si algún
+  módulo futuro necesita subir binarios, el camino es Storage, no volver a levantarlo.
+- **Dos efectos laterales buenos**: la línea base de `eslint` bajó de **27 avisos a 8** (19 eran del `.jsx`), y
+  `qa-direccionamiento-check` volvió a **14 ok / 0 fail** — llevaba en 13/2 desde antes del 2026-08-18 porque
+  su sección 2 comprobaba que el `.jsx` siguiera trayendo un párrafo que ya no traía. Vigilaba una premisa que
+  había dejado de ser cierta y nadie lo miró: **un guardián que falla y se ignora enseña a ignorar los fallos.**
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

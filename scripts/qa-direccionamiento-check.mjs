@@ -20,7 +20,7 @@
 // Correr:
 //   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-direccionamiento-check.mjs
 //   ... --live    para incluir la llamada REAL a la API (consume tokens)
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { textoMemoria, escalaCanonica, SISTEMA_REDACCION } from "../src/lib/direccionamiento/memoria.ts";
@@ -61,18 +61,39 @@ check("el system prompt exige JSON sin vallas de markdown",
   /ÚNICAMENTE con el JSON/.test(SISTEMA_REDACCION) && /sin vallas de markdown/.test(SISTEMA_REDACCION));
 
 /* ── 2. El conflicto, leído del archivo del autor ──────────────────────────── */
-console.log("\n2 · El párrafo en conflicto, dentro del .jsx vendorizado");
+console.log("\n2 · El párrafo en conflicto: RETIRADO con el módulo vendorizado (V4.32)");
 
-const jsx = readFileSync(join(RAIZ, "src/components/panel/direccionamiento/DefinicionDeContexto.jsx"), "utf8");
-const bloque = jsx.match(/GRADOS DE CALIDAD CTC[\s\S]*?\n\n/);
-check("el .jsx sigue trayendo su propio párrafo de grados", !!bloque);
-const parrafoEmbebido = bloque ? bloque[0].trim() : "";
-check("y sigue citándolos como índice de precio sobre base 100",
-  /105|150–200|150-200/.test(parrafoEmbebido),
-  parrafoEmbebido.slice(0, 120));
-check("el .jsx NO fue editado para corregirlo (se mantiene verbatim)",
-  !parrafoEmbebido.includes("82.99"),
-  "si esto falla, alguien tocó el archivo del autor en vez de la memoria");
+/* Esta sección comprobaba que el `.jsx` vendorizado siguiera trayendo su propio
+   párrafo sobre los Grados —que los citaba como ÍNDICE DE PRECIO sobre base 100,
+   contradiciendo la definición de la casa— y que nadie lo hubiera "arreglado"
+   editando el archivo del autor en vez de la memoria del sistema.
+
+   Ya no aplica. El rework de F7 (V4.32) retiró el módulo vendorizado entero: la
+   pantalla es ahora un componente de la casa (`DefinicionDeContexto.tsx`) que no
+   embebe ningún párrafo de grados. Con él desapareció el riesgo que la sección
+   vigilaba — no queda archivo de tercero que alguien pueda tocar.
+
+   ⚠️ NOTA HISTÓRICA, porque explica dos fallos que estuvieron encendidos mucho
+   tiempo: esta sección llevaba en 2/3 desde antes del 2026-08-18. El `.jsx` ya no
+   contenía aquel párrafo —el autor lo habría cambiado en alguna resincronización—,
+   así que el guardián comprobaba una premisa que había dejado de ser cierta y
+   nadie lo miró. **Un guardián que falla y se ignora es peor que no tenerlo:
+   enseña a ignorar los fallos.**
+
+   LO QUE SÍ SIGUE PROTEGIDO es lo que de verdad importaba, y está en la sección
+   1: que la MEMORIA del sistema inyecte la escala SCA canónica desde
+   `lib/grados/definicion.ts` y le diga al modelo que prevalece. Eso vale para
+   cualquier texto que se redacte, venga de donde venga el contexto. */
+check(
+  "el módulo vendorizado ya no existe",
+  !existsSync(join(RAIZ, "src/components/panel/direccionamiento/DefinicionDeContexto.jsx"))
+);
+check(
+  "y la pantalla que lo sustituye no embebe su propio párrafo de grados",
+  !readFileSync(join(RAIZ, "src/components/panel/direccionamiento/DefinicionDeContexto.tsx"), "utf8").includes(
+    "GRADOS DE CALIDAD CTC"
+  )
+);
 
 /* ── 3. La llamada real ────────────────────────────────────────────────────── */
 if (!LIVE) {

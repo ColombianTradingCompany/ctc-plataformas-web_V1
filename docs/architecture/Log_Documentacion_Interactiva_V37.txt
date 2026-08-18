@@ -285,3 +285,34 @@ APP_VERSION 4.29 → 4.30.
   qa-sneak-peek 182/182 · qa-boards 27/27 · qa-docs 14/14 · qa-encoding 711/0.
 APP_VERSION 4.30 → 4.31.
 (commit: 403f550)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.32 · Paso (iii)-5: Definición de contexto deja de ser una herramienta de guion — PASO (iii) COMPLETO
+- **Cambio de nodo grande**: `n-direccionamiento` ya no describe un módulo vendorizado de guion de vídeo. La
+  pantalla es ahora **las tres preguntas (Producto · Cliente · Contexto) por cada una de CUATRO unidades**
+  —CTCX · KR · CHP · **Value Ecosystem**, la nueva (F7)— más tres pestañas placeholder: Misión y Visión,
+  Modelo Económico y Mercado Global. Con esto el paso (iii) del plan V5 queda completo (V4.27 → V4.32).
+- ⚠️ **PARA EL DICT — el módulo DEJÓ DE SER VENDORIZADO, y su ficha lo dice al revés hoy.** La entrada
+  `direccionamiento` explica que el componente llega verbatim del autor y no se edita. Ya no: el rework retiró
+  justo lo que lo hacía suyo (formatos de vídeo, derivables, moodboard) y el archivo ya traía dentro las
+  unidades, colores y dominios de CTC — la resincronización era teórica. Hay que reescribir ese párrafo.
+  La herramienta de guion sigue existiendo FUERA de la plataforma.
+- **La decisión que el plan no había visto**: D3.3 preguntaba por el moodboard, que estaba VACÍO (28 bytes). El
+  problema real era que las respuestas de Producto y Contexto vivían dentro de la rama «Video largo» — con la
+  promesa de marca, el CTA y el objetivo ahí dentro. Borrar por prefijo se habría llevado 3.000 caracteres.
+  Owner: «Strip it, I'll rescue the text». Respaldo de los 20 campos en `docs/archive/`, migración que LEVANTA
+  las respuestas, y retirada solo de los cinco campos de planos de cámara. Quedan 15 campos / 4.202 caracteres.
+- **Guardián nuevo `qa-definicion-check.mjs` (33)**: lista las 15 claves ya escritas y exige que sigan teniendo
+  casilla. Renombrar un `id` deja su texto huérfano **sin que nada falle** — la clave deja de casar y el campo
+  sale vacío.
+- **`serverActions.bodySizeLimit` volvió al defecto** de Next (era 8 MB por los data-URI del moodboard).
+- **Dos efectos laterales que conviene registrar**: la línea base de `eslint` bajó de **27 avisos a 8** (19 eran
+  del `.jsx` retirado), y **`qa-direccionamiento-check` volvió a 14 ok / 0 fail** — llevaba en 13/2 desde antes
+  del 2026-08-18 porque su sección 2 comprobaba que el `.jsx` siguiera trayendo un párrafo que ya no traía.
+  Vigilaba una premisa muerta y nadie lo miró: **un guardián que falla y se ignora enseña a ignorar los fallos.**
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (**8** avisos, nueva línea base) · `npm run build` exit 0 ·
+  qa-definicion 33/33 · qa-direccionamiento 14/14 · qa-rutas-consolas 263/263 · qa-nav 16/16 ·
+  qa-crm-green 21/21 · qa-crm-interes 17/17 · qa-sneak-peek 182/182 · qa-docs 14/14 · qa-encoding 712/0.
+APP_VERSION 4.31 → 4.32.
+(commit: pending)

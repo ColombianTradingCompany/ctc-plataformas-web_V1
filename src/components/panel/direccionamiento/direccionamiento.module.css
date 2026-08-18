@@ -1,26 +1,94 @@
-/* ── ECP · Direccionamiento · el cortafuegos del módulo vendorizado ──────────
-   `DefinicionDeContexto.jsx` trae TODOS sus estilos consigo, con prefijo .dc- y
-   sin tocar nada de fuera. El problema es el revés: lo de fuera sí lo tocaba a
-   él. `app/globals.css` lleva `section{padding:78px 0;border-top:...}` —una
-   regla pensada para las franjas de las landings públicas— y el módulo dibuja
-   cada acordeón como un <section>. Resultado: cada bloque plegado media unos
-   200 px de alto, casi todo aire, y el owner lo vio como "altísimos sin
-   necesidad".
+/* ── Definición de contexto · estilos propios (V4.32) ────────────────────────
+   Hasta V4.31 este archivo era un CORTAFUEGOS: el módulo de guion vendorizado
+   traía sus propios estilos y lo único que hacía falta era impedir que la regla
+   `section{padding:78px 0}` de globals.css —pensada para las franjas de las
+   landings públicas— le inflara cada acordeón a 200 px de aire.
 
-   No es un ajuste de gusto: los .dc- ya traen su propio padding (11-14 px). Lo
-   único que hace falta es que la regla global no entre. Con `.host section`
-   (0,1,1) gana al `section` suelto (0,0,1) sin subir a !important.
-
-   SOLO el padding. El `border-top` de esa misma regla global NUNCA llegó a
-   aplicarse —`.dc-block`/`.dc-brief` ya declaran `border:1px solid` y con
-   (0,1,0) le ganan al `section` suelto—, así que anularlo aquí no arreglaba
-   nada: le quitaba el borde de arriba a las cajas del módulo, que sí lo
-   quieren. Medido con getComputedStyle antes de dejarlo escrito.
-
-   Si algún día se añade otra regla de elemento a globals.css que se cuele aquí,
-   este es el sitio donde se neutraliza — no dentro del .jsx, que se mantiene
-   verbatim para poder resincronizarlo. */
+   El módulo vendorizado se retiró (F7) y ahora la pantalla es de la casa, así
+   que este archivo pasa a ser lo que parece: sus estilos. Se CONSERVA la
+   neutralización de `section`, porque la pantalla nueva también usa <section>
+   y la regla global sigue ahí esperando. */
 
 .host :global(section) {
   padding: 0;
 }
+
+.generales {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-bottom: 26px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.unidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.unidadBtn {
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 148px;
+  padding: 9px 13px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.14s;
+}
+.unidadBtn b { font-size: 13px; letter-spacing: 0.04em; }
+.unidadBtn span { font-size: 12.5px; }
+.unidadBtn small { font-size: 11px; opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+.unidadCabecera {
+  border-left: 4px solid var(--line);
+  padding: 2px 0 2px 12px;
+  margin-bottom: 22px;
+}
+.unidadCabecera h2 { margin: 0; font-size: 19px; }
+.unidadCabecera p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.avance { font-variant-numeric: tabular-nums; }
+
+.pregunta { margin-bottom: 30px; }
+
+.preguntaHead {
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+}
+.preguntaHead h3 { margin: 0; font-size: 16px; }
+.preguntaHead p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+
+.campo { display: flex; flex-direction: column; gap: 3px; margin-bottom: 16px; }
+
+.campoLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.campoHelp { font-size: 12px; color: var(--muted); }
+
+.campo textarea {
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.55;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper, #fff);
+  color: var(--ink);
+  resize: vertical;
+  width: 100%;
+}
+.campo textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }

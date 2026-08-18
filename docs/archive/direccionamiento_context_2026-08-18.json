@@ -1,0 +1,63 @@
+{
+  "_que_es_esto": "Respaldo COMPLETO de la tabla `direccionamiento_context` tomado el 2026-08-18, justo ANTES del rework de «Definicion de contexto» (paso (iii)-5 del plan V5, V4.32). Se guarda porque ese rework retira los campos de guion de video, y el owner pidio conservar el texto: aqui estan los 20 campos tal y como estaban, incluidos los que la aplicacion ya no muestra. Nada de esto se borro de la base sin estar antes aqui.",
+  "_como_leerlo": "Las claves de `values` son `unidad|formato|bloque|campo`. `general|*` son globales. El nivel `largo` era el formato «Video largo» de la herramienta de guion: por eso hay texto de marca (promesa, cta, objetivo) guardado dentro de una rama de video.",
+  "record": {
+    "scope": "record",
+    "data": {
+      "links": {
+        "kr": [],
+        "chp": [],
+        "ctcx": []
+      },
+      "counts": {
+        "kr": {
+          "fast": 3,
+          "plus": 1,
+          "largo": 1
+        },
+        "chp": {
+          "fast": 2,
+          "plus": 1,
+          "largo": 1
+        },
+        "ctcx": {
+          "fast": 2,
+          "plus": 1,
+          "largo": 1
+        }
+      },
+      "values": {
+        "general|tono": "Claro y conciso pero ilustrativo.\n\n\nAVOID Common AI Writing Tell-TalesThe Em Dash (—): AI models overuse long dashes to connect clauses in nearly every paragraph.The \"It's Not X, It's Y\" Formula: A repetitive contrast-reveal structure used to sound profound without adding deep substance.The Rule of Three: A fixation on listing groups of three adjectives or items (e.g., clear, concise, and compelling).Overused Buzzwords: Frequent reliance on artificial vocabulary like delve, tapestry, testament, or navigate.Relentless Puffery: Describing ordinary places or concepts with exaggerated, overly positive editorializing",
+        "general|momento": "Kick off de la Primera Temporada, desarrollando a los \"Productores Pioneros\" (del campo) y a los \"Tostadores Pioneros\" (en destino).",
+        "general|objetivo": "Que CTC se de a conocer en su primer debout en el mercado Colombiano (KR) e Internacional (CP).",
+        "ctcx|cliente|duele": "Cada eslabón es obligado a revalidar desde cero lo que el anterior ya \"supuestamente\" logró, y ese re-trabajo se paga en tiempo y en desconfianza:\n\n- El productor consigue un producto extraordinario, pero no tiene forma de verificar si esa nota es real o de vitrina, mucho menos respaldarla al comprador; \n- El tostador paga por trazabilidad y recibe una ficha técnica sin respaldo; \n- El aliado presta su servicio pero queda fuera del dato que valida todo lo demás. \n\nEl dolor común: la trazabilidad y la evaluación sensorial son los principales factores que dictan el valor del café, y ambos son poco confiables en el mejor de los casos e inexistentes en el peor.",
+        "ctcx|cliente|puede": "El productor entra desde el celular, con conectividad rural intermitente y poco tiempo entre labores de finca; \n\nEl tostador revisa fichas técnicas y certificados desde su computador con calma pero exige precisión técnica; \n\nEl aliado ya opera su propio negocio y solo puede integrarse si el enganche con CTCX no le exige rehacer su flujo de trabajo.",
+        "ctcx|cliente|quiere": "El productor quiere que su nombre llegue hasta la taza que se sirve en Europa. \nEl tostador quiere saber exactamente qué compra, a quién se lo compra y porque cuesta lo que cuesta. \nEl aliado quiere ser parte visible de un sistema que ya funciona, no un proveedor anónimo detrás de la cortina.",
+        "ctcx|cliente|necesita": "Una cadena de valor transparente, metódica y sobre todo eficiente, que empodere a los dos extremos del mercado hacia un mejor y más sostenible producto.\nEl cómo es una plataforma que facilita la forma y procesos para que los datos viajen intactos de un lado al otro sin que nadie tenga que volver a contarlos ni volver a probarlos.",
+        "ctcx|cliente|relacion": "Aquí conviven tres roles en el mismo hilo: el caficultor que georreferencia su finca y sube su lote en Kaffetal Regal, el tostador que compra en Cherry Picked/Co-Create, y el aliado (Centro de Calidad, agente de carga, Master Roaster, estudio de contenido) que sostiene el tramo intermedio (este ultimo de manera muy breve pero enfática). Ninguno ve el ecosistema completo desde su silla: cada uno solo ve su pedazo del camino.",
+        "ctcx|largo|producto|cta": "Si cultiva, postulese a el Kaffetal Regal y descubra como destacar su café en el mundo. \nSi tuesta, explore Cherry Picked y descubra como conectar directamente con la élite cafetera Colombiana.",
+        "kr|largo|producto|objetivo": "fdfsfsdf",
+        "ctcx|largo|contexto|ensenar": "Sabrá diferenciar qué pasa en Kaffetal Regal y qué pasa en Cherry Picked, y entenderá por qué el Control Panel de CTC es la costura que las conecta sin duplicar información.",
+        "ctcx|largo|producto|promesa": "Lo que usted registra en su finca llega intacto hasta la taza que se cata en Ámsterdam. Un solo hilo conecta la vereda con la tostaduría, sin que nadie tenga que contarlo dos veces.",
+        "ctcx|largo|contexto|concepto": "Estructura de pantalla dividida: mientras un productor georreferencia su finca en Piedecuesta, un tostador revisa esa misma finca en Cherry Picked desde Ámsterdam. El montaje alterna entre las dos orillas hasta que se encuentran en la pantalla del Control Panel, donde el mismo identificador de lote aparece en ambos lados.\nElemento interesante: Un solo código de lote guía la cámara de principio a fin",
+        "ctcx|largo|producto|objetivo": "Presentar Colombian Trading Company como un solo ecosistema : Kaffetal Regal, Cherry Picked/Co-Create y la red de servicios que los sostiene, donde el dato de la finca, la catación y el contrato viajan intactos hasta la taza. \nMostrar que no hay dos plataformas separadas, sino un mismo hilo contado desde la vereda hasta la tostaduría.",
+        "ctcx|largo|producto|producto": "Recorte de las dos interfaces —panel del productor en Kaffetal Regal y vitrina del tostador en Cherry Picked— más la capa que las conecta: el Control Panel de CTC donde se ve el mismo identificador de lote en ambos lados. El producto en cámara es esa conexión, no cada plataforma por separado.",
+        "ctcx|largo|contexto|compartir": "Cada muestra que entra a la Arena recibe puntaje, perfil sensorial y feedback de mejora, gane o no gane premio. Eso se entrega antes de pedir cualquier cosa a cambio.",
+        "ctcx|largo|contexto|identidad": "Abierto por ahora",
+        "ctcx|largo|contexto|situacion": "Amanece en una finca de Piedecuesta mientras el productor georreferencia su lote desde el celular. Al mismo tiempo, en una bodega de Ámsterdam, un tostador revisa esa misma finca en la pantalla de Cherry Picked. Es la primera temporada de cosecha principal de CTCX y ambos están mirando el mismo dato.\n\nEntre la mañana en una vereda de Santander y la tarde en una oficina de tueste en Europa transcurre el mismo día de trabajo. Un lote se registra al comenzar la jornada en Colombia y, antes de que termine, ya tiene ficha técnica visible en Ámsterdam.",
+        "ctcx|largo|contexto|resultados": "La muestra entra a la Cupping Arena sin nombre, y sale con puntaje SCA y perfil sensorial escritos frente a la cámara. Ese mismo puntaje, sin cambiar una cifra, es el que aparece después en la ficha técnica de Cherry Picked.",
+        "ctcx|largo|producto|caracteristicas": "Recorrido de pantalla completa por las dos orillas: el productor georreferenciando su finca y subiendo su lote en Kaffetal Regal, la Cupping Arena calificando la muestra a ciegas, ese mismo lote apareciendo con ficha técnica y QR en Cherry Picked/Co-Create, y el mapa de servicios (CTC Tech, Directorio del Café, Varietales Registrados, Herramientas Cafeteras) que sostiene todo el proceso. Se ve login, panel del productor y vitrina del tostador, no solo la marca."
+      },
+      "version": "2.0",
+      "updatedAt": "2026-08-18T17:10:25.599Z"
+    },
+    "updated_at": "2026-08-18T17:10:27.839+00:00"
+  },
+  "assets": {
+    "scope": "assets",
+    "data": {
+      "ctcx|largo|moodboard": []
+    },
+    "updated_at": "2026-08-18T17:10:29.668+00:00"
+  }
+}

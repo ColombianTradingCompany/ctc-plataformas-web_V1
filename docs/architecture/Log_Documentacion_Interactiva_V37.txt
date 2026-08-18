@@ -209,3 +209,27 @@ APP_VERSION 4.26 → 4.27.
   qa-rutas-consolas 253/253 · qa-nav 16/16 · qa-docs 14/14 · qa-encoding 700/0.
 APP_VERSION 4.27 → 4.28.
 (commit: 4de00ab)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-18] V4.29 · Paso (iii)-2: CRM CP Green, el tablero de los compradores
+- **Módulo nuevo** `/ocp/crm/green`: los compradores de la tienda Cherry Picked Green en un embudo de tres
+  etapas (nuevo · activo · recurrente). Segundo de los cuatro CRM del OCP; Roast y X llegan en iii-3.
+  Nodo/DICT: encaja como hermano de `n-club` en «Lógica de negocio», o como nota del nodo de las consolas.
+- **La decisión que merece la ficha, y que iii-3 debería copiar: la etapa se DEDUCE y NO se guarda** (D3.2).
+  0 pedidos = nuevo, 1 = activo, 2 o más = recurrente. En `buyer_profiles.crm_stage` (nullable) vive **solo el
+  anulado manual**, y `null` significa «sigue la regla», no «sin etapa». Persistir la etapa calculada es el
+  error clásico: en cuanto entra un pedido la fila conserva la etapa vieja, **nada falla** y el tablero miente
+  en silencio. Evaluándola al leer no hay nada que recalcular en ningún camino que toque `orders`.
+- **La regla vive en un módulo PURO** (`src/lib/crm/etapaComprador.ts`) por lo mismo que `navActivo.ts`: la
+  consola está tras 2FA y no se puede conducir en un navegador, así que la lógica tiene que poder comprobarse
+  sin levantarla. Guardián nuevo `qa-crm-green-check.mjs` (**21** comprobaciones), verificado saboteando la
+  página a propósito para confirmar que canta en vez de pasar de largo.
+- **Matiz de interfaz que vale la pena recordar**: fijar a mano la MISMA etapa que dicta la regla NO se marca
+  como excepción. Si contara, el tablero se llenaría de avisos «a mano» que no informan de nada.
+- **No reutiliza `LeadsBoard`** y es deliberado: aquél está sobre `leads` y sus pilares — otra tabla y otro
+  ciclo de vida. Un lead es alguien que escribió; un comprador ya tiene cuenta y puede tener pedidos.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (27 avisos) · `npm run build` exit 0 · qa-crm-green 21/21 ·
+  qa-rutas-consolas 256/256 · qa-nav 16/16 · qa-sneak-peek 182/182 · qa-boards 27/27 · qa-encoding 700/0.
+APP_VERSION 4.28 → 4.29.
+(commit: pending)

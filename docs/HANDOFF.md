@@ -641,6 +641,28 @@ como productor — lo contrario de los «Contratos Vigentes», que se colocan pr
     promesa se lee como «en la documentación», no hay nada que cambiar; si se lee como «en todas partes», el
     texto necesita un matiz. Está anotado en el §9 del plan.
 
+## CRM CP Green — el segundo tablero de Cherry Picked (2026-08-18, V4.29)
+
+`/ocp/crm/green`: los **compradores** de la tienda Green en un embudo de tres etapas (nuevo · activo ·
+recurrente). Es el segundo de los cuatro CRM del OCP; Roast y X llegan en iii-3.
+
+- **La etapa se DEDUCE de los pedidos y NO se guarda** (D3.2). 0 pedidos = nuevo, 1 = activo, 2+ = recurrente.
+  En `buyer_profiles.crm_stage` —nullable— vive **solo el anulado manual**, y `null` significa «sigue la
+  regla», no «sin etapa». Persistir la etapa calculada habría sido el error clásico de este tipo de tablero:
+  en cuanto entra un pedido la fila conserva la etapa vieja, nada falla y el tablero miente en silencio. Así no
+  hay nada que recalcular — la regla se evalúa al leer.
+- **La regla vive en un módulo PURO**, `src/lib/crm/etapaComprador.ts`, por la misma razón que `navActivo.ts`:
+  el tablero está detrás del login maestro con 2FA y no se puede conducir en un navegador, así que la lógica
+  tiene que ser comprobable sin levantarlo. Guardián `scripts/qa-crm-green-check.mjs` (**21**), probado
+  saboteando la página a propósito para confirmar que canta.
+- **Fijar a mano la MISMA etapa que dicta la regla no cuenta como excepción**: si contara, el tablero se
+  llenaría de avisos «a mano» que no informan de nada. Solo se marca cuando el anulado discrepa.
+- **No comparte código con `LeadsBoard`**, y es deliberado: aquél está construido sobre `leads` y sus pilares
+  —otra tabla, otro ciclo de vida—. Un lead es alguien que escribió; un comprador ya tiene cuenta y pedidos.
+  Unificarlos habría significado un componente lleno de props que solo una de las dos mitades usa.
+- No se toca `membership_tier` (verde/pinton/maduro): eso es el Club y sus puntos. Un comprador puede ser
+  «recurrente» en el CRM y «verde» en el Club sin contradicción.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

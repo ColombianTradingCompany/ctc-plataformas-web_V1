@@ -278,7 +278,13 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // CRM CP (← BCP el de CaaS): un tablero por embudo de Cherry Picked.
         // Hoy solo existe CaaS; Green, Roast y X nacen en el paso (iii) (F5).
         label: "OCP · Cherry Picked",
-        links: [{ href: "/ocp/crm/caas", label: "CRM CP CaaS" }],
+        links: [
+          { href: "/ocp/crm/caas", label: "CRM CP CaaS" },
+          // CRM CP Green (paso (iii)-2): los COMPRADORES de la tienda, no los
+          // leads. Su etapa se deduce de los pedidos y solo se guarda cuando
+          // alguien la fija a mano (D3.2). Roast y X llegan después.
+          { href: "/ocp/crm/green", label: "CRM CP Green" },
+        ],
       },
     ],
   },

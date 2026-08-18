@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { replyToLead, setLeadStatus, retryWelcomeEmail, retryReplyEmail } from "@/app/ocp/(app)/leadsActions";
-import { LeadModalRow } from "@/app/ocp/(app)/leads/LeadModalRow";
+import { replyToLead, setLeadStatus, retryWelcomeEmail, retryReplyEmail } from "@/app/ecp/(app)/leadsActions";
+import { LeadModalRow } from "@/app/ecp/(app)/leads/LeadModalRow";
 import styles from "@/components/panel/shared.module.css";
 
 // ── El tablero de leads, parametrizado por pilar (V4 · Fase 1) ───────────────
-// Era la página completa de /ocp/leads; ahora es el componente compartido que
+// Era la página completa de /ecp/leads; ahora es el componente compartido que
 // cada consola monta con SUS pilares (regla Fase 0: "el CRM vive en la consola
 // dueña del dominio") — general → OCP (recepción), cocreate → BCP (CRM
 // CaaS), tech y varietales → ECP. Una sola tabla `leads`; cambia qué

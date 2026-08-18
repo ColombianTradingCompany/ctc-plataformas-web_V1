@@ -2,7 +2,8 @@
 
 > ## ▶ EMPIEZA AQUÍ
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
-> still plan. **Step (i) DONE (V4.23); step (ii) PR-A (V4.24) and PR-B (V4.25) DONE. Next: §3, PR-C.**
+> **Step (ii) is COMPLETE** — PR-A (V4.24), PR-B (V4.25), PR-C (V4.26). **Next: the Version Wrap V37**
+> (§7), and then §4, step (iii): the new modules.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one
@@ -512,7 +513,7 @@ Two things this section did NOT say, now settled as D2.2: identifiers stay, and 
 
 ---
 
-## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ← IN PROGRESS (PR-A + PR-B done)
+## 3. Step (ii) — Nav + route moves, console by console, with 308s (F2)  ✅ DONE 2026-08-18 (V4.24–V4.26)
 
 ### 3.1 The target map (exact hrefs from `consoles.ts` and the route tree)
 
@@ -606,7 +607,7 @@ the guardian in §3.4 exists.
 |---|---|---|---|---|
 | **PR-A «OCP recibe el pasaporte»** ✅ | **4.24, DONE 2026-08-18** | Productores, Fincas, Lotes, Nominados, Arena, Galardonados, Club, Catálogo (+Contratos, Subastas), Black Stock, CRM CaaS (→ `/ocp/crm/caas`); the KPI dashboard | BCP | biggest — 12 modules, 154 route literals, 66 files |
 | **PR-B «BCP recibe dirección y configuración»** ✅ | **4.25, DONE 2026-08-18** | Direccionamiento (+grados), Usuarios, Documentación, Mapa, Consumo, Automatizaciones, GVG-Space; Socios de la red | ECP, OCP | medium; touches `next.config.ts` |
-| **PR-C «ECP recibe contacto y toolbox»** ← next | **4.26** | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
+| **PR-C «ECP recibe contacto y toolbox»** ✅ | **4.26, DONE 2026-08-18** | Leads, Cotizadores ×3, Anclas, Transcripciones; Manejo de Plataformas standalone | OCP, own | medium |
 
 Between PR-A and PR-B the BCP rail is briefly just «Panel» — acceptable, the owner is the only operator; the
 alternative order B → A → C ("no console ever empty") is fine too if preferred. **After PR-C: Version Wrap V37**
@@ -678,6 +679,26 @@ Cuatro cosas que el checklist no decía y que PR-B y PR-C van a necesitar:
 6. **`next.config.ts` `outputFileTracingIncludes` lleva RUTAS como claves.** Se repuntaron a `/bcp/documentacion*`.
    Si se olvida, el módulo sale vacío en producción — sin error y sin reproducirse en local.
 
+### 3.4 quater — Lo que PR-C añadió, y el saldo del paso (ii) completo (2026-08-18)
+
+1. ⚠️ **Un mapa de PERMISOS no es una ruta, y la reescritura masiva no lo toca.** `PILLAR_CONSOLE` en
+   `leadsActions.ts` dice qué consola manda sobre cada pilar de lead. No lleva barras, así que ninguna pasada
+   de rutas lo tocó — y **se quedó mal desde PR-A**: `cocreate` seguía apuntando al BCP con su tablero ya en el
+   OCP. No falla de forma visible: simplemente le pide al operador el grant de la consola equivocada.
+   Corregido en PR-C junto con `general` (→ `ecp`). **Al mover un tablero, busque también los mapas de
+   permisos, no solo las rutas.**
+2. **Un talón de padre con catch-all sirve a sus hijos, y cada uno va a SU destino.** Tras PR-C,
+   `/ecp/direccionamiento/[[...resto]]` manda el padre y `grados` al BCP y `plataformas` al propio ECP, con un
+   solo archivo. El guardián acepta ahora el catch-all de un antecesor como talón válido de una sub-ruta.
+3. **`NO_SE_MOVIERON` quedó vacío pero se deja montado**: su único inquilino (plataformas) ya se mudó, y el
+   caso vuelve en cuanto un módulo con hijos se mude a medias.
+4. **Un guardián que revienta a mitad no guarda nada**: `qa-rutas-consolas` leía `git ls-files` y moría con
+   ENOENT sobre archivos borrados-sin-`git rm`. Ahora filtra por existencia.
+
+**Saldo del paso (ii):** 29 rutas mudadas, 3 versiones, guardián de 248 comprobaciones. El OCP quedó siendo
+solo el pasaporte del lote; el BCP, el negocio; el ECP, la ejecución. Cada consola dice lo que su tagline
+prometía desde el paso (i).
+
 ### 3.5 The guardian: `scripts/qa-rutas-consolas.mjs` (new; `qa-nav-check` stays as is)
 
 Asserts, against the real `CONSOLES` and the file system: (a) **every rail href has a `page.tsx`** under
@@ -688,7 +709,11 @@ also an `a` of another entry (no chains). Runs in the gate for PR-A/B/C and stay
 
 ---
 
-## 4. Step (iii) — New modules (F3 · F4 · F5 · F6 · F7)  → V4.26 … V4.30 (one PR each)
+## 4. Step (iii) — New modules (F3 · F4 · F5 · F7)  → V4.27 … V4.31 (one PR each)  ← after the Wrap
+
+> **F6 ya está hecho**: «Manejo de Plataformas» salió de Direccionamiento y es módulo suelto (`/ecp/plataformas`)
+> desde PR-C. Lo que queda del paso (iii) es F3 (fichas por socio), F4 (CTC Selection), F5 (los tres CRM CP que
+> faltan) y F7 (Value Ecosystem en Definición de contexto).
 
 | # | Module | Where | What (default design) | Data | Open point (default) |
 |---|---|---|---|---|---|
@@ -748,7 +773,7 @@ the rule is one bump per deployed batch.
 | **Step 0** | Sneak Peek + 7 mock lotes | ✅ **V4.16 → V4.21, DONE** |
 | — | *(unplanned)* encoding fix of the 14 public portadas + `qa-encoding-check` | ✅ **V4.22, DONE** |
 | **Step (i)** | Freeze names (§2) | ✅ **V4.23, DONE** |
-| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B ✅ · PR-C | ✅ **V4.24** · ✅ **V4.25** · **V4.26** ← next → **Version Wrap V37** |
+| **Step (ii)** | Route moves, one console per PR (§3): PR-A ✅ · PR-B ✅ · PR-C ✅ | ✅ **V4.24 · V4.25 · V4.26** → **Version Wrap V37** ← next |
 | **Step (iii)** | New modules (§4): CTC Selection · CRM CP Green · CRM CP Roast/X · socio cards · Definición rework | V4.27 – V4.31 |
 | **Step (iv)** | HC membership + shell + per-tool grants (§5) | V4.32+ |
 | **Step (v)** | KR sub-modules + CaaS → OCP (§6) | V4.33+ → **owner declares V5.0** → Version Wrap V38 |

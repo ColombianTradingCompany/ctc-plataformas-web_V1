@@ -21,24 +21,30 @@ async function requireAdmin() {
 // invocando la acción a mano. La consola dueña se deriva del pilar DEL LEAD
 // (dato del servidor, no del cliente) y se contrasta contra los grants, con el
 // mismo grandfathering que requireConsoleWrite (sin fila = las tres consolas).
+// ⚠️ ESTE MAPA ES UNA COMPUERTA DE PERMISOS, NO UNA RUTA — y por eso la
+// reescritura masiva de rutas de la reorganización V5 NO lo tocó: aquí no hay
+// barras que casar. Hay que moverlo A MANO cada vez que un tablero cambia de
+// consola, y si se olvida no falla nada visible: simplemente se le pide al
+// operador un grant de la consola equivocada. `cocreate` se quedó en "bcp"
+// durante PR-A (el tablero ya estaba en el OCP) y se corrigió en PR-C.
 const PILLAR_CONSOLE: Record<string, PanelConsoleKey> = {
-  general: "ocp",
-  cocreate: "bcp",
+  general: "ecp", // ← OCP en PR-C: Leads · Recepción vive en el ECP
+  cocreate: "ocp", // ← BCP en PR-A: el CRM CP CaaS se fue con el catálogo
   tech: "ecp",
   varietales: "ecp",
 };
 
 // El tablero que hay que revalidar es el de la consola dueña — antes se
-// revalidaba solo /ocp/leads y los otros tres tableros quedaban con caché vieja.
+// revalidaba solo /ecp/leads y los otros tres tableros quedaban con caché vieja.
 const PILLAR_BOARD_PATH: Record<string, string> = {
-  general: "/ocp/leads",
+  general: "/ecp/leads",
   cocreate: "/ocp/crm/caas",
   tech: "/ecp/ctc-tech",
   varietales: "/ecp/varietales",
 };
 
 async function requireLeadConsole(adminId: string, lead: LeadRow): Promise<void> {
-  const consoleKey = PILLAR_CONSOLE[lead.pillar] ?? "ocp";
+  const consoleKey = PILLAR_CONSOLE[lead.pillar] ?? "ecp";
   const row = await getPanelUser(adminId);
   if (!grantedConsoles(row).includes(consoleKey)) {
     throw new Error("Tu credencial no tiene acceso a la consola que administra este lead.");
@@ -46,7 +52,7 @@ async function requireLeadConsole(adminId: string, lead: LeadRow): Promise<void>
 }
 
 function leadBoardPath(lead: LeadRow): string {
-  return PILLAR_BOARD_PATH[lead.pillar] ?? "/ocp/leads";
+  return PILLAR_BOARD_PATH[lead.pillar] ?? "/ecp/leads";
 }
 
 const STATUSES = ["nuevo", "en_conversacion", "convertido", "cerrado"] as const;

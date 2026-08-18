@@ -9,7 +9,7 @@ import type { PanelNavLink } from "./consoles";
 //
 // POR QUÉ NO BASTA UN `startsWith` POR ENLACE (2026-08-16). Funcionaba mientras
 // ninguna ruta del rail fuera prefijo de otra. El atajo a «Manejo de
-// Plataformas» apunta a `/ecp/direccionamiento/plataformas`, y en aquel momento
+// Plataformas» apunta a `/ecp/plataformas`, y en aquel momento
 // el rail del ECP llevaba también la ruta PADRE de ese atajo: las dos casaban y
 // las dos se pintaban activas para UNA sola página. Gana el href MÁS LARGO, que
 // es siempre el más específico.

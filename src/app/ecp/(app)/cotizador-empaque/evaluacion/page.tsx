@@ -17,7 +17,7 @@ export default function EvaluacionEmpaquePage() {
         lente sin cambiar de comparación.
       </p>
       <p className={styles.meta} style={{ marginBottom: 14 }}>
-        <Link className={styles.backLink} href="/ocp/cotizador-empaque">← Volver al cotizador</Link>
+        <Link className={styles.backLink} href="/ecp/cotizador-empaque">← Volver al cotizador</Link>
       </p>
       <EvaluationBoard />
     </>

@@ -28,7 +28,7 @@ const toAnchor = (r: Row): MarketAnchor => ({
 });
 
 export async function listAnchors(kind = "fnc_carga", limit = 180): Promise<MarketAnchor[] | null> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service
@@ -58,7 +58,7 @@ export async function latestAnchor(kind = "fnc_carga"): Promise<MarketAnchor | n
 export async function recordAnchor(input: {
   kind?: string; asOf: string; value: number; source?: string; note?: string; unit?: string;
 }): Promise<AnchorResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   if (!input.asOf) return { ok: false, error: "Falta la fecha de la lectura." };
   if (!(input.value > 0)) return { ok: false, error: "El valor tiene que ser mayor que cero." };
@@ -78,23 +78,23 @@ export async function recordAnchor(input: {
     { onConflict: "kind,as_of" }
   );
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ocp/anclas-mercado");
+  revalidatePath("/ecp/anclas-mercado");
   return { ok: true };
 }
 
 export async function deleteAnchor(id: string): Promise<AnchorResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
   const { error } = await service.from("market_anchors").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ocp/anclas-mercado");
+  revalidatePath("/ecp/anclas-mercado");
   return { ok: true };
 }
 
 /** «Consultar precio de hoy», a mano. El cron hace lo mismo cada día. */
 export async function consultFncNow(): Promise<AnchorResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   try {
     const reading = await fetchFncPrice();
@@ -110,7 +110,7 @@ export async function consultFncNow(): Promise<AnchorResult> {
       { onConflict: "kind,as_of" }
     );
     if (error) return { ok: false, error: error.message };
-    revalidatePath("/ocp/anclas-mercado");
+    revalidatePath("/ecp/anclas-mercado");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: `No se pudo consultar: ${(e as Error).message}` };

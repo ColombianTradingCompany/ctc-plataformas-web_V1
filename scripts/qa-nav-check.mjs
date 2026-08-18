@@ -18,43 +18,23 @@ const check = (nombre, cond) => (cond ? ok++ : fallos.push(nombre));
 const links = (consola) => CONSOLES[consola].nav.flatMap((g) => g.links);
 const activo = (consola, ruta) => hrefActivoDelRail(links(consola), ruta);
 
-// ── El atajo y su módulo no pueden encenderse a la vez ───────────────────────
+// ── «Manejo de Plataformas» ya NO es un atajo: es un módulo suelto ──────────
+// Hasta PR-C colgaba de Direccionamiento y el rail lo alcanzaba con un atajo,
+// lo que obligaba a la regla del href más largo. PR-B mandó Direccionamiento al
+// BCP y PR-C (F6) lo sacó a `/ecp/plataformas`: ya no hay dos enlaces que se
+// disputen una página, y la aserción que exigía que esa ruta NO existiera está
+// invertida a propósito.
+const plataformas = links("ecp").find((l) => l.label === "Manejo de Plataformas");
+check("Manejo de Plataformas está en el rail del ECP", !!plataformas);
+check("y ES su propia ruta, no un atajo dentro de otro módulo", plataformas?.href === "/ecp/plataformas");
 check(
-  "en /ecp/direccionamiento/plataformas gana el ATAJO, no Direccionamiento",
-  activo("ecp", "/ecp/direccionamiento/plataformas") === "/ecp/direccionamiento/plataformas"
+  "vive en el grupo de IT y Plataforma",
+  CONSOLES.ecp.nav.some((g) => g.label?.includes("IT y Plataforma") && g.links.some((l) => l === plataformas))
 );
+check("y su ruta enciende SOLO su propio enlace", activo("ecp", "/ecp/plataformas") === "/ecp/plataformas");
 check(
-  "solo UN enlace del rail cubre-y-gana esa ruta",
-  links("ecp").filter((l) => l.href === activo("ecp", "/ecp/direccionamiento/plataformas")).length === 1
-);
-// Direccionamiento se mudó al BCP el 2026-08-18 (PR-B del paso (ii)), así que
-// esta comprobación cambió de consola: son las pestañas del BCP las que ahora
-// encienden su módulo. En el ECP ya no hay nada que encender.
-check(
-  "en el BCP, las pestañas de Direccionamiento encienden su módulo",
-  activo("bcp", "/bcp/direccionamiento/grados") === "/bcp/direccionamiento" &&
-    activo("bcp", "/bcp/direccionamiento") === "/bcp/direccionamiento"
-);
-check(
-  "y el rail del ECP ya no enciende nada en esa ruta",
-  activo("ecp", "/bcp/direccionamiento") === null
-);
-
-// ── El atajo existe y apunta a la página que VIVE en Direccionamiento ────────
-const atajo = links("ecp").find((l) => l.label === "Manejo de Plataformas");
-check("el atajo está en el rail del ECP", !!atajo);
-// Sigue anidado bajo la ruta que Direccionamiento tenía en el ECP, aunque el módulo padre se fuera
-// al BCP: es una ruta huérfana a propósito hasta PR-C, que la vuelve
-// `/ecp/plataformas` (F6). La página está en ecp/(app)/direccionamiento/plataformas/,
-// y el talón del padre es EXPLÍCITO —no catch-all— justamente para no comérsela.
-check("el atajo apunta a la página que sigue viva en el ECP", atajo?.href === "/ecp/direccionamiento/plataformas");
-check(
-  "el atajo vive en el grupo de IT y Plataforma",
-  CONSOLES.ecp.nav.some((g) => g.label?.includes("IT y Plataforma") && g.links.some((l) => l === atajo))
-);
-check(
-  "y NO se duplicó como módulo propio: no hay ruta /ecp/plataformas",
-  !links("ecp").some((l) => l.href === "/ecp/plataformas")
+  "sin que ningún otro enlace del rail la cubra también",
+  links("ecp").filter((l) => enlaceCubre(l, "/ecp/plataformas")).length === 1
 );
 
 // ── Límite de segmento (misma familia que ESTR-3 en el proxy) ────────────────

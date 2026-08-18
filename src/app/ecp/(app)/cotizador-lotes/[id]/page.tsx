@@ -5,5 +5,5 @@ export const metadata: Metadata = { title: "Cotización · OCP", robots: { index
 
 export default async function CotizacionLotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <QuoteDetail id={id} basePath="/ocp/cotizador-lotes" />;
+  return <QuoteDetail id={id} basePath="/ecp/cotizador-lotes" />;
 }

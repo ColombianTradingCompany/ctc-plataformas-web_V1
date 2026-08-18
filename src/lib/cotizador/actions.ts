@@ -5,7 +5,7 @@
 // propio módulo (`./lote/model`, y el logístico cuando llegue el HTML); aquí
 // solo se guarda, se numera, se emite y se busca a quién va dirigida.
 //
-// Gate: `requireConsoleWrite("ocp")` — un colaborador con grant solo de BCP no
+// Gate: `requireConsoleWrite("ecp")` — un colaborador con grant solo de BCP no
 // emite cotizaciones del OCP ni llamando la action a mano.
 //
 // ⚠️ En un módulo "use server" TODO export tiene que ser una función async
@@ -72,7 +72,7 @@ function toSummary(r: Row): QuoteSummary {
 // ---------- Lectura ----------
 
 export async function listQuotes(kind: QuoteKind): Promise<QuoteSummary[] | null> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service.from("quotes").select(LIST_COLS).eq("kind", kind).order("created_at", { ascending: false }).limit(200);
@@ -86,7 +86,7 @@ export async function listQuotes(kind: QuoteKind): Promise<QuoteSummary[] | null
 export async function listQuoteMetrics(
   kind: QuoteKind,
 ): Promise<{ id: string; code: string; title: string; status: QuoteStatus; total: number | null; createdAt: string; results: Record<string, unknown> }[] | null> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service
@@ -114,7 +114,7 @@ function effectiveStatusOf(status: QuoteStatus, validUntil: string | null): Quot
 }
 
 export async function getQuote(id: string): Promise<Quote | null> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service.from("quotes").select(`${LIST_COLS}, inputs, results`).eq("id", id).maybeSingle();
@@ -126,7 +126,7 @@ export async function getQuote(id: string): Promise<Quote | null> {
 // ---------- Alta y guardado ----------
 
 export async function createQuote(kind: QuoteKind, title: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   if (!title.trim()) return { ok: false, error: "La cotización necesita un título." };
 
@@ -152,7 +152,7 @@ export async function saveQuoteDraft(
     validUntil?: string | null;
   }
 ): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -180,7 +180,7 @@ export async function setQuoteCounterparty(
   id: string,
   cp: { kind: CounterpartyKind; profileId?: string | null; leadId?: string | null; name?: string | null; email?: string | null }
 ): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -203,7 +203,7 @@ export async function setQuoteCounterparty(
  *  el código que se citó fuera, así que una emitida no cambia de nombre — se
  *  reabre primero. */
 export async function renameQuote(id: string, title: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   if (!title.trim()) return { ok: false, error: "El nombre no puede quedar vacío." };
   const service = quoteServiceClient();
@@ -220,7 +220,7 @@ export async function renameQuote(id: string, title: string): Promise<QuoteResul
  *  trigger rechaza la reapertura si la bitácora no creció — y ese rastro se
  *  imprime al final de los documentos que se generen después. */
 export async function reopenQuote(id: string, note: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -244,7 +244,7 @@ export async function reopenQuote(id: string, note: string): Promise<QuoteResult
 // ---------- Ciclo de vida ----------
 
 export async function issueQuote(id: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
   // El trigger exige total y congela el cálculo a partir de aquí.
@@ -287,7 +287,7 @@ export async function issueQuote(id: string): Promise<QuoteResult> {
 }
 
 export async function decideQuote(id: string, decision: "aceptada" | "rechazada"): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
   const { error } = await service.from("quotes").update({ status: decision }).eq("id", id);
@@ -297,7 +297,7 @@ export async function decideQuote(id: string, decision: "aceptada" | "rechazada"
 /** Rehacer una emitida = duplicarla. Es la salida que ofrece el trigger cuando
  *  alguien intenta recalcular algo ya emitido. */
 export async function duplicateQuote(id: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -333,7 +333,7 @@ export async function duplicateQuote(id: string): Promise<QuoteResult> {
  *  interfaz; aquí se exige confirmación explícita para que una llamada suelta a
  *  la action no pueda borrar una cotización emitida por accidente. */
 export async function deleteQuote(id: string, confirm: true): Promise<QuoteResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   if (confirm !== true) return { ok: false, error: "Falta la confirmación." };
   const service = quoteServiceClient();
@@ -351,7 +351,7 @@ export async function deleteQuote(id: string, confirm: true): Promise<QuoteResul
  *  suele apuntar a un productor y el logístico a un comprador, pero ninguno de
  *  los dos lo impone: la vía CaaS cotiza logística para un productor. */
 export async function searchCounterparties(term: string): Promise<CounterpartyOption[]> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return [];
   const q = term.trim();
   if (q.length < 2) return [];

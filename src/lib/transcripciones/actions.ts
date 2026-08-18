@@ -5,7 +5,7 @@
 // herramienta local ogg_transcriber (GPU del owner); aquí se GUARDA el JSON
 // que produce y se le pone lo humano: asunto, fecha, notas y el nombre de cada
 // hablante. Tabla `transcripts`, service-role-only (RLS activo, cero políticas):
-// todo pasa por estas actions, cada una detrás de `requireConsoleWrite("ocp")`.
+// todo pasa por estas actions, cada una detrás de `requireConsoleWrite("ecp")`.
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
@@ -23,7 +23,7 @@ type WorkerRow = {
 };
 
 const NO_AUTH = { ok: false as const, error: "Tu sesión del OCP no está activa. Vuelve a iniciar sesión." };
-const LIST_PATH = "/ocp/transcripciones";
+const LIST_PATH = "/ecp/transcripciones";
 /** El bucket privado de la casa; el prefijo transcripts/ no lo alcanza ningún JWT de usuario (políticas {uid}/...). */
 const BUCKET = "kaffetal-media";
 const AUDIO_PREFIX = "transcripts";
@@ -94,7 +94,7 @@ const toTranscript = (r: FullRow): Transcript => ({
 const validDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(`${s}T12:00:00`).getTime());
 
 export async function listTranscripts(): Promise<TranscriptSummary[] | null> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -107,7 +107,7 @@ export async function listTranscripts(): Promise<TranscriptSummary[] | null> {
 }
 
 export async function getTranscript(id: string): Promise<Transcript | null> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -125,7 +125,7 @@ export async function createTranscript(input: {
   notes?: string;
   payload: TranscriptPayload;
 }): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const subject = (input.subject ?? "").trim();
   if (!subject) return { ok: false, error: "Falta el asunto." };
@@ -166,7 +166,7 @@ export async function updateTranscriptInfo(
   id: string,
   input: { subject: string; recordedOn: string; notes?: string }
 ): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const subject = (input.subject ?? "").trim();
   if (!subject) return { ok: false, error: "Falta el asunto." };
@@ -185,7 +185,7 @@ export async function updateTranscriptInfo(
 
 /** "SPEAKER_00" → "Don Luis". Vacío = volver a la etiqueta automática. */
 export async function renameSpeaker(id: string, speakerKey: string, name: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const key = (speakerKey ?? "").trim();
   if (!key) return { ok: false, error: "Falta el hablante." };
@@ -208,7 +208,7 @@ export async function renameSpeaker(id: string, speakerKey: string, name: string
 }
 
 export async function deleteTranscript(id: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { data: row } = await service.from("transcripts").select("audio_path").eq("id", id).maybeSingle();
@@ -235,7 +235,7 @@ export async function prepareAudioUpload(input: {
   fileName: string;
   sizeBytes: number;
 }): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const name = (input.fileName ?? "").trim();
   if (!isAudioName(name)) {
@@ -263,7 +263,7 @@ export async function createAudioTranscript(input: {
   mime?: string;
   options?: TranscriptJobOptions;
 }): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const subject = (input.subject ?? "").trim();
   if (!subject) return { ok: false, error: "Falta el asunto." };
@@ -313,7 +313,7 @@ export async function createAudioTranscript(input: {
 
 /** Volver a poner en cola una que acabó en error (o que lleva horas «Transcribiendo»). */
 export async function retryTranscript(id: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { data: row } = await service.from("transcripts").select("status, audio_path").eq("id", id).maybeSingle();
@@ -341,7 +341,7 @@ export async function retryTranscript(id: string): Promise<TranscriptResult> {
  * dejar una nota esperando toda la noche.
  */
 export async function listTranscriptWorkers(): Promise<TranscriptWorker[]> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return [];
   const service = createServiceRoleClient();
   const { data } = await service
@@ -371,7 +371,7 @@ export async function listTranscriptWorkers(): Promise<TranscriptWorker[]> {
 
 /** Mandar este trabajo a la nube (AssemblyAI) en vez de esperar al equipo con GPU. */
 export async function sendTranscriptToCloud(id: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const { submitToAssembly } = await import("./cloud");
   const r = await submitToAssembly(id);
@@ -383,7 +383,7 @@ export async function sendTranscriptToCloud(id: string): Promise<TranscriptResul
 
 /** ¿Está configurada la nube? La interfaz esconde el botón si no lo está. */
 export async function isCloudConfigured(): Promise<boolean> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return false;
   const { cloudConfigured } = await import("./cloud");
   return cloudConfigured();
@@ -395,7 +395,7 @@ export async function isCloudConfigured(): Promise<boolean> {
  * desarrollo en local (donde AssemblyAI no puede llamar a localhost).
  */
 export async function refreshCloudStatus(id: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const { pollAssemblyJob } = await import("./cloud");
   const r = await pollAssemblyJob(id);
@@ -404,7 +404,7 @@ export async function refreshCloudStatus(id: string): Promise<TranscriptResult> 
 
 /** Enlace firmado (1 h) para escuchar/descargar el audio original desde el detalle. */
 export async function getAudioUrl(id: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-  const who = await requireConsoleWrite("ocp");
+  const who = await requireConsoleWrite("ecp");
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { data: row } = await service.from("transcripts").select("audio_path").eq("id", id).maybeSingle();

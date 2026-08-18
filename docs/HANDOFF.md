@@ -71,9 +71,16 @@ src/
         arena/[sessionId]/run/         Jornada de Arena live runner (JornadaRunner.tsx)
         actions.ts, arenaActions.ts, contractActions.ts, catalogActions.ts, …
                                         Server Actions — each re-verifies its console itself
-        leads/, socios/, cotizador-*/, anclas-mercado/, transcripciones/
-                                        se van al ECP/BCP en PR-B y PR-C
-    ecp/(app)/                        ECP · Executive Control Panel — «Execution»: plataformas, contacto, toolbox
+      <modulo>/[[...resto]]/          ⬅ talones 308 de lo que se fue al ECP en V4.26
+    ecp/                              ECP · Executive Control Panel — «Execution»
+      <modulo>/[[...resto]]/          ⬅ talones 308 de lo que se fue al BCP en V4.25
+      (app)/
+        buzon/, leads/                 Contacto: el buzón y la recepción general (leads ⬅ OCP, V4.26)
+        directorio/, coffeed/, herramientas/, terratalento/, ctc-tech/, varietales/
+                                        Plataformas y sus CRM
+        plataformas/                   ⬅ salió de direccionamiento/ (F6, V4.26): módulo suelto
+        cotizador-lotes/, cotizador-logistico/, cotizador-empaque/, anclas-mercado/, transcripciones/
+                                        ⬅ OCP (V4.26) · Caja de herramientas interna
     socios/[partner]/                 the 5 partner "couples" (landing + /acceso login + /panel scaffold), config-driven
       panel/source-wrapper/, panel/datawave/   las apps del Estudio (404 for any other slug)
     api/socios/auth/{login,logout}/   partner single-factor auth (role partner + node-exact partner_accounts row)
@@ -566,6 +573,32 @@ prometía desde el paso (i). Diez rutas nuevas en `rutasMovidas.ts` (22 en total
   VACÍO en producción — sin error, y sin reproducirse en local.
 - «Manejo de Plataformas» salió de la tira de pestañas de Direccionamiento: una tira no puede cruzar dos
   consolas. Sigue en el rail del ECP hasta PR-C.
+
+## La reorganización V5 · PR-C y el cierre del paso (ii) (2026-08-18, V4.26)
+
+Última de las tres mudanzas. **El ECP recibe contacto y caja de herramientas**: Leads · Recepción desde el OCP,
+más los tres cotizadores, Anclas de mercado y Transcripciones; y «Manejo de Plataformas» deja de colgar de
+Direccionamiento para ser módulo suelto en `/ecp/plataformas` (F6), cerrando el interinato que PR-B dejó
+abierto. Con esto **el paso (ii) está completo**: 29 rutas mudadas en tres versiones, guardián en 248 checks.
+El OCP queda siendo solo el pasaporte del lote, el BCP el negocio y el ECP la ejecución.
+
+- ⚠️ **Un mapa de PERMISOS no es una ruta, y ninguna reescritura masiva lo toca.** `PILLAR_CONSOLE`
+  (`leadsActions.ts`) dice qué consola manda sobre cada pilar de lead; no lleva barras, así que sobrevivió
+  intacto a las tres pasadas — **y estaba mal desde PR-A**: `cocreate` apuntaba al BCP con su tablero ya en el
+  OCP. No falla de forma visible: le pide al operador el grant de la consola equivocada, y quien tiene el
+  correcto se queda fuera. Corregido junto con `general` (→ `ecp`). **Al mover un tablero, busque los mapas de
+  permisos además de las rutas.**
+- Las compuertas de escritura viajaron con sus módulos: **34 `requireConsoleWrite("ocp")` → `"ecp"`** en
+  `lib/transcripciones/actions.ts` (15), `lib/cotizador/actions.ts` (14), `lib/anclas/actions.ts` (4) y
+  `/api/transcripciones/descargar` (1). Tras PR-C no queda ninguna compuerta de escritura del OCP: sus módulos
+  siguen en el `requireActiveAdmin` grueso, que es deuda anotada en el §9 del plan, no un olvido.
+- **Un talón de padre con catch-all sirve a sus hijos, y cada uno va a SU destino**: hoy
+  `/ecp/direccionamiento/[[...resto]]` manda el padre y `grados` al BCP y `plataformas` al propio ECP, con un
+  solo archivo y sin encadenar. Verificado en servidor real, los tres.
+- `NO_SE_MOVIERON` quedó **vacío pero montado**: su único inquilino se mudó, y el caso vuelve en cuanto un
+  módulo con hijos se mude a medias.
+- **Un guardián que revienta a mitad no guarda nada**: `qa-rutas-consolas` leía `git ls-files` y moría con
+  ENOENT sobre archivos borrados sin `git rm`. Ahora filtra por existencia antes de leer.
 
 ## Audit findings — 2026-07-10 deep review
 

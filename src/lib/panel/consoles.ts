@@ -131,6 +131,11 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
           // material de dirección, no operación diaria.
           { href: "/ecp/buzon", label: "Buzón de entrada" },
+          // Leads · Recepción (← OCP, PR-C): la puerta general de la red. Viene
+          // al ECP porque contactar es EJECUTAR, no operar; los pilares de
+          // servicio (CTC Tech, Varietales) ya tenían su CRM aquí, y el de CaaS
+          // se quedó en el OCP con el catálogo, que es de donde se sirve.
+          { href: "/ecp/leads", label: "Leads · Recepción" },
           // Directorio del Café (2026-07-24): la capa de personas de la red. Aquí
           // se verifican las fichas (Aceptar/Revisar/Rechazar → Código de
           // Verificado) y se modera el muro.
@@ -161,6 +166,22 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         ],
       },
       {
+        // Caja de herramientas interna (← OCP, PR-C). Cotizar, anclar un precio
+        // y transcribir una conversación son herramientas del EQUIPO, no pasos
+        // del pasaporte del lote: por eso salen del OCP, que desde PR-A es solo
+        // la operación del lote. Sus acciones cambiaron de compuerta con ellas
+        // (`requireConsoleWrite("ocp")` → `"ecp"`), incluida la de la ruta
+        // `/api/transcripciones/descargar`.
+        label: "ECP · Caja de herramientas",
+        links: [
+          { href: "/ecp/cotizador-lotes", label: "Lotes de café" },
+          { href: "/ecp/cotizador-logistico", label: "Logístico" },
+          { href: "/ecp/cotizador-empaque", label: "Costo de empaque" },
+          { href: "/ecp/anclas-mercado", label: "Anclas de mercado" },
+          { href: "/ecp/transcripciones", label: "Transcripciones" },
+        ],
+      },
+      {
         // IT y Plataforma (2026-07-18): la administración de identidades salió del
         // BCP. El BCP sigue siendo la RAÍZ de identidad del modelo de negocio (cada
         // productor, comprador y lote nace ahí), pero administrar *la plataforma en
@@ -188,7 +209,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // se siente infraestructura, aunque la pregunta de fondo sea la misma
           // que la de las otras dos pestañas. Duplicar el DESTINO es barato;
           // duplicar el MÓDULO habría sido el error que la regla evitaba.
-          { href: "/ecp/direccionamiento/plataformas", label: "Manejo de Plataformas" },
+          // Manejo de Plataformas (F6, PR-C): dejó de colgar de Direccionamiento
+          // —que se fue al BCP en PR-B— y es módulo suelto. Ya no es un ATAJO a
+          // una pestaña ajena: es su propia ruta, y por eso `qa-nav-check` tiene
+          // invertida la aserción que antes exigía que `/ecp/plataformas` NO
+          // existiera.
+          { href: "/ecp/plataformas", label: "Manejo de Plataformas" },
           // "Herramientas internas" se renombró y subió al grupo de Dirección
           // (2026-08-02) — ver el comentario allá.
         ],
@@ -207,11 +233,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "OCP · Operación",
         links: [
           { href: "/ocp", label: "Panel", exact: true },
-          // Leads (2026-07-21 BCP→OCP; V4 Fase 1: solo queda `general`) — la
-          // recepción de la red. Los pilares de servicio viven en su consola
-          // dueña: cocreate/CaaS aquí mismo (CRM CP CaaS, desde PR-A), tech y
-          // varietales → ECP. Este módulo se va al ECP en PR-C.
-          { href: "/ocp/leads", label: "Leads · Recepción" },
         ],
       },
       {
@@ -256,28 +277,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // Hoy solo existe CaaS; Green, Roast y X nacen en el paso (iii) (F5).
         label: "OCP · Cherry Picked",
         links: [{ href: "/ocp/crm/caas", label: "CRM CP CaaS" }],
-      },
-      {
-        // Cotizadores (2026-08-04): cotizar es operación —se hace contra un
-        // productor o un cliente concreto, con números que salen de la cadena
-        // real— así que viven en el OCP y no en el ECP, que fija la política de
-        // precios. Dos módulos sobre UNA tabla `quotes` con `kind` de
-        // discriminador; comparten destinatario, código, vigencia e historial.
-        label: "OCP · Cotizadores",
-        links: [
-          { href: "/ocp/cotizador-lotes", label: "Lotes de café" },
-          { href: "/ocp/cotizador-logistico", label: "Logístico" },
-          // Costo de empaque (2026-08-06): la calculadora del banco público, con
-          // memoria. Su casa PRINCIPAL es esta, no la lista de herramientas.
-          { href: "/ocp/cotizador-empaque", label: "Costo de empaque" },
-          // Las referencias con las que cotizan las dos calculadoras. Salió de la
-          // Configuración de Mermas para poder consultarse y crecer por su cuenta.
-          { href: "/ocp/anclas-mercado", label: "Anclas de mercado" },
-          // Transcripciones (2026-08-17): las conversaciones de operación —notas
-          // de voz de WhatsApp, llamadas— transcritas con hablantes por la
-          // herramienta local (GPU) y archivadas aquí con asunto, fecha y notas.
-          { href: "/ocp/transcripciones", label: "Transcripciones" },
-        ],
       },
     ],
   },

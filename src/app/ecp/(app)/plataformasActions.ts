@@ -96,7 +96,7 @@ export async function guardarSuperficie(fila: FilaSuperficie): Promise<ActionRes
   // panel no lee por esta caché (`cargarSuperficies` va directo a la base), así
   // que quien acaba de guardar siempre se ve a sí mismo.
   revalidateTag(TAG_SUPERFICIES, "max");
-  revalidatePath("/ecp/direccionamiento/plataformas");
+  revalidatePath("/ecp/plataformas");
   revalidatePath(fila.route);
   return { ok: true };
 }

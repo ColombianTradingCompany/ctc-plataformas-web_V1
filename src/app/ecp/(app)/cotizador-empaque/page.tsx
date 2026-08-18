@@ -15,7 +15,7 @@ export default function CotizadorEmpaquePage() {
       <div className={styles.card} style={{ marginBottom: 16 }}>
         <div className={styles.sectionHead}>
           <strong>Cuadro de evaluación</strong>
-          <Link className="btn btn-sm" href="/ocp/cotizador-empaque/evaluacion">
+          <Link className="btn btn-sm" href="/ecp/cotizador-empaque/evaluacion">
             Comparar configuraciones →
           </Link>
         </div>
@@ -27,7 +27,7 @@ export default function CotizadorEmpaquePage() {
 
       <QuotesBoard
         kind="empaque"
-        basePath="/ocp/cotizador-empaque"
+        basePath="/ecp/cotizador-empaque"
         title="Costo de empaque por kilo"
         subtitle="Cuánto cuesta empacar un kilo al vacío: bolsa, mano de obra y amortización de la máquina. Cada análisis se guarda con su bolsa y su máquina elegidas, y queda para consultar, comparar y volver a abrir."
       />

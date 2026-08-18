@@ -129,7 +129,7 @@ export function EvaluationBoard({ rows: given }: { rows?: MetricRow[] } = {}) {
         <p className={styles.meta}>
           Cada análisis que guardes en el cotizador de costo de empaque aparece aquí para compararlo con los demás.
         </p>
-        <Link className={styles.backLink} href="/ocp/cotizador-empaque">← Ir al cotizador</Link>
+        <Link className={styles.backLink} href="/ecp/cotizador-empaque">← Ir al cotizador</Link>
       </div>
     );
   }
@@ -160,7 +160,7 @@ export function EvaluationBoard({ rows: given }: { rows?: MetricRow[] } = {}) {
                 {r.title}
                 <span className={ev.pickMeta}> · {r.code} · {QUOTE_STATUS_LABEL[r.status]}</span>
               </span>
-              <Link className={ev.pickMeta} href={`/ocp/cotizador-empaque/${r.id}`}>abrir →</Link>
+              <Link className={ev.pickMeta} href={`/ecp/cotizador-empaque/${r.id}`}>abrir →</Link>
             </label>
           ))}
         </div>
@@ -209,7 +209,7 @@ export function EvaluationBoard({ rows: given }: { rows?: MetricRow[] } = {}) {
               const w = max > 0 ? (v / max) * 100 : 0;
               return (
                 <div key={r.id} className={ev.row}>
-                  <Link className={ev.rowName} href={`/ocp/cotizador-empaque/${r.id}`}>
+                  <Link className={ev.rowName} href={`/ecp/cotizador-empaque/${r.id}`}>
                     {r.title}
                     <span className={ev.rowCode}>{r.code}</span>
                   </Link>
@@ -263,7 +263,7 @@ export function EvaluationBoard({ rows: given }: { rows?: MetricRow[] } = {}) {
               {sorted.map((r) => (
                 <tr key={r.id}>
                   <td>
-                    <Link href={`/ocp/cotizador-empaque/${r.id}`}>{r.title}</Link>
+                    <Link href={`/ecp/cotizador-empaque/${r.id}`}>{r.title}</Link>
                     <span className={ev.rowCode}>{r.code}</span>
                   </td>
                   <td className={ev.num}>{cop(num(r.results.costoPorKilo) ?? r.total)}</td>

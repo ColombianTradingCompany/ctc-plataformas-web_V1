@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireConsoleAccess } from "@/lib/panel/requireConsoleAccess";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { LeadModalRow } from "@/app/ocp/(app)/leads/LeadModalRow";
+import { LeadModalRow } from "@/app/ecp/(app)/leads/LeadModalRow";
 import { resumenTerminos, terminosFromRow } from "@/lib/terratalento/terminos";
 import type { ConstanciaInput } from "@/lib/terratalento/constanciaPrint";
 import { ConstanciaButton } from "./ConstanciaButton";

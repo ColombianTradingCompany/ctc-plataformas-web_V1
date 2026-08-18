@@ -128,7 +128,7 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
       setBusy(false); setProgress(null);
       if (!r.ok) { setError(r.error); return; }
       setForm({ subject: "", recordedOn: today(), notes: "" }); clearFile();
-      router.push(`/ocp/transcripciones/${r.id}`);
+      router.push(`/ecp/transcripciones/${r.id}`);
       return;
     }
 
@@ -145,7 +145,7 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
     setBusy(false);
     if (!r.ok) { setError(r.error); return; }
     setForm({ subject: "", recordedOn: today(), notes: "" }); clearFile(); setPasted("");
-    if (r.id) router.push(`/ocp/transcripciones/${r.id}`);
+    if (r.id) router.push(`/ecp/transcripciones/${r.id}`);
     else { setMsg("Transcripción guardada."); await refresh(); }
   }
 
@@ -289,7 +289,7 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
                   <tr key={r.id}>
                     <td style={{ whiteSpace: "nowrap" }}>{day(r.recordedOn)}</td>
                     <td>
-                      <Link href={`/ocp/transcripciones/${r.id}`} className={table.code}>{r.subject}</Link>
+                      <Link href={`/ecp/transcripciones/${r.id}`} className={table.code}>{r.subject}</Link>
                       <small>
                         {r.sourceName ?? "texto pegado"}{r.language ? ` · ${r.language}` : ""}
                         {r.status === "ready" ? ` · ${r.segmentCount} segm.` : r.audioSizeBytes ? ` · ${mb(r.audioSizeBytes)}` : ""}
@@ -305,7 +305,7 @@ export function TranscriptsBoard({ initial }: { initial: TranscriptSummary[] }) 
                       {r.notes ? (r.notes.length > 140 ? `${r.notes.slice(0, 140)}…` : r.notes) : "—"}
                     </td>
                     <td className={table.acts}>
-                      <Link href={`/ocp/transcripciones/${r.id}`} className="btn btn-sm">Abrir</Link>
+                      <Link href={`/ecp/transcripciones/${r.id}`} className="btn btn-sm">Abrir</Link>
                       <button className="btn btn-sm" type="button" disabled={busy} onClick={() => void remove(r)}>Borrar</button>
                     </td>
                   </tr>

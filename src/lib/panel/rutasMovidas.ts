@@ -73,23 +73,38 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/ecp/automatizaciones", a: "/bcp/automatizaciones", desde: "V4.25" },
   { de: "/ecp/gvg", a: "/bcp/gvg", desde: "V4.25" },
   { de: "/ocp/socios", a: "/bcp/socios", desde: "V4.25" },
+
+  // ── PR-C «El ECP recibe contacto y caja de herramientas» (V4.26, 2026-08-18) ─
+  // El ECP se queda con lo que EJECUTA: las plataformas, el contacto con el
+  // mundo y las herramientas internas del equipo. El OCP queda limpio: solo el
+  // pasaporte del lote, que es lo que PR-A le trajo.
+  { de: "/ocp/leads", a: "/ecp/leads", desde: "V4.26" },
+  { de: "/ocp/cotizador-lotes", a: "/ecp/cotizador-lotes", desde: "V4.26" },
+  { de: "/ocp/cotizador-logistico", a: "/ecp/cotizador-logistico", desde: "V4.26" },
+  { de: "/ocp/cotizador-empaque", a: "/ecp/cotizador-empaque", desde: "V4.26" },
+  { de: "/ocp/anclas-mercado", a: "/ecp/anclas-mercado", desde: "V4.26" },
+  { de: "/ocp/transcripciones", a: "/ecp/transcripciones", desde: "V4.26" },
+  // «Manejo de Plataformas» deja de colgar de Direccionamiento y se vuelve
+  // módulo suelto del ECP (decisión F6). Se quedó huérfano en PR-B, cuando su
+  // módulo padre se mudó al BCP; esto cierra aquel interinato.
+  { de: "/ecp/direccionamiento/plataformas", a: "/ecp/plataformas", desde: "V4.26" },
 ];
 
 /**
  * Sub-rutas que se quedaron donde estaban aunque su PADRE se mudara.
  *
- * `/ecp/direccionamiento` se fue al BCP en PR-B, pero «Manejo de Plataformas»
- * NO viajó con él: la decisión F6 lo convierte en módulo suelto del ECP en PR-C
- * (`/ecp/plataformas`). Sin esta lista, la resolución por prefijo mandaría
- * `/ecp/direccionamiento/plataformas` a `/bcp/…` y se llevaría por delante un
- * módulo que sigue vivo en su sitio.
+ * VACÍA desde PR-C (2026-08-18) y se deja a propósito. La tuvo un solo
+ * inquilino: entre PR-B y PR-C, «Manejo de Plataformas» siguió sirviéndose
+ * desde `ecp/(app)/direccionamiento/` mientras su módulo padre ya vivía en el
+ * BCP. PR-C lo movió a `/ecp/plataformas` y el interinato se acabó.
  *
- * Por eso el talón de Direccionamiento es explícito y NO un `[[...resto]]`:
- * un catch-all ahí chocaría con la página de plataformas, que sigue dentro de
- * `ecp/(app)/direccionamiento/`. Cuando PR-C la mueva, se añade su entrada
- * arriba y se borra esta excepción.
+ * El mecanismo se queda montado porque el caso volverá: en cuanto un módulo con
+ * hijos se mude a medias, hay que anotar aquí el hijo que no viaja — si no, la
+ * resolución por prefijo lo mandaría al destino del padre y se llevaría por
+ * delante una ruta viva. Y su talón tendrá que ser EXPLÍCITO, nunca un
+ * `[[...resto]]`, que chocaría con la página superviviente.
  */
-export const NO_SE_MOVIERON = new Set(["/ecp/direccionamiento/plataformas"]);
+export const NO_SE_MOVIERON = new Set<string>([]);
 
 /** Índice de consulta, construido una vez. */
 const POR_ORIGEN = new Map(RUTAS_MOVIDAS.map((r) => [r.de, r.a]));

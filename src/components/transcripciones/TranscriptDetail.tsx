@@ -117,7 +117,7 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
 
   return (
     <>
-      <Link href="/ocp/transcripciones" className={styles.backLink}>← Transcripciones</Link>
+      <Link href="/ecp/transcripciones" className={styles.backLink}>← Transcripciones</Link>
 
       <div className={css.head}>
         <div style={{ flex: 1, minWidth: 260 }}>
@@ -179,7 +179,7 @@ export function TranscriptDetail({ initial }: { initial: Transcript }) {
                 setBusy(true);
                 const r = await deleteTranscript(t.id);
                 if (!r.ok) { setError(r.error); setBusy(false); return; }
-                router.push("/ocp/transcripciones");
+                router.push("/ecp/transcripciones");
               }}>
               Borrar
             </button>

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Perfiles y carpetas temporales de los scripts de taller (ruedas/fichas)
+.rueda-tmp-profile/
+.fichas-tmp/

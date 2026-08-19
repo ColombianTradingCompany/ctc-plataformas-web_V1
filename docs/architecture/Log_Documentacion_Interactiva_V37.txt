@@ -582,3 +582,31 @@ APP_VERSION 4.40 → 4.41.
   qa-ficha-publica 105/0 · qa-sneak-peek 194/0 · qa-rutas-consolas 266/0 · qa-docs 14/14 · qa-encoding 735/0.
 APP_VERSION 4.41 → 4.42.
 (commit: 84bea49)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.43 · Los grados de Notion cuadran con su propio puntaje
+- Higiene de datos en «📋 Fichas Técnicas de Café» (Notion). Releído antes de tocar: los 6 descuadres del
+  2026-08-17 seguían idénticos.
+- **Seis relaciones `Grado CTC` corregidas**: Borbón Rosado 88.50 Red→Tiryan · Tabi Honey 87.00 Black→Gold ·
+  Gesha 86.25 Gold→Blue · Tabi Doble Ferm. 85.00 Gold→Blue · Castillo Doble Ferm. 84.50 Tiryan→Red · Castillo
+  Lavado 84.25 Tiryan→Red. Bourbon Honey (87.00 → Gold) ya estaba bien.
+- ⚠️ **CORRECCIÓN AL PROPIO PLAN: la escala numérica de Notion nunca estuvo mal.** `Min SCA`/`Max SCA` de los
+  cinco grados ya coincidían EXACTAMENTE con `definicion.ts`. Lo roto eran las RELACIONES, no los rangos.
+- ⚠️ **Dos fichas que el plan no vio**: Cenicafe 1 y Castillo [La Hacienda] llevaban grado **sin ningún SCA** —
+  un grado afirmado sin nada detrás. Por decisión del owner se rellenaron (material de muestra): 81.50 en
+  Cenicafe (dentro de Black, y **el mismo número que usa `sneakPeekMock.ts`** en la tarjeta 7) y 83.75 en
+  Castillo [La Hacienda] (dentro de Red). **Marcados en `Notas de Perfil` como PUNTAJE DE RELLENO, no de
+  laboratorio** — misma regla que las fichas PDF selladas «MUESTRA».
+- **Verificado con `gradoPorPuntaje()`**: las 9 fichas con puntaje cuadran. Chiroso y Caturra siguen sin
+  puntaje y sin grado, que es coherente.
+- ℹ️ **El owner decidió NO tocar**: la grafía «Tiryan» (la plataforma usa *Tyrian*; nada del código lee esa
+  cadena) ni su `Definicion` «SCA+89» contra su propio `Min SCA` 88.
+- ⚠️ **PARA EL DICT: no hay guardián posible hoy.** No existen credenciales de Notion en el repo, así que un
+  espejo ejecutable no se puede escribir. Es el requisito que falta para el «espejo Notion» de
+  `INTEGRACIONES_PLAN.md` §1; sin él, esto se vuelve a descuadrar en silencio.
+- Sin cambios de comportamiento en la aplicación: el mock ya llevaba 81.50/Black en la tarjeta 7.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-sneak-peek 194/0 · qa-grados OK · qa-docs 14/14 · qa-encoding.
+APP_VERSION 4.42 → 4.43.
+(commit: PENDIENTE)

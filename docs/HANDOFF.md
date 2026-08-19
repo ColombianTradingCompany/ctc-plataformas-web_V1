@@ -1049,6 +1049,35 @@ posterior, mandaba deshacerlo. **Si dos notas se contradicen, gana la que explic
   renderizada con datos reales. Proyección y compuerta sí están probadas. El primer lote publicado es el
   momento de mirarla.
 
+## Los grados de Notion cuadran con su propio puntaje (2026-08-19, V4.43)
+
+Higiene de datos en «📋 Fichas Técnicas de Café». Se releyó antes de tocar: los 6 descuadres detectados el
+2026-08-17 seguían idénticos.
+
+- **Seis relaciones `Grado CTC` corregidas** para que el grado enlazado sea el que dicta el puntaje: Borbón
+  Rosado 88.50 Red→**Tiryan** · Tabi Honey 87.00 Black→**Gold** · Gesha 86.25 Gold→**Blue** · Tabi Doble Ferm.
+  85.00 Gold→**Blue** · Castillo Doble Ferm. 84.50 Tiryan→**Red** · Castillo Lavado 84.25 Tiryan→**Red**.
+  Bourbon Honey (87.00 → Gold) ya estaba bien.
+- ⚠️ **La escala numérica de Notion nunca estuvo mal.** Los `Min SCA` / `Max SCA` de los cinco grados ya
+  coincidían **exactamente** con `src/lib/grados/definicion.ts`. Lo roto eran las relaciones, no los rangos —
+  el plan lo describía al revés.
+- ⚠️ **Dos fichas que el plan no vio, y peores que un descuadre**: «Cenicafe 1 - Lavado [Cafe Semilla]» y
+  «Castillo - Lavado [La Hacienda]» llevaban grado enlazado **sin ningún `SCA`**: un grado afirmado sin nada
+  detrás. Por decisión del owner se rellenaron (es material de muestra): **81.50** en Cenicafe —dentro de
+  Black, su grado, y el mismo número que ya usa `sneakPeekMock.ts` en la tarjeta 7— y **83.75** en Castillo
+  [La Hacienda], dentro de Red.
+  **Los dos llevan la marca en `Notas de Perfil`**: «PUNTAJE DE RELLENO — NO ES DE LABORATORIO», con fecha y la
+  instrucción de sustituirlo antes de usar la ficha para nada comercial. Misma regla que las fichas PDF de
+  muestra, selladas «MUESTRA» precisamente porque sus números son inventados.
+- **Verificado con `gradoPorPuntaje()`**, no a ojo: las **9** fichas con puntaje pasan. Las otras dos siguen sin
+  puntaje y sin grado, que es coherente — no afirman nada.
+- ℹ️ **Decisión explícita del owner de NO tocar dos cosas**, así que no son un olvido: la página del grado sigue
+  escrita **«Tiryan»** (la plataforma usa *Tyrian* y nada del código lee esa cadena), y su `Definicion` sigue
+  diciendo «SCA+89» contra su propio `Min SCA` de 88.
+- ℹ️ **No quedó guardián, y esto importa**: no hay credenciales de Notion en el repo, así que un espejo
+  ejecutable no se puede escribir hoy. Es lo que falta para el «espejo Notion» de `INTEGRACIONES_PLAN.md` §1 —
+  y sin él, esto se vuelve a descuadrar en silencio.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

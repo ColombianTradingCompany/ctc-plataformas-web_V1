@@ -1094,25 +1094,50 @@ things — as a **product** it is gone, as a **tasting note** it is standard cof
 Cacao» is an SCA flavour-wheel category) and lives legitimately in `rueda-catacion.html`, `viaje-cafe.html` and
 `ficha/fichaData.ts`. **Those are never touched.**
 
-**Found in Notion while collecting the mock references (2026-08-17) — data hygiene in «📋 Fichas Técnicas de
-Café», owner's call, nothing changed by me** (I only read the database; the platform stays the source of truth
-for grades):
+✅ **RESUELTO EN NOTION (2026-08-19, V4.43) — higiene de datos en «📋 Fichas Técnicas de Café».** Se leyó de
+nuevo antes de tocar nada: los 6 descuadres seguían exactamente igual que el 2026-08-17.
 
-| Ficha | `SCA` | Grade Notion links | Grade the score dictates | |
-|---|---|---|---|---|
-| Borbón Rosado - Natural [La Pradera] | 88.50 | Red | **Tyrian** | ✗ |
-| Tabi - Honey [La Pradera] | 87.00 | Black | **Gold** | ✗ |
-| Bourbon - Honey [La Pradera] | 87.00 | Gold | **Gold** | ✓ |
-| Gesha (Ragonvalia) - Lavado [La Fortaleza] | 86.25 | Gold | **Blue** | ✗ |
-| Tabi - Doble Fermentado [Las Cruces] | 85.00 | Gold | **Blue** | ✗ |
-| Castillo - Doble Fermentado [La Pradera] | 84.50 | Tiryan | **Red** | ✗ |
-| Castillo - Lavado [La Pradera] | 84.25 | Tiryan | **Red** | ✗ |
+**Lo que se corrigió (autorizado por el owner):** la relación `Grado CTC` de **seis** fichas, para que el grado
+enlazado sea el que dicta su propio puntaje. `Bourbon - Honey [La Pradera]` (87.00 → Gold) ya estaba bien.
 
-Also in that workspace: the grade page is spelled **«Tiryan»** (should be *Tyrian*), and its `Definicion` says
-"SCA+89" while its own `Min SCA` field says 88 — the platform's definition is **88.00–100** (`definicion.ts`).
-Same family of drift as the two contradictory Notion pages that forced the grade scale into code on 2026-08-05;
-the fix is for Notion to mirror `src/lib/grados/definicion.ts`, per `docs/INTEGRACIONES_PLAN.md` §1. Worth a
-pass before the fichas feed anything real, and a candidate for the Make/Notion espejo already in the spine.
+| Ficha | `SCA` | Enlazaba | Ahora |
+|---|---|---|---|
+| Borbón Rosado - Natural [La Pradera] | 88.50 | Red | **Tiryan** |
+| Tabi - Honey [La Pradera] | 87.00 | Black | **Gold** |
+| Gesha (Ragonvalia) - Lavado [La Fortaleza] | 86.25 | Gold | **Blue** |
+| Tabi - Doble Fermentado [Las Cruces] | 85.00 | Gold | **Blue** |
+| Castillo - Doble Fermentado [La Pradera] | 84.50 | Tiryan | **Red** |
+| Castillo - Lavado [La Pradera] | 84.25 | Tiryan | **Red** |
+
+⚠️ **Y una corrección a esta misma nota: la escala numérica de Notion NUNCA estuvo mal.** Los campos `Min SCA` /
+`Max SCA` de los cinco grados ya coincidían **exactamente** con `src/lib/grados/definicion.ts` (80–82.99 ·
+83–84.99 · 85–86.99 · 87–87.99 · 88–100). Lo roto eran **las relaciones**, no los rangos. Así que «el arreglo es
+que Notion espeje `definicion.ts`» era impreciso: ya lo espejaba donde importa.
+
+⚠️ **DOS FICHAS QUE ESTA NOTA NO VIO, y eran peores que un descuadre:** «Cenicafe 1 - Lavado [Cafe Semilla]» y
+«Castillo - Lavado [La Hacienda]» llevaban un grado enlazado **sin ningún `SCA`** — un grado afirmado sin nada
+detrás. Decisión del owner (2026-08-19): rellenarlas, porque son material de muestra. Se puso **81.50** en
+Cenicafe (dentro de Black, el grado que ya tenía, y **el mismo número que usa `sneakPeekMock.ts`** en la tarjeta
+7) y **83.75** en Castillo [La Hacienda] (dentro de Red, el grado que ya tenía).
+**Los dos van marcados en su `Notas de Perfil`** como PUNTAJE DE RELLENO, no de laboratorio, con la fecha y la
+instrucción de sustituirlos antes de usar la ficha para nada comercial — misma regla que las fichas PDF de
+muestra, que van selladas «MUESTRA» justamente porque sus números son inventados.
+
+**Verificado con la función de la casa**, no a ojo: las 9 fichas con puntaje se pasaron por `gradoPorPuntaje()`
+de `definicion.ts` y **las 9 cuadran**. Las otras dos (Chiroso, Caturra) siguen sin puntaje y sin grado, que es
+coherente: no afirman nada.
+
+ℹ️ **Lo que el owner decidió NO tocar (2026-08-19), y por tanto no es un olvido:**
+- la página del grado sigue escribiéndose **«Tiryan»** (en la plataforma es *Tyrian*, y nada del código lee la
+  cadena de Notion, así que no rompe nada);
+- su `Definicion` sigue diciendo **«SCA+89»** mientras su propio `Min SCA` dice 88. Es la única de las cinco
+  cuyo texto no concuerda con su número.
+
+ℹ️ **Por qué esto NO quedó como guardián**: no hay credenciales de Notion en el repositorio (`.env.local` no
+tiene ninguna), así que un espejo ejecutable como `qa-tools-seo-espejo.mjs` no se puede escribir hoy. Es el
+requisito que falta para el «espejo Notion» que pide `docs/INTEGRACIONES_PLAN.md` §1 — y sin él, esto vuelve a
+descuadrarse sin que nadie se entere.
+
 
 Found today while reading the schema (small, safe, owner's call before any migration):
 - `public_lot_catalog` (a join view) has `INSERT/UPDATE/DELETE/TRUNCATE/…` granted to `anon` and `authenticated`

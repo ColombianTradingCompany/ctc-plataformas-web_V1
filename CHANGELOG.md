@@ -19,6 +19,33 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.7] — 2026-08-20 (commit pendiente)
+
+- **Cambiado** (owner): el taller deja la lista por **CARÁTULAS que voltean** — la captura es la
+  portada; tocarla gira la tarjeta (rotateY, la mecánica del Sneak Peek) y el reverso trae el
+  detalle y las salidas. Tocar-para-mirar y tocar-para-abrir son dos gestos distintos a propósito.
+- **Corregido** (owner: «tenía Plus y nada me lo decía»): el estado Plus se dice **con todas las
+  letras** — arriba del taller («Plus ACTIVO en tu cuenta: abres N de M») y en el reverso de cada
+  carátula («Plus · ACTIVA en tu cuenta» / «se activa por solicitud»). La cuenta del owner abre
+  Plus por la activación heredada de la red y ahora la pantalla lo celebra.
+- **Añadido** (owner): dos altas desde `reference_html_tools` — **la rueda del sabor V23** entra
+  como versión 2 publicada de `catacion`, y **Coffee Varieties Map** (V18) como herramienta nueva
+  (`mapa-variedades`, en, default, KR/CP/web). Ambas con puente, guía, captura y espejo SEO.
+- **Añadido**: el Home Menu gana sustancia — cada trabajo lista su **resumen** (línea derivada del
+  estado que el puente manda al guardar; `CTC.usarResumen` para afinarla) y un **acordeón**
+  «¿Qué es esta herramienta y cómo funciona?», CERRADO por defecto, con la **guía** nueva de cada
+  herramienta (columna `tools.guia`, editable en la ficha del ECP; escritas las 13).
+- **Añadido**: `qa-tools-puente-conformance.mjs` (playwright) — la revisión herramienta por
+  herramienta que pidió el owner: ready, captura del centinela y restauración tras recarga.
+  **12/12 en orden**: 8 con el circuito completo (captura+resumen+restaura) y 4 SIN-CAMPOS
+  anotadas (narrativas/lienzo: agtron, cool-pdf, formula-calidad, viaje-cafe — su memoria útil
+  llegará por `CTC.usarEstado`). El arnés pagó dos trampas: un goto lento que navegaba a mitad de
+  prueba, y el centinela de texto que un `input[type=number]` sanea a «» sin fallar.
+- **Datos**: `tool_sessions.resumen` y `tools.guia` (aditivas). `qa-taller` 43 → **49**;
+  `qa-tools-seo-espejo` 74/74 con las dos altas espejadas.
+- **Docs**: el trabajo pasa al árbol real `C:\dev\ctc-platforms\ctc-platform` (el clon de
+  OneDrive queda retirado).
+
 ## [V5.6] — 2026-08-19 (commit fcbb85b)
 
 - **Añadido** (segunda pasada del owner sobre el taller, probado en producción): la **barra del

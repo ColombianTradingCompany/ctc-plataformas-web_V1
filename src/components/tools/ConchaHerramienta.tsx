@@ -34,6 +34,7 @@ export function ConchaHerramienta({
   veredicto,
   toolId,
   soportaMemoria = false,
+  guia = null,
   pantallaCompleta = false,
 }: {
   superficie: SuperficieHerramientas;
@@ -47,6 +48,8 @@ export function ConchaHerramienta({
   /** true = la herramienta habla el puente y la concha antepone el Home Menu
    *  de trabajos (A11). false = se abre directa, como siempre. */
   soportaMemoria?: boolean;
+  /** Qué es y cómo funciona — el acordeón del Home Menu (V5.7). */
+  guia?: string | null;
   /** Pantalla completa (segunda pasada del owner, 2026-08-19): la concha llena
    *  el alto de la ventana, la cabecera se aprieta y el marco se queda con
    *  todo lo demás — «the working space is very reduced». */
@@ -74,7 +77,7 @@ export function ConchaHerramienta({
 
       {veredicto.abre ? (
         soportaMemoria ? (
-          <SesionHerramienta toolId={toolId} nombre={nombre} src={src} />
+          <SesionHerramienta toolId={toolId} nombre={nombre} src={src} guia={guia ?? descripcion} />
         ) : (
           <iframe className={styles.marco} src={src} title={`Herramienta: ${nombre}`} loading="lazy" />
         )

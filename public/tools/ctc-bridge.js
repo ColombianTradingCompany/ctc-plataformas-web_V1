@@ -37,6 +37,7 @@
   var activo = false; // solo tras recibir init de la concha
   var timer = null;
   var custom = null; // {leer, poner} si la herramienta llamó usarEstado
+  var resumenFn = null; // si la herramienta llamó usarResumen
 
   // ── Serialización por defecto: todos los campos del documento ────────────
   function claveDe(el, i) {
@@ -83,11 +84,31 @@
     }
   }
 
+  // El RESUMEN (V5.7): la línea que el Home Menu enseña bajo el nombre del
+  // trabajo. Por defecto, los primeros campos con valor (texto/número), unidos
+  // con « · »; la herramienta puede darla mejor con CTC.usarResumen.
+  function resumenDe() {
+    try {
+      if (resumenFn) return String(resumenFn() || "").slice(0, 140);
+      var partes = [];
+      campos().some(function (el) {
+        if (el.type === "password" || el.type === "file" || el.type === "checkbox" || el.type === "radio" || el.type === "hidden") return false;
+        var v = String(el.value || "").trim();
+        if (!v || v.length > 60) return false;
+        partes.push(v);
+        return partes.length >= 3;
+      });
+      return partes.join(" · ").slice(0, 140);
+    } catch (e) {
+      return "";
+    }
+  }
+
   function mandarEstado() {
     if (!activo) return;
     var estado = leerEstado();
     if (estado == null) return;
-    window.parent.postMessage({ ctc: "estado", estado: estado }, "*");
+    window.parent.postMessage({ ctc: "estado", estado: estado, resumen: resumenDe() }, "*");
   }
 
   function tocado() {
@@ -130,6 +151,10 @@
     },
     /** Avisar «hay cambios» cuando no los dispara un campo del formulario. */
     tocado: tocado,
+    /** La línea que resume el trabajo en el Home Menu (V5.7). */
+    usarResumen: function (fn) {
+      resumenFn = fn;
+    },
     /** Empujar un evento al resto del ecosistema (lo recoge la concha). */
     emitir: function (evento, payload) {
       window.parent.postMessage({ ctc: "emitir", evento: String(evento || ""), payload: payload || {} }, "*");

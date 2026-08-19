@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LangProvider } from "@/components/lang/i18n";
 import { superficieConOverrides } from "@/lib/seo/openGraph";
 import { cargarTaller } from "@/lib/tools/taller";
 import { TallerBarra } from "@/components/tools/TallerBarra";
-import { CapturaMiniatura } from "@/components/tools/CapturaMiniatura";
+import { TallerAlbum } from "@/components/tools/TallerAlbum";
 import styles from "./taller.module.css";
 
 // ── /herramientas/taller · la rejilla de trabajo (A8/A9, 2026-08-19) ────────
@@ -31,6 +30,11 @@ export default async function TallerPage() {
   const taller = await cargarTaller();
   if (!taller.autenticado) redirect("/herramientas/acceso");
 
+  // Lo Plus, dicho con todas las letras (queja del owner: tenía Plus activo y
+  // nada en pantalla se lo decía): cuántas Plus abre esta cuenta, arriba.
+  const plusAbiertas = taller.herramientas.filter((h) => h.esPlus && h.veredicto.abre).length;
+  const plusTotales = taller.herramientas.filter((h) => h.esPlus).length;
+
   return (
     <div data-theme="ctc-home">
       <LangProvider storageKey="ctc-lang">
@@ -39,10 +43,17 @@ export default async function TallerPage() {
           <header className={styles.cabeza}>
             <h1>El taller</h1>
             <p>
-              Las herramientas de trabajo de la red, con tu cuenta. Las marcadas «con memoria» guardan tus trabajos —
-              con nombre y fecha — para retomarlos desde cualquier equipo. Las Plus se activan por solicitud: pídelas
-              desde su propia página y CTC las habilita en tu cuenta.
+              Las herramientas de trabajo de la red, con tu cuenta. Toca una carátula para ver qué es; ábrela desde su
+              reverso. Las marcadas «Memoria» guardan tus trabajos — con nombre y fecha — para retomarlos desde
+              cualquier equipo.
             </p>
+            {plusTotales > 0 && (
+              <p className={styles.plusEstado} data-activa={plusAbiertas > 0 ? "" : undefined}>
+                {plusAbiertas > 0
+                  ? `Plus ACTIVO en tu cuenta: abres ${plusAbiertas} de ${plusTotales} herramienta${plusTotales === 1 ? "" : "s"} Plus.`
+                  : `Hay ${plusTotales} herramienta${plusTotales === 1 ? "" : "s"} Plus: se activan por solicitud, desde su propia página.`}
+              </p>
+            )}
           </header>
 
           {!taller.esMiembro && (
@@ -53,26 +64,19 @@ export default async function TallerPage() {
             </p>
           )}
 
-          <div className={styles.rejilla}>
-            {taller.herramientas.map((h) => (
-              <Link key={h.id} href={`/herramientas/taller/${h.id}?volver=${encodeURIComponent("/herramientas/taller")}`} className={styles.tarjeta}>
-                <CapturaMiniatura toolId={h.id} className={styles.miniatura} />
-                <div className={styles.fila}>
-                  <h2>{h.nombre}</h2>
-                  {h.esPlus && (
-                    <span className={`${styles.sello} ${h.veredicto.abre ? styles.selloAbre : styles.selloPlus}`}>
-                      {h.veredicto.abre ? "Plus · activa" : "Plus"}
-                    </span>
-                  )}
-                  {h.soportaMemoria && <span className={`${styles.sello} ${styles.selloMemoria}`}>Con memoria</span>}
-                </div>
-                <p>{h.descripcion}</p>
-                <div className={styles.pie}>
-                  <span>{h.veredicto.abre ? "Abrir →" : h.veredicto.motivo === "sin-permiso" ? "Ver y solicitar →" : "Ver →"}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <TallerAlbum
+            herramientas={taller.herramientas.map((h) => ({
+              id: h.id,
+              nombre: h.nombre,
+              descripcion: h.descripcion,
+              esPlus: h.esPlus,
+              soportaMemoria: h.soportaMemoria,
+              abre: h.veredicto.abre,
+              viaPlus: h.veredicto.abre && h.esPlus && h.veredicto.via !== "default" ? h.veredicto.via : null,
+              sePuedeSolicitar: !h.veredicto.abre && h.veredicto.motivo === "sin-permiso",
+              trabajos: h.trabajos,
+            }))}
+          />
         </main>
       </LangProvider>
     </div>

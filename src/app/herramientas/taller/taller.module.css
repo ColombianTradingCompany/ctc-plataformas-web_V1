@@ -73,3 +73,13 @@
 }
 .miniatura > img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
 .miniatura[data-falta] > img { width: 38%; height: auto; object-fit: contain; }
+
+/* El estado Plus, dicho arriba y con color (V5.7). */
+.plusEstado {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #8c4a1f;
+}
+.plusEstado[data-activa] { color: #2f6b4f; }

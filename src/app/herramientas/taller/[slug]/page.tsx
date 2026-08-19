@@ -40,6 +40,7 @@ export default async function HerramientaTallerPage({
             src={h.src}
             veredicto={h.veredicto}
             soportaMemoria={h.soportaMemoria}
+            guia={h.guia}
             pantallaCompleta
           />
         </main>

@@ -42,7 +42,19 @@ const fecha = (iso: string) =>
   " · " +
   new Date(iso).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
 
-export function SesionHerramienta({ toolId, nombre, src }: { toolId: string; nombre: string; src: string }) {
+export function SesionHerramienta({
+  toolId,
+  nombre,
+  src,
+  guia,
+}: {
+  toolId: string;
+  nombre: string;
+  src: string;
+  /** Que es y como funciona (V5.7): el acordeon del menu, CERRADO por defecto
+   *  — la convencion de la casa para todo acordeon. */
+  guia?: string | null;
+}) {
   const [modo, setModo] = useState<Modo>({ tipo: "cargando" });
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [ocupado, setOcupado] = useState(false);
@@ -104,6 +116,7 @@ export function SesionHerramienta({ toolId, nombre, src }: { toolId: string; nom
         return;
       }
       if (d.ctc === "estado" && m.tipo === "abierta" && d.estado) {
+        const resumen = typeof (d as { resumen?: unknown }).resumen === "string" ? (d as { resumen: string }).resumen : "";
         pendiente.current = d.estado;
         setGuardado("guardando");
         guardando.current = guardando.current.then(async () => {
@@ -112,7 +125,7 @@ export function SesionHerramienta({ toolId, nombre, src }: { toolId: string; nom
           pendiente.current = null;
           const mm = modoRef.current;
           if (mm.tipo !== "abierta") return;
-          const r = await guardarTrabajo(toolId, mm.trabajoId, estado);
+          const r = await guardarTrabajo(toolId, mm.trabajoId, estado, resumen);
           setGuardado(
             r.ok
               ? "Guardado " + new Date(r.data.guardadoAt).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })
@@ -191,12 +204,22 @@ export function SesionHerramienta({ toolId, nombre, src }: { toolId: string; nom
         {modo.error && <p className={styles.menuError}>{modo.error}</p>}
         {aviso && <p className={styles.menuError}>{aviso}</p>}
 
+        {guia && (
+          <details className={styles.menuGuia}>
+            <summary>
+              ¿Qué es esta herramienta y cómo funciona? <span aria-hidden>▾</span>
+            </summary>
+            <p>{guia}</p>
+          </details>
+        )}
+
         {modo.trabajos.length > 0 && (
           <ul className={styles.menuLista}>
             {modo.trabajos.map((t) => (
               <li key={t.id}>
                 <button type="button" className={styles.menuAbrir} onClick={() => abrir(t)} disabled={ocupado}>
                   <b>{t.nombre}</b>
+                  {t.resumen && <i className={styles.menuResumen}>{t.resumen}</i>}
                   <span>
                     creado {fecha(t.createdAt)} · último cambio {fecha(t.updatedAt)}
                   </span>

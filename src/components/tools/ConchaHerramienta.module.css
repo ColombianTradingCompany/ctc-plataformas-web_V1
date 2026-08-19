@@ -142,3 +142,38 @@
 }
 .conchaFull .volver { margin-bottom: 2px; }
 .conchaFull .marco, .conchaFull .sesion { min-height: 0; }
+
+/* El menú con sustancia (V5.7): el resumen del trabajo bajo su nombre, y la
+   guía como acordeón CERRADO por defecto — la convención de la casa. */
+.menuResumen {
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--ink, #2c2620);
+  opacity: .8;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.menuGuia {
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 9px;
+  background: #faf8f4;
+}
+.menuGuia summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.menuGuia summary::-webkit-details-marker { display: none; }
+.menuGuia[open] summary span { display: inline-block; transform: rotate(180deg); }
+.menuGuia p {
+  margin: 0;
+  padding: 0 14px 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted, #7d6c5d);
+  max-width: 72ch;
+}

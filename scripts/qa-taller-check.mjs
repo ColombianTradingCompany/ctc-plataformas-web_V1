@@ -91,6 +91,7 @@ for (const f of [
   "mermas-rapida", "mermas-ctc", "agtron-dial", "cogs-cafe-verde", "costo-empaque",
   "cool-pdf", "rueda-catacion", "green-coffee-datasheet", "generador-qr",
   "formula-calidad", "viaje-cafe",
+  "rueda-del-cafe-v23", "mapa-variedades", // V5.7: la V23 del owner y la herramienta nueva
 ]) {
   check(`${f} incluye el puente`, lee(`public/tools/${f}.html`).includes('src="/tools/ctc-bridge.js"'));
 }
@@ -107,8 +108,23 @@ check(
   ].every((f) => lee(f).includes("pantallaCompleta"))
 );
 check(
-  "el taller enseña las capturas en sus tarjetas",
-  lee("src/app/herramientas/taller/page.tsx").includes("CapturaMiniatura")
+  "el taller es carátulas que voltean (V5.7)",
+  lee("src/app/herramientas/taller/page.tsx").includes("TallerAlbum")
+);
+check(
+  "el estado Plus se dice con todas las letras",
+  lee("src/app/herramientas/taller/page.tsx").includes("plusEstado")
+);
+const album = lee("src/components/tools/TallerAlbum.tsx");
+check("el reverso distingue «activa en tu cuenta» de «se solicita»", album.includes("ACTIVA en tu cuenta"));
+check(
+  "el acordeón de la guía va CERRADO por defecto (convención de la casa)",
+  lee("src/components/tools/SesionHerramienta.tsx").includes("<details className={styles.menuGuia}>") &&
+    !lee("src/components/tools/SesionHerramienta.tsx").includes("menuGuia} open")
+);
+check(
+  "el puente manda resumen con el estado",
+  lee("public/tools/ctc-bridge.js").includes("resumen: resumenDe()")
 );
 
 // ── 7. La trampa del %20, pagada una vez ────────────────────────────────────

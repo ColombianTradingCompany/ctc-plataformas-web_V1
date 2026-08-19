@@ -21,6 +21,8 @@ export type HerramientaResuelta = {
   /** ¿La versión publicada habla el puente de /tools/ctc-bridge.js? Si sí, la
    *  concha ofrece TRABAJOS guardados (A11). */
   soportaMemoria: boolean;
+  /** Qué es y cómo funciona — el acordeón del Home Menu (V5.7). */
+  guia: string | null;
   /** URL del iframe, ya resuelta. `null` si no hay versión publicada. */
   src: string | null;
   veredicto: Veredicto;
@@ -48,7 +50,7 @@ export async function resolverHerramienta(
   // superficie pública ni para decir que existe. Misma regla que la lista.
   let consulta = service
     .from("tools")
-    .select("id, nombre, descripcion, tier, version_publicada, clase, archivado_at, kr, cp, soporta_memoria")
+    .select("id, nombre, descripcion, guia, tier, version_publicada, clase, archivado_at, kr, cp, soporta_memoria")
     .eq("id", slug)
     .eq("clase", "compartible")
     .is("archivado_at", null);
@@ -64,6 +66,7 @@ export async function resolverHerramienta(
     tier: "default" | "plus";
     version_publicada: string | null;
     soporta_memoria: boolean;
+    guia: string | null;
   };
 
   const { data: v } = fila.version_publicada
@@ -90,6 +93,7 @@ export async function resolverHerramienta(
     descripcion: fila.descripcion,
     esPlus: fila.tier === "plus",
     soportaMemoria: fila.soporta_memoria,
+    guia: fila.guia,
     src: srcDeVersion(fila.id, version as never),
     veredicto: puedeAbrir(ctx, fila.id, fila.tier),
   };

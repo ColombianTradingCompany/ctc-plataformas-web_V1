@@ -25,6 +25,9 @@ export type HerramientaTaller = {
   esPlus: boolean;
   soportaMemoria: boolean;
   veredicto: Veredicto;
+  /** Trabajos guardados del usuario en ESTA herramienta (V5.7, para el
+   *  reverso de la carátula). 0 sin sesión. */
+  trabajos: number;
 };
 
 export type Taller = {
@@ -39,12 +42,14 @@ export async function cargarTaller(): Promise<Taller> {
   const service = createServiceRoleClient();
 
   let email: string | null = null;
+  let userId: string | null = null;
   try {
     const session = await createSessionClient();
     const {
       data: { user },
     } = await session.auth.getUser();
     email = user?.email ?? null;
+    userId = user?.id ?? null;
   } catch {
     // Sin sesión legible, la barra simplemente no enseña correo.
   }
@@ -68,6 +73,18 @@ export async function cargarTaller(): Promise<Taller> {
     version_publicada: string | null;
     soporta_memoria: boolean;
   }[];
+
+  // Los trabajos del usuario, contados de una pasada (para el reverso de las
+  // carátulas). Las filas son pocas por diseño (techo de 40 por herramienta).
+  const porHerramienta = new Map<string, number>();
+  if (userId) {
+    const { data: filasTrabajos } = await service
+      .from("tool_sessions")
+      .select("tool_id")
+      .eq("user_id", userId);
+    for (const f of (filasTrabajos as { tool_id: string }[] | null) ?? [])
+      porHerramienta.set(f.tool_id, (porHerramienta.get(f.tool_id) ?? 0) + 1);
+  }
 
   const publicadas = tools.map((t) => t.version_publicada).filter((x): x is string => !!x);
   const { data: vs } = publicadas.length
@@ -93,6 +110,7 @@ export async function cargarTaller(): Promise<Taller> {
       esPlus: t.tier === "plus",
       soportaMemoria: t.soporta_memoria,
       veredicto: puedeAbrir(ctx, t.id, t.tier),
+      trabajos: porHerramienta.get(t.id) ?? 0,
     });
   }
 

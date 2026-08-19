@@ -227,6 +227,7 @@ function Ficha({
     dc: tool.dc,
     orden: tool.orden,
     soportaMemoria: tool.soportaMemoria,
+    guia: tool.guia ?? "",
   });
 
   const interna = f.clase === "interna";
@@ -280,6 +281,9 @@ function Ficha({
       <label style={{ ...campo, marginTop: 10 }}>
         <span style={etiqueta}>Descripción (la que se lee en la tarjeta)</span>
         <textarea value={f.descripcion} onChange={(e) => set("descripcion", e.target.value)} rows={2} style={input} />
+
+        <span style={{ ...etiqueta, marginTop: 10 }}>Guía («¿Qué es y cómo funciona?» — el acordeón del menú de trabajos)</span>
+        <textarea value={f.guia} onChange={(e) => set("guia", e.target.value)} rows={3} style={input} />
       </label>
 
       <label style={{ ...campo, marginTop: 10 }}>

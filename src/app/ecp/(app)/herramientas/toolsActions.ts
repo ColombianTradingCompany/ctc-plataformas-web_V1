@@ -173,6 +173,8 @@ export type FichaTool = {
    *  owner al publicar una versión que lo incorpore (A11): enciende el Home
    *  Menu de trabajos en la concha. */
   soportaMemoria: boolean;
+  /** Qué es y cómo funciona — el acordeón del Home Menu (V5.7). */
+  guia: string;
 };
 
 export async function guardarFicha(toolId: string, ficha: FichaTool): Promise<ActionResult> {
@@ -200,6 +202,7 @@ export async function guardarFicha(toolId: string, ficha: FichaTool): Promise<Ac
       dc: ficha.dc,
       orden: ficha.orden,
       soporta_memoria: ficha.soportaMemoria,
+      guia: ficha.guia.trim() || null,
     })
     .eq("id", toolId);
   if (error) return { ok: false, error: error.message };

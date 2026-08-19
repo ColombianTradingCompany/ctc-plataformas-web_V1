@@ -31,6 +31,8 @@ const MAX_TRABAJOS_POR_HERRAMIENTA = 40;
 export type TrabajoResumen = {
   id: string;
   nombre: string;
+  /** La línea derivada del estado que manda el puente (V5.7). */
+  resumen: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -75,7 +77,7 @@ export async function listarTrabajos(toolId: string): Promise<ResultadoTrabajos<
 
   const { data } = await r.service
     .from("tool_sessions")
-    .select("id, nombre, created_at, updated_at")
+    .select("id, nombre, resumen, created_at, updated_at")
     .eq("user_id", r.user.id)
     .eq("tool_id", toolId)
     .order("updated_at", { ascending: false })
@@ -83,9 +85,9 @@ export async function listarTrabajos(toolId: string): Promise<ResultadoTrabajos<
 
   return {
     ok: true,
-    data: ((data as { id: string; nombre: string; created_at: string; updated_at: string }[] | null) ?? []).map(
-      (f) => ({ id: f.id, nombre: f.nombre, createdAt: f.created_at, updatedAt: f.updated_at })
-    ),
+    data: (
+      (data as { id: string; nombre: string; resumen: string | null; created_at: string; updated_at: string }[] | null) ?? []
+    ).map((f) => ({ id: f.id, nombre: f.nombre, resumen: f.resumen, createdAt: f.created_at, updatedAt: f.updated_at })),
   };
 }
 
@@ -145,7 +147,8 @@ export async function abrirTrabajo(
 export async function guardarTrabajo(
   toolId: string,
   trabajoId: string,
-  estado: Record<string, unknown>
+  estado: Record<string, unknown>,
+  resumen?: string
 ): Promise<ResultadoTrabajos<{ guardadoAt: string }>> {
   const r = await usuarioYVeredicto(toolId);
   if (r.error !== undefined) return { ok: false, error: r.error };
@@ -162,7 +165,10 @@ export async function guardarTrabajo(
   const ahora = new Date().toISOString();
   const { error, count } = await r.service
     .from("tool_sessions")
-    .update({ estado: JSON.parse(serializado), updated_at: ahora }, { count: "exact" })
+    .update(
+      { estado: JSON.parse(serializado), resumen: String(resumen ?? "").trim().slice(0, 140) || null, updated_at: ahora },
+      { count: "exact" }
+    )
     .eq("id", trabajoId)
     .eq("user_id", r.user.id)
     .eq("tool_id", toolId);

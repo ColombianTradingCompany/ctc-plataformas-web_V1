@@ -31,11 +31,12 @@ const HERRAMIENTAS = {
   "cogs-verde": "/tools/cogs-cafe-verde.html",
   "costo-empaque": "/tools/costo-empaque.html",
   "cool-pdf": "/tools/cool-pdf.html",
-  catacion: "/tools/rueda-catacion.html",
+  catacion: "/tools/rueda-del-cafe-v23.html", // V23 del owner (V5.7) — la captura sigue al publicado
   "green-datasheet": "/tools/green-coffee-datasheet.html",
   qr: "/tools/generador-qr.html",
   "formula-calidad": "/tools/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe.html",
+  "mapa-variedades": "/tools/mapa-variedades.html",
 };
 
 mkdirSync(SALIDA, { recursive: true });

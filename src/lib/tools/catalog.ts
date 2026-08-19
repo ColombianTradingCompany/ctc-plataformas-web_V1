@@ -106,6 +106,8 @@ export type ToolAdmin = ToolPublico & {
   archivada: boolean;
   /** true = la versión publicada habla el puente de trabajos (A11). */
   soportaMemoria: boolean;
+  /** Qué es y cómo funciona — el acordeón del Home Menu (V5.7). */
+  guia: string | null;
   versionPublicadaId: string | null;
   versiones: ToolVersion[];
 };

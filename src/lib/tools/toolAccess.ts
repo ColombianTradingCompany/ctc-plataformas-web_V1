@@ -45,6 +45,7 @@ type FilaTool = {
   archivado_at: string | null;
   version_publicada: string | null;
   soporta_memoria: boolean;
+  guia: string | null;
 };
 
 type FilaVersion = {
@@ -61,7 +62,7 @@ type FilaVersion = {
 };
 
 const COLS_TOOL =
-  "id, nombre, descripcion, lang, clase, familia, kr, cp, web, dc, tier, orden, meta_description, archivado_at, version_publicada, soporta_memoria";
+  "id, nombre, descripcion, lang, clase, familia, kr, cp, web, dc, tier, orden, meta_description, archivado_at, version_publicada, soporta_memoria, guia";
 const COLS_VERSION = "id, tool_id, numero, origen, src_publico, storage_path, bytes, notas, subido_at, subido_por";
 
 function aVersion(v: FilaVersion): ToolVersion {
@@ -193,6 +194,7 @@ export async function cargarToolsAdmin(): Promise<ToolAdmin[]> {
       metaDescription: t.meta_description,
       archivada: t.archivado_at !== null,
       soportaMemoria: t.soporta_memoria,
+      guia: t.guia,
       versionPublicadaId: t.version_publicada,
       versiones,
     };

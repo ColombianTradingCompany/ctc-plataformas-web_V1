@@ -38,6 +38,7 @@ export default async function HerramientaKrPage({
         src={h.src}
         veredicto={h.veredicto}
         soportaMemoria={h.soportaMemoria}
+        guia={h.guia}
         pantallaCompleta
       />
     </main>

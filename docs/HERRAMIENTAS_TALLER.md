@@ -74,6 +74,14 @@ herramienta va a evolucionar, que use `CTC.usarEstado` con su propio esquema.
 
 Referencia viva: `costo-empaque` (el puente al pie de su HTML).
 
+**V5.7**: el puente además manda un `resumen` con cada estado (por defecto los
+primeros campos con valor; `CTC.usarResumen(fn)` para darlo mejor) — es la línea
+que el Home Menu lista bajo el nombre del trabajo. El menú también enseña la
+**guía** (`tools.guia`, ficha del ECP) en un acordeón cerrado por defecto. La
+conformidad se comprueba con `scripts/qa-tools-puente-conformance.mjs`
+(playwright, contra el dev server): ready / captura / restauración por
+herramienta.
+
 ## Las capturas del carrusel
 
 `scripts/build-tool-shots.mjs` (playwright, devDependency): con `npm run dev`

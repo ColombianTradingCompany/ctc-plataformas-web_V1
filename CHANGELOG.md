@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.2] — 2026-08-19 (commit pendiente)
+## [V5.2] — 2026-08-19 (commit 43cc84c)
 
 - **Hito**: arranca **«Launch Beta Testing»** — la primera tanda que sale de la revisión
   pantalla por pantalla de la V5.0. El owner recorre las 19 superficies con una lista de 145

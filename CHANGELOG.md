@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.5] — 2026-08-19 (commit pendiente)
+
+- **Añadido** (A8b, pregunta del owner al probar la puerta): **«Entrar con Google»** en
+  `/herramientas/acceso` — el séptimo callback de la casa
+  (`/herramientas/auth/callback`, patrón de KR/Directorio). El callback **no promueve
+  roles**: entrar por Herramientas solo identifica; una cuenta nueva queda en el default
+  inerte y el taller le explica las tres puertas de la membresía.
+- **Docs**: la URL completa del callback debe estar en la allowlist de Supabase
+  (Authentication → URL Configuration → Redirect URLs):
+  `https://herramientas.ctcexport.com/herramientas/auth/callback`. Si falta, Google
+  completa igual pero aterriza en el Site URL CON sesión (la cookie es compartida) —
+  degradado, no roto.
+- **Cambiado**: `qa-taller-check` aprende el camino Google (25 → 29).
+
 ## [V5.4] — 2026-08-19 (commit b7baa12)
 
 - **Hito** (A8–A11): **Herramientas del Café se convierte en una aplicación semi-independiente**

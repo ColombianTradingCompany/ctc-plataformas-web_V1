@@ -35,6 +35,18 @@ export function AccesoTaller() {
   const [estado, setEstado] = useState<"idle" | "enviando" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
+  async function conGoogle() {
+    setError(null);
+    // El patrón de la casa (Directorio/KR): el redirect vuelve al callback de
+    // ESTA superficie, que canjea el código y manda al taller. La cuenta de
+    // Google es la misma identidad única — si ya existe con ese correo, entra
+    // a la misma cuenta de siempre.
+    await createClient().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/herramientas/auth/callback` },
+    });
+  }
+
   async function entrar() {
     if (estado === "enviando") return;
     setEstado("enviando");
@@ -88,9 +100,14 @@ export function AccesoTaller() {
 
       {error && <p className={styles.error}>{error}</p>}
 
+      {/* Apilados abajo a la derecha, la convención de la casa: la entrada
+          principal encima, Google debajo como alternativa. */}
       <div className={styles.acciones}>
         <button type="button" className="btn btn-solid" onClick={entrar} disabled={estado === "enviando" || !email || !pass}>
           {estado === "enviando" ? "Un momento…" : "Entrar"}
+        </button>
+        <button type="button" className="btn" onClick={conGoogle} disabled={estado === "enviando"}>
+          Entrar con Google
         </button>
       </div>
 

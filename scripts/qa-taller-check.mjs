@@ -68,6 +68,14 @@ check(
   acceso.includes("conSesion") && acceso.includes('if (conSesion) redirect("/herramientas/taller")')
 );
 
+// ── 4b. El camino Google: callback propio, sin promover a nadie ─────────────
+const callback = lee("src/app/herramientas/auth/callback/route.ts");
+check("el callback canjea el código por la sesión", callback.includes("exchangeCodeForSession"));
+check("y NO promueve roles (entrar por Herramientas solo identifica)", !callback.includes("promoteFreshBuyer"));
+check("sin código o con error, de vuelta a la puerta", (callback.match(/herramientas\/acceso/g) ?? []).length >= 2);
+const accesoTaller = lee("src/app/herramientas/acceso/AccesoTaller.tsx");
+check("el botón de Google apunta al callback de ESTA superficie", accesoTaller.includes("/herramientas/auth/callback"));
+
 // ── 5. La landing ya no abre herramientas: enseña y manda al taller ─────────
 const landing = lee("src/components/services/HerramientasLanding.tsx");
 check("la landing monta el carrusel", landing.includes("CarruselHerramientas"));

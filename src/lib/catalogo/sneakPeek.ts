@@ -128,6 +128,11 @@ type FilaCatalogo = {
   official_score: number | null;
   ficha_notas_cata: string | null;
   finca_name: string | null;
+  /** ⚠️ Un BOOLEANO, nunca el contenido. `lots.datasheet` son 110 claves con el
+   *  NIT del productor, su nombre, la georreferencia del predio y la evaluación
+   *  de riesgo EUDR; la vista no las devuelve y esta cinta no las pide. Solo
+   *  sirve para saber si encender el botón. */
+  tiene_ficha: boolean;
   ctc_selection: boolean;
   municipio: string | null;
   departamento: string | null;
@@ -165,6 +170,12 @@ function aTarjeta(fila: FilaCatalogo): SneakPeekLot | null {
     process: fila.ficha_proceso,
     cup: fila.ficha_notas_cata,
     season: TEMPORADA_ACTUAL,
+    // El botón «Ver ficha técnica» de un lote vivo (V4.42). La URL cuelga de
+    // `/docs` porque el matcher del proxy lo excluye: en un subdominio, una
+    // ruta no excluida se reescribiría y daría 404, y este enlace se abre desde
+    // las SIETE superficies donde está montada la cinta. La página proyecta el
+    // `datasheet` con lista blanca — aquí no viaja ni un dato de la ficha.
+    datasheetUrl: fila.tiene_ficha ? `/docs/ficha/${fila.lot_id}` : undefined,
     mock: false,
   };
 }
@@ -179,7 +190,7 @@ async function leeCatalogoVivo(): Promise<SneakPeekLot[]> {
     supabase
       .from("public_lot_catalog")
       .select(
-        "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection"
+        "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection, tiene_ficha"
       ),
   ]);
 

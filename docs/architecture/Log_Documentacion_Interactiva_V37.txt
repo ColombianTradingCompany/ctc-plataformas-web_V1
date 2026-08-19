@@ -554,3 +554,31 @@ APP_VERSION 4.39 → 4.40.
   qa-sneak-peek 194/0 · qa-terminos 19/19 · qa-docs 14/14 · qa-encoding 735/0.
 APP_VERSION 4.40 → 4.41.
 (commit: 3c72ca5)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.42 · La ficha pública de un lote vivo, sobre lista blanca
+- Cierra el **§9 to-do 2** del plan V5 — pero **NO como decía la nota, porque la nota era peligrosa**. Mandaba
+  «generar el PDF desde `lots.datasheet` y el botón se enciende para todo el catálogo».
+- ⚠️ **Eso publicaba el expediente entero.** `lots.datasheet` son **110 claves**: `nit_rut`, `razon_social`,
+  `productor`, `geo_ref`, `qgrader_*` y todo el bloque `eudr_*` de evaluación de RIESGO del proveedor. Y
+  `estate` — que por D3.1 la tarjeta tapa, y el PDF habría dejado a un clic de esa misma tarjeta.
+- ⚠️ **PARA EL DICT: dos documentos del repo se contradecían.** La auditoría del 2026-07-10 (HANDOFF) ya decía
+  que `public_lot_catalog` existe para que la Ficha privada y la geolocalización NO lleguen a un comprador, y
+  advertía de no deshacerlo. La nota del §9, posterior, mandaba deshacerlo. **Gana la que explica por qué.**
+- **NODO NUEVO: `/docs/ficha/[lotId]`**, la ficha pública de un lote vivo. ⚠️ Cuelga de `/docs` por la **gotcha
+  12**: el matcher del proxy excluye `docs/`, y una ruta no excluida se reescribiría en subdominio → 404. El
+  enlace se abre desde las SIETE superficies de la cinta.
+- **`src/lib/catalogo/fichaPublica.ts`**, módulo puro con **lista BLANCA**: una clave nueva del formulario nace
+  PRIVADA. Solo escalares (un anidado arrastra fincas o adjuntos). D3.1 se respeta dentro de la ficha.
+- **Migración**: `public_lot_catalog` gana `tiene_ficha` — **booleano, nunca el contenido**. Misma forma que
+  `ctc_selection`.
+- **La compuerta es la vista**: sin fila publicada, 404, y el `datasheet` ni se toca. **Verificado contra la
+  base**: los dos lotes reales con ficha (y NIT dentro) están sin publicar → 404.
+- **Guardián `qa-ficha-publica-check.mjs` (105)** contra **las 110 claves REALES**. Cuatro sabotajes: recorrer
+  la entrada, tumbar D3.1, meter `nit_rut` en la lista blanca (revienta al cargar), sacar la URL de `/docs`.
+- ℹ️ **Sin verificar**: no hay lotes publicados, así que la página no se ha visto renderizada con datos reales.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-ficha-publica 105/0 · qa-sneak-peek 194/0 · qa-rutas-consolas 266/0 · qa-docs 14/14 · qa-encoding 735/0.
+APP_VERSION 4.41 → 4.42.
+(commit: PENDIENTE)

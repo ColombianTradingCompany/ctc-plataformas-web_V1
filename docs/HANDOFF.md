@@ -1007,6 +1007,48 @@ DDS».
 - ℹ️ **Hoy no hay ningún lote publicado** (`public_lot_catalog` devuelve 0 filas), así que esto no cambia nada
   que un visitante esté viendo. Era el momento barato.
 
+## La ficha pública de un lote vivo, sobre lista blanca (2026-08-19, V4.42)
+
+El §9 del plan V5 decía, para encender el botón «Ver ficha técnica» de los lotes reales: «generar el PDF desde
+`lots.datasheet` y el botón se enciende para todo el catálogo sin tocar el componente».
+
+⚠️ **Esa instrucción publicaba el expediente entero.** `lots.datasheet` son **110 claves**: `nit_rut` y
+`razon_social` (datos fiscales del productor), `productor` (su nombre), `geo_ref` (la georreferencia del
+predio), `qgrader_name` / `qgrader_lab` (quién catató y dónde), y todo el bloque `eudr_*` con la **evaluación
+de riesgo** que CTC hace del proveedor. Y `estate`: por D3.1 la tarjeta de un lote comprado en firme no enseña
+la finca, y ese PDF la habría dejado **a un clic de esa misma tarjeta**.
+
+⚠️ **Dos documentos de este repo se contradecían, y ganó el viejo.** La auditoría del 2026-07-10 —arriba en
+este mismo archivo— ya dejó escrito que `public_lot_catalog` existe *porque* una RLS ancha «would have exposed
+the full private Ficha and exact finca geolocation to any buyer», y advierte de no deshacerlo. La nota del §9,
+posterior, mandaba deshacerlo. **Si dos notas se contradicen, gana la que explica por qué.**
+
+**Decisión del owner (2026-08-19): público, sobre lista blanca.** Lo construido:
+
+- **`src/lib/catalogo/fichaPublica.ts`** — módulo puro. Lista **BLANCA**, no negra: lo que no está nombrado no
+  sale, así que **una clave nueva del formulario nace privada**. Con lista negra nacería pública y no se sabría
+  hasta que un productor viera su NIT en una descarga. La lista tampoco es criterio propio: es lo que las
+  fichas de muestra ya publican (finca, origen, variedad, proceso, notas, SCA + diez atributos, altura).
+- **Solo escalares.** Un objeto o arreglo anidado puede arrastrar dentro una lista de fincas aportantes o un
+  adjunto, y una lista blanca solo mira el primer nivel.
+- **D3.1 vale también dentro de la ficha**: en CTC Selection, `estate` se sustituye por el rótulo de CTC —
+  también si viene vacío, porque una ficha muda ahí se leería como un dato que falta y no como una decisión.
+- **`public_lot_catalog` gana `tiene_ficha`**: **un booleano, nunca el contenido**. Misma forma que
+  `ctc_selection` en D3.1 — se deriva en la vista, la aplicación recibe un sí/no.
+- **Página `/docs/ficha/[lotId]`.** ⚠️ Cuelga de `/docs` por la **gotcha 12**: el matcher del proxy excluye
+  `docs/`; una ruta no excluida se reescribiría en un subdominio y daría 404, y el enlace se abre desde las
+  siete superficies donde está montada la cinta. Las fichas de muestra ya viven ahí.
+- **La compuerta es la vista, no un `if` a mano.** Si el lote no aparece en `public_lot_catalog`, 404 — y el
+  `datasheet` solo se lee después de pasar. **Verificado contra la base real**: los dos lotes que hoy tienen
+  ficha (con NIT dentro) están sin publicar y devuelven **404**.
+- **`qa-ficha-publica-check.mjs` (105 comprobaciones)**, ejecutado contra **las 110 claves reales** leídas de la
+  base, no un juego inventado. Verificado con cuatro sabotajes: recorrer la entrada en vez de la lista blanca,
+  tumbar la sustitución de D3.1, meter `nit_rut` en la lista blanca (revienta al cargar el módulo) y sacar la
+  URL de `/docs`.
+- ℹ️ **Lo que NO está verificado**: no hay ningún lote publicado hoy, así que la página no se ha visto
+  renderizada con datos reales. Proyección y compuerta sí están probadas. El primer lote publicado es el
+  momento de mirarla.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

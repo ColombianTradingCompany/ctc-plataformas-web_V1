@@ -989,10 +989,42 @@ worker narrow credential (F10, backlog).
    HTML cuando el mensaje es `multipart/mixed` con adjunto — ahí `m.text` es `undefined`, y eso es
    comportamiento normal, no una regresión. Una primera prueba lo dio por fallo.
 
-2. **Real lots have no datasheet.** `SneakPeekLot.datasheetUrl` exists and the flip card renders the button
-   whenever it is set, but nothing in `lots`/`lot_listings` stores one, so only the mock lots have it today.
-   When the Ficha Técnica becomes a publishable artifact, add the column (or generate the PDF from
-   `lots.datasheet`) and the button lights up for the whole catalogue with no component change.
+2. ✅ **Los lotes vivos ya tienen ficha (2026-08-19, V4.42) — pero NO como decía esta nota, porque esta nota
+   era peligrosa.** Decía: «generar el PDF desde `lots.datasheet` y el botón se enciende para todo el catálogo
+   sin tocar el componente». Hacer literalmente eso habría publicado el NIT y la razón social del productor, su
+   nombre, la georreferencia del predio, quién catató y en qué laboratorio, y **todo el bloque `eudr_*` de
+   evaluación de riesgo del proveedor** — que es un juicio interno de CTC. `lots.datasheet` son **110 claves**:
+   es el formulario entero del expediente, no una hoja de venta.
+   ⚠️ **Y el peor era `estate`**: por D3.1 la tarjeta de un lote comprado en firme no enseña la finca, y ese PDF
+   la habría puesto **a un clic de esa misma tarjeta**.
+   ⚠️ **Dos documentos de este repo se contradecían.** El HANDOFF, en la auditoría del **2026-07-10**, ya dejó
+   escrito que `public_lot_catalog` existe precisamente para que «la Ficha privada y la geolocalización exacta»
+   no lleguen a un comprador, y advierte por escrito de no deshacerlo. Esta nota, más nueva, mandaba deshacerlo.
+   Manda la auditoría.
+   **Lo construido (owner, 2026-08-19 — «público, sobre lista blanca»)**:
+   - `src/lib/catalogo/fichaPublica.ts`, módulo **puro**: proyecta `datasheet` a lo publicable con **lista
+     BLANCA**. Lo que no está nombrado no sale, así que **una clave nueva del formulario nace privada** — con
+     lista negra nacería pública y nadie se enteraría hasta ver un NIT en una descarga. La lista no es criterio
+     propio: es lo que las fichas de muestra del owner ya publican (finca, municipio y departamento, variedad,
+     proceso, notas de cata, puntaje SCA con sus diez atributos, altura). Ensancharla es cambiar una línea.
+   - Solo escalares: un objeto o arreglo anidado puede arrastrar dentro una lista de fincas o un adjunto, y la
+     lista blanca solo mira el primer nivel.
+   - **D3.1 se respeta en la ficha**: en un lote de CTC Selection `estate` se sustituye por el rótulo de CTC,
+     también cuando viene vacío. La ficha no puede desmentir a la vitrina.
+   - **Migración**: `public_lot_catalog` gana `tiene_ficha` — **un booleano, jamás el contenido**. Misma forma
+     que `ctc_selection` en D3.1: se deriva en la vista y la aplicación solo recibe un sí/no.
+   - **Página** `/docs/ficha/[lotId]`. ⚠️ Cuelga de `/docs` por la **gotcha 12**: el matcher del proxy excluye
+     `docs/`, y una ruta no excluida se reescribiría en un subdominio y daría 404 — y este enlace se abre desde
+     las **siete** superficies donde está montada la cinta. Además las fichas de muestra ya viven ahí.
+   - **La compuerta es la vista**: si el lote no sale en `public_lot_catalog` no está publicado y responde 404;
+     el `datasheet` solo se lee después. **Verificado contra la base**: los dos lotes reales que hoy tienen
+     ficha (y NIT dentro) están sin publicar y dan **404**.
+   - **Guardián `qa-ficha-publica-check.mjs` (105)**, probado con **las 110 claves reales**, no unas inventadas.
+     Verificado saboteándolo cuatro veces: recorriendo la entrada en vez de la lista, tumbando la sustitución de
+     D3.1, metiendo `nit_rut` en la lista blanca (revienta al cargar el módulo) y sacando la URL de `/docs`.
+   ℹ️ **Lo que NO se pudo verificar**: hoy no hay ningún lote publicado, así que la página no se ha visto
+   renderizada con datos de verdad. La proyección y la compuerta sí están probadas; el primer lote que se
+   publique es el momento de mirarla con ojos.
 3. ✅ **Las 12 herramientas ya tienen descripción (2026-08-19, V4.37).** `public/tools/*.html` son URLs
    **indexables** — el matcher del proxy excluye `/tools/` y `robots.txt` solo cubre `/bcp /ecp /ocp /lab` —, y
    son **archivos estáticos**: no los pinta Next, así que no pasan por `generateMetadata` ni por ningún layout.

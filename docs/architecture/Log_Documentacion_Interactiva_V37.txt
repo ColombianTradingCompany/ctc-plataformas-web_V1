@@ -505,3 +505,28 @@ APP_VERSION 4.37 → 4.38.
   qa-rutas-consolas 266/0 · qa-crm-interes 37/0 · qa-nav 16/16 · qa-boards 27/27 · qa-encoding 734/0.
 APP_VERSION 4.38 → 4.39.
 (commit: 353b49e)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.40 · D0.9 y D0.10 cerradas, sin cambiar un solo valor
+- Las dos discrepancias que el paso 0 dejó marcadas en `sneakPeekMock.ts`. **Las tarjetas ya mostraban lo
+  correcto**, así que el diff del mock es SOLO comentarios y no hubo que regenerar ruedas ni fichas PDF.
+- **D0.9 · tarjeta #2: es BOURBON** (owner, 2026-08-19). El título dice Bourbon y el campo `Variedad` dice
+  Castillo. Costó preguntarlo bien porque un campo estructurado suele ganarle a un título: la ficha hermana
+  `Tabi - Honey [La Pradera]` SÍ lleva `Variedad: Tabi` (el campo no está roto por sistema) y `Variedades / %`
+  de La Pradera está vacío (la finca no desempata). **Desempata la taza**: 87.00 floral/mandarina/cardamomo
+  frente a los dos Castillo de la MISMA finca a 84.25 y 84.50 con chocolate y especias.
+- **D0.10 · tarjeta #3: es LA FORTALEZA, y por prueba, no por criterio.** La relación apunta a «La Floresta» —y
+  **La Floresta no cultiva Gesha**: su `Variedades / %` dice «Castillo 90%, colombia 10%». El RUT adjunto a La
+  Fortaleza es de **Wilmer Rodríguez**, que es el `Supplier Name` del lote, y el datasheet se llama
+  `La_Fortaleza_Wilmer_R_Gesha_Ragonvalia…`. **Las dos fincas cuelgan del MISMO proveedor**: así se escoge la
+  equivocada en un desplegable.
+- ⚠️ **PARA EL DICT / owner: aguas arriba los dos errores SIGUEN.** Notion conserva `Variedad: Castillo` en el
+  Bourbon y la relación del Gesha con La Floresta. Hoy da igual porque el mock está a mano — **pero el mock es
+  temporal**, y el día de la importación real los dos valores volverían a entrar sin que falle nada.
+- **`qa-sneak-peek-check.mjs`: 177 → 189.** Clava variedad, finca, municipio y altura, y exige que el archivo
+  siga explicando por qué. Verificado simulando la reimportación (Castillo + La Floresta + 1 300 m): 3 fallos.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-sneak-peek 189/0 · qa-grados · qa-docs 14/14 · qa-encoding.
+APP_VERSION 4.39 → 4.40.
+(commit: PENDIENTE)

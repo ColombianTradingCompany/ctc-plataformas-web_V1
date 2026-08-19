@@ -953,6 +953,34 @@ dónde verlos. Hoy sigue en 0 filas, así que no se perdió ninguna dirección; 
   arreglarlo es barato. Verificado saboteándolo: cuarta fuente falsa + un `revalidatePath` borrado → denunció
   las dos.
 
+## D0.9 y D0.10 cerradas: las dos discrepancias del Sneak Peek (2026-08-19, V4.40)
+
+Las dos preguntas que el paso 0 dejó abiertas sobre los lotes de muestra. **Ninguna cambió un valor** —las
+tarjetas ya mostraban lo correcto—, así que el diff de `sneakPeekMock.ts` es **solo comentarios** y no hubo que
+regenerar ni las ruedas ni las fichas PDF.
+
+- **D0.9 · tarjeta #2, «Bourbon» (título) vs `Castillo` (campo)** → **Bourbon** (owner, 2026-08-19). Lo que
+  costó fue preguntarlo bien, porque un campo estructurado normalmente le gana a un título: la ficha hermana
+  `Tabi - Honey [La Pradera]` **sí** lleva `Variedad: Tabi`, así que el campo no está roto por sistema; y
+  `Variedades / %` de La Pradera está vacío, así que la finca no desempata. **Desempata la taza**: 87.00 con
+  perfil floral, mandarina y cardamomo, frente a los dos Castillo de la MISMA finca a 84.25 y 84.50 con
+  chocolate, especias y avellana. Dos puntos y medio y otra taza.
+- **D0.10 · tarjeta #3, «La Floresta» (relación) vs «La Fortaleza» (título y proveedor)** → **La Fortaleza**, y
+  aquí no hizo falta criterio: **La Floresta no cultiva Gesha** — su propio `Variedades / %` dice «Castillo
+  90%, colombia 10%». Un Gesha no sale de ahí. Todo lo demás apunta a La Fortaleza: el título dice
+  «(Ragonvalia)», `Supplier Name` es «La Fortaleza / Wilmer R», el **RUT adjunto a esa finca es de Wilmer
+  Rodríguez**, y el datasheet del lote se llama `La_Fortaleza_Wilmer_R_Gesha_Ragonvalia…`. Y el error se explica
+  solo: **las dos fincas cuelgan del mismo proveedor**, que es justo cómo se escoge la equivocada en un
+  desplegable.
+- ⚠️ **LO QUE QUEDA, Y ES DEL OWNER: aguas arriba los dos errores siguen ahí.** En Notion, la ficha del Bourbon
+  conserva `Variedad: Castillo`, y el Gesha sigue relacionado con «La Floresta» (que lo lista en sus `Fichas
+  Tecnicas Asociadas`). Hoy no estorban porque el mock está escrito a mano — **pero el mock es temporal**. El
+  día que los lotes se importen de verdad, los dos valores volverían a entrar **sin que falle nada**.
+- **Por eso se clavan**: `qa-sneak-peek-check.mjs` pasa de 177 a **189** comprobaciones y fija variedad, finca,
+  municipio y altura, además de exigir que el archivo siga explicando POR QUÉ —un valor clavado sin su razón se
+  desclava en cuanto alguien lo cuestione. Verificado simulando la reimportación: Castillo + La Floresta +
+  1 300 m → tres fallos.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

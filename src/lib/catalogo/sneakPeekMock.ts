@@ -111,10 +111,20 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     municipio: "Aratoca",
     departamento: "Santander",
     altitudeM: 1650,
-    // ⚠ DISCREPANCIA EN LA FUENTE: el título de la ficha dice «Bourbon» y su
-    // campo `Variedad` dice `Castillo`. Se muestra Bourbon —el título es lo que
-    // un comprador habría oído— y queda pendiente de la palabra del owner
-    // (D0.9 del plan). No se arregló en silencio.
+    // ✅ D0.9 RESUELTA (owner, 2026-08-19): es BOURBON. El título de la ficha
+    // dice «Bourbon» y su campo `Variedad` dice `Castillo`; manda el título.
+    // Lo que hizo falta para preguntarlo bien, porque un campo estructurado
+    // suele ganarle a un título: (a) la ficha hermana `Tabi - Honey [La
+    // Pradera]` SÍ lleva `Variedad: Tabi`, así que el campo no está roto por
+    // sistema y no bastaba con desconfiar de él; (b) `Variedades / %` de La
+    // Pradera está vacío, así que la finca no desempata; (c) la TAZA sí: este
+    // lote puntúa 87.00 con perfil floral, mandarina y cardamomo, mientras los
+    // dos Castillo de la MISMA finca puntúan 84.25 y 84.50 con chocolate,
+    // especias y avellana. Dos puntos y medio y otra taza.
+    // ⚠ PENDIENTE AGUAS ARRIBA (owner): el campo `Variedad` de esa ficha en
+    // Notion sigue diciendo Castillo. Mientras no se corrija, una importación
+    // automática desde Notion volvería a meter el error — por eso
+    // `qa-sneak-peek-check.mjs` fija este valor.
     variety: "Bourbon",
     process: "Honey",
     cup: "Floral, mandarina, cardamomo; acidez cítrica equilibrada, cuerpo redondo, residual dulce",
@@ -136,13 +146,20 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     grade: "blue", // 86.25 → Blue (85–86.99). Notion decía «Gold».
     score: "86.25",
     scoreEstimated: false,
-    // ⚠ DISCREPANCIA EN LA FUENTE: la relación `Pertenece a Finca` apunta a
-    // «La Floresta» (confines, Santander, 1300 m), pero el título dice
-    // «(Ragonvalia)», el proveedor es «La Fortaleza / …» y existe una finca
-    // «La Fortaleza» en Ragonvalia (Norte de Santander, 1700 m) sin ficha
-    // enlazada. Se usa La Fortaleza: coherente con título y proveedor, y un
-    // Gesha de 86.25 encaja mucho mejor a 1700 m que a 1300 m. Relación
-    // probablemente mal enlazada en Notion (D0.10 del plan).
+    // ✅ D0.10 RESUELTA (2026-08-19), y no por criterio sino por PRUEBA: la
+    // relación `Pertenece a Finca` de esa ficha apunta a «La Floresta», y
+    // LA FLORESTA NO CULTIVA GESHA — su propio campo `Variedades / %` dice
+    // «Castillo 90%, colombia 10%». Un Gesha no puede salir de ahí.
+    // Lo demás encaja con La Fortaleza y no con La Floresta: el título dice
+    // «(Ragonvalia)», `Supplier Name` es «La Fortaleza / Wilmer R», el RUT
+    // adjunto a la finca La Fortaleza es de WILMER RODRIGUEZ, y el propio
+    // datasheet del lote se llama `La_Fortaleza_Wilmer_R_Gesha_Ragonvalia…`.
+    // Y se explica solo: las DOS fincas cuelgan del MISMO proveedor en Notion,
+    // que es exactamente cómo se escoge la equivocada en un desplegable.
+    // ⚠ PENDIENTE AGUAS ARRIBA (owner): la relación en Notion sigue mal, y
+    // «La Floresta» sigue listando esta ficha en `Fichas Tecnicas Asociadas`.
+    // Mientras no se corrija, una importación automática reimportaría confines
+    // (Santander, 1300 m) — por eso `qa-sneak-peek-check.mjs` fija este valor.
     finca: "La Fortaleza",
     municipio: "Ragonvalia",
     departamento: "Norte de Santander",

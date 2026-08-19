@@ -357,6 +357,45 @@ for (const l of SNEAK_PEEK_MOCK) {
   );
 }
 
+// ── Las dos discrepancias resueltas, CLAVADAS ──────────────────────────────
+// D0.9 y D0.10 se cerraron el 2026-08-19 leyendo Notion y, en el caso de la
+// variedad, preguntándole al owner. Pero AGUAS ARRIBA LOS DOS ERRORES SIGUEN
+// AHÍ: la ficha del Bourbon conserva `Variedad: Castillo`, y el Gesha sigue
+// relacionado con «La Floresta».
+//
+// Esto importa porque este archivo es TEMPORAL: el día que los lotes se
+// importen de verdad —de Notion o de la base—, esos dos valores volverían a
+// entrar sin que nada falle. Serían dos campos plausibles en dos tarjetas
+// bonitas. Así que se fijan aquí: si alguien los cambia, que sea a sabiendas y
+// leyendo por qué, no de rebote en una importación.
+{
+  const lote = (n) => SNEAK_PEEK_MOCK.find((l) => l.id.endsWith(n));
+
+  // D0.9 — el título manda sobre el campo `Variedad`. La taza lo respalda: 87.00
+  // floral/mandarina/cardamomo, contra los dos Castillo de la MISMA finca a
+  // 84.25 y 84.50 con chocolate y especias.
+  const dos = lote("02");
+  check("D0.9: la tarjeta 2 sigue siendo Bourbon, no Castillo", dos?.variety === "Bourbon");
+
+  // D0.10 — La Floresta no cultiva Gesha («Castillo 90%, colombia 10%»), así que
+  // el lote no puede salir de allí. La Fortaleza sí cuadra con título, proveedor
+  // y RUT. Se clava también la altura: 1300 m (La Floresta) contra 1700 m.
+  const tres = lote("03");
+  check("D0.10: la tarjeta 3 sigue en La Fortaleza, no La Floresta", tres?.finca === "La Fortaleza");
+  check("D0.10: con su municipio de Ragonvalia", tres?.municipio === "Ragonvalia");
+  check("D0.10: y a 1700 m, no a los 1300 m de La Floresta", tres?.altitudeM === 1700);
+
+  // Y que el archivo siga EXPLICANDO por qué, que es la mitad del valor: un
+  // valor clavado sin su razón se desclava en cuanto alguien lo cuestione.
+  const fuente = readFileSync(new URL("../src/lib/catalogo/sneakPeekMock.ts", import.meta.url), "utf8");
+  check("D0.9 deja escrito que está resuelta", fuente.includes("D0.9 RESUELTA"));
+  check("D0.10 deja escrito que está resuelta", fuente.includes("D0.10 RESUELTA"));
+  check(
+    "y que aguas arriba sigue sin corregirse",
+    (fuente.match(/PENDIENTE AGUAS ARRIBA/g) ?? []).length === 2
+  );
+}
+
 console.log(`${ok} comprobaciones OK, ${fallos.length} fallos`);
 for (const f of fallos) console.log("  FALLO:", f);
 process.exit(fallos.length ? 1 : 0);

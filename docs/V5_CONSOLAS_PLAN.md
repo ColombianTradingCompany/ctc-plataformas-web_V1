@@ -236,13 +236,19 @@ to, and the variety is read from its own title). Cards 1·2·3·5·6 carry the p
 card length; the full text stays in Notion.
 
 **Discrepancies found in the references — flagged, not silently fixed:**
-- **#2** the title says «Bourbon» but the `Variedad` field says `Castillo`. The card shows **Bourbon** (the
-  title is what a buyer would have been told); needs the owner's word.
-- **#3** `Pertenece a Finca` points to **La Floresta** (confines, Santander, 1 300 m) while the title says
-  «(Ragonvalia)» and `Supplier Name` is «La Fortaleza / Wilmer R» — and a finca **La Fortaleza** (Ragonvalia,
-  Norte de Santander, **1 700 m**) does exist with no ficha linked. The card uses La Fortaleza · Ragonvalia ·
-  1 700 m (coherent with title + supplier; a Gesha scoring 86.25 fits 1 700 m far better than 1 300 m). The
-  Notion relation looks mis-linked.
+- **#2** ✅ **RESUELTA (owner, 2026-08-19): es Bourbon.** El título dice «Bourbon», el campo `Variedad` dice
+  `Castillo`, y manda el título. Costó preguntarlo bien porque un campo estructurado suele ganarle a un título:
+  la ficha hermana `Tabi - Honey [La Pradera]` **sí** lleva `Variedad: Tabi` (el campo no está roto por
+  sistema), y `Variedades / %` de La Pradera está vacío (la finca no desempata). **Desempata la taza**: 87.00
+  con perfil floral, mandarina y cardamomo, frente a los dos Castillo de la MISMA finca a 84.25 y 84.50 con
+  chocolate, especias y avellana.
+- **#3** ✅ **RESUELTA (2026-08-19): es La Fortaleza**, y no por criterio sino por prueba. `Pertenece a Finca`
+  apunta a **La Floresta** (confines, Santander, 1 300 m) — y **La Floresta no cultiva Gesha**: su propio campo
+  `Variedades / %` dice «Castillo 90%, colombia 10%». Un Gesha no puede salir de ahí. Todo lo demás señala a
+  **La Fortaleza** (Ragonvalia, Norte de Santander, **1 700 m**): el título dice «(Ragonvalia)», `Supplier Name`
+  es «La Fortaleza / Wilmer R», el **RUT adjunto a la finca La Fortaleza es de Wilmer Rodríguez**, y el propio
+  datasheet del lote se llama `La_Fortaleza_Wilmer_R_Gesha_Ragonvalia…`. Y se explica solo: **las dos fincas
+  cuelgan del mismo proveedor** en Notion, que es exactamente cómo se escoge la equivocada en un desplegable.
 - The four empty stubs (Cenicafe 1 · Castillo [La Hacienda] · Chiroso [Los Toro] · Caturra [Los Toro]) have no
   SCA, variety, process or notes at all — only #7 is used, the rest are left alone.
 
@@ -424,9 +430,12 @@ front identifies the lot, the back explains it**.
 - **D0.8 Which season is "last season"** — ✅ accepted: «cosecha principal 2025-26 (venta abr–jul 2026)», which
   Notion's own `Harvest Season` (2025-Q4 / 2026-Q1) corroborates.
 
-Two things in §1.4 do need the owner's word eventually, but **neither blocks the build** (both ship with the
-value shown in the table and a `// GAP:` / `// ⚠` comment): the **Bourbon-vs-Castillo** variety on card #2 and
-the **mis-linked finca** on card #3 (La Floresta vs La Fortaleza).
+- **D0.9 Bourbon vs Castillo (card #2)** — ✅ resuelta por el owner el 2026-08-19: **Bourbon**, el título manda.
+- **D0.10 La Floresta vs La Fortaleza (card #3)** — ✅ resuelta el 2026-08-19 **por prueba**: La Floresta no
+  cultiva Gesha. Ver el registro de decisiones y §9 punto 5-bis.
+
+**Ninguna de las dos cambió un valor**: las tarjetas ya mostraban Bourbon y La Fortaleza, así que el diff de
+`sneakPeekMock.ts` es SOLO comentarios y **no hizo falta regenerar** ni las ruedas ni las fichas PDF.
 
 ### 1.7 Definition of done, verification, version
 
@@ -828,8 +837,8 @@ updated with "done through step X".
 | # | Question | Default |
 |---|---|---|
 | D0.1–D0.8 | Sneak Peek placement · live/mock mix · fields · click · gate Green behind login · mock storage · grade ladder · which season | ✅ **ALL ACCEPTED 2026-08-17** (§1.6). D0.5 = (a) extended to every CP landing: the module replaces the direct catalogue for visitors. D0.7's ladder is superseded by the real Notion references (2 Gold · 2 Blue · 2 Red · 1 Black) |
-| D0.9 | Card #2: variety «Bourbon» (title) vs `Castillo` (field) | ships as **Bourbon**, flagged in code; owner confirms later |
-| D0.10 | Card #3: finca relation «La Floresta» vs title/supplier «La Fortaleza · Ragonvalia» | ships as **La Fortaleza · Ragonvalia · 1 700 m**, flagged in code; owner confirms later |
+| D0.9 ✅ **RESUELTA (owner, 2026-08-19)** | Card #2: variety «Bourbon» (title) vs `Castillo` (field) | **Es BOURBON**, que es lo que ya salía. El campo no está roto por sistema —la ficha hermana `Tabi - Honey [La Pradera]` sí lleva `Variedad: Tabi`— y `Variedades / %` de La Pradera está vacío, así que la finca no desempata; **la taza sí**: 87.00 floral/mandarina/cardamomo contra los dos Castillo de la MISMA finca a 84.25 y 84.50 con chocolate y especias. ⚠️ El campo en Notion sigue diciendo Castillo |
+| D0.10 ✅ **RESUELTA (2026-08-19), por prueba** | Card #3: finca relation «La Floresta» vs title/supplier «La Fortaleza · Ragonvalia» | **Es LA FORTALEZA**, que es lo que ya salía, y no hizo falta criterio: **La Floresta no cultiva Gesha** — su propio `Variedades / %` dice «Castillo 90%, colombia 10%». Además el RUT adjunto a La Fortaleza es de **Wilmer Rodríguez**, que es el `Supplier Name` del lote, y el datasheet del lote se llama `La_Fortaleza_Wilmer_R_Gesha_Ragonvalia…`. Las DOS fincas cuelgan del MISMO proveedor: así se escoge la equivocada en un desplegable. ⚠️ La relación en Notion sigue mal |
 | D2.1 | Rename `HubLanding.tsx` → `PortadaLanding.tsx`? | **No** in step (i); vocabulary only. Rename opportunistically in step (v). |
 | D2.2 | Do IDENTIFIERS (`styles.hubTile`, `HUB_ICON`, `kind="hub"`, the `hub` i18n key, `hub.module.css`, `backToHub`) and the SEALED `Log_Documentacion_Interactiva_V*.txt` count as «the word hub»? | **No — taken 2026-08-18.** Step (i) freezes *vocabulary*: prose, copy, comments, docs. Renaming identifiers is refactor, not vocabulary — it moves files and would collide with step (ii) — so it follows D2.1's logic and waits for step (v). The sealed logs are the historical record: rewriting them would falsify what was said on the day. A note saying *why* the identifiers stay is written into `HubLanding.tsx` and `AppDashboard.module.css` themselves, so the next sweep does not "fix" them. |
 | D3.1 ✅ **RESUELTA 2026-08-18** | Create a CTC-owned producer identity for CTC Selection lots | **No hace falta ninguna identidad falsa.** Palabras del owner: *«All the lots that CTC buys will be first registered in KR, which means that the real farm is shown in the documentation but is replaced as the Finca in the showcase cards (Not changing the official finca, just how it looks in the UI)»*. Implementado en V4.28: el REGISTRO conserva la finca real, la VITRINA enseña a CTC. Ver §9, punto 5 |
@@ -880,6 +889,20 @@ worker narrow credential (F10, backlog).
    no en la **tarjeta**. Si la promesa se lee como «en la ficha», no hay nada que cambiar; si se lee como «en
    todas partes», el copy necesita un matiz. No bloquea nada — es una revisión de redacción.
 
+
+5-bis. ✅ **D0.9 y D0.10 cerradas (2026-08-19, V4.40) — y ninguna cambió un valor.** Las dos discrepancias que
+   el paso 0 dejó marcadas en `sneakPeekMock.ts` ya se resolvieron: la tarjeta #2 es **Bourbon** (palabra del
+   owner) y la #3 es **La Fortaleza** (prueba: La Floresta no cultiva Gesha). Como las tarjetas **ya mostraban
+   esos dos valores**, el diff del mock es solo comentarios y **no hubo que regenerar ruedas ni fichas PDF**.
+   ⚠️ **LO QUE SÍ QUEDA, Y ES PARA EL OWNER: aguas arriba los dos errores siguen ahí.** La ficha del Bourbon
+   conserva `Variedad: Castillo`, y el Gesha sigue relacionado con «La Floresta» (que además lo lista en sus
+   `Fichas Tecnicas Asociadas`). No estorban hoy porque el mock está escrito a mano — **pero el mock es
+   temporal**. El día que los lotes se importen de verdad, esos dos valores volverían a entrar **sin que falle
+   nada**: dos campos plausibles en dos tarjetas bonitas.
+   Por eso `qa-sneak-peek-check.mjs` (189, antes 177) **clava** los cuatro valores —variedad, finca, municipio y
+   altura— y exige que el archivo siga explicando por qué, porque un valor clavado sin su razón se desclava en
+   cuanto alguien lo cuestione. Verificado simulando la reimportación: se pusieron Castillo, La Floresta y
+   1 300 m, y los denunció.
 
 6. ✅ **La lista de espera de CTC Home ya tiene tablero (2026-08-19, V4.39).** `newsletter_subscribers` tiene
    TRES fuentes —`roast`, `x` y `ctc-home`— y el paso (iii)-3 construyó tablero para las dos primeras, que es

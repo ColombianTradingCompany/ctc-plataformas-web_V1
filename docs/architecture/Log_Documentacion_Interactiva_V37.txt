@@ -673,3 +673,14 @@ APP_VERSION 4.43 → 4.44.
   qa-tools-seo-espejo 68/0 · qa-direccionamiento 14/0 · qa-docs 14/14 · qa-encoding 738/0.
 APP_VERSION 4.44 → 4.45.
 (commit: 58c5caf)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V5.0 · El owner declara el hito: «Pre-Launch Beta»
+- **APP_VERSION 4.45 → 5.0.** Quinta generación de la plataforma, declarada por el owner al cerrar TODO el
+  trabajo del plan V5: los cinco pasos de la reorganización de consolas (V4.23→V4.35) **y** la lista de nueve
+  pendientes del §9 (V4.36→V4.45). Nombre del hito: **«Pre-Launch Beta»** — el corte estable sobre el que
+  arranca la etapa siguiente, **«Launch Beta Testing»**.
+- Para el DICT: la ficha `versionado` debe recoger el hito y su nombre.
+- Cambio de código: solo `src/lib/version.ts` (la insignia pasa a decir V5.0 en las 19 superficies).
+(commit: PENDIENTE)

@@ -1151,6 +1151,13 @@ Los dos últimos puntos de la lista de nueve, y los dos son de indexación.
 - ℹ️ **«Ají» no existe en el repositorio.** Las dos únicas coincidencias son la subcadena dentro de
   «b*ají*sima cafeína». Si sale en Search Console, no viene de nada que el sitio sirva hoy.
 
+## V5.0 declarada: «Pre-Launch Beta» (2026-08-19)
+
+El owner declaró la quinta generación al cerrar TODO el ciclo del plan V5: los cinco pasos de la reorganización
+(V4.23→V4.35) y la lista de nueve pendientes (V4.36→V4.45). **Nombre del hito: «Pre-Launch Beta»** — el corte
+estable sobre el que arranca la etapa siguiente, **«Launch Beta Testing»**. La insignia de las 19 superficies
+dice V5.0; el racional del hito vive en el comentario de `src/lib/version.ts`, junto a los de V2–V4.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

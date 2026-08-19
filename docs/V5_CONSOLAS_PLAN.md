@@ -4,8 +4,9 @@
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.
-> **LOS CINCO PASOS ESTÁN COMPLETOS** (V4.23 → V4.35). Lo que queda no es trabajo de plan:
-> **el owner declara V5.0** y se hace el **Version Wrap V38** del mapa interactivo.
+> **PLAN COMPLETO Y CERRADO.** Los cinco pasos (V4.23 → V4.35), la lista de nueve del §9 (V4.36 → V4.45), y el
+> **2026-08-19 el owner declaró V5.0 — «Pre-Launch Beta»** — el corte estable sobre el que arranca la etapa
+> **«Launch Beta Testing»**. El Version Wrap V38 compila todo este ciclo en el mapa interactivo.
 > (**V4.22 was spent on an unplanned fix**: the 14 public portadas had a broken text encoding, live in
 > production since 2026-08-15. See §9, dev to-do 0. The version map in §7 is renumbered accordingly.)
 > Read §0 (ground rules) → §2 (what to do) → §7 (which version number to use). One step, one PR, one

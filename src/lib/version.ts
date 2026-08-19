@@ -16,7 +16,14 @@
 //                  primera vez [estructura, estabilidad, seguridad, deuda] y
 //                  se remedió lo encontrado; el marco quedó al día [next 16.3,
 //                  0 vulnerabilidades] y la casa, barrida [huérfanos fuera,
-//                  identidad legal en un solo sitio]). No exige una
+//                  identidad legal en un solo sitio]. V5.0 = declarada por el
+//                  owner el 2026-08-19: «Pre-Launch Beta» — la reorganización
+//                  de consolas V5 COMPLETA [plan V5 ejecutado V4.23→V4.45:
+//                  BCP/ECP/OCP reordenadas con talones 308, los cuatro CRM de
+//                  Cherry Picked, Herramientas con modelo de acceso y concha
+//                  segura, «Mis solicitudes» en KR, y la lista de nueve
+//                  pendientes cerrada]. Es el corte sobre el que arranca la
+//                  etapa siguiente, «Launch Beta Testing»). No exige una
 //                  reescritura — marca un estado estable del todo.
 //   - MENOR (x.N)  sube UNA vez por cada tanda de trabajo que se despliega.
 //                  Súbala en el MISMO commit que la tanda; si se olvida, el
@@ -26,7 +33,7 @@
 // Documentacion_Interactiva_V15.0(...).html). Esa numera SNAPSHOTS DE DOCUMENTO
 // y avanza con su propio ritmo de "Version Wrap" — que las dos digan "V15" o
 // "V1" al mismo tiempo sería coincidencia, no relación.
-export const APP_VERSION = "4.45";
+export const APP_VERSION = "5.0";
 
 /** "V1.0" — lo que se pinta en pantalla. */
 export const VERSION_LABEL = `V${APP_VERSION}`;

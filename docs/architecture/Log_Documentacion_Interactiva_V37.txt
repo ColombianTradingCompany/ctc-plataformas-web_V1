@@ -421,4 +421,4 @@ APP_VERSION 4.34 → 4.35.
   con adjunto (`m.text` sale `undefined`) — es normal, no una regresión. La primera prueba lo dio por fallo.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · **`npm audit` 0**.
 APP_VERSION 4.35 → 4.36.
-(commit: pending)
+(commit: 1ff089c)

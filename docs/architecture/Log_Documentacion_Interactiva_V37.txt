@@ -404,3 +404,21 @@ APP_VERSION 4.33 → 4.34.
   qa-boards 27/27 · qa-definicion 33/33 · qa-direccionamiento 14/14 · qa-docs 14/14 · qa-encoding 731/0.
 APP_VERSION 4.34 → 4.35.
 (commit: 642796a)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.36 · `npm audit` vuelve a 0 sin degradar el Buzón
+- La cadena era `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx) ← `html-to-text` ← **`mailparser`**, dependencia
+  directa del Buzón. Llevaba en 3 altas desde el 2026-08-17.
+- **NO se aplicó `npm audit fix --force`**: instalaba `mailparser@3.9.8`, bajada rompedora sobre el módulo que
+  lee el correo real. En su lugar, `overrides: { "deepmerge-ts": "^8.0.1" }` — `html-to-text` la pide como
+  `^7.1.5`, así que sin override no sube; con él, `mailparser` se queda en 3.9.14 y la vulnerable sale.
+- **Verificado comparando la SALIDA y no la instalación**: se capturó el resultado completo de `simpleParser`
+  sobre dos correos (solo-HTML y `multipart/alternative`, con acentos, lista, enlace y asunto codificado)
+  antes y después del cambio → **byte a byte idéntico**. El camino HTML → texto es el que atraviesa
+  `html-to-text` → `deepmerge-ts`, que es lo que se tocaba.
+- ⚠️ Nota para el DICT/gotchas: `simpleParser` **no** sintetiza `text` desde el HTML en un `multipart/mixed`
+  con adjunto (`m.text` sale `undefined`) — es normal, no una regresión. La primera prueba lo dio por fallo.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · **`npm audit` 0**.
+APP_VERSION 4.35 → 4.36.
+(commit: pending)

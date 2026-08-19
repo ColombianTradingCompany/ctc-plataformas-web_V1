@@ -840,6 +840,28 @@ que el owner declare V5.0 y el Version Wrap V38.
   productor, así que un comprador de Cherry Picked que proponga un proyecto CaaS recibe las respuestas por
   correo pero no dentro de la app. Es el reflejo exacto de lo que se acaba de construir, y está anotado.
 
+## `npm audit` vuelve a 0 sin degradar el Buzón (2026-08-19, V4.36)
+
+La cadena era `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx) ← `html-to-text` ← **`mailparser`**, que es
+dependencia directa del Buzón. Estuvo en 3 altas desde el 2026-08-17.
+
+- **No se usó `npm audit fix --force`**: instalaba `mailparser@3.9.8`, una bajada que npm marca como
+  rompedora, sobre el módulo que parsea el correo real de la casa.
+- **Se pinchó la transitiva**: `overrides: { "deepmerge-ts": "^8.0.1" }` en `package.json`. `html-to-text` la
+  pide como `^7.1.5`, así que sin override no sube; con él, `mailparser` se queda en 3.9.14 y la versión
+  vulnerable sale del árbol. `npm audit` → **0**.
+- **Verificado comparando la SALIDA, no la instalación.** Se capturó el resultado completo de `simpleParser`
+  sobre dos correos —solo-HTML y `multipart/alternative`, con acentos, lista, enlace y asunto codificado en
+  quoted-printable— **antes y después** del cambio: **byte a byte idéntico** (`text`, `textAsHtml`, `html`,
+  adjuntos). Ese camino HTML → texto es exactamente el que atraviesa `html-to-text` → `deepmerge-ts`, que es
+  lo que se estaba tocando.
+- ⚠️ **Aviso para la próxima vez**: `simpleParser` **no** genera `text` desde el HTML cuando el mensaje es
+  `multipart/mixed` con adjunto — `m.text` sale `undefined`, y es comportamiento normal. Una primera prueba lo
+  interpretó como regresión del override; no lo era.
+- **La regla del §0 del plan sigue en pie**: `npm audit` se mantiene en 0, y una dependencia nueva no puede
+  subirlo. Si vuelve a aparecer un aviso sobre una transitiva, el primer intento es un `overrides` — no una
+  bajada rompedora de la directa.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

@@ -918,14 +918,22 @@ worker narrow credential (F10, backlog).
    **Efecto lateral bueno**: al retirar el `.jsx` (1.619 líneas) la línea base de `eslint` bajó de **27 avisos
    a 8** — 19 eran suyos.
 
-1. **`npm audit` is at 3 high and needs a decision.** Chain: `deepmerge-ts <8.0.0` (GHSA-ggr8-5vv4-36mx,
-   stack exhaustion) ← `html-to-text` ← **`mailparser`** (a direct dependency; the Buzón's IMAP ingestion,
-   `src/lib/buzon/mailClient.ts` + `src/app/ecp/(app)/buzonActions.ts`). It was **not** introduced by a
-   dependency change here — `package-lock.json` is unchanged and the advisory is new (the repo was at 0 on
-   2026-08-13). `npm audit fix --force` would install `mailparser@3.9.8`, which npm flags as **breaking**.
-   Look first for a non-breaking path (an `overrides` pin of `deepmerge-ts` to ≥8, or a newer mailparser that
-   already bumped it), then verify the Buzón still parses real messages **including attachments** (there is a
-   past bug about Buzón attachment loss). Do not force the downgrade without the owner.
+1. ✅ **`npm audit` de vuelta a 0 (2026-08-19, V4.36).** La cadena era `deepmerge-ts <8.0.0`
+   (GHSA-ggr8-5vv4-36mx, agotamiento de pila) ← `html-to-text` ← **`mailparser`**, dependencia directa del
+   Buzón. **NO se aplicó `npm audit fix --force`**, que degradaba `mailparser` a 3.9.8 — una bajada rompedora
+   sobre el módulo que lee el correo real de la casa.
+   **Lo que se hizo**: un `overrides` de `deepmerge-ts` a `^8.0.1` en `package.json`. `html-to-text` lo pide
+   como `^7.1.5`, así que sin el override no sube; con él, `mailparser` se queda en 3.9.14 y la vulnerable
+   desaparece del árbol.
+   **Cómo se verificó, que es lo que importa aquí**: no basta con que instale. Se capturó la salida COMPLETA de
+   `simpleParser` sobre dos correos —uno solo-HTML y uno `multipart/alternative`, con acentos, lista, enlace y
+   asunto codificado— **antes y después** del override, y el resultado es **byte a byte idéntico**: mismo
+   `text`, mismo `textAsHtml`, mismo `html`, mismos adjuntos. El camino HTML → texto es justo el que pasa por
+   `html-to-text` y de ahí por `deepmerge-ts`, así que es el que había que comparar.
+   ⚠️ Y una advertencia para quien vuelva a tocar esto: `simpleParser` **no** sintetiza `text` a partir del
+   HTML cuando el mensaje es `multipart/mixed` con adjunto — ahí `m.text` es `undefined`, y eso es
+   comportamiento normal, no una regresión. Una primera prueba lo dio por fallo.
+
 2. **Real lots have no datasheet.** `SneakPeekLot.datasheetUrl` exists and the flip card renders the button
    whenever it is set, but nothing in `lots`/`lot_listings` stores one, so only the mock lots have it today.
    When the Ficha Técnica becomes a publishable artifact, add the column (or generate the PDF from

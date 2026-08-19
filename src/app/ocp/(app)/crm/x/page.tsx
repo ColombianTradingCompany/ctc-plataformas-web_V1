@@ -1,4 +1,4 @@
-import { InteresBoard } from "../InteresBoard";
+import { InteresBoard } from "@/components/panel/interes/InteresBoard";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +8,7 @@ export default function CrmXPage() {
     <InteresBoard
       fuente="x"
       titulo="CRM CP X"
+      origen="la landing del programa"
       intro="Quién pidió que se le avise cuando abra Cherry Picked X. El programa todavía no existe: esto no es un embudo de venta sino una lista de espera, y está hecho para la tarea que tendrá el día que abra — escribirle a todo el mundo sin perder la cuenta de por dónde se iba."
     />
   );

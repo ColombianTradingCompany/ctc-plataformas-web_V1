@@ -136,6 +136,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // servicio (CTC Tech, Varietales) ya tenían su CRM aquí, y el de CaaS
           // se quedó en el OCP con el catálogo, que es de donde se sirve.
           { href: "/ecp/leads", label: "Leads · Recepción" },
+          // Lista de espera · CTC Home (V4.39): la otra cosa que entra por la web
+          // pública. La tercera fuente de `newsletter_subscribers`, abierta el
+          // 2026-08-10 cuando el índice de la red dejó de anunciar la puerta del
+          // Control Panel. Roast y X viven en «OCP · Cherry Picked» porque son
+          // programas de Cherry Picked; ésta es de la red entera, y ahí no cabía.
+          { href: "/ecp/ctc-home", label: "Lista de espera · CTC Home" },
           // Directorio del Café (2026-07-24): la capa de personas de la red. Aquí
           // se verifican las fichas (Aceptar/Revisar/Rechazar → Código de
           // Verificado) y se modera el muro.

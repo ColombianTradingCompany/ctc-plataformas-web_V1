@@ -925,6 +925,34 @@ mentía al revés — marcaba como faltantes descripciones que ya existían.
   de mermas · Detallada» tiene el id **`mermas-ctc`**; el id `mermas-detallada` es la vieja «Reporte de proceso
   de café», que es la retirada. Esa confusión es la que había dejado a `mermas-ctc.html` describiendo la Rápida.
 
+## La lista de espera de CTC Home gana su tablero (2026-08-19, V4.39)
+
+`newsletter_subscribers` tiene tres fuentes. El paso (iii)-3 dio tablero a `roast` y `x`. La tercera,
+`ctc-home`, nació el 2026-08-10 —cuando el índice de la red, en la portada, dejó de anunciar la puerta del
+Control Panel y ofreció esta suscripción en su lugar— y estuvo **nueve días recogiendo correos que nadie podía
+mirar**. El formulario guardaba, la base guardaba, y no fallaba nada porque no había nada que fallara: no había
+dónde verlos. Hoy sigue en 0 filas, así que no se perdió ninguna dirección; eso fue suerte, no diseño.
+
+- **Vive en el ECP, no en el OCP** — ésa era la decisión del punto. Roast y X cuelgan de «OCP · Cherry Picked»
+  porque son programas de Cherry Picked. Ésta es de la red entera: en ese grupo, el sitio del tablero habría
+  contradicho lo que contiene, y quien buscara la lista de la portada la habría buscado donde no está. Queda en
+  «ECP · Dirección», junto a **Leads · Recepción**, que es lo otro que entra por la web pública. Ruta
+  `/ecp/ctc-home`, que espeja la clave de la fuente igual que `/ocp/crm/roast` espeja la suya.
+- ⚠️ **El módulo se mudó a `src/components/panel/interes/`.** `InteresBoard`, `InteresRow` e `interesActions`
+  colgaban de `src/app/ocp/(app)/crm/`. Ahora sirven a DOS consolas, y dejarlos bajo el árbol de una significaba
+  que la siguiente mudanza de módulos del OCP se llevaría por delante una página del ECP. Es la lección que dejó
+  `shared.module.css` en PR-B, aplicada antes de que costara.
+- ⚠️ **`marcarContactado` revalidaba dos rutas; ahora revalida tres.** Con la tercera dejó de ser cosmético: su
+  tablero está en otra consola. Olvidarlo deja una lista que se llena y no se refresca, sin un solo error.
+- **El estado vacío se parametrizó.** Decía «las altas llegan desde la landing del programa» — falso para la
+  lista de la portada, y manda a buscar una landing que no existe.
+- ⚠️ **LA LECCIÓN, que es la comprobación que faltaba**: `qa-crm-interes-check.mjs` llevaba las fuentes escritas
+  a mano, así que comprobaba muy bien las dos que ya conocía y era ciego a la que se añadió después. Ahora
+  **lee `SOURCES`** de `src/lib/newsletter/actions.ts` y exige que cada fuente tenga página, entrada en el rail
+  y `revalidatePath`. Una fuente nueva sin tablero rompe el guardián el mismo día que se escribe, que es cuando
+  arreglarlo es barato. Verificado saboteándolo: cuarta fuente falsa + un `revalidatePath` borrado → denunció
+  las dos.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

@@ -881,13 +881,31 @@ worker narrow credential (F10, backlog).
    todas partes», el copy necesita un matiz. No bloquea nada — es una revisión de redacción.
 
 
-6. **La lista de espera de CTC Home no tiene tablero.** `newsletter_subscribers` tiene TRES fuentes —`roast`,
-   `x` y `ctc-home`— y el paso (iii)-3 construyó tablero para las dos primeras, que es lo que pedía el plan.
-   La tercera nació el 2026-08-10, cuando el índice de CTC Home dejó de anunciar la puerta del Control Panel y
-   ofreció esta suscripción en su lugar. **Hoy son 0 filas, así que no urge**, pero es una lista que se está
-   recogiendo y que nadie puede mirar. El componente (`InteresBoard`) ya está parametrizado por fuente: darle
-   tablero es una página de tres líneas más su entrada en el rail. Decidir dónde vive — el ECP, junto a los
-   otros CRM de captación, parece más su sitio que el OCP.
+6. ✅ **La lista de espera de CTC Home ya tiene tablero (2026-08-19, V4.39).** `newsletter_subscribers` tiene
+   TRES fuentes —`roast`, `x` y `ctc-home`— y el paso (iii)-3 construyó tablero para las dos primeras, que es
+   lo que pedía el plan. La tercera nació el 2026-08-10, cuando el índice de CTC Home dejó de anunciar la puerta
+   del Control Panel y ofreció esta suscripción en su lugar: estuvo **nueve días recogiendo correos que nadie
+   podía mirar**. Hoy sigue en 0 filas (la única alta de toda la tabla es de `x`), así que no se perdió nada —
+   pero eso fue suerte, no diseño.
+   **Dónde vive: el ECP, no el OCP**, y eso era la decisión. Roast y X cuelgan de «OCP · Cherry Picked» porque
+   son programas de Cherry Picked; ésta es de la red entera, y meterla en ese grupo habría hecho que el sitio
+   del tablero contradijera lo que contiene. Queda en «ECP · Dirección», junto a **Leads · Recepción**, que es
+   lo otro que entra por la web pública. Ruta `/ecp/ctc-home`, que espeja la clave de la fuente igual que
+   `/ocp/crm/roast` espeja la suya.
+   ⚠️ **Y por eso el módulo se mudó a `src/components/panel/interes/`.** `InteresBoard`, `InteresRow` y
+   `interesActions` colgaban de `src/app/ocp/(app)/crm/`. Sirviendo ya a DOS consolas, dejarlos ahí significaba
+   que la siguiente mudanza de módulos del OCP se llevaría por delante una página del ECP — la lección exacta de
+   `shared.module.css` en PR-B.
+   ⚠️ **`marcarContactado` revalidaba dos rutas y ahora revalida tres**, y con la tercera dejó de ser cosmético:
+   su tablero está en OTRA consola. Olvidarlo habría dejado una lista que se llena y no se refresca, sin un solo
+   error.
+   ⚠️ **El estado vacío se parametrizó**: decía «las altas llegan desde la landing del programa», que para la
+   lista de la portada es falso y manda a buscar una landing que no existe.
+   **La comprobación que faltaba, y que es la lección de verdad**: `qa-crm-interes-check.mjs` (37) ya no lleva
+   las fuentes escritas a mano — las **lee de `SOURCES`** en `src/lib/newsletter/actions.ts` y exige que cada
+   una tenga página, entrada en el rail y `revalidatePath`. Una fuente nueva sin tablero rompe el guardián el
+   mismo día que se escribe. Verificado saboteándolo: se añadió una cuarta fuente falsa y se borró un
+   `revalidatePath`, y denunció las dos cosas.
 
 7. ⚠️ **CORREGIDO EN V4.31, pero la lección sigue abierta: 13 compuertas quedaron apuntando a la consola
    equivocada tras el paso (ii).** Siete archivos bajo `/bcp/` seguían llamando `requireConsoleAccess("ecp")`

@@ -478,3 +478,30 @@ APP_VERSION 4.36 → 4.37.
   qa-tools-seo 193/0 · qa-tools-seo-espejo 68/0 · qa-encoding · qa-docs 14/14.
 APP_VERSION 4.37 → 4.38.
 (commit: 419aeae)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.39 · La lista de espera de CTC Home gana su tablero
+- Cierra el **punto 6 del §9** del plan V5. `newsletter_subscribers` tiene TRES fuentes; el paso (iii)-3 dio
+  tablero a `roast` y `x`. La tercera, `ctc-home`, nació el **2026-08-10** —cuando el índice de la red, en la
+  portada, dejó de anunciar la puerta del Control Panel— y estuvo **nueve días recogiendo correos sin tablero**.
+  No fallaba nada: el formulario guardaba y la base guardaba, sencillamente no había dónde mirarlos. Sigue en 0
+  filas, así que no se perdió ninguna dirección — suerte, no diseño.
+- **NODO NUEVO: `/ecp/ctc-home` · «Lista de espera · CTC Home»**, en «ECP · Dirección», junto a Leads ·
+  Recepción. **En el ECP y NO en el OCP a propósito**: Roast y X son programas de Cherry Picked y por eso
+  cuelgan de «OCP · Cherry Picked»; ésta es de la red entera, y ahí el sitio habría contradicho el contenido.
+- ⚠️ **MUDANZA: `InteresBoard` + `InteresRow` + `interesActions` salen de `src/app/ocp/(app)/crm/` a
+  `src/components/panel/interes/`.** Sirven a DOS consolas; bajo el árbol del OCP, la siguiente mudanza de
+  módulos se habría llevado por delante una página del ECP. Misma lección que `shared.module.css` en PR-B.
+- ⚠️ `marcarContactado` revalidaba dos rutas y ahora revalida **tres** — y la tercera está en otra consola, así
+  que olvidarla dejaría una lista que se llena y no se refresca, en silencio.
+- El estado vacío se parametriza (`origen`): «desde la landing del programa» es falso para la lista de la
+  portada.
+- ⚠️ **PARA EL DICT — la comprobación que faltaba**: `qa-crm-interes-check.mjs` (37) ya no lleva las fuentes a
+  mano, las **lee de `SOURCES`**, y exige por cada una página + rail + `revalidatePath`. Una fuente nueva sin
+  tablero rompe el guardián el día que se escribe. Verificado con una cuarta fuente falsa y un `revalidatePath`
+  borrado: denunció las dos.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-rutas-consolas 266/0 · qa-crm-interes 37/0 · qa-nav 16/16 · qa-boards 27/27 · qa-encoding 734/0.
+APP_VERSION 4.38 → 4.39.
+(commit: PENDIENTE)

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
-// ── CRM CP Roast · X · lo ÚNICO que estos tableros escriben ─────────────────
+// ── Listas de espera (Roast · X · CTC Home) · lo ÚNICO que escriben ─────────
 // Marcar que ya se le escribió a alguien de la lista de espera. Es el único
 // dato que la fila no puede deducir; todo lo demás —idioma, antigüedad,
 // recuentos— se calcula al leer (regla que dejó CRM CP Green, V4.29).
@@ -44,10 +44,14 @@ export async function marcarContactado(
     performed_by: adminId,
   });
 
-  // Se revalidan los dos tableros: la fila pertenece a UNA fuente, pero saber
+  // Se revalidan los TRES tableros: la fila pertenece a UNA fuente, pero saber
   // cuál exige leerla, y revalidar de más aquí no cuesta nada. Revalidar de
   // MENOS, en cambio, no avisa — deja el otro tablero con datos rancios.
+  // ⚠️ Y ojo: el de CTC Home vive en OTRA CONSOLA. Añadir una fuente y olvidar
+  // su `revalidatePath` es justo el fallo mudo de esta familia, así que
+  // `qa-crm-interes-check.mjs` exige uno por cada fuente declarada.
   revalidatePath("/ocp/crm/roast");
   revalidatePath("/ocp/crm/x");
+  revalidatePath("/ecp/ctc-home");
   return { ok: true };
 }

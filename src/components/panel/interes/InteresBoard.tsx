@@ -20,11 +20,18 @@ import styles from "@/components/panel/shared.module.css";
 // escribió a esa persona (`contacted_at`). El idioma, la antigüedad y el
 // recuento salen de la fila.
 //
-// ⚠️ La tabla tiene una TERCERA fuente, `ctc-home`, que no tiene tablero:
-// CTC Home ofrece la misma suscripción desde 2026-08-10. Está anotado en el §9
-// del plan — hoy son cero filas, pero es una lista que nadie puede mirar.
+// LA TERCERA FUENTE, `ctc-home`, YA TIENE TABLERO (V4.39). Nació el 2026-08-10,
+// cuando el índice de la red en la portada dejó de anunciar la puerta del
+// Control Panel y ofreció esta suscripción en su lugar, y estuvo nueve días
+// recogiendo correos que nadie podía mirar. No es de Cherry Picked, así que su
+// tablero NO vive en «OCP · Cherry Picked» sino en el ECP, junto a Leads.
+//
+// ⚠️ POR ESO ESTE MÓDULO SE MUDÓ A `src/components/panel/` (V4.39): sirve a DOS
+// consolas, y colgando del árbol de una de ellas la siguiente mudanza de módulos
+// del OCP se habría llevado por delante una página del ECP. Es la lección que
+// dejó `shared.module.css` en PR-B.
 
-export type FuenteInteres = "roast" | "x";
+export type FuenteInteres = "roast" | "x" | "ctc-home";
 
 type SubRow = {
   id: string;
@@ -42,10 +49,15 @@ export async function InteresBoard({
   fuente,
   titulo,
   intro,
+  origen,
 }: {
   fuente: FuenteInteres;
   titulo: string;
   intro: string;
+  /** De dónde entran las altas, para el estado vacío. Se parametriza porque
+   *  decirle «la landing del programa» a quien mira la lista de CTC Home lo
+   *  manda a buscar una landing que no existe. */
+  origen: string;
 }) {
   const service = createServiceRoleClient();
   const { data } = await service
@@ -104,7 +116,7 @@ export async function InteresBoard({
         {pendientes.length === 0 ? (
           <p className={styles.empty}>
             {filas.length === 0
-              ? "Todavía no se ha apuntado nadie. Las altas llegan solas desde la landing del programa — aquí no se crea ninguna."
+              ? `Todavía no se ha apuntado nadie. Las altas llegan solas desde ${origen} — aquí no se crea ninguna.`
               : "No queda nadie por contactar en esta lista."}
           </p>
         ) : (

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.1] — 2026-08-19 (commit pendiente)
+## [V5.1] — 2026-08-19 (commit 511a526)
 
 - **Añadido**: este registro — `CHANGELOG.md`, la vista estándar de consulta por versión, con el
   ciclo V5 entero respaldado (V4.27 → V5.0) y su contrato en la cabecera.

@@ -155,4 +155,4 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   registro estándar y su contrato; (c) al cerrar cada wrap, estampar en CHANGELOG.md la línea
   «> Wrap V{N}: ciclo compilado en …» — el paso quedó en la SKILL de versionado.
 - Cambio de proceso, no de nodos: ningún nodo ni traza cambia por esto.
-(commit: PENDIENTE)
+(commit: 511a526)

@@ -139,4 +139,4 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   48 trazas · 91 wires · 34 CTX · 310 ANN · FILETREE 1748 (raíz ctc-platforms).
   Batería 9/9 vacías, contra el anterior como control, `node --check` del bloque.
 - El puntero de HANDOFF («Visual system map») apunta al V38.0.
-(commit: PENDIENTE)
+(commit: de19986)

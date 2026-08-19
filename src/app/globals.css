@@ -27,6 +27,20 @@ img{display:block;max-width:100%}
   --t-blue:#1F4FB0;
   --t-gold:#A87A14;
   --t-tyrian:#66023C;
+
+  /* Alto de la cabecera de CTC Home, en UN solo sitio (2026-08-19).
+     La cabecera es `sticky`, o sea que OCUPA sitio en el flujo: el hero, que
+     viene justo debajo, necesita restarlo para llegar exacto al borde inferior
+     de la primera pantalla. El número sale de `Header.module.css`:
+     padding 20+20 + logo 54 + 1 de borde = 95.
+     ⚠️ Si cambias ahí el padding de `.nav` o el alto de `.brandLogo img`,
+     cambia este valor — hay una nota al lado de cada uno. */
+  --hdr-h:95px;
+}
+/* El mismo corte que aprieta la barra en un teléfono: padding 14+14 + logo 42
+   + 1 de borde = 71. */
+@media(max-width:560px){
+  :root{--hdr-h:71px}
 }
 
 /* ============================================================

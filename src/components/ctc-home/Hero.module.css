@@ -6,7 +6,21 @@
    inferior pasó a cero, porque ahora la sección termina en la cinta de mercado,
    que va pegada al borde. Lo que se gana es que los dos botones caben en el
    primer vistazo incluso en un portátil de 768 px de alto. */
-.hero{position:relative;isolation:isolate;padding:58px 0 0;overflow:hidden;background:var(--primary-deep)}
+/* 2026-08-19 (owner, revisión V5.0 · A1): el hero llega hasta el borde inferior
+   de la PRIMERA PANTALLA, para que la cinta de mercado —que es su último hijo—
+   aterrice justo ahí, en vez de dejar asomando un pico de la sección siguiente.
+   Se le resta `--hdr-h` porque la cabecera es `sticky` y ocupa sitio en el flujo
+   (la variable vive en globals.css, junto a la explicación del número).
+   `svh` y NO `dvh`: con `dvh` el alto cambia al ocultarse la barra del navegador
+   en un móvil, y la cinta daría un salto a mitad de scroll.
+   Es `min-height`, no `height`: si el contenido crece —una traducción más larga,
+   un teléfono estrecho— el hero se estira en vez de recortarlo. */
+.hero{
+  position:relative;isolation:isolate;padding:58px 0 0;overflow:hidden;
+  background:var(--primary-deep);
+  min-height:calc(100svh - var(--hdr-h));
+  display:flex;flex-direction:column;
+}
 
 .heroBg{position:absolute;inset:0;z-index:0}
 .heroBg img{
@@ -43,11 +57,18 @@
    titular era lo que empujaba el loop fuera de la pantalla. El loop abarca las
    dos filas en escritorio, así que queda centrado contra titular + botones,
    exactamente como cuando eran una sola celda. */
+/* `flex:1 0 auto` + `align-content:center`: el sobrante de alto que deja el
+   `min-height` del hero se lo queda ESTA rejilla, y sus filas se centran dentro.
+   Así el titular y los botones quedan ópticamente centrados en la pantalla y las
+   cualidades + la cinta se apoyan en el borde de abajo. Con `flex:1` a secas la
+   base sería 0 y en una pantalla baja la rejilla se encogería por debajo de su
+   contenido; con `0 auto` no encoge nunca. */
 .heroGrid{
   position:relative;z-index:2;display:grid;
   grid-template-columns:minmax(0,2fr) minmax(0,1fr);
   grid-template-areas:"copy aside" "cta aside";
   column-gap:48px;align-items:center;
+  flex:1 0 auto;align-content:center;
 }
 .heroCopy{grid-area:copy;min-width:0}
 .heroAside{grid-area:aside}

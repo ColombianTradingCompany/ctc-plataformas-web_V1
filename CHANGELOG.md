@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.2] — 2026-08-19 (commit pendiente)
+
+- **Hito**: arranca **«Launch Beta Testing»** — la primera tanda que sale de la revisión
+  pantalla por pantalla de la V5.0. El owner recorre las 19 superficies con una lista de 145
+  puntos (bloques A–K) y marca cada uno *Done* o *Fix*; esta entrada recoge lo que trajo el
+  bloque A.
+- **Cambiado** (A1, CTC Home): el hero llega hasta el **borde inferior de la primera pantalla**,
+  así la cinta de mercado —que es su último hijo— aterriza justo ahí en vez de dejar asomando un
+  pico de la sección siguiente. `.hero` gana `min-height:calc(100svh - var(--hdr-h))` y pasa a
+  ser columna flex; `.heroGrid` se queda el sobrante (`flex:1 0 auto` + `align-content:center`),
+  de modo que el titular y los botones quedan ópticamente centrados y las cualidades + la cinta
+  se apoyan abajo.
+- **Añadido**: `--hdr-h` en `globals.css` — el alto de la cabecera de CTC Home en UN solo sitio
+  (95px; 71px por debajo de 560px). La cabecera es `sticky`, o sea que OCUPA sitio en el flujo,
+  y el hero tiene que restarlo para acabar exacto en el pliegue. `Header.module.css` lleva una
+  nota junto al padding y junto al corte de 560px para que el número no se desincronice en
+  silencio.
+- **Docs**: `svh` y no `dvh` (con `dvh` la cinta daría un salto al ocultarse la barra del
+  navegador en un móvil), y `min-height` y no `height` (una traducción más larga estira el hero
+  en vez de recortarlo) quedan razonados en el propio CSS.
+
+> Medido en la app corriendo, con la cinta al ras del pliegue y hueco 0 en los tres tamaños:
+> 1512×912 (cabecera 95, hero 817), 1366×700 (hero 605, los botones aún sobre el pliegue en
+> y=537) y 375×812 (cabecera 71, hero 741, sin desbordamiento horizontal).
+
 ## [V5.1] — 2026-08-19 (commit 511a526)
 
 - **Añadido**: este registro — `CHANGELOG.md`, la vista estándar de consulta por versión, con el

@@ -4,12 +4,18 @@
   transition:transform .28s ease;
 }
 .hide{transform:translateY(-102%)}
+/* ⚠️ El padding de `.nav` y el alto de `.brandLogo img` SUMAN el alto de la
+   cabecera, y el hero lo resta para acabar exacto en el borde de la primera
+   pantalla. Si cambias cualquiera de los dos, actualiza `--hdr-h` en
+   globals.css (ahora: 20+20 + 54 + 1 de borde = 95). */
 .nav{display:flex;align-items:center;gap:30px;padding:20px 32px;max-width:1240px;margin:0 auto}
 .brandLogo{margin-right:auto;flex:none}
 .brandLogo img{height:54px;width:auto;max-width:min(340px,58vw);object-fit:contain;display:block}
 /* En un teléfono, `gap:30px` + `padding:20px 32px` empujaban el botón del índice
    fuera de la pantalla: quedaba «Escríbenos» pegado al borde y el menú, sin
    existir. Se aprieta la barra en vez de esconder nada (2026-08-11). */
+/* Este corte cambia el alto de la cabecera → `--hdr-h` tiene su propio
+   `@media(max-width:560px)` en globals.css (14+14 + 42 + 1 = 71). */
 @media(max-width:560px){
   .brandLogo img{height:42px}
   .nav{gap:12px;padding:14px 16px}

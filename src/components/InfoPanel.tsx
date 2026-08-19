@@ -41,6 +41,10 @@ export type InfoEntry = {
   node?: React.ReactNode;
   /** Ventana ancha. Un calendario de doce meses no cabe en 560 px. */
   wide?: boolean;
+  /** Letra pequeña al pie, bajo la salida: la nota legal o la aclaración que
+   *  debe estar pero no debe competir con la entradilla (2026-08-19 · A5, la
+   *  Ley 1581 en la ficha del Directorio). */
+  footnote?: React.ReactNode;
 };
 
 export function InfoPanel({ entry, onClose }: { entry: InfoEntry | null; onClose: () => void }) {
@@ -94,6 +98,9 @@ export function InfoPanel({ entry, onClose }: { entry: InfoEntry | null; onClose
               ))}
             </div>
           )}
+          {/* Va al FINAL, después de la salida: es letra pequeña que debe estar
+              y poder leerse, no un obstáculo antes de la acción. */}
+          {entry.footnote && <p className={styles.footnote}>{entry.footnote}</p>}
         </div>
       )}
     </Modal>

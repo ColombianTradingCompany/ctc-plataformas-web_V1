@@ -53,5 +53,7 @@ export async function marcarContactado(
   revalidatePath("/ocp/crm/roast");
   revalidatePath("/ocp/crm/x");
   revalidatePath("/ecp/ctc-home");
+  revalidatePath("/ecp/directorio");
+  revalidatePath("/ecp/herramientas");
   return { ok: true };
 }

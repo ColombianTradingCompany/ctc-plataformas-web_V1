@@ -128,7 +128,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Tres ofertas, un solo hilo",
     h2: "Del cafetal a la taza, sin intermediarios anónimos",
     intro:
-      "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y el Value Ecosystem que sostiene a las dos.",
+      "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y el Ecosistema de Valor que sostiene a las dos.",
     videoTitle: "CTC, en un minuto",
     krWho: "En Colombia · Para el productor",
     krOneline:
@@ -205,10 +205,10 @@ const T: Record<Lang, Dict> = {
     netHint: "Toca cualquier módulo para ver qué hay dentro",
     netTiles: [
       { name: "CTC Tech", sub: "Tecnologías agrónomas en finca", href: NET_URL.tech },
-      { name: "Varietales Registrados", sub: "Chapolas de genética verificada", href: NET_URL.varietales },
+      { name: "Herramientas del Café", sub: "Calculadoras y utilidades del oficio", href: NET_URL.herramientas },
       { name: "Directorio del Café", sub: "Los especialistas del café de Colombia", href: NET_URL.directorio },
       { name: "Coffeed", sub: "El muro de noticias de la red", href: NET_URL.coffeed },
-      { name: "Herramientas del Café", sub: "Calculadoras y utilidades del oficio", href: NET_URL.herramientas },
+      { name: "Varietales Registrados", sub: "Chapolas de genética verificada", href: NET_URL.varietales },
       { name: "Terratalento", sub: "Las manos que recogen la cosecha", href: NET_URL.terratalento, soon: true },
     ],
     netOpen: "Entrar a {name} ↗",
@@ -315,10 +315,10 @@ const T: Record<Lang, Dict> = {
     netHint: "Tap any module to see what's inside",
     netTiles: [
       { name: "CTC Tech", sub: "On-farm agronomic technologies", href: NET_URL.tech },
-      { name: "Registered Varietals", sub: "Seedlings of verified genetics", href: NET_URL.varietales },
+      { name: "Coffee Tools", sub: "Calculators and trade utilities", href: NET_URL.herramientas },
       { name: "Coffee Directory", sub: "Colombia's coffee specialists", href: NET_URL.directorio },
       { name: "Coffeed", sub: "The network's news wall", href: NET_URL.coffeed },
-      { name: "Coffee Tools", sub: "Calculators and trade utilities", href: NET_URL.herramientas },
+      { name: "Registered Varietals", sub: "Seedlings of verified genetics", href: NET_URL.varietales },
       { name: "Terratalento", sub: "The hands that pick the harvest", href: NET_URL.terratalento, soon: true },
     ],
     netOpen: "Enter {name} ↗",
@@ -425,10 +425,10 @@ const T: Record<Lang, Dict> = {
     netHint: "Tippen Sie auf ein Modul, um zu sehen, was dahinter liegt",
     netTiles: [
       { name: "CTC Tech", sub: "Agrartechnologien auf der Finca", href: NET_URL.tech },
-      { name: "Registrierte Varietäten", sub: "Setzlinge verifizierter Genetik", href: NET_URL.varietales },
+      { name: "Kaffee-Werkzeuge", sub: "Rechner und Werkzeuge des Handwerks", href: NET_URL.herramientas },
       { name: "Kaffee-Verzeichnis", sub: "Kolumbiens Kaffeespezialisten", href: NET_URL.directorio },
       { name: "Coffeed", sub: "Die Nachrichtenwand des Netzwerks", href: NET_URL.coffeed },
-      { name: "Kaffee-Werkzeuge", sub: "Rechner und Werkzeuge des Handwerks", href: NET_URL.herramientas },
+      { name: "Registrierte Varietäten", sub: "Setzlinge verifizierter Genetik", href: NET_URL.varietales },
       { name: "Terratalento", sub: "Die Hände, die die Ernte pflücken", href: NET_URL.terratalento, soon: true },
     ],
     netOpen: "Zu {name} ↗",
@@ -491,7 +491,10 @@ export function EcosystemSection() {
       // La captación de correo era en realidad el aviso de Terratalento — la
       // única puerta en «Pronto» — así que vive dentro de SU ficha (2026-08-14),
       // no cerrando la sección como si avisara de toda la red.
-      node: slug === "terratalento" ? <NetNewsletter /> : undefined,
+      // Cada puerta pendiente lleva SU formulario (A6): Terratalento pregunta
+      // rol y municipio porque aún no abre; Herramientas, qué herramienta hace
+      // falta. Coffeed no pide nada — ya está en pie.
+      node: slug === "terratalento" ? <NetNewsletter puerta="terratalento" /> : slug === "herramientas" ? <NetNewsletter puerta="herramientas" /> : undefined,
     });
 
     switch (href) {
@@ -510,7 +513,7 @@ export function EcosystemSection() {
           )),
         };
       case NET_URL.directorio:
-        return { ...base, eyebrow: svc.dirTag, title: svc.dirH3, lead: svc.dirBody, bullets: svc.dirPoints };
+        return { ...base, eyebrow: svc.dirTag, title: svc.dirH3, lead: svc.dirBody, bullets: svc.dirPoints, footnote: svc.dirFootnote, node: <NetNewsletter puerta="directorio" /> };
       case NET_URL.varietales:
         return { ...base, eyebrow: svc.varTag, title: svc.varH3, lead: svc.varBody, bullets: svc.varPoints };
       case NET_URL.coffeed:

@@ -127,3 +127,17 @@
 .netNewsDone{margin:0;font-size:13px;color:var(--accent)}
 .netNewsErr{margin:0;flex-basis:100%;font-size:12.5px;color:#8C2130}
 @media(max-width:560px){.netNews{flex-direction:column;align-items:stretch}.netNewsRow input[type="email"]{min-width:0;flex:1}}
+
+/* Los campos propios de cada puerta (A6, 2026-08-19). Etiqueta ARRIBA y no
+   marcador de posición dentro: un marcador desaparece al escribir y deja al
+   lector sin saber qué contestó, que es justo lo que no puede pasar en un
+   desplegable de dos opciones. */
+.netNewsField{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.netNewsField > span{font-size:12.5px;font-weight:600;color:var(--muted)}
+.netNewsField select,
+.netNewsField input{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+  background:var(--card);color:var(--ink);font:inherit;font-size:14px;
+}
+.netNewsField select:focus-visible,
+.netNewsField input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}

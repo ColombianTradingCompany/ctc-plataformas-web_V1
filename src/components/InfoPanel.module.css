@@ -10,14 +10,39 @@
 .inner{--ia:var(--accent)}
 
 /* La foto de cabecera se sale del padding de la caja a propósito: ocupa el
-   ancho entero y la ventana empieza por una imagen, no por un margen. */
+   ancho entero y la ventana empieza por una imagen, no por un margen.
+
+   2026-08-19 (revisión V5.0 · A4) — DOS arreglos aquí:
+   1. La compensación era de 28px, pero `.modal` acolcha 32px (22px/16px por
+      debajo de 560). Nunca llegó a sangrar del todo: se quedaba 4px corta.
+   2. `max-width:none` es lo que hace que la sangría FUNCIONE. El reset global
+      lleva `img{max-width:100%}`, que recortaba el `calc(100% + Npx)` al ancho
+      del contenido mientras el margen negativo SÍ se aplicaba — la imagen
+      acababa 28px a la izquierda de su sitio. Medido: 4px de hueco a la
+      izquierda contra 60px a la derecha. Eso era el «no está centrado». */
 .shot{
-  display:block;width:calc(100% + 56px);margin:-28px -28px 18px;height:150px;object-fit:cover;
+  display:block;width:calc(100% + 64px);max-width:none;
+  margin:-32px -32px 18px;height:150px;object-fit:cover;
   border-radius:var(--radius) var(--radius) 0 0;
 }
-@media(max-width:560px){.shot{width:calc(100% + 40px);margin:-20px -20px 16px;height:120px}}
-/* Un logotipo no se recorta: se dibuja entero, centrado, sobre su propio plato. */
-.shotLogo{object-fit:contain;background:#fff;padding:14px}
+@media(max-width:560px){.shot{width:calc(100% + 32px);margin:-22px -16px 16px;height:120px}}
+
+/* Un logotipo NO quiere la franja a sangre (2026-08-19 · A4). Dibujado
+   `contain` en una banda de 560×150, un logo cuadrado ocupa unos 120px y deja
+   ~220px de blanco plano a cada lado: se lee como un fallo de la imagen, no
+   como un plato. Y el blanco no se puede quitar por CSS — los seis logotipos de
+   las puertas son PNG de paleta SIN transparencia, con el blanco cocido dentro
+   (`cherry-picked-logo.png` sí trae alfa; los seis de la red, no).
+   Así que el blanco se DECLARA en vez de disimularse: un plato cuadrado,
+   centrado, del tamaño del logotipo. El día que lleguen los PNG con alfa, esto
+   se queda igual y solo cambia el `background`. */
+.shotLogo{
+  width:150px;height:150px;
+  margin:6px auto 20px;padding:14px;
+  object-fit:contain;background:#fff;
+  border-radius:16px;box-shadow:0 1px 3px rgba(14,32,26,.14);
+}
+@media(max-width:560px){.shotLogo{width:124px;height:124px;margin:4px auto 16px;padding:12px}}
 
 .eyebrow{
   font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.14em;
@@ -43,3 +68,14 @@
 .bullets b{color:var(--ink)}
 
 .foot{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* La letra pequeña del pie (2026-08-19 · A5). Cumple dos cosas a la vez: se
+   lee —12,5px sobre `--muted`, no gris sobre gris— y no compite con la
+   entradilla, que era el problema de tenerla dentro del primer párrafo.
+   Va calificada con `.inner` a propósito: el global `.modal p` es `.modal p`
+   (0,1,1) y le gana a una clase suelta (0,1,0) — sin esto el pie se quedaba en
+   los 14px del párrafo normal y no se veía más pequeño que la entradilla. */
+.inner .footnote{
+  margin:16px 0 0;padding-top:12px;border-top:1px solid var(--line);
+  font-size:12.5px;line-height:1.55;color:var(--muted);
+}

@@ -39,6 +39,12 @@ const TABLEROS = {
   roast: "src/app/ocp/(app)/crm/roast/page.tsx",
   x: "src/app/ocp/(app)/crm/x/page.tsx",
   "ctc-home": "src/app/ecp/(app)/ctc-home/page.tsx",
+  // A6 (2026-08-19): nacen CON tablero, que es justo lo que este guardián
+  // existe para exigir. Los dos cuelgan de una página que ya existía —la
+  // moderación del Directorio y el registro de Herramientas—, porque una lista
+  // de espera de una plataforma se mira donde se mira esa plataforma.
+  directorio: "src/app/ecp/(app)/directorio/page.tsx",
+  herramientas: "src/app/ecp/(app)/herramientas/page.tsx",
 };
 
 const board = lee(BOARD);

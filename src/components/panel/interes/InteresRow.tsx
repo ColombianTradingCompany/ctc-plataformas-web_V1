@@ -14,13 +14,23 @@ export function InteresRow({
   desde,
   contactado,
   contactadoEl,
+  detalle,
+  onToggle,
 }: {
   id: string;
   email: string;
-  idioma: string;
+  /** Se omite cuando la lista no guarda idioma (Terratalento). */
+  idioma?: string | null;
   desde: string;
   contactado: boolean;
   contactadoEl?: string | null;
+  /** El campo propio de la fuente, ya rotulado («Especialidad: Barista»).
+   *  A6, 2026-08-19 — sin fuente que lo traiga, la fila se ve como siempre. */
+  detalle?: string | null;
+  /** Quién escribe el «contactado». Por defecto la lista de espera de
+   *  `newsletter_subscribers`; Terratalento pasa la suya porque vive en otra
+   *  tabla y la fila, por dentro, es la misma. */
+  onToggle?: (id: string, contactado: boolean) => Promise<{ ok: true } | { ok: false; error: string }>;
 }) {
   const [pendiente, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +38,7 @@ export function InteresRow({
   const alterna = () => {
     setError(null);
     startTransition(async () => {
-      const r = await marcarContactado(id, !contactado);
+      const r = await (onToggle ?? marcarContactado)(id, !contactado);
       if (!r.ok) setError(r.error);
     });
   };
@@ -40,7 +50,9 @@ export function InteresRow({
           <a href={`mailto:${email}`}>{email}</a>
         </h3>
         <p className={styles.meta} style={{ margin: "2px 0 0" }}>
-          {idioma} · en la lista desde el {desde}
+          {detalle && <><b>{detalle}</b> · </>}
+          {idioma && <>{idioma} · </>}
+          en la lista desde el {desde}
           {contactado && contactadoEl && <> · contactado el {contactadoEl}</>}
         </p>
         {error && (

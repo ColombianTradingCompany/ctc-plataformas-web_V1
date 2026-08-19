@@ -19,6 +19,45 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.3] — 2026-08-19 (commit pendiente)
+
+- **Cambiado** (A4, CTC Home): en el índice de la red, **Herramientas del Café y Varietales
+  Registrados intercambian su sitio** (es/en/de).
+- **Corregido** (A4): la imagen de cabecera de la ventana de información **no estaba centrada** —
+  4px de hueco a la izquierda contra 60px a la derecha. El reset global lleva `img{max-width:100%}`,
+  que recortaba el `calc(100% + 56px)` de la sangría mientras el margen negativo SÍ se aplicaba.
+  Lleva `max-width:none`, y la compensación pasa de 28px a los 32px/16px que de verdad acolcha
+  `.modal` — nunca había llegado a sangrar del todo.
+- **Cambiado** (A4): un logotipo deja de dibujarse sobre una franja a sangre de 560×150, donde
+  ocupaba ~120px y dejaba ~220px de blanco plano a cada lado. Ahora es un **plato cuadrado de
+  150px, centrado**: un 70% menos de blanco. Los seis logotipos de las puertas son PNG de paleta
+  **sin transparencia** (el blanco va cocido dentro), así que el blanco no se puede quitar por CSS
+  — se declara. `cherry-picked-logo.png` sí trae alfa: el día que lleguen los seis re-exportados,
+  solo cambia el `background`.
+- **Corregido** (A7): la entradilla en **español** decía «el Value Ecosystem» en inglés mientras su
+  propio titular, dos líneas más abajo, dice «Ecosistema de Valor». Inglés y alemán no se tocan.
+- **Cambiado** (A5): la línea de la **Ley 1581** sale de la entradilla del Directorio y baja a un
+  **pie de página propio** (12,5px contra los 14px del cuerpo, tras la salida y con filete). Se
+  amplía con las palabras que ya usaba `directorio/Landing.tsx`, en vez de inventar texto nuevo.
+  `InfoPanel` gana `footnote`, calificado como `.inner .footnote` porque el global `.modal p`
+  (0,1,1) le gana a una clase suelta.
+- **Añadido** (A6): las **tres listas de espera se separan** y cada puerta pregunta lo suyo —
+  Directorio: correo + especialidad · Herramientas: correo + herramienta de interés ·
+  Terratalento: correo + rol + municipio. Un solo componente parametrizado (`NetNewsletter`), no
+  cuatro copias.
+- **Datos** (A6): `newsletter_subscribers.fields` (jsonb, aditivo) para el campo propio de cada
+  fuente, con lista blanca POR FUENTE en la acción; y **`terratalento_interes`**, tabla propia
+  —service-role-only, RLS encendida y cero políticas— porque su captación no es una lista de correo
+  sino material de investigación: dónde hay manos antes de abrir.
+- **Corregido** (A6): la restricción `newsletter_subscribers_source_check` seguía nombrando SOLO
+  las tres fuentes viejas. Las altas de Directorio y Herramientas habrían fallado **contra la base**
+  aunque el código las diera por válidas. Encontrado probando la forma real contra producción, no
+  leyendo el esquema.
+- **Añadido** (A6): sus **tres tableros**, que es lo que `qa-crm-interes-check` exige de toda fuente
+  nueva — Directorio y Herramientas cuelgan de su página del ECP; Terratalento estrena tablero
+  propio (reparto por rol y municipios con más gente, que es lo que decide por dónde se abre).
+  El guardián sube de 37 a **55 comprobaciones**.
+
 ## [V5.2] — 2026-08-19 (commit 43cc84c)
 
 - **Hito**: arranca **«Launch Beta Testing»** — la primera tanda que sale de la revisión

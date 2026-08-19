@@ -7,6 +7,7 @@ import { resumenTerminos, terminosFromRow } from "@/lib/terratalento/terminos";
 import type { ConstanciaInput } from "@/lib/terratalento/constanciaPrint";
 import { ConstanciaButton } from "./ConstanciaButton";
 import { reenviarNotificacionLlamado, setJornadaEstadoAdmin, setPostulacionEstado } from "./actions";
+import { InteresTerratalentoBoard } from "@/components/panel/interes/InteresTerratalentoBoard";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Terratalento · el tablero de match del ECP (V2) ─────────────────────────
@@ -158,6 +159,15 @@ export default async function EcpTerratalentoPage({
         CTC llama, confirma cupos o descarta; al confirmar se congelan los términos y se emite la constancia de acuerdo.
         La finca solo ve a los confirmados.
       </p>
+
+      {/* La lista de espera PRE-LANZAMIENTO va ARRIBA del match (A6, 2026-08-19).
+          Mientras Terratalento no abra, esto es lo único que se mueve en esta
+          pantalla: el kanban de jornadas está vacío por definición hasta que
+          haya fincas publicando. El día que abra, esta sección envejece hacia
+          abajo sola — no hay que moverla, deja de crecer. */}
+      <div style={{ marginBottom: 40 }}>
+        <InteresTerratalentoBoard />
+      </div>
 
       <div className={styles.kpiGrid}>
         {kpis.map((kpi) => (

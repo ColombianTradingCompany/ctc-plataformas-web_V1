@@ -3,6 +3,7 @@ import { ToolPanel } from "@/components/tools/ToolPanel";
 import { PlusBoard } from "./PlusBoard";
 import { ToolsAdmin } from "./ToolsAdmin";
 import { cargarToolsAdmin } from "@/lib/tools/toolAccess";
+import { InteresBoard } from "@/components/panel/interes/InteresBoard";
 import styles from "@/components/panel/shared.module.css";
 
 // Consola interna → Herramientas del café.
@@ -38,6 +39,17 @@ export default async function EcpHerramientasPage() {
       <ToolsAdmin tools={tools} />
 
       <PlusBoard />
+
+      {/* La lista de espera va junto a PlusBoard —los dos hablan de QUIÉN quiere
+          usar algo— y por encima del visor, que es para abrirlas (A6). */}
+      <div style={{ marginTop: 40, marginBottom: 40 }}>
+        <InteresBoard
+          fuente="herramientas"
+          titulo="Lista de espera · Herramientas del Café"
+          origen="la ficha de Herramientas, en el índice de la red de la portada"
+          intro="Quién dejó su correo pidiendo que se le avise de herramientas nuevas, y cuál dijo que le haría falta. El KPI de la derecha es la lista de peticiones ordenada: es lo más parecido a un orden de construcción que hay."
+        />
+      </div>
 
       <ToolPanel
         tools={abribles.map((t) => ({

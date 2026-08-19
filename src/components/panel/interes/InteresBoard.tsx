@@ -31,7 +31,18 @@ import styles from "@/components/panel/shared.module.css";
 // del OCP se habría llevado por delante una página del ECP. Es la lección que
 // dejó `shared.module.css` en PR-B.
 
-export type FuenteInteres = "roast" | "x" | "ctc-home";
+// A6 (2026-08-19): «directorio» y «herramientas» entran con SU campo propio,
+// guardado en `newsletter_subscribers.fields`. El tablero lo pinta como una
+// línea más de la fila — no hace falta un tablero distinto para una columna
+// más, y sí haría falta mantener dos si se copiara.
+export type FuenteInteres = "roast" | "x" | "ctc-home" | "directorio" | "herramientas";
+
+/** Qué clave de `fields` enseña cada fuente, y con qué rótulo. Una fuente sin
+ *  entrada aquí simplemente no enseña detalle. */
+const DETALLE: Partial<Record<FuenteInteres, { clave: string; rotulo: string }>> = {
+  directorio: { clave: "especialidad", rotulo: "Especialidad" },
+  herramientas: { clave: "herramienta", rotulo: "Pidió" },
+};
 
 type SubRow = {
   id: string;
@@ -39,6 +50,7 @@ type SubRow = {
   lang: string | null;
   created_at: string;
   contacted_at: string | null;
+  fields: Record<string, string> | null;
 };
 
 const LANG_LABEL: Record<string, string> = { es: "Español", en: "English", de: "Deutsch" };
@@ -62,7 +74,7 @@ export async function InteresBoard({
   const service = createServiceRoleClient();
   const { data } = await service
     .from("newsletter_subscribers")
-    .select("id, email, lang, created_at, contacted_at")
+    .select("id, email, lang, created_at, contacted_at, fields")
     .eq("source", fuente)
     .order("created_at", { ascending: false });
   const filas = (data as SubRow[] | null) ?? [];
@@ -81,15 +93,33 @@ export async function InteresBoard({
   for (const f of filas) porIdioma.set(f.lang ?? "—", (porIdioma.get(f.lang ?? "—") ?? 0) + 1);
   const idiomas = [...porIdioma.entries()].sort((a, b) => b[1] - a[1]);
 
+  const det = DETALLE[fuente];
+  const detalleDe = (f: SubRow) => {
+    const v = det ? f.fields?.[det.clave] : undefined;
+    return v ? `${det!.rotulo}: ${v}` : null;
+  };
+
+  // Cuando la fuente tiene campo propio, el cuarto KPI vale más contando ESO
+  // que contando idiomas: en Herramientas, qué se pide más es la pregunta.
+  const porDetalle = new Map<string, number>();
+  if (det) for (const f of filas) { const v = f.fields?.[det.clave]; if (v) porDetalle.set(v, (porDetalle.get(v) ?? 0) + 1); }
+  const detalleTop = [...porDetalle.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+
   const kpis = [
     { k: "En la lista", v: String(filas.length), sub: "pidieron que se les avise" },
     { k: "Sin contactar", v: String(pendientes.length), sub: pendientes.length ? "pendientes de escribir" : "todo al día ✓" },
     { k: "Este mes", v: String(esteMes), sub: "altas nuevas" },
-    {
-      k: "Idiomas",
-      v: idiomas.length ? String(idiomas.length) : "—",
-      sub: idiomas.map(([l, n]) => `${LANG_LABEL[l] ?? l}: ${n}`).join(" · ") || "sin datos",
-    },
+    det
+      ? {
+          k: det.rotulo,
+          v: porDetalle.size ? String(porDetalle.size) : "—",
+          sub: detalleTop.map(([v, n]) => `${v}: ${n}`).join(" · ") || "sin datos",
+        }
+      : {
+          k: "Idiomas",
+          v: idiomas.length ? String(idiomas.length) : "—",
+          sub: idiomas.map(([l, n]) => `${LANG_LABEL[l] ?? l}: ${n}`).join(" · ") || "sin datos",
+        },
   ];
 
   return (
@@ -128,6 +158,7 @@ export async function InteresBoard({
                 email={f.email}
                 idioma={LANG_LABEL[f.lang ?? ""] ?? f.lang ?? "—"}
                 desde={fecha(f.created_at)}
+                detalle={detalleDe(f)}
                 contactado={false}
               />
             ))}
@@ -148,6 +179,7 @@ export async function InteresBoard({
                 email={f.email}
                 idioma={LANG_LABEL[f.lang ?? ""] ?? f.lang ?? "—"}
                 desde={fecha(f.created_at)}
+                detalle={detalleDe(f)}
                 contactado
                 contactadoEl={f.contacted_at ? fecha(f.contacted_at) : null}
               />

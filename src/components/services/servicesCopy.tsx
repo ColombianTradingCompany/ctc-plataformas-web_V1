@@ -86,6 +86,11 @@ type Dict = {
   dirH3: string;
   dirSub: string;
   dirBody: string;
+  /** El pie de la ficha del Directorio (2026-08-19 · A5): la nota legal sale
+   *  de la entradilla y baja aquí, en letra pequeña. Se conserva la ley —el
+   *  owner pidió NO perderla— y se dice qué es, con las mismas palabras que
+   *  ya usa `directorio/Landing.tsx`. */
+  dirFootnote: string;
   dirPoints: React.ReactNode[];
   dirSpecs: string[];
   dirCta: string;
@@ -258,12 +263,14 @@ const T: Record<Lang, Dict> = {
     dirH3: "El directorio oficial de especialistas del café de Colombia",
     dirSub: "Caficultores · Baristas · Tostadores · Catadores · Formadores — inscripción gratuita",
     dirBody:
-      "La capa de personas sobre nuestro ecosistema: una ficha pública y verificada para cada profesional del café del país, para que productores, tostadores y marcas puedan encontrarte y validar tu especialidad sin intermediarios. Registro gratuito, bajo la Ley 1581 de 2012.",
+      "La capa de personas sobre nuestro ecosistema: una ficha pública y verificada para cada profesional del café del país, para que productores, tostadores y marcas puedan encontrarte y validar tu especialidad sin intermediarios.",
     dirPoints: [
       <><b>Ficha pública verificada:</b> tu especialidad, certificaciones y experiencia, con el sello de CTC y mejor posición en las búsquedas</>,
       <><b>Red y oportunidades:</b> conecta con otros especialistas y entérate primero de proyectos, ferias, ofertas y seminarios del sector</>,
       <><b>Ligado al ecosistema:</b> una sola cuenta con Kaffetal Regal y Cherry Picked — el hilo de personas de la finca a la taza</>,
     ],
+    dirFootnote:
+      "Registro gratuito, bajo la Ley 1581 de 2012 (Habeas Data): tus datos se usan solo para el directorio profesional del café y las comunicaciones oficiales, y no se comparten con terceros sin tu autorización expresa.",
     dirSpecs: ["Inscripción gratuita", "Colombia · todo el país", "Toma menos de 2 minutos", "Ley 1581 de 2012"],
     dirCta: "Ir al Directorio del Café",
     sepDir: "Las personas detrás de cada taza · el directorio del café",
@@ -443,12 +450,14 @@ const T: Record<Lang, Dict> = {
     dirH3: "Colombia's official directory of coffee specialists",
     dirSub: "Growers · Baristas · Roasters · Cuppers · Trainers — free registration",
     dirBody:
-      "The layer of people on top of our ecosystem: a public, verified profile for every coffee professional in the country, so producers, roasters and brands can find you and validate your specialty with no intermediary. Free registration, under Colombia's Law 1581 of 2012.",
+      "The layer of people on top of our ecosystem: a public, verified profile for every coffee professional in the country, so producers, roasters and brands can find you and validate your specialty with no intermediary.",
     dirPoints: [
       <><b>Verified public profile:</b> your specialty, certifications and experience, with CTC&apos;s seal and a higher spot in search results</>,
       <><b>Network and opportunities:</b> connect with other specialists and hear first about projects, fairs, job offers and seminars</>,
       <><b>Tied to the ecosystem:</b> one account across Kaffetal Regal and Cherry Picked — the human thread from farm to cup</>,
     ],
+    dirFootnote:
+      "Free registration, under Colombia's Law 1581 of 2012 (Habeas Data): your data is used only for the coffee professional directory and official communications, and is never shared with third parties without your express authorisation.",
     dirSpecs: ["Free registration", "Colombia · nationwide", "Under 2 minutes", "Law 1581 of 2012"],
     dirCta: "Go to the Coffee Directory",
     sepDir: "The people behind every cup · the coffee directory",
@@ -630,12 +639,14 @@ const T: Record<Lang, Dict> = {
     dirH3: "Das offizielle Verzeichnis der Kaffeespezialisten Kolumbiens",
     dirSub: "Kaffeebauern · Baristas · Röster · Verkoster · Ausbilder — kostenlose Anmeldung",
     dirBody:
-      "Die Ebene der Menschen über unserem Ökosystem: ein öffentliches, verifiziertes Profil für jeden Kaffeeprofi des Landes, damit Produzenten, Röster und Marken Sie finden und Ihre Spezialität ohne Zwischenhändler prüfen können. Kostenlose Anmeldung, nach dem kolumbianischen Gesetz 1581 von 2012.",
+      "Die Ebene der Menschen über unserem Ökosystem: ein öffentliches, verifiziertes Profil für jeden Kaffeeprofi des Landes, damit Produzenten, Röster und Marken Sie finden und Ihre Spezialität ohne Zwischenhändler prüfen können.",
     dirPoints: [
       <><b>Verifiziertes öffentliches Profil:</b> Ihre Spezialität, Zertifikate und Erfahrung, mit dem Siegel von CTC und besserer Platzierung in der Suche</>,
       <><b>Netzwerk und Chancen:</b> vernetzen Sie sich mit anderen Spezialisten und erfahren Sie zuerst von Projekten, Messen, Stellenangeboten und Seminaren</>,
       <><b>Mit dem Ökosystem verbunden:</b> ein einziges Konto für Kaffetal Regal und Cherry Picked — der menschliche Faden von der Finca bis zur Tasse</>,
     ],
+    dirFootnote:
+      "Kostenlose Anmeldung nach dem kolumbianischen Gesetz 1581 von 2012 (Habeas Data): Ihre Daten werden nur für das Kaffee-Fachverzeichnis und offizielle Mitteilungen verwendet und ohne Ihre ausdrückliche Genehmigung nicht an Dritte weitergegeben.",
     dirSpecs: ["Kostenlose Anmeldung", "Kolumbien · landesweit", "Unter 2 Minuten", "Gesetz 1581 von 2012"],
     dirCta: "Zum Kaffee-Verzeichnis",
     sepDir: "Die Menschen hinter jeder Tasse · das Kaffee-Verzeichnis",

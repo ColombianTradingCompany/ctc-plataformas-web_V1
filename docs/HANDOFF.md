@@ -1112,6 +1112,35 @@ Tyrian. Es la única lectura en la que las cinco bandas embaldosan sin solaparse
 - **`qa-grados-check.mjs` 44 → 48**: se añadieron los cuatro límites enteros (82 · 84 · 86 · 88) uno por uno,
   que es donde un error de un punto convierte un Red en Blue y cambia lo que se cobra.
 
+## `/control-panel` fuera del sitemap y el cacao fuera del índice (2026-08-19, V4.45)
+
+Los dos últimos puntos de la lista de nueve, y los dos son de indexación.
+
+- **`/control-panel` sale del sitemap.** Es la puerta del EQUIPO —el selector de las tres consolas— y el
+  sitemap la estaba nominando a Google. Desde el 2026-08-10 el índice de la red ya no la enlaza (la sustituyó
+  `NetNewsletter`), así que **el sitemap era lo único que quedaba promocionándola**: `platform_surfaces` →
+  `en_sitemap = false`, con el motivo en su `notas`. **La página sigue en pie** en `panel.ctcexport.com` — se
+  retira la candidatura, no el acceso. Verificado: el sitemap pasa de 19 a **18** URLs.
+- **`mermas-rapida.html` gana `noindex, follow` — la segunda mitad del arreglo del 2026-08-14.** Aquel día se
+  cambió su `<title>` («para Café y Cacao») porque buscar «Colombian Trading Company» devolvía cacao. Arregló el
+  **titular**; pero un buscador indexa el **cuerpo**, y la página conserva el conmutador «Café / Cacao», la
+  sección «Diferencias Clave: Café vs. Cacao» y el «Proceso del Cacao» entero. **Verificado en vivo el
+  2026-08-19**: ahí siguen. Mientras la URL fuera indexable seguía siendo una página de cacao compitiendo por el
+  nombre de la casa.
+- ⚠️ **La herramienta no se toca**, como el 2026-08-14: el modo cacao queda entero y funcionando (el owner paró
+  la rama que quería amputarlo). `follow` deja pasar el enlace, la calculadora responde 200 y se sigue
+  compartiendo.
+- **El guardián tuvo que aprender la excepción.** `qa-tools-seo-espejo.mjs` exigía que una herramienta viva
+  NUNCA llevara `noindex`; la regla es correcta y ésta la incumple a propósito. Ahora hay una lista corta
+  `FUERA_DEL_INDICE` donde cada entrada trae su porqué, y para ellas la comprobación se invierte: exige que
+  **sí** lo lleve. *Una regla sin puerta se salta por la ventana* — sin la lista, la próxima excepción habría
+  borrado la comprobación entera.
+- ℹ️ **Lo que esto no hace**: ni el sitemap ni `noindex` borran nada del índice — Google tiene que volver a
+  rastrear. Y **Search Console no se puede mirar desde aquí**, es la cuenta del owner: se puede afirmar qué
+  sirve el sitio hoy, no qué recuerda Google.
+- ℹ️ **«Ají» no existe en el repositorio.** Las dos únicas coincidencias son la subcadena dentro de
+  «b*ají*sima cafeína». Si sale en Search Console, no viene de nada que el sitio sirva hoy.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

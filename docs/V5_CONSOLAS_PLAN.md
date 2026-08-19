@@ -1083,6 +1083,34 @@ worker narrow credential (F10, backlog).
    Detallada» tiene el id **`mermas-ctc`**; el id `mermas-detallada` es la vieja «Reporte de proceso de café»,
    que es la retirada. Fue exactamente esa confusión la que dejó a `mermas-ctc.html` describiendo la Rápida.
 
+3-ter. ✅ **`/control-panel` fuera del sitemap, y el cacao fuera del índice (2026-08-19, V4.45).** Las dos
+   últimas cosas de la lista de nueve, y las dos son de indexación.
+   **(a) `/control-panel`**: es la puerta del EQUIPO —el selector de las tres consolas— y el sitemap la estaba
+   nominando a Google. Desde el 2026-08-10 el índice de la red ya no la enlaza (la sustituyó la suscripción de
+   `NetNewsletter`), así que **el sitemap era lo único que quedaba promocionándola**. `platform_surfaces` →
+   `en_sitemap = false`, con el motivo escrito en su `notas`. La página **sigue en pie y accesible** en
+   `panel.ctcexport.com`; lo que se retira es la candidatura, no el acceso. Verificado: el sitemap pasa de 19 a
+   **18** URLs y ya no la nombra.
+   **(b) `mermas-rapida.html` gana `noindex, follow`** — y esto es **la segunda mitad del arreglo del
+   2026-08-14**. Aquel día se cambió su `<title>`, que decía «para Café y Cacao», porque buscar «Colombian
+   Trading Company» devolvía cacao. Arregló el TITULAR — pero **un buscador indexa el CUERPO**, y la página
+   conserva el conmutador «Café / Cacao», la sección «Diferencias Clave: Café vs. Cacao» y el «Proceso del
+   Cacao» entero. **Verificado en vivo el 2026-08-19**: ahí siguen. Mientras esa URL fuera indexable, seguía
+   siendo una página de cacao compitiendo por el nombre de la casa.
+   ⚠️ **LA HERRAMIENTA NO SE TOCA**, igual que el 2026-08-14: su modo cacao queda entero y funcionando (el owner
+   paró la rama que quería amputárselo). `follow` deja pasar el enlace; la calculadora responde 200 y se sigue
+   compartiendo. Lo que se quita es la candidatura al índice.
+   **El guardián tuvo que aprender la excepción**: `qa-tools-seo-espejo.mjs` exigía que una herramienta viva
+   NUNCA llevara `noindex` —regla correcta— y esta la incumple a propósito. Ahora hay una lista corta
+   `FUERA_DEL_INDICE` en la que cada entrada trae su porqué, y para las que están en ella el guardián invierte la
+   comprobación: exige que **sí** lo lleven. Verificado por los dos lados.
+   ℹ️ **Lo que esto NO hace**: sacar algo del sitemap o marcarlo `noindex` no lo borra del índice — Google tiene
+   que volver a rastrear. Y **Search Console no se puede mirar desde aquí**: es la cuenta del owner. Lo que se
+   puede afirmar es qué sirve el sitio hoy, no qué recuerda Google.
+   ℹ️ **Y sobre el «ají»**: no existe en el repositorio. Las únicas dos coincidencias son la subcadena dentro de
+   «b-ají-sima cafeína» en las descripciones de variedades. Si aparece en Search Console, no sale de nada que el
+   sitio sirva hoy.
+
 4. **The empty OneDrive folder stays.** `…/OneDrive/Desktop/CTC Web Platform` is empty since the migration and
    **is not going to be deleted** — Claude Code has it locked as this session's working directory and the owner
    confirmed (2026-08-17) it cannot be removed from the chat. It is inert; ignore it. The workspace is

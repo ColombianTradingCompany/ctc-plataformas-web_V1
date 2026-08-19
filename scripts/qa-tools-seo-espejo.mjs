@@ -41,6 +41,21 @@ if (!url || !service) {
   process.exit(1);
 }
 
+// Herramientas VIVAS que, a propósito, no van al índice. La lista es corta y se
+// amplía a mano: cada línea tiene que traer su porqué.
+//
+//   · mermas-rapida — es la segunda mitad del arreglo del 2026-08-14. El <title>
+//     decía «para Café y Cacao» y buscar «Colombian Trading Company» devolvía
+//     cacao; se cambió el título ese día. Pero un buscador indexa el CUERPO, y la
+//     página conserva el conmutador Café/Cacao, «Diferencias Clave: Café vs.
+//     Cacao» y el «Proceso del Cacao» entero — verificado en vivo el 2026-08-19.
+//     El cacao dejó de ser producto de la casa; la HERRAMIENTA no se toca (el
+//     owner paró la rama que quería amputarle el modo cacao). Se le quita la
+//     candidatura al índice, no la vida: `follow`, sigue abriendo y compartiendo.
+const FUERA_DEL_INDICE = {
+  "mermas-rapida": "cacao en el cuerpo; producto retirado (2026-08-19, V4.45)",
+};
+
 let ok = 0;
 const fallos = [];
 const check = (n, c) => (c ? ok++ : fallos.push(n));
@@ -102,7 +117,18 @@ for (const t of tools) {
   const arch = delArchivo(v.src_publico);
   // Y al revés: una herramienta viva NUNCA debe llevar noindex. Reactivar una
   // archivada sin quitarle la etiqueta la dejaría publicada e invisible.
-  check(`${t.id}: viva, y sin noindex`, !arch.robots.includes("noindex"));
+  //
+  // Salvo excepción DECLARADA. Una regla sin puerta se salta por la ventana: el
+  // día que haga falta una excepción, o alguien borra la comprobación entera o
+  // la deja fallando para siempre. Mejor una lista corta, con el motivo escrito
+  // al lado, que hay que ampliar a mano.
+  if (t.id in FUERA_DEL_INDICE) {
+    check(`${t.id}: excepción declarada, y de verdad lleva noindex`, arch.robots.includes("noindex"));
+    // Aunque no la indexe nadie, sigue siendo una URL pública que alguien abre
+    // desde un enlace: su descripción y su idioma se comprueban igual.
+  } else {
+    check(`${t.id}: viva, y sin noindex`, !arch.robots.includes("noindex"));
+  }
 
   // Lo que importa: que el inventario del ECP diga lo que dice el archivo.
   check(`${t.id}: el archivo tiene descripción`, !!arch.desc);

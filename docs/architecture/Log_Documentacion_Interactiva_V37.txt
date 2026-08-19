@@ -683,4 +683,4 @@ APP_VERSION 4.44 → 4.45.
   arranca la etapa siguiente, **«Launch Beta Testing»**.
 - Para el DICT: la ficha `versionado` debe recoger el hito y su nombre.
 - Cambio de código: solo `src/lib/version.ts` (la insignia pasa a decir V5.0 en las 19 superficies).
-(commit: PENDIENTE)
+(commit: 388af4e)

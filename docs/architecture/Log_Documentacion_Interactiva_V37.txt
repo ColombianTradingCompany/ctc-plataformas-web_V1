@@ -649,6 +649,13 @@ APP_VERSION 4.43 → 4.44.
   2026-08-10 el índice de la red ya no la enlaza —la sustituyó `NetNewsletter`—, así que **el sitemap era lo
   único que seguía nominándola a Google**. `platform_surfaces` → `en_sitemap = false`, con el motivo en `notas`.
   **La página sigue en pie** en `panel.ctcexport.com`. Verificado: el sitemap pasa de 19 a **18** URLs.
+- ⚠️ **AÑADIDO TRAS EL SELLADO — el atajo tuvo precio.** (a) se aplicó con un `update` directo a
+  `platform_surfaces`, no por el módulo. `guardarSuperficie` hace TRES cosas y el SQL hizo una: escribe la fila
+  ✅ · **invalida la caché** (`unstable_cache` + `TAG_SUPERFICIES`) ❌ · deja rastro en `audit_log` y
+  `actualizado_at/por` ❌. **El sitemap en producción sirve la copia vieja hasta `revalidate: 3600`** — una hora
+  como mucho. La verificación local no lo vio: `next start` recién construido arranca con caché fría. Bien en
+  local, viejo en producción — la trampa de siempre, esta vez en el arreglo. **Cierre**: Guardar esa fila desde
+  ECP → Manejo de Plataformas invalida al instante y firma el cambio.
 - **`mermas-rapida.html` gana `noindex, follow`: la SEGUNDA MITAD del arreglo del 2026-08-14.** Aquel día se
   cambió el `<title>` («para Café y Cacao») porque buscar «Colombian Trading Company» devolvía cacao. Arregló el
   TITULAR — pero un buscador indexa el CUERPO, y la página conserva el conmutador «Café / Cacao», «Diferencias

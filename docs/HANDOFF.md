@@ -1121,6 +1121,16 @@ Los dos últimos puntos de la lista de nueve, y los dos son de indexación.
   `NetNewsletter`), así que **el sitemap era lo único que quedaba promocionándola**: `platform_surfaces` →
   `en_sitemap = false`, con el motivo en su `notas`. **La página sigue en pie** en `panel.ctcexport.com` — se
   retira la candidatura, no el acceso. Verificado: el sitemap pasa de 19 a **18** URLs.
+- ⚠️ **Y una advertencia sobre CÓMO se aplicó, porque el atajo tuvo precio.** Se hizo con un `update` directo a
+  `platform_surfaces` en vez de por el módulo del ECP. La fila quedó bien, pero `guardarSuperficie` hace **tres**
+  cosas y el SQL hizo una: escribe la fila ✅ · **invalida la caché** (`overridesDeSuperficies` va por
+  `unstable_cache` con la etiqueta `TAG_SUPERFICIES`) ❌ · deja **rastro** en `audit_log` y en
+  `actualizado_at`/`actualizado_por` ❌ — esa fila sigue fechada el 2026-08-15 y sin autor.
+  **Consecuencia real**: el sitemap en producción sirve la copia vieja hasta que caduque `revalidate: 3600`,
+  como mucho una hora. **La verificación local no lo vio** porque un `next start` recién construido arranca con
+  la caché fría — la misma trampa de siempre (bien en local, viejo en producción), esta vez en el arreglo y no
+  en el código. **Cierre limpio**: Guardar esa fila desde ECP → Manejo de Plataformas dispara la invalidación al
+  instante y firma el cambio.
 - **`mermas-rapida.html` gana `noindex, follow` — la segunda mitad del arreglo del 2026-08-14.** Aquel día se
   cambió su `<title>` («para Café y Cacao») porque buscar «Colombian Trading Company» devolvía cacao. Arregló el
   **titular**; pero un buscador indexa el **cuerpo**, y la página conserva el conmutador «Café / Cacao», la

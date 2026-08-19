@@ -1091,6 +1091,22 @@ worker narrow credential (F10, backlog).
    `en_sitemap = false`, con el motivo escrito en su `notas`. La página **sigue en pie y accesible** en
    `panel.ctcexport.com`; lo que se retira es la candidatura, no el acceso. Verificado: el sitemap pasa de 19 a
    **18** URLs y ya no la nombra.
+   ⚠️ **CÓMO SE APLICÓ (a), Y LO QUE ESO SE DEJÓ FUERA.** El cambio se hizo con un `update` directo a
+   `platform_surfaces`, no por el módulo del ECP. La fila quedó bien —`en_sitemap = false`—, pero el camino del
+   panel hace **tres cosas** y el SQL solo hizo una:
+   1. escribe la fila ✅;
+   2. **invalida la caché** — `overridesDeSuperficies` va por `unstable_cache` con la etiqueta
+      `TAG_SUPERFICIES`, y `guardarSuperficie` la marca rancia con `revalidateTag`. Sin esa señal, **el sitemap
+      en producción sigue sirviendo la copia vieja hasta que caduque la red de seguridad de `revalidate: 3600`**
+      — como mucho una hora. El comentario del propio `plataformasActions.ts` lo advierte por escrito;
+   3. deja **rastro**: una fila en `audit_log` y el `actualizado_at`/`actualizado_por` de quién lo tocó. El
+      `actualizado_at` de esa fila sigue diciendo **2026-08-15** y `actualizado_por` sigue en `null`.
+   **La verificación local no lo detectó** porque un `next start` recién construido arranca con la caché fría:
+   el sitemap salió correcto al primer intento. Es exactamente la trampa de esta familia — bien en local, viejo
+   en producción — y esta vez cayó en el arreglo, no en el código.
+   **Cierre limpio**: abrir ECP → Manejo de Plataformas y **Guardar** esa fila (el interruptor ya aparece
+   apagado). Eso dispara la invalidación al instante y deja el rastro a nombre del owner. Si no, se arregla solo
+   dentro de la hora.
    **(b) `mermas-rapida.html` gana `noindex, follow`** — y esto es **la segunda mitad del arreglo del
    2026-08-14**. Aquel día se cambió su `<title>`, que decía «para Café y Cacao», porque buscar «Colombian
    Trading Company» devolvía cacao. Arregló el TITULAR — pero **un buscador indexa el CUERPO**, y la página

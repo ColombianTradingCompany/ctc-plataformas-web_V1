@@ -104,6 +104,8 @@ export type ToolAdmin = ToolPublico & {
   orden: number;
   metaDescription: string | null;
   archivada: boolean;
+  /** true = la versión publicada habla el puente de trabajos (A11). */
+  soportaMemoria: boolean;
   versionPublicadaId: string | null;
   versiones: ToolVersion[];
 };

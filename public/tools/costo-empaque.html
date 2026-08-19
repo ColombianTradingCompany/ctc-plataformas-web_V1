@@ -1612,5 +1612,11 @@ $('mName').value = 'Selladora al vacío · café';
 fillFilters('mach'); fillFilters('bag');
 applyLang();
 </script>
+<!-- CTC Tools Bridge (A11, 2026-08-19): con esta línea la herramienta gana
+     TRABAJOS guardados cuando se abre dentro de la concha de la plataforma —
+     el puente serializa los campos del formulario y la concha los guarda en la
+     cuenta del usuario. Abierta suelta (sin concha), el puente queda inerte y
+     la herramienta sigue funcionando sola y sin internet, como siempre. -->
+<script src="/tools/ctc-bridge.js"></script>
 </body>
 </html>

@@ -1,0 +1,59 @@
+/* El taller (A8/A9): la rejilla de trabajo, ya con sesión. Sobria — lo que
+   tiene que llamar la atención es la herramienta, no la tarjeta. */
+.marco { max-width: 1180px; margin: 0 auto; padding: 26px 20px 70px; }
+
+.cabeza { margin-bottom: 22px; }
+.cabeza h1 { margin: 0 0 6px; font-size: 26px; }
+.cabeza p { margin: 0; font-size: 14.5px; color: var(--muted, #7d6c5d); max-width: 68ch; line-height: 1.6; }
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.tarjeta:hover { border-color: var(--accent, #b8863b); transform: translateY(-2px); }
+
+.fila { display: flex; align-items: center; gap: 8px; }
+.fila h2 { margin: 0; font-size: 16px; flex: 1; }
+.tarjeta p { margin: 0; font-size: 13px; color: var(--muted, #7d6c5d); line-height: 1.5; flex: 1; }
+
+.sello {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.selloAbre { background: #e2efe8; color: #2f6b4f; }
+.selloPlus { background: #f3e3d6; color: #8c4a1f; }
+.selloMemoria { background: #e7e9f4; color: #3c4a86; }
+
+.pie { display: flex; justify-content: flex-end; }
+.pie span { font-size: 12.5px; font-weight: 600; }
+
+.avisoMembresia {
+  margin: 0 0 18px;
+  padding: 13px 16px;
+  border: 1px solid var(--line, #e6ddd1);
+  border-left: 3px solid var(--accent, #b8863b);
+  border-radius: 0 10px 10px 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted, #7d6c5d);
+  background: var(--card, #fff);
+}

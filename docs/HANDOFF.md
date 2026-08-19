@@ -1158,6 +1158,29 @@ El owner declaró la quinta generación al cerrar TODO el ciclo del plan V5: los
 estable sobre el que arranca la etapa siguiente, **«Launch Beta Testing»**. La insignia de las 19 superficies
 dice V5.0; el racional del hito vive en el comentario de `src/lib/version.ts`, junto a los de V2–V4.
 
+## Herramientas del Café → el Taller con trabajos guardados (2026-08-19, V5.4)
+
+La revisión V5.0 del owner (bloque A, puntos A8–A11) convirtió la superficie en una
+aplicación semi-independiente. **El documento de referencia es
+`docs/HERRAMIENTAS_TALLER.md`** — léelo antes de tocar `/herramientas` o de subir una
+herramienta que guarde trabajo. En una línea por pieza:
+
+- Landing = carrusel de capturas (`CarruselHerramientas`, cinta rAF; capturas por
+  `scripts/build-tool-shots.mjs` + playwright, comiteadas como las tarjetas OG). Ya no abre
+  herramientas.
+- `/herramientas/acceso` + `/herramientas/taller` + `/herramientas/taller/[slug]`: la puerta
+  (identidad única — KR, CP **o DC**, membresía ampliada en `accesoHerramienta.ts`), la rejilla
+  con las Plus LISTADAS con candado (A9), y la concha como tercer inquilino (superficie
+  `herramientas` en `volverSeguro.ts`; el taller no filtra por la columna `web` — es la casa).
+- Trabajos: `tool_sessions` (service-role-only) + `src/lib/tools/trabajos.ts` (sesión +
+  veredicto + propiedad en cada verbo; 200 KB/estado, 40 trabajos/herramienta) +
+  `public/tools/ctc-bridge.js` (una línea en el HTML + marca «Con memoria» en el ECP) + el Home
+  Menu de `SesionHerramienta.tsx`. Referencia viva: `costo-empaque`.
+- `CTC.emitir()` → `integration_events` (`it_plataforma`, `herramienta.<id>.<evento>`): el canal
+  para «empujar info al resto del ecosistema».
+- Guardianes: `qa-taller-check.mjs` (nuevo) y `qa-herramientas-acceso-check.mjs` (aprende la
+  puerta del DC).
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { NOMBRE_SUPERFICIE, vueltaSegura, type SuperficieHerramientas } from "@/lib/tools/volverSeguro";
 import { MOTIVO_COPY, type Veredicto } from "@/lib/tools/accesoHerramienta";
 import { SolicitarHerramienta } from "./SolicitarHerramienta";
+import { SesionHerramienta } from "./SesionHerramienta";
 import styles from "./ConchaHerramienta.module.css";
 
 // ── La concha de una herramienta DENTRO de la webapp (A5, V4.34) ────────────
@@ -32,6 +33,7 @@ export function ConchaHerramienta({
   src,
   veredicto,
   toolId,
+  soportaMemoria = false,
 }: {
   superficie: SuperficieHerramientas;
   volver: string | null;
@@ -41,6 +43,9 @@ export function ConchaHerramienta({
   src: string;
   veredicto: Veredicto;
   toolId: string;
+  /** true = la herramienta habla el puente y la concha antepone el Home Menu
+   *  de trabajos (A11). false = se abre directa, como siempre. */
+  soportaMemoria?: boolean;
 }) {
   const destino = vueltaSegura(volver, superficie);
   const casa = NOMBRE_SUPERFICIE[superficie];
@@ -63,7 +68,11 @@ export function ConchaHerramienta({
       </header>
 
       {veredicto.abre ? (
-        <iframe className={styles.marco} src={src} title={`Herramienta: ${nombre}`} loading="lazy" />
+        soportaMemoria ? (
+          <SesionHerramienta toolId={toolId} nombre={nombre} src={src} />
+        ) : (
+          <iframe className={styles.marco} src={src} title={`Herramienta: ${nombre}`} loading="lazy" />
+        )
       ) : (
         <div className={styles.bloqueada}>
           <p className={styles.motivo}>{MOTIVO_COPY[veredicto.motivo]}</p>

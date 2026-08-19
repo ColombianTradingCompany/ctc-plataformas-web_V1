@@ -1,33 +1,41 @@
-﻿import { superficieConOverrides } from "@/lib/seo/openGraph";
+import { superficieConOverrides } from "@/lib/seo/openGraph";
 import { OrganizationLd } from "@/components/JsonLd";
 import { LangProvider } from "@/components/lang/i18n";
-import { loadToolAccess } from "@/lib/tools/toolAccess";
+import { cargarTaller } from "@/lib/tools/taller";
 import { HerramientasLanding } from "@/components/services/HerramientasLanding";
 
 export const generateMetadata = superficieConOverrides({
   route: "/herramientas",
   title: "Herramientas del Café · Calculadoras y utilidades del oficio · Colombian Trading Company",
   description:
-    "Las herramientas de trabajo de la red CTC, abiertas al gremio: calculadoras de mermas y factor de rendimiento, la rueda del sabor, el disco Agtron y más. Gratis, sin instalación y funcionan sin internet.",
+    "El taller de la red CTC, abierto al gremio: calculadoras de mermas y factor de rendimiento, la rueda del sabor, el disco Agtron y más — con trabajos guardados en tu cuenta de la red.",
   siteName: "Herramientas del Café · CTC",
   image: "herramientas.jpg",
   imageAlt: "Logotipo de Herramientas del Café sobre fondo azul corporativo",
 });
 
-// La lista llega YA FILTRADA por el servidor: qué herramienta ve un visitante
-// anónimo (Default) y cuáles se suman con una cuenta de la red (Plus) lo decide
-// el registro `tools`, administrado en ECP → Herramientas del café. Se rinde por
-// request a propósito (la sesión cambia el reparto, y publicar una versión nueva
-// tiene que verse sin esperar a un deploy).
+// A8 (2026-08-19): la landing dejó de abrir herramientas. Enseña el catálogo
+// entero en el carrusel de capturas y manda al taller, que es donde se trabaja
+// con la cuenta de la red. Se rinde por request: publicar una herramienta nueva
+// tiene que verse aquí sin esperar a un deploy, y la sesión decide el CTA.
 export const dynamic = "force-dynamic";
 
 export default async function HerramientasPage() {
-  const access = await loadToolAccess("web");
+  const taller = await cargarTaller();
   return (
     <div data-theme="ctc-home">
       <OrganizationLd />
       <LangProvider storageKey="ctc-lang">
-        <HerramientasLanding tools={access.tools} isPlus={access.isPlus} lockedCount={access.lockedCount} />
+        <HerramientasLanding
+          tarjetas={taller.herramientas.map((h) => ({
+            id: h.id,
+            nombre: h.nombre,
+            descripcion: h.descripcion,
+            esPlus: h.esPlus,
+            soportaMemoria: h.soportaMemoria,
+          }))}
+          autenticado={taller.autenticado}
+        />
       </LangProvider>
     </div>
   );

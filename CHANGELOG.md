@@ -19,6 +19,47 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.4] — 2026-08-19 (commit pendiente)
+
+- **Hito** (A8–A11): **Herramientas del Café se convierte en una aplicación semi-independiente**
+  — el owner lo pidió así en la revisión V5.0: subir versiones y apps nuevas continuamente,
+  conectadas a base de datos para que los usuarios conserven su trabajo, y capaces de empujar
+  información al resto del ecosistema. Documento de referencia: `docs/HERRAMIENTAS_TALLER.md`.
+- **Cambiado** (A8): la landing **ya no abre herramientas** — enseña un **carrusel de capturas
+  reales** (cinta rAF como el Sneak Peek: velocidad sin saltos, pausa al pasar, respeta
+  `prefers-reduced-motion`) con nombre y descripción, y manda al taller. Capturas por
+  `scripts/build-tool-shots.mjs` (playwright, devDependency; 11/11 generadas y comiteadas — el
+  modelo de las tarjetas OG). Una herramienta sin captura cae a tarjeta de texto, no a un hueco.
+- **Añadido** (A8): la **puerta** `/herramientas/acceso` — la identidad única de la red: entra la
+  misma cuenta de Kaffetal Regal, Cherry Picked **o el Directorio del Café** (la membresía ganó
+  la tercera puerta en `accesoHerramienta.ts` / `matriz.ts`; la cookie ya viajaba entre
+  subdominios). Sin registro aparte; con sesión, la puerta ni se ve.
+- **Añadido** (A9): el **taller** `/herramientas/taller` — todo el catálogo compartible con el
+  estado a la vista: una Plus bloqueada **se lista** con candado y «Solicitar» (antes ni salía;
+  el owner lo señaló con razón). El taller no filtra por la columna `web`: es la casa de las
+  herramientas; el reparto por superficie sigue mandando en KR/CP/DC.
+- **Corregido** (A10): en la superficie web ahora EXISTE dónde solicitar una Plus — la concha
+  bloqueada ofrece el «Solicitar» de siempre (`tool_access_requests` → se concede a mano en el
+  ECP, como estaba diseñado).
+- **Añadido** (A11): **trabajos guardados** — el Home Menu que pidió el owner («a name and a time
+  stamp list to retrieve them»): crear con nombre, retomar, borrar; autoguardado con indicador
+  veraz («Guardando…» / «Guardado HH:MM» / el error). `tool_sessions` service-role-only; cada
+  verbo comprueba sesión + veredicto + propiedad; techos de 200 KB y 40 trabajos.
+- **Añadido** (A11): el **puente** `public/tools/ctc-bridge.js` — una herramienta se vuelve «con
+  memoria» con UNA línea en su HTML + la marca «Con memoria (puente)» en el ECP. Serializa los
+  campos solo (o `CTC.usarEstado` para estado propio) y expone `CTC.emitir()` →
+  `integration_events` (`it_plataforma`), el canal para empujar al ecosistema. Referencia viva:
+  `costo-empaque`. La concha valida `source` y `origin` y nunca habla con `*`.
+- **Datos**: `tool_sessions` (RLS encendida, cero políticas) + `tools.soporta_memoria`;
+  el ECP gana la casilla en la ficha de cada herramienta.
+- **Añadido**: guardián `qa-taller-check.mjs` (25) — propiedad en cada verbo, validación de
+  origen del puente, el redirect fuera del try, la trampa del `%20` de `pathname` en Windows
+  (pagada una vez: la primera corrida de capturas escribió once archivos en una carpeta
+  literal `%20` sin fallar nada). `qa-herramientas-acceso-check` aprende la puerta del DC
+  (26 → 31).
+- **Docs**: `docs/HERRAMIENTAS_TALLER.md` + sección en el HANDOFF. Pendiente a propósito:
+  Google OAuth en la puerta (exige callback + allowlist de Supabase) y capturas por versión.
+
 ## [V5.3] — 2026-08-19 (commit 5c20bc4)
 
 - **Cambiado** (A4, CTC Home): en el índice de la red, **Herramientas del Café y Varietales

@@ -30,18 +30,34 @@ const base = {
   autenticado: true,
   esProductor: false,
   esComprador: false,
+  esDirectorio: false,
   permisosPorHerramienta: [],
   comodinPlusHeredado: false,
 };
 const productor = { ...base, esProductor: true };
 const comprador = { ...base, esComprador: true };
+const directorio = { ...base, esDirectorio: true };
 const anonimo = { ...base, autenticado: false };
 
-// ── 1. La membresía: productor O comprador ────────────────────────────────
+// ── 1. La membresía: productor, comprador O experto del DC (A8, V5.4) ──────
 check("un productor es miembro", esMiembroHC(productor));
 check("un comprador es miembro", esMiembroHC(comprador));
-check("una cuenta sin ninguna de las dos NO es miembro", !esMiembroHC(base));
+check("un experto del Directorio es miembro (la tercera puerta, A8)", esMiembroHC(directorio));
+check("una cuenta sin ninguna de las tres NO es miembro", !esMiembroHC(base));
 check("y sin sesión tampoco", !esMiembroHC({ ...productor, autenticado: false }));
+check("el DC abre una default", puedeAbrir(directorio, "agtron", "default").abre === true);
+check(
+  "el DC sin permiso NO abre una plus — mismo trato que las otras dos puertas",
+  puedeAbrir(directorio, "cogs-verde", "plus").motivo === "sin-permiso"
+);
+check(
+  "los motivos nombran al Directorio: sin-cuenta",
+  MOTIVO_COPY["sin-cuenta"].includes("Directorio")
+);
+check(
+  "los motivos nombran al Directorio: sin-membresia",
+  MOTIVO_COPY["sin-membresia"].includes("Directorio")
+);
 
 // ── 2. Las `default` se abren con ser miembro ─────────────────────────────
 check("productor abre una default", puedeAbrir(productor, "agtron", "default").abre === true);

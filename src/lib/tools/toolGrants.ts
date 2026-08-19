@@ -39,6 +39,7 @@ export async function contextoDeAcceso(): Promise<ContextoAcceso> {
       autenticado: false,
       esProductor: false,
       esComprador: false,
+      esDirectorio: false,
       permisosPorHerramienta: [],
       comodinPlusHeredado: false,
     };
@@ -69,6 +70,7 @@ export async function contextoDeAcceso(): Promise<ContextoAcceso> {
     autenticado: true,
     esProductor: m.productor,
     esComprador: m.compradorReal,
+    esDirectorio: m.directorio,
     permisosPorHerramienta: vigentes,
     comodinPlusHeredado: (comodin?.length ?? 0) > 0,
   };

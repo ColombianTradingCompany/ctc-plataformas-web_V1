@@ -35,6 +35,10 @@ export type ContextoAcceso = {
   /** Membresías que ya calcula `identidad/matriz.ts`. */
   esProductor: boolean;
   esComprador: boolean;
+  /** Experto del Directorio del Café (A8, 2026-08-19): la tercera puerta.
+   *  El owner la sumó en la revisión V5.0 — «un login que puede coincidir con
+   *  las credenciales del DC y de KR o CP». */
+  esDirectorio: boolean;
   /** Permisos por herramienta concedidos a ESTA persona (ids de `tools`). */
   permisosPorHerramienta: readonly string[];
   /** ¿Arrastra el comodín viejo por audiencia? */
@@ -48,12 +52,13 @@ export type Veredicto =
 /**
  * ¿Esta identidad es miembro de Herramientas del Café?
  *
- * Productor de KR **o** comprador de CP. No hay tercera identidad, y por la
- * exclusión de la matriz nadie puede ser las dos — así que esto es un O real,
- * no un caso a medias.
+ * Productor de KR, comprador de CP **o** experto del Directorio (A8, revisión
+ * V5.0). Sigue sin haber una cuarta identidad: son las puertas que ya existen.
+ * La exclusión productor ⊕ comprador se mantiene; el DC compone con cualquiera
+ * de las dos, así que esto es un O de tres patas sin casos a medias.
  */
 export function esMiembroHC(ctx: ContextoAcceso): boolean {
-  return ctx.autenticado && (ctx.esProductor || ctx.esComprador);
+  return ctx.autenticado && (ctx.esProductor || ctx.esComprador || ctx.esDirectorio);
 }
 
 /**
@@ -80,9 +85,9 @@ export function puedeAbrir(ctx: ContextoAcceso, herramientaId: string, nivel: Ni
 /** El texto que ve la persona cuando no puede abrir. Uno por motivo. */
 export const MOTIVO_COPY: Record<Exclude<Veredicto, { abre: true }>["motivo"], string> = {
   "sin-cuenta":
-    "Entre con su cuenta de Kaffetal Regal o de Cherry Picked para usar las herramientas.",
+    "Entre con su cuenta de Kaffetal Regal, de Cherry Picked o del Directorio del Café para usar las herramientas.",
   "sin-membresia":
-    "Herramientas del Café es para productores de Kaffetal Regal y compradores de Cherry Picked. Su cuenta todavía no es ninguna de las dos.",
+    "Herramientas del Café es para productores de Kaffetal Regal, compradores de Cherry Picked y expertos del Directorio del Café. Su cuenta todavía no es ninguna de las tres.",
   "sin-permiso":
     "Esta herramienta se activa por solicitud. Pídala y CTC la habilita en su cuenta.",
 };

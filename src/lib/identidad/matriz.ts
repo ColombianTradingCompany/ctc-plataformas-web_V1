@@ -97,25 +97,27 @@ export async function puedeSer(profileId: string, objetivo: ObjetivoMembresia): 
 
     case "herramientas":
       // Herramientas del Café se entra con la cuenta que YA se tiene: productor
-      // de Kaffetal Regal o comprador de Cherry Picked. Es un O real y no un
-      // caso a medias, porque la exclusión de arriba impide ser las dos.
-      if (m.productor || m.compradorReal) return { permitido: true };
+      // de Kaffetal Regal, comprador de Cherry Picked o experto del Directorio
+      // (la tercera puerta la sumó el owner en la revisión V5.0 · A8). La
+      // exclusión de arriba impide ser productor y comprador a la vez; el DC
+      // compone con cualquiera de los dos.
+      if (m.productor || m.compradorReal || m.directorio) return { permitido: true };
       if (m.recolector)
         return {
           permitido: false,
           motivo:
-            "Las Herramientas del Café son para productores de Kaffetal Regal y compradores de Cherry Picked. Una cuenta de recolector de Terratalento no las abre.",
+            "Las Herramientas del Café son para productores de Kaffetal Regal, compradores de Cherry Picked y expertos del Directorio. Una cuenta de recolector de Terratalento, sola, no las abre.",
         };
       if (m.socio)
         return {
           permitido: false,
           motivo:
-            "Las Herramientas del Café son para productores y compradores. Una credencial de nodo de la Red de Socios no las abre.",
+            "Las Herramientas del Café son para productores, compradores y expertos del Directorio. Una credencial de nodo de la Red de Socios no las abre.",
         };
       return {
         permitido: false,
         motivo:
-          "Las Herramientas del Café son para productores de Kaffetal Regal y compradores de Cherry Picked. Regístrese en una de las dos y quedan disponibles.",
+          "Las Herramientas del Café son para productores de Kaffetal Regal, compradores de Cherry Picked y expertos del Directorio del Café. Regístrese en una de las tres y quedan disponibles.",
       };
 
     case "comprador":

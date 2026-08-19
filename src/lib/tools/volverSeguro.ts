@@ -16,17 +16,21 @@
 // de la superficie que abrió la herramienta. Cualquier otra cosa cae al inicio
 // de esa superficie, que siempre es un destino válido.
 
-export type SuperficieHerramientas = "kaffetal-regal" | "cherry-picked-green";
+// "herramientas" (A8/A11, 2026-08-19): la superficie propia — el taller de
+// herramientas.ctcexport.com — abre las herramientas DENTRO, igual que KR y CP.
+export type SuperficieHerramientas = "kaffetal-regal" | "cherry-picked-green" | "herramientas";
 
 /** El inicio de cada superficie. Es el destino cuando no hay vuelta fiable. */
 export const INICIO: Record<SuperficieHerramientas, string> = {
   "kaffetal-regal": "/kaffetal-regal",
   "cherry-picked-green": "/cherry-picked-green",
+  herramientas: "/herramientas",
 };
 
 export const NOMBRE_SUPERFICIE: Record<SuperficieHerramientas, string> = {
   "kaffetal-regal": "Kaffetal Regal",
   "cherry-picked-green": "Cherry Picked",
+  herramientas: "Herramientas del Café",
 };
 
 /**

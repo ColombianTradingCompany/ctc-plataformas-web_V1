@@ -169,6 +169,10 @@ export type FichaTool = {
   web: boolean;
   dc: boolean;
   orden: number;
+  /** ¿La versión publicada incluye /tools/ctc-bridge.js? Marca a mano del
+   *  owner al publicar una versión que lo incorpore (A11): enciende el Home
+   *  Menu de trabajos en la concha. */
+  soportaMemoria: boolean;
 };
 
 export async function guardarFicha(toolId: string, ficha: FichaTool): Promise<ActionResult> {
@@ -195,6 +199,7 @@ export async function guardarFicha(toolId: string, ficha: FichaTool): Promise<Ac
       web: ficha.web,
       dc: ficha.dc,
       orden: ficha.orden,
+      soporta_memoria: ficha.soportaMemoria,
     })
     .eq("id", toolId);
   if (error) return { ok: false, error: error.message };

@@ -224,6 +224,7 @@ function Ficha({
     web: tool.web,
     dc: tool.dc,
     orden: tool.orden,
+    soportaMemoria: tool.soportaMemoria,
   });
 
   const interna = f.clase === "interna";
@@ -344,6 +345,15 @@ function Ficha({
               {label}
             </label>
           ))}
+          <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }} title="La versión publicada incluye /tools/ctc-bridge.js: la concha ofrece trabajos guardados">
+            <input
+              type="checkbox"
+              checked={f.soportaMemoria}
+              disabled={interna}
+              onChange={(e) => set("soportaMemoria", e.target.checked)}
+            />
+            Con memoria (puente)
+          </label>
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
             Nivel
             <select

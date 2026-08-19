@@ -66,3 +66,64 @@
   resize: vertical;
 }
 .bloqueada label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+
+/* ── El Home Menu de los trabajos (A11, 2026-08-19) ─────────────────────────
+   Es una antesala, no una pantalla aparte: misma caja del marco, contenido de
+   menú. Los botones de acción van abajo a la derecha, apilados — la convención
+   de la casa. */
+.menuCargando { margin: 0; padding: 22px; color: var(--muted, #7d6c5d); font-size: 14px; }
+
+.menuTrabajos {
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 10px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--card, #fff);
+}
+.menuCabeza h2 { margin: 0 0 4px; font-size: 17px; }
+.menuCabeza p { margin: 0; font-size: 13.5px; color: var(--muted, #7d6c5d); max-width: 62ch; line-height: 1.55; }
+
+.menuError { margin: 0; font-size: 13.5px; color: #a2332a; }
+.menuVacio { margin: 0; font-size: 14px; color: var(--muted, #7d6c5d); }
+
+.menuLista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.menuLista li {
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--line, #e6ddd1);
+}
+.menuLista li:last-child { border-bottom: 0; }
+.menuAbrir {
+  flex: 1; text-align: left; background: none; border: 0; cursor: pointer;
+  padding: 11px 6px; display: flex; flex-direction: column; gap: 2px; font: inherit;
+}
+.menuAbrir:hover b { text-decoration: underline; }
+.menuAbrir b { font-size: 14.5px; }
+.menuAbrir span { font-size: 12px; color: var(--muted, #7d6c5d); font-variant-numeric: tabular-nums; }
+.menuBorrar {
+  background: none; border: 0; cursor: pointer; font: inherit;
+  font-size: 12px; color: var(--muted, #7d6c5d); padding: 6px 8px; flex: none;
+}
+.menuBorrar:hover { color: #a2332a; text-decoration: underline; }
+
+.menuNuevo { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line, #e6ddd1); padding-top: 16px; }
+.menuNuevo input {
+  font: inherit; font-size: 14px; padding: 9px 11px;
+  border: 1px solid var(--line, #e6ddd1); border-radius: 8px; width: 100%;
+}
+.menuAcciones { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+
+/* La sesión abierta: una barra fina y el marco de siempre. */
+.sesion { display: flex; flex-direction: column; flex: 1; min-height: 68vh; }
+.sesionBarra {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 0 2px 8px;
+}
+.sesionVolver {
+  background: none; border: 0; cursor: pointer; font: inherit;
+  font-size: 13px; font-weight: 600; padding: 0;
+}
+.sesionVolver:hover { text-decoration: underline; }
+.sesionNombre { font-size: 13px; font-weight: 600; }
+.sesionGuardado { font-size: 12px; color: var(--muted, #7d6c5d); margin-left: auto; font-variant-numeric: tabular-nums; }

@@ -34,6 +34,7 @@ export default async function HerramientaCpPage({
         esPlus={h.esPlus}
         src={h.src}
         veredicto={h.veredicto}
+        soportaMemoria={h.soportaMemoria}
       />
     </main>
   );

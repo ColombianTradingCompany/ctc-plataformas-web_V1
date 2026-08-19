@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.7] — 2026-08-20 (commit pendiente)
+## [V5.7] — 2026-08-20 (commit efd3633)
 
 - **Cambiado** (owner): el taller deja la lista por **CARÁTULAS que voltean** — la captura es la
   portada; tocarla gira la tarjeta (rotateY, la mecánica del Sneak Peek) y el reverso trae el

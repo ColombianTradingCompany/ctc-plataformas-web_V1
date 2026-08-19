@@ -610,3 +610,33 @@ APP_VERSION 4.41 → 4.42.
   qa-sneak-peek 194/0 · qa-grados OK · qa-docs 14/14 · qa-encoding.
 APP_VERSION 4.42 → 4.43.
 (commit: 6398217)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.44 · La escala de grados es DE DOS EN DOS (corrección del owner)
+- ⚠️ **NODO CRÍTICO PARA EL DICT.** `definicion.ts` afirmaba desde el 2026-08-05: Black 80–82.99 · Red 83–84.99
+  · Blue 85–86.99 · Gold 87–87.99 · Tyrian 88–100. **La escala real es**: **Black 80–82 · Red 82–84 · Blue
+  84–86 · Gold 86–88 · Tyrian 88+** → con la convención del archivo, **80–81.99 · 82–83.99 · 84–85.99 ·
+  86–87.99 · 88–100**. **El límite es siempre del grado de ARRIBA**: 84.00 es Blue, 88.00 es Tyrian.
+- ⚠️ **LA LECCIÓN, y duele**: en V4.43 (horas antes) se anotó que «la escala de Notion nunca estuvo mal» porque
+  coincidía EXACTAMENTE con `definicion.ts`. Coincidía, **y las dos estaban mal**. Se comprobó la consistencia
+  entre dos copias y se dio la cifra por buena; ninguna de las dos era la fuente. **Dos copias de acuerdo no son
+  una verificación.**
+- **Tres lotes de la cinta suben**: 86.25 Blue→**Gold**, 84.50 Red→**Blue**, 84.25 Red→**Blue**. Cambian sus
+  códigos (RD-8B15→BL-8B15, RD-3D62→BL-3D62) y sus fichas PDF, regeneradas; las `RD-*` se borraron.
+- ⚠️ **La escalera de la cinta pasa de 2 Gold · 2 Blue · 2 Red · 1 Black a 3 Gold · 3 Blue · 1 Black: SIN NINGÚN
+  RED.** Es lo que dicta el puntaje, pero cambia lo que ve un visitante.
+- **`GradosBoard` dejó de mentir**: LA página de referencia ESCRIBÍA A MANO la fila «Oficial (esta)» mientras su
+  cabecera dice que sale de `definicion.ts`. Se habría quedado enseñando la escala vieja bajo ese rótulo. Ahora
+  se pinta desde `GRADOS`.
+- **Copias reapuntadas**: `public/ocp-apps/cotizador-logistico.html` (rótulo con la escala entera), y los
+  comentarios de `sneakPeekMock.ts`, `jsonLd.ts`, `OportunidadSection.tsx` y `definicion.ts`.
+- **Notion alineado del todo**: cinco `Min SCA`/`Max SCA`, cinco `Definicion` reescritas (SCA+80 · +82 · +84 ·
+  +86 · +88), la página **renombrada «Tiryan» → «Tyrian»**, y tres relaciones movidas otra vez. **Las 9 fichas
+  con puntaje verificadas contra `gradoPorPuntaje()`: las 9 cuadran.**
+- **`qa-grados-check.mjs` 44 → 48**: los cuatro límites enteros (82 · 84 · 86 · 88), uno por uno — es donde un
+  punto de diferencia convierte un Red en Blue y cambia lo que se cobra.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · qa-grados 48/48 ·
+  qa-sneak-peek 194/0 · qa-ficha-publica 105/0 · qa-definicion 33/33 · qa-docs 14/14 · qa-encoding 738/0.
+APP_VERSION 4.43 → 4.44.
+(commit: PENDIENTE)

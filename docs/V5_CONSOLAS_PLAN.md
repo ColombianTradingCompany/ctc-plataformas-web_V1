@@ -205,12 +205,17 @@ Municipio · Departamento · Vereda · MASL) and the ladder from **«Grados»**
 contradicts its own `SCA` column on **6 of the 7** populated fichas (e.g. 84.25 linked to «Tiryan», 87.0
 linked to «Black» — full list in §9). `src/lib/grados/definicion.ts` rule 1 is **EL PUNTAJE MANDA**, and this
 repo is the definition Notion is supposed to mirror (`docs/INTEGRACIONES_PLAN.md` §1), so every mock grade is
-computed from its score: Black 80–82.99 · Red 83–84.99 · Blue 85–86.99 · Gold 87–87.99 · Tyrian 88–100.
+computed from its score. ⚠️ **La escala se corrigió el 2026-08-19 (V4.44)**: es **de dos en dos** —
+Black 80–82 · Red 82–84 · Blue 84–86 · Gold 86–88 · Tyrian 88+, es decir 80–81.99 · 82–83.99 · 84–85.99 ·
+86–87.99 · 88–100, con el límite siempre para el grado de arriba. Lo que decía antes esta línea
+(80–82.99 · 83–84.99 · 85–86.99 · 87–87.99) era lo que decía `definicion.ts`, y `definicion.ts` estaba mal.
 
 **One ficha is excluded on purpose:** «Borbón Rosado - Natural [La Pradera] 2026_1», **SCA 88.5 → Tyrian**.
 Tyrian is auction-only and `publishLot` refuses it in the catalogue, so it cannot appear in a catalogue teaser
 (it belongs in a future «Subasta Tyrian» teaser). The 7th card is therefore built from the «Cenicafe 1» stub,
-and the ladder becomes **2 Gold · 2 Blue · 2 Red · 1 Black** — this **supersedes the D0.7 default ladder**:
+and the ladder becomes **3 Gold · 3 Blue · 1 Black** (era 2/2/2/1 con la escala vieja; la corrección del
+2026-08-19 subió 86.25 a Gold y 84.50/84.25 a Blue, y **dejó la cinta sin ningún Red**) — this
+**supersedes the D0.7 default ladder**:
 real data beats an invented one.
 
 Season tag (D0.8), as shipped: the **visible** label is the short form — «Temporada anterior · 2025-26» ·
@@ -426,7 +431,8 @@ front identifies the lot, the back explains it**.
 - **D0.6 Mock storage** — ✅ accepted: static TS constant now (`sneakPeekMock.ts`); the `catalog_showcase` table
   + OCP tab stays a later option.
 - **D0.7 Grade ladder** — ⚠️ **superseded by the real references** (§1.4): the Notion fichas give
-  **2 Gold · 2 Blue · 2 Red · 1 Black**, not 1/3/2/1. Real data wins; no new decision needed.
+  **3 Gold · 3 Blue · 1 Black** (2/2/2/1 hasta la corrección de escala del 2026-08-19), not 1/3/2/1.
+  Real data wins; no new decision needed. ⚠️ Con la escala corregida **no queda ningún Red en la cinta**.
 - **D0.8 Which season is "last season"** — ✅ accepted: «cosecha principal 2025-26 (venta abr–jul 2026)», which
   Notion's own `Harvest Season` (2025-Q4 / 2026-Q1) corroborates.
 
@@ -836,7 +842,7 @@ updated with "done through step X".
 
 | # | Question | Default |
 |---|---|---|
-| D0.1–D0.8 | Sneak Peek placement · live/mock mix · fields · click · gate Green behind login · mock storage · grade ladder · which season | ✅ **ALL ACCEPTED 2026-08-17** (§1.6). D0.5 = (a) extended to every CP landing: the module replaces the direct catalogue for visitors. D0.7's ladder is superseded by the real Notion references (2 Gold · 2 Blue · 2 Red · 1 Black) |
+| D0.1–D0.8 | Sneak Peek placement · live/mock mix · fields · click · gate Green behind login · mock storage · grade ladder · which season | ✅ **ALL ACCEPTED 2026-08-17** (§1.6). D0.5 = (a) extended to every CP landing: the module replaces the direct catalogue for visitors. D0.7's ladder is superseded by the real Notion references (3 Gold · 3 Blue · 1 Black tras la corrección de escala del 2026-08-19; 2/2/2/1 antes) |
 | D0.9 ✅ **RESUELTA (owner, 2026-08-19)** | Card #2: variety «Bourbon» (title) vs `Castillo` (field) | **Es BOURBON**, que es lo que ya salía. El campo no está roto por sistema —la ficha hermana `Tabi - Honey [La Pradera]` sí lleva `Variedad: Tabi`— y `Variedades / %` de La Pradera está vacío, así que la finca no desempata; **la taza sí**: 87.00 floral/mandarina/cardamomo contra los dos Castillo de la MISMA finca a 84.25 y 84.50 con chocolate y especias. ⚠️ El campo en Notion sigue diciendo Castillo |
 | D0.10 ✅ **RESUELTA (2026-08-19), por prueba** | Card #3: finca relation «La Floresta» vs title/supplier «La Fortaleza · Ragonvalia» | **Es LA FORTALEZA**, que es lo que ya salía, y no hizo falta criterio: **La Floresta no cultiva Gesha** — su propio `Variedades / %` dice «Castillo 90%, colombia 10%». Además el RUT adjunto a La Fortaleza es de **Wilmer Rodríguez**, que es el `Supplier Name` del lote, y el datasheet del lote se llama `La_Fortaleza_Wilmer_R_Gesha_Ragonvalia…`. Las DOS fincas cuelgan del MISMO proveedor: así se escoge la equivocada en un desplegable. ⚠️ La relación en Notion sigue mal |
 | D2.1 | Rename `HubLanding.tsx` → `PortadaLanding.tsx`? | **No** in step (i); vocabulary only. Rename opportunistically in step (v). |
@@ -1109,10 +1115,16 @@ enlazado sea el que dicta su propio puntaje. `Bourbon - Honey [La Pradera]` (87.
 | Castillo - Doble Fermentado [La Pradera] | 84.50 | Tiryan | **Red** |
 | Castillo - Lavado [La Pradera] | 84.25 | Tiryan | **Red** |
 
-⚠️ **Y una corrección a esta misma nota: la escala numérica de Notion NUNCA estuvo mal.** Los campos `Min SCA` /
-`Max SCA` de los cinco grados ya coincidían **exactamente** con `src/lib/grados/definicion.ts` (80–82.99 ·
-83–84.99 · 85–86.99 · 87–87.99 · 88–100). Lo roto eran **las relaciones**, no los rangos. Así que «el arreglo es
-que Notion espeje `definicion.ts`» era impreciso: ya lo espejaba donde importa.
+⚠️ **Tres de esas seis se volvieron a mover el mismo día (V4.44)** al corregirse la escala: Gesha 86.25 → **Gold**,
+Castillo Doble Ferm. 84.50 → **Blue**, Castillo Lavado 84.25 → **Blue**. El estado final está en el Log V4.44.
+
+⚠️ **Y una corrección a esta misma nota, que a su vez hubo que corregir horas después (V4.44).** Aquí se
+escribió que «la escala numérica de Notion nunca estuvo mal» porque sus `Min SCA` / `Max SCA` coincidían
+exactamente con `src/lib/grados/definicion.ts`. Coincidían — **y los dos estaban mal**. El owner corrigió el
+2026-08-19 que la escala real es **de dos en dos** (80–82 · 82–84 · 84–86 · 86–88 · 88+), no la de
+80–82.99 · 83–84.99 · 85–86.99 · 87–87.99 que este repo llevaba afirmando desde el 2026-08-05.
+**La lección**: «Notion coincide con el código» no es lo mismo que «está bien». Se comprobó la consistencia
+entre dos copias y ninguna de las dos era la fuente — la fuente era el owner. Ver V4.44.
 
 ⚠️ **DOS FICHAS QUE ESTA NOTA NO VIO, y eran peores que un descuadre:** «Cenicafe 1 - Lavado [Cafe Semilla]» y
 «Castillo - Lavado [La Hacienda]» llevaban un grado enlazado **sin ningún `SCA`** — un grado afirmado sin nada
@@ -1127,11 +1139,9 @@ muestra, que van selladas «MUESTRA» justamente porque sus números son inventa
 de `definicion.ts` y **las 9 cuadran**. Las otras dos (Chiroso, Caturra) siguen sin puntaje y sin grado, que es
 coherente: no afirman nada.
 
-ℹ️ **Lo que el owner decidió NO tocar (2026-08-19), y por tanto no es un olvido:**
-- la página del grado sigue escribiéndose **«Tiryan»** (en la plataforma es *Tyrian*, y nada del código lee la
-  cadena de Notion, así que no rompe nada);
-- su `Definicion` sigue diciendo **«SCA+89»** mientras su propio `Min SCA` dice 88. Es la única de las cinco
-  cuyo texto no concuerda con su número.
+✅ **Y las dos cosas que aquí se dieron por no-tocar quedaron hechas en V4.44**, cuando el owner corrigió: la
+página se llama ya **«Tyrian»** y su `Definicion` dice **SCA+88**, igual que su `Min SCA`. Las cinco
+definiciones se reescribieron para que su texto concuerde con su número (SCA+80 · +82 · +84 · +86 · +88).
 
 ℹ️ **Por qué esto NO quedó como guardián**: no hay credenciales de Notion en el repositorio (`.env.local` no
 tiene ninguna), así que un espejo ejecutable como `qa-tools-seo-espejo.mjs` no se puede escribir hoy. Es el

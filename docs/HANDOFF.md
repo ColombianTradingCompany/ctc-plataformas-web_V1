@@ -1078,6 +1078,40 @@ Higiene de datos en «📋 Fichas Técnicas de Café». Se releyó antes de toca
   ejecutable no se puede escribir hoy. Es lo que falta para el «espejo Notion» de `INTEGRACIONES_PLAN.md` §1 —
   y sin él, esto se vuelve a descuadrar en silencio.
 
+## La escala de grados era de dos en dos, y el repo llevaba semanas diciendo otra cosa (2026-08-19, V4.44)
+
+Corrección del owner, y la más ancha de la tanda. `src/lib/grados/definicion.ts` afirmaba desde el 2026-08-05:
+Black 80–82.99 · Red 83–84.99 · Blue 85–86.99 · Gold 87–87.99 · Tyrian 88–100. **La escala real es de dos en
+dos**: **Black 80–82 · Red 82–84 · Blue 84–86 · Gold 86–88 · Tyrian 88+**.
+
+Escrita con la convención del archivo —rango cerrado, dos decimales— eso es **80–81.99 · 82–83.99 · 84–85.99 ·
+86–87.99 · 88–100**, y **el límite pertenece siempre al grado de arriba**: un 84.00 es Blue, no Red; un 88.00 es
+Tyrian. Es la única lectura en la que las cinco bandas embaldosan sin solaparse.
+
+- ⚠️ **La lección incómoda, y hay que dejarla escrita**: horas antes, en V4.43, se anotó que «la escala numérica
+  de Notion nunca estuvo mal» porque sus `Min SCA`/`Max SCA` **coincidían exactamente** con `definicion.ts`.
+  Coincidían — **y las dos estaban mal**. Se verificó la consistencia entre dos copias y se dio por validada la
+  cifra; pero ninguna de las dos era la fuente. La fuente era el owner. *Dos copias de acuerdo no son una
+  verificación.*
+- **Qué se movió con la escala nueva**: tres lotes de la cinta suben de grado — **86.25 Blue→Gold**,
+  **84.50 Red→Blue**, **84.25 Red→Blue**. Con ellos cambian sus códigos (`RD-8B15`→`BL-8B15`,
+  `RD-3D62`→`BL-3D62`) y sus fichas PDF, que se **regeneraron** y cuyas versiones `RD-*` se borraron.
+- ⚠️ **La escalera de la cinta pasa de 2 Gold · 2 Blue · 2 Red · 1 Black a 3 Gold · 3 Blue · 1 Black: se queda
+  SIN NINGÚN RED.** No es un error — es lo que dicta el puntaje —, pero cambia lo que ve un visitante y merece
+  una mirada del owner.
+- **`GradosBoard` dejó de mentir**: LA página de referencia de grados **escribía a mano** la fila «Oficial
+  (esta)» mientras su propia cabecera dice que los datos salen de `definicion.ts`. Con la corrección se habría
+  quedado enseñando la escala vieja bajo el rótulo «Oficial». Ahora se pinta desde `GRADOS`.
+- **Todas las demás copias reapuntadas**: el rótulo del cotizador logístico del OCP
+  (`public/ocp-apps/cotizador-logistico.html`), los comentarios de `sneakPeekMock.ts`, `jsonLd.ts`,
+  `OportunidadSection.tsx` y del propio `definicion.ts`.
+- **Notion, alineado del todo**: los cinco grados con sus `Min SCA`/`Max SCA` nuevos, las cinco `Definicion`
+  reescritas para que el texto concuerde con el número (SCA+80 · +82 · +84 · +86 · +88), la página **renombrada
+  «Tiryan» → «Tyrian»**, y tres relaciones de fichas movidas otra vez. **Las 9 fichas con puntaje verificadas
+  contra `gradoPorPuntaje()`: las 9 cuadran.**
+- **`qa-grados-check.mjs` 44 → 48**: se añadieron los cuatro límites enteros (82 · 84 · 86 · 88) uno por uno,
+  que es donde un error de un punto convierte un Red en Blue y cambia lo que se cobra.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

@@ -82,7 +82,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     id: `${MOCK_ID_PREFIX}01`,
     code: "GD-4C1A",
     name: "Tabi · Honey",
-    grade: "gold", // 87.00 → Gold (87–87.99). Notion decía «Black».
+    grade: "gold", // 87.00 → Gold (86–87.99). Notion decía «Black».
     score: "87.00",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -143,7 +143,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     // misma forma que produce `listingCode()` en la tienda.
     code: "CTCX-0326005",
     name: "Gesha Ragonvalia · Lavado",
-    grade: "blue", // 86.25 → Blue (85–86.99). Notion decía «Gold».
+    grade: "gold", // 86.25 → Gold (86–87.99, escala corregida 2026-08-19). Era Blue con la escala vieja.
     score: "86.25",
     scoreEstimated: false,
     // ✅ D0.10 RESUELTA (2026-08-19), y no por criterio sino por PRUEBA: la
@@ -202,9 +202,9 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
   },
   {
     id: `${MOCK_ID_PREFIX}05`,
-    code: "RD-8B15",
+    code: "BL-8B15",
     name: "Castillo · Doble Fermentado",
-    grade: "red", // 84.50 → Red (83–84.99). Notion decía «Tiryan».
+    grade: "blue", // 84.50 → Blue (84–85.99, escala corregida 2026-08-19). Era Red con la escala vieja.
     score: "84.50",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -219,14 +219,14 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     image: "/images/catalogo/sneak-peek/mock-lote-05.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-05-mini.svg",
     intrinseco: { fragancia: 7.25, sabor: 8.25, residual: 7.75, acidez: 7, cuerpo: 8.5, balance: 8, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
-    datasheetUrl: "/docs/fichas-mock/RD-8B15.pdf",
+    datasheetUrl: "/docs/fichas-mock/BL-8B15.pdf",
     mock: true,
   },
   {
     id: `${MOCK_ID_PREFIX}06`,
-    code: "RD-3D62",
+    code: "BL-3D62",
     name: "Castillo · Lavado",
-    grade: "red", // 84.25 → Red. Notion decía «Tiryan».
+    grade: "blue", // 84.25 → Blue (escala corregida 2026-08-19). Era Red con la escala vieja.
     score: "84.25",
     scoreEstimated: false,
     finca: "La Pradera",
@@ -241,7 +241,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     image: "/images/catalogo/sneak-peek/mock-lote-06.webp",
     wheel: "/images/catalogo/sneak-peek/rueda-mock-lote-06-mini.svg",
     intrinseco: { fragancia: 7.5, sabor: 7.75, residual: 8, acidez: 7, cuerpo: 8, balance: 8.25, uniformidad: 10, limpia: 10, dulzor: 10, catador: 7.75 },
-    datasheetUrl: "/docs/fichas-mock/RD-3D62.pdf",
+    datasheetUrl: "/docs/fichas-mock/BL-3D62.pdf",
     mock: true,
   },
   {
@@ -250,7 +250,7 @@ export const SNEAK_PEEK_MOCK: SneakPeekLot[] = [
     name: "Cenicafé 1 · Lavado",
     // GAP: esta ficha es un esbozo en Notion — sin SCA, sin variedad, sin notas.
     // Solo tiene nombre, finca y proceso. El 81.50 lo elegí DENTRO de Black
-    // (80–82.99), que es además el grado al que Notion la enlaza (la única de
+    // (80–81.99), que es además el grado al que Notion la enlaza (la única de
     // las siete en la que Notion y el puntaje coincidirían), y la variedad la
     // leí de su propio título. `scoreEstimated: true` porque este puntaje NO
     // viene de una catación: no puede parecer verificado.

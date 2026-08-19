@@ -108,8 +108,17 @@ export function GradosBoard() {
             </thead>
             <tbody>
               <tr>
-                <td><span className={table.strong}>Oficial (esta)</span><small>desde 2026-08-05</small></td>
-                <td>80–82.99</td><td>83–84.99</td><td>85–86.99</td><td>87–87.99</td><td>88–100</td>
+                <td><span className={table.strong}>Oficial (esta)</span><small>desde 2026-08-05 · rangos corregidos 2026-08-19</small></td>
+                {/* ⚠️ Esta fila SE LEE de `definicion.ts`, no se escribe a mano — y hasta
+                    V4.44 sí estaba escrita a mano, en LA página cuyo trabajo es que los
+                    grados no vivan en dos sitios. Cuando el owner corrigió la escala el
+                    2026-08-19, esta tabla se habría quedado enseñando la vieja, con el
+                    rótulo «Oficial (esta)» encima. */}
+                {GRADOS.map((g) => (
+                  <td key={g.id}>
+                    {g.scaMin}–{g.scaMax}
+                  </td>
+                ))}
               </tr>
               <tr>
                 <td className={table.muted}>Notion · Conceptos Fundamentales<small>desactualizada</small></td>
@@ -145,7 +154,7 @@ export function GradosBoard() {
             arriba en Blue; sigue siendo Blue.
           </li>
           <li>
-            <b>Dos decimales como máximo.</b> No existe un puntaje de 82.995. Es la regla que hace que la escala no tenga
+            <b>Dos decimales como máximo.</b> No existe un puntaje de 81.995. Es la regla que hace que la escala no tenga
             huecos: las bandas cierran en <code>.99</code>, así que un tercer decimal caería entre dos grados.
           </li>
         </ul>

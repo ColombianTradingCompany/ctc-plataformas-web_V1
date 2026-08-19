@@ -140,7 +140,7 @@ export function faqPageLd(): Json {
  *  cosas a la venta con un precio, son los cinco términos de una escala que
  *  esta casa define y aplica. Esa es la figura que schema.org tiene para un
  *  vocabulario propio, y es la que un modelo puede citar sin equivocarse
- *  («CTC define Blue como 85–86.99 SCA») en vez de inventar un precio. */
+ *  («CTC define Blue como 84–85.99 SCA») en vez de inventar un precio. */
 export function gradosLd(): Json {
   return {
     "@type": "DefinedTermSet",

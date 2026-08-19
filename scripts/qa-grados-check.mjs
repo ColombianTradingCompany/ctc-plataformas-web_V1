@@ -6,7 +6,7 @@
 // vigila que siga siendo coherente.
 //
 // Lo que de verdad importa aquí: la escala tiene que ser CONTINUA. Un hueco
-// entre bandas (un café de 82.995) o un solape (dos grados que reclaman el 87)
+// entre bandas (un café de 81.995) o un solape (dos grados que reclaman el 86)
 // no da error en ninguna parte — simplemente devuelve el grado equivocado, o
 // ninguno, y nadie se entera hasta que sale en una cotización.
 
@@ -34,10 +34,14 @@ check("las bandas suben monótonamente",
 // Si alguien los toca, esto salta. Ninguna de las dos versiones que había en
 // Notion coincidía con estos, así que no se derivan: se citan.
 const OFICIAL = {
-  black:  [80, 82.99],
-  red:    [83, 84.99],
-  blue:   [85, 86.99],
-  gold:   [87, 87.99],
+  // ⚠️ La escala es DE DOS EN DOS (corrección del owner, 2026-08-19). Antes este
+  // archivo y `definicion.ts` decían 80–82.99 · 83–84.99 · 85–86.99 · 87–87.99,
+  // que nadie había fijado así. El límite pertenece siempre al grado de ARRIBA:
+  // 84.00 es Blue, no Red; 88.00 es Tyrian.
+  black:  [80, 81.99],
+  red:    [82, 83.99],
+  blue:   [84, 85.99],
+  gold:   [86, 87.99],
   tyrian: [88, 100],
 };
 for (const [id, [min, max]] of Object.entries(OFICIAL)) {
@@ -48,10 +52,13 @@ for (const [id, [min, max]] of Object.entries(OFICIAL)) {
 
 // ── La búsqueda por puntaje ─────────────────────────────────────────────────
 const casos = [
-  [80, "black"], [82.99, "black"],
-  [83, "red"], [84.99, "red"],
-  [85, "blue"], [86.99, "blue"],
-  [87, "gold"], [87.99, "gold"],
+  [80, "black"], [81.99, "black"],
+  [82, "red"], [83.99, "red"],
+  [84, "blue"], [85.99, "blue"],
+  [86, "gold"], [87.99, "gold"],
+  // Los cuatro límites, uno por uno: el entero es del grado de ARRIBA. Es donde
+  // un error de un punto convierte un Red en Blue y cambia lo que se cobra.
+  [82.00, "red"], [84.00, "blue"], [86.00, "gold"], [88.00, "tyrian"],
   [88, "tyrian"], [91, "tyrian"], [100, "tyrian"],
 ];
 for (const [sca, esperado] of casos) {
@@ -68,17 +75,17 @@ check("undefined no revienta", gradoPorPuntaje(undefined) === null);
 
 // ── La regla de los dos decimales (owner, 2026-08-05) ───────────────────────
 // Es la que sostiene la continuidad de la escala: las bandas cierran en .99, y
-// sin esta regla un 82.995 se queda entre Black y Red sin ser ninguno.
+// sin esta regla un 81.995 se queda entre Black y Red sin ser ninguno.
 check("la casa trabaja con 2 decimales", SCA_DECIMALES === 2, `${SCA_DECIMALES}`);
 check("86.5 es un puntaje válido", puntajeValido(86.5));
 check("86.55 es un puntaje válido", puntajeValido(86.55));
 check("86.555 NO es un puntaje válido", !puntajeValido(86.555));
 check("79 no es válido aunque tenga 0 decimales", !puntajeValido(79));
-check("82.995 se redondea a 83", redondeaPuntaje(82.995) === 83, `${redondeaPuntaje(82.995)}`);
-check("82.995 no cae en el hueco: da red", gradoPorPuntaje(82.995)?.id === "red",
-  gradoPorPuntaje(82.995)?.id ?? "null");
-check("82.991 redondea hacia abajo: sigue siendo black", gradoPorPuntaje(82.991)?.id === "black",
-  gradoPorPuntaje(82.991)?.id ?? "null");
+check("81.995 se redondea a 82", redondeaPuntaje(81.995) === 82, `${redondeaPuntaje(81.995)}`);
+check("81.995 no cae en el hueco: da red", gradoPorPuntaje(81.995)?.id === "red",
+  gradoPorPuntaje(81.995)?.id ?? "null");
+check("81.991 redondea hacia abajo: sigue siendo black", gradoPorPuntaje(81.991)?.id === "black",
+  gradoPorPuntaje(81.991)?.id ?? "null");
 
 // ── «Mix» no es un grado ────────────────────────────────────────────────────
 // Vive en el Cotizador Logístico y significa "la carga no es de un solo grado".

@@ -414,7 +414,7 @@ const T: Record<Lang, Dict> = {
   },
 };
 
-/** 82.99 se escribe con coma en español y alemán. El dato viene de
+/** 81.99 se escribe con coma en español y alemán. El dato viene de
  *  `definicion.ts`; aquí solo se viste. */
 function num(n: number, lang: Lang): string {
   return lang === "en" ? String(n) : String(n).replace(".", ",");

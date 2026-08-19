@@ -12,6 +12,22 @@
 // que se le enseña a un cliente. El owner fijó los rangos definitivos y son los
 // de abajo: **ninguna de las dos versiones anteriores era correcta**.
 //
+// ⚠️ CORRECCIÓN DEL OWNER (2026-08-19): LOS RANGOS DE ESTE ARCHIVO TAMBIÉN
+// ESTABAN MAL. Decían Black 80–82.99 · Red 83–84.99 · Blue 85–86.99 · Gold
+// 87–87.99 · Tyrian 88–100, y la escala de verdad es **de dos en dos**:
+//
+//     Black 80–82 · Red 82–84 · Blue 84–86 · Gold 86–88 · Tyrian 88+
+//
+// Escrita con la convención de este archivo —rango cerrado por ambos extremos y
+// dos decimales como máximo— eso es 80–81.99 · 82–83.99 · 84–85.99 · 86–87.99 ·
+// 88–100. El límite pertenece SIEMPRE al grado de arriba: un 84.00 es Blue, no
+// Red, igual que un 88.00 es Tyrian. Es la única lectura que hace que las cinco
+// bandas embaldosen sin solaparse.
+//
+// No fue un cambio de criterio: el archivo llevaba desde el 2026-08-05
+// afirmando una escala que nadie había fijado así. Cambiarla mueve grados de
+// lotes reales — ver el Log V37, V4.44.
+//
 // Notion debe MIRAR a esto, no al revés (ver docs/INTEGRACIONES_PLAN.md, §1).
 //
 // ── LAS TRES REGLAS (owner, 2026-08-05) ─────────────────────────────────────
@@ -21,7 +37,7 @@
 //    variedad y disponibilidad por malla no cambian el grado — orientan el
 //    VALOR dentro del rango. Un Blue de variedad exótica se cotiza en la parte
 //    alta de Blue; sigue siendo Blue.
-// 3. DOS DECIMALES COMO MÁXIMO. No existe un puntaje de 82.995. Esta regla es
+// 3. DOS DECIMALES COMO MÁXIMO. No existe un puntaje de 81.995. Esta regla es
 //    la que hace que la escala no tenga huecos: las bandas cierran en .99, así
 //    que un tercer decimal caería entre dos grados. Ver `puntajeValido`.
 
@@ -61,7 +77,7 @@ export const GRADOS: Grado[] = [
     nombre: "Black",
     lema: "The essence of origin",
     scaMin: 80,
-    scaMax: 82.99,
+    scaMax: 81.99,
     colorVar: "--t-black",
     hex: "#1A1C1E",
     logo: "/images/shared/grados/black.webp",
@@ -73,8 +89,8 @@ export const GRADOS: Grado[] = [
     id: "red",
     nombre: "Red",
     lema: "The soul of the harvest",
-    scaMin: 83,
-    scaMax: 84.99,
+    scaMin: 82,
+    scaMax: 83.99,
     colorVar: "--t-red",
     hex: "#B01F24",
     logo: "/images/shared/grados/red.webp",
@@ -86,8 +102,8 @@ export const GRADOS: Grado[] = [
     id: "blue",
     nombre: "Blue",
     lema: "The edge of perfection",
-    scaMin: 85,
-    scaMax: 86.99,
+    scaMin: 84,
+    scaMax: 85.99,
     colorVar: "--t-blue",
     hex: "#1F4FB0",
     logo: "/images/shared/grados/blue.webp",
@@ -104,7 +120,7 @@ export const GRADOS: Grado[] = [
     id: "gold",
     nombre: "Gold",
     lema: "The standard of excellence",
-    scaMin: 87,
+    scaMin: 86,
     scaMax: 87.99,
     colorVar: "--t-gold",
     hex: "#A87A14",
@@ -153,7 +169,7 @@ export const SCA_MAXIMO = GRADOS[GRADOS.length - 1].scaMax;
 export const SCA_DECIMALES = 2;
 
 /** Redondea a la precisión de la casa. Un puntaje con más decimales es un error
- *  de captura, no un puntaje distinto: 82.995 se registra como 83. */
+ *  de captura, no un puntaje distinto: 81.995 se registra como 82. */
 export function redondeaPuntaje(sca: number): number {
   return Math.round(sca * 100) / 100;
 }
@@ -198,7 +214,7 @@ export function esGradoValido(v: string): v is GradoId {
 }
 
 /** ¿La escala cubre 80–100 sin huecos ni solapes? Cierto SOLO bajo la regla de
- *  los dos decimales: el "hueco" entre 82.99 y 83 mide justo un centésimo, que
+ *  los dos decimales: el "hueco" entre 81.99 y 82 mide justo un centésimo, que
  *  es la resolución de la escala. Lo comprueba el guardián
  *  `scripts/qa-grados-check.mjs`; se expone para poder afirmarlo en la UI. */
 export function escalaEsContinua(): boolean {

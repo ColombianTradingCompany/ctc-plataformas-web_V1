@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.6] — 2026-08-19 (commit pendiente)
+## [V5.6] — 2026-08-19 (commit fcbb85b)
 
 - **Añadido** (segunda pasada del owner sobre el taller, probado en producción): la **barra del
   taller** — marca, «Mis herramientas», el correo de la sesión y **Salir**. El botón avisa que

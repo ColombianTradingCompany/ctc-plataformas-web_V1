@@ -665,4 +665,4 @@ APP_VERSION 4.43 → 4.44.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · qa-tools-seo 193/0 ·
   qa-tools-seo-espejo 68/0 · qa-direccionamiento 14/0 · qa-docs 14/14 · qa-encoding 738/0.
 APP_VERSION 4.44 → 4.45.
-(commit: PENDIENTE)
+(commit: 58c5caf)

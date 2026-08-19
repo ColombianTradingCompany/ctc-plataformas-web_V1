@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.5] — 2026-08-19 (commit pendiente)
+## [V5.5] — 2026-08-19 (commit cc954f3)
 
 - **Añadido** (A8b, pregunta del owner al probar la puerta): **«Entrar con Google»** en
   `/herramientas/acceso` — el séptimo callback de la casa

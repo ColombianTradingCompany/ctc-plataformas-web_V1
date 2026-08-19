@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.4] — 2026-08-19 (commit pendiente)
+## [V5.4] — 2026-08-19 (commit b7baa12)
 
 - **Hito** (A8–A11): **Herramientas del Café se convierte en una aplicación semi-independiente**
   — el owner lo pidió así en la revisión V5.0: subir versiones y apps nuevas continuamente,

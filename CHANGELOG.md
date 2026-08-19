@@ -19,6 +19,28 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.6] — 2026-08-19 (commit pendiente)
+
+- **Añadido** (segunda pasada del owner sobre el taller, probado en producción): la **barra del
+  taller** — marca, «Mis herramientas», el correo de la sesión y **Salir**. El botón avisa que
+  salir cierra la identidad única en toda la red (la cookie es una sola — es la otra cara de
+  entrar una sola vez).
+- **Cambiado**: **pantalla completa en las tres superficies** — la página de una herramienta deja
+  la columna de 1180px: la concha llena la ventana (100dvh), la cabecera se aprieta a una línea y
+  el marco se queda con todo el alto. Vale para el taller, Kaffetal Regal y Cherry Picked.
+- **Cambiado**: el taller enseña **las mismas capturas del carrusel** en sus tarjetas
+  (`CapturaMiniatura`, con la misma caída a logo si falta el archivo).
+- **Cambiado**: **el puente va en las ONCE herramientas vivas** (antes solo costo-empaque) y
+  `soporta_memoria` queda encendida para todas — la archivada se queda fuera: retirada es
+  retirada. En las herramientas sin campos que serializar (el disco Agtron, el viaje) el trabajo
+  guarda poco, pero el menú y el nombre valen igual; `CTC.usarEstado` queda para cuando quieran
+  guardar su estado propio.
+- **Cambiado** (el contraparte del panel): el registro del ECP gana la columna **«Memoria»** al
+  lado de Nivel — el estado del puente se ve de un vistazo, sin abrir cada ficha (la casilla para
+  cambiarla ya estaba desde V5.4).
+- **Cambiado**: `qa-taller-check` 29 → **43** — las once herramientas con puente, la salida en la
+  barra, la pantalla completa en las tres superficies y las capturas del taller.
+
 ## [V5.5] — 2026-08-19 (commit cc954f3)
 
 - **Añadido** (A8b, pregunta del owner al probar la puerta): **«Entrar con Google»** en

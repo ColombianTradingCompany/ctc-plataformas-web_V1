@@ -1,6 +1,6 @@
 "use server";
 
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { srcDeVersion } from "./catalog";
 import { contextoDeAcceso } from "./toolGrants";
 import { esMiembroHC, puedeAbrir, type Veredicto } from "./accesoHerramienta";
@@ -30,11 +30,24 @@ export type HerramientaTaller = {
 export type Taller = {
   autenticado: boolean;
   esMiembro: boolean;
+  /** El correo de la sesión, para la barra («quién está dentro»). */
+  email: string | null;
   herramientas: HerramientaTaller[];
 };
 
 export async function cargarTaller(): Promise<Taller> {
   const service = createServiceRoleClient();
+
+  let email: string | null = null;
+  try {
+    const session = await createSessionClient();
+    const {
+      data: { user },
+    } = await session.auth.getUser();
+    email = user?.email ?? null;
+  } catch {
+    // Sin sesión legible, la barra simplemente no enseña correo.
+  }
 
   const [ctx, { data: filas }] = await Promise.all([
     contextoDeAcceso(),
@@ -83,5 +96,5 @@ export async function cargarTaller(): Promise<Taller> {
     });
   }
 
-  return { autenticado: ctx.autenticado, esMiembro: esMiembroHC(ctx), herramientas };
+  return { autenticado: ctx.autenticado, esMiembro: esMiembroHC(ctx), email, herramientas };
 }

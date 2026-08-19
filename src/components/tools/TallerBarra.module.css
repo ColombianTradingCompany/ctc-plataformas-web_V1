@@ -1,0 +1,55 @@
+/* La barra del taller: fina, fija en su sitio, sin robarle alto a la
+   herramienta — que es justo lo que el owner pidió recuperar. */
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--line, #e6ddd1);
+  background: var(--card, #fff);
+}
+.compacta { padding: 6px 14px; }
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 700;
+  font-size: 14.5px;
+  margin-right: auto;
+}
+.marca img { display: block; }
+.compacta .marca span { font-size: 13.5px; }
+
+.lado { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.enlace { font-size: 13px; font-weight: 600; text-decoration: none; }
+.enlace:hover { text-decoration: underline; }
+
+.quien {
+  font-size: 12px;
+  color: var(--muted, #7d6c5d);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.salir {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 999px;
+  padding: 5px 14px;
+  color: inherit;
+}
+.salir:hover { border-color: var(--accent, #b8863b); color: var(--accent, #b8863b); }
+
+@media (max-width: 560px) {
+  .quien { display: none; }
+  .barra { gap: 10px; padding: 8px 12px; }
+}

@@ -85,10 +85,30 @@ const carrusel = lee("src/components/services/CarruselHerramientas.tsx");
 check("el carrusel respeta prefers-reduced-motion", carrusel.includes("prefers-reduced-motion"));
 check("una captura ausente cae a tarjeta, no a hueco", carrusel.includes("onError"));
 
-// ── 6. La herramienta de referencia lleva el puente ─────────────────────────
+// ── 6. TODAS las herramientas vivas llevan el puente (V5.6, owner) ──────────
+// mermas-detallada NO está: archivada el 2026-08-15, retirada es retirada.
+for (const f of [
+  "mermas-rapida", "mermas-ctc", "agtron-dial", "cogs-cafe-verde", "costo-empaque",
+  "cool-pdf", "rueda-catacion", "green-coffee-datasheet", "generador-qr",
+  "formula-calidad", "viaje-cafe",
+]) {
+  check(`${f} incluye el puente`, lee(`public/tools/${f}.html`).includes('src="/tools/ctc-bridge.js"'));
+}
+
+// ── 6b. La segunda pasada del owner: barra, salida y pantalla completa ──────
+const barra = lee("src/components/tools/TallerBarra.tsx");
+check("la barra del taller tiene salida (signOut)", barra.includes("signOut"));
+check("y avisa que salir cierra la identidad única", barra.includes("toda la red"));
 check(
-  "costo-empaque incluye /tools/ctc-bridge.js",
-  lee("public/tools/costo-empaque.html").includes('src="/tools/ctc-bridge.js"')
+  "las tres superficies abren la herramienta a pantalla completa",
+  ["src/app/herramientas/taller/[slug]/page.tsx",
+   "src/app/kaffetal-regal/herramientas/[slug]/page.tsx",
+   "src/app/cherry-picked-green/herramientas/[slug]/page.tsx",
+  ].every((f) => lee(f).includes("pantallaCompleta"))
+);
+check(
+  "el taller enseña las capturas en sus tarjetas",
+  lee("src/app/herramientas/taller/page.tsx").includes("CapturaMiniatura")
 );
 
 // ── 7. La trampa del %20, pagada una vez ────────────────────────────────────

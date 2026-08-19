@@ -130,6 +130,7 @@ export function ToolsAdmin({ tools }: { tools: ToolAdmin[] }) {
               <th style={{ ...th, textAlign: "center", width: 70 }}>Web</th>
               <th style={{ ...th, textAlign: "center", width: 70 }}>DC</th>
               <th style={{ ...th, width: 80 }}>Nivel</th>
+              <th style={{ ...th, textAlign: "center", width: 80 }} title="La versión publicada habla el puente de trabajos (ctc-bridge)">Memoria</th>
               <th style={{ ...th, width: 90 }} />
             </tr>
           </thead>
@@ -193,6 +194,7 @@ function FilaTool({ t, abierta, onToggle }: { t: ToolAdmin; abierta: boolean; on
       <td style={{ ...td, textAlign: "center" }}>{t.web ? "●" : "·"}</td>
       <td style={{ ...td, textAlign: "center" }}>{t.dc ? "●" : "·"}</td>
       <td style={td}>{t.tier === "plus" ? "Plus" : "Default"}</td>
+      <td style={{ ...td, textAlign: "center" }}>{t.soportaMemoria ? "●" : "·"}</td>
       <td style={td}>
         <button className="btn btn-sm" onClick={onToggle} aria-expanded={abierta}>
           {abierta ? "Cerrar" : "Gestionar"}

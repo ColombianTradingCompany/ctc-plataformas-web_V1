@@ -23,8 +23,11 @@ export default async function HerramientaKrPage({
   const h = await resolverHerramienta("kaffetal-regal", slug);
   if (!h || !h.src) notFound();
 
+  // Pantalla completa (owner, V5.6): «make any tool open full screen» — vale
+  // para las TRES superficies, no solo para el taller. La columna de 1180px se
+  // va; la concha llena la ventana y el marco se queda con el alto.
   return (
-    <main style={{ maxWidth: 1180, margin: "0 auto", padding: "0 20px 40px" }}>
+    <main style={{ height: "100dvh", display: "flex", flexDirection: "column", padding: "0 16px 12px" }}>
       <ConchaHerramienta
         superficie="kaffetal-regal"
         volver={volver ?? null}
@@ -35,6 +38,7 @@ export default async function HerramientaKrPage({
         src={h.src}
         veredicto={h.veredicto}
         soportaMemoria={h.soportaMemoria}
+        pantallaCompleta
       />
     </main>
   );

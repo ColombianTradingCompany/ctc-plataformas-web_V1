@@ -34,6 +34,7 @@ export function ConchaHerramienta({
   veredicto,
   toolId,
   soportaMemoria = false,
+  pantallaCompleta = false,
 }: {
   superficie: SuperficieHerramientas;
   volver: string | null;
@@ -46,12 +47,16 @@ export function ConchaHerramienta({
   /** true = la herramienta habla el puente y la concha antepone el Home Menu
    *  de trabajos (A11). false = se abre directa, como siempre. */
   soportaMemoria?: boolean;
+  /** Pantalla completa (segunda pasada del owner, 2026-08-19): la concha llena
+   *  el alto de la ventana, la cabecera se aprieta y el marco se queda con
+   *  todo lo demás — «the working space is very reduced». */
+  pantallaCompleta?: boolean;
 }) {
   const destino = vueltaSegura(volver, superficie);
   const casa = NOMBRE_SUPERFICIE[superficie];
 
   return (
-    <div className={styles.concha}>
+    <div className={`${styles.concha}${pantallaCompleta ? ` ${styles.conchaFull}` : ""}`}>
       <header className={styles.barra}>
         <Link href={destino} className={styles.volver}>
           ← Volver a {casa}

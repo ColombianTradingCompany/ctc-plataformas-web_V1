@@ -127,3 +127,18 @@
 .sesionVolver:hover { text-decoration: underline; }
 .sesionNombre { font-size: 13px; font-weight: 600; }
 .sesionGuardado { font-size: 12px; color: var(--muted, #7d6c5d); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+/* ── Pantalla completa (segunda pasada del owner, 2026-08-19) ────────────────
+   «The working space is very reduced, make any tool open full screen»: la
+   página de una herramienta ya no vive en una columna de 1180px — la concha
+   llena la ventana, la cabecera se aprieta a una línea y el marco se queda con
+   TODO el alto restante. El menú de trabajos hereda el mismo espacio. */
+.conchaFull { height: 100%; min-height: 0; }
+.conchaFull .barra { padding: 8px 0 8px; margin-bottom: 10px; }
+.conchaFull .barra h1 { font-size: 17px; }
+.conchaFull .desc {
+  font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.conchaFull .volver { margin-bottom: 2px; }
+.conchaFull .marco, .conchaFull .sesion { min-height: 0; }

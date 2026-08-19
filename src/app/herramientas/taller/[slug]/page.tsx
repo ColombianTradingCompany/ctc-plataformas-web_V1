@@ -1,15 +1,15 @@
 import { notFound } from "next/navigation";
 import { LangProvider } from "@/components/lang/i18n";
 import { ConchaHerramienta } from "@/components/tools/ConchaHerramienta";
+import { TallerBarra } from "@/components/tools/TallerBarra";
 import { resolverHerramienta } from "@/lib/tools/unaHerramienta";
+import { cargarTaller } from "@/lib/tools/taller";
 
 // ── Herramientas del Café · una herramienta, en SU casa (A8/A11, V5.4) ──────
-// El tercer inquilino de la concha, tras KR y Cherry Picked. La ruta cuelga de
-// la superficie para que el proxy le anteponga la base por construcción
-// (gotcha 12): en herramientas.ctcexport.com esto es /taller/<slug>.
-// El veredicto viene de la MISMA regla pura que en las otras dos superficies;
-// aquí no se filtra por columna de reparto porque el taller es la casa —
-// ofrece el catálogo compartible entero (decisión A8/A9).
+// Segunda pasada del owner (V5.6): PANTALLA COMPLETA. La herramienta llena la
+// ventana — la barra del taller arriba (identidad + salida), la cabecera de la
+// concha en una línea, y el marco con todo el alto restante. Nada de columnas
+// de 1180px: «the working space is very reduced» era literal.
 export const dynamic = "force-dynamic";
 
 export default async function HerramientaTallerPage({
@@ -22,13 +22,14 @@ export default async function HerramientaTallerPage({
   const { slug } = await params;
   const { volver } = await searchParams;
 
-  const h = await resolverHerramienta("herramientas", slug);
+  const [h, taller] = await Promise.all([resolverHerramienta("herramientas", slug), cargarTaller()]);
   if (!h || !h.src) notFound();
 
   return (
-    <div data-theme="ctc-home">
+    <div data-theme="ctc-home" style={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
       <LangProvider storageKey="ctc-lang">
-        <main style={{ maxWidth: 1180, margin: "0 auto", padding: "0 20px 40px" }}>
+        <TallerBarra email={taller.email} compacta />
+        <main style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "0 16px 12px" }}>
           <ConchaHerramienta
             superficie="herramientas"
             volver={volver ?? "/herramientas/taller"}
@@ -39,6 +40,7 @@ export default async function HerramientaTallerPage({
             src={h.src}
             veredicto={h.veredicto}
             soportaMemoria={h.soportaMemoria}
+            pantallaCompleta
           />
         </main>
       </LangProvider>

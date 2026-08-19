@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { LangProvider } from "@/components/lang/i18n";
 import { superficieConOverrides } from "@/lib/seo/openGraph";
 import { cargarTaller } from "@/lib/tools/taller";
+import { TallerBarra } from "@/components/tools/TallerBarra";
+import { CapturaMiniatura } from "@/components/tools/CapturaMiniatura";
 import styles from "./taller.module.css";
 
 // ── /herramientas/taller · la rejilla de trabajo (A8/A9, 2026-08-19) ────────
@@ -10,6 +12,10 @@ import styles from "./taller.module.css";
 // trabaja. Todo el catálogo compartible, cada herramienta con su estado a la
 // vista — abrir, o candado con «Solicitar» dentro (A9: una Plus se LISTA, no
 // se esconde). Sin sesión, a la puerta.
+//
+// Segunda pasada del owner (mismo día): la barra con identidad y salida
+// arriba, y las tarjetas con la MISMA captura del carrusel — el taller ya no
+// es una lista de texto.
 export const generateMetadata = superficieConOverrides({
   route: "/herramientas",
   title: "El taller · Herramientas del Café · CTC",
@@ -28,6 +34,7 @@ export default async function TallerPage() {
   return (
     <div data-theme="ctc-home">
       <LangProvider storageKey="ctc-lang">
+        <TallerBarra email={taller.email} />
         <main className={styles.marco}>
           <header className={styles.cabeza}>
             <h1>El taller</h1>
@@ -49,6 +56,7 @@ export default async function TallerPage() {
           <div className={styles.rejilla}>
             {taller.herramientas.map((h) => (
               <Link key={h.id} href={`/herramientas/taller/${h.id}?volver=${encodeURIComponent("/herramientas/taller")}`} className={styles.tarjeta}>
+                <CapturaMiniatura toolId={h.id} className={styles.miniatura} />
                 <div className={styles.fila}>
                   <h2>{h.nombre}</h2>
                   {h.esPlus && (

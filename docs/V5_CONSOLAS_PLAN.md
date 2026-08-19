@@ -938,15 +938,35 @@ worker narrow credential (F10, backlog).
    whenever it is set, but nothing in `lots`/`lot_listings` stores one, so only the mock lots have it today.
    When the Ficha Técnica becomes a publishable artifact, add the column (or generate the PDF from
    `lots.datasheet`) and the button lights up for the whole catalogue with no component change.
-3. **The 12 tool pages are ungoverned SEO surface.** `public/tools/*.html` are **indexable** URLs — the proxy
-   matcher excludes `/tools/` and `robots.txt` only covers `/bcp /ecp /ocp /lab` — so each file's `<title>` is
-   what a search engine prints as the result headline. **Only 2 of the 12 carry a `meta description`.** Nobody
-   owns this today; it is the natural remit of the **«Manejo de Plataformas»** module (which already governs
-   `platform_surfaces`: route, title, description, `en_sitemap`). Finding salvaged from the abandoned branch
-   `fix/rastro-cacao` (see the note below) before deleting it.
-   ⚠️ When editing these files: they are vendored tools with live JS. Removing a control without removing its
-   JS references leaves a `null` that takes the whole calculator down on load — verify A/B against the previous
-   file, same script, same numbers.
+3. ✅ **Las 12 herramientas ya tienen descripción (2026-08-19, V4.37).** `public/tools/*.html` son URLs
+   **indexables** — el matcher del proxy excluye `/tools/` y `robots.txt` solo cubre `/bcp /ecp /ocp /lab` —, y
+   son **archivos estáticos**: no los pinta Next, así que no pasan por `generateMetadata` ni por ningún layout.
+   Lo que no esté escrito a mano en su `<head>` no existe. **Diez de las doce no tenían `meta description`**, y
+   cuando falta Google no deja el hueco: recorta un trozo del cuerpo y lo pone de titular — en una calculadora,
+   normalmente una etiqueta de formulario.
+   **El texto no se inventó**: sale de `tools.descripcion`, que el owner ya escribió, recortado a la longitud de
+   un resultado (139–160 caracteres) y sin las notas de administración («Se ofrece a productores»,
+   «Reemplazada por…»), que dicen a quién se le muestra, no qué hace.
+   ℹ️ **De las dos que sí tenían, solo se tocó la rota.** `viaje-cafe.html` tenía una descripción corta pero
+   correcta, escrita por el owner, y se deja como está: no había defecto que arreglar.
+   ⚠️ **Una estaba peor que vacía: `mermas-ctc.html` SÍ tenía descripción, y describía la calculadora Rápida**
+   — pero la base dice que ese archivo es la **Detallada**. Una descripción equivocada no la vuelve a mirar
+   nadie. Por eso el guardián nuevo `qa-tools-seo-check.mjs` (193) no comprueba solo que exista: exige largo
+   útil, sufijo de la casa, que no se cuele frase de admin, que **no haya dos iguales** (Google colapsa
+   duplicados) y que **el idioma case con el `<html lang>` de la página**. Verificado saboteándolo por tres
+   caminos: quitando una, duplicando otra y poniendo una en el idioma equivocado.
+   ⚠️ **Esa última comprobación existe porque el fallo ya pasó**: a `green-coffee-datasheet.html` —`lang="es"`,
+   interfaz entera en español— se le escribió primero la descripción en inglés.
+   ⚠️ **HALLAZGO APARTE, PARA EL OWNER: la columna `tools.meta_description` NO LA LEE NADIE.** El admin del ECP
+   (`ToolsAdmin.tsx` → `toolsActions.ts`) deja escribirla y la guarda, pero **nada la sirve**: ni estos archivos
+   estáticos —que Next nunca renderiza— ni `/tools/h/[slug]/route.ts`, que no inyecta metadatos. Una fila ya
+   contiene «Test descripcion 1», señal de que se intentó usar. **La fuente de verdad de lo que ve Google es el
+   archivo**, y por eso el guardián valida el archivo y no la base. Queda una decisión pendiente: o se reetiqueta
+   el campo como nota interna, o se enrutan las herramientas del repo por un handler que lo inyecte.
+   ⚠️ Al editar estos archivos: son herramientas vendorizadas con JS vivo. Quitar un control sin quitar sus
+   referencias en JS deja un `null` que tumba la calculadora entera al cargar — verificar A/B contra el archivo
+   anterior, mismo script, mismos números. (Aquí solo se tocó el `<head>`, nunca el cuerpo ni el JS.)
+
 4. **The empty OneDrive folder stays.** `…/OneDrive/Desktop/CTC Web Platform` is empty since the migration and
    **is not going to be deleted** — Claude Code has it locked as this session's working directory and the owner
    confirmed (2026-08-17) it cannot be removed from the chat. It is inert; ignore it. The workspace is

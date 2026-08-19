@@ -422,3 +422,35 @@ APP_VERSION 4.34 → 4.35.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · **`npm audit` 0**.
 APP_VERSION 4.35 → 4.36.
 (commit: 1ff089c)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.37 · Las 12 herramientas dejan de anunciarse solas
+- `public/tools/*.html` son **archivos estáticos e indexables**: NO los pinta Next, así que no pasan por
+  `generateMetadata` ni por ningún layout. Lo que no esté escrito a mano en su `<head>` no existe. **Diez de
+  las doce no tenían `meta description`**, y cuando falta, Google recorta un trozo del cuerpo y lo pone de
+  titular — en una calculadora, normalmente una etiqueta de formulario. Nada falla, nada se registra.
+- **El texto no se inventó**: sale de `tools.descripcion`, que el owner ya escribió. Recortado a longitud de
+  resultado (139–160) y sin las notas de administración («Se ofrece a productores», «Reemplazada por…»), que
+  dicen a QUIÉN se le muestra y no QUÉ hace.
+- ℹ️ **Diez añadidas, una corregida, una intacta**: `viaje-cafe.html` tenía una descripción corta pero correcta
+  del owner y se deja como está. Solo se tocó la rota.
+- ⚠️ **Una estaba peor que vacía**: `mermas-ctc.html` sí tenía descripción, y describía la calculadora
+  **Rápida** — pero la base dice que ese archivo es la **Detallada**.
+- **Guardián nuevo `qa-tools-seo-check.mjs` (193)**, que no se conforma con «existe»: largo útil, sufijo de la
+  casa, sin frase de admin, **ninguna repetida** (Google colapsa duplicados) e **idioma acorde al `<html
+  lang>`**. Verificado saboteándolo por tres caminos — quitar una, duplicar otra, cambiarle el idioma a una
+  tercera; los tres lo hacen fallar.
+- ⚠️ La comprobación de idioma existe **porque el fallo pasó en esta misma tanda**:
+  `green-coffee-datasheet.html` es `lang="es"` con la interfaz entera en español y se le escribió primero una
+  descripción en inglés.
+- ⚠️ **PARA EL DICT / decisión del owner: `tools.meta_description` es un campo DECORATIVO.** El admin del ECP
+  (`ToolsAdmin.tsx` → `toolsActions.ts`) deja escribirla y la guarda, pero **nada la consume para servir**: ni
+  los archivos estáticos ni `/tools/h/[slug]/route.ts`. Una fila ya contiene «Test descripcion 1». La fuente de
+  verdad de lo que ve Google es **el archivo**, y por eso el guardián valida el archivo.
+- Solo se tocó el `<head>`: son herramientas vendorizadas con JS vivo, y el cuerpo no se rozó.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · `npm audit` 0 ·
+  qa-tools-seo 193/0 · qa-encoding 732/0 · qa-docs 14/14.
+APP_VERSION 4.36 → 4.37.
+(commit: PENDIENTE)
+

@@ -862,6 +862,41 @@ dependencia directa del Buzón. Estuvo en 3 altas desde el 2026-08-17.
   subirlo. Si vuelve a aparecer un aviso sobre una transitiva, el primer intento es un `overrides` — no una
   bajada rompedora de la directa.
 
+## Las 12 herramientas dejan de anunciarse solas (2026-08-19, V4.37)
+
+`public/tools/*.html` son **archivos estáticos e indexables**. No los pinta Next: no pasan por
+`generateMetadata` ni por ningún layout, así que **lo que no esté escrito a mano en su `<head>` no existe**.
+Diez de las doce no tenían `meta description`, y cuando falta, Google no deja el hueco en blanco — recorta un
+trozo del cuerpo y lo pone de titular. En una calculadora ese trozo suele ser una etiqueta de formulario. Nada
+falla, no hay error en ningún log.
+
+- **El texto no se inventó**: sale de `tools.descripcion`, que el owner ya escribió, recortado a la longitud de
+  un resultado de búsqueda (139–160) y sin las notas de administración («Se ofrece a productores»,
+  «Reemplazada por…»), que dicen a quién se le muestra y no qué hace.
+- ℹ️ **De las dos que sí tenían descripción, solo se tocó la rota.** `viaje-cafe.html` tenía una corta pero
+  correcta, escrita por el owner, y se deja tal cual — no había defecto que arreglar. Diez añadidas, una
+  corregida, una intacta.
+- ⚠️ **Una estaba peor que vacía.** `mermas-ctc.html` sí tenía descripción, y describía la calculadora
+  **Rápida** — pero la base dice que ese archivo es la **Detallada**. Una descripción equivocada es peor que
+  ninguna, porque nadie vuelve a mirarla.
+- **Guardián nuevo `qa-tools-seo-check.mjs` (193 comprobaciones)**, y no se conforma con «existe»: largo útil,
+  sufijo de la casa, sin frase de admin, **ninguna repetida** (Google colapsa duplicados y elige él cuál enseña)
+  y **idioma acorde al `<html lang>`**. Verificado saboteándolo por tres caminos: quitando una descripción,
+  duplicando otra y poniendo una en el idioma equivocado — los tres lo hacen fallar.
+- ⚠️ **La comprobación de idioma existe porque el fallo ya pasó, en esta misma tanda**:
+  `green-coffee-datasheet.html` declara `lang="es"` y tiene la interfaz entera en español, y aun así se le
+  escribió primero una descripción en inglés. Un resultado de búsqueda en un idioma que la página no habla es
+  una página que no se abre.
+- ⚠️ **HALLAZGO QUE ES DECISIÓN DEL OWNER: `tools.meta_description` es un campo decorativo.** El admin del ECP
+  (`ToolsAdmin.tsx` → `toolsActions.ts`) deja escribirla y la guarda en la base, pero **nada la consume para
+  servir**: ni los archivos estáticos —que Next nunca renderiza— ni `/tools/h/[slug]/route.ts`, que no inyecta
+  metadatos. Una fila ya contiene «Test descripcion 1», señal de que se intentó usar y nadie comprobó el
+  resultado. Por eso el guardián valida **el archivo**, que es la fuente de verdad de lo que ve Google. La
+  decisión —reetiquetar el campo como nota interna, o enrutar las herramientas del repo por un handler que lo
+  inyecte— queda abierta.
+- **Solo se tocó el `<head>`.** Son herramientas vendorizadas con JS vivo; el cuerpo y los scripts no se
+  rozaron.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

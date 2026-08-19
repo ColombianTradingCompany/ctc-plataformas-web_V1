@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.3] — 2026-08-19 (commit pendiente)
+## [V5.3] — 2026-08-19 (commit 5c20bc4)
 
 - **Cambiado** (A4, CTC Home): en el índice de la red, **Herramientas del Café y Varietales
   Registrados intercambian su sitio** (es/en/de).

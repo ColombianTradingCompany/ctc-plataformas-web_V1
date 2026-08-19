@@ -140,3 +140,19 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   Batería 9/9 vacías, contra el anterior como control, `node --check` del bloque.
 - El puntero de HANDOFF («Visual system map») apunta al V38.0.
 (commit: de19986)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V5.1 · Nace CHANGELOG.md — el registro estándar de versiones
+- **Archivo nuevo en la raíz del repo**: la vista de CONSULTA por versión (una entrada por
+  `APP_VERSION`, viñetas con categoría, sha sellado), con el ciclo V5 entero respaldado
+  (V4.27 → V5.0). Es paralela A PROPÓSITO a estos logs —que existen para compilar el mapa— y por
+  eso nace con guardián: `qa-changelog-check.mjs` (105) hace imposible subir la insignia sin
+  escribir la entrada. La decisión del owner: informe estándar, en la raíz, referenciado desde el
+  mapa — NO embebido en el snapshot, que quedaría rancio entre wraps por diseño.
+- **Para el PRÓXIMO wrap (V39)**: (a) ANN para `ctc-platform/CHANGELOG.md` (info: `versionado`) y
+  para `ctc-platform/scripts/qa-changelog-check.mjs`; (b) la ficha `versionado` gana un párrafo: el
+  registro estándar y su contrato; (c) al cerrar cada wrap, estampar en CHANGELOG.md la línea
+  «> Wrap V{N}: ciclo compilado en …» — el paso quedó en la SKILL de versionado.
+- Cambio de proceso, no de nodos: ningún nodo ni traza cambia por esto.
+(commit: PENDIENTE)

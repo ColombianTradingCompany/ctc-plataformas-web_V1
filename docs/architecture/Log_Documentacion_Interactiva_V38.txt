@@ -1,0 +1,142 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V38.0(d200bb0).html
+(CTC Web Platform, desde 2026-08-19 · V5.0 «Pre-Launch Beta»). Cada entrada se
+compila al próximo Version Wrap (V39).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit — de UNO en UNO, no en bloque al final.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). Ningún chequeo de un
+wrap va envuelto en un guard de existencia: si el símbolo no existe, debe romper.
+
+⚠️ EL SELECTOR DE TRAZAS VA POR ÍNDICE (V33): `option.value` son "0","1","2"…;
+la comprobación buena es `select.options.length === SCENARIOS.length`.
+
+⚠️ EL DICT TIENE DOS ESTILOS DE ESCRITURA conviviendo (V31): nunca contar por
+regex — el número bueno es `Object.keys(DICT).length` evaluado (el validador).
+
+⚠️ EL MAPA DE ARCHIVOS DELATA LOS BORRADOS (V32): `gen_filemap_tree` lee el
+disco, pero ANN es a mano — al borrar o mover un archivo anotado hay que
+repuntar su ANN. En V38 fueron DOS, y las dos del propio ciclo: el `.jsx`
+retirado de Definición de contexto y `black-stock` → `ctc-selection`.
+
+⚠️ ESTE DOCUMENTO GUARDA HISTORIA, NO SOLO ESTADO (V33): al renombrar algo se
+cambia solo el texto en PRESENTE; las notas fechadas conservan el nombre de
+entonces.
+
+⚠️ UNA ENTRADA DEL LOG PUEDE ESTAR YA COMPILADA si se registró y se envolvió el
+mismo día (V28). Antes de compilar, comprobar en el HTML base.
+
+⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35): si la tanda no está comiteada,
+envolver con HEAD y renombrar después; tras renombrar, VOLVER a correr
+`gen_filemap_tree.mjs` (el snapshot se lista a sí mismo) y el validador.
+
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V38 ENSEÑÓ (léase antes del V39)
+════════════════════════════════════════════════════════════════════════════════
+
+· UN BACKTICK DENTRO DE UN CUERPO DE DICT ROMPE EL LITERAL ENTERO. Los cuerpos
+  son template literals de JS; escribir `GradosBoard` con acentos graves —la
+  costumbre de markdown— CIERRA el literal y el resto del DICT deja de parsear.
+  La batería lo cazó al evaluar (SyntaxError), no habría llegado al navegador.
+  Dentro de un cuerpo, SIEMPRE `<code>…</code>`, nunca backticks.
+
+· LAS ANN HUÉRFANAS DE ESTE WRAP LAS CREÓ EL PROPIO CICLO QUE SE COMPILABA. El
+  paso (iii) retiró el `.jsx` vendorizado y mudó black-stock a ctc-selection;
+  sus dos anotaciones quedaron colgando y solo la comprobación 5 —corrida
+  DESPUÉS de regenerar el FILETREE— las vio. Al compilar un ciclo largo, buscar
+  los borrados del ciclo, no solo los del día.
+
+· EL WRAP SE HIZO EN DOS COMMITS DELIBERADOS: primero el hito V5.0 (para que el
+  sha del nombre apunte al contenido que el snapshot documenta), después el
+  wrap. El commit del wrap queda como primer asiento de este log — el mismo
+  patrón que V36.
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
+
+- **Lo que V38 compiló**: el ciclo V5 entero (V4.27 → V5.0). Los cinco pasos del
+  plan (CTC Selection + D3.1, los 4 CRM de CP, fichas de socios + 13 compuertas,
+  Definición de contexto sin vendorizar, acceso + concha de Herramientas, «Mis
+  solicitudes») y la lista de nueve del §9 (npm audit por overrides, SEO de las
+  12 herramientas + espejo del inventario + noindex de retiradas, lista de
+  espera CTC Home, D0.9/D0.10 clavadas, el Manifiesto con su DÓNDE, la ficha
+  pública por lista blanca, la higiene de Notion, la ESCALA DE DOS EN DOS, y
+  /control-panel + cacao fuera del índice). 7 fichas nuevas, 2 trazas nuevas,
+  15 fichas actualizadas, 11 ANN nuevas.
+- **La etapa siguiente se llama «Launch Beta Testing»** (owner, 2026-08-19): el
+  ciclo de mejora que arranca sobre este corte.
+- **Pendientes del owner que este log arrastra**: Google re-rastrea a su ritmo
+  (/control-panel fuera del sitemap y mermas-rapida con noindex — en Search
+  Console se puede acelerar con «Request indexing»); el primer lote PUBLICADO es
+  el momento de mirar `/docs/ficha/<lotId>` renderizada con datos reales (la
+  proyección y la compuerta están probadas; la página nunca se ha visto con un
+  lote vivo); en Notion quedan a decisión del owner el borrado del archivo
+  `mermas-detallada.html` y los puntajes de RELLENO de Cenicafe 1 / Castillo
+  [La Hacienda] (marcados en su Notas de Perfil); política GDPR; número Nequi de
+  la Arena; material de Varietales; los dos vídeos con id provisional; Coffeed
+  con 5 medios sin feed; protección de contraseñas filtradas.
+- **Deuda consciente que sigue viva**: el espejo Notion del §1 de
+  INTEGRACIONES_PLAN sigue sin poder tener guardián (no hay credenciales de
+  Notion en el repo — es el prerrequisito); la cola diferida de la auditoría (83
+  índices FK, poda del Buzón, carreras de useAutosave, tableros sin tope);
+  qa-guard-check y qa-checkout-check sin cuenta QA (piden credenciales por CLI y no corren en la compuerta); Identity Value Creation declarada y sin
+  construir; los cotizadores sin conducir por 2FA; el riesgo aceptado del
+  registro de herramientas (allow-same-origin); el comodín heredado de
+  tools_plus_grants (3 filas — migrar con quienDependeDelComodin() antes de
+  retirar la tabla); el pilar del lead sigue `cocreate` (marca CaaS) a propósito.
+- **Línea base de la compuerta al cerrar**: tsc limpio · eslint 0 errores /
+  8 avisos · build exit 0 · npm audit 0 · qa-rutas-consolas 266 ·
+  qa-sneak-peek 194 · qa-ficha-publica 105 · qa-grados 48 · qa-tools-seo 193 ·
+  qa-tools-seo-espejo 68 · qa-crm-interes 37 · qa-crm-green 21 ·
+  qa-concha-herramientas 42 · qa-herramientas-acceso 26 · qa-solicitudes-kr 23 ·
+  qa-definicion 33 · qa-direccionamiento 14 · qa-nav 16 · qa-boards 27 ·
+  qa-docs 14 · qa-encoding 738/0.
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] Version Wrap V38 — el ciclo V5 compilado
+- `Documentacion_Interactiva_V38.0(d200bb0).html`: 39 nodos · 128 DICT ·
+  48 trazas · 91 wires · 34 CTX · 310 ANN · FILETREE 1748 (raíz ctc-platforms).
+  Batería 9/9 vacías, contra el anterior como control, `node --check` del bloque.
+- El puntero de HANDOFF («Visual system map») apunta al V38.0.
+(commit: PENDIENTE)

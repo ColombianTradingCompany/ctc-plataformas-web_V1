@@ -3,6 +3,30 @@
 import { useLang, type Lang } from "./i18n";
 import styles from "./ManifiestoSection.module.css";
 
+// ⚠️ EL PILAR 01 DICE DÓNDE SE VERIFICA, Y ESO NO ES ADORNO (2026-08-19, V4.41).
+//
+// Prometía «finca, personas, proceso y evaluación, VERIFICABLES LOTE A LOTE», a
+// secas. Dos cosas de la tarjeta no lo cumplían leído así:
+//
+//   · la FINCA — desde D3.1 (V4.28), un lote que CTC compró en firme se muestra
+//     a nombre de CTC. `public_lot_catalog` deja de devolver `finca_name`. El
+//     registro conserva la finca real; la vitrina enseña a quien vende.
+//   · las PERSONAS — y esto NO lo trajo D3.1: la tarjeta no ha mostrado nunca al
+//     productor, de ningún lote. El tipo `Lot` (data.ts) ni siquiera tiene campo.
+//
+// La promesa NO se retiró, porque es cierta: se le añadió el DÓNDE, que es lo
+// que le faltaba. La sección de EUDR (`GradosSection`, `eudrP2d`) ya decía que
+// el número de DDS «viaja con cada despacho y queda visible en tu factura y en
+// la ficha técnica del lote»; el pilar ahora apunta al mismo sitio. Y coincide
+// con lo que decidió el owner en D3.1, literal: la finca real «se muestra en la
+// DOCUMENTACIÓN» y se reemplaza en las tarjetas.
+//
+// La Historia («sin perder el nombre de quien los cultivó») se deja intacta a
+// propósito: con D3.1 aplicado el nombre NO se pierde — vive en la ficha. Sigue
+// siendo verdad tal cual está escrita.
+//
+// `qa-sneak-peek-check.mjs` ata las dos mitades: si alguien devuelve la finca a
+// la tarjeta o le quita el «dónde» a este pilar, falla. Van juntas o no van.
 const EN = {
   eyebrow: "Our manifesto · Why we do this",
   h2a: "True specialty ",
@@ -11,7 +35,7 @@ const EN = {
   lead2: "Cherry Picked exists so that standing out is worth it again.",
   lead3: " Every lot in this catalog is a shared bet: a grower's, who decided not to surrender to the average — and yours, serving it under their name.",
   values: [
-    { n: "01", title: "Traceability", body: "From the geolocated plot to your roaster: farm, people, process and evaluation, verifiable lot by lot." },
+    { n: "01", title: "Traceability", body: "From the geolocated plot to your roaster: farm, people, process and evaluation, verifiable lot by lot on the datasheet and the DDS." },
     { n: "02", title: "Radical transparency", body: "Prices agreed with the day's references on the table, contracts in the open and a sealed record anyone can check." },
     { n: "03", title: "Technical quality", body: "Blind cupping before Q-Graders, a full datasheet, monthly humidity control: rigor isn't optional." },
     { n: "04", title: "Flavor", body: "The cup decides the grade — not marketing. If a semester has no Tyrian, there is no Tyrian." },
@@ -29,7 +53,7 @@ const T: Record<Lang, typeof EN> = {
     lead2: "Cherry Picked existe para que sobresalir vuelva a valer la pena.",
     lead3: " Cada lote de este catálogo es una apuesta compartida: la de un caficultor que decidió no rendirse al promedio, y la tuya al servirlo con su nombre.",
     values: [
-      { n: "01", title: "Trazabilidad", body: "Del predio geolocalizado a tu tostadora: finca, personas, proceso y evaluación, verificables lote a lote." },
+      { n: "01", title: "Trazabilidad", body: "Del predio geolocalizado a tu tostadora: finca, personas, proceso y evaluación, verificables lote a lote en la ficha técnica y en la DDS." },
       { n: "02", title: "Transparencia radical", body: "Precios pactados con las referencias del día sobre la mesa, contratos a la vista y un registro sellado que cualquiera puede comprobar." },
       { n: "03", title: "Calidad técnica", body: "Catación a ciegas ante Q-Graders, ficha técnica completa, control de humedad mensual: el rigor no es opcional." },
       { n: "04", title: "Sabor", body: "El grado lo decide la taza — no el marketing. Si un semestre no hay Tyrian, no hay Tyrian." },
@@ -44,7 +68,7 @@ const T: Record<Lang, typeof EN> = {
     lead2: "Cherry Picked existiert, damit Herausragen sich wieder lohnt.",
     lead3: " Jeder Lot in diesem Katalog ist eine geteilte Wette: die eines Kaffeebauern, der sich dem Durchschnitt nicht ergeben wollte — und deine, wenn du ihn unter seinem Namen ausschenkst.",
     values: [
-      { n: "01", title: "Rückverfolgbarkeit", body: "Von der georeferenzierten Parzelle bis zu deinem Röster: Finca, Menschen, Prozess und Bewertung, Lot für Lot überprüfbar." },
+      { n: "01", title: "Rückverfolgbarkeit", body: "Von der georeferenzierten Parzelle bis zu deinem Röster: Finca, Menschen, Prozess und Bewertung, Lot für Lot überprüfbar — im Datenblatt und in der DDS." },
       { n: "02", title: "Radikale Transparenz", body: "Preise, verhandelt mit den Referenzen des Tages auf dem Tisch, offene Verträge und ein versiegeltes Register, das alle prüfen können." },
       { n: "03", title: "Technische Qualität", body: "Blindverkostung vor Q-Gradern, vollständiges Datenblatt, monatliche Feuchtigkeitskontrolle: Strenge ist nicht optional." },
       { n: "04", title: "Geschmack", body: "Die Tasse entscheidet über den Grad — nicht das Marketing. Gibt es in einem Halbjahr keinen Tyrian, dann gibt es keinen Tyrian." },

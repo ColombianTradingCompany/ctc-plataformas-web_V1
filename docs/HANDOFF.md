@@ -981,6 +981,32 @@ regenerar ni las ruedas ni las fichas PDF.
   desclava en cuanto alguien lo cuestione. Verificado simulando la reimportación: Castillo + La Floresta +
   1 300 m → tres fallos.
 
+## El Manifiesto dice dónde se verifica la trazabilidad (2026-08-19, V4.41)
+
+Consecuencia pendiente de D3.1. El pilar 01 prometía «finca, personas, proceso y evaluación, **verificables
+lote a lote**», a secas — y leído así la tarjeta fallaba en **dos** puntos, no en el que estaba anotado:
+
+- la **finca**, por D3.1: un lote que CTC compró en firme se muestra a nombre de CTC;
+- las **personas**, que **no lo trajo D3.1**: la tarjeta no ha mostrado nunca al productor, de ningún lote — el
+  tipo `Lot` de `data.ts` ni siquiera tiene campo. La promesa ya sobrepasaba antes de V4.28.
+
+**Decisión del owner: decir DÓNDE, sin retirar la promesa**, porque la promesa es cierta. El pilar 01 añade en
+los tres idiomas «en la ficha técnica y en la DDS» / «on the datasheet and the DDS» / «im Datenblatt und in der
+DDS».
+
+- **No es una rebaja, es el dato que faltaba**, y apunta al mismo sitio que la web ya nombraba: la sección de
+  EUDR (`GradosSection`, `eudrP2d`) dice que el número de DDS «viaja con cada despacho y queda visible en tu
+  factura y en la ficha técnica del lote». Y coincide con lo que el owner decidió en D3.1 — la finca real «se
+  muestra en la documentación».
+- **La Historia no se toca, a propósito**: «sin perder el nombre de quien los cultivó» sigue siendo verdad, el
+  nombre vive en la ficha. Corregir eso habría sido arreglar algo que no estaba roto.
+- ⚠️ **Las dos mitades quedan ATADAS en `qa-sneak-peek-check.mjs`** (194, antes 189): falla si alguien le quita
+  el «dónde» al pilar **y** falla si alguien devuelve la finca a la tarjeta. Por separado, ninguna de las dos
+  rompía nada en ningún sitio — que es exactamente por qué la promesa y la vitrina se habían separado sin que
+  nadie se enterara. Verificado saboteando las dos a la vez.
+- ℹ️ **Hoy no hay ningún lote publicado** (`public_lot_catalog` devuelve 0 filas), así que esto no cambia nada
+  que un visitante esté viendo. Era el momento barato.
+
 ## Audit findings — 2026-07-10 deep review
 
 Full codebase + Supabase advisors review. Code itself came back clean: no `TODO`/`FIXME`, no `@ts-ignore`/`@ts-expect-error`, no stray `any`, `tsc`/`eslint` both clean. Findings are all on the Supabase side, via `get_advisors` + manual verification of the flagged objects. **None were auto-fixed — applying them was outside the scope of what was asked this session; the DB-migration attempt was correctly blocked by the auto-mode classifier as an unrequested change.**

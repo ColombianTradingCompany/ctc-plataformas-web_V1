@@ -883,11 +883,25 @@ worker narrow credential (F10, backlog).
    Se **deriva de la compra** (`black_negotiations.status = 'comprar'`) — no hay interruptor que olvidar. Ni una
    fila de `lots` o `fincas` cambia. Se anula en la VISTA y no en el componente porque la vista la lee `anon`:
    taparlo en la interfaz habría dejado el nombre a un `curl` de distancia.
-   **Queda una consecuencia que el owner debería mirar**: el Manifiesto público promete «finca, personas,
-   proceso y evaluación, **verificables lote a lote**» y la Historia habla de no perder «el nombre de quien los
-   cultivó». Con la decisión aplicada, para un lote de CTC Selection eso es cierto en la **documentación** pero
-   no en la **tarjeta**. Si la promesa se lee como «en la ficha», no hay nada que cambiar; si se lee como «en
-   todas partes», el copy necesita un matiz. No bloquea nada — es una revisión de redacción.
+   ✅ **La consecuencia quedó cerrada el 2026-08-19 (V4.41), y era más ancha de lo que decía esta nota.** El
+   pilar 01 del Manifiesto prometía «finca, personas, proceso y evaluación, **verificables lote a lote**», a
+   secas. Leído así, la tarjeta fallaba en DOS puntos, no en uno:
+   - la **finca**, por D3.1 — un lote comprado en firme se muestra a nombre de CTC;
+   - las **personas**, y esto **NO lo trajo D3.1**: la tarjeta no ha mostrado nunca al productor, de ningún
+     lote. El tipo `Lot` de `data.ts` ni siquiera tiene campo. La promesa ya sobrepasaba antes de V4.28.
+   **Decisión del owner (2026-08-19): decir DÓNDE se verifica, sin retirar la promesa** — porque la promesa es
+   cierta. El pilar añade, en los tres idiomas, «en la ficha técnica y en la DDS» / «on the datasheet and the
+   DDS» / «im Datenblatt und in der DDS». No es una rebaja: es el dato que faltaba, y **apunta al mismo sitio
+   que ya decía la sección de EUDR** (`GradosSection`, `eudrP2d`: el número de DDS «viaja con cada despacho y
+   queda visible en tu factura y en la ficha técnica del lote»), y al mismo sitio que dijo el owner en D3.1
+   (la finca real «se muestra en la documentación»).
+   **La Historia se deja intacta a propósito**: «sin perder el nombre de quien los cultivó» sigue siendo verdad
+   —el nombre no se pierde, vive en la ficha—, así que tocarla habría sido corregir algo que no estaba mal.
+   **Y las dos mitades quedan atadas**: `qa-sneak-peek-check.mjs` (194, antes 189) falla tanto si alguien le
+   quita el «dónde» al pilar como si alguien devuelve la finca a la tarjeta. Ninguna de las dos rompía nada por
+   sí sola en ningún otro sitio. Verificado saboteando las dos.
+   ℹ️ Hoy no hay **ningún** lote publicado (`public_lot_catalog` devuelve 0 filas), así que el cambio no altera
+   nada que un visitante esté viendo: era el momento barato de arreglarlo.
 
 
 5-bis. ✅ **D0.9 y D0.10 cerradas (2026-08-19, V4.40) — y ninguna cambió un valor.** Las dos discrepancias que

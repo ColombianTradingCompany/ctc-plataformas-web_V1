@@ -357,6 +357,43 @@ for (const l of SNEAK_PEEK_MOCK) {
   );
 }
 
+// ── La promesa pública y lo que la tarjeta enseña, ATADAS ──────────────────
+// D3.1 quita la finca de la vitrina cuando CTC compró el lote en firme. El
+// Manifiesto, en su pilar 01, promete «finca, personas, proceso y evaluación,
+// verificables lote a lote». Leído a secas, esa promesa y esa tarjeta no
+// encajaban — y no solo por la finca: la tarjeta **nunca** ha mostrado al
+// productor, de ningún lote (el tipo `Lot` no tiene campo).
+//
+// No se retiró la promesa, porque es cierta: se le añadió el DÓNDE (la ficha
+// técnica y la DDS), que es donde la sección de EUDR ya decía que vive y donde
+// el owner dijo en D3.1 que se muestra la finca real.
+//
+// Aquí se atan las dos mitades. Quitarle el «dónde» al pilar deja una promesa
+// que la tarjeta no cumple; devolver la finca a la tarjeta rompe D3.1. Ninguna
+// de las dos falla sola en ningún sitio, así que fallan aquí.
+{
+  const manifiesto = readFileSync(new URL("../src/components/cherry-picked/ManifiestoSection.tsx", import.meta.url), "utf8");
+
+  // El pilar 01 dice dónde se verifica, en los TRES idiomas. Se busca por el
+  // término de cada lengua: si mañana se traduce mal, el hueco se ve aquí.
+  check("manifiesto ES: el pilar 01 dice dónde (ficha técnica y DDS)", /verificables lote a lote en la ficha técnica y en la DDS/.test(manifiesto));
+  check("manifiesto EN: el pilar 01 dice dónde (datasheet and DDS)", /verifiable lot by lot on the datasheet and the DDS/.test(manifiesto));
+  check("manifiesto DE: el pilar 01 dice dónde (Datenblatt und DDS)", /überprüfbar — im Datenblatt und in der DDS/.test(manifiesto));
+
+  // Y que siga escrito POR QUÉ: sin la razón, el próximo repaso de copy se lo
+  // lleva por «redundante».
+  check("y queda escrito por qué el pilar dice dónde", manifiesto.includes("EL PILAR 01 DICE DÓNDE SE VERIFICA"));
+
+  // La otra mitad: la tarjeta sigue tapando la finca del lote comprado. Si esto
+  // se revirtiera, el «dónde» del pilar sobraría — y al revés.
+  const vitrinaTienda = lee("src/components/cherry-picked/CherryPickedExperience.tsx");
+  const vitrinaCinta = lee("src/lib/catalogo/sneakPeek.ts");
+  check(
+    "la vitrina sigue enseñando CTC en vez de la finca cuando el lote es de CTC Selection",
+    /ctc_selection\s*\?\s*CTC_RAZON/.test(vitrinaTienda) && /ctc_selection\s*\?\s*CTC_RAZON/.test(vitrinaCinta)
+  );
+}
+
 // ── Las dos discrepancias resueltas, CLAVADAS ──────────────────────────────
 // D0.9 y D0.10 se cerraron el 2026-08-19 leyendo Notion y, en el caso de la
 // variedad, preguntándole al owner. Pero AGUAS ARRIBA LOS DOS ERRORES SIGUEN

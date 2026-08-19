@@ -530,3 +530,27 @@ APP_VERSION 4.38 → 4.39.
   qa-sneak-peek 189/0 · qa-grados · qa-docs 14/14 · qa-encoding.
 APP_VERSION 4.39 → 4.40.
 (commit: 7dfd8bb)
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.41 · El Manifiesto dice DÓNDE se verifica la trazabilidad
+- Cierra la consecuencia que dejó abierta **D3.1** (V4.28). El pilar 01 prometía «finca, personas, proceso y
+  evaluación, **verificables lote a lote**», a secas.
+- **Fallaba en DOS puntos, no en uno.** La **finca**, por D3.1 (el lote comprado se muestra a nombre de CTC); y
+  las **personas** — que **no lo trajo D3.1**: la tarjeta no ha mostrado NUNCA al productor, de ningún lote (el
+  tipo `Lot` de `data.ts` no tiene campo). La promesa ya sobrepasaba antes de V4.28.
+- **Decisión del owner (2026-08-19): decir DÓNDE, sin retirar la promesa**, porque es cierta. En los tres
+  idiomas: «en la ficha técnica y en la DDS» · «on the datasheet and the DDS» · «im Datenblatt und in der DDS».
+- **No es rebaja**: apunta al mismo sitio que ya nombraba la sección de EUDR (`eudrP2d`: el número de DDS
+  «queda visible en tu factura y en la ficha técnica del lote») y al que dijo el owner en D3.1 («se muestra en
+  la documentación»).
+- **La Historia NO se toca**: «sin perder el nombre de quien los cultivó» sigue siendo verdad — el nombre vive
+  en la ficha.
+- ⚠️ **PARA EL DICT: la promesa y la vitrina quedan ATADAS.** `qa-sneak-peek-check.mjs` 189 → **194**: falla si
+  se le quita el «dónde» al pilar y falla si se devuelve la finca a la tarjeta. Por separado ninguna rompía
+  nada — por eso se habían separado sin que nadie se enterara. Verificado saboteando las dos.
+- ℹ️ `public_lot_catalog` devuelve **0 filas** hoy: no cambia nada que un visitante esté viendo.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-sneak-peek 194/0 · qa-terminos 19/19 · qa-docs 14/14 · qa-encoding 735/0.
+APP_VERSION 4.40 → 4.41.
+(commit: PENDIENTE)

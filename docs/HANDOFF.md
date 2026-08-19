@@ -887,15 +887,43 @@ falla, no hay error en ningún log.
   `green-coffee-datasheet.html` declara `lang="es"` y tiene la interfaz entera en español, y aun así se le
   escribió primero una descripción en inglés. Un resultado de búsqueda en un idioma que la página no habla es
   una página que no se abre.
-- ⚠️ **HALLAZGO QUE ES DECISIÓN DEL OWNER: `tools.meta_description` es un campo decorativo.** El admin del ECP
-  (`ToolsAdmin.tsx` → `toolsActions.ts`) deja escribirla y la guarda en la base, pero **nada la consume para
-  servir**: ni los archivos estáticos —que Next nunca renderiza— ni `/tools/h/[slug]/route.ts`, que no inyecta
-  metadatos. Una fila ya contiene «Test descripcion 1», señal de que se intentó usar y nadie comprobó el
-  resultado. Por eso el guardián valida **el archivo**, que es la fuente de verdad de lo que ve Google. La
-  decisión —reetiquetar el campo como nota interna, o enrutar las herramientas del repo por un handler que lo
-  inyecte— queda abierta.
+- ⚠️ **CORREGIDO EN V4.38.** Aquí se dijo que `tools.meta_description` era «un campo decorativo». Medio cierto
+  y por tanto engañoso: nada la SIRVE —y no puede—, pero **sí la LEE el tablero de «Manejo de Plataformas»**
+  para la píldora «sin descripción». Es el inventario, no decoración. Ver la sección de V4.38, abajo.
 - **Solo se tocó el `<head>`.** Son herramientas vendorizadas con JS vivo; el cuerpo y los scripts no se
   rozaron.
+
+## El espejo del inventario de herramientas, y una retirada que seguía publicada (2026-08-19, V4.38)
+
+**Primero, una corrección de V4.37.** Allí se anotó que `tools.meta_description` «no la lee nadie». Es verdad
+que **nada la sirve**, y que no puede: `/tools/h/[slug]` **redirige** al archivo estático cuando la versión es
+del repo, y para una subida responde con `X-Robots-Tag: noindex`. Pero **sí la lee el tablero de «Manejo de
+Plataformas»** (`cargarHerramientasSeo` → `PlataformasBoard`): de ahí salen la píldora roja «sin descripción» y
+el contador de indexables, y el comentario del propio código dice que ese dato fue lo que abrió el módulo.
+**No es decoración: es el inventario.** Y con 11 NULL + un «Test descripcion 1», después de V4.37 el tablero
+mentía al revés — marcaba como faltantes descripciones que ya existían.
+
+- **Se llenó la columna** con lo que de verdad sirve cada archivo (las 12), y **se corrigió `tools.lang` de
+  `green-datasheet`**: decía `en` mientras el archivo declara `lang="es"` con la interfaz entera en español. Ese
+  campo sale como píldora «ES»/«EN» en la tarjeta, así que anunciaba en inglés una herramienta española.
+- **La regla, escrita para que no haya que deducirla**: para una herramienta del repositorio manda **el
+  ARCHIVO** —es literalmente lo que se descarga el buscador— y la columna es su **espejo**. El campo del ECP
+  ahora lo dice en pantalla, junto a la ruta del fichero, en vez de dejar que el owner lo descubra editando.
+- **Guardián nuevo `qa-tools-seo-espejo.mjs` (68)**, que toca la base: exige que columna y archivo digan lo
+  mismo, y que el idioma case. Verificado saboteándolo — se editó la descripción de `qr` y el `lang` de
+  `green-datasheet` desde SQL, y denunció los dos.
+- ⚠️ **ARCHIVAR NO RETIRA DE LA WEB una herramienta del repositorio, y eso salió de aquí.** `archivado_at` la
+  saca del inventario del ECP y hace que `/tools/h/<id>` dé 404 — **pero el archivo sigue en `public/`**,
+  servido estático, en una ruta que el proxy ni mira. `mermas-detallada` («Reporte de proceso de café»,
+  reemplazada el 2026-08-15) llevaba desde entonces viva e indexable, compitiendo en el buscador con la
+  herramienta que la sustituyó; y en V4.37, sin saberlo, **se le escribió una descripción nueva**, que es lo
+  contrario de retirarla. Ahora lleva `<meta name="robots" content="noindex, follow">`: sale del índice y el
+  enlace viejo sigue abriendo. **Borrar el archivo es otra decisión y es del owner** — puede estar enlazado
+  desde fuera. El guardián exige `noindex` en toda archivada y **ausencia** de `noindex` en toda viva, que es el
+  fallo simétrico: reactivar una sin quitarle la etiqueta la dejaría publicada e invisible.
+- ⚠️ **Los identificadores están cruzados, y conviene saberlo antes de tocar nada**: la herramienta «Calculadora
+  de mermas · Detallada» tiene el id **`mermas-ctc`**; el id `mermas-detallada` es la vieja «Reporte de proceso
+  de café», que es la retirada. Esa confusión es la que había dejado a `mermas-ctc.html` describiendo la Rápida.
 
 ## Audit findings — 2026-07-10 deep review
 

@@ -290,6 +290,18 @@ function Ficha({
           style={input}
         />
         <span className={styles.meta}>{f.metaDescription.length} caracteres · lo cómodo son 120–160.</span>
+        {/* Sin este aviso el campo engaña. Para una herramienta del repositorio,
+            lo que se descarga el buscador es el `<head>` del propio archivo de
+            `public/tools/` — esta ruta ni pasa por Next. Escribir aquí no cambia
+            lo que sale en Google: es el INVENTARIO con el que este panel avisa
+            de las que van sin descripción. `qa-tools-seo-espejo.mjs` comprueba
+            que los dos digan lo mismo. */}
+        {publicada?.origen === "repo" && (
+          <span className={styles.meta} style={{ color: "#B45309" }}>
+            Su HTML vive en <code>public{publicada.srcPublico}</code>: lo que enseña Google sale de ese archivo, no
+            de aquí. Este campo es el inventario — cámbialo junto con el archivo, o quedarán descuadrados.
+          </span>
+        )}
       </label>
 
       {/* ── Clase y reparto ── */}

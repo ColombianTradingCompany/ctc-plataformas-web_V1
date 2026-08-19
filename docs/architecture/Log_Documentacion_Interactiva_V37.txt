@@ -444,13 +444,37 @@ APP_VERSION 4.35 → 4.36.
 - ⚠️ La comprobación de idioma existe **porque el fallo pasó en esta misma tanda**:
   `green-coffee-datasheet.html` es `lang="es"` con la interfaz entera en español y se le escribió primero una
   descripción en inglés.
-- ⚠️ **PARA EL DICT / decisión del owner: `tools.meta_description` es un campo DECORATIVO.** El admin del ECP
-  (`ToolsAdmin.tsx` → `toolsActions.ts`) deja escribirla y la guarda, pero **nada la consume para servir**: ni
-  los archivos estáticos ni `/tools/h/[slug]/route.ts`. Una fila ya contiene «Test descripcion 1». La fuente de
-  verdad de lo que ve Google es **el archivo**, y por eso el guardián valida el archivo.
+- ⚠️ **CORREGIDO EN V4.38**: aquí se dijo que `tools.meta_description` era DECORATIVA. Nada la sirve —cierto—,
+  pero **sí la lee el tablero de «Manejo de Plataformas»** para la píldora «sin descripción». Es el INVENTARIO.
 - Solo se tocó el `<head>`: son herramientas vendorizadas con JS vivo, y el cuerpo no se rozó.
 - Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 · `npm audit` 0 ·
   qa-tools-seo 193/0 · qa-encoding 732/0 · qa-docs 14/14.
 APP_VERSION 4.36 → 4.37.
 (commit: e1fbe30)
 
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-19] V4.38 · El espejo del inventario, y una retirada que seguía publicada
+- **CORRECCIÓN DE V4.37.** `tools.meta_description` no es decorativa. Nada la SIRVE —y no puede:
+  `/tools/h/[slug]` redirige al archivo estático si la versión es del repo, y para una subida responde con
+  `X-Robots-Tag: noindex`— pero **sí la LEE `cargarHerramientasSeo` → `PlataformasBoard`**, que pinta con ella la
+  píldora «sin descripción» y el contador de indexables. Es el **INVENTARIO**. Con 11 NULL + un «Test
+  descripcion 1», tras V4.37 el tablero mentía al revés.
+- **Se llenó la columna** con lo que sirve cada archivo (12 filas) y **se corrigió `tools.lang` de
+  `green-datasheet`** (`en` → `es`): el archivo declara `lang="es"` y la interfaz es española, y ese campo sale
+  como píldora «ES»/«EN» en la tarjeta.
+- **LA REGLA, para el DICT**: en una herramienta del repositorio manda **el ARCHIVO**; la columna es su
+  **espejo**. El campo del ECP ahora lo dice en pantalla, con la ruta del fichero al lado.
+- **Guardián nuevo `qa-tools-seo-espejo.mjs` (68)**, que toca la base. Verificado saboteando la columna de `qr`
+  y el `lang` de `green-datasheet` desde SQL: denunció los dos.
+- ⚠️ **NODO NUEVO PARA EL MAPA: ARCHIVAR NO RETIRA DE LA WEB una herramienta del repositorio.** `archivado_at`
+  la saca del ECP y hace que `/tools/h/<id>` dé 404, **pero el archivo sigue en `public/`** — ruta que el proxy
+  ni mira. `mermas-detallada` («Reporte de proceso de café», reemplazada el 2026-08-15) seguía viva e indexable,
+  y en V4.37 se le escribió sin saberlo una descripción nueva. Ahora lleva `noindex, follow`. Borrar el archivo
+  es decisión del owner. El guardián exige `noindex` en toda archivada y su AUSENCIA en toda viva.
+- ⚠️ **IDS CRUZADOS**: «Calculadora de mermas · Detallada» = id `mermas-ctc`; el id `mermas-detallada` es la
+  vieja «Reporte de proceso de café», retirada. Esa confusión dejó a `mermas-ctc.html` describiendo la Rápida.
+- Compuerta: `tsc` limpio · `eslint src` 0 errores (8 avisos) · `npm run build` exit 0 ·
+  qa-tools-seo 193/0 · qa-tools-seo-espejo 68/0 · qa-encoding · qa-docs 14/14.
+APP_VERSION 4.37 → 4.38.
+(commit: PENDIENTE)

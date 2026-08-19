@@ -957,15 +957,38 @@ worker narrow credential (F10, backlog).
    caminos: quitando una, duplicando otra y poniendo una en el idioma equivocado.
    ⚠️ **Esa última comprobación existe porque el fallo ya pasó**: a `green-coffee-datasheet.html` —`lang="es"`,
    interfaz entera en español— se le escribió primero la descripción en inglés.
-   ⚠️ **HALLAZGO APARTE, PARA EL OWNER: la columna `tools.meta_description` NO LA LEE NADIE.** El admin del ECP
-   (`ToolsAdmin.tsx` → `toolsActions.ts`) deja escribirla y la guarda, pero **nada la sirve**: ni estos archivos
-   estáticos —que Next nunca renderiza— ni `/tools/h/[slug]/route.ts`, que no inyecta metadatos. Una fila ya
-   contiene «Test descripcion 1», señal de que se intentó usar. **La fuente de verdad de lo que ve Google es el
-   archivo**, y por eso el guardián valida el archivo y no la base. Queda una decisión pendiente: o se reetiqueta
-   el campo como nota interna, o se enrutan las herramientas del repo por un handler que lo inyecte.
+   ⚠️ **CORREGIDO EN V4.38 — aquí se anotó que `tools.meta_description` «no la lee nadie», y era medio cierto y
+   por tanto engañoso.** Es verdad que nada la SIRVE, y que no puede: `/tools/h/[slug]` **redirige** al archivo
+   estático cuando la versión es del repo, y para una subida responde con `X-Robots-Tag: noindex`. Pero **sí la
+   LEE el tablero de «Manejo de Plataformas»** (`cargarHerramientasSeo` → `PlataformasBoard`), que la usa para
+   la píldora roja «sin descripción» y el contador de indexables — el propio comentario del código dice que ese
+   dato fue lo que abrió el módulo. **No es decoración: es el INVENTARIO.** Y como estaba en 11 NULL + un «Test
+   descripcion 1», después de V4.37 el tablero mentía al revés: decía que faltaban descripciones que ya
+   existían. Ver §9 to-do 3-bis.
    ⚠️ Al editar estos archivos: son herramientas vendorizadas con JS vivo. Quitar un control sin quitar sus
    referencias en JS deja un `null` que tumba la calculadora entera al cargar — verificar A/B contra el archivo
    anterior, mismo script, mismos números. (Aquí solo se tocó el `<head>`, nunca el cuerpo ni el JS.)
+
+3-bis. ✅ **El espejo del inventario de herramientas (2026-08-19, V4.38).** Se llenó `tools.meta_description`
+   con lo que de verdad sirve cada archivo (las 12), y se corrigió `tools.lang` de `green-datasheet`, que decía
+   `en` mientras el archivo declara `lang="es"` y tiene la interfaz entera en español — ese campo sale como
+   píldora «ES»/«EN» en la tarjeta, así que anunciaba en inglés una herramienta española.
+   **La regla queda escrita**: para una herramienta del repositorio **manda el ARCHIVO** (es literalmente lo que
+   se descarga el buscador) y la columna es su **espejo**. El guardián nuevo `qa-tools-seo-espejo.mjs` (68) lo
+   comprueba contra la base, y el campo del ECP ahora lo dice en pantalla en vez de dejar que el owner lo
+   descubra. Verificado saboteándolo: se editó la columna de `qr` y el `lang` de `green-datasheet` y los denunció
+   a los dos.
+   ⚠️ **Y un hallazgo que salió de ahí: ARCHIVAR NO RETIRA DE LA WEB una herramienta del repositorio.**
+   `archivado_at` la saca del inventario del ECP y hace que `/tools/h/<id>` responda 404, **pero el archivo sigue
+   en `public/`**, servido estático, en una ruta que el proxy ni mira. `mermas-detallada` («Reporte de proceso de
+   café», reemplazada el 2026-08-15) llevaba desde entonces viva e indexable, compitiendo en el buscador con la
+   herramienta que la sustituyó — y en V4.37, sin saberlo, **se le escribió una descripción nueva**, que es justo
+   lo contrario de retirarla. Ahora lleva `<meta name="robots" content="noindex, follow">`: sale del índice y el
+   enlace viejo sigue abriendo. Borrar el archivo es otra decisión, y es del owner: puede estar enlazado desde
+   fuera. El guardián exige `noindex` en toda archivada y **ausencia** de `noindex` en toda viva.
+   ⚠️ **Ojo con los identificadores, que están cruzados**: la herramienta llamada «Calculadora de mermas ·
+   Detallada» tiene el id **`mermas-ctc`**; el id `mermas-detallada` es la vieja «Reporte de proceso de café»,
+   que es la retirada. Fue exactamente esa confusión la que dejó a `mermas-ctc.html` describiendo la Rápida.
 
 4. **The empty OneDrive folder stays.** `…/OneDrive/Desktop/CTC Web Platform` is empty since the migration and
    **is not going to be deleted** — Claude Code has it locked as this session's working directory and the owner

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { LangProvider } from "@/components/lang/i18n";
 import { ConchaHerramienta } from "@/components/tools/ConchaHerramienta";
-import { TallerBarra } from "@/components/tools/TallerBarra";
+import { BarraHerramienta } from "@/components/tools/BarraHerramienta";
 import { resolverHerramienta } from "@/lib/tools/unaHerramienta";
 import { cargarTaller } from "@/lib/tools/taller";
 
@@ -28,8 +28,15 @@ export default async function HerramientaTallerPage({
   return (
     <div data-theme="ctc-home" style={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
       <LangProvider storageKey="ctc-lang">
-        <TallerBarra email={taller.email} compacta />
-        <main style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "0 16px 12px" }}>
+        <BarraHerramienta
+          nombre={h.nombre}
+          email={taller.email}
+          red={taller.red}
+          volverHref={volver ?? "/herramientas/taller"}
+          volverEtiqueta="Volver a Herramientas"
+          conTrabajos={h.soportaMemoria}
+        />
+        <main style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "8px 16px 12px" }}>
           <ConchaHerramienta
             superficie="herramientas"
             volver={volver ?? "/herramientas/taller"}

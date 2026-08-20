@@ -177,3 +177,6 @@
   color: var(--muted, #7d6c5d);
   max-width: 72ch;
 }
+
+/* La línea de sesión, aún más fina en pantalla completa (V5.8). */
+.conchaFull .sesionBarra { padding: 2px 2px 6px; font-size: 12px; }

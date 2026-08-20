@@ -107,18 +107,49 @@ check(
    "src/app/cherry-picked-green/herramientas/[slug]/page.tsx",
   ].every((f) => lee(f).includes("pantallaCompleta"))
 );
+// V5.8: el taller es COVER FLOW (la mecánica de Cool PDF) en DOS estantes.
+const tallerPage = lee("src/app/herramientas/taller/page.tsx");
+check("el taller usa Cover Flow", tallerPage.includes("CoverFlow"));
+check("y en dos estantes: abiertas y Plus", tallerPage.includes("Herramientas Plus") && tallerPage.includes("Tus herramientas"));
+check("el estado Plus se dice con todas las letras", tallerPage.includes("plusEstado"));
+check("el logotipo preside el taller", tallerPage.includes("herramientas-logo.png"));
+
+const flow = lee("src/components/tools/CoverFlow.tsx");
+check("la ficha distingue «activa en tu cuenta» de «se solicita»", flow.includes("ACTIVA en tu cuenta"));
 check(
-  "el taller es carátulas que voltean (V5.7)",
-  lee("src/app/herramientas/taller/page.tsx").includes("TallerAlbum")
+  "las constantes son las de Cool PDF (54deg, 170, .14, .38)",
+  flow.includes("* 54") && flow.includes("170") && flow.includes("0.14") && flow.includes("0.38")
+);
+check("se conduce con teclado", flow.includes("ArrowRight") && flow.includes("ArrowLeft"));
+
+// V5.8: la cinta fina y su rueda dentada
+const cinta = lee("src/components/tools/BarraHerramienta.tsx");
+check("la cinta lleva rueda dentada con menú", cinta.includes('aria-haspopup="menu"'));
+check("la rueda esconde Mi Red", cinta.includes("Mi Red"));
+check("y la salida", cinta.includes("signOut"));
+check("«Mis trabajos» viaja por evento a la concha", cinta.includes("ctc:mis-trabajos"));
+check(
+  "la concha NO repite cabecera en pantalla completa",
+  lee("src/components/tools/ConchaHerramienta.tsx").includes("{!pantallaCompleta && (")
 );
 check(
-  "el estado Plus se dice con todas las letras",
-  lee("src/app/herramientas/taller/page.tsx").includes("plusEstado")
+  "la sesión escucha el evento de la rueda",
+  lee("src/components/tools/SesionHerramienta.tsx").includes('window.addEventListener("ctc:mis-trabajos"')
 );
-const album = lee("src/components/tools/TallerAlbum.tsx");
-check("el reverso distingue «activa en tu cuenta» de «se solicita»", album.includes("ACTIVA en tu cuenta"));
+
+// V5.8: «Obtener Herramientas Plus» — explica ANTES de pedir
+const obtener = lee("src/components/tools/ObtenerPlus.tsx");
+check("el botón Plus explica antes de mandar", obtener.includes("¿Qué son las Herramientas Plus?"));
+check("y mandar es un segundo gesto", obtener.includes("Enviar solicitud"));
+const accionPlus = lee("src/lib/tools/solicitarPlus.ts");
+check("la solicitud general NO inventa tabla", accionPlus.includes("tool_access_requests"));
+check("y no pide lo que la cuenta ya abre", accionPlus.includes("puedeAbrir(ctx, t.id"));
+
+// V5.8: los logotipos de la superficie
+check("el logotipo corona la puerta", lee("src/app/herramientas/acceso/AccesoTaller.tsx").includes("herramientas-logo.png"));
+check("y preside el hero de la landing", lee("src/components/services/HerramientasLanding.tsx").includes("heroMarca"));
 check(
-  "el acordeón de la guía va CERRADO por defecto (convención de la casa)",
+  "el acordeon de la guia va CERRADO por defecto (convencion de la casa)",
   lee("src/components/tools/SesionHerramienta.tsx").includes("<details className={styles.menuGuia}>") &&
     !lee("src/components/tools/SesionHerramienta.tsx").includes("menuGuia} open")
 );

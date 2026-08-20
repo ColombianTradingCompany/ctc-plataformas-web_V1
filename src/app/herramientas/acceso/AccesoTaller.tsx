@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./acceso.module.css";
 
@@ -67,6 +68,16 @@ export function AccesoTaller() {
 
   return (
     <div className={styles.caja}>
+      {/* El logotipo de la superficie corona la puerta (owner, V5.8): quien
+          llega desde un enlace suelto tiene que ver DÓNDE está entrando. */}
+      <Image
+        className={styles.marca}
+        src="/images/shared/herramientas-logo.png"
+        alt="Herramientas del Café"
+        width={720}
+        height={675}
+        priority
+      />
       <h1>Entrar al taller</h1>
       <p className={styles.explica}>
         Con tu cuenta de la red — la misma de <b>Kaffetal Regal</b>, <b>Cherry Picked</b> o el{" "}

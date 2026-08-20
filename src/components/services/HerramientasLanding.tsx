@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { CarruselHerramientas, type TarjetaCarrusel } from "./CarruselHerramientas";
 import { SurfaceShell } from "./SurfaceShell";
@@ -61,7 +62,17 @@ export function HerramientasLanding({ tarjetas, autenticado }: { tarjetas: Tarje
   return (
     <SurfaceShell name="Herramientas del Café" logo="/images/shared/herramientas-logo.png">
       <section className={styles.hero}>
-        <span className={styles.tag}>Herramientas del Café</span>
+        {/* El logotipo preside el hero (owner, V5.8): la marca de la superficie
+            se ve antes que su nombre escrito. El `tag` de texto sobraba con él
+            delante. */}
+        <Image
+          className={styles.heroMarca}
+          src="/images/shared/herramientas-logo.png"
+          alt="Herramientas del Café"
+          width={720}
+          height={675}
+          priority
+        />
         <h1>{chrome.h1}</h1>
         <p className={styles.heroSub}>{chrome.sub}</p>
         <p className={styles.heroBody}>{chrome.body}</p>

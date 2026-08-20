@@ -60,6 +60,10 @@ export function ConchaHerramienta({
 
   return (
     <div className={`${styles.concha}${pantallaCompleta ? ` ${styles.conchaFull}` : ""}`}>
+      {/* En pantalla completa la cabecera NO se pinta: el nombre, el volver y
+          las opciones viven en la cinta de arriba (BarraHerramienta, V5.8).
+          Repetirlos aquí era justo el alto que el owner reclamó. */}
+      {!pantallaCompleta && (
       <header className={styles.barra}>
         <Link href={destino} className={styles.volver}>
           ← Volver a {casa}
@@ -74,6 +78,7 @@ export function ConchaHerramienta({
         </div>
         <p className={styles.desc}>{descripcion}</p>
       </header>
+      )}
 
       {veredicto.abre ? (
         soportaMemoria ? (

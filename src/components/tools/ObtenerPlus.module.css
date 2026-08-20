@@ -1,0 +1,60 @@
+/* «Obtener Herramientas Plus» (V5.8): un botón que EXPLICA antes de pedir. */
+.caja { margin: 0 0 20px; }
+
+.abrir {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #8c4a1f;
+  background: #fff6ee;
+  color: #8c4a1f;
+}
+.abrir:hover { background: #8c4a1f; color: #fff; }
+.abrir:focus-visible { outline: 2px solid #8c4a1f; outline-offset: 2px; }
+.cuantas {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(140, 74, 31, 0.14);
+}
+.abrir:hover .cuantas { background: rgba(255, 255, 255, 0.22); }
+
+.panel {
+  margin-top: 12px;
+  border: 1px solid var(--line, #e6ddd1);
+  border-left: 3px solid #8c4a1f;
+  border-radius: 0 12px 12px 0;
+  background: var(--card, #fff);
+  padding: 18px 20px;
+  max-width: 74ch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.panel h3 { margin: 0; font-size: 16px; }
+.panel p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--muted, #7d6c5d); }
+.lista { color: inherit !important; }
+.finoPrint { font-size: 12px !important; }
+
+.campo { display: flex; flex-direction: column; gap: 5px; }
+.campo span { font-size: 12.5px; font-weight: 600; color: var(--muted, #7d6c5d); }
+.campo textarea {
+  font: inherit;
+  font-size: 13.5px;
+  padding: 9px 11px;
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 8px;
+  resize: vertical;
+}
+.error { color: #a2332a !important; font-size: 13px !important; }
+.hecho { color: #2f6b4f !important; font-weight: 600; font-size: 13.5px !important; }
+.acciones { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }

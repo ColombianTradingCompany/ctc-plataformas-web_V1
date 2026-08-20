@@ -30,11 +30,30 @@ export type HerramientaTaller = {
   trabajos: number;
 };
 
+/** «Mi Red» (owner, V5.8): las puertas que YA son de esta persona. El
+ *  Directorio y Coffeed son de la red entera; Kaffetal Regal o Cherry Picked
+ *  según lo que la cuenta ya sea — si todavía no es ninguna de las dos, no se
+ *  nombra ninguna: ofrecer las dos sería empujar a elegir, y la exclusión
+ *  productor ⊕ comprador es de la matriz, no de este menú. */
+export type MiRed = { enlaces: { nombre: string; href: string }[] };
+
+const RED_URL =
+  process.env.NODE_ENV === "production"
+    ? {
+        directorio: "https://directoriodelcafe.ctcexport.com",
+        coffeed: "https://coffeed.ctcexport.com",
+        kr: "https://kaffetal-regal.ctcexport.com",
+        cp: "https://cherry-picked-green.ctcexport.com",
+      }
+    : { directorio: "/directorio", coffeed: "/coffeed", kr: "/kaffetal-regal", cp: "/cherry-picked-green" };
+
 export type Taller = {
   autenticado: boolean;
   esMiembro: boolean;
   /** El correo de la sesión, para la barra («quién está dentro»). */
   email: string | null;
+  /** Las puertas de esta persona, para el menú «Mi Red». */
+  red: MiRed;
   herramientas: HerramientaTaller[];
 };
 
@@ -114,5 +133,12 @@ export async function cargarTaller(): Promise<Taller> {
     });
   }
 
-  return { autenticado: ctx.autenticado, esMiembro: esMiembroHC(ctx), email, herramientas };
+  const enlaces: { nombre: string; href: string }[] = [
+    { nombre: "Directorio del Café", href: RED_URL.directorio },
+    { nombre: "Coffeed", href: RED_URL.coffeed },
+  ];
+  if (ctx.esProductor) enlaces.push({ nombre: "Kaffetal Regal", href: RED_URL.kr });
+  else if (ctx.esComprador) enlaces.push({ nombre: "Cherry Picked", href: RED_URL.cp });
+
+  return { autenticado: ctx.autenticado, esMiembro: esMiembroHC(ctx), email, red: { enlaces }, herramientas };
 }

@@ -31,3 +31,6 @@
   margin: 6px 0 0; padding-top: 14px; border-top: 1px solid var(--line, #e6ddd1);
   font-size: 13px; color: var(--muted, #7d6c5d); line-height: 1.6;
 }
+
+/* El logotipo corona la puerta (V5.8). */
+.marca { width: 86px; height: auto; align-self: center; margin-bottom: 2px; }

@@ -98,6 +98,20 @@ export function SesionHerramienta({
     };
   }, [toolId]);
 
+  // La rueda dentada de la cinta (V5.8) pide «Mis trabajos» por evento y no por
+  // prop: la cinta la pinta la PÁGINA (servidor) y este menú vive dentro de la
+  // concha, así que no hay padre común de cliente al que colgar un callback.
+  // Un CustomEvent en window los une sin inventar contexto ni subir estado.
+  useEffect(() => {
+    function alMenu() {
+      setAviso(null);
+      setModo({ tipo: "cargando" });
+      cargarLista();
+    }
+    window.addEventListener("ctc:mis-trabajos", alMenu);
+    return () => window.removeEventListener("ctc:mis-trabajos", alMenu);
+  }, [cargarLista]);
+
   // El oído del puente. Se monta una vez; valida fuente y origen SIEMPRE.
   useEffect(() => {
     function onMessage(e: MessageEvent) {
@@ -271,18 +285,10 @@ export function SesionHerramienta({
   const enTrabajo = modo.tipo === "abierta";
   return (
     <div className={styles.sesion}>
+      {/* Una LÍNEA, no una barra (V5.8): qué trabajo está abierto y si está
+          guardado. «Mis trabajos» se fue a la rueda dentada de la cinta — era
+          una de las cuatro filas que el owner reclamó. */}
       <div className={styles.sesionBarra}>
-        <button
-          type="button"
-          className={styles.sesionVolver}
-          onClick={() => {
-            setAviso(null);
-            setModo({ tipo: "cargando" });
-            cargarLista();
-          }}
-        >
-          ← Mis trabajos
-        </button>
         {enTrabajo ? (
           <>
             <span className={styles.sesionNombre}>{modo.nombreTrabajo}</span>

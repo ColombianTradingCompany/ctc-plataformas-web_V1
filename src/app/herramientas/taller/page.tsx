@@ -1,20 +1,21 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { LangProvider } from "@/components/lang/i18n";
 import { superficieConOverrides } from "@/lib/seo/openGraph";
 import { cargarTaller } from "@/lib/tools/taller";
-import { TallerBarra } from "@/components/tools/TallerBarra";
-import { TallerAlbum } from "@/components/tools/TallerAlbum";
+import { BarraHerramienta } from "@/components/tools/BarraHerramienta";
+import { CoverFlow, type CoverItem } from "@/components/tools/CoverFlow";
+import { ObtenerPlus } from "@/components/tools/ObtenerPlus";
 import styles from "./taller.module.css";
 
 // ── /herramientas/taller · la rejilla de trabajo (A8/A9, 2026-08-19) ────────
 // Detrás de la puerta: la landing pública es el carrusel; ESTO es donde se
-// trabaja. Todo el catálogo compartible, cada herramienta con su estado a la
-// vista — abrir, o candado con «Solicitar» dentro (A9: una Plus se LISTA, no
-// se esconde). Sin sesión, a la puerta.
+// trabaja. Sin sesión, a la puerta.
 //
-// Segunda pasada del owner (mismo día): la barra con identidad y salida
-// arriba, y las tarjetas con la MISMA captura del carrusel — el taller ya no
-// es una lista de texto.
+// V5.8 (owner): las herramientas se enseñan en COVER FLOW —la mecánica de Cool
+// PDF, que fue la referencia que pidió— y en DOS estantes: las abiertas
+// arriba, las Plus en su propio estante debajo. Arriba del todo, el botón que
+// explica qué es Plus y manda la solicitud.
 export const generateMetadata = superficieConOverrides({
   route: "/herramientas",
   title: "El taller · Herramientas del Café · CTC",
@@ -30,30 +31,62 @@ export default async function TallerPage() {
   const taller = await cargarTaller();
   if (!taller.autenticado) redirect("/herramientas/acceso");
 
-  // Lo Plus, dicho con todas las letras (queja del owner: tenía Plus activo y
-  // nada en pantalla se lo decía): cuántas Plus abre esta cuenta, arriba.
-  const plusAbiertas = taller.herramientas.filter((h) => h.esPlus && h.veredicto.abre).length;
-  const plusTotales = taller.herramientas.filter((h) => h.esPlus).length;
+  const aCover = (h: (typeof taller.herramientas)[number]): CoverItem => ({
+    id: h.id,
+    nombre: h.nombre,
+    descripcion: h.descripcion,
+    esPlus: h.esPlus,
+    soportaMemoria: h.soportaMemoria,
+    abre: h.veredicto.abre,
+    viaPlus: h.veredicto.abre && h.esPlus && h.veredicto.via !== "default" ? h.veredicto.via : null,
+    sePuedeSolicitar: !h.veredicto.abre && h.veredicto.motivo === "sin-permiso",
+    trabajos: h.trabajos,
+  });
+
+  // Dos estantes (owner): lo abierto y lo Plus. El reparto es por NIVEL, no por
+  // si esta cuenta lo abre — una Plus ya activa sigue siendo Plus, y verla en
+  // su estante con el sello «ACTIVA» es justo lo que el owner echaba en falta.
+  const abiertas = taller.herramientas.filter((h) => !h.esPlus).map(aCover);
+  const plus = taller.herramientas.filter((h) => h.esPlus).map(aCover);
+
+  const plusAbiertas = plus.filter((h) => h.abre).length;
+  const plusPorPedir = plus.filter((h) => !h.abre);
 
   return (
     <div data-theme="ctc-home">
       <LangProvider storageKey="ctc-lang">
-        <TallerBarra email={taller.email} />
+        <BarraHerramienta
+          nombre="Herramientas del Café"
+          email={taller.email}
+          red={taller.red}
+          volverHref="/herramientas"
+          volverEtiqueta="Salir del taller"
+        />
         <main className={styles.marco}>
           <header className={styles.cabeza}>
-            <h1>El taller</h1>
-            <p>
-              Las herramientas de trabajo de la red, con tu cuenta. Toca una carátula para ver qué es; ábrela desde su
-              reverso. Las marcadas «Memoria» guardan tus trabajos — con nombre y fecha — para retomarlos desde
-              cualquier equipo.
-            </p>
-            {plusTotales > 0 && (
-              <p className={styles.plusEstado} data-activa={plusAbiertas > 0 ? "" : undefined}>
-                {plusAbiertas > 0
-                  ? `Plus ACTIVO en tu cuenta: abres ${plusAbiertas} de ${plusTotales} herramienta${plusTotales === 1 ? "" : "s"} Plus.`
-                  : `Hay ${plusTotales} herramienta${plusTotales === 1 ? "" : "s"} Plus: se activan por solicitud, desde su propia página.`}
+            <Image
+              className={styles.marca}
+              src="/images/shared/herramientas-logo.png"
+              alt="Herramientas del Café"
+              width={720}
+              height={675}
+              priority
+            />
+            <div>
+              <h1>El taller</h1>
+              <p>
+                Las herramientas de trabajo de la red, con tu cuenta. Arrastra las portadas o usa las flechas; abre la
+                que necesites desde su ficha. Las marcadas «Memoria» guardan tus trabajos — con nombre y fecha — para
+                retomarlos desde cualquier equipo.
               </p>
-            )}
+              {plus.length > 0 && (
+                <p className={styles.plusEstado} data-activa={plusAbiertas > 0 ? "" : undefined}>
+                  {plusAbiertas > 0
+                    ? `Plus ACTIVO en tu cuenta: abres ${plusAbiertas} de ${plus.length} herramienta${plus.length === 1 ? "" : "s"} Plus.`
+                    : `Hay ${plus.length} herramienta${plus.length === 1 ? "" : "s"} Plus: se activan por solicitud.`}
+                </p>
+              )}
+            </div>
           </header>
 
           {!taller.esMiembro && (
@@ -64,19 +97,30 @@ export default async function TallerPage() {
             </p>
           )}
 
-          <TallerAlbum
-            herramientas={taller.herramientas.map((h) => ({
-              id: h.id,
-              nombre: h.nombre,
-              descripcion: h.descripcion,
-              esPlus: h.esPlus,
-              soportaMemoria: h.soportaMemoria,
-              abre: h.veredicto.abre,
-              viaPlus: h.veredicto.abre && h.esPlus && h.veredicto.via !== "default" ? h.veredicto.via : null,
-              sePuedeSolicitar: !h.veredicto.abre && h.veredicto.motivo === "sin-permiso",
-              trabajos: h.trabajos,
-            }))}
-          />
+          {plusPorPedir.length > 0 && (
+            <ObtenerPlus cuantas={plusPorPedir.length} nombres={plusPorPedir.map((h) => h.nombre)} />
+          )}
+
+          {abiertas.length > 0 && (
+            <section className={styles.estante}>
+              <h2 className={styles.estanteTitulo}>
+                Tus herramientas <span>{abiertas.length}</span>
+              </h2>
+              <CoverFlow items={abiertas} idPrefijo="abiertas" />
+            </section>
+          )}
+
+          {plus.length > 0 && (
+            <section className={styles.estante}>
+              <h2 className={`${styles.estanteTitulo} ${styles.estantePlus}`}>
+                Herramientas Plus <span>{plus.length}</span>
+              </h2>
+              <p className={styles.estanteNota}>
+                Las que CTC habilita una a una y por cuenta. {plusAbiertas > 0 && `Tu cuenta abre ${plusAbiertas}.`}
+              </p>
+              <CoverFlow items={plus} idPrefijo="plus" />
+            </section>
+          )}
         </main>
       </LangProvider>
     </div>

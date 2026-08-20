@@ -19,6 +19,35 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.8] — 2026-08-20 (commit pendiente)
+
+- **Cambiado** (owner, con la referencia en la mano): el taller pasa a **Cover Flow** — la mecánica
+  de `RENDER.flow` de **Cool PDF**, transplantada con sus constantes exactas (rotateY 54°, z −170,
+  escala −.14, brightness −.38, `perspective:1500px`). Se conduce con arrastre, rueda horizontal,
+  flechas y teclado; la portada del centro tiene su ficha debajo, con la salida. Las carátulas que
+  volteaban de la V5.7 se retiran: no eran lo que se pidió.
+- **Cambiado** (owner): **dos estantes** — «Tus herramientas» arriba y **«Herramientas Plus»** en su
+  propio Cover Flow debajo. El reparto es por NIVEL, no por si la cuenta lo abre: una Plus activa
+  sigue siendo Plus, y verla en su estante con el sello **ACTIVA** era justo lo que faltaba.
+- **Añadido** (owner): **«Obtener Herramientas Plus»** arriba del taller — explica qué es el nivel
+  Plus y, en un SEGUNDO gesto, manda la solicitud. No inventa tabla: crea una fila de
+  `tool_access_requests` por cada Plus que la cuenta no abre (la misma cola del ECP, el mismo
+  conceder deliberado), avisa por correo y nunca pide lo que ya se tiene.
+- **Cambiado** (owner, con captura): abrir una herramienta mostraba **CUATRO filas** antes del
+  contenido. Ahora es **UNA cinta de 38px** — logotipo, nombre, «Volver a Herramientas» y una
+  **rueda dentada**. Dentro de la rueda: Mis trabajos, todas las herramientas, **Mi Red**, la
+  cuenta y la salida. La concha ya no repite su cabecera en pantalla completa y la línea de sesión
+  se queda en el nombre del trabajo y su estado de guardado.
+- **Añadido** (owner): **«Mi Red»** en la rueda — Directorio del Café y Coffeed siempre; Kaffetal
+  Regal **o** Cherry Picked según lo que la cuenta ya sea. Si todavía no es ninguna de las dos, no
+  se nombra ninguna: ofrecer las dos sería empujar a elegir, y la exclusión productor ⊕ comprador
+  es de la matriz, no de un menú.
+- **Añadido** (owner): el **logotipo de la superficie** corona la puerta de acceso y preside el
+  hero de la landing (el rótulo de texto que hacía de marca sobra con él delante).
+- **Cambiado**: `qa-taller-check` 49 → **65** — las constantes de Cool PDF, los dos estantes, la
+  rueda y su evento, la cinta sin cabecera repetida, el Plus que explica antes de pedir y los dos
+  logotipos.
+
 ## [V5.7] — 2026-08-20 (commit efd3633)
 
 - **Cambiado** (owner): el taller deja la lista por **CARÁTULAS que voltean** — la captura es la

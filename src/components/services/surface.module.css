@@ -282,3 +282,7 @@
   font-size: 14.5px;
   line-height: 1.6;
 }
+
+/* El logotipo de la superficie presidiendo su hero (V5.8, Herramientas). */
+.heroMarca { width: 104px; height: auto; display: block; margin: 0 0 14px; }
+@media (max-width: 560px) { .heroMarca { width: 76px; } }

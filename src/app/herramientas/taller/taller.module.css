@@ -83,3 +83,30 @@
   color: #8c4a1f;
 }
 .plusEstado[data-activa] { color: #2f6b4f; }
+
+/* ── V5.8: el logo en la cabecera y los dos estantes ─────────────────────── */
+.cabeza { display: flex; align-items: flex-start; gap: 18px; }
+.marca { width: 74px; height: auto; flex: none; margin-top: 2px; }
+@media (max-width: 560px) { .marca { width: 54px; } .cabeza { gap: 12px; } }
+
+.estante { margin-top: 34px; }
+.estanteTitulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.estanteTitulo span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--muted, #7d6c5d);
+  border: 1px solid var(--line, #e6ddd1);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-variant-numeric: tabular-nums;
+}
+.estantePlus { color: #8c4a1f; }
+.estantePlus span { border-color: #e2c7ae; color: #8c4a1f; }
+.estanteNota { margin: 0 0 12px; font-size: 13px; color: var(--muted, #7d6c5d); }

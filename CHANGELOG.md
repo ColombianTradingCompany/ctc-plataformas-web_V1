@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.13] — 2026-08-20 (commit pendiente)
+## [V5.13] — 2026-08-20 (commit 10b0cfb)
 
 - **Corregido**: el «Volver a CTC Web Platform» de `/recuperar-acceso?puerta=panel` aterrizaba en la
   **portada de CTC Home**, no en `/login`. `hrefPuerta()` recortaba la base de la superficie del

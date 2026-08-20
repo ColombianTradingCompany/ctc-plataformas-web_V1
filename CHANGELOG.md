@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.10] — 2026-08-20 (commit pendiente)
+## [V5.10] — 2026-08-20 (commit 23fd5d6)
 
 - **Añadido**: **«Regenerar»** en Redacción — la primera generación real falló por credenciales y
   la noticia quedaba `elegida` sin forma de reintentarla. Rehace la entrega **solo mientras siga

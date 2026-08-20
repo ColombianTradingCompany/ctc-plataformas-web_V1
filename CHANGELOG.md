@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.11] — 2026-08-20 (commit pendiente)
+## [V5.11] — 2026-08-20 (commit b73d73b)
 
 - **Retirado**: el **GVG-Space** sale de la plataforma. Se extrajo el **CV App Manager** — sus once
   archivos de interfaz y sus nueve de lógica, unas 6.500 líneas — y se montó como servicio del

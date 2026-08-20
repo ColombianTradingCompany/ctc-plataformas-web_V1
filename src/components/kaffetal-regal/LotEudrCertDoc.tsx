@@ -154,7 +154,7 @@ export function LotEudrCertDoc({
         <p style={{ fontSize: 12.5, color: "#555" }}>
           {lot.eudr_custody_method === "ctc_standard" ? (
             <>
-              <b>CTC Parchment Storage Standard:</b> sacos de yute con liner hermético, tarjeta indicadora de humedad (HIC)
+              <b>Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard:</b> sacos de yute con liner hermético, tarjeta indicadora de humedad (HIC)
               y código QR vinculado al código CTC del lote — separación física y documental cubiertas por el estándar.
             </>
           ) : lot.eudr_custody_method === "custom" ? (

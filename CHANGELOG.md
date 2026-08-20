@@ -19,6 +19,25 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.15] — 2026-08-20 (commit pendiente)
+
+- **Cambiado**: el **Estándar CTC de Almacenamiento de Pergamino es bilingüe en TODAS las
+  superficies** (owner: «en ambos idiomas, y en los formularios de KR sobre todo en español»). La
+  V5.14 lo tradujo solo en el formulario del productor; quedaban en inglés puro el editor EUDR del
+  OCP (tres sitios), el Expediente EUDR de la finca y el Certificado EUDR del lote. Ahora todos
+  dicen «Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard» — el
+  español dice qué es, el inglés es el nombre registrado con el que el documento viaja a Europa. En
+  el formulario de KR el inglés queda en pequeño y entre paréntesis: ahí el que lee es el
+  caficultor.
+- **Docs**: verificación de la V5.14 contra las filas REALES de producción, ejecutando
+  `fincaEudrStatus`/`lotEudrStatus` de verdad sobre las cinco fincas y los cuatro lotes: las dos
+  fincas aprobadas con expediente remitido siguen «Visa vigente» (cero regresión); **Palmas — el
+  caso exacto del reporte — pasa de la falsa «Visa vigente» a «Visa en revisión por CTC» con su
+  botón Aprobar habilitado**, y su lote deja de decir «Sello listo». Las dos incompletas siguen
+  «Visa en trámite», que es del productor.
+
+---
+
 ## [V5.14] — 2026-08-20 (commit 7e11014)
 
 - **Hito**: primera tanda de la revisión de **Kaffetal Regal y el OCP que lo administra**, sobre

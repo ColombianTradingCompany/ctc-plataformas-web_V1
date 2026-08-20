@@ -532,7 +532,7 @@ export function FincaEudrEditor({
 
         {subTab === "riesgo" && (
           <div className={styles.meta} style={{ lineHeight: 1.9 }}>
-            <div>Método de separación: {values.eudr_custody_method === "ctc_standard" ? "CTC Parchment Storage Standard" : values.eudr_custody_method === "custom" ? "Método propio" : "sin definir"}</div>
+            <div>Método de separación: {values.eudr_custody_method === "ctc_standard" ? "Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard" : values.eudr_custody_method === "custom" ? "Método propio" : "sin definir"}</div>
             {values.eudr_custody_method === "custom" && values.eudr_custody_notes && <div>Notas de custodia: {values.eudr_custody_notes}</div>}
             <div>Cadena de custodia: {labelsFor(values.eudr_custody_stages, CUSTODY_STAGES)} · complejidad {deriveChainComplexity(values.eudr_custody_stages) || "—"}</div>
             <div>Riesgo del producto: {deriveProductRisk(values.eudr_product_risk_factors)} ({values.eudr_product_risk_factors?.length ?? 0} factor(es))</div>
@@ -789,7 +789,7 @@ export function FincaEudrEditor({
             <label>Método de separación física / documental</label>
             <select name="eudr_custody_method" value={custodyMethod} onChange={(e) => setCustodyMethod(e.target.value)}>
               <option value="">Seleccione…</option>
-              <option value="ctc_standard">CTC Parchment Storage Standard</option>
+              <option value="ctc_standard">Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard</option>
               <option value="custom">Método propio</option>
             </select>
             {custodyMethod === "custom" && (
@@ -797,7 +797,7 @@ export function FincaEudrEditor({
             )}
             <ProducerAnswerNote
               show={!!producerAnswers && producerAnswers.custodyMethod !== undefined}
-              producerLabel={producerAnswers?.custodyMethod === "ctc_standard" ? "CTC Parchment Storage Standard" : producerAnswers?.custodyMethod === "custom" ? "Método propio" : "sin definir"}
+              producerLabel={producerAnswers?.custodyMethod === "ctc_standard" ? "Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard" : producerAnswers?.custodyMethod === "custom" ? "Método propio" : "sin definir"}
               matches={(producerAnswers?.custodyMethod ?? "") === custodyMethod}
               onConfirm={() => setCustodyMethod(producerAnswers?.custodyMethod ?? "")}
             />

@@ -6,7 +6,10 @@ const CUSTODY_LABEL: Record<string, string> = {
   finca: "Finca", beneficio: "Beneficio", secado: "Secado", trilla: "Trilla", almacenamiento: "Almacenamiento", exportacion: "Exportación",
 };
 const PRODUCT_RISK_LABEL: Record<string, string> = Object.fromEntries(PRODUCT_RISK_QUESTIONS.map(([k, l]) => [k, l]));
-const CUSTODY_METHOD_LABEL: Record<string, string> = { ctc_standard: "CTC Parchment Storage Standard", custom: "Método propio" };
+// Bilingüe a propósito (owner, 2026-08-20): el expediente lo leen el caficultor
+// Y el operador europeo — el nombre en español dice qué es, el inglés es el
+// nombre registrado del estándar con el que viaja el documento.
+const CUSTODY_METHOD_LABEL: Record<string, string> = { ctc_standard: "Estándar CTC de Almacenamiento de Pergamino · CTC Parchment Storage Standard", custom: "Método propio" };
 
 const INFRA_LABEL: Record<string, string> = Object.fromEntries(LOCAL_INFRA.map(([k, l]) => [k, l]));
 

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.9] — 2026-08-20 (commit pendiente)
+## [V5.9] — 2026-08-20 (commit d33b187)
 
 - **Hito** (A12, arranca el bloque Coffeed de la revisión V5.0): nace **Redacción** — el módulo del
   ECP **entre Entregas y Muro**, donde el owner lo señaló. Cierra el pendiente que el spec dejó

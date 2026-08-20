@@ -43,7 +43,7 @@ check("los fallidos viajan con id (el contrato del saltar)", red.includes("falli
 check("va por tandas con pendientes", red.includes("pendientes: todos.length - tanda.length"));
 
 // ── 4. El generador ─────────────────────────────────────────────────────────
-check("usa el modelo de redacción de la casa y el libro de consumo", red.includes("MODEL_WRITE") && red.includes("USOS.coffeedRedaccion"));
+check("apunta al libro de consumo", red.includes("USOS.coffeedRedaccion"));
 check("el prompt exige paneles autosuficientes", red.includes("entenderse SOLO"));
 check("hay fallback determinista sin ANTHROPIC_API_KEY", red.includes("fallbackPaneles"));
 check("sin Gemini la entrega sale sin portada Y LO DICE", red.includes("GEMINI_API_KEY sin configurar"));
@@ -51,6 +51,19 @@ check("la entrega nace «entregado» — la luz verde no se salta", red.includes
 check("la fuente viaja en el payload (trazabilidad)", red.includes("fuente: { outlet, titulo: noticia.titulo, url: noticia.url"));
 check("el ecosistema se entera (Make)", red.includes('tipo: "coffeed.redaccion.post_creado"'));
 check("una noticia elegida no se genera dos veces", red.includes("ya tiene su post en la cola"));
+
+// ── 4b. La disciplina de coste (owner, 2026-08-20) ──────────────────────────
+check("el redactor usa el modelo BARATO por defecto", red.includes("const MODELO_REDACTOR = MODEL_CHEAP"));
+const importLine = (red.match(/^import \{[^}]*\} from "\.\/claude";$/m) ?? [""])[0];
+check("y el import NO trae el caro (el comentario sí lo nombra, para explicar cómo escalar)", !importLine.includes("MODEL_WRITE"));
+check("el techo de salida está ajustado (1400, no 2200)", red.includes("maxTokens: 1400"));
+check("la portada es opcional y explícita", red.includes("conPortada = true") && red.includes("Sin portada (no se pidió)"));
+check("la ingesta no llama a NINGÚN modelo", !/refrescarNoticias[\s\S]{0,3000}claude\(/.test(red));
+
+// ── 4c. Rehacer: solo lo que aún espera luz verde ───────────────────────────
+check("rehacer existe", red.includes("rehacer = false"));
+check("y se niega sobre algo aceptado o publicado", red.includes("no se puede rehacer por detrás"));
+check("borra la entrega anterior antes de rehacer", red.includes('.from("coffeed_deliverables").delete()'));
 
 // ── 5. La consola: el módulo vive ENTRE Entregas y Muro ─────────────────────
 const consola = lee("src/components/coffeed/CoffeedConsole.tsx");
@@ -71,6 +84,8 @@ const vista = lee("src/components/coffeed/RedaccionView.tsx");
 check("constantes del flow (54deg, 170, .14, .38)", vista.includes("* 54") && vista.includes("170") && vista.includes("0.14") && vista.includes("0.38"));
 check("el refresco encadenado salta los fallidos por id", vista.includes("fallidos.map((f) => f.id)"));
 check("auto-refresco solo cuando está rancio", vista.includes("r.data.rancio"));
+check("la vista ofrece Regenerar", vista.includes("Regenerar"));
+check("y enseña el coste antes de gastar", vista.includes("flow.coste"));
 
 if (fallos.length) {
   console.error(`✗ qa-redaccion: ${fallos.length} fallo(s):`);

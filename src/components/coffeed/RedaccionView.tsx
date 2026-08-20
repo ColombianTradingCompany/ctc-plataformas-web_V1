@@ -43,6 +43,10 @@ export function RedaccionView({
   const [generando, setGenerando] = useState(false);
   const [aviso, setAviso] = useState<{ tono: "ok" | "err"; texto: string } | null>(null);
   const [centro, setCentro] = useState(0);
+  // La portada de Gemini es el renglón más caro del proceso, así que se
+  // ENSEÑA como decisión en vez de esconderse: encendida por defecto (el owner
+  // pidió posts con visuales) pero a un clic de apagarse, con el precio al lado.
+  const [conPortada, setConPortada] = useState(true);
 
   const recargar = useCallback(async () => {
     const r = await cargarRedaccion();
@@ -101,11 +105,11 @@ export function RedaccionView({
     });
   }, [refrescar]);
 
-  async function elegir(n: Noticia) {
+  async function elegir(n: Noticia, rehacer = false) {
     if (generando) return;
     setGenerando(true);
     setAviso(null);
-    const r = await generarPost(n.id);
+    const r = await generarPost(n.id, { conPortada, rehacer });
     setGenerando(false);
     if (!r.ok) {
       setAviso({ tono: "err", texto: r.error });
@@ -155,6 +159,10 @@ export function RedaccionView({
             a café. Hojéalas; al elegir una, el redactor escribe el capítulo completo con su portada y lo deja en{" "}
             <b>Entregas</b>: la luz verde y el publicar siguen siendo tuyos.
           </p>
+          <p className={flow.coste}>
+            Leer los medios no cuesta nada (son feeds, no un modelo). Escribir un capítulo cuesta menos de un centavo
+            —lo redacta Haiku— y la portada de Gemini es el renglón caro: por eso se pide, no se da por hecho.
+          </p>
         </div>
         <div className={flow.mandoCabeza}>
           <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnSm}`} disabled={Boolean(refrescando) || generando} onClick={refrescar}>
@@ -193,8 +201,26 @@ export function RedaccionView({
               </div>
               {/* Acciones abajo a la derecha, apiladas: la convención de la casa. */}
               <div className={flow.acciones}>
+                <label className={flow.portada} title="Gemini cobra por imagen: es lo más caro del proceso">
+                  <input type="checkbox" checked={conPortada} onChange={(e) => setConPortada(e.target.checked)} disabled={generando} />
+                  Con portada <i>(lo más caro)</i>
+                </label>
                 {actual.estado === "elegida" ? (
-                  <span className={flow.yaElegida}>En Entregas ✓</span>
+                  <>
+                    <span className={flow.yaElegida}>En Entregas ✓</span>
+                    {/* Rehacer: para cuando el redactor o la portada fallaron y
+                        el post quedó a medias. Solo funciona mientras la
+                        entrega siga esperando luz verde. */}
+                    <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnSm}`} disabled={generando} onClick={() => elegir(actual, true)}>
+                      {generando ? (
+                        <span className={styles.ringRow}>
+                          <Ring /> Rehaciendo…
+                        </span>
+                      ) : (
+                        "Regenerar"
+                      )}
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button className={`${styles.btn} ${styles.btnGo}`} disabled={generando} onClick={() => elegir(actual)}>

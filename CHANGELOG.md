@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.10] — 2026-08-20 (commit pendiente)
+
+- **Añadido**: **«Regenerar»** en Redacción — la primera generación real falló por credenciales y
+  la noticia quedaba `elegida` sin forma de reintentarla. Rehace la entrega **solo mientras siga
+  esperando luz verde**: lo aceptado o publicado no se reescribe por detrás, porque ya es contenido
+  que alguien aprobó.
+- **Cambiado** (disciplina de coste, palabra del owner: «use smaller models and avoid work that can
+  be done programmatically»): el redactor pasa a **Haiku** (`MODELO_REDACTOR = MODEL_CHEAP`) —
+  ~$0.005 por capítulo frente a ~$0.010 con Sonnet, que además sube a ~$0.016 el 1 de septiembre
+  cuando caduca su precio de lanzamiento. Escribir 7 paneles a partir de un titular no es una tarea
+  de razonamiento. Subir de modelo sigue siendo cambiar UNA constante.
+- **Cambiado**: el techo de salida baja de **2200 a 1400** tokens — un cap generoso no es una red de
+  seguridad, es divagación pagada.
+- **Cambiado**: la **portada de Gemini es opcional y explícita** (casilla «Con portada · lo más
+  caro», encendida por defecto pero a un clic de apagarse). Lo caro se pide, no se da por hecho.
+- **Docs**: `docs/CLAVES_IA_Y_COSTE.md` — dónde va cada clave, **cómo distinguir «falta la clave»
+  de «la clave está revocada»** por el aviso que viaja con la entrega, el coste medido de cada paso,
+  y dónde se iba el dinero de verdad: el **barrido agéntico** del Estudio (`webSearch: 5` × 14
+  medios = hasta 70 búsquedas facturadas por vuelta), que la ingesta por RSS de la V5.9 ya
+  reemplaza por **$0**.
+- **Cambiado**: `qa-redaccion-check` 31 → **41** — el modelo barato en el import (el comentario sí
+  lo nombra, para explicar cómo escalar), el cap ajustado, la portada opcional, el rehacer que se
+  niega sobre lo aprobado, y que la ingesta no llame a ningún modelo.
+
 ## [V5.9] — 2026-08-20 (commit d33b187)
 
 - **Hito** (A12, arranca el bloque Coffeed de la revisión V5.0): nace **Redacción** — el módulo del

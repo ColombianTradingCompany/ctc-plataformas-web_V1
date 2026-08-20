@@ -26,13 +26,29 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { after } from "next/server";
 import { emitEvent } from "@/lib/integraciones/emit";
 import { coffeedGate } from "./requireEcp";
-import { claude, parseJson, MODEL_WRITE } from "./claude";
+import { claude, parseJson, MODEL_CHEAP } from "./claude";
 import { USOS } from "@/lib/ai/consumo";
 import { geminiImagen, geminiImagenDisponible } from "./geminiImage";
 import { parseFeed, pasaFiltroCafe } from "./feeds";
 import { bajar } from "./feedFetch";
 
 const NO_AUTH = "Tu sesión del ECP no está activa. Vuelve a entrar." as const;
+
+// ── EL COSTE, dicho aquí para que la próxima decisión sea informada ─────────
+// (tarifas de src/lib/ai/precios.ts, medidas con un post real de ~700 tokens de
+// entrada y ~900 de salida)
+//
+//   ingesta de feeds (refrescarNoticias)   $0        — no toca ningún modelo
+//   capítulo con Haiku  (MODEL_CHEAP)      ~$0.005
+//   capítulo con Sonnet (MODEL_WRITE)      ~$0.010 hoy, ~$0.016 tras el 31/08
+//   portada de Gemini                      el renglón MÁS caro del proceso
+//
+// SE ESCRIBE CON HAIKU a propósito (owner, 2026-08-20: «use smaller models and
+// avoid work that can be done programmatically»). Un capítulo de 7 paneles a
+// partir de un titular y un sumario no es una tarea de razonamiento: es
+// redacción corta con una estructura dada. Si algún día la voz se queda corta,
+// subir a MODEL_WRITE es cambiar esta constante — y cuesta el doble.
+const MODELO_REDACTOR = MODEL_CHEAP;
 
 /** Ventana de ingesta. Más de dos semanas ya no es noticia, es archivo. */
 const VENTANA_DIAS = 14;
@@ -228,20 +244,29 @@ function fallbackPaneles(n: { titulo: string; resumen: string | null; outlet: st
 
 export type GenerarOut = { ok: true; deliverableId: string; conPortada: boolean; aviso: string | null } | { ok: false; error: string };
 
+export type GenerarOpts = {
+  /** La portada de Gemini es el renglón más caro. Se pide explícitamente. */
+  conPortada?: boolean;
+  /** Rehacer una noticia ya generada. Solo si su entrega SIGUE en la cola sin
+   *  luz verde — lo aceptado o publicado no se reescribe por detrás. */
+  rehacer?: boolean;
+};
+
 /**
  * De una noticia de la bandeja a una ENTREGA completa en la cola. El capítulo
  * lo escribe Claude (elaborado, cada panel autosuficiente); la portada, Gemini
  * (sin texto encima — el texto rasterizado sale mal y la maqueta ya lo pone).
  * La entrega nace «entregado»: la luz verde y el publicar no se saltan.
  */
-export async function generarPost(noticiaId: string): Promise<GenerarOut> {
+export async function generarPost(noticiaId: string, opts: GenerarOpts = {}): Promise<GenerarOut> {
+  const { conPortada = true, rehacer = false } = opts;
   const who = await coffeedGate();
   if (!who) return { ok: false, error: NO_AUTH };
   const service = createServiceRoleClient();
 
   const { data: n } = await service
     .from("coffeed_noticias")
-    .select("id, titulo, url, resumen, kind, published_at, estado, coffeed_sources(name)")
+    .select("id, titulo, url, resumen, kind, published_at, estado, deliverable_id, coffeed_sources(name)")
     .eq("id", noticiaId)
     .maybeSingle();
   if (!n) return { ok: false, error: "Esa noticia ya no está en la bandeja." };
@@ -249,7 +274,21 @@ export async function generarPost(noticiaId: string): Promise<GenerarOut> {
     id: string; titulo: string; url: string; resumen: string | null; kind: string; published_at: string;
     estado: string; coffeed_sources: { name: string } | null;
   };
-  if (noticia.estado === "elegida") return { ok: false, error: "Esta noticia ya tiene su post en la cola de Entregas." };
+  // Rehacer: se borra la entrega anterior SOLO si sigue esperando luz verde.
+  // Una entrega aceptada o publicada ya es contenido de la casa; reescribirla
+  // por detrás dejaría el muro diciendo algo que nadie aprobó.
+  if (noticia.estado === "elegida") {
+    if (!rehacer) return { ok: false, error: "Esta noticia ya tiene su post en la cola de Entregas." };
+    const { data: previa } = await service
+      .from("coffeed_deliverables")
+      .select("id, state")
+      .eq("id", (noticia as unknown as { deliverable_id: string | null }).deliverable_id ?? "")
+      .maybeSingle();
+    const estadoPrevio = (previa as { state?: string } | null)?.state;
+    if (estadoPrevio && estadoPrevio !== "entregado" && estadoPrevio !== "devuelto")
+      return { ok: false, error: "Esa entrega ya tiene luz verde o está publicada: no se puede rehacer por detrás." };
+    if (previa) await service.from("coffeed_deliverables").delete().eq("id", (previa as { id: string }).id);
+  }
   const outlet = noticia.coffeed_sources?.name ?? "la fuente";
 
   // 1. El capítulo. Claude si hay clave; fallback determinista si no.
@@ -261,7 +300,7 @@ export async function generarPost(noticiaId: string): Promise<GenerarOut> {
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       const texto = await claude({
-        model: MODEL_WRITE,
+        model: MODELO_REDACTOR,
         superficie: USOS.coffeedRedaccion,
         system: [
           "Eres el redactor de Coffeed, el muro de noticias de la red cafetera CTC (Colombia).",
@@ -281,7 +320,9 @@ export async function generarPost(noticiaId: string): Promise<GenerarOut> {
           `Papeles en orden: ${PAPELES.join(" → ")} (7 paneles).`,
           "«implicación»: qué cambia para el caficultor o comprador colombiano. «mirada CTC»: cómo conversa con una red exportadora de café de origen — sin inventar acciones de CTC.",
         ].join("\n"),
-        maxTokens: 2200,
+        // 7 paneles de 2-4 frases caben de sobra en 1400; el techo de 2200 solo
+        // pagaba divagación. El cap es coste real, no una red de seguridad.
+        maxTokens: 1400,
       });
       const out = parseJson<{ titulo?: string; hook?: string; paneles?: PanelGenerado[] }>(texto);
       if (out?.paneles?.length && out.paneles.every((p) => p.text?.trim().length > 40)) {
@@ -304,7 +345,9 @@ export async function generarPost(noticiaId: string): Promise<GenerarOut> {
   // 2. La portada. Sin Gemini la entrega sale sin imagen Y LO DICE.
   let imagenPath: string | null = null;
   let imagenError: string | null = null;
-  if (geminiImagenDisponible()) {
+  if (!conPortada) {
+    imagenError = "Sin portada (no se pidió): el post sale solo con texto.";
+  } else if (geminiImagenDisponible()) {
     try {
       const img = await geminiImagen({
         prompt: [

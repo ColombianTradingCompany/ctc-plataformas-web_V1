@@ -103,3 +103,24 @@
   .ficha { flex-direction: column; }
   .acciones { align-items: flex-end; width: 100%; }
 }
+
+/* El coste, a la vista: una decisión informada no es una sorpresa a fin de mes. */
+.coste {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted, #7d6c5d);
+  max-width: 82ch;
+  border-left: 2px solid var(--line, #e0d6c4);
+  padding-left: 10px;
+}
+.portada {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted, #7d6c5d);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.portada i { font-style: normal; opacity: 0.75; }

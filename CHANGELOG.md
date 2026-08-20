@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.12] — 2026-08-20 (commit pendiente)
+## [V5.12] — 2026-08-20 (commit 0bfc6a1)
 
 - **Hito**: **«Recuperar acceso» existe**. Hasta hoy la red tenía **siete puertas de entrada y cero
   formas de volver**: quien olvidaba su contraseña perdía la cuenta para siempre, salvo que un

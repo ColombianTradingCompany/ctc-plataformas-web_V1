@@ -39,7 +39,7 @@ export const TARIFAS: Record<string, Tarifa> = {
     // el que pagan Direccionamiento, Coffeed, Datawave y RT-Scriptor.
     promo: { entrada: 2, salida: 10, hasta: "2026-08-31" },
   },
-  "claude-opus-5": { entrada: 5, salida: 25, nota: "GVG · match y reportes" },
+  "claude-opus-5": { entrada: 5, salida: 25, nota: "sin uso en CTC desde V5.1 (se fue con el CV App Manager)" },
   "claude-haiku-4-5": { entrada: 1, salida: 5, nota: "MODEL_CHEAP de Coffeed" },
   "claude-haiku-4-5-20251001": { entrada: 1, salida: 5 },
 

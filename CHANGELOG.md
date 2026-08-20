@@ -19,6 +19,37 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.11] — 2026-08-20 (commit pendiente)
+
+- **Retirado**: el **GVG-Space** sale de la plataforma. Se extrajo el **CV App Manager** — sus once
+  archivos de interfaz y sus nueve de lógica, unas 6.500 líneas — y se montó como servicio del
+  **CommaaS Hub**, en `cv.commaas.cloud`. Era el último submodulo del espacio, así que el espacio se
+  va con él: fuera el grupo owner-only del rail del BCP, la tarjeta del índice y el nodo del diagrama
+  de estructura. Estaba previsto desde la decisión A8 del tablero del 2026-08-17.
+- **Seguridad**: con la mudanza **desaparece el candado de contraseña del espacio** (la cookie HMAC
+  de 12 h sobre `platform_settings.gvg_space_lock`). No se sustituye por otro candado: en CommaaS el
+  permiso es un grant por persona, que se revoca sin cambiársela a nadie más y deja rastro de quién
+  entró. Una contraseña compartida no podía hacer ninguna de las dos cosas.
+- **Añadido**: `src/lib/panel/salidasDeLaPlataforma.ts` — la lista de los módulos que se **fueron**
+  del edificio, hermana de `rutasMovidas.ts` y aparte de ella. Esa lista describe mudanzas ENTRE
+  consolas y su guardián exige que el destino tenga página en este repo; aquí el destino es otro
+  dominio. Dos talones 308 la usan: `/bcp/gvg/[[...resto]]` y `/ecp/gvg/[[...resto]]`. La regla F2
+  sigue en pie — una URL vieja no muere, y la del ECP se REAPUNTA al destino final en vez de
+  encadenarse contra el talón del BCP.
+- **Cambiado**: `USOS.gvgMatch` y `USOS.gvgReporte` salen de `src/lib/ai/consumo.ts` (de siete vías
+  de gasto a cinco) y `qa-consumo-check` deja de exigir el registro en los dos archivos que ya no
+  existen. Las filas históricas de `ai_usage` conservan `gvg:match` y `gvg:reporte`, y el tablero de
+  Consumo las sigue mostrando: un libro no se reescribe hacia atrás.
+- **Datos**: **nada se borró**. Las siete tablas `public.gvg_*` (1 perfil, 18 experiencias, 7 rutas,
+  4 muestras, 14 postulaciones, 56 eventos, 2 reportes) y los archivos de `kaffetal-media/gvg/…`
+  siguen donde estaban. La copia al hub la hace `scripts/migrate-cv-from-ctc.mjs` de aquel repo, que
+  tampoco borra el origen; dar de baja estas tablas es una decisión posterior del owner, cuando haya
+  visto la app funcionando allá con sus datos.
+- **Docs**: `docs/HANDOFF.md` — la sección del GVG-Space pasa de describir el módulo a describir su
+  salida: qué queda aquí, qué cambió al mudarse (el candado, las tablas de una sola fila que ganaron
+  `user_id`, el fin del `service_role`, el nombre que salió del código) y qué lecciones sobrevivieron
+  intactas en el otro repo.
+
 ## [V5.10] — 2026-08-20 (commit 23fd5d6)
 
 - **Añadido**: **«Regenerar»** en Redacción — la primera generación real falló por credenciales y

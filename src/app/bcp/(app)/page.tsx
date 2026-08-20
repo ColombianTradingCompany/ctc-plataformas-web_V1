@@ -65,12 +65,6 @@ export default function BcpHomePage() {
           built: true,
           href: "/bcp/socios",
         },
-        {
-          name: "GVG-Space",
-          desc: "El espacio personal del owner, tras su propio candado. Sale hacia CommaaS más adelante.",
-          built: true,
-          href: "/bcp/gvg",
-        },
       ]}
     />
   );

@@ -201,7 +201,6 @@ export function PanelDiagram() {
       <Modulo x={820} y={676} label="Usuarios y credenciales" />
 
       <Grupo x={808} y={732} h={70} label="Espacio personal del owner" />
-      <Modulo x={820} y={760} label="GVG-Space" />
 
       <text x={60} y={838} fontSize={12} fill={MUTED}>el cuadrito dice a qué bloque del diagrama de la red atiende cada módulo</text>
       <rect x={60} y={856} width={10} height={10} rx={2} fill={AZUL} />

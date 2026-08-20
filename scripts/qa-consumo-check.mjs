@@ -68,8 +68,6 @@ const VIAS = [
   "src/lib/coffeed/claude.ts",
   "src/app/api/kaffetal-regal/next-step/route.ts",
   "src/lib/arena/mejoras.ts",
-  "src/lib/gvg/matchActions.ts",
-  "src/lib/gvg/reportActions.ts",
   "src/lib/coffeed/gemini.ts",
   "src/lib/coffeed/geminiImage.ts",
 ];

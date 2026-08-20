@@ -58,7 +58,7 @@ src/
         usuarios/, documentacion/, mapa/, consumo/, automatizaciones/
                                         ⬅ ECP (V4.25) · Configuración del Sistema
         socios/                        ⬅ OCP (V4.25) · Red de Socios: se credencialan aquí, se operan allá
-        gvg/                           ⬅ ECP (V4.25) · el espacio personal del owner, con su propio candado
+        gvg/[[...resto]]/              talón 308 → cv.commaas.cloud (V5.1: el módulo se fue a CommaaS)
         adminLockActions.ts            la cerradura de administrador (ahora junto a Usuarios, que es su pareja)
     ocp/                              OCP · Operational Control Panel — «Operation»: del productor al catálogo
       (app)/
@@ -345,11 +345,49 @@ Adaptado del prototipo `reference_coffeed/` (v0.2): **el muro de noticias/anunci
 - **El muro en las superficies**: `getCoffeedWall()` (`wallActions.ts`) devuelve **SOLO capítulos `published`** con columnas de exhibición (curaduría estilo `public_lot_catalog`); los **anuncios internos nunca viajan**. El componente compartido `CoffeedWall` está montado en: **KR** (módulo `coffeed` del panel del productor), **Cherry Picked** (sección `#coffeed`, QuickNav renumerado a 11 entradas, cabecera EN/ES/DE — el contenido se produce en español a propósito) y **Directorio** (pestaña "Coffeed", solo miembros verificados). KR y CP verificados en vivo; la pestaña DC comparte el componente pero no se navegó (requiere miembro verificado).
 - **Fase 1 del spec completa** (+ propuestas/guion de fase 2-3): reacciones/comentarios del muro y el render de paneles a imagen para Instagram siguen pendientes. **El barrido automático llegó en V5.9 (2026-08-20)**: el módulo **Redacción** del ECP (entre Entregas y Muro) ingiere los feeds de la lista blanca solo — con 4 medios colombianos nuevos filtrados a café por `coffeed_sources.keywords` — y de una noticia elegida genera la entrega completa (capítulo elaborado por Claude + portada de Gemini, `kind: noticia`) que entra a la cola de Entregas como cualquier otra. Guardián: `qa-redaccion-check.mjs`; evento Make: `coffeed.redaccion.post_creado`.
 
-## GVG-Space — el espacio personal del owner en el ECP (2026-07-27)
+## GVG-Space — se fue de la plataforma (V5.1, 2026-08-20)
 
-Grupo de nav owner-only al final del rail del ECP → `/ecp/gvg`. Doble compuerta: owner-only + candado propio (contraseña sha256 en `platform_settings.gvg_space_lock`, patrón Admin Lock) que acuña una cookie HMAC de 12 h con path `/ecp/gvg` — cambiar la contraseña mata toda sesión abierta (`src/lib/gvg/lock*.ts`; toda Server Action del espacio pasa por `requireGvgOwner`, que exige admin activo + owner + cookie). El contenido se re-tematiza en AZUL (rail sigue morado) — `gvg.module.css`.
+**Ya no vive aquí.** El espacio personal del owner y su **CV App Manager** se extrajeron de CTC y se
+montaron como servicio del **CommaaS Hub**, en `cv.commaas.cloud`. El repo del hub es
+`ColombianTradingCompany/commaas` (árbol local `C:\dev\commaas-hub\commaas`); el plan que lo
+gobierna es `docs/HUB-PIVOT-PLAN.md` de ese repo.
 
-**CV App Manager** (`/ecp/gvg/cv`): el motor personal de aplicaciones laborales. 5 tablas **service-role-only** (`gvg_profile` fila única, `gvg_experiences` [Master Experience: 18 ítems sembrados del docx, sections jsonb con las 6 categorías], `gvg_career_paths` [7], `gvg_cover_letter_samples` [máx 4, texto = muestra de estilo], `gvg_applications`). Storage bajo `kaffetal-media/gvg/…` (solo service role — el prefijo no cumple el patrón `{uid}/` de las policies, a propósito; subidas via signed-URL desde `prepareGvgUpload` + `putSignedUrlWithProgress`). Flujo: .mhtml de LinkedIn → `parseJobMhtml` (mailparser) → "Match Me" → Anthropic **fetch crudo** (`claude-opus-5` + `web_search_20260209` + fallbacks server-side; `runGvgMatch` en `src/lib/gvg/matchActions.ts`; `maxDuration=300` en la page porque las Server Actions heredan el segment config) → MatchResult JSON editable → "Render Resources" **determinista** (`src/lib/gvg/cvTemplate.ts`: CV A4 print-perfect con foto data-URI + carta one-pager forzado; PDF = print del navegador). Kanban proceso (nueva→matching→analysis→rendering→ready→sent; columnas de tránsito medio-anchas) + kanban follow-up (Sent → Cold **derivado** a >10 d sin toque, no escrito → Next Steps con ⭐ fecha de entrevista en el tablero principal → Rejected). `cvTemplate.ts`/`mhtml.ts` son puros SIN `server-only` a propósito (QA los importa con `--experimental-strip-types`). Gotcha del gate: el layout muestra el candado en vez de children, pero Next evalúa la page en paralelo — **cada page del espacio debe re-verificar `isGvgUnlocked` y devolver null**, si no revienta con el error de la action en vez de mostrar el gate.
+Lo que queda en CTC:
+
+- Dos talones 308 — `/bcp/gvg/[[...resto]]` y `/ecp/gvg/[[...resto]]` — hacia el nuevo domicilio.
+  Su destino sale de **`src/lib/panel/salidasDeLaPlataforma.ts`**, hermana de `rutasMovidas.ts` y
+  separada de ella a propósito: `RUTAS_MOVIDAS` describe mudanzas ENTRE consolas y su guardián exige
+  que el destino tenga página en este repo. Aquí el destino es otro dominio, y meterlo en la misma
+  lista habría roto el guardián y, peor, habría mentido: el módulo no cambió de consola, se fue del
+  edificio.
+- Las siete tablas `public.gvg_*` y los archivos bajo `kaffetal-media/gvg/…`, **intactos**. No se
+  borran hasta que el owner confirme que la app funciona en CommaaS con sus datos; la copia la hace
+  `scripts/migrate-cv-from-ctc.mjs` del repo del hub, que no borra nada del origen.
+- La fila `platform_settings.gvg_space_lock` (la contraseña del espacio), ya sin uso.
+- `USOS.gvgMatch` / `USOS.gvgReporte` desaparecen de `src/lib/ai/consumo.ts`: el CV App Manager anota
+  su gasto en el libro del hub (`hub.usage_events`). Las filas históricas de `ai_usage` conservan las
+  cadenas `gvg:match` y `gvg:reporte` y el tablero de Consumo las sigue mostrando — un libro no se
+  reescribe hacia atrás.
+
+**Qué cambió al mudarse**, porque no fue un copiar y pegar:
+
+- **El candado de contraseña del espacio desapareció.** Era una cookie HMAC de 12 h sobre un sha256 en
+  `platform_settings`. Una contraseña compartida no se puede revocar a una persona sin cambiársela a
+  todas, no deja rastro de quién entró y no sabe de presupuestos. El permiso pasa a ser un grant del
+  hub (`hub.grants`), que hace las tres cosas.
+- **Las tablas dejaron de ser de una sola persona.** `gvg_profile` tenía `id boolean primary key`
+  — literalmente una tabla de una fila. En `cv.*` cada tabla lleva `user_id` y su política RLS
+  pregunta dos cosas: que la fila sea tuya y que tengas la app concedida.
+- **Se acabó el `service_role`.** Aquí toda lectura y escritura del módulo saltaba RLS porque no había
+  filas de nadie que proteger. Allá las hay, así que la app escribe con la identidad de quien la usa.
+- **El nombre salió del código.** `FULL_NAME = "Gabriel Vasquez"` era una constante en
+  `matchActions.ts`; ahora es un campo del perfil.
+
+Lo que SÍ sobrevivió tal cual, y conviene saber que sigue vivo en el otro repo: `cvTemplate.ts` y
+`mhtml.ts` puros sin `server-only`, el `maxDuration=300` en la page (las Server Actions heredan el
+segment config), el `AbortSignal.timeout(240_000)` de la llamada a Anthropic, la higiene de la raya
+larga (`stripAiDash`), y `reconcileSidebar`, que impide que la IA reescriba un título o un nivel de
+idioma en vez de solo reordenarlos.
 
 ## Versión de la plataforma (2026-07-20)
 
@@ -548,7 +586,8 @@ previsto y está avisado dentro de `consoles.ts` y de su propia `page.tsx`.
 ## La reorganización V5 · PR-B: el BCP recibe dirección y configuración (2026-08-18, V4.25)
 
 Segunda de las tres mudanzas. **Ocho módulos entran al BCP**: Direccionamiento (+grados), Usuarios y
-credenciales, Documentación del sistema, Mapa de Trabajo, Consumo de IA, Automatizaciones y GVG-Space desde el
+credenciales, Documentación del sistema, Mapa de Trabajo, Consumo de IA, Automatizaciones y GVG-Space (que en
+V5.1 se fue a CommaaS) desde el
 ECP, y la Red de Socios desde el OCP. Con esto el BCP deja de estar vacío y su rail dice lo que su tagline
 prometía desde el paso (i). Diez rutas nuevas en `rutasMovidas.ts` (22 en total) y el guardián en 213 checks.
 

@@ -1,18 +1,12 @@
 import { permanentRedirect } from "next/navigation";
-import { destinoDe } from "@/lib/panel/rutasMovidas";
+import { salidaDe } from "@/lib/panel/salidasDeLaPlataforma";
 
-// ── Talón de la mudanza: `/ecp/gvg` ──
-// PR-B del paso (ii) del plan V5 (V4.25, 2026-08-18). Regla F2: las URLs viejas
-// no mueren, quedan como 308 permanentes hacia el destino final. El destino sale
-// de `RUTAS_MOVIDAS`, nunca escrito a mano.
-//
-// Vive FUERA del grupo `(app)`: ahí dentro el layout corre
-// `requireConsoleAccess()` y un marcador viejo se comería un «no tiene acceso»
-// sobre una URL que ya no existe.
-//
-// El catch-all opcional cubre el módulo y todas sus sub-rutas con un archivo.
+// ── Talón de salida: `/ecp/gvg` ──
+// Este módulo se mudó dos veces y luego se fue: ECP → BCP (V4.25) → CommaaS
+// (V5.1). El talón se REAPUNTA al destino final en vez de encadenarse contra el
+// talón del BCP; encadenar talones es exactamente lo que la regla F2 prohíbe.
 export default async function TalonEcpGvg({ params }: { params: Promise<{ resto?: string[] }> }) {
   const { resto } = await params;
   const cola = resto?.length ? "/" + resto.join("/") : "";
-  permanentRedirect(destinoDe("/ecp/gvg" + cola) ?? "/bcp");
+  permanentRedirect(salidaDe("/ecp/gvg" + cola)?.a ?? "/bcp");
 }

@@ -98,14 +98,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/bcp/socios", label: "Socios de la red", ownerOnly: true },
         ],
       },
-      {
-        // GVG-Space (← ECP, PR-B): el espacio PERSONAL del owner, con su propio
-        // candado suave además del login maestro. Owner-only y sin encabezado:
-        // un divisor lo separa del resto a propósito. Sale hacia CommaaS más
-        // adelante (F13).
-        ownerOnly: true,
-        links: [{ href: "/bcp/gvg", label: "GVG-Space", ownerOnly: true }],
-      },
     ],
   },
   ecp: {

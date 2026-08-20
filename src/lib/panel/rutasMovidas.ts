@@ -75,7 +75,9 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/ecp/mapa", a: "/bcp/mapa", desde: "V4.25" },
   { de: "/ecp/consumo", a: "/bcp/consumo", desde: "V4.25" },
   { de: "/ecp/automatizaciones", a: "/bcp/automatizaciones", desde: "V4.25" },
-  { de: "/ecp/gvg", a: "/bcp/gvg", desde: "V4.25" },
+  // `/ecp/gvg` ya no está aquí: en V5.1 el GVG-Space salió de la plataforma
+  // hacia CommaaS, y su destino es otro dominio. Vive en
+  // `salidasDeLaPlataforma.ts`, que es la lista de las salidas.
   { de: "/ocp/socios", a: "/bcp/socios", desde: "V4.25" },
 
   // ── PR-C «El ECP recibe contacto y caja de herramientas» (V4.26, 2026-08-18) ─

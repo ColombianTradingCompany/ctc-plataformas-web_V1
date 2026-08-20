@@ -19,6 +19,100 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.14] — 2026-08-20 (commit pendiente)
+
+- **Hito**: primera tanda de la revisión de **Kaffetal Regal y el OCP que lo administra**, sobre
+  retroalimentación del owner con capturas de un teléfono real. Catorce puntos, y tres de los
+  reportados resultaron ser **síntomas de un mismo defecto**.
+- **Corregido**: **la Visa EUDR se afirmaba sola.** `fincaEudrStatus()` derivaba la Visa ÚNICAMENTE
+  de lo que contestaba el productor y **no leía `fincas.status` en ninguna parte**. De ese único
+  agujero salían los tres síntomas reportados: la finca decía «Visa vigente» **antes** de que el OCP
+  la aprobara; aprobarla no cambiaba nada visible; y **«Rechazar» parecía no hacer nada** —sí escribe
+  el estado rechazado y su fila de auditoría, pero nadie miraba ese campo—. Ahora la función se parte
+  en dos: `fincaEudrDeclaracion()` juzga el expediente del productor (y es lo que gatea
+  `approveFinca`, o haría falta estar aprobada para poder aprobarla) y `fincaEudrStatus()` le aplica
+  encima el veredicto: **en revisión → aprobada · expediente sin remitir → vigente**, y **rechazada**
+  cuando lo está. El Sello del lote hereda los estados nuevos, así que un lote deja de tener «Sello
+  listo» con su finca sin aprobar. Sin migración: `status` y `eudr_cert_shared` ya viajaban al
+  cliente, y las dos fincas aprobadas de producción ya tenían el expediente remitido.
+- **Corregido**: **la FT2 no tenía ningún impasse — tenía un botón tapado.** Los FABs («Ayuda» y
+  «Guardar Ficha») estaban `position:fixed` en la esquina inferior derecha del viewport, que es
+  exactamente donde la barra pegajosa pone «Completar FT2 y continuar». En un teléfono se posaban
+  encima: se tocaba el FAB creyendo tocar el botón y la etapa no avanzaba nunca. Ahora la botonera va
+  **anclada a la barra** (`absolute` contra el `sticky` en la Ficha, `sticky` al pie del pop-up en
+  Finca) y se apila en vertical, como manda la casa. Ninguna altura de barra puede volver a
+  solaparla.
+- **Corregido**: la fila de acciones no podía envolver, así que en 375 px el botón que se salía por
+  la derecha era el principal. Ahora envuelve, y por debajo de 520 px se apila a lo ancho.
+- **Corregido**: **la granulometría solo sabía avisar de un lado.** Como el Residuo absorbe la
+  diferencia, la suma daba «100,0 %» siempre que las mallas pesaran de MENOS: pesar una de seis y
+  olvidar las otras cinco salía impecable, con un Residuo del 75 % que nadie leía como error. El
+  veredicto ahora distingue **se pasó** (y en cuántos gramos), **faltan mallas por pesar** (y cuántos
+  gramos quedan sin repartir) y **cuadra**. Se añade además la instrucción que faltaba: tamizar el
+  grano sano, y que el Residuo no se teclea.
+- **Añadido**: en B3, **el factor de rendimiento del propio productor**, opcional, junto al
+  calculado. El campo existía pero enterrado en B1, otra sub-etapa: aquí, donde el número se calcula
+  delante de él, ya puede decir «a mí me dio otro». No toca el cálculo; los dos viajan a CTC.
+- **Añadido**: **«📍 Estoy aquí»** en el mapa de la finca. Quien está parado en la mitad de su predio
+  no debería tener que encontrarse a sí mismo en un satélite arrastrando con el dedo. Un mensaje
+  distinto por cada causa de fallo (permiso denegado · GPS lento · error), porque «no se pudo» no le
+  dice a nadie qué hacer.
+- **Añadido**: en A3, el **atajo del puntaje**. Quien adjunta ahí una foto de su hoja de catación
+  suele ponerse después a teclear los diez atributos SCA a mano. El camino corto ya existía en B2
+  («Solicitar oficialización», con adjunto, que aterriza en la cola del BCP) pero no lo descubría
+  nadie: ahora aparece la señal, con su botón, en cuanto hay un adjunto.
+- **Cambiado**: **el aviso de compuerta dice QUÉ falta y DÓNDE.** Recitaba la etapa entera —«Complete
+  A3, A4, B2 y B3»— aunque solo faltara una cosa, y había que abrir las cuatro para averiguar cuál.
+  Ahora lista solo lo que falta, con el índice del pane y el dato concreto («B3 · Física ·
+  Granulometría → el Trillado Verde Restante»), y dura 9 s en vez de 3,2 porque ahora hay algo que
+  leer.
+- **Cambiado**: **«Solicitar revisión de datos» deja de abrir el correo.** Un `mailto:` sacaba al
+  productor de la plataforma para pedir algo sobre la plataforma: la petición caía en una bandeja
+  suelta, sin quedar atada a la finca ni aparecer en «Retroalimentación y ayuda» —y en el teléfono de
+  un caficultor a menudo no abre nada—. Ahora va por el **canal interno** (`producer_comm_log`), con
+  la finca como contexto.
+- **Cambiado**: en «Retroalimentación y ayuda» el productor se llama **por su nombre** en sus propios
+  mensajes, no «Usted» —que es como le habla CTC a él, no como se nombra él—.
+- **Cambiado**: el **riesgo del producto del cuestionario EUDR se pregunta al derecho**. Pedirle al
+  caficultor que marque lo malo de su propio café se lee como una acusación, y era la única casilla
+  de la pantalla que EMPEORA su perfil al marcarla. Ahora marca lo que **sí** cumple. Es un cambio de
+  redacción, no de datos: se sigue guardando la lista de factores negativos, así que ninguna finca ya
+  registrada cambia de significado.
+- **Cambiado**: el **Estándar CTC de Almacenamiento de Pergamino** se dice en español, con el nombre
+  registrado en inglés entre paréntesis —viaja así en el expediente y en el certificado del lote, que
+  los lee un comprador europeo—.
+- **Cambiado**: **el bucle de la portada de KR sube de `.32` a `.50`** y el velo se aligera. Segunda
+  vez que el owner pide lo mismo («apenas se ve que hay algo detrás»); la subida del 14 de agosto se
+  quedó corta. Medido contra el fotograma **BLANCO** del bucle, como exige el comentario que dejó
+  aquella: la columna del titular cae en ~rgb(32,49,40), que contra el marfil del h1 da **12,4:1** en
+  escritorio y **8,2:1** en el peor punto del móvil (la AA pide 4,5; la AAA, 7).
+- **Cambiado**: **objetivos táctiles para dedos de caficultor**. `.btn-sm` medía 31 px de alto y las
+  casillas 13 px, muy por debajo de los 44 px de la WCAG 2.2. La compuerta es `pointer:coarse`, no el
+  ancho de pantalla: lo que decide es con qué se toca. El OCP en portátil no engorda un píxel.
+- **Cambiado**: **los pop-up de revisión del OCP dejan de ser estrechos**. Heredaban los 560 px de un
+  formulario de contacto, subidos a mano a 680/720 con un `style` en línea. Un expediente de finca en
+  720 px de un portátil de 1440 obliga a desplazar dentro de una caja con media pantalla vacía al
+  lado. Clase compartida `.modal-wide` = `min(1180px, 94vw)`.
+- **Corregido**: el formulario de finca **se salía del pop-up por el ancho** —y lo que se sale por la
+  derecha de una caja que solo desplaza en vertical no se puede alcanzar de ninguna forma—.
+  `min-width:0` en las rejillas, pestañas que desplazan solas, y la tabla de mallas encerrada en su
+  propio contenedor.
+- **Corregido** *(ajeno a esta tanda, encontrado al pasar el gate)*: `qa-tools-seo` llevaba **rojo
+  desde la V5.7**. `mapa-variedades` y la rueda del sabor cerraban su meta description con «Coffee
+  Tools · CTC.» / «Herramientas del Café · CTC.» en vez del sufijo de la casa. Corregidas en el
+  archivo y espejadas en la columna `meta_description`, que es lo que el guardián compara.
+- **Docs**: **dos guardianes nuevos, los dos probados revirtiendo el arreglo** (cantan ese caso y
+  solo ese). `qa-visa-check` (30 comprobaciones) fija que la Visa no se afirme sin veredicto, que
+  Rechazar se vea, que aprobar siga siendo posible, y —el fallo mudo de verdad— que **todo el que
+  arma un `FincaEudrFields` desde su propio SELECT traiga `status` y `eudr_cert_shared`**: sin esas
+  columnas la compuerta de Arena habría cerrado el pago y el recibo de muestra de fincas ya
+  aprobadas, sin un solo error en consola. `qa-kr-ficha-check` (212) fija que ningún FAB vuelva a ser
+  `position:fixed`, que la fila de acciones envuelva, la aritmética de la granulometría en los dos
+  sentidos, y que toda clase de CSS module usada EXISTA (la trampa de la V4.30: `.noteBox` se estrenó
+  en esta tanda en una hoja donde no estaba definida).
+
+---
+
 ## [V5.13] — 2026-08-20 (commit 10b0cfb)
 
 - **Corregido**: el «Volver a CTC Web Platform» de `/recuperar-acceso?puerta=panel` aterrizaba en la

@@ -59,6 +59,8 @@ type FincaJoin = {
   eudr_illegality_indicators: boolean | null;
   eudr_docs_available: boolean | null;
   eudr_mitigation_effective: boolean | null;
+  // 2026-08-20: la Visa incorpora el veredicto de CTC (fincaEudrStatus).
+  eudr_cert_shared: boolean | null;
 } | null;
 
 type LotRow = {
@@ -123,6 +125,8 @@ function toFincaEudrFields(f: FincaJoin): FincaEudrFields | null {
     eudrIllegalityIndicators: f.eudr_illegality_indicators,
     eudrDocsAvailable: f.eudr_docs_available,
     eudrMitigationEffective: f.eudr_mitigation_effective,
+    status: (f.status as FincaEudrFields["status"]) ?? "pending_review",
+    certShared: !!f.eudr_cert_shared,
   };
 }
 
@@ -156,7 +160,7 @@ export default async function BcpLotesPage() {
          eudr_product_risk, eudr_product_risk_factors,
          eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_risk_level, eudr_mitigation_actions,
          eudr_mitigation_effective, eudr_mitigation_responsible, cert_verifications,
-         fincas(name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective)`
+         fincas(name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared)`
       )
       // apto/no_apto ya NO viajan por esta consulta pesada del kanban: viven en
       // la consulta ligera de LotesViews (abajo), junto con fila/galardonado.

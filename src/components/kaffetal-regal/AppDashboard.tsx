@@ -237,6 +237,11 @@ export function AppDashboard({
   // membresía es el "Pasaporte" del productor y se otorga AUTOMÁTICAMENTE cuando
   // un lote suyo compite en una jornada de Arena — ya no se canjea un código.
   const isClubMember = !!gi.clubMemberSince;
+  // Cómo se nombra el productor a sí mismo en «Retroalimentación y ayuda»
+  // (owner, 2026-08-20): su nombre, no «Usted». Mismo orden de preferencia que
+  // ya usa el envío de solicitudes: nombre del agricultor → razón social → el
+  // nombre de la cuenta.
+  const nombreProductor = gi.agri !== "—" ? gi.agri : gi.razon !== "—" ? gi.razon : userName;
   // El reparto de herramientas se administra desde la consola interna
   // (Herramientas → Disponibilidad); esto trae ya filtrado lo que le toca.
   const toolAccess = useToolAccess("kr");
@@ -610,6 +615,7 @@ export function AppDashboard({
               onReplyToFeedback={onReplyToFeedback}
               onAcknowledgeNote={onAcknowledgeNote}
               onCreateThread={onCreateThread}
+              nombreProductor={nombreProductor}
               onOpenFicha={onOpenFicha}
               onOpenFincaModal={onOpenFincaModal}
             />
@@ -626,6 +632,7 @@ export function AppDashboard({
               onReplyToFeedback={onReplyToFeedback}
               onAcknowledgeNote={onAcknowledgeNote}
               onCreateThread={onCreateThread}
+              nombreProductor={nombreProductor}
               onOpenFicha={onOpenFicha}
               onOpenFincaModal={onOpenFincaModal}
             />

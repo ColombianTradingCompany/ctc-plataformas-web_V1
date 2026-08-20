@@ -440,7 +440,7 @@ export function SondeoRegistroControls({
       </button>
       {open && (
         <div className="modal-bg open" onClick={() => setOpen(false)}>
-          <div className="modal" style={{ maxWidth: 680 }} onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
             <button className="close" onClick={() => setOpen(false)} aria-label="Cerrar">
               ×
             </button>

@@ -16,7 +16,17 @@ const MESH_INFO: Record<string, string> = {
 
 type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
 type MeshRow = { key: string; label: string; grams: number; pct: number | null };
-type Mesh = { rows: MeshRow[]; sum: number; totalPct: number; bad: boolean; residueGrams: number };
+type Mesh = {
+  rows: MeshRow[];
+  sum: number;
+  totalPct: number;
+  bad: boolean;
+  residueGrams: number;
+  pendingGrams: number;
+  residuePct: number;
+  measuredSum: number;
+  state: "sin_base" | "vacio" | "excede" | "residuo_alto" | "ok";
+};
 
 export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: Factor; mesh: Mesh }) {
   return (
@@ -72,9 +82,51 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
             Factor de Rendimiento: <strong>{factor.yieldFactor !== null ? factor.yieldFactor.toFixed(2) : "—"}</strong>
             <span className={bstyles.yieldNote}>= 70 × Pergamino Inicial ÷ Grano Sano</span>
           </div>
+
+          {/* ── Su propio factor, al lado del calculado (owner, 2026-08-20) ──
+              Muchos caficultores YA conocen el factor de su café: se lo da la
+              cooperativa en cada compra. El campo existía, pero enterrado en B1
+              —otra sub-etapa, otra pantalla—, así que aquí, donde el número se
+              está calculando delante de sus ojos, no había forma de decir «a mí
+              me dio otro». Es OPCIONAL y no toca el cálculo: se guarda aparte
+              (`yield_factor_producer`) y viaja a CTC como lo que es, un dato
+              declarado por el productor, para contrastarlo con el de
+              laboratorio. */}
+          <div className={styles.ff} style={{ marginTop: 12 }}>
+            <label>
+              Su factor de rendimiento <small>(opcional)</small>
+              <FieldInfo text="Si su cooperativa o su propia trilla ya le dio un factor para este café, escríbalo aquí. No reemplaza al calculado arriba: los dos viajan juntos y CTC contrasta el suyo con el del laboratorio. Dejarlo vacío no le resta nada a su ficha." />
+            </label>
+            <input
+              value={data.yield_factor_producer}
+              onChange={(e) => onChange({ yield_factor_producer: e.target.value })}
+              placeholder="Ej. 92.5 — kg de pergamino por 70 kg de verde"
+            />
+            {data.yield_factor_producer.trim() !== "" && factor.yieldFactor !== null && (
+              <p className={styles.fexample} style={{ marginTop: 4 }}>
+                {(() => {
+                  const suyo = Number(data.yield_factor_producer.replace(",", "."));
+                  if (!Number.isFinite(suyo) || suyo <= 0) return "Escriba solo el número (por ejemplo 92.5).";
+                  const dif = Math.abs(suyo - factor.yieldFactor);
+                  return dif <= 2
+                    ? `✓ Su factor y el calculado se parecen (diferencia de ${dif.toFixed(1)}).`
+                    : `Su factor difiere en ${dif.toFixed(1)} del calculado aquí. No es un error: puede que la muestra no sea la misma. CTC lo tendrá en cuenta.`;
+                })()}
+              </p>
+            )}
+          </div>
         </div>
 
         <div>
+          {/* Qué hay que hacer aquí, antes de la tabla. Sin esto, la tabla es
+              siete casillas sin instrucción: el owner no sabía «qué debo poner».
+              Se dice el método (tamizar el GRANO SANO, no el trillado entero) y
+              se recuerda que el Residuo no se teclea. */}
+          <p className={styles.fexample} style={{ marginTop: 0, marginBottom: 8 }}>
+            Tamice el <b>grano sano</b> (el trillado verde ya sin defectos) por cada malla y pese lo que quede retenido en
+            cada una. El <b>Residuo</b> no se escribe: es lo que sobra y se calcula solo.
+          </p>
+          <div className={bstyles.tblWrap}>
           <table className={bstyles.tbl}>
             <thead>
               <tr><th>Granulometría</th><th style={{ textAlign: "right" }}>Peso (g)</th><th style={{ textAlign: "right" }}>%</th></tr>
@@ -116,8 +168,36 @@ export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: F
               </tr>
             </tfoot>
           </table>
-          <div className={`${bstyles.meshAlert} ${mesh.bad ? bstyles.meshBad : ""}`}>
-            Suma de mallas: <b>{factor.healthy > 0 ? mesh.totalPct.toFixed(1) + "%" : "—"}</b> del grano sano (trillado verde restante menos defectos)
+          </div>
+          {/* ── El veredicto, en los dos sentidos ──────────────────────────
+              El aviso viejo enseñaba «Suma de mallas: 100,0 %» pasara lo que
+              pasara mientras no se excediera el grano sano, porque el Residuo
+              tapaba cualquier hueco. Aquí se dice lo que de verdad ocurre: si
+              se pasó, en cuánto; si falta por pesar, cuántos gramos; y si está
+              bien, que está bien. Ver el comentario de computeMesh(). */}
+          <div className={`${bstyles.meshAlert} ${mesh.state === "excede" || mesh.state === "residuo_alto" ? bstyles.meshBad : ""}`}>
+            {mesh.state === "sin_base" ? (
+              <>Escriba primero el <b>Trillado Verde Restante</b> y los defectos: la granulometría se mide sobre el <b>Grano Sano</b>, y sin él no hay contra qué comparar.</>
+            ) : mesh.state === "vacio" ? (
+              <>Grano sano: <b>{factor.healthy.toFixed(1)} g</b> por repartir entre las mallas. Todavía no ha pesado ninguna.</>
+            ) : mesh.state === "excede" ? (
+              <>
+                <b>Se pasó por {Math.abs(mesh.pendingGrams).toFixed(1)} g.</b> Las mallas suman {mesh.measuredSum.toFixed(1)} g,
+                más que los {factor.healthy.toFixed(1)} g de grano sano. Revise la balanza o el Trillado Verde Restante — una
+                malla no puede contener grano que no existe.
+              </>
+            ) : mesh.state === "residuo_alto" ? (
+              <>
+                <b>Faltan mallas por pesar.</b> Quedan <b>{mesh.pendingGrams.toFixed(1)} g</b> sin repartir
+                ({mesh.residuePct.toFixed(0)} % del grano sano), y eso es demasiado para ser residuo real —el polvo y los
+                fragmentos rara vez pasan del 5 %—. Pese las mallas que le falten.
+              </>
+            ) : (
+              <>
+                ✓ Cuadra: {mesh.measuredSum.toFixed(1)} g repartidos en mallas y {mesh.residueGrams.toFixed(1)} g de residuo
+                ({mesh.residuePct.toFixed(1)} %) sobre {factor.healthy.toFixed(1)} g de grano sano.
+              </>
+            )}
           </div>
         </div>
       </div>

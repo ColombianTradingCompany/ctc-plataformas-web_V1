@@ -23,6 +23,12 @@ type FincaJoinRow = {
   eudr_illegality_indicators: boolean | null;
   eudr_docs_available: boolean | null;
   eudr_mitigation_effective: boolean | null;
+  // 2026-08-20: el veredicto de CTC entra en la Visa (ver fincaEudrStatus). Sin
+  // estas dos columnas en el SELECT, la compuerta resolvería "en revisión" para
+  // TODOS los lotes —incluidos los de fincas ya aprobadas— y cerraría el pago y
+  // el recibo de muestra sin decir por qué.
+  status: string | null;
+  eudr_cert_shared: boolean | null;
 };
 
 function toFields(f: FincaJoinRow): FincaEudrFields {
@@ -40,13 +46,15 @@ function toFields(f: FincaJoinRow): FincaEudrFields {
     eudrIllegalityIndicators: f.eudr_illegality_indicators,
     eudrDocsAvailable: f.eudr_docs_available,
     eudrMitigationEffective: f.eudr_mitigation_effective,
+    status: (f.status as FincaEudrFields["status"]) ?? "pending_review",
+    certShared: !!f.eudr_cert_shared,
   };
 }
 
 export type EudrGateResult = { ready: boolean; label: string };
 
 const FINCA_COLS =
-  "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective";
+  "name, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, status, eudr_cert_shared";
 
 export async function lotEudrGate(service: SupabaseClient, lotId: string): Promise<EudrGateResult> {
   // F2 (2026-07-29): el origen del lote son sus APORTES (lot_contributions) —

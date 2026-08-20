@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrStatus, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
+import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
@@ -105,7 +105,12 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
     eudrDocsAvailable: finca.eudr_docs_available,
     eudrMitigationEffective: finca.eudr_mitigation_effective,
   };
-  if (fincaEudrStatus(eudrFields, parcelas).code !== "apta") {
+  // La DECLARACIÓN, no la Visa: desde 2026-08-20 fincaEudrStatus() incorpora el
+  // veredicto de CTC, así que preguntarle aquí sería exigir que la finca ya
+  // estuviera aprobada para poder aprobarla. Lo que esta compuerta comprueba
+  // —y lo único que puede comprobar— es que el expediente del productor esté
+  // completo y limpio.
+  if (fincaEudrDeclaracion(eudrFields, parcelas).code !== "apta") {
     return {
       ok: false,
       error: "La debida diligencia EUDR de esta finca todavía está incompleta; complétela antes de aprobar.",

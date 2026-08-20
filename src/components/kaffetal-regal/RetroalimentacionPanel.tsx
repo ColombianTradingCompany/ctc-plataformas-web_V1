@@ -46,6 +46,7 @@ export function RetroalimentacionPanel({
   onOpenFincaModal,
   tituloLista,
   vacio,
+  nombreProductor,
 }: {
   feedback: FeedbackNote[];
   /** Cabecera de la lista. Por defecto, la de Retroalimentación de siempre.
@@ -65,7 +66,15 @@ export function RetroalimentacionPanel({
   onCreateThread: (title: string, link: Link, message: string) => Promise<boolean>;
   onOpenFicha: (lotId: string) => void;
   onOpenFincaModal: (index: number) => void;
+  /** Cómo se llama el productor en sus propios mensajes (owner, 2026-08-20).
+   *  Decía «Usted» — que es como le habla CTC a él, no como se nombra él. En un
+   *  hilo con dos voces, ver su propio nombre es lo que hace que la
+   *  conversación se lea como una conversación y no como un formulario. */
+  nombreProductor?: string;
 }) {
+  // El nombre propio si lo hay; «Usted» solo como último recurso (un perfil
+  // recién creado todavía no tiene nombre de agricultor ni razón social).
+  const yo = (nombreProductor ?? "").trim() || "Usted";
   const threads = groupFeedback(feedback);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(true);
@@ -167,7 +176,7 @@ export function RetroalimentacionPanel({
               <div className={styles.convoBody}>
                 {active.notes.map((n) => (
                   <div key={n.id} className={n.authorRole === "producer" ? styles.bubbleMine : styles.bubbleCtc}>
-                    <b>{n.authorRole === "producer" ? "Usted" : "CTC"}</b>{" "}
+                    <b>{n.authorRole === "producer" ? yo : "CTC"}</b>{" "}
                     <span className={styles.bubbleDate}>{new Date(n.createdAt).toLocaleDateString("es-CO")}</span>
                     <p>{n.note}</p>
                     {n.authorRole === "bcp" && (

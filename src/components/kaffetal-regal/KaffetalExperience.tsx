@@ -16,6 +16,7 @@ import { AppDashboard, type DashboardModule } from "./AppDashboard";
 import { FichaView, type FichaSaveUpdate } from "./FichaView";
 import { FincaModal } from "./FincaModal";
 import { InfoModal } from "./InfoModal";
+import { SolicitudRevisionModal } from "./SolicitudRevisionModal";
 import {
   EMPTY_GI,
   GRADE_DB,
@@ -29,7 +30,6 @@ import {
   ctcLotReferenceShort,
   fincaSelfDeletable,
   pendingLotsOfFinca,
-  supplierCode,
   type GeneralInfo,
   type Lot,
   type ProducerContract,
@@ -1057,22 +1057,27 @@ function Experience() {
 
   // For a finca CTC has already accepted (or one with lots already in the Arena
   // pipeline) the producer can't self-delete -- changing or removing it has to
-  // go through CTC. This opens a prefilled email (same channel as the CTC Home
-  // contact forms); a full deletion that would affect committed lots is handled
-  // by CTC on that thread.
+  // go through CTC.
+  //
+  // 2026-08-20 (owner): esto abría el CLIENTE DE CORREO con un `mailto:`. Salir
+  // de la plataforma para pedir algo sobre la plataforma es perder el hilo: la
+  // petición aterrizaba en una bandeja suelta, sin quedar atada a la finca, sin
+  // aparecer en «Retroalimentación y ayuda» del productor, y sin que el OCP la
+  // viera en el Registro de comunicación de esa finca. Y en el teléfono de un
+  // caficultor, `mailto:` a menudo no abre nada.
+  // Ahora usa el MISMO canal interno que el resto (`producer_comm_log`), con la
+  // finca como contexto — la conversación queda donde ya se lee.
+  const [revisionFinca, setRevisionFinca] = useState<Finca | null>(null);
   function requestFincaRevision(finca: Finca) {
-    const supplier = supplierCode(userId ?? "");
-    const subject = `Revisión de datos — Finca ${finca.name} (${supplier})`;
-    const body = [
-      `Proveedor: ${gi.razon} (${supplier})`,
-      `Finca: ${finca.name} — ${finca.mun}, ${finca.depto}`,
-      "",
-      "Solicito una revisión de los datos de esta finca. Describo abajo el cambio requerido",
-      "(o, si se trata de una eliminación que afecta lotes ya aprobados, indíquenme cómo proceder):",
-      "",
-      "",
-    ].join("\n");
-    window.location.href = `mailto:info@ctcexport.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setRevisionFinca(finca);
+  }
+  async function enviarRevisionFinca(finca: Finca, texto: string): Promise<boolean> {
+    const ok = await requestFincaHelp(
+      finca,
+      `Solicitud de revisión de datos — ${finca.name} (${finca.mun}, ${finca.depto})\n\n${texto.trim()}`
+    );
+    if (ok) setRevisionFinca(null);
+    return ok;
   }
 
   // Producer replies to a specific CTC note. The reply copies the parent's
@@ -1708,6 +1713,7 @@ function Experience() {
       )}
 
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      <SolicitudRevisionModal finca={revisionFinca} onClose={() => setRevisionFinca(null)} onSend={enviarRevisionFinca} />
       <FincaModal
         open={fincaModalOpen}
         onClose={() => setFincaModalOpen(false)}

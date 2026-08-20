@@ -9,7 +9,19 @@ import type { Finca } from "@/components/kaffetal-regal/data";
 export type EudrTone = "ok" | "pend" | "stop";
 
 export type EudrStatus = {
-  code: "no_apta" | "pendiente" | "apta" | "sin_origen" | "bloqueado" | "en_revision" | "eudr_ready";
+  code:
+    | "no_apta"
+    | "pendiente"
+    | "apta"
+    | "sin_origen"
+    | "bloqueado"
+    | "en_revision"
+    // 2026-08-20: CTC ya aprobó la finca pero todavía no ha REMITIDO el
+    // expediente (`fincas.eudr_cert_shared`). La Visa existe; el papel no ha
+    // salido. Ver fincaEudrStatus().
+    | "aprobada"
+    | "rechazada"
+    | "eudr_ready";
   label: string;
   tone: EudrTone;
 };
@@ -49,7 +61,19 @@ export type FincaEudrFields = Pick<
   | "eudrIllegalityIndicators"
   | "eudrDocsAvailable"
   | "eudrMitigationEffective"
->;
+> & {
+  // ── El veredicto de CTC (2026-08-20) ────────────────────────────────────
+  // OPCIONALES a propósito: los callers que arman un objeto ligero desde su
+  // propio SELECT (las páginas del OCP) pueden no traerlos. Cuando faltan,
+  // fincaEudrStatus() se queda en la DECLARACIÓN y nunca dice «Visa vigente»
+  // por su cuenta — el bug que tenían era justo el contrario: afirmarla.
+  //
+  // `status`      — la revisión de CTC (fincas.status: pending_review /
+  //                 approved / rejected), la escriben approveFinca/rejectFinca.
+  // `certShared`  — CTC remitió el expediente EUDR (fincas.eudr_cert_shared).
+  status?: Finca["status"];
+  certShared?: boolean;
+};
 
 // A point (lat/lng) is the primary evidence; a known vereda/municipio/departamento
 // is the fallback the reference allows for micro/small producers using a postal
@@ -93,7 +117,13 @@ export function parcelasGeoComplete(parcelas: ParcelaGeoFields[]): boolean {
 // localizadas, con polígono donde el área supera 4 ha. Los callers legacy que
 // no pasan el parámetro conservan la regla anterior (punto/dirección de la
 // finca), para no romper listados que solo tienen la fila de `fincas`.
-export function fincaEudrStatus(
+// PASO 1 — LA DECLARACIÓN DEL PRODUCTOR, y nada más.
+// Responde «¿este expediente está completo y limpio?» mirando SOLO lo que el
+// productor aportó. No sabe nada de la revisión de CTC, a propósito: es la
+// compuerta que aprueba approveFinca(), y si mirara el veredicto de CTC no se
+// podría aprobar nada (la aprobación exigiría estar ya aprobada).
+// `apta` aquí significa «listo para que CTC lo mire», NO «Visa vigente».
+export function fincaEudrDeclaracion(
   f: FincaEudrFields | null | undefined,
   parcelas?: ParcelaGeoFields[]
 ): EudrStatus {
@@ -122,6 +152,43 @@ export function fincaEudrStatus(
   return status("apta", "Visa vigente", "ok");
 }
 
+// PASO 2 — LA VISA QUE SE PINTA EN PANTALLA.
+// El defecto que arregla (owner, 2026-08-20): esta función DERIVABA la Visa
+// solo de las respuestas del productor y nunca leía `fincas.status`. De ahí
+// los tres síntomas de un mismo agujero: la finca decía «Visa vigente» ANTES
+// de que el OCP la aprobara; aprobarla no cambiaba nada visible; y «Rechazar»
+// —que sí escribe status='rejected' y su fila de auditoría— parecía no hacer
+// nada, porque nadie miraba ese campo.
+//
+// El orden importa: PRIMERO la declaración (si el expediente está incompleto,
+// eso es lo accionable para el productor y CTC no tiene nada que revisar
+// todavía), y solo sobre una declaración completa se aplica el veredicto:
+//
+//   rechazada                       → «Visa rechazada por CTC»
+//   pending_review                  → «Visa en revisión por CTC»
+//   approved, expediente sin remitir→ «Visa aprobada · expediente sin remitir»
+//   approved + expediente remitido  → «Visa vigente»
+//
+// Sin `status` (callers que no lo traen en su SELECT) se queda en la
+// declaración y devuelve `en_revision`: nunca afirma una Visa que no consta.
+export function fincaEudrStatus(
+  f: FincaEudrFields | null | undefined,
+  parcelas?: ParcelaGeoFields[]
+): EudrStatus {
+  const declaracion = fincaEudrDeclaracion(f, parcelas);
+  if (!f || declaracion.code !== "apta") return declaracion;
+
+  if (f.status === "rejected") {
+    return status("rechazada", "Visa rechazada por CTC", "stop");
+  }
+  if (f.status === "approved") {
+    return f.certShared
+      ? status("apta", "Visa vigente", "ok")
+      : status("aprobada", "Visa aprobada · expediente sin remitir", "pend");
+  }
+  return status("en_revision", "Visa en revisión por CTC", "pend");
+}
+
 // The lot-level input is intentionally a narrow pick, not the whole FichaFormData --
 // this module shouldn't need to know about cupping scores or certificates to answer
 // "is this lot EUDR ready."
@@ -148,11 +215,21 @@ export function lotEudrStatus(lot: LotEudrInput, sourceFincas: FincaEudrFields[]
   // Lambda explícita: .map(fincaEudrStatus) pasaría el ÍNDICE como el nuevo
   // parámetro opcional `parcelas`.
   const fincaStatuses = sourceFincas.map((f) => fincaEudrStatus(f));
-  if (fincaStatuses.some((s) => s.code === "no_apta")) {
+  if (fincaStatuses.some((s) => s.code === "no_apta" || s.code === "rechazada")) {
     return status("bloqueado", "Sin Visa de finca", "stop");
   }
   if (fincaStatuses.some((s) => s.code === "pendiente")) {
     return status("pendiente", "Visa de finca en trámite", "pend");
+  }
+  // 2026-08-20: la Visa completa pero todavía en manos de CTC (en revisión, o
+  // aprobada sin expediente remitido) NO es un Sello. Antes cualquier cosa que
+  // no fuera "no_apta"/"pendiente" caía en el `return` de abajo y el lote decía
+  // «Sello listo» con la finca sin aprobar siquiera.
+  if (fincaStatuses.some((s) => s.code === "en_revision")) {
+    return status("pendiente", "Visa de finca en revisión por CTC", "pend");
+  }
+  if (fincaStatuses.some((s) => s.code === "aprobada")) {
+    return status("pendiente", "Visa aprobada · expediente sin remitir", "pend");
   }
   return status("eudr_ready", "Sello listo", "ok");
 }
@@ -217,6 +294,25 @@ export const PRODUCT_RISK_QUESTIONS: [string, string][] = [
   ["sin_id_lote", "La identidad del lote (finca de origen) no se conserva durante el proceso."],
   ["intermediarios", "Pasa por intermediarios o comercializadores ajenos a CTC."],
   ["transform_terceros", "Se trilla, tuesta o transforma donde terceros, sin control de CTC."],
+];
+
+// ── Lo mismo, DICHO AL DERECHO (owner, 2026-08-20) ─────────────────────────
+// Las de arriba son las que se GUARDAN: cada clave marcada es un factor de
+// riesgo presente, y así llevan meses escritas en `eudr_product_risk_factors`.
+// Pero preguntárselas al productor tal cual le pide confirmar lo malo de su
+// propio café — se lee como una acusación, y marcar casillas para EMPEORAR su
+// perfil es justo al revés de como funciona todo lo demás en la pantalla.
+//
+// Estas son las MISMAS cuatro situaciones enunciadas en positivo. La finca
+// marca lo que SÍ hace bien; la ausencia de la marca es el factor de riesgo.
+// Es un cambio de REDACCIÓN, no de datos: el almacenamiento y deriveProductRisk
+// siguen contando factores negativos, así que las fincas ya registradas
+// significan exactamente lo mismo que ayer y no hace falta migrar nada.
+export const PRODUCT_RISK_AFFIRMATIONS: [string, string][] = [
+  ["mezcla", "El café de esta finca se mantiene separado del de otros orígenes y productores."],
+  ["sin_id_lote", "La identidad del lote (de qué finca salió) se conserva durante todo el proceso."],
+  ["intermediarios", "Va de la finca a CTC sin pasar por intermediarios ni comercializadores ajenos."],
+  ["transform_terceros", "La trilla y la transformación ocurren bajo control de CTC, no donde terceros."],
 ];
 export function deriveProductRisk(factors: string[] | null | undefined): "Bajo" | "Medio" | "Alto" {
   const n = factors?.length ?? 0;

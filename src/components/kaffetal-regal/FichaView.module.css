@@ -25,14 +25,37 @@
 .pendProofsRow{display:flex;align-items:center;gap:10px;font-size:12.5px;margin-top:8px;flex-wrap:wrap}
 
 .footer{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:14px 0;margin-top:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-.csvRow{display:flex;gap:8px;align-items:center}
+/* `flex-wrap` desde el 2026-08-20. Sin él, esta fila —chip de autoguardado +
+   «Guardar» + «Completar … y continuar»— no podía encogerse por debajo de su
+   contenido: en un teléfono de 375 px sumaban más que el ancho útil y el que
+   se salía por la derecha era, precisamente, el botón que hace avanzar la
+   etapa (se ve cortado en la captura del owner). Ahora baja de línea.
+   `justify-content:flex-end` mantiene la regla de la casa —acciones abajo a la
+   derecha— también cuando envuelve. */
+.csvRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:0}
+@media(max-width:520px){
+  /* Apiladas y a lo ancho: en un teléfono un botón de media pantalla se acierta
+     con el pulgar sin mirar. La principal arriba del todo de la pila. */
+  .footer{gap:10px}
+  .csvRow{width:100%;flex-direction:column-reverse;align-items:stretch}
+  .csvRow > button{width:100%;justify-content:center}
+}
 @media(max-width:860px){.shell{flex-direction:column}}
-.fsec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin-top:22px}
+.fsec{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;margin-top:22px;min-width:0}
+/* 28 px de relleno a cada lado se comen 56 de los 343 útiles de un teléfono de
+   375: uno de cada seis píxeles del ancho, gastado en aire. Es la diferencia
+   entre que una etiqueta larga quepa en un renglón o en tres. */
+@media(max-width:520px){.fsec{padding:18px 14px}}
 .fsec h3{font-size:19px;color:var(--primary-deep);display:flex;align-items:center;gap:10px}
 .fn{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--accent);letter-spacing:.1em}
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:18px}
+.fgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 18px;margin-top:18px;min-width:0}
+/* `minmax(0,1fr)` y no `1fr`: `1fr` es `minmax(auto,1fr)`, y ese `auto` se
+   niega a bajar del ancho MÍNIMO del contenido — un `<input>` trae ~20
+   caracteres de ancho por omisión. Ahí nace el desbordamiento lateral que el
+   owner fotografió: el texto de ayuda cortado contra el borde derecho. */
+.fgrid > *{min-width:0}
 .fw{grid-column:1/-1}
-@media(max-width:680px){.fgrid{grid-template-columns:1fr}}
+@media(max-width:680px){.fgrid{grid-template-columns:minmax(0,1fr)}}
 .ff label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
 .ff label small{font-weight:400;color:var(--muted)}
 .ff input,.ff select,.ff textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:var(--font-spline-mono),monospace;font-size:13.5px;background:var(--paper);color:var(--ink)}
@@ -43,7 +66,7 @@
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
 .chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer;background:var(--paper)}
 .chip:has(input:checked){border-color:var(--primary);background:#E8EFE4;font-weight:600}
-.fexample{font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);margin-top:5px}
+.fexample{font-family:var(--font-spline-mono),monospace;font-size:10.5px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
 .okv{color:#2E7D46;font-weight:600}
 .badv{color:var(--t-red);font-weight:600}
 .inherit{background:#EEF3EA;border:1px dashed var(--primary);border-radius:10px;padding:13px 16px;font-size:13.5px;color:var(--muted);margin-top:14px}
@@ -83,13 +106,39 @@
 
 /* FABs flotantes Guardar + Ayuda (mismos del panel de Finca -- en sincronía
    con FincaModal.module.css). */
-.fab{position:fixed;right:24px;bottom:24px;z-index:60;display:inline-flex;align-items:center;gap:0;height:56px;padding:0;width:56px;border:none;border-radius:999px;background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
-.fabHelp{position:fixed;right:24px;bottom:92px;z-index:60;display:inline-flex;align-items:center;height:52px;width:52px;padding:0;border:none;border-radius:999px;background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
+.fab{position:relative;z-index:1;display:inline-flex;align-items:center;gap:0;height:56px;padding:0;width:56px;border:none;border-radius:999px;background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
+.fabHelp{position:relative;z-index:1;display:inline-flex;align-items:center;height:52px;width:52px;padding:0;border:none;border-radius:999px;background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
 .fab:hover,.fab:focus-visible,.fabHelp:hover,.fabHelp:focus-visible{width:auto;padding:0 20px 0 14px;gap:8px}
 .fabIcon{display:inline-flex;align-items:center;justify-content:center;font-size:19px;line-height:1;flex:0 0 auto;width:56px}
 .fabHelp .fabIcon{width:52px}
 .fab:hover .fabIcon,.fab:focus-visible .fabIcon,.fabHelp:hover .fabIcon,.fabHelp:focus-visible .fabIcon{width:auto}
 .fabLabel{max-width:0;opacity:0;overflow:hidden;font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:600;transition:max-width .22s ease,opacity .18s ease}
 .fab:hover .fabLabel,.fab:focus-visible .fabLabel,.fabHelp:hover .fabLabel,.fabHelp:focus-visible .fabLabel{max-width:180px;opacity:1}
-.helpBox{position:fixed;right:24px;bottom:150px;z-index:61;width:min(340px,86vw);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.28)}
+.helpBox{width:min(340px,86vw);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.28)}
 .helpBox textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13.5px;background:var(--paper);font-family:inherit;resize:vertical}
+
+/* ── La pila de FABs, anclada a la barra de acciones ────────────────────────
+   Antes iban `position:fixed` en la esquina inferior derecha del VIEWPORT, que
+   es exactamente donde la barra pegajosa pone sus botones: en un teléfono el
+   💬 y el 💾 se posaban encima de «Completar … y continuar» y se lo comían.
+   `.footer` es `position:sticky`, o sea un bloque contenedor posicionado, así
+   que basta con colgarlos de él: suben con la barra y jamás la solapan, sea
+   cual sea su altura (una línea, o dos cuando el aviso de declaración aparece).
+   `align-items:flex-end` los apila en vertical contra la derecha — la regla de
+   la casa para acciones apiladas. */
+.fabStack{
+  position:absolute;right:0;bottom:calc(100% + 12px);z-index:60;
+  display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+  pointer-events:none;
+}
+.fabStack > *{pointer-events:auto}
+
+/* Caja de aviso ámbar — el mismo tono que ya usa el pop-up de finca. Se define
+   AQUÍ y no se toma prestada de FincaModal.module.css: una clase de CSS module
+   que no existe sale `undefined` y el elemento se pinta desnudo sin que tsc,
+   eslint ni el build digan una palabra (la trampa de la V4.30). */
+.noteBox{
+  background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;
+  padding:11px 13px;font-size:12.5px;color:#78350F;line-height:1.5;
+}
+.noteBox p{margin:4px 0 8px}

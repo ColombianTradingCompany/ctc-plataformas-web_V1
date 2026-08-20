@@ -118,6 +118,33 @@ section{padding:78px 0;border-top:1px solid var(--line)}
 .btn-sm{padding:6px 14px;font-size:13px;height:auto}
 
 /* ============================================================
+   Objetivos táctiles — dedos de caficultor (2026-08-20, owner)
+   ============================================================
+   «Los botones necesitan tener suficiente espacio: los caficultores pueden
+   tener dedos grandes y ásperos.» Medido: `.btn-sm` daba 31 px de alto y las
+   casillas nativas 13 px — muy por debajo de los 44 px que piden tanto la guía
+   de Apple como la WCAG 2.2 (2.5.8 Target Size). En el patio de una finca, con
+   una mano sucia y sol de frente, eso no es una molestia: es un dato que no se
+   registra.
+   La compuerta es `pointer:coarse`, NO el ancho de pantalla. Lo que decide es
+   con qué se toca, no cuánto mide: así el OCP en portátil —que se usa con
+   ratón, y donde el owner quiere densidad— no engorda ni un píxel, y una
+   tableta grande sí recibe el trato táctil.
+   `:has()` deja que el objetivo sea la ETIQUETA ENTERA y no solo el cuadrito:
+   es lo que de verdad multiplica el área donde se puede acertar. */
+@media (pointer: coarse){
+  .btn{min-height:48px}
+  .btn-sm{min-height:44px;padding:10px 18px;font-size:13.5px}
+  .modal .close{width:46px;height:46px}
+  input[type=checkbox],input[type=radio]{width:22px;height:22px;flex:0 0 auto}
+  label:has(> input[type=checkbox]),label:has(> input[type=radio]){min-height:44px}
+  input[type=text],input[type=tel],input[type=email],input[type=number],input[type=date],select{min-height:46px}
+  /* Filas de opción muy juntas: separarlas evita el toque cruzado, que es el
+     error caro (se marca la casilla de al lado y nadie lo nota). */
+  label:has(> input[type=checkbox]) + label:has(> input[type=checkbox]){margin-top:4px}
+}
+
+/* ============================================================
    Botones con cuerpo — la familia "objeto" (2026-08-11)
    ============================================================
    Nacieron para el hero de CTC Home, donde los rectángulos planos se leían
@@ -299,6 +326,20 @@ section{padding:78px 0;border-top:1px solid var(--line)}
   max-height:90vh;overflow:auto;position:relative;color:var(--ink);
   box-shadow:0 40px 80px -20px rgba(14,32,26,.5);
 }
+/* ── El pop-up ANCHO de revisión (owner, 2026-08-20) ────────────────────────
+   «Del lado del OCP, los pop-ups que salen para revisar son demasiado
+   pequeños»: la plataforma interna se usa en portátil, y sus modales heredaban
+   los 560 px pensados para un formulario de contacto — algunos subidos a mano a
+   680/720 px con un `style` en línea, cada uno con su número.
+   Un expediente de finca (identidad, mapa, cuestionario EUDR, certificados,
+   lotes asociados) en 720 px de un portátil de 1440 obliga a desplazar dentro
+   de una caja estrecha teniendo media pantalla vacía a los lados. Se revisa
+   peor y se revisa más lento.
+   `min(1180px, 94vw)` escala con la pantalla y sigue cayendo al modo hoja del
+   teléfono en la consulta de abajo, que no se toca. */
+.modal-wide{max-width:min(1180px,94vw)}
+@media (min-height:820px){.modal-wide{max-height:92vh}}
+
 .modal .close{position:absolute;top:14px;right:16px;border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted)}
 .modal h3{font-size:22px;margin-bottom:6px;color:var(--primary-deep)}
 .modal p{font-size:14px;color:var(--muted);margin-bottom:20px}

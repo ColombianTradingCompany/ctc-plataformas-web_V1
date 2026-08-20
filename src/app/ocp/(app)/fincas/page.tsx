@@ -1,5 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
+import { fincaEudrDeclaracion, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
 import { FINCA_SEGMENTS, segmentFinca } from "@/lib/bcp/producerSegments";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
@@ -85,6 +85,11 @@ function toEudrFields(f: FincaRow): FincaEudrFields {
     eudrIllegalityIndicators: f.eudr_illegality_indicators,
     eudrDocsAvailable: f.eudr_docs_available,
     eudrMitigationEffective: f.eudr_mitigation_effective,
+    // El veredicto de CTC viaja con el resto (2026-08-20): sin él,
+    // fincaEudrStatus() se queda en «en revisión» y esta consola —que es
+    // justamente donde se aprueba— no reflejaría su propia decisión.
+    status: f.status as FincaEudrFields["status"],
+    certShared: !!f.eudr_cert_shared,
   };
 }
 
@@ -291,8 +296,12 @@ export default async function BcpFincasPage() {
                   const gaps = missingChecks(eudrFields);
                   const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
                   // Solo se aprueba una finca EUDR "Apta" (completa) — ver el
-                  // caso de La Ceiba en el historial de este archivo.
-                  const blockedByEudr = status.code !== "apta" || blockedByPolygon;
+                  // caso de La Ceiba en el historial de este archivo. Lo que se
+                  // exige es la DECLARACIÓN completa, no la Visa: desde
+                  // 2026-08-20 `status` ya incorpora el veredicto de CTC, y
+                  // mirarlo aquí dejaría el botón Aprobar apagado para siempre
+                  // (haría falta estar aprobada para poder aprobarla).
+                  const blockedByEudr = fincaEudrDeclaracion(eudrFields).code !== "apta" || blockedByPolygon;
                   const short = fincaShortStatus(finca);
                   const producer = producers.get(finca.producer_id);
 

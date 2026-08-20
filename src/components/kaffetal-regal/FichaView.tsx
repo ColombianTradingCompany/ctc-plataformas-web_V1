@@ -83,14 +83,20 @@ export type FichaSaveUpdate = {
 // solo. El timer vive aquí para que el overlay se auto-desmonte.
 function CenterNotice({ text, onDone }: { text: string; onDone: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onDone, 3200);
+    // 9 s desde el 2026-08-20: el aviso pasó de una frase a una LISTA de lo que
+    // falta, con el índice del pane y el dato concreto. 3,2 s daban para leer
+    // «Complete A3, A4, B2 y B3»; no dan para leer tres renglones y quedarse
+    // con cuál era. Se puede cerrar antes tocándolo.
+    const t = setTimeout(onDone, 9000);
     return () => clearTimeout(t);
   }, [onDone]);
   return (
     <div className={styles.noticeOverlay}>
-      <div className={styles.notice} role="alert" onClick={onDone}>
+      {/* `pre-line`: el texto viene con saltos de línea y viñetas — una lista
+          de verdad, no una frase con comas donde todo pesa igual. */}
+      <div className={styles.notice} role="alert" onClick={onDone} style={{ whiteSpace: "pre-line", textAlign: "left" }}>
         <b>Aún falta algo:</b>
-        <br />
+        {"\n"}
         {text}
       </div>
     </div>
@@ -269,6 +275,32 @@ export function FichaView({
   const STAGE_READY = [ftReady, ft2Ready, eudrReady, videoReady];
   const currentStepReady = effectiveIntakeStep < 4 ? STAGE_READY[effectiveIntakeStep] : true;
 
+  // ── Qué falta, DICHO POR SU NOMBRE (owner, 2026-08-20) ────────────────────
+  // El aviso de la compuerta recitaba la etapa entera —«Complete A3, A4, B2 y
+  // B3»— aunque solo faltara una. El productor tenía que abrir las cuatro para
+  // averiguar cuál. Ahora se nombra el pane que falta y el dato concreto que
+  // le falta: el índice (A3) para localizarlo en el menú, el título para
+  // reconocerlo, y qué escribir para cerrarlo.
+  const QUE_FALTA: Partial<Record<PaneId, string>> = {
+    a1: "A1 · Identidad & Comercio → el nombre comercial del café",
+    a2: "A2 · Información de Origen → la finca de la que sale este café",
+    b1: "B1 · Variedades & Básica → la especie y al menos una variedad con su porcentaje",
+    a3: "A3 · Reconocimientos & Narrativa → un premio, o la historia del origen",
+    b2: "B2 · Perfil de Taza → el puntaje de taza (los descriptores SCA)",
+    b3: "B3 · Física · Granulometría → el Trillado Verde Restante (g)",
+  };
+
+  function faltantes(panes: PaneId[], conEscape: boolean): string {
+    const lista = panes
+      .filter((p) => !completed[p])
+      .filter((p) => !(conEscape && FT2_NA_FIELD[p] && data[FT2_NA_FIELD[p]!]))
+      .map((p) => "• " + (QUE_FALTA[p] ?? p.toUpperCase()));
+    const cola = conEscape
+      ? '\n\nSi este café no tiene ese dato, marque "No lo sé / no aplica para este lote" en esa misma sección y podrá continuar.'
+      : "";
+    return "\n\n" + lista.join("\n") + cola;
+  }
+
   function buildUpdate(source: FichaFormData, intakeStep?: number): FichaSaveUpdate {
     const topVariety = source.varieties.find((v) => num(v.pct) > 0);
     return {
@@ -352,7 +384,7 @@ export function FichaView({
     const step = effectiveIntakeStep;
     if (step === 0) {
       if (!ftReady) {
-        setNotice("Complete Identidad & Comercio (A1), Información de Origen (A2) y Variedades & Básica (B1).");
+        setNotice("Para enviar la FT falta:" + faltantes(["a1", "a2", "b1"], false));
         return;
       }
       // If the producer marked physical measurements as "No lo sé aún",
@@ -380,7 +412,7 @@ export function FichaView({
     }
     if (step === 1) {
       if (!ft2Ready) {
-        setNotice('Complete A3, A4, B2 y B3 — o marque "No lo sé / no aplica" en cada uno.');
+        setNotice("Para enviar la FT2 falta:" + faltantes(["a3", "b2", "b3"], true));
         return;
       }
       // F2: los certificados viven en la FINCA (con número y vigencia) — la
@@ -486,7 +518,7 @@ export function FichaView({
   }
 
   const viewingLocked = PANE_SUBSTAGE[active] < effectiveIntakeStep;
-  const paneProps = { data, onChange, fincas, fincaCerts, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo, viewingLocked };
+  const paneProps = { data, onChange, fincas, fincaCerts, onOpenNewFinca, lot, gi, onUploadCertFile: uploadCert, onUploadLotVideo, onUploadExtraVideo: uploadExtraVideo, viewingLocked, onGoToPane: setActive };
   const STAGE_BUTTON_LABEL = [
     "Completar FT y continuar",
     "Completar FT2 y continuar",
@@ -629,40 +661,50 @@ export function FichaView({
               </>
             )}
           </div>
+
+          {/* Los FABs viven DENTRO de la barra de acciones (2026-08-20).
+              Estaban `position:fixed` en la esquina inferior derecha — la misma
+              esquina donde la barra pegajosa pone «Guardar» y «Completar … y
+              continuar». En un teléfono se posaban justo encima: el productor
+              tocaba 💬 o 💾 creyendo que tocaba «Completar FT2 y continuar», y
+              la etapa no avanzaba nunca. Parecía un bloqueo de la FT2 y era un
+              botón tapado.
+              Anclados a la barra (`position:absolute` contra el `sticky`) suben
+              con ella, se apilan en vertical como manda la casa, y no hay
+              altura de barra que los vuelva a solapar. */}
+          <div className={styles.fabStack}>
+            {helpOpen && (
+              <div className={styles.helpBox}>
+                <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta ficha?</p>
+                <textarea
+                  value={helpText}
+                  onChange={(e) => setHelpText(e.target.value)}
+                  rows={3}
+                  placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
+                  autoFocus
+                />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
+                    {helpSending ? "Enviando…" : "Enviar a CTC"}
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
+                </div>
+              </div>
+            )}
+            <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
+              <span className={styles.fabIcon} aria-hidden>💬</span>
+              <span className={styles.fabLabel}>Ayuda</span>
+            </button>
+            {effectiveIntakeStep < 4 && (
+              <button className={styles.fab} onClick={save} disabled={saving} aria-label="Guardar ficha">
+                <span className={styles.fabIcon} aria-hidden>💾</span>
+                <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Ficha"}</span>
+              </button>
+            )}
+          </div>
         </div>
 
       </div>
-
-      {/* FABs flotantes (como en el panel de Finca): Guardar siempre a mano y
-          Ayuda directo al feed de retroalimentación, con el lote como contexto. */}
-      {effectiveIntakeStep < 4 && (
-        <button className={styles.fab} onClick={save} disabled={saving} aria-label="Guardar ficha">
-          <span className={styles.fabIcon} aria-hidden>💾</span>
-          <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Ficha"}</span>
-        </button>
-      )}
-      <button className={styles.fabHelp} style={effectiveIntakeStep >= 4 ? { bottom: 24 } : undefined} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
-        <span className={styles.fabIcon} aria-hidden>💬</span>
-        <span className={styles.fabLabel}>Ayuda</span>
-      </button>
-      {helpOpen && (
-        <div className={styles.helpBox}>
-          <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta ficha?</p>
-          <textarea
-            value={helpText}
-            onChange={(e) => setHelpText(e.target.value)}
-            rows={3}
-            placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
-            autoFocus
-          />
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
-              {helpSending ? "Enviando…" : "Enviar a CTC"}
-            </button>
-            <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
-          </div>
-        </div>
-      )}
 
       {notice && <CenterNotice text={notice} onDone={() => setNotice(null)} />}
       {celebrate && <StageCelebration c={celebrate} onDone={() => setCelebrate(null)} />}

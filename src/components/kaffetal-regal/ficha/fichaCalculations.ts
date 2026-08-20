@@ -28,6 +28,19 @@ export function computeFactor(data: FactorFields) {
 // El Residuo no se digita: es el "solucionador de diferencia" que lleva la
 // suma de mallas siempre a 100% del grano sano -- lo que no quedó retenido en
 // ninguna malla ES el residuo, por definición.
+//
+// ── El defecto que arregla el `state` de abajo (owner, 2026-08-20) ──────────
+// «No creo que esté funcionando bien; tampoco es fácil entender qué debo poner,
+// si fue demasiado o no alcanzó.» Tenía razón, y el motivo es aritmético: como
+// el Residuo ABSORBE la diferencia, la suma daba 100,0 % SIEMPRE que las mallas
+// pesaran menos que el grano sano. Es decir, la única desviación que el aviso
+// podía detectar era pasarse; quedarse corto —pesar una malla y olvidar las
+// otras cinco— salía como «100,0 %», impecable, con un Residuo del 75 % que
+// nadie leía como un error.
+// Ahora se distinguen los dos lados: `excede` (la balanza no cuadra) y
+// `residuo_alto` (faltan mallas por pesar). Un residuo real —pasilla, polvo,
+// fragmentos— rara vez pasa del 5 % del grano sano; se avisa a partir del 15 %
+// para no molestar a nadie con una muestra sucia de verdad.
 export function computeMesh(data: MeshFields, remainder: number) {
   const measured = MESH.filter(([key]) => key !== "mesh_residue").map(([key, label]) => {
     const grams = num(data[key as keyof MeshFields]);
@@ -48,7 +61,22 @@ export function computeMesh(data: MeshFields, remainder: number) {
   // Solo puede desviarse de 100% si las mallas medidas EXCEDEN el grano sano
   // (el residuo no puede ser negativo) -- eso sí es un error de pesaje.
   const bad = remainder > 0 && Math.abs(totalPct - 100) > 5;
-  return { rows, sum, totalPct, bad, residueGrams };
+
+  // Lo que todavía no se ha repartido en ninguna malla. Positivo = falta por
+  // pesar; negativo = las mallas pesan MÁS que el grano sano.
+  const pendingGrams = remainder > 0 ? Math.round((remainder - measuredSum) * 10) / 10 : 0;
+  const residuePct = remainder > 0 ? (residueGrams / remainder) * 100 : 0;
+  const state: "sin_base" | "vacio" | "excede" | "residuo_alto" | "ok" =
+    remainder <= 0
+      ? "sin_base" // aún no hay Grano Sano contra el que medir nada
+      : measuredSum <= 0
+        ? "vacio"
+        : measuredSum > remainder
+          ? "excede"
+          : residuePct > 15
+            ? "residuo_alto"
+            : "ok";
+  return { rows, sum, totalPct, bad, residueGrams, pendingGrams, residuePct, measuredSum, state };
 }
 
 // Bandas de clasificación por puntaje SCA total. "Especial" y superiores son

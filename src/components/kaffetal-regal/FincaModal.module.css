@@ -57,9 +57,22 @@
 /* Small dot appended to a tab when its section still has pending EUDR answers */
 .tabDot{display:inline-block;width:7px;height:7px;border-radius:999px;background:var(--accent, #C08A2D)}
 
-/* Floating save button: circular diskette, expands to its label on hover/focus.
-   Fixed to the viewport so it stays reachable while the long modal scrolls. */
-.fab{position:fixed;right:24px;bottom:24px;z-index:60;display:inline-flex;align-items:center;gap:0;height:56px;padding:0;width:56px;border:none;border-radius:999px;background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
+/* ── La botonera del pie del pop-up ────────────────────────────────────────
+   Era `position:fixed` contra el VIEWPORT «para que siguiera alcanzable
+   mientras el modal largo desplaza». Lo conseguía, sí, pero a costa de flotar
+   ENCIMA del formulario y comerse su última fila (owner, 2026-08-20: «botones
+   detrás de botones»). `.modal` ya desplaza por dentro, así que un `sticky` en
+   el pie del propio pop-up da lo mismo sin tapar nada: ocupa su sitio en el
+   flujo y sube y baja con el contenido. */
+.fabDock{
+  position:sticky;bottom:0;z-index:60;
+  display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+  margin:18px 0 0;padding:12px 0 2px;
+  /* Degradado hasta el papel: los botones no se recortan contra el texto que
+     pasa por debajo al desplazar. */
+  background:linear-gradient(180deg, color-mix(in srgb, var(--paper) 0%, transparent) 0%, var(--paper) 42%);
+}
+.fab{position:relative;display:inline-flex;align-items:center;gap:0;height:56px;padding:0;width:56px;border:none;border-radius:999px;background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
 .fab:hover,.fab:focus-visible{width:auto;padding:0 22px 0 16px;gap:9px}
 .fab:disabled{opacity:.7;cursor:default}
 .fabIcon{font-size:20px;line-height:1;flex:0 0 auto;width:56px;text-align:center}
@@ -67,16 +80,51 @@
 .fabLabel{max-width:0;opacity:0;overflow:hidden;font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:600;transition:max-width .22s ease,opacity .18s ease}
 .fab:hover .fabLabel,.fab:focus-visible .fabLabel{max-width:220px;opacity:1}
 
-/* Secondary "Ayuda" FAB, sits just above the save FAB */
-.fabHelp{position:fixed;right:24px;bottom:92px;z-index:60;display:inline-flex;align-items:center;height:52px;width:52px;padding:0;border:none;border-radius:999px;background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
+/* El "Ayuda", apilado justo encima del de guardar por el `flex-direction` */
+.fabHelp{position:relative;display:inline-flex;align-items:center;height:52px;width:52px;padding:0;border:none;border-radius:999px;background:var(--accent);color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.22);overflow:hidden;transition:width .22s ease,padding .22s ease;white-space:nowrap}
 .fabHelp:hover,.fabHelp:focus-visible{width:auto;padding:0 22px 0 14px}
 .fabHelp .fabIcon{width:52px}
 .fabHelp .fabLabel{max-width:0;opacity:0;overflow:hidden;font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:600;transition:max-width .22s ease,opacity .18s ease}
 .fabHelp:hover .fabLabel,.fabHelp:focus-visible .fabLabel{max-width:160px;opacity:1}
-.helpBox{position:fixed;right:24px;bottom:150px;z-index:61;width:min(340px,86vw);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.28)}
+.helpBox{width:min(340px,86vw);background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.28)}
 .helpBox textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--paper);resize:vertical}
 
 /* Centered save confirmation that fades in and out on its own. */
 .flash{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;pointer-events:none;animation:flashFade 1.9s ease forwards}
 .flash span{background:var(--primary);color:#fff;font-family:var(--font-fraunces),serif;font-weight:700;font-size:18px;padding:16px 28px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.28)}
 @keyframes flashFade{0%{opacity:0;transform:scale(.96)}15%{opacity:1;transform:scale(1)}75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1)}}
+
+/* ── Una fila de opción que se puede tocar entera ──────────────────────────
+   Las cuatro afirmaciones de trazabilidad llevaban la casilla con un
+   `style={{width:16}}` en línea, o sea inmune a la regla táctil de globals.css
+   (una declaración en línea gana siempre). Con clase propia, el objetivo es la
+   FILA completa —casilla y frase— y `align-items` mantiene la casilla arriba
+   cuando el texto ocupa dos renglones. */
+.checkRow{
+  display:flex;gap:10px;align-items:flex-start;
+  font-size:13px;line-height:1.45;cursor:pointer;
+  padding:6px 8px;margin:0 -8px;border-radius:8px;
+}
+.checkRow:hover{background:color-mix(in srgb, var(--primary) 6%, transparent)}
+.checkRow input{flex:0 0 auto;margin-top:2px}
+.checkRow:has(input:checked){background:color-mix(in srgb, var(--primary) 9%, transparent)}
+
+/* ── Que el formulario no se salga del pop-up (owner, 2026-08-20) ──────────
+   «El formulario rebosa el pop up». El culpable no es el alto —`.modal` ya
+   desplaza— sino el ANCHO: la fila de pestañas, la rejilla de dos columnas y
+   el mapa empujaban más allá del borde, y lo que se sale por la derecha de un
+   contenedor que solo desplaza en vertical no se puede alcanzar de ninguna
+   forma. `min-width:0` es la pieza que faltaba: sin él, un hijo de grid o flex
+   se niega a encogerse por debajo de su contenido y revienta la caja desde
+   dentro. */
+.grid{min-width:0}
+.grid > *{min-width:0}
+.grid input,.grid select,.grid textarea{max-width:100%}
+/* Las pestañas se desplazan ellas solas antes que ensanchar el pop-up. */
+.tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+@media(max-width:560px){
+  /* En un teléfono la fila de cuatro pestañas no cabe ni desplazándose bien:
+     se envuelven y cada una respeta el objetivo táctil. */
+  .tabs{flex-wrap:wrap;overflow-x:visible}
+  .tab{padding:11px 12px}
+}

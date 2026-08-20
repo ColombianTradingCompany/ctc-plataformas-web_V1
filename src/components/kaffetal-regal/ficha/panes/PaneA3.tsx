@@ -12,8 +12,9 @@ import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
-export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
+export function PaneA3({ data, onChange, onUploadCertFile, onGoToPane }: PaneProps) {
   const awardsUp = useUpload();
+  const tieneAdjunto = !!data.cert_attachments["awards"];
   return (
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>A3</span> Reconocimientos & Narrativa del Origen</h3>
@@ -40,11 +41,34 @@ export function PaneA3({ data, onChange, onUploadCertFile }: PaneProps) {
                 style={{ fontSize: 12 }}
               />
               <UploadProgressRing state={awardsUp.state} size={26} label={false} />
-              {data.cert_attachments["awards"] ? (
+              {tieneAdjunto ? (
                 <p className={styles.fexample}>✓ {data.cert_attachments["awards"].fileName} adjuntado</p>
               ) : (
                 <p className={styles.fexample}>Puede adjuntar el diploma, ranking o publicación que respalda el premio (≤ 5 MB).</p>
               )}
+            </div>
+          )}
+
+          {/* ── El atajo del puntaje (owner, 2026-08-20) ────────────────────
+              Quien sube aquí una foto de su hoja de catación normalmente está
+              intentando decir «este es mi puntaje» — y a continuación se pone a
+              teclear los diez atributos SCA de B2 a mano, uno por uno, cuando
+              el papel que acaba de fotografiar los trae todos.
+              El camino corto ya existía (B2 → «Solicitar oficialización», con
+              adjunto, que aterriza en la cola de revisión del BCP), pero no lo
+              descubría nadie desde aquí. Esto es la señal que faltaba: aparece
+              en cuanto hay un adjunto y lleva directo a esa pantalla. */}
+          {tieneAdjunto && (
+            <div className={styles.noteBox} style={{ marginTop: 10 }}>
+              <b>¿Lo que adjuntó es una hoja de catación con su puntaje?</b>
+              <p style={{ margin: "4px 0 8px" }}>
+                Entonces no hace falta que teclee los atributos uno por uno. Vaya a <b>B2 · Perfil de Taza</b> y use
+                <b> «Solicitar oficialización»</b>: adjunte ahí la hoja con la referencia de su Q-Grader o laboratorio y CTC
+                registra el puntaje por usted.
+              </p>
+              <button type="button" className="btn btn-sm" onClick={() => onGoToPane("b2")}>
+                Ir a B2 · Perfil de Taza →
+              </button>
             </div>
           )}
         </div>

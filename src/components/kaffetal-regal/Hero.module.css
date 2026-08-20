@@ -12,11 +12,16 @@
 .hero{position:relative;isolation:isolate;overflow:hidden;background:var(--primary-deep);padding:0;border-top:none}
 .heroBg{position:absolute;inset:0;z-index:0}
 .heroBg img{
-  /* `.32` desde el 2026-08-14 (owner: al quinto de opacidad «apenas se ve que
-     hay algo detrás»). Medido contra el fotograma BLANCO con el velo nuevo: la
-     columna del titular queda en ~rgb(22,41,31), que contra el marfil del h1 da
-     >10:1 — el margen sigue sobrado, lo que cambió es que el bucle EXISTE. */
-  width:100%;height:100%;object-fit:cover;display:block;opacity:.32;
+  /* `.50` desde el 2026-08-20. El owner volvió a pedir lo mismo por segunda
+     vez —«apenas se ve que hay algo detrás»— y la subida del 14 de agosto (de
+     .20 a .32) se quedó corta.
+     La regla que dejó escrita el comentario anterior sigue en pie y se cumplió:
+     se mide contra el fotograma BLANCO del bucle, no contra su promedio. Con
+     .50 y el velo aligerado de abajo, la columna del titular cae en
+     ~rgb(32,49,40); contra el marfil del h1 (#F7F3E9) eso da **12,4:1**, cuando
+     la AA pide 4,5:1 y la AAA 7:1. Queda margen de sobra para una tercera
+     subida si hiciera falta — el techo real está cerca de .70. */
+  width:100%;height:100%;object-fit:cover;display:block;opacity:.50;
   /* El origen es de 400x225: se amplía muchísimo. El desenfoque convierte esa
      blandura en ambiente deliberado en vez de pixelado a la vista, y de paso
      calma un fondo que se mueve detrás de un texto que hay que leer. */
@@ -25,16 +30,21 @@
 }
 /* Velo en dos capas: uno horizontal para que la columna del texto sea la parte
    más oscura del cuadro, y otro vertical para el contraste general. Aligerado
-   junto con la subida de opacidad del bucle (2026-08-14): la mitad derecha —
-   donde vive el logotipo de KR y no hay texto pequeño— es la que más abre. */
+   por segunda vez con la subida del bucle (2026-08-20): la mitad derecha —donde
+   vive el logotipo de KR y no hay texto pequeño— es la que más abre, porque es
+   justo donde el owner quiere ver que hay algo detrás. Las dos capas se
+   MULTIPLICAN: en lo alto de la columna del texto el velo efectivo es
+   1-(1-.74)(1-.28) = .81, que es de donde sale el 12,4:1 medido arriba. */
 .scrim{
   position:absolute;inset:0;z-index:1;
   background:
-    linear-gradient(90deg, rgba(9,28,18,.82) 0%, rgba(9,28,18,.68) 44%, rgba(9,28,18,.26) 78%, rgba(9,28,18,.18) 100%),
-    linear-gradient(180deg, rgba(6,20,13,.36) 0%, rgba(6,20,13,.08) 45%, rgba(6,20,13,.48) 100%);
+    linear-gradient(90deg, rgba(9,28,18,.74) 0%, rgba(9,28,18,.58) 44%, rgba(9,28,18,.18) 78%, rgba(9,28,18,.10) 100%),
+    linear-gradient(180deg, rgba(6,20,13,.28) 0%, rgba(6,20,13,.05) 45%, rgba(6,20,13,.40) 100%);
 }
 @media(max-width:880px){
-  .scrim{background:linear-gradient(180deg, rgba(9,28,18,.78) 0%, rgba(9,28,18,.66) 55%, rgba(9,28,18,.82) 100%)}
+  /* En el teléfono el texto se monta ENCIMA del bucle (no hay columna libre a
+     la derecha), así que el velo se aligera menos: .70 arriba en vez de .78. */
+  .scrim{background:linear-gradient(180deg, rgba(9,28,18,.70) 0%, rgba(9,28,18,.58) 55%, rgba(9,28,18,.74) 100%)}
 }
 
 .band{

@@ -16,6 +16,11 @@ export type PaneProps = {
    *  A3/A4 lo usan para no mostrar un input de archivo muerto. */
   viewingLocked?: boolean;
   onUploadLotVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
+  /** Saltar a otra sección de la Ficha. Lo usa el atajo de A3: quien adjunta la
+   *  hoja de catación de su café no debería tener que teclear los diez
+   *  atributos de B2 a mano — se le ofrece el camino corto en vez de dejarlo
+   *  descubrir por su cuenta que existe. */
+  onGoToPane: (id: import("../FichaNav").PaneId) => void;
   // Videos adicionales de B4 (slots 2 y 3): viven en datasheet.extra_video_assets,
   // no en lots.video_asset_id (que sigue siendo el video principal).
   onUploadExtraVideo: (slot: number, file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;

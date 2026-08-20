@@ -8,7 +8,7 @@ import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { polygonAreaHa } from "@/lib/geo/area";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
-import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_QUESTIONS, type ParcelaGeoFields } from "@/lib/eudr";
+import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_AFFIRMATIONS, type ParcelaGeoFields } from "@/lib/eudr";
 import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
@@ -80,7 +80,7 @@ const EUDR_INFO = {
   separacion:
     "El EUDR no acepta mezcla de café de origen conocido con desconocido, ni contabilidad de balance de masas: el café físico debe poder conectarse con esta finca. Describa cómo se mantiene separado e identificado, o use el estándar de CTC.",
   ctcStandard:
-    "CTC Parchment Storage Standard: el pergamino se almacena en sacos de yute/fique con bolsa interior hermética (liner tipo GrainPro) que protege el grano de humedad y olores. Cada saco lleva una tarjeta indicadora de humedad (HIC) y un código QR único vinculado al código CTC del lote, que conecta el saco físico con su finca de origen y su expediente EUDR — la separación física y documental queda cubierta de una vez.",
+    "Estándar CTC de Almacenamiento de Pergamino (CTC Parchment Storage Standard): el pergamino se almacena en sacos de yute/fique con bolsa interior hermética (liner tipo GrainPro) que protege el grano de humedad y olores. Cada saco lleva una tarjeta indicadora de humedad (HIC) y un código QR único vinculado al código CTC del lote, que conecta el saco físico con su finca de origen y su expediente EUDR — la separación física y documental queda cubierta de una vez.",
   complejidad:
     "Cuántos actores tocan el café entre la finca y el operador que lo coloca en la UE: acopiadores, cooperativas, trilladoras, comercializadores. Una cadena con pocos eslabones y actores conocidos es de complejidad baja.",
   riesgoProducto:
@@ -296,6 +296,10 @@ function FincaModalBody({
   const [alt, setAlt] = useState(finca?.alt && finca.alt !== "—" ? finca.alt : "");
   const [altFrom, setAltFrom] = useState<"polygon" | "point" | null>(null);
   const [altBusy, setAltBusy] = useState(false);
+  // «Estoy aquí»: el GPS del dispositivo marcando el punto del cafetal.
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoErr, setGeoErr] = useState<string | null>(null);
+  const [geoPrecision, setGeoPrecision] = useState<number | null>(null);
   const [altErr, setAltErr] = useState(false);
   // Área (ha): mismo trato que la altura — se calcula del polígono dibujado con
   // un botón explícito, nunca sola. areaFromPoly marca que el valor que se ve
@@ -386,6 +390,43 @@ function FincaModalBody({
   // la escribe a mano. refPoint es el punto que representa a la finca; si aún
   // no hay ubicación registrada, el botón queda deshabilitado.
   const refPoint = fincaReferencePoint(eudr.lat, eudr.lng, eudr.eudrPolygon);
+
+  // ── «Estoy aquí»: el punto sale del GPS, no del pulso ─────────────────────
+  // `enableHighAccuracy` porque esto es evidencia de geolocalización EUDR y la
+  // red móvil sola puede errar cientos de metros; 20 s de tope porque bajo los
+  // árboles el primer arreglo tarda; `maximumAge:0` para que no devuelva la
+  // posición de la finca anterior guardada en caché.
+  function usarUbicacionActual() {
+    if (geoBusy) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoErr("Este dispositivo no permite ubicación automática. Marque el punto a mano en el mapa.");
+      return;
+    }
+    setGeoBusy(true);
+    setGeoErr(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        // 6 decimales ≈ 11 cm: más dígitos son ruido del sensor, no precisión.
+        patchEudr({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) });
+        setGeoPrecision(pos.coords.accuracy ?? null);
+        setGeoBusy(false);
+      },
+      (err) => {
+        setGeoBusy(false);
+        setGeoPrecision(null);
+        // Un mensaje por causa: «no se pudo» no le dice a nadie qué hacer.
+        setGeoErr(
+          err.code === err.PERMISSION_DENIED
+            ? "Su navegador no dio permiso de ubicación. Actívelo para este sitio, o marque el punto a mano en el mapa."
+            : err.code === err.TIMEOUT
+              ? "El GPS tardó demasiado. Salga a cielo abierto e inténtelo otra vez, o marque el punto a mano."
+              : "No se pudo obtener su ubicación. Marque el punto a mano en el mapa."
+        );
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+    );
+  }
+
   async function pullAltitude() {
     if (!refPoint || altBusy) return;
     setAltBusy(true);
@@ -499,8 +540,17 @@ function FincaModalBody({
   function toggleCustodyStage(key: string, checked: boolean) {
     patchEudr({ eudrCustodyStages: checked ? [...eudr.eudrCustodyStages, key] : eudr.eudrCustodyStages.filter((k) => k !== key) });
   }
-  function toggleProductFactor(key: string, checked: boolean) {
-    patchEudr({ eudrProductRiskFactors: checked ? [...eudr.eudrProductRiskFactors, key] : eudr.eudrProductRiskFactors.filter((k) => k !== key) });
+  // OJO con el sentido: la casilla se enuncia EN POSITIVO («el café se mantiene
+  // separado…») pero lo que se guarda sigue siendo la lista de FACTORES DE
+  // RIESGO. Marcar la afirmación = quitar el factor. Invertir aquí y no en la
+  // base es lo que permite cambiar la redacción sin reinterpretar ni una sola
+  // finca ya registrada. Ver PRODUCT_RISK_AFFIRMATIONS en lib/eudr.ts.
+  function toggleProductAffirmation(key: string, cumple: boolean) {
+    patchEudr({
+      eudrProductRiskFactors: cumple
+        ? eudr.eudrProductRiskFactors.filter((k) => k !== key)
+        : [...new Set([...eudr.eudrProductRiskFactors, key])],
+    });
   }
 
   async function save(showFlash = true): Promise<boolean> {
@@ -896,6 +946,37 @@ function FincaModalBody({
                 ? "Este cafetal supera las 4 ha: el EUDR exige delimitarlo con un polígono, no solo un punto."
                 : "Marque el punto del cafetal en el mapa. Es la evidencia principal de geolocalización EUDR."}
             </p>
+
+            {/* «Estoy aquí» (owner, 2026-08-20) ──────────────────────────────
+                Pedido para el caso de >4 ha: quien está PARADO en la mitad de
+                su predio no debería tener que encontrarse a sí mismo en un mapa
+                satelital arrastrando con el dedo — el GPS del teléfono ya sabe
+                dónde está, y con mejor precisión que el pulso de nadie sobre una
+                pantalla de 5 pulgadas.
+                Con polígono NO lo sustituye: el punto sigue siendo el centro
+                declarado y el polígono se dibuja aparte; por eso el texto de
+                abajo lo dice en vez de dejar creer que ya está todo hecho. */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, margin: "0 0 10px" }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={usarUbicacionActual}
+                disabled={geoBusy}
+                title="Usa el GPS de este dispositivo para marcar el punto donde usted está ahora"
+              >
+                {geoBusy ? "Buscando su ubicación…" : "📍 Estoy aquí · usar mi ubicación actual"}
+              </button>
+              <p style={{ fontSize: 11, color: geoErr ? "var(--red)" : "var(--muted)", margin: 0 }}>
+                {geoErr
+                  ? geoErr
+                  : geoPrecision != null
+                    ? `Ubicación tomada del GPS (precisión ±${Math.round(geoPrecision)} m).${needsPolygon ? " Falta dibujar el polígono: este punto es el centro, no el lindero." : " Compruébela en el mapa y ajústela si hace falta."}`
+                    : needsPolygon
+                      ? "Párese en la mitad del cafetal y tóquelo: marca el punto central. El polígono se dibuja aparte, abajo."
+                      : "Párese en el cafetal y tóquelo, o marque el punto a mano en el mapa."}
+              </p>
+            </div>
+
             <FincaMapPicker
               lat={eudr.lat}
               lng={eudr.lng}
@@ -978,12 +1059,19 @@ function FincaModalBody({
           <div className={styles.wide} style={{ marginBottom: 14 }}>
             <label>
               Método de separación física / documental
-              <FieldInfo text={`${EUDR_INFO.separacion} Con el CTC Parchment Storage Standard le ayudamos a tener un mejor estándar: la separación física y documental queda resuelta de una vez.`} />
+              <FieldInfo text={`${EUDR_INFO.separacion} Con el Estándar CTC de Almacenamiento de Pergamino le ayudamos a tener un mejor estándar: la separación física y documental queda resuelta de una vez.`} />
             </label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {/* En español primero (owner, 2026-08-20). El nombre registrado
+                  sigue siendo el inglés —así viaja en el expediente y en el
+                  certificado del lote, que los lee un comprador europeo— pero
+                  al caficultor que está eligiendo su método de separación hay
+                  que decírselo en su idioma. El inglés queda como lo que es: el
+                  nombre propio del estándar, entre paréntesis. */}
               <label className={styles.chip}>
                 <input type="radio" name="eudr_custody_method" checked={eudr.eudrCustodyMethod === "ctc_standard"} onChange={() => patchEudr({ eudrCustodyMethod: "ctc_standard" })} />{" "}
-                CTC Parchment Storage Standard
+                Estándar CTC de Almacenamiento de Pergamino
+                <small style={{ color: "var(--muted)", fontWeight: 400 }}>(CTC Parchment Storage Standard)</small>
                 <FieldInfo text={EUDR_INFO.ctcStandard} />
               </label>
               <label className={styles.chip}>
@@ -1025,14 +1113,19 @@ function FincaModalBody({
           </div>
 
           <div className={styles.wide} style={{ marginBottom: 14 }}>
-            <label>Riesgo propio del producto (café)<FieldInfo text={EUDR_INFO.riesgoProducto} /></label>
+            <label>Trazabilidad de su café<FieldInfo text={EUDR_INFO.riesgoProducto} /></label>
             <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 6px" }}>
-              Marque las situaciones que apliquen. Cada una diluye el origen o rompe la trazabilidad — el nivel se calcula solo.
+              Marque lo que <b>sí</b> se cumple en su finca. Cada casilla marcada protege el origen de su café — el nivel de
+              riesgo se calcula solo con lo que quede sin marcar.
             </p>
             <div style={{ display: "grid", gap: 8 }}>
-              {PRODUCT_RISK_QUESTIONS.map(([key, label]) => (
-                <label key={key} style={{ display: "inline-flex", gap: 8, fontSize: 13, alignItems: "flex-start" }}>
-                  <input type="checkbox" checked={eudr.eudrProductRiskFactors.includes(key)} onChange={(e) => toggleProductFactor(key, e.target.checked)} style={{ width: 16, flex: "none", marginTop: 2 }} />
+              {PRODUCT_RISK_AFFIRMATIONS.map(([key, label]) => (
+                <label key={key} className={styles.checkRow}>
+                  <input
+                    type="checkbox"
+                    checked={!eudr.eudrProductRiskFactors.includes(key)}
+                    onChange={(e) => toggleProductAffirmation(key, e.target.checked)}
+                  />
                   <span>{label}</span>
                 </label>
               ))}
@@ -1201,38 +1294,44 @@ function FincaModalBody({
         </div>
       </div>
 
-      {/* Floating save: always visible bottom-right, a diskette that expands to
-          its label on hover/focus. */}
-      <button className={styles.fab} onClick={() => save()} disabled={saving} aria-label="Guardar finca">
-        <span className={styles.fabIcon} aria-hidden>💾</span>
-        <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
-      </button>
-
-      {/* Floating "Ayuda": sends a help request to CTC (only for a saved finca). */}
-      {finca && (
-        <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
-          <span className={styles.fabIcon} aria-hidden>💬</span>
-          <span className={styles.fabLabel}>Ayuda</span>
-        </button>
-      )}
-      {finca && helpOpen && (
-        <div className={styles.helpBox}>
-          <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta finca?</p>
-          <textarea
-            value={helpText}
-            onChange={(e) => setHelpText(e.target.value)}
-            rows={3}
-            placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
-            autoFocus
-          />
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
-              {helpSending ? "Enviando…" : "Enviar a CTC"}
-            </button>
-            <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
+      {/* La botonera, PEGADA AL PIE DEL POP-UP (2026-08-20).
+          Iba `position:fixed` en la esquina del VIEWPORT: flotaba por encima
+          del propio formulario y le comía la última fila —el mismo defecto que
+          en la Ficha, donde tapaba «Completar … y continuar»—. Como `.modal`
+          desplaza por dentro (`overflow:auto`), un `position:sticky` la deja
+          siempre a la vista SIN salirse del pop-up y, al ocupar su sitio en el
+          flujo, ya no hay nada debajo que tapar. Apiladas en vertical contra la
+          derecha, que es la regla de la casa. */}
+      <div className={styles.fabDock}>
+        {finca && helpOpen && (
+          <div className={styles.helpBox}>
+            <p style={{ fontWeight: 600, fontSize: 13, margin: "0 0 6px" }}>¿En qué necesita ayuda con esta finca?</p>
+            <textarea
+              value={helpText}
+              onChange={(e) => setHelpText(e.target.value)}
+              rows={3}
+              placeholder="Describa su duda o problema. CTC lo verá y le responderá en 'Retroalimentación y ayuda'."
+              autoFocus
+            />
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button className="btn btn-sm btn-solid" onClick={sendHelp} disabled={!helpText.trim() || helpSending}>
+                {helpSending ? "Enviando…" : "Enviar a CTC"}
+              </button>
+              <button className="btn btn-sm" onClick={() => setHelpOpen(false)}>Cancelar</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        {finca && (
+          <button className={styles.fabHelp} onClick={() => setHelpOpen((v) => !v)} aria-label="Pedir ayuda a CTC">
+            <span className={styles.fabIcon} aria-hidden>💬</span>
+            <span className={styles.fabLabel}>Ayuda</span>
+          </button>
+        )}
+        <button className={styles.fab} onClick={() => save()} disabled={saving} aria-label="Guardar finca">
+          <span className={styles.fabIcon} aria-hidden>💾</span>
+          <span className={styles.fabLabel}>{saving ? "Guardando…" : "Guardar Finca"}</span>
+        </button>
+      </div>
 
       {flash && (
         <div className={styles.flash} role="status" aria-live="polite">

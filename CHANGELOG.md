@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.15] — 2026-08-20 (commit pendiente)
+## [V5.15] — 2026-08-20 (commit c64beb6)
 
 - **Cambiado**: el **Estándar CTC de Almacenamiento de Pergamino es bilingüe en TODAS las
   superficies** (owner: «en ambos idiomas, y en los formularios de KR sobre todo en español»). La

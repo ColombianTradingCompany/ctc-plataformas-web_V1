@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.13] — 2026-08-20 (commit pendiente)
+
+- **Corregido**: el «Volver a CTC Web Platform» de `/recuperar-acceso?puerta=panel` aterrizaba en la
+  **portada de CTC Home**, no en `/login`. `hrefPuerta()` recortaba la base de la superficie del
+  camino —correcto en un subdominio, que ya la sirve y a quien el proxy se la vuelve a anteponer—
+  pero el login maestro **no tiene subdominio propio**: recortarle `/login` de `/login` dejaba la URL
+  desnuda. Ahora la rama se elige por si la ruta tiene subdominio, no por el camino. Detectado en la
+  verificación en vivo de la V5.12.
+- **Docs**: `qa-recuperacion-check` sube a **154** comprobaciones con la que faltaba, y que es la que
+  de verdad importa: **simula la reescritura de `proxy.ts`** sobre cada URL de producción y exige que
+  el resultado sea exactamente el camino de la puerta. La comprobación vieja —absoluta y de
+  `ctcexport.com`— la pasaba el enlace roto sin despeinarse. Probada revirtiendo el arreglo: canta
+  ese caso y solo ese.
+
+---
+
 ## [V5.12] — 2026-08-20 (commit 0bfc6a1)
 
 - **Hito**: **«Recuperar acceso» existe**. Hasta hoy la red tenía **siete puertas de entrada y cero

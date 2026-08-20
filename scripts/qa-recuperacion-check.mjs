@@ -38,6 +38,7 @@ import {
   MINUTOS_DEL_VALE,
 } from "../src/lib/auth/veredicto.ts";
 import { PUERTAS, esPuerta, puertaDe, hrefPuerta, hrefRecuperar, RUTA_RECUPERAR } from "../src/lib/auth/puertas.ts";
+import { SUBDOMAIN_ROUTES } from "../src/lib/red/subdominios.ts";
 
 let ok = 0;
 const fallos = [];
@@ -160,6 +161,26 @@ for (const [id, p] of Object.entries(PUERTAS)) {
   check(`«${id}»: en prod el volver es absoluto y de ctcexport.com`, /^https:\/\/[a-z0-9.-]+\.ctcexport\.com/.test(hrefPuerta(id, true)));
   check(`«${id}»: el enlace de recuperación apunta a la superficie compartida`, hrefRecuperar(id).startsWith(RUTA_RECUPERAR + "?"));
 }
+// La comprobación que de verdad importa, y que faltaba en la V5.12: no basta
+// con que la URL de producción sea absoluta y de ctcexport.com — tiene que
+// SERVIR la pantalla de la puerta. Así que se simula lo que hace `proxy.ts`
+// (antepone la base del subdominio a cualquier camino que no la lleve ya) y se
+// exige que el resultado sea exactamente `camino`.
+//
+// Sin esto, `panel` pasaba: su href era `https://www.ctcexport.com` —absoluto,
+// del dominio correcto— y aterrizaba en la portada de CTC Home en vez de en
+// `/login`. Detectado en la verificación en vivo, no por el guardián.
+for (const [id, p] of Object.entries(PUERTAS)) {
+  const url = new URL(hrefPuerta(id, true));
+  const sub = url.hostname.split(".")[0];
+  const base = SUBDOMAIN_ROUTES[sub];
+  const pedido = url.pathname;
+  const servido = !base || pedido === base || pedido.startsWith(base + "/")
+    ? pedido
+    : `${base}${pedido === "/" ? "" : pedido}`;
+  check(`«${id}»: la URL de producción SIRVE su puerta (${servido} === ${p.camino})`, servido === p.camino);
+}
+
 check("los cinco nodos de socio tienen puerta", ["centro-calidad", "agente-carga", "agente-nacionalizacion", "master-roaster", "estudio-contenido"].every((s) => esPuerta(`socios-${s}`)));
 check("Herramientas apunta a su pantalla de acceso, no a la portada", PUERTAS.herramientas.camino === "/herramientas/acceso");
 check("Cherry Picked apunta a la TIENDA, que es donde está su login", PUERTAS["cherry-picked"].ruta === "/cherry-picked-green");

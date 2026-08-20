@@ -15,7 +15,7 @@
 // origen de la superficie + lo que sobra del camino (gotcha 12: el proxy
 // antepone la base a cualquier ruta que no la lleve). El guardián lo verifica.
 
-import { origenDeSuperficie } from "@/lib/red/subdominios";
+import { ROOT_DOMAIN, ROUTE_SUBDOMAIN, WWW_ORIGIN } from "@/lib/red/subdominios";
 
 export type PuertaId =
   | "kaffetal-regal"
@@ -109,11 +109,20 @@ export function puertaDe(v: unknown): PuertaId {
  * En DESARROLLO no hay subdominios: el camino relativo ya sirve. En PRODUCCIÓN
  * cada superficie tiene el suyo y hay que dar la URL absoluta, porque quien
  * recupera puede haber abierto el enlace del correo en cualquier host de la red.
+ *
+ * ⚠️ Las DOS ramas existen, y confundirlas fue un fallo real (visto en la
+ * verificación en vivo de la V5.12): en un subdominio hay que RECORTAR la base
+ * —el host ya la sirve, y el proxy se la vuelve a anteponer— pero en la casa
+ * matriz NO hay base que recortar. Recortar «/login» de `/login` dejaba el
+ * enlace del login maestro apuntando a la portada de CTC Home. La regla que las
+ * separa no es el camino: es si esa ruta tiene subdominio propio.
  */
 export function hrefPuerta(id: PuertaId, produccion: boolean): string {
   const p = PUERTAS[id];
   if (!produccion) return p.camino;
-  return `${origenDeSuperficie(p.ruta)}${p.camino.slice(p.ruta.length)}`;
+  const sub = ROUTE_SUBDOMAIN[p.ruta];
+  if (!sub) return `${WWW_ORIGIN}${p.camino}`;
+  return `https://${sub}.${ROOT_DOMAIN}${p.camino.slice(p.ruta.length)}`;
 }
 
 /** El enlace «¿Olvidaste tu contraseña?» que monta cada puerta. Relativo a

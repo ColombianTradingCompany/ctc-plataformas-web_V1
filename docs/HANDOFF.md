@@ -665,7 +665,16 @@ avisos `anon_security_definer_function_executable` de Supabase.
   en otros dispositivos. Para «olvidé mi contraseña» da igual; para «me robaron la cuenta» haría falta
   tocar las tablas internas de `auth`, que esta casa no toca.
 
-**Guardián** `scripts/qa-recuperacion-check.mjs` (**143** comprobaciones), probado saboteando a
+⚠️ **Y un fallo que la verificación en vivo destapó (V5.13):** el «Volver» del login maestro
+aterrizaba en la **portada de CTC Home** en vez de en `/login`. `hrefPuerta()` recortaba la base del
+camino —lo correcto en un subdominio, que ya la sirve y a quien el proxy se la vuelve a anteponer—
+pero el login maestro no tiene subdominio propio, así que recortarle `/login` de `/login` dejaba la
+URL desnuda. **Lo que no lo cazó fue el guardián**, y por una razón instructiva: comprobaba que la
+URL fuera absoluta y de `ctcexport.com`, y el enlace roto lo era. Ahora **simula la reescritura de
+`proxy.ts`** y exige que el resultado sea exactamente el `camino` de la puerta. La regla general:
+para una URL que un subdominio va a servir, la aserción útil no es cómo se ve, es **qué sirve**.
+
+**Guardián** `scripts/qa-recuperacion-check.mjs` (**154** comprobaciones), probado saboteando a
 propósito el enrutado al `delivery_email` para confirmar que canta. Verificado además en servidor
 real, extremo a extremo: el correo con typo → «no existe»; una cuenta de Google → «entra con Google»;
 una cuenta QA → correo, enlace, contraseña nueva, **login OK con la nueva** y el enlace ya muerto al

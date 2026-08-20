@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.14] — 2026-08-20 (commit pendiente)
+## [V5.14] — 2026-08-20 (commit 7e11014)
 
 - **Hito**: primera tanda de la revisión de **Kaffetal Regal y el OCP que lo administra**, sobre
   retroalimentación del owner con capturas de un teléfono real. Catorce puntos, y tres de los

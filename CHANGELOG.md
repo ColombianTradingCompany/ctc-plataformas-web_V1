@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.8] — 2026-08-20 (commit pendiente)
+## [V5.8] — 2026-08-20 (commit c3ebfbe)
 
 - **Cambiado** (owner, con la referencia en la mano): el taller pasa a **Cover Flow** — la mecánica
   de `RENDER.flow` de **Cool PDF**, transplantada con sus constantes exactas (rotateY 54°, z −170,

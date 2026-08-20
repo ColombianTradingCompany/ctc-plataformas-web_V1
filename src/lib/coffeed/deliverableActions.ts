@@ -105,8 +105,30 @@ async function toGuion(service: Service, payload: Record<string, unknown> | null
   };
 }
 
+/** V5.9 · lo propio de una `noticia`: paneles del payload (no hay draft),
+ *  portada firmada y fuente. Tolerante con payloads viejos o a medias. */
+async function toNoticia(service: Service, payload: Record<string, unknown> | null) {
+  const p = payload ?? {};
+  const crudos = Array.isArray(p.panels) ? (p.panels as { position?: number; role?: string; text?: string }[]) : [];
+  const panels = crudos
+    .map((x, i) => ({ position: x.position ?? i + 1, role: x.role ?? null, text: String(x.text ?? "") }))
+    .filter((x) => x.text);
+  const f = (p.fuente ?? null) as { outlet?: string; titulo?: string; url?: string; publishedAt?: string } | null;
+  const imagenPath = typeof p.imagenPath === "string" ? p.imagenPath : null;
+  return {
+    panels,
+    cover: imagenPath ? await createSignedUrl(service, imagenPath) : null,
+    fuente: f?.url ? { outlet: f.outlet ?? "—", titulo: f.titulo ?? "", url: f.url, publishedAt: f.publishedAt ?? null } : null,
+    aviso:
+      (typeof p.aviso === "string" && p.aviso) || (typeof p.imagenError === "string" && p.imagenError)
+        ? [p.aviso, p.imagenError].filter((x) => typeof x === "string" && x).join(" · ")
+        : null,
+  };
+}
+
 async function toDeliverable(service: Service, r: DeliverableRow): Promise<CoffeedDeliverable> {
   const who = r.profiles;
+  const noticia = r.kind === "noticia" ? await toNoticia(service, r.payload) : null;
   return {
     id: r.id,
     kind: r.kind,
@@ -121,9 +143,14 @@ async function toDeliverable(service: Service, r: DeliverableRow): Promise<Coffe
     reviewedAt: r.reviewed_at,
     reviewNote: r.review_note,
     publishedAt: r.published_at,
-    panels: (r.coffeed_drafts?.coffeed_panels ?? []).slice().sort((a, b) => a.position - b.position),
+    panels: noticia
+      ? noticia.panels
+      : (r.coffeed_drafts?.coffeed_panels ?? []).slice().sort((a, b) => a.position - b.position),
     media: r.kind === "video" || r.kind === "embed" ? await toMedia(service, r.payload) : null,
     guion: r.kind === "guion" ? await toGuion(service, r.payload) : null,
+    cover: noticia?.cover ?? null,
+    fuente: noticia?.fuente ?? null,
+    aviso: noticia?.aviso ?? null,
   };
 }
 

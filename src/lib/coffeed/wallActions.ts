@@ -72,6 +72,22 @@ export async function getCoffeedWall(): Promise<CoffeedWallBundle> {
           };
         }
       }
+      // V5.9 · Redacción: los paneles viven en el payload (no hay draft) y la
+      // portada se firma como todo lo demás.
+      let noticiaPanels: { position: number; role: string | null; text: string }[] = [];
+      let cover: string | null = null;
+      let fuente: { outlet: string; url: string } | null = null;
+      if (r.kind === "noticia" && r.payload) {
+        const p = r.payload;
+        const crudos = Array.isArray(p.panels) ? (p.panels as { position?: number; role?: string; text?: string }[]) : [];
+        noticiaPanels = crudos
+          .map((x, i) => ({ position: x.position ?? i + 1, role: x.role ?? null, text: String(x.text ?? "") }))
+          .filter((x) => x.text);
+        if (typeof p.imagenPath === "string") cover = await createSignedUrl(service, p.imagenPath);
+        const f = p.fuente as { outlet?: string; url?: string } | undefined;
+        if (f?.url) fuente = { outlet: f.outlet ?? "—", url: f.url };
+      }
+
       // RT-Scriptor: la tira de fotogramas. Se firma en lote por entrega —
       // pueden ser treinta rutas y una a una serían treinta viajes por muro.
       let guion: CoffeedGuion | null = null;
@@ -101,9 +117,14 @@ export async function getCoffeedWall(): Promise<CoffeedWallBundle> {
         title: r.title,
         excerpt: r.excerpt,
         publishedAt: r.published_at,
-        panels: (r.coffeed_drafts?.coffeed_panels ?? []).slice().sort((a, b) => a.position - b.position),
+        panels:
+          r.kind === "noticia"
+            ? noticiaPanels
+            : (r.coffeed_drafts?.coffeed_panels ?? []).slice().sort((a, b) => a.position - b.position),
         media,
         guion,
+        cover,
+        fuente,
       };
     })
   );

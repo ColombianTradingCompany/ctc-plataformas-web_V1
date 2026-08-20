@@ -152,9 +152,9 @@ export type CoffeedAnnouncement = {
 //   guion     → RT-Scriptor: la tira de fotogramas de unas escenas + su guion
 //   identidad → Identity Value Creation, aún sin construir
 
-export type CoffeedDeliverableKind = "carrusel" | "video" | "embed" | "guion" | "identidad";
+export type CoffeedDeliverableKind = "carrusel" | "video" | "embed" | "guion" | "identidad" | "noticia";
 export type CoffeedDeliverableState = "entregado" | "aceptado" | "publicado" | "devuelto";
-export type CoffeedStudioApp = "source_wrapper" | "datawave" | "rt_scriptor" | "identity";
+export type CoffeedStudioApp = "source_wrapper" | "datawave" | "rt_scriptor" | "identity" | "redaccion";
 export type CoffeedMediaProvider = "youtube" | "instagram" | "archivo";
 
 export type CoffeedMedia = {
@@ -194,6 +194,13 @@ export type CoffeedDeliverable = {
   reviewedAt: string | null;
   reviewNote: string | null;
   publishedAt: string | null;
+  /** V5.9 · solo `noticia`: la portada firmada, la fuente y el aviso del
+   *  generador (redactor caído, portada sin Gemini…). El aviso VIAJA con la
+   *  entrega a propósito: quien da luz verde tiene que saber si lee un
+   *  capítulo redactado o un borrador determinista. */
+  cover: string | null;
+  fuente: { outlet: string; titulo: string; url: string; publishedAt: string | null } | null;
+  aviso: string | null;
   /** Resuelto solo para `carrusel`. */
   panels: { position: number; role: string | null; text: string }[];
   /** Resuelto para `video` / `embed`. */
@@ -207,6 +214,8 @@ export const COFFEED_APP_LABEL: Record<CoffeedStudioApp, string> = {
   datawave: "Datawave",
   rt_scriptor: "RT-Scriptor",
   identity: "Identity Value Creation",
+  // V5.9: el taller automático del ECP — la noticia elegida se redacta sola.
+  redaccion: "Redacción",
 };
 
 export const COFFEED_KIND_LABEL: Record<CoffeedDeliverableKind, string> = {
@@ -215,6 +224,7 @@ export const COFFEED_KIND_LABEL: Record<CoffeedDeliverableKind, string> = {
   embed: "Incrustado",
   guion: "Guion",
   identidad: "Identidad",
+  noticia: "Noticia",
 };
 
 /** Un ítem publicado, tal y como lo leen KR / Cherry Picked / Directorio. */
@@ -229,6 +239,9 @@ export type CoffeedWallItem = {
   panels: { position: number; role: string | null; text: string }[];
   media: CoffeedMedia | null;
   guion: CoffeedGuion | null;
+  /** V5.9 · solo `noticia`: portada firmada + de dónde salió. */
+  cover: string | null;
+  fuente: { outlet: string; url: string } | null;
 };
 
 /** El muro público: entregas publicadas + anuncios (2026-07-30: los anuncios
@@ -319,6 +332,9 @@ export type CoffeedStudioBundle = {
  *  la cola de entregas, el muro, la identidad de marca y el canon en espejo. */
 export type CoffeedEcpBundle = {
   deliverables: CoffeedDeliverable[];
+  /** V5.9 · Redacción: cuántas noticias esperan en la bandeja (para el conteo
+   *  del rail; la vista carga su detalle sola al abrirse). */
+  redaccionNuevas: number;
   announcements: CoffeedAnnouncement[];
   /** Canon en SOLO LECTURA: quien da luz verde necesita ver qué hilo continúa
    *  una pieza, pero el canon se escribe en el taller. */

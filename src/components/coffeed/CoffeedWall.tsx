@@ -156,6 +156,8 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
         const stamp =
           c.kind === "carrusel"
             ? `${labels.chapter} ${c.chapterNo ?? ""}`.trim()
+            : c.kind === "noticia"
+              ? "Noticia"
             : c.kind === "video"
               ? labels.video
               : c.kind === "guion"
@@ -164,6 +166,8 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
         const meta =
           c.kind === "carrusel"
             ? `${c.panels.length} ${labels.panels}`
+            : c.kind === "noticia"
+              ? (c.fuente?.outlet ?? data.brand.companyName)
             : c.kind === "guion"
               ? `${c.guion?.frames.length ?? 0} · ${data.brand.companyName}`
               : (c.media?.provider === "youtube" ? "YouTube" : c.media?.provider === "instagram" ? "Instagram" : data.brand.companyName);
@@ -181,7 +185,18 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
               {c.title}
             </h3>
 
-            {c.kind === "carrusel" && (
+            {/* V5.9 · la noticia: portada arriba, la MISMA tira de paneles del
+                carrusel debajo, y la fuente citada al pie — la trazabilidad es
+                la premisa de Coffeed también aquí. */}
+            {c.kind === "noticia" && c.cover && (
+              // eslint-disable-next-line @next/next/no-img-element -- URL firmada con TTL 1h, mismo trato que los fotogramas del guion
+              <img
+                src={c.cover}
+                alt=""
+                style={{ width: "100%", display: "block", borderRadius: 6, marginBottom: 10, aspectRatio: "4 / 5", objectFit: "cover" }}
+              />
+            )}
+            {(c.kind === "carrusel" || c.kind === "noticia") && (
               <div className={styles.strip}>
                 {c.panels.map((p, i) => (
                   <div key={p.position} className={[styles.panel, i === 0 ? styles.panelFirst : "", i === c.panels.length - 1 ? styles.panelLast : ""].join(" ")}>
@@ -200,6 +215,15 @@ export function CoffeedWall({ labels = ES, accent }: { labels?: CoffeedWallLabel
             )}
 
             {(c.kind === "video" || c.kind === "embed") && c.media && <WallMedia media={c.media} title={c.title} />}
+
+            {c.kind === "noticia" && c.fuente && (
+              <p className={styles.eyebrow} style={{ marginTop: 8 }}>
+                Fuente:{" "}
+                <a href={c.fuente.url} target="_blank" rel="noopener noreferrer">
+                  {c.fuente.outlet} ↗
+                </a>
+              </p>
+            )}
 
             {/* RT-Scriptor: la tira de fotogramas se lee como se leería un
                 tablero — de izquierda a derecha, con el pie de cada cuadro. */}

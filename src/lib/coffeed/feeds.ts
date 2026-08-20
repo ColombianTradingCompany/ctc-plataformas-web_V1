@@ -135,3 +135,27 @@ export function dentroDeVentana(items: FeedItem[], desde: Date, hasta: Date): Fe
     return t >= d && t <= h;
   });
 }
+
+// ── El filtro de café de los medios generalistas (V5.9) ─────────────────────
+// El Tiempo publica de todo; sin esto, la bandeja de Redacción sería la portada
+// de un diario. PURO como el resto del módulo: lo prueba el guardián con casos
+// reales, y la ingesta (`redaccion.ts`) solo lo llama.
+
+/** Minúsculas y sin tildes: «Café» y «cafe» son la misma palabra para el
+ *  filtro. NFD separa la tilde en un combinante y el rango lo borra. */
+export function normalizaParaFiltro(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/** ¿Pasa el titular el filtro del medio? Sin keywords (null/[]) pasa todo —
+ *  es el caso de los medios 100% cafeteros. La comparación es por SUBCADENA
+ *  normalizada a propósito: «cafet» casa «cafetero», «cafetera» y «El Cafetal»
+ *  — mejor una pieza de más que un titular de la FNC perdido por una tilde. */
+export function pasaFiltroCafe(titulo: string, keywords: readonly string[] | null | undefined): boolean {
+  if (!keywords || keywords.length === 0) return true;
+  const t = normalizaParaFiltro(titulo);
+  return keywords.some((k) => t.includes(normalizaParaFiltro(k)));
+}

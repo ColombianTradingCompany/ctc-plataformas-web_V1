@@ -52,7 +52,7 @@ export async function getEcpConsole(): Promise<CoffeedEcpBundle | null> {
   if (!who) return null;
   const service = coffeedServiceClient();
 
-  const [deliverables, { data: annRows }, { data: threadRows }, brand] = await Promise.all([
+  const [deliverables, { data: annRows }, { data: threadRows }, brand, { count: redaccionNuevas }] = await Promise.all([
     listDeliverables(),
     service
       .from("coffeed_announcements")
@@ -62,10 +62,14 @@ export async function getEcpConsole(): Promise<CoffeedEcpBundle | null> {
       .limit(50),
     service.from("coffeed_threads").select("id, name, state, opened_in, last_seen_in, summary").order("updated_at", { ascending: false }),
     loadBrand(service),
+    // V5.9 · el conteo del rail de Redacción. Solo el número: el detalle lo
+    // carga la vista al abrirse, para no engordar el bundle de la consola.
+    service.from("coffeed_noticias").select("id", { count: "exact", head: true }).eq("estado", "nueva"),
   ]);
 
   return {
     deliverables,
+    redaccionNuevas: redaccionNuevas ?? 0,
     announcements: (
       (annRows ?? []) as { id: string; title: string; body: string | null; area: string | null; pinned: boolean; published_at: string }[]
     ).map((a): CoffeedAnnouncement => ({ id: a.id, title: a.title, body: a.body, area: a.area, pinned: a.pinned, publishedAt: a.published_at })),

@@ -32,11 +32,12 @@ import {
   type CoffeedResult,
 } from "@/lib/coffeed/types";
 import { CanonView } from "./CanonView";
+import { RedaccionView } from "./RedaccionView";
 import { CoffeedBrandPanel } from "./CoffeedBrandPanel";
 import { Ring } from "./Ring";
 import styles from "./coffeedConsole.module.css";
 
-type View = "entregas" | "muro" | "marca" | "canon";
+type View = "entregas" | "redaccion" | "muro" | "marca" | "canon";
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";
@@ -134,6 +135,7 @@ export function CoffeedConsole() {
 
   const counts: Record<View, number | string> = {
     entregas: cola.length + listas.length,
+    redaccion: bundle.redaccionNuevas,
     muro: publicadas.length + announcements.length,
     marca: brand.palette.length,
     canon: threads.filter((t) => t.state === "open").length,
@@ -154,6 +156,7 @@ export function CoffeedConsole() {
           Coffeed
         </div>
         {navItem("entregas", "Entregas")}
+        {navItem("redaccion", "Redacción")}
         {navItem("muro", "Muro")}
         <hr className={styles.navRule} />
         {navItem("marca", "Identidad de marca")}
@@ -167,6 +170,7 @@ export function CoffeedConsole() {
 
       <main>
         {view === "entregas" && <EntregasView cola={cola} listas={listas} busy={busy} run={run} />}
+        {view === "redaccion" && <RedaccionView onEntregada={refresh} />}
         {view === "muro" && <MuroView publicadas={publicadas} announcements={announcements} busy={busy} run={run} />}
         {view === "marca" && <CoffeedBrandPanel brand={brand} busy={busy} run={run} refresh={refresh} showToast={showToast} />}
         {view === "canon" && <CanonView threads={threads} mirror />}
@@ -188,8 +192,27 @@ export function CoffeedConsole() {
 
 /** La previsualización cambia con el tipo: el sobre es uno, el contenido no. */
 function DeliverablePreview({ d }: { d: CoffeedDeliverable }) {
-  if (d.kind === "carrusel") {
+  if (d.kind === "carrusel" || d.kind === "noticia") {
     return (
+      <div>
+        {/* V5.9 · lo propio de la noticia, ANTES de la tira compartida: el
+            aviso del generador (¿capítulo redactado o borrador determinista?),
+            la portada y la fuente. Quien da luz verde lo ve todo aquí. */}
+        {d.kind === "noticia" && d.aviso && <p className={styles.postExcerpt}>⚠ {d.aviso}</p>}
+        {d.kind === "noticia" && d.cover && (
+          // eslint-disable-next-line @next/next/no-img-element -- URL firmada con TTL 1h: next/image no puede optimizarla y cachearía un enlace muerto
+          <img
+            src={d.cover}
+            alt=""
+            style={{ width: 190, aspectRatio: "4 / 5", objectFit: "cover", borderRadius: 6, border: "1px solid var(--line)", display: "block", marginBottom: 8 }}
+          />
+        )}
+        {d.kind === "noticia" && d.fuente && (
+          <p className={styles.eyebrow} style={{ marginBottom: 8 }}>
+            Fuente: <a href={d.fuente.url} target="_blank" rel="noopener noreferrer">{d.fuente.outlet} ↗</a>
+            {d.fuente.publishedAt ? ` · ${fmtDate(d.fuente.publishedAt)}` : ""}
+          </p>
+        )}
       <div className={styles.previewStrip}>
         {d.panels.map((p, i) => (
           <div key={p.position} className={styles.previewPanel}>
@@ -200,6 +223,7 @@ function DeliverablePreview({ d }: { d: CoffeedDeliverable }) {
             <p>{p.text}</p>
           </div>
         ))}
+      </div>
       </div>
     );
   }

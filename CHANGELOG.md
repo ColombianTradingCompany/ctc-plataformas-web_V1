@@ -19,6 +19,39 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.9] — 2026-08-20 (commit pendiente)
+
+- **Hito** (A12, arranca el bloque Coffeed de la revisión V5.0): nace **Redacción** — el módulo del
+  ECP **entre Entregas y Muro**, donde el owner lo señaló. Cierra el pendiente que el spec dejó
+  escrito («falta el barrido automático»): el muro deja de depender de posts puestos a mano.
+- **Añadido**: la **bandeja de noticias** — los feeds de la lista blanca (los mismos que alimentan
+  el ticker de la portada) entran solos, por tandas y con dedupe por URL; al abrir el módulo, si el
+  último refresco pasa de 6 h, se refresca solo. Ventana de 14 días; solo piezas con fecha.
+- **Datos**: **cuatro medios colombianos** (owner): El Tiempo · Economía, El Espectador, La
+  República · Globoeconomía y Agronegocios — feeds VERIFICADOS en vivo antes de insertarlos, y con
+  **filtro de café** (`coffeed_sources.keywords`, comparación sin tildes): sin él, la bandeja sería
+  la portada de un diario. Perfect Daily Grind ganó el feed que le faltaba. El ticker hereda los
+  medios nuevos por leer la misma lista.
+- **Añadido**: elegir una noticia dispara el **generador**: Claude (MODEL_WRITE, libro de consumo)
+  escribe el capítulo **elaborado** — 7 paneles con papeles (apertura → contexto → desarrollo →
+  implicación → mirada CTC → cierre), cada uno 2-4 frases COMPLETAS que se entienden solas: la
+  respuesta directa al «too simple and almost not understandable» del owner — y **Gemini** pinta la
+  portada (4:5, sin texto). La entrega nace **«entregado»** en la cola de Entregas: producir es del
+  taller (aunque el taller sea automático); la luz verde y el publicar siguen siendo de la consola.
+- **Añadido**: `coffeed.redaccion.post_creado` → `integration_events` (ventas_marketing) — el
+  gancho para el escenario de Make que el owner cuelgue (compartir a Instagram, avisos…).
+- **Añadido**: el sobre polimórfico aprende **`kind: noticia`** de punta a punta — la cola de
+  Entregas la previsualiza con su portada, su fuente y el AVISO del generador (si salió el
+  borrador determinista, quien da luz verde lo sabe), y el muro la pinta con la tira de paneles
+  del carrusel + la fuente citada al pie: la trazabilidad es la premisa de Coffeed también aquí.
+- **Cambiado**: la bandeja se hojea en **Cover Flow** (las constantes de Cool PDF, como en el
+  taller de Herramientas); las portadas son papel de exportación — medio, titular en serifa,
+  fecha. Sin IA ni Gemini el módulo sigue operable: borrador determinista y entrega sin portada,
+  ambos avisando.
+- **Añadido**: guardián `qa-redaccion-check.mjs` (**31**) — el filtro de café EJECUTADO con casos
+  reales, el dedupe upsert-ignore, el contrato del `saltar` por id (un medio caído encabezaría
+  cada tanda para siempre), el orden Entregas → Redacción → Muro, y el fallback sin claves.
+
 ## [V5.8] — 2026-08-20 (commit c3ebfbe)
 
 - **Cambiado** (owner, con la referencia en la mano): el taller pasa a **Cover Flow** — la mecánica

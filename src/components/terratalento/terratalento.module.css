@@ -212,6 +212,18 @@
   color: var(--muted, #6b6459);
 }
 
+/* «¿Olvidaste tu contraseña?» (V5.12). Va en su propia línea, encima de
+   «← Volver»: es la salida de quien no puede entrar, y perderla dentro de la
+   fila de acciones sería esconderla justo de quien la necesita. */
+.olvide {
+  display: block;
+  margin-top: 12px;
+  font-size: 12.5px;
+  text-decoration: underline;
+  color: var(--muted, #6b6459);
+}
+.olvide:hover { color: var(--ink, #241f1a); }
+
 /* Acceso con Google (V2, 2026-08-02) — mismo lenguaje visual que el modal de
    contacto de CTC Home: divisor con "o" y botón de ancho completo. */
 .divisor {

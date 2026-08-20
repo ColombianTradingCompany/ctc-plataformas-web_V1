@@ -5,6 +5,7 @@ import { useState } from "react";
 import { LegalFooter } from "@/components/LegalFooter";
 import { createClient } from "@/lib/supabase/client";
 import { PasswordField } from "@/components/PasswordField";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 // Ingreso PROPIO del Directorio del Café (ya no depende de Kaffetal Regal ni de
 // Cherry Picked). Es la misma Supabase Auth del ecosistema, así que entrar con
@@ -150,6 +151,13 @@ export function Login({
             </button>
 
             <p className="login__pie">
+              {/* Solo al ENTRAR: en «Crear cuenta» no hay contraseña que olvidar. */}
+              {modo === "entrar" ? (
+                <>
+                  <a href={hrefRecuperar("directorio")}>¿Olvidaste tu contraseña?</a>
+                  {" · "}
+                </>
+              ) : null}
               <a href="#" onClick={(e) => { e.preventDefault(); onVolver(); }}>Volver al inicio</a>
             </p>
           </div>

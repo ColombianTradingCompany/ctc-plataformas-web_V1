@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { PartnerSlug } from "@/lib/partners/partners";
 import styles from "../socios.module.css";
 import { PasswordField } from "@/components/PasswordField";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 export function PartnerLoginForm({ slug, name }: { slug: PartnerSlug; name: string }) {
   const router = useRouter();
@@ -51,6 +52,12 @@ export function PartnerLoginForm({ slug, name }: { slug: PartnerSlug; name: stri
         </button>
       </form>
       <p className={styles.ctaNote} style={{ marginTop: 16 }}>
+        {/* El vale viaja al `delivery_email` del nodo, no al usuario de acceso:
+            varias credenciales de socio son etiquetas @ctcexport.com sin buzón
+            (ver lib/auth/veredicto.ts · destinoDe). */}
+        <Link href={hrefRecuperar(`socios-${slug}`)}>¿Olvidaste tu contraseña?</Link>
+      </p>
+      <p className={styles.ctaNote} style={{ marginTop: 8 }}>
         <Link href={`/socios/${slug}`}>← Volver a la página del nodo</Link>
       </p>
     </div>

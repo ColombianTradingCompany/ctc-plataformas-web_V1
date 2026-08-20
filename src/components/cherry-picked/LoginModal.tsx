@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { useLang, type Lang } from "./i18n";
 import styles from "./LoginModal.module.css";
 import { PasswordField } from "@/components/PasswordField";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 const EN = {
   aria: "Sign in to Cherry Picked",
@@ -29,6 +31,7 @@ const EN = {
   submitSignin: "Sign in",
   or: "or",
   google: "Continue with Google",
+  forgot: "Forgotten your password?",
   noAccount: "Don't have an account yet? ",
   noAccountCta: "Create one for free",
   hasAccount: "Already have an account? ",
@@ -58,6 +61,7 @@ const T: Record<Lang, typeof EN> = {
     submitSignin: "Entrar",
     or: "o",
     google: "Continuar con Google",
+    forgot: "¿Olvidaste tu contraseña?",
     noAccount: "¿Aún no tienes cuenta? ",
     noAccountCta: "Crea una gratis",
     hasAccount: "¿Ya tienes cuenta? ",
@@ -84,6 +88,7 @@ const T: Record<Lang, typeof EN> = {
     submitSignin: "Anmelden",
     or: "oder",
     google: "Weiter mit Google",
+    forgot: "Passwort vergessen?",
     noAccount: "Noch kein Konto? ",
     noAccountCta: "Erstelle eins kostenlos",
     hasAccount: "Schon ein Konto? ",
@@ -211,6 +216,15 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       <button className="btn btn-solid" style={{ width: "100%", marginTop: 8, padding: 12 }} onClick={submit} disabled={loading}>
         {loading ? t.loading : mode === "signup" ? t.submitSignup : t.submitSignin}
       </button>
+
+      {/* Solo al ENTRAR: en «Crear cuenta» no hay contraseña que olvidar todavía. */}
+      {mode === "signin" && (
+        <p className={styles.alt}>
+          <Link className={styles.link} href={hrefRecuperar("cherry-picked")}>
+            {t.forgot}
+          </Link>
+        </p>
+      )}
 
       <div className={styles.divider}><span>{t.or}</span></div>
 

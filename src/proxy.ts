@@ -26,6 +26,26 @@ const AUTH_COOKIE_HINT = /^sb-.*-auth-token/;
 // misma mecánica, para que el BCP tampoco caduque a la hora.
 const PANEL_COOKIE_HINT = /^ctc-panel-auth/;
 
+// ── Rutas que se sirven desde la RAÍZ en TODOS los hosts (2026-08-20, V5.12) ─
+// `/recuperar-acceso` es UNA pantalla para las once puertas de la red. Sin esta
+// lista, el subdominio le antepondría su base —`kaffetal-regal.ctcexport.com/
+// recuperar-acceso` se reescribiría a `/kaffetal-regal/recuperar-acceso`— y
+// daría 404 justo en la pantalla a la que llega alguien que ya no puede entrar.
+// Las alternativas eran peores: once copias de la misma página, o sacarla del
+// `matcher` como `/tools` y `/docs`, que además la dejaría sin la renovación de
+// sesión que este proxy hace (aquí da igual, pero la excepción se olvidaría en
+// la siguiente ruta compartida que sí la necesite).
+//
+// La comparación es por FRONTERA DE SEGMENTO, no por prefijo de cadena: con
+// `startsWith` puro, un futuro `/recuperar-accesos` heredaría la excepción sin
+// que nadie lo decidiera (misma lección que las exclusiones del matcher,
+// auditoría 2026-08-13 ESTR-3).
+const RAIZ_COMPARTIDA = ["/recuperar-acceso"];
+
+function esRaizCompartida(path: string): boolean {
+  return RAIZ_COMPARTIDA.some((r) => path === r || path.startsWith(r + "/"));
+}
+
 export async function proxy(request: NextRequest) {
   // Read the Host header, not request.nextUrl.hostname: the dev server
   // normalizes nextUrl to "localhost" regardless of the incoming Host
@@ -45,7 +65,7 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const alreadyInBase = base ? path === base || path.startsWith(base + "/") : false;
   const rewriteUrl =
-    base && !alreadyInBase
+    base && !alreadyInBase && !esRaizCompartida(path)
       ? (() => {
           const url = request.nextUrl.clone();
           url.pathname = `${base}${request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname}`;

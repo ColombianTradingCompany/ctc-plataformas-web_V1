@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "@/components/panel/auth.module.css";
 import { PasswordField } from "@/components/PasswordField";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 export default function PanelLoginPage() {
   const router = useRouter();
@@ -49,6 +51,13 @@ export default function PanelLoginPage() {
             {loading ? "Verificando…" : "Continuar"}
           </button>
         </form>
+        {/* Recuperar aquí NO salta el segundo factor: cambia la contraseña, y
+            el código de 6 dígitos sigue pidiéndose al entrar. Para un usuario
+            @ctcexport.com sin buzón, el enlace va a su `delivery_email` —
+            el mismo campo al que ya viaja su OTP. */}
+        <p style={{ fontSize: 13, marginTop: 18, marginBottom: 0, textAlign: "center" }}>
+          <Link href={hrefRecuperar("panel")}>¿Olvidaste tu contraseña?</Link>
+        </p>
       </div>
     </div>
   );

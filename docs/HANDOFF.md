@@ -583,6 +583,95 @@ previsto y está avisado dentro de `consoles.ts` y de su propia `page.tsx`.
 - El radio real de la mudanza, re-medido antes de empezar, está en el §3.2 del plan — los números originales
   se habían quedado cortos, y el dato que faltaba era el útil: **47 rutas distintas en 66 archivos**.
 
+## «Recuperar acceso» — la puerta de servicio de toda la red (2026-08-20, V5.12)
+
+Hasta esta versión la red tenía **siete puertas de entrada y ninguna forma de volver**: `grep
+resetPasswordForEmail` no devolvía una sola línea en todo el repo. Quien olvidaba su contraseña
+perdía la cuenta, salvo que un operador del BCP le emitiera una temporal a mano — y eso solo existía
+para `panel_users` y `partner_accounts`. Un productor de Kaffetal Regal, un comprador de Cherry
+Picked, un experto del Directorio o un recolector de Terratalento no tenían nada.
+
+**Una sola superficie, `/recuperar-acceso`, para las ONCE puertas** (5 plataformas públicas + 5 nodos
+de socio + el login maestro). Se sirve **desde la raíz en todos los hosts**: `src/proxy.ts` estrena
+`RAIZ_COMPARTIDA`, la lista de rutas a las que el subdominio NO le antepone su base. Sin ella,
+`kaffetal-regal.ctcexport.com/recuperar-acceso` se reescribiría a `/kaffetal-regal/recuperar-acceso`
+y daría 404 justo en la pantalla a la que llega quien ya no puede entrar. Es la tercera vía después
+de copiar la página once veces (no) y de sacarla del `matcher` como `/tools` (la dejaría sin la
+renovación de sesión que el proxy hace; aquí da igual, pero la excepción se olvidaría en la
+siguiente ruta compartida que sí la necesite).
+
+**La decisión de producto (owner, 2026-08-20): la pantalla DICE LA VERDAD.** Si el correo no existe
+se dice; si esa cuenta entra con Google se dice. Es una excepción deliberada a la regla de la casa de
+no confirmar qué cuentas existen —la que está escrita en `AccesoTaller.tsx`, en el login de socios y
+en el maestro— y el motivo es el usuario real de esta red: un caficultor que teclea mal su correo
+tiene que enterarse en dos segundos. La base ya traía el caso: **`ete0109@yahoo.com` (sin confirmar)
+conviviendo con `etel0109@yahoo.com`**. Con el mensaje genérico de «si existe, te llegará», ese error
+es invisible para siempre. El precio aceptado: se puede sondear si un correo está registrado. Cada
+veredicto termina en una SALIDA —crear cuenta, botón de Google, escribir a CTC—, nunca en un callejón.
+
+⚠️ **POR QUÉ NO SE USA `supabase.auth.resetPasswordForEmail()`.** No es gusto por lo propio; el suyo
+no sabe tres cosas que esta red necesita, y la primera es una trampa que deja gente fuera **para
+siempre sin que nada falle de forma visible**:
+
+1. **A dónde escribir.** Tres usuarios de la casa (`gvb@`, `gvg@`, `gvg-estudiocontenido@ctcexport.com`)
+   son **etiquetas de acceso SIN BUZÓN**. Su enlace tiene que ir al `delivery_email` de
+   `panel_users`/`partner_accounts` — el mismo campo al que ya viaja su OTP. GoTrue solo sabe escribir
+   al correo de acceso.
+2. **Que hay cuentas sin contraseña.** **8 de las 29** entran solo con Google. Un enlace de
+   «restablecer» les ESTRENA una contraseña que nunca pidieron; lo correcto es señalarles su puerta.
+3. **Responder si la cuenta existe.** Su flujo responde igual en los dos casos por diseño.
+
+Y una cuarta, práctica: su enlace obliga a mantener una allowlist de redirecciones con 19 subdominios
+dentro. Este vale no necesita ninguna — el enlace se firma con el host de la propia petición.
+
+**La mecánica**, repartida en tres módulos con una frontera deliberada:
+
+- `src/lib/auth/veredicto.ts` — **PURO** (ni Supabase ni red): entran hechos, sale un veredicto.
+  Mismo motivo que `navActivo.ts` o `etapaComprador.ts` — el flujo manda correos de verdad y cambia
+  contraseñas de verdad, así que la política tiene que ser comprobable sin levantarlo. También vive
+  aquí `validarContrasena`, **compartida con `/cambiar-contrasena`** en vez de duplicada.
+- `src/lib/auth/puertas.ts` — **PURO**, el registro de las once puertas. Lo que viaja en la URL es
+  `?puerta=<id>`, un IDENTIFICADOR saneado contra esta lista, **jamás un destino**: aceptar un
+  `?volver=<url>` habría sido un redirect abierto (lección de Herramientas, 2026-08-19) y encima en
+  la pantalla donde alguien recupera su contraseña. Invariante que sostiene `hrefPuerta`: `camino`
+  siempre empieza por `ruta`.
+- `src/lib/auth/recuperacion.ts` — lo que toca el mundo. El vale: 32 bytes de `randomBytes`, guardado
+  **hasheado** (sha256), un solo uso, 60 minutos, tope de 3 por cuenta cada 15 minutos, y pedir uno
+  nuevo quema los anteriores. **Un envío fallido ANULA el vale** en vez de reportar éxito — misma
+  lección que el OTP del panel (2026-08-13): dejar la fila viva quemaba un intento por un fallo que no
+  era del usuario.
+
+**Base**: `password_reset_tokens` (RLS activa, **cero políticas** — patrón service-role de la casa) y
+`buscar_identidad_para_recuperacion()`, `security definer`, que resuelve el correo contra `auth.users`
+con un índice en vez del `admin.listUsers()` que se traería la tabla entera. **Con su `revoke`
+explícito a `public`/`anon`/`authenticated`**: Postgres concede EXECUTE a PUBLIC por defecto (el
+gotcha que el auditor ya dejó anotado), y sin él cualquiera con la clave anon podría preguntarle a la
+base por el estado de credencial de cualquier correo. Comprobado: la función **no** aparece en los
+avisos `anon_security_definer_function_executable` de Supabase.
+
+**Detalles que no son adorno:**
+
+- **Abrir el enlace NO quema el vale**; lo quema *guardar*. Hay antivirus corporativos y
+  previsualizadores de correo que «visitan» todos los enlaces de un mensaje: si la visita lo
+  consumiera, el dueño lo encontraría gastado antes de tocarlo.
+- **Quien recupera queda CONFIRMADO de paso** (`email_confirm: true`): abrir el enlace ES la prueba
+  de posesión del buzón. Sin eso, la cuenta sin confirmar de la base recuperaría su contraseña y
+  seguiría sin poder entrar.
+- **Una credencial SUSPENDIDA no se reactiva sola**, y la suspensión gana a Google en el orden de
+  veredictos: a un socio suspendido hay que decirle que está suspendido, no que pruebe con Google.
+- Recuperar desde `/login` **no salta el segundo factor**: cambia la contraseña, y el OTP se sigue
+  pidiendo al entrar.
+- **Deuda anotada, no olvido**: el cambio por el admin de GoTrue **no revoca las sesiones abiertas**
+  en otros dispositivos. Para «olvidé mi contraseña» da igual; para «me robaron la cuenta» haría falta
+  tocar las tablas internas de `auth`, que esta casa no toca.
+
+**Guardián** `scripts/qa-recuperacion-check.mjs` (**143** comprobaciones), probado saboteando a
+propósito el enrutado al `delivery_email` para confirmar que canta. Verificado además en servidor
+real, extremo a extremo: el correo con typo → «no existe»; una cuenta de Google → «entra con Google»;
+una cuenta QA → correo, enlace, contraseña nueva, **login OK con la nueva** y el enlace ya muerto al
+reusarlo; `gvg@ctcexport.com` → enlace enviado a su `delivery_email` enmascarado; el socio suspendido
+→ bloqueado; y `?puerta=https://sitio-falso` → cae en la puerta por defecto.
+
 ## La reorganización V5 · PR-B: el BCP recibe dirección y configuración (2026-08-18, V4.25)
 
 Segunda de las tres mudanzas. **Ocho módulos entran al BCP**: Direccionamiento (+grados), Usuarios y

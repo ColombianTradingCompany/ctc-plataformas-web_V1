@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./LoginModal.module.css";
 import { PasswordField } from "@/components/PasswordField";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 export function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -126,6 +128,15 @@ export function LoginModal({ open, onClose }: { open: boolean; onClose: () => vo
       <button className="btn btn-solid" style={{ width: "100%", marginTop: 8, padding: 12 }} onClick={submit} disabled={loading}>
         {loading ? "Un momento…" : mode === "signup" ? "Crear mi cuenta" : "Entrar a mi panel"}
       </button>
+
+      {/* Solo al ENTRAR: en «Crear cuenta» no hay contraseña que olvidar todavía. */}
+      {mode === "signin" && (
+        <p className={styles.alt}>
+          <Link className={styles.link} href={hrefRecuperar("kaffetal-regal")}>
+            ¿Olvidó su contraseña?
+          </Link>
+        </p>
+      )}
 
       <div className={styles.divider}><span>o</span></div>
 

@@ -19,6 +19,59 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.12] — 2026-08-20 (commit pendiente)
+
+- **Hito**: **«Recuperar acceso» existe**. Hasta hoy la red tenía **siete puertas de entrada y cero
+  formas de volver**: quien olvidaba su contraseña perdía la cuenta para siempre, salvo que un
+  operador del BCP le emitiera una temporal a mano — y para un productor de Kaffetal Regal, un
+  comprador de Cherry Picked, un experto del Directorio o un recolector de Terratalento no había ni
+  eso. `grep resetPasswordForEmail` no devolvía una sola línea en todo el repo.
+- **Añadido**: `/recuperar-acceso` — **UNA** superficie para las **once** puertas (las cinco
+  plataformas públicas, los cinco nodos de socio y el login maestro). Se sirve desde la **raíz en
+  todos los hosts** gracias a la lista `RAIZ_COMPARTIDA` nueva de `src/proxy.ts`; sin ella el
+  subdominio le antepondría su base y daría 404 justo en la pantalla a la que llega quien ya no
+  puede entrar. Segundo tramo en `/recuperar-acceso/[token]`, con las mismas reglas de contraseña
+  que el cambio forzado del panel (ahora compartidas, no duplicadas).
+- **Añadido**: el enlace «¿Olvidaste tu contraseña?» en **las siete puertas** — Kaffetal Regal,
+  Cherry Picked (en sus tres idiomas), Directorio del Café, Terratalento, Herramientas del Café, los
+  nodos de la Red de Socios y `/login`. Solo aparece al ENTRAR: en «Crear cuenta» no hay contraseña
+  que olvidar.
+- **Seguridad**: **la pantalla dice la verdad** (decisión del owner, 2026-08-20). Si el correo no
+  existe se dice, si esa cuenta entra con Google se dice, y cada veredicto termina en una SALIDA
+  —crear cuenta, botón de Google, escribir a CTC— en vez de en un callejón. Es una excepción
+  deliberada a la regla de la casa de no confirmar qué cuentas existen: el usuario real de esta red
+  es un caficultor que teclea mal su correo, y con el mensaje genérico de «si existe, te llegará»
+  ese error queda invisible para siempre. La base ya traía el caso: `ete0109@yahoo.com` conviviendo
+  con `etel0109@yahoo.com`.
+- **Seguridad**: el vale es de un solo uso, se guarda **hasheado** (sha256 sobre 32 bytes de
+  `randomBytes`), caduca en 60 minutos, tope de 3 por cuenta cada 15 minutos, y pedir uno nuevo
+  quema los anteriores. Un envío que falla **anula el vale** en vez de reportar éxito — misma
+  lección que el OTP del panel: dejar la fila viva quemaba un intento por un fallo que no era del
+  usuario. Lo que viaja en la URL es `?puerta=<id>`, un identificador saneado contra la lista, nunca
+  un destino: aceptar un `?volver=<url>` habría sido un redirect abierto **en la pantalla de
+  recuperar la contraseña**.
+- **Cambiado**: no se usa `supabase.auth.resetPasswordForEmail()`, y el porqué está escrito en
+  `lib/auth/recuperacion.ts`. El suyo no sabe (1) que tres usuarios de la casa son etiquetas
+  `@ctcexport.com` **sin buzón** y su enlace tiene que ir al `delivery_email` de
+  `panel_users`/`partner_accounts` — mandárselo a su propio usuario los dejaría fuera para siempre
+  sin que nada fallara de forma visible —, (2) que 8 de las 29 cuentas entran **solo con Google** y
+  no hay contraseña que recuperar, y (3) responder si la cuenta existe. Y una cuarta, práctica: su
+  enlace obliga a mantener una allowlist de redirecciones con 19 subdominios dentro.
+- **Datos**: migraciones `password_reset_tokens` (el vale: RLS activa y **cero políticas**, patrón
+  service-role de la casa) y `buscar_identidad_para_recuperacion` — una función `security definer`
+  que resuelve el correo contra `auth.users` con un índice, en vez del `admin.listUsers()` que se
+  traería la tabla entera. Con su `revoke` explícito a `public`/`anon`/`authenticated`: Postgres
+  concede EXECUTE a PUBLIC por defecto, y sin él cualquiera con la clave anon podría preguntarle a
+  la base por el estado de credencial de cualquier correo.
+- **Corregido**: quien recupera con el correo **sin confirmar** queda confirmado de paso — abrir el
+  enlace ES la prueba de posesión del buzón. Sin eso, la cuenta sin confirmar de la base recuperaría
+  su contraseña y seguiría sin poder entrar. Y si venía de una temporal del BCP, el
+  `must_change_password` se limpia: la persona acaba de elegir la suya.
+- **Docs**: guardián nuevo `scripts/qa-recuperacion-check.mjs` (**143** comprobaciones), probado
+  saboteando a propósito el enrutado al `delivery_email` para confirmar que canta.
+
+---
+
 ## [V5.11] — 2026-08-20 (commit b73d73b)
 
 - **Retirado**: el **GVG-Space** sale de la plataforma. Se extrajo el **CV App Manager** — sus once

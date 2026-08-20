@@ -1,0 +1,49 @@
+/* Lo poco que «Recuperar acceso» añade sobre auth.module.css (V5.12).
+   El envoltorio, la tarjeta y los campos son los mismos del login maestro: es
+   la misma familia de pantalla y no debía tener un segundo mundo de estilo.
+
+   ⚠️ Toda clase que se use en el TSX tiene que existir aquí. Una clase que no
+   existe sale `undefined` y el elemento se pinta sin estilo — ni tsc, ni eslint,
+   ni el build dicen una palabra (trampa de V4.30). El guardián
+   qa-recuperacion-check.mjs compara las dos listas. */
+
+/* El veredicto: el bloque que responde «¿existe esta cuenta?». Lleva su propio
+   color por tono — verde cuando hay salida (entra con Google), rojo cuando no
+   la hay (no existe, suspendida) — porque es la única información de la
+   pantalla y tiene que leerse antes que nada. */
+.veredicto {
+  border: 1.5px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: var(--paper);
+}
+.veredicto[data-tono="ok"] { border-left-color: #15803D; }
+.veredicto[data-tono="no"] { border-left-color: #B91C1C; }
+.veredicto b { display: block; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+.veredicto p { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+.veredicto .btn { display: inline-block; }
+
+/* Un aviso de una línea: sin salida propia, solo «vuelve a intentarlo». */
+.aviso {
+  font-size: 13px;
+  color: #B91C1C;
+  margin-bottom: 14px;
+}
+
+/* Letra pequeña de la pantalla de confirmación (caducidad, spam, buzón). */
+.dato {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.pie {
+  font-size: 13px;
+  margin-top: 18px;
+  margin-bottom: 0;
+  text-align: center;
+}
+.pie a { color: var(--muted); }
+.pie a:hover { color: var(--ink); }

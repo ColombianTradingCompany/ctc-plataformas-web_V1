@@ -14,6 +14,7 @@ import { SurfaceShell } from "@/components/services/SurfaceShell";
 import surface from "@/components/services/surface.module.css";
 import styles from "./terratalento.module.css";
 import { PasswordField } from "@/components/PasswordField";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 // ── Terratalento · la superficie del RECOLECTOR ──────────────────────────────
 // Patrón Directorio: sin sesión → landing / acceso (la MISMA cuenta del
@@ -261,6 +262,12 @@ function Acceso({ modoInicial, onVolver }: { modoInicial: "entrar" | "crear"; on
         </button>
         {aviso && <p className={styles.aviso}>{aviso}</p>}
         {error && <p className={styles.error}>{error}</p>}
+        {/* Solo al ENTRAR: en «Crear cuenta» no hay contraseña que olvidar. */}
+        {modo === "entrar" && (
+          <a className={styles.olvide} href={hrefRecuperar("terratalento")}>
+            ¿Olvidaste tu contraseña?
+          </a>
+        )}
         <button className={`${styles.volver} ${styles.salir}`} type="button" onClick={onVolver} style={{ marginLeft: 0 }}>
           ← Volver
         </button>

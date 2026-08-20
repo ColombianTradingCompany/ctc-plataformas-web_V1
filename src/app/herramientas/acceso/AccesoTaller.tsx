@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./acceso.module.css";
+import { hrefRecuperar } from "@/lib/auth/puertas";
 
 // ── La puerta del taller (A8, 2026-08-19) ────────────────────────────────────
 // Palabra del owner: «Herramientas del Café will be ALSO working with a login,
@@ -121,6 +122,10 @@ export function AccesoTaller() {
           Entrar con Google
         </button>
       </div>
+
+      <p className={styles.alternativa}>
+        <a href={hrefRecuperar("herramientas")}>¿Olvidaste tu contraseña?</a>
+      </p>
 
       <p className={styles.alternativa}>
         ¿Todavía no tienes cuenta? Créala en la plataforma que te corresponda y vuelve — esta página la reconoce sola:

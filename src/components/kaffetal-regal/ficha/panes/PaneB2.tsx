@@ -1,6 +1,8 @@
 import { SpiderChart } from "../SpiderChart";
 import { FieldInfo } from "./FieldInfo";
 import { ReportFiles } from "./ReportFiles";
+import { FichasDelLote } from "./FichasDelLote";
+import type { LotFicha } from "@/lib/fichas/tipos";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 import bstyles from "./PaneB2.module.css";
@@ -48,9 +50,12 @@ export function PaneB2({
   viewingLocked,
   onUploadFile,
   onGetFileUrl,
+  fichas = [],
 }: PaneProps & {
   onUploadFile: (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
   onGetFileUrl: (assetId: string) => Promise<string | null>;
+  /** V5.23: el set de Fichas Técnicas del lote — se lista al final del pane. */
+  fichas?: LotFicha[];
 }) {
   const score = Number(data.b2_score.replace(",", "."));
   const scoreValido = data.b2_score.trim() !== "" && Number.isFinite(score) && score >= 0 && score <= 100;
@@ -144,6 +149,10 @@ export function PaneB2({
           — la referencia del Q-Grader vive en «Solicitar oficialización» (al
           pie de la Ficha) y las notas de análisis son del laboratorio. Los
           campos quedan en el tipo por los datasheets guardados antes. */}
+
+      {/* V5.23: las Fichas Técnicas que CTC compiló de estos soportes —
+          la cara sensorial del set, la oficial primero. */}
+      <FichasDelLote fichas={fichas} mostrar="sensorial" />
     </div>
   );
 }

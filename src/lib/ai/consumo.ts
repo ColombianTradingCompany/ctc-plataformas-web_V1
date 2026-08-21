@@ -4,11 +4,12 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { costeUSD, type Uso } from "./precios";
 
 // ── El registrador del consumo de IA ─────────────────────────────────────────
-// Un solo sitio por el que pasan las CINCO vías de gasto de la plataforma:
+// Un solo sitio por el que pasan las SEIS vías de gasto de la plataforma:
 //
 //   lib/coffeed/claude.ts       → Direccionamiento, Coffeed, Datawave, RT-Scriptor
 //   api/kaffetal-regal/next-step → el asesor «¿Y ahora qué?» de la Ficha
 //   lib/arena/mejoras.ts        → las mejoras de Arena
+//   app/ocp/(app)/fichasActions.ts → el escáner visual de soportes (V5.23)
 //   lib/coffeed/gemini.ts       → extracción de vídeo
 //   lib/coffeed/geminiImage.ts  → fotogramas de RT-Scriptor
 //
@@ -43,6 +44,8 @@ export const USOS = {
   rtScriptorImagen: "rt-scriptor:imagen",
   krAsesor: "kr:asesor",
   arenaMejoras: "arena:mejoras",
+  // V5.23: el escáner visual de soportes B2/B3 del OCP (fichasActions).
+  fichaEscaner: "kr:ficha-escaner",
   // `gvg:match` y `gvg:reporte` se retiran en V5.1: el CV App Manager se fue a
   // CommaaS y anota su gasto en el libro del hub. Las filas históricas de
   // `ai_usage` conservan esas cadenas y el tablero las sigue mostrando.

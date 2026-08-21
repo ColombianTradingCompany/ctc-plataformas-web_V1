@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.23] — 2026-08-21 (commit pendiente)
+
+- **Añadido**: el **escáner visual del OCP y el set de Fichas Técnicas** — el seguimiento acordado
+  del rediseño B2/B3 (V5.20). Nueva tabla **`lot_fichas`** (RLS select-own; escrituras solo
+  service-role; índice único parcial = a lo sumo **una ficha oficial por lote**). En **/ocp/fichas**
+  (riel «OCP · Kaffetal Regal») CTCx ve los soportes B2/B3 de cada lote (URLs firmadas bajo
+  demanda), dispara el **escáner** — visión IA (`claude-sonnet-5`, fetch crudo de la casa, gasto
+  anotado en `ai_usage` como `kr:ficha-escaner`) que extrae puntaje, escala, atributos SCA, notas,
+  factor, almendra, densidad, humedades y mallas al formato `FichaTecnicaData`, saneado por rangos —
+  o **compila el reporte del productor** sin IA; y administra el set (oficial ★ · eliminar). El
+  escáner es **opt-in** (botón con confirmación de costo): jamás corre en una carga de página ni en
+  el veredicto.
+- **Añadido**: el productor ve el set en su Ficha — **FichasDelLote** lista las Fichas Técnicas al
+  pie de los panes **B2** (cara sensorial) y **B3** (cara física), la oficial primero, solo lectura.
+- **Añadido**: guardián `scripts/qa-fichas-check.mjs` (31 comprobaciones: opt-in, modelo pequeño,
+  consumo anotado, service-role, una oficial, la extracción no toca `lots` ni `lot_evaluations`).
+- **Datos**: migración `lot_fichas_set` aplicada en producción (tabla + índices + política).
+
 ## [V5.22] — 2026-08-21 (commit 20832bb)
 
 - **Cambiado**: el **Mapa de Trabajo (`/bcp/mapa`) alcanza al modelo nuevo** — el wrap V39 lo dejó

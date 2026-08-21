@@ -133,3 +133,22 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
   retirado. Cierra el pendiente que el wrap V39 dejó anotado.
 - Para el wrap V40: la ficha DICT «mapatrabajo» merece una frase (el mapa siguió al modelo).
 (commit: 20832bb)
+
+## [2026-08-21] V5.23 · El escáner visual del OCP y el set de Fichas Técnicas
+- El seguimiento acordado del rediseño B2/B3: nueva tabla `lot_fichas` (RLS
+  select-own; escrituras service-role; índice único parcial = una oficial por
+  lote). CTCx, en /ocp/fichas (riel OCP · Kaffetal Regal), ve los soportes
+  B2/B3, dispara el ESCÁNER VISUAL (claude-sonnet-5, fetch crudo, consumo
+  `kr:ficha-escaner` en ai_usage, OPT-IN con confirmación de costo) o compila
+  el reporte del productor sin IA; el set se administra ahí (oficial ★ ·
+  eliminar). El productor lo ve en los panes B2 (sensorial) y B3 (físico) de
+  su Ficha — FichasDelLote, la oficial primero, solo lectura.
+- Piezas: src/lib/fichas/tipos.ts (FichaTecnicaData — claves sca_* de
+  siempre), src/app/ocp/(app)/fichasActions.ts, /ocp/fichas (page + client),
+  src/components/fichas/FichaDatos.tsx (compartido), FichasDelLote.tsx.
+- Para el wrap V40: nodo/DICT nuevo `lot_fichas` (banda gal o propia), trace
+  «ficha técnica» (soportes → escáner → set → oficial → panes B2/B3), y
+  actualizar el DICT reportadoproductor (el círculo se cerró) + la ficha del
+  consumo (sexta vía de gasto).
+- Guardián nuevo: scripts/qa-fichas-check.mjs (31 comprobaciones).
+(commit: pendiente)

@@ -5,6 +5,7 @@ import { ToastProvider, useToast } from "@/components/Toast";
 import { puedoSer } from "@/lib/identidad/matriz";
 import { createClient } from "@/lib/supabase/client";
 import { uploadKaffetalMediaWithProgress, signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
+import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 
 // A 0..1 progress reporter threaded from a child input's useUpload() ring down
 // into these upload handlers, so the byte-level % shows next to the input.
@@ -322,6 +323,9 @@ function Experience() {
   const [lots, setLots] = useState<Lot[]>([]);
   const [contracts, setContracts] = useState<ProducerContract[]>([]);
   const [offers, setOffers] = useState<ProducerOffer[]>([]);
+  // V5.23: el set de Fichas Técnicas de los lotes (RLS select-own; las compila
+  // CTCx en /ocp/fichas). Solo lectura — se listan en los panes B2/B3.
+  const [lotFichas, setLotFichas] = useState<LotFicha[]>([]);
   const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
   const [curLotId, setCurLotId] = useState<string | null>(null);
 
@@ -363,7 +367,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }, { data: parcelaRows }, { data: certRows }, { data: offerRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }, { data: parcelaRows }, { data: certRows }, { data: offerRows }, { data: fichaRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -408,6 +412,12 @@ function Experience() {
               "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id"
             )
             .order("emitted_at", { ascending: false }),
+          // RLS (lot_fichas_select_own) scopes this to the producer's own lots
+          // — solo lectura; el set lo administra CTCx desde /ocp/fichas.
+          supabase
+            .from("lot_fichas")
+            .select("id, lot_id, source, title, data, source_files, model, confianza, observaciones, is_official, created_at")
+            .order("created_at", { ascending: false }),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -599,6 +609,8 @@ function Experience() {
         }))
       );
 
+      setLotFichas((((fichaRows as Parameters<typeof rowToLotFicha>[0][] | null) ?? []).map(rowToLotFicha)));
+
       setGi({
         razon: producerProfile?.company_name || "—",
         nit: producerProfile?.tax_id || "—",
@@ -692,6 +704,7 @@ function Experience() {
         setLots([]);
         setContracts([]);
         setOffers([]);
+        setLotFichas([]);
         setFeedback([]);
         setGi(EMPTY_GI);
         setCurLotId(null);
@@ -1796,6 +1809,7 @@ function Experience() {
         <FichaView
           key={curLot.id}
           lot={curLot}
+          fichas={ordenaFichas(lotFichas.filter((f) => f.lotId === curLot.id))}
           fincas={fincas}
           fincaCerts={fincaCerts}
           gi={gi}

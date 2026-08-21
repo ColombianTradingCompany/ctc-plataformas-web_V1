@@ -1,5 +1,7 @@
 import { FieldInfo } from "./FieldInfo";
 import { ReportFiles } from "./ReportFiles";
+import { FichasDelLote } from "./FichasDelLote";
+import type { LotFicha } from "@/lib/fichas/tipos";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 import bstyles from "./PaneB3.module.css";
@@ -43,9 +45,12 @@ export function PaneB3({
   viewingLocked,
   onUploadFile,
   onGetFileUrl,
+  fichas = [],
 }: PaneProps & {
   onUploadFile: (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
   onGetFileUrl: (assetId: string) => Promise<string | null>;
+  /** V5.23: el set de Fichas Técnicas del lote — se lista al final del pane. */
+  fichas?: LotFicha[];
 }) {
   const fueraDeRango = (v: string, r: { min: number; max: number }) => v.trim() !== "" && !rangoValido(v, r);
 
@@ -174,6 +179,10 @@ export function PaneB3({
           </div>
         </div>
       </div>
+
+      {/* V5.23: las Fichas Técnicas que CTC compiló de estos soportes —
+          la cara física del set, la oficial primero. */}
+      <FichasDelLote fichas={fichas} mostrar="fisico" />
     </div>
   );
 }

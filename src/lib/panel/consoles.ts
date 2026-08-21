@@ -243,6 +243,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/productores", label: "Productores" },
           { href: "/ocp/fincas", label: "Fincas" },
           { href: "/ocp/lotes", label: "Lotes" },
+          // V5.23: los soportes B2/B3, el escáner visual y el set de Fichas
+          // Técnicas del lote (una oficial por lote).
+          { href: "/ocp/fichas", label: "Fichas Técnicas" },
         ],
       },
       {

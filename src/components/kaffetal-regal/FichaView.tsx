@@ -125,6 +125,7 @@ function StageCelebration({ c, onDone }: { c: Celebration; onDone: () => void })
 
 export function FichaView({
   lot,
+  fichas = [],
   fincas,
   fincaCerts,
   gi,
@@ -138,6 +139,10 @@ export function FichaView({
   onSubmitOfficializationClaim,
 }: {
   lot: Lot;
+  /** V5.23: el set de Fichas Técnicas del lote (las compila CTCx en
+   *  /ocp/fichas; RLS select-own) — se listan en los panes B2 y B3, la
+   *  oficial primero. Solo lectura. */
+  fichas?: import("@/lib/fichas/tipos").LotFicha[];
   fincas: Finca[];
   fincaCerts: import("./data").FincaCertificate[];
   gi: import("./data").GeneralInfo;
@@ -615,8 +620,8 @@ export function FichaView({
               {active === "a4" && <PaneA4 {...paneProps} />}
               {active === "a5" && <PaneA5Eudr {...paneProps} />}
               {active === "b1" && <PaneB1 {...paneProps} />}
-              {active === "b2" && <PaneB2 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} />}
-              {active === "b3" && <PaneB3 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} />}
+              {active === "b2" && <PaneB2 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} fichas={fichas} />}
+              {active === "b3" && <PaneB3 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} fichas={fichas} />}
               {active === "b4" && <PaneB4 {...paneProps} />}
               {active === "ficha" && (
                 <>

@@ -184,7 +184,7 @@ const T: Record<Lang, Dict> = {
         lead: "Un solo dato viaja de punta a punta. Nada se cuenta dos veces, nada se pierde en el camino.",
         bullets: [
           "La geolocalización que usted registra en Kaffetal Regal es la declaración EUDR que CTC presenta en Europa: se escribe una vez.",
-          "La catación de la Arena se convierte en el grado con el que su lote se compra en Ámsterdam.",
+          "La catación del Q-Grader se convierte en el grado con el que su lote se compra en Ámsterdam.",
           "Su nombre, su finca y sus videos van pegados al lote hasta la tostadora.",
           "El registro queda sellado con respaldo criptográfico, del predio a la factura.",
         ],
@@ -288,7 +288,7 @@ const T: Record<Lang, Dict> = {
         lead: "A single record travels end to end. Nothing is told twice, nothing is lost on the way.",
         bullets: [
           "The geolocation you register in Kaffetal Regal is the EUDR declaration CTC files in Europe: written once.",
-          "The Arena cupping becomes the grade your lot is bought under in Amsterdam.",
+          "The Q-Grader's cupping becomes the grade your lot is bought under in Amsterdam.",
           "Your name, your farm and your videos stay attached to the lot all the way to the roastery.",
           "The record is sealed with cryptographic backing, from the plot to the invoice.",
         ],
@@ -396,7 +396,7 @@ const T: Record<Lang, Dict> = {
         lead: "Ein einziger Datensatz reist von Ende zu Ende. Nichts wird doppelt erzählt, nichts geht unterwegs verloren.",
         bullets: [
           "Die Geolokalisierung, die Sie in Kaffetal Regal erfassen, ist die EUDR-Erklärung, die CTC in Europa einreicht: einmal geschrieben.",
-          "Die Verkostung der Arena wird zum Grad, unter dem Ihr Lot in Amsterdam gekauft wird.",
+          "Die Verkostung des Q-Graders wird zum Grad, unter dem Ihr Lot in Amsterdam gekauft wird.",
           "Ihr Name, Ihre Finca und Ihre Videos bleiben bis zur Rösterei am Lot.",
           "Der Eintrag wird kryptografisch abgesichert versiegelt, vom Grundstück bis zur Rechnung.",
         ],

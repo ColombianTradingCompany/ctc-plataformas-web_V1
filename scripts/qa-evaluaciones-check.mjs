@@ -89,6 +89,20 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
 check("InscriptionPhase conoce galardonado", inscripciones.includes('| "galardonado"'));
 check("el modelo del productor también", data.includes('"fila" | "galardonado" | "arena"'));
 
+// ── 7. V5.19: la Arena es la VITRINA y no toca el estado del lote ─────────
+const acciones = lee("src/app/ocp/(app)/actions.ts");
+check("finalizeJornada ya no escribe grade/stage", !arena.includes('update({ grade, stage: "galardonado" })'));
+check("ni crea contratos", !arena.includes('from("purchase_contracts")'));
+check("ni abre negociaciones Black", !arena.includes('from("black_negotiations")'));
+check("la vitrina exige galardonado", nominados.includes('lot.stage !== "galardonado"') && nominados.includes("showcaseGate"));
+check("y los tres grados altos", nominados.includes('["blue", "gold", "tyrian"].includes(lot.grade'));
+check("y contrato abierto", nominados.includes('.in("status", ["pending_signature", "active"])'));
+check("invitar a la vitrina existe", nominados.includes("export async function inviteLotToArena("));
+check("bloquear en sesión ya no escribe fila_arena", !nominados.includes('update({ stage: "fila_arena" })'));
+check("confirmar el recibo tampoco", !acciones.includes('stage: "fila_arena"'));
+check("y avanza la inscripción a la fila", acciones.includes('.eq("phase", "postulacion")'));
+check("eliminar una sesión no revierte un galardón", !arena.includes('.in("stage", ["fila_arena", "evaluado", "galardonado"])'));
+
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);
   for (const f of fallos) console.error("   " + f);

@@ -5,7 +5,7 @@ import { createArenaSession } from "../arenaActions";
 import { reviewEvaluationClaim } from "../evaluationActions";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { CupRegistroButton, DeleteSessionButton } from "./ArenaBoardClient";
-import { AssignSessionControls } from "../nominados/NominadosClient";
+import { AssignSessionControls, InviteToShowcaseButton } from "../nominados/NominadosClient";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Sesiones de Arena como kanban (rediseño 2026-07-20) ─────────────────────
@@ -31,7 +31,7 @@ type RosterRow = { arena_session_id: string; lot_id: string; lots: { name: strin
 
 export default async function BcpArenaPage() {
   const service = createServiceRoleClient();
-  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }, { data: claimsRaw }, { data: aptosRaw }] = await Promise.all([
+  const [{ data: sessionsRaw }, { data: seasons }, { data: rosterRaw }, { data: claimsRaw }, { data: aptosRaw }, { data: elegiblesRaw }] = await Promise.all([
     service
       .from("arena_sessions")
       .select("id, session_date, status, capacity, run_state, cup_registrations, winner_lot_id, harvest_seasons(kind, year)")
@@ -46,11 +46,18 @@ export default async function BcpArenaPage() {
       .eq("source", "producer_claim")
       .eq("status", "pending")
       .order("created_at", { ascending: true }),
-    // Aptos: sondeo aprobado, esperando sesión (salieron de Nominados).
+    // Invitados a la vitrina (V5.19): galardonados Blue/Gold/Tyrian con
+    // contrato, ya invitados (phase='arena'), esperando sesión.
     service
       .from("arena_inscriptions")
       .select("lot_id, producer_id, sondeo_score, lots(name)")
       .eq("phase", "arena"),
+    // Elegibles para invitar: galardonados de los tres grados altos aún en
+    // fase 'galardonado' (la compuerta del contrato la valida la acción).
+    service
+      .from("arena_inscriptions")
+      .select("lot_id, producer_id, lots(name, grade, stage)")
+      .eq("phase", "galardonado"),
   ]);
 
   const sessions = (sessionsRaw as SessionRow[] | null) ?? [];
@@ -81,7 +88,15 @@ export default async function BcpArenaPage() {
     score: a.sondeo_score,
     name: (Array.isArray(a.lots) ? a.lots[0] : a.lots)?.name ?? "—",
   }));
-  const aptoProducers = await fetchProducerContacts(service, aptos.map((a) => a.producerId));
+  // Elegibles para la vitrina: Blue/Gold/Tyrian galardonados sin invitar (la
+  // compuerta del contrato abierta la aplica inviteLotToArena al confirmar).
+  const elegibles = ((elegiblesRaw as { lot_id: string; producer_id: string; lots: { name: string; grade: string | null; stage: string } | { name: string; grade: string | null; stage: string }[] | null }[] | null) ?? [])
+    .map((e) => {
+      const lot = (Array.isArray(e.lots) ? e.lots[0] : e.lots) as { name: string; grade: string | null; stage: string } | null;
+      return { lotId: e.lot_id, producerId: e.producer_id, name: lot?.name ?? "—", grade: lot?.grade ?? null, stage: lot?.stage ?? "" };
+    })
+    .filter((e) => e.stage === "galardonado" && ["blue", "gold", "tyrian"].includes(e.grade ?? ""));
+  const aptoProducers = await fetchProducerContacts(service, [...aptos.map((a) => a.producerId), ...elegibles.map((e) => e.producerId)]);
   // Sesiones abiertas (sin jornada en curso, no completadas) con cupo libre.
   const openSessions = sessions
     .filter((s) => s.status !== "completed" && !s.run_state)
@@ -122,7 +137,7 @@ export default async function BcpArenaPage() {
               <p className={styles.meta} style={{ margin: "6px 0 0" }}>{roster.map((l) => l.name).join(" · ")}</p>
             )}
             <p className={styles.meta} style={{ margin: "6px 0 0" }}>
-              Faltan {s.capacity - roster.length} café(s) — asígnelos desde el pool «Aptos» de arriba.
+              Faltan {s.capacity - roster.length} café(s) — asígnelos desde el pool de «Invitados» de arriba.
             </p>
           </div>
         );
@@ -195,21 +210,46 @@ export default async function BcpArenaPage() {
         </Link>
       </div>
       <p className={styles.subtitle}>
-        Preparando (roster en armado desde el pool «Aptos») → Agendada (roster completo; registre el B2/B3 de cada café y
+        Preparando (roster en armado desde el pool de «Invitados») → Agendada (roster completo; registre el B2/B3 de cada café y
         arranque la jornada) → Culminada.
       </p>
 
-      {/* ── Aptos: superaron el sondeo, esperando sesión (pedido del owner
-          2026-07-21: el lote entra aquí SOLO tras el Registro de Sondeo). ── */}
+      {/* ── La vitrina (V5.19): elegibles → invitados → sesión. La Arena es la
+          gala post-galardón de Blue/Gold/Tyrian con contrato abierto. ── */}
       <div className={styles.card} style={{ display: "block", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Aptos — listos para sesión ({aptos.length})</h2>
+        <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Elegibles para la vitrina ({elegibles.length})</h2>
         <p className={styles.subtitle} style={{ marginTop: 0 }}>
-          Cafés que superaron el sondeo (Apto). Asigne cada uno a una sesión abierta para bloquearlo en la Arena.
+          Galardonados <b>Blue / Gold / Tyrian</b>. Invitar exige además un <b>contrato abierto</b> (la compuerta lo
+          valida) — la vitrina es la gala de los que ya están en el negocio.
+        </p>
+        {!elegibles.length ? (
+          <p className={styles.empty}>Sin galardonados de los grados altos por invitar.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 8 }}>
+            {elegibles.map((e) => (
+              <div key={e.lotId} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px dashed var(--line)", paddingTop: 8 }}>
+                <span style={{ flex: 1, minWidth: 180 }}>
+                  <b>{e.name}</b>{" "}
+                  <span className={styles.meta}>
+                    {aptoProducers.get(e.producerId)?.fullName ?? "Productor"} · <b style={{ color: `var(--t-${e.grade})` }}>{e.grade}</b>
+                  </span>
+                </span>
+                <InviteToShowcaseButton lotId={e.lotId} lotName={e.name} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className={styles.card} style={{ display: "block", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Invitados — listos para sesión ({aptos.length})</h2>
+        <p className={styles.subtitle} style={{ marginTop: 0 }}>
+          Invitados a la vitrina. Asigne cada uno a una sesión abierta para bloquearlo en la gala.
         </p>
         {!aptos.length ? (
-          <p className={styles.empty}>Ningún café apto por ahora — llegan desde <Link href="/ocp/nominados">Nominados</Link> tras el Registro de Sondeo.</p>
+          <p className={styles.empty}>Ningún invitado por ahora — invítelos desde «Elegibles para la vitrina».</p>
         ) : !openSessions.length ? (
-          <p className={styles.meta}>Hay {aptos.length} café(s) apto(s), pero no hay sesión abierta con cupo — cree una abajo.</p>
+          <p className={styles.meta}>Hay {aptos.length} invitado(s), pero no hay sesión abierta con cupo — cree una abajo.</p>
         ) : (
           <div style={{ display: "grid", gap: 8 }}>
             {aptos.map((a) => (

@@ -32,9 +32,9 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registrar su finca y armar la ficha no cuesta nada. Inscribir un lote a la Arena cuesta <b>$80.000</b>{" "}
+              Registrar su finca y armar la ficha no cuesta nada. Solicitar la evaluación CTC de un lote cuesta <b>$80.000</b>{" "}
               — y lo que recibe de vuelta <b>queda suyo</b>: puntaje, perfil sensorial y el feedback técnico de
-              Q-Graders profesionales, gane o no gane. Es el diagnóstico que otros pagan en dólares y que ninguna
+              un Q-Grader profesional, salga o no salga galardonado. Es el diagnóstico que otros pagan en dólares y que ninguna
               cooperativa le entrega.
             </p>
             <p>
@@ -104,9 +104,9 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registering your farm and building the datasheet costs nothing. Entering a lot into the Arena costs{" "}
+              Registering your farm and building the datasheet costs nothing. Requesting a lot's CTC evaluation costs{" "}
               <b>$80,000 COP</b> — and what you get back <b>stays yours</b>: score, sensory profile and technical
-              feedback from professional Q-Graders, win or lose. It&apos;s the diagnosis others pay for in dollars
+              feedback from a professional Q-Grader, awarded or not. It&apos;s the diagnosis others pay for in dollars
               and no cooperative ever hands you.
             </p>
             <p>
@@ -177,9 +177,9 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Ein Lot zur Arena anzumelden
+              Die Finca zu registrieren und das Datenblatt zu erstellen kostet nichts. Die CTC-Bewertung eines Lots
               kostet <b>$80.000 COP</b> — und was Sie zurückbekommen, <b>bleibt Ihres</b>: Punktzahl, sensorisches
-              Profil und das technische Feedback professioneller Q-Grader, ob Sie gewinnen oder nicht. Es ist die
+            Profil und das technische Feedback eines professionellen Q-Graders, prämiert oder nicht. Es ist die
               Diagnose, die andere in Dollar bezahlen und die Ihnen keine Kooperative je aushändigt.
             </p>
             <p>

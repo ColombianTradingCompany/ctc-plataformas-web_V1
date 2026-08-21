@@ -21,6 +21,7 @@ import {
   planSondeoBatch,
   postularOnBehalf,
   recordEvaluationVerdict,
+  inviteLotToArena,
   regenerateMejoras,
   removeFromBatch,
   setBatchLab,
@@ -155,6 +156,26 @@ export function ConfirmSampleButton({ lotId, shipped }: { lotId: string; shipped
       </button>
       <ErrorLine error={error} />
     </div>
+  );
+}
+
+/** Invita un lote galardonado (Blue/Gold/Tyrian con contrato) a la vitrina. */
+export function InviteToShowcaseButton({ lotId, lotName }: { lotId: string; lotName: string }) {
+  const { pending, error, run } = useAction();
+  return (
+    <span>
+      <button
+        className="btn btn-sm btn-solid"
+        disabled={pending}
+        onClick={() => {
+          if (window.confirm(`¿Invitar ${lotName} a la vitrina de la Arena? El productor recibirá la invitación.`))
+            run(() => inviteLotToArena(lotId));
+        }}
+      >
+        {pending ? "Invitando…" : "Invitar a la vitrina"}
+      </button>
+      <ErrorLine error={error} />
+    </span>
   );
 }
 

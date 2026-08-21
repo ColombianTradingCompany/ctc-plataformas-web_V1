@@ -437,6 +437,23 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
               <span className={styles.certPending}>Sello EUDR: a la espera de la Visa de su finca</span>
             )}
           </div>
+          {/* La vitrina de la Arena (V5.19): la gala post-galardón de
+              Blue/Gold/Tyrian con contrato — display, la gestión es de CTC. */}
+          {ins?.phase === "arena" && (
+            <div style={{ fontSize: 12.5, color: "var(--green)", fontWeight: 700, marginTop: 8 }}>
+              ★ Invitado a la vitrina de la Arena — la gala en vivo de los mejores de la temporada. CTC le confirmará la fecha.
+            </div>
+          )}
+          {ins?.phase === "sesion" && (
+            <div style={{ fontSize: 12.5, color: "var(--green)", fontWeight: 700, marginTop: 8 }}>
+              ★ Sesión de la vitrina confirmada — la fecha está en Mensajes y Notificaciones.
+            </div>
+          )}
+          {ins?.phase === "competido" && (
+            <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 8 }}>
+              ★ Su lote compitió en la vitrina de la Arena — la sesión quedó grabada y viaja con su café.
+            </div>
+          )}
           <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 8 }}>
             Su camino comercial sigue en <b>Contratos y Compras</b>.
           </div>

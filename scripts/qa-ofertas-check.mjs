@@ -64,7 +64,8 @@ check("las escrituras van por service role", respuesta.includes("createServiceRo
 check("la lectura del productor es RLS select-own (sin writes cliente)", lee("src/components/kaffetal-regal/KaffetalExperience.tsx").includes("lot_offers_select_own"));
 
 // ── 4. El contrato ya no nace en otro sitio ───────────────────────────────
-check("el veredicto del galardón NO inserta contratos", !nominados.includes('from("purchase_contracts")'));
+// SELECT sí (la compuerta de la vitrina V5.19 lee el contrato); INSERT jamás.
+check("el veredicto del galardón NO inserta contratos", !/from\("purchase_contracts"\)\s*\.\s*insert/.test(nominados));
 check("decideBlackNegotiation emite la oferta", contratos.includes('emitOffer(neg.lot_id, "black"'));
 {
   const black = contratos.split("decideBlackNegotiation")[1] ?? "";

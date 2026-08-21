@@ -241,3 +241,26 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
 - Para el PRÓXIMO wrap (V39): nodo `lot_offers` en el workmap; re-cablear e21/e23 (gal →
   ofertas → contrato/negociación); traza nueva «la oferta y la aceptación» candidata.
 (commit: 69f2311)
+
+## [2026-08-21] V5.19 · El galardón nace del puntaje; la Arena es la vitrina
+- **Cierra el plan V5.16→V5.19 del panel del productor.** La Arena queda re-gateada como la GALA
+  post-galardón: `showcaseGate` (nominadosActions) exige galardonado + Blue/Gold/Tyrian + contrato
+  abierto; `inviteLotToArena` (nuevo) pasa la inscripción galardonado→arena (cola «Elegibles para
+  la vitrina» en /ocp/arena); `assignLotToSession` ya NO escribe lots.stage; `finalizeJornada`
+  registra el podio (arena_scores + lot_evaluations bcp_arena + nota al productor) sin gradar,
+  sin contratos, sin negociaciones, sin membresías.
+- **Dos residuos corregidos**: `confirmSampleReceived` (/ocp/lotes) ya no escribe fila_arena
+  (confirma muestra + inscripción postulacion→fila); `deleteArenaSession` ya no revierte un
+  galardonado (solo stages legados fila_arena/evaluado).
+- **Landing KR (es/en/de)**: ArenaSection pasa de «El tiquete de entrada» a «La vitrina de la
+  temporada»; PorQué habla de solicitar la evaluación; Oportunidad cita la catación del Q-Grader;
+  el índice dice «La vitrina en vivo de los mejores». El productor ve los estados de la vitrina en
+  Lotes Galardonados.
+- **Barrido de HANDOFF**: flujo de negocio central reescrito (V5.16–V5.19); banner V5.17–V5.19
+  sobre §The Arena pipeline (manda sobre el histórico); correcciones fechadas en las viñetas de la
+  tarifa y del Club; el módulo del productor es «Evaluar mi Café».
+- Guardianes: qa-evaluaciones +11 (la vitrina, 42 total); qa-ofertas afinado (SELECT sí, INSERT no).
+- Para el PRÓXIMO wrap (V39): la banda `arena` del workmap pasa a vitrina post-gal (bandas
+  mue/sondeo/gal se re-ordenan; e15 sigue; ARE cuelga de gal+contrato); ficha DICT «vitrina-arena»
+  candidata; el nodo de la landing KR cambia su descripción.
+(commit: pending)

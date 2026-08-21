@@ -19,6 +19,32 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.19] — 2026-08-21 (commit pendiente)
+
+- **Hito**: **el galardón nace del puntaje; la Arena es la vitrina.** Cierra el plan V5.16→V5.19:
+  la Arena queda re-gateada como la **gala post-galardón de la temporada**, exclusiva de
+  **Blue/Gold/Tyrian con contrato abierto** (`showcaseGate`): se INVITA (`inviteLotToArena`,
+  nueva cola «Elegibles para la vitrina» en `/ocp/arena`), se bloquea en sesión sin tocar jamás
+  `lots.grade/stage`, y `finalizeJornada` registra el **podio** (arena_scores + planillas
+  `bcp_arena` que enriquecen el promedio oficial + nota al productor) sin gradar, sin crear
+  contratos ni negociaciones y sin repartir membresías.
+- **Corregido**: dos residuos del modelo viejo que habrían corrompido lotes nuevos — «Confirmar
+  recibido» en `/ocp/lotes` ya no empuja el stage a `fila_arena` (confirma la muestra y avanza la
+  inscripción `postulacion → fila`, como Nominados), y `deleteArenaSession` ya no revierte un
+  `galardonado` a `apto` sin grado (el galardón lo escribió el bache, no la sesión que se borra —
+  solo los stages legados `fila_arena`/`evaluado` se revierten).
+- **Cambiado**: la landing de KR cuenta la historia nueva en los tres idiomas — la Arena pasa de
+  «El tiquete de entrada» a **«La vitrina de la temporada»** (todo lote se evalúa a ciegas con un
+  Q-Grader certificado; la gala es de los mejores ya galardonados y con contrato), «Por qué
+  inscribirse» habla de solicitar la evaluación, la oportunidad cita la catación del Q-Grader y el
+  índice anuncia «La vitrina en vivo de los mejores». El productor ve los estados de la vitrina
+  (invitado · sesión confirmada · compitió) dentro de Lotes Galardonados.
+- **Docs**: **barrido de HANDOFF** — el flujo de negocio central reescrito al modelo V5.16–V5.19,
+  banner V5.17–V5.19 sobre «The Arena pipeline» (manda sobre el histórico), correcciones fechadas
+  en las viñetas de la tarifa y del Club, y el módulo del productor apuntando a «Evaluar mi Café».
+  `qa-evaluaciones-check.mjs` gana la sección de la vitrina (42 comprobaciones) y
+  `qa-ofertas-check.mjs` afina su aserción (SELECT sí, INSERT jamás).
+
 ## [V5.18] — 2026-08-21 (commit 69f2311)
 
 - **Hito**: **el contrato nace de la aceptación del productor.** Nace el circuito de OFERTAS:

@@ -70,7 +70,7 @@ const T: Record<Lang, Dict> = {
         círculo que viró de color le dice en qué rango está la humedad, sin abrir instrumentos ni adivinar. Si el
         indicador marca por encima del rango objetivo (equilibrio de un pergamino bien seco, ~10–11,5% de humedad
         en grano), es señal de reacondicionar el secado y avisar a CTC antes de que la calidad sufra. Es la forma
-        más simple y barata de custodiar, mes a mes, la taza que ganó en la Arena.
+        más simple y barata de custodiar, mes a mes, la taza que ganó su galardón.
       </>
     ),
     cpEyebrow: "El destino de los galardonados",
@@ -123,7 +123,7 @@ const T: Record<Lang, Dict> = {
         the humidity range — no instruments to open, no guessing. If the indicator reads above the target range
         (the equilibrium of well-dried parchment, ~10–11.5% bean moisture), it&apos;s the signal to recondition the
         drying and alert CTC before quality suffers. It&apos;s the simplest, cheapest way to guard, month by month,
-        the cup that won in the Arena.
+        the cup that earned its award.
       </>
     ),
     cpEyebrow: "The destination of the awarded",
@@ -176,7 +176,7 @@ const T: Record<Lang, Dict> = {
         der letzte verfärbte Kreis, in welchem Bereich die Feuchte liegt — ohne Instrumente, ohne Raten. Zeigt der
         Indikator über dem Zielbereich (Gleichgewicht eines gut getrockneten Pergaminos, ~10–11,5 % Kornfeuchte),
         ist das das Signal, die Trocknung nachzubessern und CTC zu informieren, bevor die Qualität leidet. Es ist
-        die einfachste und günstigste Art, Monat für Monat die Tasse zu hüten, die in der Arena gewonnen hat.
+        die einfachste und günstigste Art, Monat für Monat die Tasse zu hüten, die ihre Prämierung verdient hat.
       </>
     ),
     cpEyebrow: "Das Ziel der Prämierten",

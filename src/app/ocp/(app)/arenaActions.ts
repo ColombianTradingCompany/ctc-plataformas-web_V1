@@ -99,10 +99,11 @@ export async function createArenaSession(formData: FormData) {
   redirect(`/ocp/arena/${session.id}`);
 }
 
-// Nota: los lotes se bloquean en una sesión desde el POOL «Aptos» del módulo
-// Arena (assignLotToSession en nominadosActions.ts), que exige phase='arena'
-// (sondeo aprobado) + cupo 5/7 y mueve el lote a fila_arena. El
-// "Disponibles"/agregar-manual y el flujo de puntaje manual legado
+// Nota (V5.19): los lotes se bloquean en una sesión desde el pool de
+// INVITADOS a la vitrina (assignLotToSession en nominadosActions.ts), que
+// exige phase='arena' + la compuerta de la vitrina (galardonado,
+// Blue/Gold/Tyrian, contrato abierto) + cupo 5/7 — y ya NO toca lots.stage.
+// El "Disponibles"/agregar-manual y el flujo de puntaje manual legado
 // (recordArenaScore/closeArenaSession) se retiraron con la jornada v2.
 
 /**
@@ -124,11 +125,14 @@ export async function deleteArenaSession(
   const { data: roster } = await service.from("arena_session_lots").select("lot_id").eq("arena_session_id", sessionId);
   const lotIds = [...new Set((roster ?? []).map((r) => r.lot_id))];
   if (lotIds.length) {
-    // Las inscripciones que estaban en sesión/competido vuelven a «arena» (Aptos).
+    // Las inscripciones que estaban en sesión/competido vuelven a «arena» (el
+    // pool de invitados a la vitrina).
     await service.from("arena_inscriptions").update({ phase: "arena" }).in("lot_id", lotIds).in("phase", ["sesion", "competido"]);
-    // Los lotes marcados por ESTA sesión (fila_arena/evaluado/galardonado) vuelven
-    // a «apto», sin grado (el grado lo otorgaba la sesión que se elimina).
-    await service.from("lots").update({ stage: "apto", grade: null }).in("id", lotIds).in("stage", ["fila_arena", "evaluado", "galardonado"]);
+    // ⚠ V5.19: SOLO los stages del modelo viejo se revierten. Un lote
+    // 'galardonado' conserva grado y stage — su galardón lo escribió el bache
+    // del Q-Grader, no la sesión que se está eliminando; borrárselo aquí sería
+    // destruir una evaluación oficial ajena a la vitrina.
+    await service.from("lots").update({ stage: "apto", grade: null }).in("id", lotIds).in("stage", ["fila_arena", "evaluado"]);
   }
 
   await service.from("arena_scores").delete().eq("arena_session_id", sessionId);
@@ -327,12 +331,22 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
   for (const lotId of finalists) gradeByLot.set(lotId, state.verdict.grades[lotId]);
   for (const discarded of state.discards) for (const lotId of discarded) gradeByLot.set(lotId, state.discard_grades[lotId]);
 
+  // ── V5.19: LA JORNADA ES LA VITRINA — no toca el estado comercial ─────────
+  // Los participantes llegan YA galardonados (el grado lo escribió el bache
+  // del Q-Grader, V5.17) y con contrato abierto (la compuerta de la vitrina).
+  // La jornada conserva TODA su mecánica —descartes, planillas, veredicto del
+  // comité, ganador— pero su desenlace es el PODIO de la temporada, no un
+  // cambio de estado: no escribe lots.grade/stage, no crea contratos ni
+  // negociaciones, no reparte membresías. Sus planillas SÍ quedan como
+  // lot_evaluations aceptadas (bcp_arena): enriquecen el promedio oficial.
   for (const lotId of state.cup_order) {
     const grade = gradeByLot.get(lotId)!;
     const rank = ranking.indexOf(lotId); // -1 si fue descartado
     const { data: lot } = await service.from("lots").select("stage, producer_id").eq("id", lotId).single();
 
-    // Un renglón de comité en arena_scores conserva la forma de la tabla para el historial.
+    // Un renglón de comité en arena_scores conserva la forma de la tabla para
+    // el historial de la vitrina (el veredicto del comité es de la GALA, no
+    // del pasaporte del lote).
     await service.from("arena_scores").insert({
       arena_session_id: sessionId,
       lot_id: lotId,
@@ -342,52 +356,25 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
       entered_by: adminId,
     });
 
-    await service.from("lots").update({ grade, stage: "galardonado" }).eq("id", lotId);
+    const resultado = rank === 0 ? "GANADOR de la jornada" : rank > 0 ? `finalista ${rank + 1}º` : "retirado en descarte";
     await service.from("audit_log").insert({
       entity_type: "lot",
       entity_id: lotId,
-      action: "graded",
+      action: "arena_showcase",
       previous_status: lot?.stage,
-      new_status: "galardonado",
+      new_status: lot?.stage,
       performed_by: adminId,
-      notes: `Jornada de Arena — ${cupLabel(state, lotId)}. Grado del comité: ${grade}${rank === 0 ? ". GANADOR de la jornada." : rank > 0 ? ` (finalista ${rank + 1}º)` : " (retirado en descarte)"}.`,
+      notes: `Vitrina de la Arena — ${cupLabel(state, lotId)}. Veredicto del comité: ${grade} · ${resultado}. El Grado CTC del lote no cambia.`,
     });
-
-    // La membresía del Kaffetal Club YA NO se otorga aquí (V5.17): llega con
-    // el GALARDÓN — recordEvaluationVerdict → grantClubMembershipOnce
-    // (src/lib/arena/club.ts). Todo lote que llega a una jornada ya pasó por
-    // ahí, así que su productor ya es miembro.
-
-    // Destino comercial por grado.
-    if (grade === "red" || grade === "blue" || grade === "gold") {
-      const { data: contract } = await service
-        .from("purchase_contracts")
-        .insert({ lot_id: lotId, status: "pending_signature", grade_snapshot: grade })
-        .select("id")
-        .single();
-      if (contract) {
-        await service.from("audit_log").insert({
-          entity_type: "purchase_contract",
-          entity_id: contract.id,
-          action: "created",
-          new_status: "pending_signature",
-          performed_by: adminId,
-        });
-      }
-    } else if (grade === "black") {
-      // Los Black se negocian aparte (no forman parte de la compra base).
-      const { data: neg } = await service.from("black_negotiations").insert({ lot_id: lotId }).select("id").single();
-      if (neg) {
-        await service.from("audit_log").insert({
-          entity_type: "black_negotiation",
-          entity_id: neg.id,
-          action: "opened",
-          new_status: "abierta",
-          performed_by: adminId,
-        });
-      }
+    if (lot?.producer_id) {
+      await service.from("producer_comm_log").insert({
+        producer_id: lot.producer_id,
+        context_label: null,
+        lot_id: lotId,
+        note: `Su lote compitió en la vitrina de la Kaffetal Regal Arena — ${resultado}. La sesión quedó grabada y su evaluación del comité se suma al expediente del lote.`,
+        created_by: adminId,
+      });
     }
-    // tyrian: sin contrato — va a la subasta (fase aún no construida).
   }
 
   // Marca las inscripciones de los participantes como "competido".

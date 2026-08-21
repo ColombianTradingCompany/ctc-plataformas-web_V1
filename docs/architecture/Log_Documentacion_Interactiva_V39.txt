@@ -113,4 +113,4 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
   `node --check` del bloque. Contadores: 39 nodos · 133 fichas (+5) · 49 trazas
   (+1) · 91 wires · 34 CTX · 309 ANN (+13/−14) · FILETREE 1827.
 - El puntero de HANDOFF («Visual system map») apunta al V39.0.
-(commit: pending)
+(commit: 0a70bd0)

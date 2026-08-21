@@ -1,0 +1,111 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V40.0(1b5720d).html
+(CTC Web Platform, desde 2026-08-21 · plataforma V5.23). Cada entrada se compila
+al próximo Version Wrap (V41).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit — de UNO en UNO, no en bloque al final.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex.
+⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO (V38): siempre
+`<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35). ⚠️ LA CADENA
+«Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la suya).
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V40 ENSEÑÓ (léase antes del V41)
+════════════════════════════════════════════════════════════════════════════════
+
+· UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS: el paso 1 (insertar las fichas
+  nuevas antes de `fasearena`) movió el vecino que el paso 2 usaba de ancla
+  («…]},\n  fasearena:» ya no existía). Escribir los replace pensando en el
+  estado DESPUÉS de cada paso, no en el archivo original. El assert lo cazó
+  antes de escribir — por eso cada rep() lleva assert.
+
+· LA DEUDA DECLARADA SE PAGA MEJOR QUE LA IMPLÍCITA: V39 dejó POR ESCRITO qué
+  fichas faltaban (Redacción, el taller de Herramientas) y este wrap solo tuvo
+  que leer los encabezados del código para escribirlas. Registrar la deuda con
+  nombres concretos es lo que la vuelve pagable.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V40 (2026-08-21) — plataforma V5.23:
+
+- **Lo que V40 compiló**: el afinado del owner sobre B2/B3 (V5.21 — números
+  siempre a la vista, B2 sin el bloque del Q-Grader), el Mapa de Trabajo
+  alcanzando al modelo nuevo (V5.22 — Arena-vitrina tras el GAL, nodo
+  lot_offers, «la aceptación crea el contrato», rombo «Grado CTC» retirado), y
+  el seguimiento acordado CONSTRUIDO (V5.23 — el escáner visual del OCP + el
+  set de Fichas Técnicas de lot_fichas, una oficial ★ por lote, listado en los
+  panes B2/B3). Más las DOS deudas de compilación que V39 declaró: ficha propia
+  para Redacción (con su traza «El post que se escribe solo») y para el taller
+  de Herramientas del Café (puerta · trabajos guardados · ctc-bridge.js ·
+  Plus). 3 fichas nuevas · 2 trazas nuevas («La Ficha Técnica» y «El post que
+  se escribe solo») · 6 fichas actualizadas (reportadoproductor, mapatrabajo,
+  consumo, coffeed, herramientas, + cabecera) · 10 ANN nuevas.
+- **Deuda de compilación**: ninguna declarada. Los logs V5.21–V5.23 se
+  escribieron al terminar cada tanda (la lección de V39 aplicada).
+- **Seguimiento acordado con el owner (no construido)**: la puja del comprador
+  para las Subastas Tyrian (hoy la subasta corre fuera y CTCx registra el
+  mejor postor como oferta).
+- **Pendientes del owner que este log arrastra**: el número Nequi real
+  (payment.ts sigue vacío — la tarifa de evaluación no es cobrable); la línea
+  del redirect-allowlist de Google en Supabase; la primera generación real de
+  Redacción; el escenario de Make de coffeed.redaccion.post_creado; recorrer el
+  BLOQUE B del review sobre el panel nuevo (las casillas siguen sin marcar);
+  la primera jornada-vitrina como evento supervisado; y estrenar el escáner
+  visual con soportes REALES (los 7 lotes de producción siguen en borrador —
+  el escáner aún no ha corrido contra un documento de verdad).
+- **Línea base de la compuerta al cerrar**: tsc limpio · eslint 0 errores /
+  8 avisos · build exit 0 · npm audit 0 · qa-fichas 31 · qa-kr-panel 119 ·
+  qa-evaluaciones 42 · qa-ofertas 36 · qa-reportado-productor 40 ·
+  qa-kr-ficha 207 · qa-changelog 220 · qa-encoding 783/0.
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-21] Version Wrap V40 — el círculo del reporte se cerró; las deudas, pagadas
+- Snapshot nuevo: `Documentacion_Interactiva_V40.0(1b5720d).html` (base V39.0 +
+  las entradas V5.21–V5.23 del log V39 + las dos fichas debidas). Batería 9/9
+  vacías, `node --check` del bloque OK. Contadores: 39 nodos · 136 fichas (+3:
+  fichastecnicas, redaccion, tallerherramientas) · 51 trazas (+2) · 91 wires ·
+  34 CTX · 319 ANN (+10) · FILETREE 1840.
+- El puntero de HANDOFF («Visual system map») apunta al V40.0.
+(commit: pendiente)

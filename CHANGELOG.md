@@ -37,6 +37,10 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   consumo anotado, service-role, una oficial, la extracción no toca `lots` ni `lot_evaluations`).
 - **Datos**: migración `lot_fichas_set` aplicada en producción (tabla + índices + política).
 
+> **Wrap V40** (2026-08-21): ciclo compilado en Documentacion_Interactiva_V40.0(1b5720d).html —
+> 39 nodos · 136 fichas (+3: el set de Fichas Técnicas, Redacción, el taller de Herramientas) ·
+> 51 trazas (+2) · 319 ANN (+10) · batería 9/9 vacías.
+
 ## [V5.22] — 2026-08-21 (commit 20832bb)
 
 - **Cambiado**: el **Mapa de Trabajo (`/bcp/mapa`) alcanza al modelo nuevo** — el wrap V39 lo dejó

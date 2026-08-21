@@ -114,8 +114,11 @@ const af = (id: string, label: string, uis: string[], stageId: string, x: number
   y,
 });
 
-// Tramo GRATIS (FT→FT2→EUDR→VID→EVA) · tramo PAGADO (MUE→Sondeo→Arena→GAL, COP 80.000)
-// · soporte (comercio/club/leads/plataforma). EVA y GAL son los dos puntos de equilibrio.
+// Tramo GRATIS (FT→FT2→EUDR→VID→EVA) · tramo PAGADO (MUE→Evaluación→GAL, COP 80.000)
+// · la ARENA es la VITRINA post-galardón (V5.19: Blue/Gold/Tyrian con contrato)
+// · soporte (comercio/club/leads/plataforma). EVA y GAL son los dos puntos de
+// equilibrio — y desde V5.17 el GALARDÓN LO ESCRIBE EL BACHE del Q-Grader
+// (gradoPorPuntaje: el puntaje manda), no la sesión de Arena.
 const STAGES: MapStage[] = [
   { id: "cuenta", label: "Cuenta", x0: 40, x1: 250, tint: "free" },
   { id: "ft", label: "FT · Finca + Visa EUDR", x0: 270, x1: 480, tint: "free" },
@@ -124,9 +127,9 @@ const STAGES: MapStage[] = [
   { id: "vid", label: "VID · Video", x0: 980, x1: 1160, tint: "free" },
   { id: "eva", label: "EVA · Evaluación", x0: 1180, x1: 1440, tint: "free" },
   { id: "mue", label: "MUE · Pago + Muestra", x0: 1460, x1: 1680, tint: "paid" },
-  { id: "sondeo", label: "Sondeo", x0: 1700, x1: 1940, tint: "paid" },
-  { id: "arena", label: "Arena", x0: 1960, x1: 2220, tint: "paid" },
-  { id: "gal", label: "GAL · Galardón", x0: 2240, x1: 2460, tint: "paid" },
+  { id: "sondeo", label: "Evaluación · bache Q-Grader", x0: 1700, x1: 1940, tint: "paid" },
+  { id: "gal", label: "GAL · Galardón", x0: 1960, x1: 2220, tint: "paid" },
+  { id: "arena", label: "Arena · vitrina", x0: 2240, x1: 2460, tint: "support" },
   { id: "comercio", label: "Comercio", x0: 2480, x1: 2860, tint: "support" },
   { id: "club", label: "Kaffetal Club", x0: 2880, x1: 3100, tint: "support" },
   { id: "leads", label: "Leads · Buzón", x0: 3120, x1: 3350, tint: "support" },
@@ -165,24 +168,27 @@ const NODES: MapNode[] = [
   t("arena_entry_codes", "arena_entry_codes", "arena_entry_codes", ["BCP · códigos", "KR · postulación"], "mue", 1570, 420),
   // Sondeo · bache de laboratorio
   t("sondeo_batches", "sondeo_batches", "sondeo_batches", ["BCP · Nominados (Baches)"], "sondeo", 1820, 230),
-  d("sondeo_gate", "Sondeo Apto / No Apto", "sondeo", 1820, 430),
+  d("sondeo_gate", "Veredicto Q-Grader · el puntaje manda", "sondeo", 1820, 430),
   st("retiro_stop", "No Apto · resultado + feedback + 80% cashback", "sondeo", 1820, 660, ["KR · Panel", "BCP · Nominados (cashback)"]),
-  // Arena · la jornada
-  t("arena_sessions", "arena_sessions", "arena_sessions", ["BCP · Arena"], "arena", 2090, 175),
-  t("arena_session_lots", "arena_session_lots", "arena_session_lots", ["BCP · Arena (sesión)"], "arena", 2090, 320),
-  t("arena_scores", "arena_scores", "arena_scores", ["BCP · Arena (jornada)"], "arena", 2090, 465),
-  d("grade_gate", "Grado CTC", "arena", 2090, 630),
-  // lot_evaluations · REGISTRO de puntajes SCA (reclamos del productor + planillas de jornada)
-  t("lot_evaluations", "lot_evaluations", "lot_evaluations", ["BCP · Arena (reclamos)", "KR · Ficha (SCA declarado)"], "arena", 2090, 820),
-  // GAL · Galardón (HITO / entrega: evaluación Q-Grader — granulometría + perfil + Arena).
-  // lots.grade + stage=galardonado.
-  ms("gal", "GAL · Galardón + evaluación Q-Grader", "lots", ["BCP · Galardonados", "CP · Catálogo / Subastas"], "gal", 2350, 250),
-  // Comercio
-  t("lot_listings", "lot_listings", "lot_listings", ["BCP · Catálogo", "CP · tienda"], "comercio", 2670, 170),
-  t("purchase_contracts", "purchase_contracts", "purchase_contracts", ["BCP · Contratos", "KR · Mis contratos"], "comercio", 2670, 320),
-  t("orders", "orders / order_items", "orders", ["CP · checkout", "OCP"], "comercio", 2670, 470),
-  t("black_negotiations", "black_negotiations", "black_negotiations", ["BCP · Contratos"], "comercio", 2670, 620),
-  t("contract_releases", "contract_releases / humidity_readings", "contract_releases", ["BCP · Contratos / Humedad", "KR · Mis contratos"], "comercio", 2670, 790),
+  // GAL · Galardón (HITO / entrega: la evaluación del Q-Grader — el grado se
+  // DERIVA del puntaje en el veredicto del bache, V5.17). lots.grade + stage=galardonado.
+  ms("gal", "GAL · Galardón (gradoPorPuntaje)", "lots", ["OCP · Galardonados", "OCP · Ofertas", "KR · Evaluar mi Café"], "gal", 2090, 250),
+  // lot_evaluations · REGISTRO de puntajes SCA (la planilla oficial q_grader_batch
+  // del veredicto + las bcp_arena de la vitrina + los reclamos del productor)
+  t("lot_evaluations", "lot_evaluations", "lot_evaluations", ["KR · Ficha (procedencias)", "OCP · Arena (reclamos)"], "gal", 2090, 490),
+  // Arena · LA VITRINA (V5.19): post-galardón, Blue/Gold/Tyrian con contrato —
+  // la jornada registra el podio y no toca el estado de ningún lote.
+  t("arena_sessions", "arena_sessions", "arena_sessions", ["OCP · Arena (vitrina)"], "arena", 2350, 175),
+  t("arena_session_lots", "arena_session_lots", "arena_session_lots", ["OCP · Arena (sesión)"], "arena", 2350, 320),
+  t("arena_scores", "arena_scores", "arena_scores", ["OCP · Arena (podio)"], "arena", 2350, 465),
+  // Comercio — desde V5.18 el CONTRATO NACE DE LA ACEPTACIÓN del productor
+  // sobre una oferta (lot_offers: temporada · black · subasta Tyrian).
+  t("lot_offers", "lot_offers", "lot_offers", ["OCP · Ofertas", "KR · Contratos y Compras"], "comercio", 2670, 170),
+  t("purchase_contracts", "purchase_contracts", "purchase_contracts", ["OCP · Contratos", "KR · Contratos y Compras"], "comercio", 2670, 320),
+  t("lot_listings", "lot_listings", "lot_listings", ["OCP · Catálogo", "CP · tienda"], "comercio", 2670, 470),
+  t("orders", "orders / order_items", "orders", ["CP · checkout", "OCP"], "comercio", 2670, 620),
+  t("black_negotiations", "black_negotiations", "black_negotiations", ["OCP · CTC Selection"], "comercio", 2670, 770),
+  t("contract_releases", "contract_releases / humidity_readings", "contract_releases", ["OCP · Contratos / Humedad", "KR · Contratos y Compras"], "comercio", 2670, 920),
   // Kaffetal Club
   t("club_campaigns", "club_campaigns", "club_campaigns", ["BCP · Kaffetal Club"], "club", 2990, 190),
   t("club_member_codes", "club_member_codes", "club_member_codes", ["BCP · Kaffetal Club", "KR · Mis contratos"], "club", 2990, 340),
@@ -224,20 +230,26 @@ const EDGES: MapEdge[] = [
   e("e11", "arena_entry_codes", "arena_inscriptions", "info"),
   e("e12", "arena_inscriptions", "sondeo_batches"),
   e("e13", "sondeo_batches", "sondeo_gate"),
-  e("e14", "sondeo_gate", "arena_sessions", "ok", "Apto"),
-  // No Apto ⇒ resultado + feedback + 80% cashback (NO contrato).
-  e("e15", "sondeo_gate", "retiro_stop", "bad", "No Apto"),
+  // V5.17: el veredicto del bache GALARDONA — el grado se deriva del puntaje.
+  e("e14", "sondeo_gate", "gal", "ok", "Galardonado (gradoPorPuntaje)"),
+  // No supera ⇒ resultado + feedback + 80% cashback (NO contrato).
+  e("e15", "sondeo_gate", "retiro_stop", "bad", "No supera"),
+  // La planilla del veredicto queda como evaluación OFICIAL (q_grader_batch).
+  e("e_qg", "sondeo_gate", "lot_evaluations", "info", "planilla oficial"),
+  // V5.19: la vitrina — invitación post-galardón (Blue/Gold/Tyrian + contrato).
+  e("e_vit", "gal", "arena_sessions", "info", "vitrina · invitación"),
   e("e16", "arena_sessions", "arena_session_lots"),
   e("e17", "arena_session_lots", "arena_scores"),
-  e("e18", "arena_scores", "grade_gate"),
-  // Las planillas de la jornada alimentan el registro SCA.
-  e("e_le", "arena_scores", "lot_evaluations", "info", "planillas → registro"),
-  e("e19", "grade_gate", "gal", "ok"),
+  // Las planillas de la vitrina alimentan el registro SCA (bcp_arena).
+  e("e_le", "arena_scores", "lot_evaluations", "info", "podio → registro"),
+  // V5.18: la OFERTA — y el contrato nace de que el productor la ACEPTE.
+  e("e21", "gal", "lot_offers", "ok", "CTCx emite (temporada/subasta)"),
+  e("e_of", "lot_offers", "purchase_contracts", "ok", "aceptada → contrato"),
   e("e20", "gal", "lot_listings"),
-  e("e21", "gal", "purchase_contracts", "ok", "Red/Blue/Gold"),
   e("e22", "lot_listings", "orders"),
-  // Grado Black NO va a contrato normal: sale del galardón a negociación aparte.
+  // Grado Black: negociación aparte; su «comprar» EMITE la oferta black.
   e("e23", "gal", "black_negotiations", "info", "grado Black"),
+  e("e_bo", "black_negotiations", "lot_offers", "info", "comprar → oferta"),
   e("e24", "purchase_contracts", "contract_releases", "info"),
   e("e25", "purchase_contracts", "club_member_codes", "info"),
   e("e26", "club_campaigns", "club_member_codes"),

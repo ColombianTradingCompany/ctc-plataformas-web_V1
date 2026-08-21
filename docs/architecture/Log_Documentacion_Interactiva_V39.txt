@@ -123,3 +123,13 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
 - Toca la ficha DICT «reportadoproductor» del V39 (una frase: los números siempre a la vista) —
   para compilar en V40.
 (commit: 6a4af47)
+
+## [2026-08-21] V5.22 · El Mapa de Trabajo alcanza al modelo nuevo
+- `src/lib/workmap/schema.ts` (el mapa de /bcp/mapa — CÓDIGO, no este doc): banda Arena después de
+  GAL como «Arena · vitrina» (tinte support); bache = «Evaluación · bache Q-Grader»; la compuerta
+  del veredicto cablea a GAL (gradoPorPuntaje) y a lot_evaluations (planilla oficial); nodo nuevo
+  lot_offers; e21 → gal→lot_offers, e_of lot_offers→purchase_contracts «aceptada → contrato»,
+  e_bo black_negotiations→lot_offers, e_vit gal→arena_sessions «vitrina · invitación»; grade_gate
+  retirado. Cierra el pendiente que el wrap V39 dejó anotado.
+- Para el wrap V40: la ficha DICT «mapatrabajo» merece una frase (el mapa siguió al modelo).
+(commit: pending)

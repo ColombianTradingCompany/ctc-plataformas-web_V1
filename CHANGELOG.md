@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.22] — 2026-08-21 (commit pendiente)
+
+- **Cambiado**: el **Mapa de Trabajo (`/bcp/mapa`) alcanza al modelo nuevo** — el wrap V39 lo dejó
+  señalado como el último rincón narrando el flujo viejo. La banda de la **Arena pasa DESPUÉS del
+  Galardón** y se rotula «Arena · vitrina» (tinte de soporte, no del tramo pagado); el bache se
+  rotula «Evaluación · bache Q-Grader» y su compuerta «Veredicto Q-Grader · el puntaje manda»
+  cablea directo al **GAL** (`gradoPorPuntaje`) y a la planilla oficial en `lot_evaluations`; entra
+  el nodo **`lot_offers`** y el comercio se recablea — el galardón emite la oferta, **la aceptación
+  crea el contrato**, la negociación Black desemboca en su oferta, y la vitrina cuelga del galardón
+  como invitación. El nodo de decisión «Grado CTC» de la jornada se retira (el grado ya no se vota).
+
 ## [V5.21] — 2026-08-21 (commit 6a4af47)
 
 - **Corregido**: dos afinados del owner sobre el B2/B3 recién rediseñado. **B2 pierde el bloque

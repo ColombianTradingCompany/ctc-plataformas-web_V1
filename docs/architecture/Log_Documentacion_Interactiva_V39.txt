@@ -132,4 +132,4 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
   e_bo black_negotiations→lot_offers, e_vit gal→arena_sessions «vitrina · invitación»; grade_gate
   retirado. Cierra el pendiente que el wrap V39 dejó anotado.
 - Para el wrap V40: la ficha DICT «mapatrabajo» merece una frase (el mapa siguió al modelo).
-(commit: pending)
+(commit: 20832bb)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.22] — 2026-08-21 (commit pendiente)
+## [V5.22] — 2026-08-21 (commit 20832bb)
 
 - **Cambiado**: el **Mapa de Trabajo (`/bcp/mapa`) alcanza al modelo nuevo** — el wrap V39 lo dejó
   señalado como el último rincón narrando el flujo viejo. La banda de la **Arena pasa DESPUÉS del

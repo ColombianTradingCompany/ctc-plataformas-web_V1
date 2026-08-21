@@ -185,3 +185,30 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   entrada DICT «panel-productor»; ANN para `src/components/kaffetal-regal/panel/`.
 - Cambio de UI + navegación; ningún nodo de datos ni wire cambia todavía (eso llega en V5.17+).
 (commit: c2fc0a1)
+
+## [2026-08-21] V5.17 · El galardón nace del bache — el Q-Grader escribe el grado
+- **Cambio de arquitectura del flujo de negocio**: `recordEvaluationVerdict`
+  (ex-`recordSondeoResult`, `src/app/ocp/(app)/nominadosActions.ts`) es EL escritor del grado:
+  planilla B2/B3 con puntaje SCA → `redondeaPuntaje` → **`gradoPorPuntaje()` deriva el Grado**
+  (nadie lo digita; el OCP solo previsualiza «Puntaje 86.5 → Gold») → `lot_evaluations` con
+  **`source='q_grader_batch'`** (procedencia visible en la Ficha: «Evaluación CTC · Q-Grader en
+  bache», firmada por `sondeo_batches.q_grader_name`) → `lots.grade` + `stage='galardonado'` →
+  inscripción en fase terminal nueva **`galardonado`**. La sesión de Arena deja de ser el paso
+  obligatorio (re-gate como vitrina en V5.19); ningún veredicto nuevo escribe `phase='arena'`.
+- **El Club llega con el Galardón**: `grantClubMembershipOnce` (nuevo `src/lib/arena/club.ts`),
+  retirado de `finalizeJornada`. Cierra el ítem abierto de `definicion.ts` §«LA JORNADA DE ARENA».
+- **Escalera canónica del lote**: FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (ARE opcional,
+  vitrina). `LotKanbanStepper` reescrito; STAGES[6]=«En fila de evaluación», STAGES[7]=«Evaluado
+  (histórico)»; copy del productor en el idioma nuevo («Solicitar evaluación», EVALUATION_FEE_COP).
+- **Pestaña «Evaluar mi Café» real** en tres secciones (Solicitudes de Evaluación · Evaluaciones en
+  Fila · Lotes Galardonados, con el sello del grado de public/images/shared/grados/).
+- **DDL remota** (migraciones `v5_17_qgrader_evaluation` + `v5_17_evaluation_source_q_grader_batch`):
+  fase `galardonado` en el CHECK de `arena_inscriptions.phase`; `sondeo_batches.q_grader_name`;
+  `evaluation_source` += `q_grader_batch`. M3 (muestra solo con inscripción, en `apto`) intacto.
+- `isLotCommitted` mira stage O inscripción (espejo completo de la delete-RLS).
+- Guardián nuevo `scripts/qa-evaluaciones-check.mjs` (31); banner V5.17 sobre §Arena pipeline del
+  HANDOFF (dos frases corregidas: la jornada ya no grada para el camino base, el Club no llega al
+  competir). Barrido completo de HANDOFF y landing: V5.19.
+- Para el PRÓXIMO wrap (V39): la traza del lote cambia (GAL sale del bache; e15/e21/e23 del workmap
+  se re-cablean cuando V5.18 traiga las ofertas); ficha DICT «evaluacion-q-grader» candidata.
+(commit: pending)

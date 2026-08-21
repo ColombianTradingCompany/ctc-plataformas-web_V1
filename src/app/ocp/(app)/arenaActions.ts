@@ -284,8 +284,6 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
   const qGrader = state.guests.find((g) => g.role === "q_grader" && g.name.trim())?.name.trim() ?? null;
   // Comité como un solo evaluador para arena_scores/producer_comm_log.
   const committee = qGrader ?? state.guests.find((g) => g.role === "host" && g.name.trim())?.name.trim() ?? "Comité CTC";
-  // Se otorga la membresía del Club a cada productor participante (una vez).
-  const grantedMembers = new Set<string>();
 
   for (const lotId of state.cup_order) {
     const sheet = state.sca[lotId];
@@ -355,30 +353,10 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
       notes: `Jornada de Arena — ${cupLabel(state, lotId)}. Grado del comité: ${grade}${rank === 0 ? ". GANADOR de la jornada." : rank > 0 ? ` (finalista ${rank + 1}º)` : " (retirado en descarte)"}.`,
     });
 
-    // Membresía del Kaffetal Club: participar en una sesión completada la otorga.
-    if (lot?.producer_id && !grantedMembers.has(lot.producer_id)) {
-      grantedMembers.add(lot.producer_id);
-      const { data: pp } = await service.from("producer_profiles").select("club_member_since").eq("profile_id", lot.producer_id).maybeSingle();
-      if (!pp?.club_member_since) {
-        await service.from("producer_profiles").upsert(
-          { profile_id: lot.producer_id, club_member_since: new Date().toISOString() },
-          { onConflict: "profile_id" }
-        );
-        await service.from("audit_log").insert({
-          entity_type: "club_membership",
-          entity_id: lot.producer_id,
-          action: "granted_by_arena",
-          performed_by: adminId,
-          notes: `Su lote compitió en la Arena — Pasaporte del Kaffetal Club otorgado.`,
-        });
-        await service.from("producer_comm_log").insert({
-          producer_id: lot.producer_id,
-          context_label: null,
-          note: "¡Bienvenido al Kaffetal Club! Su lote compitió en la Arena, así que su Pasaporte quedó activo: ya puede firmar contratos de compra con CTC y sus lotes participan en el catálogo de Cherry Picked.",
-          created_by: adminId,
-        });
-      }
-    }
+    // La membresía del Kaffetal Club YA NO se otorga aquí (V5.17): llega con
+    // el GALARDÓN — recordEvaluationVerdict → grantClubMembershipOnce
+    // (src/lib/arena/club.ts). Todo lote que llega a una jornada ya pasó por
+    // ahí, así que su productor ya es miembro.
 
     // Destino comercial por grado.
     if (grade === "red" || grade === "blue" || grade === "gold") {

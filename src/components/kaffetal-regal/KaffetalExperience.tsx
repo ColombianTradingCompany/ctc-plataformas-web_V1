@@ -21,7 +21,6 @@ import { SolicitudRevisionModal } from "./SolicitudRevisionModal";
 import {
   EMPTY_GI,
   GRADE_DB,
-  LOT_COMMITTED_STAGE,
   STAGE_DB,
   type CompletionPoint,
   type Finca,
@@ -30,6 +29,7 @@ import {
   type EudrProducerAnswers,
   ctcLotReferenceShort,
   fincaSelfDeletable,
+  isLotCommitted,
   pendingLotsOfFinca,
   type GeneralInfo,
   type Lot,
@@ -46,13 +46,13 @@ type View = "landing" | "app" | "ficha";
 const STAGE_EXTRA = [
   "Complete la ficha técnica para avanzar.",
   "En evaluación documental por CTC.",
-  "¡Apto para la Arena! Ya puede postularlo.",
+  "¡Apto! Ya puede solicitar su evaluación.",
   "Revise la retroalimentación de CTC.",
   "Etapa histórica.",
   "Etapa histórica.",
-  "Esperando su turno en la próxima Arena.",
-  "El panel ya la calificó.",
-  "Siga el contrato en Mis contratos.",
+  "Su muestra espera al Q-Grader.",
+  "Etapa histórica.",
+  "Siga su camino en Contratos y Compras.",
 ];
 
 type FincaRow = {
@@ -486,7 +486,7 @@ function Experience() {
               // Cada puntaje con su procedencia, para la Ficha (vista final).
               scorings: rows.map((e) => ({
                 id: e.id,
-                source: e.source === "bcp_arena" ? "bcp_arena" : "producer_claim",
+                source: e.source === "bcp_arena" || e.source === "q_grader_batch" ? e.source : "producer_claim",
                 status: e.status,
                 total: e.sca_total != null ? Number(e.sca_total) : null,
                 attrs: (e.sca_data as Record<string, number> | null) ?? null,
@@ -691,10 +691,11 @@ function Experience() {
   async function deleteLot(id: string) {
     const lot = lots.find((l) => l.id === id);
     // Guard here matches the RLS policy (lots_delete_own_before_mue): a lot is
-    // self-deletable any time before it passes MUE into the Arena backlog
-    // (stage < fila_arena), excluding bcp_manual_entry lots -- those exist
-    // because BCP already has the physical sample in hand.
-    if (!lot || lot.stage >= LOT_COMMITTED_STAGE || lot.source === "bcp_manual_entry") {
+    // self-deletable while the paid pipeline hasn't taken it — sin inscripción
+    // y antes del legado fila_arena (isLotCommitted mira las DOS señales desde
+    // V5.17) — excluding bcp_manual_entry lots, those exist because BCP
+    // already has the physical sample in hand.
+    if (!lot || isLotCommitted(lot) || lot.source === "bcp_manual_entry") {
       showToast("Este lote ya entró en revisión de CTC y no puede eliminarse.");
       return;
     }

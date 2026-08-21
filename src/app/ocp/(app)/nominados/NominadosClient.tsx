@@ -20,7 +20,7 @@ import {
   markCashbackPaid,
   planSondeoBatch,
   postularOnBehalf,
-  recordSondeoResult,
+  recordEvaluationVerdict,
   regenerateMejoras,
   removeFromBatch,
   setBatchLab,
@@ -28,6 +28,7 @@ import {
 } from "../nominadosActions";
 import { LabEvalEditor } from "@/components/bcp/LabEvalEditor";
 import { EMPTY_LAB_EVALUATION, labEvaluationHasData, labEvaluationScore, computeSca, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
 import { openSondeoRequest } from "@/lib/arena/sondeoRequestPrint";
 import styles from "@/components/panel/shared.module.css";
 
@@ -290,12 +291,13 @@ export function PlannedBatchControls({
   batch,
   samples,
 }: {
-  batch: { id: string; label: string; labName: string; labContact: string };
+  batch: { id: string; label: string; labName: string; labContact: string; qGraderName: string };
   samples: { reference: string; kg: string }[];
 }) {
   const { pending, error, run } = useAction();
   const [labName, setLabName] = useState(batch.labName);
   const [labContact, setLabContact] = useState(batch.labContact);
+  const [qGrader, setQGrader] = useState(batch.qGraderName);
   const [proof, setProof] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const proofUp = useUpload();
@@ -323,7 +325,10 @@ export function PlannedBatchControls({
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         <input placeholder="Laboratorio (nombre)" value={labName} onChange={(e) => setLabName(e.target.value)} style={{ maxWidth: 200 }} />
         <input placeholder="Contacto (correo / tel.)" value={labContact} onChange={(e) => setLabContact(e.target.value)} style={{ maxWidth: 200 }} />
-        <button className="btn btn-sm" disabled={pending || !labName.trim()} onClick={() => run(() => setBatchLab(batch.id, labName, labContact))}>
+        {/* El Q-Grader del bache firma la planilla oficial cuando el veredicto
+            galardona (V5.17) — sin su nombre no hay galardón. */}
+        <input placeholder="Q-Grader del bache" value={qGrader} onChange={(e) => setQGrader(e.target.value)} style={{ maxWidth: 200 }} />
+        <button className="btn btn-sm" disabled={pending || !labName.trim()} onClick={() => run(() => setBatchLab(batch.id, labName, labContact, qGrader))}>
           Guardar lab
         </button>
       </div>
@@ -377,17 +382,21 @@ export function PendingBatchControls({ batchId, received }: { batchId: string; r
 }
 
 /** Columna «Registro de Sondeo», por lote: varias planillas B2/B3 + archivo del
- *  lab + el veredicto (aprobado ⇒ vuelve a En Fila / rechazado ⇒ cashback). */
+ *  lab + el veredicto (galardona con el grado derivado del puntaje /
+ *  rechazado ⇒ cashback 80%). Desde V5.17 el galardón nace AQUÍ. */
 export function SondeoRegistroControls({
   lotId,
   lotName,
   evaluations,
   resultFilename,
+  qGraderName,
 }: {
   lotId: string;
   lotName: string;
   evaluations: LabEvaluation[];
   resultFilename: string | null;
+  /** El Q-Grader del bache — firma la planilla oficial al galardonar. */
+  qGraderName: string;
 }) {
   const { pending, error, run } = useAction();
   const [open, setOpen] = useState(false);
@@ -426,7 +435,7 @@ export function SondeoRegistroControls({
           setUploading(false);
         }
       }
-      return recordSondeoResult(lotId, resultado, notes, undefined, {
+      return recordEvaluationVerdict(lotId, resultado, notes, undefined, {
         evaluation: adding && labEvaluationHasData(ev) ? ev : undefined,
         resultFile,
       });
@@ -493,14 +502,40 @@ export function SondeoRegistroControls({
               <label>Resumen del resultado (el productor lo verá)</label>
               <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Resultado del laboratorio…" />
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button className="btn btn-sm btn-solid" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("aprobado")}>
-                Aprobado → En Fila
-              </button>
-              <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("rechazado")}>
-                Rechazado (cashback 80% + mejoras IA)
-              </button>
-            </div>
+            {/* El puntaje manda (V5.17): el grado se DERIVA de la última
+                planilla con gradoPorPuntaje — aquí se previsualiza para que el
+                registrador vea qué va a firmar; nadie digita un grado. */}
+            {(() => {
+              const previewEval = adding && labEvaluationHasData(ev) ? ev : evaluations.length ? evaluations[evaluations.length - 1] : null;
+              const rawScore = previewEval ? labEvaluationScore(previewEval) : null;
+              const puntaje = rawScore != null ? redondeaPuntaje(rawScore) : null;
+              const grado = puntaje != null ? gradoPorPuntaje(puntaje) : null;
+              const sinQGrader = !qGraderName.trim();
+              return (
+                <>
+                  <p className={styles.meta} style={{ margin: "8px 0 6px" }}>
+                    {puntaje == null
+                      ? "Sin planilla con puntaje SCA — registre una para poder galardonar."
+                      : grado
+                        ? <>Puntaje <b>{puntaje}</b> → Grado <b style={{ color: grado.hex }}>{grado.nombre}</b> (derivado — el puntaje manda).</>
+                        : <>Puntaje <b>{puntaje}</b>: por debajo de 80 no hay galardón — registre «No supera».</>}
+                    {grado && sinQGrader && <> ⚠ Defina el Q-Grader del bache (columna Sondeo Planeado) antes de galardonar.</>}
+                  </p>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button
+                      className="btn btn-sm btn-solid"
+                      disabled={pending || uploading || !notes.trim() || !grado || sinQGrader}
+                      onClick={() => verdict("aprobado")}
+                    >
+                      {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
+                    </button>
+                    <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("rechazado")}>
+                      No supera (cashback 80% + mejoras IA)
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
             <ErrorLine error={error} />
           </div>
         </div>

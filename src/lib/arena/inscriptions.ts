@@ -14,6 +14,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // the old fixed 0/25/50/75/100 tramos are gone.
 
 export const ARENA_FEE_COP = 80000;
+// V5.17: el mismo valor, con su nombre de HOY — es la tarifa de la evaluación
+// CTC (muestra + bache del Q-Grader), no una entrada a la Arena. El alias
+// viejo se conserva porque lo usan pantallas y acciones ya desplegadas.
+export const EVALUATION_FEE_COP = ARENA_FEE_COP;
 
 /** Un bache de sondeo admite máximo 30 lotes (regla del owner, 2026-07-20). */
 export const MAX_BATCH_LOTS = 30;
@@ -34,6 +38,9 @@ export type InscriptionPhase =
   | "postulacion"
   | "sondeo"
   | "fila"
+  // Terminal del camino base desde V5.17: la evaluación del bache galardonó.
+  | "galardonado"
+  // Reservadas para la vitrina de la Arena (overlay post-galardón).
   | "arena"
   | "sesion"
   | "competido"
@@ -43,6 +50,7 @@ export const PHASE_LABEL: Record<InscriptionPhase, string> = {
   postulacion: "Postulado",
   sondeo: "Sondeo preliminar",
   fila: "En fila",
+  galardonado: "Galardonado",
   arena: "Clasificado a Arena",
   sesion: "Sesión asignada",
   competido: "Compitió",

@@ -125,13 +125,18 @@ export type EudrProducerAnswers = {
   mitigationEffective?: boolean | null;
 };
 
-// A lot is "committed" to CTC once it enters the Arena pipeline (stage index
-// >= 6 == fila_arena): the producer can no longer self-delete it, and a finca
-// with any committed lot can't be deleted from the app either. Mirrors the
-// `stage >= 'fila_arena'` check in the fincas delete RLS policy.
+// A lot is "committed" to CTC once the paid pipeline takes it: the producer
+// can no longer self-delete it, and a finca with any committed lot can't be
+// deleted from the app either. Two signals, either commits (V5.17):
+//   · stage >= 6 (fila_arena, hoy legacy) — mirrors the `stage >=
+//     'fila_arena'` check in the fincas delete RLS policy; y
+//   · TENER INSCRIPCIÓN — desde que el galardón nace del bache (V5.17), un
+//     lote puede llegar a 'galardonado' sin pisar 'fila_arena' jamás, y la
+//     inscripción es la señal real de que CTC ya está operando el lote (la
+//     delete-RLS también la mira; el espejo por stage solo cubría la mitad).
 export const LOT_COMMITTED_STAGE = 6;
-export function isLotCommitted(l: Pick<Lot, "stage">): boolean {
-  return l.stage >= LOT_COMMITTED_STAGE;
+export function isLotCommitted(l: Pick<Lot, "stage" | "inscription">): boolean {
+  return l.stage >= LOT_COMMITTED_STAGE || l.inscription !== null;
 }
 
 // Mirrors the fincas_delete_own_not_committed RLS policy so the button state
@@ -184,7 +189,7 @@ export type Lot = {
     amountCop: number;
     discountPct: number;
     amountDueCop: number;
-    phase: "postulacion" | "sondeo" | "fila" | "arena" | "sesion" | "competido" | "retirado";
+    phase: "postulacion" | "sondeo" | "fila" | "galardonado" | "arena" | "sesion" | "competido" | "retirado";
     entryCode: string | null;
     sondeoResult: "aprobado" | "rechazado" | null;
     sondeoResultNotes: string | null;
@@ -232,8 +237,10 @@ export type Lot = {
 /** Un puntaje sensorial con su origen y su estado de verificación. */
 export type ScaScoring = {
   id: string;
-  /** bcp_arena = registrado por CTC · producer_claim = aportado por el productor. */
-  source: "bcp_arena" | "producer_claim";
+  /** bcp_arena = sesión de Arena · q_grader_batch = evaluación CTC por
+   *  Q-Grader en bache (V5.17, la oficial del camino base) · producer_claim =
+   *  aportado por el productor. La procedencia es lo que el comprador lee. */
+  source: "bcp_arena" | "q_grader_batch" | "producer_claim";
   status: "pending" | "accepted" | "rejected";
   total: number | null;
   /** Los 10 atributos, cuando la fila los trae. */
@@ -331,7 +338,7 @@ export const GRADES: Record<string, string> = {
   Tyrian: "var(--t-tyrian)",
 };
 
-export const STAGES = ["Borrador", "Ficha completa", "Apto", "No apto", "Videos ✓", "Muestra en tránsito", "En fila Arena", "Evaluado", "Galardonado"];
+export const STAGES = ["Borrador", "Ficha completa", "Apto", "No apto", "Videos ✓", "Muestra en tránsito", "En fila de evaluación", "Evaluado (histórico)", "Galardonado"];
 
 // Order matches the `lot_stage` Postgres enum exactly, so the array index doubles
 // as the UI stage number. `apto`/`no_apto` are the EVA verdict stages (2026-07-17,

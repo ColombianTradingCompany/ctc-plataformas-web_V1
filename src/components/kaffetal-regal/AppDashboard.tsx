@@ -163,6 +163,7 @@ export function AppDashboard({
         {tab === "evaluaciones" && (
           <EvaluacionesTab
             lots={lots}
+            fincas={fincas}
             onRefreshData={onRefreshData}
             onConfirmSampleShipped={onConfirmSampleShipped}
             onVerLotes={irALotes}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GRADES, LOT_COMMITTED_STAGE, STAGES, fincaCode, fincaSelfDeletable, type Finca, type GeneralInfo, type Lot, type Parcela } from "../data";
+import { GRADES, STAGES, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela } from "../data";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus, type EudrStatus, type ParcelaGeoFields } from "@/lib/eudr";
 import { EudrStatusBadge } from "../EudrStatusBadge";
 import { FieldInfo } from "../ficha/panes/FieldInfo";
@@ -195,9 +195,10 @@ export function PerfilTab({
               Sello EUDR ↗
             </a>
           )}
-          {/* Deletable any time before the paid pipeline takes the lot, unless
+          {/* Deletable any time before the paid pipeline takes the lot (sin
+              inscripción y antes del legado fila_arena — isLotCommitted), unless
               BCP already has the physical sample in hand (bcp_manual_entry). */}
-          {l.stage < LOT_COMMITTED_STAGE && l.source !== "bcp_manual_entry" && (
+          {!isLotCommitted(l) && l.source !== "bcp_manual_entry" && (
             <button className={styles.deletebtn} onClick={() => onDeleteLot(l.id)}>Eliminar lote</button>
           )}
         </div>

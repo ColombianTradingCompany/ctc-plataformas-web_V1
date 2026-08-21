@@ -14,7 +14,7 @@ function di(k: string, v: string) {
 
 /** Un puntaje sensorial registrado sobre el lote, con su procedencia. */
 export type ScaScoringExport = {
-  source: "bcp_arena" | "producer_claim";
+  source: "bcp_arena" | "q_grader_batch" | "producer_claim";
   status: "pending" | "accepted" | "rejected";
   total: number | null;
   attrs: Record<string, number> | null;
@@ -27,7 +27,10 @@ export type ScaScoringExport = {
 // productor con lo que CTC contrastó — así que el rótulo es explícito y va
 // pegado a cada puntaje, no en una nota al pie.
 function scoringLabel(s: ScaScoringExport): { text: string; cls: string } {
-  if (s.source === "bcp_arena") return { text: "Contrastado por CTC", cls: "ok" };
+  // V5.17: la evaluación oficial del camino base es la del Q-Grader en bache,
+  // y su etiqueta dice exactamente eso — no se disfraza de sesión de Arena.
+  if (s.source === "q_grader_batch") return { text: "Evaluación CTC · Q-Grader en bache", cls: "ok" };
+  if (s.source === "bcp_arena") return { text: "Contrastado por CTC · Arena", cls: "ok" };
   if (s.status === "accepted") return { text: "Aportado por el productor · contrastado por CTC", cls: "ok" };
   if (s.status === "rejected") return { text: "Aportado por el productor · NO validado por CTC", cls: "bad" };
   return { text: "Aportado por el productor · pendiente de contrastar", cls: "pend" };

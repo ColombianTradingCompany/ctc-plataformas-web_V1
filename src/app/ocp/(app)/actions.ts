@@ -458,7 +458,7 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: "¡Su lote fue declarado APTO tras la evaluación documental! Ya puede postularlo a la Kaffetal Regal Arena desde su panel.",
+    note: "¡Su lote fue declarado APTO tras la evaluación documental! Ya puede solicitar su evaluación CTC desde «Evaluar mi Café» en su panel.",
     created_by: adminId,
   });
 

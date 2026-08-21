@@ -19,6 +19,37 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.17] — 2026-08-21 (commit pendiente)
+
+- **Hito**: **el galardón nace del bache — el Q-Grader escribe el grado, y el puntaje manda.** El
+  veredicto de la evaluación (`recordEvaluationVerdict`, ex-`recordSondeoResult`) es ahora EL
+  escritor del grado: exige una planilla B2/B3 con puntaje SCA, lo pasa por `redondeaPuntaje`,
+  **deriva el Grado CTC con `gradoPorPuntaje()`** (nadie digita un grado — la puerta que
+  `definicion.ts` §«la jornada de Arena» pedía cerrar), inserta la planilla como evaluación oficial
+  y saca el lote **galardonado sin pisar una sesión de Arena**. La sesión de Arena deja de ser el
+  paso obligatorio del proceso (su re-gate como vitrina de Blue/Gold/Tyrian llega en V5.19).
+  Fase 2 de 4 del plan V5.16→V5.19.
+- **Añadido**: la pestaña **«Evaluar mi Café» real, en tres secciones** (mockups del owner):
+  *Solicitudes de Evaluación* (lotes Aptos: solicitar, pagar, despachar la muestra), *Evaluaciones
+  en Fila* (muestra y pago confirmados, esperando bache/Q-Grader; el «no superó» con su cashback y
+  mejoras vive aquí) y *Lotes Galardonados* (el sello del grado, el puntaje, el certificado EUDR y
+  el feedback del Q-Grader). El OCP previsualiza el grado derivado antes de firmar («Puntaje 86.5 →
+  Gold») y el bache gana su campo **Q-Grader** — su nombre firma la planilla oficial.
+- **Cambiado**: la **membresía del Kaffetal Club llega con el Galardón** (una sola función,
+  `grantClubMembershipOnce` en `src/lib/arena/club.ts`); `finalizeJornada` ya no la reparte. La
+  escalera canónica del lote es **FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE** (ARE al final,
+  opcional — la vitrina); el stepper, las etiquetas de etapa («En fila de evaluación»), los avisos
+  al productor y el copy de solicitar («Solicitar evaluación», `EVALUATION_FEE_COP`) hablan el
+  idioma nuevo. `isLotCommitted` mira también la inscripción (un lote puede galardonarse sin pisar
+  `fila_arena`, y el espejo por stage solo cubría la mitad de la delete-RLS).
+- **Datos**: fase terminal **`galardonado`** en el CHECK de `arena_inscriptions.phase`; columna
+  `sondeo_batches.q_grader_name`; valor **`q_grader_batch`** en el enum `evaluation_source` — la
+  procedencia visible en la Ficha dice «Evaluación CTC · Q-Grader en bache», no se disfraza de
+  Arena. El trigger M3 (muestra solo con inscripción y en `apto`) NO cambió, a propósito.
+- **Docs**: guardián nuevo `scripts/qa-evaluaciones-check.mjs` (la firma del veredicto no acepta
+  grados, la procedencia propia, el Club en un solo sitio, las tres secciones, GAL antes que ARE);
+  banner V5.17 sobre la sección «The Arena pipeline» del HANDOFF (barrido completo en V5.19).
+
 ## [V5.16] — 2026-08-21 (commit c2fc0a1)
 
 - **Hito**: **el panel del productor se rehace en CINCO interfaces** detrás de una barra de

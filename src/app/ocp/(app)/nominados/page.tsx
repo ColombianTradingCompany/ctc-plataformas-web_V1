@@ -38,6 +38,7 @@ type BatchRow = {
   status: string;
   lab_name: string | null;
   lab_contact: string | null;
+  q_grader_name: string | null;
   proof_filename: string | null;
   received_at: string | null;
   delivered_at: string | null;
@@ -56,7 +57,7 @@ export default async function NominadosPage() {
       .in("phase", ["postulacion", "sondeo", "fila", "retirado"]),
     service
       .from("sondeo_batches")
-      .select("id, label, status, lab_name, lab_contact, proof_filename, received_at, delivered_at, shipped_at, created_at")
+      .select("id, label, status, lab_name, lab_contact, q_grader_name, proof_filename, received_at, delivered_at, shipped_at, created_at")
       .order("created_at", { ascending: false }),
   ]);
 
@@ -171,7 +172,7 @@ export default async function NominadosPage() {
             Defina el laboratorio, imprima la Solicitud y despache; el «Bache Enviado» exige la prueba de recibo.
           </p>
           <PlannedBatchControls
-            batch={{ id: b.id, label: b.label, labName: b.lab_name ?? "", labContact: b.lab_contact ?? "" }}
+            batch={{ id: b.id, label: b.label, labName: b.lab_name ?? "", labContact: b.lab_contact ?? "", qGraderName: b.q_grader_name ?? "" }}
             samples={batchLots(b).map((i) => ({ reference: ctcLotReferenceShort(i.lot_id), kg: "2 kg" }))}
           />
         </div>
@@ -209,6 +210,7 @@ export default async function NominadosPage() {
                   lotName={i.lot!.name}
                   evaluations={toLabEvaluationList(i.sondeo_evaluation)}
                   resultFilename={i.sondeo_result_filename ?? null}
+                  qGraderName={b.q_grader_name ?? ""}
                 />
               </div>
             ))}

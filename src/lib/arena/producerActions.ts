@@ -39,7 +39,7 @@ export async function postularLote(lotId: string, campaignCode?: string): Promis
     .maybeSingle();
   if (!lot || lot.producer_id !== auth.userId) return { ok: false, message: "Lote no encontrado." };
   if (lot.stage !== "apto") {
-    return { ok: false, message: "Solo un lote declarado Apto por CTC puede postularse a la Arena." };
+    return { ok: false, message: "Solo un lote declarado Apto por CTC puede solicitar evaluación." };
   }
   const { data: existing } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
   if (existing) return { ok: false, message: "Este lote ya está postulado." };
@@ -99,7 +99,7 @@ export async function postularLote(lotId: string, campaignCode?: string): Promis
     producer_id: auth.userId,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `Su lote quedó postulado a la Kaffetal Regal Arena. Código de inscripción: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (descuento ${codeRow.discount_pct}%)` : ""} · valor a pagar: ${formatCop(due)}. Use el código como referencia del pago.`,
+    note: `Su solicitud de evaluación CTC quedó registrada. Código de inscripción: ${codeRow.code}${codeRow.discount_pct > 0 ? ` (descuento ${codeRow.discount_pct}%)` : ""} · valor a pagar: ${formatCop(due)}. Use el código como referencia del pago.`,
   });
 
   return { ok: true, entryCode: codeRow.code, discountPct: codeRow.discount_pct, dueCop: due };

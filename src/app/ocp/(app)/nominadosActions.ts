@@ -6,8 +6,11 @@ import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, MAX_BATCH_LOTS, dueFor, formatCop, isSettled, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
-import { labEvaluationHasData, labEvaluationScore, toLabEvaluationList, type LabEvaluation } from "@/lib/arena/labEvaluation";
+import { labEvaluationHasData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
+import { SCA_KEYS } from "@/lib/arena/jornada";
+import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
+import { grantClubMembershipOnce } from "@/lib/arena/club";
 
 // ── Nominados: el tramo pagado de la Arena, lado BCP ────────────────────────
 // Rediseño 2026-07-20 (paquete del owner). El tablero de arriba tiene TRES
@@ -355,14 +358,19 @@ export async function planSondeoBatch(batchId: string): Promise<Result> {
   return { ok: true };
 }
 
-/** Datos del laboratorio que recibirá el bache (editable mientras está planeado). */
-export async function setBatchLab(batchId: string, labName: string, labContact: string): Promise<Result> {
+/** Datos del laboratorio que recibirá el bache (editable mientras está planeado).
+ *  Desde V5.17 incluye el Q-GRADER del bache: su nombre firma la planilla
+ *  oficial (`lot_evaluations.q_grader_reference`) cuando el veredicto galardona. */
+export async function setBatchLab(batchId: string, labName: string, labContact: string, qGraderName?: string): Promise<Result> {
   await requireAdmin();
   const service = createServiceRoleClient();
   const { data: batch } = await service.from("sondeo_batches").select("id, status").eq("id", batchId).maybeSingle();
   if (!batch || batch.status !== "planeado") return { ok: false, error: "El laboratorio se define con el bache planeado." };
   if (!labName.trim()) return { ok: false, error: "Escriba el nombre del laboratorio." };
-  await service.from("sondeo_batches").update({ lab_name: labName.trim(), lab_contact: labContact.trim() || null }).eq("id", batchId);
+  await service
+    .from("sondeo_batches")
+    .update({ lab_name: labName.trim(), lab_contact: labContact.trim() || null, q_grader_name: qGraderName?.trim() || null })
+    .eq("id", batchId);
   revalidateAll();
   return { ok: true };
 }
@@ -463,11 +471,23 @@ export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluati
 }
 
 /**
- * El veredicto del sondeo por lote. Aprobado ⇒ pasa a la fila. Rechazado ⇒
- * sale del pipeline con cashback del 80% de lo pagado (si pagó) y unas
- * "Recomendaciones de Mejora" generadas por IA (best-effort, reintenteable).
+ * EL VEREDICTO DE LA EVALUACIÓN — el escritor del grado (V5.17).
+ *
+ * Desde V5.17 la evaluación por Q-Grader en bache ES el camino del galardón:
+ * ya no hay «aprobado ⇒ clasifica a sesión de Arena». Con puntaje suficiente,
+ * el lote sale GALARDONADO aquí mismo — el grado se DERIVA del puntaje con
+ * `gradoPorPuntaje()` (regla 1 del owner, 2026-08-19: «el puntaje manda»; ver
+ * src/lib/grados/definicion.ts) y nadie digita un grado a mano. La planilla
+ * queda como `lot_evaluations` con procedencia PROPIA (`q_grader_batch`) y la
+ * membresía del Club llega con el galardón (grantClubMembershipOnce).
+ * Rechazado ⇒ sale del pipeline con cashback del 80% de lo pagado (si pagó) y
+ * unas "Recomendaciones de Mejora" generadas por IA (best-effort).
+ *
+ * DESTINO COMERCIAL (interino hasta V5.18, que trae el modelo de ofertas):
+ * red|blue|gold → purchase_contracts pending_signature · black →
+ * black_negotiations · tyrian → nada aún (Subastas llegan en V5.18).
  */
-export async function recordSondeoResult(
+export async function recordEvaluationVerdict(
   lotId: string,
   resultado: "aprobado" | "rechazado",
   notes: string,
@@ -483,24 +503,28 @@ export async function recordSondeoResult(
   const service = createServiceRoleClient();
 
   const cleanNotes = notes.trim();
-  if (!cleanNotes) return { ok: false, error: "Escriba el resultado del sondeo — el productor lo verá." };
+  if (!cleanNotes) return { ok: false, error: "Escriba el resultado de la evaluación — el productor lo verá." };
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, lots(name)")
+    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, lots(name, stage)")
     .eq("lot_id", lotId)
     .maybeSingle();
-  if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en sondeo." };
+  if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en evaluación." };
 
   // El veredicto solo existe en la fase de REGISTRO del bache: recibido en el
   // laboratorio y con las pruebas entregadas.
-  if (!ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un bache de sondeo." };
-  const { data: batch } = await service.from("sondeo_batches").select("status").eq("id", ins.sondeo_batch_id).maybeSingle();
+  if (!ins.sondeo_batch_id) return { ok: false, error: "Este lote no está en un bache de evaluación." };
+  const { data: batch } = await service
+    .from("sondeo_batches")
+    .select("status, q_grader_name")
+    .eq("id", ins.sondeo_batch_id)
+    .maybeSingle();
   if (batch?.status !== "registro") {
-    return { ok: false, error: "El bache aún no está en Registro de Sondeo — confirme recibo y pruebas entregadas primero." };
+    return { ok: false, error: "El bache aún no está en Registro — confirme recibo y pruebas entregadas primero." };
   }
 
-  const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string } | null;
+  const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string; stage: string } | null;
 
   // Si el veredicto llega con una planilla nueva, se AÑADE a la lista (un lote
   // puede tener varias). El puntaje del sondeo = el explícito, o el total SCA
@@ -521,27 +545,115 @@ export async function recordSondeoResult(
   };
 
   if (resultado === "aprobado") {
-    // Apto ⇒ el lote SALE de Nominados y entra al módulo Arena (phase='arena'),
-    // desde donde se bloquea en una sesión. Ya no vuelve a la fila de sondeo.
+    // ── El galardón nace aquí (V5.17) ────────────────────────────────────
+    // El puntaje manda: el grado se deriva, jamás se digita. Sin puntaje no
+    // hay galardón; con puntaje bajo el camino honesto es «rechazado».
+    if (effectiveScore == null) {
+      return { ok: false, error: "Registre una planilla con puntaje SCA (o digite el puntaje) antes de galardonar." };
+    }
+    const puntaje = redondeaPuntaje(effectiveScore);
+    const grado = gradoPorPuntaje(puntaje);
+    if (!grado) {
+      return { ok: false, error: `Con puntaje ${puntaje} no hay galardón (mínimo 80). Registre el veredicto como «rechazado».` };
+    }
+    if (!batch.q_grader_name?.trim()) {
+      return { ok: false, error: "Defina el Q-Grader del bache (junto al laboratorio) — la planilla oficial lleva su nombre." };
+    }
+
+    // La planilla del Q-Grader queda como evaluación OFICIAL del lote, con su
+    // procedencia propia — el comprador confía en esa etiqueta.
+    if (lastEval) {
+      const scaData: Record<string, number> = {};
+      for (const key of SCA_KEYS) scaData[key] = Number(lastEval[`sca_${key}` as keyof LabEvaluation]) || 0;
+      const derived = computeFactor(lastEval);
+      const { error: evalError } = await service.from("lot_evaluations").insert({
+        lot_id: lotId,
+        source: "q_grader_batch",
+        status: "accepted",
+        sca_total: puntaje,
+        sca_data: scaData,
+        factor_rendimiento: derived.yieldFactor,
+        physical_data: {
+          fa_start: lastEval.fa_start,
+          fa_green_remainder: lastEval.fa_green_remainder,
+          fa_primary_defect: lastEval.fa_primary_defect,
+          fa_secondary_defect: lastEval.fa_secondary_defect,
+          fa_parch_hum: lastEval.fa_parch_hum,
+          mesh_supremo_plus: lastEval.mesh_supremo_plus,
+          mesh_supremo: lastEval.mesh_supremo,
+          mesh_extra: lastEval.mesh_extra,
+          mesh_europa: lastEval.mesh_europa,
+          mesh_ugq: lastEval.mesh_ugq,
+          mesh_peaberry: lastEval.mesh_peaberry,
+          tipo: "q_grader_batch",
+        },
+        q_grader_reference: batch.q_grader_name.trim(),
+        notes: lastEval.analysis_notes || null,
+        submitted_by: adminId,
+        reviewed_by: adminId,
+        reviewed_at: new Date().toISOString(),
+      });
+      if (evalError) return { ok: false, error: "No se pudo guardar la evaluación oficial del lote." };
+    }
+
+    // El grado y el galardón. El service role salta los guards por diseño.
+    await service.from("lots").update({ grade: grado.id, stage: "galardonado" }).eq("id", lotId);
     await service
       .from("arena_inscriptions")
-      .update({ phase: "arena", sondeo_result: "aprobado", ...resultCols })
+      .update({ phase: "galardonado", sondeo_result: "aprobado", ...resultCols, sondeo_score: puntaje })
       .eq("id", ins.id);
     await service.from("audit_log").insert({
-      entity_type: "arena_inscription",
+      entity_type: "lot",
       entity_id: lotId,
-      action: "sondeo_aprobado",
-      new_status: "arena",
+      action: "graded",
+      previous_status: lot?.stage,
+      new_status: "galardonado",
       performed_by: adminId,
-      notes: cleanNotes.slice(0, 300),
+      notes: `Evaluación CTC por Q-Grader en bache. Puntaje ${puntaje} ⇒ Grado ${grado.nombre} (derivado). ${cleanNotes.slice(0, 220)}`,
     });
     await service.from("producer_comm_log").insert({
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `¡Su lote superó el sondeo preliminar${effectiveScore != null ? ` (${effectiveScore})` : ""}! Quedó clasificado para la próxima sesión de la Kaffetal Regal Arena.`,
+      note: `¡Su lote fue GALARDONADO! Puntaje SCA ${puntaje} — Grado CTC ${grado.nombre}. Encontrará los documentos y el resultado completo en «Evaluar mi Café» → Lotes Galardonados.`,
       created_by: adminId,
     });
+
+    // La membresía del Club llega con el galardón (decisión del owner V5.17).
+    if (ins.producer_id) {
+      await grantClubMembershipOnce(service, ins.producer_id, adminId, new Set<string>());
+    }
+
+    // Destino comercial INTERINO (hasta V5.18, que trae el modelo de ofertas):
+    // el mismo enrutamiento por grado que hacía finalizeJornada.
+    if (grado.id === "red" || grado.id === "blue" || grado.id === "gold") {
+      const { data: contract } = await service
+        .from("purchase_contracts")
+        .insert({ lot_id: lotId, status: "pending_signature", grade_snapshot: grado.id })
+        .select("id")
+        .single();
+      if (contract) {
+        await service.from("audit_log").insert({
+          entity_type: "purchase_contract",
+          entity_id: contract.id,
+          action: "created",
+          new_status: "pending_signature",
+          performed_by: adminId,
+        });
+      }
+    } else if (grado.id === "black") {
+      const { data: neg } = await service.from("black_negotiations").insert({ lot_id: lotId }).select("id").single();
+      if (neg) {
+        await service.from("audit_log").insert({
+          entity_type: "black_negotiation",
+          entity_id: neg.id,
+          action: "opened",
+          new_status: "abierta",
+          performed_by: adminId,
+        });
+      }
+    }
+    // tyrian: sin contrato — las Subastas Tyrian llegan en V5.18.
   } else {
     // Cashback: 80% de lo efectivamente pagado. Un exento no pagó — sin cashback.
     const cashback = ins.status === "pagado" ? Math.round((ins.amount_due_cop ?? 0) * 0.8) : null;

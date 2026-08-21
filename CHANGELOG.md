@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.19] — 2026-08-21 (commit pendiente)
+## [V5.19] — 2026-08-21 (commit 3302cf3)
 
 - **Hito**: **el galardón nace del puntaje; la Arena es la vitrina.** Cierra el plan V5.16→V5.19:
   la Arena queda re-gateada como la **gala post-galardón de la temporada**, exclusiva de

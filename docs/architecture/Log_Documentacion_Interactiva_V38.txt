@@ -263,4 +263,4 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
 - Para el PRÓXIMO wrap (V39): la banda `arena` del workmap pasa a vitrina post-gal (bandas
   mue/sondeo/gal se re-ordenan; e15 sigue; ARE cuelga de gal+contrato); ficha DICT «vitrina-arena»
   candidata; el nodo de la landing KR cambia su descripción.
-(commit: pending)
+(commit: 3302cf3)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.17] — 2026-08-21 (commit pendiente)
+## [V5.17] — 2026-08-21 (commit 5adb30e)
 
 - **Hito**: **el galardón nace del bache — el Q-Grader escribe el grado, y el puntaje manda.** El
   veredicto de la evaluación (`recordEvaluationVerdict`, ex-`recordSondeoResult`) es ahora EL

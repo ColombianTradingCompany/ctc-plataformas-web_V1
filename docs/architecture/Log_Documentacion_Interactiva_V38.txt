@@ -211,4 +211,4 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   competir). Barrido completo de HANDOFF y landing: V5.19.
 - Para el PRÓXIMO wrap (V39): la traza del lote cambia (GAL sale del bache; e15/e21/e23 del workmap
   se re-cablean cuando V5.18 traiga las ofertas); ficha DICT «evaluacion-q-grader» candidata.
-(commit: pending)
+(commit: 5adb30e)

@@ -212,3 +212,32 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
 - Para el PRÓXIMO wrap (V39): la traza del lote cambia (GAL sale del bache; e15/e21/e23 del workmap
   se re-cablean cuando V5.18 traiga las ofertas); ficha DICT «evaluacion-q-grader» candidata.
 (commit: 5adb30e)
+
+## [2026-08-21] V5.18 · El contrato nace de la aceptación — el circuito de ofertas
+- **Tabla nueva `lot_offers`** (migraciones `v5_18_lot_offers_and_contract_season` +
+  `v5_18_lot_offers_season_framing`): kind `temporada|black|subasta`, status
+  `emitida|aceptada|rechazada|retirada|expirada`, snapshots congelados (grado, puntaje, variedad,
+  proceso, season_label, lote_de_temporada_pasada), índice único parcial (UNA abierta por lote),
+  RLS select-own + escrituras solo service role. Columna `purchase_contracts.season_id` (temporada
+  de VENTA de la oferta, no la de registro del lote).
+- **El flujo**: CTCx emite desde `/ocp/ofertas` (`ofertasActions.ts`: emitOffer/retireOffer;
+  pestaña nueva en CatalogoTabs, primera) → el productor decide desde «Contratos y Compras»
+  (`src/lib/ofertas/producerActions.ts`: respondToOffer) → ACEPTAR crea el purchase_contract
+  pending_signature con grado + temporada de la oferta y enlaza contract_id → CTC firma con el
+  signContract de siempre. Rechazar cierra con nota. `recordEvaluationVerdict` ya no inserta
+  contratos; `decideBlackNegotiation('comprar')` emite la oferta Black (precio obligatorio).
+- **Reglas**: elegibilidad por clase (temporada⇒red|blue|gold · black⇒black · subasta⇒tyrian);
+  solo galardonados; ventana «esta temporada o la pasada» con `seasonKey` nuevo en
+  src/lib/arena/seasons.ts (Mitaca antes que Principal, diff ≤ 1, rechazo duro si más vieja); un
+  contrato vivo bloquea re-ofertar. El encuadre de temporada viaja CONGELADO en la oferta porque
+  harvest_seasons es service-role-only y el productor no podría derivarlo.
+- **Panel del productor**: «Contratos y Compras» en cuatro secciones — Ofertas de Temporada ·
+  Contratos de Temporada (lote de la temporada pasada SE VE como tal) · Ofertas Black · Subastas
+  Tyrian («el podio de los mejores, al mejor postor»; la puja del comprador corre FUERA — alcance
+  V5.18: CTC registra el mejor postor como oferta). ProducerOffer en data.ts; lot_offers en el
+  loadData de KaffetalExperience.
+- Probado en producción con rollback: el índice de una-abierta-por-lote bloquea el duplicado.
+- Guardián nuevo `scripts/qa-ofertas-check.mjs` (36).
+- Para el PRÓXIMO wrap (V39): nodo `lot_offers` en el workmap; re-cablear e21/e23 (gal →
+  ofertas → contrato/negociación); traza nueva «la oferta y la aceptación» candidata.
+(commit: pending)

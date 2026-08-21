@@ -42,6 +42,13 @@ export async function currentSeason(service: SupabaseClient): Promise<Season | n
   return active ?? seasons[0];
 }
 
+/** Orden cronológico de una temporada: la Mitaca (mar–may) va ANTES que la
+ *  Principal (sep–dic) del mismo año. Sirve para la regla de las ofertas
+ *  (V5.18): «de esta temporada o la pasada» ⇔ diferencia de clave ≤ 1. */
+export function seasonKey(s: Pick<Season, "kind" | "year">): number {
+  return s.year * 2 + (s.kind === "principal" ? 1 : 0);
+}
+
 /** ¿Cuántas temporadas distintas ha jugado ya este lote? (para el tope de 2) */
 export async function lotSeasonCount(service: SupabaseClient, lotId: string): Promise<number> {
   const { data } = await service.from("arena_inscriptions").select("season_id").eq("lot_id", lotId);

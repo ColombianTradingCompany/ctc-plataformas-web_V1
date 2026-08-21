@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type FeedbackNote } from "./data";
+import { type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer, type FeedbackNote } from "./data";
 import { RedSwitcher } from "@/components/RedSwitcher";
 import { LegalFooter } from "@/components/LegalFooter";
 import { PanelNav } from "./panel/PanelNav";
@@ -35,6 +35,7 @@ export function AppDashboard({
   parcelas,
   gi,
   contracts,
+  offers,
   feedback,
   tab,
   onSelectTab,
@@ -64,6 +65,7 @@ export function AppDashboard({
   parcelas: Parcela[];
   gi: GeneralInfo;
   contracts: ProducerContract[];
+  offers: ProducerOffer[];
   feedback: FeedbackNote[];
   tab: PanelTab;
   onSelectTab: (t: PanelTab) => void;
@@ -171,7 +173,14 @@ export function AppDashboard({
         )}
 
         {tab === "contratos" && (
-          <ContratosTab gi={gi} contracts={contracts} onGoEvaluaciones={irAEvaluaciones} />
+          <ContratosTab
+            gi={gi}
+            contracts={contracts}
+            offers={offers}
+            lots={lots}
+            onRefreshData={onRefreshData}
+            onGoEvaluaciones={irAEvaluaciones}
+          />
         )}
 
         {tab === "ecosistema" && (

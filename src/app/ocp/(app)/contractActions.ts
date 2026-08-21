@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { emitOffer } from "./ofertasActions";
 
 async function requireAdmin() {
   // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
@@ -39,11 +40,11 @@ export async function signContract(
     .eq("profile_id", lot?.producer_id ?? "")
     .maybeSingle();
   if (!pp?.club_member_since) {
-    // Desde 2026-07-17 la membresía se otorga automáticamente al competir en una
-    // jornada; este gate queda como defensa en profundidad.
+    // Desde V5.17 la membresía se otorga automáticamente con el GALARDÓN
+    // (grantClubMembershipOnce); este gate queda como defensa en profundidad.
     return {
       ok: false,
-      error: "El productor de este lote todavía no es miembro del Kaffetal Club — la membresía se otorga al competir su lote en una jornada de Arena.",
+      error: "El productor de este lote todavía no es miembro del Kaffetal Club — la membresía llega automáticamente cuando un lote suyo es galardonado.",
     };
   }
 
@@ -174,10 +175,13 @@ export async function resolveReconditioning(contractId: string, outcome: "active
   revalidatePath("/ocp/contratos");
 }
 
-// ── Negociación de lotes Black (2026-07-17) ─────────────────────────────────
+// ── Negociación de lotes Black (2026-07-17; desenlace re-cableado V5.18) ────
 // Un lote graduado Black no entra a la compra base automáticamente: se negocia
-// aparte. "comprar" crea un contrato pending_signature (misma compuerta de Club
-// al firmar); "liberado" lo cierra sin compra — el lote conserva su grado.
+// aparte. Desde V5.18, "comprar" YA NO crea el contrato directamente — EMITE
+// una OFERTA Black (lot_offers, vía emitOffer) que el productor acepta o
+// rechaza desde «Contratos y Compras»; el contrato nace de su aceptación
+// (misma compuerta de Club al firmar). "liberado" cierra sin compra — el lote
+// conserva su grado.
 export async function decideBlackNegotiation(
   negotiationId: string,
   outcome: "comprar" | "liberado",
@@ -191,30 +195,23 @@ export async function decideBlackNegotiation(
   if (neg.status !== "abierta") return { ok: false, error: "Esta negociación ya fue resuelta." };
 
   const notes = String(formData.get("notes") || "").trim() || null;
-  let contractId: string | null = null;
 
   if (outcome === "comprar") {
     const price = formData.get("agreed_price_per_kg") ? Number(formData.get("agreed_price_per_kg")) : null;
-    const { data: contract } = await service
-      .from("purchase_contracts")
-      .insert({ lot_id: neg.lot_id, status: "pending_signature", grade_snapshot: "black" })
-      .select("id")
-      .single();
-    contractId = contract?.id ?? null;
+    if (!price || !Number.isFinite(price) || price <= 0) {
+      return { ok: false, error: "Escriba el precio acordado por kg — es lo que la oferta Black le presenta al productor." };
+    }
+    // La oferta congela los snapshots y le avisa al productor; el contrato
+    // nace cuando él acepte (lot_offers.contract_id lo enlazará).
+    const fd = new FormData();
+    fd.set("price_per_kg", String(price));
+    if (notes) fd.set("notes", notes);
+    const emitted = await emitOffer(neg.lot_id, "black", fd);
+    if (!emitted.ok) return emitted;
     await service
       .from("black_negotiations")
-      .update({ status: "comprar", agreed_price_per_kg: price, notes, contract_id: contractId, decided_by: adminId, decided_at: new Date().toISOString() })
+      .update({ status: "comprar", agreed_price_per_kg: price, notes, decided_by: adminId, decided_at: new Date().toISOString() })
       .eq("id", negotiationId);
-    if (contractId) {
-      await service.from("audit_log").insert({
-        entity_type: "purchase_contract",
-        entity_id: contractId,
-        action: "created",
-        new_status: "pending_signature",
-        performed_by: adminId,
-        notes: "Contrato de negociación Black.",
-      });
-    }
   } else {
     await service
       .from("black_negotiations")

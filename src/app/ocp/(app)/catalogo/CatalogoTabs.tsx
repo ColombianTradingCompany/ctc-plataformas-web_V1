@@ -8,6 +8,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
+  // Ofertas primero (V5.18): es donde el trato NACE — el contrato y el
+  // catálogo vienen después de que el productor acepte.
+  { href: "/ocp/ofertas", label: "Ofertas" },
   { href: "/ocp/catalogo", label: "Catálogo" },
   { href: "/ocp/contratos", label: "Contratos" },
   { href: "/ocp/subastas", label: "Subastas Tyrian" },

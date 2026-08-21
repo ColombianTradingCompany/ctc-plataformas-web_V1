@@ -483,9 +483,10 @@ export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluati
  * Rechazado ⇒ sale del pipeline con cashback del 80% de lo pagado (si pagó) y
  * unas "Recomendaciones de Mejora" generadas por IA (best-effort).
  *
- * DESTINO COMERCIAL (interino hasta V5.18, que trae el modelo de ofertas):
- * red|blue|gold → purchase_contracts pending_signature · black →
- * black_negotiations · tyrian → nada aún (Subastas llegan en V5.18).
+ * DESTINO COMERCIAL (V5.18): el contrato NO nace aquí. Red|blue|gold y
+ * tyrian aparecen en las colas de /ocp/ofertas (CTCx emite; el contrato nace
+ * cuando el productor ACEPTA — respondToOffer); black abre su negociación
+ * (CRM de CTC) cuyo desenlace «comprar» emite la oferta Black.
  */
 export async function recordEvaluationVerdict(
   lotId: string,
@@ -624,24 +625,12 @@ export async function recordEvaluationVerdict(
       await grantClubMembershipOnce(service, ins.producer_id, adminId, new Set<string>());
     }
 
-    // Destino comercial INTERINO (hasta V5.18, que trae el modelo de ofertas):
-    // el mismo enrutamiento por grado que hacía finalizeJornada.
-    if (grado.id === "red" || grado.id === "blue" || grado.id === "gold") {
-      const { data: contract } = await service
-        .from("purchase_contracts")
-        .insert({ lot_id: lotId, status: "pending_signature", grade_snapshot: grado.id })
-        .select("id")
-        .single();
-      if (contract) {
-        await service.from("audit_log").insert({
-          entity_type: "purchase_contract",
-          entity_id: contract.id,
-          action: "created",
-          new_status: "pending_signature",
-          performed_by: adminId,
-        });
-      }
-    } else if (grado.id === "black") {
+    // Destino comercial (V5.18): EL CONTRATO YA NO NACE AQUÍ. Red/Blue/Gold
+    // aparecen en la cola de /ocp/ofertas (CTCx emite, el productor acepta y
+    // AHÍ nace el contrato — respondToOffer); Tyrian aparece en la cola de
+    // Subastas de la misma pantalla. Black conserva su CRM: se abre la
+    // negociación, y su desenlace «comprar» emite la oferta Black.
+    if (grado.id === "black") {
       const { data: neg } = await service.from("black_negotiations").insert({ lot_id: lotId }).select("id").single();
       if (neg) {
         await service.from("audit_log").insert({
@@ -653,7 +642,6 @@ export async function recordEvaluationVerdict(
         });
       }
     }
-    // tyrian: sin contrato — las Subastas Tyrian llegan en V5.18.
   } else {
     // Cashback: 80% de lo efectivamente pagado. Un exento no pagó — sin cashback.
     const cashback = ins.status === "pagado" ? Math.round((ins.amount_due_cop ?? 0) * 0.8) : null;

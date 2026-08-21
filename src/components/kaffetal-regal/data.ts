@@ -310,9 +310,39 @@ export type FeedbackNote = {
   leadId: string | null;
 };
 
+// ── Ofertas (V5.18) ─────────────────────────────────────────────────────────
+// El espejo cliente de lot_offers (RLS select-own; el productor solo LEE —
+// responder pasa por src/lib/ofertas/producerActions.ts). Los snapshots
+// (grado, puntaje, variedad, proceso, temporada) se congelaron al emitir:
+// el productor acepta exactamente lo que lee.
+export type ProducerOffer = {
+  id: string;
+  lotId: string;
+  lotName: string;
+  kind: "temporada" | "black" | "subasta";
+  status: "emitida" | "aceptada" | "rechazada" | "retirada" | "expirada";
+  grade: NonNullable<Lot["grade"]> | null;
+  score: number | null;
+  variety: string | null;
+  process: string | null;
+  pricePerKg: number;
+  quantityKg: number | null;
+  notes: string | null;
+  seasonLabel: string | null;
+  /** Congelado al emitir: el lote se galardonó la temporada PASADA y se
+   *  posiciona en la ventana de esta — se muestra encuadrado como tal. */
+  loteDeTemporadaPasada: boolean;
+  emittedAt: string;
+  respondedAt: string | null;
+  responseNote: string | null;
+  contractId: string | null;
+};
+
 export type ProducerContract = {
   id: string;
   lotId: string;
+  /** Temporada de VENTA, heredada de la oferta aceptada (V5.18). */
+  seasonId: string | null;
   lotName: string;
   grade: Lot["grade"];
   status: "pending_signature" | "active" | "reconditioning" | "completed" | "cancelled";

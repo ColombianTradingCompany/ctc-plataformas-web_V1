@@ -34,6 +34,7 @@ import {
   type GeneralInfo,
   type Lot,
   type ProducerContract,
+  type ProducerOffer,
   type FeedbackNote,
   type ScaScoring,
 } from "./data";
@@ -320,6 +321,7 @@ function Experience() {
   const [fincaCerts, setFincaCerts] = useState<FincaCertificate[]>([]);
   const [lots, setLots] = useState<Lot[]>([]);
   const [contracts, setContracts] = useState<ProducerContract[]>([]);
+  const [offers, setOffers] = useState<ProducerOffer[]>([]);
   const [feedback, setFeedback] = useState<FeedbackNote[]>([]);
   const [curLotId, setCurLotId] = useState<string | null>(null);
 
@@ -361,7 +363,7 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
-      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }, { data: parcelaRows }, { data: certRows }] =
+      const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }, { data: parcelaRows }, { data: certRows }, { data: offerRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
@@ -398,6 +400,14 @@ function Experience() {
           // RLS (parcelas/finca_certs *_own) scopes both to the producer's fincas.
           supabase.from("finca_parcelas").select("*").order("position", { ascending: true }),
           supabase.from("finca_certificates").select("*").order("created_at", { ascending: true }),
+          // RLS (lot_offers_select_own) scopes this to the producer's own offers
+          // — solo lectura; responder pasa por respondToOffer (Server Action).
+          supabase
+            .from("lot_offers")
+            .select(
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id"
+            )
+            .order("emitted_at", { ascending: false }),
         ]);
 
       const fincaRowList = (fincaRows as FincaRow[] | null) ?? [];
@@ -505,6 +515,7 @@ function Experience() {
         status: ProducerContract["status"];
         price_per_kg_locked: number | null;
         quantity_frozen_kg: number | null;
+        season_id: string | null;
         lots: { id: string; name: string; grade: string | null } | null;
         contract_releases: {
           month_number: number;
@@ -521,6 +532,7 @@ function Experience() {
         ((contractRows as ContractRow[] | null) ?? []).map((c) => ({
           id: c.id,
           lotId: c.lot_id,
+          seasonId: c.season_id,
           lotName: c.lots?.name ?? "—",
           grade: c.lots?.grade ? GRADE_DB[c.lots.grade] : null,
           status: c.status,
@@ -541,6 +553,49 @@ function Experience() {
             .slice()
             .sort((a, b) => a.reading_month - b.reading_month)
             .map((h) => ({ month: h.reading_month, pct: Number(h.humidity_pct), flagged: h.flagged, reportedAt: h.reported_at })),
+        }))
+      );
+
+      type OfferRow = {
+        id: string;
+        lot_id: string;
+        kind: ProducerOffer["kind"];
+        status: ProducerOffer["status"];
+        grade_snapshot: string;
+        score_snapshot: number | string | null;
+        variety_snapshot: string | null;
+        process_snapshot: string | null;
+        price_per_kg: number | string;
+        quantity_kg: number | string | null;
+        notes: string | null;
+        season_label: string | null;
+        lote_de_temporada_pasada: boolean;
+        emitted_at: string;
+        responded_at: string | null;
+        response_note: string | null;
+        contract_id: string | null;
+      };
+      const lotNameById = new Map(lotRowList.map((l) => [l.id, l.name]));
+      setOffers(
+        ((offerRows as OfferRow[] | null) ?? []).map((o) => ({
+          id: o.id,
+          lotId: o.lot_id,
+          lotName: lotNameById.get(o.lot_id) ?? "—",
+          kind: o.kind,
+          status: o.status,
+          grade: GRADE_DB[o.grade_snapshot] ?? null,
+          score: o.score_snapshot != null ? Number(o.score_snapshot) : null,
+          variety: o.variety_snapshot,
+          process: o.process_snapshot,
+          pricePerKg: Number(o.price_per_kg),
+          quantityKg: o.quantity_kg != null ? Number(o.quantity_kg) : null,
+          notes: o.notes,
+          seasonLabel: o.season_label,
+          loteDeTemporadaPasada: o.lote_de_temporada_pasada,
+          emittedAt: o.emitted_at,
+          respondedAt: o.responded_at,
+          responseNote: o.response_note,
+          contractId: o.contract_id,
         }))
       );
 
@@ -636,6 +691,7 @@ function Experience() {
         setFincas([]);
         setLots([]);
         setContracts([]);
+        setOffers([]);
         setFeedback([]);
         setGi(EMPTY_GI);
         setCurLotId(null);
@@ -1696,6 +1752,7 @@ function Experience() {
           parcelas={parcelas}
           gi={gi}
           contracts={contracts}
+          offers={offers}
           feedback={feedback}
           tab={activeTab}
           onSelectTab={selectTab}

@@ -19,6 +19,37 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.18] — 2026-08-21 (commit pendiente)
+
+- **Hito**: **el contrato nace de la aceptación del productor.** Nace el circuito de OFERTAS:
+  CTCx confirma el trato desde el OCP (`/ocp/ofertas`, pestaña nueva del Catálogo) referenciando la
+  combinación **Grado + Puntaje + Variedad + Proceso congelada como snapshot**, y el productor lo
+  acepta o rechaza desde su panel — aceptar crea el `purchase_contract` (pendiente de la firma de
+  CTC, que conserva su `signContract` y su escalera de liberación); rechazar cierra sin compromiso.
+  El contrato automático que el galardón creaba desde 2026-07-17 queda retirado. Fase 3 de 4 del
+  plan V5.16→V5.19.
+- **Añadido**: la pestaña **«Contratos y Compras» real, en cuatro secciones** (mockups del owner):
+  *Ofertas de Temporada* (galardonados Red o superior, de esta temporada o la pasada), *Contratos
+  de Temporada* (el mes a mes de la ventana de venta; un **lote de la temporada pasada se posiciona
+  pero SE VE como tal** — el encuadre viaja congelado en la oferta), *Ofertas Black* (la compra
+  directa que sale de la negociación Black) y **Subastas Tyrian** — «el podio de los mejores, al
+  mejor postor»: el Tyrian va rumbo a subasta, CTC corre la puja fuera y registra el mejor postor
+  como oferta que el productor decide. En el OCP: colas de elegibles por clase, abiertas con
+  retiro, historial de respuestas.
+- **Cambiado**: `recordEvaluationVerdict` ya no inserta contratos (red/blue/gold y tyrian aparecen
+  en las colas de Ofertas); `decideBlackNegotiation('comprar')` **emite la oferta Black** (precio
+  acordado obligatorio) en vez de crear el contrato; el gate del Club en `signContract` corrige su
+  mensaje (la membresía llega con el galardón). Regla de temporada con `seasonKey` (Mitaca antes
+  que Principal): más vieja que la pasada, rechazo duro al emitir.
+- **Datos**: tabla **`lot_offers`** (kind `temporada|black|subasta`, status
+  `emitida|aceptada|rechazada|retirada|expirada`, snapshots, encuadre de temporada congelado,
+  índice único parcial de UNA oferta abierta por lote — probado con rollback en producción), RLS
+  select-own y escrituras solo por service role; columna **`purchase_contracts.season_id`**
+  (temporada de VENTA, heredada de la oferta — no derivada del registro del lote, a propósito).
+- **Docs**: guardián nuevo `scripts/qa-ofertas-check.mjs` (máquina de estados, elegibilidad por
+  clase, ventana de dos temporadas, propiedad del productor, y que el contrato no nazca en ningún
+  otro sitio).
+
 ## [V5.17] — 2026-08-21 (commit 5adb30e)
 
 - **Hito**: **el galardón nace del bache — el Q-Grader escribe el grado, y el puntaje manda.** El

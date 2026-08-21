@@ -4,15 +4,14 @@ import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 import bstyles from "./PaneB3.module.css";
 
-// ── B3 · Caracterización Física (rediseño V5.20, owner 2026-08-21) ──────────
-// Igual que B2, el productor ya no llena la granulometría malla a malla. Dos
-// caminos, y basta con uno:
-//   · «Solo sé información básica»: el Factor de Rendimiento (75–120) y/o la
-//     Almendra Total (150–245 g; AT = 205 g − gramos de cisco), y la Densidad
-//     en Verde (600–1000 g/L) que aquí es OBLIGATORIA.
-//   · Adjuntar al menos un soporte (PDF o foto del análisis físico), con un
-//     bloque opcional de Humedad en Pergamino, Humedad en Verde y Densidad en
-//     Verde.
+// ── B3 · Caracterización Física (rediseño V5.20; afinado V5.21) ─────────────
+// Igual que B2, el productor ya no llena la granulometría malla a malla. Los
+// NÚMEROS van siempre a la vista (owner, V5.21): factor (75–120), almendra
+// total (150–245 g; AT = 205 g − cisco) y densidad en verde (600–1000 g/L)
+// arriba, y las humedades opcionales abajo. Dos caminos para COMPLETAR:
+//   · «Solo sé información básica» (la casilla declara que no habrá soportes):
+//     factor y/o almendra, y la densidad OBLIGATORIA.
+//   · Adjuntar al menos un soporte (PDF o foto del análisis físico).
 // Todo viaja con B2 como «Reportado por Productor». El detalle completo
 // (mallas, defectos, factor de laboratorio) nace después, cuando CTCx analiza
 // los soportes y compila las Fichas Técnicas del lote — aquí se listarán al
@@ -49,7 +48,6 @@ export function PaneB3({
   onGetFileUrl: (assetId: string) => Promise<string | null>;
 }) {
   const fueraDeRango = (v: string, r: { min: number; max: number }) => v.trim() !== "" && !rangoValido(v, r);
-  const tieneAdjuntos = data.b3_files_pdf.length + data.b3_files_foto.length > 0;
 
   return (
     <div className={styles.fsec}>
@@ -84,10 +82,14 @@ export function PaneB3({
         Solo sé información básica <small>(sin hoja de análisis que adjuntar)</small>
       </label>
 
-      {data.b3_solo_basica && (
-        <div className={bstyles.basicaBox}>
+      {/* Los números van SIEMPRE a la vista (owner, 2026-08-21): el productor
+          no debería tener que marcar una casilla para descubrir qué se le
+          pide. La casilla de arriba solo DECLARA que no habrá soportes — y con
+          ella marcada, factor/almendra + densidad completan la sección. */}
+      <div className={bstyles.basicaBox}>
           <p className={styles.fexample} style={{ marginTop: 0 }}>
-            Reporte <b>al menos uno</b> de los dos primeros; la <b>Densidad en Verde</b> es obligatoria.
+            Reporte <b>al menos uno</b> de los dos primeros; la <b>Densidad en Verde</b> es obligatoria si no adjunta
+            soportes.
           </p>
           <div className={styles.fgrid}>
             <div className={styles.ff}>
@@ -139,8 +141,7 @@ export function PaneB3({
               )}
             </div>
           </div>
-        </div>
-      )}
+      </div>
 
       <ReportFiles
         titulo="Soportes del análisis físico · granulometría, factor, densidad (hasta 7 PDFs y 7 fotos)"
@@ -158,30 +159,21 @@ export function PaneB3({
         onGetFileUrl={onGetFileUrl}
       />
 
-      {tieneAdjuntos && (
-        <div className={bstyles.opcionalBox}>
-          <p className={styles.fexample} style={{ marginTop: 0, fontWeight: 600, color: "var(--ink)" }}>
-            Si además conoce estos números, repórtelos (opcional)
-          </p>
-          <div className={styles.fgrid}>
-            <div className={styles.ff}>
-              <label>Humedad en Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino. Rango sano: 10–12%." /></label>
-              <input type="number" step="0.1" value={data.fa_parch_hum} onChange={(e) => onChange({ fa_parch_hum: e.target.value })} placeholder="Ej. 11.0" />
-            </div>
-            <div className={styles.ff}>
-              <label>Humedad en Verde (%)<FieldInfo text="Porcentaje de humedad del café verde ya trillado. Rango sano: 10–12%." /></label>
-              <input type="number" step="0.1" value={data.b3_humedad_verde} onChange={(e) => onChange({ b3_humedad_verde: e.target.value })} placeholder="Ej. 10.5" />
-            </div>
-            <div className={styles.ff}>
-              <label>Densidad en Verde (g/L)<FieldInfo text="Cuánto pesa un litro de su café verde — aquí es opcional porque su hoja adjunta normalmente ya la trae." /></label>
-              <input type="number" step="1" value={data.b3_densidad_verde} onChange={(e) => onChange({ b3_densidad_verde: e.target.value })} placeholder="Ej. 720" />
-              {fueraDeRango(data.b3_densidad_verde, B3_RANGOS.densidad) && (
-                <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.densidad.min} y {B3_RANGOS.densidad.max} g/L.</p>
-              )}
-            </div>
+      <div className={bstyles.opcionalBox}>
+        <p className={styles.fexample} style={{ marginTop: 0, fontWeight: 600, color: "var(--ink)" }}>
+          Si además conoce estos números, repórtelos (opcional)
+        </p>
+        <div className={styles.fgrid}>
+          <div className={styles.ff}>
+            <label>Humedad en Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino. Rango sano: 10–12%." /></label>
+            <input type="number" step="0.1" value={data.fa_parch_hum} onChange={(e) => onChange({ fa_parch_hum: e.target.value })} placeholder="Ej. 11.0" />
+          </div>
+          <div className={styles.ff}>
+            <label>Humedad en Verde (%)<FieldInfo text="Porcentaje de humedad del café verde ya trillado. Rango sano: 10–12%." /></label>
+            <input type="number" step="0.1" value={data.b3_humedad_verde} onChange={(e) => onChange({ b3_humedad_verde: e.target.value })} placeholder="Ej. 10.5" />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

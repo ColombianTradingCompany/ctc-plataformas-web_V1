@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.21] — 2026-08-21 (commit pendiente)
+
+- **Corregido**: dos afinados del owner sobre el B2/B3 recién rediseñado. **B2 pierde el bloque
+  «Notas de Análisis & Referencia Q-Grader»** (notas de laboratorio y campos del Q-Grader no son
+  del reporte del productor — la referencia vive en «Solicitar oficialización», al pie de la Ficha;
+  los campos quedan en el tipo por los datasheets guardados). **B3 muestra SIEMPRE sus números**:
+  factor (75–120), almendra total (150–245 g) y densidad en verde (600–1000 g/L) a la vista sin
+  marcar nada, y las humedades opcionales debajo — la casilla «Solo sé información básica» queda
+  solo como declaración de que no habrá soportes (la regla de completar no cambia). Las notas del
+  productor alimentan ahora `ficha_notas_cata` vía `cupping_profile` cuando el campo legado viene
+  vacío.
+
 ## [V5.20] — 2026-08-21 (commit 5e12b04)
 
 - **Hito**: **B2 y B3 de la Ficha se vuelven «Reportado por Productor»** (instrucciones del owner

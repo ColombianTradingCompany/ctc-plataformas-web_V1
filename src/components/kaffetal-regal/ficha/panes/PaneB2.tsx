@@ -139,31 +139,11 @@ export function PaneB2({
         onGetFileUrl={onGetFileUrl}
       />
 
-      <p className={styles.fexample} style={{ marginTop: 22, borderTop: "1px solid var(--line)", paddingTop: 14, fontWeight: 600, color: "var(--ink)" }}>
-        Notas de Análisis & Referencia Q-Grader
-      </p>
-      <div className={styles.fgrid} style={{ marginTop: 10 }}>
-        <div className={`${styles.ff} ${styles.fw}`}>
-          <label>Notas de Análisis</label>
-          <textarea value={data.analysis_notes} onChange={(e) => onChange({ analysis_notes: e.target.value })} placeholder="Observaciones del laboratorio físico, condiciones de muestra…" />
-        </div>
-        <div className={styles.ff}>
-          <label>Nombre del Q-Grader</label>
-          <input value={data.qgrader_name} onChange={(e) => onChange({ qgrader_name: e.target.value })} placeholder="Nombre completo" />
-        </div>
-        <div className={styles.ff}>
-          <label>Laboratorio</label>
-          <input value={data.qgrader_lab} onChange={(e) => onChange({ qgrader_lab: e.target.value })} placeholder="Laboratorio / entidad" />
-        </div>
-        <div className={styles.ff}>
-          <label>Número de Certificación</label>
-          <input value={data.qgrader_cert} onChange={(e) => onChange({ qgrader_cert: e.target.value })} placeholder="N° de certificación Q" />
-        </div>
-      </div>
-      <p className={styles.fexample} style={{ marginTop: 10 }}>
-        Con la referencia del Q-Grader diligenciada, use &quot;Solicitar oficialización&quot; (justo debajo de esta
-        sección) para adjuntar el soporte y que CTC oficialice su puntaje.
-      </p>
+      {/* El bloque «Notas de Análisis & Referencia Q-Grader» salió de B2
+          (owner, 2026-08-21): esa información no es del reporte del productor
+          — la referencia del Q-Grader vive en «Solicitar oficialización» (al
+          pie de la Ficha) y las notas de análisis son del laboratorio. Los
+          campos quedan en el tipo por los datasheets guardados antes. */}
     </div>
   );
 }

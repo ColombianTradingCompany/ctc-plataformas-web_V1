@@ -114,3 +114,12 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
   (+1) · 91 wires · 34 CTX · 309 ANN (+13/−14) · FILETREE 1827.
 - El puntero de HANDOFF («Visual system map») apunta al V39.0.
 (commit: 0a70bd0)
+
+## [2026-08-21] V5.21 · Afinado de B2/B3 (owner sobre el panel nuevo)
+- PaneB2 pierde el bloque «Notas de Análisis & Referencia Q-Grader» (no es del reporte del
+  productor; la referencia vive en «Solicitar oficialización»). PaneB3 muestra SIEMPRE los números
+  (factor/almendra/densidad + humedades opcionales); la casilla «Solo sé información básica» queda
+  solo como declaración. ficha_notas_cata cae a cupping_profile si analysis_notes viene vacío.
+- Toca la ficha DICT «reportadoproductor» del V39 (una frase: los números siempre a la vista) —
+  para compilar en V40.
+(commit: pending)

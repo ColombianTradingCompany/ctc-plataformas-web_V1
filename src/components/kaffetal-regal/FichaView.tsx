@@ -339,7 +339,9 @@ export function FichaView({
         ficha_variedad: topVariety?.name || null,
         ficha_proceso: source.base_processing || null,
         ficha_altitud_m: source.masl ? Math.round(num(source.masl)) : null,
-        ficha_notas_cata: source.analysis_notes || null,
+        // V5.21: el bloque de Notas de Análisis salió de B2 — las notas del
+        // productor viven en cupping_profile; analysis_notes queda de legado.
+        ficha_notas_cata: source.analysis_notes || source.cupping_profile || null,
         // V5.20: el puntaje reportado manda; el total de los sca_* viejos queda
         // de respaldo para datasheets guardados antes del rediseño de B2.
         ficha_puntaje_estimado: b2ScoreValido ? numOr(data.b2_score) : sca.total > 0 ? sca.total : null,

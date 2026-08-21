@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.23] — 2026-08-21 (commit pendiente)
+## [V5.23] — 2026-08-21 (commit d5d2391)
 
 - **Añadido**: el **escáner visual del OCP y el set de Fichas Técnicas** — el seguimiento acordado
   del rediseño B2/B3 (V5.20). Nueva tabla **`lot_fichas`** (RLS select-own; escrituras solo

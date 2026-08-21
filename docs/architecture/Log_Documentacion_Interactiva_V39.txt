@@ -151,4 +151,4 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
   actualizar el DICT reportadoproductor (el círculo se cerró) + la ficha del
   consumo (sexta vía de gasto).
 - Guardián nuevo: scripts/qa-fichas-check.mjs (31 comprobaciones).
-(commit: pendiente)
+(commit: d5d2391)

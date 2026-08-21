@@ -14,32 +14,38 @@
 @media(max-width:520px){.main{padding:26px 18px 64px}}
 .h1{font-size:clamp(26px,3.6vw,40px);color:var(--primary-deep);margin-top:8px}
 
-/* Las clases `hub*` de aquí abajo conservan ese nombre a propósito: desde el
-   2026-08-18 «hub» está reservada para CommaaS y en la prosa esto es «el panel
-   del productor», pero renombrar clases CSS es refactor, no vocabulario (D2.1
-   del plan V5). Se renombran enteras o no se renombran.
+/* (V5.16) La rejilla de tarjetas `hub*` se RETIRÓ ENTERA — bloque completo,
+   nunca renombrado, cumpliendo su propia regla («se renombran enteras o no se
+   renombran»): el panel ahora son cinco interfaces detrás de la barra inferior
+   (panel/PanelNav.module.css). Aquí quedan las clases del cascarón y las que
+   comparten las pestañas. */
 
-   Tile landing: full-width tiles + two paired rows, separated by thin rules --
-   Información general / divider / Fincas+Lotes / divider / Arena+Certificación
-   / Mis contratos / Más allá de la exportación. Retroalimentación y
-   Herramientas moved OUT of this grid entirely, into the side FABs. */
-.hubGrid{display:flex;flex-direction:column;gap:18px;margin-top:28px}
-.hubDivider{border:none;height:1px;background:var(--line);margin:0}
-.hubPair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:640px){.hubPair{grid-template-columns:1fr}}
-/* Compact row: icon chip on the left, title + fact stacked beside it. */
-.hubTile{
-  width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:var(--radius);
-  padding:14px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;
-  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-}
-.hubTile:hover{border-color:var(--primary);box-shadow:0 3px 14px rgba(0,0,0,.08);transform:translateY(-2px)}
-.hubIcon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:42px;height:42px;border-radius:11px;background:var(--paper);border:1px solid var(--line);color:var(--primary)}
-.hubIcon svg{width:22px;height:22px}
-.hubText{display:flex;flex-direction:column;gap:2px;min-width:0}
-.hubTitle{font-family:var(--font-fraunces),serif;font-weight:700;font-size:16px;color:var(--primary-deep)}
-.hubFact{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--muted);line-height:1.45}
-.hubFactAlert{font-family:var(--font-spline-mono),monospace;font-size:11px;color:var(--accent);font-weight:700;line-height:1.45}
+/* El cascarón entero: deja sitio a la barra inferior fija para que el pie
+   legal no quede tapado al final del scroll. */
+.page{padding-bottom:74px}
+
+/* El saludo de Mi Perfil, bajo el título — serif, como en el mockup. */
+.saludo{font-family:var(--font-fraunces),serif;font-weight:700;font-size:19px;color:var(--primary-deep);margin-top:6px}
+
+/* Cabecera de sección de Mi Perfil: título-botón con flecha (abre el drill)
+   y la acción primaria a la derecha. */
+.secHead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.secTitleBtn{display:inline-flex;align-items:center;gap:10px;background:none;border:none;padding:0;cursor:pointer}
+.secTitle{font-family:var(--font-fraunces),serif;font-weight:700;font-size:22px;color:var(--primary-deep)}
+.secTitleBtn:hover .secTitle{text-decoration:underline}
+.secArrow{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px solid var(--line);border-radius:8px;color:var(--primary);font-size:15px}
+.secTitleBtn:hover .secArrow{border-color:var(--primary)}
+.secSub{font-family:var(--font-spline-mono),monospace;font-size:11.5px;color:var(--muted);margin-top:4px}
+
+/* El filtro de los drills (lista completa de fincas / lotes). */
+.filterSel{padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;background:var(--card);font-family:inherit}
+
+/* Tarjeta compacta del carrusel de lotes (la fila completa vive en el drill). */
+.lotCard{flex:0 0 300px;border:1px solid var(--line);border-left:7px solid var(--lc,var(--line));border-radius:12px;background:var(--paper);padding:14px;scroll-snap-align:start;display:flex;flex-direction:column;gap:7px}
+.lotCard h5{font-family:var(--font-fraunces),serif;font-size:15.5px;color:var(--primary-deep)}
+
+/* El drill de fincas: las mismas tarjetas del carrusel, en rejilla vertical. */
+.fincaList{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:14px;margin-top:12px}
 
 /* "Más allá de la exportación" in-panel service request forms */
 .svcForm{display:grid;gap:10px;margin-top:12px;max-width:560px}

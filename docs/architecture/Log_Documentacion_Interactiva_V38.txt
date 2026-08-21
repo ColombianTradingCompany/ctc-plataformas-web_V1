@@ -156,3 +156,32 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   «> Wrap V{N}: ciclo compilado en …» — el paso quedó en la SKILL de versionado.
 - Cambio de proceso, no de nodos: ningún nodo ni traza cambia por esto.
 (commit: 511a526)
+
+## [2026-08-21] V5.16 · El panel del productor se rehace en 5 interfaces
+- **Kaffetal Regal, lado productor**: la rejilla de 12 tarjetas y los dos FABs flotantes
+  (Retroalimentación + Herramientas) se retiran; el panel son ahora CINCO interfaces detrás de una
+  barra de navegación inferior fija — Mensajes · Ecosistema · Mi Perfil (centro) · Evaluaciones ·
+  Contratos. Cada interfaz es un componente en `src/components/kaffetal-regal/panel/`
+  (`PanelNav`, `PerfilTab`, `EvaluacionesTab`, `ContratosTab`, `EcosistemaTab`, `MensajesTab`,
+  `FlipCard`, `panelTabs.ts`, `mensajes.ts`); `AppDashboard.tsx` quedó como cascarón.
+- Mi Perfil: Información general + Mis Fincas + Mis Lotes como carruseles; la flecha abre la
+  lista completa con filtros (drill, que SÍ cuenta como capa del botón "Atrás"; la pestaña no).
+- Ecosistema de Valor: tarjetas que voltean — Directorio/Herramientas/Coffeed abren su plataforma
+  (el ToolPanel embebido y Solicitar Plus salen del panel: el Plus se administra en Herramientas
+  del Café); CTC Tech/Varietales abren su solicitud in-panel; Terratalento en gris, solo interés
+  (el módulo de Jornadas de Recolecta sale del panel del productor; su lado ECP queda intacto).
+- Mensajes y Notificaciones: reemplaza «Retroalimentación y ayuda» y absorbe «Mis solicitudes»
+  en una bandeja con dos filtros; la partición por CAMPO se movió a `panel/mensajes.ts`
+  (`partirFeed`) y el guardián `qa-solicitudes-kr-check.mjs` se re-apuntó allí.
+- El contrato `?m=<módulo>` (V4.34) por fin SE LEE: `LEGACY_MODULE_TO_TAB` traduce cada clave
+  vieja a su pestaña (con drill para fincas/lotes) y la URL se limpia con replaceState.
+- Guardián nuevo: `scripts/qa-kr-panel-check.mjs` (5 pestañas, mapa ?m= completo, pila de Atrás,
+  FABs fuera, y la trampa V4.30 de CSS modules en los 8 archivos del panel).
+- Es la FASE 1 de 4 del plan aprobado del panel (V5.16→V5.19): V5.17 = escalera de etapas +
+  Evaluaciones real (el Q-Grader en bache escribe el grado vía gradoPorPuntaje; Club al galardón);
+  V5.18 = ofertas/contratos/subastas Tyrian (tabla lot_offers + /ocp/ofertas); V5.19 = la Arena
+  re-gateada como vitrina (Blue/Gold/Tyrian con contrato) + barrido de HANDOFF.
+- Para el PRÓXIMO wrap (V39): el nodo del panel KR cambia de descripción (5 interfaces); posible
+  entrada DICT «panel-productor»; ANN para `src/components/kaffetal-regal/panel/`.
+- Cambio de UI + navegación; ningún nodo de datos ni wire cambia todavía (eso llega en V5.17+).
+(commit: pending)

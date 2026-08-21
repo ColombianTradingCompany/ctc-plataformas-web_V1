@@ -1,4 +1,6 @@
-// Guardián de «Mis solicitudes» en el panel del productor (paso (v), V4.35).
+// Guardián de las solicitudes de servicio en el panel del productor (V4.35;
+// re-apuntado en V5.16 cuando la partición se mudó a panel/mensajes.ts y las
+// dos mitades pasaron a vivir en la pestaña «Mensajes y Notificaciones»).
 //
 //   node scripts/qa-solicitudes-kr-check.mjs
 //
@@ -18,8 +20,8 @@
 //     desaparece de la interfaz sin que nada falle; si cae en las dos, se
 //     cuenta dos veces.
 //   · Que el espejo del ECP siga existiendo. Es lo que alimenta el módulo: si
-//     alguien lo quita, «Mis solicitudes» se queda vacío para siempre y el
-//     módulo parecerá «sin uso» en vez de roto.
+//     alguien lo quita, las solicitudes se quedan vacías para siempre y la
+//     pestaña parecerá «sin uso» en vez de rota.
 
 import { readFileSync } from "node:fs";
 
@@ -28,7 +30,8 @@ const fallos = [];
 const check = (n, c) => (c ? ok++ : fallos.push(n));
 const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 
-const dash = lee("src/components/kaffetal-regal/AppDashboard.tsx");
+const particion = lee("src/components/kaffetal-regal/panel/mensajes.ts");
+const mensajesTab = lee("src/components/kaffetal-regal/panel/MensajesTab.tsx");
 const exp = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
 const data = lee("src/components/kaffetal-regal/data.ts");
 const leads = lee("src/app/ecp/(app)/leadsActions.ts");
@@ -40,8 +43,8 @@ check("la consulta pide lead_id", exp.includes("parent_id, lead_id"));
 check("y lo mapea al modelo", exp.includes("leadId: c.lead_id"));
 
 // ── 2. La partición es por CAMPO, no por texto ────────────────────────────
-check("las solicitudes se identifican por leadId", dash.includes("n.leadId !== null"));
-check("y las dos mitades salen del MISMO predicado", dash.includes("feedback.filter(esDeServicio)") && dash.includes("feedback.filter((n) => !esDeServicio(n))"));
+check("las solicitudes se identifican por leadId", particion.includes("n.leadId !== null"));
+check("y las dos mitades salen del MISMO predicado", particion.includes("feedback.filter(esDeServicio)") && particion.includes("feedback.filter((n) => !esDeServicio(n))"));
 
 // ⚠️ EL FALLO QUE SE ENCONTRÓ CON DATOS REALES, y que un `leadId !== null` a
 // secas no cubre: solo la nota de CTC lleva el lead. La RESPUESTA del productor
@@ -50,25 +53,27 @@ check("y las dos mitades salen del MISMO predicado", dash.includes("feedback.fil
 // dos pantallas, sin un solo error. Eran 2 de 15 notas el día que se construyó.
 check(
   "una respuesta del productor viaja con su hilo (se mira el parentId)",
-  dash.includes("idsDeServicio.has(n.parentId)")
+  particion.includes("idsDeServicio.has(n.parentId)")
 );
 {
   // Complementarias: `!== null` y `=== null` cubren todo y no se solapan. Si
   // alguien cambia una de las dos a comparar etiquetas, esto lo caza.
-  const sinComentarios = dash.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const sinComentarios = particion.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
   check(
     "ninguna de las dos mitades mira el contextLabel para decidir",
     !/filter\(\(n\) => n\.contextLabel/.test(sinComentarios)
   );
 }
 
-// ── 3. Cada módulo recibe SU mitad ────────────────────────────────────────
-check("«Mis solicitudes» recibe las solicitudes", dash.includes("feedback={solicitudes}"));
-check("«Retroalimentación» recibe el resto", dash.includes("feedback={retroalimentacion}"));
-check("el contador de retro cuenta solo su mitad", dash.includes("retroalimentacion.filter((n) => n.authorRole === \"bcp\""));
-check("el módulo existe en el tipo", dash.includes('"solicitudes"'));
-check("y tiene tarjeta en la rejilla", dash.includes('renderTile("solicitudes")'));
-check("con icono propio", dash.includes("HUB_ICON.solicitudes"));
+// ── 3. Cada mitad se pinta con SU feed ────────────────────────────────────
+check("la pestaña Mensajes parte el feed con el predicado compartido", mensajesTab.includes("partirFeed(feedback)"));
+check("las solicitudes reciben su mitad", mensajesTab.includes("feedback={solicitudes}"));
+check("la retroalimentación recibe el resto", mensajesTab.includes("feedback={retroalimentacion}"));
+check("los contadores cuentan cada mitad por separado", mensajesTab.includes("sinLeer(retroalimentacion)") && mensajesTab.includes("sinLeer(solicitudes)"));
+{
+  // El contador de "sin leer" es por campo, no por copy, y vive UNA sola vez.
+  check("«sin leer» = nota de CTC sin acuse (por campo)", particion.includes('n.authorRole === "bcp" && !n.acknowledgedAt'));
+}
 
 // ── 4. El espejo del ECP, que es lo que lo alimenta ───────────────────────
 check("el ECP sigue espejando sus respuestas al productor", leads.includes("mirrorReplyToProducerFeed"));

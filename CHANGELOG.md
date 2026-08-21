@@ -19,6 +19,39 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.16] — 2026-08-21 (commit pendiente)
+
+- **Hito**: **el panel del productor se rehace en CINCO interfaces** detrás de una barra de
+  navegación inferior fija — Mensajes · Ecosistema · **Mi Perfil** (al centro) · Evaluaciones ·
+  Contratos — según los mockups del owner (bloque B del review V5.0, ítems B3/B4: el panel se
+  rehace ANTES de recorrer el bloque). La rejilla de doce tarjetas y los dos FABs flotantes se
+  retiran; cada interfaz vive en `src/components/kaffetal-regal/panel/` y `AppDashboard` queda como
+  cascarón. Fase 1 de 4 del plan V5.16→V5.19 (la escalera de etapas, las ofertas/subastas y la
+  Arena-vitrina llegan en las siguientes).
+- **Añadido**: **Mi Perfil** — Información general + Mis Fincas + Mis Lotes como carruseles (lo
+  nuevo empuja lo viejo a la derecha); la flecha de cada sección abre la lista completa con filtros
+  (Visa EUDR para fincas, etapa para lotes). **Ecosistema de Valor** — las plataformas de la red
+  como tarjetas que VOLTEAN: Directorio, Herramientas y Coffeed abren su plataforma; CTC Tech y
+  Varietales abren su solicitud especializada aquí mismo; Terratalento va en gris («En
+  desarrollo») y solo registra interés. **Mensajes y Notificaciones** — reemplaza a
+  «Retroalimentación y ayuda» y absorbe «Mis solicitudes»: una sola bandeja con dos filtros, la
+  partición sigue siendo por CAMPO (`panel/mensajes.ts`, `partirFeed`). La barra inferior lleva la
+  insignia de notas sin leer.
+- **Cambiado**: el contrato `?m=<módulo>` (V4.34) por fin se LEE: cada clave de la rejilla vieja
+  aterriza en su pestaña nueva (`LEGACY_MODULE_TO_TAB`), con el drill abierto para `fincas`/`lotes`
+  — los enlaces de vuelta de la concha de herramientas y los marcadores viejos siguen funcionando.
+  El botón «Atrás» del teléfono: el drill cuenta como capa de historial; cambiar de pestaña no.
+- **Retirado**: los dos FABs (`SideModuleFabs`), el `ToolPanel` embebido con su `KR_TOOL_COPY` y
+  «Solicitar Plus» (decisión del owner: la tarjeta de Herramientas ABRE la plataforma y el Plus se
+  administra allá), y el módulo de Jornadas de Recolecta (Terratalento queda en gris hasta su
+  lanzamiento; su lado ECP no se toca). Evaluaciones y Contratos son por ahora TRASPLANTES de los
+  módulos Arena+Certificación y Mis contratos — se reconstruyen en V5.17/V5.18.
+- **Docs**: guardián nuevo `scripts/qa-kr-panel-check.mjs` (las 5 pestañas, el mapa `?m=`, la pila
+  de «Atrás», los FABs fuera, y la trampa V4.30 de los CSS modules en los 8 archivos del panel);
+  `qa-solicitudes-kr-check.mjs` re-apuntado a `panel/mensajes.ts`/`MensajesTab`.
+
+---
+
 ## [V5.15] — 2026-08-20 (commit c64beb6)
 
 - **Cambiado**: el **Estándar CTC de Almacenamiento de Pergamino es bilingüe en TODAS las

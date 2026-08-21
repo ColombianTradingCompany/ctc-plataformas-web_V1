@@ -12,7 +12,8 @@ type ProgressFn = (fraction: number) => void;
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
-import { AppDashboard, type DashboardModule } from "./AppDashboard";
+import { AppDashboard } from "./AppDashboard";
+import { LEGACY_MODULE_TO_DRILL, LEGACY_MODULE_TO_TAB, esModuloLegado, type PanelDrill, type PanelTab } from "./panel/panelTabs";
 import { FichaView, type FichaSaveUpdate } from "./FichaView";
 import { FincaModal } from "./FincaModal";
 import { InfoModal } from "./InfoModal";
@@ -325,9 +326,38 @@ function Experience() {
   const [fincaModalOpen, setFincaModalOpen] = useState(false);
   const [editingFincaIdx, setEditingFincaIdx] = useState(-1);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
-  // Which dashboard module is open (null = the tile landing). Lives here, not
-  // in AppDashboard, so it participates in the Back-button layer stack below.
-  const [activeModule, setActiveModule] = useState<DashboardModule | null>(null);
+  // El contrato `?m=<módulo>` (V4.34): los enlaces de vuelta de la concha de
+  // herramientas y los marcadores viejos traen la clave de la rejilla
+  // retirada. Se lee UNA vez, como INICIALIZADOR de estado (no en un efecto:
+  // react-hooks/set-state-in-effect), se traduce a pestaña (+drill) y la URL
+  // se limpia después con replaceState para no dejar historia fantasma. En el
+  // servidor no hay window y el valor es null — inofensivo: el panel solo se
+  // pinta tras autenticarse, así que no hay desajuste de hidratación visible.
+  const [moduloLegado] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const m = new URLSearchParams(window.location.search).get("m");
+    return m && esModuloLegado(m) ? m : null;
+  });
+
+  // Which panel tab is active, and whether a drill-in (full list) is open.
+  // Live here, not in AppDashboard: the DRILL participates in the Back-button
+  // layer stack below (switching tabs does NOT — a tab is a place, not a
+  // layer). V5.16: las cinco interfaces reemplazan a la rejilla de módulos.
+  const [activeTab, setActiveTab] = useState<PanelTab>(moduloLegado ? LEGACY_MODULE_TO_TAB[moduloLegado] : "perfil");
+  const [drill, setDrill] = useState<PanelDrill | null>(moduloLegado ? LEGACY_MODULE_TO_DRILL[moduloLegado] ?? null : null);
+
+  useEffect(() => {
+    if (moduloLegado === null) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("m");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, [moduloLegado]);
+
+  const selectTab = useCallback((t: PanelTab) => {
+    setActiveTab(t);
+    setDrill(null);
+    window.scrollTo(0, 0);
+  }, []);
 
   const loadData = useCallback(
     async (uid: string) => {
@@ -609,6 +639,8 @@ function Experience() {
         setFeedback([]);
         setGi(EMPTY_GI);
         setCurLotId(null);
+        setActiveTab("perfil");
+        setDrill(null);
         setView("landing");
       }
     });
@@ -1602,17 +1634,19 @@ function Experience() {
     (fincaModalOpen ? 1 : 0) +
     (infoModalOpen ? 1 : 0) +
     (view === "ficha" ? 1 : 0) +
-    (activeModule ? 1 : 0);
+    (drill ? 1 : 0);
   const closeTopLayer = useCallback(() => {
     // Orden de cierre: los modales están por encima de la ficha (un modal
-    // puede abrirse desde dentro de la ficha), la ficha por encima del módulo
-    // del panel, y el módulo por encima de la rejilla.
+    // puede abrirse desde dentro de la ficha), la ficha por encima del drill,
+    // y el drill por encima de su pestaña. Cambiar de PESTAÑA no es una capa:
+    // "Atrás" nunca deshace un cambio de pestaña, sale de la app — como en
+    // cualquier app con barra inferior.
     if (loginOpen) setLoginOpen(false);
     else if (fincaModalOpen) setFincaModalOpen(false);
     else if (infoModalOpen) setInfoModalOpen(false);
     else if (view === "ficha") setView(userId ? "app" : "landing");
-    else if (activeModule) setActiveModule(null);
-  }, [loginOpen, fincaModalOpen, infoModalOpen, view, userId, activeModule]);
+    else if (drill) setDrill(null);
+  }, [loginOpen, fincaModalOpen, infoModalOpen, view, userId, drill]);
 
   const backDepth = useRef(0);
   const backFromPop = useRef(false);
@@ -1662,13 +1696,16 @@ function Experience() {
           gi={gi}
           contracts={contracts}
           feedback={feedback}
-          module={activeModule}
-          onSelectModule={setActiveModule}
+          tab={activeTab}
+          onSelectTab={selectTab}
+          drill={drill}
+          onSetDrill={setDrill}
           onRefreshData={() => {
             if (userId) loadData(userId);
           }}
           onBackHome={() => {
-            setActiveModule(null);
+            setDrill(null);
+            setActiveTab("perfil");
             setView("landing");
           }}
           onLogout={logout}

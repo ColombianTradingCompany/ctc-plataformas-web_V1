@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.20] — 2026-08-21 (commit pendiente)
+## [V5.20] — 2026-08-21 (commit 5e12b04)
 
 - **Hito**: **B2 y B3 de la Ficha se vuelven «Reportado por Productor»** (instrucciones del owner
   sobre el panel nuevo). El productor ya no digita los 10 atributos SCA ni la granulometría malla a

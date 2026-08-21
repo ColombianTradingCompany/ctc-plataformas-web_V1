@@ -283,4 +283,4 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
 - Guardián nuevo `scripts/qa-reportado-productor-check.mjs` (40).
 - Para el PRÓXIMO wrap: el nodo de la Ficha cambia su descripción (B2/B3 reportado); ficha DICT
   «reportado-por-productor» candidata; el seguimiento del escáner queda anotado como plan.
-(commit: pending)
+(commit: 5e12b04)

@@ -108,4 +108,4 @@ Contexto abierto al cerrar V40 (2026-08-21) — plataforma V5.23:
   fichastecnicas, redaccion, tallerherramientas) · 51 trazas (+2) · 91 wires ·
   34 CTX · 319 ANN (+10) · FILETREE 1840.
 - El puntero de HANDOFF («Visual system map») apunta al V40.0.
-(commit: pendiente)
+(commit: 5e757b2)

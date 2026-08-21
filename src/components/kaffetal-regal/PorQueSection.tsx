@@ -104,7 +104,7 @@ const T: Record<Lang, Dict> = {
         body: (
           <>
             <p>
-              Registering your farm and building the datasheet costs nothing. Requesting a lot's CTC evaluation costs{" "}
+              Registering your farm and building the datasheet costs nothing. Requesting a lot&apos;s CTC evaluation costs{" "}
               <b>$80,000 COP</b> — and what you get back <b>stays yours</b>: score, sensory profile and technical
               feedback from a professional Q-Grader, awarded or not. It&apos;s the diagnosis others pay for in dollars
               and no cooperative ever hands you.

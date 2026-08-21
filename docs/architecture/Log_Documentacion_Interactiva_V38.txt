@@ -240,4 +240,4 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
 - Guardián nuevo `scripts/qa-ofertas-check.mjs` (36).
 - Para el PRÓXIMO wrap (V39): nodo `lot_offers` en el workmap; re-cablear e21/e23 (gal →
   ofertas → contrato/negociación); traza nueva «la oferta y la aceptación» candidata.
-(commit: pending)
+(commit: 69f2311)

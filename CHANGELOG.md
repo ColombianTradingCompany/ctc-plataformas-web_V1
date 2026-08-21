@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.18] — 2026-08-21 (commit pendiente)
+## [V5.18] — 2026-08-21 (commit 69f2311)
 
 - **Hito**: **el contrato nace de la aceptación del productor.** Nace el circuito de OFERTAS:
   CTCx confirma el trato desde el OCP (`/ocp/ofertas`, pestaña nueva del Catálogo) referenciando la

@@ -49,6 +49,10 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   compuertas y rangos, tope de 7, la re-descarga por ancla, los bocetos, y FileDrop en los cuatro
   formularios).
 
+> **Wrap V39** (2026-08-21): ciclo compilado en `Documentacion_Interactiva_V39.0(5c128cf).html` —
+> 39 nodos · 133 fichas (+5) · 49 trazas (+1) · 91 wires · 309 ANN · FILETREE 1827. Compila
+> V5.16–V5.20, los pendientes V5.1 y notas compactas de V5.2–V5.15 (deuda declarada en Log V39).
+
 ## [V5.19] — 2026-08-21 (commit 3302cf3)
 
 - **Hito**: **el galardón nace del puntaje; la Arena es la vitrina.** Cierra el plan V5.16→V5.19:

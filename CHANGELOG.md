@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.21] — 2026-08-21 (commit pendiente)
+## [V5.21] — 2026-08-21 (commit 6a4af47)
 
 - **Corregido**: dos afinados del owner sobre el B2/B3 recién rediseñado. **B2 pierde el bloque
   «Notas de Análisis & Referencia Q-Grader»** (notas de laboratorio y campos del Q-Grader no son

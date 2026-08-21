@@ -122,4 +122,4 @@ Contexto abierto al cerrar V39 (2026-08-21) — plataforma V5.20:
   solo como declaración. ficha_notas_cata cae a cupping_profile si analysis_notes viene vacío.
 - Toca la ficha DICT «reportadoproductor» del V39 (una frase: los números siempre a la vista) —
   para compilar en V40.
-(commit: pending)
+(commit: 6a4af47)

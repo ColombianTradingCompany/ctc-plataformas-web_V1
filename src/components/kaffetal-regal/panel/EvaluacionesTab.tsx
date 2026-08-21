@@ -55,7 +55,7 @@ export function EvaluacionesTab({
   const totalDueCop = paymentsDue.reduce((sum, l) => sum + (l.inscription?.amountDueCop ?? EVALUATION_FEE_COP), 0);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 26, marginTop: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
       <section>
         <div className={styles.secHead}>
           <span className={styles.secTitle}>Solicitudes de Evaluación</span>

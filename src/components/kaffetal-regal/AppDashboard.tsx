@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer, type FeedbackNote } from "./data";
-import { RedSwitcher } from "@/components/RedSwitcher";
 import { LegalFooter } from "@/components/LegalFooter";
 import { PanelNav } from "./panel/PanelNav";
 import { TAB_META, type PanelDrill, type PanelTab } from "./panel/panelTabs";
@@ -119,13 +118,18 @@ export function AppDashboard({
               <span className={styles.by}>Panel del productor · by CTC</span>
             </span>
           </a>
+          {/* «Mi red» salió del panel (owner, 2026-08-21): el salto entre
+              plataformas vive en el Ecosistema de Valor, no en la cabecera. */}
           <div className={styles.navActions}>
             <button className="btn btn-sm" onClick={onBackHome}>← Inicio</button>
-            <RedSwitcher actual="kr" compact />
             <button className="btn btn-sm" onClick={onLogout}>Cerrar sesión</button>
           </div>
         </div>
       </div>
+
+      {/* En escritorio la barra vive AQUÍ, pegajosa bajo la cabecera; en móvil
+          el CSS la fija abajo (owner, 2026-08-21). */}
+      <PanelNav tab={tab} onSelectTab={onSelectTab} mensajesBadge={mensajesBadge} />
 
       <div className={`wrap ${styles.main}`}>
         <p className="eyebrow">Panel del productor</p>
@@ -214,8 +218,6 @@ export function AppDashboard({
           también esta superficie y, sobre todo, deja la versión a la vista
           donde más se prueba el lado productor. */}
       <LegalFooter />
-
-      <PanelNav tab={tab} onSelectTab={onSelectTab} mensajesBadge={mensajesBadge} />
     </div>
   );
 }

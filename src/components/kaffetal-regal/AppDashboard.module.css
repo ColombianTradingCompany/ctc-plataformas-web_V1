@@ -10,8 +10,8 @@
    shorthand's left/right components override .wrap's `padding:0 24px`, and
    with `0` the panel went edge-to-edge on any viewport < the wrap max-width
    (invisible on desktop, but flush to the screen edges on phones). */
-.main{padding:40px 22px 84px}
-@media(max-width:520px){.main{padding:26px 18px 64px}}
+.main{padding:22px 22px 84px}
+@media(max-width:520px){.main{padding:18px 18px 64px}}
 .h1{font-size:clamp(26px,3.6vw,40px);color:var(--primary-deep);margin-top:8px}
 
 /* (V5.16) La rejilla de tarjetas `hub*` se RETIRÓ ENTERA — bloque completo,
@@ -20,9 +20,10 @@
    (panel/PanelNav.module.css). Aquí quedan las clases del cascarón y las que
    comparten las pestañas. */
 
-/* El cascarón entero: deja sitio a la barra inferior fija para que el pie
-   legal no quede tapado al final del scroll. */
+/* El cascarón: en móvil deja sitio a la barra fija de abajo; en escritorio la
+   barra está arriba (sticky) y no hay nada que despejar. */
 .page{padding-bottom:74px}
+@media(min-width:880px){.page{padding-bottom:0}.main{padding-bottom:40px}}
 
 /* El saludo de Mi Perfil, bajo el título — serif, como en el mockup. */
 .saludo{font-family:var(--font-fraunces),serif;font-weight:700;font-size:19px;color:var(--primary-deep);margin-top:6px}
@@ -54,7 +55,7 @@
 .svcChips{display:flex;gap:8px;flex-wrap:wrap}
 .svcChip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;background:var(--card);font-weight:400}
 .svcChip input{width:auto;accent-color:var(--primary)}
-.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}
+.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
 /* min-width:0 is load-bearing: without it a grid item defaults to min-width:auto
    and expands to its content, so the inner .fincaScroll / wide .lotrow blow the
    whole page wide instead of scrolling/stacking -- that's why it "worked" only

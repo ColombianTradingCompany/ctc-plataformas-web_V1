@@ -291,7 +291,24 @@ export type FichaFormData = {
   // Keys (see B1_OPTIONAL_FIELDS) the producer marked "No lo sé aún" -- these
   // physical measurements are optional; CTC determines them on evaluation.
   b1_unknown: string[];
-  // B2 — Perfil de Taza · SCA
+  // B2 — Perfil de Taza (rediseño V5.20, owner 2026-08-21): el productor ya no
+  // digita los 10 atributos — reporta su ESTIMACIÓN (puntaje + escala SCA/CVA
+  // + notas) y/o adjunta sus soportes (hasta 7 PDFs y 7 fotos). Los campos
+  // sca_* de abajo quedan en el tipo por los datasheets guardados antes.
+  b2_score: string;
+  b2_scale: "" | "sca" | "cva";
+  b2_files_pdf: { assetId: string; fileName: string }[];
+  b2_files_foto: { assetId: string; fileName: string }[];
+  // B3 — rediseño V5.20: o «Solo sé información básica» (factor 75–120 y/o
+  // almendra total 150–245, y densidad en verde 600–1000 OBLIGATORIA), o
+  // soportes adjuntos con un bloque opcional de humedades/densidad. Junto a lo
+  // de B2 forma el bloque «Reportado por Productor».
+  b3_solo_basica: boolean;
+  b3_almendra_total: string;
+  b3_densidad_verde: string;
+  b3_humedad_verde: string;
+  b3_files_pdf: { assetId: string; fileName: string }[];
+  b3_files_foto: { assetId: string; fileName: string }[];
   cupping_profile: string;
   sca_fragrance: string; sca_flavor: string; sca_aftertaste: string; sca_acidity: string;
   sca_body: string; sca_balance: string; sca_uniformity: string; sca_clean_cup: string;
@@ -360,6 +377,10 @@ export const EMPTY_FICHA: FichaFormData = {
   base_processing: "", special_processing: "", yield_factor_producer: "",
   b1_unknown: [],
   cupping_profile: "",
+  b2_score: "", b2_scale: "",
+  b2_files_pdf: [], b2_files_foto: [],
+  b3_solo_basica: false, b3_almendra_total: "", b3_densidad_verde: "", b3_humedad_verde: "",
+  b3_files_pdf: [], b3_files_foto: [],
   sca_fragrance: "", sca_flavor: "", sca_aftertaste: "", sca_acidity: "",
   sca_body: "", sca_balance: "", sca_uniformity: "", sca_clean_cup: "",
   sca_sweetness: "", sca_cuppers: "",

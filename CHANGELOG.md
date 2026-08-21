@@ -19,6 +19,36 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.20] — 2026-08-21 (commit pendiente)
+
+- **Hito**: **B2 y B3 de la Ficha se vuelven «Reportado por Productor»** (instrucciones del owner
+  sobre el panel nuevo). El productor ya no digita los 10 atributos SCA ni la granulometría malla a
+  malla: **B2** pide «No lo sé» O su estimación — puntaje (0–100) + escala **SCA/CVA** + notas — y/o
+  sus soportes; **B3** pide «Solo sé información básica» — Factor de Rendimiento (**75–120**) y/o
+  Almendra Total (**150–245 g**; AT = 205 g − cisco) con Densidad en Verde (**600–1000 g/L**)
+  OBLIGATORIA — o al menos un soporte, con bloque opcional de Humedad en Pergamino / Humedad en
+  Verde / Densidad. Ambas pantallas llevan la explicación grande y B2 sus dos bocetos (red de araña
+  + rueda de sabores). Los datasheets viejos siguen contando como completos (los campos legados
+  quedan en el tipo y en las compuertas).
+- **Añadido**: **soportes por sección** — hasta **7 PDFs y 7 fotos** en B2 y en B3, subidos directo
+  a Storage con la convención kaffetalMedia y referenciados en el datasheet; con validación de tipo,
+  tope aplicado y **re-descarga garantizada incluso con la sección bloqueada** (anclas firmadas
+  bajo demanda, que un fieldset disabled no apaga). Son el insumo del seguimiento acordado: el
+  escáner visual del OCP que extraerá los datos y compilará el SET de Fichas Técnicas del lote (una
+  oficial), listadas en esos mismos panes al existir.
+- **Corregido**: **arrastrar un archivo ya no pinta el cursor prohibido** — los inputs de archivo
+  (Información general, Finca, certificados, A3, B4 y los soportes nuevos) son ahora destinos de
+  arrastre reales (`FileDrop`: dragover + drop al mismo manejador).
+- **Cambiado**: la **barra de módulos va ARRIBA en escritorio** (pegajosa bajo la cabecera) y sigue
+  fija abajo en el móvil; menos aire entre bloques en todas las pestañas; y el botón **«Mi red»
+  sale de la cabecera del panel** — el salto entre plataformas vive en el Ecosistema de Valor. El
+  puntaje reportado de B2 alimenta `ficha_puntaje_estimado`; la vista final de la Ficha muestra el
+  reporte del productor (puntaje + escala + soportes + almendra/densidad/humedades) cuando no hay
+  datos del formato viejo.
+- **Docs**: guardián nuevo `scripts/qa-reportado-productor-check.mjs` (40: campos nuevos y legados,
+  compuertas y rangos, tope de 7, la re-descarga por ancla, los bocetos, y FileDrop en los cuatro
+  formularios).
+
 ## [V5.19] — 2026-08-21 (commit 3302cf3)
 
 - **Hito**: **el galardón nace del puntaje; la Arena es la vitrina.** Cierra el plan V5.16→V5.19:

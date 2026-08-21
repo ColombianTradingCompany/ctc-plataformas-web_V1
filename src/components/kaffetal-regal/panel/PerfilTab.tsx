@@ -284,7 +284,7 @@ export function PerfilTab({
 
   // ── La portada: información general + dos carruseles ─────────────────────
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 26, marginTop: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
       <div className={styles.acard}>
         <span className={styles.k}>Información general · se registra una sola vez</span>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginTop: 8 }}>

@@ -3,6 +3,7 @@
 import { useToast } from "@/components/Toast";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
+import { FileDrop } from "../../FileDrop";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
@@ -67,7 +68,7 @@ export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: Pane
       <div className={styles.fgrid} style={{ marginTop: 16 }}>
         <div className={`${styles.ff} ${styles.fw}`}>
           <label>Video 1 · principal (obligatorio)</label>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <FileDrop onFile={(file) => { if (checkSize(file)) void mainUp.run(() => onUploadLotVideo(file, mainUp.progress)); }}>
             <input
               type="file"
               accept="video/*"
@@ -77,7 +78,7 @@ export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: Pane
               }}
             />
             <UploadProgressRing state={mainUp.state} />
-          </div>
+          </FileDrop>
           {lot.videoUrl && (
             <p className={styles.fexample} style={{ marginTop: 6 }}>
               ✓ Video actual: <a href={lot.videoUrl} target="_blank" rel="noopener noreferrer">ver</a> · para reemplazarlo, suba otro archivo.
@@ -87,7 +88,7 @@ export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: Pane
         {[0, 1].map((slot) => (
           <div className={styles.ff} key={slot}>
             <label>Video {slot + 2} · opcional</label>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <FileDrop onFile={(file) => { if (checkSize(file)) void extraUps[slot].run(() => onUploadExtraVideo(slot, file, extraUps[slot].progress)); }}>
               <input
                 type="file"
                 accept="video/*"
@@ -97,7 +98,7 @@ export function PaneB4({ data, lot, onUploadLotVideo, onUploadExtraVideo }: Pane
                 }}
               />
               <UploadProgressRing state={extraUps[slot].state} size={26} label={false} />
-            </div>
+            </FileDrop>
             {extras[slot] && <p className={styles.fexample} style={{ marginTop: 6 }}>✓ {extras[slot].fileName} subido</p>}
           </div>
         ))}

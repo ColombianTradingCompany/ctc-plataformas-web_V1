@@ -53,7 +53,7 @@ export function ContratosTab({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 26, marginTop: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
       <section>
         <div className={styles.secHead}>
           <span className={styles.secTitle}>Ofertas de Temporada</span>

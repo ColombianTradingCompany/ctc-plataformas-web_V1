@@ -1,206 +1,187 @@
-import type { FichaFormData } from "../fichaData";
 import { FieldInfo } from "./FieldInfo";
+import { ReportFiles } from "./ReportFiles";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 import bstyles from "./PaneB3.module.css";
 
-const MESH_INFO: Record<string, string> = {
-  mesh_supremo_plus: "Grano retenido en malla 18 (>7.10 mm) — el tamaño más grande, típicamente el de mayor valor comercial.",
-  mesh_supremo: "Grano retenido en malla 17 (~6.75–7.10 mm).",
-  mesh_extra: "Grano retenido en malla 16 (~6.35–6.75 mm).",
-  mesh_europa: "Grano retenido en malla 15 (~6.00–6.35 mm) — tamaño estándar de exportación a mercados europeos.",
-  mesh_ugq: "Grano retenido en malla 14 (~5.60–6.00 mm) — Usual Good Quality, un grado por debajo del estándar de exportación.",
-  mesh_peaberry: "Grano caracol: un solo grano redondo por cereza en vez de los dos planos habituales — se separa aparte.",
-  mesh_residue: "Lo que no pasa por ninguna de las mallas anteriores — polvo, partículas y fragmentos muy pequeños.",
-};
+// ── B3 · Caracterización Física (rediseño V5.20, owner 2026-08-21) ──────────
+// Igual que B2, el productor ya no llena la granulometría malla a malla. Dos
+// caminos, y basta con uno:
+//   · «Solo sé información básica»: el Factor de Rendimiento (75–120) y/o la
+//     Almendra Total (150–245 g; AT = 205 g − gramos de cisco), y la Densidad
+//     en Verde (600–1000 g/L) que aquí es OBLIGATORIA.
+//   · Adjuntar al menos un soporte (PDF o foto del análisis físico), con un
+//     bloque opcional de Humedad en Pergamino, Humedad en Verde y Densidad en
+//     Verde.
+// Todo viaja con B2 como «Reportado por Productor». El detalle completo
+// (mallas, defectos, factor de laboratorio) nace después, cuando CTCx analiza
+// los soportes y compila las Fichas Técnicas del lote — aquí se listarán al
+// existir. Los campos viejos (mesh_*, fa_*) siguen en el tipo por los
+// datasheets guardados antes; computeFactor/computeMesh siguen vivos para el
+// laboratorio del OCP.
 
-type Factor = { start: number; remainder: number; yieldLoss: number; healthy: number; yieldFactor: number | null };
-type MeshRow = { key: string; label: string; grams: number; pct: number | null };
-type Mesh = {
-  rows: MeshRow[];
-  sum: number;
-  totalPct: number;
-  bad: boolean;
-  residueGrams: number;
-  pendingGrams: number;
-  residuePct: number;
-  measuredSum: number;
-  state: "sin_base" | "vacio" | "excede" | "residuo_alto" | "ok";
-};
+// Rangos del owner (2026-08-21). Fuera de rango no se envía.
+export const B3_RANGOS = {
+  factor: { min: 75, max: 120 },
+  almendra: { min: 150, max: 245 },
+  densidad: { min: 600, max: 1000 },
+} as const;
 
-export function PaneB3({ data, onChange, factor, mesh }: PaneProps & { factor: Factor; mesh: Mesh }) {
+function num(v: string): number {
+  return Number(v.replace(",", "."));
+}
+
+export function rangoValido(v: string, r: { min: number; max: number }): boolean {
+  if (v.trim() === "") return false;
+  const n = num(v);
+  return Number.isFinite(n) && n >= r.min && n <= r.max;
+}
+
+export function PaneB3({
+  data,
+  onChange,
+  lot,
+  viewingLocked,
+  onUploadFile,
+  onGetFileUrl,
+}: PaneProps & {
+  onUploadFile: (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
+  onGetFileUrl: (assetId: string) => Promise<string | null>;
+}) {
+  const fueraDeRango = (v: string, r: { min: number; max: number }) => v.trim() !== "" && !rangoValido(v, r);
+  const tieneAdjuntos = data.b3_files_pdf.length + data.b3_files_foto.length > 0;
+
   return (
     <div className={styles.fsec}>
-      <h3><span className={styles.fn}>B3</span> Caracterización Física · Granulometría & Factor</h3>
-      <p className={styles.fexample} style={{ marginTop: 8 }}>
-        El &quot;Trillado Verde Restante&quot; es el dato central: los defectos se restan de él para obtener el Grano Sano, base del Factor de Rendimiento y de la granulometría (las mallas se tamizan sobre el grano ya sano, sin defectos).
-      </p>
-      <p className={styles.fexample} style={{ marginTop: 4 }}>
-        🎥{" "}
-        <a href="https://www.youtube.com/watch?v=fLzOAHJkuQg" target="_blank" rel="noopener noreferrer">
-          Aprenda aquí cómo calcular el factor de rendimiento
-        </a>
-        <FieldInfo text="Amigo caficultor, ¿sabe qué es el factor de rendimiento del café y cómo implementarlo? La Cooperativa de Caficultores te enseña cómo se realiza este paso clave en el proceso de compra. 🍒☕" />
-      </p>
+      <h3><span className={styles.fn}>B3</span> Caracterización Física</h3>
+      <p className={styles.reportadoTag}>Reportado por Productor · junto con B2 forma su reporte del café</p>
 
-      <div className={bstyles.layout}>
-        <div>
-          <div className={bstyles.primary}>
-            <label>Trillado Verde Restante (g) ← dato principal<FieldInfo text="El peso de café verde que queda tras trillar el pergamino — el dato base sobre el que se calculan mermas, defectos y el factor de rendimiento." /></label>
-            <input type="number" step="0.1" value={data.fa_green_remainder} onChange={(e) => onChange({ fa_green_remainder: e.target.value })} placeholder="212.7" />
-          </div>
-          <div className={styles.fgrid} style={{ marginTop: 10 }}>
-            <div className={styles.ff}>
-              <label>Muestra Pergamino Inicial (g)<FieldInfo text="El peso de la muestra de café pergamino antes de trillar — el punto de partida del cálculo físico. El estándar de laboratorio es una muestra de 250 g." /></label>
-              <input type="number" step="0.1" value={data.fa_start} onChange={(e) => onChange({ fa_start: e.target.value })} placeholder="250.0" />
-            </div>
-            <div className={styles.ff}>
-              <label>Humedad Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino antes de trillar. Rango aceptable: 10–12%, igual que el grano verde." /></label>
-              <input type="number" step="0.1" value={data.fa_parch_hum} onChange={(e) => onChange({ fa_parch_hum: e.target.value })} placeholder="0.0" />
-            </div>
-          </div>
-          <p className={bstyles.divider}>Análisis de mermas y defectos</p>
+      <div className={bstyles.intro}>
+        <p className={bstyles.introBig}>
+          La <b>caracterización física</b> dice cuánto café exportable hay de verdad en su pergamino: el factor de
+          rendimiento, el tamaño del grano y su densidad.
+        </p>
+        <p className={bstyles.introSub}>
+          Si su cooperativa o un laboratorio ya le hizo el análisis, <b>adjunte esa hoja</b> (PDF o fotos) y CTC extrae
+          el detalle. Si solo conoce los números básicos —el factor que le dan al comprarle, o la almendra total—
+          marque <b>«Solo sé información básica»</b> y repórtelos aquí.
+        </p>
+        <p className={styles.fexample} style={{ marginTop: 8 }}>
+          🎥{" "}
+          <a href="https://www.youtube.com/watch?v=fLzOAHJkuQg" target="_blank" rel="noopener noreferrer">
+            Aprenda aquí cómo se calcula el factor de rendimiento
+          </a>
+          <FieldInfo text="Amigo caficultor, ¿sabe qué es el factor de rendimiento del café y cómo implementarlo? La Cooperativa de Caficultores te enseña cómo se realiza este paso clave en el proceso de compra. 🍒☕" />
+        </p>
+      </div>
+
+      <label className={bstyles.toggleBasica}>
+        <input
+          type="checkbox"
+          checked={data.b3_solo_basica}
+          onChange={(e) => onChange({ b3_solo_basica: e.target.checked })}
+        />{" "}
+        Solo sé información básica <small>(sin hoja de análisis que adjuntar)</small>
+      </label>
+
+      {data.b3_solo_basica && (
+        <div className={bstyles.basicaBox}>
+          <p className={styles.fexample} style={{ marginTop: 0 }}>
+            Reporte <b>al menos uno</b> de los dos primeros; la <b>Densidad en Verde</b> es obligatoria.
+          </p>
           <div className={styles.fgrid}>
             <div className={styles.ff}>
-              <label>Pérdida por Trilla (g) — derivado<FieldInfo text="Diferencia entre el pergamino inicial y el trillado verde restante — se calcula sola, no se ingresa a mano." /></label>
-              <input readOnly value={factor.start > 0 && factor.remainder > 0 ? factor.yieldLoss.toFixed(1) : ""} placeholder="Calculado automáticamente" />
+              <label>
+                Factor de Rendimiento ({B3_RANGOS.factor.min}–{B3_RANGOS.factor.max})
+                <FieldInfo text="Los kilos de pergamino que se necesitan para 70 kg de café verde excelso. Se lo da la cooperativa en cada compra; entre más bajo, mejor rinde su café." />
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={data.yield_factor_producer}
+                onChange={(e) => onChange({ yield_factor_producer: e.target.value })}
+                placeholder="Ej. 92.5"
+              />
+              {fueraDeRango(data.yield_factor_producer, B3_RANGOS.factor) && (
+                <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.factor.min} y {B3_RANGOS.factor.max}.</p>
+              )}
             </div>
             <div className={styles.ff}>
-              <label>Grano Sano (g) — derivado<FieldInfo text="El trillado verde restante menos los defectos primario y secundario — la base real del Factor de Rendimiento." /></label>
-              <input readOnly value={factor.remainder > 0 ? factor.healthy.toFixed(1) : ""} placeholder="Calculado automáticamente" />
+              <label>
+                Almendra Total (g · {B3_RANGOS.almendra.min}–{B3_RANGOS.almendra.max})
+                <FieldInfo text="De una muestra de 205 g de pergamino, los gramos de almendra (café verde) que quedan al quitar el cisco: AT = 205 g − gramos de cisco. Otro número que suele dar la cooperativa." />
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={data.b3_almendra_total}
+                onChange={(e) => onChange({ b3_almendra_total: e.target.value })}
+                placeholder="Ej. 168.0"
+              />
+              {fueraDeRango(data.b3_almendra_total, B3_RANGOS.almendra) && (
+                <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.almendra.min} y {B3_RANGOS.almendra.max} g.</p>
+              )}
             </div>
             <div className={styles.ff}>
-              <label>Defecto Primario (g)<FieldInfo text="Peso en gramos de los defectos físicos más graves (grano negro, agrio, con hongo, etc.). Para grado Especialidad (SCA) sobre una muestra de 350 g: 0 defectos primarios permitidos." /></label>
-              <input type="number" step="0.1" value={data.fa_primary_defect} onChange={(e) => onChange({ fa_primary_defect: e.target.value })} placeholder="0.0" />
+              <label>
+                Densidad en Verde (g/L · {B3_RANGOS.densidad.min}–{B3_RANGOS.densidad.max}) · obligatoria
+                <FieldInfo text="Cuánto pesa un litro de su café verde. Un grano denso (más de 700 g/L) suele venir de buena altura y desarrollarse completo — es de los primeros números que mira un comprador." />
+              </label>
+              <input
+                type="number"
+                step="1"
+                value={data.b3_densidad_verde}
+                onChange={(e) => onChange({ b3_densidad_verde: e.target.value })}
+                placeholder="Ej. 720"
+              />
+              {fueraDeRango(data.b3_densidad_verde, B3_RANGOS.densidad) && (
+                <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.densidad.min} y {B3_RANGOS.densidad.max} g/L.</p>
+              )}
             </div>
-            <div className={styles.ff}>
-              <label>Defecto Secundario (g)<FieldInfo text="Peso en gramos de defectos menores (partido, inmaduro, picado, etc.). Para grado Especialidad (SCA) sobre una muestra de 350 g: máximo 5 defectos equivalentes." /></label>
-              <input type="number" step="0.1" value={data.fa_secondary_defect} onChange={(e) => onChange({ fa_secondary_defect: e.target.value })} placeholder="0.0" />
-            </div>
-          </div>
-          <div className={bstyles.yieldBox}>
-            Factor de Rendimiento: <strong>{factor.yieldFactor !== null ? factor.yieldFactor.toFixed(2) : "—"}</strong>
-            <span className={bstyles.yieldNote}>= 70 × Pergamino Inicial ÷ Grano Sano</span>
-          </div>
-
-          {/* ── Su propio factor, al lado del calculado (owner, 2026-08-20) ──
-              Muchos caficultores YA conocen el factor de su café: se lo da la
-              cooperativa en cada compra. El campo existía, pero enterrado en B1
-              —otra sub-etapa, otra pantalla—, así que aquí, donde el número se
-              está calculando delante de sus ojos, no había forma de decir «a mí
-              me dio otro». Es OPCIONAL y no toca el cálculo: se guarda aparte
-              (`yield_factor_producer`) y viaja a CTC como lo que es, un dato
-              declarado por el productor, para contrastarlo con el de
-              laboratorio. */}
-          <div className={styles.ff} style={{ marginTop: 12 }}>
-            <label>
-              Su factor de rendimiento <small>(opcional)</small>
-              <FieldInfo text="Si su cooperativa o su propia trilla ya le dio un factor para este café, escríbalo aquí. No reemplaza al calculado arriba: los dos viajan juntos y CTC contrasta el suyo con el del laboratorio. Dejarlo vacío no le resta nada a su ficha." />
-            </label>
-            <input
-              value={data.yield_factor_producer}
-              onChange={(e) => onChange({ yield_factor_producer: e.target.value })}
-              placeholder="Ej. 92.5 — kg de pergamino por 70 kg de verde"
-            />
-            {data.yield_factor_producer.trim() !== "" && factor.yieldFactor !== null && (
-              <p className={styles.fexample} style={{ marginTop: 4 }}>
-                {(() => {
-                  const suyo = Number(data.yield_factor_producer.replace(",", "."));
-                  if (!Number.isFinite(suyo) || suyo <= 0) return "Escriba solo el número (por ejemplo 92.5).";
-                  const dif = Math.abs(suyo - factor.yieldFactor);
-                  return dif <= 2
-                    ? `✓ Su factor y el calculado se parecen (diferencia de ${dif.toFixed(1)}).`
-                    : `Su factor difiere en ${dif.toFixed(1)} del calculado aquí. No es un error: puede que la muestra no sea la misma. CTC lo tendrá en cuenta.`;
-                })()}
-              </p>
-            )}
           </div>
         </div>
+      )}
 
-        <div>
-          {/* Qué hay que hacer aquí, antes de la tabla. Sin esto, la tabla es
-              siete casillas sin instrucción: el owner no sabía «qué debo poner».
-              Se dice el método (tamizar el GRANO SANO, no el trillado entero) y
-              se recuerda que el Residuo no se teclea. */}
-          <p className={styles.fexample} style={{ marginTop: 0, marginBottom: 8 }}>
-            Tamice el <b>grano sano</b> (el trillado verde ya sin defectos) por cada malla y pese lo que quede retenido en
-            cada una. El <b>Residuo</b> no se escribe: es lo que sobra y se calcula solo.
+      <ReportFiles
+        titulo="Soportes del análisis físico · granulometría, factor, densidad (hasta 7 PDFs y 7 fotos)"
+        pdfs={data.b3_files_pdf}
+        fotos={data.b3_files_foto}
+        subpathBase={`lots/${lot.id}/b3`}
+        locked={!!viewingLocked}
+        onChange={(patch) =>
+          onChange({
+            ...(patch.pdfs ? { b3_files_pdf: patch.pdfs } : {}),
+            ...(patch.fotos ? { b3_files_foto: patch.fotos } : {}),
+          })
+        }
+        onUploadFile={onUploadFile}
+        onGetFileUrl={onGetFileUrl}
+      />
+
+      {tieneAdjuntos && (
+        <div className={bstyles.opcionalBox}>
+          <p className={styles.fexample} style={{ marginTop: 0, fontWeight: 600, color: "var(--ink)" }}>
+            Si además conoce estos números, repórtelos (opcional)
           </p>
-          <div className={bstyles.tblWrap}>
-          <table className={bstyles.tbl}>
-            <thead>
-              <tr><th>Granulometría</th><th style={{ textAlign: "right" }}>Peso (g)</th><th style={{ textAlign: "right" }}>%</th></tr>
-            </thead>
-            <tbody>
-              {mesh.rows.map((r) => {
-                // El Residuo no se digita: es la diferencia que lleva la suma
-                // siempre a 100% del grano sano -- se calcula solo y su % va
-                // en rojo para que se lea como "lo que se pierde".
-                const isResidue = r.key === "mesh_residue";
-                return (
-                  <tr key={r.key}>
-                    <td>{r.label}{MESH_INFO[r.key] && <FieldInfo text={MESH_INFO[r.key]} />}</td>
-                    <td>
-                      {isResidue ? (
-                        <input readOnly value={factor.healthy > 0 ? mesh.residueGrams.toFixed(1) : ""} placeholder="Se calcula solo" />
-                      ) : (
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={data[r.key as keyof FichaFormData] as string}
-                          onChange={(e) => onChange({ [r.key]: e.target.value } as Partial<FichaFormData>)}
-                          placeholder="0.0"
-                        />
-                      )}
-                    </td>
-                    <td className={bstyles.pct} style={isResidue ? { color: "var(--red, #C4402F)", fontWeight: 700 } : undefined}>
-                      {r.pct !== null ? r.pct.toFixed(1) + "%" : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td>Total mallas</td>
-                <td className={bstyles.pct}>{mesh.sum.toFixed(1)} g</td>
-                <td className={bstyles.pct}>{factor.healthy > 0 ? mesh.totalPct.toFixed(1) + "%" : "—"}</td>
-              </tr>
-            </tfoot>
-          </table>
-          </div>
-          {/* ── El veredicto, en los dos sentidos ──────────────────────────
-              El aviso viejo enseñaba «Suma de mallas: 100,0 %» pasara lo que
-              pasara mientras no se excediera el grano sano, porque el Residuo
-              tapaba cualquier hueco. Aquí se dice lo que de verdad ocurre: si
-              se pasó, en cuánto; si falta por pesar, cuántos gramos; y si está
-              bien, que está bien. Ver el comentario de computeMesh(). */}
-          <div className={`${bstyles.meshAlert} ${mesh.state === "excede" || mesh.state === "residuo_alto" ? bstyles.meshBad : ""}`}>
-            {mesh.state === "sin_base" ? (
-              <>Escriba primero el <b>Trillado Verde Restante</b> y los defectos: la granulometría se mide sobre el <b>Grano Sano</b>, y sin él no hay contra qué comparar.</>
-            ) : mesh.state === "vacio" ? (
-              <>Grano sano: <b>{factor.healthy.toFixed(1)} g</b> por repartir entre las mallas. Todavía no ha pesado ninguna.</>
-            ) : mesh.state === "excede" ? (
-              <>
-                <b>Se pasó por {Math.abs(mesh.pendingGrams).toFixed(1)} g.</b> Las mallas suman {mesh.measuredSum.toFixed(1)} g,
-                más que los {factor.healthy.toFixed(1)} g de grano sano. Revise la balanza o el Trillado Verde Restante — una
-                malla no puede contener grano que no existe.
-              </>
-            ) : mesh.state === "residuo_alto" ? (
-              <>
-                <b>Faltan mallas por pesar.</b> Quedan <b>{mesh.pendingGrams.toFixed(1)} g</b> sin repartir
-                ({mesh.residuePct.toFixed(0)} % del grano sano), y eso es demasiado para ser residuo real —el polvo y los
-                fragmentos rara vez pasan del 5 %—. Pese las mallas que le falten.
-              </>
-            ) : (
-              <>
-                ✓ Cuadra: {mesh.measuredSum.toFixed(1)} g repartidos en mallas y {mesh.residueGrams.toFixed(1)} g de residuo
-                ({mesh.residuePct.toFixed(1)} %) sobre {factor.healthy.toFixed(1)} g de grano sano.
-              </>
-            )}
+          <div className={styles.fgrid}>
+            <div className={styles.ff}>
+              <label>Humedad en Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino. Rango sano: 10–12%." /></label>
+              <input type="number" step="0.1" value={data.fa_parch_hum} onChange={(e) => onChange({ fa_parch_hum: e.target.value })} placeholder="Ej. 11.0" />
+            </div>
+            <div className={styles.ff}>
+              <label>Humedad en Verde (%)<FieldInfo text="Porcentaje de humedad del café verde ya trillado. Rango sano: 10–12%." /></label>
+              <input type="number" step="0.1" value={data.b3_humedad_verde} onChange={(e) => onChange({ b3_humedad_verde: e.target.value })} placeholder="Ej. 10.5" />
+            </div>
+            <div className={styles.ff}>
+              <label>Densidad en Verde (g/L)<FieldInfo text="Cuánto pesa un litro de su café verde — aquí es opcional porque su hoja adjunta normalmente ya la trae." /></label>
+              <input type="number" step="1" value={data.b3_densidad_verde} onChange={(e) => onChange({ b3_densidad_verde: e.target.value })} placeholder="Ej. 720" />
+              {fueraDeRango(data.b3_densidad_verde, B3_RANGOS.densidad) && (
+                <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.densidad.min} y {B3_RANGOS.densidad.max} g/L.</p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

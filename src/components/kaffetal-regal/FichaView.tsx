@@ -30,13 +30,14 @@ export type { PaneProps } from "./ficha/panes/types";
 // everything is locked in.
 const FIRST_PANE_BY_STEP: PaneId[] = ["a1", "a3", "a5", "b4", "ficha"];
 const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 1, b2: 1, b3: 1, a5: 2, b4: 3, ficha: 4 };
-// FT2's four panes can each be declared "no lo sé / no aplica" instead of
-// filled in -- see fichaData.ts's ft2_*_na fields and FichaView's ft2Ready gate.
-const FT2_NA_FIELD: Partial<Record<PaneId, "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na" | "ft2_b3_na">> = {
+// FT2 escape hatches: A3/A4/B2 can be declared "no lo sé / no aplica" instead
+// of filled in (fichaData's ft2_*_na). B3 YA NO (V5.20): su escape es el camino
+// «Solo sé información básica» dentro del propio pane — ft2_b3_na queda en el
+// tipo solo por los datasheets viejos, y el gate lo honra como legado.
+const FT2_NA_FIELD: Partial<Record<PaneId, "ft2_a3_na" | "ft2_a4_na" | "ft2_b2_na">> = {
   a3: "ft2_a3_na",
   a4: "ft2_a4_na",
   b2: "ft2_b2_na",
-  b3: "ft2_b3_na",
 };
 
 export type FichaSaveUpdate = {
@@ -131,6 +132,7 @@ export function FichaView({
   onSave,
   onOpenNewFinca,
   onUploadFile,
+  onGetFileUrl,
   onUploadLotVideo,
   onRequestHelp,
   onSubmitOfficializationClaim,
@@ -145,6 +147,9 @@ export function FichaView({
   onSave: (updates: FichaSaveUpdate) => Promise<boolean>;
   onOpenNewFinca: () => void;
   onUploadFile: (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
+  /** URL firmada de un asset de kaffetal-media — para RE-DESCARGAR los
+   *  soportes de B2/B3 (V5.20), incluso con la sección ya bloqueada. */
+  onGetFileUrl: (assetId: string) => Promise<string | null>;
   onUploadLotVideo: (file: File, onProgress?: (fraction: number) => void) => Promise<boolean>;
   onRequestHelp: (text: string) => Promise<boolean>;
   onSubmitOfficializationClaim: (qGraderRef: string, file: File | null, scaTotal: number | null, factorRendimiento: number | null, onProgress?: (fraction: number) => void) => void | Promise<void>;
@@ -227,6 +232,21 @@ export function FichaView({
   // F2: el origen del lote son los APORTES de A2.
   const sourceFincas = useMemo(() => resolveContributionFincas(data.contributions, fincas), [data.contributions, fincas]);
 
+  const numOr = (v: string) => Number(v.replace(",", "."));
+  const enRango = (v: string, min: number, max: number) => {
+    if (v.trim() === "") return false;
+    const n = numOr(v);
+    return Number.isFinite(n) && n >= min && n <= max;
+  };
+  const b2ScoreValido = data.b2_score.trim() !== "" && Number.isFinite(numOr(data.b2_score)) && numOr(data.b2_score) >= 0 && numOr(data.b2_score) <= 100;
+  const b2Reportado = b2ScoreValido || data.b2_files_pdf.length + data.b2_files_foto.length > 0;
+  const b3FactorValido = enRango(data.yield_factor_producer, 75, 120);
+  const b3AlmendraValida = enRango(data.b3_almendra_total, 150, 245);
+  const b3DensidadValida = enRango(data.b3_densidad_verde, 600, 1000);
+  const b3Basica = data.b3_solo_basica && (b3FactorValido || b3AlmendraValida) && b3DensidadValida;
+  const b3Adjuntos = data.b3_files_pdf.length + data.b3_files_foto.length > 0;
+  const b3Reportado = b3Basica || b3Adjuntos;
+
   const completed = useMemo<Partial<Record<PaneId, boolean>>>(
     () => ({
       a1: !!data.product_name,
@@ -241,10 +261,16 @@ export function FichaView({
       // el lote ya no declara custodia/país/factores propios.
       a5: sourceFincas.length > 0,
       b1: vTotal > 0 && !!data.species,
-      b2: sca.total > 0,
-      b3: factor.remainder > 0,
+      // V5.20 — «Reportado por Productor»: B2 se completa con un puntaje
+      // válido O al menos un soporte adjunto (los sca_* viejos siguen contando
+      // por los datasheets guardados antes). B3 con el camino básico VÁLIDO
+      // (factor 75–120 y/o almendra 150–245, y densidad 600–1000 obligatoria)
+      // O al menos un soporte; el Trillado Verde legado sigue contando.
+      b2: b2Reportado || sca.total > 0,
+      b3: b3Reportado || factor.remainder > 0,
       b4: !!lot.videoUrl,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- b2Reportado/b3Reportado derivan de `data`, ya en la lista
     [data, vTotal, sca.total, factor.remainder, lot.videoUrl, sourceFincas.length]
   );
 
@@ -265,7 +291,7 @@ export function FichaView({
     (!!completed.a3 || data.ft2_a3_na) &&
     (!!completed.a4 || data.ft2_a4_na) &&
     (!!completed.b2 || data.ft2_b2_na) &&
-    (!!completed.b3 || data.ft2_b3_na);
+    (!!completed.b3 || data.ft2_b3_na); // ft2_b3_na = solo datasheets viejos
   // La aptitud EUDR de las fincas ya NO bloquea en duro: si es lo único que
   // falta, se puede continuar al video con la bandera roja del lote pendiente
   // (ver el confirm en submitCurrentStage) -- la finca completa lo suyo en
@@ -286,8 +312,8 @@ export function FichaView({
     a2: "A2 · Información de Origen → la finca de la que sale este café",
     b1: "B1 · Variedades & Básica → la especie y al menos una variedad con su porcentaje",
     a3: "A3 · Reconocimientos & Narrativa → un premio, o la historia del origen",
-    b2: "B2 · Perfil de Taza → el puntaje de taza (los descriptores SCA)",
-    b3: "B3 · Física · Granulometría → el Trillado Verde Restante (g)",
+    b2: "B2 · Perfil de Taza → su puntaje reportado (0–100) o un soporte adjunto (PDF/foto)",
+    b3: "B3 · Física → información básica (factor 75–120 o almendra total 150–245, y densidad en verde 600–1000) o un soporte adjunto",
   };
 
   function faltantes(panes: PaneId[], conEscape: boolean): string {
@@ -314,7 +340,9 @@ export function FichaView({
         ficha_proceso: source.base_processing || null,
         ficha_altitud_m: source.masl ? Math.round(num(source.masl)) : null,
         ficha_notas_cata: source.analysis_notes || null,
-        ficha_puntaje_estimado: sca.total > 0 ? sca.total : null,
+        // V5.20: el puntaje reportado manda; el total de los sca_* viejos queda
+        // de respaldo para datasheets guardados antes del rediseño de B2.
+        ficha_puntaje_estimado: b2ScoreValido ? numOr(data.b2_score) : sca.total > 0 ? sca.total : null,
       },
       eudr: {
         eudr_custody_stages: source.eudr_custody_stages,
@@ -585,8 +613,8 @@ export function FichaView({
               {active === "a4" && <PaneA4 {...paneProps} />}
               {active === "a5" && <PaneA5Eudr {...paneProps} />}
               {active === "b1" && <PaneB1 {...paneProps} />}
-              {active === "b2" && <PaneB2 {...paneProps} sca={sca} />}
-              {active === "b3" && <PaneB3 {...paneProps} factor={factor} mesh={mesh} />}
+              {active === "b2" && <PaneB2 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} />}
+              {active === "b3" && <PaneB3 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} />}
               {active === "b4" && <PaneB4 {...paneProps} />}
               {active === "ficha" && (
                 <>

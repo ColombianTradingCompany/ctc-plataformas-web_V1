@@ -1,20 +1,16 @@
-.scaWrap{background:#151022;border-radius:10px;padding:18px;margin-top:14px;display:grid;grid-template-columns:1fr 200px;gap:18px;align-items:center}
-@media(max-width:640px){.scaWrap{grid-template-columns:1fr}}
-.score{text-align:center}
-.big{font-family:var(--font-spline-mono),monospace;font-size:40px;font-weight:700;color:#fff;line-height:1}
-.big small{font-size:16px;color:#8884AA}
-.badge{display:inline-block;font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:3px;margin-top:6px;color:#fff}
-/* Las 5 bandas: Comercial <80 · Especial 80–84 · Especialidad 84–87 ·
-   Alta Especialidad 87–90 · Rareza 90+ */
-.none{background:#3A3550}
-.com{background:#4A5568}
-.esp{background:#003087}
-.especialidad{background:#C8102F}
-.alta{background:#7B2D8E}
-.rareza{background:#A87A14}
-.tbl{width:100%;border-collapse:collapse;font-family:var(--font-spline-mono),monospace;font-size:12.5px}
-.tbl th{background:var(--paper);text-align:left;padding:7px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);border-bottom:2px solid var(--primary)}
-.tbl td{padding:5px 9px;border-bottom:1px solid var(--line)}
-.tbl input{width:100%;border:1px solid var(--line);border-radius:4px;padding:4px 6px;text-align:right;background:var(--paper)}
-.tbl tfoot td{font-weight:700;border-top:2px solid var(--primary);background:var(--paper)}
-.pct{text-align:right}
+/* B2 · Perfil de Taza (rediseño V5.20): la pantalla quedó liviana a propósito
+   — explicación grande + dos bocetos + la estimación + los soportes. */
+.intro{margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.introBig{font-family:var(--font-fraunces),serif;font-size:19px;line-height:1.45;color:var(--primary-deep);margin:0}
+.introSub{font-size:13.5px;line-height:1.6;color:var(--muted);margin:10px 0 0}
+.introSub b{color:var(--ink)}
+
+/* Los dos bocetos, lado a lado. El SpiderChart trae su propio fondo oscuro;
+   la rueda va en el mismo tono para que lean como pareja. */
+.sketches{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:640px){.sketches{grid-template-columns:1fr}}
+.sketch{margin:0;background:#151022;border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.wheelSvg{width:100%;max-width:190px;height:auto;color:#8884AA}
+.cap{font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.05em;color:#8884AA;text-align:center}
+
+.divider{font-family:var(--font-spline-mono),monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:1px dashed var(--line);margin:16px 0 10px;padding-top:10px}

@@ -7,6 +7,7 @@ import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
+import { FileDrop } from "./FileDrop";
 import { DEP_MUNI } from "./ficha/fichaData";
 import { supplierCode, type GeneralInfo } from "./data";
 import styles from "./FincaModal.module.css";
@@ -193,10 +194,10 @@ function InfoModalBody({
         </div>
         <div className={styles.wide}>
           <label>Foto de perfil <small>(máx. 5 MB)</small></label>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <FileDrop onFile={(f) => handleAvatarFile(f)}>
             <input type="file" accept="image/*" onChange={(e) => handleAvatarFile(e.target.files?.[0])} />
             <UploadProgressRing state={avatarUp.state} />
-          </div>
+          </FileDrop>
           {gi.avatarUrl && (
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               ✓ Foto actual: <a href={gi.avatarUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
@@ -205,10 +206,10 @@ function InfoModalBody({
         </div>
         <div className={styles.wide}>
           <label>Video del productor y su equipo <small>(máx. 100 MB)</small></label>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <FileDrop onFile={(f) => handleVideoFile(f)}>
             <input type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
             <UploadProgressRing state={videoUp.state} />
-          </div>
+          </FileDrop>
           {gi.producerVideoUrl && (
             <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
               ✓ Video actual: <a href={gi.producerVideoUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
@@ -230,12 +231,14 @@ function InfoModalBody({
                       Sin foto
                     </div>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ marginTop: 4, fontSize: 11, width: 130 }}
-                    onChange={(e) => handleGalleryFile(i, e.target.files?.[0])}
-                  />
+                  <FileDrop onFile={(f) => handleGalleryFile(i, f)} style={{ marginTop: 4 }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ fontSize: 11, width: 130 }}
+                      onChange={(e) => handleGalleryFile(i, e.target.files?.[0])}
+                    />
+                  </FileDrop>
                   <div style={{ marginTop: 4 }}>
                     <UploadProgressRing state={galleryUps[i].state} size={26} />
                   </div>

@@ -213,16 +213,27 @@ export function renderFichaHtml(
       </div>
       ${scaTable}
     </div>`
-        : data.cupping_profile || scaTable
-          ? `<div class="ficha-section"><h3>Perfil Sensorial</h3>${data.cupping_profile ? `<p class="prose">${esc(data.cupping_profile)}</p>` : ""}${scaTable}</div>`
+        : data.b2_score || data.cupping_profile || scaTable || data.b2_files_pdf.length + data.b2_files_foto.length > 0
+          ? `<div class="ficha-section"><h3>Perfil Sensorial</h3>${
+              data.b2_score
+                ? `<div class="scoreband"><span class="big">${esc(data.b2_score)}</span><div><div class="scoreclass">Reportado por Productor${data.b2_scale ? ` · escala ${esc(data.b2_scale.toUpperCase())}` : ""}</div><div class="prose">Puntaje declarado por el productor — sin contrastar por CTC.</div></div></div>`
+                : ""
+            }${data.cupping_profile ? `<p class="prose">${esc(data.cupping_profile)}</p>` : ""}${
+              data.b2_files_pdf.length + data.b2_files_foto.length > 0
+                ? `<p class="prose">Soportes adjuntos por el productor: ${data.b2_files_pdf.length} PDF · ${data.b2_files_foto.length} foto(s) — disponibles en la sección B2 de la Ficha.</p>`
+                : ""
+            }${scaTable}</div>`
           : ""
     }
 
     ${
-      factor.remainder || factor.healthy || meshRows
+      factor.remainder || factor.healthy || meshRows || data.b3_almendra_total || data.b3_densidad_verde || data.b3_humedad_verde || data.yield_factor_producer || data.b3_files_pdf.length + data.b3_files_foto.length > 0
         ? `<div class="ficha-section">
       <h3>Caracterización Física</h3>
       <div class="dl">
+        ${di("Almendra Total (productor)", data.b3_almendra_total && data.b3_almendra_total + " g")}
+        ${di("Densidad en Verde (productor)", data.b3_densidad_verde && data.b3_densidad_verde + " g/L")}
+        ${di("Humedad en Verde (productor)", data.b3_humedad_verde && data.b3_humedad_verde + " %")}
         ${di("Muestra Pergamino Inicial", data.fa_start && data.fa_start + " g")}
         ${di("Humedad Pergamino", data.fa_parch_hum && data.fa_parch_hum + " %")}
         ${di("Pérdida por Trilla", factor.yieldLoss ? factor.yieldLoss.toFixed(1) + " g" : "")}
@@ -233,6 +244,11 @@ export function renderFichaHtml(
         ${di("Factor de Rendimiento", factor.yieldFactor !== null ? factor.yieldFactor.toFixed(2) : "")}
       </div>
       ${meshRows ? `<p class="chipslabel">GRANULOMETRÍA</p><div class="dl">${meshRows}</div>` : ""}
+      ${
+        data.b3_files_pdf.length + data.b3_files_foto.length > 0
+          ? `<p class="prose">Soportes del análisis físico adjuntos por el productor: ${data.b3_files_pdf.length} PDF · ${data.b3_files_foto.length} foto(s) — disponibles en la sección B3 de la Ficha.</p>`
+          : ""
+      }
     </div>`
         : ""
     }

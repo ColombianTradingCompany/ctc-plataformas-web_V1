@@ -264,3 +264,23 @@ Contexto abierto al cerrar V38 (2026-08-19) — V5.0 «Pre-Launch Beta»:
   mue/sondeo/gal se re-ordenan; e15 sigue; ARE cuelga de gal+contrato); ficha DICT «vitrina-arena»
   candidata; el nodo de la landing KR cambia su descripción.
 (commit: 3302cf3)
+
+## [2026-08-21] V5.20 · B2/B3 «Reportado por Productor» + afinado del panel
+- **La Ficha deja de exigir conocimiento de laboratorio**: B2 (Perfil de Taza) = «No lo sé» O
+  estimación (puntaje 0–100 + escala SCA/CVA + notas) y/o soportes; B3 (Física) = «Solo sé
+  información básica» (factor 75–120 y/o almendra total 150–245 g, densidad en verde 600–1000 g/L
+  obligatoria) O soportes, con bloque opcional de humedades/densidad. Explicación grande + bocetos
+  (SpiderChart de muestra + rueda de sabores SVG). Los dos panes se rotulan «Reportado por
+  Productor» — un solo bloque del que saldrá su documentación.
+- **Soportes**: hasta 7 PDFs + 7 fotos por sección (`ReportFiles`, refs en lots.datasheet jsonb —
+  sin DDL), re-descargables por ancla firmada bajo demanda incluso con el pane bloqueado.
+  SEGUIMIENTO acordado: escáner visual en el OCP que extrae los datos y compila el SET de Fichas
+  Técnicas del lote (una oficial), a listar en B2/B3 — no construido en V5.20.
+- **FileDrop**: los inputs de archivo del lado productor aceptan arrastrar-y-soltar (el cursor
+  prohibido del no-drop era el reporte del owner). InfoModal, FincaModal, PaneA3, PaneB4, soportes.
+- **Panel**: la barra de módulos arriba en escritorio (sticky bajo la cabecera) / abajo en móvil;
+  menos aire entre bloques; «Mi red» (RedSwitcher) fuera de la cabecera del panel.
+- Guardián nuevo `scripts/qa-reportado-productor-check.mjs` (40).
+- Para el PRÓXIMO wrap: el nodo de la Ficha cambia su descripción (B2/B3 reportado); ficha DICT
+  «reportado-por-productor» candidata; el seguimiento del escáner queda anotado como plan.
+(commit: pending)

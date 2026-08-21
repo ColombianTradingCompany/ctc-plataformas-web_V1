@@ -8,6 +8,7 @@
 // concreto, no una finca) y la narrativa del origen.
 
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
+import { FileDrop } from "../../FileDrop";
 import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
@@ -30,7 +31,7 @@ export function PaneA3({ data, onChange, onUploadCertFile, onGoToPane }: PanePro
           </label>
           <textarea value={data.awards} onChange={(e) => onChange({ awards: e.target.value })} placeholder="Ej. Cup of Excellence 2024 · Top 10…" />
           {data.awards.trim() !== "" && (
-            <div style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <FileDrop onFile={(file) => void awardsUp.run(() => onUploadCertFile("awards", file, awardsUp.progress))} style={{ marginTop: 6, gap: 8 }}>
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
@@ -46,7 +47,7 @@ export function PaneA3({ data, onChange, onUploadCertFile, onGoToPane }: PanePro
               ) : (
                 <p className={styles.fexample}>Puede adjuntar el diploma, ranking o publicación que respalda el premio (≤ 5 MB).</p>
               )}
-            </div>
+            </FileDrop>
           )}
 
           {/* ── El atajo del puntaje (owner, 2026-08-20) ────────────────────

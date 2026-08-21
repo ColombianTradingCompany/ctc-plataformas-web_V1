@@ -1338,6 +1338,13 @@ function Experience() {
     return uploadKaffetalMediaWithProgress(supabase, userId, subpath, file, onProgress);
   }
 
+  // V5.20: URL firmada bajo demanda para RE-DESCARGAR un soporte de B2/B3 —
+  // firmar al hacer clic evita pre-firmar hasta 28 archivos en cada carga.
+  async function getFileUrl(assetId: string): Promise<string | null> {
+    const urls = await signedKaffetalMediaUrls(supabase, [assetId]);
+    return urls.get(assetId) ?? null;
+  }
+
   async function uploadAvatar(file: File, onProgress?: ProgressFn): Promise<boolean> {
     if (!userId) return false;
     const result = await uploadKaffetalMediaWithProgress(supabase, userId, "avatar", file, onProgress);
@@ -1799,6 +1806,7 @@ function Experience() {
             setFincaModalOpen(true);
           }}
           onUploadFile={uploadFile}
+          onGetFileUrl={getFileUrl}
           onUploadLotVideo={(file, onProgress) => uploadLotVideo(curLot.id, file, onProgress)}
           onRequestHelp={(text) => requestLotHelp(curLot, text)}
           onSubmitOfficializationClaim={(qGraderRef, file, scaTotal, factorRendimiento, onProgress) =>

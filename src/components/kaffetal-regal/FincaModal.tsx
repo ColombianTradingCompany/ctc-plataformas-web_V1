@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
+import { FileDrop } from "./FileDrop";
 import { fincaReferencePoint, lookupElevation } from "@/lib/geo/elevation";
 import { polygonAreaHa } from "@/lib/geo/area";
 import { Modal } from "@/components/Modal";
@@ -765,10 +766,10 @@ function FincaModalBody({
               <label>Documento de respaldo <small>(PDF, máx. 10 MB)</small></label>
               {finca ? (
                 <>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <FileDrop onFile={(f) => handleDocFile(f)}>
                     <input type="file" accept="application/pdf" onChange={(e) => handleDocFile(e.target.files?.[0])} />
                     <UploadProgressRing state={docUp.state} />
-                  </div>
+                  </FileDrop>
                   {eudr.eudrLegalDocsFilename && (
                     <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
                       ✓ {eudr.eudrLegalDocsFilename}
@@ -804,8 +805,10 @@ function FincaModalBody({
                     // eslint-disable-next-line @next/next/no-img-element -- signed Supabase URL
                     <img src={finca.profilePhotoUrl} alt={finca.name} style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", border: "1px solid var(--line)" }} />
                   )}
-                  <input type="file" accept="image/*" onChange={(e) => handlePhotoFile(e.target.files?.[0])} />
-                  <UploadProgressRing state={photoUp.state} />
+                  <FileDrop onFile={(f) => handlePhotoFile(f)} style={{ display: "inline-flex" }}>
+                    <input type="file" accept="image/*" onChange={(e) => handlePhotoFile(e.target.files?.[0])} />
+                    <UploadProgressRing state={photoUp.state} />
+                  </FileDrop>
                 </div>
               ) : (
                 <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder subir su foto.</p>
@@ -815,10 +818,10 @@ function FincaModalBody({
               <label>Video de la finca <small>(máx. 100 MB)</small></label>
               {finca ? (
                 <>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <FileDrop onFile={(f) => handleVideoFile(f)}>
                     <input type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files?.[0])} />
                     <UploadProgressRing state={videoUp.state} />
-                  </div>
+                  </FileDrop>
                   {finca.videoUrl && (
                     <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
                       ✓ Video actual: <a href={finca.videoUrl} target="_blank" rel="noopener noreferrer">ver / reemplazar arriba</a>
@@ -1635,7 +1638,10 @@ function CertCard({
           a tocar «Editar» y recién ahí aparecía el campo — el productor decía,
           con razón, que no podía adjuntar nada. El campo necesita que la fila
           exista (la subida se cuelga de cert.id), y en la tarjeta ya existe. */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+      <FileDrop
+        onFile={(file) => void up.run(() => onUploadSupport(cert.id, fincaId, file, up.progress))}
+        style={{ marginTop: 8 }}
+      >
         <label style={{ fontSize: 12, fontWeight: 600 }}>Soporte del certificado <small style={{ fontWeight: 400 }}>(PDF o imagen, opcional)</small></label>
         <input
           type="file"
@@ -1647,7 +1653,7 @@ function CertCard({
         />
         <UploadProgressRing state={up.state} />
         {cert.supportFilename && <span style={{ fontSize: 12, color: "#2E7D52" }}>✓ {cert.supportFilename}</span>}
-      </div>
+      </FileDrop>
       {reg && (
         <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "6px 0 0" }}>
           CTC lo contrasta contra:{" "}

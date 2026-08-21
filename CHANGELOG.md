@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.16] — 2026-08-21 (commit pendiente)
+## [V5.16] — 2026-08-21 (commit c2fc0a1)
 
 - **Hito**: **el panel del productor se rehace en CINCO interfaces** detrás de una barra de
   navegación inferior fija — Mensajes · Ecosistema · **Mi Perfil** (al centro) · Evaluaciones ·

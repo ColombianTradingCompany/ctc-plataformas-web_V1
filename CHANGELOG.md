@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.25] — 2026-08-22 (commit pendiente)
+
+- **Añadido**: nueva herramienta **Defectos del Café** en `public/tools/defectos-cafe.html` —
+  catálogo interactivo de los 14 defectos del café verde del afiche oficial de la FNC (fotografía
+  propia de CTC, fondo de muestra cambiable gris/blanco/negro/bandeja) y de los defectos del tueste,
+  con clave visual de identificación (desde el grano o desde la taza), la matriz de incidencia y
+  origen, control de proceso por etapa y una práctica de reconocimiento uno a la vez con
+  retroalimentación inmediata. Tres idiomas (español, inglés, alemán). Marca CTCX. Origen `repo`,
+  registrada en `tools`/`tool_versions` (id `defectos-cafe`, orden 20) y encendida solo en **web**
+  (Herramientas del Café pública) — kr/cp/dc quedan apagados a propósito hasta que el owner decida
+  ampliar el reparto.
+
 ## [V5.24] — 2026-08-22 (commit edf29ea)
 
 - **Añadido**: **Subastas Tyrian — la puja del comprador**, «el podio de los mejores, al mejor postor».

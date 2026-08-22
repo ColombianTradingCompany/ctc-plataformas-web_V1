@@ -123,4 +123,4 @@ Contexto abierto al cerrar V40 (2026-08-21) — plataforma V5.23:
   postor → productor acepta → contrato); actualizar «ofertas» (la subasta ya
   corre DENTRO); retirar del DICT «cherry» la palabra demo del TY-2713 si la
   menciona. Guardián nuevo: scripts/qa-subastas-check.mjs (30).
-(commit: pendiente)
+(commit: edf29ea)

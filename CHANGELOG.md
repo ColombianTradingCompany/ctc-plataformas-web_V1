@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.24] — 2026-08-22 (commit pendiente)
+## [V5.24] — 2026-08-22 (commit edf29ea)
 
 - **Añadido**: **Subastas Tyrian — la puja del comprador**, «el podio de los mejores, al mejor postor».
   Dos tablas service-role-only (`lot_auctions` · `auction_bids`, RLS con cero políticas) y un **guard

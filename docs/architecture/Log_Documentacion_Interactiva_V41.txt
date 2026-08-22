@@ -1,0 +1,92 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V41.0(8ac6f6f).html
+(CTC Web Platform, desde 2026-08-22 · plataforma V5.24). Cada entrada se compila
+al próximo Version Wrap (V42).
+
+Formato:
+## [YYYY-MM-DD] Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pending">)
+
+Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y sellar
+el sha en cuanto exista el commit — de UNO en UNO, no en bloque al final.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex.
+⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO (V38): siempre
+`<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35). ⚠️ LA CADENA
+«Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la suya).
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V41 ENSEÑÓ (léase antes del V42)
+════════════════════════════════════════════════════════════════════════════════
+
+· UN WRAP DE UNA SOLA ENTRADA ES UN WRAP PEQUEÑO Y ESTÁ BIEN: V5.24 llegó con su
+  asiento escrito al terminar, con la lista exacta de qué tocar (ficha nueva,
+  traza, dos fichas vecinas). Compilarlo tomó un parche de 9 bloques. El
+  tamaño del wrap lo decide la disciplina del log, no el calendario.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V41 (2026-08-22) — plataforma V5.24:
+
+- **Lo que V41 compiló**: V5.24 — Subastas Tyrian, la puja del comprador
+  (lot_auctions + auction_bids, guard trigger, TyrianSection real, /ocp/subastas;
+  adjudicar no emite oferta — EUR vs COP). 1 ficha nueva («Subastas Tyrian») ·
+  1 traza nueva («La puja Tyrian») · 2 fichas actualizadas (ofertas, cherry) ·
+  6 ANN nuevas.
+- **Seguimientos acordados sin construir**: ninguno. Todo lo pactado en el
+  rediseño del panel (V5.16) y sus derivados está desplegado.
+- **Pendientes del owner que este log arrastra**: el número Nequi real; la
+  línea del redirect-allowlist de Google en Supabase; la primera generación
+  real de Redacción; el escenario de Make de coffeed.redaccion.post_creado;
+  recorrer el BLOQUE B del review sobre el panel nuevo; la primera
+  jornada-vitrina supervisada; estrenar el escáner visual con soportes REALES;
+  y la primera subasta real cuando el bache galardone un Tyrian (hoy la
+  sección de Cherry Picked Green dice «no hay subasta abierta»).
+- **Línea base de la compuerta al cerrar**: tsc limpio · eslint 0 errores /
+  8 avisos · build exit 0 · qa-subastas 30 · qa-fichas 31 · qa-ofertas 36 ·
+  qa-kr-panel 119 · qa-changelog 225 · qa-encoding 791/0.
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-08-22] Version Wrap V41 — la puja Tyrian, compilada
+- Snapshot nuevo: `Documentacion_Interactiva_V41.0(8ac6f6f).html` (base V40.0 +
+  la entrada V5.24 del log V40). Batería 9/9 vacías, `node --check` OK.
+  Contadores: 39 nodos · 137 fichas (+1: subastas) · 52 trazas (+1) · 91 wires ·
+  34 CTX · 325 ANN (+6) · FILETREE 1927.
+- El puntero de HANDOFF («Visual system map») apunta al V41.0.
+(commit: pendiente)

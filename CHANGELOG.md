@@ -37,6 +37,9 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 - **Añadido**: guardián `scripts/qa-subastas-check.mjs` (30 comprobaciones).
 - **Datos**: migración `subastas_tyrian` aplicada en producción (tablas, índices, trigger).
 
+> **Wrap V41** (2026-08-22): ciclo compilado en Documentacion_Interactiva_V41.0(8ac6f6f).html —
+> 39 nodos · 137 fichas (+1: Subastas Tyrian) · 52 trazas (+1) · 325 ANN (+6) · batería 9/9 vacías.
+
 ## [V5.23] — 2026-08-21 (commit d5d2391)
 
 - **Añadido**: el **escáner visual del OCP y el set de Fichas Técnicas** — el seguimiento acordado

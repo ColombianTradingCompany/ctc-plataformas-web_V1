@@ -89,4 +89,4 @@ Contexto abierto al cerrar V41 (2026-08-22) — plataforma V5.24:
   Contadores: 39 nodos · 137 fichas (+1: subastas) · 52 trazas (+1) · 91 wires ·
   34 CTX · 325 ANN (+6) · FILETREE 1927.
 - El puntero de HANDOFF («Visual system map») apunta al V41.0.
-(commit: pendiente)
+(commit: 7a94ddf)

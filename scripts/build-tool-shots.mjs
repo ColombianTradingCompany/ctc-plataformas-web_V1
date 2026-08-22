@@ -37,6 +37,7 @@ const HERRAMIENTAS = {
   "formula-calidad": "/tools/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe.html",
   "mapa-variedades": "/tools/mapa-variedades.html",
+  "defectos-cafe": "/tools/defectos-cafe.html",
 };
 
 mkdirSync(SALIDA, { recursive: true });

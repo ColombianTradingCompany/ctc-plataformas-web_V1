@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.25] — 2026-08-22 (commit pendiente)
+## [V5.25] — 2026-08-22 (commit 90593cd)
 
 - **Añadido**: nueva herramienta **Defectos del Café** en `public/tools/defectos-cafe.html` —
   catálogo interactivo de los 14 defectos del café verde del afiche oficial de la FNC (fotografía

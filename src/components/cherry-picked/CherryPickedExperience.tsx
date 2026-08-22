@@ -14,6 +14,8 @@ import { BlackSection } from "./BlackSection";
 import { GradosSection } from "./GradosSection";
 import { EnviosSection } from "./EnviosSection";
 import { TyrianSection } from "./TyrianSection";
+import { listarSubastas, pujar } from "@/lib/subastas/buyerActions";
+import type { MembershipTier, SubastaPublica } from "@/lib/subastas/tipos";
 import { MuestrasSection } from "./MuestrasSection";
 import { NarrativaSection } from "./NarrativaSection";
 import { CosechaSection } from "./CosechaSection";
@@ -32,7 +34,6 @@ import { VisitCtcBand } from "./VisitCtcBand";
 import { LangProvider, useLang, type Lang } from "./i18n";
 
 type View = "store" | "profile";
-const BID_STEP = 0.5;
 
 const EN = {
   quickNav: [
@@ -66,7 +67,7 @@ const EN = {
   billingFailed: "The details couldn't be saved.",
   billingOk: "Billing details updated ✓",
   loginToBid: "Sign in to bid (Pintón level or higher)",
-  bidLeading: (half: string) => `Your bid for Half ${half} is leading (demo)`,
+  bidLeading: (half: string) => `Your bid for Half ${half} is leading`,
 };
 
 const T: Record<Lang, typeof EN> = {
@@ -103,7 +104,7 @@ const T: Record<Lang, typeof EN> = {
     billingFailed: "No se pudo guardar la información.",
     billingOk: "Datos de facturación actualizados ✓",
     loginToBid: "Inicia sesión para pujar (nivel Pintón o superior)",
-    bidLeading: (half: string) => `Tu puja por la Mitad ${half} va ganando (demo)`,
+    bidLeading: (half: string) => `Tu puja por la Mitad ${half} va ganando`,
   },
   de: {
     quickNav: [
@@ -137,7 +138,7 @@ const T: Record<Lang, typeof EN> = {
     billingFailed: "Die Daten konnten nicht gespeichert werden.",
     billingOk: "Rechnungsdaten aktualisiert ✓",
     loginToBid: "Melde dich an, um zu bieten (Level Pintón oder höher)",
-    bidLeading: (half: string) => `Dein Gebot für Hälfte ${half} führt (Demo)`,
+    bidLeading: (half: string) => `Dein Gebot für Hälfte ${half} führt`,
   },
 };
 
@@ -236,9 +237,11 @@ function Experience() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [samplePackOrdered, setSamplePackOrdered] = useState(false);
 
-  const [bidA, setBidA] = useState(24.5);
-  const [bidB, setBidB] = useState(23.0);
-  const [myBids, setMyBids] = useState(0);
+  // V5.24: la subasta Tyrian REAL (lot_auctions, vía Server Actions). La
+  // vitrina se carga para todos; pujar exige sesión + nivel Pintón.
+  const [subastas, setSubastas] = useState<SubastaPublica[]>([]);
+  const [buyerTier, setBuyerTier] = useState<MembershipTier | null>(null);
+  const myBids = subastas.filter((s) => s.status === "abierta").reduce((n, s) => n + s.fraccionesDetalle.filter((f) => f.miPuja != null).length, 0);
 
   const loadCatalog = useCallback(async () => {
     const [{ data: listingRows }, { data: catalogRows }, { data: transparencyRows }, { data: zoneRows }] = await Promise.all([
@@ -470,16 +473,40 @@ function Experience() {
     showToast(t.billingOk);
   }
 
-  function bid(half: "A" | "B") {
+  const loadSubastas = useCallback(async () => {
+    const res = await listarSubastas();
+    setSubastas(res.subastas);
+    setBuyerTier(res.tier);
+  }, []);
+
+  // La vitrina se carga para todos y se recarga al cambiar la sesión (las
+  // pujas «mías» dependen de quién mira). El setState va en el .then — nunca
+  // síncrono dentro del efecto.
+  useEffect(() => {
+    let activo = true;
+    listarSubastas().then((res) => {
+      if (!activo) return;
+      setSubastas(res.subastas);
+      setBuyerTier(res.tier);
+    });
+    return () => {
+      activo = false;
+    };
+  }, [userId]);
+
+  async function bid(auctionId: string, fraccion: 1 | 2, amount: number) {
     if (!userId) {
       setLoginOpen(true);
       showToast(t.loginToBid);
       return;
     }
-    if (half === "A") setBidA((b) => Math.round((b + BID_STEP) * 100) / 100);
-    else setBidB((b) => Math.round((b + BID_STEP) * 100) / 100);
-    setMyBids((n) => n + 1);
-    showToast(t.bidLeading(half));
+    const res = await pujar(auctionId, fraccion, amount);
+    await loadSubastas();
+    if (!res.ok) {
+      showToast(res.error);
+      return;
+    }
+    showToast(t.bidLeading(fraccion === 1 ? "A" : "B"));
   }
 
   const summary = cartData(lots, myKg, packInCart, shipZone, zones);
@@ -515,7 +542,7 @@ function Experience() {
           )}
           <EnviosSection />
           <VisitCtcBand />
-          <TyrianSection loggedIn={!!userId} bidA={bidA} bidB={bidB} onBid={bid} />
+          <TyrianSection loggedIn={!!userId} subastas={subastas} tier={buyerTier} onBid={bid} />
           <MuestrasSection packInCart={packInCart} onAddPack={addPack} loggedIn={!!userId} onOpenLogin={() => setLoginOpen(true)} />
           <NarrativaSection lots={lots} loggedIn={!!userId} />
           <CosechaSection />

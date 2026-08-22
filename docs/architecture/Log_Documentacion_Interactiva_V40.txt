@@ -109,3 +109,18 @@ Contexto abierto al cerrar V40 (2026-08-21) — plataforma V5.23:
   34 CTX · 319 ANN (+10) · FILETREE 1840.
 - El puntero de HANDOFF («Visual system map») apunta al V40.0.
 (commit: 5e757b2)
+
+## [2026-08-22] V5.24 · Subastas Tyrian — la puja del comprador
+- Tablas lot_auctions + auction_bids (service-role-only, cero políticas) con el
+  guard trigger auction_bids_guard (la regla de la puja, atómica con FOR UPDATE).
+  Cherry Picked Green: TyrianSection real (listarSubastas/pujar en
+  src/lib/subastas/buyerActions.ts; sesión + nivel Pintón; mitades A/B).
+  OCP: /ocp/subastas (abrir · en vivo · cerrar · adjudicar · cancelar) en
+  src/app/ocp/(app)/subastasActions.ts. Adjudicar NO emite oferta: EUR/kg vs
+  COP/kg — el mejor postor se registra en Ofertas (V5.18 intacto).
+- Para el wrap V41: ficha DICT nueva «subastas» (+ trace «La puja Tyrian»:
+  OCP abre → CP Green puja → trigger → adjudica → Ofertas registra al mejor
+  postor → productor acepta → contrato); actualizar «ofertas» (la subasta ya
+  corre DENTRO); retirar del DICT «cherry» la palabra demo del TY-2713 si la
+  menciona. Guardián nuevo: scripts/qa-subastas-check.mjs (30).
+(commit: pendiente)

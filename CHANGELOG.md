@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.24] — 2026-08-22 (commit pendiente)
+
+- **Añadido**: **Subastas Tyrian — la puja del comprador**, «el podio de los mejores, al mejor postor».
+  Dos tablas service-role-only (`lot_auctions` · `auction_bids`, RLS con cero políticas) y un **guard
+  trigger** que hace atómica la regla de la puja (bloquea la fila de la subasta: abierta y vigente,
+  fracción válida, monto ≥ líder + incremento o precio de salida; la líder anterior pasa a
+  `superada`). En **Cherry Picked Green** la `TyrianSection` dejó de ser demo: lee la subasta real
+  (`listarSubastas`, también para visitantes) y puja con `pujar` — sesión + nivel **Pintón o
+  superior**; estados «tu puja lidera» / «te superaron»; por mitades A/B o el lote completo; tres
+  idiomas. En el OCP, **/ocp/subastas** (pestaña del Catálogo) reemplaza el stub: CTCx abre la
+  subasta de un Tyrian galardonado (kilos, salida EUR/kg, incremento, cierre, nivel mínimo, nota
+  pública), la mira en vivo (líder y pujadores por mitad), la cierra, la adjudica o la cancela.
+- **Cambiado**: adjudicar **no emite oferta ni contrato** — las monedas no se mezclan: la puja es
+  EUR/kg, la oferta al productor sigue en COP/kg y se registra en Ofertas como «mejor postor»
+  (circuito V5.18 intacto). El perfil del comprador ya no habla del lote demo TY-2713.
+- **Añadido**: guardián `scripts/qa-subastas-check.mjs` (30 comprobaciones).
+- **Datos**: migración `subastas_tyrian` aplicada en producción (tablas, índices, trigger).
+
 ## [V5.23] — 2026-08-21 (commit d5d2391)
 
 - **Añadido**: el **escáner visual del OCP y el set de Fichas Técnicas** — el seguimiento acordado

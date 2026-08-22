@@ -68,8 +68,8 @@ const EN = {
   billingNote: "Complete your details to speed up dispatches from the Amsterdam warehouse (EU shipping in 2–5 days).",
   kTyrian: "Tyrian auctions",
   bids: (n: number) => `${n} bid${n === 1 ? "" : "s"}`,
-  leading: "TY-2713 · you lead at least one half (demo).",
-  notBidding: "You're not bidding on TY-2713.",
+  leading: "You're bidding in the open Tyrian auction — check the section to see if you still lead.",
+  notBidding: "You're not bidding in any open Tyrian auction.",
   logout: "Sign out",
 };
 
@@ -118,8 +118,8 @@ const T: Record<Lang, typeof EN> = {
     billingNote: "Completa tus datos para agilizar despachos desde bodega Ámsterdam (envíos UE en 2–5 días).",
     kTyrian: "Subastas Tyrian",
     bids: (n: number) => `${n} puja${n === 1 ? "" : "s"}`,
-    leading: "TY-2713 · vas líder en al menos una mitad (demo).",
-    notBidding: "No estás pujando en el TY-2713.",
+    leading: "Estás pujando en la subasta Tyrian abierta — revisa la sección para ver si sigues liderando.",
+    notBidding: "No estás pujando en ninguna subasta Tyrian abierta.",
     logout: "Cerrar sesión",
   },
   de: {
@@ -165,8 +165,8 @@ const T: Record<Lang, typeof EN> = {
     billingNote: "Vervollständige deine Daten, um Lieferungen aus dem Lager Amsterdam zu beschleunigen (EU-Versand in 2–5 Tagen).",
     kTyrian: "Tyrian-Auktionen",
     bids: (n: number) => `${n} Gebot${n === 1 ? "" : "e"}`,
-    leading: "TY-2713 · du führst in mindestens einer Hälfte (Demo).",
-    notBidding: "Du bietest nicht auf TY-2713.",
+    leading: "Du bietest in der offenen Tyrian-Auktion — sieh im Abschnitt nach, ob du noch führst.",
+    notBidding: "Du bietest in keiner offenen Tyrian-Auktion.",
     logout: "Abmelden",
   },
 };

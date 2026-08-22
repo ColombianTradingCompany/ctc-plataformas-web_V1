@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.26] — 2026-08-22 (commit pendiente)
+## [V5.26] — 2026-08-22 (commit 4bb787d)
 
 - **Añadido**: captura del carrusel de Herramientas para **Defectos del Café**
   (`public/images/herramientas/shots/defectos-cafe.jpg`, `scripts/build-tool-shots.mjs` registra la

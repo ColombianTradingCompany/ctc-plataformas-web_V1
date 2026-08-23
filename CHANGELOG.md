@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.27] — 2026-08-23 (commit pendiente)
+## [V5.27] — 2026-08-23 (commit 76993c7)
 
 - **Corregido**: en **Defectos del Café**, la clave de identificación pintaba la foto del grano ENCIMA de
   su etiqueta («Negro o carbón», «Ámbar traslúcido»…). Causa real: la caja de la imagen era una rejilla

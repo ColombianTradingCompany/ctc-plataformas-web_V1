@@ -19,6 +19,17 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.27] — 2026-08-23 (commit pendiente)
+
+- **Corregido**: en **Defectos del Café**, la clave de identificación pintaba la foto del grano ENCIMA de
+  su etiqueta («Negro o carbón», «Ámbar traslúcido»…). Causa real: la caja de la imagen era una rejilla
+  con fila automática y la imagen llevaba `max-height:80%` — ese porcentaje no se resuelve contra una
+  fila auto, la imagen salía a tamaño natural (hasta 92 px en una caja de 58) y, como el filtro
+  `drop-shadow` crea contexto de apilamiento, se dibujaba sobre la etiqueta que la sigue. Las dos
+  correcciones anteriores (V5.25) atacaban el recorte del texto, que era un síntoma secundario. Ahora la
+  caja es flex de alto fijo con `overflow:hidden` y la imagen lleva tope en píxeles; medido en el
+  navegador: 0/21 imágenes fuera de caja en ES/EN/DE (antes 21/21).
+
 ## [V5.26] — 2026-08-22 (commit 4bb787d)
 
 - **Añadido**: captura del carrusel de Herramientas para **Defectos del Café**

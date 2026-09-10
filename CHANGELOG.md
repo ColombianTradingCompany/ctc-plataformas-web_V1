@@ -19,6 +19,25 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.29] — 2026-09-10 (commit pendiente)
+
+- **Cambiado**: **PVC · revisión de coherencia.** El dossier v2.1.1 (`docs/pvc/v2.1.1`) se reeditó armonizado con el
+  módulo: el código de edición pierde el sufijo de versión (`PVC-F4-2026`; el método se versiona aparte), D2 §7.3–7.4
+  describen la publicación con huella en BCP · PVC y los ciclos semanales internos, D3 §1 registra la huella
+  (`c476fe80`), y el **D4 en español e inglés lleva el mismo esqueleto que produce «Exportar Reporte» en el
+  tablero** (PVC, tres KPIs, escalera con FCA/CIP/DDP, cómo se construye, compromisos; el contexto de mercado
+  vive en D3). Una sola etiqueta de versión (v2.1.1) en motor, calculadora y documentos.
+- **Cambiado**: el tablero exporta el D4 en **español o inglés** con el título `código · modelo · huella` (ya no
+  numera sus propias versiones «D4 v3.n»); abierto sin conexión al BCP, «Publicar» se declara simulación local.
+- **Corregido**: el motor Python de referencia redondeaba los empates al par (2.025.000 → 2.020.000) donde Excel
+  y el tablero redondean hacia arriba; ahora los cuatro motores coinciden y D2 Anexo A lo fija por escrito.
+- **Corregido**: las tablas de `/bcp/pvc` usaban una clase inexistente; ahora llevan el estilo de tabla del panel.
+- **Retirado**: las Server Actions de lectura y publicación sin uso en `lib/pvc/actions.ts` — publicar tiene un solo
+  camino (la ruta del tablero) para que no existan dos ediciones del mismo código.
+- **Añadido**: guardián `scripts/qa-pvc-tablero.mjs` — evalúa el modelo JavaScript del tablero (marcadores
+  `@@MODELO`) contra `paridad.json`; con `qa-pvc-motor` y `verify_xlsx.py`, las cuatro implementaciones quedan
+  ancladas a la misma referencia.
+
 ## [V5.28] — 2026-09-10 (commit 3ae9914)
 
 - **Hito**: **PVC · Ponderación de Valor de Cosecha** entra a la plataforma como módulo del **BCP · Business Core**

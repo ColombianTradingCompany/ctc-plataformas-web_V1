@@ -549,6 +549,11 @@ TypeScript en `src/lib/pvc/motor.ts` y **`scripts/qa-pvc-motor.mjs` exige parida
   la anterior pasa a `superseded`), `pvc_cycles` + `pvc_sources` (ciclo semanal, fase 3), `pvc_trigger_watch`
   y `pvc_forecast_scores` (fase 4). **La única lectura pública es la vista `public_pvc_current`** y su ruta
   `GET /api/pvc/current` — nada más expone entradas ni notas.
+- **Cuatro implementaciones, una referencia** (V5.29): Python (`pvc_model_v2.py`, referencia; redondeo comercial), Excel
+  (`verify_xlsx.py`), `motor.ts` (`qa-pvc-motor.mjs`) y el JS del tablero (`qa-pvc-tablero.mjs`, marcadores `@@MODELO`)
+  se comparan contra `src/lib/pvc/paridad.json`. Al cambiar una regla: primero Python, regenerar vals/paridad, luego
+  los otros tres hasta que los guardianes pasen. El D4 del dossier y el «Exportar Reporte» del tablero comparten
+  esqueleto (PVC · 3 KPIs · escalera FCA/CIP/DDP · construcción · compromisos) en ES y EN; el contexto de mercado vive en D3.
 - **Pendiente antes de la fase 2** (que los contratos, ofertas y listados lean la edición): las cinco decisiones
   del owner en `docs/PVC_BCP_PLAN.md` §8 — sobre todo el conflicto de bandas (`src/lib/grados/definicion.ts`
   va de dos en dos; el PVC usa 80/84/86/88/89), el MOQ Black (350 en Cherry Picked vs 228) y la moneda (EUR en

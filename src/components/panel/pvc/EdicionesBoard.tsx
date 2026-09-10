@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import styles from "@/components/panel/shared.module.css";
+import table from "@/components/cotizador/quotesTable.module.css";
 import type { PvcEdition } from "@/lib/pvc/tipos";
 
 // ── BCP · PVC · Ediciones ────────────────────────────────────────────────────
@@ -68,8 +69,8 @@ export function EdicionesBoard({ ediciones, modeloVersion }: { ediciones: PvcEdi
       {vigente && (
         <div className={styles.card}>
           <div className={styles.sectionHead}><strong>Escalera y pila de precios de la edición vigente</strong></div>
-          <div style={{ overflowX: "auto" }}>
-            <table className="tbl">
+          <div className={table.scroll}>
+            <table className={table.t}>
               <thead><tr><th>Banda</th><th>Puntaje</th><th style={{ textAlign: "right" }}>Mult.</th><th style={{ textAlign: "right" }}>COP / carga</th><th style={{ textAlign: "right" }}>MOQ kg</th><th style={{ textAlign: "right" }}>N2 FCA US$/kg</th><th style={{ textAlign: "right" }}>N3 CIP al MOQ</th><th style={{ textAlign: "right" }}>N4 DDP</th></tr></thead>
               <tbody>
                 {vigente.outputs.pila.map((f) => (
@@ -103,8 +104,8 @@ export function EdicionesBoard({ ediciones, modeloVersion }: { ediciones: PvcEdi
         {ediciones.length === 0 ? (
           <p className={styles.empty}>Todavía no hay ediciones.</p>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="tbl">
+          <div className={table.scroll}>
+            <table className={table.t}>
               <thead><tr><th>Código</th><th>Estado</th><th>Corte</th><th>Publicada</th><th style={{ textAlign: "right" }}>PVC</th><th style={{ textAlign: "right" }}>Prima coop.</th><th>Gobierna</th><th>Modelo</th><th>Huella</th><th></th></tr></thead>
               <tbody>
                 {ediciones.map((e) => (

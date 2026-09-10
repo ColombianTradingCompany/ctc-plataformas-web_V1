@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import styles from "@/components/panel/shared.module.css";
+import table from "@/components/cotizador/quotesTable.module.css";
 import { listarDossier } from "@/lib/pvc/dossier";
 import { edicionVigente } from "@/lib/pvc/servicio";
 
@@ -25,7 +26,7 @@ export default async function PvcDossierPage() {
       {versiones.map((v) => (
         <div className={styles.card} key={v}>
           <div className={styles.sectionHead}><strong>Dossier {v}</strong></div>
-          <table className="tbl">
+          <div className={table.scroll}><table className={table.t}>
             <thead><tr><th>Documento</th><th>Archivo</th><th style={{ textAlign: "right" }}>Tamaño</th><th></th></tr></thead>
             <tbody>
               {docs.filter((d) => d.version === v).map((d) => (
@@ -39,7 +40,7 @@ export default async function PvcDossierPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       ))}
       <p className={styles.meta}>

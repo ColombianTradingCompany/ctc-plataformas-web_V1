@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/components/panel/shared.module.css";
+import table from "@/components/cotizador/quotesTable.module.css";
 import { crearVersionModeloAction } from "@/lib/pvc/actions";
 import type { PvcModelVersion } from "@/lib/pvc/tipos";
 
@@ -46,7 +47,7 @@ export function ParametrosBoard({ versiones }: { versiones: PvcModelVersion[] })
           </span>
         </div>
         {versiones.length === 0 ? <p className={styles.empty}>No hay versiones registradas.</p> : (
-          <table className="tbl">
+          <div className={table.scroll}><table className={table.t}>
             <thead><tr><th>Versión</th><th>Registrada</th><th>Nota</th><th style={{ textAlign: "right" }}>Multiplicadores</th><th style={{ textAlign: "right" }}>Prima · margen</th><th></th></tr></thead>
             <tbody>
               {versiones.map((v, i) => (
@@ -60,7 +61,7 @@ export function ParametrosBoard({ versiones }: { versiones: PvcModelVersion[] })
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
         {msg && <p className={styles.meta}>{msg}</p>}
       </div>

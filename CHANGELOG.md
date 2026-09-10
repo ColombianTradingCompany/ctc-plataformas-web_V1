@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.28] — 2026-09-10 (commit pendiente)
+## [V5.28] — 2026-09-10 (commit 3ae9914)
 
 - **Hito**: **PVC · Ponderación de Valor de Cosecha** entra a la plataforma como módulo del **BCP · Business Core**
   (`/bcp/pvc`, owner-only): la fuente única del indicador principal del negocio. Fase 1 de `docs/PVC_BCP_PLAN.md`.

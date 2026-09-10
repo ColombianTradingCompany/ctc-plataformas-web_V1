@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.29] — 2026-09-10 (commit pendiente)
+## [V5.29] — 2026-09-10 (commit 9f57a17)
 
 - **Cambiado**: **PVC · revisión de coherencia.** El dossier v2.1.1 (`docs/pvc/v2.1.1`) se reeditó armonizado con el
   módulo: el código de edición pierde el sufijo de versión (`PVC-F4-2026`; el método se versiona aparte), D2 §7.3–7.4

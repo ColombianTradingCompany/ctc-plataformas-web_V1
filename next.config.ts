@@ -38,6 +38,11 @@ const nextConfig: NextConfig = {
     // carpeta del disco en tiempo de ejecución. Sin esta línea la carpeta no
     // existiría en el servidor y la descarga saldría vacía.
     "/api/transcripciones/descargar": ["./tools/transcriptor/**"],
+    // BCP · PVC (V5.28): el dossier (PDF + calculadora por versión) y el tablero
+    // HTML se leen de docs/pvc/ en tiempo de ejecución, autenticados.
+    "/bcp/pvc/dossier": ["./docs/pvc/**"],
+    "/bcp/pvc/dossier/[version]/[file]": ["./docs/pvc/**"],
+    "/bcp/pvc/tablero/embed": ["./docs/pvc/tablero/**"],
     // NOTA histórica: las herramientas "internas" (leídas del disco y luego
     // embebidas) ya no existen — desde 2026-07-24 TODAS las herramientas viven
     // en public/tools/ y se sirven estáticas, así que no hay nada que trazar.

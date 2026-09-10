@@ -531,6 +531,29 @@ Módulo **reutilizable** (`src/components/catalogo/SneakPeek.tsx` + `SneakPeek.m
 - ⚠️ **Un volteo 3D NO se puede verificar en el panel de vista previa**: además de no pintar fotogramas, devuelve el valor INICIAL de una transición, así que `getComputedStyle(...).transform` dice «identidad» aunque la tarjeta esté volteada, y un `transform` en línea tampoco cambia la lectura. Se comprueba con Chrome headless conducido por CDP (receta en la memoria `reference_headless_chrome_verification`), que sí compone.
 - **Lo que destapó Chrome headless y ninguna aserción habría visto**: el sello de grado de 420×420 reducido a 36 px era una mancha gris ilegible (ahora va el NOMBRE del grado sobre su color oficial), el puntaje salía sin escala (lleva etiqueta «SCA») y el rótulo largo de temporada partía el año por el guion. Ver `reference_headless_chrome_verification` en la memoria: el panel de vista previa no pinta fotogramas.
 
+## BCP · PVC — la Ponderación de Valor de Cosecha entra al sistema (2026-09-10, V5.28)
+
+El PVC es la referencia de valor en COP/carga (125 kg pergamino seco, FR 94) que CTCx publica dos meses antes de
+cada franja trimestral; de él cuelgan la escalera por banda (Black ×1,15 · Red ×1,30 · Blue ×1,60 · Gold ×2,00;
+Tyrian en subasta), el contrato de franja y el precio al comprador (pila FCA/CIP/DDP en US$/kg). El método y el
+dossier viven en `reference_internal_apps/PVC - Modelo/v2.0` (motor Python + D0–D9); la plataforma lleva el port
+TypeScript en `src/lib/pvc/motor.ts` y **`scripts/qa-pvc-motor.mjs` exige paridad** con `paridad.json`.
+
+- **Módulo** `/bcp/pvc` (owner-only, grupo Business Core): Ediciones · Tablero · Parámetros del modelo · Dossier.
+  El Tablero es el HTML `docs/pvc/tablero/PVC_Tablero.html` servido autenticado por `/bcp/pvc/tablero/embed` con
+  `window.PVC_DB` inyectado; «Publicar» hace POST a `/bcp/pvc/tablero/embed/publicar`, que separa ENTRADAS de
+  PARÁMETROS y rechaza si los parámetros no coinciden con la versión vigente del modelo (un cambio de parámetros
+  es una versión nueva, con acta, no una edición).
+- **Datos** (migración `bcp_pvc_core`, service-role-only): `pvc_model_versions` (inmutables), `pvc_editions`
+  (guard `pvc_editions_guard`: publicada = inmutable; correcciones al alza = otra fila con `correction_of`;
+  la anterior pasa a `superseded`), `pvc_cycles` + `pvc_sources` (ciclo semanal, fase 3), `pvc_trigger_watch`
+  y `pvc_forecast_scores` (fase 4). **La única lectura pública es la vista `public_pvc_current`** y su ruta
+  `GET /api/pvc/current` — nada más expone entradas ni notas.
+- **Pendiente antes de la fase 2** (que los contratos, ofertas y listados lean la edición): las cinco decisiones
+  del owner en `docs/PVC_BCP_PLAN.md` §8 — sobre todo el conflicto de bandas (`src/lib/grados/definicion.ts`
+  va de dos en dos; el PVC usa 80/84/86/88/89), el MOQ Black (350 en Cherry Picked vs 228) y la moneda (EUR en
+  subastas y roast vs US$ a la TRM del corte).
+
 ## Dev workflow
 
 - `npm run dev` (Turbopack). Type-check with `npx tsc --noEmit`, lint with `npx eslint src --max-warnings=0` — both must be clean before considering a change done; this has held throughout the project.

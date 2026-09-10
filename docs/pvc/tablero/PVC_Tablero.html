@@ -1,0 +1,604 @@
+<title>Tablero PVC CTCx</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f3fa; --panel:#ffffff; --panel2:#efebf7; --ink:#1d1633; --ink2:#5a5271; --ink3:#8b83a1; --line:#dcd6ea; --line2:#c9c1de;
+  --acc:#3a0b8f; --acc2:#5b2fb5; --acc-soft:#e6def6; --acc-ink:#ffffff;
+  --good:#1f7a4d; --warn:#a86b00; --crit:#b3121f; --good-soft:#dff3e7; --warn-soft:#fbeed0; --crit-soft:#fbe0e2;
+  --black:#181818; --red:#c8102e; --blue:#0a3d91; --gold:#e0b200; --tyrian:#5b1a6b; --grey:#8b83a1;
+  --shadow:0 10px 30px rgba(29,22,51,.14);
+  --fd:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif; --fb:"IBM Plex Sans",Arial,Helvetica,sans-serif; --fm:"IBM Plex Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#130f1f; --panel:#1c1730; --panel2:#251e3f; --ink:#efeaf8; --ink2:#b8afcf; --ink3:#8a819f; --line:#332b4f; --line2:#443a64;
+  --acc:#b9a6e6; --acc2:#d2c4f2; --acc-soft:#2d2350; --acc-ink:#140d2a;
+  --good:#5fcf92; --warn:#e7b34a; --crit:#f07882; --good-soft:#193629; --warn-soft:#3b2f12; --crit-soft:#3e1a1f;
+  --black:#e9e5f2; --red:#ff5a6e; --blue:#6f9cf0; --gold:#f2c200; --tyrian:#c87be0; --grey:#8a819f; --shadow:0 12px 34px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --bg:#130f1f; --panel:#1c1730; --panel2:#251e3f; --ink:#efeaf8; --ink2:#b8afcf; --ink3:#8a819f; --line:#332b4f; --line2:#443a64;
+  --acc:#b9a6e6; --acc2:#d2c4f2; --acc-soft:#2d2350; --acc-ink:#140d2a;
+  --good:#5fcf92; --warn:#e7b34a; --crit:#f07882; --good-soft:#193629; --warn-soft:#3b2f12; --crit-soft:#3e1a1f;
+  --black:#e9e5f2; --red:#ff5a6e; --blue:#6f9cf0; --gold:#f2c200; --tyrian:#c87be0; --grey:#8a819f; --shadow:0 12px 34px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.app{max-width:640px;margin:0 auto;padding:0 12px 96px}
+/* header */
+.hdr{position:sticky;top:0;z-index:20;background:var(--panel);border:1.5px solid var(--ink);border-top:0;border-radius:0 0 10px 10px;display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:14px}
+.hdr .eq{font-family:var(--fd);font-weight:700;font-size:15px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink2)}
+.hdr .val{font-family:var(--fm);font-weight:600;font-size:22px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:var(--acc)}
+.hdr .unit{font-family:var(--fd);font-size:13px;color:var(--ink2);font-weight:600}
+.hdr .sp{flex:1}
+.ref{border:1.5px solid var(--ink);background:var(--panel);border-radius:6px;padding:4px 9px;font-family:var(--fd);font-weight:700;letter-spacing:.06em;font-size:12px}
+.ref:hover{background:var(--acc-soft)}
+.stamp{font-family:var(--fm);font-size:10.5px;color:var(--ink3);text-align:right;margin:-8px 2px 14px}
+/* kpis */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-bottom:22px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 10px;display:flex;flex-direction:column;gap:4px;position:relative;min-height:112px}
+.kpi .lab{font-family:var(--fd);font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding-right:26px}
+.kpi .num{font-family:var(--fm);font-weight:600;font-size:30px;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--ink)}
+.kpi .sub{font-size:12px;color:var(--ink2)}
+.kpi .pill{align-self:flex-start;margin-top:auto;font-family:var(--fd);font-weight:600;font-size:11px;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--panel2);color:var(--ink2)}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.crit{background:var(--crit-soft);color:var(--crit)}
+.txt{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;color:var(--ink2);max-width:60ch}
+.txt b{color:var(--ink);font-weight:600}
+.txt .wc{display:block;margin-top:6px;font-family:var(--fm);font-size:10px;color:var(--ink3)}
+/* i button */
+.ib{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--acc);background:var(--panel);color:var(--acc);font-family:var(--fd);font-weight:700;font-size:12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ib.inl{position:static;width:18px;height:18px;font-size:10.5px;vertical-align:middle;margin-left:4px}
+.ib:hover{background:var(--acc);color:var(--acc-ink)}
+/* charts */
+.chart{margin-bottom:24px}
+.chart .txt{border-radius:10px 10px 0 0;border-bottom:0;max-width:none}
+.chart .ttl{display:flex;align-items:center;gap:8px;font-family:var(--fd);font-weight:700;font-size:15px;color:var(--ink);margin-bottom:4px}
+.cwrap{display:flex;gap:8px;align-items:stretch;background:var(--panel);border:1.5px solid var(--ink);border-radius:0 0 10px 10px;padding:10px 8px 8px 10px}
+.cwrap svg{flex:1;min-width:0;display:block;height:auto}
+.dials{width:96px;flex:0 0 96px;display:flex;flex-direction:column;gap:8px;padding-top:2px}
+.dial{border:1.5px solid var(--ink);border-radius:8px;padding:5px 6px 6px;background:var(--panel);display:flex;flex-direction:column;gap:3px}
+.dial .k{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--fd);font-weight:700;font-size:12px}
+.dial .k small{font-weight:500;font-size:10px;color:var(--ink3);letter-spacing:.02em}
+.dial .v{font-family:var(--fm);font-size:12px;font-variant-numeric:tabular-nums;color:var(--acc);font-weight:600}
+.dial input[type=range]{width:100%;margin:0;accent-color:var(--acc);height:18px}
+.dial .name{font-size:10.5px;color:var(--ink2);line-height:1.2}
+.seg{display:flex;flex-direction:column;gap:2px}
+.seg button{border:1px solid var(--line2);background:var(--panel);border-radius:5px;padding:3px 4px;font-family:var(--fd);font-weight:600;font-size:11px;color:var(--ink2)}
+.seg button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.tog{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink2)}
+.tog input{accent-color:var(--acc);margin:0;width:16px;height:16px}
+.link{font-size:10px;color:var(--ink3);text-align:center;font-family:var(--fd)}
+svg text{font-family:var(--fm);font-size:9px;fill:var(--ink2)}
+svg .ax{stroke:var(--line2);stroke-width:1}
+svg .grid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 3}
+svg .lbl{font-family:var(--fd);font-size:9.5px;fill:var(--ink2)}
+svg .val{font-size:9px;fill:var(--ink);font-weight:500}
+/* fab + menu */
+.fab{position:fixed;left:max(14px,calc(50% - 320px + 14px));bottom:18px;z-index:30;width:52px;height:52px;border-radius:10px;border:1.5px solid var(--ink);background:var(--acc-soft);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;padding:0}
+.fab span{display:block;width:22px;height:2px;background:var(--ink);box-shadow:0 -7px 0 var(--ink),0 7px 0 var(--ink)}
+.scrim{position:fixed;inset:0;background:rgba(15,10,30,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.menu{position:fixed;left:50%;bottom:0;transform:translate(-50%,110%);width:min(100%,640px);background:var(--panel);border:1.5px solid var(--ink);border-bottom:0;border-radius:14px 14px 0 0;z-index:50;padding:14px 14px 22px;transition:transform .25s;box-shadow:var(--shadow)}
+.menu.on{transform:translate(-50%,0)}
+.menu h2{font-family:var(--fd);font-weight:700;font-size:20px;margin:0 0 8px;letter-spacing:-.01em}
+.menu button.it{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:11px 4px;font-family:var(--fd);font-weight:600;font-size:18px;color:var(--ink)}
+.menu button.it:hover{color:var(--acc)}
+.menu button.it small{display:block;font-family:var(--fb);font-weight:400;font-size:12px;color:var(--ink3)}
+@media (prefers-reduced-motion:reduce){.menu,.scrim,.drawer{transition:none}}
+/* drawer (config flow) */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(100%,900px);background:var(--bg);z-index:60;transform:translateX(105%);transition:transform .28s;overflow:auto;border-left:1.5px solid var(--ink)}
+.drawer.on{transform:none}
+.dh{position:sticky;top:0;background:var(--panel);border-bottom:1.5px solid var(--ink);padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:2}
+.dh h2{font-family:var(--fd);font-size:20px;margin:0;font-weight:700}
+.dh .sp{flex:1}
+.btn{border:1.5px solid var(--ink);background:var(--panel);border-radius:7px;padding:6px 11px;font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.02em}
+.btn.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn:hover{filter:brightness(1.06)}
+.flow{padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px 26px;position:relative}
+.blk{background:var(--panel);border:1.5px solid var(--ink);border-radius:10px;padding:10px 12px 12px;position:relative}
+.blk::after{content:"→";position:absolute;right:-22px;top:14px;font-family:var(--fd);font-weight:700;font-size:18px;color:var(--acc)}
+.blk:last-child::after{content:""}
+.blk h3{margin:0 0 2px;font-family:var(--fd);font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px}
+.blk h3 .n{font-family:var(--fm);font-size:10px;color:var(--acc);border:1px solid var(--acc);border-radius:4px;padding:0 4px}
+.blk .why{font-size:11.5px;color:var(--ink3);margin:0 0 8px}
+.blk .out{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line2);font-family:var(--fm);font-size:11.5px;color:var(--ink2)}
+.blk .out b{color:var(--acc);font-weight:600}
+.f{display:grid;grid-template-columns:1fr 92px;gap:4px 8px;align-items:center;padding:4px 0;border-top:1px solid var(--line)}
+.f:first-of-type{border-top:0}
+.f label{font-size:12px;color:var(--ink);line-height:1.25}
+.f label small{display:block;color:var(--ink3);font-size:10.5px}
+.f input[type=number],.f select{width:100%;border:1px solid var(--line2);background:var(--panel2);border-radius:5px;padding:4px 6px;font-family:var(--fm);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.f input[type=number].dec{background:#fff6c2;color:#3a2a00}
+:root[data-theme="dark"] .f input[type=number].dec{background:#4a3d0f;color:#ffe58a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .f input[type=number].dec{background:#4a3d0f;color:#ffe58a}}
+.f input[type=number].est{background:#ffe6cc;color:#4a2400}
+:root[data-theme="dark"] .f input[type=number].est{background:#4d2f14;color:#ffc98a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .f input[type=number].est{background:#4d2f14;color:#ffc98a}}
+.f input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--acc);margin:0 0 2px}
+.f input[type=checkbox]{justify-self:start;width:18px;height:18px;accent-color:var(--acc)}
+.legend{grid-column:1/-1;font-size:11.5px;color:var(--ink2);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.legend i{display:inline-block;width:14px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line2)}
+/* modal */
+.modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,10,30,.5)}
+.modal.on{display:flex}
+.card{background:var(--panel);border:1.5px solid var(--ink);border-radius:12px;max-width:640px;width:100%;max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
+.card .ch{display:flex;align-items:flex-start;gap:10px;padding:14px 16px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+.card .ch h2{margin:0;font-family:var(--fd);font-size:19px;font-weight:700;flex:1;text-wrap:balance}
+.card .ch .x{border:0;background:none;font-size:22px;line-height:1;color:var(--ink2);padding:0 4px}
+.card .cb{padding:12px 16px 18px;font-size:13px;line-height:1.5}
+.card h4{font-family:var(--fd);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin:12px 0 4px}
+.card h4:first-child{margin-top:0}
+.card p{margin:0 0 6px;max-width:66ch}
+.card ul{margin:2px 0 6px 18px;padding:0}
+.card li{margin:2px 0}
+.card .kv{font-family:var(--fm);font-size:12px;background:var(--panel2);border-radius:6px;padding:8px 10px;margin:6px 0;color:var(--ink2)}
+.card table{border-collapse:collapse;width:100%;font-size:12px}
+.card th,.card td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.card th{font-family:var(--fd);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.card td.r,.card th.r{text-align:right;font-family:var(--fm);font-variant-numeric:tabular-nums}
+.card .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.card textarea{width:100%;min-height:220px;font-family:var(--fm);font-size:11px;border:1px solid var(--line2);border-radius:6px;padding:8px;background:var(--panel2);color:var(--ink)}
+.card input[type=text]{width:100%;border:1px solid var(--line2);background:var(--panel2);border-radius:6px;padding:7px 9px;font-family:var(--fm)}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--bg);font-family:var(--fd);font-weight:600;font-size:13px;padding:8px 14px;border-radius:8px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.badge{display:inline-block;font-family:var(--fd);font-weight:700;font-size:10.5px;letter-spacing:.04em;color:#fff;border-radius:4px;padding:1px 6px}
+.badge.Black{background:#181818}.badge.Red{background:#c8102e}.badge.Blue{background:#0a3d91}.badge.Gold{background:#c99e00}.badge.Tyrian{background:#5b1a6b}
+@media (max-width:520px){
+  .kpis{grid-template-columns:1fr} .kpi{min-height:0} .txt{max-width:none}
+  .cwrap{flex-direction:column} .dials{width:100%;flex-direction:row;flex-wrap:wrap} .dial{flex:1 1 30%}
+  .fab{left:14px}
+}
+/* one-pager */
+.op{font-family:var(--fb);color:#111;background:#fff;padding:18px 22px;font-size:11.5px;line-height:1.35}
+.op *{color:inherit}
+.op .oh{display:flex;gap:12px;align-items:flex-start;border-bottom:2px solid #3a0b8f;padding-bottom:8px;margin-bottom:10px}
+.op .oh h1{font-family:var(--fd);font-size:20px;margin:0;color:#3a0b8f;letter-spacing:-.01em}
+.op .oh .s{font-size:10.5px;color:#555}
+.op .big{border:2px solid #3a0b8f;border-radius:8px;padding:8px 12px;text-align:center;margin:8px 0 10px;background:#f6f2fd}
+.op .big .n{font-family:var(--fm);font-weight:600;font-size:30px;color:#3a0b8f;letter-spacing:-.02em}
+.op .big .d{font-size:10.5px;color:#333}
+.op h2{font-family:var(--fd);font-size:13px;margin:10px 0 4px;color:#3a0b8f;letter-spacing:.02em}
+.op table{border-collapse:collapse;width:100%;font-size:10.5px}
+.op th,.op td{border-bottom:1px solid #ddd;padding:3px 5px;text-align:left;vertical-align:top}
+.op th{background:#3a0b8f;color:#fff;font-family:var(--fd);font-weight:600;font-size:10px}
+.op td.r,.op th.r{text-align:right;font-family:var(--fm);font-variant-numeric:tabular-nums}
+.op .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0}
+.op .kp div{border:1px solid #cfc6e6;border-radius:6px;padding:6px 8px}
+.op .kp .l{font-family:var(--fd);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#555}
+.op .kp .v{font-family:var(--fm);font-weight:600;font-size:20px;color:#3a0b8f}
+.op .kp .t{font-size:10px;color:#333;margin-top:3px}
+.op .kp .pl{display:inline-block;font-family:var(--fd);font-size:9px;border-radius:999px;padding:1px 6px;margin-top:3px;background:#eee;color:#333}
+.op .box{border:1px solid #cfc6e6;border-radius:6px;padding:6px 9px;margin-top:8px;font-size:10.5px;background:#fbfafe}
+.op .src{font-size:9px;color:#666;margin-top:8px;border-top:1px solid #ddd;padding-top:4px}
+.op .badge{font-size:9.5px;color:#fff}
+#opWrap{display:none}
+@media print{
+  body>*{display:none!important} body{background:#fff} #opWrap{display:block!important;position:static} #opWrap .op{padding:0}
+  @page{size:Letter;margin:12mm}
+}
+</style>
+
+<div class="app">
+  <header class="hdr">
+    <span class="eq">PVC =</span><span class="val" id="hPVC">$2.500.000</span><span class="unit">COP / carga</span>
+    <span class="sp"></span>
+    <button class="ref" id="btnRef" title="Ficha de la referencia">REF</button>
+  </header>
+  <div class="stamp" id="stamp"></div>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="chart" id="c1"></section>
+  <section class="chart" id="c2"></section>
+  <section class="chart" id="c3"></section>
+</div>
+
+<button class="fab" id="fab" aria-label="Menú"><span></span></button>
+<div class="scrim" id="scrim"></div>
+<nav class="menu" id="menu" aria-label="Menú principal">
+  <h2>Configuración del Modelo</h2>
+  <button class="it" data-act="config">Abrir el flujo del modelo <small>Todos los valores, bloque a bloque, con su explicación</small></button>
+  <button class="it" data-act="save">Guardar Reporte <small>Estado actual de diales y parámetros en este navegador</small></button>
+  <button class="it" data-act="load">Cargar Reporte</button>
+  <button class="it" data-act="publish">Publicar Reporte <small>Fija una edición con código, fecha y huella</small></button>
+  <button class="it" data-act="history">Ver Historial de PVCs Publicados</button>
+  <button class="it" data-act="export">Exportar Reporte en Pantalla <small>Texto para copiar o imprimir</small></button>
+  <button class="it" data-act="docs">Ver Documentación <small>Conceptos, dossier de PDFs por versión y cómo se lee el tablero</small></button>
+  <div style="border-top:1px solid var(--line);padding:10px 4px 0;display:flex;align-items:center;gap:8px"><span style="font-family:var(--fd);font-weight:600;font-size:13px;color:var(--ink2)">Tema</span><div class="seg" style="flex-direction:row;gap:4px" id="themeSeg"><button data-theme="system">Sistema</button><button data-theme="light">Claro</button><button data-theme="dark">Oscuro</button></div></div>
+</nav>
+
+<aside class="drawer" id="drawer" aria-label="Configuración del modelo">
+  <div class="dh"><h2>Configuración del Modelo · flujo</h2><span class="sp"></span><button class="btn" id="btnReset">Restablecer F4-2026</button><button class="btn p" id="btnCloseDrawer">Cerrar</button></div>
+  <div class="legend" style="padding:12px 16px 0"><span><i style="background:#fff6c2"></i>decisión CTCx</span><span><i style="background:#ffe6cc"></i>estimado, pendiente de cotización</span><span><i style="background:var(--panel2)"></i>dato medido o de entrada</span><span>Todo recalcula al instante; nada se guarda hasta "Guardar Reporte".</span></div>
+  <div class="flow" id="flow"></div>
+</aside>
+
+<div class="modal" id="modal"><div class="card" role="dialog" aria-modal="true"><div class="ch"><h2 id="mTitle"></h2><button class="x" id="mClose" aria-label="Cerrar">×</button></div><div class="cb" id="mBody"></div></div></div>
+<div class="toast" id="toast"></div>
+<div id="opWrap"></div>
+
+<script>
+/* ================================================================ datos base (motor v2.1.1, edición PVC-F4-2026) */
+const MENSUAL={2018:[763903,745031,729855,715325,754210,746400,717839,705065,686933,796774,804283,727645],2019:[727274,708089,690581,680567,724065,779917,796484,798935,815450,819581,909600,999129],2020:[886161,909103,1143194,1175567,1068871,962800,1001452,1143968,1142233,1052484,1044700,1047677],2021:[1073194,1113536,1156032,1207433,1385935,1420800,1562742,1704806,1712138,1784935,1999655,2116484],2022:[2148333,2213333,1988774,2027448,2096733,2172233,2250290,2315548,2398967,2277290,1990067,1933032],2023:[1838032,2075286,1993129,1978900,1895968,1577900,1318774,1319097,1285967,1379065,1406448,1468258],2024:[1423000,1456862,1440129,1661933,1596129,1817033,1876387,1943323,2120233,2173290,2456567,2764871],2025:[2751258,3118571,3054452,3044433,3012759,2700567,2369903,2758032,2966133,2954935,2889633,2745226],2026:[2627903,2174143,2227129,2229900,2229129,2086867,2244839,2263548,null,null,null,null]};
+const COSTO={2019:700e3,2020:745e3,2021:860e3,2022:1.12e6,2023:1.28e6,2024:1.35e6,2025:1.447e6,2026:1.5508e6};
+const PEC_ADD_HIST=0.027, SELLO_HIST=0.03, LB=2.20462;
+const BANDAS=["Black","Red","Blue","Gold"], BANDAS5=["Black","Red","Blue","Gold","Tyrian"];
+const RANGOS={Black:"80,0–83,9",Red:"84,0–85,9",Blue:"86,0–87,9",Gold:"88,0–88,9",Tyrian:"≥ 89,0"};
+const SCORE_KEYS=["Sub-índice O&D cafetero","Clima / ENSO","BRL/USD","COP/USD (TRM)","Petróleo / fertilizantes","Político / comercial","Posicionamiento especulativo"];
+const DEFAULT={
+  codigo:"PVC-F4-2026", fecha_corte:"2026-09-04", fecha_pub:"2026-09-09", vigencia:"15-dic-2026", valid_from:"2026-09-15", valid_to:"2026-12-15",
+  fnc:[2229900,2229129,2086867,2244839,2263548], fnc_30d:2252419, fnc_corte:2080000, fnc_max90:2520000, fnc_prom180:2213674,
+  c_strip:296.0, delta:0.3809, k:0.967, lb_excelso:205.2, trm:3141.36,
+  pec_add:60000, prima:0.08, costo:1550805, escalamiento:0.06, margen:0.50, desembolso:0.73,
+  peso_L:0.60, tope_impulso:0.05, paso:0.075, collar:0.15, aplicar_mod:true,
+  score:{"Sub-índice O&D cafetero":[0.30,1],"Clima / ENSO":[0.20,1],"BRL/USD":[0.15,0],"COP/USD (TRM)":[0.10,-1],"Petróleo / fertilizantes":[0.10,1],"Político / comercial":[0.10,1],"Posicionamiento especulativo":[0.05,-1]},
+  pvc_anterior:0, banda_muerta:0.05, tope_bajista:0.15, redondeo:10000,
+  mult:{Black:1.15,Red:1.30,Blue:1.60,Gold:2.00}, tyrian_umbral:89, tyrian_reparto:0.80, tyrian_cierre:2.6,
+  min_cargas:{Black:5,Red:5,Blue:3,Gold:3,Tyrian:1}, moq:{Black:228,Red:228,Blue:150,Gold:60,Tyrian:30},
+  retiro_libre:0.25, cifra_salida:0.075, antiguedad:0.05, anticipo:0.60, catacion:200000, subsidio:0.30,
+  ref:{Black:3.80,Red:4.30,Blue:5.60,Gold:7.40}, flete_mar:0.12,
+  kg_excelso:93.09, kg_g:78, bolsa:6, excedente_val:0, proc:0.95, palet:0.10, transp:0.20, exp:0.25,
+  tarifa_base:1.20, factor:{Black:1.00,Red:1.10,Blue:1.25,Gold:1.50,Tyrian:2.00}, rec:{FCA:0,CIP:0.35,DDP:0.90},
+  escalas:[[0,6.50],[45,5.20],[100,4.20],[300,3.60],[500,3.20],[1000,2.90]], modo_aereo:1.00, seguro:0.006, seguro_base:1.10,
+  ddp_iva:false, destinos:[["Estados Unidos (Miami / Nueva York)",0.25,0.40,0.00],["Países Bajos (Ámsterdam)",0.30,0.45,0.09],["Alemania (Fráncfort)",0.30,0.45,0.07]],
+  nivel:"CIP", destino:0, lead:3, disparador:true, disp_dias:10, disp_de:15,
+};
+let S=JSON.parse(JSON.stringify(DEFAULT));
+/* Puente a la base (BCP · /bcp/pvc/tablero): si existe, la edición vigente manda y Publicar/Historial van a la base. */
+const DB=(typeof window!=="undefined"&&window.PVC_DB)||null;
+if(DB&&DB.current&&DB.current.S){S={...S,...DB.current.S};}
+
+/* ================================================================ formato */
+const cop=x=>"$"+Math.round(x).toLocaleString("es-CO");
+const pct=(x,d=1,sign=true)=>(sign&&x>=0?"+":"")+(x*100).toFixed(d).replace(".",",")+"%";
+const num=(x,d=2)=>Number(x).toLocaleString("es-CO",{minimumFractionDigits:d,maximumFractionDigits:d});
+const usd=(x,d=2)=>num(x,d);
+const mult=m=>"×"+String(+m.toFixed(2)).replace(".",",");
+const wc=t=>t.replace(/<[^>]+>/g," ").trim().split(/\s+/).length;
+
+/* ================================================================ modelo */
+function edicion(s){
+  const f=s.fnc, L=f.reduce((a,v,i)=>a+(i+1)*v,0)/15;
+  const impulso=Math.max(-s.tope_impulso,Math.min(s.tope_impulso,0.5*(f[4]/f[0]-1)*3/5));
+  const P0=(s.c_strip/100+s.delta)*s.lb_excelso*s.k*s.trm, P=P0*(1+impulso);
+  const ancla=s.peso_L*L+(1-s.peso_L)*P;
+  const pec30=s.fnc_30d+s.pec_add, min_atr=pec30*(1+s.prima);
+  const costo=s.costo*(1+s.escalamiento), piso=costo*(1+s.margen);
+  const neto=SCORE_KEYS.reduce((a,k)=>a+s.score[k][0]*s.score[k][1],0);
+  const modificador=s.aplicar_mod?Math.max(-s.collar,Math.min(s.collar,s.paso*neto)):0;
+  const mercado=ancla*(1+modificador);
+  const bruto=Math.max(piso,min_atr,mercado);
+  let aj=bruto, regla="";
+  if(s.pvc_anterior>0){ if(bruto>=s.pvc_anterior*(1-s.banda_muerta)){aj=Math.max(bruto,s.pvc_anterior); if(aj!==bruto)regla="banda muerta";} else {aj=Math.max(bruto,s.pvc_anterior*(1-s.tope_bajista)); if(aj!==bruto)regla="tope bajista";} }
+  const pvc=Math.round(aj/s.redondeo)*s.redondeo;
+  const gob=piso>=Math.max(min_atr,mercado)?"piso":(min_atr>=mercado?"PEC":"mercado");
+  return {L,impulso,P0,P,ancla,pec30,min_atr,costo,piso,neto,modificador,mercado,bruto,pvc,gob,regla,pec_corte:s.fnc_corte+s.pec_add};
+}
+function fleteKg(kg,s){let t=s.escalas[0][1];for(const [m,v] of s.escalas) if(kg>=m)t=v;return t*s.modo_aereo;}
+function escalaDe(kg,s){const e=s.escalas;for(let i=0;i<e.length;i++){if(kg>=e[i][0]&&(i+1===e.length||kg<e[i+1][0]))return i+1<e.length?`${e[i][0]}–${e[i+1][0]-1} kg`:`≥ ${e[i][0]} kg`;}}
+function pila(s,pvc,kg_g){
+  kg_g=kg_g||s.kg_g; const cred=(s.kg_excelso-kg_g)*s.excedente_val/kg_g; const out=[];
+  for(const b of BANDAS5){
+    const m=b==="Tyrian"?s.tyrian_cierre:s.mult[b]; const copc=pvc*m;
+    const n0=copc/s.trm/kg_g-cred, n1=n0+s.proc, sin=n1+s.palet+s.transp+s.exp;
+    const tarifa=s.tarifa_base*s.factor[b]+s.rec.FCA, n2=sin+tarifa;
+    const moq=s.moq[b], flete=fleteKg(moq,s), seg=s.seguro*s.seguro_base*(n2+flete), n3=n2+flete+seg+s.rec.CIP;
+    const d=s.destinos[s.destino]; const n4b=n3+d[1]+d[2]+s.rec.DDP; const iva=s.ddp_iva?n4b*d[3]:0; const n4=n4b+iva;
+    const ref=s.ref[b]||null;
+    out.push({b,m,copc,usd_carga:copc/s.trm,n0,n1,sin,tarifa,n2,moq,flete,seg,n3,dest:d[1]+d[2],n4,iva,n2_lb:n2/LB,n3_lb:n3/LB,n4_lb:n4/LB,escala:escalaDe(moq,s),ref,sobre:ref?n2/LB/ref-1:null,bolsas:Math.floor(kg_g/s.bolsa),cargas_moq:Math.ceil(moq/kg_g),cubre:s.min_cargas[b]*kg_g>=moq,taza:ref?(n2/LB-ref)*12/453.592*100:null});
+  }
+  return out;
+}
+function precio(y,m){const a=MENSUAL[y];if(!a)throw 0;const v=a[m-1];if(v==null)throw 0;return v;}
+function addm(y,m,k){m+=k;while(m>12){m-=12;y++}while(m<1){m+=12;y--}return [y,m];}
+function backproof(s,lead,trigger){
+  const rows=[];let prev=null;
+  for(let y=2019;y<=2026;y++){
+    [[y-1,12],[y,3],[y,6],[y,9]].forEach((start,fi)=>{
+      let lb,venta; try{lb=[0,1,2,3,4].map(i=>precio(...addm(start[0],start[1],-lead-4+i)));venta=[0,1,2].map(k=>precio(...addm(start[0],start[1],k)));}catch(e){return;}
+      const L=lb.reduce((a,v,i)=>a+(i+1)*v,0)/15;
+      const imp=Math.max(-s.tope_impulso,Math.min(s.tope_impulso,.5*(lb[4]/lb[0]-1)*3/5));
+      const P=lb[4]*(1+imp), ancla=s.peso_L*L+(1-s.peso_L)*P;
+      const pec=lb[4]*(1+PEC_ADD_HIST)*(1+s.prima), piso=COSTO[Math.max(2019,start[0])]*(1+s.margen);
+      const terms={piso,PEC:pec,mercado:ancla}; const bruto=Math.max(piso,pec,ancla); const gob=Object.keys(terms).reduce((a,k)=>terms[k]>terms[a]?k:a,"piso");
+      let pvc=bruto; if(prev){pvc=bruto>=prev*(1-s.banda_muerta)?Math.max(bruto,prev):Math.max(bruto,prev*(1-s.tope_bajista));}
+      pvc=Math.round(pvc/s.redondeo)*s.redondeo;
+      let price=pvc,disp=0;const precios=[];
+      for(const fnc of venta){precios.push(price);if(trigger&&fnc>price){price=Math.max(price,Math.round(fnc*(1+PEC_ADD_HIST)*(1+s.prima)/s.redondeo)*s.redondeo);disp++;}}
+      const prima=precios.reduce((a,pr,i)=>a+(pr/venta[i]-1),0)/3;
+      const black=precios.reduce((a,pr,i)=>a+(pr*s.mult.Black/(venta[i]*(1+PEC_ADD_HIST+SELLO_HIST))-1),0)/3;
+      rows.push({franja:`${y}F${fi+1}`,start,pvc,precios,venta,prima,black,disp,gob,piso});
+      prev=pvc;
+    });
+  }
+  const pr=rows.map(r=>r.prima), pb=rows.map(r=>r.black);
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  return {rows,n:rows.length,prima_media:mean(pr),prima_min:Math.min(...pr),neg:pr.filter(x=>x<0).length,black_media:mean(pb),black_min:Math.min(...pb),black_neg:pb.filter(x=>x<0).length,disparos:rows.filter(r=>r.disp).length,piso:rows.filter(r=>r.gob==="piso").length,pec:rows.filter(r=>r.gob==="PEC").length};
+}
+
+/* ================================================================ conceptos especiales (botón i) */
+const CONCEPTOS={
+pvc:{t:"PVC · Ponderación de Valor de Cosecha",q:"Es la referencia de valor de CTCx para una carga de 125 kg de café pergamino seco a factor de rendimiento 94, en pesos, publicada dos meses antes de cada ventana trimestral de venta. Se calcula con el método D2: el máximo entre un piso de costo, un comparador de cooperativa con prima y un ancla de mercado, redondeado a $10.000. Se encuentra en la cabecera de este tablero, en el D3 de cada franja y en el D4 impreso.",h:"Es el número del que cuelga todo lo demás: la escalera de calidad lo multiplica, el contrato lo usa para la cifra de salida, la pila de precios lo convierte a dólares y el disparador vigila si la Federación lo alcanza. Nadie cobra el PVC × 1,0; CTCx compra sólo café que demostró calidad, desde Black.",pm:"<b>Valor final:</b> sube si sube cualquiera de sus tres términos; nunca baja dentro de la franja. <b>Productor:</b> más PVC es más pesos por carga en todas las bandas. <b>Tostador / HORECA:</b> más PVC es más dólares por kilo en toda la pila; el sobreprecio frente al mercado crece si el mercado no acompaña."},
+pec:{t:"PEC y PEC-ADD · precio efectivo de cooperativa",q:"El PEC es lo que un productor recibe hoy en su cooperativa: el precio interno de la Federación (FNC) más el sobreprecio incondicional que las cooperativas pagan encima (PEC-ADD, hoy $60.000 documentado en tableros de Caldas). Se mide con la serie diaria oficial de la FNC y con los tableros publicados; el PEC de 30 días usa 30 días calendario.",h:"Es el comparador de atractivo: el PVC debe superar al PEC de 30 días en la prima objetivo. En F4-2026 ese término es el que gobierna, por eso el número es $2.500.000. El PEC-ADD también entra en el disparador (FNC de 15 días + PEC-ADD, por 1,08).",pm:"<b>Valor final:</b> cada $10.000 de PEC-ADD suben el PVC unos $10.800 cuando gobierna el PEC. <b>Productor:</b> un PEC-ADD alto significa que la cooperativa ya paga bien y el PVC debe pagar más para ser atractivo. <b>Tostador / HORECA:</b> sube el costo de origen sin mejorar la taza; es el precio de competir contra la cooperativa."},
+prima:{t:"Prima objetivo (dial Va)",q:"Porcentaje que CTCx decide pagar por encima del precio efectivo de cooperativa de 30 días para que la oferta sea atractiva sin ser innecesariamente alta. Hoy 8%. Es una decisión del comité PVC, registrada en D0, no una calibración.",h:"Multiplica el PEC de 30 días para formar el término de atractivo. Cuando ese término es el mayor de los tres, la prima define directamente el PVC. También entra en el disparador de corrección al alza y en el back-proof histórico.",pm:"<b>Valor final:</b> +1 punto de prima sube el PVC en ~$23.000 mientras gobierne el PEC; bajarla por debajo del punto en que el piso manda no cambia nada. <b>Productor:</b> más prima, más pesos, pero también más riesgo de que CTCx reduzca el cupo. <b>Tostador / HORECA:</b> más prima es más sobreprecio frente al mercado en toda la escalera."},
+piso:{t:"Piso de costo y margen de dignidad (dial Vb)",q:"El piso es el costo medio de producción por carga que publica FEPCafé, escalado al mes de corte (hoy +6%), multiplicado por 1 + margen de dignidad (50%). La regla 'dos pesos por cada peso' viene de que la finca familiar desembolsa en caja ~73% del costo económico: 1,50 sobre el costo equivale a ~2× sobre lo desembolsado.",h:"El PVC nunca baja del piso. Cuando el mercado cae, el piso toma el mando y el PVC se ancla al costo. En el back-proof el piso por año usa el costo histórico y el mismo margen, por eso el dial Vb mueve también la gráfica 3 y toda la pila.",pm:"<b>Valor final:</b> si el piso supera al PEC con prima, cada punto de margen sube el PVC ~$16.400; si no, el dial no mueve el número pero sí la protección ante caídas. <b>Productor:</b> un margen alto es un seguro de precio. <b>Tostador / HORECA:</b> un piso alto es lo que se paga cuando el mercado está barato: el origen fijo cuesta más que el spot."},
+ancla:{t:"Ancla de mercado · mirada atrás L y proyección P",q:"L pondera los cinco promedios mensuales oficiales de la FNC anteriores al corte con pesos 1:2:3:4:5. P convierte el contrato C de la bolsa de Nueva York para los meses de venta (strip) más el diferencial colombiano Δ, por las libras de excelso por carga, el coeficiente k de traslado y la TRM, con un impulso acotado a ±5%. Se mezclan 60/40.",h:"El ancla, ajustada por el modificador, es el tercer término del máximo. Hoy está por debajo del PEC con prima y no gobierna, pero es la que reacciona primero a un cambio del mercado de futuros.",pm:"<b>Valor final:</b> sólo manda cuando el mercado supera al PEC + prima y al piso, típicamente en alzas rápidas. <b>Productor:</b> un ancla alta anticipa subidas antes de que la cooperativa las pague. <b>Tostador / HORECA:</b> es el término más parecido a su propia referencia de compra."},
+mod:{t:"Modificador de factores paralelos (scorecard)",q:"Siete factores con pesos fijos (oferta y demanda cafetera 30%, ENSO 20%, real brasileño 15%, TRM 10%, petróleo y fertilizantes 10%, político y comercial 10%, especulación 5%) puntuados −2…+2 por tres analistas; el neto se multiplica por el paso de 7,5% y se acota a ±15%. Las fuentes están en D1.",h:"Multiplica el ancla de mercado: Ancla × (1 + modificador). Hoy +4,1%. No toca el piso ni el PEC. El interruptor de la gráfica 1 permite ver el PVC sin él.",pm:"<b>Valor final:</b> mueve el término de mercado; sólo cambia el PVC si ese término gobierna. <b>Productor:</b> un modificador positivo refleja un mercado que se espera más caro: protege de vender barato. <b>Tostador / HORECA:</b> un modificador alto adelanta subidas al precio de origen."},
+reajuste:{t:"Banda muerta y tope bajista entre franjas",q:"Reglas de traslado entre ediciones: si el nuevo cálculo cae menos de 5% frente al PVC anterior, se mantiene el anterior (banda muerta); si cae más, la caída se limita a 15% por franja (tope bajista). Al alza se sigue el dato.",h:"Sólo actúan cuando existe un PVC anterior (F4-2026 es la edición de transición, sin anterior). Suavizan las caídas para que el productor no vea saltos bruscos entre trimestres.",pm:"<b>Valor final:</b> nunca lo suben; frenan bajadas. <b>Productor:</b> más protección en mercados bajistas. <b>Tostador / HORECA:</b> en un mercado que cae, el origen fijo baja más despacio que el spot."},
+escalera:{t:"Escalera de calidad y multiplicadores",q:"Black 80–83,9 ×1,15 · Red 84–85,9 ×1,30 · Blue 86–87,9 ×1,60 · Gold 88–88,9 ×2,00: cada banda dobla la prima de la anterior. Tyrian (≥ 89, genética A/B) se subasta desde el precio Gold y el excedente se reparte 80:20 a favor del productor. El grado sale de la matriz SCA + reconocimientos, con puertas de genética y de factor de rendimiento.",h:"Convierte la referencia en precio de contrato: PVC × multiplicador por carga. Los puntajes intermedios dentro de una banda no mueven el precio; nunca se baja un multiplicador dentro de una franja.",pm:"<b>Valor final:</b> no cambia el PVC; cambia lo que se paga. <b>Productor:</b> subir un punto de banda vale entre +15% y +40% del PVC. <b>Tostador / HORECA:</b> el sobreprecio frente al mercado baja con la calidad: Gold es la banda más 'barata' en relativo."},
+kg:{t:"Kilos garantizados por carga (dial Vc)",q:"Una carga FR 94 rinde 93,09 kg de excelso, pero CTCx sólo promete al comprador el verde perfecto empacado al vacío que la selección garantiza siempre: hoy 78 kg (13 bolsas de 6 kg), que admite 16% de merma con FR 94 y 14% con FR 96. Lo que rinde de más va a kits, promoción y tostado.",h:"Divide el valor de la carga para obtener el precio de finca por kilo (N0). Es el parámetro que más mueve el precio al comprador y el que fija los MOQ (múltiplos de 6 kg) y cuántas cargas llama un pedido.",pm:"<b>Valor final:</b> no toca el PVC. <b>Productor:</b> neutro, cobra por carga. <b>Tostador / HORECA:</b> cada 6 kg menos garantizados suben el FCA de Black ~7%; con 72 kg el sobreprecio llega a +84%, con 90 kg baja a +54%."},
+tarifa:{t:"Tarifa CTCx y recargos de servicio (dial Ve)",q:"Base en US$/kg (hoy 1,20, estimado) multiplicada por un factor de banda (Black 1,00 · Red 1,10 · Blue 1,25 · Gold 1,50 · Tyrian 2,00) más un recargo de servicio según el nivel de entrega (FCA 0 · CIP 0,35 · DDP 0,90). Cubre la cobertura de CTCx y su profit máximo.",h:"Entra en el nivel FCA y crece con el nivel. No depende del modo de envío: el factor de modo vive en el flete, entre FCA y CIP.",pm:"<b>Valor final:</b> no toca el PVC. <b>Productor:</b> neutro. <b>Tostador / HORECA:</b> es la parte del precio que paga la plataforma, la catación subsidiada y la garantía de origen; sube con la banda y con cuánto trabajo pide en destino."},
+niveles:{t:"Niveles de entrega FCA · CIP · DDP (dial Vd)",q:"Incoterms 2020 correctos para carga aérea. FCA Bogotá: CTCx entrega paletizado en El Dorado con exportación hecha (para el comprador marítimo, equivale al FOB). CIP aeropuerto de destino: CTCx paga flete y seguro; el comprador nacionaliza (equivale al CIF). DDP: entregado con derechos pagados, sólo en destinos habilitados; el IVA queda a cargo del importador salvo acuerdo.",h:"Cada nivel suma componentes a la pila: flete por escala más seguro en CIP; nacionalización, entrega y recargo en DDP. El precio se expresa en dólares a la TRM del corte y queda fijo en la ventana.",pm:"<b>Valor final:</b> no toca el PVC. <b>Productor:</b> neutro. <b>Tostador / HORECA:</b> subir de nivel es comprar servicio: CIP añade unos US$ 4,7/kg en Black al MOQ; DDP otros 1,5."},
+flete:{t:"Escalas de flete aéreo",q:"Tarifa por kilo Bogotá → aeropuerto de destino según el peso consolidado (hoy 0–44 kg 6,50 · 45–99 5,20 · 100–299 4,20 · 300–499 3,60 · 500–999 3,20 · ≥ 1000 2,90 US$/kg, estimadas). Se multiplica por el factor de modo (aéreo 1,00).",h:"Se cotiza con el peso del pedido: nunca peor. Si la consolidación del embarque alcanza una escala mejor, la diferencia se acredita sobre el 40% final. Aparece como línea separada del precio del café.",pm:"<b>Valor final:</b> no toca el PVC. <b>Productor:</b> neutro. <b>Tostador / HORECA:</b> pedir más kilos baja el flete por kilo; un pedido de 300 kg paga 14% menos de flete que uno de 228."},
+disparador:{t:"Disparador de corrección al alza",q:"Regla de vigilancia diaria: si el precio interno de la FNC es mayor o igual al PVC en 10 de cualesquiera 15 publicaciones, el PVC se recalcula como máx(PVC, (FNC de 15 días + PEC-ADD) × 1,08). Rige desde el siguiente corte de fin de mes para lo que falte por entregar; nunca retroactivo, sin tope.",h:"Es la única forma en que el PVC cambia dentro de la franja y sólo al alza. En el back-proof reduce la peor franja de −18% a −5% y elimina las franjas en que Black quedaría por debajo de la cooperativa.",pm:"<b>Valor final:</b> sólo sube. <b>Productor:</b> garantía de no quedarse atrás en un alza. <b>Tostador / HORECA:</b> lo ya comprado no cambia; las compras posteriores al corte pagan el nuevo precio."},
+contrato:{t:"Contrato de franja · retiro y cifra de salida",q:"El productor declara N cargas (mínimo 5 Black/Red, 3 Blue/Gold, 1 Tyrian); CTCx compra la carga 1 de inmediato y reserva el resto al precio del contrato, que llama contra ventas. Retiro libre del 25% de la reserva en cada cierre de mes; por encima, cifra de salida del 7,5% del PVC por carga, la misma que paga un tostador que cancela una reserva a fórmula.",h:"Define la exposición de CTCx (sólo la carga 1) y la regla de cupo: cuando falta demanda no se baja el PVC, se reduce el número de lotes aceptados.",pm:"<b>Valor final:</b> la cifra de salida se calcula sobre el PVC × 1,0. <b>Productor:</b> más retiro libre es más flexibilidad; la cifra de salida es el costo de irse. <b>Tostador / HORECA:</b> la misma cifra al cancelar: nadie sale gratis."},
+catacion:{t:"Muestra, evaluación y subsidio",q:"La muestra de 2 kg viaja gratis (guía prepagada). La evaluación cuesta $200.000: catación Q $120.000 (en bloque $80.000), envío $30.000, informe y manejo $50.000. El productor paga por adelantado una parte con descuento: base 30% ($140.000), habitual 50–60%, máximo 70% por acta.",h:"Es la puerta de entrada al grado y por tanto al contrato. Nunca va dentro del PVC ni del precio del contrato; es una línea separada.",pm:"<b>Valor final:</b> no toca el PVC. <b>Productor:</b> más subsidio es menos desembolso inicial. <b>Tostador / HORECA:</b> paga indirectamente la parte subsidiada a través de la Tarifa CTCx."},
+trm:{t:"TRM del corte",q:"Tasa representativa del mercado (COP por US$) del Banco de la República vigente el día de corte, tomada de datos.gov.co. En F4-2026: 3.141,36 del 4-sep-2026.",h:"Convierte la proyección P (que nace en dólares) a pesos, y convierte toda la pila de precios de pesos a dólares. Los precios al comprador quedan fijos en dólares a esta TRM durante la ventana; la variación cambiaria posterior la absorbe CTCx.",pm:"<b>Valor final:</b> una TRM alta sube la proyección P y el ancla. <b>Productor:</b> cobra en pesos; una TRM alta suele venir con FNC alto. <b>Tostador / HORECA:</b> una TRM alta abarata el origen en dólares; hoy el peso fuerte lo encarece."},
+fr:{t:"Factor de rendimiento (FR)",q:"Kilos de pergamino necesarios para obtener 70 kg de excelso. FR 94 es la base de publicación de la FNC y del PVC. La tabla diaria de la FNC da el precio para cada FR; el PVC se ajusta con esa proporción el día de recibo.",h:"El FR es una puerta de grado: máximo 94 en todas las bandas (98 en Black); el FR excluye, no baja de banda. También ajusta el precio del contrato: PVC × FNC_FR / FNC_FR94.",pm:"<b>Valor final:</b> el PVC se publica a FR 94; otros FR escalan el precio del contrato. <b>Productor:</b> un FR más bajo (mejor rendimiento) paga más por carga. <b>Tostador / HORECA:</b> un FR bajo significa más verde por carga y menos merma."},
+};
+
+/* ================================================================ estado calculado */
+let E, PI, BP;
+function recompute(){
+  E=edicion(S); PI=pila(S,E.pvc); BP=backproof(S,S.lead,S.disparador);
+  document.getElementById("hPVC").textContent=cop(E.pvc);
+  document.getElementById("stamp").textContent=`${S.codigo} · corte ${S.fecha_corte} · publicación ${S.fecha_pub} · vigente hasta ${S.vigencia} · gobierna: ${E.gob}${E.regla?" · "+E.regla:""} · método D2 v2.1.1`;
+  renderKPIs(); renderC1(); renderC2(); renderC3();
+}
+
+/* ================================================================ KPIs */
+function kpiBlock(k){return `<div class="kpi"><button class="ib" data-i="${k.i}" aria-label="Información">i</button><div class="lab">${k.lab}</div><div class="num">${k.num}</div><div class="sub">${k.sub}</div><span class="pill ${k.cls}">${k.pill}</span></div>`;}
+function txtBlock(t){return `<div class="txt">${t}<span class="wc">${wc(t)} palabras</span></div>`;}
+function renderKPIs(){
+  const B=PI[0], ret=E.pvc*S.mult.Black/E.costo, vsPec=E.pvc/E.pec_corte-1;
+  const gobTxt={piso:"el piso de costo, es decir que el mercado y la cooperativa quedaron por debajo de lo que la finca necesita y el número se ancló al costo",PEC:"el comparador de cooperativa con prima: el número es exactamente lo que hace falta para superar en un "+pct(S.prima,0,false)+" lo que hoy paga la cooperativa",mercado:"el ancla de mercado ajustada por el modificador: el mercado de futuros pide más que la cooperativa y que el costo"}[E.gob];
+  const t1=`El PVC de <b>${cop(E.pvc)}</b> está <b>${pct(vsPec)}</b> por encima de lo que hoy recibe un productor en la cooperativa: el precio interno de la Federación del corte (${cop(S.fnc_corte)}) más el sobreprecio incondicional documentado de ${cop(S.pec_add)}. Esa distancia es el argumento de entrada del modelo: no es un promedio de mercado sino una promesa fija por tres meses, publicada dos meses antes de la ventana, que nunca baja dentro de la franja. La prima objetivo del ${pct(S.prima,0,false)} sobre el PEC de 30 días (${cop(E.pec30)}) es una decisión de CTCx; con el dial Va puede ver cuánto cambia el número por cada punto. Hoy gobierna ${gobTxt}. Para el productor es dinero adicional por carga; para el tostador es el costo del origen conocido.`;
+  const t2=`Un lote Black (80 a 83,9 puntos) se paga a <b>${cop(E.pvc*S.mult.Black)}</b> por carga, es decir <b>${num(ret,2)}×</b> el costo medio de producción de FEPCafé escalado al corte (${cop(E.costo)}). El piso del modelo exige ${num(1+S.margen,2)}× ese costo, la regla de "dos pesos por cada peso" que protege a la finca familiar cuando el mercado cae; hoy el piso está en ${cop(E.piso)}, ${pct(E.piso/E.min_atr-1)} frente al comparador de cooperativa con prima. El dial Vb mueve el margen de dignidad y con él el piso, la construcción del PVC, el back-proof y toda la pila de precios: un solo parámetro que atraviesa el modelo entero. Para el productor el retorno es bruto, antes de pagar su propio trabajo; para el tostador es la evidencia verificable de que el precio pagado cubre el costo con holgura.`;
+  const t3=`Convertido a dólares a la TRM del corte (${num(S.trm,2)}) y repartido sobre <b>${S.kg_g} kg</b> de verde garantizado por carga, el precio FCA Bogotá de Black queda en <b>US$ ${usd(B.n2)}/kg</b> (${usd(B.n2_lb)} por libra), un <b>${pct(B.sobre,0)}</b> por encima de la referencia de mercado para su puntaje (${usd(B.ref)} por libra). Ese sobreprecio es el precio de la transparencia y del avión; por taza de 12 gramos son ${usd(B.taza,1)} centavos de dólar. El dial Vc, los kilos garantizados, es el parámetro que más lo mueve: cada bolsa de 6 kg que se garantiza de más reparte el valor de la carga entre más kilos. Para el productor no cambia nada, su precio está en pesos por carga; para el tostador y el HORECA define si el origen fijo cabe en su carta.`;
+  const cls1=vsPec>=0.15?"good":vsPec>=0.08?"warn":"crit", cls2=ret>=1.5?"good":ret>=1.2?"warn":"crit", cls3=B.sobre<=0.5?"good":B.sobre<=0.8?"warn":"crit";
+  document.getElementById("kpis").innerHTML=
+    kpiBlock({i:"pec",lab:"KPI 1 · Prima sobre la cooperativa",num:pct(vsPec),sub:`PVC vs PEC del corte ${cop(E.pec_corte)}`,cls:cls1,pill:vsPec>=0.15?"atractivo":vsPec>=0.08?"justo":"insuficiente"})+txtBlock(t1)+
+    txtBlock(t2)+kpiBlock({i:"piso",lab:"KPI 2 · Retorno de la finca Black",num:num(ret,2)+"×",sub:`sobre costo FEPCafé ${cop(E.costo)}`,cls:cls2,pill:ret>=1.5?"dos pesos por peso":ret>=1.2?"cubre costo":"bajo costo"})+
+    kpiBlock({i:"kg",lab:"KPI 3 · Sobreprecio FCA Black",num:pct(B.sobre,0),sub:`US$ ${usd(B.n2_lb)}/lb vs ref. ${usd(B.ref)} · ${usd(B.taza,1)} ¢/taza`,cls:cls3,pill:B.sobre<=0.5?"defendible":B.sobre<=0.8?"margen estrecho":"por encima del cuartil"})+txtBlock(t3);
+}
+
+/* ================================================================ gráficas */
+function dialRange(id,name,label,min,max,step,val,fmt){return `<div class="dial"><div class="k"><span>${id}</span><span class="v" id="${id}v">${fmt(val)}</span></div><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-dial="${name}" aria-label="${label}"><div class="name">${label}</div></div>`;}
+function chartShell(id,title,ib,text,svg,dials){
+  document.getElementById(id).innerHTML=`<div class="txt"><div class="ttl">${title}<button class="ib inl" data-i="${ib}" aria-label="Información">i</button></div>${text}<span class="wc">${wc(text)} palabras</span></div><div class="cwrap">${svg}<div class="dials">${dials}</div></div>`;
+}
+function renderC1(){
+  const items=[["Mirada atrás L",E.L,"var(--grey)"],["Proyección P",E.P,"var(--grey)"],["Ancla × (1+mod)",E.mercado,"var(--blue)"],["PEC 30 d × "+num(1+S.prima,2),E.min_atr,"var(--red)"],["Piso costo × "+num(1+S.margen,2),E.piso,"var(--gold)"],["PVC",E.pvc,"var(--acc)"]];
+  const W=430,H=190,L0=118,R0=64,top=10,bh=20,gap=8; const mx=Math.max(...items.map(i=>i[1]),S.fnc_corte)*1.08;
+  const x=v=>L0+(W-L0-R0)*v/mx;
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Construcción del PVC">`;
+  [1e6,1.5e6,2e6,2.5e6,3e6].filter(v=>v<mx).forEach(v=>{g+=`<line class="grid" x1="${x(v)}" y1="${top}" x2="${x(v)}" y2="${H-18}"/><text x="${x(v)}" y="${H-6}" text-anchor="middle">${(v/1e6).toFixed(1).replace(".",",")} M</text>`;});
+  items.forEach((it,i)=>{const y=top+i*(bh+gap);const gob=(i===2&&E.gob==="mercado")||(i===3&&E.gob==="PEC")||(i===4&&E.gob==="piso");
+    g+=`<text class="lbl" x="${L0-6}" y="${y+bh/2+3.5}" text-anchor="end" ${gob?'font-weight="700"':''}>${it[0]}${gob?" ●":""}</text><rect x="${L0}" y="${y}" width="${Math.max(1,x(it[1])-L0)}" height="${bh}" rx="3" fill="${it[2]}" opacity="${i===5?1:.85}"/><text class="val" x="${x(it[1])+4}" y="${y+bh/2+3.5}">${cop(it[1])}</text>`;});
+  g+=`<line x1="${x(S.fnc_corte)}" y1="${top-4}" x2="${x(S.fnc_corte)}" y2="${H-18}" stroke="var(--ink3)" stroke-width="1.2" stroke-dasharray="4 3"/><text x="${x(S.fnc_corte)+3}" y="${H-22}" fill="var(--ink3)">FNC corte</text></svg>`;
+  const t=`La barra final es el máximo de tres términos: el piso de costo (${cop(E.piso)}), el comparador PEC de 30 días por ${num(1+S.prima,2)} (${cop(E.min_atr)}) y el ancla de mercado ajustada por el modificador (${cop(E.mercado)}). Hoy manda <b>${E.gob}</b>. La mirada atrás L pondera los cinco meses oficiales de la FNC de abril a agosto (1:2:3:4:5) y la proyección P convierte el contrato C de ${num(S.c_strip,1)} centavos con el diferencial y la TRM; se mezclan ${Math.round(S.peso_L*100)}/${Math.round((1-S.peso_L)*100)}. Mueva Va para ver cuánto pide de prima sobre la cooperativa y Vb para subir o bajar el piso: cuando el piso supera al PEC, el modelo deja de mirar al mercado y se ancla al costo. El redondeo a ${cop(S.redondeo)} es lo último que ocurre.`;
+  chartShell("c1","1 · Cómo se construye el PVC","pvc",t,g,dialRange("Va","prima","Prima objetivo sobre el PEC",0,0.15,0.005,S.prima,v=>pct(v,1,false))+dialRange("Vb","margen","Margen de dignidad (piso)",0.2,0.8,0.01,S.margen,v=>pct(v,0,false))+`<div class="dial"><div class="k"><span>Mod</span></div><label class="tog"><input type="checkbox" data-chk="aplicar_mod" ${S.aplicar_mod?"checked":""}> aplicar ${pct(E.neto*S.paso)}</label></div><div class="link">Vb también mueve 2 y 3</div>`);
+}
+function renderC2(){
+  const W=430,H=210,L0=38,top=12,bot=30; const lvl=S.nivel; const rows=PI;
+  const tot=r=>lvl==="FCA"?r.n2:lvl==="CIP"?r.n3:r.n4; const mx=Math.max(...rows.map(tot))*1.12;
+  const y=v=>top+(H-top-bot)*(1-v/mx); const bw=54, sp=(W-L0-10)/rows.length;
+  const segs=r=>{const s=[["N0 finca",r.n0,"var(--acc)"],["empaque",S.proc,"var(--acc2)"],["a FCA",S.palet+S.transp+S.exp,"var(--blue)"],["Tarifa CTCx",r.tarifa,"var(--gold)"]]; if(lvl!=="FCA")s.push(["flete + seguro + CIP",r.flete+r.seg+S.rec.CIP,"var(--red)"]); if(lvl==="DDP")s.push(["destino + DDP",r.dest+S.rec.DDP+r.iva,"var(--tyrian)"]); return s;};
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pila de precios por banda">`;
+  const step=mx>30?10:5; for(let v=0;v<mx;v+=step){g+=`<line class="grid" x1="${L0}" y1="${y(v)}" x2="${W-6}" y2="${y(v)}"/><text x="${L0-4}" y="${y(v)+3}" text-anchor="end">${v}</text>`;}
+  rows.forEach((r,i)=>{const cx=L0+sp*i+sp/2; let acc=0; segs(r).forEach(sg=>{const h=y(acc)-y(acc+sg[1]); g+=`<rect x="${cx-bw/2}" y="${y(acc+sg[1])}" width="${bw}" height="${Math.max(0,h)}" fill="${sg[2]}" stroke="var(--panel)" stroke-width=".8"><title>${r.b} · ${sg[0]}: US$ ${usd(sg[1])}/kg</title></rect>`; acc+=sg[1];});
+    g+=`<text class="val" x="${cx}" y="${y(acc)-4}" text-anchor="middle" font-weight="600">${usd(acc)}</text>`;
+    if(r.ref){const rv=r.ref*LB; g+=`<line x1="${cx-bw/2-4}" y1="${y(rv)}" x2="${cx+bw/2+4}" y2="${y(rv)}" stroke="var(--ink)" stroke-width="1.6"/><text x="${cx+bw/2+6}" y="${y(rv)+3}" font-size="8">ref</text>`;}
+    g+=`<text class="lbl" x="${cx}" y="${H-16}" text-anchor="middle" font-weight="700">${r.b}</text><text x="${cx}" y="${H-5}" text-anchor="middle" font-size="8">${r.moq} kg · ${mult(r.m)}</text>`;});
+  g+=`<text x="${L0}" y="${H-4}" font-size="8" fill="var(--ink3)">US$/kg</text></svg>`;
+  const t=`Cada barra apila lo que el comprador paga por kilo de verde garantizado: la finca (PVC por multiplicador, en dólares del corte), el empaque, los costos hasta FCA Bogotá con la Tarifa CTCx por banda y, según el nivel que elija en Vd, el flete por escala más seguro (CIP) y la nacionalización y entrega (DDP). La línea corta sobre cada barra es la referencia de mercado para ese puntaje, comparable sólo en FCA: Black queda ${pct(rows[0].sobre,0)} y Gold ${pct(rows[3].sobre,0)}. Con Vc reparte la carga entre más o menos kilos: es la variable que más mueve el precio final; hoy ${S.kg_g} kg, ${rows[0].bolsas} bolsas. Ve fija la tarifa base de CTCx. Todos los costos de la pila son estimados hasta tener cotizaciones; la estructura sí es decisión.`;
+  const seg=`<div class="dial"><div class="k"><span>Vd</span><span class="v">${lvl}</span></div><div class="seg">${["FCA","CIP","DDP"].map(n=>`<button data-nivel="${n}" aria-pressed="${lvl===n}">${n}${n==="FCA"?" ≈FOB":n==="CIP"?" ≈CIF":""}</button>`).join("")}</div><div class="name">Nivel de entrega</div></div>`;
+  chartShell("c2","2 · Pila de precios por banda · "+lvl+(lvl==="DDP"?" · "+S.destinos[S.destino][0].split(" (")[0]:""),"niveles",t,g,dialRange("Vc","kg_g","Kg garantizados por carga",66,90,6,S.kg_g,v=>v+" kg")+seg+dialRange("Ve","tarifa_base","Tarifa CTCx base US$/kg",0.5,2.5,0.05,S.tarifa_base,v=>usd(v))+`<div class="link">← Vb (piso) y Va entran vía PVC</div>`);
+}
+function renderC3(){
+  const W=430,H=210,L0=34,R0=8,top=10,bot=22; const ys=[],xs=[];
+  for(let y=2019;y<=2026;y++)for(let m=1;m<=12;m++){try{ys.push(precio(y,m));xs.push(y+(m-.5)/12);}catch(e){}}
+  const mn=0.5e6, mxv=Math.max(...ys,...BP.rows.map(r=>Math.max(...r.precios)),E.pvc)*1.08;
+  const X=t=>L0+(W-L0-R0)*(t-2018.9)/(2027.1-2018.9), Y=v=>top+(H-top-bot)*(1-(v-mn)/(mxv-mn));
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Back-proof del PVC">`;
+  for(let v=1e6;v<mxv;v+=0.5e6){g+=`<line class="grid" x1="${L0}" y1="${Y(v)}" x2="${W-R0}" y2="${Y(v)}"/><text x="${L0-3}" y="${Y(v)+3}" text-anchor="end">${(v/1e6).toFixed(1).replace(".",",")}</text>`;}
+  for(let y=2019;y<=2026;y++){g+=`<line class="ax" x1="${X(y)}" y1="${H-bot}" x2="${X(y)}" y2="${H-bot+4}"/><text x="${X(y+.5)}" y="${H-6}" text-anchor="middle">${y}</text>`;}
+  g+=`<path d="${ys.map((v,i)=>(i?"L":"M")+X(xs[i]).toFixed(1)+" "+Y(v).toFixed(1)).join(" ")}" fill="none" stroke="var(--ink3)" stroke-width="1.3"/>`;
+  BP.rows.forEach(r=>{r.precios.forEach((pr,k)=>{const [yy,mm]=addm(r.start[0],r.start[1],k);const x0=yy+(mm-1)/12;g+=`<line x1="${X(x0)}" y1="${Y(pr)}" x2="${X(x0+1/12)}" y2="${Y(pr)}" stroke="var(--acc)" stroke-width="3"><title>${r.franja}: PVC ${cop(pr)} · prima ${pct(r.prima)}</title></line>`;});
+    g+=`<line x1="${X(r.start[0]+(r.start[1]-1)/12)}" y1="${Y(r.piso)}" x2="${X(r.start[0]+(r.start[1]-1)/12+.25)}" y2="${Y(r.piso)}" stroke="var(--gold)" stroke-width="1" stroke-dasharray="3 2"/>`;});
+  g+=`<line x1="${X(2026+8.5/12)}" y1="${Y(E.pvc)}" x2="${X(2026+11.5/12)}" y2="${Y(E.pvc)}" stroke="var(--red)" stroke-width="3.5"/><text x="${X(2026+8.4/12)}" y="${Y(E.pvc)-6}" text-anchor="end" fill="var(--red)" font-weight="600">F4-2026</text>`;
+  g+=`<text x="${L0+4}" y="${top+8}" fill="var(--ink3)">gris: FNC oficial mensual · morado: PVC por franja · oro: piso · COP millones/carga</text></svg>`;
+  const t=`La línea gris es el precio interno oficial de la Federación mes a mes desde 2019; los escalones morados son el PVC que el método habría publicado para cada franja con los datos disponibles ${S.lead} meses antes de la venta. La prima media realizada es <b>${pct(BP.prima_media)}</b>, la peor franja ${pct(BP.prima_min)} y el PVC quedó por debajo del mercado en ${BP.neg} de ${BP.n} franjas; Black nunca bajó de la cooperativa en ${BP.n-BP.black_neg} de ellas. Con Ve cambia la anticipación (a más meses, más incertidumbre y más disparos: hoy ${BP.disparos}) y con el interruptor activa el disparador de corrección al alza, que recalcula cuando la FNC alcanza al PVC en ${S.disp_dias} de ${S.disp_de} publicaciones. Vb también entra aquí: el piso de cada año es el costo por (1 + margen) y gobernó ${BP.piso} franjas.`;
+  chartShell("c3","3 · Back-proof 2019–2026","disparador",t,g,dialRange("Ve","lead","Meses de anticipación del corte",1,4,1,S.lead,v=>v+" m")+`<div class="dial"><div class="k"><span>Disp</span></div><label class="tog"><input type="checkbox" data-chk="disparador" ${S.disparador?"checked":""}> disparador</label></div>`+dialRange("Vb","margen","Margen de dignidad (piso)",0.2,0.8,0.01,S.margen,v=>pct(v,0,false))+`<div class="link">Vb es el mismo dial de la gráfica 1</div>`);
+}
+
+/* ================================================================ flujo de configuración */
+function fld(label,key,opts={}){const v=opts.get?opts.get():S[key];const cls=opts.nat==="D"?"dec":opts.nat==="E"?"est":"";
+  if(opts.type==="check")return `<div class="f"><label>${label}${opts.small?`<small>${opts.small}</small>`:""}${opts.i?`<button class="ib inl" data-i="${opts.i}">i</button>`:""}</label><input type="checkbox" data-key="${key}" ${v?"checked":""}></div>`;
+  if(opts.type==="select")return `<div class="f"><label>${label}${opts.small?`<small>${opts.small}</small>`:""}${opts.i?`<button class="ib inl" data-i="${opts.i}">i</button>`:""}</label><select data-key="${key}">${opts.options.map((o,i)=>`<option value="${i}" ${v==i?"selected":""}>${o}</option>`).join("")}</select></div>`;
+  const rng=opts.range?`<input type="range" min="${opts.range[0]}" max="${opts.range[1]}" step="${opts.range[2]}" value="${v}" data-key="${key}" data-mirror="1">`:"";
+  return `<div class="f"><label>${label}${opts.small?`<small>${opts.small}</small>`:""}${opts.i?`<button class="ib inl" data-i="${opts.i}">i</button>`:""}</label><input type="number" class="${cls}" step="${opts.step||"any"}" value="${v}" data-key="${key}" ${opts.path?`data-path="${opts.path}"`:""}>${rng}</div>`;}
+function pf(label,path,val,nat,opts={}){const cls=nat==="D"?"dec":nat==="E"?"est":"";return `<div class="f"><label>${label}${opts.small?`<small>${opts.small}</small>`:""}${opts.i?`<button class="ib inl" data-i="${opts.i}">i</button>`:""}</label><input type="number" class="${cls}" step="${opts.step||"any"}" value="${val}" data-path="${path}"></div>`;}
+function renderFlow(){document.getElementById("flow").innerHTML=flowHTML();}
+function flowHTML(){
+  const meses=["abr","may","jun","jul","ago"];
+  const b=[];
+  b.push(`<div class="blk"><h3><span class="n">E</span>Entradas de mercado</h3><p class="why">Datos medidos al corte (D1). Cambian en cada edición.</p>
+    ${S.fnc.map((v,i)=>pf(`FNC mensual ${meses[i]} 2026`,`fnc.${i}`,v,"",{step:1000})).join("")}
+    ${pf("FNC promedio 30 días","fnc_30d",S.fnc_30d,"",{step:1000,i:"pec"})}${pf("FNC del día de corte (FR 94)","fnc_corte",S.fnc_corte,"",{step:1000,i:"fr"})}
+    ${pf("C proyectado (strip de venta) US¢/lb","c_strip",S.c_strip,"",{step:0.1,i:"ancla"})}${pf("TRM del corte","trm",S.trm,"",{step:0.01,i:"trm"})}${pf("Diferencial Δ US$/lb","delta",S.delta,"",{step:0.0001})}${pf("Coeficiente k","k",S.k,"",{step:0.001})}
+    <div class="out">PEC corte <b>${cop(E.pec_corte)}</b> · PEC 30 d <b>${cop(E.pec30)}</b></div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">1</span>Capa 1 · Ancla de mercado</h3><p class="why">L (mirada atrás 1:2:3:4:5) y P (proyección desde la bolsa) mezcladas.</p>
+    ${pf("Peso de L (P = 1 − L)","peso_L",S.peso_L,"D",{step:0.05,i:"ancla"})}${pf("Tope de impulso","tope_impulso",S.tope_impulso,"D",{step:0.01})}
+    <div class="out">L <b>${cop(E.L)}</b> · P <b>${cop(E.P)}</b> (impulso ${pct(E.impulso,2)}) · Ancla <b>${cop(E.ancla)}</b></div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">1b</span>Comparador PEC + prima</h3><p class="why">Mínimo de atractivo frente a la cooperativa.</p>
+    ${pf("PEC-ADD sobreprecio de cooperativa","pec_add",S.pec_add,"",{step:5000,i:"pec"})}${pf("Prima objetivo (Va)","prima",S.prima,"D",{step:0.005,i:"prima"})}
+    <div class="out">PEC 30 d × ${num(1+S.prima,2)} = <b>${cop(E.min_atr)}</b></div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">2</span>Capa 2 · Piso de costo</h3><p class="why">Costo FEPCafé escalado × (1 + margen de dignidad).</p>
+    ${pf("Costo medio FEPCafé (último publicado)","costo",S.costo,"",{step:1000,i:"piso"})}${pf("Escalamiento al corte","escalamiento",S.escalamiento,"E",{step:0.01})}${pf("Margen de dignidad (Vb)","margen",S.margen,"D",{step:0.01,i:"piso"})}${pf("Desembolso de caja / costo","desembolso",S.desembolso,"D",{step:0.01})}
+    <div class="out">Costo <b>${cop(E.costo)}</b> · Piso <b>${cop(E.piso)}</b> · retorno caja ${num(E.pvc/(S.desembolso*E.costo),2)}×</div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">3</span>Capa 3 · Modificador</h3><p class="why">Scorecard: peso × puntaje (−2…+2) por factor; paso y collar.</p>
+    ${SCORE_KEYS.map(k=>`<div class="f"><label>${k}<small>peso ${pct(S.score[k][0],0,false)}</small></label><input type="number" class="dec" step="1" min="-2" max="2" value="${S.score[k][1]}" data-score="${k}"></div>`).join("")}
+    ${pf("Paso por punto","paso",S.paso,"D",{step:0.005,i:"mod"})}${pf("Collar ±","collar",S.collar,"D",{step:0.01})}${fld("Aplicar modificador","aplicar_mod",{type:"check"})}
+    <div class="out">Neto ${num(E.neto,2)} → modificador <b>${pct(E.modificador,2)}</b> · Mercado <b>${cop(E.mercado)}</b></div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">4</span>Combinación y reajuste → PVC</h3><p class="why">máx(piso; PEC × 1+p; ancla × 1+mod), banda muerta, tope bajista, redondeo.</p>
+    ${pf("PVC de la franja anterior (0 = ninguno)","pvc_anterior",S.pvc_anterior,"",{step:10000,i:"reajuste"})}${pf("Banda muerta","banda_muerta",S.banda_muerta,"D",{step:0.01})}${pf("Tope bajista","tope_bajista",S.tope_bajista,"D",{step:0.01})}${pf("Redondeo","redondeo",S.redondeo,"D",{step:1000})}
+    <div class="out">Bruto ${cop(E.bruto)} · gobierna <b>${E.gob}</b> ${E.regla?"· "+E.regla:""} · <b>PVC ${cop(E.pvc)}</b></div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">5</span>Escalera de calidad</h3><p class="why">Multiplicadores por banda; Tyrian en subasta desde Gold.</p>
+    ${BANDAS.map(k=>pf(`Multiplicador ${k} (${RANGOS[k]})`,`mult.${k}`,S.mult[k],"D",{step:0.05,i:k==="Black"?"escalera":""})).join("")}
+    ${pf("Umbral Tyrian (puntos)","tyrian_umbral",S.tyrian_umbral,"D",{step:0.5})}${pf("Reparto del excedente al productor","tyrian_reparto",S.tyrian_reparto,"D",{step:0.05})}${pf("Cierre Tyrian de ejemplo (× PVC)","tyrian_cierre",S.tyrian_cierre,"",{step:0.1})}
+    <div class="out">${BANDAS.map(k=>`${k} <b>${cop(E.pvc*S.mult[k])}</b>`).join(" · ")}</div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">6</span>Contrato de franja</h3><p class="why">Carga 1 en firme; reserva llamada contra ventas; retiro y cifra de salida; evaluación.</p>
+    ${pf("Retiro libre por corte mensual","retiro_libre",S.retiro_libre,"D",{step:0.05,i:"contrato"})}${pf("Cifra de salida (% del PVC por carga)","cifra_salida",S.cifra_salida,"D",{step:0.005})}${pf("Descuento por antigüedad de catación","antiguedad",S.antiguedad,"D",{step:0.01})}${pf("Anticipo del tostador","anticipo",S.anticipo,"D",{step:0.05})}
+    ${pf("Tarifa de evaluación (COP)","catacion",S.catacion,"",{step:10000,i:"catacion"})}${pf("Subsidio por defecto","subsidio",S.subsidio,"D",{step:0.05})}
+    ${BANDAS5.map(k=>pf(`Lote mínimo ${k} (cargas)`,`min_cargas.${k}`,S.min_cargas[k],"D",{step:1})).join("")}
+    <div class="out">Cifra de salida <b>${cop(E.pvc*S.cifra_salida)}</b>/carga · el productor paga <b>${cop(S.catacion*(1-S.subsidio))}</b> por la evaluación</div></div>`);
+  const P0=PI[0];
+  b.push(`<div class="blk"><h3><span class="n">7</span>Pila de precios · N0 → N2 FCA</h3><p class="why">US$/kg de verde garantizado a la TRM del corte. Naranja = estimado.</p>
+    ${pf("Kg de excelso por carga FR 94","kg_excelso",S.kg_excelso,"",{step:0.01,i:"fr"})}${pf("Kg garantizados por carga (Vc)","kg_g",S.kg_g,"D",{step:6,i:"kg"})}${pf("Bolsa (kg)","bolsa",S.bolsa,"D",{step:3})}${pf("Valor recuperado del excedente US$/kg","excedente_val",S.excedente_val,"E",{step:0.1})}
+    ${pf("Procesamiento y empaque","proc",S.proc,"E",{step:0.05})}${pf("Paletizaje Bogotá","palet",S.palet,"E",{step:0.05})}${pf("Transporte interno","transp",S.transp,"E",{step:0.05})}${pf("Gastos de exportación","exp",S.exp,"E",{step:0.05})}
+    ${pf("Tarifa CTCx base (Ve)","tarifa_base",S.tarifa_base,"E",{step:0.05,i:"tarifa"})}${BANDAS5.map(k=>pf(`Factor de banda ${k}`,`factor.${k}`,S.factor[k],"D",{step:0.05})).join("")}
+    ${BANDAS5.map(k=>pf(`MOQ ${k} (kg, múltiplo de ${S.bolsa})`,`moq.${k}`,S.moq[k],"D",{step:S.bolsa})).join("")}
+    <div class="out">Black N0 <b>${usd(P0.n0)}</b> · N1 ${usd(P0.n1)} · tarifa ${usd(P0.tarifa)} · <b>FCA ${usd(P0.n2)}</b> US$/kg (${usd(P0.n2_lb)}/lb, ${pct(P0.sobre,0)} vs ref) · MOQ ${P0.moq} kg = ${P0.cargas_moq} cargas${P0.cubre?"":" · ¡el lote mínimo no cubre el MOQ!"}</div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">8</span>Pila de precios · N3 CIP → N4 DDP</h3><p class="why">El factor de modo vive aquí, en el flete; la tarifa no depende del modo.</p>
+    ${S.escalas.map((e,i)=>pf(`Flete aéreo desde ${e[0]} kg (US$/kg)`,`escalas.${i}.1`,e[1],"E",{step:0.1,i:i===0?"flete":""})).join("")}
+    ${pf("Factor de modo aéreo","modo_aereo",S.modo_aereo,"D",{step:0.05})}${pf("Recargo de servicio CIP","rec.CIP",S.rec.CIP,"E",{step:0.05,i:"niveles"})}${pf("Recargo de servicio DDP","rec.DDP",S.rec.DDP,"E",{step:0.05})}${pf("Seguro (prima)","seguro",S.seguro,"E",{step:0.001})}${pf("Base asegurada (×)","seguro_base",S.seguro_base,"E",{step:0.05})}
+    ${fld("Destino DDP para el tablero","destino",{type:"select",options:S.destinos.map(d=>d[0])})}${S.destinos.map((d,i)=>pf(`${d[0].split(" (")[0]} · nacionalización + entrega`,`destinos.${i}.1`,d[1],"E",{step:0.05,small:`entrega ${usd(d[2])} · IVA ${pct(d[3],0,false)}`})).join("")}${fld("DDP incluye IVA","ddp_iva",{type:"check",small:"práctica habitual: IVA a cargo del importador"})}
+    <div class="out">Black CIP al MOQ <b>${usd(P0.n3)}</b> (flete ${usd(P0.flete)} ${P0.escala}) · DDP <b>${usd(P0.n4)}</b> US$/kg · pedido MOQ a CIP US$ ${num(P0.n3*P0.moq,0)}</div></div>`);
+  b.push(`<div class="blk"><h3><span class="n">9</span>Disparador y back-proof</h3><p class="why">Vigilancia diaria del FNC durante la franja; prueba histórica del método.</p>
+    ${pf("Días con FNC ≥ PVC","disp_dias",S.disp_dias,"D",{step:1,i:"disparador"})}${pf("de las últimas publicaciones","disp_de",S.disp_de,"D",{step:1})}${fld("Disparador activo en el back-proof","disparador",{type:"check"})}${pf("Meses de anticipación (Ve, gráfica 3)","lead",S.lead,"D",{step:1})}
+    <div class="out">Umbral <b>${cop(E.pvc)}</b> · back-proof: prima media <b>${pct(BP.prima_media)}</b>, mín ${pct(BP.prima_min)}, ${BP.disparos} disparos en ${BP.n} franjas</div></div>`);
+  return b.join("");
+}
+function setPath(path,val){const parts=path.split(".");let o=S;for(let i=0;i<parts.length-1;i++)o=o[parts[i]];o[parts[parts.length-1]]=val;}
+
+/* ================================================================ interacción */
+document.addEventListener("input",ev=>{
+  const t=ev.target;
+  if(t.dataset.dial){S[t.dataset.dial]=+t.value; if(t.dataset.dial==="kg_g")S.kg_g=Math.round(S.kg_g/6)*6; recompute(); if(drawerOpen)renderFlow(); return;}
+  if(t.dataset.key&&t.type!=="checkbox"&&t.tagName!=="SELECT"){const v=+t.value;if(isNaN(v))return;S[t.dataset.key]=v;if(t.dataset.mirror){}recompute();refreshOuts();return;}
+  if(t.dataset.path){const v=+t.value;if(isNaN(v))return;setPath(t.dataset.path,v);recompute();refreshOuts();return;}
+  if(t.dataset.score){S.score[t.dataset.score][1]=Math.max(-2,Math.min(2,+t.value||0));recompute();refreshOuts();}
+});
+document.addEventListener("change",ev=>{
+  const t=ev.target;
+  if(t.dataset.chk){S[t.dataset.chk]=t.checked;recompute();return;}
+  if(t.dataset.key&&t.type==="checkbox"){S[t.dataset.key]=t.checked;recompute();refreshOuts();return;}
+  if(t.dataset.key&&t.tagName==="SELECT"){S[t.dataset.key]=+t.value;recompute();refreshOuts();}
+});
+function refreshOuts(){ /* actualiza sólo las salidas del flujo sin perder el foco del campo que se edita */
+  if(!drawerOpen)return; const tmp=document.createElement("div"); tmp.innerHTML=flowHTML();
+  const outsNew=tmp.querySelectorAll(".blk .out"), outsOld=document.getElementById("flow").querySelectorAll(".blk .out");
+  outsOld.forEach((o,i)=>{if(outsNew[i])o.innerHTML=outsNew[i].innerHTML;});
+}
+document.addEventListener("click",ev=>{
+  const b=ev.target.closest("button"); if(!b)return;
+  if(b.dataset.i){openConcept(b.dataset.i);return;}
+  if(b.dataset.nivel){S.nivel=b.dataset.nivel;recompute();return;}
+  if(b.dataset.act){menu(false);act(b.dataset.act);return;}
+});
+let drawerOpen=false;
+function menu(on){document.getElementById("menu").classList.toggle("on",on);document.getElementById("scrim").classList.toggle("on",on);}
+document.getElementById("fab").onclick=()=>menu(!document.getElementById("menu").classList.contains("on"));
+document.getElementById("scrim").onclick=()=>menu(false);
+document.getElementById("btnCloseDrawer").onclick=()=>{document.getElementById("drawer").classList.remove("on");drawerOpen=false;};
+document.getElementById("btnReset").onclick=()=>{S=JSON.parse(JSON.stringify(DEFAULT));recompute();renderFlow();toast("Valores de F4-2026 restablecidos");};
+document.getElementById("mClose").onclick=()=>modal(false);
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")modal(false);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){modal(false);menu(false);}});
+document.getElementById("btnRef").onclick=()=>openModal("Ficha de la referencia · "+S.codigo,`
+  <div class="kv">PVC = máx( Piso ${cop(E.piso)} ; PEC<sub>30d</sub> × ${num(1+S.prima,2)} = ${cop(E.min_atr)} ; Ancla × (1 + ${pct(E.modificador,1)}) = ${cop(E.mercado)} ) → redondeo a ${cop(S.redondeo)} → <b>${cop(E.pvc)}</b></div>
+  <table><tr><th>Dato</th><th class="r">Valor</th></tr>
+  <tr><td>Corte de datos / publicación / vigencia</td><td class="r">${S.fecha_corte} / ${S.fecha_pub} / ${S.vigencia}</td></tr>
+  <tr><td>Gobierna</td><td class="r">${E.gob}</td></tr>
+  <tr><td>PVC vs PEC del corte</td><td class="r">${pct(E.pvc/E.pec_corte-1)}</td></tr>
+  <tr><td>PVC vs máximo FNC 90 días (${cop(S.fnc_max90)})</td><td class="r">${pct(E.pvc/S.fnc_max90-1)}</td></tr>
+  <tr><td>PVC vs promedio FNC 180 días (${cop(S.fnc_prom180)})</td><td class="r">${pct(E.pvc/S.fnc_prom180-1)}</td></tr>
+  <tr><td>PVC vs costo escalado</td><td class="r">${pct(E.pvc/E.costo-1)}</td></tr>
+  <tr><td>US$ por carga / por lb excelso eq.</td><td class="r">${num(E.pvc/S.trm,0)} / ${usd(E.pvc/S.trm/S.lb_excelso)}</td></tr>
+  <tr><td>Escalera</td><td class="r">${BANDAS.map(k=>k+" "+cop(E.pvc*S.mult[k])).join(" · ")}</td></tr>
+  <tr><td>Umbral del disparador</td><td class="r">FNC ≥ ${cop(E.pvc)} en ${S.disp_dias} de ${S.disp_de}</td></tr></table>
+  <p style="margin-top:8px;color:var(--ink3);font-size:12px">Método PVC-D2 v2.1.1 · fuentes PVC-D1 · aplicación PVC-D3. Toda cifra de esta ficha sale de los parámetros del flujo del modelo.</p>`);
+function modal(on){document.getElementById("modal").classList.toggle("on",on);}
+function openModal(title,html){document.getElementById("mTitle").innerHTML=title;document.getElementById("mBody").innerHTML=html;modal(true);}
+function openConcept(k){const c=CONCEPTOS[k];if(!c)return;openModal(c.t,`<h4>Qué es este valor</h4><p>${c.q}</p><h4>Qué hace aquí</h4><p>${c.h}</p><h4>Qué significa + / −</h4><p>${c.pm}</p>`);}
+let toastT; function toast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),2200);}
+
+/* ================================================================ acciones del menú */
+const LS=k=>{try{return JSON.parse(localStorage.getItem(k)||"[]");}catch(e){return [];}};
+const LSset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){toast("Este navegador no permite guardar");return false;}};
+function snapshot(){return {pvc:E.pvc,gob:E.gob,prima:E.pvc/E.pec_corte-1,fca_black:PI[0].n2,S:JSON.parse(JSON.stringify(S))};}
+function act(a){
+  if(a==="config"){renderFlow();document.getElementById("drawer").classList.add("on");drawerOpen=true;return;}
+  if(a==="save"){openModal("Guardar Reporte",`<p>Guarda el estado completo del modelo (diales, parámetros y edición) en este navegador.</p><input type="text" id="rName" value="${S.codigo} · ${new Date().toISOString().slice(0,16).replace("T"," ")}"><div class="row"><button class="btn p" id="rSave">Guardar</button></div>`);
+    document.getElementById("rSave").onclick=()=>{const r=LS("pvc_reports");r.unshift({name:document.getElementById("rName").value,date:new Date().toISOString(),...snapshot()});if(LSset("pvc_reports",r.slice(0,40))){modal(false);toast("Reporte guardado");}};return;}
+  if(a==="load"){const r=LS("pvc_reports");openModal("Cargar Reporte",r.length?`<table><tr><th>Nombre</th><th class="r">PVC</th><th></th></tr>${r.map((x,i)=>`<tr><td>${x.name}<br><small style="color:var(--ink3)">${x.date.slice(0,16).replace("T"," ")}</small></td><td class="r">${cop(x.pvc)}</td><td class="r"><button class="btn" data-load="${i}">Cargar</button> <button class="btn" data-del="${i}">Borrar</button></td></tr>`).join("")}</table>`:"<p>No hay reportes guardados en este navegador.</p>");
+    document.getElementById("mBody").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.load){S=r[+b.dataset.load].S;recompute();if(drawerOpen)renderFlow();modal(false);toast("Reporte cargado");}if(b.dataset.del){r.splice(+b.dataset.del,1);LSset("pvc_reports",r);act("load");}};return;}
+  if(a==="publish"){openModal("Publicar Reporte",`<p>Fija el PVC actual como edición publicada: código, fecha, huella de los parámetros. Una edición publicada no se edita; se publica otra.${DB?" <b>Se escribe en la base del BCP</b> con la versión vigente del modelo; si movió parámetros del modelo (no entradas), la base lo rechaza y hay que registrar una versión nueva en Parámetros.":""}</p><input type="text" id="pCode" value="${S.codigo}"><p style="margin-top:8px"><b>${cop(E.pvc)}</b> · gobierna ${E.gob} · prima ${pct(E.pvc/E.pec_corte-1)} · FCA Black US$ ${usd(PI[0].n2)}/kg</p><div class="row"><button class="btn p" id="pGo">Publicar</button></div>`);
+    if(DB){document.getElementById("pGo").onclick=async()=>{const b=document.getElementById("pGo");b.disabled=true;b.textContent="Publicando…";try{const r=await fetch(DB.publishUrl,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:document.getElementById("pCode").value,S})});const j=await r.json();if(!j.ok){b.disabled=false;b.textContent="Publicar";toast(j.error||"No se pudo publicar");alert(j.error||"No se pudo publicar");return;}modal(false);toast(`Publicado ${document.getElementById("pCode").value} · ${cop(j.pvc)} · modelo ${j.modelVersion}`);setTimeout(()=>location.reload(),1200);}catch(e){b.disabled=false;b.textContent="Publicar";toast("Error de red al publicar");}};return;}
+    document.getElementById("pGo").onclick=()=>{const h=LS("pvc_publicados");const snap=snapshot();const hash=(s=>{let x=0;for(const ch of s)x=(x*31+ch.charCodeAt(0))>>>0;return x.toString(16).padStart(8,"0");})(JSON.stringify(snap.S));h.unshift({code:document.getElementById("pCode").value,date:new Date().toISOString(),hash,...snap});if(LSset("pvc_publicados",h)){modal(false);toast("Publicado "+document.getElementById("pCode").value);}};return;}
+  if(a==="history"&&DB){const h=DB.editions||[];const EST={published:"Publicada",corrected:"Corrección",superseded:"Sustituida",draft:"Borrador",computed:"Calculada"};openModal("Historial de PVCs publicados (base del BCP)",h.length?`<table><tr><th>Código</th><th>Estado</th><th>Fecha</th><th class="r">PVC</th><th class="r">Prima</th><th>Gobierna</th><th>Modelo</th><th>Huella</th><th></th></tr>${h.map((x,i)=>`<tr><td>${x.code}</td><td>${EST[x.status]||x.status}</td><td>${String(x.date||"").slice(0,10)}</td><td class="r">${cop(x.pvc||0)}</td><td class="r">${x.prima==null?"—":pct(x.prima)}</td><td>${x.gob||"—"}</td><td>${x.modelVersion||"—"}</td><td style="font-family:var(--fm);font-size:11px">${x.hash||""}</td><td class="r"><button class="btn" data-load="${i}">Ver</button></td></tr>`).join("")}</table>`:"<p>Aún no hay ediciones en la base.</p>");
+    document.getElementById("mBody").onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.load){const x=h[+b.dataset.load];if(x.S){S={...S,...x.S};recompute();if(drawerOpen)renderFlow();modal(false);toast("Edición cargada en pantalla");}}};return;}
+  if(a==="history"){const h=LS("pvc_publicados");openModal("Historial de PVCs publicados",h.length?`<table><tr><th>Código</th><th>Fecha</th><th class="r">PVC</th><th class="r">Prima</th><th>Gobierna</th><th>Huella</th><th></th></tr>${h.map((x,i)=>`<tr><td>${x.code}</td><td>${x.date.slice(0,10)}</td><td class="r">${cop(x.pvc)}</td><td class="r">${pct(x.prima)}</td><td>${x.gob}</td><td style="font-family:var(--fm);font-size:11px">${x.hash}</td><td class="r"><button class="btn" data-load="${i}">Ver</button></td></tr>`).join("")}</table><p style="margin-top:8px;color:var(--ink3);font-size:12px">Ediciones oficiales anteriores (documentos): PVC-F4-2026 v1.5.2 $2.470.000 (7-sep-2026) → v2.1 $2.500.000 (9-sep-2026, errata al alza con series oficiales).</p>`:"<p>Aún no hay ediciones publicadas desde este tablero. Ediciones oficiales en documentos: PVC-F4-2026 v1.5.2 $2.470.000 (7-sep-2026) → v2.1 $2.500.000 (9-sep-2026).</p>");
+    document.getElementById("mBody").onclick=e=>{const b=e.target.closest("button");if(b&&b.dataset.load){S=h[+b.dataset.load].S;recompute();if(drawerOpen)renderFlow();modal(false);toast("Edición cargada en pantalla");}};return;}
+  if(a==="export"){const html=onePager();document.getElementById("opWrap").innerHTML=html;const txt=exportText();
+    openModal(`One-pager ${S.codigo} · ${opVersion()}`,`<p style="color:var(--ink3);font-size:12px">Nueva versión del D4 generada desde el tablero: usa el PVC en pantalla, la escalera, los tres KPIs con su lectura y la pila de precios. "Guardar PDF" abre el diálogo de impresión del navegador (elija "Guardar como PDF", tamaño carta).</p><div style="border:1px solid var(--line2);border-radius:8px;overflow:auto;max-height:52vh">${html}</div><div class="row"><button class="btn p" id="ePrint">Guardar PDF / Imprimir</button><button class="btn" id="eCopy">Copiar texto del tablero</button></div>`);
+    document.querySelector("#modal .card").style.maxWidth="820px";
+    document.getElementById("eCopy").onclick=()=>{navigator.clipboard?.writeText(txt).then(()=>toast("Copiado"),()=>toast("El navegador no permitió copiar"));};document.getElementById("ePrint").onclick=()=>{setTimeout(()=>window.print(),50);};return;}
+  if(a==="docs"){openModal("Documentación del modelo",`<p>Conjunto documental PVC v2.1.1 (carpeta <i>PVC - Modelo/v2.0</i>): D0 índice y decisiones · D1 fuentes y datos · D2 método · D3 aplicación F4-2026 · D4 one-pager ES/EN · D5 prueba de fuego · D6 formatos · D7 guion y preguntas · D8 guiones de comunicación · D9 video de anticipación · calculadora Excel (12 hojas) · motor <i>pvc_model_v2.py</i>. Este tablero reproduce el motor con los mismos parámetros; toda cifra es rastreable a D1.</p><h4>Conceptos especiales</h4><table>${Object.entries(CONCEPTOS).map(([k,c])=>`<tr><td><b>${c.t}</b></td><td class="r"><button class="ib inl" data-i="${k}">i</button></td></tr>`).join("")}</table><h4>Dossier · versiones de los PDF producidos</h4><p>El dossier declara el modelo de manera conceptual y se reedita con los números del último PVC publicado (hoy: <b>${(LS("pvc_publicados")[0]||{code:S.codigo}).code} · ${cop((LS("pvc_publicados")[0]||{pvc:E.pvc}).pvc)}</b>). Carpeta <i>reference_internal_apps/PVC - Modelo</i>: raíz = v1.5.2 (histórico); subcarpeta <i>v2.0</i> = vigente.</p>
+<table><tr><th>Versión</th><th>Fecha</th><th>Qué cambió</th><th>PVC-F4</th></tr>
+<tr><td>v1.0–v1.2.1</td><td>7-sep-2026</td><td>Conjunto inicial; comparador FNC → PEC + prima 8%; prueba de fuego; política de pagos y catación</td><td class="r">$2.320.000 → $2.470.000</td></tr>
+<tr><td>v1.3–v1.5.2</td><td>7-sep-2026</td><td>Cuatro franjas; nombre PVC; piso ×1,50; corrección al alza; muestra de 2 kg; contrato con retiro 50%</td><td class="r">$2.470.000</td></tr>
+<tr><td>v2.0</td><td>8-sep-2026</td><td>Modelo de plataforma: carga 1 en firme, reserva llamada contra ventas, retiro 25% + cifra de salida 7,5%, sin compensación de reserva, disparador FNC ≥ PVC, avión desde Black, calendario 2 meses antes</td><td class="r">$2.470.000</td></tr>
+<tr><td>v2.0.1</td><td>9-sep-2026</td><td>Escalera que se dobla (×1,15/1,30/1,60/2,00), Gold 88–88,9, Tyrian en subasta 80:20, matriz de grado (SCA + reconocimientos, genética, FR excluyente), MOQ del comprador</td><td class="r">$2.470.000</td></tr>
+<tr><td>v2.1</td><td>9-sep-2026</td><td>Series oficiales FNC y TRM del Banco de la República; ventana de 30 días calendario; errata al alza; bloque canónico de muestra y evaluación</td><td class="r">$2.500.000</td></tr>
+<tr><td><b>v2.1.1</b></td><td>10-sep-2026</td><td>Pila de precios FCA/CIP/DDP en US$/kg sobre 78 kg garantizados, Tarifa CTCx por banda, flete por escalas, MOQ 228; todos los costos de la pila estimados</td><td class="r">$2.500.000</td></tr></table>
+<table style="margin-top:8px"><tr><th>Documento (v2.1.1)</th><th class="r">Págs.</th><th>Contenido</th></tr>
+<tr><td>PVC-D0 Índice</td><td class="r">6</td><td>Mapa del conjunto, versiones, decisiones, pendientes, inconsistencias resueltas</td></tr>
+<tr><td>PVC-D1 Fuentes y datos</td><td class="r">10</td><td>Cada dato, su fuente, captura y control; series oficiales; anexos</td></tr>
+<tr><td>PVC-D2 Método</td><td class="r">19</td><td>Tres capas, calendario, disparador, escalera y matriz de grado, back-proof, contrato, plataforma, pila de precios §13.1</td></tr>
+<tr><td>PVC-D3 Aplicación F4-2026</td><td class="r">12</td><td>Cálculo completo, comparaciones, escalera en cifras, contrato, disparador, sensibilidad, riesgos, pila §12</td></tr>
+<tr><td>PVC-D4 One-pager ES / EN</td><td class="r">1 + 1</td><td>Ficha pública de la edición; este tablero genera su nueva versión con los KPIs (Exportar Reporte)</td></tr>
+<tr><td>PVC-D5 Prueba de fuego</td><td class="r">6</td><td>Tres perspectivas simuladas y el debate v2.0</td></tr>
+<tr><td>PVC-D6 Formatos</td><td class="r">5</td><td>Muestra, oferta, contrato de franja, llamado, orden de compra</td></tr>
+<tr><td>PVC-D7 Guion y preguntas</td><td class="r">4</td><td>Guion locutado, FAQ del productor, puesta en marcha</td></tr>
+<tr><td>PVC-D8 Guiones de comunicación</td><td class="r">10</td><td>Por tipo de productor y comprador internacional</td></tr>
+<tr><td>PVC-D9 Guion de video</td><td class="r">7</td><td>Campaña de anticipación</td></tr>
+<tr><td>PVC_Calculadora_CTCx.xlsx</td><td class="r">12 hojas</td><td>Fórmulas vivas verificadas contra el motor; hoja Pila_de_precios</td></tr>
+<tr><td>pvc_model_v2.py + _fuentes/</td><td class="r">—</td><td>Motor, plantillas HTML, build de PDF, build y verificación de la calculadora</td></tr></table>
+<p style="font-size:11.5px;color:var(--ink3)">Reedición: <i>python pvc_model_v2.py → _fuentes/build.py → build_xlsx.py → verify_xlsx.py</i>. Con el módulo BCP, la edición publicada en base de datos alimentará ese motor y el dossier se regenerará por edición.</p>
+<h4>Cómo se lee el tablero</h4><ul><li>Cabecera: el PVC vigente y REF con la ficha de la edición.</li><li>Tres KPIs con su texto de 120 palabras: prima sobre la cooperativa, retorno de la finca y sobreprecio al comprador.</li><li>Tres gráficas con diales: Va prima, Vb margen (atraviesa las tres), Vc kilos garantizados, Vd nivel de entrega, Ve tarifa base y anticipación.</li><li>El menú abre el flujo completo del modelo por bloques, con "i" en cada concepto especial; amarillo = decisión, naranja = estimado.</li></ul>`);return;}
+}
+function opVersion(){const h=LS("pvc_publicados");const n=h.length+1;return `D4 v3.${n} · ${new Date().toISOString().slice(0,10)}`;}
+function onePager(){const B=PI[0],vsPec=E.pvc/E.pec_corte-1,ret=E.pvc*S.mult.Black/E.costo;const d=S.destinos[S.destino][0].split(" (")[0];
+  const kp=[["KPI 1 · Prima sobre la cooperativa",pct(vsPec),`El PVC supera en ${pct(vsPec)} lo que hoy paga la cooperativa (FNC ${cop(S.fnc_corte)} + ${cop(S.pec_add)}). Gobierna ${E.gob}; prima objetivo ${pct(S.prima,0,false)} sobre el PEC de 30 días.`,vsPec>=0.15?"atractivo":vsPec>=0.08?"justo":"insuficiente"],
+    ["KPI 2 · Retorno de la finca Black",num(ret,2)+"×",`Black se paga a ${cop(E.pvc*S.mult.Black)}: ${num(ret,2)} veces el costo FEPCafé escalado (${cop(E.costo)}). Piso ${cop(E.piso)} con margen de dignidad ${pct(S.margen,0,false)}.`,ret>=1.5?"dos pesos por peso":"cubre costo"],
+    ["KPI 3 · Sobreprecio FCA Black",pct(B.sobre,0),`US$ ${usd(B.n2)}/kg FCA Bogotá (${usd(B.n2_lb)}/lb) sobre ${S.kg_g} kg garantizados, frente a ${usd(B.ref)}/lb de referencia: ${usd(B.taza,1)} ¢ por taza de 12 g.`,B.sobre<=0.5?"defendible":B.sobre<=0.8?"margen estrecho":"por encima del cuartil"]];
+  return `<div class="op"><div class="oh"><div><h1>${S.codigo} · Ponderación de Valor de Cosecha</h1><div class="s">Referencia de valor CTCx para café pergamino seco · Colombia · corte ${S.fecha_corte} · publicado ${S.fecha_pub} · vigente hasta ${S.vigencia} · método PVC-D2 v2.1.1 · ${opVersion()} generada desde el Tablero PVC · plataforma Cherry Picked</div></div></div>
+  <div class="big"><div class="n">COP ${cop(E.pvc)} / carga</div><div class="d">125 kg pergamino seco · FR 94 · ${cop(E.pvc/125)}/kg · ≈ US$ ${num(E.pvc/S.trm,0)}/carga a TRM ${num(S.trm,2)} · ≈ US$ ${usd(E.pvc/S.trm/S.lb_excelso)}/lb excelso equivalente<br>${pct(vsPec)} sobre lo que hoy recibe el productor en la cooperativa · ${pct(E.pvc/S.fnc_max90-1)} vs máximo FNC de 90 días · ${pct(E.pvc/E.costo-1)} sobre el costo de producción · nunca baja durante la franja</div></div>
+  <div class="kp">${kp.map(k=>`<div><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="t">${k[2]}</div><span class="pl">${k[3]}</span></div>`).join("")}</div>
+  <h2>Escalera de calidad CTCx · lo que CTCx paga (el PVC × 1,0 es referencia y no se compra)</h2>
+  <table><tr><th>Banda</th><th>Puntaje SCA</th><th class="r">Mult.</th><th class="r">COP / carga</th><th class="r">US$ / carga</th><th class="r">Lote mínimo</th><th class="r">N2 FCA US$/kg</th><th class="r">N3 CIP al MOQ</th><th class="r">N4 DDP ${d}</th></tr>
+  <tr><td>Referencia</td><td>&lt; 80 · grado federación</td><td class="r">×1,0</td><td class="r">${cop(E.pvc)}</td><td class="r">${num(E.pvc/S.trm,0)}</td><td class="r">no se compra</td><td class="r">—</td><td class="r">—</td><td class="r">—</td></tr>
+  ${PI.map(r=>`<tr><td><span class="badge ${r.b}">${r.b}</span></td><td>${RANGOS[r.b]}${r.b==="Tyrian"?" · genética A/B · subasta desde Gold":""}</td><td class="r">${r.b==="Tyrian"?"cierre ej. "+mult(r.m):mult(r.m)}</td><td class="r"><b>${cop(r.copc)}</b></td><td class="r">${num(r.usd_carga,0)}</td><td class="r">${S.min_cargas[r.b]} carga${S.min_cargas[r.b]>1?"s":""} · MOQ ${r.moq} kg</td><td class="r">${usd(r.n2)}</td><td class="r">${usd(r.n3)}</td><td class="r">${usd(r.n4)}</td></tr>`).join("")}</table>
+  <div style="font-size:9.5px;color:#555;margin-top:3px">Grado = puntaje SCA + reconocimientos (+1 / ++2), con puertas de genética (Gold y Tyrian sólo A/B) y de factor de rendimiento (≤ 94; Black hasta 98). Precios al comprador en US$ a la TRM del corte sobre ${S.kg_g} kg de verde garantizado por carga (${B.bolsas} bolsas de ${S.bolsa} kg); FCA Bogotá (≈FOB) → CIP aeropuerto (≈CIF, flete por escala: nunca peor, crédito si mejor) → DDP en destinos habilitados. Costos de la pila estimados hasta cotización. Evaluación de la muestra: envío gratis; el productor paga ${cop(S.catacion*(1-S.subsidio))} de ${cop(S.catacion)} con el descuento base.</div>
+  <h2>Cómo se construye el PVC</h2>
+  <table><tr><th>Capa</th><th>Qué hace</th><th class="r">Valor</th></tr>
+  <tr><td>1 · Ancla de mercado</td><td>FNC oficial de los cinco meses previos (1:2:3:4:5) mezclada ${Math.round(S.peso_L*100)}/${Math.round((1-S.peso_L)*100)} con la proyección desde el contrato C ${num(S.c_strip,1)} US¢/lb, ajustada por el modificador (${pct(E.modificador)}).</td><td class="r">${cop(E.mercado)}</td></tr>
+  <tr><td>1b · Atractivo frente a la cooperativa</td><td>PEC de 30 días (FNC ${cop(S.fnc_30d)} + sobreprecio ${cop(S.pec_add)}) más prima objetivo ${pct(S.prima,0,false)}.</td><td class="r">${cop(E.min_atr)}</td></tr>
+  <tr><td>2 · Piso de costo</td><td>Costo FEPCafé escalado (${cop(E.costo)}) × ${num(1+S.margen,2)} de retorno de dignidad. El PVC nunca baja del piso.</td><td class="r">${cop(E.piso)}</td></tr>
+  <tr><td>Resultado</td><td>máx(piso ; PEC × ${num(1+S.prima,2)} ; ancla × (1 + modificador)), redondeado a ${cop(S.redondeo)}. Gobierna <b>${E.gob}</b>.</td><td class="r"><b>${cop(E.pvc)}</b></td></tr></table>
+  <div class="box"><b>Compromisos CTCx.</b> El PVC nunca baja durante la franja. Sube si el precio de la Federación alcanza ${cop(E.pvc)} en ${S.disp_dias} de ${S.disp_de} publicaciones: se recalcula sobre el promedio de 15 días más el sobreprecio, por ${num(1+S.prima,2)}, desde el siguiente corte de mes; nunca retroactivo. Contrato de franja: CTCx compra la carga 1 de inmediato y reserva el resto al precio del contrato; retiro libre ${pct(S.retiro_libre,0,false)} por mes, cifra de salida ${pct(S.cifra_salida,1,false)} del PVC por carga (${cop(E.pvc*S.cifra_salida)}). Back-proof 2019–2026 con ${S.lead} meses de anticipación: prima media ${pct(BP.prima_media)}, peor franja ${pct(BP.prima_min)}, ${BP.disparos} correcciones al alza en ${BP.n} franjas.</div>
+  <div class="src">Fuentes: FNC serie oficial diaria y mensual (Precios, área y producción de café), TRM Banco de la República (datos.gov.co), FEPCafé Reporte mensual, tableros de cooperativas de Caldas, ICE, NOAA CPC. Método PVC-D2 · fuentes PVC-D1 · aplicación PVC-D3 · dossier v2.1.1. Cifras en COP por carga de 125 kg de pergamino seco, FR 94. CTCx · Colombian Trading Company · Cherry Picked.</div></div>`;}
+function exportText(){const B=PI[0];const lines=[`${S.codigo} · PVC ${cop(E.pvc)} COP/carga · corte ${S.fecha_corte} · gobierna ${E.gob}`,`Piso ${cop(E.piso)} · PEC30×${num(1+S.prima,2)} ${cop(E.min_atr)} · Mercado ${cop(E.mercado)} · L ${cop(E.L)} · P ${cop(E.P)} · modificador ${pct(E.modificador,2)}`,`KPI1 prima sobre cooperativa ${pct(E.pvc/E.pec_corte-1)} · KPI2 retorno Black ${num(E.pvc*S.mult.Black/E.costo,2)}× · KPI3 sobreprecio FCA Black ${pct(B.sobre,0)}`,`Escalera: ${BANDAS.map(k=>k+" "+mult(S.mult[k])+" "+cop(E.pvc*S.mult[k])).join(" · ")}`,`Pila (${S.kg_g} kg garantizados, TRM ${num(S.trm,2)}, nivel ${S.nivel}): `+PI.map(r=>`${r.b} FCA ${usd(r.n2)} / CIP ${usd(r.n3)} / DDP ${usd(r.n4)} US$/kg`).join(" · "),`Back-proof (lead ${S.lead} m, disparador ${S.disparador?"sí":"no"}): prima media ${pct(BP.prima_media)}, mín ${pct(BP.prima_min)}, negativas ${BP.neg}/${BP.n}, disparos ${BP.disparos}`,`Diales: Va ${pct(S.prima,1,false)} · Vb ${pct(S.margen,0,false)} · Vc ${S.kg_g} kg · Vd ${S.nivel} · Ve ${usd(S.tarifa_base)} · anticipación ${S.lead} m`,"","Textos:",...[...document.querySelectorAll(".txt")].map(t=>"- "+t.textContent.replace(/\s*\d+ palabras$/,"").trim()),"","Parámetros (JSON):",JSON.stringify(S)];return lines.join("\n");}
+
+/* ================================================================ tema */
+function applyTheme(t){const r=document.documentElement;if(t==="system")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t);document.querySelectorAll("#themeSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.theme===t));try{localStorage.setItem("pvc_theme",t);}catch(e){}}
+document.getElementById("themeSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(b)applyTheme(b.dataset.theme);});
+(function(){let t="system";try{t=localStorage.getItem("pvc_theme")||(document.documentElement.getAttribute("data-theme")||"system");}catch(e){}applyTheme(t);})();
+recompute();
+</script>

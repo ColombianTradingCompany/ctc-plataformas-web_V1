@@ -75,6 +75,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // «Manejo de Plataformas» NO vino: F6 lo convierte en módulo suelto
           // del ECP en PR-C, y hasta entonces sigue en /bcp/direccionamiento/…
           { href: "/bcp/direccionamiento", label: "Direccionamiento" },
+          // PVC · Ponderación de Valor de Cosecha (V5.28): el indicador principal
+          // del negocio y la fuente única de ese valor para todo el sistema —
+          // ediciones publicadas, versiones del método, tablero y dossier. Es
+          // «Business Core» en sentido literal, y owner-only porque publicar una
+          // edición fija el precio de origen de la franja. Ver docs/PVC_BCP_PLAN.md.
+          { href: "/bcp/pvc", label: "PVC · Valor de Cosecha", ownerOnly: true },
         ],
       },
       {

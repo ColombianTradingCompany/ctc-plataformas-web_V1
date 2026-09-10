@@ -1,0 +1,107 @@
+import "server-only";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { calcular, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
+import type { PvcCurrent, PvcEdition, PvcEditionStatus, PvcModelVersion } from "./tipos";
+
+// ── PVC · el servicio (lectura y escritura sobre las tablas) ─────────────────
+// Server-only: aquí se usa el cliente de service role porque las tablas son
+// service-role-only. Lo llaman las Server Actions (`actions.ts`) y los route
+// handlers del embed del tablero — nunca un componente de cliente.
+
+type ModelRow = { id: string; version: string; params: PvcParams; notes: string | null; created_at: string };
+type EditionRow = {
+  id: string; code: string; model_version_id: string; status: PvcEditionStatus;
+  cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null;
+  inputs: PvcEntradas; outputs: PvcSalida; pvc_cop: number | null; hash: string | null;
+  correction_of: string | null; published_at: string | null; notes: string | null; created_at: string;
+  pvc_model_versions?: { version: string } | null;
+};
+
+const EDITION_COLS = "id, code, model_version_id, status, cut_date, publish_date, valid_from, valid_to, inputs, outputs, pvc_cop, hash, correction_of, published_at, notes, created_at, pvc_model_versions(version)";
+
+const toModel = (r: ModelRow): PvcModelVersion => ({ id: r.id, version: r.version, params: r.params, notes: r.notes, createdAt: r.created_at });
+const toEdition = (r: EditionRow): PvcEdition => ({
+  id: r.id, code: r.code, modelVersionId: r.model_version_id, modelVersion: r.pvc_model_versions?.version ?? null, status: r.status,
+  cutDate: r.cut_date, publishDate: r.publish_date, validFrom: r.valid_from, validTo: r.valid_to,
+  inputs: r.inputs, outputs: r.outputs, pvcCop: r.pvc_cop, hash: r.hash, correctionOf: r.correction_of,
+  publishedAt: r.published_at, notes: r.notes, createdAt: r.created_at,
+});
+
+export async function listarVersionesModelo(): Promise<PvcModelVersion[]> {
+  const service = createServiceRoleClient();
+  const { data } = await service.from("pvc_model_versions").select("id, version, params, notes, created_at").order("created_at", { ascending: false });
+  return ((data ?? []) as ModelRow[]).map(toModel);
+}
+
+export async function versionModeloVigente(): Promise<PvcModelVersion | null> {
+  const v = await listarVersionesModelo();
+  return v[0] ?? null;
+}
+
+export async function listarEdiciones(limit = 40): Promise<PvcEdition[]> {
+  const service = createServiceRoleClient();
+  const { data } = await service.from("pvc_editions").select(EDITION_COLS).order("created_at", { ascending: false }).limit(limit);
+  return ((data ?? []) as unknown as EditionRow[]).map(toEdition);
+}
+
+export async function edicionVigente(): Promise<PvcEdition | null> {
+  const service = createServiceRoleClient();
+  const { data } = await service
+    .from("pvc_editions").select(EDITION_COLS)
+    .in("status", ["published", "corrected"])
+    .order("published_at", { ascending: false }).limit(1).maybeSingle();
+  return data ? toEdition(data as unknown as EditionRow) : null;
+}
+
+/** Crea una versión nueva del modelo (nunca se edita una existente). */
+export async function crearVersionModelo(input: { version: string; params: PvcParams; notes?: string; userId: string }): Promise<{ id: string } | { error: string }> {
+  const service = createServiceRoleClient();
+  const { data, error } = await service
+    .from("pvc_model_versions")
+    .insert({ version: input.version, params: input.params, notes: input.notes ?? null, created_by: input.userId })
+    .select("id").single();
+  if (error) return { error: error.message };
+  await service.from("audit_log").insert({ entity_type: "pvc_model_version", entity_id: data.id, action: "created", performed_by: input.userId, notes: input.version });
+  return { id: data.id as string };
+}
+
+/**
+ * Publica una edición: calcula con el motor, sella la huella y la inserta ya
+ * como `published`. Si hay una edición vigente con el mismo código, pasa a
+ * `superseded` (el guard de la base impide editarla de cualquier otra forma).
+ * Con `correctionOf` se registra una corrección al alza (D2 §7.5).
+ */
+export async function publicarEdicion(input: {
+  params: PvcParams; entradas: PvcEntradas; modelVersionId: string; userId: string; notes?: string; correctionOf?: string | null;
+}): Promise<{ id: string; pvc: number } | { error: string }> {
+  const salida = calcular(input.params, input.entradas);
+  const service = createServiceRoleClient();
+  const now = new Date().toISOString();
+  const { data: prev } = await service.from("pvc_editions").select("id").eq("code", input.entradas.codigo).in("status", ["published", "corrected"]);
+  const { data, error } = await service
+    .from("pvc_editions")
+    .insert({
+      code: input.entradas.codigo, model_version_id: input.modelVersionId, status: input.correctionOf ? "corrected" : "published",
+      cut_date: input.entradas.fecha_corte, publish_date: input.entradas.fecha_pub, valid_from: input.entradas.valid_from, valid_to: input.entradas.valid_to,
+      inputs: input.entradas, outputs: salida, pvc_cop: salida.edicion.pvc, hash: huella(input.params, input.entradas),
+      previous_edition_id: prev?.[0]?.id ?? null, correction_of: input.correctionOf ?? null,
+      published_by: input.userId, published_at: now, notes: input.notes ?? null, created_by: input.userId,
+    })
+    .select("id").single();
+  if (error) return { error: error.message };
+  for (const p of prev ?? []) await service.from("pvc_editions").update({ status: "superseded" }).eq("id", p.id);
+  await service.from("audit_log").insert({
+    entity_type: "pvc_edition", entity_id: data.id, action: input.correctionOf ? "corrected" : "published", new_status: "published",
+    performed_by: input.userId, notes: `${input.entradas.codigo} · ${salida.edicion.pvc}`,
+  });
+  return { id: data.id as string, pvc: salida.edicion.pvc };
+}
+
+/** La edición vigente tal y como la ve el público (vista SECURITY DEFINER). */
+export async function pvcVigentePublico(): Promise<PvcCurrent | null> {
+  const service = createServiceRoleClient();
+  const { data } = await service.from("public_pvc_current").select("*").maybeSingle();
+  if (!data) return null;
+  const r = data as { code: string; pvc_cop: number; cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null; model_version: string | null; escalera: PvcSalida["escalera"]; pila: PvcSalida["pila"]; kpis: PvcSalida["kpis"] };
+  return { code: r.code, pvcCop: Number(r.pvc_cop), cutDate: r.cut_date, publishDate: r.publish_date, validFrom: r.valid_from, validTo: r.valid_to, modelVersion: r.model_version, escalera: r.escalera, pila: r.pila, kpis: r.kpis };
+}

@@ -19,6 +19,28 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.28] — 2026-09-10 (commit pendiente)
+
+- **Hito**: **PVC · Ponderación de Valor de Cosecha** entra a la plataforma como módulo del **BCP · Business Core**
+  (`/bcp/pvc`, owner-only): la fuente única del indicador principal del negocio. Fase 1 de `docs/PVC_BCP_PLAN.md`.
+- **Añadido**: motor TypeScript `src/lib/pvc/motor.ts` (port de `pvc_model_v2.py`, método PVC-D2 v2.1.1: edición,
+  escalera, pila FCA/CIP/DDP, back-proof 2019–2026, KPIs, huella) con guardián de paridad
+  `scripts/qa-pvc-motor.mjs` contra las cifras exportadas del motor Python (`paridad.json`).
+- **Añadido**: cuatro pestañas — **Ediciones** (la vigente con sus KPIs, escalera y pila; historial con huella),
+  **Tablero** (el tablero HTML interactivo embebido y autenticado, con puente a la base: publica y lee ediciones),
+  **Parámetros del modelo** (versiones inmutables del método, registro de una nueva por acta) y **Dossier**
+  (D0–D9 + calculadora por versión, servidos autenticados desde `docs/pvc/`).
+- **Añadido**: `GET /api/pvc/current` — la edición vigente pública (código, PVC, vigencia, escalera, pila, KPIs)
+  desde la vista `public_pvc_current`, para Cherry Picked, Kaffetal Regal y Make.
+- **Datos**: migración `bcp_pvc_core` — `pvc_model_versions`, `pvc_editions` (guard `pvc_editions_guard`: una
+  edición publicada es inmutable; una corrección al alza es otra fila con `correction_of`), `pvc_cycles`,
+  `pvc_sources`, `pvc_trigger_watch`, `pvc_forecast_scores` (todas service-role-only) y la vista
+  `public_pvc_current`. Semilla: modelo v2.1.1 y la edición **PVC-F4-2026 = $2.500.000** publicada.
+- **Cambiado**: el rail del BCP · Business Core gana «PVC · Valor de Cosecha»; la pestaña Modelo Económico enlaza al
+  módulo. `next.config.ts` traza `docs/pvc/**` para las rutas que lo leen.
+- **Docs**: `docs/PVC_BCP_PLAN.md` (el acople completo: tablas, sitios donde repercute, ciclo semanal, certeza,
+  fases y las cinco decisiones pendientes del owner); sección en HANDOFF.
+
 ## [V5.27] — 2026-08-23 (commit 76993c7)
 
 - **Corregido**: en **Defectos del Café**, la clave de identificación pintaba la foto del grano ENCIMA de

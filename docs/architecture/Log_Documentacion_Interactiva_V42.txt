@@ -106,4 +106,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   Contadores: 39 nodos · 139 fichas (+2: pvc, componentes) · 53 trazas (+1) · 91 wires ·
   34 CTX · 340 ANN (+15) · FILETREE regenerado.
 - El puntero de HANDOFF («Visual system map») apunta al V42.0; CHANGELOG estampado bajo V5.31.
-(commit: pendiente)
+(commit: 3b88977)

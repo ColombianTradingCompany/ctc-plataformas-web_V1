@@ -1,0 +1,109 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V42.0(8eb14f5).html
+(CTC Web Platform, desde 2026-09-12 · plataforma V5.31). Cada entrada se compila
+al próximo Version Wrap (V43).
+
+Formato:
+## [YYYY-MM-DD] V5.NN · Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pendiente">)
+
+════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
+  CHANGELOG posterior a «plataforma V5.31» tiene que aparecer aquí). Se añade al
+  final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «Wraps del mapa» (grupo CTC Consolas
+  internas, vía `plataforma`). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La línea «plataforma V5.31» de la cabecera es la referencia del guardián: el wrap
+  siguiente la reescribe con la versión sobre la que cierra.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137 ·
+V42: 137→139).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex.
+⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO (V38): siempre
+`<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35). ⚠️ LA CADENA
+«Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la suya).
+⚠️ UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS (V40): cada replace lleva assert.
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V42 ENSEÑÓ (léase antes del V43)
+════════════════════════════════════════════════════════════════════════════════
+
+· SEIS VERSIONES SIN ASIENTO EN TRES SEMANAS. V5.25–V5.30 salieron de sesiones
+  distintas (Defectos del Café, PVC, el vídeo) y ninguna escribió aquí — la misma
+  lección de V39, y esta vez con el trabajo repartido en diez conversaciones el
+  riesgo es permanente. Por eso el asiento dejó de ser un hábito y pasó a ser una
+  COMPROBACIÓN DE LA COMPUERTA (`qa-arqlog-check.mjs`), y por eso este log lleva
+  arriba quién escribe y quién llama al wrap.
+
+· DOS «EMPIEZA AQUÍ» SON NINGUNO. `V5_CONSOLAS_PLAN.md` seguía abriendo con su
+  «▶ EMPIEZA AQUÍ» un mes después de ejecutarse. Los planes ejecutados llevan
+  banner de archivado y se quedan en su sitio (30 archivos del código los citan);
+  el único punto de partida es `docs/KICKOFF.md`.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
+
+- **Lo que V42 compiló**: V5.25–V5.27 (Defectos del Café, desde el CHANGELOG),
+  V5.28–V5.29 (el PVC en el BCP: ficha nueva «pvc», traza nueva «La edición PVC», el
+  conflicto de bandas anotado en «grados»), V5.30 (el vídeo definitivo en «ytembed») y
+  V5.31 (la reorganización por componentes: ficha nueva «componentes», «docsistema» y
+  «versionado» al día, el nodo n-bcp con PVC y sin GVG, 16 ANN nuevas (una sustituye a la vieja del README) y 6 repuntadas,
+  FILETREE con `reference/` y `apps-internas/`). 2 fichas nuevas · 1 traza nueva ·
+  6 fichas actualizadas.
+- **Deuda de compilación**: ninguna. Todo lo posterior a V5.24 está compilado.
+- **Pendientes cruzados con dueño**: en `docs/ALINEACION.md` §3b (PVC §8, Nequi,
+  WorkersBadge, el escáner con soportes reales, la primera subasta Tyrian, la primera
+  Redacción real). Del plan de reorganización queda solo §3.9: decomisionar la carpeta
+  de OneDrive desde una sesión fresca.
+- **Línea base de la compuerta al cerrar**: tsc limpio · eslint 0 errores / 8 avisos ·
+  build exit 0 · qa-changelog 260 · qa-arqlog 7/7 · qa-encoding 834/0 · 49 guardianes.
+
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-09-12] Version Wrap V42 — por componentes, y seis versiones recuperadas
+- Snapshot nuevo: `Documentacion_Interactiva_V42.0(8eb14f5).html` (base V41.0 + los
+  asientos V5.25–V5.31 del log V41). Batería 9/9 vacías, `node --check` OK.
+  Contadores: 39 nodos · 139 fichas (+2: pvc, componentes) · 53 trazas (+1) · 91 wires ·
+  34 CTX · 340 ANN (+15) · FILETREE regenerado.
+- El puntero de HANDOFF («Visual system map») apunta al V42.0; CHANGELOG estampado bajo V5.31.
+(commit: pendiente)

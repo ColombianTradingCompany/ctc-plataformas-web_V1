@@ -41,6 +41,10 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 - **Datos**: fuera del repo — `C:\dev` ordenado (`reference/<tema>`, `apps-internas/`, los prototipos como
   tenants pendientes de CommaaS), memoria de Claude propia por espacio, barra lateral del Code por componente.
 
+> **Wrap V42** (2026-09-12): ciclo compilado en Documentacion_Interactiva_V42.0(8eb14f5).html —
+> 39 nodos · 139 fichas (+2: PVC, componentes) · 53 trazas (+1) · 340 ANN (+15) · batería 9/9 vacías ·
+> recupera V5.25–V5.30, que ninguna sesión había anotado.
+
 ## [V5.30] — 2026-09-11 (commit 12ea217)
 
 - **Cambiado**: **el video de presentación deja de ser provisional.** Las dos superficies que lo montan —«Tres

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.30] — 2026-09-11 (commit pendiente)
+## [V5.30] — 2026-09-11 (commit 12ea217)
 
 - **Cambiado**: **el video de presentación deja de ser provisional.** Las dos superficies que lo montan —«Tres
   ofertas» en CTC Home (`EcosystemSection`) y «Bienvenidos al Kaffetal Regal» (`BienvenidosSection`)— apuntan al

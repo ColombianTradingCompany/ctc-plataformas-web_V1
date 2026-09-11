@@ -28,7 +28,7 @@ import styles from "./EcosystemSection.module.css";
 
 /** El video de presentación de la sección. CAMBIARLO = cambiar este id (lo que
  *  va tras `watch?v=` en la URL del video). */
-const OFERTAS_VIDEO_ID = "Yird1_j6yqo";
+const OFERTAS_VIDEO_ID = "qDAu9mK3KRA";
 const NET_URL =
   process.env.NODE_ENV === "production"
     ? {
@@ -129,7 +129,7 @@ const T: Record<Lang, Dict> = {
     h2: "Del cafetal a la taza, sin intermediarios anónimos",
     intro:
       "Todo lo que hace CTC cabe en tres ofertas: la que trae el café, la que lo compra y el Ecosistema de Valor que sostiene a las dos.",
-    videoTitle: "CTC, en un minuto",
+    videoTitle: "CTC, el ecosistema en video",
     krWho: "En Colombia · Para el productor",
     krOneline:
       "El portal donde los caficultores registran sus fincas y lotes, compiten en la Cupping Arena y firman tratos blindados con primas indexadas.",
@@ -244,7 +244,7 @@ const T: Record<Lang, Dict> = {
     h2: "From the coffee field to the cup, with no anonymous middlemen",
     intro:
       "Everything CTC does fits into three offers: the one that brings the coffee, the one that buys it, and the Value Ecosystem holding both up.",
-    videoTitle: "CTC, in one minute",
+    videoTitle: "CTC, the ecosystem on video",
     krWho: "In Colombia · For the producer",
     krOneline:
       "The portal where coffee growers register their farms and lots, compete in the Cupping Arena and sign armored deals with indexed premiums.",
@@ -354,7 +354,7 @@ const T: Record<Lang, Dict> = {
     h2: "Vom Kaffeefeld bis zur Tasse, ohne anonyme Zwischenhändler",
     intro:
       "Alles, was CTC tut, passt in drei Angebote: das, was den Kaffee bringt, das, was ihn kauft, und das Value Ecosystem, das beide trägt.",
-    videoTitle: "CTC, in einer Minute",
+    videoTitle: "CTC, das Ökosystem im Video",
     krWho: "In Kolumbien · Für den Produzenten",
     krOneline:
       "Das Portal, in dem Kaffeebauern ihre Fincas und Lots registrieren, in der Cupping Arena antreten und abgesicherte Verträge mit indexierten Prämien unterzeichnen.",

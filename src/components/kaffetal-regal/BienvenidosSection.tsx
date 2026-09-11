@@ -7,13 +7,13 @@ import styles from "./BienvenidosSection.module.css";
 // ── Bienvenidos al Kaffetal Regal (2026-08-14) ───────────────────────────────
 // El bloque que el owner entregó en boceto: entre la portada y «La oportunidad,
 // en números», el video de bienvenida con los seis pasos del productor al lado.
-// Es la versión en 60 segundos de lo que la página desarrolla después — por eso
+// Es la versión en video de lo que la página desarrolla después — por eso
 // va ANTES del argumento, no dentro de él, y por eso no está en el índice del
 // QuickNav: es un vestíbulo, no una sección a la que se vuelve.
 //
 // El reproductor es el `YtEmbed` compartido (miniatura primero, iframe al
 // clic). CAMBIAR EL VIDEO = cambiar este id (lo que va tras `watch?v=`).
-const BIENVENIDA_VIDEO_ID = "Yird1_j6yqo";
+const BIENVENIDA_VIDEO_ID = "qDAu9mK3KRA";
 
 type Dict = {
   eyebrow: string;
@@ -30,7 +30,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Bienvenidos al Kaffetal Regal",
     h2: "Vende tu mejor café en el mundo, ",
     h2em: "desde tu celular.",
-    lead: "El camino completo, en un minuto de video — y en seis pasos:",
+    lead: "El camino completo, en video — y en seis pasos:",
     steps: [
       "Crea tu cuenta de Productor",
       "Registra tu Finca caficultora",
@@ -46,7 +46,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Welcome to Kaffetal Regal",
     h2: "Sell your best coffee to the world, ",
     h2em: "from your phone.",
-    lead: "The whole path, in a one-minute video — and in six steps:",
+    lead: "The whole path, in video — and in six steps:",
     steps: [
       "Create your Producer account",
       "Register your coffee farm",
@@ -62,7 +62,7 @@ const T: Record<Lang, Dict> = {
     eyebrow: "Willkommen im Kaffetal Regal",
     h2: "Verkaufen Sie Ihren besten Kaffee in die Welt, ",
     h2em: "vom Handy aus.",
-    lead: "Der ganze Weg, in einer Minute Video — und in sechs Schritten:",
+    lead: "Der ganze Weg, im Video — und in sechs Schritten:",
     steps: [
       "Erstellen Sie Ihr Produzentenkonto",
       "Registrieren Sie Ihre Kaffee-Finca",

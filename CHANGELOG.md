@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.30] — 2026-09-11 (commit pendiente)
+
+- **Cambiado**: **el video de presentación deja de ser provisional.** Las dos superficies que lo montan —«Tres
+  ofertas» en CTC Home (`EcosystemSection`) y «Bienvenidos al Kaffetal Regal» (`BienvenidosSection`)— apuntan al
+  video definitivo (`qDAu9mK3KRA`) en lugar del id provisional `Yird1_j6yqo` que compartían desde que se montó el
+  `YtEmbed`. Miniatura, reproductor y enlace a YouTube se derivan del id, así que el cambio es una constante por
+  superficie.
+- **Corregido**: el copy afirmaba una duración que el video definitivo no tiene. El pie visible del reproductor en
+  CTC Home decía «CTC, en un minuto» (y sus pares en inglés y alemán) debajo de un video de 5:33, y la entradilla
+  del Kaffetal Regal prometía «el camino completo, en un minuto de video». Las seis cadenas de las tres lenguas
+  quedaron **neutras respecto a la duración**, que es lo correcto para cualquier montaje futuro.
+
 ## [V5.29] — 2026-09-10 (commit 9f57a17)
 
 - **Cambiado**: **PVC · revisión de coherencia.** El dossier v2.1.1 (`docs/pvc/v2.1.1`) se reeditó armonizado con el

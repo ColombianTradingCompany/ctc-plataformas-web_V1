@@ -141,8 +141,11 @@ CV App Manager extraído del BCP).
       estado, dónde vive) dentro de sus charters. *(hecho 2026-09-11 — 13 herramientas vivas + 1
       archivada en `herramientas-cafe.md`; 6 internas con su domicilio en `herramientas-internas.md`.)*
 - [ ] **3.7 El gemelo de CommaaS** (`commaas/docs/ALINEACION.md` + índice de tenants).
-- [ ] **3.8 Kick-off prompts** — la sección «Kick-off» de cada charter + `docs/KICKOFF.md`
-      con los diez listos para pegar. *(el entregable de la sesión)*
+- [x] **3.8 Kick-off prompts** — la sección «Kick-off» de cada charter + `docs/KICKOFF.md`
+      con los diez listos para pegar. *(el entregable de la sesión — hecho 2026-09-11: 12 prompts
+      compilados desde los charters por `docs/componentes/build_kickoff.py` — los diez componentes
+      + `plataforma` + CommaaS —, cada uno con su grupo, su charter y una sugerencia de primera tarea.
+      Se ejecutó antes que 3.7 por decisión del owner.)*
 - [ ] **3.9 Decomisionar OneDrive** (§4) — desde una sesión fresca.
 
 ## 4 · Decomisionar la carpeta de OneDrive (sesión FRESCA, todo lo demás cerrado)

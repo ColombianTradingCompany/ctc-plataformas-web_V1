@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.31] — 2026-09-11 (commit pendiente)
+## [V5.31] — 2026-09-11 (commit 649435c)
 
 - **Docs**: **la plataforma se trabaja por componentes.** Decisión del owner (2026-09-11): un componente por
   conversación, cada uno con su **charter** (`docs/componentes/<clave>.md` — diez: consolas, herramientas-internas,

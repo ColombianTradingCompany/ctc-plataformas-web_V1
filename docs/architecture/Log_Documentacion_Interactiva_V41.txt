@@ -163,5 +163,5 @@ Contexto abierto al cerrar V41 (2026-08-22) — plataforma V5.24:
   regla de versionado/wraps en paralelo (ALINEACION §5): asiento del componente, wrap de la
   plataforma desde «Wraps del mapa». Para el wrap: la ficha «versionado» gana el guardián y
   la regla; la ficha «docsistema», el orden de lectura y quién llama al wrap.
-(commit: pendiente)
+(commit: 649435c)
 

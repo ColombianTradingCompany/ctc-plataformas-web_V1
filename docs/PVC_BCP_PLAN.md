@@ -1,7 +1,7 @@
 # PVC · módulo del BCP · Business Core — plan de acople
 
 Estado: **fase 1 ejecutada** (V5.28, 10-sep-2026): tablas, motor, `/bcp/pvc`, vista pública. Fases 2–4 pendientes de las decisiones de §8. El modelo de referencia sigue en
-`reference_internal_apps/PVC - Modelo/v2.0` (motor Python, dossier D0–D9, calculadora) y el tablero interactivo en
+`apps-internas/PVC - Modelo/v2.0` (motor Python, dossier D0–D9, calculadora) y el tablero interactivo en
 `reference_html_tools/PVC_Tablero_de_Control_CTC_V1.html`.
 
 ## 1. Qué es el módulo

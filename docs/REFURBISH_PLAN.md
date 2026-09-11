@@ -120,7 +120,7 @@ CV App Manager extraído del BCP).
       se rompió y CommaaS tiene memoria propia con solo lo suyo. *(hecho 2026-09-11)*
 - [x] **3.2 Barra lateral del Code.** Grupos por componente creados/renombrados, sesiones
       movidas, «Initial Build» conservado como historial. *(hecho 2026-09-11)*
-- [ ] **3.3 Ordenar `C:\dev` y `ctc-platforms`.** Prototipos → `commaas-hub/tenants-pendientes/`
+- [x] **3.3 Ordenar `C:\dev` y `ctc-platforms`.** *(hecho 2026-09-11 — ver `C:\dev\README.md` y `commaas-hub/tenants-pendientes/README.md`; el informe de Stripe quedó en `docs/STRIPE_PLUGIN_SETUP.md`)* Prototipos → `commaas-hub/tenants-pendientes/`
       (junctions fuera); `reference_*` → `ctc-platforms/reference/<tema>/`; `reference_internal_apps`
       → `ctc-platforms/apps-internas/`; `CTCx_BoD` (vacía), backup JSON, `legacy-prototypes`,
       `prototype_landing-v4`, `review-v5` → `reference/` o `_archive/`; `C:\dev\README.md` y

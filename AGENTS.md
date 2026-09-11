@@ -10,28 +10,35 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Start here
 
-Read `docs/HANDOFF.md` before doing anything else in this repo — it's the living architecture/status doc (directory map, Supabase schema + RLS/guard model, per-platform feature status, dev workflow, and a running list of gotchas learned the hard way). Keep it updated as things change; don't let it silently go stale.
+**This repo is worked ONE COMPONENT PER SESSION** (owner's decision, 2026-09-11 — `docs/REFURBISH_PLAN.md`). Before touching anything, read in this order:
 
-# Current snapshot (V4.0, 2026-08-13)
+1. **`docs/componentes/<clave>.md`** — the charter of the component you were assigned (what it is, its routes, code map, tables, guardians, house rules, what the consoles govern of it, open items). If the kick-off prompt didn't name a component, ask.
+2. **`docs/ALINEACION.md`** — the cross-cutting contracts nobody changes alone (grades, subdomains, identity, the Supabase pattern, vocabulary, versioning gate, AI ledger, i18n, SEO), the **backstage rule** for the consoles, and the **permeation log** — read its §3 from the last date you know, and write a line there when your change reaches another component.
+3. **`docs/HANDOFF.md`** — the transversal architecture (stack, directory map, database + guard triggers, dev workflow, gotchas). Its dated chronology lives in `docs/archive/HANDOFF_cronologia_2026-07_09.md` — the *why* behind every decision, mined by the charters.
 
-One Next.js **16.3** repo serving **18 subdomains** of `ctcexport.com`, all routed by `src/proxy.ts` (this Next renamed `middleware.ts` → `proxy.ts`; the comparison is by **segment boundary**, not `startsWith` — see the audit note below). Supabase (Postgres 17 + Auth + Storage, project `sjznkzvefqfcysczllli`, ~88 tables), deployed on Vercel on every push to `main`.
+Work happens from `C:\dev\ctc-platforms\ctc-platform` (its Claude memory key is `C--dev-ctc-platforms`); CommaaS is a separate repo at `C:\dev\commaas-hub\commaas` with its own memory. The old OneDrive folder is decommissioned.
 
-The surfaces, by class: **public platforms with login** — CTC Home (`/`), Kaffetal Regal (producer), the Cherry Picked family (hub + Green store + Roast/X scaffolds), Directorio del Café, Terratalento; **capture-only (Class B, no login, deposit into `leads`)** — CTC Tech, Co-Create, Varietales; **broadcast/shared** — Coffeed, Herramientas; **partner nodes** — 5 `socios/*` couples (landing + credential login), one of which is the Estudio de Contenido's app workshop; **internal** — one master login (password + OTP) opening three parallel consoles, **BCP** (base/passport), **ECP** (executive) and **OCP** (operational).
+# Current snapshot (V5.30, 2026-09-11)
 
-Security model = RLS + `BEFORE UPDATE` guard triggers (service-role bypasses by design) + per-console write gates. **V4.0 is the post-audit baseline**: the whole system was audited on 2026-08-13 (structure, stability, security, dead weight) and the findings remediated — report in `docs/architecture/Auditoria_Estructura_Estabilidad_V30.html`, which also records what was *deliberately* deferred and why. `npm audit` is at **0 vulnerabilities**; keep it there.
+One Next.js **16.3** repo serving **19 subdomains** of `ctcexport.com` (`src/lib/red/subdominios.ts`), routed by `src/proxy.ts` (this Next renamed `middleware.ts` → `proxy.ts`; the comparison is by **segment boundary**, not `startsWith`). Supabase (Postgres 17 + Auth + Storage, project `sjznkzvefqfcysczllli`, ~100 tables), deployed on Vercel on every push to `main`.
 
-Operational caveats to know before touching email/BCP:
-- **Transactional email** (leads + BCP OTP) sends via Resend from `EMAIL_FROM` (`info@ctcexport.com`, domain verified). Never point `EMAIL_FROM` at an unverified domain — it breaks *all* sends including the BCP login OTP. Every sender persists its result on the row; **none may swallow a failure silently** (the OTP one did, and it could lock the only door to the panel).
-- **BCP can't be driven in an automated browser** (real 2FA, emailed OTP). Verify BCP changes via `tsc`/`eslint` + SQL, and drive the producer-facing side that exercises the same code.
-- **A `throw` in a Server Action bound to `<form action>` crashes the whole page** (and prod redacts the message). Reachable business rejections must `return {ok:false,error}` — use `src/app/bcp/(app)/ActionForm.tsx`.
+The surfaces, by class: **public platforms with login** — CTC Home (`/`), Kaffetal Regal (producer: 5-interface panel, Ficha Técnica, evaluación, ofertas), the Cherry Picked family (hub + Green store with Tyrian auctions + Roast/X scaffolds + CaaS), Directorio del Café, Terratalento, Herramientas del Café (taller with saved works); **capture-only (Class B, no login, deposit into `leads`)** — CTC Tech, Varietales; **broadcast** — Coffeed (wall + Redacción); **partner nodes** — 5 `socios/*` couples (landing + credential login), one of which is the Estudio de Contenido's app workshop; **internal** — one master login (password + OTP) opening three parallel consoles, **BCP** (Business: dirección, configuración, socios, PVC), **OCP** (Operation: the lot passport from producer to catalogue — EVA, Q-Grader verdict, ofertas, subastas, fichas, transcripciones) and **ECP** (Execution: plataformas, contacto, herramientas, Coffeed). Standalone internal apps (La Biblia del Café, the PVC model) live beside the repo in `C:\dev\ctc-platforms\apps-internas/`.
 
-Docs: the versioned interactive system map lives in `docs/architecture/` (managed by the `architecture-doc-versioning` skill — log changes, don't hand-edit the HTML; wrap on request).
+Security model = RLS + `BEFORE UPDATE` guard triggers (service-role bypasses by design) + per-console write gates; most tables are service-role-only (RLS on, zero policies) **on purpose**. V4.0 (2026-08-13) was the audited baseline; V5.0 (2026-08-19) the «Pre-Launch Beta» milestone; V5.16–V5.24 (2026-08-21/22) rebuilt the producer panel and the lot's commercial circuit (the grade is derived from the Q-Grader's score, the contract is born from the producer's acceptance of an offer, the Arena is the showcase). `npm audit` is at **0 vulnerabilities**; keep it there.
+
+Operational caveats to know before touching email/consoles:
+- **Transactional email** (leads + master-login OTP) sends via Resend from `EMAIL_FROM` (`info@ctcexport.com`, domain verified). Never point `EMAIL_FROM` at an unverified domain — it breaks *all* sends including the login OTP. Every sender persists its result on the row; **none may swallow a failure silently**.
+- **The consoles can't be driven in an automated browser** (real 2FA, emailed OTP). Verify console changes via `tsc`/`eslint`/guardians + SQL, and drive the producer/buyer-facing side that exercises the same code.
+- **A `throw` in a Server Action bound to `<form action>` crashes the whole page** (and prod redacts the message). Reachable business rejections must `return {ok:false,error}`.
+
+Docs: the versioned interactive system map lives in `docs/architecture/` (managed by the `architecture-doc-versioning` skill — log changes to the current `Log_Documentacion_Interactiva_V*.txt`, don't hand-edit the HTML; wrap on request). `CHANGELOG.md` is the standard per-version record.
 
 # Working rules (learned the hard way — don't rediscover them)
 
-- **The gate before calling anything done**: `npx tsc --noEmit` clean, `npx eslint src` at or below its current warning baseline, `npm run build` exit 0. This has held all project long; don't lower it. Note `npm run build` can flake on a `next/font` Google fetch (`/lab`) — re-run before blaming your change.
-- **Commits stage explicit paths, never `git add -A`.** Another session may be working in the same tree; a `git add -A` once swept an unrelated feature into an unrelated commit.
-- **Bump `APP_VERSION` (`src/lib/version.ts`) in the same commit that deploys a batch of work** — the badge is how you tell, from any screen, whether you're looking at the latest deploy. Minor per batch; the owner declares majors. **The same commit adds the version's entry to `CHANGELOG.md`** (categorised bullets; seal the sha right after committing) — `scripts/qa-changelog-check.mjs` fails if the badge has no entry.
-- **Keep `npm audit` at 0.** It got there on 2026-08-13 and the three high-severity ones that mattered sat exactly on this repo's hot paths (proxy routing, Server Actions).
-- **If you keep something that looks dead, write why in the file itself**, not only in the log — the next sweep greps, and a bitácora entry won't reach it. Live examples: `/api/kaffetal-regal/next-step` (plumbing kept on purpose, no caller) and `/lab` (a workshop, not pending cleanup).
-
+- **Stay inside your component.** Code of another component is touched only with the owner told and a line in `ALINEACION.md` §3; a change born in a console that reaches a surface is executed there in the same batch or left as a pending item **with an owner** in that surface's charter (the backstage rule, `ALINEACION.md` §2).
+- **The gate before calling anything done**: `npx tsc --noEmit` clean, `npx eslint src` at or below its current warning baseline (8, all deliberate `<img>`), `npm run build` exit 0, and **every `scripts/qa-*.mjs` guardian the batch touches** (48 of them; some need `node --experimental-strip-types --import ./scripts/ts-resolve.mjs`). Note `npm run build` can flake on a `next/font` Google fetch (`/lab`) — re-run before blaming your change.
+- **Commits stage explicit paths, never `git add -A`.** Another session may be working in the same tree.
+- **Bump `APP_VERSION` (`src/lib/version.ts`) in the same commit that deploys a batch of work, with its `CHANGELOG.md` entry** (categorised bullets; seal the sha right after committing) — `scripts/qa-changelog-check.mjs` fails otherwise. Then push and **verify live** (`curl -L` the badge `V5.NN · build <sha>`). Docs-only commits don't bump.
+- **Keep `npm audit` at 0.**
+- **If you keep something that looks dead, write why in the file itself**, not only in a log — the next sweep greps.
+- **Update the charter's «Pendientes» when you finish a batch.** The charter is the component's living status; memory is not.

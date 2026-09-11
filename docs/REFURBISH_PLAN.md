@@ -126,8 +126,13 @@ CV App Manager extraído del BCP).
       `prototype_landing-v4`, `review-v5` → `reference/` o `_archive/`; `C:\dev\README.md` y
       las notas de memoria con rutas se actualizan. ⚠️ El FILETREE del mapa interactivo se
       regenera en el siguiente wrap (comprobación 5 caza cualquier ANN huérfano).
-- [ ] **3.4 `ALINEACION.md` + `HANDOFF.md` adelgazado + `AGENTS.md` al día (V5.30).** La
-      cronología del HANDOFF pasa a `docs/archive/HANDOFF_cronologia_2026-07_09.md`.
+- [x] **3.4 `ALINEACION.md` + `HANDOFF.md` adelgazado + `AGENTS.md` al día (V5.30).** La
+      cronología del HANDOFF pasa a `docs/archive/HANDOFF_cronologia_2026-07_09.md`. *(hecho
+      2026-09-11 — HANDOFF 1.397 → 276 líneas; 40 secciones fechadas archivadas íntegras; ALINEACION
+      con 14 contratos, la regla del backstage, 12 líneas de permeación sembradas y 6 pendientes
+      cruzados con dueño; AGENTS.md reescrito con el orden de lectura charter → alineación → handoff.
+      Un 11.º charter implícito, `plataforma`, recoge lo que no es de nadie: CTC Home, proxy, SEO,
+      auth compartida, socios, Terratalento, recuperar-acceso.)*
 - [ ] **3.5 Los diez charters** (`docs/componentes/*.md`), escritos desde el código, no de
       memoria; cada uno con sus guardianes reales y sus pendientes reales.
 - [ ] **3.6 Herramientas: los dos inventarios** (tabla por herramienta: archivo, versión,

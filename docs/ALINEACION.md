@@ -1,0 +1,125 @@
+# ALINEACIÓN · lo que ningún componente cambia solo
+
+**Se lee en TODA sesión, en paralelo al charter del componente** (`docs/componentes/<clave>.md`).
+Existe porque el trabajo se segmentó por componentes (2026-09-11, `REFURBISH_PLAN.md`) y el owner
+puso la condición: «tie all up somehow to avoid silo development that may cause divergent or
+inconsistent logic». Este archivo es el atado. Tiene cuatro partes: los **contratos transversales**
+(§1), la **regla del backstage** (§2), el **registro de permeación** (§3) y las **reglas de trabajo**
+(§4) que valen igual en los diez componentes.
+
+**Cómo se usa, en tres líneas.** Al empezar: leer §3 desde la última fecha que conozcas — ahí se
+entera Cherry Picked de que Kaffetal Regal cambió algo que lo alcanza. Al trabajar: si vas a tocar
+una fuente única de §1, o código de otro componente, PARA y díselo al owner (o anótalo como
+pendiente con dueño en el charter afectado). Al terminar la tanda: si el cambio tiene alcance más
+allá de tu componente, **una línea en §3**, en el mismo commit.
+
+---
+
+## 1 · Contratos transversales
+
+Cada uno tiene UNA fuente en el código. Se cambia allí y solo allí, y quien lo cambie avisa en §3.
+
+| Contrato | Fuente única | Quién lo lee | Guardián |
+|---|---|---|---|
+| **Grados de Calidad CTC** — Black 80–81.99 · Red 82–83.99 · Blue 84–85.99 · Gold 86–87.99 · Tyrian 88+; *el puntaje manda*, el límite pertenece al grado de arriba, dos decimales como máximo | `src/lib/grados/definicion.ts` (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`, sellos en `public/images/shared/grados/`) | KR (Ficha, Evaluaciones), CP (catálogo, sellos, JSON-LD), OCP (veredicto, ofertas, subastas), cotizadores, PVC, Notion (que MIRA aquí, no al revés) | `qa-grados-check.mjs` (48) |
+| **La red de subdominios** — 19 superficies + `www`; una superficie nueva = una línea (y el DNS a mano) | `src/lib/red/subdominios.ts` (`SUBDOMAIN_ROUTES` → `ROUTE_SUBDOMAIN`, `origenDeSuperficie`) | `src/proxy.ts` (lee el `Host`, compara por frontera de segmento, excluye `images/`·`docs/`·`tools/`, `RAIZ_COMPARTIDA` para `/recuperar-acceso`), Open Graph, canonical, sitemap | `qa-nav-check`, `qa-rutas-consolas` (248) |
+| **Identidad** — UNA cuenta de Supabase Auth para toda la red; productor ⊕ comprador (excluyentes); socios = `role partner` + `partner_accounts` (nunca `bcp_admin`); equipo = `panel_users` con grants por consola | `src/lib/identidad/matriz.ts`, `src/lib/panel/{requireConsoleAccess,requireActiveAdmin,requireConsoleWrite}.ts`, `src/lib/partners/`, `src/lib/auth/{puertas,veredicto,recuperacion}.ts` | todas las puertas (11) y todas las compuertas de escritura | `qa-guard-check`, `qa-recuperacion-check` (154) |
+| **Sesiones y cookies** — la cookie compartida `sb-…` (`Domain=.ctcexport.com`) para las superficies públicas; la cookie PROPIA `ctc-panel-auth` para las consolas. **Nunca fusionarlas** (el race de refresh entre pestañas de subdominios mató el login del BCP en producción, 2026-07-29) | `src/lib/supabase/server.ts` (las tres factorías + `PANEL_AUTH_COOKIE`), `src/proxy.ts` (renueva las dos) | todo lo que autentica | — |
+| **El patrón Supabase de la casa** — RLS encendida con CERO políticas (service-role-only) por defecto; una política `select-own` estrecha solo cuando el usuario debe leer lo suyo; guard triggers `BEFORE UPDATE` que restringen columnas y transiciones; lecturas públicas por **vista `SECURITY DEFINER` estrecha**, jamás por política ancha; **lo derivado no se persiste** (se calcula al leer); lo histórico se **congela en snapshots**; DDL solo por `apply_migration` | `docs/HANDOFF.md` §Database (la tabla de guards) | cualquier tabla nueva | `qa-guard-check` (suite de seguridad) |
+| **Vocabulario congelado** — BCP = *Business* (dirección, configuración, socios) · OCP = *Operation* (el pasaporte del lote, del productor al catálogo) · ECP = *Execution* (plataformas, contacto, herramientas); «CaaS» es la marca y `cocreate` la clave; **Tyrian** (no Tiryan); CommaaS ≠ CaaS; «hub» es de CommaaS; «Value Ecosystem»; el cacao existe como **nota de cata** y jamás como producto | `src/lib/panel/consoles.ts` (taglines), `src/lib/legal.ts` (`CTC_RAZON`, NIT), `src/lib/panel/rutasMovidas.ts` | copy de todas las superficies | `qa-rutas-consolas`, `qa-nav-check` |
+| **Temporada y año-cosecha** — Mitaca/Principal, `seasonKey`, ventana de DOS temporadas para ofertar; el calendario de cosecha en tres idiomas | `src/lib/arena/seasons.ts`, `src/lib/harvestYear.ts` | KR, OCP (ofertas), CP (etiquetas), landing | `qa-ofertas-check` (36) |
+| **Versión y compuerta de despliegue** — `APP_VERSION` sube en el MISMO commit que la tanda + entrada en `CHANGELOG.md` (Hito · Añadido · Cambiado · Corregido · Retirado · Seguridad · Datos · Docs) + sello del sha en el commit siguiente | `src/lib/version.ts`, `CHANGELOG.md` | la insignia de las 19 superficies y las consolas | `qa-changelog-check.mjs` |
+| **El libro de consumo de IA** — toda llamada a un modelo se anota (`registrarConsumo`, superficie en `USOS`), fetch crudo a la API (sin SDK), modelo pequeño por defecto, pasos caros **opt-in** con el precio a la vista, y **sin credencial nada revienta** (degradación determinista que lo dice) | `src/lib/ai/{consumo,precios}.ts`, `src/lib/coffeed/claude.ts` | Coffeed, KR (asesor, escáner), Arena (mejoras), PVC | `qa-consumo-check.mjs` |
+| **Tres idiomas** (ES · EN · DE) en toda superficie pública; el contenido de Coffeed se produce en español a propósito | `src/components/lang/i18n.tsx` (Home, KR, Directorio…) y `src/components/cherry-picked/i18n.ts` (la familia CP) — dos proveedores, la misma unión de idiomas | landings, paneles, formularios de captación, correos | — |
+| **SEO y tarjetas** — `metadatosDeSuperficie()` es la única puerta al Open Graph; JSON-LD **no escribe datos** (sale de las fuentes únicas); `robots.txt`/`sitemap.xml` son route handlers por host; `platform_surfaces` (ECP · Manejo de Plataformas) es la capa de excepciones; `public/tools/*.html` llevan su `<head>` a mano | `src/lib/seo/{openGraph,jsonLd,superficies}.ts`, `src/app/{robots.txt,sitemap.xml}/route.ts` | todas las superficies públicas | `qa-tools-seo-check` (193), `qa-tools-seo-espejo` (68) |
+| **La espina de integración** — los eventos hacia Make/Notion/Google se **emiten** (`emitEvent`, nombrados por dominio: `coffeed.redaccion.post_creado`, `herramienta.<id>.<evento>`…), nunca se llama a la máquina de nadie | `src/lib/integraciones/{emit,dominios,dispatch}.ts` | Coffeed, Herramientas (`CTC.emitir`), leads | `qa-integraciones-check` |
+| **Codificación** — todo fuente en UTF-8; la compuerta no mira los bytes, el guardián sí | — | todo | `qa-encoding-check.mjs` |
+| **Reglas UI/UX de la casa** — botones abajo a la derecha (apilados si hay varios) · acordeones cerrados por defecto · hilos y adjuntos en pop-up · interfaz mínima y técnica · cada pantalla define vacío · edición · guardado · error · pendiente · objetivos táctiles ≥ 44 px | Notion «Checklist de Proceso de Creación» (ya decidido por el owner: no se re-litiga) | toda pantalla nueva | — |
+
+**Dos conflictos abiertos que este archivo hereda** (los resuelve el owner, no un componente):
+
+1. **Bandas de grado vs PVC** — `definicion.ts` va de dos en dos (80·82·84·86·88); el PVC del BCP usa
+   80/84/86/88/89. Mientras no se decida, **manda `definicion.ts`** en toda superficie de cara al
+   productor o comprador, y el PVC lo declara como estimación. Decisión pendiente en
+   `docs/PVC_BCP_PLAN.md` §8 (también MOQ Black 350 vs 228 y la moneda EUR vs US$ a la TRM).
+2. **El número de Nequi** (`src/lib/arena/payment.ts`, `NEQUI` vacío): la tarifa de evaluación no es
+   cobrable hasta que el owner lo escriba; `nequiConfigured()` esconde las instrucciones mientras tanto.
+
+## 2 · La regla del backstage (consolas internas)
+
+Las consolas —BCP · OCP · ECP— son el **origen operativo** de todo lo demás: el veredicto que
+galardona, la oferta que se emite, la visa EUDR, la publicación al catálogo, la configuración de
+las herramientas, el reparto de superficies. **Por eso mandan hacia fuera, y nunca en silencio**
+(NOTA del owner, 2026-09-11):
+
+- Un cambio en una consola que **altere lo que otro componente muestra, exige o permite** se ejecuta
+  en ese componente **en la misma tanda** — o queda escrito como **pendiente CON dueño** en la
+  sección «Pendientes» del charter afectado, con la versión que lo originó.
+- Cada charter de superficie lleva la sección **«Lo que las consolas gobiernan de este componente»**:
+  es la lista de puntos donde el backstage manda (estados del lote, grados, visas, publicaciones,
+  grants…). Si tocas uno de esos puntos desde la consola, ese charter es tu lista de verificación.
+- La sesión de consolas **busca los identificadores de permiso y las claves, no solo las rutas**
+  (`PILLAR_CONSOLE`, `requireConsoleAccess("…")`, `revalidatePath`): tres veces en la reorganización
+  V5 se movió una ruta y se dejó atrás la clave que la gobernaba, sin que nada fallara.
+- Y al revés **no**: un componente de superficie no cambia una regla de negocio por su cuenta. Si un
+  panel necesita que el estado del lote se comporte distinto, eso se pide a la consola y se anota.
+
+## 3 · Registro de permeación
+
+Una línea por cambio con alcance más allá de su componente. **Fecha · versión · origen → afectados ·
+qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al empezar cada sesión.
+
+| Fecha | Versión | Origen → afectados | Qué cambió | Dónde quedó |
+|---|---|---|---|---|
+| 2026-08-19 | V4.44 | consolas (grados) → KR, CP, cotizadores, JSON-LD, Notion | La escala de grados pasó a **dos en dos**; tres lotes de la cinta subieron de grado y sus fichas se regeneraron | `definicion.ts`, `qa-grados-check` 48 |
+| 2026-08-18 | V4.24–26 | consolas → todas las superficies internas | 29 rutas cambiaron de consola con talones 308; claves de permiso repuntadas después (13 casos) | `rutasMovidas.ts`, `qa-rutas-consolas` |
+| 2026-08-21 | V5.17 | consolas (OCP) → Kaffetal Regal | El galardón lo escribe el **veredicto del bache Q-Grader** (`gradoPorPuntaje`); la sesión de Arena deja de ser paso; el Club llega con el galardón; KR estrena «Evaluar mi Café» | `nominadosActions.recordEvaluationVerdict`, `EvaluacionesTab` |
+| 2026-08-21 | V5.18 | consolas (OCP) → Kaffetal Regal, Cherry Picked | Nace `lot_offers`: **el contrato nace de la aceptación del productor**; snapshots congelados; ventana de dos temporadas; Black vía negociación | `ofertasActions`, `lib/ofertas/producerActions`, `ContratosTab` |
+| 2026-08-21 | V5.19 | consolas → KR landing (3 idiomas), Cherry Picked (copy) | La **Arena es la vitrina** (Blue/Gold/Tyrian con contrato); `finalizeJornada` ya no escribe grado ni contrato | `arenaActions`, `ArenaSection`, `PorQueSection` |
+| 2026-08-21 | V5.20–21 | Kaffetal Regal → consolas (OCP) | B2/B3 «Reportado por Productor»: hasta 7 PDFs + 7 fotos por sección en `lots.datasheet`; los números de B3 siempre a la vista | `PaneB2/B3`, `ReportFiles`, `qa-reportado-productor` 40 |
+| 2026-08-21 | V5.23 | consolas (OCP) → Kaffetal Regal, libro de consumo | `lot_fichas`: el escáner visual compila el **set de Fichas Técnicas** (una oficial); el productor lo ve en B2/B3; sexta vía de gasto `kr:ficha-escaner` | `fichasActions`, `FichasDelLote`, `qa-fichas-check` 31 |
+| 2026-08-22 | V5.24 | Cherry Picked → consolas (OCP) | **Subastas Tyrian**: la puja corre en CP Green (Pintón+, mitades A/B, trigger atómico); `/ocp/subastas` administra; **adjudicar no emite oferta** (EUR/kg vs COP/kg) | `lib/subastas/*`, `subastasActions`, `qa-subastas-check` 30 |
+| 2026-08-25–27 | V5.25–27 | Herramientas del Café → ECP (registro), SEO | Nueva herramienta **Defectos del Café** (`public/tools/defectos-cafe.html`) registrada en `tools`, con captura para el carrusel | `reference/html_tools/defectos_cafe`, `qa-tools-seo-*` |
+| 2026-09-10 | V5.28–29 | consolas (BCP) → **PENDIENTE**: grados, Cherry Picked (MOQ), subastas (moneda) | **PVC** entra al BCP (`/bcp/pvc`, `pvc_*`, `public_pvc_current`, `/api/pvc/current`); sus bandas y su MOQ **no coinciden** con los de la plataforma — nada de cara al cliente lo lee aún | `lib/pvc/*`, `PVC_BCP_PLAN.md` §8 (dueño: consolas; decide el owner) |
+| 2026-09-10 | V5.30 | CTC Home → Kaffetal Regal | El **vídeo de presentación definitivo** se monta en la Home y en la landing de KR (subtítulos ES/EN) | `reference/video-presentacion/` (tras §4 del plan) |
+| 2026-09-11 | — | plataforma → todos | **Reorganización por componentes**: charters, este archivo, `C:\dev` ordenado, memoria unificada por espacio | `REFURBISH_PLAN.md` |
+
+### 3b · Pendientes cruzados con dueño (lo que un componente le debe a otro)
+
+| Dueño | Debe a | Qué | Desde |
+|---|---|---|---|
+| consolas (OCP · Transcripciones) | herramientas-internas | `WorkersBadge.tsx` sigue diciendo al operador que abra `reference_html_tools\_whatsapp-transcript-html`; la herramienta vive en `tools/transcriptor/` desde V4.15 y la carpeta ya no existe | V4.15 / 2026-09-11 |
+| consolas (BCP · PVC) | cherry-picked, kaffetal-regal | Las cinco decisiones del owner (`PVC_BCP_PLAN.md` §8) antes de que contratos, ofertas y listados lean la edición PVC | V5.28 |
+| consolas (OCP) | kaffetal-regal | El número de Nequi real en `payment.ts` — la tarifa de evaluación no es cobrable | 2026-07-16 |
+| kaffetal-regal | consolas (OCP) | Estrenar el escáner visual con soportes REALES (los 7 lotes de producción siguen en borrador) | V5.23 |
+| cherry-picked | consolas (OCP) | La primera subasta real cuando el bache galardone un Tyrian | V5.24 |
+| coffeed | consolas (ECP) | La primera generación real de Redacción y el escenario de Make de `coffeed.redaccion.post_creado` | V5.9 |
+
+## 4 · Reglas de trabajo (valen en los diez componentes)
+
+1. **Las definiciones del repo mandan** sobre Notion, hojas y prototipos: cuando una fuente externa
+   contradice una definición que vive en código (grados, año-cosecha, legal, subdominios), gana el
+   código y se corrige la fuente; la discrepancia se **anota en el archivo de datos**, nunca se
+   armoniza en silencio. *Dos copias de acuerdo no son una verificación.*
+2. **Investigar no es amputar.** «Debuggea esto» pide un diagnóstico y una propuesta de arreglo
+   mínimo; retirar una funcionalidad es decisión del owner.
+3. **La compuerta antes de decir «hecho»**: `npx tsc --noEmit` limpio · `npx eslint src` en o bajo
+   su línea base (8 avisos, todos `no-img-element` deliberados) · `npm run build` exit 0 · todo
+   guardián `qa-*` que toque la tanda · `APP_VERSION` + `CHANGELOG` en el mismo commit · sello del
+   sha · push · **verificar en vivo** (`curl -L` a la insignia `V5.NN · build <sha>`) · entrada en el
+   log de arquitectura (`docs/architecture/Log_Documentacion_Interactiva_V*.txt`).
+4. **`git add` de rutas explícitas, nunca `-A`** — otra sesión puede estar en el mismo árbol.
+5. **Un guardián nuevo por cada costura que valga la pena** — y **un guardián que falla y se ignora
+   enseña a ignorar los fallos**: se arregla o se retira, jamás se deja rojo.
+6. **Las consolas no se conducen en un navegador** (login maestro con OTP real): se verifican por
+   `tsc`/`eslint`/guardianes + SQL, y se conduce la superficie de productor/comprador que ejercita el
+   mismo código (cuentas `prueba-*`, ver memoria `ctc-qa-fleet`).
+7. **Lo que parece muerto y se queda, dice por qué en el propio archivo** — el siguiente barrido hace
+   `grep`, no lee bitácoras.
+8. **Un `throw` en una Server Action atada a `<form action>` tumba la página**: los rechazos de
+   negocio se devuelven como `{ ok: false, error }`.
+9. **El repo es PÚBLICO**: nunca una ruta absoluta con el nombre de usuario ni una clave en el
+   código; y ponerlo en privado rompe los despliegues de Vercel (probado).
+10. **Costes de IA**: lo que un programa puede hacer, un modelo no lo hace; modelo pequeño por
+    defecto; `webSearch` es el parámetro más caro del repo; los pasos caros se piden con el precio a
+    la vista.

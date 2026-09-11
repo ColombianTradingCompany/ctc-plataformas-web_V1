@@ -106,4 +106,4 @@ Contexto abierto al cerrar V41 (2026-08-22) — plataforma V5.24:
   `docs/componentes/` (carpeta) y el archivo de cronología; la ficha DICT «docsistema»
   merece un párrafo (el orden de lectura charter → alineación → handoff); el FILETREE
   regenerado verá `reference/` y `apps-internas/` en vez de `reference_*`.
-(commit: pendiente)
+(commit: d9f4b17)

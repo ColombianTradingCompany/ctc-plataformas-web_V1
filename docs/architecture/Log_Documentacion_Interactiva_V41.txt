@@ -90,3 +90,20 @@ Contexto abierto al cerrar V41 (2026-08-22) — plataforma V5.24:
   34 CTX · 325 ANN (+6) · FILETREE 1927.
 - El puntero de HANDOFF («Visual system map») apunta al V41.0.
 (commit: 7a94ddf)
+
+## [2026-09-11] Reorganización por componentes — docs, no código
+- Sin cambio de sistema: la plataforma sigue en V5.30. Cambia CÓMO se documenta y se
+  trabaja: `docs/REFURBISH_PLAN.md` (el plan y sus decisiones), `docs/ALINEACION.md`
+  (contratos transversales + regla del backstage + registro de permeación),
+  `docs/componentes/<clave>.md` (diez charters: consolas, herramientas-internas, biblia,
+  kaffetal-regal, cherry-picked, herramientas-cafe, coffeed, directorio, ctc-tech,
+  varietales), `docs/HANDOFF.md` adelgazado a lo transversal y su cronología en
+  `docs/archive/HANDOFF_cronologia_2026-07_09.md`; `AGENTS.md` al día (V5.30).
+- Fuera del repo: `C:\dev` ordenado (reference_* → reference/<tema>, apps internas en
+  apps-internas/, prototipos → commaas-hub/tenants-pendientes/), memoria de Claude
+  unificada por espacio.
+- Para el wrap V42: ANN nuevas para `docs/ALINEACION.md`, `docs/REFURBISH_PLAN.md`,
+  `docs/componentes/` (carpeta) y el archivo de cronología; la ficha DICT «docsistema»
+  merece un párrafo (el orden de lectura charter → alineación → handoff); el FILETREE
+  regenerado verá `reference/` y `apps-internas/` en vez de `reference_*`.
+(commit: pendiente)

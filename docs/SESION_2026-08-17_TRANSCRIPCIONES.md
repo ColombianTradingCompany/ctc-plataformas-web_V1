@@ -1,5 +1,7 @@
 # Sesión 2026-08-17 · OCP · Transcripciones — nota de traspaso
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Traspaso histórico de la sesión del 2026-08-17. Lo vivo está en `docs/componentes/herramientas-internas.md` (Transcriptor). El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 Referencia para la sesión que haga el **Version Wrap V36**. Lo detallado está en
 `docs/architecture/Log_Documentacion_Interactiva_V35.txt` (10 entradas de este día, **todas con su sha
 sellado**) y en `docs/HANDOFF.md` (sección «OCP · Transcripciones» + el dominio de BD). Esto es solo el

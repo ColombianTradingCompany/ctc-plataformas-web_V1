@@ -19,6 +19,28 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.31] — 2026-09-11 (commit pendiente)
+
+- **Docs**: **la plataforma se trabaja por componentes.** Decisión del owner (2026-09-11): un componente por
+  conversación, cada uno con su **charter** (`docs/componentes/<clave>.md` — diez: consolas, herramientas-internas,
+  biblia, kaffetal-regal, cherry-picked, herramientas-cafe, coffeed, directorio, ctc-tech, varietales), atados
+  por **`docs/ALINEACION.md`** (14 contratos transversales, la regla del backstage, el registro de permeación y
+  los pendientes cruzados con dueño) y arrancados con **`docs/KICKOFF.md`** (12 prompts compilados desde los
+  charters por `docs/componentes/build_kickoff.py`). `docs/HANDOFF.md` se queda con lo transversal (1.397 → 276
+  líneas; su cronología íntegra en `docs/archive/HANDOFF_cronologia_2026-07_09.md`); `AGENTS.md` describe el
+  trabajo por componentes y el orden de lectura; `README.md` deja de ser el boilerplate de create-next-app; los
+  planes ya ejecutados de `docs/` llevan banner de archivado (se quedan en su sitio porque el código los cita).
+  Plan y decisiones: `docs/REFURBISH_PLAN.md`.
+- **Añadido**: guardián **`scripts/qa-arqlog-check.mjs`** — toda versión del CHANGELOG posterior al último wrap
+  del mapa debe tener su asiento en el log de arquitectura vigente. Nació porque V5.25–V5.30 salieron de seis
+  sesiones sin dejar asiento; sus seis asientos se compilaron hoy desde este archivo.
+- **Cambiado**: **versionado y wraps con desarrollos en paralelo** (`ALINEACION.md` §5): la versión se toma al
+  empujar (pull → +1 → push), el asiento es del componente y va en el mismo commit que la versión, el wrap es
+  de la plataforma y solo se llama desde la conversación «Wraps del mapa» del grupo CTC Consolas internas.
+  CommaaS adopta el mismo contrato a su escala (`commaas/docs/ALINEACION.md`).
+- **Datos**: fuera del repo — `C:\dev` ordenado (`reference/<tema>`, `apps-internas/`, los prototipos como
+  tenants pendientes de CommaaS), memoria de Claude propia por espacio, barra lateral del Code por componente.
+
 ## [V5.30] — 2026-09-11 (commit 12ea217)
 
 - **Cambiado**: **el video de presentación deja de ser provisional.** Las dos superficies que lo montan —«Tres

@@ -1,5 +1,7 @@
 # Análisis · La red, la identidad y la navegación entre plataformas
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Análisis EJECUTADO (`src/lib/identidad/matriz.ts`). Lo vivo está en `docs/ALINEACION.md` §1 (Identidad). El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 **2026-08-02 · respuesta al diagrama de relaciones del owner.** Verificado contra
 el código y contra los datos reales de producción, no contra el plan.
 

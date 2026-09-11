@@ -121,6 +121,8 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
+Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «Wraps del mapa» de este grupo
+(ALINEACION §5); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push,
 verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.

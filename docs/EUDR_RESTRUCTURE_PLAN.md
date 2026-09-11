@@ -1,5 +1,7 @@
 # Plan · Reestructura EUDR + Certificados — Parcela / Credencial / Aporte / Claim
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Plan EJECUTADO (la visa EUDR de la finca y el sello del lote). Lo vivo está en `docs/componentes/kaffetal-regal.md` y en `qa-visa-check.mjs`. El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 **2026-07-29 · aprobado en conversación con el owner.** Fuente: dos notas técnicas del
 28-07-2026 (deep research del owner): *¿Finca o Lote?* y *Los cuatro arquetipos de lote*
 (`Downloads/ctc-finca-vs-lote-simple-en-es.html`, `Downloads/ctc-arquetipos-de-lote-especialidad.html`).

@@ -1,5 +1,7 @@
 # Estado del proyecto y preguntas de desambiguación — 2026-08-17
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Foto del 2026-08-17 con las respuestas del owner; la reorganización que describe se construyó (V4.23–V4.45). Lo vivo está en `docs/componentes/` y `docs/ALINEACION.md`. El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 Written at the owner's request after several messy sessions, to fix the ground before continuing.
 Input: the repo (code + `docs/`), the memory notes, and the owner's PDF **"CTC Platforms Structure"**
 (3 pages — BCP / OCP / ECP — parked at `reference_html-vision-board/ctc-platforms-structure-2026-08-17.pdf`,

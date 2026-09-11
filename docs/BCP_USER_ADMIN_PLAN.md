@@ -1,5 +1,7 @@
 # Plan · Identidad y accesos de la CTC Web Platform
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Plan EJECUTADO (panel_users + partner_accounts, 2026-07-15/20). Lo vivo está en `docs/componentes/consolas.md`. El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 > Reconciliado con la visión v3 (`reference_html-vision-board/ctc-arquitectura-v3.html`)
 > el 2026-07-15. Este documento sustituye al plan anterior (que solo contemplaba
 > colaboradores internos con rol por módulo). El modelo v3 obliga a **dos capas

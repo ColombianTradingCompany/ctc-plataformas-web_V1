@@ -1,6 +1,8 @@
 # V5 · Plan de consolas — the CTC Platforms re-org (written 2026-08-17)
 
-> ## ▶ EMPIEZA AQUÍ
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Plan EJECUTADO (V4.23–V4.45, 2026-08-18/19; V5.0 declarada). Lo vivo está en `docs/componentes/consolas.md` y `docs/ALINEACION.md`. El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
+> ## ▶ (EJECUTADO — ya no es el punto de partida)
 > **Step 0 (the Sneak Peek) is BUILT and deployed — V4.16 through V4.21.** Everything from §2 onward is
 > **Steps (i) and (ii) are COMPLETE**, the **Version Wrap V37 is done**, and **iii-1 «CTC Selection» is
 > COMPLETE** — pipeline in V4.27, publication in V4.28 once the owner answered **D3.1**.

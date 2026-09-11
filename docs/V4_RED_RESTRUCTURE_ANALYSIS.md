@@ -1,5 +1,7 @@
 # Análisis · Reestructura V4 — la red orquestada desde el CTC Control Panel
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Análisis EJECUTADO (V4, 2026-07-31 → 2026-08-13). Lo vivo está en `docs/HANDOFF.md` y `docs/ALINEACION.md`. El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 **2026-07-29 · análisis previo al plan.** Fuente: board de arquitectura del owner
 (imagen entregada en conversación; conviene guardarla en
 `reference_html-vision-board/` junto a `ctc-arquitectura-v3.html` para que no se

@@ -12,6 +12,18 @@ Recordatorio: registrar la entrada AL TERMINAR el trabajo, no «después». Y se
 el sha en cuanto exista el commit — de UNO en UNO, no en bloque al final.
 
 ════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION (lo exige `scripts/qa-arqlog-check.mjs`). Se añade al final;
+  nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «Wraps del mapa» (grupo CTC Consolas
+  internas, vía `plataforma`). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La cabecera «plataforma VN.N» de este archivo es la referencia del guardián.
+
+════════════════════════════════════════════════════════════════════════════════
 CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
 ════════════════════════════════════════════════════════════════════════════════
 
@@ -107,3 +119,49 @@ Contexto abierto al cerrar V41 (2026-08-22) — plataforma V5.24:
   merece un párrafo (el orden de lectura charter → alineación → handoff); el FILETREE
   regenerado verá `reference/` y `apps-internas/` en vez de `reference_*`.
 (commit: d9f4b17)
+
+## [2026-08-22] V5.25–V5.27 · Herramientas del Café: nace «Defectos del Café» (asiento compilado del CHANGELOG el 2026-09-11)
+- Tres versiones de OTRAS sesiones sin asiento propio (la lección de V39, repetida; desde
+  hoy lo exige `scripts/qa-arqlog-check.mjs`). V5.25: nueva herramienta pública
+  `public/tools/defectos-cafe.html` — catálogo interactivo de los 14 defectos del café verde
+  del afiche de la FNC + defectos del tueste, clave visual (grano o taza), matriz de
+  incidencia, control por etapa y práctica de reconocimiento; ES/EN/DE; registrada en
+  `tools`/`tool_versions` (id `defectos-cafe`, orden 20) encendida solo en web. V5.26:
+  captura del carrusel (`public/images/herramientas/shots/defectos-cafe.jpg`). V5.27: la
+  clave pintaba la foto encima de la etiqueta (`max-height:%` contra fila auto de grid +
+  `drop-shadow` = contexto de apilamiento); caja flex de alto fijo. Para el wrap: una línea
+  en el DICT «herramientas» y la fila del inventario.
+(commit: 90593cd · 4bb787d · 76993c7)
+
+## [2026-09-10] V5.28–V5.29 · BCP · PVC — la Ponderación de Valor de Cosecha entra al sistema (asiento compilado del CHANGELOG)
+- Hito: `/bcp/pvc` (owner-only, Business Core) — Ediciones · Tablero (HTML embebido y
+  autenticado con puente `window.PVC_DB`) · Parámetros del modelo (versiones inmutables por
+  acta) · Dossier (D0–D9 servidos desde `docs/pvc/`). Motor TypeScript `src/lib/pvc/motor.ts`
+  (port de `pvc_model_v2.py`, método v2.1.1: edición, escalera Black ×1,15 · Red ×1,30 · Blue
+  ×1,60 · Gold ×2,00, pila FCA/CIP/DDP, back-proof 2019–2026, KPIs, huella) anclado a
+  `paridad.json` por `qa-pvc-motor.mjs`; `GET /api/pvc/current` sobre la vista
+  `public_pvc_current`. Migración `bcp_pvc_core`: `pvc_model_versions`, `pvc_editions` (guard:
+  publicada = inmutable; corrección = fila nueva con `correction_of`), `pvc_cycles`,
+  `pvc_sources`, `pvc_trigger_watch`, `pvc_forecast_scores`. Semilla PVC-F4-2026 = $2.500.000.
+  V5.29: coherencia del dossier (código sin sufijo de versión, D4 ES/EN = «Exportar Reporte»),
+  el Python de referencia redondea comercial como Excel y el tablero, `qa-pvc-tablero.mjs`
+  (marcadores `@@MODELO`), una sola ruta de publicación. Para el wrap: nodo/DICT nuevo «pvc»
+  (¿en el nodo n-bcp?), ANN de `src/lib/pvc`, `docs/pvc`, `/bcp/pvc`, los dos guardianes; y el
+  CONFLICTO abierto con «grados» (bandas 80/84/86/88/89 vs dos en dos) — decisión del owner
+  (`docs/PVC_BCP_PLAN.md` §8).
+(commit: 3ae9914 · 9f57a17)
+
+## [2026-09-11] V5.30 · El vídeo de presentación definitivo (asiento compilado del CHANGELOG)
+- `EcosystemSection` (CTC Home, «Tres ofertas») y `BienvenidosSection` (Kaffetal Regal) apuntan
+  al vídeo definitivo (`qDAu9mK3KRA`, 5:33) en vez del provisional; el copy deja de prometer
+  «un minuto» en las tres lenguas. Para el wrap: una frase en los DICT «home» y «ytembed».
+(commit: 12ea217)
+
+## [2026-09-11] V5.31 · La plataforma se trabaja por componentes (docs) + qa-arqlog
+- La reorganización del asiento anterior recibe versión propia (V5.31 · Docs) para que la
+  insignia y el CHANGELOG la registren. Nuevo guardián `scripts/qa-arqlog-check.mjs` y la
+  regla de versionado/wraps en paralelo (ALINEACION §5): asiento del componente, wrap de la
+  plataforma desde «Wraps del mapa». Para el wrap: la ficha «versionado» gana el guardián y
+  la regla; la ficha «docsistema», el orden de lectura y quién llama al wrap.
+(commit: pendiente)
+

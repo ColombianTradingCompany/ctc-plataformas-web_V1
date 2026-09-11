@@ -28,7 +28,7 @@ Cada uno tiene UNA fuente en el código. Se cambia allí y solo allí, y quien l
 | **El patrón Supabase de la casa** — RLS encendida con CERO políticas (service-role-only) por defecto; una política `select-own` estrecha solo cuando el usuario debe leer lo suyo; guard triggers `BEFORE UPDATE` que restringen columnas y transiciones; lecturas públicas por **vista `SECURITY DEFINER` estrecha**, jamás por política ancha; **lo derivado no se persiste** (se calcula al leer); lo histórico se **congela en snapshots**; DDL solo por `apply_migration` | `docs/HANDOFF.md` §Database (la tabla de guards) | cualquier tabla nueva | `qa-guard-check` (suite de seguridad) |
 | **Vocabulario congelado** — BCP = *Business* (dirección, configuración, socios) · OCP = *Operation* (el pasaporte del lote, del productor al catálogo) · ECP = *Execution* (plataformas, contacto, herramientas); «CaaS» es la marca y `cocreate` la clave; **Tyrian** (no Tiryan); CommaaS ≠ CaaS; «hub» es de CommaaS; «Value Ecosystem»; el cacao existe como **nota de cata** y jamás como producto | `src/lib/panel/consoles.ts` (taglines), `src/lib/legal.ts` (`CTC_RAZON`, NIT), `src/lib/panel/rutasMovidas.ts` | copy de todas las superficies | `qa-rutas-consolas`, `qa-nav-check` |
 | **Temporada y año-cosecha** — Mitaca/Principal, `seasonKey`, ventana de DOS temporadas para ofertar; el calendario de cosecha en tres idiomas | `src/lib/arena/seasons.ts`, `src/lib/harvestYear.ts` | KR, OCP (ofertas), CP (etiquetas), landing | `qa-ofertas-check` (36) |
-| **Versión y compuerta de despliegue** — `APP_VERSION` sube en el MISMO commit que la tanda + entrada en `CHANGELOG.md` (Hito · Añadido · Cambiado · Corregido · Retirado · Seguridad · Datos · Docs) + sello del sha en el commit siguiente | `src/lib/version.ts`, `CHANGELOG.md` | la insignia de las 19 superficies y las consolas | `qa-changelog-check.mjs` |
+| **Versión y compuerta de despliegue** — `APP_VERSION` sube en el MISMO commit que la tanda + entrada en `CHANGELOG.md` (Hito · Añadido · Cambiado · Corregido · Retirado · Seguridad · Datos · Docs) + **asiento en el log de arquitectura vigente** + sello del sha en el commit siguiente; la versión se toma al empujar (§5) | `src/lib/version.ts`, `CHANGELOG.md`, `docs/architecture/Log_*.txt` | la insignia de las 19 superficies y las consolas | `qa-changelog-check.mjs`, `qa-arqlog-check.mjs` |
 | **El libro de consumo de IA** — toda llamada a un modelo se anota (`registrarConsumo`, superficie en `USOS`), fetch crudo a la API (sin SDK), modelo pequeño por defecto, pasos caros **opt-in** con el precio a la vista, y **sin credencial nada revienta** (degradación determinista que lo dice) | `src/lib/ai/{consumo,precios}.ts`, `src/lib/coffeed/claude.ts` | Coffeed, KR (asesor, escáner), Arena (mejoras), PVC | `qa-consumo-check.mjs` |
 | **Tres idiomas** (ES · EN · DE) en toda superficie pública; el contenido de Coffeed se produce en español a propósito | `src/components/lang/i18n.tsx` (Home, KR, Directorio…) y `src/components/cherry-picked/i18n.ts` (la familia CP) — dos proveedores, la misma unión de idiomas | landings, paneles, formularios de captación, correos | — |
 | **SEO y tarjetas** — `metadatosDeSuperficie()` es la única puerta al Open Graph; JSON-LD **no escribe datos** (sale de las fuentes únicas); `robots.txt`/`sitemap.xml` son route handlers por host; `platform_surfaces` (ECP · Manejo de Plataformas) es la capa de excepciones; `public/tools/*.html` llevan su `<head>` a mano | `src/lib/seo/{openGraph,jsonLd,superficies}.ts`, `src/app/{robots.txt,sitemap.xml}/route.ts` | todas las superficies públicas | `qa-tools-seo-check` (193), `qa-tools-seo-espejo` (68) |
@@ -123,3 +123,34 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 10. **Costes de IA**: lo que un programa puede hacer, un modelo no lo hace; modelo pequeño por
     defecto; `webSearch` es el parámetro más caro del repo; los pasos caros se piden con el precio a
     la vista.
+
+## 5 · Versionado y wraps con desarrollos en paralelo (2026-09-11)
+
+Diez conversaciones despliegan sobre el mismo `main`. Las dos cosas que antes hacía una sola sesión
+lineal —numerar versiones y compilar el mapa— se reparten así:
+
+1. **La versión se toma al empujar, no al empezar.** `git pull --ff-only` → leer `APP_VERSION` →
+   sumar uno → commit (con su entrada en `CHANGELOG.md` y su asiento, ver 2) → `git push` de
+   inmediato. Si el push se rechaza (otra sesión llegó antes), se vuelve a hacer pull, se renumera y
+   se vuelve a sellar. **Una tanda = una versión = un push.** `qa-changelog-check` vigila que las
+   cabeceras no se repitan ni desordenen.
+2. **El asiento es del componente.** En el MISMO commit que sube la versión, la sesión escribe
+   `## [fecha] V5.NN · …` en el log vigente (`docs/architecture/Log_Documentacion_Interactiva_V<N>.txt`,
+   el de mayor N) con lo que el mapa deberá reflejar (nodos, fichas DICT, trazas, ANN). Solo se
+   añade al final; nunca se reescribe un asiento ajeno. Lo exige **`scripts/qa-arqlog-check.mjs`**
+   (parte de la compuerta): toda versión del CHANGELOG posterior al último wrap debe estar en el log.
+   Nació porque V5.25–V5.30 salieron de seis sesiones sin dejar asiento.
+3. **El wrap es de la plataforma.** Solo se llama desde la conversación **«Wraps del mapa»** del
+   grupo *CTC Consolas internas* (la vía `plataforma`), nunca desde una sesión de componente — así
+   dos wraps no pueden cruzarse ni dos sesiones editar el mismo HTML. Un componente puede PEDIR un
+   wrap (una línea en su charter o al owner). **Cadencia**: cuando el log acumule cinco asientos o
+   más, al cerrar un hito de un componente, o antes de declarar una versión mayor — lo primero que
+   ocurra. El wrap compila los asientos de TODOS los componentes, corre la batería de nueve
+   comprobaciones, regenera el FILETREE, estampa CHANGELOG y HANDOFF y abre el log siguiente.
+4. **El log siguiente nace vacío con su cabecera** («plataforma V5.NN» = la versión sobre la que se
+   cerró el wrap): esa cabecera es lo que `qa-arqlog` usa de referencia.
+5. **CommaaS, a su escala**: no tiene mapa HTML. Su `CHANGELOG.md` sigue el mismo contrato (una
+   entrada por tanda empujada; clave = fecha + sha, sin insignia); el asiento lo escribe quien
+   empuja (sesión del hub o del tenant), y la **consolidación** —la sección fechada del `HANDOFF.md`
+   y el índice de tenants de su `ALINEACION.md` §2— la hace la sesión del hub, que es el backstage
+   de los tenants. Detalle en `commaas/docs/ALINEACION.md` §6.

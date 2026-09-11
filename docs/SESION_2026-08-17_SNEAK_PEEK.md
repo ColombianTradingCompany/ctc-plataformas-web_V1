@@ -1,10 +1,12 @@
 # Sesión 2026-08-17 · el plan V5 y el módulo «Sneak Peek»
 
+> **ARCHIVADO 2026-09-11 · se conserva en su sitio porque el código lo cita.** Traspaso histórico de la sesión del 2026-08-17. Lo vivo está en `docs/componentes/cherry-picked.md` (Sneak Peek) y en `docs/archive/HANDOFF_cronologia_2026-07_09.md`. El punto de partida de toda sesión es `docs/KICKOFF.md`.
+
 Traspaso de una sesión larga. Lo que sigue es lo que hace falta saber para **abrir la siguiente y ejecutar**,
 sin volver a deducir nada. Todo está empujado a `origin/main`; producción en **V4.21**.
 
 > **Lo siguiente que toca hacer**: `docs/V5_CONSOLAS_PLAN.md` §2 — el paso (i), congelar los nombres → V4.22.
-> El plan abre con un «▶ EMPIEZA AQUÍ» y §0.1 explica el bucle de cada paso.
+> El plan abre con un «▶ (EJECUTADO — ya no es el punto de partida)» y §0.1 explica el bucle de cada paso.
 
 ---
 

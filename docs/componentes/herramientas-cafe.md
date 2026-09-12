@@ -31,6 +31,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | `qr` | Generador de códigos QR | default | en | sí | `generador-qr.html` |
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
 | `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15): `mermas-detallada.html` sigue en `public/` con `noindex` |
+| `cromatografia-suelo` | Lector de Cromatografía de Suelo | plus (propuesto) | es | sí (propuesto) | **en scoping** (2026-09-12): brief en `briefs/herramientas-cafe-cromatografia-suelo.md`; primera herramienta con pieza de servidor (`/api/herramientas/cromatografia`, IA opt-in) |
 
 Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_tools\` (p. ej.
 `rueda_del_cafe_V23.html`, `Defectos_del_Cafe_CTC_V3.html`) y de ahí se registran.
@@ -90,6 +91,9 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **Lector de Cromatografía de Suelo** (`cromatografia-suelo`, en scoping 2026-09-12): esperando la aprobación del
+  brief y sus 8 decisiones (nombre, nivel, superficies, modelo, dataset, idioma, validador agronómico, registros = Home
+  Menu). Fuente en `reference/html_tools/Analisis Cromatografico/`.
 - **Google OAuth en la puerta** del taller (`auth/callback` propio + allowlist de Supabase) — cuando el owner lo pida.
 - **Migrar el comodín `tools_plus_grants`** a permisos por persona (`quienDependeDelComodin()` es la lista) y retirar la tabla.
 - **Defectos del Café**: `soporta_memoria=false` (¿línea del puente?); fotogramas de tostado y conmutador de

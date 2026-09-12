@@ -145,4 +145,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   `scripts/qa-cromatografia-modelo.mjs`, `docs/componentes/briefs/herramientas-cafe-cromatografia-suelo.md`.
 - Lección para la cabecera: **un umbral puesto con sintéticos rechaza el mundo real**; la compuerta 1.0 no
   dejaba pasar ni una de 108 capturas de laboratorio. Se calibra con datos abiertos antes de publicar.
-(commit: pendiente)
+(commit: cb4f9e7)

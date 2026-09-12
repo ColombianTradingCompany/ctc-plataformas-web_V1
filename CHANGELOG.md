@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.32] — 2026-09-13 (commit pendiente)
+## [V5.32] — 2026-09-13 (commit cb4f9e7)
 
 - **Añadido**: **Lector de Cromatografía de Suelo** (`cromatografia-suelo`, Herramientas del Café, Plus), la
   primera herramienta de la suite con pieza de servidor. Lee la foto de una cromatografía de Pfeiffer y el

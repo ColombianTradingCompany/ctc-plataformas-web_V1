@@ -343,7 +343,7 @@ Hoy: <el proyecto>.
 Trabajas en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega una HERRAMIENTA NUEVA que NO está en el
 inventario: <nombre y qué hace, en dos líneas>. La fuente (HTML o brief) está en
-C:\dev\ctc-platformseference\html_tools\<archivo>. Antes de registrar nada:
+C:\dev\ctc-platforms\reference\html_tools\<archivo>. Antes de registrar nada:
 1. Lee docs/componentes/herramientas-cafe.md (el inventario y la receta de alta), docs/HERRAMIENTAS_TALLER.md
    (el puente y los trabajos guardados), docs/ALINEACION.md y AGENTS.md.
 2. Escribe el BRIEF en docs/componentes/briefs/herramientas-cafe-<id>.md: id, nombre, idioma, nivel
@@ -361,7 +361,7 @@ Hoy: <la herramienta>.
 ```
 Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main). Hoy llega un TENANT NUEVO que NO
 está en el índice: <nombre y qué es, en dos líneas>; su prototipo, si existe, está en
-C:\dev\commaas-hub	enants-pendientes\<carpeta>. Antes de portar nada:
+C:\dev\commaas-hub\tenants-pendientes\<carpeta>. Antes de portar nada:
 1. Comprueba que el proyecto de Supabase togwpmprggfvhwwxfzlh esté activo (se pausa a los 7 días).
 2. Lee docs/HANDOFF.md, CLAUDE.md, docs/ALINEACION.md (§1 la receta de un tenant, §2 el índice) y
    docs/HUB-PIVOT-PLAN.md §2.4.

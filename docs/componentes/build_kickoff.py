@@ -33,7 +33,7 @@ ORDEN = [
 #    hace SCOPING primero (brief + fila en el inventario) y no toca código hasta que el brief
 #    esté aprobado. Se renderizan al final del compendio.
 VARIANTES = [
- ('herramientas-internas', 'Herramientas Internas · PROYECTO NUEVO', 'Herramientas Internas', """Trabajas en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
+ ('herramientas-internas', 'Herramientas Internas · PROYECTO NUEVO', 'Herramientas Internas', r"""Trabajas en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega un PROYECTO NUEVO que NO está en el charter:
 <nombre y qué es, en dos líneas>. Antes de construir nada:
 1. Lee docs/componentes/herramientas-internas.md (la tabla de herramientas y dónde vive cada una),
@@ -45,7 +45,7 @@ VARIANTES = [
 3. Añade su fila a la tabla del charter con estado «en scoping» y una línea en ALINEACION §3 si toca a otro.
 4. Propón el primer paso y PARA: no se escribe código hasta que apruebe el brief.
 Hoy: <el proyecto>."""),
- ('herramientas-cafe', 'Herramientas del Café · HERRAMIENTA NUEVA', 'Herramientas del Café', """Trabajas en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
+ ('herramientas-cafe', 'Herramientas del Café · HERRAMIENTA NUEVA', 'Herramientas del Café', r"""Trabajas en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega una HERRAMIENTA NUEVA que NO está en el
 inventario: <nombre y qué hace, en dos líneas>. La fuente (HTML o brief) está en
 C:\dev\ctc-platforms\reference\html_tools\<archivo>. Antes de registrar nada:
@@ -57,7 +57,7 @@ C:\dev\ctc-platforms\reference\html_tools\<archivo>. Antes de registrar nada:
 3. Añade su fila al inventario del charter con estado «en scoping» y PARA hasta que apruebe el brief.
    Después: .html a public/tools → vendor-tool-assets → alta en `tools` → puente → captura → qa-tools-seo-*.
 Hoy: <la herramienta>."""),
- ('commaas', 'CommaaS · TENANT NUEVO', 'CommaaS', """Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main). Hoy llega un TENANT NUEVO que NO
+ ('commaas', 'CommaaS · TENANT NUEVO', 'CommaaS', r"""Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main). Hoy llega un TENANT NUEVO que NO
 está en el índice: <nombre y qué es, en dos líneas>; su prototipo, si existe, está en
 C:\dev\commaas-hub\tenants-pendientes\<carpeta>. Antes de portar nada:
 1. Comprueba que el proyecto de Supabase togwpmprggfvhwwxfzlh esté activo (se pausa a los 7 días).

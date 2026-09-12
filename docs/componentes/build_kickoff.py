@@ -29,6 +29,47 @@ ORDEN = [
   'Lo mismo que CTC Tech para el pilar `varietales`, y definir con el owner el catálogo real de plántulas (hoy la landing recoge interés, no vende).'),
 ]
 
+# ── Variantes «proyecto nuevo»: el owner trae algo que NO está en el charter. La sesión
+#    hace SCOPING primero (brief + fila en el inventario) y no toca código hasta que el brief
+#    esté aprobado. Se renderizan al final del compendio.
+VARIANTES = [
+ ('herramientas-internas', 'Herramientas Internas · PROYECTO NUEVO', 'Herramientas Internas', """Trabajas en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
+(repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega un PROYECTO NUEVO que NO está en el charter:
+<nombre y qué es, en dos líneas>. Antes de construir nada:
+1. Lee docs/componentes/herramientas-internas.md (la tabla de herramientas y dónde vive cada una),
+   docs/ALINEACION.md (contratos; en especial el libro de consumo de IA y el patrón Supabase) y AGENTS.md.
+2. Pregúntame lo que falte y escribe el BRIEF en docs/componentes/briefs/herramientas-internas-<slug>.md
+   (plantilla en docs/componentes/briefs/README.md): qué es, para quién, dónde vivirá (apps-internas/<slug>
+   si es una app propia · tools/<slug> si es una herramienta local · dentro de una consola si es un módulo),
+   tablas y datos, costes de IA si los hay, guardián previsto, primera tanda.
+3. Añade su fila a la tabla del charter con estado «en scoping» y una línea en ALINEACION §3 si toca a otro.
+4. Propón el primer paso y PARA: no se escribe código hasta que apruebe el brief.
+Hoy: <el proyecto>."""),
+ ('herramientas-cafe', 'Herramientas del Café · HERRAMIENTA NUEVA', 'Herramientas del Café', """Trabajas en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
+(repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega una HERRAMIENTA NUEVA que NO está en el
+inventario: <nombre y qué hace, en dos líneas>. La fuente (HTML o brief) está en
+C:\dev\ctc-platforms\reference\html_tools\<archivo>. Antes de registrar nada:
+1. Lee docs/componentes/herramientas-cafe.md (el inventario y la receta de alta), docs/HERRAMIENTAS_TALLER.md
+   (el puente y los trabajos guardados), docs/ALINEACION.md y AGENTS.md.
+2. Escribe el BRIEF en docs/componentes/briefs/herramientas-cafe-<id>.md: id, nombre, idioma, nivel
+   (default/plus), superficies donde se enciende (web · kr · cp · dc), si guarda trabajo (puente) y qué emite,
+   meta description, captura.
+3. Añade su fila al inventario del charter con estado «en scoping» y PARA hasta que apruebe el brief.
+   Después: .html a public/tools → vendor-tool-assets → alta en `tools` → puente → captura → qa-tools-seo-*.
+Hoy: <la herramienta>."""),
+ ('commaas', 'CommaaS · TENANT NUEVO', 'CommaaS', """Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main). Hoy llega un TENANT NUEVO que NO
+está en el índice: <nombre y qué es, en dos líneas>; su prototipo, si existe, está en
+C:\dev\commaas-hub\tenants-pendientes\<carpeta>. Antes de portar nada:
+1. Comprueba que el proyecto de Supabase togwpmprggfvhwwxfzlh esté activo (se pausa a los 7 días).
+2. Lee docs/HANDOFF.md, CLAUDE.md, docs/ALINEACION.md (§1 la receta de un tenant, §2 el índice) y
+   docs/HUB-PIVOT-PLAN.md §2.4.
+3. Escribe el BRIEF en docs/briefs/<slug>.md (plantilla en docs/briefs/README.md): qué es, para quién,
+   esquema <slug> y sus tablas (user_id + RLS doble), bucket si hay archivos, llamadas pagadas y su
+   presupuesto (canSpend/recordUsage), subdominio, primer paso.
+4. Añade su fila a ALINEACION §2 con estado «en scoping» y PARA hasta que apruebe el brief.
+Hoy: <el tenant>."""),
+]
+
 def kickoff_de(clave):
     s = io.open(os.path.join(R, 'componentes', clave + '.md'), encoding='utf-8').read()
     m = re.search(r'## Kick-off\s*```\n(.*?)```', s, flags=re.S)
@@ -95,5 +136,11 @@ out += ['## Plataforma (lo transversal)  ·  `plataforma`', '',
  'HANDOFF del hub al día.', 'Hoy: <la tarea>.', '```', '',
  '**Sugerencia de primera tarea:** el paso 3.7 del plan de CTC — escribir `commaas/docs/ALINEACION.md` (el gemelo: contratos entre hub y tenants + índice de tenants) y actualizar el HANDOFF del hub con la carpeta `tenants-pendientes`.', '']
 
+out += ['## Proyectos nuevos (los tres componentes que reciben proyectos sin scoping)', '',
+ 'Cuando traes algo que no está en ningún charter, la sesión NO empieza construyendo: empieza escribiendo un',
+ '**brief de una página** (plantilla en `docs/componentes/briefs/README.md`; en CommaaS, `docs/briefs/README.md`)',
+ 'y una fila «en scoping» en el inventario de su componente. El código empieza cuando apruebas el brief.', '']
+for clave, titulo, grupo, prompt in VARIANTES:
+    out += [f'### {titulo}', '', f'**Grupo:** {grupo}', '', '```', prompt, '```', '']
 io.open(os.path.join(R, 'KICKOFF.md'), 'w', encoding='utf-8', newline='\n').write('\n'.join(out).rstrip() + '\n')
 print('KICKOFF.md:', len(out), 'líneas ·', len(ORDEN) + 2, 'prompts')

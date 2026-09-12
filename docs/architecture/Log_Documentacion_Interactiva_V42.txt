@@ -126,4 +126,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
 - Para el wrap V43: la ficha «componentes» pasa a **trece charters**; la ficha «integraciones» (n-make
   / la espina) enlaza el plan de la Secretaría y anota que la base de grados de Notion coincide con
   `definicion.ts`; ANN nuevas para `docs/SECRETARIA_PLAN.md` y `docs/componentes/secretaria.md`.
-(commit: pendiente)
+(commit: 78f79b7)

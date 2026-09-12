@@ -1,0 +1,115 @@
+# Charter · `socios` — Red de Socios (los cinco nodos partner)
+
+> Se lee con `docs/ALINEACION.md` al lado. Grupo de la barra lateral: **Red de Socios** — **una
+> conversación por nodo** (Centro de Calidad · Agente de Carga · Agente de Nacionalización · Master
+> Roaster · Estudio de Contenido). Atado a las consolas: **BCP · Socios** emite y suspende la
+> credencial de cada nodo; **OCP** opera lo que cada nodo sella en el pasaporte del lote.
+
+## Qué es
+
+Los cinco **nodos delegados** de la red orquestada v3 (`reference/html-vision-board/ctc-arquitectura-v3.html`):
+CTC no toca un grano ni un contenedor — orquesta el pasaporte del lote — y cada nodo pone el oficio y
+**sella** su tramo. Cada nodo es una **pareja** en `/socios/<slug>`: una landing pública (qué hace, por
+qué se delega, qué sella, sus pantallas) + un login de credencial (`/acceso`) + un panel (`/panel`).
+Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + una fila activa en
+`partner_accounts` para exactamente un nodo — **nunca `bcp_admin`**.
+
+| Nodo (`slug`) | Rol | Sella en el pasaporte | Panel hoy |
+|---|---|---|---|
+| **Centro de Calidad** (`centro-calidad`) | trilla, monitoreo y selección óptica · pergamino → verde | merma + humedad + verde liberado | scaffold (pantallas declaradas: Lotes en camino · Orden de trilla · Control de proceso · Liberación) |
+| **Agente de Carga** (`agente-carga`) | flete internacional · Colombia → Europa | booking + BL + ETA | scaffold (Lotes listos · Booking · Documentos · Tracking) |
+| **Agente de Nacionalización** (`agente-nacionalizacion`) | aduana en destino · importación en la UE | nacionalizado + DDS enlazada | scaffold (Contenedores en tránsito · Expediente aduanero · Liquidación · Liberación) |
+| **Master Roaster** (`master-roaster`) | el pivote de destino · bodega, tueste, empaque, última milla | recepción + tueste + despacho | scaffold (Contenedor en camino · Bodega · Desconsolidación y ruta · Cola de tueste · Empaque y despacho) |
+| **Estudio de Contenido** (`estudio-contenido`) | la voz de la red · producción de contenido | video de Arena + assets del lote | **construido**: el taller de Coffeed (Source Wrapper · Datawave · RT-Scriptor) — charter `coffeed` |
+
+## Superficies y rutas
+
+| Ruta | Qué |
+|---|---|
+| `/socios/[partner]` | landing del nodo (`PARTNERS[slug]`: rol, qué hace, por qué, sello, pantallas, color y logo) |
+| `/socios/[partner]/acceso` | login de credencial (`PartnerLoginForm` → `POST /api/socios/auth/login`; logout en `/logout`) — un solo factor, por diseño |
+| `/socios/[partner]/panel` | el panel (`requirePartner(slug)`: sesión + `role partner` + fila activa de ESE nodo); cambio de contraseña (`PartnerPasswordCard`); en el Estudio, `panel/{source-wrapper,datawave,rt-scriptor}` |
+| `/bcp/socios` · `/bcp/socios/[nodo]` | **backstage** (consolas): alta, baja, reenvío de invitación; la **ficha de estado por nodo** (V4.31: quién tiene credencial, en qué estado, último acceso, qué sella) |
+| subdominios | `centro-calidad.*` · `agente-carga.*` · `agente-nacionalizacion.*` · `master-roaster.*` · `ctc-content.*` (`src/lib/red/subdominios.ts`) |
+| `/recuperar-acceso?puerta=<nodo>` | la puerta de servicio común (charter `plataforma`) |
+
+## Mapa de código
+
+- `src/lib/partners/partners.ts` — **fuente única** de los cinco nodos (`PARTNERS`, `PartnerSlug`,
+  `isPartnerSlug`); copy y colores vienen del vision board. `src/lib/partners/requirePartner.ts` (la
+  compuerta del panel: redirige a `/socios/<slug>/acceso` si falta cualquiera de las tres condiciones).
+- `src/app/socios/layout.tsx`, `src/app/socios/[partner]/{page,acceso/page,panel/page}.tsx`,
+  `panel/actions.ts`, `socios.module.css`; `src/app/api/socios/auth/{login,logout}/route.ts`.
+- `src/app/bcp/(app)/socios/{page,SociosClient}.tsx`, `[nodo]/page.tsx`, `sociosActions.ts` (invitación
+  por Resend con resultado guardado en la fila; KPI de invitaciones fallidas).
+- Open Graph: `generateMetadata` sobre `PARTNERS` (una tarjeta por nodo); JSON-LD declara a **CTC**, no al
+  socio (los nodos son puertas de esta casa).
+- Docs: `docs/PARTNER_DOMAINS_SETUP.md` (los 5 subdominios), `docs/archive/HANDOFF_cronologia_2026-07_09.md`
+  §«Partners (2026-07-15)» y §«Red de Socios — una ficha por nodo (V4.31)».
+
+## Tablas que posee
+
+`partner_accounts` (service-role-only: `profile_id` PK → `profiles`, `node_type` CHECK contra los 5 slugs,
+`org_name`, `contact_name`, `status` invited/active/suspended, rastro de invitación, **`delivery_email`** —
+el buzón real, distinto del correo de acceso, que puede ser una etiqueta sin buzón como
+`estudio-contenido@ctcexport.com`). Solo lee: `profiles`. Lo que el Estudio produce vive en `coffeed_*`
+(charter `coffeed`). **Ningún nodo tiene tablas operativas propias todavía** (ver Pendientes).
+
+## Guardianes
+
+Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas de socio) y
+`qa-rutas-consolas` (el rail de `/bcp/socios`).
+
+## Reglas propias
+
+- **Un socio nunca es `bcp_admin`**, y una credencial vale para **exactamente un nodo** (`node_type`).
+- **Correo de acceso ≠ buzón**: la identidad puede ser una etiqueta sin buzón; la invitación y los
+  restablecimientos viajan al `delivery_email`, y el correo de invitación dice cuál es el usuario.
+- **Una credencial suspendida no se reactiva sola** y la suspensión gana a Google en el veredicto de
+  «Recuperar acceso».
+- El panel de un nodo se construye **nodo a nodo, en su propia interfaz**; la ficha del BCP es de ESTADO,
+  no de operación, y no escribe nada.
+- Máxima lectura narrativa, **cero acceso al dinero** para el Estudio (vision board): ningún panel de
+  socio ve precios, contratos ni datos comerciales del productor — si algún día uno los necesita, es una
+  vista `SECURITY DEFINER` estrecha, nunca una política ancha.
+
+## Lo que las consolas gobiernan de este componente
+
+| Quién | Qué | Dónde |
+|---|---|---|
+| BCP · Socios | emitir, reenviar, suspender y revocar la credencial de cada nodo; la ficha de estado | `sociosActions.ts`, `/bcp/socios/[nodo]` |
+| OCP | lo que cada sello significa en el pasaporte: liberación de verde (Centro de Calidad), booking/BL (Carga), DDS y nacionalización (Nacionalización), recepción y tueste (Roaster) — **hoy sin módulo de OCP que los reciba** | pendiente por nodo |
+| ECP · Coffeed | el trabajo del Estudio (luz verde, publicar) | charter `coffeed` |
+| ECP · Plataformas | título, descripción y sitemap de los cinco subdominios | `platform_surfaces` |
+
+## Pendientes
+
+- **Cuatro paneles son scaffolds**: solo el Estudio de Contenido tiene módulo real. Cada nodo necesita su
+  interfaz (las pantallas ya están declaradas en `partners.ts`) **y su contraparte en el OCP** que reciba
+  el sello en el pasaporte del lote — eso es lo que abre cada sesión de nodo.
+- **Verificar los cinco subdominios** con `curl -I` (el doc de dominio deja el paso Vercel + Hostinger al
+  owner).
+- **Guardián propio** (`qa-socios-check.mjs`): `PARTNERS` ↔ `SUBDOMAIN_ROUTES` ↔ `puertas.ts` en sincronía;
+  `requirePartner` exige las tres condiciones; ningún panel importa un cliente `service_role`.
+- La cuarta app del Estudio, **Identity Value Creation** (leer finca y lote desde el tier de socios): exige
+  vistas estrechas antes de una línea de UI (charter `coffeed`).
+
+## Kick-off
+
+```
+Trabajas SOLO en el componente «Red de Socios» (clave: socios) de la plataforma CTC
+(repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en EL NODO <nodo>
+(centro-calidad · agente-carga · agente-nacionalizacion · master-roaster · estudio-contenido).
+Antes de tocar nada lee, en este orden:
+1. docs/componentes/socios.md   ← tu charter (los cinco nodos, sus sellos, qué está construido)
+2. docs/ALINEACION.md           ← contratos transversales (identidad, cookies, patrón Supabase) y el registro de permeación (§3)
+3. AGENTS.md                    ← la compuerta y las reglas de la casa
+Un socio nunca es bcp_admin y su credencial vale para un solo nodo; el panel del nodo se construye en
+SU interfaz (/socios/<nodo>/panel) y lo que sella viaja al pasaporte por el OCP — si tu tarea necesita
+un módulo del OCP o una vista nueva, es pendiente con dueño «consolas» y una línea en el §3; ningún
+panel de socio ve dinero. Para el Estudio de Contenido, lee además docs/componentes/coffeed.md.
+Al terminar: compuerta completa (incl. qa-recuperacion, qa-rutas-consolas), APP_VERSION + CHANGELOG +
+asiento en el log de arquitectura, sello, push, verificación en vivo en el subdominio del nodo, y
+«Pendientes» de este charter al día.
+Hoy: <la tarea>.
+```

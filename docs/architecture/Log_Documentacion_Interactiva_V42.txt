@@ -107,3 +107,13 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   34 CTX · 340 ANN (+15) · FILETREE regenerado.
 - El puntero de HANDOFF («Visual system map») apunta al V42.0; CHANGELOG estampado bajo V5.31.
 (commit: 3b88977)
+
+## [2026-09-12] Dos charters más: Red de Socios (componente) y Terratalento (en espera)
+- Sin versión (docs). `docs/componentes/socios.md`: los cinco nodos partner como componente
+  propio con grupo «Red de Socios» (una conversación por nodo), atado a BCP · Socios; cuatro
+  paneles son scaffolds. `docs/componentes/terratalento.md`: charter en espera dentro de
+  plataforma (~6 meses, solo retroalimentación), sin grupo ni kick-off hasta separarse.
+  KICKOFF pasa a 13 prompts. Para el wrap V43: la ficha «componentes» dice «doce charters»
+  (diez + socios + terratalento en espera) y el nodo n-socios/DICT «socios» apunta al charter.
+(commit: pendiente)
+

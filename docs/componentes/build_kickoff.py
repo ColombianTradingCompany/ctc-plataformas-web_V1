@@ -7,6 +7,8 @@ R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # docs/
 ORDEN = [
  ('consolas', 'CTC Consolas internas', 'CTC Consolas internas',
   'Cerrar el pendiente más barato con dueño: la línea de `WorkersBadge.tsx` que manda al operador a una carpeta que ya no existe (sube versión); y preparar al owner las cinco decisiones del PVC (`docs/PVC_BCP_PLAN.md` §8) en una sola pantalla.'),
+ ('socios', 'Red de Socios', 'Red de Socios (una conversación por nodo)',
+  'Elegir el nodo de la sesión. Cuatro paneles son scaffolds (solo el Estudio tiene módulo real): empezar por verificar los cinco subdominios con `curl -I` y escribir `qa-socios-check.mjs` (PARTNERS ↔ subdominios ↔ puertas; requirePartner con sus tres condiciones); después, la primera pantalla del nodo elegido con su contraparte en el OCP.'),
  ('herramientas-internas', 'Herramientas Internas', 'Herramientas Internas',
   'Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). PVC: nada hasta §8. Transcriptor: la credencial estrecha.'),
  ('biblia', 'La Biblia del Café', 'Biblia del Café',
@@ -49,7 +51,7 @@ out = ['# KICKOFF · los prompts de arranque, uno por componente', '',
  '## Índice', '', '| Componente | Grupo de la barra lateral | Charter |', '|---|---|---|']
 for clave, nombre, grupo, _ in ORDEN:
     out.append(f'| {nombre} | {grupo} | `docs/componentes/{clave}.md` |')
-out += ['| Plataforma (lo transversal: CTC Home, proxy, SEO, auth, socios, Terratalento) | CTC Consolas internas | `docs/HANDOFF.md` + `docs/ALINEACION.md` |',
+out += ['| Plataforma (lo transversal: CTC Home, proxy, SEO, auth, recuperar-acceso; **Terratalento en espera**, `docs/componentes/terratalento.md`) | CTC Consolas internas | `docs/HANDOFF.md` + `docs/ALINEACION.md` |',
         '| CommaaS (hub + tenants) | CommaaS | `C:\\dev\\commaas-hub\\commaas\\docs\\HANDOFF.md` |', '']
 
 for clave, nombre, grupo, primera in ORDEN:
@@ -67,6 +69,8 @@ out += ['## Plataforma (lo transversal)  ·  `plataforma`', '',
  '3. AGENTS.md            ← la compuerta y las reglas de la casa',
  'Eres también la vía que LLAMA LOS WRAPS del mapa interactivo (ALINEACION §5): cuando el log acumule',
  'cinco asientos o se cierre un hito, compila el snapshot siguiente con el skill architecture-doc-versioning.',
+ 'Terratalento vive aquí EN ESPERA (docs/componentes/terratalento.md): solo retroalimentación y comunicación desde ECP',
+ 'durante ~6 meses; no se construye nada nuevo ahí sin el owner.',
  'Todo cambio aquí PERMEA: cada tanda deja su línea en el §3 con los componentes afectados, y verifica en',
  'las superficies que tocan el contrato (una superficie nueva = una línea en subdominios.ts + DNS a mano).',
  'Al terminar: compuerta completa (incl. qa-rutas-consolas, qa-nav, qa-grados, qa-encoding, qa-guard),',

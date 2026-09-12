@@ -11,6 +11,7 @@ y cada componente tiene su **charter** en `docs/componentes/`. Lo que ningún co
 | Clave | Componente | Charter |
 |---|---|---|
 | `consolas` | CTC Consolas internas — BCP · OCP · ECP, login maestro, `/panel` | `docs/componentes/consolas.md` |
+| `socios` | Red de Socios — los cinco nodos partner (una sesión por nodo; BCP · Socios es su backstage) | `docs/componentes/socios.md` |
 | `herramientas-internas` | Transcriptor · PVC · Herramienta de Guion · Stripe (setup) | `docs/componentes/herramientas-internas.md` |
 | `biblia` | La Biblia del Café (`apps-internas/biblia_del_cafe`) | `docs/componentes/biblia.md` |
 | `kaffetal-regal` | Kaffetal Regal — landing + panel del productor + Ficha | `docs/componentes/kaffetal-regal.md` |
@@ -20,7 +21,7 @@ y cada componente tiene su **charter** en `docs/componentes/`. Lo que ningún co
 | `directorio` | Directorio del Café | `docs/componentes/directorio.md` |
 | `ctc-tech` | CTC Tech (captación Clase B) | `docs/componentes/ctc-tech.md` |
 | `varietales` | Varietales Registrados (captación Clase B) | `docs/componentes/varietales.md` |
-| `plataforma` | Lo que no es de nadie: CTC Home, proxy, SEO, auth compartida, socios, Terratalento, recuperar-acceso | este archivo + `docs/ALINEACION.md` |
+| `plataforma` | Lo que no es de nadie: CTC Home, proxy, SEO, auth compartida, recuperar-acceso — y **Terratalento en espera** (`docs/componentes/terratalento.md`, sin grupo propio ~6 meses) | este archivo + `docs/ALINEACION.md` |
 
 ## What this is
 

@@ -21,6 +21,7 @@ Regla de oro: **una conversación = un componente**. Si la tarea cruza dos, se a
 | Componente | Grupo de la barra lateral | Charter |
 |---|---|---|
 | CTC Consolas internas | CTC Consolas internas | `docs/componentes/consolas.md` |
+| Red de Socios | Red de Socios (una conversación por nodo) | `docs/componentes/socios.md` |
 | Herramientas Internas | Herramientas Internas | `docs/componentes/herramientas-internas.md` |
 | La Biblia del Café | Biblia del Café | `docs/componentes/biblia.md` |
 | Kaffetal Regal | Kaffetal Regal | `docs/componentes/kaffetal-regal.md` |
@@ -30,7 +31,7 @@ Regla de oro: **una conversación = un componente**. Si la tarea cruza dos, se a
 | Directorio del Café | Directorio del Café | `docs/componentes/directorio.md` |
 | CTC Tech | CTC Tech | `docs/componentes/ctc-tech.md` |
 | Varietales Registrados | Varietales Registrados | `docs/componentes/varietales.md` |
-| Plataforma (lo transversal: CTC Home, proxy, SEO, auth, socios, Terratalento) | CTC Consolas internas | `docs/HANDOFF.md` + `docs/ALINEACION.md` |
+| Plataforma (lo transversal: CTC Home, proxy, SEO, auth, recuperar-acceso; **Terratalento en espera**, `docs/componentes/terratalento.md`) | CTC Consolas internas | `docs/HANDOFF.md` + `docs/ALINEACION.md` |
 | CommaaS (hub + tenants) | CommaaS | `C:\dev\commaas-hub\commaas\docs\HANDOFF.md` |
 
 ## CTC Consolas internas  ·  `consolas`
@@ -54,6 +55,30 @@ Hoy: <la tarea>.
 ```
 
 **Sugerencia de primera tarea:** Cerrar el pendiente más barato con dueño: la línea de `WorkersBadge.tsx` que manda al operador a una carpeta que ya no existe (sube versión); y preparar al owner las cinco decisiones del PVC (`docs/PVC_BCP_PLAN.md` §8) en una sola pantalla.
+
+## Red de Socios  ·  `socios`
+
+**Grupo:** Red de Socios (una conversación por nodo) · **Charter:** `docs/componentes/socios.md`
+
+```
+Trabajas SOLO en el componente «Red de Socios» (clave: socios) de la plataforma CTC
+(repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en EL NODO <nodo>
+(centro-calidad · agente-carga · agente-nacionalizacion · master-roaster · estudio-contenido).
+Antes de tocar nada lee, en este orden:
+1. docs/componentes/socios.md   ← tu charter (los cinco nodos, sus sellos, qué está construido)
+2. docs/ALINEACION.md           ← contratos transversales (identidad, cookies, patrón Supabase) y el registro de permeación (§3)
+3. AGENTS.md                    ← la compuerta y las reglas de la casa
+Un socio nunca es bcp_admin y su credencial vale para un solo nodo; el panel del nodo se construye en
+SU interfaz (/socios/<nodo>/panel) y lo que sella viaja al pasaporte por el OCP — si tu tarea necesita
+un módulo del OCP o una vista nueva, es pendiente con dueño «consolas» y una línea en el §3; ningún
+panel de socio ve dinero. Para el Estudio de Contenido, lee además docs/componentes/coffeed.md.
+Al terminar: compuerta completa (incl. qa-recuperacion, qa-rutas-consolas), APP_VERSION + CHANGELOG +
+asiento en el log de arquitectura, sello, push, verificación en vivo en el subdominio del nodo, y
+«Pendientes» de este charter al día.
+Hoy: <la tarea>.
+```
+
+**Sugerencia de primera tarea:** Elegir el nodo de la sesión. Cuatro paneles son scaffolds (solo el Estudio tiene módulo real): empezar por verificar los cinco subdominios con `curl -I` y escribir `qa-socios-check.mjs` (PARTNERS ↔ subdominios ↔ puertas; requirePartner con sus tres condiciones); después, la primera pantalla del nodo elegido con su contraparte en el OCP.
 
 ## Herramientas Internas  ·  `herramientas-internas`
 
@@ -249,6 +274,8 @@ CTC Home (/), src/proxy.ts y la red de subdominios, SEO/Open Graph/JSON-LD/sitem
 3. AGENTS.md            ← la compuerta y las reglas de la casa
 Eres también la vía que LLAMA LOS WRAPS del mapa interactivo (ALINEACION §5): cuando el log acumule
 cinco asientos o se cierre un hito, compila el snapshot siguiente con el skill architecture-doc-versioning.
+Terratalento vive aquí EN ESPERA (docs/componentes/terratalento.md): solo retroalimentación y comunicación desde ECP
+durante ~6 meses; no se construye nada nuevo ahí sin el owner.
 Todo cambio aquí PERMEA: cada tanda deja su línea en el §3 con los componentes afectados, y verifica en
 las superficies que tocan el contrato (una superficie nueva = una línea en subdominios.ts + DNS a mano).
 Al terminar: compuerta completa (incl. qa-rutas-consolas, qa-nav, qa-grados, qa-encoding, qa-guard),

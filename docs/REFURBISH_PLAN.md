@@ -76,7 +76,9 @@ consolas gobiernan de este componente** (la cara backstage) · **Pendientes** ·
 | Clave | Componente | Grupo de la barra lateral |
 |---|---|---|
 | `consolas` | CTC Consolas internas (BCP · OCP · ECP · login maestro · `/panel`) | CTC Consolas internas |
+| `socios` | Red de Socios: los cinco nodos partner (Centro de Calidad · Agente de Carga · Agente de Nacionalización · Master Roaster · Estudio de Contenido), atados al BCP · Socios — *añadido 2026-09-12* | Red de Socios (una conversación por nodo) |
 | `herramientas-internas` | Transcriptor · PVC (motor + modelo) · Herramienta de Guion · (CV App Manager → CommaaS) | Herramientas Internas |
+| `terratalento` | Terratalento — **en espera dentro de `plataforma`** (~6 meses, solo retroalimentación); charter preparado para separarse — *añadido 2026-09-12* | (ninguno hasta separarse) |
 | `biblia` | La Biblia del Café (app-interna propia, varias sesiones) | Biblia del Café |
 | `kaffetal-regal` | Kaffetal Regal: landing + panel del productor + Ficha + Arena/ofertas/subastas lado productor | Kaffetal Regal |
 | `cherry-picked` | Cherry Picked: hub + Green + Roast/X + CaaS; subastas lado comprador | Cherry Picked |

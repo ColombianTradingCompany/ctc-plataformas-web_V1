@@ -87,6 +87,7 @@ consolas gobiernan de este componente** (la cara backstage) · **Pendientes** ·
 | `directorio` | Directorio del Café | Directorio del Café |
 | `ctc-tech` | CTC Tech (captación Clase B) | CTC Tech |
 | `varietales` | Varietales Registrados (captación Clase B) | Varietales Registrados |
+| `secretaria` | Secretaría CTC: el espejo plataforma ↔ Notion ↔ Google (agente con conectores + la espina de integración); `docs/SECRETARIA_PLAN.md` — *añadido 2026-09-12* | Secretaría CTC (Notion · Google) |
 
 Lo que no es de ningún componente (proxy, Supabase, auth compartida, SEO/OG, i18n, la espina
 de integración, el libro de consumo, `version.ts`, los guardianes transversales) es

@@ -7,8 +7,9 @@ Escrito el 2026-09-11 como entregable del paso 3.8 de `REFURBISH_PLAN.md`.
 ## Cómo se arranca una sesión
 
 1. **Abrir Claude Code en `C:\dev\ctc-platforms\ctc-platform`** (para CommaaS, en `C:\dev\commaas-hub\commaas`).
-   Nunca en la carpeta vieja de OneDrive: la memoria de Claude va atada a la carpeta.
-2. **Filar la conversación en el grupo de la barra lateral** que lleva el nombre del componente (ya existen los diez).
+   Nunca en la carpeta vieja de OneDrive: la memoria de Claude va atada a la carpeta. La sesión de la
+   **Secretaría** necesita además los conectores de Notion, Google (Drive · Gmail · Calendar) y Make activos.
+2. **Filar la conversación en el grupo de la barra lateral** que lleva el nombre del componente (ya existen los doce).
 3. **Pegar el prompt** del componente y sustituir `<la tarea>` (y `<nombre>`/`<id>` en las herramientas).
 4. Al cerrar la tanda, la sesión deja el charter con sus «Pendientes» al día y, si el cambio alcanza a otro
    componente, una línea en `docs/ALINEACION.md` §3. La siguiente sesión de ese componente empieza leyendo eso.
@@ -22,6 +23,7 @@ Regla de oro: **una conversación = un componente**. Si la tarea cruza dos, se a
 |---|---|---|
 | CTC Consolas internas | CTC Consolas internas | `docs/componentes/consolas.md` |
 | Red de Socios | Red de Socios (una conversación por nodo) | `docs/componentes/socios.md` |
+| Secretaría CTC | Secretaría CTC (Notion · Google) | `docs/componentes/secretaria.md` |
 | Herramientas Internas | Herramientas Internas | `docs/componentes/herramientas-internas.md` |
 | La Biblia del Café | Biblia del Café | `docs/componentes/biblia.md` |
 | Kaffetal Regal | Kaffetal Regal | `docs/componentes/kaffetal-regal.md` |
@@ -79,6 +81,31 @@ Hoy: <la tarea>.
 ```
 
 **Sugerencia de primera tarea:** Elegir el nodo de la sesión. Cuatro paneles son scaffolds (solo el Estudio tiene módulo real): empezar por verificar los cinco subdominios con `curl -I` y escribir `qa-socios-check.mjs` (PARTNERS ↔ subdominios ↔ puertas; requirePartner con sus tres condiciones); después, la primera pantalla del nodo elegido con su contraparte en el OCP.
+
+## Secretaría CTC  ·  `secretaria`
+
+**Grupo:** Secretaría CTC (Notion · Google) · **Charter:** `docs/componentes/secretaria.md`
+
+```
+Trabajas SOLO en el componente «Secretaría CTC» (clave: secretaria) de la plataforma CTC
+(repo C:\dev\ctc-platforms\ctc-platform, rama main). Eres el ESPEJO entre la plataforma, Notion y
+Google: la plataforma manda en lo que gestiona; Notion lo refleja con ctc_id · CTC · Enlace CTC y
+puede tener más; de Notion vuelve solo lo que tenga manejador con nombre. Antes de tocar nada lee:
+1. docs/componentes/secretaria.md   ← tu charter (reglas: conciliar es humano, nunca borrar, nunca Postgres)
+2. docs/SECRETARIA_PLAN.md          ← el escaneo, la tabla de correspondencias (§3), las decisiones (§5) y la bitácora (§6)
+3. docs/ALINEACION.md               ← contratos transversales (el espejo es uno) y el registro de permeación (§3)
+4. el charter del componente cuya base vayas a espejar (kaffetal-regal, consolas, cherry-picked…)
+Herramientas: Notion (fetch/query SQL para leer; create/update página a página para escribir), Drive,
+Gmail, Calendar, Make (lectura de escenarios y ejecuciones) y Supabase SOLO LECTURA. Propón cada
+coincidencia por correo o nombre y espera mi confirmación antes de escribir el ctc_id; anuncia antes
+cualquier corrida de más de 100 páginas. Lo que exija código (eventos, tablas, manejadores) es
+pendiente con dueño «consolas» y una línea en ALINEACION §3, no lo escribes tú.
+Al terminar: fila en la bitácora del plan (§6), «Pendientes» de este charter al día, y si tocaste
+una base que otro componente refleja, su charter lo sabe.
+Hoy: <la tarea>.
+```
+
+**Sugerencia de primera tarea:** F0 del plan (`docs/SECRETARIA_PLAN.md` §4), sin código: añadir `ctc_id` · `CTC` · `Enlace CTC` a Lista de Proveedores, Lista de Fincas, Fichas Técnicas y Clientes Potenciales; proponer al owner las coincidencias (Doña Hortencia ↔ Hortencia PALMAS, Hacienda Calapo ↔ «Finca calapo», La Ceiba fuera de la Lista de Fincas) y escribir solo las confirmadas; reescribir la prosa de «Grados de Calidad CTC» desde su base; señalar las dos páginas con contraseñas en claro.
 
 ## Herramientas Internas  ·  `herramientas-internas`
 

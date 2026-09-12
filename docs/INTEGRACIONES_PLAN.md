@@ -86,6 +86,11 @@ Candidatos naturales para el espejo, por orden de utilidad:
 umbrales SCA (BLACK 80+, RED 84+, BLUE 86+, GOLD 88+, TYRIAN 91+); la plataforma
 los asigna en la Jornada de Arena y los escribe en `lots.grade`.
 
+**Actualización 2026-09-12** (escaneo de la Secretaría, `SECRETARIA_PLAN.md` §1.5): la base
+estructurada «Grados de Calidad CTC» de Notion ya dice lo mismo que `definicion.ts`
+(80·82·84·86·88); solo la prosa de la página sigue vieja y la reescribe la Secretaría.
+Los umbrales de arriba (80/84/86/88/91) son los del pitch, no los de la base.
+
 Hoy coinciden. En cuanto uno se mueva y el otro no, habrá dos verdades y ninguna
 forma de saber cuál rige. **Decisión pendiente del owner**: el canónico debería
 ser la plataforma (es quien los otorga) y Notion debería mostrar el espejo. Lo

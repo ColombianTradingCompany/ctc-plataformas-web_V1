@@ -33,6 +33,7 @@ Cada uno tiene UNA fuente en el código. Se cambia allí y solo allí, y quien l
 | **Tres idiomas** (ES · EN · DE) en toda superficie pública; el contenido de Coffeed se produce en español a propósito | `src/components/lang/i18n.tsx` (Home, KR, Directorio…) y `src/components/cherry-picked/i18n.ts` (la familia CP) — dos proveedores, la misma unión de idiomas | landings, paneles, formularios de captación, correos | — |
 | **SEO y tarjetas** — `metadatosDeSuperficie()` es la única puerta al Open Graph; JSON-LD **no escribe datos** (sale de las fuentes únicas); `robots.txt`/`sitemap.xml` son route handlers por host; `platform_surfaces` (ECP · Manejo de Plataformas) es la capa de excepciones; `public/tools/*.html` llevan su `<head>` a mano | `src/lib/seo/{openGraph,jsonLd,superficies}.ts`, `src/app/{robots.txt,sitemap.xml}/route.ts` | todas las superficies públicas | `qa-tools-seo-check` (193), `qa-tools-seo-espejo` (68) |
 | **La espina de integración** — los eventos hacia Make/Notion/Google se **emiten** (`emitEvent`, nombrados por dominio: `coffeed.redaccion.post_creado`, `herramienta.<id>.<evento>`…), nunca se llama a la máquina de nadie | `src/lib/integraciones/{emit,dominios,dispatch}.ts` | Coffeed, Herramientas (`CTC.emitir`), leads | `qa-integraciones-check` |
+| **El espejo Notion/Google** — la plataforma manda en lo que gestiona; Notion lo **refleja** con tres propiedades (`ctc_id` · `CTC` · `Enlace CTC`) y puede tener más filas; de Notion vuelve **solo** lo que tenga manejador con nombre en `aplicar.ts`; conciliar es humano (propone el agente, confirma el owner); Google Contacts ↔ Notion por campos con dueño; Drive enlaza, no copia | `docs/SECRETARIA_PLAN.md` §2 (doctrina) y §3 (correspondencias), `src/lib/integraciones/aplicar.ts` (lo que vuelve) | Secretaría (agente), consolas (eventos y `notion_espejos`), todo componente cuya base se refleje | `qa-espejo-notion` (F2); `espejo-reporte.mjs` (pendiente) |
 | **Codificación** — todo fuente en UTF-8; la compuerta no mira los bytes, el guardián sí | — | todo | `qa-encoding-check.mjs` |
 | **Reglas UI/UX de la casa** — botones abajo a la derecha (apilados si hay varios) · acordeones cerrados por defecto · hilos y adjuntos en pop-up · interfaz mínima y técnica · cada pantalla define vacío · edición · guardado · error · pendiente · objetivos táctiles ≥ 44 px | Notion «Checklist de Proceso de Creación» (ya decidido por el owner: no se re-litiga) | toda pantalla nueva | — |
 
@@ -83,6 +84,7 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 | 2026-09-10 | V5.28–29 | consolas (BCP) → **PENDIENTE**: grados, Cherry Picked (MOQ), subastas (moneda) | **PVC** entra al BCP (`/bcp/pvc`, `pvc_*`, `public_pvc_current`, `/api/pvc/current`); sus bandas y su MOQ **no coinciden** con los de la plataforma — nada de cara al cliente lo lee aún | `lib/pvc/*`, `PVC_BCP_PLAN.md` §8 (dueño: consolas; decide el owner) |
 | 2026-09-10 | V5.30 | CTC Home → Kaffetal Regal | El **vídeo de presentación definitivo** se monta en la Home y en la landing de KR (subtítulos ES/EN) | `reference/video-presentacion/` (tras §4 del plan) |
 | 2026-09-11 | — | plataforma → todos | **Reorganización por componentes**: charters, este archivo, `C:\dev` ordenado, memoria unificada por espacio | `REFURBISH_PLAN.md` |
+| 2026-09-12 | — | secretaria → consolas, kaffetal-regal, cherry-picked, ctc-tech, varietales, socios | Nace la **Secretaría CTC** (el espejo con Notion/Google) con su contrato en §1; el escaneo confirma que la base «Grados de Calidad CTC» de Notion **ya coincide** con `definicion.ts` (solo la prosa está vieja); F1 (eventos + `notion_espejos`) es de consolas | `SECRETARIA_PLAN.md`, `componentes/secretaria.md` |
 
 ### 3b · Pendientes cruzados con dueño (lo que un componente le debe a otro)
 
@@ -94,6 +96,8 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 | kaffetal-regal | consolas (OCP) | Estrenar el escáner visual con soportes REALES (los 7 lotes de producción siguen en borrador) | V5.23 |
 | cherry-picked | consolas (OCP) | La primera subasta real cuando el bache galardone un Tyrian | V5.24 |
 | coffeed | consolas (ECP) | La primera generación real de Redacción y el escenario de Make de `coffeed.redaccion.post_creado` | V5.9 |
+| consolas | secretaria | F1 del espejo: `notion_espejos`, eventos `productor.registrado` · `finca.aprobada` · `lote.galardonado` · `lead.creado` · `comprador.registrado` · `socio.credencial`, manejadores `<entidad>.espejada`, `espejo-reporte.mjs` (`SECRETARIA_PLAN.md` §4) | 2026-09-12 |
+| owner | secretaria | Conexión **Google Contacts** en Make (no hay conector en Claude); las coincidencias de proveedores/fincas; sacar y rotar las dos contraseñas en claro de Objetivos y Tareas (`SECRETARIA_PLAN.md` §5) | 2026-09-12 |
 
 ## 4 · Reglas de trabajo (valen en los diez componentes)
 

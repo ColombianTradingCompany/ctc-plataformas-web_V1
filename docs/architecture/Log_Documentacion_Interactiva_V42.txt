@@ -117,3 +117,13 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   (diez + socios + terratalento en espera) y el nodo n-socios/DICT «socios» apunta al charter.
 (commit: 18d61c0)
 
+## [2026-09-12] La Secretaría CTC: el espejo plataforma ↔ Notion ↔ Google
+- Sin versión (docs). Componente nuevo `secretaria` (`docs/componentes/secretaria.md`) con grupo
+  «Secretaría CTC (Notion · Google)» y plan `docs/SECRETARIA_PLAN.md`: escaneo de Notion (12 bases
+  contadas), Google (Gmail 0–6 = DOMINIOS, Calendar «CTC · Operación», Drive A–Z, sin Contacts),
+  Make (3 escenarios CTC) y la base; doctrina del espejo (`ctc_id` · `CTC` · `Enlace CTC`); tabla de
+  15 correspondencias; F0–F3. Contrato nuevo en ALINEACION §1 y pendientes en §3b.
+- Para el wrap V43: la ficha «componentes» pasa a **trece charters**; la ficha «integraciones» (n-make
+  / la espina) enlaza el plan de la Secretaría y anota que la base de grados de Notion coincide con
+  `definicion.ts`; ANN nuevas para `docs/SECRETARIA_PLAN.md` y `docs/componentes/secretaria.md`.
+(commit: pendiente)

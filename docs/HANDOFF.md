@@ -21,6 +21,7 @@ y cada componente tiene su **charter** en `docs/componentes/`. Lo que ningún co
 | `directorio` | Directorio del Café | `docs/componentes/directorio.md` |
 | `ctc-tech` | CTC Tech (captación Clase B) | `docs/componentes/ctc-tech.md` |
 | `varietales` | Varietales Registrados (captación Clase B) | `docs/componentes/varietales.md` |
+| `secretaria` | Secretaría CTC — el espejo plataforma ↔ Notion ↔ Google: agente con conectores + la espina (`docs/SECRETARIA_PLAN.md`) | `docs/componentes/secretaria.md` |
 | `plataforma` | Lo que no es de nadie: CTC Home, proxy, SEO, auth compartida, recuperar-acceso — y **Terratalento en espera** (`docs/componentes/terratalento.md`, sin grupo propio ~6 meses) | este archivo + `docs/ALINEACION.md` |
 
 ## What this is

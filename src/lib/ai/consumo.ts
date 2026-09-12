@@ -12,6 +12,7 @@ import { costeUSD, type Uso } from "./precios";
 //   app/ocp/(app)/fichasActions.ts → el escáner visual de soportes (V5.23)
 //   lib/coffeed/gemini.ts       → extracción de vídeo
 //   lib/coffeed/geminiImage.ts  → fotogramas de RT-Scriptor
+//   api/herramientas/cromatografia → el Lector de Cromatografía de Suelo (2026-09-12)
 //
 // LA REGLA DE ORO: registrar el gasto NUNCA puede tumbar la operación que lo
 // generó. Es la misma regla que `emitEvent()` de la espina de integración —
@@ -46,6 +47,10 @@ export const USOS = {
   arenaMejoras: "arena:mejoras",
   // V5.23: el escáner visual de soportes B2/B3 del OCP (fichasActions).
   fichaEscaner: "kr:ficha-escaner",
+  // 2026-09-12: el Lector de Cromatografía de Suelo (Herramientas del Café,
+  // api/herramientas/cromatografia). La primera herramienta de la suite que
+  // gasta: una lectura por análisis, opt-in, nivel Plus, techo diario.
+  herramientasCromatografia: "herramientas:cromatografia",
   // `gvg:match` y `gvg:reporte` se retiran en V5.1: el CV App Manager se fue a
   // CommaaS y anota su gasto en el libro del hub. Las filas históricas de
   // `ai_usage` conservan esas cadenas y el tablero las sigue mostrando.

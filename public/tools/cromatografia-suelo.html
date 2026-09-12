@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lector de Cromatografía de Suelo</title>
+<meta name="description" content="Lector asistido por IA de cromatografías de suelo Pfeiffer en fincas cafeteras. Lectura tentativa, no de laboratorio. Colombian Trading Company SAS · ctcexport.com">
+<style>/* fuentes locales (vendor-tool-assets.mjs) */
+/* vietnamese */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCBTeO-U.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCFTeO-U.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCBTeO-U.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCFTeO-U.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>
+  :root{
+    --ink:#1F1B2E; --muted:#6B6580; --rule:#E4E0EC; --paper:#FFFFFF; --wash:#F7F5FA;
+    --purple:#3B2566; --purple-2:#4B2E83; --gold:#C9A227; --gold-soft:#F3E8C4;
+    --ok:#2F7D4F; --warn:#B7791F; --bad:#B3261E;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--wash);font-size:15px;line-height:1.5}
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .top{background:var(--purple);color:#EDE8F6;padding:18px 22px}
+  .top .in{max-width:980px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .mark{width:40px;height:40px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--gold);
+    background:radial-gradient(circle,#F3EDE0 0 18%,#B67A2E 19% 46%,#D9A441 47% 74%,#E8D9A8 75% 100%)}
+  .top h1{font-family:var(--serif);font-weight:600;font-size:22px;margin:0;line-height:1.2}
+  .top .sub{font-size:13px;opacity:.8}
+  .chip{margin-left:auto;font-size:12px;border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:3px 10px}
+  main{max-width:980px;margin:0 auto;padding:18px 16px 60px;display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
+  .card h2{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 4px}
+  .card .lead{color:var(--muted);margin:0 0 14px;font-size:14px}
+  .paso{display:inline-block;width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;text-align:center;font:600 13px/24px var(--sans);margin-right:8px;vertical-align:2px}
+  details{border:1px solid var(--rule);border-radius:8px;background:var(--wash);margin:10px 0}
+  details>summary{cursor:pointer;padding:10px 12px;font-weight:500;min-height:44px;display:flex;align-items:center}
+  details>div{padding:0 14px 12px;font-size:14px;color:var(--muted)}
+  .aviso{font-size:13px;color:var(--muted)}
+  .drop{border:2px dashed #C9C2D8;border-radius:10px;padding:26px;text-align:center;background:var(--wash);cursor:pointer}
+  .drop:hover,.drop.sobre{border-color:var(--purple-2);background:#EFEAF7}
+  .drop b{display:block;font-size:16px}
+  .foto{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:18px;align-items:start;margin-top:14px}
+  .foto canvas{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);background:#fff}
+  @media (max-width:700px){.foto{grid-template-columns:1fr}}
+  .gate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+  .gate li{display:flex;gap:8px;align-items:baseline}
+  .gate .s{width:18px;flex:none;font-weight:600}
+  .gate .ok{color:var(--ok)} .gate .no{color:var(--bad)}
+  .gate .v{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+  .banner{border-radius:8px;padding:10px 12px;font-size:14px;margin-top:10px}
+  .banner.bad{background:#FBEAE8;color:#7A1C15}
+  .banner.ok{background:#E8F3EC;color:#1E5234}
+  .banner.info{background:var(--gold-soft);color:#5A4710}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field.span{grid-column:1/-1}
+  .field label{font-size:13px;font-weight:500}
+  .field input,.field select,.field textarea{border:1px solid #CFC8DD;border-radius:6px;padding:9px 10px;background:#fff;min-height:44px}
+  .field textarea{min-height:80px;resize:vertical}
+  @media (max-width:640px){.fgrid{grid-template-columns:1fr}}
+  .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;grid-column:1/-1}
+  .check input{width:20px;height:20px;margin-top:2px;flex:none}
+  .bar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+  .btn{border:1px solid #CFC8DD;background:#fff;border-radius:6px;padding:10px 16px;min-height:44px;cursor:pointer;font-weight:500}
+  .btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .btn.gold{background:var(--gold);border-color:var(--gold);color:#1F1B2E}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+  td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tw{overflow-x:auto}
+  .sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:-2px;margin-right:6px}
+  .ford{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .ford>div{border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
+  .ford b{display:block;font-size:13px;color:var(--muted);font-weight:500}
+  .ford .r{font-family:var(--serif);font-size:24px;font-weight:600}
+  .ford .base{font-size:12px;color:var(--muted)}
+  @media (max-width:640px){.ford{grid-template-columns:1fr}}
+  .nivel{display:inline-block;font-weight:600;border-radius:4px;padding:0 6px;font-size:12px}
+  .nivel.A{background:#E3EEF9;color:#1B4B7A} .nivel.B{background:#F3E8C4;color:#5A4710} .nivel.C{background:#F1E4EF;color:#6B2A61}
+  .etq{display:block;font-size:12px;color:var(--muted)}
+  .reco{margin:0;padding-left:20px}
+  .reco li{margin-bottom:8px}
+  .prio{font-size:12px;color:var(--muted)}
+  .limites{background:var(--wash);border-left:3px solid var(--gold);padding:10px 14px;font-size:13px;color:#4A4460}
+  .reporte h3{font-family:var(--serif);font-weight:600;font-size:16px;margin:18px 0 6px}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:6px 0 10px}
+  .versiones{font-size:12px;color:var(--muted);margin-top:14px}
+  .cargando{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:g .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes g{to{transform:rotate(360deg)}}
+  [hidden]{display:none!important}
+  @media print{
+    body{background:#fff}
+    .top,.noprint,#paso1,#paso2,#paso3,#paso4{display:none!important}
+    main{padding:0;max-width:none}
+    .card{border:0;padding:0}
+    .reporte h3{break-after:avoid}
+    tr{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="in">
+    <span class="mark" aria-hidden="true"></span>
+    <div>
+      <h1>Lector de Cromatografía de Suelo</h1>
+      <div class="sub">Suite de Herramientas del Café · Colombian Trading Company</div>
+    </div>
+    <span class="chip">Lectura cualitativa · no es laboratorio</span>
+  </div>
+</header>
+
+<main>
+  <div class="card noprint" id="recuperar" hidden>
+    <span class="aviso">Hay un análisis sin guardar en este navegador.</span>
+    <div class="bar"><button class="btn" id="btnRecuperar" type="button">Recuperar el último análisis</button></div>
+  </div>
+
+  <section class="card" id="paso1">
+    <h2><span class="paso">1</span>La foto del cromatograma</h2>
+    <p class="lead">La herramienta mide la foto antes de interpretar nada: si no sirve, lo dice y no la lee.</p>
+    <details>
+      <summary>Cómo tomar la foto</summary>
+      <div id="instrCaptura"></div>
+    </details>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Cargar la foto del cromatograma">
+      <b>Cargar la foto</b>
+      <span class="aviso">Arrástrela aquí o toque para elegirla · JPEG, PNG o WebP</span>
+      <input type="file" id="archivo" accept="image/jpeg,image/png,image/webp" hidden>
+    </div>
+    <div class="foto" id="fotoBloque" hidden>
+      <canvas id="vista" width="300" height="300" aria-label="Vista del cromatograma con las fronteras medidas"></canvas>
+      <div>
+        <ul class="gate" id="gate"></ul>
+        <div id="gateMsg"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="paso2">
+    <h2><span class="paso">2</span>El contexto de la muestra</h2>
+    <p class="lead">El departamento no es decorativo: decide qué línea base de suelo aplica a la lectura.</p>
+    <form class="fgrid" id="formCtx" autocomplete="off" onsubmit="return false">
+      <div class="field span" id="campoFincaSel" hidden>
+        <label for="fincaSel">Finca de su cuenta</label>
+        <select id="fincaSel"></select>
+      </div>
+      <div class="field span" id="campoFincaTxt">
+        <label for="fincaTxt">Finca <span class="aviso">(opcional)</span></label>
+        <input id="fincaTxt" placeholder="Nombre de la finca">
+      </div>
+      <div class="field" id="campoParcelaSel" hidden>
+        <label for="parcelaSel">Lote o parcela</label>
+        <select id="parcelaSel"></select>
+      </div>
+      <div class="field" id="campoParcelaTxt">
+        <label for="parcelaTxt">Lote o parcela <span class="aviso">(opcional)</span></label>
+        <input id="parcelaTxt" placeholder="Lote 3, parte alta">
+      </div>
+      <div class="field">
+        <label for="departamento">Departamento</label>
+        <select id="departamento"></select>
+      </div>
+      <div class="field">
+        <label for="municipio">Municipio <span class="aviso">(opcional)</span></label>
+        <input id="municipio">
+      </div>
+      <div class="field">
+        <label for="altitud">Altitud (msnm) <span class="aviso">(opcional)</span></label>
+        <input id="altitud" type="number" min="0" max="4500" step="10">
+      </div>
+      <div class="field">
+        <label for="variedad">Variedad <span class="aviso">(opcional)</span></label>
+        <input id="variedad" placeholder="Castillo">
+      </div>
+      <div class="field">
+        <label for="manejo">Manejo</label>
+        <select id="manejo">
+          <option value="">Elegir</option>
+          <option value="orgánico">Orgánico</option>
+          <option value="convencional">Convencional</option>
+          <option value="en transición">En transición</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fecha">Fecha de la muestra</label>
+        <input id="fecha" type="date">
+      </div>
+      <div class="field span">
+        <label for="practicas">Prácticas recientes y notas <span class="aviso">(opcional)</span></label>
+        <textarea id="practicas" maxlength="600" placeholder="Abonado con compost hace 3 semanas; cobertura de leguminosas; sin herbicida desde 2025."></textarea>
+      </div>
+      <label class="check"><input type="checkbox" id="consent"><span>Autorizo guardar el nombre de la finca y del lote con este análisis, para compararlo con otros de la misma finca. Sin esta casilla el análisis se guarda sin ellos. La herramienta nunca pide coordenadas.</span></label>
+      <label class="check"><input type="checkbox" id="fincaPdf" disabled><span>Mostrar el nombre de la finca en el PDF.</span></label>
+    </form>
+  </section>
+
+  <section class="card" id="paso3" hidden>
+    <h2><span class="paso">3</span>Rasgos medidos</h2>
+    <p class="lead">Medidos sobre la foto con visión clásica, sin IA. Son el ancla de cualquier lectura.</p>
+    <div class="tw"><table><tbody id="tablaRasgos"></tbody></table></div>
+    <h3 style="font-family:var(--serif);font-size:16px;margin:16px 0 6px">Escala morfológica de Ford · estimación programática</h3>
+    <div class="ford" id="fordProg"></div>
+    <p class="aviso" id="fordCaveat"></p>
+  </section>
+
+  <section class="card noprint" id="paso4" hidden>
+    <h2><span class="paso">4</span>Lectura interpretativa</h2>
+    <p class="lead">Una lectura tentativa, con la observación, la fuente y el nivel de evidencia de cada afirmación. Necesita cuenta con la herramienta activa e internet.</p>
+    <div id="iaMsg"></div>
+    <div class="bar">
+      <button class="btn primary" id="btnIA" type="button">Interpretar con IA · ≈ US$ 0,01</button>
+    </div>
+  </section>
+
+  <article class="card reporte" id="reporte" hidden>
+    <h2 id="rTitulo">Reporte de lectura cromatográfica</h2>
+    <div class="meta" id="rMeta"></div>
+
+    <h3>Descripción visual objetiva</h3>
+    <p id="rDesc"></p>
+
+    <h3>Rasgos computacionales</h3>
+    <div class="tw"><table><tbody id="rRasgos"></tbody></table></div>
+
+    <h3>Escala morfológica (Ford et al.) · rangos estimados</h3>
+    <div class="ford" id="rFord"></div>
+
+    <h3>Interpretación tentativa · cadena de evidencia</h3>
+    <div id="rEvidenciaVacia" class="aviso"></div>
+    <div class="tw"><table id="rEvidenciaTabla">
+      <thead><tr><th>Observación</th><th>Lectura tentativa</th><th>Fuente</th><th>Nivel</th><th>Confianza</th></tr></thead>
+      <tbody id="rEvidencia"></tbody>
+    </table></div>
+
+    <h3>Contexto regional aplicado</h3>
+    <p id="rRegion"></p>
+
+    <h3>Recomendaciones de manejo</h3>
+    <ul class="reco" id="rReco"></ul>
+
+    <h3>Límites del análisis</h3>
+    <div class="limites" id="rLimites"></div>
+    <div class="versiones" id="rVersiones"></div>
+
+    <div class="bar noprint">
+      <button class="btn" id="btnNuevo" type="button">Nuevo análisis</button>
+      <button class="btn gold" id="btnPdf" type="button">Descargar PDF</button>
+    </div>
+  </article>
+</main>
+
+<script src="/tools/assets/cromatografia-rasgos.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DEPARTAMENTOS = ["Antioquia","Bolívar","Boyacá","Caldas","Caquetá","Casanare","Cauca","Cesar","Cundinamarca","Huila","La Guajira","Magdalena","Meta","Nariño","Norte de Santander","Putumayo","Quindío","Risaralda","Santander","Tolima","Valle del Cauca"];
+  var API = "/api/herramientas/cromatografia";
+  var CLAVE_LOCAL = "ctc-croma-ultimo";
+  var ETQ_ESTADO = { "sin-foto": "Sin foto", rechazada: "Foto rechazada", medida: "Rasgos medidos", "con-lectura": "Con lectura" };
+  var ZONAS = { central: "Central", mineral: "Mineral", organic: "Orgánica", enzymatic: "Externa (enzimática)" };
+
+  var $ = function (s) { return document.querySelector(s); };
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim(); }
+  function hoy() { return new Date().toISOString().slice(0, 10); }
+  function coma(n, d) { return typeof n === "number" && isFinite(n) ? n.toFixed(d == null ? 2 : d).replace(".", ",") : "—"; }
+  function nuevoId() {
+    return "CRM-" + hoy().replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  }
+
+  // ¿Abierta dentro de Cherry Picked? Allí no hay fincas (owner, 2026-09-12).
+  var enCP = false;
+  try {
+    var pl = window.parent.location;
+    enCP = /^\/cherry-picked/.test(pl.pathname) || /^cherry-picked/.test(pl.hostname);
+  } catch (e) { enCP = false; }
+
+  var REGLAS = null;
+  var imagenIA = null; // la foto reducida para la lectura; NO se guarda en el trabajo
+  var fincas = [];
+
+  function nuevoEstado() {
+    return {
+      esquema: 1,
+      sample_id: nuevoId(),
+      estado: "sin-foto",
+      creado: new Date().toISOString(),
+      miniatura: null,
+      validacion: null,
+      rasgos: null,
+      ford_programatico: null,
+      rasgos_version: null,
+      contexto: { finca_id: "", finca: "", parcela: "", departamento: "", municipio: "", altitud_m: "", variedad: "", manejo: "", fecha_muestra: hoy(), practicas: "", consentimiento: false, finca_en_pdf: false },
+      lectura: null,
+      meta: null
+    };
+  }
+  var E = nuevoEstado();
+
+  /* ── Guardado: puente + respaldo local ─────────────────────────────────── */
+  function estadoParaGuardar() {
+    var copia = JSON.parse(JSON.stringify(E));
+    if (!copia.contexto.consentimiento) {
+      copia.contexto.finca = "";
+      copia.contexto.finca_id = "";
+      copia.contexto.parcela = "";
+      copia.contexto.finca_en_pdf = false;
+    }
+    if (JSON.stringify(copia).length > 190000) copia.miniatura = null;
+    return copia;
+  }
+  function resumen() {
+    var c = E.contexto;
+    return [(c.consentimiento && c.finca) || "Sin finca", c.departamento || "sin departamento", c.fecha_muestra || "", ETQ_ESTADO[E.estado] || ""].filter(Boolean).join(" · ");
+  }
+  function cambio() {
+    try { localStorage.setItem(CLAVE_LOCAL, JSON.stringify(estadoParaGuardar())); } catch (e) { /* sin almacenamiento */ }
+    if (window.CTC) window.CTC.tocado();
+  }
+
+  /* ── Reglas ────────────────────────────────────────────────────────────── */
+  fetch("/tools/assets/cromatografia-reglas.json")
+    .then(function (r) { return r.json(); })
+    .then(function (j) { REGLAS = j; pintarReglas(); pintarTodo(); })
+    .catch(function () { $("#instrCaptura").textContent = "No se pudieron cargar las reglas de interpretación."; });
+
+  function pintarReglas() {
+    $("#instrCaptura").innerHTML = "<p>" + esc(REGLAS.image_validation_gate.on_reject) + ".</p><p>Motivos de rechazo:</p><ul>" +
+      REGLAS.image_validation_gate.reject_if.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul>";
+    $("#fordCaveat").textContent = REGLAS.ford_scale.caveat + " " + REGLAS.ford_scale.reporting_rule;
+  }
+
+  /* ── Formulario ────────────────────────────────────────────────────────── */
+  $("#departamento").innerHTML = '<option value="">Otro o no lo sé</option>' + DEPARTAMENTOS.map(function (d) { return "<option>" + esc(d) + "</option>"; }).join("");
+
+  var CAMPOS = { fincaTxt: "finca", parcelaTxt: "parcela", departamento: "departamento", municipio: "municipio", altitud: "altitud_m", variedad: "variedad", manejo: "manejo", fecha: "fecha_muestra", practicas: "practicas" };
+  Object.keys(CAMPOS).forEach(function (id) {
+    $("#" + id).addEventListener("input", function (ev) {
+      E.contexto[CAMPOS[id]] = ev.target.value;
+      if (id === "departamento" || id === "manejo" || id === "fecha") pintarIA();
+      cambio();
+    });
+  });
+  $("#consent").addEventListener("change", function (ev) {
+    E.contexto.consentimiento = ev.target.checked;
+    $("#fincaPdf").disabled = !ev.target.checked;
+    if (!ev.target.checked) { $("#fincaPdf").checked = false; E.contexto.finca_en_pdf = false; }
+    pintarReporte();
+    cambio();
+  });
+  $("#fincaPdf").addEventListener("change", function (ev) { E.contexto.finca_en_pdf = ev.target.checked; pintarReporte(); cambio(); });
+
+  function ponerFormulario() {
+    var c = E.contexto;
+    $("#fincaTxt").value = c.finca || "";
+    $("#parcelaTxt").value = c.parcela || "";
+    $("#departamento").value = DEPARTAMENTOS.indexOf(c.departamento) >= 0 ? c.departamento : "";
+    $("#municipio").value = c.municipio || "";
+    $("#altitud").value = c.altitud_m || "";
+    $("#variedad").value = c.variedad || "";
+    $("#manejo").value = c.manejo || "";
+    $("#fecha").value = c.fecha_muestra || "";
+    $("#practicas").value = c.practicas || "";
+    $("#consent").checked = !!c.consentimiento;
+    $("#fincaPdf").disabled = !c.consentimiento;
+    $("#fincaPdf").checked = !!c.finca_en_pdf;
+    if (fincas.length) {
+      $("#fincaSel").value = c.finca_id || "";
+      pintarParcelas();
+    }
+  }
+
+  /* ── Fincas de la cuenta ───────────────────────────────────────────────── */
+  fetch(API + "/fincas" + (enCP ? "?superficie=cp" : ""), { credentials: "same-origin" })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (!j || !j.disponible || !j.fincas || !j.fincas.length) return;
+      fincas = j.fincas;
+      $("#fincaSel").innerHTML = '<option value="">Elegir una finca</option>' +
+        fincas.map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.nombre) + (f.pendiente ? " (en revisión)" : "") + "</option>"; }).join("") +
+        '<option value="otra">Otra finca (escribirla)</option>';
+      $("#campoFincaSel").hidden = false;
+      $("#campoFincaTxt").hidden = true;
+      ponerFormulario();
+    })
+    .catch(function () { /* sin sesión, sin red o fuera de la plataforma: se escribe a mano */ });
+
+  function pintarParcelas() {
+    var id = $("#fincaSel").value;
+    var f = fincas.filter(function (x) { return x.id === id; })[0];
+    var otra = id === "otra" || !id;
+    $("#campoFincaTxt").hidden = !otra;
+    if (f && f.parcelas && f.parcelas.length) {
+      $("#parcelaSel").innerHTML = '<option value="">Toda la finca</option>' + f.parcelas.map(function (p) { return "<option>" + esc(p.nombre) + "</option>"; }).join("");
+      $("#parcelaSel").value = E.contexto.parcela || "";
+      $("#campoParcelaSel").hidden = false;
+      $("#campoParcelaTxt").hidden = true;
+    } else {
+      $("#campoParcelaSel").hidden = true;
+      $("#campoParcelaTxt").hidden = false;
+    }
+  }
+  $("#fincaSel").addEventListener("change", function (ev) {
+    var id = ev.target.value;
+    var f = fincas.filter(function (x) { return x.id === id; })[0];
+    E.contexto.finca_id = f ? f.id : "";
+    E.contexto.finca = f ? f.nombre : "";
+    E.contexto.parcela = "";
+    if (f) {
+      var dep = DEPARTAMENTOS.filter(function (d) { return norm(d) === norm(f.departamento); })[0];
+      if (dep) E.contexto.departamento = dep;
+      if (f.municipio) E.contexto.municipio = f.municipio;
+      if (f.altitud_m) E.contexto.altitud_m = String(f.altitud_m);
+    }
+    ponerFormulario();
+    pintarIA();
+    cambio();
+  });
+  $("#parcelaSel").addEventListener("change", function (ev) { E.contexto.parcela = ev.target.value; cambio(); });
+
+  /* ── La foto ───────────────────────────────────────────────────────────── */
+  var drop = $("#drop"), archivo = $("#archivo");
+  drop.addEventListener("click", function () { archivo.click(); });
+  drop.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); archivo.click(); } });
+  drop.addEventListener("dragover", function (ev) { ev.preventDefault(); drop.classList.add("sobre"); });
+  drop.addEventListener("dragleave", function () { drop.classList.remove("sobre"); });
+  drop.addEventListener("drop", function (ev) {
+    ev.preventDefault();
+    drop.classList.remove("sobre");
+    if (ev.dataTransfer.files && ev.dataTransfer.files[0]) cargar(ev.dataTransfer.files[0]);
+  });
+  archivo.addEventListener("change", function () { if (archivo.files[0]) cargar(archivo.files[0]); archivo.value = ""; });
+
+  function aCanvas(img, lado) {
+    var k = Math.min(1, lado / Math.max(img.naturalWidth, img.naturalHeight));
+    var c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(img.naturalWidth * k));
+    c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c;
+  }
+
+  function cargar(file) {
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      $("#gateMsg").innerHTML = '<div class="banner bad">Ese archivo no es una foto JPEG, PNG o WebP.</div>';
+      $("#fotoBloque").hidden = false;
+      return;
+    }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      $("#fotoBloque").hidden = false;
+      $("#gate").innerHTML = "";
+      $("#gateMsg").innerHTML = '<div class="banner info">Midiendo la foto…</div>';
+      setTimeout(function () {
+        var cAnal = aCanvas(img, 900);
+        var res = window.CromaRasgos.analizar(cAnal.getContext("2d").getImageData(0, 0, cAnal.width, cAnal.height));
+        var cIA = aCanvas(img, 1024);
+        imagenIA = cIA.toDataURL("image/jpeg", 0.85);
+        var cMini = aCanvas(img, 420);
+        var mini = cMini.toDataURL("image/jpeg", 0.7);
+        if (mini.length > 90000) mini = cMini.toDataURL("image/jpeg", 0.5);
+        URL.revokeObjectURL(url);
+
+        var id = E.sample_id, ctx = E.contexto;
+        E = nuevoEstado();
+        E.sample_id = id;
+        E.contexto = ctx;
+        E.miniatura = mini;
+        E.validacion = res.validation_report;
+        E.validacion.valida = res.valida;
+        E.validacion.escala = cAnal.width / cMini.width; // del lienzo medido a la miniatura
+        E.rasgos = res.rasgos;
+        E.ford_programatico = res.ford_programatico;
+        E.rasgos_version = res.version;
+        E.estado = res.valida ? "medida" : "rechazada";
+        pintarTodo();
+        cambio();
+      }, 30);
+    };
+    img.onerror = function () {
+      $("#fotoBloque").hidden = false;
+      $("#gateMsg").innerHTML = '<div class="banner bad">No se pudo abrir la imagen.</div>';
+    };
+    img.src = url;
+  }
+
+  /* ── Pintar ────────────────────────────────────────────────────────────── */
+  function labARgb(L, a, b) {
+    var fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+    function inv(t) { var t3 = t * t * t; return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787; }
+    var X = 0.95047 * inv(fx), Y = inv(fy), Z = 1.08883 * inv(fz);
+    function g(c) { c = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return Math.round(Math.max(0, Math.min(1, c)) * 255); }
+    return "rgb(" + g(3.2406 * X - 1.5372 * Y - 0.4986 * Z) + "," + g(-0.9689 * X + 1.8758 * Y + 0.0415 * Z) + "," + g(0.0557 * X - 0.204 * Y + 1.057 * Z) + ")";
+  }
+
+  function pintarFoto() {
+    var v = E.validacion;
+    $("#fotoBloque").hidden = !E.miniatura;
+    if (!E.miniatura) return;
+    var cv = $("#vista"), img = new Image();
+    img.onload = function () {
+      cv.width = img.naturalWidth;
+      cv.height = img.naturalHeight;
+      var g = cv.getContext("2d");
+      g.drawImage(img, 0, 0);
+      if (E.rasgos && v && v.escala) {
+        var k = 1 / v.escala, cx = E.rasgos.center_xy[0] * k, cy = E.rasgos.center_xy[1] * k, R = E.rasgos.outer_radius_px * k;
+        g.lineWidth = 1.5;
+        g.strokeStyle = "#C9A227";
+        g.beginPath(); g.arc(cx, cy, R, 0, 2 * Math.PI); g.stroke();
+        g.setLineDash([4, 3]);
+        g.strokeStyle = "#3B2566";
+        E.rasgos.zone_boundaries_rel.forEach(function (b) { g.beginPath(); g.arc(cx, cy, R * b, 0, 2 * Math.PI); g.stroke(); });
+        g.setLineDash([]);
+      }
+    };
+    img.src = E.miniatura;
+
+    if (!v) return;
+    var filas = [
+      ["Patrón circular detectado", v.circulo_detectado, v.circularidad == null ? "—" : "circularidad " + coma(v.circularidad)],
+      ["Nitidez suficiente", v.nitidez != null && v.nitidez >= v.nitidez_min, v.nitidez == null ? "—" : coma(v.nitidez, 0) + " (mín. " + v.nitidez_min + ")"],
+      ["Área útil del croma", v.area_util != null && v.area_util >= v.area_min, v.area_util == null ? "—" : Math.round(v.area_util * 100) + " % (mín. " + Math.round(v.area_min * 100) + " %)"],
+      ["Borde externo completo", v.borde_completo, ""],
+      ["Fondo claro sin dominante de color", v.fondo_claro, "L* " + coma(v.fondo_lab[0], 0)]
+    ];
+    $("#gate").innerHTML = filas.map(function (f) {
+      return '<li><span class="s ' + (f[1] ? "ok" : "no") + '">' + (f[1] ? "✓" : "✗") + "</span><span>" + esc(f[0]) + '</span><span class="v">' + esc(f[2]) + "</span></li>";
+    }).join("");
+    if (v.valida) {
+      $("#gateMsg").innerHTML = '<div class="banner ok">La foto sirve. Los rasgos están medidos abajo.</div>';
+    } else {
+      var motivos = (v.motivos || []).map(function (m) {
+        var i = window.CromaRasgos.MOTIVOS.indexOf(m);
+        // El área se dice con el umbral calibrado, no con el 40 % del JSON, que
+        // rechaza capturas bien hechas (ver la cabecera de cromatografia-rasgos.js).
+        if (m === "area") return "<li>El croma ocupa menos del " + Math.round(v.area_min * 100) + " % de la foto: acérquese hasta que el papel llene el encuadre.</li>";
+        return "<li>" + esc(REGLAS ? REGLAS.image_validation_gate.reject_if[i] : m) + "</li>";
+      }).join("");
+      $("#gateMsg").innerHTML = '<div class="banner bad"><b>La foto no se interpreta.</b><ul style="margin:6px 0 6px 18px;padding:0">' + motivos + "</ul>" +
+        esc(REGLAS ? "Para repetirla: " + REGLAS.image_validation_gate.on_reject + "." : "") + "</div>";
+    }
+  }
+
+  function filasRasgos(r) {
+    var zonas = Object.keys(ZONAS).map(function (z) {
+      var c = r.zone_colour_median_lab[z] || [];
+      return '<span style="white-space:nowrap;margin-right:12px"><span class="sw" style="background:' + labARgb(c[0], c[1], c[2]) + '"></span>' + esc(ZONAS[z]) + "</span>";
+    }).join("");
+    var fronteras = r.zone_boundaries_rel.map(function (b, i) {
+      return "r≈" + coma(b) + (r.zone_boundaries_source && r.zone_boundaries_source[i] === "nominal" ? " (nominal)" : "");
+    }).join(" · ");
+    var entropia = Object.keys(ZONAS).map(function (z) { return ZONAS[z] + " " + coma(r.texture_entropy_by_zone[z]); }).join(" · ");
+    return [
+      ["Fronteras entre zonas (radio relativo)", fronteras],
+      ["Color mediano por zona", zonas],
+      ["Índice de radialidad (canales)", coma(r.radiality_index)],
+      ["Índice de picos en la periferia", coma(r.spike_index)],
+      ["Irregularidad del borde", coma(r.edge_irregularity, 3)],
+      ["Índice de intensidad de color", coma(r.colour_intensity_index)],
+      ["Simetría", coma(r.symmetry_score)],
+      ["Entropía de textura (bits)", entropia],
+      ["Calidad de captura", "nitidez " + coma(r.capture_quality.sharpness, 0) + " · área útil " + Math.round(r.capture_quality.usable_area_ratio * 100) + " %"]
+    ].map(function (f, i) {
+      return "<tr><th scope=\"row\" style=\"text-transform:none;letter-spacing:0;font-size:13px;width:38%\">" + esc(f[0]) + '</th><td class="' + (i === 1 ? "" : "n") + '">' + (i === 1 ? f[1] : esc(f[1])) + "</td></tr>";
+    }).join("");
+  }
+
+  function tarjetasFord(f, bases) {
+    var nombres = { canales: "Estructura de canales", picos: "Desarrollo de picos", intensidad: "Intensidad de color" };
+    return Object.keys(nombres).map(function (k) {
+      var rg = f[k].rango || f[k];
+      return "<div><b>" + nombres[k] + '</b><span class="r">' + rg[0] + (rg[1] !== rg[0] ? "–" + rg[1] : "") + "</span>" +
+        (bases && f[k].base ? '<span class="base">' + esc(f[k].base) + "</span>" : "") + "</div>";
+    }).join("");
+  }
+
+  function pintarRasgos() {
+    var hay = !!E.rasgos;
+    $("#paso3").hidden = !hay;
+    if (!hay) return;
+    $("#tablaRasgos").innerHTML = filasRasgos(E.rasgos);
+    $("#fordProg").innerHTML = tarjetasFord(E.ford_programatico, false);
+  }
+
+  function pintarIA(msg) {
+    $("#paso4").hidden = !E.rasgos;
+    var faltan = [];
+    if (!E.contexto.manejo) faltan.push("el manejo");
+    if (!E.contexto.fecha_muestra) faltan.push("la fecha de la muestra");
+    var sinFoto = !imagenIA;
+    $("#btnIA").disabled = !E.rasgos || faltan.length > 0 || sinFoto;
+    if (msg !== undefined) { $("#iaMsg").innerHTML = msg; return; }
+    if (sinFoto && E.rasgos) $("#iaMsg").innerHTML = '<div class="banner info">Este trabajo guarda la miniatura, no la foto original. Para una lectura nueva, vuelva a cargar la foto.</div>';
+    else if (faltan.length) $("#iaMsg").innerHTML = '<div class="aviso">Falta ' + esc(faltan.join(" y ")) + " en el paso 2.</div>";
+    else $("#iaMsg").innerHTML = "";
+  }
+
+  function pintarReporte() {
+    var hay = !!E.rasgos && !!REGLAS;
+    $("#reporte").hidden = !hay;
+    if (!hay) return;
+    var c = E.contexto, L = E.lectura;
+    var fincaVisible = c.consentimiento && c.finca_en_pdf && c.finca;
+    $("#rMeta").innerHTML = [
+      "<span>" + esc(E.sample_id) + "</span>",
+      fincaVisible ? "<span>" + esc(c.finca) + (c.parcela ? " · " + esc(c.parcela) : "") + "</span>" : "",
+      "<span>" + esc(c.departamento || "Departamento no declarado") + (c.municipio ? " · " + esc(c.municipio) : "") + "</span>",
+      c.altitud_m ? "<span>" + esc(c.altitud_m) + " msnm</span>" : "",
+      c.manejo ? "<span>Manejo " + esc(c.manejo) + "</span>" : "",
+      c.fecha_muestra ? "<span>Muestra del " + esc(c.fecha_muestra) + "</span>" : ""
+    ].filter(Boolean).join("");
+
+    $("#rDesc").textContent = L ? L.descripcion_visual : "Sin lectura con IA todavía. Los rasgos medidos y la estimación programática de abajo no interpretan el croma.";
+    $("#rRasgos").innerHTML = filasRasgos(E.rasgos);
+    $("#rFord").innerHTML = L ? tarjetasFord(L.escala_ford, true) : tarjetasFord(E.ford_programatico, false);
+
+    var interp = L ? L.interpretaciones : [];
+    $("#rEvidenciaTabla").hidden = !interp.length;
+    $("#rEvidenciaVacia").textContent = interp.length ? "" : "Sin interpretación: requiere la lectura con IA.";
+    $("#rEvidencia").innerHTML = interp.map(function (it) {
+      return "<tr><td>" + esc(it.observacion) + "</td><td>" + esc(it.lectura) + "</td><td>" + esc(it.fuente) +
+        '</td><td><span class="nivel ' + esc(it.nivel) + '">' + esc(it.nivel) + '</span><span class="etq">' + esc(it.etiqueta_nivel) + "</span></td><td>" + esc(it.confianza) + "</td></tr>";
+    }).join("");
+
+    $("#rRegion").innerHTML = L
+      ? esc(L.contexto_regional_aplicado) + (L.contexto_regional_regla ? '<span class="etq">Regla aplicada: ' + esc(L.contexto_regional_regla) + "</span>" : "")
+      : '<span class="aviso">Se aplica con la lectura.</span>';
+
+    $("#rReco").innerHTML = L && L.recomendaciones.length
+      ? L.recomendaciones.map(function (r) { return "<li><b>" + esc(r.accion) + "</b> <span class=\"prio\">· prioridad " + esc(r.prioridad) + "</span><br>" + esc(r.justificacion) + "</li>"; }).join("")
+      : '<li class="aviso">Sin recomendaciones: requieren la lectura con IA.</li>';
+
+    // El descargo SIEMPRE sale de las reglas, con o sin lectura.
+    $("#rLimites").textContent = REGLAS.mandatory_disclaimer_es;
+    var m = E.meta;
+    $("#rVersiones").textContent = "Reglas v" + REGLAS.$schema_version + " · " + (E.rasgos_version || "") +
+      (m ? " · " + m.prompt_version + " · " + m.model_name + " · " + String(m.timestamp).slice(0, 16).replace("T", " ") + " UTC" : "") +
+      (L && L.ajustes && L.ajustes.length ? " · Ajustes: " + L.ajustes.join(" ") : "");
+  }
+
+  function pintarTodo() {
+    ponerFormulario();
+    pintarFoto();
+    pintarRasgos();
+    pintarIA();
+    pintarReporte();
+  }
+
+  /* ── La lectura con IA ─────────────────────────────────────────────────── */
+  $("#btnIA").addEventListener("click", function () {
+    var btn = $("#btnIA");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="cargando"></span>Leyendo el cromatograma…';
+    var c = E.contexto;
+    fetch(API, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        imagen: imagenIA,
+        validacion: E.validacion,
+        rasgos: E.rasgos,
+        ford_programatico: E.ford_programatico,
+        rasgos_version: E.rasgos_version,
+        contexto: { departamento: c.departamento, municipio: c.municipio, altitud_m: c.altitud_m, variedad: c.variedad, manejo: c.manejo, fecha_muestra: c.fecha_muestra, practicas: c.practicas }
+      })
+    })
+      .then(function (r) { return r.json().catch(function () { return { ok: false, error: "Respuesta inesperada del servidor." }; }); })
+      .then(function (j) {
+        btn.textContent = "Interpretar con IA · ≈ US$ 0,01";
+        if (!j.ok) {
+          var det = j.detalles && j.detalles.length
+            ? "<details><summary>Qué no pasó los controles</summary><div><ul>" + j.detalles.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul></div></details>"
+            : "";
+          pintarIA('<div class="banner bad">' + esc(j.error || "No se pudo leer el cromatograma.") + "</div>" + det);
+          $("#btnIA").disabled = false;
+          return;
+        }
+        E.lectura = j.reporte;
+        E.meta = j.meta;
+        E.estado = "con-lectura";
+        pintarIA('<div class="banner ok">Lectura lista. El reporte está abajo.</div>');
+        pintarReporte();
+        cambio();
+        if (window.CTC) {
+          window.CTC.emitir("analisis.generado", {
+            sample_id: E.sample_id,
+            departamento: c.departamento || null,
+            zona_regional: j.reporte.contexto_regional_clave,
+            ford: {
+              canales: j.reporte.escala_ford.canales.rango,
+              picos: j.reporte.escala_ford.picos.rango,
+              intensidad: j.reporte.escala_ford.intensidad.rango
+            },
+            prompt_version: j.meta.prompt_version,
+            rules_version: j.meta.rules_version,
+            model_name: j.meta.model_name
+          });
+        }
+        $("#reporte").scrollIntoView({ behavior: "smooth", block: "start" });
+      })
+      .catch(function () {
+        btn.textContent = "Interpretar con IA · ≈ US$ 0,01";
+        pintarIA('<div class="banner bad">Sin conexión con la plataforma. La lectura con IA necesita internet; los rasgos medidos siguen aquí.</div>');
+        $("#btnIA").disabled = false;
+      });
+  });
+
+  $("#btnPdf").addEventListener("click", function () { window.print(); });
+  $("#btnNuevo").addEventListener("click", function () {
+    var ctx = E.contexto;
+    E = nuevoEstado();
+    E.contexto.finca_id = ctx.finca_id; E.contexto.finca = ctx.finca; E.contexto.departamento = ctx.departamento;
+    E.contexto.municipio = ctx.municipio; E.contexto.altitud_m = ctx.altitud_m; E.contexto.consentimiento = ctx.consentimiento;
+    imagenIA = null;
+    $("#fotoBloque").hidden = true;
+    pintarTodo();
+    cambio();
+    window.scrollTo({ top: 0 });
+  });
+
+  /* ── Restaurar ─────────────────────────────────────────────────────────── */
+  function restaurar(e) {
+    if (!e || typeof e !== "object" || e.esquema !== 1) return; // trabajo nuevo o de otra versión
+    var base = nuevoEstado();
+    for (var k in base) if (e[k] !== undefined) base[k] = e[k];
+    for (var k2 in nuevoEstado().contexto) if (base.contexto[k2] === undefined) base.contexto[k2] = nuevoEstado().contexto[k2];
+    E = base;
+    imagenIA = null;
+    $("#recuperar").hidden = true;
+    pintarTodo();
+  }
+
+  var recibioTrabajo = false;
+  function registrarPuente() {
+    if (!window.CTC) return;
+    window.CTC.usarEstado(estadoParaGuardar, function (e) { recibioTrabajo = true; restaurar(e); });
+    window.CTC.usarResumen(resumen);
+    // El puente se carga DESPUÉS de este script y pudo anunciarse antes de que
+    // la herramienta registrara su estado: se vuelve a anunciar para que la
+    // concha repita el init con el trabajo guardado.
+    if (window.parent !== window) window.parent.postMessage({ ctc: "ready", v: 1 }, location.origin);
+  }
+  document.addEventListener("DOMContentLoaded", registrarPuente);
+
+  setTimeout(function () {
+    if (recibioTrabajo || E.estado !== "sin-foto") return;
+    try {
+      var guardado = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null");
+      if (guardado && guardado.esquema === 1 && guardado.estado !== "sin-foto") {
+        $("#recuperar").hidden = false;
+        $("#btnRecuperar").onclick = function () { restaurar(guardado); };
+      }
+    } catch (e) { /* sin almacenamiento */ }
+  }, 1500);
+
+  pintarTodo();
+})();
+</script>
+<!-- Puente de trabajos (A11): con él, la concha guarda cada análisis como un
+     trabajo de la cuenta. Abierta suelta, el puente queda inerte y la
+     herramienta sigue midiendo sin internet. -->
+<script src="/tools/ctc-bridge.js"></script>
+</body>
+</html>

@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.32] — 2026-09-13 (commit pendiente)
+
+- **Añadido**: **Lector de Cromatografía de Suelo** (`cromatografia-suelo`, Herramientas del Café, Plus), la
+  primera herramienta de la suite con pieza de servidor. Lee la foto de una cromatografía de Pfeiffer y el
+  contexto de la finca, y da un reporte con cadena de evidencia (observación · lectura · fuente · nivel A/B/C).
+  Regla de oro en código: lectura cualitativa, nunca medición ni vínculo con la taza.
+  `public/tools/cromatografia-suelo.html` (compuerta, rasgos, Ford programático, reporte y PDF en el navegador,
+  sin cuenta y sin internet) · `public/tools/assets/cromatografia-rasgos.js` (visión clásica en JS puro: centro,
+  perfil radial CIELAB de 50 anillos, fronteras, radialidad, picos, entropía, simetría) ·
+  `src/lib/tools/cromatografia/{reglas.json,prompt.ts,salida.ts}` (prompt armado en tiempo de ejecución desde
+  `interpretation_rules.json` v2.0; validación de claims prohibidos, coherencia rasgos↔texto, techo de nivel por
+  fuente, descargo forzado, ids por lectura para el futuro modo «expert feedback») ·
+  `api/herramientas/cromatografia` (sesión → veredicto de acceso → techo diario de 20 → Haiku 4.5 a temperatura
+  0, una corrección si no pasa los controles) · `api/herramientas/cromatografia/fincas` (las fincas de la cuenta
+  para prellenar; nunca coordenadas; apagado en Cherry Picked). Trabajos por el puente con esquema propio.
+- **Añadido**: guardián `scripts/qa-cromatografia-check.mjs` (122: reglas byte a byte, cromas sintéticos y seis
+  rechazos de compuerta, regiones, techos de nivel, salida del modelo, costuras) y prueba en vivo manual
+  `scripts/qa-cromatografia-modelo.mjs` (estabilidad a temperatura 0; ≈ US$ 0,013 por lectura, medido).
+- **Cambiado**: el libro de consumo gana la vía `herramientas:cromatografia` (`USOS`, `qa-consumo-check`).
+- **Datos**: umbrales de la compuerta calibrados con las 108 capturas abiertas de Martins et al. 2026 (Zenodo,
+  CC BY 4.0): 107 pasan. El área mínima baja al 20 % frente al 40 % del JSON, que rechazaba capturas bien
+  hechas; decisión pendiente del owner.
+- **Docs**: brief aprobado `docs/componentes/briefs/herramientas-cafe-cromatografia-suelo.md` (con lo
+  construido, la investigación de fuentes y el diseño del modo experto); charter, ALINEACION §3 y §3b.
+
 ## [V5.31] — 2026-09-11 (commit 649435c)
 
 - **Docs**: **la plataforma se trabaja por componentes.** Decisión del owner (2026-09-11): un componente por

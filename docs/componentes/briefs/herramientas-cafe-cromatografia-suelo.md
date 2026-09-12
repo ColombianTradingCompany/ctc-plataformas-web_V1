@@ -2,7 +2,8 @@
 
 > Acta de origen de la herramienta. Fuente del owner: `C:\dev\ctc-platforms\reference\html_tools\Analisis Cromatografico\`
 > (KICKOFF v2, PDF1 validez científica, PDF2 atlas y taxonomía, `interpretation_rules.json` v2.0, maqueta HTML).
-> Estado: **en scoping** — no se escribe código hasta que el owner apruebe este brief.
+> Estado: **aprobado** por el owner el 2026-09-12 («si a todo») · primera tanda construida en **V5.32** (2026-09-13).
+> Lo construido y lo aprendido está al final, en «Acta de construcción».
 
 **Qué es** — Una herramienta que recibe la FOTO de una cromatografía de suelo tipo Pfeiffer más el contexto de la
 finca (departamento, manejo, altitud, prácticas recientes) y devuelve un reporte justificado: descripción visual
@@ -138,3 +139,62 @@ visión entrenado (v3+, solo con ≥ 30 pares y aceptando que vale para una zona
    garantizan honestidad, no acierto.
 8. **Registros/Fincas de la maqueta → Home Menu de la concha**: ¿de acuerdo con que la lista de análisis sea la
    lista de trabajos guardados y no una tabla propia dentro de la herramienta?
+
+---
+
+## Acta de construcción (V5.32, 2026-09-13)
+
+**Lo que añadió el owner al aprobar.** (1) Las fincas de la maqueta se conectan con las fincas de la cuenta del
+productor, y desde Cherry Picked no se habilitan. (2) La validación agronómica la hará un experto cuando el sistema
+funcione, con un **modo «expert feedback»** que se pueda activar. (3) Usar las fuentes y descargar las bases de
+datos relevantes para sustentar el modelo.
+
+**Decisiones del brief, todas aprobadas**: nombre «Lector de Cromatografía de Suelo» · Plus · web + kr + dc ·
+Haiku 4.5 · dataset propio en segunda tanda · solo español · validador: un experto, después · registros = Home Menu.
+
+**Lo construido.** Ver CHANGELOG V5.32. Diferencias con el brief:
+- **Nombre de finca y coordenadas no llegan nunca al modelo.** La herramienta no pide coordenadas; el nombre de
+  finca y lote se guarda en el trabajo solo con consentimiento y sale en el PDF solo si se marca.
+- **Fincas**: `GET api/herramientas/cromatografia/fincas` devuelve nombre, departamento, municipio, altitud y
+  parcelas de las fincas de la cuenta (excepto rechazadas); `?superficie=cp` responde vacío sin consultar, y el HTML
+  además detecta Cherry Picked por la ruta de la concha.
+- **Techo de nivel por fuente**: se lee del texto de `evidence_levels`; si la fuente no aparece, la letra más
+  conservadora de sus criterios. La versión «mejor letra del criterio» le daba nivel A a Restrepo/Pinheiro.
+- **Techo diario** de 20 llamadas por persona (un reintento cuenta).
+
+**Pruebas en vivo contra la API** (clave local, Haiku 4.5, croma sintético radial, Santander):
+- Prompt 1.0: las 3 corridas fallaron el primer intento por lo mismo. El modelo escribió las palabras prohibidas
+  para negarlas («no vincular con puntaje o precio») y «sin canales» acotado a la zona mineral. Pasaban al
+  corregir, a ≈ US$ 0,037 por lectura.
+- Prompt 1.1 (no escribir lo prohibido ni para negarlo; límites de palabras; recomendaciones sin mecanismos que no
+  estén en el JSON) y coherencia por frase: 2 de 2 pasan al primer intento, rangos idénticos, **≈ US$ 0,013 por
+  lectura**.
+
+**Investigación de fuentes** (fuera del repo, que es público: `reference/html_tools/Analisis Cromatografico/fuentes/`).
+26 documentos abiertos, 168 figuras con su manifiesto, `INDEX.md` y `HALLAZGOS.md`. Lo que cambia el modelo:
+- **Sí hay datasets públicos** (PDF2 decía que no): Martins et al. 2026, Zenodo 18840454 (108 cromas de 12 suelos
+  con z-scores de 15 propiedades, CC BY 4.0, 35,9 GB) y su código con `raw_448px.zip` (Zenodo 18851814, descargado);
+  Calixto et al. 2025, Zenodo 16943808 (35 cromas sin laboratorio). Útiles para la compuerta y la segmentación; no
+  para interpretar (suelos brasileños, validación entre suelos negativa según sus autores).
+- **Calibración**: la compuerta 1.0 rechazaba 108 de 108 capturas de laboratorio. Con nitidez mínima 10 y área
+  mínima 20 % pasan 107. El 40 % del JSON queda como decisión del owner.
+- **Propuestas v2.1 para el JSON, NO aplicadas**: los radios relativos no dicen si se normalizan al papel o al
+  frente del extracto; la zona «periférica» de las reglas contradice a todas las fuentes (es el papel sin extracto);
+  los niveles 3 de la escala de Ford no están en la fuente y en 361 cromas el color nunca llegó a 5; la lectura
+  «zona media ↔ carbono de biomasa» es de Graciano 2020 (Oxisol de Paraná, n=12), no de Uberlândia; «borde dentado»
+  tiene valencia contraria en varias escalas; faltan metadatos de protocolo que cambian la imagen (papel n.º 1/4,
+  dilución, días de revelado); ninguna fuente abierta estudia cromas en Andisoles. UIS 2026 (café en Guadalupe,
+  Santander) muestra cromas dorados con MO de 0,82–1,29 %: dorado no equivale a materia orgánica alta.
+- `HALLAZGOS.md` quedó con marcadores sin rellenar (§b y partes de §e–f): la investigación se cortó por el límite
+  de gasto de la cuenta. Las propuestas están listadas en el charter.
+
+**Diseño del modo «expert feedback»** (para cuando haya uso real):
+- Interruptor por persona en ECP · Herramientas (un permiso `experto-cromatografia` en `tool_user_grants` o una
+  columna de rol), nunca por superficie.
+- En el reporte, junto a cada lectura (`i1…`) y recomendación (`r1…`): «de acuerdo · en desacuerdo · corregir», con
+  texto libre y, para Ford, el rango que el experto daría.
+- Tabla `croma_feedback` service-role-only: `sample_id`, `lectura_id`, `veredicto`, `correccion`, `rango_ford`,
+  `experto_id`, `prompt_version`, `rules_version`, `model_name`. Congela las versiones: una opinión sobre el prompt
+  1.1 no se mezcla con la del 1.2.
+- Es la materia prima para la v2.1 de las reglas y, con `croma_muestras`, para cualquier calibración futura.
+

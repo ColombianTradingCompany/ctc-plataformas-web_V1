@@ -38,6 +38,7 @@ const HERRAMIENTAS = {
   "viaje-cafe": "/tools/viaje-cafe.html",
   "mapa-variedades": "/tools/mapa-variedades.html",
   "defectos-cafe": "/tools/defectos-cafe.html",
+  "cromatografia-suelo": "/tools/cromatografia-suelo.html",
 };
 
 mkdirSync(SALIDA, { recursive: true });

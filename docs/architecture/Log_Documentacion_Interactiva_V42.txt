@@ -127,3 +127,22 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   / la espina) enlaza el plan de la Secretaría y anota que la base de grados de Notion coincide con
   `definicion.ts`; ANN nuevas para `docs/SECRETARIA_PLAN.md` y `docs/componentes/secretaria.md`.
 (commit: 78f79b7)
+
+## [2026-09-13] V5.32 · Lector de Cromatografía de Suelo (herramientas-cafe)
+- Herramienta nueva `cromatografia-suelo` (Plus · web/kr/dc · con memoria). Para el wrap V43:
+  **ficha DICT nueva `cromatografia`**: la primera herramienta con servidor (`api/herramientas/cromatografia`),
+  el reparto «medir en el navegador, interpretar en el servidor», el prompt armado desde
+  `interpretation_rules.json` y la salida validada en código (claims prohibidos, coherencia con los rasgos,
+  techo de nivel por fuente leído de `evidence_levels`, descargo puesto por el servidor, ids por lectura).
+- **Traza nueva** «Una foto de croma hasta el reporte»: concha → HTML → `CromaRasgos.analizar` (compuerta)
+  → fincas de la cuenta → POST con veredicto de acceso y techo diario → Haiku → `validarSalida` (una
+  corrección) → reporte → `tool_sessions` por el puente → `herramienta.cromatografia-suelo.analisis.generado`.
+- Fichas a tocar: `herramientas` (primera con servidor), `consumo` (séptima vía `herramientas:cromatografia`),
+  `tallerherramientas` (esquema propio con `CTC.usarEstado`).
+- ANN nuevas: `public/tools/cromatografia-suelo.html`, `public/tools/assets/cromatografia-rasgos.js`,
+  `public/tools/assets/cromatografia-reglas.json`, `src/lib/tools/cromatografia/{reglas.json,prompt.ts,salida.ts}`,
+  `src/app/api/herramientas/cromatografia/route.ts`, `.../fincas/route.ts`, `scripts/qa-cromatografia-check.mjs`,
+  `scripts/qa-cromatografia-modelo.mjs`, `docs/componentes/briefs/herramientas-cafe-cromatografia-suelo.md`.
+- Lección para la cabecera: **un umbral puesto con sintéticos rechaza el mundo real**; la compuerta 1.0 no
+  dejaba pasar ni una de 108 capturas de laboratorio. Se calibra con datos abiertos antes de publicar.
+(commit: pendiente)

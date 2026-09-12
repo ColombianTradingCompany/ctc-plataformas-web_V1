@@ -70,6 +70,7 @@ const VIAS = [
   "src/lib/arena/mejoras.ts",
   "src/lib/coffeed/gemini.ts",
   "src/lib/coffeed/geminiImage.ts",
+  "src/app/api/herramientas/cromatografia/route.ts",
 ];
 
 const conocidos = new Set([...Object.keys(TARIFAS), ...SIN_TARIFA_CONOCIDA]);

@@ -31,7 +31,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | `qr` | Generador de códigos QR | default | en | sí | `generador-qr.html` |
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
 | `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15): `mermas-detallada.html` sigue en `public/` con `noindex` |
-| `cromatografia-suelo` | Lector de Cromatografía de Suelo | plus (propuesto) | es | sí (propuesto) | **en scoping** (2026-09-12): brief en `briefs/herramientas-cafe-cromatografia-suelo.md`; primera herramienta con pieza de servidor (`/api/herramientas/cromatografia`, IA opt-in) |
+| `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es | sí (esquema propio) | `cromatografia-suelo.html` (V5.32) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`) · brief en `briefs/` |
 
 Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_tools\` (p. ej.
 `rueda_del_cafe_V23.html`, `Defectos_del_Cafe_CTC_V3.html`) y de ahí se registran.
@@ -47,6 +47,10 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 
 - `public/tools/*.html` (vendorizadas; solo se toca el `<head>` para SEO) + **`public/tools/ctc-bridge.js`**
   (una línea antes de `</body>` → memoria; `CTC.usarEstado/tocado/emitir`; postMessage mismo origen).
+- **Lector de Cromatografía** (V5.32): `public/tools/assets/cromatografia-{rasgos.js,reglas.json}` (motor y copia de
+  las reglas para el navegador) · `src/lib/tools/cromatografia/{reglas.json,prompt.ts,salida.ts}` (puros) ·
+  `src/app/api/herramientas/cromatografia/{route.ts,fincas/route.ts}`. Fuentes y datasets: fuera del repo, en
+  `reference/html_tools/Analisis Cromatografico/fuentes/` (INDEX.md, HALLAZGOS.md; con derechos, no se publican).
 - `src/lib/tools/` — `catalog.ts` (`ToolId` libre, `srcDeVersion`), `accesoHerramienta.ts` (**regla pura**
   de acceso: sin cuenta · sin membresía · sin permiso), `toolGrants.ts` + `plusGrants.ts` (`tool_user_grants`
   por persona y herramienta; `tools_plus_grants` = comodín heredado, `quienDependeDelComodin()`), `trabajos.ts`
@@ -68,7 +72,8 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 
 `qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (193) ·
-`qa-tools-seo-espejo.mjs` (68, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`).
+`qa-tools-seo-espejo.mjs` (68, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
+`qa-cromatografia-check.mjs` (122, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo).
 
 ## Reglas propias
 
@@ -91,9 +96,23 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
-- **Lector de Cromatografía de Suelo** (`cromatografia-suelo`, en scoping 2026-09-12): esperando la aprobación del
-  brief y sus 8 decisiones (nombre, nivel, superficies, modelo, dataset, idioma, validador agronómico, registros = Home
-  Menu). Fuente en `reference/html_tools/Analisis Cromatografico/`.
+- **Lector de Cromatografía de Suelo** (V5.32, brief aprobado 2026-09-12). Abierto, en orden:
+  1. **La lectura con IA no funciona en producción** hasta que el owner reponga `ANTHROPIC_API_KEY` en Vercel (la
+     última llamada, 2026-08-20, dio «API key is invalid»). La herramienta lo dice y sigue midiendo.
+  2. **Decisión del owner: el 40 % de área útil** del JSON rechaza capturas bien hechas (0 de 108 de laboratorio);
+     el motor usa 20 %. Corregir `image_validation_gate` en la v2.1 del JSON o volver al 40 %.
+  3. **Modo «expert feedback»** (owner): un experto valida o corrige cada lectura (`interpretaciones[].id`,
+     `recomendaciones[].id`) y el rango de Ford; tabla `croma_feedback` service-role-only + interruptor por
+     persona en ECP · Herramientas. Diseño en el brief; se construye cuando el sistema esté en uso.
+  4. **Dataset propio** `croma_muestras` + bucket con consentimiento (aprobado, segunda tanda).
+  5. **Propuestas v2.1 del JSON** (HALLAZGOS §a–b): normalizar radios al frente del extracto; zona periférica mal
+     definida; niveles 3 de Ford no están en la fuente; atribución Uberlândia/Graciano corregida; nivel por fuente;
+     metadatos de protocolo (papel, dilución, días de revelado). Ninguna aplicada.
+  6. Calibrar la compuerta con **fotos de móvil** del protocolo CTC; revisión de tono de 3 reportes reales por un
+     experto antes de cualquier demo a Tecnicafé/CQI.
+- **Fuera de este componente, visto al vendorizar**: `rueda-del-cafe-v23.html` y `cogs-cafe-verde.html` siguen
+  cargando fuentes o librerías de CDN (no funcionan sin internet). `vendor-tool-assets.mjs` las reescribe; se
+  deshizo aquí para no tocar herramientas de otras conversaciones.
 - **Google OAuth en la puerta** del taller (`auth/callback` propio + allowlist de Supabase) — cuando el owner lo pida.
 - **Migrar el comodín `tools_plus_grants`** a permisos por persona (`quienDependeDelComodin()` es la lista) y retirar la tabla.
 - **Defectos del Café**: `soporta_memoria=false` (¿línea del puente?); fotogramas de tostado y conmutador de

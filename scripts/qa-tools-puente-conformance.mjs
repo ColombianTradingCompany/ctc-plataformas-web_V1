@@ -31,7 +31,14 @@ const HERRAMIENTAS = {
   "formula-calidad": "/tools/formula-calidad.html",
   "viaje-cafe": "/tools/viaje-cafe.html",
   "mapa-variedades": "/tools/mapa-variedades.html",
+  "cromatografia-suelo": "/tools/cromatografia-suelo.html",
 };
+
+// El campo donde escribir el centinela, cuando el primero de texto NO debe
+// guardarse. En el Lector de Cromatografía el primero es el nombre de la finca,
+// que el trabajo solo guarda con consentimiento (V5.32): escribir ahí y exigir
+// que llegue al estado sería exigir que se salte la privacidad.
+const CAMPO = { "cromatografia-suelo": "#municipio" };
 
 const CENTINELA = "QA-PUENTE-77";
 // Un <input type=number> SANEA lo no numérico a "": el centinela de texto
@@ -86,7 +93,7 @@ for (const [id, ruta] of Object.entries(HERRAMIENTAS)) {
 
     // Primero un campo de TEXTO; si la herramienta solo tiene números (las
     // calculadoras de mermas), un numérico con centinela numérico.
-    let campo = marco.locator("input[type=text], input:not([type]), textarea").first();
+    let campo = CAMPO[id] ? marco.locator(CAMPO[id]) : marco.locator("input[type=text], input:not([type]), textarea").first();
     let centinela = CENTINELA;
     if ((await campo.count()) === 0) {
       campo = marco.locator("input[type=number]").first();

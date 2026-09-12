@@ -28,7 +28,7 @@ Tecnicafé/CQI: el tono importa más que en cualquier otra herramienta.
 | `soporta_memoria` | **sí** (puente) — un trabajo = un análisis |
 | `familia` | — |
 | Archivo | `public/tools/cromatografia-suelo.html` |
-| `meta description` | «Lector asistido por IA de cromatografías de suelo Pfeiffer para fincas cafeteras. Lectura tentativa, no análisis de laboratorio. Colombian Trading Company SAS · ctcexport.com» (174 caracteres ≤ 165, sufijo de la casa) |
+| `meta description` | «Lector asistido por IA de cromatografías de suelo Pfeiffer en fincas cafeteras. Lectura tentativa, no de laboratorio. Colombian Trading Company SAS · ctcexport.com» (163 caracteres ≤ 165, sufijo de la casa) |
 | Captura | `public/images/herramientas/shots/cromatografia-suelo.jpg` (añadir al mapa de `build-tool-shots.mjs`) con un croma sintético cargado para que la captura enseñe un reporte, no un formulario vacío |
 
 **Dónde vivirá** — `public/tools/cromatografia-suelo.html` + registro en `tools` (herramienta pública, misma concha

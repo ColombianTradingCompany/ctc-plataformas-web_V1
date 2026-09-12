@@ -115,5 +115,5 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   plataforma (~6 meses, solo retroalimentación), sin grupo ni kick-off hasta separarse.
   KICKOFF pasa a 13 prompts. Para el wrap V43: la ficha «componentes» dice «doce charters»
   (diez + socios + terratalento en espera) y el nodo n-socios/DICT «socios» apunta al charter.
-(commit: pendiente)
+(commit: 18d61c0)
 

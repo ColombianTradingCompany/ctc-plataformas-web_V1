@@ -212,5 +212,5 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   laboratorio Cenicafé pareado) como fuente B en zona central, cuatro lecturas de color, dilución, protocolo y las dos
   prácticas fijas; bloque `referentes` (documentación, el prompt no lo inyecta). El diálogo «Bibliografía y
   metodología» abre con el referente y sus seis enlaces en los tres idiomas; PDF edición 1.2. Guardián 280.
-(commit: pendiente)
+(commit: 0dd40e5)
 

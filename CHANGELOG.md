@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.40] — 2026-09-13 (commit pendiente)
+## [V5.40] — 2026-09-13 (commit 0dd40e5)
 
 - **Añadido**: **Tulio Esteban Lozano Vesga** (UIS-IPRED, proyecto Campo Para Todos) entra en el Lector de Cromatografía
   como **referente de la cromatografía cualitativa en la caficultura latinoamericana**. Su trabajo de grado (finca El

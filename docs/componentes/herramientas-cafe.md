@@ -47,7 +47,8 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 
 - `public/tools/*.html` (vendorizadas; solo se toca el `<head>` para SEO) + **`public/tools/ctc-bridge.js`**
   (una línea antes de `</body>` → memoria; `CTC.usarEstado/tocado/emitir`; postMessage mismo origen).
-- **Lector de Cromatografía** (V5.32): `public/tools/assets/cromatografia-{rasgos.js,reglas.json}` (motor y copia de
+- **Lector de Cromatografía** (V5.32–V5.38) · **guía de trabajo: `src/lib/tools/cromatografia/README.md`** (lo construido,
+  contratos, cómo cambiar cada cosa, puntos abiertos y kick-off propio) · `public/tools/assets/cromatografia-{rasgos.js,reglas.json}` (motor y copia de
   las reglas para el navegador) · `src/lib/tools/cromatografia/{reglas.json,prompt.ts,salida.ts}` (puros) ·
   `src/app/api/herramientas/cromatografia/{route.ts,fincas/route.ts}`. Fuentes y datasets: fuera del repo, en
   `reference/html_tools/Analisis Cromatografico/fuentes/` (INDEX.md, HALLAZGOS.md; con derechos, no se publican).
@@ -75,7 +76,8 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 `qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (193) ·
 `qa-tools-seo-espejo.mjs` (68, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-cromatografia-check.mjs` (213, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo).
+`qa-cromatografia-check.mjs` (213, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo) ·
+`cromatografia-recorrido.mjs` y `cromatografia-calibrar.mjs` (manuales: recorrido visual y calibración de la compuerta).
 
 ## Reglas propias
 
@@ -114,9 +116,9 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
      revisión de tono de 3 reportes reales por un experto antes de cualquier demo a Tecnicafé/CQI.
   4. **Sugerencia abierta, sin aprobar: dataset propio** `croma_muestras` + bucket, con consentimiento, pareando croma
      con laboratorio. El owner no tiene hoy ningún dataset probado (2026-09-13); se propone cuando haya análisis.
-  5. **Fotos de ejemplo (V5.38)**: son las tres que dejó el owner en `reference/…/cromatografias_mock`; su origen y
-     sus derechos no están confirmados y la 2 parece una lámina de libro. El repo y el sitio son públicos: confirmar
-     derechos o cambiarlas por cromas propios de CTC (mismos nombres de archivo, y que pasen la compuerta).
+  5. **Fotos de ejemplo (V5.38)**: son fotos públicas de internet de autoría no rastreada (owner, 2026-09-13); el
+     owner las cambiará pronto por cromas propios (mismos nombres de archivo y que pasen la compuerta; receta en la
+     guía de trabajo §5).
   6. **PDF de metodología (V5.38)**: regenerarlos con `node scripts/build-cromatografia-docs.mjs` cada vez que cambien
      las reglas, el motor o el prompt (el guardián comprueba que existen, no que estén al día). Aviso legal pendiente
      de revisión por un abogado.
@@ -151,3 +153,6 @@ qa-tools-seo-espejo, qa-taller, conformidad del puente), APP_VERSION + CHANGELOG
 verificación en vivo, log de arquitectura, y «Pendientes» e inventario de este charter al día.
 Hoy: <la tarea>.
 ```
+
+Para el **Lector de Cromatografía** hay un kick-off propio y más completo al final de
+`src/lib/tools/cromatografia/README.md`.

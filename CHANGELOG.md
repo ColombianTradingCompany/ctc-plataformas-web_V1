@@ -19,6 +19,26 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.38] — 2026-09-13 (commit pendiente)
+
+- **Cambiado**: el Lector de Cromatografía usa en modo oscuro **el morado claro de CTCX** (fondo `#451D96`, tarjetas
+  `#512AA6`, acentos lavanda) en vez del casi negro que el owner encontró demasiado oscuro.
+- **Añadido**: la cara del laboratorio **muestra la foto anotada**, con el id y la zona de cada conjetura bajo su
+  título. Cada figura lleva ids propios de flecha y recorte, porque las dos viven a la vez en la página.
+- **Añadido**: **identificación del laboratorio** en el Feedback Técnico: laboratorio o institución, RUT con aviso del
+  dígito de verificación (algoritmo DIAN), nombre y cargo del técnico, y firma dibujada con el dedo o el mouse. Sale en
+  el PDF impreso y en el JSON (esquema 2). Una lectura nueva conserva a quien revisa pero no su firma; los trabajos
+  anteriores se migran.
+- **Añadido**: botón **«?»** amarillo en el paso 1 del productor: qué es la cromatografía en cinco puntos sencillos,
+  un dibujo de las cuatro partes del croma y un cierre, más **tres fotos de ejemplo** que pasan por la misma
+  compuerta y quedan marcadas como ejemplo en el informe.
+- **Añadido**: botón **«i»** verde en la tarjeta de feedback: el método en unas 150 palabras, un acordeón de recursos
+  en línea con licencia y nivel, y otro con **tres PDF de metodología** (metodología · base de conocimiento y fuentes ·
+  datos, calibración y validación) con marca de agua, derechos de CTCX, atribución de terceros y limitación de
+  responsabilidad. Se generan con `scripts/build-cromatografia-docs.mjs` desde las reglas, el motor y el prompt.
+- **Añadido**: el guardián `qa-cromatografia` sube a 213 comprobaciones (tema, figura del laboratorio, identificación y
+  NIT, los dos diálogos sin jerga para el productor, fotos y PDF en disco).
+
 ## [V5.37] — 2026-09-13 (commit c918c8f)
 
 - **Añadido**: el informe del productor del Lector de Cromatografía **abre con su foto anotada** (pedido del owner): el

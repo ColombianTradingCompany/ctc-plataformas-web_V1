@@ -24,20 +24,20 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --purple:#B99CF5; --purple-deep:#D9C8FA; --purple-mid:#9B79E8;
-    --lavender:#6A5A8C; --lavender-soft:#241640; --lavender-line:#2E1F55;
-    --bg:#150A2E; --panel:#1E1140; --ink:#F2ECFF; --muted:#9E8FBC; --line:#2E1F55;
-    --on-purple:#1A0E33; --ok:#5CC98A; --ok-soft:#12331F; --warn:#F2C35B; --warn-soft:#3A2C0A; --bad:#FF8A8A; --bad-soft:#3A1418;
-    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.4);
+    --purple:#CDB9F0; --purple-deep:#F6F1FF; --purple-mid:#B69CF0;
+    --lavender:#9C80DE; --lavender-soft:#5A3AA6; --lavender-line:#7152BE;
+    --bg:#451D96; --panel:#512AA6; --ink:#FFFFFF; --muted:#E2D6FA; --line:#6B4BBA; color-scheme:dark;
+    --on-purple:#2B1160; --ok:#A6F2C6; --ok-soft:#1D5A47; --warn:#FFE08A; --warn-soft:#6A4A12; --bad:#FFC2C2; --bad-soft:#74234A;
+    --shadow:0 1px 2px rgba(20,6,60,.25),0 10px 28px rgba(20,6,60,.3);
     --parrot-dark:none; --parrot-light:block;
   }
 }
 :root[data-theme="dark"]{
-  --purple:#B99CF5; --purple-deep:#D9C8FA; --purple-mid:#9B79E8;
-  --lavender:#6A5A8C; --lavender-soft:#241640; --lavender-line:#2E1F55;
-  --bg:#150A2E; --panel:#1E1140; --ink:#F2ECFF; --muted:#9E8FBC; --line:#2E1F55;
-  --on-purple:#1A0E33; --ok:#5CC98A; --ok-soft:#12331F; --warn:#F2C35B; --warn-soft:#3A2C0A; --bad:#FF8A8A; --bad-soft:#3A1418;
-  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.4);
+  --purple:#CDB9F0; --purple-deep:#F6F1FF; --purple-mid:#B69CF0;
+  --lavender:#9C80DE; --lavender-soft:#5A3AA6; --lavender-line:#7152BE;
+  --bg:#451D96; --panel:#512AA6; --ink:#FFFFFF; --muted:#E2D6FA; --line:#6B4BBA; color-scheme:dark;
+  --on-purple:#2B1160; --ok:#A6F2C6; --ok-soft:#1D5A47; --warn:#FFE08A; --warn-soft:#6A4A12; --bad:#FFC2C2; --bad-soft:#74234A;
+  --shadow:0 1px 2px rgba(20,6,60,.25),0 10px 28px rgba(20,6,60,.3);
   --parrot-dark:none; --parrot-light:block;
 }
 *{box-sizing:border-box}
@@ -181,6 +181,47 @@ td.n{font-family:var(--f-mono);font-size:13px}
 .limites{background:var(--lavender-soft);border-left:3px solid var(--yellow);padding:10px 14px;font-size:13px;color:var(--muted)}
 .versiones{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:12px}
 .contador{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+/* botones redondos de ayuda */
+.redondo{width:44px;height:44px;border-radius:50%;border:0;display:inline-grid;place-items:center;cursor:pointer;font-weight:800;box-shadow:0 2px 8px rgba(20,6,60,.28);flex:none}
+.redondo.ayuda{position:absolute;top:12px;right:12px;background:var(--yellow);color:#2B1160;font-size:22px;font-family:var(--f-ui)}
+.redondo.info{background:#12A150;color:#fff;font:italic 700 22px/1 Georgia,serif;margin-right:auto}
+.redondo:hover{filter:brightness(1.06)}
+#paso-foto{position:relative}
+#paso-foto h2{padding-right:52px}
+/* diálogos */
+dialog.modal{width:min(740px,calc(100% - 24px));max-height:calc(100% - 32px);overflow:auto;border:0;border-radius:16px;padding:0;background:var(--panel);color:var(--ink);box-shadow:0 20px 60px rgba(20,6,60,.45)}
+dialog.modal::backdrop{background:rgba(26,10,60,.55)}
+.mcab{display:flex;align-items:center;gap:10px;padding:14px 16px 12px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:1}
+.mcab h2{margin:0;flex:1}
+.mcuerpo{padding:12px 20px 6px}
+.mcuerpo a{color:var(--purple-deep)}
+.mpie{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px;border-top:1px solid var(--line)}
+.cerrar-x{border:0;background:none;font-size:20px;width:44px;height:44px;border-radius:10px;cursor:pointer;color:var(--muted)}
+.cerrar-x:hover{background:var(--lavender-soft)}
+.cinco,.metodo{margin:6px 0 10px;padding-left:20px}
+.cinco li,.metodo li{margin:7px 0}
+.esquema-croma{display:block;width:100%;max-width:560px;height:auto;margin:6px auto 8px;border-radius:12px;background:#fff}
+.cierre{font-family:var(--f-txt);font-size:16px;line-height:1.55}
+.ejemplos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 10px}
+.ejemplo{border:1px solid var(--line);border-radius:12px;background:var(--lavender-soft);padding:6px 6px 8px;cursor:pointer;display:flex;flex-direction:column;gap:6px;align-items:stretch;font-weight:600;color:var(--purple-deep);min-height:44px;text-align:center}
+.ejemplo:hover{border-color:var(--purple)}
+.ejemplo img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#fff;display:block}
+@media (max-width:520px){.ejemplos{grid-template-columns:1fr 1fr}}
+.recursos{margin:0;padding-left:20px;font-size:13.5px}
+.recursos li{margin:8px 0}
+.recursos .lic{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.docs{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.docs a{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel);text-decoration:none;min-height:44px}
+.docs a:hover{border-color:var(--purple)}
+.docs b{color:var(--purple-deep)}
+.docs .pdf{font-family:var(--f-mono);font-size:10.5px;font-weight:700;background:var(--red);color:#fff;border-radius:5px;padding:3px 6px;flex:none}
+/* identificación del laboratorio y firma */
+.ident{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:6px 0 4px;background:var(--lavender-soft)}
+.ident h3{margin:0 0 8px}
+.firma{display:flex;flex-direction:column;gap:6px}
+.firma .etiqueta{font-size:13px;font-weight:600}
+.firma canvas{width:100%;max-width:520px;height:auto;aspect-ratio:600/180;background:#fff;border:1px dashed var(--purple);border-radius:10px;touch-action:none;cursor:crosshair}
+.firma .bar{justify-content:flex-start;align-items:center;margin-top:2px}
 /* pie de marca */
 footer.pie{border-top:1px solid var(--line);margin-top:26px;background:var(--panel)}
 footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:grid;grid-template-columns:260px 1fr;gap:28px}
@@ -209,7 +250,10 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
   .impreso-cabecera .t small{color:#6E5F8A;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
   .impreso-pie{display:flex;gap:12px;align-items:center;border-top:1px solid #ccc;margin-top:18px;padding-top:8px;font-size:10px;color:#555}
   .impreso-pie img{height:34px}
-  .accion,.elemento,.hallazgos li{break-inside:avoid}
+  .accion,.elemento,.hallazgos li,.ident{break-inside:avoid}
+  dialog{display:none!important}
+  .ident{background:none;border:1px solid #ccc}
+  .firma canvas{border:0;border-bottom:1px solid #888;border-radius:0}
   details{border:0;background:none}
   .fb select,.fb textarea,.fb input{border:0;padding:0;min-height:0}
 }
@@ -245,6 +289,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     </div>
 
     <section class="card solo-pantalla" id="paso-foto">
+      <button type="button" class="redondo ayuda noprint" id="btnAyudaCroma" aria-haspopup="dialog" aria-controls="dlgCroma" title="¿Qué es la cromatografía?" aria-label="¿Qué es la cromatografía? Ver explicación y fotos de ejemplo">?</button>
       <h2><span class="paso">1</span>La foto de su cromatografía</h2>
       <ul class="tips">
         <li><b>Desde arriba</b>Con el celular paralelo al papel y el papel completo.</li>
@@ -256,6 +301,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
         <span class="aviso">Toque aquí para elegirla o tomarla con la cámara</span>
         <input type="file" id="archivo" accept="image/jpeg,image/png,image/webp" hidden>
       </div>
+      <p class="aviso">¿Aún no tiene su foto? Toque el botón <b>?</b> de arriba: le explicamos qué es la cromatografía y puede probar con una foto de ejemplo.</p>
       <div class="foto" id="fotoProductor" hidden>
         <canvas id="vistaProductor" width="260" height="260" aria-label="Su foto"></canvas>
         <div id="gateProductor"></div>
@@ -393,6 +439,13 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       <h2>Lectura técnica</h2>
       <p class="aviso" id="labSinLectura">Sin lectura con IA todavía. Se pide desde la cara del productor.</p>
       <div id="labLecturaContenido" hidden>
+        <div id="lFigura" hidden>
+          <h3>Foto anotada del informe del productor</h3>
+          <figure class="figura-croma">
+            <div id="lFiguraSvg"></div>
+            <figcaption>La misma figura que ve el productor. Cada número es una conjetura (c1, c2…) y la flecha apunta al punto medio de su zona, calculado con el centro, el radio y las fronteras medidas. Las zonas son aproximadas.</figcaption>
+          </figure>
+        </div>
         <h3>Descripción visual</h3>
         <div class="elemento" data-el="descripcion"><p id="rDesc"></p><div id="fbDescripcion"></div></div>
         <h3>Escala morfológica (Ford et al.) · rangos de la lectura</h3>
@@ -414,9 +467,23 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     <section class="card" id="labFeedback">
       <h2>Feedback técnico</h2>
       <p class="lead">Quién revisa y su valoración general. Cada comentario queda ligado al elemento que revisa.</p>
+      <div class="ident" id="labIdent">
+        <h3>Identificación del laboratorio</h3>
+        <div class="fgrid">
+          <div class="field"><label for="fbLab">Laboratorio o institución</label><input id="fbLab" data-fbg="laboratorio.nombre" autocomplete="organization" maxlength="160"></div>
+          <div class="field"><label for="fbRut">RUT (NIT con dígito de verificación)</label><input id="fbRut" data-fbg="laboratorio.rut" inputmode="numeric" maxlength="20" placeholder="900.123.456-7"><span class="aviso" id="fbRutAviso"></span></div>
+          <div class="field"><label for="fbNombre">Nombre del técnico</label><input id="fbNombre" data-fbg="tecnico.nombre" autocomplete="name" maxlength="120"></div>
+          <div class="field"><label for="fbRol">Cargo o profesión</label><input id="fbRol" data-fbg="tecnico.rol" maxlength="120" placeholder="Ingeniero agrónomo, analista de suelos…"></div>
+          <div class="field span firma">
+            <span class="etiqueta" id="fbFirmaEtq">Firma del técnico</span>
+            <canvas id="fbFirma" width="600" height="180" role="img" aria-labelledby="fbFirmaEtq"></canvas>
+            <div class="bar noprint"><button class="btn" type="button" id="btnBorrarFirma">Borrar firma</button><span class="aviso" id="fbFirmaEstado"></span></div>
+            <span class="aviso">Firme con el dedo o con el mouse. Es una firma dibujada que identifica a quien revisa; no es una firma digital certificada.</span>
+          </div>
+        </div>
+      </div>
+      <h3>Valoración general</h3>
       <div class="fgrid">
-        <div class="field"><label for="fbNombre">Técnico que revisa</label><input id="fbNombre" data-fbg="tecnico.nombre"></div>
-        <div class="field"><label for="fbRol">Institución o rol</label><input id="fbRol" data-fbg="tecnico.rol" placeholder="Agrónomo, laboratorio de suelos…"></div>
         <div class="field"><label for="fbFoto">Calidad de la foto</label>
           <select id="fbFoto" data-fbg="general.calidad_foto"><option value="">Sin valorar</option><option value="buena">Buena</option><option value="dudosa">Dudosa</option><option value="mala">No sirve</option></select></div>
         <div class="field"><label for="fbValor">La lectura, en conjunto</label>
@@ -425,6 +492,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       </div>
       <p class="contador" id="fbContador"></p>
       <div class="bar noprint">
+        <button type="button" class="redondo info" id="btnInfoMetodo" aria-haspopup="dialog" aria-controls="dlgMetodo" title="Cómo funciona el método" aria-label="Cómo funciona el método: resumen, recursos y documentos">i</button>
         <button class="btn" type="button" id="btnPdfLab">Imprimir feedback (PDF)</button>
         <button class="btn primary" type="button" id="btnExportarFeedback">Exportar Feedback Técnico (.json)</button>
       </div>
@@ -432,6 +500,106 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     <div class="impreso-pie"><img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"><div id="labPieImpreso"></div></div>
   </section>
 </main>
+
+<!-- ═════════════ «?» · Qué es la cromatografía (productor) ═════════════ -->
+<dialog class="modal" id="dlgCroma" aria-labelledby="dlgCromaTitulo">
+  <div class="mcab"><h2 id="dlgCromaTitulo">¿Qué es la cromatografía de suelo?</h2><button type="button" class="cerrar-x" data-cerrar aria-label="Cerrar">✕</button></div>
+  <div class="mcuerpo">
+    <ul class="cinco">
+      <li><b>Es un retrato de su suelo en papel.</b> Se mezcla un poco de tierra con un líquido, y ese líquido sube por un papel redondo y lo pinta con los colores y las formas de la tierra.</li>
+      <li><b>Se lee del centro hacia afuera.</b> El centro habla del aire que tiene la tierra; el anillo de adentro, de su parte mineral; el del medio, de la materia orgánica; y el borde, de la vida pequeña del suelo.</li>
+      <li><b>Las formas cuentan una historia.</b> Rayos y picos que van del centro al borde suelen verse en suelos con más vida; anillos lisos y separados, en suelos más cansados.</li>
+      <li><b>Sirve para comparar.</b> Es barata y se hace en la finca. Hacerla en el mismo lote cada cierto tiempo, con la misma receta, muestra si el manejo está ayudando.</li>
+      <li><b>Orienta, pero no mide.</b> No dice cuánto de cada cosa tiene la tierra, no reemplaza el laboratorio y no dice nada de la calidad de su café.</li>
+    </ul>
+    <svg class="esquema-croma" viewBox="0 0 560 300" role="img" aria-label="Dibujo de un croma con sus cuatro partes: centro, adentro, medio y borde" font-family="Segoe UI, system-ui, sans-serif">
+      <rect width="560" height="300" rx="14" fill="#fff"/>
+      <circle cx="150" cy="150" r="126" fill="#F6EFDD"/>
+      <g fill="#A8702F"><path d="M239.7 142.9 L276.0 150.0 L239.7 157.1 z"/><path d="M238.5 166.4 L271.7 182.6 L234.8 180.0 z"/><path d="M231.2 188.7 L259.1 213.0 L224.2 201.0 z"/><path d="M218.4 208.5 L239.1 239.1 L208.5 218.4 z"/><path d="M201.0 224.2 L213.0 259.1 L188.7 231.2 z"/><path d="M180.0 234.8 L182.6 271.7 L166.4 238.5 z"/><path d="M157.1 239.7 L150.0 276.0 L142.9 239.7 z"/><path d="M133.6 238.5 L117.4 271.7 L120.0 234.8 z"/><path d="M111.3 231.2 L87.0 259.1 L99.0 224.2 z"/><path d="M91.5 218.4 L60.9 239.1 L81.6 208.5 z"/><path d="M75.8 201.0 L40.9 213.0 L68.8 188.7 z"/><path d="M65.2 180.0 L28.3 182.6 L61.5 166.4 z"/><path d="M60.3 157.1 L24.0 150.0 L60.3 142.9 z"/><path d="M61.5 133.6 L28.3 117.4 L65.2 120.0 z"/><path d="M68.8 111.3 L40.9 87.0 L75.8 99.0 z"/><path d="M81.6 91.5 L60.9 60.9 L91.5 81.6 z"/><path d="M99.0 75.8 L87.0 40.9 L111.3 68.8 z"/><path d="M120.0 65.2 L117.4 28.3 L133.6 61.5 z"/><path d="M142.9 60.3 L150.0 24.0 L157.1 60.3 z"/><path d="M166.4 61.5 L182.6 28.3 L180.0 65.2 z"/><path d="M188.7 68.8 L213.0 40.9 L201.0 75.8 z"/><path d="M208.5 81.6 L239.1 60.9 L218.4 91.5 z"/><path d="M224.2 99.0 L259.1 87.0 L231.2 111.3 z"/><path d="M234.8 120.0 L271.7 117.4 L238.5 133.6 z"/></g>
+      <circle cx="150" cy="150" r="94" fill="#D9A650"/>
+      <circle cx="150" cy="150" r="60" fill="#8E5A2B"/>
+      <circle cx="150" cy="150" r="24" fill="#F4EAD6"/>
+      <circle cx="150" cy="150" r="3" fill="#fff" stroke="#8E5A2B"/>
+      <g stroke="#451D96" stroke-width="2" fill="none">
+        <path d="M296 57 L159 143"/><path d="M296 117 L190 139"/><path d="M296 177 L226 163"/><path d="M296 237 L238 212"/>
+      </g>
+      <g fill="#FDC70C" stroke="#451D96" stroke-width="1.5">
+        <circle cx="159" cy="143" r="4.5"/><circle cx="190" cy="139" r="4.5"/><circle cx="226" cy="163" r="4.5"/><circle cx="238" cy="212" r="4.5"/>
+      </g>
+      <g fill="#2B1160">
+        <text x="304" y="54" font-size="17" font-weight="700">Centro</text><text x="304" y="74" font-size="14" fill="#6E5F8A">el aire de la tierra</text>
+        <text x="304" y="114" font-size="17" font-weight="700">Adentro</text><text x="304" y="134" font-size="14" fill="#6E5F8A">la parte mineral</text>
+        <text x="304" y="174" font-size="17" font-weight="700">Medio</text><text x="304" y="194" font-size="14" fill="#6E5F8A">la materia orgánica</text>
+        <text x="304" y="234" font-size="17" font-weight="700">Borde</text><text x="304" y="254" font-size="14" fill="#6E5F8A">la vida pequeña del suelo</text>
+      </g>
+    </svg>
+    <p class="cierre">Piense en el croma como una foto de la salud de su suelo: muestra señales, no da un diagnóstico. Úselo para seguir cómo cambia su lote con el manejo y, cuando quiera estar seguro, confírmelo con un análisis de laboratorio.</p>
+    <h3>¿Aún no tiene una foto?</h3>
+    <p class="aviso">Pruebe la herramienta con una de estas fotos de ejemplo. La lectura será de ese croma, no de su suelo, y reemplaza la foto que haya subido.</p>
+    <div class="ejemplos">
+      <button type="button" class="ejemplo" data-ejemplo="1"><img src="/tools/assets/cromatografia-ejemplos/ejemplo-1.jpg" alt="" loading="lazy">Ejemplo 1 · compost</button>
+      <button type="button" class="ejemplo" data-ejemplo="2"><img src="/tools/assets/cromatografia-ejemplos/ejemplo-2.jpg" alt="" loading="lazy">Ejemplo 2 · lámina</button>
+      <button type="button" class="ejemplo" data-ejemplo="3"><img src="/tools/assets/cromatografia-ejemplos/ejemplo-3.jpg" alt="" loading="lazy">Ejemplo 3 · bocashi</button>
+    </div>
+    <p class="aviso" id="ejemploMsg"></p>
+  </div>
+  <div class="mpie"><button type="button" class="btn primary" data-cerrar>Entendido</button></div>
+</dialog>
+
+<!-- ═════════════ «i» · Cómo funciona el método (laboratorio) ═════════════ -->
+<dialog class="modal" id="dlgMetodo" aria-labelledby="dlgMetodoTitulo">
+  <div class="mcab"><h2 id="dlgMetodoTitulo">Cómo funciona el Lector</h2><button type="button" class="cerrar-x" data-cerrar aria-label="Cerrar">✕</button></div>
+  <div class="mcuerpo">
+    <ul class="metodo" id="metodoResumen">
+      <li><b>Compuerta de captura.</b> Antes de interpretar se mide la foto: círculo, nitidez, 500 px de diámetro, borde completo, fondo claro y cámara paralela. Si falla, no hay lectura.</li>
+      <li><b>Rasgos sin IA.</b> Perfil radial CIELAB de 50 anillos, fronteras de zona medidas, radialidad, picos, borde, intensidad, simetría y entropía. La escala de Ford se estima por programa.</li>
+      <li><b>Lectura con IA.</b> Claude Haiku 4.5, a temperatura 0, recibe la foto reducida, los rasgos y el contexto sin datos de la finca, y responde en un esquema cerrado.</li>
+      <li><b>Reglas CTC v<span data-reglas-version>2.3</span>.</b> Cada criterio lleva su fuente y su nivel de evidencia (A, B o C), y el lenguaje se ajusta a ese nivel.</li>
+      <li><b>Validación en el servidor.</b> Rechaza afirmaciones prohibidas e incoherencias con los rasgos, limita el nivel por fuente y calcula la certeza de cada conjetura.</li>
+      <li><b>Límites.</b> Es cualitativo: Ford et al. 2021 (n = 343) no halló variación consistente con la condición del suelo. No mide nutrientes ni se relaciona con la taza.</li>
+    </ul>
+    <details>
+      <summary>Recursos en línea y atribuciones</summary>
+      <div>
+        <p class="aviso">Obras de terceros citadas y enlazadas, no reproducidas. Cada una pertenece a sus autores y editores, con la licencia indicada; su mención no implica que respalden esta herramienta. El nivel A, B o C es la valoración de CTC para este uso.</p>
+        <ol class="recursos">
+          <li>Martins, D. W. P. y Calixto, W. P. (2026). <i>Digital Pfeiffer chromatogram image dataset for multitarget soil property prediction</i>. Zenodo. <a href="https://doi.org/10.5281/zenodo.18840454" target="_blank" rel="noopener">doi:10.5281/zenodo.18840454</a><span class="lic">CC BY 4.0 · A · protocolo de captura y límites del dataset</span></li>
+          <li>Martins, D. W. P., Martins, K. F. S. O. y Calixto, W. P. (2026). Código y muestras de 448 px, parte I. Zenodo. <a href="https://doi.org/10.5281/zenodo.18851814" target="_blank" rel="noopener">doi:10.5281/zenodo.18851814</a><span class="lic">CC BY 4.0 · A · calibración de la compuerta con 108 capturas (solo se miden, no se redistribuyen)</span></li>
+          <li>Martins, D. W. P. et al. (2026). Pfeiffer chromatography for computational soil analysis: Part I. <i>Smart Agricultural Technology</i>. <a href="https://doi.org/10.1016/j.atech.2026.102312" target="_blank" rel="noopener">doi:10.1016/j.atech.2026.102312</a><span class="lic">CC BY-NC-ND 4.0 · A · validación por tipo de suelo</span></li>
+          <li>Ford, B. M., Stewart, B. A., Tunbridge, D. J. y Tilbrook, P. (2021). Paper chromatography: An inconsistent tool for assessing soil health. <i>Geoderma</i> 383:114783. <a href="https://doi.org/10.1016/j.geoderma.2020.114783" target="_blank" rel="noopener">doi:10.1016/j.geoderma.2020.114783</a><span class="lic">de pago, leído en resumen · A · rasgos y advertencia de consistencia</span></li>
+          <li>Ford, B., Cook, B., Tunbridge, D. y Tilbrook, P. (2019). <i>Using paper chromatography for assessing soil health in southwestern Australia</i>. UWA para Torbay Catchment Group. <a href="https://torbaycatchment.org.au/wp-content/uploads/2019/07/Using-paper-chromatography-for-assessing-soil-health-compressed-1.pdf" target="_blank" rel="noopener">torbaycatchment.org.au</a><span class="lic">acceso abierto · B · escala 1–5 y medidas de zonas (n = 361)</span></li>
+          <li>Kokornaczyk, M. O., Primavera, F., Luneia, R., Baumgartner, S. y Betti, L. (2016). Analysis of soils by means of Pfeiffer's circular chromatography test and comparison to chemical analysis results. <i>Biological Agriculture &amp; Horticulture</i> 33(3):143–157. <a href="https://doi.org/10.1080/01448765.2016.1214889" target="_blank" rel="noopener">doi:10.1080/01448765.2016.1214889</a><span class="lic">de pago · A · grupos concéntrico y radial</span></li>
+          <li>Graciano, I., Matsumoto, L. S., Demétrio, G. B. y Peixoto, E. C. T. M. (2020). Evaluating Pfeiffer Chromatography for Its Validation as an Indicator of Soil Quality. <i>Journal of Agricultural Studies</i> 8(3). <a href="http://www.macrothink.org/journal/index.php/jas/article/download/16336/13045" target="_blank" rel="noopener">macrothink.org</a><span class="lic">CC BY 4.0 · B · zonas frente a laboratorio (n = 12)</span></li>
+          <li>Pilon, L. C., Cardoso, J. H. y Medeiros, F. S. (2018). <i>Guia prático de cromatografia de Pfeiffer</i>. Embrapa, Documentos 455. <a href="https://ainfo.cnptia.embrapa.br/digital/bitstream/item/184134/1/DOCUMENTO-455.pdf" target="_blank" rel="noopener">embrapa.br</a><span class="lic">acceso gratuito, derechos de Embrapa · B · protocolo, zonas y escala visual</span></li>
+          <li>Ardila Gómez, J. D. (2026). Análisis de los suelos mediante la cromatografía de Pfeiffer para mejorar la producción de café orgánico. Universidad Industrial de Santander. <a href="https://noesis.uis.edu.co/items/fc72305a-c2da-4543-8e5c-e1f234831817" target="_blank" rel="noopener">noesis.uis.edu.co</a><span class="lic">CC BY-NC-ND 4.0 · B · café en Santander con laboratorio pareado</span></li>
+          <li>Nivia Torres, I. N. (2017). Análisis del uso de la cromatografía como herramienta cualitativa de diagnóstico de la fertilidad del suelo. UNAD. <a href="https://repository.unad.edu.co/handle/10596/13593" target="_blank" rel="noopener">repository.unad.edu.co</a><span class="lic">acceso abierto · B · lectura por forma y color</span></li>
+          <li>Programa Altepetl, SEDEMA-CDMX (2021). Manual para la elaboración de cromatografía de suelos mediante el método Pfeiffer. <a href="https://www.researchgate.net/publication/352006157" target="_blank" rel="noopener">researchgate.net</a><span class="lic">acceso restringido · B · observación, diagnóstico y manejo</span></li>
+          <li>Hernández-Rodríguez, A. et al. (2021). Patrones para estimar la fertilidad del suelo mediante la técnica de cromatografía de Pfeiffer. <i>Terra Latinoamericana</i> 39:e844. <a href="https://www.scielo.org.mx/pdf/tl/v39/2395-8030-tl-39-e844.pdf" target="_blank" rel="noopener">scielo.org.mx</a><span class="lic">acceso abierto · B · anchuras de zona</span></li>
+          <li>Domingues, S., Boff, P. y Boff, M. I. C. (2022). Cromatografía circular Pfeiffer en suelo tratado con altas diluciones dinamizadas. <i>Rev. Mex. Cienc. Agríc.</i> 13(7):1183. <a href="https://www.scielo.org.mx/pdf/remexca/v13n7/2007-0934-remexca-13-07-1183.pdf" target="_blank" rel="noopener">scielo.org.mx</a><span class="lic">acceso abierto · B · entropía de textura</span></li>
+          <li>Pian, L. (2017). <i>Chromatography of Pfeiffer: principles, method and use in perception of soils</i>. Landbauschule Dottenfelderhof. <a href="https://www.dottenfelderhof.de/fileadmin/images/landbauschule/projektarbeiten/Projektarbeit_Livia_Pian2016-17_ingles.pdf" target="_blank" rel="noopener">dottenfelderhof.de</a><span class="lic">acceso abierto · B/C · controles con reactivos y estaciones</span></li>
+          <li>Trío Maseda, M. (2016). Desarrollo y caracterización del método de Dinamolisis Capilar para el análisis de suelos contaminados. Universidad Politécnica de Madrid. <a href="https://oa.upm.es/39731/" target="_blank" rel="noopener">oa.upm.es</a><span class="lic">CC BY-NC-ND 3.0 ES · B · estandarización y fijación de la imagen</span></li>
+          <li>Mikrobiomik. Cromatografía circular de suelos (guía). <a href="https://mikrobiomik.org/inc/Chromatography_Guide_ESP.pdf" target="_blank" rel="noopener">mikrobiomik.org</a><span class="lic">CC BY-SA 4.0 · C · protocolo y efecto de la concentración</span></li>
+          <li>Barbosa, G. O. (2024). Cromatografia Circular de Pfeiffer Radial Profile no ImageJ. Zenodo. <a href="https://doi.org/10.5281/zenodo.10932371" target="_blank" rel="noopener">doi:10.5281/zenodo.10932371</a><span class="lic">CC BY 4.0 · B · referencia del perfil radial; su código no se usa</span></li>
+          <li>Restrepo Rivera, J. y Pinheiro, S. (2011). <i>Cromatografía: imágenes de vida y destrucción del suelo</i>. ISBN 9789584485823.<span class="lic">libro con derechos · C · criterio de práctica, citado a través de fuentes secundarias</span></li>
+          <li>Pfeiffer, E. E. (1984). <i>Chromatography Applied to Quality Testing</i>. ISBN 9780938250210.<span class="lic">libro con derechos · C · origen del método</span></li>
+          <li>Modelo de lenguaje: Claude Haiku 4.5, de Anthropic, usado mediante su API.<span class="lic">Claude y Anthropic son marcas de Anthropic PBC · proveedor, no fuente de criterios</span></li>
+        </ol>
+      </div>
+    </details>
+    <details>
+      <summary>Documentos de metodología (PDF)</summary>
+      <div>
+        <p class="aviso">Documentos de CTCX con marca de agua. Se pueden consultar y citar con atribución; no se permite reproducirlos, modificarlos ni distribuirlos sin autorización escrita.</p>
+        <ul class="docs">
+          <li><a href="/tools/assets/cromatografia-docs/CTCX-Croma-01-Metodologia.pdf" target="_blank" rel="noopener"><span class="pdf">PDF</span><span><b>1 · Metodología del Lector</b><br><span class="aviso">Compuerta de captura, motor de rasgos, lectura con IA, validación de la salida y las dos caras.</span></span></a></li>
+          <li><a href="/tools/assets/cromatografia-docs/CTCX-Croma-02-Base-de-conocimiento.pdf" target="_blank" rel="noopener"><span class="pdf">PDF</span><span><b>2 · Base de conocimiento y fuentes</b><br><span class="aviso">Las reglas de interpretación con su fuente y nivel de evidencia, y la bibliografía con sus licencias.</span></span></a></li>
+          <li><a href="/tools/assets/cromatografia-docs/CTCX-Croma-03-Datos-y-validacion.pdf" target="_blank" rel="noopener"><span class="pdf">PDF</span><span><b>3 · Datos, calibración y validación</b><br><span class="aviso">Datasets usados, calibración de la compuerta, pruebas del guardián y del modelo, y límites conocidos.</span></span></a></li>
+        </ul>
+      </div>
+    </details>
+  </div>
+  <div class="mpie"><button type="button" class="btn primary" data-cerrar>Cerrar</button></div>
+</dialog>
 
 <footer class="pie"><div class="fin">
   <div>
@@ -492,7 +660,19 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
   var fincas = [];
 
   function feedbackVacio() {
-    return { tecnico: { nombre: "", rol: "" }, general: { calidad_foto: "", valoracion: "", comentario: "" }, items: {}, actualizado: null };
+    return { laboratorio: { nombre: "", rut: "" }, tecnico: { nombre: "", rol: "", firma: null, firmado_at: null }, general: { calidad_foto: "", valoracion: "", comentario: "" }, items: {}, actualizado: null };
+  }
+  // Una lectura nueva se revisa desde cero, pero quien revisa sigue siendo el mismo:
+  // se conservan el laboratorio y el técnico. La firma no: firma una revisión concreta.
+  function feedbackConIdentidad(previo) {
+    var f = feedbackVacio();
+    if (previo) {
+      f.laboratorio.nombre = (previo.laboratorio && previo.laboratorio.nombre) || "";
+      f.laboratorio.rut = (previo.laboratorio && previo.laboratorio.rut) || "";
+      f.tecnico.nombre = (previo.tecnico && previo.tecnico.nombre) || "";
+      f.tecnico.rol = (previo.tecnico && previo.tecnico.rol) || "";
+    }
+    return f;
   }
   function nuevoEstado() {
     return {
@@ -501,6 +681,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       estado: "sin-foto",
       creado: new Date().toISOString(),
       miniatura: null,
+      foto_ejemplo: null,
       validacion: null,
       rasgos: null,
       ford_programatico: null,
@@ -521,6 +702,30 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     try { localStorage.setItem("ctc-croma-cara", cara); } catch (e) { /* sin almacenamiento */ }
     window.scrollTo({ top: 0 });
   }
+  /* ── Diálogos ──────────────────────────────────────────────────────────── */
+  function abrirDialogo(id) { var d = $("#" + id); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
+  function cerrarDialogo(d) { if (d.close) d.close(); else d.removeAttribute("open"); }
+  $$("dialog.modal").forEach(function (d) {
+    d.addEventListener("click", function (ev) { if (ev.target === d || ev.target.closest("[data-cerrar]")) cerrarDialogo(d); });
+  });
+  $("#btnAyudaCroma").addEventListener("click", function () { abrirDialogo("dlgCroma"); });
+  $("#btnInfoMetodo").addEventListener("click", function () { abrirDialogo("dlgMetodo"); });
+  // Las fotos de ejemplo pasan por la misma compuerta que una foto propia.
+  $$("[data-ejemplo]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var n = b.dataset.ejemplo;
+      b.disabled = true;
+      fetch("/tools/assets/cromatografia-ejemplos/ejemplo-" + n + ".jpg")
+        .then(function (r) { if (!r.ok) throw new Error("sin foto"); return r.blob(); })
+        .then(function (blob) {
+          cerrarDialogo($("#dlgCroma"));
+          cargar(new File([blob], "ejemplo-" + n + ".jpg", { type: "image/jpeg" }), "ejemplo-" + n);
+          $("#paso-foto").scrollIntoView({ block: "start" });
+        })
+        .catch(function () { $("#ejemploMsg").textContent = "No se pudo abrir la foto de ejemplo. Revise su conexión."; })
+        .then(function () { b.disabled = false; });
+    });
+  });
   $$("nav.caras button").forEach(function (b) { b.addEventListener("click", function () { verCara(b.dataset.cara); }); });
   document.addEventListener("click", function (ev) {
     var b = ev.target.closest("[data-ir-cara]");
@@ -561,6 +766,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     $("#ftReglas").textContent = REGLAS.$schema_version;
     // El descargo obligatorio sale SIEMPRE de las reglas, haya lectura o no.
     $("#rLimites").textContent = REGLAS.mandatory_disclaimer_es;
+    $$("[data-reglas-version]").forEach(function (el) { el.textContent = REGLAS.$schema_version; });
   }
   $("#ftYear").textContent = new Date().getFullYear();
 
@@ -677,7 +883,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     return c;
   }
 
-  function cargar(file) {
+  function cargar(file, ejemplo) {
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
       $("#fotoProductor").hidden = false;
       $("#gateProductor").innerHTML = '<div class="banner bad">Ese archivo no es una foto. Use una foto JPEG, PNG o WebP.</div>';
@@ -699,10 +905,12 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
         if (mini.length > 120000) mini = cMini.toDataURL("image/jpeg", 0.5);
         URL.revokeObjectURL(url);
 
-        var id = E.sample_id, ctx = E.contexto;
+        var id = E.sample_id, ctx = E.contexto, fbPrevio = E.feedback;
         E = nuevoEstado();
         E.sample_id = id;
         E.contexto = ctx;
+        E.feedback = feedbackConIdentidad(fbPrevio);
+        E.foto_ejemplo = ejemplo || null;
         E.miniatura = mini;
         E.validacion = res.validation_report;
         E.validacion.valida = res.valida;
@@ -755,6 +963,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     var c = E.contexto;
     return [
       E.sample_id,
+      E.foto_ejemplo ? "Foto de ejemplo (" + E.foto_ejemplo + ")" : "",
       conFinca && c.consentimiento && c.finca_en_pdf && c.finca ? c.finca + (c.parcela ? " · " + c.parcela : "") : "",
       (c.departamento || "Departamento no declarado") + (c.municipio ? " · " + c.municipio : ""),
       c.manejo ? "Manejo " + c.manejo : "",
@@ -769,7 +978,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     if (!E.miniatura || !v) return;
     dibujarFoto($("#vistaProductor"), false);
     if (v.valida) {
-      $("#gateProductor").innerHTML = '<div class="banner ok"><b>La foto sirve.</b> Complete los datos y pida la lectura.</div>';
+      $("#gateProductor").innerHTML = '<div class="banner ok"><b>La foto sirve.</b> ' + (E.foto_ejemplo ? "Es una foto de ejemplo: la lectura será de ese croma, no de su suelo. " : "") + "Complete los datos y pida la lectura.</div>";
     } else {
       $("#gateProductor").innerHTML = '<div class="banner bad"><b>Hay que repetir la foto.</b><ul>' +
         (v.motivos || []).map(function (m) { return "<li>" + esc(MOTIVO_PRODUCTOR[m] || m) + "</li>"; }).join("") + "</ul></div>";
@@ -800,8 +1009,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     $("#pSenal").className = "senal " + P.senal;
     $("#pSenalTexto").textContent = P.senal_texto;
     $("#pResumen").textContent = P.resumen;
-    // Las lecturas de V5.35 traían «hallazgos» y el laboratorio mezclado con las acciones.
-    var conjeturas = P.conjeturas || (P.hallazgos || []).map(function (h) { return { titulo: h.titulo, lo_que_se_ve: "", conjetura: h.explicacion, otra_posibilidad: "", que_implica: "", certeza: "", certeza_texto: "" }; });
+    var conjeturas = conjeturasDe(P);
     var confirmar = P.confirmar || P.acciones.filter(function (a) { return a.forzada || a.practica === "analisis-laboratorio" || a.practica === "repetir-croma"; });
     var acciones = P.confirmar ? P.acciones : P.acciones.filter(function (a) { return confirmar.indexOf(a) < 0; });
     $("#pConjeturas").innerHTML = conjeturas.map(function (c, i) {
@@ -822,9 +1030,14 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     $("#pConfirmar").innerHTML = confirmar.map(function (a) {
       return '<details class="accion"><summary>' + esc(a.titulo) + "</summary><div><p>" + esc(a.por_que) + "</p>" + pasos(a) + "</div></details>";
     }).join("");
-    dibujarFigura(conjeturas);
+    dibujarFigura(conjeturas, "p");
     $("#pDescargo").textContent = P.descargo;
     $("#pPieImpreso").textContent = "Informe generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + ". " + P.descargo;
+  }
+
+  // Las lecturas de V5.35 traían «hallazgos» y el laboratorio mezclado con las acciones.
+  function conjeturasDe(P) {
+    return P.conjeturas || (P.hallazgos || []).map(function (h) { return { id: h.id, titulo: h.titulo, lo_que_se_ve: "", conjetura: h.explicacion, otra_posibilidad: "", que_implica: "", certeza: "", certeza_texto: "" }; });
   }
 
   /* ── La foto anotada del informe ────────────────────────────────────────
@@ -849,8 +1062,12 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     if (lineas.length > 4) { lineas = lineas.slice(0, 4); lineas[3] = lineas[3] + "…"; }
     return lineas;
   }
-  function dibujarFigura(conjeturas) {
-    var figura = $("#pFigura"), caja = $("#pFiguraSvg");
+  var ZONA_TECNICA = { central: "zona central", mineral: "zona mineral", organic: "zona orgánica", enzymatic: "zona externa", general: "croma completo" };
+  // pref «p»: informe del productor; «l»: cara del laboratorio (con el id y la zona de
+  // cada conjetura). Cada figura lleva ids propios: las dos viven a la vez en la página.
+  function dibujarFigura(conjeturas, pref) {
+    var figura = $("#" + pref + "Figura"), caja = $("#" + pref + "FiguraSvg");
+    var tecnica = pref === "l";
     var r = E.rasgos, v = E.validacion;
     if (!E.miniatura || !r || !v || !v.escala || !conjeturas.length) { figura.hidden = true; caja.innerHTML = ""; return; }
     var img = new Image();
@@ -876,21 +1093,23 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
           var px = (CX + Math.cos(ang) * rel * RR).toFixed(1), py = (CY + Math.sin(ang) * rel * RR).toFixed(1);
           var sx = nx - lado * 15;
           flechas += '<line x1="' + sx + '" y1="' + ly + '" x2="' + px + '" y2="' + py + '" stroke="#fff" stroke-width="8" stroke-linecap="round"/>' +
-            '<line class="flecha" x1="' + sx + '" y1="' + ly + '" x2="' + px + '" y2="' + py + '" stroke="#451D96" stroke-width="3" marker-end="url(#flecha)"/>' +
+            '<line class="flecha" x1="' + sx + '" y1="' + ly + '" x2="' + px + '" y2="' + py + '" stroke="#451D96" stroke-width="3" marker-end="url(#' + pref + '-flecha)"/>' +
             '<circle cx="' + px + '" cy="' + py + '" r="4" fill="#FDC70C" stroke="#451D96" stroke-width="1.5"/>';
         }
         var lineas = envolver(c.titulo, 24);
+        if (tecnica && lineas.length > 3) { lineas = lineas.slice(0, 3); lineas[2] = lineas[2].replace(/…?$/, "…"); }
         var tx = lado < 0 ? nx - 22 : nx + 22;
+        var extra = tecnica ? '<tspan x="' + tx + '" dy="19" font-size="13" font-weight="400" fill="#6E5F8A">' + esc((c.id || "c" + (i + 1)) + " · " + (ZONA_TECNICA[zona] || zona)) + "</tspan>" : "";
         etiquetas += '<circle cx="' + nx + '" cy="' + ly + '" r="14" fill="#451D96"/>' +
           '<text x="' + nx + '" y="' + (ly + 5) + '" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">' + (i + 1) + "</text>" +
           '<text x="' + tx + '" y="' + (ly - (lineas.length - 1) * 10 + 6) + '" text-anchor="' + (lado < 0 ? "end" : "start") + '" font-size="17" font-weight="700" fill="#2B1160">' +
-          lineas.map(function (l, j) { return '<tspan x="' + tx + '" dy="' + (j ? 20 : 0) + '">' + esc(l) + "</tspan>"; }).join("") + "</text>";
+          lineas.map(function (l, j) { return '<tspan x="' + tx + '" dy="' + (j ? 20 : 0) + '">' + esc(l) + "</tspan>"; }).join("") + extra + "</text>";
       });
       caja.innerHTML = '<svg viewBox="0 0 ' + VW + " " + VH + '" role="img" aria-label="Su cromatografía con lo que se describe señalado" font-family="Segoe UI, system-ui, sans-serif">' +
-        '<defs><marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#451D96"/></marker>' +
-        '<clipPath id="recorteCroma"><rect x="' + bx + '" y="' + by + '" width="' + BOX + '" height="' + BOX + '" rx="18"/></clipPath></defs>' +
+        '<defs><marker id="' + pref + '-flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#451D96"/></marker>' +
+        '<clipPath id="' + pref + '-recorte"><rect x="' + bx + '" y="' + by + '" width="' + BOX + '" height="' + BOX + '" rx="18"/></clipPath></defs>' +
         '<rect x="' + bx + '" y="' + by + '" width="' + BOX + '" height="' + BOX + '" rx="18" fill="#fff"/>' +
-        '<image href="' + E.miniatura + '" x="' + (CX - cx * s).toFixed(1) + '" y="' + (CY - cy * s).toFixed(1) + '" width="' + (img.naturalWidth * s).toFixed(1) + '" height="' + (img.naturalHeight * s).toFixed(1) + '" clip-path="url(#recorteCroma)" preserveAspectRatio="none"/>' +
+        '<image href="' + E.miniatura + '" x="' + (CX - cx * s).toFixed(1) + '" y="' + (CY - cy * s).toFixed(1) + '" width="' + (img.naturalWidth * s).toFixed(1) + '" height="' + (img.naturalHeight * s).toFixed(1) + '" clip-path="url(#' + pref + '-recorte)" preserveAspectRatio="none"/>' +
         flechas + etiquetas + "</svg>";
       figura.hidden = false;
     };
@@ -982,6 +1201,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     var L = E.lectura;
     $("#labSinLectura").hidden = !!L;
     $("#labLecturaContenido").hidden = !L;
+    if (!L) $("#lFigura").hidden = true;
     if (L && REGLAS) {
       $("#rDesc").textContent = L.descripcion_visual;
       $("#fbDescripcion").innerHTML = controlFeedback("descripcion");
@@ -1000,6 +1220,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
         return '<div class="elemento" data-el="' + esc(r.id) + '"><div class="cab"><span class="id">' + esc(r.id) + "</span><b>" + esc(r.accion) + '</b><span class="prio ' + esc(r.prioridad) + '">' + esc(r.prioridad) + "</span></div><p>" + esc(r.justificacion) + "</p>" + controlFeedback(r.id) + "</div>";
       }).join("");
       var P = L.productor;
+      dibujarFigura(P ? conjeturasDe(P) : [], "l");
       $("#rProductor").innerHTML = P ? (
         '<div class="elemento" data-el="productor.resumen"><div class="cab"><span class="id">productor.resumen</span><b>Señal: ' + esc(P.senal) + "</b></div><p>" + esc(P.resumen) + "</p>" + controlFeedback("productor.resumen") + "</div>" +
         (P.conjeturas || []).map(function (h) {
@@ -1018,7 +1239,11 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     }
     ponerFeedbackGeneral();
     contarRevisados();
-    $("#labPieImpreso").textContent = "Feedback técnico generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + ".";
+    pintarPieLab();
+  }
+  function pintarPieLab() {
+    var f = E.feedback, quien = [f.tecnico.nombre, f.laboratorio.nombre, f.laboratorio.rut ? "RUT " + f.laboratorio.rut : ""].filter(Boolean).join(" · ");
+    $("#labPieImpreso").textContent = "Feedback técnico generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + "." + (quien ? " Revisado por " + quien + "." : "");
   }
 
   /* ── Feedback técnico ──────────────────────────────────────────────────── */
@@ -1036,6 +1261,8 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     } else if (el.dataset.fbg) {
       var partes = el.dataset.fbg.split(".");
       E.feedback[partes[0]][partes[1]] = el.value;
+      if (el.dataset.fbg === "laboratorio.rut") pintarAvisoRut();
+      pintarPieLab();
     } else {
       return;
     }
@@ -1047,7 +1274,89 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
   document.addEventListener("change", alEditarFeedback);
   function ponerFeedbackGeneral() {
     $$("[data-fbg]").forEach(function (el) { var p = el.dataset.fbg.split("."); el.value = (E.feedback[p[0]] || {})[p[1]] || ""; });
+    pintarAvisoRut();
+    ponerFirma();
   }
+
+  /* ── Identificación del laboratorio: RUT y firma ───────────────────────── */
+  // Dígito de verificación del NIT (DIAN): pesos primos desde la última cifra.
+  function dvNit(numero) {
+    var pesos = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 67, 71], s = 0;
+    var cifras = numero.split("").reverse();
+    for (var i = 0; i < cifras.length; i++) s += Number(cifras[i]) * pesos[i];
+    var r = s % 11;
+    return r > 1 ? 11 - r : r;
+  }
+  function pintarAvisoRut() {
+    var v = String(E.feedback.laboratorio.rut || "").replace(/[.\s]/g, "");
+    var m = /^(\d{5,15})(?:-(\d))?$/.exec(v), aviso = $("#fbRutAviso");
+    if (!v) aviso.textContent = "";
+    else if (!m) aviso.textContent = "Escríbalo con números, por ejemplo 900.123.456-7.";
+    else if (m[2] === undefined) aviso.textContent = "Falta el dígito de verificación, después del guion.";
+    else aviso.textContent = Number(m[2]) === dvNit(m[1]) ? "Dígito de verificación correcto." : "El dígito de verificación no coincide: revise el número.";
+  }
+  var lienzoFirma = $("#fbFirma"), gFirma = lienzoFirma.getContext("2d"), trazando = false, versionFirma = 0;
+  function limpiarFirma() {
+    gFirma.fillStyle = "#fff";
+    gFirma.fillRect(0, 0, lienzoFirma.width, lienzoFirma.height);
+    gFirma.strokeStyle = "#1E1033";
+    gFirma.lineWidth = 2.6;
+    gFirma.lineCap = "round";
+    gFirma.lineJoin = "round";
+  }
+  function pintarEstadoFirma() {
+    var t = E.feedback.tecnico;
+    $("#fbFirmaEstado").textContent = t.firma ? "Firmado el " + new Date(t.firmado_at).toLocaleString("es-CO") : "Sin firma";
+  }
+  function ponerFirma() {
+    if (trazando) return;
+    var f = E.feedback.tecnico.firma, v = ++versionFirma;
+    limpiarFirma();
+    if (f && /^data:image\/png;base64,/.test(f)) {
+      var im = new Image();
+      im.onload = function () { if (v === versionFirma) gFirma.drawImage(im, 0, 0, lienzoFirma.width, lienzoFirma.height); };
+      im.src = f;
+    }
+    pintarEstadoFirma();
+  }
+  function puntoFirma(ev) {
+    var b = lienzoFirma.getBoundingClientRect();
+    return [(ev.clientX - b.left) * lienzoFirma.width / b.width, (ev.clientY - b.top) * lienzoFirma.height / b.height];
+  }
+  lienzoFirma.addEventListener("pointerdown", function (ev) {
+    ev.preventDefault();
+    trazando = true;
+    versionFirma++;
+    try { lienzoFirma.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura */ }
+    var p = puntoFirma(ev);
+    gFirma.beginPath();
+    gFirma.moveTo(p[0], p[1]);
+    gFirma.lineTo(p[0] + 0.1, p[1] + 0.1);
+    gFirma.stroke();
+  });
+  lienzoFirma.addEventListener("pointermove", function (ev) {
+    if (!trazando) return;
+    var p = puntoFirma(ev);
+    gFirma.lineTo(p[0], p[1]);
+    gFirma.stroke();
+  });
+  function terminarTrazo() {
+    if (!trazando) return;
+    trazando = false;
+    E.feedback.tecnico.firma = lienzoFirma.toDataURL("image/png");
+    E.feedback.tecnico.firmado_at = new Date().toISOString();
+    E.feedback.actualizado = E.feedback.tecnico.firmado_at;
+    pintarEstadoFirma();
+    cambio();
+  }
+  lienzoFirma.addEventListener("pointerup", terminarTrazo);
+  lienzoFirma.addEventListener("pointercancel", terminarTrazo);
+  $("#btnBorrarFirma").addEventListener("click", function () {
+    E.feedback.tecnico.firma = null;
+    E.feedback.tecnico.firmado_at = null;
+    ponerFirma();
+    cambio();
+  });
   function contarRevisados() {
     var elementos = $$("#labLecturaContenido [data-el]");
     var revisados = 0;
@@ -1066,7 +1375,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     var guardado = estadoParaGuardar();
     var paquete = {
       tipo: "feedback_tecnico",
-      esquema: 1,
+      esquema: 2, // 2: identificación del laboratorio (nombre, RUT) y firma del técnico
       herramienta: "cromatografia-suelo",
       emitido_por: PIE_MARCA,
       exportado_at: new Date().toISOString(),
@@ -1147,7 +1456,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
         E.lectura = j.reporte;
         E.meta = j.meta;
         E.estado = "con-lectura";
-        E.feedback = feedbackVacio(); // una lectura nueva se revisa desde cero
+        E.feedback = feedbackConIdentidad(E.feedback); // una lectura nueva se revisa desde cero
         pintarIA('<div class="banner ok">Listo. Su informe está abajo.</div>');
         pintarInforme();
         pintarLaboratorio();
@@ -1175,8 +1484,9 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
   });
 
   $("#btnNuevo").addEventListener("click", function () {
-    var ctx = E.contexto;
+    var ctx = E.contexto, fbPrevio = E.feedback;
     E = nuevoEstado();
+    E.feedback = feedbackConIdentidad(fbPrevio);
     ["finca_id", "finca", "departamento", "municipio", "altitud_m", "variedad", "manejo", "papel", "dilucion", "consentimiento"].forEach(function (k) { E.contexto[k] = ctx[k]; });
     imagenIA = null;
     pintarTodo();
@@ -1194,6 +1504,9 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     var defCtx = nuevoEstado().contexto;
     for (var k2 in defCtx) if (base.contexto[k2] === undefined) base.contexto[k2] = defCtx[k2];
     base.feedback = Object.assign(feedbackVacio(), base.feedback || {});
+    // Trabajos de V5.36–V5.37: sin identificación del laboratorio ni firma.
+    base.feedback.laboratorio = Object.assign(feedbackVacio().laboratorio, base.feedback.laboratorio || {});
+    base.feedback.tecnico = Object.assign(feedbackVacio().tecnico, base.feedback.tecnico || {});
     E = base;
     imagenIA = null;
     $("#recuperar").hidden = true;

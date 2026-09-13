@@ -316,3 +316,30 @@ deduce de lo que se ve («centro», «dorado del medio», «picos del borde»). 
 flecha. La figura es un SVG con la miniatura recortada al croma, así que en el PDF los textos quedan nítidos. Las zonas
 son aproximadas y la leyenda lo dice.
 
+---
+
+## Morado claro, identificación del laboratorio y ayudas «?» e «i» (V5.38, 2026-09-13)
+
+**Lo que pidió el owner.** Usar el morado claro de CTCX porque todo se veía muy oscuro; mostrar la foto anotada también
+al laboratorio; casillas de identificación del laboratorio (nombre, RUT, técnico y firma); un botón «?» para el
+productor que explique la cromatografía en cinco puntos, un dibujo y un cierre, y que ofrezca tres fotos de ejemplo;
+y un botón «i» para el laboratorio con el método, los recursos en línea y unos tres PDF de metodología protegidos.
+
+**Cómo quedó.**
+- El modo oscuro toma el morado de marca `#451D96` como fondo y lavanda como acento; el modo claro no cambia.
+- La figura del laboratorio es la misma del productor, con «c1 · zona orgánica» bajo cada título.
+- El RUT se valida con el dígito de verificación de la DIAN solo como aviso: no bloquea. La firma es un trazo en un
+  lienzo, guardado como PNG en el trabajo; lo dice la pantalla: identifica a quien revisa y no es firma digital
+  certificada. Al pedir una lectura nueva se conservan laboratorio y técnico, pero la firma se borra, porque firma una
+  revisión concreta.
+- La explicación del productor no nombra nutrientes, acidez ni jerga; el guardián la pasa por las mismas listas
+  vetadas de las reglas. Las fotos de ejemplo son las tres que dejó el owner, convertidas a JPEG (a la 1 se le tapó el
+  icono de captura y a la 2 se le quitó el borde de madera y se le dio margen) y pasan la compuerta 1.2.
+- Los PDF se generan desde el código (reglas, umbrales, versiones), así que no se desalinean al regenerarlos. Llevan
+  marca de agua y pie de derechos en cada página, citan a terceros sin reproducir texto ni figuras, dan atribución
+  CC BY 4.0 a los datasets de Martins et al. y cierran con aviso legal (propiedad intelectual con Ley 23 de 1982 y
+  Decisión Andina 351, marcas de terceros, limitación de responsabilidad, privacidad).
+
+**Queda para el owner.** Confirmar el origen y los derechos de las tres fotos de ejemplo (la 2 parece una lámina de
+libro escaneada) o cambiarlas por cromas propios de CTC, y que un abogado revise el aviso legal de los PDF.
+

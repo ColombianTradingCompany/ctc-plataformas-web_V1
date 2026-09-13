@@ -187,3 +187,11 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   flecha numerada por conjetura; la zona de cada conjetura (prompt 1.7, `zonaDesdeTexto` como respaldo) se ubica con
   `center_xy`, `outer_radius_px` y `zone_boundaries_rel` del motor de rasgos. SVG en el HTML, sin librerías.
 (commit: c918c8f)
+
+## [2026-09-13] V5.38 · Cromatografía: morado claro, identificación del laboratorio y los botones «?» e «i» (herramientas-cafe)
+- Para la ficha DICT `cromatografia` del wrap V43: tema oscuro con fondo `#451D96`; la foto anotada también en la cara
+  del laboratorio; el Feedback Técnico (esquema 2) lleva laboratorio, RUT, técnico y firma dibujada; diálogo «?» para
+  el productor con tres fotos de ejemplo (`assets/cromatografia-ejemplos/`); diálogo «i» para el laboratorio con
+  recursos y tres PDF de metodología con marca de agua (`assets/cromatografia-docs/`, `scripts/build-cromatografia-docs.mjs`).
+(commit: pendiente)
+

@@ -21,6 +21,7 @@
 // temperatura 0) necesita la API y cuesta dinero: vive aparte, en
 // `scripts/qa-cromatografia-modelo.mjs`, y se corre a mano.
 
+import { existsSync as existeEnDisco } from "node:fs";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import {
@@ -460,7 +461,44 @@ check("html: los estados guardados de la versión anterior se migran", /esquema 
 check("html: conjeturas con certeza y un bloque aparte para confirmar, después de las acciones", /id="pConjeturas"/.test(html) && html.indexOf('id="pAcciones"') < html.indexOf('id="pConfirmar"') && html.includes("Certeza "));
 check("html: las lecturas de V5.35 (hallazgos) se siguen pintando", html.includes("P.hallazgos"));
 check("html: el informe abre con la foto anotada, antes de la señal", html.indexOf('id="pFigura"') > 0 && html.indexOf('id="pFigura"') < html.indexOf('id="pSenal"'));
-check("html: las flechas se ubican con las fronteras medidas y la zona de cada conjetura", /function dibujarFigura[\s\S]*zone_boundaries_rel/.test(html) && html.includes('id="flecha"') && html.includes("dibujarFigura(conjeturas)"));
+check("html: las flechas se ubican con las fronteras medidas y la zona de cada conjetura", /function dibujarFigura[\s\S]*zone_boundaries_rel/.test(html) && html.includes('-flecha" viewBox') && html.includes('dibujarFigura(conjeturas, "p")'));
+// ── V5.38: tema claro, foto anotada en el laboratorio, identificación y los dos «?»/«i» ──
+const bloqueDialogo = (id) => { const i = html.indexOf(`<dialog class="modal" id="${id}"`); return i < 0 ? "" : html.slice(i, html.indexOf("</dialog>", i)); };
+const textoPlano = (h) => h.replace(/<svg[\s\S]*?<\/svg>/g, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const enDisco = (ruta) => existeEnDisco(new URL(`../${ruta}`, import.meta.url));
+const fondos = [...html.matchAll(/--bg:(#[0-9A-Fa-f]{6})/g)].map((m) => m[1].toUpperCase());
+check("html: el tema oscuro usa el morado CTCX claro, no el casi negro", fondos.length === 3 && fondos.slice(1).every((c) => c === "#451D96") && !html.includes("#150A2E"), fondos.join(" "));
+check("html: la cara del laboratorio también muestra la foto anotada, con ids propios", html.indexOf('id="lFigura"') > html.indexOf('id="cara-laboratorio"') && html.includes('dibujarFigura(P ? conjeturasDe(P) : [], "l")') && html.includes("-recorte)"));
+check("html: identificación del laboratorio (nombre, RUT, técnico y firma)", ['data-fbg="laboratorio.nombre"', 'data-fbg="laboratorio.rut"', 'data-fbg="tecnico.nombre"', 'id="fbFirma"'].every((x) => html.includes(x)) && /laboratorio: \{ nombre: "", rut: "" \}, tecnico: \{ nombre: "", rol: "", firma: null/.test(html));
+check("html: los trabajos sin identificación se migran y una lectura nueva conserva a quien revisa, sin su firma", html.includes("base.feedback.laboratorio = Object.assign(feedbackVacio().laboratorio") && (html.match(/feedbackConIdentidad\(/g) ?? []).length >= 4 && !/function feedbackConIdentidad[\s\S]{0,700}firma/.test(html));
+check("html: el Feedback Técnico exportado sube a esquema 2", /tipo: "feedback_tecnico",\s*esquema: 2/.test(html));
+const fuenteDv = html.match(/function dvNit\(numero\) \{[\s\S]*?\n  \}/);
+const dvNit = fuenteDv ? new Function(`${fuenteDv[0]}; return dvNit;`)() : () => -1;
+check("html: el dígito de verificación del NIT sigue el algoritmo de la DIAN (800197268-4, 899999068-1)", dvNit("800197268") === 4 && dvNit("899999068") === 1);
+const dlgCroma = bloqueDialogo("dlgCroma");
+const puntos = (dlgCroma.match(/<ul class="cinco">([\s\S]*?)<\/ul>/) ?? [, ""])[1];
+check("html: el «?» del productor va arriba a la derecha del paso 1 y abre su explicación", /id="paso-foto">\s*<button type="button" class="redondo ayuda/.test(html) && html.includes('abrirDialogo("dlgCroma")'));
+check("html: la explicación trae 5 puntos, un dibujo simple y un cierre", (puntos.match(/<li>/g) ?? []).length === 5 && /<svg class="esquema-croma"/.test(dlgCroma) && /class="cierre"/.test(dlgCroma));
+const vetadas = [...reglas.lenguaje_productor.prohibido_nombrar, ...reglas.lenguaje_productor.palabras_tecnicas_prohibidas];
+const planoCroma = textoPlano(dlgCroma).toLowerCase();
+const nombradas = vetadas.filter((w) => new RegExp(`(^|[^a-záéíóúñ])${w.toLowerCase()}`).test(planoCroma));
+check("html: la explicación del productor no nombra nutrientes, acidez ni jerga técnica", nombradas.length === 0, nombradas.join(", "));
+const ejemplos = [...dlgCroma.matchAll(/data-ejemplo="(\d)"/g)].map((m) => m[1]);
+check("html: ofrece las 3 fotos de ejemplo y existen en disco", ejemplos.length === 3 && ejemplos.every((n) => enDisco(`public/tools/assets/cromatografia-ejemplos/ejemplo-${n}.jpg`)));
+check("html: la foto de ejemplo pasa por la misma compuerta y queda marcada como ejemplo", html.includes('cargar(new File([blob], "ejemplo-" + n + ".jpg"') && html.includes("E.foto_ejemplo = ejemplo || null") && html.includes("Foto de ejemplo ("));
+const dlgMetodo = bloqueDialogo("dlgMetodo");
+check("html: el «i» del laboratorio va abajo a la izquierda de la tarjeta de feedback", /class="bar noprint">\s*<button type="button" class="redondo info" id="btnInfoMetodo"/.test(html) && html.indexOf('id="btnInfoMetodo"') > html.indexOf('id="labFeedback"') && html.includes('abrirDialogo("dlgMetodo")'));
+const palabrasMetodo = textoPlano((dlgMetodo.match(/<ul class="metodo"[^>]*>([\s\S]*?)<\/ul>/) ?? [, ""])[1]).split(" ").length;
+check(`html: el resumen del método ronda las 150 palabras (${palabrasMetodo})`, palabrasMetodo >= 120 && palabrasMetodo <= 185);
+const acordeones = [...dlgMetodo.matchAll(/<details([^>]*)>\s*<summary>([^<]+)<\/summary>/g)];
+check("html: dos acordeones cerrados, recursos en línea y documentos PDF", acordeones.length === 2 && acordeones.every((a) => !/\bopen\b/.test(a[1])) && /Recursos en línea/.test(acordeones[0][2]) && /PDF/.test(acordeones[1][2]));
+const pdfs = [...dlgMetodo.matchAll(/href="\/tools\/assets\/cromatografia-docs\/([^"]+\.pdf)"/g)].map((m) => m[1]);
+check("html: enlaza 3 PDF de metodología que existen en disco", pdfs.length === 3 && pdfs.every((f) => enDisco(`public/tools/assets/cromatografia-docs/${f}`)), pdfs.join(", "));
+check("html: los recursos llevan licencia y aclaran que citar no implica respaldo", (dlgMetodo.match(/class="lic"/g) ?? []).length >= 15 && dlgMetodo.includes("no implica que respalden"));
+const generador = leeTxt("scripts/build-cromatografia-docs.mjs");
+check("docs: los PDF llevan marca de agua, derechos de CTCX, atribución de terceros y descargo de responsabilidad", generador.includes('class="marca-agua"') && generador.includes("Todos los derechos reservados") && generador.includes("Creative Commons Atribución 4.0") && generador.includes("Limitación de responsabilidad") && generador.includes("footerTemplate"));
+check("docs: reglas, umbrales y versiones salen del código, no copiados a mano", generador.includes('leer("src/lib/tools/cromatografia/reglas.json")') && generador.includes("var UMBRALES") && generador.includes("PROMPT_VERSION"));
+
 check("html: emite el análisis sin nombre de finca", html.includes('CTC.emitir("analisis.generado"') && !/emitir\("analisis\.generado",[^)]*finca/.test(html));
 
 if (fallos.length) {

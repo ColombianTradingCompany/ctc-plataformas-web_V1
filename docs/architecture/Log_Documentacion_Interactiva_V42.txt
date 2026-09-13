@@ -193,5 +193,5 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   del laboratorio; el Feedback Técnico (esquema 2) lleva laboratorio, RUT, técnico y firma dibujada; diálogo «?» para
   el productor con tres fotos de ejemplo (`assets/cromatografia-ejemplos/`); diálogo «i» para el laboratorio con
   recursos y tres PDF de metodología con marca de agua (`assets/cromatografia-docs/`, `scripts/build-cromatografia-docs.mjs`).
-(commit: pendiente)
+(commit: 6fd3187)
 

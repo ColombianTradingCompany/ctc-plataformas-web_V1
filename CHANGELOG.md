@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.38] — 2026-09-13 (commit pendiente)
+## [V5.38] — 2026-09-13 (commit 6fd3187)
 
 - **Cambiado**: el Lector de Cromatografía usa en modo oscuro **el morado claro de CTCX** (fondo `#451D96`, tarjetas
   `#512AA6`, acentos lavanda) en vez del casi negro que el owner encontró demasiado oscuro.

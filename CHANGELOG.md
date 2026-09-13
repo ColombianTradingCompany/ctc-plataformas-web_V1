@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.35] — 2026-09-13 (commit pendiente)
+## [V5.35] — 2026-09-13 (commit 89cf9bf)
 
 - **Cambiado**: **el Lector de Cromatografía tiene dos caras** (reingeniería pedida por el owner). La del **productor**
   es la principal: tres pasos (foto con consejos en palabras del campo, datos de la muestra, «Leer mi suelo») y un

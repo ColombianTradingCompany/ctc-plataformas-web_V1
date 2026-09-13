@@ -174,4 +174,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   nuevos → `qa-cromatografia-modelo`.
 - Reglas v2.2: `practicas_de_manejo` (catálogo con su cómo) y `lenguaje_productor`. Prompt 1.5 (no cambia plazos ni cantidades del catálogo). Marca CTCX en pie e
   impresos. ANN nuevas: `public/tools/assets/ctcx-loro.png`, `ctcx-loro-claro.png`, `ctcx-logo.png`.
-(commit: pendiente)
+(commit: 89cf9bf)

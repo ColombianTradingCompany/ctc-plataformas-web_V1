@@ -156,4 +156,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   revelado) y el prompt 1.3 lo usa; las fronteras se miden como máximo local.
 - Lección para la cabecera: **calibrar con datos reales dice también dónde está mal el motor**: las 108 capturas de
   Martins pusieron las fronteras en el borde de sus ventanas (la perforación y el fondo), no solo los umbrales.
-(commit: pendiente)
+(commit: ed19bb3)

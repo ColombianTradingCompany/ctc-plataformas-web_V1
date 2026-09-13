@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.33] — 2026-09-13 (commit pendiente)
+## [V5.33] — 2026-09-13 (commit ed19bb3)
 
 - **Cambiado**: **reglas de interpretación v2.1** del Lector de Cromatografía (`src/lib/tools/cromatografia/reglas.json`).
   El owner dejó la v2.0 como guía y el criterio de CTC con prelación; cada cambio está contrastado página a página

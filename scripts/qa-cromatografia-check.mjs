@@ -32,7 +32,7 @@ import {
   letrasDeEvidencia,
   reglaRegional,
 } from "../src/lib/tools/cromatografia/prompt.ts";
-import { certezaDe, claimsProhibidos, extraerJson, validarSalida, ETIQUETA_NIVEL } from "../src/lib/tools/cromatografia/salida.ts";
+import { certezaDe, zonaDesdeTexto, claimsProhibidos, extraerJson, validarSalida, ETIQUETA_NIVEL } from "../src/lib/tools/cromatografia/salida.ts";
 
 let ok = 0;
 const fallos = [];
@@ -284,8 +284,8 @@ const buena = () => ({
     senal: "mixta",
     resumen: "Según la foto, su suelo parece tener vida en la parte de afuera, pero el centro se ve muy blanco y puede que haya abono sin descomponer.",
     conjeturas: [
-      { titulo: "Centro muy blanco", lo_que_se_ve: "El centro se ve muy blanco y con el borde marcado.", conjetura: "Puede que haya abono fresco o químicos que se disuelven rápido.", otra_posibilidad: "", que_implica: "Si es así, parte del abono no está alimentando la vida del suelo.", basado_en: ["i1"] },
-      { titulo: "Buena vida en el borde", lo_que_se_ve: "Se ven rayas que salen hacia el borde.", conjetura: "Parece que hay actividad de vida en el suelo.", otra_posibilidad: "También podría venir del abono reciente.", que_implica: "Si es así, el suelo está respondiendo al manejo.", basado_en: ["i2"] },
+      { zona: "central", titulo: "Centro muy blanco", lo_que_se_ve: "El centro se ve muy blanco y con el borde marcado.", conjetura: "Puede que haya abono fresco o químicos que se disuelven rápido.", otra_posibilidad: "", que_implica: "Si es así, parte del abono no está alimentando la vida del suelo.", basado_en: ["i1"] },
+      { zona: "enzymatic", titulo: "Buena vida en el borde", lo_que_se_ve: "Se ven rayas que salen hacia el borde.", conjetura: "Parece que hay actividad de vida en el suelo.", otra_posibilidad: "También podría venir del abono reciente.", que_implica: "Si es así, el suelo está respondiendo al manejo.", basado_en: ["i2"] },
     ],
     acciones: [
       { practica: "evitar-abono-crudo", por_que: "El centro blanco puede venir de abono sin descomponer.", prioridad: "alta", basado_en: ["i1"] },
@@ -390,6 +390,11 @@ check("productor: si el modelo elige el laboratorio, pasa a «confirmar» con su
 const prioridades = validarSalida((() => { const x = buena(); x.productor.acciones = [{ practica: "cobertura-viva", por_que: "Cubrir el suelo ayuda a la vida que se ve.", prioridad: "baja", basado_en: ["i2"] }, { practica: "evitar-abono-crudo", por_que: "El centro blanco puede venir de abono crudo.", prioridad: "alta", basado_en: ["i1"] }]; return x; })(), reglas, RI, regSant);
 check("productor: el servidor ordena las acciones por prioridad", prioridades.ok && prioridades.reporte.productor.acciones.map((a) => a.prioridad).join() === "alta,baja", prioridades.ok ? "" : prioridades.errores.join(" | "));
 check("productor: certezaDe nunca da más que media", certezaDe(["i1", "i2"], [{ id: "i1", nivel: "A", confianza: "media" }, { id: "i2", nivel: "A", confianza: "media" }]) === "media" && certezaDe(["i1"], [{ id: "i1", nivel: "C", confianza: "media" }]) === "baja");
+if (vb.ok) check("productor: cada conjetura conserva su zona para señalarla en la foto", vb.reporte.productor.conjeturas.map((c) => c.zona).join() === "central,enzymatic");
+const sinZona = validarSalida((() => { const x = buena(); delete x.productor.conjeturas[1].zona; x.productor.conjeturas[0].zona = "techo"; return x; })(), reglas, RI, regSant);
+check("productor: sin zona o con una inválida, se deduce de lo que se ve y queda anotado", sinZona.ok && sinZona.reporte.productor.conjeturas[0].zona === "central" && sinZona.reporte.productor.conjeturas[1].zona === "enzymatic" && sinZona.reporte.ajustes.some((a) => a.includes("zona")), sinZona.ok ? "" : sinZona.errores.join(" | "));
+check("zonas: el texto del campo se ubica en el croma", zonaDesdeTexto("El centro se ve blanco") === "central" && zonaDesdeTexto("La parte del medio es dorada") === "organic" && zonaDesdeTexto("Picos que salen hacia el borde") === "enzymatic" && zonaDesdeTexto("Se ve un anillo marrón oscuro") === "mineral" && zonaDesdeTexto("El suelo en general") === "general");
+check("prompt: cada conjetura nombra su zona para la foto anotada", sistemaCaldas.includes('"zona": la zona del croma'));
 mal("productor: solo laboratorio, sin práctica de manejo", (x) => (x.productor.acciones = [{ practica: "analisis-laboratorio", por_que: "Para confirmar lo que se ve.", prioridad: "alta", basado_en: ["i1"] }]));
 mal("productor: nombra el potasio", (x) => (x.productor.conjeturas[0].conjetura = "Parece que falta potasio en el suelo."));
 mal("productor: nombra la acidez en lo que implica", (x) => (x.productor.conjeturas[1].que_implica = "Si es así, puede que haya mucha acidez."));
@@ -454,6 +459,8 @@ check("html: el informe del productor pinta el cómo desde la lectura (catálogo
 check("html: los estados guardados de la versión anterior se migran", /esquema === 1/.test(html));
 check("html: conjeturas con certeza y un bloque aparte para confirmar, después de las acciones", /id="pConjeturas"/.test(html) && html.indexOf('id="pAcciones"') < html.indexOf('id="pConfirmar"') && html.includes("Certeza "));
 check("html: las lecturas de V5.35 (hallazgos) se siguen pintando", html.includes("P.hallazgos"));
+check("html: el informe abre con la foto anotada, antes de la señal", html.indexOf('id="pFigura"') > 0 && html.indexOf('id="pFigura"') < html.indexOf('id="pSenal"'));
+check("html: las flechas se ubican con las fronteras medidas y la zona de cada conjetura", /function dibujarFigura[\s\S]*zone_boundaries_rel/.test(html) && html.includes('id="flecha"') && html.includes("dibujarFigura(conjeturas)"));
 check("html: emite el análisis sin nombre de finca", html.includes('CTC.emitir("analisis.generado"') && !/emitir\("analisis\.generado",[^)]*finca/.test(html));
 
 if (fallos.length) {

@@ -141,6 +141,11 @@ details>div{padding:0 14px 12px}
 .confirmar{display:grid;gap:8px}
 .confirmar details.accion{background:var(--panel);margin:0}
 .confirmar details.accion>div{padding:0 2px 4px}
+.figura-croma{margin:6px 0 14px}
+.figura-croma svg{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:14px;background:#fff}
+.figura-croma figcaption{font-size:12.5px;color:var(--muted);margin-top:5px}
+.num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--purple);color:var(--on-purple);font-size:12px;font-weight:700;flex:none}
+@media print{.figura-croma{break-inside:avoid}.figura-croma svg{border:0}}
 /* laboratorio */
 .gate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .gate li{display:flex;gap:8px;align-items:baseline}
@@ -332,6 +337,10 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       <div class="aviso" id="pMeta"></div>
       <div id="pVacio" class="aviso" style="margin-top:10px">Cuando suba la foto y pida la lectura, aquí aparece su informe.</div>
       <div id="pContenido" hidden>
+        <figure class="figura-croma" id="pFigura" hidden>
+          <div id="pFiguraSvg"></div>
+          <figcaption>Los números señalan en su foto lo que se describe abajo. Las zonas son aproximadas.</figcaption>
+        </figure>
         <div class="senal" id="pSenal"><span class="punto"></span><div><b id="pSenalTexto"></b><span class="aviso">Lectura orientativa hecha con la foto</span></div></div>
         <p class="resumen" id="pResumen"></p>
         <h3>Lo que vemos y lo que podría significar</h3>
@@ -684,9 +693,10 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
         // La resolución se juzga sobre la foto ORIGINAL, no sobre el lienzo reducido.
         var res = window.CromaRasgos.analizar(cAnal.getContext("2d").getImageData(0, 0, cAnal.width, cAnal.height), { escalaOriginal: img.naturalWidth / cAnal.width });
         imagenIA = aCanvas(img, 1024).toDataURL("image/jpeg", 0.85);
-        var cMini = aCanvas(img, 420);
-        var mini = cMini.toDataURL("image/jpeg", 0.7);
-        if (mini.length > 90000) mini = cMini.toDataURL("image/jpeg", 0.5);
+        // 560 px: la miniatura también es la foto anotada del informe impreso.
+        var cMini = aCanvas(img, 560);
+        var mini = cMini.toDataURL("image/jpeg", 0.72);
+        if (mini.length > 120000) mini = cMini.toDataURL("image/jpeg", 0.5);
         URL.revokeObjectURL(url);
 
         var id = E.sample_id, ctx = E.contexto;
@@ -794,11 +804,11 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     var conjeturas = P.conjeturas || (P.hallazgos || []).map(function (h) { return { titulo: h.titulo, lo_que_se_ve: "", conjetura: h.explicacion, otra_posibilidad: "", que_implica: "", certeza: "", certeza_texto: "" }; });
     var confirmar = P.confirmar || P.acciones.filter(function (a) { return a.forzada || a.practica === "analisis-laboratorio" || a.practica === "repetir-croma"; });
     var acciones = P.confirmar ? P.acciones : P.acciones.filter(function (a) { return confirmar.indexOf(a) < 0; });
-    $("#pConjeturas").innerHTML = conjeturas.map(function (c) {
+    $("#pConjeturas").innerHTML = conjeturas.map(function (c, i) {
       var filas = [["Lo que se ve", c.lo_que_se_ve], ["Podría significar", c.conjetura], ["También podría ser", c.otra_posibilidad], ["Si es así", c.que_implica]]
         .filter(function (f) { return f[1]; })
         .map(function (f) { return "<dt>" + f[0] + "</dt><dd>" + esc(f[1]) + "</dd>"; }).join("");
-      return '<div class="conjetura"><header><b>' + esc(c.titulo) + "</b>" + (c.certeza ? '<span class="certeza ' + esc(c.certeza) + '">Certeza ' + esc(c.certeza) + "</span>" : "") + "</header><dl>" + filas + "</dl>" +
+      return '<div class="conjetura"><header><span class="num">' + (i + 1) + "</span><b>" + esc(c.titulo) + "</b>" + (c.certeza ? '<span class="certeza ' + esc(c.certeza) + '">Certeza ' + esc(c.certeza) + "</span>" : "") + "</header><dl>" + filas + "</dl>" +
         (c.certeza_texto ? '<p class="aviso">' + esc(c.certeza_texto) + "</p>" : "") + "</div>";
     }).join("");
     function pasos(a) {
@@ -812,8 +822,79 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     $("#pConfirmar").innerHTML = confirmar.map(function (a) {
       return '<details class="accion"><summary>' + esc(a.titulo) + "</summary><div><p>" + esc(a.por_que) + "</p>" + pasos(a) + "</div></details>";
     }).join("");
+    dibujarFigura(conjeturas);
     $("#pDescargo").textContent = P.descargo;
     $("#pPieImpreso").textContent = "Informe generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + ". " + P.descargo;
+  }
+
+  /* ── La foto anotada del informe ────────────────────────────────────────
+     Un número y una flecha por conjetura. La flecha apunta a la zona del croma de
+     la que habla la conjetura, ubicada con el centro, el radio y las fronteras que
+     midió el motor de rasgos: señala la franja, no un punto exacto. */
+  var PATRONES_ZONA = { central: /centr|perfora/i, mineral: /mineral|intern|marr[oó]n oscuro|anillo oscuro/i, organic: /medi[oa]|dorad|org[aá]nic|[aá]mbar/i, enzymatic: /borde|pico|rayo|canal|afuera|extern|periferi|penach/i };
+  function zonaDesdeTexto(t) {
+    var mejor = "general", pos = Infinity;
+    Object.keys(PATRONES_ZONA).forEach(function (z) {
+      var m = PATRONES_ZONA[z].exec(t || "");
+      if (m && m.index < pos) { pos = m.index; mejor = z; }
+    });
+    return mejor;
+  }
+  function envolver(texto, max) {
+    var lineas = [], actual = "";
+    String(texto || "").split(/\s+/).forEach(function (p) {
+      if (actual && (actual + " " + p).length > max) { lineas.push(actual); actual = p; } else { actual = (actual + " " + p).trim(); }
+    });
+    if (actual) lineas.push(actual);
+    if (lineas.length > 4) { lineas = lineas.slice(0, 4); lineas[3] = lineas[3] + "…"; }
+    return lineas;
+  }
+  function dibujarFigura(conjeturas) {
+    var figura = $("#pFigura"), caja = $("#pFiguraSvg");
+    var r = E.rasgos, v = E.validacion;
+    if (!E.miniatura || !r || !v || !v.escala || !conjeturas.length) { figura.hidden = true; caja.innerHTML = ""; return; }
+    var img = new Image();
+    img.onload = function () {
+      var k = 1 / v.escala; // del lienzo medido a la miniatura
+      var cx = r.center_xy[0] * k, cy = r.center_xy[1] * k, R = r.outer_radius_px * k;
+      var VW = 1000, BOX = 460, by = 30, VH = BOX + 2 * by, bx = (VW - BOX) / 2;
+      var s = BOX / (2 * R * 1.1);
+      var CX = bx + BOX / 2, CY = by + BOX / 2, RR = R * s;
+      var fr = r.zone_boundaries_rel;
+      var radio = { central: fr[0] * 0.5, mineral: (fr[0] + fr[1]) / 2, organic: (fr[1] + fr[2]) / 2, enzymatic: (fr[2] + 1) / 2 };
+      var n = conjeturas.length, izq = Math.ceil(n / 2);
+      var flechas = "", etiquetas = "";
+      conjeturas.forEach(function (c, i) {
+        var lado = i < izq ? -1 : 1;
+        var fila = lado < 0 ? i : i - izq, total = lado < 0 ? izq : n - izq;
+        var ly = by + BOX * ((fila + 0.5) / total);
+        var nx = lado < 0 ? bx - 20 : bx + BOX + 20;
+        var zona = c.zona || zonaDesdeTexto((c.titulo || "") + " " + (c.lo_que_se_ve || ""));
+        var rel = radio[zona];
+        if (rel !== undefined) {
+          var ang = Math.atan2(ly - CY, lado * RR);
+          var px = (CX + Math.cos(ang) * rel * RR).toFixed(1), py = (CY + Math.sin(ang) * rel * RR).toFixed(1);
+          var sx = nx - lado * 15;
+          flechas += '<line x1="' + sx + '" y1="' + ly + '" x2="' + px + '" y2="' + py + '" stroke="#fff" stroke-width="8" stroke-linecap="round"/>' +
+            '<line class="flecha" x1="' + sx + '" y1="' + ly + '" x2="' + px + '" y2="' + py + '" stroke="#451D96" stroke-width="3" marker-end="url(#flecha)"/>' +
+            '<circle cx="' + px + '" cy="' + py + '" r="4" fill="#FDC70C" stroke="#451D96" stroke-width="1.5"/>';
+        }
+        var lineas = envolver(c.titulo, 24);
+        var tx = lado < 0 ? nx - 22 : nx + 22;
+        etiquetas += '<circle cx="' + nx + '" cy="' + ly + '" r="14" fill="#451D96"/>' +
+          '<text x="' + nx + '" y="' + (ly + 5) + '" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">' + (i + 1) + "</text>" +
+          '<text x="' + tx + '" y="' + (ly - (lineas.length - 1) * 10 + 6) + '" text-anchor="' + (lado < 0 ? "end" : "start") + '" font-size="17" font-weight="700" fill="#2B1160">' +
+          lineas.map(function (l, j) { return '<tspan x="' + tx + '" dy="' + (j ? 20 : 0) + '">' + esc(l) + "</tspan>"; }).join("") + "</text>";
+      });
+      caja.innerHTML = '<svg viewBox="0 0 ' + VW + " " + VH + '" role="img" aria-label="Su cromatografía con lo que se describe señalado" font-family="Segoe UI, system-ui, sans-serif">' +
+        '<defs><marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#451D96"/></marker>' +
+        '<clipPath id="recorteCroma"><rect x="' + bx + '" y="' + by + '" width="' + BOX + '" height="' + BOX + '" rx="18"/></clipPath></defs>' +
+        '<rect x="' + bx + '" y="' + by + '" width="' + BOX + '" height="' + BOX + '" rx="18" fill="#fff"/>' +
+        '<image href="' + E.miniatura + '" x="' + (CX - cx * s).toFixed(1) + '" y="' + (CY - cy * s).toFixed(1) + '" width="' + (img.naturalWidth * s).toFixed(1) + '" height="' + (img.naturalHeight * s).toFixed(1) + '" clip-path="url(#recorteCroma)" preserveAspectRatio="none"/>' +
+        flechas + etiquetas + "</svg>";
+      figura.hidden = false;
+    };
+    img.src = E.miniatura;
   }
 
   /* ── Cara del laboratorio ──────────────────────────────────────────────── */
@@ -922,7 +1003,7 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       $("#rProductor").innerHTML = P ? (
         '<div class="elemento" data-el="productor.resumen"><div class="cab"><span class="id">productor.resumen</span><b>Señal: ' + esc(P.senal) + "</b></div><p>" + esc(P.resumen) + "</p>" + controlFeedback("productor.resumen") + "</div>" +
         (P.conjeturas || []).map(function (h) {
-          return '<div class="elemento" data-el="' + esc(h.id) + '"><div class="cab"><span class="id">' + esc(h.id) + " ← " + esc(h.basado_en.join(", ")) + "</span><b>" + esc(h.titulo) + '</b><span class="certeza ' + esc(h.certeza) + '">certeza ' + esc(h.certeza) + "</span></div>" +
+          return '<div class="elemento" data-el="' + esc(h.id) + '"><div class="cab"><span class="id">' + esc(h.id) + " ← " + esc(h.basado_en.join(", ")) + (h.zona ? " · zona " + esc(h.zona) : "") + "</span><b>" + esc(h.titulo) + '</b><span class="certeza ' + esc(h.certeza) + '">certeza ' + esc(h.certeza) + "</span></div>" +
             "<p><b>Se ve:</b> " + esc(h.lo_que_se_ve) + "</p><p><b>Conjetura:</b> " + esc(h.conjetura) + "</p>" + (h.otra_posibilidad ? "<p><b>Otra posibilidad:</b> " + esc(h.otra_posibilidad) + "</p>" : "") + "<p><b>Implica:</b> " + esc(h.que_implica) + "</p>" + controlFeedback(h.id) + "</div>";
         }).join("") +
         (P.hallazgos || []).map(function (h) {

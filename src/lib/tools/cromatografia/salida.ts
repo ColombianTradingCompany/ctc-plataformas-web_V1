@@ -38,6 +38,9 @@ export type Recomendacion = { id: string; accion: string; justificacion: string;
 
 export type Senal = "buena" | "mixta" | "atencion";
 export type Certeza = "baja" | "media";
+/** La zona del croma de la que habla una conjetura: la usa la foto anotada del informe. */
+export type ZonaFoto = "central" | "mineral" | "organic" | "enzymatic" | "general";
+export const ZONAS_FOTO: ZonaFoto[] = ["central", "mineral", "organic", "enzymatic", "general"];
 /** Una conjetura para el productor: lo que se ve, lo que podría significar, otra
  *  explicación posible y lo que implicaría. La certeza NO la decide el modelo: se
  *  calcula desde las interpretaciones técnicas que la sustentan (`certezaDe`). */
@@ -48,6 +51,8 @@ export type Conjetura = {
   conjetura: string;
   otra_posibilidad: string;
   que_implica: string;
+  /** Dónde señalarla en la foto. */
+  zona: ZonaFoto;
   certeza: Certeza;
   certeza_texto: string;
   basado_en: string[];
@@ -78,6 +83,27 @@ export type InformeProductor = {
   confirmar: AccionProductor[];
   descargo: string;
 };
+
+/** La zona que nombra un texto en palabras del campo; la primera que aparece gana.
+ *  La misma regla vive en el HTML para las lecturas guardadas sin zona. */
+const PATRONES_ZONA: [ZonaFoto, RegExp][] = [
+  ["central", /centr|perfora/i],
+  ["mineral", /mineral|intern|marr[oó]n oscuro|anillo oscuro/i],
+  ["organic", /medi[oa]|dorad|org[aá]nic|[aá]mbar/i],
+  ["enzymatic", /borde|pico|rayo|canal|afuera|extern|periferi|penach/i],
+];
+export function zonaDesdeTexto(texto: string): ZonaFoto {
+  let mejor: ZonaFoto = "general";
+  let posicion = Infinity;
+  for (const [zona, re] of PATRONES_ZONA) {
+    const m = re.exec(texto ?? "");
+    if (m && m.index < posicion) {
+      posicion = m.index;
+      mejor = zona;
+    }
+  }
+  return mejor;
+}
 
 /** Media solo si alguna interpretación que la sustenta tiene confianza media y
  *  evidencia A o B; si no, baja. El método no admite «alta». */
@@ -335,6 +361,9 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     if (str(c?.conjetura) && !DUDA_SENCILLA.test(str(c?.conjetura))) errores.push(`${pos}.conjetura es categórica: usa puede que, podría o parece.`);
     const ids = basado(c?.basado_en, pos);
     const certeza = certezaDe(ids, interpretaciones);
+    const zonaBruta = str(c?.zona).toLowerCase() as ZonaFoto;
+    const zona = ZONAS_FOTO.includes(zonaBruta) ? zonaBruta : zonaDesdeTexto(`${str(c?.titulo)} ${str(c?.lo_que_se_ve)}`);
+    if (zona !== zonaBruta) ajustes.push(`La conjetura ${i + 1} no traía una zona válida; se dedujo «${zona}» de lo que se ve.`);
     return {
       id: `c${i + 1}`,
       titulo: str(c?.titulo),
@@ -342,6 +371,7 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       conjetura: str(c?.conjetura),
       otra_posibilidad: str(c?.otra_posibilidad),
       que_implica: str(c?.que_implica),
+      zona,
       certeza,
       certeza_texto: lp?.certezas?.[certeza] ?? "",
       basado_en: ids,

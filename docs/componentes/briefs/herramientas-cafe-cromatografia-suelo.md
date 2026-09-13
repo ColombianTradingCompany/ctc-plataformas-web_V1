@@ -303,3 +303,16 @@ implicarían.
 - «Qué puede hacer» trae prácticas de manejo ordenadas por prioridad (al menos una). El laboratorio y repetir el croma
   van al final, en «Para confirmar y seguir el avance», plegados; en el PDF salen abiertos.
 
+---
+
+## La foto anotada abre el informe (V5.37, 2026-09-13)
+
+**Pedido del owner.** El informe exportado incluye, al principio, la imagen con flechas que señalan las observaciones.
+
+**Cómo quedó.** Cada conjetura dice de qué zona del croma habla (central, mineral, media u orgánica, externa, o general
+si habla del croma entero). La flecha no se pone a ojo: apunta al punto medio de esa franja, calculado con el centro, el
+radio y las fronteras que midió el motor de rasgos, en el ángulo que mira hacia su etiqueta. Si la zona falta, se
+deduce de lo que se ve («centro», «dorado del medio», «picos del borde»). Una conjetura «general» lleva número pero no
+flecha. La figura es un SVG con la miniatura recortada al croma, así que en el PDF los textos quedan nítidos. Las zonas
+son aproximadas y la leyenda lo dice.
+

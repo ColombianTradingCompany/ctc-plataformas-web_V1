@@ -19,6 +19,16 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.37] — 2026-09-13 (commit pendiente)
+
+- **Añadido**: el informe del productor del Lector de Cromatografía **abre con su foto anotada** (pedido del owner): el
+  croma recortado y centrado, con un número y una flecha por conjetura que señalan la zona de la que habla, y el
+  título al lado. Va en pantalla y en el PDF exportado; las tarjetas de las conjeturas llevan el mismo número.
+- **Cambiado**: cada conjetura nombra su **zona** (central · mineral · organic · enzymatic · general; prompt 1.7). La
+  flecha se ubica con el centro, el radio y las fronteras que midió el motor de rasgos, no a ojo. Si la zona falta o
+  no es válida, `zonaDesdeTexto` la deduce de lo que se ve y queda anotado; las lecturas guardadas sin zona también
+  se señalan. La miniatura guardada sube a 560 px para que la foto se imprima nítida.
+
 ## [V5.36] — 2026-09-13 (commit d72cdc3)
 
 - **Cambiado**: el informe del productor del Lector de Cromatografía **lee más y no abre con «vaya al laboratorio»**

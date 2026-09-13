@@ -205,5 +205,5 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
 - «Preparada por» (`profiles.full_name` vía `api/herramientas/cromatografia/fincas`, `cuenta.nombre`), «i» de
   definiciones con ecuación (`DEF` en el HTML), PDF con cabecera «Colombian Trading Company SAS», NIT y «Página n de N»
   (`@page` con cajas de margen inyectadas al imprimir), botón «Bibliografía y metodología». Guardián 271.
-(commit: pendiente)
+(commit: d23352f)
 

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.39] — 2026-09-13 (commit pendiente)
+## [V5.39] — 2026-09-13 (commit d23352f)
 
 - **Añadido**: el Lector de Cromatografía habla **español, inglés y alemán**. Conmutador ES · EN · DE en la cabecera
   (se recuerda en el navegador); la interfaz entera, los diálogos y las definiciones salen de diccionarios completos; la

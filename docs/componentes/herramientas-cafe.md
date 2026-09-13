@@ -101,6 +101,8 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   1. **Claves (V5.34)**: la lectura usa `CROMATOGRAPHY_ANTHROPIC_API_KEY`, clave propia creada por el owner el
      2026-09-13, y si falta cae en `ANTHROPIC_API_KEY`, que es la de toda la plataforma y NO se retira. Estado en vivo,
      sin gasto: `GET /api/herramientas/cromatografia/estado`. Vercel: proyecto `ctc-plataformas-web-v1`.
+     Verificado en producción el 2026-09-13: la propia responde y la lectura está disponible; la general sigue
+     inválida en Vercel (pendiente del owner en ALINEACION §3b, no afecta al Lector).
   2. **Modo «expert feedback»**: un experto valida o corrige cada lectura (`interpretaciones[].id`,
      `recomendaciones[].id`) y el rango de Ford; tabla `croma_feedback` service-role-only + interruptor por persona
      en ECP · Herramientas. Diseño en el brief; se construye cuando haya uso real y un experto.

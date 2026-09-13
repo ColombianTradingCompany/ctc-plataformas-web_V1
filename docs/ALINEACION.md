@@ -98,7 +98,7 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 | cherry-picked | consolas (OCP) | La primera subasta real cuando el bache galardone un Tyrian | V5.24 |
 | coffeed | consolas (ECP) | La primera generación real de Redacción y el escenario de Make de `coffeed.redaccion.post_creado` | V5.9 |
 | consolas | secretaria | F1 del espejo: `notion_espejos`, eventos `productor.registrado` · `finca.aprobada` · `lote.galardonado` · `lead.creado` · `comprador.registrado` · `socio.credencial`, manejadores `<entidad>.espejada`, `espejo-reporte.mjs` (`SECRETARIA_PLAN.md` §4) | 2026-09-12 |
-| owner | herramientas-cafe, coffeed | Reponer **`ANTHROPIC_API_KEY` en Vercel producción**: inválida desde 2026-08-20 (Redacción da 401; la lectura del Lector de Cromatografía no funciona en vivo) | V5.32 |
+| owner | coffeed, consolas (OCP · fichas), kaffetal-regal, arena | Reponer **`ANTHROPIC_API_KEY` en Vercel producción**: sigue inválida (comprobado 2026-09-13 con `GET /api/herramientas/cromatografia/estado`). Rompe Coffeed Redacción, Direccionamiento, Datawave, RT-Scriptor, el asesor de KR, las mejoras de Arena y el escáner de fichas del OCP. El Lector de Cromatografía ya NO depende de ella: usa `CROMATOGRAPHY_ANTHROPIC_API_KEY`, que responde. La clave válida «CTC Web Platform» de la consola de Anthropic es la de `.env.local` | V5.32 · V5.34 |
 | owner | secretaria | Conexión **Google Contacts** en Make (no hay conector en Claude); las coincidencias de proveedores/fincas; sacar y rotar las dos contraseñas en claro de Objetivos y Tareas (`SECRETARIA_PLAN.md` §5) | 2026-09-12 |
 
 ## 4 · Reglas de trabajo (valen en los diez componentes)

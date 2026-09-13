@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.36] — 2026-09-13 (commit pendiente)
+## [V5.36] — 2026-09-13 (commit d72cdc3)
 
 - **Cambiado**: el informe del productor del Lector de Cromatografía **lee más y no abre con «vaya al laboratorio»**
   (owner). Los hallazgos pasan a ser **conjeturas** (de 2 a 5): lo que se ve, lo que podría significar, otra

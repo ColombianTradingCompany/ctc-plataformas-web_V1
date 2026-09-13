@@ -180,4 +180,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
 - Para la ficha DICT `cromatografia` del wrap V43: la cara del productor ordena conjeturas (con certeza calculada
   desde las interpretaciones técnicas, nunca escrita por el modelo) → prácticas de manejo por prioridad →
   «confirmar» (laboratorio y repetir el croma). Reglas v2.3, prompt 1.6. Ids de feedback c1…, a1…, k1….
-(commit: pendiente)
+(commit: d72cdc3)

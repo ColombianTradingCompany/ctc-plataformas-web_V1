@@ -250,3 +250,39 @@ la corrección del modelo sepa qué cambiar.
 
 **Prueba en vivo con reglas v2.1 y prompt 1.3**: 3 de 3 lecturas pasan los controles al primer intento, rangos de Ford idénticos, ≈ US$ 0,016 por lectura.
 
+---
+
+## Reingeniería: dos caras y Feedback Técnico (V5.35, 2026-09-13)
+
+**Lo que pidió el owner.** El usuario objetivo es un campesino que no necesita el marco teórico. El marco sigue siendo
+la columna vertebral, pero la herramienta muestra dos caras: la del productor (principal, sencilla y accionable) y la
+del laboratorio (backstage técnico con rigor). La IA produce el informe accionable. El técnico comenta observaciones
+y conclusiones y lo exporta como «Feedback Técnico» para refinar el modelo. Marca CTCX en el pie y en lo exportado.
+
+**Un límite que se mantuvo.** El ejemplo del owner fue «se perciben concentraciones bajas de potasio». La foto de una
+cromatografía no permite ver potasio, fósforo, calcio, magnesio ni acidez (UNAD 2017, p. 55: no da cantidades), y
+nombrarlos sería inventar un análisis de laboratorio. La cara del productor habla de lo que la foto sí sugiere (vida
+del suelo, materia orgánica, aireación, abono sin descomponer) y siempre manda al laboratorio antes de comprar
+correctivos. `validarSalida` rechaza esas palabras en la cara del productor.
+
+**Cómo quedó.**
+- Una sola lectura del modelo trae las dos caras. La del productor tiene señal (buena · mixta · atención), resumen,
+  hallazgos y acciones. Cada hallazgo y cada acción nombra las interpretaciones técnicas que lo sustentan
+  (`basado_en`), así el laboratorio puede ver de dónde sale cada frase del informe del campesino.
+- Las acciones son prácticas del catálogo de las reglas v2.2, elegidas por id. El cómo hacerlo, el cuidado y la fuente
+  los pone el servidor desde el catálogo, nunca el modelo. El análisis de laboratorio y repetir el croma van siempre.
+- Catálogo inicial: análisis de laboratorio, repetir el croma, compost o bocashi maduro, no usar abono crudo, dejar
+  poco a poco los herbicidas, cobertura viva, microorganismos de la finca, no compactar, sombra regulada y croma de un
+  bosque de referencia. El cómo sale del plan agroecológico de UIS 2026 (café en Santander, pp. 60–62), de Altepetl y
+  de Embrapa 455. La única cantidad que aparece (kilo y medio de compost por planta) va como referencia de esa tesis y
+  remite al técnico. Las dosis de cal, yeso o roca fosfórica de UIS no entraron porque dependen del laboratorio.
+- Feedback Técnico: veredicto (de acuerdo · parcialmente · en desacuerdo) y comentario por elemento, rango de Ford
+  que daría el técnico, quién revisa y valoración general. Se exporta como JSON con la lectura, los rasgos, las
+  versiones y la miniatura; sin consentimiento, sin el nombre de la finca. También se imprime.
+- Marca CTCX: franja de cuatro colores, loro en la cabecera, pie con el logo, «Herramienta propiedad de CTCX ·
+  Colombian Trading Company S.A.S.» y fuentes consultadas; el informe del productor y el feedback impresos llevan la
+  misma cabecera y pie.
+
+**Pendiente.** Que un agrónomo revise el catálogo y el tono de tres informes reales; guardar los Feedback Técnicos en
+la base cuando haya volumen; restringir la cara del laboratorio a técnicos con permiso.
+

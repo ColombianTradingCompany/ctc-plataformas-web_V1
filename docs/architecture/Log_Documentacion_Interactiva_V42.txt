@@ -164,3 +164,14 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   en uso y si responde. Para la ficha `consumo`: el gasto del Lector se separa también en la consola de Anthropic.
 - ANN nueva: `src/app/api/herramientas/cromatografia/estado/route.ts`.
 (commit: 43917c0)
+
+## [2026-09-13] V5.35 · Cromatografía con dos caras y Feedback Técnico (herramientas-cafe)
+- Para la ficha DICT `cromatografia` del wrap V43: **dos caras** en la misma herramienta. Productor (principal,
+  lenguaje del campo, acciones del catálogo) y laboratorio (backstage técnico con revisión por elemento). Las dos
+  salen de UNA lectura del modelo; la del productor apunta a las interpretaciones técnicas por id (`basado_en`).
+- **Traza nueva** «Del comentario del técnico al modelo»: cara del laboratorio → veredicto y comentario por elemento
+  (i1…, r1…, h1…, a1…, ford.*) → `feedback-tecnico-<id>.json` → el owner lo trae a una sesión → reglas o prompt
+  nuevos → `qa-cromatografia-modelo`.
+- Reglas v2.2: `practicas_de_manejo` (catálogo con su cómo) y `lenguaje_productor`. Prompt 1.5 (no cambia plazos ni cantidades del catálogo). Marca CTCX en pie e
+  impresos. ANN nuevas: `public/tools/assets/ctcx-loro.png`, `ctcx-loro-claro.png`, `ctcx-logo.png`.
+(commit: pendiente)

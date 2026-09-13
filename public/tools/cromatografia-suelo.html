@@ -5,344 +5,209 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lector de Cromatografía de Suelo</title>
 <meta name="description" content="Lector asistido por IA de cromatografías de suelo Pfeiffer en fincas cafeteras. Lectura tentativa, no de laboratorio. Colombian Trading Company SAS · ctcexport.com">
-<style>/* fuentes locales (vendor-tool-assets.mjs) */
-/* vietnamese */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCBTeO-U.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCFTeO-U.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* vietnamese */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCBTeO-U.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxCFTeO-U.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'Fraunces';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v38-6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92uemAk_WBq8U_9v0c2Wa0KxC9TeA.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* cyrillic-ext */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2) format('woff2');
-  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-/* cyrillic */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2) format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-/* greek */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2) format('woff2');
-  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
-}
-/* vietnamese */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* cyrillic-ext */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2) format('woff2');
-  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-/* cyrillic */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2) format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-/* greek */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2) format('woff2');
-  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
-}
-/* vietnamese */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-/* cyrillic-ext */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxTKYbABA.woff2) format('woff2');
-  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-/* cyrillic */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxaKYbABA.woff2) format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-/* greek */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxdKYbABA.woff2) format('woff2');
-  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
-}
-/* vietnamese */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxRKYbABA.woff2) format('woff2');
-  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
-}
-/* latin-ext */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbABA.woff2) format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-/* latin */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-stretch: 100%;
-  font-display: swap;
-  src: url(/tools/assets/fonts/v23-zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYY.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-</style>
 <style>
-  :root{
-    --ink:#1F1B2E; --muted:#6B6580; --rule:#E4E0EC; --paper:#FFFFFF; --wash:#F7F5FA;
-    --purple:#3B2566; --purple-2:#4B2E83; --gold:#C9A227; --gold-soft:#F3E8C4;
-    --ok:#2F7D4F; --warn:#B7791F; --bad:#B3261E;
-    --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+/* ============================================================
+   CTCX · sistema de marca (el mismo de Defectos del Café)
+   ============================================================ */
+:root{
+  --purple:#451D96; --purple-deep:#2B1160; --purple-mid:#5C2FB5;
+  --lavender:#CDB9F0; --lavender-soft:#F0EAFC; --lavender-line:#E4D9F8;
+  --yellow:#FDC70C; --red:#CE1127; --blue:#124A9C;
+  --bg:#FBFAFE; --panel:#FFFFFF; --ink:#1E1033; --muted:#6E5F8A; --line:#E6DEF7;
+  --on-purple:#FFFFFF; --on-yellow:#2B1160;
+  --ok:#0F7A46; --ok-soft:#E4F5EB; --warn:#8A5A00; --warn-soft:#FFF4D6; --bad:#B3261E; --bad-soft:#FBEAE8;
+  --shadow:0 1px 2px rgba(43,17,96,.05),0 10px 28px rgba(43,17,96,.07);
+  --f-ui:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+  --f-txt:Georgia,"Times New Roman",serif;
+  --f-mono:Consolas,"SFMono-Regular",Menlo,monospace;
+  --parrot-dark:block; --parrot-light:none;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --purple:#B99CF5; --purple-deep:#D9C8FA; --purple-mid:#9B79E8;
+    --lavender:#6A5A8C; --lavender-soft:#241640; --lavender-line:#2E1F55;
+    --bg:#150A2E; --panel:#1E1140; --ink:#F2ECFF; --muted:#9E8FBC; --line:#2E1F55;
+    --on-purple:#1A0E33; --ok:#5CC98A; --ok-soft:#12331F; --warn:#F2C35B; --warn-soft:#3A2C0A; --bad:#FF8A8A; --bad-soft:#3A1418;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.4);
+    --parrot-dark:none; --parrot-light:block;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0}
-  body{font-family:var(--sans);color:var(--ink);background:var(--wash);font-size:15px;line-height:1.5}
-  button,input,select,textarea{font:inherit;color:inherit}
-  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-  .top{background:var(--purple);color:#EDE8F6;padding:18px 22px}
-  .top .in{max-width:980px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-  .mark{width:40px;height:40px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--gold);
-    background:radial-gradient(circle,#F3EDE0 0 18%,#B67A2E 19% 46%,#D9A441 47% 74%,#E8D9A8 75% 100%)}
-  .top h1{font-family:var(--serif);font-weight:600;font-size:22px;margin:0;line-height:1.2}
-  .top .sub{font-size:13px;opacity:.8}
-  .chip{margin-left:auto;font-size:12px;border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:3px 10px}
-  main{max-width:980px;margin:0 auto;padding:18px 16px 60px;display:flex;flex-direction:column;gap:16px}
-  .card{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
-  .card h2{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 4px}
-  .card .lead{color:var(--muted);margin:0 0 14px;font-size:14px}
-  .paso{display:inline-block;width:24px;height:24px;border-radius:50%;background:var(--purple);color:#fff;text-align:center;font:600 13px/24px var(--sans);margin-right:8px;vertical-align:2px}
-  details{border:1px solid var(--rule);border-radius:8px;background:var(--wash);margin:10px 0}
-  details>summary{cursor:pointer;padding:10px 12px;font-weight:500;min-height:44px;display:flex;align-items:center}
-  details>div{padding:0 14px 12px;font-size:14px;color:var(--muted)}
-  .aviso{font-size:13px;color:var(--muted)}
-  .drop{border:2px dashed #C9C2D8;border-radius:10px;padding:26px;text-align:center;background:var(--wash);cursor:pointer}
-  .drop:hover,.drop.sobre{border-color:var(--purple-2);background:#EFEAF7}
-  .drop b{display:block;font-size:16px}
-  .foto{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:18px;align-items:start;margin-top:14px}
-  .foto canvas{width:100%;height:auto;border-radius:8px;border:1px solid var(--rule);background:#fff}
-  @media (max-width:700px){.foto{grid-template-columns:1fr}}
-  .gate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
-  .gate li{display:flex;gap:8px;align-items:baseline}
-  .gate .s{width:18px;flex:none;font-weight:600}
-  .gate .ok{color:var(--ok)} .gate .no{color:var(--bad)}
-  .gate .v{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
-  .banner{border-radius:8px;padding:10px 12px;font-size:14px;margin-top:10px}
-  .banner.bad{background:#FBEAE8;color:#7A1C15}
-  .banner.ok{background:#E8F3EC;color:#1E5234}
-  .banner.info{background:var(--gold-soft);color:#5A4710}
-  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
-  .field{display:flex;flex-direction:column;gap:4px}
-  .field.span{grid-column:1/-1}
-  .field label{font-size:13px;font-weight:500}
-  .field input,.field select,.field textarea{border:1px solid #CFC8DD;border-radius:6px;padding:9px 10px;background:#fff;min-height:44px}
-  .field textarea{min-height:80px;resize:vertical}
-  @media (max-width:640px){.fgrid{grid-template-columns:1fr}}
-  .check{display:flex;gap:10px;align-items:flex-start;font-size:14px;grid-column:1/-1}
-  .check input{width:20px;height:20px;margin-top:2px;flex:none}
-  .bar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
-  .btn{border:1px solid #CFC8DD;background:#fff;border-radius:6px;padding:10px 16px;min-height:44px;cursor:pointer;font-weight:500}
-  .btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
-  .btn.gold{background:var(--gold);border-color:var(--gold);color:#1F1B2E}
-  .btn[disabled]{opacity:.5;cursor:not-allowed}
-  table{border-collapse:collapse;width:100%;font-size:14px}
-  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
-  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
-  td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
-  .tw{overflow-x:auto}
-  .sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:-2px;margin-right:6px}
-  .ford{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .ford>div{border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
-  .ford b{display:block;font-size:13px;color:var(--muted);font-weight:500}
-  .ford .r{font-family:var(--serif);font-size:24px;font-weight:600}
-  .ford .base{font-size:12px;color:var(--muted)}
-  @media (max-width:640px){.ford{grid-template-columns:1fr}}
-  .nivel{display:inline-block;font-weight:600;border-radius:4px;padding:0 6px;font-size:12px}
-  .nivel.A{background:#E3EEF9;color:#1B4B7A} .nivel.B{background:#F3E8C4;color:#5A4710} .nivel.C{background:#F1E4EF;color:#6B2A61}
-  .etq{display:block;font-size:12px;color:var(--muted)}
-  .reco{margin:0;padding-left:20px}
-  .reco li{margin-bottom:8px}
-  .prio{font-size:12px;color:var(--muted)}
-  .limites{background:var(--wash);border-left:3px solid var(--gold);padding:10px 14px;font-size:13px;color:#4A4460}
-  .reporte h3{font-family:var(--serif);font-weight:600;font-size:16px;margin:18px 0 6px}
-  .meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:6px 0 10px}
-  .versiones{font-size:12px;color:var(--muted);margin-top:14px}
-  .cargando{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:g .8s linear infinite;vertical-align:-2px;margin-right:6px}
-  @keyframes g{to{transform:rotate(360deg)}}
-  [hidden]{display:none!important}
-  @media print{
-    body{background:#fff}
-    .top,.noprint,#paso1,#paso2,#paso3,#paso4{display:none!important}
-    main{padding:0;max-width:none}
-    .card{border:0;padding:0}
-    .reporte h3{break-after:avoid}
-    tr{break-inside:avoid}
-  }
+}
+:root[data-theme="dark"]{
+  --purple:#B99CF5; --purple-deep:#D9C8FA; --purple-mid:#9B79E8;
+  --lavender:#6A5A8C; --lavender-soft:#241640; --lavender-line:#2E1F55;
+  --bg:#150A2E; --panel:#1E1140; --ink:#F2ECFF; --muted:#9E8FBC; --line:#2E1F55;
+  --on-purple:#1A0E33; --ok:#5CC98A; --ok-soft:#12331F; --warn:#F2C35B; --warn-soft:#3A2C0A; --bad:#FF8A8A; --bad-soft:#3A1418;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.4);
+  --parrot-dark:none; --parrot-light:block;
+}
+*{box-sizing:border-box}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-ui);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+[hidden]{display:none!important}
+.brandbar{height:4px;background:linear-gradient(90deg,var(--purple) 0 28%,var(--red) 28% 52%,var(--blue) 52% 76%,var(--yellow) 76% 100%)}
+header.top{background:var(--panel);border-bottom:1px solid var(--line)}
+header.top .in{max-width:1040px;margin:0 auto;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.brand .mk{width:34px;height:34px;position:relative;flex:none}
+.brand .mk img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.brand .mk img.pd{display:var(--parrot-dark)} .brand .mk img.pl{display:var(--parrot-light)}
+.brand .wm{line-height:1.15}
+.brand .wm b{display:block;font-weight:800;letter-spacing:.15em;font-size:12.5px;color:var(--purple);text-transform:uppercase}
+.brand .wm small{display:block;color:var(--muted);font-size:12px}
+nav.caras{margin-left:auto;display:flex;gap:4px;background:var(--lavender-soft);border:1px solid var(--line);border-radius:12px;padding:4px}
+nav.caras button{border:0;background:none;border-radius:9px;padding:8px 14px;min-height:40px;cursor:pointer;color:var(--purple-deep);font-weight:600}
+nav.caras button[aria-current="true"]{background:var(--purple);color:var(--on-purple)}
+main{max-width:1040px;margin:0 auto;padding:18px 16px 30px;display:flex;flex-direction:column;gap:16px}
+section#cara-productor,section#cara-laboratorio{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+.kick{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+h1,h2,h3{color:var(--purple-deep);margin:0}
+h1{font-size:24px;letter-spacing:-.015em}
+h2{font-size:19px;margin-bottom:4px}
+h3{font-size:15.5px;margin:18px 0 6px}
+.lead{color:var(--muted);margin:4px 0 14px}
+.aviso{font-size:13px;color:var(--muted)}
+.paso{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--purple);color:var(--on-purple);font-weight:700;font-size:13px;margin-right:8px;vertical-align:2px}
+details{border:1px solid var(--line);border-radius:10px;background:var(--lavender-soft);margin:10px 0}
+details>summary{cursor:pointer;padding:10px 12px;font-weight:600;min-height:44px;display:flex;align-items:center;color:var(--purple-deep)}
+details>div{padding:0 14px 12px}
+.tips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 12px;padding:0;list-style:none}
+.tips li{background:var(--lavender-soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.tips b{display:block;color:var(--purple-deep)}
+@media (max-width:680px){.tips{grid-template-columns:1fr}}
+.drop{border:2px dashed var(--lavender);border-radius:14px;padding:26px;text-align:center;background:var(--lavender-soft);cursor:pointer}
+.drop:hover,.drop.sobre{border-color:var(--purple)}
+.drop b{display:block;font-size:17px;color:var(--purple-deep)}
+.foto{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:18px;align-items:start;margin-top:14px}
+.foto canvas{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#fff}
+@media (max-width:680px){.foto{grid-template-columns:1fr}}
+.banner{border-radius:10px;padding:11px 13px;font-size:14.5px;margin-top:8px}
+.banner.ok{background:var(--ok-soft);color:var(--ok)}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.banner.info{background:var(--warn-soft);color:var(--warn)}
+.banner ul{margin:6px 0 0 18px;padding:0}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.span{grid-column:1/-1}
+.field label{font-size:13px;font-weight:600}
+.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:var(--panel);min-height:44px}
+.field textarea{min-height:76px;resize:vertical}
+@media (max-width:640px){.fgrid{grid-template-columns:1fr}}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;grid-column:1/-1}
+.check input{width:20px;height:20px;margin-top:2px;flex:none}
+.bar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--purple-deep);border-radius:10px;padding:10px 16px;min-height:44px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--purple);background:var(--lavender-soft)}
+.btn.primary{background:var(--purple);border-color:var(--purple);color:var(--on-purple)}
+.btn.gold{background:var(--yellow);border-color:var(--yellow);color:var(--on-yellow)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.cargando{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:g .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes g{to{transform:rotate(360deg)}}
+/* informe del productor */
+.senal{display:flex;gap:14px;align-items:center;border-radius:14px;padding:14px 16px;margin:6px 0 12px}
+.senal .punto{width:22px;height:22px;border-radius:50%;flex:none}
+.senal b{font-size:17px;display:block}
+.senal.buena{background:var(--ok-soft);color:var(--ok)} .senal.buena .punto{background:var(--ok)}
+.senal.mixta{background:var(--warn-soft);color:var(--warn)} .senal.mixta .punto{background:var(--yellow)}
+.senal.atencion{background:var(--bad-soft);color:var(--bad)} .senal.atencion .punto{background:var(--red)}
+.resumen{font-family:var(--f-txt);font-size:17px;line-height:1.6;margin:0 0 6px}
+.hallazgos{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.hallazgos li{border-left:4px solid var(--lavender);background:var(--lavender-soft);border-radius:0 10px 10px 0;padding:10px 12px}
+.hallazgos b{color:var(--purple-deep)}
+.acciones{display:grid;gap:10px}
+.accion{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--panel)}
+.accion header{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.accion header b{font-size:16px;color:var(--purple-deep)}
+.prio{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:2px 7px;background:var(--lavender-soft);color:var(--purple-deep)}
+.prio.alta{background:var(--yellow);color:var(--on-yellow)}
+.accion ol{margin:8px 0 6px 20px;padding:0}
+.accion .cuidado{font-size:13.5px;color:var(--warn)}
+.accion .fuente{font-size:12px;color:var(--muted)}
+.recuerde{font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
+/* laboratorio */
+.gate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.gate li{display:flex;gap:8px;align-items:baseline}
+.gate .s{width:18px;flex:none;font-weight:700}
+.gate .ok{color:var(--ok)} .gate .no{color:var(--bad)}
+.gate .v{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:12.5px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+th[scope=row]{text-transform:none;letter-spacing:0;font-family:var(--f-ui);font-size:13px;width:36%}
+td.n{font-family:var(--f-mono);font-size:13px}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:-2px;margin-right:6px}
+.ford{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ford>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.ford b{display:block;font-size:13px;color:var(--muted);font-weight:600}
+.ford .r{font-family:var(--f-txt);font-size:24px;font-weight:700;color:var(--purple-deep)}
+.ford .base{font-size:12px;color:var(--muted);display:block}
+@media (max-width:680px){.ford{grid-template-columns:1fr}}
+.nivel{display:inline-block;font-weight:700;border-radius:5px;padding:0 6px;font-size:12px;background:var(--lavender-soft);color:var(--purple-deep)}
+.etq{display:block;font-size:12px;color:var(--muted)}
+.elemento{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0}
+.elemento .cab{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.elemento .id{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.elemento p{margin:6px 0}
+.fb{display:grid;grid-template-columns:200px 1fr;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.fb select,.fb textarea,.fb input{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--panel);min-height:40px;width:100%}
+.fb textarea{min-height:40px;resize:vertical}
+.fb .rango{display:flex;gap:6px;align-items:center;font-size:13px;grid-column:1/-1}
+.fb .rango select{width:auto}
+@media (max-width:640px){.fb{grid-template-columns:1fr}}
+.elemento.revisado{border-color:var(--purple)}
+.limites{background:var(--lavender-soft);border-left:3px solid var(--yellow);padding:10px 14px;font-size:13px;color:var(--muted)}
+.versiones{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-top:12px}
+.contador{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+/* pie de marca */
+footer.pie{border-top:1px solid var(--line);margin-top:26px;background:var(--panel)}
+footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:grid;grid-template-columns:260px 1fr;gap:28px}
+@media (max-width:760px){footer.pie .fin{grid-template-columns:1fr;gap:16px}}
+.flogo{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;place-items:center}
+.flogo img{width:100%;max-width:230px;height:auto;display:block}
+.frights{margin-top:9px;font-size:11.5px;color:var(--muted);line-height:1.5}
+.frights b{color:var(--ink);display:block;font-size:12px}
+.fsrc h4{margin:0 0 5px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.fsrc p{margin:0 0 8px;font-size:11.5px;line-height:1.6;color:var(--muted)}
+/* impreso: una cara por archivo, con la firma CTCX arriba y abajo */
+.impreso-cabecera,.impreso-pie{display:none}
+@media print{
+  :root{--bg:#fff;--panel:#fff;--ink:#1E1033;--muted:#555;--line:#ddd;--purple-deep:#2B1160;--lavender-soft:#F6F2FD}
+  body{background:#fff}
+  header.top,footer.pie,.noprint,.brandbar,.solo-pantalla{display:none!important}
+  main{padding:0;max-width:none}
+  .card{box-shadow:none;border:0;padding:0}
+  body[data-imprime="productor"] #cara-laboratorio{display:none!important}
+  body[data-imprime="productor"] #cara-productor{display:flex!important}
+  body[data-imprime="laboratorio"] #cara-productor{display:none!important}
+  body[data-imprime="laboratorio"] #cara-laboratorio{display:flex!important}
+  .impreso-cabecera{display:flex;align-items:center;gap:12px;border-bottom:3px solid #451D96;padding-bottom:8px;margin-bottom:12px}
+  .impreso-cabecera img{height:44px}
+  .impreso-cabecera .t b{display:block;font-size:18px;color:#2B1160}
+  .impreso-cabecera .t small{color:#6E5F8A;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+  .impreso-pie{display:flex;gap:12px;align-items:center;border-top:1px solid #ccc;margin-top:18px;padding-top:8px;font-size:10px;color:#555}
+  .impreso-pie img{height:34px}
+  .accion,.elemento,.hallazgos li{break-inside:avoid}
+  details{border:0;background:none}
+  .fb select,.fb textarea,.fb input{border:0;padding:0;min-height:0}
+}
 </style>
 </head>
 <body>
+<div class="brandbar"></div>
 <header class="top">
   <div class="in">
-    <span class="mark" aria-hidden="true"></span>
-    <div>
-      <h1>Lector de Cromatografía de Suelo</h1>
-      <div class="sub">Suite de Herramientas del Café · Colombian Trading Company</div>
-    </div>
-    <span class="chip">Lectura cualitativa · no es laboratorio</span>
+    <span class="brand">
+      <span class="mk"><img class="pd" src="/tools/assets/ctcx-loro.png" alt="CTC"><img class="pl" src="/tools/assets/ctcx-loro-claro.png" alt=""></span>
+      <span class="wm"><b>CTCX</b><small>Lector de Cromatografía de Suelo</small></span>
+    </span>
+    <nav class="caras" aria-label="Vista">
+      <button type="button" data-cara="productor" aria-current="true">Productor</button>
+      <button type="button" data-cara="laboratorio" aria-current="false">Laboratorio</button>
+    </nav>
   </div>
 </header>
 
@@ -352,162 +217,208 @@
     <div class="bar"><button class="btn" id="btnRecuperar" type="button">Recuperar el último análisis</button></div>
   </div>
 
-  <section class="card" id="paso1">
-    <h2><span class="paso">1</span>La foto del cromatograma</h2>
-    <p class="lead">La herramienta mide la foto antes de interpretar nada: si no sirve, lo dice y no la lee.</p>
-    <details>
-      <summary>Cómo tomar la foto</summary>
-      <div id="instrCaptura"></div>
-    </details>
-    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Cargar la foto del cromatograma">
-      <b>Cargar la foto</b>
-      <span class="aviso">Arrástrela aquí o toque para elegirla · JPEG, PNG o WebP</span>
-      <input type="file" id="archivo" accept="image/jpeg,image/png,image/webp" hidden>
+  <!-- ═════════════════════ CARA DEL PRODUCTOR ═════════════════════ -->
+  <section id="cara-productor">
+    <div class="card solo-pantalla" id="bienvenida">
+      <div class="kick">Herramientas del Café · CTCX</div>
+      <h1>Lea su suelo con una foto</h1>
+      <p class="lead">Suba la foto de su cromatografía. Le decimos cómo se ve su suelo y qué puede hacer para cuidarlo.</p>
     </div>
-    <div class="foto" id="fotoBloque" hidden>
-      <canvas id="vista" width="300" height="300" aria-label="Vista del cromatograma con las fronteras medidas"></canvas>
-      <div>
-        <ul class="gate" id="gate"></ul>
-        <div id="gateMsg"></div>
+
+    <section class="card solo-pantalla" id="paso-foto">
+      <h2><span class="paso">1</span>La foto de su cromatografía</h2>
+      <ul class="tips">
+        <li><b>Desde arriba</b>Con el celular paralelo al papel y el papel completo.</li>
+        <li><b>Con luz de día</b>Sin flash y sin sombras encima.</li>
+        <li><b>Sobre algo blanco</b>Una mesa o una hoja blanca debajo.</li>
+      </ul>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Subir la foto de la cromatografía">
+        <b>Subir o tomar la foto</b>
+        <span class="aviso">Toque aquí para elegirla o tomarla con la cámara</span>
+        <input type="file" id="archivo" accept="image/jpeg,image/png,image/webp" hidden>
       </div>
-    </div>
+      <div class="foto" id="fotoProductor" hidden>
+        <canvas id="vistaProductor" width="260" height="260" aria-label="Su foto"></canvas>
+        <div id="gateProductor"></div>
+      </div>
+    </section>
+
+    <section class="card solo-pantalla" id="paso-datos">
+      <h2><span class="paso">2</span>Datos de la muestra</h2>
+      <p class="lead">El departamento importa: cada tipo de suelo se lee distinto.</p>
+      <form class="fgrid" id="formCtx" autocomplete="off" onsubmit="return false">
+        <div class="field span" id="campoFincaSel" hidden>
+          <label for="fincaSel">Su finca</label>
+          <select id="fincaSel"></select>
+        </div>
+        <div class="field span" id="campoFincaTxt">
+          <label for="fincaTxt">Finca <span class="aviso">(opcional)</span></label>
+          <input id="fincaTxt" placeholder="Nombre de la finca">
+        </div>
+        <div class="field" id="campoParcelaSel" hidden>
+          <label for="parcelaSel">Lote</label>
+          <select id="parcelaSel"></select>
+        </div>
+        <div class="field" id="campoParcelaTxt">
+          <label for="parcelaTxt">Lote <span class="aviso">(opcional)</span></label>
+          <input id="parcelaTxt" placeholder="Lote 3, parte alta">
+        </div>
+        <div class="field">
+          <label for="departamento">Departamento</label>
+          <select id="departamento"></select>
+        </div>
+        <div class="field">
+          <label for="manejo">¿Cómo maneja la finca?</label>
+          <select id="manejo">
+            <option value="">Elegir</option>
+            <option value="orgánico">Orgánico</option>
+            <option value="convencional">Convencional</option>
+            <option value="en transición">En transición</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fecha">Fecha de la muestra</label>
+          <input id="fecha" type="date">
+        </div>
+        <div class="field span">
+          <label for="practicas">¿Qué le ha aplicado al lote últimamente? <span class="aviso">(opcional)</span></label>
+          <textarea id="practicas" maxlength="600" placeholder="Por ejemplo: compost hace tres semanas, guadaña en vez de herbicida."></textarea>
+        </div>
+        <details class="field span">
+          <summary>Más datos (si los tiene)</summary>
+          <div class="fgrid">
+            <div class="field"><label for="municipio">Municipio</label><input id="municipio"></div>
+            <div class="field"><label for="altitud">Altitud (msnm)</label><input id="altitud" type="number" min="0" max="4500" step="10"></div>
+            <div class="field"><label for="variedad">Variedad</label><input id="variedad" placeholder="Castillo"></div>
+            <div class="field"><label for="papel">Papel del croma</label>
+              <select id="papel"><option value="">No lo sé</option><option value="whatman-1">Whatman n.º 1</option><option value="whatman-4">Whatman n.º 4</option><option value="otro">Otro</option></select></div>
+            <div class="field"><label for="dilucion">NaOH por 5 g de suelo</label>
+              <select id="dilucion"><option value="">No lo sé</option><option value="50">50 ml</option><option value="100">100 ml</option><option value="150">150 ml</option><option value="otra">Otra</option></select></div>
+            <div class="field"><label for="dias">Días desde el revelado</label><input id="dias" type="number" min="0" max="120" step="1"></div>
+          </div>
+        </details>
+        <label class="check"><input type="checkbox" id="consent"><span>Autorizo guardar el nombre de la finca y del lote con este análisis, para compararlo con los próximos. Sin esta casilla se guarda sin ellos. Nunca pedimos coordenadas.</span></label>
+        <label class="check"><input type="checkbox" id="fincaPdf" disabled><span>Poner el nombre de la finca en el informe.</span></label>
+      </form>
+    </section>
+
+    <section class="card solo-pantalla" id="paso-leer">
+      <h2><span class="paso">3</span>Leer su suelo</h2>
+      <p class="lead">La lectura la hace una inteligencia artificial con reglas revisadas por CTC. Necesita internet y una cuenta con la herramienta activa.</p>
+      <div id="iaMsg"></div>
+      <div class="bar">
+        <button class="btn primary" id="btnIA" type="button">Leer mi suelo · ≈ US$ 0,02</button>
+      </div>
+    </section>
+
+    <article class="card" id="informeProductor">
+      <div class="impreso-cabecera"><img src="/tools/assets/ctcx-loro.png" alt="CTC"><div class="t"><small>CTCX · Herramientas del Café</small><b>Informe de su suelo</b></div></div>
+      <div class="kick">Informe para el productor</div>
+      <h2>Cómo se ve su suelo</h2>
+      <div class="aviso" id="pMeta"></div>
+      <div id="pVacio" class="aviso" style="margin-top:10px">Cuando suba la foto y pida la lectura, aquí aparece su informe.</div>
+      <div id="pContenido" hidden>
+        <div class="senal" id="pSenal"><span class="punto"></span><div><b id="pSenalTexto"></b><span class="aviso">Lectura orientativa hecha con la foto</span></div></div>
+        <p class="resumen" id="pResumen"></p>
+        <h3>Lo que muestra la foto</h3>
+        <ul class="hallazgos" id="pHallazgos"></ul>
+        <h3>Qué puede hacer</h3>
+        <div class="acciones" id="pAcciones"></div>
+        <p class="recuerde" id="pDescargo"></p>
+      </div>
+      <div class="impreso-pie"><img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"><div id="pPieImpreso"></div></div>
+      <div class="bar noprint">
+        <button class="btn" id="btnNuevo" type="button">Nuevo análisis</button>
+        <button class="btn" type="button" data-ir-cara="laboratorio">Ver detalle técnico</button>
+        <button class="btn gold" id="btnPdfProductor" type="button" disabled>Descargar informe (PDF)</button>
+      </div>
+    </article>
   </section>
 
-  <section class="card" id="paso2">
-    <h2><span class="paso">2</span>El contexto de la muestra</h2>
-    <p class="lead">El departamento no es decorativo: decide qué línea base de suelo aplica a la lectura.</p>
-    <form class="fgrid" id="formCtx" autocomplete="off" onsubmit="return false">
-      <div class="field span" id="campoFincaSel" hidden>
-        <label for="fincaSel">Finca de su cuenta</label>
-        <select id="fincaSel"></select>
+  <!-- ═════════════════════ CARA DEL LABORATORIO ═════════════════════ -->
+  <section id="cara-laboratorio" hidden>
+    <div class="impreso-cabecera"><img src="/tools/assets/ctcx-loro.png" alt="CTC"><div class="t"><small>CTCX · Herramientas del Café</small><b>Feedback técnico · Lector de Cromatografía de Suelo</b></div></div>
+
+    <section class="card">
+      <div class="kick">Laboratorio · backstage técnico</div>
+      <h2>Foto y compuerta de captura</h2>
+      <p class="lead">Lo que se midió antes de interpretar. El técnico revisa y comenta cada lectura; el resultado se exporta como Feedback Técnico.</p>
+      <div class="foto" id="fotoLab" hidden>
+        <canvas id="vistaLab" width="260" height="260" aria-label="Cromatograma con las fronteras medidas"></canvas>
+        <div><ul class="gate" id="gateLab"></ul><div id="gateLabMsg"></div></div>
       </div>
-      <div class="field span" id="campoFincaTxt">
-        <label for="fincaTxt">Finca <span class="aviso">(opcional)</span></label>
-        <input id="fincaTxt" placeholder="Nombre de la finca">
+      <p class="aviso" id="labSinFoto">Suba la foto en la cara del productor.</p>
+      <details><summary>Cómo tomar la foto (instrucciones de la compuerta)</summary><div id="instrCaptura" class="aviso"></div></details>
+    </section>
+
+    <section class="card" id="labContexto">
+      <h2>Contexto y protocolo declarados</h2>
+      <div class="aviso" id="labMeta"></div>
+    </section>
+
+    <section class="card" id="labRasgos" hidden>
+      <h2>Rasgos medidos (sin IA)</h2>
+      <div class="tw"><table><tbody id="tablaRasgos"></tbody></table></div>
+      <h3>Escala morfológica de Ford · estimación programática</h3>
+      <div class="ford" id="fordProg"></div>
+      <p class="aviso" id="fordCaveat"></p>
+    </section>
+
+    <section class="card" id="labLectura">
+      <h2>Lectura técnica</h2>
+      <p class="aviso" id="labSinLectura">Sin lectura con IA todavía. Se pide desde la cara del productor.</p>
+      <div id="labLecturaContenido" hidden>
+        <h3>Descripción visual</h3>
+        <div class="elemento" data-el="descripcion"><p id="rDesc"></p><div id="fbDescripcion"></div></div>
+        <h3>Escala morfológica (Ford et al.) · rangos de la lectura</h3>
+        <div id="rFord"></div>
+        <h3>Cadena de evidencia</h3>
+        <div id="rEvidencia"></div>
+        <h3>Contexto regional aplicado</h3>
+        <div class="elemento" data-el="regional"><p id="rRegion"></p><span class="etq" id="rRegla"></span><div id="fbRegional"></div></div>
+        <h3>Recomendaciones técnicas</h3>
+        <div id="rReco"></div>
+        <h3>Revisión del informe del productor</h3>
+        <div id="rProductor"></div>
+        <div class="versiones" id="rVersiones"></div>
       </div>
-      <div class="field" id="campoParcelaSel" hidden>
-        <label for="parcelaSel">Lote o parcela</label>
-        <select id="parcelaSel"></select>
+      <h3>Límites del análisis</h3>
+      <div class="limites" id="rLimites"></div>
+    </section>
+
+    <section class="card" id="labFeedback">
+      <h2>Feedback técnico</h2>
+      <p class="lead">Quién revisa y su valoración general. Cada comentario queda ligado al elemento que revisa.</p>
+      <div class="fgrid">
+        <div class="field"><label for="fbNombre">Técnico que revisa</label><input id="fbNombre" data-fbg="tecnico.nombre"></div>
+        <div class="field"><label for="fbRol">Institución o rol</label><input id="fbRol" data-fbg="tecnico.rol" placeholder="Agrónomo, laboratorio de suelos…"></div>
+        <div class="field"><label for="fbFoto">Calidad de la foto</label>
+          <select id="fbFoto" data-fbg="general.calidad_foto"><option value="">Sin valorar</option><option value="buena">Buena</option><option value="dudosa">Dudosa</option><option value="mala">No sirve</option></select></div>
+        <div class="field"><label for="fbValor">La lectura, en conjunto</label>
+          <select id="fbValor" data-fbg="general.valoracion"><option value="">Sin valorar</option><option value="correcta">Correcta y útil</option><option value="con-cambios">Útil con cambios</option><option value="incorrecta">Incorrecta</option></select></div>
+        <div class="field span"><label for="fbComentario">Comentario general</label><textarea id="fbComentario" data-fbg="general.comentario"></textarea></div>
       </div>
-      <div class="field" id="campoParcelaTxt">
-        <label for="parcelaTxt">Lote o parcela <span class="aviso">(opcional)</span></label>
-        <input id="parcelaTxt" placeholder="Lote 3, parte alta">
+      <p class="contador" id="fbContador"></p>
+      <div class="bar noprint">
+        <button class="btn" type="button" id="btnPdfLab">Imprimir feedback (PDF)</button>
+        <button class="btn primary" type="button" id="btnExportarFeedback">Exportar Feedback Técnico (.json)</button>
       </div>
-      <div class="field">
-        <label for="departamento">Departamento</label>
-        <select id="departamento"></select>
-      </div>
-      <div class="field">
-        <label for="municipio">Municipio <span class="aviso">(opcional)</span></label>
-        <input id="municipio">
-      </div>
-      <div class="field">
-        <label for="altitud">Altitud (msnm) <span class="aviso">(opcional)</span></label>
-        <input id="altitud" type="number" min="0" max="4500" step="10">
-      </div>
-      <div class="field">
-        <label for="variedad">Variedad <span class="aviso">(opcional)</span></label>
-        <input id="variedad" placeholder="Castillo">
-      </div>
-      <div class="field">
-        <label for="manejo">Manejo</label>
-        <select id="manejo">
-          <option value="">Elegir</option>
-          <option value="orgánico">Orgánico</option>
-          <option value="convencional">Convencional</option>
-          <option value="en transición">En transición</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="fecha">Fecha de la muestra</label>
-        <input id="fecha" type="date">
-      </div>
-      <div class="field">
-        <label for="papel">Papel <span class="aviso">(opcional)</span></label>
-        <select id="papel">
-          <option value="">No lo sé</option>
-          <option value="whatman-1">Whatman n.º 1</option>
-          <option value="whatman-4">Whatman n.º 4</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="dilucion">NaOH por 5 g de suelo <span class="aviso">(opcional)</span></label>
-        <select id="dilucion">
-          <option value="">No lo sé</option>
-          <option value="50">50 ml</option>
-          <option value="100">100 ml</option>
-          <option value="150">150 ml</option>
-          <option value="otra">Otra</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="dias">Días desde el revelado <span class="aviso">(opcional)</span></label>
-        <input id="dias" type="number" min="0" max="120" step="1">
-      </div>
-      <div class="field span">
-        <label for="practicas">Prácticas recientes y notas <span class="aviso">(opcional)</span></label>
-        <textarea id="practicas" maxlength="600" placeholder="Abonado con compost hace 3 semanas; cobertura de leguminosas; sin herbicida desde 2025."></textarea>
-      </div>
-      <label class="check"><input type="checkbox" id="consent"><span>Autorizo guardar el nombre de la finca y del lote con este análisis, para compararlo con otros de la misma finca. Sin esta casilla el análisis se guarda sin ellos. La herramienta nunca pide coordenadas.</span></label>
-      <label class="check"><input type="checkbox" id="fincaPdf" disabled><span>Mostrar el nombre de la finca en el PDF.</span></label>
-    </form>
+    </section>
+    <div class="impreso-pie"><img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"><div id="labPieImpreso"></div></div>
   </section>
-
-  <section class="card" id="paso3" hidden>
-    <h2><span class="paso">3</span>Rasgos medidos</h2>
-    <p class="lead">Medidos sobre la foto con visión clásica, sin IA. Son el ancla de cualquier lectura.</p>
-    <div class="tw"><table><tbody id="tablaRasgos"></tbody></table></div>
-    <h3 style="font-family:var(--serif);font-size:16px;margin:16px 0 6px">Escala morfológica de Ford · estimación programática</h3>
-    <div class="ford" id="fordProg"></div>
-    <p class="aviso" id="fordCaveat"></p>
-  </section>
-
-  <section class="card noprint" id="paso4" hidden>
-    <h2><span class="paso">4</span>Lectura interpretativa</h2>
-    <p class="lead">Una lectura tentativa, con la observación, la fuente y el nivel de evidencia de cada afirmación. Necesita cuenta con la herramienta activa e internet.</p>
-    <div id="iaMsg"></div>
-    <div class="bar">
-      <button class="btn primary" id="btnIA" type="button">Interpretar con IA · ≈ US$ 0,01</button>
-    </div>
-  </section>
-
-  <article class="card reporte" id="reporte" hidden>
-    <h2 id="rTitulo">Reporte de lectura cromatográfica</h2>
-    <div class="meta" id="rMeta"></div>
-
-    <h3>Descripción visual objetiva</h3>
-    <p id="rDesc"></p>
-
-    <h3>Rasgos computacionales</h3>
-    <div class="tw"><table><tbody id="rRasgos"></tbody></table></div>
-
-    <h3>Escala morfológica (Ford et al.) · rangos estimados</h3>
-    <div class="ford" id="rFord"></div>
-
-    <h3>Interpretación tentativa · cadena de evidencia</h3>
-    <div id="rEvidenciaVacia" class="aviso"></div>
-    <div class="tw"><table id="rEvidenciaTabla">
-      <thead><tr><th>Observación</th><th>Lectura tentativa</th><th>Fuente</th><th>Nivel</th><th>Confianza</th></tr></thead>
-      <tbody id="rEvidencia"></tbody>
-    </table></div>
-
-    <h3>Contexto regional aplicado</h3>
-    <p id="rRegion"></p>
-
-    <h3>Recomendaciones de manejo</h3>
-    <ul class="reco" id="rReco"></ul>
-
-    <h3>Límites del análisis</h3>
-    <div class="limites" id="rLimites"></div>
-    <div class="versiones" id="rVersiones"></div>
-
-    <div class="bar noprint">
-      <button class="btn" id="btnNuevo" type="button">Nuevo análisis</button>
-      <button class="btn gold" id="btnPdf" type="button">Descargar PDF</button>
-    </div>
-  </article>
 </main>
+
+<footer class="pie"><div class="fin">
+  <div>
+    <div class="flogo"><img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"></div>
+    <p class="frights"><b>Herramienta propiedad de CTCX · Colombian Trading Company S.A.S.</b>Todos los derechos reservados. © <span id="ftYear"></span></p>
+  </div>
+  <div class="fsrc">
+    <h4>Fuentes consultadas</h4>
+    <p>Ford et al. 2021, <i>Geoderma</i> 383 · Ford et al. 2019, informe UWA · Kokornaczyk et al. 2016, <i>Biological Agriculture &amp; Horticulture</i> · Graciano et al. 2020, <i>Journal of Agricultural Studies</i> · Embrapa, Documentos 455 (2018) · Programa Altepetl, SEDEMA-CDMX · Ardila Gómez, UIS 2026 (café orgánico, Guadalupe, Santander) · Nivia Torres, UNAD 2017 · Restrepo y Pinheiro 2011.</p>
+    <p style="opacity:.85">Reglas de interpretación v<span id="ftReglas">2.2</span> con criterio CTC. Compuerta de captura calibrada con el dataset abierto de Martins et al. 2026 (Zenodo, CC BY 4.0). La cromatografía de Pfeiffer es una lectura cualitativa y no reemplaza un análisis de laboratorio.</p>
+  </div>
+</div></footer>
 
 <script src="/tools/assets/cromatografia-rasgos.js"></script>
 <script>
@@ -517,10 +428,23 @@
   var DEPARTAMENTOS = ["Antioquia","Bolívar","Boyacá","Caldas","Caquetá","Casanare","Cauca","Cesar","Cundinamarca","Huila","La Guajira","Magdalena","Meta","Nariño","Norte de Santander","Putumayo","Quindío","Risaralda","Santander","Tolima","Valle del Cauca"];
   var API = "/api/herramientas/cromatografia";
   var CLAVE_LOCAL = "ctc-croma-ultimo";
-  var ETQ_ESTADO = { "sin-foto": "Sin foto", rechazada: "Foto rechazada", medida: "Rasgos medidos", "con-lectura": "Con lectura" };
-  var ZONAS = { central: "Central", mineral: "Mineral", organic: "Orgánica", enzymatic: "Externa (enzimática)" };
+  var PIE_MARCA = "Lector de Cromatografía de Suelo · CTCX · Colombian Trading Company S.A.S. · ctcexport.com";
+  var ETQ_ESTADO = { "sin-foto": "Sin foto", rechazada: "Foto rechazada", medida: "Foto medida", "con-lectura": "Con lectura" };
+  var ZONAS = { central: "Central", mineral: "Mineral", organic: "Orgánica", enzymatic: "Externa" };
+  // La compuerta dicha en palabras del campo: qué pasó y cómo repetir la foto.
+  var MOTIVO_PRODUCTOR = {
+    sin_circulo: "No encontramos el círculo del croma. Tome la foto desde arriba, con el papel completo, sobre algo blanco.",
+    nitidez: "La foto salió movida o borrosa. Apoye bien el celular y tómela otra vez con buena luz.",
+    resolucion: "La foto quedó muy pequeña. Acérquese al papel y use la cámara del celular; no use capturas de pantalla ni fotos reenviadas por chat.",
+    recorte: "Falta un pedazo del borde. Aléjese un poco para que se vea el papel completo.",
+    fondo: "El fondo no es claro o la luz cambia los colores. Ponga el papel sobre algo blanco y tome la foto con luz de día, sin flash.",
+    oblicua: "La foto quedó de lado. Ponga el celular paralelo al papel, justo encima."
+  };
+  var VEREDICTOS = [["", "Sin revisar"], ["de-acuerdo", "De acuerdo"], ["parcial", "Parcialmente"], ["en-desacuerdo", "En desacuerdo"]];
+  var NOMBRE_FORD = { canales: "Estructura de canales", picos: "Desarrollo de picos", intensidad: "Intensidad de color" };
 
   var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -529,9 +453,7 @@
   function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim(); }
   function hoy() { return new Date().toISOString().slice(0, 10); }
   function coma(n, d) { return typeof n === "number" && isFinite(n) ? n.toFixed(d == null ? 2 : d).replace(".", ",") : "—"; }
-  function nuevoId() {
-    return "CRM-" + hoy().replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
-  }
+  function nuevoId() { return "CRM-" + hoy().replace(/-/g, "") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase(); }
 
   // ¿Abierta dentro de Cherry Picked? Allí no hay fincas (owner, 2026-09-12).
   var enCP = false;
@@ -544,9 +466,12 @@
   var imagenIA = null; // la foto reducida para la lectura; NO se guarda en el trabajo
   var fincas = [];
 
+  function feedbackVacio() {
+    return { tecnico: { nombre: "", rol: "" }, general: { calidad_foto: "", valoracion: "", comentario: "" }, items: {}, actualizado: null };
+  }
   function nuevoEstado() {
     return {
-      esquema: 1,
+      esquema: 2,
       sample_id: nuevoId(),
       estado: "sin-foto",
       creado: new Date().toISOString(),
@@ -557,10 +482,25 @@
       rasgos_version: null,
       contexto: { finca_id: "", finca: "", parcela: "", departamento: "", municipio: "", altitud_m: "", variedad: "", manejo: "", fecha_muestra: hoy(), practicas: "", papel: "", dilucion: "", dias_revelado: "", consentimiento: false, finca_en_pdf: false },
       lectura: null,
-      meta: null
+      meta: null,
+      feedback: feedbackVacio()
     };
   }
   var E = nuevoEstado();
+
+  /* ── Caras ─────────────────────────────────────────────────────────────── */
+  function verCara(cara) {
+    $$("nav.caras button").forEach(function (b) { b.setAttribute("aria-current", String(b.dataset.cara === cara)); });
+    $("#cara-productor").hidden = cara !== "productor";
+    $("#cara-laboratorio").hidden = cara !== "laboratorio";
+    try { localStorage.setItem("ctc-croma-cara", cara); } catch (e) { /* sin almacenamiento */ }
+    window.scrollTo({ top: 0 });
+  }
+  $$("nav.caras button").forEach(function (b) { b.addEventListener("click", function () { verCara(b.dataset.cara); }); });
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-ir-cara]");
+    if (b) verCara(b.dataset.irCara);
+  });
 
   /* ── Guardado: puente + respaldo local ─────────────────────────────────── */
   function estadoParaGuardar() {
@@ -590,10 +530,14 @@
     .catch(function () { $("#instrCaptura").textContent = "No se pudieron cargar las reglas de interpretación."; });
 
   function pintarReglas() {
-    $("#instrCaptura").innerHTML = "<p>" + esc(REGLAS.image_validation_gate.on_reject) + ".</p><p>Motivos de rechazo:</p><ul>" +
-      REGLAS.image_validation_gate.reject_if.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul>";
+    $("#instrCaptura").innerHTML = "<p>" + esc(REGLAS.image_validation_gate.on_reject) + ".</p><ul>" +
+      REGLAS.image_validation_gate.reject_if.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul><p>" + esc(REGLAS.image_validation_gate.not_rejected || "") + "</p>";
     $("#fordCaveat").textContent = REGLAS.ford_scale.caveat + " " + REGLAS.ford_scale.reporting_rule;
+    $("#ftReglas").textContent = REGLAS.$schema_version;
+    // El descargo obligatorio sale SIEMPRE de las reglas, haya lectura o no.
+    $("#rLimites").textContent = REGLAS.mandatory_disclaimer_es;
   }
+  $("#ftYear").textContent = new Date().getFullYear();
 
   /* ── Formulario ────────────────────────────────────────────────────────── */
   $("#departamento").innerHTML = '<option value="">Otro o no lo sé</option>' + DEPARTAMENTOS.map(function (d) { return "<option>" + esc(d) + "</option>"; }).join("");
@@ -602,8 +546,9 @@
   Object.keys(CAMPOS).forEach(function (id) {
     $("#" + id).addEventListener("input", function (ev) {
       E.contexto[CAMPOS[id]] = ev.target.value;
-      if (id === "departamento" || id === "manejo" || id === "fecha") pintarIA();
-      pintarReporte(); // la cabecera del reporte refleja el contexto al momento
+      pintarIA();
+      pintarInforme();
+      pintarContextoLab();
       cambio();
     });
   });
@@ -611,10 +556,10 @@
     E.contexto.consentimiento = ev.target.checked;
     $("#fincaPdf").disabled = !ev.target.checked;
     if (!ev.target.checked) { $("#fincaPdf").checked = false; E.contexto.finca_en_pdf = false; }
-    pintarReporte();
+    pintarInforme();
     cambio();
   });
-  $("#fincaPdf").addEventListener("change", function (ev) { E.contexto.finca_en_pdf = ev.target.checked; pintarReporte(); cambio(); });
+  $("#fincaPdf").addEventListener("change", function (ev) { E.contexto.finca_en_pdf = ev.target.checked; pintarInforme(); cambio(); });
 
   function ponerFormulario() {
     var c = E.contexto;
@@ -657,8 +602,7 @@
   function pintarParcelas() {
     var id = $("#fincaSel").value;
     var f = fincas.filter(function (x) { return x.id === id; })[0];
-    var otra = id === "otra" || !id;
-    $("#campoFincaTxt").hidden = !otra;
+    $("#campoFincaTxt").hidden = !(id === "otra" || !id);
     if (f && f.parcelas && f.parcelas.length) {
       $("#parcelaSel").innerHTML = '<option value="">Toda la finca</option>' + f.parcelas.map(function (p) { return "<option>" + esc(p.nombre) + "</option>"; }).join("");
       $("#parcelaSel").value = E.contexto.parcela || "";
@@ -670,8 +614,7 @@
     }
   }
   $("#fincaSel").addEventListener("change", function (ev) {
-    var id = ev.target.value;
-    var f = fincas.filter(function (x) { return x.id === id; })[0];
+    var f = fincas.filter(function (x) { return x.id === ev.target.value; })[0];
     E.contexto.finca_id = f ? f.id : "";
     E.contexto.finca = f ? f.nombre : "";
     E.contexto.parcela = "";
@@ -682,7 +625,7 @@
       if (f.altitud_m) E.contexto.altitud_m = String(f.altitud_m);
     }
     ponerFormulario();
-    pintarIA();
+    pintarTodo();
     cambio();
   });
   $("#parcelaSel").addEventListener("change", function (ev) { E.contexto.parcela = ev.target.value; cambio(); });
@@ -711,22 +654,20 @@
 
   function cargar(file) {
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
-      $("#gateMsg").innerHTML = '<div class="banner bad">Ese archivo no es una foto JPEG, PNG o WebP.</div>';
-      $("#fotoBloque").hidden = false;
+      $("#fotoProductor").hidden = false;
+      $("#gateProductor").innerHTML = '<div class="banner bad">Ese archivo no es una foto. Use una foto JPEG, PNG o WebP.</div>';
       return;
     }
     var url = URL.createObjectURL(file);
     var img = new Image();
     img.onload = function () {
-      $("#fotoBloque").hidden = false;
-      $("#gate").innerHTML = "";
-      $("#gateMsg").innerHTML = '<div class="banner info">Midiendo la foto…</div>';
+      $("#fotoProductor").hidden = false;
+      $("#gateProductor").innerHTML = '<div class="banner info">Revisando la foto…</div>';
       setTimeout(function () {
         var cAnal = aCanvas(img, 900);
         // La resolución se juzga sobre la foto ORIGINAL, no sobre el lienzo reducido.
         var res = window.CromaRasgos.analizar(cAnal.getContext("2d").getImageData(0, 0, cAnal.width, cAnal.height), { escalaOriginal: img.naturalWidth / cAnal.width });
-        var cIA = aCanvas(img, 1024);
-        imagenIA = cIA.toDataURL("image/jpeg", 0.85);
+        imagenIA = aCanvas(img, 1024).toDataURL("image/jpeg", 0.85);
         var cMini = aCanvas(img, 420);
         var mini = cMini.toDataURL("image/jpeg", 0.7);
         if (mini.length > 90000) mini = cMini.toDataURL("image/jpeg", 0.5);
@@ -739,7 +680,7 @@
         E.miniatura = mini;
         E.validacion = res.validation_report;
         E.validacion.valida = res.valida;
-        E.validacion.escala = cAnal.width / cMini.width; // del lienzo medido a la miniatura
+        E.validacion.escala = cAnal.width / cMini.width;
         E.rasgos = res.rasgos;
         E.ford_programatico = res.ford_programatico;
         E.rasgos_version = res.version;
@@ -749,13 +690,13 @@
       }, 30);
     };
     img.onerror = function () {
-      $("#fotoBloque").hidden = false;
-      $("#gateMsg").innerHTML = '<div class="banner bad">No se pudo abrir la imagen.</div>';
+      $("#fotoProductor").hidden = false;
+      $("#gateProductor").innerHTML = '<div class="banner bad">No se pudo abrir la foto.</div>';
     };
     img.src = url;
   }
 
-  /* ── Pintar ────────────────────────────────────────────────────────────── */
+  /* ── Pintar: utilidades ────────────────────────────────────────────────── */
   function labARgb(L, a, b) {
     var fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
     function inv(t) { var t3 = t * t * t; return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787; }
@@ -763,165 +704,306 @@
     function g(c) { c = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return Math.round(Math.max(0, Math.min(1, c)) * 255); }
     return "rgb(" + g(3.2406 * X - 1.5372 * Y - 0.4986 * Z) + "," + g(-0.9689 * X + 1.8758 * Y + 0.0415 * Z) + "," + g(0.0557 * X - 0.204 * Y + 1.057 * Z) + ")";
   }
-
-  function pintarFoto() {
-    var v = E.validacion;
-    $("#fotoBloque").hidden = !E.miniatura;
+  function dibujarFoto(canvas, conFronteras) {
     if (!E.miniatura) return;
-    var cv = $("#vista"), img = new Image();
+    var v = E.validacion, img = new Image();
     img.onload = function () {
-      cv.width = img.naturalWidth;
-      cv.height = img.naturalHeight;
-      var g = cv.getContext("2d");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      var g = canvas.getContext("2d");
       g.drawImage(img, 0, 0);
-      if (E.rasgos && v && v.escala) {
+      if (conFronteras && E.rasgos && v && v.escala) {
         var k = 1 / v.escala, cx = E.rasgos.center_xy[0] * k, cy = E.rasgos.center_xy[1] * k, R = E.rasgos.outer_radius_px * k;
         g.lineWidth = 1.5;
-        g.strokeStyle = "#C9A227";
+        g.strokeStyle = "#FDC70C";
         g.beginPath(); g.arc(cx, cy, R, 0, 2 * Math.PI); g.stroke();
         g.setLineDash([4, 3]);
-        g.strokeStyle = "#3B2566";
+        g.strokeStyle = "#451D96";
         E.rasgos.zone_boundaries_rel.forEach(function (b) { g.beginPath(); g.arc(cx, cy, R * b, 0, 2 * Math.PI); g.stroke(); });
         g.setLineDash([]);
       }
     };
     img.src = E.miniatura;
+  }
+  function metaTexto(conFinca) {
+    var c = E.contexto;
+    return [
+      E.sample_id,
+      conFinca && c.consentimiento && c.finca_en_pdf && c.finca ? c.finca + (c.parcela ? " · " + c.parcela : "") : "",
+      (c.departamento || "Departamento no declarado") + (c.municipio ? " · " + c.municipio : ""),
+      c.manejo ? "Manejo " + c.manejo : "",
+      c.fecha_muestra ? "Muestra del " + c.fecha_muestra : ""
+    ].filter(Boolean).join(" · ");
+  }
 
-    if (!v) return;
-    var filas = [
-      ["Patrón circular detectado", v.circulo_detectado, v.circularidad == null ? "—" : "circularidad " + coma(v.circularidad)],
-      ["Nitidez suficiente", v.nitidez != null && v.nitidez >= v.nitidez_min, v.nitidez == null ? "—" : coma(v.nitidez, 0) + " (mín. " + v.nitidez_min + ")"],
-      ["Resolución del croma", v.diametro_px != null && v.diametro_px >= v.diametro_min, v.diametro_px == null ? "—" : v.diametro_px + " px de diámetro (mín. " + v.diametro_min + ")"],
-      ["Borde externo completo", v.borde_completo, ""],
-      ["Fondo claro sin dominante de color", v.fondo_claro, "L* " + coma(v.fondo_lab[0], 0)],
-      ["Cámara paralela al papel", v.razon_ejes == null || v.razon_ejes >= v.razon_ejes_min, v.razon_ejes == null ? "—" : "ejes " + coma(v.razon_ejes) + " (mín. " + coma(v.razon_ejes_min) + ")"]
-    ];
-    $("#gate").innerHTML = filas.map(function (f) {
-      return '<li><span class="s ' + (f[1] ? "ok" : "no") + '">' + (f[1] ? "✓" : "✗") + "</span><span>" + esc(f[0]) + '</span><span class="v">' + esc(f[2]) + "</span></li>";
-    }).join("");
+  /* ── Cara del productor ────────────────────────────────────────────────── */
+  function pintarFotoProductor() {
+    var v = E.validacion;
+    $("#fotoProductor").hidden = !E.miniatura;
+    if (!E.miniatura || !v) return;
+    dibujarFoto($("#vistaProductor"), false);
     if (v.valida) {
-      $("#gateMsg").innerHTML = '<div class="banner ok">La foto sirve. Los rasgos están medidos abajo.</div>';
+      $("#gateProductor").innerHTML = '<div class="banner ok"><b>La foto sirve.</b> Complete los datos y pida la lectura.</div>';
     } else {
-      var motivos = (v.motivos || []).map(function (m) {
-        var i = window.CromaRasgos.MOTIVOS.indexOf(m);
-        return "<li>" + esc(REGLAS ? REGLAS.image_validation_gate.reject_if[i] : m) + "</li>";
-      }).join("");
-      $("#gateMsg").innerHTML = '<div class="banner bad"><b>La foto no se interpreta.</b><ul style="margin:6px 0 6px 18px;padding:0">' + motivos + "</ul>" +
-        esc(REGLAS ? "Para repetirla: " + REGLAS.image_validation_gate.on_reject + "." : "") + "</div>";
+      $("#gateProductor").innerHTML = '<div class="banner bad"><b>Hay que repetir la foto.</b><ul>' +
+        (v.motivos || []).map(function (m) { return "<li>" + esc(MOTIVO_PRODUCTOR[m] || m) + "</li>"; }).join("") + "</ul></div>";
     }
   }
 
+  function pintarIA(msg) {
+    var faltan = [];
+    if (!E.contexto.manejo) faltan.push("cómo maneja la finca");
+    if (!E.contexto.fecha_muestra) faltan.push("la fecha de la muestra");
+    var sinFoto = !imagenIA;
+    $("#btnIA").disabled = !E.rasgos || faltan.length > 0 || sinFoto;
+    if (msg !== undefined) { $("#iaMsg").innerHTML = msg; return; }
+    if (!E.miniatura) $("#iaMsg").innerHTML = '<div class="aviso">Primero suba la foto.</div>';
+    else if (!E.rasgos) $("#iaMsg").innerHTML = '<div class="aviso">Primero repita la foto.</div>';
+    else if (sinFoto) $("#iaMsg").innerHTML = '<div class="banner info">Este análisis guardado tiene solo la miniatura. Para una lectura nueva, vuelva a subir la foto.</div>';
+    else if (faltan.length) $("#iaMsg").innerHTML = '<div class="aviso">Falta ' + esc(faltan.join(" y ")) + ".</div>";
+    else $("#iaMsg").innerHTML = "";
+  }
+
+  function pintarInforme() {
+    var L = E.lectura, P = L && L.productor;
+    $("#pMeta").textContent = metaTexto(true);
+    $("#pVacio").hidden = !!P;
+    $("#pContenido").hidden = !P;
+    $("#btnPdfProductor").disabled = !P;
+    if (!P) return;
+    $("#pSenal").className = "senal " + P.senal;
+    $("#pSenalTexto").textContent = P.senal_texto;
+    $("#pResumen").textContent = P.resumen;
+    $("#pHallazgos").innerHTML = P.hallazgos.map(function (h) {
+      return "<li><b>" + esc(h.titulo) + "</b><br>" + esc(h.explicacion) + "</li>";
+    }).join("");
+    $("#pAcciones").innerHTML = P.acciones.map(function (a) {
+      return '<div class="accion"><header><b>' + esc(a.titulo) + '</b><span class="prio ' + esc(a.prioridad) + '">Prioridad ' + esc(a.prioridad) + "</span></header>" +
+        "<p>" + esc(a.por_que) + "</p>" +
+        "<ol>" + a.como.map(function (paso) { return "<li>" + esc(paso) + "</li>"; }).join("") + "</ol>" +
+        (a.cuidado ? '<p class="cuidado">Cuidado: ' + esc(a.cuidado) + "</p>" : "") +
+        '<p class="fuente">Fuente: ' + esc(a.fuentes.join(" · ")) + "</p></div>";
+    }).join("");
+    $("#pDescargo").textContent = P.descargo;
+    $("#pPieImpreso").textContent = "Informe generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + ". " + P.descargo;
+  }
+
+  /* ── Cara del laboratorio ──────────────────────────────────────────────── */
   function filasRasgos(r) {
     var zonas = Object.keys(ZONAS).map(function (z) {
       var c = r.zone_colour_median_lab[z] || [];
-      return '<span style="white-space:nowrap;margin-right:12px"><span class="sw" style="background:' + labARgb(c[0], c[1], c[2]) + '"></span>' + esc(ZONAS[z]) + "</span>";
+      return '<span style="white-space:nowrap;margin-right:12px"><span class="sw" style="background:' + labARgb(c[0], c[1], c[2]) + '"></span>' + esc(ZONAS[z]) + " " + esc(c.join(" / ")) + "</span>";
     }).join("");
     var fronteras = r.zone_boundaries_rel.map(function (b, i) {
       return "r≈" + coma(b) + (r.zone_boundaries_source && r.zone_boundaries_source[i] === "nominal" ? " (nominal)" : "");
     }).join(" · ");
     var entropia = Object.keys(ZONAS).map(function (z) { return ZONAS[z] + " " + coma(r.texture_entropy_by_zone[z]); }).join(" · ");
+    var cq = r.capture_quality;
     return [
       ["Fronteras entre zonas (radio relativo)", fronteras],
-      ["Color mediano por zona", zonas],
+      ["Color mediano por zona (L*a*b*)", zonas],
       ["Índice de radialidad (canales)", coma(r.radiality_index)],
       ["Índice de picos en la periferia", coma(r.spike_index)],
       ["Irregularidad del borde", coma(r.edge_irregularity, 3)],
       ["Índice de intensidad de color", coma(r.colour_intensity_index)],
       ["Simetría", coma(r.symmetry_score)],
       ["Entropía de textura (bits)", entropia],
-      ["Calidad de captura", "nitidez " + coma(r.capture_quality.sharpness, 0) + " · " + (r.capture_quality.diameter_px || "—") + " px de diámetro · ocupa el " + Math.round(r.capture_quality.usable_area_ratio * 100) + " % de la foto"]
+      ["Calidad de captura", "nitidez " + coma(cq.sharpness, 0) + " · " + (cq.diameter_px || "—") + " px · ejes " + coma(cq.axis_ratio) + " · " + Math.round(cq.usable_area_ratio * 100) + " % del encuadre"]
     ].map(function (f, i) {
-      return "<tr><th scope=\"row\" style=\"text-transform:none;letter-spacing:0;font-size:13px;width:38%\">" + esc(f[0]) + '</th><td class="' + (i === 1 ? "" : "n") + '">' + (i === 1 ? f[1] : esc(f[1])) + "</td></tr>";
+      return '<tr><th scope="row">' + esc(f[0]) + '</th><td class="' + (i === 1 ? "" : "n") + '">' + (i === 1 ? f[1] : esc(f[1])) + "</td></tr>";
     }).join("");
   }
-
-  function tarjetasFord(f, bases) {
-    var nombres = { canales: "Estructura de canales", picos: "Desarrollo de picos", intensidad: "Intensidad de color" };
-    return Object.keys(nombres).map(function (k) {
+  function tarjetasFord(f) {
+    return Object.keys(NOMBRE_FORD).map(function (k) {
       var rg = f[k].rango || f[k];
-      return "<div><b>" + nombres[k] + '</b><span class="r">' + rg[0] + (rg[1] !== rg[0] ? "–" + rg[1] : "") + "</span>" +
-        (bases && f[k].base ? '<span class="base">' + esc(f[k].base) + "</span>" : "") + "</div>";
+      return "<div><b>" + NOMBRE_FORD[k] + '</b><span class="r">' + rg[0] + (rg[1] !== rg[0] ? "–" + rg[1] : "") + "</span>" + (f[k].base ? '<span class="base">' + esc(f[k].base) + "</span>" : "") + "</div>";
     }).join("");
   }
 
-  function pintarRasgos() {
-    var hay = !!E.rasgos;
-    $("#paso3").hidden = !hay;
-    if (!hay) return;
-    $("#tablaRasgos").innerHTML = filasRasgos(E.rasgos);
-    $("#fordProg").innerHTML = tarjetasFord(E.ford_programatico, false);
+  // Controles de revisión de un elemento. La clave (i1, r1, h1, a1, ford.canales…)
+  // es el ancla que une el comentario del técnico con lo que revisa.
+  function controlFeedback(clave, conRango) {
+    var it = E.feedback.items[clave] || {};
+    var opciones = VEREDICTOS.map(function (v) { return '<option value="' + v[0] + '"' + (it.veredicto === v[0] ? " selected" : "") + ">" + v[1] + "</option>"; }).join("");
+    var rango = "";
+    if (conRango) {
+      var r = it.rango_corregido || ["", ""];
+      var nums = function (sel) { return ['<option value="">—</option>'].concat([1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '"' + (String(sel) === String(n) ? " selected" : "") + ">" + n + "</option>"; })).join(""); };
+      rango = '<div class="rango">Rango que daría el técnico: <select data-fb="' + esc(clave) + '" data-campo="rango0" aria-label="Desde">' + nums(r[0]) + '</select> a <select data-fb="' + esc(clave) + '" data-campo="rango1" aria-label="Hasta">' + nums(r[1]) + "</select></div>";
+    }
+    return '<div class="fb"><select data-fb="' + esc(clave) + '" data-campo="veredicto" aria-label="Veredicto del técnico">' + opciones + "</select>" +
+      '<textarea data-fb="' + esc(clave) + '" data-campo="comentario" placeholder="Comentario u observación del técnico" aria-label="Comentario del técnico">' + esc(it.comentario || "") + "</textarea>" + rango + "</div>";
   }
 
-  function pintarIA(msg) {
-    $("#paso4").hidden = !E.rasgos;
-    var faltan = [];
-    if (!E.contexto.manejo) faltan.push("el manejo");
-    if (!E.contexto.fecha_muestra) faltan.push("la fecha de la muestra");
-    var sinFoto = !imagenIA;
-    $("#btnIA").disabled = !E.rasgos || faltan.length > 0 || sinFoto;
-    if (msg !== undefined) { $("#iaMsg").innerHTML = msg; return; }
-    if (sinFoto && E.rasgos) $("#iaMsg").innerHTML = '<div class="banner info">Este trabajo guarda la miniatura, no la foto original. Para una lectura nueva, vuelva a cargar la foto.</div>';
-    else if (faltan.length) $("#iaMsg").innerHTML = '<div class="aviso">Falta ' + esc(faltan.join(" y ")) + " en el paso 2.</div>";
-    else $("#iaMsg").innerHTML = "";
+  function pintarContextoLab() {
+    var c = E.contexto;
+    $("#labMeta").textContent = metaTexto(false) + (c.altitud_m ? " · " + c.altitud_m + " msnm" : "") + (c.variedad ? " · " + c.variedad : "") +
+      " · Protocolo: " + ([c.papel, c.dilucion ? c.dilucion + " ml NaOH" : "", c.dias_revelado ? c.dias_revelado + " días desde el revelado" : ""].filter(Boolean).join(" · ") || "no declarado") +
+      (c.practicas ? " · Prácticas: " + c.practicas : "");
   }
 
-  function pintarReporte() {
-    var hay = !!E.rasgos && !!REGLAS;
-    $("#reporte").hidden = !hay;
-    if (!hay) return;
-    var c = E.contexto, L = E.lectura;
-    var fincaVisible = c.consentimiento && c.finca_en_pdf && c.finca;
-    $("#rMeta").innerHTML = [
-      "<span>" + esc(E.sample_id) + "</span>",
-      fincaVisible ? "<span>" + esc(c.finca) + (c.parcela ? " · " + esc(c.parcela) : "") + "</span>" : "",
-      "<span>" + esc(c.departamento || "Departamento no declarado") + (c.municipio ? " · " + esc(c.municipio) : "") + "</span>",
-      c.altitud_m ? "<span>" + esc(c.altitud_m) + " msnm</span>" : "",
-      c.manejo ? "<span>Manejo " + esc(c.manejo) + "</span>" : "",
-      c.fecha_muestra ? "<span>Muestra del " + esc(c.fecha_muestra) + "</span>" : "",
-      c.papel || c.dilucion || c.dias_revelado ? "<span>Protocolo: " + esc([c.papel, c.dilucion ? c.dilucion + " ml NaOH" : "", c.dias_revelado ? c.dias_revelado + " días desde el revelado" : ""].filter(Boolean).join(" · ")) + "</span>" : ""
-    ].filter(Boolean).join("");
+  function pintarLaboratorio() {
+    var v = E.validacion;
+    $("#fotoLab").hidden = !E.miniatura;
+    $("#labSinFoto").hidden = !!E.miniatura;
+    if (E.miniatura && v) {
+      dibujarFoto($("#vistaLab"), true);
+      var filas = [
+        ["Patrón circular", v.circulo_detectado, v.circularidad == null ? "—" : "circ. " + coma(v.circularidad)],
+        ["Nitidez", v.nitidez != null && v.nitidez >= v.nitidez_min, v.nitidez == null ? "—" : coma(v.nitidez, 0) + " (mín. " + v.nitidez_min + ")"],
+        ["Resolución del croma", v.diametro_px != null && v.diametro_px >= v.diametro_min, v.diametro_px == null ? "—" : v.diametro_px + " px (mín. " + v.diametro_min + ")"],
+        ["Borde completo", v.borde_completo, ""],
+        ["Fondo claro", v.fondo_claro, "L* " + coma(v.fondo_lab[0], 0)],
+        ["Cámara paralela", v.razon_ejes == null || v.razon_ejes >= v.razon_ejes_min, v.razon_ejes == null ? "—" : "ejes " + coma(v.razon_ejes) + " (mín. " + coma(v.razon_ejes_min) + ")"]
+      ];
+      $("#gateLab").innerHTML = filas.map(function (f) {
+        return '<li><span class="s ' + (f[1] ? "ok" : "no") + '">' + (f[1] ? "✓" : "✗") + "</span><span>" + esc(f[0]) + '</span><span class="v">' + esc(f[2]) + "</span></li>";
+      }).join("");
+      $("#gateLabMsg").innerHTML = v.valida ? '<div class="banner ok">Pasa la compuerta.</div>' :
+        '<div class="banner bad">Rechazada: ' + esc((v.motivos || []).map(function (m) { var i = window.CromaRasgos.MOTIVOS.indexOf(m); return REGLAS ? REGLAS.image_validation_gate.reject_if[i] : m; }).join(" · ")) + "</div>";
+    }
+    pintarContextoLab();
 
-    $("#rDesc").textContent = L ? L.descripcion_visual : "Sin lectura con IA todavía. Los rasgos medidos y la estimación programática de abajo no interpretan el croma.";
-    $("#rRasgos").innerHTML = filasRasgos(E.rasgos);
-    $("#rFord").innerHTML = L ? tarjetasFord(L.escala_ford, true) : tarjetasFord(E.ford_programatico, false);
+    $("#labRasgos").hidden = !E.rasgos;
+    if (E.rasgos) {
+      $("#tablaRasgos").innerHTML = filasRasgos(E.rasgos);
+      $("#fordProg").innerHTML = tarjetasFord(E.ford_programatico);
+    }
 
-    var interp = L ? L.interpretaciones : [];
-    $("#rEvidenciaTabla").hidden = !interp.length;
-    $("#rEvidenciaVacia").textContent = interp.length ? "" : "Sin interpretación: requiere la lectura con IA.";
-    $("#rEvidencia").innerHTML = interp.map(function (it) {
-      return "<tr><td>" + esc(it.observacion) + "</td><td>" + esc(it.lectura) + "</td><td>" + esc(it.fuente) +
-        '</td><td><span class="nivel ' + esc(it.nivel) + '">' + esc(it.nivel) + '</span><span class="etq">' + esc(it.etiqueta_nivel) + "</span></td><td>" + esc(it.confianza) + "</td></tr>";
-    }).join("");
-
-    $("#rRegion").innerHTML = L
-      ? esc(L.contexto_regional_aplicado) + (L.contexto_regional_regla ? '<span class="etq">Regla aplicada: ' + esc(L.contexto_regional_regla) + "</span>" : "")
-      : '<span class="aviso">Se aplica con la lectura.</span>';
-
-    $("#rReco").innerHTML = L && L.recomendaciones.length
-      ? L.recomendaciones.map(function (r) { return "<li><b>" + esc(r.accion) + "</b> <span class=\"prio\">· prioridad " + esc(r.prioridad) + "</span><br>" + esc(r.justificacion) + "</li>"; }).join("")
-      : '<li class="aviso">Sin recomendaciones: requieren la lectura con IA.</li>';
-
-    // El descargo SIEMPRE sale de las reglas, con o sin lectura.
-    $("#rLimites").textContent = REGLAS.mandatory_disclaimer_es;
-    var m = E.meta;
-    $("#rVersiones").textContent = "Reglas v" + REGLAS.$schema_version + " · " + (E.rasgos_version || "") +
-      (m ? " · " + m.prompt_version + " · " + m.model_name + " · " + String(m.timestamp).slice(0, 16).replace("T", " ") + " UTC" : "") +
-      (L && L.ajustes && L.ajustes.length ? " · Ajustes: " + L.ajustes.join(" ") : "");
+    var L = E.lectura;
+    $("#labSinLectura").hidden = !!L;
+    $("#labLecturaContenido").hidden = !L;
+    if (L && REGLAS) {
+      $("#rDesc").textContent = L.descripcion_visual;
+      $("#fbDescripcion").innerHTML = controlFeedback("descripcion");
+      $("#rFord").innerHTML = Object.keys(NOMBRE_FORD).map(function (k) {
+        var f = L.escala_ford[k];
+        return '<div class="elemento" data-el="ford.' + k + '"><div class="cab"><span class="id">ford.' + k + "</span><b>" + NOMBRE_FORD[k] + ": " + f.rango[0] + (f.rango[1] !== f.rango[0] ? "–" + f.rango[1] : "") + '</b></div><p class="aviso">' + esc(f.base) + "</p>" + controlFeedback("ford." + k, true) + "</div>";
+      }).join("");
+      $("#rEvidencia").innerHTML = L.interpretaciones.map(function (it) {
+        return '<div class="elemento" data-el="' + esc(it.id) + '"><div class="cab"><span class="id">' + esc(it.id) + '</span><span class="nivel">' + esc(it.nivel) + "</span><b>" + esc(it.fuente) + '</b><span class="aviso">confianza ' + esc(it.confianza) + "</span></div>" +
+          "<p><b>Observación:</b> " + esc(it.observacion) + "</p><p><b>Lectura:</b> " + esc(it.lectura) + '</p><span class="etq">' + esc(it.etiqueta_nivel) + "</span>" + controlFeedback(it.id) + "</div>";
+      }).join("");
+      $("#rRegion").textContent = L.contexto_regional_aplicado;
+      $("#rRegla").textContent = L.contexto_regional_regla ? "Regla aplicada: " + L.contexto_regional_regla : "";
+      $("#fbRegional").innerHTML = controlFeedback("regional");
+      $("#rReco").innerHTML = L.recomendaciones.map(function (r) {
+        return '<div class="elemento" data-el="' + esc(r.id) + '"><div class="cab"><span class="id">' + esc(r.id) + "</span><b>" + esc(r.accion) + '</b><span class="prio ' + esc(r.prioridad) + '">' + esc(r.prioridad) + "</span></div><p>" + esc(r.justificacion) + "</p>" + controlFeedback(r.id) + "</div>";
+      }).join("");
+      var P = L.productor;
+      $("#rProductor").innerHTML = P ? (
+        '<div class="elemento" data-el="productor.resumen"><div class="cab"><span class="id">productor.resumen</span><b>Señal: ' + esc(P.senal) + "</b></div><p>" + esc(P.resumen) + "</p>" + controlFeedback("productor.resumen") + "</div>" +
+        P.hallazgos.map(function (h) {
+          return '<div class="elemento" data-el="' + esc(h.id) + '"><div class="cab"><span class="id">' + esc(h.id) + " ← " + esc(h.basado_en.join(", ")) + "</span><b>" + esc(h.titulo) + "</b></div><p>" + esc(h.explicacion) + "</p>" + controlFeedback(h.id) + "</div>";
+        }).join("") +
+        P.acciones.map(function (a) {
+          return '<div class="elemento" data-el="' + esc(a.id) + '"><div class="cab"><span class="id">' + esc(a.id) + " · " + esc(a.practica) + (a.basado_en.length ? " ← " + esc(a.basado_en.join(", ")) : "") + (a.forzada ? " · fija" : "") + "</span><b>" + esc(a.titulo) + "</b></div><p>" + esc(a.por_que) + "</p>" + controlFeedback(a.id) + "</div>";
+        }).join("")
+      ) : '<p class="aviso">Esta lectura es de una versión anterior y no trae informe del productor.</p>';
+      var m = E.meta;
+      $("#rVersiones").textContent = "Reglas v" + ((m && m.rules_version) || REGLAS.$schema_version) + " · " + (E.rasgos_version || "") + (m ? " · " + m.prompt_version + " · " + m.model_name + " · " + String(m.timestamp).slice(0, 16).replace("T", " ") + " UTC" : "") + (L.ajustes && L.ajustes.length ? " · Ajustes: " + L.ajustes.join(" ") : "");
+    }
+    ponerFeedbackGeneral();
+    contarRevisados();
+    $("#labPieImpreso").textContent = "Feedback técnico generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + ".";
   }
+
+  /* ── Feedback técnico ──────────────────────────────────────────────────── */
+  function alEditarFeedback(ev) {
+    var el = ev.target;
+    if (!el.dataset) return;
+    if (el.dataset.fb) {
+      var clave = el.dataset.fb, it = E.feedback.items[clave] || (E.feedback.items[clave] = {});
+      if (el.dataset.campo === "rango0" || el.dataset.campo === "rango1") {
+        it.rango_corregido = it.rango_corregido || ["", ""];
+        it.rango_corregido[el.dataset.campo === "rango0" ? 0 : 1] = el.value ? Number(el.value) : "";
+      } else {
+        it[el.dataset.campo] = el.value;
+      }
+    } else if (el.dataset.fbg) {
+      var partes = el.dataset.fbg.split(".");
+      E.feedback[partes[0]][partes[1]] = el.value;
+    } else {
+      return;
+    }
+    E.feedback.actualizado = new Date().toISOString();
+    contarRevisados();
+    cambio();
+  }
+  document.addEventListener("input", alEditarFeedback);
+  document.addEventListener("change", alEditarFeedback);
+  function ponerFeedbackGeneral() {
+    $$("[data-fbg]").forEach(function (el) { var p = el.dataset.fbg.split("."); el.value = (E.feedback[p[0]] || {})[p[1]] || ""; });
+  }
+  function contarRevisados() {
+    var elementos = $$("#labLecturaContenido [data-el]");
+    var revisados = 0;
+    elementos.forEach(function (el) {
+      var it = E.feedback.items[el.dataset.el];
+      var hecho = !!(it && (it.veredicto || it.comentario));
+      el.classList.toggle("revisado", hecho);
+      if (hecho) revisados++;
+    });
+    $("#fbContador").textContent = E.lectura ? revisados + " de " + elementos.length + " elementos revisados" : "Sin lectura que revisar.";
+    $("#btnExportarFeedback").disabled = !E.lectura;
+  }
+
+  function exportarFeedback() {
+    // Sale del estado que se guarda: sin nombre de finca si no hubo consentimiento.
+    var guardado = estadoParaGuardar();
+    var paquete = {
+      tipo: "feedback_tecnico",
+      esquema: 1,
+      herramienta: "cromatografia-suelo",
+      emitido_por: PIE_MARCA,
+      exportado_at: new Date().toISOString(),
+      sample_id: guardado.sample_id,
+      versiones: {
+        reglas: guardado.meta ? guardado.meta.rules_version : (REGLAS && REGLAS.$schema_version),
+        rasgos: guardado.rasgos_version,
+        prompt: guardado.meta ? guardado.meta.prompt_version : null,
+        modelo: guardado.meta ? guardado.meta.model_name : null
+      },
+      contexto: guardado.contexto,
+      validacion: guardado.validacion,
+      rasgos: guardado.rasgos,
+      ford_programatico: guardado.ford_programatico,
+      lectura: guardado.lectura,
+      feedback: guardado.feedback,
+      miniatura: guardado.miniatura
+    };
+    var blob = new Blob([JSON.stringify(paquete, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "feedback-tecnico-" + guardado.sample_id + ".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  $("#btnExportarFeedback").addEventListener("click", exportarFeedback);
+
+  function imprimir(cara) {
+    document.body.dataset.imprime = cara;
+    window.print();
+  }
+  window.addEventListener("afterprint", function () { delete document.body.dataset.imprime; });
+  $("#btnPdfProductor").addEventListener("click", function () { imprimir("productor"); });
+  $("#btnPdfLab").addEventListener("click", function () { imprimir("laboratorio"); });
 
   function pintarTodo() {
     ponerFormulario();
-    pintarFoto();
-    pintarRasgos();
+    pintarFotoProductor();
     pintarIA();
-    pintarReporte();
+    pintarInforme();
+    pintarLaboratorio();
   }
 
   /* ── La lectura con IA ─────────────────────────────────────────────────── */
+  var TEXTO_BOTON = "Leer mi suelo · ≈ US$ 0,02";
   $("#btnIA").addEventListener("click", function () {
     var btn = $("#btnIA");
     btn.disabled = true;
-    btn.innerHTML = '<span class="cargando"></span>Leyendo el cromatograma…';
+    btn.innerHTML = '<span class="cargando"></span>Leyendo su suelo…';
     var c = E.contexto;
     fetch(API, {
       method: "POST",
@@ -938,53 +1020,50 @@
     })
       .then(function (r) { return r.json().catch(function () { return { ok: false, error: "Respuesta inesperada del servidor." }; }); })
       .then(function (j) {
-        btn.textContent = "Interpretar con IA · ≈ US$ 0,01";
+        btn.textContent = TEXTO_BOTON;
         if (!j.ok) {
           var det = j.detalles && j.detalles.length
-            ? "<details><summary>Qué no pasó los controles</summary><div><ul>" + j.detalles.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul></div></details>"
+            ? "<details><summary>Detalle para el técnico</summary><div><ul>" + j.detalles.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul></div></details>"
             : "";
-          pintarIA('<div class="banner bad">' + esc(j.error || "No se pudo leer el cromatograma.") + "</div>" + det);
-          $("#btnIA").disabled = false;
+          pintarIA('<div class="banner bad">' + esc(j.error || "No se pudo leer la foto.") + "</div>" + det);
+          btn.disabled = false;
           return;
         }
         E.lectura = j.reporte;
         E.meta = j.meta;
         E.estado = "con-lectura";
-        pintarIA('<div class="banner ok">Lectura lista. El reporte está abajo.</div>');
-        pintarReporte();
+        E.feedback = feedbackVacio(); // una lectura nueva se revisa desde cero
+        pintarIA('<div class="banner ok">Listo. Su informe está abajo.</div>');
+        pintarInforme();
+        pintarLaboratorio();
         cambio();
         if (window.CTC) {
           window.CTC.emitir("analisis.generado", {
             sample_id: E.sample_id,
             departamento: c.departamento || null,
             zona_regional: j.reporte.contexto_regional_clave,
-            ford: {
-              canales: j.reporte.escala_ford.canales.rango,
-              picos: j.reporte.escala_ford.picos.rango,
-              intensidad: j.reporte.escala_ford.intensidad.rango
-            },
+            senal: j.reporte.productor ? j.reporte.productor.senal : null,
+            ford: { canales: j.reporte.escala_ford.canales.rango, picos: j.reporte.escala_ford.picos.rango, intensidad: j.reporte.escala_ford.intensidad.rango },
+            practicas: j.reporte.productor ? j.reporte.productor.acciones.map(function (a) { return a.practica; }) : [],
             prompt_version: j.meta.prompt_version,
             rules_version: j.meta.rules_version,
             model_name: j.meta.model_name
           });
         }
-        $("#reporte").scrollIntoView({ behavior: "smooth", block: "start" });
+        $("#informeProductor").scrollIntoView({ behavior: "smooth", block: "start" });
       })
       .catch(function () {
-        btn.textContent = "Interpretar con IA · ≈ US$ 0,01";
-        pintarIA('<div class="banner bad">Sin conexión con la plataforma. La lectura con IA necesita internet; los rasgos medidos siguen aquí.</div>');
-        $("#btnIA").disabled = false;
+        btn.textContent = TEXTO_BOTON;
+        pintarIA('<div class="banner bad">Sin conexión. La lectura necesita internet; su foto sigue aquí.</div>');
+        btn.disabled = false;
       });
   });
 
-  $("#btnPdf").addEventListener("click", function () { window.print(); });
   $("#btnNuevo").addEventListener("click", function () {
     var ctx = E.contexto;
     E = nuevoEstado();
-    E.contexto.finca_id = ctx.finca_id; E.contexto.finca = ctx.finca; E.contexto.departamento = ctx.departamento;
-    E.contexto.municipio = ctx.municipio; E.contexto.altitud_m = ctx.altitud_m; E.contexto.consentimiento = ctx.consentimiento;
+    ["finca_id", "finca", "departamento", "municipio", "altitud_m", "variedad", "manejo", "papel", "dilucion", "consentimiento"].forEach(function (k) { E.contexto[k] = ctx[k]; });
     imagenIA = null;
-    $("#fotoBloque").hidden = true;
     pintarTodo();
     cambio();
     window.scrollTo({ top: 0 });
@@ -992,10 +1071,14 @@
 
   /* ── Restaurar ─────────────────────────────────────────────────────────── */
   function restaurar(e) {
-    if (!e || typeof e !== "object" || e.esquema !== 1) return; // trabajo nuevo o de otra versión
+    if (!e || typeof e !== "object") return;
+    if (e.esquema === 1) { e.esquema = 2; e.feedback = feedbackVacio(); } // trabajos de V5.32–V5.34
+    if (e.esquema !== 2) return;
     var base = nuevoEstado();
     for (var k in base) if (e[k] !== undefined) base[k] = e[k];
-    for (var k2 in nuevoEstado().contexto) if (base.contexto[k2] === undefined) base.contexto[k2] = nuevoEstado().contexto[k2];
+    var defCtx = nuevoEstado().contexto;
+    for (var k2 in defCtx) if (base.contexto[k2] === undefined) base.contexto[k2] = defCtx[k2];
+    base.feedback = Object.assign(feedbackVacio(), base.feedback || {});
     E = base;
     imagenIA = null;
     $("#recuperar").hidden = true;
@@ -1018,13 +1101,14 @@
     if (recibioTrabajo || E.estado !== "sin-foto") return;
     try {
       var guardado = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null");
-      if (guardado && guardado.esquema === 1 && guardado.estado !== "sin-foto") {
+      if (guardado && (guardado.esquema === 1 || guardado.esquema === 2) && guardado.estado !== "sin-foto") {
         $("#recuperar").hidden = false;
         $("#btnRecuperar").onclick = function () { restaurar(guardado); };
       }
     } catch (e) { /* sin almacenamiento */ }
   }, 1500);
 
+  try { if (localStorage.getItem("ctc-croma-cara") === "laboratorio") verCara("laboratorio"); } catch (e) { /* sin almacenamiento */ }
   pintarTodo();
 })();
 </script>

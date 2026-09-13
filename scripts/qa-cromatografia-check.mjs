@@ -280,6 +280,18 @@ const buena = () => ({
   ],
   contexto_regional_aplicado: "Suelo sedimentario: un croma pálido no implica degradación; solo se compara dentro de la misma finca.",
   recomendaciones: [{ accion: "Repetir la cromatografía en tres meses en el mismo lote", justificacion: "La comparación válida es intra-finca", prioridad: "media" }],
+  productor: {
+    senal: "mixta",
+    resumen: "Según la foto, su suelo parece tener vida en la parte de afuera, pero el centro se ve muy blanco y puede que haya abono sin descomponer.",
+    hallazgos: [
+      { titulo: "Centro muy blanco", explicacion: "Puede que haya abono fresco o químicos que se disuelven rápido.", basado_en: ["i1"] },
+      { titulo: "Buena vida en el borde", explicacion: "Se ven rayas hacia afuera, una señal de actividad en el suelo.", basado_en: ["i2"] },
+    ],
+    acciones: [
+      { practica: "evitar-abono-crudo", por_que: "El centro blanco puede venir de abono sin descomponer.", prioridad: "alta", basado_en: ["i1"] },
+      { practica: "cobertura-viva", por_que: "Cubrir el suelo ayuda a mantener la vida que se ve en el borde.", prioridad: "media", basado_en: ["i2", "i3"] },
+    ],
+  },
 });
 const RI = { radiality_index: 0.62 };
 const vb = validarSalida(buena(), reglas, RI, regSant);
@@ -322,6 +334,8 @@ mal("radialidad 0,7 con canales 1–2", (x) => (x.escala_ford.canales.rango = [1
 mal("nivel C presentado como institucional", (x) => (x.interpretaciones[2].lectura = "en manuales institucionales se asocia con materia orgánica humificada"));
 mal("nivel C presentado como estudio con n", (x) => (x.interpretaciones[2].lectura = "estudios con n=16 reportan materia orgánica humificada"));
 check("prompt: pide no escoger la lectura favorable cuando hay dos patrones", sistemaCaldas.includes("no escojas la favorable"));
+check("prompt: pide no cambiar plazos ni cantidades del catálogo", sistemaCaldas.includes("No cambies los plazos ni las cantidades"));
+check("prompt: lista literal de palabras que la cara del productor no puede escribir", reglas.lenguaje_productor.prohibido_nombrar.every((w) => sistemaCaldas.includes(w)) && sistemaCaldas.includes("NO escribas ninguna de estas palabras"));
 
 const zonaMineral = validarSalida(
   (() => { const x = buena(); x.interpretaciones[0].observacion = "zona mineral parda, sin canales radiales visibles en esta zona"; return x; })(),
@@ -351,6 +365,31 @@ check("claims: «el análisis mide la materia orgánica» sigue prohibido", clai
 
 const sinRegion = validarSalida(buena(), reglas, RI, reglaRegional(reglas, ""));
 check("región desconocida: el reporte dice que no aplicó línea base", sinRegion.ok && /No se aplicó línea base regional/.test(sinRegion.reporte.contexto_regional_aplicado) && sinRegion.reporte.contexto_regional_aplicado.includes(reglas.regional_context_rules.unknown_region.rule));
+
+// ── 4b · La cara del productor ──────────────────────────────────────────────
+if (vb.ok) {
+  const pr = vb.reporte.productor;
+  check("productor: la señal trae su texto de las reglas", pr.senal === "mixta" && pr.senal_texto === reglas.lenguaje_productor.senales.mixta);
+  check("productor: ids estables para el feedback (h1…, a1…)", pr.hallazgos[0].id === "h1" && pr.acciones[0].id === "a1");
+  check("productor: el cómo de cada acción sale del catálogo, no del modelo", pr.acciones[0].como.join() === reglas.practicas_de_manejo.find((p) => p.id === "evitar-abono-crudo").como.join());
+  const siempre = reglas.practicas_de_manejo.filter((p) => p.siempre).map((p) => p.id);
+  check("productor: laboratorio y repetir el croma van siempre, al final y marcados", siempre.every((id) => pr.acciones.some((a) => a.practica === id && a.forzada)) && pr.acciones.at(-1).forzada);
+  check("productor: el descargo corto sale de las reglas", pr.descargo === reglas.lenguaje_productor.descargo_corto);
+  check("productor: cada hallazgo apunta a interpretaciones técnicas", pr.hallazgos.every((h) => h.basado_en.length && h.basado_en.every((id) => /^i\d+$/.test(id))));
+}
+mal("productor: nombra el potasio", (x) => (x.productor.hallazgos[0].explicacion = "Parece que falta potasio en el suelo."));
+mal("productor: nombra la acidez", (x) => (x.productor.resumen = "Según la foto, puede que su suelo tenga mucha acidez y poca vida."));
+mal("productor: usa jerga técnica (radialidad)", (x) => (x.productor.hallazgos[1].explicacion = "Se ve buena radialidad en la zona de afuera."));
+mal("productor: cita a Ford", (x) => (x.productor.resumen = "Según la foto y la escala de Ford, su suelo parece estar bien."));
+mal("productor: resumen categórico", (x) => (x.productor.resumen = "Su suelo está enfermo y tiene que cambiar todo el manejo de inmediato."));
+mal("productor: práctica inventada", (x) => (x.productor.acciones[0].practica = "aplicar-urea"));
+mal("productor: hallazgo sin sustento técnico", (x) => (x.productor.hallazgos[0].basado_en = ["i9"]));
+mal("productor: señal fuera de la escala", (x) => (x.productor.senal = "excelente"));
+mal("productor: vínculo con la taza", (x) => (x.productor.acciones[1].por_que = "Así mejora el sabor de su café."));
+mal("productor: sin cara del productor", (x) => delete x.productor);
+const labConAcidez = validarSalida((() => { const x = buena(); x.productor.acciones.push({ practica: "analisis-laboratorio", por_que: "El laboratorio le dirá la acidez y los nutrientes que la foto no ve.", prioridad: "alta", basado_en: ["i1"] }); return x; })(), reglas, RI, regSant);
+check("productor: el porqué del análisis de laboratorio sí puede nombrar la acidez", labConAcidez.ok, labConAcidez.ok ? "" : labConAcidez.errores.join(" | "));
+mal("productor: otra acción que nombra la acidez", (x) => (x.productor.acciones[1].por_que = "La cobertura baja la acidez del suelo."));
 
 check("claims: «n=343» es lenguaje permitido de nivel A", claimsProhibidos("estudios con n=343 reportan").length === 0);
 check("claims: el descargo nombra lo prohibido (por eso no lo escribe el modelo)", claimsProhibidos(reglas.mandatory_disclaimer_es).length > 0);
@@ -385,13 +424,19 @@ check("fincas: pasa por el veredicto de acceso", fincas.includes("puedeAbrir("))
 const html = leeTxt("public/tools/cromatografia-suelo.html");
 check("html: lleva el puente al pie", /<script src="\/tools\/ctc-bridge\.js"><\/script>\s*<\/body>/.test(html));
 check("html: carga el motor de rasgos y las reglas locales", html.includes("/tools/assets/cromatografia-rasgos.js") && html.includes("/tools/assets/cromatografia-reglas.json"));
-check("html: estado propio versionado y resumen", html.includes("CTC.usarEstado(") && html.includes("CTC.usarResumen(") && /esquema:\s*1/.test(html));
+check("html: estado propio versionado y resumen", html.includes("CTC.usarEstado(") && html.includes("CTC.usarResumen(") && /esquema:\s*2/.test(html));
 check("html: el descargo sale de las reglas, no escrito a mano", html.includes("mandatory_disclaimer_es") && !html.includes(reglas.mandatory_disclaimer_es.slice(0, 60)));
 check("html: detecta Cherry Picked y no ofrece fincas", html.includes("cherry-picked") && html.includes("superficie=cp"));
 check("html: pide consentimiento para guardar la finca", /id="consent"/.test(html));
 check("html: juzga la resolución sobre la foto original", html.includes("escalaOriginal: img.naturalWidth"));
 check("html: pide los metadatos de protocolo", /id="papel"/.test(html) && /id="dilucion"/.test(html) && /id="dias"/.test(html));
-check("html: el botón de IA dice el precio", /Interpretar con IA[^<]*US\$/.test(html));
+check("html: el botón de IA dice el precio", /Leer mi suelo[^<]*US\$/.test(html));
+check("html: dos caras, productor por defecto y laboratorio", /id="cara-productor"/.test(html) && /id="cara-laboratorio"/.test(html) && /data-cara="productor"[^>]*aria-current="true"/.test(html));
+check("html: el técnico exporta un Feedback Técnico en JSON", html.includes('tipo: "feedback_tecnico"') && html.includes("feedback-tecnico-"));
+check("html: el feedback exportado usa el estado sin finca si no hay consentimiento", /function exportarFeedback[\s\S]{0,400}estadoParaGuardar\(\)/.test(html));
+check("html: firma CTCX en el pie y en el impreso", html.includes("Herramienta propiedad de CTCX · Colombian Trading Company S.A.S.") && /class="impreso-pie"/.test(html) && html.includes("/tools/assets/ctcx-logo.png"));
+check("html: el informe del productor pinta el cómo desde la lectura (catálogo), no escrito a mano", html.includes("a.como") && !html.includes("Aplique compost o bocashi"));
+check("html: los estados guardados de la versión anterior se migran", /esquema === 1/.test(html));
 check("html: emite el análisis sin nombre de finca", html.includes('CTC.emitir("analisis.generado"') && !/emitir\("analisis\.generado",[^)]*finca/.test(html));
 
 if (fallos.length) {

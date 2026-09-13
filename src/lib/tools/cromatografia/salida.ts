@@ -18,7 +18,7 @@
 // valida o corrige POR LECTURA, y eso solo se puede guardar si cada lectura
 // tiene nombre.
 
-import { fuentesPermitidas, normaliza, type FuentePermitida, type Nivel, type Rasgos, type Reglas, type ReglaRegional } from "./prompt";
+import { fuentesPermitidas, normaliza, type FuentePermitida, type Nivel, type PracticaDeManejo, type Rasgos, type Reglas, type ReglaRegional } from "./prompt";
 
 export type Rango = [number, number];
 
@@ -36,6 +36,32 @@ export type Interpretacion = {
 
 export type Recomendacion = { id: string; accion: string; justificacion: string; prioridad: "alta" | "media" | "baja" };
 
+export type Senal = "buena" | "mixta" | "atencion";
+export type Hallazgo = { id: string; titulo: string; explicacion: string; basado_en: string[] };
+export type AccionProductor = {
+  id: string;
+  practica: string;
+  titulo: string;
+  por_que: string;
+  como: string[];
+  cuidado: string;
+  fuentes: string[];
+  nivel: Nivel;
+  prioridad: "alta" | "media" | "baja";
+  basado_en: string[];
+  /** La puso el servidor porque la práctica va siempre, no el modelo. */
+  forzada: boolean;
+};
+/** La cara del productor (v2.2). Todo lo que dice apunta a interpretaciones técnicas. */
+export type InformeProductor = {
+  senal: Senal;
+  senal_texto: string;
+  resumen: string;
+  hallazgos: Hallazgo[];
+  acciones: AccionProductor[];
+  descargo: string;
+};
+
 export type Reporte = {
   descripcion_visual: string;
   escala_ford: Record<"canales" | "picos" | "intensidad", { rango: Rango; base: string }>;
@@ -44,6 +70,7 @@ export type Reporte = {
   contexto_regional_clave: string;
   contexto_regional_regla: string;
   recomendaciones: Recomendacion[];
+  productor: InformeProductor;
   /** `mandatory_disclaimer_es`, íntegro, puesto por el servidor. */
   limites: string;
   ajustes: string[];
@@ -87,6 +114,16 @@ export const PATRONES_PROHIBIDOS: { nombre: string; re: RegExp }[] = [
 
 export function claimsProhibidos(texto: string): string[] {
   return PATRONES_PROHIBIDOS.filter((p) => p.re.test(texto)).map((p) => p.nombre);
+}
+
+/** La duda dicha en palabras del campo, para la cara del productor. */
+export const DUDA_SENCILLA = /parece|puede que|puede|podr[ií]a|se ve|posiblemente|según la foto|al parecer|señal/i;
+
+const escaparRegex = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Una lista de palabras como patrón que las busca al principio de palabra. */
+export function patronDePalabras(lista: string[] | undefined): RegExp | null {
+  const limpias = (lista ?? []).map((p) => p.trim()).filter(Boolean);
+  return limpias.length ? new RegExp(`(^|[^\\p{L}])(${limpias.map(escaparRegex).join("|")})`, "iu") : null;
 }
 
 /** Lenguaje probabilístico: la lectura tiene que dudar en voz alta. */
@@ -228,6 +265,59 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     return { id: `r${i + 1}`, accion: str(r?.accion), justificacion: str(r?.justificacion), prioridad: prioridad as Recomendacion["prioridad"] };
   });
 
+  // 4b · La cara del productor. Todo lo que diga tiene que apuntar a una
+  // interpretación técnica que exista; las acciones salen del catálogo de las
+  // reglas (el cómo lo pone el servidor, nunca el modelo).
+  const lp = reglas.lenguaje_productor;
+  const catalogo = new Map<string, PracticaDeManejo>((reglas.practicas_de_manejo ?? []).map((p) => [p.id, p]));
+  const idsTecnicos = new Set(interpretaciones.map((it) => it.id));
+  const prod = (x.productor ?? {}) as Record<string, unknown>;
+  const senal = str(prod.senal).toLowerCase() as Senal;
+  if (!["buena", "mixta", "atencion"].includes(senal)) errores.push("productor.senal debe ser buena, mixta o atencion.");
+  const resumenProductor = str(prod.resumen);
+  if (resumenProductor.length < 30) errores.push("productor.resumen falta: 2 o 3 frases sencillas para el productor.");
+  else if (!DUDA_SENCILLA.test(resumenProductor)) errores.push("productor.resumen es categórico: usa parece, puede que o se ve.");
+  const basado = (v: unknown, pos: string) => {
+    const ids = Array.isArray(v) ? v.map((e) => String(e).trim()) : [];
+    if (!ids.length || ids.some((id) => !idsTecnicos.has(id))) errores.push(`${pos}.basado_en debe nombrar interpretaciones que existan (i1, i2…).`);
+    return ids.filter((id) => idsTecnicos.has(id));
+  };
+  const hallazgosBrutos = Array.isArray(prod.hallazgos) ? (prod.hallazgos as Record<string, unknown>[]) : [];
+  if (hallazgosBrutos.length < 1 || hallazgosBrutos.length > 4) errores.push("productor.hallazgos debe traer de 1 a 4 hallazgos.");
+  const hallazgos: Hallazgo[] = hallazgosBrutos.slice(0, 4).map((h, i) => {
+    const pos = `productor.hallazgos[${i}]`;
+    if (!str(h?.titulo) || !str(h?.explicacion)) errores.push(`${pos} necesita titulo y explicacion.`);
+    return { id: `h${i + 1}`, titulo: str(h?.titulo), explicacion: str(h?.explicacion), basado_en: basado(h?.basado_en, pos) };
+  });
+  const accionesBrutas = Array.isArray(prod.acciones) ? (prod.acciones as Record<string, unknown>[]) : [];
+  if (accionesBrutas.length > 4) errores.push("productor.acciones trae más de 4 acciones.");
+  const elegidas = new Set<string>();
+  const acciones: AccionProductor[] = [];
+  accionesBrutas.slice(0, 4).forEach((a, i) => {
+    const pos = `productor.acciones[${i}]`;
+    const practica = catalogo.get(str(a?.practica));
+    if (!practica) {
+      errores.push(`${pos}.practica «${str(a?.practica)}» no está en el catálogo de prácticas.`);
+      return;
+    }
+    const prioridad = str(a?.prioridad).toLowerCase();
+    if (!str(a?.por_que)) errores.push(`${pos}.por_que está vacío.`);
+    if (!["alta", "media", "baja"].includes(prioridad)) errores.push(`${pos}.prioridad debe ser alta, media o baja.`);
+    if (elegidas.has(practica.id)) return;
+    elegidas.add(practica.id);
+    acciones.push({
+      id: "", practica: practica.id, titulo: practica.titulo, por_que: str(a?.por_que), como: practica.como,
+      cuidado: practica.cuidado ?? "", fuentes: practica.fuentes, nivel: practica.nivel,
+      prioridad: prioridad as AccionProductor["prioridad"], basado_en: basado(a?.basado_en, pos), forzada: false,
+    });
+  });
+  // Las que van siempre (laboratorio, repetir el croma), al final, con su propio porqué.
+  for (const p of reglas.practicas_de_manejo ?? []) {
+    if (!p.siempre || elegidas.has(p.id)) continue;
+    acciones.push({ id: "", practica: p.id, titulo: p.titulo, por_que: p.para_que, como: p.como, cuidado: p.cuidado ?? "", fuentes: p.fuentes, nivel: p.nivel, prioridad: "media", basado_en: [], forzada: true });
+  }
+  acciones.forEach((a, i) => (a.id = `a${i + 1}`));
+
   // 5 · Contexto regional: si no hay región, lo escribe el servidor.
   let contexto = str(x.contexto_regional_aplicado);
   const entrada = regional.entrada as { rule?: string; expected_baseline?: string };
@@ -251,6 +341,26 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       [`recomendaciones[${i}].justificacion`, r.justificacion] as [string, string],
     ]),
   ];
+  // La cara del productor pasa por las mismas prohibiciones y por dos más: ni
+  // nutrientes ni acidez (la foto no los ve) y ni jerga técnica.
+  const nutrientes = patronDePalabras(lp?.prohibido_nombrar);
+  const jerga = patronDePalabras(lp?.palabras_tecnicas_prohibidas);
+  // El porqué del análisis de laboratorio SÍ puede nombrar acidez y nutrientes:
+  // es exactamente lo que el laboratorio mira y la foto no.
+  const camposProductor: [string, string, string?][] = [
+    ["productor.resumen", resumenProductor],
+    ...hallazgos.flatMap((h, i) => [[`productor.hallazgos[${i}].titulo`, h.titulo], [`productor.hallazgos[${i}].explicacion`, h.explicacion]] as [string, string][]),
+    ...acciones.filter((a) => !a.forzada).map((a, i) => [`productor.acciones[${i}].por_que`, a.por_que, a.practica] as [string, string, string]),
+  ];
+  for (const [campo, texto, practica] of camposProductor) {
+    const hallados = claimsProhibidos(texto);
+    if (hallados.length) errores.push(`${campo} contiene afirmaciones prohibidas (${hallados.join(", ")}).`);
+    const n = nutrientes?.exec(texto);
+    if (n && practica !== "analisis-laboratorio") errores.push(`${campo} nombra «${n[2]}»: la foto no ve nutrientes ni acidez.`);
+    const t = jerga?.exec(texto);
+    if (t) errores.push(`${campo} usa lenguaje técnico («${t[2]}»); háblale al productor en palabras del campo.`);
+  }
+
   for (const [campo, texto] of campos) {
     const hallados = claimsProhibidos(texto);
     if (hallados.length) errores.push(`${campo} contiene afirmaciones prohibidas (${hallados.join(", ")}).`);
@@ -301,6 +411,14 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       contexto_regional_clave: regional.clave,
       contexto_regional_regla: regional.parcial ? `${regla}. El departamento solo está parcialmente en esta zona.` : regla,
       recomendaciones,
+      productor: {
+        senal,
+        senal_texto: lp?.senales?.[senal] ?? "",
+        resumen: resumenProductor,
+        hallazgos,
+        acciones,
+        descargo: lp?.descargo_corto ?? "",
+      },
       limites: reglas.mandatory_disclaimer_es,
       ajustes,
     },

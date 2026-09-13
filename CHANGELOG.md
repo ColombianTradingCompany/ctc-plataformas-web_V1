@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.35] — 2026-09-13 (commit pendiente)
+
+- **Cambiado**: **el Lector de Cromatografía tiene dos caras** (reingeniería pedida por el owner). La del **productor**
+  es la principal: tres pasos (foto con consejos en palabras del campo, datos de la muestra, «Leer mi suelo») y un
+  informe con señal general, resumen, lo que muestra la foto y qué puede hacer, cada acción con su cómo hacerlo, su
+  cuidado y su fuente. La del **laboratorio** es el backstage técnico: compuerta, rasgos, Ford, cadena de evidencia,
+  contexto regional y recomendaciones técnicas.
+- **Añadido**: **Feedback Técnico**. En la cara del laboratorio el técnico da un veredicto y un comentario por cada
+  elemento (descripción, rangos de Ford con el rango que él daría, interpretaciones, contexto regional,
+  recomendaciones, y cada hallazgo y acción del informe del productor) y una valoración general. Se exporta como
+  `feedback-tecnico-<id>.json`, con la lectura, los rasgos, las versiones y la miniatura, para refinar el modelo, y
+  se imprime en PDF. Sin consentimiento no lleva el nombre de la finca.
+- **Cambiado**: reglas **v2.2** con el catálogo de prácticas de manejo (cómo hacerlo verificado en UIS 2026 pp. 60–62,
+  Altepetl y Embrapa 455) y la política de lenguaje del productor (sin jerga y sin nombrar nutrientes ni acidez: la
+  foto no los ve). Prompt **1.5**: la IA escribe las dos caras en la misma lectura; la del productor elige prácticas
+  del catálogo por id y cada hallazgo y acción apunta a las interpretaciones técnicas que lo sustentan.
+  `validarSalida` lo comprueba y añade siempre el análisis de laboratorio y repetir el croma. Prueba en vivo: 2 de 2
+  al primer intento, ≈ US$ 0,019 por lectura.
+- **Cambiado**: marca **CTCX** como en Defectos del Café: franja de color, loro en cabecera, pie con el logo, la
+  propiedad y las fuentes, y la misma firma en los PDF exportados (`public/tools/assets/ctcx-*.png`).
+- **Retirado**: las seis fuentes Plex que solo usaba el Lector (el sistema CTCX usa fuentes del sistema).
+- **Docs**: brief (acta de la reingeniería) y charter.
+
 ## [V5.34] — 2026-09-13 (commit 43917c0)
 
 - **Añadido**: el Lector de Cromatografía usa su **clave propia** `CROMATOGRAPHY_ANTHROPIC_API_KEY` (creada por el owner

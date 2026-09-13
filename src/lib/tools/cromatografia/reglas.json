@@ -1,5 +1,5 @@
 {
-  "$schema_version": "2.1",
+  "$schema_version": "2.2",
   "generated": "2026-09-13",
   "purpose": "Base de conocimiento estructurada para la lectura cualitativa de cromatografías de suelo tipo Pfeiffer en suelos cafeteros. La v2.0 del paquete del owner fue la guía; la v2.1 es la de CTC, corregida contra las fuentes primarias abiertas (reference/html_tools/Analisis Cromatografico/fuentes, verificadas página a página). Cada criterio lleva su nivel de evidencia; el modelo modula su lenguaje según ese nivel.",
   "changelog_v2_1": [
@@ -12,6 +12,11 @@
     "Borde dentado sustituido por la forma de las terminaciones de los picos (escala de Embrapa 455).",
     "Nivel de evidencia por fuente explícito (source_levels); metadatos de protocolo y reglas de comparación nuevos.",
     "Compuerta de imagen: el porcentaje del encuadre ya no rechaza; se exige resolución del croma y cámara paralela al papel."
+  ],
+  "changelog_v2_2": [
+    "Dos caras del reporte: la del productor (sencilla y accionable) y la del laboratorio (técnica). La IA escribe las dos en la misma lectura.",
+    "Catálogo de prácticas de manejo con su cómo hacerlo, verificado en el plan agroecológico de UIS 2026 (café, Santander, pp. 60–62), Altepetl y Embrapa 455. La IA elige prácticas por id; no inventa recetas.",
+    "Lenguaje del productor: sin jerga técnica y sin nombrar nutrientes ni acidez, porque la foto no los ve (UNAD 2017, p. 55: la cromatografía no da cantidades)."
   ],
   "evidence_levels": {
     "A": "Revisado por pares con rigor metodológico (Ford et al. 2021 n=343; Kokornaczyk et al. 2016 n=16). Puede citarse como evidencia indicando alcance (n, contexto edafológico).",
@@ -26,6 +31,7 @@
     "Embrapa Documentos 455 (2018)": "B",
     "Altepetl (SEDEMA-CDMX, manual)": "B",
     "UIS 2026 (café, Guadalupe, Santander)": "B",
+    "UNAD 2017 (monografía)": "B",
     "Restrepo y Pinheiro 2011": "C",
     "Pfeiffer 1984": "C"
   },
@@ -101,6 +107,30 @@
       "dias_desde_revelado": "días entre el revelado a la luz y la foto; el croma sigue oscureciendo"
     },
     "rule": "Si falta un metadato de protocolo, la lectura no puede descartar que el patrón se deba al protocolo y debe decirlo."
+  },
+  "practicas_de_manejo": [
+    {"id": "analisis-laboratorio", "siempre": true, "titulo": "Haga un análisis de suelo en laboratorio", "para_que": "La foto orienta, pero no ve la acidez ni los nutrientes. El laboratorio dice qué le falta al suelo y cuánto.", "como": ["Tome la muestra en el mismo lote de la foto, a unos 20 o 30 cm de profundidad, en varios puntos, y mézclela.", "Llévela a un laboratorio de suelos (Federación, universidad o Agrosavia).", "Antes de comprar cal, roca fosfórica u otros correctivos, espere el resultado y pida a su técnico la cantidad."], "cuidado": "No aplique cal ni correctivos a ciegas: sin análisis puede gastar plata y dañar el suelo.", "cuando_aplica": "siempre", "fuentes": ["UNAD 2017 (monografía)", "UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "repetir-croma", "siempre": true, "titulo": "Repita la cromatografía en seis meses", "para_que": "Un solo croma dice poco; lo valioso es ver si el suelo mejora con el tiempo en el mismo lote.", "como": ["Saque la muestra del mismo lote y a la misma profundidad.", "Use el mismo papel, la misma cantidad de NaOH y deje revelar los mismos días.", "Tome la foto igual: desde arriba, con luz de día y el papel completo."], "cuidado": "Compare solo cromas de su misma finca y hechos de la misma forma.", "cuando_aplica": "siempre", "fuentes": ["UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "compost-maduro", "titulo": "Aplique compost o bocashi bien descompuesto", "para_que": "Alimenta la vida del suelo y le devuelve materia orgánica.", "como": ["Use solo abono bien descompuesto: frío, oscuro y con olor a tierra.", "Espárzalo alrededor de cada planta, en la zona donde cae el agua de las hojas, y cúbralo con hojarasca.", "Como referencia, en fincas cafeteras de Santander se usó kilo y medio por planta, dos veces al año; ajuste la cantidad con su técnico."], "cuidado": "El abono crudo o a medio compostar puede quemar raíces y desordenar el suelo.", "cuando_aplica": "zona media u orgánica pálida, estrecha o poco integrada; colores apagados; poca actividad en la zona externa", "fuentes": ["UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "evitar-abono-crudo", "titulo": "No use gallinaza ni estiércol frescos", "para_que": "El abono crudo aporta nitrógeno de golpe y puede dañar la vida del suelo.", "como": ["Composte la gallinaza o el estiércol antes de usarlos, hasta que estén bien descompuestos.", "Si ya aplicó abono fresco, espere a que se integre antes de volver a abonar."], "cuidado": "Revise también si ha usado abonos químicos muy solubles en exceso.", "cuando_aplica": "centro blanco nítido y aislado de la zona siguiente", "fuentes": ["Altepetl (SEDEMA-CDMX, manual)", "UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "reducir-herbicidas", "titulo": "Deje poco a poco los herbicidas", "para_que": "Los herbicidas y los químicos de síntesis afectan la vida del suelo.", "como": ["Controle las malezas con guadaña en lugar de herbicida.", "Deje la maleza cortada sobre el suelo como cobertura.", "Haga el cambio de forma gradual, lote por lote."], "cuidado": "Si maneja una certificación, consulte a su técnico antes de cambiar el plan de control.", "cuando_aplica": "centro blanco nítido; colores oscuros, grises o azulados; señales de desgaste", "fuentes": ["UIS 2026 (café, Guadalupe, Santander)", "Altepetl (SEDEMA-CDMX, manual)"], "nivel": "B"},
+    {"id": "cobertura-viva", "titulo": "Mantenga el suelo cubierto con plantas", "para_que": "La cobertura protege el suelo del sol y la lluvia, y alimenta su vida.", "como": ["Siembre coberturas entre calles, como canavalia, maní forrajero o crotalaria.", "No deje el suelo pelado: corte y deje los residuos encima.", "Mantenga las coberturas bajas para que no compitan con el café."], "cuidado": "Escoja coberturas que no trepen sobre los cafetos.", "cuando_aplica": "zona central indefinida o compacta; poca materia orgánica; zona externa pobre", "fuentes": ["UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "microorganismos", "titulo": "Reactive el suelo con microorganismos de la finca", "para_que": "Ayuda a recuperar la vida del suelo cuando se ve poca actividad.", "como": ["Recoja hojarasca con moho blanco de un monte o bosque de la finca.", "Multiplíquela con melaza y salvado, como le enseñe su técnico o la escuela de campo.", "Aplíquela disuelta en agua sobre el suelo, cada mes y medio."], "cuidado": "Use recipientes limpios y deseche la mezcla si huele a podrido.", "cuando_aplica": "zona externa sin canales ni picos; colores apagados; señales de poca actividad biológica", "fuentes": ["UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "no-compactar", "titulo": "Evite compactar el suelo", "para_que": "Un suelo apretado no deja pasar aire ni agua y la vida se ahoga.", "como": ["No pase animales ni maquinaria por el lote cuando el suelo esté mojado.", "Evite remover el suelo más de lo necesario.", "Mantenga cobertura o hojarasca para que la lluvia no lo golpee."], "cuidado": "Si el suelo está muy duro, pregunte a su técnico antes de hacer labores profundas.", "cuando_aplica": "zona central ausente, indefinida, negra o gris", "fuentes": ["Altepetl (SEDEMA-CDMX, manual)"], "nivel": "B"},
+    {"id": "sombra-regulada", "titulo": "Conserve una sombra regulada", "para_que": "La sombra conserva la humedad y protege la vida del suelo del calor.", "como": ["Mantenga árboles de sombra distribuidos en el lote.", "Pode la sombra para que entre luz suficiente al café."], "cuidado": "El exceso de sombra también afecta la producción; busque el equilibrio con su técnico.", "cuando_aplica": "colores pálidos o apagados en suelos expuestos al sol", "fuentes": ["UIS 2026 (café, Guadalupe, Santander)"], "nivel": "B"},
+    {"id": "croma-de-referencia", "titulo": "Haga un croma de un monte o bosque cercano", "para_que": "Le da una referencia de cómo se ve un suelo sin intervenir en su misma zona.", "como": ["Tome una muestra de un monte o bosque vecino, a la misma profundidad.", "Hágale la cromatografía igual que a su lote y compare las dos fotos."], "cuidado": "Compare solo con suelos de su misma región.", "cuando_aplica": "cuando no hay cromas anteriores de la finca para comparar", "fuentes": ["Embrapa Documentos 455 (2018)"], "nivel": "B"}
+  ],
+  "lenguaje_productor": {
+    "tono": "Frases cortas, de usted, en palabras del campo. Nada de términos técnicos. Siempre lenguaje de posibilidad: parece, puede que, se ve, según la foto.",
+    "senales": {
+      "buena": "Según la foto, se ve un suelo con vida",
+      "mixta": "Según la foto, hay señales buenas y otras por mejorar",
+      "atencion": "Según la foto, se ven señales de desgaste"
+    },
+    "prohibido_nombrar": ["potasio", "fósforo", "fosfato", "magnesio", "calcio", "pH", "acidez", "nitrógeno", "boro", "zinc"],
+    "motivo_prohibido": "La foto de la cromatografía no permite ver acidez ni nutrientes, ni en qué cantidad; eso lo dice el laboratorio.",
+    "palabras_tecnicas_prohibidas": ["Pfeiffer", "Ford", "Kokornaczyk", "radialidad", "radiality", "CIELAB", "entropía", "índice", "spike", "enzimática", "morfológic"],
+    "descargo_corto": "Esta lectura se hace con una foto y es orientativa. No reemplaza un análisis de laboratorio ni dice nada sobre la calidad de su café."
   },
   "mandatory_report_sections": ["descripcion_visual_objetiva", "rasgos_computacionales", "estimacion_escala_ford_con_rango", "interpretacion_tentativa_con_fuente_y_nivel", "recomendaciones_de_manejo", "limites_del_analisis"],
   "mandatory_disclaimer_es": "Este reporte es una lectura cualitativa y visual asistida por IA; no es una medición científica ni sustituye un análisis de laboratorio. La cromatografía de Pfeiffer no ha demostrado, en el estudio más riguroso disponible (Ford et al., 2021, Geoderma, n=343), una relación consistente y reproducible entre sus patrones y la condición real del suelo, y no existe evidencia científica de relación con la calidad sensorial del café. Las observaciones deben contrastarse con análisis de laboratorio convencional antes de tomar decisiones de manejo significativas.",

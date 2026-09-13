@@ -102,9 +102,12 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
      2026-09-13, y si falta cae en `ANTHROPIC_API_KEY`, que es la de toda la plataforma y NO se retira. Estado en vivo,
      sin gasto: `GET /api/herramientas/cromatografia/estado`. Vercel: proyecto `ctc-plataformas-web-v1`.
      Verificado en producción el 2026-09-13: las dos claves responden y la lectura está disponible.
-  2. **Modo «expert feedback»**: un experto valida o corrige cada lectura (`interpretaciones[].id`,
-     `recomendaciones[].id`) y el rango de Ford; tabla `croma_feedback` service-role-only + interruptor por persona
-     en ECP · Herramientas. Diseño en el brief; se construye cuando haya uso real y un experto.
+  2. **Feedback Técnico (V5.35)**: la cara del laboratorio exporta `feedback-tecnico-<id>.json`; el owner los trae a
+     una sesión para refinar reglas y prompt. Pendiente, cuando haya volumen: guardarlos en una tabla
+     (`croma_feedback`, service-role-only) en vez de archivos, y restringir la cara del laboratorio a técnicos con
+     permiso por persona desde ECP · Herramientas (hoy la ve cualquiera con la herramienta abierta).
+  2b. **Catálogo de prácticas** (reglas v2.2): lo debe revisar un agrónomo antes de la demo; es lo primero que el
+     Feedback Técnico va a corregir.
   3. **Calibrar con fotos de MÓVIL** del protocolo CTC (la compuerta 1.2 se calibró con capturas de laboratorio) y
      revisión de tono de 3 reportes reales por un experto antes de cualquier demo a Tecnicafé/CQI.
   4. **Sugerencia abierta, sin aprobar: dataset propio** `croma_muestras` + bucket, con consentimiento, pareando croma

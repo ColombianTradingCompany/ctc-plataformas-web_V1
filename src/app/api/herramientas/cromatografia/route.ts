@@ -149,7 +149,7 @@ async function llamar(apiKey: string, system: string, messages: Mensaje[], actor
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
       signal: AbortSignal.timeout(55_000),
-      body: JSON.stringify({ model: MODEL, max_tokens: 3000, temperature: 0, system, messages }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 4500, temperature: 0, system, messages }),
     });
   } catch (e) {
     void registrarConsumo({

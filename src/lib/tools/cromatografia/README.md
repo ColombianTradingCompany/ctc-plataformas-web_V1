@@ -1,9 +1,9 @@
 # Lector de Cromatografía de Suelo · guía de trabajo
 
-Estado al 2026-09-13: **V5.39 en producción**. Herramienta `cromatografia-suelo` del componente **herramientas-cafe**,
+Estado al 2026-09-13: **V5.40 en producción**. Herramienta `cromatografia-suelo` del componente **herramientas-cafe**,
 plan **plus**. Esta guía basta para entender lo construido y cambiarlo sin releer las sesiones anteriores. La historia
 de cada decisión está en el brief (`docs/componentes/briefs/herramientas-cafe-cromatografia-suelo.md`, un acta por
-versión, V5.32–V5.39) y el estado del componente en su charter (`docs/componentes/herramientas-cafe.md`, «Pendientes»).
+versión, V5.32–V5.40) y el estado del componente en su charter (`docs/componentes/herramientas-cafe.md`, «Pendientes»).
 
 ---
 
@@ -72,16 +72,16 @@ la leyenda de símbolos y el rango, en los tres idiomas. Viven en `DEF` (fórmul
 | `public/tools/cromatografia-suelo.html` | La herramienta entera (HTML + CSS + JS ES5, sin librerías). Dos caras, diálogos, figura SVG, firma, export, diccionarios `T.es/en/de` y definiciones `DEF`. El puente `ctc-bridge.js` es la última línea antes de `</body>`. |
 | `public/tools/assets/cromatografia-rasgos.js` | Motor `croma-rasgos-1.2` (global `CromaRasgos`): compuerta + rasgos + Ford programático. Corre en el navegador y en los guardianes. |
 | `public/tools/assets/cromatografia-reglas.json` | Copia **byte a byte** de `reglas.json` para el navegador. |
-| `src/lib/tools/cromatografia/reglas.json` | **Reglas vivas v2.4**, de CTC (la v2.0 de `reference/` fue solo guía). Con `analisis_cuantitativo` (campos y rangos) y `i18n.en/de`. |
+| `src/lib/tools/cromatografia/reglas.json` | **Reglas vivas v2.5**, de CTC (la v2.0 de `reference/` fue solo guía). Con `analisis_cuantitativo` (campos y rangos), `i18n.en/de` y `referentes` (documentación: quién es el referente y qué obras suyas se citan; el prompt no lo inyecta). |
 | `src/lib/tools/cromatografia/prompt.ts` | `croma-prompt-1.8`: ensambla sistema y usuario desde las reglas; esquema de salida; idioma y análisis declarado. |
 | `src/lib/tools/cromatografia/salida.ts` | Validación de la respuesta del modelo (ver §4). Puro. Léxicos EN/DE, `pareceEspanol`, contraste. |
 | `src/app/api/herramientas/cromatografia/route.ts` | POST de la lectura: sesión, acceso, techo diario, saneo (idioma, análisis), llamada, validación, un reintento, registro de consumo. |
 | `…/cromatografia/fincas/route.ts` | Fincas de la cuenta (sin coordenadas; `?superficie=cp` devuelve vacío) y `cuenta.nombre` (`profiles.full_name`) para «Preparada por». |
 | `…/cromatografia/estado/route.ts` | Estado de las claves sin gastar tokens (`GET /v1/models`, caché 10 min, nunca devuelve la clave). |
 | `public/tools/assets/cromatografia-ejemplos/ejemplo-{1,2,3}.jpg` | Fotos de ejemplo del «?». |
-| `public/tools/assets/cromatografia-docs/CTCX-Croma-0{1,2,3}-*.pdf` | PDF de «Bibliografía y metodología», generados (edición 1.1). |
+| `public/tools/assets/cromatografia-docs/CTCX-Croma-0{1,2,3}-*.pdf` | PDF de «Bibliografía y metodología», generados (edición 1.2). |
 | `public/tools/assets/ctcx-{logo,loro,loro-claro}.png` | Marca CTCX de pie, cabecera e impresos. |
-| `scripts/qa-cromatografia-check.mjs` | Guardián puro (271 comprobaciones). |
+| `scripts/qa-cromatografia-check.mjs` | Guardián puro (280 comprobaciones). |
 | `scripts/qa-cromatografia-modelo.mjs` | Prueba con el modelo real (gasta). `[imagen] [departamento] [corridas] [idioma] [lab]`. Escribe `<tmp>/croma-modelo-*.json`. |
 | `scripts/build-cromatografia-docs.mjs` | Genera los 3 PDF desde reglas, motor y prompt. |
 | `scripts/cromatografia-calibrar.mjs` | Pasa una carpeta de fotos por la compuerta y resume umbrales y fronteras. |
@@ -96,8 +96,8 @@ En Supabase (proyecto `sjznkzvefqfcysczllli`): fila en `tools` y `tool_versions`
 Fuera del repo (con derechos de terceros, **no se publica**):
 `C:\dev\ctc-platforms\reference\html_tools\Analisis Cromatografico\` → `fuentes/INDEX.md` (26 PDF con nivel,
 licencia y URL), `fuentes/HALLAZGOS.md` (verificación página a página contra las reglas), `fuentes/datasets/`
-(Martins D2 `raw_448px.zip` para calibrar), el paquete original del owner (KICKOFF, PDF1, PDF2, JSON v2.0, mock) y
-`cromatografias_mock/` (origen de las fotos de ejemplo).
+(Martins D2 `raw_448px.zip` para calibrar), la tesis de Lozano Vesga 2021 (#24 del INDEX, entregada por el owner), el
+paquete original del owner (KICKOFF, PDF1, PDF2, JSON v2.0, mock) y `cromatografias_mock/` (origen de las fotos de ejemplo).
 
 ## 4. Flujo y contratos
 
@@ -152,8 +152,22 @@ licencia y URL), `fuentes/HALLAZGOS.md` (verificación página a página contra 
    título, `@bottom-left` NIT y web, `@bottom-right` «Página n de N» con `counter(pages)`) en el idioma de la interfaz.
    Chrome y Edge las pintan; Firefox no, y queda la cabecera y el pie del documento (que también llevan empresa, NIT y web).
 
-Versiones vivas: reglas **2.4** · motor **croma-rasgos-1.2** · prompt **croma-prompt-1.8** · estado **2** ·
-feedback **2** · PDF edición **1.1**.
+Versiones vivas: reglas **2.5** · motor **croma-rasgos-1.2** · prompt **croma-prompt-1.8** · estado **2** ·
+feedback **2** · PDF edición **1.2**.
+
+## 4b. El referente: Tulio Esteban Lozano Vesga
+
+Desde V5.40, **Tulio Esteban Lozano Vesga** (UIS-IPRED, proyecto Campo Para Todos) es el referente de la cromatografía
+cualitativa en la caficultura latinoamericana con que trabaja el Lector, y el experto con quien el owner tendrá
+contacto para la parte técnica y académica. Su trabajo de grado (finca El Guacal, Barichara, 2021, laboratorio
+Cenicafé pareado) es la fuente `Lozano Vesga 2021 (café, Barichara, Santander)`, nivel **B** (tesis de pregrado, n
+pequeño, lecturas de Restrepo y Pinheiro); dirigió la tesis `UIS 2026 (café, Guadalupe, Santander)`. Dónde aparece:
+`reglas.referentes` (perfil, obras con URL y nivel, nota de no respaldo), `source_levels` y las fuentes de zona central,
+cuatro lecturas de color, salvedad de la dilución, protocolo y prácticas fijas; en el HTML, el bloque `#referente` al
+abrir «Bibliografía y metodología» (claves `d.ref.*` en los tres idiomas), el resumen del método (`d.met.4`) y el pie;
+en los PDF, `parrafoReferente` (DOC-02 §11) y DOC-03 §5. **Trato**: se le cita con el nivel de cada obra, nada suyo se
+reproduce, y siempre se dice que nombrarlo no implica que respalde la herramienta ni que participe en ella. El
+guardián lo comprueba (bloque V5.40).
 
 ## 5. Cómo cambiar cada cosa
 
@@ -227,8 +241,9 @@ node scripts/build-cromatografia-docs.mjs
 
 ## 7. Puntos abiertos (en orden)
 
-1. **Revisión experta**: nadie de laboratorio ha revisado reglas v2.4 ni el catálogo de prácticas. Es lo primero que
-   corregirá el Feedback Técnico. Revisar el tono de 3 informes reales antes de cualquier demo (Tecnicafé, CQI).
+1. **Revisión experta**: nadie de laboratorio ha revisado reglas v2.5 ni el catálogo de prácticas. Es lo primero que
+   corregirá el Feedback Técnico. Candidato natural: Lozano Vesga (§4b); antes de cualquier demo, contarle que está
+   citado y cómo. Revisar el tono de 3 informes reales antes de cualquier demo (Tecnicafé, CQI).
 2. **Traducciones**: inglés y alemán (interfaz, definiciones, catálogo, descargos, listas vetadas) los escribió la IA;
    falta un hablante nativo. Los PDF de metodología siguen solo en español.
 3. **Fotos de ejemplo**: son públicas de internet, de autoría no rastreada (decisión del owner, 2026-09-13); el owner
@@ -261,7 +276,7 @@ node scripts/build-cromatografia-docs.mjs
 - La foto anotada abre el informe; el morado claro de CTCX en modo oscuro; identificación del laboratorio con firma;
   «?» para el productor y «Bibliografía y metodología» para el laboratorio con 3 PDF protegidos.
 - Tres idiomas, PDF con razón social, NIT y páginas, «Preparada por», «i» de definiciones y análisis cuantitativo
-  declarado (2026-09-13). El análisis del laboratorio no convierte la lectura en interpretación de nutrientes: se
+  declarado (2026-09-13). Lozano Vesga como referente, reflejado y validado, nunca aprovechado (2026-09-13). El análisis del laboratorio no convierte la lectura en interpretación de nutrientes: se
   contrasta en la cara técnica y el productor ve sus propios valores.
 - Reglas de la casa: repo **público** (nunca rutas con usuario ni claves en código), commits con rutas explícitas,
   las consolas no se manejan en navegador, las claves nunca se imprimen, las obras de terceros quedan fuera del repo.
@@ -293,7 +308,7 @@ node scripts/build-cromatografia-docs.mjs
 ```
 Trabajas SOLO en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en LA HERRAMIENTA cromatografia-suelo
-(Lector de Cromatografía de Suelo, en producción desde V5.39).
+(Lector de Cromatografía de Suelo, en producción desde V5.40).
 Antes de tocar nada lee, en este orden:
 1. src/lib/tools/cromatografia/README.md   ← esta guía: lo construido, contratos, cómo cambiar y puntos abiertos
 2. docs/componentes/herramientas-cafe.md   ← el charter del componente («Pendientes»)

@@ -393,3 +393,39 @@ documento. El botón «Bibliografía y metodología» va en su propia barra enci
 decidir si el contraste con el laboratorio debe llegar también al productor en una frase sin nutrientes (hoy solo lo ve
 el laboratorio); y probar la impresión desde el móvil, donde las cajas de margen dependen del navegador.
 
+---
+
+## Tulio Esteban Lozano Vesga, referente en América Latina (V5.40, 2026-09-13)
+
+**Lo que pidió el owner.** Integrar a la bibliografía y a la metodología el material de Tulio Esteban Lozano Vesga, experto
+con quien CTC tendrá contacto para desarrollar la parte técnica y académica: su trabajo de grado «Análisis de
+cromatografía en la finca El Guacal» (entregado en la carpeta de referencia), su perfil de TikTok (@campoparatodos), su
+taller en SINTERCAFE 2026 y sus publicaciones en Perfect Daily Grind y Comunicaciones UIS. Que se vea reflejado y
+validado, nunca vulnerado ni aprovechado, y señalado como referente de gran importancia para el tema en Latinoamérica.
+
+**Lo que se encontró al leer la tesis.** Trabajo de grado de Producción Agroindustrial (UIS-IPRED, 2021; dir. Jennifer
+Ricaurte Galvis), disponible en el repositorio de la UIS (`noesis.uis.edu.co/items/61179d3c-…`). Aplica el protocolo de
+Restrepo y Pinheiro en dos lotes de café de Barichara (uno orgánico seis años, otro convencional), 14 cromas a 50, 100,
+150 y 200 ml de NaOH al 1 % por 5 g, con análisis convencional de Cenicafé pareado. Hallazgos que entran a las reglas:
+el protocolo tal como se practica en Colombia (AgNO₃ 0,5 %, papel n.º 1 y 4, marcas a 4 y 6 cm, reposo 6 h, revelado 1–2
+semanas); a más NaOH la zona central se cierra, la interna se extiende y la media y la externa se ven mejor (segunda
+fuente colombiana para la salvedad de la dilución); las terminaciones «explosión de lunares enzimáticos» (deseable)
+frente a «granos de maíz» y «dientes puntiagudos» (no deseables); y el caso pareado: el lote orgánico, leído como
+excelente en el croma, dio en Cenicafé materia orgánica 4,0 % «muy baja», pH 4,4 y fósforo 3 mg/kg «muy bajo». El propio
+autor concluye que el croma «visualiza lo que las cifras muestran» y que complementa, no reemplaza, el laboratorio: es
+exactamente la regla de oro del Lector, y por eso su tesis sostiene también las prácticas fijas de laboratorio y de
+repetir el croma (él repitió a los cuatro meses). Además, la tesis UIS 2026 (Ardila Gómez) que las reglas ya citaban
+fue dirigida por él.
+
+**Cómo quedó.** Reglas v2.5: fuente «Lozano Vesga 2021 (café, Barichara, Santander)» de nivel B (tesis de pregrado, n
+pequeño, lecturas de Restrepo y Pinheiro) en la zona central, cuatro lecturas de color, la salvedad de la dilución, el
+protocolo y las dos prácticas fijas; bloque `referentes` con su perfil, sus siete obras (tesis, tesis dirigida, tres
+artículos, taller, TikTok), el nivel de cada una y la nota de que nombrarlo no implica que respalde la herramienta ni
+que participe en ella. El diálogo «Bibliografía y metodología» abre con él, en los tres idiomas, con los seis enlaces;
+el resumen del método nombra su protocolo; el pie de la herramienta y la bibliografía de los PDF (edición 1.2) lo
+citan; DOC-03 lo nombra en la revisión experta pendiente y en la lección de los casos pareados. El nivel es honesto:
+B por la naturaleza de la obra, no por la persona. Nada de lo suyo se reproduce: se cita y se enlaza.
+
+**Queda para el owner.** Contarle que está citado y cómo, antes de cualquier demo; y, cuando haya contacto, la revisión
+experta de las reglas v2.5 y del catálogo de prácticas es la primera tarea que se le puede proponer.
+

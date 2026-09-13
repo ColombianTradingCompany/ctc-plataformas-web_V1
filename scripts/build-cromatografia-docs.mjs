@@ -29,7 +29,7 @@ const LOGO = "data:image/png;base64," + readFileSync(join(RAIZ, "public/tools/as
 const LORO = "data:image/png;base64," + readFileSync(join(RAIZ, "public/tools/assets/ctcx-loro.png")).toString("base64");
 
 const FECHA = "2026-09-13";
-const EDICION = "1.1"; // 1.1 (V5.39): tres idiomas, análisis de laboratorio declarado y contraste técnico
+const EDICION = "1.2"; // 1.1 (V5.39): tres idiomas, análisis declarado y contraste · 1.2 (V5.40): Lozano Vesga como referente y fuente B
 const ANIO = FECHA.slice(0, 4);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const coma = (n) => String(n).replace(".", ",");
@@ -102,6 +102,10 @@ function avisoLegal(codigo) {
 }
 
 const tabla = (cab, filas) => `<table><thead><tr>${cab.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${filas.map((f) => `<tr>${f.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+const REF = reglas.referentes?.lozano_vesga;
+const parrafoReferente = REF
+  ? `<h2>Referente en América Latina</h2><p><b>${esc(REF.nombre)}</b>. ${esc(REF.perfil)}</p><p class="nota">${esc(reglas.referentes.nota)}</p>${tabla(["Obra", "Tipo", "Nivel", "Qué aporta"], REF.obras.map((o) => [esc(o.cita) + (o.url ? `<br><span class="mono">${esc(o.url)}</span>` : ""), esc(o.tipo), `<span class="nivel">${esc(o.nivel)}</span>`, esc(o.aporta)]))}`
+  : "";
 
 // ── 01 · Metodología ─────────────────────────────────────────────────────────
 const doc1 = documento({
@@ -118,6 +122,7 @@ const doc1 = documento({
 <li><b>Programático antes que IA.</b> Todo lo que se puede medir se mide con código determinista; la IA solo interpreta, y lo que dice se contrasta con esas medidas.</li>
 <li><b>Evidencia explícita.</b> Cada criterio lleva fuente y nivel (A, B o C), y el lenguaje se ajusta al nivel.</li>
 <li><b>Privacidad.</b> Al modelo no llegan el nombre de la finca ni coordenadas. El nombre de la finca se guarda solo con consentimiento.</li>
+<li><b>Protocolo de referencia.</b> El de Restrepo y Pinheiro tal como lo aplica en el café de Santander Tulio Esteban Lozano Vesga (UIS, 2021), referente de la cromatografía cualitativa en la caficultura latinoamericana: NaOH al 1 %, nitrato de plata al 0,5 %, papel n.º 1 o n.º 4, marcas a 4 y 6 cm, y la advertencia de que el croma complementa el análisis de laboratorio sin reemplazarlo.</li>
 </ul>
 
 <h1>2. Flujo</h1>
@@ -261,14 +266,16 @@ ${tabla(["Clave", "Práctica", "Fuentes"], filasPracticas)}
 <p>${esc(reglas.mandatory_disclaimer_es)}</p>
 
 <h1>11. Bibliografía y licencias</h1>
+${parrafoReferente}
 <p class="nota">El nivel es la valoración de CTC para este uso. «Acceso» describe cómo se consultó la obra. Ninguna obra de terceros se reproduce en la herramienta ni en este documento.</p>
 ${tabla(["Obra", "Licencia o acceso", "Nivel", "Qué aporta a las reglas"], [
+  ["Lozano Vesga, T. E. (2021). Análisis práctico de la técnica «cromatografía de Pfeiffer» en la finca El Guacal, vereda Santa Elena, Barichara, Santander. Trabajo de grado, UIS-IPRED. noesis.uis.edu.co/items/61179d3c-c57a-4341-9de5-01060a7f74c9", "repositorio UIS; derechos del autor", "B", "protocolo de Restrepo y Pinheiro en café de Santander; efecto de la dilución de NaOH (50–200 ml por 5 g); terminaciones «explosión de lunares» frente a «granos de maíz»; laboratorio Cenicafé pareado: un lote leído como excelente con MO 4,0 % «muy baja»"],
   ["Ford, B. M., Stewart, B. A., Tunbridge, D. J. y Tilbrook, P. (2021). Paper chromatography: An inconsistent tool for assessing soil health. <i>Geoderma</i> 383:114783. doi:10.1016/j.geoderma.2020.114783", "de pago; leído en resumen", "A", "salvedad de consistencia de los rasgos (n = 343)"],
   ["Kokornaczyk, M. O. et al. (2016). Analysis of soils by means of Pfeiffer's circular chromatography test and comparison to chemical analysis results. <i>Biol. Agric. Hortic.</i> 33(3):143–157. doi:10.1080/01448765.2016.1214889", "de pago; método conocido a través de Ford et al. 2019 y Domingues et al. 2022", "A", "grupos concéntrico y radial"],
   ["Ford, B., Cook, B., Tunbridge, D. y Tilbrook, P. (2019). Using paper chromatography for assessing soil health in southwestern Australia. UWA.", "acceso abierto", "B", "definición de la escala 1–5, procedimiento y distribución (n = 361)"],
   ["Graciano, I. et al. (2020). Evaluating Pfeiffer Chromatography for Its Validation as an Indicator of Soil Quality. <i>J. Agric. Stud.</i> 8(3).", "CC BY 4.0", "B", "zona media frente a carbono de biomasa microbiana (n = 12)"],
   ["Pilon, L. C., Cardoso, J. H. y Medeiros, F. S. (2018). Guia prático de cromatografia de Pfeiffer. Embrapa, Documentos 455.", "acceso gratuito; derechos de Embrapa", "B", "zona periférica, escala visual de picos"],
-  ["Ardila Gómez, J. D. (2026). Análisis de los suelos mediante la cromatografía de Pfeiffer… café orgánico, Guadalupe, Santander. UIS.", "CC BY-NC-ND 4.0", "B", "café colombiano con laboratorio pareado; centro blanco nítido o cremoso; efecto de la dilución; ejemplo negativo de vínculo con la taza"],
+  ["Ardila Gómez, J. D. (2026; dir. T. E. Lozano Vesga). Análisis de los suelos mediante la cromatografía de Pfeiffer… café orgánico, Guadalupe, Santander. UIS.", "CC BY-NC-ND 4.0", "B", "café colombiano con laboratorio pareado; centro blanco nítido o cremoso; efecto de la dilución; ejemplo negativo de vínculo con la taza"],
   ["Nivia Torres, I. N. (2017). Análisis del uso de la cromatografía como herramienta cualitativa de diagnóstico de la fertilidad del suelo. UNAD.", "acceso abierto", "B", "monografía de lectura por forma y color"],
   ["Programa Altepetl, SEDEMA-CDMX (2021). Manual para la elaboración de cromatografía de suelos mediante el método Pfeiffer.", "acceso restringido", "B", "observación, diagnóstico y manejo"],
   ["Restrepo Rivera, J. y Pinheiro, S. (2011). Cromatografía: imágenes de vida y destrucción del suelo.", "libro con derechos", "C", "criterios de práctica de color y forma, citados a través de fuentes secundarias"],
@@ -332,7 +339,8 @@ ${tabla(["Fuente", "Central", "Fin de la interna", "Fin de la media", "Externa"]
 
 <h1>5. Lo que falta validar</h1>
 <ul>
-<li><b>Revisión experta.</b> Las reglas v${esc(reglas.$schema_version)} no han sido revisadas por un laboratorio colombiano. El Feedback Técnico recoge veredicto, comentario y rango corregido por elemento, con la identificación del laboratorio, para esa revisión.</li>
+<li><b>Revisión experta.</b> Las reglas v${esc(reglas.$schema_version)} no han sido revisadas por un laboratorio colombiano ni por un lector experto de cromas. El Feedback Técnico recoge veredicto, comentario y rango corregido por elemento, con la identificación del laboratorio, para esa revisión. CTC busca desarrollar la parte técnica y académica con referentes de la cromatografía cualitativa en la caficultura latinoamericana, como Tulio Esteban Lozano Vesga (UIS), cuyas obras ya alimentan las reglas.</li>
+<li><b>Lo que enseñan los casos pareados colombianos.</b> En Barichara (Lozano Vesga 2021) y en Guadalupe (UIS 2026) hubo cromas leídos como favorables en suelos que el laboratorio dio pobres en materia orgánica y ácidos. Por eso el Lector no convierte colores en cantidades y manda siempre al laboratorio.</li>
 <li><b>Datos colombianos.</b> Hace falta un conjunto de cromas de fincas cafeteras con análisis de laboratorio pareado, protocolo declarado y fotos de celular, para medir acuerdo entre la lectura y el laboratorio.</li>
 <li><b>Andisoles.</b> No hay estudios de cromas en Andisoles. Los suelos con mucha arcilla y materia orgánica pueden no completar el desarrollo con el protocolo estándar (Martins et al., limitaciones del dataset).</li>
 <li><b>Transferencia.</b> Martins et al. 2026 no lograron transferir su modelo entre tipos de suelo (validación LOSO negativa). Cualquier regla aprendida debe validarse por tipo de suelo.</li>

@@ -19,6 +19,21 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.40] — 2026-09-13 (commit pendiente)
+
+- **Añadido**: **Tulio Esteban Lozano Vesga** (UIS-IPRED, proyecto Campo Para Todos) entra en el Lector de Cromatografía
+  como **referente de la cromatografía cualitativa en la caficultura latinoamericana**. Su trabajo de grado (finca El
+  Guacal, Barichara, 2021; 14 cromas con laboratorio Cenicafé pareado) es fuente de nivel B en las **reglas v2.5**:
+  protocolo de Restrepo y Pinheiro tal como se practica en Colombia, efecto de la dilución de NaOH (50–200 ml por 5 g),
+  terminaciones de los picos («explosión de lunares» frente a «granos de maíz») y un segundo caso colombiano en que un
+  croma leído como excelente coincidió con materia orgánica «muy baja» en laboratorio. Dirigió además la tesis UIS 2026
+  que ya se citaba. Bloque `referentes` en las reglas (documentación, no criterio).
+- **Añadido**: «Bibliografía y metodología» abre con el referente y seis enlaces (tesis en el repositorio UIS, Perfect
+  Daily Grind 2025, dos notas de Comunicaciones UIS 2026, taller en SINTERCAFE 2026 y @campoparatodos), con la nota de
+  que citarlo no implica que respalde la herramienta; en los tres idiomas. Pie de la herramienta y bibliografía de los
+  PDF (edición 1.2) al día; DOC-03 lo nombra en «lo que falta validar» y en la lección de los casos pareados.
+- **Docs**: `fuentes/INDEX.md` (fuera del repo) registra la tesis como #24; el guardián `qa-cromatografia` sube a **280**.
+
 ## [V5.39] — 2026-09-13 (commit d23352f)
 
 - **Añadido**: el Lector de Cromatografía habla **español, inglés y alemán**. Conmutador ES · EN · DE en la cabecera

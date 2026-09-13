@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.34] — 2026-09-13 (commit pendiente)
+## [V5.34] — 2026-09-13 (commit 43917c0)
 
 - **Añadido**: el Lector de Cromatografía usa su **clave propia** `CROMATOGRAPHY_ANTHROPIC_API_KEY` (creada por el owner
   para separar su gasto en la consola de Anthropic) y, si falta, la general `ANTHROPIC_API_KEY`.

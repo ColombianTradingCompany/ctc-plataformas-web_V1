@@ -163,4 +163,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   `ANTHROPIC_API_KEY`; `api/herramientas/cromatografia/estado` (público, sin gasto, caché de 10 min) dice qué clave está
   en uso y si responde. Para la ficha `consumo`: el gasto del Lector se separa también en la consola de Anthropic.
 - ANN nueva: `src/app/api/herramientas/cromatografia/estado/route.ts`.
-(commit: pendiente)
+(commit: 43917c0)

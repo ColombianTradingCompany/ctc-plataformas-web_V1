@@ -18,7 +18,7 @@
 // valida o corrige POR LECTURA, y eso solo se puede guardar si cada lectura
 // tiene nombre.
 
-import { fuentesPermitidas, normaliza, type FuentePermitida, type Nivel, type PracticaDeManejo, type Rasgos, type Reglas, type ReglaRegional } from "./prompt";
+import { fuentesPermitidas, normaliza, textosIdioma, type FuentePermitida, type Idioma, type Nivel, type PracticaDeManejo, type Rasgos, type Reglas, type ReglaRegional } from "./prompt";
 
 export type Rango = [number, number];
 
@@ -92,10 +92,11 @@ const PATRONES_ZONA: [ZonaFoto, RegExp][] = [
   ["organic", /medi[oa]|dorad|org[aá]nic|[aá]mbar/i],
   ["enzymatic", /borde|pico|rayo|canal|afuera|extern|periferi|penach/i],
 ];
-export function zonaDesdeTexto(texto: string): ZonaFoto {
+export function zonaDesdeTexto(texto: string, idioma: Idioma = "es"): ZonaFoto {
   let mejor: ZonaFoto = "general";
   let posicion = Infinity;
-  for (const [zona, re] of PATRONES_ZONA) {
+  const patrones = idioma === "es" ? PATRONES_ZONA : [...LEXICO[idioma].zonas, ...PATRONES_ZONA];
+  for (const [zona, re] of patrones) {
     const m = re.exec(texto ?? "");
     if (m && m.index < posicion) {
       posicion = m.index;
@@ -104,6 +105,122 @@ export function zonaDesdeTexto(texto: string): ZonaFoto {
   }
   return mejor;
 }
+
+// ── El léxico de cada idioma (V5.39) ──────────────────────────────────────────
+// La regla de oro no cambia con el idioma, pero sus palabras sí. Cada idioma
+// trae lo que la validación necesita: lo prohibido, cómo suena la duda, cómo se
+// contradice la radialidad y cómo se nombran las zonas. El español es el de
+// siempre (los patrones de arriba); inglés y alemán se SUMAN a él, porque una
+// lectura en inglés que escriba «taza» tampoco pasa.
+type Lexico = {
+  prohibidos: { nombre: string; re: RegExp }[];
+  probabilistico: RegExp;
+  duda: RegExp;
+  institucional: RegExp;
+  contradiceBaja: RegExp;
+  contradiceAlta: RegExp;
+  zonaInterior: RegExp;
+  zonaExterior: RegExp;
+  croma: RegExp;
+  zonas: [ZonaFoto, RegExp][];
+};
+export const LEXICO: Record<Exclude<Idioma, "es">, Lexico> = {
+  en: {
+    prohibidos: [
+      { nombre: "cup", re: /\bcups?\b|\bcupping\b/i },
+      { nombre: "score", re: /\bscor(e|es|ed|ing)\b/i },
+      { nombre: "price", re: /\bprices?\b/i },
+      { nombre: "flavour or sensory quality", re: /\bflavou?r|sensory quality|coffee quality|quality of (the |your )?coffee/i },
+      { nombre: "certification", re: /\bcertif/i },
+      // «does not measure», «cannot measure» and «measures no nutrients» are honest negations.
+      { nombre: "«measures» or scientific measurement", re: /(?<!\bnot\s)(?<!cannot\s)\bmeasures\b(?!\s+(no|neither|nothing)\b)|scientific measurement|\bis a measurement/i },
+      { nombre: "% organic matter", re: /%\s*(of\s+)?organic\s+matter|organic\s+matter\s*(of|:|=|≈|~)?\s*\d+([.,]\d+)?\s*%/i },
+      { nombre: "nutrient value", re: /\b(nitrogen|phosphorus|potassium)\s*(total\s*)?(of|:|=|≈)\s*\d/i },
+    ],
+    probabilistico: /could|might|\bmay\b|suggest|consistent with|align|associat|is interpreted|possib|probabl|likely|tentativ|compatible with|appear|seem|report|indicat/i,
+    duda: /seem|appear|\bmay\b|might|could|possibl|according to the photo|looks like|\bsign/i,
+    institucional: /institutional|peer[- ]reviewed|studies with n\s*=/i,
+    contradiceBaja: /channels?\s+(are\s+|is\s+)?(well|very|fully|clearly|strongly)[- ](developed|defined|marked)|(well|fully|clearly)[- ]developed\s+(channels?|spikes?)|spikes?\s+(are\s+|is\s+)?(well|very|fully|clearly)[- ](developed|defined|marked)/i,
+    contradiceAlta: /(\bno|without|absence of|lacks?|lacking)\s+(radial\s+)?channels|channels\s+(are\s+)?absent/i,
+    zonaInterior: /(central|mineral|inner|interior)\s+zone|in this zone|perforation/i,
+    zonaExterior: /(outer|enzymatic|exterior|nutritional|external)\s+zone|periphery|outer edge/i,
+    croma: /\bchroma|chromatogram/i,
+    zonas: [
+      ["central", /\bcent(er|re)|perforation/i],
+      ["mineral", /mineral|\binner|dark brown|dark ring/i],
+      ["organic", /middle|golden|organic|amber/i],
+      ["enzymatic", /\bedge|spike|\bray|channel|outside|\bouter|peripher|plume/i],
+    ],
+  },
+  de: {
+    prohibidos: [
+      { nombre: "Tasse", re: /\btassen?\b|tassenqualit|cupping/i },
+      { nombre: "Punktzahl", re: /punktzahl|\bpunkte?\b|bewertungspunkt/i },
+      { nombre: "Verkostung", re: /verkost/i },
+      { nombre: "Preis", re: /\bpreis(e|es|en)?\b/i },
+      { nombre: "Geschmack oder sensorische Qualität", re: /geschmack|sensorische qualität|kaffeequalität|qualität (des|ihres) kaffees/i },
+      { nombre: "Zertifizierung", re: /zertifi/i },
+      // «misst nicht», «misst keine Nährstoffe»: negaciones honestas.
+      { nombre: "«misst» oder wissenschaftliche Messung", re: /(?<!\bnicht\s)\bmisst\b(?!\s+(keine[nrs]?|nicht|weder|nichts)\b)|wissenschaftliche messung|\bist eine messung/i },
+      { nombre: "% organische Substanz", re: /%\s*(an\s+)?organische[rn]?\s+substanz|organische[rn]?\s+substanz\s*(von|:|=|≈|~)?\s*\d+([.,]\d+)?\s*%/i },
+      { nombre: "Nährstoffwert", re: /\b(stickstoff|phosphor|kalium)\s*(gesamt\s*)?(von|:|=|≈)\s*\d/i },
+    ],
+    probabilistico: /könnte|könnten|\bkann\b|\bkönnen\b|deutet|deuten|vereinbar mit|konsistent mit|assoziier|möglich|wahrscheinlich|vorläufig|scheint|scheinen|berichten|hinweis|\bweist\b|weisen|vermuten|dürfte|entspr[ei]ch/i,
+    duda: /scheint|scheinen|könnte|möglicherweise|vielleicht|\bkann\b|nach dem foto|sieht|zeichen/i,
+    institucional: /institutionell|begutachtet|peer[- ]review|studien mit n\s*=/i,
+    contradiceBaja: /(gut|sehr|voll|vollständig|klar|deutlich|stark)\s+(entwickelte?[nrs]?|ausgeprägte?[nrs]?|definierte?[nrs]?)\s+(kanäle|spitzen)|(kanäle|spitzen)\s+(sind\s+)?(gut|voll|vollständig|klar|deutlich|stark)\s+(entwickelt|ausgeprägt|definiert)/i,
+    contradiceAlta: /(keine|ohne|fehlende[nrs]?)\s+(radiale[nrs]?\s+)?kanäle|kanäle\s+fehlen|abwesenheit von kanälen/i,
+    zonaInterior: /(zentral|mineral|inner)\w*\s+zone|in dieser zone|perforation/i,
+    zonaExterior: /(äußer|enzymatisch|extern)\w*\s+zone|peripherie|außenrand|äußeren rand/i,
+    croma: /\bchroma|chromatogramm/i,
+    zonas: [
+      ["central", /zentr|perforation|\bmitte\b/i],
+      ["mineral", /mineral|inner|dunkelbraun|dunkler ring/i],
+      ["organic", /mittler|golden|organisch|bernstein/i],
+      ["enzymatic", /\brand|spitze|strahl|kanal|kanäle|außen|äußer|peripher|fahne/i],
+    ],
+  },
+};
+/** Una frase que parece español: dos o más palabras funcionales del español.
+ *  En una lectura pedida en inglés o alemán, un campo así se rechaza (la primera
+ *  prueba en alemán mezcló idiomas campo por campo). Las palabras elegidas no
+ *  existen en inglés ni en alemán; «con» y «para» solas no bastan (una sola no
+ *  cuenta). */
+// Sin «foto» ni «zona»: existen en alemán (Foto) y casi en inglés (zone).
+const FUNCIONALES_ES = /(^|[^\p{L}])(el|la|los|las|del|al|que|una|uno|unos|unas|con|para|por|según|pero|sin|hay|puede|podría|parece|suelo|centro|borde|abono|está|son|más|muy|también|como|sobre|este|esta|esto|ese|esa|esos|esas)(?=[^\p{L}]|$)/giu;
+export function pareceEspanol(texto: string): boolean {
+  return (String(texto ?? "").match(FUNCIONALES_ES) ?? []).length >= 2;
+}
+
+/** Calificar un valor del laboratorio («pH bajo», «moderate organic matter») es
+ *  interpretar el análisis, trabajo del agrónomo, no del lector. En el contraste
+ *  solo cabe decir si la foto va en la misma dirección. Haiku lo hizo en la
+ *  primera prueba en inglés aunque el prompt lo prohibía: se comprueba. */
+const CALIFICADORES: Record<Idioma, string> = {
+  es: "alt[oa]s?|baj[oa]s?|moderad[oa]s?|óptim[oa]s?|deficientes?|adecuad[oa]s?|excesiv[oa]s?|típic[oa]s?|ácid[oa]s?|alcalin[oa]s?|pobres?|ric[oa]s?",
+  en: "high|low|moderate(?:ly)?|optimal|deficient|adequate|excessive|typical|acidic|alkaline|poor|rich",
+  de: "hoch|hohe[nrs]?|niedrig\\p{L}*|moderat\\p{L}*|optimal\\p{L}*|mangel\\p{L}*|ausreichend\\p{L}*|übermäßig\\p{L}*|typisch\\p{L}*|sauer|saure[nrs]?|alkalisch\\p{L}*|arm|reich",
+};
+const TERMINOS_LAB: Record<Idioma, string> = {
+  es: "pH|materia\\s+org[aá]nica|nitr[oó]geno|f[oó]sforo|potasio|calcio|magnesio|acidez",
+  en: "pH|organic\\s+matter|nitrogen|phosphorus|potassium|calcium|magnesium|acidity",
+  de: "pH(?:-Wert)?|organische[nrs]?\\s+(?:materie|substanz)|stickstoff|phosphor|kalium|calcium|kalzium|magnesium|säure",
+};
+/** «pH bajo», «moderate organic matter», «organic matter at 6.1 %, which is moderate»,
+ *  «pH-Wert von 4,9 ist sauer»: un calificador pegado a un parámetro del
+ *  laboratorio (hasta 2 palabras antes o 4 después). «High colour intensity» o
+ *  «hohe Aktivität» describen la foto y pasan. */
+function calificaLab(texto: string, idioma: Idioma): string | null {
+  const q = CALIFICADORES[idioma];
+  const lab = TERMINOS_LAB[idioma];
+  const re = new RegExp(`(?<![\\p{L}])(${q})(?:[^\\p{L}]+\\p{L}+){0,2}[^\\p{L}]+(?:${lab})(?![\\p{L}])|(?<![\\p{L}])(?:${lab})(?:[^\\p{L}\\d]+[\\p{L}\\d.,%]+){0,4}[^\\p{L}]+(${q})(?![\\p{L}])`, "iu");
+  const m = re.exec(texto);
+  return m ? m[1] ?? m[2] ?? m[0] : null;
+}
+
+/** Los nombres de patrón que hablan de VALORES (pH, % MO, ppm…): en el contraste
+ *  con el laboratorio declarado el modelo puede citarlos, porque no los inventa. */
+const PATRONES_DE_VALOR = new Set(["valor de pH", "valor de nutriente", "valor de N/P/K", "% de materia orgánica", "% organic matter", "nutrient value", "% organische Substanz", "Nährstoffwert"]);
 
 /** Media solo si alguna interpretación que la sustenta tiene confianza media y
  *  evidencia A o B; si no, baja. El método no admite «alta». */
@@ -119,13 +236,24 @@ export type Reporte = {
   contexto_regional_clave: string;
   contexto_regional_regla: string;
   recomendaciones: Recomendacion[];
+  /** V5.39: solo cuando el productor declaró un análisis de laboratorio. */
+  contraste_laboratorio: string | null;
   productor: InformeProductor;
-  /** `mandatory_disclaimer_es`, íntegro, puesto por el servidor. */
+  /** `mandatory_disclaimer_es` (o su traducción), íntegro, puesto por el servidor. */
   limites: string;
+  /** El idioma en que el modelo escribió la lectura. */
+  idioma: Idioma;
   ajustes: string[];
 };
 
 export type ResultadoValidacion = { ok: true; reporte: Reporte } | { ok: false; errores: string[] };
+
+export type OpcionesValidacion = {
+  /** Idioma en que debía escribir el modelo; decide el léxico y los textos forzados. */
+  idioma?: Idioma;
+  /** Si el usuario declaró un análisis de laboratorio: entonces `contraste_laboratorio` es obligatorio. */
+  conLaboratorio?: boolean;
+};
 
 export const ETIQUETA_NIVEL: Record<Nivel, string> = {
   A: "Evidencia revisada por pares, de alcance limitado",
@@ -161,18 +289,24 @@ export const PATRONES_PROHIBIDOS: { nombre: string; re: RegExp }[] = [
   { nombre: "valor de N/P/K", re: /\b(N|P|K)\s*(total\s*)?(:|=|≈)\s*\d/ },
 ];
 
-export function claimsProhibidos(texto: string): string[] {
-  return PATRONES_PROHIBIDOS.filter((p) => p.re.test(texto)).map((p) => p.nombre);
+export function claimsProhibidos(texto: string, idioma: Idioma = "es"): string[] {
+  const patrones = idioma === "es" ? PATRONES_PROHIBIDOS : [...PATRONES_PROHIBIDOS, ...LEXICO[idioma].prohibidos];
+  return patrones.filter((p) => p.re.test(texto)).map((p) => p.nombre);
 }
 
 /** La duda dicha en palabras del campo, para la cara del productor. */
 export const DUDA_SENCILLA = /parece|puede que|puede|podr[ií]a|se ve|posiblemente|según la foto|al parecer|señal/i;
 
 const escaparRegex = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-/** Una lista de palabras como patrón que las busca al principio de palabra. */
+/** Una lista de palabras como patrón que las busca al principio de palabra.
+ *  Las entradas largas valen como prefijo («morfológic» atrapa «morfológica»);
+ *  las cortas (≤ 4 letras, como «pH») exigen fin de palabra, o «photo» y
+ *  «Phosphat» caerían por «pH» (V5.39). */
 export function patronDePalabras(lista: string[] | undefined): RegExp | null {
   const limpias = (lista ?? []).map((p) => p.trim()).filter(Boolean);
-  return limpias.length ? new RegExp(`(^|[^\\p{L}])(${limpias.map(escaparRegex).join("|")})`, "iu") : null;
+  if (!limpias.length) return null;
+  const alternativas = limpias.map((p) => (p.length <= 4 ? `${escaparRegex(p)}(?![\\p{L}])` : escaparRegex(p)));
+  return new RegExp(`(^|[^\\p{L}])(${alternativas.join("|")})`, "iu");
 }
 
 /** Lenguaje probabilístico: la lectura tiene que dudar en voz alta. */
@@ -238,13 +372,39 @@ function rangoValido(v: unknown): v is Rango {
  * Valida y normaliza la respuesta del modelo. `regional` es la regla que el
  * servidor YA resolvió para el departamento (no la que diga el modelo).
  */
-export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, regional: ReglaRegional): ResultadoValidacion {
+export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, regional: ReglaRegional, opciones: OpcionesValidacion = {}): ResultadoValidacion {
   const errores: string[] = [];
   const ajustes: string[] = [];
   if (!bruto || typeof bruto !== "object" || Array.isArray(bruto)) {
     return { ok: false, errores: ["La respuesta no es un objeto JSON con el esquema pedido."] };
   }
   const x = bruto as Record<string, unknown>;
+  const idioma: Idioma = opciones.idioma === "en" || opciones.idioma === "de" ? opciones.idioma : "es";
+  const tx = textosIdioma(reglas, idioma);
+  const lex = idioma === "es" ? null : LEXICO[idioma];
+  // La duda y la contradicción se buscan en el léxico del idioma pedido Y en el
+  // español: el modelo escribe en uno, pero la validación no se fía.
+  const probabilistico = (t: string) => LENGUAJE_PROBABILISTICO.test(t) || !!lex?.probabilistico.test(t);
+  const duda = (t: string) => DUDA_SENCILLA.test(t) || !!lex?.duda.test(t);
+  // Una fuente C no puede sonar a institución ni a estudio revisado por pares…
+  // salvo para NEGARLO («not validated in peer-reviewed studies», «no validado
+  // por pares»), que es exactamente la honestidad que se pide. Se mira la
+  // cláusula donde aparece la palabra.
+  const institucional = (t: string) => {
+    const reInst = [/institucional|revisad[oa]s?\s+por\s+pares|estudios\s+con\s+n\s*=/i, lex?.institucional].filter(Boolean) as RegExp[];
+    return t.split(/[.;\n]|,\s*(?:aunque|though|although|but|pero|obwohl|aber)\b/i).some((clausula) => reInst.some((re) => re.test(clausula)) && !/\bnot\b|\bno\s|\bnon-|\bnicht\b|\bkein/i.test(clausula));
+  };
+  const contradiceBaja = (t: string) => CONTRADICE_RADIALIDAD_BAJA.test(t) || !!lex?.contradiceBaja.test(t);
+  const contradiceAlta = (t: string) => CONTRADICE_RADIALIDAD_ALTA.test(t) || !!lex?.contradiceAlta.test(t);
+  const zonaInterior = (t: string) => ZONA_INTERIOR.test(t) || !!lex?.zonaInterior.test(t);
+  const zonaExterior = (t: string) => ZONA_EXTERIOR.test(t) || !!lex?.zonaExterior.test(t);
+  const hablaDelCroma = (t: string) => /\bcroma/i.test(t) || !!lex?.croma.test(t);
+  // Lo que el servidor pone por su cuenta, en el idioma de la lectura.
+  const etiquetaNivel = (n: Nivel) => tx?.etiqueta_nivel?.[n] ?? ETIQUETA_NIVEL[n] ?? "";
+  const practicaTraducida = (p: PracticaDeManejo) => {
+    const t = tx?.practicas?.[p.id];
+    return { titulo: t?.titulo ?? p.titulo, para_que: t?.para_que ?? p.para_que, como: t?.como ?? p.como, cuidado: t?.cuidado ?? p.cuidado ?? "" };
+  };
 
   // 1 · Descripción
   const descripcion = str(x.descripcion_visual);
@@ -281,10 +441,10 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     let confianza = str(it?.confianza).toLowerCase();
     if (!observacion) errores.push(`${pos}.observacion está vacía: sin observación concreta no hay lectura.`);
     if (!lectura) errores.push(`${pos}.lectura está vacía.`);
-    else if (!LENGUAJE_PROBABILISTICO.test(lectura)) errores.push(`${pos}.lectura es categórica; usa lenguaje probabilístico según su nivel.`);
+    else if (!probabilistico(lectura)) errores.push(`${pos}.lectura es categórica; usa lenguaje probabilístico según su nivel.`);
     // Sobrepresentar la evidencia es el error que importa: un manual de práctica
     // (nivel C) no puede sonar a institución ni a estudio revisado por pares.
-    if (nivel === "C" && /institucional|revisad[oa]s?\s+por\s+pares|estudios\s+con\s+n\s*=/i.test(lectura)) {
+    if (nivel === "C" && institucional(lectura)) {
       errores.push(`${pos}: una fuente de nivel C no se presenta como institucional ni como estudio revisado por pares.`);
     }
     if (!["A", "B", "C"].includes(nivel)) errores.push(`${pos}.nivel debe ser A, B o C.`);
@@ -315,7 +475,7 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       lectura,
       fuente: f?.fuente ?? str(it?.fuente),
       nivel,
-      etiqueta_nivel: ETIQUETA_NIVEL[nivel] ?? "",
+      etiqueta_nivel: etiquetaNivel(nivel),
       confianza: confianza as "baja" | "media",
     });
   });
@@ -332,6 +492,23 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     return { id: `r${i + 1}`, accion: str(r?.accion), justificacion: str(r?.justificacion), prioridad: prioridad as Recomendacion["prioridad"] };
   });
 
+  // 4a · El contraste con el laboratorio declarado (V5.39). Solo existe si el
+  // usuario declaró un análisis; ahí el modelo puede citar los valores
+  // declarados (no los inventa), pero no la taza, el precio ni la medición.
+  const contrasteBruto = str(x.contraste_laboratorio);
+  let contraste: string | null = null;
+  if (opciones.conLaboratorio) {
+    if (contrasteBruto.length < 30) errores.push("contraste_laboratorio falta: el usuario declaró un análisis de laboratorio; di en 80 palabras o menos si lo que sugiere la foto va en la misma dirección que esos valores.");
+    else if (!probabilistico(contrasteBruto)) errores.push("contraste_laboratorio es categórico; usa lenguaje probabilístico.");
+    const hallados = claimsProhibidos(contrasteBruto, idioma).filter((n) => !PATRONES_DE_VALOR.has(n));
+    if (hallados.length) errores.push(`contraste_laboratorio contiene afirmaciones prohibidas (${hallados.join(", ")}).`);
+    const califica = calificaLab(contrasteBruto, idioma) ?? (idioma !== "es" ? calificaLab(contrasteBruto, "es") : null);
+    if (califica) errores.push(`contraste_laboratorio califica los valores del laboratorio («${califica}»): interpretar el análisis es del agrónomo; di solo si lo que sugiere la foto va en la misma dirección que lo declarado. Describir la foto («alta intensidad de color») sí vale.`);
+    contraste = contrasteBruto || null;
+  } else if (contrasteBruto) {
+    ajustes.push("El modelo escribió contraste_laboratorio sin análisis declarado; se descartó.");
+  }
+
   // 4b · La cara del productor (v2.3). Conjeturas con su certeza y lo que
   // implicarían; prácticas de manejo por prioridad; y lo que confirma
   // (laboratorio, repetir el croma) en su propio bloque al final: siempre está,
@@ -344,7 +521,7 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
   if (!["buena", "mixta", "atencion"].includes(senal)) errores.push("productor.senal debe ser buena, mixta o atencion.");
   const resumenProductor = str(prod.resumen);
   if (resumenProductor.length < 30) errores.push("productor.resumen falta: 2 o 3 frases sencillas para el productor.");
-  else if (!DUDA_SENCILLA.test(resumenProductor)) errores.push("productor.resumen es categórico: usa parece, puede que o se ve.");
+  else if (!duda(resumenProductor)) errores.push("productor.resumen es categórico: usa parece, puede que o se ve.");
   const basado = (v: unknown, pos: string) => {
     const ids = Array.isArray(v) ? v.map((e) => String(e).trim()) : [];
     if (!ids.length || ids.some((id) => !idsTecnicos.has(id))) errores.push(`${pos}.basado_en debe nombrar interpretaciones que existan (i1, i2…).`);
@@ -358,11 +535,11 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     for (const campo of ["titulo", "lo_que_se_ve", "conjetura", "que_implica"]) {
       if (!str(c?.[campo])) errores.push(`${pos}.${campo} está vacío.`);
     }
-    if (str(c?.conjetura) && !DUDA_SENCILLA.test(str(c?.conjetura))) errores.push(`${pos}.conjetura es categórica: usa puede que, podría o parece.`);
+    if (str(c?.conjetura) && !duda(str(c?.conjetura))) errores.push(`${pos}.conjetura es categórica: usa puede que, podría o parece.`);
     const ids = basado(c?.basado_en, pos);
     const certeza = certezaDe(ids, interpretaciones);
     const zonaBruta = str(c?.zona).toLowerCase() as ZonaFoto;
-    const zona = ZONAS_FOTO.includes(zonaBruta) ? zonaBruta : zonaDesdeTexto(`${str(c?.titulo)} ${str(c?.lo_que_se_ve)}`);
+    const zona = ZONAS_FOTO.includes(zonaBruta) ? zonaBruta : zonaDesdeTexto(`${str(c?.titulo)} ${str(c?.lo_que_se_ve)}`, idioma);
     if (zona !== zonaBruta) ajustes.push(`La conjetura ${i + 1} no traía una zona válida; se dedujo «${zona}» de lo que se ve.`);
     return {
       id: `c${i + 1}`,
@@ -373,7 +550,7 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       que_implica: str(c?.que_implica),
       zona,
       certeza,
-      certeza_texto: lp?.certezas?.[certeza] ?? "",
+      certeza_texto: tx?.certezas?.[certeza] ?? lp?.certezas?.[certeza] ?? "",
       basado_en: ids,
     };
   });
@@ -395,9 +572,10 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     if (!["alta", "media", "baja"].includes(prioridad)) errores.push(`${pos}.prioridad debe ser alta, media o baja.`);
     if (elegidas.has(practica.id)) return;
     elegidas.add(practica.id);
+    const pt = practicaTraducida(practica);
     const accion: AccionProductor = {
-      id: "", practica: practica.id, titulo: practica.titulo, por_que: str(a?.por_que), como: practica.como,
-      cuidado: practica.cuidado ?? "", fuentes: practica.fuentes, nivel: practica.nivel,
+      id: "", practica: practica.id, titulo: pt.titulo, por_que: str(a?.por_que), como: pt.como,
+      cuidado: pt.cuidado, fuentes: practica.fuentes, nivel: practica.nivel,
       prioridad: prioridad as AccionProductor["prioridad"], basado_en: basado(a?.basado_en, pos), forzada: false,
     };
     // Si el modelo eligió una de las que confirman, va a su bloque con su porqué.
@@ -408,16 +586,19 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
   acciones.sort((a, b) => (ORDEN_PRIORIDAD[a.prioridad] ?? 3) - (ORDEN_PRIORIDAD[b.prioridad] ?? 3));
   for (const p of reglas.practicas_de_manejo ?? []) {
     if (!p.siempre || elegidas.has(p.id)) continue;
-    confirmar.push({ id: "", practica: p.id, titulo: p.titulo, por_que: p.para_que, como: p.como, cuidado: p.cuidado ?? "", fuentes: p.fuentes, nivel: p.nivel, prioridad: "media", basado_en: [], forzada: true });
+    const pt = practicaTraducida(p);
+    confirmar.push({ id: "", practica: p.id, titulo: pt.titulo, por_que: pt.para_que, como: pt.como, cuidado: pt.cuidado, fuentes: p.fuentes, nivel: p.nivel, prioridad: "media", basado_en: [], forzada: true });
   }
   acciones.forEach((a, i) => (a.id = `a${i + 1}`));
   confirmar.forEach((a, i) => (a.id = `k${i + 1}`));
 
   // 5 · Contexto regional: si no hay región, lo escribe el servidor.
   let contexto = str(x.contexto_regional_aplicado);
-  const entrada = regional.entrada as { rule?: string; expected_baseline?: string };
+  const entradaEs = regional.entrada as { rule?: string; expected_baseline?: string };
+  // La regla regional que se cita, en el idioma de la lectura (si hay traducción).
+  const entrada = { ...entradaEs, ...(tx?.regional?.[regional.clave] ?? {}) } as { rule?: string; expected_baseline?: string };
   if (regional.clave === "unknown_region") {
-    contexto = `No se aplicó línea base regional: ${reglas.regional_context_rules.unknown_region.rule}.`;
+    contexto = `${tx?.sin_region ?? "No se aplicó línea base regional: "}${entrada.rule ?? reglas.regional_context_rules.unknown_region.rule}.`;
   } else if (!contexto) {
     errores.push("contexto_regional_aplicado falta: explica cómo condiciona la zona edafológica esta lectura.");
   }
@@ -437,9 +618,13 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     ]),
   ];
   // La cara del productor pasa por las mismas prohibiciones y por dos más: ni
-  // nutrientes ni acidez (la foto no los ve) y ni jerga técnica.
-  const nutrientes = patronDePalabras(lp?.prohibido_nombrar);
-  const jerga = patronDePalabras(lp?.palabras_tecnicas_prohibidas);
+  // nutrientes ni acidez (la foto no los ve) y ni jerga técnica. En inglés o
+  // alemán, las listas de ese idioma MÁS las del español.
+  // Los nutrientes se suman (un nombre en español dentro de una lectura en inglés
+  // tampoco pasa); la jerga NO: «spike» es palabra vetada en español por ser
+  // extranjera, y «spikes» es el inglés llano de los picos.
+  const nutrientes = patronDePalabras([...(lp?.prohibido_nombrar ?? []), ...(tx?.prohibido_nombrar ?? [])]);
+  const jerga = patronDePalabras(tx?.palabras_tecnicas_prohibidas ?? lp?.palabras_tecnicas_prohibidas);
   // El porqué del análisis de laboratorio SÍ puede nombrar acidez y nutrientes:
   // es exactamente lo que el laboratorio mira y la foto no.
   const camposProductor: [string, string, string?][] = [
@@ -450,7 +635,7 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     ...acciones.concat(confirmar).filter((a) => !a.forzada).map((a, i) => [`productor.acciones[${i}].por_que`, a.por_que, a.practica] as [string, string, string]),
   ];
   for (const [campo, texto, practica] of camposProductor) {
-    const hallados = claimsProhibidos(texto);
+    const hallados = claimsProhibidos(texto, idioma);
     if (hallados.length) errores.push(`${campo} contiene afirmaciones prohibidas (${hallados.join(", ")}).`);
     const n = nutrientes?.exec(texto);
     if (n && practica !== "analisis-laboratorio") errores.push(`${campo} nombra «${n[2]}»: la foto no ve nutrientes ni acidez.`);
@@ -459,8 +644,17 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
   }
 
   for (const [campo, texto] of campos) {
-    const hallados = claimsProhibidos(texto);
+    const hallados = claimsProhibidos(texto, idioma);
     if (hallados.length) errores.push(`${campo} contiene afirmaciones prohibidas (${hallados.join(", ")}).`);
+  }
+  // 6b · El idioma pedido, campo por campo. Los títulos van con su conjetura.
+  if (idioma !== "es") {
+    const enEspanol = [
+      ...campos,
+      ...camposProductor.map(([campo, texto]) => [campo, texto] as [string, string]),
+      ...(contraste ? ([["contraste_laboratorio", contraste]] as [string, string][]) : []),
+    ].filter(([, texto]) => pareceEspanol(texto)).map(([campo]) => campo);
+    if (enEspanol.length) errores.push(`Estos campos están en español y la lectura se pidió en ${idioma === "en" ? "inglés" : "alemán"}: ${enEspanol.slice(0, 6).join(", ")}. Escribe TODO el texto libre en ese idioma.`);
   }
 
   // 7 · Coherencia rasgos ↔ texto
@@ -469,7 +663,7 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
   if (typeof ri === "number") {
     if (ri < COHERENCIA.radialidadBaja) {
       if (escala.canales.rango[1] >= 4) errores.push(`Con radiality_index ${ri.toFixed(2)} (< ${COHERENCIA.radialidadBaja}) el rango de canales no puede llegar a 4.`);
-      if (CONTRADICE_RADIALIDAD_BAJA.test(todoElTexto)) errores.push(`Con radiality_index ${ri.toFixed(2)} el texto no puede hablar de canales o picos bien desarrollados.`);
+      if (contradiceBaja(todoElTexto)) errores.push(`Con radiality_index ${ri.toFixed(2)} el texto no puede hablar de canales o picos bien desarrollados.`);
     }
     if (ri > COHERENCIA.radialidadAlta) {
       if (escala.canales.rango[1] <= 2) errores.push(`Con radiality_index ${ri.toFixed(2)} (> ${COHERENCIA.radialidadAlta}) el rango de canales no puede quedarse en 2 o menos.`);
@@ -481,13 +675,13 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       // contradice la radialidad alta. El error cita la frase para que la
       // corrección del modelo sepa qué cambiar.
       const acotada = (frase: string, previa: string) =>
-        !ZONA_EXTERIOR.test(frase) && (ZONA_INTERIOR.test(frase) || (!/\bcroma/i.test(frase) && ZONA_INTERIOR.test(previa)));
+        !zonaExterior(frase) && (zonaInterior(frase) || (!hablaDelCroma(frase) && zonaInterior(previa)));
       const niega = campos
         .flatMap(([, texto]) => {
           const frases = texto.split(/[.;\n]/).map((f) => f.trim());
           return frases.map((frase, i) => ({ frase, previa: frases[i - 1] ?? "" }));
         })
-        .find(({ frase, previa }) => CONTRADICE_RADIALIDAD_ALTA.test(frase) && !acotada(frase, previa));
+        .find(({ frase, previa }) => contradiceAlta(frase) && !acotada(frase, previa));
       if (niega) {
         errores.push(`Con radiality_index ${ri.toFixed(2)} el texto no puede decir que la zona externa no tiene canales: «${niega.frase.slice(0, 120)}».`);
       }
@@ -506,19 +700,27 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       interpretaciones,
       contexto_regional_aplicado: contexto,
       contexto_regional_clave: regional.clave,
-      contexto_regional_regla: regional.parcial ? `${regla}. El departamento solo está parcialmente en esta zona.` : regla,
+      contexto_regional_regla: regional.parcial ? `${regla}. ${PARCIAL[idioma]}` : regla,
       recomendaciones,
+      contraste_laboratorio: contraste,
       productor: {
         senal,
-        senal_texto: lp?.senales?.[senal] ?? "",
+        senal_texto: tx?.senales?.[senal] ?? lp?.senales?.[senal] ?? "",
         resumen: resumenProductor,
         conjeturas,
         acciones,
         confirmar,
-        descargo: lp?.descargo_corto ?? "",
+        descargo: tx?.descargo_corto ?? lp?.descargo_corto ?? "",
       },
-      limites: reglas.mandatory_disclaimer_es,
+      limites: tx?.mandatory_disclaimer ?? reglas.mandatory_disclaimer_es,
+      idioma,
       ajustes,
     },
   };
 }
+
+const PARCIAL: Record<Idioma, string> = {
+  es: "El departamento solo está parcialmente en esta zona.",
+  en: "The department is only partly within this zone.",
+  de: "Das Departamento liegt nur teilweise in dieser Zone.",
+};

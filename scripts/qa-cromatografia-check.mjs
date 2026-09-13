@@ -16,6 +16,9 @@
 //   4 · La salida del modelo: claims prohibidos, coherencia rasgos↔texto,
 //       cadena de evidencia, descargo forzado, ids para el feedback experto.
 //   5 · Costuras estáticas del handler, la ruta de fincas y el HTML.
+//   6 · V5.39: tres idiomas (diccionarios completos, léxicos de la validación,
+//       textos forzados traducidos), PDF con empresa, NIT y páginas, «preparada
+//       por», definiciones con ecuación y el análisis cuantitativo declarado.
 //
 // La prueba de ESTABILIDAD del kickoff §7 (misma imagen, 3 corridas a
 // temperatura 0) necesita la API y cuesta dinero: vive aparte, en
@@ -33,7 +36,7 @@ import {
   letrasDeEvidencia,
   reglaRegional,
 } from "../src/lib/tools/cromatografia/prompt.ts";
-import { certezaDe, zonaDesdeTexto, claimsProhibidos, extraerJson, validarSalida, ETIQUETA_NIVEL } from "../src/lib/tools/cromatografia/salida.ts";
+import { certezaDe, zonaDesdeTexto, claimsProhibidos, extraerJson, pareceEspanol, validarSalida, ETIQUETA_NIVEL } from "../src/lib/tools/cromatografia/salida.ts";
 
 let ok = 0;
 const fallos = [];
@@ -478,19 +481,21 @@ check("html: el dígito de verificación del NIT sigue el algoritmo de la DIAN (
 const dlgCroma = bloqueDialogo("dlgCroma");
 const puntos = (dlgCroma.match(/<ul class="cinco">([\s\S]*?)<\/ul>/) ?? [, ""])[1];
 check("html: el «?» del productor va arriba a la derecha del paso 1 y abre su explicación", /id="paso-foto">\s*<button type="button" class="redondo ayuda/.test(html) && html.includes('abrirDialogo("dlgCroma")'));
-check("html: la explicación trae 5 puntos, un dibujo simple y un cierre", (puntos.match(/<li>/g) ?? []).length === 5 && /<svg class="esquema-croma"/.test(dlgCroma) && /class="cierre"/.test(dlgCroma));
+check("html: la explicación trae 5 puntos, un dibujo simple y un cierre", (puntos.match(/<li[ >]/g) ?? []).length === 5 && /<svg class="esquema-croma"/.test(dlgCroma) && /class="cierre"/.test(dlgCroma));
 const vetadas = [...reglas.lenguaje_productor.prohibido_nombrar, ...reglas.lenguaje_productor.palabras_tecnicas_prohibidas];
 const planoCroma = textoPlano(dlgCroma).toLowerCase();
 const nombradas = vetadas.filter((w) => new RegExp(`(^|[^a-záéíóúñ])${w.toLowerCase()}`).test(planoCroma));
 check("html: la explicación del productor no nombra nutrientes, acidez ni jerga técnica", nombradas.length === 0, nombradas.join(", "));
 const ejemplos = [...dlgCroma.matchAll(/data-ejemplo="(\d)"/g)].map((m) => m[1]);
 check("html: ofrece las 3 fotos de ejemplo y existen en disco", ejemplos.length === 3 && ejemplos.every((n) => enDisco(`public/tools/assets/cromatografia-ejemplos/ejemplo-${n}.jpg`)));
-check("html: la foto de ejemplo pasa por la misma compuerta y queda marcada como ejemplo", html.includes('cargar(new File([blob], "ejemplo-" + n + ".jpg"') && html.includes("E.foto_ejemplo = ejemplo || null") && html.includes("Foto de ejemplo ("));
+check("html: la foto de ejemplo pasa por la misma compuerta y queda marcada como ejemplo", html.includes('cargar(new File([blob], "ejemplo-" + n + ".jpg"') && html.includes("E.foto_ejemplo = ejemplo || null") && html.includes('t("j.meta.ejemplo") + " ("'));
 const dlgMetodo = bloqueDialogo("dlgMetodo");
-check("html: el «i» del laboratorio va abajo a la izquierda de la tarjeta de feedback", /class="bar noprint">\s*<button type="button" class="redondo info" id="btnInfoMetodo"/.test(html) && html.indexOf('id="btnInfoMetodo"') > html.indexOf('id="labFeedback"') && html.includes('abrirDialogo("dlgMetodo")'));
+// V5.39: el «i» redondo se volvió el botón «Bibliografía y metodología», en su propia barra ENCIMA de la de imprimir (owner).
+const iBiblio = html.indexOf('id="btnInfoMetodo"');
+check("html: el botón «Bibliografía y metodología» va encima de «Imprimir feedback (PDF)», en la tarjeta de feedback", iBiblio > html.indexOf('id="labFeedback"') && iBiblio < html.indexOf('id="btnPdfLab"') && /id="btnInfoMetodo"[^>]*data-t="l.btn.biblio"/.test(html) && !/class="redondo info"/.test(html) && html.includes('abrirDialogo("dlgMetodo")'));
 const palabrasMetodo = textoPlano((dlgMetodo.match(/<ul class="metodo"[^>]*>([\s\S]*?)<\/ul>/) ?? [, ""])[1]).split(" ").length;
-check(`html: el resumen del método ronda las 150 palabras (${palabrasMetodo})`, palabrasMetodo >= 120 && palabrasMetodo <= 185);
-const acordeones = [...dlgMetodo.matchAll(/<details([^>]*)>\s*<summary>([^<]+)<\/summary>/g)];
+check(`html: el resumen del método ronda las 150 palabras (${palabrasMetodo})`, palabrasMetodo >= 120 && palabrasMetodo <= 195);
+const acordeones = [...dlgMetodo.matchAll(/<details([^>]*)>\s*<summary[^>]*>([^<]+)<\/summary>/g)];
 check("html: dos acordeones cerrados, recursos en línea y documentos PDF", acordeones.length === 2 && acordeones.every((a) => !/\bopen\b/.test(a[1])) && /Recursos en línea/.test(acordeones[0][2]) && /PDF/.test(acordeones[1][2]));
 const pdfs = [...dlgMetodo.matchAll(/href="\/tools\/assets\/cromatografia-docs\/([^"]+\.pdf)"/g)].map((m) => m[1]);
 check("html: enlaza 3 PDF de metodología que existen en disco", pdfs.length === 3 && pdfs.every((f) => enDisco(`public/tools/assets/cromatografia-docs/${f}`)), pdfs.join(", "));
@@ -500,6 +505,125 @@ check("docs: los PDF llevan marca de agua, derechos de CTCX, atribución de terc
 check("docs: reglas, umbrales y versiones salen del código, no copiados a mano", generador.includes('leer("src/lib/tools/cromatografia/reglas.json")') && generador.includes("var UMBRALES") && generador.includes("PROMPT_VERSION"));
 
 check("html: emite el análisis sin nombre de finca", html.includes('CTC.emitir("analisis.generado"') && !/emitir\("analisis\.generado",[^)]*finca/.test(html));
+
+// ── 6 · V5.39: tres idiomas, PDF con empresa/NIT/páginas, «preparada por», definiciones y análisis cuantitativo ──
+const objetoJs = (nombre) => {
+  const m = html.match(new RegExp(`${nombre} = (\\{[\\s\\S]*?\\n  \\});`));
+  return m ? new Function(`return ${m[1]}`)() : null;
+};
+const T = { es: objetoJs("T\\.es"), en: objetoJs("T\\.en"), de: objetoJs("T\\.de") };
+check("i18n: el HTML trae los diccionarios es, en y de", !!T.es && !!T.en && !!T.de && Object.keys(T.es).length >= 200);
+for (const l of ["en", "de"]) {
+  const faltan = Object.keys(T.es ?? {}).filter((k) => !(k in (T[l] ?? {})));
+  const sobran = Object.keys(T[l] ?? {}).filter((k) => !(k in (T.es ?? {})));
+  check(`i18n: ${l} tiene exactamente las claves del español`, faltan.length === 0 && sobran.length === 0, `faltan ${faltan.join(",")} · sobran ${sobran.join(",")}`);
+}
+const clavesUsadas = new Set([
+  ...[...html.matchAll(/data-t="([^"]+)"/g)].map((m) => m[1]),
+  ...[...html.matchAll(/data-t-attr="([^"]+)"/g)].flatMap((m) => m[1].split("|").map((p) => p.split(":")[1])),
+  ...[...html.matchAll(/\bt\("([^"]+)"\)/g)].map((m) => m[1]),
+]);
+const sinDefinir = [...clavesUsadas].filter((k) => !(k in (T.es ?? {})));
+check("i18n: toda clave usada en el HTML o en el JS existe en el diccionario", sinDefinir.length === 0, sinDefinir.join(","));
+check("i18n: conmutador ES · EN · DE en la cabecera y la lectura pide el idioma al servidor", ["es", "en", "de"].every((l) => html.includes(`data-idioma="${l}"`)) && html.includes("idioma: IDIOMA,") && html.includes('localStorage.setItem(CLAVE_IDIOMA'));
+check("i18n: los textos de las reglas (compuerta, Ford, descargo) salen del bloque i18n cuando no es español", html.includes("REGLAS.i18n[IDIOMA]") && html.includes("(x && x.mandatory_disclaimer) || REGLAS.mandatory_disclaimer_es"));
+const productorEn = textoPlano(html.match(/T\.en = \{([\s\S]*?)\n  \};/)?.[1] ?? "").toLowerCase();
+for (const l of ["en", "de"]) {
+  const vet = [...(reglas.i18n?.[l]?.prohibido_nombrar ?? []), ...(reglas.i18n?.[l]?.palabras_tecnicas_prohibidas ?? [])];
+  const dlg = ["d.croma.1", "d.croma.2", "d.croma.3", "d.croma.4", "d.croma.5", "d.croma.cierre", "d.z1s", "d.z2s", "d.z3s", "d.z4s"].map((k) => textoPlano(T[l]?.[k] ?? "")).join(" ").toLowerCase();
+  // Mismo criterio que patronDePalabras: los tokens cortos («pH») exigen fin de palabra.
+  const halladas = vet.filter((w) => new RegExp(`(^|[^a-zäöüß])${w.toLowerCase()}${w.length <= 4 ? "(?![a-zäöüß])" : ""}`).test(dlg));
+  check(`i18n: la explicación del productor en ${l} no nombra nutrientes, acidez ni jerga`, halladas.length === 0, halladas.join(","));
+}
+void productorEn;
+const DEF = objetoJs("var DEF");
+const clavesDef = Object.keys(DEF?.formulas ?? {});
+check("definiciones: 18 entradas con fórmula, símbolos y los tres idiomas", clavesDef.length === 18 && ["es", "en", "de"].every((l) => clavesDef.every((k) => DEF[l]?.[k]?.t && DEF[l][k].q && DEF[l][k].r && DEF[l][k].l.length === DEF.simbolos[k].length)));
+check("definiciones: las ecuaciones son las del motor (radialidad 6–100 ciclos, e/(e+6), Ford 1+4s, entropía log₂)", /6\.\.100/.test(DEF?.formulas.radialidad ?? "") && /\+ 6\)/.test(DEF?.formulas.radialidad ?? "") && /1 \+ 4·s/.test(DEF?.formulas.ford ?? "") && /log₂/.test(DEF?.formulas.entropia ?? ""));
+check("definiciones: hay «i» en rasgos, compuerta, Ford, certeza y señal, y un diálogo común", html.includes('botonDef(f[0])') && html.includes("botonDef(f[3])") && html.includes('data-def="ford"') && html.includes('data-def="certeza"') && html.includes('data-def="senal"') && /<dialog class="modal" id="dlgDef"/.test(html) && html.includes("function abrirDefinicion"));
+check("pdf: la cabecera impresa dice «Colombian Trading Company SAS» en las dos caras", (html.match(/<span class="empresa">Colombian Trading Company SAS<\/span>/g) ?? []).length === 2);
+check("pdf: cajas de margen con la empresa arriba, NIT y web abajo y «Página n de N»", html.includes("@top-center{content:") && html.includes("@bottom-left{content:") && html.includes('counter(page)') && html.includes("counter(pages)") && T.es?.["pr.nit"] === "NIT 901.483.425-7 · ctcexport.com" && html.includes('id="estiloImpresion"'));
+check("pdf: el pie impreso lleva el NIT y la web en las dos caras", html.includes('id="pPieLegal"') && html.includes('id="labPieLegal"') && html.includes('$("#pPieLegal").textContent = pieLegal()') && html.includes('$("#labPieLegal").textContent = pieLegal()'));
+check("preparada por: casilla opcional, nombre de la cuenta por defecto y editable, solo se guarda si se pide", html.includes('id="prepChk"') && html.includes('id="prepNombre"') && html.includes("nombreCuenta = j.cuenta.nombre") && html.includes("if (!copia.contexto.preparada_por_en_informe) copia.contexto.preparada_por = \"\"") && html.includes('$("#pPreparada")'));
+const cuerpoPost = html.match(/body: JSON\.stringify\(\{[\s\S]*?contexto: \{[^}]*\}/)?.[0] ?? "preparada_por";
+check("preparada por: el nombre no viaja al modelo", !cuerpoPost.includes("preparada_por") && cuerpoPost.includes("analisis_cuantitativo"));
+check("fincas: devuelve el nombre de la cuenta (solo full_name) para «preparada por»", fincas.includes('.from("profiles").select("full_name")') && fincas.includes("cuenta") && !/profiles"\)\.select\("[^"]*(email|tax_id|phone)/.test(fincas));
+check("cuantitativo: acordeón paralelo a «Más datos» con los siete campos de las reglas", html.includes('id="acordeonCuant"') && Object.keys(reglas.analisis_cuantitativo.campos).every((k) => html.includes(`id="q${k}"`)) && html.indexOf('id="acordeonCuant"') > html.indexOf('data-t="f.mas"'));
+check("cuantitativo: explica qué es desde las reglas (Federación / Cenicafé)", html.includes('$("#qExplica").textContent') && /Federaci[oó]n Nacional de Cafeteros/.test(reglas.analisis_cuantitativo.que_es) && /Cenicaf/.test(reglas.analisis_cuantitativo.que_es));
+check("cuantitativo: viaja al servidor como dato del laboratorio y se muestra al productor y al laboratorio como tabla", html.includes("analisis_cuantitativo: cuantParaEnviar(c.analisis_cuantitativo)") && html.includes('id="pCuantTabla"') && html.includes('id="labCuantTabla"') && html.includes('id="rContraste"'));
+check("cuantitativo: los trabajos anteriores se migran con el bloque vacío", html.includes("base.contexto.analisis_cuantitativo = Object.assign(cuantVacio()"));
+check("reglas v2.4: i18n en y de con el catálogo completo, señales, certezas, descargos y listas vetadas", ["en", "de"].every((l) => reglas.practicas_de_manejo.every((p) => reglas.i18n[l].practicas[p.id]?.titulo && reglas.i18n[l].practicas[p.id].como?.length === p.como.length) && ["buena", "mixta", "atencion"].every((s) => reglas.i18n[l].senales[s]) && ["baja", "media"].every((c) => reglas.i18n[l].certezas[c]) && reglas.i18n[l].descargo_corto && reglas.i18n[l].mandatory_disclaimer && reglas.i18n[l].prohibido_nombrar.length >= 8 && reglas.i18n[l].gate.reject_if.length === 6));
+check("reglas v2.4: sin i18n o sin análisis cuantitativo, las reglas se consideran incompletas", (() => { const r = structuredClone(reglas); delete r.i18n; delete r.analisis_cuantitativo; const f = faltantesEnReglas(r); return f.includes("i18n.en.practicas") && f.includes("analisis_cuantitativo.campos"); })());
+const sistemaEn = ensamblarSistema(reglas, reglaRegional(reglas, "Santander"), "en");
+const sistemaDe = ensamblarSistema(reglas, reglaRegional(reglas, "Santander"), "de");
+check("prompt: en inglés y alemán pide el idioma de salida y lista las palabras vetadas en ese idioma; en español no", sistemaEn.includes("IDIOMA DE SALIDA: inglés") && reglas.i18n.en.prohibido_nombrar.every((w) => sistemaEn.includes(w)) && sistemaDe.includes("IDIOMA DE SALIDA: alemán") && reglas.i18n.de.prohibido_nombrar.every((w) => sistemaDe.includes(w)) && !sistemaCaldas.includes("IDIOMA DE SALIDA"));
+check("prompt: las enumeraciones, los ids de práctica y las fuentes no se traducen", sistemaEn.includes("Deja EXACTOS, sin traducir") && sistemaEn.includes("copiado de la lista de fuentes permitidas"));
+check("prompt: el análisis declarado es un dato del laboratorio con su propio campo de contraste", sistemaCaldas.includes(reglas.analisis_cuantitativo.regla) && sistemaCaldas.includes('"contraste_laboratorio"') && sistemaCaldas.includes("omite el campo"));
+const ctxLab = { departamento: "Santander", manejo: "orgánico", analisis_cuantitativo: { laboratorio: "Cenicafé", fecha: "2026-08-01", ph: 4.9, mo: 6.1, n: null, p: 12, k: 0.3, ca: 2.1, mg: 0.6 } };
+const usuarioLab = ensamblarUsuario(ctxLab, rasgosRadial, reglaRegional(reglas, "Santander"), radial.ford_programatico, reglas, "en");
+check("prompt: el análisis declarado viaja marcado como DATO del laboratorio, con etiquetas en el idioma pedido y unidades de las reglas, y el usuario pide el idioma", usuarioLab.includes("NO de la foto") && usuarioLab.includes("Organic matter") && !usuarioLab.includes("Materia orgánica") && usuarioLab.includes("6.1 %") && usuarioLab.includes("Cenicafé") && !usuarioLab.includes("Total nitrogen") && usuarioLab.includes("inglés") && ensamblarUsuario(ctxLab, rasgosRadial, reglaRegional(reglas, "Santander"), null, reglas).includes("Materia orgánica"));
+check("prompt: sin análisis declarado no hay bloque de laboratorio", !usuario.includes("Análisis cuantitativo de laboratorio declarado"));
+
+// ── 6b · La salida en inglés y alemán ────────────────────────────────────────
+const buenaEn = () => {
+  const x = buena();
+  x.descripcion_visual = "Chroma with a light central zone (L*≈93), brown mineral zone and golden organic zone; radiality index 0.62 and organic/outer boundary at r≈0.76.";
+  x.escala_ford.picos.base = "spike_index=0.55 and indented edge";
+  x.interpretaciones[0].observacion = "pale, almost white central zone";
+  x.interpretaciones[1].observacion = "radial formations in the outer zone (radiality_index 0.62)";
+  x.interpretaciones[2].observacion = "homogeneous golden colouring";
+  x.contexto_regional_aplicado = "Sedimentary soil: a pale chroma does not imply degradation; it is only compared within the same farm.";
+  x.recomendaciones[0] = { accion: "Repeat the chromatography in three months on the same plot", justificacion: "The valid comparison is within the farm", prioridad: "media" };
+  x.interpretaciones[0].lectura = "institutional manuals associate this pattern with highly soluble inputs; it could indicate recent raw manure";
+  x.interpretaciones[1].lectura = "it is consistent with the radial group described by Kokornaczyk, n=16";
+  x.interpretaciones[2].lectura = "in agroecological practice it is interpreted as humified organic matter";
+  x.productor.resumen = "According to the photo, your soil seems to have life at the edge, but the centre looks very white and there may be undecomposed manure.";
+  x.productor.conjeturas[0] = { zona: "central", titulo: "Very white centre", lo_que_se_ve: "The centre looks very white with a marked edge.", conjetura: "It may be fresh manure or chemicals that dissolve quickly.", otra_posibilidad: "", que_implica: "If so, part of the fertiliser is not feeding soil life.", basado_en: ["i1"] };
+  x.productor.conjeturas[1] = { zona: "enzymatic", titulo: "Good life at the edge", lo_que_se_ve: "Rays are seen running towards the edge.", conjetura: "It seems there is living activity in the soil.", otra_posibilidad: "It could also come from recent manure.", que_implica: "If so, the soil is responding to management.", basado_en: ["i2"] };
+  x.productor.acciones[0].por_que = "The white centre may come from undecomposed manure.";
+  x.productor.acciones[1].por_que = "Covering the soil helps keep the life seen at the edge.";
+  return x;
+};
+const ven = validarSalida(buenaEn(), reglas, RI, regSant, { idioma: "en" });
+check("salida en: una respuesta honesta en inglés pasa", ven.ok, ven.ok ? "" : ven.errores.join(" | "));
+if (ven.ok) {
+  check("salida en: el descargo, la señal, la certeza y las etiquetas de nivel salen traducidos de las reglas", ven.reporte.limites === reglas.i18n.en.mandatory_disclaimer && ven.reporte.productor.senal_texto === reglas.i18n.en.senales.mixta && ven.reporte.productor.descargo === reglas.i18n.en.descargo_corto && ven.reporte.productor.conjeturas[1].certeza_texto === reglas.i18n.en.certezas.media && ven.reporte.interpretaciones[2].etiqueta_nivel === reglas.i18n.en.etiqueta_nivel.C && ven.reporte.idioma === "en");
+  check("salida en: el cómo del catálogo y los bloques forzados salen en inglés", ven.reporte.productor.acciones[0].titulo === reglas.i18n.en.practicas["evitar-abono-crudo"].titulo && ven.reporte.productor.confirmar.some((a) => a.titulo === reglas.i18n.en.practicas["analisis-laboratorio"].titulo && a.como[0] === reglas.i18n.en.practicas["analisis-laboratorio"].como[0]));
+  check("salida en: la regla regional citada sale traducida", ven.reporte.contexto_regional_regla.toLowerCase().includes(reglas.i18n.en.regional.sedimentarios_metamorficos.rule.toLowerCase()));
+}
+const malEn = (nombre, mutar, opciones = { idioma: "en" }) => { const x = buenaEn(); mutar(x); const v = validarSalida(x, reglas, RI, regSant, opciones); check(`salida en rechaza: ${nombre}`, !v.ok, "pasó y no debía"); };
+malEn("«cup» en una lectura", (x) => (x.interpretaciones[0].lectura += "; it could show in the cup"));
+malEn("«score» en una recomendación", (x) => (x.recomendaciones[0].justificacion = "to raise the lot score"));
+malEn("«price» en el productor", (x) => (x.productor.acciones[1].por_que = "It improves the price of your coffee."));
+malEn("el productor nombra «potassium»", (x) => (x.productor.conjeturas[0].conjetura = "It may be that the soil lacks potassium."));
+malEn("el productor nombra «acidity»", (x) => (x.productor.conjeturas[1].que_implica = "If so, there may be high acidity."));
+malEn("jerga «radiality» al productor", (x) => (x.productor.conjeturas[1].lo_que_se_ve = "Good radiality is seen at the outer zone."));
+malEn("lectura categórica en inglés", (x) => (x.interpretaciones[0].lectura = "the soil has excess nitrogen"));
+malEn("resumen categórico en inglés", (x) => (x.productor.resumen = "Your soil is sick and you must change all the management right now."));
+malEn("nivel C presentado como «peer-reviewed»", (x) => (x.interpretaciones[2].lectura = "peer-reviewed studies report humified organic matter"));
+check("salida: una fuente C que NIEGA la validación por pares es honesta y pasa (en y es)", validarSalida((() => { const x = buenaEn(); x.interpretaciones[2].lectura = "In agroecological practice it is interpreted as humified organic matter, though this is not validated in peer-reviewed studies."; return x; })(), reglas, RI, regSant, { idioma: "en" }).ok && validarSalida((() => { const x = buena(); x.interpretaciones[2].lectura = "En la práctica agroecológica se interpreta como materia orgánica humificada; no está validado por estudios revisados por pares."; return x; })(), reglas, RI, regSant).ok);
+malEn("el resumen del productor viene en español (mezcla de idiomas)", (x) => (x.productor.resumen = "Según la foto, se ve un suelo con vida y el centro está claro."));
+malEn("el porqué de una acción viene en español", (x) => (x.productor.acciones[0].por_que = "El centro blanco puede venir de abono sin descomponer."));
+check("idioma: pareceEspanol distingue español de inglés y alemán", pareceEspanol("Según la foto, el suelo parece tener vida en el borde.") && !pareceEspanol("According to the photo, the soil seems to have life at the edge.") && !pareceEspanol("Nach dem Foto scheint der Boden am Rand lebendig zu sein.") && !pareceEspanol("It is consistent with the radial group (Kokornaczyk, n=16) for the soil of Santander"));
+check("prompt: el idioma va al principio y al final del sistema, y el contraste no califica los valores del laboratorio", sistemaDe.startsWith("Eres el lector") && sistemaDe.indexOf("RESPONDE EN ALEMÁN") < sistemaDe.indexOf("REGLA DE ORO") && sistemaDe.includes("Ni una frase en español") && sistemaCaldas.includes("No califiques esos valores"));
+const rad07 = { radiality_index: 0.7 };
+check("salida en: «no channels» con radialidad alta contradice", !validarSalida((() => { const x = buenaEn(); x.descripcion_visual += " The chroma shows no channels."; return x; })(), reglas, rad07, regSant, { idioma: "en" }).ok);
+check("salida en: «well-developed channels» con radialidad baja contradice", !validarSalida((() => { const x = buenaEn(); x.descripcion_visual += " Well-developed channels are seen."; return x; })(), reglas, { radiality_index: 0.1 }, regSant, { idioma: "en" }).ok);
+check("salida en: la zona se deduce del texto en inglés", zonaDesdeTexto("The centre looks white", "en") === "central" && zonaDesdeTexto("Golden middle part", "en") === "organic" && zonaDesdeTexto("Spikes towards the edge", "en") === "enzymatic" && zonaDesdeTexto("Die Mitte ist weiß", "de") === "central" && zonaDesdeTexto("Spitzen am Rand", "de") === "enzymatic");
+check("salida de: «Tasse», «Kalium» y «misst» se rechazan; «misst nicht» no", claimsProhibidos("das könnte sich in der Tasse zeigen", "de").length > 0 && claimsProhibidos("die Chromatografie misst keine Nährstoffe", "de").length === 0 && !validarSalida((() => { const x = buena(); x.productor.conjeturas[0].conjetura = "Es könnte sein, dass Kalium fehlt."; return x; })(), reglas, RI, regSant, { idioma: "de" }).ok);
+// ── 6c · El contraste con el laboratorio declarado ───────────────────────────
+const sinContraste = validarSalida(buena(), reglas, RI, regSant, { conLaboratorio: true });
+check("contraste: con análisis declarado, contraste_laboratorio es obligatorio", !sinContraste.ok && sinContraste.errores.some((e) => e.includes("contraste_laboratorio falta")));
+const conContraste = validarSalida((() => { const x = buena(); x.contraste_laboratorio = "El laboratorio declaró pH 4,9 y materia orgánica 6,1 %; la zona orgánica dorada podría ir en la misma dirección que esa materia orgánica media, mientras que la acidez no se ve en la foto."; return x; })(), reglas, RI, regSant, { conLaboratorio: true });
+check("contraste: puede citar los valores declarados (pH, % MO) y sale en el reporte", conContraste.ok && conContraste.reporte.contraste_laboratorio.includes("pH 4,9"), conContraste.ok ? "" : conContraste.errores.join(" | "));
+check("contraste: no puede hablar de la taza ni ser categórico", !validarSalida((() => { const x = buena(); x.contraste_laboratorio = "El laboratorio confirma que este suelo dará mejor taza que el vecino, sin duda alguna."; return x; })(), reglas, RI, regSant, { conLaboratorio: true }).ok && !validarSalida((() => { const x = buena(); x.contraste_laboratorio = "El laboratorio dice pH 4,9 y la foto confirma exactamente eso y nada más importa."; return x; })(), reglas, RI, regSant, { conLaboratorio: true }).ok);
+const contrasteOk = (texto, idioma) => validarSalida((() => { const x = idioma === "en" ? buenaEn() : buena(); x.contraste_laboratorio = texto; return x; })(), reglas, RI, regSant, { idioma, conLaboratorio: true }).ok;
+check("contraste: describir la foto con «alta», «high» o «hohe» sí vale; calificar el laboratorio no", contrasteOk("La alta intensidad de color de la foto podría ir en la misma dirección que la materia orgánica declarada (6,1 %).", "es") && contrasteOk("The high colour intensity and the low texture entropy in the mineral zone may be consistent with the declared organic matter of 6.1 %.", "en") && !contrasteOk("The laboratory reports organic matter at 6.1 %, which is moderate for an Andisol; the golden zone may agree.", "en") && !contrasteOk("El laboratorio reporta un suelo ácido (pH 4,9); la zona dorada podría coincidir con la materia orgánica declarada.", "es"));
+check("contraste: no puede calificar los valores del laboratorio (pH bajo, moderate organic matter, niedrig)",!validarSalida((() => { const x = buena(); x.contraste_laboratorio = "El laboratorio declaró un pH bajo (4,9); la foto podría ir en la misma dirección que una materia orgánica media."; return x; })(), reglas, RI, regSant, { conLaboratorio: true }).ok && !validarSalida((() => { const x = buenaEn(); x.contraste_laboratorio = "The laboratory reports moderate organic matter (6.1 %); the golden zone may be consistent with it."; return x; })(), reglas, RI, regSant, { idioma: "en", conLaboratorio: true }).ok && validarSalida((() => { const x = buenaEn(); x.contraste_laboratorio = "The laboratory reports organic matter 6.1 % and pH 4.9; the golden, integrated organic zone may be consistent with organic matter being present, while the photo cannot see pH."; return x; })(), reglas, RI, regSant, { idioma: "en", conLaboratorio: true }).ok);
+const contrasteSinLab = validarSalida((() => { const x = buena(); x.contraste_laboratorio = "Podría coincidir con un análisis que no existe."; return x; })(), reglas, RI, regSant);
+check("contraste: sin análisis declarado se descarta y queda anotado", contrasteSinLab.ok && contrasteSinLab.reporte.contraste_laboratorio === null && contrasteSinLab.reporte.ajustes.some((a) => a.includes("contraste_laboratorio")));
+check("contraste: la cara del productor sigue sin nombrar nutrientes aunque haya laboratorio", !validarSalida((() => { const x = buena(); x.contraste_laboratorio = "Podría ir en la misma dirección que la materia orgánica declarada."; x.productor.conjeturas[0].conjetura = "Puede que el potasio declarado explique el centro blanco."; return x; })(), reglas, RI, regSant, { conLaboratorio: true }).ok);
+check("handler: sanea el idioma y el análisis declarado con los rangos de las reglas, y anota el idioma en meta", handler.includes("IDIOMAS as string[]).includes(idiomaBruto)") && handler.includes("function leerAnalisis") && handler.includes("esNum(n, c.min, c.max)") && handler.includes("idioma,\n          con_laboratorio: conLaboratorio") && handler.includes("{ idioma, conLaboratorio }"));
 
 if (fallos.length) {
   console.error(`✗ qa-cromatografia: ${fallos.length} fallo(s), ${ok} OK\n`);

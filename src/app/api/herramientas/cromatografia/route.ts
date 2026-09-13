@@ -5,13 +5,18 @@ import { contextoDeAcceso } from "@/lib/tools/toolGrants";
 import { MOTIVO_COPY, puedeAbrir } from "@/lib/tools/accesoHerramienta";
 import reglasJson from "@/lib/tools/cromatografia/reglas.json";
 import {
+  CAMPOS_CUANTITATIVOS,
+  IDIOMAS,
   PROMPT_VERSION,
   ensamblarSistema,
   ensamblarUsuario,
   faltantesEnReglas,
+  hayAnalisisCuantitativo,
   reglaRegional,
+  type AnalisisCuantitativo,
   type ContextoMuestra,
   type FordProgramatico,
+  type Idioma,
   type Rasgos,
   type Reglas,
 } from "@/lib/tools/cromatografia/prompt";
@@ -63,7 +68,26 @@ type Entrada = {
   contexto: ContextoMuestra;
   ford: FordProgramatico | null;
   rasgosVersion: string;
+  /** V5.39: idioma en que el modelo escribe la lectura (es · en · de). */
+  idioma: Idioma;
 };
+
+/** El análisis de laboratorio declarado, saneado con los rangos de las reglas.
+ *  Un valor fuera de rango se descarta (no se corrige): es un dato del usuario. */
+function leerAnalisis(v: unknown): AnalisisCuantitativo | null {
+  if (!v || typeof v !== "object") return null;
+  const a = v as Record<string, unknown>;
+  const campos = reglas.analisis_cuantitativo?.campos ?? {};
+  const out: AnalisisCuantitativo = { laboratorio: txt(a.laboratorio, 120), fecha: txt(a.fecha, 10) };
+  if (out.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(out.fecha)) out.fecha = "";
+  for (const k of CAMPOS_CUANTITATIVOS) {
+    const raw = a[k];
+    const n = raw === null || raw === undefined || raw === "" ? null : Number(String(raw).replace(",", "."));
+    const c = campos[k];
+    out[k] = n !== null && c && esNum(n, c.min, c.max) ? Math.round(n * 100) / 100 : null;
+  }
+  return hayAnalisisCuantitativo(out) ? out : null;
+}
 
 const txt = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const esNum = (v: unknown, min: number, max: number) => typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
@@ -114,6 +138,8 @@ function leerEntrada(body: unknown): { ok: true; entrada: Entrada } | { ok: fals
 
   const f = (b.ford_programatico ?? null) as Record<string, unknown> | null;
   const ford = f && esRango(f.canales) && esRango(f.picos) && esRango(f.intensidad) ? (f as unknown as FordProgramatico) : null;
+  const idiomaBruto = txt(b.idioma, 5).toLowerCase();
+  const idioma = (IDIOMAS as string[]).includes(idiomaBruto) ? (idiomaBruto as Idioma) : "es";
 
   return {
     ok: true,
@@ -132,9 +158,12 @@ function leerEntrada(body: unknown): { ok: true; entrada: Entrada } | { ok: fals
         papel,
         dilucion,
         dias_revelado: dias,
+        // Dato del laboratorio, no de la foto: solo alimenta contraste_laboratorio.
+        analisis_cuantitativo: leerAnalisis(c.analisis_cuantitativo),
       },
       ford,
       rasgosVersion: txt(b.rasgos_version, 40),
+      idioma,
     },
   };
 }
@@ -227,7 +256,7 @@ export async function POST(request: NextRequest) {
   const cuerpo = await request.json().catch(() => null);
   const leida = leerEntrada(cuerpo);
   if (!leida.ok) return responder(400, { ok: false, codigo: "entrada", error: leida.error });
-  const { imagen, rasgos, contexto, ford, rasgosVersion } = leida.entrada;
+  const { imagen, rasgos, contexto, ford, rasgosVersion, idioma } = leida.entrada;
 
   // 6 · Techo diario por persona
   const desde = new Date();
@@ -244,13 +273,14 @@ export async function POST(request: NextRequest) {
 
   // 7 · Lectura, con UNA corrección si no pasa los controles
   const regional = reglaRegional(reglas, contexto.departamento);
-  const system = ensamblarSistema(reglas, regional);
+  const system = ensamblarSistema(reglas, regional, idioma);
+  const conLaboratorio = hayAnalisisCuantitativo(contexto.analisis_cuantitativo);
   const messages: Mensaje[] = [
     {
       role: "user",
       content: [
         { type: "image", source: { type: "base64", media_type: imagen.media_type, data: imagen.data } },
-        { type: "text", text: ensamblarUsuario(contexto, rasgos, regional, ford) },
+        { type: "text", text: ensamblarUsuario(contexto, rasgos, regional, ford, reglas, idioma) },
       ],
     },
   ];
@@ -259,7 +289,7 @@ export async function POST(request: NextRequest) {
   for (let intento = 1; intento <= 2; intento++) {
     const r = await llamar(apiKey, system, messages, user.id);
     if (!r.ok) return responder(502, { ok: false, codigo: "ia", error: r.error });
-    const v = validarSalida(extraerJson(r.texto), reglas, rasgos, regional);
+    const v = validarSalida(extraerJson(r.texto), reglas, rasgos, regional, { idioma, conLaboratorio });
     if (v.ok) {
       return responder(200, {
         ok: true,
@@ -269,6 +299,8 @@ export async function POST(request: NextRequest) {
           rules_version: reglas.$schema_version,
           rasgos_version: rasgosVersion || null,
           model_name: MODEL,
+          idioma,
+          con_laboratorio: conLaboratorio,
           timestamp: new Date().toISOString(),
           intentos: intento,
         },

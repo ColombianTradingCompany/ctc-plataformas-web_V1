@@ -343,3 +343,53 @@ y un botón «i» para el laboratorio con el método, los recursos en línea y u
 **Queda para el owner.** Confirmar el origen y los derechos de las tres fotos de ejemplo (la 2 parece una lámina de
 libro escaneada) o cambiarlas por cromas propios de CTC, y que un abogado revise el aviso legal de los PDF.
 
+---
+
+## Tres idiomas, análisis de laboratorio declarado y PDF con razón social (V5.39, 2026-09-13)
+
+**Lo que pidió el owner.** Un conmutador de idiomas (inglés y alemán además de español); PDF con cabecera explícita
+«Colombian Trading Company SAS», RUT y web en el pie y hojas numeradas «# de #»; «Preparada por» opcional en el informe
+del productor con el nombre de la cuenta de KR por defecto y editable; una «i» que amplíe las definiciones en un
+diálogo, también para la leyenda de las ecuaciones; un acordeón «Análisis cuantitativo» paralelo a «Más datos», que
+explique que es el examen que suele hacer la Federación, porque los productores pueden tener ese análisis (pH, MO, N,
+P, K, Ca, Mg) y da datos relacionados útiles para el análisis holístico; y mover la «i» del laboratorio encima de
+«Imprimir feedback» con el nombre «Bibliografía y metodología».
+
+**El límite que se mantuvo con el análisis de laboratorio.** Los valores del laboratorio son un dato del productor, no
+de la foto. Se guardan, salen en su informe como tabla con sus propios números y van en el Feedback Técnico (es el
+primer par croma–laboratorio que la herramienta recoge). Al modelo llegan marcados como «DATO del laboratorio, NO de la
+foto» y solo pueden alimentar un campo técnico nuevo, `contraste_laboratorio`: si lo que sugiere la foto va en la misma
+dirección que lo declarado o no. La cara del productor sigue sin nombrar nutrientes ni acidez, porque la foto no los
+ve y porque interpretar un análisis de laboratorio (qué le falta al suelo y cuánto) es trabajo del agrónomo. La
+validación lo sostiene: el contraste es obligatorio cuando hay análisis, se descarta cuando no lo hay, y se rechaza si
+califica los valores («pH bajo», «moderate organic matter», «acidic pH») o si el modelo cuela el valor del
+laboratorio en una interpretación de la imagen. En las pruebas Haiku hizo las dos cosas al primer intento y las
+corrigió al segundo.
+
+**Cómo quedaron los idiomas.** Un diccionario por idioma en el HTML (`T.es`, `T.en`, `T.de`, unas 250 claves; el guardián
+exige paridad exacta), definiciones (`DEF`) en los tres, y en las reglas v2.4 un bloque `i18n` con lo que el servidor
+pone por su cuenta: catálogo de prácticas con su cómo, señales, certezas, descargos, etiquetas de nivel, reglas
+regionales, compuerta y las listas de palabras que el productor no puede leer en cada idioma. Los criterios siguen
+siendo uno solo, en español. El prompt 1.8 pide el idioma al principio y al final, con los ejemplos de duda en ese
+idioma («seems, may, looks like»), porque con los ejemplos en español el modelo escribía el resumen y los títulos en
+español y las conjeturas en alemán; `validarSalida` rechaza además cualquier campo que parezca español
+(`pareceEspanol`, dos palabras funcionales) cuando se pidió otro idioma, y aplica léxicos por idioma para las
+prohibiciones (cup, score, price, Tasse, Preis, misst…), la duda, la coherencia con la radialidad y las zonas. En
+inglés «spikes» es lenguaje llano y salió de la lista de jerga; «photo» dejó de caer por «pH» (los tokens cortos exigen
+fin de palabra). Los PDF de metodología siguen en español, y el diálogo lo dice.
+
+**Coste y estabilidad medidos.** Español con laboratorio 2/2 al primer intento; inglés con laboratorio 3 de 5 corridas
+al primer intento, el resto al segundo; alemán con laboratorio 0 de 2 al primer intento y 2/2 al segundo. Rangos de Ford
+idénticos en todas. Una lectura en inglés o alemán cuesta hoy ≈ US$ 0,02–0,05 según haya reintento.
+
+**Lo demás.** «Preparada por» toma `profiles.full_name` (la ruta de fincas devuelve `cuenta.nombre`, solo el nombre), se
+guarda únicamente si se marcó y no viaja al modelo. Las «i» abren un diálogo común con qué es, la ecuación tal como la
+calcula el motor, la leyenda de símbolos y el rango: compuerta (6), rasgos (9), Ford, certeza y señal. El PDF lleva la
+razón social en la cabecera y, con cajas de margen `@page` inyectadas al imprimir, la empresa arriba, el NIT y la web
+abajo y «Página n de N»; los navegadores sin cajas de margen (Firefox) imprimen igual con la cabecera y el pie del
+documento. El botón «Bibliografía y metodología» va en su propia barra encima de la de imprimir.
+
+**Queda para el owner.** Que un hablante nativo revise las traducciones al inglés y al alemán (las escribió la IA);
+decidir si el contraste con el laboratorio debe llegar también al productor en una frase sin nutrientes (hoy solo lo ve
+el laboratorio); y probar la impresión desde el móvil, donde las cajas de margen dependen del navegador.
+

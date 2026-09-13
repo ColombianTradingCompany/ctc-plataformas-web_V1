@@ -1,7 +1,8 @@
 // Prueba EN VIVO del Lector de Cromatografía de Suelo contra la API de Anthropic
 // (kickoff v2 §7: estabilidad y controles sobre la salida real del modelo).
 //
-//   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-cromatografia-modelo.mjs [imagen] [departamento] [corridas]
+//   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-cromatografia-modelo.mjs [imagen] [departamento] [corridas] [idioma] [lab]
+//   ([imagen] vacío = "" para el croma sintético; [idioma] es|en|de; [lab] 1 declara un análisis de laboratorio)
 //
 // CUESTA DINERO (≈ US$ 0,013 por corrida con Haiku 4.5 y el prompt 1.1, medido el
 // 2026-09-13; un reintento dobla esa corrida) y por eso NO es parte de la compuerta: se corre a mano al cambiar el
@@ -41,8 +42,12 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const [rutaImagen, departamento = "Santander", corridasTxt = "3"] = process.argv.slice(2);
+// V5.39: [idioma] es · en · de, y [lab] = 1 declara un análisis cuantitativo de
+// laboratorio (obliga al campo contraste_laboratorio).
+const [rutaImagen, departamento = "Santander", corridasTxt = "3", idiomaTxt = "es", labTxt = "0"] = process.argv.slice(2);
 const CORRIDAS = Math.max(1, Math.min(5, Number(corridasTxt) || 3));
+const IDIOMA = ["es", "en", "de"].includes(idiomaTxt) ? idiomaTxt : "es";
+const CON_LAB = labTxt === "1";
 const reglas = JSON.parse(readFileSync(new URL("src/lib/tools/cromatografia/reglas.json", raiz), "utf8"));
 const motor = readFileSync(new URL("public/tools/assets/cromatografia-rasgos.js", raiz), "utf8");
 
@@ -113,7 +118,9 @@ console.log(`Rasgos: radialidad ${rasgos.radiality_index} · fronteras ${rasgos.
 // ── Leer con el modelo ────────────────────────────────────────────────────────
 const regional = reglaRegional(reglas, departamento);
 const contexto = { departamento, manejo: "orgánico", fecha_muestra: "2026-09-08", practicas: "Compost hace tres semanas; cobertura de leguminosas.", papel: "whatman-4", dilucion: "100", dias_revelado: 7 };
-const system = ensamblarSistema(reglas, regional);
+if (CON_LAB) contexto.analisis_cuantitativo = { laboratorio: "Cenicafé", fecha: "2026-08-01", ph: 4.9, mo: 6.1, n: 0.28, p: 12, k: 0.3, ca: 2.1, mg: 0.6 };
+const system = ensamblarSistema(reglas, regional, IDIOMA);
+console.log(`Idioma ${IDIOMA} · análisis de laboratorio declarado: ${CON_LAB ? "sí" : "no"}`);
 const m = medido.imagen.match(/^data:(image\/jpeg);base64,(.+)$/);
 
 async function llamar(messages) {
@@ -136,7 +143,7 @@ for (let i = 1; i <= CORRIDAS; i++) {
       role: "user",
       content: [
         { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } },
-        { type: "text", text: ensamblarUsuario(contexto, rasgos, regional, ford) },
+        { type: "text", text: ensamblarUsuario(contexto, rasgos, regional, ford, reglas, IDIOMA) },
       ],
     },
   ];
@@ -144,7 +151,7 @@ for (let i = 1; i <= CORRIDAS; i++) {
   for (let intento = 1; intento <= 2; intento++) {
     const r = await llamar(messages);
     tokensIn += r.usage.input_tokens; tokensOut += r.usage.output_tokens;
-    v = validarSalida(extraerJson(r.texto), reglas, rasgos, regional);
+    v = validarSalida(extraerJson(r.texto), reglas, rasgos, regional, { idioma: IDIOMA, conLaboratorio: CON_LAB });
     console.log(`Corrida ${i}, intento ${intento}: ${v.ok ? "✓ pasa los controles" : "✗ " + v.errores.join(" | ")}`);
     if (!v.ok) fallidos.push({ corrida: i, intento, errores: v.errores, texto: r.texto });
     if (v.ok) break;
@@ -168,7 +175,7 @@ for (const k of ["canales", "picos", "intensidad"]) {
 
 // Fuera del repo (es público): los reportes y los intentos fallidos, para leerlos.
 const salida = join(tmpdir(), `croma-modelo-${Date.now()}.json`);
-writeFileSync(salida, JSON.stringify({ modelo: MODEL, departamento, rasgos, ford, reportes: resultados, fallidos }, null, 2));
+writeFileSync(salida, JSON.stringify({ modelo: MODEL, departamento, idioma: IDIOMA, con_laboratorio: CON_LAB, rasgos, ford, reportes: resultados, fallidos }, null, 2));
 console.log(`Reportes e intentos fallidos en ${salida}`);
 
 if (fallos || !estable) {

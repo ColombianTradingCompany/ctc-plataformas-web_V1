@@ -1,7 +1,11 @@
 {
-  "$schema_version": "2.3",
+  "$schema_version": "2.4",
   "generated": "2026-09-13",
   "purpose": "Base de conocimiento estructurada para la lectura cualitativa de cromatografías de suelo tipo Pfeiffer en suelos cafeteros. La v2.0 del paquete del owner fue la guía; la v2.1 es la de CTC, corregida contra las fuentes primarias abiertas (reference/html_tools/Analisis Cromatografico/fuentes, verificadas página a página). Cada criterio lleva su nivel de evidencia; el modelo modula su lenguaje según ese nivel.",
+  "changelog_v2_4": [
+    "Tres idiomas (español, inglés, alemán): el bloque i18n traduce lo que el servidor pone por su cuenta (catálogo de prácticas, señales, certezas, descargos, etiquetas de nivel, reglas regionales y compuerta) y las listas de palabras que la cara del productor no puede escribir en cada idioma. Los criterios siguen siendo uno solo, en español; el modelo escribe la lectura en el idioma pedido.",
+    "Análisis cuantitativo de laboratorio declarado por el productor (pH, materia orgánica, N, P, K, Ca, Mg): es un dato del laboratorio, no de la foto. Solo se contrasta en la cara técnica (contraste_laboratorio); la cara del productor sigue sin nombrar nutrientes ni acidez, y sus propios valores se le muestran en una tabla aparte."
+  ],
   "changelog_v2_1": [
     "Radios relativos declarados respecto al frente del extracto; priors de frontera 0,15 · 0,5 · 0,8 (medidos en UIS 2026, Embrapa 455, Ford 2019 y TerraLat 2021).",
     "Zona periférica redefinida: es el papel que el extracto no alcanza y no se interpreta (Embrapa 455, UIS 2026).",
@@ -153,5 +157,423 @@
     ],
     "not_rejected": "El porcentaje del encuadre que ocupa el croma se informa pero no rechaza: con papel de 15 cm el croma ocupa como máximo la mitad del encuadre, y 108 capturas de laboratorio (Martins et al. 2026) miden entre el 25 y el 39 %.",
     "on_reject": "papel entero con el borde visible, cámara paralela al papel, luz difusa sin flash, fondo blanco mate, el croma de al menos 1.000 píxeles de diámetro (acérquese y use la cámara, no una captura de pantalla ni una foto reenviada por chat) y sin anotaciones encima"
+  },
+  "analisis_cuantitativo": {
+    "que_es": "Análisis químico de suelo hecho en laboratorio (en Colombia, el que suele hacer la Federación Nacional de Cafeteros a través de Cenicafé, o un laboratorio universitario o de Agrosavia). Mide lo que la foto no ve: acidez (pH), materia orgánica y nutrientes.",
+    "campos": {
+      "ph": {
+        "etiqueta": "pH",
+        "unidad": "",
+        "min": 3,
+        "max": 10
+      },
+      "mo": {
+        "etiqueta": "Materia orgánica",
+        "unidad": "%",
+        "min": 0,
+        "max": 40
+      },
+      "n": {
+        "etiqueta": "Nitrógeno total",
+        "unidad": "%",
+        "min": 0,
+        "max": 3
+      },
+      "p": {
+        "etiqueta": "Fósforo disponible",
+        "unidad": "mg/kg",
+        "min": 0,
+        "max": 500
+      },
+      "k": {
+        "etiqueta": "Potasio",
+        "unidad": "cmol(+)/kg",
+        "min": 0,
+        "max": 30
+      },
+      "ca": {
+        "etiqueta": "Calcio",
+        "unidad": "cmol(+)/kg",
+        "min": 0,
+        "max": 60
+      },
+      "mg": {
+        "etiqueta": "Magnesio",
+        "unidad": "cmol(+)/kg",
+        "min": 0,
+        "max": 30
+      }
+    },
+    "regla": "Los valores declarados son del laboratorio, no de la foto. El modelo solo los contrasta en la cara técnica (contraste_laboratorio): dice si lo que sugiere la foto va en la misma dirección que esos valores o no, con lenguaje probabilístico y sin convertirlos en recomendaciones de dosis. No entran en las interpretaciones de la imagen ni en la cara del productor, que sigue sin nombrar nutrientes ni acidez; el productor ve sus propios valores en una tabla aparte, tal como los escribió."
+  },
+  "i18n": {
+    "en": {
+      "nombre": "English",
+      "practicas": {
+        "analisis-laboratorio": {
+          "titulo": "Get a laboratory soil analysis",
+          "para_que": "The photo gives orientation, but it cannot see acidity or nutrients. The laboratory says what the soil lacks and how much.",
+          "como": [
+            "Take the sample in the same plot as the photo, 20 to 30 cm deep, at several points, and mix it.",
+            "Take it to a soil laboratory (coffee federation, university or Agrosavia).",
+            "Before buying lime, rock phosphate or other amendments, wait for the result and ask your technician for the amount."
+          ],
+          "cuidado": "Do not apply lime or amendments blindly: without an analysis you can waste money and harm the soil."
+        },
+        "repetir-croma": {
+          "titulo": "Repeat the chromatography in six months",
+          "para_que": "A single chroma says little; what matters is seeing whether the soil improves over time in the same plot.",
+          "como": [
+            "Take the sample from the same plot and at the same depth.",
+            "Use the same paper, the same amount of NaOH and let it develop the same number of days.",
+            "Take the photo the same way: from above, in daylight, with the whole paper in view."
+          ],
+          "cuidado": "Compare only chromas from your own farm made the same way."
+        },
+        "compost-maduro": {
+          "titulo": "Apply well-decomposed compost or bocashi",
+          "para_que": "It feeds soil life and returns organic matter to the soil.",
+          "como": [
+            "Use only well-decomposed material: cool, dark and smelling of earth.",
+            "Spread it around each plant, where the water drips from the leaves, and cover it with leaf litter.",
+            "As a reference, coffee farms in Santander used one and a half kilos per plant, twice a year; adjust the amount with your technician."
+          ],
+          "cuidado": "Raw or half-composted material can burn roots and unbalance the soil."
+        },
+        "evitar-abono-crudo": {
+          "titulo": "Do not use fresh poultry litter or manure",
+          "para_que": "Raw manure releases nitrogen all at once and can harm soil life.",
+          "como": [
+            "Compost poultry litter or manure before using it, until it is well decomposed.",
+            "If you already applied fresh manure, wait for it to integrate before fertilising again."
+          ],
+          "cuidado": "Also check whether you have used highly soluble chemical fertilisers in excess."
+        },
+        "reducir-herbicidas": {
+          "titulo": "Gradually stop using herbicides",
+          "para_que": "Herbicides and synthetic chemicals affect soil life.",
+          "como": [
+            "Control weeds with a brush cutter instead of herbicide.",
+            "Leave the cut weeds on the soil as cover.",
+            "Make the change gradually, plot by plot."
+          ],
+          "cuidado": "If you hold a certification, consult your technician before changing the weed control plan."
+        },
+        "cobertura-viva": {
+          "titulo": "Keep the soil covered with plants",
+          "para_que": "Cover protects the soil from sun and rain and feeds its life.",
+          "como": [
+            "Sow cover crops between rows, such as jack bean, forage peanut or crotalaria.",
+            "Never leave bare soil: cut and leave the residues on top.",
+            "Keep the cover low so it does not compete with the coffee."
+          ],
+          "cuidado": "Choose covers that do not climb on the coffee trees."
+        },
+        "microorganismos": {
+          "titulo": "Reactivate the soil with microorganisms from the farm",
+          "para_que": "It helps recover soil life when little activity is seen.",
+          "como": [
+            "Collect leaf litter with white mould from a forest or woodland on the farm.",
+            "Multiply it with molasses and bran, as your technician or field school teaches.",
+            "Apply it dissolved in water on the soil, every month and a half."
+          ],
+          "cuidado": "Use clean containers and discard the mix if it smells rotten."
+        },
+        "no-compactar": {
+          "titulo": "Avoid compacting the soil",
+          "para_que": "A packed soil lets neither air nor water through, and life suffocates.",
+          "como": [
+            "Do not walk animals or machinery through the plot when the soil is wet.",
+            "Avoid disturbing the soil more than necessary.",
+            "Keep cover or leaf litter so the rain does not beat it."
+          ],
+          "cuidado": "If the soil is very hard, ask your technician before deep tillage."
+        },
+        "sombra-regulada": {
+          "titulo": "Keep a regulated shade",
+          "para_que": "Shade keeps moisture and protects soil life from heat.",
+          "como": [
+            "Keep shade trees distributed across the plot.",
+            "Prune the shade so enough light reaches the coffee."
+          ],
+          "cuidado": "Too much shade also affects production; find the balance with your technician."
+        },
+        "croma-de-referencia": {
+          "titulo": "Make a chroma of a nearby forest or woodland",
+          "para_que": "It gives you a reference of how an undisturbed soil looks in your own area.",
+          "como": [
+            "Take a sample from a neighbouring forest or woodland, at the same depth.",
+            "Run the chromatography exactly as for your plot and compare the two photos."
+          ],
+          "cuidado": "Compare only with soils from your own region."
+        }
+      },
+      "senales": {
+        "buena": "According to the photo, the soil looks alive",
+        "mixta": "According to the photo, there are good signs and others to improve",
+        "atencion": "According to the photo, there are signs of wear"
+      },
+      "certezas": {
+        "baja": "Low certainty: it is one possibility and there are other explanations.",
+        "media": "Medium certainty: it is likely from what is seen, but it should be confirmed."
+      },
+      "descargo_corto": "This reading is made from a photo and is for orientation only. It does not replace a laboratory analysis and says nothing about the quality of your coffee.",
+      "mandatory_disclaimer": "This report is a qualitative, visual reading assisted by AI; it is not a scientific measurement and does not replace a laboratory analysis. Pfeiffer chromatography has not shown, in the most rigorous study available (Ford et al., 2021, Geoderma, n=343), a consistent and reproducible relationship between its patterns and the real condition of the soil, and there is no scientific evidence of a relationship with the sensory quality of coffee. Observations must be contrasted with a conventional laboratory analysis before significant management decisions.",
+      "etiqueta_nivel": {
+        "A": "Peer-reviewed evidence, limited in scope",
+        "B": "Reported by an institutional or academic source",
+        "C": "Practitioner criterion, not validated"
+      },
+      "prohibido_nombrar": [
+        "potassium",
+        "phosphorus",
+        "phosphate",
+        "magnesium",
+        "calcium",
+        "pH",
+        "acidity",
+        "nitrogen",
+        "boron",
+        "zinc"
+      ],
+      "palabras_tecnicas_prohibidas": [
+        "Pfeiffer",
+        "Ford",
+        "Kokornaczyk",
+        "radiality",
+        "CIELAB",
+        "entropy",
+        "index",
+        "enzymatic",
+        "morpholog"
+      ],
+      "regional": {
+        "andisoles_eje_cafetero": {
+          "expected_baseline": "wide organic zones and intense colouring by the nature of the soil (high organic matter, allophane); do NOT attribute automatically to good management. In soils with much clay and organic matter the front may not complete its development with the standard protocol: a short chroma is a protocol matter, not a reading",
+          "rule": "compare only against chromas from the same farm or soil region"
+        },
+        "sedimentarios_metamorficos": {
+          "expected_baseline": "lower baseline organic matter; potentially paler chromas without that implying degradation. Paleness depends as much on dilution and paper as on the soil",
+          "rule": "compare only against chromas from the same farm or soil region"
+        },
+        "unknown_region": {
+          "rule": "if the region is unknown, omit any baseline inference and say so explicitly in the report"
+        }
+      },
+      "sin_region": "No regional baseline was applied: ",
+      "gate": {
+        "reject_if": [
+          "no circular pattern is detected",
+          "the photo is blurred or out of focus (low sharpness over the chroma)",
+          "the chroma is less than 500 pixels in diameter in the original photo",
+          "the outer edge of the chroma is cut off",
+          "the background is not light or the light gives it a colour cast",
+          "the camera was not parallel to the paper: the chroma looks like an ellipse"
+        ],
+        "not_rejected": "The share of the frame taken by the chroma is reported but does not reject: with 15 cm paper the chroma takes at most half the frame, and 108 laboratory captures (Martins et al. 2026) measure between 25 and 39 %.",
+        "on_reject": "the whole paper with its edge visible, camera parallel to the paper, diffuse light without flash, matte white background, the chroma at least 1,000 pixels in diameter (get closer and use the camera, not a screenshot or a photo forwarded by chat) and no annotations on it"
+      },
+      "ford": {
+        "caveat": "In 343 samples the features did NOT vary consistently with soil condition. Use as a morphological descriptor, not as a quality score.",
+        "reporting_rule": "Report as an 'assisted visual estimate' with a range (e.g. 3–4), never as a measurement."
+      },
+      "analisis_cuantitativo": {
+        "que_es": "Chemical soil analysis made in a laboratory (in Colombia, usually the one run by the National Coffee Federation through Cenicafé, or a university or Agrosavia laboratory). It measures what the photo cannot see: acidity (pH), organic matter and nutrients.",
+        "campos": {
+          "ph": "pH",
+          "mo": "Organic matter",
+          "n": "Total nitrogen",
+          "p": "Available phosphorus",
+          "k": "Potassium",
+          "ca": "Calcium",
+          "mg": "Magnesium"
+        }
+      }
+    },
+    "de": {
+      "nombre": "Deutsch",
+      "practicas": {
+        "analisis-laboratorio": {
+          "titulo": "Lassen Sie eine Bodenanalyse im Labor machen",
+          "para_que": "Das Foto gibt Orientierung, sieht aber weder Säure noch Nährstoffe. Das Labor sagt, was dem Boden fehlt und wie viel.",
+          "como": [
+            "Nehmen Sie die Probe auf derselben Parzelle wie das Foto, in 20 bis 30 cm Tiefe, an mehreren Stellen, und mischen Sie sie.",
+            "Bringen Sie sie zu einem Bodenlabor (Kaffeeverband, Universität oder Agrosavia).",
+            "Warten Sie das Ergebnis ab, bevor Sie Kalk, Rohphosphat oder andere Korrekturmittel kaufen, und fragen Sie Ihren Berater nach der Menge."
+          ],
+          "cuidado": "Bringen Sie Kalk oder Korrekturmittel nicht blind aus: ohne Analyse verschwenden Sie Geld und können dem Boden schaden."
+        },
+        "repetir-croma": {
+          "titulo": "Wiederholen Sie die Chromatografie in sechs Monaten",
+          "para_que": "Ein einzelnes Chroma sagt wenig; wertvoll ist zu sehen, ob sich der Boden auf derselben Parzelle mit der Zeit verbessert.",
+          "como": [
+            "Nehmen Sie die Probe von derselben Parzelle und in derselben Tiefe.",
+            "Verwenden Sie dasselbe Papier, dieselbe Menge NaOH und lassen Sie gleich viele Tage entwickeln.",
+            "Fotografieren Sie gleich: von oben, bei Tageslicht, mit dem ganzen Papier im Bild."
+          ],
+          "cuidado": "Vergleichen Sie nur Chromas Ihrer eigenen Finca, die auf dieselbe Weise gemacht wurden."
+        },
+        "compost-maduro": {
+          "titulo": "Bringen Sie gut verrotteten Kompost oder Bocashi aus",
+          "para_que": "Er nährt das Bodenleben und gibt dem Boden organische Substanz zurück.",
+          "como": [
+            "Verwenden Sie nur gut verrottetes Material: kühl, dunkel und nach Erde riechend.",
+            "Verteilen Sie es rund um jede Pflanze, dort wo das Wasser von den Blättern tropft, und decken Sie es mit Laub ab.",
+            "Als Anhaltspunkt wurden auf Kaffeefincas in Santander anderthalb Kilo pro Pflanze zweimal im Jahr verwendet; passen Sie die Menge mit Ihrem Berater an."
+          ],
+          "cuidado": "Roher oder halb verrotteter Dünger kann Wurzeln verbrennen und den Boden aus dem Gleichgewicht bringen."
+        },
+        "evitar-abono-crudo": {
+          "titulo": "Verwenden Sie keinen frischen Hühner- oder Stallmist",
+          "para_que": "Roher Dünger setzt Stickstoff auf einmal frei und kann das Bodenleben schädigen.",
+          "como": [
+            "Kompostieren Sie Hühner- oder Stallmist vor der Verwendung, bis er gut verrottet ist.",
+            "Wenn Sie schon frischen Mist ausgebracht haben, warten Sie, bis er eingearbeitet ist, bevor Sie erneut düngen."
+          ],
+          "cuidado": "Prüfen Sie auch, ob Sie leicht lösliche Mineraldünger im Übermaß verwendet haben."
+        },
+        "reducir-herbicidas": {
+          "titulo": "Verzichten Sie nach und nach auf Herbizide",
+          "para_que": "Herbizide und synthetische Chemikalien beeinträchtigen das Bodenleben.",
+          "como": [
+            "Bekämpfen Sie Unkraut mit der Motorsense statt mit Herbizid.",
+            "Lassen Sie das geschnittene Unkraut als Bodenbedeckung liegen.",
+            "Stellen Sie schrittweise um, Parzelle für Parzelle."
+          ],
+          "cuidado": "Wenn Sie eine Zertifizierung haben, sprechen Sie mit Ihrem Berater, bevor Sie den Pflanzenschutzplan ändern."
+        },
+        "cobertura-viva": {
+          "titulo": "Halten Sie den Boden mit Pflanzen bedeckt",
+          "para_que": "Die Bedeckung schützt den Boden vor Sonne und Regen und nährt sein Leben.",
+          "como": [
+            "Säen Sie Bodendecker zwischen den Reihen, etwa Jackbohne, Futter-Erdnuss oder Crotalaria.",
+            "Lassen Sie den Boden nie nackt: schneiden und die Reste oben liegen lassen.",
+            "Halten Sie die Bodendecker niedrig, damit sie nicht mit dem Kaffee konkurrieren."
+          ],
+          "cuidado": "Wählen Sie Bodendecker, die nicht an den Kaffeesträuchern hochranken."
+        },
+        "microorganismos": {
+          "titulo": "Beleben Sie den Boden mit Mikroorganismen von der Finca",
+          "para_que": "Hilft, das Bodenleben zurückzugewinnen, wenn wenig Aktivität zu sehen ist.",
+          "como": [
+            "Sammeln Sie Laub mit weißem Schimmel aus einem Wald oder Gehölz der Finca.",
+            "Vermehren Sie es mit Melasse und Kleie, wie es Ihr Berater oder die Feldschule zeigt.",
+            "Bringen Sie es in Wasser gelöst auf den Boden aus, alle anderthalb Monate."
+          ],
+          "cuidado": "Verwenden Sie saubere Gefäße und entsorgen Sie die Mischung, wenn sie faulig riecht."
+        },
+        "no-compactar": {
+          "titulo": "Vermeiden Sie Bodenverdichtung",
+          "para_que": "Ein verdichteter Boden lässt weder Luft noch Wasser durch, und das Leben erstickt.",
+          "como": [
+            "Führen Sie keine Tiere oder Maschinen über die Parzelle, wenn der Boden nass ist.",
+            "Bearbeiten Sie den Boden nicht mehr als nötig.",
+            "Halten Sie Bedeckung oder Laub, damit der Regen ihn nicht verschlägt."
+          ],
+          "cuidado": "Wenn der Boden sehr hart ist, fragen Sie Ihren Berater vor tiefen Bodenarbeiten."
+        },
+        "sombra-regulada": {
+          "titulo": "Erhalten Sie einen regulierten Schatten",
+          "para_que": "Schatten hält die Feuchtigkeit und schützt das Bodenleben vor Hitze.",
+          "como": [
+            "Halten Sie Schattenbäume über die Parzelle verteilt.",
+            "Schneiden Sie den Schatten so, dass genug Licht zum Kaffee kommt."
+          ],
+          "cuidado": "Zu viel Schatten beeinträchtigt auch den Ertrag; finden Sie das Gleichgewicht mit Ihrem Berater."
+        },
+        "croma-de-referencia": {
+          "titulo": "Machen Sie ein Chroma von einem nahen Wald oder Gehölz",
+          "para_que": "Es gibt Ihnen eine Referenz, wie ein unberührter Boden in Ihrer Gegend aussieht.",
+          "como": [
+            "Nehmen Sie eine Probe aus einem benachbarten Wald oder Gehölz, in derselben Tiefe.",
+            "Machen Sie die Chromatografie genau wie für Ihre Parzelle und vergleichen Sie die beiden Fotos."
+          ],
+          "cuidado": "Vergleichen Sie nur mit Böden aus Ihrer eigenen Region."
+        }
+      },
+      "senales": {
+        "buena": "Nach dem Foto sieht der Boden lebendig aus",
+        "mixta": "Nach dem Foto gibt es gute Zeichen und andere, die zu verbessern sind",
+        "atencion": "Nach dem Foto gibt es Zeichen von Erschöpfung"
+      },
+      "certezas": {
+        "baja": "Geringe Sicherheit: es ist eine Möglichkeit, und es gibt andere Erklärungen.",
+        "media": "Mittlere Sicherheit: nach dem Gesehenen wahrscheinlich, sollte aber bestätigt werden."
+      },
+      "descargo_corto": "Diese Lesung beruht auf einem Foto und dient nur der Orientierung. Sie ersetzt keine Laboranalyse und sagt nichts über die Qualität Ihres Kaffees aus.",
+      "mandatory_disclaimer": "Dieser Bericht ist eine qualitative, visuelle, KI-gestützte Lesung; er ist keine wissenschaftliche Messung und ersetzt keine Laboranalyse. Die Pfeiffer-Chromatografie hat in der strengsten verfügbaren Studie (Ford et al., 2021, Geoderma, n=343) keinen konsistenten und reproduzierbaren Zusammenhang zwischen ihren Mustern und dem tatsächlichen Bodenzustand gezeigt, und es gibt keinen wissenschaftlichen Beleg für einen Zusammenhang mit der sensorischen Qualität des Kaffees. Die Beobachtungen müssen vor wesentlichen Bewirtschaftungsentscheidungen mit einer konventionellen Laboranalyse abgeglichen werden.",
+      "etiqueta_nivel": {
+        "A": "Begutachtete Evidenz mit begrenzter Reichweite",
+        "B": "Von einer institutionellen oder akademischen Quelle berichtet",
+        "C": "Praxiskriterium, nicht validiert"
+      },
+      "prohibido_nombrar": [
+        "Kalium",
+        "Phosphor",
+        "Phosphat",
+        "Magnesium",
+        "Calcium",
+        "Kalzium",
+        "pH",
+        "Säure",
+        "Stickstoff",
+        "Bor",
+        "Zink"
+      ],
+      "palabras_tecnicas_prohibidas": [
+        "Pfeiffer",
+        "Ford",
+        "Kokornaczyk",
+        "Radialität",
+        "CIELAB",
+        "Entropie",
+        "Index",
+        "Spike",
+        "enzymatisch",
+        "morpholog"
+      ],
+      "regional": {
+        "andisoles_eje_cafetero": {
+          "expected_baseline": "breite organische Zonen und intensive Färbung durch die Natur des Bodens (viel organische Substanz, Allophan); NICHT automatisch guter Bewirtschaftung zuschreiben. In Böden mit viel Ton und organischer Substanz kann die Front mit dem Standardprotokoll ihre Entwicklung nicht abschließen: ein kurzes Chroma ist eine Frage des Protokolls, nicht der Lesung",
+          "rule": "nur mit Chromas derselben Finca oder Bodenregion vergleichen"
+        },
+        "sedimentarios_metamorficos": {
+          "expected_baseline": "geringere organische Substanz als Ausgangslage; möglicherweise blassere Chromas, ohne dass dies Degradation bedeutet. Die Blässe hängt ebenso von Verdünnung und Papier wie vom Boden ab",
+          "rule": "nur mit Chromas derselben Finca oder Bodenregion vergleichen"
+        },
+        "unknown_region": {
+          "rule": "ist die Region unbekannt, jede Ableitung einer Ausgangslage weglassen und dies im Bericht ausdrücklich sagen"
+        }
+      },
+      "sin_region": "Keine regionale Ausgangslage angewendet: ",
+      "gate": {
+        "reject_if": [
+          "es wird kein kreisförmiges Muster erkannt",
+          "das Foto ist verwackelt oder unscharf (geringe Schärfe über dem Chroma)",
+          "das Chroma misst im Originalfoto weniger als 500 Pixel Durchmesser",
+          "der äußere Rand des Chromas ist abgeschnitten",
+          "der Hintergrund ist nicht hell oder das Licht gibt einen Farbstich",
+          "die Kamera war nicht parallel zum Papier: das Chroma erscheint als Ellipse"
+        ],
+        "not_rejected": "Der Anteil des Bildausschnitts, den das Chroma einnimmt, wird angegeben, führt aber nicht zur Ablehnung: bei 15-cm-Papier nimmt das Chroma höchstens die Hälfte des Bildes ein, und 108 Laboraufnahmen (Martins et al. 2026) liegen zwischen 25 und 39 %.",
+        "on_reject": "das ganze Papier mit sichtbarem Rand, Kamera parallel zum Papier, diffuses Licht ohne Blitz, matt-weißer Hintergrund, das Chroma mit mindestens 1.000 Pixel Durchmesser (näher herangehen und die Kamera benutzen, keinen Screenshot und kein per Chat weitergeleitetes Foto) und ohne Notizen darauf"
+      },
+      "ford": {
+        "caveat": "In 343 Proben variierten die Merkmale NICHT konsistent mit dem Bodenzustand. Als morphologischen Deskriptor verwenden, nicht als Qualitätsnote.",
+        "reporting_rule": "Als „gestützte visuelle Schätzung“ mit Spanne angeben (z. B. 3–4), nie als Messung."
+      },
+      "analisis_cuantitativo": {
+        "que_es": "Chemische Bodenanalyse aus dem Labor (in Kolumbien meist die des Nationalen Kaffeeverbands über Cenicafé oder eines Universitäts- oder Agrosavia-Labors). Sie misst, was das Foto nicht sieht: Säure (pH), organische Substanz und Nährstoffe.",
+        "campos": {
+          "ph": "pH",
+          "mo": "Organische Substanz",
+          "n": "Gesamtstickstoff",
+          "p": "Verfügbarer Phosphor",
+          "k": "Kalium",
+          "ca": "Calcium",
+          "mg": "Magnesium"
+        }
+      }
+    }
   }
 }

@@ -19,6 +19,36 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.39] — 2026-09-13 (commit pendiente)
+
+- **Añadido**: el Lector de Cromatografía habla **español, inglés y alemán**. Conmutador ES · EN · DE en la cabecera
+  (se recuerda en el navegador); la interfaz entera, los diálogos y las definiciones salen de diccionarios completos; la
+  lectura del modelo se pide en ese idioma (prompt `croma-prompt-1.8`) y la validación aplica léxicos por idioma
+  (prohibiciones, duda, coherencia con la radialidad, zonas) más el español. Lo que el servidor pone por su cuenta
+  (catálogo de prácticas, señales, certezas, descargos, etiquetas de nivel, reglas regionales, compuerta) sale del
+  bloque `i18n` de las **reglas v2.4**. Una lectura con campos en español cuando se pidió otro idioma se rechaza.
+- **Añadido**: **análisis cuantitativo de laboratorio** (pH, materia orgánica, N, P, K, Ca, Mg, laboratorio y fecha) en
+  un acordeón paralelo a «Más datos», con la explicación de qué es (el examen que suele hacer la Federación a través de
+  Cenicafé). Se guarda con el trabajo, sale en el informe del productor como tabla con sus propios valores, viaja al
+  modelo marcado como dato del laboratorio y solo alimenta un campo técnico nuevo, `contraste_laboratorio`, que la
+  validación exige cuando hay análisis, prohíbe cuando no lo hay, y rechaza si califica los valores («pH bajo»,
+  «moderate organic matter») o mezcla la taza. La cara del productor sigue sin nombrar nutrientes ni acidez.
+- **Añadido**: **«Preparada por»** opcional en el informe del productor: casilla, nombre de la cuenta por defecto (la ruta
+  de fincas devuelve `cuenta.nombre` desde `profiles.full_name`) y editable. No viaja al modelo y solo se guarda si se
+  marca.
+- **Añadido**: botones **«i» de definiciones** en la compuerta, los rasgos medidos, la escala de Ford, la certeza y la
+  señal: un diálogo con qué es, la ecuación tal como la calcula el motor, la leyenda de símbolos y el rango, en los
+  tres idiomas.
+- **Cambiado**: los PDF impresos llevan cabecera explícita **«Colombian Trading Company SAS»**, pie con **NIT
+  901.483.425-7 · ctcexport.com** y **«Página n de N»** (cajas de margen `@page`, Chrome y Edge; el pie del documento
+  sigue en cualquier navegador).
+- **Cambiado**: el «i» verde del laboratorio es ahora el botón **«Bibliografía y metodología»**, en su propia barra
+  encima de «Imprimir feedback (PDF)».
+- **Corregido**: el patrón de palabras vetadas tomaba «photo» por «pH»; los tokens cortos exigen fin de palabra. Una
+  fuente C que **niega** la validación por pares ya no se rechaza.
+- **Docs**: PDF de metodología edición 1.1 regenerados; `qa-cromatografia-modelo` acepta `[idioma] [lab]`; el guardián
+  `qa-cromatografia` sube a **271** comprobaciones (paridad de diccionarios, léxicos, contraste, PDF, definiciones).
+
 ## [V5.38] — 2026-09-13 (commit 6fd3187)
 
 - **Cambiado**: el Lector de Cromatografía usa en modo oscuro **el morado claro de CTCX** (fondo `#451D96`, tarjetas

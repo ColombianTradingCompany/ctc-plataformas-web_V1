@@ -16,6 +16,10 @@ import { puedeAbrir } from "@/lib/tools/accesoHerramienta";
 // CHERRY PICKED: `?superficie=cp` responde `disponible: false` sin consultar. La
 // herramienta además lo detecta por la ruta de la concha; las dos cosas a la
 // vez porque la segunda es del navegador y la primera no.
+//
+// V5.39: también devuelve `cuenta.nombre` (el `full_name` del perfil) para
+// prellenar «Preparada por» en el informe del productor, que es opcional y se
+// puede cambiar. Solo el nombre: ni correo ni documento.
 
 const TOOL_ID = "cromatografia-suelo";
 
@@ -50,15 +54,19 @@ export async function GET(request: NextRequest) {
   if (!veredicto.abre) return responder({ disponible: false, motivo: veredicto.motivo, fincas: [] }, 403);
 
   // La propiedad va en la consulta: solo las fincas de ESTA cuenta.
-  const { data, error } = await service
-    .from("fincas")
-    .select("id, name, municipio, departamento, altitude_m, status, finca_parcelas(id, name, position)")
-    .eq("producer_id", user.id)
-    .neq("status", "rejected")
-    .order("created_at", { ascending: true });
+  const [{ data, error }, { data: perfil }] = await Promise.all([
+    service
+      .from("fincas")
+      .select("id, name, municipio, departamento, altitude_m, status, finca_parcelas(id, name, position)")
+      .eq("producer_id", user.id)
+      .neq("status", "rejected")
+      .order("created_at", { ascending: true }),
+    service.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+  ]);
+  const cuenta = { nombre: String((perfil as { full_name?: string | null } | null)?.full_name ?? "").trim() };
   if (error) {
     console.error("[cromatografia/fincas]", error.message);
-    return responder({ disponible: false, motivo: "error", fincas: [] }, 500);
+    return responder({ disponible: false, motivo: "error", fincas: [], cuenta }, 500);
   }
 
   const fincas = ((data as FilaFinca[] | null) ?? []).map((f) => ({
@@ -70,5 +78,5 @@ export async function GET(request: NextRequest) {
     pendiente: f.status !== "approved",
     parcelas: (f.finca_parcelas ?? []).sort((a, b) => a.position - b.position).map((p) => ({ id: p.id, nombre: p.name })),
   }));
-  return responder({ disponible: fincas.length > 0, motivo: fincas.length ? null : "sin-fincas", fincas });
+  return responder({ disponible: fincas.length > 0, motivo: fincas.length ? null : "sin-fincas", fincas, cuenta });
 }

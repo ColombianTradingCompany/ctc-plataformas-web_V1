@@ -195,3 +195,15 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   recursos y tres PDF de metodología con marca de agua (`assets/cromatografia-docs/`, `scripts/build-cromatografia-docs.mjs`).
 (commit: 6fd3187)
 
+## [2026-09-13] V5.39 · Cromatografía en tres idiomas, análisis de laboratorio declarado y PDF con razón social (herramientas-cafe)
+- Para la ficha DICT `cromatografia` del wrap V43: conmutador ES · EN · DE; diccionarios en el HTML (`T.es/en/de`) y
+  bloque `i18n` en las reglas v2.4; el prompt 1.8 pide el idioma y `validarSalida` aplica léxicos por idioma y rechaza
+  la mezcla (`pareceEspanol`). **Traza nueva** «Del análisis de laboratorio al contraste técnico»: acordeón
+  «Análisis cuantitativo» → `contexto.analisis_cuantitativo` (saneado con los rangos de las reglas) → bloque «DATO del
+  laboratorio» en el mensaje del usuario → campo `contraste_laboratorio` (obligatorio con análisis, descartado sin él,
+  sin calificar valores) → cara del laboratorio; el productor ve su tabla, nunca nutrientes en la lectura.
+- «Preparada por» (`profiles.full_name` vía `api/herramientas/cromatografia/fincas`, `cuenta.nombre`), «i» de
+  definiciones con ecuación (`DEF` en el HTML), PDF con cabecera «Colombian Trading Company SAS», NIT y «Página n de N»
+  (`@page` con cajas de margen inyectadas al imprimir), botón «Bibliografía y metodología». Guardián 271.
+(commit: pendiente)
+

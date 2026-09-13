@@ -32,7 +32,7 @@ import {
   letrasDeEvidencia,
   reglaRegional,
 } from "../src/lib/tools/cromatografia/prompt.ts";
-import { claimsProhibidos, extraerJson, validarSalida, ETIQUETA_NIVEL } from "../src/lib/tools/cromatografia/salida.ts";
+import { certezaDe, claimsProhibidos, extraerJson, validarSalida, ETIQUETA_NIVEL } from "../src/lib/tools/cromatografia/salida.ts";
 
 let ok = 0;
 const fallos = [];
@@ -283,9 +283,9 @@ const buena = () => ({
   productor: {
     senal: "mixta",
     resumen: "Según la foto, su suelo parece tener vida en la parte de afuera, pero el centro se ve muy blanco y puede que haya abono sin descomponer.",
-    hallazgos: [
-      { titulo: "Centro muy blanco", explicacion: "Puede que haya abono fresco o químicos que se disuelven rápido.", basado_en: ["i1"] },
-      { titulo: "Buena vida en el borde", explicacion: "Se ven rayas hacia afuera, una señal de actividad en el suelo.", basado_en: ["i2"] },
+    conjeturas: [
+      { titulo: "Centro muy blanco", lo_que_se_ve: "El centro se ve muy blanco y con el borde marcado.", conjetura: "Puede que haya abono fresco o químicos que se disuelven rápido.", otra_posibilidad: "", que_implica: "Si es así, parte del abono no está alimentando la vida del suelo.", basado_en: ["i1"] },
+      { titulo: "Buena vida en el borde", lo_que_se_ve: "Se ven rayas que salen hacia el borde.", conjetura: "Parece que hay actividad de vida en el suelo.", otra_posibilidad: "También podría venir del abono reciente.", que_implica: "Si es así, el suelo está respondiendo al manejo.", basado_en: ["i2"] },
     ],
     acciones: [
       { practica: "evitar-abono-crudo", por_que: "El centro blanco puede venir de abono sin descomponer.", prioridad: "alta", basado_en: ["i1"] },
@@ -321,6 +321,11 @@ mal("un % de materia orgánica", (x) => (x.interpretaciones[0].lectura = "sugier
 mal("«certifica»", (x) => (x.descripcion_visual += " Este análisis certifica un suelo sano y vivo."));
 mal("lectura categórica", (x) => (x.interpretaciones[0].lectura = "el suelo tiene exceso de nitrógeno"));
 mal("fuente inventada", (x) => (x.interpretaciones[0].fuente = "Wikipedia"));
+const dosFuentes = validarSalida((() => { const x = buena(); x.interpretaciones[1].fuente = "Kokornaczyk et al. 2016 (n=16); Graciano et al. 2020 (n=12)"; x.interpretaciones[1].nivel = "A/B"; return x; })(), reglas, RI, regSant);
+check("niveles: dos fuentes con nivel «A/B» se aceptan con el más conservador (B) y quedan anotadas", dosFuentes.ok && dosFuentes.reporte.interpretaciones[1].nivel === "B" && dosFuentes.reporte.interpretaciones[1].fuente.includes(" · ") && dosFuentes.reporte.ajustes.some((a) => a.includes("más conservador")), dosFuentes.ok ? "" : dosFuentes.errores.join(" | "));
+mal("niveles: dos fuentes presentadas con la mejor letra (Kokornaczyk; Restrepo como A)", (x) => { x.interpretaciones[1].fuente = "Kokornaczyk et al. 2016; Restrepo/Pinheiro"; x.interpretaciones[1].nivel = "A"; });
+mal("niveles: una de las dos fuentes inventada", (x) => { x.interpretaciones[1].fuente = "Kokornaczyk et al. 2016; Wikipedia"; x.interpretaciones[1].nivel = "A"; });
+mal("niveles: un nivel que no es A, B ni C («Alta»)", (x) => (x.interpretaciones[1].nivel = "Alta"));
 mal("Restrepo/Pinheiro presentado como nivel A", (x) => (x.interpretaciones[2].nivel = "A"));
 mal("observación vacía", (x) => (x.interpretaciones[0].observacion = ""));
 mal("Ford como número suelto", (x) => (x.escala_ford.canales.rango = 4));
@@ -334,6 +339,7 @@ mal("radialidad 0,7 con canales 1–2", (x) => (x.escala_ford.canales.rango = [1
 mal("nivel C presentado como institucional", (x) => (x.interpretaciones[2].lectura = "en manuales institucionales se asocia con materia orgánica humificada"));
 mal("nivel C presentado como estudio con n", (x) => (x.interpretaciones[2].lectura = "estudios con n=16 reportan materia orgánica humificada"));
 check("prompt: pide no escoger la lectura favorable cuando hay dos patrones", sistemaCaldas.includes("no escojas la favorable"));
+check("prompt: lista literal de palabras técnicas prohibidas para el productor", reglas.lenguaje_productor.palabras_tecnicas_prohibidas.every((w) => sistemaCaldas.includes(w)) && sistemaCaldas.includes("Tampoco uses estas palabras técnicas"));
 check("prompt: pide no cambiar plazos ni cantidades del catálogo", sistemaCaldas.includes("No cambies los plazos ni las cantidades"));
 check("prompt: lista literal de palabras que la cara del productor no puede escribir", reglas.lenguaje_productor.prohibido_nombrar.every((w) => sistemaCaldas.includes(w)) && sistemaCaldas.includes("NO escribas ninguna de estas palabras"));
 
@@ -370,25 +376,34 @@ check("región desconocida: el reporte dice que no aplicó línea base", sinRegi
 if (vb.ok) {
   const pr = vb.reporte.productor;
   check("productor: la señal trae su texto de las reglas", pr.senal === "mixta" && pr.senal_texto === reglas.lenguaje_productor.senales.mixta);
-  check("productor: ids estables para el feedback (h1…, a1…)", pr.hallazgos[0].id === "h1" && pr.acciones[0].id === "a1");
-  check("productor: el cómo de cada acción sale del catálogo, no del modelo", pr.acciones[0].como.join() === reglas.practicas_de_manejo.find((p) => p.id === "evitar-abono-crudo").como.join());
+  check("productor: ids estables para el feedback (c1…, a1…, k1…)", pr.conjeturas[0].id === "c1" && pr.acciones[0].id === "a1" && pr.confirmar[0].id === "k1");
+  check("productor: la certeza la calcula el servidor (i1 B baja → baja; i2 A media → media)", pr.conjeturas[0].certeza === "baja" && pr.conjeturas[1].certeza === "media" && pr.conjeturas[1].certeza_texto === reglas.lenguaje_productor.certezas.media);
+  check("productor: cada conjetura trae lo que se ve, la conjetura y lo que implica", pr.conjeturas.every((c) => c.lo_que_se_ve && c.conjetura && c.que_implica));
+  check("productor: el cómo de cada acción sale del catálogo, no del modelo", pr.acciones.find((a) => a.practica === "evitar-abono-crudo").como.join() === reglas.practicas_de_manejo.find((p) => p.id === "evitar-abono-crudo").como.join());
   const siempre = reglas.practicas_de_manejo.filter((p) => p.siempre).map((p) => p.id);
-  check("productor: laboratorio y repetir el croma van siempre, al final y marcados", siempre.every((id) => pr.acciones.some((a) => a.practica === id && a.forzada)) && pr.acciones.at(-1).forzada);
+  check("productor: laboratorio y repetir el croma no van entre las acciones sino en «confirmar»", pr.acciones.every((a) => !siempre.includes(a.practica)) && siempre.every((id) => pr.confirmar.some((a) => a.practica === id)));
+  check("productor: la primera acción es de prioridad alta", pr.acciones[0].prioridad === "alta");
   check("productor: el descargo corto sale de las reglas", pr.descargo === reglas.lenguaje_productor.descargo_corto);
-  check("productor: cada hallazgo apunta a interpretaciones técnicas", pr.hallazgos.every((h) => h.basado_en.length && h.basado_en.every((id) => /^i\d+$/.test(id))));
 }
-mal("productor: nombra el potasio", (x) => (x.productor.hallazgos[0].explicacion = "Parece que falta potasio en el suelo."));
-mal("productor: nombra la acidez", (x) => (x.productor.resumen = "Según la foto, puede que su suelo tenga mucha acidez y poca vida."));
-mal("productor: usa jerga técnica (radialidad)", (x) => (x.productor.hallazgos[1].explicacion = "Se ve buena radialidad en la zona de afuera."));
+const eligeLab = validarSalida((() => { const x = buena(); x.productor.acciones.unshift({ practica: "analisis-laboratorio", por_que: "El laboratorio le dirá la acidez y los nutrientes que la foto no ve.", prioridad: "alta", basado_en: ["i1"] }); return x; })(), reglas, RI, regSant);
+check("productor: si el modelo elige el laboratorio, pasa a «confirmar» con su porqué (y ahí puede nombrar la acidez)", eligeLab.ok && eligeLab.reporte.productor.acciones[0].practica !== "analisis-laboratorio" && eligeLab.reporte.productor.confirmar.some((a) => a.practica === "analisis-laboratorio" && !a.forzada), eligeLab.ok ? "" : eligeLab.errores.join(" | "));
+const prioridades = validarSalida((() => { const x = buena(); x.productor.acciones = [{ practica: "cobertura-viva", por_que: "Cubrir el suelo ayuda a la vida que se ve.", prioridad: "baja", basado_en: ["i2"] }, { practica: "evitar-abono-crudo", por_que: "El centro blanco puede venir de abono crudo.", prioridad: "alta", basado_en: ["i1"] }]; return x; })(), reglas, RI, regSant);
+check("productor: el servidor ordena las acciones por prioridad", prioridades.ok && prioridades.reporte.productor.acciones.map((a) => a.prioridad).join() === "alta,baja", prioridades.ok ? "" : prioridades.errores.join(" | "));
+check("productor: certezaDe nunca da más que media", certezaDe(["i1", "i2"], [{ id: "i1", nivel: "A", confianza: "media" }, { id: "i2", nivel: "A", confianza: "media" }]) === "media" && certezaDe(["i1"], [{ id: "i1", nivel: "C", confianza: "media" }]) === "baja");
+mal("productor: solo laboratorio, sin práctica de manejo", (x) => (x.productor.acciones = [{ practica: "analisis-laboratorio", por_que: "Para confirmar lo que se ve.", prioridad: "alta", basado_en: ["i1"] }]));
+mal("productor: nombra el potasio", (x) => (x.productor.conjeturas[0].conjetura = "Parece que falta potasio en el suelo."));
+mal("productor: nombra la acidez en lo que implica", (x) => (x.productor.conjeturas[1].que_implica = "Si es así, puede que haya mucha acidez."));
+mal("productor: usa jerga técnica (radialidad)", (x) => (x.productor.conjeturas[1].lo_que_se_ve = "Se ve buena radialidad en la zona de afuera."));
 mal("productor: cita a Ford", (x) => (x.productor.resumen = "Según la foto y la escala de Ford, su suelo parece estar bien."));
 mal("productor: resumen categórico", (x) => (x.productor.resumen = "Su suelo está enfermo y tiene que cambiar todo el manejo de inmediato."));
+mal("productor: conjetura categórica", (x) => (x.productor.conjeturas[0].conjetura = "Hay abono fresco sin descomponer."));
+mal("productor: conjetura sin lo que implica", (x) => (x.productor.conjeturas[0].que_implica = ""));
+mal("productor: una sola conjetura", (x) => (x.productor.conjeturas = x.productor.conjeturas.slice(0, 1)));
 mal("productor: práctica inventada", (x) => (x.productor.acciones[0].practica = "aplicar-urea"));
-mal("productor: hallazgo sin sustento técnico", (x) => (x.productor.hallazgos[0].basado_en = ["i9"]));
+mal("productor: conjetura sin sustento técnico", (x) => (x.productor.conjeturas[0].basado_en = ["i9"]));
 mal("productor: señal fuera de la escala", (x) => (x.productor.senal = "excelente"));
 mal("productor: vínculo con la taza", (x) => (x.productor.acciones[1].por_que = "Así mejora el sabor de su café."));
 mal("productor: sin cara del productor", (x) => delete x.productor);
-const labConAcidez = validarSalida((() => { const x = buena(); x.productor.acciones.push({ practica: "analisis-laboratorio", por_que: "El laboratorio le dirá la acidez y los nutrientes que la foto no ve.", prioridad: "alta", basado_en: ["i1"] }); return x; })(), reglas, RI, regSant);
-check("productor: el porqué del análisis de laboratorio sí puede nombrar la acidez", labConAcidez.ok, labConAcidez.ok ? "" : labConAcidez.errores.join(" | "));
 mal("productor: otra acción que nombra la acidez", (x) => (x.productor.acciones[1].por_que = "La cobertura baja la acidez del suelo."));
 
 check("claims: «n=343» es lenguaje permitido de nivel A", claimsProhibidos("estudios con n=343 reportan").length === 0);
@@ -437,6 +452,8 @@ check("html: el feedback exportado usa el estado sin finca si no hay consentimie
 check("html: firma CTCX en el pie y en el impreso", html.includes("Herramienta propiedad de CTCX · Colombian Trading Company S.A.S.") && /class="impreso-pie"/.test(html) && html.includes("/tools/assets/ctcx-logo.png"));
 check("html: el informe del productor pinta el cómo desde la lectura (catálogo), no escrito a mano", html.includes("a.como") && !html.includes("Aplique compost o bocashi"));
 check("html: los estados guardados de la versión anterior se migran", /esquema === 1/.test(html));
+check("html: conjeturas con certeza y un bloque aparte para confirmar, después de las acciones", /id="pConjeturas"/.test(html) && html.indexOf('id="pAcciones"') < html.indexOf('id="pConfirmar"') && html.includes("Certeza "));
+check("html: las lecturas de V5.35 (hallazgos) se siguen pintando", html.includes("P.hallazgos"));
 check("html: emite el análisis sin nombre de finca", html.includes('CTC.emitir("analisis.generado"') && !/emitir\("analisis\.generado",[^)]*finca/.test(html));
 
 if (fallos.length) {

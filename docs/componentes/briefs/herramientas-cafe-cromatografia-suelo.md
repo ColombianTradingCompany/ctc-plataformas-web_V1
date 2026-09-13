@@ -286,3 +286,20 @@ correctivos. `validarSalida` rechaza esas palabras en la cara del productor.
 **Pendiente.** Que un agrónomo revise el catálogo y el tono de tres informes reales; guardar los Feedback Técnicos en
 la base cuando haya volumen; restringir la cara del laboratorio a técnicos con permiso.
 
+---
+
+## Conjeturas con certeza y el laboratorio al final (V5.36, 2026-09-13)
+
+**Lo que pidió el owner.** Recomendar un experto o un laboratorio siempre tiene sentido, pero no puede ser el primer
+consejo. Sin inventar soluciones, la lectura debe ampliarse y dar conjeturas con su nivel de certeza y lo que
+implicarían.
+
+**Cómo quedó.**
+- Cada conjetura dice lo que se ve, lo que podría significar, otra explicación posible (solo si las reglas la admiten)
+  y lo que implicaría para el lote si es cierta.
+- La certeza la calcula el servidor: media solo si alguna interpretación técnica que la sustenta tiene confianza media
+  y evidencia A o B; si no, baja. Nunca alta, porque el método no lo admite. Así el modelo no puede inflarla, y el
+  técnico ve en la cara del laboratorio de qué interpretaciones sale.
+- «Qué puede hacer» trae prácticas de manejo ordenadas por prioridad (al menos una). El laboratorio y repetir el croma
+  van al final, en «Para confirmar y seguir el avance», plegados; en el PDF salen abiertos.
+

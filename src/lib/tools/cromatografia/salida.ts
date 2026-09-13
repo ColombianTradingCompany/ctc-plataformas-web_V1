@@ -37,7 +37,21 @@ export type Interpretacion = {
 export type Recomendacion = { id: string; accion: string; justificacion: string; prioridad: "alta" | "media" | "baja" };
 
 export type Senal = "buena" | "mixta" | "atencion";
-export type Hallazgo = { id: string; titulo: string; explicacion: string; basado_en: string[] };
+export type Certeza = "baja" | "media";
+/** Una conjetura para el productor: lo que se ve, lo que podría significar, otra
+ *  explicación posible y lo que implicaría. La certeza NO la decide el modelo: se
+ *  calcula desde las interpretaciones técnicas que la sustentan (`certezaDe`). */
+export type Conjetura = {
+  id: string;
+  titulo: string;
+  lo_que_se_ve: string;
+  conjetura: string;
+  otra_posibilidad: string;
+  que_implica: string;
+  certeza: Certeza;
+  certeza_texto: string;
+  basado_en: string[];
+};
 export type AccionProductor = {
   id: string;
   practica: string;
@@ -52,15 +66,24 @@ export type AccionProductor = {
   /** La puso el servidor porque la práctica va siempre, no el modelo. */
   forzada: boolean;
 };
-/** La cara del productor (v2.2). Todo lo que dice apunta a interpretaciones técnicas. */
+/** La cara del productor (v2.3). Todo lo que dice apunta a interpretaciones técnicas. */
 export type InformeProductor = {
   senal: Senal;
   senal_texto: string;
   resumen: string;
-  hallazgos: Hallazgo[];
+  conjeturas: Conjetura[];
+  /** Prácticas de manejo, ordenadas por prioridad. */
   acciones: AccionProductor[];
+  /** Laboratorio y repetir el croma: siempre, pero al final (owner, 2026-09-13). */
+  confirmar: AccionProductor[];
   descargo: string;
 };
+
+/** Media solo si alguna interpretación que la sustenta tiene confianza media y
+ *  evidencia A o B; si no, baja. El método no admite «alta». */
+export function certezaDe(ids: string[], interpretaciones: Interpretacion[]): Certeza {
+  return interpretaciones.some((it) => ids.includes(it.id) && it.confianza === "media" && (it.nivel === "A" || it.nivel === "B")) ? "media" : "baja";
+}
 
 export type Reporte = {
   descripcion_visual: string;
@@ -221,7 +244,14 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     const pos = `interpretaciones[${i}]`;
     const observacion = str(it?.observacion);
     const lectura = str(it?.lectura);
-    const nivel = str(it?.nivel).toUpperCase() as Nivel;
+    // Una interpretación puede citar varias fuentes («Kokornaczyk…; Graciano…») con
+    // un nivel compuesto («A/B»). Se acepta, pero con el nivel MÁS CONSERVADOR: una
+    // lectura nunca se presenta con más evidencia que su fuente más débil.
+    const nivelBruto = str(it?.nivel).toUpperCase();
+    const nivelBienFormado = /^[ABC](\s*[/,+Y]\s*[ABC])*$/.test(nivelBruto);
+    const letras = nivelBienFormado ? ([...new Set(nivelBruto.match(/[ABC]/g) ?? [])] as Nivel[]) : [];
+    const nivel = (letras.length ? letras.reduce((a, b) => (ORDEN[b] > ORDEN[a] ? b : a)) : "") as Nivel;
+    if (letras.length > 1) ajustes.push(`La lectura ${i + 1} citaba los niveles ${letras.join("/")}; se toma el más conservador (${nivel}).`);
     let confianza = str(it?.confianza).toLowerCase();
     if (!observacion) errores.push(`${pos}.observacion está vacía: sin observación concreta no hay lectura.`);
     if (!lectura) errores.push(`${pos}.lectura está vacía.`);
@@ -232,10 +262,21 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
       errores.push(`${pos}: una fuente de nivel C no se presenta como institucional ni como estudio revisado por pares.`);
     }
     if (!["A", "B", "C"].includes(nivel)) errores.push(`${pos}.nivel debe ser A, B o C.`);
-    const f = resolverFuente(str(it?.fuente), permitidas);
-    if (!f) errores.push(`${pos}.fuente «${str(it?.fuente)}» no está en la lista de fuentes permitidas.`);
-    else if (["A", "B", "C"].includes(nivel) && ORDEN[nivel] < ORDEN[f.mejorNivel]) {
-      errores.push(`${pos}: la fuente «${f.fuente}» no alcanza el nivel ${nivel} en las reglas (máximo ${f.mejorNivel}).`);
+    const citadas = str(it?.fuente).split(/\s*;\s*|\s+·\s+/).filter(Boolean);
+    const resueltas = citadas.map((c) => resolverFuente(c, permitidas));
+    const f: FuentePermitida | null =
+      citadas.length && resueltas.every(Boolean)
+        ? {
+            fuente: (resueltas as FuentePermitida[]).map((r) => r.fuente).join(" · "),
+            // El techo de varias fuentes es el de la más débil.
+            mejorNivel: (resueltas as FuentePermitida[]).map((r) => r.mejorNivel).reduce((a, b) => (ORDEN[b] > ORDEN[a] ? b : a)),
+          }
+        : null;
+    if (!f) {
+      const malas = citadas.filter((_, k) => !resueltas[k]);
+      errores.push(`${pos}.fuente «${malas.join("; ") || str(it?.fuente)}» no está en la lista de fuentes permitidas.`);
+    } else if (["A", "B", "C"].includes(nivel) && ORDEN[nivel] < ORDEN[f.mejorNivel]) {
+      errores.push(`${pos}: «${f.fuente}» no alcanza el nivel ${nivel} en las reglas (máximo ${f.mejorNivel}).`);
     }
     if (confianza === "alta") {
       confianza = "media";
@@ -265,9 +306,10 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     return { id: `r${i + 1}`, accion: str(r?.accion), justificacion: str(r?.justificacion), prioridad: prioridad as Recomendacion["prioridad"] };
   });
 
-  // 4b · La cara del productor. Todo lo que diga tiene que apuntar a una
-  // interpretación técnica que exista; las acciones salen del catálogo de las
-  // reglas (el cómo lo pone el servidor, nunca el modelo).
+  // 4b · La cara del productor (v2.3). Conjeturas con su certeza y lo que
+  // implicarían; prácticas de manejo por prioridad; y lo que confirma
+  // (laboratorio, repetir el croma) en su propio bloque al final: siempre está,
+  // pero no es el primer consejo. El cómo de cada práctica lo pone el servidor.
   const lp = reglas.lenguaje_productor;
   const catalogo = new Map<string, PracticaDeManejo>((reglas.practicas_de_manejo ?? []).map((p) => [p.id, p]));
   const idsTecnicos = new Set(interpretaciones.map((it) => it.id));
@@ -282,18 +324,36 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     if (!ids.length || ids.some((id) => !idsTecnicos.has(id))) errores.push(`${pos}.basado_en debe nombrar interpretaciones que existan (i1, i2…).`);
     return ids.filter((id) => idsTecnicos.has(id));
   };
-  const hallazgosBrutos = Array.isArray(prod.hallazgos) ? (prod.hallazgos as Record<string, unknown>[]) : [];
-  if (hallazgosBrutos.length < 1 || hallazgosBrutos.length > 4) errores.push("productor.hallazgos debe traer de 1 a 4 hallazgos.");
-  const hallazgos: Hallazgo[] = hallazgosBrutos.slice(0, 4).map((h, i) => {
-    const pos = `productor.hallazgos[${i}]`;
-    if (!str(h?.titulo) || !str(h?.explicacion)) errores.push(`${pos} necesita titulo y explicacion.`);
-    return { id: `h${i + 1}`, titulo: str(h?.titulo), explicacion: str(h?.explicacion), basado_en: basado(h?.basado_en, pos) };
+
+  const conjeturasBrutas = Array.isArray(prod.conjeturas) ? (prod.conjeturas as Record<string, unknown>[]) : [];
+  if (conjeturasBrutas.length < 2 || conjeturasBrutas.length > 5) errores.push("productor.conjeturas debe traer de 2 a 5 conjeturas.");
+  const conjeturas: Conjetura[] = conjeturasBrutas.slice(0, 5).map((c, i) => {
+    const pos = `productor.conjeturas[${i}]`;
+    for (const campo of ["titulo", "lo_que_se_ve", "conjetura", "que_implica"]) {
+      if (!str(c?.[campo])) errores.push(`${pos}.${campo} está vacío.`);
+    }
+    if (str(c?.conjetura) && !DUDA_SENCILLA.test(str(c?.conjetura))) errores.push(`${pos}.conjetura es categórica: usa puede que, podría o parece.`);
+    const ids = basado(c?.basado_en, pos);
+    const certeza = certezaDe(ids, interpretaciones);
+    return {
+      id: `c${i + 1}`,
+      titulo: str(c?.titulo),
+      lo_que_se_ve: str(c?.lo_que_se_ve),
+      conjetura: str(c?.conjetura),
+      otra_posibilidad: str(c?.otra_posibilidad),
+      que_implica: str(c?.que_implica),
+      certeza,
+      certeza_texto: lp?.certezas?.[certeza] ?? "",
+      basado_en: ids,
+    };
   });
+
   const accionesBrutas = Array.isArray(prod.acciones) ? (prod.acciones as Record<string, unknown>[]) : [];
-  if (accionesBrutas.length > 4) errores.push("productor.acciones trae más de 4 acciones.");
+  if (accionesBrutas.length > 5) errores.push("productor.acciones trae más de 4 prácticas.");
   const elegidas = new Set<string>();
   const acciones: AccionProductor[] = [];
-  accionesBrutas.slice(0, 4).forEach((a, i) => {
+  const confirmar: AccionProductor[] = [];
+  accionesBrutas.slice(0, 5).forEach((a, i) => {
     const pos = `productor.acciones[${i}]`;
     const practica = catalogo.get(str(a?.practica));
     if (!practica) {
@@ -305,18 +365,23 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     if (!["alta", "media", "baja"].includes(prioridad)) errores.push(`${pos}.prioridad debe ser alta, media o baja.`);
     if (elegidas.has(practica.id)) return;
     elegidas.add(practica.id);
-    acciones.push({
+    const accion: AccionProductor = {
       id: "", practica: practica.id, titulo: practica.titulo, por_que: str(a?.por_que), como: practica.como,
       cuidado: practica.cuidado ?? "", fuentes: practica.fuentes, nivel: practica.nivel,
       prioridad: prioridad as AccionProductor["prioridad"], basado_en: basado(a?.basado_en, pos), forzada: false,
-    });
+    };
+    // Si el modelo eligió una de las que confirman, va a su bloque con su porqué.
+    (practica.siempre ? confirmar : acciones).push(accion);
   });
-  // Las que van siempre (laboratorio, repetir el croma), al final, con su propio porqué.
+  if (!acciones.length) errores.push("productor.acciones debe traer al menos una práctica de manejo del catálogo, además del laboratorio y de repetir el croma.");
+  const ORDEN_PRIORIDAD = { alta: 0, media: 1, baja: 2 } as const;
+  acciones.sort((a, b) => (ORDEN_PRIORIDAD[a.prioridad] ?? 3) - (ORDEN_PRIORIDAD[b.prioridad] ?? 3));
   for (const p of reglas.practicas_de_manejo ?? []) {
     if (!p.siempre || elegidas.has(p.id)) continue;
-    acciones.push({ id: "", practica: p.id, titulo: p.titulo, por_que: p.para_que, como: p.como, cuidado: p.cuidado ?? "", fuentes: p.fuentes, nivel: p.nivel, prioridad: "media", basado_en: [], forzada: true });
+    confirmar.push({ id: "", practica: p.id, titulo: p.titulo, por_que: p.para_que, como: p.como, cuidado: p.cuidado ?? "", fuentes: p.fuentes, nivel: p.nivel, prioridad: "media", basado_en: [], forzada: true });
   }
   acciones.forEach((a, i) => (a.id = `a${i + 1}`));
+  confirmar.forEach((a, i) => (a.id = `k${i + 1}`));
 
   // 5 · Contexto regional: si no hay región, lo escribe el servidor.
   let contexto = str(x.contexto_regional_aplicado);
@@ -349,8 +414,10 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
   // es exactamente lo que el laboratorio mira y la foto no.
   const camposProductor: [string, string, string?][] = [
     ["productor.resumen", resumenProductor],
-    ...hallazgos.flatMap((h, i) => [[`productor.hallazgos[${i}].titulo`, h.titulo], [`productor.hallazgos[${i}].explicacion`, h.explicacion]] as [string, string][]),
-    ...acciones.filter((a) => !a.forzada).map((a, i) => [`productor.acciones[${i}].por_que`, a.por_que, a.practica] as [string, string, string]),
+    ...conjeturas.flatMap((c, i) =>
+      (["titulo", "lo_que_se_ve", "conjetura", "otra_posibilidad", "que_implica"] as const).map((k) => [`productor.conjeturas[${i}].${k}`, c[k]] as [string, string])
+    ),
+    ...acciones.concat(confirmar).filter((a) => !a.forzada).map((a, i) => [`productor.acciones[${i}].por_que`, a.por_que, a.practica] as [string, string, string]),
   ];
   for (const [campo, texto, practica] of camposProductor) {
     const hallados = claimsProhibidos(texto);
@@ -415,8 +482,9 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
         senal,
         senal_texto: lp?.senales?.[senal] ?? "",
         resumen: resumenProductor,
-        hallazgos,
+        conjeturas,
         acciones,
+        confirmar,
         descargo: lp?.descargo_corto ?? "",
       },
       limites: reglas.mandatory_disclaimer_es,

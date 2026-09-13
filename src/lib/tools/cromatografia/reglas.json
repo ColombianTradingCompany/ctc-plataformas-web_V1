@@ -1,5 +1,5 @@
 {
-  "$schema_version": "2.2",
+  "$schema_version": "2.3",
   "generated": "2026-09-13",
   "purpose": "Base de conocimiento estructurada para la lectura cualitativa de cromatografías de suelo tipo Pfeiffer en suelos cafeteros. La v2.0 del paquete del owner fue la guía; la v2.1 es la de CTC, corregida contra las fuentes primarias abiertas (reference/html_tools/Analisis Cromatografico/fuentes, verificadas página a página). Cada criterio lleva su nivel de evidencia; el modelo modula su lenguaje según ese nivel.",
   "changelog_v2_1": [
@@ -12,6 +12,10 @@
     "Borde dentado sustituido por la forma de las terminaciones de los picos (escala de Embrapa 455).",
     "Nivel de evidencia por fuente explícito (source_levels); metadatos de protocolo y reglas de comparación nuevos.",
     "Compuerta de imagen: el porcentaje del encuadre ya no rechaza; se exige resolución del croma y cámara paralela al papel."
+  ],
+  "changelog_v2_3": [
+    "La cara del productor lee más: conjeturas con lo que se ve, lo que podría significar, otra posibilidad y lo que implicaría. La certeza de cada una la calcula el sistema desde las interpretaciones técnicas que la sustentan.",
+    "Confirmar con laboratorio y repetir el croma siguen estando siempre, pero en su propio bloque al final: no son el primer consejo (owner, 2026-09-13)."
   ],
   "changelog_v2_2": [
     "Dos caras del reporte: la del productor (sencilla y accionable) y la del laboratorio (técnica). La IA escribe las dos en la misma lectura.",
@@ -130,6 +134,10 @@
     "prohibido_nombrar": ["potasio", "fósforo", "fosfato", "magnesio", "calcio", "pH", "acidez", "nitrógeno", "boro", "zinc"],
     "motivo_prohibido": "La foto de la cromatografía no permite ver acidez ni nutrientes, ni en qué cantidad; eso lo dice el laboratorio.",
     "palabras_tecnicas_prohibidas": ["Pfeiffer", "Ford", "Kokornaczyk", "radialidad", "radiality", "CIELAB", "entropía", "índice", "spike", "enzimática", "morfológic"],
+    "certezas": {
+      "baja": "Certeza baja: es una posibilidad y hay otras explicaciones.",
+      "media": "Certeza media: es probable por lo que se ve, pero conviene confirmarlo."
+    },
     "descargo_corto": "Esta lectura se hace con una foto y es orientativa. No reemplaza un análisis de laboratorio ni dice nada sobre la calidad de su café."
   },
   "mandatory_report_sections": ["descripcion_visual_objetiva", "rasgos_computacionales", "estimacion_escala_ford_con_rango", "interpretacion_tentativa_con_fuente_y_nivel", "recomendaciones_de_manejo", "limites_del_analisis"],

@@ -127,6 +127,20 @@ details>div{padding:0 14px 12px}
 .accion .cuidado{font-size:13.5px;color:var(--warn)}
 .accion .fuente{font-size:12px;color:var(--muted)}
 .recuerde{font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
+.conjeturas{display:grid;gap:10px}
+.conjetura{border:1px solid var(--line);border-left:4px solid var(--lavender);border-radius:12px;padding:12px 14px;background:var(--panel)}
+.conjetura header{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.conjetura header b{font-size:16px;color:var(--purple-deep)}
+.conjetura dl{margin:8px 0 4px;display:grid;grid-template-columns:150px 1fr;gap:5px 12px}
+.conjetura dt{font-weight:600;color:var(--muted);font-size:13.5px}
+.conjetura dd{margin:0}
+@media (max-width:640px){.conjetura dl{grid-template-columns:1fr;gap:2px}}
+.certeza{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border-radius:6px;padding:2px 7px}
+.certeza.media{background:var(--ok-soft);color:var(--ok)}
+.certeza.baja{background:var(--warn-soft);color:var(--warn)}
+.confirmar{display:grid;gap:8px}
+.confirmar details.accion{background:var(--panel);margin:0}
+.confirmar details.accion>div{padding:0 2px 4px}
 /* laboratorio */
 .gate{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
 .gate li{display:flex;gap:8px;align-items:baseline}
@@ -320,10 +334,12 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       <div id="pContenido" hidden>
         <div class="senal" id="pSenal"><span class="punto"></span><div><b id="pSenalTexto"></b><span class="aviso">Lectura orientativa hecha con la foto</span></div></div>
         <p class="resumen" id="pResumen"></p>
-        <h3>Lo que muestra la foto</h3>
-        <ul class="hallazgos" id="pHallazgos"></ul>
+        <h3>Lo que vemos y lo que podría significar</h3>
+        <div class="conjeturas" id="pConjeturas"></div>
         <h3>Qué puede hacer</h3>
         <div class="acciones" id="pAcciones"></div>
+        <h3>Para confirmar y seguir el avance</h3>
+        <div class="confirmar" id="pConfirmar"></div>
         <p class="recuerde" id="pDescargo"></p>
       </div>
       <div class="impreso-pie"><img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"><div id="pPieImpreso"></div></div>
@@ -774,15 +790,27 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
     $("#pSenal").className = "senal " + P.senal;
     $("#pSenalTexto").textContent = P.senal_texto;
     $("#pResumen").textContent = P.resumen;
-    $("#pHallazgos").innerHTML = P.hallazgos.map(function (h) {
-      return "<li><b>" + esc(h.titulo) + "</b><br>" + esc(h.explicacion) + "</li>";
+    // Las lecturas de V5.35 traían «hallazgos» y el laboratorio mezclado con las acciones.
+    var conjeturas = P.conjeturas || (P.hallazgos || []).map(function (h) { return { titulo: h.titulo, lo_que_se_ve: "", conjetura: h.explicacion, otra_posibilidad: "", que_implica: "", certeza: "", certeza_texto: "" }; });
+    var confirmar = P.confirmar || P.acciones.filter(function (a) { return a.forzada || a.practica === "analisis-laboratorio" || a.practica === "repetir-croma"; });
+    var acciones = P.confirmar ? P.acciones : P.acciones.filter(function (a) { return confirmar.indexOf(a) < 0; });
+    $("#pConjeturas").innerHTML = conjeturas.map(function (c) {
+      var filas = [["Lo que se ve", c.lo_que_se_ve], ["Podría significar", c.conjetura], ["También podría ser", c.otra_posibilidad], ["Si es así", c.que_implica]]
+        .filter(function (f) { return f[1]; })
+        .map(function (f) { return "<dt>" + f[0] + "</dt><dd>" + esc(f[1]) + "</dd>"; }).join("");
+      return '<div class="conjetura"><header><b>' + esc(c.titulo) + "</b>" + (c.certeza ? '<span class="certeza ' + esc(c.certeza) + '">Certeza ' + esc(c.certeza) + "</span>" : "") + "</header><dl>" + filas + "</dl>" +
+        (c.certeza_texto ? '<p class="aviso">' + esc(c.certeza_texto) + "</p>" : "") + "</div>";
     }).join("");
-    $("#pAcciones").innerHTML = P.acciones.map(function (a) {
-      return '<div class="accion"><header><b>' + esc(a.titulo) + '</b><span class="prio ' + esc(a.prioridad) + '">Prioridad ' + esc(a.prioridad) + "</span></header>" +
-        "<p>" + esc(a.por_que) + "</p>" +
-        "<ol>" + a.como.map(function (paso) { return "<li>" + esc(paso) + "</li>"; }).join("") + "</ol>" +
+    function pasos(a) {
+      return "<ol>" + a.como.map(function (paso) { return "<li>" + esc(paso) + "</li>"; }).join("") + "</ol>" +
         (a.cuidado ? '<p class="cuidado">Cuidado: ' + esc(a.cuidado) + "</p>" : "") +
-        '<p class="fuente">Fuente: ' + esc(a.fuentes.join(" · ")) + "</p></div>";
+        '<p class="fuente">Fuente: ' + esc(a.fuentes.join(" · ")) + "</p>";
+    }
+    $("#pAcciones").innerHTML = acciones.map(function (a) {
+      return '<div class="accion"><header><b>' + esc(a.titulo) + '</b><span class="prio ' + esc(a.prioridad) + '">Prioridad ' + esc(a.prioridad) + "</span></header><p>" + esc(a.por_que) + "</p>" + pasos(a) + "</div>";
+    }).join("");
+    $("#pConfirmar").innerHTML = confirmar.map(function (a) {
+      return '<details class="accion"><summary>' + esc(a.titulo) + "</summary><div><p>" + esc(a.por_que) + "</p>" + pasos(a) + "</div></details>";
     }).join("");
     $("#pDescargo").textContent = P.descargo;
     $("#pPieImpreso").textContent = "Informe generado con el " + PIE_MARCA + " · " + new Date().toLocaleDateString("es-CO") + " · " + E.sample_id + ". " + P.descargo;
@@ -893,10 +921,14 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
       var P = L.productor;
       $("#rProductor").innerHTML = P ? (
         '<div class="elemento" data-el="productor.resumen"><div class="cab"><span class="id">productor.resumen</span><b>Señal: ' + esc(P.senal) + "</b></div><p>" + esc(P.resumen) + "</p>" + controlFeedback("productor.resumen") + "</div>" +
-        P.hallazgos.map(function (h) {
+        (P.conjeturas || []).map(function (h) {
+          return '<div class="elemento" data-el="' + esc(h.id) + '"><div class="cab"><span class="id">' + esc(h.id) + " ← " + esc(h.basado_en.join(", ")) + "</span><b>" + esc(h.titulo) + '</b><span class="certeza ' + esc(h.certeza) + '">certeza ' + esc(h.certeza) + "</span></div>" +
+            "<p><b>Se ve:</b> " + esc(h.lo_que_se_ve) + "</p><p><b>Conjetura:</b> " + esc(h.conjetura) + "</p>" + (h.otra_posibilidad ? "<p><b>Otra posibilidad:</b> " + esc(h.otra_posibilidad) + "</p>" : "") + "<p><b>Implica:</b> " + esc(h.que_implica) + "</p>" + controlFeedback(h.id) + "</div>";
+        }).join("") +
+        (P.hallazgos || []).map(function (h) {
           return '<div class="elemento" data-el="' + esc(h.id) + '"><div class="cab"><span class="id">' + esc(h.id) + " ← " + esc(h.basado_en.join(", ")) + "</span><b>" + esc(h.titulo) + "</b></div><p>" + esc(h.explicacion) + "</p>" + controlFeedback(h.id) + "</div>";
         }).join("") +
-        P.acciones.map(function (a) {
+        P.acciones.concat(P.confirmar || []).map(function (a) {
           return '<div class="elemento" data-el="' + esc(a.id) + '"><div class="cab"><span class="id">' + esc(a.id) + " · " + esc(a.practica) + (a.basado_en.length ? " ← " + esc(a.basado_en.join(", ")) : "") + (a.forzada ? " · fija" : "") + "</span><b>" + esc(a.titulo) + "</b></div><p>" + esc(a.por_que) + "</p>" + controlFeedback(a.id) + "</div>";
         }).join("")
       ) : '<p class="aviso">Esta lectura es de una versión anterior y no trae informe del productor.</p>';
@@ -983,6 +1015,8 @@ footer.pie .fin{max-width:1040px;margin:0 auto;padding:22px 18px 34px;display:gr
   $("#btnExportarFeedback").addEventListener("click", exportarFeedback);
 
   function imprimir(cara) {
+    // En papel no hay acordeones: lo de «confirmar» se imprime abierto.
+    $$("#informeProductor details").forEach(function (d) { d.setAttribute("open", ""); });
     document.body.dataset.imprime = cara;
     window.print();
   }

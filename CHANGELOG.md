@@ -19,6 +19,20 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.36] — 2026-09-13 (commit pendiente)
+
+- **Cambiado**: el informe del productor del Lector de Cromatografía **lee más y no abre con «vaya al laboratorio»**
+  (owner). Los hallazgos pasan a ser **conjeturas** (de 2 a 5): lo que se ve, lo que podría significar, otra
+  explicación posible y lo que implicaría para el lote, cada una con su **certeza** (baja o media). La certeza no la
+  escribe el modelo: la calcula `certezaDe` desde la confianza y el nivel de evidencia de las interpretaciones
+  técnicas que la sustentan.
+- **Cambiado**: «Qué puede hacer» trae solo prácticas de manejo, ordenadas por prioridad, y al menos una. El análisis de
+  laboratorio y repetir el croma siguen siempre, pero en un bloque aparte al final, «Para confirmar y seguir el
+  avance»; si el modelo los elige, pasan ahí con su porqué. Reglas v2.3 (textos de certeza) y prompt 1.6.
+- **Corregido**: una interpretación que cita dos fuentes («Kokornaczyk…; Graciano…») con nivel «A/B» ya no se rechaza: se acepta con el nivel más conservador y queda anotado; cada fuente debe existir en las reglas. Prompt 1.6 con las listas literales de palabras que la cara del productor no puede usar. Prueba en vivo: 3 de 3 al primer intento, ≈ US$ 0,021 por lectura.
+- **Añadido**: la cara del laboratorio revisa cada conjetura (c1…) y cada práctica para confirmar (k1…); las lecturas
+  guardadas de V5.35 se siguen pintando. Guardián `qa-cromatografia` con las costuras nuevas.
+
 ## [V5.35] — 2026-09-13 (commit 89cf9bf)
 
 - **Cambiado**: **el Lector de Cromatografía tiene dos caras** (reingeniería pedida por el owner). La del **productor**

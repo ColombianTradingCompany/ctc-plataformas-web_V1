@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.37] — 2026-09-13 (commit pendiente)
+## [V5.37] — 2026-09-13 (commit c918c8f)
 
 - **Añadido**: el informe del productor del Lector de Cromatografía **abre con su foto anotada** (pedido del owner): el
   croma recortado y centrado, con un número y una flecha por conjetura que señalan la zona de la que habla, y el

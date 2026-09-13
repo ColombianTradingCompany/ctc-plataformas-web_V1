@@ -186,4 +186,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
 - Para la ficha DICT `cromatografia` del wrap V43: el informe del productor empieza con la foto del croma y una
   flecha numerada por conjetura; la zona de cada conjetura (prompt 1.7, `zonaDesdeTexto` como respaldo) se ubica con
   `center_xy`, `outer_radius_px` y `zone_boundaries_rel` del motor de rasgos. SVG en el HTML, sin librerías.
-(commit: pendiente)
+(commit: c918c8f)

@@ -422,6 +422,29 @@
         <label for="fecha">Fecha de la muestra</label>
         <input id="fecha" type="date">
       </div>
+      <div class="field">
+        <label for="papel">Papel <span class="aviso">(opcional)</span></label>
+        <select id="papel">
+          <option value="">No lo sé</option>
+          <option value="whatman-1">Whatman n.º 1</option>
+          <option value="whatman-4">Whatman n.º 4</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="dilucion">NaOH por 5 g de suelo <span class="aviso">(opcional)</span></label>
+        <select id="dilucion">
+          <option value="">No lo sé</option>
+          <option value="50">50 ml</option>
+          <option value="100">100 ml</option>
+          <option value="150">150 ml</option>
+          <option value="otra">Otra</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="dias">Días desde el revelado <span class="aviso">(opcional)</span></label>
+        <input id="dias" type="number" min="0" max="120" step="1">
+      </div>
       <div class="field span">
         <label for="practicas">Prácticas recientes y notas <span class="aviso">(opcional)</span></label>
         <textarea id="practicas" maxlength="600" placeholder="Abonado con compost hace 3 semanas; cobertura de leguminosas; sin herbicida desde 2025."></textarea>
@@ -532,7 +555,7 @@
       rasgos: null,
       ford_programatico: null,
       rasgos_version: null,
-      contexto: { finca_id: "", finca: "", parcela: "", departamento: "", municipio: "", altitud_m: "", variedad: "", manejo: "", fecha_muestra: hoy(), practicas: "", consentimiento: false, finca_en_pdf: false },
+      contexto: { finca_id: "", finca: "", parcela: "", departamento: "", municipio: "", altitud_m: "", variedad: "", manejo: "", fecha_muestra: hoy(), practicas: "", papel: "", dilucion: "", dias_revelado: "", consentimiento: false, finca_en_pdf: false },
       lectura: null,
       meta: null
     };
@@ -575,11 +598,12 @@
   /* ── Formulario ────────────────────────────────────────────────────────── */
   $("#departamento").innerHTML = '<option value="">Otro o no lo sé</option>' + DEPARTAMENTOS.map(function (d) { return "<option>" + esc(d) + "</option>"; }).join("");
 
-  var CAMPOS = { fincaTxt: "finca", parcelaTxt: "parcela", departamento: "departamento", municipio: "municipio", altitud: "altitud_m", variedad: "variedad", manejo: "manejo", fecha: "fecha_muestra", practicas: "practicas" };
+  var CAMPOS = { fincaTxt: "finca", parcelaTxt: "parcela", departamento: "departamento", municipio: "municipio", altitud: "altitud_m", variedad: "variedad", manejo: "manejo", fecha: "fecha_muestra", practicas: "practicas", papel: "papel", dilucion: "dilucion", dias: "dias_revelado" };
   Object.keys(CAMPOS).forEach(function (id) {
     $("#" + id).addEventListener("input", function (ev) {
       E.contexto[CAMPOS[id]] = ev.target.value;
       if (id === "departamento" || id === "manejo" || id === "fecha") pintarIA();
+      pintarReporte(); // la cabecera del reporte refleja el contexto al momento
       cambio();
     });
   });
@@ -603,6 +627,9 @@
     $("#manejo").value = c.manejo || "";
     $("#fecha").value = c.fecha_muestra || "";
     $("#practicas").value = c.practicas || "";
+    $("#papel").value = c.papel || "";
+    $("#dilucion").value = c.dilucion || "";
+    $("#dias").value = c.dias_revelado || "";
     $("#consent").checked = !!c.consentimiento;
     $("#fincaPdf").disabled = !c.consentimiento;
     $("#fincaPdf").checked = !!c.finca_en_pdf;
@@ -696,7 +723,8 @@
       $("#gateMsg").innerHTML = '<div class="banner info">Midiendo la foto…</div>';
       setTimeout(function () {
         var cAnal = aCanvas(img, 900);
-        var res = window.CromaRasgos.analizar(cAnal.getContext("2d").getImageData(0, 0, cAnal.width, cAnal.height));
+        // La resolución se juzga sobre la foto ORIGINAL, no sobre el lienzo reducido.
+        var res = window.CromaRasgos.analizar(cAnal.getContext("2d").getImageData(0, 0, cAnal.width, cAnal.height), { escalaOriginal: img.naturalWidth / cAnal.width });
         var cIA = aCanvas(img, 1024);
         imagenIA = cIA.toDataURL("image/jpeg", 0.85);
         var cMini = aCanvas(img, 420);
@@ -763,9 +791,10 @@
     var filas = [
       ["Patrón circular detectado", v.circulo_detectado, v.circularidad == null ? "—" : "circularidad " + coma(v.circularidad)],
       ["Nitidez suficiente", v.nitidez != null && v.nitidez >= v.nitidez_min, v.nitidez == null ? "—" : coma(v.nitidez, 0) + " (mín. " + v.nitidez_min + ")"],
-      ["Área útil del croma", v.area_util != null && v.area_util >= v.area_min, v.area_util == null ? "—" : Math.round(v.area_util * 100) + " % (mín. " + Math.round(v.area_min * 100) + " %)"],
+      ["Resolución del croma", v.diametro_px != null && v.diametro_px >= v.diametro_min, v.diametro_px == null ? "—" : v.diametro_px + " px de diámetro (mín. " + v.diametro_min + ")"],
       ["Borde externo completo", v.borde_completo, ""],
-      ["Fondo claro sin dominante de color", v.fondo_claro, "L* " + coma(v.fondo_lab[0], 0)]
+      ["Fondo claro sin dominante de color", v.fondo_claro, "L* " + coma(v.fondo_lab[0], 0)],
+      ["Cámara paralela al papel", v.razon_ejes == null || v.razon_ejes >= v.razon_ejes_min, v.razon_ejes == null ? "—" : "ejes " + coma(v.razon_ejes) + " (mín. " + coma(v.razon_ejes_min) + ")"]
     ];
     $("#gate").innerHTML = filas.map(function (f) {
       return '<li><span class="s ' + (f[1] ? "ok" : "no") + '">' + (f[1] ? "✓" : "✗") + "</span><span>" + esc(f[0]) + '</span><span class="v">' + esc(f[2]) + "</span></li>";
@@ -775,9 +804,6 @@
     } else {
       var motivos = (v.motivos || []).map(function (m) {
         var i = window.CromaRasgos.MOTIVOS.indexOf(m);
-        // El área se dice con el umbral calibrado, no con el 40 % del JSON, que
-        // rechaza capturas bien hechas (ver la cabecera de cromatografia-rasgos.js).
-        if (m === "area") return "<li>El croma ocupa menos del " + Math.round(v.area_min * 100) + " % de la foto: acérquese hasta que el papel llene el encuadre.</li>";
         return "<li>" + esc(REGLAS ? REGLAS.image_validation_gate.reject_if[i] : m) + "</li>";
       }).join("");
       $("#gateMsg").innerHTML = '<div class="banner bad"><b>La foto no se interpreta.</b><ul style="margin:6px 0 6px 18px;padding:0">' + motivos + "</ul>" +
@@ -803,7 +829,7 @@
       ["Índice de intensidad de color", coma(r.colour_intensity_index)],
       ["Simetría", coma(r.symmetry_score)],
       ["Entropía de textura (bits)", entropia],
-      ["Calidad de captura", "nitidez " + coma(r.capture_quality.sharpness, 0) + " · área útil " + Math.round(r.capture_quality.usable_area_ratio * 100) + " %"]
+      ["Calidad de captura", "nitidez " + coma(r.capture_quality.sharpness, 0) + " · " + (r.capture_quality.diameter_px || "—") + " px de diámetro · ocupa el " + Math.round(r.capture_quality.usable_area_ratio * 100) + " % de la foto"]
     ].map(function (f, i) {
       return "<tr><th scope=\"row\" style=\"text-transform:none;letter-spacing:0;font-size:13px;width:38%\">" + esc(f[0]) + '</th><td class="' + (i === 1 ? "" : "n") + '">' + (i === 1 ? f[1] : esc(f[1])) + "</td></tr>";
     }).join("");
@@ -851,7 +877,8 @@
       "<span>" + esc(c.departamento || "Departamento no declarado") + (c.municipio ? " · " + esc(c.municipio) : "") + "</span>",
       c.altitud_m ? "<span>" + esc(c.altitud_m) + " msnm</span>" : "",
       c.manejo ? "<span>Manejo " + esc(c.manejo) + "</span>" : "",
-      c.fecha_muestra ? "<span>Muestra del " + esc(c.fecha_muestra) + "</span>" : ""
+      c.fecha_muestra ? "<span>Muestra del " + esc(c.fecha_muestra) + "</span>" : "",
+      c.papel || c.dilucion || c.dias_revelado ? "<span>Protocolo: " + esc([c.papel, c.dilucion ? c.dilucion + " ml NaOH" : "", c.dias_revelado ? c.dias_revelado + " días desde el revelado" : ""].filter(Boolean).join(" · ")) + "</span>" : ""
     ].filter(Boolean).join("");
 
     $("#rDesc").textContent = L ? L.descripcion_visual : "Sin lectura con IA todavía. Los rasgos medidos y la estimación programática de abajo no interpretan el croma.";
@@ -906,7 +933,7 @@
         rasgos: E.rasgos,
         ford_programatico: E.ford_programatico,
         rasgos_version: E.rasgos_version,
-        contexto: { departamento: c.departamento, municipio: c.municipio, altitud_m: c.altitud_m, variedad: c.variedad, manejo: c.manejo, fecha_muestra: c.fecha_muestra, practicas: c.practicas }
+        contexto: { departamento: c.departamento, municipio: c.municipio, altitud_m: c.altitud_m, variedad: c.variedad, manejo: c.manejo, fecha_muestra: c.fecha_muestra, practicas: c.practicas, papel: c.papel, dilucion: c.dilucion, dias_revelado: c.dias_revelado }
       })
     })
       .then(function (r) { return r.json().catch(function () { return { ok: false, error: "Respuesta inesperada del servidor." }; }); })

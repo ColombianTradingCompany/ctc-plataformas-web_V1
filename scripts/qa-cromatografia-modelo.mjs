@@ -96,7 +96,7 @@ const medido = await pagina.evaluate(async (src) => {
     return cv;
   };
   const cA = reducir(900);
-  const res = window.CromaRasgos.analizar(cA.getContext("2d").getImageData(0, 0, cA.width, cA.height));
+  const res = window.CromaRasgos.analizar(cA.getContext("2d").getImageData(0, 0, cA.width, cA.height), { escalaOriginal: base.width / cA.width });
   return { res, imagen: reducir(1024).toDataURL("image/jpeg", 0.85) };
 }, fuente);
 await navegador.close();
@@ -111,7 +111,7 @@ console.log(`Rasgos: radialidad ${rasgos.radiality_index} · fronteras ${rasgos.
 
 // ── Leer con el modelo ────────────────────────────────────────────────────────
 const regional = reglaRegional(reglas, departamento);
-const contexto = { departamento, manejo: "orgánico", fecha_muestra: "2026-09-08", practicas: "Compost hace tres semanas; cobertura de leguminosas." };
+const contexto = { departamento, manejo: "orgánico", fecha_muestra: "2026-09-08", practicas: "Compost hace tres semanas; cobertura de leguminosas.", papel: "whatman-4", dilucion: "100", dias_revelado: 7 };
 const system = ensamblarSistema(reglas, regional);
 const m = medido.imagen.match(/^data:(image\/jpeg);base64,(.+)$/);
 

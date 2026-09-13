@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.33] — 2026-09-13 (commit pendiente)
+
+- **Cambiado**: **reglas de interpretación v2.1** del Lector de Cromatografía (`src/lib/tools/cromatografia/reglas.json`).
+  El owner dejó la v2.0 como guía y el criterio de CTC con prelación; cada cambio está contrastado página a página
+  con las fuentes abiertas: radios relativos al frente del extracto con priors 0,15 · 0,5 · 0,8; zona periférica
+  como papel sin extracto que no se interpreta; escala de Ford con solo sus extremos, procedimiento por cuadrantes y
+  distribución observada (mediana 2,5, el color nunca pasó de 4); centro blanco en dos lecturas (nítido y aislado
+  frente a cremoso que se integra); fuera el verde oscuro como degradación, dentro el violeta como no deseable; zona
+  media ↔ biomasa atribuida a Graciano et al. 2020; terminaciones de los picos según Embrapa 455 en lugar de «borde
+  dentado»; nivel de evidencia explícito por fuente; reglas de comparación y metadatos de protocolo.
+- **Cambiado**: **compuerta de la foto 1.2**, pensada como «¿se tomó bien la foto?» (owner). El porcentaje del
+  encuadre deja de rechazar. Se rechaza un croma de menos de 500 px de diámetro en la foto original y una cámara muy
+  inclinada (razón de ejes < 0,80). Las fronteras solo cuentan si son un máximo local dentro de su ventana. Con las
+  108 capturas de Martins et al. 2026 pasan 108 y las fronteras medianas medidas son 0,15 · 0,48 · 0,82.
+- **Añadido**: el formulario pide el protocolo (papel, NaOH por 5 g de suelo, días desde el revelado) y la lectura lo
+  tiene en cuenta. Prompt 1.3 (una fuente C no suena a institución; la observación sale de la imagen; ante dos patrones, las dos lecturas): 3 de 3 lecturas pasan los controles al primer intento, rangos de Ford idénticos, ≈ US$ 0,016 por lectura.
+- **Docs**: brief y charter con las tres decisiones del owner resueltas; el dataset propio queda como sugerencia.
+
 ## [V5.32] — 2026-09-13 (commit cb4f9e7)
 
 - **Añadido**: **Lector de Cromatografía de Suelo** (`cromatografia-suelo`, Herramientas del Café, Plus), la

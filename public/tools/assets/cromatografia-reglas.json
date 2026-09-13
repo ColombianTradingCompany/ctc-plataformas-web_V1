@@ -1,11 +1,33 @@
 {
-  "$schema_version": "2.0",
-  "generated": "2026-09-12",
-  "purpose": "Base de conocimiento estructurada para la lectura cualitativa de cromatografías de suelo tipo Pfeiffer en suelos cafeteros. Extraída de knowledge/PDF1 y knowledge/PDF2. Cada criterio lleva su nivel de evidencia; el modelo debe modular su lenguaje según ese nivel.",
+  "$schema_version": "2.1",
+  "generated": "2026-09-13",
+  "purpose": "Base de conocimiento estructurada para la lectura cualitativa de cromatografías de suelo tipo Pfeiffer en suelos cafeteros. La v2.0 del paquete del owner fue la guía; la v2.1 es la de CTC, corregida contra las fuentes primarias abiertas (reference/html_tools/Analisis Cromatografico/fuentes, verificadas página a página). Cada criterio lleva su nivel de evidencia; el modelo modula su lenguaje según ese nivel.",
+  "changelog_v2_1": [
+    "Radios relativos declarados respecto al frente del extracto; priors de frontera 0,15 · 0,5 · 0,8 (medidos en UIS 2026, Embrapa 455, Ford 2019 y TerraLat 2021).",
+    "Zona periférica redefinida: es el papel que el extracto no alcanza y no se interpreta (Embrapa 455, UIS 2026).",
+    "Escala de Ford: la fuente solo define los extremos 1 y 5; se añaden el procedimiento por cuadrantes y la distribución observada en 361 cromas (Ford 2019).",
+    "Centro blanco separado en dos lecturas: blanco nítido y aislado frente a blanco cremoso que se integra (UIS 2026).",
+    "Verde oscuro retirado de las lecturas de degradación; violeta añadido como no deseable (Restrepo y Pinheiro).",
+    "Zona media ↔ carbono de biomasa microbiana atribuida a Graciano et al. 2020 (Latosol de Paraná, n=12), no a Uberlândia.",
+    "Borde dentado sustituido por la forma de las terminaciones de los picos (escala de Embrapa 455).",
+    "Nivel de evidencia por fuente explícito (source_levels); metadatos de protocolo y reglas de comparación nuevos.",
+    "Compuerta de imagen: el porcentaje del encuadre ya no rechaza; se exige resolución del croma y cámara paralela al papel."
+  ],
   "evidence_levels": {
-    "A": "Revisado por pares con rigor metodológico (Ford 2021 n=343; Kokornaczyk 2016 n=16; estudio deep learning 2026). Puede citarse como evidencia indicando alcance (n, contexto edafológico).",
-    "B": "Institucional o académico no indexado en revistas de alto impacto (Manual Altepetl, Embrapa 455, tesis UIS/UFU/UFPel, Terra Latinoamericana). Citar como 'reportado por', sin generalizar.",
-    "C": "Practicantes, consultores y medios de industria (Restrepo/Pinheiro, Perfect Daily Grind, CuBa BIOTEC, sitios de cooperativas). Etiquetar SIEMPRE como 'criterio de práctica, no validado'."
+    "A": "Revisado por pares con rigor metodológico (Ford et al. 2021 n=343; Kokornaczyk et al. 2016 n=16). Puede citarse como evidencia indicando alcance (n, contexto edafológico).",
+    "B": "Institucional, académico o revisado por pares con muestra pequeña o puntuación no ciega (Manual Altepetl, Embrapa Documentos 455, tesis UIS 2026, UFU 2022, Graciano et al. 2020, informe Ford et al. 2019). Citar como 'reportado por', sin generalizar.",
+    "C": "Practicantes, consultores y medios de industria (Restrepo y Pinheiro, Pfeiffer 1984, Perfect Daily Grind, CuBa BIOTEC, sitios de cooperativas). Etiquetar SIEMPRE como 'criterio de práctica, no validado'."
+  },
+  "source_levels": {
+    "Ford et al. 2021 (Geoderma, n=343)": "A",
+    "Kokornaczyk et al. 2016 (n=16)": "A",
+    "Ford et al. 2019 (informe UWA, n=361)": "B",
+    "Graciano et al. 2020 (n=12)": "B",
+    "Embrapa Documentos 455 (2018)": "B",
+    "Altepetl (SEDEMA-CDMX, manual)": "B",
+    "UIS 2026 (café, Guadalupe, Santander)": "B",
+    "Restrepo y Pinheiro 2011": "C",
+    "Pfeiffer 1984": "C"
   },
   "language_policy": {
     "A": ["es consistente con", "estudios con n=... reportan", "sugiere"],
@@ -19,48 +41,79 @@
       "comparar cromas de regiones edafológicas distintas como si fueran equivalentes"
     ]
   },
+  "radius_reference": "Todos los radios relativos se miden respecto al frente del extracto (r = 1 donde termina el croma), no al borde del papel. Con el protocolo estándar (papel de 15 cm, frente a 6 cm) el frente cae a unos 0,80 del radio del papel. Los radios de las zonas son priors: cada croma tiene sus fronteras, que se miden en el perfil radial.",
   "zones": [
-    {"id": "central", "names": ["zona central", "perforación", "zona de aireación"], "relative_radius": [0.0, 0.2], "meaning": "aireación / estructura física; su ausencia o indefinición se asocia en manuales con compactación o mal manejo", "sources": ["Restrepo/Pinheiro", "Altepetl"], "evidence": "B/C"},
-    {"id": "mineral", "names": ["zona interna", "zona mineral", "inner zone"], "relative_radius": [0.2, 0.5], "meaning": "contenido y disponibilidad mineral; residualidad de insumos solubles", "sources": ["Restrepo/Pinheiro", "Pfeiffer 1984"], "evidence": "C"},
-    {"id": "organic", "names": ["zona media", "zona orgánica", "zona proteica", "middle zone"], "relative_radius": [0.5, 0.77], "meaning": "materia orgánica y su humificación; correlación reportada con MO, N total y carbono de biomasa microbiana", "sources": ["Restrepo/Pinheiro", "Kokornaczyk 2016", "Uberlândia"], "evidence": "A (n=16) + B"},
-    {"id": "enzymatic", "names": ["zona externa", "zona enzimática", "zona nutricional", "outer/humus zone"], "relative_radius": [0.77, 1.0], "meaning": "actividad biológica/enzimática; aquí se leen canales, picos y penachos", "sources": ["Restrepo/Pinheiro", "Kokornaczyk 2016", "Ford 2019"], "evidence": "A (asociación NO replicada de forma consistente por Ford 2021)"},
-    {"id": "peripheral", "names": ["zona periférica", "borde"], "relative_radius": [0.97, 1.0], "meaning": "frente final del extracto; forma del borde (regular/irregular)", "sources": ["Altepetl"], "evidence": "B"}
+    {"id": "central", "names": ["zona central", "perforación", "zona de aireación"], "relative_radius": [0.0, 0.15], "meaning": "aireación y estructura física; su ausencia o indefinición se asocia en manuales con compactación o mal manejo. En cromas de café de Santander medida entre 0 y 0,12 del frente", "sources": ["Restrepo y Pinheiro 2011", "Altepetl (SEDEMA-CDMX, manual)", "UIS 2026 (café, Guadalupe, Santander)"], "evidence": "B/C"},
+    {"id": "mineral", "names": ["zona interna", "zona mineral", "inner zone"], "relative_radius": [0.15, 0.5], "meaning": "contenido y disponibilidad mineral; residualidad de insumos solubles", "sources": ["Restrepo y Pinheiro 2011", "Pfeiffer 1984"], "evidence": "C"},
+    {"id": "organic", "names": ["zona media", "zona orgánica", "zona proteica", "middle zone"], "relative_radius": [0.5, 0.8], "meaning": "materia orgánica y su integración; su frontera externa es morfológica (la base de los picos), no un radio fijo", "sources": ["Restrepo y Pinheiro 2011", "Kokornaczyk et al. 2016 (n=16)", "Graciano et al. 2020 (n=12)"], "evidence": "A (n=16) + B"},
+    {"id": "enzymatic", "names": ["zona externa", "zona enzimática", "zona nutricional", "outer zone"], "relative_radius": [0.8, 1.0], "meaning": "actividad biológica y enzimática; aquí se leen canales, picos, sus terminaciones y nubes; su anchura cambia con el suelo, la época y el protocolo", "sources": ["Restrepo y Pinheiro 2011", "Kokornaczyk et al. 2016 (n=16)", "Ford et al. 2021 (Geoderma, n=343)"], "evidence": "A (asociación NO replicada de forma consistente por Ford et al. 2021)"},
+    {"id": "peripheral", "names": ["zona periférica"], "relative_radius": [1.0, 1.25], "meaning": "papel que el extracto no alcanza, fuera del croma; sirve para rotular y manipular y NO se interpreta. La forma del frente del croma se lee en la zona externa", "sources": ["Embrapa Documentos 455 (2018)", "UIS 2026 (café, Guadalupe, Santander)"], "evidence": "B"}
   ],
   "ford_scale": {
-    "source": "Ford et al. 2019 (UWA) / 2021 (Geoderma 383:114783, DOI 10.1016/j.geoderma.2020.114783)",
+    "source": "Ford et al. 2021 (Geoderma, n=343)",
+    "definition_source": "Ford et al. 2019 (informe UWA, n=361)",
     "evidence": "A",
     "caveat": "En 343 muestras los rasgos NO variaron de forma consistente con la condición del suelo. Usar como descriptor morfológico, no como puntaje de calidad.",
     "features": {
-      "channel_structure": {"1": "ausente", "3": "parcial, discontinua", "5": "totalmente desarrollada, continua desde zona media a externa"},
-      "spike_development": {"1": "ausente", "3": "picos cortos o irregulares", "5": "picos/penachos largos y bien definidos en todo el perímetro"},
-      "colour_intensity": {"1": "difusa, lavada, grisácea", "3": "media", "5": "intensa, dorada/ámbar, con fronteras nítidas"}
+      "channel_structure": {"1": "ausente", "5": "totalmente desarrollada"},
+      "spike_development": {"1": "ausente", "5": "totalmente desarrollados"},
+      "colour_intensity": {"1": "borrosa", "5": "intensa"}
     },
+    "intermediate_levels": "La fuente solo define los extremos 1 y 5; los niveles 2 a 4 son graduación del evaluador y así deben presentarse.",
+    "scores_intensity_not_hue": "La intensidad de color se puntúa sin mirar el tono; el tono se lee aparte con colour_readings.",
+    "procedure": "Se puntúan dos cuadrantes opuestos por el mismo evaluador y se promedia (Ford et al. 2019).",
+    "observed_distribution": "En 361 cromas del suroeste de Australia la mediana fue 2,5 en canales, picos y color; canales entre 0,5 y 4,5, picos entre 1 y 4,5, y el color nunca pasó de 4. Una estimación de 5 es atípica frente a la única distribución publicada.",
     "reporting_rule": "Reportar como 'estimación visual asistida' con rango (ej. 3–4), nunca como medición."
   },
   "morphology_groups": {
-    "source": "Kokornaczyk et al. 2016/2017",
+    "source": "Kokornaczyk et al. 2016 (n=16)",
     "evidence": "A (n=16)",
     "concentric": {"descriptors": ["anillos marcados", "colores homogéneos", "bordes borrosos", "sin canales"], "practitioner_reading": "menor actividad biológica / suelo menos estructurado"},
-    "radial": {"descriptors": ["canales", "picos", "penachos", "alta entropía de textura", "fronteras nítidas"], "practitioner_reading": "mayor actividad biológica / mejor integración de materia orgánica"}
+    "radial": {"descriptors": ["canales", "picos", "penachos", "alta entropía de textura", "fronteras nítidas"], "practitioner_reading": "mayor actividad biológica / mejor integración de materia orgánica"},
+    "caveat": "La misma muestra cambia de lectura con la dilución del extracto y con el papel usado (UIS 2026): solo se comparan cromas hechos con el mismo protocolo."
   },
   "colour_readings": [
-    {"pattern": "dorado, ámbar, anaranjado cálido con distribución radial homogénea", "reading": "materia orgánica humificada; suelo biológicamente activo", "sources": ["Restrepo/Pinheiro", "Altepetl"], "evidence": "C; parcialmente consistente con Kokornaczyk 2016 (A)"},
-    {"pattern": "blanco o muy claro en el centro", "reading": "insumos nitrogenados o químicos de alta solubilidad; herbicidas; abonos crudos (gallinaza, estiércol sin procesar)", "sources": ["Altepetl"], "evidence": "B"},
-    {"pattern": "zona central ausente o indefinida", "reading": "compactación, pérdida de estructura, escasa materia orgánica", "sources": ["Altepetl"], "evidence": "B"},
-    {"pattern": "colores oscuros, negros, grises, verdes oscuros", "reading": "degradación, contaminación o procesos anaeróbicos", "sources": ["Restrepo/Pinheiro", "Follador (compost)"], "evidence": "C"},
-    {"pattern": "zona media amplia bien integrada con la externa", "reading": "materia orgánica humificada, carbono de biomasa microbiana", "sources": ["Graciano et al.", "Uberlândia"], "evidence": "B (Cerrado brasileño, no Andisoles)"},
-    {"pattern": "borde externo irregular o 'dentado'", "reading": "en manuales, señal de desequilibrio o de residualidad; también puede ser artefacto de difusión", "sources": ["Restrepo/Pinheiro"], "evidence": "C"}
+    {"pattern": "dorado, ámbar, anaranjado cálido con distribución radial homogénea", "reading": "materia orgánica humificada; suelo biológicamente activo", "sources": ["Restrepo y Pinheiro 2011", "Altepetl (SEDEMA-CDMX, manual)"], "evidence": "C; parcialmente consistente con Kokornaczyk 2016 (A)", "caveat": "En café de Santander hubo cromas dorados en suelos que el laboratorio dio pobres en materia orgánica (UIS 2026): dorado no equivale a materia orgánica alta."},
+    {"pattern": "centro blanco nítido, de borde definido y separado de la zona siguiente", "reading": "insumos nitrogenados o químicos de alta solubilidad; herbicidas; abonos crudos o mal compostados", "sources": ["Altepetl (SEDEMA-CDMX, manual)", "UIS 2026 (café, Guadalupe, Santander)"], "evidence": "B"},
+    {"pattern": "centro blanco cremoso que se desvanece y se integra con la zona siguiente", "reading": "suelo aireado con materia orgánica; lectura favorable", "sources": ["UIS 2026 (café, Guadalupe, Santander)"], "evidence": "B"},
+    {"pattern": "zona central ausente, indefinida o de color negro, ceniza o gris", "reading": "compactación, pérdida de estructura, escasa materia orgánica o mala aireación", "sources": ["Altepetl (SEDEMA-CDMX, manual)", "UIS 2026 (café, Guadalupe, Santander)"], "evidence": "B"},
+    {"pattern": "colores oscuros, negros, grises o azulados en las zonas media y externa", "reading": "degradación, contaminación o procesos anaeróbicos", "sources": ["Restrepo y Pinheiro 2011"], "evidence": "C"},
+    {"pattern": "violeta o lila en la zona central o interna", "reading": "patrón no deseable en manuales de práctica", "sources": ["Restrepo y Pinheiro 2011"], "evidence": "C"},
+    {"pattern": "zona media amplia bien integrada con la externa", "reading": "carbono de biomasa microbiana (Spearman r=0,74 en un Latosol de Paraná, puntuación visual no ciega)", "sources": ["Graciano et al. 2020 (n=12)"], "evidence": "B"},
+    {"pattern": "picos que se abren al final en manchas o nubes", "reading": "mayor desarrollo en la escala visual de Embrapa (nota 4 a 5)", "sources": ["Embrapa Documentos 455 (2018)"], "evidence": "B"},
+    {"pattern": "picos solo puntiagudos, sin derivaciones ni manchas", "reading": "menor desarrollo en la escala visual de Embrapa (nota 2)", "sources": ["Embrapa Documentos 455 (2018)"], "evidence": "B"}
   ],
   "regional_context_rules": {
-    "evidence": "hipótesis edafológica razonada (PDF1 §6b), no hallazgo publicado",
-    "andisoles_eje_cafetero": {"departments": ["Caldas", "Quindío", "Risaralda", "norte del Valle", "parte de Antioquia, Cauca, Nariño"], "expected_baseline": "zonas orgánicas amplias y coloración intensa por naturaleza del suelo (alta MO, alófana); NO atribuir automáticamente a buen manejo", "rule": "comparar solo contra cromas de la misma finca o zona edafológica"},
-    "sedimentarios_metamorficos": {"departments": ["Santander", "Huila", "Tolima", "Sierra Nevada / Magdalena", "Cesar"], "expected_baseline": "menor MO de base; cromas potencialmente más pálidos sin que ello implique degradación", "rule": "misma restricción de comparación intra-zona"},
+    "evidence": "hipótesis edafológica razonada (PDF1 §6b), no hallazgo publicado; ninguna fuente abierta estudia cromas de Pfeiffer en Andisoles",
+    "andisoles_eje_cafetero": {"departments": ["Caldas", "Quindío", "Risaralda", "norte del Valle", "parte de Antioquia, Cauca, Nariño"], "expected_baseline": "zonas orgánicas amplias y coloración intensa por naturaleza del suelo (alta MO, alófana); NO atribuir automáticamente a buen manejo. En suelos con mucha arcilla y materia orgánica el frente puede no completar su desarrollo con el protocolo estándar: un croma corto es un asunto de protocolo, no de lectura", "rule": "comparar solo contra cromas de la misma finca o zona edafológica"},
+    "sedimentarios_metamorficos": {"departments": ["Santander", "Huila", "Tolima", "Sierra Nevada / Magdalena", "Cesar"], "expected_baseline": "menor MO de base; cromas potencialmente más pálidos sin que ello implique degradación. La palidez depende tanto de la dilución y del papel como del suelo", "rule": "comparar solo contra cromas de la misma finca o zona edafológica"},
     "unknown_region": {"rule": "si la región no se conoce, omitir cualquier inferencia de línea base y decirlo explícitamente en el reporte"}
+  },
+  "comparison_rules": [
+    "Solo se comparan cromas de la misma finca o zona edafológica.",
+    "Solo se comparan cromas hechos con el mismo papel, la misma dilución y un tiempo de revelado parecido.",
+    "Conviene comparar muestras de la misma época del año."
+  ],
+  "protocol_metadata": {
+    "fields": {
+      "papel": "Whatman n.º 1, n.º 4 u otro",
+      "ml_naoh_por_5g_suelo": "volumen de NaOH al 1 % por 5 g de suelo (50, 100 o 150 ml)",
+      "dias_desde_revelado": "días entre el revelado a la luz y la foto; el croma sigue oscureciendo"
+    },
+    "rule": "Si falta un metadato de protocolo, la lectura no puede descartar que el patrón se deba al protocolo y debe decirlo."
   },
   "mandatory_report_sections": ["descripcion_visual_objetiva", "rasgos_computacionales", "estimacion_escala_ford_con_rango", "interpretacion_tentativa_con_fuente_y_nivel", "recomendaciones_de_manejo", "limites_del_analisis"],
   "mandatory_disclaimer_es": "Este reporte es una lectura cualitativa y visual asistida por IA; no es una medición científica ni sustituye un análisis de laboratorio. La cromatografía de Pfeiffer no ha demostrado, en el estudio más riguroso disponible (Ford et al., 2021, Geoderma, n=343), una relación consistente y reproducible entre sus patrones y la condición real del suelo, y no existe evidencia científica de relación con la calidad sensorial del café. Las observaciones deben contrastarse con análisis de laboratorio convencional antes de tomar decisiones de manejo significativas.",
   "image_validation_gate": {
-    "reject_if": ["no se detecta un patrón circular sobre papel filtro", "nitidez (varianza del Laplaciano) por debajo del umbral configurado", "área útil del croma < 40% del encuadre", "recorte que omite el borde externo", "dominante de color extrema por iluminación (sin fondo blanco detectable)"],
-    "on_reject": "devolver instrucciones de captura (fondo blanco mate, luz difusa, cámara perpendicular, borde completo visible), sin generar interpretación"
+    "reject_if": [
+      "no se detecta un patrón circular",
+      "la foto está movida o desenfocada (nitidez baja sobre el croma)",
+      "el croma mide menos de 500 píxeles de diámetro en la foto original",
+      "el borde externo del croma queda recortado",
+      "el fondo no es claro o la luz le da una dominante de color",
+      "la cámara no estaba paralela al papel: el croma se ve como una elipse"
+    ],
+    "not_rejected": "El porcentaje del encuadre que ocupa el croma se informa pero no rechaza: con papel de 15 cm el croma ocupa como máximo la mitad del encuadre, y 108 capturas de laboratorio (Martins et al. 2026) miden entre el 25 y el 39 %.",
+    "on_reject": "papel entero con el borde visible, cámara paralela al papel, luz difusa sin flash, fondo blanco mate, el croma de al menos 1.000 píxeles de diámetro (acérquese y use la cámara, no una captura de pantalla ni una foto reenviada por chat) y sin anotaciones encima"
   }
 }

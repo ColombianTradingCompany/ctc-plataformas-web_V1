@@ -48,6 +48,8 @@ const MODEL = process.env.CROMA_MODEL?.trim() || "claude-haiku-4-5-20251001";
 const TECHO_DIARIO = 20;
 const MAX_IMAGEN_B64 = 1_600_000;
 const MANEJOS = new Set(["", "orgánico", "convencional", "en transición"]);
+const PAPELES = new Set(["", "whatman-1", "whatman-4", "otro"]);
+const DILUCIONES = new Set(["", "50", "100", "150", "otra"]);
 
 const reglas = reglasJson as unknown as Reglas;
 
@@ -103,6 +105,12 @@ function leerEntrada(body: unknown): { ok: true; entrada: Entrada } | { ok: fals
   if (!MANEJOS.has(manejo)) return { ok: false, error: "Manejo no reconocido." };
   if (fecha && !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { ok: false, error: "Fecha de la muestra inválida." };
   if (altitud !== null && !esNum(altitud, 0, 4500)) return { ok: false, error: "Altitud fuera de rango." };
+  const papel = txt(c.papel, 20);
+  const dilucion = txt(c.dilucion, 10);
+  const dias = c.dias_revelado === null || c.dias_revelado === undefined || c.dias_revelado === "" ? null : Number(c.dias_revelado);
+  if (!PAPELES.has(papel)) return { ok: false, error: "Papel no reconocido." };
+  if (!DILUCIONES.has(dilucion)) return { ok: false, error: "Dilución no reconocida." };
+  if (dias !== null && !esNum(dias, 0, 120)) return { ok: false, error: "Días desde el revelado fuera de rango." };
 
   const f = (b.ford_programatico ?? null) as Record<string, unknown> | null;
   const ford = f && esRango(f.canales) && esRango(f.picos) && esRango(f.intensidad) ? (f as unknown as FordProgramatico) : null;
@@ -121,6 +129,9 @@ function leerEntrada(body: unknown): { ok: true; entrada: Entrada } | { ok: fals
         manejo,
         fecha_muestra: fecha,
         practicas: txt(c.practicas, 600),
+        papel,
+        dilucion,
+        dias_revelado: dias,
       },
       ford,
       rasgosVersion: txt(b.rasgos_version, 40),

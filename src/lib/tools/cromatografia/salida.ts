@@ -76,7 +76,8 @@ export const PATRONES_PROHIBIDOS: { nombre: string; re: RegExp }[] = [
   { nombre: "precio", re: /\bprecios?\b/i },
   { nombre: "sabor o calidad sensorial", re: /\bsabor|calidad\s+sensorial|calidad\s+(del|de)\s+caf/i },
   { nombre: "certificación", re: /\bcertific/i },
-  { nombre: "«mide» o medición científica", re: /\bmide\b|\bmedici[oó]n\s+cient/i },
+  // «no mide nutrientes» es una negación honesta y pasa; «mide la materia orgánica» no.
+  { nombre: "«mide» o medición científica", re: /(?<!\bno\s)\bmide\b|\bmedici[oó]n\s+cient/i },
   { nombre: "% de materia orgánica", re: /%\s*(de\s+)?(la\s+)?materia\s+org|materia\s+org[aá]nica\s*(de|del|:|=|≈)?\s*\d+([.,]\d+)?\s*%/i },
   { nombre: "valor de pH", re: /\bpH\s*(de|del|:|=|≈|~|entre|cercano a)?\s*\d/i },
   { nombre: "valor de nutriente", re: /\b\d+([.,]\d+)?\s*(ppm|mg\s*\/\s*kg|meq|cmol)|\b(nitr[oó]geno|f[oó]sforo|potasio)\s*(total\s*)?(de|:|=|≈)\s*\d/i },
@@ -96,6 +97,8 @@ const CONTRADICE_RADIALIDAD_BAJA = /canales\s+(bien|muy|totalmente|plenamente|cl
 const CONTRADICE_RADIALIDAD_ALTA = /(sin|ausencia\s+de|no\s+(se\s+observan|hay|presenta))\s+canales|canales\s+ausentes/i;
 /** Una frase acotada a las zonas de dentro, donde los canales no se leen. */
 const ZONA_INTERIOR = /zona\s+(central|mineral|interna|interior)|en\s+esta\s+zona|perforaci/i;
+/** Una frase que habla de la zona de fuera, donde los canales sí se leen. */
+const ZONA_EXTERIOR = /zona\s+(externa|enzim[aá]tica|exterior|nutricional)|periferia|borde\s+extern/i;
 
 /** El primer objeto JSON del texto. El modelo a veces antepone una frase
  *  aunque se le pida que no (misma rescatada que `coffeed/claude.ts`). */
@@ -119,7 +122,8 @@ export function resolverFuente(fuente: string, permitidas: FuentePermitida[]): F
   // «Kokornaczyk et al. 2016» ↔ «Kokornaczyk 2016»: el mismo autor, otra grafía.
   const primera = (s: string) => normaliza(s).split(/[\s/(,]+/)[0] ?? "";
   const tok = primera(n);
-  if (tok.length < 4) return null;
+  // Tres letras bastan: «UIS», «UFU» son autores de pleno derecho en las reglas.
+  if (tok.length < 3) return null;
   const candidatas = permitidas.filter((p) => primera(p.fuente) === tok);
   if (candidatas.length <= 1) return candidatas[0] ?? null;
   // Mismo autor, varias entradas: gana la que comparte más palabras con la cita.
@@ -185,6 +189,11 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     if (!observacion) errores.push(`${pos}.observacion está vacía: sin observación concreta no hay lectura.`);
     if (!lectura) errores.push(`${pos}.lectura está vacía.`);
     else if (!LENGUAJE_PROBABILISTICO.test(lectura)) errores.push(`${pos}.lectura es categórica; usa lenguaje probabilístico según su nivel.`);
+    // Sobrepresentar la evidencia es el error que importa: un manual de práctica
+    // (nivel C) no puede sonar a institución ni a estudio revisado por pares.
+    if (nivel === "C" && /institucional|revisad[oa]s?\s+por\s+pares|estudios\s+con\s+n\s*=/i.test(lectura)) {
+      errores.push(`${pos}: una fuente de nivel C no se presenta como institucional ni como estudio revisado por pares.`);
+    }
     if (!["A", "B", "C"].includes(nivel)) errores.push(`${pos}.nivel debe ser A, B o C.`);
     const f = resolverFuente(str(it?.fuente), permitidas);
     if (!f) errores.push(`${pos}.fuente «${str(it?.fuente)}» no está en la lista de fuentes permitidas.`);
@@ -257,19 +266,31 @@ export function validarSalida(bruto: unknown, reglas: Reglas, rasgos: Rasgos, re
     }
     if (ri > COHERENCIA.radialidadAlta) {
       if (escala.canales.rango[1] <= 2) errores.push(`Con radiality_index ${ri.toFixed(2)} (> ${COHERENCIA.radialidadAlta}) el rango de canales no puede quedarse en 2 o menos.`);
-      // Frase por frase: «sin canales visibles en la zona mineral» es una
-      // descripción correcta de un croma radial (los canales viven en la zona
-      // externa). Lo que contradice la radialidad alta es negarlos sin acotar.
-      const niega = todoElTexto
-        .split(/[.;\n]/)
-        .some((frase) => CONTRADICE_RADIALIDAD_ALTA.test(frase) && !ZONA_INTERIOR.test(frase));
-      if (niega) errores.push(`Con radiality_index ${ri.toFixed(2)} el texto no puede decir que la zona externa no tiene canales.`);
+      // Frase por frase: «zona mineral parda; sin canales ni variación radial»
+      // describe bien un croma radial (los canales viven en la zona externa),
+      // aunque la zona se nombre en la frase ANTERIOR. Una negación está acotada
+      // si nombra una zona interior, o si la frase anterior la nombra y la
+      // negación no habla del croma entero ni de la zona externa. Todo lo demás
+      // contradice la radialidad alta. El error cita la frase para que la
+      // corrección del modelo sepa qué cambiar.
+      const acotada = (frase: string, previa: string) =>
+        !ZONA_EXTERIOR.test(frase) && (ZONA_INTERIOR.test(frase) || (!/\bcroma/i.test(frase) && ZONA_INTERIOR.test(previa)));
+      const niega = campos
+        .flatMap(([, texto]) => {
+          const frases = texto.split(/[.;\n]/).map((f) => f.trim());
+          return frases.map((frase, i) => ({ frase, previa: frases[i - 1] ?? "" }));
+        })
+        .find(({ frase, previa }) => CONTRADICE_RADIALIDAD_ALTA.test(frase) && !acotada(frase, previa));
+      if (niega) {
+        errores.push(`Con radiality_index ${ri.toFixed(2)} el texto no puede decir que la zona externa no tiene canales: «${niega.frase.slice(0, 120)}».`);
+      }
     }
   }
 
   if (errores.length) return { ok: false, errores };
 
-  const regla = [entrada.expected_baseline, entrada.rule].filter(Boolean).join(". ");
+  const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+  const regla = [entrada.expected_baseline, entrada.rule].filter(Boolean).map((t) => mayuscula(String(t))).join(". ");
   return {
     ok: true,
     reporte: {

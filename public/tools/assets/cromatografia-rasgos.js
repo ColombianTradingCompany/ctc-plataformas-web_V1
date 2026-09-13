@@ -11,33 +11,43 @@
  *   }
  *
  * LA COMPUERTA (kickoff §3, `image_validation_gate.reject_if` en el mismo orden
- * que MOTIVOS): sin círculo · nitidez baja · área útil < 40 % · recorte del
- * borde · sin fondo claro. Si falla, no hay rasgos ni lectura; el
+ * que MOTIVOS): sin círculo · nitidez baja · croma de menos de 500 px · recorte del
+ * borde · sin fondo claro · foto oblicua. Si falla, no hay rasgos ni lectura; el
  * `validation_report` sale SIEMPRE, con los valores medidos, para trazabilidad.
  *
- * CALIBRACIÓN (1.1, 2026-09-13). Los umbrales de la 1.0 salían de los
- * sintéticos del guardián y rechazaban TODA foto real. Se midieron las 108
- * capturas de laboratorio del dataset abierto de Martins et al. 2026 (Zenodo
- * 10.5281/zenodo.18851814, CC BY 4.0, fondo blanco, papel entero, 448 px):
- *   · nitidez normalizada: mínimo 13,9 · mediana 33  → nitidezMin 10
- *   · área útil del croma: 0,30–0,39 del encuadre      → areaMin 0,20
- * ⚠️ El JSON de reglas dice «área útil < 40 %». Con papel de 15 cm y frente a
- * 6 cm el máximo físico ronda el 50 % del encuadre y ninguna de las 108 fotos
- * de laboratorio llega al 40 %: aplicado literal, la compuerta rechaza las
- * capturas bien hechas. Se usa 0,20 y la corrección del JSON queda como
- * DECISIÓN DEL OWNER (charter herramientas-cafe · Pendientes; fuentes en
- * reference/html_tools/Analisis Cromatografico/fuentes/HALLAZGOS.md §a.6).
- * Falta calibrar con fotos de MÓVIL del protocolo CTC. Cambiar un umbral =
- * subir VERSION.
+ * CALIBRACIÓN Y CRITERIO (1.2, 2026-09-13).
+ *   · 1.0 salía de sintéticos y rechazaba TODA foto real.
+ *   · 1.1 se calibró con las 108 capturas de laboratorio abiertas de Martins et
+ *     al. 2026 (Zenodo 10.5281/zenodo.18851814, CC BY 4.0): nitidez mínima 10.
+ *   · 1.2 (owner: «piensa la limitación como la capacidad de tomar bien la
+ *     foto»). El porcentaje del encuadre deja de rechazar: una foto de móvil
+ *     con el croma al 15 % del encuadre tiene píxeles de sobra, y con papel de
+ *     15 cm el croma nunca pasa de la mitad del encuadre. Lo que sí delata una
+ *     foto mal tomada, y se rechaza:
+ *       - resolución: el croma debe medir ≥ 500 px de diámetro en la foto
+ *         ORIGINAL. Es el tamaño al que el motor lo remuestrea (RN = 250);
+ *         por debajo tendría que inventar píxeles. Se recomiendan 1.000.
+ *       - perpendicularidad: razón de ejes del borde ≥ 0,80. El frente real
+ *         del extracto no es un círculo perfecto: en las 108 capturas
+ *         perpendiculares de Martins la razón va de 0,857 a 0,96 (mediana
+ *         0,93), y un umbral de 0,90 rechazaba 14 de ellas. Con 0,80 solo se
+ *         detecta una inclinación fuerte (unos 35° o más); la protección fina
+ *         es la instrucción de captura.
+ *   · Fronteras: solo cuenta un máximo LOCAL de la derivada dentro de su
+ *     ventana. Con cromas reales, el máximo pegado al borde de la ventana era la
+ *     perforación del centro (0,04) o el fondo entre picos (0,94).
+ *   Falta calibrar con fotos de MÓVIL del protocolo CTC. Cambiar un umbral =
+ *   subir VERSION.
  */
 (function (root) {
   "use strict";
 
-  var VERSION = "croma-rasgos-1.1";
+  var VERSION = "croma-rasgos-1.2";
 
   var UMBRALES = {
     nitidezMin: 10, // varianza del Laplaciano sobre el croma normalizado a radio 250 px (Martins D2: mín. 13,9)
-    areaMin: 0.2, // el JSON dice 40 %; ver CALIBRACIÓN arriba (Martins D2: 0,30–0,39)
+    diametroMin: 500, // px de diámetro del croma en la foto ORIGINAL (ver cabecera)
+    razonEjesMin: 0.8, // eje menor / eje mayor del borde; ver cabecera (Martins D2: mínimo 0,857)
     fondoLMin: 55, // L* mínima del borde de la foto para contar como fondo claro
     fondoCromaMax: 18, // C* máxima del fondo: por encima hay dominante de color
     deltaMascara: 14, // ΔE*ab respecto al fondo para contar un píxel como croma
@@ -47,18 +57,18 @@
   };
 
   /* Radios nominales de las fronteras central/mineral, mineral/orgánica y
-   * orgánica/enzimática = `zones[].relative_radius` de interpretation_rules.json
-   * (0,2 · 0,5 · 0,77). El guardián comprueba que coinciden con el JSON. Se usan
+   * orgánica/enzimática = `zones[].relative_radius` de las reglas v2.1
+   * (0,15 · 0,5 · 0,8, medidos en las fuentes). El guardián comprueba que coinciden con el JSON. Se usan
    * como ventanas de búsqueda y como respaldo cuando una frontera no se ve. */
-  var ZONAS_NOMINALES = [0.2, 0.5, 0.77];
+  var ZONAS_NOMINALES = [0.15, 0.5, 0.8];
   var VENTANAS = [
-    [0.08, 0.35],
+    [0.06, 0.32],
     [0.36, 0.66],
-    [0.62, 0.93],
+    [0.64, 0.92],
   ];
 
   /* Mismo orden que image_validation_gate.reject_if. */
-  var MOTIVOS = ["sin_circulo", "nitidez", "area", "recorte", "fondo"];
+  var MOTIVOS = ["sin_circulo", "nitidez", "resolucion", "recorte", "fondo", "oblicua"];
 
   var RN = 250; // radio del recorte normalizado
   var ANILLOS = 50; // anillos del 2 % de radio (kickoff §4)
@@ -142,6 +152,8 @@
     var U = {};
     for (var k in UMBRALES) U[k] = UMBRALES[k];
     if (opciones && opciones.umbrales) for (var k2 in opciones.umbrales) U[k2] = opciones.umbrales[k2];
+    // Cuántos píxeles de la foto original representa cada píxel del lienzo medido.
+    var escalaOriginal = opciones && opciones.escalaOriginal > 0 ? opciones.escalaOriginal : 1;
 
     var w = img.width,
       h = img.height,
@@ -207,7 +219,10 @@
       nitidez: null,
       nitidez_min: U.nitidezMin,
       area_util: null,
-      area_min: U.areaMin,
+      diametro_px: null,
+      diametro_min: U.diametroMin,
+      razon_ejes: null,
+      razon_ejes_min: U.razonEjesMin,
       borde_completo: false,
       fondo_claro: fondoClaro,
       fondo_lab: [r1(fondo[0]), r1(fondo[1]), r1(fondo[2])],
@@ -217,9 +232,10 @@
     function cerrar() {
       if (!reporte.circulo_detectado) reporte.motivos.push("sin_circulo");
       if (reporte.nitidez === null || reporte.nitidez < U.nitidezMin) reporte.motivos.push("nitidez");
-      if (reporte.area_util === null || reporte.area_util < U.areaMin) reporte.motivos.push("area");
+      if (reporte.circulo_detectado && (reporte.diametro_px === null || reporte.diametro_px < U.diametroMin)) reporte.motivos.push("resolucion");
       if (!reporte.borde_completo) reporte.motivos.push("recorte");
       if (!fondoClaro) reporte.motivos.push("fondo");
+      if (reporte.circulo_detectado && reporte.razon_ejes !== null && reporte.razon_ejes < U.razonEjesMin) reporte.motivos.push("oblicua");
       return reporte;
     }
 
@@ -299,6 +315,18 @@
     reporte.circularidad = r3(circularidad);
     reporte.relleno = r3(relleno);
     reporte.area_util = r3(enDisco / n);
+    reporte.diametro_px = Math.round(2 * R * escalaOriginal);
+    // Perpendicularidad: una elipse deja en r(θ) un armónico de orden 2. Las
+    // espigas son de frecuencia alta y no lo tocan.
+    var c2 = 0,
+      s2 = 0;
+    for (var a3 = 0; a3 < borde.rs.length; a3++) {
+      var th3 = (2 * Math.PI * a3) / borde.rs.length;
+      c2 += borde.rs[a3] * Math.cos(2 * th3);
+      s2 += borde.rs[a3] * Math.sin(2 * th3);
+    }
+    var armonico2 = (2 / borde.rs.length) * Math.hypot(c2, s2);
+    reporte.razon_ejes = R > 0 ? r3(Math.max(0, (R - armonico2) / (R + armonico2))) : null;
     reporte.borde_completo = borde.tocaBorde < 2 && cx - R >= 1 && cy - R >= 1 && cx + R <= w - 2 && cy + R <= h - 2;
     reporte.circulo_detectado = R >= 0.1 * Math.min(w, h) && circularidad <= U.circularidadMax && relleno >= U.rellenoMin;
 
@@ -421,6 +449,12 @@
       for (var k5 = 0; k5 < der.length; k5++) {
         var pos = (k5 + 1) / ANILLOS;
         if (pos < desde || pos > hasta) continue;
+        // Un máximo en el borde de la ventana no es una frontera: es la pendiente
+        // de algo que queda fuera (la perforación del centro, el fondo entre picos).
+        var vIzq = suave[k5 - 1],
+          vDer = suave[k5 + 1];
+        if (vIzq === undefined || vDer === undefined || suave[k5] < vIzq || suave[k5] < vDer) continue;
+        if (k5 / ANILLOS < desde || (k5 + 2) / ANILLOS > hasta) continue;
         if (suave[k5] > mejorV) {
           mejorV = suave[k5];
           mejor = k5;
@@ -609,7 +643,7 @@
       texture_entropy_by_zone: entropia,
       texture_entropy_method: "histograma L* de 32 clases, bits",
       symmetry_score: r3(simetria),
-      capture_quality: { sharpness: reporte.nitidez, white_balance_ok: fondoClaro, usable_area_ratio: reporte.area_util },
+      capture_quality: { sharpness: reporte.nitidez, white_balance_ok: fondoClaro, usable_area_ratio: reporte.area_util, diameter_px: reporte.diametro_px, axis_ratio: reporte.razon_ejes },
     };
     return { version: VERSION, valida: true, validation_report: reporte, rasgos: rasgos, ford_programatico: fordDesdeRasgos(rasgos) };
   }

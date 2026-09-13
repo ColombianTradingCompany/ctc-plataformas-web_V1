@@ -96,20 +96,20 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
-- **Lector de Cromatografía de Suelo** (V5.32, brief aprobado 2026-09-12). Abierto, en orden:
-  1. **La lectura con IA no funciona en producción** hasta que el owner reponga `ANTHROPIC_API_KEY` en Vercel (la
-     última llamada, 2026-08-20, dio «API key is invalid»). La herramienta lo dice y sigue midiendo.
-  2. **Decisión del owner: el 40 % de área útil** del JSON rechaza capturas bien hechas (0 de 108 de laboratorio);
-     el motor usa 20 %. Corregir `image_validation_gate` en la v2.1 del JSON o volver al 40 %.
-  3. **Modo «expert feedback»** (owner): un experto valida o corrige cada lectura (`interpretaciones[].id`,
-     `recomendaciones[].id`) y el rango de Ford; tabla `croma_feedback` service-role-only + interruptor por
-     persona en ECP · Herramientas. Diseño en el brief; se construye cuando el sistema esté en uso.
-  4. **Dataset propio** `croma_muestras` + bucket con consentimiento (aprobado, segunda tanda).
-  5. **Propuestas v2.1 del JSON** (HALLAZGOS §a–b): normalizar radios al frente del extracto; zona periférica mal
-     definida; niveles 3 de Ford no están en la fuente; atribución Uberlândia/Graciano corregida; nivel por fuente;
-     metadatos de protocolo (papel, dilución, días de revelado). Ninguna aplicada.
-  6. Calibrar la compuerta con **fotos de móvil** del protocolo CTC; revisión de tono de 3 reportes reales por un
-     experto antes de cualquier demo a Tecnicafé/CQI.
+- **Lector de Cromatografía de Suelo** (V5.32–V5.33). Las reglas vivas son `src/lib/tools/cromatografia/reglas.json`
+  v2.1; la v2.0 de `reference/` fue la guía del owner y no manda. Abierto, en orden:
+  1. **La lectura con IA no funciona en producción** hasta que el owner reponga `ANTHROPIC_API_KEY` en Vercel
+     (proyecto `ctc-plataformas-web-v1`; la última llamada, 2026-08-20, dio «API key is invalid»). La herramienta lo
+     dice y sigue midiendo. El owner se ocupa (2026-09-13).
+  2. **Modo «expert feedback»**: un experto valida o corrige cada lectura (`interpretaciones[].id`,
+     `recomendaciones[].id`) y el rango de Ford; tabla `croma_feedback` service-role-only + interruptor por persona
+     en ECP · Herramientas. Diseño en el brief; se construye cuando haya uso real y un experto.
+  3. **Calibrar con fotos de MÓVIL** del protocolo CTC (la compuerta 1.2 se calibró con capturas de laboratorio) y
+     revisión de tono de 3 reportes reales por un experto antes de cualquier demo a Tecnicafé/CQI.
+  4. **Sugerencia abierta, sin aprobar: dataset propio** `croma_muestras` + bucket, con consentimiento, pareando croma
+     con laboratorio. El owner no tiene hoy ningún dataset probado (2026-09-13); se propone cuando haya análisis.
+  - Resuelto en V5.33 por delegación del owner: el 40 % de área útil (sustituido por resolución y perpendicularidad)
+    y las correcciones del JSON (reglas v2.1).
 - **Fuera de este componente, visto al vendorizar**: `rueda-del-cafe-v23.html` y `cogs-cafe-verde.html` siguen
   cargando fuentes o librerías de CDN (no funcionan sin internet). `vendor-tool-assets.mjs` las reescribe; se
   deshizo aquí para no tocar herramientas de otras conversaciones.

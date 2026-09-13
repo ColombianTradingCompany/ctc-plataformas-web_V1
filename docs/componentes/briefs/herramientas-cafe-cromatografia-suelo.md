@@ -198,3 +198,55 @@ Haiku 4.5 · dataset propio en segunda tanda · solo español · validador: un e
   1.1 no se mezcla con la del 1.2.
 - Es la materia prima para la v2.1 de las reglas y, con `croma_muestras`, para cualquier calibración futura.
 
+---
+
+## Decisiones del owner del 2026-09-13 y lo que se hizo (V5.33)
+
+El owner delegó: (1) la compuerta de la foto, pensando la limitación como «la capacidad de tomar bien la foto»;
+(2) el JSON inicial es una guía y el criterio de CTC tiene prelación; (3) no hay dataset probado: queda como
+sugerencia abierta.
+
+**1 · La compuerta mira cómo se tomó la foto.**
+- Fuera el porcentaje del encuadre como motivo de rechazo. No dice nada de la calidad de la foto: con papel de 15 cm el
+  croma nunca pasa de la mitad del encuadre, y una foto de móvil con el croma al 15 % tiene píxeles de sobra.
+- Resolución: el croma debe medir al menos 500 px de diámetro en la foto original, que es el tamaño al que el motor lo
+  remuestrea; por debajo tendría que inventar píxeles. Se recomiendan 1.000. Esto frena capturas de pantalla y fotos
+  reenviadas por chat.
+- Perpendicularidad: razón de ejes del borde ≥ 0,80. Se probó 0,90 y rechazaba 14 de las 108 capturas perpendiculares
+  de Martins et al. 2026 (su frente llega a 0,857). Con 0,80 solo se detecta una inclinación fuerte; la protección fina
+  es la instrucción de captura, que la herramienta muestra.
+- Siguen nitidez, borde completo y fondo claro. Resultado con las 108 capturas de Martins: pasan las 108.
+
+**2 · Reglas v2.1**, contrastadas página a página con las fuentes abiertas antes de aplicarlas. Lo que no se pudo
+confirmar en el PDF (por ejemplo, el anillo oscuro del blanco de reactivos) no entró.
+- Radios relativos al frente del extracto; priors 0,15 · 0,5 · 0,8. La calibración con las capturas de Martins midió
+  fronteras medianas de 0,15 · 0,48 · 0,82 con el motor corregido.
+- Zona periférica: el papel sin extracto, que no se interpreta (Embrapa 455, UIS 2026).
+- Escala de Ford: la fuente solo define 1 y 5; se puntúan cuadrantes opuestos; en 361 cromas la mediana fue 2,5 y el
+  color nunca pasó de 4 (Ford et al. 2019, tabla 4.7).
+- Centro blanco nítido y aislado frente a blanco cremoso que se integra (UIS 2026, p. 35).
+- Dorado con advertencia: en café de Santander hubo cromas dorados con materia orgánica baja en laboratorio (UIS 2026).
+- Zona media ↔ carbono de biomasa: Graciano et al. 2020, r=0,74, n=12, Latosol de Paraná.
+- Terminaciones de los picos según la escala de Embrapa 455 (abiertas en manchas: nota 4–5; solo puntiagudas: nota 2).
+- Violeta no deseable y verde oscuro fuera de las lecturas de degradación (Restrepo y Pinheiro).
+- La dilución cambia la lectura de la misma muestra: a 50 ml de NaOH los cromas no se podían leer (UIS 2026, pp. 46–52).
+  Por eso el formulario pide papel, NaOH por 5 g y días desde el revelado, y las reglas solo comparan cromas del mismo
+  protocolo.
+- Nivel por fuente explícito (`source_levels`): A Ford 2021, Kokornaczyk 2016; B Ford 2019 (informe), Graciano 2020,
+  Embrapa 455, Altepetl, UIS 2026; C Restrepo y Pinheiro, Pfeiffer 1984.
+
+**3 · Dataset**: sugerencia abierta en el charter, sin aprobar.
+
+**Calidad de la lectura.** La primera prueba con reglas v2.1 pasó los controles pero mostró tres defectos de honestidad: un
+centro «blanco cremoso, separado nítidamente» leído solo en su versión favorable, una fuente C presentada como
+«manuales institucionales» y una observación tomada del contexto declarado en vez de la imagen. El prompt 1.3 lo
+prohíbe y `validarSalida` rechaza ahora una fuente C con lenguaje institucional o de estudio con n.
+
+**Controles afinados con la salida real.** La primera prueba del prompt 1.3 falló por dos controles demasiado
+literales: «sin canales ni variación radial» describía la zona mineral nombrada en la frase anterior, y «no mide
+nutrientes» es una negación honesta. `validarSalida` acota ahora la negación de canales con la frase anterior (salvo
+que hable del croma entero o de la zona externa), deja pasar «no mide» y cita la frase culpable en el error para que
+la corrección del modelo sepa qué cambiar.
+
+**Prueba en vivo con reglas v2.1 y prompt 1.3**: 3 de 3 lecturas pasan los controles al primer intento, rangos de Ford idénticos, ≈ US$ 0,016 por lectura.
+

@@ -98,9 +98,9 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 - **Lector de Cromatografía de Suelo** (V5.32–V5.33). Las reglas vivas son `src/lib/tools/cromatografia/reglas.json`
   v2.1; la v2.0 de `reference/` fue la guía del owner y no manda. Abierto, en orden:
-  1. **La lectura con IA no funciona en producción** hasta que el owner reponga `ANTHROPIC_API_KEY` en Vercel
-     (proyecto `ctc-plataformas-web-v1`; la última llamada, 2026-08-20, dio «API key is invalid»). La herramienta lo
-     dice y sigue midiendo. El owner se ocupa (2026-09-13).
+  1. **Claves (V5.34)**: la lectura usa `CROMATOGRAPHY_ANTHROPIC_API_KEY`, clave propia creada por el owner el
+     2026-09-13, y si falta cae en `ANTHROPIC_API_KEY`, que es la de toda la plataforma y NO se retira. Estado en vivo,
+     sin gasto: `GET /api/herramientas/cromatografia/estado`. Vercel: proyecto `ctc-plataformas-web-v1`.
   2. **Modo «expert feedback»**: un experto valida o corrige cada lectura (`interpretaciones[].id`,
      `recomendaciones[].id`) y el rango de Ford; tabla `croma_feedback` service-role-only + interruptor por persona
      en ECP · Herramientas. Diseño en el brief; se construye cuando haya uso real y un experto.

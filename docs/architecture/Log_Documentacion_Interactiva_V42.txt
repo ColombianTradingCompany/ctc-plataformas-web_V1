@@ -157,3 +157,10 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
 - Lección para la cabecera: **calibrar con datos reales dice también dónde está mal el motor**: las 108 capturas de
   Martins pusieron las fronteras en el borde de sus ventanas (la perforación y el fondo), no solo los umbrales.
 (commit: ed19bb3)
+
+## [2026-09-13] V5.34 · Cromatografía: clave propia y endpoint de estado (herramientas-cafe)
+- Para la ficha DICT `cromatografia` del wrap V43: la lectura usa `CROMATOGRAPHY_ANTHROPIC_API_KEY` y cae en
+  `ANTHROPIC_API_KEY`; `api/herramientas/cromatografia/estado` (público, sin gasto, caché de 10 min) dice qué clave está
+  en uso y si responde. Para la ficha `consumo`: el gasto del Lector se separa también en la consola de Anthropic.
+- ANN nueva: `src/app/api/herramientas/cromatografia/estado/route.ts`.
+(commit: pendiente)

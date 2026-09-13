@@ -19,6 +19,14 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.34] — 2026-09-13 (commit pendiente)
+
+- **Añadido**: el Lector de Cromatografía usa su **clave propia** `CROMATOGRAPHY_ANTHROPIC_API_KEY` (creada por el owner
+  para separar su gasto en la consola de Anthropic) y, si falta, la general `ANTHROPIC_API_KEY`.
+- **Añadido**: `GET /api/herramientas/cromatografia/estado` dice si la lectura con IA está disponible y el estado de
+  cada variable (ok · sin-clave · clave-invalida · limite-o-saldo), comprobado contra `GET /v1/models` sin gastar
+  tokens y guardado 10 minutos. Nunca devuelve la clave. Guardián `qa-cromatografia` con sus costuras.
+
 ## [V5.33] — 2026-09-13 (commit ed19bb3)
 
 - **Cambiado**: **reglas de interpretación v2.1** del Lector de Cromatografía (`src/lib/tools/cromatografia/reglas.json`).

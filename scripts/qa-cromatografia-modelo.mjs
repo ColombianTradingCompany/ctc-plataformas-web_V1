@@ -33,10 +33,11 @@ const env = Object.fromEntries(
     .filter(Boolean)
     .map((m) => [m[1], m[2].replace(/^["']|["']$/g, "")])
 );
-const apiKey = process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
+// Misma precedencia que el handler: la clave propia del Lector y, si no está, la general.
+const apiKey = process.env.CROMATOGRAPHY_ANTHROPIC_API_KEY || env.CROMATOGRAPHY_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
 const MODEL = process.env.CROMA_MODEL || env.CROMA_MODEL || "claude-haiku-4-5-20251001";
 if (!apiKey) {
-  console.error("✗ Falta ANTHROPIC_API_KEY en .env.local");
+  console.error("✗ Falta CROMATOGRAPHY_ANTHROPIC_API_KEY o ANTHROPIC_API_KEY en .env.local");
   process.exit(1);
 }
 

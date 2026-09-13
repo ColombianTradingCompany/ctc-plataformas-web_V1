@@ -369,6 +369,12 @@ check("handler: exige que la foto haya pasado la compuerta", handler.includes("v
 check("handler: temperatura 0 y modelo configurable", handler.includes("temperature: 0") && handler.includes("process.env.CROMA_MODEL"));
 check("handler: no reenvía el error crudo del proveedor a la pantalla", !/error:\s*`[^`]*json\?\.error\?\.message/.test(handler));
 check("handler: sin clave responde sin reventar", handler.includes('codigo: "sin-ia"'));
+check("handler: usa la clave propia del Lector y, si falta, la general", handler.includes("process.env.CROMATOGRAPHY_ANTHROPIC_API_KEY?.trim() || process.env.ANTHROPIC_API_KEY"));
+const estado = leeTxt("src/app/api/herramientas/cromatografia/estado/route.ts");
+check("estado: comprueba las claves sin gastar tokens (GET /v1/models)", estado.includes("/v1/models") && !estado.includes("/v1/messages"));
+check("estado: misma precedencia que el handler", /propia !== "sin-clave" \? "CROMATOGRAPHY_ANTHROPIC_API_KEY"/.test(estado));
+check("estado: nunca devuelve la clave, solo estados", !/slice\(|substring\(|substr\(/.test(estado) && estado.includes("claves: { CROMATOGRAPHY_ANTHROPIC_API_KEY: propia, ANTHROPIC_API_KEY: general }"));
+check("estado: guarda el resultado para no martillar la API", estado.includes("TTL_MS"));
 
 const fincas = leeTxt("src/app/api/herramientas/cromatografia/fincas/route.ts");
 check("fincas: filtra por la cuenta de la sesión", fincas.includes('.eq("producer_id", user.id)'));

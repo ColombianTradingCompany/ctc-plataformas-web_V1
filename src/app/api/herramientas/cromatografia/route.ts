@@ -215,7 +215,10 @@ export async function POST(request: NextRequest) {
   }
 
   // 4 · Clave: sin ella nada revienta, la herramienta sigue dando rasgos.
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // La clave PROPIA del Lector (owner, 2026-09-13) separa su gasto en la consola
+  // de Anthropic; si no está, cae en la general de la plataforma. `estado/route.ts`
+  // aplica la MISMA precedencia para decir si la lectura está disponible.
+  const apiKey = process.env.CROMATOGRAPHY_ANTHROPIC_API_KEY?.trim() || process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return responder(503, { ok: false, codigo: "sin-ia", error: "La lectura con IA no está configurada. Los rasgos medidos siguen siendo válidos." });
   }

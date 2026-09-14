@@ -42,8 +42,9 @@ export function useTranscriptWorkers() {
 
 /** Carpeta de la herramienta, RELATIVA a la carpeta del proyecto.
  *  A propósito sin ruta absoluta: este repo es público y la ruta lleva el nombre
- *  de usuario. Además cambia de un equipo a otro. */
-const TOOL_FOLDER = "reference_html_tools\\_whatsapp-transcript-html";
+ *  de usuario. Además cambia de un equipo a otro.
+ *  Nota: reorganizada en V5.30; verificar con OCP dónde está el transcriptor en tu equipo. */
+const TOOL_FOLDER = "apps-internas/whatsapp-transcript-html";
 
 /** Las instrucciones que faltaban: «enciende worker.ps1» daba por supuesto que
  *  quien lo lee sabe abrir PowerShell en una carpeta. Aquí es un doble clic —

@@ -220,4 +220,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   con glosario `SIMB` (99 símbolos, tres idiomas), leyenda plegada y `diagramaMedida`; guía 1–5 de Ford en el rango del
   técnico; N/A; pestañas del laboratorio (`verTab`); one-pager del productor al abrir el PDF del laboratorio
   (`pintarOnePager`, figura con prefijo «o»). Guardián 294.
-(commit: pendiente)
+(commit: 9a16044)

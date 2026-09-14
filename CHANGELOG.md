@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.41] — 2026-09-14 (commit pendiente)
+## [V5.41] — 2026-09-14 (commit 9a16044)
 
 - **Añadido**: botones **«i» en cada campo** del análisis cuantitativo (pH, materia orgánica, nitrógeno, fósforo, potasio,
   calcio, magnesio) con qué es en 15 palabras o menos y los **rangos bajo · medio · alto de Cenicafé** (Sadeghian 2018,

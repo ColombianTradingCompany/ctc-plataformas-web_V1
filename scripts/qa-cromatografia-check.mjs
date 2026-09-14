@@ -538,8 +538,20 @@ for (const l of ["en", "de"]) {
 void productorEn;
 const DEF = objetoJs("var DEF");
 const clavesDef = Object.keys(DEF?.formulas ?? {});
-check("definiciones: 18 entradas con fórmula, símbolos y los tres idiomas", clavesDef.length === 18 && ["es", "en", "de"].every((l) => clavesDef.every((k) => DEF[l]?.[k]?.t && DEF[l][k].q && DEF[l][k].r && DEF[l][k].l.length === DEF.simbolos[k].length)));
-check("definiciones: las ecuaciones son las del motor (radialidad 6–100 ciclos, e/(e+6), Ford 1+4s, entropía log₂)", /6\.\.100/.test(DEF?.formulas.radialidad ?? "") && /\+ 6\)/.test(DEF?.formulas.radialidad ?? "") && /1 \+ 4·s/.test(DEF?.formulas.ford ?? "") && /log₂/.test(DEF?.formulas.entropia ?? ""));
+check("definiciones: 21 entradas con qué es, rango y los tres idiomas", clavesDef.length === 21 && ["es", "en", "de"].every((l) => clavesDef.every((k) => DEF[l]?.[k]?.t && DEF[l][k].q && DEF[l][k].r)));
+const SIMB = objetoJs("var SIMB");
+const CAMPO = objetoJs("var CAMPO");
+const simbSinGlosario = clavesDef.flatMap((k) => (DEF.simbolos[k] ?? []).filter((sb) => !(SIMB?.[sb]?.es && SIMB[sb].en && SIMB[sb].de)).map((sb) => `${k}:${sb}`));
+check("definiciones: la leyenda es completa: cada símbolo listado está en el glosario, en los tres idiomas", simbSinGlosario.length === 0, simbSinGlosario.join(", "));
+// Un símbolo de una letra cuenta si está suelto (no dentro de otra palabra, subíndice o «a*»).
+// Las palabras ASCII («med», «min», «Var», «corr») también: «media» no es «med».
+const apareceSimbolo = (f, sb) => (/^[A-Za-z]+$/.test(sb) ? new RegExp(`(?<![\\p{L}\\p{N}_*])${sb}(?![\\p{L}\\p{N}*_(₀₁₂₃₄₅₆₇₈₉²⁰¹])`, "u").test(f) : f.includes(sb));
+const simbSinLeyenda = clavesDef.flatMap((k) => {
+  const fs = typeof DEF.formulas[k] === "string" ? [DEF.formulas[k]] : Object.values(DEF.formulas[k]);
+  return Object.keys(SIMB ?? {}).filter((sb) => fs.some((f) => apareceSimbolo(f, sb)) && !DEF.simbolos[k].includes(sb)).map((sb) => `${k}:${sb}`);
+});
+check("definiciones: ningún símbolo que aparece en una fórmula queda fuera de su leyenda (L*, a*, b*…)", simbSinLeyenda.length === 0, simbSinLeyenda.join(", "));
+check("definiciones: las ecuaciones son las del motor (radialidad 6–100 ciclos, E/(E+6), Ford 1 + 4·t, entropía log₂)", /6…100/.test(DEF?.formulas.radialidad ?? "") && /\(E\(ρ\) \+ 6\)/.test(DEF?.formulas.radialidad ?? "") && /1 \+ 4 · clamp₀¹\(t\)/.test(DEF?.formulas.ford ?? "") && /log₂/.test(DEF?.formulas.entropia ?? ""));
 check("definiciones: hay «i» en rasgos, compuerta, Ford, certeza y señal, y un diálogo común", html.includes('botonDef(f[0])') && html.includes("botonDef(f[3])") && html.includes('data-def="ford"') && html.includes('data-def="certeza"') && html.includes('data-def="senal"') && /<dialog class="modal" id="dlgDef"/.test(html) && html.includes("function abrirDefinicion"));
 check("pdf: la cabecera impresa dice «Colombian Trading Company SAS» en las dos caras", (html.match(/<span class="empresa">Colombian Trading Company SAS<\/span>/g) ?? []).length === 2);
 check("pdf: cajas de margen con la empresa arriba, NIT y web abajo y «Página n de N»", html.includes("@top-center{content:") && html.includes("@bottom-left{content:") && html.includes('counter(page)') && html.includes("counter(pages)") && T.es?.["pr.nit"] === "NIT 901.483.425-7 · ctcexport.com" && html.includes('id="estiloImpresion"'));
@@ -637,6 +649,24 @@ check("html: «Bibliografía y metodología» abre con el referente Tulio Esteba
 check("html: el referente está en los tres idiomas y el método lo nombra", ["es", "en", "de"].every((l) => /Tulio Esteban Lozano Vesga/.test(T[l]?.["d.ref.p"] ?? "") && /Lozano Vesga/.test(T[l]?.["d.met.4"] ?? "")));
 check("html: el pie nombra a Lozano Vesga y a Ardila Gómez como dirigido por él", html.includes("Lozano Vesga, UIS 2021") && html.includes("dir. Lozano Vesga"));
 check("docs: el referente y su tesis van en la bibliografía y en lo que falta validar", generador.includes("parrafoReferente") && generador.includes("Lozano Vesga, T. E. (2021)") && generador.includes("referentes de la cromatografía cualitativa"));
+
+// ── V5.41: «i» de campos con rangos de Cenicafé, leyenda plegada, diagramas, escala 1–5, N/A, pestañas y one-pager ──
+const RANGOS_CENICAFE = { ph: [5, 5.5], mo: [8, 16], n: [0.34, 0.58], p: [10, 20], k: [0.2, 0.4], ca: [1.5, 3], mg: [0.6, 0.9] };
+const camposAc = reglas.analisis_cuantitativo.campos;
+check("reglas v2.6: rangos bajo · medio · alto de Cenicafé (Avance Técnico 497, tabla 2), con método y rango adecuado", Object.entries(RANGOS_CENICAFE).every(([k, r]) => JSON.stringify(camposAc[k].rango) === JSON.stringify(r) && ["bajo", "medio", "alto"].includes(camposAc[k].adecuado) && camposAc[k].metodo) && camposAc.ph.adecuado === "medio" && /Avance Técnico 497/.test(reglas.analisis_cuantitativo.fuente_rangos));
+check("reglas v2.6: los rangos de Cenicafé no llegan al modelo", !sistemaCaldas.includes("Avance Técnico 497") && !usuarioLab.includes("Walkley") && !/"rango"/.test(usuarioLab));
+const CAMPOS_I = ["ph", "mo", "n", "p", "k", "ca", "mg", "dilucion", "papel", "manejo"];
+check("campos: «i» en los siete parámetros del análisis cuantitativo, en NaOH, papel y manejo", CAMPOS_I.every((k) => html.includes(`data-def="campo.${k}"`)));
+const largos = ["es", "en", "de"].flatMap((l) => CAMPOS_I.filter((k) => !(CAMPO?.[l]?.[k]?.t && CAMPO[l][k].q.split(/\s+/).length <= 15)).map((k) => `${l}.${k}`));
+check("campos: cada «i» dice qué es en 15 palabras o menos, en los tres idiomas", largos.length === 0, largos.join(", "));
+check("campos: NaOH, papel y manejo traen su tabla de opciones; los parámetros, bajo · medio · alto desde las reglas", ["es", "en", "de"].every((l) => ["dilucion", "papel", "manejo"].every((k) => CAMPO[l][k].filas.length === 3) && CAMPO[l].bajo && CAMPO[l].nota_lab) && html.includes("function abrirCampo") && html.includes("campo.rango[0]"));
+check("definiciones: la leyenda completa va plegada al final, después de la ecuación y el rango", html.includes('class="def-leyenda-acordeon"') && html.indexOf('t("def.rango")') < html.indexOf('<details class="def-leyenda-acordeon">') && !/<details class="def-leyenda-acordeon" open/.test(html));
+check("definiciones: diagrama de lo que se mide en la compuerta, los rasgos y Ford, sobre la foto si la hay", ["circulo", "nitidez", "fronteras", "radialidad", "picos", "intensidad", "simetria", "entropia", "ford_canales", "ford_picos", "ford_intensidad"].every((k) => DEF.diag[k]) && html.includes("function diagramaMedida") && html.includes('clip-path="url(#def-recorte)"'));
+check("ford: guía 1–5 por rasgo en los tres idiomas y la nota de que la fuente solo define 1 y 5", ["canales", "picos", "intensidad"].every((r) => ["es", "en", "de"].every((l) => DEF.escala[r][l].length === 5)) && /1 y 5/.test(DEF.es.nota_escala) && /1 and 5/.test(DEF.en.nota_escala) && /1 und 5/.test(DEF.de.nota_escala));
+check("ford: el rango del técnico muestra qué significa cada número, el rango del programa y el de la lectura, y abre la «i» con ecuación y diagrama", html.includes('" · " + esc(guia[n - 1][0])') && html.includes('t("fb.programa")') && html.includes('botonDef("ford_" + rasgo)') && html.includes('controlFeedback("ford." + k, k)'));
+check("feedback: N/A en los veredictos y en la valoración general", html.includes('["na", t("v.na")]') && (html.match(/<option value="na" data-t="v.na">/g) ?? []).length === 2);
+check("laboratorio: cuatro pestañas con sus paneles; al imprimir salen todos", (html.match(/role="tab" /g) ?? []).length === 4 && (html.match(/class="panel-lab/g) ?? []).length === 4 && html.includes('body[data-imprime="laboratorio"] .tab-oculto:not([hidden]){display:flex!important}') && html.includes("function verTab"));
+check("pdf del laboratorio: abre con el one-pager del informe del productor y salto de página", html.indexOf('id="labOnePager"') > html.indexOf('id="cara-laboratorio"') && html.indexOf('id="labOnePager"') < html.indexOf('class="tabs-lab') && ["oFiguraSvg", "opSenal", "opResumen", "opConjeturas", "opAcciones", "opConfirmar", "opCuantTabla", "opDescargo", "opPreparada"].every((id) => html.includes(`id="${id}"`)) && html.includes(".onepager{break-after:page") && html.includes('if (cara === "laboratorio") pintarOnePager()'));
 
 if (fallos.length) {
   console.error(`✗ qa-cromatografia: ${fallos.length} fallo(s), ${ok} OK\n`);

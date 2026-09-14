@@ -84,6 +84,9 @@ for (const esquema of ["dark", "light"]) {
   // 3 · Laboratorio: foto anotada, identificación y firma
   await p.click('nav.caras button[data-cara="laboratorio"]');
   await p.waitForTimeout(1200);
+  // V5.41: el laboratorio va en pestañas; la identificación está en «Feedback».
+  await p.click("#tab-feedback");
+  await p.waitForTimeout(200);
   await p.fill("#fbLab", "Laboratorio de Suelos de Prueba");
   await p.fill("#fbRut", "800.197.268-5");
   R.rut_mal = await p.textContent("#fbRutAviso");

@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.41] — 2026-09-14 (commit pendiente)
+
+- **Añadido**: botones **«i» en cada campo** del análisis cuantitativo (pH, materia orgánica, nitrógeno, fósforo, potasio,
+  calcio, magnesio) con qué es en 15 palabras o menos y los **rangos bajo · medio · alto de Cenicafé** (Sadeghian 2018,
+  Avance Técnico 497, tabla 2; café en producción), el rango adecuado resaltado, el método de laboratorio al que valen y
+  el aviso de confirmarlos con el técnico. Los rangos viven en las **reglas v2.6** y no llegan al modelo. También hay
+  «i» en «NaOH por 5 g de suelo», «Papel del croma» y «¿Cómo maneja la finca?», con una tabla de opciones.
+- **Cambiado**: las definiciones con ecuación usan notación simbólica y una **leyenda completa de símbolos**, plegada al
+  final en un acordeón (glosario de 99 símbolos en tres idiomas: L*, a*, b*, ΔE*ab, r(θ)…). Abren con un **diagrama de
+  lo que se mide**, dibujado sobre la foto del croma con sus fronteras medidas si la hay.
+- **Añadido**: en la revisión de la escala de Ford, cada número del **rango que daría el técnico** dice qué significa
+  (1 ausente … 5 totalmente desarrollada), junto al rango del programa, el de la lectura y la mediana publicada. Tres «i»
+  nuevas (canales, picos, intensidad) con su ecuación, su diagrama y la guía 1–5, aclarando que la fuente solo define 1 y
+  5 y que 2 a 4 son la guía de CTC.
+- **Añadido**: opción **N/A** en los veredictos por elemento y en la valoración general del laboratorio.
+- **Cambiado**: la cara del laboratorio va en **pestañas** (Captura · Rasgos · Lectura · Feedback), con el contador de
+  revisados en la pestaña de lectura; al imprimir salen todas.
+- **Añadido**: el **PDF del laboratorio abre con un one-pager** del informe del productor (foto anotada, señal, resumen,
+  conjeturas con certeza, prácticas, lo que confirma, análisis declarado, «Preparada por» y descargo) y salto de página.
+- **Corregido**: el contador de elementos revisados daba 0 cuando la cara del laboratorio estaba oculta.
+- **Docs**: PDF de metodología edición 1.3; `cromatografia-recorrido.mjs` pasa por la pestaña Feedback; guardián
+  `qa-cromatografia` sube a **294**.
+
 ## [V5.40] — 2026-09-13 (commit 0dd40e5)
 
 - **Añadido**: **Tulio Esteban Lozano Vesga** (UIS-IPRED, proyecto Campo Para Todos) entra en el Lector de Cromatografía

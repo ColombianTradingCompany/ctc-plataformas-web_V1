@@ -429,3 +429,35 @@ B por la naturaleza de la obra, no por la persona. Nada de lo suyo se reproduce:
 **Queda para el owner.** Contarle que está citado y cómo, antes de cualquier demo; y, cuando haya contacto, la revisión
 experta de las reglas v2.5 y del catálogo de prácticas es la primera tarea que se le puede proponer.
 
+---
+
+## Rangos de Cenicafé, leyendas completas, pestañas y one-pager (V5.41, 2026-09-14)
+
+**Lo que pidió el owner.** Una «i» en cada término del análisis cuantitativo que diga qué es en 15 palabras como máximo y
+el rango bajo, medio y alto, y lo mismo para NaOH, papel y manejo; que la leyenda de las ecuaciones esté siempre completa
+(no aparecían L*, a* ni b*) pero plegada al final; más contexto para el técnico sobre qué significa cada número del rango
+de Ford, con las ecuaciones y un diagrama de lo que se mide; la opción N/A en la evaluación; pestañas en el laboratorio;
+y que el PDF del técnico abra con un one-pager del informe del productor.
+
+**De dónde salen los rangos.** De la tabla 2 del Avance Técnico 497 de Cenicafé (Sadeghian, 2018; adaptado del Boletín
+Técnico 32 de 2008), para café en producción: pH < 5,0 · 5,0–5,5 · > 5,5 (el medio es el adecuado); materia orgánica
+< 8 · 8–16 · > 16 %; nitrógeno total < 0,34 · 0,34–0,58 · > 0,58 %; fósforo Bray II < 10 · 10–20 · > 20 mg/kg; potasio
+< 0,2 · 0,2–0,4 · > 0,4, calcio < 1,5 · 1,5–3,0 · > 3,0 y magnesio < 0,6 · 0,6–0,9 · > 0,9 cmol(+)/kg (en nutrientes el
+alto es el adecuado). Se verificaron en el PDF de Cenicafé, con los métodos a los que valen. Cuadran con la tesis de
+Lozano Vesga (fósforo 3 «muy bajo», magnesio 0,7 «medio», materia orgánica 4,0 % «muy baja»).
+
+**Un límite que se sostiene.** Mostrar al productor el rango de referencia de Cenicafé junto a su propio valor es
+información del laboratorio con fuente, no una lectura de la foto, y va con el aviso de confirmarla con el técnico. Los
+rangos no llegan al modelo: el contraste técnico sigue sin poder calificar los valores declarados (el guardián lo
+comprueba).
+
+**Cómo quedó.** Las fórmulas pasaron a notación simbólica y cada una lista sus símbolos contra un glosario de 99 entradas
+en tres idiomas; el guardián detecta cualquier símbolo de una fórmula que falte en su leyenda (así apareció que faltaban
+L*, a* y b*). El diálogo abre con qué es, un diagrama de lo que se mide sobre la foto del croma (o un esquema si no hay
+foto), la ecuación, el rango, la guía 1–5 si es un rasgo de Ford y, al final y plegada, la leyenda. En el rango del
+técnico cada opción dice qué significa y debajo aparecen el rango del programa, el de la lectura y la mediana publicada;
+la fuente solo define 1 y 5, y 2 a 4 se presentan como guía de CTC. El laboratorio va en cuatro pestañas y al imprimir
+salen todas, precedidas del one-pager, que en la prueba cupo en la primera página.
+
+**Queda para el owner.** Revisar con un agrónomo la guía 1–5 (es de CTC) y los textos de 15 palabras; y decidir si los
+rangos de Cenicafé deben mostrarse también en la tabla del informe del productor (hoy solo en la «i»).

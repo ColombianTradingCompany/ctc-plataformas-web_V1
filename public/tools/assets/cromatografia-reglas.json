@@ -1,7 +1,10 @@
 {
-  "$schema_version": "2.5",
+  "$schema_version": "2.6",
   "generated": "2026-09-13",
   "purpose": "Base de conocimiento estructurada para la lectura cualitativa de cromatografías de suelo tipo Pfeiffer en suelos cafeteros. La v2.0 del paquete del owner fue la guía; la v2.1 es la de CTC, corregida contra las fuentes primarias abiertas (reference/html_tools/Analisis Cromatografico/fuentes, verificadas página a página). Cada criterio lleva su nivel de evidencia; el modelo modula su lenguaje según ese nivel.",
+  "changelog_v2_6": [
+    "Rangos de referencia bajo · medio · alto para los siete parámetros del análisis cuantitativo, tomados de Cenicafé (Sadeghian 2018, Avance Técnico 497, tabla 2, café en producción), con el método de laboratorio al que corresponden y cuál rango es el adecuado. Se muestran al productor en la «i» de cada campo como referencia de Cenicafé, con la advertencia de confirmar con el técnico. No llegan al modelo: el contraste técnico sigue sin calificar los valores declarados."
+  ],
   "changelog_v2_5": [
     "Entra como fuente de nivel B la tesis de Tulio Esteban Lozano Vesga (UIS-IPRED, 2021): la técnica de Pfeiffer según Restrepo y Pinheiro aplicada en café de Barichara, Santander, con 14 cromas y laboratorio de Cenicafé pareado. Es referente de la cromatografía cualitativa en la caficultura latinoamericana y director de la tesis UIS 2026 que ya se citaba. Aporta el protocolo tal como se practica en Colombia, el efecto de la dilución de NaOH, las terminaciones de los picos y un segundo caso colombiano en que un croma leído como excelente coincidió con materia orgánica «muy baja» en laboratorio.",
     "Bloque «referentes»: quién es el referente, qué obras suyas se consultaron y qué se le atribuye. Es documentación de la base de conocimiento; no es un criterio y el prompt no lo inyecta."
@@ -171,45 +174,67 @@
         "etiqueta": "pH",
         "unidad": "",
         "min": 3,
-        "max": 10
+        "max": 10,
+        "rango": [5.0, 5.5],
+        "adecuado": "medio",
+        "metodo": "potenciométrico, suelo:agua 1:1"
       },
       "mo": {
         "etiqueta": "Materia orgánica",
         "unidad": "%",
         "min": 0,
-        "max": 40
+        "max": 40,
+        "rango": [8.0, 16.0],
+        "adecuado": "medio",
+        "metodo": "Walkley & Black"
       },
       "n": {
         "etiqueta": "Nitrógeno total",
         "unidad": "%",
         "min": 0,
-        "max": 3
+        "max": 3,
+        "rango": [0.34, 0.58],
+        "adecuado": "alto",
+        "metodo": "Kjeldahl"
       },
       "p": {
         "etiqueta": "Fósforo disponible",
         "unidad": "mg/kg",
         "min": 0,
-        "max": 500
+        "max": 500,
+        "rango": [10, 20],
+        "adecuado": "alto",
+        "metodo": "Bray II"
       },
       "k": {
         "etiqueta": "Potasio",
         "unidad": "cmol(+)/kg",
         "min": 0,
-        "max": 30
+        "max": 30,
+        "rango": [0.2, 0.4],
+        "adecuado": "alto",
+        "metodo": "acetato de amonio 1 N, pH 7"
       },
       "ca": {
         "etiqueta": "Calcio",
         "unidad": "cmol(+)/kg",
         "min": 0,
-        "max": 60
+        "max": 60,
+        "rango": [1.5, 3.0],
+        "adecuado": "alto",
+        "metodo": "acetato de amonio 1 N, pH 7"
       },
       "mg": {
         "etiqueta": "Magnesio",
         "unidad": "cmol(+)/kg",
         "min": 0,
-        "max": 30
+        "max": 30,
+        "rango": [0.6, 0.9],
+        "adecuado": "alto",
+        "metodo": "acetato de amonio 1 N, pH 7"
       }
     },
+    "fuente_rangos": "Sadeghian, S. (2018). Interpretación de los resultados de análisis de suelo. Soporte para una adecuada nutrición de cafetales. Avance Técnico 497, Cenicafé, tabla 2 (adaptado de Sadeghian 2008, Boletín Técnico 32). Café en etapa de producción; valen solo con los métodos de laboratorio indicados. rango = [límite bajo/medio, límite medio/alto]; adecuado = el rango preferible para café (en pH el medio; en nutrientes el alto; en materia orgánica, más de 16 % limita la mineralización).",
     "regla": "Los valores declarados son del laboratorio, no de la foto. El modelo solo los contrasta en la cara técnica (contraste_laboratorio): dice si lo que sugiere la foto va en la misma dirección que esos valores o no, con lenguaje probabilístico y sin convertirlos en recomendaciones de dosis. No entran en las interpretaciones de la imagen ni en la cara del productor, que sigue sin nombrar nutrientes ni acidez; el productor ve sus propios valores en una tabla aparte, tal como los escribió."
   },
   "i18n": {

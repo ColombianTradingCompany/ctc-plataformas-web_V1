@@ -31,7 +31,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | `qr` | Generador de códigos QR | default | en | sí | `generador-qr.html` |
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
 | `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15): `mermas-detallada.html` sigue en `public/` con `noindex` |
-| `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es (+ en, de en la propia herramienta, V5.39) | sí (esquema propio) | `cromatografia-suelo.html` (V5.32–V5.40) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`, `/estado`) · brief en `briefs/` |
+| `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es (+ en, de en la propia herramienta, V5.39) | sí (esquema propio) | `cromatografia-suelo.html` (V5.32–V5.41) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`, `/estado`) · brief en `briefs/` |
 
 Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_tools\` (p. ej.
 `rueda_del_cafe_V23.html`, `Defectos_del_Cafe_CTC_V3.html`) y de ahí se registran.
@@ -47,7 +47,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 
 - `public/tools/*.html` (vendorizadas; solo se toca el `<head>` para SEO) + **`public/tools/ctc-bridge.js`**
   (una línea antes de `</body>` → memoria; `CTC.usarEstado/tocado/emitir`; postMessage mismo origen).
-- **Lector de Cromatografía** (V5.32–V5.40) · **guía de trabajo: `src/lib/tools/cromatografia/README.md`** (lo construido,
+- **Lector de Cromatografía** (V5.32–V5.41) · **guía de trabajo: `src/lib/tools/cromatografia/README.md`** (lo construido,
   contratos, cómo cambiar cada cosa, puntos abiertos y kick-off propio) · `public/tools/assets/cromatografia-{rasgos.js,reglas.json}` (motor y copia de
   las reglas para el navegador) · `src/lib/tools/cromatografia/{reglas.json,prompt.ts,salida.ts}` (puros) ·
   `src/app/api/herramientas/cromatografia/{route.ts,fincas/route.ts}`. Fuentes y datasets: fuera del repo, en
@@ -79,7 +79,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 `qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (193) ·
 `qa-tools-seo-espejo.mjs` (68, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
-`qa-cromatografia-check.mjs` (280, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
+`qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
 `[idioma] [lab]`) ·
 `cromatografia-recorrido.mjs` y `cromatografia-calibrar.mjs` (manuales: recorrido visual y calibración de la compuerta).
 
@@ -104,8 +104,8 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
-- **Lector de Cromatografía de Suelo** (V5.32–V5.40). Las reglas vivas son `src/lib/tools/cromatografia/reglas.json`
-  v2.5; la v2.0 de `reference/` fue la guía del owner y no manda. Abierto, en orden:
+- **Lector de Cromatografía de Suelo** (V5.32–V5.41). Las reglas vivas son `src/lib/tools/cromatografia/reglas.json`
+  v2.6; la v2.0 de `reference/` fue la guía del owner y no manda. Abierto, en orden:
   1. **Claves (V5.34)**: la lectura usa `CROMATOGRAPHY_ANTHROPIC_API_KEY`, clave propia creada por el owner el
      2026-09-13, y si falta cae en `ANTHROPIC_API_KEY`, que es la de toda la plataforma y NO se retira. Estado en vivo,
      sin gasto: `GET /api/herramientas/cromatografia/estado`. Vercel: proyecto `ctc-plataformas-web-v1`.
@@ -138,6 +138,9 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   9. **Análisis cuantitativo (V5.39)**: hoy solo el laboratorio ve el contraste técnico; decidir con el owner si el
      productor debe recibir una frase de contraste sin nutrientes. Es también el primer par croma–laboratorio que se
      recoge en el Feedback Técnico: cuando haya volumen, es la semilla del dataset propio (punto 4).
+  11. **Guía 1–5 de Ford y textos de las «i» (V5.41)**: la graduación de 2 a 4 es de CTC (la fuente solo define 1 y 5) y
+     los textos de 15 palabras los escribió la IA; que los revise un agrónomo. Decidir si los rangos de Cenicafé (hoy en
+     la «i» de cada campo) deben ir también en la tabla del informe del productor.
   10. **Impresión (V5.39)**: «Página n de N», NIT y razón social en los márgenes dependen de las cajas de margen `@page`
      (Chrome, Edge); probar desde el móvil. El pie del documento sale en cualquier navegador.
   - Resuelto en V5.33 por delegación del owner: el 40 % de área útil (sustituido por resolución y perpendicularidad)

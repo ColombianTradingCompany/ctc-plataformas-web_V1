@@ -214,3 +214,10 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   metodología» abre con el referente y sus seis enlaces en los tres idiomas; PDF edición 1.2. Guardián 280.
 (commit: 0dd40e5)
 
+## [2026-09-14] V5.41 · Cromatografía: rangos de Cenicafé, leyendas completas, pestañas y one-pager (herramientas-cafe)
+- Para la ficha DICT `cromatografia` del wrap V43: «i» de campos (`CAMPO` en el HTML; rangos bajo/medio/alto en
+  `reglas.analisis_cuantitativo.campos[k].rango`, reglas v2.6, fuente Cenicafé AT 497; no llegan al prompt); definiciones
+  con glosario `SIMB` (99 símbolos, tres idiomas), leyenda plegada y `diagramaMedida`; guía 1–5 de Ford en el rango del
+  técnico; N/A; pestañas del laboratorio (`verTab`); one-pager del productor al abrir el PDF del laboratorio
+  (`pintarOnePager`, figura con prefijo «o»). Guardián 294.
+(commit: pendiente)

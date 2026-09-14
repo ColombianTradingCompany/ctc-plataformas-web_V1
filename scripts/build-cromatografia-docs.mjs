@@ -29,7 +29,7 @@ const LOGO = "data:image/png;base64," + readFileSync(join(RAIZ, "public/tools/as
 const LORO = "data:image/png;base64," + readFileSync(join(RAIZ, "public/tools/assets/ctcx-loro.png")).toString("base64");
 
 const FECHA = "2026-09-13";
-const EDICION = "1.2"; // 1.1 (V5.39): tres idiomas, análisis declarado y contraste · 1.2 (V5.40): Lozano Vesga como referente y fuente B
+const EDICION = "1.3"; // 1.1 (V5.39): tres idiomas, análisis declarado y contraste · 1.2 (V5.40): Lozano Vesga como referente y fuente B · 1.3 (V5.41): rangos de Cenicafé en reglas v2.6
 const ANIO = FECHA.slice(0, 4);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const coma = (n) => String(n).replace(".", ",");

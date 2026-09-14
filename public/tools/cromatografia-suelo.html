@@ -254,6 +254,25 @@ table.cuant{font-size:13.5px;width:auto;min-width:min(100%,420px)}
 table.cuant td.n{font-family:var(--f-mono);text-align:right}
 .nota-lab{font-size:12.5px;color:var(--muted);margin:4px 0 0}
 .preparada{font-size:14px;margin:4px 0 0;color:var(--ink)}
+/* V5.41: «i» de campos, leyenda plegada, diagrama, escala 1–5, pestañas del laboratorio y one-pager */
+.lbl-i{display:flex;align-items:center;gap:2px}
+.def-tabla{width:100%;font-size:13.5px;margin:6px 0 8px}
+.def-tabla th{font-family:var(--f-ui);text-transform:none;letter-spacing:0;font-size:13px;color:var(--purple-deep);width:34%}
+.def-tabla td.n{font-family:var(--f-mono)}
+.def-tabla tr.adecuado th,.def-tabla tr.adecuado td{background:var(--ok-soft)}
+.def-diagrama{display:flex;flex-direction:column;align-items:center;margin:8px 0}
+.def-diagrama svg{width:100%;max-width:340px;height:auto;border-radius:12px;background:#fff;border:1px solid var(--line)}
+.def-diagrama figcaption{font-size:12.5px;color:var(--muted);margin-top:4px;text-align:center}
+details.def-leyenda-acordeon{margin-top:12px}
+.guia-escala{font-size:12.5px;color:var(--muted);margin:2px 0 0;grid-column:1/-1;line-height:1.5}
+.guia-escala b{color:var(--purple-deep)}
+nav.tabs-lab{display:flex;gap:4px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:var(--shadow);position:sticky;top:0;z-index:2}
+nav.tabs-lab button{flex:1 1 auto;border:0;background:none;border-radius:9px;padding:9px 12px;min-height:42px;cursor:pointer;color:var(--purple-deep);font-weight:600}
+nav.tabs-lab button[aria-selected="true"]{background:var(--purple);color:var(--on-purple)}
+nav.tabs-lab .contador{color:inherit;opacity:.8}
+.panel-lab{display:flex;flex-direction:column;gap:16px}
+.tab-oculto{display:none}
+.solo-impreso{display:none}
 /* impreso: una cara por archivo, con la firma CTCX arriba y abajo */
 .impreso-cabecera,.impreso-pie{display:none}
 @page{size:A4;margin:18mm 14mm 20mm}
@@ -281,6 +300,24 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
   .firma canvas{border:0;border-bottom:1px solid #888;border-radius:0}
   details{border:0;background:none}
   .fb select,.fb textarea,.fb input{border:0;padding:0;min-height:0}
+  body[data-imprime="laboratorio"] .tab-oculto:not([hidden]){display:flex!important}
+  body[data-imprime="laboratorio"] .solo-impreso{display:block!important}
+  .onepager{break-after:page;font-size:10.5px;line-height:1.4}
+  .onepager h2{font-size:15px;margin:0 0 2px}
+  .onepager h3{font-size:12px;margin:8px 0 3px}
+  .onepager .op-grid{display:grid;grid-template-columns:46% 1fr;gap:12px;align-items:start;margin-top:6px}
+  .onepager .figura-croma{margin:0}
+  .onepager .figura-croma svg{max-height:68mm}
+  .onepager .senal{padding:6px 10px;margin:0 0 6px;gap:8px}
+  .onepager .senal .punto{width:14px;height:14px}
+  .onepager .senal b{font-size:12.5px}
+  .onepager p{margin:0 0 4px}
+  .onepager ol,.onepager ul{margin:2px 0 4px 16px;padding:0}
+  .onepager li{margin:1px 0}
+  .onepager .certeza,.onepager .prio{font-size:8px;padding:1px 4px}
+  .onepager table.cuant{font-size:10px;min-width:0}
+  .onepager table.cuant th,.onepager table.cuant td{padding:2px 6px}
+  .onepager .op-descargo{font-size:9.5px;color:#555;border-top:1px solid #ddd;padding-top:4px;margin-top:6px}
 }
 </style>
 <style id="estiloImpresion"></style>
@@ -364,7 +401,7 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
           <select id="departamento"></select>
         </div>
         <div class="field">
-          <label for="manejo" data-t="f.manejo">¿Cómo maneja la finca?</label>
+          <span class="lbl-i"><label for="manejo" data-t="f.manejo">¿Cómo maneja la finca?</label><button type="button" class="i-def" data-def="campo.manejo" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span>
           <select id="manejo">
             <option value="" data-t="f.elegir">Elegir</option>
             <option value="orgánico" data-t="f.manejo.org">Orgánico</option>
@@ -386,9 +423,9 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
             <div class="field"><label for="municipio" data-t="f.municipio">Municipio</label><input id="municipio"></div>
             <div class="field"><label for="altitud" data-t="f.altitud">Altitud (msnm)</label><input id="altitud" type="number" min="0" max="4500" step="10"></div>
             <div class="field"><label for="variedad" data-t="f.variedad">Variedad</label><input id="variedad" placeholder="Castillo"></div>
-            <div class="field"><label for="papel" data-t="f.papel">Papel del croma</label>
+            <div class="field"><span class="lbl-i"><label for="papel" data-t="f.papel">Papel del croma</label><button type="button" class="i-def" data-def="campo.papel" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span>
               <select id="papel"><option value="" data-t="f.nose">No lo sé</option><option value="whatman-1">Whatman n.º 1</option><option value="whatman-4">Whatman n.º 4</option><option value="otro" data-t="f.otro">Otro</option></select></div>
-            <div class="field"><label for="dilucion" data-t="f.dilucion">NaOH por 5 g de suelo</label>
+            <div class="field"><span class="lbl-i"><label for="dilucion" data-t="f.dilucion">NaOH por 5 g de suelo</label><button type="button" class="i-def" data-def="campo.dilucion" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span>
               <select id="dilucion"><option value="" data-t="f.nose">No lo sé</option><option value="50">50 ml</option><option value="100">100 ml</option><option value="150">150 ml</option><option value="otra" data-t="f.otra">Otra</option></select></div>
             <div class="field"><label for="dias" data-t="f.dias">Días desde el revelado</label><input id="dias" type="number" min="0" max="120" step="1"></div>
           </div>
@@ -399,13 +436,13 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
             <p class="explica" id="qExplica"></p>
             <div class="field"><label for="qLab" data-t="q.lab">Laboratorio que lo hizo</label><input id="qLab" maxlength="120" placeholder="Cenicafé, universidad, Agrosavia…" data-t-attr="placeholder:q.lab.ph"></div>
             <div class="field"><label for="qFecha" data-t="q.fecha">Fecha del análisis</label><input id="qFecha" type="date"></div>
-            <div class="field"><label for="qph"><span data-t="q.ph">pH</span></label><input id="qph" type="number" min="3" max="10" step="0.1" inputmode="decimal"></div>
-            <div class="field"><label for="qmo"><span data-t="q.mo">Materia orgánica</span> (%)</label><input id="qmo" type="number" min="0" max="40" step="0.1" inputmode="decimal"></div>
-            <div class="field"><label for="qn"><span data-t="q.n">Nitrógeno total</span> (%)</label><input id="qn" type="number" min="0" max="3" step="0.01" inputmode="decimal"></div>
-            <div class="field"><label for="qp"><span data-t="q.p">Fósforo disponible</span> (mg/kg)</label><input id="qp" type="number" min="0" max="500" step="0.1" inputmode="decimal"></div>
-            <div class="field"><label for="qk"><span data-t="q.k">Potasio</span> (cmol(+)/kg)</label><input id="qk" type="number" min="0" max="30" step="0.01" inputmode="decimal"></div>
-            <div class="field"><label for="qca"><span data-t="q.ca">Calcio</span> (cmol(+)/kg)</label><input id="qca" type="number" min="0" max="60" step="0.01" inputmode="decimal"></div>
-            <div class="field"><label for="qmg"><span data-t="q.mg">Magnesio</span> (cmol(+)/kg)</label><input id="qmg" type="number" min="0" max="30" step="0.01" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qph"><span data-t="q.ph">pH</span></label><button type="button" class="i-def" data-def="campo.ph" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qph" type="number" min="3" max="10" step="0.1" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qmo"><span data-t="q.mo">Materia orgánica</span> (%)</label><button type="button" class="i-def" data-def="campo.mo" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qmo" type="number" min="0" max="40" step="0.1" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qn"><span data-t="q.n">Nitrógeno total</span> (%)</label><button type="button" class="i-def" data-def="campo.n" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qn" type="number" min="0" max="3" step="0.01" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qp"><span data-t="q.p">Fósforo disponible</span> (mg/kg)</label><button type="button" class="i-def" data-def="campo.p" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qp" type="number" min="0" max="500" step="0.1" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qk"><span data-t="q.k">Potasio</span> (cmol(+)/kg)</label><button type="button" class="i-def" data-def="campo.k" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qk" type="number" min="0" max="30" step="0.01" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qca"><span data-t="q.ca">Calcio</span> (cmol(+)/kg)</label><button type="button" class="i-def" data-def="campo.ca" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qca" type="number" min="0" max="60" step="0.01" inputmode="decimal"></div>
+            <div class="field"><span class="lbl-i"><label for="qmg"><span data-t="q.mg">Magnesio</span> (cmol(+)/kg)</label><button type="button" class="i-def" data-def="campo.mg" aria-label="Qué significa" data-t-attr="aria-label:def.aria.campo">i</button></span><input id="qmg" type="number" min="0" max="30" step="0.01" inputmode="decimal"></div>
             <p class="explica" data-t="q.nota">Estos valores son del laboratorio, no de la foto. Se guardan con el análisis, salen en su informe tal como los escribió y el detalle técnico los contrasta con lo que sugiere la foto.</p>
           </div>
         </details>
@@ -469,6 +506,41 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
   <section id="cara-laboratorio" hidden>
     <div class="impreso-cabecera"><img src="/tools/assets/ctcx-loro.png" alt="CTC"><div class="t"><small data-t="pr.kick">CTCX · Herramientas del Café</small><b data-t="pr.feedback">Feedback técnico · Lector de Cromatografía de Suelo</b><span class="empresa">Colombian Trading Company SAS</span></div></div>
 
+    <!-- One-pager del informe del productor: solo en el PDF del laboratorio (V5.41) -->
+    <section class="onepager solo-impreso" id="labOnePager">
+      <div class="kick" data-t="op.kick">Resumen del informe del productor</div>
+      <h2 data-t="p.inf.h2">Cómo se ve su suelo</h2>
+      <div class="aviso" id="opMeta"></div>
+      <p class="preparada" id="opPreparada" hidden></p>
+      <p class="aviso" id="opVacio" data-t="op.vacio">Sin lectura con IA: el informe del productor aún no existe.</p>
+      <div id="opContenido" hidden>
+        <div class="op-grid">
+          <figure class="figura-croma" id="oFigura" hidden><div id="oFiguraSvg"></div></figure>
+          <div>
+            <div class="senal" id="opSenal"><span class="punto"></span><div><b id="opSenalTexto"></b></div></div>
+            <p id="opResumen"></p>
+          </div>
+        </div>
+        <h3 data-t="p.h3.conj">Lo que vemos y lo que podría significar</h3>
+        <ol id="opConjeturas"></ol>
+        <h3 data-t="p.h3.acc">Qué puede hacer</h3>
+        <ul id="opAcciones"></ul>
+        <h3 data-t="p.h3.conf">Para confirmar y seguir el avance</h3>
+        <ul id="opConfirmar"></ul>
+        <div id="opCuant" hidden><h3 data-t="p.h3.lab">Su análisis de laboratorio</h3><table class="cuant"><tbody id="opCuantTabla"></tbody></table></div>
+        <p class="op-descargo" id="opDescargo"></p>
+      </div>
+    </section>
+
+    <nav class="tabs-lab noprint" role="tablist" aria-label="Secciones del laboratorio" data-t-attr="aria-label:tab.aria">
+      <button type="button" role="tab" id="tab-captura" data-tab="captura" aria-controls="panel-captura" aria-selected="true" data-t="tab.captura">Captura</button>
+      <button type="button" role="tab" id="tab-rasgos" data-tab="rasgos" aria-controls="panel-rasgos" aria-selected="false" data-t="tab.rasgos">Rasgos</button>
+      <button type="button" role="tab" id="tab-lectura" data-tab="lectura" aria-controls="panel-lectura" aria-selected="false"><span data-t="tab.lectura">Lectura</span> <span class="contador" id="tabContador"></span></button>
+      <button type="button" role="tab" id="tab-feedback" data-tab="feedback" aria-controls="panel-feedback" aria-selected="false" data-t="tab.feedback">Feedback</button>
+    </nav>
+
+    <div class="panel-lab" id="panel-captura" data-tab="captura" role="tabpanel" aria-labelledby="tab-captura">
+
     <section class="card">
       <div class="kick" data-t="l.kick">Laboratorio · backstage técnico</div>
       <h2 data-t="l.h2.foto">Foto y compuerta de captura</h2>
@@ -491,6 +563,10 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
       </div>
     </section>
 
+    </div>
+
+    <div class="panel-lab tab-oculto" id="panel-rasgos" data-tab="rasgos" role="tabpanel" aria-labelledby="tab-rasgos">
+    <p class="card aviso" id="labSinRasgos" data-t="l.sinrasgos">Sin rasgos medidos todavía: suba una foto que pase la compuerta.</p>
     <section class="card" id="labRasgos" hidden>
       <h2 data-t="l.h2.rasgos">Rasgos medidos (sin IA)</h2>
       <div class="tw"><table><tbody id="tablaRasgos"></tbody></table></div>
@@ -499,6 +575,9 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
       <p class="aviso" id="fordCaveat"></p>
     </section>
 
+    </div>
+
+    <div class="panel-lab tab-oculto" id="panel-lectura" data-tab="lectura" role="tabpanel" aria-labelledby="tab-lectura">
     <section class="card" id="labLectura">
       <h2 data-t="l.h2.lectura">Lectura técnica</h2>
       <p class="aviso" id="labSinLectura" data-t="l.sinlectura">Sin lectura con IA todavía. Se pide desde la cara del productor.</p>
@@ -533,6 +612,9 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
       <div class="limites" id="rLimites"></div>
     </section>
 
+    </div>
+
+    <div class="panel-lab tab-oculto" id="panel-feedback" data-tab="feedback" role="tabpanel" aria-labelledby="tab-feedback">
     <section class="card" id="labFeedback">
       <h2 data-t="l.h2.fb">Feedback técnico</h2>
       <p class="lead" data-t="l.fb.lead">Quién revisa y su valoración general. Cada comentario queda ligado al elemento que revisa.</p>
@@ -554,9 +636,9 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
       <h3 data-t="l.val">Valoración general</h3>
       <div class="fgrid">
         <div class="field"><label for="fbFoto" data-t="l.val.foto">Calidad de la foto</label>
-          <select id="fbFoto" data-fbg="general.calidad_foto"><option value="" data-t="l.val.sin">Sin valorar</option><option value="buena" data-t="l.val.foto.b">Buena</option><option value="dudosa" data-t="l.val.foto.d">Dudosa</option><option value="mala" data-t="l.val.foto.m">No sirve</option></select></div>
+          <select id="fbFoto" data-fbg="general.calidad_foto"><option value="" data-t="l.val.sin">Sin valorar</option><option value="buena" data-t="l.val.foto.b">Buena</option><option value="dudosa" data-t="l.val.foto.d">Dudosa</option><option value="mala" data-t="l.val.foto.m">No sirve</option><option value="na" data-t="v.na">N/A</option></select></div>
         <div class="field"><label for="fbValor" data-t="l.val.lectura">La lectura, en conjunto</label>
-          <select id="fbValor" data-fbg="general.valoracion"><option value="" data-t="l.val.sin">Sin valorar</option><option value="correcta" data-t="l.val.l.c">Correcta y útil</option><option value="con-cambios" data-t="l.val.l.cc">Útil con cambios</option><option value="incorrecta" data-t="l.val.l.i">Incorrecta</option></select></div>
+          <select id="fbValor" data-fbg="general.valoracion"><option value="" data-t="l.val.sin">Sin valorar</option><option value="correcta" data-t="l.val.l.c">Correcta y útil</option><option value="con-cambios" data-t="l.val.l.cc">Útil con cambios</option><option value="incorrecta" data-t="l.val.l.i">Incorrecta</option><option value="na" data-t="v.na">N/A</option></select></div>
         <div class="field span"><label for="fbComentario" data-t="l.val.com">Comentario general</label><textarea id="fbComentario" data-fbg="general.comentario"></textarea></div>
       </div>
       <p class="contador" id="fbContador"></p>
@@ -568,6 +650,7 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
         <button class="btn primary" type="button" id="btnExportarFeedback" data-t="l.btn.json">Exportar Feedback Técnico (.json)</button>
       </div>
     </section>
+    </div>
     <div class="impreso-pie"><img src="/tools/assets/ctcx-logo.png" alt="Colombian Trading Company"><div id="labPieImpreso"></div><div class="legal" id="labPieLegal"></div></div>
   </section>
 </main>
@@ -821,7 +904,8 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     "l.antigua": "Esta lectura es de una versión anterior y no trae informe del productor.", "l.versiones": "Reglas v", "l.ajustes": " · Ajustes: ", "l.idioma.aviso": "Esta lectura se escribió en ",
     "j.res.sinfinca": "Sin finca", "j.res.sindep": "sin departamento", "e.sin-foto": "Sin foto", "e.rechazada": "Foto rechazada", "e.medida": "Foto medida", "e.con-lectura": "Con lectura",
     "pr.pagina": "Página", "pr.de": "de", "pr.nit": "NIT 901.483.425-7 · ctcexport.com",
-    "def.que": "Qué es", "def.como": "Cómo se calcula", "def.leyenda": "Leyenda", "def.rango": "Rango y lectura",
+    "def.que": "Qué es", "def.como": "Cómo se calcula", "def.leyenda": "Leyenda de símbolos", "def.rango": "Rango y lectura",
+    "def.aria.campo": "Qué significa", "def.diag.cap": "Amarillo: lo que se mide · morado: fronteras y círculos de muestreo.", "def.escala": "Qué significa cada número (1–5)", "v.na": "N/A", "fb.programa": "Programa:", "fb.lectura": "Lectura IA:", "fb.mediana": "Mediana publicada (Ford 2019): 2,5", "tab.aria": "Secciones del laboratorio", "tab.captura": "Captura", "tab.rasgos": "Rasgos", "tab.lectura": "Lectura", "tab.feedback": "Feedback", "l.sinrasgos": "Sin rasgos medidos todavía: suba una foto que pase la compuerta.", "op.kick": "Resumen del informe del productor", "op.vacio": "Sin lectura con IA: el informe del productor aún no existe.",
     "idioma.es": "español", "idioma.en": "inglés", "idioma.de": "alemán"
   };
   T.en = {
@@ -931,7 +1015,8 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     "l.antigua": "This reading is from an earlier version and has no producer report.", "l.versiones": "Rules v", "l.ajustes": " · Adjustments: ", "l.idioma.aviso": "This reading was written in ",
     "j.res.sinfinca": "No farm", "j.res.sindep": "no department", "e.sin-foto": "No photo", "e.rechazada": "Photo rejected", "e.medida": "Photo measured", "e.con-lectura": "With reading",
     "pr.pagina": "Page", "pr.de": "of", "pr.nit": "NIT 901.483.425-7 · ctcexport.com",
-    "def.que": "What it is", "def.como": "How it is computed", "def.leyenda": "Legend", "def.rango": "Range and reading",
+    "def.que": "What it is", "def.como": "How it is computed", "def.leyenda": "Symbol legend", "def.rango": "Range and reading",
+    "def.aria.campo": "What it means", "def.diag.cap": "Yellow: what is measured · purple: boundaries and sampling circles.", "def.escala": "What each number means (1–5)", "v.na": "N/A", "fb.programa": "Program:", "fb.lectura": "AI reading:", "fb.mediana": "Published median (Ford 2019): 2.5", "tab.aria": "Laboratory sections", "tab.captura": "Capture", "tab.rasgos": "Features", "tab.lectura": "Reading", "tab.feedback": "Feedback", "l.sinrasgos": "No measured features yet: upload a photo that passes the gate.", "op.kick": "Summary of the producer report", "op.vacio": "No AI reading yet: the producer report does not exist.",
     "idioma.es": "Spanish", "idioma.en": "English", "idioma.de": "German"
   };
   T.de = {
@@ -1041,7 +1126,8 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     "l.antigua": "Diese Lesung stammt aus einer früheren Version und enthält keinen Erzeugerbericht.", "l.versiones": "Regeln v", "l.ajustes": " · Anpassungen: ", "l.idioma.aviso": "Diese Lesung wurde geschrieben auf ",
     "j.res.sinfinca": "Ohne Finca", "j.res.sindep": "ohne Departamento", "e.sin-foto": "Kein Foto", "e.rechazada": "Foto abgelehnt", "e.medida": "Foto gemessen", "e.con-lectura": "Mit Lesung",
     "pr.pagina": "Seite", "pr.de": "von", "pr.nit": "NIT 901.483.425-7 · ctcexport.com",
-    "def.que": "Was es ist", "def.como": "Wie es berechnet wird", "def.leyenda": "Legende", "def.rango": "Spanne und Lesung",
+    "def.que": "Was es ist", "def.como": "Wie es berechnet wird", "def.leyenda": "Symbollegende", "def.rango": "Spanne und Lesung",
+    "def.aria.campo": "Was es bedeutet", "def.diag.cap": "Gelb: was gemessen wird · Lila: Grenzen und Abtastkreise.", "def.escala": "Was jede Zahl bedeutet (1–5)", "v.na": "k. A.", "fb.programa": "Programm:", "fb.lectura": "KI-Lesung:", "fb.mediana": "Publizierter Median (Ford 2019): 2,5", "tab.aria": "Laborbereiche", "tab.captura": "Aufnahme", "tab.rasgos": "Merkmale", "tab.lectura": "Lesung", "tab.feedback": "Feedback", "l.sinrasgos": "Noch keine gemessenen Merkmale: laden Sie ein Foto hoch, das die Prüfung besteht.", "op.kick": "Zusammenfassung des Erzeugerberichts", "op.vacio": "Noch keine KI-Lesung: der Erzeugerbericht existiert noch nicht.",
     "idioma.es": "Spanisch", "idioma.en": "Englisch", "idioma.de": "Deutsch"
   };
 
@@ -1051,91 +1137,1732 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
      idioma pone el título, qué es, la leyenda (en el orden de los símbolos)
      y el rango. El guardián exige que las tres lenguas tengan las mismas claves. */
   var DEF = {
-    formulas: {
-      circulo: "fondo = mediana(L*, a*, b*) de la banda del 3 % del borde de la foto\nmáscara: ΔE*ab(p, fondo) > 14\nR = mediana r(θ), θ ∈ 180 ángulos · circ = σ(r)/R ≤ 0,22 · relleno ≥ 0,45",
-      nitidez: "nitidez = Var(∇²L*) · 2,55²\n∇²L* = 4·L(x,y) − L(x−1,y) − L(x+1,y) − L(x,y−1) − L(x,y+1)\nsobre el croma remuestreado a radio 250 px, dentro de 0,95·R",
-      resolucion: "D = 2 · R · escala_original ≥ 500 px",
-      recorte: "recorridos radiales que tocan el borde de la foto < 2\ncx − R ≥ 1 · cy − R ≥ 1 · cx + R ≤ w − 2 · cy + R ≤ h − 2",
-      fondo: "L*_fondo ≥ 55\nC*_fondo = √(a*² + b*²) ≤ 18",
-      oblicua: "a₂ = (2/N) · | Σ_θ r(θ) · e^(−2iθ) |\nrazón de ejes = (R − a₂) / (R + a₂) ≥ 0,80",
-      fronteras: "ΔE_k = ‖P_(k+1) − P_k‖, k = 1…49 (anillos vecinos)\ns_k = (ΔE_(k−1) + 2·ΔE_k + ΔE_(k+1)) / 4\nfrontera_z = máximo local de s_k en la ventana z, si s_k ≥ 1; si no, prior nominal (0,15 · 0,50 · 0,80)\nventanas: 0,06–0,32 · 0,36–0,66 · 0,64–0,92 · separación mínima 0,08",
-      color: "color_zona = (mediana L*, mediana a*, mediana b*) de los píxeles entre fronteras\nsRGB → CIELAB, iluminante D65",
-      radialidad: "F_k(ρ) = Σ_j L*(ρ, θ_j) · e^(−2πi·k·j/N), N = 256 muestras por vuelta\nE(ρ) = √(2 · Σ_(k=6..100) |F_k|²) / N\nradialidad = media_ρ [ E(ρ) / (E(ρ) + 6) ], ρ desde f₃ + 0,03 hasta 0,94, paso 0,03",
-      picos: "picos = media [ E(ρ) / (E(ρ) + 6) ] en ρ = 0,88 · 0,92 · 0,96\n(E(ρ) como en el índice de radialidad)",
-      borde: "irregularidad = σ(r(θ)) / R, θ ∈ 180 ángulos",
-      intensidad: "C*_medio = media √(a*² + b*²) en las zonas media y externa (ρ ≥ f₂)\nintensidad = 0,6 · min(1, C*_medio / 40) + 0,4 · min(1, contraste_fronteras / 25)",
-      simetria: "simetría = clamp₀¹ [ (1/4) · Σ_(s=1..4) r_Pearson(perfil_L*(sector s), perfil_L*(sector s+4)) ]\n8 sectores × 25 anillos",
-      entropia: "H_zona = − Σ_(i=1..32) p_i · log₂ p_i\np_i = fracción de píxeles de la zona en la clase i del histograma de L* (32 clases)",
-      captura: "nitidez (ver Nitidez) · D = 2·R·escala_original · razón de ejes (ver Cámara paralela)\nencuadre = área del disco / área de la foto",
-      ford: "x = 1 + 4·s → rango [⌊x⌋, ⌈x⌉], acotado a 1…5 y de ancho ≤ 1\ncanales: s = (radialidad − 0,2) / 0,55\npicos: s = 0,6 · clamp((picos − 0,2) / 0,55) + 0,4 · clamp(irregularidad / 0,08)\nintensidad: s = índice de intensidad",
-      certeza: "certeza = media  si ∃ i ∈ basado_en con confianza(i) = media y nivel(i) ∈ {A, B}\ncerteza = baja  en cualquier otro caso · nunca alta",
-      senal: "senal ∈ {buena, mixta, atencion}"
+    "formulas": {
+      "circulo": "F = med{ (L*, a*, b*)(p) : p ∈ B₃ }\nM(p) = 1 ⟺ ΔE*ab(p, F) > 14\nR = med{ r(θ) : θ ∈ Θ₁₈₀ }\nκ = σ(r(θ)) / R ≤ 0,22 · φ ≥ 0,45 · R ≥ 0,1 · min(w, h)",
+      "nitidez": "∇²L*(x, y) = 4·L*(x, y) − L*(x−1, y) − L*(x+1, y) − L*(x, y−1) − L*(x, y+1)\nν = Var{ 2,55 · ∇²L*(p) : p ∈ D₂₅₀, r(p) ≤ 0,95 · R } ≥ 10",
+      "resolucion": "D = 2 · R · k₀ ≥ 500 px",
+      "recorte": "N_borde < 2\ncx − R ≥ 1 · cy − R ≥ 1 · cx + R ≤ w − 2 · cy + R ≤ h − 2",
+      "fondo": "L*_F ≥ 55\nC*_F = √(a*_F² + b*_F²) ≤ 18",
+      "oblicua": "a₂ = (2/N) · | Σ_θ r(θ) · e^(−2iθ) |, N = 180\nq = (R − a₂) / (R + a₂) ≥ 0,80",
+      "fronteras": {
+        "es": "P_k = ⟨ (L*, a*, b*)(p) : p ∈ anillo k ⟩, k = 1…50\nΔE_k = ‖P_(k+1) − P_k‖\ns_k = (ΔE_(k−1) + 2·ΔE_k + ΔE_(k+1)) / 4\nf_z = k/50 del máximo local de s_k dentro de W_z, si s_k ≥ 1; si no, f_z = f⁰_z\nf⁰ = (0,15 · 0,50 · 0,80) · W = (0,06–0,32 · 0,36–0,66 · 0,64–0,92) · f_(z+1) − f_z ≥ 0,08",
+        "en": "P_k = ⟨ (L*, a*, b*)(p) : p ∈ ring k ⟩, k = 1…50\nΔE_k = ‖P_(k+1) − P_k‖\ns_k = (ΔE_(k−1) + 2·ΔE_k + ΔE_(k+1)) / 4\nf_z = k/50 of the local maximum of s_k inside W_z, if s_k ≥ 1; otherwise f_z = f⁰_z\nf⁰ = (0.15 · 0.50 · 0.80) · W = (0.06–0.32 · 0.36–0.66 · 0.64–0.92) · f_(z+1) − f_z ≥ 0.08",
+        "de": "P_k = ⟨ (L*, a*, b*)(p) : p ∈ Ring k ⟩, k = 1…50\nΔE_k = ‖P_(k+1) − P_k‖\ns_k = (ΔE_(k−1) + 2·ΔE_k + ΔE_(k+1)) / 4\nf_z = k/50 des lokalen Maximums von s_k in W_z, falls s_k ≥ 1; sonst f_z = f⁰_z\nf⁰ = (0,15 · 0,50 · 0,80) · W = (0,06–0,32 · 0,36–0,66 · 0,64–0,92) · f_(z+1) − f_z ≥ 0,08"
+      },
+      "color": "C_z = ( med L*, med a*, med b* ) : p ∈ Z_z\nsRGB → XYZ (D65) → CIELAB",
+      "radialidad": "F_n(ρ) = Σ_(j=0…N−1) L*(ρ, θ_j) · e^(−2πi·n·j/N), θ_j = 2πj/N, N = 256\nE(ρ) = √( 2 · Σ_(n=6…100) |F_n(ρ)|² ) / N\nI_rad = ⟨ E(ρ) / (E(ρ) + 6) ⟩_ρ, ρ = f₃ + 0,03 … 0,94 (Δρ = 0,03)",
+      "picos": "I_pic = ⟨ E(ρ) / (E(ρ) + 6) ⟩_ρ, ρ ∈ {0,88 · 0,92 · 0,96}",
+      "borde": "I_bor = σ( r(θ) ) / R, θ ∈ Θ₁₈₀",
+      "intensidad": "C*(p) = √( a*(p)² + b*(p)² )\nC̄* = ⟨ C*(p) : f₂ ≤ r(p) < 1 ⟩\nΔ̄E_f = ⟨ ΔE_k en k = f_z ⟩_z\nI_int = 0,6 · min(1, C̄*/40) + 0,4 · min(1, Δ̄E_f/25)",
+      "simetria": "P_s(α) = ⟨ L*(p) : p ∈ s, p ∈ α ⟩, s = 1…8, α = 1…25\nS = clamp₀¹[ ¼ · Σ_(s=1…4) corr( P_s , P_(s+4) ) ]",
+      "entropia": "p_ℓ = n_ℓ / n_z, ℓ = 1…32\nH_z = − Σ_ℓ p_ℓ · log₂ p_ℓ",
+      "captura": "D = 2 · R · k₀\nq = (R − a₂) / (R + a₂)\nu = A_disco / A_foto",
+      "ford": "g = 1 + 4 · clamp₀¹(t)\nrango = [⌊g⌋, ⌈g⌉] ∩ [1, 5], ⌈g⌉ − ⌊g⌋ ≤ 1\nt_canales = (I_rad − 0,2) / 0,55\nt_picos = 0,6 · clamp₀¹((I_pic − 0,2) / 0,55) + 0,4 · clamp₀¹(I_bor / 0,08)\nt_intensidad = I_int",
+      "ford_canales": "E(ρ) = √( 2 · Σ_(n=6…100) |F_n(ρ)|² ) / N, N = 256\nI_rad = ⟨ E(ρ) / (E(ρ) + 6) ⟩_ρ, ρ = f₃ + 0,03 … 0,94\nt = (I_rad − 0,2) / 0,55 → g = 1 + 4 · clamp₀¹(t) → [⌊g⌋, ⌈g⌉]",
+      "ford_picos": "I_pic = ⟨ E(ρ) / (E(ρ) + 6) ⟩_ρ, ρ ∈ {0,88 · 0,92 · 0,96}\nI_bor = σ( r(θ) ) / R\nt = 0,6 · clamp₀¹((I_pic − 0,2) / 0,55) + 0,4 · clamp₀¹(I_bor / 0,08) → g = 1 + 4 · clamp₀¹(t) → [⌊g⌋, ⌈g⌉]",
+      "ford_intensidad": "C̄* = ⟨ √( a*(p)² + b*(p)² ) : f₂ ≤ r(p) < 1 ⟩\nΔ̄E_f = ⟨ ΔE_k en k = f_z ⟩_z\nI_int = 0,6 · min(1, C̄*/40) + 0,4 · min(1, Δ̄E_f/25)\nt = I_int → g = 1 + 4 · clamp₀¹(t) → [⌊g⌋, ⌈g⌉]",
+      "certeza": {
+        "es": "certeza(c) = media ⟺ ∃ m ∈ B(c) : conf(m) = media ∧ ev(m) ∈ {A, B}\ncerteza(c) = baja en cualquier otro caso (nunca alta)",
+        "en": "certainty(c) = medium ⟺ ∃ m ∈ B(c) : conf(m) = medium ∧ ev(m) ∈ {A, B}\ncertainty(c) = low in any other case (never high)",
+        "de": "Sicherheit(c) = mittel ⟺ ∃ m ∈ B(c) : conf(m) = mittel ∧ ev(m) ∈ {A, B}\nSicherheit(c) = gering in jedem anderen Fall (nie hoch)"
+      },
+      "senal": {
+        "es": "señal ∈ { buena, mixta, atención }",
+        "en": "signal ∈ { good, mixed, attention }",
+        "de": "Signal ∈ { gut, gemischt, Achtung }"
+      }
     },
-    simbolos: {
-      circulo: ["ΔE*ab", "r(θ)", "R", "σ(r)"], nitidez: ["∇²L*", "Var", "R"], resolucion: ["D", "R", "escala_original"], recorte: ["cx, cy", "w, h"], fondo: ["L*", "C*"],
-      oblicua: ["a₂", "N", "r(θ)"], fronteras: ["P_k", "ΔE_k", "s_k", "ventana z"], color: ["L*", "a*", "b*"], radialidad: ["ρ", "θ_j", "F_k", "E(ρ)", "f₃"], picos: ["E(ρ)", "ρ"],
-      borde: ["r(θ)", "σ", "R"], intensidad: ["C*_medio", "contraste_fronteras", "f₂"], simetria: ["r_Pearson", "sector s", "clamp₀¹"], entropia: ["H", "p_i"], captura: ["D", "encuadre"],
-      ford: ["s", "x", "clamp"], certeza: ["basado_en", "confianza(i)", "nivel(i)"], senal: []
+    "simbolos": {
+      "circulo": [
+        "F",
+        "med",
+        "L*",
+        "a*",
+        "b*",
+        "p",
+        "B₃",
+        "M(p)",
+        "⟺",
+        "ΔE*ab",
+        "R",
+        "r(θ)",
+        "θ",
+        "Θ₁₈₀",
+        "κ",
+        "σ",
+        "φ",
+        "w",
+        "h",
+        "min"
+      ],
+      "nitidez": [
+        "∇²L*",
+        "L*",
+        "x",
+        "y",
+        "ν",
+        "Var",
+        "p",
+        "D₂₅₀",
+        "r(p)",
+        "R"
+      ],
+      "resolucion": [
+        "D",
+        "R",
+        "k₀",
+        "px"
+      ],
+      "recorte": [
+        "N_borde",
+        "cx",
+        "cy",
+        "R",
+        "w",
+        "h"
+      ],
+      "fondo": [
+        "F",
+        "L*",
+        "a*",
+        "b*",
+        "C*"
+      ],
+      "oblicua": [
+        "a₂",
+        "N",
+        "Σ",
+        "r(θ)",
+        "θ",
+        "e",
+        "i",
+        "R",
+        "q"
+      ],
+      "fronteras": [
+        "P_k",
+        "⟨·⟩",
+        "L*",
+        "a*",
+        "b*",
+        "p",
+        "k",
+        "ΔE_k",
+        "‖·‖",
+        "s_k",
+        "f_z",
+        "z",
+        "W_z",
+        "f⁰_z"
+      ],
+      "color": [
+        "C_z",
+        "med",
+        "L*",
+        "a*",
+        "b*",
+        "p",
+        "Z_z",
+        "z",
+        "sRGB",
+        "XYZ",
+        "D65",
+        "CIELAB"
+      ],
+      "radialidad": [
+        "F_n(ρ)",
+        "Σ",
+        "j",
+        "N",
+        "L*",
+        "ρ",
+        "θ_j",
+        "θ",
+        "e",
+        "i",
+        "π",
+        "n",
+        "E(ρ)",
+        "|·|",
+        "I_rad",
+        "⟨·⟩",
+        "f₃",
+        "Δρ"
+      ],
+      "picos": [
+        "I_pic",
+        "E(ρ)",
+        "⟨·⟩",
+        "ρ"
+      ],
+      "borde": [
+        "I_bor",
+        "σ",
+        "r(θ)",
+        "θ",
+        "Θ₁₈₀",
+        "R"
+      ],
+      "intensidad": [
+        "C*",
+        "a*",
+        "b*",
+        "p",
+        "C̄*",
+        "⟨·⟩",
+        "f₂",
+        "r(p)",
+        "Δ̄E_f",
+        "ΔE_k",
+        "k",
+        "f_z",
+        "z",
+        "I_int",
+        "min"
+      ],
+      "simetria": [
+        "P_s(α)",
+        "⟨·⟩",
+        "L*",
+        "p",
+        "s",
+        "α",
+        "S",
+        "clamp₀¹",
+        "Σ",
+        "corr"
+      ],
+      "entropia": [
+        "p_ℓ",
+        "n_ℓ",
+        "n_z",
+        "ℓ",
+        "H_z",
+        "Σ",
+        "log₂",
+        "z"
+      ],
+      "captura": [
+        "D",
+        "R",
+        "k₀",
+        "q",
+        "a₂",
+        "u",
+        "A_disco",
+        "A_foto"
+      ],
+      "ford": [
+        "g",
+        "t",
+        "clamp₀¹",
+        "⌊·⌋",
+        "⌈·⌉",
+        "I_rad",
+        "I_pic",
+        "I_bor",
+        "I_int"
+      ],
+      "ford_canales": [
+        "E(ρ)",
+        "Σ",
+        "n",
+        "F_n(ρ)",
+        "|·|",
+        "N",
+        "I_rad",
+        "⟨·⟩",
+        "ρ",
+        "f₃",
+        "t",
+        "g",
+        "clamp₀¹",
+        "⌊·⌋",
+        "⌈·⌉"
+      ],
+      "ford_picos": [
+        "I_pic",
+        "E(ρ)",
+        "⟨·⟩",
+        "ρ",
+        "I_bor",
+        "σ",
+        "r(θ)",
+        "θ",
+        "R",
+        "t",
+        "g",
+        "clamp₀¹",
+        "⌊·⌋",
+        "⌈·⌉"
+      ],
+      "ford_intensidad": [
+        "C̄*",
+        "⟨·⟩",
+        "a*",
+        "b*",
+        "p",
+        "f₂",
+        "r(p)",
+        "Δ̄E_f",
+        "ΔE_k",
+        "k",
+        "f_z",
+        "z",
+        "I_int",
+        "min",
+        "t",
+        "g",
+        "clamp₀¹",
+        "⌊·⌋",
+        "⌈·⌉"
+      ],
+      "certeza": [
+        "c",
+        "⟺",
+        "∃",
+        "m",
+        "B(c)",
+        "conf(m)",
+        "ev(m)",
+        "∧"
+      ],
+      "senal": []
     },
-    es: {
-      circulo: { t: "Patrón circular", q: "Si en la foto hay un disco de croma sobre un fondo claro. Se separa el croma del fondo por color y se mide el borde en 180 direcciones desde el centro.", l: ["diferencia de color CIELAB entre un píxel y el fondo", "distancia del centro al borde del croma en la dirección θ", "radio mediano del croma (en píxeles del lienzo de 900 px)", "desviación típica de esos radios"], r: "Debe existir un disco con radio ≥ 10 % del lado menor, circularidad ≤ 0,22 y relleno ≥ 0,45. Si falla, no hay lectura." },
-      nitidez: { t: "Nitidez", q: "Si la foto está enfocada. Es la varianza del laplaciano de la luminosidad: una foto nítida tiene bordes marcados y varianza alta; una movida, baja.", l: ["laplaciano de L*, la segunda derivada discreta (vecinos en cruz)", "varianza", "radio del croma"], r: "Umbral ≥ 10. Las 108 capturas de laboratorio de Martins et al. 2026 dan como mínimo 13,9." },
-      resolucion: { t: "Resolución del croma", q: "Cuántos píxeles mide el croma en la foto original. El motor lo remuestrea a 500 px de diámetro; con menos tendría que inventar píxeles.", l: ["diámetro del croma en la foto original", "radio medido en el lienzo de 900 px", "píxeles de la foto original por píxel del lienzo"], r: "≥ 500 px; se recomiendan 1.000. Frena capturas de pantalla y fotos reenviadas por chat." },
-      recorte: { t: "Borde completo", q: "Si el papel se ve entero. Un recorrido radial que llega al borde de la foto sin salir del croma delata un recorte.", l: ["centro del croma en el lienzo", "ancho y alto del lienzo"], r: "Menos de 2 recorridos tocan el borde y el disco cabe en el encuadre." },
-      fondo: { t: "Fondo claro", q: "Si el fondo es claro y neutro. Un fondo oscuro o con color cambia la máscara del croma y los colores medidos.", l: ["luminosidad CIELAB del fondo (0 negro, 100 blanco)", "croma CIELAB del fondo: cuánto color tiene"], r: "L* ≥ 55 y C* ≤ 18." },
-      oblicua: { t: "Cámara paralela", q: "Si la cámara estaba paralela al papel. Una foto inclinada convierte el círculo en elipse; la elipse deja un armónico de orden 2 en el radio del borde, que los picos (de alta frecuencia) no tocan.", l: ["amplitud del armónico de orden 2 del radio del borde", "número de ángulos (180)", "radio del borde en la dirección θ"], r: "Razón de ejes ≥ 0,80. Las capturas perpendiculares de Martins et al. van de 0,857 a 0,96." },
-      fronteras: { t: "Fronteras entre zonas", q: "Dónde termina cada zona del croma, como radio relativo al frente del extracto (r = 1 donde termina el croma). Se buscan los saltos de color más fuertes entre anillos vecinos.", l: ["color CIELAB medio del anillo k (50 anillos del 2 %)", "diferencia de color entre el anillo k y el siguiente", "esa diferencia suavizada", "intervalo de radios donde se busca la frontera z (central/mineral, mineral/orgánica, orgánica/externa)"], r: "Tres fronteras, «medida» o «nominal» cada una. Los priors 0,15 · 0,50 · 0,80 salen de las reglas v2.1." },
-      color: { t: "Color mediano por zona", q: "El color representativo de cada zona, en CIELAB, que es un espacio de color perceptual: L* es la luminosidad, a* va del verde al rojo y b* del azul al amarillo.", l: ["luminosidad (0–100)", "eje verde (−) a rojo (+)", "eje azul (−) a amarillo (+)"], r: "Se muestra con una muestra de color. Una foto de celular no está calibrada: comparar solo fotos tomadas igual." },
-      radialidad: { t: "Índice de radialidad", q: "Cuánta estructura radial (canales, rayos) tiene la zona externa. Se recorre un círculo a radio fijo, se toma la luminosidad en 256 puntos y se mide la energía de las frecuencias medias: lo que varía despacio alrededor del croma (una luz de lado) no cuenta; canales y picos sí.", l: ["radio relativo del círculo recorrido", "ángulo de la muestra j", "coeficiente de Fourier de orden k de L* alrededor del círculo", "energía angular de frecuencia media a ese radio", "tercera frontera (orgánica/externa)"], r: "De 0 a 1. Por debajo de 0,25 la lectura no puede hablar de canales bien desarrollados; por encima de 0,6 no puede negarlos." },
-      picos: { t: "Índice de picos", q: "La misma medida de estructura angular, pero en los tres radios más externos, donde viven los picos y sus terminaciones.", l: ["energía angular de frecuencia media", "radios 0,88 · 0,92 · 0,96"], r: "De 0 a 1. Alimenta la estimación programática de «desarrollo de picos»." },
-      borde: { t: "Irregularidad del borde", q: "Cuánto se aparta el borde del croma de un círculo: picos que dentan el borde suben este valor.", l: ["radio del borde en cada ángulo", "desviación típica", "radio mediano"], r: "Típico 0,02–0,08. Se combina con el índice de picos en la escala de Ford programática." },
-      intensidad: { t: "Índice de intensidad de color", q: "Cuán saturados son los colores de las zonas media y externa, más lo nítidas que son las fronteras. Mide intensidad, no tono: el tono se lee aparte con las lecturas de color.", l: ["croma CIELAB medio (saturación) de las zonas media y externa", "salto de color medio en las fronteras medidas", "segunda frontera (mineral/orgánica)"], r: "De 0 a 1. Alimenta la estimación programática de «intensidad de color»." },
-      simetria: { t: "Simetría", q: "Si el croma se parece a sí mismo en sectores opuestos. Compara el perfil radial de luminosidad de cada sector con el del sector de enfrente.", l: ["coeficiente de correlación de Pearson entre dos perfiles", "uno de 8 sectores de 45°", "acotar a [0, 1]"], r: "De 0 a 1. Cerca de 1, croma centrado y parejo; bajo, luz de lado, mancha o croma torcido." },
-      entropia: { t: "Entropía de textura", q: "Cuánta variedad de luminosidades hay en cada zona. Una zona lisa y uniforme tiene entropía baja; una con textura, alta. Es un descriptor simple, no la entropía GLCM de Haralick de Kokornaczyk et al.", l: ["entropía de la zona, en bits", "fracción de píxeles en cada clase de luminosidad"], r: "De 0 a 5 bits (32 clases). Se informa por zona." },
-      captura: { t: "Calidad de captura", q: "Resumen de la compuerta: nitidez, diámetro del croma en la foto original, razón de ejes y qué parte del encuadre ocupa el croma.", l: ["diámetro del croma en la foto original", "fracción del encuadre que ocupa el disco"], r: "El encuadre se informa y no rechaza: con papel de 15 cm el croma ocupa como máximo la mitad." },
-      ford: { t: "Escala de Ford estimada por programa", q: "Traduce los rasgos a la escala 1–5 de Ford et al. (canales, picos, intensidad) como rango de dos enteros. No ve la imagen: es una referencia comparable entre muestras, no una lectura. La fuente advierte que en 343 muestras estos rasgos no variaron de forma consistente con la condición del suelo.", l: ["puntuación normalizada de 0 a 1", "puntuación en la escala 1–5 antes de redondear", "acotar a [0, 1]"], r: "Rangos como 2–3 o 3–4. En 361 cromas la mediana publicada fue 2,5 y el color nunca pasó de 4." },
-      certeza: { t: "Certeza de una conjetura", q: "Cuánto sustento técnico tiene lo que se le dice al productor. No la escribe la inteligencia artificial: la calcula el servidor a partir de las interpretaciones técnicas que sustentan cada conjetura, con su nivel de evidencia y su confianza.", l: ["interpretaciones técnicas (i1, i2…) en que se apoya la conjetura", "baja o media, según lo que el modelo pudo ver", "nivel de evidencia de la fuente: A revisado por pares, B institucional, C práctica no validada"], r: "Baja: una posibilidad entre otras. Media: probable por lo que se ve, conviene confirmarlo. Nunca alta, porque el método no lo admite." },
-      senal: { t: "La señal del informe", q: "Un resumen de una palabra de lo que sugiere la foto: buena (se ve un suelo con vida), mixta (señales buenas y otras por mejorar) o atención (señales de desgaste). La elige la inteligencia artificial según lo que ve; el texto que la acompaña sale de las reglas de CTC.", l: [], r: "Es orientativa: la foto no mide nada. Confírmela con el laboratorio y repita el croma para ver el avance." }
+    "diag": {
+      "circulo": {
+        "borde": 1,
+        "rayos": 1,
+        "banda": 1
+      },
+      "nitidez": {
+        "disco": 0.95
+      },
+      "resolucion": {
+        "diametro": 1
+      },
+      "recorte": {
+        "banda": 1,
+        "borde": 1,
+        "rayos": 1
+      },
+      "fondo": {
+        "banda": 1
+      },
+      "oblicua": {
+        "elipse": 1
+      },
+      "fronteras": {
+        "fronteras": 1
+      },
+      "color": {
+        "zonas": 1,
+        "fronteras": 1
+      },
+      "radialidad": {
+        "anillo": [
+          "f3+0.03",
+          0.94
+        ],
+        "muestreo": [
+          "f3+0.03",
+          0.94
+        ]
+      },
+      "picos": {
+        "muestreo": [
+          0.88,
+          0.92,
+          0.96
+        ]
+      },
+      "borde": {
+        "borde": 1,
+        "rayos": 1
+      },
+      "intensidad": {
+        "anillo": [
+          "f2",
+          1
+        ],
+        "fronteras": 1
+      },
+      "simetria": {
+        "sectores": 8
+      },
+      "entropia": {
+        "zonas": 1,
+        "fronteras": 1
+      },
+      "captura": {
+        "diametro": 1
+      },
+      "ford": {
+        "anillo": [
+          "f3+0.03",
+          0.94
+        ],
+        "muestreo": [
+          0.88,
+          0.92,
+          0.96
+        ]
+      },
+      "ford_canales": {
+        "anillo": [
+          "f3+0.03",
+          0.94
+        ],
+        "muestreo": [
+          "f3+0.03",
+          0.94
+        ]
+      },
+      "ford_picos": {
+        "muestreo": [
+          0.88,
+          0.92,
+          0.96
+        ],
+        "borde": 1,
+        "rayos": 1
+      },
+      "ford_intensidad": {
+        "anillo": [
+          "f2",
+          1
+        ],
+        "fronteras": 1
+      }
     },
-    en: {
-      circulo: { t: "Circular pattern", q: "Whether the photo has a chroma disc on a light background. The chroma is separated from the background by colour and the edge is measured in 180 directions from the centre.", l: ["CIELAB colour difference between a pixel and the background", "distance from the centre to the chroma edge in direction θ", "median radius of the chroma (pixels of the 900 px canvas)", "standard deviation of those radii"], r: "A disc must exist with radius ≥ 10 % of the shorter side, circularity ≤ 0.22 and fill ≥ 0.45. If it fails, there is no reading." },
-      nitidez: { t: "Sharpness", q: "Whether the photo is in focus. It is the variance of the Laplacian of lightness: a sharp photo has marked edges and high variance; a shaken one, low.", l: ["Laplacian of L*, the discrete second derivative (cross neighbours)", "variance", "chroma radius"], r: "Threshold ≥ 10. The 108 laboratory captures of Martins et al. 2026 give at least 13.9." },
-      resolucion: { t: "Chroma resolution", q: "How many pixels the chroma spans in the original photo. The engine resamples it to 500 px in diameter; with fewer it would have to invent pixels.", l: ["chroma diameter in the original photo", "radius measured on the 900 px canvas", "original-photo pixels per canvas pixel"], r: "≥ 500 px; 1,000 recommended. Stops screenshots and photos forwarded by chat." },
-      recorte: { t: "Complete edge", q: "Whether the whole paper is visible. A radial walk that reaches the photo edge without leaving the chroma reveals a crop.", l: ["chroma centre on the canvas", "canvas width and height"], r: "Fewer than 2 walks touch the edge and the disc fits in the frame." },
-      fondo: { t: "Light background", q: "Whether the background is light and neutral. A dark or coloured background changes the chroma mask and the measured colours.", l: ["CIELAB lightness of the background (0 black, 100 white)", "CIELAB chroma of the background: how much colour it has"], r: "L* ≥ 55 and C* ≤ 18." },
-      oblicua: { t: "Parallel camera", q: "Whether the camera was parallel to the paper. A tilted photo turns the circle into an ellipse; the ellipse leaves a second-order harmonic in the edge radius, which the high-frequency spikes do not touch.", l: ["amplitude of the second-order harmonic of the edge radius", "number of angles (180)", "edge radius in direction θ"], r: "Axis ratio ≥ 0.80. The perpendicular captures of Martins et al. range from 0.857 to 0.96." },
-      fronteras: { t: "Zone boundaries", q: "Where each zone of the chroma ends, as a radius relative to the extract front (r = 1 where the chroma ends). The strongest colour jumps between neighbouring rings are searched.", l: ["mean CIELAB colour of ring k (50 rings of 2 %)", "colour difference between ring k and the next", "that difference smoothed", "radius interval where boundary z is searched (central/mineral, mineral/organic, organic/outer)"], r: "Three boundaries, each «measured» or «nominal». The priors 0.15 · 0.50 · 0.80 come from rules v2.1." },
-      color: { t: "Median colour per zone", q: "The representative colour of each zone in CIELAB, a perceptual colour space: L* is lightness, a* runs from green to red and b* from blue to yellow.", l: ["lightness (0–100)", "green (−) to red (+) axis", "blue (−) to yellow (+) axis"], r: "Shown with a colour swatch. A phone photo is not calibrated: compare only photos taken the same way." },
-      radialidad: { t: "Radiality index", q: "How much radial structure (channels, rays) the outer zone has. A circle at fixed radius is walked, lightness is sampled at 256 points and the energy of the mid frequencies is measured: what varies slowly around the chroma (side light) does not count; channels and spikes do.", l: ["relative radius of the walked circle", "angle of sample j", "Fourier coefficient of order k of L* around the circle", "mid-frequency angular energy at that radius", "third boundary (organic/outer)"], r: "From 0 to 1. Below 0.25 the reading cannot speak of well-developed channels; above 0.6 it cannot deny them." },
-      picos: { t: "Spike index", q: "The same measure of angular structure, but at the three outermost radii, where the spikes and their endings live.", l: ["mid-frequency angular energy", "radii 0.88 · 0.92 · 0.96"], r: "From 0 to 1. Feeds the programmatic estimate of «spike development»." },
-      borde: { t: "Edge irregularity", q: "How far the chroma edge departs from a circle: spikes that indent the edge raise this value.", l: ["edge radius at each angle", "standard deviation", "median radius"], r: "Typically 0.02–0.08. Combined with the spike index in the programmatic Ford scale." },
-      intensidad: { t: "Colour intensity index", q: "How saturated the colours of the middle and outer zones are, plus how sharp the boundaries are. It measures intensity, not hue: hue is read separately with the colour readings.", l: ["mean CIELAB chroma (saturation) of the middle and outer zones", "mean colour jump at the measured boundaries", "second boundary (mineral/organic)"], r: "From 0 to 1. Feeds the programmatic estimate of «colour intensity»." },
-      simetria: { t: "Symmetry", q: "Whether the chroma resembles itself in opposite sectors. It compares the radial lightness profile of each sector with that of the sector across.", l: ["Pearson correlation coefficient between two profiles", "one of 8 sectors of 45°", "clip to [0, 1]"], r: "From 0 to 1. Near 1, a centred, even chroma; low, side light, a stain or a skewed chroma." },
-      entropia: { t: "Texture entropy", q: "How much variety of lightness there is in each zone. A smooth, uniform zone has low entropy; a textured one, high. It is a simple descriptor, not the GLCM Haralick entropy of Kokornaczyk et al.", l: ["entropy of the zone, in bits", "fraction of pixels in each lightness class"], r: "From 0 to 5 bits (32 classes). Reported per zone." },
-      captura: { t: "Capture quality", q: "Summary of the gate: sharpness, chroma diameter in the original photo, axis ratio and what share of the frame the chroma takes.", l: ["chroma diameter in the original photo", "share of the frame taken by the disc"], r: "The frame share is reported and does not reject: with 15 cm paper the chroma takes at most half." },
-      ford: { t: "Programmatic Ford scale", q: "Translates the features into the 1–5 scale of Ford et al. (channels, spikes, intensity) as a range of two integers. It does not see the image: it is a reference comparable between samples, not a reading. The source warns that in 343 samples these features did not vary consistently with soil condition.", l: ["normalised score from 0 to 1", "score on the 1–5 scale before rounding", "clip to [0, 1]"], r: "Ranges such as 2–3 or 3–4. In 361 chromas the published median was 2.5 and colour never exceeded 4." },
-      certeza: { t: "Certainty of a conjecture", q: "How much technical support what the producer is told has. The AI does not write it: the server computes it from the technical interpretations that support each conjecture, with their evidence level and confidence.", l: ["technical interpretations (i1, i2…) the conjecture rests on", "low or medium, according to what the model could see", "evidence level of the source: A peer-reviewed, B institutional, C unvalidated practice"], r: "Low: one possibility among others. Medium: likely from what is seen, worth confirming. Never high, because the method does not allow it." },
-      senal: { t: "The report signal", q: "A one-word summary of what the photo suggests: good (a soil with life is seen), mixed (good signs and others to improve) or attention (signs of wear). The AI chooses it from what it sees; the accompanying text comes from CTC's rules.", l: [], r: "It is for orientation: the photo measures nothing. Confirm it with the laboratory and repeat the chroma to follow progress." }
+    "escala": {
+      "canales": {
+        "es": [
+          [
+            "ausente",
+            "Anillos lisos; ninguna raya cruza la zona externa."
+          ],
+          [
+            "incipiente",
+            "Pocas rayas cortas y sueltas en parte del perímetro."
+          ],
+          [
+            "parcial",
+            "Rayas visibles en parte del perímetro o que no cruzan toda la zona externa."
+          ],
+          [
+            "bien desarrollada",
+            "Rayas continuas en casi todo el perímetro."
+          ],
+          [
+            "totalmente desarrollada",
+            "Canales continuos y ramificados en todo el perímetro."
+          ]
+        ],
+        "en": [
+          [
+            "absent",
+            "Smooth rings; no ray crosses the outer zone."
+          ],
+          [
+            "incipient",
+            "A few short, scattered rays in part of the perimeter."
+          ],
+          [
+            "partial",
+            "Rays visible in part of the perimeter or not crossing the whole outer zone."
+          ],
+          [
+            "well developed",
+            "Continuous rays around almost the whole perimeter."
+          ],
+          [
+            "fully developed",
+            "Continuous, branched channels around the whole perimeter."
+          ]
+        ],
+        "de": [
+          [
+            "fehlend",
+            "Glatte Ringe; kein Strahl durchquert die äußere Zone."
+          ],
+          [
+            "beginnend",
+            "Wenige kurze, vereinzelte Strahlen in einem Teil des Umfangs."
+          ],
+          [
+            "teilweise",
+            "Strahlen in einem Teil des Umfangs oder nicht durch die ganze äußere Zone."
+          ],
+          [
+            "gut entwickelt",
+            "Durchgehende Strahlen fast um den ganzen Umfang."
+          ],
+          [
+            "voll entwickelt",
+            "Durchgehende, verzweigte Kanäle um den ganzen Umfang."
+          ]
+        ]
+      },
+      "picos": {
+        "es": [
+          [
+            "ausentes",
+            "Borde liso, sin dientes."
+          ],
+          [
+            "incipientes",
+            "Dientes cortos y puntiagudos (nota 2 de Embrapa)."
+          ],
+          [
+            "parciales",
+            "Picos definidos en parte del borde; pocas terminaciones abiertas."
+          ],
+          [
+            "bien desarrollados",
+            "Picos en casi todo el borde; algunos se abren en manchas."
+          ],
+          [
+            "totalmente desarrollados",
+            "Picos en todo el borde que se abren en manchas o nubes (nota 4–5 de Embrapa)."
+          ]
+        ],
+        "en": [
+          [
+            "absent",
+            "Smooth edge, no teeth."
+          ],
+          [
+            "incipient",
+            "Short, pointed teeth (Embrapa score 2)."
+          ],
+          [
+            "partial",
+            "Defined spikes in part of the edge; few open endings."
+          ],
+          [
+            "well developed",
+            "Spikes around almost the whole edge; some open into spots."
+          ],
+          [
+            "fully developed",
+            "Spikes around the whole edge opening into spots or clouds (Embrapa score 4–5)."
+          ]
+        ],
+        "de": [
+          [
+            "fehlend",
+            "Glatter Rand, keine Zähne."
+          ],
+          [
+            "beginnend",
+            "Kurze, spitze Zähne (Embrapa-Note 2)."
+          ],
+          [
+            "teilweise",
+            "Ausgeprägte Spitzen in einem Teil des Randes; wenige offene Enden."
+          ],
+          [
+            "gut entwickelt",
+            "Spitzen fast am ganzen Rand; einige öffnen sich in Flecken."
+          ],
+          [
+            "voll entwickelt",
+            "Spitzen am ganzen Rand, die sich in Flecken oder Wolken öffnen (Embrapa-Note 4–5)."
+          ]
+        ]
+      },
+      "intensidad": {
+        "es": [
+          [
+            "borrosa",
+            "Colores lavados y fronteras difusas."
+          ],
+          [
+            "débil",
+            "Colores pálidos; se distinguen pocas fronteras."
+          ],
+          [
+            "media",
+            "Colores definidos y fronteras reconocibles."
+          ],
+          [
+            "marcada",
+            "Colores saturados en la zona media y externa; fronteras nítidas."
+          ],
+          [
+            "intensa",
+            "Colores muy saturados y fronteras muy nítidas (atípico: en 361 cromas nunca se llegó a 5)."
+          ]
+        ],
+        "en": [
+          [
+            "blurred",
+            "Washed-out colours and diffuse boundaries."
+          ],
+          [
+            "weak",
+            "Pale colours; few boundaries can be told apart."
+          ],
+          [
+            "medium",
+            "Defined colours and recognisable boundaries."
+          ],
+          [
+            "marked",
+            "Saturated colours in the middle and outer zones; sharp boundaries."
+          ],
+          [
+            "intense",
+            "Very saturated colours and very sharp boundaries (atypical: 5 was never reached in 361 chromas)."
+          ]
+        ],
+        "de": [
+          [
+            "verschwommen",
+            "Verwaschene Farben und diffuse Grenzen."
+          ],
+          [
+            "schwach",
+            "Blasse Farben; wenige Grenzen unterscheidbar."
+          ],
+          [
+            "mittel",
+            "Deutliche Farben und erkennbare Grenzen."
+          ],
+          [
+            "ausgeprägt",
+            "Gesättigte Farben in mittlerer und äußerer Zone; scharfe Grenzen."
+          ],
+          [
+            "intensiv",
+            "Sehr gesättigte Farben und sehr scharfe Grenzen (untypisch: in 361 Chromas nie erreicht)."
+          ]
+        ]
+      }
     },
-    de: {
-      circulo: { t: "Kreisförmiges Muster", q: "Ob im Foto eine Chroma-Scheibe auf hellem Hintergrund liegt. Das Chroma wird nach Farbe vom Hintergrund getrennt und der Rand in 180 Richtungen vom Zentrum aus gemessen.", l: ["CIELAB-Farbabstand zwischen einem Pixel und dem Hintergrund", "Abstand vom Zentrum zum Chroma-Rand in Richtung θ", "Medianradius des Chromas (Pixel der 900-px-Leinwand)", "Standardabweichung dieser Radien"], r: "Es muss eine Scheibe mit Radius ≥ 10 % der kürzeren Seite, Kreisförmigkeit ≤ 0,22 und Füllung ≥ 0,45 geben. Sonst gibt es keine Lesung." },
-      nitidez: { t: "Schärfe", q: "Ob das Foto scharf ist. Es ist die Varianz des Laplace-Operators der Helligkeit: ein scharfes Foto hat markante Kanten und hohe Varianz; ein verwackeltes eine niedrige.", l: ["Laplace-Operator von L*, die diskrete zweite Ableitung (Kreuznachbarn)", "Varianz", "Chroma-Radius"], r: "Schwelle ≥ 10. Die 108 Laboraufnahmen von Martins et al. 2026 ergeben mindestens 13,9." },
-      resolucion: { t: "Auflösung des Chromas", q: "Wie viele Pixel das Chroma im Originalfoto misst. Der Motor rechnet es auf 500 px Durchmesser um; mit weniger müsste er Pixel erfinden.", l: ["Chroma-Durchmesser im Originalfoto", "auf der 900-px-Leinwand gemessener Radius", "Pixel des Originalfotos je Leinwandpixel"], r: "≥ 500 px; empfohlen 1.000. Stoppt Screenshots und per Chat weitergeleitete Fotos." },
-      recorte: { t: "Vollständiger Rand", q: "Ob das ganze Papier zu sehen ist. Ein radialer Lauf, der den Fotorand erreicht, ohne das Chroma zu verlassen, verrät einen Beschnitt.", l: ["Chroma-Zentrum auf der Leinwand", "Breite und Höhe der Leinwand"], r: "Weniger als 2 Läufe berühren den Rand und die Scheibe passt ins Bild." },
-      fondo: { t: "Heller Hintergrund", q: "Ob der Hintergrund hell und neutral ist. Ein dunkler oder farbiger Hintergrund verändert die Chroma-Maske und die gemessenen Farben.", l: ["CIELAB-Helligkeit des Hintergrunds (0 schwarz, 100 weiß)", "CIELAB-Buntheit des Hintergrunds: wie viel Farbe er hat"], r: "L* ≥ 55 und C* ≤ 18." },
-      oblicua: { t: "Parallele Kamera", q: "Ob die Kamera parallel zum Papier war. Ein schräges Foto macht aus dem Kreis eine Ellipse; die Ellipse hinterlässt eine Harmonische zweiter Ordnung im Randradius, die die hochfrequenten Spitzen nicht berühren.", l: ["Amplitude der Harmonischen zweiter Ordnung des Randradius", "Anzahl der Winkel (180)", "Randradius in Richtung θ"], r: "Achsenverhältnis ≥ 0,80. Die senkrechten Aufnahmen von Martins et al. liegen zwischen 0,857 und 0,96." },
-      fronteras: { t: "Zonengrenzen", q: "Wo jede Zone des Chromas endet, als Radius relativ zur Extraktfront (r = 1, wo das Chroma endet). Gesucht werden die stärksten Farbsprünge zwischen benachbarten Ringen.", l: ["mittlere CIELAB-Farbe des Rings k (50 Ringe zu 2 %)", "Farbabstand zwischen Ring k und dem nächsten", "dieser Abstand geglättet", "Radiusintervall, in dem Grenze z gesucht wird (zentral/mineralisch, mineralisch/organisch, organisch/außen)"], r: "Drei Grenzen, jede «gemessen» oder «nominal». Die Priors 0,15 · 0,50 · 0,80 stammen aus den Regeln v2.1." },
-      color: { t: "Medianfarbe je Zone", q: "Die repräsentative Farbe jeder Zone in CIELAB, einem wahrnehmungsbezogenen Farbraum: L* ist die Helligkeit, a* geht von Grün nach Rot und b* von Blau nach Gelb.", l: ["Helligkeit (0–100)", "Achse Grün (−) bis Rot (+)", "Achse Blau (−) bis Gelb (+)"], r: "Wird mit einem Farbfeld gezeigt. Ein Handyfoto ist nicht kalibriert: nur gleich aufgenommene Fotos vergleichen." },
-      radialidad: { t: "Radialitätsindex", q: "Wie viel radiale Struktur (Kanäle, Strahlen) die äußere Zone hat. Ein Kreis mit festem Radius wird abgefahren, die Helligkeit an 256 Punkten abgetastet und die Energie der mittleren Frequenzen gemessen: was sich langsam um das Chroma ändert (Seitenlicht), zählt nicht; Kanäle und Spitzen schon.", l: ["relativer Radius des abgefahrenen Kreises", "Winkel der Probe j", "Fourier-Koeffizient der Ordnung k von L* entlang des Kreises", "angulare Energie mittlerer Frequenz bei diesem Radius", "dritte Grenze (organisch/außen)"], r: "Von 0 bis 1. Unter 0,25 darf die Lesung nicht von gut entwickelten Kanälen sprechen; über 0,6 darf sie sie nicht verneinen." },
-      picos: { t: "Spitzenindex", q: "Dasselbe Maß angularer Struktur, aber an den drei äußersten Radien, wo die Spitzen und ihre Enden liegen.", l: ["angulare Energie mittlerer Frequenz", "Radien 0,88 · 0,92 · 0,96"], r: "Von 0 bis 1. Speist die programmatische Schätzung der «Spitzenentwicklung»." },
-      borde: { t: "Randunregelmäßigkeit", q: "Wie weit der Chroma-Rand von einem Kreis abweicht: Spitzen, die den Rand zacken, erhöhen diesen Wert.", l: ["Randradius bei jedem Winkel", "Standardabweichung", "Medianradius"], r: "Typisch 0,02–0,08. Wird in der programmatischen Ford-Skala mit dem Spitzenindex kombiniert." },
-      intensidad: { t: "Farbintensitätsindex", q: "Wie gesättigt die Farben der mittleren und äußeren Zone sind, plus wie scharf die Grenzen sind. Er misst Intensität, nicht Farbton: der Farbton wird separat mit den Farblesungen gelesen.", l: ["mittlere CIELAB-Buntheit (Sättigung) der mittleren und äußeren Zone", "mittlerer Farbsprung an den gemessenen Grenzen", "zweite Grenze (mineralisch/organisch)"], r: "Von 0 bis 1. Speist die programmatische Schätzung der «Farbintensität»." },
-      simetria: { t: "Symmetrie", q: "Ob das Chroma sich in gegenüberliegenden Sektoren ähnelt. Es vergleicht das radiale Helligkeitsprofil jedes Sektors mit dem des gegenüberliegenden.", l: ["Pearson-Korrelationskoeffizient zweier Profile", "einer von 8 Sektoren zu 45°", "auf [0, 1] begrenzen"], r: "Von 0 bis 1. Nahe 1 ein zentriertes, gleichmäßiges Chroma; niedrig bei Seitenlicht, Fleck oder verzerrtem Chroma." },
-      entropia: { t: "Texturentropie", q: "Wie viel Helligkeitsvielfalt in jeder Zone ist. Eine glatte, gleichmäßige Zone hat niedrige Entropie; eine texturierte hohe. Ein einfacher Deskriptor, nicht die GLCM-Haralick-Entropie von Kokornaczyk et al.", l: ["Entropie der Zone, in Bit", "Anteil der Pixel in jeder Helligkeitsklasse"], r: "Von 0 bis 5 Bit (32 Klassen). Wird je Zone angegeben." },
-      captura: { t: "Aufnahmequalität", q: "Zusammenfassung der Prüfung: Schärfe, Chroma-Durchmesser im Originalfoto, Achsenverhältnis und welchen Anteil des Bildes das Chroma einnimmt.", l: ["Chroma-Durchmesser im Originalfoto", "Anteil des Bildes, den die Scheibe einnimmt"], r: "Der Bildanteil wird angegeben und lehnt nicht ab: bei 15-cm-Papier nimmt das Chroma höchstens die Hälfte ein." },
-      ford: { t: "Programmatisch geschätzte Ford-Skala", q: "Übersetzt die Merkmale in die Skala 1–5 von Ford et al. (Kanäle, Spitzen, Intensität) als Spanne zweier ganzer Zahlen. Sie sieht das Bild nicht: eine zwischen Proben vergleichbare Referenz, keine Lesung. Die Quelle warnt, dass diese Merkmale in 343 Proben nicht konsistent mit dem Bodenzustand variierten.", l: ["normierte Punktzahl von 0 bis 1", "Punktzahl auf der Skala 1–5 vor dem Runden", "auf [0, 1] begrenzen"], r: "Spannen wie 2–3 oder 3–4. In 361 Chromas lag der publizierte Median bei 2,5 und die Farbe nie über 4." },
-      certeza: { t: "Sicherheit einer Vermutung", q: "Wie viel technische Stütze das hat, was dem Erzeuger gesagt wird. Die KI schreibt sie nicht: der Server berechnet sie aus den technischen Interpretationen, die jede Vermutung stützen, mit ihrem Evidenzniveau und ihrer Konfidenz.", l: ["technische Interpretationen (i1, i2…), auf denen die Vermutung beruht", "gering oder mittel, je nachdem, was das Modell sehen konnte", "Evidenzniveau der Quelle: A begutachtet, B institutionell, C nicht validierte Praxis"], r: "Gering: eine Möglichkeit unter anderen. Mittel: nach dem Gesehenen wahrscheinlich, sollte bestätigt werden. Nie hoch, weil die Methode es nicht zulässt." },
-      senal: { t: "Das Signal des Berichts", q: "Eine Ein-Wort-Zusammenfassung dessen, was das Foto nahelegt: gut (ein lebendiger Boden ist zu sehen), gemischt (gute Zeichen und andere zu verbessern) oder Achtung (Zeichen von Erschöpfung). Die KI wählt es nach dem Gesehenen; der Begleittext stammt aus den CTC-Regeln.", l: [], r: "Es dient der Orientierung: das Foto misst nichts. Bestätigen Sie es mit dem Labor und wiederholen Sie das Chroma, um den Fortschritt zu sehen." }
+    "es": {
+      "circulo": {
+        "t": "Patrón circular",
+        "q": "Si en la foto hay un disco de croma sobre un fondo claro. Se separa el croma del fondo por color y se mide el borde en 180 direcciones desde el centro.",
+        "r": "Debe existir un disco con radio ≥ 10 % del lado menor, circularidad ≤ 0,22 y relleno ≥ 0,45. Si falla, no hay lectura."
+      },
+      "nitidez": {
+        "t": "Nitidez",
+        "q": "Si la foto está enfocada. Es la varianza del laplaciano de la luminosidad: una foto nítida tiene bordes marcados y varianza alta; una movida, baja.",
+        "r": "Umbral ≥ 10. Las 108 capturas de laboratorio de Martins et al. 2026 dan como mínimo 13,9."
+      },
+      "resolucion": {
+        "t": "Resolución del croma",
+        "q": "Cuántos píxeles mide el croma en la foto original. El motor lo remuestrea a 500 px de diámetro; con menos tendría que inventar píxeles.",
+        "r": "≥ 500 px; se recomiendan 1.000. Frena capturas de pantalla y fotos reenviadas por chat."
+      },
+      "recorte": {
+        "t": "Borde completo",
+        "q": "Si el papel se ve entero. Un recorrido radial que llega al borde de la foto sin salir del croma delata un recorte.",
+        "r": "Menos de 2 recorridos tocan el borde y el disco cabe en el encuadre."
+      },
+      "fondo": {
+        "t": "Fondo claro",
+        "q": "Si el fondo es claro y neutro. Un fondo oscuro o con color cambia la máscara del croma y los colores medidos.",
+        "r": "L* ≥ 55 y C* ≤ 18."
+      },
+      "oblicua": {
+        "t": "Cámara paralela",
+        "q": "Si la cámara estaba paralela al papel. Una foto inclinada convierte el círculo en elipse; la elipse deja un armónico de orden 2 en el radio del borde, que los picos (de alta frecuencia) no tocan.",
+        "r": "Razón de ejes ≥ 0,80. Las capturas perpendiculares de Martins et al. van de 0,857 a 0,96."
+      },
+      "fronteras": {
+        "t": "Fronteras entre zonas",
+        "q": "Dónde termina cada zona del croma, como radio relativo al frente del extracto (r = 1 donde termina el croma). Se buscan los saltos de color más fuertes entre anillos vecinos.",
+        "r": "Tres fronteras, «medida» o «nominal» cada una. Los priors 0,15 · 0,50 · 0,80 salen de las reglas v2.1."
+      },
+      "color": {
+        "t": "Color mediano por zona",
+        "q": "El color representativo de cada zona, en CIELAB, que es un espacio de color perceptual: L* es la luminosidad, a* va del verde al rojo y b* del azul al amarillo.",
+        "r": "Se muestra con una muestra de color. Una foto de celular no está calibrada: comparar solo fotos tomadas igual."
+      },
+      "radialidad": {
+        "t": "Índice de radialidad",
+        "q": "Cuánta estructura radial (canales, rayos) tiene la zona externa. Se recorre un círculo a radio fijo, se toma la luminosidad en 256 puntos y se mide la energía de las frecuencias medias: lo que varía despacio alrededor del croma (una luz de lado) no cuenta; canales y picos sí.",
+        "r": "De 0 a 1. Por debajo de 0,25 la lectura no puede hablar de canales bien desarrollados; por encima de 0,6 no puede negarlos."
+      },
+      "picos": {
+        "t": "Índice de picos",
+        "q": "La misma medida de estructura angular, pero en los tres radios más externos, donde viven los picos y sus terminaciones.",
+        "r": "De 0 a 1. Alimenta la estimación programática de «desarrollo de picos»."
+      },
+      "borde": {
+        "t": "Irregularidad del borde",
+        "q": "Cuánto se aparta el borde del croma de un círculo: picos que dentan el borde suben este valor.",
+        "r": "Típico 0,02–0,08. Se combina con el índice de picos en la escala de Ford programática."
+      },
+      "intensidad": {
+        "t": "Índice de intensidad de color",
+        "q": "Cuán saturados son los colores de las zonas media y externa, más lo nítidas que son las fronteras. Mide intensidad, no tono: el tono se lee aparte con las lecturas de color.",
+        "r": "De 0 a 1. Alimenta la estimación programática de «intensidad de color»."
+      },
+      "simetria": {
+        "t": "Simetría",
+        "q": "Si el croma se parece a sí mismo en sectores opuestos. Compara el perfil radial de luminosidad de cada sector con el del sector de enfrente.",
+        "r": "De 0 a 1. Cerca de 1, croma centrado y parejo; bajo, luz de lado, mancha o croma torcido."
+      },
+      "entropia": {
+        "t": "Entropía de textura",
+        "q": "Cuánta variedad de luminosidades hay en cada zona. Una zona lisa y uniforme tiene entropía baja; una con textura, alta. Es un descriptor simple, no la entropía GLCM de Haralick de Kokornaczyk et al.",
+        "r": "De 0 a 5 bits (32 clases). Se informa por zona."
+      },
+      "captura": {
+        "t": "Calidad de captura",
+        "q": "Resumen de la compuerta: nitidez, diámetro del croma en la foto original, razón de ejes y qué parte del encuadre ocupa el croma.",
+        "r": "El encuadre se informa y no rechaza: con papel de 15 cm el croma ocupa como máximo la mitad."
+      },
+      "ford": {
+        "t": "Escala de Ford estimada por programa",
+        "q": "Traduce los rasgos a la escala 1–5 de Ford et al. (canales, picos, intensidad) como rango de dos enteros. No ve la imagen: es una referencia comparable entre muestras, no una lectura. La fuente advierte que en 343 muestras estos rasgos no variaron de forma consistente con la condición del suelo.",
+        "r": "Rangos como 2–3 o 3–4. En 361 cromas la mediana publicada fue 2,5 y el color nunca pasó de 4."
+      },
+      "ford_canales": {
+        "t": "Estructura de canales (Ford)",
+        "q": "Cuánto se ven canales o rayos que atraviesan la zona externa del croma. El programa lo estima con el índice de radialidad: la energía de las variaciones de luminosidad que se repiten entre 6 y 100 veces por vuelta, a radios desde la tercera frontera hasta 0,94.",
+        "r": "Rango de dos enteros de 1 a 5. Con índice de radialidad < 0,25 la lectura no puede pasar de 3; con > 0,6 no puede quedarse en 2 o menos. Mediana publicada en 361 cromas: 2,5."
+      },
+      "ford_picos": {
+        "t": "Desarrollo de picos (Ford)",
+        "q": "Cuánto se desarrollan los picos o dientes del borde del croma y cómo terminan. El programa combina la estructura angular en los tres radios más externos (60 %) con la irregularidad del borde (40 %).",
+        "r": "Rango de dos enteros de 1 a 5. En la escala de Embrapa, picos solo puntiagudos equivalen a nota 2 y picos que se abren en manchas o nubes a nota 4–5. Mediana publicada: 2,5."
+      },
+      "ford_intensidad": {
+        "t": "Intensidad de color (Ford)",
+        "q": "Cuán saturados son los colores de las zonas media y externa y cuán nítidas las fronteras. Se puntúa sin mirar el tono: dorado o pardo pueden tener la misma intensidad.",
+        "r": "Rango de dos enteros de 1 a 5. En 361 cromas el color nunca pasó de 4: una estimación de 5 es atípica. El tono se lee aparte, con las lecturas de color."
+      },
+      "certeza": {
+        "t": "Certeza de una conjetura",
+        "q": "Cuánto sustento técnico tiene lo que se le dice al productor. No la escribe la inteligencia artificial: la calcula el servidor a partir de las interpretaciones técnicas que sustentan cada conjetura, con su nivel de evidencia y su confianza.",
+        "r": "Baja: una posibilidad entre otras. Media: probable por lo que se ve, conviene confirmarlo. Nunca alta, porque el método no lo admite."
+      },
+      "senal": {
+        "t": "La señal del informe",
+        "q": "Un resumen de una palabra de lo que sugiere la foto: buena (se ve un suelo con vida), mixta (señales buenas y otras por mejorar) o atención (señales de desgaste). La elige la inteligencia artificial según lo que ve; el texto que la acompaña sale de las reglas de CTC.",
+        "r": "Es orientativa: la foto no mide nada. Confírmela con el laboratorio y repita el croma para ver el avance."
+      },
+      "nota_escala": "Ford et al. (2019) solo definen los extremos 1 y 5. Los niveles 2 a 4 son la guía de graduación de CTC para que dos técnicos lean igual; puntúe dos cuadrantes opuestos y promedie."
+    },
+    "en": {
+      "circulo": {
+        "t": "Circular pattern",
+        "q": "Whether the photo has a chroma disc on a light background. The chroma is separated from the background by colour and the edge is measured in 180 directions from the centre.",
+        "r": "A disc must exist with radius ≥ 10 % of the shorter side, circularity ≤ 0.22 and fill ≥ 0.45. If it fails, there is no reading."
+      },
+      "nitidez": {
+        "t": "Sharpness",
+        "q": "Whether the photo is in focus. It is the variance of the Laplacian of lightness: a sharp photo has marked edges and high variance; a shaken one, low.",
+        "r": "Threshold ≥ 10. The 108 laboratory captures of Martins et al. 2026 give at least 13.9."
+      },
+      "resolucion": {
+        "t": "Chroma resolution",
+        "q": "How many pixels the chroma spans in the original photo. The engine resamples it to 500 px in diameter; with fewer it would have to invent pixels.",
+        "r": "≥ 500 px; 1,000 recommended. Stops screenshots and photos forwarded by chat."
+      },
+      "recorte": {
+        "t": "Complete edge",
+        "q": "Whether the whole paper is visible. A radial walk that reaches the photo edge without leaving the chroma reveals a crop.",
+        "r": "Fewer than 2 walks touch the edge and the disc fits in the frame."
+      },
+      "fondo": {
+        "t": "Light background",
+        "q": "Whether the background is light and neutral. A dark or coloured background changes the chroma mask and the measured colours.",
+        "r": "L* ≥ 55 and C* ≤ 18."
+      },
+      "oblicua": {
+        "t": "Parallel camera",
+        "q": "Whether the camera was parallel to the paper. A tilted photo turns the circle into an ellipse; the ellipse leaves a second-order harmonic in the edge radius, which the high-frequency spikes do not touch.",
+        "r": "Axis ratio ≥ 0.80. The perpendicular captures of Martins et al. range from 0.857 to 0.96."
+      },
+      "fronteras": {
+        "t": "Zone boundaries",
+        "q": "Where each zone of the chroma ends, as a radius relative to the extract front (r = 1 where the chroma ends). The strongest colour jumps between neighbouring rings are searched.",
+        "r": "Three boundaries, each «measured» or «nominal». The priors 0.15 · 0.50 · 0.80 come from rules v2.1."
+      },
+      "color": {
+        "t": "Median colour per zone",
+        "q": "The representative colour of each zone in CIELAB, a perceptual colour space: L* is lightness, a* runs from green to red and b* from blue to yellow.",
+        "r": "Shown with a colour swatch. A phone photo is not calibrated: compare only photos taken the same way."
+      },
+      "radialidad": {
+        "t": "Radiality index",
+        "q": "How much radial structure (channels, rays) the outer zone has. A circle at fixed radius is walked, lightness is sampled at 256 points and the energy of the mid frequencies is measured: what varies slowly around the chroma (side light) does not count; channels and spikes do.",
+        "r": "From 0 to 1. Below 0.25 the reading cannot speak of well-developed channels; above 0.6 it cannot deny them."
+      },
+      "picos": {
+        "t": "Spike index",
+        "q": "The same measure of angular structure, but at the three outermost radii, where the spikes and their endings live.",
+        "r": "From 0 to 1. Feeds the programmatic estimate of «spike development»."
+      },
+      "borde": {
+        "t": "Edge irregularity",
+        "q": "How far the chroma edge departs from a circle: spikes that indent the edge raise this value.",
+        "r": "Typically 0.02–0.08. Combined with the spike index in the programmatic Ford scale."
+      },
+      "intensidad": {
+        "t": "Colour intensity index",
+        "q": "How saturated the colours of the middle and outer zones are, plus how sharp the boundaries are. It measures intensity, not hue: hue is read separately with the colour readings.",
+        "r": "From 0 to 1. Feeds the programmatic estimate of «colour intensity»."
+      },
+      "simetria": {
+        "t": "Symmetry",
+        "q": "Whether the chroma resembles itself in opposite sectors. It compares the radial lightness profile of each sector with that of the sector across.",
+        "r": "From 0 to 1. Near 1, a centred, even chroma; low, side light, a stain or a skewed chroma."
+      },
+      "entropia": {
+        "t": "Texture entropy",
+        "q": "How much variety of lightness there is in each zone. A smooth, uniform zone has low entropy; a textured one, high. It is a simple descriptor, not the GLCM Haralick entropy of Kokornaczyk et al.",
+        "r": "From 0 to 5 bits (32 classes). Reported per zone."
+      },
+      "captura": {
+        "t": "Capture quality",
+        "q": "Summary of the gate: sharpness, chroma diameter in the original photo, axis ratio and what share of the frame the chroma takes.",
+        "r": "The frame share is reported and does not reject: with 15 cm paper the chroma takes at most half."
+      },
+      "ford": {
+        "t": "Programmatic Ford scale",
+        "q": "Translates the features into the 1–5 scale of Ford et al. (channels, spikes, intensity) as a range of two integers. It does not see the image: it is a reference comparable between samples, not a reading. The source warns that in 343 samples these features did not vary consistently with soil condition.",
+        "r": "Ranges such as 2–3 or 3–4. In 361 chromas the published median was 2.5 and colour never exceeded 4."
+      },
+      "ford_canales": {
+        "t": "Channel structure (Ford)",
+        "q": "How visible the channels or rays crossing the outer zone of the chroma are. The program estimates it with the radiality index: the energy of lightness variations that repeat 6 to 100 times per turn, at radii from the third boundary to 0.94.",
+        "r": "Range of two integers from 1 to 5. With a radiality index < 0.25 the reading cannot go above 3; with > 0.6 it cannot stay at 2 or below. Published median in 361 chromas: 2.5."
+      },
+      "ford_picos": {
+        "t": "Spike development (Ford)",
+        "q": "How developed the spikes or teeth at the chroma edge are and how they end. The program combines the angular structure at the three outermost radii (60 %) with the edge irregularity (40 %).",
+        "r": "Range of two integers from 1 to 5. On the Embrapa scale, merely pointed spikes equal score 2 and spikes opening into spots or clouds score 4–5. Published median: 2.5."
+      },
+      "ford_intensidad": {
+        "t": "Colour intensity (Ford)",
+        "q": "How saturated the colours of the middle and outer zones are and how sharp the boundaries are. It is scored without looking at hue: gold or brown can have the same intensity.",
+        "r": "Range of two integers from 1 to 5. In 361 chromas colour never exceeded 4: an estimate of 5 is atypical. Hue is read separately, with the colour readings."
+      },
+      "certeza": {
+        "t": "Certainty of a conjecture",
+        "q": "How much technical support what the producer is told has. The AI does not write it: the server computes it from the technical interpretations that support each conjecture, with their evidence level and confidence.",
+        "r": "Low: one possibility among others. Medium: likely from what is seen, worth confirming. Never high, because the method does not allow it."
+      },
+      "senal": {
+        "t": "The report signal",
+        "q": "A one-word summary of what the photo suggests: good (a soil with life is seen), mixed (good signs and others to improve) or attention (signs of wear). The AI chooses it from what it sees; the accompanying text comes from CTC's rules.",
+        "r": "It is for orientation: the photo measures nothing. Confirm it with the laboratory and repeat the chroma to follow progress."
+      },
+      "nota_escala": "Ford et al. (2019) only define the extremes 1 and 5. Levels 2 to 4 are CTC's grading guide so that two technicians read alike; score two opposite quadrants and average."
+    },
+    "de": {
+      "circulo": {
+        "t": "Kreisförmiges Muster",
+        "q": "Ob im Foto eine Chroma-Scheibe auf hellem Hintergrund liegt. Das Chroma wird nach Farbe vom Hintergrund getrennt und der Rand in 180 Richtungen vom Zentrum aus gemessen.",
+        "r": "Es muss eine Scheibe mit Radius ≥ 10 % der kürzeren Seite, Kreisförmigkeit ≤ 0,22 und Füllung ≥ 0,45 geben. Sonst gibt es keine Lesung."
+      },
+      "nitidez": {
+        "t": "Schärfe",
+        "q": "Ob das Foto scharf ist. Es ist die Varianz des Laplace-Operators der Helligkeit: ein scharfes Foto hat markante Kanten und hohe Varianz; ein verwackeltes eine niedrige.",
+        "r": "Schwelle ≥ 10. Die 108 Laboraufnahmen von Martins et al. 2026 ergeben mindestens 13,9."
+      },
+      "resolucion": {
+        "t": "Auflösung des Chromas",
+        "q": "Wie viele Pixel das Chroma im Originalfoto misst. Der Motor rechnet es auf 500 px Durchmesser um; mit weniger müsste er Pixel erfinden.",
+        "r": "≥ 500 px; empfohlen 1.000. Stoppt Screenshots und per Chat weitergeleitete Fotos."
+      },
+      "recorte": {
+        "t": "Vollständiger Rand",
+        "q": "Ob das ganze Papier zu sehen ist. Ein radialer Lauf, der den Fotorand erreicht, ohne das Chroma zu verlassen, verrät einen Beschnitt.",
+        "r": "Weniger als 2 Läufe berühren den Rand und die Scheibe passt ins Bild."
+      },
+      "fondo": {
+        "t": "Heller Hintergrund",
+        "q": "Ob der Hintergrund hell und neutral ist. Ein dunkler oder farbiger Hintergrund verändert die Chroma-Maske und die gemessenen Farben.",
+        "r": "L* ≥ 55 und C* ≤ 18."
+      },
+      "oblicua": {
+        "t": "Parallele Kamera",
+        "q": "Ob die Kamera parallel zum Papier war. Ein schräges Foto macht aus dem Kreis eine Ellipse; die Ellipse hinterlässt eine Harmonische zweiter Ordnung im Randradius, die die hochfrequenten Spitzen nicht berühren.",
+        "r": "Achsenverhältnis ≥ 0,80. Die senkrechten Aufnahmen von Martins et al. liegen zwischen 0,857 und 0,96."
+      },
+      "fronteras": {
+        "t": "Zonengrenzen",
+        "q": "Wo jede Zone des Chromas endet, als Radius relativ zur Extraktfront (r = 1, wo das Chroma endet). Gesucht werden die stärksten Farbsprünge zwischen benachbarten Ringen.",
+        "r": "Drei Grenzen, jede «gemessen» oder «nominal». Die Priors 0,15 · 0,50 · 0,80 stammen aus den Regeln v2.1."
+      },
+      "color": {
+        "t": "Medianfarbe je Zone",
+        "q": "Die repräsentative Farbe jeder Zone in CIELAB, einem wahrnehmungsbezogenen Farbraum: L* ist die Helligkeit, a* geht von Grün nach Rot und b* von Blau nach Gelb.",
+        "r": "Wird mit einem Farbfeld gezeigt. Ein Handyfoto ist nicht kalibriert: nur gleich aufgenommene Fotos vergleichen."
+      },
+      "radialidad": {
+        "t": "Radialitätsindex",
+        "q": "Wie viel radiale Struktur (Kanäle, Strahlen) die äußere Zone hat. Ein Kreis mit festem Radius wird abgefahren, die Helligkeit an 256 Punkten abgetastet und die Energie der mittleren Frequenzen gemessen: was sich langsam um das Chroma ändert (Seitenlicht), zählt nicht; Kanäle und Spitzen schon.",
+        "r": "Von 0 bis 1. Unter 0,25 darf die Lesung nicht von gut entwickelten Kanälen sprechen; über 0,6 darf sie sie nicht verneinen."
+      },
+      "picos": {
+        "t": "Spitzenindex",
+        "q": "Dasselbe Maß angularer Struktur, aber an den drei äußersten Radien, wo die Spitzen und ihre Enden liegen.",
+        "r": "Von 0 bis 1. Speist die programmatische Schätzung der «Spitzenentwicklung»."
+      },
+      "borde": {
+        "t": "Randunregelmäßigkeit",
+        "q": "Wie weit der Chroma-Rand von einem Kreis abweicht: Spitzen, die den Rand zacken, erhöhen diesen Wert.",
+        "r": "Typisch 0,02–0,08. Wird in der programmatischen Ford-Skala mit dem Spitzenindex kombiniert."
+      },
+      "intensidad": {
+        "t": "Farbintensitätsindex",
+        "q": "Wie gesättigt die Farben der mittleren und äußeren Zone sind, plus wie scharf die Grenzen sind. Er misst Intensität, nicht Farbton: der Farbton wird separat mit den Farblesungen gelesen.",
+        "r": "Von 0 bis 1. Speist die programmatische Schätzung der «Farbintensität»."
+      },
+      "simetria": {
+        "t": "Symmetrie",
+        "q": "Ob das Chroma sich in gegenüberliegenden Sektoren ähnelt. Es vergleicht das radiale Helligkeitsprofil jedes Sektors mit dem des gegenüberliegenden.",
+        "r": "Von 0 bis 1. Nahe 1 ein zentriertes, gleichmäßiges Chroma; niedrig bei Seitenlicht, Fleck oder verzerrtem Chroma."
+      },
+      "entropia": {
+        "t": "Texturentropie",
+        "q": "Wie viel Helligkeitsvielfalt in jeder Zone ist. Eine glatte, gleichmäßige Zone hat niedrige Entropie; eine texturierte hohe. Ein einfacher Deskriptor, nicht die GLCM-Haralick-Entropie von Kokornaczyk et al.",
+        "r": "Von 0 bis 5 Bit (32 Klassen). Wird je Zone angegeben."
+      },
+      "captura": {
+        "t": "Aufnahmequalität",
+        "q": "Zusammenfassung der Prüfung: Schärfe, Chroma-Durchmesser im Originalfoto, Achsenverhältnis und welchen Anteil des Bildes das Chroma einnimmt.",
+        "r": "Der Bildanteil wird angegeben und lehnt nicht ab: bei 15-cm-Papier nimmt das Chroma höchstens die Hälfte ein."
+      },
+      "ford": {
+        "t": "Programmatisch geschätzte Ford-Skala",
+        "q": "Übersetzt die Merkmale in die Skala 1–5 von Ford et al. (Kanäle, Spitzen, Intensität) als Spanne zweier ganzer Zahlen. Sie sieht das Bild nicht: eine zwischen Proben vergleichbare Referenz, keine Lesung. Die Quelle warnt, dass diese Merkmale in 343 Proben nicht konsistent mit dem Bodenzustand variierten.",
+        "r": "Spannen wie 2–3 oder 3–4. In 361 Chromas lag der publizierte Median bei 2,5 und die Farbe nie über 4."
+      },
+      "ford_canales": {
+        "t": "Kanalstruktur (Ford)",
+        "q": "Wie deutlich Kanäle oder Strahlen die äußere Zone des Chromas durchqueren. Das Programm schätzt sie mit dem Radialitätsindex: der Energie der Helligkeitsschwankungen, die sich 6- bis 100-mal pro Umlauf wiederholen, bei Radien von der dritten Grenze bis 0,94.",
+        "r": "Spanne zweier ganzer Zahlen von 1 bis 5. Bei einem Radialitätsindex < 0,25 darf die Lesung nicht über 3 gehen; bei > 0,6 nicht bei 2 oder darunter bleiben. Publizierter Median in 361 Chromas: 2,5."
+      },
+      "ford_picos": {
+        "t": "Spitzenentwicklung (Ford)",
+        "q": "Wie stark die Spitzen oder Zähne am Rand des Chromas entwickelt sind und wie sie enden. Das Programm kombiniert die angulare Struktur an den drei äußersten Radien (60 %) mit der Randunregelmäßigkeit (40 %).",
+        "r": "Spanne zweier ganzer Zahlen von 1 bis 5. Auf der Embrapa-Skala entsprechen nur spitze Zacken Note 2, Spitzen, die sich in Flecken oder Wolken öffnen, Note 4–5. Publizierter Median: 2,5."
+      },
+      "ford_intensidad": {
+        "t": "Farbintensität (Ford)",
+        "q": "Wie gesättigt die Farben der mittleren und äußeren Zone sind und wie scharf die Grenzen. Bewertet wird ohne Farbton: Gold oder Braun können dieselbe Intensität haben.",
+        "r": "Spanne zweier ganzer Zahlen von 1 bis 5. In 361 Chromas lag die Farbe nie über 4: eine Schätzung von 5 ist untypisch. Der Farbton wird separat mit den Farblesungen gelesen."
+      },
+      "certeza": {
+        "t": "Sicherheit einer Vermutung",
+        "q": "Wie viel technische Stütze das hat, was dem Erzeuger gesagt wird. Die KI schreibt sie nicht: der Server berechnet sie aus den technischen Interpretationen, die jede Vermutung stützen, mit ihrem Evidenzniveau und ihrer Konfidenz.",
+        "r": "Gering: eine Möglichkeit unter anderen. Mittel: nach dem Gesehenen wahrscheinlich, sollte bestätigt werden. Nie hoch, weil die Methode es nicht zulässt."
+      },
+      "senal": {
+        "t": "Das Signal des Berichts",
+        "q": "Eine Ein-Wort-Zusammenfassung dessen, was das Foto nahelegt: gut (ein lebendiger Boden ist zu sehen), gemischt (gute Zeichen und andere zu verbessern) oder Achtung (Zeichen von Erschöpfung). Die KI wählt es nach dem Gesehenen; der Begleittext stammt aus den CTC-Regeln.",
+        "r": "Es dient der Orientierung: das Foto misst nichts. Bestätigen Sie es mit dem Labor und wiederholen Sie das Chroma, um den Fortschritt zu sehen."
+      },
+      "nota_escala": "Ford et al. (2019) definieren nur die Extreme 1 und 5. Die Stufen 2 bis 4 sind die Bewertungshilfe von CTC, damit zwei Fachkräfte gleich lesen; zwei gegenüberliegende Quadranten bewerten und mitteln."
+    }
+  };
+  var SIMB = {
+    "F": {
+      "es": "color del fondo: mediana CIELAB de la banda B₃",
+      "en": "background colour: CIELAB median of band B₃",
+      "de": "Hintergrundfarbe: CIELAB-Median des Bandes B₃"
+    },
+    "med": {
+      "es": "mediana: el valor del medio al ordenar",
+      "en": "median: the middle value when sorted",
+      "de": "Median: der mittlere Wert nach Sortierung"
+    },
+    "L*": {
+      "es": "luminosidad CIELAB, de 0 (negro) a 100 (blanco)",
+      "en": "CIELAB lightness, from 0 (black) to 100 (white)",
+      "de": "CIELAB-Helligkeit, von 0 (schwarz) bis 100 (weiß)"
+    },
+    "a*": {
+      "es": "eje de color CIELAB del verde (−) al rojo (+)",
+      "en": "CIELAB colour axis from green (−) to red (+)",
+      "de": "CIELAB-Farbachse von Grün (−) bis Rot (+)"
+    },
+    "b*": {
+      "es": "eje de color CIELAB del azul (−) al amarillo (+)",
+      "en": "CIELAB colour axis from blue (−) to yellow (+)",
+      "de": "CIELAB-Farbachse von Blau (−) bis Gelb (+)"
+    },
+    "p": {
+      "es": "un píxel de la imagen",
+      "en": "a pixel of the image",
+      "de": "ein Pixel des Bildes"
+    },
+    "B₃": {
+      "es": "banda del borde de la foto: el 3 % del lado menor",
+      "en": "edge band of the photo: 3 % of the shorter side",
+      "de": "Randband des Fotos: 3 % der kürzeren Seite"
+    },
+    "M(p)": {
+      "es": "máscara: 1 si el píxel es croma, 0 si es fondo",
+      "en": "mask: 1 if the pixel is chroma, 0 if background",
+      "de": "Maske: 1, wenn das Pixel Chroma ist, 0 bei Hintergrund"
+    },
+    "⟺": {
+      "es": "«si y solo si»",
+      "en": "«if and only if»",
+      "de": "«genau dann, wenn»"
+    },
+    "ΔE*ab": {
+      "es": "distancia de color CIELAB: √(ΔL*² + Δa*² + Δb*²)",
+      "en": "CIELAB colour distance: √(ΔL*² + Δa*² + Δb*²)",
+      "de": "CIELAB-Farbabstand: √(ΔL*² + Δa*² + Δb*²)"
+    },
+    "R": {
+      "es": "radio del croma: del centro al frente del extracto, en píxeles",
+      "en": "chroma radius: from the centre to the extract front, in pixels",
+      "de": "Chroma-Radius: vom Zentrum bis zur Extraktfront, in Pixeln"
+    },
+    "r(θ)": {
+      "es": "distancia del centro al borde del croma en la dirección θ",
+      "en": "distance from the centre to the chroma edge in direction θ",
+      "de": "Abstand vom Zentrum zum Chroma-Rand in Richtung θ"
+    },
+    "θ": {
+      "es": "ángulo alrededor del centro",
+      "en": "angle around the centre",
+      "de": "Winkel um das Zentrum"
+    },
+    "Θ₁₈₀": {
+      "es": "180 direcciones repartidas por igual en la vuelta",
+      "en": "180 directions spread evenly around the turn",
+      "de": "180 gleichmäßig verteilte Richtungen"
+    },
+    "κ": {
+      "es": "circularidad: cuánto varía el radio del borde (0 = círculo perfecto)",
+      "en": "circularity: how much the edge radius varies (0 = perfect circle)",
+      "de": "Kreisförmigkeit: wie stark der Randradius schwankt (0 = perfekter Kreis)"
+    },
+    "σ": {
+      "es": "desviación típica",
+      "en": "standard deviation",
+      "de": "Standardabweichung"
+    },
+    "φ": {
+      "es": "relleno: fracción del disco de radio R que es croma",
+      "en": "fill: share of the disc of radius R that is chroma",
+      "de": "Füllung: Anteil der Scheibe mit Radius R, der Chroma ist"
+    },
+    "w": {
+      "es": "ancho del lienzo medido (hasta 900 px)",
+      "en": "width of the measured canvas (up to 900 px)",
+      "de": "Breite der gemessenen Leinwand (bis 900 px)"
+    },
+    "h": {
+      "es": "alto del lienzo medido",
+      "en": "height of the measured canvas",
+      "de": "Höhe der gemessenen Leinwand"
+    },
+    "min": {
+      "es": "el menor de los valores",
+      "en": "the smallest of the values",
+      "de": "der kleinste der Werte"
+    },
+    "∇²L*": {
+      "es": "laplaciano de L*: segunda derivada discreta con los cuatro vecinos en cruz",
+      "en": "Laplacian of L*: discrete second derivative with the four cross neighbours",
+      "de": "Laplace-Operator von L*: diskrete zweite Ableitung mit den vier Kreuznachbarn"
+    },
+    "x": {
+      "es": "columna del píxel",
+      "en": "pixel column",
+      "de": "Pixelspalte"
+    },
+    "y": {
+      "es": "fila del píxel",
+      "en": "pixel row",
+      "de": "Pixelzeile"
+    },
+    "ν": {
+      "es": "nitidez de la foto",
+      "en": "photo sharpness",
+      "de": "Schärfe des Fotos"
+    },
+    "Var": {
+      "es": "varianza: promedio del cuadrado de la distancia a la media",
+      "en": "variance: mean of the squared distance to the mean",
+      "de": "Varianz: Mittel des quadrierten Abstands zum Mittelwert"
+    },
+    "D₂₅₀": {
+      "es": "el croma remuestreado a radio 250 px, para que no dependa de la resolución",
+      "en": "the chroma resampled to radius 250 px, so it does not depend on resolution",
+      "de": "das auf Radius 250 px umgerechnete Chroma, damit es nicht von der Auflösung abhängt"
+    },
+    "r(p)": {
+      "es": "radio relativo del píxel p: su distancia al centro dividida por R",
+      "en": "relative radius of pixel p: its distance to the centre divided by R",
+      "de": "relativer Radius des Pixels p: Abstand zum Zentrum geteilt durch R"
+    },
+    "D": {
+      "es": "diámetro del croma en la foto original",
+      "en": "chroma diameter in the original photo",
+      "de": "Chroma-Durchmesser im Originalfoto"
+    },
+    "k₀": {
+      "es": "píxeles de la foto original por píxel del lienzo medido",
+      "en": "original-photo pixels per measured-canvas pixel",
+      "de": "Pixel des Originalfotos je Pixel der gemessenen Leinwand"
+    },
+    "px": {
+      "es": "píxeles",
+      "en": "pixels",
+      "de": "Pixel"
+    },
+    "N_borde": {
+      "es": "recorridos radiales que llegan al borde de la foto sin salir del croma",
+      "en": "radial walks that reach the photo edge without leaving the chroma",
+      "de": "radiale Läufe, die den Fotorand erreichen, ohne das Chroma zu verlassen"
+    },
+    "cx": {
+      "es": "columna del centro del croma",
+      "en": "column of the chroma centre",
+      "de": "Spalte des Chroma-Zentrums"
+    },
+    "cy": {
+      "es": "fila del centro del croma",
+      "en": "row of the chroma centre",
+      "de": "Zeile des Chroma-Zentrums"
+    },
+    "C*": {
+      "es": "croma CIELAB (saturación): √(a*² + b*²)",
+      "en": "CIELAB chroma (saturation): √(a*² + b*²)",
+      "de": "CIELAB-Buntheit (Sättigung): √(a*² + b*²)"
+    },
+    "a₂": {
+      "es": "amplitud del armónico de orden 2 del radio del borde: lo que deja una elipse",
+      "en": "amplitude of the second-order harmonic of the edge radius: what an ellipse leaves",
+      "de": "Amplitude der Harmonischen 2. Ordnung des Randradius: was eine Ellipse hinterlässt"
+    },
+    "N": {
+      "es": "número de muestras en la vuelta (180 en el borde, 256 en la radialidad)",
+      "en": "number of samples around the turn (180 at the edge, 256 for radiality)",
+      "de": "Anzahl der Abtastungen pro Umlauf (180 am Rand, 256 bei der Radialität)"
+    },
+    "Σ": {
+      "es": "suma",
+      "en": "sum",
+      "de": "Summe"
+    },
+    "e": {
+      "es": "número de Euler (2,718…)",
+      "en": "Euler's number (2.718…)",
+      "de": "Eulersche Zahl (2,718…)"
+    },
+    "i": {
+      "es": "unidad imaginaria: e^(iθ) describe una vuelta",
+      "en": "imaginary unit: e^(iθ) describes a turn",
+      "de": "imaginäre Einheit: e^(iθ) beschreibt einen Umlauf"
+    },
+    "q": {
+      "es": "razón de ejes: 1 si el croma es un círculo, menos si se ve como elipse",
+      "en": "axis ratio: 1 if the chroma is a circle, less if it looks like an ellipse",
+      "de": "Achsenverhältnis: 1 bei einem Kreis, weniger bei einer Ellipse"
+    },
+    "P_k": {
+      "es": "color medio (L*, a*, b*) del anillo k",
+      "en": "mean colour (L*, a*, b*) of ring k",
+      "de": "mittlere Farbe (L*, a*, b*) des Rings k"
+    },
+    "⟨·⟩": {
+      "es": "promedio de lo que va dentro",
+      "en": "average of what is inside",
+      "de": "Mittelwert des Inhalts"
+    },
+    "k": {
+      "es": "número de anillo: 50 anillos del 2 % del radio",
+      "en": "ring number: 50 rings of 2 % of the radius",
+      "de": "Ringnummer: 50 Ringe zu je 2 % des Radius"
+    },
+    "ΔE_k": {
+      "es": "salto de color entre el anillo k y el siguiente",
+      "en": "colour jump between ring k and the next",
+      "de": "Farbsprung zwischen Ring k und dem nächsten"
+    },
+    "‖·‖": {
+      "es": "distancia euclídea entre dos colores",
+      "en": "Euclidean distance between two colours",
+      "de": "euklidischer Abstand zweier Farben"
+    },
+    "s_k": {
+      "es": "salto de color suavizado con sus vecinos (pesos 1, 2, 1)",
+      "en": "colour jump smoothed with its neighbours (weights 1, 2, 1)",
+      "de": "mit den Nachbarn geglätteter Farbsprung (Gewichte 1, 2, 1)"
+    },
+    "f_z": {
+      "es": "frontera z como radio relativo (f₁ central/mineral, f₂ mineral/orgánica, f₃ orgánica/externa)",
+      "en": "boundary z as relative radius (f₁ central/mineral, f₂ mineral/organic, f₃ organic/outer)",
+      "de": "Grenze z als relativer Radius (f₁ zentral/mineralisch, f₂ mineralisch/organisch, f₃ organisch/außen)"
+    },
+    "z": {
+      "es": "número de zona o de frontera",
+      "en": "zone or boundary number",
+      "de": "Zonen- oder Grenznummer"
+    },
+    "W_z": {
+      "es": "ventana de radios donde se busca la frontera z",
+      "en": "radius window where boundary z is searched",
+      "de": "Radiusfenster, in dem Grenze z gesucht wird"
+    },
+    "f⁰_z": {
+      "es": "frontera nominal de las reglas, usada si no se ve una medida",
+      "en": "nominal boundary from the rules, used if none is measured",
+      "de": "nominale Grenze aus den Regeln, falls keine gemessen wird"
+    },
+    "C_z": {
+      "es": "color mediano de la zona z",
+      "en": "median colour of zone z",
+      "de": "Medianfarbe der Zone z"
+    },
+    "Z_z": {
+      "es": "píxeles de la zona z, entre dos fronteras",
+      "en": "pixels of zone z, between two boundaries",
+      "de": "Pixel der Zone z, zwischen zwei Grenzen"
+    },
+    "sRGB": {
+      "es": "espacio de color de la foto del celular",
+      "en": "colour space of the phone photo",
+      "de": "Farbraum des Handyfotos"
+    },
+    "XYZ": {
+      "es": "espacio de color intermedio CIE 1931",
+      "en": "intermediate CIE 1931 colour space",
+      "de": "CIE-1931-Zwischenfarbraum"
+    },
+    "D65": {
+      "es": "luz de día estándar usada como blanco de referencia",
+      "en": "standard daylight used as reference white",
+      "de": "Normlicht Tageslicht als Referenzweiß"
+    },
+    "CIELAB": {
+      "es": "espacio de color perceptual: distancias iguales se ven como diferencias parecidas",
+      "en": "perceptual colour space: equal distances look like similar differences",
+      "de": "wahrnehmungsnaher Farbraum: gleiche Abstände wirken ähnlich verschieden"
+    },
+    "F_n(ρ)": {
+      "es": "coeficiente de Fourier de orden n de L* alrededor del círculo de radio ρ",
+      "en": "Fourier coefficient of order n of L* around the circle of radius ρ",
+      "de": "Fourier-Koeffizient der Ordnung n von L* entlang des Kreises mit Radius ρ"
+    },
+    "j": {
+      "es": "número de muestra en la vuelta",
+      "en": "sample number around the turn",
+      "de": "Nummer der Abtastung im Umlauf"
+    },
+    "ρ": {
+      "es": "radio relativo del círculo que se recorre (0 centro, 1 frente)",
+      "en": "relative radius of the walked circle (0 centre, 1 front)",
+      "de": "relativer Radius des abgefahrenen Kreises (0 Zentrum, 1 Front)"
+    },
+    "θ_j": {
+      "es": "ángulo de la muestra j",
+      "en": "angle of sample j",
+      "de": "Winkel der Abtastung j"
+    },
+    "π": {
+      "es": "pi (3,1416…)",
+      "en": "pi (3.1416…)",
+      "de": "Pi (3,1416…)"
+    },
+    "n": {
+      "es": "orden de la frecuencia angular: veces que el patrón se repite por vuelta",
+      "en": "angular frequency order: times the pattern repeats per turn",
+      "de": "Ordnung der Winkelfrequenz: Wiederholungen des Musters pro Umlauf"
+    },
+    "E(ρ)": {
+      "es": "energía de las variaciones que se repiten entre 6 y 100 veces por vuelta",
+      "en": "energy of variations repeating 6 to 100 times per turn",
+      "de": "Energie der Schwankungen, die sich 6- bis 100-mal pro Umlauf wiederholen"
+    },
+    "|·|": {
+      "es": "módulo (tamaño) de un número complejo",
+      "en": "modulus (size) of a complex number",
+      "de": "Betrag einer komplexen Zahl"
+    },
+    "I_rad": {
+      "es": "índice de radialidad (0 a 1)",
+      "en": "radiality index (0 to 1)",
+      "de": "Radialitätsindex (0 bis 1)"
+    },
+    "f₃": {
+      "es": "tercera frontera: orgánica/externa",
+      "en": "third boundary: organic/outer",
+      "de": "dritte Grenze: organisch/außen"
+    },
+    "Δρ": {
+      "es": "paso entre círculos recorridos",
+      "en": "step between walked circles",
+      "de": "Schritt zwischen abgefahrenen Kreisen"
+    },
+    "I_pic": {
+      "es": "índice de picos (0 a 1)",
+      "en": "spike index (0 to 1)",
+      "de": "Spitzenindex (0 bis 1)"
+    },
+    "I_bor": {
+      "es": "irregularidad del borde",
+      "en": "edge irregularity",
+      "de": "Randunregelmäßigkeit"
+    },
+    "C̄*": {
+      "es": "croma medio de las zonas media y externa",
+      "en": "mean chroma of the middle and outer zones",
+      "de": "mittlere Buntheit der mittleren und äußeren Zone"
+    },
+    "f₂": {
+      "es": "segunda frontera: mineral/orgánica",
+      "en": "second boundary: mineral/organic",
+      "de": "zweite Grenze: mineralisch/organisch"
+    },
+    "Δ̄E_f": {
+      "es": "salto de color medio en las fronteras (una frontera nominal cuenta 0)",
+      "en": "mean colour jump at the boundaries (a nominal boundary counts 0)",
+      "de": "mittlerer Farbsprung an den Grenzen (eine nominale Grenze zählt 0)"
+    },
+    "I_int": {
+      "es": "índice de intensidad de color (0 a 1)",
+      "en": "colour intensity index (0 to 1)",
+      "de": "Farbintensitätsindex (0 bis 1)"
+    },
+    "P_s(α)": {
+      "es": "luminosidad media del sector s en el anillo α",
+      "en": "mean lightness of sector s in ring α",
+      "de": "mittlere Helligkeit des Sektors s im Ring α"
+    },
+    "s": {
+      "es": "sector de 45° (8 en la vuelta); s + 4 es el opuesto",
+      "en": "45° sector (8 per turn); s + 4 is the opposite one",
+      "de": "45°-Sektor (8 pro Umlauf); s + 4 ist der gegenüberliegende"
+    },
+    "α": {
+      "es": "anillo del perfil de simetría (25 anillos del 4 %)",
+      "en": "ring of the symmetry profile (25 rings of 4 %)",
+      "de": "Ring des Symmetrieprofils (25 Ringe zu 4 %)"
+    },
+    "S": {
+      "es": "simetría (0 a 1)",
+      "en": "symmetry (0 to 1)",
+      "de": "Symmetrie (0 bis 1)"
+    },
+    "clamp₀¹": {
+      "es": "recorta el valor al intervalo [0, 1]",
+      "en": "clips the value to the interval [0, 1]",
+      "de": "begrenzt den Wert auf das Intervall [0, 1]"
+    },
+    "corr": {
+      "es": "correlación de Pearson entre dos perfiles (−1 a 1)",
+      "en": "Pearson correlation between two profiles (−1 to 1)",
+      "de": "Pearson-Korrelation zweier Profile (−1 bis 1)"
+    },
+    "p_ℓ": {
+      "es": "fracción de píxeles de la zona en la clase ℓ",
+      "en": "share of the zone's pixels in class ℓ",
+      "de": "Anteil der Zonenpixel in Klasse ℓ"
+    },
+    "n_ℓ": {
+      "es": "píxeles de la zona en la clase ℓ",
+      "en": "pixels of the zone in class ℓ",
+      "de": "Pixel der Zone in Klasse ℓ"
+    },
+    "n_z": {
+      "es": "píxeles de la zona z",
+      "en": "pixels of zone z",
+      "de": "Pixel der Zone z"
+    },
+    "ℓ": {
+      "es": "clase del histograma de L* (32 clases de igual ancho)",
+      "en": "L* histogram class (32 equal-width classes)",
+      "de": "Klasse des L*-Histogramms (32 gleich breite Klassen)"
+    },
+    "H_z": {
+      "es": "entropía de textura de la zona z, en bits",
+      "en": "texture entropy of zone z, in bits",
+      "de": "Texturentropie der Zone z, in Bit"
+    },
+    "log₂": {
+      "es": "logaritmo en base 2 (da bits)",
+      "en": "base-2 logarithm (gives bits)",
+      "de": "Logarithmus zur Basis 2 (ergibt Bit)"
+    },
+    "u": {
+      "es": "fracción del encuadre que ocupa el croma",
+      "en": "share of the frame taken by the chroma",
+      "de": "Anteil des Bildes, den das Chroma einnimmt"
+    },
+    "A_disco": {
+      "es": "área del disco del croma",
+      "en": "area of the chroma disc",
+      "de": "Fläche der Chroma-Scheibe"
+    },
+    "A_foto": {
+      "es": "área del lienzo medido",
+      "en": "area of the measured canvas",
+      "de": "Fläche der gemessenen Leinwand"
+    },
+    "g": {
+      "es": "puntuación continua en la escala 1–5",
+      "en": "continuous score on the 1–5 scale",
+      "de": "stetige Punktzahl auf der Skala 1–5"
+    },
+    "t": {
+      "es": "puntuación normalizada del rasgo antes de llevarla a 1–5",
+      "en": "normalised feature score before mapping to 1–5",
+      "de": "normierte Merkmalspunktzahl vor der Umrechnung auf 1–5"
+    },
+    "⌊·⌋": {
+      "es": "redondeo hacia abajo",
+      "en": "round down",
+      "de": "abrunden"
+    },
+    "⌈·⌉": {
+      "es": "redondeo hacia arriba",
+      "en": "round up",
+      "de": "aufrunden"
+    },
+    "c": {
+      "es": "una conjetura del informe del productor (c1, c2…)",
+      "en": "a conjecture of the producer report (c1, c2…)",
+      "de": "eine Vermutung des Erzeugerberichts (c1, c2…)"
+    },
+    "∃": {
+      "es": "«existe al menos una»",
+      "en": "«there is at least one»",
+      "de": "«es gibt mindestens eine»"
+    },
+    "m": {
+      "es": "una interpretación técnica (i1, i2…)",
+      "en": "a technical interpretation (i1, i2…)",
+      "de": "eine technische Interpretation (i1, i2…)"
+    },
+    "B(c)": {
+      "es": "interpretaciones en que se apoya la conjetura c",
+      "en": "interpretations the conjecture c rests on",
+      "de": "Interpretationen, auf denen Vermutung c beruht"
+    },
+    "conf(m)": {
+      "es": "confianza que el modelo dio a m: baja o media",
+      "en": "confidence the model gave m: low or medium",
+      "de": "Konfidenz des Modells für m: gering oder mittel"
+    },
+    "ev(m)": {
+      "es": "nivel de evidencia de la fuente de m: A, B o C",
+      "en": "evidence level of the source of m: A, B or C",
+      "de": "Evidenzniveau der Quelle von m: A, B oder C"
+    },
+    "∧": {
+      "es": "«y»",
+      "en": "«and»",
+      "de": "«und»"
+    }
+  };
+  var CAMPO = {
+    "es": {
+      "ph": {
+        "t": "pH",
+        "q": "Mide la acidez del suelo: por debajo de 7 es ácido, por encima alcalino."
+      },
+      "mo": {
+        "t": "Materia orgánica",
+        "q": "La parte del suelo que viene de restos de plantas y animales descompuestos."
+      },
+      "n": {
+        "t": "Nitrógeno total",
+        "q": "Todo el nitrógeno del suelo; casi todo está en la materia orgánica."
+      },
+      "p": {
+        "t": "Fósforo disponible",
+        "q": "El fósforo que las raíces pueden tomar; ayuda a las raíces y la floración."
+      },
+      "k": {
+        "t": "Potasio",
+        "q": "Potasio intercambiable; ayuda al llenado del grano y a resistir la sequía."
+      },
+      "ca": {
+        "t": "Calcio",
+        "q": "Calcio intercambiable; fortalece los tejidos de la planta y ayuda a la estructura."
+      },
+      "mg": {
+        "t": "Magnesio",
+        "q": "Magnesio intercambiable; forma parte de la clorofila que hace verdes las hojas."
+      },
+      "dilucion": {
+        "t": "NaOH por 5 g de suelo",
+        "q": "Mililitros de soda cáustica al 1 % con que se extraen 5 g de suelo.",
+        "filas": [
+          [
+            "50 ml",
+            "Receta base de Restrepo y Pinheiro; en algunos suelos cafeteros sale demasiado concentrada (UIS 2026)."
+          ],
+          [
+            "100 ml",
+            "Más diluida: el centro se cierra y se ven mejor la parte del medio y el borde."
+          ],
+          [
+            "150–200 ml",
+            "Muy diluida: centro pequeño y anillo de adentro más ancho (Lozano Vesga 2021)."
+          ]
+        ],
+        "nota": "Compare solo cromas hechos con la misma cantidad: la receta cambia el dibujo."
+      },
+      "papel": {
+        "t": "Papel del croma",
+        "q": "El papel filtro redondo usado; cambia la velocidad y el dibujo del croma.",
+        "filas": [
+          [
+            "Whatman n.º 1",
+            "Más denso y lento (15 a 45 minutos); deja ver mejor la materia orgánica y el borde."
+          ],
+          [
+            "Whatman n.º 4",
+            "Más poroso y rápido (10 a 30 minutos); deja ver cómo se mezclan minerales y materia orgánica."
+          ],
+          [
+            "Otro",
+            "Anótelo: con otro papel el croma no se compara con los anteriores."
+          ]
+        ],
+        "nota": "Fuente: Restrepo y Pinheiro 2011, aplicado por Lozano Vesga 2021."
+      },
+      "manejo": {
+        "t": "¿Cómo maneja la finca?",
+        "q": "Cómo se ha cuidado el lote en los últimos años.",
+        "filas": [
+          [
+            "Orgánico",
+            "Sin fertilizantes ni plaguicidas de síntesis química; abonos y controles naturales."
+          ],
+          [
+            "Convencional",
+            "Con fertilizantes o plaguicidas de síntesis química."
+          ],
+          [
+            "En transición",
+            "Dejando los insumos de síntesis; el suelo todavía está cambiando."
+          ]
+        ],
+        "nota": "El manejo ayuda a leer el croma, pero la lectura sale de la foto, no de esta respuesta."
+      },
+      "rangos": "Referencia para café",
+      "bajo": "Bajo",
+      "medio": "Medio",
+      "alto": "Alto",
+      "adecuado": "Lo adecuado para café",
+      "metodo": "Método de laboratorio",
+      "nota_lab": "Rangos de Cenicafé para café en producción (Sadeghian 2018, Avance Técnico 497). Valen con ese método de laboratorio. Confírmelos con su técnico: la foto no mide estos valores."
+    },
+    "en": {
+      "ph": {
+        "t": "pH",
+        "q": "Measures soil acidity: below 7 is acidic, above is alkaline."
+      },
+      "mo": {
+        "t": "Organic matter",
+        "q": "The part of the soil that comes from decomposed plant and animal remains."
+      },
+      "n": {
+        "t": "Total nitrogen",
+        "q": "All the nitrogen in the soil; almost all of it is in organic matter."
+      },
+      "p": {
+        "t": "Available phosphorus",
+        "q": "The phosphorus roots can take up; it helps roots and flowering."
+      },
+      "k": {
+        "t": "Potassium",
+        "q": "Exchangeable potassium; it helps bean filling and drought resistance."
+      },
+      "ca": {
+        "t": "Calcium",
+        "q": "Exchangeable calcium; it strengthens plant tissue and helps soil structure."
+      },
+      "mg": {
+        "t": "Magnesium",
+        "q": "Exchangeable magnesium; part of the chlorophyll that makes leaves green."
+      },
+      "dilucion": {
+        "t": "NaOH per 5 g of soil",
+        "q": "Millilitres of 1 % caustic soda used to extract 5 g of soil.",
+        "filas": [
+          [
+            "50 ml",
+            "Base recipe of Restrepo and Pinheiro; in some coffee soils it comes out too concentrated (UIS 2026)."
+          ],
+          [
+            "100 ml",
+            "More diluted: the centre closes and the middle and edge show better."
+          ],
+          [
+            "150–200 ml",
+            "Very diluted: small centre and a wider inner ring (Lozano Vesga 2021)."
+          ]
+        ],
+        "nota": "Compare only chromas made with the same amount: the recipe changes the pattern."
+      },
+      "papel": {
+        "t": "Chroma paper",
+        "q": "The round filter paper used; it changes the speed and pattern of the chroma.",
+        "filas": [
+          [
+            "Whatman no. 1",
+            "Denser and slower (15 to 45 minutes); shows organic matter and the edge better."
+          ],
+          [
+            "Whatman no. 4",
+            "More porous and faster (10 to 30 minutes); shows how minerals and organic matter mix."
+          ],
+          [
+            "Other",
+            "Write it down: with another paper the chroma cannot be compared with earlier ones."
+          ]
+        ],
+        "nota": "Source: Restrepo and Pinheiro 2011, as applied by Lozano Vesga 2021."
+      },
+      "manejo": {
+        "t": "How do you manage the farm?",
+        "q": "How the plot has been looked after in recent years.",
+        "filas": [
+          [
+            "Organic",
+            "No synthetic fertilisers or pesticides; natural fertilisers and controls."
+          ],
+          [
+            "Conventional",
+            "With synthetic fertilisers or pesticides."
+          ],
+          [
+            "In transition",
+            "Leaving synthetic inputs behind; the soil is still changing."
+          ]
+        ],
+        "nota": "Management helps read the chroma, but the reading comes from the photo, not from this answer."
+      },
+      "rangos": "Reference for coffee",
+      "bajo": "Low",
+      "medio": "Medium",
+      "alto": "High",
+      "adecuado": "Suitable for coffee",
+      "metodo": "Laboratory method",
+      "metodos": {
+        "ph": "potentiometric, soil:water 1:1",
+        "mo": "Walkley & Black",
+        "n": "Kjeldahl",
+        "p": "Bray II",
+        "k": "1 N ammonium acetate, pH 7",
+        "ca": "1 N ammonium acetate, pH 7",
+        "mg": "1 N ammonium acetate, pH 7"
+      },
+      "nota_lab": "Cenicafé ranges for coffee in production (Sadeghian 2018, Avance Técnico 497). They hold for that laboratory method. Confirm them with your technician: the photo does not measure these values."
+    },
+    "de": {
+      "ph": {
+        "t": "pH",
+        "q": "Misst die Bodensäure: unter 7 sauer, darüber alkalisch."
+      },
+      "mo": {
+        "t": "Organische Substanz",
+        "q": "Der Teil des Bodens aus zersetzten Pflanzen- und Tierresten."
+      },
+      "n": {
+        "t": "Gesamtstickstoff",
+        "q": "Der gesamte Stickstoff im Boden; fast alles steckt in der organischen Substanz."
+      },
+      "p": {
+        "t": "Verfügbarer Phosphor",
+        "q": "Der Phosphor, den Wurzeln aufnehmen können; hilft Wurzeln und Blüte."
+      },
+      "k": {
+        "t": "Kalium",
+        "q": "Austauschbares Kalium; hilft bei der Bohnenfüllung und gegen Trockenheit."
+      },
+      "ca": {
+        "t": "Calcium",
+        "q": "Austauschbares Calcium; stärkt das Pflanzengewebe und hilft der Bodenstruktur."
+      },
+      "mg": {
+        "t": "Magnesium",
+        "q": "Austauschbares Magnesium; Teil des Chlorophylls, das Blätter grün macht."
+      },
+      "dilucion": {
+        "t": "NaOH je 5 g Boden",
+        "q": "Milliliter 1-prozentiger Natronlauge, mit denen 5 g Boden extrahiert werden.",
+        "filas": [
+          [
+            "50 ml",
+            "Grundrezept von Restrepo und Pinheiro; in manchen Kaffeeböden zu konzentriert (UIS 2026)."
+          ],
+          [
+            "100 ml",
+            "Stärker verdünnt: das Zentrum schließt sich, Mitte und Rand sind besser zu sehen."
+          ],
+          [
+            "150–200 ml",
+            "Sehr verdünnt: kleines Zentrum und breiterer innerer Ring (Lozano Vesga 2021)."
+          ]
+        ],
+        "nota": "Nur Chromas mit derselben Menge vergleichen: das Rezept verändert das Bild."
+      },
+      "papel": {
+        "t": "Chroma-Papier",
+        "q": "Das verwendete runde Filterpapier; es verändert Geschwindigkeit und Bild des Chromas.",
+        "filas": [
+          [
+            "Whatman Nr. 1",
+            "Dichter und langsamer (15 bis 45 Minuten); zeigt organische Substanz und Rand besser."
+          ],
+          [
+            "Whatman Nr. 4",
+            "Poröser und schneller (10 bis 30 Minuten); zeigt, wie sich Mineralien und organische Substanz mischen."
+          ],
+          [
+            "Anderes",
+            "Notieren Sie es: mit anderem Papier ist das Chroma nicht mit früheren vergleichbar."
+          ]
+        ],
+        "nota": "Quelle: Restrepo und Pinheiro 2011, angewandt von Lozano Vesga 2021."
+      },
+      "manejo": {
+        "t": "Wie bewirtschaften Sie die Finca?",
+        "q": "Wie die Parzelle in den letzten Jahren gepflegt wurde.",
+        "filas": [
+          [
+            "Ökologisch",
+            "Ohne synthetische Dünger oder Pestizide; natürliche Dünger und Bekämpfung."
+          ],
+          [
+            "Konventionell",
+            "Mit synthetischen Düngern oder Pestiziden."
+          ],
+          [
+            "In Umstellung",
+            "Synthetische Mittel werden aufgegeben; der Boden verändert sich noch."
+          ]
+        ],
+        "nota": "Die Bewirtschaftung hilft beim Lesen, aber die Lesung stammt aus dem Foto, nicht aus dieser Antwort."
+      },
+      "rangos": "Referenz für Kaffee",
+      "bajo": "Niedrig",
+      "medio": "Mittel",
+      "alto": "Hoch",
+      "adecuado": "Geeignet für Kaffee",
+      "metodo": "Labormethode",
+      "metodos": {
+        "ph": "potentiometrisch, Boden:Wasser 1:1",
+        "mo": "Walkley & Black",
+        "n": "Kjeldahl",
+        "p": "Bray II",
+        "k": "1 N Ammoniumacetat, pH 7",
+        "ca": "1 N Ammoniumacetat, pH 7",
+        "mg": "1 N Ammoniumacetat, pH 7"
+      },
+      "nota_lab": "Cenicafé-Bereiche für Kaffee in Produktion (Sadeghian 2018, Avance Técnico 497). Sie gelten für diese Labormethode. Bestätigen Sie sie mit Ihrem Berater: das Foto misst diese Werte nicht."
     }
   };
 
@@ -1266,6 +2993,26 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     window.scrollTo({ top: 0 });
   }
   /* ── Diálogos ──────────────────────────────────────────────────────────── */
+  /* ── Pestañas del laboratorio (V5.41) ─────────────────────────────────────
+     En pantalla se ve una; al imprimir el feedback salen todas. */
+  var TABS_LAB = ["captura", "rasgos", "lectura", "feedback"];
+  function verTab(tab) {
+    if (TABS_LAB.indexOf(tab) < 0) tab = "captura";
+    $$("nav.tabs-lab button").forEach(function (b) { var si = b.dataset.tab === tab; b.setAttribute("aria-selected", String(si)); b.tabIndex = si ? 0 : -1; });
+    $$(".panel-lab").forEach(function (pn) { pn.classList.toggle("tab-oculto", pn.dataset.tab !== tab); });
+    try { localStorage.setItem("ctc-croma-tab", tab); } catch (e) { /* sin almacenamiento */ }
+  }
+  $$("nav.tabs-lab button").forEach(function (b) {
+    b.addEventListener("click", function () { verTab(b.dataset.tab); });
+    b.addEventListener("keydown", function (ev) {
+      if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
+      var i = TABS_LAB.indexOf(b.dataset.tab) + (ev.key === "ArrowRight" ? 1 : -1);
+      var sig = TABS_LAB[(i + TABS_LAB.length) % TABS_LAB.length];
+      verTab(sig);
+      $("#tab-" + sig).focus();
+    });
+  });
+  try { verTab(localStorage.getItem("ctc-croma-tab") || "captura"); } catch (e) { verTab("captura"); }
   function abrirDialogo(id) { var d = $("#" + id); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
   function cerrarDialogo(d) { if (d.close) d.close(); else d.removeAttribute("open"); }
   $$("dialog.modal").forEach(function (d) {
@@ -1273,18 +3020,115 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
   });
   $("#btnAyudaCroma").addEventListener("click", function () { abrirDialogo("dlgCroma"); });
   $("#btnInfoMetodo").addEventListener("click", function () { abrirDialogo("dlgMetodo"); });
-  // Las «i» de definiciones: un diálogo para todas, con ecuación y leyenda.
+  // Las «i» de definiciones: un diálogo para todas. Qué es → qué se mide en la foto
+  // (diagrama) → cómo se calcula → rango → escala 1–5 (Ford) → leyenda COMPLETA de
+  // símbolos, plegada al final (V5.41). Las «i» de los campos del formulario van aparte.
   function abrirDefinicion(clave) {
+    if (clave.indexOf("campo.") === 0) { abrirCampo(clave.slice(6)); return; }
     var d = (DEF[IDIOMA] || DEF.es)[clave] || DEF.es[clave];
     if (!d) return;
+    var f = DEF.formulas[clave];
+    if (f && typeof f === "object") f = f[IDIOMA] || f.es;
     var simbolos = DEF.simbolos[clave] || [];
-    var leyenda = simbolos.map(function (s, i) { return "<li><code>" + esc(s) + "</code><span>" + esc(d.l[i] || "") + "</span></li>"; }).join("");
+    var leyenda = simbolos.map(function (sb) { var g = SIMB[sb] || {}; return "<li><code>" + esc(sb) + "</code><span>" + esc(g[IDIOMA] || g.es || "") + "</span></li>"; }).join("");
+    var rasgo = clave.indexOf("ford_") === 0 ? clave.slice(5) : "";
     $("#dlgDefTitulo").textContent = d.t;
     $("#dlgDefCuerpo").innerHTML = "<h3>" + esc(t("def.que")) + "</h3><p>" + esc(d.q) + "</p>" +
-      "<h3>" + esc(t("def.como")) + "</h3><div class=\"def-eq\">" + esc(DEF.formulas[clave]) + "</div>" +
-      (leyenda ? "<h3>" + esc(t("def.leyenda")) + "</h3><ul class=\"def-leyenda\">" + leyenda + "</ul>" : "") +
-      "<h3>" + esc(t("def.rango")) + "</h3><p class=\"def-rango\">" + esc(d.r) + "</p>";
+      (DEF.diag[clave] ? '<figure class="def-diagrama"><div id="defDiagrama"></div><figcaption>' + esc(t("def.diag.cap")) + "</figcaption></figure>" : "") +
+      "<h3>" + esc(t("def.como")) + '</h3><div class="def-eq">' + esc(f) + "</div>" +
+      "<h3>" + esc(t("def.rango")) + '</h3><p class="def-rango">' + esc(d.r) + "</p>" +
+      (rasgo && DEF.escala[rasgo] ? tablaEscala(rasgo) : "") +
+      (leyenda ? '<details class="def-leyenda-acordeon"><summary>' + esc(t("def.leyenda")) + " (" + simbolos.length + ')</summary><div><ul class="def-leyenda">' + leyenda + "</ul></div></details>" : "");
+    if (DEF.diag[clave]) diagramaMedida(DEF.diag[clave], $("#defDiagrama"));
     abrirDialogo("dlgDef");
+  }
+  function escalaDe(rasgo) { return (DEF.escala[rasgo] && (DEF.escala[rasgo][IDIOMA] || DEF.escala[rasgo].es)) || []; }
+  function tablaEscala(rasgo) {
+    return "<h3>" + esc(t("def.escala")) + '</h3><table class="def-tabla"><tbody>' + escalaDe(rasgo).map(function (e, i) { return '<tr><th scope="row">' + (i + 1) + " · " + esc(e[0]) + "</th><td>" + esc(e[1]) + "</td></tr>"; }).join("") +
+      '</tbody></table><p class="aviso">' + esc((DEF[IDIOMA] || DEF.es).nota_escala) + "</p>";
+  }
+  // «i» de un campo: qué es y cómo se lee. Los rangos del análisis cuantitativo son de
+  // Cenicafé y salen de las reglas; nunca llegan al modelo.
+  function abrirCampo(k) {
+    var c = CAMPO[IDIOMA] || CAMPO.es, d = c[k];
+    if (!d) return;
+    var cuerpo = "<p>" + esc(d.q) + "</p>";
+    var campo = REGLAS && REGLAS.analisis_cuantitativo && REGLAS.analisis_cuantitativo.campos[k];
+    if (campo && campo.rango) {
+      var u = campo.unidad ? " " + campo.unidad : "", dec = k === "n" ? 2 : 1, lo = coma(campo.rango[0], dec), hi = coma(campo.rango[1], dec);
+      var filas = [["bajo", "< " + lo + u], ["medio", lo + "–" + hi + u], ["alto", "> " + hi + u]];
+      cuerpo += "<h3>" + esc(c.rangos) + '</h3><table class="def-tabla"><tbody>' + filas.map(function (fl) { return '<tr class="' + (campo.adecuado === fl[0] ? "adecuado" : "") + '"><th scope="row">' + esc(c[fl[0]]) + '</th><td class="n">' + esc(fl[1]) + "</td></tr>"; }).join("") + "</tbody></table>" +
+        '<p class="aviso">' + esc(c.adecuado + ": " + c[campo.adecuado].toLowerCase() + " · " + c.metodo + ": " + ((c.metodos && c.metodos[k]) || campo.metodo)) + '</p><p class="aviso">' + esc(c.nota_lab) + "</p>";
+    } else if (d.filas) {
+      cuerpo += '<table class="def-tabla"><tbody>' + d.filas.map(function (fl) { return '<tr><th scope="row">' + esc(fl[0]) + "</th><td>" + esc(fl[1]) + "</td></tr>"; }).join("") + "</tbody></table>" + (d.nota ? '<p class="aviso">' + esc(d.nota) + "</p>" : "");
+    }
+    $("#dlgDefTitulo").textContent = d.t;
+    $("#dlgDefCuerpo").innerHTML = cuerpo;
+    abrirDialogo("dlgDef");
+  }
+
+  /* Diagrama de lo que se mide: sobre la foto del croma con sus fronteras medidas si
+     la hay; si no, sobre un croma esquemático con las fronteras nominales. */
+  function diagramaMedida(spec, cont) {
+    if (!cont) return;
+    var r = E.rasgos, v = E.validacion;
+    var fr = r && r.zone_boundaries_rel ? r.zone_boundaries_rel : [0.15, 0.5, 0.8];
+    var W = 340, H = 300, CX = 170, CY = 150, RR = 116, AMA = "#FDC70C", MOR = "#451D96";
+    function rad(x) { if (typeof x === "number") return x; var m = /^f([123])(?:\+([\d.]+))?$/.exec(x); return m ? fr[m[1] - 1] + (m[2] ? Number(m[2]) : 0) : 0; }
+    function circ(rel, attrs) { return '<circle cx="' + CX + '" cy="' + CY + '" r="' + (rel * RR).toFixed(1) + '" ' + attrs + "/>"; }
+    function etq(x, y, txt) { return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" font-size="12" font-weight="700" fill="' + MOR + '" stroke="#fff" stroke-width="3" paint-order="stroke">' + esc(txt) + "</text>"; }
+    function capas() {
+      var o = "";
+      if (spec.banda) o += '<rect x="5" y="5" width="' + (W - 10) + '" height="' + (H - 10) + '" fill="none" stroke="' + AMA + '" stroke-width="10" opacity=".85"/>' + etq(12, 24, "B₃");
+      if (spec.disco) o += circ(spec.disco, 'fill="' + AMA + '" fill-opacity=".35" stroke="' + MOR + '" stroke-dasharray="5 4" stroke-width="2"');
+      if (spec.anillo) {
+        var a = rad(spec.anillo[0]) * RR, b = rad(spec.anillo[1]) * RR;
+        o += '<path fill-rule="evenodd" fill="' + AMA + '" fill-opacity=".5" d="M' + (CX - b) + "," + CY + "a" + b + "," + b + " 0 1,0 " + 2 * b + ",0a" + b + "," + b + " 0 1,0 " + -2 * b + ",0ZM" + (CX - a) + "," + CY + "a" + a + "," + a + " 0 1,0 " + 2 * a + ",0a" + a + "," + a + " 0 1,0 " + -2 * a + ',0Z"/>';
+      }
+      if (spec.fronteras) fr.forEach(function (f, i) { o += circ(f, 'fill="none" stroke="' + MOR + '" stroke-width="2"'); o += etq(CX + f * RR * 0.72 + 3, CY - f * RR * 0.72 - 3, "f" + "₁₂₃".charAt(i)); });
+      if (spec.muestreo) {
+        var radios = [];
+        if (spec.muestreo.length === 2) { for (var x = rad(spec.muestreo[0]); x <= rad(spec.muestreo[1]) + 1e-9; x += 0.03) radios.push(x); }
+        else radios = spec.muestreo.map(rad);
+        radios.forEach(function (q) {
+          o += circ(q, 'fill="none" stroke="' + MOR + '" stroke-width="1.3" stroke-dasharray="3 3"');
+          for (var j = 0; j < 16; j++) { var th = 2 * Math.PI * j / 16; o += '<circle cx="' + (CX + q * RR * Math.cos(th)).toFixed(1) + '" cy="' + (CY + q * RR * Math.sin(th)).toFixed(1) + '" r="1.6" fill="' + MOR + '"/>'; }
+        });
+        o += etq(CX + RR * 0.7, CY + RR * 0.95, "ρ");
+      }
+      if (spec.zonas) {
+        var med = [fr[0] / 2, (fr[0] + fr[1]) / 2, (fr[1] + fr[2]) / 2, (fr[2] + 1) / 2];
+        med.forEach(function (m, i) { o += etq(CX - m * RR - 8, CY + 4, "Z" + "₁₂₃₄".charAt(i)); });
+      }
+      if (spec.borde) o += circ(1, 'fill="none" stroke="' + AMA + '" stroke-width="3"');
+      if (spec.rayos) {
+        for (var k = 0; k < 12; k++) { var t2 = 2 * Math.PI * k / 12; o += '<line x1="' + CX + '" y1="' + CY + '" x2="' + (CX + RR * Math.cos(t2)).toFixed(1) + '" y2="' + (CY + RR * Math.sin(t2)).toFixed(1) + '" stroke="' + MOR + '" stroke-width="1.4" marker-end="url(#def-punta)"/>'; }
+        o += etq(CX + RR * 0.35, CY - RR * 0.1, "r(θ)");
+      }
+      if (spec.sectores) {
+        var n = spec.sectores, paso = 2 * Math.PI / n;
+        [0, n / 2].forEach(function (sct) { var a0 = sct * paso, a1 = a0 + paso; o += '<path fill="' + AMA + '" fill-opacity=".45" d="M' + CX + "," + CY + "L" + (CX + RR * Math.cos(a0)).toFixed(1) + "," + (CY + RR * Math.sin(a0)).toFixed(1) + "A" + RR + "," + RR + " 0 0,1 " + (CX + RR * Math.cos(a1)).toFixed(1) + "," + (CY + RR * Math.sin(a1)).toFixed(1) + 'Z"/>'; });
+        for (var sg = 0; sg < n; sg++) { var ts = sg * paso; o += '<line x1="' + CX + '" y1="' + CY + '" x2="' + (CX + RR * Math.cos(ts)).toFixed(1) + '" y2="' + (CY + RR * Math.sin(ts)).toFixed(1) + '" stroke="' + MOR + '" stroke-width="1.2"/>'; }
+        o += etq(CX + RR * 0.55, CY + RR * 0.3, "s") + etq(CX - RR * 0.65, CY - RR * 0.25, "s+4");
+      }
+      if (spec.diametro) o += '<line x1="' + (CX - RR) + '" y1="' + CY + '" x2="' + (CX + RR) + '" y2="' + CY + '" stroke="' + MOR + '" stroke-width="2.5" marker-start="url(#def-punta)" marker-end="url(#def-punta)"/>' + etq(CX - 6, CY - 8, "D");
+      if (spec.elipse) o += '<ellipse cx="' + CX + '" cy="' + CY + '" rx="' + RR + '" ry="' + (RR * 0.76).toFixed(1) + '" fill="none" stroke="' + MOR + '" stroke-width="2" stroke-dasharray="6 4"/>' + etq(CX + RR + 4, CY + 4, "q");
+      return o;
+    }
+    var defs = '<defs><marker id="def-punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="' + MOR + '"/></marker><clipPath id="def-recorte"><circle cx="' + CX + '" cy="' + CY + '" r="' + (RR * 1.06).toFixed(1) + '"/></clipPath></defs>';
+    function esquema() {
+      return '<rect width="' + W + '" height="' + H + '" fill="#fff"/>' + circ(1.06, 'fill="#F6EFDD"') + circ(1, 'fill="#E4D096"') + circ(fr[2], 'fill="#D9A650"') + circ(fr[1], 'fill="#8E5A2B"') + circ(fr[0], 'fill="#F4EAD6"');
+    }
+    function pintar(base) { cont.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(t("def.diag.cap")) + '" font-family="Segoe UI, system-ui, sans-serif">' + defs + base + capas() + "</svg>"; }
+    var conFoto = E.miniatura && r && v && v.escala && !spec.banda && !spec.elipse;
+    if (!conFoto) { pintar(esquema()); return; }
+    var img = new Image();
+    img.onload = function () {
+      var k0 = 1 / v.escala, cx = r.center_xy[0] * k0, cy = r.center_xy[1] * k0, R = r.outer_radius_px * k0, sc = RR / R;
+      pintar('<rect width="' + W + '" height="' + H + '" fill="#fff"/><image href="' + E.miniatura + '" x="' + (CX - cx * sc).toFixed(1) + '" y="' + (CY - cy * sc).toFixed(1) + '" width="' + (img.naturalWidth * sc).toFixed(1) + '" height="' + (img.naturalHeight * sc).toFixed(1) + '" clip-path="url(#def-recorte)" preserveAspectRatio="none"/>');
+    };
+    img.onerror = function () { pintar(esquema()); };
+    img.src = E.miniatura;
   }
   document.addEventListener("click", function (ev) {
     var b = ev.target.closest("[data-def]");
@@ -1799,15 +3643,22 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
 
   // Controles de revisión de un elemento. La clave (i1, r1, h1, a1, ford.canales…)
   // es el ancla que une el comentario del técnico con lo que revisa.
-  function controlFeedback(clave, conRango) {
+  // `rasgo` (canales · picos · intensidad) activa el rango corregido de Ford, con lo que
+  // significa cada número, el rango del programa y el de la lectura como anclas.
+  function controlFeedback(clave, rasgo) {
     var it = E.feedback.items[clave] || {};
-    var VEREDICTOS = [["", t("v.sin")], ["de-acuerdo", t("v.deacuerdo")], ["parcial", t("v.parcial")], ["en-desacuerdo", t("v.desacuerdo")]];
+    var VEREDICTOS = [["", t("v.sin")], ["de-acuerdo", t("v.deacuerdo")], ["parcial", t("v.parcial")], ["en-desacuerdo", t("v.desacuerdo")], ["na", t("v.na")]];
     var opciones = VEREDICTOS.map(function (v) { return '<option value="' + v[0] + '"' + (it.veredicto === v[0] ? " selected" : "") + ">" + esc(v[1]) + "</option>"; }).join("");
     var rango = "";
-    if (conRango) {
+    if (rasgo) {
+      var guia = escalaDe(rasgo);
       var r = it.rango_corregido || ["", ""];
-      var nums = function (sel) { return ['<option value="">—</option>'].concat([1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '"' + (String(sel) === String(n) ? " selected" : "") + ">" + n + "</option>"; })).join(""); };
-      rango = '<div class="rango">' + esc(t("fb.rango")) + '<select data-fb="' + esc(clave) + '" data-campo="rango0" aria-label="' + esc(t("fb.desde")) + '">' + nums(r[0]) + "</select>" + esc(t("fb.a")) + '<select data-fb="' + esc(clave) + '" data-campo="rango1" aria-label="' + esc(t("fb.hasta")) + '">' + nums(r[1]) + "</select></div>";
+      var nums = function (sel) { return ['<option value="">—</option>'].concat([1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '"' + (String(sel) === String(n) ? " selected" : "") + ">" + n + (guia[n - 1] ? " · " + esc(guia[n - 1][0]) : "") + "</option>"; })).join(""); };
+      var fmt = function (rg) { return rg && rg.length === 2 ? rg[0] + (rg[1] !== rg[0] ? "–" + rg[1] : "") : "—"; };
+      var prog = E.ford_programatico && E.ford_programatico[rasgo];
+      var lect = E.lectura && E.lectura.escala_ford && E.lectura.escala_ford[rasgo];
+      rango = '<div class="rango">' + esc(t("fb.rango")) + '<select data-fb="' + esc(clave) + '" data-campo="rango0" aria-label="' + esc(t("fb.desde")) + '">' + nums(r[0]) + "</select>" + esc(t("fb.a")) + '<select data-fb="' + esc(clave) + '" data-campo="rango1" aria-label="' + esc(t("fb.hasta")) + '">' + nums(r[1]) + "</select>" + botonDef("ford_" + rasgo) + "</div>" +
+        '<p class="guia-escala">' + guia.map(function (e, i) { return "<b>" + (i + 1) + "</b> " + esc(e[0]); }).join(" · ") + "<br>" + esc(t("fb.programa")) + " " + fmt(prog) + " · " + esc(t("fb.lectura")) + " " + fmt(lect && lect.rango) + " · " + esc(t("fb.mediana")) + "</p>";
     }
     return '<div class="fb"><select data-fb="' + esc(clave) + '" data-campo="veredicto" aria-label="' + esc(t("fb.veredicto")) + '">' + opciones + "</select>" +
       '<textarea data-fb="' + esc(clave) + '" data-campo="comentario" placeholder="' + esc(t("fb.comentario")) + '" aria-label="' + esc(t("fb.comentario")) + '">' + esc(it.comentario || "") + "</textarea>" + rango + "</div>";
@@ -1821,6 +3672,31 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     var q = c.analisis_cuantitativo;
     $("#labCuant").hidden = !hayCuant(q);
     if (hayCuant(q)) $("#labCuantTabla").innerHTML = filasCuant(q);
+  }
+
+  function pintarOnePager() {
+    var L = E.lectura, P = L && L.productor, c = E.contexto;
+    $("#opMeta").textContent = metaTexto(true);
+    var prep = c.preparada_por_en_informe && c.preparada_por;
+    $("#opPreparada").hidden = !prep;
+    $("#opPreparada").textContent = prep ? t("j.preparada") + c.preparada_por : "";
+    $("#opVacio").hidden = !!P;
+    $("#opContenido").hidden = !P;
+    if (!P) { $("#oFigura").hidden = true; return; }
+    $("#opSenal").className = "senal " + P.senal;
+    $("#opSenalTexto").textContent = P.senal_texto;
+    $("#opResumen").textContent = P.resumen;
+    var conj = conjeturasDe(P);
+    var confirmar = P.confirmar || P.acciones.filter(function (a) { return a.forzada || a.practica === "analisis-laboratorio" || a.practica === "repetir-croma"; });
+    var acciones = P.confirmar ? P.acciones : P.acciones.filter(function (a) { return confirmar.indexOf(a) < 0; });
+    $("#opConjeturas").innerHTML = conj.map(function (x) { return "<li><b>" + esc(x.titulo) + "</b> — " + esc(x.conjetura) + (x.certeza ? ' <span class="certeza ' + esc(x.certeza) + '">' + esc(t("c.certeza") + x.certeza) + "</span>" : "") + "</li>"; }).join("");
+    $("#opAcciones").innerHTML = acciones.map(function (a) { return '<li><span class="prio ' + esc(a.prioridad) + '">' + esc(t("a.prio") + a.prioridad) + "</span> <b>" + esc(a.titulo) + "</b>: " + esc(a.por_que) + "</li>"; }).join("");
+    $("#opConfirmar").innerHTML = confirmar.map(function (a) { return "<li><b>" + esc(a.titulo) + "</b></li>"; }).join("");
+    var q = c.analisis_cuantitativo;
+    $("#opCuant").hidden = !hayCuant(q);
+    if (hayCuant(q)) $("#opCuantTabla").innerHTML = filasCuant(q);
+    $("#opDescargo").textContent = P.descargo;
+    dibujarFigura(conj, "o");
   }
 
   function pintarLaboratorio() {
@@ -1848,6 +3724,7 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     pintarContextoLab();
 
     $("#labRasgos").hidden = !E.rasgos;
+    $("#labSinRasgos").hidden = !!E.rasgos;
     if (E.rasgos) {
       $("#tablaRasgos").innerHTML = filasRasgos(E.rasgos);
       $("#fordProg").innerHTML = tarjetasFord(E.ford_programatico);
@@ -1865,7 +3742,7 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
       $("#fbDescripcion").innerHTML = controlFeedback("descripcion");
       $("#rFord").innerHTML = FORD_ID.map(function (k) {
         var f = L.escala_ford[k];
-        return '<div class="elemento" data-el="ford.' + k + '"><div class="cab"><span class="id">ford.' + k + "</span><b>" + esc(t("ford." + k)) + ": " + f.rango[0] + (f.rango[1] !== f.rango[0] ? "–" + f.rango[1] : "") + '</b></div><p class="aviso">' + esc(f.base) + "</p>" + controlFeedback("ford." + k, true) + "</div>";
+        return '<div class="elemento" data-el="ford.' + k + '"><div class="cab"><span class="id">ford.' + k + "</span><b>" + esc(t("ford." + k)) + ": " + f.rango[0] + (f.rango[1] !== f.rango[0] ? "–" + f.rango[1] : "") + "</b>" + botonDef("ford_" + k) + '</div><p class="aviso">' + esc(f.base) + "</p>" + controlFeedback("ford." + k, k) + "</div>";
       }).join("");
       $("#rEvidencia").innerHTML = L.interpretaciones.map(function (it) {
         return '<div class="elemento" data-el="' + esc(it.id) + '"><div class="cab"><span class="id">' + esc(it.id) + '</span><span class="nivel">' + esc(it.nivel) + "</span><b>" + esc(it.fuente) + '</b><span class="aviso">' + esc(t("l.confianza") + it.confianza) + "</span></div>" +
@@ -1901,6 +3778,7 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     ponerFeedbackGeneral();
     contarRevisados();
     pintarPieLab();
+    pintarOnePager();
   }
   function pintarPieLab() {
     var f = E.feedback, quien = [f.tecnico.nombre, f.laboratorio.nombre, f.laboratorio.rut ? t("j.pie.rut") + f.laboratorio.rut : ""].filter(Boolean).join(" · ");
@@ -2019,7 +3897,9 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     cambio();
   });
   function contarRevisados() {
-    var elementos = $$("#labLecturaContenido [data-el]").filter(function (el) { return !el.closest("[hidden]"); });
+    // Solo cuenta lo oculto DENTRO de la lectura (p. ej. el contraste sin laboratorio): la cara o la
+    // pestaña del laboratorio pueden estar ocultas y los elementos siguen siendo revisables.
+    var elementos = $$("#labLecturaContenido [data-el]").filter(function (el) { return !el.closest("#labLecturaContenido [hidden]"); });
     var revisados = 0;
     elementos.forEach(function (el) {
       var it = E.feedback.items[el.dataset.el];
@@ -2028,6 +3908,7 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
       if (hecho) revisados++;
     });
     $("#fbContador").textContent = E.lectura ? revisados + t("fb.de") + elementos.length + t("fb.revisados") : t("fb.sinlectura");
+    $("#tabContador").textContent = E.lectura ? "(" + revisados + "/" + elementos.length + ")" : "";
     $("#btnExportarFeedback").disabled = !E.lectura;
   }
 
@@ -2084,6 +3965,8 @@ table.cuant td.n{font-family:var(--f-mono);text-align:right}
     // En papel no hay acordeones: lo de «confirmar» se imprime abierto.
     $$("#informeProductor details").forEach(function (d) { d.setAttribute("open", ""); });
     $("#estiloImpresion").textContent = estiloImpresion(cara);
+    // El PDF del laboratorio abre con el one-pager del informe del productor.
+    if (cara === "laboratorio") pintarOnePager();
     document.body.dataset.imprime = cara;
     window.print();
   }

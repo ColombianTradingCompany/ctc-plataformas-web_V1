@@ -1,9 +1,9 @@
 # Lector de Cromatografía de Suelo · guía de trabajo
 
-Estado al 2026-09-13: **V5.40 en producción**. Herramienta `cromatografia-suelo` del componente **herramientas-cafe**,
+Estado al 2026-09-14: **V5.41 en producción**. Herramienta `cromatografia-suelo` del componente **herramientas-cafe**,
 plan **plus**. Esta guía basta para entender lo construido y cambiarlo sin releer las sesiones anteriores. La historia
 de cada decisión está en el brief (`docs/componentes/briefs/herramientas-cafe-cromatografia-suelo.md`, un acta por
-versión, V5.32–V5.40) y el estado del componente en su charter (`docs/componentes/herramientas-cafe.md`, «Pendientes»).
+versión, V5.32–V5.41) y el estado del componente en su charter (`docs/componentes/herramientas-cafe.md`, «Pendientes»).
 
 ---
 
@@ -62,8 +62,17 @@ guardada conserva el suyo (`lectura.idioma`) y la cara del laboratorio avisa si 
   imprimir: el método en ~150 palabras, un acordeón de recursos con licencias y otro con los **3 PDF de metodología**,
   en español), «Imprimir feedback (PDF)», «Exportar Feedback Técnico (.json)».
 
-**Las «i» de definiciones** (V5.39): un diálogo común (`dlgDef`) con qué es, la ecuación tal como la calcula el motor,
-la leyenda de símbolos y el rango, en los tres idiomas. Viven en `DEF` (fórmulas y símbolos una vez; textos por idioma).
+**Las «i» de definiciones** (V5.39, rehechas en V5.41): un diálogo común (`dlgDef`) con qué es, un **diagrama de lo que
+se mide** (`diagramaMedida`, sobre la foto con sus fronteras si la hay), la ecuación en notación simbólica, el rango, la
+**guía 1–5** si es un rasgo de Ford y, al final y plegada, la **leyenda completa**. Viven en `DEF` (`formulas`,
+`simbolos`, `diag`, `escala`, textos por idioma) y `SIMB` (glosario de símbolos en tres idiomas). Las «i» de los campos del
+formulario (`data-def="campo.<k>"`) abren `abrirCampo` con `CAMPO` (qué es en ≤ 15 palabras y tabla de opciones) y, en el
+análisis cuantitativo, los rangos de Cenicafé desde las reglas.
+
+**Laboratorio en pestañas** (V5.41): Captura · Rasgos · Lectura (con el contador de revisados) · Feedback (`verTab`,
+recordada en `localStorage["ctc-croma-tab"]`). Veredictos con **N/A**; el rango corregido de Ford muestra qué significa
+cada número y los rangos del programa y de la lectura. Al imprimir salen todas las pestañas, precedidas del **one-pager**
+del informe del productor (`#labOnePager`, `pintarOnePager`, figura con prefijo «o») y un salto de página.
 
 ## 3. Mapa de archivos
 
@@ -72,16 +81,16 @@ la leyenda de símbolos y el rango, en los tres idiomas. Viven en `DEF` (fórmul
 | `public/tools/cromatografia-suelo.html` | La herramienta entera (HTML + CSS + JS ES5, sin librerías). Dos caras, diálogos, figura SVG, firma, export, diccionarios `T.es/en/de` y definiciones `DEF`. El puente `ctc-bridge.js` es la última línea antes de `</body>`. |
 | `public/tools/assets/cromatografia-rasgos.js` | Motor `croma-rasgos-1.2` (global `CromaRasgos`): compuerta + rasgos + Ford programático. Corre en el navegador y en los guardianes. |
 | `public/tools/assets/cromatografia-reglas.json` | Copia **byte a byte** de `reglas.json` para el navegador. |
-| `src/lib/tools/cromatografia/reglas.json` | **Reglas vivas v2.5**, de CTC (la v2.0 de `reference/` fue solo guía). Con `analisis_cuantitativo` (campos y rangos), `i18n.en/de` y `referentes` (documentación: quién es el referente y qué obras suyas se citan; el prompt no lo inyecta). |
+| `src/lib/tools/cromatografia/reglas.json` | **Reglas vivas v2.6**, de CTC (la v2.0 de `reference/` fue solo guía). Con `analisis_cuantitativo` (campos, límites de saneo y rangos bajo/medio/alto de Cenicafé con método y rango adecuado), `i18n.en/de` y `referentes` (documentación: quién es el referente y qué obras suyas se citan; el prompt no lo inyecta). |
 | `src/lib/tools/cromatografia/prompt.ts` | `croma-prompt-1.8`: ensambla sistema y usuario desde las reglas; esquema de salida; idioma y análisis declarado. |
 | `src/lib/tools/cromatografia/salida.ts` | Validación de la respuesta del modelo (ver §4). Puro. Léxicos EN/DE, `pareceEspanol`, contraste. |
 | `src/app/api/herramientas/cromatografia/route.ts` | POST de la lectura: sesión, acceso, techo diario, saneo (idioma, análisis), llamada, validación, un reintento, registro de consumo. |
 | `…/cromatografia/fincas/route.ts` | Fincas de la cuenta (sin coordenadas; `?superficie=cp` devuelve vacío) y `cuenta.nombre` (`profiles.full_name`) para «Preparada por». |
 | `…/cromatografia/estado/route.ts` | Estado de las claves sin gastar tokens (`GET /v1/models`, caché 10 min, nunca devuelve la clave). |
 | `public/tools/assets/cromatografia-ejemplos/ejemplo-{1,2,3}.jpg` | Fotos de ejemplo del «?». |
-| `public/tools/assets/cromatografia-docs/CTCX-Croma-0{1,2,3}-*.pdf` | PDF de «Bibliografía y metodología», generados (edición 1.2). |
+| `public/tools/assets/cromatografia-docs/CTCX-Croma-0{1,2,3}-*.pdf` | PDF de «Bibliografía y metodología», generados (edición 1.3). |
 | `public/tools/assets/ctcx-{logo,loro,loro-claro}.png` | Marca CTCX de pie, cabecera e impresos. |
-| `scripts/qa-cromatografia-check.mjs` | Guardián puro (280 comprobaciones). |
+| `scripts/qa-cromatografia-check.mjs` | Guardián puro (294 comprobaciones). |
 | `scripts/qa-cromatografia-modelo.mjs` | Prueba con el modelo real (gasta). `[imagen] [departamento] [corridas] [idioma] [lab]`. Escribe `<tmp>/croma-modelo-*.json`. |
 | `scripts/build-cromatografia-docs.mjs` | Genera los 3 PDF desde reglas, motor y prompt. |
 | `scripts/cromatografia-calibrar.mjs` | Pasa una carpeta de fotos por la compuerta y resume umbrales y fronteras. |
@@ -152,8 +161,8 @@ paquete original del owner (KICKOFF, PDF1, PDF2, JSON v2.0, mock) y `cromatograf
    título, `@bottom-left` NIT y web, `@bottom-right` «Página n de N» con `counter(pages)`) en el idioma de la interfaz.
    Chrome y Edge las pintan; Firefox no, y queda la cabecera y el pie del documento (que también llevan empresa, NIT y web).
 
-Versiones vivas: reglas **2.5** · motor **croma-rasgos-1.2** · prompt **croma-prompt-1.8** · estado **2** ·
-feedback **2** · PDF edición **1.2**.
+Versiones vivas: reglas **2.6** · motor **croma-rasgos-1.2** · prompt **croma-prompt-1.8** · estado **2** ·
+feedback **2** · PDF edición **1.3**.
 
 ## 4b. El referente: Tulio Esteban Lozano Vesga
 
@@ -190,8 +199,9 @@ guardián lo comprueba (bloque V5.40).
   no haya claves usadas sin definir). Las claves `api.<codigo>` traducen los errores del handler. Textos en palabras
   del campo; el guardián pasa el diálogo «?» en los tres idiomas por las listas vetadas de su idioma. Los botones de
   acción van abajo a la derecha; los acordeones nacen cerrados.
-- **Definiciones «i»**: `DEF.formulas[clave]` y `DEF.simbolos[clave]` una vez; `DEF.es/en/de[clave] = {t, q, l, r}` con
-  `l` en el orden de los símbolos (el guardián compara longitudes). Un botón: `botonDef("clave")` o
+- **Definiciones «i»**: `DEF.formulas[clave]` (texto, o `{es, en, de}` si lleva palabras), `DEF.simbolos[clave]` (claves de
+  `SIMB`), `DEF.diag[clave]` (qué dibuja) y `DEF.es/en/de[clave] = {t, q, r}`. Todo símbolo nuevo va a `SIMB` en los tres
+  idiomas; el guardián detecta cualquier símbolo de una fórmula que falte en su leyenda. Un botón: `botonDef("clave")` o
   `<button class="i-def" data-def="clave">`. Si cambias un cálculo del motor, cambia su fórmula aquí y en DOC-01.
 - **Análisis cuantitativo**: campos y rangos en `reglas.analisis_cuantitativo.campos` (el handler sanea con ellos);
   inputs `#q<clave>` en el HTML, `CAMPOS_Q`, `UNIDAD_CUANT`; etiquetas traducidas en `i18n.*.analisis_cuantitativo.campos`.
@@ -308,7 +318,7 @@ node scripts/build-cromatografia-docs.mjs
 ```
 Trabajas SOLO en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en LA HERRAMIENTA cromatografia-suelo
-(Lector de Cromatografía de Suelo, en producción desde V5.40).
+(Lector de Cromatografía de Suelo, en producción desde V5.41).
 Antes de tocar nada lee, en este orden:
 1. src/lib/tools/cromatografia/README.md   ← esta guía: lo construido, contratos, cómo cambiar y puntos abiertos
 2. docs/componentes/herramientas-cafe.md   ← el charter del componente («Pendientes»)

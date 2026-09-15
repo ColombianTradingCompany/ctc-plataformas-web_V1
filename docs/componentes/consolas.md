@@ -102,7 +102,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   contrato de grados de `ALINEACION` §1 y a KR, CP, OCP, cotizadores y Notion), `moqPorGrado` desde la edición
   (§9.2; `ASSOC_BLACK_MOQ` se retira), precios FOB en US$ y CIF/DDP por moneda de destino (§9.3), el ciclo
   semanal como cron de Vercel (§5) y el dossier por GitHub Action. Antes de tocar `definicion.ts`, la escala
-  del §9.1 debe validarla el owner con la calculadora (la del artefacto «PVC · Cinco decisiones»).
+  del §9.1 debe validarla el owner con la calculadora (la del artefacto «PVC · Cinco decisiones»). La Ficha (KR)
+  gana los tres físicos y la lista de reconocimientos verificables (§9.1.b); los multiplicadores PBC (§9.4) entran en
+  `pvc_model_versions.params`.
 - **Número de Nequi** real en `src/lib/arena/payment.ts` (owner).
 - **La primera jornada-vitrina** como evento supervisado; **estrenar el escáner visual** con soportes reales.
 - Hallazgos de la auditoría 2026-07-10 aún sin aplicar (HANDOFF §Audit findings): `search_path` en 4

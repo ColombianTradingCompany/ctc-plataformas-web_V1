@@ -134,9 +134,51 @@ el owner llama el **surplus**:
 
 | Atributo | C | B | A |
 |---|---|---|---|
-| Variedad | común | exótica | rara |
-| Proceso | lavado · honey clásicos | natural · honey+ · infusiones | experimental · fermentaciones · co-fermentaciones |
-| Reconocimiento | ninguno | 1 a 3 | 4 o más |
+| Variedad | **Regional / Tradicional** | **Especial / Híbrido** | **Exótica / Rara** |
+| Proceso | **Lavado** | **Honey · Natural · infusiones** | **Experimental · fermentaciones · co-fermentaciones** |
+| Reconocimiento | ninguno | 1 a 3 | 4 o más — solo reconocimientos **relevantes y verificables** (no cualquier certificación menor; el OCP los verifica antes de contar) |
+
+**Los nombres.** Al conjunto de las dos medidas se le llama **«El Punto y la Tríada»**: el Punto es el puntaje SCA;
+la Tríada son las tres letras (variedad · proceso · reconocimiento), *lo que el café tiene además de la taza*. Antes
+de las dos hay una condición previa —los tres físicos (§9.1.b)— que no da puntos: da el derecho a que el lote lleve un
+grado. Para no confundirla con la Tríada, en los textos se la llama **«la Base física»** (el owner la enunció como
+«tríada de calidad»; el nombre queda por confirmar).
+
+**Las tres clases de variedad** (definiciones del owner, 2026-09-15):
+
+- **C · Regionales / Tradicionales.** Los caballos de batalla de la caficultura. Incluyen las genéticas fundacionales
+  (Typica, Bourbon) y las variedades desarrolladas por institutos nacionales para adaptarse al clima local y resistir
+  enfermedades (la roya). Perfiles de taza clásicos, achocolatados, de acidez media y excelente rendimiento agronómico.
+- **B · Especiales / Híbridos.** Cruces botánicos o mutaciones que logran un punto intermedio excepcional. Atributos en
+  taza muy superiores o diferenciados, muchas veces con características físicas únicas (el grano gigante del Maragogype
+  o el Pacamara) o una excelente arquitectura de planta y resistencia con alta calidad sensorial.
+- **A · Exóticas / Raras.** Variedades (a menudo de origen etíope o mutaciones espontáneas) con perfiles de taza
+  extraordinariamente complejos, florales y frutales. Rendimientos muy bajos, cuidados agronómicos extremos y los
+  precios más altos en subastas y mercados internacionales.
+
+**Catálogo de variedades** (la semilla de `VARIEDAD_NIVEL`; tabla del owner 2026-09-15 más los acuerdos de la reunión
+G&G del mismo día; **se revisa al menos cada tres meses** para seguir al mercado):
+
+| C · Regional / Tradicional | B · Especial / Híbrido | A · Exótica / Rara |
+|---|---|---|
+| Castillo | Tabi | Geisha (Gesha) |
+| Caturra *(la reunión G&G la movía a B — confirmar)* | Bourbon Rosado (Pink Bourbon) | Chiroso |
+| Colombia | Pacamara | Sudan Rume |
+| Typica | Maragogype | Wush Wush |
+| Mundo Novo | SL28 y SL34 | Eugenioides (especie distinta) |
+| Cenicafé 1 | Java | Laurina (Bourbon Pointu) |
+| Lempira | Maracaturra | Mokka |
+| Catimor | Ruiru 11 | Papayo |
+| Garnica | Batian | Aji |
+| | Sarchimor | Purpurascens |
+| | Obatá | Sidra |
+| | Catuaí *(acuerdo G&G: a B)* | |
+| | Bourbon Rojo y Amarillo *(acuerdo G&G: a B)* | |
+
+En la tabla del owner, Catuaí y Bourbon Rojo/Amarillo quedaron en una columna desplazada (junto a un «Bourbon Rosado»
+repetido); se colocan en B siguiendo el acuerdo de la reunión («mover Bourbon Rojo, Caturra y Catuaí a Especiales»).
+Caturra sigue en C porque la tabla, posterior a la reunión, la deja ahí — **el owner confirma esas dos filas**. Toda
+variedad fuera del catálogo se trata como C hasta que el comité la clasifique.
 
 Las tres reglas de `definicion.ts` (2026-08-05) evolucionan así: **(1) los puntos mandan** —el grado no se negocia, se
 lee de los puntos—; **(2) los criterios cualitativos ya no son solo guía de valor: entran en los puntos como surplus**,
@@ -174,10 +216,10 @@ Ficha y de la página «Grados de Calidad CTC» que reescribe la Secretaría).
 > **Black — the essence of origin.** Una cosecha verificada que llega a 82 en la taza sin más, o a 80 con algo que
 > contar. Es el café que la casa se atreve a firmar.
 > **Red — the soul of the harvest.** Un 84 común, o un 83 con surplus. La taza ya tiene carácter propio.
-> **Blue — the edge of perfection.** Un 88 común: la taza excelente por sí sola. Con surplus se alcanza antes: 86,7 con
-> una cosa que contar, 84,4 con tres.
+> **Blue — the edge of perfection.** Un 88 común: la taza excelente por sí sola. Con surplus se alcanza antes: 86 con
+> una cosa que contar, 84,3 con tres.
 > **Gold — the standard of excellence.** Un 89 común: la taza extraordinaria. O un 88 con tres cosas que contar; un
-> 84,7 con todo.
+> 84,5 con todo.
 > **Tyrian — the highest rarity tier.** Nunca por la taza sola. Un 89 con tres cosas que contar; un 91,5 con dos; un 96
 > con una; un 100 común, no.
 
@@ -189,7 +231,8 @@ puntos fijos**, es un **porcentaje del café**; la entrada a la escala es una **
 
 ```
 base(SCA): interpolación lineal entre las anclas de la línea CCC de la gráfica
-   (82, 1000) (84, 1400) (86, 1500) (88, 1600) (89, 1800) (100, 1990)
+   (82, 1000) (84, 1400) (86, 1540) (88, 1600) (89, 1800) (100, 1990)
+   (86 sube de 1500 a 1540 por decisión del owner 2026-09-15: una sola letra B a 86 ya es Blue)
    por debajo de 82 sigue la misma pendiente que 82→84 (200 puntos por punto SCA): 80 → 600 · 79 → 400 · 77 → 0
 
 M(V, P, R) = 1 + K · (w(V) + w(P) + w(R))        w(C) = 0 · w(B) = 1 · w(A) = 2
@@ -214,6 +257,10 @@ sin regalar Tyrian a 84. El único sitio donde la gráfica salta en vez de escal
 
 **Las puertas** (las notas de la gráfica, cumplidas por construcción):
 
+- **Puerta 0 — la Base física (§9.1.b).** Antes de mirar el Punto y la Tríada, el lote tiene que cumplir los tres
+  físicos: factor de rendimiento **> 94**, humedad **10–12 %** y densidad **dentro del rango de su variedad**. Sin eso
+  no hay grado que nombrar: el lote queda «apto en taza, pendiente de físico» y no entra en la escala.
+
 - **SCA < 80 → sin grado, sea cual sea el surplus.** La base sigue bajando 200 puntos por punto SCA y el multiplicador
   no aplica: un 79,99 AAA computa 598.
 - **Con 80–81,99 solo se entra con al menos un B.** El café común queda entre 600 y 999 (CCC:80 = 600, proporcional a
@@ -232,7 +279,7 @@ sin regalar Tyrian a 84. El único sitio donde la gráfica salta en vez de escal
 | 80 | no entra 600 ✓ | Black 1043 ✓ | | Black 1128 ✓ | Black 1256 (**dibujado Red 1400**) |
 | 82 | Black 1000 ✓ | | | | |
 | 84 | Red 1400 ✓ | | | Red 1579 ✓ | Blue 1759 ✓ |
-| 86 | Red 1500 ✓ | | | Blue 1692 ✓ | Gold 1884 ✓ |
+| 86 | Red 1540 ✓ | Blue 1606 *(cambio del owner: BCC:86 y CBC:86 son Blue)* | | Blue 1737 ✓ | Gold 1935 ✓ |
 | 88 | Blue 1600 ✓ | Blue 1668 ✓ | Blue 1737 (**dibujado Gold 1800**) | Gold 1805 ✓ | Gold 2000 ✓ |
 | 89 | Gold 1800 ✓ | | | Tyrian 2031 (**dibujado Gold 2000**) | Tyrian 2261 ✓ |
 | 100 | Gold 1990 ✓ | | | Tyrian 2245 ✓ | Tyrian 2500 ✓ |
@@ -251,27 +298,91 @@ Gold que enaltece la taza), y a la vez no admitir a ningún lote como Tyrian sol
 
 | Surplus | Σw | Black | Red | Blue | Gold | Tyrian |
 |---|---|---|---|---|---|---|
-| CCC | 0 | 82,00 | 84,00 | 88,00 | 89,00 | **nunca** |
-| BCC · CBC · CCB | 1 | 80,00 | 83,72 | 86,68 | 88,63 | 95,87 |
-| BBC · ACC (y equivalentes) | 2 | 80,00 | 83,45 | 85,48 | 88,29 | 91,50 |
-| BBB · ABC (y equivalentes) | 3 | 80,00 | 83,21 | 84,36 | 87,91 | 89,00 |
-| AAC · ABB | 4 | 80,00 | 82,98 | 83,84 | 86,74 | 89,00 |
-| AAB | 5 | 80,00 | 82,77 | 83,60 | 85,66 | 89,00 |
-| AAA | 6 | 80,00 | 82,58 | 83,37 | 84,65 | 89,00 |
+| CCC | 0 | 82,00 | 84,00 | 87,99 | 89,00 | **nunca** |
+| BCC · CBC · CCB | 1 | 80,00 | 83,72 | 85,92 | 88,63 | 95,87 |
+| BBC · ACC (y equivalentes) | 2 | 80,00 | 83,45 | 85,06 | 88,29 | 91,50 |
+| BBB · ABC (y equivalentes) | 3 | 80,00 | 83,21 | 84,26 | 87,84 | 89,00 |
+| AAC · ABB | 4 | 80,00 | 82,98 | 83,84 | 85,96 | 89,00 |
+| AAB | 5 | 80,00 | 82,77 | 83,60 | 85,19 | 89,00 |
+| AAA | 6 | 80,00 | 82,58 | 83,37 | 84,47 | 89,00 |
+
+Contra los acuerdos de la reunión G&G (2026-09-15): Black «82 con CCC, 80 con al menos un B» ✓; Red «desde 84, o
+≈ 83,5 con tríada favorable» ✓ (83,72 con una B); Blue «≈ 88 con CCC, ≈ 86 con dos o más B, ≈ 84,5 con BBB» ✓ (87,99 ·
+85,06 · 84,26) — y con **una** B el owner bajó después el umbral de ≈ 87 a 86 (BCC:86 = Blue) ✓; «desde CCC no se
+puede llegar a Tyrian» ✓. Los cambios pedidos el mismo día: BCC:86 y CBC:86 Blue (1606) ✓, CCB:87 Blue (1637) ✓,
+ABB:84 Blue (1639) ✓. Con pesos iguales, CCB:86 también es Blue (1606); si el reconocimiento debe pesar menos que la
+variedad y el proceso, ahí está la palanca (`w` por atributo).
 
 Lo que la tabla enseña de un vistazo: el surplus adelanta cada banda, pero nunca la regala (Black siempre pide 80 con
 algo, 82 sin nada); Tyrian tiene un suelo que no se mueve (89) y un techo que solo el surplus abre.
 
 **Lo que queda por confirmar** (owner): que las tres atribuciones pesan igual (`w` es el mismo para variedad, proceso
-y reconocimiento; podría no serlo) y el caso AAA:80 (Black alto). **Se valida con la calculadora del artefacto «PVC ·
-Cinco decisiones» antes de que la fase 2 toque `definicion.ts`.**
+y reconocimiento; CCB:86 = Blue lo delata) · el caso AAA:80 (Black alto) · Caturra (C en tu tabla, B en la reunión) y
+Catuaí / Bourbon Rojo-Amarillo (a B por la reunión) · el criterio de «reconocimiento relevante y verificable» (qué cuenta
+y qué no) · el nombre de la Base física · las densidades de referencia por variedad (§9.1.b). **Se valida con la
+calculadora del artefacto «PVC · Cinco decisiones» antes de que la fase 2 toque `definicion.ts`.**
+
+**La especificación alternativa** (`especificacion-grados-ctc.md`, 2026-09-15 15:24, del socio): se leyó entera. Sus tres
+restricciones se cumplen aquí — R1 (tope duro 2500, por K derivada), R3 (la excelencia en proceso y reconocimiento no
+es atajo: AAA:84 = Blue, AAA:88 = Gold, Tyrian exige 89) — salvo **R2** (ventanas duras por variedad: C solo hasta Blue,
+A desde Blue), que **no se adopta**: contradice los acuerdos del mismo día (un CCC de 89 es Gold; la entrada a 80 la
+compra cualquier B, no solo la variedad) y la gráfica del owner. El modelo multiplicativo que esa especificación
+descarta (§3.1) era otro —sin techo y sin puerta—; este tiene los dos. Lo que sí se toma de ella: la suite de casos
+como semilla de `qa-grados-check`, y las invariantes I1 (1000–2500), I5/I7 (2500 solo con AAA y SCA 100; Tyrian solo
+desde 89) e I8 (monotonía en SCA, V, P y R), que el guardián comprobará por enumeración.
 
 **De dónde salen las letras** (fase 2, dueño `consolas`): Variedad y Proceso se derivan de la Ficha Técnica del lote
-(`lot_fichas.variety` / `.process`) por dos catálogos en `definicion.ts` (`VARIEDAD_NIVEL`, `PROCESO_NIVEL`); el
-Reconocimiento es un contador nuevo (`lot_fichas.reconocimientos`, lista con nombre · año · enlace, que el OCP verifica
-antes de contar). El veredicto del Q-Grader (`recordEvaluationVerdict`) pasa a llamar `puntosCtc(sca, surplus)` y a
-guardar los puntos y las letras en `lots` (`ctc_points`, `surplus jsonb`) al lado del `grade`; la Ficha y el catálogo
-los exhiben. `gradoPorPuntaje(sca)` sobrevive como «el grado sin surplus» y `qa-grados-check` gana las puertas.
+(`lot_fichas.variety` / `.process`) por dos catálogos en `definicion.ts` (`VARIEDAD_NIVEL` —el catálogo de arriba— y
+`PROCESO_NIVEL`); el Reconocimiento es una lista nueva (`lot_fichas.reconocimientos`: nombre · año · enlace · verificado
+por), y solo cuentan los que el OCP marcó verificados. **El productor declara los tres** —los conoce mejor que nadie
+(acuerdo G&G)— y CTC los verifica. El veredicto del Q-Grader (`recordEvaluationVerdict`) pasa a llamar
+`puntosCtc(sca, surplus)` **solo si la Base física está cumplida** y a guardar los puntos y las letras en `lots`
+(`ctc_points`, `surplus jsonb`) al lado del `grade`; la Ficha y el catálogo los exhiben. `gradoPorPuntaje(sca)`
+sobrevive como «el grado sin surplus» y `qa-grados-check` gana las puertas y las invariantes.
+
+### 9.1.b La Base física (la condición previa)
+
+Acuerdo G&G y nota del owner (2026-09-15): antes del grado, el lote cumple tres físicos, que CTC pide junto a la
+Tríada y que el formato de características físicas de la Ficha pasa a registrar (`lot_fichas.physical_data` gana los
+tres campos; hoy `lot_evaluations` ya lleva `factor_rendimiento` y `physical_data`):
+
+| Físico | Umbral | Quién lo mide |
+|---|---|---|
+| Factor de rendimiento | **> 94** | laboratorio de CTC (planilla del Q-Grader) |
+| Humedad | **10–12 %** | laboratorio de CTC |
+| Densidad | **dentro del rango de referencia de la variedad** (tabla `DENSIDAD_REFERENCIA` por variedad, pendiente del comité) | laboratorio de CTC |
+
+No suma puntos ni resta: es una puerta. Un lote que no la cumple no recibe grado («pendiente de físico»), y el productor
+ve cuál de los tres falló. La reunión fijó además la expectativa: **al menos 1 de cada 5 cafés no debería pasar** los
+criterios mínimos — si todos pasan, la puerta está mal puesta.
+
+### 9.1.c La escala para cada avatar
+
+El material técnico de arriba se lleva a un plano emocional, uno por persona. El marco común, en palabras del owner:
+*la escala de grados CTCx se mide en «El Punto y la Tríada», que juntas significan un marco lógico matemáticamente,
+coherente conceptualmente y justo entre sus partes.* De ahí, cada avatar lee lo suyo:
+
+- **Productores — una vara clara para lo que pueden ofrecer, y recibir.** El Punto se lo da la taza; la Tríada ya la
+  tiene: sabe qué sembró, cómo lo benefició y quién lo ha premiado. Con las dos ve, antes de vender, a qué grado aspira
+  su lote y qué le falta para el siguiente — un varietal, un proceso, un reconocimiento — y sabe que el precio que sigue
+  al grado es el mismo para todos: *«nuestro precio obedece a un estudio juicioso del mercado; no hacemos margen de
+  negociación porque queremos ser justos con todos»* (acuerdo G&G). La escala no le pide que negocie: le pide que mejore.
+- **Tostadores — una garantía de calidad, confianza y diferenciación.** Un grado CTC no es un puntaje repetido: es una
+  taza medida **y** un origen verificado, con los físicos que hacen que ese café llegue al tambor como se prometió.
+  Blue dice «excelente en taza»; Gold, «extraordinario»; Tyrian, «extraordinario y además raro» — y el tostador puede
+  contar por qué, con las tres letras delante del cliente.
+- **HORECA — un producto de alto atractivo y valor percibido para mis clientes.** El grado es una historia corta que
+  cabe en una carta: el color, el lema y la Tríada (de qué planta, qué manos, qué reconocimiento). Vende la taza sin
+  tener que explicar el SCA, y vende la diferencia entre un Red y un Gold sin bajar el precio del Red.
+- **Consumidor final — la experiencia del café a otros niveles, y un lazo directo a su sostenibilidad.** Detrás de cada
+  grado hay un productor con nombre, una variedad que existe porque alguien la cuidó y un precio que llegó a la finca
+  por una regla pública. El grado es la puerta a la Ficha: lo que bebe, de dónde viene, y qué parte de lo que pagó
+  se quedó en el origen.
+
+Esos cuatro textos son la semilla del copy por superficie (KR para productores; Cherry Picked Green y Roast para
+tostadores; CaaS/HORECA; Cherry Picked X y la Ficha pública para el consumidor) y de la página «Grados de Calidad CTC»
+de Notion. Se escriben en los tres idiomas cuando la fase 2 los lleve a código.
+
 
 ### 9.2 MOQ en unidades de 6 kg (decisión #2)
 
@@ -304,3 +415,23 @@ kilos («56 unidades · 336 kg»). Gold = 13 unidades = 78 kg es la carga garant
   TRM del corte durante 10 de 15 días, se abre una edición `corrected` en borrador y se avisa al owner (una TRM que cae
   golpea el ingreso en COP del productor; una que sube encarece al comprador en US$; el collar cuida los dos lados).
   **X queda por fijar por el owner** (propuesta: 6 %, el mismo orden que la ventana de 30 días del FNC).
+
+### 9.4 Multiplicadores por grado sobre el PBC (acuerdo G&G, 2026-09-15)
+
+El **PBC** (precio base de comercialización: el PVC de la edición en la moneda que toque, §9.3) se multiplica por grado.
+Son los coeficientes que la escalera de la edición aplica y que viven en `pvc_model_versions.params.multiplicadores`:
+
+| Grado | Multiplicador sobre PBC |
+|---|---|
+| Black | **1,15** (+15 %) |
+| Red | **1,30** |
+| Blue | **1,60** |
+| Gold | **2,00** |
+| Tyrian | **2,00 de base + subasta**: el excedente se reparte **80 % productor / 20 % CTC** cuando el productor conserva el café y CTC lo subasta; si CTC lo compra antes, el esquema cambia (§4, Subastas). Referencia: Fedecafé cobra ≈ 25 % en subasta — CTC debe ser igual o mejor |
+
+Con la Tríada declarada por el productor y el Punto —real, o estimado por CTC hasta la catación formal—, la calculadora
+de costos (PAD: precio ancla en verde, pergamino o tostado, hacia atrás o hacia adelante) da la oferta; el precio es
+**transparente, no negociable y el mismo para todos**. Ejemplo de la reunión (Monte Azul, Castillo lavado sin
+reconocimientos, ≈ 84 → Red): referencia tostado $70.000/kg; techo sin margen ≈ $39.307/kg pergamino; con 25 % de
+margen CTC, oferta máxima ≈ $23.000/kg pergamino frente a ≈ $18.000 de la cooperativa — ≈ 30 % más para los cafés que
+cumplen. La PAD es una herramienta interna (`herramientas-internas`); cuando el módulo la absorba, lee la edición.

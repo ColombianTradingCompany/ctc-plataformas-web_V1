@@ -16,12 +16,19 @@ versionadas por separado:
 | Capa | Qué versiona | Cadencia | Quién |
 |---|---|---|---|
 | Modelo (`pvc_model_versions`) | Los parámetros del método (prima, margen, multiplicadores, pila…) = el objeto `S` del tablero | Entre franjas, con acta | Comité PVC |
-| Edición (`pvc_editions`) | Los números de una franja: entradas, salidas, PVC, escalera, pila, KPIs | Trimestral + correcciones al alza | Publicación del owner |
+| Edición (`pvc_editions`) | Los números de una franja: entradas, salidas, PVC, escalera, pila, KPIs | **Fija por 3 meses**; se publica **7–8 semanas antes** de su fecha efectiva; + correcciones al alza | Publicación del owner |
 | Dossier (`tool_versions` / storage) | Los PDF D0–D9, calculadora y one-pager regenerados con la edición publicada | Por edición | Pipeline Python |
 
-Además, un **ciclo** (`pvc_cycles`) es cada corrida semanal del cálculo con los datos capturados ese día: produce una
-edición *preliminar* para la próxima franja, guarda cada dato con su fuente y compara contra el ciclo anterior. Al
-llegar la fecha de corte, el último ciclo se convierte en el borrador que el comité publica.
+**La cadencia, con las palabras del owner (2026-09-15):** el PVC **se fija por tres meses** y **se publica siete u ocho
+semanas antes de su fecha efectiva**. Entre la publicación y el `valid_from` hay, por diseño, casi dos meses en los que
+**dos ediciones están publicadas y solo una rige** — la vieja. Eso no es un caso raro: es el funcionamiento normal, y es
+la razón de ser del hallazgo A1 (§10.2). La edición PVC-F4-2026 es la excepción (transición: publicada el 9-sep para
+regir el 15-sep).
+
+Además, un **ciclo** (`pvc_cycles`) es cada corrida semanal. **No recalcula el precio para publicarlo**: es la *lectura
+del mercado* de esa semana — qué pasó, cuánto se ha separado de lo que el modelo pronosticó al corte, y qué novedades
+hubo desde entonces (§10.3). El precio solo cambia al publicar la franja siguiente o al dispararse una corrección al
+alza. Al llegar la fecha de corte, el ciclo de esa semana es el borrador que el comité revisa y publica.
 
 ## 2. Dónde vive en la consola
 
@@ -449,18 +456,46 @@ Dos caminos, y el PVC no cambia en ninguno:
 | Camino | Quién | Oferta | Dónde se aplica |
 |---|---|---|---|
 | **Cherry Picked** (el productor se adscribe al esquema de colaboración y ofrece su café en ese formato) | productor con cuenta KR, lote galardonado | **PVC × multiplicador del grado** (escalera de la edición) | `lot_offers` kind `temporada`/`black`/`subasta` |
-| **Compra directa** (el productor **no se adscribe**, pero CTCx ve valor en comprar una cantidad mínima **asumiendo el riesgo**) | decisión del OCP/BCP, lote a lote | **PVC × multiplicador del grado, menos la prima**: se retira el **8 %** (`params.prima`, la prima de atractivo sobre la cooperativa) **del valor final, no del PVC** — `oferta_directa = PVC × mult(grado) × (1 − prima)` | `lot_offers` kind nuevo `directa` (fase 2) |
+| **Compra directa · CTC Selection** (el productor **no se adscribe**, pero CTCx ve valor en comprar una cantidad mínima **asumiendo el riesgo**) | decisión del OCP/BCP, lote a lote | **PVC × multiplicador del grado, menos la prima**: se retira el **8 %** (`params.prima`, la prima de atractivo sobre la cooperativa) **del valor final, no del PVC** — `oferta_directa = PVC × mult(grado) × (1 − prima)` | `lot_offers` kind nuevo `directa` (fase 2) |
 
-Lectura: el PVC publicado es uno solo y es público; lo que cambia es la oferta, y la diferencia entre los dos caminos es
-exactamente la prima que paga estar dentro del esquema. *Por confirmar con el owner*: si el 8 % se retira sobre el valor
-con multiplicador (como está escrito) o sobre el PVC antes de multiplicar (`PVC × (1 − prima) × mult`, que da lo mismo
-en aritmética pero no en cómo se explica), y si «cantidad mínima» es el MOQ del grado (§9.2) u otra.
+**Qué es la compra directa, en el comercio** (owner, 2026-09-15): CTCx compra ese café y **lo vende como suyo**. No como
+café de su finca —la finca sigue siendo la del productor y la Ficha lo dice— sino bajo el sello **CTC Selection**:
+ofertas **preseleccionadas por CTCx** por ser particularmente interesantes y **listas en bodega**. Es la diferencia
+comercial que justifica el riesgo: el comprador no espera una cosecha ni firma una franja, compra algo que ya está.
+
+**Esto ya existe a medias en el código, y ahí está el trabajo.** `public_lot_catalog.ctc_selection` es un campo
+**derivado** (nada lo persiste, regla de la casa): vale `true` cuando hay una fila en `black_negotiations` con
+`status = 'comprar'` para ese lote. Cuando vale `true`, el catálogo y la ficha pública **sustituyen el nombre de la
+finca por `CTC_RAZON`** (`src/lib/catalogo/{fichaPublica,sneakPeek}.ts`, `CherryPickedExperience.tsx`) — exactamente
+«lo vende como suyo». Lo que falta:
+
+- La puerta es **solo Black**: `decideBlackNegotiation('comprar')` es el único camino, así que una compra directa de un
+  Gold o un Blue no encendería `ctc_selection` y el catálogo seguiría mostrando la finca del productor (hallazgo **A13**).
+- El **precio** no sale del PVC: `decideBlackNegotiation` toma `agreed_price_per_kg` a mano.
+- No hay **«listo en bodega»**: el catálogo no distingue un lote comprado en firme y disponible de uno por contrato.
+
+*Por confirmar con el owner*: si el 8 % se retira sobre el valor con multiplicador (como está escrito) o sobre el PVC
+antes de multiplicar (`PVC × (1 − prima) × mult` — misma aritmética, distinta explicación al productor), y si «cantidad
+mínima» es el MOQ del grado (§9.2) u otra.
 
 ## 10. Auditoría de mejora (2026-09-15)
 
-Hecha sobre el código de V5.42, la semilla `seed-pvc-f4-2026.mjs` y este plan. **El MCP de Supabase no respondió
-durante la auditoría**, así que los conteos vivos (ediciones, ciclos, filas de `market_anchors`) no se verificaron: donde
-se afirma algo de la base, sale de la semilla y del código, no de una consulta.
+Hecha sobre el código de V5.42, la semilla `seed-pvc-f4-2026.mjs` y este plan. **Verificada contra la base el
+2026-09-16** (el MCP de Supabase había fallado el día anterior; los conteos de abajo salen de consultas reales):
+
+| Tabla | Filas | Lectura |
+|---|---|---|
+| `pvc_model_versions` | **1** (v2.1.1) | nunca se ha registrado una versión nueva desde la consola |
+| `pvc_editions` | **1** (PVC-F4-2026 · `published` · $2.500.000 · corte 4-sep · pub 9-sep · vigencia 15-sep → 15-dic · huella `c476fe80`) | la semilla; ninguna publicada desde el tablero todavía |
+| `pvc_cycles` · `pvc_sources` · `pvc_trigger_watch` · `pvc_forecast_scores` | **0 · 0 · 0 · 0** | confirmado: nadie les escribe |
+| `market_anchors` (`fnc_carga`) | **45** filas, 2-ene → 15-sep-2026, **29 en los últimos 30 días** | el cron diario **sí corre** y es la única captura viva |
+| `integration_events` con dominio PVC | **0** | confirmado: el PVC no emite nada |
+| `lot_offers` · `purchase_contracts` · `lot_listings` | **0 · 0 · 0** | nada comercial que pudiera leer el PVC existe todavía |
+
+**Una cifra que vale la pena mirar**: el promedio de `fnc_carga` de los últimos 30 días es **$2.176.069**, contra los
+**$2.252.419** de `fnc_30d` con que se calculó la edición vigente. El mercado se ha movido **−3,4 %** desde el corte, el
+PVC vigente ($2.500.000) está **~15 % por encima** del PEC de hoy y el disparador (FNC ≥ PVC) está lejísimos. Eso es
+exactamente el contenido del reporte semanal que pide el owner (§10.3) — y hoy no lo calcula nadie.
 
 ### 10.1 Cómo funciona hoy (lo que existe)
 
@@ -510,7 +545,7 @@ tomadas en §8). Tampoco emite eventos: no hay `pvc.published` en `integration_e
 
 | # | Hallazgo | Dónde | Riesgo | Mejora |
 |---|---|---|---|---|
-| A1 | **La vigencia no se aplica.** `edicionVigente()` toma la última `published`/`corrected` por `published_at`, sin mirar `valid_from`/`valid_to`. El PVC se publica **dos meses antes** de su franja (así lo dice la pantalla): al publicar F1-2027 en octubre, la home y las ofertas la leerían como vigente desde ese día, con la F4-2026 todavía en curso | `servicio.ts:376`, `public_pvc_current` | alto (precio equivocado durante dos meses, en cuanto haya un segundo consumidor) | «vigente» = `published`/`corrected` **y** `valid_from ≤ hoy ≤ valid_to`; la siguiente es «próxima» y se exhibe como tal; la vista pública devuelve las dos |
+| A1 | **La vigencia no se aplica — y la cadencia lo vuelve seguro, no hipotético.** `edicionVigente()` y la vista `public_pvc_current` toman la última `published`/`corrected` por `published_at`, **sin mirar `valid_from`/`valid_to`** (verificado en el `pg_get_viewdef`: `WHERE status IN (…) ORDER BY published_at DESC LIMIT 1`). Como el PVC se publica **7–8 semanas antes** de su fecha efectiva (§1), en cuanto se publique F1-2027 —hacia finales de octubre— **empezará a regir ese mismo día** y durante casi dos meses, con F4-2026 todavía vigente hasta el 15-dic | `servicio.ts:376`, vista `public_pvc_current` | **alto** · ocurre en la próxima publicación, no «si acaso» | «vigente» = `published`/`corrected` **y** `valid_from ≤ hoy ≤ valid_to`; la recién publicada es **«próxima»** y se exhibe como tal (es información valiosa: el productor y el comprador ven con 7 semanas de antelación el precio que viene); la vista pública devuelve **las dos**, marcadas |
 | A2 | **`pvc_anterior` lo teclea el usuario.** La banda muerta y el tope bajista dependen de él, y la ruta de publicar toma `S.pvc_anterior ?? 0` del tablero; con 0 la regla no actúa | `publicar/route.ts`, `motor.ts:150` | alto (se pierde la suavización entre franjas) | la ruta lo lee de la última edición publicada de la franja anterior e ignora el del tablero; el tablero lo muestra como dato de la base |
 | A3 | **Cinco parámetros escapan al control de deriva.** `NO_PARAM` deja fuera `k`, `lb_excelso`, `lb_pergamino`, `lead` y `disparador`, que sí son parámetros del modelo (k y lb entran en P0); si el tablero los mueve, el número que ve el owner y el que se publica (calculado con los params de la versión) no coinciden | `publicar/route.ts` | medio | comparar todos los `PvcParams`; solo `nivel`/`destino` (UI) quedan fuera |
 | A4 | **Supersede solo por código.** Al publicar F1-2027 la F4-2026 sigue `published`; con A1 resuelto es correcto (dos publicadas, una vigente, una próxima), pero `previous_edition_id` solo se llena si el código repite | `servicio.ts:409` | bajo | `previous_edition_id` = la última publicada de cualquier código; estados: `published` + ventana de vigencia deciden |
@@ -522,57 +557,71 @@ tomadas en §8). Tampoco emite eventos: no hay `pvc.published` en `integration_e
 | A10 | **Solo se captura FNC.** TRM (datos.gov.co), ICE C (ya está en la cinta, sin persistir), diferencial, costo FEPCafé, ENSO, BRL, Brent: todo manual | `market-anchors/route.ts` | medio | el cron diario gana `kinds` `trm` e `ice_c_strip` (§4); el semanal captura el resto a `pvc_sources` con fuente, hora, método y confianza |
 | A11 | **Huella de 32 bits.** `huella()` es un hash multiplicativo (`x*31+c`); para sellar una edición pública, un SHA-256 cuesta lo mismo y no tiene colisiones prácticas | `motor.ts:323` | bajo | `sha256(JSON.stringify({p,e}))` en el servicio; el motor sigue puro |
 | A12 | **El dossier no sigue a la edición.** `docs/pvc/v2.1.1/` es estático; D3 y D4 nombran F4-2026 a mano | `dossier.ts` | medio | decisión #5: GitHub Action con `repository_dispatch` desde `pvc.published`, artefactos a storage `pvc/<código>/` |
+| A13 | **`ctc_selection` solo lo enciende la vía Black.** El campo derivado de `public_lot_catalog` (`black_negotiations.status = 'comprar'`) es lo que hace que el catálogo muestre `CTC_RAZON` en vez de la finca. Una compra directa de un Gold o un Blue —que es justo lo que el owner describe en §9.5— no lo encendería | vista `public_lot_catalog`, `contractActions.ts:199` | medio (bloquea §9.5) | que `ctc_selection` derive de **la compra en firme, sea cual sea el grado**: una oferta `directa` aceptada, o el contrato que nazca de ella; y un distintivo «listo en bodega» en el catálogo |
 
 ### 10.3 Lo que pide el owner (2026-09-15) y cómo encaja
 
-**1 · El cálculo completo, cada semana, con reporte y contenido.** Se mantiene la distinción de §1 entre *edición*
-(el precio que rige una franja, con banda muerta y tope bajista) y *ciclo* (la corrida semanal), pero el ciclo deja de
-ser «preliminar» y pasa a ser **el reporte semanal del PVC**:
+**1 · La lectura semanal del mercado (no un precio nuevo).** El owner lo fijó el 2026-09-15: *«no quiero que el precio
+del PVC se mueva cada semana; lo que quiero es una lectura del mercado y comparación con lo que se pronosticó y las
+novedades desde entonces, semana a semana»*. El precio se fija por tres meses y se publica 7–8 semanas antes (§1). El
+ciclo semanal, por tanto, **corre el cálculo completo pero no publica nada**: lo usa como instrumento de medición.
 
 - **Lunes 06:00 COT**, cron de Vercel → `POST /api/pvc/cycle` (`CRON_SECRET`): captura fuentes → `pvc_sources` (A10),
-  extiende la serie mensual (A5), corre `calcular()` completo con la versión vigente y las entradas del día, guarda
-  `pvc_cycles` (`kind = weekly`, `inputs`, `outputs`, `diff` contra el ciclo anterior: qué dato movió qué término y
-  cuánto, y contra la **edición vigente**: cuánto se ha separado el mercado del precio que rige).
-- **El reporte** nace del ciclo, no de la edición: «PVC semanal — semana N»: las tres cifras KPI, el término que gobierna,
-  el PVC que *saldría* hoy frente al que rige, la distancia al disparador, las fuentes con baja confianza y el marco de
-  mercado vigente (§10.3.2). Se emite `pvc.cycle_ready` con el ciclo; Make lo reparte: correo al owner (Resend, como ya
-  dice §5.4), PDF del reporte (GitHub Action, misma que el dossier: decisión #5), y el **contenido digital** —
-  un post de Coffeed Redacción a partir del reporte (`coffeed.redaccion` ya existe), el one-pager en Canva por Make, y
-  la pieza para redes. Lo que se publica hacia afuera no lleva el desglose de costos (A7).
-- **La publicación del precio sigue siendo por franja** (corte el último día hábil de M−3, D2) y por corrección
-  disparada; el ciclo semanal *informa*, no publica. Si el owner quiere que el precio también se mueva cada semana, es
-  otra decisión: cambia D2 (banda muerta, vigencia) y la promesa al productor de un precio estable por franja.
-  **Por confirmar.**
+  extiende la serie mensual (A5), corre `calcular()` completo con la versión vigente y los datos de esa semana, y guarda
+  `pvc_cycles` (`kind = weekly`) con `inputs`, `outputs` y **tres comparaciones** en `diff`:
+  1. **contra lo que se pronosticó al corte** — la edición vigente fijó L, P, el ancla y el término que gobernaba; el
+     ciclo dice cuánto se han movido y **si el pronóstico está aguantando** (es el mismo cálculo que `pvc_forecast_scores`
+     hace al cerrar la franja, §6, pero en vivo y semana a semana en vez de una vez al final);
+  2. **contra el ciclo de la semana pasada** — qué dato movió qué término y cuánto (el «qué cambió esta semana»);
+  3. **contra el precio que rige** — cuánto se ha separado el mercado del PVC vigente, y **a qué distancia está el
+     disparador** de corrección al alza (hoy: FNC 30 d $2.176.069 vs PVC $2.500.000 → el mercado está 15 % por debajo,
+     el disparador lejísimos).
+- **El reporte** nace del ciclo: «PVC · lectura de mercado, semana N» — el precio vigente y desde cuándo, las tres cifras
+  KPI, el término que gobierna, la desviación contra el pronóstico, las novedades de la semana (titulares del barrido de
+  Coffeed, movimientos de ICE C, TRM, clima/ENSO), las fuentes con baja confianza y la distancia al disparador. Se emite
+  `pvc.cycle_ready`; Make lo reparte: correo al owner (Resend, §5.4), PDF del reporte (GitHub Action, la misma de la
+  decisión #5) y el **contenido digital** — post de Coffeed Redacción a partir del reporte (`coffeed.redaccion` ya
+  existe), one-pager en Canva y pieza para redes. Hacia afuera no va el desglose de costos (A7).
+- **Lo que el ciclo NO hace**: publicar, mover el precio o crear una edición. Solo dos cosas cambian el precio — la
+  publicación de la franja siguiente (7–8 semanas antes de su `valid_from`) y una **corrección al alza** disparada
+  (A9). En la semana del corte, el ciclo es el borrador que el comité revisa y publica; ahí el `kind` es `cut`.
 
-**2 · El marco de mercado de la Tríada, semestral (enero y julio).** Factores que **no entran en el PVC** pero sí en
-cómo la escala se lee y se vende: la *percepción de mercado* de las variedades A/B/C, de los procesos A/B/C y de los
-reconocimientos A/B/C. Diseño:
+**2 · El marco de mercado de la Tríada: un documento adjunto, semestral (enero y julio).** Factores que **no entran en
+el PVC** pero sí en cómo la escala se lee y se vende: la *percepción de mercado* de las variedades A/B/C, de los procesos
+A/B/C y de los reconocimientos A/B/C. **Decisión del owner (2026-09-15): no es un tablero ni una tabla con pantalla —
+es un archivo adjunto al PVC, accesible desde el menú secundario.**
 
-- Tabla nueva **`pvc_marco_mercado`** (service-role-only, inmutable como las versiones del modelo): `periodo` (`2026-H2`),
-  `atributo` (`variedad` · `proceso` · `reconocimiento`), `nivel` (`A` · `B` · `C`), `indice` (la percepción, en una
-  escala fija: p. ej. prima de mercado observada en % sobre el café común y una nota de demanda 1–5), `fuentes jsonb`
-  (subastas, informes, precios de referencia, con url y fecha), `notas`, `published_by`, `published_at`. Nueve filas por
-  periodo. Se publica desde `/bcp/pvc/marco` (pestaña nueva) con acta, **dos veces al año: enero y julio**; el ciclo
-  semanal la cita, no la recalcula.
-- Para qué sirve: (i) la revisión trimestral del catálogo de variedades (§9.1) y la revisión de los pesos `w` de la
-  Tríada se hacen **con el marco delante**, no de memoria; (ii) la oferta se posiciona *dentro* de la banda del grado
-  (parte alta o baja) con el índice del semestre; (iii) el reporte semanal y el contenido digital cuentan «lo que el
-  mercado está pagando por…»; (iv) el D2 gana un anexo «Marco de mercado» por semestre.
-- Ciclo: `pvc_cycles.kind = semestral` en enero y julio (el mismo endpoint, con captura de fuentes de percepción:
-  resultados de subastas de la temporada, informes de mercado, lo que Coffeed ya barre); el owner revisa y publica.
+- **Dónde vive**: como un documento más del dossier, `docs/pvc/<versión>/PVC-D10_Marco_de_Mercado_<periodo>_CTCx.pdf`,
+  listado y servido por la pestaña **Dossier** que ya existe (`lib/pvc/dossier.ts` lo recoge solo con añadir su título a
+  `TITULOS`; el route handler autenticado ya lo sirve). Sin tabla nueva, sin pantalla nueva, sin migración.
+- **Qué contiene**: las nueve celdas (tres atributos × tres niveles) con la prima de mercado observada, una nota de
+  demanda y **las fuentes con fecha y enlace** (resultados de subastas de la temporada, informes de mercado, precios de
+  referencia, lo que el barrido de Coffeed ya recoge); más el comentario del semestre.
+- **Cadencia**: **enero y julio**. Lo produce la misma GitHub Action del dossier (decisión #5) a partir de un
+  `marco_<periodo>.json` que el comité llena, y el owner lo aprueba antes de adjuntarlo.
+- **Para qué sirve**: (i) la revisión trimestral del catálogo de variedades y de los pesos `w` de la Tríada (§9.1) se
+  hace **con el marco delante**, no de memoria; (ii) la oferta se posiciona *dentro* de la banda del grado con el índice
+  del semestre; (iii) el reporte semanal lo **cita** («según el marco 2027-H1…»).
+- **La tensión que hay que decidir**: un PDF no lo puede leer el código. Mientras el marco solo se *cite* en el reporte y
+  *oriente* al comité, el archivo basta. Si algún día debe **calcular** algo (posicionar el precio dentro de la banda de
+  forma automática), hará falta su gemelo legible por máquina — el mismo `marco_<periodo>.json` que genera el PDF,
+  guardado junto a él. **Por confirmar con el owner**, y mientras tanto el archivo manda.
 
 ### 10.4 Orden propuesto (fase 2 y 3 del §7, revisadas)
 
-1. **Correcciones de base** (una versión, `consolas`): A1 vigencia · A2 `pvc_anterior` de la base · A3 comparación
-   completa de parámetros · A4 `previous_edition_id` · A11 SHA-256 · A7 vista pública recortada (si el owner confirma).
+1. **Correcciones de base** (una versión, `consolas`): **A1 vigencia primero** — es lo único que se rompe solo, en la
+   próxima publicación, y hoy es barato porque nadie lee el PVC todavía (0 ofertas, 0 contratos, 0 listados) · A2
+   `pvc_anterior` de la base · A3 comparación completa de parámetros · A4 `previous_edition_id` · A11 SHA-256 · A7 vista
+   pública recortada (si el owner confirma).
 2. **Modelo v2.2.0** (A8): MOQ por unidades, bandas por puntos, prima explícita; y `definicion.ts` a la escala del
-   §9.1 con la Base física (§9.1.b). Con esto, ofertas, contratos, listados y subastas **leen la edición** (§4) y nace la
-   herramienta «PVC × grado» del §9.5.
+   §9.1 con la Base física (§9.1.b). Con esto, ofertas, contratos, listados y subastas **leen la edición** (§4), nace la
+   herramienta «PVC × grado» del §9.5 y con ella la **compra directa / CTC Selection** (oferta `directa`, `ctc_selection`
+   por compra en firme de cualquier grado, «listo en bodega» en el catálogo — A13).
 3. **La espina** (A6 · A10 · A5 · A9): `pvc.published`/`pvc.corrected`/`pvc.cycle_ready`; cron diario con TRM e ICE C
    y el disparador; `POST /api/pvc/cycle` semanal con captura, serie viva, `diff` y reporte; GitHub Action del dossier y
    del reporte (A12).
-4. **El marco de mercado** (§10.3.2): tabla, pestaña, primer periodo 2027-H1 en enero (o un `2026-H2` retroactivo ahora,
-   a mano, para que la fase 2 arranque con marco).
+4. **El marco de mercado** (§10.3.2): documento D10 en el dossier, primer periodo **2027-H1 en enero** (o un `2026-H2`
+   retroactivo ahora, a mano, para que la fase 2 arranque con marco). Una línea en `TITULOS` de `dossier.ts`, nada más.
 5. **Certeza** (§6): `pvc_forecast_scores` al cerrar F4-2026 y el informe de afinación cada cuatro franjas.
 
 Cada punto lleva su guardián: `qa-pvc-vigencia` (una edición futura no es vigente), `qa-pvc-publicar` (deriva de

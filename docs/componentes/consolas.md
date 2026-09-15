@@ -104,7 +104,12 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   semanal como cron de Vercel (§5) y el dossier por GitHub Action. Antes de tocar `definicion.ts`, la escala
   del §9.1 debe validarla el owner con la calculadora (la del artefacto «PVC · Cinco decisiones»). La Ficha (KR)
   gana los tres físicos y la lista de reconocimientos verificables (§9.1.b); los multiplicadores PBC (§9.4) entran en
-  `pvc_model_versions.params`.
+  `pvc_model_versions.params`. **Auditoría del módulo (§10, 2026-09-15)**: doce hallazgos con orden propuesto —
+  primero A1 (la vigencia no se aplica: `edicionVigente()` ignora `valid_from/valid_to`), A2 (`pvc_anterior` lo
+  teclea el usuario) y A3 (cinco parámetros escapan al control de deriva); luego el modelo v2.2.0, la espina
+  (`pvc.*`, cron diario con TRM e ICE C, ciclo semanal con reporte y contenido) y el marco de mercado semestral
+  de la Tríada (`pvc_marco_mercado`, enero y julio). La oferta en dos caminos (§9.5) exige `lot_offers` kind
+  `directa` y la herramienta «PVC × grado».
 - **Número de Nequi** real en `src/lib/arena/payment.ts` (owner).
 - **La primera jornada-vitrina** como evento supervisado; **estrenar el escáner visual** con soportes reales.
 - Hallazgos de la auditoría 2026-07-10 aún sin aplicar (HANDOFF §Audit findings): `search_path` en 4

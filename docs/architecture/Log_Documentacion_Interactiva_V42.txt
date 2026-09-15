@@ -227,9 +227,11 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   `ecp/transcripciones/page.tsx` nombran `tools/transcriptor/` (la carpeta que empaqueta `/api/transcripciones/descargar`)
   en vez de `reference_html_tools\_whatsapp-transcript-html`, que ya no existe. Sin cambio de nodo ni de wire.
 - Para la ficha DICT `pvc` del wrap V43: `docs/PVC_BCP_PLAN.md` §8 pasa de «decisiones que necesita el owner» a
-  «decisiones tomadas» (2026-09-15) y nace el §9 «Escala de puntos CTC»: puntos = base(SCA) + surplus(variedad,
-  proceso, reconocimiento), bandas 1000–1399 Black · 1400–1599 Red · 1600–1799 Blue · 1800–2000 Gold · >2000 Tyrian,
-  tope 2500; con SCA < 80 nunca llega a 1000; con 80–81.99 solo entra con al menos un B. MOQ por unidades de 6 kg
+  «decisiones tomadas» (2026-09-15) y nace el §9 «Escala de puntos CTC»: puntos = base(SCA) × M(variedad, proceso,
+  reconocimiento) —multiplicativo: cada B +4,27 %, cada A +8,54 %, K derivado de llevar el techo CCC (1990) al techo
+  de la escala (2500)—, bandas 1000–1399 Black · 1400–1599 Red · 1600–1799 Blue · 1800–2000 Gold · >2000 Tyrian;
+  con SCA < 80 nunca llega a 1000; con 80–81.99 solo entra con al menos un B (como si fuera un 82); Tyrian exige
+  SCA ≥ 89. MOQ por unidades de 6 kg
   (56/42/26/13/6 = 336/252/156/78/36 kg). Moneda: PVC en COP → FOB en US$ a la TRM del corte (normalizador) →
   CIF/DDP en la moneda del destino. Ciclo semanal por cron de Vercel (plan Pro); dossier por GitHub Action. Nada de
   esto está en código todavía: es la fase 2 del PVC (pendiente con dueño consolas; `definicion.ts` cambia entonces).

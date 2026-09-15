@@ -142,49 +142,73 @@ Las tres reglas de `definicion.ts` (2026-08-05) evolucionan así: **(1) los punt
 lee de los puntos—; **(2) los criterios cualitativos ya no son solo guía de valor: entran en los puntos como surplus**,
 pero nunca sustituyen al SCA (ver las puertas); **(3) dos decimales en el SCA, puntos enteros.**
 
-**El modelo** (propuesta de esta sesión, calcada de la gráfica del owner y afinada donde la gráfica se contradecía —
-ver «Cómo se ajustó»):
+Las letras del surplus se escriben **siempre en el orden Variedad · Proceso · Reconocimiento**: «BCC» es variedad
+exótica con proceso y reconocimiento comunes; «CCB» es un café común con 1 a 3 reconocimientos.
+
+**El modelo** (segunda propuesta, 2026-09-15, tras la revisión del owner de la primera: el surplus **no es una suma de
+puntos fijos**, es un **porcentaje del café**; la entrada a la escala es una **puerta**, no aritmética):
 
 ```
-puntos(SCA, V, P, R) = round( base(SCA) + surplus(V) + surplus(P) + surplus(R) ), tope 2500
-surplus(C) = 0 · surplus(B) = +50 · surplus(A) = +100          (máximo AAA = +300)
-base(SCA): interpolación lineal entre las anclas
-   (80, 950) (82, 1000) (84, 1400) (86, 1500) (88, 1650) (89, 1800) (100, 2000)
+base(SCA): interpolación lineal entre las anclas de la línea CCC de la gráfica
+   (82, 1000) (84, 1400) (86, 1500) (88, 1600) (89, 1800) (100, 1990)
+   por debajo de 82 sigue la misma pendiente que 82→84 (200 puntos por punto SCA): 80 → 600 · 79 → 400 · 77 → 0
+
+M(V, P, R) = 1 + K · (w(V) + w(P) + w(R))        w(C) = 0 · w(B) = 1 · w(A) = 2
+   K = (2500 / 1990 − 1) / 6 ≈ 0,0427  →  cada B vale +4,27 %, cada A +8,54 %, AAA = ×1,2563
+   (K no se elige a mano: es exactamente lo que lleva el techo del café común, 1990, al techo de la escala, 2500)
+
+puntos(SCA, V, P, R) =
+   SCA < 80          → round(base(SCA))                 el surplus no aplica: nunca llega a 1000
+   80 ≤ SCA < 82     → CCC: round(base(SCA)) — no entra (600–999)
+                       con al menos un B o un A: round(1000 × M) — entra «como si fuera un 82»
+   SCA ≥ 82          → round(base(SCA) × M), tope 2500
+   Tyrian exige SCA ≥ 89: con 82–88,99 el resultado se topa en 2000 (techo de Gold)
+
 grado(puntos): < 1000 sin grado · 1000–1399 Black · 1400–1599 Red · 1600–1799 Blue · 1800–2000 Gold · 2001–2500 Tyrian
 ```
 
+**Por qué multiplicativo.** En la gráfica el valor del surplus **crece con el SCA**: AAA vale +200 sobre CCC a 84,
++300 a 86, +400 a 88–89 y +500 a 100. Eso es un porcentaje (≈ +25 % en todos), no una cantidad fija — un varietal raro
+con proceso experimental vale más cuanto mejor es la taza. Una suma con pesos fijos es plana y no puede llegar a 2500
+sin regalar Tyrian a 84. El único sitio donde la gráfica salta en vez de escalar es la entrada (un solo B lleva un 80 de
+500 a 1000): ese salto es la **puerta** de las notas, y así se modela.
+
 **Las puertas** (las notas de la gráfica, cumplidas por construcción):
 
-- **SCA < 80 → sin grado, sea cual sea el surplus.** La base baja 50 puntos por cada punto SCA por debajo de 80 y el
-  surplus **no se suma**: un 79,9 AAA computa por debajo de 1000.
-- **Con 80–81,99 solo se entra con al menos un B** (CCC:80 = 950). Es decir: el mínimo real de un café sin surplus es
-  **82 SCA**, exactamente lo que dice la nota.
-- **Un café CCC nunca es Tyrian** (CCC:100 = 2000, el techo de Gold): Tyrian exige surplus. Y desde Blue, el café común
-  va **una banda por debajo** de su banda SCA (CCC:86 = Red, CCC:88 = Blue, CCC:89 = Gold): el surplus es lo que la
-  recupera. Es la traducción de «los puntos debajo de la raya requieren al menos un aumento proporcional en SCA o al menos
-  un surplus más alto en cualquier métrica».
+- **SCA < 80 → sin grado, sea cual sea el surplus.** La base sigue bajando 200 puntos por punto SCA y el multiplicador
+  no aplica: un 79,99 AAA computa 598.
+- **Con 80–81,99 solo se entra con al menos un B.** El café común queda entre 600 y 999 (CCC:80 = 600, proporcional a
+  la pendiente de la línea, como pidió el owner; en la gráfica de ejemplo eran 500). Con surplus, el café entra como si
+  fuera un 82 (1000 × M) — continuo con lo que vale el mismo surplus a 82. El mínimo real sin surplus es **82 SCA**.
+- **Un café CCC nunca toca los 2000**: CCC:100 = 1990, el techo de Gold. Tyrian exige surplus **y** SCA ≥ 89 (la banda
+  SCA de referencia «≥ 89»): un AAA de 88 se queda en 2000 = Gold, exactamente como está dibujado. Desde Blue, el café
+  común va **una banda por debajo** de su banda SCA (CCC:86 = Red, CCC:88 = Blue, CCC:89 = Gold): el surplus es lo que
+  la recupera — «los puntos debajo de la raya requieren al menos un aumento proporcional en SCA o al menos un surplus
+  más alto en cualquier métrica».
 
 **Contraste con los puntos de la gráfica** (banda que dibuja el owner → banda que da el modelo):
 
-| SCA | CCC | B·C·C | BBB | AAA | BBC | BCC |
-|---|---|---|---|---|---|---|
-| 80 | no entra ✓ | Black 1000 ✓ | Black 1100 ✓ | Black 1250 (**dibujado Red 1400**) | — | — |
-| 82 | Black 1000 ✓ | | | | | |
-| 84 | Red 1400 ✓ | | Red 1550 ✓ | Blue 1700 ✓ | | |
-| 86 | Red 1500 ✓ | | Blue 1650 ✓ | Gold 1800 ✓ | | |
-| 88 | Blue 1650 ✓ | | Gold 1800 ✓ | Gold 1950 ✓ | Blue 1750 (**dibujado Gold 1800**) | Blue 1700 ✓ |
-| 89 | Gold 1800 ✓ | | Gold 1950 ✓ | Tyrian 2100 ✓ | | |
-| 100 | Gold 2000 ✓ | | Tyrian 2150 ✓ | Tyrian 2300 ✓ | | |
+| SCA | CCC | BCC (= CBC = CCB) | BBC | BBB | AAA |
+|---|---|---|---|---|---|
+| 80 | no entra 600 ✓ | Black 1043 ✓ | | Black 1128 ✓ | Black 1256 (**dibujado Red 1400**) |
+| 82 | Black 1000 ✓ | | | | |
+| 84 | Red 1400 ✓ | | | Red 1579 ✓ | Blue 1759 ✓ |
+| 86 | Red 1500 ✓ | | | Blue 1692 ✓ | Gold 1884 ✓ |
+| 88 | Blue 1600 ✓ | Blue 1668 ✓ | Blue 1737 (**dibujado Gold 1800**) | Gold 1805 ✓ | Gold 2000 ✓ |
+| 89 | Gold 1800 ✓ | | | Tyrian 2031 (**dibujado Gold 2000**) | Tyrian 2261 ✓ |
+| 100 | Gold 1990 ✓ | | | Tyrian 2245 ✓ | Tyrian 2500 ✓ |
 
-**Cómo se ajustó.** La gráfica está dibujada a mano y en dos sitios se contradice a sí misma: al mismo SCA, tres A
-valen 200 puntos (84) o 900 (80), y BBB pesa 100 (84) o 300 (88). No hay pesos fijos que reproduzcan los 22 puntos a la
-vez; con **B = +50 y A = +100** el modelo respeta la banda de 20 y mueve dos: **AAA:80** se queda en Black (1250) en
-vez de Red, y **BBC:88** en Blue (1750) en vez de Gold. Los dos son coherentes con las puertas (un 80 no debería ser
-Red por surplus; dos B no deberían valer una banda entera). Si el owner quiere que AAA:80 sea Red, el peso pasa a
-B = +75 · A = +150 — y entonces cambian cuatro puntos en vez de dos (BBB:84 y AAA:84 suben una banda, AAA:88 y
-BBB:89 llegan a Tyrian). El techo nominal es 2500; con estos pesos el máximo alcanzable es AAA:100 = 2300 (el resto
-del eje queda de reserva). **El owner valida los pesos con la calculadora del artefacto «PVC · Cinco decisiones» antes
-de que la fase 2 toque `definicion.ts`.**
+**Los tres puntos que se mueven, y por qué no se pueden salvar los tres.** (a) **AAA:80 = Red** es incompatible con
+AAA:100 = 2500: si tres A valieran ×1,40 a 80, valdrían ×1,40 a 100 (2786). Con el multiplicador que cierra en 2500,
+un 80 con todo el surplus es un Black alto (1256), y el owner decide si eso le vale — es coherente con la puerta: el
+surplus a 80 compra la entrada, no dos bandas. (b) **BBC:88** queda en Blue (1737): dos B valen +8,5 %, no una banda
+entera; a 88 la banda la dan tres B (1805). (c) **BBB:89 = Tyrian** (2031): a 89 ya se cumple el SCA de Tyrian y tres
+B sobre 1800 pasan de 2000 por 31 puntos; el dibujo lo deja justo en la raya. Si el owner prefiere que a 89 solo AAA
+sea Tyrian, la puerta sube a **Tyrian exige SCA ≥ 89 y al menos un A** — un cambio de una línea, no del modelo.
+
+**Lo que queda por confirmar** (owner): que las tres atribuciones pesan igual (`w` es el mismo para variedad, proceso
+y reconocimiento; podría no serlo), la puerta de Tyrian (SCA ≥ 89 solo, o SCA ≥ 89 y un A), y el caso AAA:80.
+**Se valida con la calculadora del artefacto «PVC · Cinco decisiones» antes de que la fase 2 toque `definicion.ts`.**
 
 **De dónde salen las letras** (fase 2, dueño `consolas`): Variedad y Proceso se derivan de la Ficha Técnica del lote
 (`lot_fichas.variety` / `.process`) por dos catálogos en `definicion.ts` (`VARIEDAD_NIVEL`, `PROCESO_NIVEL`); el

@@ -25,8 +25,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
   operador a `reference_html_tools\_whatsapp-transcript-html`, carpeta que dejó de existir con la reorganización de
   `C:\dev` (2026-09-11). Ahora dice `tools\transcriptor` — la misma carpeta que empaqueta `/api/transcripciones/descargar`.
 - **Docs**: las cinco decisiones del PVC (`docs/PVC_BCP_PLAN.md` §8) quedan **tomadas por el owner** (2026-09-15) y el
-  plan gana el §9 con la **escala de puntos CTC** (1000–2500: base por SCA + surplus por variedad · proceso ·
-  reconocimiento), los MOQ por unidades de 6 kg y la doctrina de moneda (US$ FOB a la TRM del corte como normalizador;
+  plan gana el §9 con la **escala de puntos CTC** (1000–2500: base por SCA × surplus multiplicativo por variedad ·
+  proceso · reconocimiento, con puerta de entrada en 80–81,99 y Tyrian solo desde 89 SCA), los MOQ por unidades de 6 kg y la doctrina de moneda (US$ FOB a la TRM del corte como normalizador;
   CIF/DDP en la moneda del destino). El conflicto abierto n.º 1 de `ALINEACION.md` §1 se cierra; la fase 2 del PVC
   queda desbloqueada (pendiente con dueño `consolas`).
 

@@ -39,10 +39,11 @@ Cada uno tiene UNA fuente en el código. Se cambia allí y solo allí, y quien l
 
 **Dos conflictos abiertos que este archivo hereda** (los resuelve el owner, no un componente):
 
-1. **Bandas de grado vs PVC** — `definicion.ts` va de dos en dos (80·82·84·86·88); el PVC del BCP usa
-   80/84/86/88/89. Mientras no se decida, **manda `definicion.ts`** en toda superficie de cara al
-   productor o comprador, y el PVC lo declara como estimación. Decisión pendiente en
-   `docs/PVC_BCP_PLAN.md` §8 (también MOQ Black 350 vs 228 y la moneda EUR vs US$ a la TRM).
+1. **Bandas de grado vs PVC** — **decidido por el owner el 2026-09-15** (`docs/PVC_BCP_PLAN.md` §8–§9): el
+   grado se leerá de la **escala de puntos CTC** (base por SCA + surplus de variedad · proceso ·
+   reconocimiento; 1000–1399 Black … > 2000 Tyrian). Hasta que la fase 2 del PVC lo lleve a
+   `definicion.ts` (dueño `consolas`, §3b), **sigue mandando `definicion.ts` tal como está** en toda
+   superficie de cara al productor o comprador. MOQ y moneda quedaron decididos en el mismo acto.
 2. **El número de Nequi** (`src/lib/arena/payment.ts`, `NEQUI` vacío): la tarifa de evaluación no es
    cobrable hasta que el owner lo escriba; `nequiConfigured()` esconde las instrucciones mientras tanto.
 
@@ -86,6 +87,8 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 | 2026-09-11 | — | plataforma → todos | **Reorganización por componentes**: charters, este archivo, `C:\dev` ordenado, memoria unificada por espacio | `REFURBISH_PLAN.md` |
 | 2026-09-13 | V5.34 | owner → coffeed, consolas, kaffetal-regal, arena, herramientas-cafe | **Claves de Anthropic repuestas en Vercel y verificadas** con `GET /api/herramientas/cromatografia/estado`: `ANTHROPIC_API_KEY` (toda la plataforma) y `CROMATOGRAPHY_ANTHROPIC_API_KEY` (el Lector) responden. Vuelven Coffeed Redacción, Direccionamiento, Datawave, RT-Scriptor, el asesor de KR, las mejoras de Arena y el escáner de fichas | pendiente de §3b cerrado |
 | 2026-09-13 | V5.32 | herramientas-cafe → consolas (ECP · Herramientas), libro de consumo, kaffetal-regal | **Lector de Cromatografía de Suelo**: primera herramienta con servidor (`api/herramientas/cromatografia`); séptima vía de gasto `herramientas:cromatografia`; lee `fincas`/`finca_parcelas` de la cuenta (solo nombre, departamento, municipio, altitud, parcelas; nunca coordenadas); alta Plus en `tools` | `componentes/herramientas-cafe.md`, brief, `qa-cromatografia-check` 122 |
+| 2026-09-14 | — | **CommaaS · hub-kit** → libro de consumo (todas las vías de gasto con Sonnet 5) | **La tarifa de `claude-sonnet-5` en `precios.ts` es falsa**: dice «promo 2/10 hasta el 2026-08-31» con base 3/15, y la documentación de la API (Models overview, consultada el 2026-09-14) dice **2/10 sin promoción**. Desde el 1 de septiembre cada fila de Sonnet 5 del libro de CTC queda un 50% por encima de lo facturado. CommaaS corrigió su copia (`pricing.ts`, que se trajo de aquí); **la de CTC no se tocó** (fuera del alcance de la sesión de CommaaS). De paso: Sonnet 5 piensa por defecto y `max_tokens` topa pensamiento y respuesta juntos, así que un tope ajustado trunca en silencio | `src/lib/ai/precios.ts` (sin cambiar) · commaas `docs/HANDOFF.md` §2026-09-14 |
+| 2026-09-15 | V5.42 | owner → consolas (BCP · PVC, OCP · veredicto), kaffetal-regal, cherry-picked (Green, subastas, Roast), cotizadores, secretaria (Notion «Grados») | **Las cinco decisiones del PVC, tomadas**: escala de puntos CTC (el grado se lee de los puntos = base SCA + surplus V·P·R), MOQ en unidades de 6 kg (336/252/156/78/36 kg), US$ FOB a la TRM del corte con CIF/DDP en la moneda del destino y collar de TRM, ciclo semanal por cron de Vercel (Pro), dossier por GitHub Action. **Nada cambia en código todavía**: es la fase 2 del PVC. El conflicto abierto n.º 1 de §1 queda cerrado | `PVC_BCP_PLAN.md` §8–§9, `componentes/consolas.md` §Pendientes |
 | 2026-09-12 | — | secretaria → consolas, kaffetal-regal, cherry-picked, ctc-tech, varietales, socios | Nace la **Secretaría CTC** (el espejo con Notion/Google) con su contrato en §1; el escaneo confirma que la base «Grados de Calidad CTC» de Notion **ya coincide** con `definicion.ts` (solo la prosa está vieja); F1 (eventos + `notion_espejos`) es de consolas | `SECRETARIA_PLAN.md`, `componentes/secretaria.md` |
 
 ### 3b · Pendientes cruzados con dueño (lo que un componente le debe a otro)
@@ -99,6 +102,9 @@ qué · dónde quedó.** Se escribe en el mismo commit que el cambio; se lee al 
 | cherry-picked | consolas (OCP) | La primera subasta real cuando el bache galardone un Tyrian | V5.24 |
 | coffeed | consolas (ECP) | La primera generación real de Redacción y el escenario de Make de `coffeed.redaccion.post_creado` | V5.9 |
 | consolas | secretaria | F1 del espejo: `notion_espejos`, eventos `productor.registrado` · `finca.aprobada` · `lote.galardonado` · `lead.creado` · `comprador.registrado` · `socio.credencial`, manejadores `<entidad>.espejada`, `espejo-reporte.mjs` (`SECRETARIA_PLAN.md` §4) | 2026-09-12 |
+| quien lleve el libro de consumo | todas las vías de gasto | Corregir `claude-sonnet-5` en `src/lib/ai/precios.ts` a 2/10 y quitar la promo; decidir con el owner qué se hace con las filas de Sonnet 5 desde el 2026-09-01 (aviso de CommaaS, §3) | 2026-09-14 |
+| consolas | kaffetal-regal, cherry-picked, cotizadores, secretaria | **Fase 2 del PVC** (`PVC_BCP_PLAN.md` §7, §9): `definicion.ts` a la escala de puntos (`puntosCtc`, `gradoPorPuntos`, catálogos `VARIEDAD_NIVEL`/`PROCESO_NIVEL`, `lot_fichas.reconocimientos`, `lots.ctc_points`/`surplus`), `moqPorGrado` desde la edición (se retira `ASSOC_BLACK_MOQ`), precios FOB en US$ y exhibición por moneda de destino (`precio_salida_usd_kg`), collar de TRM en `pvc_trigger_watch`. Una versión, con aviso previo a cada superficie que lea grados | 2026-09-15 |
+| owner | consolas | Validar los pesos del surplus (B = +50 · A = +100) con la calculadora del artefacto «PVC · Cinco decisiones» y fijar el **X %** del collar de TRM (propuesta 6 %) antes de que la fase 2 toque `definicion.ts` | 2026-09-15 |
 | owner | secretaria | Conexión **Google Contacts** en Make (no hay conector en Claude); las coincidencias de proveedores/fincas; sacar y rotar las dos contraseñas en claro de Objetivos y Tareas (`SECRETARIA_PLAN.md` §5) | 2026-09-12 |
 
 ## 4 · Reglas de trabajo (valen en los diez componentes)

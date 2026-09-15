@@ -40,11 +40,13 @@ export function useTranscriptWorkers() {
   return workers;
 }
 
-/** Carpeta de la herramienta, RELATIVA a la carpeta del proyecto.
- *  A propósito sin ruta absoluta: este repo es público y la ruta lleva el nombre
- *  de usuario. Además cambia de un equipo a otro.
- *  Nota: reorganizada en V5.30; verificar con OCP dónde está el transcriptor en tu equipo. */
-const TOOL_FOLDER = "apps-internas/whatsapp-transcript-html";
+/** Carpeta de la herramienta, RELATIVA a la carpeta del proyecto (la misma que
+ *  empaqueta `/api/transcripciones/descargar`). A propósito sin ruta absoluta:
+ *  este repo es público y la ruta lleva el nombre de usuario. Además cambia de
+ *  un equipo a otro. Hasta V5.41 decía `reference_html_tools\_whatsapp-
+ *  transcript-html`, una carpeta que dejó de existir con la reorganización de
+ *  C:\dev (2026-09-11). */
+const TOOL_FOLDER = "tools\\transcriptor";
 
 /** Las instrucciones que faltaban: «enciende worker.ps1» daba por supuesto que
  *  quien lo lee sabe abrir PowerShell en una carpeta. Aquí es un doble clic —
@@ -57,7 +59,7 @@ function HowToStart() {
       <p className={css.howtoHead}>Si es ESTE equipo, o uno donde ya esté instalada</p>
       <ol>
         <li>
-          Abre la carpeta <code>{TOOL_FOLDER}</code> (dentro de <strong>CTC Web Platform</strong>).
+          Abre la carpeta <code>{TOOL_FOLDER}</code> (dentro de la carpeta del proyecto, <strong>ctc-platform</strong>).
         </li>
         <li>
           Doble clic en <strong><code>Iniciar transcriptor.bat</code></strong>. Se abre una ventana negra:{" "}

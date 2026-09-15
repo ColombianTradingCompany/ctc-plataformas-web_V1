@@ -97,11 +97,12 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Pendientes
 
-- **Las cinco decisiones del PVC** (`docs/PVC_BCP_PLAN.md` §8): bandas, MOQ Black, moneda, ciclo
-  semanal, dónde corre el pipeline del dossier — bloquean la fase 2 (que ofertas/contratos lean la edición).
-- **`WorkersBadge.tsx`** (OCP · Transcripciones) sigue mandando al operador a
-  `reference_html_tools\_whatsapp-transcript-html`, carpeta que ya no existe (la herramienta vive en
-  `tools/transcriptor/`). Cambio de una línea; sube versión.
+- **Fase 2 del PVC** (`docs/PVC_BCP_PLAN.md` §7–§9): las cinco decisiones están **tomadas** (owner,
+  2026-09-15). Toca ejecutarlas en una versión: `definicion.ts` pasa a la escala de puntos CTC (§9.1; toca el
+  contrato de grados de `ALINEACION` §1 y a KR, CP, OCP, cotizadores y Notion), `moqPorGrado` desde la edición
+  (§9.2; `ASSOC_BLACK_MOQ` se retira), precios FOB en US$ y CIF/DDP por moneda de destino (§9.3), el ciclo
+  semanal como cron de Vercel (§5) y el dossier por GitHub Action. Antes de tocar `definicion.ts`, la escala
+  del §9.1 debe validarla el owner con la calculadora (la del artefacto «PVC · Cinco decisiones»).
 - **Número de Nequi** real en `src/lib/arena/payment.ts` (owner).
 - **La primera jornada-vitrina** como evento supervisado; **estrenar el escáner visual** con soportes reales.
 - Hallazgos de la auditoría 2026-07-10 aún sin aplicar (HANDOFF §Audit findings): `search_path` en 4

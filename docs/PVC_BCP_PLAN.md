@@ -142,6 +142,45 @@ Las tres reglas de `definicion.ts` (2026-08-05) evolucionan así: **(1) los punt
 lee de los puntos—; **(2) los criterios cualitativos ya no son solo guía de valor: entran en los puntos como surplus**,
 pero nunca sustituyen al SCA (ver las puertas); **(3) dos decimales en el SCA, puntos enteros.**
 
+**La narrativa: leer un café entero.** Esta es la explicación que va delante del modelo — la que el productor, el
+comprador y Notion deben leer antes que ninguna fórmula (en fase 2 es la fuente del copy de `GradosSection`, de la
+Ficha y de la página «Grados de Calidad CTC» que reescribe la Secretaría).
+
+> **La taza es el suelo; el surplus es la altura.** El puntaje SCA dice qué tan bien está resuelto un café en la taza:
+> limpieza, dulzor, acidez, cuerpo, balance. Es la medida más honesta que tiene el oficio, y por eso es el ancla: sin
+> taza no hay grado, y ningún atributo la maquilla. Pero la taza no dice cuán difícil es que ese café exista. Eso lo
+> dicen tres cosas que la taza no puede ver: **de qué planta viene** (variedad: común, exótica, rara), **qué manos y
+> qué riesgo hubo en el beneficio** (proceso: clásico, natural o infusión, experimental o co-fermentado) y **quién más
+> lo ha mirado** (reconocimiento: ninguno, algunos, muchos). A eso la casa lo llama el **surplus**: lo que el café
+> tiene *además* de la taza. Un café íntegro es las dos cosas a la vez, y la escala CTC mide las dos a la vez.
+>
+> **Por qué el surplus multiplica.** Un varietal raro en una taza de 82 es una promesa; en una de 90 es un hecho. El
+> mismo atributo vale más cuanto mejor es la taza que lo sostiene, y por eso el surplus es un porcentaje del café y no
+> una cantidad fija de puntos: cada B vale +4,27 %, cada A +8,54 %, y los tres A juntos (+25,6 %) son exactamente el
+> tramo que separa el techo de un café común (1990) del techo de la escala (2500). Sumar puntos fijos diría que la
+> rareza vale igual en cualquier taza; no es verdad ni en la finca ni en el mercado.
+>
+> **Las tres puertas.** *Debajo de 80 no hay café de especialidad*, y no hay atributo que lo compense: el surplus no se
+> aplica; la escala empieza donde empieza la especialidad. *80 a 81,99 es el umbral*: un café común se queda fuera
+> (600–999 puntos: cerca, pero no dentro); un café con algo que contar —una variedad exótica, un natural, un
+> reconocimiento— entra, y entra como si fuera un 82: la casa le abre la puerta por lo que promete, no le regala una
+> banda. *La taza sola nunca es Tyrian*: un café común de 88 es **excelente** en la taza y es un Blue; uno de 89 o más
+> es **extraordinario** y es un Gold — el Gold enaltece la taza. Tyrian es otra cosa: exige un 89 **y** exige surplus,
+> porque lo extraordinario del origen no cabe en una sola medida. Y cuanto mejor la taza, menos surplus necesita: a 89
+> hacen falta tres cosas que contar (BBB, o un A y un B); a 91,5, dos; a casi 96, una; con ninguna, nunca. Así el número
+> de Tyrian posibles no se sobreestima: la puerta es doble, y la abren la taza y el origen juntos.
+>
+> **Cada grado, leído entero.**
+> **Black — the essence of origin.** Una cosecha verificada que llega a 82 en la taza sin más, o a 80 con algo que
+> contar. Es el café que la casa se atreve a firmar.
+> **Red — the soul of the harvest.** Un 84 común, o un 83 con surplus. La taza ya tiene carácter propio.
+> **Blue — the edge of perfection.** Un 88 común: la taza excelente por sí sola. Con surplus se alcanza antes: 86,7 con
+> una cosa que contar, 84,4 con tres.
+> **Gold — the standard of excellence.** Un 89 común: la taza extraordinaria. O un 88 con tres cosas que contar; un
+> 84,7 con todo.
+> **Tyrian — the highest rarity tier.** Nunca por la taza sola. Un 89 con tres cosas que contar; un 91,5 con dos; un 96
+> con una; un 100 común, no.
+
 Las letras del surplus se escriben **siempre en el orden Variedad · Proceso · Reconocimiento**: «BCC» es variedad
 exótica con proceso y reconocimiento comunes; «CCB» es un café común con 1 a 3 reconocimientos.
 
@@ -162,7 +201,7 @@ puntos(SCA, V, P, R) =
    80 ≤ SCA < 82     → CCC: round(base(SCA)) — no entra (600–999)
                        con al menos un B o un A: round(1000 × M) — entra «como si fuera un 82»
    SCA ≥ 82          → round(base(SCA) × M), tope 2500
-   Tyrian exige SCA ≥ 89: con 82–88,99 el resultado se topa en 2000 (techo de Gold)
+   Tyrian exige SCA ≥ 89 (decidido por el owner 2026-09-15): con 82–88,99 el resultado se topa en 2000 (techo de Gold)
 
 grado(puntos): < 1000 sin grado · 1000–1399 Black · 1400–1599 Red · 1600–1799 Blue · 1800–2000 Gold · 2001–2500 Tyrian
 ```
@@ -203,12 +242,29 @@ AAA:100 = 2500: si tres A valieran ×1,40 a 80, valdrían ×1,40 a 100 (2786). C
 un 80 con todo el surplus es un Black alto (1256), y el owner decide si eso le vale — es coherente con la puerta: el
 surplus a 80 compra la entrada, no dos bandas. (b) **BBC:88** queda en Blue (1737): dos B valen +8,5 %, no una banda
 entera; a 88 la banda la dan tres B (1805). (c) **BBB:89 = Tyrian** (2031): a 89 ya se cumple el SCA de Tyrian y tres
-B sobre 1800 pasan de 2000 por 31 puntos; el dibujo lo deja justo en la raya. Si el owner prefiere que a 89 solo AAA
-sea Tyrian, la puerta sube a **Tyrian exige SCA ≥ 89 y al menos un A** — un cambio de una línea, no del modelo.
+B sobre 1800 pasan de 2000 por 31 puntos; el dibujo lo deja justo en la raya. **El owner lo confirmó el 2026-09-15**:
+la puerta de Tyrian es SCA ≥ 89 **y surplus**, sin exigir un A — BBB:89 es Tyrian. Su razón: no sobreestimar el límite
+de algo que ya es más que extraordinario (un 88 común es excelente y es Blue; un 89+ común es extraordinario y es un
+Gold que enaltece la taza), y a la vez no admitir a ningún lote como Tyrian solo por su SCA: **CCC nunca es Tyrian**.
+
+**Umbrales: el SCA mínimo para cada grado según el surplus** (calculado del modelo; Σw = w(V)+w(P)+w(R)):
+
+| Surplus | Σw | Black | Red | Blue | Gold | Tyrian |
+|---|---|---|---|---|---|---|
+| CCC | 0 | 82,00 | 84,00 | 88,00 | 89,00 | **nunca** |
+| BCC · CBC · CCB | 1 | 80,00 | 83,72 | 86,68 | 88,63 | 95,87 |
+| BBC · ACC (y equivalentes) | 2 | 80,00 | 83,45 | 85,48 | 88,29 | 91,50 |
+| BBB · ABC (y equivalentes) | 3 | 80,00 | 83,21 | 84,36 | 87,91 | 89,00 |
+| AAC · ABB | 4 | 80,00 | 82,98 | 83,84 | 86,74 | 89,00 |
+| AAB | 5 | 80,00 | 82,77 | 83,60 | 85,66 | 89,00 |
+| AAA | 6 | 80,00 | 82,58 | 83,37 | 84,65 | 89,00 |
+
+Lo que la tabla enseña de un vistazo: el surplus adelanta cada banda, pero nunca la regala (Black siempre pide 80 con
+algo, 82 sin nada); Tyrian tiene un suelo que no se mueve (89) y un techo que solo el surplus abre.
 
 **Lo que queda por confirmar** (owner): que las tres atribuciones pesan igual (`w` es el mismo para variedad, proceso
-y reconocimiento; podría no serlo), la puerta de Tyrian (SCA ≥ 89 solo, o SCA ≥ 89 y un A), y el caso AAA:80.
-**Se valida con la calculadora del artefacto «PVC · Cinco decisiones» antes de que la fase 2 toque `definicion.ts`.**
+y reconocimiento; podría no serlo) y el caso AAA:80 (Black alto). **Se valida con la calculadora del artefacto «PVC ·
+Cinco decisiones» antes de que la fase 2 toque `definicion.ts`.**
 
 **De dónde salen las letras** (fase 2, dueño `consolas`): Variedad y Proceso se derivan de la Ficha Técnica del lote
 (`lot_fichas.variety` / `.process`) por dos catálogos en `definicion.ts` (`VARIEDAD_NIVEL`, `PROCESO_NIVEL`); el

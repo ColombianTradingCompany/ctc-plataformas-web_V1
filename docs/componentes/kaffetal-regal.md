@@ -101,7 +101,7 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
     **Ponderación, no acumulación**: un productor pequeño y consistente puede estar arriba. Pesos y beneficios: por
     definir (ideas: compra anticipada de ciertas cargas, que consume caja y hay que dosificar; mejores precios en lotes
     selectos).
-- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.3** en
+- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.4** en
   `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md` (página de rodaje publicada para el equipo), con
   las decisiones del owner dentro (§5.1):
   - evaluación **$200.000 con envío incluido**, descuentos del 30–70 %;
@@ -110,6 +110,14 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
   - **oferta a 1–3 días**;
   - plazos de `PVC-D2` §11;
   - **trimestres desde enero**.
+  - **multiplicadores en voz alta**;
+  - **reporte mensual de ventas**, con retiro sin costo si falta;
+  - **revisión de almacenaje con 1 kg** a más de 90 días;
+  - **reoferta**: el siguiente periodo sin descuento, el posterior con −5 %;
+  - **crédito a favor** que no vence;
+  - **la Arena como contenido, no requisito**.
+
+  ⚠ **El 4 % de salida de Cherry Picked no lo reconoce el owner**: fuera de la locución hasta confirmarlo.
 
   Quedan preguntas menores en su §5.2, que no bloquean la animática. Depende de **consolas**: el PVC ene–mar 2027
   publicado **antes del 15-oct-2026** (ALINEACIÓN §3b).
@@ -119,7 +127,8 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
   - instrucciones de envío con guía prepagada;
   - `TratoSection`: escalera 400→200→100, 15 kg, pago al mes 3, 2,5–4 t, humedad;
   - `faq.ts` n.º 1·2·4·5·6·9·11;
-  - índices de `OportunidadSection` y el paso 5 de `BienvenidosSection`;
+  - índices de `OportunidadSection` → multiplicadores reales, y el paso 5 de `BienvenidosSection`;
+  - `ArenaSection` y `faq.ts` n.º 1·2·9: la Arena como invitación de contenido, no paso ni requisito;
   - vocabulario «Arena» en la evaluación.
 - ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
   la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.

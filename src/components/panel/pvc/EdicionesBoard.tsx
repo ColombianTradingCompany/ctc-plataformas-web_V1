@@ -24,8 +24,14 @@ const ESTADO: Record<string, { label: string; cls: string }> = {
   draft: { label: "Borrador", cls: styles.badge },
 };
 
-export function EdicionesBoard({ ediciones, modeloVersion }: { ediciones: PvcEdition[]; modeloVersion: string | null }) {
-  const vigente = ediciones.find((e) => e.status === "published" || e.status === "corrected") ?? null;
+export function EdicionesBoard({
+  ediciones, modeloVersion, vigenteId, proximaId,
+}: { ediciones: PvcEdition[]; modeloVersion: string | null; vigenteId: string | null; proximaId: string | null }) {
+  // Vigente y próxima llegan RESUELTAS del servidor (ventana de vigencia). No
+  // se deriva aquí: «la última publicada» no es «la que rige» — hay 7–8 semanas
+  // entre publicar y entrar en vigor.
+  const vigente = ediciones.find((e) => e.id === vigenteId) ?? null;
+  const proxima = ediciones.find((e) => e.id === proximaId) ?? null;
   const [abierta, setAbierta] = useState<PvcEdition | null>(null);
   const k = vigente?.outputs?.kpis;
   const ed = vigente?.outputs?.edicion;
@@ -35,8 +41,9 @@ export function EdicionesBoard({ ediciones, modeloVersion }: { ediciones: PvcEdi
     <>
       <h1 className={styles.title}>PVC · Ponderación de Valor de Cosecha</h1>
       <p className={styles.subtitle}>
-        La referencia de valor en pesos por carga, publicada dos meses antes de cada franja. Lo que se publica aquí es lo que
-        leen la escalera, los contratos y el precio al comprador. Modelo vigente: <strong>{modeloVersion ?? "sin versión"}</strong>.
+        La referencia de valor en pesos por carga: <strong>se fija por tres meses</strong> y se publica <strong>siete u ocho
+        semanas antes</strong> de su fecha efectiva. Lo que rige hoy es lo que leen la escalera, los contratos y el precio al
+        comprador — no lo último publicado. Modelo vigente: <strong>{modeloVersion ?? "sin versión"}</strong>.
       </p>
 
       {vigente ? (
@@ -63,7 +70,29 @@ export function EdicionesBoard({ ediciones, modeloVersion }: { ediciones: PvcEdi
           </div>
         </div>
       ) : (
-        <p className={styles.empty}>No hay ninguna edición publicada. Publique la primera desde el Tablero.</p>
+        <p className={styles.empty}>
+          {proxima
+            ? `Ninguna edición rige hoy. La próxima (${proxima.code}) entra en vigor el ${day(proxima.validFrom)}.`
+            : "No hay ninguna edición publicada. Publique la primera desde el Tablero."}
+        </p>
+      )}
+
+      {proxima && (
+        <div className={styles.card}>
+          <div className={styles.sectionHead}>
+            <strong>Próxima edición · {proxima.code}</strong>
+            <span className={styles.badge}>publicada, aún no rige</span>
+          </div>
+          <p className={styles.meta}>
+            <strong>{cop(proxima.pvcCop)}</strong> por carga · entra en vigor el <strong>{day(proxima.validFrom)}</strong> y rige hasta {day(proxima.validTo)} ·
+            modelo {proxima.modelVersion ?? "—"} · gobierna {proxima.outputs?.edicion?.gob ?? "—"}.
+            {vigente ? ` Hasta entonces manda ${vigente.code} (${cop(vigente.pvcCop)}).` : ""}
+          </p>
+          <p className={styles.meta}>
+            El PVC se publica siete u ocho semanas antes de su fecha efectiva: esta cifra ya es pública y sirve para que
+            productores y compradores vean con antelación el precio que viene, pero <strong>no es la que rige hoy</strong>.
+          </p>
+        </div>
       )}
 
       {vigente && (
@@ -110,7 +139,11 @@ export function EdicionesBoard({ ediciones, modeloVersion }: { ediciones: PvcEdi
               <tbody>
                 {ediciones.map((e) => (
                   <tr key={e.id}>
-                    <td><strong>{e.code}</strong></td>
+                    <td>
+                      <strong>{e.code}</strong>
+                      {e.id === vigenteId && <> <span className={styles.badgeGood}>rige hoy</span></>}
+                      {e.id === proximaId && <> <span className={styles.badge}>próxima</span></>}
+                    </td>
                     <td><span className={ESTADO[e.status]?.cls ?? styles.badge}>{ESTADO[e.status]?.label ?? e.status}</span></td>
                     <td>{day(e.cutDate)}</td>
                     <td>{day(e.publishedAt)}</td>

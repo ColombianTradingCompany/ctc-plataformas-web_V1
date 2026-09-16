@@ -44,13 +44,51 @@ export async function listarEdiciones(limit = 40): Promise<PvcEdition[]> {
   return ((data ?? []) as unknown as EditionRow[]).map(toEdition);
 }
 
+/** El día de hoy en Colombia (YYYY-MM-DD). El negocio es colombiano y el
+ *  servidor corre en UTC: sin esto, la franja cambiaría cinco horas antes. */
+export function hoyEnColombia(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
+/**
+ * La edición que RIGE hoy: publicada/corregida Y con hoy dentro de su ventana
+ * de vigencia.
+ *
+ * La ventana no es un adorno. El PVC se publica SIETE U OCHO SEMANAS antes de
+ * su fecha efectiva (docs/PVC_BCP_PLAN.md §1), así que entre la publicación y
+ * el `valid_from` hay casi dos meses en los que DOS ediciones están publicadas
+ * y solo una manda — la vieja. Hasta V5.42 esto tomaba la última por
+ * `published_at` y la recién publicada empezaba a regir el día que se publicaba
+ * (hallazgo A1). Se salvó de hacer daño porque todavía nadie lee el PVC.
+ *
+ * `coalesce(valid_from, publish_date)` a propósito: una edición a la que se le
+ * olvidó la ventana no debe dejar al sistema sin precio.
+ */
 export async function edicionVigente(): Promise<PvcEdition | null> {
+  const hoy = hoyEnColombia();
   const service = createServiceRoleClient();
   const { data } = await service
     .from("pvc_editions").select(EDITION_COLS)
     .in("status", ["published", "corrected"])
-    .order("published_at", { ascending: false }).limit(1).maybeSingle();
-  return data ? toEdition(data as unknown as EditionRow) : null;
+    .order("published_at", { ascending: false });
+  const filas = (data ?? []) as unknown as EditionRow[];
+  const vigente = filas.find((r) => (r.valid_from ?? r.publish_date ?? "") <= hoy && (!r.valid_to || r.valid_to >= hoy));
+  return vigente ? toEdition(vigente) : null;
+}
+
+/** Lo ya publicado que TODAVÍA no rige. No se esconde: que el precio de la
+ *  franja siguiente se conozca con siete semanas de antelación es el sentido de
+ *  publicar tan pronto. La más cercana a entrar, si hay varias. */
+export async function edicionProxima(): Promise<PvcEdition | null> {
+  const hoy = hoyEnColombia();
+  const service = createServiceRoleClient();
+  const { data } = await service
+    .from("pvc_editions").select(EDITION_COLS)
+    .in("status", ["published", "corrected"])
+    .order("valid_from", { ascending: true });
+  const filas = (data ?? []) as unknown as EditionRow[];
+  const proxima = filas.find((r) => (r.valid_from ?? r.publish_date ?? "") > hoy);
+  return proxima ? toEdition(proxima) : null;
 }
 
 /** Crea una versión nueva del modelo (nunca se edita una existente). */
@@ -97,11 +135,25 @@ export async function publicarEdicion(input: {
   return { id: data.id as string, pvc: salida.edicion.pvc };
 }
 
-/** La edición vigente tal y como la ve el público (vista SECURITY DEFINER). */
+type PublicRow = { code: string; pvc_cop: number; cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null; model_version: string | null; escalera: PvcSalida["escalera"]; pila: PvcSalida["pila"]; kpis: PvcSalida["kpis"] };
+
+const toPublic = (r: PublicRow): PvcCurrent => ({
+  code: r.code, pvcCop: Number(r.pvc_cop), cutDate: r.cut_date, publishDate: r.publish_date,
+  validFrom: r.valid_from, validTo: r.valid_to, modelVersion: r.model_version,
+  escalera: r.escalera, pila: r.pila, kpis: r.kpis,
+});
+
+/** La edición vigente tal y como la ve el público (vista `SECURITY DEFINER`,
+ *  que desde V5.43 filtra por ventana de vigencia). */
 export async function pvcVigentePublico(): Promise<PvcCurrent | null> {
   const service = createServiceRoleClient();
   const { data } = await service.from("public_pvc_current").select("*").maybeSingle();
-  if (!data) return null;
-  const r = data as { code: string; pvc_cop: number; cut_date: string | null; publish_date: string | null; valid_from: string | null; valid_to: string | null; model_version: string | null; escalera: PvcSalida["escalera"]; pila: PvcSalida["pila"]; kpis: PvcSalida["kpis"] };
-  return { code: r.code, pvcCop: Number(r.pvc_cop), cutDate: r.cut_date, publishDate: r.publish_date, validFrom: r.valid_from, validTo: r.valid_to, modelVersion: r.model_version, escalera: r.escalera, pila: r.pila, kpis: r.kpis };
+  return data ? toPublic(data as PublicRow) : null;
+}
+
+/** La próxima edición, pública: ya publicada y aún sin regir. */
+export async function pvcProximoPublico(): Promise<PvcCurrent | null> {
+  const service = createServiceRoleClient();
+  const { data } = await service.from("public_pvc_next").select("*").maybeSingle();
+  return data ? toPublic(data as PublicRow) : null;
 }

@@ -19,7 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.42] — 2026-09-15 (commit pendiente)
+## [V5.43] — 2026-09-16 (commit pendiente)
+
+- **Corregido** (hallazgo **A1** de `docs/PVC_BCP_PLAN.md` §10.2): **«vigente» ignoraba la ventana de vigencia del PVC**.
+  `edicionVigente()`, la vista `public_pvc_current` y —por su cuenta— la pantalla de Ediciones decidían cuál rige con
+  «la última publicada por `published_at`». Como el PVC **se fija por tres meses y se publica siete u ocho semanas antes
+  de su fecha efectiva**, publicar la franja siguiente habría puesto su precio a regir el mismo día, con la anterior
+  todavía en curso. Ahora rige la edición publicada/corregida **cuya ventana contiene hoy**, y la fecha se toma en hora
+  de Colombia (`hoyEnColombia()`): el servidor corre en UTC y adelantaba el cambio de franja cinco horas. No hubo daño
+  en producción porque ningún módulo comercial lee todavía el PVC (0 ofertas, 0 contratos, 0 listados).
+- **Añadido**: la **próxima edición** deja de estar escondida. Vista `public_pvc_next`, `edicionProxima()`,
+  `pvcProximoPublico()`, el campo `proxima` en `GET /api/pvc/current` y una tarjeta propia en Ediciones — que un
+  productor o un comprador vea con siete semanas de antelación el precio que viene es el sentido de publicar tan pronto.
+  El historial marca «rige hoy» y «próxima».
+- **Datos**: migración `pvc_vigencia_por_ventana` — `public_pvc_current` filtra por `[valid_from, valid_to]` con
+  `coalesce(valid_from, publish_date)` para que una edición sin ventana no deje al sistema sin precio; nace
+  `public_pvc_next`.
+- **Añadido**: guardián **`scripts/qa-pvc-vigencia.mjs`** (28) — la regla en los tres sitios que la deciden, que la
+  pantalla ya no la derive por su cuenta, y la aritmética de la ventana probada con las fechas de una franja real.
+- **Docs**: `PVC_BCP_PLAN.md` gana el **§11, el refurbish del BCP a «Modelo Económico»** (pestañas Lectura · Grados ·
+  Marco de mercado · MOQ y mermas; el marco **es dato** y clasifica la Tríada, con el D10 como su impresión; la
+  explicación de los dos sistemas de MOQ por la doble unidad carga↔bolsa y el colchón de merma; el Tablero como
+  configurador de un agente; los KPI con sus visualizaciones; Month-Wrap ×5 por periodo) y el **§10, la auditoría del
+  módulo** (A1–A13) verificada contra la base.
+
+## [V5.42] — 2026-09-15 (commit da793d4)
 
 - **Corregido**: la ayuda «¿Cómo enciendo un equipo?» de OCP · Transcripciones (`WorkersBadge.tsx`) mandaba al
   operador a `reference_html_tools\_whatsapp-transcript-html`, carpeta que dejó de existir con la reorganización de

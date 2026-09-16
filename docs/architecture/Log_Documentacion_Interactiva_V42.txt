@@ -235,4 +235,25 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   (56/42/26/13/6 = 336/252/156/78/36 kg). Moneda: PVC en COP → FOB en US$ a la TRM del corte (normalizador) →
   CIF/DDP en la moneda del destino. Ciclo semanal por cron de Vercel (plan Pro); dossier por GitHub Action. Nada de
   esto está en código todavía: es la fase 2 del PVC (pendiente con dueño consolas; `definicion.ts` cambia entonces).
+(commit: da793d4)
+
+## [2026-09-16] V5.43 · PVC: la vigencia se aplica, y la próxima edición se ve (consolas)
+- Para la ficha DICT `pvc` del wrap V43 — **cambio de comportamiento, no solo de código**: «vigente» pasa de ser «la
+  última publicada por published_at» a «la publicada/corregida cuya ventana [valid_from, valid_to] contiene hoy», en los
+  TRES sitios que lo decidían (`edicionVigente()` en `lib/pvc/servicio.ts`, la vista `public_pvc_current` y la pantalla
+  de Ediciones, que lo derivaba por su cuenta y ahora lo recibe resuelto del servidor). La fecha se toma en hora de
+  Colombia (`hoyEnColombia()`, `America/Bogota`): el servidor corre en UTC y adelantaba el cambio de franja cinco horas.
+  Motivo: el PVC se fija por tres meses y se publica 7–8 SEMANAS antes de su fecha efectiva, así que entre publicación y
+  vigencia hay casi dos meses con dos ediciones publicadas y solo una que manda (hallazgo A1 del plan §10.2). Nadie lo
+  leía todavía (0 ofertas, 0 contratos, 0 listados), así que no hubo daño.
+- **Nodo nuevo en la traza «La edición PVC»**: la *próxima* edición deja de estar escondida — vista `public_pvc_next`,
+  `edicionProxima()`, `pvcProximoPublico()`, campo `proxima` en `GET /api/pvc/current` y tarjeta propia en Ediciones.
+  Migración `pvc_vigencia_por_ventana`. Guardián nuevo `qa-pvc-vigencia.mjs` (28).
+- Para la ficha DICT `pvc`, capa de doctrina (docs, sin código todavía): el plan gana el **§10** (auditoría del módulo,
+  A1–A13, verificada contra la base: 1 modelo, 1 edición, ciclos/fuentes/vigilancia/certeza en 0, 45 filas de fnc_carga)
+  y el **§11** (refurbish a «Modelo Económico»: pestañas Lectura · Grados · Marco de mercado · MOQ y mermas; el marco de
+  mercado ES DATO y clasifica la Tríada A/B/C, con el D10 como su impresión; los dos sistemas de MOQ explicados por la
+  doble unidad carga de pergamino ↔ bolsa de verde y el colchón de merma; el Tablero como configurador de un agente que
+  PROPONE la versión siguiente y nunca publica; Month-Wrap ×5 por periodo). `ctc_selection` resultó ser un campo
+  derivado de `public_lot_catalog` que solo enciende `black_negotiations` (A13).
 (commit: pendiente)

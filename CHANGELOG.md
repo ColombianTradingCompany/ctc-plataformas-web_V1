@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.47] — 2026-09-16 (commit pendiente)
+## [V5.47] — 2026-09-16 (commit ea30260)
 
 - **Cambiado**: las **correcciones del CEO** (2026-09-16) entran como `docs/PVC_BCP_PLAN.md` §12 y **priman** sobre lo
   escrito: §9.2, §9.5 y §9.6 quedan marcados SUPERADO. **Cherry Picked solo se entrega DDP** (consolidado a través del

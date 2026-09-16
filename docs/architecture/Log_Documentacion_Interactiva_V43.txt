@@ -146,4 +146,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - MOQ único en cargas por grado; subasta Tyrian sobre FOB puerto Colombia en EUR; calendario del PVC por trimestres.
 - Brechas para la v2.2.0 del modelo: columna marítima del puerto (hoy n3 aéreo, anotado), DDP consolidado vs dedicado,
   regiones como dato. Guardianes: qa-pvc-canales 57 · qa-pvc-compromiso 31 (nuevo).
-(commit: pendiente)
+(commit: ea30260)

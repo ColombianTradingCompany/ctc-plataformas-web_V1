@@ -16,6 +16,7 @@ import styles from "@/components/panel/shared.module.css";
 const TABS = [
   { href: "/bcp/pvc/lectura", label: "Lectura" },
   { href: "/bcp/pvc", label: "Ediciones", exact: true },
+  { href: "/bcp/pvc/grados", label: "Grados" },
   { href: "/bcp/pvc/tablero", label: "Tablero" },
   { href: "/bcp/pvc/parametros", label: "Parámetros del modelo" },
   { href: "/bcp/pvc/dossier", label: "Dossier" },

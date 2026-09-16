@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.45] — 2026-09-16 (commit pendiente)
+
+- **Añadido**: pestaña **Grados** del Modelo Económico (`/bcp/pvc/grados`) — la escala **«El Punto y la Tríada»**
+  (`docs/PVC_BCP_PLAN.md` §9.1) con su **calculadora**: puntaje SCA + las tres letras (variedad · proceso ·
+  reconocimiento) → puntos → grado → **lo que ese grado vale hoy** (escalón de la edición vigente, empaque y MOQ). Es
+  la primera versión de la herramienta «PVC × grado» del §9.5. Trae la curva de la escala sobre las cinco bandas, la
+  **Base física** como puerta previa (factor > 94, humedad 10–12 %, densidad por variedad), la tabla de SCA mínimo por
+  tríada y el catálogo semilla de variedades con las tres filas que el owner aún no confirma.
+- **Añadido**: `src/lib/pvc/escala.ts` — módulo **puro** con el modelo: `baseSca` sobre las anclas de la gráfica del
+  owner, el multiplicador con **K derivada** ((2500/1990 − 1)/6, que es lo que lleva el techo del café común al de la
+  escala), las tres puertas y `revisarBaseFisica`.
+- **Cambiado**: el módulo se llama **«Modelo Económico»** en el rail del BCP (antes «PVC · Valor de Cosecha»). La
+  **ruta sigue siendo `/bcp/pvc`** a propósito: el rename es de nombre, no de sitio.
+- **Cambiado**: el **panel del BCP deja de ser un índice y es un tablero**. Llevaba escrito desde V4.24 que volvería a
+  serlo «cuando haya KPIs de negocio que valga la pena mirar de un vistazo» — el Modelo Económico los trajo: PVC
+  vigente, prima mínima, cuánto se ha movido el mercado desde el corte y qué precio viene. El índice de módulos sigue
+  debajo, ahora encabezado por Modelo Económico. `ConsoleScaffold` acepta `kpis` y `badge` (sin ellos se comporta igual
+  que antes, que es lo que hace el ECP).
+- **Añadido**: guardián **`scripts/qa-pvc-escala.mjs`** (63) — K derivada y no elegida; que el surplus **multiplique** y
+  no sume; las tres puertas; los cuatro cambios del owner del 16-sep (BCC:86, CBC:86, CCB:87 y ABB:84 son Blue); el
+  contraste con la gráfica (19 de 22 puntos en su banda, y **exactamente** los tres conocidos moviéndose); bandas sin
+  huecos; monotonía en SCA y en surplus; y que la pantalla siga diciendo que esto **no gobierna**.
+
 ## [V5.44] — 2026-09-16 (commit 7f3e9aa)
 
 - **Añadido**: primera cara del refurbish del BCP (`docs/PVC_BCP_PLAN.md` §11) — la pestaña **Lectura**

@@ -75,12 +75,17 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // «Manejo de Plataformas» NO vino: F6 lo convierte en módulo suelto
           // del ECP en PR-C, y hasta entonces sigue en /bcp/direccionamiento/…
           { href: "/bcp/direccionamiento", label: "Direccionamiento" },
-          // PVC · Ponderación de Valor de Cosecha (V5.28): el indicador principal
-          // del negocio y la fuente única de ese valor para todo el sistema —
-          // ediciones publicadas, versiones del método, tablero y dossier. Es
+          // Modelo Económico (V5.28 como «PVC · Valor de Cosecha»; renombrado en
+          // V5.45): el PVC es el indicador principal del negocio, pero no es lo
+          // único que vive ahí — con él van la lectura de mercado, la escala de
+          // grados con su calculadora, el tablero del método y el dossier. Es
           // «Business Core» en sentido literal, y owner-only porque publicar una
-          // edición fija el precio de origen de la franja. Ver docs/PVC_BCP_PLAN.md.
-          { href: "/bcp/pvc", label: "PVC · Valor de Cosecha", ownerOnly: true },
+          // edición fija el precio de origen de la franja.
+          //
+          // La RUTA sigue siendo `/bcp/pvc` a propósito: el rename es de nombre,
+          // no de sitio, y mudarla costaría un talón 308 y tocar todo lo que la
+          // enlaza sin ganar nada. Ver docs/PVC_BCP_PLAN.md §11.
+          { href: "/bcp/pvc", label: "Modelo Económico", ownerOnly: true },
         ],
       },
       {

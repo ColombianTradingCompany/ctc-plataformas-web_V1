@@ -273,3 +273,18 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   para Gold y Tyrian; el incremento es la mitad del mínimo, fraccionable a cuartos como upsale. Se exhibe, no gobierna
   precio todavía: eso es la versión v2.2.0 del modelo.
 (commit: 7f3e9aa)
+
+## [2026-09-16] V5.45 · Modelo Económico: la escala de grados con calculadora, y el BCP deja de ser un índice (consolas)
+- Para la ficha DICT `pvc` (que pasa a llamarse **Modelo Económico** — el rename está en `consoles.ts`, la ruta sigue
+  siendo `/bcp/pvc`) y para la ficha `grados` del wrap V43: **pestaña nueva Grados** (`/bcp/pvc/grados`) con la escala
+  «El Punto y la Tríada» y su calculadora — SCA + tríada (variedad · proceso · reconocimiento) → puntos → grado → el
+  escalón de precio, el empaque y el MOQ de ese grado. Módulo puro nuevo `src/lib/pvc/escala.ts` (K derivada de
+  (2500/1990 − 1)/6, las tres puertas, la Base física). Guardián nuevo `qa-pvc-escala.mjs` (63).
+  ⚠️ **Dos escalas conviven a propósito**: `definicion.ts` (SCA de dos en dos) es la que GOBIERNA y la vigila
+  `qa-grados-check`; la de puntos espera la validación del owner y no se escribe en ningún lote. La pantalla lo dice y
+  el guardián lo comprueba. Cuando la fase 2 las funda, esta nota se cierra.
+- **Cambio de nodo** para `n-bcp`: el panel del BCP deja de ser un índice y pasa a ser un tablero con las cifras del
+  Modelo Económico (PVC vigente, prima mínima, desviación del mercado desde el corte, próxima edición). Lo pedía su
+  propio archivo desde V4.24, cuando el pasaporte del lote se llevó los KPIs al OCP. `ConsoleScaffold` gana `kpis` y
+  `badge` (opcionales; el ECP no cambia).
+(commit: pendiente)

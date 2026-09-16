@@ -287,4 +287,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   Modelo Económico (PVC vigente, prima mínima, desviación del mercado desde el corte, próxima edición). Lo pedía su
   propio archivo desde V4.24, cuando el pasaporte del lote se llevó los KPIs al OCP. `ConsoleScaffold` gana `kpis` y
   `badge` (opcionales; el ECP no cambia).
-(commit: pendiente)
+(commit: 8730d9f)

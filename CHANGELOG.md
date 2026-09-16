@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.45] — 2026-09-16 (commit pendiente)
+## [V5.45] — 2026-09-16 (commit 8730d9f)
 
 - **Añadido**: pestaña **Grados** del Modelo Económico (`/bcp/pvc/grados`) — la escala **«El Punto y la Tríada»**
   (`docs/PVC_BCP_PLAN.md` §9.1) con su **calculadora**: puntaje SCA + las tres letras (variedad · proceso ·

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.46] — 2026-09-16 (commit pendiente)
+## [V5.46] — 2026-09-16 (commit ee1383a)
 
 - **Añadido**: la **matriz comercial** del Modelo Económico (`docs/PVC_BCP_PLAN.md` §9.6, lámina del owner) — **dos
   canales × tres tramos de incoterm**, que es lo que faltaba para poder cotizar. **FOB/FCA es el precio base**: no

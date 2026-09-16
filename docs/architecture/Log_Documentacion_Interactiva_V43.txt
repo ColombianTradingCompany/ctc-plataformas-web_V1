@@ -133,4 +133,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   La pestaña Lectura la exhibe con el escalón de flete de cada canal. Guardián nuevo `qa-pvc-canales.mjs` (63).
 - Abierto para el owner: si el tercer tramo es DDP o se parte en DDP y DAP; y la tensión Tyrian ½ carga vs el piso de
   saco de 70 kg del §9.2.
-(commit: pendiente)
+(commit: ee1383a)

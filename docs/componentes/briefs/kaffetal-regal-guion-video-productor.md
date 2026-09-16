@@ -1,6 +1,6 @@
-# Guion · «Así funciona Kaffetal Regal» — video para el productor (≈ 6:08)
+# Guion · «Así funciona Kaffetal Regal» — video para el productor (≈ 6:12)
 
-(componente: `kaffetal-regal` · slug: `guion-video-productor` · **BORRADOR v0.5**)
+(componente: `kaffetal-regal` · slug: `guion-video-productor` · **v0.6 · narrativa completa, lista para trasladar a las plataformas**)
 
 **Historial.**
 - v0.1: primer borrador.
@@ -17,11 +17,17 @@
   - Cherry Picked como camino recomendado, con la prima del 8 % y su compra inicial.
   - Ventas y pago sin la cláusula de retiro.
   - La Arena como herramienta, con cierre y llamado a la acción.
+- **v0.6 (2026-09-16): últimas respuestas del owner (§5.1 n.º 26–30).** Escalera 25 % + 25 % con 4 % del PVC × grado por
+  carga (vuelve a la locución); factor de 94 o menos, con Black hasta 98; CaaS sin prima confirmado; reporte de ventas
+  en la primera semana del mes; la Arena abierta a todo café Blue+, con fila. **No quedan preguntas abiertas.**
 
 **Qué es.** El guion locutado de la pieza larga para el caficultor: cómo funciona Kaffetal Regal de punta a punta, del
 perfil de productor al pago, con el PVC, la evaluación, la base física, el Punto y la Tríada, los dos caminos de oferta
-y la Arena. Esta fuente la genera junto con la página de rodaje publicada para el equipo, para que las dos digan lo
-mismo.
+y la Arena.
+
+**Es la narrativa fuente del productor.** Lo que dice este guion es lo que deben decir la landing, el FAQ, el panel y
+el veredicto; §6 es el plan de ese traslado. La misma fuente genera la página de rodaje publicada para el equipo, para
+que las dos digan lo mismo.
 
 **Para quién.** El productor colombiano: de finca pequeña o de microlotes, asociado o no, que nunca ha mandado una
 muestra. Lo ve en el celular, muchas veces sin sonido. **Reemplaza o complementa** el video de bienvenida vigente
@@ -31,8 +37,7 @@ muestra. Lo ve en el celular, muchas veces sin sonido. **Reemplaza o complementa
 1. **La plataforma debe decir lo mismo que el video** (§6). Hoy contradice la tarifa, la compra inicial, el trato, los
    grados y la Arena.
 2. **El PVC de ene–mar 2027 publicado antes del 15-oct-2026**, tarea de consolas.
-3. **Las preguntas de §5.2**, sobre todo la cifra de salida de Cherry Picked.
-4. **La marca «Kaffetal» ante la SIC**, que el owner tramita después.
+3. **La marca «Kaffetal» ante la SIC**, que el owner tramita después.
 
 La **animática** (locución provisional sobre capturas) se puede hacer ya.
 
@@ -72,45 +77,45 @@ palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz gr
 - **VOZ.** Es la plataforma del caficultor de CTCx: todo desde el celular, y en cada paso le mostramos lo que recibe y lo que se le pide.
 - **PANTALLA.** *1 Perfil* · *2 Finca* · *3 Lote* · *4 Evaluación* · *5 Oferta* · *6 Despacho*
 
-### Bloque 2 · Su perfil y su finca (0:40–1:08)
+### Bloque 2 · Su perfil y su finca (0:40–1:05)
 
 - **IMAGEN.** «Crear cuenta gratis» → «Continuar con Google» → Mi Perfil: «Editar información» (nombre, NIT/CC, foto, video del productor). Luego el formulario de finca: «📍 Estoy aquí», el polígono se dibuja. Pestaña Cuestionario EUDR, desplazándose.
-- **VOZ.** Primero, cree su cuenta gratis, con su correo o con Google, y complete su perfil de productor: su nombre, su documento y su historia.
+- **VOZ.** Primero, cree su cuenta gratis y complete su perfil de productor: su nombre, su documento y su historia.
   Después, registre su finca: parado en el cafetal, toque «Estoy aquí» y el mapa toma su ubicación; si pasa de **cuatro hectáreas**, dibuje el contorno. Y responda el cuestionario EUDR, el reglamento europeo contra la deforestación.
 - **PANTALLA.** *Paso 1 · Perfil de productor* · *Paso 2 · Finca* · *Más de 4 ha → contorno completo* · *EUDR: sin deforestación después del 31-dic-2020*
 
-### Bloque 3 · El primer resultado, gratis (1:08–1:22)
+### Bloque 3 · El primer resultado, gratis (1:05–1:19)
 
 - **IMAGEN.** Tarjeta de la finca: «Visa EUDR: en trámite» → «Visa vigente» → «⬇ Descargar Visa EUDR».
 - **VOZ.** Y recibe lo primero, sin pagar nada: CTCx le devuelve el análisis EUDR de su finca y, con todo en regla, su Visa EUDR, la puerta de Europa.
 - **PANTALLA.** *Perfil, finca y análisis EUDR: $0*
 
-### Bloque 4 · El lote y la Ficha Técnica (1:22–1:43)
+### Bloque 4 · El lote y la Ficha Técnica (1:19–1:41)
 
 - **IMAGEN.** «+ Registrar nuevo lote» → Ficha Técnica; la barra FT · FT2 · EUDR · VID avanza. La casilla «No lo sé» se marca. Un video de 30 s grabándose en vertical. «¡Ficha completa!».
 - **VOZ.** Luego registre su lote en la Ficha Técnica: de qué fincas sale, su variedad y su proceso, lo que sabe de su taza y de su grano, y un video corto hecho con el celular. Si no conoce un dato, marque «No lo sé»: lo mediremos.
 - **PANTALLA.** *FT · FT2 · EUDR · VID* · *«No lo sé» también es una respuesta*
 
-### Bloque 5 · Qué es el PVC (1:43–2:13)
+### Bloque 5 · Qué es el PVC (1:41–2:11)
 
 - **IMAGEN.** Tres barras que se levantan —costo de producción, precio de cooperativa, mercado— y una línea que las cruza por arriba. Luego la línea de tiempo trimestral con la publicación dos meses antes.
 - **VOZ.** ¿Cómo se fija el precio? Con el PVC, la Ponderación de Valor de Cosecha: la referencia de CTCx por carga de pergamino. Se construye con el costo real de producir, lo que paga la cooperativa y el mercado mundial, y nunca queda por debajo de ninguno.
   Se fija por trimestre, se publica con **al menos dos meses** de anticipación, y en la compra rige el vigente.
 - **PANTALLA.** *PVC · Ponderación de Valor de Cosecha* · *Costo de producción · cooperativa · mercado: nunca por debajo de ninguno* · *ene–mar · abr–jun · jul–sep · oct–dic* · *ene–mar: publicado antes del 15 de octubre*
 
-### Bloque 6 · La evaluación (2:13–2:46)
+### Bloque 6 · La evaluación (2:11–2:44)
 
 - **IMAGEN.** Mensaje «¡Su lote fue declarado APTO!» → «Evaluar mi Café» → tarifa con el descuento aplicado → guía prepagada → bolsa anónima con el código de 7 caracteres. En el laboratorio: pesaje, contramuestra sellada, un Q-Grader rompe la costra.
 - **VOZ.** No buscamos café para revender: lo preparamos para las vitrinas globales. Por eso, cuando su lote queda Apto, lo evaluamos. El servicio completo cuesta **doscientos mil pesos**, con el envío incluido, y usted recibe un descuento **del treinta al setenta por ciento**.
   Envíe dos kilos de pergamino marcados solo con el código del lote: la cata es a ciegas. En **máximo cinco días hábiles** desde que llega, tiene su resultado por escrito.
 - **PANTALLA.** *Servicio completo: $200.000 con envío incluido · tarifa 2026* · *Descuentos del 30 % al 70 %: usted paga entre $140.000 y $60.000* · *Recepción 1 día hábil · análisis físico 2 · resultado 5* · *Contramuestra sellada de 0,5 kg*
 
-### Bloque 7 · La base física, el Punto y la Tríada (2:46–3:23)
+### Bloque 7 · La base física, el Punto y la Tríada (2:44–3:23)
 
 - **IMAGEN.** Tres instrumentos en la mesa del laboratorio: la trilladora con el factor, el medidor de humedad, la probeta de densidad; un sello «apto» cae sobre la planilla. Luego tres cartas se voltean junto a la taza: Variedad · Proceso · Reconocimientos, cada una con su letra C · B · A.
-- **VOZ.** Primero, la base física: factor de rendimiento **por debajo de noventa y cuatro**, humedad **entre diez y doce por ciento** y densidad regular para su variedad. Sin ella, el café no puede aceptarse.
+- **VOZ.** Primero, la base física: factor de rendimiento de **noventa y cuatro o menos** —en Black, hasta noventa y ocho—, humedad **entre diez y doce por ciento** y densidad regular para su variedad. Sin ella, el café no puede aceptarse.
   Después, el grado se lee en **el Punto y la Tríada**: el Punto es su puntaje en taza; la Tríada, lo que su café tiene además de la taza: variedad, proceso y reconocimientos. Una Tríada favorable adelanta su grado, y Tyrian, el más alto, exige las dos cosas.
-- **PANTALLA.** *Base física: factor < 94 · humedad 10–12 % · densidad regular para la variedad* · *Sin base física, no hay grado* · *El Punto: puntaje SCA en taza* · *La Tríada: variedad · proceso · reconocimientos* · *Tyrian: taza extraordinaria y Tríada*
+- **PANTALLA.** *Base física: factor ≤ 94 (Black hasta 98) · humedad 10–12 % · densidad regular para la variedad* · *Sin base física, no hay grado* · *El Punto: puntaje SCA en taza* · *La Tríada: variedad · proceso · reconocimientos* · *Tyrian: taza extraordinaria y Tríada*
 
 ### Bloque 8 · El precio de cada grado (3:23–3:57)
 
@@ -126,13 +131,13 @@ palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz gr
   | PVC × 1,15 | PVC × 1,30 | PVC × 1,60 | PVC × 2,00 | subasta desde Gold · 80 % del alza para usted |
 
 
-### Bloque 9 · Dos caminos: Cherry Picked o CaaS (3:57–4:52)
+### Bloque 9 · Dos caminos: Cherry Picked o CaaS (3:57–4:58)
 
 - **IMAGEN.** Dos tarjetas lado a lado. **Cherry Picked** a la izquierda, más grande, con la etiqueta «Recomendado», la prima y la compra inicial por grado; debajo, la escalera de liberación de tres meses. **CaaS** a la derecha, más sobria.
 - **VOZ.** Con el grado validado, su oferta llega en **uno a tres días**, con dos caminos.
-  El recomendado es **Cherry Picked**: su lote sale a las vitrinas globales con su nombre y su finca, y se paga a la referencia completa de su grado, **con la prima del ocho por ciento**. Desde el inicio, CTCx le compra en firme **una carga** en Black y Red, **doscientos kilos** en Blue y **más de cien** en Gold. A cambio, usted compromete cargas por tres meses: al segundo mes puede liberar una cuarta parte, y al tercero, la mitad.
+  El recomendado es **Cherry Picked**: su lote sale a las vitrinas globales con su nombre y su finca, y se paga a la referencia completa de su grado, **con la prima del ocho por ciento**. Desde el inicio, CTCx le compra en firme **una carga** en Black y Red, **doscientos kilos** en Blue y **más de cien** en Gold. A cambio, usted compromete cargas por tres meses: al segundo mes puede liberar una cuarta parte, y al tercero otra cuarta parte. Si necesita retirar más, paga **el cuatro por ciento** del valor de cada carga adicional.
   El otro camino es **CaaS**: CTCx le compra directamente y asume el riesgo, sin la prima, con una compra de entrada de **quince a veinticinco kilos**.
-- **PANTALLA.** *La oferta llega 1 a 3 días después de validar el grado* · *Mínimo del lote: Black y Red 3–4 cargas · Blue 2 · Gold y Tyrian 1 o menos · 1 carga = 125 kg* · *¿Su lote se evaluó en un periodo anterior? En el siguiente, sin descuento; en el posterior, −5 % con asesoría* · **⚠ Cherry Picked · retiro por encima de lo liberado: cifra de salida por confirmar**
+- **PANTALLA.** *La oferta llega 1 a 3 días después de validar el grado* · *Mínimo del lote: Black y Red 3–4 cargas · Blue 2 · Gold y Tyrian 1 o menos · 1 carga = 125 kg* · *¿Su lote se evaluó en un periodo anterior? En el siguiente, sin descuento; en el posterior, −5 % con asesoría*
 
   Los dos caminos:
 
@@ -140,32 +145,32 @@ palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz gr
   |---|---|---|
   | Precio | PVC × grado, con la prima del 8 % | PVC × grado, sin la prima |
   | Compra inicial de CTCx | Black y Red 1 carga · Blue 200 kg · Gold más de 100 kg · Tyrian ajustada al lote | 15–25 kg en todos los grados |
-  | Su compromiso | Cargas por 3 meses · libera 25 % al mes 2 y 50 % al mes 3 | Mantener la oferta a la referencia al menos 1 mes |
+  | Su compromiso | Cargas por 3 meses · libera 25 % al mes 2 y otro 25 % al mes 3 · por encima, 4 % del PVC × grado por carga | Mantener la oferta a la referencia al menos 1 mes |
   | Su café en el mundo | En la vitrina con su nombre y su finca | CTCx lo compra y lo vende |
 
 
-### Bloque 10 · Ventas, entrega y pago (4:52–5:20)
+### Bloque 10 · Ventas, entrega y pago (4:58–5:29)
 
 - **IMAGEN.** Pestaña Contratos: el reporte de ventas del mes. Punto de acopio: una carga se pesa con testigo, se toma la muestra de control, el productor firma la confirmación de compra. Notificación de transferencia en su celular.
-- **VOZ.** Cada mes le enviamos el reporte de ventas de su café. Cuando se vende una carga, la recibimos con pesaje y testigo y la verificamos contra su muestra el mismo día; si la catación tiene más de noventa días, antes revisamos el almacenaje con un kilo.
+- **VOZ.** En la **primera semana** de cada mes le enviamos el reporte de ventas de su café. Cuando se vende una carga, la recibimos con pesaje y testigo y la verificamos contra su muestra el mismo día; si la catación tiene más de noventa días, antes revisamos el almacenaje con un kilo.
   Usted firma la confirmación de compra y recibe el pago completo en **máximo dos días hábiles**.
-- **PANTALLA.** *Reporte de ventas: cada mes* · *Recibo y verificación: el mismo día* · *Catación de más de 90 días: revisión de almacenaje con 1 kg* · *Pago del 100 %: máximo 2 días hábiles · si CTCx se demora, +0,5 % por día hábil* · *Humedad 10–12 %, confirmada cada mes*
+- **PANTALLA.** *Reporte de ventas: la primera semana de cada mes* · *Recibo y verificación: el mismo día* · *Catación de más de 90 días: revisión de almacenaje con 1 kg* · *Pago del 100 %: máximo 2 días hábiles · si CTCx se demora, +0,5 % por día hábil* · *Humedad 10–12 %, confirmada cada mes*
 
-### Bloque 11 · La Arena y su reputación (5:20–5:47)
+### Bloque 11 · La Arena y su reputación (5:29–5:51)
 
-- **IMAGEN.** Un set de grabación: mesa de cata a ciegas, cámaras, un productor invitado frente a su taza. Tres barras en su perfil: lotes completados · calidad · confiabilidad.
-- **VOZ.** Si su café es extraordinario, generalmente de Blue en adelante, lo postulamos a la **Kaffetal Regal Arena** y lo invitamos a la grabación: una poderosa herramienta para impulsar su café en el mundo, con su identidad.
-  Y cada lote que completa construye su reputación: se pondera, no se acumula, y un productor pequeño y constante puede estar arriba.
-- **PANTALLA.** *Kaffetal Regal Arena: su café, contado al mundo con su identidad* · *Reputación: lotes completados · calidad · confiabilidad*
+- **IMAGEN.** Un set de grabación: mesa de cata a ciegas, cámaras, un productor frente a su taza; en el panel, «Postular a la Arena» y la fila de grabación. Tres barras en su perfil: lotes completados · calidad · confiabilidad.
+- **VOZ.** Todo café Blue o superior puede postularse a la **Kaffetal Regal Arena**; los aceptados entran en fila para la grabación: una poderosa herramienta para impulsar su café en el mundo, con su identidad.
+  Y cada lote completado construye su reputación: pesa la constancia, no el tamaño.
+- **PANTALLA.** *Kaffetal Regal Arena: abierta a todo café Blue+ · los aceptados entran en fila* · *Su café, contado al mundo con su identidad* · *Reputación: lotes completados · calidad · confiabilidad*
 
-### Bloque 12 · Cierre y llamado (5:47–6:08)
+### Bloque 12 · Cierre y llamado (5:51–6:12)
 
 - **IMAGEN.** Vuelta al productor en su finca, mirando a cámara. Corte a su celular: la pantalla «Crear cuenta gratis». Fondo limpio con la dirección grande y el logo.
 - **VOZ.** Su café ya tiene lo que el mundo está buscando. Ahora puede llegar con su nombre.
   Entre a **kaffetal-regal punto ctcexport punto com**, cree su perfil de productor y registre su primera finca. Es gratis, y su primer resultado también. Kaffetal Regal, de CTCx.
 - **PANTALLA.** *kaffetal-regal.ctcexport.com* · *Crear cuenta gratis* · *Kaffetal Regal · una iniciativa de CTCx*
 
-**Duración.** La locución tiene 801 palabras, ≈ 5:48; con las pausas de imagen, la pieza dura ≈ 6:08.
+**Duración.** La locución tiene 810 palabras, ≈ 5:52; con las pausas de imagen, la pieza dura ≈ 6:12.
 
 **Qué se recorta.** Si el montaje queda largo, primero la segunda oración del bloque 11 (reputación, que pasa a texto en
 pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca se recortan**:
@@ -174,7 +179,7 @@ pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca
 - la base física;
 - el Punto y la Tríada;
 - los multiplicadores;
-- los dos caminos con la prima y la compra inicial;
+- los dos caminos con la prima, la compra inicial, la escalera y el 4 %;
 - los plazos;
 - el llamado final.
 
@@ -189,7 +194,7 @@ pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca
 | «Le pagamos el PVC» · «le pagamos más» sin cifra | «Black paga el PVC por 1,15; Red por 1,30; Blue por 1,60; Gold por 2; Tyrian, subasta desde Gold con el 80 % del alza» | Transparencia radical en toda la cadena |
 | CaaS primero, o los dos caminos sin la prima | «El recomendado es Cherry Picked… con la prima del ocho por ciento… El otro camino es CaaS… sin la prima» | Cherry Picked es el camino por defecto (§5.1 n.º 22) |
 | «Le compramos todo» · «compra garantizada» | «CTCx le compra en firme una carga / 200 kg / más de 100 kg» · «una compra de entrada de 15 a 25 kg» | La única compra firme al vincularse es la inicial |
-| «Si no le reportamos, retire sin costo» | «Cada mes le enviamos el reporte de ventas» | Abre preguntas innecesarias (§5.1 n.º 23) |
+| «Si no le reportamos, retire sin costo» | «En la primera semana de cada mes le enviamos el reporte de ventas» | Abre preguntas innecesarias (§5.1 n.º 23) |
 | «La evaluación es gratis» · «le devolvemos lo que pagó» | «$200.000 con envío incluido y descuento del 30 al 70 %» · «si su grado sube, lo que pagó queda como crédito a favor» | Las dos mitades se dicen juntas; no hay devolución en efectivo |
 | «La Arena es un requisito» · «no es un requisito» a secas | «una poderosa herramienta para impulsar su café en el mundo, con su identidad» | §5.1 n.º 24 |
 | «Precio justo» a secas · «Comercio directo» · «Fairtrade» | — | «Justo» es opinión; hay intermediación declarada; no son sellos propios |
@@ -197,7 +202,7 @@ pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca
 
 ## 4 · Verificación de afirmaciones
 
-✅ vive hoy en la plataforma · 🟡 decidido, sin construir · 🔴 lo publicado hoy dice otra cosa · ⚠ sin confirmar
+✅ vive hoy en la plataforma · 🟡 decidido, sin construir · 🔴 lo publicado hoy dice otra cosa
 
 | Bloque · afirmación | Fuente | Estado |
 |---|---|---|
@@ -208,16 +213,16 @@ pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca
 | 5 · PVC: referencia por carga, construida con costo de producción, cooperativa y mercado, nunca por debajo de ninguno | `docs/pvc/v2.1.1/PVC-D2` §3 y §7.1, `lib/pvc/motor.ts` | ✅ en el método · 🟡 KR no tiene página del PVC |
 | 5 · Trimestral desde enero, publicado al menos dos meses antes, rige el vigente | `PVC_BCP_PLAN.md` §12.8 · owner (§5.1 n.º 9) | 🟡 La edición vigente va del 15-sep al 15-dic; **el PVC ene–mar 2027 se publica antes del 15-oct-2026** |
 | 6 · $200.000 con envío incluido, descuentos 30–70 %, resultado en 5 días hábiles | owner (§5.1 n.º 1, 4) · D2 §11.1, §11.4 | 🔴 El código cobra **$80.000** (`ARENA_FEE_COP`), y la landing, el FAQ y «Evaluar mi Café» también; envío por cuenta del productor (`faq.ts:70`) · 🔴 **no se puede pagar** (Nequi vacío; Zulu en evaluación) |
-| 7 · **Base física**: factor < 94, humedad 10–12 %, densidad regular para la variedad; sin ella no se acepta | owner (§5.1 n.º 21) · `PVC_BCP_PLAN.md` §9.1.b · D2 §8 | 🟡 No existe como puerta: `recordEvaluationVerdict` gradúa solo con el SCA · ⚠ el plan escribe «factor **> 94**» y el owner dice **< 94** (D2: «94 o menos, salvo Black hasta 98»): corregir el plan (§5.2 n.º 2) · la tabla de densidades por variedad está pendiente del comité |
+| 7 · **Base física**: factor ≤ 94 (Black hasta 98), humedad 10–12 %, densidad regular para la variedad; sin ella no se acepta | owner (§5.1 n.º 21, 27) · D2 §8 | 🟡 No existe como puerta: `recordEvaluationVerdict` gradúa solo con el SCA · el `PVC_BCP_PLAN.md` §9.1.b escribe «> 94»: **se corrige** (consolas) · la tabla de densidades por variedad está pendiente del comité |
 | 7 · **El Punto y la Tríada** (SCA + variedad · proceso · reconocimientos); Tríada favorable adelanta; Tyrian exige las dos | `PVC_BCP_PLAN.md` §9.1 · `lib/pvc/escala.ts` (vista previa) | 🟡 Es la **fase 2** del PVC (dueño consolas); `escala.ts` no gobierna nada y la escala espera la validación del owner (pesos iguales, AAA:80, Caturra) · 🔴 hoy manda `lib/grados/definicion.ts` (**solo SCA**: 80·82·84·86·88), y así lo dicen la landing, la Ficha y el catálogo |
 | 8 · Multiplicadores ×1,15 · 1,30 · 1,60 · 2,00; Tyrian en subasta desde Gold con 80 % del alza | `PVC_BCP_PLAN.md` §9.4 · owner (§5.1 n.º 13) | 🟡 `motor.ts` los tiene; **ninguna oferta los aplica** · 🔴 «La oportunidad» publica índices base 100 |
 | 8 · Contra-catación en 5 días hábiles, crédito a favor | owner (§5.1 n.º 7, 15) · D2 §11.4 | 🟡 No existen el flujo ni el crédito · 🔴 el código **reembolsa el 80 % al rechazado** |
 | 9 · Oferta en 1–3 días | owner (§5.1 n.º 6) | 🟡 La emite el OCP a mano, sin plazo |
-| 9 · **Cherry Picked recomendado**: PVC × grado con la **prima del 8 %**; compra inicial 1 carga / 200 kg / > 100 kg / ajustada; 3 meses, 25 % al mes 2, 50 % al mes 3 | owner (§5.1 n.º 3, 22) · `PVC_BCP_PLAN.md` §9.5 (prima), §12.9 (escalera) | 🟡 No existe · ⚠ la escalera y su cifra de salida vienen del §12.9 (§5.2 n.º 1) · 🔴 el contrato real libera 50/75/100 sin penalización y «El trato» promete 15 kg de entrada |
-| 9 · **CaaS**: compra directa, CTCx asume el riesgo, **sin la prima**, entrada de 15–25 kg | owner (§5.1 n.º 5, 22) · §9.5 | 🟡 No existe oferta `directa` · ⚠ el §9.5 está marcado SUPERADO por el §12.9, que decía «al PVC vigente» sin prima: consolas reconcilia |
+| 9 · **Cherry Picked recomendado**: PVC × grado con la **prima del 8 %**; compra inicial 1 carga / 200 kg / > 100 kg / ajustada; 3 meses, 25 % al mes 2 y otro 25 % al mes 3; por encima, 4 % del PVC × grado por carga | owner (§5.1 n.º 3, 22, 26) · `PVC_BCP_PLAN.md` §9.5, §12.9 · `lib/pvc/compromiso.ts` | ✅ la aritmética (`compromiso.ts`, `qa-pvc-compromiso`) · 🟡 no existe en ofertas ni contratos · 🔴 el contrato real libera 50/75/100 sin penalización y «El trato» promete 15 kg de entrada |
+| 9 · **CaaS**: compra directa, CTCx asume el riesgo, **sin la prima**, entrada de 15–25 kg | owner (§5.1 n.º 5, 22, 28) · §9.5 | 🟡 No existe oferta `directa` · el §12.9 decía «al PVC vigente» sin mencionar la prima: consolas lo reconcilia con el §9.5 |
 | 9 · Mínimo del lote por grado; reoferta de lotes de periodos anteriores | §12.6 · owner (§5.1 n.º 6, 10) | 🟡 Oferta y contrato van en kg; la ventana de `ofertasActions` es de temporadas, sin descuento |
-| 10 · Reporte mensual de ventas; recibo y verificación el mismo día; almacenaje con 1 kg a más de 90 días; pago en 2 días hábiles | owner (§5.1 n.º 11, 12) · D2 §11.3 | 🟡 Nada de esto existe en el contrato (registra un pago por mes) · 🔴 «El trato»: «pago completo al final del mes 3» |
-| 11 · La Arena para cafés extraordinarios (generalmente Blue+), herramienta de impulso | owner (§5.1 n.º 16, 24) | 🔴 `showcaseGate` exige contrato abierto; el FAQ la presenta como paso de catación |
+| 10 · Reporte de ventas en la primera semana de cada mes; recibo y verificación el mismo día; almacenaje con 1 kg a más de 90 días; pago en 2 días hábiles | owner (§5.1 n.º 11, 12) · D2 §11.3 | 🟡 Nada de esto existe en el contrato (registra un pago por mes) · 🔴 «El trato»: «pago completo al final del mes 3» |
+| 11 · La Arena **abierta a todo café Blue+**; los aceptados entran en fila; herramienta de impulso | owner (§5.1 n.º 16, 24, 30) | 🔴 `showcaseGate` exige contrato abierto; el FAQ la presenta como paso de catación; el productor no puede postularse (la invitación la hace el OCP) |
 | 11 · Reputación ponderada | charter · §12 | 🟡 Sin fórmula ni pesos |
 | 12 · Perfil, finca y primer resultado gratis | charter | ✅ registro gratis · 🟡 el primer resultado (análisis EUDR) no tiene aviso ni plazo |
 
@@ -252,7 +257,7 @@ pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca
 12. El plazo que CTCx no puede incumplir es **reportar las ventas del mes**. La cláusula de retiro sin costo **no va en
     el video** (n.º 23).
 13. **Multiplicadores en voz alta**, con transparencia radical en toda la cadena.
-14. **El 4 %**: el owner no lo reconoce (§5.2 n.º 1).
+14. **El 4 %**: resuelto en el n.º 26.
 15. **Crédito a favor**: evaluación o contra-catación; se liquida al cierre del mes, no vence y se hace efectivo solo
     con las contracondiciones de CaaS o Cherry Picked.
 16. **La Arena** es arsenal de contenido, no cuello de botella: se postulan cafés extraordinarios (generalmente Blue+) y
@@ -269,24 +274,21 @@ pantalla) y después el bloque 1 (se queda la imagen de los seis pasos). **Nunca
 23. **Ventas, entrega y pago**: sin la cláusula de retiro por reporte faltante, con redacción clara.
 24. **La Arena**: «una poderosa herramienta para impulsar su café en el mundo, con su identidad».
 25. **Cierre con llamado a la acción** claro.
+26. **Escalera de Cherry Picked: 25 % + 25 %** (un cuarto libre al mes 2 y otro al mes 3), con **4 % del PVC × grado por
+    carga** retirada por encima de lo libre. Confirma `compromiso.ts`: el n.º 14 queda resuelto.
+27. **Factor de rendimiento de 94 o menos**, con la **excepción de Black hasta 98**.
+28. **CaaS sin la prima del 8 %** y Cherry Picked con ella: confirmado.
+29. **El reporte de ventas** se envía en la **primera semana** de cada mes.
+30. **La Arena está abierta a todos los cafés Blue+**; los aceptados se ponen en fila para la grabación.
 
 ### 5.2 · Preguntas que quedan
 
-1. **La cifra de salida de Cherry Picked y su escalera.** El 4 % y la escalera 0/25/50 entraron en V5.47 (`ea30260`), en
-   el `PVC_BCP_PLAN.md` §12.9, «Correcciones del CEO». Hoy los fijan `src/lib/pvc/compromiso.ts` y `qa-pvc-compromiso`.
-   El documento justifica el 4 % como «la mitad del 8 % de la prima» y lo compara con el 3 % y el 8 %. El método v2.1.1
-   decía 25 % libre al mes y 7,5 %. El video nombra la escalera 25 %/50 % y **no dice la cifra**. ¿Cuál es la cifra, y
-   la escalera es correcta?
-2. **Factor de rendimiento**: ¿«menor a 94» o «94 o menos»? D2 permitía hasta 98 en Black: ¿sigue esa excepción? El
-   `PVC_BCP_PLAN.md` §9.1.b dice «> 94» y hay que corregirlo.
-3. **El día límite del reporte mensual de ventas.**
-4. **La Arena**: ¿la invitación exige contrato abierto (hoy `showcaseGate`) o basta con el grado?
-5. **La prima del 8 % en CaaS**: el §12.9 decía «CaaS al PVC vigente». ¿Confirmas que CaaS es PVC × grado **sin** la
-   prima y Cherry Picked **con** ella? Así lo dice ahora el video.
+Ninguna. La narrativa está cerrada; lo que sigue es trasladarla (§6).
 
-## 6 · Lo que hay que corregir en la plataforma antes de publicar
+## 6 · Traslado a las plataformas
 
-Un video que contradice la landing en la que se reproduce hace más daño que no tener video.
+Esta narrativa es la fuente: la landing, el FAQ, el panel y las consolas se alinean a ella, y el video se publica cuando
+la plataforma dice lo mismo que él.
 
 **De `kaffetal-regal`** (tanda propia):
 - **Marca**: «CTC» → «CTCx» en el copy de cara al productor.
@@ -297,23 +299,24 @@ Un video que contradice la landing en la que se reproduce hace más daño que no
 
   La constante la lee también el OCP: línea en ALINEACIÓN §3.
 - **Grados**: `OportunidadSection` y las fichas de grado pasan de «el puntaje decide» a **el Punto y la Tríada** y la base
-  física, **cuando consolas lleve la escala a `definicion.ts`** (fase 2). Hasta entonces no se promete en la landing lo
-  que el veredicto no aplica. Los índices base 100 pasan a los multiplicadores reales.
+  física. Se publican **en la misma tanda** en que consolas lleve la escala al veredicto (fase 2), para que landing y
+  veredicto cambien juntos. Los índices base 100 pasan a los multiplicadores reales.
 - `TratoSection.tsx`:
   - Cherry Picked recomendado con prima y compra inicial;
   - CaaS sin prima con entrada de 15–25 kg;
-  - la escalera según §5.2 n.º 1;
+  - la escalera 25 % + 25 % con el 4 % por carga;
   - pago a 2 días hábiles;
-  - reporte mensual de ventas;
+  - reporte de ventas en la primera semana del mes;
   - fuera los 15 kg, las 2,5–4 t y la humedad «~10–11,5 %».
 - `faq.ts`, en tres idiomas:
-  - n.º 1·2·9: la Arena como herramienta, no como paso;
+  - n.º 1·2·9: la Arena como herramienta abierta a todo café Blue+, no como paso;
   - n.º 2: perfil primero y videos de 30 s;
   - n.º 4·5: los dos caminos;
   - n.º 6: trimestres PVC;
   - n.º 11.
 
   Además, preguntas nuevas sobre el PVC, la base física y la Tríada.
+- **Arena**: el productor Blue+ se postula desde su panel y ve su lugar en la fila.
 - **Perfil primero**: el panel guía a completar el perfil antes de la primera finca (`PerfilTab`).
 - **Vocabulario «Arena»** en la evaluación: `LoginModal`, `FichaView`, `PerfilTab`, la etiqueta impresa, y «Envío de
   muestras» en `ShipmentInstructionsModal`.
@@ -322,13 +325,14 @@ Un video que contradice la landing en la que se reproduce hace más daño que no
 **De `consolas`** (ALINEACIÓN §3b):
 - **Con fecha**: la edición PVC vigente y el PVC de ene–mar 2027 antes del 15-oct-2026.
 - **Base física como puerta** en el veredicto, y **el Punto y la Tríada** en `definicion.ts` (fase 2, con la escala
-  validada por el owner). Corregir «factor > 94» en el plan.
+  validada por el owner). Base física con factor ≤ 94 y Black hasta 98; corregir «> 94» en el plan.
 - **Ofertas**: Cherry Picked PVC × grado con prima del 8 %; CaaS `directa` sin prima; multiplicadores reales; oferta a
   1–3 días; compra inicial por programa y grado; reoferta por periodos.
-- **Contrato**: escalera y cifra de salida según §5.2 n.º 1; reporte mensual de ventas; almacenaje con 1 kg; pago por
-  entrega a 2 días hábiles con mora.
+- **Contrato**: escalera 25 % + 25 % con 4 % del PVC × grado por carga (conectar `compromiso.ts`); reporte de ventas en
+  la primera semana del mes; almacenaje con 1 kg; pago por entrega a 2 días hábiles con mora.
 - **Evaluación**: retirar el reembolso del 80 %; contra-catación con crédito a favor.
-- **La Arena** fuera del camino (`showcaseGate`), y avisos al productor en los pasos que hoy no avisan.
+- **La Arena**: postulación abierta a todo café Blue+ con fila de grabación, sin exigir contrato (`showcaseGate`); y avisos
+  al productor en los pasos que hoy no avisan.
 
 ## 7 · Producción
 
@@ -347,7 +351,7 @@ Un video que contradice la landing en la que se reproduce hace más daño que no
   - La escalera de cinco grados con sus multiplicadores y los sellos de `public/images/shared/grados/`.
   - La comparación de los dos caminos, con Cherry Picked destacado.
 - **Entregables.**
-  - Pieza de ≈ 6:08 en 16:9 y 9:16, locución ES, subtítulos ES/EN/DE (`.srt`).
+  - Pieza de ≈ 6:12 en 16:9 y 9:16, locución ES, subtítulos ES/EN/DE (`.srt`).
   - Cortes derivados:
     - 90 s: bloques 0, 5, 7, 9 y 12;
     - 30 s, para WhatsApp y redes: bloque 0, los multiplicadores, Cherry Picked y el llamado.

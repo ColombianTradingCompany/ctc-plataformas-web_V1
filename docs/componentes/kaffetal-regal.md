@@ -101,34 +101,34 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
     **Ponderación, no acumulación**: un productor pequeño y consistente puede estar arriba. Pesos y beneficios: por
     definir (ideas: compra anticipada de ciertas cargas, que consume caja y hay que dosificar; mejores precios en lotes
     selectos).
-- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.5** en
-  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md` (página de rodaje publicada para el equipo).
-  - **Decisiones dentro** (§5.1, 25 puntos):
-    - marca **CTCx**;
-    - perfil antes que finca;
-    - bloque propio del **PVC**;
-    - evaluación de **$200.000** con envío incluido;
-    - **base física** y **el Punto y la Tríada** en lugar del grado por SCA solo;
-    - multiplicadores en voz alta;
-    - **Cherry Picked recomendado** con prima del 8 % y compra inicial, **CaaS** sin prima con entrada de 15–25 kg;
-    - reporte mensual de ventas y pago a 2 días hábiles;
-    - la **Arena** como herramienta;
-    - cierre con llamado a la acción.
-  - **Preguntas del owner** (§5.2): la **cifra de salida** de Cherry Picked y su escalera (el 4 % no lo reconoce);
-    factor «< 94» o «≤ 94»; CaaS sin prima; día del reporte de ventas; contrato para la Arena.
-  - **Depende de consolas**: el PVC de ene–mar 2027 **antes del 15-oct-2026**; la base física y la Tríada en el veredicto
-    (fase 2).
-  - **Tanda propia de copy** (§6 del guion):
-    - «CTC» → «CTCx»;
-    - `ARENA_FEE_COP` 80.000 → 200.000 con descuento y envío incluido;
-    - `TratoSection` con los dos caminos;
-    - `faq.ts` n.º 1·2·4·5·6·9·11 y preguntas nuevas (PVC, base física, Tríada);
-    - `BienvenidosSection` con el paso Perfil;
-    - multiplicadores en `OportunidadSection`;
-    - la Arena como herramienta;
-    - el perfil antes de la finca en `PerfilTab`.
-
-    El copy de **grados por la Tríada espera a la fase 2**, para no prometer lo que el veredicto no aplica.
+- **Narrativa del productor · cerrada** (2026-09-16, guion **v0.6**, 30 decisiones del owner, sin preguntas abiertas):
+  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md`, con página de rodaje publicada para el equipo.
+  **Es la fuente de lo que deben decir la landing, el FAQ y el panel**; el video se publica cuando la plataforma diga
+  lo mismo. El traslado está en su §6.
+  - **Tandas de este componente**:
+    1. Copy:
+       - CTCx;
+       - evaluación de $200.000 con envío incluido;
+       - `TratoSection` con los dos caminos: Cherry Picked recomendado con prima del 8 %, compra inicial, escalera
+         25 % + 25 % y 4 %; CaaS sin prima con 15–25 kg;
+       - pago a 2 días hábiles y reporte de ventas en la primera semana del mes;
+       - `faq.ts`, con preguntas nuevas de PVC, base física y Tríada;
+       - `BienvenidosSection` con Perfil;
+       - multiplicadores en `OportunidadSection`;
+       - la Arena abierta a Blue+.
+    2. Panel:
+       - perfil antes que finca;
+       - postulación a la Arena para todo lote Blue+, con su fila.
+    3. Grados: el Punto y la Tríada con la base física (factor ≤ 94, Black hasta 98), **en la misma tanda** en que
+       consolas lleve la escala al veredicto (fase 2).
+  - **Depende de consolas** (ALINEACIÓN §3b):
+    - el PVC de ene–mar 2027 **antes del 15-oct-2026**;
+    - base física y Tríada en el veredicto;
+    - ofertas con prima y compra inicial;
+    - `compromiso.ts` conectado a contratos;
+    - reporte de ventas;
+    - fin del reembolso del 80 %;
+    - `showcaseGate` sin contrato.
 - ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
   la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.
 

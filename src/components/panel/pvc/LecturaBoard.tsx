@@ -1,7 +1,8 @@
 import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import { GRADOS } from "@/lib/grados/definicion";
-import { BANDAS5, type Banda5 } from "@/lib/pvc/motor";
+import { BANDAS5, escalaDe, fleteKg, PARAMS_V211, type Banda5 } from "@/lib/pvc/motor";
+import { CANALES, TRAMOS, moqKgVerde, precioDeTramo, puedeCotizar } from "@/lib/pvc/canales";
 import {
   CARGA_KG_CPS, SACO_KG_CPS, admiteSaco, desviacionDeMercado, embudoDeCarga, empaqueDe,
   holguraDisparador, incrementoCargas, moqCargas, primaMinima, sobreBasePergamino, verdeFobCop,
@@ -330,6 +331,76 @@ export function LecturaBoard({
           Los MOQ y el empaque son la decisión del owner del 2026-09-16 (`docs/PVC_BCP_PLAN.md` §9.2). Todavía **no**
           gobiernan el precio: los parámetros del modelo vigente ({vigente.modelVersion ?? "—"}) siguen con la tabla
           anterior hasta la versión v2.2.0, que se registra con acta en Parámetros.
+        </p>
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.sectionHead}><strong>Canales y tramos de incoterm</strong></div>
+        <p className={styles.meta}>
+          <strong>FOB / FCA es el precio base</strong>: no depende del destino, depende del MOQ — y eso es literal, no
+          una frase, porque la pila calcula el flete por escalones de volumen. <strong>CIF/CIP y DDP solo se cotizan
+          donde hay habilitación regional</strong>, y es distinta en cada canal. Cotizar una casilla sin ella es
+          prometer una entrega que la casa no puede sostener.
+        </p>
+        {CANALES.map((c) => (
+          <div key={c.id} style={{ marginTop: 14 }}>
+            <div className={styles.kpiK}>{c.nombre} · habilitación: {c.habilitacion}</div>
+            <p className={styles.meta} style={{ marginTop: 4 }}>{c.queEs}</p>
+            <div className={table.scroll}>
+              <table className={table.t}>
+                <thead>
+                  <tr>
+                    <th>Grado</th>
+                    <th>MOQ</th>
+                    <th className={styles.kpiSub} style={{ textAlign: "right" }}>kg verde</th>
+                    <th style={{ textAlign: "right" }}>Flete al MOQ</th>
+                    {TRAMOS.map((t) => <th key={t.id} style={{ textAlign: "right" }}>{t.nombre}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {BANDAS5.map((b: Banda5) => {
+                    const fila = pila.find((f) => f.b === b);
+                    const m = moqKgVerde(c.id, b, kgGarantizados);
+                    return (
+                      <tr key={b}>
+                        <td>
+                          <span className="cell" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                            <span style={{ width: 10, height: 10, borderRadius: 999, background: HEX[b] ?? "var(--line)" }} />
+                            <strong>{b}</strong>
+                          </span>
+                        </td>
+                        <td>{m.etiqueta}</td>
+                        <td style={{ textAlign: "right" }}>{num(m.kg)}</td>
+                        <td style={{ textAlign: "right" }}>
+                          {num(fleteKg(PARAMS_V211, m.kg), 2)}
+                          <div className={styles.kpiSub}>{escalaDe(PARAMS_V211, m.kg)}</div>
+                        </td>
+                        {TRAMOS.map((t) => {
+                          const v = fila ? precioDeTramo(fila, t.id) : null;
+                          // La habilitación es por REGIÓN y no está en la base todavía:
+                          // aquí se muestra la condición, no un permiso concreto.
+                          const cot = puedeCotizar(c.id, t.id, false);
+                          return (
+                            <td key={t.id} style={{ textAlign: "right" }}>
+                              {v == null ? "—" : num(v, 2)}
+                              {!cot.puede && <div className={styles.kpiSub} style={{ color: "var(--warn, #B7791F)" }}>condicionado</div>}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+        <p className={styles.meta}>
+          Precios en US$/kg de verde de la edición vigente. El <strong>flete al MOQ</strong> es el escalón en el que cae
+          cada canal: por eso el mismo café sale distinto en Cherry Picked y en CaaS — la diferencia es el camión, no una
+          política comercial. Los precios de la pila se calculan todavía con el MOQ de los parámetros del modelo
+          ({vigente.modelVersion ?? "—"}); recalcularlos por canal es parte de la versión v2.2.0. La habilitación regional
+          aún no se registra en la base: la columna dice la condición, no un permiso concreto.
         </p>
       </div>
 

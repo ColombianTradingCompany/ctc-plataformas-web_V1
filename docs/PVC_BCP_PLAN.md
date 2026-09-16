@@ -457,7 +457,8 @@ cuando la fase 2 llegue a Cherry Picked.
 - **El PVC nace en COP por carga** (origen). **El precio FOB del periodo se publica en US$/kg** convertido a la **TRM
   del corte**, congelada en la edición (`pvc_editions.outputs.trm_corte`). El dólar es el normalizador: todas las demás
   monedas se derivan de él, nunca del peso directamente.
-- **CIF y DDP se exhiben en la moneda de la geografía del comprador** (EUR para Europa, y la que corresponda: GBP, JPY,
+- **CIF y DDP solo se cotizan donde hay habilitación regional** (§9.6: Master Roaster para Cherry Picked, Regional
+  Operation Enablement para CaaS) y **se exhiben en la moneda de la geografía del comprador** (EUR para Europa, y la que corresponda: GBP, JPY,
   CHF…), calculados desde el FOB en US$ más la pila logística de la edición y convertidos con el cruce US$→moneda del
   mismo corte. Las subastas Tyrian y la tarifa Roast siguen la misma regla: `precio_salida_eur_kg` pasa a
   `precio_salida_usd_kg` y la interfaz convierte para mostrar.
@@ -522,6 +523,47 @@ finca por `CTC_RAZON`** (`src/lib/catalogo/{fichaPublica,sneakPeek}.ts`, `Cherry
 *Por confirmar con el owner*: si el 8 % se retira sobre el valor con multiplicador (como está escrito) o sobre el PVC
 antes de multiplicar (`PVC × (1 − prima) × mult` — misma aritmética, distinta explicación al productor), y si «cantidad
 mínima» es el MOQ del grado (§9.2) u otra.
+
+### 9.6 Canales, tramos de incoterm y MOQ (matriz del owner, 2026-09-16)
+
+Faltaba la capa **comercial**: el §9.2 explica cómo se convierte una carga de pergamino en kilos vendibles, pero no
+**quién compra, en qué condición de entrega y con qué mínimo**. Son **dos canales por tres tramos**, y no todas las
+casillas se pueden cotizar.
+
+| | **FOB / FCA** | **CIF / CIP** | **DDP** | **MOQ** |
+|---|---|---|---|---|
+| **Cherry Picked** | US$/kg | US$/kg — *solo con **Master Roaster** regional* | US$/kg — *solo con **Master Roaster** regional* | Black y Red **3 o 4 cargas** equivalentes · Blue **2** · Gold **1** · Tyrian **½** |
+| **CaaS** | US$/kg | US$/kg — *solo con **Regional Operation Enablement*** | US$/kg — *solo con **Regional Operation Enablement*** | Black y Red **1000 kg** · Blue **500 kg** · Gold y Tyrian **100 kg** — el mínimo puede componerse de **fracciones de varios cafés**, no de uno solo |
+
+**El tramo base es FOB/FCA**, y su precio **no depende del destino — depende del MOQ**. Eso no es una frase: el motor ya
+lo hace. La pila calcula el flete con `fleteKg(params, moq)` sobre la tabla de escalas
+(`[0, 6,5] [45, 5,2] [100, 4,2] [300, 3,6] [500, 3,2] [1000, 2,9]` US$/kg), así que **el volumen del canal decide el
+escalón de flete**: un Black de Cherry Picked (3 cargas ≈ 234 kg) cae en el tramo de 4,2 y el mismo Black en CaaS
+(1000 kg) en el de **2,9**. La diferencia de precio entre canales no es una política comercial: es el camión.
+
+**Los dos tramos de arriba dependen de una habilitación regional, y es distinta en cada canal.**
+
+- **Cherry Picked → Master Roaster regional.** Un tostador de referencia que opera ese mercado junto a CTCx. Ya existe
+  como concepto en la casa (el modelo del hub, la promesa de Roast, el «Libro de reservas» y la «Salud de la red» del
+  ECP lo cuentan entre sus indicadores). Sin él no hay quién reciba, almacene ni entregue: solo se cotiza el tramo base.
+- **CaaS → Regional Operation Enablement.** El **papeleo y el conocimiento** para operar en esa geografía: importación,
+  aduana, fitosanitario y quién responde. No es un socio: es capacidad propia. Es un concepto **nuevo** en el sistema.
+
+**Por qué esto importa en el código y no solo en una lámina.** El motor calcula `n2` (FCA Bogotá ≈ FOB), `n3` (CIP
+aeropuerto ≈ CIF) y `n4` (DDP) para **todos** los grados y para cualquier destino de `params.destinos` — hoy nada impide
+que una superficie pinte un DDP a un país donde CTCx no tiene con quién entregarlo. La regla vive ahora en
+`src/lib/pvc/canales.ts` (`puedeCotizar(canal, tramo, habilitacionEnLaRegion)`), se exhibe en la pestaña Lectura y la
+fija el guardián `qa-pvc-canales`. **Cotizar una casilla sin habilitación es prometer una entrega que la casa no puede
+sostener.**
+
+**Dos cosas por confirmar con el owner:**
+
+1. **El nombre del tercer tramo.** En la lámina dice «DDP/???». DDP entrega con derechos pagados; si en algunos destinos
+   la casa entrega **sin** pagarlos, ese caso es **DAP** y son dos tramos distintos, no uno con dos nombres.
+2. **Tyrian: media carga contra el saco.** Aquí el mínimo estándar de Tyrian es **½ carga** (62,5 kg de pergamino),
+   pero el §9.2 daba a Gold y Tyrian un piso excepcional de **un saco** (70 kg de pergamino) — que es *más* que media
+   carga. La lectura coherente es que el saco es la excepción que baja a **Gold** por debajo de su carga, y que Tyrian
+   ya nace en media; queda escrito así, y se confirma.
 
 ## 10. Auditoría de mejora (2026-09-15)
 
@@ -693,7 +735,7 @@ contenido es el módulo. Cambia `src/lib/panel/consoles.ts` (`label: "Modelo Eco
 | **Tablero** | El configurador del modelo — ahora también la base con la que un agente propone la configuración del periodo siguiente (§11.4) | existe, gana rol |
 | **Grados** *(nueva)* | La escala «El Punto y la Tríada» (§9.1) con **calculadora**: SCA + V·P·R + Base física → puntos → grado → escalón de precio | nueva |
 | **Marco de mercado** *(nueva)* | La referencia que **clasifica** variedades, procesos y reconocimientos en A/B/C. Semestral (enero y julio). Su PDF es el D10 (§11.2) | nueva |
-| **MOQ y mermas** *(nueva)* | Las dos tablas de mínimos y el embudo de conversión que las explica (§11.3) | nueva |
+| **MOQ y mermas** *(nueva)* | Las dos tablas de mínimos, el embudo de conversión que las explica (§11.3) y la **matriz de canales × tramos de incoterm** (§9.6) | nueva |
 | **Parámetros del modelo** | Las versiones inmutables del método | existe |
 | **Dossier** | D0–D10 por versión | existe, gana el D10 |
 

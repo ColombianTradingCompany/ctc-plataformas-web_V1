@@ -119,3 +119,18 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   qa-pvc-escala 63 · qa-pvc-lectura 59 · qa-pvc-vigencia 28 · 52 guardianes.
 
 ════════════════════════════════════════════════════════════════════════════════
+
+## [2026-09-16] V5.46 · Modelo Económico: la matriz comercial (canales × incoterms) (consolas)
+- Para la ficha DICT `pvc` («Modelo Económico») y para `cherry` del wrap V44: la lámina del owner entra como §9.6 del
+  plan y como módulo puro `src/lib/pvc/canales.ts`. **Dos canales × tres tramos**: FOB/FCA es el precio base
+  (independiente del destino, dependiente del MOQ — literal: la pila usa `fleteKg(moq)` por escalones de volumen, así
+  que CaaS a 1000 kg cae en 2,9 US$/kg y Cherry Picked a 3 cargas en 4,2); **CIF/CIP y DDP exigen habilitación
+  regional**, y es distinta por canal: **Master Roaster** (Cherry Picked, ya existía en la casa) y **Regional Operation
+  Enablement** (CaaS, concepto NUEVO: papeleo y conocimiento propios). MOQ por canal: CP en cargas equivalentes
+  (3–4 · 2 · 1 · ½), CaaS en kilos (1000 · 500 · 100, componible con fracciones de varios cafés).
+- **Cambio de regla, no de pantalla**: hasta ahora el motor calculaba n2/n3/n4 para cualquier destino y nada impedía
+  cotizar un DDP donde CTCx no tiene con quién entregar. `puedeCotizar(canal, tramo, habilitacion)` es esa puerta.
+  La pestaña Lectura la exhibe con el escalón de flete de cada canal. Guardián nuevo `qa-pvc-canales.mjs` (63).
+- Abierto para el owner: si el tercer tramo es DDP o se parte en DDP y DAP; y la tensión Tyrian ½ carga vs el piso de
+  saco de 70 kg del §9.2.
+(commit: pendiente)

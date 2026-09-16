@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.46] — 2026-09-16 (commit pendiente)
+
+- **Añadido**: la **matriz comercial** del Modelo Económico (`docs/PVC_BCP_PLAN.md` §9.6, lámina del owner) — **dos
+  canales × tres tramos de incoterm**, que es lo que faltaba para poder cotizar. **FOB/FCA es el precio base**: no
+  depende del destino, **depende del MOQ** — y eso es literal, porque la pila calcula el flete con `fleteKg(moq)` sobre
+  escalones de volumen, así que un Black de Cherry Picked (3 cargas ≈ 234 kg) cae en el tramo de 4,2 US$/kg y el mismo
+  Black en CaaS (1000 kg) en el de **2,9**. La diferencia entre canales es el camión, no una política comercial.
+- **Añadido**: **CIF/CIP y DDP solo se cotizan con habilitación regional**, y es distinta en cada canal — **Master
+  Roaster** en Cherry Picked (un tostador de referencia que opera ese mercado con CTCx; ya existía en la casa) y
+  **Regional Operation Enablement** en CaaS (el papeleo y el conocimiento propios para esa geografía; concepto nuevo).
+  Hasta ahora el motor calculaba `n2`/`n3`/`n4` para cualquier destino y **nada impedía** pintar un DDP a un país donde
+  CTCx no tiene con quién entregar.
+- **Añadido**: MOQ por canal — Cherry Picked en **cargas equivalentes** (Black y Red 3 o 4 · Blue 2 · Gold 1 · Tyrian ½)
+  y CaaS en **kilos** (Black y Red 1000 · Blue 500 · Gold y Tyrian 100), este último **componible con fracciones de
+  varios cafés**. El módulo puro `src/lib/pvc/canales.ts` lo encierra junto a `puedeCotizar()`.
+- **Añadido**: la pestaña **Lectura** muestra la matriz con los precios reales de la edición y **el escalón de flete en
+  el que cae el MOQ de cada canal**, con las casillas condicionadas marcadas.
+- **Añadido**: guardián **`scripts/qa-pvc-canales.mjs`** (63) — el mapeo tramo → columna de la pila (fob=n2, cif=n3,
+  ddp=n4), que FOB sea el único incondicional, las dos habilitaciones, los MOQ de la lámina, que los dos módulos que
+  dicen el MOQ de Cherry Picked no se separen, y que el flete siga bajando con el volumen.
+- **Docs**: §9.3 anota que CIF/DDP dependen de la habilitación; §11.1 mete la matriz en la pestaña «MOQ y mermas».
+  Quedan **dos preguntas al owner**: si el tercer tramo es DDP o hay que partirlo en DDP y **DAP** (entregado sin
+  derechos pagados), y la tensión entre el mínimo estándar de Tyrian (½ carga) y el piso de saco de §9.2 (70 kg).
+
 ## [V5.45] — 2026-09-16 (commit 8730d9f)
 
 > **Wrap V43** (2026-09-16): ciclo compilado en `Documentacion_Interactiva_V43.0(4418a67).html` — 39 nodos · 140 fichas (+1: `cromatografia`) · 56 trazas (+3) · 91 wires · 34 CTX · 362 ANN (+22) · FILETREE 2864 archivos. Compila V5.32–V5.45.

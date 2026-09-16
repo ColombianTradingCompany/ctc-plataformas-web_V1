@@ -646,7 +646,7 @@ tomadas en §8). Tampoco emite eventos: no hay `pvc.published` en `integration_e
 
 | # | Hallazgo | Dónde | Riesgo | Mejora |
 |---|---|---|---|---|
-| A1 | **La vigencia no se aplica — y la cadencia lo vuelve seguro, no hipotético.** `edicionVigente()` y la vista `public_pvc_current` toman la última `published`/`corrected` por `published_at`, **sin mirar `valid_from`/`valid_to`** (verificado en el `pg_get_viewdef`: `WHERE status IN (…) ORDER BY published_at DESC LIMIT 1`). Como el PVC se publica **7–8 semanas antes** de su fecha efectiva (§1), en cuanto se publique F1-2027 —hacia finales de octubre— **empezará a regir ese mismo día** y durante casi dos meses, con F4-2026 todavía vigente hasta el 15-dic | `servicio.ts:376`, vista `public_pvc_current` | **alto** · ocurre en la próxima publicación, no «si acaso» | «vigente» = `published`/`corrected` **y** `valid_from ≤ hoy ≤ valid_to`; la recién publicada es **«próxima»** y se exhibe como tal (es información valiosa: el productor y el comprador ven con 7 semanas de antelación el precio que viene); la vista pública devuelve **las dos**, marcadas |
+| A1 | ✅ **Corregido en V5.43** (`pvc_vigencia_por_ventana`, `qa-pvc-vigencia`). **La vigencia no se aplica — y la cadencia lo vuelve seguro, no hipotético.** `edicionVigente()` y la vista `public_pvc_current` toman la última `published`/`corrected` por `published_at`, **sin mirar `valid_from`/`valid_to`** (verificado en el `pg_get_viewdef`: `WHERE status IN (…) ORDER BY published_at DESC LIMIT 1`). Como el PVC se publica **7–8 semanas antes** de su fecha efectiva (§1), en cuanto se publique F1-2027 —hacia finales de octubre— **empezará a regir ese mismo día** y durante casi dos meses, con F4-2026 todavía vigente hasta el 15-dic | `servicio.ts:376`, vista `public_pvc_current` | **alto** · ocurre en la próxima publicación, no «si acaso» | «vigente» = `published`/`corrected` **y** `valid_from ≤ hoy ≤ valid_to`; la recién publicada es **«próxima»** y se exhibe como tal (es información valiosa: el productor y el comprador ven con 7 semanas de antelación el precio que viene); la vista pública devuelve **las dos**, marcadas |
 | A2 | **`pvc_anterior` lo teclea el usuario.** La banda muerta y el tope bajista dependen de él, y la ruta de publicar toma `S.pvc_anterior ?? 0` del tablero; con 0 la regla no actúa | `publicar/route.ts`, `motor.ts:150` | alto (se pierde la suavización entre franjas) | la ruta lo lee de la última edición publicada de la franja anterior e ignora el del tablero; el tablero lo muestra como dato de la base |
 | A3 | **Cinco parámetros escapan al control de deriva.** `NO_PARAM` deja fuera `k`, `lb_excelso`, `lb_pergamino`, `lead` y `disparador`, que sí son parámetros del modelo (k y lb entran en P0); si el tablero los mueve, el número que ve el owner y el que se publica (calculado con los params de la versión) no coinciden | `publicar/route.ts` | medio | comparar todos los `PvcParams`; solo `nivel`/`destino` (UI) quedan fuera |
 | A4 | **Supersede solo por código.** Al publicar F1-2027 la F4-2026 sigue `published`; con A1 resuelto es correcto (dos publicadas, una vigente, una próxima), pero `previous_edition_id` solo se llena si el código repite | `servicio.ts:409` | bajo | `previous_edition_id` = la última publicada de cualquier código; estados: `published` + ventana de vigencia deciden |
@@ -1093,3 +1093,63 @@ La auditoría de exposición se hizo sobre los archivos **versionados** el 2026-
 - **Actas de reunión** citadas en `ALINEACION.md` y en los documentos de la Secretaría.
 - **Pendiente, no hecho:** la auditoría completa de vulnerabilidades y de niveles de permisos que pide el §0.2 es una
   tanda propia.
+
+## 13. Estado al cierre de la sesión del 2026-09-16 — arranque de la próxima
+
+Punto de partida para la siguiente sesión de **Consolas internas**. Plataforma en vivo: **V5.47 · build 5213ddd**.
+Mapa interactivo: `Documentacion_Interactiva_V43.0(4418a67).html`, log pendiente `Log_Documentacion_Interactiva_V43.txt`
+(asientos V5.46 y V5.47; el wrap V44 se pide en «Wraps del mapa», no aquí).
+
+### 13.1 Lo que ya está hecho (V5.42 → V5.47)
+
+| Versión | Qué |
+|---|---|
+| V5.42 | WorkersBadge apunta a `tools	ranscriptor`; las cinco decisiones del §8 preparadas |
+| V5.43 | **A1 corregido**: vigencia por ventana (`public_pvc_current`, `public_pvc_next`, `edicionVigente`/`edicionProxima`); pestaña **Lectura** con los tres KPI (§11.5); el módulo se llama **Modelo Económico** |
+| V5.44 | Addendum de MOQ y empaque en `lectura.ts` (hoy parcialmente superado por §12.6) |
+| V5.45 | Pestaña **Grados** con la calculadora (`escala.ts`, §9.1); panel BCP como dashboard; Wrap V43 |
+| V5.46 | Matriz canales × incoterm (§9.6) — **SUPERADA** por V5.47 |
+| V5.47 | Correcciones del CEO (§12): `canales.ts` reescrito (programas × tramos, habilitaciones, `accesoDelComprador`), `compromiso.ts` nuevo (0/25/50 %, 4 %), tarjetas en Lectura |
+
+Guardianes del módulo y su línea base: `qa-pvc-vigencia` 28 · `qa-pvc-lectura` 59 · `qa-pvc-escala` 63 ·
+`qa-pvc-canales` 57 · `qa-pvc-compromiso` 31. Compuerta: tsc limpio, eslint 0 errores / 8 avisos, build exit 0.
+
+### 13.2 Reglas que no se rompen
+
+- **El §12 prima** sobre §9.2, §9.5 y §9.6 (marcados SUPERADO). Donde choquen, manda el §12.
+- **Dos escalas conviven a propósito**: `src/lib/grados/definicion.ts` (SCA dos en dos) **gobierna** lo real;
+  `escala.ts` (puntos) es vista previa y no escribe nada ni importa `definicion.ts`. No unificarlas hasta que el owner
+  valide la escala (artefacto «PVC · Cinco decisiones»: https://claude.ai/artifact/ADTBbhLoJ5XfJjURwwXwzD).
+- El PVC **no se mueve cada semana**: el ciclo semanal es lectura de mercado (§10.3.1). Se fija por trimestre.
+- **El repositorio es público**: ningún documento copia credenciales, márgenes nuevos ni actas sin decisión del owner (§12.12).
+
+### 13.3 Lo que NO está construido (pendiente técnico, en orden)
+
+1. **Resto de correcciones de base** (§10.4.1): A2 `pvc_anterior` desde la base · A3 deriva de parámetros completa ·
+   A4 `previous_edition_id` · A11 SHA-256 · A7 vista pública recortada (decisión owner).
+2. **Modelo v2.2.0** (A8 + brechas del §12.10): MOQ único en cargas por grado (§12.6; retirar `ASSOC_BLACK_MOQ=350` y los
+   MOQ en kg), **columna marítima** para el tramo «puerto» (hoy aproxima con n3 aéreo), **DDP consolidado (CP) vs
+   dedicado (CaaS)**, **regiones y habilitaciones como dato** (tabla), tablas de precio por región del master roaster con
+   tostado in situ (§12.5), prima explícita; después `definicion.ts` a la escala de puntos con la Base física (solo
+   con la escala validada). Con esto nace la oferta «PVC × grado», la compra directa CaaS y A13 (`ctc_selection` por
+   compra en firme de cualquier grado).
+3. **Compromiso Cherry Picked como dato**: hoy `compromiso.ts` es cálculo puro; falta que la oferta/contrato registre
+   cargas comprometidas, retiros por mes y la penalización (§12.9).
+4. **Subasta Tyrian** sobre FOB puerto Colombia en EUR/kg (§12.7) — alinear la tienda Green.
+5. **Calendario PVC por trimestres exactos**, público, publicado dos meses antes (§12.8) — depende de la pregunta 8 del §12.11.
+6. **La espina** (A6 · A10 · A5 · A9): eventos `pvc.*`, cron diario TRM/ICE C y disparador, ciclo semanal
+   `POST /api/pvc/cycle` con reporte; GitHub Action del dossier (A12).
+7. **Pestaña Marco de mercado** (§11.2): `pvc_marco_mercado` como dato que clasifica A/B/C + D10 como su impresión.
+8. **Pestaña MOQ y mermas** (§11.1/§11.3): rehacerla sobre el §12.6 (ya no dos mercados en dos unidades).
+9. **Certeza** (§6): `pvc_forecast_scores` al cerrar F4-2026.
+
+### 13.4 Decisiones pendientes del owner (consolidado)
+
+- **Seguridad (urgente)**: rotar las cuentas afectadas (§12.12); decidir si se reescribe el historial de git; decidir si
+  salen del repo público el §9.4 (margen y comparación con la cooperativa) y las actas; auditoría de vulnerabilidades y
+  permisos como tanda propia.
+- **§12.11**: tarifa de conexión del tostado in situ · beneficios por nivel de reputación · pesos de la tríada de
+  reputación · Plus vs Básica · Zulu · entidad legal · marca Kaffetal ante la SIC · alinear F4-2026 al trimestre exacto.
+- **Escala** (§9.1): pesos iguales V·P·R, caso AAA:80, filas Caturra/Catuaí/Bourbon Rojo y Amarillo, nombre de la Base física.
+- **§9.3**: el X % del collar de TRM.
+- **§11.7**: ruta `/bcp/pvc` vs `/bcp/modelo` · cuarto KPI · aviso a lotes galardonados si una variedad baja de nivel.

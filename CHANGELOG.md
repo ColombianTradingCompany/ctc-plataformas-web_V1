@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.44] — 2026-09-16 (commit pendiente)
+## [V5.44] — 2026-09-16 (commit 7f3e9aa)
 
 - **Añadido**: primera cara del refurbish del BCP (`docs/PVC_BCP_PLAN.md` §11) — la pestaña **Lectura**
   (`/bcp/pvc/lectura`, primera del tab strip) responde «qué significa hoy el precio que rige». **No recalcula ni

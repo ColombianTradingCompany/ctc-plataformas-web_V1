@@ -272,4 +272,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   (2→4 cargas, 3→3, 4→4; no hay mezclas de cinco), Blue 2 cargas, Gold 1 con piso excepcional de un saco (70 kg CPS)
   para Gold y Tyrian; el incremento es la mitad del mínimo, fraccionable a cuartos como upsale. Se exhibe, no gobierna
   precio todavía: eso es la versión v2.2.0 del modelo.
-(commit: pendiente)
+(commit: 7f3e9aa)

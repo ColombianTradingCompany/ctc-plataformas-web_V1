@@ -602,10 +602,10 @@ es un archivo adjunto al PVC, accesible desde el menú secundario.**
 - **Para qué sirve**: (i) la revisión trimestral del catálogo de variedades y de los pesos `w` de la Tríada (§9.1) se
   hace **con el marco delante**, no de memoria; (ii) la oferta se posiciona *dentro* de la banda del grado con el índice
   del semestre; (iii) el reporte semanal lo **cita** («según el marco 2027-H1…»).
-- **La tensión que hay que decidir**: un PDF no lo puede leer el código. Mientras el marco solo se *cite* en el reporte y
-  *oriente* al comité, el archivo basta. Si algún día debe **calcular** algo (posicionar el precio dentro de la banda de
-  forma automática), hará falta su gemelo legible por máquina — el mismo `marco_<periodo>.json` que genera el PDF,
-  guardado junto a él. **Por confirmar con el owner**, y mientras tanto el archivo manda.
+- **Resuelto el 2026-09-16 (§11.2)**: la tensión que quedaba aquí —un PDF no lo lee el código— la cerró el owner
+  eligiendo las dos cosas. El marco **es dato** (`pvc_marco_mercado`) y es **la referencia que clasifica los grados**;
+  el D10 es su impresión, generada desde las filas publicadas, y sigue accesible como archivo en el menú secundario.
+  Lo escrito arriba vale salvo en eso: el archivo no es la fuente, es la salida.
 
 ### 10.4 Orden propuesto (fase 2 y 3 del §7, revisadas)
 
@@ -627,3 +627,174 @@ es un archivo adjunto al PVC, accesible desde el menú secundario.**
 Cada punto lleva su guardián: `qa-pvc-vigencia` (una edición futura no es vigente), `qa-pvc-publicar` (deriva de
 parámetros completa, `pvc_anterior` de la base), `qa-pvc-ciclo` (un ciclo semanal deja fila, diff y evento), y
 `qa-pvc-motor`/`qa-pvc-tablero` siguen sellando la paridad.
+
+## 11. El refurbish del BCP · «Modelo Económico» (owner, 2026-09-16)
+
+El módulo deja de llamarse «PVC · Valor de Cosecha» y pasa a ser **Modelo Económico**: el PVC es *una* de las cosas que
+vive ahí, no el todo. Junto a él entran la escala de grados con su calculadora, el marco de mercado que clasifica la
+Tríada, y los MOQ de las dos puntas del negocio. Esta sección es el diseño; no está construida.
+
+**El nombre resuelve una duplicación que ya existía.** `/bcp/direccionamiento/modelo-economico` es hoy una pestaña vacía
+cuyo único contenido es un enlace a `/bcp/pvc` y un resumen del D2 (§2). Con el rename, esa pestaña **se retira** y su
+contenido es el módulo. Cambia `src/lib/panel/consoles.ts` (`label: "Modelo Económico"`, la ruta puede seguir siendo
+`/bcp/pvc` para no romper enlaces, o mudarse a `/bcp/modelo` con talón 308 — regla de `rutasMovidas.ts`).
+
+### 11.1 Las pestañas
+
+| Pestaña | Qué es | Estado |
+|---|---|---|
+| **Lectura** *(nueva, por defecto)* | Qué está pasando **hoy**: los KPI del §11.5 y la lectura semanal del ciclo (§10.3.1) | nueva |
+| **Ediciones** | Lo publicado, su historial y la huella | existe |
+| **Tablero** | El configurador del modelo — ahora también la base con la que un agente propone la configuración del periodo siguiente (§11.4) | existe, gana rol |
+| **Grados** *(nueva)* | La escala «El Punto y la Tríada» (§9.1) con **calculadora**: SCA + V·P·R + Base física → puntos → grado → escalón de precio | nueva |
+| **Marco de mercado** *(nueva)* | La referencia que **clasifica** variedades, procesos y reconocimientos en A/B/C. Semestral (enero y julio). Su PDF es el D10 (§11.2) | nueva |
+| **MOQ y mermas** *(nueva)* | Las dos tablas de mínimos y el embudo de conversión que las explica (§11.3) | nueva |
+| **Parámetros del modelo** | Las versiones inmutables del método | existe |
+| **Dossier** | D0–D10 por versión | existe, gana el D10 |
+
+### 11.2 El marco de mercado **es dato**, y el PDF es su impresión
+
+Corrección del owner sobre lo escrito en §10.3.2 el 2026-09-15: el marco **no es solo un PDF adjunto** — es *«la
+referencia que clasifica directamente los grados, permitiendo actualizarlo»*. Eso cambia la arquitectura, y la mejora:
+
+- **La estructura vive en el código** (`definicion.ts`, contrato de `ALINEACION` §1): que hay tres niveles C · B · A, qué
+  significa cada uno, y cómo entran en los puntos (§9.1). Eso no cambia cada semestre.
+- **El contenido vive en el marco vigente**: *qué* variedad es A, *qué* proceso es B, *cuántos* reconocimientos hacen A,
+  y con qué prima de mercado observada. Tabla **`pvc_marco_mercado`** (service-role-only, inmutable como las versiones
+  del modelo): `periodo` (`2027-H1`), `atributo`, `nivel`, `entradas jsonb` (la lista de variedades/procesos de ese
+  nivel), `indice` (prima observada y nota de demanda), `fuentes jsonb` (subastas, informes, con url y fecha), `notas`,
+  `published_by`, `published_at`. `definicion.ts` pide la clasificación al marco vigente, con **fallback al catálogo
+  semilla del §9.1** si no hay marco publicado (nada revienta sin dato — regla de la casa).
+- **El D10 es la impresión del marco**, no su fuente: la GitHub Action del dossier lo genera desde las filas publicadas.
+  Así el owner tiene las dos cosas que pidió — un archivo adjunto en el menú secundario **y** un dato actualizable.
+- **Cadencia**: enero y julio, con acta, desde la pestaña Marco. La revisión trimestral del catálogo de variedades
+  (acuerdo G&G) se hace contra el marco vigente; si mueve una variedad de nivel, **no** se recalculan los lotes ya
+  galardonados (sus letras están congeladas en `lots.surplus`, como los snapshots de las ofertas).
+
+### 11.3 Los MOQ: dos mercados, dos unidades, y un puente que no es constante
+
+Esto es lo que el owner pidió explicar. Hay **dos** sistemas de mínimos porque hay **dos unidades de comercio** y entre
+ellas no hay un factor fijo, sino un rendimiento variable.
+
+**La unidad del origen es la carga.** El productor cosecha, beneficia y vende **pergamino seco**, y su unidad es la
+**carga de 125 kg**: es lo que pesa la cooperativa, lo que cotiza la Federación y en lo que el productor piensa. No
+existe media carga en su cabeza salvo como excepción.
+
+**La unidad del mercado es la bolsa de 6 kg de verde.** Es lo que cabe en un batch de tueste y lo que se paletiza. El
+comprador no compra cargas: compra bolsas.
+
+**Entre las dos está la merma, y no es un número.** Nominalmente 125 kg de pergamino dan 87,5 kg de verde (70 %). Pero
+el rendimiento real depende del **factor de rendimiento** (FR 94 = 94 kg de CPS por cada 70 kg de excelso, o sea 93,09 kg
+de excelso por carga), de la humedad, de los defectos y de la **selección por malla**. Por eso el modelo no promete el
+nominal: promete **78 kg garantizados por carga** (`params.kg_g`) y se queda el resto como colchón.
+
+De ahí salen las dos tablas, que son la misma cosa vista desde cada punta:
+
+| Grado | **MOQ al productor** (Direct CaaS) | kg CPS | verde nominal (70 %) | **MOQ al comprador** (Cherry Picked) | kg entregados | colchón |
+|---|---|---|---|---|---|---|
+| Black | **4 cargas** | 500 | 350,0 | **56 unidades** | 336 | −14 kg · **4,0 %** |
+| Red | **3 cargas** | 375 | 262,5 | **42 unidades** | 252 | −10,5 kg · **4,0 %** |
+| Blue | **2 cargas** | 250 | 175,0 | **26 unidades** | 156 | −19 kg · **10,9 %** |
+| Gold | **1 carga** | 125 | 87,5 | **13 unidades** | 78 | −9,5 kg · **10,9 %** |
+| Tyrian | **½ carga** | 62,5 | 43,75 | **6 unidades** | 36 | −7,75 kg · **17,7 %** |
+
+Obsérvese que **Gold = 1 carga = 13 bolsas = 78 kg** es exactamente el `kg_g` del modelo: la carga garantizada es la
+unidad de referencia de toda la pila de precios (`n0 = COP por carga ÷ TRM ÷ 78`).
+
+**Por qué el colchón crece con el grado** — tres razones que se acumulan, y ninguna es arbitraria:
+
+1. **La varianza no se promedia igual en lo pequeño.** El MOQ Black son 4 cargas: las desviaciones de rendimiento de
+   una carga se compensan con las de las otras tres. El MOQ Tyrian es media carga: una sola tanda mal trillada se come
+   una fracción desproporcionada. La dispersión relativa de un rendimiento cae con la raíz del volumen, así que para la
+   **misma confianza de entrega** hace falta proporcionalmente más colchón cuanto más pequeño es el lote.
+2. **El grado alto selecciona más.** «Disponibilidad por malla» está en los criterios de Gold y Tyrian, no en los de
+   Black. Seleccionar por tamaño de grano retira masa que un Black conserva: más selección, más merma, y el colchón
+   no es opcional sino la consecuencia.
+3. **El redondeo a bolsa pesa más en lo pequeño.** La bolsa de 6 kg es indivisible. A Black le cuesta 2 kg sobre 350
+   (0,6 %); a Tyrian, 1,75 kg sobre 43,75 (**4 %**). La unidad no cambia; el lote encoge.
+
+**Y por qué Direct CaaS ≠ CTCx Selection.** Son dos negocios distintos aunque el café sea el mismo:
+
+- En **Direct CaaS** el café sigue siendo del productor en identidad y en riesgo compartido: CTCx le compra su cosecha
+  dentro del esquema, la vende **con el nombre de su finca**, y es CTCx quien **garantiza al comprador** los kilos de
+  verde. El colchón es entonces un seguro operativo sobre un rendimiento que CTCx no controla, y el mínimo se expresa
+  **en cargas** porque es lo que el productor entrega y porque el lote tiene que ser lo bastante grande para sostener su
+  propia línea en el catálogo, con su Ficha y su historia.
+- En **CTCx Selection** CTCx ya compró en firme: la merma **ya ocurrió**, el café está trillado, contado y en bodega, y
+  lo que hay es lo que hay. El mínimo deja de ser un pronóstico de rendimiento y pasa a ser una **decisión de
+  inventario**: si la compra justifica el capital y la bodega. Ese cambio de quién carga el riesgo es exactamente lo
+  que justifica retirar el 8 % de prima del valor final (§9.5): la prima paga estar dentro del esquema, y en compra
+  directa el productor no está dentro — es CTCx quien asume el riesgo y vende el café como suyo, listo en bodega.
+
+**El embudo, que es la mejor manera de enseñarlo** (y la visualización de la pestaña, §11.5): una carga entra por arriba
+y sale por abajo en bolsas, con el precio por kilo recalculado en cada escalón —
+`125 kg CPS → 93,09 kg excelso (FR 94) → 78 kg garantizados → 13 bolsas de 6 kg` — y al lado, en cada escalón, el
+`COP/kg` que implica el escalón de precio del grado. Ese dibujo explica la merma, la carga, el kilo garantizado y la
+bolsa de una vez, y es el mismo que usa la pestaña de Grados para justificar el MOQ.
+
+### 11.4 El Tablero como configurador del agente
+
+El Tablero deja de ser solo «los diales del owner» y pasa a tener **dos lectores**: la persona y un **agente**.
+
+- **Hacia adelante — proponer la configuración del periodo siguiente.** El agente lee el estado del mercado (las fuentes
+  del ciclo, §10.3.1), los cinco Month-Wrap del periodo que cierra (§11.6) y el marco de mercado vigente, y **propone
+  un conjunto de parámetros** para la versión siguiente del modelo: peso L/P, tope de impulso, prima objetivo, collar,
+  PEC-ADD. La propuesta llega como un **borrador de versión** en la pestaña Parámetros —con su nota de acta redactada y
+  el porqué de cada cambio— y **el owner la acepta o no**. Nunca publica: la versión del modelo la registra una persona
+  (regla vigente de `crearVersionModeloAction`, owner-only).
+- **Hacia ahora — explicar lo que está pasando.** El mismo agente corre `calcular()` con los parámetros hallados y
+  **traduce** el resultado: no «PVC 2.500.000 y gobierna PEC», sino qué significa eso para el productor, para el
+  comprador y para la caja. Esa traducción es el contenido de la pestaña **Lectura** y del reporte semanal.
+- **Los límites**, que valen aquí como en todo el libro de consumo de IA (`ALINEACION` §1): modelo pequeño por defecto,
+  el paso caro es **opt-in con el precio a la vista**, todo se anota en `ai_usage` con su vía (`bcp:modelo-economico`), y
+  **sin credencial nada revienta**: sin IA la pestaña muestra las cifras y omite la narración.
+
+### 11.5 La pestaña «Lectura»: los KPI, con cara
+
+Las cifras de abajo están calculadas con datos reales de hoy (FNC del 15-sep-2026 = **$2.045.000**/carga; PVC vigente
+$2.500.000) para que se vea qué dice cada una cuando está viva.
+
+| KPI | Fórmula | Hoy | Visualización |
+|---|---|---|---|
+| **% de prima mínima** | `(PVC × 1,15 − FNC hoy) / FNC hoy` — el escalón Black contra el precio de la Federación | **+40,6 %** ($2.875.000 vs $2.045.000) | **La regla de precios**: una barra horizontal con el FNC a la izquierda y los cinco escalones (Black→Tyrian) como marcas a lo largo, cada una con **el sello del grado** (`public/images/shared/grados/*.webp`, que ya existen). El tramo FNC→Black va sombreado: *eso* es la prima mínima. Una sola imagen explica el KPI y la escalera entera |
+| **$ sobre base pergamino** | `PVC × 1,15 − FNC hoy`, por carga de 125 kg | **+$830.000 / carga** | **La carga apilada**: una barra vertical que es una carga, con el precio FNC abajo y el sobreprecio encima, rotulado en pesos y en «lo que significa» (cuánto más recibe el productor por carga entregada) |
+| **COP/kg de verde empacado, estándar CTCx** | `n1 = n0 + costo de trilla y empaque`, por grado | Black **≈ $39.800/kg** (n0 $36.859 + empaque) | **El embudo del §11.3**: 125 kg CPS → 93,09 excelso → 78 garantizados → 13 bolsas, con el COP/kg en cada escalón |
+
+**El tercer KPI necesita un dato que hoy está estimado a mano.** En el motor, el salto de `n0` (verde a granel) a `n1`
+(verde empacado) es `params.proc = 0,95 US$/kg`, un estimado del D2 §13.1. El owner pide que ese componente **se pueda
+añadir desde la pestaña** y que venga de una herramienta que ya existe: es el **Cotizador de Empaque**
+(`/ecp/cotizador-empaque` + `public/tools/costo-empaque.html`), con `mermas-detallada.html` al lado para el rendimiento.
+El acople: la pestaña trae el costo calculado allí y lo escribe como parámetro de la versión del modelo (`proc`), con su
+fecha y su origen — deja de ser un número inventado y pasa a ser un número **con procedencia**, como todo lo demás.
+
+*La lista de KPI del owner quedaba abierta (un cuarto viñeta sin texto): cuando lo diga, entra aquí.*
+
+### 11.6 Month-Wrap: cinco hitos por periodo
+
+El periodo de una franja —del **corte** al **cierre de la vigencia**— dura unos **cinco meses**: 7–8 semanas entre la
+publicación y el `valid_from`, más los tres meses de vigencia. El owner pide un punto de reflexión por cada mes que
+cierra: **cinco Month-Wrap por periodo**.
+
+- **Qué compara cada M-W**: el FNC realizado del mes cerrado contra lo que el modelo implicaba para él; el error de la
+  proyección **P** y el de la mirada atrás **L**; si el término que gobierna habría cambiado; si el disparador se acercó
+  o se cumplió; y la prima realizada acumulada contra la objetivo.
+- **Qué añade sobre la lectura semanal**: la semanal dice *qué está pasando*; el M-W dice *qué patrón se está formando*.
+  Es el nivel donde se ve que, por ejemplo, la proyección P se adelanta sistemáticamente en meses de cosecha, o que el
+  collar del modificador se satura siempre en la misma dirección. Eso es lo que el owner llama «entendimiento de
+  patrones para optimización predictiva y manejo de riesgo».
+- **Dónde vive**: `pvc_cycles.kind` gana el valor `month_wrap` (junto a `weekly | cut | trigger | manual`), y el M-W es
+  un ciclo como los demás, con su `diff` y su reporte. **El quinto cierra la franja**: consolida los cinco en
+  `pvc_forecast_scores` (§6) y dispara el **informe de afinación**, que es la entrada del agente del §11.4 para proponer
+  la versión siguiente del modelo. Así se cierra el círculo: publicar → leer cada semana → reflexionar cada mes →
+  reasesorar el modelo → publicar mejor.
+- **La serie histórica se vuelve viva aquí**: cada M-W consolida el mes cerrado en la serie mensual (hoy `FNC_MENSUAL`
+  embebida en el código, hallazgo A5) a partir de las lecturas diarias de `market_anchors`. El back-proof deja de
+  congelarse en agosto de 2026 sin que nadie tenga que hacer un commit.
+
+### 11.7 Lo que queda por decidir (owner)
+
+1. La **ruta**: ¿`/bcp/pvc` se queda (enlaces vivos, cero riesgo) o se muda a `/bcp/modelo` con talón 308?
+2. El **cuarto KPI** de la lista del §11.5, que quedó sin escribir.
+3. Si al mudar la clasificación al marco de mercado, una variedad que **baja** de nivel debe avisar a los lotes ya
+   galardonados (hoy la propuesta es no: las letras quedan congeladas en el lote, como los snapshots de las ofertas).
+4. El **nombre de la Base física** (§9.1.b) sigue pendiente desde el 2026-09-15.

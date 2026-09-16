@@ -113,6 +113,13 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   disparador) y el marco de mercado semestral como **documento D10 del dossier** (enero y julio, sin tabla ni pantalla).
   La oferta en dos caminos (§9.5) exige `lot_offers` kind `directa` y abrir `ctc_selection` a cualquier grado (**A13**:
   hoy solo lo enciende `black_negotiations`), además de la herramienta «PVC × grado».
+- **Refurbish del módulo a «Modelo Económico»** (`PVC_BCP_PLAN.md` §11, diseñado 2026-09-16, sin construir): rename en
+  `consoles.ts` (retira la pestaña vacía `direccionamiento/modelo-economico`), pestañas nuevas **Lectura** (KPI con la
+  regla de precios, la carga apilada y el embudo de mermas), **Grados** (escala y calculadora), **Marco de mercado**
+  (`pvc_marco_mercado`: la clasificación A/B/C **es dato**, semestral, y el D10 es su impresión) y **MOQ y mermas**;
+  el Tablero gana el rol de configurador que un agente usa para proponer la versión siguiente del modelo (nunca
+  publica); `pvc_cycles.kind` gana `month_wrap` (cinco por periodo, el quinto cierra la franja y alimenta la afinación);
+  el componente de empaque del KPI de verde viene del **Cotizador de Empaque** del ECP.
 - **Número de Nequi** real en `src/lib/arena/payment.ts` (owner).
 - **La primera jornada-vitrina** como evento supervisado; **estrenar el escáner visual** con soportes reales.
 - Hallazgos de la auditoría 2026-07-10 aún sin aplicar (HANDOFF §Audit findings): `search_path` en 4

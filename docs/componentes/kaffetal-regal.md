@@ -101,26 +101,26 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
     **Ponderación, no acumulación**: un productor pequeño y consistente puede estar arriba. Pesos y beneficios: por
     definir (ideas: compra anticipada de ciertas cargas, que consume caja y hay que dosificar; mejores precios en lotes
     selectos).
-- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.2** en
-  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md`, con las decisiones del owner ya dentro (§5.1):
-  - evaluación: **$200.000 con envío incluido**, descuentos del 30–70 % (100 % excepcional), revisada cada año;
-  - reembolso **solo si el grado mejora**;
-  - **inversión inicial** por programa y grado (Cherry Picked: Black/Red 1 carga · Blue 200 kg · Gold > 100 kg ·
-    Tyrian ajustado; CaaS 15–25 kg);
-  - **plazos de `PVC-D2` §11**.
+- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.3** en
+  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md` (página de rodaje publicada para el equipo), con
+  las decisiones del owner dentro (§5.1):
+  - evaluación **$200.000 con envío incluido**, descuentos del 30–70 %;
+  - contra-catación que sube el grado → **crédito a favor** al concretar el trato;
+  - **inversión inicial** por programa y grado; en CaaS, 15–25 kg de entrada atados a mantener la oferta un mes;
+  - **oferta a 1–3 días**;
+  - plazos de `PVC-D2` §11;
+  - **trimestres desde enero**.
 
-  Esperan al owner sus preguntas §5.2: CaaS directa frente a 15–25 kg, la tabla frente al MOQ del §12.6, qué más de
-  D2 §11 sigue vigente, multiplicadores en voz alta.
+  Quedan preguntas menores en su §5.2, que no bloquean la animática. Depende de **consolas**: el PVC ene–mar 2027
+  publicado **antes del 15-oct-2026** (ALINEACIÓN §3b).
 
   Después, **tanda propia de copy y tarifa** (su §6):
   - `ARENA_FEE_COP` 80.000 → 200.000 con descuento, y el texto de `PorQueSection`, `faq.ts` n.º 3 y `EvaluacionesTab`;
   - instrucciones de envío con guía prepagada;
-  - `TratoSection` (escalera 400→200→100, 15 kg, pago al mes 3, 2,5–4 t, humedad);
+  - `TratoSection`: escalera 400→200→100, 15 kg, pago al mes 3, 2,5–4 t, humedad;
   - `faq.ts` n.º 1·2·4·5·6·9·11;
   - índices de `OportunidadSection` y el paso 5 de `BienvenidosSection`;
-  - el vocabulario «Arena» en la evaluación.
-
-  El rodaje espera también a la SIC (línea siguiente).
+  - vocabulario «Arena» en la evaluación.
 - ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
   la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.
 

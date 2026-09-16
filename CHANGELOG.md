@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.44] — 2026-09-16 (commit pendiente)
+
+- **Añadido**: primera cara del refurbish del BCP (`docs/PVC_BCP_PLAN.md` §11) — la pestaña **Lectura**
+  (`/bcp/pvc/lectura`, primera del tab strip) responde «qué significa hoy el precio que rige». **No recalcula ni
+  publica nada**: el PVC está fijado por tres meses y esta pantalla mide la distancia entre lo que se fijó al corte y lo
+  que el mercado hace hoy. Las tres cifras del owner, cada una con su dibujo: **prima mínima** (el escalón Black contra
+  el precio de la Federación del día, +40,6 % hoy) con **la regla de precios** a escala real; **sobre base pergamino**
+  (+$830.000 por carga de 125 kg) con **la carga apilada**; y **verde empacado FOB** ($45.341/kg, `n2` a la TRM del
+  corte) con **el embudo de una carga** — 125 kg CPS → 93,09 excelso → 78 garantizados → unidades de empaque, con el
+  COP/kg en cada escalón. Añade la desviación contra la entrada de la edición y la holgura hasta el disparador.
+- **Añadido**: `src/lib/pvc/lectura.ts` — módulo **puro** (como `motor.ts`) con las tres fórmulas, el embudo y las
+  reglas de MOQ y empaque; y `lecturaDeMercado()` en el servicio, que lee `market_anchors` (90 días, promedio de 30).
+- **Cambiado** (addendum del owner, `PVC_BCP_PLAN.md` §9.2): el empaque son **dos estándares**, no cinco formatos —
+  **vacío 3 · 6 · 12 kg** para Blue, Gold y Tyrian (los tres con **un solo estimado de costo**) y **GrainPro-type +
+  yute de 35 kg** para Black y Red, que deja de venderse en bolsa de 6 kg. El MOQ de Black y Red lo fija **cuántos lotes
+  componen la mezcla** (2 → 4 cargas, 3 → 3, 4 → 4; una mezcla de cinco no existe: con seis se hacen dos de tres);
+  Blue 2 cargas; Gold 1 carga, con piso excepcional de **un saco** (70 kg CPS ≈ 50 verde ≈ 40 tostado) para Gold y
+  Tyrian. El incremento después del mínimo es **la mitad**, fraccionable a cuartos como upsale. Se **exhibe** en
+  Lectura; todavía no gobierna precio — eso es la versión v2.2.0 del modelo, con acta.
+- **Añadido**: guardián **`scripts/qa-pvc-lectura.mjs`** (59) — las tres fórmulas con los números reales del día, los
+  dos estándares de empaque, la regla de la mezcla, el piso de saco, el incremento a la mitad y el embudo; más que la
+  pantalla use las funciones en vez de repetir fórmulas.
+- **Docs**: el §11.5 corrige el tercer KPI — el owner lo llama «verde FOB», así que es `n2` (FCA Bogotá), no `n1`; y el
+  costo de empaque pasa de ser un parámetro a **dos**, uno por estándar, traídos del Cotizador de Empaque del ECP.
+
 ## [V5.43] — 2026-09-16 (commit dba3795)
 
 - **Corregido** (hallazgo **A1** de `docs/PVC_BCP_PLAN.md` §10.2): **«vigente» ignoraba la ventana de vigencia del PVC**.

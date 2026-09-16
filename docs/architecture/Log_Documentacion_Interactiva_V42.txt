@@ -257,3 +257,19 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   PROPONE la versión siguiente y nunca publica; Month-Wrap ×5 por periodo). `ctc_selection` resultó ser un campo
   derivado de `public_lot_catalog` que solo enciende `black_negotiations` (A13).
 (commit: dba3795)
+
+## [2026-09-16] V5.44 · Modelo Económico: la pestaña Lectura y el addendum de MOQ y empaque (consolas)
+- Para la ficha DICT `pvc` del wrap V43 (que en el refurbish pasa a llamarse «Modelo Económico»): **nodo nuevo** en la
+  traza «La edición PVC» — la pestaña **Lectura** (`/bcp/pvc/lectura`, primera del tab strip) traduce la edición vigente
+  a las tres cifras del owner, cada una con su dibujo: prima mínima (escalón Black vs FNC del día) con la regla de
+  precios a escala real; sobre base pergamino (COP por carga de 125 kg) con la carga apilada; y verde empacado FOB
+  (`n2` × TRM) con el embudo 125 CPS → 93,09 excelso → 78 garantizados → unidades de empaque. NO recalcula ni publica:
+  el precio está fijado por tres meses (§10.3.1). Módulo puro nuevo `src/lib/pvc/lectura.ts` + `lecturaDeMercado()` en
+  el servicio (lee `market_anchors`, 90 días). Guardián nuevo `qa-pvc-lectura.mjs` (59).
+- **Cambio de regla de negocio** para la ficha `grados` y para `cherry` (addendum del owner, plan §9.2): el empaque son
+  DOS estándares — vacío 3·6·12 kg para Blue+ con un solo estimado de costo, y GrainPro-type + yute de 35 kg para Black
+  y Red, que **dejan de venderse en bolsa de 6 kg**. El MOQ de Black y Red sale de cuántos lotes componen la mezcla
+  (2→4 cargas, 3→3, 4→4; no hay mezclas de cinco), Blue 2 cargas, Gold 1 con piso excepcional de un saco (70 kg CPS)
+  para Gold y Tyrian; el incremento es la mitad del mínimo, fraccionable a cuartos como upsale. Se exhibe, no gobierna
+  precio todavía: eso es la versión v2.2.0 del modelo.
+(commit: pendiente)

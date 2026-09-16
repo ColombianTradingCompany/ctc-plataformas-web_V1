@@ -143,6 +143,41 @@ const toPublic = (r: PublicRow): PvcCurrent => ({
   escalera: r.escalera, pila: r.pila, kpis: r.kpis,
 });
 
+/** Lo que el mercado ha hecho desde que se fijó la edición vigente. Sale de
+ *  `market_anchors`, que el cron diario llena solo (`/api/cron/market-anchors`).
+ *  Es la materia prima de la pestaña Lectura y del reporte semanal (§10.3.1). */
+export type LecturaMercado = {
+  fncHoy: number | null;
+  fncAsOf: string | null;
+  fncPromedio30d: number | null;
+  /** Lecturas de los últimos 90 días, de la más vieja a la más nueva. */
+  serie: { asOf: string; value: number }[];
+};
+
+export async function lecturaDeMercado(dias = 90): Promise<LecturaMercado> {
+  const service = createServiceRoleClient();
+  const desde = new Date(Date.now() - dias * 86_400_000).toISOString().slice(0, 10);
+  const { data } = await service
+    .from("market_anchors")
+    .select("as_of, value")
+    .eq("kind", "fnc_carga")
+    .gte("as_of", desde)
+    .order("as_of", { ascending: true });
+  const filas = ((data ?? []) as { as_of: string; value: number | string }[])
+    .map((r) => ({ asOf: r.as_of, value: Number(r.value) }))
+    .filter((r) => Number.isFinite(r.value));
+  if (!filas.length) return { fncHoy: null, fncAsOf: null, fncPromedio30d: null, serie: [] };
+  const ultima = filas[filas.length - 1];
+  const corte30 = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const ult30 = filas.filter((r) => r.asOf >= corte30);
+  return {
+    fncHoy: ultima.value,
+    fncAsOf: ultima.asOf,
+    fncPromedio30d: ult30.length ? ult30.reduce((a, r) => a + r.value, 0) / ult30.length : null,
+    serie: filas,
+  };
+}
+
 /** La edición vigente tal y como la ve el público (vista `SECURITY DEFINER`,
  *  que desde V5.43 filtra por ventana de vigencia). */
 export async function pvcVigentePublico(): Promise<PvcCurrent | null> {

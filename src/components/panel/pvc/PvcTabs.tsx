@@ -4,10 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "@/components/panel/shared.module.css";
 
-// ── BCP · PVC · las cuatro caras del módulo ──────────────────────────────────
-// Ediciones (lo publicado y su historial), Tablero (el modelo con diales),
-// Parámetros (las versiones del método) y Dossier (los PDF por versión).
+// ── BCP · Modelo Económico · las caras del módulo ────────────────────────────
+// Lectura (qué significa hoy el precio que rige), Ediciones (lo publicado y su
+// historial), Tablero (el modelo con diales), Parámetros (las versiones del
+// método) y Dossier (los PDF por versión).
+//
+// Lectura va primera porque es la pregunta que se hace al entrar; el refurbish
+// completo (docs/PVC_BCP_PLAN.md §11) la convierte además en la de aterrizaje y
+// añade Grados, Marco de mercado y MOQ. Hasta entonces `/bcp/pvc` sigue siendo
+// Ediciones: mover la raíz es una mudanza de ruta, con su talón 308.
 const TABS = [
+  { href: "/bcp/pvc/lectura", label: "Lectura" },
   { href: "/bcp/pvc", label: "Ediciones", exact: true },
   { href: "/bcp/pvc/tablero", label: "Tablero" },
   { href: "/bcp/pvc/parametros", label: "Parámetros del modelo" },

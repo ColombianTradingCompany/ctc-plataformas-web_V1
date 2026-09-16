@@ -391,21 +391,66 @@ tostadores; CaaS/HORECA; Cherry Picked X y la Ficha pública para el consumidor)
 de Notion. Se escriben en los tres idiomas cuando la fase 2 los lleve a código.
 
 
-### 9.2 MOQ en unidades de 6 kg (decisión #2)
+### 9.2 MOQ y empaque (decisión #2, con el addendum del 2026-09-16)
 
-Merma pergamino → verde 70 %; carga = 125 kg CPS; unidad de venta = bolsa de 6 kg.
+Merma pergamino → verde 70 %; carga = 125 kg CPS; FR 94 → 93,09 kg de excelso por carga; 78 kg garantizados por carga.
 
-| Grado | Cargas mín. | kg CPS | kg verde | Unidades (máx.) | **MOQ unidades** | **kg ajustados** | Delta |
+**Primera versión (15-sep), en unidades de 6 kg** — sigue valiendo como la conversión a kilos entregados:
+
+| Grado | Cargas mín. | kg CPS | kg verde | Unidades (máx.) | MOQ unidades | kg ajustados | Colchón |
 |---|---|---|---|---|---|---|---|
-| Black | 4 | 500 | 350 | 58,0 | **56** | **336** | −14 kg (−4,0 %) |
-| Red | 3 | 375 | 262,5 | 43,0 | **42** | **252** | −10,5 kg (−4,0 %) |
-| Blue | 2 | 250 | 175 | 29,0 | **26** | **156** | −19 kg (−10,9 %) |
-| Gold | 1 | 125 | 87,5 | 14,0 | **13** | **78** | −9,5 kg (−10,9 %) |
-| Tyrian | 0,5 | 62,5 | 43,75 | 7,0 | **6** | **36** | −7,75 kg (−17,7 %) |
+| Black | 4 | 500 | 350 | 58,0 | 56 | 336 | −14 kg (−4,0 %) |
+| Red | 3 | 375 | 262,5 | 43,0 | 42 | 252 | −10,5 kg (−4,0 %) |
+| Blue | 2 | 250 | 175 | 29,0 | 26 | 156 | −19 kg (−10,9 %) |
+| Gold | 1 | 125 | 87,5 | 14,0 | 13 | 78 | −9,5 kg (−10,9 %) |
+| Tyrian | 0,5 | 62,5 | 43,75 | 7,0 | 6 | 36 | −7,75 kg (−17,7 %) |
 
-Los MOQ son **cifras del owner, no una fórmula**: se guardan como tabla (`pvc_model_versions.params.moq`) y
-`moqPorGrado(grado)` la lee de la edición vigente. `ASSOC_BLACK_MOQ = 350` se retira; el catálogo muestra unidades y
-kilos («56 unidades · 336 kg»). Gold = 13 unidades = 78 kg es la carga garantizada que ya nombraba §4.
+**Addendum del owner (16-sep): el empaque son dos estándares, y el mínimo de Black y Red lo fija la mezcla.**
+
+**El empaque.** No hay cinco formatos con cinco costos: hay **dos estándares**, y dentro de uno el formato es elección
+del comprador con **un solo estimado de costo**.
+
+| Estándar | Grados | Formatos |
+|---|---|---|
+| **Vacío** | Blue · Gold · Tyrian | **3 · 6 · 12 kg** — *los tres en un solo estimado, no tres* |
+| **GrainPro-type + yute** | Black · Red | **35 kg** |
+
+Eso cambia la unidad de venta de Black y Red: el saco de 35 kg, no la bolsa de 6. Y cambia el KPI de verde empacado
+(§11.5): el costo de empaque deja de ser un número por grado y pasa a ser **dos** parámetros del modelo, uno por
+estándar, traídos del Cotizador de Empaque del ECP.
+
+**El mínimo de Black y Red sale de la mezcla, no del kilaje.** Los dos son **combinaciones de lotes**, y el mínimo es
+que cada lote de la mezcla aporte al menos una carga, con la mezcla sin bajar de tres:
+
+| Lotes en la mezcla | MOQ | Reparto |
+|---|---|---|
+| **2 lotes** | **4 cargas** | 2 de cada uno |
+| **3 lotes** | **3 cargas** | 1 de cada uno |
+| **4 lotes** | **4 cargas** | 1 de cada uno |
+
+**Una mezcla de cinco no existe**: con seis lotes se hacen dos mezclas de tres. Vale igual para Black y para Red.
+
+**Lote único: el mínimo es del lote.** **Blue: 2 cargas.** **Gold: 1 carga** como estándar. **Gold y Tyrian** admiten,
+en casos particulares, bajar hasta **un saco — 70 kg de CPS, ≈ 50 kg de verde, ≈ 40 kg de tostado** — incluso al borde
+de la carga.
+
+**Los incrementos siguen la misma lógica modular: el siguiente paso es la mitad del mínimo.**
+
+| Grado | MOQ | Incremento |
+|---|---|---|
+| Black · Red, mezcla de 4 (o de 2) | 4 cargas | **2 cargas** |
+| Black · Red, mezcla de 3 | 3 cargas | **1,5 cargas** |
+| Blue | 2 cargas | **1 carga** |
+| Gold | 1 carga | **½ carga** |
+
+La fracción que sobra (media carga, y hasta cuartos) **se promociona como upsale a otros clientes**: es inventario
+colocable, no un residuo. Todo limitado, siempre, a la disponibilidad real del lote.
+
+**Dónde vive esto.** Hoy `pvc_model_versions.params.moq` sigue con la tabla de la primera versión (228/150/60/30) y
+`params.proc` con un solo costo de empaque estimado: cambiarlos es la **versión v2.2.0 del modelo**, con acta (§10.4
+paso 2). Mientras tanto, la regla de arriba vive en `src/lib/pvc/lectura.ts` (`moqCargas`, `incrementoCargas`,
+`EMPAQUES`) y se **exhibe** en la pestaña Lectura, sin gobernar todavía ningún precio. `ASSOC_BLACK_MOQ = 350` se retira
+cuando la fase 2 llegue a Cherry Picked.
 
 ### 9.3 Moneda y la protección contra la TRM (decisión #3)
 
@@ -758,14 +803,17 @@ $2.500.000) para que se vea qué dice cada una cuando está viva.
 |---|---|---|---|
 | **% de prima mínima** | `(PVC × 1,15 − FNC hoy) / FNC hoy` — el escalón Black contra el precio de la Federación | **+40,6 %** ($2.875.000 vs $2.045.000) | **La regla de precios**: una barra horizontal con el FNC a la izquierda y los cinco escalones (Black→Tyrian) como marcas a lo largo, cada una con **el sello del grado** (`public/images/shared/grados/*.webp`, que ya existen). El tramo FNC→Black va sombreado: *eso* es la prima mínima. Una sola imagen explica el KPI y la escalera entera |
 | **$ sobre base pergamino** | `PVC × 1,15 − FNC hoy`, por carga de 125 kg | **+$830.000 / carga** | **La carga apilada**: una barra vertical que es una carga, con el precio FNC abajo y el sobreprecio encima, rotulado en pesos y en «lo que significa» (cuánto más recibe el productor por carga entregada) |
-| **COP/kg de verde empacado, estándar CTCx** | `n1 = n0 + costo de trilla y empaque`, por grado | Black **≈ $39.800/kg** (n0 $36.859 + empaque) | **El embudo del §11.3**: 125 kg CPS → 93,09 excelso → 78 garantizados → 13 bolsas, con el COP/kg en cada escalón |
+| **COP/kg de verde empacado FOB** | `n2` de la pila (FCA Bogotá ≈ FOB) × TRM del corte | Black **$45.341/kg** (n0 $36.859 a granel → n1 $39.843 empacado → **n2 $45.341** puesto en FCA) | **El embudo del §11.3**: 125 kg CPS → 93,09 excelso → 78 garantizados → unidades de empaque, con el COP/kg en cada escalón |
 
-**El tercer KPI necesita un dato que hoy está estimado a mano.** En el motor, el salto de `n0` (verde a granel) a `n1`
-(verde empacado) es `params.proc = 0,95 US$/kg`, un estimado del D2 §13.1. El owner pide que ese componente **se pueda
+**El tercer KPI necesita un dato que hoy está estimado a mano.** El owner lo llama «verde FOB», así que la cifra es `n2`
+(FCA Bogotá), no `n1`. Dentro de esa cadena, el salto de `n0` (verde a granel) a `n1` (verde empacado) es
+`params.proc = 0,95 US$/kg`, un estimado del D2 §13.1. El owner pide que ese componente **se pueda
 añadir desde la pestaña** y que venga de una herramienta que ya existe: es el **Cotizador de Empaque**
 (`/ecp/cotizador-empaque` + `public/tools/costo-empaque.html`), con `mermas-detallada.html` al lado para el rendimiento.
-El acople: la pestaña trae el costo calculado allí y lo escribe como parámetro de la versión del modelo (`proc`), con su
-fecha y su origen — deja de ser un número inventado y pasa a ser un número **con procedencia**, como todo lo demás.
+El acople: la pestaña trae el costo calculado allí y lo escribe como parámetro de la versión del modelo, con su fecha y
+su origen — deja de ser un número inventado y pasa a ser un número **con procedencia**, como todo lo demás. Con el
+addendum del §9.2 ya no es **un** parámetro sino **dos**, uno por estándar de empaque: vacío (Blue+) y GrainPro-type +
+yute (Black y Red).
 
 *La lista de KPI del owner quedaba abierta (un cuarto viñeta sin texto): cuando lo diga, entra aquí.*
 

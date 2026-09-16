@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.43] — 2026-09-16 (commit pendiente)
+## [V5.43] — 2026-09-16 (commit dba3795)
 
 - **Corregido** (hallazgo **A1** de `docs/PVC_BCP_PLAN.md` §10.2): **«vigente» ignoraba la ventana de vigencia del PVC**.
   `edicionVigente()`, la vista `public_pvc_current` y —por su cuenta— la pantalla de Ediciones decidían cuál rige con

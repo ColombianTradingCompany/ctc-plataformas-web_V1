@@ -256,4 +256,4 @@ Contexto abierto al cerrar V42 (2026-09-12) — plataforma V5.31:
   doble unidad carga de pergamino ↔ bolsa de verde y el colchón de merma; el Tablero como configurador de un agente que
   PROPONE la versión siguiente y nunca publica; Month-Wrap ×5 por periodo). `ctc_selection` resultó ser un campo
   derivado de `public_lot_catalog` que solo enciende `black_negotiations` (A13).
-(commit: pendiente)
+(commit: dba3795)

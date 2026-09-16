@@ -1,0 +1,121 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V43.0(4418a67).html
+(CTC Web Platform, desde 2026-09-16 · plataforma V5.45). Cada entrada se compila
+al próximo Version Wrap (V44).
+
+Formato:
+## [YYYY-MM-DD] V5.NN · Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pendiente">)
+
+════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
+  CHANGELOG posterior a «plataforma V5.45» tiene que aparecer aquí). Se añade al
+  final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «Wraps del mapa» (grupo CTC Consolas
+  internas, vía `plataforma`). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La línea «plataforma V5.45» de la cabecera es la referencia del guardián: el wrap
+  siguiente la reescribe con la versión sobre la que cierra.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137 ·
+V42: 137→139 · V43: 139→140).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex —
+y OJO al anclar un parche: las entradas viejas van `clave: {` (con espacio) y las
+nuevas `clave:{`. ⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO
+(V38): siempre `<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35).
+⚠️ LA CADENA «Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la
+suya). ⚠️ UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS (V40): cada replace lleva
+assert.
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V43 ENSEÑÓ (léase antes del V44)
+════════════════════════════════════════════════════════════════════════════════
+
+· LA COMPROBACIÓN 9 SE GANÓ EL SUELDO OTRA VEZ. Añadir un `CTX["n-bcp"]` «nuevo»
+  duplicó una clave que YA existía con 25 chips: JS se queda con la última, así que
+  la lista entera del nodo del BCP habría desaparecido sin un solo error. Es la
+  misma familia que V31, V34 y V37. ANTES de añadir a CTX o a DICT, buscar la clave
+  — y buscarla con los DOS estilos de escritura.
+
+· DIEZ VERSIONES DE UN COMPONENTE CABEN EN UNA FICHA, PERO NO EN UN PÁRRAFO. El
+  Lector de Cromatografía trajo V5.32–V5.41. Lo que hizo legible el arco no fue
+  resumir versión por versión, sino contarlo por lo que el sistema APRENDIÓ:
+  el reparto navegador/servidor, lo que el modelo nunca decide, las dos caras de
+  una lectura, y la lección de calibración. Los asientos por versión son la materia
+  prima; la ficha es la síntesis.
+
+· CUANDO DOS VERDADES CONVIVEN A PROPÓSITO, EL MAPA TIENE QUE DECIRLO. La escala de
+  puntos «El Punto y la Tríada» y la de `definicion.ts` coexisten hasta que el owner
+  valide la primera. La ficha `grados` lo dice con un aviso explícito y nombra el
+  guardián que impide que se mezclen. Un mapa que enseñara solo la nueva mentiría
+  sobre lo que hoy gobierna.
+
+· ESTE WRAP SE LLAMÓ FUERA DE SU VÍA, Y SE DEJA ANOTADO. ALINEACION §5.3 lo reserva
+  a la conversación «Wraps del mapa»; se compiló desde la sesión de `consolas` con
+  el owner presente, tras verificar que no había ninguna otra conversación en el
+  grupo (el peligro que la regla evita —dos wraps cruzados sobre el mismo HTML— no
+  existía). Si esto se repite, la regla sobra o la vía tiene que existir de verdad.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
+
+- **Lo que V43 compiló**: V5.32–V5.41 (el Lector de Cromatografía de Suelo, ficha
+  nueva `cromatografia` y tres trazas), V5.42–V5.45 (el módulo del BCP de PVC a
+  **Modelo Económico**: las cinco decisiones tomadas, la vigencia por ventana, las
+  pestañas Lectura y Grados, el panel del BCP como tablero) y los dos asientos de
+  docs del 12-sep (Red de Socios y Terratalento como charters; la Secretaría CTC).
+  1 ficha nueva · 3 trazas nuevas · 7 fichas actualizadas · 22 ANN.
+- **Deuda de compilación**: ninguna. Todo lo posterior a V5.31 está compilado.
+- **Pendientes cruzados con dueño**: en `docs/ALINEACION.md` §3b. Los del Modelo
+  Económico van por delante: la **fase 2 del PVC** (`definicion.ts` a la escala de
+  puntos, MOQ desde la edición, precios FOB en US$, la oferta en dos caminos con
+  `lot_offers` kind `directa` y `ctc_selection` abierto a cualquier grado), y del
+  owner: validar la escala con la calculadora, el X % del collar de TRM, las tres
+  filas del catálogo de variedades y el nombre de la Base física.
+- **Lo que el mapa TODAVÍA no refleja** (nace con el V43, para el V44): el marco de
+  mercado (`pvc_marco_mercado`) y la pestaña MOQ y mermas, que están diseñados en
+  `docs/PVC_BCP_PLAN.md` §11 pero no construidos.
+- **Línea base de la compuerta al cerrar**: tsc limpio · eslint 0 errores / 8 avisos ·
+  build exit 0 · qa-changelog 330 · qa-arqlog 14/14 · qa-encoding 858/0 ·
+  qa-pvc-escala 63 · qa-pvc-lectura 59 · qa-pvc-vigencia 28 · 52 guardianes.
+
+════════════════════════════════════════════════════════════════════════════════

@@ -21,6 +21,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ## [V5.45] — 2026-09-16 (commit 8730d9f)
 
+> **Wrap V43** (2026-09-16): ciclo compilado en `Documentacion_Interactiva_V43.0(4418a67).html` — 39 nodos · 140 fichas (+1: `cromatografia`) · 56 trazas (+3) · 91 wires · 34 CTX · 362 ANN (+22) · FILETREE 2864 archivos. Compila V5.32–V5.45.
+
 - **Añadido**: pestaña **Grados** del Modelo Económico (`/bcp/pvc/grados`) — la escala **«El Punto y la Tríada»**
   (`docs/PVC_BCP_PLAN.md` §9.1) con su **calculadora**: puntaje SCA + las tres letras (variedad · proceso ·
   reconocimiento) → puntos → grado → **lo que ese grado vale hoy** (escalón de la edición vigente, empaque y MOQ). Es

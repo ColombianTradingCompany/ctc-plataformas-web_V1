@@ -13,7 +13,8 @@ import type { Banda5 } from "./motor";
 /** La carga colombiana de café pergamino seco. Es la unidad del origen. */
 export const CARGA_KG_CPS = 125;
 
-/** Un saco de pergamino. Es el piso excepcional de Gold y Tyrian (§9.2). */
+/** Un saco de pergamino (70 kg). Es la referencia de «menos de una carga» que admiten Gold y Tyrian
+ *  según disponibilidad real (plan §12.6). No es un mínimo fijo: es hasta dónde se ha bajado. */
 export const SACO_KG_CPS = 70;
 
 // ── Empaque (addendum del owner, 2026-09-16) ────────────────────────────────
@@ -61,6 +62,11 @@ export const empaqueDe = (b: Banda5): EstandarEmpaque =>
 //   4 lotes → 4 cargas (1 de cada uno)
 //
 // Blue, Gold y Tyrian son lote único: el mínimo es del lote, no de la mezcla.
+//
+// FUNDAMENTO (CEO, 2026-09-16, plan §12.6): el MOQ sale de la cantidad de café que
+// se puede comprar y procesar de forma significativa e INDIVIDUAL en Colombia. Por
+// eso se dice en cargas y no en kilos de empaque, y por eso vale igual para
+// Cherry Picked que para CaaS: es una restricción del origen, no del canal.
 
 export const MOQ_MEZCLA: Record<number, number> = { 2: 4, 3: 3, 4: 4 };
 export const LOTES_EN_MEZCLA = [2, 3, 4] as const;
@@ -70,7 +76,7 @@ export const LOTES_EN_MEZCLA = [2, 3, 4] as const;
 export function moqCargas(b: Banda5, lotesEnMezcla?: number): number {
   if (b === "Black" || b === "Red") return MOQ_MEZCLA[lotesEnMezcla ?? 4] ?? 4;
   if (b === "Blue") return 2;
-  return 1; // Gold estándar; Tyrian igual, con el piso de saco por excepción
+  return 1; // Gold y Tyrian: 1 carga — «o menos, según disponibilidad real» (ver moqPuedeBajarDeUnaCarga)
 }
 
 /** El incremento después del mínimo es LA MITAD del mínimo — y la casa puede
@@ -79,6 +85,10 @@ export const incrementoCargas = (moq: number): number => moq / 2;
 
 /** ¿Este grado admite el piso excepcional de un saco? (§9.2) */
 export const admiteSaco = (b: Banda5): boolean => b === "Gold" || b === "Tyrian";
+
+/** Gold y Tyrian se ofrecen con «1 carga o menos, según disponibilidad real». No
+ *  hay un mínimo por debajo fijado: manda lo que de verdad haya del lote. */
+export const moqPuedeBajarDeUnaCarga = admiteSaco;
 
 // ── Las tres cifras ─────────────────────────────────────────────────────────
 

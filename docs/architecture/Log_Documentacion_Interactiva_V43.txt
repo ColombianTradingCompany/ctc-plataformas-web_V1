@@ -134,3 +134,16 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Abierto para el owner: si el tercer tramo es DDP o se parte en DDP y DAP; y la tensión Tyrian ½ carga vs el piso de
   saco de 70 kg del §9.2.
 (commit: ee1383a)
+
+## [2026-09-16] V5.47 · Modelo Económico: correcciones del CEO (programas, habilitaciones, compromiso) (consolas)
+- Para las fichas DICT `pvc` y `cherry` del wrap V44: el documento del CEO prima y SUPERA la matriz de V5.46.
+  `canales.ts` pasa de «canales × incoterm» a **programas × tramos**: Cherry Picked solo DDP (consolidado vía master
+  roaster); CaaS FOB Colombia · puerto de destino · DDP (dedicado). Dos habilitaciones no intercambiables: master
+  roaster (partner) → CP; regional enablement (operador logístico contratado por CTC) → puerto y DDP de CaaS. FOB
+  siempre. `accesoDelComprador(region)` devuelve la escalera de opciones del comprador.
+- Módulo NUEVO `compromiso.ts`: la oportunidad Cherry Picked del productor (liberación trimestral acumulada 0/25/50 %,
+  penalización 4 % = prima/2). La pestaña Lectura la muestra con la tabla de salida.
+- MOQ único en cargas por grado; subasta Tyrian sobre FOB puerto Colombia en EUR; calendario del PVC por trimestres.
+- Brechas para la v2.2.0 del modelo: columna marítima del puerto (hoy n3 aéreo, anotado), DDP consolidado vs dedicado,
+  regiones como dato. Guardianes: qa-pvc-canales 57 · qa-pvc-compromiso 31 (nuevo).
+(commit: pendiente)

@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.47] — 2026-09-16 (commit pendiente)
+
+- **Cambiado**: las **correcciones del CEO** (2026-09-16) entran como `docs/PVC_BCP_PLAN.md` §12 y **priman** sobre lo
+  escrito: §9.2, §9.5 y §9.6 quedan marcados SUPERADO. **Cherry Picked solo se entrega DDP** (consolidado a través del
+  master roaster); **CaaS** cotiza **FOB Colombia · puerto de destino · DDP** (envío dedicado). Las habilitaciones no son
+  intercambiables: **master roaster** (cliente tipo partner) abre Cherry Picked; **regional enablement** (operador
+  logístico contratado por CTC) abre el puerto y el DDP de CaaS. **FOB siempre está disponible**.
+- **Cambiado**: `src/lib/pvc/canales.ts` reescrito — programas × tramos, `habilitacionRequerida`, `puedeCotizar` y la
+  escalera de acceso del comprador `accesoDelComprador` (con master roaster: CP preferido, CaaS segunda opción; solo
+  regional enablement: CaaS completo; sin nada: CaaS FOB). El MOQ es **único, en cargas por grado** (Black/Red 3–4,
+  Blue 2, Gold/Tyrian 1 o menos según disponibilidad); el empaque es solo presentación. El MOQ en kilos de CaaS se retira.
+- **Añadido**: `src/lib/pvc/compromiso.ts` — la **oportunidad Cherry Picked** del productor: escalera de liberación por
+  trimestre acumulada (0 · 25 · 50 %) y penalización del **4 %** sobre lo retirado fuera de tramo; `tablaDeSalida`.
+- **Añadido**: pestaña Lectura del Modelo Económico — tarjetas «Programas, incoterms y región» y «Oportunidad Cherry
+  Picked · la escalera de compromiso» (tabla de salida mes a mes).
+- **Cambiado**: la subasta Tyrian puja sobre **FOB puerto Colombia** y se queda en EUR/kg; calendario del PVC por
+  trimestres exactos, público, publicado dos meses antes, rige el PVC vigente en la compra.
+- **Añadido**: guardianes `qa-pvc-canales.mjs` reescrito (57) y `qa-pvc-compromiso.mjs` nuevo (31).
+- **Seguridad**: se retiró del árbol vigente información sensible de acceso hallada en la documentación; la corrección
+  real se atiende con el owner fuera del repo. Regla: ningún documento del repo copia credenciales.
+- **Docs**: cartas de Cherry Picked, Kaffetal Regal y Herramientas del Café con las decisiones del CEO; `ALINEACION.md`
+  §3 y §3b (pendientes del owner: seguridad, auditoría de exposición del repo público, marca Kaffetal ante la SIC,
+  preguntas abiertas y brechas del modelo para la v2.2.0).
+
 ## [V5.46] — 2026-09-16 (commit ee1383a)
 
 - **Añadido**: la **matriz comercial** del Modelo Económico (`docs/PVC_BCP_PLAN.md` §9.6, lámina del owner) — **dos

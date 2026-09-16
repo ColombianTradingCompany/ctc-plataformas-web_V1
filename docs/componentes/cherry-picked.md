@@ -76,10 +76,31 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (105, contra las 110 claves reale
 
 ## Pendientes
 
+- **Decisiones del CEO del 2026-09-16** (`docs/PVC_BCP_PLAN.md` §12) que este componente tiene que ejecutar:
+  - **Cherry Picked solo se entrega DDP.** Es consolidado a través del master roaster de la región: **no hay FOB ni
+    entrega en puerto**. Si un comprador quiere su café en un envío propio, eso es **CaaS** (FOB · puerto de destino ·
+    DDP). La regla ya vive en `src/lib/pvc/canales.ts` (`puedeCotizar`, `accesoDelComprador`); ninguna superficie de
+    este componente debe pintar un tramo que esa función niegue.
+  - **Requiere región con master roaster.** El master roaster es un **cliente tipo partner**: le compra a CTC por el
+    mismo canal que él habilita. Sin master roaster en la región, el comprador va a CaaS.
+  - **Tablas de precio por región de master roaster**: 5 grados × 4 precios (CP DDP · CaaS FOB · CaaS puerto · CaaS
+    DDP) más el **precio aconsejado de tostado in situ** (verde CTC público + tarifa del master roaster en línea aparte +
+    tarifa de conexión de CTC). Falta decidir si la tarifa de conexión es fija o porcentual.
+  - **Retirar `ASSOC_BLACK_MOQ = 350`**: el MOQ es uno solo, **en cargas** y por grado (Black y Red 3–4 · Blue 2 · Gold
+    y Tyrian 1 carga o menos según disponibilidad). El empaque se muestra como **presentación**, no como mínimo.
+  - **Subasta Tyrian**: una sola por lote, en verde; **el bid es sobre FOB puerto Colombia** y el programa se elige al
+    cerrar. **Las reglas de ajuste por programa se publican antes de abrir la puja**: el pujador ve su precio final
+    desde el principio. **Se mantiene EUR/kg** y la adjudicación del OCP.
+  - **Tríada de reputación del comprador** (niveles verde → pintón → maduro): compras completadas · diversidad de
+    grados y orígenes probados · confiabilidad (paga a tiempo, no abandona carritos ni pujas). **Ponderación, no
+    acumulación**; no se agregan más factores; **CaaS queda fuera** de los niveles. Pesos, fórmula y beneficios: por
+    definir.
+  - **Stripe, aplazado**; se evalúa **Zulu** como pasarela. La entidad legal sigue bloqueando cobrar.
+
 - **La primera subasta real** cuando el bache galardone un Tyrian (hoy la sección dice «no hay subasta abierta»).
-- **Cobros**: sin código de Stripe; bloqueado por la entidad legal (charter `herramientas-internas`, Stripe).
-- **MOQ Black 350 vs 228 kg y EUR vs US$ a la TRM** — decisión del owner en el PVC; hasta entonces manda
-  `ASSOC_BLACK_MOQ = 350` y EUR.
+- **Cobros**: sin código de Stripe (aplazado, 2026-09-16); bloqueado por la entidad legal.
+- ~~MOQ Black 350 vs 228 kg y EUR vs US$ a la TRM~~ — **resuelto** por el CEO (arriba): MOQ en cargas y subasta en EUR.
+  Hasta que este componente lo ejecute, el código sigue con `ASSOC_BLACK_MOQ = 350`.
 - Un comprador que propone un proyecto CaaS recibe las respuestas **solo por correo** (el espejo al panel es
   de productores, diseño A3) — anotado, no roto.
 - Roast y X: listas de espera hasta 2027; el día que abran, el tablero del OCP ya existe.

@@ -120,9 +120,9 @@ Los tres primeros están registrados en `automations` (ECP · Automatizaciones) 
    «La Fortaleza / Wilmer R» y «La Pradera» tienen fichas y fincas en Notion pero **no cuenta** en KR;
    «La Ceiba» está en la plataforma (aprobada) y en Notion solo como página de Inmuebles, no en la
    Lista de Fincas.
-3. **Dos contraseñas en claro** en títulos de páginas de Objetivos y Tareas («Finca calapo
-   apartamentosalbaniauno@gmail.com clave 123456», «finca hortencia palmas ctcxcontable@gmail.com
-   clave 123456»). Son cuentas de KR. Hay que sacarlas de ahí y **rotarlas** (decisión del owner: la
+3. **Dos contraseñas en claro** en títulos de páginas de Objetivos y Tareas (las páginas «Finca calapo…» y
+   «finca hortencia palmas…»). Son cuentas de KR. ⚠️ **Las credenciales nunca se copian en este archivo**: el repositorio es
+   público. Hay que sacarlas de ahí y **rotarlas** (decisión del owner: la
    Secretaría no toca credenciales).
 4. **La lista de Plataformas Web CTC ya está partida como los componentes** (incluye los cinco nodos,
    Ecosistema de Valor, CommaaS, Terratalento). Es el lugar natural para reflejar versión viva y charter.

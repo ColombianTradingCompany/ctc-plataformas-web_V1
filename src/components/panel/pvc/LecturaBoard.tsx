@@ -1,8 +1,9 @@
 import styles from "@/components/panel/shared.module.css";
 import table from "@/components/cotizador/quotesTable.module.css";
 import { GRADOS } from "@/lib/grados/definicion";
-import { BANDAS5, escalaDe, fleteKg, PARAMS_V211, type Banda5 } from "@/lib/pvc/motor";
-import { CANALES, TRAMOS, moqKgVerde, precioDeTramo, puedeCotizar } from "@/lib/pvc/canales";
+import { BANDAS5, type Banda5 } from "@/lib/pvc/motor";
+import { TRAMOS, accesoDelComprador, habilitacionRequerida, precioDeTramo } from "@/lib/pvc/canales";
+import { PENALIZACION, tablaDeSalida, valorPorCarga } from "@/lib/pvc/compromiso";
 import {
   CARGA_KG_CPS, SACO_KG_CPS, admiteSaco, desviacionDeMercado, embudoDeCarga, empaqueDe,
   holguraDisparador, incrementoCargas, moqCargas, primaMinima, sobreBasePergamino, verdeFobCop,
@@ -177,6 +178,7 @@ export function LecturaBoard({
   const pvc = vigente.pvcCop ?? 0;
   const black = escalera.find((e) => e.banda === "Black");
   const multBlack = black?.mult ?? 1.15;
+  const multRed = escalera.find((e) => e.banda === "Red")?.mult ?? 1.3;
   const trm = vigente.inputs?.trm ?? 0;
   const fnc = mercado.fncHoy;
 
@@ -335,72 +337,114 @@ export function LecturaBoard({
       </div>
 
       <div className={styles.card}>
-        <div className={styles.sectionHead}><strong>Canales y tramos de incoterm</strong></div>
+        <div className={styles.sectionHead}><strong>Programas, incoterms y región</strong></div>
         <p className={styles.meta}>
-          <strong>FOB / FCA es el precio base</strong>: no depende del destino, depende del MOQ — y eso es literal, no
-          una frase, porque la pila calcula el flete por escalones de volumen. <strong>CIF/CIP y DDP solo se cotizan
-          donde hay habilitación regional</strong>, y es distinta en cada canal. Cotizar una casilla sin ella es
-          prometer una entrega que la casa no puede sostener.
+          <strong>Cherry Picked solo se entrega DDP</strong>: es un envío consolidado a través del master roaster de la
+          región, así que no tiene FOB ni entrega en puerto — si alguien quiere su café en un envío propio, eso ya es
+          CaaS. <strong>CaaS es el envío dedicado</strong>, con tres tramos. Las dos habilitaciones <strong>no son
+          intercambiables</strong>, y <strong>FOB está siempre disponible</strong>: nadie queda fuera, lo que cambia es
+          cuánta logística asume el comprador.
         </p>
-        {CANALES.map((c) => (
-          <div key={c.id} style={{ marginTop: 14 }}>
-            <div className={styles.kpiK}>{c.nombre} · habilitación: {c.habilitacion}</div>
-            <p className={styles.meta} style={{ marginTop: 4 }}>{c.queEs}</p>
-            <div className={table.scroll}>
-              <table className={table.t}>
-                <thead>
-                  <tr>
-                    <th>Grado</th>
-                    <th>MOQ</th>
-                    <th className={styles.kpiSub} style={{ textAlign: "right" }}>kg verde</th>
-                    <th style={{ textAlign: "right" }}>Flete al MOQ</th>
-                    {TRAMOS.map((t) => <th key={t.id} style={{ textAlign: "right" }}>{t.nombre}</th>)}
+        <div className={table.scroll}>
+          <table className={table.t}>
+            <thead>
+              <tr>
+                <th>Grado</th>
+                <th style={{ textAlign: "right" }}>Cherry Picked · DDP</th>
+                {TRAMOS.map((t) => <th key={t.id} style={{ textAlign: "right" }}>CaaS · {t.nombre}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {BANDAS5.map((b: Banda5) => {
+                const fila = pila.find((f) => f.b === b);
+                return (
+                  <tr key={b}>
+                    <td>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: 999, background: HEX[b] ?? "var(--line)" }} />
+                        <strong>{b}</strong>
+                      </span>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      {fila ? num(precioDeTramo(fila, "ddp"), 2) : "—"}
+                      <div className={styles.kpiSub}>con master roaster</div>
+                    </td>
+                    {TRAMOS.map((t) => (
+                      <td key={t.id} style={{ textAlign: "right" }}>
+                        {fila ? num(precioDeTramo(fila, t.id), 2) : "—"}
+                        <div className={styles.kpiSub}>{habilitacionRequerida("caas", t.id) ? "con regional enablement" : "siempre"}</div>
+                      </td>
+                    ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {BANDAS5.map((b: Banda5) => {
-                    const fila = pila.find((f) => f.b === b);
-                    const m = moqKgVerde(c.id, b, kgGarantizados);
-                    return (
-                      <tr key={b}>
-                        <td>
-                          <span className="cell" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
-                            <span style={{ width: 10, height: 10, borderRadius: 999, background: HEX[b] ?? "var(--line)" }} />
-                            <strong>{b}</strong>
-                          </span>
-                        </td>
-                        <td>{m.etiqueta}</td>
-                        <td style={{ textAlign: "right" }}>{num(m.kg)}</td>
-                        <td style={{ textAlign: "right" }}>
-                          {num(fleteKg(PARAMS_V211, m.kg), 2)}
-                          <div className={styles.kpiSub}>{escalaDe(PARAMS_V211, m.kg)}</div>
-                        </td>
-                        {TRAMOS.map((t) => {
-                          const v = fila ? precioDeTramo(fila, t.id) : null;
-                          // La habilitación es por REGIÓN y no está en la base todavía:
-                          // aquí se muestra la condición, no un permiso concreto.
-                          const cot = puedeCotizar(c.id, t.id, false);
-                          return (
-                            <td key={t.id} style={{ textAlign: "right" }}>
-                              {v == null ? "—" : num(v, 2)}
-                              {!cot.puede && <div className={styles.kpiSub} style={{ color: "var(--warn, #B7791F)" }}>condicionado</div>}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ))}
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         <p className={styles.meta}>
-          Precios en US$/kg de verde de la edición vigente. El <strong>flete al MOQ</strong> es el escalón en el que cae
-          cada canal: por eso el mismo café sale distinto en Cherry Picked y en CaaS — la diferencia es el camión, no una
-          política comercial. Los precios de la pila se calculan todavía con el MOQ de los parámetros del modelo
-          ({vigente.modelVersion ?? "—"}); recalcularlos por canal es parte de la versión v2.2.0. La habilitación regional
-          aún no se registra en la base: la columna dice la condición, no un permiso concreto.
+          US$/kg de verde de la edición vigente. Extremo más barato: <strong>Black por Cherry Picked</strong>; más caro:{" "}
+          <strong>Tyrian por CaaS</strong> (poco volumen, envío propio, sin economía de escala). Hoy los dos DDP salen de
+          la misma columna del motor porque todavía no modela el consolidado aparte del dedicado, y el puerto de destino se
+          aproxima con el tramo aéreo — separarlos es la versión v2.2.0 del modelo. Las regiones y sus habilitaciones aún
+          no viven en la base: la tabla dice la condición, no un permiso.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 12, marginTop: 10 }}>
+          {[
+            { t: "Región con master roaster", o: accesoDelComprador({ masterRoaster: true, regionalEnablement: true }) },
+            { t: "Solo regional enablement", o: accesoDelComprador({ masterRoaster: false, regionalEnablement: true }) },
+            { t: "Sin habilitación", o: accesoDelComprador({ masterRoaster: false, regionalEnablement: false }) },
+          ].map((caso) => (
+            <div key={caso.t} className={styles.kpiCard}>
+              <div className={styles.kpiK}>{caso.t}</div>
+              <ol className={styles.list} style={{ marginTop: 6 }}>
+                {caso.o.map((op) => (
+                  <li key={op.programa}>
+                    <strong>{op.programa === "cherry-picked" ? "Cherry Picked" : "CaaS"}</strong>{" "}
+                    ({op.tramos.map((x) => (x === "fob" ? "FOB" : x === "puerto" ? "puerto" : "DDP")).join(" · ")})
+                    {op.preferida && <> <span className={styles.badgeGood}>preferido</span></>}
+                    <div className={styles.kpiSub}>{op.nota}</div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.sectionHead}><strong>Oportunidad Cherry Picked · la escalera de compromiso</strong></div>
+        <p className={styles.meta}>
+          El café se vende a compradores <strong>antes</strong> de estar en manos de CTC, por eso el trato es contractual:
+          cubre los tres meses del periodo, el productor declara antes cuántas cargas compromete, y se desbloquea en{" "}
+          <strong>cuartos acumulados</strong> — mes 1 nada libre, mes 2 un 25 %, mes 3 la mitad. Siempre puede retirar
+          todo pagando un <strong>{num(PENALIZACION * 100)} %</strong> del valor de cada carga por encima del tramo libre:
+          un igualador, no un castigo. La escalera premia esperar.
+        </p>
+        <div className={table.scroll}>
+          <table className={table.t}>
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th style={{ textAlign: "right" }}>Libres sin cobro</th>
+                <th style={{ textAlign: "right" }}>Penalizadas</th>
+                <th style={{ textAlign: "right" }}>Si retira todo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tablaDeSalida(8, pvc, multRed).map((f) => (
+                <tr key={f.mes}>
+                  <td>Mes {f.mes}</td>
+                  <td style={{ textAlign: "right" }}>{num(f.libres)} de 8</td>
+                  <td style={{ textAlign: "right" }}>{num(f.penalizadas)}</td>
+                  <td style={{ textAlign: "right" }}><strong>{cop0(f.monto)}</strong></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className={styles.meta}>
+          Ejemplo con 8 cargas de Red (×{num(multRed, 2)}) al PVC vigente: {cop0(valorPorCarga(pvc, multRed))} por carga y{" "}
+          {cop0(valorPorCarga(pvc, multRed) * PENALIZACION)} por cada carga penalizada.
         </p>
       </div>
 

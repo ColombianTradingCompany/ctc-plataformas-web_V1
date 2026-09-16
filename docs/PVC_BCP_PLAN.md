@@ -74,7 +74,7 @@ pvc_forecast_scores edition_id, realized_fnc_avg, prima_realizada, err_L, err_P,
 | `lot_offers.price_per_kg` (`ofertasActions.ts`, `producerActions.ts`) | Precio libre | Derivado de edición × banda; la oferta muestra "PVC-F4-2026 × 1,15"; reemisión automática −5% por franja | — |
 | `lot_listings.price_per_kg, moq_kg, unit_kg` y Cherry Picked (`CherryPickedExperience`, `LotCard`, `data.ts`) | `ASSOC_BLACK_MOQ = 350`, precio libre | Precio = pila N2/N3/N4 en US$ a la TRM del corte; **MOQ en unidades de 6 kg** por banda: 56 · 42 · 26 · 13 · 6 = 336 · 252 · 156 · 78 · 36 kg (§9.2) | **#2 decidido**: `ASSOC_BLACK_MOQ` se retira; `moqPorGrado` sale de la edición |
 | `market_anchors` + cron `/api/cron/market-anchors` (11:10 UTC, `parseFnc`) | Sólo FNC carga | Añadir kinds `trm` (datos.gov.co 32sa-8pi3) e `ice_c_strip` (del ticker); la ventana de 30 días y los dos disparadores (FNC y TRM, §9.3) se calculan de aquí | **#4 decidido**: Vercel está en **Pro** para CTCx → el ciclo semanal es un cron de Vercel más; Make queda como bus de `pvc.*` |
-| Subastas Tyrian (`src/lib/subastas`, `precio_salida_eur_kg`) | Salida en EUR | Salida = precio Gold de la edición **en US$ FOB**, mostrada al comprador en la moneda de su destino (§9.3) | **#3 decidido**: US$ FOB del periodo; CIF/DDP en EUR o la moneda de la geografía. `precio_salida_eur_kg` → `precio_salida_usd_kg` + moneda de exhibición |
+| Subastas Tyrian (`src/lib/subastas`, `precio_salida_eur_kg`) | Salida en EUR | **Corregido §12.7**: una sola subasta por lote, en verde; **el bid es sobre FOB puerto Colombia** y el programa se elige al cerrar, con los recargos por programa sumados después | **Se mantiene EUR/kg** y la adjudicación por el OCP; las reglas de ajuste por programa se **publican antes** de abrir la puja |
 | Roast landing (`FEE_EUR_KG = 9.50`, MOQ por grado) | Constantes | Tarifa CTCx = base × factor de banda + recargo por nivel, desde la edición; se exhibe en la moneda del destino | Misma doctrina de moneda (§9.3) |
 | Arena (`ARENA_FEE_COP`, `EVALUATION_FEE_COP`) | Constantes | Tarifa de evaluación $200.000 y subsidios 30/50/60/70 desde `pvc_model_versions.params` | — |
 | `public_transparency_pricing`, jsonLd SEO | — | Exponen `public_pvc_current` | Sneak peek sigue sin precio (`qa-sneak-peek-check.mjs`) |
@@ -393,6 +393,10 @@ de Notion. Se escriben en los tres idiomas cuando la fase 2 los lleve a código.
 
 ### 9.2 MOQ y empaque (decisión #2, con el addendum del 2026-09-16)
 
+> ⚠️ **SUPERADO en parte por el §12.6** (CEO, 2026-09-16). El MOQ se dice **en cargas** y es una restricción del
+> **origen**, igual para todo programa; el empaque **se mantiene, pero como presentación, no como mínimo**. Gold y Tyrian
+> pasan a **«1 carga o menos, según disponibilidad real»**. Lo de abajo queda como historia del razonamiento.
+
 Merma pergamino → verde 70 %; carga = 125 kg CPS; FR 94 → 93,09 kg de excelso por carga; 78 kg garantizados por carga.
 
 **Primera versión (15-sep), en unidades de 6 kg** — sigue valiendo como la conversión a kilos entregados:
@@ -491,6 +495,10 @@ cumplen. La PAD es una herramienta interna (`herramientas-internas`); cuando el 
 
 ### 9.5 La oferta al productor: dos caminos (nota del owner, 2026-09-15)
 
+> ⚠️ **SUPERADO por el §12.9** (CEO, 2026-09-16). Los dos caminos se llaman ahora **Oportunidad CaaS** (compra
+> directa, CTC asume el riesgo) y **Oportunidad Cherry Picked** (compromiso contractual con escalera de desbloqueo y
+> penalización del 4 %). Lo de abajo queda como historia.
+
 El PVC se usa **en tándem** con la escala de grados: la oferta a un productor es `PVC × multiplicador(grado)`, y el grado
 sale del Punto y la Tríada (§9.1). Por eso hace falta **una herramienta que compute los dos juntos** — edición vigente ×
 grado (SCA + V·P·R + Base física) → oferta por carga y por kg — para el OCP, para el productor en KR y para la visita de
@@ -525,6 +533,12 @@ antes de multiplicar (`PVC × (1 − prima) × mult` — misma aritmética, dist
 mínima» es el MOQ del grado (§9.2) u otra.
 
 ### 9.6 Canales, tramos de incoterm y MOQ (matriz del owner, 2026-09-16)
+
+> ⚠️ **SUPERADO por el §12.1–§12.6** (CEO, el mismo día, más tarde). Esta matriz daba a Cherry Picked los tres tramos
+> y a CaaS un MOQ en kilos. **No es así**: Cherry Picked **solo se entrega DDP** (es consolidado a través del master
+> roaster), CaaS tiene **FOB · puerto de destino · DDP**, el «regional enablement» es **un operador logístico contratado
+> por CTC** (no capacidad propia) y el MOQ es **uno solo, en cargas**. El código se corrigió en V5.47
+> (`src/lib/pvc/canales.ts`). Lo de abajo queda como historia.
 
 Faltaba la capa **comercial**: el §9.2 explica cómo se convierte una carga de pergamino en kilos vendibles, pero no
 **quién compra, en qué condición de entrega y con qué mínimo**. Son **dos canales por tres tramos**, y no todas las
@@ -888,3 +902,194 @@ cierra: **cinco Month-Wrap por periodo**.
 3. Si al mudar la clasificación al marco de mercado, una variedad que **baja** de nivel debe avisar a los lotes ya
    galardonados (hoy la propuesta es no: las letras quedan congeladas en el lote, como los snapshots de las ofertas).
 4. El **nombre de la Base física** (§9.1.b) sigue pendiente desde el 2026-09-15.
+
+## 12. Correcciones del CEO (2026-09-16)
+
+Dictadas por Gabriel Vázquez (cofundador y CEO) el 2026-09-16. **Priman sobre todo lo escrito antes en este plan**; las
+secciones que reemplazan llevan su banner de SUPERADO. Van aquí las **reglas** que el sistema aplica o le muestra al
+cliente. El repositorio es público: el margen de CTC, la comparación con la cooperativa y las palancas de negociación
+**no se copian aquí** (ver §12.12).
+
+### 12.1 Programas × incoterm
+
+| Programa | Naturaleza del envío | Incoterms |
+|---|---|---|
+| **Cherry Picked** | **Consolidado** a través del master roaster de la región | **Solo DDP** |
+| **CaaS** (Coffee as a Service) | **Dedicado** / personal | **FOB Colombia · puerto de destino · DDP** |
+
+Cherry Picked **no tiene FOB ni entrega en puerto**: el café llega consolidado, y al comprador le sale más barato esperar
+el siguiente envío. **Si alguien quiere su café en un envío propio, eso ya es CaaS.**
+
+### 12.2 Dos habilitaciones regionales, no intercambiables
+
+| Habilitación | Qué la otorga | Qué desbloquea |
+|---|---|---|
+| **Región con master roaster** | Un master roaster habilitado en la región | Cherry Picked (DDP) |
+| **Regional enablement** | Un **operador logístico contratado por CTC** en la región (por ejemplo, Estados Unidos) | El puerto de destino y el DDP de CaaS |
+
+Una región puede tener una, la otra o las dos. **El FOB está siempre disponible, en cualquier parte del mundo.**
+
+### 12.3 La escalera de acceso del comprador
+
+1. **Región con master roaster** → Cherry Picked es el **preferido por defecto** (flexibilidad y costo consolidado). CaaS
+   es la segunda opción cuando el consolidado no cubre la necesidad: **volúmenes grandes** o **periodicidad distinta** a
+   la de los envíos consolidados. Sin presión de periodicidad, lo ideal es que viaje en el mismo cargamento.
+2. **Región con regional enablement y sin master roaster** → solo CaaS: puerto de destino o DDP.
+3. **Región sin habilitación** → **FOB**. El comprador asume toda la logística. **Nadie queda fuera**: lo que cambia es
+   cuánta logística asume el comprador.
+
+Vive en `src/lib/pvc/canales.ts` (`accesoDelComprador`, `puedeCotizar`) y lo fija `qa-pvc-canales`.
+
+### 12.4 Consolidación operativa de CaaS
+
+Si en una región habilitada hay varios clientes CaaS con destino común y ninguno quiere ser master roaster todavía, CTC
+puede **consolidar envíos CaaS**. No es un precio de tabla: se resuelve caso por caso.
+
+### 12.5 El master roaster y las tablas de precio
+
+- El master roaster es un **cliente tipo partner**: le compra a CTC por el mismo canal de Cherry Picked que él habilita.
+- Hay **una tabla por región de master roaster**, con los **5 grados** (el grado actúa como multiplicador) y **4 precios
+  por grado**: **Cherry Picked DDP · CaaS FOB · CaaS puerto de destino · CaaS DDP**.
+- Extremo más económico: **Black por Cherry Picked**. Extremo más costoso: **Tyrian por CaaS** (poco volumen, envío
+  propio, sin economía de escala).
+- Cada tabla regional incluye además un **precio de café tostado in situ**, que es un **precio aconsejado, no impuesto**:
+
+```
+Precio aconsejado tostado in situ =
+    precio CTC del café verde          (público, igual para todos)
+  + tarifa del master roaster por tostar (la fija él; se muestra como línea aparte)
+  + tarifa de CTC por la conexión de tostado con el cliente final
+```
+
+  La parte de CTC sigue siendo **pública e igual para todos**; lo que varía por región es la tarifa del master roaster.
+
+### 12.6 MOQ
+
+**Fundamento.** El MOQ sale de **la cantidad de café que se puede comprar y procesar de forma significativa e individual
+en Colombia**. Por eso se expresa **en cargas** (1 carga = 125 kg de pergamino) y no en kilos de empaque, y por eso es
+**el mismo para todo programa**: es una restricción del origen, no del canal. Hacia el comprador, el mismo lote se ofrece
+en verde empacado; la merma de trilla está considerada en los precios.
+
+| Grado | MOQ |
+|---|---|
+| Black | 3 a 4 cargas, según el componente de café de la mezcla |
+| Red | 3 a 4 cargas, según el componente de café de la mezcla |
+| Blue | 2 cargas |
+| Gold | **1 carga o menos, según disponibilidad real** |
+| Tyrian | **1 carga o menos, según disponibilidad real** |
+
+Los MOQ son parte de **cómo se promocionan los lotes**, en escala descendente por grado.
+
+**Empaque: se mantiene, pero como presentación, no como mínimo.** Black y Red en GrainPro-type + yute de 35 kg; Blue, Gold
+y Tyrian en vacío de 3 · 6 · 12 kg. Esto **reemplaza** la lógica anterior de MOQ y precio atada a empaque
+(`ASSOC_BLACK_MOQ = 350`, y las unidades de 3·6·12 kg o sacos de 35 kg usados como mínimos).
+
+### 12.7 Subasta Tyrian
+
+- **Una sola subasta por lote**, en verde.
+- **El bid es sobre FOB puerto Colombia.** El programa (Cherry Picked o CaaS) se elige **al cerrar**; los recargos por
+  programa (consolidado con master roaster o envío dedicado) se suman **después**.
+- **Requisito:** todas las reglas de ajuste por programa deben estar **publicadas antes de que abra la puja**. El pujador
+  ve su precio final según programa desde el principio: no hay sorpresas al cerrar.
+- **Se mantiene** la moneda **EUR/kg** y la adjudicación por el OCP. (Corrige el §4, que la movía a US$.)
+
+### 12.8 El calendario PVC
+
+- **Trimestral, en trimestres exactos**: ene–mar · abr–jun · jul–sep · oct–dic.
+- **Se publica con dos meses de anticipación** (el PVC de abril se publica en febrero). **El calendario es público.**
+- **Aplica el PVC vigente en el momento de la compra**, no el ya publicado para el trimestre siguiente: comprar en febrero
+  o marzo es comprar al PVC de ene–mar. La publicación anticipada sirve **para planear, no para escoger precio**.
+- La ventana de compra al productor es de **3 a 5 meses** según su ubicación: la anticipación existe porque en ese marco
+  hay que evaluar el café para dar la oferta real.
+
+**Esto confirma la corrección A1 de V5.43** (rige la edición cuya ventana contiene hoy, no la última publicada). Pero deja
+un **desfase a corregir**: la edición vigente PVC-F4-2026 va del **15-sep al 15-dic**, que no es un trimestre exacto. Es
+la edición de transición; la siguiente debe alinearse a trimestre (§12.11).
+
+**Riesgo reconocido:** si el PVC siguiente sube, el productor querrá esperar. La respuesta es la Oportunidad Cherry Picked
+con **venta programada** para el trimestre siguiente bajo compromiso contractual (§12.9).
+
+### 12.9 Dos oportunidades de oferta al productor
+
+**Oportunidad CaaS · compra directa.** CTC **compra el café directamente** al productor y **asume el riesgo** de venderlo.
+Se aplica el **PVC vigente en el momento de la compra**.
+
+**Oportunidad Cherry Picked · compromiso con escalera de desbloqueo.** El café se vende a compradores **antes** de estar
+en manos de CTC. Retirarlo después de vendido crea una responsabilidad grave frente al comprador; por eso **el compromiso
+es contractual**.
+
+1. El trato cubre **los tres meses** del periodo PVC.
+2. **Antes de empezar**, el productor declara cuántas **cargas por mes** compromete.
+3. Lo comprometido queda **retenido al menos un mes** para poder activarse.
+4. **Escalera de desbloqueo, en cuartos acumulados**: mes 1 sin tramo libre · mes 2 **25 %** sin cobro · mes 3 otro 25 %,
+   **acumulado 50 %** libre.
+5. **Siempre puede retirar todo de golpe**, pagando una **penalización por carga** retirada por encima del tramo libre.
+
+```
+Penalización = cargas penalizadas × PVC por carga × multiplicador de grado × % penalización
+cargas penalizadas = max(0, cargas retiradas − tramo libre del mes)
+```
+
+**La penalización es del 4 %** del valor de cada carga penalizada: la **mitad del 8 % de `params.prima`**, así que no es
+una cifra nueva. No es un castigo sino un **igualador**: evita que el productor se vaya por una diferencia mínima frente a
+otra oferta, sin que se sienta atrapado. La escalera **premia esperar**: quien cumple puede desarmar la mitad en el mes 3
+sin costo; quien se va de golpe en el mes 1 paga sobre todo lo comprometido.
+
+**Ejemplo** — 8 cargas (1.000 kg) de Red (×1,3) al PVC de $2.500.000 → $3.250.000 por carga, $26.000.000 comprometidos,
+retirando todo:
+
+| Mes | Cargas penalizadas | 3 % | **4 %** | 8 % |
+|---|---|---|---|---|
+| 1 | 8 | $780.000 | **$1.040.000** | $2.080.000 |
+| 2 | 6 | $585.000 | **$780.000** | $1.560.000 |
+| 3 | 4 | $390.000 | **$520.000** | $1.040.000 |
+
+Por carga: $97.500 (3 %) · **$130.000 (4 %)** · $260.000 (8 %). Vive en `src/lib/pvc/compromiso.ts`, lo muestra la pestaña
+Lectura y `qa-pvc-compromiso` reproduce esta tabla **exacta**.
+
+### 12.10 Respuestas a las preguntas que quedaron abiertas en esta sesión
+
+1. **«DDP/???» — ¿un tramo o dos (DDP y DAP)?** Resuelto: los tres tramos son **FOB Colombia · puerto de destino · DDP**.
+   No hay DAP. Y Cherry Picked solo tiene el último.
+2. **Tyrian: media carga contra el saco de 70 kg.** Resuelto: Gold y Tyrian son **«1 carga o menos, según disponibilidad
+   real»**. No hay un mínimo fijo por debajo de la carga; manda lo que de verdad haya del lote. El saco (70 kg) queda como
+   referencia de hasta dónde se ha bajado, no como regla.
+3. **CaaS con MOQ en kilos (1000 · 500 · 100).** **Superado**: el MOQ es uno solo, en cargas y por grado, porque es una
+   restricción del origen (§12.6). Si CaaS debe llevar además un mínimo propio, es decisión nueva.
+
+**Lo que el modelo todavía no hace** (versión v2.2.0 del modelo, con acta):
+
+- **Puerto de destino es marítimo; el motor modela aéreo.** El `n3` de la pila es CIP en *aeropuerto*, con flete aéreo por
+  escalones. `canales.ts` mapea «puerto» a `n3` como aproximación anotada; hace falta una columna marítima propia (el
+  motor ya tiene `params.flete_mar` sin usar).
+- **Los dos DDP salen de la misma columna.** El DDP consolidado de Cherry Picked debería ser más barato que el dedicado de
+  CaaS; hoy el motor no los distingue.
+- **Las regiones no existen en la base.** No hay tabla de regiones ni de sus habilitaciones: la pantalla muestra la
+  condición, no un permiso concreto. Las tablas por región de master roaster (§12.5) necesitan ese soporte.
+
+### 12.11 Preguntas abiertas (owner)
+
+1. **Tarifa de conexión de CTC** en el tostado in situ: ¿monto fijo por pedido o porcentaje?
+2. **Beneficios concretos** por nivel de reputación (charter `cherry-picked` y `kaffetal-regal`).
+3. **Pesos y fórmula** de cada pata de la tríada de reputación.
+4. **Plus contra Básica**: qué herramientas quedan en cada nivel (hoy el default de Herramientas del Café es Plus).
+5. **Zulu** como pasarela de pagos (Stripe y Nequi, aplazados).
+6. **Entidad legal** (país) para cobros — bloquea cobrar.
+7. **Marca «Kaffetal»** ante la SIC.
+8. **Alinear PVC-F4-2026 al trimestre exacto** (hoy 15-sep → 15-dic): ¿la siguiente edición arranca el 1-ene y se acorta
+   esta, o se publica una de oct–dic?
+9. De sesiones anteriores, siguen abiertas: los pesos iguales de V·P·R en la escala de puntos, el caso AAA:80, las tres
+   filas del catálogo de variedades, el X % del collar de TRM y el nombre de la Base física.
+
+### 12.12 Nota de seguridad: el repositorio es público (§0.2 del documento del CEO)
+
+La auditoría de exposición se hizo sobre los archivos **versionados** el 2026-09-16:
+
+- **Grave:** se encontró y se retiró del árbol vigente **información sensible de acceso** en un documento. El detalle y la
+  corrección real (rotar las cuentas afectadas) se tratan **con el owner, fuera de este repositorio**: una nota pública no
+  debe señalar dónde buscar. Regla desde hoy: **ningún documento del repo copia credenciales**, ni para señalarlas.
+- **Márgenes y comparación con la cooperativa:** el §9.4 de este plan cita el margen de CTC y el ejemplo de Monte Azul
+  contra la cooperativa, copiados de las actas de la reunión G&G. Pendiente de decidir si sale del repo público (§0.2).
+- **Actas de reunión** citadas en `ALINEACION.md` y en los documentos de la Secretaría.
+- **Pendiente, no hecho:** la auditoría completa de vulnerabilidades y de niveles de permisos que pide el §0.2 es una
+  tanda propia.

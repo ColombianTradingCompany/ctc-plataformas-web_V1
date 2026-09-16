@@ -104,6 +104,12 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 
 ## Pendientes
 
+- **Tres niveles de acceso** (CEO, 2026-09-16, `docs/PVC_BCP_PLAN.md` §12 y charter `kaffetal-regal`): **Default**
+  (cualquier cuenta de KR o de Cherry Picked, sin importar qué tenga dentro), **Básica** (productor con al menos un lote
+  completado hasta EUDR) y **Plus**. Hoy el modelo tiene dos niveles y el default de las herramientas del café es
+  **Plus**, que **debe revisarse**: falta decidir qué herramienta queda en cada nivel. Es la primera regla compartida
+  entre las dos plataformas, así que el cambio toca `permisoherramienta` y la concha segura.
+
 - **Lector de Cromatografía de Suelo** (V5.32–V5.41). Las reglas vivas son `src/lib/tools/cromatografia/reglas.json`
   v2.6; la v2.0 de `reference/` fue la guía del owner y no manda. Abierto, en orden:
   1. **Claves (V5.34)**: la lectura usa `CROMATOGRAPHY_ANTHROPIC_API_KEY`, clave propia creada por el owner el

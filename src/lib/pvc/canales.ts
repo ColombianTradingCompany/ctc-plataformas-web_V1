@@ -1,121 +1,146 @@
-// ── Canales comerciales y tramos de incoterm ─────────────────────────────────
-// La matriz del owner (2026-09-16, docs/PVC_BCP_PLAN.md §9.6): DOS canales por
-// TRES tramos, y no todas las casillas se pueden cotizar.
+// ── Programas × incoterm × región ────────────────────────────────────────────
+// Decisión del CEO del 2026-09-16 (docs/PVC_BCP_PLAN.md §12.1–§12.4), que
+// REEMPLAZA la matriz de V5.46. Lo que cambió, y por qué importa:
 //
-// Lo que esto resuelve: el motor calcula `n2` (FCA Bogotá ≈ FOB), `n3` (CIP ≈
-// CIF) y `n4` (DDP) para TODOS los grados y para cualquier destino de la tabla
-// de parámetros — nada en el código impedía que una superficie cotizara un DDP
-// a un país donde CTCx no tiene con quién entregarlo. La regla que faltaba es
-// que los dos tramos de arriba **dependen de una habilitación regional**, y que
-// esa habilitación es distinta en cada canal.
+//   · Cherry Picked NO tiene FOB ni entrega en puerto. Es un envío CONSOLIDADO a
+//     través del master roaster de la región, así que solo existe entregado:
+//     DDP. Si alguien quiere su café en un envío propio, eso ya es CaaS.
+//   · CaaS es el envío DEDICADO, con tres tramos: FOB Colombia, puerto de
+//     destino y DDP.
+//   · Las habilitaciones son DOS y NO son intercambiables: el master roaster
+//     abre Cherry Picked; el «regional enablement» (un operador logístico que
+//     CTC contrata en la región) abre el puerto de destino y el DDP de CaaS.
+//   · FOB está SIEMPRE disponible, en cualquier parte del mundo: nadie queda
+//     fuera, lo que cambia es cuánta logística asume el comprador.
 //
-// PURO y sin `server-only`, como `motor.ts`, `lectura.ts` y `escala.ts`.
+// PURO y sin `server-only`, como motor.ts, lectura.ts y escala.ts.
 
-import type { Banda5, Nivel } from "./motor";
+import type { Nivel } from "./motor";
 
-export type Canal = "cherry-picked" | "caas";
-export type Tramo = "fob" | "cif" | "ddp";
+export type Programa = "cherry-picked" | "caas";
+export type Tramo = "fob" | "puerto" | "ddp";
 
-/** Los tres tramos, en el orden en que se cotizan. `nivel` es la columna de la
- *  pila del motor: FCA → `n2`, CIP → `n3`, DDP → `n4`. */
+/** La columna de la pila del motor de la que sale cada tramo.
+ *
+ *  ⚠️ `puerto` → `n3` es la aproximación honesta que hay hoy, no una
+ *  equivalencia: el `n3` del motor es CIP en AEROPUERTO (flete aéreo por
+ *  escalones), y «puerto de destino» es marítimo. El motor ya tiene
+ *  `params.flete_mar` pero no lo usa para una columna propia. Modelar el
+ *  tramo marítimo es parte de la versión v2.2.0 del modelo (plan §12.10). */
 export const TRAMOS: {
   id: Tramo;
   nombre: string;
   nivel: Nivel;
-  /** La clave de la pila (`FilaPila`) de la que sale el precio. */
   campo: "n2" | "n3" | "n4";
-  /** El precio base no depende del destino; los otros dos sí. */
   dependeDelDestino: boolean;
-  /** Los dos de arriba exigen habilitación regional. */
-  exigeHabilitacion: boolean;
 }[] = [
-  { id: "fob", nombre: "FOB / FCA", nivel: "FCA", campo: "n2", dependeDelDestino: false, exigeHabilitacion: false },
-  { id: "cif", nombre: "CIF / CIP", nivel: "CIP", campo: "n3", dependeDelDestino: true, exigeHabilitacion: true },
-  { id: "ddp", nombre: "DDP", nivel: "DDP", campo: "n4", dependeDelDestino: true, exigeHabilitacion: true },
+  { id: "fob", nombre: "FOB Colombia", nivel: "FCA", campo: "n2", dependeDelDestino: false },
+  { id: "puerto", nombre: "Puerto de destino", nivel: "CIP", campo: "n3", dependeDelDestino: true },
+  { id: "ddp", nombre: "DDP", nivel: "DDP", campo: "n4", dependeDelDestino: true },
 ];
 
 export const tramo = (id: Tramo) => TRAMOS.find((t) => t.id === id)!;
 
-/** El MOQ de Cherry Picked se dice en CARGAS EQUIVALENTES — la unidad del
- *  origen, porque el lote es de un productor con nombre. Black y Red son
- *  mezclas y su mínimo depende de cuántos lotes las componen (§9.2). */
-export const MOQ_CHERRY_CARGAS: Record<Banda5, number[]> = {
-  Black: [3, 4],
-  Red: [3, 4],
-  Blue: [2],
-  Gold: [1],
-  Tyrian: [0.5],
+export type Habilitacion = "master-roaster" | "regional-enablement";
+
+export const HABILITACIONES: Record<Habilitacion, { nombre: string; queEs: string; abre: string }> = {
+  "master-roaster": {
+    nombre: "Región con master roaster",
+    queEs: "Un master roaster habilitado en la región. Es un cliente tipo partner: le compra a CTC por el mismo canal de Cherry Picked que él habilita.",
+    abre: "Cherry Picked (DDP)",
+  },
+  "regional-enablement": {
+    nombre: "Regional enablement",
+    queEs: "Un operador logístico contratado por CTC en la región (por ejemplo, Estados Unidos).",
+    abre: "El puerto de destino y el DDP de CaaS",
+  },
 };
 
-/** El de CaaS se dice en KILOS de verde: no es el lote de nadie, es volumen de
- *  servicio, y puede componerse de FRACCIONES de varios cafés. */
-export const MOQ_CAAS_KG: Record<Banda5, number> = {
-  Black: 1000,
-  Red: 1000,
-  Blue: 500,
-  Gold: 100,
-  Tyrian: 100,
-};
-
-export const CANALES: {
-  id: Canal;
+export const PROGRAMAS: {
+  id: Programa;
   nombre: string;
-  /** Cómo se expresa su mínimo. Son unidades distintas a propósito. */
-  unidadMoq: "cargas" | "kg";
-  /** Qué hace falta en la región para poder cotizar CIF/CIP y DDP. */
-  habilitacion: string;
-  queEs: string;
+  envio: string;
+  tramos: Tramo[];
 }[] = [
   {
     id: "cherry-picked",
     nombre: "Cherry Picked",
-    unidadMoq: "cargas",
-    habilitacion: "Master Roaster regional",
-    queEs: "Un tostador de referencia que opera el mercado junto a CTCx. Sin él no hay quién reciba, almacene ni entregue en destino, así que solo se cotiza el tramo base.",
+    envio: "Consolidado a través del master roaster de la región",
+    tramos: ["ddp"],
   },
   {
     id: "caas",
     nombre: "CaaS",
-    unidadMoq: "kg",
-    habilitacion: "Regional Operation Enablement",
-    queEs: "El papeleo y el conocimiento para operar en esa geografía: importación, aduana, fitosanitario y quién responde. Es capacidad propia, no un socio.",
+    envio: "Dedicado / personal",
+    tramos: ["fob", "puerto", "ddp"],
   },
 ];
 
-export const canal = (id: Canal) => CANALES.find((c) => c.id === id)!;
+export const programa = (id: Programa) => PROGRAMAS.find((p) => p.id === id)!;
 
-/** El MOQ de un grado en su canal, ya normalizado a kilos de verde para poder
- *  compararlos y para saber en qué escalón de flete cae.
- *  `kgGarantizados` son los kilos que una carga entrega (78 en el modelo). */
-export function moqKgVerde(c: Canal, b: Banda5, kgGarantizados: number): { kg: number; etiqueta: string } {
-  if (c === "caas") {
-    const kg = MOQ_CAAS_KG[b];
-    return { kg, etiqueta: `${kg} kg` };
-  }
-  const cargas = MOQ_CHERRY_CARGAS[b];
-  const kg = cargas[0] * kgGarantizados;
-  const etiqueta = cargas.length > 1
-    ? `${cargas[0]} o ${cargas[1]} cargas`
-    : `${cargas[0] === 0.5 ? "½" : cargas[0]} carga${cargas[0] === 1 || cargas[0] === 0.5 ? "" : "s"}`;
-  return { kg, etiqueta };
+/** Lo que una región tiene habilitado. Una región puede tener una, la otra o las
+ *  dos. Hoy esto NO vive en la base (no hay tabla de regiones): la pantalla
+ *  muestra la condición, no un permiso concreto. */
+export type Region = { masterRoaster: boolean; regionalEnablement: boolean };
+
+/** Qué habilitación exige una casilla, o null si no exige ninguna. */
+export function habilitacionRequerida(p: Programa, t: Tramo): Habilitacion | null {
+  if (p === "cherry-picked") return "master-roaster";
+  if (t === "fob") return null;
+  return "regional-enablement";
 }
 
-export type Cotizable =
-  | { puede: true }
-  | { puede: false; motivo: string };
+export type Cotizable = { puede: true } | { puede: false; motivo: string };
 
 /**
- * ¿Se puede cotizar esta casilla? El tramo base siempre; los otros dos solo con
- * la habilitación regional del canal.
- *
- * Es una regla de NEGOCIO, no de interfaz: quien pinte un precio CIF o DDP sin
- * preguntar esto está prometiendo una entrega que la casa no puede sostener.
+ * ¿Se puede cotizar esta casilla en esta región? Regla de NEGOCIO, no de
+ * interfaz: quien pinte un precio sin preguntarla promete una entrega que la casa
+ * no puede sostener — o, en Cherry Picked, un FOB que el programa no tiene.
  */
-export function puedeCotizar(c: Canal, t: Tramo, habilitacionEnLaRegion: boolean): Cotizable {
-  const tr = tramo(t);
-  if (!tr.exigeHabilitacion) return { puede: true };
-  if (habilitacionEnLaRegion) return { puede: true };
-  return { puede: false, motivo: `Requiere ${canal(c).habilitacion} en la región de destino.` };
+export function puedeCotizar(p: Programa, t: Tramo, region: Region): Cotizable {
+  if (!programa(p).tramos.includes(t)) {
+    return {
+      puede: false,
+      motivo: p === "cherry-picked"
+        ? "Cherry Picked solo se entrega DDP: es un envío consolidado. Un envío propio es CaaS."
+        : `CaaS no ofrece ${tramo(t).nombre}.`,
+    };
+  }
+  const h = habilitacionRequerida(p, t);
+  if (h === null) return { puede: true };
+  const tiene = h === "master-roaster" ? region.masterRoaster : region.regionalEnablement;
+  return tiene ? { puede: true } : { puede: false, motivo: `Requiere: ${HABILITACIONES[h].nombre}.` };
+}
+
+export type OpcionAcceso = { programa: Programa; tramos: Tramo[]; preferida: boolean; nota: string };
+
+/**
+ * La escalera de acceso del comprador (plan §12.3). Devuelve las opciones de una
+ * región en orden de preferencia.
+ *
+ *  1. Con master roaster → Cherry Picked es el preferido POR DEFECTO (flexible y
+ *     consolidado). CaaS queda como segunda opción para volúmenes grandes o una
+ *     periodicidad distinta a la de los consolidados.
+ *  2. Con regional enablement y sin master roaster → solo CaaS, puerto o DDP.
+ *  3. Sin habilitación → FOB. Nadie queda fuera.
+ */
+export function accesoDelComprador(region: Region): OpcionAcceso[] {
+  const out: OpcionAcceso[] = [];
+  if (region.masterRoaster) {
+    out.push({ programa: "cherry-picked", tramos: ["ddp"], preferida: true, nota: "Preferido por defecto: flexible y con costo consolidado." });
+  }
+  const caas: Tramo[] = region.regionalEnablement ? ["fob", "puerto", "ddp"] : ["fob"];
+  out.push({
+    programa: "caas",
+    tramos: caas,
+    preferida: !region.masterRoaster,
+    nota: region.masterRoaster
+      ? "Segunda opción: volúmenes grandes o periodicidad distinta a la de los consolidados."
+      : region.regionalEnablement
+        ? "Envío dedicado hasta puerto o puerta."
+        : "Solo FOB: el comprador asume toda la logística.",
+  });
+  return out;
 }
 
 /** El precio de una casilla, sacado de la fila de la pila del grado. */

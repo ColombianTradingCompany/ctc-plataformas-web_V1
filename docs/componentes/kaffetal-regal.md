@@ -80,10 +80,35 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
+- **Decisiones del CEO del 2026-09-16** (`docs/PVC_BCP_PLAN.md` §12) que este componente tiene que ejecutar:
+  - **El recorrido del productor**: llega con contexto de la propuesta de valor → crea cuenta → crea finca y lote →
+    **primer win, gratis: se le devuelve el análisis EUDR del lote** → recibe la **expectativa de oferta** según el
+    calendario PVC → envía muestra y se evalúa (**no se compra nada antes de tener la muestra y estar seguros de que
+    funciona**) → elige oportunidad.
+  - **Dos oportunidades de oferta**: **CaaS** (CTC compra directo y asume el riesgo, al PVC vigente en el momento de la
+    compra) y **Cherry Picked** (compromiso contractual de tres meses, cargas declaradas por mes, **escalera de
+    desbloqueo en cuartos acumulados** —mes 2 un 25 %, mes 3 la mitad— y **penalización del 4 %** por carga retirada
+    por encima del tramo libre). La aritmética vive en `src/lib/pvc/compromiso.ts`; el productor debe **ver la tabla de
+    salida antes de firmar**.
+  - **El calendario PVC es público**: trimestres exactos, publicado con dos meses de anticipación, y **aplica el PVC
+    vigente en el momento de la compra**. Si el siguiente sube, la respuesta es la venta programada con compromiso.
+  - **Tres niveles de acceso a herramientas**: **Default** (cualquier cuenta de KR o de Cherry Picked — la primera regla
+    compartida entre las dos plataformas), **Básica** (productor con al menos un lote completado hasta EUDR: incluye
+    herramientas del café, directorio y servicios de Kaffetal) y **Plus**. El reparto concreto está por definir con
+    `herramientas-cafe`.
+  - **Tríada de reputación del productor**: lotes completados · calidad (promedio ponderado por cargas y por grado) ·
+    confiabilidad **con la consistencia dentro** (quien deja de mover café se enfría solo, sin castigo brusco).
+    **Ponderación, no acumulación**: un productor pequeño y consistente puede estar arriba. Pesos y beneficios: por
+    definir (ideas: compra anticipada de ciertas cargas, que consume caja y hay que dosificar; mejores precios en lotes
+    selectos).
+- ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
+  la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.
+
 - **Recorrer el bloque B del artefacto de revisión V5.0** sobre el panel nuevo (owner; B3/B4 primero)
   — el artefacto: `C:\dev\ctc-platforms\reference\review-v5\ctc-v5-review.html`.
 - **Estrenar el escáner visual** con soportes reales (los 7 lotes de producción siguen en `borrador`).
-- **Número de Nequi** (dueño: consolas) — hasta entonces «Evaluar mi Café» manda a `info@`.
+- **Pagos**: Nequi y Stripe **aplazados** (CEO, 2026-09-16); se evalúa **Zulu**. «Evaluar mi Café» sigue mandando a
+  `info@` mientras no haya medio de pago.
 - **Google OAuth**: la línea del redirect-allowlist en Supabase para las puertas que lo ofrecen.
 - **Confirmación de correo en el alta** (memoria `project_kr_email_confirmation`): verificar que el
   SMTP/rate-limit de Supabase no bloquea registros reales antes de la beta.

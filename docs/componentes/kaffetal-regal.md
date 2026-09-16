@@ -101,35 +101,34 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
     **Ponderación, no acumulación**: un productor pequeño y consistente puede estar arriba. Pesos y beneficios: por
     definir (ideas: compra anticipada de ciertas cargas, que consume caja y hay que dosificar; mejores precios en lotes
     selectos).
-- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.4** en
-  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md` (página de rodaje publicada para el equipo), con
-  las decisiones del owner dentro (§5.1):
-  - evaluación **$200.000 con envío incluido**, descuentos del 30–70 %;
-  - contra-catación que sube el grado → **crédito a favor** al concretar el trato;
-  - **inversión inicial** por programa y grado; en CaaS, 15–25 kg de entrada atados a mantener la oferta un mes;
-  - **oferta a 1–3 días**;
-  - plazos de `PVC-D2` §11;
-  - **trimestres desde enero**.
-  - **multiplicadores en voz alta**;
-  - **reporte mensual de ventas**, con retiro sin costo si falta;
-  - **revisión de almacenaje con 1 kg** a más de 90 días;
-  - **reoferta**: el siguiente periodo sin descuento, el posterior con −5 %;
-  - **crédito a favor** que no vence;
-  - **la Arena como contenido, no requisito**.
+- **Narrativa del productor · video de ~6 min** (2026-09-16): guion **v0.5** en
+  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md` (página de rodaje publicada para el equipo).
+  - **Decisiones dentro** (§5.1, 25 puntos):
+    - marca **CTCx**;
+    - perfil antes que finca;
+    - bloque propio del **PVC**;
+    - evaluación de **$200.000** con envío incluido;
+    - **base física** y **el Punto y la Tríada** en lugar del grado por SCA solo;
+    - multiplicadores en voz alta;
+    - **Cherry Picked recomendado** con prima del 8 % y compra inicial, **CaaS** sin prima con entrada de 15–25 kg;
+    - reporte mensual de ventas y pago a 2 días hábiles;
+    - la **Arena** como herramienta;
+    - cierre con llamado a la acción.
+  - **Preguntas del owner** (§5.2): la **cifra de salida** de Cherry Picked y su escalera (el 4 % no lo reconoce);
+    factor «< 94» o «≤ 94»; CaaS sin prima; día del reporte de ventas; contrato para la Arena.
+  - **Depende de consolas**: el PVC de ene–mar 2027 **antes del 15-oct-2026**; la base física y la Tríada en el veredicto
+    (fase 2).
+  - **Tanda propia de copy** (§6 del guion):
+    - «CTC» → «CTCx»;
+    - `ARENA_FEE_COP` 80.000 → 200.000 con descuento y envío incluido;
+    - `TratoSection` con los dos caminos;
+    - `faq.ts` n.º 1·2·4·5·6·9·11 y preguntas nuevas (PVC, base física, Tríada);
+    - `BienvenidosSection` con el paso Perfil;
+    - multiplicadores en `OportunidadSection`;
+    - la Arena como herramienta;
+    - el perfil antes de la finca en `PerfilTab`.
 
-  ⚠ **El 4 % de salida de Cherry Picked no lo reconoce el owner**: fuera de la locución hasta confirmarlo.
-
-  Quedan preguntas menores en su §5.2, que no bloquean la animática. Depende de **consolas**: el PVC ene–mar 2027
-  publicado **antes del 15-oct-2026** (ALINEACIÓN §3b).
-
-  Después, **tanda propia de copy y tarifa** (su §6):
-  - `ARENA_FEE_COP` 80.000 → 200.000 con descuento, y el texto de `PorQueSection`, `faq.ts` n.º 3 y `EvaluacionesTab`;
-  - instrucciones de envío con guía prepagada;
-  - `TratoSection`: escalera 400→200→100, 15 kg, pago al mes 3, 2,5–4 t, humedad;
-  - `faq.ts` n.º 1·2·4·5·6·9·11;
-  - índices de `OportunidadSection` → multiplicadores reales, y el paso 5 de `BienvenidosSection`;
-  - `ArenaSection` y `faq.ts` n.º 1·2·9: la Arena como invitación de contenido, no paso ni requisito;
-  - vocabulario «Arena» en la evaluación.
+    El copy de **grados por la Tríada espera a la fase 2**, para no prometer lo que el veredicto no aplica.
 - ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
   la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.
 

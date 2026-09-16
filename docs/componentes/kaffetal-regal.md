@@ -101,6 +101,13 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
     **Ponderación, no acumulación**: un productor pequeño y consistente puede estar arriba. Pesos y beneficios: por
     definir (ideas: compra anticipada de ciertas cargas, que consume caja y hay que dosificar; mejores precios en lotes
     selectos).
+- **Narrativa del productor · video de 5–6 min** (2026-09-16): borrador del guion en
+  `docs/componentes/briefs/kaffetal-regal-guion-video-productor.md`. Espera al owner: sus §5 (evaluación $80.000 o
+  $200.000 con descuentos · reembolso del 80 % · compra inicial de 15 kg o carga 1 · **plazos**, que no existen en
+  ningún lado · multiplicadores en voz alta). Después, **tanda propia de copy** (su §6): `TratoSection` (escalera
+  400→200→100, 15 kg, 2,5–4 t, humedad), `faq.ts` n.º 1·2·4·5·6·9·11, índices de `OportunidadSection`, el paso 5 de
+  `BienvenidosSection`, y el vocabulario «Arena» en la evaluación (`LoginModal`, `FichaView`, `PerfilTab`, la etiqueta
+  impresa, «Envío de muestras» en `ShipmentInstructionsModal`). El rodaje espera también a la SIC (línea siguiente).
 - ⚠️ **Marca «Kaffetal»** (owner): existe una marca colombiana homónima (Kaffetal, Villavicencio, Meta). Consultar ante
   la **SIC** y actuar en consecuencia **antes de invertir más** en el nombre de este componente.
 

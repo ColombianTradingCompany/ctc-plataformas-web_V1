@@ -1240,14 +1240,9 @@ son fijos (el §12.6 decía «3–4 según la mezcla»). Estos mínimos son los 
 
 ### 14.5 Queda por confirmar (owner)
 
-- Si CTCx acopia, procesa y empaca, qué sella el nodo socio **Centro de Calidad** (n.º 1).
-- Merma verde → tostado: **80 %** (respuesta) o **85 %** (tabla) (n.º 14). El mapa V43 ya decía «100 kg verde → ~80 kg tostado» en Roast.
-- Publicación del PVC ene–mar 2027: «antes del 15-oct» (guion, §5.1 n.º 9) o el segundo mes de la edición vigente (n.º 6).
-- La ficha pública de un lote CTCx Selection: ¿documentación (finca visible, como hoy) o vitrina (CTCx)? (n.º 15).
-- Si los cinco pines «MR coming soon» van en la portada pública o solo en material comercial.
-- La bolsa de Papagayo Beans®: ¿lleva también el nombre del productor y su finca, o eso va solo en la vitrina y la ficha?
-  (§14.6). Y si Roast conserva las etiquetas My Brand · Co-Brand con Papagayo Beans por defecto (mapa V43).
-- ~~Qué es el programa X~~ — resuelto en el §14.6: la cara al consumidor directo de Cherry Picked.
+Resuelto en el §14.7 (tercera ronda, el mismo día): Centro de Calidad con el CIR, merma 82 %, PVC ene–mar 2027
+antes del 15-oct, ficha de CTCx Selection con la finca como dato, pines MR en todo, la bolsa con productor y finca (Cherry Picked)
+y las etiquetas de Roast. No queda ninguna pregunta de narrativa abierta; lo que queda es ejecución (ALINEACIÓN §3b y charters).
 
 ### 14.6 Papagayo Beans® (segunda ronda del owner, 2026-09-17)
 
@@ -1261,3 +1256,26 @@ son fijos (el §12.6 decía «3–4 según la mezcla»). Estos mínimos son los 
 20. **Roast** sigue como lo describe el mapa V43 (etiquetas *My Brand* · *Co-Brand* · **Papagayo Beans, por defecto**, con
     la etiqueta trasera estándar; «100 kg verde → ~80 kg tostado»): por confirmar que sigue vigente (§14.5). Ese ~80 % del
     mapa coincide con la respuesta del n.º 14.
+
+### 14.7 Tercera ronda del owner (2026-09-17): lo que quedaba por confirmar, resuelto
+
+21. **Centro de Calidad**: el procesamiento (trilla, monitoreo y selección óptica) lo hace **el nodo socio Centro de Calidad**
+    en la mayoría de los casos, **en alianza con el Centro de Industrialización Regional (CIR) de Santander**; CTCx acopia y
+    empaca. Así se lee el n.º 1.
+22. **Razón social: «CTCX Colombian Trading Company SAS»**, completa en cualquier lugar que lo amerite y en lo legal. Hoy
+    `legal.ts` (`CTC_RAZON`) dice «Colombian Trading Company»: pendiente de consolas (§3b).
+23. **La bolsa de Papagayo Beans®** lleva el nombre del productor y su finca **si el lote va por Cherry Picked** —añadidos con
+    sticker o escritos, más un **QR/UID** que enlaza a la base de datos—; **CTCx Selection** los reemplaza cuando el café llegó
+    por CaaS.
+24. **Roast**: siguen las etiquetas del mapa V43 —Papagayo Beans por defecto; **Co-Brand** lleva al productor y su finca; en
+    **My Brand** decide el comprador, que entrega o aprueba el diseño.
+25. **Ficha pública de un lote CTCx Selection**: la finca es **visible como dato, pero no protagonista**.
+26. **Merma verde → tostado: 82 %** de remanente, argumentado por la búsqueda del mejor grano y la pérdida que implica
+    (reemplaza el 80 % del n.º 14 y el 85 % de la tabla; el mapa V43 decía ~80 %).
+27. **El PVC de ene–mar 2027 se publica antes del 15-oct-2026** (la regla general del n.º 6 sigue).
+28. **Black y Red: 3–4 cargas según la mezcla** (no fijos); la tabla del §14.4 muestra los dos casos (3 cargas → 42 unidades ·
+    252 kg; 4 → 56 · 336 kg).
+29. **Los pines «MR coming soon» van en todo**: portada pública y material comercial.
+
+**Al cierre del 2026-09-17 no queda ninguna pregunta de narrativa abierta.** El material (tres documentos con anexo interno y un
+cuarto documento de decisiones y pendientes) se regenera con `reference/narrativa-2026-09-17/build.py`, fuera del repo.

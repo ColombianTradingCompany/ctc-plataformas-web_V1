@@ -85,6 +85,10 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 
 ## Pendientes
 
+- **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: el **Centro de Calidad** hace el procesamiento (trilla,
+  monitoreo y selección óptica) en la mayoría de los casos, **en alianza con el CIR de Santander** —CTCx acopia y empaca—; el
+  **Master Roaster** empaca Papagayo Beans® con etiqueta PB por defecto, Co-Brand con productor y finca, o My Brand a diseño del
+  comprador. Razón social completa en las landings donde amerite: CTCX Colombian Trading Company SAS.
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el Master Roaster tuesta y empaca **Papagayo Beans®**
   (etiqueta por defecto; My Brand · Co-Brand según el mapa V43, por confirmar) con el sello del grado y la referencia a CTCx
   como motor; su landing y su panel deben nombrar la marca.

@@ -25,7 +25,8 @@
   dice como «a la referencia completa» y CaaS «sin la prima» sigue siendo cierto; (2) el mínimo del lote de Cherry Picked
   por grado es **4 · 3 · 2 · 1 · ½ cargas** (bloque 9, pantalla); (3) el 80 % del alza de Tyrian es del productor **solo en
   Cherry Picked** (bloque 8) y se convierte a COP el día del pago. La marca CTCx y el factor ≤ 94 quedan confirmados. La
-  regla interna del CaaS sin cooperación (§14 n.º 8) no entra en el guion.
+  regla interna del CaaS sin cooperación (§14 n.º 8) no entra en el guion. **Y (4) el café se nombra: «su café sale al mundo
+  como Papagayo Beans®, con su nombre y su finca»** (§14.6; bloques 0, 9 y 12).
 
 **Qué es.** El guion locutado de la pieza larga para el caficultor: cómo funciona Kaffetal Regal de punta a punta, del
 perfil de productor al pago, con el PVC, la evaluación, la base física, el Punto y la Tríada, los dos caminos de oferta

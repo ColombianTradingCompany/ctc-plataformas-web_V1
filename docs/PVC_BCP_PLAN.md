@@ -1241,7 +1241,23 @@ son fijos (el §12.6 decía «3–4 según la mezcla»). Estos mínimos son los 
 ### 14.5 Queda por confirmar (owner)
 
 - Si CTCx acopia, procesa y empaca, qué sella el nodo socio **Centro de Calidad** (n.º 1).
-- Merma verde → tostado: **80 %** (respuesta) o **85 %** (tabla) (n.º 14).
+- Merma verde → tostado: **80 %** (respuesta) o **85 %** (tabla) (n.º 14). El mapa V43 ya decía «100 kg verde → ~80 kg tostado» en Roast.
 - Publicación del PVC ene–mar 2027: «antes del 15-oct» (guion, §5.1 n.º 9) o el segundo mes de la edición vigente (n.º 6).
 - La ficha pública de un lote CTCx Selection: ¿documentación (finca visible, como hoy) o vitrina (CTCx)? (n.º 15).
-- Qué es el programa **X**; y si los cinco pines «MR coming soon» van en la portada pública o solo en material comercial.
+- Si los cinco pines «MR coming soon» van en la portada pública o solo en material comercial.
+- La bolsa de Papagayo Beans®: ¿lleva también el nombre del productor y su finca, o eso va solo en la vitrina y la ficha?
+  (§14.6). Y si Roast conserva las etiquetas My Brand · Co-Brand con Papagayo Beans por defecto (mapa V43).
+- ~~Qué es el programa X~~ — resuelto en el §14.6: la cara al consumidor directo de Cherry Picked.
+
+### 14.6 Papagayo Beans® (segunda ronda del owner, 2026-09-17)
+
+18. **Papagayo Beans® es la marca del café de CTCx.** Su logo va de la mano del producto final junto con los grados: los
+    cinco sellos (`public/images/shared/grados/`) llevan el loro y el monograma **PB**. **Las bolsas hacen referencia a CTCx
+    como el motor de todo, pero el nombre del café que se vende, del verde hasta X, es Papagayo Beans.** Kaffetal Regal y
+    Cherry Picked son las plataformas, no la marca del café; CTCx Selection también sale como Papagayo Beans (lo que cambia
+    es quién figura como productor).
+19. **X es la cara hacia el consumidor directo de Cherry Picked**: Papagayo Beans tostado y empacado, venta directa. Cierra
+    la pregunta abierta del §14.5.
+20. **Roast** sigue como lo describe el mapa V43 (etiquetas *My Brand* · *Co-Brand* · **Papagayo Beans, por defecto**, con
+    la etiqueta trasera estándar; «100 kg verde → ~80 kg tostado»): por confirmar que sigue vigente (§14.5). Ese ~80 % del
+    mapa coincide con la respuesta del n.º 14.

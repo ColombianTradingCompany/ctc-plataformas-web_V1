@@ -80,6 +80,10 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
+- **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el café del productor sale al mundo como **Papagayo
+  Beans®**, la marca de CTCx, con el sello de su grado (loro y monograma PB) y, en Cherry Picked, con su nombre y su finca en
+  la vitrina; falta decir la marca en la landing, el FAQ, «Su café en el mundo» y el guion (v0.7). Por confirmar si el nombre
+  del productor y la finca van también en la bolsa.
 - **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: la prima del 8 % **está dentro del PVC**
   (Cherry Picked paga PVC × grado tal cual; CaaS la retira y luego multiplica) — ajustar `TratoSection`, el FAQ y el guion
   (v0.7); factor ≤ 94 confirmado; mínimo del lote de Cherry Picked por grado **4 · 3 · 2 · 1 · ½ cargas** (tabla §14.4) y

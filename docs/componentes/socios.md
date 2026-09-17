@@ -85,6 +85,9 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 
 ## Pendientes
 
+- **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el Master Roaster tuesta y empaca **Papagayo Beans®**
+  (etiqueta por defecto; My Brand · Co-Brand según el mapa V43, por confirmar) con el sello del grado y la referencia a CTCx
+  como motor; su landing y su panel deben nombrar la marca.
 - **Decisión del owner (2026-09-17, `PVC_BCP_PLAN.md` §14 n.º 1 y 12)**: CTCx acopia, procesa y empaca —la frase «no toca
   un grano» se corrigió arriba y falta corregirla en el vision board v3 y en las landings de los nodos—; reconciliar el rol
   del **Centro de Calidad** (trilla y selección óptica) con el procesamiento propio de CTCx (§14.5); el **Master Roaster** se

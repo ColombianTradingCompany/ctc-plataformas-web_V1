@@ -76,6 +76,10 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (105, contra las 110 claves reale
 
 ## Pendientes
 
+- **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: es la marca del café en los tres programas —Green lo
+  vende en verde por grado, Roast tostado por el Master Roaster (etiqueta Papagayo Beans por defecto; My Brand · Co-Brand por
+  confirmar) y **X es la cara al consumidor directo** (tostado y empacado, venta directa)—; la bolsa lleva Papagayo Beans® +
+  sello del grado + referencia a CTCx como motor. Hoy ninguna superficie de este componente dice «Papagayo Beans».
 - **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: **US$ en toda la tienda y la subasta**
   (adiós EUR: `eur`, `price`, `FEE_EUR_KG`, `precio_salida_eur_kg`; supera el §12.7); portada con el **mapa de Enabled
   Regions** (Nueva York · Florida · California · Alemania · Japón con «MR · coming soon», Colombia con MR local, EE. UU. y

@@ -8,8 +8,9 @@
 ## Qué es
 
 Los cinco **nodos delegados** de la red orquestada v3 (`reference/html-vision-board/ctc-arquitectura-v3.html`):
-CTC no toca un grano ni un contenedor — orquesta el pasaporte del lote — y cada nodo pone el oficio y
-**sella** su tramo. Cada nodo es una **pareja** en `/socios/<slug>`: una landing pública (qué hace, por
+CTCx orquesta el pasaporte del lote **y participa en él con las mismas reglas que exige** —hace el acopio, el
+procesamiento y el empacado en origen (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14 n.º 1; hasta entonces este charter
+decía «no toca un grano ni un contenedor»)— y cada nodo pone el oficio y **sella** su tramo. Cada nodo es una **pareja** en `/socios/<slug>`: una landing pública (qué hace, por
 qué se delega, qué sella, sus pantallas) + un login de credencial (`/acceso`) + un panel (`/panel`).
 Los socios son un **tier de identidad aparte**: `profiles.role = 'partner'` + una fila activa en
 `partner_accounts` para exactamente un nodo — **nunca `bcp_admin`**.
@@ -84,6 +85,11 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 
 ## Pendientes
 
+- **Decisión del owner (2026-09-17, `PVC_BCP_PLAN.md` §14 n.º 1 y 12)**: CTCx acopia, procesa y empaca —la frase «no toca
+  un grano» se corrigió arriba y falta corregirla en el vision board v3 y en las landings de los nodos—; reconciliar el rol
+  del **Centro de Calidad** (trilla y selección óptica) con el procesamiento propio de CTCx (§14.5); el **Master Roaster** se
+  narra así: uno **local en Colombia** (activo) y «coming soon» en Nueva York, Florida, California, Alemania y Japón (mapa
+  en `reference/narrativa-2026-09-17/img/mapa-regiones.svg`, fuera del repo). Marca **CTCx** en las landings.
 - **Cuatro paneles son scaffolds**: solo el Estudio de Contenido tiene módulo real. Cada nodo necesita su
   interfaz (las pantallas ya están declaradas en `partners.ts`) **y su contraparte en el OCP** que reciba
   el sello en el pasaporte del lote — eso es lo que abre cada sesión de nodo.

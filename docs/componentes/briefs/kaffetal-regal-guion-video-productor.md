@@ -20,6 +20,12 @@
 - **v0.6 (2026-09-16): últimas respuestas del owner (§5.1 n.º 26–30).** Escalera 25 % + 25 % con 4 % del PVC × grado por
   carga (vuelve a la locución); factor de 94 o menos, con Black hasta 98; CaaS sin prima confirmado; reporte de ventas
   en la primera semana del mes; la Arena abierta a todo café Blue+, con fila. **No quedan preguntas abiertas.**
+- **v0.7 (pendiente · decisiones del owner del 2026-09-17, `PVC_BCP_PLAN.md` §14).** Tres ajustes al traslado: (1) la prima
+  del 8 % **ya está dentro del PVC** —Cherry Picked paga la referencia completa, CaaS la retira—, así que «con la prima» se
+  dice como «a la referencia completa» y CaaS «sin la prima» sigue siendo cierto; (2) el mínimo del lote de Cherry Picked
+  por grado es **4 · 3 · 2 · 1 · ½ cargas** (bloque 9, pantalla); (3) el 80 % del alza de Tyrian es del productor **solo en
+  Cherry Picked** (bloque 8) y se convierte a COP el día del pago. La marca CTCx y el factor ≤ 94 quedan confirmados. La
+  regla interna del CaaS sin cooperación (§14 n.º 8) no entra en el guion.
 
 **Qué es.** El guion locutado de la pieza larga para el caficultor: cómo funciona Kaffetal Regal de punta a punta, del
 perfil de productor al pago, con el PVC, la evaluación, la base física, el Punto y la Tríada, los dos caminos de oferta

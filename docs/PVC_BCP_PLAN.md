@@ -355,7 +355,7 @@ tres campos; hoy `lot_evaluations` ya lleva `factor_rendimiento` y `physical_dat
 
 | Físico | Umbral | Quién lo mide |
 |---|---|---|
-| Factor de rendimiento | **> 94** | laboratorio de CTC (planilla del Q-Grader) |
+| Factor de rendimiento | **≤ 94** — más bajo es mejor; Black hasta 98 (corregido el 2026-09-17, §14 n.º 9: decía «> 94») | laboratorio de CTC (planilla del Q-Grader) |
 | Humedad | **10–12 %** | laboratorio de CTC |
 | Densidad | **dentro del rango de referencia de la variedad** (tabla `DENSIDAD_REFERENCIA` por variedad, pendiente del comité) | laboratorio de CTC |
 
@@ -965,6 +965,10 @@ Precio aconsejado tostado in situ =
 
 ### 12.6 MOQ
 
+> ⚠️ **Precisado por el owner el 2026-09-17** (§14 n.º 10 y §14.4): el mínimo **no es igual para todo programa**. Cherry Picked
+> lleva el mínimo del lote en cargas por grado —**4 · 3 · 2 · 1 · ½**, fijos— más la compra inicial en firme; CaaS entra con 15–25 kg.
+> El empaque como presentación se mantiene.
+
 **Fundamento.** El MOQ sale de **la cantidad de café que se puede comprar y procesar de forma significativa e individual
 en Colombia**. Por eso se expresa **en cargas** (1 carga = 125 kg de pergamino) y no en kilos de empaque, y por eso es
 **el mismo para todo programa**: es una restricción del origen, no del canal. Hacia el comprador, el mismo lote se ofrece
@@ -985,6 +989,10 @@ y Tyrian en vacío de 3 · 6 · 12 kg. Esto **reemplaza** la lógica anterior de
 (`ASSOC_BLACK_MOQ = 350`, y las unidades de 3·6·12 kg o sacos de 35 kg usados como mínimos).
 
 ### 12.7 Subasta Tyrian
+
+> ⚠️ **SUPERADO en la moneda por el §14** (owner, 2026-09-17, n.º 5, 11 y 16): la puja va en **US$/kg** sobre FOB Colombia
+> (todo hacia el comprador en US$, hacia el productor en COP); el 80 % del alza es del productor **solo en Cherry Picked** y se
+> convierte a COP el día del pago, sin seguro. Lo demás (una subasta por lote, reglas publicadas antes, adjudica el OCP) sigue.
 
 - **Una sola subasta por lote**, en verde.
 - **El bid es sobre FOB puerto Colombia.** El programa (Cherry Picked o CaaS) se elige **al cerrar**; los recargos por
@@ -1116,7 +1124,8 @@ Guardianes del módulo y su línea base: `qa-pvc-vigencia` 28 · `qa-pvc-lectura
 
 ### 13.2 Reglas que no se rompen
 
-- **El §12 prima** sobre §9.2, §9.5 y §9.6 (marcados SUPERADO). Donde choquen, manda el §12.
+- **El §12 prima** sobre §9.2, §9.5 y §9.6 (marcados SUPERADO). Donde choquen, manda el §12. **Y el §14 prima sobre el §12**
+  donde choquen (moneda de la puja, mínimo por programa, prima embebida en el PVC).
 - **Dos escalas conviven a propósito**: `src/lib/grados/definicion.ts` (SCA dos en dos) **gobierna** lo real;
   `escala.ts` (puntos) es vista previa y no escribe nada ni importa `definicion.ts`. No unificarlas hasta que el owner
   valide la escala (artefacto «PVC · Cinco decisiones»: https://claude.ai/artifact/ADTBbhLoJ5XfJjURwwXwzD).
@@ -1135,7 +1144,8 @@ Guardianes del módulo y su línea base: `qa-pvc-vigencia` 28 · `qa-pvc-lectura
    compra en firme de cualquier grado).
 3. **Compromiso Cherry Picked como dato**: hoy `compromiso.ts` es cálculo puro; falta que la oferta/contrato registre
    cargas comprometidas, retiros por mes y la penalización (§12.9).
-4. **Subasta Tyrian** sobre FOB puerto Colombia en EUR/kg (§12.7) — alinear la tienda Green.
+4. **Subasta Tyrian** sobre FOB puerto Colombia en **US$/kg** (§12.7 corregido por el §14 n.º 5) — alinear la tienda Green y el OCP;
+   el 80 % del alza al productor solo en Cherry Picked, a COP el día del pago.
 5. **Calendario PVC por trimestres exactos**, público, publicado dos meses antes (§12.8) — depende de la pregunta 8 del §12.11.
 6. **La espina** (A6 · A10 · A5 · A9): eventos `pvc.*`, cron diario TRM/ICE C y disparador, ciclo semanal
    `POST /api/pvc/cycle` con reporte; GitHub Action del dossier (A12).
@@ -1153,3 +1163,85 @@ Guardianes del módulo y su línea base: `qa-pvc-vigencia` 28 · `qa-pvc-lectura
 - **Escala** (§9.1): pesos iguales V·P·R, caso AAA:80, filas Caturra/Catuaí/Bourbon Rojo y Amarillo, nombre de la Base física.
 - **§9.3**: el X % del collar de TRM.
 - **§11.7**: ruta `/bcp/pvc` vs `/bcp/modelo` · cuarto KPI · aviso a lotes galardonados si una variedad baja de nivel.
+
+## 14. Decisiones de narrativa del owner (2026-09-17)
+
+Respuestas del owner a los tres documentos de narrativa —**CTCx · Kaffetal Regal · Cherry Picked**, dos páginas cada
+uno— que viven **fuera del repo** en `C:\dev\ctc-platforms\reference\narrativa-2026-09-17\` (HTML, PDF y el mapa
+`img/mapa-regiones.svg`). **Priman sobre el §12 donde choquen**; las secciones tocadas llevan su nota. Solo van aquí las
+reglas que el sistema aplica o le muestra al cliente; lo que es palanca de negociación se queda fuera del repo (§12.12).
+
+### 14.1 CTCx
+
+1. **Orquestador que participa.** CTCx orquesta el pasaporte del lote **y participa en el mercado con las mismas métricas
+   que exige**: hace el **acopio, el procesamiento y el empacado** en origen (y en destino se instruye en el tueste y la
+   preparación). La frase «CTC no toca un grano ni un contenedor» (charter `socios`, vision board v3) se corrige. Queda por
+   reconciliar con el nodo socio Centro de Calidad (trilla y selección óptica): §14.5.
+2. **La marca es CTCx en todo** (consolas, documentos, vitrina de CTCx Selection); «CTC» solo cuando sea estéticamente más
+   conveniente. La razón social y el NIT (`legal.ts`) son lo legal, no la marca.
+3. **CaaS es un solo negocio con dos caras.** Hacia el comprador, el camino **no consolidado** (FOB · puerto · DDP) donde
+   CTCx es activo en riesgo y negociación. Hacia el productor, la **compra directa** que CTCx propone a un café interesante
+   —hallado en campo— cuyo productor no quiere participar en las plataformas: ese café alimenta **CTCx Selection**, el
+   stock que CTCx compra directamente para asegurar disponibilidad mínima (cosechas extraordinarias o importantes; Black y
+   Red en cantidades mayores). En las plataformas el productor pasa a ser CTCx; la finca conserva sus propiedades de origen
+   y sigue en la documentación, pero pierde el protagonismo.
+4. **«Tríada»** nombra tres cosas a propósito (la del grado · la reputación del productor · la del comprador): se califica
+   («Tríada del grado», «tríada de reputación»), no se renombra.
+5. **Moneda: US$ y COP.** El **FOB en US$ es la base**; todo hacia el comprador en US$ (tienda Green, tabla por región,
+   subasta Tyrian), todo hacia el productor en COP. **Supera el §12.7** en la moneda de la puja (EUR/kg → US$/kg) y retira
+   el EUR de `data.ts` (`eur`, `price`), `RoastLanding` (`FEE_EUR_KG`) y `precio_salida_eur_kg`.
+6. **Anticipación del PVC**: «7–8 semanas» y «al menos dos meses» son lo mismo; la regla, fluida a propósito: **se publica
+   en las primeras dos semanas del segundo mes del periodo anterior**.
+
+### 14.2 Kaffetal Regal
+
+7. **La prima del 8 % está embebida en el PVC.** Cherry Picked paga PVC × multiplicador del grado tal cual (la referencia
+   completa); **CaaS le retira el componente de la prima al PVC** y después aplica el multiplicador:
+   `oferta_caas = (PVC − prima) × mult`. Reconcilia el §9.5 con el §12.9.
+8. **Excepción del CaaS sin cooperación**: cuando el productor no coopera y solo busca la transacción, CTCx estudia el café e
+   invierte a su propio riesgo. La regla de precio de ese caso se trata con el owner **fuera del repo** (§12.12) y **no es
+   copy** de ninguna superficie.
+9. **Factor de rendimiento ≤ 94** (más bajo es mejor; Black hasta 98). Corregido el «> 94» del §9.1.b.
+10. **El mínimo no es igual para todo programa** (precisa el §12.6): Cherry Picked lleva el mínimo del lote en cargas por
+    grado (tabla del §14.4) más la compra inicial en firme por grado (Black y Red 1 carga · Blue 200 kg · Gold > 100 kg ·
+    Tyrian ajustada); CaaS entra con **15–25 kg** y después CTCx compra lo que decida.
+11. **Tyrian**: el 80 % del alza de la subasta es del productor **solo en Cherry Picked**; en CaaS el alza es de CTCx. El
+    alza se muestra con el aproximado del día de la puja y **se fija en COP el día del pago**, sin seguro adicional.
+
+### 14.3 Cherry Picked
+
+12. **Narrativa de regiones, con mapa**: *Enabled Regions* **Nueva York · Florida · California · Alemania · Japón** (cada
+    una con un pin «MR · coming soon», morado claro); **Colombia** con el **Master Roaster local** (morado oscuro); **EE. UU.
+    y Europa** resaltados como área potencial de cobertura. Las regiones siguen sin existir como dato (§12.10).
+13. **Green hoy**: la lista principal es **FOB**; la lista **CaaS** existe pero está en construcción. Cherry Picked
+    consolidado llega con la primera región con master roaster.
+14. **Roast** es casi exclusivamente el tostado del Master Roaster de una región; **CaaS también ofrece tostado para HORECA
+    desde destino**, con los mismos MOQ de verde traducidos a tostado con **80 % de remanente** (la tabla del owner usa 85 %
+    en «merma V→T»: §14.5).
+15. **CTCx Selection en la vitrina**: el nombre de la finca **no aparece**, lo reemplaza CTCx; la finca sigue en la
+    documentación. Hoy la ficha pública muestra la finca real: `cherry-picked` decide si cuenta como documentación (§14.5).
+16. **La puja** se transforma a COP el día del pago y con eso se liquida; sin seguro de cambio.
+17. **Co-Create es vestigio y se retira** (logos, copy, la clave `cocreate` del pilar de leads y la ruta `/co-create`, con su
+    308 vivo mientras haya enlaces indexados). **X** sigue sin definición.
+
+### 14.4 La tabla de mínimos del owner (2026-09-17)
+
+| Grado | Cargas mín. (origen) | kg pergamino | kg verde (70 %) | MOQ comprador (unid. de 6 kg) | kg ajustado | Colchón |
+|---|---|---|---|---|---|---|
+| Black | 4 | 500 | 350 | 56 | 336 | 14 kg · 4,0 % |
+| Red | 3 | 375 | 262,5 | 42 | 252 | 10,5 kg · 4,0 % |
+| Blue | 2 | 250 | 175 | 26 | 156 | 19 kg · 10,9 % |
+| Gold | 1 | 125 | 87,5 | 13 | 78 | 9,5 kg · 10,9 % |
+| Tyrian | ½ | 62,5 | 43,75 | 6 | 36 | 7,75 kg · 17,7 % |
+
+Es el puente del §11.3 con números: el colchón de merma **crece al bajar el volumen**. La columna «máx. tostado sobre el
+colchón» de la tabla (85 % de remanente: 11,9 · 8,9 · 16,2 · 8,1 · 6,6 kg; 52,5 kg en total) queda anotada. Black 4 y Red 3
+son fijos (el §12.6 decía «3–4 según la mezcla»). Estos mínimos son los de Cherry Picked (n.º 10).
+
+### 14.5 Queda por confirmar (owner)
+
+- Si CTCx acopia, procesa y empaca, qué sella el nodo socio **Centro de Calidad** (n.º 1).
+- Merma verde → tostado: **80 %** (respuesta) o **85 %** (tabla) (n.º 14).
+- Publicación del PVC ene–mar 2027: «antes del 15-oct» (guion, §5.1 n.º 9) o el segundo mes de la edición vigente (n.º 6).
+- La ficha pública de un lote CTCx Selection: ¿documentación (finca visible, como hoy) o vitrina (CTCx)? (n.º 15).
+- Qué es el programa **X**; y si los cinco pines «MR coming soon» van en la portada pública o solo en material comercial.

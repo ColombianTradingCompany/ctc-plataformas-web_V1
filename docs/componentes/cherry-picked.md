@@ -76,6 +76,14 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (105, contra las 110 claves reale
 
 ## Pendientes
 
+- **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: **US$ en toda la tienda y la subasta**
+  (adiós EUR: `eur`, `price`, `FEE_EUR_KG`, `precio_salida_eur_kg`; supera el §12.7); portada con el **mapa de Enabled
+  Regions** (Nueva York · Florida · California · Alemania · Japón con «MR · coming soon», Colombia con MR local, EE. UU. y
+  Europa como cobertura potencial — el SVG está en `reference/narrativa-2026-09-17/img/mapa-regiones.svg`); Green hoy =
+  **lista FOB** principal + lista CaaS en construcción (Cherry Picked consolidado cuando haya MR); Roast = tostado del MR de
+  la región + **tostado HORECA por CaaS** (MOQ de verde × 80 %); **CTCx Selection reemplaza el nombre de la finca** en la
+  vitrina (decidir si la ficha pública es documentación o vitrina); mínimos del comprador en unidades de 6 kg
+  (56 · 42 · 26 · 13 · 6, tabla §14.4); **retirar Co-Create** (logos y copy aquí; la clave y la ruta con consolas); marca CTCx.
 - **Decisiones del CEO del 2026-09-16** (`docs/PVC_BCP_PLAN.md` §12) que este componente tiene que ejecutar:
   - **Cherry Picked solo se entrega DDP.** Es consolidado a través del master roaster de la región: **no hay FOB ni
     entrega en puerto**. Si un comprador quiere su café en un envío propio, eso es **CaaS** (FOB · puerto de destino ·

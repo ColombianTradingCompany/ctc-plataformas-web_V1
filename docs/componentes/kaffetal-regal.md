@@ -80,6 +80,13 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
+- **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: la prima del 8 % **está dentro del PVC**
+  (Cherry Picked paga PVC × grado tal cual; CaaS la retira y luego multiplica) — ajustar `TratoSection`, el FAQ y el guion
+  (v0.7); factor ≤ 94 confirmado; mínimo del lote de Cherry Picked por grado **4 · 3 · 2 · 1 · ½ cargas** (tabla §14.4) y
+  entrada CaaS de 15–25 kg; el 80 % del alza Tyrian **solo en Cherry Picked**, convertido a COP el día del pago; CaaS vende
+  como **CTCx Selection** (CTCx figura como productor, la finca queda en la documentación); marca CTCx en todo el copy (ya
+  previsto). La regla interna del CaaS sin cooperación (§14 n.º 8) **no va en ninguna pantalla**. El documento:
+  `reference/narrativa-2026-09-17/Kaffetal Regal - Narrativa.pdf` (fuera del repo).
 - **Decisiones del CEO del 2026-09-16** (`docs/PVC_BCP_PLAN.md` §12) que este componente tiene que ejecutar:
   - **El recorrido del productor**: llega con contexto de la propuesta de valor → crea cuenta → crea finca y lote →
     **primer win, gratis: se le devuelve el análisis EUDR del lote** → recibe la **expectativa de oferta** según el

@@ -76,6 +76,9 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (105, contra las 110 claves reale
 
 ## Pendientes
 
+- **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **CP-1** (US$ y mínimos) y **CP-2**
+  (portada, programas, mapa; ola 1) · CP-3 (catálogo y ficha para el primer lote publicado; espera CN-3, CN-4 y CN-7) ·
+  CP-4 (Green por región; espera CN-8) · CP-5 (Roast y X como productos, 2027).
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: Roast con etiquetas **Papagayo Beans por defecto · Co-Brand
   (productor y finca) · My Brand (diseño del comprador, que lo entrega o aprueba)**; ficha pública de un lote CTCx Selection con la
   finca **visible como dato, no protagonista**; tostado HORECA al **82 %**; los pines «MR coming soon» **también en la portada**;

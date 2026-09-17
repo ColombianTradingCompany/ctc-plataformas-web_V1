@@ -80,6 +80,9 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
+- **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **KR-1** (copy del guion, ola 1, sin
+  dependencias) · KR-2 (panel: perfil primero, tabla de salida, Arena, bolsa, avisos; espera CN-3, CN-5 y CN-6) · KR-3
+  (copy de grados, en la misma tanda que CN-9). El rodaje del video (O-8) espera a KR-1 y KR-2.
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: el nombre del productor y su finca **van en la bolsa** de
   Papagayo Beans® si el lote va por Cherry Picked (sticker o escrito + QR/UID); el PVC de ene–mar 2027 se publica **antes del
   15-oct** (como dice el guion); Black y Red 3–4 cargas según la mezcla (no fijos).

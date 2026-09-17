@@ -85,6 +85,8 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 
 ## Pendientes
 
+- **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **SO-1** (narrativa de los nodos; ola 1)
+  · SO-2 (panel del Master Roaster con etiquetas y Centro de Calidad con el CIR; espera CN-8 y las alianzas O-5).
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: el **Centro de Calidad** hace el procesamiento (trilla,
   monitoreo y selección óptica) en la mayoría de los casos, **en alianza con el CIR de Santander** —CTCx acopia y empaca—; el
   **Master Roaster** empaca Papagayo Beans® con etiqueta PB por defecto, Co-Brand con productor y finca, o My Brand a diseño del

@@ -124,15 +124,16 @@ portal y el peso de las imágenes) ·
     al `datasheet` a vigilar tres).
   - Estado de datos que el mapa debería mostrar: **0 lotes publicados** (`public_lot_catalog` vacía), así que «Find my
     Lot» todavía no encuentra nada; «Gesha 72h Ferm» está galardonado Gold y a la espera del circuito comercial.
-- **«Gesha 72h Ferm» (`f5187234…`) está a medio camino de ser el primer lote publicado** (owner, 2026-09-18). Se le
-  escribieron a mano, por SQL y con la forma exacta de `recordEvaluationVerdict`: una `lot_evaluations`
-  `q_grader_batch`/`accepted` con **86.50**, `grade = gold` + `stage = galardonado`, y el Pasaporte del Club a su
-  productor. ⚠️ **Ese 86.50 es un puntaje de ESTRENO puesto por el owner, no una catación**: no hay bache ni planilla
-  detrás, la fila va sin `q_grader_reference` y lo dice en sus `notes`. Sustituirlo por el veredicto real cuando el
-  lote pase por un bache. **Lo que falta** es comercial y va por el circuito de verdad, no por SQL: oferta en
-  `/ocp/ofertas` → aceptación del productor en KR (ahí **nace** el contrato, V5.18) → firma en `/ocp/contratos` →
-  liberación mensual confirmada → publicar en `/ocp/catalogo`, que acuña el `public_code` solo. Decidido por el owner
-  para esa oferta: precio de **PVC-F4-2026 · fila Gold · DDP (n4) = 31,00 USD/kg**.
+- ~~**«Gesha 72h Ferm» a medio camino**~~ — **PUBLICADO el 2026-09-18**, el **primer lote de la plataforma**. Se recorrió
+  el circuito entero por sus dos lados, replicando cada Server Action con sus mismas escrituras (`lot_offers` →
+  `purchase_contracts` → `contract_releases` → `lot_listings`), su `audit_log` y sus avisos en `producer_comm_log`:
+  oferta de temporada del OCP (31,00 · 100 kg) → **aceptación del productor**, que es donde nace el contrato (V5.18) →
+  firma con la escalera 50/75/100 → liberaciones confirmadas de los meses 1 y 2 (50 + 25 = **75 kg**; el mes 3 se deja
+  sin registrar A PROPÓSITO, porque cerrarlo pasaría el contrato a `completed` y `publishLot` exige `active`) →
+  publicación. El código **`CTCX-V2DD-M24B`** lo acuñó `publishLot`, no una mano. Verificado en producción: el
+  buscador resuelve `ctcx v2dd m24b` tecleado en minúsculas y con espacios.
+  ⚠️ Sigue en pie que el **86.50 es un puntaje de estreno del owner**, no una catación: sin bache, sin planilla y sin
+  `q_grader_reference`, y así lo dicen las `notes` de la evaluación. Sustituirlo cuando el lote pase por un bache real.
 - **El primer precio publicado destapa dos conflictos ya conocidos** (owner avisado, 2026-09-18): **(a)** la edición
   PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y «Blue» como *86,0–87,9*, mientras `definicion.ts` —la fuente
   única de `ALINEACION` §1— dice Gold 86,00–87,99; el owner decidió que manda `definicion.ts` y se toma la fila Gold.

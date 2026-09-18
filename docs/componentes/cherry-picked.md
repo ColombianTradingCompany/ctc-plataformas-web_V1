@@ -86,14 +86,16 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 - **BLOQUEANTE del primer lote publicado: la tienda imprime `€` sobre un precio en USD.** El PVC entrega su pila en
   **USD/kg** (`motor.ts`: `n0 = copc / trm / kg_g`) y `CherryPickedExperience` pinta `€{l.price_per_kg}/kg`. El owner
   decidió (2026-09-18) que el primer lote —«Gesha 72h Ferm», Gold, `PVC-F4-2026 · DDP (n4) = 31,00`— se publique con
-  el valor del PVC tal cual, así que **en cuanto se publique la tienda estará mostrando dólares con símbolo de euro**.
+  el valor del PVC tal cual. **Ya ocurrió**: el lote se publicó el 2026-09-18 a **31,00**, así que la tienda está
+  mostrando **€31,00/kg sobre un número en dólares** — tras el login, que es donde vive el catálogo completo (D0.5).
   Lo arregla **CP-1** («US$ y mínimos»). Dueño: cherry-picked.
 - **Unificar el código del lote sobre `lots.public_code`** (dueño: **cherry-picked**, nace en consolas V5.48,
   `ALINEACION` §3). Desde la V5.48 el lote tiene UN código corto, único y almacenado (`CTCX-XXXX-XXXX`), y ya viaja en
   `public_lot_catalog`. Mientras tanto siguen vivos los dos derivados que se contradicen: `codigoDeLote(lot_id, grade)`
-  en `lib/catalogo/sneakPeek.ts` («GD-A1B2») y `listingCode(lot_listings.id, grade)` en `cherry-picked/data.ts`
-  («GD-7F3C») — el MISMO café con dos cadenas según la superficie. Sustituirlos por la columna es tanda **CP-3**; ojo a
-  que un lote publicado siempre tiene código, y uno sin publicar no aparece en la vista.
+  en `lib/catalogo/sneakPeek.ts` y `listingCode(lot_listings.id, grade)` en `cherry-picked/data.ts`. **Ya no es
+  hipotético**: con el primer lote publicado (2026-09-18) el MISMO café enseña hoy **tres códigos distintos** —
+  `GD-F518` en la cinta, `GD-F0F9` en la tienda y `CTCX-V2DD-M24B` en el portal público. Sustituirlos por la columna es
+  tanda **CP-3**; ojo a que un lote publicado siempre tiene código, y uno sin publicar no aparece en la vista.
 - **La ficha pública de un lote CTCx Selection se arregla EN LA VISTA, no en la página** (§14.7: la finca «visible como
   dato, no protagonista»). `public_lot_catalog` anula `finca_name` cuando `ctc_selection`, y tanto `/docs/ficha/[lotId]`
   como el paquete público de `/ctcx-public-catalogue/[codigo]` solo pueden pintar lo que la vista devuelve. D3.1 se

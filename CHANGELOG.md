@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.49] — 2026-09-18 (commit pendiente)
+## [V5.49] — 2026-09-18 (commit e549669)
 
 - **Añadido**: la cinta del **Catálogo Activo** estrena la puerta al portal público — un botón «Buscar mi lote por su
   código» junto al «Ver el catálogo completo» de siempre. Como el módulo está montado en **siete superficies**, el

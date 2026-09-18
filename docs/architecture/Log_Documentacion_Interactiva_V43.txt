@@ -182,4 +182,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   portal; `rutaDelCodigo()` cuelga de ella y el guardián comprueba que coincida con la del mapa de la red.
 - Guardián: `qa-catalogo-publico-check` 76 → 85 (enlace absoluto, ruta no tecleada, 44 px táctiles, y el diccionario
   de `SneakPeek.tsx` con las tres lenguas completas).
-(commit: pendiente)
+(commit: e549669)

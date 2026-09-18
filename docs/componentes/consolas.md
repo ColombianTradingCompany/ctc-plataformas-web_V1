@@ -98,6 +98,21 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Pendientes
 
+- **«Gesha 72h Ferm» (`f5187234…`) está a medio camino de ser el primer lote publicado** (owner, 2026-09-18). Se le
+  escribieron a mano, por SQL y con la forma exacta de `recordEvaluationVerdict`: una `lot_evaluations`
+  `q_grader_batch`/`accepted` con **86.50**, `grade = gold` + `stage = galardonado`, y el Pasaporte del Club a su
+  productor. ⚠️ **Ese 86.50 es un puntaje de ESTRENO puesto por el owner, no una catación**: no hay bache ni planilla
+  detrás, la fila va sin `q_grader_reference` y lo dice en sus `notes`. Sustituirlo por el veredicto real cuando el
+  lote pase por un bache. **Lo que falta** es comercial y va por el circuito de verdad, no por SQL: oferta en
+  `/ocp/ofertas` → aceptación del productor en KR (ahí **nace** el contrato, V5.18) → firma en `/ocp/contratos` →
+  liberación mensual confirmada → publicar en `/ocp/catalogo`, que acuña el `public_code` solo. Decidido por el owner
+  para esa oferta: precio de **PVC-F4-2026 · fila Gold · DDP (n4) = 31,00 USD/kg**.
+- **El primer precio publicado destapa dos conflictos ya conocidos** (owner avisado, 2026-09-18): **(a)** la edición
+  PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y «Blue» como *86,0–87,9*, mientras `definicion.ts` —la fuente
+  única de `ALINEACION` §1— dice Gold 86,00–87,99; el owner decidió que manda `definicion.ts` y se toma la fila Gold.
+  Es el conflicto abierto n.º 1 de §1, mordiendo por primera vez en un precio real. **(b)** la pila del PVC está en
+  **USD/kg** y la tienda Green imprime `€{price}/kg`: el owner decidió publicar el valor igual y anotarlo — lo arregla
+  **CP-1**, y queda como pendiente bloqueante en el charter de `cherry-picked`.
 - **CN-7 va por la mitad (V5.48)**. Entregado: `lots.public_code` (el identificador), el portal público
   `/ctcx-public-catalogue` con «Find my Lot» y el paquete del lote, y la acuñación en `publishLot`. **Falta**: el
   **QR** y el **sticker imprimible** desde OCP · Fichas (nombre del productor y finca, o «CTCx Selection»), que

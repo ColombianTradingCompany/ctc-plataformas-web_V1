@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.48] — 2026-09-18 (commit pendiente)
+## [V5.48] — 2026-09-18 (commit 5a3121b)
 
 - **Hito**: nace **CTCx Public Catalogue** (`www.ctcexport.com/ctcx-public-catalogue`), el pivote público del lote:
   **«Find my Lot»** resuelve un código corto al paquete público del café, y debajo van la explicación del portal y las

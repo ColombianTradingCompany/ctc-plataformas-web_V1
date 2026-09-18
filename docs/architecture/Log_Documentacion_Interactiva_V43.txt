@@ -168,4 +168,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Es la mitad delantera de CN-7 del plan de narrativa; el sticker imprimible y el QR siguen pendientes.
 - Guardianes: `qa-catalogo-publico-check` 76 (nuevo) · `qa-ficha-publica-check` 105 → 115 (su §8 vigila ahora TRES
   puertas al `datasheet`) · `qa-guard-check` +1.
-(commit: pendiente)
+(commit: 5a3121b)

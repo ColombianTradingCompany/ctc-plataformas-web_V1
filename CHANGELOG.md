@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.50] — 2026-09-18 (commit pendiente)
+## [V5.50] — 2026-09-18 (commit c438f9f)
 
 - **Hito**: el **CTCx Public Catalogue** se vistió. La portada pasa de una columna de texto a una página con hero
   fotográfico, firma de procedencia, explicación ilustrada y la tira «de la finca a la taza». Las fotos son del

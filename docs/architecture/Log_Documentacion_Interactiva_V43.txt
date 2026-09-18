@@ -201,4 +201,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   mano, así que la página sigue al tema y no al revés.
 - Guardián: `qa-catalogo-publico-check` 85 → 115 (las dos copias de la marca, la firma con sus tres logos, la portada
   sin rutas a `reference/`, y el peso de cada foto y de la tarjeta).
-(commit: pendiente)
+(commit: c438f9f)

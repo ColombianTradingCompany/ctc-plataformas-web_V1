@@ -76,7 +76,7 @@ pvc_forecast_scores edition_id, realized_fnc_avg, prima_realizada, err_L, err_P,
 | `market_anchors` + cron `/api/cron/market-anchors` (11:10 UTC, `parseFnc`) | Sólo FNC carga | Añadir kinds `trm` (datos.gov.co 32sa-8pi3) e `ice_c_strip` (del ticker); la ventana de 30 días y los dos disparadores (FNC y TRM, §9.3) se calculan de aquí | **#4 decidido**: Vercel está en **Pro** para CTCx → el ciclo semanal es un cron de Vercel más; Make queda como bus de `pvc.*` |
 | Subastas Tyrian (`src/lib/subastas`, `precio_salida_eur_kg`) | Salida en EUR | **Corregido §12.7**: una sola subasta por lote, en verde; **el bid es sobre FOB puerto Colombia** y el programa se elige al cerrar, con los recargos por programa sumados después | **Se mantiene EUR/kg** y la adjudicación por el OCP; las reglas de ajuste por programa se **publican antes** de abrir la puja |
 | Roast landing (`FEE_EUR_KG = 9.50`, MOQ por grado) | Constantes | Tarifa CTCx = base × factor de banda + recargo por nivel, desde la edición; se exhibe en la moneda del destino | Misma doctrina de moneda (§9.3) |
-| Arena (`ARENA_FEE_COP`, `EVALUATION_FEE_COP`) | Constantes | Tarifa de evaluación $200.000 y subsidios 30/50/60/70 desde `pvc_model_versions.params` | — |
+| Arena (`ARENA_FEE_COP`, `EVALUATION_FEE_COP`) | Constantes | Tarifa de evaluación $200.000 y **coinversión de CTCx** 30/50/60/70 desde `pvc_model_versions.params` (owner, 2026-09-18: **no es un «descuento»** — CTCx coinvierte del 30 % y hasta el 70 % del costo; el 100 % sigue siendo excepcional) | — |
 | `public_transparency_pricing`, jsonLd SEO | — | Exponen `public_pvc_current` | Sneak peek sigue sin precio (`qa-sneak-peek-check.mjs`) |
 | `/bcp/documentacion/[file]`, `tools` + `tool_versions` | Registro de herramientas versionadas | El dossier D0–D9 + calculadora + one-pager se registran por edición (`tool_versions`) y se sirven desde storage `pvc/<código>/` | **#5 decidido**: el pipeline Python corre en una **GitHub Action** (`repository_dispatch` desde `pvc.published`); los artefactos suben a storage |
 | Cola de integraciones → Make (`src/lib/integraciones/emit.ts`) | Eventos de dominio | `pvc.published`, `pvc.corrected`, `pvc.cycle_ready`: Canva del one-pager, correo a productores (D8), WhatsApp, campaña D9 | Regla vigente: las Server Actions insertan en la cola, nunca llaman el webhook |
@@ -1203,10 +1203,19 @@ reglas que el sistema aplica o le muestra al cliente; lo que es palanca de negoc
    copy** de ninguna superficie.
 9. **Factor de rendimiento ≤ 94** (más bajo es mejor; Black hasta 98). Corregido el «> 94» del §9.1.b.
 10. **El mínimo no es igual para todo programa** (precisa el §12.6): Cherry Picked lleva el mínimo del lote en cargas por
-    grado (tabla del §14.4) más la compra inicial en firme por grado (Black y Red 1 carga · Blue 200 kg · Gold > 100 kg ·
-    Tyrian ajustada); CaaS entra con **15–25 kg** y después CTCx compra lo que decida.
+    grado (tabla del §14.4) más la compra inicial en firme por grado (Black y Red 1 carga · Blue 200 kg ·
+    **Gold hasta 100 kg** · Tyrian ajustada); CaaS entra con **15–25 kg** y después CTCx compra lo que decida.
+    *(Corregido el 2026-09-18, v0.9.1 del guion: decía «Gold > 100 kg», que es lo contrario — el Gold entra con menos
+    kilos, no con más, porque es café más caro. Lo mismo se corrigió en `PLAN_NARRATIVA_2026-09-17.md` §CN-3.)*
 11. **Tyrian**: el 80 % del alza de la subasta es del productor **solo en Cherry Picked**; en CaaS el alza es de CTCx. El
     alza se muestra con el aproximado del día de la puja y **se fija en COP el día del pago**, sin seguro adicional.
+11-bis. **La evaluación no se rebaja: se COINVIERTE** (owner, 2026-09-18, v0.9.1 del guion). La tarifa son $200.000 COP
+    con envío incluido, y lo que CTCx pone del 30 % y hasta el 70 % **no es un «descuento»** — es coinversión en el café
+    del productor; el 100 % sigue siendo excepcional. Es una corrección de VOCABULARIO con efecto en las superficies:
+    donde se diga «descuento» al hablar del costo de la evaluación, se dice coinversión. La máquina no cambia — el campo
+    sigue siendo `arena_inscriptions.discount_pct` y las campañas siguen siendo códigos—, cambia lo que se le dice al
+    productor. **Dueño del copy: `kaffetal-regal`** (`EvaluacionesTab`, `PorQueSection`, `faq.ts` n.º 3, `TratoSection`),
+    anotado en su charter.
 
 ### 14.3 Cherry Picked
 

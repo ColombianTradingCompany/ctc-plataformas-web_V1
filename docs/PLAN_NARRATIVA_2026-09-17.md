@@ -157,7 +157,8 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 
 - **Ofertas.** Precio de toda oferta desde la edición vigente: PVC × multiplicador del grado (la prima ya está dentro);
   `lot_offers.kind` gana `directa` = (PVC − prima) × mult; compra inicial en firme por programa y grado (Cherry Picked
-  1 carga · 1 carga · 200 kg · > 100 kg · ajustada; CaaS 15–25 kg); mínimos por programa leídos de la edición
+  1 carga · 1 carga · 200 kg · **hasta 100 kg** · ajustada; CaaS 15–25 kg — el Gold entra con MENOS kilos, corregido el
+  2026-09-18 con la v0.9.1 del guion); mínimos por programa leídos de la edición
   (`moqPorGrado`; Black y Red 3–4 según la mezcla); reoferta por periodos (siguiente sin descuento, posterior −5 %);
   oferta en 1–3 días tras el veredicto (aviso); `ctc_selection` encendido por cualquier compra en firme (A13), no
   solo por `black_negotiations`.

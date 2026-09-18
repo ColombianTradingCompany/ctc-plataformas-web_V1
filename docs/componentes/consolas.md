@@ -99,6 +99,11 @@ portal y el peso de las imágenes) ·
 
 ## Pendientes
 
+- ~~**Reconciliar las correcciones del guion v0.9.1**~~ — **hecho el 2026-09-18**. `PVC_BCP_PLAN.md` §14.2 (n.º 10 y el
+  nuevo 11-bis) y `PLAN_NARRATIVA_2026-09-17.md` §CN-3 ya dicen **«Gold hasta 100 kg»** y **«CTCx coinvierte»** en vez de
+  «descuento». La línea está en `ALINEACION` §3. Lo que queda es **copy con dueño `kaffetal-regal`** (`EvaluacionesTab`,
+  `PorQueSection`, `faq.ts` n.º 3, `TratoSection`) y la regeneración de `reference/narrativa-2026-09-17/`, que es del owner
+  y vive fuera del repo.
 - **WRAP DEL MAPA · PEDIDO FORMAL** (consolas → plataforma, 2026-09-18). `Log_Documentacion_Interactiva_V43.txt`
   acumula **seis asientos** (V5.46 a V5.51) sobre el wrap V43 (plataforma V5.45): por encima de la cadencia de cinco de
   `ALINEACION` §5. Un componente no llama al wrap — lo pide; lo ejecuta la vía **`plataforma`** desde la conversación

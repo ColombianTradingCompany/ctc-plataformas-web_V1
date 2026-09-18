@@ -202,3 +202,16 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Guardián: `qa-catalogo-publico-check` 85 → 115 (las dos copias de la marca, la firma con sus tres logos, la portada
   sin rutas a `reference/`, y el peso de cada foto y de la tarjeta).
 (commit: c438f9f)
+
+## [2026-09-18] V5.51 · La cesta abre el portal, y la mesa deja de estar boca abajo (consolas)
+- ASSET nuevo y PRIMERA imagen de la página: `cesta-flavour-quality-traceability.webp`, el grabado del owner. Sustituye
+  a la foto del patio en el hero. Va sobre placa BLANCA (el trazo es muy claro y sobre `--paper` se apaga) y con
+  `object-fit: contain` — un dibujo no se recorta.
+- CORRECCIÓN: `cadena-mesa-cafe.webp` salía invertida. La panorámica original está tomada de lado y se había rotado
+  −90° en vez de +90°, así que los platos colgaban de la madera. Regenerada con la rotación buena y reencuadrada.
+- La tira de la cadena pasa de 4 a 5 pasos: finca → **secado** → productor → tostador → destino. El secado es la foto
+  del patio, ahora en 4:3 (`secado-patio-guacamayo.webp`); `hero-patio-guacamayo.webp` se retira por no tener lectores.
+- Guardián: `qa-catalogo-publico-check` 115 → 119. La comprobación nueva vigila una costura que los tipos NO ven: la
+  tira empareja foto y pie POR ÍNDICE, así que una foto de más o un pie de menos en un idioma es un `undefined` en
+  producción.
+(commit: pendiente)

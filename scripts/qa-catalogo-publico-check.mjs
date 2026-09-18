@@ -290,6 +290,17 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("la marca hereda el color del tema", /currentColor/.test(marcaTsx) && !/#[0-9a-fA-F]{3,6}/.test(sinComentarios(marcaTsx)));
   check("y es decorativa (el texto de al lado ya la nombra)", /aria-hidden="true"/.test(marcaTsx));
 
+  // La tira de la cadena empareja FOTO con PIE por índice, así que una foto de
+  // más —o un pie de menos en un idioma— es una página que revienta en
+  // producción con `t.pasos[i]` undefined. Los tipos no lo ven: es un array.
+  {
+    const src = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
+    const fotos = (/const FOTOS = \[([\s\S]*?)\n\];/.exec(src)?.[1].match(/src:/g) ?? []).length;
+    const pies = [...src.matchAll(/pasos: \[([\s\S]*?)\n\s{4}\],/g)].map((m) => (m[1].match(/\{ t: "/g) ?? []).length);
+    check(`la tira declara ${fotos} fotos`, fotos > 0);
+    check(`los tres idiomas traen los ${fotos} pies (${pies.join("·")})`, pies.length === 3 && pies.every((n) => n === fotos));
+  }
+
   // La firma de procedencia es lo que le dice a quien llega desde una bolsa de
   // quién es esto. Las tres casas, con su logo.
   const proc = lee("src/components/catalogo/ProcedenciaCTCx.tsx");
@@ -309,9 +320,13 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   // un original de `reference/`, no se despliega: esa carpeta no va al build.
   check("la portada no apunta a `reference/`", !/reference\//.test(sinComentarios(portada)));
   for (const f of [
-    "hero-patio-guacamayo.webp",
+    // La primera imagen de la página (V5.51): el grabado del owner. Va sin
+    // recortar, así que pesa más que una foto recortada — de ahí el margen.
+    "cesta-flavour-quality-traceability.webp",
     "cadena-mesa-cafe.webp",
+    // Los cinco pasos de la cadena, en su orden.
     "finca-cerezas.webp",
+    "secado-patio-guacamayo.webp",
     "productor-pergamino.webp",
     "tostador-probat.webp",
     "destino-molinillos.webp",

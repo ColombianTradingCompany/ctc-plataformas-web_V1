@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.51] — 2026-09-18 (commit pendiente)
+
+- **Cambiado**: la **primera imagen** del CTCx Public Catalogue pasa a ser la **cesta de cerezas** del owner
+  («Flavour · Quality · Traceability»). Va entera y sin retocar sobre una placa blanca —`contain`, nunca `cover`:
+  recortar un dibujo le corta el asa a la cesta—, y sobre blanco y no sobre el papel del tema, porque es un grabado a
+  línea muy claro que sobre gris se apagaría.
+- **Corregido**: la foto de la mesa con el café en sus cinco estados **salía boca abajo**. Es una panorámica tomada de
+  lado y se había rotado −90° en vez de +90°, así que los platos colgaban de la madera en lugar de apoyarse en ella.
+  Rotada bien y reencuadrada: ahora se ven molido, tostado, verde y pergamino sobre la mesa, con las tazas detrás.
+- **Cambiado**: la tira «de la finca a la taza» pasa de cuatro pasos a **cinco** — la foto del patio de secado, que
+  hasta ahora hacía de hero, bajó a un paso propio («El secado»). De paso la cadena queda completa: el café no salta
+  de la cereza al saco.
+- **Retirado**: `hero-patio-guacamayo.webp` (su recorte 3:4 ya no se usa; el patio vive ahora en 4:3 como
+  `secado-patio-guacamayo.webp`). Nada apunta a él — se comprueba antes de borrar.
+- **Añadido**: `qa-catalogo-publico-check.mjs` sube a **119**. La comprobación nueva empareja la tira: las fotos se
+  casan con los pies **por índice**, así que una foto de más —o un pie de menos en un idioma— es una página que
+  revienta en producción con `undefined`, y los tipos no lo ven porque es un array.
+
 ## [V5.50] — 2026-09-18 (commit c438f9f)
 
 - **Hito**: el **CTCx Public Catalogue** se vistió. La portada pasa de una columna de texto a una página con hero

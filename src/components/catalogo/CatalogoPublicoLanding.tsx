@@ -21,18 +21,25 @@ import styles from "./catalogoPublico.module.css";
 // `ALINEACION.md` §1 pide ES·EN·DE en toda superficie pública, y el nombre de
 // una marca no es una excepción a esa regla: es que no es texto traducible.
 //
-// LAS FOTOS SON DEL ARCHIVO DE CTC (V5.50), no de banco de imágenes, y ese es el
-// punto: la del hero lleva el guacamayo de la casa DENTRO del encuadre, sobre el
-// patio de secado. La tira de abajo recorre la cadena real —finca, productor,
-// tostador, destino— porque es exactamente lo que el portal permite rastrear.
-// Originales en `reference/ctcx-public-catalogue/`; aquí van en webp recortado.
+// LA PRIMERA IMAGEN ES LA CESTA (V5.51, owner): el grabado a línea con «Flavour
+// · Quality · Traceability». Dice de entrada lo que el portal promete, y dice
+// que esto es dibujo de la casa y no una foto de archivo. Va entera y sin
+// retocar sobre una placa blanca — `contain`, nunca `cover`: recortar un dibujo
+// le corta el asa a la cesta.
+//
+// EL RESTO SON FOTOS DEL ARCHIVO DE CTC, no de banco de imágenes. La tira de
+// abajo recorre la cadena real —finca, secado, productor, tostador, destino—
+// porque es exactamente lo que el portal permite rastrear; el secado entró en la
+// V5.51 con la foto del patio, que hasta entonces hacía de hero. Originales en
+// `reference/ctcx-public-catalogue/`; aquí van en webp recortado.
 
 const T: Record<
   Lang,
   {
     tag: string;
     sub: string;
-    pieFoto: string;
+    altCesta: string;
+    pieCesta: string;
     queTag: string;
     queH2: string;
     que: string[];
@@ -45,7 +52,8 @@ const T: Record<
   es: {
     tag: "CTCx · Catálogo público",
     sub: "Escriba el código de su lote y vea lo que CTCx tiene registrado de él: origen, variedad, proceso, altura y taza. Sin cuenta y sin registro.",
-    pieFoto: "Patio de secado en Santander — el pergamino de un lote camino de su ficha.",
+    altCesta: "Cesta de cerezas de café dibujada a línea, con las palabras Flavour, Quality y Traceability.",
+    pieCesta: "Sabor, calidad y trazabilidad — las tres cosas que un código de lote tiene que poder demostrar.",
     queTag: "Qué es este portal",
     queH2: "El expediente del lote, en abierto",
     que: [
@@ -57,7 +65,8 @@ const T: Record<
     cadenaH2: "Todo esto es lo que hay detrás de un código",
     pasos: [
       { t: "La finca", d: "La cereza se recoge madura y se despulpa el mismo día." },
-      { t: "El productor", d: "El pergamino se seca y se recoge con nombre y apellido." },
+      { t: "El secado", d: "El pergamino se tiende al sol y se voltea hasta su punto." },
+      { t: "El productor", d: "Lo recoge, lo pesa y lo registra con nombre y apellido." },
       { t: "El tostador", d: "El verde viaja a quien sabe leerlo en taza." },
       { t: "El destino", d: "Y termina donde el café lleva siglos siendo un oficio." },
     ],
@@ -66,7 +75,8 @@ const T: Record<
   en: {
     tag: "CTCx · Public catalogue",
     sub: "Type your lot code and see what CTCx has on record for it: origin, variety, process, altitude and cup. No account, no sign-up.",
-    pieFoto: "Drying patio in Santander — a lot's parchment on its way to its datasheet.",
+    altCesta: "Line drawing of a basket of coffee cherries, with the words Flavour, Quality and Traceability.",
+    pieCesta: "Flavour, quality and traceability — the three things a lot code has to be able to prove.",
     queTag: "What this portal is",
     queH2: "The lot's file, in the open",
     que: [
@@ -78,7 +88,8 @@ const T: Record<
     cadenaH2: "All of this sits behind one code",
     pasos: [
       { t: "The farm", d: "The cherry is picked ripe and pulped the same day." },
-      { t: "The grower", d: "The parchment dries and is gathered under a name." },
+      { t: "The drying", d: "The parchment is laid in the sun and turned until ready." },
+      { t: "The grower", d: "They gather it, weigh it and record it under a name." },
       { t: "The roaster", d: "The green travels to someone who can read it in the cup." },
       { t: "The destination", d: "And ends where coffee has been a craft for centuries." },
     ],
@@ -87,7 +98,8 @@ const T: Record<
   de: {
     tag: "CTCx · Öffentlicher Katalog",
     sub: "Geben Sie Ihre Losnummer ein und sehen Sie, was CTCx dazu erfasst hat: Herkunft, Varietät, Aufbereitung, Höhe und Tasse. Ohne Konto, ohne Anmeldung.",
-    pieFoto: "Trockenpatio in Santander — das Pergamino eines Loses auf dem Weg zu seinem Datenblatt.",
+    altCesta: "Strichzeichnung eines Korbes mit Kaffeekirschen, mit den Wörtern Flavour, Quality und Traceability.",
+    pieCesta: "Geschmack, Qualität und Rückverfolgbarkeit — die drei Dinge, die eine Losnummer belegen können muss.",
     queTag: "Was dieses Portal ist",
     queH2: "Die Akte des Loses, offen einsehbar",
     que: [
@@ -99,7 +111,8 @@ const T: Record<
     cadenaH2: "Das alles steckt hinter einer Nummer",
     pasos: [
       { t: "Die Finca", d: "Die Kirsche wird reif gepflückt und noch am selben Tag entpulpt." },
-      { t: "Der Produzent", d: "Das Pergamino trocknet und wird mit Namen eingesammelt." },
+      { t: "Die Trocknung", d: "Das Pergamino liegt in der Sonne und wird bis zum Punkt gewendet." },
+      { t: "Der Produzent", d: "Er sammelt es ein, wiegt es und erfasst es mit Namen." },
       { t: "Der Röster", d: "Der Rohkaffee reist zu jemandem, der ihn in der Tasse lesen kann." },
       { t: "Das Ziel", d: "Und endet dort, wo Kaffee seit Jahrhunderten ein Handwerk ist." },
     ],
@@ -109,6 +122,7 @@ const T: Record<
 
 const FOTOS = [
   { src: "/images/ctcx-public-catalogue/finca-cerezas.webp", w: 1200, h: 675 },
+  { src: "/images/ctcx-public-catalogue/secado-patio-guacamayo.webp", w: 900, h: 675 },
   { src: "/images/ctcx-public-catalogue/productor-pergamino.webp", w: 900, h: 675 },
   { src: "/images/ctcx-public-catalogue/tostador-probat.webp", w: 900, h: 675 },
   { src: "/images/ctcx-public-catalogue/destino-molinillos.webp", w: 900, h: 675 },
@@ -133,16 +147,16 @@ export function CatalogoPublicoLanding() {
               <BuscadorDeLote />
             </div>
             <div>
-              <div className={styles.heroFoto}>
+              <div className={styles.heroArte}>
                 <Image
-                  src="/images/ctcx-public-catalogue/hero-patio-guacamayo.webp"
-                  alt={t.pieFoto}
-                  fill
-                  sizes="(max-width: 900px) 100vw, 46vw"
+                  src="/images/ctcx-public-catalogue/cesta-flavour-quality-traceability.webp"
+                  alt={t.altCesta}
+                  width={1100}
+                  height={841}
                   priority
                 />
               </div>
-              <p className={styles.pie}>{t.pieFoto}</p>
+              <p className={styles.pie}>{t.pieCesta}</p>
             </div>
           </div>
         </div>
@@ -182,7 +196,7 @@ export function CatalogoPublicoLanding() {
             {FOTOS.map((f, i) => (
               <figure className={styles.paso} key={f.src}>
                 <div className={styles.pasoFoto}>
-                  <Image src={f.src} alt={t.pasos[i].t} fill sizes="(max-width: 900px) 46vw, 23vw" />
+                  <Image src={f.src} alt={t.pasos[i].t} fill sizes="(max-width: 900px) 46vw, 19vw" />
                 </div>
                 <figcaption className={styles.pasoPie}>
                   <b>{t.pasos[i].t}</b>

@@ -62,19 +62,30 @@
   color: var(--muted, #5a6472);
 }
 
-/* La foto del hero: patio de secado con el guacamayo de CTC dentro del propio
-   encuadre. Se recorta en 3:4 y se deja que respire — es la única imagen de la
-   página que compite con el titular, así que no lleva texto encima. */
-.heroFoto {
-  position: relative;
-  aspect-ratio: 3 / 4;
+/* La ilustración del hero (V5.51, owner): la cesta de cerezas con «Flavour ·
+   Quality · Traceability». Es un grabado a línea con transparencia, así que va
+   sobre una placa BLANCA y no sobre el papel gris del tema: el trazo es muy
+   claro y sobre `--paper` se apagaría. Y `contain`, nunca `cover` — recortar un
+   dibujo le corta el asa a la cesta.
+
+   Va sin recortar y sin retocar a propósito: es obra del owner, no material de
+   relleno. La foto del patio, que estaba aquí hasta la V5.50, bajó a la tira de
+   la cadena, que es donde cuenta algo («El secado»). */
+.heroArte {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  padding: clamp(14px, 2.5vw, 30px);
+  background: #fff;
   border-radius: calc(var(--radius, 14px) + 6px);
-  overflow: hidden;
-  box-shadow: 0 18px 44px -20px rgba(14, 44, 72, 0.45);
+  box-shadow: 0 18px 44px -24px rgba(14, 44, 72, 0.35);
 }
 
-.heroFoto img {
-  object-fit: cover;
+.heroArte img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .pie {
@@ -280,10 +291,13 @@
   padding: 0 0 clamp(34px, 5vw, 64px);
 }
 
+/* Cinco pasos desde la V5.51 — finca, secado, productor, tostador, destino. El
+   secado entró cuando la foto del patio bajó del hero, y de paso la cadena
+   quedó completa: el café no salta de la cereza al saco. */
 .tira {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(12px, 2vw, 20px);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 18px);
   margin-top: clamp(18px, 2.5vw, 26px);
 }
 
@@ -480,10 +494,10 @@
   .explicaGrid {
     grid-template-columns: minmax(0, 1fr);
   }
-  /* La foto del hero baja y se achata: en vertical, un 3:4 empujaría el
-     buscador —que es a lo que se viene— por debajo del pliegue. */
-  .heroFoto {
-    aspect-ratio: 16 / 10;
+  /* La ilustración baja y se achata: en vertical, un 4:3 empujaría el buscador
+     —que es a lo que se viene— por debajo del pliegue. */
+  .heroArte {
+    aspect-ratio: 16 / 9;
     order: 2;
   }
   /* Las tres casas se apilan y el logo encoge: siguen siendo tres tarjetas

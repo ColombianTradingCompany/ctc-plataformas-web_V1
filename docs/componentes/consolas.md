@@ -69,7 +69,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `qa-direccionamiento-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
 `qa-evaluaciones-check.mjs` (42, veredicto Q-Grader) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` ·
-`qa-catalogo-publico-check.mjs` (76 — el código público del lote, «Find my Lot» y las rutas SOLO-www) ·
+`qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
+portal y el peso de las imágenes) ·
 `qa-guard-check.mjs` (seguridad, con cuentas QA).
 
 ## Reglas propias
@@ -98,8 +99,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Pendientes
 
-- **WRAP DEL MAPA PEDIDO** (2026-09-18). El log vigente `Log_Documentacion_Interactiva_V43.txt` acumula **cinco
-  asientos** desde el wrap V43 (V5.46 · V5.47 · V5.48 · V5.49 · V5.50), que es la cadencia de `ALINEACION` §5. Un
+- **WRAP DEL MAPA PEDIDO** (2026-09-18). El log vigente `Log_Documentacion_Interactiva_V43.txt` acumula **seis
+  asientos** desde el wrap V43 (V5.46 a V5.51), por encima de la cadencia de cinco de `ALINEACION` §5. Un
   componente no llama al wrap: lo pide. Hay material nuevo de sobra para el mapa — superficie nueva
   `/ctcx-public-catalogue` (+ su ruta `[codigo]`), el concepto **RUTAS_SOLO_WWW**, la columna `lots.public_code` con su
   guardia, y la marca del portal. Se llama desde la conversación «Wraps del mapa».

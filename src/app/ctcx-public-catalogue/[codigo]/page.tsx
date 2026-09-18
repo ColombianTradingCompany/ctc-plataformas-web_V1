@@ -181,8 +181,9 @@ export async function generateMetadata({
       .filter(Boolean)
       .join(" · "),
     siteName: "Colombian Trading Company",
-    image: "ctc-home.jpg",
-    imageAlt: "Logotipo de Colombian Trading Company sobre fondo azul corporativo",
+    image: "ctcx-public-catalogue.jpg",
+    imageAlt:
+      "Patio de secado de café en Santander con «Find my Lot» y el logotipo de Colombian Trading Company",
     alternateLocale: ["en_GB", "de_DE"],
   });
 }

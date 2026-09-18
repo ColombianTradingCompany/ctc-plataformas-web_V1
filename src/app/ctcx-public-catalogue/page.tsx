@@ -29,8 +29,9 @@ export const generateMetadata = superficieConOverrides({
   description:
     "Escriba el código de su lote y vea el expediente público que CTCx tiene de él: finca y origen, variedad, proceso, altura, notas de cata y el análisis SCA. Solo lotes publicados.",
   siteName: "Colombian Trading Company",
-  image: "ctc-home.jpg",
-  imageAlt: "Logotipo de Colombian Trading Company sobre fondo azul corporativo",
+  image: "ctcx-public-catalogue.jpg",
+  imageAlt:
+    "Patio de secado de café en Santander con «Find my Lot» y el logotipo de Colombian Trading Company",
   alternateLocale: ["en_GB", "de_DE"],
 });
 

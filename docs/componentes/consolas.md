@@ -98,6 +98,11 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Pendientes
 
+- **WRAP DEL MAPA PEDIDO** (2026-09-18). El log vigente `Log_Documentacion_Interactiva_V43.txt` acumula **cinco
+  asientos** desde el wrap V43 (V5.46 · V5.47 · V5.48 · V5.49 · V5.50), que es la cadencia de `ALINEACION` §5. Un
+  componente no llama al wrap: lo pide. Hay material nuevo de sobra para el mapa — superficie nueva
+  `/ctcx-public-catalogue` (+ su ruta `[codigo]`), el concepto **RUTAS_SOLO_WWW**, la columna `lots.public_code` con su
+  guardia, y la marca del portal. Se llama desde la conversación «Wraps del mapa».
 - **«Gesha 72h Ferm» (`f5187234…`) está a medio camino de ser el primer lote publicado** (owner, 2026-09-18). Se le
   escribieron a mano, por SQL y con la forma exacta de `recordEvaluationVerdict`: una `lot_evaluations`
   `q_grader_batch`/`accepted` con **86.50**, `grade = gold` + `stage = galardonado`, y el Pasaporte del Club a su

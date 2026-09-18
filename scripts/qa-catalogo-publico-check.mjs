@@ -28,7 +28,7 @@
 // vive en `qa-ficha-publica-check.mjs` §8, que vigila las TRES puertas juntas —
 // es el archivo donde el siguiente barrido va a mirar.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import {
   ALFABETO,
   LARGO_CUERPO,
@@ -43,6 +43,10 @@ let ok = 0;
 const fallos = [];
 const check = (n, c) => (c ? ok++ : fallos.push(n));
 const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
+const existe = (r) => existsSync(new URL(`../${r}`, import.meta.url));
+/** Peso en KB. Una página que se abre con el móvil en una finca no puede servir
+ *  el original de 4 MB que salió de la cámara. */
+const kb = (r) => statSync(new URL(`../${r}`, import.meta.url)).size / 1024;
 const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 const RUTA = "/ctcx-public-catalogue";
@@ -173,6 +177,13 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   const landing = sinComentarios(lee("src/app/ctcx-public-catalogue/page.tsx"));
   check("la landing firma su tarjeta por la única puerta", landing.includes("superficieConOverrides("));
   check("con la ruta que el mapa conoce", landing.includes(`route: "${RUTA}"`));
+  // Tarjeta PROPIA desde la V5.50: hasta entonces prestaba la de la casa
+  // matriz, y compartir un lote por WhatsApp enseñaba el logotipo de CTC sin
+  // decir a dónde llevaba el enlace. El protocolo pide JPEG 1200×630.
+  const OG = "public/images/og/ctcx-public-catalogue.jpg";
+  check("la landing usa su propia tarjeta", landing.includes('image: "ctcx-public-catalogue.jpg"'));
+  check("existe el archivo de la tarjeta", existe(OG));
+  check(`y pesa menos de 300 KB (${existe(OG) ? kb(OG).toFixed(0) : "?"} KB)`, existe(OG) && kb(OG) < 300);
   check("y NO se vuelve dinámica (es página de marketing)", !/force-dynamic/.test(landing));
 
   const paqueteBruto = lee("src/app/ctcx-public-catalogue/[codigo]/page.tsx");
@@ -184,6 +195,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("cada lote firma su canonical completo", /route: rutaDelCodigo\(lote\.codigo\)/.test(paquete));
   check("y devuelve {} para un código desconocido", /if \(!lote\) return \{\};/.test(paquete));
   check("lee la vista con el cliente anónimo", /createEphemeralClient\(\)/.test(paquete));
+  check("y el lote comparte la tarjeta del portal", paquete.includes('image: "ctcx-public-catalogue.jpg"'));
 
   // `generateMetadata` NO puede redirigir ni lanzar 404: Next la ejecuta aparte
   // del render, y un control de flujo ahí dentro se traga o se duplica. De eso
@@ -240,6 +252,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
     "src/components/catalogo/BuscadorDeLote.tsx",
     "src/components/catalogo/PuertasDelPortal.tsx",
     "src/components/catalogo/PaquetePublico.tsx",
+    "src/components/catalogo/ProcedenciaCTCx.tsx",
     // La cinta del Catálogo Activo entra aquí desde la V5.49, cuando estrenó la
     // puerta al portal: su diccionario alimenta las siete superficies, así que
     // una clave que falte en alemán se ve en siete sitios a la vez.
@@ -259,8 +272,56 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   // idiomas — como «Cherry Picked». Que esté escrito por qué evita que el
   // siguiente barrido lo «arregle».
   const landing = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
-  check("el H1 es «Find my Lot»", /<h1>Find my Lot<\/h1>/.test(landing));
+  check("el H1 es «Find my Lot»", /<h1[^>]*>Find my Lot<\/h1>/.test(landing));
   check("y queda explicado por qué no se traduce", /nombre de la función/.test(landing));
+}
+
+// ── 11. La marca del portal y la firma de procedencia (V5.50) ─────────────
+{
+  // La marca vive DOS veces: en React (hereda `currentColor`, así que se pinta
+  // con el tema de cada superficie) y como .svg suelto (para lo que no puede
+  // usar React: una tarjeta, un favicon, un documento). Dos copias del mismo
+  // dibujo se separan solas si nadie las mira, así que se comparan los
+  // trazados — que es lo único que tienen que compartir.
+  const marcaTsx = lee("src/components/catalogo/MarcaPortal.tsx");
+  const marcaSvg = lee("public/images/ctcx-public-catalogue/marca-ctcx-portal.svg");
+  const trazos = (t) => (t.match(/[Mm]13\.2 4\.2c[-\d. s]+|19\.9 19\.9 27\.6 27\.6|cx="13\.2"|r="9\.2"/g) ?? []).sort().join("|");
+  check("la marca en React y el .svg dibujan lo mismo", trazos(marcaTsx) === trazos(marcaSvg) && trazos(marcaTsx).length > 0);
+  check("la marca hereda el color del tema", /currentColor/.test(marcaTsx) && !/#[0-9a-fA-F]{3,6}/.test(sinComentarios(marcaTsx)));
+  check("y es decorativa (el texto de al lado ya la nombra)", /aria-hidden="true"/.test(marcaTsx));
+
+  // La firma de procedencia es lo que le dice a quien llega desde una bolsa de
+  // quién es esto. Las tres casas, con su logo.
+  const proc = lee("src/components/catalogo/ProcedenciaCTCx.tsx");
+  for (const logo of ["logo-ctc.webp", "logo-kaffetal-regal.webp", "logo-cherry-picked.webp"]) {
+    check(`la firma muestra ${logo}`, proc.includes(logo));
+  }
+  check("nombra el dominio de la casa", proc.includes("ctcexport.com"));
+  check(
+    "es una FIRMA, no una llamada a la acción (sin botones)",
+    !/className=\{?["'`]?btn/.test(proc) && !/<button/.test(proc)
+  );
+  const portada = lee("src/components/catalogo/CatalogoPublicoLanding.tsx");
+  check("la portada la monta", portada.includes("<ProcedenciaCTCx"));
+  check("y el paquete del lote también firma", lee("src/components/catalogo/PaquetePublico.tsx").includes("logo-ctc.webp"));
+
+  // Las fotos son del archivo de CTC y viven optimizadas. Si alguien apunta a
+  // un original de `reference/`, no se despliega: esa carpeta no va al build.
+  check("la portada no apunta a `reference/`", !/reference\//.test(sinComentarios(portada)));
+  for (const f of [
+    "hero-patio-guacamayo.webp",
+    "cadena-mesa-cafe.webp",
+    "finca-cerezas.webp",
+    "productor-pergamino.webp",
+    "tostador-probat.webp",
+    "destino-molinillos.webp",
+  ]) {
+    const ruta = `public/images/ctcx-public-catalogue/${f}`;
+    check(`existe la foto ${f}`, existe(ruta));
+    // 320 KB por foto: holgado para un hero, imposible para un original de
+    // cámara (los de `reference/` pesan entre 1,5 y 6,7 MB).
+    check(`${f} va optimizada (${existe(ruta) ? kb(ruta).toFixed(0) : "?"} KB)`, existe(ruta) && kb(ruta) < 320);
+  }
 }
 
 // ── 9. Las tres puertas, y que no nazca un cuarto buzón ────────────────────

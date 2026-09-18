@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-labelledby="t">
+  <title id="t">CTCx Public Catalogue</title>
+  <!-- La lupa cuyo cristal ES el grano: el circulo hace de lente y de grano, y la
+       doble curva es la hendidura del cafe. Copia fiel de src/components/catalogo/
+       MarcaPortal.tsx — si se cambia una, se cambia la otra (qa-catalogo-publico). -->
+  <circle cx="13.2" cy="13.2" r="9.2" stroke="currentColor" stroke-width="2"/>
+  <path d="M13.2 4.2c-3.1 2.9-3.1 5.5 0 9s3.1 6.1 0 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M19.9 19.9 27.6 27.6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

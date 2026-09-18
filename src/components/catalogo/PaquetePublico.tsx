@@ -58,6 +58,7 @@ const T: Record<
     notas: string;
     fichaCompleta: string;
     nota: string;
+    firma: string;
     filas: Record<string, string>;
     atributos: Record<string, string>;
   }
@@ -70,6 +71,7 @@ const T: Record<
     notas: "Notas de cata",
     fichaCompleta: "Ver la ficha técnica completa",
     nota: "Este paquete recoge los datos de exhibición del lote. Los documentos comerciales y la declaración de diligencia debida (DDS) viajan con cada despacho.",
+    firma: "Registrado y exportado por Colombian Trading Company · ctcexport.com. El productor lo publica desde Kaffetal Regal; el tostador lo compra en Cherry Picked.",
     filas: {
       finca: "Finca",
       origen: "Origen",
@@ -101,6 +103,7 @@ const T: Record<
     notas: "Cupping notes",
     fichaCompleta: "See the full technical sheet",
     nota: "This package holds the lot's display data. Commercial documents and the due diligence statement (DDS) travel with each shipment.",
+    firma: "Recorded and exported by Colombian Trading Company · ctcexport.com. The grower publishes it from Kaffetal Regal; the roaster buys it on Cherry Picked.",
     filas: {
       finca: "Farm",
       origen: "Origin",
@@ -132,6 +135,7 @@ const T: Record<
     notas: "Verkostungsnotizen",
     fichaCompleta: "Vollständiges Datenblatt ansehen",
     nota: "Dieses Paket enthält die Ausstellungsdaten des Loses. Handelsdokumente und die Sorgfaltserklärung (DDS) reisen mit jeder Sendung.",
+    firma: "Erfasst und exportiert von Colombian Trading Company · ctcexport.com. Der Produzent veröffentlicht es über Kaffetal Regal; der Röster kauft es bei Cherry Picked.",
     filas: {
       finca: "Finca",
       origen: "Herkunft",
@@ -187,7 +191,7 @@ export function PaquetePublico({ lote }: { lote: LotePublico }) {
             <p className={styles.codigo}>
               {t.eyebrow} · {lote.codigo}
             </p>
-            <h1 className={styles.titulo}>{lote.nombre}</h1>
+            <h1 className={styles.tituloLote}>{lote.nombre}</h1>
             {lote.puntaje && (
               <p className={styles.puntaje}>
                 <b>{lote.puntaje}</b> SCA
@@ -243,6 +247,21 @@ export function PaquetePublico({ lote }: { lote: LotePublico }) {
         )}
 
         <p className={styles.nota}>{t.nota}</p>
+
+        {/* La firma, también aquí (V5.50). A esta pantalla se llega escaneando
+            un código o abriendo un enlace que alguien pasó por WhatsApp — casi
+            nunca desde la portada. Quien aterriza aquí necesita saber de quién
+            es el dato sin tener que subir a buscarlo. */}
+        <div className={styles.firma}>
+          <Image
+            className={styles.firmaLogo}
+            src="/images/ctcx-public-catalogue/logo-ctc.webp"
+            alt="Colombian Trading Company"
+            width={480}
+            height={264}
+          />
+          <p className={styles.firmaTexto}>{t.firma}</p>
+        </div>
 
         <PuertasDelPortal compacto />
       </article>

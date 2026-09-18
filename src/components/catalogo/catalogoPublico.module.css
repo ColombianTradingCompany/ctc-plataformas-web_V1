@@ -1,15 +1,92 @@
-/* ── CTCx Public Catalogue · el pivote público del lote (V5.48) ──────────────
-   Hoja MÍNIMA: el cascarón, la tipografía y los botones vienen de
-   `services/surface.module.css` y de `globals.css` (`.btn`, `.wrap`,
-   `.eyebrow`, `.mono`). Aquí solo vive lo que esta superficie estrena — el
-   buscador «Find my Lot» y la ficha del paquete público — para no engordar la
-   hoja compartida de las tres superficies Clase B con algo que solo usa una.
-   Los colores salen del tema `data-theme="ctc-home"`. */
+/* ── CTCx Public Catalogue · el pivote público del lote ──────────────────────
+   El cascarón (barra superior, selector de idioma, pie legal) sigue siendo
+   `services/SurfaceShell`; de la cintura para adentro manda esta hoja. Los
+   colores salen del tema `data-theme="ctc-home"` — ni un hex de marca escrito
+   a mano, para que la página siga al tema y no al revés.
+
+   V5.50: la página se vistió. Las fotos son del propio archivo de CTC (patio de
+   secado, finca, productor, tostador, destino) y la procedencia está dicha con
+   los tres logos, que era lo que faltaba: quien llega aquí desde una bolsa no
+   tiene por qué saber qué es CTCx. */
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.hero {
+  padding: clamp(28px, 5vw, 64px) 0 clamp(24px, 4vw, 48px);
+  background:
+    radial-gradient(120% 90% at 10% 0%, rgba(227, 163, 44, 0.1), transparent 60%),
+    var(--paper, #f5f6f8);
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+}
+
+.heroTexto {
+  min-width: 0;
+}
+
+.marcaFila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--primary, #16436b);
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--primary, #16436b);
+}
+
+.titulo {
+  margin: 14px 0 0;
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(38px, 7vw, 66px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--primary-deep, #0e2c48);
+}
+
+.sub {
+  margin: 14px 0 0;
+  max-width: 46ch;
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.6;
+  color: var(--muted, #5a6472);
+}
+
+/* La foto del hero: patio de secado con el guacamayo de CTC dentro del propio
+   encuadre. Se recorta en 3:4 y se deja que respire — es la única imagen de la
+   página que compite con el titular, así que no lleva texto encima. */
+.heroFoto {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: calc(var(--radius, 14px) + 6px);
+  overflow: hidden;
+  box-shadow: 0 18px 44px -20px rgba(14, 44, 72, 0.45);
+}
+
+.heroFoto img {
+  object-fit: cover;
+}
+
+.pie {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--muted, #5a6472);
+}
 
 /* ── El buscador ─────────────────────────────────────────────────────────── */
 
 .buscador {
-  margin: 22px 0 0;
+  margin: clamp(20px, 3vw, 30px) 0 0;
   max-width: 560px;
 }
 
@@ -20,26 +97,28 @@
 }
 
 .entrada {
-  flex: 1 1 260px;
+  flex: 1 1 250px;
   min-width: 0;
-  /* 48px: por encima del mínimo táctil de 44 px de la casa. */
-  height: 48px;
-  padding: 0 14px;
+  /* 52px: holgado por encima del mínimo táctil de 44 px de la casa, porque este
+     campo es la razón de ser de la página. */
+  height: 52px;
+  padding: 0 16px;
   font-family: var(--font-spline-mono), monospace;
   font-size: 17px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink, #1b2430);
   background: var(--card, #fff);
   border: 1px solid var(--line, #dde1e7);
   border-radius: var(--radius, 14px);
+  box-shadow: 0 1px 2px rgba(14, 44, 72, 0.05);
 }
 
 .entrada::placeholder {
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: none;
   color: var(--muted, #5a6472);
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .entrada:focus-visible {
@@ -52,34 +131,225 @@
 }
 
 .boton {
-  height: 48px;
+  height: 52px;
+  padding: 0 26px;
 }
 
 .ayuda {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--muted, #5a6472);
 }
 
 .error {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-size: 13.5px;
   line-height: 1.55;
   color: var(--red, #c4402f);
 }
 
-/* ── El paquete público ──────────────────────────────────────────────────── */
+/* ── La procedencia: de quién es esto ────────────────────────────────────── */
+/* Lo que pidió el owner, y el bloque que más trabaja de la página: quien llega
+   desde un código impreso en una bolsa no tiene por qué saber qué es CTCx. Tres
+   logos y una línea cada uno — no son botones a propósito, son una FIRMA. */
+
+.procedencia {
+  padding: clamp(30px, 4.5vw, 54px) 0;
+  background: var(--card, #fff);
+  border-top: 1px solid var(--line, #dde1e7);
+  border-bottom: 1px solid var(--line, #dde1e7);
+}
+
+.procedenciaIntro {
+  margin: 0 0 clamp(20px, 3vw, 32px);
+  max-width: 62ch;
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.45;
+  color: var(--primary-deep, #0e2c48);
+}
+
+.procedenciaIntro b {
+  font-weight: 700;
+}
+
+.casas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2.5vw, 30px);
+}
+
+.casa {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--paper, #f5f6f8);
+  border: 1px solid var(--line, #dde1e7);
+  border-radius: var(--radius, 14px);
+}
+
+/* Caja de altura fija para los tres logos: vienen con proporciones distintas
+   (CTC es apaisado, KR y CP son cuadrados) y sin esto la fila baila. */
+.casaLogo {
+  display: flex;
+  align-items: center;
+  height: 64px;
+}
+
+.casaLogo img {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.casaQue {
+  margin: 0;
+  font-size: 12px;
+  font-family: var(--font-spline-mono), monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent, #e3a32c);
+}
+
+.casaTexto {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--muted, #5a6472);
+}
+
+.casaDominio {
+  margin: auto 0 0;
+  padding-top: 4px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 12.5px;
+  color: var(--primary, #16436b);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  align-self: flex-start;
+}
+
+.casaDominio:hover {
+  border-bottom-color: var(--primary, #16436b);
+}
+
+/* ── Qué es este portal ──────────────────────────────────────────────────── */
+
+.explica {
+  padding: clamp(34px, 5vw, 64px) 0;
+}
+
+.explicaGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 52px);
+  align-items: center;
+}
+
+.h2 {
+  margin: 10px 0 0;
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.12;
+  color: var(--primary-deep, #0e2c48);
+}
+
+.parrafos p {
+  margin: 16px 0 0;
+  font-size: 15.5px;
+  line-height: 1.68;
+  color: var(--muted, #5a6472);
+}
+
+.explicaFoto {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  border-radius: var(--radius, 14px);
+  overflow: hidden;
+}
+
+.explicaFoto img {
+  object-fit: cover;
+}
+
+/* ── La tira de la cadena ────────────────────────────────────────────────── */
+
+.cadena {
+  padding: 0 0 clamp(34px, 5vw, 64px);
+}
+
+.tira {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 20px);
+  margin-top: clamp(18px, 2.5vw, 26px);
+}
+
+.paso {
+  margin: 0;
+}
+
+.pasoFoto {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius, 14px);
+  overflow: hidden;
+}
+
+.pasoFoto img {
+  object-fit: cover;
+}
+
+.pasoPie {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted, #5a6472);
+}
+
+.pasoPie b {
+  display: block;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary, #16436b);
+}
+
+/* ── Las tres puertas ────────────────────────────────────────────────────── */
+
+.puertas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: clamp(20px, 3vw, 28px) 0 0;
+}
+
+.puertasNota {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted, #5a6472);
+}
+
+.cierre {
+  padding: 0 0 clamp(40px, 6vw, 76px);
+}
+
+/* ── El paquete público del lote ─────────────────────────────────────────── */
 
 .paquete {
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
-  padding: 40px 24px 72px;
+  padding: clamp(26px, 4vw, 44px) 24px 64px;
 }
 
 .volver {
-  display: inline-block;
-  margin: 0 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 20px;
   font-size: 13.5px;
   color: var(--muted, #5a6472);
   text-decoration: none;
@@ -91,32 +361,35 @@
 
 .cabeza {
   display: flex;
-  gap: 20px;
+  gap: 22px;
   align-items: flex-start;
   flex-wrap: wrap;
+  padding-bottom: 22px;
+  border-bottom: 2px solid var(--line, #dde1e7);
 }
 
 .sello {
-  width: 72px;
+  width: 78px;
   height: auto;
   flex: none;
-}
-
-.titulo {
-  margin: 4px 0 0;
-  font-family: var(--font-fraunces), serif;
-  font-size: clamp(26px, 4vw, 34px);
-  line-height: 1.12;
-  color: var(--primary-deep, #0e2c48);
 }
 
 .codigo {
   display: inline-block;
   margin: 0;
   font-family: var(--font-spline-mono), monospace;
-  font-size: 13px;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--muted, #5a6472);
+}
+
+.tituloLote {
+  margin: 6px 0 0;
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(27px, 4vw, 36px);
+  line-height: 1.1;
+  color: var(--primary-deep, #0e2c48);
 }
 
 .puntaje {
@@ -132,13 +405,13 @@
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 28px;
+  margin-top: 26px;
   font-size: 15px;
 }
 
 .tabla th {
   width: 190px;
-  padding: 9px 12px 9px 0;
+  padding: 10px 12px 10px 0;
   text-align: left;
   font-weight: 500;
   vertical-align: top;
@@ -147,7 +420,7 @@
 }
 
 .tabla td {
-  padding: 9px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line, #dde1e7);
 }
 
@@ -168,22 +441,63 @@
 
 .nota {
   margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line, #dde1e7);
   font-size: 12.5px;
   line-height: 1.6;
   color: var(--muted, #5a6472);
 }
 
-/* ── Las tres puertas ────────────────────────────────────────────────────── */
-
-.puertas {
+/* La firma al pie del paquete: el mismo «de quién es esto» del portal, en
+   pequeño. Un lote compartido por WhatsApp aterriza aquí, no en la portada. */
+.firma {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
   flex-wrap: wrap;
-  margin: 22px 0 0;
+  margin-top: 26px;
+  padding: 16px 18px;
+  background: var(--paper, #f5f6f8);
+  border-radius: var(--radius, 14px);
 }
 
-.puertasNota {
-  margin: 12px 0 0;
+.firmaLogo {
+  height: 34px;
+  width: auto;
+}
+
+.firmaTexto {
+  margin: 0;
   font-size: 13px;
+  line-height: 1.5;
   color: var(--muted, #5a6472);
+}
+
+/* ── Estrecho ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .heroGrid,
+  .explicaGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* La foto del hero baja y se achata: en vertical, un 3:4 empujaría el
+     buscador —que es a lo que se viene— por debajo del pliegue. */
+  .heroFoto {
+    aspect-ratio: 16 / 10;
+    order: 2;
+  }
+  /* Las tres casas se apilan y el logo encoge: siguen siendo tres tarjetas
+     iguales, que es lo que hace legible la firma de un vistazo. */
+  .casas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .casaLogo {
+    height: 54px;
+  }
+  .casaDominio {
+    margin: 6px 0 0;
+  }
+  .tira {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

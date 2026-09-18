@@ -19,6 +19,32 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.50] — 2026-09-18 (commit pendiente)
+
+- **Hito**: el **CTCx Public Catalogue** se vistió. La portada pasa de una columna de texto a una página con hero
+  fotográfico, firma de procedencia, explicación ilustrada y la tira «de la finca a la taza». Las fotos son del
+  **archivo propio de CTC** (originales en `reference/ctcx-public-catalogue/`), no de banco de imágenes: la del hero
+  lleva el guacamayo de la casa dentro del encuadre, sobre el patio de secado.
+- **Añadido**: la **marca del portal** (`MarcaPortal.tsx` + `marca-ctcx-portal.svg`) — una lupa cuyo cristal es el
+  grano: el círculo hace de lente y de grano a la vez y la doble curva es la hendidura del café, así que el símbolo
+  dice lo que hace la página. Va en línea y hereda `currentColor`, de modo que se pinta con el tema de cada superficie
+  sin una imagen por tema.
+- **Añadido**: la **firma de procedencia** (`ProcedenciaCTCx.tsx`) — quién es CTC, Kaffetal Regal y Cherry Picked, con
+  sus tres logos y una línea cada uno. Es lo que le faltaba a la página: a este portal se llega tecleando un código
+  impreso en una bolsa, sin haber visto nunca la marca. No son botones a propósito — es una firma; las puertas siguen
+  abajo. La misma firma, en pequeño, cierra el paquete de cada lote.
+- **Añadido**: seis fotos optimizadas en `public/images/ctcx-public-catalogue/` (webp, 72–233 KB frente a originales de
+  1,5–6,7 MB) y copias ligeras de los tres logos (los de Kaffetal Regal y Cherry Picked pesaban 852 KB y 1,1 MB).
+- **Añadido**: tarjeta **Open Graph propia** (`public/images/og/ctcx-public-catalogue.jpg`, 1200×630, 87 KB), que cierra
+  el pendiente abierto en la V5.48: hasta ahora el portal prestaba la de la casa matriz, así que compartir un lote por
+  WhatsApp enseñaba el logotipo de CTC sin decir a dónde llevaba el enlace. La usan la portada y cada lote.
+- **Cambiado**: `catalogoPublico.module.css` reescrita — hero a dos columnas, tarjetas de procedencia de altura
+  pareja con los logos alineados, tira de cuatro pasos, y el paquete del lote con cabecera y firma. Ni un color de
+  marca escrito a mano: todo sale de los tokens del tema.
+- **Añadido**: `qa-catalogo-publico-check.mjs` sube a **115** — comprueba que las dos copias de la marca dibujen lo
+  mismo, que la firma muestre los tres logos y no sea una llamada a la acción, que la portada no apunte a
+  `reference/` (esa carpeta no va al build) y que ninguna foto ni la tarjeta se pasen de peso.
+
 ## [V5.49] — 2026-09-18 (commit e549669)
 
 - **Añadido**: la cinta del **Catálogo Activo** estrena la puerta al portal público — un botón «Buscar mi lote por su

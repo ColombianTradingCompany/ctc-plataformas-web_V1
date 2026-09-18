@@ -183,3 +183,22 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Guardián: `qa-catalogo-publico-check` 76 → 85 (enlace absoluto, ruta no tecleada, 44 px táctiles, y el diccionario
   de `SneakPeek.tsx` con las tres lenguas completas).
 (commit: e549669)
+
+## [2026-09-18] V5.50 · El CTCx Public Catalogue se vistió: marca propia, fotos de archivo y firma de procedencia
+- FICHA DICT NUEVA para el mapa: la **marca del portal** — una lupa cuyo cristal es el grano (el círculo hace de lente
+  y de grano; la doble curva es la hendidura del café). Vive DOS veces, en React (`MarcaPortal.tsx`, hereda
+  `currentColor` y se pinta con el tema de cada superficie) y como `.svg` suelto para lo que no puede usar React; el
+  guardián compara los dos trazados.
+- NODO NUEVO de interfaz: `ProcedenciaCTCx` — la firma «de quién es esto» con los tres logos (CTC · Kaffetal Regal ·
+  Cherry Picked) y una línea cada uno. Responde a la pregunta que tiene quien llega tecleando un código impreso en una
+  bolsa sin haber visto nunca la marca. No son botones: las puertas siguen siendo `PuertasDelPortal`, más abajo. La
+  misma firma cierra el paquete de cada lote, que es donde aterriza un enlace compartido.
+- ASSETS: seis fotos del archivo propio de CTC (`reference/ctcx-public-catalogue/`) recortadas a webp en
+  `public/images/ctcx-public-catalogue/` — hero (patio de secado con el guacamayo DENTRO del encuadre), la mesa con el
+  café en sus cinco estados, y la tira finca → productor → tostador → destino. Más la tarjeta Open Graph propia
+  (1200×630), que cierra el pendiente que dejó abierto la V5.48.
+- La hoja de estilo del portal se reescribió sobre los tokens del tema (`data-theme="ctc-home"`): ni un hex de marca a
+  mano, así que la página sigue al tema y no al revés.
+- Guardián: `qa-catalogo-publico-check` 85 → 115 (las dos copias de la marca, la firma con sus tres logos, la portada
+  sin rutas a `reference/`, y el peso de cada foto y de la tarjeta).
+(commit: pendiente)

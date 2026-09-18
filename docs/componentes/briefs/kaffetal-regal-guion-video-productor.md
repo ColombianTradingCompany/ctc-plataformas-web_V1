@@ -1,6 +1,6 @@
 # Guion · «Así funciona Kaffetal Regal» — video para el productor (≈ 5:57)
 
-(componente: `kaffetal-regal` · slug: `guion-video-productor` · **v0.8 · la misma narrativa, dentro del tope de 6 minutos**)
+(componente: `kaffetal-regal` · slug: `guion-video-productor` · **v0.9 · la misma narrativa, contada de cerca**)
 
 **Historial.**
 - v0.1: primer borrador.
@@ -36,6 +36,11 @@
     gratuito, la referencia con piso, el multiplicador en pesos, la compra en firme, el pago a 2 días y el nombre en la
     bolsa. Las cifras en pesos van **solo en pantalla y rotuladas con su edición de PVC**, para que el máster no caduque
     cuando cambie el trimestre.
+- **v0.9 (2026-09-18): la locución se reescribió entera por pedido del owner** —«lenguaje muy poco cercano y transiciones
+  muy poco naturales»—. Mismos hechos, mismo orden, mismo tope de 6:00; cambia cómo se dice. Frases cortas y habladas,
+  las preguntas que el productor se haría («¿a cómo me lo pagan?», «¿y qué miramos?»), y cada bloque le entrega el turno
+  al siguiente («Ahora sí, hablemos del café», «Pero para pagarle por calidad, primero hay que medirla»). Bajan a pantalla
+  «en la compra rige el PVC vigente» (bloque 5) y «convertido a pesos el día del pago» (bloque 8).
 
 **Qué es.** El guion locutado de la pieza larga para el caficultor: cómo funciona Kaffetal Regal de punta a punta, del
 perfil de productor al pago, con el PVC, la evaluación, la base física, el Punto y la Tríada, los dos caminos de oferta
@@ -80,75 +85,82 @@ La **animática** (locución provisional sobre capturas) se puede hacer ya.
 `IMAGEN` = lo que se ve · `VOZ` = locución · `PANTALLA` = texto sobreimpreso. Los tiempos se calculan de la locución (2,3
 palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz grabada.
 
-### Bloque 0 · Apertura (0:00–0:28)
+### Bloque 0 · Apertura (0:00–0:29)
+
 
 
 
 - **IMAGEN.** Amanece en un patio de secado. Manos que mueven el pergamino. Un celular con el precio del día; corte a una taza servida lejos de allí.
-- **VOZ.** Usted sabe lo que cuesta sacar una carga: la recolección, el beneficio, el secado. Y sabe que su mejor café muchas veces se paga igual que el corriente.
-  Kaffetal Regal existe para cambiar eso: para que su café se mida con rigor, salga al mundo como Papagayo Beans® con su nombre y su finca, y se pague por lo que vale.
+- **VOZ.** Usted sabe lo que cuesta sacar una carga: la recolección, el beneficio, el secado. Y sabe que, al vender, su mejor café muchas veces se paga igual que el corriente.
+  Para cambiar eso nació Kaffetal Regal: para que su café se mida con rigor, salga al mundo como Papagayo Beans®, con su nombre y su finca, y se pague por lo que vale.
 - **PANTALLA.** *Su café, medido con rigor.* · *En las vitrinas del mundo, con su nombre.* · *Pagado por lo que vale.*
 
-### Bloque 1–2 · Qué es, su perfil y su finca (0:28–0:57)
+### Bloque 1–2 · Qué es, su perfil y su finca (0:29–0:54)
+
 
 
 
 - **IMAGEN.** La landing en el celular; los seis pasos aparecen uno a uno. «Crear cuenta gratis» → «Continuar con Google» → Mi Perfil: «Editar información» (nombre, NIT/CC, foto, video del productor). Luego el formulario de finca: «📍 Estoy aquí», el polígono se dibuja. Pestaña Cuestionario EUDR, desplazándose.
-- **VOZ.** Es la plataforma del caficultor de CTCx, y funciona desde el celular.
-  Primero cree su cuenta gratis y complete su perfil: su nombre, su documento y su historia.
-  Después registre su finca: parado en el cafetal, toque «Estoy aquí» y el mapa toma su ubicación; si pasa de **cuatro hectáreas**, dibuje el contorno. Y responda el cuestionario EUDR, el reglamento europeo contra la deforestación.
+- **VOZ.** Todo se hace desde el celular. Cree su cuenta y cuéntenos quién es: su nombre, su documento, su historia.
+  Después, la finca: párese en el cafetal, toque «Estoy aquí» y el mapa toma su ubicación; si pasa de **cuatro hectáreas**, dibuje el contorno. Y responda unas preguntas sobre EUDR, la norma europea contra la deforestación.
 - **PANTALLA.** *1 Perfil* · *2 Finca* · *3 Lote* · *4 Evaluación* · *5 Oferta* · *6 Despacho* · *En cada paso, lo que recibe y lo que se le pide* · *Más de 4 ha → contorno completo* · *EUDR: sin deforestación después del 31-dic-2020*
 
-### Bloque 3 · El primer resultado, gratis (0:57–1:10)
+### Bloque 3 · El primer resultado, gratis (0:54–1:08)
+
 
 
 
 - **IMAGEN.** Tarjeta de la finca: «Visa EUDR: en trámite» → «Visa vigente» → «⬇ Descargar Visa EUDR».
-- **VOZ.** Y recibe lo primero sin pagar nada: el análisis EUDR de su finca y, con todo en regla, su Visa EUDR, la puerta de Europa.
+- **VOZ.** Con eso ya recibe algo, sin pagar un peso: el análisis EUDR de su finca y, con todo en regla, su Visa EUDR: la puerta de Europa.
 - **PANTALLA.** *Perfil, finca y análisis EUDR: $0*
 
-### Bloque 4 · El lote y la Ficha Técnica (1:10–1:29)
+### Bloque 4 · El lote y la Ficha Técnica (1:08–1:26)
+
 
 
 
 - **IMAGEN.** «+ Registrar nuevo lote» → Ficha Técnica; la barra FT · FT2 · EUDR · VID avanza. La casilla «No lo sé» se marca. Un video de 30 s grabándose en vertical. «¡Ficha completa!».
-- **VOZ.** Luego registre su lote en la Ficha Técnica: de qué fincas sale, su variedad, su proceso y lo que sabe de su taza, con un video corto del celular. Si no conoce un dato, marque «No lo sé»: lo mediremos.
+- **VOZ.** Ahora sí, el café. Registre su lote en la Ficha Técnica: la variedad, el proceso, lo que sabe de su taza, y un video corto con el celular. ¿No conoce un dato? Marque «No lo sé», y nosotros lo medimos.
 - **PANTALLA.** *FT · FT2 · EUDR · VID* · *«No lo sé» también es una respuesta*
 
-### Bloque 5 · Qué es el PVC (1:29–1:57)
+### Bloque 5 · Qué es el PVC (1:26–1:55)
+
 
 
 
 - **IMAGEN.** Tres barras que se levantan —costo de producción, precio de cooperativa, mercado— y una línea que las cruza por arriba. Luego la línea de tiempo trimestral con la publicación dos meses antes.
-- **VOZ.** ¿Cómo se fija el precio? Con el PVC, la Ponderación de Valor de Cosecha: la referencia de CTCx por carga. Se construye con el costo real de producir, lo que paga la cooperativa y el mercado mundial, y nunca queda por debajo de ninguno.
-  Se fija por trimestre y se publica con **dos meses** de anticipación; en la compra rige el vigente.
-- **PANTALLA.** *PVC · Ponderación de Valor de Cosecha* · *Costo de producción · cooperativa · mercado: nunca por debajo de ninguno* · *ene–mar · abr–jun · jul–sep · oct–dic* · *ene–mar: publicado antes del 15 de octubre*
+- **VOZ.** ¿Y a cómo me lo pagan? Aquí el precio no se regatea: sale del PVC, la Ponderación de Valor de Cosecha. Es una referencia por carga, armada con lo que cuesta producir, lo que paga la cooperativa y el mercado mundial. Y nunca queda por debajo de ninguno.
+  Se fija por trimestre y se publica **dos meses** antes, para que usted planee.
+- **PANTALLA.** *PVC · Ponderación de Valor de Cosecha* · *Costo de producción · cooperativa · mercado: nunca por debajo de ninguno* · *ene–mar · abr–jun · jul–sep · oct–dic* · *ene–mar: publicado antes del 15 de octubre* · *En la compra rige el PVC vigente*
 
-### Bloque 6 · La evaluación (1:57–2:28)
+### Bloque 6 · La evaluación (1:55–2:27)
+
 
 
 
 - **IMAGEN.** Mensaje «¡Su lote fue declarado APTO!» → «Evaluar mi Café» → tarifa con el descuento aplicado → guía prepagada → bolsa anónima con el código de 7 caracteres. En el laboratorio: pesaje, contramuestra sellada, un Q-Grader rompe la costra.
-- **VOZ.** No buscamos café para revender: lo preparamos para las vitrinas globales. Cuando su lote queda Apto, lo evaluamos. El servicio completo cuesta **doscientos mil pesos**, con el envío incluido, y usted recibe un descuento **del treinta al setenta por ciento**.
-  Envíe dos kilos de pergamino marcados solo con el código del lote: la cata es a ciegas. En **máximo cinco días hábiles** tiene su resultado por escrito.
+- **VOZ.** Para pagar por calidad, primero hay que medirla. No buscamos café para revender: lo preparamos para las vitrinas globales. Cuando su lote queda Apto, lo evaluamos.
+  El servicio vale **doscientos mil pesos** con el envío incluido, y un descuento **del treinta al setenta por ciento**. Nos manda dos kilos de pergamino marcados solo con un código: la cata es a ciegas. Y en **máximo cinco días hábiles** tiene su resultado.
 - **PANTALLA.** *Servicio completo: $200.000 con envío incluido · tarifa 2026* · *Descuentos del 30 % al 70 %: usted paga entre $140.000 y $60.000* · *Recepción 1 día hábil · análisis físico 2 · resultado 5* · *Contramuestra sellada de 0,5 kg*
 
-### Bloque 7 · La base física, el Punto y la Tríada (2:28–3:03)
+### Bloque 7 · La base física, el Punto y la Tríada (2:27–3:04)
+
 
 
 
 - **IMAGEN.** Tres instrumentos en la mesa del laboratorio: la trilladora con el factor, el medidor de humedad, la probeta de densidad; un sello «apto» cae sobre la planilla. Luego tres cartas se voltean junto a la taza: Variedad · Proceso · Reconocimientos, cada una con su letra C · B · A.
-- **VOZ.** Primero, la base física: factor de rendimiento de **noventa y cuatro o menos** —en Black, hasta noventa y ocho—, humedad **entre diez y doce por ciento** y densidad regular para su variedad. Sin ella no hay grado.
-  Después, el grado se lee en **el Punto y la Tríada**: el Punto es su puntaje en taza; la Tríada, lo que su café tiene además: variedad, proceso y reconocimientos. Una Tríada favorable adelanta su grado; Tyrian exige las dos cosas.
+- **VOZ.** ¿Y qué miramos? Primero, la base física: factor de rendimiento de **noventa y cuatro o menos** —en Black, hasta noventa y ocho—, humedad **entre el diez y el doce por ciento** y densidad pareja para su variedad. Sin eso, no hay grado.
+  El grado se lee en **el Punto y la Tríada**: el Punto es el puntaje de su taza; la Tríada, lo que trae además: variedad, proceso y reconocimientos. Una buena Tríada adelanta el grado, y Tyrian pide las dos.
 - **PANTALLA.** *Base física: factor ≤ 94 (Black hasta 98) · humedad 10–12 % · densidad regular para la variedad* · *Sin base física, no hay grado* · *El Punto: puntaje SCA en taza* · *La Tríada: variedad · proceso · reconocimientos* · *Tyrian: taza extraordinaria y Tríada*
 
-### Bloque 8 · El precio de cada grado (3:03–3:28)
+### Bloque 8 · El precio de cada grado (3:04–3:30)
+
 
 
 
 - **IMAGEN.** Los cinco sellos de grado en escalera; junto a cada uno, su multiplicador sobre la barra del PVC. Corte a la contramuestra sellada saliendo hacia un laboratorio externo.
-- **VOZ.** Cada grado multiplica la referencia, a la vista de todos: Black paga el PVC por **uno punto quince**; Red, por **uno punto treinta**; Blue, por **uno punto sesenta**; Gold, por **dos**; y Tyrian sale a subasta: en Cherry Picked, el **ochenta por ciento** del alza es suyo, convertido a pesos el día del pago.
-- **PANTALLA.** *Con el grado llega su Pasaporte del Kaffetal Club* · *¿No está de acuerdo? Contra-catación externa: pedirla en 5 días hábiles · $200.000 a su cargo* · *Si su grado sube, lo que pagó queda como crédito a favor: se liquida al cierre del mes · no vence · se hace efectivo con un trato*
+- **VOZ.** ¿Y para qué sirve el grado? Para multiplicar el precio, a la vista de todos. Black paga el PVC por **uno punto quince**; Red, por **uno punto treinta**; Blue, por **uno punto sesenta**; y Gold, por **dos**. Tyrian va a subasta, y en Cherry Picked el **ochenta por ciento** de lo que suba la puja es suyo.
+- **PANTALLA.** *Tyrian en Cherry Picked: el 80 % del alza, convertido a pesos el día del pago* · *Con el grado llega su Pasaporte del Kaffetal Club* · *¿No está de acuerdo? Contra-catación externa: pedirla en 5 días hábiles · $200.000 a su cargo* · *Si su grado sube, lo que pagó queda como crédito a favor: se liquida al cierre del mes · no vence · se hace efectivo con un trato*
 
   El grado multiplica el PVC:
 
@@ -157,15 +169,14 @@ palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz gr
   | PVC × 1,15 | PVC × 1,30 | PVC × 1,60 | PVC × 2,00 | subasta desde Gold · 80 % del alza para usted **en Cherry Picked** |
 
 
-### Bloque 8b · Lo que usted gana, en limpio (3:28–4:07)
+### Bloque 8b · Lo que usted gana, en limpio (3:30–4:06)
+
 
 
 
 - **IMAGEN.** Sobre fondo limpio, una sola tarjeta que se arma sola: arriba la barra del PVC vigente con su código de edición; debajo, los cinco grados con su valor en pesos por carga. Corte corto a la bolsa terminada: el sello del grado, el nombre del productor, su finca y el QR.
-- **VOZ.** En limpio: ¿qué gana usted? Su cuenta, su finca y su análisis EUDR no le cuestan nada.
-  Su café se mide contra una referencia que nunca baja del costo de producir, de lo que paga la cooperativa ni del mercado; y esa referencia se multiplica por su grado.
-  Desde el primer día CTCx le compra en firme, y cada carga vendida se le paga completa en máximo dos días hábiles.
-  Y su nombre y su finca viajan en la bolsa, en la vitrina del mundo.
+- **VOZ.** En limpio: ¿qué gana usted? Su cuenta, su finca y su análisis EUDR no le cuestan nada. Su café se paga sobre un precio que nunca baja del costo, de la cooperativa ni del mercado, multiplicado por su grado.
+  Hay compra en firme desde el primer día, y cada carga vendida se le paga completa en máximo dos días hábiles. Y lo que no tiene precio: su nombre y su finca viajan en la bolsa, a la vitrina del mundo.
 - **PANTALLA.** *Gratis: su cuenta · su finca · su análisis y su Visa EUDR* · *La referencia nunca baja del costo, de la cooperativa ni del mercado* · *Compra en firme desde el primer día* · *Pago del 100 % en ≤ 2 días hábiles* · *Su nombre y su finca, en la bolsa*
 
   **Tarjeta de pesos (se re-renderiza cada trimestre, sin volver a grabar la voz):**
@@ -176,14 +187,15 @@ palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz gr
 
   *Por carga de 125 kg de pergamino. Rótulo obligatorio en pantalla: «Edición PVC-F4-2026 · vigente 15-sep → 15-dic-2026».*
 
-### Bloque 9 · Dos caminos: Cherry Picked o CaaS (4:07–5:01)
+### Bloque 9 · Dos caminos: Cherry Picked o CaaS (4:06–5:04)
+
 
 
 
 - **IMAGEN.** Dos tarjetas lado a lado. **Cherry Picked** a la izquierda, más grande, con la etiqueta «Recomendado», la prima y la compra inicial por grado; debajo, la escalera de liberación de tres meses. **CaaS** a la derecha, más sobria.
-- **VOZ.** Su oferta llega en **uno a tres días**, con dos caminos.
-  El recomendado es **Cherry Picked**: su lote sale como Papagayo Beans®, con su nombre y su finca, a **la referencia completa** de su grado —la prima del ocho por ciento ya está dentro—. CTCx le compra en firme desde el inicio: **una carga** en Black y Red, **doscientos kilos** en Blue, **más de cien** en Gold. A cambio compromete cargas por tres meses: libera un cuarto al segundo mes y otro al tercero; por encima, **el cuatro por ciento** de cada carga.
-  El otro camino es **CaaS**: CTCx compra directamente y asume el riesgo, sin la prima, desde **quince kilos**. En la vitrina figura como **CTCx Selection**, no su finca.
+- **VOZ.** Con el grado en la mano, su oferta llega en **uno a tres días**, con dos caminos.
+  Recomendamos **Cherry Picked**: su lote sale como Papagayo Beans®, con su nombre y su finca, a **la referencia completa** de su grado: la prima del ocho por ciento ya está dentro. Hay compra en firme desde el inicio: **una carga** en Black y Red, **doscientos kilos** en Blue, **más de cien** en Gold. A cambio, compromete sus cargas por tres meses: puede liberar un cuarto al segundo y otro al tercero; retirar más cuesta **el cuatro por ciento** de cada carga.
+  El otro es **CaaS**: CTCx le compra directo y asume el riesgo, sin la prima, desde **quince kilos**. Eso sí: en la vitrina figura como **CTCx Selection**, no con su nombre.
 - **PANTALLA.** *La oferta llega 1 a 3 días después de validar el grado* · *CTCx Selection: su finca queda en la documentación, no en la etiqueta* · *Mínimo del lote: Black y Red 3–4 cargas según la mezcla · Blue 2 · Gold 1 · Tyrian ½ · 1 carga = 125 kg* · *¿Su lote se evaluó en un periodo anterior? En el siguiente, sin descuento; en el posterior, −5 % con asesoría*
 
   Los dos caminos:
@@ -197,30 +209,32 @@ palabras por segundo más 1,5 s de imagen por bloque) y se ajustan con la voz gr
   | Tyrian en subasta | Base Gold + **80 % del alza**, a pesos el día del pago | El alza es de CTCx |
 
 
-### Bloque 10 · Ventas, entrega y pago (5:01–5:20)
+### Bloque 10 · Ventas, entrega y pago (5:04–5:22)
+
 
 
 
 - **IMAGEN.** Pestaña Contratos: el reporte de ventas del mes. Punto de acopio: una carga se pesa con testigo, se toma la muestra de control, el productor firma la confirmación de compra. Notificación de transferencia en su celular.
-- **VOZ.** En la **primera semana** de cada mes le enviamos el reporte de ventas. Cuando se vende una carga, la recibimos con pesaje y testigo y la verificamos el mismo día.
-  Usted firma y recibe el pago completo en **máximo dos días hábiles**.
+- **VOZ.** ¿Y las ventas? En la **primera semana** de cada mes le mandamos el reporte. Cada carga vendida la recibimos con pesaje y testigo, la revisamos ese mismo día, y en **máximo dos días hábiles** tiene su pago completo.
 - **PANTALLA.** *Reporte de ventas: la primera semana de cada mes* · *Recibo y verificación: el mismo día* · *Catación de más de 90 días: revisión de almacenaje con 1 kg* · *Pago del 100 %: máximo 2 días hábiles · si CTCx se demora, +0,5 % por día hábil* · *Humedad 10–12 %, confirmada cada mes*
 
-### Bloque 11 · La Arena y su reputación (5:20–5:35)
+### Bloque 11 · La Arena y su reputación (5:22–5:35)
+
 
 
 
 - **IMAGEN.** Un set de grabación: mesa de cata a ciegas, cámaras, un productor frente a su taza; en el panel, «Postular a la Arena» y la fila de grabación. Tres barras en su perfil: lotes completados · calidad · confiabilidad.
-- **VOZ.** Todo café Blue o superior puede postularse a la **Kaffetal Regal Arena**; los aceptados entran en fila para la grabación: una herramienta poderosa para impulsar su café, con su identidad.
+- **VOZ.** Y si su café es Blue o superior, puede postularlo a la **Kaffetal Regal Arena**: una poderosa herramienta para impulsar su café en el mundo, con su identidad.
 - **PANTALLA.** *Kaffetal Regal Arena: abierta a todo café Blue+ · los aceptados entran en fila* · *Su café, contado al mundo con su identidad* · *Y cada lote completado construye su reputación: pesa la constancia, no el tamaño* · *Reputación: lotes completados · calidad · confiabilidad*
 
 ### Bloque 12 · Cierre y llamado (5:35–5:57)
 
 
 
+
 - **IMAGEN.** Vuelta al productor en su finca, mirando a cámara. Corte a su celular: la pantalla «Crear cuenta gratis». Fondo limpio con la dirección grande y el logo.
-- **VOZ.** Su café ya tiene lo que el mundo está buscando. Ahora puede llegar como Papagayo Beans®, con su nombre y su finca.
-  Entre a **kaffetal-regal punto ctcexport punto com**, cree su perfil y registre su primera finca. Es gratis, y su primer resultado también. Kaffetal Regal, de CTCx.
+- **VOZ.** Su café ya tiene lo que el mundo busca. Ahora puede llegar como Papagayo Beans®, con su nombre y su finca.
+  Entre a **kaffetal-regal punto ctcexport punto com**, cree su cuenta y registre su primera finca. Es gratis, y su primer resultado también. Kaffetal Regal, de CTCx.
 - **PANTALLA.** *kaffetal-regal.ctcexport.com* · *Crear cuenta gratis* · *Kaffetal Regal · una iniciativa de CTCx*
 
 **Duración.** La locución tiene 777 palabras, ≈ 5:38; con las pausas de imagen, la pieza dura ≈ 5:57 — **dentro del tope de 6:00 que fijó el owner**. Los tiempos de cada bloque se recalculan con la fórmula de §2 cada vez que cambia la locución.

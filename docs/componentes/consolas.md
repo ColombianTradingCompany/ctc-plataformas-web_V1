@@ -120,10 +120,11 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   CN-2. Si el sticker exige el código ANTES de publicar, el punto de acuñación se adelanta sin tocar nada más: la
   condición `public_code is null` de `publishLot` lo hace idempotente venga de donde venga.
 - **`/ctcx-public-catalogue` vive en territorio del charter `plataforma`** (CTC Home, proxy, SEO), y se ejecutó desde
-  aquí por la regla del backstage (`ALINEACION` §2 y su línea en §3). Dos cosas quedan con dueño `plataforma`: **(a)**
-  no hay entrada al portal desde la Home — hoy se descubre por el sitemap y por el QR, y no estaba en el encargo;
-  **(b)** la superficie reutiliza la tarjeta Open Graph `ctc-home.jpg`, le falta una propia
-  (`ctcx-public-catalogue.jpg`, 1200×630 JPEG < 300 KB, owner).
+  aquí por la regla del backstage (`ALINEACION` §2 y su línea en §3). **(a)** La entrada al portal ya no falta:
+  la **V5.49** la puso en el pie de la cinta del Catálogo Activo, que está montada en siete superficies (Home, KR,
+  CaaS y las cuatro de Cherry Picked) — el enlace va **absoluto** a la casa matriz porque la ruta no tiene subdominio.
+  **(b)** Sigue con dueño `plataforma`: la superficie reutiliza la tarjeta Open Graph `ctc-home.jpg` y le falta una
+  propia (`ctcx-public-catalogue.jpg`, 1200×630 JPEG < 300 KB, owner).
 - **Las cuatro vistas `public_*` arrastran grants `INSERT/UPDATE/DELETE/TRUNCATE` a `anon` y `authenticated`** (el
   reparto por defecto de Supabase). Son inertes —ninguna es actualizable, todas son joins de varias tablas— pero son
   ruido en cada auditoría. Retirarlos es una migración de una línea por vista; no se hizo aquí para no mezclarlo con

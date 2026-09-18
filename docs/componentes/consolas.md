@@ -99,11 +99,26 @@ portal y el peso de las imágenes) ·
 
 ## Pendientes
 
-- **WRAP DEL MAPA PEDIDO** (2026-09-18). El log vigente `Log_Documentacion_Interactiva_V43.txt` acumula **seis
-  asientos** desde el wrap V43 (V5.46 a V5.51), por encima de la cadencia de cinco de `ALINEACION` §5. Un
-  componente no llama al wrap: lo pide. Hay material nuevo de sobra para el mapa — superficie nueva
-  `/ctcx-public-catalogue` (+ su ruta `[codigo]`), el concepto **RUTAS_SOLO_WWW**, la columna `lots.public_code` con su
-  guardia, y la marca del portal. Se llama desde la conversación «Wraps del mapa».
+- **WRAP DEL MAPA · PEDIDO FORMAL** (consolas → plataforma, 2026-09-18). `Log_Documentacion_Interactiva_V43.txt`
+  acumula **seis asientos** (V5.46 a V5.51) sobre el wrap V43 (plataforma V5.45): por encima de la cadencia de cinco de
+  `ALINEACION` §5. Un componente no llama al wrap — lo pide; lo ejecuta la vía **`plataforma`** desde la conversación
+  «Wraps del mapa» con el skill `architecture-doc-versioning`. **Lo que el snapshot V44 tiene que reflejar**, y que el
+  mapa hoy no conoce:
+  - **Superficie pública nueva**: `/ctcx-public-catalogue` (pivote, estática) y `/ctcx-public-catalogue/[codigo]`
+    (paquete del lote, dinámica). Es la **primera superficie pública de la red sin host propio** — de ahí el concepto
+    nuevo **`RUTAS_SOLO_WWW`** (`lib/red/subdominios.ts`), que leen a la vez el sitemap y ECP · Manejo de Plataformas.
+  - **Columna nueva** `lots.public_code` + función `ctc_public_code()` + `guard_lot_protected_columns` ampliada, y
+    `public_lot_catalog` con una columna más. **Traza nueva**: bolsa/QR → código → vista → `fichaPublica()` →
+    paquete público → `/docs/ficha/[lotId]`. Se acuña en `publishLot`.
+  - **Ficha DICT**: el código público **sustituye** a los dos derivados que aún conviven (`codigoDeLote(lot_id)` en la
+    cinta, `listingCode(lot_listings.id)` en la tienda); unificarlos es CP-3, anotado en `cherry-picked`.
+  - **Nodo de interfaz**: la cinta del Catálogo Activo gana una segunda puerta en su pie, hacia el portal, en las
+    **siete** superficies donde está montada. Y la **marca del portal** (lupa cuyo cristal es el grano), que vive dos
+    veces —React y `.svg`— con guardián que compara los trazados.
+  - Guardián nuevo `qa-catalogo-publico-check` (119) y `qa-ficha-publica` 105 → 115 (su §8 pasa de vigilar dos puertas
+    al `datasheet` a vigilar tres).
+  - Estado de datos que el mapa debería mostrar: **0 lotes publicados** (`public_lot_catalog` vacía), así que «Find my
+    Lot» todavía no encuentra nada; «Gesha 72h Ferm» está galardonado Gold y a la espera del circuito comercial.
 - **«Gesha 72h Ferm» (`f5187234…`) está a medio camino de ser el primer lote publicado** (owner, 2026-09-18). Se le
   escribieron a mano, por SQL y con la forma exacta de `recordEvaluationVerdict`: una `lot_evaluations`
   `q_grader_batch`/`accepted` con **86.50**, `grade = gold` + `stage = galardonado`, y el Pasaporte del Club a su

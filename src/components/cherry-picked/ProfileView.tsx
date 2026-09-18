@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { fmt, type CartSummary } from "./data";
+import { CUR, fmt, type CartSummary } from "./data";
 import { LOCALE, useLang, type Lang } from "./i18n";
 import styles from "./ProfileView.module.css";
 
@@ -41,7 +41,7 @@ const EN = {
   kCart: "Cart · order in progress",
   spotShip: "ships in 2–5 days",
   arrival: "arrival per the lot's date",
-  packLine: "Sample pack · €300 · flies Oct 2026",
+  packLine: `Sample pack · ${CUR}300 · flies Oct 2026`,
   cartEmpty: "Your cart is empty. Explore the Black and the harvest by grade.",
   dueToday: "Due today:",
   balance: "Balance on arrival:",
@@ -91,7 +91,7 @@ const T: Record<Lang, typeof EN> = {
     kCart: "Carrito · pedido en curso",
     spotShip: "envío 2–5 días",
     arrival: "arribo según fecha del lote",
-    packLine: "Pack muestras · 300 € · vuela oct 2026",
+    packLine: `Pack muestras · 300 ${CUR} · vuela oct 2026`,
     cartEmpty: "Tu carrito está vacío. Explora el Black y la cosecha por grados.",
     dueToday: "Pagas hoy:",
     balance: "Saldo al arribo:",
@@ -138,7 +138,7 @@ const T: Record<Lang, typeof EN> = {
     kCart: "Warenkorb · laufende Bestellung",
     spotShip: "Versand in 2–5 Tagen",
     arrival: "Ankunft je nach Lot-Datum",
-    packLine: "Musterpaket · 300 € · fliegt Okt. 2026",
+    packLine: `Musterpaket · 300 ${CUR} · fliegt Okt. 2026`,
     cartEmpty: "Dein Warenkorb ist leer. Entdecke den Black und die Ernte nach Graden.",
     dueToday: "Heute fällig:",
     balance: "Rest bei Ankunft:",
@@ -252,7 +252,7 @@ export function ProfileView({
                 <>
                   {summary.items.map((i) => (
                     <span key={i.id}>
-                      <b>{i.code}</b> · {i.name} · {fmt(i.kg, lang)} kg · {fmt(Math.round(i.total), lang)} € ·{" "}
+                      <b>{i.code}</b> · {i.name} · {fmt(i.kg, lang)} kg · {fmt(Math.round(i.total), lang)} {CUR} ·{" "}
                       {i.mode === "spot" ? t.spotShip : t.arrival}
                       <br />
                     </span>
@@ -265,8 +265,8 @@ export function ProfileView({
             </div>
             {summary.n > 0 && (
               <div className={styles.pfList} style={{ marginTop: 10 }}>
-                {t.dueToday} <b>{fmt(Math.round(summary.today), lang)} €</b> · {t.balance}{" "}
-                <b>{fmt(Math.round(summary.later), lang)} €</b> · {t.total} <b>{fmt(Math.round(summary.total), lang)} €</b> · +
+                {t.dueToday} <b>{fmt(Math.round(summary.today), lang)} {CUR}</b> · {t.balance}{" "}
+                <b>{fmt(Math.round(summary.later), lang)} {CUR}</b> · {t.total} <b>{fmt(Math.round(summary.total), lang)} {CUR}</b> · +
                 {fmt(summary.kg, lang)} {t.pts}
               </div>
             )}
@@ -281,7 +281,7 @@ export function ProfileView({
               ) : (
                 orders.map((o) => (
                   <span key={o.id}>
-                    <b>#{o.code}</b> · {o.items.map((i) => i.name).join(", ")} · {fmt(o.kg, lang)} kg · {fmt(Math.round(o.totalNow), lang)} € ·{" "}
+                    <b>#{o.code}</b> · {o.items.map((i) => i.name).join(", ")} · {fmt(o.kg, lang)} kg · {fmt(Math.round(o.totalNow), lang)} {CUR} ·{" "}
                     {new Date(o.placedAt).toLocaleDateString(LOCALE[lang], { month: "short", year: "numeric" })}
                     <br />
                   </span>

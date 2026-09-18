@@ -104,6 +104,16 @@ portal y el peso de las imágenes) ·
   «descuento». La línea está en `ALINEACION` §3. Lo que queda es **copy con dueño `kaffetal-regal`** (`EvaluacionesTab`,
   `PorQueSection`, `faq.ts` n.º 3, `TratoSection`) y la regeneración de `reference/narrativa-2026-09-17/`, que es del owner
   y vive fuera del repo.
+- **CN-4 se vuelve urgente** (2026-09-18). La V5.52 pasó la tienda a US$, pero la **subasta Tyrian sigue en EUR**
+  porque `lot_auctions` lleva la moneda en el NOMBRE de sus columnas (`precio_salida_eur_kg`, `incremento_eur_kg`).
+  Hasta que CN-4 haga esa migración, la misma superficie muestra dos monedas — cada una con su fuente declarada
+  (`MONEDA_TIENDA` y `MONEDA_SUBASTA`), así que no es un despiste, pero sí es una deuda visible al comprador.
+- **El juego de muestra del owner tiene planillas B2 que no cuadran** (hallazgo, 2026-09-18). En
+  `reference/kr-mock-profile-data/Perfiles de tasa/`, los diez atributos SCA suman MÁS que el total declarado (La
+  Quebrada: 89.25 vs 86.25; La Cima: 91.25 vs 88.75; El Roble: 86.95 vs 84.70) — el PDF resta defectos y `computeSca()`
+  de la plataforma es **suma llana**. Quien transcriba una de esas planillas sin mirar se llevará el grado equivocado:
+  con los valores literales, el primer lote habría salido **Tyrian** y no habría podido publicarse. Decide el owner si
+  el material se corrige o si la plataforma adopta la resta de defectos.
 - **WRAP DEL MAPA · PEDIDO FORMAL** (consolas → plataforma, 2026-09-18). `Log_Documentacion_Interactiva_V43.txt`
   acumula **seis asientos** (V5.46 a V5.51) sobre el wrap V43 (plataforma V5.45): por encima de la cadencia de cinco de
   `ALINEACION` §5. Un componente no llama al wrap — lo pide; lo ejecuta la vía **`plataforma`** desde la conversación

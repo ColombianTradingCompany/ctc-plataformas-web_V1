@@ -83,12 +83,14 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
   locución, tratamiento, el matiz del 80 % del alza, el ejemplo de precio en pantalla y el QR de la bolsa. **No se rueda la versión
   final hasta que la plataforma diga lo mismo** (US$, Papagayo Beans®, mínimos en unidades de 6 kg, regiones como dato, cobros):
   lo cubren CP-1 a CP-3.
-- **BLOQUEANTE del primer lote publicado: la tienda imprime `€` sobre un precio en USD.** El PVC entrega su pila en
-  **USD/kg** (`motor.ts`: `n0 = copc / trm / kg_g`) y `CherryPickedExperience` pinta `€{l.price_per_kg}/kg`. El owner
-  decidió (2026-09-18) que el primer lote —«Gesha 72h Ferm», Gold, `PVC-F4-2026 · DDP (n4) = 31,00`— se publique con
-  el valor del PVC tal cual. **Ya ocurrió**: el lote se publicó el 2026-09-18 a **31,00**, así que la tienda está
-  mostrando **€31,00/kg sobre un número en dólares** — tras el login, que es donde vive el catálogo completo (D0.5).
-  Lo arregla **CP-1** («US$ y mínimos»). Dueño: cherry-picked.
+- ~~**BLOQUEANTE: la tienda imprime `€` sobre un precio en USD**~~ — **RESUELTO en la V5.52** por la sesión de
+  `consolas`, con el owner avisado y su línea en `ALINEACION` §3 (es código de este componente). La moneda tiene ahora
+  UNA fuente, `src/lib/precios/moneda.ts`, y `eur()` pasó a `importe()`. Lo que queda con dueño aquí: **(a)** el flete
+  (`shipping_zones.rate_per_kg`, 0,10–0,45) y el **pack de muestras** (`PACK_PRICE = 300`) se escribieron pensando en
+  euros y ahora se leen en dólares con el mismo número — un **cambio de precio implícito de ~8 %** que el owner aceptó
+  con 0 pedidos de lote y 1 pack de prueba; si se prefiere convertir, es una tasa en ese archivo. **(b)** la **subasta
+  Tyrian sigue en EUR** y no puede moverse desde aquí: `lot_auctions` lleva la moneda en el nombre de sus columnas
+  (`precio_salida_eur_kg`, `incremento_eur_kg`), así que es **CN-4** y lleva DDL. Guardián: `qa-moneda-check` (24).
 - **Unificar el código del lote sobre `lots.public_code`** (dueño: **cherry-picked**, nace en consolas V5.48,
   `ALINEACION` §3). Desde la V5.48 el lote tiene UN código corto, único y almacenado (`CTCX-XXXX-XXXX`), y ya viaja en
   `public_lot_catalog`. Mientras tanto siguen vivos los dos derivados que se contradicen: `codigoDeLote(lot_id, grade)`

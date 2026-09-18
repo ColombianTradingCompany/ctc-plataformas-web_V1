@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { eur, type Lot } from "./data";
+import { CUR, importe, type Lot } from "./data";
 import { useLang, type Lang } from "./i18n";
 import styles from "./NarrativaSection.module.css";
 
@@ -214,9 +214,9 @@ export function NarrativaSection({ lots, loggedIn }: { lots: Lot[]; loggedIn: bo
                       <span>
                         <b>{t.tcLabel}</b>
                         {t.tc1}
-                        <b>{eur(previewLot.transparency.locked, lang)}</b>
+                        <b>{importe(previewLot.transparency.locked, lang)} {CUR}</b>
                         {t.tc2}
-                        <b>{eur(previewLot.transparency.reference, lang)}</b>
+                        <b>{importe(previewLot.transparency.reference, lang)} {CUR}</b>
                         {t.tc3}
                       </span>
                     </div>

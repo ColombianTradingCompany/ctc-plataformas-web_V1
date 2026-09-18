@@ -19,6 +19,31 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.52] — 2026-09-18 (commit pendiente)
+
+- **Hito**: **CP-1 · la tienda deja el euro.** El precio de un lote lo calcula el PVC en **dólares**
+  (`motor.ts`: `n0 = copc / trm / kg_g`) y la tienda Green tenía el símbolo «€» escrito a mano en seis archivos. El
+  2026-09-18, con el primer lote publicado, quedó anunciando **«€31,00/kg» sobre un número en dólares**. Ejecuta la
+  decisión del owner de `ALINEACION` §3 (2026-09-17).
+- **Añadido**: `src/lib/precios/moneda.ts` — **fuente única** de la moneda de cara al comprador: `MONEDA_TIENDA`
+  (USD · «US$») y `MONEDA_SUBASTA` (EUR · «€»), más el formateador `importe()`, que antes se llamaba `eur()` — el
+  nombre era la mitad del problema: devolvía un número sin moneda y cada sitio le pegaba el símbolo que le parecía.
+- **Cambiado**: catálogo, tarjeta de lote, carrito, envíos, perfil y pedidos, el pack de muestras, la narrativa
+  (Transparency Credit, que **no llevaba ninguna moneda**), la landing de Roast y el catálogo del OCP pasan a leer el
+  símbolo de esa fuente. Ni un «€» suelto queda en la tienda.
+- **Datos**: ⚠️ `cartData()` suma en UN total los kilos, el flete y el pack, así que los tres pasan a dólares con el
+  **mismo número**. Para el lote es una corrección (siempre fue USD); para el flete (0,10–0,45/kg) y el pack (300) es
+  un **cambio de precio implícito de ~8 %**, hecho con eso sabido: 0 pedidos de lote y 1 pack de prueba el día del
+  cambio. Si el owner prefiere convertir en vez de reetiquetar, el sitio es ese archivo y una tasa.
+- **Retirado**: a medias y declarado — la **subasta Tyrian sigue en euros** y no es un olvido — `lot_auctions` lleva
+  la moneda en el NOMBRE de sus columnas (`precio_salida_eur_kg`, `incremento_eur_kg`), así que cambiarle el símbolo a
+  la pantalla sin migrar el esquema sería mentir en la dirección contraria a la que se acaba de corregir. Pasa a US$
+  en **CN-4**. Su euro ahora sale de `MONEDA_SUBASTA`, no de un literal: una excepción declarada se ve.
+- **Corregido**: en el paquete público del lote, el atributo SCA `sca_cuppers` se rotulaba «Catador» — se lee como un
+  nombre y es un **puntaje**. Pasa a «Puntaje del catador» en los tres idiomas.
+- **Añadido**: guardián `qa-moneda-check.mjs` (24) — ni un símbolo suelto en la tienda, `eur()` no vuelve, los tres
+  sumandos del carrito comparten moneda y el euro de la subasta viene declarado.
+
 ## [V5.51] — 2026-09-18 (commit 9ed7b28)
 
 - **Cambiado**: la **primera imagen** del CTCx Public Catalogue pasa a ser la **cesta de cerezas** del owner

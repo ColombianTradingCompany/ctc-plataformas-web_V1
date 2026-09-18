@@ -1,7 +1,7 @@
 "use client";
 
 import { useToast } from "@/components/Toast";
-import { ASSOC_BLACK_MOQ, eur, fmt, moqOf, type Lot } from "./data";
+import { ASSOC_BLACK_MOQ, CUR, importe, fmt, moqOf, type Lot } from "./data";
 import { useLang, type Lang } from "./i18n";
 import styles from "./LotCard.module.css";
 
@@ -206,10 +206,10 @@ export function LotCard({
         </div>
         <div className={styles.lotFoot}>
           <div className={styles.price}>
-            <div className={styles.p}>{eur(lot.price, lang)} €<span style={{ fontSize: 13 }}>/kg</span></div>
+            <div className={styles.p}>{importe(lot.price, lang)} {CUR}<span style={{ fontSize: 13 }}>/kg</span></div>
             <div className={styles.u}>
-              {t.min} {fmt(m, lang)} kg = {fmt(Math.round(minTotal), lang)} €
-              {isSpot ? "" : ` · ${t.deposit} ${fmt(Math.round(minTotal * 0.3), lang)} €`}
+              {t.min} {fmt(m, lang)} kg = {fmt(Math.round(minTotal), lang)} {CUR}
+              {isSpot ? "" : ` · ${t.deposit} ${fmt(Math.round(minTotal * 0.3), lang)} ${CUR}`}
             </div>
           </div>
           <div className={styles.stepper} aria-label={t.stepperAria(lot.code)}>
@@ -219,8 +219,8 @@ export function LotCard({
           </div>
           {mine > 0 && (
             <span className={styles.myline}>
-              {t.myFraction} {fmt(mine, lang)} kg · {fmt(Math.round(mine * lot.price), lang)} €
-              {isSpot ? "" : ` · ${t.prePay} ${fmt(Math.round(mine * lot.price * 0.3), lang)} €`} · +{fmt(mine, lang)} {t.pts}
+              {t.myFraction} {fmt(mine, lang)} kg · {fmt(Math.round(mine * lot.price), lang)} {CUR}
+              {isSpot ? "" : ` · ${t.prePay} ${fmt(Math.round(mine * lot.price * 0.3), lang)} ${CUR}`} · +{fmt(mine, lang)} {t.pts}
             </span>
           )}
         </div>

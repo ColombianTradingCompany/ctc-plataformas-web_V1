@@ -1,6 +1,6 @@
 "use client";
 
-import { eur } from "./data";
+import { CUR, importe } from "./data";
 import { useLang, type Lang } from "./i18n";
 import styles from "./EnviosSection.module.css";
 
@@ -27,7 +27,7 @@ const EN = {
     Z4: "Spain · Sweden · Hungary · Slovenia · Croatia",
     Z5: "Portugal · Greece · Ireland · Finland · Baltics · Romania · Bulgaria",
   } as Record<string, string>,
-  note: "Rates fixed per season · consolidated pallet with insurance included · EXW pickup at the Amsterdam warehouse: 0.00 €/kg · The spot last mile is charged at dispatch; the pre-order last mile, with the balance on arrival.",
+  note: `Rates fixed per season · consolidated pallet with insurance included · EXW pickup at the Amsterdam warehouse: 0.00 ${CUR}/kg · The spot last mile is charged at dispatch; the pre-order last mile, with the balance on arrival.`,
 };
 
 const T: Record<Lang, typeof EN> = {
@@ -47,7 +47,7 @@ const T: Record<Lang, typeof EN> = {
       Z4: "España · Suecia · Hungría · Eslovenia · Croacia",
       Z5: "Portugal · Grecia · Irlanda · Finlandia · Bálticos · Rumanía · Bulgaria",
     },
-    note: "Tarifas fijas por temporada · pallet consolidado con seguro incluido · Recogida EXW en bodega Ámsterdam: 0,00 €/kg · La última milla del spot se cobra al despachar; la de las preórdenes, con el saldo al arribo.",
+    note: `Tarifas fijas por temporada · pallet consolidado con seguro incluido · Recogida EXW en bodega Ámsterdam: 0,00 ${CUR}/kg · La última milla del spot se cobra al despachar; la de las preórdenes, con el saldo al arribo.`,
   },
   de: {
     eyebrow: "Letzte Meile · Fixpreis pro kg · Ab Amsterdam",
@@ -64,14 +64,14 @@ const T: Record<Lang, typeof EN> = {
       Z4: "Spanien · Schweden · Ungarn · Slowenien · Kroatien",
       Z5: "Portugal · Griechenland · Irland · Finnland · Baltikum · Rumänien · Bulgarien",
     },
-    note: "Tarife fix pro Saison · konsolidierte Palette inkl. Versicherung · EXW-Abholung im Lager Amsterdam: 0,00 €/kg · Die letzte Meile für Spot wird beim Versand berechnet; für Vorbestellungen mit der Restzahlung bei Ankunft.",
+    note: `Tarife fix pro Saison · konsolidierte Palette inkl. Versicherung · EXW-Abholung im Lager Amsterdam: 0,00 ${CUR}/kg · Die letzte Meile für Spot wird beim Versand berechnet; für Vorbestellungen mit der Restzahlung bei Ankunft.`,
   },
 };
 
 export function EnviosSection() {
   const lang = useLang();
   const t = T[lang];
-  const rateLbl = (rate: number) => `${eur(rate, lang)} €/kg`;
+  const rateLbl = (rate: number) => `${importe(rate, lang)} ${CUR}/kg`;
   return (
     <section id="envios">
       <div className="wrap">

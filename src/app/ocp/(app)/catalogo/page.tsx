@@ -109,7 +109,7 @@ export default async function BcpCatalogoPage() {
                   <input id={`moq-${lot.id}`} name="moq_kg" type="number" step="0.1" required />
                 </div>
                 <div className={styles.field}>
-                  <label htmlFor={`price-${lot.id}`}>Precio de venta (€/kg)</label>
+                  <label htmlFor={`price-${lot.id}`}>Precio de venta (US$/kg)</label>
                   <input id={`price-${lot.id}`} name="price_per_kg" type="number" step="0.01" required />
                 </div>
                 <div className={styles.field}>
@@ -164,7 +164,7 @@ export default async function BcpCatalogoPage() {
                 <p className={styles.meta}>
                   <span className={styles.badge}>{GRADE_LABEL[lot?.grade ?? ""] ?? lot?.grade}</span> ·{" "}
                   <span className={styles.badge}>{STATUS_LABEL[l.status]}</span> · {l.commercial_mode} · {l.sold_kg}/{l.total_kg} kg
-                  vendidos · €{l.price_per_kg}/kg
+                  vendidos · US${l.price_per_kg}/kg
                   {/* El código público del lote (V5.48): lo que el comprador
                       teclea en «Find my Lot» y lo que va impreso en la bolsa.
                       Se acuña al publicar, así que aquí nunca falta; en <code>

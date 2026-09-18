@@ -1,4 +1,5 @@
 import { LOCALE, type Lang } from "./i18n";
+import { importe as importeBase, MONEDA_TIENDA } from "@/lib/precios/moneda";
 
 export type Grade = "Black" | "Red" | "Blue" | "Gold";
 export type Mode = "spot" | "pre";
@@ -43,8 +44,17 @@ export const ASSOC_BLACK_MOQ = 350;
 export const PACK_PRICE = 300;
 
 export const fmt = (n: number, lang: Lang) => n.toLocaleString(LOCALE[lang]);
-export const eur = (n: number, lang: Lang) =>
-  n.toLocaleString(LOCALE[lang], { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// ── La moneda (V5.52, CP-1) ──────────────────────────────────────────────────
+// Se llamaba `eur()` y el símbolo «€» estaba escrito a mano en seis archivos.
+// El precio del lote sale del PVC, que calcula en DÓLARES, así que la tienda
+// llevaba meses preparada para mentir — y lo hizo en cuanto se publicó el primer
+// lote. Ahora el símbolo tiene una fuente única (`lib/precios/moneda.ts`, que
+// explica por qué la subasta se queda en euros hasta CN-4) y el formateador
+// perdió la moneda del nombre, que era la mitad del problema.
+export const importe = (n: number, lang: Lang) => importeBase(n, lang);
+/** El símbolo de la tienda. Se pinta junto al número; nunca se escribe a mano. */
+export const CUR = MONEDA_TIENDA.simbolo;
 
 export function moqOf(l: Lot, loggedIn: boolean) {
   return l.grade === "Black" && loggedIn ? ASSOC_BLACK_MOQ : l.moq;

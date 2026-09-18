@@ -215,3 +215,23 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   tira empareja foto y pie POR ÍNDICE, así que una foto de más o un pie de menos en un idioma es un `undefined` en
   producción.
 (commit: 9ed7b28)
+
+## [2026-09-18] V5.52 · CP-1: la tienda deja el euro, y el primer lote estrena ficha completa (consolas → cherry-picked)
+- FICHA DICT NUEVA: `lib/precios/moneda.ts` es la **fuente única** de la moneda de cara al comprador —
+  `MONEDA_TIENDA` (USD) y `MONEDA_SUBASTA` (EUR). El símbolo «€» estaba escrito a mano en seis archivos de la tienda,
+  y el precio del lote sale del PVC, que calcula en dólares: con el primer lote publicado la tienda quedó anunciando
+  «€31,00/kg» sobre un número en dólares. El formateador pierde la moneda del nombre (`eur()` → `importe()`).
+- ⚠️ ARISTA PARA EL MAPA: la SUBASTA sigue en euros y está DECLARADO. `lot_auctions` lleva la moneda en el nombre de
+  sus columnas (`precio_salida_eur_kg`, `incremento_eur_kg`), así que su migración es CN-4, con DDL. Hasta entonces
+  conviven dos monedas en la misma superficie, cada una con su fuente.
+- ⚠️ EFECTO EN DATOS: `cartData()` suma lote + flete + pack en un total, así que los tres pasan a dólares con el mismo
+  número — corrección para el lote, cambio implícito de ~8 % para flete y pack (0 pedidos, 1 pack de prueba).
+- NODO DE DATOS: el primer lote publicado («Gesha 72h Ferm», CTCX-V2DD-M24B) estrena **ficha completa**: B2 (diez
+  atributos SCA que suman 86.25) y B3 (trilla, defectos, siete mallas sobre grano sano, factor 82.74), más dos PDFs de
+  soporte, dos fotos y dos vídeos en `kaffetal-media` enganchados a `b2_files_*`, `b3_files_*`, `video_asset_id` y
+  `extra_video_assets`. El puntaje pasa a DERIVARSE de la planilla (era un 86.50 puesto a mano) y el grado sigue Gold.
+- ⚠️ HALLAZGO sobre el juego de muestra del owner: sus planillas B2 **no cuadran consigo mismas** — los diez atributos
+  suman más que el total declarado porque el PDF resta defectos y `computeSca()` de la plataforma es suma llana. Con
+  los valores literales del mock este lote habría salido Tyrian y no habría podido publicarse.
+- Guardián nuevo `qa-moneda-check` (24).
+(commit: pendiente)

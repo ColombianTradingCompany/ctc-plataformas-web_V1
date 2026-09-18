@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { PACK_PRICE } from "./data";
+import { CUR, PACK_PRICE } from "./data";
 import { useLang, type Lang } from "./i18n";
 import styles from "./MuestrasSection.module.css";
 
@@ -251,7 +251,7 @@ export function MuestrasSection({
             <li>{t.b4a}<strong>{t.b4b}</strong></li>
           </ul>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
-            <span className={styles.bigprice}>{PACK_PRICE} € <small>{t.packUnit}</small></span>
+            <span className={styles.bigprice}>{PACK_PRICE} {CUR} <small>{t.packUnit}</small></span>
             {packInCart ? (
               <button className="btn" disabled>{t.inCart}</button>
             ) : (

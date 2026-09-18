@@ -1,6 +1,14 @@
 "use client";
 
-import { eur, fmt } from "./data";
+import { importe, fmt } from "./data";
+import { MONEDA_SUBASTA } from "@/lib/precios/moneda";
+
+// ⚠️ LA SUBASTA SIGUE EN EUROS, y está declarado en vez de escrito a mano.
+// `lot_auctions` lleva la moneda EN EL NOMBRE DE SUS COLUMNAS
+// (`precio_salida_eur_kg`, `incremento_eur_kg`), así que cambiarle el símbolo
+// a la pantalla sin migrar el esquema sería mentir en la dirección contraria a
+// la que acaba de corregirse en la tienda. Pasa a US$ en la tanda CN-4.
+const SUB = MONEDA_SUBASTA.simbolo;
 import { useLang, type Lang } from "./i18n";
 import { subastaVencida, tierAlcanza, type MembershipTier, type SubastaPublica } from "@/lib/subastas/tipos";
 import styles from "./TyrianSection.module.css";
@@ -36,7 +44,7 @@ const EN = {
   bid: "Bid",
   closedChip: "Closed",
   awarded: "Awarded",
-  foot: (p: string, inc: string) => `Opening price: ${p} €/kg · minimum raise ${inc} €/kg · The whole lot is auctioned · Requires an account and Pintón level or higher.`,
+  foot: (p: string, inc: string) => `Opening price: ${p} ${SUB}/kg · minimum raise ${inc} ${SUB}/kg · The whole lot is auctioned · Requires an account and Pintón level or higher.`,
   footLogin: " Sign in to bid.",
   footTier: " Your level doesn't allow bidding yet — it rises with each purchase.",
   masl: "m a.s.l.",
@@ -67,7 +75,7 @@ const T: Record<Lang, typeof EN> = {
     bid: "Pujar",
     closedChip: "Cerrada",
     awarded: "Adjudicada",
-    foot: (p: string, inc: string) => `Precio de salida: ${p} €/kg · incremento mínimo ${inc} €/kg · Se subasta el lote completo · Requiere sesión y nivel Pintón o superior.`,
+    foot: (p: string, inc: string) => `Precio de salida: ${p} ${SUB}/kg · incremento mínimo ${inc} ${SUB}/kg · Se subasta el lote completo · Requiere sesión y nivel Pintón o superior.`,
     footLogin: " Inicia sesión para pujar.",
     footTier: " Tu nivel aún no permite pujar — sube con cada compra.",
     masl: "msnm",
@@ -95,7 +103,7 @@ const T: Record<Lang, typeof EN> = {
     bid: "Bieten:",
     closedChip: "Beendet",
     awarded: "Zugeschlagen",
-    foot: (p: string, inc: string) => `Startpreis: ${p} €/kg · Mindesterhöhung ${inc} €/kg · Versteigert wird der gesamte Lot · Erfordert ein Konto und Level Pintón oder höher.`,
+    foot: (p: string, inc: string) => `Startpreis: ${p} ${SUB}/kg · Mindesterhöhung ${inc} ${SUB}/kg · Versteigert wird der gesamte Lot · Erfordert ein Konto und Level Pintón oder höher.`,
     footLogin: " Melde dich an, um zu bieten.",
     footTier: " Dein Level erlaubt noch kein Bieten — es steigt mit jedem Kauf.",
     masl: "m ü. M.",
@@ -141,7 +149,7 @@ export function TyrianSection({
                 {mostrada.variety && <><span className={styles.k}>{t.kVariety}</span><span>{mostrada.variety}</span></>}
                 {mostrada.process && <><span className={styles.k}>{t.kProcess}</span><span>{mostrada.process}</span></>}
                 {mostrada.altitudeM != null && <><span className={styles.k}>{t.kAlt}</span><span>{fmt(mostrada.altitudeM, lang)} {t.masl}</span></>}
-                {mostrada.score != null && <><span className={styles.k}>{t.kScore}</span><span>{eur(mostrada.score, lang)}</span></>}
+                {mostrada.score != null && <><span className={styles.k}>{t.kScore}</span><span>{importe(mostrada.score, lang)}</span></>}
                 <span className={styles.k}>{abierta ? t.kClose : t.kClosed}</span><span>{fecha(mostrada.endsAt)}</span>
               </div>
             )}
@@ -163,14 +171,14 @@ export function TyrianSection({
                     </div>
                     <hr />
                     <span className={styles.k}>{f.lider != null ? t.current : t.opening}</span>
-                    <div className={styles.big}>{eur(precio, lang)} €/kg</div>
+                    <div className={styles.big}>{importe(precio, lang)} {SUB}/kg</div>
                     <div className={styles.sub}>
-                      {t.halfTotal}: {fmt(Math.round(precio * f.kg), lang)} € · {f.pujadores} {t.bidders}
+                      {t.halfTotal}: {fmt(Math.round(precio * f.kg), lang)} {SUB} · {f.pujadores} {t.bidders}
                     </div>
                     <hr />
                     {viva ? (
                       <button className={styles.btnTyrian} onClick={() => onBid(mostrada.id, f.fraccion, f.siguiente)} disabled={loggedIn && !puedePujar}>
-                        {t.bid} {eur(f.siguiente, lang)} €/kg
+                        {t.bid} {importe(f.siguiente, lang)} {SUB}/kg
                       </button>
                     ) : (
                       <span className={styles.leadChip}>{mostrada.status === "adjudicada" ? t.awarded : t.closedChip}</span>
@@ -179,7 +187,7 @@ export function TyrianSection({
                 );
               })}
               <p className={styles.sub} style={{ gridColumn: "1/-1", fontFamily: "var(--font-spline-mono), monospace", fontSize: 11.5, color: "#EDD3E1" }}>
-                {t.foot(eur(mostrada.precioSalida, lang), eur(mostrada.incremento, lang))}
+                {t.foot(importe(mostrada.precioSalida, lang), importe(mostrada.incremento, lang))}
                 {!loggedIn && t.footLogin}
                 {loggedIn && !puedePujar && t.footTier}
               </p>

@@ -92,7 +92,7 @@ const T: Record<
       sca_uniformity: "Uniformidad",
       sca_clean_cup: "Taza limpia",
       sca_sweetness: "Dulzor",
-      sca_cuppers: "Catador",
+      sca_cuppers: "Puntaje del catador",
     },
   },
   en: {
@@ -124,7 +124,7 @@ const T: Record<
       sca_uniformity: "Uniformity",
       sca_clean_cup: "Clean cup",
       sca_sweetness: "Sweetness",
-      sca_cuppers: "Cupper",
+      sca_cuppers: "Cupper's score",
     },
   },
   de: {
@@ -156,7 +156,7 @@ const T: Record<
       sca_uniformity: "Gleichmäßigkeit",
       sca_clean_cup: "Sauberkeit",
       sca_sweetness: "Süße",
-      sca_cuppers: "Verkoster",
+      sca_cuppers: "Bewertung des Verkosters",
     },
   },
 };

@@ -78,6 +78,11 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 
 ## Pendientes
 
+- **Guion del video del comprador** (`briefs/cherry-picked-guion-video-comprador.md`, **v0.1 · en revisión del owner**, 2026-09-18):
+  gemelo del guion del productor, 694 palabras, ≈ 5:20, en «tú». Esperan respuesta cinco decisiones (§5 del brief): idioma de la
+  locución, tratamiento, el matiz del 80 % del alza, el ejemplo de precio en pantalla y el QR de la bolsa. **No se rueda la versión
+  final hasta que la plataforma diga lo mismo** (US$, Papagayo Beans®, mínimos en unidades de 6 kg, regiones como dato, cobros):
+  lo cubren CP-1 a CP-3.
 - **BLOQUEANTE del primer lote publicado: la tienda imprime `€` sobre un precio en USD.** El PVC entrega su pila en
   **USD/kg** (`motor.ts`: `n0 = copc / trm / kg_g`) y `CherryPickedExperience` pinta `€{l.price_per_kg}/kg`. El owner
   decidió (2026-09-18) que el primer lote —«Gesha 72h Ferm», Gold, `PVC-F4-2026 · DDP (n4) = 31,00`— se publique con

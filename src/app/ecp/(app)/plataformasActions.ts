@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
-import { SUBDOMAIN_ROUTES } from "@/lib/red/subdominios";
+import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW } from "@/lib/red/subdominios";
 import { TAG_SUPERFICIES } from "@/lib/seo/superficies";
 import { cargarToolsAdmin } from "@/lib/tools/toolAccess";
 
@@ -16,9 +16,18 @@ import { cargarToolsAdmin } from "@/lib/tools/toolAccess";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 /** Toda superficie pública, ordenada. `/` es la casa matriz y no está en el mapa
- *  de subdominios porque no es uno — se añade a mano y va primera. */
+ *  de subdominios porque no es uno — se añade a mano y va primera.
+ *
+ *  `RUTAS_SOLO_WWW` (2026-09-18) son las demás que tampoco son un subdominio:
+ *  superficies públicas servidas como RUTA de la casa matriz. Tienen que estar
+ *  aquí o `guardarSuperficie()` las rechaza —«Esa superficie no existe en el
+ *  mapa de la red»— y el owner se queda sin poder corregir su título ni
+ *  apagarlas del sitemap. El mismo array lo lee `sitemap.xml/route.ts`; una
+ *  copia local sería garantizar que se enruten bien y se gobiernen mal. */
 function rutasDeLaRed(): string[] {
-  const rutas = [...new Set(Object.values(SUBDOMAIN_ROUTES))].filter((r) => r !== "/co-create").sort();
+  const rutas = [...new Set([...Object.values(SUBDOMAIN_ROUTES), ...RUTAS_SOLO_WWW])]
+    .filter((r) => r !== "/co-create")
+    .sort();
   return ["/", ...rutas];
 }
 

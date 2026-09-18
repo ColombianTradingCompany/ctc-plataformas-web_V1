@@ -22,6 +22,7 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 | `/caas` (`/co-create` → 308) | landing + formulario Clase B (pilar `cocreate` — la MARCA es CaaS, la CLAVE es cocreate) |
 | `/api/catalogo/sneak-peek` | la cinta (anon, `s-maxage=900`) |
 | `/docs/ficha/[lotId]` | ficha pública de un lote vivo sobre **lista blanca** (charter `plataforma`, la ruta cuelga de `/docs` por el proxy) |
+| `/ctcx-public-catalogue` · `/ctcx-public-catalogue/[codigo]` | «Find my Lot» y el paquete público del lote por su `lots.public_code` (V5.48; charter `plataforma`, nacida en `consolas` · OCP, **solo www**) |
 
 ## Mapa de código
 
@@ -48,7 +49,8 @@ sustituir por una política ancha sobre `lots`/`fincas`), `market_anchors`, `cof
 ## Guardianes
 
 `qa-sneak-peek-check.mjs` (194) · `qa-subastas-check.mjs` (30) · `qa-checkout-check.mjs` (`place_order`,
-con cuenta QA) · `qa-ficha-publica-check.mjs` (105, contra las 110 claves reales del datasheet) ·
+con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reales del datasheet; su §8 vigila las
+**tres** puertas al `datasheet` desde la V5.48) ·
 `qa-crm-interes-check.mjs` (fuentes de la lista de espera) · `qa-recuperacion-check.mjs` (puerta CP).
 
 ## Reglas propias
@@ -76,6 +78,16 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (105, contra las 110 claves reale
 
 ## Pendientes
 
+- **Unificar el código del lote sobre `lots.public_code`** (dueño: **cherry-picked**, nace en consolas V5.48,
+  `ALINEACION` §3). Desde la V5.48 el lote tiene UN código corto, único y almacenado (`CTCX-XXXX-XXXX`), y ya viaja en
+  `public_lot_catalog`. Mientras tanto siguen vivos los dos derivados que se contradicen: `codigoDeLote(lot_id, grade)`
+  en `lib/catalogo/sneakPeek.ts` («GD-A1B2») y `listingCode(lot_listings.id, grade)` en `cherry-picked/data.ts`
+  («GD-7F3C») — el MISMO café con dos cadenas según la superficie. Sustituirlos por la columna es tanda **CP-3**; ojo a
+  que un lote publicado siempre tiene código, y uno sin publicar no aparece en la vista.
+- **La ficha pública de un lote CTCx Selection se arregla EN LA VISTA, no en la página** (§14.7: la finca «visible como
+  dato, no protagonista»). `public_lot_catalog` anula `finca_name` cuando `ctc_selection`, y tanto `/docs/ficha/[lotId]`
+  como el paquete público de `/ctcx-public-catalogue/[codigo]` solo pueden pintar lo que la vista devuelve. D3.1 se
+  aplica en SQL a propósito: taparlo en la interfaz dejaría el nombre a un `curl` de distancia.
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **CP-1** (US$ y mínimos) y **CP-2**
   (portada, programas, mapa; ola 1) · CP-3 (catálogo y ficha para el primer lote publicado; espera CN-3, CN-4 y CN-7) ·
   CP-4 (Green por región; espera CN-8) · CP-5 (Roast y X como productos, 2027).

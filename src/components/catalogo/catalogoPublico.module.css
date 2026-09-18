@@ -1,0 +1,189 @@
+/* ── CTCx Public Catalogue · el pivote público del lote (V5.48) ──────────────
+   Hoja MÍNIMA: el cascarón, la tipografía y los botones vienen de
+   `services/surface.module.css` y de `globals.css` (`.btn`, `.wrap`,
+   `.eyebrow`, `.mono`). Aquí solo vive lo que esta superficie estrena — el
+   buscador «Find my Lot» y la ficha del paquete público — para no engordar la
+   hoja compartida de las tres superficies Clase B con algo que solo usa una.
+   Los colores salen del tema `data-theme="ctc-home"`. */
+
+/* ── El buscador ─────────────────────────────────────────────────────────── */
+
+.buscador {
+  margin: 22px 0 0;
+  max-width: 560px;
+}
+
+.campo {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.entrada {
+  flex: 1 1 260px;
+  min-width: 0;
+  /* 48px: por encima del mínimo táctil de 44 px de la casa. */
+  height: 48px;
+  padding: 0 14px;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink, #1b2430);
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #dde1e7);
+  border-radius: var(--radius, 14px);
+}
+
+.entrada::placeholder {
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--muted, #5a6472);
+  opacity: 0.7;
+}
+
+.entrada:focus-visible {
+  outline: 2px solid var(--primary, #16436b);
+  outline-offset: 1px;
+}
+
+.entrada[aria-invalid="true"] {
+  border-color: var(--red, #c4402f);
+}
+
+.boton {
+  height: 48px;
+}
+
+.ayuda {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted, #5a6472);
+}
+
+.error {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--red, #c4402f);
+}
+
+/* ── El paquete público ──────────────────────────────────────────────────── */
+
+.paquete {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px 72px;
+}
+
+.volver {
+  display: inline-block;
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  color: var(--muted, #5a6472);
+  text-decoration: none;
+}
+
+.volver:hover {
+  color: var(--primary, #16436b);
+}
+
+.cabeza {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.sello {
+  width: 72px;
+  height: auto;
+  flex: none;
+}
+
+.titulo {
+  margin: 4px 0 0;
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.12;
+  color: var(--primary-deep, #0e2c48);
+}
+
+.codigo {
+  display: inline-block;
+  margin: 0;
+  font-family: var(--font-spline-mono), monospace;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--muted, #5a6472);
+}
+
+.puntaje {
+  margin: 10px 0 0;
+  font-size: 15px;
+  color: var(--ink, #1b2430);
+}
+
+.estimado {
+  color: var(--muted, #5a6472);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 28px;
+  font-size: 15px;
+}
+
+.tabla th {
+  width: 190px;
+  padding: 9px 12px 9px 0;
+  text-align: left;
+  font-weight: 500;
+  vertical-align: top;
+  color: var(--muted, #5a6472);
+  border-bottom: 1px solid var(--line, #dde1e7);
+}
+
+.tabla td {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line, #dde1e7);
+}
+
+.bloque {
+  margin-top: 30px;
+}
+
+.bloque h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  color: var(--primary-deep, #0e2c48);
+}
+
+.bloque p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.nota {
+  margin-top: 34px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted, #5a6472);
+}
+
+/* ── Las tres puertas ────────────────────────────────────────────────────── */
+
+.puertas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 22px 0 0;
+}
+
+.puertasNota {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted, #5a6472);
+}

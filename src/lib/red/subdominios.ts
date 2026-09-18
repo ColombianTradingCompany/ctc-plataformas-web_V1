@@ -78,6 +78,39 @@ export const ROUTE_SUBDOMAIN: Record<string, string> = Object.fromEntries(
   Object.entries(SUBDOMAIN_ROUTES).map(([sub, route]) => [route, sub])
 );
 
+// ── Superficies públicas que viven SOLO en www (2026-09-18, V5.48) ───────────
+// Hasta hoy «superficie pública» y «subdominio» eran la misma cosa, así que los
+// dos lectores del mapa —el sitemap y el tablero de Manejo de Plataformas—
+// derivaban su lista de `SUBDOMAIN_ROUTES` y con eso les bastaba.
+//
+// `/ctcx-public-catalogue` rompe esa equivalencia: es una superficie pública de
+// pleno derecho (tarjeta propia, canonical propio, tres idiomas) que el owner
+// pidió como RUTA de la casa matriz, sin subdominio ni DNS. Sin esta lista se
+// caía por dos agujeros callados a la vez:
+//
+//   · `sitemap.xml/route.ts` no la anunciaría — invisible para los buscadores.
+//   · `ecp/plataformasActions.ts` no la listaría, y `guardarSuperficie()` la
+//     rechazaría («Esa superficie no existe en el mapa de la red»): el owner no
+//     podría corregir su título ni apagarla del sitemap sin un deploy, y su
+//     `superficieConOverrides({ route: "/ctcx-public-catalogue" })` quedaría
+//     inerte SIN fallar — el peor modo de fallo, el que no se nota.
+//
+// Vive aquí y no en cada lector por el mismo motivo que `SUBDOMAIN_ROUTES`: dos
+// copias serían garantizar que una superficie nueva se enrute bien y se
+// gobierne mal. `rutasDeLaRed()` ya añadía `"/"` a mano por esta misma razón.
+//
+// ⚠️ Estas rutas responden SOLO en `www` (y en el ápex). El matcher de
+// `src/proxy.ts` no las excluye, así que en un subdominio se reescriben
+// (`kaffetal-regal.ctcexport.com/ctcx-public-catalogue` →
+// `/kaffetal-regal/ctcx-public-catalogue`) y dan 404. Por eso todo enlace que
+// venga de otra superficie tiene que ser ABSOLUTO contra `WWW_ORIGIN`. La
+// alternativa —meterlas en `RAIZ_COMPARTIDA` del proxy, como
+// `/recuperar-acceso`— existe y no se tomó: esta superficie no es una pantalla
+// de rescate que haya que servir desde cualquier puerta, y `qa-recuperacion`
+// solo comprueba que esa lista CONTENGA `/recuperar-acceso`, así que no
+// atraparía un error ahí.
+export const RUTAS_SOLO_WWW: string[] = ["/ctcx-public-catalogue"];
+
 /** El origen absoluto donde vive una superficie en PRODUCCIÓN.
  *
  *  `/` y cualquier ruta sin subdominio propio (p. ej. `/login`) caen en la casa

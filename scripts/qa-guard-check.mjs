@@ -38,6 +38,15 @@ const prod = createClient(url, anon, { auth: { persistSession: false } });
   const selfGrade = await prod.from("lots").update({ stage: "galardonado", grade: "gold" }).eq("id", lot.id).select();
   check("producer CANNOT self-grade (stage/grade)", !!selfGrade.error, selfGrade.error?.message ?? "(no error!)");
 
+  // V5.48: `lots.public_code` is the lot's PUBLIC identifier -- it resolves
+  // /ctcx-public-catalogue/<code> and it goes printed on the bag. `lots_update_own`
+  // has no WITH CHECK, so without `public_code` in guard_lot_protected_columns a
+  // producer could PATCH their own row and write anything onto a public URL, or
+  // squat a code and break an already-shared link. Minted service-role only, in
+  // publishLot().
+  const selfCode = await prod.from("lots").update({ public_code: "CTCX-HACK-HACK" }).eq("id", lot.id).select();
+  check("producer CANNOT set public_code", !!selfCode.error, selfCode.error?.message ?? "(no error!)");
+
   const fichaBump = await prod.from("lots").update({ stage: "ficha_completa", name: "QA Guard Lot v2" }).eq("id", lot.id).select();
   check("producer CAN still save ficha (borrador->ficha_completa)", !fichaBump.error && fichaBump.data.length === 1, fichaBump.error?.message);
 

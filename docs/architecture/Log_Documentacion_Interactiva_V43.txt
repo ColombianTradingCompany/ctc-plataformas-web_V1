@@ -147,3 +147,25 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Brechas para la v2.2.0 del modelo: columna marítima del puerto (hoy n3 aéreo, anotado), DDP consolidado vs dedicado,
   regiones como dato. Guardianes: qa-pvc-canales 57 · qa-pvc-compromiso 31 (nuevo).
 (commit: ea30260)
+
+## [2026-09-18] V5.48 · CTCx Public Catalogue: «Find my Lot» y el código público del lote (consolas)
+- SUPERFICIE NUEVA para el mapa: `/ctcx-public-catalogue` (pivote, estática) y `/ctcx-public-catalogue/[codigo]`
+  (paquete público del lote, dinámica), servidas SOLO desde `www` — no son un subdominio. Es la primera superficie
+  pública de la red que no tiene host propio, así que el mapa gana el concepto **RUTAS_SOLO_WWW**
+  (`lib/red/subdominios.ts`), que leen a la vez el sitemap y ECP · Manejo de Plataformas.
+- NODO/TABLA: `lots` gana `public_code` — el código corto, único y ALMACENADO del lote (`CTCX-XXXX-XXXX`, Crockford
+  base32 sin I/L/O/U). Traza nueva: bolsa/QR → `/ctcx-public-catalogue/[codigo]` → vista `public_lot_catalog` →
+  `fichaPublica()` (lista blanca) → paquete público → enlace a `/docs/ficha/[lotId]`. La vista `public_lot_catalog`
+  gana la columna (`create or replace`, nunca `drop`).
+- FICHA DICT: el código público **sustituye** a los dos códigos derivados que hoy se contradicen —`codigoDeLote(lot_id)`
+  en la cinta y `listingCode(lot_listings.id)` en la tienda Green—; unificarlos sobre `public_code` es tanda de
+  cherry-picked (CP-3), anotada en su charter.
+- Se acuña en `publishLot` (OCP · Catálogo), service-role e idempotente: despublicar y republicar conserva el código
+  porque la URL puede estar impresa. La columna NO lleva DEFAULT — los lotes nacen desde el navegador del productor.
+- SEGURIDAD: `guard_lot_protected_columns` gana `public_code` (el productor no escribe su propio identificador
+  público). Y queda escrito que el código NO es una credencial: `public_lot_catalog` es anónima y devuelve el catálogo
+  publicado entero con sus códigos.
+- Es la mitad delantera de CN-7 del plan de narrativa; el sticker imprimible y el QR siguen pendientes.
+- Guardianes: `qa-catalogo-publico-check` 76 (nuevo) · `qa-ficha-publica-check` 105 → 115 (su §8 vigila ahora TRES
+  puertas al `datasheet`) · `qa-guard-check` +1.
+(commit: pendiente)

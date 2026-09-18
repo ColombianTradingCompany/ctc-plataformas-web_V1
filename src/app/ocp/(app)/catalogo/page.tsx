@@ -19,7 +19,9 @@ export default async function BcpCatalogoPage() {
     service.from("lot_listings").select("lot_id"),
     service
       .from("lot_listings")
-      .select("id, status, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, arrival_date, lots(name, grade)")
+      .select(
+        "id, status, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, arrival_date, lots(name, grade, public_code)"
+      )
       .order("created_at", { ascending: false }),
   ]);
 
@@ -154,7 +156,7 @@ export default async function BcpCatalogoPage() {
       {!listings?.length && <p className={styles.empty}>Nada publicado todavía.</p>}
       <div className={styles.list}>
         {listings?.map((l) => {
-          const lot = l.lots as unknown as { name: string; grade: string } | null;
+          const lot = l.lots as unknown as { name: string; grade: string; public_code: string | null } | null;
           return (
             <div className={styles.card} key={l.id}>
               <div>
@@ -163,6 +165,16 @@ export default async function BcpCatalogoPage() {
                   <span className={styles.badge}>{GRADE_LABEL[lot?.grade ?? ""] ?? lot?.grade}</span> ·{" "}
                   <span className={styles.badge}>{STATUS_LABEL[l.status]}</span> · {l.commercial_mode} · {l.sold_kg}/{l.total_kg} kg
                   vendidos · €{l.price_per_kg}/kg
+                  {/* El código público del lote (V5.48): lo que el comprador
+                      teclea en «Find my Lot» y lo que va impreso en la bolsa.
+                      Se acuña al publicar, así que aquí nunca falta; en <code>
+                      y no en un `badge` porque ese pill es para ESTADOS. */}
+                  {lot?.public_code && (
+                    <>
+                      {" · "}
+                      <code>{lot.public_code}</code>
+                    </>
+                  )}
                 </p>
               </div>
               {l.status !== "archived" && (

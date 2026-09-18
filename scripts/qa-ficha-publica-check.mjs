@@ -150,9 +150,12 @@ check("una cadena vacía no ocupa campo", fichaPublica({ estate: "   " }, { ctcS
   check("queda escrito por qué es lista blanca", fuente.includes("LISTA BLANCA, NO NEGRA"));
 }
 
-// ── 8. El camino real: la página y la cinta ───────────────────────────────
+// ── 8. El camino real: las páginas y la cinta ─────────────────────────────
 // La proyección puede ser perfecta y aun así sobrar, si alguien lee el
-// `datasheet` por otra puerta. Esto vigila las dos puertas que existen.
+// `datasheet` por otra puerta. Esto vigila las puertas que existen — TRES desde
+// la V5.48, cuando «Find my Lot» (`/ctcx-public-catalogue/[codigo]`) abrió la
+// tercera. Cada puerta nueva se añade AQUÍ, no en su propio guardián: este es
+// el archivo donde el siguiente barrido va a buscar quién toca el `datasheet`.
 {
   const pagina = readFileSync(new URL("../src/app/docs/ficha/[lotId]/page.tsx", import.meta.url), "utf8");
   const cinta = readFileSync(new URL("../src/lib/catalogo/sneakPeek.ts", import.meta.url), "utf8");
@@ -186,6 +189,37 @@ check("una cadena vacía no ocupa campo", fichaPublica({ estate: "   " }, { ctcS
   check("el botón apunta a /docs/ficha/…", /datasheetUrl: fila\.tiene_ficha \? `\/docs\/ficha\//.test(cinta));
   const proxy = readFileSync(new URL("../src/proxy.ts", import.meta.url), "utf8");
   check("y `docs/` sigue excluido del matcher del proxy", /matcher:[^\]]*docs\//s.test(proxy));
+
+  // ── La TERCERA puerta (V5.48): el paquete público de «Find my Lot» ───────
+  // Mismas cinco afirmaciones que la ficha, sobre el archivo nuevo. Si alguien
+  // «simplifica» esta ruta para que busque el código en `lots` en vez de en la
+  // vista, un lote sin publicar se volvería visible con solo saber su código —
+  // y los códigos se leen en bloque desde `public_lot_catalog`, que es anónima.
+  const paquete = readFileSync(
+    new URL("../src/app/ctcx-public-catalogue/[codigo]/page.tsx", import.meta.url),
+    "utf8"
+  );
+  check("el paquete público se cierra sobre `public_lot_catalog`", paquete.includes('from("public_lot_catalog")'));
+  check(
+    "y NUNCA resuelve el código contra `lots`",
+    !/from\("lots"\)[\s\S]{0,200}public_code/.test(paquete) && !/\.eq\("public_code"[\s\S]{0,120}from\("lots"\)/.test(paquete)
+  );
+  check("responde 404 a lo que no salga de la vista", /if \(!lote\) notFound\(\)/.test(paquete));
+  check("normaliza el código antes de preguntar nada", /const c = canonico\(codigo\)/.test(paquete));
+  check("canoniza con 308 y no con 307", paquete.includes("permanentRedirect(") && !/[^t]\bredirect\(/.test(paquete));
+  check("el `datasheet` pasa siempre por fichaPublica()", /fichaPublica\(crudo\?\.datasheet/.test(paquete));
+  const lecturasPaquete = (sinComentarios(paquete).match(/datasheet/g) ?? []).length;
+  check(
+    `el paquete toca \`datasheet\` solo dos veces: leerlo y proyectarlo (${lecturasPaquete})`,
+    lecturasPaquete === 2
+  );
+  check("el paquete no serializa la fila cruda", !/JSON\.stringify\(crudo/.test(paquete));
+
+  // El componente que PINTA el paquete es de cliente, así que todo lo que
+  // reciba cruza al navegador. No puede leer nada por su cuenta.
+  const vista = readFileSync(new URL("../src/components/catalogo/PaquetePublico.tsx", import.meta.url), "utf8");
+  check("el componente del paquete no consulta la base", !/from\("|createClient|supabase/.test(sinComentarios(vista)));
+  check("ni recibe el datasheet crudo", !/datasheet/.test(sinComentarios(vista)));
 }
 
 if (fallos.length) {

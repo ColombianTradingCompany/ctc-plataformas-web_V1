@@ -80,6 +80,12 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
+- **`lots.public_code` es de solo lectura para el productor** (dueño: **kaffetal-regal**, nace en consolas V5.48,
+  `ALINEACION` §3). El `select("*")` del panel ahora devuelve la columna nueva, y `guard_lot_protected_columns` la
+  protege: un `UPDATE` del productor sobre ella responde «Estos campos solo puede actualizarlos CTC.». Si algún día el
+  panel quiere enseñarle su código («así encuentran su café en `ctcexport.com/ctcx-public-catalogue`»), sale de esa
+  misma fila — **nunca** de una segunda derivación, que es justo el problema que la columna vino a cerrar. Ojo: el
+  código se acuña al PUBLICAR, así que un lote que aún no está en el catálogo lo tiene en `null`.
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **KR-1** (copy del guion, ola 1, sin
   dependencias) · KR-2 (panel: perfil primero, tabla de salida, Arena, bolsa, avisos; espera CN-3, CN-5 y CN-6) · KR-3
   (copy de grados, en la misma tanda que CN-9). El rodaje del video (O-8) espera a KR-1 y KR-2.

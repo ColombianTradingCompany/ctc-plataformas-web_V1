@@ -19,6 +19,43 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.48] — 2026-09-18 (commit pendiente)
+
+- **Hito**: nace **CTCx Public Catalogue** (`www.ctcexport.com/ctcx-public-catalogue`), el pivote público del lote:
+  **«Find my Lot»** resuelve un código corto al paquete público del café, y debajo van la explicación del portal y las
+  tres puertas — Kaffetal Regal, Cherry Picked y el «Escríbenos» con su selector de Tema completo. Es la mitad
+  delantera de la tanda **CN-7** del plan de narrativa (identificador público del lote → ficha pública).
+- **Añadido**: `lots.public_code` — el código corto, único y ALMACENADO del lote (`CTCX-XXXX-XXXX`, alfabeto Crockford
+  base32 sin I/L/O/U). Es la **fuente única** que viene a reemplazar los dos códigos derivados y contradictorios que
+  convivían: `codigoDeLote(lot_id, grade)` en la cinta y `listingCode(lot_listings.id, grade)` en la tienda Green.
+- **Añadido**: `src/lib/catalogo/codigoPublico.ts` (módulo PURO, sin `server-only`) — `normalizaCodigo()` perdona
+  minúsculas, guiones, el prefijo y las tres letras ambiguas (O→0, I/L→1), y devuelve la forma canónica o `null`.
+- **Añadido**: `/ctcx-public-catalogue` (estática, con su tarjeta y su canonical) y `/ctcx-public-catalogue/[codigo]`
+  (dinámica, con canonical y Open Graph POR LOTE). Un código no canónico responde **308** a su forma canónica; un
+  código ilegible o sin lote publicado, **404**. Las dos pantallas en ES · EN · DE.
+- **Añadido**: `RUTAS_SOLO_WWW` en `src/lib/red/subdominios.ts` — la red aprende que una superficie pública puede no
+  ser un subdominio. La leen **los dos** consumidores del mapa: el sitemap (`sitemap.xml/route.ts`) y el tablero de
+  ECP · Manejo de Plataformas (`plataformasActions.rutasDeLaRed`), que sin ella habría rechazado la fila y dejado el
+  `superficieConOverrides` de la superficie inerte sin fallar.
+- **Cambiado**: `publishLot` (OCP · Catálogo) acuña el código público si falta, con el cliente service-role y de forma
+  idempotente — despublicar y volver a publicar conserva el código, porque la URL puede estar impresa en una bolsa.
+  `/ocp/catalogo` lo muestra en cada publicación.
+- **Datos**: migración `lots_codigo_publico` — columna `lots.public_code` (nullable, sin DEFAULT), función
+  `public.ctc_public_code()` (`SECURITY INVOKER`, `search_path = ''`, `EXECUTE` revocado a `public`/`anon`/
+  `authenticated`), índice único `lots_public_code_key`, y `public_lot_catalog` recreada con `create or replace`
+  añadiendo `public_code` al final — nunca `drop + create`, que habría perdido el `grant select` de `anon`.
+- **Seguridad**: `guard_lot_protected_columns` gana `public_code`. `lots_update_own` no tiene `WITH CHECK`, así que sin
+  esa línea un productor podía escribir cualquier cadena sobre una URL pública o romper un enlace ya compartido.
+  Verificado contra la base: el `UPDATE` del productor responde «Estos campos solo puede actualizarlos CTC.» y el
+  control (renombrar su lote) sigue permitido. La columna **no lleva DEFAULT** a propósito: los lotes se insertan desde
+  el navegador del productor, y un DEFAULT + el REVOKE habría roto «crear lote» en Kaffetal Regal.
+- **Seguridad**: queda escrito, en el módulo y en la ruta, que **el código público no es una credencial** —
+  `public_lot_catalog` es legible por `anon`, así que el catálogo publicado entero se lee con sus códigos en una sola
+  petición. «Find my Lot» es un índice de conveniencia; la compuerta sigue siendo la vista.
+- **Añadido**: guardián `qa-catalogo-publico-check.mjs` (76). `qa-ficha-publica-check.mjs` sube a **115**: su §8 pasa de
+  vigilar dos puertas al `datasheet` a vigilar **tres**. `qa-guard-check.mjs` gana «producer CANNOT set public_code».
+- **Docs**: `ALINEACION.md` §3 y los «Pendientes» de `consolas`, `cherry-picked` y `kaffetal-regal`.
+
 ## [V5.47] — 2026-09-16 (commit ea30260)
 
 - **Cambiado**: las **correcciones del CEO** (2026-09-16) entran como `docs/PVC_BCP_PLAN.md` §12 y **priman** sobre lo

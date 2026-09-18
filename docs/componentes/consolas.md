@@ -69,6 +69,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `qa-direccionamiento-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
 `qa-evaluaciones-check.mjs` (42, veredicto Q-Grader) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` ·
+`qa-catalogo-publico-check.mjs` (76 — el código público del lote, «Find my Lot» y las rutas SOLO-www) ·
 `qa-guard-check.mjs` (seguridad, con cuentas QA).
 
 ## Reglas propias
@@ -97,6 +98,21 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Pendientes
 
+- **CN-7 va por la mitad (V5.48)**. Entregado: `lots.public_code` (el identificador), el portal público
+  `/ctcx-public-catalogue` con «Find my Lot» y el paquete del lote, y la acuñación en `publishLot`. **Falta**: el
+  **QR** y el **sticker imprimible** desde OCP · Fichas (nombre del productor y finca, o «CTCx Selection»), que
+  dependen del diseño físico de la bolsa (O-4); y el vocabulario **Papagayo Beans®** en el paquete público, que es
+  CN-2. Si el sticker exige el código ANTES de publicar, el punto de acuñación se adelanta sin tocar nada más: la
+  condición `public_code is null` de `publishLot` lo hace idempotente venga de donde venga.
+- **`/ctcx-public-catalogue` vive en territorio del charter `plataforma`** (CTC Home, proxy, SEO), y se ejecutó desde
+  aquí por la regla del backstage (`ALINEACION` §2 y su línea en §3). Dos cosas quedan con dueño `plataforma`: **(a)**
+  no hay entrada al portal desde la Home — hoy se descubre por el sitemap y por el QR, y no estaba en el encargo;
+  **(b)** la superficie reutiliza la tarjeta Open Graph `ctc-home.jpg`, le falta una propia
+  (`ctcx-public-catalogue.jpg`, 1200×630 JPEG < 300 KB, owner).
+- **Las cuatro vistas `public_*` arrastran grants `INSERT/UPDATE/DELETE/TRUNCATE` a `anon` y `authenticated`** (el
+  reparto por defecto de Supabase). Son inertes —ninguna es actualizable, todas son joins de varias tablas— pero son
+  ruido en cada auditoría. Retirarlos es una migración de una línea por vista; no se hizo aquí para no mezclarlo con
+  la tanda (ver también los hallazgos de la auditoría 2026-07-10, más abajo).
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): las tandas de este componente, en orden,
   son **CN-1** (PVC ene–mar 2027 antes del 15-oct) · CN-2 (marca, razón social, catálogo, `cocreate`) · CN-3a/b (ofertas
   y contratos) · CN-4 (subastas en US$) · CN-5 (evaluación) · CN-6 (Arena) · CN-7 (UID/QR y sticker) · CN-8 (regiones y

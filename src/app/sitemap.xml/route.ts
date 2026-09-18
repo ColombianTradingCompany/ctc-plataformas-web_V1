@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { SUBDOMAIN_ROUTES, ROOT_DOMAIN, WWW_ORIGIN } from "@/lib/red/subdominios";
+import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW, ROOT_DOMAIN, WWW_ORIGIN } from "@/lib/red/subdominios";
 import { overridesDeSuperficies } from "@/lib/seo/superficies";
 
 // ── El sitemap de la red (2026-08-14) ────────────────────────────────────────
@@ -52,9 +52,15 @@ const REDIRECCIONES = new Set(["/co-create"]);
  *  dos declaraciones nuestras sobre lo mismo — y la lección de esta tanda fue
  *  justamente que tienen que decir lo mismo. Manda el canonical, que es la
  *  declaración fuerte; el sitemap se ajusta a él. Si algún día Next cambia esa
- *  normalización, este es el sitio que hay que mover con ella. */
+ *  normalización, este es el sitio que hay que mover con ella.
+ *
+ *  `RUTAS_SOLO_WWW` entra aquí en pie de igualdad (2026-09-18): son superficies
+ *  públicas sin subdominio propio, y este sitemap —el de www— es el ÚNICO sitio
+ *  de la red donde pueden anunciarse. En un subdominio ni siquiera responden
+ *  (el proxy las reescribe), y la rama de abajo que sirve a los subdominios no
+ *  las toca, así que no hay riesgo de anunciar una URL que dé 404. */
 function rutasCanonicas(origin: string, fuera: Set<string>): string[] {
-  const rutas = [...new Set(Object.values(SUBDOMAIN_ROUTES))]
+  const rutas = [...new Set([...Object.values(SUBDOMAIN_ROUTES), ...RUTAS_SOLO_WWW])]
     .filter((r) => !REDIRECCIONES.has(r) && !fuera.has(r))
     .sort();
   return [origin, ...rutas.map((r) => `${origin}${r}`)];

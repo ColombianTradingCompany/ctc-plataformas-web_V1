@@ -10,6 +10,17 @@ async function requireAdmin() {
   return requireActiveAdmin();
 }
 
+/** Un código público libre, pedido a `public.ctc_public_code()` — la ÚNICA
+ *  fuente que lo acuña. No se genera en TypeScript a propósito: el alfabeto y
+ *  la comprobación de unicidad tienen que vivir del lado que puede mirar la
+ *  tabla entera en la misma transacción. `EXECUTE` está revocado a `anon` y a
+ *  `authenticated`; solo llega aquí, con el cliente service-role. */
+async function nuevoCodigoPublico(service: ReturnType<typeof createServiceRoleClient>): Promise<string | null> {
+  const { data, error } = await service.rpc("ctc_public_code");
+  if (error || typeof data !== "string") return null;
+  return data;
+}
+
 // Devuelve resultado en vez de lanzar: sus 4 compuertas son rechazos de negocio
 // ALCANZABLES con un clic normal (no miembro del Club, sin contrato activo, sin
 // liberación confirmada, grado equivocado) y un throw en una form action revienta
@@ -19,7 +30,11 @@ export async function publishLot(formData: FormData): Promise<{ ok: true } | { o
   const service = createServiceRoleClient();
 
   const lotId = String(formData.get("lot_id"));
-  const { data: lot } = await service.from("lots").select("stage, grade, producer_id").eq("id", lotId).single();
+  const { data: lot } = await service
+    .from("lots")
+    .select("stage, grade, producer_id, public_code")
+    .eq("id", lotId)
+    .single();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
   if (lot.stage !== "galardonado") return { ok: false, error: "Solo se pueden publicar lotes galardonados." };
   if (lot.grade === "tyrian") {
@@ -60,6 +75,37 @@ export async function publishLot(formData: FormData): Promise<{ ok: true } | { o
       ok: false,
       error: "Este contrato aún no tiene ninguna liberación mensual confirmada — regístrala en /ocp/contratos antes de publicar.",
     };
+  }
+
+  // ── El código público del lote se acuña AQUÍ (V5.48) ──────────────────────
+  // Publicar es el momento en que el lote se vuelve encontrable desde fuera, y
+  // «Find my Lot» (/ctcx-public-catalogue) resuelve por este código. Se acuña
+  // con el cliente SERVICE-ROLE a propósito: `ctc_public_code()` comprueba que
+  // el candidato esté libre, y bajo RLS de productor esa comprobación solo
+  // vería los lotes de UN productor — un bucle de unicidad que miente. Por lo
+  // mismo la columna no tiene DEFAULT: los lotes nacen desde el navegador del
+  // productor (ver la cabecera de la migración `lots_codigo_publico`).
+  //
+  // Solo se acuña si FALTA. Un lote que se despublica y se vuelve a publicar
+  // conserva el suyo: la URL ya compartida —o ya impresa en una bolsa— tiene
+  // que seguir resolviendo. `unpublishListing` nunca lo borra, por lo mismo.
+  //
+  // Cuando la tanda CN-7 traiga el sticker imprimible, este punto puede
+  // adelantarse (al declarar «apto», p. ej.) sin tocar nada más: la condición
+  // `public_code is null` lo hace idempotente venga de donde venga.
+  if (!lot.public_code) {
+    const codigo = await nuevoCodigoPublico(service);
+    if (!codigo) {
+      return { ok: false, error: "No se pudo generar el código público del lote. Intenta de nuevo." };
+    }
+    // `is("public_code", null)` cierra la carrera: si otra publicación acuñó
+    // primero, esta actualización no toca nada y el código que ya existe manda.
+    const { error: errCodigo } = await service
+      .from("lots")
+      .update({ public_code: codigo })
+      .eq("id", lotId)
+      .is("public_code", null);
+    if (errCodigo) return { ok: false, error: "No se pudo asignar el código público del lote: " + errCodigo.message };
   }
 
   const { error } = await service.from("lot_listings").insert({

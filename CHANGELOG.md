@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.52] — 2026-09-18 (commit pendiente)
+## [V5.52] — 2026-09-18 (commit 7037ec4)
 
 - **Hito**: **CP-1 · la tienda deja el euro.** El precio de un lote lo calcula el PVC en **dólares**
   (`motor.ts`: `n0 = copc / trm / kg_g`) y la tienda Green tenía el símbolo «€» escrito a mano en seis archivos. El

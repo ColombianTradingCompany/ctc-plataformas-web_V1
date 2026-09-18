@@ -234,4 +234,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   suman más que el total declarado porque el PDF resta defectos y `computeSca()` de la plataforma es suma llana. Con
   los valores literales del mock este lote habría salido Tyrian y no habría podido publicarse.
 - Guardián nuevo `qa-moneda-check` (24).
-(commit: pendiente)
+(commit: 7037ec4)

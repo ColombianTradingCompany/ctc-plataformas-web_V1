@@ -1,4 +1,4 @@
-# Guion · «Así funciona Kaffetal Regal» — video para el productor (≈ 6:12)
+# Guion · «Así funciona Kaffetal Regal» — video para el productor (≈ 7:13)
 
 (componente: `kaffetal-regal` · slug: `guion-video-productor` · **v0.7 · narrativa completa, alineada a las decisiones del 17-sep-2026**)
 

@@ -214,4 +214,4 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Guardián: `qa-catalogo-publico-check` 115 → 119. La comprobación nueva vigila una costura que los tipos NO ven: la
   tira empareja foto y pie POR ÍNDICE, así que una foto de más o un pie de menos en un idioma es un `undefined` en
   producción.
-(commit: pendiente)
+(commit: 9ed7b28)

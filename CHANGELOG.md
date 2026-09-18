@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.51] — 2026-09-18 (commit pendiente)
+## [V5.51] — 2026-09-18 (commit 9ed7b28)
 
 - **Cambiado**: la **primera imagen** del CTCx Public Catalogue pasa a ser la **cesta de cerezas** del owner
   («Flavour · Quality · Traceability»). Va entera y sin retocar sobre una placa blanca —`contain`, nunca `cover`:

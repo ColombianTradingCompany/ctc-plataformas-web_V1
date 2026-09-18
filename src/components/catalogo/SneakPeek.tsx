@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { GRADO_POR_ID } from "@/lib/grados/definicion";
 import { origenDeSuperficie } from "@/lib/red/subdominios";
+import { RUTA_PORTAL } from "@/lib/catalogo/codigoPublico";
 import type { SneakPeekLang, SneakPeekLot, SneakPeekPayload } from "@/lib/catalogo/sneakPeek";
 import { CatalogoPopup } from "./CatalogoPopup";
 import { RadarIntrinseco } from "./RadarIntrinseco";
@@ -59,6 +60,8 @@ const T: Record<
     head: string;
     tail: string;
     cta: string;
+    portal: string;
+    portalAria: string;
     aria: string;
     est: string;
     sca: string;
@@ -75,6 +78,8 @@ const T: Record<
     head: "Un vistazo a lo que hay ahora mismo",
     tail: "El catálogo completo se ve dentro de Cherry Picked.",
     cta: "Ver el catálogo completo",
+    portal: "Buscar mi lote por su código",
+    portalAria: "Find my Lot — buscar un lote por su código en el catálogo público de CTCx",
     aria: "Vistazo al Catálogo Activo de CTC",
     est: "est.",
     sca: "SCA",
@@ -90,6 +95,8 @@ const T: Record<
     head: "A sneak peek at what is on the table",
     tail: "The full catalogue lives inside Cherry Picked.",
     cta: "See the full catalogue",
+    portal: "Find my lot by its code",
+    portalAria: "Find my Lot — look up a lot by its code in the CTCx public catalogue",
     aria: "A peek at the CTC Active Catalogue",
     est: "est.",
     sca: "SCA",
@@ -105,6 +112,8 @@ const T: Record<
     head: "Ein Blick auf das, was gerade da ist",
     tail: "Der vollständige Katalog liegt in Cherry Picked.",
     cta: "Den ganzen Katalog ansehen",
+    portal: "Mein Los per Code finden",
+    portalAria: "Find my Lot — ein Los per Code im öffentlichen CTCx-Katalog suchen",
     aria: "Ein Blick in den aktiven Katalog von CTC",
     est: "gesch.",
     sca: "SCA",
@@ -125,6 +134,19 @@ const T: Record<
 // de hidratación.
 const CHERRY_PICKED_HREF =
   process.env.NODE_ENV === "development" ? "/cherry-picked" : origenDeSuperficie("/cherry-picked");
+
+// El portal público del lote (V5.49), desde las SIETE superficies donde está
+// montada esta cinta.
+//
+// ⚠️ AQUÍ EL ABSOLUTO NO ES UNA MEJORA, ES LA ÚNICA FORMA QUE FUNCIONA. Cherry
+// Picked tiene subdominio propio, así que `origenDeSuperficie` devuelve su host
+// y la ruta sobra. `/ctcx-public-catalogue` NO tiene subdominio —vive en
+// `RUTAS_SOLO_WWW`— así que `origenDeSuperficie` devuelve la casa matriz y hay
+// que añadirle la ruta. Y si se dejara relativa, el proxy la reescribiría en los
+// seis hosts que no son `www` (`kaffetal-regal.ctcexport.com/ctcx-public-catalogue`
+// → `/kaffetal-regal/ctcx-public-catalogue`) y daría 404 en todos menos uno.
+const PORTAL_HREF =
+  process.env.NODE_ENV === "development" ? RUTA_PORTAL : `${origenDeSuperficie(RUTA_PORTAL)}${RUTA_PORTAL}`;
 
 function Tarjeta({
   lot,
@@ -477,20 +499,33 @@ export function SneakPeek({
         </div>
       )}
       <div className="wrap">
-        {/* El enlace sigue siendo un <a> con href real —para que se pueda abrir
-            en otra pestaña y para que un buscador lo siga— pero el clic normal
-            abre la ventana que explica dónde está el catálogo y que registrarse
-            es gratis (owner, 2026-08-17). */}
-        <a
-          className={styles.cta}
-          href={CHERRY_PICKED_HREF}
-          onClick={(e) => {
-            e.preventDefault();
-            setPopup(true);
-          }}
-        >
-          {t.cta} <span aria-hidden>→</span>
-        </a>
+        {/* Las DOS puertas del pie (V5.49). A la izquierda la de siempre: el
+            catálogo COMPLETO, que vive tras el login de Cherry Picked. A la
+            derecha la pública: quien ya tiene un café en la mano no quiere el
+            catálogo, quiere SU lote — y para eso no hace falta cuenta.
+            Van juntas porque son la misma pregunta con dos respuestas según de
+            dónde venga quien mira. */}
+        <div className={styles.pie}>
+          {/* El enlace sigue siendo un <a> con href real —para que se pueda abrir
+              en otra pestaña y para que un buscador lo siga— pero el clic normal
+              abre la ventana que explica dónde está el catálogo y que registrarse
+              es gratis (owner, 2026-08-17). */}
+          <a
+            className={styles.cta}
+            href={CHERRY_PICKED_HREF}
+            onClick={(e) => {
+              e.preventDefault();
+              setPopup(true);
+            }}
+          >
+            {t.cta} <span aria-hidden>→</span>
+          </a>
+          {/* Éste NO abre ventana: es una navegación de verdad, y a un sitio que
+              no pide nada. Absoluto a la casa matriz — ver `PORTAL_HREF`. */}
+          <a className={styles.portal} href={PORTAL_HREF} aria-label={t.portalAria}>
+            <span aria-hidden>⌕</span> {t.portal}
+          </a>
+        </div>
       </div>
       <CatalogoPopup
         open={popup}

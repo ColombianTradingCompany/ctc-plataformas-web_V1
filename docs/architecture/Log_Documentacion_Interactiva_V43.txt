@@ -169,3 +169,17 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
 - Guardianes: `qa-catalogo-publico-check` 76 (nuevo) · `qa-ficha-publica-check` 105 → 115 (su §8 vigila ahora TRES
   puertas al `datasheet`) · `qa-guard-check` +1.
 (commit: 5a3121b)
+
+## [2026-09-18] V5.49 · La cinta del Catálogo Activo estrena la puerta al portal público (consolas)
+- TRAZA NUEVA para el mapa: el módulo `SneakPeek` —montado en SIETE superficies (CTC Home, Kaffetal Regal, CaaS y las
+  cuatro landings de la familia Cherry Picked)— gana un segundo enlace en el pie, hacia
+  `/ctcx-public-catalogue`. El pie pasa a ser una fila con dos puertas: a la izquierda el catálogo COMPLETO (tras el
+  login de Cherry Picked, con su pop-up), a la derecha el portal PÚBLICO (sin cuenta, navegación directa).
+- ⚠️ El enlace es ABSOLUTO a la casa matriz y eso es estructural, no cosmético: la ruta vive en `RUTAS_SOLO_WWW` y no
+  tiene subdominio, así que un href relativo habría dado 404 en los seis hosts que no son `www`. Mismo patrón que
+  `CHERRY_PICKED_HREF`, pero con la ruta añadida al origen porque `origenDeSuperficie` devuelve solo la casa matriz.
+- FICHA DICT: `RUTA_PORTAL` (en `lib/catalogo/codigoPublico.ts`) es ahora el único sitio donde se escribe la ruta del
+  portal; `rutaDelCodigo()` cuelga de ella y el guardián comprueba que coincida con la del mapa de la red.
+- Guardián: `qa-catalogo-publico-check` 76 → 85 (enlace absoluto, ruta no tecleada, 44 px táctiles, y el diccionario
+  de `SneakPeek.tsx` con las tres lenguas completas).
+(commit: pendiente)

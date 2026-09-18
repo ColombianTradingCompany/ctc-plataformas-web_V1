@@ -29,7 +29,14 @@
 // es el archivo donde el siguiente barrido va a mirar.
 
 import { readFileSync } from "node:fs";
-import { ALFABETO, LARGO_CUERPO, normalizaCodigo, esCanonico, rutaDelCodigo } from "../src/lib/catalogo/codigoPublico.ts";
+import {
+  ALFABETO,
+  LARGO_CUERPO,
+  normalizaCodigo,
+  esCanonico,
+  rutaDelCodigo,
+  RUTA_PORTAL,
+} from "../src/lib/catalogo/codigoPublico.ts";
 import { RUTAS_SOLO_WWW, SUBDOMAIN_ROUTES } from "../src/lib/red/subdominios.ts";
 
 let ok = 0;
@@ -131,7 +138,11 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
 
 // ── 6. La ruta SOLO-www y sus DOS lectores ─────────────────────────────────
 {
-  check("la superficie está en RUTAS_SOLO_WWW", RUTAS_SOLO_WWW.includes(RUTA));
+  // Las dos mitades nombran la ruta: el mapa de la red (`subdominios.ts`) y el
+  // módulo puro (`codigoPublico.ts`, que no puede importar nada). Que digan lo
+  // mismo se comprueba aquí, que es lo único que las ata.
+  check("`RUTA_PORTAL` y la ruta del mapa son la misma", RUTA_PORTAL === RUTA);
+  check("la superficie está en RUTAS_SOLO_WWW", RUTAS_SOLO_WWW.includes(RUTA_PORTAL));
   check("y NO está en SUBDOMAIN_ROUTES (no es un subdominio)", !Object.values(SUBDOMAIN_ROUTES).includes(RUTA));
 
   const sitemap = lee("src/app/sitemap.xml/route.ts");
@@ -229,6 +240,10 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
     "src/components/catalogo/BuscadorDeLote.tsx",
     "src/components/catalogo/PuertasDelPortal.tsx",
     "src/components/catalogo/PaquetePublico.tsx",
+    // La cinta del Catálogo Activo entra aquí desde la V5.49, cuando estrenó la
+    // puerta al portal: su diccionario alimenta las siete superficies, así que
+    // una clave que falte en alemán se ve en siete sitios a la vez.
+    "src/components/catalogo/SneakPeek.tsx",
   ]) {
     const fuente = lee(archivo);
     const es = clavesDe(fuente, "es");
@@ -258,6 +273,24 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   // En un subdominio esta superficie da 404, así que los destinos tienen que
   // ser absolutos en producción — es el desdoblamiento de siempre.
   check("los destinos son absolutos en producción", /https:\/\/\$\{sub\}\.ctcexport\.com/.test(puertas));
+}
+
+// ── 10. La puerta desde la cinta del Catálogo Activo (V5.49) ───────────────
+// La cinta está montada en SIETE superficies de hosts distintos, y esta ruta
+// solo responde en `www`. Un href relativo funcionaría en la casa matriz y
+// daría 404 en las otras seis — un fallo que solo se ve en producción y solo
+// en algunos hosts. Es la misma trampa que ya se pagó con el botón de la ficha.
+{
+  const cinta = lee("src/components/catalogo/SneakPeek.tsx");
+  check("la cinta enlaza el portal", cinta.includes("PORTAL_HREF"));
+  check(
+    "y lo hace ABSOLUTO contra la casa matriz en producción",
+    /origenDeSuperficie\(RUTA_PORTAL\)\}\$\{RUTA_PORTAL\}/.test(cinta)
+  );
+  check("la ruta la trae del módulo, no la teclea", !new RegExp(`["'\`]${RUTA}`).test(sinComentarios(cinta)));
+  check("es una navegación de verdad, no el pop-up del catálogo", /href=\{PORTAL_HREF\}/.test(cinta));
+  const css = lee("src/components/catalogo/SneakPeek.module.css");
+  check("el botón respeta el mínimo táctil de 44 px", /\.portal\{[^}]*min-height:44px/s.test(css));
 }
 
 if (fallos.length) {

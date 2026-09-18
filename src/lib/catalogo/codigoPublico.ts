@@ -102,10 +102,19 @@ export function esCanonico(entrada: string): boolean {
   return normalizaCodigo(entrada) === entrada;
 }
 
-/** La URL pública de un lote, relativa. Cuelga de `www` y NO de un subdominio:
- *  el matcher de `src/proxy.ts` no excluye esta ruta, así que en cualquier host
- *  de subdominio se reescribiría y daría 404. Todo enlace que salga de otra
- *  superficie tiene que ser ABSOLUTO contra `WWW_ORIGIN`. */
+/** La ruta del portal público. Cuelga de `www` y NO de un subdominio: el matcher
+ *  de `src/proxy.ts` no excluye esta ruta, así que en cualquier host de
+ *  subdominio se reescribiría y daría 404. **Todo enlace que salga de otra
+ *  superficie tiene que ser ABSOLUTO** contra `origenDeSuperficie()` — es
+ *  exactamente la trampa que ya se pagó con el botón de la ficha técnica.
+ *
+ *  Vive aquí, y no en `lib/red/subdominios.ts`, porque este módulo es PURO (sin
+ *  imports, para que lo pueda usar un componente de cliente) y aquel es la
+ *  fuente del mapa de la red. Los dos nombran la ruta y `qa-catalogo-publico`
+ *  comprueba que digan lo mismo. */
+export const RUTA_PORTAL = "/ctcx-public-catalogue";
+
+/** La URL pública de un lote, relativa. Se absolutiza igual que `RUTA_PORTAL`. */
 export function rutaDelCodigo(codigo: string): string {
-  return `/ctcx-public-catalogue/${codigo}`;
+  return `${RUTA_PORTAL}/${codigo}`;
 }

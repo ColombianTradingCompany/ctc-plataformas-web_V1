@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.49] — 2026-09-18 (commit pendiente)
+
+- **Añadido**: la cinta del **Catálogo Activo** estrena la puerta al portal público — un botón «Buscar mi lote por su
+  código» junto al «Ver el catálogo completo» de siempre. Como el módulo está montado en **siete superficies**, el
+  botón aparece de una vez en CTC Home, Kaffetal Regal, CaaS y las cuatro landings de la familia Cherry Picked.
+- **Cambiado**: el pie de la cinta pasa a ser una fila (`.pie`) con las dos puertas en los extremos — a la izquierda el
+  catálogo completo, que vive tras el login; a la derecha el portal público, que no pide nada. En pantalla estrecha se
+  apilan alineadas a la izquierda, y el botón mide 44 px de alto (mínimo táctil de la casa).
+- **Corregido**: el enlace es **absoluto** a la casa matriz, antes de que doliera. `/ctcx-public-catalogue`
+  vive en `RUTAS_SOLO_WWW` y no tiene subdominio, así que un `href` relativo habría funcionado en `www` y dado **404
+  en los otros seis hosts** donde está montada la cinta — la misma trampa del proxy que ya se pagó con el botón de la
+  ficha técnica.
+- **Añadido**: `RUTA_PORTAL` en `src/lib/catalogo/codigoPublico.ts`, para que la ruta del portal se nombre una vez y
+  `rutaDelCodigo()` cuelgue de ella. El guardián comprueba que coincida con la del mapa de la red.
+- **Añadido**: `qa-catalogo-publico-check.mjs` sube a **85** — vigila que la cinta enlace absoluto, que no teclee la
+  ruta a mano, que el botón conserve los 44 px, y que el diccionario de `SneakPeek.tsx` (el que alimenta las siete
+  superficies) tenga las tres lenguas completas.
+
 ## [V5.48] — 2026-09-18 (commit 5a3121b)
 
 - **Hito**: nace **CTCx Public Catalogue** (`www.ctcexport.com/ctcx-public-catalogue`), el pivote público del lote:

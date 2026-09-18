@@ -210,13 +210,36 @@
 }
 .ficha:hover{background:var(--accent);color:#fff}
 
+/* El pie de la cinta: la puerta del catálogo completo a la izquierda y la del
+   portal público a la derecha (V5.49). En pantalla estrecha se apilan y la
+   segunda pasa debajo, alineada a la izquierda — un botón pegado al borde
+   derecho de un móvil se lee como un descuido. */
+.pie{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;margin-top:clamp(18px,3vw,28px);
+}
+
 .cta{
-  display:inline-flex;align-items:center;gap:8px;margin-top:clamp(18px,3vw,28px);
+  display:inline-flex;align-items:center;gap:8px;
   font-size:13px;font-weight:700;letter-spacing:.02em;
   color:var(--accent);text-decoration:none;
   border-bottom:1px solid transparent;padding-bottom:2px;
 }
 .cta:hover{border-bottom-color:var(--accent)}
+
+/* La puerta pública se dibuja como BOTÓN y no como enlace de texto: es la única
+   del módulo que lleva a algo que no pide cuenta, y tiene que distinguirse de
+   la de al lado, que sí. Altura 44 px = el mínimo táctil de la casa. */
+.portal{
+  display:inline-flex;align-items:center;gap:8px;
+  min-height:44px;padding:0 18px;
+  font-size:13px;font-weight:700;letter-spacing:.02em;
+  color:var(--primary);text-decoration:none;
+  background:transparent;border:1px solid var(--line);border-radius:999px;
+  transition:background .18s ease,border-color .18s ease,color .18s ease;
+}
+.portal:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+.portal:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 
 @media(max-width:640px){
   .card{width:284px;height:494px}

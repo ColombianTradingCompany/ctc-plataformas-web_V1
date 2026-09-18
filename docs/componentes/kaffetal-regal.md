@@ -88,11 +88,13 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
   15-oct** (como dice el guion); Black y Red 3–4 cargas según la mezcla (no fijos).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el café del productor sale al mundo como **Papagayo
   Beans®**, la marca de CTCx, con el sello de su grado (loro y monograma PB) y, en Cherry Picked, con su nombre y su finca en
-  la vitrina; falta decir la marca en la landing, el FAQ, «Su café en el mundo» y el guion (v0.7). Por confirmar si el nombre
-  del productor y la finca van también en la bolsa.
+  la vitrina; falta decir la marca en la landing, el FAQ y «Su café en el mundo»;
+  **el guion ya lo dice (v0.7, 2026-09-18: bloques 0, 8b, 9 y 12)**. El nombre del productor y la finca en la bolsa quedó
+  confirmado en la ronda 3 (§14.7).
 - **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: la prima del 8 % **está dentro del PVC**
-  (Cherry Picked paga PVC × grado tal cual; CaaS la retira y luego multiplica) — ajustar `TratoSection`, el FAQ y el guion
-  (v0.7); factor ≤ 94 confirmado; mínimo del lote de Cherry Picked por grado **4 · 3 · 2 · 1 · ½ cargas** (tabla §14.4) y
+  (Cherry Picked paga PVC × grado tal cual; CaaS la retira y luego multiplica) — **el guion ya está en v0.7 (2026-09-18)**;
+  faltan `TratoSection` y el FAQ; factor ≤ 94 confirmado; mínimo del lote de Cherry Picked por grado **3–4 según la mezcla · 2 ·
+  1 · ½ cargas** (§14.7 corrige el «4 · 3 · 2 · 1 · ½» del §14.4 — **consolas reconcilia**) y
   entrada CaaS de 15–25 kg; el 80 % del alza Tyrian **solo en Cherry Picked**, convertido a COP el día del pago; CaaS vende
   como **CTCx Selection** (CTCx figura como productor, la finca queda en la documentación); marca CTCx en todo el copy (ya
   previsto). La regla interna del CaaS sin cooperación (§14 n.º 8) **no va en ninguna pantalla**. El documento:

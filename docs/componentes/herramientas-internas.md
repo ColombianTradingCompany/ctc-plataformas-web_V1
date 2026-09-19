@@ -101,6 +101,11 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **⚠️ El overhaul de las consolas (`docs/OVERHAUL_CONSOLAS_PLAN.md`, 2026-09-19, sin ejecutar) devuelve este grupo al ECP**
+  y lo agrupa por modelo, como lo dibujó el owner: Definición de Contexto (con Misión y Visión y **Mercado Global**) · Modelo
+  Económico en Origen (PVC · Grados) · **Modelo de Producción** (Procesamiento · Empacado) · Modelo Logístico (Costos en Puerto
+  Colombia · en Puerto de Destino · Puerta a Puerta) · Plataformas de Pagos · Automatizaciones. Sería la tercera mudanza de
+  los cotizadores; se hace una sola vez, en su fase 2, si el owner confirma la decisión D1.
 - **Los dos modelos sin módulo (2026-09-19).** **Modelo de Procesamiento** y **Modelo de Logística** existen como piezas
   sueltas (tabla de arriba). Primera tanda de cada uno: un **brief** que diga qué entra (etapas finca → CPS → verde →
   empacado → embalado, con sus mermas y costos; tramos post-FOB por volumen y región), qué de lo que hoy vive en

@@ -122,6 +122,10 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
 
 ## Pendientes
 
+- **OVERHAUL DE LAS CONSOLAS — planificado el 2026-09-19: `docs/OVERHAUL_CONSOLAS_PLAN.md`** (sin ejecutar; espera las
+  decisiones D1–D10 del owner). Cuarta consola **LCP · Lead Control Panel** (buzón, leads, listas de espera y los cuatro
+  CRM), nuevo reparto BCP ↔ ECP, la tabla única Productor·Finca·Lote del OCP, y **el circuito del lote sin Sondeo** (a
+  evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo). Seis fases, una versión cada una.
 - **EL MODELO ECONÓMICO YA NO ES DE ESTE CHARTER (owner, 2026-09-19, V5.55).** Herramientas Internas pasó a ser lo que el
   rail llamaba «BCP · Business Core» —Contexto, Misión y Visión, Modelo Económico (PVC y Grados), Procesamiento, Logística— y
   se llevó los pendientes del PVC: la **fase 2**, el **refurbish** del módulo, **CN-1** (el PVC de ene–mar 2027 antes del

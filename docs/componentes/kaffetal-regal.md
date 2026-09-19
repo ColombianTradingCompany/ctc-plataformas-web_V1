@@ -80,6 +80,11 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
+- **⚠️ El overhaul de las consolas toca este componente en su fase 5** (`docs/OVERHAUL_CONSOLAS_PLAN.md`, 2026-09-19, sin
+  ejecutar): el paso 4 del intake pasa de «Video» a **«Fotos y video» — 2 fotos obligatorias, video opcional**, validado en
+  el servidor (hoy el video solo se exige en el cliente y no se pide ninguna foto del lote); «Evaluar mi Café» pasa a **Por
+  evaluar · En evaluación · Evaluados** (el Sondeo desaparece como concepto); y al aceptar una oferta el productor acepta los
+  términos y declara su **Initial Locked Availability**. Se verifica en vivo con las cuentas `prueba-*`.
 - **Correcciones del owner al guion (2026-09-18, v0.9.1)** que alcanzan a otros: la evaluación deja de hablar de «descuento»
   —**CTCx coinvierte** del 30 % y hasta el 70 % del costo— y la compra inicial de **Gold en Cherry Picked es «hasta 100 kg»**,
   no «> 100 kg». ~~`PVC_BCP_PLAN.md` §14 dice todavía lo anterior: **consolas reconcilia**~~ — **reconciliado**: el plan del PVC

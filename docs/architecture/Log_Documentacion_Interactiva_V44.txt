@@ -231,4 +231,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   reescribe en vivo con «Hoy:», botón «Arriba» en cada ficha. Sin alcance de nodos ni trazas.
 - Compuerta: tsc · eslint 8 · build · 55/58 guardianes (2 piden las cuentas `prueba-*`; el de
   conformidad del puente exige servidor de desarrollo y no tocaba).
-(commit: pendiente)
+(commit: 6e90d79)

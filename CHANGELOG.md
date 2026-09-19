@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.54] — 2026-09-19 (commit pendiente)
+## [V5.54] — 2026-09-19 (commit 6e90d79)
 
 - **Corregido**: **Sonnet 5 cuesta 2/10 por millón, sin promoción.** `src/lib/ai/precios.ts` lo tenía como base 3/15 con
   un «precio de lanzamiento» 2/10 hasta el 2026-08-31 — la promo no existía: 2/10 ES la tarifa (tabla de modelos de la API,

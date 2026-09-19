@@ -67,9 +67,9 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
   );
   const productores = await fetchProducerContacts(service, msgs.map((m) => m.producer_id));
 
-  // Deep-links (2026-07-20): cada tarea aterriza en SU elemento — el hash
-  // #lot-/#finca-/#lead-<id> hace que la fila destino se desplace a la vista y
-  // abra su modal sola (ver FincaModalRow/LeadModalRow.anchorId).
+  // Deep-links: cada tarea aterriza en SU elemento. Un lead, por ancla (`#lead-<id>`: su fila se desplaza a
+  // la vista y abre su modal, `LeadModalRow.anchorId`); un lote o una finca, por PARÁMETRO desde la V5.61
+  // (`/ocp/kr?lote=` · `?finca=`), que abre su vista completa.
   const tareas: TareaDeConsola[] = [];
   const pon = (t: Omit<TareaDeConsola, "state">) => tareas.push({ ...t, state: estado.get(t.key) ?? "tbd" });
 
@@ -91,7 +91,7 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
       icon: "🌱",
       label: `Revisar finca ${f.name}`,
       sublabel: f.municipio ?? undefined,
-      href: `/ocp/fincas?status=pending_review#finca-${f.id}`,
+      href: `/ocp/kr?finca=${f.id}`,
       consola: "ocp",
     });
   }
@@ -102,7 +102,7 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
       icon: "💬",
       label: `Responder a ${who}: ${snippet(m.note)}`,
       sublabel: m.context_label ?? undefined,
-      href: m.lot_id ? `/ocp/lotes#lot-${m.lot_id}` : m.finca_id ? `/ocp/fincas#finca-${m.finca_id}` : "/ocp/productores",
+      href: m.lot_id ? `/ocp/kr?lote=${m.lot_id}` : m.finca_id ? `/ocp/kr?finca=${m.finca_id}` : "/ocp/kr",
       consola: "ocp",
     });
   }

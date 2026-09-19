@@ -470,7 +470,7 @@ export function EvaReviewCard({
                 {eudrReady ? "✓ " : ""}Estado del Sello: {eudrLabel}
               </p>
               <p className={styles.meta} style={{ margin: 0 }}>
-                La Visa se revisa y otorga en <a href="/ocp/fincas">Fincas</a> (panel de la finca → pestaña EUDR:
+                La Visa se revisa y otorga en <a href="/ocp/kr">Fincas</a> (panel de la finca → pestaña EUDR:
                 declaración del productor, análisis con Google Earth y atributos). Al quedar la Visa vigente, este
                 checklist se puede marcar y el veredicto Apto queda desbloqueado.
               </p>

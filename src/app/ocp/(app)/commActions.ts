@@ -38,9 +38,7 @@ export async function logProducerComm(
   });
   if (error) throw new Error("No se pudo registrar la comunicación.");
 
-  revalidatePath("/ocp/productores");
-  revalidatePath("/ocp/fincas");
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }

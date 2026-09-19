@@ -26,7 +26,7 @@ import { grantClubMembershipOnce } from "@/lib/arena/club";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-const PATHS = ["/ocp/nominados", "/ocp/lotes", "/bcp"];
+const PATHS = ["/ocp/nominados", "/ocp/kr", "/bcp"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }

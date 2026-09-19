@@ -9,7 +9,7 @@ import styles from "@/components/panel/shared.module.css";
 // minimalistas: General (con las FOTOS — foto de perfil y video de la finca —
 // más ubicación/DANE y las acciones de veredicto), EUDR (el editor completo),
 // Lotes asociados (con enlace y estado/etapa individual) y Registro de
-// comunicación. Mismo patrón que ProducerPanel en /ocp/productores: el server
+// comunicación. Mismo patrón que ProducerPanel en /ocp/kr: el server
 // prepara datos serializables + nodos ya armados (acciones y editor EUDR, que
 // llevan Server Actions enlazadas) y este cliente solo pone la navegación.
 
@@ -148,7 +148,7 @@ export function FincaPanel({
             <ul style={{ margin: "2px 0 0", paddingLeft: 16, fontSize: 13, display: "grid", gap: 6 }}>
               {data.lotes.map((l) => (
                 <li key={l.id}>
-                  <Link href={`/ocp/lotes#lot-${l.id}`}>{l.name}</Link>{" "}
+                  <Link href={`/ocp/kr?lote=${l.id}`}>{l.name}</Link>{" "}
                   <span className={styles.badge}>{l.stageLabel}</span>{" "}
                   <span className={styles[TONE_CLASS[l.statusTone]]}>{l.statusLabel}</span>
                 </li>

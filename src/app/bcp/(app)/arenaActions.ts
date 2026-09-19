@@ -404,7 +404,7 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
 
   revalidatePath(`/bcp/arena/${sessionId}`);
   revalidatePath("/bcp/arena");
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/ocp/contratos");
   revalidatePath("/bcp/evaluaciones");
   revalidatePath("/ocp/nominados");

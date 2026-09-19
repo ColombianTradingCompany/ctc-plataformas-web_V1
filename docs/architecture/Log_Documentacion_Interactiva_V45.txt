@@ -182,3 +182,32 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   PanelTasks.tsx,tareasActions.ts}`. ANN nuevas: `src/lib/panel/{tareas.ts,tareasCarga.ts}`.
 - NO inventar en el mapa: «Seguimiento de Temas» y «Plataformas de Pagos» están en el cuadro del owner y NO en el rail.
 (commit: 257c42d)
+
+## [2026-09-19] V5.61 · Productores, Fincas y Lotes son UNA tabla: `/ocp/kr` (consolas → kaffetal-regal, cherry-picked)
+- Nota de NODO `n-ocp`: el grupo «OCP · Kaffetal Regal» es UNA entrada, «Productores, Fincas y Lotes» (`/ocp/kr`), más Fichas
+  Técnicas. Galardonados ya no es módulo (filtro de la tabla). La Arena y el Club salieron en la V5.60.
+- FICHA NUEVA candidata: **`tablaunica`** — grano de LOTE, con fila propia para la finca sin lote y el productor sin finca; una
+  carga de nueve lecturas ligeras para DOS vistas (tabla y mapa) con los MISMOS filtros; la vista completa por parámetro
+  (`?lote=` · `?finca=` · `?productor=`), protagonista Lote → Finca → Productor, que lee SOLO lo que abre. `a:` hacia `eva`,
+  `visaeudr`, `gradoscalidad`, `ofertas`, `rutasmovidas`.
+- Fichas que cambian: `rutasmovidas` (53; **la mudanza «MUCHAS A UNA»** merece párrafo junto al «viaje de vuelta» de la V5.60:
+  las sub-rutas viajan pegadas al destino —por eso el dossier y el KML de la Visa se mudaron a `kr/[id]/…`— y el ANCLA no viaja
+  en un 308: la traduce el cliente al llegar); `visaeudr` (el constructor de sus campos tiene una fuente, `src/lib/ocp/fincaEudr.ts`);
+  `eva` (vive en la vista completa del lote, no en un kanban); `galardonados` (retirada como módulo).
+- Para `guardianespejo` / `espejoamano`: TERCER caso de la misma familia en tres versiones — **tres etiquetas para la misma etapa
+  en tres pantallas** (`ficha_completa` = «En evaluación (EVA)» · «Ficha enviada» · «En EVA»), y el constructor de la Visa escrito
+  dos veces. No es un guardián que copie: es CÓDIGO que se copia. La cura es la misma: una fuente y que la lean.
+- LECCIÓN: **convertir, no reescribir.** Las tres páginas (1.427 líneas) pasaron a ser tres secciones con `git mv` y un parche
+  que filtra por id y quita el tablero: la lógica de la EVA y de la Visa es la MISMA línea por línea, y `git log --follow` la
+  sigue. Reescribir a ciegas una pantalla que no se puede abrir habría sido apostar.
+- LECCIÓN: **lo que no se puede mirar se verifica por donde sí se puede.** Sin navegador (OTP real): `tsc`, build, guardianes, y
+  SQL — que las 41 columnas pedidas existen (un typo en un `.select()` no lo ve el compilador) y que la lógica de filas, replicada
+  en SQL, da 35. Y el SQL encontró algo que el código no decía: 7 lotes sin `finca_id`, que resultaron borradores vacíos — y la
+  pregunta destapó que un lote de VARIAS fincas (aportes) habría salido como «sin finca».
+- ⚠️ ANN QUE EL V46 TIENE QUE REPUNTAR: `ctc-platform/src/app/ocp/(app)/{productores,fincas,lotes,galardonados}` (y sus hijos) →
+  `ctc-platform/src/app/ocp/(app)/kr/…` (`productores/page.tsx` → `kr/ProductorSeccion.tsx`; `fincas/page.tsx` →
+  `kr/FincaSeccion.tsx`; `lotes/page.tsx` → `kr/LoteSeccion.tsx`; `lotes/LotesViews.tsx` → `kr/LotePiezas.tsx`; `fincas/[id]` →
+  `kr/[id]`). RETIRADOS: `fincas/FincaModalRow.tsx`, `fincas/FincasViewSwitch.tsx`, `productores/ProductoresBoard.tsx`,
+  `galardonados/page.tsx`. ANN nuevas: `src/lib/ocp/{etapas.ts,fincaEudr.ts}`, `src/app/ocp/(app)/kr/{page.tsx,carga.ts,KrTabla.tsx}`.
+- NO inventar en el mapa: nadie ha visto la pantalla pintada todavía; el owner tiene pendiente abrirla.
+(commit: pendiente)

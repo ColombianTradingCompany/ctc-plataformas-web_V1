@@ -1,15 +1,16 @@
-import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createLot, deleteAbandonedLot } from "../actions";
-import { ActionForm } from "@/components/panel/ActionForm";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import { deleteAbandonedLot } from "../actions";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
-import { LotesViews, type ViewLot } from "./LotesViews";
-import { fincaCenter } from "@/lib/earthKml";
-import { seasonLabel, type Season } from "@/lib/arena/seasons";
+import { RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
+import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
 import type { EvaChecklist } from "./evaChecklist";
+import { fincaEudrFieldsDe } from "@/lib/ocp/fincaEudr";
+import { etapaDelLote, GRADO_LABEL as GRADE_LABEL } from "@/lib/ocp/etapas";
 import {
   fincaEudrStatus,
   lotEudrStatus,
@@ -20,7 +21,6 @@ import { deriveCertSchemes, MESH, SCA_ATTRS, type FichaFormData } from "@/compon
 import { computeFactor, computeSca, type ScaFields } from "@/components/kaffetal-regal/ficha/fichaCalculations";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
-import { FincaModalRow } from "../fincas/FincaModalRow";
 import { fetchProducerContacts, type ProducerContact } from "@/lib/bcpProducers";
 import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { ProducerContactLine } from "../ProducerContactLine";
@@ -28,22 +28,6 @@ import styles from "@/components/panel/shared.module.css";
 
 type CommRow = { id: string; lot_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
 
-const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };
-
-// Columns mirror the producer-facing intake sub-stages (FT/FT2/EUDR/Video --
-// see FichaView.tsx/intake_step) plus EVA, the documentation-evaluation
-// verdict (2026-07-17): a ficha_completa lot waits here until BCP resolves its
-// EUDR and declares it Apto (opening the paid Arena track) or No Apto. Apto
-// lots leave the kanban into the "Aptos" strip below (their pipeline continues
-// in Nominados); No Apto lots collapse into their own rail.
-type Bucket = "ft" | "ft2" | "eudr" | "video" | "eva";
-const COLUMNS: { id: Bucket; label: string }[] = [
-  { id: "ft", label: "FT · Identidad y Origen" },
-  { id: "ft2", label: "FT2 · Certificados y Análisis" },
-  { id: "eudr", label: "EUDR · Debida Diligencia" },
-  { id: "video", label: "Video" },
-  { id: "eva", label: "EVA · Evaluación Documental" },
-];
 
 type FincaJoin = {
   name: string | null;
@@ -68,6 +52,8 @@ type LotRow = {
   id: string;
   name: string;
   producer_id: string;
+  finca_id: string | null;
+  dds_reference: string | null;
   // F2: la ventana de cosecha — la prueba temporal de los claims derivados.
   harvest_from: string | null;
   harvest_to: string | null;
@@ -110,52 +96,29 @@ type LotRow = {
   fincas: FincaJoin;
 };
 
+// El constructor de los campos de la Visa es el de `src/lib/ocp/fincaEudr.ts` (una fuente desde la V5.61).
 function toFincaEudrFields(f: FincaJoin): FincaEudrFields | null {
-  if (!f) return null;
-  return {
-    name: f.name || "",
-    ha: f.hectares != null ? String(f.hectares) : "—",
-    lat: f.eudr_lat != null ? String(f.eudr_lat) : "",
-    lng: f.eudr_lng != null ? String(f.eudr_lng) : "",
-    vereda: f.vereda || "—",
-    mun: f.municipio || "—",
-    depto: f.departamento || "—",
-    eudrDeforestationFree: f.eudr_deforestation_free,
-    eudrLegalProduction: f.eudr_legal_production,
-    eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
-    eudrIllegalityIndicators: f.eudr_illegality_indicators,
-    eudrDocsAvailable: f.eudr_docs_available,
-    eudrMitigationEffective: f.eudr_mitigation_effective,
-    status: (f.status as FincaEudrFields["status"]) ?? "pending_review",
-    certShared: !!f.eudr_cert_shared,
-  };
+  return f ? fincaEudrFieldsDe(f) : null;
 }
 
-function bucketOf(lot: LotRow): Bucket {
-  // Lots BCP registered by hand exist precisely because the physical sample
-  // is already in CTC's hands -- they never go through the producer-driven
-  // intake columns, so they'd be stranded in FT forever (the old manual
-  // stage dropdown that used to move them is retired). Straight to EVA,
-  // where the verdict and "Confirmar recibido" (legacy) live.
-  if (lot.source === "bcp_manual_entry") return "eva";
-  if (lot.stage !== "borrador") return "eva"; // ficha locked in -- awaiting the documentation verdict
-  if (lot.intake_step <= 0) return "ft";
-  if (lot.intake_step === 1) return "ft2";
-  if (lot.intake_step === 2) return "eudr";
-  return "video"; // intake_step === 3
-}
+// ── Vista completa · la sección del LOTE (V5.61) ────────────────────────────
+// Era la página del módulo Lotes: un kanban de intake (FT · FT2 · EUDR · Video · EVA) más tres vistas de los
+// lotes que ya habían pasado. La tabla única se llevó el tablero, la lista y el mapa; aquí queda la TARJETA
+// de un lote, entera y sin modal: la checklist de la EVA con su veredicto, el recibo de la muestra, la DDS,
+// reabrir un No apto, postular en nombre del productor y eliminar un borrador abandonado — leyendo SOLO ese
+// lote. «Nuevo lote» se quedó en la página de la tabla.
+//
+// Ninguna Server Action cambió.
 
-export default async function BcpLotesPage() {
-  const service = createServiceRoleClient();
-
-  const [{ data: lots }, { data: approvedFincas }, { data: seasonsRaw }] = await Promise.all([
+export async function LoteSeccion({ service, loteId }: { service: SupabaseClient; loteId: string }) {
+  const [{ data: lots }] = await Promise.all([
     service
       .from("lots")
       // Supabase's select() must be a single literal string (not runtime-concatenated)
       // for its compile-time column parsing to work -- otherwise it falls back to a
       // GenericStringError type and every field access below breaks.
       .select(
-        `id, name, producer_id, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet, harvest_from, harvest_to,
+        `id, name, producer_id, finca_id, dds_reference, stage, intake_step, grade, source, season_id, updated_at, sample_shipped_at, sample_2kg_confirmed_at, eva_no_apto_reason, eva_checklist, video_asset_id, datasheet, harvest_from, harvest_to,
          ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_notas_cata, ficha_puntaje_estimado,
          eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_country, eudr_country_risk, eudr_chain_complexity,
          eudr_product_risk, eudr_product_risk_factors,
@@ -163,42 +126,12 @@ export default async function BcpLotesPage() {
          eudr_mitigation_effective, eudr_mitigation_responsible, cert_verifications,
          fincas(name, status, hectares, vereda, municipio, departamento, eudr_lat, eudr_lng, eudr_deforestation_free, eudr_legal_production, eudr_tenure, eudr_illegality_indicators, eudr_docs_available, eudr_mitigation_effective, eudr_cert_shared)`
       )
-      // apto/no_apto ya NO viajan por esta consulta pesada del kanban: viven en
-      // la consulta ligera de LotesViews (abajo), junto con fila/galardonado.
-      .in("stage", ["borrador", "ficha_completa", "videos_ok", "muestra_transito"])
-      .order("created_at", { ascending: false }),
-    service.from("fincas").select("id, name, municipio").eq("status", "approved").order("name"),
-    service.from("harvest_seasons").select("id, kind, year, arena_starts_at, arena_ends_at").order("year", { ascending: false }),
+      // CUALQUIER etapa: la vista completa abre también un apto, un no apto o un galardonado.
+      .eq("id", loteId),
   ]);
 
-  // TODOS los lotes para las 3 vistas (Mapa/Lista/No aptos, 2026-07-23):
-  // consulta ligera con la finca de origen — el pin del mapa usa su punto o el
-  // centroide de su polígono EUDR. La Lista abarca el ciclo completo (también
-  // el intake); el Mapa filtra al camino de la Arena por el flag arenaPath.
-  type PassedRow = {
-    id: string;
-    name: string;
-    producer_id: string;
-    stage: string;
-    grade: string | null;
-    season_id: string | null;
-    eva_no_apto_reason: string | null;
-    dds_reference: string | null;
-    fincas: { name: string | null; departamento: string | null; eudr_lat: string | number | null; eudr_lng: string | number | null; eudr_polygon_geojson: { lat: number; lng: number }[] | null } | { name: string | null; departamento: string | null; eudr_lat: string | number | null; eudr_lng: string | number | null; eudr_polygon_geojson: { lat: number; lng: number }[] | null }[] | null;
-  };
-  const { data: passedRaw } = await service
-    .from("lots")
-    .select(
-      `id, name, producer_id, stage, grade, season_id, eva_no_apto_reason, dds_reference,
-       fincas(name, departamento, eudr_lat, eudr_lng, eudr_polygon_geojson)`
-    )
-    .order("created_at", { ascending: false });
-  const passedRows = (passedRaw as PassedRow[] | null) ?? [];
-  const ARENA_PATH_STAGES = new Set(["apto", "fila_arena", "evaluado", "galardonado"]);
-
   const lotRows = (lots as LotRow[] | null) ?? [];
-  const seasons = (seasonsRaw as Season[] | null) ?? [];
-  const seasonById = new Map(seasons.map((s) => [s.id, s]));
+  if (!lotRows.length) return <p className={styles.empty}>Ese lote ya no existe.</p>;
 
   // Firmar en un solo lote todos los adjuntos que los paneles enlazan: los
   // soportes de certificados (A3/A4), el video principal y los B4 extra.
@@ -258,7 +191,7 @@ export default async function BcpLotesPage() {
   };
 
   const [producers, { data: comms }, { data: inscriptionRows }, signedUrls] = await Promise.all([
-    fetchProducerContacts(service, [...lotRows.map((l) => l.producer_id), ...passedRows.map((l) => l.producer_id)]),
+    fetchProducerContacts(service, lotRows.map((l) => l.producer_id)),
     service
       .from("producer_comm_log")
       .select("id, lot_id, context_label, note, created_at, author_role")
@@ -267,7 +200,7 @@ export default async function BcpLotesPage() {
     service
       .from("arena_inscriptions")
       .select("lot_id, status")
-      .in("lot_id", [...lotRows.map((l) => l.id), ...passedRows.map((l) => l.id)]),
+      .in("lot_id", lotRows.map((l) => l.id)),
     signedKaffetalMediaUrls(service, assetIds),
   ]);
   const inscriptionSettledByLot = new Map<string, boolean>();
@@ -281,140 +214,39 @@ export default async function BcpLotesPage() {
     if (!c.lot_id) continue;
     commsByLot.set(c.lot_id, [...(commsByLot.get(c.lot_id) ?? []), c]);
   }
-  const boardLots = lotRows; // apto/no_apto ya no llegan en la consulta del kanban
-  const byBucket = new Map<Bucket, LotRow[]>(COLUMNS.map((c) => [c.id, []]));
-  for (const lot of boardLots) byBucket.get(bucketOf(lot))!.push(lot);
-
-  // Serializa un lote "pasado" para las 3 vistas (Mapa/Lista/No aptos).
-  const toViewLot = (l: PassedRow): ViewLot => {
-    const f = Array.isArray(l.fincas) ? l.fincas[0] : l.fincas;
-    const center = f ? fincaCenter(f.eudr_lat, f.eudr_lng, f.eudr_polygon_geojson) : null;
-    return {
-      id: l.id,
-      name: l.name,
-      reference: ctcLotReferenceShort(l.id),
-      producerName: producers.get(l.producer_id)?.fullName ?? "Productor",
-      stage: l.stage,
-      arenaPath: ARENA_PATH_STAGES.has(l.stage),
-      grade: l.grade ? GRADE_LABEL[l.grade] ?? l.grade : null,
-      seasonId: l.season_id,
-      seasonLabel: seasonLabel(seasonById.get(l.season_id ?? "")),
-      fincaName: f?.name ?? "—",
-      region: f?.departamento ?? "",
-      lat: center?.la ?? null,
-      lng: center?.ln ?? null,
-      postulated: postulatedLots.has(l.id),
-      reason: l.eva_no_apto_reason,
-      ddsReference: l.dds_reference,
-    };
-  };
-  const viewLots = passedRows.filter((l) => l.stage !== "no_apto").map(toViewLot);
-  const noAptoViewLots = passedRows.filter((l) => l.stage === "no_apto").map(toViewLot);
-  // Para el dial de rango: de la temporada más vieja a la más nueva.
-  const seasonsAsc = [...seasons].sort((a, b) => a.year - b.year || String(a.kind).localeCompare(String(b.kind)));
+  const lot = lotRows[0];
+  const ARENA_PATH_STAGES = new Set(["apto", "fila_arena", "evaluado", "galardonado"]);
 
   return (
     <div>
-      <h1 className={styles.title}>Lotes</h1>
-      <p className={styles.subtitle}>
-        Tablero de intake documental (todo gratis para el productor). En la columna EVA, CTC revisa la Ficha como una
-        <b> checklist</b> (FT · Certificados · Análisis Físico · EUDR · Video) y emite el veredicto: <b>Apto</b> abre el
-        tramo pagado de la Arena (postulación → pago → sondeo), <b>No Apto</b> devuelve la razón al productor.
+      <p className={styles.meta} style={{ marginBottom: 10 }}>
+        Etapa: <b>{etapaDelLote(lot.stage)}</b>
+        {lot.finca_id && (
+          <>
+            {" "}· Finca: <Link href={`/ocp/kr?finca=${lot.finca_id}`}>{lot.fincas?.name ?? "abrir"}</Link>
+          </>
+        )}{" "}
+        · Productor: <Link href={`/ocp/kr?productor=${lot.producer_id}`}>{producers.get(lot.producer_id)?.fullName ?? "abrir"}</Link>
       </p>
-
-      <details className={styles.card} style={{ display: "block", marginBottom: 28 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 600 }}>Nuevo lote (en nombre del productor)</summary>
-        {!approvedFincas?.length ? (
-          <p className={styles.empty} style={{ marginTop: 14 }}>
-            Aprueba al menos una finca antes de poder crear un lote.
-          </p>
-        ) : (
-          <ActionForm action={createLot} style={{ marginTop: 16 }} submitLabel="Crear lote" pendingLabel="Creando…" buttonClassName="btn btn-solid">
-            <div className={styles.field}>
-              <label htmlFor="finca_id">Finca</label>
-              <select id="finca_id" name="finca_id" required>
-                {approvedFincas.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} ({f.municipio})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="name">Nombre del lote</label>
-              <input id="name" name="name" required placeholder="Ej. Caturra Natural" />
-            </div>
-            <div className={styles.formGrid}>
-              <div className={styles.field}>
-                <label htmlFor="ficha_variedad">Variedad</label>
-                <input id="ficha_variedad" name="ficha_variedad" />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="ficha_proceso">Proceso</label>
-                <input id="ficha_proceso" name="ficha_proceso" />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="ficha_altitud_m">Altitud (m)</label>
-                <input id="ficha_altitud_m" name="ficha_altitud_m" type="number" />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="ficha_peso_muestra_kg">Peso de muestra (kg)</label>
-                <input id="ficha_peso_muestra_kg" name="ficha_peso_muestra_kg" type="number" step="0.1" defaultValue={2} />
-              </div>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="ficha_notas_cata">Notas de cata</label>
-              <textarea id="ficha_notas_cata" name="ficha_notas_cata" rows={2} />
-            </div>
-          </ActionForm>
-        )}
-      </details>
-
-      {!boardLots.length ? (
-        <p className={styles.empty}>No hay lotes en proceso de intake.</p>
-      ) : (
-        <div className={styles.board}>
-          {COLUMNS.map((col) => {
-            const colLots = byBucket.get(col.id) ?? [];
-            return (
-              <div className={styles.column} key={col.id}>
-                <div className={styles.columnHead}>
-                  <h3>{col.label}</h3>
-                  <span className={styles.columnCount}>{colLots.length}</span>
-                </div>
-                <div className={styles.columnList}>
-                  {colLots.map((lot) => (
-                    <LotCard
-                      key={lot.id}
-                      lot={lot}
-                      producer={producers.get(lot.producer_id)}
-                      comms={commsByLot.get(lot.id) ?? []}
-                      signedUrls={signedUrls}
-                      // Legacy receipt path only for lots BCP registered by hand
-                      // (their sample is already in CTC's hands, no EVA verdict).
-                      showConfirmReceipt={col.id === "eva" && lot.source === "bcp_manual_entry"}
-                      showEvaVerdict={col.id === "eva" && lot.stage === "ficha_completa"}
-                      inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
-                      derivedClaimRows={claimRowsFor(lot)}
-                      archetypeLabel={archetypeFor(lot)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Las 3 vistas de los lotes que ya pasaron el intake (2026-07-23):
-          Mapa (pin por finca, color = grado, dial de temporadas) · Lista con
-          filtros y búsqueda (la postulación en nombre del productor vive ahí) ·
-          No aptos (veredicto reversible). Reemplazan a AptosNoAptosSections. */}
-      <LotesViews
-        lots={viewLots}
-        noAptos={noAptoViewLots}
-        seasons={seasonsAsc.map((s) => ({ id: s.id, label: seasonLabel(s) }))}
+      <LotCard
+        lot={lot}
+        producer={producers.get(lot.producer_id)}
+        comms={commsByLot.get(lot.id) ?? []}
+        signedUrls={signedUrls}
+        // El recibo «a mano» es solo de los lotes que el BCP registró por su cuenta (su muestra ya está en
+        // manos de CTC y no pasan por el veredicto de la EVA).
+        showConfirmReceipt={lot.source === "bcp_manual_entry"}
+        showEvaVerdict={lot.stage === "ficha_completa"}
+        inscriptionSettled={inscriptionSettledByLot.get(lot.id) ?? false}
+        derivedClaimRows={claimRowsFor(lot)}
+        archetypeLabel={archetypeFor(lot)}
       />
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start", marginTop: 14 }}>
+        {lot.stage === "no_apto" && <RevertNoAptoButton lotId={lot.id} />}
+        {lot.stage === "apto" && !postulatedLots.has(lot.id) && <PostularOnBehalfButton lotId={lot.id} />}
+        {ARENA_PATH_STAGES.has(lot.stage) && <RegisterDdsButton lotId={lot.id} ddsReference={lot.dds_reference} />}
+      </div>
+      {lot.stage === "no_apto" && lot.eva_no_apto_reason && <p className={styles.warn}>Razón del No apto: {lot.eva_no_apto_reason}</p>}
     </div>
   );
 }
@@ -613,23 +445,8 @@ function LotCard({
     certSchemes,
   };
 
-  const summary = (
-    <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <b style={{ fontSize: 14, color: "var(--ink)" }}>{lot.name}</b>
-        <EudrStatusBadge status={eudrStatus} />
-        {lot.grade && <span className={styles.badge}>{GRADE_LABEL[lot.grade] ?? lot.grade}</span>}
-        {lot.source === "bcp_manual_entry" && <span className={styles.badge}>registrado por BCP</span>}
-      </span>
-      <span className={styles.meta}>
-        {producer?.fullName ?? "Productor"} · {lot.fincas?.name ?? "—"}
-        {lot.sample_shipped_at && !lot.sample_2kg_confirmed_at && " · muestra enviada, por confirmar"}
-      </span>
-    </span>
-  );
-
   return (
-    <FincaModalRow title={lot.name} summary={summary} anchorId={`lot-${lot.id}`}>
+    <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
         <span className={`${styles.badge} mono`}>{ctcLotReferenceShort(lot.id)}</span>
         <EudrStatusBadge status={eudrStatus} />
@@ -696,6 +513,6 @@ function LotCard({
           />
         </div>
       )}
-    </FincaModalRow>
+    </div>
   );
 }

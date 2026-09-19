@@ -118,7 +118,7 @@ function RiskPill({ level }: { level: string }) {
 
 // Evidencia disponible, Áreas de legislación verificadas, y Sostenibilidad y
 // enfoque social are BCP-only fields now (filled in by CTC staff on
-// /ocp/fincas as part of their own review, not self-declared by the
+// /ocp/kr as part of their own review, not self-declared by the
 // producer) -- see EudrDraft below, which only covers what the producer
 // still edits here. Their values round-trip on save; the producer can't see
 // or change them from here. Since 2026-08-06 they no longer feed

@@ -41,7 +41,7 @@ const MODEL = "claude-sonnet-5";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-const PATHS = ["/ocp/fichas", "/ocp/lotes", "/kaffetal-regal"];
+const PATHS = ["/ocp/fichas", "/ocp/kr", "/kaffetal-regal"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }

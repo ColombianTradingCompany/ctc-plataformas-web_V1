@@ -1,6 +1,9 @@
-import { createServiceRoleClient } from "@/lib/supabase/server";
-import { fincaEudrDeclaracion, fincaEudrStatus, type FincaEudrFields } from "@/lib/eudr";
-import { FINCA_SEGMENTS, segmentFinca } from "@/lib/bcp/producerSegments";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import Link from "next/link";
+import { fincaEudrDeclaracion, fincaEudrStatus } from "@/lib/eudr";
+import { segmentFinca } from "@/lib/bcp/producerSegments";
+import { fincaEudrFieldsDe, vaciosDeLaDeclaracion } from "@/lib/ocp/fincaEudr";
+import { etapaDelLote } from "@/lib/ocp/etapas";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { fincaCode } from "@/components/kaffetal-regal/data";
@@ -12,11 +15,7 @@ import { ProducerContactLine } from "../ProducerContactLine";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
-import { FincaModalRow } from "./FincaModalRow";
 import { FincaPanel, type FincaLote } from "./FincaPanel";
-import { FincasViewSwitch } from "./FincasViewSwitch";
-import { fincaCenter } from "@/lib/earthKml";
-import type { GeoMarker } from "@/components/bcp/GeoMap";
 import styles from "@/components/panel/shared.module.css";
 
 type CommRow = { id: string; finca_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
@@ -70,43 +69,10 @@ type FincaRow = {
   created_at: string;
 };
 
-function toEudrFields(f: FincaRow): FincaEudrFields {
-  return {
-    name: f.name,
-    ha: f.hectares != null ? String(f.hectares) : "—",
-    lat: f.eudr_lat != null ? String(f.eudr_lat) : "",
-    lng: f.eudr_lng != null ? String(f.eudr_lng) : "",
-    vereda: f.vereda || "—",
-    mun: f.municipio || "—",
-    depto: f.departamento || "—",
-    eudrDeforestationFree: f.eudr_deforestation_free,
-    eudrLegalProduction: f.eudr_legal_production,
-    eudrTenure: (f.eudr_tenure as FincaEudrFields["eudrTenure"]) || "",
-    eudrIllegalityIndicators: f.eudr_illegality_indicators,
-    eudrDocsAvailable: f.eudr_docs_available,
-    eudrMitigationEffective: f.eudr_mitigation_effective,
-    // El veredicto de CTC viaja con el resto (2026-08-20): sin él,
-    // fincaEudrStatus() se queda en «en revisión» y esta consola —que es
-    // justamente donde se aprueba— no reflejaría su propia decisión.
-    status: f.status as FincaEudrFields["status"],
-    certShared: !!f.eudr_cert_shared,
-  };
-}
-
-function missingChecks(f: FincaEudrFields): string[] {
-  const gaps: string[] = [];
-  if (!f.name) gaps.push("nombre");
-  if (!((f.lat && f.lng) || f.vereda !== "—" || f.mun !== "—" || f.depto !== "—")) gaps.push("geolocalización o dirección");
-  if (!(f.ha !== "—" && Number(f.ha.replace(",", ".")) > 0)) gaps.push("área cultivada");
-  if (f.eudrDeforestationFree !== true) gaps.push("declaración de no deforestación");
-  // Las «áreas de legislación verificadas» YA NO cuentan como vacío (2026-08-06):
-  // son revisión propia de CTC (pestaña Atributos del editor), no un pendiente
-  // del productor — tenían fincas completas clavadas en «EUDR incompleta».
-  if (!f.eudrTenure) gaps.push("tenencia de la tierra");
-  // Risk questionnaire: the two yes/no answers gate the risk determination.
-  if (f.eudrIllegalityIndicators == null || f.eudrDocsAvailable == null) gaps.push("cuestionario de riesgo (indicios / documentos)");
-  return gaps;
-}
+// El constructor de los campos de la Visa y la lista de vacíos vivían AQUÍ y, copiados, en la página de
+// Lotes. Desde la V5.61 son de `src/lib/ocp/fincaEudr.ts`: una fuente para la tabla y las dos secciones.
+const toEudrFields = fincaEudrFieldsDe;
+const missingChecks = vaciosDeLaDeclaracion;
 
 // ── El estado corto de la tarjeta (2026-07-23, pedido del owner) ─────────────
 // UN solo rótulo por finca, derivado en orden — el primer paso que aplica gana:
@@ -128,16 +94,7 @@ function fincaShortStatus(f: FincaRow): ShortStatus {
   return { label: "Lista para veredicto", cls: "badgeGood" };
 }
 
-// Estado + etapa individual de un lote asociado (pestaña "Lotes asociados").
-const STAGE_LABEL: Record<string, string> = {
-  borrador: "Borrador",
-  ficha_completa: "Ficha enviada",
-  apto: "Apto",
-  no_apto: "No apto",
-  fila_arena: "En sesión de Arena",
-  evaluado: "Evaluado",
-  galardonado: "Galardonado",
-};
+// Estado individual de un lote asociado (pestaña «Lotes asociados»). La ETAPA se rotula en `src/lib/ocp/etapas.ts`.
 function lotStatus(l: LotRow): Pick<FincaLote, "statusLabel" | "statusTone"> {
   switch (l.stage) {
     case "borrador":
@@ -155,14 +112,16 @@ function lotStatus(l: LotRow): Pick<FincaLote, "statusLabel" | "statusTone"> {
   }
 }
 
-// ── Fincas como kanban (2026-07-20, criterios del owner) ────────────────────
-// Cinco columnas derivadas (segmentFinca en src/lib/bcp/producerSegments.ts):
-// Marchitando · Nuevas · En Proceso · Aprobadas · No Aprobadas. Desde 2026-07-23
-// la tarjeta es COMPACTA (nombre + proveedor con enlace + estado corto) y el
-// detalle vive en un pop-up con pestañas (FincaPanel).
+// ── Vista completa · la sección de la FINCA (V5.61) ─────────────────────────
+// Era la página del módulo Fincas: un kanban de cinco columnas (Marchitando · Nuevas · En Proceso · Aprobadas ·
+// No Aprobadas) con su mapa. La tabla única se llevó el tablero y el mapa; lo que queda aquí es el PANEL
+// de una finca, entero y sin modal —`FincaPanel` con sus pestañas, el veredicto de la Visa, el editor EUDR
+// con parcelas y certificados, y el hilo con el productor—, leyendo SOLO esa finca.
+//
+// Ninguna Server Action cambió: aprobar, rechazar, compartir la certificación, guardar la EUDR y eliminar
+// por abandono son las de `../actions.ts`, con las mismas reglas duras en el servidor.
 
-export default async function BcpFincasPage() {
-  const service = createServiceRoleClient();
+export async function FincaSeccion({ service, fincaId }: { service: SupabaseClient; fincaId: string }) {
   const { data: allFincas } = await service
     .from("fincas")
     // A single literal string (not runtime-concatenated) -- see the note on
@@ -175,9 +134,10 @@ export default async function BcpFincasPage() {
        eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra,
        eudr_support_doc_type, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, created_at`
     )
-    .order("created_at", { ascending: true });
+    .eq("id", fincaId);
 
   const fincaRows = (allFincas as FincaRow[] | null) ?? [];
+  if (!fincaRows.length) return <p className={styles.empty}>Esa finca ya no existe.</p>;
   // Todos los asset ids en un solo lote de firmas: documentos EUDR + la foto y
   // el video de la finca (pestaña General del pop-up).
   const allAssetIds = fincaRows.flatMap((f) => [
@@ -239,59 +199,17 @@ export default async function BcpFincasPage() {
     ((certsRaw as BcpCertRow[] | null) ?? []).map((c) => c.support_asset_id)
   );
 
-  return (
-    <div>
-      <h1 className={styles.title}>Fincas</h1>
-      <p className={styles.subtitle}>
-        <b>Marchitando</b> (pendiente hace &gt;7 días con EUDR incompleta) · <b>Nuevas</b> (≤7 días) · <b>En Proceso</b>{" "}
-        (EUDR completa — lista para el veredicto) · <b>Aprobadas</b> · <b>No Aprobadas</b>. El video no cuenta para la
-        completitud. Toque la tarjeta para abrir el panel de la finca.
-      </p>
-
-      {!fincaRows.length && <p className={styles.empty}>No hay fincas registradas.</p>}
-      <FincasViewSwitch
-        markers={fincaRows.flatMap((f): GeoMarker[] => {
-          const center = fincaCenter(f.eudr_lat, f.eudr_lng, f.eudr_polygon_geojson);
-          if (!center) return [];
-          const short = fincaShortStatus(f);
-          return [
-            {
-              id: f.id,
-              lat: center.la,
-              lng: center.ln,
-              color: f.status === "approved" ? "#166534" : f.status === "rejected" ? "#991B1B" : "#B45309",
-              title: f.name,
-              lines: [
-                fincaCode(f.id),
-                short.label,
-                [f.municipio, f.departamento].filter(Boolean).join(", ") + (f.hectares ? ` · ${f.hectares} ha` : ""),
-                producers.get(f.producer_id)?.fullName ?? "Productor",
-              ],
-              link: { label: "Abrir panel", href: `#finca-${f.id}` },
-            },
-          ];
-        })}
-      >
-      <div className={styles.board}>
-        {FINCA_SEGMENTS.map((seg) => {
-          const segRows = fincaRows.filter(
-            (f) =>
-              segmentFinca({
-                status: f.status,
-                createdAt: f.created_at,
-                eudrComplete: missingChecks(toEudrFields(f)).length === 0,
-              }) === seg.id
-          );
-          return (
-            <div className={styles.column} key={seg.id}>
-              <div className={styles.columnHead}>
-                <h3>{seg.label}</h3>
-                <span className={styles.columnCount}>{segRows.length}</span>
-              </div>
-              <div className={styles.columnList}>
-                {!segRows.length && <p className={styles.empty}>—</p>}
-                {segRows.map((finca) => {
-                  const eudrFields = toEudrFields(finca);
+  const finca = fincaRows[0];
+  // «Marchitando» (pendiente hace más de 7 días con la EUDR incompleta) es lo que habilita eliminarla por
+  // abandono; la regla dura la re-impone el servidor.
+  const seg = {
+    id: segmentFinca({
+      status: finca.status,
+      createdAt: finca.created_at,
+      eudrComplete: missingChecks(toEudrFields(finca)).length === 0,
+    }),
+  };
+  const eudrFields = toEudrFields(finca);
                   const status = fincaEudrStatus(eudrFields);
                   const gaps = missingChecks(eudrFields);
                   const blockedByPolygon = !!(finca.requires_eudr_polygon && !finca.eudr_polygon_geojson?.length);
@@ -321,23 +239,8 @@ export default async function BcpFincasPage() {
                   const fincaLots = lotsByFinca.get(finca.id) ?? [];
                   const dane = daneCodeFor(finca.departamento, finca.municipio);
 
-                  // Tarjeta COMPACTA: nombre + estado corto; el proveedor va como
-                  // enlace propio (prop `link` de la fila) para no anidar <a> en el botón.
-                  const summary = (
-                    <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <b style={{ fontSize: 14.5, color: "var(--ink)" }}>{finca.name}</b>
-                      <span className={styles[short.cls]}>{short.label}</span>
-                    </span>
-                  );
-
                   return (
-                    <FincaModalRow
-                      key={finca.id}
-                      title={finca.name}
-                      summary={summary}
-                      anchorId={`finca-${finca.id}`}
-                      link={{ href: `/ocp/productores#prod-${finca.producer_id}`, label: producer?.fullName || "Proveedor" }}
-                    >
+                    <div>
                       <FincaPanel
                         data={{
                           code: fincaCode(finca.id),
@@ -350,7 +253,7 @@ export default async function BcpFincasPage() {
                           lotes: fincaLots.map((l): FincaLote => ({
                             id: l.id,
                             name: l.name,
-                            stageLabel: STAGE_LABEL[l.stage] ?? l.stage,
+                            stageLabel: etapaDelLote(l.stage),
                             ...lotStatus(l),
                           })),
                           comms: fincaComms.map((c) => ({ id: c.id, authorRole: c.author_role, createdAt: c.created_at, note: c.note })),
@@ -405,7 +308,7 @@ export default async function BcpFincasPage() {
                               )}
                               {finca.status === "approved" && (
                                 <>
-                                  <a className="btn btn-sm" href={`/ocp/fincas/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
+                                  <a className="btn btn-sm" href={`/ocp/kr/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
                                     Ver Visa EUDR (dossier) ↗
                                   </a>
                                   <ActionForm
@@ -475,15 +378,20 @@ export default async function BcpFincasPage() {
                         }
                         addComm={addComm}
                       />
-                    </FincaModalRow>
+                      <p className={styles.meta} style={{ marginTop: 16 }}>
+                        Productor: <Link href={`/ocp/kr?productor=${finca.producer_id}`}>{producer?.fullName || "abrir"}</Link>
+                        {fincaLots.length > 0 && (
+                          <>
+                            {" "}· Lotes:{" "}
+                            {fincaLots.map((l, i) => (
+                              <span key={l.id}>
+                                {i > 0 && ", "}
+                                <Link href={`/ocp/kr?lote=${l.id}`}>{l.name}</Link>
+                              </span>
+                            ))}
+                          </>
+                        )}
+                      </p>
+                    </div>
                   );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      </FincasViewSwitch>
-    </div>
-  );
 }

@@ -394,9 +394,9 @@ function LeadCard({
       {sectionHead("Conexiones")}
       {profile?.role === "producer" ? (
         <p className={styles.meta} style={{ margin: 0 }}>
-          <Link href="/ocp/fincas">{fincaCount} finca{fincaCount === 1 ? "" : "s"}</Link> ·{" "}
-          <Link href="/ocp/lotes">{lotCount} lote{lotCount === 1 ? "" : "s"}</Link> ·{" "}
-          <Link href="/ocp/productores">ver productor</Link>
+          <Link href={`/ocp/kr?productor=${profile.id}`}>{fincaCount} finca{fincaCount === 1 ? "" : "s"}</Link> ·{" "}
+          <Link href={`/ocp/kr?productor=${profile.id}`}>{lotCount} lote{lotCount === 1 ? "" : "s"}</Link> ·{" "}
+          <Link href={`/ocp/kr?productor=${profile.id}`}>ver productor</Link>
         </p>
       ) : profile?.role === "buyer" ? (
         <p className={styles.meta} style={{ margin: 0 }}>

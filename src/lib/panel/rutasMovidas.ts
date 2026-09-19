@@ -41,12 +41,12 @@ export type RutaMovida = {
  */
 export const RUTAS_MOVIDAS: RutaMovida[] = [
   // Kaffetal Regal — el origen del lote
-  { de: "/bcp/productores", a: "/ocp/productores", desde: "V4.24" },
-  { de: "/bcp/fincas", a: "/ocp/fincas", desde: "V4.24" },
-  { de: "/bcp/lotes", a: "/ocp/lotes", desde: "V4.24" },
+  { de: "/bcp/productores", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
+  { de: "/bcp/fincas", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
+  { de: "/bcp/lotes", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
   // KR Arena — la calificación
   { de: "/bcp/nominados", a: "/ocp/nominados", desde: "V4.24" },
-  { de: "/bcp/galardonados", a: "/ocp/galardonados", desde: "V4.24" },
+  { de: "/bcp/galardonados", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
   // Catálogo — la salida comercial
   { de: "/bcp/catalogo", a: "/ocp/catalogo", desde: "V4.24" },
   { de: "/bcp/contratos", a: "/ocp/contratos", desde: "V4.24" },
@@ -147,6 +147,19 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/bcp/cotizador-empaque", a: "/ecp/cotizador-empaque", desde: "V5.60 · de vuelta (salió en la V5.56)" },
   { de: "/bcp/anclas-mercado", a: "/ecp/anclas-mercado", desde: "V5.60 · de vuelta (salió en la V5.56)" },
   { de: "/bcp/automatizaciones", a: "/ecp/automatizaciones", desde: "V5.60 · de vuelta (salió en la V4.25)" },
+
+  // ── V5.61 (2026-09-19) · la tabla única del OCP — fase 3 del overhaul ─────────────────────
+  // Productores, Fincas y Lotes se funden en UNA ruta, `/ocp/kr`, y Galardonados deja de ser módulo (es
+  // un filtro de esa tabla). Las cuatro `/bcp/…` de la V4.24 que apuntaban aquí se REAPUNTARON arriba.
+  //
+  // ⚠️ ES LA PRIMERA MUDANZA DE «MUCHAS A UNA», y tiene una consecuencia: las sub-rutas viajan pegadas al
+  // destino. `/ocp/fincas/<id>/dossier` llega a `/ocp/kr/<id>/dossier`, y por eso el dossier y el KML de
+  // la Visa se mudaron a `kr/[id]/…` — para que ESA URL, que está impresa en correos y expedientes, siga
+  // abriendo. Lo que NO viaja es el ancla (`#lot-…`): un 308 no la ve. La traduce `kr/AnclasViejas.tsx`.
+  { de: "/ocp/productores", a: "/ocp/kr", desde: "V5.61" },
+  { de: "/ocp/fincas", a: "/ocp/kr", desde: "V5.61" },
+  { de: "/ocp/lotes", a: "/ocp/kr", desde: "V5.61" },
+  { de: "/ocp/galardonados", a: "/ocp/kr", desde: "V5.61" },
 ];
 
 /**

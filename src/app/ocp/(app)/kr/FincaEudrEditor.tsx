@@ -432,7 +432,7 @@ export function FincaEudrEditor({
         )}
         {hasCoords && (
           <>
-            <a className="btn btn-sm" href={`/ocp/fincas/${fincaId}/kml`}>
+            <a className="btn btn-sm" href={`/ocp/kr/${fincaId}/kml`}>
               Archivo Google Earth (.kml) ⤓
             </a>
             <button type="button" className="btn btn-sm" onClick={() => downloadGeoJson(fincaId, fincaName, values, parcelas)}>

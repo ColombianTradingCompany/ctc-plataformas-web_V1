@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import styles from "@/components/panel/shared.module.css";
 
-// Kanban-card variant of FincaModalRow: a compact miniCard-style button inside
+// Kanban-card variant of the old finca row modal (retired V5.61): a compact miniCard-style button inside
 // a board column that opens a popup with the full lead detail. Summary and
 // children are server-rendered; this client wrapper only owns open/close.
 // `anchorId` (2026-07-20): deep-link desde "Tareas pendientes de CTC" — con

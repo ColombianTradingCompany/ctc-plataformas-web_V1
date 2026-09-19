@@ -131,7 +131,7 @@ export function SubastaCard({ subasta: a }: { subasta: SubastaAdmin }) {
   return (
     <div className={styles.miniCard}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <Link href={`/ocp/lotes#lot-${a.lotId}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>{a.lotName}</Link>
+        <Link href={`/ocp/kr?lote=${a.lotId}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>{a.lotName}</Link>
         <span className={styles.meta}>{STATUS_LABEL[a.status]}{a.status === "abierta" && a.vencida && " · VENCIDA"}</span>
       </div>
       <p className={styles.meta} style={{ margin: "2px 0 6px" }}>

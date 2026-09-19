@@ -2,7 +2,7 @@
 // La evaluación documental es una checklist explícita: BCP marca cada bloque de
 // la Ficha como revisado antes de poder declarar el veredicto. Las claves se
 // persisten en lots.eva_checklist (jsonb {clave: true}) y las comparten el
-// tablero (/ocp/lotes), la acción setEvaChecklistItem y la compuerta de
+// tablero (/ocp/kr), la acción setEvaChecklistItem y la compuerta de
 // markLotApto — un solo lugar para que servidor y cliente nunca diverjan.
 // Módulo plano (sin "use server"/"use client") para poder exportar constantes.
 

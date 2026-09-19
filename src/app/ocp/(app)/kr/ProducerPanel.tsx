@@ -188,7 +188,7 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
         <ListOrEmpty empty="Sin fincas.">
           {data.fincas.map((f) => (
             <li key={f.id}>
-              <Link href={`/ocp/fincas#finca-${f.id}`}>{f.name}</Link>
+              <Link href={`/ocp/kr?finca=${f.id}`}>{f.name}</Link>
               {f.municipio ? ` · ${f.municipio}` : ""} <span className={styles.badge}>{f.statusLabel}</span>
             </li>
           ))}
@@ -199,7 +199,7 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
         <ListOrEmpty empty="Sin lotes.">
           {data.lotes.map((l) => (
             <li key={l.id}>
-              <Link href={`/ocp/lotes#lot-${l.id}`}>{l.name}</Link> <span className={styles.badge}>{l.stageLabel}</span>
+              <Link href={`/ocp/kr?lote=${l.id}`}>{l.name}</Link> <span className={styles.badge}>{l.stageLabel}</span>
             </li>
           ))}
         </ListOrEmpty>

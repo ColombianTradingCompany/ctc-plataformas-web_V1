@@ -121,7 +121,8 @@ const completa = (extra = {}) => ({
     acciones.includes("fincaEudrDeclaracion(eudrFields, parcelas).code !== \"apta\"") &&
       !acciones.includes("fincaEudrStatus(eudrFields, parcelas)")
   );
-  const consola = lee("src/app/ocp/(app)/fincas/page.tsx");
+  // V5.61: la página de Fincas es ahora la SECCIÓN de la finca en la vista completa de `/ocp/kr`.
+  const consola = lee("src/app/ocp/(app)/kr/FincaSeccion.tsx");
   check(
     "el botón Aprobar del OCP también, o quedaría apagado para siempre",
     consola.includes("fincaEudrDeclaracion(eudrFields).code !== \"apta\"")
@@ -162,8 +163,8 @@ const completa = (extra = {}) => ({
 {
   const constructores = [
     "src/lib/arena/eudrGate.ts",
-    "src/app/ocp/(app)/fincas/page.tsx",
-    "src/app/ocp/(app)/lotes/page.tsx",
+    // V5.61: los tres constructores del OCP (Fincas, Lotes y la tabla única) son UNO, en `src/lib/ocp/`.
+    "src/lib/ocp/fincaEudr.ts",
     "src/app/kaffetal-regal/certificacion-lote/[id]/page.tsx",
   ];
   for (const archivo of constructores) {
@@ -171,6 +172,18 @@ const completa = (extra = {}) => ({
     check(`${archivo}: su FincaEudrFields lleva status`, /\bstatus:\s/.test(src));
     check(`${archivo}: y lleva certShared`, src.includes("certShared:"));
     check(`${archivo}: y su SELECT pide eudr_cert_shared`, src.includes("eudr_cert_shared"));
+  }
+  // …y quien USA ese constructor único tiene que pedir las dos columnas en SU consulta: el constructor no
+  // puede inventarse un `status` que el SELECT no trajo.
+  for (const archivo of ["src/app/ocp/(app)/kr/carga.ts", "src/app/ocp/(app)/kr/FincaSeccion.tsx", "src/app/ocp/(app)/kr/LoteSeccion.tsx"]) {
+    const src = lee(archivo);
+    check(`${archivo}: usa el constructor único`, src.includes("fincaEudrFieldsDe"));
+    // El SELECT que importa es el que trae la Visa (el que pide `eudr_cert_shared`), no el primero del archivo:
+    // la tabla única hace ocho lecturas y la de `profiles` no tiene por qué llevar `status`.
+    const selects = [...src.matchAll(/\.select\(\s*([`"])([\s\S]*?)\1\s*\)/g)].map((x) => x[2]);
+    const delaVisa = selects.find((t) => t.includes("eudr_cert_shared"));
+    check(`${archivo}: el SELECT que trae la Visa pide también status`, !!delaVisa && /\bstatus\b/.test(delaVisa));
+    check(`${archivo}: su SELECT pide eudr_cert_shared`, src.includes("eudr_cert_shared"));
   }
 }
 

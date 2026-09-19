@@ -19,6 +19,47 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.61] — 2026-09-19 (commit pendiente)
+
+- **Hito**: **Productores, Fincas y Lotes son UNA tabla: `/ocp/kr`** — fase 3 del overhaul de las consolas (nota 1 del owner).
+  Tres módulos con tres tableros, tres mapas a medias y tres modales pasan a ser una pantalla navegable en cualquier dirección:
+  del lote a su finca, de la finca a su productor, y de vuelta.
+- **Añadido**: **la tabla de grano LOTE.** Cada fila es un lote con su finca y su productor al lado; **la finca sin lotes y el
+  productor sin fincas tienen fila propia** (si no, 18 de los 28 productores de hoy habrían desaparecido de la pantalla — justo
+  a los que hay que acompañar). Columnas: Productor · Finca · Lote · **Visa EUDR · Ficha (FT · FT2 · EUDR · Video) · EVA ·
+  Muestra · Grado · Oferta CP · Trato**, cada una con enlace a lo que nombra. Búsqueda libre; filtros por país, departamento,
+  grado y rango de temporadas; filtros rápidos **Galardonados · Sin finca · Sin lote**; agrupable por productor o por finca.
+- **Añadido**: **el mapa se conserva, y por fin dice lo mismo que la tabla.** Es una segunda vista de LA MISMA carga con LOS
+  MISMOS filtros: un pin por finca (color = su Visa) y uno por lote (color = su grado) sobre ella, agrupados por cercanía, con
+  el dial de temporadas de dos perillas. Antes el mapa de Fincas no filtraba por temporada y el de Lotes solo enseñaba los que
+  iban camino de la Arena.
+- **Añadido**: **la vista completa** — `?lote=` · `?finca=` · `?productor=` — con protagonista **Lote → Finca → Productor** y
+  migas para saltar entre los tres. Monta como secciones de UNA página lo que eran tres modales: la checklist de la EVA con
+  su veredicto, el recibo de la muestra, la DDS y reabrir un No apto; el veredicto de la Visa con el editor EUDR, las
+  parcelas y los certificados; y el panel del productor con sus seis pestañas. Lee SOLO lo que se abre: la página de
+  Productores leía los perfiles, fincas, lotes, inscripciones, contratos y notas de todos para pintar un tablero.
+- **Cambiado**: **las tres páginas no se reescribieron: se convirtieron** en esas tres secciones (con `git mv`, conservando su
+  historia). **Ninguna Server Action cambió**, ni sus reglas, ni lo que ve el productor.
+- **Retirado**: **Galardonados deja de ser módulo**: es el filtro «Galardonados» de la tabla (D4 del plan). Se retiran también
+  `FincaModalRow`, `ProductoresBoard` y `FincasViewSwitch`; de `LotesViews` sobreviven el dial de temporadas y dos botones.
+- **Corregido**: **la etapa de un lote se rotulaba de tres maneras.** `ficha_completa` era «En evaluación (EVA)» en Productores,
+  «Ficha enviada» en Fincas y «En EVA» en Lotes. Una fuente: `src/lib/ocp/etapas.ts`. Y el constructor de los campos de la
+  Visa EUDR —quince columnas, escritas dos veces— pasa a `src/lib/ocp/fincaEudr.ts`: un campo olvidado en una copia no falla,
+  deja la Visa clavada en «en revisión» para todo el mundo. `qa-visa-check` (36) lo vigila ahora en un sitio, y exige que el
+  SELECT de quien lo usa pida `status` y `eudr_cert_shared` (probado haciéndolo morder).
+- **Corregido**: dos enlaces del Panel llevaban meses mandando a Fincas un `?status=pending_review` **que ninguna página leía**.
+  Las tareas enlazan ahora por parámetro a la vista completa de SU finca o SU lote.
+- **Cambiado**: cuatro rutas se mudan a una — `/ocp/productores`, `/ocp/fincas`, `/ocp/lotes`, `/ocp/galardonados` → `/ocp/kr` —
+  y las cuatro `/bcp/…` de la V4.24 que apuntaban a ellas se reapuntaron (53 rutas en `rutasMovidas.ts`, todas en un salto).
+  Es la primera mudanza «muchas a una»: las sub-rutas viajan pegadas al destino, así que **el dossier y el KML de la Visa se
+  mudaron a `/ocp/kr/<id>/…`** para que las URLs `/ocp/fincas/<id>/dossier` impresas en correos y expedientes sigan abriendo.
+  Un ancla (`#lot-…`) no viaja en un 308 —el servidor ni la ve—: la traduce la página nueva al llegar.
+- **Docs**: charter `consolas` (el mapa de código de `kr/` y de `src/lib/ocp/`; lo que la fase dejó abierto) y `kaffetal-regal`;
+  `ALINEACION` §3; `AGENTS.md`; `OVERHAUL_CONSOLAS_PLAN.md`, con lo que cambió al ejecutarla.
+  ⚠️ **Nadie ha visto la pantalla pintada**: las consolas no se conducen en navegador (OTP real). Se verificó por `tsc`,
+  `eslint`, build, guardianes y SQL — las 41 columnas que piden sus consultas existen, y la lógica de filas replicada en SQL
+  da 35 (15 lotes + 2 fincas sin lote + 18 productores sin nada). Queda como pendiente del owner en el charter.
+
 ## [V5.60] — 2026-09-19 (commit 257c42d)
 
 - **Hito**: **el nuevo reparto BCP ↔ ECP** — fase 2 del overhaul de las consolas (`docs/OVERHAUL_CONSOLAS_PLAN.md`), según el

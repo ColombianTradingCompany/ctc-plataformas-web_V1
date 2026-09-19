@@ -119,9 +119,9 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   check("globals: las casillas crecen con el dedo", /input\[type=checkbox\][^{]*\{[^}]*width:\s*22px/.test(coarse));
   check("globals: existe el pop-up ancho de revisión", /^\.modal-wide\{/m.test(g));
 
-  // Y que las consolas lo USEN: definirla sin aplicarla no ensancha nada.
+  // Y que las consolas lo USEN: definirla sin aplicarla no ensancha nada. (`FincaModalRow` salió de esta lista
+  // en la V5.61: la tabla única abre una vista completa, no un pop-up, y el componente se retiró.)
   for (const ruta of [
-    "src/app/ocp/(app)/fincas/FincaModalRow.tsx",
     "src/app/bcp/(app)/arena/ArenaBoardClient.tsx",
     "src/app/ocp/(app)/nominados/NominadosClient.tsx",
   ]) {

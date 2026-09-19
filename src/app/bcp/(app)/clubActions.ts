@@ -143,5 +143,5 @@ export async function revokeClubMembership(producerId: string) {
   });
 
   revalidatePath("/bcp/club");
-  revalidatePath("/ocp/productores");
+  revalidatePath("/ocp/kr");
 }

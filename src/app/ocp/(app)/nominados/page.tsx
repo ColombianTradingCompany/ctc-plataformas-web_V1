@@ -29,7 +29,7 @@ import styles from "@/components/panel/shared.module.css";
 //                     para asignarse a una sesión de Arena.
 // Kanban de Baches de Sondeo (4 columnas): Nuevo Sondeo → Sondeo Planeado →
 // Sondeo Pendiente → Registro de Sondeo. Los lotes aptos SIN postular viven en
-// /ocp/lotes (sección Aptos).
+// /ocp/kr (sección Aptos).
 
 type LotJoin = { id: string; name: string; producer_id: string; stage: string; sample_shipped_at: string | null; sample_2kg_confirmed_at: string | null };
 type BatchRow = {

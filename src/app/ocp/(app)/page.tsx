@@ -18,8 +18,8 @@ type AuditRow = { entity_type: string; entity_id: string | null; action: string;
 
 // Which OCP section an audit/entity type links to.
 const ENTITY_HREF: Record<string, string> = {
-  finca: "/ocp/fincas",
-  lot: "/ocp/lotes",
+  finca: "/ocp/kr",
+  lot: "/ocp/kr",
   contract: "/ocp/contratos",
   lot_listing: "/ocp/catalogo",
   lead: "/lcp/leads", // Leads vive en la LCP desde la V5.59; el Panel del OCP enlaza allá.
@@ -51,7 +51,7 @@ export default async function OcpHomePage() {
       v: pendingFincas.length,
       denom: totalFincas ?? 0,
       color: "#3C0A86",
-      href: "/ocp/fincas?status=pending_review",
+      href: "/ocp/kr",
       sub: `de ${totalFincas ?? 0} fincas`,
     },
     {
@@ -60,7 +60,7 @@ export default async function OcpHomePage() {
       v: queuedLots.length,
       denom: totalLots ?? 0,
       color: "#003087",
-      href: "/ocp/lotes",
+      href: "/ocp/kr",
       sub: `de ${totalLots ?? 0} lotes`,
     },
     {

@@ -81,7 +81,7 @@ export default async function OcpFichasPage() {
       <p className={styles.subtitle}>
         Los soportes que cada productor adjuntó en B2/B3, el <b>escáner visual</b> que los lee (IA, bajo demanda) y el{" "}
         <b>set de Fichas Técnicas</b> del lote — una de ellas se fija como <b>la oficial</b>. El productor ve el set en
-        los panes B2 y B3 de su <Link href="/ocp/lotes">Ficha</Link>.
+        los panes B2 y B3 de su <Link href="/ocp/kr">Ficha</Link>.
       </p>
 
       {!conMaterial.length && <p className={styles.empty}>Ningún lote tiene soportes, reporte B2/B3 ni fichas todavía.</p>}
@@ -95,7 +95,7 @@ export default async function OcpFichasPage() {
               lotId={lot.id}
               header={
                 <>
-                  <Link href={`/ocp/lotes#lot-${lot.id}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>
+                  <Link href={`/ocp/kr?lote=${lot.id}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>
                     {lot.name}
                   </Link>
                   <p className={styles.meta} style={{ margin: "2px 0 0" }}>

@@ -171,7 +171,7 @@ dejan su 308.
   solo las suyas. **(6) El diagrama «espejo del menú»** no se redibujó: se genera del rail. **(7) «Seguimiento de Temas» y
   «Plataformas de Pagos»** no entraron al rail (D9): no tienen módulo ni brief.
 
-**Fase 3 · La tabla única · «Productores, Fincas y Lotes»** — *riesgo medio · pantalla nueva, mismas acciones*
+**Fase 3 · La tabla única · «Productores, Fincas y Lotes»** — *riesgo medio · pantalla nueva, mismas acciones* — ✅ **EJECUTADA en la V5.61 (2026-09-19)**
 - Una ruta (`/ocp/kr`), **una consulta**, grano de LOTE: cada fila es un lote; la finca sin lotes y el productor sin fincas
   tienen su fila propia (si no, desaparecerían de la pantalla al menos 19 de los 28 productores, que aún no tienen finca). Agrupable por productor o por finca.
 - Columnas: Productor · Finca · Lote · Visa EUDR · Ficha (FT · FT2 · EUDR · Fotos) · EVA · Muestra · Grado · Oferta CP ·
@@ -184,6 +184,15 @@ dejan su 308.
   página, con migas para saltar entre los tres. La etiqueta de etapa pasa a una sola fuente.
 - Ninguna Server Action cambia. 308 desde `/ocp/productores`, `/ocp/fincas`, `/ocp/lotes` (las anclas viejas `#finca-…` no
   viajan en un 308: la página nueva las traduce al parámetro).
+- **Lo que cambió al ejecutarla**: **(1) las tres páginas no se reescribieron: se CONVIRTIERON** (`git mv`, con su historia) en
+  las tres secciones de la vista completa, filtradas por id — la lógica de la EVA, la Visa y el panel del productor es la
+  misma, línea por línea; lo que desapareció son los tres tableros y los tres modales. **(2) «Una consulta» son nueve lecturas
+  LIGERAS en paralelo**, no un JOIN: lo pesado (`datasheet`, el expediente EUDR) lo pide la vista completa, y solo de lo que se
+  abre. **(3) Primera mudanza «muchas a una»**: cuatro rutas → `/ocp/kr`. Las sub-rutas viajan pegadas al destino, así que el
+  dossier y el KML de la Visa se mudaron a `kr/[id]/…` para que `/ocp/fincas/<id>/dossier` siga abriendo. **(4) Un lote puede
+  tener su origen por DOS sitios** (`lots.finca_id` o los aportes de `lot_contributions`): la tabla mira los dos, o un lote
+  de varias fincas saldría como «sin finca». **(5) `FincaModalRow` y `ProductoresBoard` se retiraron**; de `LotesViews`
+  sobrevivieron el dial de temporadas y dos botones. **(6) NADIE HA VISTO LA PANTALLA** — ver «Pendientes» del charter `consolas`.
 
 **Fase 4 · El circuito del lote, lado OCP** — *riesgo alto · reglas de negocio, DDL aditivo*
 - «Lotes a evaluar» y «Lotes en evaluación» reemplazan a `/ocp/nominados`; los baches salen de la pantalla (D5). Los estados

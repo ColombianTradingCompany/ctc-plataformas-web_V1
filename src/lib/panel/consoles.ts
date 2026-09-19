@@ -204,9 +204,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // desde la reorganización V5 el pasaporte ES la operación.
         label: "OCP · Kaffetal Regal",
         links: [
-          { href: "/ocp/productores", label: "Productores" },
-          { href: "/ocp/fincas", label: "Fincas" },
-          { href: "/ocp/lotes", label: "Lotes" },
+          // UNA entrada donde hubo tres (V5.61, nota 1 del owner): Productor, Finca y Lote son una tabla
+          // navegable en cualquier dirección, con su mapa, y el clic abre la vista completa
+          // (`?lote=` · `?finca=` · `?productor=`). `/ocp/kr` por «Kaffetal Regal», el origen del lote.
+          { href: "/ocp/kr", label: "Productores, Fincas y Lotes" },
           // V5.23: los soportes B2/B3, el escáner visual y el set de Fichas
           // Técnicas del lote (una oficial por lote).
           { href: "/ocp/fichas", label: "Fichas Técnicas" },
@@ -218,9 +219,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // viaja con ellos: es la membresía que la Arena alimenta.
         label: "OCP · KR Arena",
         links: [
-          // La Arena y el Club se fueron a «BCP · Ecosistema de Valor» en la V5.60.
+          // La Arena y el Club se fueron a «BCP · Ecosistema de Valor» en la V5.60, y Galardonados dejó de
+          // ser módulo en la V5.61: es un filtro de la tabla única (D4 del overhaul).
           { href: "/ocp/nominados", label: "Nominados" },
-          { href: "/ocp/galardonados", label: "Galardonados" },
         ],
       },
       {

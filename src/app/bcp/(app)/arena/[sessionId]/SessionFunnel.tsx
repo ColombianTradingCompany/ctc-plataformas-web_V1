@@ -43,7 +43,7 @@ function CupChip({ cup, identity }: { cup: FunnelCup; identity: RevealedIdentity
     >
       <b style={{ fontSize: 12.5, fontFamily: "var(--font-spline-mono), monospace" }}>{cup.blindLabel}</b>
       {revealed ? (
-        <Link href={`/ocp/lotes#lot-${cup.lotId}`} style={{ fontSize: 11, textDecoration: "underline", maxWidth: 120, textAlign: "center" }}>
+        <Link href={`/ocp/kr?lote=${cup.lotId}`} style={{ fontSize: 11, textDecoration: "underline", maxWidth: 120, textAlign: "center" }}>
           {revealed}
         </Link>
       ) : (

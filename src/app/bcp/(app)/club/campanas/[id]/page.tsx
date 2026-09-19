@@ -163,7 +163,7 @@ export default async function BcpCampaignDetailPage({ params }: { params: Promis
                       <span className="mono">Lote {ctcLotReferenceShort(lot.id)}</span>
                       <span>· Finca {fincaNameOf(lot)}</span>
                       <span>·</span>
-                      <Link href={`/ocp/productores#prod-${lot.producer_id}`} style={{ color: "var(--primary)", fontWeight: 700 }}>
+                      <Link href={`/ocp/kr?productor=${lot.producer_id}`} style={{ color: "var(--primary)", fontWeight: 700 }}>
                         {name(lot.producer_id)} →
                       </Link>
                     </>

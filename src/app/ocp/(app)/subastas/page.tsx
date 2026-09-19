@@ -125,7 +125,7 @@ export default async function OcpSubastasPage() {
               const finca = (Array.isArray(l.fincas) ? l.fincas[0] : l.fincas) as { name: string } | null;
               return (
                 <div key={l.id} className={styles.miniCard}>
-                  <Link href={`/ocp/lotes#lot-${l.id}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>{l.name}</Link>
+                  <Link href={`/ocp/kr?lote=${l.id}`} style={{ fontWeight: 700, color: "var(--ink)", textDecoration: "none" }}>{l.name}</Link>
                   <p className={styles.meta} style={{ margin: "2px 0 6px" }}>
                     {name(l.producer_id)} · {finca?.name ?? "—"} · <span className="mono">{ctcLotReferenceShort(l.id)}</span> · <b style={{ color: "var(--t-tyrian)" }}>tyrian</b>
                   </p>

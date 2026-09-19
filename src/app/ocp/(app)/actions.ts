@@ -8,7 +8,7 @@ import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } 
 import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
-import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./lotes/evaChecklist";
+import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./kr/evaChecklist";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
@@ -125,7 +125,7 @@ export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok
     performed_by: adminId,
   });
 
-  revalidatePath("/ocp/fincas");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -158,7 +158,7 @@ export async function setFincaCertShared(
       created_by: adminId,
     });
   }
-  revalidatePath("/ocp/fincas");
+  revalidatePath("/ocp/kr");
   return { ok: true };
 }
 
@@ -196,7 +196,7 @@ export async function setFincaCertVerified(
     performed_by: adminId,
     notes: `${cert.scheme}${cert.cert_number ? ` · N.º ${cert.cert_number}` : ""}`,
   });
-  revalidatePath("/ocp/fincas");
+  revalidatePath("/ocp/kr");
   return { ok: true };
 }
 
@@ -240,7 +240,7 @@ export async function registerLotDds(
       performed_by: adminId,
       notes: `Referencia corregida a ${ref} (snapshot intacto).`,
     });
-    revalidatePath("/ocp/lotes");
+    revalidatePath("/ocp/kr");
     return { ok: true };
   }
 
@@ -323,7 +323,7 @@ export async function registerLotDds(
     performed_by: adminId,
     notes: `DDS ${ref} · ${joins.length} finca(s), ${snapshot.contributions.reduce((a, c) => a + c.parcelas.length, 0)} parcela(s).`,
   });
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   return { ok: true };
 }
 
@@ -364,7 +364,7 @@ export async function createLot(formData: FormData): Promise<ActionResult> {
     notes: "Creado por BCP en nombre del productor (source=bcp_manual_entry)",
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -426,7 +426,7 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
     notes: "Muestra de 2 kg confirmada — la inscripción pasa a la fila de baches.",
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -484,7 +484,7 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
     created_by: adminId,
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -511,7 +511,7 @@ export async function setEvaChecklistItem(
   const { error } = await service.from("lots").update({ eva_checklist: next }).eq("id", lotId);
   if (error) return { ok: false, error: "No se pudo guardar la checklist." };
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   return { ok: true };
 }
 
@@ -543,7 +543,7 @@ export async function setCertVerification(
   const { error } = await service.from("lots").update({ cert_verifications: current }).eq("id", lotId);
   if (error) return { ok: false, error: "No se pudo guardar la verificación." };
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   return { ok: true };
 }
 
@@ -588,7 +588,7 @@ export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok
     created_by: adminId,
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -623,7 +623,7 @@ export async function revertNoApto(lotId: string): Promise<{ ok: true } | { ok: 
     created_by: adminId,
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -785,8 +785,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
     });
   }
 
-  revalidatePath("/ocp/fincas");
-  revalidatePath("/ocp/productores");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
 }
 
@@ -863,7 +862,7 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
     notes: "Campos EUDR completados/editados por BCP en nombre del productor",
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
 }
 
 // ── Limpieza de abandonados (V2.0, pedido del owner) ─────────────────────────
@@ -918,7 +917,7 @@ export async function deleteAbandonedLot(lotId: string): Promise<{ ok: true } | 
     created_by: adminId,
   });
 
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -978,8 +977,7 @@ export async function deleteAbandonedFinca(fincaId: string): Promise<{ ok: true 
     created_by: adminId,
   });
 
-  revalidatePath("/ocp/fincas");
-  revalidatePath("/ocp/lotes");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -1006,6 +1004,6 @@ export async function rejectFinca(fincaId: string, notes: string) {
     notes,
   });
 
-  revalidatePath("/ocp/fincas");
+  revalidatePath("/ocp/kr");
   revalidatePath("/bcp");
 }

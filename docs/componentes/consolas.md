@@ -15,8 +15,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   Configuración del Sistema»: usuarios y credenciales, **socios de la red** (dejó de ser grupo aparte), documentación, Mapa
   de Trabajo, consumo de IA y **Manejo de Plataformas**.
 - **OCP · Operational Control Panel — *Operation***: el **pasaporte del lote** de punta a punta —
-  productores, fincas (visa EUDR), lotes (EVA, sello), nominados (bache y veredicto Q-Grader),
-  galardonados, **ofertas**, catálogo, contratos, **subastas**, **fichas**
+  **«Productores, Fincas y Lotes»** (`/ocp/kr`, V5.61: UNA tabla de grano lote con su mapa, y la vista completa por
+  `?lote=` · `?finca=` · `?productor=` — visa EUDR, EVA y sello dentro), nominados (bache y veredicto Q-Grader),
+  **ofertas**, catálogo, contratos, **subastas**, **fichas**
   (escáner), CTC Selection. (Los cuatro CRM de Cherry Picked se fueron a la LCP en la V5.59.)
 - **ECP · Executive Control Panel — *Execution***: **con qué decide la casa y qué tiene pendiente** (V5.60). Cabecera «ECP ·
   Ejecución»: el **Tablero de Ejecución** (el Panel del ECP: las tareas DERIVADAS de las cuatro consolas en un sitio —
@@ -39,10 +40,10 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena/[sessionId]/run` (+ `temporadas`), `club` · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas` |
-| `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `galardonados`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
+| `/ocp/(app)/…` | Operation | `kr` (+ `kr/[id]/{dossier,kml}`, la Visa de una finca), `nominados`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
-| `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.60 (49 rutas; nueve viajes de vuelta en la V5.60) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
+| `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
 | `/socios/<slug>` · `/socios/<slug>/acceso` · `/socios/<slug>/panel` | los 5 nodos socio (landing + login + panel) | `src/lib/partners/partners.ts`; credenciales desde `/bcp/socios` |
 
 ## Mapa de código
@@ -60,7 +61,12 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   tablero administra cada pilar de `leads`; la CONSOLA se deduce de esa ruta**, ya no se escribe a mano), `requireConsoleAccess`,
   `requireActiveAdmin`, `requireConsoleWrite`, `rutasMovidas.ts`, `salidasDeLaPlataforma.ts`,
   `navActivo.ts`, `panelUsers.ts`, `architectureDocs.ts`.
-- `src/lib/{bcp,buzon,crm,workmap,identidad,partners,email,ai,integraciones}/`.
+- `src/lib/{bcp,buzon,crm,workmap,identidad,partners,email,ai,integraciones}/` · **`src/lib/ocp/`** (V5.61): `etapas.ts` —
+  LA etiqueta de cada etapa del lote, estado de finca, grado, oferta y contrato (eran tres copias divergentes)— y
+  `fincaEudr.ts`, EL constructor de los campos de la Visa (eran dos copias; `qa-visa-check` lo vigila en un sitio).
+- **`src/app/ocp/(app)/kr/`**: `page.tsx` (tabla o vista completa, según parámetros), `carga.ts` (una carga, grano de lote),
+  `KrTabla.tsx` (tabla + mapa, mismos filtros), `{Lote,Finca,Productor}Seccion.tsx` (eran las tres páginas; leen SOLO lo
+  que se abre), `AnclasViejas.tsx` (traduce `#lot-…` al parámetro: un ancla no viaja en un 308), `LotePiezas.tsx`.
 - **Transcripciones** (de aquí desde el 2026-09-19): `src/lib/transcripciones/{types,model,actions,cloud}.ts` (`model.ts` es
   puro), `src/components/transcripciones/{TranscriptsBoard,TranscriptDetail,WorkersBadge}.tsx`, `/api/transcripciones/
   {descargar,callback}`, y la herramienta local `tools/transcriptor/ogg_transcriber/` (worker de TIRÓN: `claim_transcript_job`
@@ -136,8 +142,9 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
 
 - **OVERHAUL DE LAS CONSOLAS — `docs/OVERHAUL_CONSOLAS_PLAN.md`**, aprobado por el owner el 2026-09-19 («todo lo
   recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
-  reparto BCP ↔ ECP y el Tablero de Ejecución) — **EJECUTADAS.**
-  **Quedan**: **fase 3** (la tabla única Productor·Finca·Lote en `/ocp/kr`, con el mapa); **fase 4** (el circuito del lote
+  reparto BCP ↔ ECP y el Tablero de Ejecución) y **fase 3** (V5.61: la tabla única «Productores, Fincas y Lotes») —
+  **EJECUTADAS.**
+  **Quedan**: **fase 4** (el circuito del lote
   sin Sondeo: a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo; DDL aditivo en `lot_offers`);
   **fase 5** (Kaffetal Regal — **exige las cuentas `prueba-*`, que esta sesión no tiene**); **fase 6** (stock físico y lo
   que no existe, por briefs; Wrap V46).
@@ -147,6 +154,15 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
   Arena sigue asignando lotes; **(b)** los KPI del Modelo Económico se quedaron en el Panel del BCP (son cifras del
   negocio) aunque el módulo viva en el ECP; **(c)** «Seguimiento de Temas» y «Plataformas de Pagos» no tienen módulo ni brief.
   **Cerrado en la fase 2**: el diagrama de `/bcp/documentacion` ya no se dibuja a mano — se GENERA del rail.
+  **Lo que la fase 3 dejó abierto, con dueño `consolas`**: **(d)** ⚠️ **NADIE HA VISTO `/ocp/kr` PINTADA.** Las consolas no
+  se conducen en navegador (OTP real): se verificó por `tsc`, `eslint`, build, guardianes y SQL (las 41 columnas que piden
+  sus consultas existen; la lógica de filas, replicada en SQL, da 35 = 15 lotes + 2 fincas sin lote + 18 productores sin
+  nada). **El owner tiene que abrirla y decir qué ve** — sobre todo la vista completa de un lote en EVA y la de una finca
+  pendiente, que son las dos con botones que emiten. **(e)** los segmentos de «temperatura» (Marchitando · Nuevos ·
+  Primíparos…) dejaron de ser un tablero: van como texto bajo el nombre del productor; si el owner echa de menos el kanban,
+  vuelve como agrupación de la tabla. **(f)** `GRADO_LABEL` tiene una fuente (`src/lib/ocp/etapas.ts`) y seis copias más en
+  catálogo, contratos y la Arena, sin tocar. **(g)** el KPI «Fincas pendientes» del Panel del OCP abre la tabla SIN filtrar:
+  la tabla no tiene todavía un filtro «pendientes de revisión».
 - **EL MODELO ECONÓMICO YA NO ES DE ESTE CHARTER (owner, 2026-09-19, V5.55).** Herramientas Internas pasó a ser lo que el
   rail llamaba «BCP · Business Core» —Contexto, Misión y Visión, Modelo Económico (PVC y Grados), Procesamiento, Logística— y
   se llevó los pendientes del PVC: la **fase 2**, el **refurbish** del módulo, **CN-1** (el PVC de ene–mar 2027 antes del

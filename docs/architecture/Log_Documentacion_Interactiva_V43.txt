@@ -268,4 +268,4 @@ LO QUE HAY QUE SEGUIR MIRANDO (todo con dueño, en su charter)
 
 VERIFICADO EN VIVO (V5.52, 2026-09-19): el portal responde, «Find my Lot» resuelve `ctcx v2dd m24b` tecleado en
 minúsculas y con espacios, la canonicalización devuelve 308 y un código inexistente 404.
-(commit: pendiente)
+(commit: 4ba1b2d)

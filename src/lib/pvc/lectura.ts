@@ -51,15 +51,21 @@ export const EMPAQUES: EstandarEmpaque[] = [
 export const empaqueDe = (b: Banda5): EstandarEmpaque =>
   EMPAQUES.find((e) => e.grados.includes(b)) ?? EMPAQUES[0];
 
-// ── MOQ por grado (addendum del owner, 2026-09-16) ──────────────────────────
-// Black y Red son MEZCLAS. Su mínimo no sale de un kilaje sino de cuántos lotes
-// componen la mezcla, porque cada lote tiene que aportar al menos una carga y la
-// mezcla no baja de tres. Una mezcla de cinco no existe: con seis lotes se hacen
-// dos mezclas de tres.
+// ── MOQ por grado (addendum del owner, 2026-09-16; precisado el 2026-09-19) ──
+// Black y Red son MEZCLAS de TRES o CUATRO productores, y no son la misma mezcla:
 //
-//   2 lotes → 4 cargas (2 de cada uno)
-//   3 lotes → 3 cargas (1 de cada uno)
-//   4 lotes → 4 cargas (1 de cada uno)
+//   Black → blend de 3 a 4 orígenes Y/O variedades.
+//   Red   → SIEMPRE una sola variedad: es una mezcla REGIONAL (3 a 4 orígenes).
+//
+// Su mínimo no sale de un kilaje: está ANCLADO a la compra mínima que se le puede
+// hacer a cada productor involucrado en el lote, que es UNA CARGA. Por eso:
+//
+//   3 productores → 3 cargas (1 de cada uno)
+//   4 productores → 4 cargas (1 de cada uno)
+//
+// Una mezcla de DOS no existe (hasta el 2026-09-19 este archivo decía «2 lotes → 4
+// cargas»: el owner fijó que el blend es de 3 a 4). Una de CINCO tampoco: con seis
+// productores se hacen dos mezclas de tres.
 //
 // Blue, Gold y Tyrian son lote único: el mínimo es del lote, no de la mezcla.
 //
@@ -68,11 +74,22 @@ export const empaqueDe = (b: Banda5): EstandarEmpaque =>
 // eso se dice en cargas y no en kilos de empaque, y por eso vale igual para
 // Cherry Picked que para CaaS: es una restricción del origen, no del canal.
 
-export const MOQ_MEZCLA: Record<number, number> = { 2: 4, 3: 3, 4: 4 };
-export const LOTES_EN_MEZCLA = [2, 3, 4] as const;
+/** La compra mínima a CADA productor de una mezcla: el ancla del MOQ de Black y Red. */
+export const CARGAS_POR_PRODUCTOR = 1;
+export const LOTES_EN_MEZCLA = [3, 4] as const;
+export const MOQ_MEZCLA: Record<number, number> = Object.fromEntries(
+  LOTES_EN_MEZCLA.map((n) => [n, n * CARGAS_POR_PRODUCTOR]),
+);
 
-/** Cargas mínimas de un grado. Para Black y Red hay que decir de cuántos lotes
- *  se compone la mezcla; sin ese dato se devuelve el caso más común (4). */
+/** De qué se compone cada mezcla. Hoy se EXHIBE (BCP · Lectura); el día que el OCP
+ *  arme blends, esta es la regla que tendrá que hacer cumplir. */
+export const COMPOSICION_MEZCLA = {
+  Black: { productores: LOTES_EN_MEZCLA, variedades: "varias", nota: "blend de 3 a 4 orígenes y/o variedades" },
+  Red: { productores: LOTES_EN_MEZCLA, variedades: "una", nota: "una sola variedad: mezcla regional de 3 a 4 orígenes" },
+} as const;
+
+/** Cargas mínimas de un grado. Para Black y Red hay que decir de cuántos productores
+ *  se compone la mezcla; sin ese dato se devuelve el caso mayor (4). */
 export function moqCargas(b: Banda5, lotesEnMezcla?: number): number {
   if (b === "Black" || b === "Red") return MOQ_MEZCLA[lotesEnMezcla ?? 4] ?? 4;
   if (b === "Blue") return 2;

@@ -85,10 +85,10 @@ export function EscalaBoard({
 }) {
   const [sca, setSca] = useState(86);
   const [t, setT] = useState<Triada>({ variedad: "C", proceso: "C", reconocimiento: "C" });
-  const [fisica, setFisica] = useState<BaseFisica>({ factor: 95, humedad: 11, densidadEnRango: true });
+  const [fisica, setFisica] = useState<BaseFisica>({ factor: 92.8, humedad: 11, densidadEnRango: true });
 
   const r = useMemo(() => puntosCtc(sca, t), [sca, t]);
-  const fis = useMemo(() => revisarBaseFisica(fisica), [fisica]);
+  const fis = useMemo(() => revisarBaseFisica(fisica, r.banda?.nombre ?? null), [fisica, r.banda]);
   const umbrales = useMemo(
     () => TRIADAS_TABLA.map((row) => ({
       ...row,
@@ -220,7 +220,7 @@ export function EscalaBoard({
                 Se entrega en <strong>{emp.nombre.toLowerCase()}</strong> de {emp.formatosKg.map((f) => `${f} kg`).join(" · ")}.{" "}
                 MOQ{" "}
                 {esMezcla
-                  ? "3 cargas si la mezcla es de 3 lotes, 4 si es de 2 o de 4"
+                  ? "3 o 4 cargas: una por cada productor de la mezcla (que es de 3 o de 4)"
                   : `${moqCargas(bandaComoBanda5)} carga${moqCargas(bandaComoBanda5) === 1 ? "" : "s"}`}
                 {admiteSaco(bandaComoBanda5) && ", con piso excepcional de un saco (70 kg CPS)"}; el incremento siguiente es{" "}
                 {esMezcla ? "1,5 o 2 cargas" : `${num(incrementoCargas(moqCargas(bandaComoBanda5)), 1)} carga(s)`}.

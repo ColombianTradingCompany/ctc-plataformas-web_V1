@@ -111,7 +111,9 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: Roast con etiquetas **Papagayo Beans por defecto · Co-Brand
   (productor y finca) · My Brand (diseño del comprador, que lo entrega o aprueba)**; ficha pública de un lote CTCx Selection con la
   finca **visible como dato, no protagonista**; tostado HORECA al **82 %**; los pines «MR coming soon» **también en la portada**;
-  Black y Red 3–4 cargas según la mezcla.
+  Black y Red 3–4 cargas según la mezcla — **una carga por productor**, mezcla de 3 a 4; **Black** = blend de orígenes y/o
+  variedades, **Red** = siempre una sola variedad, mezcla regional (owner, 2026-09-19). Importa para la ficha y la vitrina:
+  un Red puede anunciar SU variedad; un Black, no necesariamente.
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: es la marca del café en los tres programas —Green lo
   vende en verde por grado, Roast tostado por el Master Roaster (etiqueta Papagayo Beans por defecto; My Brand · Co-Brand por
   confirmar) y **X es la cara al consumidor directo** (tostado y empacado, venta directa)—; la bolsa lleva Papagayo Beans® +
@@ -123,7 +125,7 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
   **lista FOB** principal + lista CaaS en construcción (Cherry Picked consolidado cuando haya MR); Roast = tostado del MR de
   la región + **tostado HORECA por CaaS** (MOQ de verde × 80 %); **CTCx Selection reemplaza el nombre de la finca** en la
   vitrina (decidir si la ficha pública es documentación o vitrina); mínimos del comprador en unidades de 6 kg
-  (56 · 42 · 26 · 13 · 6, tabla §14.4); **retirar Co-Create** (logos y copy aquí; la clave y la ruta con consolas); marca CTCx.
+  (Black y Red **56 o 42** —mezcla de 4 o de 3 productores— · 26 · 13 · 6, tabla §14.4, reconciliada el 2026-09-19); **retirar Co-Create** (logos y copy aquí; la clave y la ruta con consolas); marca CTCx.
 - **Decisiones del CEO del 2026-09-16** (`docs/PVC_BCP_PLAN.md` §12) que este componente tiene que ejecutar:
   - **Cherry Picked solo se entrega DDP.** Es consolidado a través del master roaster de la región: **no hay FOB ni
     entrega en puerto**. Si un comprador quiere su café en un envío propio, eso es **CaaS** (FOB · puerto de destino ·
@@ -144,7 +146,7 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
     grados y orígenes probados · confiabilidad (paga a tiempo, no abandona carritos ni pujas). **Ponderación, no
     acumulación**; no se agregan más factores; **CaaS queda fuera** de los niveles. Pesos, fórmula y beneficios: por
     definir.
-  - **Stripe, aplazado**; se evalúa **Zulu** como pasarela. La entidad legal sigue bloqueando cobrar.
+  - **Stripe, aplazado**; las pasarelas serán **Zulu y Nequi, las dos** (owner, 2026-09-19), a configurar más adelante. La entidad legal sigue bloqueando cobrar.
 
 - **La primera subasta real** cuando el bache galardone un Tyrian (hoy la sección dice «no hay subasta abierta»).
 - **Cobros**: sin código de Stripe (aplazado, 2026-09-16); bloqueado por la entidad legal.

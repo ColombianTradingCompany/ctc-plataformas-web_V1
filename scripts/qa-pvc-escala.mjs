@@ -23,7 +23,7 @@ import { readFileSync } from "node:fs";
 import {
   ANCLAS, BANDAS_PUNTOS, K, ORDEN_TRIADA, PUNTOS_MAX, SCA_ENTRADA_PLENA, SCA_MINIMO_ESCALA, SCA_TYRIAN,
   TECHO_COMUN, VARIEDADES_SEMILLA, bandaDePuntos, baseSca, letras, multiplicador, pesoTotal,
-  puntosCtc, revisarBaseFisica, scaMinimoPara,
+  puntosCtc, revisarBaseFisica, scaMinimoPara, FACTOR_MAXIMO, FACTOR_MAXIMO_BLACK, factorMaximoDe,
 } from "../src/lib/pvc/escala.ts";
 
 const raiz = new URL("../", import.meta.url);
@@ -126,12 +126,21 @@ check("letras() respeta ese orden", letras({ variedad: "A", proceso: "B", recono
 check("pesoTotal de AAA es 6", pesoTotal(T("AAA")) === 6);
 
 // ── 9 · la Base física es una puerta, no puntos ───────────────────────────
-const fisOk = revisarBaseFisica({ factor: 95, humedad: 11, densidadEnRango: true });
-const fisMal = revisarBaseFisica({ factor: 93, humedad: 11, densidadEnRango: true });
-const fisHum = revisarBaseFisica({ factor: 95, humedad: 13, densidadEnRango: true });
-const fisSin = revisarBaseFisica({ factor: 95, humedad: 11, densidadEnRango: null });
-check("factor 95 cumple", fisOk.cumple);
-check("factor 93 no cumple", !fisMal.cumple);
+// El factor: MÁS BAJO ES MEJOR — ≤ 94, y un Black entra hasta 98 (owner, 2026-09-17).
+// Hasta la V5.52 estas dos afirmaciones estaban AL REVÉS («95 cumple · 93 no cumple») y
+// pasaban en verde sobre un módulo que también lo estaba: un guardián que copia la
+// regla del código no verifica nada. La fuente es el plan (§14 n.º 9) y el tablero.
+const fisOk = revisarBaseFisica({ factor: 93, humedad: 11, densidadEnRango: true });
+const fisMal = revisarBaseFisica({ factor: 95, humedad: 11, densidadEnRango: true });
+const fisHum = revisarBaseFisica({ factor: 93, humedad: 13, densidadEnRango: true });
+const fisSin = revisarBaseFisica({ factor: 93, humedad: 11, densidadEnRango: null });
+check("factor 93 cumple (más bajo es mejor)", fisOk.cumple);
+check("factor 94 cumple (el límite es del que cumple)", revisarBaseFisica({ factor: 94, humedad: 11, densidadEnRango: true }).cumple);
+check("factor 95 NO cumple", !fisMal.cumple);
+check("factor 95 SÍ cumple si el lote es Black (hasta 98)", revisarBaseFisica({ factor: 95, humedad: 11, densidadEnRango: true }, "Black").cumple);
+check("factor 98 cumple en Black, 98,5 ya no", revisarBaseFisica({ factor: 98, humedad: 11, densidadEnRango: true }, "Black").cumple && !revisarBaseFisica({ factor: 98.5, humedad: 11, densidadEnRango: true }, "Black").cumple);
+check("el tope de Black NO vale para un Red", !revisarBaseFisica({ factor: 96, humedad: 11, densidadEnRango: true }, "Red").cumple);
+check("los topes son 94 y 98", FACTOR_MAXIMO === 94 && FACTOR_MAXIMO_BLACK === 98 && factorMaximoDe("Black") === 98 && factorMaximoDe("Gold") === 94 && factorMaximoDe(null) === 94);
 check("humedad 13 no cumple", !fisHum.cumple);
 check("sin densidad queda pendiente", fisSin.pendiente && !fisSin.cumple);
 check("la Base física NO cambia los puntos", P(86, "BBB") === puntosCtc(86, T("BBB")).puntos);

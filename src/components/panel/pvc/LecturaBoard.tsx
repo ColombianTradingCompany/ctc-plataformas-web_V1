@@ -282,8 +282,9 @@ export function LecturaBoard({
       <div className={styles.card}>
         <div className={styles.sectionHead}><strong>Mínimos y empaque por grado</strong></div>
         <p className={styles.meta}>
-          Black y Red son mezclas: su mínimo lo fija cuántos lotes las componen (cada lote aporta al menos una carga y la
-          mezcla no baja de tres). El incremento después del mínimo es la mitad, y la casa puede bajar a cuartos para
+          Black y Red son mezclas de 3 a 4 productores: el Black, de varios orígenes y/o variedades; el Red, siempre de
+          una sola variedad (una mezcla regional). Su mínimo está anclado a la compra mínima a cada productor —una carga—,
+          así que son 3 o 4 cargas. El incremento después del mínimo es la mitad, y la casa puede bajar a cuartos para
           colocar el resto. Siempre limitado a la disponibilidad.
         </p>
         <div className={table.scroll}>
@@ -315,7 +316,7 @@ export function LecturaBoard({
                     <td>{emp.formatosKg.map((f) => `${f} kg`).join(" · ")}</td>
                     <td style={{ textAlign: "right" }}>
                       {esMezcla ? "3 o 4 cargas" : `${moq} carga${moq === 1 ? "" : "s"}`}
-                      {esMezcla && <div className={styles.kpiSub}>3 lotes → 3 · 2 o 4 lotes → 4</div>}
+                      {esMezcla && <div className={styles.kpiSub}>1 carga por productor · 3 productores → 3 · 4 → 4</div>}
                       {admiteSaco(b) && <div className={styles.kpiSub}>excepción: 1 saco ({SACO_KG_CPS} kg CPS)</div>}
                     </td>
                     <td style={{ textAlign: "right" }}>

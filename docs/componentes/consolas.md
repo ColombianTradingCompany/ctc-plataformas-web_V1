@@ -9,7 +9,8 @@ Las tres consolas internas del equipo CTC detrás de **un login maestro** (contr
 correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18):
 
 - **BCP · Base Control Panel — *Business***: dirección (Direccionamiento, grados, misión/visión,
-  modelo económico, mercado global, **PVC**), configuración del sistema (usuarios y credenciales,
+  mercado global y el **Modelo Económico** —el módulo PVC, `/bcp/pvc`: **es ÚNICAMENTE de este componente** desde el
+  2026-09-19, decisión del owner; antes lo compartía en los papeles con `herramientas-internas`—), configuración del sistema (usuarios y credenciales,
   documentación, Mapa de Trabajo, consumo de IA, automatizaciones) y la **red de socios**.
 - **OCP · Operational Control Panel — *Operation***: el **pasaporte del lote** de punta a punta —
   productores, fincas (visa EUDR), lotes (EVA, sello), nominados (bache y veredicto Q-Grader),
@@ -28,7 +29,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 | Ruta | Qué | Notas |
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
-| `/bcp/(app)/…` | Business | `direccionamiento/*`, `usuarios`, `documentacion`, `mapa`, `consumo`, `automatizaciones`, `socios/[nodo]`, `pvc/*` |
+| `/bcp/(app)/…` | Business | `direccionamiento/*`, `usuarios`, `documentacion`, `mapa`, `consumo`, `automatizaciones`, `socios/[nodo]`, `pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` (+ `GET /api/pvc/current`) |
 | `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `arena/[sessionId]/run`, `galardonados`, `club`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection`, `crm/{caas,green,roast,x}` |
 | `/ecp/(app)/…` | Execution | `buzon`, `leads`, `plataformas`, `directorio`, `coffeed`, `herramientas`, `terratalento`, `ctc-tech`, `varietales`, `ctc-home`, `cotizador-*`, `anclas-mercado`, `transcripciones` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V4.26 | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -46,6 +47,14 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   `requireActiveAdmin`, `requireConsoleWrite`, `rutasMovidas.ts`, `salidasDeLaPlataforma.ts`,
   `navActivo.ts`, `panelUsers.ts`, `architectureDocs.ts`.
 - `src/lib/{bcp,buzon,crm,direccionamiento,workmap,identidad,partners,email,ai,integraciones}/`.
+- **`src/lib/pvc/` — el Modelo Económico** (BCP, solo de aquí): `motor.ts` (port del Python; **`paridad.json` es el contrato
+  entre los cuatro motores** — Python de referencia en `C:\dev\ctc-platforms\apps-internas\PVC - Modelo\v2.0`, Excel,
+  `motor.ts` y el JS del tablero `docs/pvc/tablero/PVC_Tablero.html`), `servicio.ts` (`edicionVigente`: la edición cuya
+  ventana contiene hoy), `actions.ts` (`crearVersionModeloAction`), `dossier.ts`, `tablero.ts`, `tipos.ts`, y los módulos
+  PUROS que hoy se exhiben y no gobiernan nada: `lectura.ts` (KPI, empaque, **la regla de la mezcla y los MOQ**),
+  `escala.ts` («El Punto y la Tríada» y la **Base física**), `canales.ts` (programas × tramos), `compromiso.ts` (la escalera
+  del productor). Pantallas en `src/components/panel/pvc/` (`PvcTabs`, `LecturaBoard`, `EscalaBoard`, `ParametrosBoard`,
+  `EdicionesBoard`); `scripts/seed-pvc-f4-2026.mjs`. Plan: `docs/PVC_BCP_PLAN.md`.
 - `src/lib/arena/` (compartido con KR): `jornada.ts`, `labEvaluation.ts`, `club.ts`, `seasons.ts`,
   `inscriptions.ts`, `entryCodes.ts`, `mejoras.ts`, `payment.ts`.
 
@@ -58,10 +67,12 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
 `lot_auctions` (administración) · `black_negotiations` · `purchase_contracts` · `contract_releases` ·
-`humidity_readings` · `lot_listings` (publicación) · `club_campaigns` · `ai_usage`.
+`humidity_readings` · `lot_listings` (publicación) · `club_campaigns` · `ai_usage` ·
+**el Modelo Económico**: `pvc_model_versions` · `pvc_editions` (guard: publicada = inmutable) · `pvc_cycles` ·
+`pvc_sources` · `pvc_trigger_watch` · `pvc_forecast_scores` · vistas `public_pvc_current` y `public_pvc_next`.
 
 **Solo lee** (dueño en otro charter): `fincas`, `lots`, `producer_profiles`, `buyer_profiles`,
-`orders`, `directorio_*`, `coffeed_*`, `tools*`, `transcripts`, `pvc_*`, `terratalento_*`.
+`orders`, `directorio_*`, `coffeed_*`, `tools*`, `transcripts`, `terratalento_*`.
 
 ## Guardianes
 
@@ -73,7 +84,10 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
-`qa-guard-check.mjs` (seguridad, con cuentas QA).
+`qa-guard-check.mjs` (seguridad, con cuentas QA) ·
+**los siete del Modelo Económico**: `qa-pvc-motor.mjs` (49 — paridad con Python, tolerancia 1e-4) · `qa-pvc-tablero.mjs`
+(44 — marcadores `@@MODELO`) · `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (67 — incluye la regla de la mezcla, en el código Y en el plan) ·
+`qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31).
 
 ## Reglas propias
 
@@ -84,6 +98,10 @@ portal y el peso de las imágenes) ·
 - **Lo derivado no se persiste** (etapa del comprador, `ctc_selection`, `tiene_ficha`…): se calcula al leer.
 - **Un `throw` en una action de formulario tumba la página**: `{ ok:false, error }` + `ActionForm`.
 - La sesión de consola vive en **`ctc-panel-auth`**, jamás en la cookie compartida.
+- **Modelo Económico: cambiar una regla del MOTOR empieza en Python** (`pvc_model_v2.py`, redondeo comercial), se regeneran
+  `vals`/`paridad.json`, y después los otros tres motores hasta que los guardianes pasen. Un cambio de parámetros es **una
+  versión nueva con acta**, no una edición. **Una sola ruta de publicación** (el embed). Y un guardián **no copia la regla
+  del código**: la toma del plan (la lección de la Base física, V5.53).
 - Escrituras del OCP: el `requireActiveAdmin` grueso es deuda anotada (plan V5 §9), no un olvido.
 
 ## Lo que este componente gobierna de los demás (la cara backstage)
@@ -102,10 +120,10 @@ portal y el peso de las imágenes) ·
 ## Pendientes
 
 - **PRIMERA AUDITORÍA DEL NODO FINAL (2026-09-19, `ALINEACION` §3)** — lo que destapó y es de este componente:
-  **(a)** ⚠️ **`src/lib/pvc/escala.ts` implementa la base física AL REVÉS de lo decidido**: `revisarBaseFisica` exige
-  `factor > 94` («mayor que 94») y `qa-pvc-escala` lo afirma en verde («factor 95 cumple · 93 no cumple»), cuando el
-  owner fijó **≤ 94, Black hasta 98** (`PVC_BCP_PLAN.md` §14 n.º 9). Hoy solo lo lee `EscalaBoard` (BCP · Grados), pero
-  es la puerta que el veredicto heredará en CN-9: se corrigen el módulo Y su guardián en la misma tanda.
+  **(a)** ~~⚠️ `src/lib/pvc/escala.ts` implementa la base física AL REVÉS de lo decidido~~ — **corregido en la V5.53**:
+  `revisarBaseFisica(b, banda)` pide **factor ≤ 94, y hasta 98 si el lote es Black** (`FACTOR_MAXIMO`,
+  `FACTOR_MAXIMO_BLACK`), y `qa-pvc-escala` (68) lo afirma desde el plan, no desde el código. Sigue siendo exhibición
+  (BCP · Grados); la puerta real del veredicto es CN-9.
   **(b)** **Guardián roto**: `scripts/qa-transcripciones-nube.mjs` (línea 60) busca el fixture en
   `../reference_html_tools/_whatsapp-transcript-html/…`, que ya no existe; vive en
   `tools/transcriptor/tests/fixtures/two_speakers.ogg`. Es el gemelo de la línea de `WorkersBadge` (hecha en la V5.42).
@@ -121,9 +139,10 @@ portal y el peso de las imágenes) ·
   `contractActions.ts`, el reembolso del 80 % al rechazado en `recordEvaluationVerdict`, los pasos que no avisan al
   productor, los plazos de D2 §11.3); el **modelo v2.2.0** (columna marítima, DDP consolidado ≠ dedicado, regiones como
   dato); y la **contraparte en el OCP de cada nodo socio** (`socios.md`, SO-2).
-  **(e)** **Dueño ambiguo del PVC**: §3b carga todo el PVC a «consolas (BCP)», este charter declara `pvc_*` como «solo
-  lee» y `herramientas-internas.md` se dice dueño de `pvc_*` y `src/lib/pvc` — mientras §3 anota las V5.44–V5.47 a
-  nombre de «consolas (BCP)». **Decide el owner** de quién es el módulo; mientras tanto manda §3b.
+  **(e)** ~~**Dueño ambiguo del PVC**~~ — **decidido por el owner el 2026-09-19: el módulo es ÚNICAMENTE del BCP** (este
+  componente). Este charter ganó sus tablas, su mapa de código, sus siete guardianes y su regla; `herramientas-internas.md`
+  los soltó. Lo único que ese charter conserva cerca es el **Cotizador de Empaque** (ECP), del que el KPI de verde toma el
+  costo de empaque.
 - ~~**Reconciliar las correcciones del guion v0.9.1**~~ — **hecho el 2026-09-18**. `PVC_BCP_PLAN.md` §14.2 (n.º 10 y el
   nuevo 11-bis) y `PLAN_NARRATIVA_2026-09-17.md` §CN-3 ya dicen **«Gold hasta 100 kg»** y **«CTCx coinvierte»** en vez de
   «descuento». La línea está en `ALINEACION` §3. Lo que queda es **copy con dueño `kaffetal-regal`** (`EvaluacionesTab`,
@@ -183,7 +202,9 @@ portal y el peso de las imágenes) ·
   motor v2.2.0) · CN-9 (fase 2 de grados, con O-2). Cada una lleva su línea «Hoy:» lista para este kick-off.
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: `legal.ts` con la razón social completa **CTCX Colombian
   Trading Company SAS**; **UID/QR del lote** para la bolsa (enlaza ficha pública, Visa EUDR y trazabilidad); publicar el PVC de
-  ene–mar 2027 **antes del 15-oct-2026**; mínimos con Black y Red **3–4 según la mezcla**. No queda ninguna pregunta de narrativa
+  ene–mar 2027 **antes del 15-oct-2026**; mínimos con Black y Red **3–4 según la mezcla** — **cerrado el 2026-09-19 y en
+  código desde la V5.53**: mezcla de 3 a 4 productores, **una carga por productor**; Black = blend de orígenes y/o
+  variedades, Red = siempre una sola variedad (mezcla regional); la mezcla de dos ya no existe (`lectura.ts`). No queda ninguna pregunta de narrativa
   abierta; el cuarto documento («Decisiones y pendientes», fuera del repo) consolida lo que falta ejecutar.
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: entra al vocabulario congelado; donde este componente
   nombra el café (catálogo publicado, fichas técnicas y ficha pública, Open Graph/JSON-LD del lote, CTCx Selection) debe
@@ -221,7 +242,9 @@ portal y el peso de las imágenes) ·
   el Tablero gana el rol de configurador que un agente usa para proponer la versión siguiente del modelo (nunca
   publica); `pvc_cycles.kind` gana `month_wrap` (cinco por periodo, el quinto cierra la franja y alimenta la afinación);
   el componente de empaque del KPI de verde viene del **Cotizador de Empaque** del ECP.
-- **Número de Nequi** real en `src/lib/arena/payment.ts` (owner).
+- **Métodos de pago: Nequi Y Zulu, los dos** (owner, 2026-09-19) — se configuran más adelante. De este componente: el
+  número de Nequi real en `src/lib/arena/payment.ts` (la tarifa de evaluación no es cobrable hasta entonces) y, cuando
+  toque, la integración de Zulu; Stripe sigue aplazado.
 - **La primera jornada-vitrina** como evento supervisado; **estrenar el escáner visual** con soportes reales.
 - Hallazgos de la auditoría 2026-07-10 aún sin aplicar (HANDOFF §Audit findings): `search_path` en 4
   funciones, `revoke EXECUTE` en 4 funciones trigger, índices de FK, `(select auth.uid())` en ~20 políticas,
@@ -239,6 +262,7 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
+El Modelo Económico (PVC, /bcp/pvc) es SOLO de este componente: si la tarea lo toca, lee además docs/PVC_BCP_PLAN.md.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
 de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).

@@ -266,7 +266,7 @@ sin regalar Tyrian a 84. El único sitio donde la gráfica salta en vez de escal
 
 - **Puerta 0 — la Base física (§9.1.b).** Antes de mirar el Punto y la Tríada, el lote tiene que cumplir los tres
   físicos: factor de rendimiento **≤ 94** (más bajo es mejor; Black hasta 98 — corregido el 2026-09-19: aquí seguía
-  el «> 94» que el §14 n.º 9 retiró; ⚠️ `src/lib/pvc/escala.ts` aún lo implementa al revés), humedad **10–12 %** y densidad **dentro del rango de su variedad**. Sin eso
+  el «> 94» que el §14 n.º 9 retiró; `src/lib/pvc/escala.ts` lo implementaba al revés hasta la V5.53), humedad **10–12 %** y densidad **dentro del rango de su variedad**. Sin eso
   no hay grado que nombrar: el lote queda «apto en taza, pendiente de físico» y no entra en la escala.
 
 - **SCA < 80 → sin grado, sea cual sea el surplus.** La base sigue bajando 200 puntos por punto SCA y el multiplicador
@@ -424,16 +424,21 @@ Eso cambia la unidad de venta de Black y Red: el saco de 35 kg, no la bolsa de 6
 (§11.5): el costo de empaque deja de ser un número por grado y pasa a ser **dos** parámetros del modelo, uno por
 estándar, traídos del Cotizador de Empaque del ECP.
 
-**El mínimo de Black y Red sale de la mezcla, no del kilaje.** Los dos son **combinaciones de lotes**, y el mínimo es
-que cada lote de la mezcla aporte al menos una carga, con la mezcla sin bajar de tres:
+**El mínimo de Black y Red sale de la mezcla, no del kilaje.** Los dos son **combinaciones de lotes de 3 a 4
+productores**, y el mínimo está **anclado a la compra mínima que se le puede hacer a cada productor involucrado: una
+carga** (precisado por el owner el 2026-09-19; hasta entonces esta tabla traía una fila «2 lotes → 4 cargas, 2 de cada
+uno», que **ya no existe**: el blend es de 3 a 4):
 
-| Lotes en la mezcla | MOQ | Reparto |
+| Productores en la mezcla | MOQ | Reparto |
 |---|---|---|
-| **2 lotes** | **4 cargas** | 2 de cada uno |
-| **3 lotes** | **3 cargas** | 1 de cada uno |
-| **4 lotes** | **4 cargas** | 1 de cada uno |
+| **3** | **3 cargas** | 1 de cada uno |
+| **4** | **4 cargas** | 1 de cada uno |
 
-**Una mezcla de cinco no existe**: con seis lotes se hacen dos mezclas de tres. Vale igual para Black y para Red.
+**No son la misma mezcla.** **Black** es un blend de 3 a 4 **orígenes y/o variedades**. **Red** es **siempre de una sola
+variedad**: una **mezcla regional** de 3 a 4 orígenes. La regla de cargas es la misma para los dos.
+
+**Una mezcla de dos no existe, y una de cinco tampoco**: con seis productores se hacen dos mezclas de tres. En código:
+`src/lib/pvc/lectura.ts` (`LOTES_EN_MEZCLA`, `CARGAS_POR_PRODUCTOR`, `COMPOSICION_MEZCLA`), guardián `qa-pvc-lectura`.
 
 **Lote único: el mínimo es del lote.** **Blue: 2 cargas.** **Gold: 1 carga** como estándar. **Gold y Tyrian** admiten,
 en casos particulares, bajar hasta **un saco — 70 kg de CPS, ≈ 50 kg de verde, ≈ 40 kg de tostado** — incluso al borde
@@ -967,7 +972,9 @@ Precio aconsejado tostado in situ =
 ### 12.6 MOQ
 
 > ⚠️ **Precisado por el owner el 2026-09-17** (§14 n.º 10 y §14.4): el mínimo **no es igual para todo programa**. Cherry Picked
-> lleva el mínimo del lote en cargas por grado —**4 · 3 · 2 · 1 · ½**, fijos— más la compra inicial en firme; CaaS entra con 15–25 kg.
+> lleva el mínimo del lote en cargas por grado —~~**4 · 3 · 2 · 1 · ½**, fijos~~ **3–4 · 3–4 · 2 · 1 · ½**: Black y Red NO son fijos,
+> son 3 o 4 según cuántos productores compongan la mezcla, a una carga por productor (§14.7 n.º 28, cerrado por el owner el
+> 2026-09-19)— más la compra inicial en firme; CaaS entra con 15–25 kg.
 > El empaque como presentación se mantiene.
 
 **Fundamento.** El MOQ sale de **la cantidad de café que se puede comprar y procesar de forma significativa e individual
@@ -1082,7 +1089,8 @@ Lectura y `qa-pvc-compromiso` reproduce esta tabla **exacta**.
 2. **Beneficios concretos** por nivel de reputación (charter `cherry-picked` y `kaffetal-regal`).
 3. **Pesos y fórmula** de cada pata de la tríada de reputación.
 4. **Plus contra Básica**: qué herramientas quedan en cada nivel (hoy el default de Herramientas del Café es Plus).
-5. **Zulu** como pasarela de pagos (Stripe y Nequi, aplazados).
+5. **Zulu** como pasarela de pagos (Stripe y Nequi, aplazados). — **Precisado por el owner el 2026-09-19**: los métodos de pago
+   se configuran más adelante, y **se integrarán los dos, Nequi y Zulu** (no es uno u otro). Stripe sigue aplazado.
 6. **Entidad legal** (país) para cobros — bloquea cobrar.
 7. **Marca «Kaffetal»** ante la SIC.
 8. **Alinear PVC-F4-2026 al trimestre exacto** (hoy 15-sep → 15-dic): ¿la siguiente edición arranca el 1-ene y se acorta
@@ -1238,15 +1246,19 @@ reglas que el sistema aplica o le muestra al cliente; lo que es palanca de negoc
 
 | Grado | Cargas mín. (origen) | kg pergamino | kg verde (70 %) | MOQ comprador (unid. de 6 kg) | kg ajustado | Colchón |
 |---|---|---|---|---|---|---|
-| Black | 4 | 500 | 350 | 56 | 336 | 14 kg · 4,0 % |
-| Red | 3 | 375 | 262,5 | 42 | 252 | 10,5 kg · 4,0 % |
+| Black · Red — mezcla de **4** productores | 4 | 500 | 350 | 56 | 336 | 14 kg · 4,0 % |
+| Black · Red — mezcla de **3** productores | 3 | 375 | 262,5 | 42 | 252 | 10,5 kg · 4,0 % |
 | Blue | 2 | 250 | 175 | 26 | 156 | 19 kg · 10,9 % |
 | Gold | 1 | 125 | 87,5 | 13 | 78 | 9,5 kg · 10,9 % |
 | Tyrian | ½ | 62,5 | 43,75 | 6 | 36 | 7,75 kg · 17,7 % |
 
 Es el puente del §11.3 con números: el colchón de merma **crece al bajar el volumen**. La columna «máx. tostado sobre el
-colchón» de la tabla (85 % de remanente: 11,9 · 8,9 · 16,2 · 8,1 · 6,6 kg; 52,5 kg en total) queda anotada. Black 4 y Red 3
-son fijos (el §12.6 decía «3–4 según la mezcla»). Estos mínimos son los de Cherry Picked (n.º 10).
+colchón» de la tabla (85 % de remanente: 11,9 · 8,9 · 16,2 · 8,1 · 6,6 kg; 52,5 kg en total) queda anotada. ~~Black 4 y Red 3
+son fijos~~ — **reconciliado el 2026-09-19 (owner)**: la tabla original traía «Black 4 · Red 3» como fijos y el §14.7 n.º 28 lo
+corrigió a «3–4 según la mezcla» sin tocar esta sección. La regla, ya en todos lados: **Black y Red son mezclas de 3 a 4
+productores y el mínimo es una carga por productor** —3 o 4 cargas, las dos filas de arriba valen para los dos grados—;
+**Black** mezcla orígenes y/o variedades, **Red** es siempre de una sola variedad (mezcla regional). Estos mínimos son los de
+Cherry Picked (n.º 10).
 
 ### 14.5 Queda por confirmar (owner)
 
@@ -1283,7 +1295,9 @@ y las etiquetas de Roast. No queda ninguna pregunta de narrativa abierta; lo que
 26. **Merma verde → tostado: 82 %** de remanente, argumentado por la búsqueda del mejor grano y la pérdida que implica
     (reemplaza el 80 % del n.º 14 y el 85 % de la tabla; el mapa V43 decía ~80 %).
 27. **El PVC de ene–mar 2027 se publica antes del 15-oct-2026** (la regla general del n.º 6 sigue).
-28. **Black y Red: 3–4 cargas según la mezcla** (no fijos); la tabla del §14.4 muestra los dos casos (3 cargas → 42 unidades ·
+28. **Black y Red: 3–4 cargas según la mezcla** (no fijos — **precisado el 2026-09-19**: la mezcla es de 3 a 4 productores y el
+    mínimo es **una carga por productor**; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla
+    regional); la tabla del §14.4 muestra los dos casos (3 cargas → 42 unidades ·
     252 kg; 4 → 56 · 336 kg).
 29. **Los pines «MR coming soon» van en todo**: portada pública y material comercial.
 

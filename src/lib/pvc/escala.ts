@@ -185,12 +185,20 @@ export function scaMinimoPara(banda: string, t: Triada, paso = 0.01): number | n
 // No suma ni resta puntos. Da el DERECHO a que el lote lleve un grado. Un lote
 // que no la cumple queda «apto en taza, pendiente de físico».
 
-export const FACTOR_MINIMO = 94;
+// El factor de rendimiento son los kilos de pergamino que hacen falta para 70 kg de
+// excelso: MÁS BAJO ES MEJOR. La casa pide 94 o menos; un Black entra hasta 98
+// (owner, 2026-09-17, plan §14 n.º 9). Hasta la V5.52 este archivo lo tenía AL REVÉS
+// («mayor que 94») y su guardián lo afirmaba en verde: lo destapó la auditoría del
+// 2026-09-19. El tablero publicado siempre dijo «≤ 94; Black hasta 98».
+export const FACTOR_MAXIMO = 94;
+export const FACTOR_MAXIMO_BLACK = 98;
+export const factorMaximoDe = (banda?: string | null): number =>
+  banda === "Black" ? FACTOR_MAXIMO_BLACK : FACTOR_MAXIMO;
 export const HUMEDAD_MIN = 10;
 export const HUMEDAD_MAX = 12;
 
 export type BaseFisica = {
-  /** Factor de rendimiento. La casa pide > 94. */
+  /** Factor de rendimiento. La casa pide ≤ 94 (Black hasta 98): más bajo es mejor. */
   factor: number | null;
   /** Humedad en %. Entre 10 y 12. */
   humedad: number | null;
@@ -202,13 +210,21 @@ export type BaseFisica = {
 
 export type ChequeoFisico = { id: keyof BaseFisica; nombre: string; ok: boolean | null; detalle: string };
 
-export function revisarBaseFisica(b: BaseFisica): { cumple: boolean; pendiente: boolean; checks: ChequeoFisico[] } {
+/** `banda` es el grado que el lote llevaría por sus puntos: solo cambia el tope del
+ *  factor (un Black entra hasta 98). Sin banda se aplica el tope general. */
+export function revisarBaseFisica(
+  b: BaseFisica,
+  banda?: string | null,
+): { cumple: boolean; pendiente: boolean; checks: ChequeoFisico[] } {
+  const tope = factorMaximoDe(banda);
   const checks: ChequeoFisico[] = [
     {
       id: "factor",
       nombre: "Factor de rendimiento",
-      ok: b.factor == null ? null : b.factor > FACTOR_MINIMO,
-      detalle: `mayor que ${FACTOR_MINIMO}`,
+      ok: b.factor == null ? null : b.factor <= tope,
+      detalle: banda === "Black"
+        ? `${FACTOR_MAXIMO_BLACK} o menos (Black; el resto de los grados, ${FACTOR_MAXIMO} o menos)`
+        : `${FACTOR_MAXIMO} o menos — más bajo es mejor (un Black entra hasta ${FACTOR_MAXIMO_BLACK})`,
     },
     {
       id: "humedad",

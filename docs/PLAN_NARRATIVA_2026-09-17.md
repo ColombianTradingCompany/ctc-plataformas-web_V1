@@ -28,7 +28,7 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 |---|---|---|---|---|---|---|
 | 0 | O-1 | owner | F4-2026: extender al 31-dic o publicar oct–dic | — | — | CN-1 |
 | 0 | O-2 | owner | Validar la escala de puntos + X % del collar de TRM | — | — | ola 4 |
-| 0 | O-3 | owner | Entidad legal + pasarela (Zulu) | — | — | cobros: CN-5, CP-3 |
+| 0 | O-3 | owner | Entidad legal + pasarelas (**Zulu y Nequi, las dos**) | — | — | cobros: CN-5, CP-3 |
 | 0 | O-4 | owner + Estudio de Contenido | Diseño físico de la bolsa, el sticker y la etiqueta trasera | — | — | CN-7, SO-1 |
 | 0 | O-5 | owner | Alianzas: Centro de Calidad + CIR, MR local, operadores y MR «coming soon» | — | — | ola 3 |
 | 0 | O-6 | owner | Marcas: «Kaffetal» ante la SIC; registros de Papagayo Beans® y CTCx | — | — | KR, CP |
@@ -64,7 +64,8 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 - **O-2 · La escala de puntos.** Validar con la calculadora del artefacto «PVC · Cinco decisiones» (pesos iguales
   V·P·R, caso AAA:80, filas Caturra/Catuaí/Bourbon; `PVC_BCP_PLAN.md` §9.1) y fijar el X % del collar de TRM (§9.3).
   Es la única puerta de la ola 4.
-- **O-3 · Cobrar.** Entidad legal (país) y pasarela (Zulu; Stripe y Nequi aplazados). Hasta entonces, la tarifa de
+- **O-3 · Cobrar.** Entidad legal (país) y pasarelas: **Zulu y Nequi, se integran las dos** (owner, 2026-09-19; Stripe sigue
+  aplazado). Se configuran más adelante. Hasta entonces, la tarifa de
   evaluación y la tienda no cobran: «Evaluar mi Café» sigue mandando a `info@`.
 - **O-4 · La bolsa.** Diseño del frente (Papagayo Beans®, sello del grado, «un café de CTCx»), del sticker de
   productor y finca, del QR y de la etiqueta trasera estándar (Roast: PB por defecto · Co-Brand · My Brand). Lo hace
@@ -86,7 +87,8 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 - **Alcance.** Nueva edición con `valid_from` 1-ene-2027 y `valid_to` 31-mar; F4-2026 según O-1; la regla pública
   de anticipación (primeras dos semanas del segundo mes del periodo anterior) en la pestaña Lectura y en
   `GET /api/pvc/current` + `public_pvc_next`; emitir `pvc.published`. Mínimos por grado en la edición con Black y Red
-  «3–4 según la mezcla» (tabla §14.4) para que CN-3 y CP-3 los lean.
+  «3–4 según la mezcla» (tabla §14.4: mezcla de 3 a 4 productores, **una carga por productor**; Black = orígenes y/o
+  variedades, Red = siempre una sola variedad — owner, 2026-09-19) para que CN-3 y CP-3 los lean.
 - **Archivos.** `src/app/bcp/(app)/pvc/*`, `src/lib/pvc/{servicio,actions,lectura}.ts`, migración si cambia `pvc_editions`.
 - **Guardianes.** `qa-pvc-vigencia`, `qa-pvc-lectura`, `qa-pvc-motor`, `qa-pvc-tablero`.
 - **Backstage.** KR-1 cita el calendario (texto); CP-3 lee la edición. Línea en §3.
@@ -107,7 +109,7 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 ### CP-1 · cherry-picked · US$ y mínimos · M
 
 - **Alcance.** `data.ts`: `eur` → formato US$, `price` en US$/kg, retirar `ASSOC_BLACK_MOQ = 350`; `LotCard` con el
-  mínimo en unidades de 6 kg por grado (Black y Red 42–56 según la mezcla · Blue 26 · Gold 13 · Tyrian 6) y el empaque
+  mínimo en unidades de 6 kg por grado (Black y Red 42 o 56 —mezcla de 3 o de 4 productores, una carga por productor— · Blue 26 · Gold 13 · Tyrian 6) y el empaque
   como presentación; `RoastLanding` (`FEE_EUR_KG` → US$); `TyrianSection` exhibe US$/kg (la puja real cambia con CN-4:
   o se hace en la misma tanda con línea en §3, o CP-1 solo cambia la exhibición).
 - **Guardianes.** `qa-sneak-peek-check`, `qa-subastas-check` (lado CP), `qa-checkout-check`.

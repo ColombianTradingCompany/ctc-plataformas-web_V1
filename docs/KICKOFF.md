@@ -2,17 +2,16 @@
 
 **Generado desde la sección «Kick-off» de cada charter** (`docs/componentes/<clave>.md`) por
 `python docs/componentes/build_kickoff.py`; si un charter cambia su kick-off, se vuelve a compilar — este archivo no se edita a mano.
-Escrito el 2026-09-11 como entregable del paso 3.8 de `REFURBISH_PLAN.md`.
+El mismo script escribe **`docs/KICKOFF.html`**: el mismo contenido como documento para usar (índice, botón de copiar y el campo «Hoy:»).
+Escrito el 2026-09-11 como entregable del paso 3.8 de `REFURBISH_PLAN.md`; el prompt del nodo final entró el 2026-09-19.
 
 ## Cómo se arranca una sesión
 
-1. **Abrir Claude Code en `C:\dev\ctc-platforms\ctc-platform`** (para CommaaS, en `C:\dev\commaas-hub\commaas`).
-   Nunca en la carpeta vieja de OneDrive: la memoria de Claude va atada a la carpeta. La sesión de la
-   **Secretaría** necesita además los conectores de Notion, Google (Drive · Gmail · Calendar) y Make activos.
-2. **Filar la conversación en el grupo de la barra lateral** que lleva el nombre del componente (ya existen los doce).
-3. **Pegar el prompt** del componente y sustituir `<la tarea>` (y `<nombre>`/`<id>` en las herramientas).
-4. Al cerrar la tanda, la sesión deja el charter con sus «Pendientes» al día y, si el cambio alcanza a otro
-   componente, una línea en `docs/ALINEACION.md` §3. La siguiente sesión de ese componente empieza leyendo eso.
+1. **Abrir Claude Code en `C:\dev\ctc-platforms\ctc-platform`.** Para CommaaS, en `C:\dev\commaas-hub\commaas`. Nunca en la carpeta vieja de OneDrive: la memoria de Claude va atada a la carpeta. La sesión de la Secretaría necesita además los conectores de Notion, Google (Drive · Gmail · Calendar) y Make activos.
+2. **Filar la conversación en el grupo de la barra lateral.** El que lleva el nombre del componente (ya existen los doce).
+3. **Pegar el prompt y sustituir `<la tarea>`.** Y `<nombre>` / `<id>` / `<nodo>` en las herramientas y los socios.
+4. **Cerrar la tanda.** La sesión deja el charter con sus «Pendientes» al día y, si el cambio alcanza a otro componente, una línea en `docs/ALINEACION.md` §3. La siguiente sesión de ese componente empieza leyendo eso.
+5. **Pasar por el nodo final.** Cuando una o varias tandas ya están empujadas, la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» audita que el maestro y los charters digan lo mismo y, si toca, compila el wrap del mapa.
 
 Regla de oro: **una conversación = un componente**. Si la tarea cruza dos, se arranca en el que la ORIGINA
 (la consola, casi siempre) y el otro recibe un pendiente con dueño.
@@ -33,8 +32,9 @@ Regla de oro: **una conversación = un componente**. Si la tarea cruza dos, se a
 | Directorio del Café | Directorio del Café | `docs/componentes/directorio.md` |
 | CTC Tech | CTC Tech | `docs/componentes/ctc-tech.md` |
 | Varietales Registrados | Varietales Registrados | `docs/componentes/varietales.md` |
-| Plataforma (lo transversal: CTC Home, proxy, SEO, auth, recuperar-acceso; **Terratalento en espera**, `docs/componentes/terratalento.md`) | CTC Consolas internas | `docs/HANDOFF.md` + `docs/ALINEACION.md` |
-| CommaaS (hub + tenants) | CommaaS | `C:\dev\commaas-hub\commaas\docs\HANDOFF.md` |
+| WRAP-COMMIT-PUSH (CTC Platforms) | CTC Consolas internas — UNA sola conversación, siempre la misma | `docs/ALINEACION.md §5.3` |
+| Plataforma (lo transversal) | CTC Consolas internas (no tiene grupo propio: es el backstage del backstage) | `docs/HANDOFF.md + docs/ALINEACION.md` |
+| CommaaS (hub y tenants) | CommaaS | `C:\dev\commaas-hub\commaas\docs\HANDOFF.md (memoria propia C--dev-commaas-hub; tenants pendientes en C:\dev\commaas-hub\tenants-pendientes\)` |
 
 ## CTC Consolas internas  ·  `consolas`
 
@@ -48,6 +48,7 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
+El Modelo Económico (PVC, /bcp/pvc) es SOLO de este componente: si la tarea lo toca, lee además docs/PVC_BCP_PLAN.md.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
 de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
@@ -56,7 +57,7 @@ verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de es
 Hoy: <la tarea>.
 ```
 
-**Sugerencia de primera tarea:** Cerrar el pendiente más barato con dueño: la línea de `WorkersBadge.tsx` que manda al operador a una carpeta que ya no existe (sube versión); y preparar al owner las cinco decisiones del PVC (`docs/PVC_BCP_PLAN.md` §8) en una sola pantalla.
+**Sugerencia de primera tarea:** CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 **antes del 15-oct-2026** (espera la decisión O-1 del owner). Si O-1 no ha llegado, lo más barato con dueño: la tarifa de `claude-sonnet-5` en `src/lib/ai/precios.ts` y el guardián roto `qa-transcripciones-nube.mjs` (`ALINEACION` §3b).
 
 ## Red de Socios  ·  `socios`
 
@@ -118,15 +119,15 @@ Antes de tocar nada lee, en este orden:
 1. docs/componentes/herramientas-internas.md   ← tu charter (dónde vive cada herramienta)
 2. docs/ALINEACION.md                          ← contratos transversales y registro de permeación
 3. AGENTS.md                                   ← la compuerta y las reglas de la casa
-Para el PVC lee además docs/PVC_BCP_PLAN.md; para el transcriptor, tools/transcriptor/README.md y
-docs/TRANSCRIPCIONES_NUBE.md; para Stripe, docs/STRIPE_PLUGIN_SETUP.md y connect-recommend-plan.md.
+El Modelo Económico (PVC) NO es de este componente: es solo del BCP (charter consolas). Para el transcriptor lee
+además tools/transcriptor/README.md y docs/TRANSCRIPCIONES_NUBE.md; para Stripe, docs/STRIPE_PLUGIN_SETUP.md y connect-recommend-plan.md.
 Lo que calcules aquí NO llega a Kaffetal Regal ni a Cherry Picked sin una línea en el §3 y el visto
 bueno del owner. Al terminar: compuerta, APP_VERSION + CHANGELOG, sello, push, verificación en vivo,
 log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
 ```
 
-**Sugerencia de primera tarea:** Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). PVC: nada hasta §8. Transcriptor: la credencial estrecha.
+**Sugerencia de primera tarea:** Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha, y el guardián `qa-transcripciones-nube` que busca su fixture en una carpeta muerta. (El PVC ya no es de aquí: es solo del BCP, charter `consolas`.)
 
 ## La Biblia del Café  ·  `biblia`
 
@@ -287,9 +288,44 @@ Hoy: <la tarea>.
 
 **Sugerencia de primera tarea:** Lo mismo que CTC Tech para el pilar `varietales`, y definir con el owner el catálogo real de plántulas (hoy la landing recoge interés, no vende).
 
+## WRAP-COMMIT-PUSH (CTC Platforms)  ·  `plataforma · nodo final`
+
+**Grupo:** CTC Consolas internas — UNA sola conversación, siempre la misma · **Charter:** `docs/ALINEACION.md §5.3`
+
+```
+Eres la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» del grupo CTC Consolas internas: el NODO FINAL de la
+plataforma CTC (repo C:\dev\ctc-platforms\ctc-platform, rama main; vía `plataforma`). Tu único oficio es comprobar
+que el maestro y el plan de cada componente están en el mismo punto, y solo entonces compilar el wrap del mapa y
+empujar. No construyes funcionalidades. Antes de tocar nada lee, en este orden:
+1. docs/ALINEACION.md     ← el maestro: §1 contratos, §3 permeación, §3b pendientes cruzados, §5.3 tu regla
+2. docs/componentes/*.md  ← los trece charters, sección «Pendientes» (y el tablero del plan vigente:
+                            docs/PLAN_NARRATIVA_2026-09-17.md §8)
+3. AGENTS.md y el log vigente docs/architecture/Log_Documentacion_Interactiva_V*.txt (su cabecera dice cómo se
+   valida un wrap y qué enseñó el anterior)
+LA AUDITORÍA, en este orden:
+(1) git fetch + status: árbol limpio y a la par de origin/main; ninguna otra sesión corriendo.
+(2) APP_VERSION ↔ CHANGELOG ↔ asientos del log ↔ insignia en vivo (curl -L a www: «V5.NN · build <sha>»).
+(3) Cada fila de §3b reflejada en «Pendientes» del charter de su dueño, y al revés.
+(4) Lo que un documento da por pendiente y otro —o el CHANGELOG, o el código— da por hecho.
+(5) Cifras y reglas que se contradicen entre documentos.
+(6) El tablero del plan contra el código.
+(7) tsc · eslint (línea base 8) · TODOS los scripts/qa-*.mjs (qa-guard y qa-checkout piden las cuentas prueba-*
+    por argv: pídemelas). Un guardián no verifica nada si copia la regla del código: la regla sale del plan.
+Lo documental lo reconcilias tú en un commit de solo docs; lo que es CÓDIGO lo anotas como pendiente con dueño
+(§3b + su charter) salvo que yo te pida ejecutarlo. Siempre una línea en el §3.
+EL WRAP: solo si el log acumula cinco asientos o más, se cerró un hito o viene una versión mayor — con el skill
+architecture-doc-versioning y la batería de validate_snapshot.mjs. Las sesiones de componente siguen empujando su
+propia tanda: tú eres el cierre, no un cuello de botella.
+Al terminar: git add de rutas explícitas, commit, sello del sha, push, verificación en vivo, y
+docs/KICKOFF.md + docs/KICKOFF.html recompilados (python docs/componentes/build_kickoff.py) si cambió un kick-off.
+Hoy: <auditoría y wrap | solo auditoría | la decisión que traigo>.
+```
+
+**Sugerencia de primera tarea:** «solo auditoría» después de que cualquier componente empuje una tanda; «auditoría y wrap» cuando el log vigente acumule cinco asientos o se cierre un hito. Si vuelves a la conversación que ya existe, no pegues el prompt entero: basta la línea «Hoy:».
+
 ## Plataforma (lo transversal)  ·  `plataforma`
 
-**Grupo:** CTC Consolas internas (no tiene grupo propio: es el backstage del backstage) · **Charter:** `docs/HANDOFF.md` + `docs/ALINEACION.md`
+**Grupo:** CTC Consolas internas (no tiene grupo propio: es el backstage del backstage) · **Charter:** `docs/HANDOFF.md + docs/ALINEACION.md`
 
 ```
 Trabajas en lo TRANSVERSAL de la plataforma CTC (clave: plataforma) — lo que no es de ningún componente:
@@ -299,13 +335,9 @@ CTC Home (/), src/proxy.ts y la red de subdominios, SEO/Open Graph/JSON-LD/sitem
 1. docs/ALINEACION.md   ← ERES el dueño de sus contratos (§1): cambiar uno exige avisar a todos los componentes que lo leen
 2. docs/HANDOFF.md      ← la arquitectura transversal y los gotchas
 3. AGENTS.md            ← la compuerta y las reglas de la casa
-Los WRAPS del mapa interactivo son de esta vía, pero se llaman SOLO desde UNA conversación del grupo:
-«WRAP-COMMIT-PUSH (CTC Platforms)» (ALINEACION §5.3), el nodo final. Si eres esa conversación: antes de
-compilar, AUDITA que el maestro y los charters estén en el mismo punto (árbol limpio y a la par de origin,
-ninguna otra sesión corriendo, version ↔ CHANGELOG ↔ log ↔ insignia en vivo, §3b ↔ «Pendientes» del dueño,
-el tablero del plan vigente, la batería completa de guardianes) y deja tu línea en el §3; después, cuando el
-log acumule cinco asientos o se cierre un hito, compila el snapshot con el skill architecture-doc-versioning.
-Si NO eres esa conversación, pide el wrap (una línea en tu charter o al owner) y no lo llames.
+Los WRAPS del mapa interactivo son de esta vía, pero NO los llamas tú: se llaman SOLO desde la conversación
+«WRAP-COMMIT-PUSH (CTC Platforms)» de este grupo (ALINEACION §5.3), que tiene su propio prompt. Si tu tanda
+necesita un wrap, pídelo (una línea en ALINEACION §3 o al owner).
 Terratalento vive aquí EN ESPERA (docs/componentes/terratalento.md): solo retroalimentación y comunicación desde ECP
 durante ~6 meses; no se construye nada nuevo ahí sin el owner.
 Todo cambio aquí PERMEA: cada tanda deja su línea en el §3 con los componentes afectados, y verifica en
@@ -320,7 +352,7 @@ Hoy: <la tarea>.
 
 ## CommaaS (hub y tenants)  ·  `commaas`
 
-**Grupo:** CommaaS · **Repo:** `C:\dev\commaas-hub\commaas` (memoria propia `C--dev-commaas-hub`) · **Tenants pendientes:** `C:\dev\commaas-hub\tenants-pendientes\` (ver su README)
+**Grupo:** CommaaS · **Charter:** `C:\dev\commaas-hub\commaas\docs\HANDOFF.md (memoria propia C--dev-commaas-hub; tenants pendientes en C:\dev\commaas-hub\tenants-pendientes\)`
 
 ```
 Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main) — el hub personal de despliegue

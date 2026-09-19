@@ -27,6 +27,8 @@
   - (2) **Mínimo del lote en Cherry Picked: Black y Red 3–4 cargas según la mezcla · Blue 2 · Gold 1 · Tyrian ½**
     (narrativa v3 KR p2 y §14 n.º 10, 28). ⚠️ La nota v0.7 original y el §14.4 decían «4 · 3 · 2 · 1 · ½»; la
     **tercera ronda (§14.7) lo corrigió a «3–4 según la mezcla, no fijos»** y así lo registra el charter. Se adopta esa.
+    **Cerrado por el owner el 2026-09-19**: la mezcla es de 3 a 4 productores y el mínimo es **una carga por productor**;
+    Black = blend de orígenes y/o variedades, Red = siempre una sola variedad (mezcla regional). El §14.4 ya lo dice.
   - (3) El **80 % del alza de Tyrian es del productor solo en Cherry Picked**, convertido a COP el día del pago; en CaaS
     el alza es de CTCx (bloques 8 y 9).
   - (4) **El café se nombra: Papagayo Beans®**, la marca del café de CTCx del verde al consumidor, con el sello del grado,
@@ -333,7 +335,7 @@ afirmación: todo lo que salió de la voz **está en PANTALLA**.
 | 8b · Lo gratuito (cuenta, finca, análisis y Visa EUDR) · compra en firme desde el primer día · pago del 100 % en ≤ 2 días | charter · owner (§5.1 n.º 3, 4) | ✅ registro y Visa gratis · 🟡 compra inicial y pago a 2 días no existen en ofertas ni contratos |
 | 0 · 8b · 9 · 12 · **Papagayo Beans®** como marca del café, con el sello del grado, el nombre del productor y su finca | narrativa v3 (CTCx p2, KR p2) · §14.6 n.º 18, §14.7 n.º 23 | 🔴 **Ninguna superficie ni línea de código dice «Papagayo Beans»**; no hay UID ni QR de bolsa |
 | 9 · **CTCx Selection** reemplaza a la finca en la vitrina si el lote entra por CaaS | narrativa v3 (CP p2) · §14 n.º 15 | 🟡 No existe la oferta `directa` ni la ficha de CTCx Selection |
-| 9 · Mínimo en Cherry Picked **3–4 según la mezcla · 2 · 1 · ½** | §14.7 (ronda 3) · narrativa v3 KR p2 · charter «Pendientes» | 🟡 El §14.4 aún dice «4 · 3 · 2 · 1 · ½»: la ronda 3 lo corrigió a «3–4 según la mezcla, no fijos». **Consolas reconcilia §14.4 con §14.7** |
+| 9 · Mínimo en Cherry Picked **3–4 según la mezcla · 2 · 1 · ½** | §14.7 (ronda 3) · narrativa v3 KR p2 · charter «Pendientes» | 🟢 **Reconciliado el 2026-09-19** (V5.53): el §14.4 ya dice «3–4 según la mezcla» — una carga por productor, mezcla de 3 a 4; Black = orígenes y/o variedades, Red = una sola variedad |
 | 12 · Perfil, finca y primer resultado gratis | charter | ✅ registro gratis · 🟡 el primer resultado (análisis EUDR) no tiene aviso ni plazo |
 
 ## 5 · Decisiones

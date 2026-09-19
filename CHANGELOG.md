@@ -19,6 +19,48 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.53] — 2026-09-19 (commit pendiente)
+
+- **Hito**: **el nodo final estrena oficio, y el owner cierra cinco decisiones en un día.** La conversación
+  «WRAP-COMMIT-PUSH (CTC Platforms)» —la vía de los wraps que `ALINEACION` §5.3 nombraba y nunca existió— auditó por
+  primera vez que el maestro y los charters estuvieran en el mismo punto (`d563a44`, solo docs). No lo estaban. De lo que
+  encontró, el owner decidió el mismo día: **(1)** el Modelo Económico (PVC) es **únicamente del BCP**; **(2)** los
+  métodos de pago serán **Nequi Y Zulu, los dos**, a configurar más adelante; **(3)** la regla de la mezcla, reconciliada
+  en todos lados; **(4)** las sesiones de componente siguen empujando su tanda y esta vía es el cierre; **(5)** un
+  documento nuevo con todos los prompts de arranque.
+- **Corregido**: **la Base física estaba implementada AL REVÉS de lo decidido.** `src/lib/pvc/escala.ts` exigía
+  `factor > 94` («mayor que 94») cuando el owner fijó **≤ 94, y un Black hasta 98** (`PVC_BCP_PLAN.md` §14 n.º 9): el
+  factor de rendimiento son los kilos de pergamino por 70 kg de excelso, y más bajo es mejor. El tablero publicado
+  siempre lo dijo bien. `revisarBaseFisica(b, banda)` recibe ahora el grado que el lote llevaría, y nacen
+  `FACTOR_MAXIMO`, `FACTOR_MAXIMO_BLACK` y `factorMaximoDe`. La calculadora de BCP · Grados arranca en 92,8 (la base
+  de la FNC) en vez de en un 95 que ya no cumple. Hoy solo lo lee esa pantalla; es la puerta que el veredicto heredará.
+- **Corregido**: **`qa-pvc-escala` afirmaba la regla invertida EN VERDE** («factor 95 cumple · 93 no cumple»). Un
+  guardián que copia la regla del código no verifica nada: ahora la toma del plan — 93 y 94 cumplen, 95 no, 95 sí en
+  Black, 98 sí y 98,5 no, y el tope de Black no vale para un Red (63 → **68** comprobaciones).
+- **Cambiado**: **la regla de la mezcla** (`src/lib/pvc/lectura.ts`), precisada por el owner. **Black** es un blend de
+  3 a 4 **orígenes y/o variedades**; **Red** es **siempre de una sola variedad** —una mezcla regional—; y los 3 o 4
+  están **anclados a la compra mínima a cada productor involucrado: una carga**. Sale la fila «2 lotes → 4 cargas»: una
+  mezcla de dos ya no existe. Nacen `CARGAS_POR_PRODUCTOR` y `COMPOSICION_MEZCLA`; `MOQ_MEZCLA` se DERIVA
+  (`n × CARGAS_POR_PRODUCTOR`) en vez de escribirse a mano. `LecturaBoard` y `EscalaBoard` lo dicen así;
+  `qa-pvc-lectura` 59 → **67** (cuatro de ellas leen el PLAN: la regla escrita y la del código tienen que ser la misma).
+- **Docs**: la mezcla, **reconciliada en todos lados** — `PVC_BCP_PLAN.md` §9.2 (tabla sin la fila de dos), §12 (el
+  «4 · 3 · 2 · 1 · ½, fijos»), §14.4 (la tabla traía «Black 4 · Red 3» fijos; ahora son dos filas que valen para los dos
+  grados) y §14.7 n.º 28; `ALINEACION` §3b; el plan de narrativa (CN-1, CP-1); `consolas.md`, `cherry-picked.md`,
+  `kaffetal-regal.md` y el brief del guion del productor, que llevaba el 🟡 «consolas reconcilia».
+- **Docs**: **el Modelo Económico es solo del BCP.** `consolas.md` gana sus tablas (`pvc_*`, `public_pvc_current`,
+  `public_pvc_next`), su mapa de código, sus **siete guardianes** (`qa-pvc-{motor,tablero,vigencia,lectura,escala,
+  canales,compromiso}`) y su regla («cambiar el motor empieza en Python»); `herramientas-internas.md` los suelta — llevaba
+  congelado en la fase 1 del PVC desde la V5.29.
+- **Docs**: **métodos de pago** — `ALINEACION` §1 deja de tener un «conflicto abierto n.º 2»: Nequi y Zulu se integran
+  los dos (Stripe sigue aplazado). Reescritas las dos filas de §3b que se contradecían, el O-3 del plan, y los charters
+  de consolas, Kaffetal Regal y Cherry Picked.
+- **Añadido**: **`docs/KICKOFF.html`** — el documento nuevo con los **18 prompts de arranque** (los doce componentes,
+  el nodo final, plataforma, CommaaS y los tres de «proyecto nuevo»): índice, botón de copiar y un campo «Hoy:» que
+  rellena `<la tarea>` antes de copiar. Lo compila el mismo `build_kickoff.py` que ya escribía `KICKOFF.md`, desde
+  `docs/componentes/kickoff_plantilla.html`, para que no vuelva a quedarse viejo (el PDF que usaba el owner no traía la
+  Secretaría y nombraba una vía que no existía). El **prompt de «WRAP-COMMIT-PUSH»** es nuevo y lleva la auditoría en
+  siete pasos.
+
 ## [V5.52] — 2026-09-18 (commit 7037ec4)
 
 - **Hito**: **CP-1 · la tienda deja el euro.** El precio de un lote lo calcula el PVC en **dólares**

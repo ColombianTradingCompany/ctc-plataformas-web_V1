@@ -96,7 +96,8 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
   (copy de grados, en la misma tanda que CN-9). El rodaje del video (O-8) espera a KR-1 y KR-2.
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: el nombre del productor y su finca **van en la bolsa** de
   Papagayo Beans® si el lote va por Cherry Picked (sticker o escrito + QR/UID); el PVC de ene–mar 2027 se publica **antes del
-  15-oct** (como dice el guion); Black y Red 3–4 cargas según la mezcla (no fijos).
+  15-oct** (como dice el guion); Black y Red 3–4 cargas según la mezcla (no fijos: **una carga por productor**, mezcla de
+  3 a 4; Black = blend de orígenes y/o variedades, Red = siempre una sola variedad, mezcla regional — owner, 2026-09-19).
 - **Papagayo Beans® (owner, 2026-09-17, `PVC_BCP_PLAN.md` §14.6)**: el café del productor sale al mundo como **Papagayo
   Beans®**, la marca de CTCx, con el sello de su grado (loro y monograma PB) y, en Cherry Picked, con su nombre y su finca en
   la vitrina; falta decir la marca en la landing, el FAQ y «Su café en el mundo»;
@@ -105,7 +106,8 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 - **Decisiones de narrativa del owner (2026-09-17, `PVC_BCP_PLAN.md` §14)**: la prima del 8 % **está dentro del PVC**
   (Cherry Picked paga PVC × grado tal cual; CaaS la retira y luego multiplica) — **el guion ya está en v0.7 (2026-09-18)**;
   faltan `TratoSection` y el FAQ; factor ≤ 94 confirmado; mínimo del lote de Cherry Picked por grado **3–4 según la mezcla · 2 ·
-  1 · ½ cargas** (§14.7 corrige el «4 · 3 · 2 · 1 · ½» del §14.4 — **consolas reconcilia**) y
+  1 · ½ cargas** (§14.7 corrige el «4 · 3 · 2 · 1 · ½» del §14.4 — ~~**consolas reconcilia**~~ **reconciliado el 2026-09-19** en
+  el plan, los charters y `lectura.ts`, V5.53) y
   entrada CaaS de 15–25 kg; el 80 % del alza Tyrian **solo en Cherry Picked**, convertido a COP el día del pago; CaaS vende
   como **CTCx Selection** (CTCx figura como productor, la finca queda en la documentación); marca CTCx en todo el copy (ya
   previsto). La regla interna del CaaS sin cooperación (§14 n.º 8) **no va en ninguna pantalla**. El documento:
@@ -165,7 +167,8 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 - **Recorrer el bloque B del artefacto de revisión V5.0** sobre el panel nuevo (owner; B3/B4 primero)
   — el artefacto: `C:\dev\ctc-platforms\reference\review-v5\ctc-v5-review.html`.
 - **Estrenar el escáner visual** con soportes reales (los 7 lotes de producción siguen en `borrador`).
-- **Pagos**: Nequi y Stripe **aplazados** (CEO, 2026-09-16); se evalúa **Zulu**. «Evaluar mi Café» sigue mandando a
+- **Pagos**: se integrarán **los dos, Nequi y Zulu** (owner, 2026-09-19; el 16-sep el CEO había aplazado Nequi) — se
+  configuran más adelante; Stripe sigue aplazado. «Evaluar mi Café» sigue mandando a
   `info@` mientras no haya medio de pago.
 - **Google OAuth**: la línea del redirect-allowlist en Supabase para las puertas que lo ofrecen.
 - **Confirmación de correo en el alta** (memoria `project_kr_email_confirmation`): verificar que el

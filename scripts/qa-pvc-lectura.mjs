@@ -23,7 +23,7 @@
 
 import { readFileSync } from "node:fs";
 import {
-  CARGA_KG_CPS, SACO_KG_CPS, EMPAQUES, LOTES_EN_MEZCLA, MOQ_MEZCLA,
+  CARGA_KG_CPS, SACO_KG_CPS, EMPAQUES, LOTES_EN_MEZCLA, MOQ_MEZCLA, CARGAS_POR_PRODUCTOR, COMPOSICION_MEZCLA,
   admiteSaco, desviacionDeMercado, embudoDeCarga, empaqueDe, holguraDisparador,
   incrementoCargas, moqCargas, primaMinima, sobreBasePergamino, verdeFobCop,
 } from "../src/lib/pvc/lectura.ts";
@@ -69,10 +69,14 @@ check("el GrainPro es de 35 kg", JSON.stringify(grain.formatosKg) === JSON.strin
 check("Black y Red YA NO van en bolsa de 6 kg", !grain.formatosKg.includes(6));
 
 // ── 3 · el MOQ de las mezclas ─────────────────────────────────────────────
-check("mezcla de 2 lotes → 4 cargas", moqCargas("Black", 2) === 4);
+check("una mezcla de DOS no existe (owner, 2026-09-19: el blend es de 3 a 4)", !LOTES_EN_MEZCLA.includes(2) && MOQ_MEZCLA[2] === undefined);
 check("mezcla de 3 lotes → 3 cargas", moqCargas("Black", 3) === 3);
 check("mezcla de 4 lotes → 4 cargas", moqCargas("Black", 4) === 4);
-check("Red sigue la misma regla que Black", [2, 3, 4].every((n) => moqCargas("Red", n) === moqCargas("Black", n)));
+check("Red sigue la misma regla de cargas que Black", [3, 4].every((n) => moqCargas("Red", n) === moqCargas("Black", n)));
+check("el mínimo está anclado a UNA carga por productor", CARGAS_POR_PRODUCTOR === 1 && LOTES_EN_MEZCLA.every((n) => MOQ_MEZCLA[n] === n * CARGAS_POR_PRODUCTOR));
+check("Black mezcla orígenes y/o variedades", COMPOSICION_MEZCLA.Black.variedades === "varias");
+check("Red es SIEMPRE de una sola variedad (mezcla regional)", COMPOSICION_MEZCLA.Red.variedades === "una");
+check("sin el dato de la mezcla se devuelve el caso mayor (4)", moqCargas("Black") === 4 && moqCargas("Red") === 4);
 check("una mezcla de cinco no existe", !LOTES_EN_MEZCLA.includes(5) && MOQ_MEZCLA[5] === undefined);
 check("cada lote de la mezcla aporta al menos una carga", LOTES_EN_MEZCLA.every((n) => MOQ_MEZCLA[n] / n >= 1));
 check("la mezcla nunca baja de tres cargas", LOTES_EN_MEZCLA.every((n) => MOQ_MEZCLA[n] >= 3));
@@ -113,7 +117,13 @@ check("la página lee el mercado de market_anchors", lee("src/lib/pvc/servicio.t
 // ── 7 · la doctrina está escrita ──────────────────────────────────────────
 const plan = lee("docs/PVC_BCP_PLAN.md");
 check("el plan declara los dos estándares de empaque", /GrainPro-type \+ yute/.test(plan));
-check("el plan declara la regla de la mezcla", /3 lotes\*{0,2} \| \*{0,2}3 cargas/.test(plan));
+// La mezcla, tal como la cerró el owner el 2026-09-19 (§9.2 y §14.4): 3 o 4 productores,
+// una carga de cada uno; Black mezcla orígenes y/o variedades, Red es de una sola variedad.
+check("el plan declara la regla de la mezcla (3 → 3 · 4 → 4)", /\| \*\*3\*\* \| \*\*3 cargas\*\* \|/.test(plan) && /\| \*\*4\*\* \| \*\*4 cargas\*\* \|/.test(plan));
+check("el plan ancla el mínimo a una carga por productor", /una\s+carga\*{0,2} por productor|cada productor involucrado: una\s+carga/.test(plan));
+check("el plan ya NO trae la mezcla de dos lotes", !/\*\*2 lotes\*\* \| \*\*4 cargas\*\*/.test(plan));
+check("el plan distingue Black (orígenes y/o variedades) de Red (una sola variedad)", /orígenes y\/o variedades/.test(plan) && /siempre de una sola\s+variedad/.test(plan));
+check("el §14.4 ya no dice que Black 4 y Red 3 son fijos sin tacharlo", !/(?<!~~)Black 4 y Red 3\s+son fijos/.test(plan));
 check("el plan declara el piso de saco", /70 kg de CPS/.test(plan));
 check("el plan declara que el incremento es la mitad", /mitad del mínimo/.test(plan));
 

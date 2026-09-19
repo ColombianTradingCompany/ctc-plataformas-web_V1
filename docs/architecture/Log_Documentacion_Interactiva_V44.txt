@@ -184,3 +184,33 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   (`qa-tools-puente-conformance`) · 1 roto (`qa-transcripciones-nube`, arriba). `npm run build` no se corrió: no cambió
   una línea de `src/`.
 (commit: d563a44)
+
+## [2026-09-19] V5.53 · El nodo final estrena oficio: cinco decisiones del owner, la Base física al derecho y la mezcla reconciliada (consolas · BCP)
+- FICHA `grados` y FICHA `pvc` — **«decidido» pasa a «construido»**: la **Base física** dice por fin lo decidido. `escala.ts`
+  pedía `factor > 94`; el owner fijó **≤ 94, Black hasta 98** (§14 n.º 9). `revisarBaseFisica(b, banda)`, `FACTOR_MAXIMO`,
+  `FACTOR_MAXIMO_BLACK`, `factorMaximoDe`. Sigue siendo EXHIBICIÓN (BCP · Grados): la puerta real del veredicto es CN-9.
+  Esto cierra la «tercera verdad» que el asiento DOCS de arriba le pedía decir al mapa: ya no hace falta.
+- LECCIÓN para la ficha `versionado` (o una nueva, a juicio del V45 — candidata: `guardianespejo`): **un guardián que copia
+  la regla del código no verifica nada.** `qa-pvc-escala` afirmaba «factor 95 cumple · 93 no cumple» en verde sobre un
+  módulo invertido; los dos nacieron en la misma tanda (V5.45), de la misma lectura equivocada del plan. Misma familia que
+  «dos copias de acuerdo no son una verificación» (V38, `grados`). La regla del guardián sale del plan y del tablero.
+- FICHA `pvc` (y `canales`, que narra los MOQ): **la regla de la mezcla, cerrada por el owner.** Black = blend de 3 a 4
+  orígenes y/o variedades; Red = SIEMPRE una sola variedad (mezcla regional); el mínimo está anclado a **una carga por
+  productor** → 3 o 4 cargas. **La mezcla de dos ya no existe** (`lectura.ts` decía «2 lotes → 4 cargas»). Nuevos:
+  `CARGAS_POR_PRODUCTOR`, `COMPOSICION_MEZCLA`; `MOQ_MEZCLA` se deriva. `PVC_BCP_PLAN.md` §9.2 · §12 · §14.4 · §14.7
+  reconciliados: el §14.4 traía «Black 4 · Red 3» como fijos.
+- FICHA `componentes` — **cambio de dueño**: el **Modelo Económico (PVC) es ÚNICAMENTE del BCP** (charter `consolas`), por
+  decisión del owner. `herramientas-internas` suelta `pvc_*`, `src/lib/pvc` y los siete guardianes `qa-pvc-*`; conserva el
+  transcriptor, los cotizadores, las anclas y Stripe. Revisar la tarjeta `n-bcp` y la ficha `herramientas` (la interna) por
+  si nombran al PVC como herramienta interna.
+- FICHA `componentes` / `versionado` — **`docs/KICKOFF.html`**: los 18 prompts de arranque como documento para usar
+  (índice, copiar, campo «Hoy:»), compilado por `build_kickoff.py` junto a `KICKOFF.md` desde
+  `docs/componentes/kickoff_plantilla.html`. Trae el **prompt propio del nodo final** (la auditoría en siete pasos), que
+  hasta hoy vivía como un condicional dentro del de `plataforma`.
+  ANN nuevas: `docs/KICKOFF.html`, `docs/componentes/kickoff_plantilla.html`; ANN a actualizar: `docs/componentes/build_kickoff.py`.
+- Métodos de pago: **Nequi Y Zulu, los dos** (owner); `ALINEACION` §1 se queda sin «conflicto abierto n.º 2». Sin alcance
+  de mapa salvo que alguna ficha diga «Nequi aplazado» (buscar en `vitrinaarena` y `evaluacionqgrader`).
+- FICHA `narrativa`: ninguna frase pasa de «decidido» a «construido» por esta versión — la mezcla y la base física son del
+  Modelo Económico, no del plan de narrativa. CP-1 sigue por la mitad.
+- Compuerta: tsc · eslint 8 · build · 58 guardianes (2 sin cuentas `prueba-*`, 1 que exige servidor, 1 roto y anotado).
+(commit: pendiente)

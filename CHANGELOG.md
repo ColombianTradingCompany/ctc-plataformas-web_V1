@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.62] — 2026-09-19 (commit pendiente)
+## [V5.62] — 2026-09-19 (commit eaea06c)
 
 - **Añadido**: **el estado de un lote en el circuito nuevo, DERIVADO** — fase 4a del overhaul (notas 2–5 del owner). El camino
   *a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo* no es una columna: sale de datos que ya

@@ -230,4 +230,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - NO inventar en el mapa: las pantallas «Lotes a evaluar / en evaluación / pendiente de oferta / catálogo activo» NO existen;
   `/ocp/nominados` sigue siendo donde se confirma el pago, se recibe la muestra y se emite el veredicto. El veredicto NO se partió.
 - ANN nuevas: `src/lib/ocp/circuito.ts`, `scripts/qa-circuito-check.mjs`.
-(commit: pendiente)
+(commit: eaea06c)

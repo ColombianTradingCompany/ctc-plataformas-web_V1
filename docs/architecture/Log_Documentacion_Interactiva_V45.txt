@@ -146,4 +146,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - NO inventar en el mapa: `EstructuraModal.tsx` (el diagrama de `/bcp/documentacion`) sigue dibujando TRES consolas — se
   redibuja al cerrar la fase 2. La fase 2 moverá además Directorio, Herramientas y Terratalento al BCP.
 - Datos: `panel_users.consoles` ganó `lcp` en las tres credenciales (owner `admin`, colaboradores `viewer`).
-(commit: pendiente)
+(commit: cfb0808)

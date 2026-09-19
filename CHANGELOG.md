@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.59] — 2026-09-19 (commit pendiente)
+## [V5.59] — 2026-09-19 (commit cfb0808)
 
 - **Hito**: **nace la LCP · Lead Control Panel — *Relationship*, la cuarta consola.** Fase 1 del overhaul aprobado por el
   owner (`docs/OVERHAUL_CONSOLAS_PLAN.md`). La LCP es la consola de **lo que entra de fuera y a quién se le responde**: no

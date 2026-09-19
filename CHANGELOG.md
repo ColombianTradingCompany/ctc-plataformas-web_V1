@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.53] — 2026-09-19 (commit pendiente)
+## [V5.53] — 2026-09-19 (commit a53a27d)
 
 - **Hito**: **el nodo final estrena oficio, y el owner cierra cinco decisiones en un día.** La conversación
   «WRAP-COMMIT-PUSH (CTC Platforms)» —la vía de los wraps que `ALINEACION` §5.3 nombraba y nunca existió— auditó por

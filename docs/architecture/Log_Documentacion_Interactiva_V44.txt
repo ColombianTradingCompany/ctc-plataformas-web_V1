@@ -213,4 +213,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
 - FICHA `narrativa`: ninguna frase pasa de «decidido» a «construido» por esta versión — la mezcla y la base física son del
   Modelo Económico, no del plan de narrativa. CP-1 sigue por la mitad.
 - Compuerta: tsc · eslint 8 · build · 58 guardianes (2 sin cuentas `prueba-*`, 1 que exige servidor, 1 roto y anotado).
-(commit: pendiente)
+(commit: a53a27d)

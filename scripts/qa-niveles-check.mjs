@@ -114,6 +114,45 @@ for (const f of fuentes) {
     }
   }
 }
+// ── 4-bis · las compuertas INDIRECTAS (V5.58) ──────────────────────────────
+// La V5.57 miraba la llamada a la vista y se le escapó el Buzón: sus acciones no llaman a
+// `requireActiveAdmin()`, llaman a un AYUDANTE (`loadIfAllowed` → `buzonIdentity`) que la llama. Un
+// viewer podía responder correos. Aquí se sigue la cadena dentro de cada archivo: toda función
+// EXPORTADA que llegue a la compuerta vieja —directa o por ayudantes— y escriba, tiene que pasar
+// además por una compuerta que mire el nivel.
+const RX_VIEJA = /await (requireAdmin|requireActiveAdmin)\(\)/;
+const RX_CON_NIVEL = /(?:permisoDeEscritura|requireConsoleWrite|coffeedGate|studioGate)\(/;
+const RX_ESCRIBE_AMPLIO = /\.(insert|update|upsert|delete)\(|\.rpc\(|\.upload\(|\.remove\(|send\w*\(|emitEvent\(|registrarConsumo|auth\.admin\.|moveRemoteMessage\(/;
+const RX_FUNC_TODA = /^(export )?(?:default )?(?:async )?function (\w+)\s*[<(]/gm;
+const indirectas = [];
+for (const f of fuentes) {
+  if (f.startsWith("src/lib/panel/")) continue;
+  const texto = lee(f);
+  if (!RX_VIEJA.test(texto)) continue;
+  const hitos = [...texto.matchAll(RX_FUNC_TODA)].map((m) => ({ nombre: m[2], exportada: Boolean(m[1]), ini: m.index }));
+  const fns = hitos.map((h, i) => ({ ...h, cuerpo: texto.slice(h.ini, hitos[i + 1]?.ini ?? texto.length) }));
+  const alcanza = new Set(fns.filter((x) => RX_VIEJA.test(x.cuerpo)).map((x) => x.nombre));
+  for (let cambio = true; cambio; ) {
+    cambio = false;
+    for (const x of fns) {
+      if (alcanza.has(x.nombre)) continue;
+      if ([...alcanza].some((a) => new RegExp("\\b" + a + "\\(").test(x.cuerpo))) {
+        alcanza.add(x.nombre);
+        cambio = true;
+      }
+    }
+  }
+  for (const x of fns) {
+    if (!x.exportada || !alcanza.has(x.nombre) || x.nombre === "requireAdmin") continue;
+    if (RX_ESCRIBE_AMPLIO.test(x.cuerpo) && !RX_CON_NIVEL.test(x.cuerpo)) indirectas.push(`${f}::${x.nombre}`);
+  }
+}
+check(
+  "ninguna acción que ESCRIBE llega a la compuerta vieja —ni a través de un ayudante— sin pasar por una que mire el nivel",
+  indirectas.length === 0,
+  indirectas.join(" · ")
+);
+
 const soloPlan = [...blancaPlan].filter((x) => !blancaCodigo.has(x));
 const soloCodigo = [...blancaCodigo].filter((x) => !blancaPlan.has(x));
 check("toda acción que el PLAN llama borrador lo es en el código", soloPlan.length === 0, soloPlan.join(", "));

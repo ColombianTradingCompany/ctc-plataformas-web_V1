@@ -242,11 +242,14 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `setEtapaComprador` | OCP · CRM Green | la excepción manual de la etapa; solo la lee ese tablero |
 | `marcarContactado` | OCP · ECP · listas de espera | «ya le escribí»; se puede desmarcar |
 | `marcarInteresTtContactado` | ECP · Terratalento | lo mismo |
+| `setBuzonTags` | ECP · Buzón | etiquetas internas del correo; reversible |
+| `markInboundEmailRead` | ECP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
 
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta
 la lectura de mercado del PVC; `redactarContexto`, `scanFichaSoportes` y todo el Estudio de Coffeed **gastan** en IA;
-`createTranscript`/`sendTranscriptToCloud` abren un trabajo que cuesta; y borrar nunca es un borrador.
+`createTranscript`/`sendTranscriptToCloud` abren un trabajo que cuesta; **responder o reenviar un correo del Buzón
+notifica a alguien de fuera**, y archivarlo lo mueve también en el buzón remoto; y borrar nunca es un borrador.
 
 **Cómo se entera un viewer.** El rail de la consola dice «Lectura y borradores» bajo su nombre, y la acción responde con
 un mensaje que explica qué pasó y a quién pedírselo — **sin tumbar la página**: `permisoDeEscritura` LANZA solo cuando no

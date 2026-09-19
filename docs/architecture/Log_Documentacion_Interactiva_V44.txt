@@ -310,3 +310,15 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   `requireConsoleWrite.ts`, `panelUsers.ts`, `coffeed/requireEcp.ts`, `coffeed/studioGate.ts`, `BCP_USER_ADMIN_PLAN.md`.
 - Compuerta: tsc · eslint 8 · build · guardianes (sin los dos que gastan dinero ni los dos que piden cuentas `prueba-*`).
 (commit: 66cb351)
+
+## [2026-09-19] V5.58 · El Buzón se le escapó a la V5.57: las compuertas INDIRECTAS (consolas · Seguridad)
+- Para la ficha `nivelesconsola` que el asiento V5.57 propone: **una compuerta puede estar detrás de un ayudante.** Cuatro
+  acciones del Buzón llegaban a `requireActiveAdmin()` a través de `loadIfAllowed` → `buzonIdentity`, y ni el inventario ni
+  el guardián —que miraban función por función— las vieron: un viewer podía responder correos. Sin daño (cero envíos en
+  `buzon_outbound`). Responder/reenviar y archivar/borrar exigen admin del ECP; etiquetar y leído/no leído son borradores
+  (lista blanca: 14). `qa-niveles` sigue ahora la cadena de llamadas dentro del archivo.
+- LECCIÓN para esa misma ficha: **un inventario que mira la llamada a la vista no ve lo que está a una función de
+  distancia.** «Fallo cerrado» solo lo es si el guardián recorre el camino entero hasta la compuerta.
+- Para la traza «Un viewer pulsa un botón que emite»: vale igual para el Buzón (`sendBuzonReply`), que además pasará a la
+  cuarta consola LCP cuando se ejecute `docs/OVERHAUL_CONSOLAS_PLAN.md`.
+(commit: pendiente)

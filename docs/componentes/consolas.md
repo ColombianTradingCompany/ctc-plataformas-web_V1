@@ -83,7 +83,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
-`qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (35 — el nivel `viewer`: la regla y la lista
+`qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (36 — el nivel `viewer`: la regla y la lista
 blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
 `qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
@@ -133,8 +133,9 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
   Direccionamiento retirada. **`qa-rutas-consolas` ganó (f-bis)**: mira las compuertas de `src/lib/` y `src/components/`
   contra el rail, y exige que todo módulo con compuerta esté en `MODULOS_LIB` — **un módulo nuevo con Server Actions se
   declara ahí o el guardián falla**. Al nacer cazó Automatizaciones (V4.25: en el BCP pidiendo permiso del ECP), corregido.
-- ~~**SEGURIDAD — el nivel `viewer` no se hace cumplir**~~ — **cerrado en la V5.57.** Regla del owner: un viewer **lee y
-  prepara borradores**. Las cuatro compuertas miran el nivel y cierran por defecto (`emite`); 12 borradores en lista blanca,
+- ~~**SEGURIDAD — el nivel `viewer` no se hace cumplir**~~ — **cerrado en la V5.57, y de verdad en la V5.58** (el Buzón se
+  protegía a través de un ayudante y se le escapó al primer inventario; `qa-niveles` sigue ahora la cadena de llamadas). Regla del owner: un viewer **lee y
+  prepara borradores**. Las cuatro compuertas miran el nivel y cierran por defecto (`emite`); 14 borradores en lista blanca,
   en `BCP_USER_ADMIN_PLAN.md` §«Niveles por consola», que es la fuente que lee `qa-niveles-check`. **Lo que queda**:
   **(a)** esconder o deshabilitar los botones de escritura a un viewer, consola por consola (OCP primero) — hoy los ve, los
   pulsa y recibe el mensaje; **(b)** `requireActiveAdmin()` a secas (las 16 lecturas) sigue sin mirar la CONSOLA: un operador

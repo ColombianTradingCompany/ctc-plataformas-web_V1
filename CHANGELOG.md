@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.58] — 2026-09-19 (commit pendiente)
+
+- **Seguridad**: **el Buzón se le escapó a la V5.57: un «viewer» podía responder correos.** Cuatro acciones de
+  `src/app/ecp/(app)/buzonActions.ts` —`sendBuzonReply`, `setBuzonStatus`, `setBuzonTags`, `markInboundEmailRead`— no llaman
+  a `requireActiveAdmin()`: llaman a un AYUDANTE (`loadIfAllowed` → `buzonIdentity`) que la llama. El inventario de la V5.57
+  y su guardián miraban la llamada a la vista, función por función, y un ayudante que no escribe pasa limpio. Lo destapó el
+  mapa que se hizo para planificar la cuarta consola (LCP), horas después. **Sin daño**: `buzon_outbound` tiene cero filas —
+  nadie ha enviado nunca una respuesta desde el Buzón.
+- **Corregido**: responder o reenviar un correo y archivarlo o borrarlo (que lo mueve también en el buzón remoto) exigen
+  nivel **admin** del ECP. Etiquetar y marcar leído/no leído entran en la lista blanca de **borradores** —son orden interno
+  y reversible, y sin lo segundo un viewer fallaría en silencio al abrir su propio correo—: la lista pasa de 12 a **14**,
+  primero en `BCP_USER_ADMIN_PLAN.md` y después en el código, como manda la regla.
+- **Añadido**: `qa-niveles-check` (35 → **36**) **sigue la cadena de ayudantes** dentro de cada archivo: toda función
+  exportada que llegue a la compuerta vieja —directa o por ayudantes— y escriba tiene que pasar además por una compuerta
+  que mire el nivel. Probado mordiendo: quitarle la compuerta a `sendBuzonReply` lo pone rojo. Es la única familia de
+  compuerta indirecta del repo (comprobado: el otro caso, `revealSessionIdentities`, solo lee).
+
 ## [V5.57] — 2026-09-19 (commit 66cb351)
 
 - **Seguridad**: **el nivel «viewer» de un colaborador por fin se hace cumplir.** `panel_users.consoles` guarda desde el

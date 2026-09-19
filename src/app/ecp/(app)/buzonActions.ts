@@ -9,6 +9,9 @@ export type BuzonActionResult = { ok: true } | { ok: false; error: string };
 
 // Identity for Buzón permissions: owners act on ANY mail; a collaborator only on
 // mail addressed to their own @ctcexport.com label (same rule as the list view).
+// ⚠️ Esto decide DE QUIÉN es el correo, no QUÉ puede hacer con él. `requireActiveAdmin()` no mira el nivel: las
+// acciones que escriben piden además `permisoDeEscritura("ecp", clase)`. En la V5.57 se escaparon justo por
+// estar detrás de este ayudante y no de la compuerta a la vista — un viewer podía responder correos (V5.58).
 async function buzonIdentity() {
   const userId = await requireActiveAdmin();
   const service = createServiceRoleClient();
@@ -53,6 +56,9 @@ export async function sendBuzonReply(
   inboundId: string,
   input: { mode: "reply" | "forward"; to: string; subject: string; body: string }
 ): Promise<BuzonActionResult> {
+  // Responder o reenviar un correo NOTIFICA a alguien de fuera: nivel admin del ECP (V5.58).
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity, row } = await loadIfAllowed(inboundId);
 
   const to = input.to.trim();
@@ -96,6 +102,9 @@ export async function sendBuzonReply(
 }
 
 export async function setBuzonStatus(id: string, status: "archived" | "deleted"): Promise<BuzonActionResult> {
+  // Archivar o borrar mueve el mensaje también en el buzón REMOTO (Hostinger): no es un borrador.
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity, row } = await loadIfAllowed(id);
   // Reflect to Hostinger first (best-effort — a retention-cleaned message just isn't there).
   if (row.message_id) await moveRemoteMessage(row.message_id, status === "deleted" ? "trash" : "archive");
@@ -105,6 +114,9 @@ export async function setBuzonStatus(id: string, status: "archived" | "deleted")
 }
 
 export async function setBuzonTags(id: string, tags: string[]): Promise<BuzonActionResult> {
+  // Etiquetar es orden interno, reversible y sin efecto fuera de la consola: un viewer puede (lista blanca del plan).
+  const permiso = await permisoDeEscritura("ecp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity } = await loadIfAllowed(id);
   const clean = Array.from(new Set(tags.map((t) => t.trim().toLowerCase()).filter(Boolean))).slice(0, 8).map((t) => t.slice(0, 24));
   await identity.service.from("inbound_emails").update({ tags: clean }).eq("id", id);
@@ -133,6 +145,9 @@ export async function syncBuzonNow() {
 }
 
 export async function markInboundEmailRead(id: string, read: boolean): Promise<BuzonActionResult> {
+  // Leído / no leído: lo mismo — si un viewer no pudiera, abrir su propio correo fallaría en silencio.
+  const permiso = await permisoDeEscritura("ecp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity } = await loadIfAllowed(id);
   await identity.service
     .from("inbound_emails")

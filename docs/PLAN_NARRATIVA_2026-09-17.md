@@ -289,7 +289,7 @@ del 2026-07-10 y la F1 del espejo con Notion. Van después de la ola 2 salvo que
 Se marca en el mismo commit que cierra la tanda (con su versión).
 
 - [ ] O-1 · [ ] O-2 · [ ] O-3 · [ ] O-4 · [ ] O-5 · [ ] O-6 · [ ] O-7 · [ ] O-8
-- [ ] CN-1 · [ ] CN-2 · [ ] CP-1 · [ ] CP-2 · [ ] KR-1 · [ ] SO-1 · [ ] SE-1
-- [ ] CN-3a · [ ] CN-3b · [ ] CN-4 · [ ] CN-5 · [ ] CN-6 · [ ] CN-7 · [ ] KR-2 · [ ] CP-3
+- [ ] CN-1 · [ ] CN-2 · [x] CP-1 (V5.52, `7037ec4`) · [ ] CP-2 · [ ] KR-1 · [ ] SO-1 · [ ] SE-1
+- [ ] CN-3a · [ ] CN-3b · [ ] CN-4 · [ ] CN-5 · [ ] CN-6 · [ ] CN-7 (mitad delantera hecha en V5.48: `lots.public_code` y el portal; faltan el QR y el sticker) · [ ] KR-2 · [ ] CP-3
 - [ ] CN-8 · [ ] CP-4 · [ ] SO-2 · [ ] CP-5 · [ ] HI-1
 - [ ] CN-9 · [ ] KR-3 · [ ] SE-2

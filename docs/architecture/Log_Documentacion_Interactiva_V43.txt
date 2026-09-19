@@ -323,3 +323,37 @@ este log: V5.42 · V5.43 · V5.44 · V5.45 · V5.46 · V5.47. La plataforma qued
   wrap se llama antes de esas respuestas, las fichas 2 y 5 se escriben como
   «vista previa» y «propuesta», no como regla cerrada.
 
+════════════════════════════════════════════════════════════════════════════════
+CIERRE DE LA SESIÓN «Cohesión de narrativa» (2026-09-16 → 19) — LEER ANTES DEL WRAP V44
+════════════════════════════════════════════════════════════════════════════════
+
+## [2026-09-17/18] DOCS · La narrativa de CTCx: tres rondas del owner, Papagayo Beans® y el plan de ejecución (consolas)
+Sin versión (solo docs: `723ba71` · `ed92328` · `38b7137` · `603340e`), pero el mapa tiene que saberlo porque cambia
+cómo se NOMBRA todo lo demás y porque de aquí salen las tandas que otras sesiones ya están ejecutando.
+
+- FICHA DICT NUEVA para el wrap V44: `narrativa`. Tres rondas de decisiones del owner el 2026-09-17, escritas en
+  `docs/PVC_BCP_PLAN.md` **§14** (§14.1–§14.7, 29 decisiones numeradas; prima sobre el §12 donde choquen):
+  · **CTCx orquesta Y participa**: acopia y empaca; el procesamiento (trilla, monitoreo, selección óptica) lo hace el
+    nodo socio Centro de Calidad con el CIR de Santander. Se corrigió «CTC no toca un grano» en el charter `socios`.
+  · **La marca es CTCx en todo**; razón social completa «CTCX Colombian Trading Company SAS» (`legal.ts` aún no).
+  · **Papagayo Beans® es la marca del CAFÉ**, del verde hasta X; los sellos de grado ya llevan el loro y el
+    monograma PB; la bolsa referencia a CTCx como motor, lleva productor y finca si el lote va por Cherry Picked
+    (sticker + QR/UID) y «CTCx Selection» si llegó por CaaS. **X = la cara al consumidor directo** de Cherry Picked.
+  · **CaaS es un negocio con dos caras** (camino no consolidado del comprador ↔ compra directa al productor, que
+    alimenta CTCx Selection). La prima del 8 % **está dentro del PVC** y CaaS la retira.
+  · **US$ y COP**, FOB en US$ como base (CP-1 ya lo ejecutó para la tienda en V5.52; la subasta es CN-4).
+  · Mínimos por programa (Cherry Picked 3–4 · 2 · 1 · ½ cargas ↔ 42–56 · 26 · 13 · 6 unidades de 6 kg; CaaS 15–25 kg),
+    tostado al 82 %, el 80 % del alza Tyrian solo en Cherry Picked, Enabled Regions con mapa, Co-Create se retira.
+- VOCABULARIO CONGELADO (`ALINEACION.md` §1): entran Papagayo Beans®, CTCx como empresa y motor, y X. La ficha
+  `vocabcongelado` debe decirlo.
+- ⚠️ DECIDIDO ≠ CONSTRUIDO, y el mapa tiene que decirlo (lección del V43): hoy ninguna superficie ni línea de código
+  dice «Papagayo Beans», `legal.ts` sigue con la razón social corta, las regiones no existen como dato, las ofertas no
+  leen la edición y la subasta sigue en EUR. La ficha se escribe como doctrina decidida con su estado, no como sistema.
+- PLAN DE EJECUCIÓN: `docs/PLAN_NARRATIVA_2026-09-17.md` — 29 tandas en cinco olas, cada una con su «Hoy:» para el
+  kick-off. Ya cerradas por otras sesiones: **CP-1** (V5.52) y la **mitad delantera de CN-7** (V5.48, `public_code`).
+- BRIEFS que nacieron de esta narrativa (de las sesiones de KR y CP, solo docs, sin asiento propio): el guion del
+  video del productor **v0.9.1** y el guion del video del comprador **v0.1**, en `docs/componentes/briefs/`.
+- FUERA DEL REPO (público): los cuatro documentos de narrativa —CTCx · Kaffetal Regal · Cherry Picked, cada uno con su
+  anexo interno, y «Decisiones y pendientes»— con su `build.py` en `reference/narrativa-2026-09-17/`. Ni márgenes ni
+  la excepción del CaaS sin cooperación se copian al repo (§12.12), y tampoco al snapshot.
+(commit: 603340e)

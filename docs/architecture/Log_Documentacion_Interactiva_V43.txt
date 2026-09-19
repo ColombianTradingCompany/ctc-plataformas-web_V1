@@ -235,3 +235,37 @@ Contexto abierto al cerrar V43 (2026-09-16) — plataforma V5.45:
   los valores literales del mock este lote habría salido Tyrian y no habría podido publicarse.
 - Guardián nuevo `qa-moneda-check` (24).
 (commit: 7037ec4)
+
+## [2026-09-18/19] CIERRE DE SESIÓN · «CTCx catálogo público con búsqueda de lotes» (consolas)
+Resumen de la tanda completa, para que el wrap V44 la compile de una pieza. Cinco versiones seguidas, V5.48 → V5.52,
+más dos commits de solo datos. Los asientos de detalle están arriba, uno por versión; esto es el hilo.
+
+QUÉ NACIÓ
+- Una superficie pública nueva —`/ctcx-public-catalogue` y su `[codigo]`— que es la PRIMERA de la red sin host propio.
+  De ahí el concepto `RUTAS_SOLO_WWW`, con dos lectores (sitemap y ECP · Manejo de Plataformas).
+- El identificador que faltaba: `lots.public_code`, único y almacenado, acuñado por `publishLot`. Cierra la mitad
+  delantera de CN-7.
+- La puerta desde la cinta del Catálogo Activo, que la pone en las SIETE superficies donde está montada.
+- La marca del portal (lupa cuyo cristal es el grano), la firma de procedencia con los tres logos y la tarjeta Open
+  Graph propia.
+- `lib/precios/moneda.ts`: la moneda de cara al comprador deja de estar escrita a mano (CP-1).
+
+QUÉ PASÓ CON LOS DATOS
+- **El primer lote publicado de la plataforma**: «Gesha 72h Ferm» → `CTCX-V2DD-M24B`. Se recorrió el circuito entero
+  por sus dos lados replicando cada Server Action (oferta → aceptación del productor → firma → liberaciones → publicar).
+  `public_lot_catalog` deja de estar vacía.
+- Su ficha pasó de casi vacía a completa: B2 (diez atributos SCA que suman 86.25) y B3 (trilla, defectos, siete mallas,
+  factor 82.74), con dos PDFs, dos fotos y dos vídeos en `kaffetal-media`.
+
+LO QUE HAY QUE SEGUIR MIRANDO (todo con dueño, en su charter)
+- El MISMO café enseña TRES códigos: `GD-F518` (cinta, deriva de `lots.id`), `GD-F0F9` (tienda, deriva de
+  `lot_listings.id`) y `CTCX-V2DD-M24B` (portal). Unificarlos es CP-3.
+- La subasta Tyrian sigue en EUR porque sus columnas se llaman `*_eur_kg`. Es CN-4 y lleva DDL.
+- El 86.25 y la planilla B2/B3 son de ESTRENO, transcritos del juego de muestra: no hubo bache, ni muestra, ni
+  Q-Grader. Sustituir enteros cuando el lote pase por un laboratorio real.
+- El flete y el pack de muestras pasaron a dólares con el mismo número: ~8 % de cambio implícito, aceptado por el owner.
+- Dos guardianes quedaron SIN correr por falta de las cuentas `prueba-*`: `qa-guard-check` y `qa-checkout-check`.
+
+VERIFICADO EN VIVO (V5.52, 2026-09-19): el portal responde, «Find my Lot» resuelve `ctcx v2dd m24b` tecleado en
+minúsculas y con espacios, la canonicalización devuelve 308 y un código inexistente 404.
+(commit: pendiente)

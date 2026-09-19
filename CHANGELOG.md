@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.62] — 2026-09-19 (commit pendiente)
+
+- **Añadido**: **el estado de un lote en el circuito nuevo, DERIVADO** — fase 4a del overhaul (notas 2–5 del owner). El camino
+  *a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo* no es una columna: sale de datos que ya
+  existen —la inscripción y su pago, el recibo de la muestra, el grado, la última oferta, el contrato—. `src/lib/ocp/circuito.ts`
+  es una función PURA que lo lee y lo dice, con **lo que falta** para el paso siguiente («confirmar el pago», «recibir la
+  muestra», «confirmar el grado y emitir la oferta»…). No escribe nada y no cambia ninguna regla.
+- **Añadido**: la tabla `/ocp/kr` gana la columna **Circuito** y su filtro. Sobre los datos de hoy dice lo que es verdad: 14
+  lotes en ficha y 1 en catálogo activo (no hay ninguna inscripción todavía, y hay un trato vivo).
+- **Añadido**: `qa-circuito-check` (31; el guardián n.º 60). Su tabla de verdad está escrita **desde las notas del owner**, no
+  desde el módulo, y exige dos propiedades que importan cuando dos superficies van a leer el mismo estado: que sea **TOTAL**
+  (las 13.440 combinaciones de entradas dan un estado conocido) y **MONÓTONA** (confirmar un pago, recibir una muestra, poner
+  un grado, emitir o aceptar una oferta nunca hacen RETROCEDER a un lote). Probado haciéndolo morder dos veces.
+- **Cambiado**: «Oferta emitida» es un estado que las notas no nombran y que hace falta: entre que CTCx oferta y el productor
+  acepta, el lote está en algún sitio. Y una oferta rechazada, retirada o expirada devuelve el lote a «pendiente de oferta»,
+  diciendo por qué.
+- **Docs**: ⚠️ **la fase 4 se partió en dos, y la 4b está PARADA a propósito.** `OVERHAUL_CONSOLAS_PLAN.md` lo explica: (1) el
+  plan tenía un problema de ORDEN — el *guard* «no se acepta una oferta sin disponibilidad declarada ni términos» es de la fase
+  4, pero la pantalla del productor que los envía es de la fase 5, bloqueada por las cuentas `prueba-*`: desplegado en ese
+  orden, **ningún productor podría aceptar una oferta**; (2) la 4b reemplaza `/ocp/nominados` por cuatro pantallas sin que nadie
+  haya visto todavía la de la fase 3; (3) toca dinero —la escalera de liberaciones y el reembolso del 80 %— sobre un contrato
+  vivo. Charter `consolas`, `ALINEACION` §3 (para `kaffetal-regal`: ese estado se IMPORTA, no se recalcula) y `AGENTS.md`.
+
 ## [V5.61] — 2026-09-19 (commit dd3b734)
 
 - **Hito**: **Productores, Fincas y Lotes son UNA tabla: `/ocp/kr`** — fase 3 del overhaul de las consolas (nota 1 del owner).

@@ -64,6 +64,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 - `src/lib/{bcp,buzon,crm,workmap,identidad,partners,email,ai,integraciones}/` · **`src/lib/ocp/`** (V5.61): `etapas.ts` —
   LA etiqueta de cada etapa del lote, estado de finca, grado, oferta y contrato (eran tres copias divergentes)— y
   `fincaEudr.ts`, EL constructor de los campos de la Visa (eran dos copias; `qa-visa-check` lo vigila en un sitio).
+- **`src/lib/ocp/circuito.ts`** (V5.62): el estado de un lote en el circuito comercial —a evaluar · en evaluación · pendiente
+  de oferta · oferta emitida · catálogo activo—, DERIVADO y puro. **Quien pinte ese estado (el OCP hoy, Kaffetal Regal mañana)
+  lo importa de aquí; nadie lo recalcula.**
 - **`src/app/ocp/(app)/kr/`**: `page.tsx` (tabla o vista completa, según parámetros), `carga.ts` (una carga, grano de lote),
   `KrTabla.tsx` (tabla + mapa, mismos filtros), `{Lote,Finca,Productor}Seccion.tsx` (eran las tres páginas; leen SOLO lo
   que se abre), `AnclasViejas.tsx` (traduce `#lot-…` al parámetro: un ancla no viaja en un 308), `LotePiezas.tsx`.
@@ -144,7 +147,11 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
   recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
   reparto BCP ↔ ECP y el Tablero de Ejecución) y **fase 3** (V5.61: la tabla única «Productores, Fincas y Lotes») —
   **EJECUTADAS.**
-  **Quedan**: **fase 4** (el circuito del lote
+  **Fase 4a** (V5.62): el estado del circuito del lote, DERIVADO (`src/lib/ocp/circuito.ts` + `qa-circuito-check`), como
+  columna y filtro de `/ocp/kr` — **ejecutada**. **La 4b está PARADA a propósito** y espera al owner: ver el recuadro de la
+  fase 4 en el plan (un guard que, por orden, dejaría a los productores sin poder aceptar ofertas; dos pantallas operativas
+  sin ver; y dinero sobre un contrato vivo).
+  **Quedan**: **fase 4b** (el circuito del lote
   sin Sondeo: a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo; DDL aditivo en `lot_offers`);
   **fase 5** (Kaffetal Regal — **exige las cuentas `prueba-*`, que esta sesión no tiene**); **fase 6** (stock físico y lo
   que no existe, por briefs; Wrap V46).

@@ -194,7 +194,28 @@ dejan su 308.
   de varias fincas saldría como «sin finca». **(5) `FincaModalRow` y `ProductoresBoard` se retiraron**; de `LotesViews`
   sobrevivieron el dial de temporadas y dos botones. **(6) NADIE HA VISTO LA PANTALLA** — ver «Pendientes» del charter `consolas`.
 
-**Fase 4 · El circuito del lote, lado OCP** — *riesgo alto · reglas de negocio, DDL aditivo*
+**Fase 4 · El circuito del lote, lado OCP** — *riesgo alto · reglas de negocio, DDL aditivo* — ⚠️ **PARTIDA EN DOS al ejecutarla (2026-09-19)**
+
+> **4a · el estado del circuito, DERIVADO — ✅ EJECUTADA en la V5.62.** `src/lib/ocp/circuito.ts` (puro) deriva de datos que ya
+> existen —inscripción y pago, recibo de la muestra, grado, última oferta, contrato— los estados del cuadro: *en ficha → a
+> evaluar → en evaluación → pendiente de oferta → oferta emitida → catálogo activo* (+ *no apto*, salida lateral). «Oferta
+> emitida» no está en las notas del owner pero hace falta para que la función sea TOTAL: entre que CTCx oferta y el productor
+> acepta, el lote está en algún sitio. `qa-circuito-check` (31) es su tabla de verdad, escrita desde las notas, y exige que sea
+> total (13.440 combinaciones) y MONÓTONA (ningún avance hace retroceder). La tabla `/ocp/kr` lo enseña como columna, con lo
+> que FALTA, y lo filtra. No escribe nada, no cambia ninguna regla.
+>
+> **4b · todo lo demás — SIN EJECUTAR, y necesita dos cosas del owner antes:**
+> 1. **Un problema de ORDEN que este plan no vio.** El *guard* «no se acepta una oferta sin `locked_kg` ni términos» es de ESTA
+>    fase, pero la pantalla que los envía (el productor declara su Initial Locked Availability y acepta los términos) es de la
+>    **fase 5**, que está bloqueada por las cuentas `prueba-*`. Si el guard sale antes que la pantalla, **ningún productor puede
+>    aceptar una oferta**. Salida propuesta: el DDL aditivo sale en 4b SIN guard; el guard sale CON la fase 5, en el mismo
+>    despliegue, y solo aplica a ofertas emitidas con `terms_version` (las viejas se aceptan como hasta hoy).
+> 2. **Que el owner abra `/ocp/kr`** (fase 3). La 4b reemplaza `/ocp/nominados` —donde hoy se confirma el pago, se recibe la
+>    muestra y se emite el veredicto— por cuatro pantallas nuevas, otra vez sin poder verlas. Apilar dos pantallas operativas
+>    que nadie ha visto es apostar con la operación.
+> 3. Y toca **dinero sobre un contrato vivo**: la escalera de liberaciones (50/75/100 → 25 + 25 y 4 %) y el reembolso del 80 % al
+>    rechazado (CN-5). Se hará versionado —el contrato vigente conserva la escalera con la que se firmó—, pero las cifras
+>    exactas se confirman con el owner contra `PVC_BCP_PLAN.md` §12.9 antes de escribirlas.
 - «Lotes a evaluar» y «Lotes en evaluación» reemplazan a `/ocp/nominados`; los baches salen de la pantalla (D5). Los estados
   se DERIVAN (§1.3) en un módulo puro con su guardián, para que el OCP y KR no puedan decir cosas distintas.
 - `recordEvaluationVerdict` se parte (D8): **`registrarEvaluacion`** (Q-Grader: planilla, soportes, escáner de fichas →

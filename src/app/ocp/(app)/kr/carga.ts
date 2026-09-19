@@ -7,6 +7,7 @@ import { ctcLotReferenceShort, fincaCode, supplierCode } from "@/components/kaff
 import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/bcp/producerSegments";
 import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEudr";
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
+import { estadoDelCircuito, type EstadoDelCircuito } from "@/lib/ocp/circuito";
 
 // ── Productores, Fincas y Lotes · LA carga de la tabla única (V5.61) ─────────
 // Una sola lectura para las dos vistas (tabla y mapa). El GRANO ES EL LOTE: cada
@@ -48,6 +49,8 @@ export type KrFila = {
   etapaLabel: string | null;
   ficha: boolean[] | null;
   eva: { label: string; tono: Tono } | null;
+  /** El estado en el circuito comercial (a evaluar → en evaluación → pendiente de oferta → catálogo activo): DERIVADO. */
+  circuito: { estado: EstadoDelCircuito; label: string; tono: Tono; falta: string[] } | null;
   muestra: { label: string; tono: Tono } | null;
   grado: string | null;
   gradoLabel: string | null;
@@ -200,7 +203,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
     };
     const sinFinca = { fincaId: null, fincaNombre: null, fincaCodigo: null, fincaLugar: "", visa: null, lat: null, lng: null };
     const sinLote = {
-      loteId: null, loteNombre: null, loteRef: null, etapa: null, etapaLabel: null, ficha: null, eva: null, muestra: null,
+      loteId: null, loteNombre: null, loteRef: null, etapa: null, etapaLabel: null, ficha: null, eva: null, circuito: null, muestra: null,
       grado: null, gradoLabel: null, temporadaId: null, temporadaLabel: null, oferta: null, trato: null,
     };
 
@@ -237,6 +240,17 @@ export async function cargarKr(service: SupabaseClient): Promise<{
         etapaLabel: etapaDelLote(l.stage),
         ficha: fichaHecha(l.stage, l.intake_step),
         eva: evaDelLote(l.stage),
+        // Una función pura, la misma que leerán las pantallas del circuito y Kaffetal Regal (`qa-circuito-check`).
+        circuito: estadoDelCircuito({
+          stage: l.stage,
+          registradoPorCtc: l.source === "bcp_manual_entry",
+          tieneInscripcion: !!ins,
+          pagoConfirmado: ins?.status === "pagado" || ins?.status === "exento",
+          muestraRecibida: !!l.sample_2kg_confirmed_at,
+          grado: l.grade,
+          ultimaOferta: oferta?.status ?? null,
+          contrato: contrato?.status ?? null,
+        }),
         muestra,
         grado: l.grade,
         gradoLabel: gradoLabel(l.grade),

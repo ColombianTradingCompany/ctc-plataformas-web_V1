@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { GeoMap, type GeoMarker } from "@/components/bcp/GeoMap";
 import { GRADO_HEX, GRADO_LABEL, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
+import { CIRCUITO_LABEL, ORDEN_DEL_CIRCUITO } from "@/lib/ocp/circuito";
 import { SeasonRangeDial } from "./LotePiezas";
 import type { KrFila, Tono } from "./carga";
 import styles from "@/components/panel/shared.module.css";
@@ -55,6 +56,7 @@ export function KrTabla({
   const [pais, setPais] = useState("");
   const [depto, setDepto] = useState("");
   const [grado, setGrado] = useState("");
+  const [circuito, setCircuito] = useState("");
   const [rapido, setRapido] = useState<FiltroRapido>(filtroInicial);
   const [rango, setRango] = useState<[number, number] | null>(null);
   const [agrupar, setAgrupar] = useState<Agrupar>("");
@@ -72,6 +74,7 @@ export function KrTabla({
       if (pais && f.pais !== pais) return false;
       if (depto && f.departamento !== depto) return false;
       if (grado && f.grado !== grado) return false;
+      if (circuito && f.circuito?.estado !== circuito) return false;
       // Una temporada elegida deja fuera lo que no tiene lote: una finca sin lote no es «de» ninguna temporada.
       if (enRango && !(f.temporadaId && enRango.has(f.temporadaId))) return false;
       if (rapido === "galardonados" && !f.grado) return false;
@@ -86,7 +89,7 @@ export function KrTabla({
       }
       return true;
     });
-  }, [filas, texto, pais, depto, grado, rapido, rango, temporadas]);
+  }, [filas, texto, pais, depto, grado, circuito, rapido, rango, temporadas]);
 
   // Al agrupar, las filas se ordenan por el grupo y cada una sabe si ABRE grupo (lleva la cabecera encima).
   const ordenadas = useMemo((): { fila: KrFila; cabecera: string | null }[] => {
@@ -179,6 +182,10 @@ export function KrTabla({
           <option value="">Grado</option>
           {Object.entries(GRADO_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
+        <select id="kr-circuito" aria-label="Circuito" value={circuito} onChange={(e) => setCircuito(e.target.value)}>
+          <option value="">Circuito</option>
+          {[...ORDEN_DEL_CIRCUITO, "no_apto" as const].map((k) => <option key={k} value={k}>{CIRCUITO_LABEL[k]}</option>)}
+        </select>
         {temporadas.length > 0 && <SeasonRangeDial seasons={temporadas} range={rango} onChange={setRango} />}
         <select id="kr-agrupar" aria-label="Agrupar" value={agrupar} onChange={(e) => setAgrupar(e.target.value as Agrupar)}>
           <option value="">Sin agrupar</option>
@@ -214,7 +221,7 @@ export function KrTabla({
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["Productor", "Finca", "Lote", "Visa EUDR", "Ficha", "EVA", "Muestra", "Grado", "Oferta CP", "Trato"].map((h) => (
+                {["Productor", "Finca", "Lote", "Circuito", "Visa EUDR", "Ficha", "EVA", "Muestra", "Grado", "Oferta CP", "Trato"].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>
@@ -224,7 +231,7 @@ export function KrTabla({
                 return [
                   cabecera !== null && (
                     <tr key={`g-${f.clave}`}>
-                      <td colSpan={10} style={{ ...td, background: "var(--paper)", fontWeight: 700, fontSize: 12.5 }}>{cabecera}</td>
+                      <td colSpan={11} style={{ ...td, background: "var(--paper)", fontWeight: 700, fontSize: 12.5 }}>{cabecera}</td>
                     </tr>
                   ),
                   <tr key={f.clave}>
@@ -251,6 +258,10 @@ export function KrTabla({
                       ) : (
                         <span style={{ color: "var(--muted)" }}>sin lote</span>
                       )}
+                    </td>
+                    <td style={td}>
+                      <Insignia v={f.circuito} />
+                      {f.circuito && f.circuito.falta.length > 0 && <span style={sub}>Falta: {f.circuito.falta.join(" · ")}</span>}
                     </td>
                     <td style={td}>{f.fincaId ? <Link href={`/ocp/kr?finca=${f.fincaId}`} style={{ textDecoration: "none" }}><Insignia v={f.visa} /></Link> : <Insignia v={null} />}</td>
                     <td style={{ ...td, whiteSpace: "nowrap" }}>

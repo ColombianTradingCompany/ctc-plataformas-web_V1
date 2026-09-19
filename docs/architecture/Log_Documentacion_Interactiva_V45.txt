@@ -211,3 +211,23 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   `galardonados/page.tsx`. ANN nuevas: `src/lib/ocp/{etapas.ts,fincaEudr.ts}`, `src/app/ocp/(app)/kr/{page.tsx,carga.ts,KrTabla.tsx}`.
 - NO inventar en el mapa: nadie ha visto la pantalla pintada todavía; el owner tiene pendiente abrirla.
 (commit: dd3b734)
+
+## [2026-09-19] V5.62 · El estado del circuito del lote, DERIVADO (consolas → kaffetal-regal)
+- FICHA NUEVA candidata: **`circuitodellote`** — *en ficha → a evaluar → en evaluación → pendiente de oferta → oferta emitida →
+  catálogo activo* (+ *no apto*). No es una columna: `estadoDelCircuito()` (`src/lib/ocp/circuito.ts`, puro) lo deriva de la
+  inscripción y su pago, el recibo de la muestra, el grado, la última oferta y el contrato, y dice además LO QUE FALTA. Las
+  reglas van de atrás hacia adelante —lo más avanzado gana—, porque los datos se acumulan. `a:` hacia `tablaunica`, `eva`,
+  `gradoscalidad`, `ofertas`, `derivadonosepersiste` (si existe; si no, es buen momento para escribirla: la regla tiene ya
+  cuatro casos — etapa del comprador, tareas del Tablero, consola del pilar, circuito del lote).
+- Para `tablaunica`: gana la columna «Circuito» y su filtro.
+- Para `guardianespejo`: el caso que SALIÓ BIEN. `qa-circuito-check` nació con su tabla de verdad escrita desde las notas del
+  owner (cada caso cita la nota), y con dos propiedades en vez de ejemplos sueltos: TOTAL (13.440 combinaciones) y MONÓTONA
+  (ningún avance hace retroceder). Una propiedad no se puede copiar del módulo que se vigila.
+- LECCIÓN: **un plan aprobado también se audita al ejecutarlo.** La fase 4 tenía un problema de ORDEN que nadie vio al
+  aprobarla: su guard (no aceptar una oferta sin disponibilidad declarada) depende de una pantalla de la fase 5, bloqueada.
+  Desplegado como estaba escrito, ningún productor habría podido aceptar una oferta. Se partió: 4a (lo derivado, sin riesgo)
+  sale; 4b espera al owner, y el porqué está escrito en el plan, no en la memoria de nadie.
+- NO inventar en el mapa: las pantallas «Lotes a evaluar / en evaluación / pendiente de oferta / catálogo activo» NO existen;
+  `/ocp/nominados` sigue siendo donde se confirma el pago, se recibe la muestra y se emite el veredicto. El veredicto NO se partió.
+- ANN nuevas: `src/lib/ocp/circuito.ts`, `scripts/qa-circuito-check.mjs`.
+(commit: pendiente)

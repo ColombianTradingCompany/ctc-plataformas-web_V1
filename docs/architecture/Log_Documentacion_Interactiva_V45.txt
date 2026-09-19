@@ -210,4 +210,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   `kr/[id]`). RETIRADOS: `fincas/FincaModalRow.tsx`, `fincas/FincasViewSwitch.tsx`, `productores/ProductoresBoard.tsx`,
   `galardonados/page.tsx`. ANN nuevas: `src/lib/ocp/{etapas.ts,fincaEudr.ts}`, `src/app/ocp/(app)/kr/{page.tsx,carga.ts,KrTabla.tsx}`.
 - NO inventar en el mapa: nadie ha visto la pantalla pintada todavía; el owner tiene pendiente abrirla.
-(commit: pendiente)
+(commit: dd3b734)

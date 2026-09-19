@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.61] — 2026-09-19 (commit pendiente)
+## [V5.61] — 2026-09-19 (commit dd3b734)
 
 - **Hito**: **Productores, Fincas y Lotes son UNA tabla: `/ocp/kr`** — fase 3 del overhaul de las consolas (nota 1 del owner).
   Tres módulos con tres tableros, tres mapas a medias y tres modales pasan a ser una pantalla navegable en cualquier dirección:

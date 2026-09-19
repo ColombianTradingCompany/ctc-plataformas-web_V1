@@ -43,7 +43,7 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 | 1 | SE-1 | secretaria | Vocabulario en Notion: Papagayo Beans®, CTCx, X, razón social | S | — | — |
 | 2 | CN-3 | consolas · OCP | **Ofertas y contratos según la narrativa** (prima dentro, `directa`, mínimos, escalera, reporte, pago) | L | CN-1 | KR-2, CP-3, HI-1 |
 | 2 | CN-4 | consolas · OCP | Subastas en US$; alza al productor solo en Cherry Picked, a COP el día del pago | M | CP-1 | CP-3 |
-| 2 | CN-5 | consolas · OCP | Evaluación: tarifa $200.000 con descuentos, sin reembolso del 80 %, contra-catación con crédito, avisos | M | O-3 (cobro) | KR-2 |
+| 2 | CN-5 | consolas · OCP | Evaluación: tarifa $200.000 con la **coinversión de CTCx** (30–70 %; no se dice «descuento», owner 2026-09-18), sin reembolso del 80 %, contra-catación con crédito, avisos | M | O-3 (cobro) | KR-2 |
 | 2 | CN-6 | consolas · OCP | Arena abierta a Blue+ sin contrato, postulación y fila | M | — | KR-2 |
 | 2 | CN-7 | consolas · OCP | UID/QR del lote y sticker imprimible; ficha pública de CTCx Selection | M | CN-2, O-4 | CP-3 |
 | 2 | KR-2 | kaffetal-regal | Panel: perfil primero, tabla de salida antes de firmar, Arena, «su café en la bolsa», avisos | M | CN-3, CN-5, CN-6 | O-8 |
@@ -127,14 +127,14 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 ### KR-1 · kaffetal-regal · el copy del guion (v0.6 + v0.7) · M
 
 - **Alcance** (guion §6): CTCx y **Papagayo Beans®** («su café sale al mundo como…»); tarifa `ARENA_FEE_COP`
-  80.000 → 200.000 con descuento del 30 al 70 % y envío incluido (la leen `nominadosActions`, `inscriptions`,
+  80.000 → 200.000 —**CTCx coinvierte** del 30 al 70 % del costo; no se dice «descuento» (owner, 2026-09-18, guion v0.9.1)— y envío incluido (la leen `nominadosActions`, `inscriptions`,
   `producerActions`: línea en §3 a consolas; el cobro real espera O-3); `TratoSection` con los dos caminos (prima
   dentro del PVC; CaaS sin prima; compra inicial por grado; mínimos 3–4 · 2 · 1 · ½; escalera 25 % + 25 % con el 4 %;
   pago a 2 días; reporte en la primera semana del mes); `faq.ts` en tres idiomas; `BienvenidosSection` con Perfil ·
   Finca · Lote · Evaluación · Oferta · Despacho; `OportunidadSection` con los multiplicadores reales en vez de índices
   base 100; la Arena como herramienta abierta a Blue+; el calendario del PVC. **No toca el copy de grados** (ola 4).
 - **Guardianes.** `qa-kr-panel-check`, `qa-kr-ficha-check`, `qa-nav-check`.
-- **Hoy:** `Tanda KR-1 del plan de narrativa (§3): trasladar el guion v0.6/v0.7 a la landing y el FAQ —CTCx, Papagayo Beans®, tarifa de $200.000 con descuento, los dos caminos con la prima dentro del PVC, escalera 25 % + 25 % y 4 %, pasos con Perfil primero, multiplicadores reales, Arena abierta a Blue+—, sin tocar el copy de grados.`
+- **Hoy:** `Tanda KR-1 del plan de narrativa (§3): trasladar el guion v0.6/v0.7 a la landing y el FAQ —CTCx, Papagayo Beans®, tarifa de $200.000 con la coinversión de CTCx (30–70 %, nunca «descuento»), los dos caminos con la prima dentro del PVC, escalera 25 % + 25 % y 4 %, pasos con Perfil primero, multiplicadores reales, Arena abierta a Blue+—, sin tocar el copy de grados.`
 
 ### SO-1 · socios · la narrativa de los nodos · S
 
@@ -186,13 +186,13 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 
 ### CN-5 · consolas · OCP · la evaluación como la cuenta el guion · M
 
-- **Alcance.** Tarifa $200.000 con descuentos 30/50/60/70 (desde `pvc_model_versions.params` o la constante
+- **Alcance.** Tarifa $200.000 con la **coinversión de CTCx** en 30/50/60/70 —vocabulario, no máquina: `arena_inscriptions.discount_pct` y las campañas no cambian— (desde `pvc_model_versions.params` o la constante
   compartida con KR-1); envío incluido (guía prepagada); retirar el reembolso del 80 % al rechazado; contra-catación
   externa pedida en 5 días hábiles con **crédito a favor** (ledger que se liquida al cierre del mes y se hace efectivo
   con un trato); avisos al productor que hoy faltan: finca aprobada (`approveFinca`), lote Apto, resultado. El cobro
   real llega con O-3.
 - **Guardianes.** `qa-evaluaciones-check` (42), `qa-jornada-check`, `qa-visa-check`.
-- **Hoy:** `Tanda CN-5 del plan de narrativa (§4): tarifa de evaluación de $200.000 con descuentos y envío, sin reembolso del 80 %, contra-catación con crédito a favor, y avisos al productor al aprobar la finca, declarar Apto y publicar el resultado.`
+- **Hoy:** `Tanda CN-5 del plan de narrativa (§4): tarifa de evaluación de $200.000 con la coinversión de CTCx (30–70 %, nunca «descuento») y envío, sin reembolso del 80 %, contra-catación con crédito a favor, y avisos al productor al aprobar la finca, declarar Apto y publicar el resultado.`
 
 ### CN-6 · consolas · OCP · la Arena abierta · M
 
@@ -205,10 +205,11 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 ### CN-7 · consolas · OCP · UID/QR del lote y el sticker · M
 
 - **Alcance.** Identificador público del lote (el `lotId` de la ficha pública o un UID corto) → QR que resuelve a
-  `/docs/ficha/[lotId]` (lista blanca); sticker imprimible desde OCP · Fichas con nombre del productor y finca si el
+  `/ctcx-public-catalogue/[codigo]` (el paquete público del lote, que es lo que la V5.48 construyó sobre
+  `lots.public_code`; el alcance original decía `/docs/ficha/[lotId]`); sticker imprimible desde OCP · Fichas con nombre del productor y finca si el
   lote va por Cherry Picked, o «CTCx Selection» si `ctc_selection`; ficha pública con Papagayo Beans® y la finca como
   dato no protagonista en CTCx Selection (`fichaPublica.ts`, `docs/ficha/[lotId]/page.tsx`). Diseño físico: O-4.
-- **Guardianes.** `qa-ficha-publica-check` (105), `qa-fichas-check` (31).
+- **Guardianes.** `qa-ficha-publica-check` (115), `qa-catalogo-publico-check` (119), `qa-fichas-check` (31).
 - **Hoy:** `Tanda CN-7 del plan de narrativa (§4): QR/UID del lote hacia la ficha pública, sticker imprimible de productor y finca (o CTCx Selection) desde OCP · Fichas, y la ficha pública con Papagayo Beans® y la finca como dato en CTCx Selection.`
 
 ### KR-2 · kaffetal-regal · el panel · M
@@ -289,7 +290,7 @@ del 2026-07-10 y la F1 del espejo con Notion. Van después de la ola 2 salvo que
 Se marca en el mismo commit que cierra la tanda (con su versión).
 
 - [ ] O-1 · [ ] O-2 · [ ] O-3 · [ ] O-4 · [ ] O-5 · [ ] O-6 · [ ] O-7 · [ ] O-8
-- [ ] CN-1 · [ ] CN-2 · [x] CP-1 (V5.52, `7037ec4`) · [ ] CP-2 · [ ] KR-1 · [ ] SO-1 · [ ] SE-1
+- [ ] CN-1 · [ ] CN-2 · [ ] CP-1 (mitad hecha en V5.52, `7037ec4`: la moneda de la tienda; **faltan** los mínimos en unidades de 6 kg en `LotCard`, retirar `ASSOC_BLACK_MOQ = 350` y la constante muerta `FEE_EUR_KG` de `RoastLanding` — auditoría del 2026-09-19) · [ ] CP-2 · [ ] KR-1 · [ ] SO-1 · [ ] SE-1
 - [ ] CN-3a · [ ] CN-3b · [ ] CN-4 · [ ] CN-5 · [ ] CN-6 · [ ] CN-7 (mitad delantera hecha en V5.48: `lots.public_code` y el portal; faltan el QR y el sticker) · [ ] KR-2 · [ ] CP-3
 - [ ] CN-8 · [ ] CP-4 · [ ] SO-2 · [ ] CP-5 · [ ] HI-1
 - [ ] CN-9 · [ ] KR-3 · [ ] SE-2

@@ -14,11 +14,12 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 - **OCP · Operational Control Panel — *Operation***: el **pasaporte del lote** de punta a punta —
   productores, fincas (visa EUDR), lotes (EVA, sello), nominados (bache y veredicto Q-Grader),
   Arena (vitrina), galardonados, Club, **ofertas**, catálogo, contratos, **subastas**, **fichas**
-  (escáner), CTC Selection, los cuatro CRM de Cherry Picked, transcripciones.
+  (escáner), CTC Selection, los cuatro CRM de Cherry Picked.
 - **ECP · Executive Control Panel — *Execution***: plataformas (Manejo de Plataformas, SEO), contacto
   (buzón, leads), las superficies satélite (Directorio, Coffeed/Redacción, Herramientas, Terratalento,
   CTC Tech, Varietales, la lista de espera de CTC Home) y la caja de herramientas interna
-  (cotizadores, anclas de mercado — charter `herramientas-internas`).
+  (cotizadores, anclas de mercado, **transcripciones** — del ECP desde la V4.26, `/ocp/transcripciones` es solo su
+  talón 308; charter `herramientas-internas`).
 
 `/panel` es el selector tras el login; `/control-panel` la puerta pública (`panel.ctcexport.com`).
 
@@ -28,8 +29,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | `direccionamiento/*`, `usuarios`, `documentacion`, `mapa`, `consumo`, `automatizaciones`, `socios/[nodo]`, `pvc/*` |
-| `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `arena/[sessionId]/run`, `galardonados`, `club`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection`, `crm/{caas,green,roast,x}`, `transcripciones` |
-| `/ecp/(app)/…` | Execution | `buzon`, `leads`, `plataformas`, `directorio`, `coffeed`, `herramientas`, `terratalento`, `ctc-tech`, `varietales`, `ctc-home`, `cotizador-*`, `anclas-mercado` |
+| `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `arena/[sessionId]/run`, `galardonados`, `club`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection`, `crm/{caas,green,roast,x}` |
+| `/ecp/(app)/…` | Execution | `buzon`, `leads`, `plataformas`, `directorio`, `coffeed`, `herramientas`, `terratalento`, `ctc-tech`, `varietales`, `ctc-home`, `cotizador-*`, `anclas-mercado`, `transcripciones` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V4.26 | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
 | `/socios/<slug>` · `/socios/<slug>/acceso` · `/socios/<slug>/panel` | los 5 nodos socio (landing + login + panel) | `src/lib/partners/partners.ts`; credenciales desde `/bcp/socios` |
 
@@ -100,6 +101,29 @@ portal y el peso de las imágenes) ·
 
 ## Pendientes
 
+- **PRIMERA AUDITORÍA DEL NODO FINAL (2026-09-19, `ALINEACION` §3)** — lo que destapó y es de este componente:
+  **(a)** ⚠️ **`src/lib/pvc/escala.ts` implementa la base física AL REVÉS de lo decidido**: `revisarBaseFisica` exige
+  `factor > 94` («mayor que 94») y `qa-pvc-escala` lo afirma en verde («factor 95 cumple · 93 no cumple»), cuando el
+  owner fijó **≤ 94, Black hasta 98** (`PVC_BCP_PLAN.md` §14 n.º 9). Hoy solo lo lee `EscalaBoard` (BCP · Grados), pero
+  es la puerta que el veredicto heredará en CN-9: se corrigen el módulo Y su guardián en la misma tanda.
+  **(b)** **Guardián roto**: `scripts/qa-transcripciones-nube.mjs` (línea 60) busca el fixture en
+  `../reference_html_tools/_whatsapp-transcript-html/…`, que ya no existe; vive en
+  `tools/transcriptor/tests/fixtures/two_speakers.ogg`. Es el gemelo de la línea de `WorkersBadge` (hecha en la V5.42).
+  **(c)** **`src/lib/ai/precios.ts` es de este componente** (BCP · Consumo de IA; §3b le asignó dueño hoy):
+  `claude-sonnet-5` sigue con base 3/15 y una promo 2/10 vencida el 2026-08-31, cuando la tarifa es 2/10 sin promoción;
+  cada fila de Sonnet 5 del libro desde el 1-sep está un 50 % por encima. Falta decidir con el owner qué se hace con
+  esas filas.
+  **(d)** **Filas de §3b con dueño `consolas` que este charter no recogía** y siguen abiertas (el detalle vive allí, no
+  se duplica): la **F1 del espejo** con Notion (`notion_espejos`, los seis eventos, `espejo-reporte.mjs` —
+  `SECRETARIA_PLAN.md` §4); la **base física como puerta** del veredicto; la **segunda ronda del owner** (reoferta por
+  periodos PVC, reporte mensual de ventas, revisión de almacenaje con 1 kg —que no está en NINGUNA tanda del plan—,
+  crédito a favor, `showcaseGate` abierto a Blue+); **el trato real contra el §12.9** (`RELEASE_STAIRCASE` 50/75/100 en
+  `contractActions.ts`, el reembolso del 80 % al rechazado en `recordEvaluationVerdict`, los pasos que no avisan al
+  productor, los plazos de D2 §11.3); el **modelo v2.2.0** (columna marítima, DDP consolidado ≠ dedicado, regiones como
+  dato); y la **contraparte en el OCP de cada nodo socio** (`socios.md`, SO-2).
+  **(e)** **Dueño ambiguo del PVC**: §3b carga todo el PVC a «consolas (BCP)», este charter declara `pvc_*` como «solo
+  lee» y `herramientas-internas.md` se dice dueño de `pvc_*` y `src/lib/pvc` — mientras §3 anota las V5.44–V5.47 a
+  nombre de «consolas (BCP)». **Decide el owner** de quién es el módulo; mientras tanto manda §3b.
 - ~~**Reconciliar las correcciones del guion v0.9.1**~~ — **hecho el 2026-09-18**. `PVC_BCP_PLAN.md` §14.2 (n.º 10 y el
   nuevo 11-bis) y `PLAN_NARRATIVA_2026-09-17.md` §CN-3 ya dicen **«Gold hasta 100 kg»** y **«CTCx coinvierte»** en vez de
   «descuento». La línea está en `ALINEACION` §3. Lo que queda es **copy con dueño `kaffetal-regal`** (`EvaluacionesTab`,
@@ -124,14 +148,17 @@ portal y el peso de las imágenes) ·
   asientos V5.46–V5.52 y la narrativa del 17-sep: nodo `n-portal`, fichas `portalpublico` · `codigopublico` · `moneda` ·
   `canales` · `compromiso` · `narrativa`, trazas `findmylot` y `programas`. ⚠️ Se llamó **otra vez fuera de su vía**
   (`ALINEACION` §5.3): la conversación «Wraps del mapa» **no existe** en el grupo; lo pidió el owner desde la sesión de
-  narrativa, con las otras dos sesiones del grupo detenidas. Es la segunda vez (V43, V44): **decide el owner** si se crea la
-  vía o se reescribe la regla. El log vigente es `Log_Documentacion_Interactiva_V44.txt`.
+  narrativa, con las otras dos sesiones del grupo detenidas. Es la segunda vez (V43, V44). ~~**Decide el owner** si se crea la
+  vía o se reescribe la regla~~ — **decidido el 2026-09-19: la vía existe.** El owner creó la conversación
+  **«WRAP-COMMIT-PUSH (CTC Platforms)»** en este grupo como nodo final (`ALINEACION` §5.3, reescrito): antes de compilar y
+  empujar, audita que el maestro y los charters estén en el mismo punto. El log vigente es `Log_Documentacion_Interactiva_V44.txt`.
 - **El primer precio publicado destapa dos conflictos ya conocidos** (owner avisado, 2026-09-18): **(a)** la edición
   PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y «Blue» como *86,0–87,9*, mientras `definicion.ts` —la fuente
   única de `ALINEACION` §1— dice Gold 86,00–87,99; el owner decidió que manda `definicion.ts` y se toma la fila Gold.
   Es el conflicto abierto n.º 1 de §1, mordiendo por primera vez en un precio real. **(b)** la pila del PVC está en
-  **USD/kg** y la tienda Green imprime `€{price}/kg`: el owner decidió publicar el valor igual y anotarlo — lo arregla
-  **CP-1**, y queda como pendiente bloqueante en el charter de `cherry-picked`.
+  **USD/kg** y la tienda Green imprime `€{price}/kg`: el owner decidió publicar el valor igual y anotarlo — ~~lo arregla
+  **CP-1**, y queda como pendiente bloqueante en el charter de `cherry-picked`~~ **resuelto en la V5.52** (la tienda imprime
+  US$ desde `lib/precios/moneda.ts`). El (a) sigue abierto.
 - **CN-7 va por la mitad (V5.48)**. Entregado: `lots.public_code` (el identificador), el portal público
   `/ctcx-public-catalogue` con «Find my Lot» y el paquete del lote, y la acuñación en `publishLot`. **Falta**: el
   **QR** y el **sticker imprimible** desde OCP · Fichas (nombre del productor y finca, o «CTCx Selection»), que
@@ -142,8 +169,10 @@ portal y el peso de las imágenes) ·
   aquí por la regla del backstage (`ALINEACION` §2 y su línea en §3). **(a)** La entrada al portal ya no falta:
   la **V5.49** la puso en el pie de la cinta del Catálogo Activo, que está montada en siete superficies (Home, KR,
   CaaS y las cuatro de Cherry Picked) — el enlace va **absoluto** a la casa matriz porque la ruta no tiene subdominio.
-  **(b)** Sigue con dueño `plataforma`: la superficie reutiliza la tarjeta Open Graph `ctc-home.jpg` y le falta una
-  propia (`ctcx-public-catalogue.jpg`, 1200×630 JPEG < 300 KB, owner).
+  **(b)** ~~Sigue con dueño `plataforma`: la superficie reutiliza la tarjeta Open Graph `ctc-home.jpg` y le falta una
+  propia~~ — **hecho en la V5.50**: `public/images/og/ctcx-public-catalogue.jpg` existe (89 KB) y las dos páginas del
+  portal la declaran. Nota: `plataforma` no tiene charter propio (`REFURBISH_PLAN.md` lo llama «charter implícito» =
+  `HANDOFF` + `ALINEACION`), así que un pendiente «con dueño plataforma» solo vive donde se escribió.
 - **Las cuatro vistas `public_*` arrastran grants `INSERT/UPDATE/DELETE/TRUNCATE` a `anon` y `authenticated`** (el
   reparto por defecto de Supabase). Son inertes —ninguna es actualizable, todas son joins de varias tablas— pero son
   ruido en cada auditoría. Retirarlos es una migración de una línea por vista; no se hizo aquí para no mezclarlo con
@@ -174,16 +203,19 @@ portal y el peso de las imágenes) ·
   del §9.1 debe validarla el owner con la calculadora (la del artefacto «PVC · Cinco decisiones»). La Ficha (KR)
   gana los tres físicos y la lista de reconocimientos verificables (§9.1.b); los multiplicadores PBC (§9.4) entran en
   `pvc_model_versions.params`. **Auditoría del módulo (§10, verificada contra la base 2026-09-16)**: trece hallazgos —
-  **A1 primero y urgente**: `edicionVigente()` y `public_pvc_current` ignoran `valid_from/valid_to`, y como el PVC se
-  publica **7–8 semanas antes** de su fecha efectiva, la próxima edición empezará a regir el día que se publique
-  (hoy es barato: 0 ofertas, 0 contratos, 0 listados lo leen); luego A2 (`pvc_anterior` lo teclea el usuario), A3
+  ~~**A1 primero y urgente**: `edicionVigente()` y `public_pvc_current` ignoran `valid_from/valid_to`~~ **A1 corregido en la
+  V5.43** («vigente» = la edición cuya ventana contiene hoy; guardián `qa-pvc-vigencia`); siguen A2 (`pvc_anterior` lo teclea el usuario), A3
   (cinco parámetros fuera del control de deriva), el modelo v2.2.0, la espina (`pvc.*`, cron diario con TRM e ICE C,
   **ciclo semanal que LEE el mercado y no publica precio**: desviación contra el pronóstico, novedades y distancia al
   disparador) y el marco de mercado semestral como **documento D10 del dossier** (enero y julio, sin tabla ni pantalla).
   La oferta en dos caminos (§9.5) exige `lot_offers` kind `directa` y abrir `ctc_selection` a cualquier grado (**A13**:
   hoy solo lo enciende `black_negotiations`), además de la herramienta «PVC × grado».
-- **Refurbish del módulo a «Modelo Económico»** (`PVC_BCP_PLAN.md` §11, diseñado 2026-09-16, sin construir): rename en
-  `consoles.ts` (retira la pestaña vacía `direccionamiento/modelo-economico`), pestañas nuevas **Lectura** (KPI con la
+- **Refurbish del módulo a «Modelo Económico»** (`PVC_BCP_PLAN.md` §11, diseñado 2026-09-16) — **a medio construir**
+  (corregido el 2026-09-19: este párrafo decía «sin construir»). **Hecho**: el rename en el rail (V5.45; la ruta sigue
+  siendo `/bcp/pvc` a propósito), **Lectura** (V5.44) y **Grados** con su calculadora —la primera versión de la herramienta
+  «PVC × grado» del §9.5— (V5.45). **Falta**: **Marco de mercado**, **MOQ y mermas**, el Tablero como configurador,
+  `month_wrap`, y retirar la pestaña vacía `direccionamiento/modelo-economico`, que sigue en el árbol. El diseño completo:
+  rename en `consoles.ts` (retira la pestaña vacía `direccionamiento/modelo-economico`), pestañas nuevas **Lectura** (KPI con la
   regla de precios, la carga apilada y el embudo de mermas), **Grados** (escala y calculadora), **Marco de mercado**
   (`pvc_marco_mercado`: la clasificación A/B/C **es dato**, semestral, y el D10 es su impresión) y **MOQ y mermas**;
   el Tablero gana el rol de configurador que un agente usa para proponer la versión siguiente del modelo (nunca
@@ -208,8 +240,8 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
-Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «Wraps del mapa» de este grupo
-(ALINEACION §5); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
+Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
+de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push,
 verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.

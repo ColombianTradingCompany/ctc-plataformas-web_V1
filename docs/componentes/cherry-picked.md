@@ -28,7 +28,7 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 
 - `src/components/cherry-picked/` — `CherryPickedExperience.tsx`, `TyrianSection.tsx` (subasta real, V5.24),
   `GradosSection`, `BlackSection`, `Cart`, `ProfileView`, `EnviosSection`, `LoginModal`, `i18n.ts` (EN · ES · DE),
-  `data.ts` (`moqOf`, `eur`, `fmt`, `ASSOC_BLACK_MOQ = 350`).
+  `data.ts` (`moqOf`, `importe` —antes `eur`, V5.52—, `fmt`, `ASSOC_BLACK_MOQ = 350`).
 - `src/components/cherry-picked-hub/HubLanding.tsx`, `cherry-picked-roast/`, `cherry-picked-x/`,
   `src/components/services/CaasLanding.tsx`.
 - `src/components/catalogo/SneakPeek.tsx` (montado en 7 superficies), `src/lib/catalogo/{sneakPeek,sneakPeekMock,
@@ -73,7 +73,7 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 | OCP · Subastas | abrir · cerrar · adjudicar · cancelar la subasta Tyrian | `subastasActions` |
 | OCP · CTC Selection | qué lote se muestra a nombre de CTC (`black_negotiations.status='comprar'`) | vista `public_lot_catalog` |
 | OCP · CRM CaaS / Green / Roast / X | respuestas a leads, etapa manual del comprador, contacto de la lista de espera | `/ocp/crm/*` |
-| BCP · PVC | (futuro) MOQ y moneda al comprador — **pendiente de decisión** | `PVC_BCP_PLAN.md` §8 |
+| BCP · Modelo Económico (PVC) | MOQ y moneda al comprador — **decididos** (2026-09-15 y §14 del 2026-09-17): la moneda ya se ejecutó (V5.52, `lib/precios/moneda.ts`); los mínimos por grado siguen sin ejecutar (segunda mitad de CP-1) | `PVC_BCP_PLAN.md` §8–§9, §14.4 |
 | ECP · Herramientas | gadgets y nivel Plus en la tienda | charter `herramientas-cafe` |
 
 ## Pendientes
@@ -102,7 +102,10 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
   dato, no protagonista»). `public_lot_catalog` anula `finca_name` cuando `ctc_selection`, y tanto `/docs/ficha/[lotId]`
   como el paquete público de `/ctcx-public-catalogue/[codigo]` solo pueden pintar lo que la vista devuelve. D3.1 se
   aplica en SQL a propósito: taparlo en la interfaz dejaría el nombre a un `curl` de distancia.
-- **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **CP-1** (US$ y mínimos) y **CP-2**
+- **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **CP-1 va por la MITAD** (auditoría del
+  2026-09-19: el tablero la daba por cerrada) — **hecha** la moneda de la tienda (V5.52); **faltan** los mínimos en
+  unidades de 6 kg en `LotCard`, retirar `ASSOC_BLACK_MOQ = 350` (`data.ts`, `LotCard.tsx`), la constante muerta
+  `FEE_EUR_KG` de `RoastLanding.tsx` y el comentario `// EUR/kg` de `data.ts`. Después, **CP-2**
   (portada, programas, mapa; ola 1) · CP-3 (catálogo y ficha para el primer lote publicado; espera CN-3, CN-4 y CN-7) ·
   CP-4 (Green por región; espera CN-8) · CP-5 (Roast y X como productos, 2027).
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: Roast con etiquetas **Papagayo Beans por defecto · Co-Brand
@@ -135,7 +138,8 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
     y Tyrian 1 carga o menos según disponibilidad). El empaque se muestra como **presentación**, no como mínimo.
   - **Subasta Tyrian**: una sola por lote, en verde; **el bid es sobre FOB puerto Colombia** y el programa se elige al
     cerrar. **Las reglas de ajuste por programa se publican antes de abrir la puja**: el pujador ve su precio final
-    desde el principio. **Se mantiene EUR/kg** y la adjudicación del OCP.
+    desde el principio. ~~**Se mantiene EUR/kg**~~ (**superado por el §14 del 2026-09-17**: US$ en tienda y subasta; la
+    subasta cambia con **CN-4**, dueño `consolas`, porque lleva DDL) y la adjudicación del OCP.
   - **Tríada de reputación del comprador** (niveles verde → pintón → maduro): compras completadas · diversidad de
     grados y orígenes probados · confiabilidad (paga a tiempo, no abandona carritos ni pujas). **Ponderación, no
     acumulación**; no se agregan más factores; **CaaS queda fuera** de los niveles. Pesos, fórmula y beneficios: por
@@ -144,13 +148,15 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 
 - **La primera subasta real** cuando el bache galardone un Tyrian (hoy la sección dice «no hay subasta abierta»).
 - **Cobros**: sin código de Stripe (aplazado, 2026-09-16); bloqueado por la entidad legal.
-- ~~MOQ Black 350 vs 228 kg y EUR vs US$ a la TRM~~ — **resuelto** por el CEO (arriba): MOQ en cargas y subasta en EUR.
+- ~~MOQ Black 350 vs 228 kg y EUR vs US$ a la TRM~~ — **resuelto** por el CEO (arriba): MOQ en cargas; la subasta, que
+  el CEO dejó en EUR, pasó a **US$ por el §14 del owner** (2026-09-17) y espera a CN-4.
   Hasta que este componente lo ejecute, el código sigue con `ASSOC_BLACK_MOQ = 350`.
 - Un comprador que propone un proyecto CaaS recibe las respuestas **solo por correo** (el espejo al panel es
   de productores, diseño A3) — anotado, no roto.
 - Roast y X: listas de espera hasta 2027; el día que abran, el tablero del OCP ya existe.
-- **No hay ningún lote publicado hoy**: la ficha pública y la cinta con lotes vivos no se han visto con datos
-  reales — el primer lote publicado es el momento de mirarlas.
+- ~~**No hay ningún lote publicado hoy**~~ — **desde el 2026-09-18 hay uno**: «Gesha 72h Ferm» · `CTCX-V2DD-M24B`
+  (`ALINEACION` §3). Es el momento que este pendiente esperaba: **mirar la ficha pública y la cinta con datos reales**
+  (y los tres códigos del mismo café, arriba) sigue sin hacerse desde este componente.
 
 ## Kick-off
 

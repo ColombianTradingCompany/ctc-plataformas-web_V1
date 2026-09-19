@@ -82,8 +82,9 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 - **Correcciones del owner al guion (2026-09-18, v0.9.1)** que alcanzan a otros: la evaluación deja de hablar de «descuento»
   —**CTCx coinvierte** del 30 % y hasta el 70 % del costo— y la compra inicial de **Gold en Cherry Picked es «hasta 100 kg»**,
-  no «> 100 kg». `PVC_BCP_PLAN.md` §14 y la narrativa v3 (KR p2, CP p2) dicen todavía lo anterior: **consolas reconcilia** y
-  `reference/narrativa-2026-09-17/` se regenera. En KR: `EvaluacionesTab`, `PorQueSection`, `faq.ts` n.º 3 y `TratoSection`.
+  no «> 100 kg». ~~`PVC_BCP_PLAN.md` §14 dice todavía lo anterior: **consolas reconcilia**~~ — **reconciliado**: el plan del PVC
+  el 2026-09-18 y el plan de narrativa (que seguía diciendo «descuento») el 2026-09-19; la narrativa v3 (KR p2, CP p2) de
+  `reference/narrativa-2026-09-17/` la regenera el owner, fuera del repo. En KR: `EvaluacionesTab`, `PorQueSection`, `faq.ts` n.º 3 y `TratoSection`.
 - **`lots.public_code` es de solo lectura para el productor** (dueño: **kaffetal-regal**, nace en consolas V5.48,
   `ALINEACION` §3). El `select("*")` del panel ahora devuelve la columna nueva, y `guard_lot_protected_columns` la
   protege: un `UPDATE` del productor sobre ella responde «Estos campos solo puede actualizarlos CTC.». Si algún día el

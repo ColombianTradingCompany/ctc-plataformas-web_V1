@@ -49,8 +49,8 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
-Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «Wraps del mapa» de este grupo
-(ALINEACION §5); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
+Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
+de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push,
 verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
@@ -299,8 +299,13 @@ CTC Home (/), src/proxy.ts y la red de subdominios, SEO/Open Graph/JSON-LD/sitem
 1. docs/ALINEACION.md   ← ERES el dueño de sus contratos (§1): cambiar uno exige avisar a todos los componentes que lo leen
 2. docs/HANDOFF.md      ← la arquitectura transversal y los gotchas
 3. AGENTS.md            ← la compuerta y las reglas de la casa
-Eres también la vía que LLAMA LOS WRAPS del mapa interactivo (ALINEACION §5): cuando el log acumule
-cinco asientos o se cierre un hito, compila el snapshot siguiente con el skill architecture-doc-versioning.
+Los WRAPS del mapa interactivo son de esta vía, pero se llaman SOLO desde UNA conversación del grupo:
+«WRAP-COMMIT-PUSH (CTC Platforms)» (ALINEACION §5.3), el nodo final. Si eres esa conversación: antes de
+compilar, AUDITA que el maestro y los charters estén en el mismo punto (árbol limpio y a la par de origin,
+ninguna otra sesión corriendo, version ↔ CHANGELOG ↔ log ↔ insignia en vivo, §3b ↔ «Pendientes» del dueño,
+el tablero del plan vigente, la batería completa de guardianes) y deja tu línea en el §3; después, cuando el
+log acumule cinco asientos o se cierre un hito, compila el snapshot con el skill architecture-doc-versioning.
+Si NO eres esa conversación, pide el wrap (una línea en tu charter o al owner) y no lo llames.
 Terratalento vive aquí EN ESPERA (docs/componentes/terratalento.md): solo retroalimentación y comunicación desde ECP
 durante ~6 meses; no se construye nada nuevo ahí sin el owner.
 Todo cambio aquí PERMEA: cada tanda deja su línea en el §3 con los componentes afectados, y verifica en

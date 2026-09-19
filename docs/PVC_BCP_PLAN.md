@@ -265,7 +265,8 @@ sin regalar Tyrian a 84. El único sitio donde la gráfica salta en vez de escal
 **Las puertas** (las notas de la gráfica, cumplidas por construcción):
 
 - **Puerta 0 — la Base física (§9.1.b).** Antes de mirar el Punto y la Tríada, el lote tiene que cumplir los tres
-  físicos: factor de rendimiento **> 94**, humedad **10–12 %** y densidad **dentro del rango de su variedad**. Sin eso
+  físicos: factor de rendimiento **≤ 94** (más bajo es mejor; Black hasta 98 — corregido el 2026-09-19: aquí seguía
+  el «> 94» que el §14 n.º 9 retiró; ⚠️ `src/lib/pvc/escala.ts` aún lo implementa al revés), humedad **10–12 %** y densidad **dentro del rango de su variedad**. Sin eso
   no hay grado que nombrar: el lote queda «apto en taza, pendiente de físico» y no entra en la escala.
 
 - **SCA < 80 → sin grado, sea cual sea el surplus.** La base sigue bajando 200 puntos por punto SCA y el multiplicador

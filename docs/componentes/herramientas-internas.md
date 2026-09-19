@@ -67,8 +67,15 @@ hasta que el owner resuelva `PVC_BCP_PLAN.md` §8 (bandas · MOQ · moneda).
 
 ## Pendientes
 
-- **PVC fases 2–4** tras las cinco decisiones del owner (§8): que ofertas/contratos/listados lean la
-  edición; ciclo semanal (Make o cron); análisis de certeza; dónde corre el pipeline del dossier.
+- **ESTE CHARTER ESTÁ CONGELADO EN LA FASE 1 DEL PVC** (auditoría del 2026-09-19, `ALINEACION` §3). No recoge nada de
+  las V5.42–V5.47: las cinco decisiones **ya se tomaron** (2026-09-15); el ciclo semanal es **cron de Vercel**, no Make, y
+  el dossier va por **GitHub Action**; existen `src/lib/pvc/{lectura,escala,canales,compromiso}.ts`, `public_pvc_next`,
+  `/bcp/pvc/{lectura,grados}` y los guardianes `qa-pvc-{vigencia,lectura,escala,canales,compromiso}`; el módulo se llama
+  **«Modelo Económico»** desde la V5.45. El «Qué es», el mapa de código, las rutas y los guardianes de arriba hay que
+  reescribirlos — **y antes decide el owner de quién es el módulo**: §3b lo carga todo a «consolas (BCP)» y
+  `consolas.md` declara `pvc_*` como «solo lee». Lo que sigue pendiente del PVC vive en `consolas.md` §Pendientes.
+- **PVC fases 2–4** ~~tras las cinco decisiones del owner (§8)~~: que ofertas/contratos/listados lean la
+  edición; ciclo semanal (~~Make o cron~~ cron de Vercel); análisis de certeza; ~~dónde corre el pipeline del dossier~~.
 - **Stripe**: (1) país de la entidad legal (bloquea la cuenta real); (2) volver a guardar las claves
   sandbox en `.env.local` (owner, desde el Dashboard — nunca por chat); (3) autorizar el MCP de Stripe
   (OAuth) en sesión interactiva; (4) primera tanda sugerida: seguimiento de pagos a productores en
@@ -76,7 +83,8 @@ hasta que el owner resuelva `PVC_BCP_PLAN.md` §8 (bandas · MOQ · moneda).
 - **Transcriptor**: una credencial estrecha (RPC dedicada) en vez de `service_role` en el instalador.
 - **Herramienta de Guion**: decidir si se registra como herramienta interna (`clase: interna` en `tools`)
   o sigue fuera; hoy no la sirve nadie.
-- `WorkersBadge.tsx` con la carpeta vieja (dueño: consolas · OCP; ver ALINEACION §3b).
+- ~~`WorkersBadge.tsx` con la carpeta vieja~~ — **hecho en la V5.42**. Queda su gemelo: `scripts/qa-transcripciones-nube.mjs`
+  busca el fixture en la misma carpeta muerta y muere con `ENOENT` (dueño: consolas · ECP; `ALINEACION` §3b, 2026-09-19).
 
 ## Kick-off
 

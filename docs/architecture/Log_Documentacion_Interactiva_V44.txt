@@ -16,8 +16,10 @@ QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
   que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
   CHANGELOG posterior a «plataforma V5.52» tiene que aparecer aquí). Se añade al
   final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
-· EL WRAP lo llama SOLO la conversación «Wraps del mapa» (grupo CTC Consolas
-  internas, vía `plataforma`). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+· EL WRAP lo llama SOLO la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» (grupo CTC
+  Consolas internas, vía `plataforma`; existe desde el 2026-09-19 — antes la regla
+  nombraba una «Wraps del mapa» que nunca existió). Es el NODO FINAL: antes de compilar
+  audita que el maestro y los charters estén en el mismo punto (ALINEACION §5.3). Cadencia: ≥ 5 asientos, un hito de componente cerrado
   o antes de una versión mayor — lo primero que ocurra.
 · La línea «plataforma V5.52» de la cabecera es la referencia del guardián: el wrap
   siguiente la reescribe con la versión sobre la que cierra.
@@ -141,3 +143,44 @@ Contexto abierto al cerrar V44 (2026-09-19) — plataforma V5.52:
 
 ════════════════════════════════════════════════════════════════════════════════
 
+
+## [2026-09-19] DOCS · La vía de los wraps existe: «WRAP-COMMIT-PUSH (CTC Platforms)» y su primera auditoría (plataforma)
+Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué hace antes de compilar—, así que deja asiento
+(la lección del V44). Para el V45:
+
+- FICHA `versionado` (y `componentes`, que narra la regla paralela de versionado y wrap): el wrap ya no se llama desde
+  «Wraps del mapa» —conversación que nunca existió; los wraps V43 y V44 se llamaron fuera de vía— sino desde
+  **«WRAP-COMMIT-PUSH (CTC Platforms)»**, que el owner creó el 2026-09-19 en el grupo CTC Consolas internas. Es el
+  **nodo final**, y su oficio tiene un paso nuevo ANTES de compilar: **auditar que el maestro (`ALINEACION.md`) y los
+  charters estén en el mismo punto** — árbol limpio y a la par de `origin/main`, ninguna otra sesión corriendo,
+  `APP_VERSION` ↔ `CHANGELOG` ↔ log ↔ insignia en vivo, cada fila de §3b reflejada en el charter de su dueño, lo
+  «pendiente» que ya está hecho y al revés, el tablero del plan vigente, y la batería completa de guardianes. Las
+  sesiones de componente siguen empujando su propia tanda: la vía es el cierre, no un cuello de botella.
+  ANN: `docs/ALINEACION.md` (§5.3), `AGENTS.md`, `docs/KICKOFF.md` y `docs/componentes/build_kickoff.py` (el prompt
+  de `plataforma` dice ahora qué hace la conversación si ES la vía y qué hace si no lo es).
+- FICHA `narrativa` — corrección de estado, no de doctrina: **CP-1 NO está cerrada, va por la mitad.** El V44 escribió
+  «Cerradas: CP-1 y la mitad delantera de CN-7». De CP-1 solo existe la moneda de la tienda (V5.52); siguen en el
+  código `ASSOC_BLACK_MOQ = 350`, los mínimos sin pasar a unidades de 6 kg en `LotCard` y la constante muerta
+  `FEE_EUR_KG`. El tablero del plan (§8) quedó corregido. «Decidido» y «construido» son dos estados (lección del V44):
+  aquí se había marcado como construido algo que solo lo estaba a medias.
+- FICHA `grados` / `pvc` — ⚠️ **una tercera verdad que el mapa debe decir**: la **Base física** está decidida como
+  factor **≤ 94 (Black hasta 98)** y `src/lib/pvc/escala.ts` la implementa como **> 94**, con `qa-pvc-escala` afirmándolo
+  en verde («factor 95 cumple · 93 no cumple»). Un guardián verde sobre una regla invertida: la misma familia que
+  «dos copias de acuerdo no son una verificación». Hoy solo lo lee `EscalaBoard` (BCP · Grados). Pendiente con dueño
+  `consolas`; el plan del PVC quedó corregido también en la línea de la Puerta 0, que se había quedado atrás.
+- FICHA `transcripciones` y tarjeta `n-transcripciones`: comprobar que digan **ECP** (el módulo es del ECP desde la
+  V4.26; `/ocp/transcripciones` es solo su talón 308). Tres documentos del repo lo seguían poniendo en el OCP
+  (`consolas.md`, `AGENTS.md`, una fila de §3b) — corregidos. Y un **guardián roto** de ese módulo:
+  `qa-transcripciones-nube.mjs` busca su fixture en `reference_html_tools/_whatsapp-transcript-html`, carpeta que ya no
+  existe (el gemelo de la línea de `WorkersBadge` que la V5.42 sí arregló). Pendiente con dueño en §3b.
+- Reconciliado sin alcance de mapa: tres filas de §3b que estaban hechas y seguían abiertas (`WorkersBadge` → V5.42,
+  las cinco decisiones del PVC → 2026-09-15, la tienda en US$ → V5.52); `precios.ts` ganó dueño (consolas · BCP ·
+  Consumo de IA); el plan de narrativa dice por fin «CTCx coinvierte» (decía «descuento» en cinco sitios, dos de ellos
+  en líneas «Hoy:»); `herramientas-internas.md` está congelado en la fase 1 del PVC y lo dice; `AGENTS.md` pasó de
+  «snapshot V5.30 · 48 guardianes» a V5.52 · 58.
+- **Línea base de esta auditoría** (HEAD `96fd36a`, en vivo `V5.52 · build 96fd36a` en www): `tsc` limpio · `eslint`
+  8 avisos (la línea base) · 54 de 58 guardianes en verde · 2 sin correr por falta de las cuentas `prueba-*`
+  (`qa-guard-check`, `qa-checkout-check` — ya van dos sesiones) · 1 que exige servidor de desarrollo y playwright
+  (`qa-tools-puente-conformance`) · 1 roto (`qa-transcripciones-nube`, arriba). `npm run build` no se corrió: no cambió
+  una línea de `src/`.
+(commit: pendiente)

@@ -183,4 +183,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   (`qa-guard-check`, `qa-checkout-check` — ya van dos sesiones) · 1 que exige servidor de desarrollo y playwright
   (`qa-tools-puente-conformance`) · 1 roto (`qa-transcripciones-nube`, arriba). `npm run build` no se corrió: no cambió
   una línea de `src/`.
-(commit: pendiente)
+(commit: d563a44)

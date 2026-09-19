@@ -125,8 +125,14 @@ portal y el peso de las imágenes) ·
   contratos y veredicto LEAN esos modelos (CN-3, CN-4, CN-5, CN-6, CN-7 y la puerta de la Base física en el veredicto).
   A cambio llegaron el **Transcriptor**, **Stripe** y la **Herramienta de Guion**. **Pendiente que nace hoy, con dueño
   aquí**: la **mudanza** de `/ecp/cotizador-*` y `/ecp/anclas-mercado` al BCP y el orden de las pestañas de Direccionamiento
-  (dos «Grados», una «Modelo Económico» vacía) — talones 308, 14 compuertas `requireConsoleWrite("ecp")` y `revalidatePath`;
-  el owner la aplazó: se planifica antes de ejecutar.
+  (dos «Grados», una «Modelo Económico» vacía). **Planificada el 2026-09-19: `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`** —
+  el plan trae su línea «Hoy:». Lo que NO hay que olvidar: son **17 compuertas `requireConsoleWrite("ecp")` en `src/lib/`
+  que `qa-rutas-consolas` (f) hoy no ve** (solo mira `src/app/`), así que el paso 1 es ampliar el guardián; y es la SEGUNDA
+  mudanza de estos módulos: las cuatro entradas `/ocp/…` se REAPUNTAN. Esperan cinco decisiones del owner (D1–D5).
+- **SEGURIDAD — el nivel `viewer` no se hace cumplir** (hallazgo del 2026-09-19, al mirar los grants para ese plan):
+  `panel_users.consoles` guarda `"admin"` o `"viewer"`, pero `grantedConsoles()` los trata igual y `requireConsoleWrite` solo
+  pregunta si la consola está concedida. Un colaborador «viewer» pasa todas las compuertas de escritura. Hay dos activos. Falta
+  decidir con el owner qué puede hacer un viewer (`BCP_USER_ADMIN_PLAN.md`, pregunta abierta n.º 2) y hacerlo cumplir.
 - **Transcriptor**: una credencial estrecha (RPC dedicada) en vez de `service_role` en el instalador. **Stripe**: (1) país de
   la entidad legal; (2) claves sandbox en `.env.local` (owner, nunca por chat); (3) autorizar el MCP de Stripe (OAuth) en
   sesión interactiva; (4) primera tanda: seguimiento de pagos a productores en `contract_releases`, luego Checkout según

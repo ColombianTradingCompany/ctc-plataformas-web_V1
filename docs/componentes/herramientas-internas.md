@@ -54,7 +54,7 @@ definición (la que leen todas las superficies) y `/bcp/pvc/grados` es la escala
   (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`) y `GradosBoard.tsx` — **contrato transversal de `ALINEACION` §1**: se
   cambia aquí y solo aquí, avisando a todos los que lo leen. **Anclas**: `src/lib/anclas/{actions,fnc,parseFnc,types}.ts`,
   `src/lib/market/ticker.ts` (lector FNC/ICE para Home y anclas). Plan: `docs/PVC_BCP_PLAN.md`.
-- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (14 compuertas `requireConsoleWrite("ecp")` — las
+- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (13 compuertas `requireConsoleWrite("ecp")`, más 4 en `anclas/actions.ts` — las
   tres cotizaciones comparten módulo y tabla `quotes`), `src/components/cotizador/`.
 
 ## Tablas que posee
@@ -109,8 +109,9 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   **DDP consolidado ≠ dedicado**, **regiones con sus habilitaciones** como dato) es, en la práctica, el Modelo de Logística.
 - **Traer las tres rutas del ECP al BCP** (`cotizador-*`, `anclas-mercado`) y **ordenar las pestañas** (los dos «Grados», la
   pestaña vacía `direccionamiento/modelo-economico`, Mercado Global → «Marco de mercado»): es una mudanza con talones 308 y
-  claves de permiso (`rutasMovidas.ts`, `requireConsoleWrite("ecp")` → `"bcp"` en 14 compuertas, `revalidatePath`). El owner
-  la aplazó el 2026-09-19; se pide a `consolas` y se planifica antes de ejecutar.
+  claves de permiso. **Ya está planificada: `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`** (2026-09-19) — 17 compuertas de
+  escritura que el guardián hoy NO ve, ocho líneas en `rutasMovidas.ts` (es la SEGUNDA mudanza de estos módulos: se reapunta,
+  no se encadena), cuatro talones, y cinco decisiones del owner (D1–D5) antes de ejecutar. La ejecuta `consolas`.
 - **Con fecha — CN-1**: revisar la edición vigente PVC-F4-2026 (15-sep → 15-dic) para alinear los trimestres desde enero y
   **publicar el PVC de ene–mar 2027 antes del 15-oct-2026** (espera la decisión O-1 del owner). La clave «CN-» del plan de
   narrativa se conserva aunque el dueño ya no sea `consolas`; lo mismo **CN-8** (regiones y motor v2.2.0) y la mitad de

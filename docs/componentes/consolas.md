@@ -159,7 +159,12 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
   acciones del circuito del lote (OCP): `assignLotToSession`, `inviteLotToArena`, `reviewEvaluationClaim` abren las DOS
   consolas (`["ocp","bcp"]`) y dos componentes se importan del árbol del OCP por ruta absoluta — **la fase 4 decide** si la
   Arena sigue asignando lotes; **(b)** los KPI del Modelo Económico se quedaron en el Panel del BCP (son cifras del
-  negocio) aunque el módulo viva en el ECP; **(c)** «Seguimiento de Temas» y «Plataformas de Pagos» no tienen módulo ni brief.
+  negocio) aunque el módulo viva en el ECP; **(c)** ~~«Seguimiento de Temas» y «Plataformas de Pagos» no tienen módulo ni brief~~ — **tienen brief desde el 2026-09-19**, igual
+  que «Gestión de Muestras» y «CTCx Selection · Compras»: cuatro briefs de este charter en `docs/componentes/briefs/` (índice en su
+  README), **en scoping, a la espera del owner**. Cada uno termina con sus preguntas. De paso destaparon: **un pedido de pack de
+  muestras en producción que ninguna consola enseña** (`sample_pack_orders` no tiene lector); la regla del owner «a más de 90 días,
+  revisión de almacenaje con 1 kg», que no estaba en ninguna tanda, ya tiene sitio (Muestras); y la pestaña «Selección» de CTC
+  Selection (Red · Blue · Gold) tiene pantalla y **ningún escritor**.
   **Cerrado en la fase 2**: el diagrama de `/bcp/documentacion` ya no se dibuja a mano — se GENERA del rail.
   **Lo que la fase 3 dejó abierto, con dueño `consolas`**: **(d)** ⚠️ **NADIE HA VISTO `/ocp/kr` PINTADA.** Las consolas no
   se conducen en navegador (OTP real): se verificó por `tsc`, `eslint`, build, guardianes y SQL (las 41 columnas que piden

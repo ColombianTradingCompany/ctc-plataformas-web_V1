@@ -20,3 +20,21 @@ y el brief queda como acta de origen.
 **Primera tanda** — lo mínimo que se puede desplegar y verificar en vivo.
 **Decisiones del owner** — lo que bloquea, con la pregunta escrita.
 ```
+
+## En scoping — esperan al owner
+
+**Fase 6 del overhaul de las consolas** (`docs/OVERHAUL_CONSOLAS_PLAN.md`, D9: «el rail no promete lo que no hay; cada entrada
+entra con su brief»). El cuadro del owner nombra NUEVE entradas sin módulo; son **seis briefs**, porque cinco de ellas son
+vistas de dos modelos. Escritos el 2026-09-19 desde un inventario del repo y del esquema; ninguno tiene una línea de código.
+
+| Brief | Componente | Entradas del cuadro que cubre | Depende de |
+|---|---|---|---|
+| [`consolas-plataformas-de-pagos.md`](consolas-plataformas-de-pagos.md) | consolas | ECP · Configuración de Plataformas de Pagos | nada (la 1.ª tanda); la entidad legal, para cobrar |
+| [`consolas-seguimiento-de-temas.md`](consolas-seguimiento-de-temas.md) | consolas (+ secretaria) | ECP · Seguimiento de Temas | que el owner confirme QUÉ es |
+| [`herramientas-internas-modelo-de-produccion.md`](herramientas-internas-modelo-de-produccion.md) | herramientas-internas | ECP · Procesamiento · Empacado | nada (la 1.ª tanda); la paridad del PVC, después |
+| [`herramientas-internas-modelo-logistico.md`](herramientas-internas-modelo-logistico.md) | herramientas-internas | ECP · Costos en Puerto Colombia · en Puerto de Destino · Puerta a Puerta | nada (la 1.ª tanda); CN-8, después |
+| [`consolas-gestion-de-muestras.md`](consolas-gestion-de-muestras.md) | consolas | OCP · Gestión de Muestras | nada |
+| [`consolas-ctcx-selection-compras.md`](consolas-ctcx-selection-compras.md) | consolas | OCP · CTCx Selection · Compras | la fase 4b del overhaul; Pagos; Producción |
+
+Orden recomendado si se aprueban todos: **Pagos → Muestras → Producción → Logístico → Compras**; Temas, cuando el owner diga qué es.
+Las cuatro primeras tandas no se pisan entre sí y ninguna cambia un precio ni una regla.

@@ -22,8 +22,8 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 | 1 | **Definición de Contexto** | qué dice la casa y con qué cifras: la ficha viva de realineación de GTM y comunicación (CTCx · KR · CP), con redacción asistida | `/ecp/direccionamiento` (pestaña 1) · `DefinicionDeContexto.tsx`, `DireccionamientoClient.tsx` · `src/lib/direccionamiento/{definicion,memoria}.ts` · tabla `direccionamiento_context` | vivo (V4.32) |
 | 2 | **Misión y Visión** | el porqué y el hacia dónde | `/ecp/direccionamiento/mision-vision` | **pestaña vacía a propósito** (lo dice en voz alta) |
 | 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/ecp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/ecp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/ecp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/ecp/anclas-mercado`) · **Cotizador de lotes** (`/ecp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
-| 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, la regla de la mezcla y los MOQ) · **Cotizador de empaque** (`/ecp/cotizador-empaque`) · la Base física de `escala.ts` | por diseñar (brief primero) |
-| 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | por diseñar (brief primero); el plan §12.10 ya lista lo que falta |
+| 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, la regla de la mezcla y los MOQ) · **Cotizador de empaque** (`/ecp/cotizador-empaque`) · la Base física de `escala.ts` | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-de-produccion.md`), espera al owner |
+| 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-logistico.md`), espera al owner; el plan §12.10 ya lista lo que falta |
 
 **Lo que salió de este charter el 2026-09-19** y ahora es de `consolas` (ECP · Caja de herramientas): el **Transcriptor**
 (`tools/transcriptor/`, `/ecp/transcripciones`), **Stripe** (plugin y decisión de arquitectura) y la **Herramienta de Guion**
@@ -104,11 +104,20 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
-- **⚠️ El overhaul de las consolas (`docs/OVERHAUL_CONSOLAS_PLAN.md`, 2026-09-19, sin ejecutar) devuelve este grupo al ECP**
-  y lo agrupa por modelo, como lo dibujó el owner: Definición de Contexto (con Misión y Visión y **Mercado Global**) · Modelo
-  Económico en Origen (PVC · Grados) · **Modelo de Producción** (Procesamiento · Empacado) · Modelo Logístico (Costos en Puerto
-  Colombia · en Puerto de Destino · Puerta a Puerta) · Plataformas de Pagos · Automatizaciones. Sería la tercera mudanza de
-  los cotizadores; se hace una sola vez, en su fase 2, si el owner confirma la decisión D1.
+- ~~**El overhaul de las consolas devuelve este grupo al ECP**~~ — **ejecutado en la V5.60** (fase 2 de
+  `docs/OVERHAUL_CONSOLAS_PLAN.md`): el grupo vive en el ECP, agrupado por modelo como lo dibujó el owner — Definición de
+  Contexto (con Misión y Visión y **Mercado Global**) · Modelo Económico en Origen (PVC · Grados) · **Modelo de Producción** ·
+  **Modelo Logístico** · Automatizaciones. Fue la tercera mudanza de los cotizadores. **Lo que el rail todavía NO tiene, a
+  propósito** (D9: no promete lo que no hay): las vistas Procesamiento · Empacado, los tres costos logísticos y Plataformas de
+  Pagos — cada una espera su brief aprobado (abajo).
+- **LOS DOS BRIEFS ESTÁN ESCRITOS (2026-09-19, fase 6 del overhaul) y esperan al owner.** Cada uno cubre las vistas que el
+  cuadro nombra (Procesamiento · Empacado; los tres costos) y propone una primera tanda de SOLO LECTURA que junta lo disperso
+  y enseña el hueco, sin cambiar un precio. Lo que destaparon: el modelo de producción vive en CINCO sitios que no se hablan
+  (el embudo en `lectura.ts`, las mermas dentro de `cotizador-lotes.html`, los costos de trilla dentro del HTML LOGÍSTICO, el
+  vacío en el cotizador de empaque, y GrainPro sin estimador); las tarifas logísticas están todas escritas a mano en un HTML de
+  366 KB, sin fuente ni fecha; los tres cotizadores no tienen guardián; y la página `/ecp/cotizador-logistico` le dice al
+  operador que «falta el motor de cálculo» cuando el motor lleva semanas funcionando (se corrige en su primera tanda).
+  ⚠️ Riesgo común: partir `params.proc` o añadir la columna marítima toca `paridad.json`, el contrato entre cuatro motores.
 - **Los dos modelos sin módulo (2026-09-19).** **Modelo de Procesamiento** y **Modelo de Logística** existen como piezas
   sueltas (tabla de arriba). Primera tanda de cada uno: un **brief** que diga qué entra (etapas finca → CPS → verde →
   empacado → embalado, con sus mermas y costos; tramos post-FOB por volumen y región), qué de lo que hoy vive en

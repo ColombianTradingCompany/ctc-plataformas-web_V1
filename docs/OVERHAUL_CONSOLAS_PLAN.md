@@ -236,7 +236,12 @@ dejan su 308.
 - Aceptar una oferta: casilla de términos + **Initial Locked Availability** (D7), en los tres idiomas.
 - Exige las cuentas `prueba-*`, que esta vía no ha tenido en ninguna tanda: **sin ellas la fase no se cierra**.
 
-**Fase 6 · Stock físico y lo que falte** — *briefs primero*
+**Fase 6 · Stock físico y lo que falte** — *briefs primero* — 🟡 **BRIEFS ESCRITOS el 2026-09-19; esperan al owner**
+
+> Las nueve entradas del cuadro sin módulo son **seis briefs** (`docs/componentes/briefs/`, índice en su README): Procesamiento y
+> Empacado son dos vistas del **Modelo de Producción**; los tres costos, tres vistas del **Modelo Logístico**. Se escribieron
+> ANTES de la 4b y la 5 —que están paradas— porque no dependen de ellas, salvo «Compras», que sí espera a la 4b. Cada brief
+> propone una primera tanda que no cambia ningún precio ni ninguna regla, y termina con las preguntas que la bloquean.
 - «Gestión de Muestras» (una tabla de muestras: qué llegó, cuánto, dónde está, a quién se mandó) y «CTCx Selection · Compras»
   (lo que CTCx compra en firme y lo que de ahí se ofrece) **no tienen nada debajo**: cada uno empieza por su brief. Igual
   «Seguimiento de Temas» y «Plataformas de Pagos». Entran al rail cuando existan (D9).

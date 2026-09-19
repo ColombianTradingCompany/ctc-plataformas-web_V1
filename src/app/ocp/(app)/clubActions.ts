@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { insertEntryCode } from "@/lib/arena/entryCodes";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import type { ActionResult } from "./ActionForm";
 
 // Kaffetal Club, modelo 2026-07-17: la membresía se otorga AUTOMÁTICAMENTE
@@ -15,9 +15,6 @@ import type { ActionResult } from "./ActionForm";
 //     inscripción (ver entryCodes.ts / producerActions.ts).
 //   · El ledger de miembros (retirar la membresía).
 
-async function requireAdmin() {
-  return requireActiveAdmin();
-}
 
 // Una campaña ("Fundadores", ...) agrupa los códigos de descuento emitidos bajo
 // ella y fija su porcentaje. Se crea aquí, se gestiona en /ocp/club/campanas/[id].
@@ -28,7 +25,9 @@ async function requireAdmin() {
 // auditoría V14 arregló en publishLot/signContract/approveFinca. El motivo
 // aparece inline bajo el botón vía <ActionForm>.
 export async function createCampaign(formData: FormData): Promise<ActionResult> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const name = String(formData.get("name") ?? "").trim();
@@ -56,7 +55,9 @@ export async function createCampaign(formData: FormData): Promise<ActionResult> 
 //   · producer_id presente → 1 código asignado a ese productor
 //   · producer_id ausente  → `cantidad` códigos anónimos para entregar en mano
 export async function emitCampaignCodes(campaignId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: campaign } = await service.from("club_campaigns").select("id, name, discount_pct").eq("id", campaignId).maybeSingle();
@@ -99,7 +100,9 @@ export async function emitCampaignCodes(campaignId: string, formData: FormData) 
 // Resultado en vez de throw (ESTR-1): revocar un código que otra pestaña/estado
 // viejo ya usó o revocó es una carrera alcanzable, no debe tumbar la página.
 export async function revokeCampaignCode(codeId: string): Promise<ActionResult> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: revoked } = await service
@@ -124,7 +127,9 @@ export async function revokeCampaignCode(codeId: string): Promise<ActionResult> 
 }
 
 export async function revokeClubMembership(producerId: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { error } = await service.from("producer_profiles").update({ club_member_since: null }).eq("profile_id", producerId);

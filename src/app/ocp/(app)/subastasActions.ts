@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import type { MembershipTier } from "@/lib/subastas/tipos";
 
@@ -22,7 +22,9 @@ function revalidateAll() {
 }
 
 export async function abrirSubasta(lotId: string, formData: FormData): Promise<Result> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const fracciones = Number(formData.get("fracciones")) === 1 ? 1 : 2;
@@ -83,7 +85,8 @@ export async function abrirSubasta(lotId: string, formData: FormData): Promise<R
 }
 
 export async function cerrarSubasta(auctionId: string): Promise<Result> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { error } = await service
     .from("lot_auctions")
@@ -98,7 +101,8 @@ export async function cerrarSubasta(auctionId: string): Promise<Result> {
 /** Las pujas vigentes pasan a GANADORAS y la subasta queda adjudicada. No
  *  emite oferta: eso es COP/kg y se registra en /ocp/ofertas. */
 export async function adjudicarSubasta(auctionId: string): Promise<Result> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
 
   const { data: a } = await service.from("lot_auctions").select("id, status, ends_at").eq("id", auctionId).maybeSingle();
@@ -124,7 +128,8 @@ export async function adjudicarSubasta(auctionId: string): Promise<Result> {
 }
 
 export async function cancelarSubasta(auctionId: string): Promise<Result> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { error } = await service
     .from("lot_auctions")

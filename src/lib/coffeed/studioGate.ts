@@ -1,6 +1,7 @@
 import "server-only";
 import { createPanelSessionClient, createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { getPanelUser, grantedConsoles } from "@/lib/panel/panelUsers";
+import { getPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
+import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
 
 /**
  * Compuerta de PRODUCCIÓN del Estudio de Contenido (Source Wrapper, Datawave y,
@@ -31,7 +32,9 @@ export type StudioIdentity = {
 const STUDIO_NODE = "estudio-contenido";
 
 /** Variante SIN redirect — para Server Actions, que devuelven {ok:false}. */
-export async function studioGate(): Promise<StudioIdentity | null> {
+/** `clase` (V5.57) solo pesa en la vía 1: un operador «viewer» del ECP ve el taller y no produce (producir
+ *  gasta). El SOCIO del Estudio no tiene niveles: su credencial es para producir, y pasa cualquier clase. */
+export async function studioGate(clase: ClaseDeAccion = "emite"): Promise<StudioIdentity | null> {
   // 1. Operador interno con acceso al ECP.
   const panel = await createPanelSessionClient();
   const {
@@ -41,7 +44,7 @@ export async function studioGate(): Promise<StudioIdentity | null> {
     const { data: profile } = await panel.from("profiles").select("role, full_name, email").eq("id", panelUser.id).maybeSingle();
     if (profile?.role === "bcp_admin") {
       const row = await getPanelUser(panelUser.id);
-      if ((!row || row.status === "active") && grantedConsoles(row).includes("ecp")) {
+      if ((!row || row.status === "active") && grantedConsoles(row).includes("ecp") && puede(nivelDeConsola(row, "ecp"), clase)) {
         return {
           userId: panelUser.id,
           via: "ecp",

@@ -1,6 +1,7 @@
 import "server-only";
 import { createPanelSessionClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { getPanelUser, grantedConsoles } from "@/lib/panel/panelUsers";
+import { getPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
+import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
 
 /**
  * Compuerta de las Server Actions de Coffeed. Desde el 2026-07-30 el módulo
@@ -12,7 +13,9 @@ import { getPanelUser, grantedConsoles } from "@/lib/panel/panelUsers";
  * navega; el gate con redirect sigue siendo `requireConsoleAccess("ecp")` en
  * la page. Lee la sesión INTERNA (`createPanelSessionClient`, cookie propia).
  */
-export async function coffeedGate(): Promise<{ userId: string } | null> {
+/** `clase` (V5.57): qué hace la acción. Por defecto `emite` — un «viewer» del ECP no publica en el Muro ni
+ *  gasta en Redacción; las lecturas del tablero se declaran `"lectura"`. Ver `@/lib/panel/niveles`. */
+export async function coffeedGate(clase: ClaseDeAccion = "emite"): Promise<{ userId: string } | null> {
   const session = await createPanelSessionClient();
   const {
     data: { user },
@@ -25,6 +28,7 @@ export async function coffeedGate(): Promise<{ userId: string } | null> {
   const row = await getPanelUser(user.id);
   if (row && row.status !== "active") return null;
   if (!grantedConsoles(row).includes("ecp")) return null;
+  if (!puede(nivelDeConsola(row, "ecp"), clase)) return null;
 
   return { userId: user.id };
 }

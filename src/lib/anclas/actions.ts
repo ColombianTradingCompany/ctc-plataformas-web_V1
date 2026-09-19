@@ -21,7 +21,7 @@ import type { MarketAnchor, AnchorResult } from "./types";
  *  si el módulo se muda y esta línea no, el guardián falla — que es justo lo que (f) no veía en `src/lib/`. */
 const CONSOLA: PanelConsoleKey = "bcp";
 
-const NO_AUTH: AnchorResult = { ok: false, error: "Tu sesión del BCP no está activa. Vuelve a iniciar sesión." };
+const NO_AUTH: AnchorResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 
 type Row = {
   id: string; kind: string; as_of: string; value: string | number; unit: string;
@@ -34,7 +34,7 @@ const toAnchor = (r: Row): MarketAnchor => ({
 });
 
 export async function listAnchors(kind = "fnc_carga", limit = 180): Promise<MarketAnchor[] | null> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service

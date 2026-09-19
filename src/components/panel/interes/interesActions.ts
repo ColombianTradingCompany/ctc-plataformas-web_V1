@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
 // ── Listas de espera (Roast · X · CTC Home) · lo ÚNICO que escriben ─────────
 // Marcar que ya se le escribió a alguien de la lista de espera. Es el único
@@ -17,7 +17,9 @@ export async function marcarContactado(
   subscriberId: string,
   contactado: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura(["ocp", "ecp"], "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: fila } = await service

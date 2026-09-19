@@ -23,7 +23,7 @@ import type { Counterparty, CounterpartyKind, CounterpartyOption, Quote, QuoteKi
  *  si el módulo se muda y esta línea no, el guardián falla — que es justo lo que (f) no veía en `src/lib/`. */
 const CONSOLA: PanelConsoleKey = "bcp";
 
-const NO_AUTH: QuoteResult = { ok: false, error: "Tu sesión del BCP no está activa. Vuelve a iniciar sesión." };
+const NO_AUTH: QuoteResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 
 type Row = {
   id: string; kind: QuoteKind; code: string; title: string; status: QuoteStatus;
@@ -78,7 +78,7 @@ function toSummary(r: Row): QuoteSummary {
 // ---------- Lectura ----------
 
 export async function listQuotes(kind: QuoteKind): Promise<QuoteSummary[] | null> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service.from("quotes").select(LIST_COLS).eq("kind", kind).order("created_at", { ascending: false }).limit(200);
@@ -92,7 +92,7 @@ export async function listQuotes(kind: QuoteKind): Promise<QuoteSummary[] | null
 export async function listQuoteMetrics(
   kind: QuoteKind,
 ): Promise<{ id: string; code: string; title: string; status: QuoteStatus; total: number | null; createdAt: string; results: Record<string, unknown> }[] | null> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service
@@ -120,7 +120,7 @@ function effectiveStatusOf(status: QuoteStatus, validUntil: string | null): Quot
 }
 
 export async function getQuote(id: string): Promise<Quote | null> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service.from("quotes").select(`${LIST_COLS}, inputs, results`).eq("id", id).maybeSingle();
@@ -132,7 +132,7 @@ export async function getQuote(id: string): Promise<Quote | null> {
 // ---------- Alta y guardado ----------
 
 export async function createQuote(kind: QuoteKind, title: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "borrador");
   if (!who) return NO_AUTH;
   if (!title.trim()) return { ok: false, error: "La cotización necesita un título." };
 
@@ -158,7 +158,7 @@ export async function saveQuoteDraft(
     validUntil?: string | null;
   }
 ): Promise<QuoteResult> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "borrador");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -186,7 +186,7 @@ export async function setQuoteCounterparty(
   id: string,
   cp: { kind: CounterpartyKind; profileId?: string | null; leadId?: string | null; name?: string | null; email?: string | null }
 ): Promise<QuoteResult> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "borrador");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -209,7 +209,7 @@ export async function setQuoteCounterparty(
  *  el código que se citó fuera, así que una emitida no cambia de nombre — se
  *  reabre primero. */
 export async function renameQuote(id: string, title: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "borrador");
   if (!who) return NO_AUTH;
   if (!title.trim()) return { ok: false, error: "El nombre no puede quedar vacío." };
   const service = quoteServiceClient();
@@ -303,7 +303,7 @@ export async function decideQuote(id: string, decision: "aceptada" | "rechazada"
 /** Rehacer una emitida = duplicarla. Es la salida que ofrece el trigger cuando
  *  alguien intenta recalcular algo ya emitido. */
 export async function duplicateQuote(id: string): Promise<QuoteResult> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "borrador");
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
 
@@ -357,7 +357,7 @@ export async function deleteQuote(id: string, confirm: true): Promise<QuoteResul
  *  suele apuntar a un productor y el logístico a un comprador, pero ninguno de
  *  los dos lo impone: la vía CaaS cotiza logística para un productor. */
 export async function searchCounterparties(term: string): Promise<CounterpartyOption[]> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return [];
   const q = term.trim();
   if (q.length < 2) return [];

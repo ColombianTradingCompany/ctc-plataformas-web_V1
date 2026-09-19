@@ -16,7 +16,7 @@
 // cableado.
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { claude, parseJson, MODEL_WRITE } from "@/lib/coffeed/claude";
 import { USOS } from "@/lib/ai/consumo";
 import { SISTEMA_REDACCION, textoMemoria } from "@/lib/direccionamiento/memoria";
@@ -49,7 +49,11 @@ export async function cargarContexto(scope: string): Promise<Record<string, unkn
 /** Guarda la ficha. El componente rebota 700 ms (900 ms para imágenes), así que
  *  esto NO se llama por tecla — pero sí es un upsert completo del ámbito. */
 export async function guardarContexto(scope: string, data: unknown): Promise<void> {
-  const userId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("bcp", "emite");
+  // El adaptador del módulo espera una promesa que RECHAZA (lo atrapa y pinta su estado de error); no es una
+  // action de formulario, así que este throw no tumba la página.
+  if (!permiso.ok) throw new Error(permiso.error);
+  const userId = permiso.userId;
   const s = assertScope(scope);
   const service = createServiceRoleClient();
   const { error } = await service
@@ -71,7 +75,10 @@ export async function guardarContexto(scope: string, data: unknown): Promise<voi
 // El system prompt vive en el módulo puro para que el guardián pruebe la misma
 // cadena que se manda en producción.
 export async function redactarContexto(prompt: string): Promise<string> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("bcp", "emite");
+  // El adaptador del módulo espera una promesa que RECHAZA (lo atrapa y pinta su estado de error); no es una
+  // action de formulario, así que este throw no tumba la página.
+  if (!permiso.ok) throw new Error(permiso.error);
   if (!prompt || prompt.length > 60_000) throw new Error("Petición no válida.");
   const raw = await claude({
     model: MODEL_WRITE, superficie: USOS.direccionamiento,

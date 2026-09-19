@@ -9,6 +9,7 @@ export default async function OcpAppLayout({ children }: { children: React.React
       identityName={identity.displayName}
       accessibleConsoles={identity.consoles}
       isOwner={identity.isOwner}
+      nivel={identity.niveles["ocp"] ?? null}
     >
       {children}
     </PanelShell>

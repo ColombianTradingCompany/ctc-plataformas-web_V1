@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { ActionResult } from "./ActionForm";
 import { redirect } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import {
   activeCups,
   allowedDiscardGrades,
@@ -23,14 +24,10 @@ import { labEvaluationHasData, toLabEvaluationList, type LabEvaluation } from "@
 import { seasonLabel } from "@/lib/arena/seasons";
 import { emitEvent } from "@/lib/integraciones/emit";
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
-export async function createHarvestSeason(formData: FormData) {
-  await requireAdmin();
+export async function createHarvestSeason(formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
 
   await service.from("harvest_seasons").insert({
@@ -42,10 +39,13 @@ export async function createHarvestSeason(formData: FormData) {
 
   revalidatePath("/ocp/arena/temporadas");
   revalidatePath("/ocp/arena");
+  return { ok: true };
 }
 
-export async function createArenaSession(formData: FormData) {
-  const adminId = await requireAdmin();
+export async function createArenaSession(formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const capacity = Number(formData.get("capacity")) === 5 ? 5 : 7;
@@ -116,7 +116,9 @@ export async function createArenaSession(formData: FormData) {
 export async function deleteArenaSession(
   sessionId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: sess } = await service.from("arena_sessions").select("id").eq("id", sessionId).maybeSingle();
@@ -165,7 +167,9 @@ export async function saveCupRegistration(
   lotId: string,
   evaluation: LabEvaluation
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const [{ data: session }, { data: roster }] = await Promise.all([
@@ -192,7 +196,9 @@ export async function saveCupRegistration(
 // ---------------------------------------------------------------------------
 
 export async function startJornada(sessionId: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: session } = await service.from("arena_sessions").select("id, status, run_state").eq("id", sessionId).single();
@@ -233,7 +239,8 @@ export async function startJornada(sessionId: string) {
 // Autosave del runner. El estado completo viaja como un solo jsonb -- es
 // maquinaria interna service-role-only, igual que el resto de tablas Arena.
 export async function saveJornadaState(sessionId: string, state: JornadaState) {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
 
   const { data: session } = await service.from("arena_sessions").select("status, run_state").eq("id", sessionId).single();
@@ -248,7 +255,9 @@ export async function saveJornadaState(sessionId: string, state: JornadaState) {
 // grado por mayoría → galardonado + contrato (regla existente), descartadas →
 // evaluado, y el ganador de la jornada en la sesión.
 export async function finalizeJornada(sessionId: string, state: JornadaState) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: session } = await service.from("arena_sessions").select("status, run_state").eq("id", sessionId).single();

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { esEtapaValida } from "@/lib/crm/etapaComprador";
 
 // ── CRM CP Green · el único dato que este tablero escribe ───────────────────
@@ -14,7 +14,9 @@ export async function setEtapaComprador(
   profileId: string,
   etapa: string | null
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (etapa !== null && !esEtapaValida(etapa)) return { ok: false, error: "Etapa inválida." };
 
   const service = createServiceRoleClient();

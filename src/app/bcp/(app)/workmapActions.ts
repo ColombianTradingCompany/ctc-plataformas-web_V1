@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { toWorkMapConfig, DEFAULT_WORK_MAP, type WorkMapConfig, type ProposalMeta } from "@/lib/workmap/schema";
 
 // ── Mapa de Trabajo · Base + Propuestas ──────────────────────────────────────
@@ -61,7 +61,9 @@ export async function saveProposal(input: {
   note?: string;
   config: WorkMapConfig;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("bcp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   if (!(await isOwner(service, adminId))) return { ok: false, error: "Solo el owner puede guardar propuestas." };
 
@@ -94,7 +96,9 @@ export async function saveProposal(input: {
 
 /** Borra una propuesta. Solo el owner. */
 export async function deleteProposal(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("bcp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   if (!(await isOwner(service, adminId))) return { ok: false, error: "Solo el owner puede borrar propuestas." };
   const { error } = await service.from("work_map_proposals").delete().eq("id", id);

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { sendTransactionalEmail } from "@/lib/email/leadEmails";
 import { CTC_EMAIL } from "@/lib/legal";
 
@@ -116,7 +116,9 @@ export async function resolverSolicitud(
   solicitudId: string,
   decision: "concedida" | "rechazada"
 ): Promise<ResultadoSolicitud> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { error } = await service

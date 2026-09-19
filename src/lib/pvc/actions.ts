@@ -18,7 +18,7 @@ import type { PvcResult } from "./tipos";
 /** Registra una versión nueva del modelo (los parámetros completos, con nota de acta). Owner. */
 export async function crearVersionModeloAction(version: string, params: Partial<PvcParams>, notes?: string): Promise<PvcResult> {
   const who = await requireConsoleWrite("bcp");
-  if (!who) return { ok: false, error: "Tu sesión del BCP no está activa. Vuelve a iniciar sesión." };
+  if (!who) return { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
   if (!isPanelOwner(await getPanelUser(who.userId))) return { ok: false, error: "Registrar una versión del modelo es una decisión del owner." };
   const v = version.trim();
   if (!/^v\d+\.\d+(\.\d+)?$/.test(v)) return { ok: false, error: "La versión se escribe como v2.1.1." };

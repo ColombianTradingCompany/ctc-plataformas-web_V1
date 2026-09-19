@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { ConsoleLevel } from "@/lib/panel/niveles";
 import { usePathname } from "next/navigation";
 import { CONSOLE_ORDER, CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
 import { hrefActivoDelRail } from "@/lib/panel/navActivo";
@@ -17,12 +18,15 @@ export function PanelSidebar({
   identityName,
   accessibleConsoles,
   isOwner,
+  nivel = null,
   onMinimize,
 }: {
   activeConsole: PanelConsoleKey;
   identityName: string;
   accessibleConsoles: PanelConsoleKey[];
   isOwner: boolean;
+  /** Nivel del operador en la consola activa. «viewer» se anuncia: lee y prepara borradores (V5.57). */
+  nivel?: ConsoleLevel | null;
   /** Pliega el rail (solo escritorio; el botón se oculta bajo 1024 px). */
   onMinimize?: () => void;
 }) {
@@ -54,6 +58,14 @@ export function PanelSidebar({
         </span>
         <span className={styles.brandSub}>Consolas internas · una sesión</span>
         {identityName && <span className={styles.identity}>{identityName}</span>}
+        {nivel === "viewer" && (
+          <span
+            className={styles.soloLectura}
+            title={`En ${active.code} puedes ver todo y preparar borradores. Lo que emite, publica, cobra, notifica o borra lo ejecuta un administrador.`}
+          >
+            Lectura y borradores
+          </span>
+        )}
       </div>
 
       {switchable.length > 1 && (

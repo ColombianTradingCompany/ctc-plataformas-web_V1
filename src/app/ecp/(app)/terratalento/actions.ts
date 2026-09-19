@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { sendLlamadoEmail } from "@/lib/email/terratalentoEmails";
 
 // ── Terratalento · acciones del tablero de match (ECP) ──────────────────────
@@ -14,7 +14,9 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 const ESTADOS_POSTULACION = ["postulado", "llamado", "confirmado", "descartado"] as const;
 
 export async function setPostulacionEstado(postulacionId: string, estado: string): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (!ESTADOS_POSTULACION.includes(estado as (typeof ESTADOS_POSTULACION)[number])) {
     return { ok: false, error: "Estado inválido." };
   }
@@ -153,7 +155,8 @@ async function notificarPostulacion(
 
 /** Reintento manual del correo del llamado (el estado actual decide el texto). */
 export async function reenviarNotificacionLlamado(postulacionId: string): Promise<ActionResult> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { data: post } = await service
     .from("terratalento_postulaciones")
@@ -171,7 +174,9 @@ export async function reenviarNotificacionLlamado(postulacionId: string): Promis
 const ESTADOS_JORNADA = ["abierta", "en_gestion", "cerrada", "cancelada"] as const;
 
 export async function setJornadaEstadoAdmin(jornadaId: string, estado: string): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (!ESTADOS_JORNADA.includes(estado as (typeof ESTADOS_JORNADA)[number])) {
     return { ok: false, error: "Estado inválido." };
   }

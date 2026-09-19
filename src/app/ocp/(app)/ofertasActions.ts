@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { currentSeason, seasonKey, seasonLabel, type Season } from "@/lib/arena/seasons";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
@@ -52,7 +52,9 @@ function kindAllowsGrade(kind: OfferKind, grade: GradoId): boolean {
  * Ofertas (temporada · subasta) y por decideBlackNegotiation (black).
  */
 export async function emitOffer(lotId: string, kind: OfferKind, formData: FormData): Promise<Result> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const price = Number(formData.get("price_per_kg"));
@@ -158,7 +160,9 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
 
 /** Retira una oferta abierta (emitida y sin responder). */
 export async function retireOffer(offerId: string): Promise<Result> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: offer } = await service.from("lot_offers").select("id, status, lot_id").eq("id", offerId).maybeSingle();
   if (!offer) return { ok: false, error: "Oferta no encontrada." };

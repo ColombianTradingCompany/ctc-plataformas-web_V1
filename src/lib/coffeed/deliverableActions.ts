@@ -28,8 +28,8 @@ import {
   type CoffeedStudioApp,
 } from "./types";
 
-const NO_STUDIO: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
-const NO_ECP: CoffeedResult = { ok: false, error: "Tu sesión del ECP no está activa. Vuelve a iniciar sesión." };
+const NO_STUDIO: CoffeedResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del Estudio ya no está activa (vuelve a entrar), o entraste como operador del ECP con nivel de lectura y borradores — y producir gasta." };
+const NO_ECP: CoffeedResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del ECP ya no está activa (vuelve a iniciar sesión), o tu nivel en el ECP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 
 type Service = ReturnType<typeof coffeedServiceClient>;
 

@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 // ── Admin Lock (2026-07-20, pedido del owner) ────────────────────────────────
 // Una contraseña SUAVE que desbloquea información estructuralmente oculta por
@@ -38,7 +38,9 @@ export async function verifyAdminLock(password: string): Promise<Result> {
 
 /** Cambia la contraseña del candado — solo el owner, y con la actual en mano. */
 export async function setAdminLockPassword(current: string, next: string): Promise<Result> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("bcp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   // Owner = sin fila en panel_users (grandfathered) o con is_owner.

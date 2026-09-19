@@ -44,7 +44,8 @@ check("la puja se redondea a céntimos", comprador.includes("Math.round(amountEu
 check("el ranking de niveles es verde < pinton < maduro", tipos.includes("verde: 0, pinton: 1, maduro: 2"));
 
 // ── 2. CTCx: solo Tyrian galardonado, una abierta por lote, adjudicar informa ─
-check("subastasActions es Server Action con gate de admin", ocp.startsWith('"use server"') && (ocp.match(/requireActiveAdmin\(\)/g) ?? []).length >= 4);
+// V5.57: abrir, cerrar, adjudicar y cancelar EMITEN — exigen nivel admin del OCP; un «viewer» no adjudica.
+check("subastasActions es Server Action con gate de admin", ocp.startsWith('"use server"') && (ocp.match(/permisoDeEscritura\("ocp", "emite"\)/g) ?? []).length >= 4);
 check("abrir exige galardonado + tyrian", ocp.includes('lot.stage !== "galardonado" || lot.grade !== "tyrian"'));
 check("abrir rechaza una segunda subasta abierta", /eq\("status", "abierta"\)\.maybeSingle\(\);\s*if \(open\) return \{ ok: false/.test(ocp));
 check("el cierre debe ser futuro", ocp.includes("endsAt.getTime() <= Date.now()"));

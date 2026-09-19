@@ -76,14 +76,15 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Guardianes
 
-`qa-rutas-consolas.mjs` (341 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
+`qa-rutas-consolas.mjs` (365 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
 `qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
 `qa-evaluaciones-check.mjs` (42, veredicto Q-Grader) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
-`qa-guard-check.mjs` (seguridad, con cuentas QA) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
+`qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (35 — el nivel `viewer`: la regla y la lista
+blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
 `qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
@@ -99,7 +100,11 @@ portal y el peso de las imágenes) ·
 - **La cifra de un guardián sale de la FUENTE, nunca del módulo que vigila** (el plan del owner, la documentación de la
   API). Dos guardianes afirmaron en verde una regla equivocada por copiarla del código: `qa-pvc-escala` (V5.53, hoy de
   `herramientas-internas`) y `qa-consumo-check` (V5.54).
-- Escrituras del OCP: el `requireActiveAdmin` grueso es deuda anotada (plan V5 §9), no un olvido.
+- **Toda Server Action de consola declara su CLASE** (V5.57, `src/lib/panel/niveles.ts`): `lectura` · `borrador` · `emite`. La
+  compuerta cierra por defecto (`emite` = nivel admin). Un borrador nuevo se escribe PRIMERO en la lista blanca de
+  `BCP_USER_ADMIN_PLAN.md` y después en el código. La clase se decide mirando **quién lee lo que la acción escribe**.
+- Escrituras del OCP: desde la V5.57 pasan por `permisoDeEscritura("ocp", clase)`, que SÍ mira consola y nivel; el
+  `requireActiveAdmin()` grueso queda solo para las 16 lecturas (deuda del plan V5 §9, ahora acotada).
 
 ## Lo que este componente gobierna de los demás (la cara backstage)
 
@@ -128,10 +133,14 @@ portal y el peso de las imágenes) ·
   Direccionamiento retirada. **`qa-rutas-consolas` ganó (f-bis)**: mira las compuertas de `src/lib/` y `src/components/`
   contra el rail, y exige que todo módulo con compuerta esté en `MODULOS_LIB` — **un módulo nuevo con Server Actions se
   declara ahí o el guardián falla**. Al nacer cazó Automatizaciones (V4.25: en el BCP pidiendo permiso del ECP), corregido.
-- **SEGURIDAD — el nivel `viewer` no se hace cumplir** (hallazgo del 2026-09-19, al mirar los grants para ese plan):
-  `panel_users.consoles` guarda `"admin"` o `"viewer"`, pero `grantedConsoles()` los trata igual y `requireConsoleWrite` solo
-  pregunta si la consola está concedida. Un colaborador «viewer» pasa todas las compuertas de escritura. Hay dos activos. Falta
-  decidir con el owner qué puede hacer un viewer (`BCP_USER_ADMIN_PLAN.md`, pregunta abierta n.º 2) y hacerlo cumplir.
+- ~~**SEGURIDAD — el nivel `viewer` no se hace cumplir**~~ — **cerrado en la V5.57.** Regla del owner: un viewer **lee y
+  prepara borradores**. Las cuatro compuertas miran el nivel y cierran por defecto (`emite`); 12 borradores en lista blanca,
+  en `BCP_USER_ADMIN_PLAN.md` §«Niveles por consola», que es la fuente que lee `qa-niveles-check`. **Lo que queda**:
+  **(a)** esconder o deshabilitar los botones de escritura a un viewer, consola por consola (OCP primero) — hoy los ve, los
+  pulsa y recibe el mensaje; **(b)** `requireActiveAdmin()` a secas (las 16 lecturas) sigue sin mirar la CONSOLA: un operador
+  con grant solo de ECP puede llamar a mano una lectura del OCP — es la «deuda anotada» del plan V5 §9, ahora acotada a leer;
+  **(c)** las validaciones que todavía hacen `throw` dentro de acciones de formulario (`createLot`: «Finca no encontrada»…)
+  son deuda anterior a esta tanda: tumban la página igual que antes.
 - **Transcriptor**: una credencial estrecha (RPC dedicada) en vez de `service_role` en el instalador. **Stripe**: (1) país de
   la entidad legal; (2) claves sandbox en `.env.local` (owner, nunca por chat); (3) autorizar el MCP de Stripe (OAuth) en
   sesión interactiva; (4) primera tanda: seguimiento de pagos a productores en `contract_releases`, luego Checkout según

@@ -36,7 +36,7 @@ import {
   type CoffeedThread,
 } from "./types";
 
-const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
+const NO_AUTH: CoffeedResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del Estudio ya no está activa (vuelve a entrar), o entraste como operador del ECP con nivel de lectura y borradores — y producir gasta." };
 
 type Service = ReturnType<typeof coffeedServiceClient>;
 
@@ -127,7 +127,7 @@ async function loadBrand(service: Service): Promise<CoffeedBrand> {
 // ---------- Lectura: el bundle completo del taller ----------
 
 export async function getStudioConsole(): Promise<CoffeedStudioBundle | null> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return null;
   const service = coffeedServiceClient();
 
@@ -260,7 +260,7 @@ export async function getStudioConsole(): Promise<CoffeedStudioBundle | null> {
 export async function getCycleDetail(
   cycleId: string
 ): Promise<{ extractions: CoffeedExtraction[]; proposals: CoffeedProposal[] } | null> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return null;
   const service = coffeedServiceClient();
 
@@ -321,7 +321,7 @@ export async function getCycleDetail(
 
 /** El HTML renderizado del post — para abrirlo, descargarlo o imprimirlo a PDF. */
 export async function getPostHtml(draftId: string): Promise<{ ok: true; html: string; title: string } | { ok: false; error: string }> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return { ok: false, error: NO_AUTH.ok ? "" : NO_AUTH.error };
   const service = coffeedServiceClient();
   const { data } = await service.from("coffeed_drafts").select("post_html, title").eq("id", draftId).maybeSingle();

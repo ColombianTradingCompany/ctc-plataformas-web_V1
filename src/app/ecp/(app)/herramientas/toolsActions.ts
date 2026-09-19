@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { MAX_TOOL_MB, type ToolClase, type ToolTier } from "@/lib/tools/catalog";
 
 // ── ECP · Herramientas del café · el registro escribible ─────────────────────
@@ -41,7 +41,9 @@ function slugValido(s: string): boolean {
 /** Sube un HTML como versión NUEVA de una herramienta. No la publica: subir y
  *  publicar son dos gestos a propósito, para poder mirar antes de encender. */
 export async function subirVersion(formData: FormData): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
 
   const toolId = String(formData.get("toolId") ?? "").trim();
   const notas = String(formData.get("notas") ?? "").trim().slice(0, 500);
@@ -126,7 +128,9 @@ export async function subirVersion(formData: FormData): Promise<ActionResult> {
 /** Publica una versión concreta: es a la vez «encender la nueva» y «volver a la
  *  anterior». Una sola acción para los dos gestos porque son el mismo. */
 export async function publicarVersion(toolId: string, versionId: string): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: v } = await service
@@ -178,7 +182,9 @@ export type FichaTool = {
 };
 
 export async function guardarFicha(toolId: string, ficha: FichaTool): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (!ficha.nombre.trim()) return { ok: false, error: "La herramienta necesita un nombre." };
   if (!["interna", "compartible"].includes(ficha.clase)) return { ok: false, error: "Clase inválida." };
   if (!["default", "plus"].includes(ficha.tier)) return { ok: false, error: "Nivel inválido." };
@@ -220,7 +226,9 @@ export async function guardarFicha(toolId: string, ficha: FichaTool): Promise<Ac
 /** Archiva o desarchiva. Nunca borra: una herramienta retirada conserva su fila
  *  y todas sus versiones, y devolverla es quitar la fecha. */
 export async function archivarTool(toolId: string, archivar: boolean): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { error } = await service
     .from("tools")
@@ -241,7 +249,9 @@ export async function archivarTool(toolId: string, archivar: boolean): Promise<A
 /** Da de alta una herramienta NUEVA. Nace sin versión publicada y archivada no:
  *  no se ofrece en ninguna parte hasta que se le suba y publique un archivo. */
 export async function crearTool(formData: FormData): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const id = String(formData.get("id") ?? "").trim().toLowerCase();
   const nombre = String(formData.get("nombre") ?? "").trim();
   const clase = String(formData.get("clase") ?? "compartible") as ToolClase;

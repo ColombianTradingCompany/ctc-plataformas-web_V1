@@ -116,6 +116,10 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
         </div>
 
         <p className={styles.grantsLabel}>Consolas</p>
+        <p className={styles.hint}>
+          <b>Admin</b> hace todo en esa consola. <b>Viewer</b> ve todo y prepara borradores (una cotización sin emitir, una nota,
+          una marca del CRM), pero no ejecuta nada que emita, publique, cobre, notifique o borre.
+        </p>
         <div className={styles.grants}>
           {CONSOLE_ORDER.map((k) => (
             <div key={k} className={styles.grantRow}>
@@ -131,8 +135,8 @@ export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]
                 aria-label={`Nivel para ${CONSOLES[k].code}`}
               >
                 <option value="">Sin acceso</option>
-                <option value="admin">Admin</option>
-                <option value="viewer">Viewer</option>
+                <option value="admin">Admin — todo</option>
+                <option value="viewer">Viewer — lee y prepara borradores</option>
               </select>
             </div>
           ))}

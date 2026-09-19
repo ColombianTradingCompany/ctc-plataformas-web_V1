@@ -53,7 +53,7 @@ async function añadirCarpeta(zip: JSZip, dir: string, rel = ""): Promise<number
 }
 
 export async function GET() {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return NextResponse.json({ error: "no autorizado" }, { status: 401 });
 
   const zip = new JSZip();

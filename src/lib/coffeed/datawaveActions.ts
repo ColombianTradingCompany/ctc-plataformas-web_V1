@@ -34,7 +34,7 @@ export type DatawaveEpisodeRow = {
 
 export type DatawaveResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
-const NO_AUTH = "Tu sesión del Estudio no está activa. Vuelve a entrar.";
+const NO_AUTH = "No se pudo ejecutar: o tu sesión del Estudio ya no está activa (vuelve a entrar), o entraste como operador del ECP con nivel de lectura y borradores — y producir gasta.";
 
 const slugify = (s: string) =>
   String(s)
@@ -46,7 +46,7 @@ const slugify = (s: string) =>
 // ---------- La biblioteca ----------
 
 export async function listEpisodes(): Promise<DatawaveEpisodeRow[]> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return [];
   const service = coffeedServiceClient();
   const { data } = await service

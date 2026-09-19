@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
 // ── Terratalento · la lista de espera PRE-LANZAMIENTO (A6, 2026-08-19) ───────
 // Terratalento es la única puerta de la red que todavía no abre, así que lo que
@@ -67,7 +67,9 @@ export async function marcarInteresTtContactado(
   interesId: string,
   contactado: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "borrador");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: fila } = await service

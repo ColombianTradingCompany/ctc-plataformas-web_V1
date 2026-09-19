@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { createArenaSession } from "../arenaActions";
+import { ActionForm } from "../ActionForm";
 import { reviewEvaluationClaim } from "../evaluationActions";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { CupRegistroButton, DeleteSessionButton } from "./ArenaBoardClient";
@@ -275,7 +276,7 @@ export default async function BcpArenaPage() {
             Crea una temporada primero.
           </p>
         ) : (
-          <form action={createArenaSession} style={{ marginTop: 16 }}>
+          <ActionForm action={createArenaSession} submitLabel="Crear sesión" pendingLabel="Creando…" buttonClassName="btn btn-solid" style={{ marginTop: 16 }}>
             <div className={styles.field}>
               <label htmlFor="harvest_season_id">Temporada</label>
               <select id="harvest_season_id" name="harvest_season_id" required>
@@ -297,10 +298,7 @@ export default async function BcpArenaPage() {
                 <option value="5">5 cafés</option>
               </select>
             </div>
-            <button className="btn btn-solid" type="submit">
-              Crear sesión
-            </button>
-          </form>
+          </ActionForm>
         )}
       </details>
 

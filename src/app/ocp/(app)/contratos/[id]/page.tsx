@@ -147,7 +147,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
               </div>
             ))}
           </div>
-          <form action={recordHumidityReading.bind(null, id)} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 28 }}>
+          <ActionForm action={recordHumidityReading.bind(null, id)} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 28 }} submitLabel="Registrar" pendingLabel="Registrando…" buttonClassName="btn btn-sm">
             <div className={styles.field} style={{ marginBottom: 0 }}>
               <label>Mes</label>
               <select name="reading_month" defaultValue="1">
@@ -164,30 +164,18 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
               <label>Comunicado por (requerido)</label>
               <input name="notes" placeholder="Ej. WhatsApp con el productor, 12/07" required />
             </div>
-            <button className="btn btn-sm" type="submit">
-              Registrar
-            </button>
-          </form>
+          </ActionForm>
 
           {contract.status === "active" && (
-            <form action={markReconditioning.bind(null, id)}>
-              <button className="btn" type="submit">
-                Marcar conversación de reacondicionamiento
-              </button>
-            </form>
+            <ActionForm action={markReconditioning.bind(null, id)} submitLabel="Marcar conversación de reacondicionamiento" pendingLabel="Guardando…" buttonClassName="btn">
+            </ActionForm>
           )}
           {contract.status === "reconditioning" && (
             <div className={styles.actions}>
-              <form action={resolveReconditioning.bind(null, id, "active")}>
-                <button className="btn btn-solid" type="submit">
-                  Resuelto — volver a activo
-                </button>
-              </form>
-              <form action={resolveReconditioning.bind(null, id, "cancelled")}>
-                <button className="btn" type="submit">
-                  No se resolvió — cancelar contrato
-                </button>
-              </form>
+              <ActionForm action={resolveReconditioning.bind(null, id, "active")} submitLabel="Resuelto — volver a activo" pendingLabel="Guardando…" buttonClassName="btn btn-solid">
+              </ActionForm>
+              <ActionForm action={resolveReconditioning.bind(null, id, "cancelled")} submitLabel="No se resolvió — cancelar contrato" pendingLabel="Guardando…" buttonClassName="btn">
+              </ActionForm>
             </div>
           )}
         </>

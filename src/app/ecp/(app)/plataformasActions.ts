@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { SUBDOMAIN_ROUTES, RUTAS_SOLO_WWW } from "@/lib/red/subdominios";
 import { TAG_SUPERFICIES } from "@/lib/seo/superficies";
 import { cargarToolsAdmin } from "@/lib/tools/toolAccess";
@@ -67,7 +67,9 @@ export async function cargarSuperficies(): Promise<FilaSuperficie[]> {
 }
 
 export async function guardarSuperficie(fila: FilaSuperficie): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (!rutasDeLaRed().includes(fila.route)) return { ok: false, error: "Esa superficie no existe en el mapa de la red." };
 
   const service = createServiceRoleClient();

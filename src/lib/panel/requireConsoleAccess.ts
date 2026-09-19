@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createPanelSessionClient } from "@/lib/supabase/server";
 import type { PanelConsoleKey } from "./consoles";
-import { getPanelUser, grantedConsoles, isPanelOwner } from "./panelUsers";
+import { getPanelUser, grantedConsoles, isPanelOwner, nivelDeConsola } from "./panelUsers";
+import type { ConsoleLevel } from "./niveles";
 
 export type PanelIdentity = {
   userId: string;
@@ -10,6 +11,8 @@ export type PanelIdentity = {
   consoles: PanelConsoleKey[];
   /** May this identity manage collaborators (/bcp/usuarios)? */
   isOwner: boolean;
+  /** El nivel en cada consola concedida (V5.57): la concha lo usa para decir «Lectura y borradores». */
+  niveles: Partial<Record<PanelConsoleKey, ConsoleLevel>>;
 };
 
 /**
@@ -45,6 +48,12 @@ async function loadPanelIdentity(): Promise<PanelIdentity> {
     displayName: row?.display_name ?? profile.full_name ?? profile.email ?? "",
     consoles: grantedConsoles(row),
     isOwner: isPanelOwner(row),
+    niveles: Object.fromEntries(
+      grantedConsoles(row).flatMap((k) => {
+        const n = nivelDeConsola(row, k);
+        return n ? [[k, n]] : [];
+      }),
+    ),
   };
 }
 

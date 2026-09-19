@@ -71,7 +71,7 @@ import type {
 
 export type RtsResult<T = null> = { ok: true; data: T } | { ok: false; error: string };
 
-const NO_AUTH = "Tu sesión del Estudio no está activa. Vuelve a entrar.";
+const NO_AUTH = "No se pudo ejecutar: o tu sesión del Estudio ya no está activa (vuelve a entrar), o entraste como operador del ECP con nivel de lectura y borradores — y producir gasta.";
 const BUCKET = "kaffetal-media";
 const ROOT = "coffeed/rts";
 const SIGNED_TTL = 60 * 60;
@@ -191,7 +191,7 @@ function toCard(p: Project): ProjectCard {
 
 /** La sala de vídeos: todo lo que se pinta antes de abrir un proyecto. */
 export async function loadWorkshop(): Promise<Workshop | null> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return null;
   const service = coffeedServiceClient();
 
@@ -214,7 +214,7 @@ export async function loadWorkshop(): Promise<Workshop | null> {
 export type OpenProject = { project: Project; renders: RenderJob[]; assets: Record<string, string> };
 
 export async function loadProject(id: string): Promise<OpenProject | null> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return null;
   const service = coffeedServiceClient();
 
@@ -377,7 +377,7 @@ async function siblingDocs(service: Service, projectId: string) {
 }
 
 export async function seriesCharacters(projectId: string): Promise<{ list: BorrowedCharacter[]; assets: Record<string, string> }> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return { list: [], assets: {} };
   const service = coffeedServiceClient();
 
@@ -392,7 +392,7 @@ export async function seriesCharacters(projectId: string): Promise<{ list: Borro
  *  puestos: importar una bodega sin su mesa no traería el decorado, que es lo
  *  único que hacía útil importarla. */
 export async function seriesSets(projectId: string): Promise<{ escenarios: BorrowedEscenario[]; props: BorrowedProp[] }> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return { escenarios: [], props: [] };
   const service = coffeedServiceClient();
 
@@ -811,7 +811,7 @@ async function readDeck(service: Service, id: string): Promise<Deck | null> {
 }
 
 export async function listRenders(projectId: string): Promise<RenderJob[]> {
-  const who = await studioGate();
+  const who = await studioGate("lectura");
   if (!who) return [];
   const service = coffeedServiceClient();
   const { data } = await service

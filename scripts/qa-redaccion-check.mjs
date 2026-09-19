@@ -35,7 +35,9 @@ check("la pieza sin fecha trae publishedAt null (la ingesta la descarta)", pieza
 
 // ── 3. Las costuras de la ingesta ───────────────────────────────────────────
 const red = lee("src/lib/coffeed/redaccion.ts");
-check("todas las actions pasan por coffeedGate", (red.match(/await coffeedGate\(\)/g) ?? []).length >= 4);
+// V5.57: `coffeedGate` recibe la CLASE de la acción; sin argumento es «emite» (nivel admin): generar gasta.
+check("todas las actions pasan por coffeedGate", (red.match(/await coffeedGate\(/g) ?? []).length >= 4);
+check("solo CARGAR el tablero se declara lectura; generar exige nivel admin", (red.match(/await coffeedGate\("lectura"\)/g) ?? []).length === 1 && (red.match(/await coffeedGate\(\)/g) ?? []).length >= 3);
 check("el dedupe es upsert-ignore contra la unique de url", red.includes('onConflict: "url", ignoreDuplicates: true'));
 check("solo entra lo que tiene fecha", red.includes("p.publishedAt && new Date(p.publishedAt)"));
 check("el filtro de café se aplica en la ingesta", red.includes("pasaFiltroCafe(p.title, s.keywords)"));

@@ -2,13 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
 /** Un código público libre, pedido a `public.ctc_public_code()` — la ÚNICA
  *  fuente que lo acuña. No se genera en TypeScript a propósito: el alfabeto y
@@ -26,7 +21,9 @@ async function nuevoCodigoPublico(service: ReturnType<typeof createServiceRoleCl
 // liberación confirmada, grado equivocado) y un throw en una form action revienta
 // la página entera — además, en producción Next redacta el mensaje. Ver ActionForm.tsx.
 export async function publishLot(formData: FormData): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const lotId = String(formData.get("lot_id"));
@@ -137,7 +134,9 @@ export async function publishLot(formData: FormData): Promise<{ ok: true } | { o
 }
 
 export async function unpublishListing(listingId: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: listing } = await service.from("lot_listings").select("status").eq("id", listingId).single();

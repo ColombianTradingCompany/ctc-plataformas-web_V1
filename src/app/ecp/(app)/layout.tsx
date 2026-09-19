@@ -9,6 +9,7 @@ export default async function EcpAppLayout({ children }: { children: React.React
       identityName={identity.displayName}
       accessibleConsoles={identity.consoles}
       isOwner={identity.isOwner}
+      nivel={identity.niveles["ecp"] ?? null}
     >
       {children}
     </PanelShell>

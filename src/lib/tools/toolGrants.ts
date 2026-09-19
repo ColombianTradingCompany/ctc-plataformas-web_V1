@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { membresiasDe } from "@/lib/identidad/matriz";
 import { type ContextoAcceso } from "./accesoHerramienta";
 
@@ -82,7 +82,9 @@ export async function concederHerramienta(
   toolId: string,
   source: "manual" | "payment" = "manual"
 ): Promise<ResultadoGrant> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const [{ data: persona }, { data: tool }] = await Promise.all([
@@ -115,7 +117,9 @@ export async function concederHerramienta(
 
 /** Retirar el permiso. La persona vuelve a ver la herramienta bloqueada. */
 export async function revocarHerramienta(userId: string, toolId: string): Promise<ResultadoGrant> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { error } = await service

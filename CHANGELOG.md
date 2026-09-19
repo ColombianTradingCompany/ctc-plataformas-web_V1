@@ -19,6 +19,45 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.57] — 2026-09-19 (commit pendiente)
+
+- **Seguridad**: **el nivel «viewer» de un colaborador por fin se hace cumplir.** `panel_users.consoles` guarda desde el
+  2026-07-15 un nivel por consola —`admin` o `viewer`— y durante dos meses **ningún código lo leyó**: `grantedConsoles()`
+  solo preguntaba si la consola estaba concedida (`Boolean("viewer")` es tan verdadero como `Boolean("admin")`), y las
+  compuertas se conformaban. `requireActiveAdmin()` —detrás de **124 acciones**, casi todo el OCP— no miraba ni la consola.
+  Un «viewer» podía emitir una oferta, firmar un contrato, publicar un lote o adjudicar una subasta. **Lo destapó la
+  auditoría del nodo final, no un incidente**: los dos colaboradores «viewer» llevaban desde el 20 de julio sin escribir
+  nada (siete acciones en total, todas de sus días de alta).
+- **Añadido**: **la regla**, decidida por el owner (cierra la pregunta abierta n.º 2 de `BCP_USER_ADMIN_PLAN.md`): dos
+  niveles bastan, pero el de abajo no es «solo mirar» — es **leer y preparar borradores**. Toda acción del servidor declara
+  su **clase** —`lectura` · `borrador` · `emite`— y la clase decide el nivel: un viewer pasa las dos primeras. Vive en
+  `src/lib/panel/niveles.ts` (puro) y su FUENTE es la sección nueva «Niveles por consola» del plan.
+- **Añadido**: `permisoDeEscritura(consola, clase)` — la compuerta de las 124 acciones que nacieron detrás de
+  `requireActiveAdmin()`. **Lanza** solo cuando no hay sesión (inalcanzable desde una pantalla legítima) y **devuelve**
+  `{ ok:false, error }` cuando lo que falta es nivel: un viewer pulsando un botón ve un mensaje que dice qué pasó y a
+  quién pedírselo, y la página no se cae. `requireConsoleWrite`, `coffeedGate` y `studioGate` ganan el mismo argumento.
+- **Seguridad**: **fallo CERRADO.** La clase por defecto de las cuatro compuertas es `emite`: una acción nueva que olvide
+  declararse queda cerrada al viewer, no abierta. De 228 acciones, **174 exigen nivel admin**, 42 son lectura y **12 son
+  borradores**, en una lista blanca corta: las cinco de una cotización sin emitir, rotular una transcripción (2), guardar
+  una propuesta del Mapa de Trabajo, la casilla de una tarea, la etapa manual del CRM y las dos marcas de «ya le escribí».
+- **Corregido**: `logProducerComm` —la nota sobre un productor— parecía un borrador y **no lo es: el productor la ve** en
+  su panel. Salió de la lista blanca al revisar los formularios, y el plan lo deja escrito para que nadie lo «arregle».
+- **Cambiado**: siete acciones atadas a `<form action>` devolvían `void` y no tenían cómo mostrar un rechazo
+  (`createHarvestSeason`, `createArenaSession`, `recordHumidityReading`, `markReconditioning`, `resolveReconditioning`,
+  `createLot`, `logProducerComm`): devuelven `ActionResult` y sus ocho formularios pasan al `ActionForm` de la casa.
+- **Añadido**: el rail de la consola dice **«Lectura y borradores»** bajo el nombre de un viewer, y `/bcp/usuarios`
+  explica qué hace cada nivel al concederlo («Viewer — lee y prepara borradores»). Los botones siguen visibles: esconderlos
+  es una tanda por consola, posterior. Quince mensajes «Tu sesión no está activa» dicen ahora la verdad para los dos casos.
+- **Añadido**: guardián **`qa-niveles-check.mjs`** (35) — **lee la regla y la lista blanca DEL PLAN**, no del código, y
+  exige que `niveles.ts` y las llamadas digan lo mismo; que las cuatro compuertas miren el nivel y cierren por defecto; que
+  detrás de `requireActiveAdmin()` a secas no quede nada que escriba; y que ningún borrador exista sin estar antes en el
+  plan. Probado mordiendo: marcar `emitOffer` como borrador lo pone rojo.
+- **Cambiado**: `qa-rutas-consolas` (341 → **365**) entiende las compuertas con clase y `permisoDeEscritura("ocp", …)`, y
+  declara cuatro módulos de `src/lib/` que ahora nombran su consola; `qa-fichas`, `qa-redaccion` y `qa-subastas` afirman
+  que sus acciones exigen nivel admin, no solo que tienen compuerta.
+- **Datos**: ninguno. Los dos colaboradores se quedan como `viewer` en las tres consolas (decisión del owner) y pasan a
+  leer y preparar borradores en cuanto despliega; comprobado por SQL que ningún nivel guardado es inválido.
+
 ## [V5.56] — 2026-09-19 (commit 867a4b5)
 
 - **Hito**: **«BCP · Herramientas Internas» recibe sus piezas: los tres cotizadores y las anclas de mercado dejan el ECP.**

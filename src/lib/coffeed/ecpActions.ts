@@ -27,7 +27,7 @@ import {
   type CoffeedThread,
 } from "./types";
 
-const NO_AUTH_MSG = "Tu sesión del ECP no está activa. Vuelve a iniciar sesión.";
+const NO_AUTH_MSG = "No se pudo ejecutar: o tu sesión del ECP ya no está activa (vuelve a iniciar sesión), o tu nivel en el ECP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra.";
 const NO_AUTH: CoffeedResult = { ok: false, error: NO_AUTH_MSG };
 
 type Service = ReturnType<typeof coffeedServiceClient>;
@@ -48,7 +48,7 @@ async function loadBrand(service: Service): Promise<CoffeedBrand> {
 
 /** Todo lo que la consola del ECP necesita para pintarse de una vez. */
 export async function getEcpConsole(): Promise<CoffeedEcpBundle | null> {
-  const who = await coffeedGate();
+  const who = await coffeedGate("lectura");
   if (!who) return null;
   const service = coffeedServiceClient();
 
@@ -82,7 +82,7 @@ export async function getEcpConsole(): Promise<CoffeedEcpBundle | null> {
 
 /** El HTML renderizado de un carrusel entregado — para revisarlo antes de publicar. */
 export async function getDeliverableHtml(draftId: string): Promise<{ ok: true; html: string; title: string } | { ok: false; error: string }> {
-  const who = await coffeedGate();
+  const who = await coffeedGate("lectura");
   if (!who) return { ok: false, error: NO_AUTH_MSG };
   const service = coffeedServiceClient();
   const { data } = await service.from("coffeed_drafts").select("post_html, title").eq("id", draftId).maybeSingle();

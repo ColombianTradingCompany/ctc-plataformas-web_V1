@@ -32,7 +32,7 @@ import { geminiImagen, geminiImagenDisponible } from "./geminiImage";
 import { parseFeed, pasaFiltroCafe } from "./feeds";
 import { bajar } from "./feedFetch";
 
-const NO_AUTH = "Tu sesión del ECP no está activa. Vuelve a entrar." as const;
+const NO_AUTH = "No se pudo ejecutar: o tu sesión del ECP ya no está activa (vuelve a iniciar sesión), o tu nivel en el ECP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." as const;
 
 // ── EL COSTE, dicho aquí para que la próxima decisión sea informada ─────────
 // (tarifas de src/lib/ai/precios.ts, medidas con un post real de ~700 tokens de
@@ -85,7 +85,7 @@ async function marcarRefresco(service: Service) {
 }
 
 export async function cargarRedaccion(): Promise<{ ok: true; data: Redaccion } | { ok: false; error: string }> {
-  const who = await coffeedGate();
+  const who = await coffeedGate("lectura");
   if (!who) return { ok: false, error: NO_AUTH };
   const service = createServiceRoleClient();
 

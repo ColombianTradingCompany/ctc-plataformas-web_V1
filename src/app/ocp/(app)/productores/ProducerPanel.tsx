@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { logProducerComm } from "../commActions";
+import { ActionForm } from "../ActionForm";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Panel del productor con pestañas (2026-07-23, pedido del owner) ──────────
@@ -227,13 +228,12 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
 
       {tab === "comm" && (
         <div>
-          <form action={addComm} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <ActionForm action={addComm} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }} submitLabel="Registrar" pendingLabel="Registrando…" buttonClassName="btn btn-sm btn-solid">
             <div className={styles.field} style={{ margin: 0, flex: 1, minWidth: 200 }}>
               <label>Nota</label>
               <input name="note" required placeholder="Nota interna sobre este productor…" />
             </div>
-            <button className="btn btn-sm btn-solid" type="submit">Registrar</button>
-          </form>
+          </ActionForm>
           <p style={{ fontSize: 11, color: "var(--muted)", margin: "6px 0 0" }}>
             El productor puede ver estas notas en su panel, bajo &quot;Retroalimentación y ayuda&quot;.
           </p>

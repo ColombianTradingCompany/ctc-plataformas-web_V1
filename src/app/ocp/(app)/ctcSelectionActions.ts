@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
 // ── CTC Selection · acciones del pipeline ────────────────────────────────────
 // Sirven a las DOS ramas del paraguas (Black Stock y Selección): la etapa del
@@ -26,7 +26,9 @@ export async function setBlackNegotiationStage(
   negotiationId: string,
   stage: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (!STAGES.includes(stage as BlackStage)) return { ok: false, error: "Etapa inválida." };
   const service = createServiceRoleClient();
 
@@ -54,7 +56,9 @@ export async function setBlackNegotiationTarget(
   negotiationId: string,
   formData: FormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: neg } = await service.from("black_negotiations").select("id, status").eq("id", negotiationId).maybeSingle();

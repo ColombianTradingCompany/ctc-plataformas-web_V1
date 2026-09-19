@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createHarvestSeason } from "../../arenaActions";
+import { ActionForm } from "../../ActionForm";
 import styles from "@/components/panel/shared.module.css";
 
 export default async function BcpTemporadasPage() {
@@ -19,7 +20,7 @@ export default async function BcpTemporadasPage() {
 
       <details className={styles.card} style={{ display: "block", marginBottom: 28 }}>
         <summary style={{ cursor: "pointer", fontWeight: 600 }}>Nueva temporada</summary>
-        <form action={createHarvestSeason} style={{ marginTop: 16 }}>
+        <ActionForm action={createHarvestSeason} style={{ marginTop: 16 }} submitLabel="Crear temporada" pendingLabel="Creando…" buttonClassName="btn btn-solid">
           <div className={styles.formGrid}>
             <div className={styles.field}>
               <label htmlFor="kind">Cosecha</label>
@@ -41,10 +42,7 @@ export default async function BcpTemporadasPage() {
               <input id="arena_ends_at" name="arena_ends_at" type="date" />
             </div>
           </div>
-          <button className="btn btn-solid" type="submit">
-            Crear temporada
-          </button>
-        </form>
+        </ActionForm>
       </details>
 
       {!seasons?.length && <p className={styles.empty}>No hay temporadas todavía.</p>}

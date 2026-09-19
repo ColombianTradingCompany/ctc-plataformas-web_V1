@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { registrarConsumo, usoDesdeAnthropic, USOS } from "@/lib/ai/consumo";
 import {
   ATRIBUTOS_SCA,
@@ -186,7 +186,9 @@ function saneaExtraccion(raw: Record<string, unknown>): { data: FichaTecnicaData
  * corre cuando CTCx pulsa el botón en /ocp/fichas.
  */
 export async function scanFichaSoportes(lotId: string): Promise<Result> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: "ANTHROPIC_API_KEY no está configurada." };
   const service = createServiceRoleClient();
@@ -336,7 +338,9 @@ export async function scanFichaSoportes(lotId: string): Promise<Result> {
  * densidad, humedades). Programático: cero costo de IA.
  */
 export async function crearFichaDesdeReporte(lotId: string): Promise<Result> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("id, producer_id, datasheet").eq("id", lotId).maybeSingle();
@@ -379,7 +383,8 @@ export async function crearFichaDesdeReporte(lotId: string): Promise<Result> {
 /** Fija (o retira) LA ficha oficial del lote. Primero limpia, luego fija — el
  *  índice único parcial rechaza cualquier carrera que intente dos oficiales. */
 export async function setFichaOficial(fichaId: string, oficial: boolean): Promise<Result> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
 
   const { data: ficha } = await service.from("lot_fichas").select("id, lot_id").eq("id", fichaId).maybeSingle();
@@ -397,7 +402,8 @@ export async function setFichaOficial(fichaId: string, oficial: boolean): Promis
 }
 
 export async function deleteFicha(fichaId: string): Promise<Result> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { error } = await service.from("lot_fichas").delete().eq("id", fichaId);
   if (error) return { ok: false, error: error.message };

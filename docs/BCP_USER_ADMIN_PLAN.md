@@ -200,11 +200,70 @@ Modelo propuesto (a refinar antes de construir):
    construir los módulos reales del ECP (precios/primas, reservas, finanzas, salud de la
    red) y del OCP (despacho/seguimiento/excepciones sobre todos los nodos).
 
+## Niveles por consola · qué puede hacer cada uno (decidido 2026-09-19, V5.57)
+
+**Esta sección es la FUENTE de la regla.** `src/lib/panel/niveles.ts` la implementa y `scripts/qa-niveles-check.mjs` lee
+ESTAS dos tablas y falla si el código dice otra cosa (la cifra de un guardián sale del plan, no del módulo que vigila).
+
+**Por qué hubo que escribirla.** `panel_users.consoles` guarda un nivel por consola desde el 2026-07-15, y durante dos
+meses **ningún código lo leyó**: `grantedConsoles()` solo preguntaba si la consola estaba concedida —`Boolean("viewer")` es
+tan verdadero como `Boolean("admin")`— y las compuertas de escritura se conformaban con eso. Un «viewer» podía emitir una
+oferta o adjudicar una subasta. Lo destapó una auditoría (2026-09-19), no un incidente: los dos colaboradores «viewer»
+llevaban dos meses sin escribir nada.
+
+Toda acción del servidor declara su **clase** —qué HACE—, y la clase decide qué nivel la ejecuta:
+
+| Nivel | `lectura` | `borrador` | `emite` |
+|---|---|---|---|
+| `admin` | sí | sí | sí |
+| `viewer` | sí | sí | no |
+
+- **`lectura`** — no cambia nada: listar, cargar, firmar una URL para ver un archivo.
+- **`borrador`** — crea o edita algo **interno**, que nadie fuera de la consola ve, que no dispara correo, evento, cobro ni
+  gasto de IA, y que se puede deshacer.
+- **`emite`** — todo lo demás: cambia lo que ve un productor, un comprador, un socio o el público; mueve dinero; gasta;
+  notifica; concede permisos; borra. **En caso de duda es `emite`**, y es el valor por defecto de las cuatro compuertas
+  (`requireConsoleWrite`, `permisoDeEscritura`, `coffeedGate`, `studioGate`): una acción nueva que olvide declararse queda
+  cerrada al viewer, no abierta.
+
+**La lista blanca de borradores** — corta a propósito; se amplía aquí primero y en el código después:
+
+| Acción | Módulo | Por qué es un borrador |
+|---|---|---|
+| `createQuote` | BCP · cotizadores | una cotización nace como borrador; nadie la ve hasta `issueQuote` |
+| `saveQuoteDraft` | BCP · cotizadores | guarda el borrador |
+| `setQuoteCounterparty` | BCP · cotizadores | a quién iría dirigida; no se le avisa |
+| `renameQuote` | BCP · cotizadores | el título interno |
+| `duplicateQuote` | BCP · cotizadores | copia un borrador |
+| `updateTranscriptInfo` | ECP · transcripciones | rotula una transcripción ya hecha |
+| `renameSpeaker` | ECP · transcripciones | nombra una voz |
+| `saveProposal` | BCP · Mapa de Trabajo | una propuesta es, por definición, algo que otro confirma |
+| `setTaskState` | OCP · panel | la casilla de una tarea del tablero |
+| `setEtapaComprador` | OCP · CRM Green | la excepción manual de la etapa; solo la lee ese tablero |
+| `marcarContactado` | OCP · ECP · listas de espera | «ya le escribí»; se puede desmarcar |
+| `marcarInteresTtContactado` | ECP · Terratalento | lo mismo |
+
+**Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
+**la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta
+la lectura de mercado del PVC; `redactarContexto`, `scanFichaSoportes` y todo el Estudio de Coffeed **gastan** en IA;
+`createTranscript`/`sendTranscriptToCloud` abren un trabajo que cuesta; y borrar nunca es un borrador.
+
+**Cómo se entera un viewer.** El rail de la consola dice «Lectura y borradores» bajo su nombre, y la acción responde con
+un mensaje que explica qué pasó y a quién pedírselo — **sin tumbar la página**: `permisoDeEscritura` LANZA solo cuando no
+hay sesión (inalcanzable desde una pantalla legítima) y DEVUELVE `{ ok:false, error }` cuando lo que falta es nivel. Los
+botones siguen visibles; esconderlos es una tanda por consola, posterior. Siete acciones atadas a `<form action>` pasaron
+a `ActionForm` para poder mostrar ese rechazo.
+
+**Lo que NO cambia**: `is_owner` sigue gobernando usuarios y socios; cambiar la propia contraseña no pasa por estas
+compuertas; el socio del Estudio de Contenido no tiene niveles (su credencial es para producir).
+
 ## Preguntas abiertas (decidir antes de la Fase 1)
 
 1. ¿Los colaboradores entran solo con contraseña+OTP (como hoy) o también con Google?
    (Propuesta: solo contraseña+OTP — superficie mínima para lo interno.)
-2. ¿Bastan dos niveles por consola (`admin`/`viewer`) o hace falta algo intermedio?
+2. ~~¿Bastan dos niveles por consola (`admin`/`viewer`) o hace falta algo intermedio?~~ — **decidido por el owner el
+   2026-09-19 (V5.57)**: bastan dos, pero el de abajo no es «solo mirar»: **lee y prepara borradores**. Ver «Niveles por
+   consola», abajo.
 3. ¿El owner puede ver/regenerar la contraseña temporal tras invitar (patrón leads) o
    solo reenviar la invitación?
 4. Partners: ¿`role='partner'` en el enum de `profiles`, o tabla `partner_accounts`

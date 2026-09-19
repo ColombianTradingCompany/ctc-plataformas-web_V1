@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { ARENA_FEE_COP, MAX_BATCH_LOTS, dueFor, formatCop, isSettled, type InscriptionStatus } from "@/lib/arena/inscriptions";
 import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
@@ -31,9 +31,6 @@ function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }
 
-async function requireAdmin() {
-  return requireActiveAdmin();
-}
 
 /** Avanza postulacion → fila cuando pago Y muestra están confirmados: el lote
  *  entra al pool desde el que se arman los baches de sondeo. */
@@ -50,7 +47,9 @@ async function maybeAdvanceToFila(service: ReturnType<typeof createServiceRoleCl
 
 /** BCP postula en nombre del productor (lotes grandfathered o registrados a mano). */
 export async function postularOnBehalf(lotId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("id, name, stage, producer_id").eq("id", lotId).maybeSingle();
@@ -107,7 +106,9 @@ export async function postularOnBehalf(lotId: string): Promise<Result> {
 
 /** BCP aplica un código de campaña en nombre del productor (solo con pago pendiente). */
 export async function applyCodeOnBehalf(lotId: string, rawCode: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: ins } = await service
@@ -145,7 +146,9 @@ export async function applyCodeOnBehalf(lotId: string, rawCode: string): Promise
  * Este es el momento en que el código queda bloqueado (locked_at).
  */
 export async function confirmInscriptionPayment(lotId: string, paymentRef?: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: ins } = await service
@@ -195,7 +198,9 @@ export async function confirmInscriptionPayment(lotId: string, paymentRef?: stri
 
 /** Corrección: revierte un pago confirmado mientras la postulación no avanzó. */
 export async function unsettleInscription(lotId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: ins } = await service
     .from("arena_inscriptions")
@@ -225,7 +230,9 @@ export async function unsettleInscription(lotId: string): Promise<Result> {
 
 /** Confirma el recibo físico de la muestra de 2 kg (ya bajo postulación). */
 export async function confirmSampleReceivedNom(lotId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: ins } = await service.from("arena_inscriptions").select("id, phase").eq("lot_id", lotId).maybeSingle();
@@ -261,7 +268,9 @@ async function auditBatch(service: ReturnType<typeof createServiceRoleClient>, b
 
 /** Nuevo Sondeo: un bache abierto al que se le seleccionan lotes del pool. */
 export async function createSondeoBatch(formData: FormData): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const label = String(formData.get("label") ?? "").trim();
   if (!label) return { ok: false, error: "Escriba el nombre del bache (p. ej. «Sondeo agosto 2026»)." };
@@ -273,7 +282,8 @@ export async function createSondeoBatch(formData: FormData): Promise<Result> {
 /** Selección múltiple desde «En Fila»: hasta 30 lotes por bache. Solo entran
  *  lotes del pool SIN sondeo previo (un aprobado no vuelve al laboratorio). */
 export async function assignLotsToBatch(batchId: string, lotIds: string[]): Promise<Result> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const ids = [...new Set(lotIds)].filter(Boolean);
   if (!ids.length) return { ok: false, error: "Seleccione al menos un lote." };
@@ -308,7 +318,9 @@ export async function assignLotsToBatch(batchId: string, lotIds: string[]): Prom
  * bache; conservan su resultado. Sirve para limpiar baches de prueba.
  */
 export async function deleteSondeoBatch(batchId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: batch } = await service.from("sondeo_batches").select("id, label").eq("id", batchId).maybeSingle();
   if (!batch) return { ok: false, error: "Bache no encontrado." };
@@ -330,7 +342,8 @@ export async function deleteSondeoBatch(batchId: string): Promise<Result> {
 }
 
 export async function removeFromBatch(lotId: string): Promise<Result> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { data: ins } = await service.from("arena_inscriptions").select("id, sondeo_batch_id").eq("lot_id", lotId).maybeSingle();
   if (!ins?.sondeo_batch_id) return { ok: false, error: "Este lote no está en un bache." };
@@ -344,7 +357,9 @@ export async function removeFromBatch(lotId: string): Promise<Result> {
 /** «Cerrar Bache de sondeo»: abierto → planeado. Ahora se define el laboratorio
  *  y se produce la Solicitud de Bache de muestras (documento formal). */
 export async function planSondeoBatch(batchId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const [{ data: batch }, { count }] = await Promise.all([
     service.from("sondeo_batches").select("id, status, label").eq("id", batchId).maybeSingle(),
@@ -362,7 +377,8 @@ export async function planSondeoBatch(batchId: string): Promise<Result> {
  *  Desde V5.17 incluye el Q-GRADER del bache: su nombre firma la planilla
  *  oficial (`lot_evaluations.q_grader_reference`) cuando el veredicto galardona. */
 export async function setBatchLab(batchId: string, labName: string, labContact: string, qGraderName?: string): Promise<Result> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { data: batch } = await service.from("sondeo_batches").select("id, status").eq("id", batchId).maybeSingle();
   if (!batch || batch.status !== "planeado") return { ok: false, error: "El laboratorio se define con el bache planeado." };
@@ -380,7 +396,8 @@ export async function createBatchProofUploadUrl(
   batchId: string,
   filename: string
 ): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const clean = filename.replace(/[^\w.\-]+/g, "_").slice(0, 80) || "confirmacion";
   const path = `sondeo/${batchId}/proof-${Date.now()}-${clean}`;
@@ -392,7 +409,9 @@ export async function createBatchProofUploadUrl(
 /** «Bache Enviado»: planeado → pendiente. Exige el lab definido Y la prueba de
  *  confirmación de recibo subida — sin soporte no hay seguimiento. */
 export async function markBatchSent(batchId: string, proofPath: string, proofFilename: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: batch } = await service.from("sondeo_batches").select("id, status, label, lab_name").eq("id", batchId).maybeSingle();
   if (!batch || batch.status !== "planeado") return { ok: false, error: "Ese bache no está planeado." };
@@ -409,7 +428,9 @@ export async function markBatchSent(batchId: string, proofPath: string, proofFil
 
 /** «Bache recibido en Lab» — primera de las dos confirmaciones de pendiente. */
 export async function markBatchReceived(batchId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: batch } = await service.from("sondeo_batches").select("id, status").eq("id", batchId).maybeSingle();
   if (!batch || batch.status !== "pendiente") return { ok: false, error: "Ese bache no está pendiente." };
@@ -422,7 +443,9 @@ export async function markBatchReceived(batchId: string): Promise<Result> {
 /** «Pruebas entregadas»: pendiente → registro (exige el recibo previo).
  *  A partir de aquí se registran las planillas B2/B3 por lote. */
 export async function markBatchDelivered(batchId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: batch } = await service.from("sondeo_batches").select("id, status, received_at").eq("id", batchId).maybeSingle();
   if (!batch || batch.status !== "pendiente") return { ok: false, error: "Ese bache no está pendiente." };
@@ -438,7 +461,8 @@ export async function createSondeoLotResultUploadUrl(
   lotId: string,
   filename: string
 ): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { data: ins } = await service.from("arena_inscriptions").select("id, phase").eq("lot_id", lotId).maybeSingle();
   if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en sondeo." };
@@ -452,7 +476,8 @@ export async function createSondeoLotResultUploadUrl(
 /** Añade UNA planilla B2/B3 al lote (pueden registrarse varias por lote —
  *  pedido del owner; el jsonb guarda la lista). Sin veredicto todavía. */
 export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluation): Promise<Result> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   if (!labEvaluationHasData(evaluation)) return { ok: false, error: "La planilla está vacía — digite al menos un dato." };
   const { data: ins } = await service
@@ -500,7 +525,9 @@ export async function recordEvaluationVerdict(
     resultFile?: { path: string; filename: string };
   }
 ): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const cleanNotes = notes.trim();
@@ -679,7 +706,9 @@ export async function recordEvaluationVerdict(
 }
 
 export async function markCashbackPaid(lotId: string, ref: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: ins } = await service
     .from("arena_inscriptions")
@@ -710,7 +739,8 @@ export async function markCashbackPaid(lotId: string, ref: string): Promise<Resu
 }
 
 export async function regenerateMejoras(lotId: string): Promise<Result> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const ok = await generateMejorasDoc(service, lotId);
   revalidateAll();
@@ -749,7 +779,9 @@ async function showcaseGate(
 /** Invita un lote galardonado a la vitrina de la Arena: fase → 'arena' (el
  *  pool de invitados desde el que se bloquea en una sesión). */
 export async function inviteLotToArena(lotId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const gate = await showcaseGate(service, lotId);
@@ -780,7 +812,9 @@ export async function inviteLotToArena(lotId: string): Promise<Result> {
 }
 
 export async function assignLotToSession(lotId: string, sessionId: string): Promise<Result> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const [{ data: ins }, { data: sess }, { count: roster }] = await Promise.all([

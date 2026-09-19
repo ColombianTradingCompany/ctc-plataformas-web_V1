@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { moveRemoteMessage, sendBuzonMail } from "@/lib/buzon/mailClient";
 
 export type BuzonActionResult = { ok: true } | { ok: false; error: string };
@@ -124,7 +124,8 @@ export async function getBuzonAttachmentUrls(id: string): Promise<{ filename: st
 }
 
 export async function syncBuzonNow() {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { syncBuzon } = await import("@/lib/buzon/syncBuzon");
   const result = await syncBuzon();
   revalidatePath("/ecp/buzon");

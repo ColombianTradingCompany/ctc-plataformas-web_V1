@@ -14,7 +14,7 @@ import { canalIdDesdeHtml, feedDeCanal, feedDesdeHtml, parseFeed } from "./feeds
 import { bajar } from "./feedFetch";
 import type { CoffeedResult } from "./types";
 
-const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
+const NO_AUTH: CoffeedResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del Estudio ya no está activa (vuelve a entrar), o entraste como operador del ECP con nivel de lectura y borradores — y producir gasta." };
 
 /** Rutas que prueban casi todos los gestores de contenido, por si la página no
  *  declara su feed en el `<head>`. Se prueban DESPUÉS del autodescubrimiento,

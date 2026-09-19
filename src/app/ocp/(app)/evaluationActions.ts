@@ -2,20 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
 // A BCP-submitted evaluation is authoritative on entry (auto-accepted) --
 // unlike a producer_claim, which always starts pending. This is the "many
 // evaluations per lot, averaged" path: src/lib/evaluations.ts's averageOf()
 // reads every accepted row for a lot and averages sca_total/factor_rendimiento.
 export async function submitLotEvaluation(lotId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const scaFields = ["fragrance", "flavor", "aftertaste", "acidity", "body", "balance", "uniformity", "clean_cup", "sweetness", "cuppers"];
@@ -50,7 +47,9 @@ export async function submitLotEvaluation(lotId: string, formData: FormData) {
 // does the claim's score start counting toward the lot's official average --
 // a rejected claim stays in the table (audit trail) but is simply excluded.
 export async function reviewEvaluationClaim(evaluationId: string, decision: "accepted" | "rejected", notes: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { error } = await service

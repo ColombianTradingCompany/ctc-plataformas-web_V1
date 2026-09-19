@@ -1,15 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { ActionResult } from "./ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { emitOffer } from "./ofertasActions";
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
 const RELEASE_STAIRCASE = [
   { month_number: 1, max_release_pct: 50 },
@@ -24,7 +20,9 @@ export async function signContract(
   contractId: string,
   formData: FormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: contract } = await service.from("purchase_contracts").select("status, lot_id").eq("id", contractId).single();
@@ -79,7 +77,9 @@ export async function signContract(
 }
 
 export async function recordContractRelease(contractId: string, monthNumber: number, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const releasedKg = formData.get("released_kg") ? Number(formData.get("released_kg")) : null;
@@ -121,8 +121,10 @@ export async function recordContractRelease(contractId: string, monthNumber: num
   revalidatePath("/ocp/contratos");
 }
 
-export async function recordHumidityReading(contractId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+export async function recordHumidityReading(contractId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   await service.from("humidity_readings").insert({
@@ -137,10 +139,13 @@ export async function recordHumidityReading(contractId: string, formData: FormDa
   revalidatePath(`/ocp/contratos/${contractId}`);
   revalidatePath("/ocp/contratos/humedad");
   revalidatePath("/bcp");
+  return { ok: true };
 }
 
-export async function markReconditioning(contractId: string) {
-  const adminId = await requireAdmin();
+export async function markReconditioning(contractId: string): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   await service.from("purchase_contracts").update({ status: "reconditioning" }).eq("id", contractId);
@@ -155,10 +160,13 @@ export async function markReconditioning(contractId: string) {
   revalidatePath(`/ocp/contratos/${contractId}`);
   revalidatePath("/ocp/contratos/humedad");
   revalidatePath("/ocp/contratos");
+  return { ok: true };
 }
 
-export async function resolveReconditioning(contractId: string, outcome: "active" | "cancelled") {
-  const adminId = await requireAdmin();
+export async function resolveReconditioning(contractId: string, outcome: "active" | "cancelled"): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   await service.from("purchase_contracts").update({ status: outcome }).eq("id", contractId);
@@ -173,6 +181,7 @@ export async function resolveReconditioning(contractId: string, outcome: "active
 
   revalidatePath(`/ocp/contratos/${contractId}`);
   revalidatePath("/ocp/contratos");
+  return { ok: true };
 }
 
 // ── Negociación de lotes Black (2026-07-17; desenlace re-cableado V5.18) ────
@@ -187,7 +196,9 @@ export async function decideBlackNegotiation(
   outcome: "comprar" | "liberado",
   formData: FormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: neg } = await service.from("black_negotiations").select("id, status, lot_id").eq("id", negotiationId).maybeSingle();

@@ -23,7 +23,7 @@ import type { PanelConsoleKey } from "@/lib/panel/consoles";
 /** La consola donde vive este módulo. UNA vez, y `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
 const CONSOLA: PanelConsoleKey = "bcp";
 
-const NO_AUTH: AutomationResult = { ok: false, error: "Tu sesión del BCP no está activa. Vuelve a iniciar sesión." };
+const NO_AUTH: AutomationResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 
 type Row = {
   id: string; nombre: string; make_scenario_id: string | number | null; proposito: string;
@@ -52,7 +52,7 @@ const toAutomation = (r: Row): Automation => ({
 });
 
 export async function listAutomations(): Promise<Automation[] | null> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -66,7 +66,7 @@ export async function listAutomations(): Promise<Automation[] | null> {
 
 /** Los últimos eventos de la espina — para ver si la cola respira. */
 export async function listRecentEvents(limit = 30): Promise<IntegrationEvent[] | null> {
-  const who = await requireConsoleWrite(CONSOLA);
+  const who = await requireConsoleWrite(CONSOLA, "lectura");
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service

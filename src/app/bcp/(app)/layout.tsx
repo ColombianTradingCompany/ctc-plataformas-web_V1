@@ -9,6 +9,7 @@ export default async function BcpAppLayout({ children }: { children: React.React
       identityName={identity.displayName}
       accessibleConsoles={identity.consoles}
       isOwner={identity.isOwner}
+      nivel={identity.niveles["bcp"] ?? null}
     >
       {children}
     </PanelShell>

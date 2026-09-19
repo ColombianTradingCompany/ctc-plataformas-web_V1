@@ -38,7 +38,10 @@ const listado = lee("src/components/kaffetal-regal/ficha/panes/FichasDelLote.tsx
 
 // ── 1. El escáner: patrón de la casa y disciplina de costes ───────────────
 check("fichasActions es Server Action", acciones.startsWith('"use server"'));
-check("gate de admin en cada acción", (acciones.match(/requireActiveAdmin\(\)/g) ?? []).length >= 5);
+// V5.57: las que escriben pasan por `permisoDeEscritura("ocp", …)` (mira el NIVEL); `requireActiveAdmin()` a secas queda
+// solo para leer. Escanear gasta en IA y marcar la oficial cambia lo que ve el productor: ninguna es un borrador.
+check("gate de admin en cada acción", (acciones.match(/requireActiveAdmin\(\)|permisoDeEscritura\("ocp"/g) ?? []).length >= 5);
+check("las que escriben exigen nivel admin del OCP (no son borradores)", (acciones.match(/permisoDeEscritura\("ocp", "emite"\)/g) ?? []).length >= 4 && !/permisoDeEscritura\("ocp", "borrador"\)/.test(acciones));
 check("modelo pequeño (claude-sonnet-5, disciplina de costes)", acciones.includes('const MODEL = "claude-sonnet-5"'));
 check("fetch crudo a la API (sin SDK)", acciones.includes('"https://api.anthropic.com/v1/messages"') && !acciones.includes("@anthropic-ai/sdk"));
 check("timeout explícito en el fetch", acciones.includes("AbortSignal.timeout("));

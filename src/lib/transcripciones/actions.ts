@@ -22,7 +22,7 @@ type WorkerRow = {
   tool_version: string | null; poll_seconds: number | null; last_seen_at: string;
 };
 
-const NO_AUTH = { ok: false as const, error: "Tu sesión del OCP no está activa. Vuelve a iniciar sesión." };
+const NO_AUTH = { ok: false as const, error: "No se pudo ejecutar: o tu sesión del ECP ya no está activa (vuelve a iniciar sesión), o tu nivel en el ECP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 const LIST_PATH = "/ecp/transcripciones";
 /** El bucket privado de la casa; el prefijo transcripts/ no lo alcanza ningún JWT de usuario (políticas {uid}/...). */
 const BUCKET = "kaffetal-media";
@@ -94,7 +94,7 @@ const toTranscript = (r: FullRow): Transcript => ({
 const validDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(`${s}T12:00:00`).getTime());
 
 export async function listTranscripts(): Promise<TranscriptSummary[] | null> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -107,7 +107,7 @@ export async function listTranscripts(): Promise<TranscriptSummary[] | null> {
 }
 
 export async function getTranscript(id: string): Promise<Transcript | null> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -166,7 +166,7 @@ export async function updateTranscriptInfo(
   id: string,
   input: { subject: string; recordedOn: string; notes?: string }
 ): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "borrador");
   if (!who) return NO_AUTH;
   const subject = (input.subject ?? "").trim();
   if (!subject) return { ok: false, error: "Falta el asunto." };
@@ -185,7 +185,7 @@ export async function updateTranscriptInfo(
 
 /** "SPEAKER_00" → "Don Luis". Vacío = volver a la etiqueta automática. */
 export async function renameSpeaker(id: string, speakerKey: string, name: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "borrador");
   if (!who) return NO_AUTH;
   const key = (speakerKey ?? "").trim();
   if (!key) return { ok: false, error: "Falta el hablante." };
@@ -341,7 +341,7 @@ export async function retryTranscript(id: string): Promise<TranscriptResult> {
  * dejar una nota esperando toda la noche.
  */
 export async function listTranscriptWorkers(): Promise<TranscriptWorker[]> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return [];
   const service = createServiceRoleClient();
   const { data } = await service
@@ -383,7 +383,7 @@ export async function sendTranscriptToCloud(id: string): Promise<TranscriptResul
 
 /** ¿Está configurada la nube? La interfaz esconde el botón si no lo está. */
 export async function isCloudConfigured(): Promise<boolean> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return false;
   const { cloudConfigured } = await import("./cloud");
   return cloudConfigured();
@@ -395,7 +395,7 @@ export async function isCloudConfigured(): Promise<boolean> {
  * desarrollo en local (donde AssemblyAI no puede llamar a localhost).
  */
 export async function refreshCloudStatus(id: string): Promise<TranscriptResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return NO_AUTH;
   const { pollAssemblyJob } = await import("./cloud");
   const r = await pollAssemblyJob(id);
@@ -404,7 +404,7 @@ export async function refreshCloudStatus(id: string): Promise<TranscriptResult> 
 
 /** Enlace firmado (1 h) para escuchar/descargar el audio original desde el detalle. */
 export async function getAudioUrl(id: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite("ecp", "lectura");
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { data: row } = await service.from("transcripts").select("audio_path").eq("id", id).maybeSingle();

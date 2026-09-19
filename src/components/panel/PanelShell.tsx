@@ -1,4 +1,5 @@
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
+import type { ConsoleLevel } from "@/lib/panel/niveles";
 import { PanelChrome } from "./PanelChrome";
 
 /**
@@ -12,12 +13,15 @@ export function PanelShell({
   identityName,
   accessibleConsoles,
   isOwner,
+  nivel = null,
   children,
 }: {
   console: PanelConsoleKey;
   identityName: string;
   accessibleConsoles: PanelConsoleKey[];
   isOwner: boolean;
+  /** El nivel del operador en ESTA consola (V5.57). «viewer» se dice en el rail. */
+  nivel?: ConsoleLevel | null;
   children: React.ReactNode;
 }) {
   return (
@@ -26,6 +30,7 @@ export function PanelShell({
       identityName={identityName}
       accessibleConsoles={accessibleConsoles}
       isOwner={isOwner}
+      nivel={nivel}
     >
       {children}
     </PanelChrome>

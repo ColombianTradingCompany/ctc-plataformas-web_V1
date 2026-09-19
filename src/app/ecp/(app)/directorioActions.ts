@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 import { signedKaffetalMediaUrls } from "@/lib/kaffetalMedia";
 import { codigoDirectorio, hace, iniciales } from "@/components/directorio/data";
 import type { DirectorioEstado, FichaDoc } from "@/lib/directorio/types";
@@ -287,7 +287,9 @@ async function logVerdicto(
 // código" se eliminaron — Aceptar es lo mismo que verificar. La cuenta gana
 // acceso completo de inmediato en su próxima carga.
 export async function aceptarFicha(profileId: string): Promise<AdminResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: r } = await service.from("directorio_profiles").select("estado").eq("profile_id", profileId).maybeSingle();
   if (!r) return { ok: false, error: "Ficha no encontrada." };
@@ -307,7 +309,9 @@ export async function aceptarFicha(profileId: string): Promise<AdminResult> {
 }
 
 export async function revisarFicha(profileId: string, nota: string): Promise<AdminResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const n = clamp(nota, 2000);
   if (!n) return { ok: false, error: "Escribe qué información le pides al usuario." };
   const service = createServiceRoleClient();
@@ -323,7 +327,9 @@ export async function revisarFicha(profileId: string, nota: string): Promise<Adm
 }
 
 export async function rechazarFicha(profileId: string, nota: string): Promise<AdminResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const n = clamp(nota, 2000);
   if (!n) return { ok: false, error: "Escribe el motivo del rechazo." };
   const service = createServiceRoleClient();
@@ -339,7 +345,9 @@ export async function rechazarFicha(profileId: string, nota: string): Promise<Ad
 }
 
 export async function responderEcp(profileId: string, texto: string): Promise<AdminResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const t = clamp(texto, 4000);
   if (!t) return { ok: false, error: "Escribe un mensaje." };
   const service = createServiceRoleClient();
@@ -363,7 +371,9 @@ async function cargarCertDoc(service: ReturnType<typeof createServiceRoleClient>
 }
 
 export async function aprobarCertificado(docId: string): Promise<AdminResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const doc = await cargarCertDoc(service, docId);
   if (!doc || doc.enlaza_a !== "certificacion") return { ok: false, error: "Ese soporte no existe o no liga una certificación." };
@@ -383,7 +393,9 @@ export async function aprobarCertificado(docId: string): Promise<AdminResult> {
 }
 
 export async function rechazarCertificado(docId: string, nota: string): Promise<AdminResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const doc = await cargarCertDoc(service, docId);
   if (!doc || doc.enlaza_a !== "certificacion") return { ok: false, error: "Ese soporte no existe o no liga una certificación." };
@@ -413,7 +425,8 @@ export async function rechazarCertificado(docId: string, nota: string): Promise<
 // ── Moderación del muro ───────────────────────────────────────────────────────
 
 export async function moderarPost(postId: string, accion: "ocultar" | "publicar" | "eliminar"): Promise<AdminResult> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const estado = accion === "ocultar" ? "oculto" : accion === "publicar" ? "publicado" : "eliminado";
   const service = createServiceRoleClient();
   const { error } = await service.from("directorio_posts").update({ estado }).eq("id", postId);
@@ -423,7 +436,8 @@ export async function moderarPost(postId: string, accion: "ocultar" | "publicar"
 }
 
 export async function fijarPost(postId: string, fijo: boolean): Promise<AdminResult> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
   const { error } = await service.from("directorio_posts").update({ fijo }).eq("id", postId);
   if (error) return { ok: false, error: "No se pudo fijar la publicación." };
@@ -432,7 +446,8 @@ export async function fijarPost(postId: string, fijo: boolean): Promise<AdminRes
 }
 
 export async function crearAnuncioCtc(etiqueta: string, texto: string): Promise<AdminResult> {
-  await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const t = clamp(texto, 4000);
   if (!t) return { ok: false, error: "Escribe el anuncio." };
   const service = createServiceRoleClient();

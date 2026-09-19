@@ -20,7 +20,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { claude, parseJson, MODEL_CHEAP, MODEL_WRITE } from "./claude";
 import { USOS } from "@/lib/ai/consumo";
 
-const NO_AUTH: CoffeedResult = { ok: false, error: "Tu sesión del Estudio no está activa. Vuelve a entrar." };
+const NO_AUTH: CoffeedResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del Estudio ya no está activa (vuelve a entrar), o entraste como operador del ECP con nivel de lectura y borradores — y producir gasta." };
 
 type Service = ReturnType<typeof createServiceRoleClient>;
 import { studioGate } from "./studioGate";

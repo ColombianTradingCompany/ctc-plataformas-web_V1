@@ -16,7 +16,7 @@ const NO_PARAM = new Set<string>([...ENTRADA_KEYS, "nivel", "destino", "lb_excel
 
 export async function POST(request: Request) {
   const who = await requireConsoleWrite("bcp");
-  if (!who) return NextResponse.json({ ok: false, error: "Sesión del BCP no activa." }, { status: 401 });
+  if (!who) return NextResponse.json({ ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." }, { status: 401 });
   if (!isPanelOwner(await getPanelUser(who.userId))) return NextResponse.json({ ok: false, error: "Publicar es una decisión del owner." }, { status: 403 });
 
   let body: { code?: string; S?: Record<string, unknown>; notes?: string; correctionOf?: string | null };

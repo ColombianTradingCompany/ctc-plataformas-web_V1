@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ConsoleLevel } from "@/lib/panel/niveles";
 import { CONSOLES, type PanelConsoleKey } from "@/lib/panel/consoles";
 import { PanelSidebar } from "./PanelSidebar";
 import styles from "./panel.module.css";
@@ -26,12 +27,14 @@ export function PanelChrome({
   identityName,
   accessibleConsoles,
   isOwner,
+  nivel = null,
   children,
 }: {
   consoleKey: PanelConsoleKey;
   identityName: string;
   accessibleConsoles: PanelConsoleKey[];
   isOwner: boolean;
+  nivel?: ConsoleLevel | null;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState<boolean | null>(null);
@@ -107,6 +110,7 @@ export function PanelChrome({
           identityName={identityName}
           accessibleConsoles={accessibleConsoles}
           isOwner={isOwner}
+          nivel={nivel}
           onMinimize={() => toggle(false)}
         />
       </div>

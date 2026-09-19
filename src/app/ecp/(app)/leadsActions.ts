@@ -3,15 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendLeadWelcomeEmail, sendLeadReplyEmail, PILLAR_LABEL, type LeadEmailInput, type ThreadMessage } from "@/lib/email/leadEmails";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { getPanelUser, grantedConsoles } from "@/lib/panel/panelUsers";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
 // ── Compuerta fina por consola (auditoría 2026-08-13, ESTR-4) ────────────────
 // Estas acciones las comparten CUATRO tableros (regla V4 Fase 0: "el CRM vive
@@ -165,7 +160,9 @@ async function applySuccessfulReply(
 // never stored in the reply body); on success the password is cleared from
 // the lead and the status auto-advances nuevo -> en_conversacion.
 export async function replyToLead(leadId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
   await requireLeadConsole(adminId, lead);
@@ -202,7 +199,9 @@ export async function replyToLead(leadId: string, formData: FormData) {
 }
 
 export async function setLeadStatus(leadId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
   await requireLeadConsole(adminId, lead);
@@ -224,7 +223,9 @@ export async function setLeadStatus(leadId: string, formData: FormData) {
 }
 
 export async function retryWelcomeEmail(leadId: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
   await requireLeadConsole(adminId, lead);
@@ -245,7 +246,9 @@ export async function retryWelcomeEmail(leadId: string) {
 }
 
 export async function retryReplyEmail(replyId: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: reply } = await service

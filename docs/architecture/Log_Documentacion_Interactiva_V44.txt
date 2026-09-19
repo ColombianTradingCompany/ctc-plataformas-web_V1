@@ -285,3 +285,28 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   Procesamiento y Logística ya están EN el grupo del rail; los modelos mismos siguen sin módulo (brief primero).
 - Compuerta: tsc · eslint 8 · build · guardianes; verificación en vivo por `curl` a los talones (viven fuera del login).
 (commit: 867a4b5)
+
+## [2026-09-19] V5.57 · El nivel «viewer» se hace cumplir: leer y preparar borradores (consolas · Seguridad)
+- FICHA NUEVA — candidata `nivelesconsola` (zona de identidad, junto a `permisonoruta`): **un nivel que se guarda y nadie
+  lee no es un permiso, es un adorno.** `panel_users.consoles` llevaba dos meses guardando `admin`/`viewer` sin que ninguna
+  compuerta lo mirase (`Boolean("viewer")` es verdadero). La regla, decidida por el owner: dos niveles, y el de abajo
+  **lee y prepara borradores**. Toda acción declara su CLASE (`lectura` · `borrador` · `emite`) y la clase decide el nivel.
+  Fuente: `docs/BCP_USER_ADMIN_PLAN.md` §«Niveles por consola»; implementación pura: `src/lib/panel/niveles.ts`.
+- TRAZA NUEVA — «Un viewer pulsa un botón que emite»: página (entra: `requireConsoleAccess`, que solo pregunta si la
+  consola está concedida) → el rail le dice «Lectura y borradores» → pulsa «Emitir oferta» → `permisoDeEscritura("ocp",
+  "emite")` → sesión válida, nivel insuficiente → **DEVUELVE** `{ ok:false, error }` (no lanza: un throw en una Server
+  Action tumba la página y producción redacta el mensaje) → el tablero pinta el rechazo inline. Contrapunto en la misma
+  traza: sin sesión SÍ lanza, porque eso no es alcanzable desde una pantalla legítima.
+- FICHA `identidad` (el contrato de `ALINEACION` §1): las compuertas de escritura son ahora CUATRO y todas miran el nivel
+  — `requireConsoleWrite(consola, clase)`, `permisoDeEscritura(consola, clase)`, `coffeedGate(clase)`, `studioGate(clase)`.
+  **Fallo cerrado**: la clase por defecto es `emite`. `requireActiveAdmin()` a secas queda SOLO para leer (16 funciones).
+  El socio del Estudio no tiene niveles; `is_owner` sigue gobernando usuarios y socios.
+- NODO `n-consoles` / `n-bcp`: la tarjeta de «Usuarios y credenciales» puede decir por fin qué significa cada nivel.
+- LECCIÓN, cuarta del día en la misma familia: `logProducerComm` PARECÍA un borrador («nota interna») y el productor la
+  ve en su panel. **La clase de una acción se decide mirando quién LEE lo que escribe, no cómo se llama.**
+- FICHA `actionform` (si existe; si no, dentro de `nivelesconsola`): ocho formularios más pasan a `ActionForm` — las
+  acciones atadas a `<form action>` que devolvían `void` no tenían cómo enseñar un rechazo.
+- ANN nuevas: `src/lib/panel/niveles.ts`, `scripts/qa-niveles-check.mjs`. ANN a actualizar: `requireActiveAdmin.ts`,
+  `requireConsoleWrite.ts`, `panelUsers.ts`, `coffeed/requireEcp.ts`, `coffeed/studioGate.ts`, `BCP_USER_ADMIN_PLAN.md`.
+- Compuerta: tsc · eslint 8 · build · guardianes (sin los dos que gastan dinero ni los dos que piden cuentas `prueba-*`).
+(commit: pendiente)

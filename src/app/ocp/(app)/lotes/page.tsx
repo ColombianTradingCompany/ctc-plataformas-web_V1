@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, deleteAbandonedLot } from "../actions";
+import { ActionForm } from "../ActionForm";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { LotesViews, type ViewLot } from "./LotesViews";
@@ -328,7 +329,7 @@ export default async function BcpLotesPage() {
             Aprueba al menos una finca antes de poder crear un lote.
           </p>
         ) : (
-          <form action={createLot} style={{ marginTop: 16 }}>
+          <ActionForm action={createLot} style={{ marginTop: 16 }} submitLabel="Crear lote" pendingLabel="Creando…" buttonClassName="btn btn-solid">
             <div className={styles.field}>
               <label htmlFor="finca_id">Finca</label>
               <select id="finca_id" name="finca_id" required>
@@ -365,10 +366,7 @@ export default async function BcpLotesPage() {
               <label htmlFor="ficha_notas_cata">Notas de cata</label>
               <textarea id="ficha_notas_cata" name="ficha_notas_cata" rows={2} />
             </div>
-            <button className="btn btn-solid" type="submit">
-              Crear lote
-            </button>
-          </form>
+          </ActionForm>
         )}
       </details>
 

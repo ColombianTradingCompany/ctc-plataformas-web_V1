@@ -1,14 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { ActionResult } from "./ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
 // BCP leaves an internal note about a producer -- writes go through here
 // (service-role only, no client insert policy), reads are open to the
@@ -23,8 +19,10 @@ export async function logProducerComm(
   contextLabel: string | null,
   formData: FormData,
   ref?: { fincaId?: string; lotId?: string }
-) {
-  const adminId = await requireAdmin();
+): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const note = String(formData.get("note") ?? "").trim();
@@ -44,4 +42,5 @@ export async function logProducerComm(
   revalidatePath("/ocp/fincas");
   revalidatePath("/ocp/lotes");
   revalidatePath("/bcp");
+  return { ok: true };
 }

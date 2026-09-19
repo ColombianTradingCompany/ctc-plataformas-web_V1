@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura, requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 
 // ── Herramientas Plus · solicitudes y activaciones (owner, 2026-08-02) ───────
 // El nivel Plus dejó de DERIVARSE (Pasaporte del Club / escalón pintón): ahora
@@ -134,7 +134,9 @@ export async function listarSolicitudesPlus(): Promise<SolicitudPlus[]> {
 }
 
 export async function decidirPlus(grantId: string, decision: "activo" | "rechazado" | "pendiente"): Promise<ActionResult> {
-  const adminId = await requireActiveAdmin();
+  const permiso = await permisoDeEscritura("ecp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   if (!["activo", "rechazado", "pendiente"].includes(decision)) return { ok: false, error: "Decisión inválida." };
   const service = createServiceRoleClient();
   const { error } = await service

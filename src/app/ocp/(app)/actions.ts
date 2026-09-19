@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { ActionResult } from "./ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
@@ -8,7 +9,7 @@ import { deriveCertSchemes } from "@/components/kaffetal-regal/ficha/fichaData";
 import { lotInscriptionSettled } from "@/lib/arena/inscriptions";
 import { lotEudrGate } from "@/lib/arena/eudrGate";
 import { isEvaChecklistKey, missingEvaItems, type EvaChecklist } from "./lotes/evaChecklist";
-import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
+import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
 type KeyedFiles = Record<string, { assetId: string; fileName: string }>;
 
@@ -35,18 +36,15 @@ function collectKeyedAttachments(
   return out;
 }
 
-async function requireAdmin() {
-  // Delegates to the shared write-path gate (bcp_admin + panel_users.status),
-  // so suspending a collaborator revokes Server Actions instantly.
-  return requireActiveAdmin();
-}
 
 // Devuelve resultado en vez de lanzar: "falta el polígono" y "EUDR incompleta"
 // son rechazos alcanzables desde el botón Aprobar (la UI lo deshabilita, pero el
 // formulario igual se envía si el estado quedó viejo), y un throw en una form
 // action revienta la página (ver ActionForm.tsx).
 export async function approveFinca(fincaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: finca } = await service
@@ -139,7 +137,9 @@ export async function setFincaCertShared(
   fincaId: string,
   shared: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: finca } = await service.from("fincas").select("name, producer_id, status").eq("id", fincaId).single();
   if (!finca) return { ok: false, error: "Finca no encontrada." };
@@ -170,7 +170,9 @@ export async function setFincaCertVerified(
   certId: string,
   verified: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const { data: cert } = await service
     .from("finca_certificates")
@@ -210,7 +212,9 @@ export async function registerLotDds(
   reference: string,
   verificationCode: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const ref = reference.trim();
   const code = verificationCode.trim();
@@ -323,8 +327,10 @@ export async function registerLotDds(
   return { ok: true };
 }
 
-export async function createLot(formData: FormData) {
-  const adminId = await requireAdmin();
+export async function createLot(formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const fincaId = String(formData.get("finca_id"));
@@ -360,6 +366,7 @@ export async function createLot(formData: FormData) {
 
   revalidatePath("/ocp/lotes");
   revalidatePath("/bcp");
+  return { ok: true };
 }
 
 // The 2kg-sample handoff is a deliberate two-sided confirmation, not a side effect
@@ -373,7 +380,9 @@ export async function createLot(formData: FormData) {
 // Orden del intake (decidido 2026-07-16): EUDR resuelto → inscripción saldada →
 // muestra recibida → recién ahí la fila de la Arena.
 export async function confirmSampleReceived(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("stage, sample_shipped_at, source").eq("id", lotId).single();
@@ -430,7 +439,9 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
 // que confirmSampleReceived.
 
 export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("stage, name, producer_id, eva_checklist").eq("id", lotId).single();
@@ -485,7 +496,8 @@ export async function setEvaChecklistItem(
   key: string,
   checked: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const service = createServiceRoleClient();
 
   if (!isEvaChecklistKey(key)) return { ok: false, error: "Bloque de checklist desconocido." };
@@ -516,7 +528,9 @@ export async function setCertVerification(
   certKey: string,
   status: "confirmado" | "no_confirmado" | null
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("id, cert_verifications").eq("id", lotId).single();
@@ -534,7 +548,9 @@ export async function setCertVerification(
 }
 
 export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const cleanReason = reason.trim();
@@ -578,7 +594,9 @@ export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok
 }
 
 export async function revertNoApto(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service.from("lots").select("stage, name, producer_id").eq("id", lotId).single();
@@ -666,7 +684,9 @@ function valuesDiffer(a: unknown, b: unknown): boolean {
 }
 
 export async function updateFincaEudr(fincaId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: before } = await service
@@ -776,7 +796,9 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
 // finca y NINGUNA UI llama esto ya — se conserva solo para correcciones de
 // datos históricos por consola.
 export async function updateLotEudr(lotId: string, formData: FormData) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   // País lo declara BCP; la clasificación de riesgo se deriva de él. Complejidad,
@@ -860,7 +882,9 @@ export async function updateLotEudr(lotId: string, formData: FormData) {
 const ABANDONED_DAYS = 10;
 
 export async function deleteAbandonedLot(lotId: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: lot } = await service
@@ -900,7 +924,9 @@ export async function deleteAbandonedLot(lotId: string): Promise<{ ok: true } | 
 }
 
 export async function deleteAbandonedFinca(fincaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: finca } = await service
@@ -959,7 +985,9 @@ export async function deleteAbandonedFinca(fincaId: string): Promise<{ ok: true 
 }
 
 export async function rejectFinca(fincaId: string, notes: string) {
-  const adminId = await requireAdmin();
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
   const { data: finca } = await service.from("fincas").select("status").eq("id", fincaId).single();

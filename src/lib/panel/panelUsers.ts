@@ -1,11 +1,12 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { CONSOLE_ORDER, type PanelConsoleKey } from "./consoles";
+import { nivelEn, type ConsoleLevel } from "./niveles";
 
 // Server-only helpers over `panel_users`. The table is service-role-only (RLS
 // on, zero policies), so a user's own JWT can never read it — every access here
 // goes through the service-role client. Never import this from a client component.
 
-export type ConsoleLevel = "admin" | "viewer";
+export type { ConsoleLevel } from "./niveles";
 
 export type PanelUserRow = {
   profile_id: string;
@@ -42,6 +43,16 @@ export async function getPanelUser(profileId: string): Promise<PanelUserRow | nu
 export function grantedConsoles(row: PanelUserRow | null): PanelConsoleKey[] {
   if (!row) return [...CONSOLE_ORDER];
   return CONSOLE_ORDER.filter((k) => Boolean(row.consoles?.[k]));
+}
+
+/**
+ * El NIVEL de una identidad en una consola. `grantedConsoles()` responde «¿entra?»; esto responde
+ * «¿qué puede hacer dentro?» — y hasta la V5.57 nadie lo preguntaba (ver `./niveles.ts`).
+ * Sin fila = el fundador de antes de `panel_users`: admin, igual que `grantedConsoles` lo deja entrar.
+ */
+export function nivelDeConsola(row: PanelUserRow | null, consola: PanelConsoleKey): ConsoleLevel | null {
+  if (!row) return "admin";
+  return nivelEn(row.consoles, consola);
 }
 
 /** True if this identity may manage collaborators. Grandfathered when no row. */

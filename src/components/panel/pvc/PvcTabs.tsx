@@ -16,7 +16,10 @@ import styles from "@/components/panel/shared.module.css";
 const TABS = [
   { href: "/bcp/pvc/lectura", label: "Lectura" },
   { href: "/bcp/pvc", label: "Ediciones", exact: true },
-  { href: "/bcp/pvc/grados", label: "Grados" },
+  // «Escala de puntos», no «Grados»: LA definición vigente de los grados —la que leen todas las
+  // superficies— es la pestaña de Direccionamiento (`definicion.ts`). Esto es la escala que viene
+  // («El Punto y la Tríada»), exhibida y sin gobernar nada hasta que el owner la valide (V5.56).
+  { href: "/bcp/pvc/grados", label: "Escala de puntos · en validación" },
   { href: "/bcp/pvc/tablero", label: "Tablero" },
   { href: "/bcp/pvc/parametros", label: "Parámetros del modelo" },
   { href: "/bcp/pvc/dossier", label: "Dossier" },

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { QuotesBoard } from "@/components/cotizador/QuotesBoard";
 import styles from "@/components/panel/shared.module.css";
+import { QUOTE_BASE_PATH } from "@/lib/cotizador/types";
 
-export const metadata: Metadata = { title: "Costo de empaque · OCP", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Costo de empaque · BCP", robots: { index: false, follow: false } };
 
 // Cotizador de Costo de Empaque (2026-08-06). La herramienta es la misma que el
 // banco público (`public/tools/costo-empaque.html`) — aquí gana memoria: cada
@@ -15,7 +16,7 @@ export default function CotizadorEmpaquePage() {
       <div className={styles.card} style={{ marginBottom: 16 }}>
         <div className={styles.sectionHead}>
           <strong>Cuadro de evaluación</strong>
-          <Link className="btn btn-sm" href="/ecp/cotizador-empaque/evaluacion">
+          <Link className="btn btn-sm" href={`${QUOTE_BASE_PATH.empaque}/evaluacion`}>
             Comparar configuraciones →
           </Link>
         </div>
@@ -27,7 +28,7 @@ export default function CotizadorEmpaquePage() {
 
       <QuotesBoard
         kind="empaque"
-        basePath="/ecp/cotizador-empaque"
+        basePath={QUOTE_BASE_PATH.empaque}
         title="Costo de empaque por kilo"
         subtitle="Cuánto cuesta empacar un kilo al vacío: bolsa, mano de obra y amortización de la máquina. Cada análisis se guarda con su bolsa y su máquina elegidas, y queda para consultar, comparar y volver a abrir."
       />

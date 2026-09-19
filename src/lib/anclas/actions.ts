@@ -12,10 +12,16 @@
 
 import { revalidatePath } from "next/cache";
 import { requireConsoleWrite, quoteServiceClient } from "@/lib/panel/requireConsoleWrite";
+import type { PanelConsoleKey } from "@/lib/panel/consoles";
 import { fetchFncPrice } from "./fnc";
+import { ANCLAS_PATH } from "./types";
 import type { MarketAnchor, AnchorResult } from "./types";
 
-const NO_AUTH: AnchorResult = { ok: false, error: "Tu sesión del OCP no está activa. Vuelve a iniciar sesión." };
+/** La consola donde vive este módulo. UNA vez, y `qa-rutas-consolas` (f-bis) la contrasta con el rail:
+ *  si el módulo se muda y esta línea no, el guardián falla — que es justo lo que (f) no veía en `src/lib/`. */
+const CONSOLA: PanelConsoleKey = "bcp";
+
+const NO_AUTH: AnchorResult = { ok: false, error: "Tu sesión del BCP no está activa. Vuelve a iniciar sesión." };
 
 type Row = {
   id: string; kind: string; as_of: string; value: string | number; unit: string;
@@ -28,7 +34,7 @@ const toAnchor = (r: Row): MarketAnchor => ({
 });
 
 export async function listAnchors(kind = "fnc_carga", limit = 180): Promise<MarketAnchor[] | null> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return null;
   const service = quoteServiceClient();
   const { data } = await service
@@ -58,7 +64,7 @@ export async function latestAnchor(kind = "fnc_carga"): Promise<MarketAnchor | n
 export async function recordAnchor(input: {
   kind?: string; asOf: string; value: number; source?: string; note?: string; unit?: string;
 }): Promise<AnchorResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   if (!input.asOf) return { ok: false, error: "Falta la fecha de la lectura." };
   if (!(input.value > 0)) return { ok: false, error: "El valor tiene que ser mayor que cero." };
@@ -78,23 +84,23 @@ export async function recordAnchor(input: {
     { onConflict: "kind,as_of" }
   );
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ecp/anclas-mercado");
+  revalidatePath(ANCLAS_PATH);
   return { ok: true };
 }
 
 export async function deleteAnchor(id: string): Promise<AnchorResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   const service = quoteServiceClient();
   const { error } = await service.from("market_anchors").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/ecp/anclas-mercado");
+  revalidatePath(ANCLAS_PATH);
   return { ok: true };
 }
 
 /** «Consultar precio de hoy», a mano. El cron hace lo mismo cada día. */
 export async function consultFncNow(): Promise<AnchorResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   try {
     const reading = await fetchFncPrice();
@@ -110,7 +116,7 @@ export async function consultFncNow(): Promise<AnchorResult> {
       { onConflict: "kind,as_of" }
     );
     if (error) return { ok: false, error: error.message };
-    revalidatePath("/ecp/anclas-mercado");
+    revalidatePath(ANCLAS_PATH);
     return { ok: true };
   } catch (e) {
     return { ok: false, error: `No se pudo consultar: ${(e as Error).message}` };

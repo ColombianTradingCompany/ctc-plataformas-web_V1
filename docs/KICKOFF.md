@@ -316,8 +316,13 @@ LA AUDITORÍA, en este orden:
 (4) Lo que un documento da por pendiente y otro —o el CHANGELOG, o el código— da por hecho.
 (5) Cifras y reglas que se contradicen entre documentos.
 (6) El tablero del plan contra el código.
-(7) tsc · eslint (línea base 8) · TODOS los scripts/qa-*.mjs (qa-guard y qa-checkout piden las cuentas prueba-*
-    por argv: pídemelas). Un guardián no verifica nada si copia la regla del código: la regla sale del plan.
+(7) tsc · eslint (línea base 8) · los scripts/qa-*.mjs, con CUATRO excepciones que NO entran en un bucle:
+    · qa-cromatografia-modelo y qa-transcripciones-nube GASTAN DINERO (API de Anthropic, AssemblyAI): solo a mano,
+      cuando la tanda toca su módulo, y diciéndome el costo antes;
+    · qa-guard y qa-checkout piden las cuentas prueba-* por argv: pídemelas;
+    · qa-tools-puente-conformance exige un next dev en el puerto 3210 (y borra .next/dev antes del build siguiente).
+    Lee la cabecera de un guardián antes de meterlo en una batería. Y un guardián no verifica nada si copia la
+    regla del código: la regla sale del plan.
 Lo documental lo reconcilias tú en un commit de solo docs; lo que es CÓDIGO lo anotas como pendiente con dueño
 (§3b + su charter) salvo que yo te pida ejecutarlo. Siempre una línea en el §3.
 EL WRAP: solo si el log acumula cinco asientos o más, se cerró un hito o viene una versión mayor — con el skill

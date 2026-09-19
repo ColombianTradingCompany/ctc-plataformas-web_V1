@@ -72,9 +72,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // Son los MODELOS con los que la casa piensa y fija sus cifras: Definición de Contexto y
         // Misión y Visión (hoy pestañas de Direccionamiento), el Modelo Económico (PVC y Grados) y,
         // cuando tengan módulo, los modelos de Procesamiento y de Logística — cuyas piezas siguen
-        // hoy en «ECP · Caja de herramientas» (cotizadores, anclas). El grupo es del charter
+        // llegaron del ECP en la V5.56 (cotizadores, anclas). El grupo es del charter
         // `herramientas-internas`; el rail, los permisos y las rutas siguen siendo de `consolas`.
-        // SOLO cambió el nombre: ninguna ruta se movió (eso es una mudanza con talones 308).
+        // La V5.55 cambió solo el nombre; la V5.56 hizo la mudanza (talones 308 en `/ecp/…`,
+        // las `/ocp/…` REAPUNTADAS, y las 17 compuertas de `src/lib/{cotizador,anclas}` a `bcp`).
+        // Orden: por MODELO — Contexto y Misión (Direccionamiento) · Económico (PVC, anclas, lotes)
+        // · Procesamiento (empaque) · Logística.
         label: "BCP · Herramientas Internas",
         links: [
           { href: "/bcp", label: "Panel", exact: true },
@@ -93,6 +96,15 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // no de sitio, y mudarla costaría un talón 308 y tocar todo lo que la
           // enlaza sin ganar nada. Ver docs/PVC_BCP_PLAN.md §11.
           { href: "/bcp/pvc", label: "Modelo Económico", ownerOnly: true },
+          // Piezas del Modelo Económico: la lectura diaria del mercado (FNC) que el PVC consume,
+          // y cotizar un lote a un comprador. NO son owner-only: cotizar no fija el precio de
+          // origen de nadie, y quien las veía en el ECP las sigue viendo aquí.
+          { href: "/bcp/anclas-mercado", label: "Anclas de mercado" },
+          { href: "/bcp/cotizador-lotes", label: "Cotizador de lotes" },
+          // Pieza del Modelo de Procesamiento (de CPS a verde empacado y embalado).
+          { href: "/bcp/cotizador-empaque", label: "Costo de empaque" },
+          // Pieza del Modelo de Logística (lo que cuesta después del FOB, por volumen y región).
+          { href: "/bcp/cotizador-logistico", label: "Cotizador logístico" },
         ],
       },
       {
@@ -182,18 +194,15 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         ],
       },
       {
-        // Caja de herramientas interna (← OCP, PR-C). Cotizar, anclar un precio
-        // y transcribir una conversación son herramientas del EQUIPO, no pasos
-        // del pasaporte del lote: por eso salen del OCP, que desde PR-A es solo
-        // la operación del lote. Sus acciones cambiaron de compuerta con ellas
-        // (`requireConsoleWrite("ocp")` → `"ecp"`), incluida la de la ruta
-        // `/api/transcripciones/descargar`.
+        // Caja de herramientas interna (← OCP, PR-C): las herramientas del EQUIPO que no son
+        // pasos del pasaporte del lote. Llegó con cinco entradas; en la V5.56 los tres
+        // cotizadores y las anclas de mercado se fueron a «BCP · Herramientas Internas»
+        // —son piezas de los modelos Económico, de Procesamiento y de Logística— y aquí
+        // quedó Transcripciones, con su compuerta del ECP y la de
+        // `/api/transcripciones/descargar`. El grupo conserva el nombre: es donde caerá
+        // la próxima utilidad del equipo que no sea un modelo.
         label: "ECP · Caja de herramientas",
         links: [
-          { href: "/ecp/cotizador-lotes", label: "Lotes de café" },
-          { href: "/ecp/cotizador-logistico", label: "Logístico" },
-          { href: "/ecp/cotizador-empaque", label: "Costo de empaque" },
-          { href: "/ecp/anclas-mercado", label: "Anclas de mercado" },
           { href: "/ecp/transcripciones", label: "Transcripciones" },
         ],
       },

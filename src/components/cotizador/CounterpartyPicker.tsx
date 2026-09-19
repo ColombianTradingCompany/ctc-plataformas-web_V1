@@ -1,6 +1,6 @@
 "use client";
 
-// ── OCP · Cotizaciones · a quién va dirigida ─────────────────────────────────
+// ── BCP · Herramientas Internas · Cotizaciones · a quién va dirigida ─────────────────────────────────
 // Busca a la vez en productores, compradores y leads. NO impone quién puede
 // recibir qué: el cotizador de lotes suele apuntar a un productor y el logístico
 // a un cliente, pero la vía CaaS cotiza logística para un productor y eso

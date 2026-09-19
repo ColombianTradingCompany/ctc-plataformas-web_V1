@@ -18,9 +18,9 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 |---|---|---|---|---|
 | 1 | **Definición de Contexto** | qué dice la casa y con qué cifras: la ficha viva de realineación de GTM y comunicación (CTCx · KR · CP), con redacción asistida | `/bcp/direccionamiento` (pestaña 1) · `DefinicionDeContexto.tsx`, `DireccionamientoClient.tsx` · `src/lib/direccionamiento/{definicion,memoria}.ts` · tabla `direccionamiento_context` | vivo (V4.32) |
 | 2 | **Misión y Visión** | el porqué y el hacia dónde | `/bcp/direccionamiento/mision-vision` | **pestaña vacía a propósito** (lo dice en voz alta) |
-| 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/bcp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/bcp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/bcp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/ecp/anclas-mercado`) · **Cotizador de lotes** (`/ecp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
-| 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, la regla de la mezcla y los MOQ) · **Cotizador de empaque** (`/ecp/cotizador-empaque`) · la Base física de `escala.ts` | por diseñar (brief primero) |
-| 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | por diseñar (brief primero); el plan §12.10 ya lista lo que falta |
+| 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/bcp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/bcp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/bcp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/bcp/anclas-mercado`) · **Cotizador de lotes** (`/bcp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
+| 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, la regla de la mezcla y los MOQ) · **Cotizador de empaque** (`/bcp/cotizador-empaque`) · la Base física de `escala.ts` | por diseñar (brief primero) |
+| 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/bcp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | por diseñar (brief primero); el plan §12.10 ya lista lo que falta |
 
 **Lo que salió de este charter el 2026-09-19** y ahora es de `consolas` (ECP · Caja de herramientas): el **Transcriptor**
 (`tools/transcriptor/`, `/ecp/transcripciones`), **Stripe** (plugin y decisión de arquitectura) y la **Herramienta de Guion**
@@ -28,17 +28,16 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 
 ## Superficies y rutas
 
-Todas dentro de la consola **BCP** salvo las tres que siguen en el ECP — **las rutas NO se mudaron** (decisión del owner:
-esta tanda cambió la definición y el nombre del grupo, no los sitios; traerlas al BCP es una mudanza con talones 308 y claves
-de permiso, tanda propia):
+**Todas dentro de la consola BCP desde la V5.56**, que trajo del ECP los tres cotizadores y las anclas
+(`docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`; las URLs viejas del ECP y del OCP siguen vivas como 308):
 
-`/bcp/direccionamiento` · `/bcp/direccionamiento/{grados,mision-vision,modelo-economico,mercado-global}` · `/bcp/pvc` ·
+`/bcp/direccionamiento` · `/bcp/direccionamiento/{grados,mision-vision,mercado-global}` · `/bcp/pvc` ·
 `/bcp/pvc/{lectura,grados,tablero,parametros,dossier}` · `/bcp/pvc/tablero/embed[/publicar]` · `/api/pvc/current` ·
-`/ecp/cotizador-{lotes,logistico,empaque}[/id]` · `/ecp/anclas-mercado`.
+`/bcp/cotizador-{lotes,logistico,empaque}[/id]` · `/bcp/cotizador-empaque/evaluacion` · `/bcp/anclas-mercado`.
 
-⚠️ Hay **dos «Grados»** y **dos «Modelo Económico»** en pantalla, y es deuda declarada: `/bcp/direccionamiento/grados` es LA
-definición (la que leen todas las superficies) y `/bcp/pvc/grados` es la escala de puntos con su calculadora (la que viene);
-`/bcp/direccionamiento/modelo-economico` es una pestaña vacía que el rename de la V5.45 dejó atrás.
+Hay **dos pantallas de grados**, y desde la V5.56 no se llaman igual: `/bcp/direccionamiento/grados` es «Grados de Calidad ·
+definición vigente» (LA que leen todas las superficies) y `/bcp/pvc/grados` es «Escala de puntos · en validación» (la que
+viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Direccionamiento se retiró (308 → `/bcp/pvc`).
 
 ## Mapa de código
 
@@ -54,8 +53,9 @@ definición (la que leen todas las superficies) y `/bcp/pvc/grados` es la escala
   (`GRADOS`, `gradoPorPuntaje`, `redondeaPuntaje`) y `GradosBoard.tsx` — **contrato transversal de `ALINEACION` §1**: se
   cambia aquí y solo aquí, avisando a todos los que lo leen. **Anclas**: `src/lib/anclas/{actions,fnc,parseFnc,types}.ts`,
   `src/lib/market/ticker.ts` (lector FNC/ICE para Home y anclas). Plan: `docs/PVC_BCP_PLAN.md`.
-- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (13 compuertas `requireConsoleWrite("ecp")`, más 4 en `anclas/actions.ts` — las
-  tres cotizaciones comparten módulo y tabla `quotes`), `src/components/cotizador/`.
+- **Procesamiento y Logística**: `src/lib/cotizador/{actions,types}.ts` (13 compuertas, más 4 en `anclas/actions.ts`: cada módulo declara su consola UNA
+  vez —`const CONSOLA = "bcp"`— y `qa-rutas-consolas` (f-bis) la contrasta con el rail; las rutas salen de `QUOTE_BASE_PATH`
+  y `ANCLAS_PATH`), `src/components/cotizador/` (con `QuoteDetail.tsx`, que antes vivía en la carpeta de rutas).
 
 ## Tablas que posee
 
@@ -107,11 +107,10 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   `lectura.ts`, `canales.ts`, el motor y los dos cotizadores se queda donde está y qué se trae, y qué pantalla lo enseña.
   El **modelo v2.2.0** del plan (§12.10: columna **marítima** para el puerto de destino —hoy se aproxima con el aéreo `n3`—,
   **DDP consolidado ≠ dedicado**, **regiones con sus habilitaciones** como dato) es, en la práctica, el Modelo de Logística.
-- **Traer las tres rutas del ECP al BCP** (`cotizador-*`, `anclas-mercado`) y **ordenar las pestañas** (los dos «Grados», la
-  pestaña vacía `direccionamiento/modelo-economico`, Mercado Global → «Marco de mercado»): es una mudanza con talones 308 y
-  claves de permiso. **Ya está planificada: `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`** (2026-09-19) — 17 compuertas de
-  escritura que el guardián hoy NO ve, ocho líneas en `rutasMovidas.ts` (es la SEGUNDA mudanza de estos módulos: se reapunta,
-  no se encadena), cuatro talones, y cinco decisiones del owner (D1–D5) antes de ejecutar. La ejecuta `consolas`.
+- ~~**Traer las rutas del ECP al BCP** y ordenar las pestañas~~ — **hecho en la V5.56** (`MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`,
+  ejecutado). Lo que dejó: la pestaña «Modelo Económico» de Direccionamiento era el sitio reservado para el TEXTO de doctrina
+  («cómo gana dinero el negocio: margen por unidad CTCx / KR / CP») y nunca se escribió; al retirarla, **esa pieza ya no tiene
+  pantalla**. Cuando el owner la redacte, va DENTRO del Modelo Económico (`/bcp/pvc`), no en una pestaña aparte.
 - **Con fecha — CN-1**: revisar la edición vigente PVC-F4-2026 (15-sep → 15-dic) para alinear los trimestres desde enero y
   **publicar el PVC de ene–mar 2027 antes del 15-oct-2026** (espera la decisión O-1 del owner). La clave «CN-» del plan de
   narrativa se conserva aunque el dueño ya no sea `consolas`; lo mismo **CN-8** (regiones y motor v2.2.0) y la mitad de

@@ -1,6 +1,14 @@
 # Mudanza · los cotizadores y las anclas de mercado pasan del ECP al BCP
 
-**Estado: PLAN, sin ejecutar** (2026-09-19, escrito sobre la V5.55 · `f01bf76`). Lo pidió el owner al redefinir
+**Estado: EJECUTADO en la V5.56** (2026-09-19; el owner aprobó D1–D5 tal como se recomendaban; tandas A y B en una sola
+versión). Se conserva como registro de por qué se hizo así. **Lo que el plan NO sabía y la ejecución encontró**: (1) la
+comprobación (f-bis), al nacer, cazó una compuerta viva que no era de esta mudanza — **Automatizaciones** pedía permiso del
+ECP desde el BCP desde la V4.25 — y un módulo que nadie tenía en la lista, `coffeed/studioGate.ts`; (2) el talón de la
+pestaña retirada tuvo que ser un `page.tsx` a secas (sus hermanas siguen vivas) y hubo que enseñarle esa forma al guardián
+(c), que solo exentaba los `[[...resto]]`; (3) `.next/dev/types` —la caché de un `next dev` anterior— rompe `next build` tras
+un `git mv` de rutas: se borra, es generada.
+
+*Texto original del plan* (escrito sobre la V5.55 · `f01bf76`). Lo pidió el owner al redefinir
 Herramientas Internas (V5.55): el grupo del rail **«BCP · Herramientas Internas»** es dueño de los tres cotizadores y de
 las anclas de mercado, pero sus pantallas siguen en **«ECP · Caja de herramientas»**. Este documento dice qué se mueve, en
 qué orden, qué puede romperse sin avisar y cómo se comprueba.

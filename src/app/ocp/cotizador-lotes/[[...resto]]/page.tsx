@@ -13,5 +13,5 @@ import { destinoDe } from "@/lib/panel/rutasMovidas";
 export default async function TalonOcpCotizadorLotes({ params }: { params: Promise<{ resto?: string[] }> }) {
   const { resto } = await params;
   const cola = resto?.length ? "/" + resto.join("/") : "";
-  permanentRedirect(destinoDe("/ocp/cotizador-lotes" + cola) ?? "/ecp");
+  permanentRedirect(destinoDe("/ocp/cotizador-lotes" + cola) ?? "/bcp");
 }

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { QuotesBoard } from "@/components/cotizador/QuotesBoard";
+import { QUOTE_BASE_PATH } from "@/lib/cotizador/types";
 
-export const metadata: Metadata = { title: "Cotizador Logístico · OCP", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Cotizador Logístico · BCP", robots: { index: false, follow: false } };
 
 // Cotizador Logístico (2026-08-04). El andamiaje está completo —tabla, código,
 // destinatario, vigencia, historial— y comparte todo con el de lotes. Falta SOLO
@@ -11,7 +12,7 @@ export default function CotizadorLogisticoPage() {
   return (
     <QuotesBoard
       kind="logistico"
-      basePath="/ecp/cotizador-logistico"
+      basePath={QUOTE_BASE_PATH.logistico}
       title="Cotizador Logístico"
       subtitle="Cotizaciones de transporte y logística contra un cliente o un productor. El andamiaje ya guarda, numera y archiva; el motor de cálculo entra cuando llegue el HTML de referencia."
 

@@ -1,6 +1,6 @@
 "use client";
 
-// ── OCP · Anclas de mercado ──────────────────────────────────────────────────
+// ── BCP · Herramientas Internas · Anclas de mercado ──────────────────────────────────────────────────
 // El histórico del precio interno de la FNC, que antes vivía en el localStorage
 // de la Calculadora de Mermas: se perdía al limpiar el caché y no lo veía nadie
 // más. Aquí se consulta, se corrige y se acumula.

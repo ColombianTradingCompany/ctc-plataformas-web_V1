@@ -17,9 +17,9 @@ export const QUOTE_KIND_LABEL: Record<QuoteKind, string> = {
  *  cinco sitios de actions.ts, que al añadir un tercer módulo habría mandado
  *  `empaque` al cotizador logístico. */
 export const QUOTE_BASE_PATH: Record<QuoteKind, string> = {
-  lote: "/ecp/cotizador-lotes",
-  logistico: "/ecp/cotizador-logistico",
-  empaque: "/ecp/cotizador-empaque",
+  lote: "/bcp/cotizador-lotes",
+  logistico: "/bcp/cotizador-logistico",
+  empaque: "/bcp/cotizador-empaque",
 };
 
 export const QUOTE_STATUS_LABEL: Record<QuoteStatus, string> = {

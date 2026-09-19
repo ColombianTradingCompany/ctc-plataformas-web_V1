@@ -256,3 +256,32 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
 - ANN: `docs/componentes/herramientas-internas.md` (reescrito), `docs/componentes/consolas.md`, `src/lib/panel/consoles.ts`.
 - Compuerta: tsc · eslint 8 · build · guardianes (los 2 de siempre piden las cuentas `prueba-*`).
 (commit: 912d7e5)
+
+## [2026-09-19] V5.56 · Los cotizadores y las anclas de mercado pasan del ECP a «BCP · Herramientas Internas» (consolas → herramientas-internas)
+- NODOS `n-cotizadores` y `n-anclas`: **cambian de consola** — de «ECP · Caja de herramientas» a «BCP · Herramientas
+  Internas». Rutas: `/bcp/cotizador-{lotes,logistico,empaque}` y `/bcp/anclas-mercado`. Es su SEGUNDA mudanza (OCP → ECP en
+  la V4.26). La tarjeta `n-ecp` / la zona de la caja de herramientas del ECP se queda con Transcripciones; la tarjeta `n-bcp`
+  gana las cuatro piezas, ordenadas por modelo (Económico: anclas y lotes · Procesamiento: empaque · Logística).
+- NODO `n-rutas` y FICHA `rutasmovidas`: **29 → 35 rutas mudadas**. Cuatro REAPUNTADAS por segunda vez (`/ocp/… → /bcp/…`),
+  cuatro nuevas (`/ecp/… → /bcp/…`), y dos de la pestaña retirada (`/bcp/direccionamiento/modelo-economico` y su abuela del
+  ECP → `/bcp/pvc`, en un salto). Dato nuevo para la ficha: existe el talón de FORMA EXPLÍCITA (un `page.tsx` fuera de
+  `(app)`), para cuando las hermanas de la ruta siguen vivas; el guardián lo reconoce por lo que hace, no por su nombre.
+- FICHA `permisonoruta` — **la lección crece, y esta vez con un caso vivo**: el guardián (f) solo miraba `src/app/`. Las
+  compuertas de `src/lib/<módulo>/actions.ts` eran invisibles, y **Automatizaciones** llevaba desde la V4.25 en el BCP
+  pidiendo permiso del ECP. La nueva (f-bis) saca la consola esperada DEL RAIL (tercera aplicación en un día de «la cifra de
+  un guardián sale de la fuente», tras `qa-pvc-escala` y `qa-consumo`) y exige que todo módulo con compuerta esté declarado:
+  al correr por primera vez encontró también `coffeed/studioGate.ts`. Candidata a ficha propia junto a `guardianespejo`.
+- FICHA `direccionamiento`: pierde la pestaña «Modelo Económico» (vacía desde F7); quedan Definición de contexto · Grados de
+  Calidad · definición vigente · Misión y Visión · Mercado Global. FICHA `pvc`: su pestaña «Grados» se llama «Escala de
+  puntos · en validación».
+- La ficha que narre Automatizaciones (`espina`): las acciones del registro de automatizaciones se protegen con el BCP (antes, por
+  error, con el ECP).
+- **ANN HUÉRFANAS que el V45 tiene que repuntar** (la comprobación 5 las va a cantar): todo `src/app/ecp/(app)/cotizador-*`
+  y `src/app/ecp/(app)/anclas-mercado` → `src/app/bcp/(app)/…`; `…/cotizador-lotes/[id]/QuoteDetail.tsx` →
+  `src/components/cotizador/QuoteDetail.tsx`; `src/app/bcp/(app)/direccionamiento/modelo-economico/page.tsx` → retirada (su
+  talón: `src/app/bcp/direccionamiento/modelo-economico/page.tsx`). ANN nuevas: los cuatro talones
+  `src/app/ecp/<módulo>/[[...resto]]/page.tsx` y `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`.
+- FICHA `componentes`: el «decidido, sin construir» del asiento V5.55 baja un escalón — las piezas de los modelos de
+  Procesamiento y Logística ya están EN el grupo del rail; los modelos mismos siguen sin módulo (brief primero).
+- Compuerta: tsc · eslint 8 · build · guardianes; verificación en vivo por `curl` a los talones (viven fuera del login).
+(commit: pendiente)

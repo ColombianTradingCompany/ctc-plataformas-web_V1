@@ -85,11 +85,27 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // mundo y las herramientas internas del equipo. El OCP queda limpio: solo el
   // pasaporte del lote, que es lo que PR-A le trajo.
   { de: "/ocp/leads", a: "/ecp/leads", desde: "V4.26" },
-  { de: "/ocp/cotizador-lotes", a: "/ecp/cotizador-lotes", desde: "V4.26" },
-  { de: "/ocp/cotizador-logistico", a: "/ecp/cotizador-logistico", desde: "V4.26" },
-  { de: "/ocp/cotizador-empaque", a: "/ecp/cotizador-empaque", desde: "V4.26" },
-  { de: "/ocp/anclas-mercado", a: "/ecp/anclas-mercado", desde: "V4.26" },
+  { de: "/ocp/cotizador-lotes", a: "/bcp/cotizador-lotes", desde: "V4.26 · reapuntada V5.56" },
+  { de: "/ocp/cotizador-logistico", a: "/bcp/cotizador-logistico", desde: "V4.26 · reapuntada V5.56" },
+  { de: "/ocp/cotizador-empaque", a: "/bcp/cotizador-empaque", desde: "V4.26 · reapuntada V5.56" },
+  { de: "/ocp/anclas-mercado", a: "/bcp/anclas-mercado", desde: "V4.26 · reapuntada V5.56" },
   { de: "/ocp/transcripciones", a: "/ecp/transcripciones", desde: "V4.26" },
+
+  // ── V5.56 (2026-09-19) · «BCP · Herramientas Internas» recibe sus piezas ──────────────
+  // El owner redefinió Herramientas Internas (V5.55) como los modelos de la casa, y los tres
+  // cotizadores y las anclas de mercado son piezas suyas: dejan «ECP · Caja de herramientas».
+  // Es su SEGUNDA mudanza (OCP → ECP en la V4.26): las cuatro entradas `/ocp/…` de arriba se
+  // REAPUNTARON al BCP — regla F2, jamás un talón contra otro — y estas cuatro son las nuevas.
+  // Plan: docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md.
+  { de: "/ecp/cotizador-lotes", a: "/bcp/cotizador-lotes", desde: "V5.56" },
+  { de: "/ecp/cotizador-logistico", a: "/bcp/cotizador-logistico", desde: "V5.56" },
+  { de: "/ecp/cotizador-empaque", a: "/bcp/cotizador-empaque", desde: "V5.56" },
+  { de: "/ecp/anclas-mercado", a: "/bcp/anclas-mercado", desde: "V5.56" },
+  // La pestaña vacía que dejó el rename de la V5.45: el Modelo Económico vive en /bcp/pvc. La
+  // segunda entrada existe para que la URL antiquísima del ECP llegue en UN salto: `destinoDe()`
+  // resuelve por el `de` más largo, y sin ella pasaría por /bcp/direccionamiento/modelo-economico.
+  { de: "/bcp/direccionamiento/modelo-economico", a: "/bcp/pvc", desde: "V5.56" },
+  { de: "/ecp/direccionamiento/modelo-economico", a: "/bcp/pvc", desde: "V5.56" },
   // «Manejo de Plataformas» deja de colgar de Direccionamiento y se vuelve
   // módulo suelto del ECP (decisión F6). Se quedó huérfano en PR-B, cuando su
   // módulo padre se mudó al BCP; esto cierra aquel interinato.

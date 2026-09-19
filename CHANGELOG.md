@@ -19,6 +19,49 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.56] — 2026-09-19 (commit pendiente)
+
+- **Hito**: **«BCP · Herramientas Internas» recibe sus piezas: los tres cotizadores y las anclas de mercado dejan el ECP.**
+  Ejecuta `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md` entero (tandas A y B; el owner aprobó las cinco decisiones tal como
+  se recomendaban). Es la **segunda** mudanza de estos módulos (OCP → ECP en la V4.26): las cuatro entradas `/ocp/…` de
+  `rutasMovidas.ts` se **reapuntaron** al BCP —regla F2, jamás un talón contra otro— y nacen las cuatro `/ecp/… → /bcp/…`
+  con sus talones 308. `qa-rutas-consolas`: 29 → **35** rutas mudadas.
+- **Seguridad**: **`qa-rutas-consolas` aprende a mirar `src/lib/` — y caza una compuerta viva.** La comprobación (f) solo
+  veía `src/app/<consola>/`, y las Server Actions de media casa viven en `src/lib/<módulo>/actions.ts`, donde la consola es
+  un identificador que ninguna mudanza de rutas toca. La nueva **(f-bis)** declara qué entrada del rail sirve a cada módulo
+  y exige que todas sus compuertas (y sus `revalidatePath`) sean de ESA consola — **la consola esperada sale del rail, no
+  del módulo** — y que ningún módulo con compuerta quede sin declarar. El día que se escribió encontró dos cosas:
+  **Automatizaciones** llevaba desde la V4.25 en `/bcp/automatizaciones` con sus seis acciones pidiendo
+  `requireConsoleWrite("ecp")` (no le fallaba a nadie: el owner tiene las tres consolas; le habría fallado al primer
+  colaborador con grant solo de BCP), y `src/lib/coffeed/studioGate.ts`, una compuerta que nadie tenía en la lista. 264 →
+  **341** comprobaciones.
+- **Corregido**: `src/lib/integraciones/actions.ts` — las seis compuertas de Automatizaciones pasan a la consola donde
+  vive su pantalla (`CONSOLA = "bcp"`), y el mensaje «Tu sesión del ECP no está activa» dice BCP.
+- **Cambiado**: las **17 compuertas de escritura** de `src/lib/cotizador/actions.ts` (13) y `src/lib/anclas/actions.ts` (4)
+  ya no llevan la consola escrita a mano: cada módulo la declara UNA vez (`const CONSOLA: PanelConsoleKey = "bcp"`) y (f-bis)
+  la contrasta con el rail. Los tres `revalidatePath("/ecp/anclas-mercado")` leen `ANCLAS_PATH`, y los seis `basePath` de las
+  páginas y los seis enlaces escritos a mano del costo de empaque leen `QUOTE_BASE_PATH`: la próxima mudanza es una línea.
+- **Cambiado**: **el rail** — «BCP · Herramientas Internas» queda ordenado por modelo: Panel · Direccionamiento · Modelo
+  Económico · Anclas de mercado · Cotizador de lotes · Costo de empaque · Cotizador logístico (sin `ownerOnly`: quien los
+  veía en el ECP los sigue viendo). «ECP · Caja de herramientas» se queda con Transcripciones.
+- **Cambiado**: `QuoteDetail.tsx` sale de la carpeta de rutas a `src/components/cotizador/`: dos páginas lo importaban desde
+  `@/app/ecp/(app)/cotizador-lotes/[id]/…`, un import de ruta a ruta que la mudanza habría roto.
+- **Retirado**: la pestaña vacía **«Modelo Económico» de Direccionamiento** (`/bcp/direccionamiento/modelo-economico`), que
+  el rename de la V5.45 dejó atrás: había dos entradas con el mismo nombre en la misma consola. Queda como 308 hacia
+  `/bcp/pvc`, y la URL antiquísima del ECP llega en UN salto (entrada propia; `destinoDe()` resuelve por el `de` más largo).
+  Su talón es un `page.tsx` a secas —las hermanas de la ruta siguen vivas y un catch-all chocaría—, y el guardián aprendió
+  a reconocer esa forma por lo que HACE (fuera de `(app)`, redirigiendo con `destinoDe()`).
+- **Cambiado**: los dos «Grados» ya no se llaman igual — en Direccionamiento, «Grados de Calidad · definición vigente»; en
+  el Modelo Económico, «Escala de puntos · en validación». Se funden cuando la fase 2 lleve la escala a `definicion.ts`.
+- **Corregido**: ocho títulos de página decían «· OCP» y cinco cabeceras de archivo «OCP ·» — dos consolas atrás; y los dos
+  módulos respondían «Tu sesión del OCP no está activa». Dicen BCP.
+- **Corregido**: el prompt del nodo final pedía correr «TODOS los `qa-*.mjs`», y dos **gastan dinero**:
+  `qa-cromatografia-modelo` (API de Anthropic, ≈ US$ 0,013 por corrida × 3) dice en su cabecera que NO es parte de la
+  compuerta, y la batería de esta vía lo corrió cinco veces el 2026-09-19 (≈ US$ 0,20–0,35; no escribe en `ai_usage`, así
+  que el libro no lo muestra). El prompt y `ALINEACION` §5.3 nombran ahora las excepciones.
+- **Docs**: el plan pasa a EJECUTADO; `herramientas-internas.md` y `consolas.md` al día (la mudanza se cierra; queda con
+  dueño en `consolas` el nivel `viewer`, que sigue sin hacerse cumplir); línea en `ALINEACION` §3.
+
 ## [V5.55] — 2026-09-19 (commit 912d7e5)
 
 - **Hito**: **Herramientas Internas se redefine: es lo que el rail del BCP llamaba «Business Core».** El owner se

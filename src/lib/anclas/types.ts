@@ -1,4 +1,8 @@
-// ── OCP · Anclas de mercado · tipos ──────────────────────────────────────────
+// ── BCP · Herramientas Internas · Anclas de mercado · tipos ──────────────────────────────────────────
+
+/** Dónde vive la pantalla. La lee `revalidatePath` — una ruta vieja ahí NO falla, deja datos rancios —
+ *  y la contrasta `qa-rutas-consolas` (f-bis). Si el módulo se muda, se cambia AQUÍ y solo aquí. */
+export const ANCLAS_PATH = "/bcp/anclas-mercado";
 
 export type MarketAnchor = {
   id: string;

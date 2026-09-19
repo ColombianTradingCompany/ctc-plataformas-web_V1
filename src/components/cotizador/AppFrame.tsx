@@ -1,6 +1,6 @@
 "use client";
 
-// ── OCP · Cotizadores · la app real, embebida ────────────────────────────────
+// ── BCP · Herramientas Internas · Cotizadores · la app real, embebida ────────────────────────────────
 // Las dos calculadoras del owner (Mermas V15 y CoGS V19) se montan TAL CUAL en
 // `public/ocp-apps/`. No se reescriben ni se reinterpretan: son las mismas
 // aplicaciones, con sus mismos paneles, sus mismas curvas y sus mismos

@@ -1,6 +1,6 @@
 "use client";
 
-// ── OCP · Cotizaciones · la lista ────────────────────────────────────────────
+// ── BCP · Herramientas Internas · Cotizaciones · la lista ────────────────────────────────────────────
 // Una TABLA, no tarjetas (2026-08-04): son documentos numerados y lo que se hace
 // con ellos es buscarlos y compararlos, no leerlos de un vistazo.
 //

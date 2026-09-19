@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EvaluationBoard } from "./EvaluationBoard";
+import { QUOTE_BASE_PATH } from "@/lib/cotizador/types";
 import styles from "@/components/panel/shared.module.css";
 
-export const metadata: Metadata = { title: "Evaluación de empaque · OCP", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Evaluación de empaque · BCP", robots: { index: false, follow: false } };
 
 // Cuadro de evaluación (2026-08-06): todas las configuraciones guardadas de
 // costo de empaque, superpuestas y leídas por lentes. Ver EvaluationBoard.
@@ -17,7 +18,7 @@ export default function EvaluacionEmpaquePage() {
         lente sin cambiar de comparación.
       </p>
       <p className={styles.meta} style={{ marginBottom: 14 }}>
-        <Link className={styles.backLink} href="/ecp/cotizador-empaque">← Volver al cotizador</Link>
+        <Link className={styles.backLink} href={QUOTE_BASE_PATH.empaque}>← Volver al cotizador</Link>
       </p>
       <EvaluationBoard />
     </>

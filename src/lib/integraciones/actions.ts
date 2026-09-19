@@ -1,11 +1,15 @@
 "use server";
 
-// ── ECP · Automatizaciones · Server Actions ──────────────────────────────────
+// ── BCP · Configuración del Sistema · Automatizaciones · Server Actions ──────────────────────────────────
 // El registro de automatizaciones y la cola de eventos. Vive en IT y Plataforma
 // porque es infraestructura: qué automatismos existen, para qué, y si siguen
 // vivos.
 //
-// Gate: `requireConsoleWrite("ecp")`.
+// Gate: `requireConsoleWrite(CONSOLA)`, y CONSOLA es el BCP. El módulo se mudó del ECP al BCP en la V4.25
+// (PR-B): la RUTA se corrigió —`revalidatePath("/bcp/automatizaciones")`— y la CLAVE no, porque una
+// consola escrita como identificador no lleva barras y ninguna reescritura de rutas la toca. Estuvo un
+// mes pidiendo permiso del ECP desde una pantalla del BCP, sin fallarle a nadie (el owner tiene las tres
+// consolas). Lo cazó `qa-rutas-consolas` (f-bis) el día que aprendió a mirar `src/lib/` (V5.56).
 //
 // ⚠️ En un módulo "use server" TODO export tiene que ser una función async
 // (lección del 2026-07-30) — los tipos se importan desde ./types.
@@ -14,8 +18,12 @@ import { revalidatePath } from "next/cache";
 import { requireConsoleWrite } from "@/lib/panel/requireConsoleWrite";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Automation, AutomationResult, IntegrationEvent } from "./types";
+import type { PanelConsoleKey } from "@/lib/panel/consoles";
 
-const NO_AUTH: AutomationResult = { ok: false, error: "Tu sesión del ECP no está activa. Vuelve a iniciar sesión." };
+/** La consola donde vive este módulo. UNA vez, y `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
+const CONSOLA: PanelConsoleKey = "bcp";
+
+const NO_AUTH: AutomationResult = { ok: false, error: "Tu sesión del BCP no está activa. Vuelve a iniciar sesión." };
 
 type Row = {
   id: string; nombre: string; make_scenario_id: string | number | null; proposito: string;
@@ -44,7 +52,7 @@ const toAutomation = (r: Row): Automation => ({
 });
 
 export async function listAutomations(): Promise<Automation[] | null> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -58,7 +66,7 @@ export async function listAutomations(): Promise<Automation[] | null> {
 
 /** Los últimos eventos de la espina — para ver si la cola respira. */
 export async function listRecentEvents(limit = 30): Promise<IntegrationEvent[] | null> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return null;
   const service = createServiceRoleClient();
   const { data } = await service
@@ -81,7 +89,7 @@ export async function saveAutomation(input: {
   makeScenarioId: number | null;
   notas: string;
 }): Promise<AutomationResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   if (!input.nombre.trim()) return { ok: false, error: "Ponle nombre." };
   // La regla del registro: si no se puede escribir para qué existe, no se
@@ -112,7 +120,7 @@ export async function saveAutomation(input: {
 }
 
 export async function deleteAutomation(id: string): Promise<AutomationResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { error } = await service.from("automations").delete().eq("id", id);
@@ -123,7 +131,7 @@ export async function deleteAutomation(id: string): Promise<AutomationResult> {
 
 /** Reintentar los eventos que se rindieron, tras arreglar lo que fallaba. */
 export async function retryFailedEvents(): Promise<AutomationResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { error } = await service
@@ -137,7 +145,7 @@ export async function retryFailedEvents(): Promise<AutomationResult> {
 
 /** Emitir un ping por la espina — la prueba de vida de F1. */
 export async function emitPing(): Promise<AutomationResult> {
-  const who = await requireConsoleWrite("ecp");
+  const who = await requireConsoleWrite(CONSOLA);
   if (!who) return NO_AUTH;
   const service = createServiceRoleClient();
   const { error } = await service.from("integration_events").insert({

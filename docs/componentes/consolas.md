@@ -22,8 +22,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
   (buzón, leads), las superficies satélite (Directorio, Coffeed/Redacción, Herramientas, Terratalento,
   CTC Tech, Varietales, la lista de espera de CTC Home) y la caja de herramientas: **transcripciones** (del ECP desde
   la V4.26; `/ocp/transcripciones` es solo su talón 308) es de aquí desde el 2026-09-19, con Stripe y la Herramienta de
-  Guion; los **cotizadores y las anclas de mercado** se ven en este rail pero son de `herramientas-internas` (piezas de sus
-  modelos de Logística, Procesamiento y Económico).
+  Guion; los **cotizadores y las anclas de mercado** se fueron a «BCP · Herramientas Internas» en la V5.56.
 
 `/panel` es el selector tras el login; `/control-panel` la puerta pública (`panel.ctcexport.com`).
 
@@ -32,9 +31,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 | Ruta | Qué | Notas |
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
-| `/bcp/(app)/…` | Business | `usuarios`, `documentacion`, `mapa`, `consumo`, `automatizaciones`, `socios/[nodo]` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*` |
+| `/bcp/(app)/…` | Business | `usuarios`, `documentacion`, `mapa`, `consumo`, `automatizaciones`, `socios/[nodo]` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-*`, `anclas-mercado` (llegaron del ECP en la V5.56) |
 | `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `arena/[sessionId]/run`, `galardonados`, `club`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection`, `crm/{caas,green,roast,x}` |
-| `/ecp/(app)/…` | Execution | `buzon`, `leads`, `plataformas`, `directorio`, `coffeed`, `herramientas`, `terratalento`, `ctc-tech`, `varietales`, `ctc-home`, `transcripciones` — y, **de `herramientas-internas`**: `cotizador-*`, `anclas-mercado` |
+| `/ecp/(app)/…` | Execution | `buzon`, `leads`, `plataformas`, `directorio`, `coffeed`, `herramientas`, `terratalento`, `ctc-tech`, `varietales`, `ctc-home`, `transcripciones` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V4.26 | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
 | `/socios/<slug>` · `/socios/<slug>/acceso` · `/socios/<slug>/panel` | los 5 nodos socio (landing + login + panel) | `src/lib/partners/partners.ts`; credenciales desde `/bcp/socios` |
 
@@ -77,7 +76,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 ## Guardianes
 
-`qa-rutas-consolas.mjs` (264 — rail, talones, sin rutas viejas, compuerta de SU consola) ·
+`qa-rutas-consolas.mjs` (341 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
 `qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
 `qa-evaluaciones-check.mjs` (42, veredicto Q-Grader) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
@@ -123,12 +122,12 @@ portal y el peso de las imágenes) ·
   se llevó los pendientes del PVC: la **fase 2**, el **refurbish** del módulo, **CN-1** (el PVC de ene–mar 2027 antes del
   15-oct), **CN-8** (regiones y motor v2.2.0) y la mitad de modelo de **CN-9**. Aquí quedan las mitades del OCP: que ofertas,
   contratos y veredicto LEAN esos modelos (CN-3, CN-4, CN-5, CN-6, CN-7 y la puerta de la Base física en el veredicto).
-  A cambio llegaron el **Transcriptor**, **Stripe** y la **Herramienta de Guion**. **Pendiente que nace hoy, con dueño
-  aquí**: la **mudanza** de `/ecp/cotizador-*` y `/ecp/anclas-mercado` al BCP y el orden de las pestañas de Direccionamiento
-  (dos «Grados», una «Modelo Económico» vacía). **Planificada el 2026-09-19: `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`** —
-  el plan trae su línea «Hoy:». Lo que NO hay que olvidar: son **17 compuertas `requireConsoleWrite("ecp")` en `src/lib/`
-  que `qa-rutas-consolas` (f) hoy no ve** (solo mira `src/app/`), así que el paso 1 es ampliar el guardián; y es la SEGUNDA
-  mudanza de estos módulos: las cuatro entradas `/ocp/…` se REAPUNTAN. Esperan cinco decisiones del owner (D1–D5).
+  A cambio llegaron el **Transcriptor**, **Stripe** y la **Herramienta de Guion**. ~~La mudanza de `/ecp/cotizador-*` y
+  `/ecp/anclas-mercado` al BCP~~ — **ejecutada en la V5.56** (`docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md`): 35 rutas en
+  `rutasMovidas.ts`, las cuatro `/ocp/…` reapuntadas, las 17 compuertas a `CONSOLA = "bcp"`, y la pestaña vacía de
+  Direccionamiento retirada. **`qa-rutas-consolas` ganó (f-bis)**: mira las compuertas de `src/lib/` y `src/components/`
+  contra el rail, y exige que todo módulo con compuerta esté en `MODULOS_LIB` — **un módulo nuevo con Server Actions se
+  declara ahí o el guardián falla**. Al nacer cazó Automatizaciones (V4.25: en el BCP pidiendo permiso del ECP), corregido.
 - **SEGURIDAD — el nivel `viewer` no se hace cumplir** (hallazgo del 2026-09-19, al mirar los grants para ese plan):
   `panel_users.consoles` guarda `"admin"` o `"viewer"`, pero `grantedConsoles()` los trata igual y `requireConsoleWrite` solo
   pregunta si la consola está concedida. Un colaborador «viewer» pasa todas las compuertas de escritura. Hay dos activos. Falta

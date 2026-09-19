@@ -13,5 +13,5 @@ import { destinoDe } from "@/lib/panel/rutasMovidas";
 export default async function TalonOcpAnclas({ params }: { params: Promise<{ resto?: string[] }> }) {
   const { resto } = await params;
   const cola = resto?.length ? "/" + resto.join("/") : "";
-  permanentRedirect(destinoDe("/ocp/anclas-mercado" + cola) ?? "/ecp");
+  permanentRedirect(destinoDe("/ocp/anclas-mercado" + cola) ?? "/bcp");
 }

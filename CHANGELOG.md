@@ -44,6 +44,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 - **Añadido**: guardián `qa-moneda-check.mjs` (24) — ni un símbolo suelto en la tienda, `eur()` no vuelve, los tres
   sumandos del carrito comparten moneda y el euro de la subasta viene declarado.
 
+> **Wrap V44** (2026-09-19): ciclo compilado en `Documentacion_Interactiva_V44.0(f420ad4).html` — 40 nodos (+1: `n-portal`) · 146 fichas (+6: `portalpublico`, `codigopublico`, `moneda`, `canales`, `compromiso`, `narrativa`) · 58 trazas (+2: `findmylot`, `programas`) · 95 wires (+4) · 35 CTX (+1) · 381 ANN (+19) · FILETREE 3002. Compila V5.46–V5.52 y la narrativa del 17-sep (solo docs).
+
 ## [V5.51] — 2026-09-18 (commit 9ed7b28)
 
 - **Cambiado**: la **primera imagen** del CTCx Public Catalogue pasa a ser la **cesta de cerezas** del owner

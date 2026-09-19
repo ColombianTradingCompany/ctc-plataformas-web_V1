@@ -120,36 +120,12 @@ portal y el peso de las imágenes) ·
   de la plataforma es **suma llana**. Quien transcriba una de esas planillas sin mirar se llevará el grado equivocado:
   con los valores literales, el primer lote habría salido **Tyrian** y no habría podido publicarse. Decide el owner si
   el material se corrige o si la plataforma adopta la resta de defectos.
-- **WRAP DEL MAPA · PEDIDO FORMAL** (consolas → plataforma, 2026-09-18). `Log_Documentacion_Interactiva_V43.txt`
-  acumula **seis asientos** (V5.46 a V5.51) sobre el wrap V43 (plataforma V5.45): por encima de la cadencia de cinco de
-  `ALINEACION` §5. Un componente no llama al wrap — lo pide; lo ejecuta la vía **`plataforma`** desde la conversación
-  «Wraps del mapa» con el skill `architecture-doc-versioning`. **Lo que el snapshot V44 tiene que reflejar**, y que el
-  mapa hoy no conoce:
-  - **Superficie pública nueva**: `/ctcx-public-catalogue` (pivote, estática) y `/ctcx-public-catalogue/[codigo]`
-    (paquete del lote, dinámica). Es la **primera superficie pública de la red sin host propio** — de ahí el concepto
-    nuevo **`RUTAS_SOLO_WWW`** (`lib/red/subdominios.ts`), que leen a la vez el sitemap y ECP · Manejo de Plataformas.
-  - **Columna nueva** `lots.public_code` + función `ctc_public_code()` + `guard_lot_protected_columns` ampliada, y
-    `public_lot_catalog` con una columna más. **Traza nueva**: bolsa/QR → código → vista → `fichaPublica()` →
-    paquete público → `/docs/ficha/[lotId]`. Se acuña en `publishLot`.
-  - **Ficha DICT**: el código público **sustituye** a los dos derivados que aún conviven (`codigoDeLote(lot_id)` en la
-    cinta, `listingCode(lot_listings.id)` en la tienda); unificarlos es CP-3, anotado en `cherry-picked`.
-  - **Nodo de interfaz**: la cinta del Catálogo Activo gana una segunda puerta en su pie, hacia el portal, en las
-    **siete** superficies donde está montada. Y la **marca del portal** (lupa cuyo cristal es el grano), que vive dos
-    veces —React y `.svg`— con guardián que compara los trazados.
-  - Guardián nuevo `qa-catalogo-publico-check` (119) y `qa-ficha-publica` 105 → 115 (su §8 pasa de vigilar dos puertas
-    al `datasheet` a vigilar tres).
-  - Estado de datos que el mapa debería mostrar: **0 lotes publicados** (`public_lot_catalog` vacía), así que «Find my
-    Lot» todavía no encuentra nada; «Gesha 72h Ferm» está galardonado Gold y a la espera del circuito comercial.
-- ~~**«Gesha 72h Ferm» a medio camino**~~ — **PUBLICADO el 2026-09-18**, el **primer lote de la plataforma**. Se recorrió
-  el circuito entero por sus dos lados, replicando cada Server Action con sus mismas escrituras (`lot_offers` →
-  `purchase_contracts` → `contract_releases` → `lot_listings`), su `audit_log` y sus avisos en `producer_comm_log`:
-  oferta de temporada del OCP (31,00 · 100 kg) → **aceptación del productor**, que es donde nace el contrato (V5.18) →
-  firma con la escalera 50/75/100 → liberaciones confirmadas de los meses 1 y 2 (50 + 25 = **75 kg**; el mes 3 se deja
-  sin registrar A PROPÓSITO, porque cerrarlo pasaría el contrato a `completed` y `publishLot` exige `active`) →
-  publicación. El código **`CTCX-V2DD-M24B`** lo acuñó `publishLot`, no una mano. Verificado en producción: el
-  buscador resuelve `ctcx v2dd m24b` tecleado en minúsculas y con espacios.
-  ⚠️ Sigue en pie que el **86.50 es un puntaje de estreno del owner**, no una catación: sin bache, sin planilla y sin
-  `q_grader_reference`, y así lo dicen las `notes` de la evaluación. Sustituirlo cuando el lote pase por un bache real.
+- ~~**WRAP DEL MAPA · PEDIDO FORMAL**~~ — **atendido el 2026-09-19: Wrap V44** (`docs/architecture/Documentacion_Interactiva_V44.0(f420ad4).html`). Compiló los
+  asientos V5.46–V5.52 y la narrativa del 17-sep: nodo `n-portal`, fichas `portalpublico` · `codigopublico` · `moneda` ·
+  `canales` · `compromiso` · `narrativa`, trazas `findmylot` y `programas`. ⚠️ Se llamó **otra vez fuera de su vía**
+  (`ALINEACION` §5.3): la conversación «Wraps del mapa» **no existe** en el grupo; lo pidió el owner desde la sesión de
+  narrativa, con las otras dos sesiones del grupo detenidas. Es la segunda vez (V43, V44): **decide el owner** si se crea la
+  vía o se reescribe la regla. El log vigente es `Log_Documentacion_Interactiva_V44.txt`.
 - **El primer precio publicado destapa dos conflictos ya conocidos** (owner avisado, 2026-09-18): **(a)** la edición
   PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y «Blue» como *86,0–87,9*, mientras `definicion.ts` —la fuente
   única de `ALINEACION` §1— dice Gold 86,00–87,99; el owner decidió que manda `definicion.ts` y se toma la fila Gold.

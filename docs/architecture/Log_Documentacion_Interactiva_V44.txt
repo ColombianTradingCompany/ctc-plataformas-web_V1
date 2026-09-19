@@ -1,0 +1,143 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V44.0(f420ad4).html
+(CTC Web Platform, desde 2026-09-19 · plataforma V5.52). Cada entrada se compila
+al próximo Version Wrap (V45).
+
+Formato:
+## [YYYY-MM-DD] V5.NN · Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pendiente">)
+
+════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
+  CHANGELOG posterior a «plataforma V5.52» tiene que aparecer aquí). Se añade al
+  final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «Wraps del mapa» (grupo CTC Consolas
+  internas, vía `plataforma`). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La línea «plataforma V5.52» de la cabecera es la referencia del guardián: el wrap
+  siguiente la reescribe con la versión sobre la que cierra.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137 ·
+V42: 137→139 · V43: 139→140 · V44: 140→146).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex —
+y OJO al anclar un parche: las entradas viejas van `clave: {` (con espacio) y las
+nuevas `clave:{`. ⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO
+(V38): siempre `<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35).
+⚠️ LA CADENA «Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la
+suya). ⚠️ UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS (V40): cada replace lleva
+assert.
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V44 ENSEÑÓ (léase antes del V45)
+════════════════════════════════════════════════════════════════════════════════
+
+· LO QUE NO SUBE VERSIÓN TAMBIÉN PUEDE CAMBIAR EL MAPA. `qa-arqlog` exige asiento por
+  VERSIÓN, y la narrativa del 17-sep fueron cuatro commits de solo docs: cambió cómo
+  se nombra todo (CTCx, Papagayo Beans®, X), fijó doctrina de negocio y parió un plan
+  de 29 tandas — y no había dejado una sola línea en el log. El wrap tuvo que escribir
+  ese asiento antes de compilar. Regla práctica: un trabajo de solo docs que cambie
+  DOCTRINA, VOCABULARIO o el ORDEN del trabajo deja asiento, aunque el guardián no lo
+  pida. (Los guiones de KR v0.7→v0.9.1 y el del comprador v0.1 tampoco lo dejaron; van
+  nombrados dentro de la ficha `narrativa`.)
+
+· «DECIDIDO» Y «CONSTRUIDO» SON DOS ESTADOS, Y LA FICHA LLEVA LOS DOS. La ficha
+  `narrativa` dice qué decidió el owner Y qué de eso existe hoy (CP-1 y la mitad de
+  CN-7, nada más). Es la lección del V43 («cuando dos verdades conviven, el mapa lo
+  dice») aplicada a un plan entero. Consecuencia para los próximos asientos: cada
+  tanda del plan que cierre debe decir QUÉ frase de la ficha `narrativa` pasa de
+  «decidido» a «construido» — así el V45 la actualiza sin re-derivar nada.
+
+· EL PARCHE SE ESCRIBIÓ CON TRES AYUDANTES Y PASÓ A LA PRIMERA. `append_note(nodo)`
+  encuentra el cierre de la tarjeta por su sangría (el primer `\n      </div>\n` tras
+  el id) y comprueba que no haya otra tarjeta en medio; `add_par_newstyle` ancla en
+  el `a:[…]` exacto de la ficha (que es único y además hay que tocarlo); y
+  `add_par_oldstyle` busca la línea `    a: […],` y retrocede hasta el backtick que
+  cierra el cuerpo. Con `must_be_new_key` probando los DOS estilos antes de añadir.
+  Nueve comprobaciones vacías y contadores exactos sin una sola corrección.
+
+· `file://` NO ABRE EN EL PANEL DEL NAVEGADOR, Y EL `launch.json` NO ESTABA DONDE
+  ARRANCA LA SESIÓN. Las sesiones abren ahora en `C:\dev`, y la configuración
+  `docs-architecture` vive en `ctc-platforms/.claude/launch.json`. Se añadió un
+  `C:\dev\.claude\launch.json` mínimo (python `http.server` sobre
+  `docs/architecture`, puerto 4300) — fuera del repo. La validación en navegador:
+  `select.options.length === SCENARIOS.length`, el nodo nuevo presente, las fichas
+  nuevas presentes, cero referencias colgantes, cero errores de consola.
+
+· ESTE WRAP SE LLAMÓ OTRA VEZ FUERA DE SU VÍA — Y YA VAN DOS. ALINEACION §5.3 lo
+  reserva a la conversación «Wraps del mapa», que NO EXISTE en el grupo. Lo pidió el
+  owner desde la sesión de narrativa; se verificó que las otras dos sesiones del grupo
+  estaban detenidas, con `git pull` antes del asiento y antes del commit. El V43 dejó
+  escrito «si esto se repite, la regla sobra o la vía tiene que existir de verdad»: se
+  repitió. Queda para el owner, en el charter de `consolas`: crear la conversación o
+  reescribir la regla como lo que de verdad se hace («lo llama el owner desde una sesión
+  de consolas, tras verificar que no hay otra corriendo»).
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V44 (2026-09-19) — plataforma V5.52:
+
+- **Lo que V44 compiló**: V5.46–V5.47 (Modelo Económico: programas × tramos y la
+  escalera de compromiso), V5.48–V5.51 (el CTCx Public Catalogue, `lots.public_code`,
+  la puerta desde la cinta, la marca y la firma), V5.52 (CP-1: la moneda del comprador;
+  el primer lote publicado) y el asiento de solo docs de la narrativa del 17-sep con su
+  plan de ejecución. 1 nodo nuevo · 6 fichas nuevas · 2 trazas nuevas · 9 fichas
+  actualizadas · 6 notas de nodo · 19 ANN.
+- **Deuda de compilación**: ninguna. Todo lo posterior a V5.45 está compilado.
+- **Lo que viene, y ya tiene orden**: `docs/PLAN_NARRATIVA_2026-09-17.md` — 29 tandas en
+  cinco olas. Cerradas: CP-1 y la mitad delantera de CN-7. La única fecha dura es el PVC
+  de ene–mar 2027 **antes del 15-oct-2026** (CN-1, que espera la decisión O-1 del owner
+  sobre F4-2026). Pendientes cruzados con dueño: `docs/ALINEACION.md` §3b.
+- **Lo que el mapa TODAVÍA no refleja, y es correcto** (no inventarlo en el V45): el marco
+  de mercado y la pestaña MOQ y mermas (diseñados, §11); el ciclo semanal, los eventos
+  `pvc.*` y el cron; la columna marítima del tramo «puerto»; las regiones como dato; el
+  QR y el sticker de la bolsa; nada de Papagayo Beans® en el código.
+- **Tres deudas que el primer lote destapó** (con dueño en su charter): los TRES códigos
+  del mismo café (CP-3), la subasta en EUR (CN-4) y la planilla B2/B3 de estreno de
+  «Gesha 72h Ferm», que se sustituye entera cuando pase por un laboratorio real.
+- **Guardianes sin correr desde V5.52** por falta de las cuentas `prueba-*`:
+  `qa-guard-check` y `qa-checkout-check`.
+- **Línea base de este wrap** (solo docs, no se corrió la compuerta de código; la última
+  verificada en vivo es la V5.52 de la sesión del catálogo): validate_snapshot 9/9 vacías
+  contra V43 como control · `node --check` del script · navegador sin errores ·
+  qa-changelog · qa-arqlog · qa-encoding · qa-docs.
+
+════════════════════════════════════════════════════════════════════════════════
+

@@ -40,7 +40,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena/[sessionId]/run` (+ `temporadas`), `club` · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas` |
-| `/ocp/(app)/…` | Operation | `kr` (+ `kr/[id]/{dossier,kml}`, la Visa de una finca), `nominados`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
+| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, la Visa de una finca) · `a-evaluar` y `en-evaluacion` (las dos vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -147,6 +147,18 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
   recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
   reparto BCP ↔ ECP y el Tablero de Ejecución) y **fase 3** (V5.61: la tabla única «Productores, Fincas y Lotes») —
   **EJECUTADAS.**
+  **V5.63 · mejoras del owner sobre las consolas ya desplegadas**: el rail del OCP es SU CUADRO, entrada por entrada —
+  Kaffetal Regal (Productores, Fincas y Lotes) · Catálogo (Lotes a Evaluar · en Evaluación · Pendiente Oferta · Catálogo
+  Activo · Ofertas CP Aceptadas · Oferta desde CTCx Selection) · Manejo de Stock Físico (Gestión de Muestras · Compras)—;
+  **sin «Panel»** en BCP, OCP y LCP (la página sigue siendo donde aterriza el conmutador) y **sin «Fichas Técnicas»** (se
+  abre desde «Lotes en Evaluación»). **Se hizo SIN cambiar una regla**: las etiquetas son las del cuadro y las rutas las que
+  había; «Nominados» se partió en dos vistas de un mismo componente. ⚠️ **Los baches de sondeo siguen en «Lotes en
+  Evaluación»**: `recordEvaluationVerdict` exige un bache en «registro», y quitarlos sin cambiar esa regla dejaría a la casa
+  sin poder evaluar — salen con la 4b. ⚠️ **La D9 («el rail no promete lo que no hay») quedó INVERTIDA por el owner para
+  Stock Físico**: sus dos entradas están en el rail con una página que dice que el módulo no existe y qué falta decidir.
+  Y un fallo mío de la V5.59, que vio el owner en una captura: **a la LCP le faltaba su layout raíz** (`src/app/lcp/layout.tsx`),
+  el que pone `data-theme="bcp"`, el Tailwind del panel y el `noindex` — toda la consola salía lavada. `qa-rutas-consolas` (h)
+  exige ahora uno por cada consola de `CONSOLE_ORDER`.
   **Fase 4a** (V5.62): el estado del circuito del lote, DERIVADO (`src/lib/ocp/circuito.ts` + `qa-circuito-check`), como
   columna y filtro de `/ocp/kr` — **ejecutada**. **La 4b está PARADA a propósito** y espera al owner: ver el recuadro de la
   fase 4 en el plan (un guard que, por orden, dejaría a los productores sin poder aceptar ofertas; dos pantallas operativas

@@ -86,7 +86,12 @@ check("y el contrato su temporada", data.includes("seasonId: string | null"));
 // ── 6. La pantalla del OCP ────────────────────────────────────────────────
 check("/ocp/ofertas existe con sus colas", pagina.includes("Elegibles · Temporada") && pagina.includes("Subastas Tyrian"));
 check("las Black no se emiten ahí", pagina.includes("no se emiten aquí"));
-check("la pestaña vive en CatalogoTabs", lee("src/app/ocp/(app)/catalogo/CatalogoTabs.tsx").includes('{ href: "/ocp/ofertas", label: "Ofertas" }'));
+// V5.63: Ofertas dejó de ser una PESTAÑA del catálogo y es una entrada del rail, con el nombre del cuadro del owner.
+check(
+  "Ofertas tiene su entrada en el rail: «Lotes Evaluados → Pendiente Oferta»",
+  lee("src/lib/panel/consoles.ts").includes('{ href: "/ocp/ofertas", label: "Lotes Evaluados → Pendiente Oferta" }')
+);
+check("y ya no se repite como pestaña", !lee("src/app/ocp/(app)/catalogo/CatalogoTabs.tsx").includes('"/ocp/ofertas"'));
 
 if (fallos.length) {
   console.error(`✗ qa-ofertas: ${fallos.length} fallo(s), ${ok} OK\n`);

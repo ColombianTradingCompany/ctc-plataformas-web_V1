@@ -231,3 +231,25 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   `/ocp/nominados` sigue siendo donde se confirma el pago, se recibe la muestra y se emite el veredicto. El veredicto NO se partió.
 - ANN nuevas: `src/lib/ocp/circuito.ts`, `scripts/qa-circuito-check.mjs`.
 (commit: eaea06c)
+
+## [2026-09-19] V5.63 · El rail del OCP es el cuadro del owner, y a la LCP le faltaba su layout raíz (consolas → kaffetal-regal, cherry-picked)
+- Nota de NODO `n-ocp`: tres grupos — «Kaffetal Regal» (Productores, Fincas y Lotes), «Catálogo» (Lotes a Evaluar · Lotes en
+  Evaluación · Pendiente Oferta · Catálogo Activo · Ofertas CP Aceptadas · Oferta desde CTCx Selection) y «Manejo de Stock
+  Físico» (Gestión de Muestras · Compras, SIN módulo). Sin «Panel» ni «Fichas Técnicas» en el rail. `n-bcp` y `n-lcp`: sin «Panel».
+- Fichas que cambian: `nominados` → pasa a describir DOS vistas de un componente (`nominados/CircuitoVista.tsx`): `/ocp/a-evaluar`
+  y `/ocp/en-evaluacion`; los baches siguen en la segunda porque el veredicto exige un bache en «registro». `circuitodellote`:
+  el rail sigue ya el mismo orden que la función. `rutasmovidas` (54): primera mudanza «UNA A MUCHAS» —la inversa de la V5.61—;
+  la URL vieja aterriza en la primera parada del camino. `consolas`: la D9 («el rail no promete lo que no hay») tiene una
+  excepción decidida por el owner.
+- Para `guardianespejo` / `espejoamano`: CUARTO caso de la familia, y el que más enseña. La V5.59 derivó la lista de consolas de
+  `CONSOLE_ORDER` en guardianes, `/panel`, conmutador y credenciales… y se le escapó que **una consola nueva necesita además un
+  archivo que nadie enumera**: su layout raíz. La LCP vivió tres versiones sin tema —texto lavado sobre blanco— con todo en verde.
+  Lo vio el owner en una captura. LECCIÓN: **derivar la LISTA no basta; hay que derivar el INVENTARIO de lo que cada elemento de
+  la lista exige.** (h) lo hace ahora para las consolas.
+- LECCIÓN: **lo que el owner dibuja se puede dar HOY con etiquetas, sin tocar reglas.** El cuadro pedía seis entradas de Catálogo;
+  cuatro ya existían con otro nombre y dos salieron de partir una página. La 4b —que sí cambia reglas— sigue parada, y el owner
+  tiene ya su rail. Rótulo y ruta no tienen por qué coincidir (como `/ecp/pvc`).
+- ⚠️ ANN QUE EL V46 TIENE QUE REPUNTAR: `ctc-platform/src/app/ocp/(app)/nominados/page.tsx` →
+  `…/nominados/CircuitoVista.tsx`. ANN nuevas: `src/app/lcp/layout.tsx`, `src/app/ocp/(app)/{a-evaluar,en-evaluacion,muestras,compras}/page.tsx`.
+- NO inventar en el mapa: Gestión de Muestras y Compras están en el rail y NO existen (sus páginas lo dicen).
+(commit: pendiente)

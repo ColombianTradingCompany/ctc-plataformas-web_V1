@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { CatalogoTabs } from "../../catalogo/CatalogoTabs";
 import styles from "@/components/panel/shared.module.css";
 
 export default async function BcpHumedadPage() {
@@ -12,9 +13,7 @@ export default async function BcpHumedadPage() {
 
   return (
     <div>
-      <Link href="/ocp/contratos" className={styles.backLink}>
-        ← Contratos
-      </Link>
+      <CatalogoTabs />
       <h1 className={styles.title}>Humedad fuera de rango (&gt;12.5%)</h1>
 
       {!readings?.length && <p className={styles.empty}>No hay lecturas fuera de rango.</p>}

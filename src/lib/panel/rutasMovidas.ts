@@ -45,7 +45,7 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/bcp/fincas", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
   { de: "/bcp/lotes", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
   // KR Arena — la calificación
-  { de: "/bcp/nominados", a: "/ocp/nominados", desde: "V4.24" },
+  { de: "/bcp/nominados", a: "/ocp/a-evaluar", desde: "V4.24 · reapuntada V5.63" },
   { de: "/bcp/galardonados", a: "/ocp/kr", desde: "V4.24 · reapuntada V5.61" },
   // Catálogo — la salida comercial
   { de: "/bcp/catalogo", a: "/ocp/catalogo", desde: "V4.24" },
@@ -160,6 +160,11 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/ocp/fincas", a: "/ocp/kr", desde: "V5.61" },
   { de: "/ocp/lotes", a: "/ocp/kr", desde: "V5.61" },
   { de: "/ocp/galardonados", a: "/ocp/kr", desde: "V5.61" },
+
+  // ── V5.63 (2026-09-19) · el rail del OCP es el cuadro del owner ─────────────────────────
+  // «Nominados» se parte en DOS entradas —«Lotes a Evaluar» y «Lotes en Evaluación»— y su URL vieja
+  // aterriza en la primera, que es por donde entra un lote. Es «una a muchas»: la inversa de la V5.61.
+  { de: "/ocp/nominados", a: "/ocp/a-evaluar", desde: "V5.63" },
 ];
 
 /**

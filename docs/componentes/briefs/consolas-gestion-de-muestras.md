@@ -3,6 +3,8 @@
 > Fase 6 del overhaul (`docs/OVERHAUL_CONSOLAS_PLAN.md`, D9). Primera entrada del grupo nuevo **OCP · Manejo de Stock Físico**.
 > El plan la describe en una línea: «una tabla de muestras: qué llegó, cuánto, dónde está, a quién se mandó». Estado: **en
 > scoping — espera al owner.** No hay un solo dato que migrar: cero muestras enviadas, cero recibidas.
+> **V5.63:** el owner pidió el cuadro completo en el rail, así que la entrada YA EXISTE (`/ocp/muestras`) con una página que dice que el
+> módulo no existe, qué será y qué falta decidir. Cuando este brief se apruebe y se construya, esa página se reemplaza entera.
 
 **Qué es** — El registro de cada **muestra física** que pasa por las manos de CTC: qué lote, cuántos kilos llegaron, dónde
 está guardada, quién la tiene, qué se sacó de ella y a quién se mandó. Hoy una muestra es **una marca de tiempo**: la

@@ -19,6 +19,36 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.63] — 2026-09-19 (commit pendiente)
+
+- **Corregido**: **la LCP salía lavada: texto casi invisible sobre blanco.** Lo vio el owner en una captura. A la cuarta consola
+  le faltaba su **layout raíz** (`src/app/lcp/layout.tsx`) desde que nació en la V5.59: ese archivo —fuera de `(app)`— es el que
+  envuelve la consola en `data-theme="bcp"`, carga el Tailwind del panel y pone el `noindex`. Sin él heredaba los colores de
+  otro tema y el rail perdía su fondo. **Nada lo avisó**: `tsc`, el build y los 54 guardianes pasaron en verde tres versiones
+  seguidas, porque las consolas no se conducen en navegador. Es el mismo fallo de familia que la V5.59 quiso cerrar —una consola
+  nueva son varios archivos, y el que no se deriva de `CONSOLE_ORDER` se olvida—, así que `qa-rutas-consolas` gana **(h)**: exige
+  el layout raíz de cada consola, con su tema, su Tailwind y su `noindex` (probado haciéndolo morder).
+- **Cambiado**: **el rail del OCP es el cuadro del owner, entrada por entrada.** «OCP · Kaffetal Regal»: Productores, Fincas y
+  Lotes. «OCP · Catálogo»: **Lotes a Evaluar · Lotes en Evaluación · Lotes Evaluados → Pendiente Oferta · Catálogo Activo ·
+  Ofertas CP Aceptadas · Oferta desde CTCx Selection**. «OCP · Manejo de Stock Físico»: Gestión de Muestras · CTCx Selection ·
+  Compras. Las etiquetas son las del cuadro; las rutas, las que existían — y cada página dice en su título lo que dice el rail.
+- **Cambiado**: **«Nominados» se parte en dos.** `/ocp/a-evaluar` (nota 2: el productor pidió la evaluación; falta confirmar el
+  pago, la muestra o las dos) y `/ocp/en-evaluacion` (nota 3: pagados y recibidos — En Fila, los baches, el veredicto y el
+  reembolso). Es UNA carga y UN componente con dos vistas (`nominados/CircuitoVista.tsx`), no dos páginas copiadas. La URL vieja
+  es un 308 a la primera (54 rutas en `rutasMovidas.ts`). **Ninguna Server Action ni regla cambió.**
+- **Cambiado**: ⚠️ **los baches de sondeo siguen en pantalla, a propósito.** El plan (D5) los saca, pero `recordEvaluationVerdict`
+  EXIGE hoy que el lote esté en un bache en estado «registro»: quitarlos sin cambiar esa regla dejaría a la casa sin poder
+  evaluar un solo lote. Salen con la fase 4b.
+- **Retirado**: **«Panel» sale del rail** del BCP, el OCP y la LCP (la página sigue siendo donde aterriza el conmutador de
+  consolas; el ECP conserva el suyo porque ES una entrada del cuadro: el Tablero de Ejecución). **«Fichas Técnicas» sale del
+  rail**: se abre desde «Lotes en Evaluación», que es donde se usa. Y las cuatro pestañas repetidas en todas las páginas del
+  catálogo se reducen a las que el rail NO tiene: Subastas Tyrian bajo «Catálogo Activo», Humedad bajo «Ofertas CP Aceptadas».
+- **Añadido**: **«Gestión de Muestras» y «CTCx Selection · Compras» entran al rail sin módulo**, por decisión del owner (invierte
+  la D9 del plan para este grupo). Sus páginas no fingen un tablero vacío: dicen que el módulo no existe, qué hay hoy, qué se
+  construiría primero y las cinco preguntas que lo bloquean — las de su brief.
+- **Docs**: charter `consolas`, `ALINEACION` §3, `AGENTS.md`, el recuadro de la fase 4 en `OVERHAUL_CONSOLAS_PLAN.md` y los dos
+  briefs de Stock Físico.
+
 ## [V5.62] — 2026-09-19 (commit eaea06c)
 
 - **Añadido**: **el estado de un lote en el circuito nuevo, DERIVADO** — fase 4a del overhaul (notas 2–5 del owner). El camino

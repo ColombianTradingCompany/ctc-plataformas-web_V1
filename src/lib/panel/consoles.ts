@@ -76,7 +76,10 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       {
         label: "BCP · Ecosistema de Valor",
         links: [
-          { href: "/bcp", label: "Panel", exact: true },
+          // SIN entrada «Panel» (owner, 2026-09-19, V5.63): el rail enseña los módulos del cuadro y nada más.
+          // La página `/bcp` sigue existiendo —es donde aterriza el conmutador de consolas—; lo que se fue es
+          // su enlace. Lo mismo en el OCP y la LCP. El ECP conserva el suyo porque ES un módulo del cuadro:
+          // el Tablero de Ejecución.
           // Herramientas (← ECP): desde la Fase 4 de V4 es un PRODUCTO de la red (superficie pública
           // propia), no tooling interno; aquí se administra su Disponibilidad, el Plus y su lista de espera.
           { href: "/bcp/herramientas", label: "Herramientas del Café" },
@@ -191,52 +194,54 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     accent: "#5B8DEF", // corporate blue
     home: "/ocp",
     nav: [
+      // ── EL RAIL DEL OCP ES EL CUADRO DEL OWNER (2026-09-19, V5.63), entrada por entrada ──
+      // Tres grupos: el origen (Kaffetal Regal), el camino comercial del lote (Catálogo) y el stock físico.
+      // Sin «Panel» (la página `/ocp` sigue siendo donde aterriza el conmutador) y sin «Fichas Técnicas»
+      // (se abre desde «Lotes en Evaluación», que es donde se usa — D4 del overhaul).
+      //
+      // ⚠️ LAS ETIQUETAS SON LAS DEL CUADRO; LAS RUTAS, LAS QUE YA EXISTÍAN. «Pendiente Oferta» es el módulo
+      // de ofertas, «Ofertas CP Aceptadas» el de contratos (con la humedad dentro) y «Catálogo Activo» el
+      // catálogo (con las subastas Tyrian como pestaña). Renombrar la ruta habría costado un 308 por módulo
+      // sin ganar nada — la misma decisión que dejó al Modelo Económico en `/…/pvc`.
       {
-        label: "OCP · Operación",
-        links: [
-          { href: "/ocp", label: "Panel", exact: true },
-        ],
-      },
-      {
-        // Kaffetal Regal (← BCP, PR-A del paso (ii), 2026-08-18): el origen del
-        // lote. Es la cadena tal y como la ve el operador — quién produce, dónde
-        // y qué. Antes vivía en el BCP porque el BCP era el dueño del pasaporte;
-        // desde la reorganización V5 el pasaporte ES la operación.
         label: "OCP · Kaffetal Regal",
         links: [
           // UNA entrada donde hubo tres (V5.61, nota 1 del owner): Productor, Finca y Lote son una tabla
           // navegable en cualquier dirección, con su mapa, y el clic abre la vista completa
           // (`?lote=` · `?finca=` · `?productor=`). `/ocp/kr` por «Kaffetal Regal», el origen del lote.
           { href: "/ocp/kr", label: "Productores, Fincas y Lotes" },
-          // V5.23: los soportes B2/B3, el escáner visual y el set de Fichas
-          // Técnicas del lote (una oficial por lote).
-          { href: "/ocp/fichas", label: "Fichas Técnicas" },
         ],
       },
       {
-        // KR Arena (← BCP): la calificación. Nominados es la fila de espera,
-        // Arena la sesión de cata y Galardonados el resultado sellado. El Club
-        // viaja con ellos: es la membresía que la Arena alimenta.
-        label: "OCP · KR Arena",
-        links: [
-          // La Arena y el Club se fueron a «BCP · Ecosistema de Valor» en la V5.60, y Galardonados dejó de
-          // ser módulo en la V5.61: es un filtro de la tabla única (D4 del overhaul).
-          { href: "/ocp/nominados", label: "Nominados" },
-        ],
-      },
-      {
-        // Catálogo (← BCP): la salida comercial del lote. Contratos y Subastas
-        // Tyrian NO son entradas propias — son pestañas dentro del Catálogo, y
-        // siguen sin serlo tras la mudanza.
+        // El camino del lote, en el orden en que lo recorre. Es el mismo que DERIVA `src/lib/ocp/circuito.ts`.
         label: "OCP · Catálogo",
         links: [
-          { href: "/ocp/catalogo", label: "Catálogo Cherry Picked (Contratos Vigentes)" },
-          // CTC Selection (F4, paso (iii)-1): el paraguas de todo lote que CTC
-          // compra EN FIRME para venderlo como productor. Black Stock ya no es
-          // entrada propia — es su pestaña Black, la rama de volumen; la otra
-          // pestaña, «Selección», lleva Red/Blue/Gold. Tyrian no cabe en
-          // ninguna: va a subasta, y lo impide el CHECK de la base.
-          { href: "/ocp/ctc-selection", label: "CTC Selection" },
+          // Nota 2: el lote cae aquí cuando el productor pide la evaluación, y se queda mientras se confirman
+          // el pago y la muestra. Era la mitad «postulación» de Nominados.
+          { href: "/ocp/a-evaluar", label: "Lotes a Evaluar" },
+          // Nota 3: pagados y recibidos, en cola para la evaluación completa. Era la otra mitad de Nominados.
+          // ⚠️ Conserva los baches: `recordEvaluationVerdict` EXIGE hoy que el lote esté en un bache en
+          // «registro». Salen de la pantalla con la fase 4b, que cambia esa regla — no antes.
+          { href: "/ocp/en-evaluacion", label: "Lotes en Evaluación" },
+          // Nota 4: el Q-Grader ya dijo; falta que CTCx confirme el grado y empuje la oferta.
+          { href: "/ocp/ofertas", label: "Lotes Evaluados → Pendiente Oferta" },
+          // Nota 5: lo publicado. Las subastas Tyrian son su pestaña (Tyrian no se oferta: se subasta).
+          { href: "/ocp/catalogo", label: "Catálogo Activo" },
+          // Las ofertas que el productor aceptó: el contrato, sus liberaciones y la humedad mes a mes.
+          { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
+          // Lo que CTCx compra en firme para venderlo como productor. Tyrian no cabe: lo impide un CHECK.
+          { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
+        ],
+      },
+      {
+        // ⚠️ ESTOS DOS MÓDULOS NO EXISTEN TODAVÍA. El owner pidió el cuadro completo en el rail (2026-09-19),
+        // lo que invierte la D9 del plan («el rail no promete lo que no hay») para este grupo. Sus páginas NO
+        // fingen: dicen que no hay módulo, qué será, y que el brief espera su aprobación
+        // (`docs/componentes/briefs/consolas-{gestion-de-muestras,ctcx-selection-compras}.md`).
+        label: "OCP · Manejo de Stock Físico",
+        links: [
+          { href: "/ocp/muestras", label: "Gestión de Muestras" },
+          { href: "/ocp/compras", label: "CTCx Selection · Compras" },
         ],
       },
       // El grupo «OCP · Cherry Picked» (los cuatro CRM CP) se fue a «LCP · CRM» en la V5.59.
@@ -257,7 +262,6 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
       {
         label: "LCP · General",
         links: [
-          { href: "/lcp", label: "Panel", exact: true },
           // El Buzón (← ECP, V5.59; antes BCP): el correo de la red. Un colaborador ve solo el
           // dirigido a su etiqueta @ctcexport.com; el owner, todo.
           { href: "/lcp/buzon", label: "Buzón de entrada" },

@@ -3,6 +3,8 @@
 > Fase 6 del overhaul (`docs/OVERHAUL_CONSOLAS_PLAN.md`, D9). Segunda entrada de **OCP · Manejo de Stock Físico**. El plan: «lo
 > que CTCx compra en firme y lo que de ahí se ofrece», y hereda el tablero de negociación de `/ocp/ctc-selection`. La nota 5 del
 > owner la necesita: las ofertas de CTCx Selection toman su cantidad **de aquí**. Estado: **en scoping — espera al owner, y a la fase 4b.**
+> **V5.63:** el owner pidió el cuadro completo en el rail, así que la entrada YA EXISTE (`/ocp/compras`) con una página que dice que el
+> módulo no existe, qué será y qué falta decidir. Cuando este brief se apruebe y se construya, esa página se reemplaza entera.
 
 **Qué es** — El registro de **cada compra en firme**: qué café, a quién, cuántos kilos, a qué precio, cuándo se pagó y cuándo
 llegó; de **cómo se combina** (los blends de Black y Red); y de **cuánto queda por ofrecer**. Es lo contrario del contrato de

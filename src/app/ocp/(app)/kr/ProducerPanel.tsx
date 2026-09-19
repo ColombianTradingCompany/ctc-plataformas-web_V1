@@ -209,7 +209,7 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
         <ListOrEmpty empty="Sin participaciones en la Arena.">
           {data.arena.map((a) => (
             <li key={a.lotId}>
-              <Link href="/ocp/nominados">{a.lotName}</Link> <span className={styles.badge}>{a.phaseLabel}</span>
+              <Link href="/ocp/a-evaluar">{a.lotName}</Link> <span className={styles.badge}>{a.phaseLabel}</span>
               {a.sondeoAprobado && <span className={styles.badgeGood}> Sondeo ✓</span>}
             </li>
           ))}

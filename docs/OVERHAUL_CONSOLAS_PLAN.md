@@ -204,6 +204,14 @@ dejan su 308.
 > total (13.440 combinaciones) y MONÓTONA (ningún avance hace retroceder). La tabla `/ocp/kr` lo enseña como columna, con lo
 > que FALTA, y lo filtra. No escribe nada, no cambia ninguna regla.
 >
+> **V5.63 · el RAIL del OCP ya es el cuadro — sin tocar una regla.** El owner vio las consolas desplegadas y pidió el cuadro
+> completo en el rail. Se hizo con lo que había: las etiquetas son las suyas, las rutas las que existían («Pendiente Oferta» =
+> `/ocp/ofertas`, «Ofertas CP Aceptadas» = `/ocp/contratos` con la humedad como pestaña, «Catálogo Activo» = `/ocp/catalogo` con
+> las subastas Tyrian como pestaña), y «Nominados» se partió en `/ocp/a-evaluar` y `/ocp/en-evaluacion`. **Lo que NO se pudo
+> hacer todavía: sacar los baches** (D5) — `recordEvaluationVerdict` exige un bache en «registro». Eso, partir el veredicto, el
+> DDL de `lot_offers` y la escalera siguen siendo la 4b. Y el owner INVIRTIÓ la D9 para «Manejo de Stock Físico»: sus dos
+> entradas están en el rail, con página honesta («este módulo todavía no existe») y su brief pendiente de aprobar.
+>
 > **4b · todo lo demás — SIN EJECUTAR, y necesita dos cosas del owner antes:**
 > 1. **Un problema de ORDEN que este plan no vio.** El *guard* «no se acepta una oferta sin `locked_kg` ni términos» es de ESTA
 >    fase, pero la pantalla que los envía (el productor declara su Initial Locked Availability y acepta los términos) es de la

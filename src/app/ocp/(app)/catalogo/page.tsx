@@ -64,7 +64,7 @@ export default async function BcpCatalogoPage() {
   return (
     <div>
       <CatalogoTabs />
-      <h1 className={styles.title}>Catálogo Cherry Picked</h1>
+      <h1 className={styles.title}>Catálogo Activo</h1>
 
       <h3 style={{ marginTop: 8 }}>Listos para publicar</h3>
       <p className={styles.meta}>Contrato activo con al menos una liberación mensual confirmada.</p>

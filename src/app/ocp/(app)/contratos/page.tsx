@@ -32,7 +32,7 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
     <div>
       <CatalogoTabs />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1 className={styles.title}>Contratos</h1>
+        <h1 className={styles.title}>Ofertas CP Aceptadas</h1>
         <Link href="/ocp/contratos/humedad" className={styles.backLink}>
           Humedad fuera de rango →
         </Link>

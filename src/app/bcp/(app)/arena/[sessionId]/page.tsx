@@ -189,7 +189,7 @@ export default async function BcpArenaSessionPage({ params }: { params: Promise<
       </h2>
       {!isCompleted && !jornadaOwns && (
         <p className={styles.subtitle}>
-          Los lotes entran a la sesión desde <Link href="/ocp/nominados">Nominados</Link> (columna «En Fila»). La jornada
+          Los lotes entran a la sesión desde <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link> (columna «En Fila»). La jornada
           arranca cuando hay exactamente {capacity} cafés. Desde ya puede abrir nuevas planillas B2/B3 por café.
         </p>
       )}

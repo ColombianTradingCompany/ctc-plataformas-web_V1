@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { formatCop, MAX_BATCH_LOTS, type ArenaInscription } from "@/lib/arena/inscriptions";
@@ -20,16 +21,24 @@ import {
 } from "./NominadosClient";
 import styles from "@/components/panel/shared.module.css";
 
-// ── Nominados (rediseño 2026-07-20, paquete del owner) ───────────────────────
-// Tablero de inscripciones (3 columnas):
-//   Embotellados      postulado hace >5 días, con pago o muestra pendientes
-//   Recién Nominados  ≤5 días, ídem
-//   En Fila           pagado + muestra ⇒ el POOL: de aquí los baches toman
-//                     lotes, y aquí vuelven los aprobados (con puntaje) listos
-//                     para asignarse a una sesión de Arena.
-// Kanban de Baches de Sondeo (4 columnas): Nuevo Sondeo → Sondeo Planeado →
-// Sondeo Pendiente → Registro de Sondeo. Los lotes aptos SIN postular viven en
-// /ocp/kr (sección Aptos).
+// ── Las dos primeras secciones del circuito del lote (V5.63) ────────────────
+// Este archivo era la página de «Nominados» (rediseño del 2026-07-20): un tablero de inscripciones y, debajo,
+// el kanban de los baches de sondeo. El cuadro del owner (2026-09-19) lo parte en DOS entradas del rail:
+//
+//   «Lotes a Evaluar»      nota 2 — el productor pidió la evaluación; falta confirmar el pago, la muestra o
+//                          las dos. Son las columnas Embotellados (>5 días esperando) y Recién llegados.
+//   «Lotes en Evaluación»  nota 3 — pagados y recibidos, en cola para la evaluación completa: En Fila, los
+//                          baches y el reembolso de los que no pasaron. Desde aquí se abren las Fichas Técnicas.
+//
+// Es UNA carga y UN componente con dos vistas, no dos páginas copiadas: las dos leen las mismas inscripciones,
+// y un lote pasa de una a otra en cuanto se confirma lo que faltaba.
+//
+// ⚠️ LOS BACHES SIGUEN AQUÍ A PROPÓSITO. La D5 del overhaul los saca de la pantalla, pero
+// `recordEvaluationVerdict` EXIGE hoy que el lote esté en un bache en estado «registro»: quitarlos sin cambiar
+// esa regla dejaría a la casa sin poder evaluar un solo lote. Salen con la fase 4b, que parte el veredicto.
+// Ninguna Server Action cambió.
+
+export type VistaDelCircuito = "a-evaluar" | "en-evaluacion";
 
 type LotJoin = { id: string; name: string; producer_id: string; stage: string; sample_shipped_at: string | null; sample_2kg_confirmed_at: string | null };
 type BatchRow = {
@@ -46,7 +55,7 @@ type BatchRow = {
   created_at: string;
 };
 
-export default async function NominadosPage() {
+export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const service = createServiceRoleClient();
 
   const [{ data: insRaw }, { data: batchesRaw }] = await Promise.all([
@@ -100,7 +109,7 @@ export default async function NominadosPage() {
 
   const columns = [
     { label: "Embotellados", count: embotellados.length, body: embotellados.map(postCard) },
-    { label: "Recién Nominados", count: recien.length, body: recien.map(postCard) },
+    { label: "Recién llegados", count: recien.length, body: recien.map(postCard) },
     {
       label: "En Fila",
       count: fila.length,
@@ -221,26 +230,51 @@ export default async function NominadosPage() {
     },
   ];
 
+  const columnasDeLaVista = vista === "a-evaluar" ? columns.slice(0, 2) : columns.slice(2);
+  const tablero = (
+    <div className={styles.board}>
+      {columnasDeLaVista.map((col) => (
+        <div className={styles.column} key={col.label}>
+          <div className={styles.columnHead}>
+            <h3>{col.label}</h3>
+            <span className={styles.columnCount}>{col.count}</span>
+          </div>
+          <div className={styles.columnList}>{col.count ? col.body : <p className={styles.empty}>—</p>}</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (vista === "a-evaluar") {
+    return (
+      <div>
+        <h1 className={styles.title}>Lotes a Evaluar</h1>
+        <p className={styles.subtitle}>
+          El productor confirmó que quiere la evaluación. El lote se queda aquí mientras se confirman <b>el pago</b> y{" "}
+          <b>la muestra</b>; con las dos cosas pasa solo a <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link>.{" "}
+          <b>Embotellados</b> lleva más de 5 días esperando.
+        </p>
+        {tablero}
+        {fila.length + enBache.length > 0 && (
+          <p className={styles.meta} style={{ marginTop: 16 }}>
+            {fila.length + enBache.length} lote(s) ya pagados y recibidos están en <Link href="/ocp/en-evaluacion">Lotes en Evaluación</Link>.
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h1 className={styles.title}>Nominados</h1>
+      <h1 className={styles.title}>Lotes en Evaluación</h1>
       <p className={styles.subtitle}>
-        Postulación (pago + muestra) → <b>En Fila</b> (esperando bache) → bache de sondeo (≤{MAX_BATCH_LOTS} lotes,
-        laboratorio formal) → registro B2/B3 → <b>Apto</b> pasa al módulo <b>Arena</b> (y sale de aquí); No Apto sale con
-        cashback.
+        Pagados y recibidos, en cola para la evaluación completa. <b>En Fila</b> espera bache → bache de sondeo (≤{MAX_BATCH_LOTS}{" "}
+        lotes, laboratorio formal) → registro B2/B3 y veredicto. Los soportes y el escáner están en{" "}
+        <Link href="/ocp/fichas">Fichas Técnicas</Link>. Con el veredicto, el lote pasa a{" "}
+        <Link href="/ocp/ofertas">Pendiente de Oferta</Link>; el que no supera el sondeo sale con reembolso.
       </p>
 
-      <div className={styles.board}>
-        {columns.map((col) => (
-          <div className={styles.column} key={col.label}>
-            <div className={styles.columnHead}>
-              <h3>{col.label}</h3>
-              <span className={styles.columnCount}>{col.count}</span>
-            </div>
-            <div className={styles.columnList}>{col.count ? col.body : <p className={styles.empty}>—</p>}</div>
-          </div>
-        ))}
-      </div>
+      {tablero}
 
       {/* ── Baches de Sondeo ── */}
       <div style={{ marginTop: 30 }}>

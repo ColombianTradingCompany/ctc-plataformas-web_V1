@@ -68,7 +68,13 @@ const cuerpoCompilar = acciones.slice(acciones.indexOf("export async function cr
 check("compilar del reporte es programático (sin fetch a la IA)", cuerpoCompilar.includes("revalidateAll") && !cuerpoCompilar.includes("fetch(") && !cuerpoCompilar.includes("ANTHROPIC_URL"));
 
 // ── 4. Las dos superficies ────────────────────────────────────────────────
-check("el OCP tiene su entrada de riel (/ocp/fichas)", consolas.includes('href: "/ocp/fichas"'));
+// V5.63: «Fichas Técnicas» salió del rail por decisión del owner (su cuadro no la tiene). Lo que hay que
+// vigilar ahora es lo contrario: que la página NO quede huérfana — se abre desde «Lotes en Evaluación».
+check("Fichas ya no es una entrada del rail del OCP", !consolas.includes('href: "/ocp/fichas"'));
+check(
+  "y no queda huérfana: «Lotes en Evaluación» la enlaza",
+  lee("src/app/ocp/(app)/nominados/CircuitoVista.tsx").includes('href="/ocp/fichas"')
+);
 check("el productor solo LEE lot_fichas (select, jamás insert/update)", experiencia.includes('from("lot_fichas")') && !/from\("lot_fichas"\)\s*\.\s*(insert|update|delete)/.test(experiencia));
 check("FichaView recibe y reparte el set", vista.includes("fichas={fichas}"));
 check("el pane B2 lista la cara sensorial", b2.includes('<FichasDelLote fichas={fichas} mostrar="sensorial"'));

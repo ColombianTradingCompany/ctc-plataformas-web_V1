@@ -150,7 +150,8 @@ export async function deleteArenaSession(
     notes: `${lotIds.length} café(s) devuelto(s) a Aptos`,
   });
   revalidatePath("/bcp/arena");
-  revalidatePath("/ocp/nominados");
+  revalidatePath("/ocp/a-evaluar");
+  revalidatePath("/ocp/en-evaluacion");
   revalidatePath("/bcp");
   return { ok: true };
 }
@@ -407,7 +408,8 @@ export async function finalizeJornada(sessionId: string, state: JornadaState) {
   revalidatePath("/ocp/kr");
   revalidatePath("/ocp/contratos");
   revalidatePath("/bcp/evaluaciones");
-  revalidatePath("/ocp/nominados");
+  revalidatePath("/ocp/a-evaluar");
+  revalidatePath("/ocp/en-evaluacion");
   revalidatePath("/bcp");
   // Sin redirect() aquí: el runner navega él mismo al resumen de la sesión
   // cuando la promesa resuelve, y así puede distinguir un error real.

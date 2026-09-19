@@ -120,7 +120,7 @@ export default async function OcpOfertasPage() {
   return (
     <div>
       <CatalogoTabs />
-      <h1 className={styles.title}>Ofertas</h1>
+      <h1 className={styles.title}>Lotes Evaluados → Pendiente de Oferta</h1>
       <p className={styles.subtitle}>
         CTCx confirma aquí el trato sobre cada lote galardonado — el productor lo acepta o rechaza desde su panel, y{" "}
         <b>el contrato nace de su aceptación</b>. Las ofertas <b>Black</b> no se emiten aquí: salen del desenlace

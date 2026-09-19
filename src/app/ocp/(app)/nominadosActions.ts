@@ -26,7 +26,8 @@ import { grantClubMembershipOnce } from "@/lib/arena/club";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-const PATHS = ["/ocp/nominados", "/ocp/kr", "/bcp"];
+// Las DOS secciones que fueron «Nominados» (V5.63): un lote pasa de una a otra al confirmarse pago y muestra.
+const PATHS = ["/ocp/a-evaluar", "/ocp/en-evaluacion", "/ocp/kr", "/bcp"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }

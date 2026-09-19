@@ -121,7 +121,7 @@ export async function SelectionBoard({ grados }: { grados: GradoId[] }) {
 
   return (
     <div>
-      <h1 className={styles.title}>CTC Selection</h1>
+      <h1 className={styles.title}>Oferta desde CTCx Selection</h1>
       <SelectionTabs />
       <h2 className={styles.title} style={{ fontSize: 20, marginTop: 4 }}>{esBlack ? "Black Stock" : "Selección"}</h2>
       <p className={styles.subtitle}>

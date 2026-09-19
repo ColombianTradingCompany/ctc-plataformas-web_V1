@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.56] — 2026-09-19 (commit pendiente)
+## [V5.56] — 2026-09-19 (commit 867a4b5)
 
 - **Hito**: **«BCP · Herramientas Internas» recibe sus piezas: los tres cotizadores y las anclas de mercado dejan el ECP.**
   Ejecuta `docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md` entero (tandas A y B; el owner aprobó las cinco decisiones tal como

@@ -284,4 +284,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
 - FICHA `componentes`: el «decidido, sin construir» del asiento V5.55 baja un escalón — las piezas de los modelos de
   Procesamiento y Logística ya están EN el grupo del rail; los modelos mismos siguen sin módulo (brief primero).
 - Compuerta: tsc · eslint 8 · build · guardianes; verificación en vivo por `curl` a los talones (viven fuera del login).
-(commit: pendiente)
+(commit: 867a4b5)

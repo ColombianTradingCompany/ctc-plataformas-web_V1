@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.63] — 2026-09-19 (commit pendiente)
+## [V5.63] — 2026-09-19 (commit cc8d39a)
 
 - **Corregido**: **la LCP salía lavada: texto casi invisible sobre blanco.** Lo vio el owner en una captura. A la cuarta consola
   le faltaba su **layout raíz** (`src/app/lcp/layout.tsx`) desde que nació en la V5.59: ese archivo —fuera de `(app)`— es el que

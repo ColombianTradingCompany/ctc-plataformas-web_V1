@@ -252,4 +252,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - ⚠️ ANN QUE EL V46 TIENE QUE REPUNTAR: `ctc-platform/src/app/ocp/(app)/nominados/page.tsx` →
   `…/nominados/CircuitoVista.tsx`. ANN nuevas: `src/app/lcp/layout.tsx`, `src/app/ocp/(app)/{a-evaluar,en-evaluacion,muestras,compras}/page.tsx`.
 - NO inventar en el mapa: Gestión de Muestras y Compras están en el rail y NO existen (sus páginas lo dicen).
-(commit: pendiente)
+(commit: cc8d39a)

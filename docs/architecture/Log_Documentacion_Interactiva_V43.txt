@@ -269,3 +269,57 @@ LO QUE HAY QUE SEGUIR MIRANDO (todo con dueño, en su charter)
 VERIFICADO EN VIVO (V5.52, 2026-09-19): el portal responde, «Find my Lot» resuelve `ctcx v2dd m24b` tecleado en
 minúsculas y con espacios, la canonicalización devuelve 308 y un código inexistente 404.
 (commit: 4ba1b2d)
+
+════════════════════════════════════════════════════════════════════════════════
+CIERRE DE LA SESIÓN «Modelo Económico» (2026-09-16 → 19) — LEER ANTES DEL WRAP V44
+════════════════════════════════════════════════════════════════════════════════
+
+Esta sesión (consolas · BCP) deja el ciclo listo para compilar. Asientos suyos en
+este log: V5.42 · V5.43 · V5.44 · V5.45 · V5.46 · V5.47. La plataforma quedó en
+**V5.47 · build 5213ddd**, verificada en vivo.
+
+· EL ESTADO COMPLETO, EN UN SOLO SITIO: `docs/PVC_BCP_PLAN.md` **§13** («Estado al
+  cierre de la sesión») — qué trajo cada versión, las reglas que no se rompen, lo
+  que NO está construido en orden, y las decisiones pendientes del owner. La
+  próxima sesión de consolas arranca leyendo esa sección; el wrap también.
+
+· LO QUE EL WRAP V44 TIENE QUE REFLEJAR (y hoy el mapa no dice):
+  1. El módulo ya no se llama «PVC · Valor de Cosecha» sino **Modelo Económico**
+     (ruta `/bcp/pvc` sin mover). Ficha DICT `pvc`: reescribir de «el precio» a
+     «el precio + la escala de grados + los programas comerciales».
+  2. Ficha/concepto NUEVO: **la escala de puntos «El Punto y la Tríada»**
+     (`src/lib/pvc/escala.ts`, pestaña Grados con calculadora). Tiene que decir
+     que CONVIVE con `definicion.ts` y que `definicion.ts` es la que GOBIERNA.
+  3. Ficha/concepto NUEVO: **programas × tramos** (`canales.ts`, V5.47) — Cherry
+     Picked solo DDP consolidado vía master roaster; CaaS FOB Colombia · puerto ·
+     DDP dedicado; master roaster y regional enablement NO son intercambiables;
+     FOB siempre. Toca también la ficha `cherry`.
+  4. Ficha/concepto NUEVO: **la escalera de compromiso del productor**
+     (`compromiso.ts`) — 0/25/50 % acumulado por trimestre, penalización 4 %.
+  5. Cambio de comportamiento a anotar en la ficha del PVC: **la vigencia se aplica
+     por ventana** (V5.43, vista `public_pvc_current` + `public_pvc_next`): hay una
+     edición VIGENTE y una PRÓXIMA, y eso es visible.
+  6. Escenario candidato (traza): «del PVC vigente a la oferta» — edición vigente →
+     grado del lote → multiplicador → programa e incoterm según habilitación de la
+     región → MOQ en cargas. Todos los nodos existen salvo los de habilitación.
+  7. El panel BCP dejó de ser índice: es tablero con KPIs (`ConsoleScaffold` ganó
+     `kpis`/`badge` opcionales; ECP y OCP sin cambios).
+
+· LO QUE EL MAPA SIGUE SIN REFLEJAR, Y ES CORRECTO (no inventarlo en el wrap):
+  la pestaña **Marco de mercado** (`pvc_marco_mercado` + D10) y la pestaña **MOQ y
+  mermas** están diseñadas (§11.1–§11.3) pero NO construidas; el ciclo semanal, los
+  eventos `pvc.*` y el cron siguen sin existir (§10.4.3). La columna marítima del
+  tramo «puerto» tampoco: hoy aproxima con el flete aéreo (n3), anotado en el código.
+
+· ⚠️ REGLA NUEVA DE LA CASA, VALE PARA EL SNAPSHOT: **el repositorio es PÚBLICO**
+  (§0.2 del documento del CEO, §12.12 del plan). El HTML del mapa se versiona aquí,
+  así que NO puede llevar credenciales, ni márgenes, ni comparaciones con
+  cooperativas, ni actas. Si una ficha necesita hablar de márgenes, habla de la
+  MECÁNICA sin las cifras.
+
+· PENDIENTE DEL OWNER que puede cambiar lo compilado: la escala de puntos aún NO
+  está validada (pesos iguales V·P·R, caso AAA:80, filas Caturra/Catuaí/Bourbon,
+  nombre de la Base física) y F4-2026 puede alinearse al trimestre exacto. Si el
+  wrap se llama antes de esas respuestas, las fichas 2 y 5 se escriben como
+  «vista previa» y «propuesta», no como regla cerrada.
+

@@ -309,4 +309,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
 - ANN nuevas: `src/lib/panel/niveles.ts`, `scripts/qa-niveles-check.mjs`. ANN a actualizar: `requireActiveAdmin.ts`,
   `requireConsoleWrite.ts`, `panelUsers.ts`, `coffeed/requireEcp.ts`, `coffeed/studioGate.ts`, `BCP_USER_ADMIN_PLAN.md`.
 - Compuerta: tsc · eslint 8 · build · guardianes (sin los dos que gastan dinero ni los dos que piden cuentas `prueba-*`).
-(commit: pendiente)
+(commit: 66cb351)

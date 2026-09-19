@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.57] — 2026-09-19 (commit pendiente)
+## [V5.57] — 2026-09-19 (commit 66cb351)
 
 - **Seguridad**: **el nivel «viewer» de un colaborador por fin se hace cumplir.** `panel_users.consoles` guarda desde el
   2026-07-15 un nivel por consola —`admin` o `viewer`— y durante dos meses **ningún código lo leyó**: `grantedConsoles()`

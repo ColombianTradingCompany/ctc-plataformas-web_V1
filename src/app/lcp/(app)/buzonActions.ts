@@ -10,7 +10,7 @@ export type BuzonActionResult = { ok: true } | { ok: false; error: string };
 // Identity for Buzón permissions: owners act on ANY mail; a collaborator only on
 // mail addressed to their own @ctcexport.com label (same rule as the list view).
 // ⚠️ Esto decide DE QUIÉN es el correo, no QUÉ puede hacer con él. `requireActiveAdmin()` no mira el nivel: las
-// acciones que escriben piden además `permisoDeEscritura("ecp", clase)`. En la V5.57 se escaparon justo por
+// acciones que escriben piden además `permisoDeEscritura("lcp", clase)` (la consola del Buzón desde la V5.59). En la V5.57 se escaparon justo por
 // estar detrás de este ayudante y no de la compuerta a la vista — un viewer podía responder correos (V5.58).
 async function buzonIdentity() {
   const userId = await requireActiveAdmin();
@@ -56,8 +56,8 @@ export async function sendBuzonReply(
   inboundId: string,
   input: { mode: "reply" | "forward"; to: string; subject: string; body: string }
 ): Promise<BuzonActionResult> {
-  // Responder o reenviar un correo NOTIFICA a alguien de fuera: nivel admin del ECP (V5.58).
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  // Responder o reenviar un correo NOTIFICA a alguien de fuera: nivel admin de la LCP (V5.58; la consola, V5.59).
+  const permiso = await permisoDeEscritura("lcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity, row } = await loadIfAllowed(inboundId);
 
@@ -97,30 +97,30 @@ export async function sendBuzonReply(
   if (input.mode === "reply") {
     await identity.service.from("inbound_emails").update({ replied_at: new Date().toISOString() }).eq("id", row.id);
   }
-  revalidatePath("/ecp/buzon");
+  revalidatePath("/lcp/buzon");
   return { ok: true };
 }
 
 export async function setBuzonStatus(id: string, status: "archived" | "deleted"): Promise<BuzonActionResult> {
   // Archivar o borrar mueve el mensaje también en el buzón REMOTO (Hostinger): no es un borrador.
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura("lcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity, row } = await loadIfAllowed(id);
   // Reflect to Hostinger first (best-effort — a retention-cleaned message just isn't there).
   if (row.message_id) await moveRemoteMessage(row.message_id, status === "deleted" ? "trash" : "archive");
   await identity.service.from("inbound_emails").update({ status }).eq("id", id);
-  revalidatePath("/ecp/buzon");
+  revalidatePath("/lcp/buzon");
   return { ok: true };
 }
 
 export async function setBuzonTags(id: string, tags: string[]): Promise<BuzonActionResult> {
   // Etiquetar es orden interno, reversible y sin efecto fuera de la consola: un viewer puede (lista blanca del plan).
-  const permiso = await permisoDeEscritura("ecp", "borrador");
+  const permiso = await permisoDeEscritura("lcp", "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity } = await loadIfAllowed(id);
   const clean = Array.from(new Set(tags.map((t) => t.trim().toLowerCase()).filter(Boolean))).slice(0, 8).map((t) => t.slice(0, 24));
   await identity.service.from("inbound_emails").update({ tags: clean }).eq("id", id);
-  revalidatePath("/ecp/buzon");
+  revalidatePath("/lcp/buzon");
   return { ok: true };
 }
 
@@ -136,23 +136,23 @@ export async function getBuzonAttachmentUrls(id: string): Promise<{ filename: st
 }
 
 export async function syncBuzonNow() {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura("lcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { syncBuzon } = await import("@/lib/buzon/syncBuzon");
   const result = await syncBuzon();
-  revalidatePath("/ecp/buzon");
+  revalidatePath("/lcp/buzon");
   return result;
 }
 
 export async function markInboundEmailRead(id: string, read: boolean): Promise<BuzonActionResult> {
   // Leído / no leído: lo mismo — si un viewer no pudiera, abrir su propio correo fallaría en silencio.
-  const permiso = await permisoDeEscritura("ecp", "borrador");
+  const permiso = await permisoDeEscritura("lcp", "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const { identity } = await loadIfAllowed(id);
   await identity.service
     .from("inbound_emails")
     .update({ read_at: read ? new Date().toISOString() : null })
     .eq("id", id);
-  revalidatePath("/ecp/buzon");
+  revalidatePath("/lcp/buzon");
   return { ok: true };
 }

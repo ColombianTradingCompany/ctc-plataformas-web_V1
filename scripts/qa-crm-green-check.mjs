@@ -59,8 +59,8 @@ check("una etapa inventada no cuela", !esEtapaValida("vip"));
 
 // ── 3. La decisión de diseño: la etapa deducida NO se persiste ─────────────
 {
-  const acciones = lee("src/app/ocp/(app)/crm/green/crmGreenActions.ts");
-  const pagina = lee("src/app/ocp/(app)/crm/green/page.tsx");
+  const acciones = lee("src/app/lcp/(app)/crm/green/crmGreenActions.ts");
+  const pagina = lee("src/app/lcp/(app)/crm/green/page.tsx");
 
   check(
     "la única escritura del módulo es sobre crm_stage",

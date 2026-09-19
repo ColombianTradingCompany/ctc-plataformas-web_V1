@@ -31,14 +31,13 @@ const CSS = "src/components/panel/shared.module.css";
 const ALTAS = "src/lib/newsletter/actions.ts";
 const RAIL = "src/lib/panel/consoles.ts";
 
-// Dónde vive el tablero de cada fuente. El OCP es para lo de Cherry Picked; la
-// lista de la portada es de la red entera y por eso está en el ECP, junto a
-// Leads. Si mañana nace una cuarta fuente, la línea que falta aquí es la que
-// hace fallar el guardián — a propósito.
+// Dónde vive el tablero de cada fuente. Desde la V5.59 Roast y X están en «LCP · CRM», y la de la
+// portada en «LCP · Lista de espera» — que además las REÚNE todas (comprobación 1-bis). Si mañana
+// nace otra fuente, la línea que falta aquí es la que hace fallar el guardián — a propósito.
 const TABLEROS = {
-  roast: "src/app/ocp/(app)/crm/roast/page.tsx",
-  x: "src/app/ocp/(app)/crm/x/page.tsx",
-  "ctc-home": "src/app/ecp/(app)/ctc-home/page.tsx",
+  roast: "src/app/lcp/(app)/crm/roast/page.tsx",
+  x: "src/app/lcp/(app)/crm/x/page.tsx",
+  "ctc-home": "src/app/lcp/(app)/lista-espera/page.tsx",
   // A6 (2026-08-19): nacen CON tablero, que es justo lo que este guardián
   // existe para exigir. Los dos cuelgan de una página que ya existía —la
   // moderación del Directorio y el registro de Herramientas—, porque una lista
@@ -83,6 +82,23 @@ for (const [f, ruta] of Object.entries(TABLEROS)) {
   check(`${f}: su ruta ${href} está en el rail`, rail.includes(`"${href}"`));
 }
 
+// ── 1-bis. La lista REUNIDA enseña todas las fuentes (V5.59) ───────────────
+// «Lista de espera» de la LCP es el sitio donde se ven todas a la vez. La verdad de cuáles son
+// sale de `SOURCES`, como arriba: una fuente nueva que no llegue a la lista reunida falla aquí.
+{
+  const REUNIDA = "src/app/lcp/(app)/lista-espera/page.tsx";
+  const reunida = lee(REUNIDA);
+  for (const f of SOURCES) {
+    check(`lista reunida: enseña la fuente ${f}`, reunida.includes(`fuente="${f}"`));
+  }
+  check("lista reunida: enseña también la de Terratalento (tabla propia)", reunida.includes("<InteresTerratalentoBoard"));
+  check("lista reunida: la acción la revalida", acciones.includes('revalidatePath("/lcp/lista-espera")'));
+  check(
+    "lista reunida: la acción de Terratalento también la revalida",
+    lee("src/lib/terratalento/interesActions.ts").includes('revalidatePath("/lcp/lista-espera")')
+  );
+}
+
 // ── 2. Cada tablero ve SOLO su lista ───────────────────────────────────────
 // Si el filtro por fuente se cayera, Roast enseñaría los correos de X y de
 // CTC Home. No fallaría nada: saldrían más filas, y nadie las contaría.
@@ -104,7 +120,9 @@ check(
 );
 check("se puede DESMARCAR (contacted_at vuelve a null)", acciones.includes("contacted_at: null"));
 check("queda rastro en audit_log", acciones.includes("audit_log"));
-check("y exige admin activo", acciones.includes("requireActiveAdmin"));
+// Hasta la V5.58 esto buscaba la palabra `requireActiveAdmin`, que aparece en la RUTA DEL IMPORT: pasaba
+// aunque la acción no llamara a ninguna compuerta. Se mira la llamada, y con su clase.
+check("y pasa por la compuerta de escritura, como borrador", /await permisoDeEscritura\(\[[^\]]+\], "borrador"\)/.test(acciones));
 
 // ── 4. Revalidar de menos no avisa ─────────────────────────────────────────
 // Una fila pertenece a UNA fuente, pero saber cuál exige leerla. Revalidar los

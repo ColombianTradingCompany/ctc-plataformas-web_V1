@@ -1,10 +1,9 @@
 import { LeadsBoard } from "@/components/panel/LeadsBoard";
 
-// CRM CaaS (V4 · Fase 1): el kanban del outlet CaaS vive en el BCP
-// porque es negocio núcleo — cada proyecto propuesto desde caas.ctcexport.com
-// cae aquí con su cuenta de comprador creada. A futuro (vía paralela Black
-// Stock) una tarjeta podrá coordinarse con una compra Black específica.
-export default function BcpCoCreatePage() {
+// CRM CP CaaS: cada proyecto propuesto desde caas.ctcexport.com cae aquí con su cuenta de
+// comprador creada. Es el pilar `cocreate` de `leads`. Cuarta casa: BCP → OCP (V4.24) → LCP (V5.59).
+// A futuro (vía paralela Black Stock) una tarjeta podrá coordinarse con una compra Black específica.
+export default function LcpCrmCaasPage() {
   return (
     <LeadsBoard
       pillars={["cocreate"]}

@@ -12,7 +12,7 @@ export const maxDuration = 60;
 // see the whole network inbox; a collaborator sees only mail addressed to their
 // own @ctcexport.com label (the catch-all preserves To:).
 export default async function BcpBuzonPage() {
-  const identity = await requireConsoleAccess("ecp");
+  const identity = await requireConsoleAccess("lcp");
   const service = createServiceRoleClient();
 
   let myAddress: string | null = null;

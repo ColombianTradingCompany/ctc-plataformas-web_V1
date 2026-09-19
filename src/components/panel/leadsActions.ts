@@ -4,50 +4,34 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { sendLeadWelcomeEmail, sendLeadReplyEmail, PILLAR_LABEL, type LeadEmailInput, type ThreadMessage } from "@/lib/email/leadEmails";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
-import { getPanelUser, grantedConsoles } from "@/lib/panel/panelUsers";
-import type { PanelConsoleKey } from "@/lib/panel/consoles";
+import { CONSOLAS_DE_LEADS, consolaDelPilar, tableroDelPilar } from "@/lib/panel/leadsPilares";
 
 
 // ── Compuerta fina por consola (auditoría 2026-08-13, ESTR-4) ────────────────
-// Estas acciones las comparten CUATRO tableros (regla V4 Fase 0: "el CRM vive
-// en la consola dueña del dominio"): general→OCP, cocreate→BCP, tech→ECP,
-// varietales→ECP. `requireActiveAdmin` solo mira el rol, no el grant de
-// consola — un colaborador con grant solo de BCP podía operar leads del OCP
-// invocando la acción a mano. La consola dueña se deriva del pilar DEL LEAD
-// (dato del servidor, no del cliente) y se contrasta contra los grants, con el
-// mismo grandfathering que requireConsoleWrite (sin fila = las tres consolas).
-// ⚠️ ESTE MAPA ES UNA COMPUERTA DE PERMISOS, NO UNA RUTA — y por eso la
-// reescritura masiva de rutas de la reorganización V5 NO lo tocó: aquí no hay
-// barras que casar. Hay que moverlo A MANO cada vez que un tablero cambia de
-// consola, y si se olvida no falla nada visible: simplemente se le pide al
-// operador un grant de la consola equivocada. `cocreate` se quedó en "bcp"
-// durante PR-A (el tablero ya estaba en el OCP) y se corrigió en PR-C.
-const PILLAR_CONSOLE: Record<string, PanelConsoleKey> = {
-  general: "ecp", // ← OCP en PR-C: Leads · Recepción vive en el ECP
-  cocreate: "ocp", // ← BCP en PR-A: el CRM CP CaaS se fue con el catálogo
-  tech: "ecp",
-  varietales: "ecp",
-};
-
-// El tablero que hay que revalidar es el de la consola dueña — antes se
-// revalidaba solo /ecp/leads y los otros tres tableros quedaban con caché vieja.
-const PILLAR_BOARD_PATH: Record<string, string> = {
-  general: "/ecp/leads",
-  cocreate: "/ocp/crm/caas",
-  tech: "/ecp/ctc-tech",
-  varietales: "/ecp/varietales",
-};
-
-async function requireLeadConsole(adminId: string, lead: LeadRow): Promise<void> {
-  const consoleKey = PILLAR_CONSOLE[lead.pillar] ?? "ecp";
-  const row = await getPanelUser(adminId);
-  if (!grantedConsoles(row).includes(consoleKey)) {
-    throw new Error("Tu credencial no tiene acceso a la consola que administra este lead.");
-  }
+// Estas acciones las comparten CUATRO tableros de DOS consolas (regla V4 Fase 0: «el CRM vive
+// en la consola dueña del dominio»): `general` y `cocreate` en la LCP, `tech` y `varietales` en
+// el ECP. Por eso el archivo vive en `src/components/panel/` y no en el árbol de una consola
+// (V5.59) — colgando del ECP, la mudanza de Leads a la LCP se lo habría llevado por delante.
+//
+// DOS COMPUERTAS, y las dos hacen falta:
+//   1. la GRUESA, antes de leer nada: sesión activa y nivel «emite» en ALGUNA consola que
+//      administre leads (`CONSOLAS_DE_LEADS`). Sin ella, cualquiera con sesión podría sondear ids.
+//   2. la FINA, con el lead ya leído: nivel «emite» en LA consola dueña de SU pilar — dato del
+//      servidor, no del cliente. Hasta la V5.58 esta segunda solo miraba el GRANT
+//      (`grantedConsoles`), no el nivel: un colaborador «admin» del ECP y «viewer» de la consola
+//      dueña podía responder un lead ajeno. Y lanzaba (`throw`) en vez de devolver el rechazo.
+//
+// ⚠️ La consola del pilar YA NO SE ESCRIBE AQUÍ: sale de `src/lib/panel/leadsPilares.ts`, que la
+// deduce de la ruta del tablero. El mapa `PILLAR_CONSOLE` que había aquí era una compuerta de
+// permisos sin barras, invisible a toda reescritura de rutas, y se quedó atrás en dos mudanzas.
+async function permisoSobreElLead(lead: LeadRow) {
+  return permisoDeEscritura(consolaDelPilar(lead.pillar), "emite");
 }
 
+// El tablero que hay que revalidar es el de la consola dueña — antes se
+// revalidaba un solo tablero y los otros tres quedaban con caché vieja.
 function leadBoardPath(lead: LeadRow): string {
-  return PILLAR_BOARD_PATH[lead.pillar] ?? "/ecp/leads";
+  return tableroDelPilar(lead.pillar);
 }
 
 const STATUSES = ["nuevo", "en_conversacion", "convertido", "cerrado"] as const;
@@ -160,12 +144,13 @@ async function applySuccessfulReply(
 // never stored in the reply body); on success the password is cleared from
 // the lead and the status auto-advances nuevo -> en_conversacion.
 export async function replyToLead(leadId: string, formData: FormData) {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura(CONSOLAS_DE_LEADS, "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
-  await requireLeadConsole(adminId, lead);
+  const fino = await permisoSobreElLead(lead);
+  if (!fino.ok) return { ok: false as const, error: fino.error };
 
   const subject = String(formData.get("subject") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -199,12 +184,13 @@ export async function replyToLead(leadId: string, formData: FormData) {
 }
 
 export async function setLeadStatus(leadId: string, formData: FormData) {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura(CONSOLAS_DE_LEADS, "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
-  await requireLeadConsole(adminId, lead);
+  const fino = await permisoSobreElLead(lead);
+  if (!fino.ok) return { ok: false as const, error: fino.error };
 
   const status = String(formData.get("status") ?? "");
   if (!STATUSES.includes(status as (typeof STATUSES)[number])) throw new Error("Estado inválido.");
@@ -223,12 +209,13 @@ export async function setLeadStatus(leadId: string, formData: FormData) {
 }
 
 export async function retryWelcomeEmail(leadId: string) {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura(CONSOLAS_DE_LEADS, "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
   const lead = await getLead(service, leadId);
-  await requireLeadConsole(adminId, lead);
+  const fino = await permisoSobreElLead(lead);
+  if (!fino.ok) return { ok: false as const, error: fino.error };
 
   const result = await sendLeadWelcomeEmail(lead);
   await service
@@ -246,7 +233,7 @@ export async function retryWelcomeEmail(leadId: string) {
 }
 
 export async function retryReplyEmail(replyId: string) {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura(CONSOLAS_DE_LEADS, "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -258,7 +245,8 @@ export async function retryReplyEmail(replyId: string) {
     .single();
   if (!reply) throw new Error("Respuesta no encontrada.");
   const lead = await getLead(service, reply.lead_id);
-  await requireLeadConsole(adminId, lead);
+  const fino = await permisoSobreElLead(lead);
+  if (!fino.ok) return { ok: false as const, error: fino.error };
 
   // Re-append the password only if this reply was its designated carrier and
   // it hasn't been delivered (cleared) by a successful send yet.

@@ -20,7 +20,8 @@ donde las respuestas llegan a «Mis solicitudes». Comparte con CTC Tech y CaaS 
 
 - `src/components/services/{VarietalesLanding,SurfaceShell,servicesCopy}.tsx`.
 - `src/lib/leads/actions.ts` (compartido: `FIELD_KEYS.varietales`), `src/app/ecp/(app)/varietales/page.tsx`,
-  `src/app/ecp/(app)/leadsActions.ts` (`PILLAR_CONSOLE`), `src/lib/email/leadEmails.ts`.
+  `src/components/panel/leadsActions.ts` + `src/lib/panel/leadsPilares.ts` (la consola del pilar se deduce de la ruta
+  de su tablero, V5.59), `src/lib/email/leadEmails.ts`.
 - El **catálogo de variedades** que se le enseña al productor sale de la fuente única de la Ficha:
   `VARIETIES` en `src/components/kaffetal-regal/ficha/fichaData.ts` (dueño: `kaffetal-regal`) — no se duplica.
 

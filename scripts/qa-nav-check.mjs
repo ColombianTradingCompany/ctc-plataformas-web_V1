@@ -46,7 +46,13 @@ check("pero la propia ruta sí", enlaceCubre({ href: "/ecp/varietales" }, "/ecp/
 check("y sus hijas también", enlaceCubre({ href: "/ecp/varietales" }, "/ecp/varietales/algo"));
 
 // ── `exact` sigue significando exacto ────────────────────────────────────────
-check("el Panel (exact) no se enciende en una subruta", activo("ecp", "/ecp/buzon") !== "/ecp");
+check("el Panel (exact) no se enciende en una subruta", activo("ecp", "/ecp/directorio") !== "/ecp");
+// La LCP (V5.59) es la primera consola con un grupo ANIDADO (`/lcp/crm/…`) sin página en `/lcp/crm`:
+// cada CRM enciende el suyo, ninguno enciende a un hermano, y el Panel no se enciende con ellos.
+check("LCP: un CRM enciende solo su enlace", activo("lcp", "/lcp/crm/green") === "/lcp/crm/green");
+check("LCP: y no el de un hermano", !enlaceCubre({ href: "/lcp/crm/x" }, "/lcp/crm/green"));
+check("LCP: el Panel (exact) no se enciende en un CRM", activo("lcp", "/lcp/crm/caas") !== "/lcp");
+check("LCP: el filtro de la lista de espera no apaga su enlace", activo("lcp", "/lcp/lista-espera") === "/lcp/lista-espera");
 check("el Panel (exact) sí se enciende en su propia ruta", activo("ecp", "/ecp") === "/ecp");
 
 // ── Ninguna consola tiene hrefs repetidos en su rail ─────────────────────────

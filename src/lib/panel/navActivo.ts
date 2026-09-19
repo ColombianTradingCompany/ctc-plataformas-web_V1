@@ -15,7 +15,8 @@ import type { PanelNavLink } from "./consoles";
 // es siempre el más específico.
 // (Direccionamiento se mudó al BCP el 2026-08-18 y esa pareja concreta ya no
 // coexiste en un mismo rail — pero la regla sigue siendo la que evita el fallo,
-// y `/ocp/crm` vs `/ocp/crm/caas` la volverá a necesitar en el paso (iii).)
+// y el primer grupo anidado del rail —los CRM de Cherry Picked, hoy `/lcp/crm/…`— la
+// volvería a necesitar el día que `/lcp/crm` tenga página propia.)
 //
 // Y el segundo arreglo, de la misma familia que el del matcher del proxy
 // (auditoría ESTR-3): `startsWith("/ecp/varietales")` también casaba un futuro

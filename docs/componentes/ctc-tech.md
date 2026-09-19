@@ -16,15 +16,16 @@ La conversación la lleva CTC desde el ECP.
 |---|---|
 | `/ctc-tech` | landing + formulario (`CtcTechLanding.tsx` sobre `SurfaceShell`; copy en `servicesCopy.tsx`, EN · ES · DE) |
 | `/ecp/ctc-tech` | el tablero de leads del pilar `tech` (kanban por estado, respuesta con correo, aprovisionamiento) |
-| `/ecp/leads` | la recepción general (todos los pilares) |
+| `/lcp/leads` | la recepción general (pilar `general`), en la LCP desde la V5.59 — `/ecp/leads` es su talón 308 |
 
 ## Mapa de código
 
 - `src/components/services/{CtcTechLanding,SurfaceShell,servicesCopy}.tsx` (+ `surface.module.css`).
 - `src/lib/leads/actions.ts` — **compartido con Varietales y CaaS**: `PILLARS`, `FIELD_KEYS` (lista blanca de
   campos por pilar — lo que no está nombrado se descarta), `sanitize`, la creación/atado de la cuenta.
-- `src/app/ecp/(app)/{ctc-tech,leads}/` + `src/app/ecp/(app)/leadsActions.ts` (`PILLAR_CONSOLE`: qué consola manda sobre cada
-  pilar — **un mapa de permisos no es una ruta**; buscarlo al mover algo).
+- `src/app/ecp/(app)/ctc-tech/` + `src/components/panel/{LeadsBoard.tsx,leadsActions.ts}` (compartidos con la LCP) +
+  `src/lib/panel/leadsPilares.ts`: **qué tablero administra cada pilar, y de ahí se DEDUCE la consola** (V5.59). Al mover
+  este tablero de consola se cambia esa línea y el permiso viaja con ella; `qa-rutas-consolas` (g) lo contrasta con el rail.
 - `src/lib/email/leadEmails.ts` (bienvenida + respuestas por Resend; el resultado se guarda en la fila).
 
 ## Tablas que posee

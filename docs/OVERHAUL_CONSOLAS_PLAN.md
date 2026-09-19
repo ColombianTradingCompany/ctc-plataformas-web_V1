@@ -125,7 +125,7 @@ dejan su 308.
 
 **Fase 0 · Wrap V45** (solo docs). Compila V5.53–V5.58. Es la línea base contra la que se medirá el overhaul.
 
-**Fase 1 · La LCP existe** — *riesgo bajo · solo pantallas y permisos*
+**Fase 1 · La LCP existe** — *riesgo bajo · solo pantallas y permisos* — ✅ **EJECUTADA en la V5.59 (2026-09-19)**
 - `PanelConsoleKey` gana `"lcp"`; `CONSOLE_ORDER`, `CONSOLES.lcp` (nombre, palabra, color, rail), `src/app/lcp/(app)/layout.tsx`,
   la tarjeta en `/panel`, el copy de `ControlPanelLanding` en ES · EN · DE.
 - **Los guardianes dejan de tener la lista a mano**: `qa-rutas-consolas` y `qa-niveles` derivan las consolas de
@@ -136,7 +136,16 @@ dejan su 308.
   enlaces a mano del panel del OCP; los imports por ruta de archivo de `LeadsBoard` y Terratalento; y los cuatro guardianes
   que leen rutas de archivo (`qa-crm-interes`, `qa-crm-green`, `qa-solicitudes-kr`, `qa-nav`).
 - «Lista de espera» pasa de ser solo CTC Home a las seis fuentes de `newsletter_subscribers` + Terratalento, con filtro.
-- **Datos (D2)**: `panel_users.consoles` gana `lcp` para las tres credenciales. Antes del push, SQL: nadie con `ecp` u `ocp`
+- **Lo que cambió al ejecutarla** (el plan se corrige aquí, no se reescribe): **(1) el color** — D3 proponía un azul acero y
+  se descartó: en el conmutador no se distingue del azul del OCP; quedó el carmesí corporativo aclarado (`#F0708A`), el color
+  de la paleta que ninguna consola usaba. **(2) `PILLAR_CONSOLE` no se «movió a `lcp`»: desapareció** — la consola de un pilar
+  se deduce de la ruta de su tablero (`src/lib/panel/leadsPilares.ts`); CTC Tech y Varietales siguen en el ECP (D4). Y la
+  compuerta fina, que solo miraba el GRANT y lanzaba, mira ahora el NIVEL y devuelve el rechazo. **(3) `leadsActions.ts` y
+  `LeadModalRow.tsx` no fueron al árbol de la LCP** sino a `src/components/panel/`: sirven a dos consolas. **(4) `interesActions`
+  quedó en `["lcp","ecp"]`**, no en `"lcp"`: Directorio y Herramientas siguen enseñando su lista en el ECP hasta la fase 2; el
+  guardián aprendió la compuerta en array y la deduce del rail. **(5) Las «seis fuentes»** son cinco de `newsletter_subscribers`
+  más la tabla propia de Terratalento. **(6) Queda para la fase 2**: redibujar `EstructuraModal.tsx` con cuatro consolas.
+- **Datos (D2)** — ✅ hecho y comprobado por SQL (3 filas; 0 con `ecp`/`ocp` y sin `lcp`): `panel_users.consoles` gana `lcp` para las tres credenciales. Antes del push, SQL: nadie con `ecp` u `ocp`
   y sin `lcp`. Verificación en vivo: `curl -sI` a los siete talones.
 
 **Fase 2 · El nuevo reparto BCP ↔ ECP, y el Tablero de Ejecución** — *riesgo bajo-medio · 16 rutas, 7 de vuelta*

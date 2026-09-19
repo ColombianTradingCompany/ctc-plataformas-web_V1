@@ -14,7 +14,7 @@ export async function setEtapaComprador(
   profileId: string,
   etapa: string | null
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const permiso = await permisoDeEscritura("ocp", "borrador");
+  const permiso = await permisoDeEscritura("lcp", "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   if (etapa !== null && !esEtapaValida(etapa)) return { ok: false, error: "Etapa inválida." };
@@ -42,6 +42,6 @@ export async function setEtapaComprador(
     notes: etapa ? null : "vuelve a la etapa que dictan los pedidos",
   });
 
-  revalidatePath("/ocp/crm/green");
+  revalidatePath("/lcp/crm/green");
   return { ok: true };
 }

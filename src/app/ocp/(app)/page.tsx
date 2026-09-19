@@ -34,7 +34,7 @@ const ENTITY_HREF: Record<string, string> = {
   lot: "/ocp/lotes",
   contract: "/ocp/contratos",
   lot_listing: "/ocp/catalogo",
-  lead: "/ecp/leads", // Leads se movió a OCP (2026-07-21); el Panel BCP enlaza allá.
+  lead: "/lcp/leads", // Leads vive en la LCP desde la V5.59; el Panel del OCP enlaza allá.
 };
 
 const LEAD_PILLAR_LABEL: Record<string, string> = {
@@ -141,7 +141,7 @@ export default async function OcpHomePage() {
       v: newLeads.length,
       denom: totalLeads ?? 0,
       color: "#2E7D52",
-      href: "/ecp/leads",
+      href: "/lcp/leads",
       sub: `de ${totalLeads ?? 0} leads`,
     },
   ];
@@ -158,7 +158,7 @@ export default async function OcpHomePage() {
       icon: "✉️",
       label: `Responder lead ${l.nombre}`,
       sublabel: LEAD_PILLAR_LABEL[l.pillar] ?? l.pillar,
-      href: `/ecp/leads#lead-${l.id}`,
+      href: `/lcp/leads#lead-${l.id}`,
       state: stateByKey.get(key) ?? "tbd",
     });
   }

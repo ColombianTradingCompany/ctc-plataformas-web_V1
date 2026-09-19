@@ -11,7 +11,7 @@ import { ROOT_DOMAIN } from "@/lib/red/subdominios";
 // consolas es `requireConsoleAccess()` + el re-chequeo de cada Server Action.
 // Este archivo es público, y pedir que no se rastree una ruta es justamente
 // anunciar que existe.
-//   · /bcp /ecp /ocp — las tres consolas internas (ecp/ocp añadidas 2026-08-14;
+//   · /bcp /ecp /ocp /lcp — las cuatro consolas internas (lcp desde la V5.59) (ecp/ocp añadidas 2026-08-14;
 //     nacieron con el login maestro del 2026-07-15 y faltaban aquí desde
 //     entonces).
 //   · /lab — la mesa de pruebas del owner (tipografía del titular): no está
@@ -32,6 +32,7 @@ export function GET(request: NextRequest) {
 Disallow: /bcp
 Disallow: /ecp
 Disallow: /ocp
+Disallow: /lcp
 Disallow: /lab
 
 Sitemap: ${origin}/sitemap.xml

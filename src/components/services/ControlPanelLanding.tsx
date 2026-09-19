@@ -1,6 +1,6 @@
 "use client";
 
-import { CONSOLES, CONSOLE_ORDER } from "@/lib/panel/consoles";
+import { CONSOLES, CONSOLE_ORDER, type PanelConsoleKey } from "@/lib/panel/consoles";
 import { useLang, type Lang } from "@/components/lang/i18n";
 import { SurfaceShell } from "./SurfaceShell";
 import styles from "./surface.module.css";
@@ -21,46 +21,49 @@ const CHROME: Record<
     sub: string;
     body: string;
     thesis: string;
-    consoles: Record<"bcp" | "ecp" | "ocp", string>;
+    consoles: Record<PanelConsoleKey, string>;
     enter: string;
     note: string;
   }
 > = {
   es: {
     h1: "La sala de máquinas de la red",
-    sub: "Tres consolas paralelas · un solo acceso",
-    body: "Desde aquí el equipo de CTC orquesta la red completa: la identidad de cada productor, el pasaporte de cada lote, la operación de los nodos socios y la dirección del modelo. Cada consola es dueña de un dominio; las tres comparten una sola llave.",
+    sub: "Cuatro consolas paralelas · un solo acceso",
+    body: "Desde aquí el equipo de CTC orquesta la red completa: la identidad de cada productor, el pasaporte de cada lote, la operación de los nodos socios y la dirección del modelo. Cada consola es dueña de un dominio; las cuatro comparten una sola llave.",
     thesis: "CTC no es dueño de ninguna máquina. Es dueño del expediente.",
     consoles: {
       bcp: "El negocio núcleo: encontrar el mejor productor, el mejor producto y el mejor cliente.",
       ecp: "El negocio estratégico: la capa que se construye alrededor del núcleo para mejorarlo.",
       ocp: "La rama operativa: todo lo que debe pasar en el mundo real para que los flujos corran.",
+      lcp: "La relación: todo lo que entra de fuera, y a quién se le ha respondido ya.",
     },
     enter: "Entrar al panel",
     note: "Acceso exclusivo del equipo CTC — contraseña + código de un solo uso.",
   },
   en: {
     h1: "The network's engine room",
-    sub: "Three parallel consoles · one access",
-    body: "From here the CTC team orchestrates the whole network: each producer's identity, each lot's passport, the partner nodes' operation and the direction of the model. Each console owns a domain; the three share a single key.",
+    sub: "Four parallel consoles · one access",
+    body: "From here the CTC team orchestrates the whole network: each producer's identity, each lot's passport, the partner nodes' operation and the direction of the model. Each console owns a domain; the four share a single key.",
     thesis: "CTC owns no machine. It owns the file.",
     consoles: {
       bcp: "The core business: finding the best producer, the best product and the best customer.",
       ecp: "The strategic business: the layer built around the core to improve it.",
       ocp: "The operational branch: everything that must happen in the real world for the flows to run.",
+      lcp: "The relationship: everything that comes in from outside, and who has already been answered.",
     },
     enter: "Enter the panel",
     note: "CTC team access only — password + one-time code.",
   },
   de: {
     h1: "Der Maschinenraum des Netzwerks",
-    sub: "Drei parallele Konsolen · ein Zugang",
-    body: "Von hier aus orchestriert das CTC-Team das gesamte Netzwerk: die Identität jedes Produzenten, den Pass jedes Lots, den Betrieb der Partnerknoten und die Richtung des Modells. Jede Konsole besitzt eine Domäne; alle drei teilen einen einzigen Schlüssel.",
+    sub: "Vier parallele Konsolen · ein Zugang",
+    body: "Von hier aus orchestriert das CTC-Team das gesamte Netzwerk: die Identität jedes Produzenten, den Pass jedes Lots, den Betrieb der Partnerknoten und die Richtung des Modells. Jede Konsole besitzt eine Domäne; alle vier teilen einen einzigen Schlüssel.",
     thesis: "CTC besitzt keine Maschine. CTC besitzt die Akte.",
     consoles: {
       bcp: "Das Kerngeschäft: den besten Produzenten, das beste Produkt und den besten Kunden finden.",
       ecp: "Das strategische Geschäft: die Schicht, die um den Kern gebaut wird, um ihn zu verbessern.",
       ocp: "Der operative Zweig: alles, was in der realen Welt passieren muss, damit die Abläufe laufen.",
+      lcp: "Die Beziehung: alles, was von außen hereinkommt, und wem bereits geantwortet wurde.",
     },
     enter: "Zum Panel",
     note: "Nur für das CTC-Team — Passwort + Einmalcode.",

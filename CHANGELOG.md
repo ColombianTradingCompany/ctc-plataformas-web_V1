@@ -19,6 +19,50 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.59] — 2026-09-19 (commit pendiente)
+
+- **Hito**: **nace la LCP · Lead Control Panel — *Relationship*, la cuarta consola.** Fase 1 del overhaul aprobado por el
+  owner (`docs/OVERHAUL_CONSOLAS_PLAN.md`). La LCP es la consola de **lo que entra de fuera y a quién se le responde**: no
+  decide precios ni mueve lotes. Mismo login maestro, mismo conmutador, su tarjeta en `/panel` y su línea en la puerta
+  pública (ES · EN · DE).
+- **Cambiado**: **siete rutas se mudan a la LCP.** Del ECP: `/ecp/buzon` → `/lcp/buzon`, `/ecp/leads` → `/lcp/leads`,
+  `/ecp/ctc-home` → `/lcp/lista-espera`. Del OCP: `/ocp/crm/{caas,green,roast,x}` → `/lcp/crm/…` (el grupo «OCP · Cherry
+  Picked» desaparece del rail). Las siete URLs viejas siguen vivas como **308 en un salto**; `/bcp/caas` y `/ocp/leads`, que
+  apuntaban a rutas que hoy se mudan, se **reapuntaron** (42 rutas en `rutasMovidas.ts`; regla F2: jamás un talón contra otro).
+- **Añadido**: **«Lista de espera» reúne todas las listas de la red.** Era solo la de la portada; ahora enseña, con un filtro
+  que dice cuántos quedan sin contactar en cada una, las cinco fuentes de `newsletter_subscribers` (CTC Home, Roast, X,
+  Directorio, Herramientas) y la lista de Terratalento, que tiene tabla propia. No sustituye a los tableros que cada lista
+  tiene junto a lo suyo: es el mismo componente leyendo la misma tabla — marcar a alguien aquí lo marca allá.
+- **Seguridad**: **la consola que administra un lead ya no se escribe a mano, y su compuerta fina mira el NIVEL.**
+  `leadsActions.ts` tenía un mapa `PILLAR_CONSOLE` —permisos sin barras, invisibles a toda reescritura de rutas— que se quedó
+  atrás en dos mudanzas. Desapareció: `src/lib/panel/leadsPilares.ts` guarda UN mapa, pilar → ruta del tablero, y la consola
+  se deduce de su primer segmento. Y la compuerta fina (`requireLeadConsole`) solo comprobaba el GRANT, no el nivel: un
+  colaborador «admin» en una consola y «viewer» en la dueña del lead podía responderlo. Ahora pide nivel `emite` en la
+  consola dueña, y **devuelve** el rechazo en vez de lanzar. Sin daño: las tres credenciales tienen el mismo nivel en todas.
+  De paso se cura el doble grant que pedía CaaS (ECP para entrar a la acción + OCP por el pilar): ahora es solo LCP.
+- **Cambiado**: **lo que sirve a dos consolas no cuelga del árbol de ninguna.** `leadsActions.ts` y `LeadModalRow.tsx` pasan a
+  `src/components/panel/` (los usan la LCP y los tableros de CTC Tech y Varietales del ECP). Las compuertas del Buzón y del
+  CRM CP Green pasan a `"lcp"`; la de las listas de espera a `["lcp","ecp"]`; la de Terratalento a `["ecp","lcp"]`.
+- **Cambiado**: **la lista de consolas tiene una sola fuente.** `qa-rutas-consolas` y `qa-niveles` tenían `bcp|ecp|ocp`
+  escrito a mano nueve veces; ahora leen `CONSOLE_ORDER`, igual que `/panel`, el conmutador y la pantalla de credenciales
+  (cuyo mapa de niveles vacío también se deriva). `/panel` pasa a una rejilla que acepta cuatro tarjetas; `robots.txt` cierra `/lcp`.
+- **Añadido**: `qa-rutas-consolas` (431) aprende dos cosas. **La compuerta en ARRAY**: hasta hoy era invisible para él, y por
+  eso la lista de espera compartida «no entraba en el mapa» — nadie la vigilaba. Ahora las consolas esperadas se deducen del
+  rail (`rail` + `tambien`) y la compuerta tiene que nombrar exactamente ese conjunto. **(g) los pilares de leads**: cada
+  tablero es un enlace real del rail de su consola, y `leadsActions` no vuelve a escribir una consola a mano. Las tres
+  comprobaciones se probaron haciéndolas morder. `qa-crm-interes` (63) exige que la lista reunida enseñe TODA fuente de
+  `SOURCES`, y deja de dar por buena la compuerta por una palabra que estaba en la ruta del `import`. `qa-nav` (22) cubre el
+  primer grupo anidado del rail (`/lcp/crm/…`).
+- **Datos**: `panel_users.consoles` gana `lcp` en las tres credenciales — el owner `admin`, los dos colaboradores `viewer`,
+  igual que en las otras tres (D2 del plan, con permiso explícito del owner). Comprobado por SQL antes del push: nadie con
+  `ecp` u `ocp` y sin `lcp`.
+- **Docs**: charter `consolas` (cuatro consolas; fases que quedan), `ctc-tech`, `varietales`, `cherry-picked`; `ALINEACION`
+  §1 (vocabulario: LCP = *Relationship*) y §3; `AGENTS.md`; `BCP_USER_ADMIN_PLAN.md` (la columna «Módulo» de la lista blanca);
+  `OVERHAUL_CONSOLAS_PLAN.md` — fase 1 marcada como ejecutada, **con lo que cambió al ejecutarla**: el color (el azul acero
+  propuesto no se distinguía del OCP; quedó el carmesí corporativo aclarado), y las cinco decisiones de diseño de arriba.
+  **Pendiente a propósito**: el diagrama «espejo del menú» de `/bcp/documentacion` sigue dibujando tres consolas; se
+  redibuja una vez, al cerrar la fase 2.
+
 ## [V5.58] — 2026-09-19 (commit 8fa0441)
 
 > **Wrap V45** (2026-09-19): ciclo compilado en `Documentacion_Interactiva_V45.0(55c8aaa).html` — 40 nodos · 148 fichas (+2: `nivelesconsola`, `guardianespejo`) · 59 trazas (+1) · 95 wires · 36 CTX (+1) · 389 ANN (+8). Primer wrap llamado desde su vía, y fase 0 del overhaul de las consolas: es la foto del ANTES.

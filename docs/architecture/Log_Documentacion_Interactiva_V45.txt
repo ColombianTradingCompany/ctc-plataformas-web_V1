@@ -113,3 +113,37 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   navegador sin errores · qa-changelog · qa-arqlog · qa-encoding · qa-docs.
 
 ════════════════════════════════════════════════════════════════════════════════
+
+## [2026-09-19] V5.59 · Nace la LCP · Lead Control Panel, la cuarta consola (consolas → cherry-picked, ctc-tech, varietales, ctc-home, directorio, herramientas-cafe, terratalento)
+- NODO NUEVO para el V46: **`n-lcp`** — LCP · Lead Control Panel, «Relationship»: lo que entra de fuera y a quién se le
+  responde. Rail: «LCP · General» (Buzón de entrada, Leads · Recepción, Lista de espera) y «LCP · CRM» (CaaS, Green, Roast,
+  X). Acento `#F0708A` (carmesí corporativo aclarado; el azul acero del plan no se distinguía del OCP). WIRES: `n-login` →
+  `n-lcp` (misma llave), y lo que hoy sale de `n-ecp` hacia buzón/leads y de `n-ocp` hacia los CRM pasa a salir de `n-lcp`.
+  Actualizar las notas de `n-ecp` (pierde buzón, leads y la lista de la portada) y `n-ocp` (pierde el grupo Cherry Picked).
+- Fichas que cambian: `consolas` / `rutasmovidas` (42 rutas; primera mudanza que REAPUNTA dos entradas a una consola que no
+  existía cuando nacieron: `/bcp/caas`, `/ocp/leads`); `nivelesconsola` (cinco borradores de la lista blanca viven ahora en
+  la LCP; la clase no cambió); `leads` (la consola del pilar se DEDUCE de la ruta del tablero: `src/lib/panel/leadsPilares.ts`
+  — desaparece `PILLAR_CONSOLE`, el mapa de permisos sin barras que se quedó atrás en dos mudanzas; la compuerta fina mira
+  el NIVEL y devuelve el rechazo); `listasdeespera` (la lista reunida: seis listas, dos tablas, un filtro con pendientes).
+- Para la ficha `guardianespejo`: QUINTO caso, y el más sutil. `qa-crm-interes` afirmaba «exige admin activo» buscando la
+  palabra `requireActiveAdmin`… que aparecía en la RUTA DEL IMPORT (`@/lib/panel/requireActiveAdmin`). Habría pasado con la
+  acción sin compuerta alguna. Y `qa-rutas-consolas` no veía las compuertas en array: la lista de espera compartida llevaba
+  desde la V5.57 fuera de su mapa «a propósito», que quería decir sin vigilar. Las dos se deducen ahora del rail.
+- LECCIÓN: **una lista escrita a mano en un guardián es una consola que el guardián no mira.** `bcp|ecp|ocp` estaba nueve
+  veces entre dos guardianes; el paso 1 de la fase fue derivarla de `CONSOLE_ORDER` y verla en verde CON TRES antes de añadir
+  la cuarta. Todo lo que enumera consolas lee ya de ahí (`/panel`, conmutador, credenciales, `grantedConsoles`, guardianes).
+- LECCIÓN: **lo que sirve a dos consolas no cuelga del árbol de ninguna** (la que dejó `shared.module.css` en PR-B y repitió
+  `InteresBoard` en la V4.39). `leadsActions.ts` colgaba del ECP y servía a cuatro tableros de dos consolas: la mudanza se lo
+  habría llevado. Vive en `src/components/panel/`, con `LeadModalRow.tsx`.
+- TRAZA candidata: «Alguien deja su correo en la portada» → `subscribeNewsletter` (`source: ctc-home`) →
+  `newsletter_subscribers` → LCP · Lista de espera (filtro, pendientes) → `marcarContactado` (borrador; abre LCP y ECP) →
+  revalida la lista reunida Y el tablero de la fuente.
+- ⚠️ ANN QUE EL V46 TIENE QUE REPUNTAR (la comprobación 5 las cantará como huérfanas):
+  `ctc-platform/src/app/ecp/(app)/buzon` → `ctc-platform/src/app/lcp/(app)/buzon` ·
+  `ctc-platform/src/app/ecp/(app)/ctc-home/page.tsx` → `ctc-platform/src/app/lcp/(app)/lista-espera/page.tsx` ·
+  `ctc-platform/src/app/ecp/(app)/leadsActions.ts` → `ctc-platform/src/components/panel/leadsActions.ts`.
+  ANN nuevas que merecen entrada: `src/app/lcp/(app)/layout.tsx`, `src/lib/panel/leadsPilares.ts`, `src/app/lcp/(app)/crm`.
+- NO inventar en el mapa: `EstructuraModal.tsx` (el diagrama de `/bcp/documentacion`) sigue dibujando TRES consolas — se
+  redibuja al cerrar la fase 2. La fase 2 moverá además Directorio, Herramientas y Terratalento al BCP.
+- Datos: `panel_users.consoles` ganó `lcp` en las tres credenciales (owner `admin`, colaboradores `viewer`).
+(commit: pendiente)

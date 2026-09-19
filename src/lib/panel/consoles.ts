@@ -1,5 +1,5 @@
 // ── CTC Web Platform · the internal consoles ────────────────────────────────
-// Single source of truth for the three INTERNAL consoles that share ONE login
+// Single source of truth for the FOUR internal consoles that share ONE login
 // (the "master key") and ONE session. They are PARALLEL surfaces, each with its
 // own route tree and shell — NOT tabs inside one panel. See the vision board
 // (`reference_html-vision-board/ctc-arquitectura-v3.html`, tab "BCP · credenciales"):
@@ -13,6 +13,12 @@
 //                                     contacto y caja de herramientas interna.
 //                                     (La sigla conserva *Executive*: es la
 //                                     decisión F1 del owner, 2026-08-17.)
+//   LCP · Lead Control Panel        — «Relationship». La relación: todo lo que
+//                                     entra de fuera y a quién se le responde —
+//                                     buzón, leads, listas de espera y los CRM
+//                                     de Cherry Picked. CUARTA consola, nacida
+//                                     en la V5.59 (overhaul de las consolas,
+//                                     docs/OVERHAUL_CONSOLAS_PLAN.md, fase 1).
 //
 // ⚠️ Ese es el reparto al que VAMOS. Las palabras se congelaron el 2026-08-18
 // (paso (i) de docs/V5_CONSOLAS_PLAN.md) ANTES de mover un solo módulo, y solo
@@ -24,7 +30,7 @@
 // tier (see docs/BCP_USER_ADMIN_PLAN.md) — they are credentialed by BCP but are
 // not consoles listed here, and their operators are never `bcp_admin`.
 
-export type PanelConsoleKey = "bcp" | "ecp" | "ocp";
+export type PanelConsoleKey = "bcp" | "ecp" | "ocp" | "lcp";
 
 export type PanelNavLink = { href: string; label: string; exact?: boolean; ownerOnly?: boolean };
 /** `ownerOnly` en el grupo oculta TODO el grupo; en un link, solo ese link.
@@ -150,20 +156,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // material de cliente. Se metió aquí dentro porque es exactamente la
           // cifra que el contenido no puede inventarse; /bcp/direccionamiento/grados sigue vivo
           // como redirección.
-          // El Buzón se movió del BCP a ECP (2026-07-21): el correo de la red es
-          // material de dirección, no operación diaria.
-          { href: "/ecp/buzon", label: "Buzón de entrada" },
-          // Leads · Recepción (← OCP, PR-C): la puerta general de la red. Viene
-          // al ECP porque contactar es EJECUTAR, no operar; los pilares de
-          // servicio (CTC Tech, Varietales) ya tenían su CRM aquí, y el de CaaS
-          // se quedó en el OCP con el catálogo, que es de donde se sirve.
-          { href: "/ecp/leads", label: "Leads · Recepción" },
-          // Lista de espera · CTC Home (V4.39): la otra cosa que entra por la web
-          // pública. La tercera fuente de `newsletter_subscribers`, abierta el
-          // 2026-08-10 cuando el índice de la red dejó de anunciar la puerta del
-          // Control Panel. Roast y X viven en «OCP · Cherry Picked» porque son
-          // programas de Cherry Picked; ésta es de la red entera, y ahí no cabía.
-          { href: "/ecp/ctc-home", label: "Lista de espera · CTC Home" },
+          // El Buzón, «Leads · Recepción» y la lista de espera de CTC Home se fueron a la
+          // LCP en la V5.59: son lo que ENTRA de fuera, y la LCP es la consola de eso.
+          // Sus URLs viejas siguen vivas como 308 (`rutasMovidas.ts`).
           // Directorio del Café (2026-07-24): la capa de personas de la red. Aquí
           // se verifican las fichas (Aceptar/Revisar/Rechazar → Código de
           // Verificado) y se modera el muro.
@@ -302,24 +297,56 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/ctc-selection", label: "CTC Selection" },
         ],
       },
+      // El grupo «OCP · Cherry Picked» (los cuatro CRM CP) se fue a «LCP · CRM» en la V5.59.
+    ],
+  },
+  lcp: {
+    key: "lcp",
+    code: "LCP",
+    name: "Lead Control Panel",
+    tagline: "La relación: lo que entra de fuera y a quién se le responde",
+    // Carmesí corporativo (`--crimson` #C8102F) aclarado para el rail oscuro, igual que el azul del
+    // OCP aclara el `--navy`. El plan (D3) proponía un azul acero; se descartó al ejecutarlo porque
+    // en el conmutador no se distingue del azul del OCP, y el carmesí era el color de la paleta
+    // corporativa que ninguna consola usaba.
+    accent: "#F0708A",
+    home: "/lcp",
+    nav: [
       {
-        // CRM CP (← BCP el de CaaS): un tablero por embudo de Cherry Picked.
-        // Hoy solo existe CaaS; Green, Roast y X nacen en el paso (iii) (F5).
-        label: "OCP · Cherry Picked",
+        label: "LCP · General",
         links: [
-          { href: "/ocp/crm/caas", label: "CRM CP CaaS" },
-          // CRM CP Green (paso (iii)-2): los COMPRADORES de la tienda, no los
-          // leads. Su etapa se deduce de los pedidos y solo se guarda cuando
-          // alguien la fija a mano (D3.2). Roast y X llegan después.
-          { href: "/ocp/crm/green", label: "CRM CP Green" },
-          // Roast y X (paso (iii)-3) son LISTAS DE ESPERA, no embudos: sus
-          // programas abren en 2027 y lo único que recogen hoy es un correo.
-          { href: "/ocp/crm/roast", label: "CRM CP Roast" },
-          { href: "/ocp/crm/x", label: "CRM CP X" },
+          { href: "/lcp", label: "Panel", exact: true },
+          // El Buzón (← ECP, V5.59; antes BCP): el correo de la red. Un colaborador ve solo el
+          // dirigido a su etiqueta @ctcexport.com; el owner, todo.
+          { href: "/lcp/buzon", label: "Buzón de entrada" },
+          // Leads · Recepción (← ECP): el pilar `general` de «Escríbenos». Los pilares de servicio
+          // se miran en el tablero de SU superficie (CTC Tech y Varietales, en el ECP) o en su CRM
+          // (CaaS, aquí abajo) — `src/lib/panel/leadsPilares.ts` es la fuente única de ese reparto.
+          { href: "/lcp/leads", label: "Leads · Recepción" },
+          // Lista de espera (← el módulo «ctc-home» del ECP): dejó de ser solo la de la portada. Reúne, con un
+          // filtro, las cinco fuentes de `newsletter_subscribers` y la lista de Terratalento. Roast,
+          // X, Directorio y Herramientas SIGUEN teniendo su tablero junto a lo suyo; esto es el
+          // sitio donde se ven todas a la vez.
+          { href: "/lcp/lista-espera", label: "Lista de espera" },
+        ],
+      },
+      {
+        // Los cuatro CRM de Cherry Picked (← «OCP · Cherry Picked»): un tablero por embudo. CaaS es
+        // un kanban de leads; Green son los COMPRADORES de la tienda (su etapa se deduce de los
+        // pedidos); Roast y X son listas de espera de programas que abren en 2027.
+        label: "LCP · CRM",
+        links: [
+          { href: "/lcp/crm/caas", label: "CRM CP CaaS" },
+          { href: "/lcp/crm/green", label: "CRM CP Green" },
+          { href: "/lcp/crm/roast", label: "CRM CP Roast" },
+          { href: "/lcp/crm/x", label: "CRM CP X" },
         ],
       },
     ],
   },
 };
 
-export const CONSOLE_ORDER: PanelConsoleKey[] = ["bcp", "ecp", "ocp"];
+// El orden es el del cuadro del owner (2026-09-19): BCP · ECP · OCP · LCP. Todo lo que enumera
+// consolas —el conmutador, `/panel`, la pantalla de credenciales, `grantedConsoles`, los guardianes—
+// lee de aquí: una quinta consola es una línea en este archivo, no una búsqueda por el repo.
+export const CONSOLE_ORDER: PanelConsoleKey[] = ["bcp", "ecp", "ocp", "lcp"];

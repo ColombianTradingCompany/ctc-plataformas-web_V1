@@ -16,6 +16,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { PUEDE, nivelEn, puede, mensajeSoloLectura } from "../src/lib/panel/niveles.ts";
+import { CONSOLE_ORDER } from "../src/lib/panel/consoles.ts";
 
 let ok = 0;
 const fallos = [];
@@ -172,7 +173,7 @@ check("nada declarado «lectura» inserta, borra, emite, envía ni gasta", sinCl
 // ── 5 · el viewer se entera ────────────────────────────────────────────────
 const rail = lee("src/components/panel/PanelSidebar.tsx");
 check("el rail anuncia el nivel «viewer»", /nivel === "viewer"/.test(rail) && /Lectura y borradores/.test(rail));
-for (const k of ["bcp", "ecp", "ocp"]) {
+for (const k of CONSOLE_ORDER) {
   check(`el layout de ${k} entrega a la concha el nivel de SU consola`, lee(`src/app/${k}/(app)/layout.tsx`).includes(`identity.niveles["${k}"]`));
 }
 const usuarios = lee("src/app/bcp/(app)/usuarios/UsuariosClient.tsx");

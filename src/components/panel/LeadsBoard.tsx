@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { replyToLead, setLeadStatus, retryWelcomeEmail, retryReplyEmail } from "@/app/ecp/(app)/leadsActions";
-import { LeadModalRow } from "@/app/ecp/(app)/leads/LeadModalRow";
+import { replyToLead, setLeadStatus, retryWelcomeEmail, retryReplyEmail } from "@/components/panel/leadsActions";
+import { LeadModalRow } from "@/components/panel/LeadModalRow";
 import styles from "@/components/panel/shared.module.css";
 
 // ── El tablero de leads, parametrizado por pilar (V4 · Fase 1) ───────────────
-// Era la página completa de /ecp/leads; ahora es el componente compartido que
+// Nació como la página completa de Leads; ahora es el componente compartido que
 // cada consola monta con SUS pilares (regla Fase 0: "el CRM vive en la consola
-// dueña del dominio") — general → OCP (recepción), cocreate → BCP (CRM
-// CaaS), tech y varietales → ECP. Una sola tabla `leads`; cambia qué
-// consola ve qué pilar. Las Server Actions siguen viviendo en
-// src/app/ocp/(app)/leadsActions.ts y re-verifican admin activo por su cuenta.
+// dueña del dominio") — `general` y `cocreate` (CaaS) → LCP; `tech` y
+// `varietales` → ECP. Una sola tabla `leads`; cambia qué consola ve qué pilar, y
+// ese reparto tiene fuente única: `src/lib/panel/leadsPilares.ts`. Las Server
+// Actions viven AL LADO (`leadsActions.ts`), no en el árbol de una consola, y
+// re-verifican sesión, consola y nivel por su cuenta.
 
 type LeadRow = {
   id: string;

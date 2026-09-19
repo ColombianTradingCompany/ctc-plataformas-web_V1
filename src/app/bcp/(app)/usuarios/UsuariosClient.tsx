@@ -30,7 +30,8 @@ const STATUS_LABEL: Record<PanelUserRow["status"], string> = {
 };
 
 type LevelMap = Record<PanelConsoleKey, "" | ConsoleLevel>;
-const EMPTY_LEVELS: LevelMap = { bcp: "", ecp: "", ocp: "" };
+// Se DERIVA del rail: una consola nueva (la LCP, V5.59) aparece aquí sola, sin tocar este archivo.
+const EMPTY_LEVELS = Object.fromEntries(CONSOLE_ORDER.map((k) => [k, ""])) as LevelMap;
 
 export function UsuariosClient({ users, currentUserId }: { users: PanelUserRow[]; currentUserId: string }) {
   const router = useRouter();

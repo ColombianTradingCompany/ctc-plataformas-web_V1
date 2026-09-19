@@ -17,7 +17,9 @@ export async function marcarContactado(
   subscriberId: string,
   contactado: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const permiso = await permisoDeEscritura(["ocp", "ecp"], "borrador");
+  // DOS consolas, a propósito: Roast, X y la lista reunida se miran en la LCP; Directorio y
+  // Herramientas, junto a su plataforma en el ECP. `qa-rutas-consolas` deduce este par del rail.
+  const permiso = await permisoDeEscritura(["lcp", "ecp"], "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -46,15 +48,15 @@ export async function marcarContactado(
     performed_by: adminId,
   });
 
-  // Se revalidan los TRES tableros: la fila pertenece a UNA fuente, pero saber
+  // Se revalidan TODOS los tableros: la fila pertenece a UNA fuente, pero saber
   // cuál exige leerla, y revalidar de más aquí no cuesta nada. Revalidar de
   // MENOS, en cambio, no avisa — deja el otro tablero con datos rancios.
-  // ⚠️ Y ojo: el de CTC Home vive en OTRA CONSOLA. Añadir una fuente y olvidar
+  // ⚠️ Y ojo: viven en DOS consolas, y `/lcp/lista-espera` las enseña todas. Añadir una fuente y olvidar
   // su `revalidatePath` es justo el fallo mudo de esta familia, así que
   // `qa-crm-interes-check.mjs` exige uno por cada fuente declarada.
-  revalidatePath("/ocp/crm/roast");
-  revalidatePath("/ocp/crm/x");
-  revalidatePath("/ecp/ctc-home");
+  revalidatePath("/lcp/crm/roast");
+  revalidatePath("/lcp/crm/x");
+  revalidatePath("/lcp/lista-espera");
   revalidatePath("/ecp/directorio");
   revalidatePath("/ecp/herramientas");
   return { ok: true };

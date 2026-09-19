@@ -59,7 +59,7 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // guardián (e) rechaza la cadena si alguien lo intenta.
   { de: "/bcp/black-stock", a: "/ocp/ctc-selection", desde: "V4.24 · reapuntada V4.27" },
   // Cherry Picked — el primero de los cuatro CRM (los otros tres nacen en el paso (iii))
-  { de: "/bcp/caas", a: "/ocp/crm/caas", desde: "V4.24" },
+  { de: "/bcp/caas", a: "/lcp/crm/caas", desde: "V4.24 · reapuntada V5.59" },
 
   // ── PR-B «El BCP recibe dirección y configuración» (V4.25, 2026-08-18) ─────
   // El BCP deja de estar vacío: recibe del ECP lo que dice la casa y cómo está
@@ -84,7 +84,7 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // El ECP se queda con lo que EJECUTA: las plataformas, el contacto con el
   // mundo y las herramientas internas del equipo. El OCP queda limpio: solo el
   // pasaporte del lote, que es lo que PR-A le trajo.
-  { de: "/ocp/leads", a: "/ecp/leads", desde: "V4.26" },
+  { de: "/ocp/leads", a: "/lcp/leads", desde: "V4.26 · reapuntada V5.59" },
   { de: "/ocp/cotizador-lotes", a: "/bcp/cotizador-lotes", desde: "V4.26 · reapuntada V5.56" },
   { de: "/ocp/cotizador-logistico", a: "/bcp/cotizador-logistico", desde: "V4.26 · reapuntada V5.56" },
   { de: "/ocp/cotizador-empaque", a: "/bcp/cotizador-empaque", desde: "V4.26 · reapuntada V5.56" },
@@ -113,6 +113,19 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
 
   // ── Paso (iii)-1 «CTC Selection» (V4.27, 2026-08-18) ───────────────────────
   { de: "/ocp/black-stock", a: "/ocp/ctc-selection", desde: "V4.27" },
+
+  // ── V5.59 (2026-09-19) · nace la LCP — fase 1 de docs/OVERHAUL_CONSOLAS_PLAN.md ──────────
+  // La cuarta consola se lleva lo que ENTRA de fuera: el buzón, la recepción de leads y la lista
+  // de espera (del ECP) y los cuatro CRM de Cherry Picked (del OCP). Dos entradas de arriba
+  // apuntaban a rutas que hoy se mudan y se REAPUNTARON: `/bcp/caas` y `/ocp/leads`.
+  // `/ecp/ctc-home` cambia además de NOMBRE: la lista dejó de ser solo la de la portada.
+  { de: "/ecp/buzon", a: "/lcp/buzon", desde: "V5.59" },
+  { de: "/ecp/leads", a: "/lcp/leads", desde: "V5.59" },
+  { de: "/ecp/ctc-home", a: "/lcp/lista-espera", desde: "V5.59" },
+  { de: "/ocp/crm/caas", a: "/lcp/crm/caas", desde: "V5.59" },
+  { de: "/ocp/crm/green", a: "/lcp/crm/green", desde: "V5.59" },
+  { de: "/ocp/crm/roast", a: "/lcp/crm/roast", desde: "V5.59" },
+  { de: "/ocp/crm/x", a: "/lcp/crm/x", desde: "V5.59" },
 ];
 
 /**

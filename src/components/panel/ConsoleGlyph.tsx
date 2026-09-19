@@ -4,6 +4,7 @@ import type { PanelConsoleKey } from "@/lib/panel/consoles";
 //   BCP — a key: identity root, issues every credential.
 //   ECP — an upward trend: direction, pricing, finances, network health.
 //   OCP — a cycle: dispatch and relevos, the operational loop.
+//   LCP — a speech bubble: what comes in from outside, and who has been answered.
 export function ConsoleGlyph({ console: key, size = 24, className }: { console: PanelConsoleKey; size?: number; className?: string }) {
   const common = {
     width: size,
@@ -42,6 +43,14 @@ export function ConsoleGlyph({ console: key, size = 24, className }: { console: 
           <path d="M20 4.5v5h-5" />
           <path d="M19.5 14a7.5 7.5 0 0 1-12.6 3.3L4 14.5" />
           <path d="M4 19.5v-5h5" />
+        </svg>
+      );
+    case "lcp":
+      return (
+        <svg {...common}>
+          <path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5v-3.5a2 2 0 0 1-2-2z" />
+          <path d="M8.5 9h7" />
+          <path d="M8.5 12h4.5" />
         </svg>
       );
   }

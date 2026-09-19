@@ -6,7 +6,7 @@ import { ConsoleGlyph } from "@/components/panel/ConsoleGlyph";
 import styles from "./hub.module.css";
 
 // The console selector: the neutral landing after the master login. Presents the
-// three internal consoles as parallel surfaces. If the operator can reach only
+// internal consoles (four since V5.59) as parallel surfaces. If the operator can reach only
 // one, we forward straight into it.
 export default async function PanelHubPage() {
   const identity = await requirePanelIdentity();
@@ -22,7 +22,7 @@ export default async function PanelHubPage() {
           <h1>{consoles.length ? "Elige una consola" : "Sin consolas asignadas"}</h1>
           <p>
             {consoles.length
-              ? "Una sola sesión, tres consolas paralelas. Puedes cambiar entre ellas en cualquier momento desde la barra lateral."
+              ? "Una sola sesión, cuatro consolas paralelas. Puedes cambiar entre ellas en cualquier momento desde la barra lateral."
               : "Tu cuenta no tiene ninguna consola asignada todavía. Pídele a un owner que te conceda acceso desde Usuarios y credenciales."}
           </p>
         </div>

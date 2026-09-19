@@ -226,7 +226,7 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
   (`requireConsoleWrite`, `permisoDeEscritura`, `coffeedGate`, `studioGate`): una acción nueva que olvide declararse queda
   cerrada al viewer, no abierta.
 
-**La lista blanca de borradores** — corta a propósito; se amplía aquí primero y en el código después:
+**La lista blanca de borradores** — corta a propósito; se amplía aquí primero y en el código después. (La columna «Módulo» dice la consola de HOY: la V5.59 llevó cinco de estas acciones a la LCP, la cuarta consola, sin cambiarles la clase.)
 
 | Acción | Módulo | Por qué es un borrador |
 |---|---|---|
@@ -239,11 +239,11 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `renameSpeaker` | ECP · transcripciones | nombra una voz |
 | `saveProposal` | BCP · Mapa de Trabajo | una propuesta es, por definición, algo que otro confirma |
 | `setTaskState` | OCP · panel | la casilla de una tarea del tablero |
-| `setEtapaComprador` | OCP · CRM Green | la excepción manual de la etapa; solo la lee ese tablero |
-| `marcarContactado` | OCP · ECP · listas de espera | «ya le escribí»; se puede desmarcar |
-| `marcarInteresTtContactado` | ECP · Terratalento | lo mismo |
-| `setBuzonTags` | ECP · Buzón | etiquetas internas del correo; reversible |
-| `markInboundEmailRead` | ECP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
+| `setEtapaComprador` | LCP · CRM Green | la excepción manual de la etapa; solo la lee ese tablero |
+| `marcarContactado` | LCP · ECP · listas de espera | «ya le escribí»; se puede desmarcar |
+| `marcarInteresTtContactado` | ECP · LCP · Terratalento | lo mismo |
+| `setBuzonTags` | LCP · Buzón | etiquetas internas del correo; reversible |
+| `markInboundEmailRead` | LCP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
 
 **Lo que parece un borrador y NO lo es** (para que nadie lo «arregle»): `logProducerComm` —la nota sobre un productor—
 **la ve el productor** en su panel; `guardarContexto` es la doctrina que lee la redacción asistida; `recordAnchor` alimenta

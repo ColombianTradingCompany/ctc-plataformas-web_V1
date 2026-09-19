@@ -34,7 +34,8 @@ const particion = lee("src/components/kaffetal-regal/panel/mensajes.ts");
 const mensajesTab = lee("src/components/kaffetal-regal/panel/MensajesTab.tsx");
 const exp = lee("src/components/kaffetal-regal/KaffetalExperience.tsx");
 const data = lee("src/components/kaffetal-regal/data.ts");
-const leads = lee("src/app/ecp/(app)/leadsActions.ts");
+// V5.59: las acciones de leads sirven a DOS consolas (LCP y ECP) y dejaron de colgar del árbol de una.
+const leads = lee("src/components/panel/leadsActions.ts");
 const modal = lee("src/components/ctc-home/ContactModal.tsx");
 
 // ── 1. El dato llega hasta el cliente ─────────────────────────────────────

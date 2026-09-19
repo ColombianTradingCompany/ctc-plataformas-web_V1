@@ -6,7 +6,8 @@
 .head h1{font-family:var(--font-fraunces),serif;font-size:30px;font-weight:800;color:var(--primary-deep);margin-top:10px;letter-spacing:-.01em}
 .head p{color:var(--muted);font-size:14px;margin-top:8px;max-width:56ch;line-height:1.6}
 
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+/* auto-fit y no `repeat(3,1fr)`: con la LCP (V5.59) son cuatro tarjetas, y quien tiene dos o tres no ve huecos */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 @media (max-width:760px){.grid{grid-template-columns:1fr}}
 
 .card{

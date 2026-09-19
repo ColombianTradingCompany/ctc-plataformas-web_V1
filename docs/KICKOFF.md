@@ -23,7 +23,7 @@ Regla de oro: **una conversación = un componente**. Si la tarea cruza dos, se a
 | CTC Consolas internas | CTC Consolas internas | `docs/componentes/consolas.md` |
 | Red de Socios | Red de Socios (una conversación por nodo) | `docs/componentes/socios.md` |
 | Secretaría CTC | Secretaría CTC (Notion · Google) | `docs/componentes/secretaria.md` |
-| Herramientas Internas | Herramientas Internas | `docs/componentes/herramientas-internas.md` |
+| Herramientas Internas | Herramientas Internas (una conversación por modelo) | `docs/componentes/herramientas-internas.md` |
 | La Biblia del Café | Biblia del Café | `docs/componentes/biblia.md` |
 | Kaffetal Regal | Kaffetal Regal | `docs/componentes/kaffetal-regal.md` |
 | Cherry Picked | Cherry Picked | `docs/componentes/cherry-picked.md` |
@@ -48,7 +48,9 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
-El Modelo Económico (PVC, /bcp/pvc) es SOLO de este componente: si la tarea lo toca, lee además docs/PVC_BCP_PLAN.md.
+El grupo «BCP · Herramientas Internas» del rail (Contexto, Misión y Visión, Modelo Económico —PVC y Grados—,
+Procesamiento, Logística; y los cotizadores y anclas del ECP) NO es tuyo: es del charter herramientas-internas.
+Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
 de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
@@ -110,24 +112,29 @@ Hoy: <la tarea>.
 
 ## Herramientas Internas  ·  `herramientas-internas`
 
-**Grupo:** Herramientas Internas · **Charter:** `docs/componentes/herramientas-internas.md`
+**Grupo:** Herramientas Internas (una conversación por modelo) · **Charter:** `docs/componentes/herramientas-internas.md`
 
 ```
 Trabajas SOLO en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
-(repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en LA HERRAMIENTA <nombre>.
+(repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en EL MODELO <Definición de Contexto |
+Misión y Visión | Modelo Económico | Modelo de Procesamiento | Modelo de Logística>.
 Antes de tocar nada lee, en este orden:
-1. docs/componentes/herramientas-internas.md   ← tu charter (dónde vive cada herramienta)
-2. docs/ALINEACION.md                          ← contratos transversales y registro de permeación
+1. docs/componentes/herramientas-internas.md   ← tu charter (los cinco modelos y dónde vive hoy cada pieza)
+2. docs/ALINEACION.md                          ← contratos transversales (los GRADOS son tuyos: §1) y registro de permeación
 3. AGENTS.md                                   ← la compuerta y las reglas de la casa
-El Modelo Económico (PVC) NO es de este componente: es solo del BCP (charter consolas). Para el transcriptor lee
-además tools/transcriptor/README.md y docs/TRANSCRIPCIONES_NUBE.md; para Stripe, docs/STRIPE_PLUGIN_SETUP.md y connect-recommend-plan.md.
-Lo que calcules aquí NO llega a Kaffetal Regal ni a Cherry Picked sin una línea en el §3 y el visto
-bueno del owner. Al terminar: compuerta, APP_VERSION + CHANGELOG, sello, push, verificación en vivo,
-log de arquitectura, y «Pendientes» de este charter al día.
+Para el Modelo Económico lee además docs/PVC_BCP_PLAN.md. Procesamiento y Logística NO tienen módulo todavía:
+si la tarea es darles uno, empieza por un BRIEF (docs/componentes/briefs/README.md) y PARA hasta que lo apruebe.
+Vives DENTRO de la consola BCP: el rail, los permisos y las rutas son del charter «consolas» — mover una ruta o
+tocar consoles.ts se le pide a él. Las consolas no se conducen en navegador: tsc, eslint, guardianes y SQL.
+Un modelo se EXHIBE antes de GOBERNAR: lo que calcules aquí NO llega a Kaffetal Regal ni a Cherry Picked sin una
+línea en el §3 y mi visto bueno, y quien lo lleva a la superficie es el OCP. La cifra de un guardián sale del
+plan o de la documentación, nunca del módulo que vigila.
+Al terminar: compuerta (incl. los qa-pvc-*, qa-grados, qa-rutas-consolas), APP_VERSION + CHANGELOG + asiento en el
+log de arquitectura, sello, push, verificación en vivo, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
 ```
 
-**Sugerencia de primera tarea:** Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha (RPC dedicada en vez de `service_role` en el instalador). (El PVC ya no es de aquí: es solo del BCP, charter `consolas`.)
+**Sugerencia de primera tarea:** Elegir el MODELO de la sesión. Con fecha: **CN-1**, publicar el PVC de ene–mar 2027 antes del 15-oct-2026 (espera la decisión O-1). Sin dependencias: el **brief del Modelo de Logística** (qué cuesta después del FOB por volumen y región — columna marítima, DDP consolidado ≠ dedicado, regiones como dato) o el del **Modelo de Procesamiento** (finca → CPS → verde → empacado → embalado, con mermas y costos), que hoy son piezas sueltas en `lectura.ts`, `canales.ts` y los cotizadores del ECP.
 
 ## La Biblia del Café  ·  `biblia`
 

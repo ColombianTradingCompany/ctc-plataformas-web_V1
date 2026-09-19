@@ -1,4 +1,9 @@
-# PVC · módulo del BCP · Business Core — plan de acople
+# PVC · módulo del BCP · Herramientas Internas (antes «Business Core») — plan de acople
+
+> **Dueño desde el 2026-09-19 (V5.55): el charter `herramientas-internas`**, que el owner redefinió como los cinco modelos
+> de la casa (Contexto · Misión y Visión · **Modelo Económico** · Procesamiento · Logística). Donde este plan dice «dueño:
+> `consolas`» para algo del modelo, léase `herramientas-internas`; lo que es del OCP (que ofertas, contratos y veredicto
+> lean el modelo) sigue siendo de `consolas`. El módulo sigue viviendo en la consola BCP, en `/bcp/pvc`.
 
 Estado: **fase 1 ejecutada** (V5.28, 10-sep-2026): tablas, motor, `/bcp/pvc`, vista pública. **Las cinco decisiones de §8
 están tomadas (owner, 15-sep-2026)** y el §9 fija lo que cambian; la fase 2 queda desbloqueada (dueño: `consolas`). El
@@ -32,7 +37,7 @@ alza. Al llegar la fecha de corte, el ciclo de esa semana es el borrador que el 
 
 ## 2. Dónde vive en la consola
 
-- Grupo de navegación **BCP · Business Core** (`src/lib/panel/consoles.ts`, `CONSOLES.bcp.nav[0]`), enlace `/bcp/pvc`
+- Grupo de navegación **BCP · Herramientas Internas** (hasta la V5.54, «Business Core»; `src/lib/panel/consoles.ts`, `CONSOLES.bcp.nav[0]`), enlace `/bcp/pvc`
   con `ownerOnly`. La pestaña vacía `direccionamiento/modelo-economico` enlaza al módulo y explica la doctrina
   (el D2 en versión corta).
 - Rutas: `src/app/bcp/(app)/pvc/` con tab strip (patrón `DireccionamientoTabs`):

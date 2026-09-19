@@ -232,3 +232,27 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
 - Compuerta: tsc · eslint 8 · build · 55/58 guardianes (2 piden las cuentas `prueba-*`; el de
   conformidad del puente exige servidor de desarrollo y no tocaba).
 (commit: 6e90d79)
+
+## [2026-09-19] V5.55 · Herramientas Internas se redefine: los cinco modelos de la casa, donde el rail decía «Business Core» (owner → herramientas-internas, consolas)
+- CAMBIO DE ARQUITECTURA DE COMPONENTES — FICHA `componentes` (y la tarjeta `n-bcp`): el primer grupo del rail del BCP
+  deja de llamarse «BCP · Business Core» y es **«BCP · Herramientas Internas»**. Es un componente propio (charter
+  `herramientas-internas`) que vive DENTRO de la consola BCP: **cinco modelos** — Definición de Contexto · Misión y Visión ·
+  Modelo Económico (PVC y Grados de Calidad) · Modelo de Procesamiento · Modelo de Logística. Los dos últimos NO tienen
+  módulo: son piezas sueltas (`lectura.ts`, `canales.ts`, los escalones de flete del motor, los cotizadores de empaque y
+  logístico del ECP) y empiezan por un brief. **No inventar nodos para ellos en el V45**: decirlo como «decidido, sin
+  construir», igual que la ficha `narrativa`.
+- ⚠️ **INVIERTE el asiento de la V5.53** en un punto: allí se escribió «el Modelo Económico es ÚNICAMENTE del BCP (charter
+  `consolas`)». El owner lo cambió esa misma tarde. El V45 compila el estado FINAL: PVC, Grados, Direccionamiento, Mercado
+  Global, anclas y cotizadores → `herramientas-internas`; Transcriptor, Stripe y Herramienta de Guion → `consolas`.
+- FICHA `grados`: el contrato de Grados (`definicion.ts`, `ALINEACION` §1) cambia de dueño a `herramientas-internas`.
+  Sigue habiendo dos «Grados» en pantalla (`/bcp/direccionamiento/grados` = LA definición; `/bcp/pvc/grados` = la escala de
+  puntos que viene) y una pestaña «Modelo Económico» vacía en Direccionamiento: deuda declarada, con la mudanza.
+- FICHAS `pvc`, `direccionamiento`, `manejoplataformas`, `transcripciones`, `transcriptor`, `herramientas`: revisar la línea
+  de «componente / dueño» de cada una. `n-cotizadores` y `n-anclas`: su grupo del rail sigue siendo «ECP · Caja de
+  herramientas» (las rutas no se movieron), pero su dueño es `herramientas-internas`.
+- REGLA nueva en `ALINEACION` §2, para la ficha `componentes`: **Herramientas Internas es el backstage del backstage** — un
+  modelo se EXHIBE antes de GOBERNAR; lo que calcula llega a una superficie solo por el OCP, con línea en §3.
+- Lo que NO cambió, para que el V45 no lo mueva: ninguna ruta, ningún permiso, ninguna tabla. `qa-rutas-consolas` 264/264.
+- ANN: `docs/componentes/herramientas-internas.md` (reescrito), `docs/componentes/consolas.md`, `src/lib/panel/consoles.ts`.
+- Compuerta: tsc · eslint 8 · build · guardianes (los 2 de siempre piden las cuentas `prueba-*`).
+(commit: pendiente)

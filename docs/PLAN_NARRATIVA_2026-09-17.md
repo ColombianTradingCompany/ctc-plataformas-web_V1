@@ -34,7 +34,7 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 | 0 | O-6 | owner | Marcas: «Kaffetal» ante la SIC; registros de Papagayo Beans® y CTCx | — | — | KR, CP |
 | 0 | O-7 | owner | Tarifa de conexión del tostado in situ; tríadas de reputación; Plus vs Básica | — | — | CN-8 |
 | 0 | O-8 | owner | Video del productor: animática ya, rodaje tras KR-1 y KR-2 | — | KR-1, KR-2 | — |
-| 1 | CN-1 | consolas · BCP | **PVC ene–mar 2027 antes del 15-oct** + calendario público | M | O-1 | KR-1 (cita el calendario) |
+| 1 | CN-1 | **herramientas-internas** · Modelo Económico (era consolas · BCP hasta el 2026-09-19; la clave se conserva) | **PVC ene–mar 2027 antes del 15-oct** + calendario público | M | O-1 | KR-1 (cita el calendario) |
 | 1 | CN-2 | consolas | Marca y catálogo: razón social, CTCx, Papagayo Beans® en ficha/cinta/OG, retiro de `cocreate` | M | — | CN-7, CP-2 |
 | 1 | CP-1 | cherry-picked | US$ en tienda y Roast; mínimos en unidades de 6 kg; fin de `ASSOC_BLACK_MOQ` | M | — | CP-3, CN-4 |
 | 1 | CP-2 | cherry-picked | Portada y programas con Papagayo Beans®; mapa de Enabled Regions; Roast, X y CaaS; fuera Co-Create | M–L | CN-2 (clave y ruta) | — |
@@ -48,12 +48,12 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 | 2 | CN-7 | consolas · OCP | UID/QR del lote y sticker imprimible; ficha pública de CTCx Selection | M | CN-2, O-4 | CP-3 |
 | 2 | KR-2 | kaffetal-regal | Panel: perfil primero, tabla de salida antes de firmar, Arena, «su café en la bolsa», avisos | M | CN-3, CN-5, CN-6 | O-8 |
 | 2 | CP-3 | cherry-picked | Catálogo y ficha: mínimos desde la edición, lista FOB, Papagayo Beans®, CTCx Selection, puja en US$ | M | CN-3, CN-4, CN-7 | primer lote publicado |
-| 3 | CN-8 | consolas · BCP/OCP | Regiones como dato, tablas de precio por región, motor v2.2.0 | L | O-5, O-7 | CP-4, SO-2 |
+| 3 | CN-8 | **herramientas-internas** · Modelo de Logística y Económico (el lado OCP sigue en consolas) | Regiones como dato, tablas de precio por región, motor v2.2.0 | L | O-5, O-7 | CP-4, SO-2 |
 | 3 | CP-4 | cherry-picked | Green por región: acceso, tramos y consolidado con MR | M | CN-8 | — |
 | 3 | SO-2 | socios | Panel del Master Roaster con etiquetas (PB · Co-Brand · My Brand) y Centro de Calidad con el CIR | L | CN-8, O-5 | CP-5 |
 | 3 | CP-5 | cherry-picked | Roast y X como productos (2027); HORECA por CaaS al 82 % | L | SO-2 | — |
 | 3 | HI-1 | herramientas-internas | Calculadora «PVC × grado» / PAD para OCP, KR y campo | M | CN-3 | — |
-| 4 | CN-9 | consolas · OCP/BCP | Fase 2 de grados: el Punto y la Tríada + base física en el veredicto | L | O-2 | KR-3, SE-2 |
+| 4 | CN-9 | **herramientas-internas** (la escala, `definicion.ts`) + consolas · OCP (la puerta del veredicto) | Fase 2 de grados: el Punto y la Tríada + base física en el veredicto | L | O-2 | KR-3, SE-2 |
 | 4 | KR-3 | kaffetal-regal | Copy de grados (misma tanda que CN-9) | S | CN-9 | — |
 | 4 | SE-2 | secretaria | Notion «Grados» con la escala nueva | S | CN-9 | — |
 
@@ -82,7 +82,7 @@ versión, y el charter borra su pendiente. Si una tanda cambia de alcance, se co
 
 ## 3 · Ola 1 · en paralelo, sin dependencias
 
-### CN-1 · consolas · BCP · el PVC de ene–mar 2027 (antes del 15-oct-2026) · M
+### CN-1 · herramientas-internas · Modelo Económico · el PVC de ene–mar 2027 (antes del 15-oct-2026) · M
 
 - **Alcance.** Nueva edición con `valid_from` 1-ene-2027 y `valid_to` 31-mar; F4-2026 según O-1; la regla pública
   de anticipación (primeras dos semanas del segundo mes del periodo anterior) en la pestaña Lectura y en

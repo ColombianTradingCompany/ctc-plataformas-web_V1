@@ -19,6 +19,34 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.55] — 2026-09-19 (commit pendiente)
+
+- **Hito**: **Herramientas Internas se redefine: es lo que el rail del BCP llamaba «Business Core».** El owner se
+  arrepintió de la definición de dos componentes y la cambió: Herramientas Internas deja de ser un cajón de utilidades
+  del equipo y pasa a ser **los cinco modelos con los que la casa piensa y fija sus cifras** — **Definición de
+  Contexto · Misión y Visión · Modelo Económico (PVC y Grados de Calidad) · Modelo de Procesamiento (de la finca, de CPS
+  a verde empacado y embalado) · Modelo de Logística (estimaciones y cotizaciones que definen precios post-FOB, según
+  volúmenes y regiones)**. Invierte su propia decisión de esa mañana (V5.53: «el PVC es únicamente del BCP», charter
+  `consolas`): el Modelo Económico vuelve a `herramientas-internas`, ahora como pieza central.
+- **Cambiado**: el primer grupo del rail del BCP se llama **«BCP · Herramientas Internas»** (antes «BCP · Business
+  Core», `src/lib/panel/consoles.ts`). **Solo cambió el nombre: ninguna ruta se movió** — traer `/ecp/cotizador-*` y
+  `/ecp/anclas-mercado` al BCP es una mudanza con talones 308 y 14 compuertas de permiso que el owner aplazó.
+- **Docs**: `docs/componentes/herramientas-internas.md` **reescrito**: la tabla de los cinco modelos con dónde vive
+  HOY cada pieza (dos no tienen módulo: Procesamiento y Logística son piezas sueltas en `lectura.ts`, `canales.ts`, el
+  motor y los cotizadores del ECP), sus tablas (`direccionamiento_context`, `pvc_*`, `quotes`, `market_anchors`), sus
+  once guardianes, sus reglas («un modelo se EXHIBE antes de GOBERNAR», «un modelo nuevo empieza por un brief») y su
+  kick-off — una conversación por MODELO. Recibe de `consolas` los pendientes del PVC (fase 2, refurbish, CN-1, CN-8, la
+  mitad de modelo de CN-9) **y el contrato de Grados de `ALINEACION` §1** (`definicion.ts`).
+- **Docs**: `docs/componentes/consolas.md` — el BCP de este charter queda en **configuración del sistema y red de
+  socios**; suelta Direccionamiento y el Modelo Económico y **recibe el Transcriptor, Stripe y la Herramienta de Guion**
+  (con sus tablas `transcripts`/`transcript_workers` y sus dos guardianes). Nace con dueño aquí el pendiente de la mudanza.
+- **Docs**: reparto de lo que sobraba, **por modelo** — cotizador logístico → Logística; cotizador de empaque →
+  Procesamiento; anclas de mercado y cotizador de lotes → Económico; las pestañas «Grados de Calidad» y «Mercado Global»
+  de Direccionamiento → Modelo Económico (Mercado Global es el «Marco de mercado» del plan §11).
+- **Docs**: `ALINEACION` — línea en §3, regla nueva en §2 (**Herramientas Internas es el backstage del backstage**), nota
+  de lectura y tres filas con dueño nuevo en §3b; `PLAN_NARRATIVA` §1 (CN-1, CN-8, CN-9 cambian de dueño y conservan la
+  clave); cabecera de `PVC_BCP_PLAN.md`; `AGENTS.md`; y los kick-offs recompilados (`docs/KICKOFF.{md,html}`).
+
 ## [V5.54] — 2026-09-19 (commit 6e90d79)
 
 - **Corregido**: **Sonnet 5 cuesta 2/10 por millón, sin promoción.** `src/lib/ai/precios.ts` lo tenía como base 3/15 con

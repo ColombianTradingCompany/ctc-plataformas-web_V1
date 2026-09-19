@@ -68,7 +68,14 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     // red de socios. El pasaporte del lote se opera desde el OCP desde PR-A.
     nav: [
       {
-        label: "BCP · Business Core",
+        // «Herramientas Internas» desde la V5.55 (owner, 2026-09-19); hasta entonces «Business Core».
+        // Son los MODELOS con los que la casa piensa y fija sus cifras: Definición de Contexto y
+        // Misión y Visión (hoy pestañas de Direccionamiento), el Modelo Económico (PVC y Grados) y,
+        // cuando tengan módulo, los modelos de Procesamiento y de Logística — cuyas piezas siguen
+        // hoy en «ECP · Caja de herramientas» (cotizadores, anclas). El grupo es del charter
+        // `herramientas-internas`; el rail, los permisos y las rutas siguen siendo de `consolas`.
+        // SOLO cambió el nombre: ninguna ruta se movió (eso es una mudanza con talones 308).
+        label: "BCP · Herramientas Internas",
         links: [
           { href: "/bcp", label: "Panel", exact: true },
           // Direccionamiento (← ECP, PR-B): qué dice la casa y con qué cifras.
@@ -79,7 +86,7 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // V5.45): el PVC es el indicador principal del negocio, pero no es lo
           // único que vive ahí — con él van la lectura de mercado, la escala de
           // grados con su calculadora, el tablero del método y el dossier. Es
-          // «Business Core» en sentido literal, y owner-only porque publicar una
+          // el corazón de «Herramientas Internas», y owner-only porque publicar una
           // edición fija el precio de origen de la franja.
           //
           // La RUTA sigue siendo `/bcp/pvc` a propósito: el rename es de nombre,

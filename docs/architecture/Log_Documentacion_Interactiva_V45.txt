@@ -181,4 +181,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   `…/ocp/(app)/{ActionForm.tsx,PanelTasks.tsx,dashboardActions.ts}` → `ctc-platform/src/components/panel/{ActionForm.tsx,
   PanelTasks.tsx,tareasActions.ts}`. ANN nuevas: `src/lib/panel/{tareas.ts,tareasCarga.ts}`.
 - NO inventar en el mapa: «Seguimiento de Temas» y «Plataformas de Pagos» están en el cuadro del owner y NO en el rail.
-(commit: pendiente)
+(commit: 257c42d)

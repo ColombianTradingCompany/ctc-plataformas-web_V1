@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.60] — 2026-09-19 (commit pendiente)
+## [V5.60] — 2026-09-19 (commit 257c42d)
 
 - **Hito**: **el nuevo reparto BCP ↔ ECP** — fase 2 del overhaul de las consolas (`docs/OVERHAUL_CONSOLAS_PLAN.md`), según el
   cuadro del owner. El **BCP** es *lo que la casa ES*: «Ecosistema de Valor» —el tablero de cada plataforma de la red— y

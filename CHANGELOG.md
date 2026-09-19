@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.55] — 2026-09-19 (commit pendiente)
+## [V5.55] — 2026-09-19 (commit 912d7e5)
 
 - **Hito**: **Herramientas Internas se redefine: es lo que el rail del BCP llamaba «Business Core».** El owner se
   arrepintió de la definición de dos componentes y la cambió: Herramientas Internas deja de ser un cajón de utilidades

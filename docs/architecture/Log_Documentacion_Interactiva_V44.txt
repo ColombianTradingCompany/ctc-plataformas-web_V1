@@ -255,4 +255,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
 - Lo que NO cambió, para que el V45 no lo mueva: ninguna ruta, ningún permiso, ninguna tabla. `qa-rutas-consolas` 264/264.
 - ANN: `docs/componentes/herramientas-internas.md` (reescrito), `docs/componentes/consolas.md`, `src/lib/panel/consoles.ts`.
 - Compuerta: tsc · eslint 8 · build · guardianes (los 2 de siempre piden las cuentas `prueba-*`).
-(commit: pendiente)
+(commit: 912d7e5)

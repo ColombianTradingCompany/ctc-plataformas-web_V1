@@ -1,0 +1,115 @@
+Bitácora de cambios PENDIENTES sobre Documentacion_Interactiva_V45.0(55c8aaa).html
+(CTC Web Platform, desde 2026-09-19 · plataforma V5.58). Cada entrada se compila
+al próximo Version Wrap (V46).
+
+Formato:
+## [YYYY-MM-DD] V5.NN · Título corto
+- Qué cambió, concreto (archivo/tabla/flujo)
+- Si es escenario nuevo, cambio de nodo, entrada de DICT o cambio de arquitectura
+(commit: <sha corto o "pendiente">)
+
+════════════════════════════════════════════════════════════════════════════════
+QUIÉN ESCRIBE AQUÍ Y QUIÉN LLAMA AL WRAP (desde 2026-09-11, ALINEACION §5)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL ASIENTO lo escribe LA SESIÓN DEL COMPONENTE que despliega, en el MISMO commit
+  que sube APP_VERSION — lo exige `scripts/qa-arqlog-check.mjs` (toda versión del
+  CHANGELOG posterior a «plataforma V5.58» tiene que aparecer aquí). Se añade al
+  final; nunca se toca un asiento ajeno. `git pull` antes de escribir.
+· EL WRAP lo llama SOLO la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» (grupo CTC
+  Consolas internas, vía `plataforma`; existe desde el 2026-09-19 — antes la regla
+  nombraba una «Wraps del mapa» que nunca existió). Es el NODO FINAL: antes de compilar
+  audita que el maestro y los charters estén en el mismo punto (ALINEACION §5.3). Cadencia: ≥ 5 asientos, un hito de componente cerrado
+  o antes de una versión mayor — lo primero que ocurra.
+· La línea «plataforma V5.58» de la cabecera es la referencia del guardián: el wrap
+  siguiente la reescribe con la versión sobre la que cierra.
+
+════════════════════════════════════════════════════════════════════════════════
+CÓMO SE VALIDA UN WRAP — la lista que de verdad hay que correr
+════════════════════════════════════════════════════════════════════════════════
+
+✅ LA BATERÍA ES UN ARCHIVO: `docs/architecture/validate_snapshot.mjs`. Corre en
+NODE, no en la consola del navegador. Uso, desde `ctc-platform/`:
+
+    node docs/architecture/validate_snapshot.mjs docs/architecture/<nuevo>.html --prev docs/architecture/<anterior>.html [--dump]
+
+`--prev` imprime los contadores del snapshot anterior al lado de los del nuevo;
+`--dump` lista nodos, claves de DICT, ids de escenarios y CTX. Correrlo también
+contra el snapshot ANTERIOR como control: si pasa en los dos, no es permisivo.
+
+Las NUEVE comprobaciones, y las nueve tienen que volver VACÍAS:
+  1. pasos de traza (`q.n` y `q.from`) contra los `.node[id]` reales
+  2. `DICT[k].a[]` contra las claves de DICT
+  3. `WIRES` contra los nodos reales
+  4. `CTX` — nodo real Y claves reales
+  5. `ANN` huérfanas: rutas que ya no existen en el FILETREE recién regenerado
+  6. `ANN[...].info` contra las claves de DICT
+  7. `.ibtn[data-info]` del marcado contra DICT
+  8. `.chip[data-info]` — SOLO sobre el marcado ANTERIOR a `<script>`
+  9. claves REPETIDAS en el texto de DICT/CTX (JS se queda con la última en silencio)
+
+Y los contadores tienen que subir EXACTAMENTE lo esperado
+(V32: 95→99 · V33: 99→102 · V34: 102→104 · V35: 104→107 · V36: 107→113 ·
+V37: 113→121 · V38: 121→128 · V39: 128→133 · V40: 133→136 · V41: 136→137 ·
+V42: 137→139 · V43: 139→140 · V44: 140→146 · V45: 146→148).
+
+Además, después de `gen_filemap_tree.mjs`, un `node --check` del bloque `<script>`
+extraído (el validador evalúa los literales, no el resto del motor).
+
+⚠️ EL MAPA NODO→FICHAS SE LLAMA `CTX`, NO `NODEDICT` (V34). ⚠️ EL SELECTOR DE
+TRAZAS VA POR ÍNDICE (V33): la comprobación buena es
+`select.options.length === SCENARIOS.length`. ⚠️ EL DICT TIENE DOS ESTILOS DE
+ESCRITURA (V31): contar con `Object.keys(DICT).length` evaluado, nunca por regex —
+y OJO al anclar un parche: las entradas viejas van `clave: {` (con espacio) y las
+nuevas `clave:{`. ⚠️ UN BACKTICK EN UN CUERPO DE DICT ROMPE EL LITERAL ENTERO
+(V38): siempre `<code>…</code>`. ⚠️ EL SHA DEL NOMBRE ES EL DEL CONTENIDO (V35).
+⚠️ LA CADENA «Última actualización» DEBE NOMBRAR AL PROPIO SNAPSHOT (V38 olvidó la
+suya). ⚠️ UN PARCHE DE WRAP CAMBIA SUS PROPIAS ANCLAS (V40): cada replace lleva
+assert.
+
+════════════════════════════════════════════════════════════════════════════════
+LO QUE EL WRAP V45 ENSEÑÓ (léase antes del V46)
+════════════════════════════════════════════════════════════════════════════════
+
+· EL WRAP SE LLAMÓ POR PRIMERA VEZ DESDE SU VÍA. «WRAP-COMMIT-PUSH (CTC Platforms)» existe desde el 2026-09-19 y este
+  es su primer wrap. Se llamó como FASE 0 de un overhaul ya aprobado (`docs/OVERHAUL_CONSOLAS_PLAN.md`): cuando se va a
+  mover media arquitectura, el wrap de ANTES vale más que el de después — es la foto contra la que se mide.
+
+· UN ASIENTO PUEDE QUEDAR INVERTIDO POR OTRO DEL MISMO LOG. El de la V5.53 decía «el Modelo Económico es únicamente del
+  BCP (charter consolas)» y el de la V5.55 lo invirtió esa misma tarde. El wrap compila el ESTADO FINAL, no la suma de los
+  asientos: se leyó el log entero antes de escribir una sola ficha. Un asiento que corrige a otro anterior debe decirlo
+  con su versión («INVIERTE el asiento de la V5.NN»), como hizo el de la V5.55.
+
+· LAS FICHAS DE UNA LÍNEA Y LAS MULTILÍNEA SE PARCHEAN CON EL MISMO AYUDANTE. `add_par(clave, html)` localiza la ficha por
+  `^  clave\s*:\s*{` hasta la siguiente ficha, y dentro busca el ÚNICO cierre «backtick , a:[» — vale para los dos
+  estilos. `add_a` añade al último `a:[…]` de la ficha. `append_note(nodo)` sigue siendo el del V44. Las entradas de CTX NO
+  siempre llevan espacio tras los dos puntos (`"n-bcp":[` frente a `"n-rutas": [`): el patrón es `"nodo"\s*:\s*\[`.
+
+· NINGUNA ANN QUEDÓ HUÉRFANA, PESE A MOVER CUATRO CARPETAS. Las rutas de `src/app/ecp/(app)/cotizador-*` no estaban
+  anotadas. ⚠️ El overhaul sí moverá carpetas anotadas (buzón, leads, CRM, nominados…): la comprobación 5 las va a cantar
+  en el V46, y cada fase del plan debe dejar en su asiento la lista de rutas que repuntar.
+
+· SE VALIDÓ EN EL NAVEGADOR con la configuración `docs-architecture` de `C:\dev\.claude\launch.json` (puerto 4300):
+  `select.options.length === SCENARIOS.length` (59), las dos fichas y la traza nuevas presentes, 7 notas «V45», cero
+  referencias colgantes recalculadas en vivo, cero errores de consola. Más `node --check` del bloque `<script>`.
+
+════════════════════════════════════════════════════════════════════════════════
+
+Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
+
+- **Lo que V45 compiló**: V5.53–V5.58 y los dos asientos DOCS del 19-sep. 2 fichas nuevas (`nivelesconsola`,
+  `guardianespejo`) · 1 traza nueva («Un viewer pulsa un botón que emite») · 13 fichas actualizadas · 7 notas de nodo ·
+  1 entrada CTX nueva (`n-rutas`) y dos ampliadas · 8 ANN. 40 nodos · 148 fichas · 59 trazas · 95 wires · 36 CTX · 389 ANN.
+- **Deuda de compilación**: ninguna.
+- **Lo que viene, y ya tiene orden**: `docs/OVERHAUL_CONSOLAS_PLAN.md`, aprobado por el owner («todo lo recomendado»,
+  D1–D10). Fase 1: nace la cuarta consola, **LCP**, y se lleva buzón, leads, listas de espera y los cuatro CRM. Fase 2:
+  Ecosistema de Valor al BCP y Herramientas Internas de vuelta al ECP. Fase 3: la tabla única Productor·Finca·Lote. Fase 4:
+  el circuito del lote sin Sondeo. Fase 5: Kaffetal Regal (exige las cuentas `prueba-*`). Fase 6: stock físico, por briefs.
+- **Lo que el mapa TODAVÍA no refleja, y es correcto** (no inventarlo): la LCP; nada del circuito nuevo; los modelos de
+  Procesamiento y Logística, que no tienen módulo; las plataformas de pago; el stock físico.
+- **Guardianes sin correr**: `qa-guard-check` y `qa-checkout-check` (piden las cuentas `prueba-*`). Y DOS que NO van en
+  ninguna batería porque gastan dinero: `qa-cromatografia-modelo` y `qa-transcripciones-nube`.
+- **Línea base de este wrap** (solo docs): validate_snapshot 9/9 vacías, con el V44 como control · `node --check` ·
+  navegador sin errores · qa-changelog · qa-arqlog · qa-encoding · qa-docs.
+
+════════════════════════════════════════════════════════════════════════════════

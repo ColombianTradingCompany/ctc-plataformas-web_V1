@@ -21,6 +21,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ## [V5.58] — 2026-09-19 (commit 8fa0441)
 
+> **Wrap V45** (2026-09-19): ciclo compilado en `Documentacion_Interactiva_V45.0(55c8aaa).html` — 40 nodos · 148 fichas (+2: `nivelesconsola`, `guardianespejo`) · 59 trazas (+1) · 95 wires · 36 CTX (+1) · 389 ANN (+8). Primer wrap llamado desde su vía, y fase 0 del overhaul de las consolas: es la foto del ANTES.
+
 - **Seguridad**: **el Buzón se le escapó a la V5.57: un «viewer» podía responder correos.** Cuatro acciones de
   `src/app/ecp/(app)/buzonActions.ts` —`sendBuzonReply`, `setBuzonStatus`, `setBuzonTags`, `markInboundEmailRead`— no llaman
   a `requireActiveAdmin()`: llaman a un AYUDANTE (`loadIfAllowed` → `buzonIdentity`) que la llama. El inventario de la V5.57

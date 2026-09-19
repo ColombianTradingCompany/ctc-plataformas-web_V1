@@ -4,7 +4,7 @@
 //
 // El tablero (docs/pvc/tablero/PVC_Tablero.html) lleva su propia copia del
 // modelo en JavaScript — es un archivo autocontenido a propósito, funciona
-// abierto como fichero y embebido en /bcp/pvc/tablero. Cuatro implementaciones
+// abierto como fichero y embebido en /ecp/pvc/tablero. Cuatro implementaciones
 // (Python de referencia, Excel, motor.ts y este HTML) son cuatro sitios donde
 // una regla puede separarse: aquí se recorta el tramo entre los marcadores
 // @@MODELO_INICIO / @@MODELO_FIN, se evalúa sin DOM y se compara con

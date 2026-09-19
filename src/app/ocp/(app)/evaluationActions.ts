@@ -40,14 +40,15 @@ export async function submitLotEvaluation(lotId: string, formData: FormData) {
   });
   if (error) throw new Error("No se pudo guardar la evaluación.");
 
-  revalidatePath("/ocp/arena");
+  revalidatePath("/bcp/arena");
 }
 
 // Accept or reject a producer's officialization claim. Only on acceptance
 // does the claim's score start counting toward the lot's official average --
 // a rejected claim stays in the table (audit trail) but is simply excluded.
 export async function reviewEvaluationClaim(evaluationId: string, decision: "accepted" | "rejected", notes: string) {
-  const permiso = await permisoDeEscritura("ocp", "emite");
+  // Se pulsa desde DOS consolas: el circuito del lote (OCP) y la página de la Arena (BCP, V5.60).
+  const permiso = await permisoDeEscritura(["ocp", "bcp"], "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -59,5 +60,5 @@ export async function reviewEvaluationClaim(evaluationId: string, decision: "acc
     .eq("status", "pending");
   if (error) throw new Error("No se pudo actualizar la solicitud.");
 
-  revalidatePath("/ocp/arena");
+  revalidatePath("/bcp/arena");
 }

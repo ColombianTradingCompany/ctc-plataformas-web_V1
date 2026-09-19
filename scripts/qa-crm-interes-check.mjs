@@ -42,8 +42,8 @@ const TABLEROS = {
   // existe para exigir. Los dos cuelgan de una página que ya existía —la
   // moderación del Directorio y el registro de Herramientas—, porque una lista
   // de espera de una plataforma se mira donde se mira esa plataforma.
-  directorio: "src/app/ecp/(app)/directorio/page.tsx",
-  herramientas: "src/app/ecp/(app)/herramientas/page.tsx",
+  directorio: "src/app/bcp/(app)/directorio/page.tsx",
+  herramientas: "src/app/bcp/(app)/herramientas/page.tsx",
 };
 
 const board = lee(BOARD);

@@ -19,6 +19,54 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.60] — 2026-09-19 (commit pendiente)
+
+- **Hito**: **el nuevo reparto BCP ↔ ECP** — fase 2 del overhaul de las consolas (`docs/OVERHAUL_CONSOLAS_PLAN.md`), según el
+  cuadro del owner. El **BCP** es *lo que la casa ES*: «Ecosistema de Valor» —el tablero de cada plataforma de la red— y
+  «Configuración del Sistema». El **ECP** es *con qué decide y qué tiene pendiente*: «Herramientas Internas», agrupadas por
+  modelo, y el Tablero de Ejecución.
+- **Cambiado**: **dieciséis módulos cambian de consola.** Al BCP: Herramientas del Café, Directorio, Coffeed, CTC Tech,
+  Varietales, Terratalento y Manejo de Plataformas (del ECP), y **Kaffetal Regal Arena con su Club** (del OCP). Al ECP:
+  Direccionamiento, el Modelo Económico (`/ecp/pvc`), los tres cotizadores, las anclas de mercado y Automatizaciones. «Socios
+  de la red» deja de ser grupo aparte y entra en Configuración. Todas las URLs viejas siguen vivas como **308 en un salto**
+  (49 rutas en `rutasMovidas.ts`).
+- **Cambiado**: **nueve de las dieciséis son viajes de vuelta**, y un viaje de vuelta no se escribe como una mudanza: la página
+  real vuelve a una URL que era un talón. Se borraron nueve talones (chocarían con la página), sus nueve entradas (la vieja y
+  la inversa juntas son un bucle) y se reapuntó lo que apuntaba a la casa que se deja: las cuatro `/ocp/cotizador-*|anclas`,
+  `/ecp/grados` y las dos de la pestaña que dejó el rename de la V5.45. `/ecp/direccionamiento/{plataformas,modelo-economico}`
+  pasan a talón EXPLÍCITO: su padre volvió a ser una página real. Los cotizadores habían salido del ECP esa misma tarde (V5.56).
+- **Añadido**: **el Tablero de Ejecución** (`/ecp`). El Panel del ECP era un índice con cuatro casillas de módulos por
+  construir; ahora enseña **lo que la casa tiene pendiente en las cuatro consolas**, agrupado por la consola dueña. Nada se
+  escribe a mano: cada tarea se DEDUCE de un estado que pide a alguien (un lead sin responder, una finca por revisar, un mensaje
+  de productor, una humedad fuera de rango, un lote en fila para la Arena) y enlaza a su elemento. El motor nació dentro del
+  Panel del OCP y se generalizó: `src/lib/panel/tareas.ts` (puro) + `tareasCarga.ts`. El Panel del OCP enseña ya solo las suyas.
+- **Corregido**: **marcar una tarea no refrescaba nada, y a quien no tenía permiso la casilla le mentía.** `setTaskState`
+  revalidaba `/bcp` — la casa de la que el Panel se fue en la V4.24. Ahora revalida el Panel de cada consola que enseña la
+  tarea. Y devolvía el rechazo, pero `PanelTasks` lo ignoraba: la casilla se quedaba marcada en pantalla y desmarcada en la
+  base. Ahora deshace y lo dice. Qué consolas pueden marcarla sale de la CLAVE de la tarea (su dueña y el ECP), no del cliente.
+- **Seguridad**: **las compuertas de Coffeed leen su consola del rail.** `coffeedGate` y `studioGate` llevaban `"ecp"` escrito
+  dentro — un permiso sin barras, de los que ninguna mudanza de rutas toca. Ahora llaman a `consolaDelModulo("coffeed")`, y si
+  nadie enlaza Coffeed en el rail, **cierran**. Las 17 compuertas de cotizadores/anclas/integraciones volvieron a `"ecp"` (una
+  línea por módulo, gracias a la V5.56); PVC a `"ecp"`; herramientas, directorio, plataformas, Arena y Club a `"bcp"`; las dos
+  listas de espera compartidas a `["lcp","bcp"]` / `["bcp","lcp"]`. `qa-rutas-consolas` (468) lo contrastó todo con el rail.
+- **Cambiado**: **la Arena vive en el BCP, pero no se despega limpia del OCP.** Su página asigna lotes a sesiones, invita a la
+  vitrina y revisa reclamos: tres acciones del circuito del lote, que abren ahora las DOS consolas (`["ocp","bcp"]`), con dos
+  componentes importados del árbol del OCP por ruta absoluta. Queda anotado en el charter: la fase 4 decide.
+- **Cambiado**: **lo que sirve a varias consolas sale del árbol del OCP**: `ActionForm`, `PanelTasks` y `tareasActions`
+  (antes `dashboardActions`) viven en `src/components/panel/`.
+- **Corregido**: **el diagrama de `/bcp/documentacion` llevaba un mes pintando una casa que ya no existía.** «Dentro del
+  Control Panel» era un SVG con cada caja escrita a mano como «espejo del menú»: seguía dibujando el reparto de antes de la
+  V4.24, con tres consolas. Ya no se dibuja: **se genera del rail**, y en el diagrama de la red la consola que recibe cada
+  formulario se lee también de ahí. Una consola o un módulo nuevo aparecen solos.
+- **Cambiado**: el Panel del BCP es el índice del Ecosistema de Valor y la Configuración; **conserva los KPI del Modelo
+  Económico** (son las cifras del negocio) aunque el módulo viva en el ECP. Títulos de pestaña, cabeceras y mensajes de las
+  páginas mudadas dicen su consola de hoy. El rail **no promete lo que no hay** (D9): «Seguimiento de Temas» y «Plataformas de
+  Pagos» no entraron.
+- **Docs**: charters `consolas`, `herramientas-internas` (vive en el ECP), `coffeed`, `directorio`, `herramientas-cafe`,
+  `terratalento`, `ctc-tech`, `varietales`, `kaffetal-regal`, `socios`, `cherry-picked`; `ALINEACION` §1 (vocabulario) y §3;
+  `AGENTS.md`; `BCP_USER_ADMIN_PLAN.md`; nota de cabecera en `PVC_BCP_PLAN.md`; `OVERHAUL_CONSOLAS_PLAN.md` — fase 2 marcada
+  como ejecutada, con las siete cosas que cambiaron al ejecutarla; `KICKOFF` recompilado.
+
 ## [V5.59] — 2026-09-19 (commit cfb0808)
 
 - **Hito**: **nace la LCP · Lead Control Panel — *Relationship*, la cuarta consola.** Fase 1 del overhaul aprobado por el

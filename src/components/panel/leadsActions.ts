@@ -10,7 +10,7 @@ import { CONSOLAS_DE_LEADS, consolaDelPilar, tableroDelPilar } from "@/lib/panel
 // ── Compuerta fina por consola (auditoría 2026-08-13, ESTR-4) ────────────────
 // Estas acciones las comparten CUATRO tableros de DOS consolas (regla V4 Fase 0: «el CRM vive
 // en la consola dueña del dominio»): `general` y `cocreate` en la LCP, `tech` y `varietales` en
-// el ECP. Por eso el archivo vive en `src/components/panel/` y no en el árbol de una consola
+// el BCP (V5.60; antes en el ECP). Por eso el archivo vive en `src/components/panel/` y no en el árbol de una consola
 // (V5.59) — colgando del ECP, la mudanza de Leads a la LCP se lo habría llevado por delante.
 //
 // DOS COMPUERTAS, y las dos hacen falta:

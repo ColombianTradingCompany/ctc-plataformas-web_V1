@@ -1,5 +1,9 @@
 # PVC · módulo del BCP · Herramientas Internas (antes «Business Core») — plan de acople
 
+> **⚠️ V5.60 (2026-09-19): el módulo vive en `/ecp/pvc`.** El cuadro del owner devolvió «Herramientas Internas» al ECP (fase 2 de
+> `docs/OVERHAUL_CONSOLAS_PLAN.md`). Este plan conserva sus rutas `/bcp/pvc…` tal y como se escribieron —son historia, y siguen vivas
+> como 308—; el segmento `pvc`, las tablas `pvc_*`, `/api/pvc/current` y todo lo decidido aquí no cambian. La compuerta es `"ecp"`.
+
 > **Dueño desde el 2026-09-19 (V5.55): el charter `herramientas-internas`**, que el owner redefinió como los cinco modelos
 > de la casa (Contexto · Misión y Visión · **Modelo Económico** · Procesamiento · Logística). Donde este plan dice «dueño:
 > `consolas`» para algo del modelo, léase `herramientas-internas`; lo que es del OCP (que ofertas, contratos y veredicto

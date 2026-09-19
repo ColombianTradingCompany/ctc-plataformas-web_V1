@@ -18,8 +18,8 @@ export async function marcarContactado(
   contactado: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   // DOS consolas, a propósito: Roast, X y la lista reunida se miran en la LCP; Directorio y
-  // Herramientas, junto a su plataforma en el ECP. `qa-rutas-consolas` deduce este par del rail.
-  const permiso = await permisoDeEscritura(["lcp", "ecp"], "borrador");
+  // Herramientas, junto a su plataforma en el BCP (V5.60). `qa-rutas-consolas` deduce este par del rail.
+  const permiso = await permisoDeEscritura(["lcp", "bcp"], "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -57,7 +57,7 @@ export async function marcarContactado(
   revalidatePath("/lcp/crm/roast");
   revalidatePath("/lcp/crm/x");
   revalidatePath("/lcp/lista-espera");
-  revalidatePath("/ecp/directorio");
-  revalidatePath("/ecp/herramientas");
+  revalidatePath("/bcp/directorio");
+  revalidatePath("/bcp/herramientas");
   return { ok: true };
 }

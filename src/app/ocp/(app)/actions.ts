@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ActionResult } from "./ActionForm";
+import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
@@ -395,7 +395,7 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
   }
   // 2. Luego la inscripción de Arena (COP 80.000, descontable/eximible).
   if (!(await lotInscriptionSettled(service, lotId))) {
-    return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /ocp/club." };
+    return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /bcp/club." };
   }
   // 3. Y la muestra tiene que haber salido de la finca.
   if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {

@@ -67,7 +67,7 @@ const DEFAULT_PIN = "#1A1C1E";
 
 function lotLink(l: ViewLot): { label: string; href: string } | undefined {
   if (l.stage === "galardonado") return { label: "Ver en Galardonados", href: "/ocp/galardonados" };
-  if (l.stage === "fila_arena") return { label: "Ver en Arena", href: "/ocp/arena" };
+  if (l.stage === "fila_arena") return { label: "Ver en Arena", href: "/bcp/arena" };
   if (l.postulated) return { label: "Ver en Nominados", href: "/ocp/nominados" };
   return undefined;
 }

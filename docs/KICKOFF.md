@@ -48,8 +48,9 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
-El grupo «BCP · Herramientas Internas» del rail (Contexto, Misión y Visión, Modelo Económico —PVC y Grados—,
-Procesamiento, Logística; y los cotizadores y anclas del ECP) NO es tuyo: es del charter herramientas-internas.
+Son CUATRO consolas (BCP · ECP · OCP · LCP; la lista tiene una sola fuente, CONSOLE_ORDER). Los grupos de «Herramientas
+Internas» del rail del ECP (Definición de Contexto, Modelo Económico —PVC y Grados—, Producción, Logística, Automatizaciones,
+con sus cotizadores y anclas) NO son tuyos: son del charter herramientas-internas.
 Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
@@ -124,7 +125,7 @@ Antes de tocar nada lee, en este orden:
 3. AGENTS.md                                   ← la compuerta y las reglas de la casa
 Para el Modelo Económico lee además docs/PVC_BCP_PLAN.md. Procesamiento y Logística NO tienen módulo todavía:
 si la tarea es darles uno, empieza por un BRIEF (docs/componentes/briefs/README.md) y PARA hasta que lo apruebe.
-Vives DENTRO de la consola BCP: el rail, los permisos y las rutas son del charter «consolas» — mover una ruta o
+Vives DENTRO de la consola ECP (desde la V5.60): el rail, los permisos y las rutas son del charter «consolas» — mover una ruta o
 tocar consoles.ts se le pide a él. Las consolas no se conducen en navegador: tsc, eslint, guardianes y SQL.
 Un modelo se EXHIBE antes de GOBERNAR: lo que calcules aquí NO llega a Kaffetal Regal ni a Cherry Picked sin una
 línea en el §3 y mi visto bueno, y quien lo lleva a la superficie es el OCP. La cifra de un guardián sale del
@@ -250,7 +251,7 @@ Trabajas SOLO en el componente «Directorio del Café» (clave: directorio) de l
 2. docs/ALINEACION.md               ← contratos transversales y el registro de permeación (§3)
 3. AGENTS.md                        ← la compuerta y las reglas de la casa
 La cuenta es la de toda la red; los documentos son privados y solo el hecho de la verificación es
-público; la verificación es del ECP (pendiente con dueño «consolas» si tu tarea la necesita distinta).
+público; la verificación es del BCP (pendiente con dueño «consolas» si tu tarea la necesita distinta).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push, verificación en vivo (curl al
 subdominio), log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
@@ -270,7 +271,7 @@ Trabajas SOLO en el componente «CTC Tech» (clave: ctc-tech) de la plataforma C
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Clase B: sin login, deposita en leads bajo lista blanca y aprovisiona la cuenta. `lib/leads/actions.ts`
 es COMPARTIDO con Varietales y CaaS: tocarlo es cambio transversal (línea en §3). La respuesta al
-productor es del ECP. Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push,
+productor es del BCP. Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
 ```

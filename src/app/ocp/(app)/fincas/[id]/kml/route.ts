@@ -7,7 +7,7 @@ import { fincaCode } from "@/components/kaffetal-regal/data";
 // punto, su polígono EUDR y la ficha de datos — para el análisis de imágenes
 // satelitales (históricas incluidas) en Google Earth. OJO: un route handler NO
 // hereda el layout del grupo (app), así que la puerta de la consola se pone
-// aquí mismo, igual que en /ecp/herramientas/[tool].
+// aquí mismo, igual que en /bcp/herramientas/[tool].
 export const dynamic = "force-dynamic";
 
 const PRODUCTION_SYSTEM_LABEL: Record<string, string> = {

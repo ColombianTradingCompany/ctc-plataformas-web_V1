@@ -127,7 +127,7 @@ export function EdicionesBoard({
         <div className={styles.sectionHead}>
           <strong>Historial de ediciones</strong>
           <span className={styles.actions}>
-            <Link href="/bcp/pvc/tablero" className="btn btn-sm btn-solid">Abrir el Tablero para publicar</Link>
+            <Link href="/ecp/pvc/tablero" className="btn btn-sm btn-solid">Abrir el Tablero para publicar</Link>
           </span>
         </div>
         {ediciones.length === 0 ? (

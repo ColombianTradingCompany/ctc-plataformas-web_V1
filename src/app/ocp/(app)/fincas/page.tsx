@@ -9,7 +9,7 @@ import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { approveFinca, rejectFinca, updateFincaEudr, setFincaCertShared, deleteAbandonedFinca } from "../actions";
 import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
-import { ActionForm } from "../ActionForm";
+import { ActionForm } from "@/components/panel/ActionForm";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
 import { FincaModalRow } from "./FincaModalRow";

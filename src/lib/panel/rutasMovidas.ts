@@ -46,9 +46,7 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/bcp/lotes", a: "/ocp/lotes", desde: "V4.24" },
   // KR Arena — la calificación
   { de: "/bcp/nominados", a: "/ocp/nominados", desde: "V4.24" },
-  { de: "/bcp/arena", a: "/ocp/arena", desde: "V4.24" },
   { de: "/bcp/galardonados", a: "/ocp/galardonados", desde: "V4.24" },
-  { de: "/bcp/club", a: "/ocp/club", desde: "V4.24" },
   // Catálogo — la salida comercial
   { de: "/bcp/catalogo", a: "/ocp/catalogo", desde: "V4.24" },
   { de: "/bcp/contratos", a: "/ocp/contratos", desde: "V4.24" },
@@ -64,17 +62,14 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // ── PR-B «El BCP recibe dirección y configuración» (V4.25, 2026-08-18) ─────
   // El BCP deja de estar vacío: recibe del ECP lo que dice la casa y cómo está
   // configurado el sistema, y del OCP las credenciales de los nodos partner.
-  { de: "/ecp/direccionamiento", a: "/bcp/direccionamiento", desde: "V4.25" },
-  { de: "/ecp/direccionamiento/grados", a: "/bcp/direccionamiento/grados", desde: "V4.25" },
   // La puerta suelta de Grados (2026-08-10) ya era un talón hacia Direccionamiento.
   // Se REAPUNTA al destino final en vez de encadenarla contra el talón nuevo —
   // que es exactamente lo que la regla F2 prohíbe y el guardián (e) comprueba.
-  { de: "/ecp/grados", a: "/bcp/direccionamiento/grados", desde: "V4.25" },
+  { de: "/ecp/grados", a: "/ecp/direccionamiento/grados", desde: "V4.25 · reapuntada V5.60" },
   { de: "/ecp/usuarios", a: "/bcp/usuarios", desde: "V4.25" },
   { de: "/ecp/documentacion", a: "/bcp/documentacion", desde: "V4.25" },
   { de: "/ecp/mapa", a: "/bcp/mapa", desde: "V4.25" },
   { de: "/ecp/consumo", a: "/bcp/consumo", desde: "V4.25" },
-  { de: "/ecp/automatizaciones", a: "/bcp/automatizaciones", desde: "V4.25" },
   // `/ecp/gvg` ya no está aquí: en V5.1 el GVG-Space salió de la plataforma
   // hacia CommaaS, y su destino es otro dominio. Vive en
   // `salidasDeLaPlataforma.ts`, que es la lista de las salidas.
@@ -85,31 +80,25 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   // mundo y las herramientas internas del equipo. El OCP queda limpio: solo el
   // pasaporte del lote, que es lo que PR-A le trajo.
   { de: "/ocp/leads", a: "/lcp/leads", desde: "V4.26 · reapuntada V5.59" },
-  { de: "/ocp/cotizador-lotes", a: "/bcp/cotizador-lotes", desde: "V4.26 · reapuntada V5.56" },
-  { de: "/ocp/cotizador-logistico", a: "/bcp/cotizador-logistico", desde: "V4.26 · reapuntada V5.56" },
-  { de: "/ocp/cotizador-empaque", a: "/bcp/cotizador-empaque", desde: "V4.26 · reapuntada V5.56" },
-  { de: "/ocp/anclas-mercado", a: "/bcp/anclas-mercado", desde: "V4.26 · reapuntada V5.56" },
+  { de: "/ocp/cotizador-lotes", a: "/ecp/cotizador-lotes", desde: "V4.26 · reapuntada V5.56 y V5.60" },
+  { de: "/ocp/cotizador-logistico", a: "/ecp/cotizador-logistico", desde: "V4.26 · reapuntada V5.56 y V5.60" },
+  { de: "/ocp/cotizador-empaque", a: "/ecp/cotizador-empaque", desde: "V4.26 · reapuntada V5.56 y V5.60" },
+  { de: "/ocp/anclas-mercado", a: "/ecp/anclas-mercado", desde: "V4.26 · reapuntada V5.56 y V5.60" },
   { de: "/ocp/transcripciones", a: "/ecp/transcripciones", desde: "V4.26" },
 
-  // ── V5.56 (2026-09-19) · «BCP · Herramientas Internas» recibe sus piezas ──────────────
-  // El owner redefinió Herramientas Internas (V5.55) como los modelos de la casa, y los tres
-  // cotizadores y las anclas de mercado son piezas suyas: dejan «ECP · Caja de herramientas».
-  // Es su SEGUNDA mudanza (OCP → ECP en la V4.26): las cuatro entradas `/ocp/…` de arriba se
-  // REAPUNTARON al BCP — regla F2, jamás un talón contra otro — y estas cuatro son las nuevas.
-  // Plan: docs/MUDANZA_HERRAMIENTAS_INTERNAS_PLAN.md.
-  { de: "/ecp/cotizador-lotes", a: "/bcp/cotizador-lotes", desde: "V5.56" },
-  { de: "/ecp/cotizador-logistico", a: "/bcp/cotizador-logistico", desde: "V5.56" },
-  { de: "/ecp/cotizador-empaque", a: "/bcp/cotizador-empaque", desde: "V5.56" },
-  { de: "/ecp/anclas-mercado", a: "/bcp/anclas-mercado", desde: "V5.56" },
-  // La pestaña vacía que dejó el rename de la V5.45: el Modelo Económico vive en /bcp/pvc. La
-  // segunda entrada existe para que la URL antiquísima del ECP llegue en UN salto: `destinoDe()`
-  // resuelve por el `de` más largo, y sin ella pasaría por /bcp/direccionamiento/modelo-economico.
-  { de: "/bcp/direccionamiento/modelo-economico", a: "/bcp/pvc", desde: "V5.56" },
-  { de: "/ecp/direccionamiento/modelo-economico", a: "/bcp/pvc", desde: "V5.56" },
+  // ── V5.56 (2026-09-19) · lo que quedó de aquella mudanza ──────────────────────────────
+  // La V5.56 llevó los tres cotizadores y las anclas del ECP al BCP; la V5.60 los devolvió (abajo),
+  // y sus cuatro entradas `/ecp/… → /bcp/…` MURIERON con el viaje de vuelta: la página real volvió a
+  // esa URL. Quedan las dos de la pestaña que dejó el rename de la V5.45, reapuntadas.
+  // La pestaña vacía que dejó el rename de la V5.45: el Modelo Económico vive en su propio módulo.
+  // La segunda es desde la V5.60 un talón EXPLÍCITO: su padre (Direccionamiento) volvió al ECP y es
+  // una página real, así que un catch-all ahí chocaría con ella.
+  { de: "/bcp/direccionamiento/modelo-economico", a: "/ecp/pvc", desde: "V5.56 · reapuntada V5.60" },
+  { de: "/ecp/direccionamiento/modelo-economico", a: "/ecp/pvc", desde: "V5.56 · reapuntada V5.60" },
   // «Manejo de Plataformas» deja de colgar de Direccionamiento y se vuelve
   // módulo suelto del ECP (decisión F6). Se quedó huérfano en PR-B, cuando su
   // módulo padre se mudó al BCP; esto cierra aquel interinato.
-  { de: "/ecp/direccionamiento/plataformas", a: "/ecp/plataformas", desde: "V4.26" },
+  { de: "/ecp/direccionamiento/plataformas", a: "/bcp/plataformas", desde: "V4.26 · reapuntada V5.60" },
 
   // ── Paso (iii)-1 «CTC Selection» (V4.27, 2026-08-18) ───────────────────────
   { de: "/ocp/black-stock", a: "/ocp/ctc-selection", desde: "V4.27" },
@@ -126,6 +115,38 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/ocp/crm/green", a: "/lcp/crm/green", desde: "V5.59" },
   { de: "/ocp/crm/roast", a: "/lcp/crm/roast", desde: "V5.59" },
   { de: "/ocp/crm/x", a: "/lcp/crm/x", desde: "V5.59" },
+
+  // ── V5.60 (2026-09-19) · el nuevo reparto BCP ↔ ECP — fase 2 del overhaul ─────────────────
+  // El cuadro del owner: el BCP es lo que la casa ES (su Ecosistema de Valor y la configuración del
+  // sistema); el ECP, con lo que DECIDE y EJECUTA (Herramientas Internas y el Tablero de Ejecución).
+  //
+  // ⚠️ NUEVE DE ESTAS DIECISÉIS SON VIAJES DE VUELTA, y un viaje de vuelta no se escribe como los
+  // demás: la página real vuelve a una URL que era un talón. Hay que (1) BORRAR ese talón —chocaría
+  // con la página—, (2) BORRAR su entrada de esta lista —`/ecp/x → /bcp/x` y `/bcp/x → /ecp/x` juntas
+  // son un bucle, y el guardián (e) lo rechaza— y (3) REAPUNTAR todo lo que apuntaba a la casa que se
+  // deja (`/ocp/cotizador-*`, `/ecp/grados`…). Volvieron: Arena y Club al BCP (salieron en la V4.24);
+  // Direccionamiento y Automatizaciones al ECP (V4.25); los tres cotizadores y las anclas al ECP
+  // (salieron ESTA MISMA TARDE, en la V5.56).
+  // Ecosistema de Valor ← ECP
+  { de: "/ecp/herramientas", a: "/bcp/herramientas", desde: "V5.60" },
+  { de: "/ecp/directorio", a: "/bcp/directorio", desde: "V5.60" },
+  { de: "/ecp/coffeed", a: "/bcp/coffeed", desde: "V5.60" },
+  { de: "/ecp/ctc-tech", a: "/bcp/ctc-tech", desde: "V5.60" },
+  { de: "/ecp/varietales", a: "/bcp/varietales", desde: "V5.60" },
+  { de: "/ecp/terratalento", a: "/bcp/terratalento", desde: "V5.60" },
+  // Ecosistema de Valor ← OCP (de vuelta)
+  { de: "/ocp/arena", a: "/bcp/arena", desde: "V5.60 · de vuelta (salió en la V4.24)" },
+  { de: "/ocp/club", a: "/bcp/club", desde: "V5.60 · de vuelta (salió en la V4.24)" },
+  // Configuración del Sistema ← ECP
+  { de: "/ecp/plataformas", a: "/bcp/plataformas", desde: "V5.60" },
+  // Herramientas Internas → ECP (todas de vuelta salvo el PVC, que nació en el BCP en la V5.28)
+  { de: "/bcp/direccionamiento", a: "/ecp/direccionamiento", desde: "V5.60 · de vuelta (salió en la V4.25)" },
+  { de: "/bcp/pvc", a: "/ecp/pvc", desde: "V5.60" },
+  { de: "/bcp/cotizador-lotes", a: "/ecp/cotizador-lotes", desde: "V5.60 · de vuelta (salió en la V5.56)" },
+  { de: "/bcp/cotizador-logistico", a: "/ecp/cotizador-logistico", desde: "V5.60 · de vuelta (salió en la V5.56)" },
+  { de: "/bcp/cotizador-empaque", a: "/ecp/cotizador-empaque", desde: "V5.60 · de vuelta (salió en la V5.56)" },
+  { de: "/bcp/anclas-mercado", a: "/ecp/anclas-mercado", desde: "V5.60 · de vuelta (salió en la V5.56)" },
+  { de: "/bcp/automatizaciones", a: "/ecp/automatizaciones", desde: "V5.60 · de vuelta (salió en la V4.25)" },
 ];
 
 /**

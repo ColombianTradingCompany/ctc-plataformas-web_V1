@@ -3,12 +3,16 @@
 > Se lee con `docs/ALINEACION.md` al lado. Grupo de la barra lateral: **Coffeed** (crear entradas nuevas
 > y administrar la app).
 
+> **V5.60 (2026-09-19):** el tablero de esta superficie pasó del ECP a **«BCP · Ecosistema de Valor»** (fase 2 de
+> `docs/OVERHAUL_CONSOLAS_PLAN.md`). Donde este charter decía «ECP» dice ahora «BCP»; las rutas `/ecp/…` viejas siguen vivas
+> como 308.
+
 ## Qué es
 
 El **muro de noticias** de la red (`coffeed.ctcexport.com`, y montado en Kaffetal Regal, Cherry Picked
 y el Directorio) más **la línea de producción editorial** detrás. Partido en dos por decisión del owner
 (2026-08-03): el socio **Estudio de Contenido PRODUCE** (Medios · Selección · Propuestas · Posts · el
-Canon donde se escribe, y las apps del taller: Source Wrapper, Datawave, RT-Scriptor) y el **ECP recibe,
+Canon donde se escribe, y las apps del taller: Source Wrapper, Datawave, RT-Scriptor) y el **BCP recibe,
 da luz verde y publica** (Entregas · **Redacción** · Muro · Identidad de marca · Canon en espejo). Las
 entregas son **polimórficas** (`coffeed_deliverables`, `kind` carrusel | video | embed | identidad | noticia)
 — una cola para todas las apps. **Redacción** (V5.9) es el post que se escribe solo: feeds de la lista
@@ -19,8 +23,8 @@ blanca → noticia elegida → capítulo (Haiku, a propósito) + portada (Gemini
 | Ruta | Qué |
 |---|---|
 | `/coffeed` | la Home propia del muro (Clase C: solo capítulos `published` + anuncios) |
-| `/ecp/coffeed` | `CoffeedConsole`: Entregas · Redacción · Muro · Identidad · Canon |
-| `/socios/estudio-contenido/panel` (+ `/source-wrapper`, `/datawave`, `/rt-scriptor`) | el taller del socio (`studioGate()`: socio con cookie pública O operador con grant de ECP) |
+| `/bcp/coffeed` | `CoffeedConsole`: Entregas · Redacción · Muro · Identidad · Canon |
+| `/socios/estudio-contenido/panel` (+ `/source-wrapper`, `/datawave`, `/rt-scriptor`) | el taller del socio (`studioGate()`: socio con cookie pública O operador con grant de BCP) |
 | el muro en KR (módulo), CP Green (`#coffeed`) y Directorio (pestaña, miembros verificados) | `CoffeedWall` compartido |
 
 ## Mapa de código
@@ -66,7 +70,7 @@ por tercera vez), `coffeed_update_canon`. Solo lee: `partner_accounts`, `platfor
 
 ## Lo que las consolas gobiernan de este componente
 
-**ECP · Coffeed** es la consola de este componente (luz verde, publicar, identidad de marca, Redacción,
+**BCP · Coffeed** es la consola de este componente (luz verde, publicar, identidad de marca, Redacción,
 lista blanca de medios); **BCP · Socios** emite y suspende la credencial del Estudio de Contenido
 (`partner_accounts`, nodo `estudio-contenido`); **BCP · Consumo** ve el gasto. Un cambio en las reglas de
 formato toca el trigger, la action y el cliente a la vez — y las tres superficies que montan el muro.

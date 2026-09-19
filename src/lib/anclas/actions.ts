@@ -19,7 +19,7 @@ import type { MarketAnchor, AnchorResult } from "./types";
 
 /** La consola donde vive este módulo. UNA vez, y `qa-rutas-consolas` (f-bis) la contrasta con el rail:
  *  si el módulo se muda y esta línea no, el guardián falla — que es justo lo que (f) no veía en `src/lib/`. */
-const CONSOLA: PanelConsoleKey = "bcp";
+const CONSOLA: PanelConsoleKey = "ecp";
 
 const NO_AUTH: AnchorResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 

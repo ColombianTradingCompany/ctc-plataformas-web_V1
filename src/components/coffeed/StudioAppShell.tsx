@@ -43,7 +43,7 @@ export function StudioAppShell({
         <span className={styles.who}>
           {identity.displayName}
           <small>
-            {identity.via === "partner" ? "Credencial del socio" : "CTC · por dentro"} · entrega al ECP
+            {identity.via === "partner" ? "Credencial del socio" : "CTC · por dentro"} · entrega a la Redacción
           </small>
         </span>
         <span className={styles.version} title={`Versión ${VERSION_LABEL} · build ${BUILD_SHA}`}>

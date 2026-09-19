@@ -2,6 +2,7 @@ import "server-only";
 import { createPanelSessionClient, createServiceRoleClient, createSessionClient } from "@/lib/supabase/server";
 import { getPanelUser, grantedConsoles, nivelDeConsola } from "@/lib/panel/panelUsers";
 import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
+import { consolaDelModulo } from "@/lib/panel/consoles";
 
 /**
  * Compuerta de PRODUCCIÓN del Estudio de Contenido (Source Wrapper, Datawave y,
@@ -25,17 +26,17 @@ import { puede, type ClaseDeAccion } from "@/lib/panel/niveles";
 export type StudioIdentity = {
   userId: string;
   /** Quién entró: cambia la cabecera y de quién se firma la entrega. */
-  via: "partner" | "ecp";
+  via: "partner" | "consola";
   displayName: string;
 };
 
 const STUDIO_NODE = "estudio-contenido";
 
 /** Variante SIN redirect — para Server Actions, que devuelven {ok:false}. */
-/** `clase` (V5.57) solo pesa en la vía 1: un operador «viewer» del ECP ve el taller y no produce (producir
+/** `clase` (V5.57) solo pesa en la vía 1: un operador «viewer» de la consola ve el taller y no produce (producir
  *  gasta). El SOCIO del Estudio no tiene niveles: su credencial es para producir, y pasa cualquier clase. */
 export async function studioGate(clase: ClaseDeAccion = "emite"): Promise<StudioIdentity | null> {
-  // 1. Operador interno con acceso al ECP.
+  // 1. Operador interno con acceso a la consola donde vive Coffeed.
   const panel = await createPanelSessionClient();
   const {
     data: { user: panelUser },
@@ -44,10 +45,12 @@ export async function studioGate(clase: ClaseDeAccion = "emite"): Promise<Studio
     const { data: profile } = await panel.from("profiles").select("role, full_name, email").eq("id", panelUser.id).maybeSingle();
     if (profile?.role === "bcp_admin") {
       const row = await getPanelUser(panelUser.id);
-      if ((!row || row.status === "active") && grantedConsoles(row).includes("ecp") && puede(nivelDeConsola(row, "ecp"), clase)) {
+      // La consola de Coffeed se lee del rail (V5.60), igual que en `coffeedGate`: sin enlace, cierra.
+      const consola = consolaDelModulo("coffeed");
+      if (consola && (!row || row.status === "active") && grantedConsoles(row).includes(consola) && puede(nivelDeConsola(row, consola), clase)) {
         return {
           userId: panelUser.id,
-          via: "ecp",
+          via: "consola",
           displayName: (profile.full_name as string | null) ?? (profile.email as string | null) ?? "CTC",
         };
       }

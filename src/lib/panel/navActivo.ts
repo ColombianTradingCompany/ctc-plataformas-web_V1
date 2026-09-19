@@ -9,7 +9,7 @@ import type { PanelNavLink } from "./consoles";
 //
 // POR QUÉ NO BASTA UN `startsWith` POR ENLACE (2026-08-16). Funcionaba mientras
 // ninguna ruta del rail fuera prefijo de otra. El atajo a «Manejo de
-// Plataformas» apunta a `/ecp/plataformas`, y en aquel momento
+// Plataformas» apunta a `/bcp/plataformas`, y en aquel momento
 // el rail del ECP llevaba también la ruta PADRE de ese atajo: las dos casaban y
 // las dos se pintaban activas para UNA sola página. Gana el href MÁS LARGO, que
 // es siempre el más específico.
@@ -19,7 +19,7 @@ import type { PanelNavLink } from "./consoles";
 // volvería a necesitar el día que `/lcp/crm` tenga página propia.)
 //
 // Y el segundo arreglo, de la misma familia que el del matcher del proxy
-// (auditoría ESTR-3): `startsWith("/ecp/varietales")` también casaba un futuro
+// (auditoría ESTR-3): `startsWith("/bcp/varietales")` también casaba un futuro
 // `/ecp/varietalesx`. La comparación es por LÍMITE DE SEGMENTO — la ruta exacta,
 // o la ruta seguida de una barra.
 

@@ -18,35 +18,35 @@ const check = (nombre, cond) => (cond ? ok++ : fallos.push(nombre));
 const links = (consola) => CONSOLES[consola].nav.flatMap((g) => g.links);
 const activo = (consola, ruta) => hrefActivoDelRail(links(consola), ruta);
 
-// ── «Manejo de Plataformas» ya NO es un atajo: es un módulo suelto ──────────
-// Hasta PR-C colgaba de Direccionamiento y el rail lo alcanzaba con un atajo,
-// lo que obligaba a la regla del href más largo. PR-B mandó Direccionamiento al
-// BCP y PR-C (F6) lo sacó a `/ecp/plataformas`: ya no hay dos enlaces que se
-// disputen una página, y la aserción que exigía que esa ruta NO existiera está
-// invertida a propósito.
-const plataformas = links("ecp").find((l) => l.label === "Manejo de Plataformas");
-check("Manejo de Plataformas está en el rail del ECP", !!plataformas);
-check("y ES su propia ruta, no un atajo dentro de otro módulo", plataformas?.href === "/ecp/plataformas");
+// ── «Manejo de Plataformas» es un módulo suelto, y vive donde se configura el sistema ──
+// Hasta PR-C colgaba de Direccionamiento y el rail lo alcanzaba con un atajo, lo que obligaba a la regla
+// del href más largo. PR-C (F6, V4.26) lo hizo módulo suelto del ECP, y la V5.60 lo llevó a «BCP ·
+// Configuración del Sistema». La aserción de fondo no cambió: UN enlace, su propia ruta, y nadie más la cubre.
+const CONSOLA_DE_PLATAFORMAS = "bcp";
+const plataformas = links(CONSOLA_DE_PLATAFORMAS).find((l) => l.label === "Manejo de Plataformas");
+check("Manejo de Plataformas está en el rail del BCP", !!plataformas);
+check("y ES su propia ruta, no un atajo dentro de otro módulo", plataformas?.href === "/bcp/plataformas");
 check(
-  "vive en el grupo de IT y Plataforma",
-  CONSOLES.ecp.nav.some((g) => g.label?.includes("IT y Plataforma") && g.links.some((l) => l === plataformas))
+  "vive en el grupo de Configuración del Sistema",
+  CONSOLES[CONSOLA_DE_PLATAFORMAS].nav.some((g) => g.label?.includes("Configuración del Sistema") && g.links.some((l) => l === plataformas))
 );
-check("y su ruta enciende SOLO su propio enlace", activo("ecp", "/ecp/plataformas") === "/ecp/plataformas");
+check("y su ruta enciende SOLO su propio enlace", activo(CONSOLA_DE_PLATAFORMAS, "/bcp/plataformas") === "/bcp/plataformas");
 check(
   "sin que ningún otro enlace del rail la cubra también",
-  links("ecp").filter((l) => enlaceCubre(l, "/ecp/plataformas")).length === 1
+  links(CONSOLA_DE_PLATAFORMAS).filter((l) => enlaceCubre(l, "/bcp/plataformas")).length === 1
 );
+check("y ninguna otra consola la enlaza", ["ecp", "ocp", "lcp"].every((k) => !links(k).some((l) => l.label === "Manejo de Plataformas")));
 
 // ── Límite de segmento (misma familia que ESTR-3 en el proxy) ────────────────
 check(
   "una ruta hermana con prefijo común NO enciende el enlace",
-  !enlaceCubre({ href: "/ecp/varietales" }, "/ecp/varietalesx")
+  !enlaceCubre({ href: "/bcp/varietales" }, "/bcp/varietalesx")
 );
-check("pero la propia ruta sí", enlaceCubre({ href: "/ecp/varietales" }, "/ecp/varietales"));
-check("y sus hijas también", enlaceCubre({ href: "/ecp/varietales" }, "/ecp/varietales/algo"));
+check("pero la propia ruta sí", enlaceCubre({ href: "/bcp/varietales" }, "/bcp/varietales"));
+check("y sus hijas también", enlaceCubre({ href: "/bcp/varietales" }, "/bcp/varietales/algo"));
 
 // ── `exact` sigue significando exacto ────────────────────────────────────────
-check("el Panel (exact) no se enciende en una subruta", activo("ecp", "/ecp/directorio") !== "/ecp");
+check("el Panel (exact) no se enciende en una subruta", activo("ecp", "/ecp/transcripciones") !== "/ecp");
 // La LCP (V5.59) es la primera consola con un grupo ANIDADO (`/lcp/crm/…`) sin página en `/lcp/crm`:
 // cada CRM enciende el suyo, ninguno enciende a un hermano, y el Panel no se enciende con ellos.
 check("LCP: un CRM enciende solo su enlace", activo("lcp", "/lcp/crm/green") === "/lcp/crm/green");

@@ -73,10 +73,10 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 | OCP · Nominados | bache, planilla y **veredicto** (`gradoPorPuntaje` → `galardonado` + Club) | `recordEvaluationVerdict` |
 | OCP · Ofertas / Contratos | emisión de ofertas (temporada · black · subasta), precio y firma del contrato, escalera de liberación | `ofertasActions`, `contractActions` |
 | OCP · Fichas | el set de Fichas Técnicas y cuál es la **oficial ★** | `fichasActions` |
-| OCP · Arena | la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato) | `inviteLotToArena` |
-| OCP · Club | membresía (llega con el galardón), campañas de pasaporte | `club.ts`, `clubActions` |
-| ECP · Leads | respuestas a «Mis solicitudes» (CTC Tech · Varietales · CaaS) espejadas en el panel | `producer_comm_log.lead_id` |
-| ECP · Herramientas | qué herramientas ve el productor y con qué nivel | charter `herramientas-cafe` |
+| BCP · Kaffetal Regal Arena (del OCP hasta la V5.59) | la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato) | `inviteLotToArena` |
+| BCP · Kaffetal Club (del OCP hasta la V5.59) | membresía (llega con el galardón), campañas de pasaporte | `club.ts`, `clubActions` |
+| LCP · Leads y CRM CaaS · BCP · CTC Tech / Varietales | respuestas a «Mis solicitudes» (CTC Tech · Varietales · CaaS) espejadas en el panel | `producer_comm_log.lead_id` |
+| BCP · Herramientas del Café | qué herramientas ve el productor y con qué nivel | charter `herramientas-cafe` |
 
 ## Pendientes
 

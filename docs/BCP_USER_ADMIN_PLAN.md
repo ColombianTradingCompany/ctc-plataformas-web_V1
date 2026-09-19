@@ -226,22 +226,22 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
   (`requireConsoleWrite`, `permisoDeEscritura`, `coffeedGate`, `studioGate`): una acción nueva que olvide declararse queda
   cerrada al viewer, no abierta.
 
-**La lista blanca de borradores** — corta a propósito; se amplía aquí primero y en el código después. (La columna «Módulo» dice la consola de HOY: la V5.59 llevó cinco de estas acciones a la LCP, la cuarta consola, sin cambiarles la clase.)
+**La lista blanca de borradores** — corta a propósito; se amplía aquí primero y en el código después. (La columna «Módulo» dice la consola de HOY: la V5.59 llevó cinco de estas acciones a la LCP y la V5.60 repartió BCP ↔ ECP, sin cambiarle la clase a ninguna.)
 
 | Acción | Módulo | Por qué es un borrador |
 |---|---|---|
-| `createQuote` | BCP · cotizadores | una cotización nace como borrador; nadie la ve hasta `issueQuote` |
-| `saveQuoteDraft` | BCP · cotizadores | guarda el borrador |
-| `setQuoteCounterparty` | BCP · cotizadores | a quién iría dirigida; no se le avisa |
-| `renameQuote` | BCP · cotizadores | el título interno |
-| `duplicateQuote` | BCP · cotizadores | copia un borrador |
+| `createQuote` | ECP · cotizadores | una cotización nace como borrador; nadie la ve hasta `issueQuote` |
+| `saveQuoteDraft` | ECP · cotizadores | guarda el borrador |
+| `setQuoteCounterparty` | ECP · cotizadores | a quién iría dirigida; no se le avisa |
+| `renameQuote` | ECP · cotizadores | el título interno |
+| `duplicateQuote` | ECP · cotizadores | copia un borrador |
 | `updateTranscriptInfo` | ECP · transcripciones | rotula una transcripción ya hecha |
 | `renameSpeaker` | ECP · transcripciones | nombra una voz |
 | `saveProposal` | BCP · Mapa de Trabajo | una propuesta es, por definición, algo que otro confirma |
-| `setTaskState` | OCP · panel | la casilla de una tarea del tablero |
+| `setTaskState` | las cuatro · Tablero de Ejecución y Paneles | la casilla de una tarea derivada; qué consolas la abren sale de la clave de la tarea |
 | `setEtapaComprador` | LCP · CRM Green | la excepción manual de la etapa; solo la lee ese tablero |
-| `marcarContactado` | LCP · ECP · listas de espera | «ya le escribí»; se puede desmarcar |
-| `marcarInteresTtContactado` | ECP · LCP · Terratalento | lo mismo |
+| `marcarContactado` | LCP · BCP · listas de espera | «ya le escribí»; se puede desmarcar |
+| `marcarInteresTtContactado` | BCP · LCP · Terratalento | lo mismo |
 | `setBuzonTags` | LCP · Buzón | etiquetas internas del correo; reversible |
 | `markInboundEmailRead` | LCP · Buzón | leído / no leído; si un viewer no pudiera, abrir su propio correo fallaría en silencio |
 

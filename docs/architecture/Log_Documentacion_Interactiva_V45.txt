@@ -147,3 +147,38 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   redibuja al cerrar la fase 2. La fase 2 moverá además Directorio, Herramientas y Terratalento al BCP.
 - Datos: `panel_users.consoles` ganó `lcp` en las tres credenciales (owner `admin`, colaboradores `viewer`).
 (commit: cfb0808)
+
+## [2026-09-19] V5.60 · El nuevo reparto BCP ↔ ECP, y el Tablero de Ejecución (consolas → herramientas-internas, coffeed, socios, directorio, herramientas-cafe, terratalento, ctc-tech, varietales, kaffetal-regal)
+- Notas de NODO que el V46 tiene que reescribir: **`n-bcp`** — «lo que la casa ES»: Ecosistema de Valor (Herramientas,
+  Directorio, Coffeed, CTC Tech, Varietales, Terratalento, KR Arena + Club) y Configuración del Sistema (usuarios, socios,
+  documentación, mapa, consumo, plataformas). **`n-ecp`** — «con qué decide y qué tiene pendiente»: el Tablero de Ejecución,
+  Transcripciones y Herramientas Internas por modelo (Contexto · Económico en Origen · Producción · Logístico · Automatizaciones).
+  **`n-ocp`** pierde la Arena y el Club. WIRES: lo que salía de `n-ecp` hacia Coffeed, Directorio, Herramientas, Terratalento,
+  CTC Tech y Varietales sale ahora de `n-bcp`; lo que salía de `n-bcp` hacia el PVC y los cotizadores, de `n-ecp`.
+- Fichas que cambian: `rutasmovidas` (49 rutas; **el VIAJE DE VUELTA** es un concepto nuevo y merece párrafo propio: nueve
+  módulos volvieron a una URL que era un talón — se borra el talón, se borra la entrada, la inversa va aparte, se reapunta lo
+  que apuntaba a la casa que se deja; y un hijo cuyo padre vuelve a ser página real pasa a talón EXPLÍCITO); `herramientasinternas`
+  (vive en el ECP; duró cinco versiones en el BCP); `modeloeconomico` / `pvc` (`/ecp/pvc`; compuerta `"ecp"`; los KPI siguen en el
+  Panel del BCP); `coffeed` (la consola de sus dos compuertas se LEE del rail: `consolaDelModulo`); `nivelesconsola` (la casilla de
+  tarea abre la consola dueña y el ECP); `arena` (en el BCP, con tres acciones del OCP que abren las dos consolas).
+- FICHA NUEVA candidata: **`tablerodeejecucion`** — las tareas DERIVADAS de la casa. No se guardan: se deducen de un estado que
+  pide a alguien; lo único persistido es la casilla (`bcp_task_state`). `tareas.ts` (puro: tipos, consola dueña por clave,
+  paneles a revalidar) + `tareasCarga.ts` (las cinco lecturas) + `PanelTasks` + `tareasActions`. Cada consola aporta las suyas;
+  `/ecp` las enseña todas agrupadas; el Panel del OCP, las suyas.
+- FICHA NUEVA candidata: **`espejoamano`** (o párrafo en `guardianespejo`) — el diagrama «espejo del menú» de la documentación
+  pintó durante un mes el reparto de antes de la V4.24. Un espejo escrito a mano no refleja. Se genera del rail. Misma familia
+  que la lista de consolas nueve veces en dos guardianes (V5.59) y que `PILLAR_CONSOLE`: **todo lo que REPITE el rail se queda atrás;
+  todo lo que lo LEE, no.** Tres casos en dos versiones: `CONSOLE_ORDER`, `leadsPilares`, `consolaDelModulo`.
+- TRAZA candidata: «Un productor escribe un mensaje» → `producer_comm_log` → `cargarTareas` → aparece en el Panel del OCP y
+  en el Tablero de Ejecución del ECP → alguien marca la casilla → `setTaskState` (borrador; abre `ocp` y `ecp`) → revalida `/ocp` y `/ecp`.
+- LECCIÓN: **una reescritura ciega de rutas deja tres clases de resto, y cada una la caza otra cosa.** Las URLs absolutas
+  (`https://panel…/ocp/arena/…` en un correo) — las cazó el guardián (c), porque el patrón exigía límite de segmento a la
+  izquierda. Los imports relativos que cruzan de árbol (`../evaluationActions` desde la Arena) — los cazó `tsc`. Y la PROSA
+  (títulos de pestaña «· BCP», cabeceras, «tu sesión del BCP») — no la caza nadie: se buscó a mano, consola por consola.
+- ⚠️ ANN QUE EL V46 TIENE QUE REPUNTAR: todo `ctc-platform/src/app/ecp/(app)/{herramientas,directorio,coffeed,ctc-tech,varietales,
+  terratalento,plataformas}` → `…/bcp/(app)/…`; `…/ocp/(app)/{arena,club,arenaActions.ts,clubActions.ts}` → `…/bcp/(app)/…`;
+  `…/bcp/(app)/{direccionamiento,pvc,cotizador-*,anclas-mercado,automatizaciones,direccionamientoActions.ts}` → `…/ecp/(app)/…`;
+  `…/ocp/(app)/{ActionForm.tsx,PanelTasks.tsx,dashboardActions.ts}` → `ctc-platform/src/components/panel/{ActionForm.tsx,
+  PanelTasks.tsx,tareasActions.ts}`. ANN nuevas: `src/lib/panel/{tareas.ts,tareasCarga.ts}`.
+- NO inventar en el mapa: «Seguimiento de Temas» y «Plataformas de Pagos» están en el cuadro del owner y NO en el rail.
+(commit: pendiente)

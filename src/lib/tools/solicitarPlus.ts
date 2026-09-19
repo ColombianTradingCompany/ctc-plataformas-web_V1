@@ -84,7 +84,7 @@ export async function solicitarPlus(nota?: string): Promise<ResultadoPlus> {
     ).catch(() => ({ ok: false }));
   }
 
-  revalidatePath("/ecp/herramientas");
+  revalidatePath("/bcp/herramientas");
   revalidatePath("/herramientas/taller");
   return { ok: true, pedidas, yaPendientes };
 }

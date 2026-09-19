@@ -153,7 +153,7 @@ check("el cuerpo del código son 8 caracteres", LARGO_CUERPO === 8);
   check("el sitemap lee RUTAS_SOLO_WWW", /RUTAS_SOLO_WWW/.test(sitemap) && /import[^;]*RUTAS_SOLO_WWW/s.test(sitemap));
   check("y las mezcla con las de subdominio", /Object\.values\(SUBDOMAIN_ROUTES\), \.\.\.RUTAS_SOLO_WWW/.test(sitemap));
 
-  const plataformas = lee("src/app/ecp/(app)/plataformasActions.ts");
+  const plataformas = lee("src/app/bcp/(app)/plataformasActions.ts");
   check("Manejo de Plataformas lee RUTAS_SOLO_WWW", /RUTAS_SOLO_WWW/.test(plataformas));
   check(
     "y por tanto `guardarSuperficie()` la acepta",

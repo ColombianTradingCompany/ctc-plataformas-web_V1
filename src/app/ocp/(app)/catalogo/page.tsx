@@ -1,6 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { publishLot, unpublishListing } from "../catalogActions";
-import { ActionForm } from "../ActionForm";
+import { ActionForm } from "@/components/panel/ActionForm";
 import { CatalogoTabs } from "./CatalogoTabs";
 import styles from "@/components/panel/shared.module.css";
 

@@ -2,12 +2,16 @@
 
 > Se lee con `docs/ALINEACION.md` al lado. Grupo de la barra lateral: **Directorio del Café**.
 
+> **V5.60 (2026-09-19):** el tablero de esta superficie pasó del ECP a **«BCP · Ecosistema de Valor»** (fase 2 de
+> `docs/OVERHAUL_CONSOLAS_PLAN.md`). Donde este charter decía «ECP» dice ahora «BCP»; las rutas `/ecp/…` viejas siguen vivas
+> como 308.
+
 ## Qué es
 
 El **Directorio de Especialistas del Café · Santander** (`directoriodelcafe.ctcexport.com`): la capa de
 **personas** de la red. Un profesional del café se inscribe, arma su ficha (especialidades, documentos de
 soporte, certificaciones), aparece en el directorio con búsqueda y filtros, conversa por mensajes, participa
-en un muro propio y ve el muro de Coffeed. CTC **verifica** desde el ECP las certificaciones que un documento
+en un muro propio y ve el muro de Coffeed. CTC **verifica** desde el BCP las certificaciones que un documento
 apoya (gris «En revisión» → azul «Verificado por CTC» → gris «No aceptado» + retiro a 10 días).
 
 ## Superficies y rutas
@@ -16,7 +20,7 @@ apoya (gris «En revisión» → azul «Verificado por CTC» → gris «No acept
 |---|---|
 | `/directorio` | landing + login + app (`DirectorioExperience.tsx`: `AppView` con paneles Directorio · Muro · Mensajes · Perfil · Herramientas · `BancoCertificaciones`) |
 | `/directorio/auth/callback` | OAuth de Google |
-| `/ecp/directorio` | `DirectorioAdmin.tsx`: verificación, pestaña **Certificados** (cola, pendientes primero) |
+| `/bcp/directorio` | `DirectorioAdmin.tsx`: verificación, pestaña **Certificados** (cola, pendientes primero) |
 | `/herramientas/taller` | el Directorio es la tercera identidad que abre el taller (membresía ampliada en `accesoHerramienta.ts`) |
 
 ## Mapa de código
@@ -27,7 +31,7 @@ apoya (gris «En revisión» → azul «Verificado por CTC» → gris «No acept
 - `src/lib/directorio/` — `actions.ts` (`cargarDirectorio`, inscripción, mensajes, muro, documentos; `sanitizeDoc`
   hace nacer `pendiente` todo documento ligado a una certificación), `sweep.ts` (`barrerCertificadosVencidos`,
   colgado del cron diario de integraciones — sin cron nuevo), `perfilPrint.ts`, `types.ts`; `src/lib/directorioLink.ts`.
-- `src/app/ecp/(app)/directorio/` + `src/app/ecp/(app)/directorioActions.ts` (`aprobarCertificado` / `rechazarCertificado`: mensaje
+- `src/app/bcp/(app)/directorio/` + `src/app/bcp/(app)/directorioActions.ts` (`aprobarCertificado` / `rechazarCertificado`: mensaje
   de CTC al hilo del usuario, `audit_log`, `remover_despues_de = now()+10d`).
 - Docs: `docs/DIRECTORIO_DOMAIN_SETUP.md` (subdominio: código listo, paso externo Vercel + Hostinger).
 
@@ -55,9 +59,9 @@ No tiene guardián propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (la puer
 
 ## Lo que las consolas gobiernan de este componente
 
-**ECP · Directorio**: la verificación de certificados (aprobar/rechazar, con mensaje al hilo del usuario y
-rastro en `audit_log`) y la moderación. **ECP · Plataformas**: título, descripción y sitemap del subdominio.
-Un cambio en el modelo de verificación toca `sanitizeDoc`, el ECP y la insignia pública a la vez.
+**BCP · Directorio**: la verificación de certificados (aprobar/rechazar, con mensaje al hilo del usuario y
+rastro en `audit_log`) y la moderación. **BCP · Plataformas**: título, descripción y sitemap del subdominio.
+Un cambio en el modelo de verificación toca `sanitizeDoc`, el BCP y la insignia pública a la vez.
 
 ## Pendientes
 
@@ -78,7 +82,7 @@ Trabajas SOLO en el componente «Directorio del Café» (clave: directorio) de l
 2. docs/ALINEACION.md               ← contratos transversales y el registro de permeación (§3)
 3. AGENTS.md                        ← la compuerta y las reglas de la casa
 La cuenta es la de toda la red; los documentos son privados y solo el hecho de la verificación es
-público; la verificación es del ECP (pendiente con dueño «consolas» si tu tarea la necesita distinta).
+público; la verificación es del BCP (pendiente con dueño «consolas» si tu tarea la necesita distinta).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push, verificación en vivo (curl al
 subdominio), log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.

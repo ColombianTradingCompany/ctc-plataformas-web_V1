@@ -111,7 +111,7 @@
 <div class="wrap" id="inicio" tabindex="-1">
   <nav aria-label="Índice de prompts">
     <p class="brand">Kick-offs<br>CTC Platforms</p>
-    <p class="sub">18 prompts · compilado sobre la V5.56</p>
+    <p class="sub">18 prompts · compilado sobre la V5.59</p>
     <p class="nav-label">Componentes</p><ul>
 <li><a href="#consolas">CTC Consolas internas</a></li>
 <li><a href="#socios">Red de Socios</a></li>
@@ -152,8 +152,9 @@
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
-El grupo «BCP · Herramientas Internas» del rail (Contexto, Misión y Visión, Modelo Económico —PVC y Grados—,
-Procesamiento, Logística; y los cotizadores y anclas del ECP) NO es tuyo: es del charter herramientas-internas.
+Son CUATRO consolas (BCP · ECP · OCP · LCP; la lista tiene una sola fuente, CONSOLE_ORDER). Los grupos de «Herramientas
+Internas» del rail del ECP (Definición de Contexto, Modelo Económico —PVC y Grados—, Producción, Logística, Automatizaciones,
+con sus cotizadores y anclas) NO son tuyos: son del charter herramientas-internas.
 Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»
@@ -201,7 +202,7 @@ Antes de tocar nada lee, en este orden:
 3. AGENTS.md                                   ← la compuerta y las reglas de la casa
 Para el Modelo Económico lee además docs/PVC_BCP_PLAN.md. Procesamiento y Logística NO tienen módulo todavía:
 si la tarea es darles uno, empieza por un BRIEF (docs/componentes/briefs/README.md) y PARA hasta que lo apruebe.
-Vives DENTRO de la consola BCP: el rail, los permisos y las rutas son del charter «consolas» — mover una ruta o
+Vives DENTRO de la consola ECP (desde la V5.60): el rail, los permisos y las rutas son del charter «consolas» — mover una ruta o
 tocar consoles.ts se le pide a él. Las consolas no se conducen en navegador: tsc, eslint, guardianes y SQL.
 Un modelo se EXHIBE antes de GOBERNAR: lo que calcules aquí NO llega a Kaffetal Regal ni a Cherry Picked sin una
 línea en el §3 y mi visto bueno, y quien lo lleva a la superficie es el OCP. La cifra de un guardián sale del
@@ -273,7 +274,7 @@ Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.
 2. docs/ALINEACION.md               ← contratos transversales y el registro de permeación (§3)
 3. AGENTS.md                        ← la compuerta y las reglas de la casa
 La cuenta es la de toda la red; los documentos son privados y solo el hecho de la verificación es
-público; la verificación es del ECP (pendiente con dueño «consolas» si tu tarea la necesita distinta).
+público; la verificación es del BCP (pendiente con dueño «consolas» si tu tarea la necesita distinta).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push, verificación en vivo (curl al
 subdominio), log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Comprobar con <code>curl -I</code> que <code>directoriodelcafe.ctcexport.com</code> sirve con TLS, y escribir el guardián propio <code>qa-directorio-check.mjs</code> (ciclo de verificación de certificados + insignia pública + búsqueda sin tildes).</p></section>
@@ -284,7 +285,7 @@ Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Clase B: sin login, deposita en leads bajo lista blanca y aprovisiona la cuenta. `lib/leads/actions.ts`
 es COMPARTIDO con Varietales y CaaS: tocarlo es cambio transversal (línea en §3). La respuesta al
-productor es del ECP. Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push,
+productor es del BCP. Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> El guardián ligero de leads compartido (<code>qa-leads-check.mjs</code>: listas blancas por pilar + aprovisionamiento), y el contenido real de la landing con el owner.</p></section>
 <section class="prompt" id="varietales" tabindex="-1"><header><div class="head"><h3>Varietales Registrados</h3><div class="meta"><span class="chip">varietales</span><span class="grupo">Grupo: Varietales Registrados</span></div><p class="charter">Charter · <code>docs/componentes/varietales.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-varietales"><span>Hoy:</span><input id="hoy-varietales" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-varietales">Copiar prompt</button></div><div class="scroll"><pre id="pre-varietales" tabindex="0">Trabajas SOLO en el componente «Varietales Registrados» (clave: varietales) de la plataforma CTC

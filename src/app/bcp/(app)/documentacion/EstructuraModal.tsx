@@ -1,14 +1,16 @@
 "use client";
 
+import { CONSOLES, CONSOLE_ORDER, consolaDelModulo } from "@/lib/panel/consoles";
 import { useState } from "react";
 
 // ── Estructura del sistema · dos diagramas que se complementan ───────────────
 // 1. LA RED PÚBLICA — el board del owner (2026-08-03): las plataformas con
 //    login, las superficies de captación, los dos módulos compartidos y el
 //    Control Panel al centro haciendo Posting / Manage / Screening.
-// 2. DENTRO DEL CONTROL PANEL — el árbol de las tres consolas con sus módulos
-//    REALES (espejo de src/lib/panel/consoles.ts; si cambia el nav, cambia
-//    este dibujo).
+// 2. DENTRO DEL CONTROL PANEL — el árbol de las consolas con sus módulos REALES.
+//    Desde la V5.60 SE GENERA de src/lib/panel/consoles.ts: si cambia el nav,
+//    este dibujo cambia solo. Y en el diagrama 1, la consola que recibe cada
+//    formulario se lee también del rail (`enConsola`).
 // La bisagra entre los dos es la caja "CTC Control Panel", que aparece en
 // ambos. En el segundo, el cuadrito de color de cada módulo dice a qué bloque
 // del primero atiende — mismo código de color en los dos.
@@ -24,7 +26,13 @@ const MORADO = "#3C0A86"; // enrutador y consolas
 
 const HOOK_TOOLS = "#D96F1E"; // lazo naranja: monta el panel de Herramientas
 const HOOK_COFFEED = "#C9A227"; // lazo dorado: monta el muro de Coffeed
-const SCREENING = "#6B4FC9"; // la línea del screening del ECP
+const SCREENING = "#6B4FC9"; // la línea del screening (el match de Terratalento)
+
+/** La sigla de la consola en cuyo rail vive un módulo — leída del rail, para que una mudanza no deje el rótulo atrás. */
+const enConsola = (segmento: string) => {
+  const k = consolaDelModulo(segmento);
+  return k ? CONSOLES[k].code : "—";
+};
 
 const FILL = {
   hub: "#F0E7FD",
@@ -90,10 +98,10 @@ export function RedPublicaDiagram() {
 
       <Box x={405} y={50} w={210} h={52} kind="bi" title="Kaffetal Regal" sub="catálogo: Specialty + Black" />
       <Box x={760} y={50} w={200} h={52} kind="bi" title="Cherry Picked" sub="Green · Roast · X" />
-      <Box x={880} y={130} w={200} h={46} kind="cap" title="CaaS" sub="form → CRM en BCP" />
-      <Box x={210} y={120} w={200} h={46} kind="cap" title="Varietales" sub="form → CRM en ECP" />
-      <Box x={210} y={176} w={200} h={46} kind="cap" title="CTC Tech" sub="form → CRM en ECP" />
-      <Box x={210} y={232} w={200} h={46} kind="cap" title="Terratalento" sub="form → CRM en ECP" />
+      <Box x={880} y={130} w={200} h={46} kind="cap" title="CaaS" sub={`form → CRM en ${enConsola("crm/caas")}`} />
+      <Box x={210} y={120} w={200} h={46} kind="cap" title="Varietales" sub={`form → CRM en ${enConsola("varietales")}`} />
+      <Box x={210} y={176} w={200} h={46} kind="cap" title="CTC Tech" sub={`form → CRM en ${enConsola("ctc-tech")}`} />
+      <Box x={210} y={232} w={200} h={46} kind="cap" title="Terratalento" sub={`form → lista en ${enConsola("terratalento")}`} />
       <Box x={615} y={230} w={210} h={52} kind="dif" title="Coffeed" sub="home propia · solo difusión" />
       <Box x={600} y={328} w={240} h={56} kind="hub" title="CTC Control Panel" sub="landing pública + login maestro" />
       <Box x={210} y={470} w={200} h={52} kind="bi" title="Terratalento" sub="landing · login" />
@@ -114,34 +122,70 @@ export function RedPublicaDiagram() {
       <line x1={380} y1={708} x2={408} y2={708} stroke={HOOK_COFFEED} strokeWidth={1.6} />
       <text x={416} y={712} fontSize={12} fill={MUTED}>monta el muro Coffeed</text>
       <line x1={640} y1={708} x2={668} y2={708} stroke={SCREENING} strokeWidth={2.5} />
-      <text x={676} y={712} fontSize={12} fill={MUTED}>screening del ECP</text>
+      <text x={676} y={712} fontSize={12} fill={MUTED}>screening del {enConsola("terratalento")}</text>
     </svg>
   );
 }
 
 // ── Diagrama 2 · dentro del Control Panel ────────────────────────────────────
-function Modulo({ x, y, label, dot }: { x: number; y: number; label: string; dot?: string }) {
-  return (
-    <g>
-      <rect x={x} y={y} width={300} height={30} rx={4} fill="#FFFFFF" stroke="#CFC9BF" strokeWidth={1} />
-      {dot && <rect x={x + 12} y={y + 10} width={10} height={10} rx={2} fill={dot} />}
-      <text x={x + 34} y={y + 20} fontSize={14} fill={INK}>{label}</text>
-    </g>
-  );
-}
+// SE GENERA DEL RAIL (`CONSOLES`), no se dibuja a mano (V5.60). La versión anterior era un SVG con
+// cada caja escrita a mano como «espejo del menú», y un espejo a mano no refleja: en septiembre de
+// 2026 seguía pintando el reparto de ANTES de la V4.24 —el BCP con el catálogo y los lotes, tres
+// consolas— después de cinco mudanzas y del nacimiento de la LCP. Ahora una consola, un grupo o un
+// módulo nuevo aparecen aquí solos, en el orden del rail.
+//
+// Lo único que sigue escrito a mano es el CUADRITO de color —a qué bloque del diagrama de la red
+// atiende cada módulo—, por SEGMENTO de ruta y no por consola, para que sobreviva a una mudanza.
+const ATIENDE: Record<string, string> = {
+  // una plataforma con login
+  directorio: AZUL, terratalento: AZUL, arena: AZUL, club: AZUL, socios: AZUL, catalogo: AZUL, "ctc-selection": AZUL,
+  productores: AZUL, fincas: AZUL, lotes: AZUL, fichas: AZUL, nominados: AZUL, galardonados: AZUL, "crm/green": AZUL,
+  // un formulario de captación
+  leads: AMBAR, "crm/caas": AMBAR, "crm/roast": AMBAR, "crm/x": AMBAR, "lista-espera": AMBAR, "ctc-tech": AMBAR, varietales: AMBAR,
+  // un módulo compartido
+  coffeed: GRIS, herramientas: GRIS,
+};
 
-function Grupo({ x, y, h, label }: { x: number; y: number; h: number; label: string }) {
+const COL_W = 280;
+const COL_GAP = 16;
+const MOD_H = 30;
+const MOD_GAP = 6;
+const GRUPO_PAD_TOP = 28;
+const GRUPO_PAD_BOTTOM = 12;
+const GRUPO_GAP = 14;
+const TOP_CONSOLAS = 204;
+
+function ModuloRail({ x, y, label, dot }: { x: number; y: number; label: string; dot?: string }) {
   return (
     <g>
-      <rect x={x} y={y} width={324} height={h} rx={8} fill="none" stroke="#B9B3A9" strokeWidth={1} strokeDasharray="5 4" />
-      <text x={x + 16} y={y + 18} fontSize={12} fill={MUTED}>{label}</text>
+      <rect x={x} y={y} width={COL_W - 24} height={MOD_H} rx={4} fill="#FFFFFF" stroke="#CFC9BF" strokeWidth={1} />
+      {dot && <rect x={x + 10} y={y + 10} width={10} height={10} rx={2} fill={dot} />}
+      <text x={x + 28} y={y + 20} fontSize={13} fill={INK}>{label.length > 32 ? label.slice(0, 31) + "…" : label}</text>
     </g>
   );
 }
 
 export function PanelDiagram() {
+  const n = CONSOLE_ORDER.length;
+  const ancho = n * COL_W + (n - 1) * COL_GAP;
+  const x0 = (1200 - ancho) / 2;
+  const colX = (i: number) => x0 + i * (COL_W + COL_GAP);
+
+  // La altura de cada columna sale de su rail; la del lienzo, de la más alta.
+  const columnas = CONSOLE_ORDER.map((k, i) => {
+    let y = TOP_CONSOLAS + 56 + 16;
+    const grupos = CONSOLES[k].nav.map((g) => {
+      const h = GRUPO_PAD_TOP + g.links.length * (MOD_H + MOD_GAP) - MOD_GAP + GRUPO_PAD_BOTTOM;
+      const caja = { y, h, label: g.label ?? "", links: g.links };
+      y += h + GRUPO_GAP;
+      return caja;
+    });
+    return { k, x: colX(i), grupos, fin: y };
+  });
+  const alto = Math.max(...columnas.map((c) => c.fin)) + 56;
+
   return (
-    <svg width="100%" viewBox="0 0 1200 890" role="img" aria-label="Contenidos del CTC Control Panel: las tres consolas internas y sus módulos" style={{ display: "block" }}>
+    <svg width="100%" viewBox={`0 0 1200 ${alto}`} role="img" aria-label={`Contenidos del CTC Control Panel: las ${n} consolas internas y sus módulos`} style={{ display: "block" }}>
       <defs>
         <marker id="pan-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M2 1L8 5L2 9" fill="none" stroke={LINE} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -156,59 +200,42 @@ export function PanelDiagram() {
       <text x={600} y={140} textAnchor="middle" fontSize={12} fill={MUTED}>landing pública + login maestro</text>
       <text x={600} y={158} textAnchor="middle" fontSize={12} fill={MUTED}>la misma caja del diagrama de la red</text>
 
-      <line x1={560} y1={170} x2={234} y2={200} stroke={LINE} strokeWidth={1.5} markerEnd="url(#pan-arr)" />
-      <line x1={600} y1={170} x2={600} y2={200} stroke={LINE} strokeWidth={1.5} markerEnd="url(#pan-arr)" />
-      <line x1={640} y1={170} x2={966} y2={200} stroke={LINE} strokeWidth={1.5} markerEnd="url(#pan-arr)" />
+      {columnas.map((c) => (
+        <line key={`l-${c.k}`} x1={600} y1={170} x2={c.x + COL_W / 2} y2={TOP_CONSOLAS - 4} stroke={LINE} strokeWidth={1.5} markerEnd="url(#pan-arr)" />
+      ))}
 
-      <Box x={60} y={204} w={340} h={56} kind="hub" title="BCP · Base" sub="identidad y pasaporte del lote" />
-      <Box x={430} y={204} w={340} h={56} kind="hub" title="OCP · Operación" sub="despacho, relevos, recepción" />
-      <Box x={800} y={204} w={340} h={56} kind="hub" title="ECP · Dirección" sub="precios, primas, salud de la red" />
+      {columnas.map((c) => {
+        const consola = CONSOLES[c.k];
+        return (
+          <g key={c.k}>
+            <Box x={c.x} y={TOP_CONSOLAS} w={COL_W} h={56} kind="hub" title={`${consola.code} · ${consola.name}`} sub={consola.tagline.split(":")[0]} />
+            <rect x={c.x} y={TOP_CONSOLAS} width={COL_W} height={4} rx={2} fill={consola.accent} />
+            {c.grupos.map((g) => (
+              <g key={`${c.k}-${g.label}-${g.y}`}>
+                <rect x={c.x} y={g.y} width={COL_W} height={g.h} rx={8} fill="none" stroke="#B9B3A9" strokeWidth={1} strokeDasharray="5 4" />
+                <text x={c.x + 12} y={g.y + 18} fontSize={12} fill={MUTED}>{g.label.replace(`${consola.code} · `, "")}</text>
+                {g.links.map((l, j) => (
+                  <ModuloRail
+                    key={l.href}
+                    x={c.x + 12}
+                    y={g.y + GRUPO_PAD_TOP + j * (MOD_H + MOD_GAP)}
+                    label={l.label}
+                    dot={ATIENDE[l.href.split("/").slice(2).join("/")]}
+                  />
+                ))}
+              </g>
+            ))}
+          </g>
+        );
+      })}
 
-      <Grupo x={68} y={276} h={178} label="Comercial" />
-      <Modulo x={80} y={304} label="Kaffetal Club" dot={AZUL} />
-      <Modulo x={80} y={340} label="Catálogo Cherry Picked" dot={AZUL} />
-      <Modulo x={80} y={376} label="Black Stock" dot={AZUL} />
-      <Modulo x={80} y={412} label="CRM CaaS" dot={AMBAR} />
-
-      <Grupo x={68} y={468} h={142} label="Cadena del lote · lo que escribe Kaffetal Regal" />
-      <Modulo x={80} y={496} label="Productores" />
-      <Modulo x={80} y={532} label="Fincas" />
-      <Modulo x={80} y={568} label="Lotes" />
-
-      <Grupo x={68} y={624} h={142} label="Competencia · la Arena del Club" />
-      <Modulo x={80} y={652} label="Nominados" />
-      <Modulo x={80} y={688} label="Arena" />
-      <Modulo x={80} y={724} label="Galardonados" />
-
-      <Grupo x={438} y={276} h={106} label="Operación" />
-      <Modulo x={450} y={304} label="Leads · Recepción" dot={AMBAR} />
-      <Modulo x={450} y={340} label="Socios de la red" dot={AZUL} />
-      <text x={600} y={424} textAnchor="middle" fontSize={12} fill={MUTED}>BCP + OCP = orquestación operacional</text>
-      <text x={600} y={444} textAnchor="middle" fontSize={12} fill={MUTED}>el ECP dirige · el OCP ejecuta</text>
-
-      <Grupo x={808} y={276} h={286} label="Dirección" />
-      <Modulo x={820} y={304} label="Buzón de entrada" />
-      <Modulo x={820} y={340} label="Directorio del Café" dot={AZUL} />
-      <Modulo x={820} y={376} label="Coffeed" dot={GRIS} />
-      <Modulo x={820} y={412} label="CRM CTC Tech" dot={AMBAR} />
-      <Modulo x={820} y={448} label="CRM Varietales" dot={AMBAR} />
-      <Modulo x={820} y={484} label="Herramientas del café" dot={GRIS} />
-      <Modulo x={820} y={520} label="Terratalento" dot={AZUL} />
-
-      <Grupo x={808} y={576} h={142} label="IT y Plataforma" />
-      <Modulo x={820} y={604} label="Documentación del sistema" />
-      <Modulo x={820} y={640} label="Mapa de Trabajo" />
-      <Modulo x={820} y={676} label="Usuarios y credenciales" />
-
-      <Grupo x={808} y={732} h={70} label="Espacio personal del owner" />
-
-      <text x={60} y={838} fontSize={12} fill={MUTED}>el cuadrito dice a qué bloque del diagrama de la red atiende cada módulo</text>
-      <rect x={60} y={856} width={10} height={10} rx={2} fill={AZUL} />
-      <text x={80} y={865} fontSize={12} fill={MUTED}>atiende una plataforma con login</text>
-      <rect x={320} y={856} width={10} height={10} rx={2} fill={AMBAR} />
-      <text x={340} y={865} fontSize={12} fill={MUTED}>recibe un formulario de captación</text>
-      <rect x={590} y={856} width={10} height={10} rx={2} fill={GRIS} />
-      <text x={610} y={865} fontSize={12} fill={MUTED}>administra un módulo compartido</text>
+      <text x={x0} y={alto - 32} fontSize={12} fill={MUTED}>el cuadrito dice a qué bloque del diagrama de la red atiende cada módulo</text>
+      <rect x={x0} y={alto - 20} width={10} height={10} rx={2} fill={AZUL} />
+      <text x={x0 + 20} y={alto - 11} fontSize={12} fill={MUTED}>atiende una plataforma con login</text>
+      <rect x={x0 + 260} y={alto - 20} width={10} height={10} rx={2} fill={AMBAR} />
+      <text x={x0 + 280} y={alto - 11} fontSize={12} fill={MUTED}>recibe un formulario de captación</text>
+      <rect x={x0 + 530} y={alto - 20} width={10} height={10} rx={2} fill={GRIS} />
+      <text x={x0 + 550} y={alto - 11} fontSize={12} fill={MUTED}>administra un módulo compartido</text>
     </svg>
   );
 }
@@ -243,7 +270,7 @@ export function EstructuraModal() {
 
             <h4 style={heading}>2 · Dentro del Control Panel</h4>
             <p style={caption}>
-              El mismo login maestro abre tres consolas con sus módulos reales (espejo del menú). El
+              El mismo login maestro abre las consolas con sus módulos reales. Este diagrama se genera del menú: no puede quedarse atrás. El
               cuadrito de color dice a qué bloque del diagrama de arriba atiende cada módulo; los que no
               lo tienen son de uso interno.
             </p>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { logProducerComm } from "../commActions";
-import { ActionForm } from "../ActionForm";
+import { ActionForm } from "@/components/panel/ActionForm";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Panel del productor con pestañas (2026-07-23, pedido del owner) ──────────

@@ -8,7 +8,7 @@ import styles from "@/components/panel/shared.module.css";
 // Nació como la página completa de Leads; ahora es el componente compartido que
 // cada consola monta con SUS pilares (regla Fase 0: "el CRM vive en la consola
 // dueña del dominio") — `general` y `cocreate` (CaaS) → LCP; `tech` y
-// `varietales` → ECP. Una sola tabla `leads`; cambia qué consola ve qué pilar, y
+// `varietales` → BCP (el tablero de su superficie). Una sola tabla `leads`; cambia qué consola ve qué pilar, y
 // ese reparto tiene fuente única: `src/lib/panel/leadsPilares.ts`. Las Server
 // Actions viven AL LADO (`leadsActions.ts`), no en el árbol de una consola, y
 // re-verifican sesión, consola y nivel por su cuenta.

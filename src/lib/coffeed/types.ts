@@ -325,7 +325,7 @@ export type CoffeedStudioBundle = {
   nextChapterNo: number;
   /** Borradores ya entregados al ECP, por id — para no entregar dos veces. */
   deliveredDraftIds: string[];
-  identity: { displayName: string; via: "partner" | "ecp" };
+  identity: { displayName: string; via: "partner" | "consola" };
 };
 
 /** Todo lo que la consola de DIRECCIÓN necesita (ECP · Coffeed):

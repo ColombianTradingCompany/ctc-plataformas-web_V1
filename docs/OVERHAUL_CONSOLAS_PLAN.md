@@ -148,7 +148,7 @@ dejan su 308.
 - **Datos (D2)** — ✅ hecho y comprobado por SQL (3 filas; 0 con `ecp`/`ocp` y sin `lcp`): `panel_users.consoles` gana `lcp` para las tres credenciales. Antes del push, SQL: nadie con `ecp` u `ocp`
   y sin `lcp`. Verificación en vivo: `curl -sI` a los siete talones.
 
-**Fase 2 · El nuevo reparto BCP ↔ ECP, y el Tablero de Ejecución** — *riesgo bajo-medio · 16 rutas, 7 de vuelta*
+**Fase 2 · El nuevo reparto BCP ↔ ECP, y el Tablero de Ejecución** — *riesgo bajo-medio · 16 rutas, 7 de vuelta* — ✅ **EJECUTADA en la V5.60 (2026-09-19)**
 - Ecosistema de Valor al BCP (6 del ECP + `arena` y `club` del OCP); `plataformas` al BCP; `socios` entra en Configuración.
 - Herramientas Internas al ECP: `direccionamiento`, `pvc`, `grados`, los dos cotizadores y las anclas, `automatizaciones`.
   **Viajes de vuelta**: borrar los talones `/ecp/cotizador-*`, `/ecp/anclas-mercado` y `/ecp/direccionamiento` (chocarían con
@@ -160,6 +160,16 @@ dejan su 308.
   cada consola aporta sus tareas— y `/ecp` deja de ser un índice con cuatro casillas vacías. Se corrige el `revalidatePath`
   rancio de `setTaskState`.
 - Charters: `herramientas-internas.md` (vive en el ECP), `consolas.md`, y un charter nuevo o sección para la LCP.
+- **Lo que cambió al ejecutarla**: **(1) los viajes de vuelta eran NUEVE, no siete** — la Arena y el Club también volvían a una URL
+  que era un talón (salieron del BCP en la V4.24). Un viaje de vuelta borra el talón, borra su entrada (la inversa va aparte: juntas
+  serían un bucle) y reapunta lo que apuntaba a la casa que se deja. **(2) La Arena no se despega limpia del OCP**: su página asigna
+  lotes a sesiones, invita a la vitrina y revisa reclamos — tres acciones del circuito del lote, que abren ahora las dos consolas.
+  La fase 4 decide si sigue haciéndolo. **(3) `coffeedGate`/`studioGate` leen la consola del rail** (`consolaDelModulo`), como pedía
+  el plan; el resto de `src/lib` cambió su clave a mano y el guardián (f-bis) lo contrastó con el rail. **(4) Los KPI del Modelo
+  Económico se quedaron en el Panel del BCP** (son cifras del negocio); el del ECP es el Tablero. **(5) El Tablero** agrupa por
+  consola DUEÑA y se ve entero aunque no se tenga su grant; la casilla pide nivel en la dueña o en el ECP. El Panel del OCP enseña
+  solo las suyas. **(6) El diagrama «espejo del menú»** no se redibujó: se genera del rail. **(7) «Seguimiento de Temas» y
+  «Plataformas de Pagos»** no entraron al rail (D9): no tienen módulo ni brief.
 
 **Fase 3 · La tabla única · «Productores, Fincas y Lotes»** — *riesgo medio · pantalla nueva, mismas acciones*
 - Una ruta (`/ocp/kr`), **una consulta**, grano de LOTE: cada fila es un lote; la finca sin lotes y el productor sin fincas

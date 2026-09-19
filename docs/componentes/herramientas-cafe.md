@@ -3,6 +3,10 @@
 > Se lee con `docs/ALINEACION.md` al lado. Grupo de la barra lateral: **Herramientas del Café**
 > (una conversación por herramienta). El documento de referencia sigue siendo `docs/HERRAMIENTAS_TALLER.md`.
 
+> **V5.60 (2026-09-19):** el tablero de esta superficie pasó del ECP a **«BCP · Ecosistema de Valor»** (fase 2 de
+> `docs/OVERHAUL_CONSOLAS_PLAN.md`). Donde este charter decía «ECP» dice ahora «BCP»; las rutas `/ecp/…` viejas siguen vivas
+> como 308.
+
 ## Qué es
 
 Las herramientas **públicas** de la red (`herramientas.ctcexport.com`): calculadoras y referencias en
@@ -11,7 +15,7 @@ en tres superficies (la propia, Kaffetal Regal y Cherry Picked Green). Desde V5.
 semi-independiente**: landing con carrusel de capturas, **puerta** (`/herramientas/acceso`, la misma
 cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abiertas y **Plus**) y
 **trabajos guardados** gracias al puente `ctc-bridge.js`. El inventario **vive en la base** (`tools` +
-`tool_versions`): una versión nueva se sube y publica desde el ECP sin desplegar.
+`tool_versions`): una versión nueva se sube y publica desde el BCP sin desplegar.
 
 ## El inventario (tabla `tools`, 2026-09-11)
 
@@ -41,7 +45,7 @@ Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_t
 `/herramientas` (landing) · `/herramientas/acceso` · `/herramientas/taller` · `/herramientas/taller/[slug]` ·
 `/kaffetal-regal/herramientas/[slug]` · `/cherry-picked-green/herramientas/[slug]` (la ruta es de la
 SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy) ·
-`/ecp/herramientas` (administración).
+`/bcp/herramientas` (administración).
 
 ## Mapa de código
 
@@ -92,14 +96,14 @@ once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-too
 - **La caducidad de un permiso se filtra en código** (`expires_at` nulo = no caduca); nunca `.lt()` a secas.
 - **`?volver=` solo acepta rutas relativas de ESA superficie** — un redirect abierto dentro del dominio es
   phishing servido por la casa.
-- Una herramienta nueva: `.html` a `public/tools/` → `vendor-tool-assets.mjs` → alta en `tools` desde el ECP
+- Una herramienta nueva: `.html` a `public/tools/` → `vendor-tool-assets.mjs` → alta en `tools` desde el BCP
   → línea del puente si guarda trabajo → captura con `build-tool-shots.mjs` → `qa-tools-seo-*` verdes.
 
 ## Lo que las consolas gobiernan de este componente
 
-**ECP · Herramientas** es el dueño operativo: alta/versión/publicación (`toolsActions.ts`), `tier`,
+**BCP · Herramientas** es el dueño operativo: alta/versión/publicación (`toolsActions.ts`), `tier`,
 `clase`, `soporta_memoria`, `archivado_at`, permisos Plus por persona (`tool_user_grants`), solicitudes.
-**ECP · Manejo de Plataformas** lee `tools.meta_description` como inventario de indexables. Un cambio en
+**BCP · Manejo de Plataformas** lee `tools.meta_description` como inventario de indexables. Un cambio en
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
@@ -119,7 +123,7 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
   2. **Feedback Técnico (V5.35)**: la cara del laboratorio exporta `feedback-tecnico-<id>.json`; el owner los trae a
      una sesión para refinar reglas y prompt. Pendiente, cuando haya volumen: guardarlos en una tabla
      (`croma_feedback`, service-role-only) en vez de archivos, y restringir la cara del laboratorio a técnicos con
-     permiso por persona desde ECP · Herramientas (hoy la ve cualquiera con la herramienta abierta).
+     permiso por persona desde BCP · Herramientas (hoy la ve cualquiera con la herramienta abierta).
   2b. **Catálogo de prácticas** (reglas v2.2): lo debe revisar un agrónomo antes de la demo; es lo primero que el
      Feedback Técnico va a corregir. **Candidato (V5.40)**: Tulio Esteban Lozano Vesga (UIS-IPRED, Campo Para Todos),
      referente de la cromatografía cualitativa en la caficultura latinoamericana, ya citado como fuente B (tesis 2021,

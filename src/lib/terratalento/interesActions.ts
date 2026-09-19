@@ -67,9 +67,9 @@ export async function marcarInteresTtContactado(
   interesId: string,
   contactado: boolean
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  // La lista se mira en DOS sitios desde la V5.59: junto a Terratalento (ECP) y en la lista de
+  // La lista se mira en DOS sitios desde la V5.59: junto a Terratalento (BCP) y en la lista de
   // espera reunida de la LCP. Quien la ve en cualquiera de las dos puede marcarla.
-  const permiso = await permisoDeEscritura(["ecp", "lcp"], "borrador");
+  const permiso = await permisoDeEscritura(["bcp", "lcp"], "borrador");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -98,7 +98,7 @@ export async function marcarInteresTtContactado(
     performed_by: adminId,
   });
 
-  revalidatePath("/ecp/terratalento");
+  revalidatePath("/bcp/terratalento");
   revalidatePath("/lcp/lista-espera");
   return { ok: true };
 }

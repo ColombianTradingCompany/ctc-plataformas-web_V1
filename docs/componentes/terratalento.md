@@ -5,11 +5,15 @@
 > charter existe para que la separación, cuando llegue, sea crear el grupo «Terratalento» y añadir la
 > clave a `build_kickoff.py`: todo lo demás ya está aquí.
 
+> **V5.60 (2026-09-19):** el tablero de esta superficie pasó del ECP a **«BCP · Ecosistema de Valor»** (fase 2 de
+> `docs/OVERHAUL_CONSOLAS_PLAN.md`). Donde este charter decía «ECP» dice ahora «BCP»; las rutas `/ecp/…` viejas siguen vivas
+> como 308.
+
 ## Qué es
 
 La superficie del **recolector** (`terratalento.ctcexport.com`, V2.35–V2.36, 2026-08-02): un recolector
 arma su perfil, se declara disponible y **se postula** a las **jornadas de recolecta** que las fincas de
-Kaffetal Regal publican; CTC **confirma** desde el ECP y **conecta a las partes** — nunca es empleador.
+Kaffetal Regal publican; CTC **confirma** desde el BCP y **conecta a las partes** — nunca es empleador.
 La finca ve solo conteos y, tras la confirmación, nombre y celular de los confirmados (decisión 5.1 del
 plan V2); el acuerdo queda por escrito en una **constancia** imprimible que dice explícitamente que CTC
 conecta (decisión 5.2) — no puede llamarse contrato ni obligar a nada laboral.
@@ -23,7 +27,7 @@ retroalimentación que hoy se atiende.
 | Ruta | Qué |
 |---|---|
 | `/terratalento` (+ `/terratalento/auth`) | landing + app del recolector (`TerratalentoExperience`, `JornadaCard`) |
-| `/ecp/terratalento` | el tablero de CTC: jornadas, postulaciones, confirmación, constancia (`ConstanciaButton`), interés |
+| `/bcp/terratalento` | el tablero de CTC: jornadas, postulaciones, confirmación, constancia (`ConstanciaButton`), interés |
 | KR · Ecosistema | la tarjeta gris con el composer de interés (`producer_comm_log`, `context_label: "Terratalento · interés"`) |
 
 ## Mapa de código
@@ -32,7 +36,7 @@ retroalimentación que hoy se atiende.
 `terratalento.module.css`, `src/lib/terratalento/{actions,constanciaPrint,interesActions,terminos}.ts`
 (`cargarTerratalento`, `guardarPerfilRecolector`, `setDisponibleRecolector`, `postularJornada`,
 `retirarPostulacion`, `miConstancia`, `misJornadasRecolecta`, `crearJornadaRecolecta`, `cerrarJornadaRecolecta`;
-`registrarInteresTerratalento`, `marcarInteresTtContactado`), `src/app/ecp/(app)/terratalento/`, el correo del
+`registrarInteresTerratalento`, `marcarInteresTtContactado`), `src/app/bcp/(app)/terratalento/`, el correo del
 llamado (`qa-llamado-email-check`). Plan abierto: `docs/TERRATALENTO_V2_PLAN.md` (§5.1 y §5.2 resueltas; §5.3
 —datos sensibles, EPS— por defecto sin pedir hasta que exista política de privacidad).
 
@@ -56,13 +60,13 @@ términos de una jornada, módulo puro).
 
 ## Lo que las consolas gobiernan de este componente
 
-**ECP · Terratalento** lo es todo: confirmar/descartar postulaciones, cerrar jornadas, emitir la constancia,
+**BCP · Terratalento** lo es todo: confirmar/descartar postulaciones, cerrar jornadas, emitir la constancia,
 marcar el interés como contactado. **Hoy la tarea es solo ésa**: leer el interés que llega desde KR y
 responder.
 
 ## Pendientes
 
-- Nada que construir en seis meses (owner). Mantener: responder el interés desde el ECP.
+- Nada que construir en seis meses (owner). Mantener: responder el interés desde el BCP.
 - Al separar: grupo «Terratalento» en la barra lateral, clave en `build_kickoff.py`, guardián propio, y
   retomar `TERRATALENTO_V2_PLAN.md` §4 (tableros, Google login, información contractual).
 - La política de privacidad de la red (transversal) desbloquea §5.3.

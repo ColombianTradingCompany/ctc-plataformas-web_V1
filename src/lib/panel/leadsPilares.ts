@@ -19,8 +19,8 @@ import { CONSOLE_ORDER, type PanelConsoleKey } from "./consoles";
 export const PILLAR_BOARD_PATH: Record<string, string> = {
   general: "/lcp/leads", // Leads · Recepción — la puerta general de la red
   cocreate: "/lcp/crm/caas", // CRM CP CaaS
-  tech: "/ecp/ctc-tech", // el tablero de SU superficie (D4 del overhaul): no es un CRM de Cherry Picked
-  varietales: "/ecp/varietales",
+  tech: "/bcp/ctc-tech", // el tablero de SU superficie (D4 del overhaul): no es un CRM de Cherry Picked. BCP desde la V5.60
+  varietales: "/bcp/varietales",
 };
 
 /** El pilar que no se conoce cae en la recepción general, que es donde se mira lo que no tiene dueño. */

@@ -2,6 +2,10 @@
 
 > Se lee con `docs/ALINEACION.md` al lado. Grupo de la barra lateral: **Varietales Registrados**.
 
+> **V5.60 (2026-09-19):** el tablero de esta superficie pasó del ECP a **«BCP · Ecosistema de Valor»** (fase 2 de
+> `docs/OVERHAUL_CONSOLAS_PLAN.md`). Donde este charter decía «ECP» dice ahora «BCP»; las rutas `/ecp/…` viejas siguen vivas
+> como 308.
+
 ## Qué es
 
 La superficie de **captación** para productores que piden el catálogo de plántulas de variedades
@@ -14,12 +18,12 @@ donde las respuestas llegan a «Mis solicitudes». Comparte con CTC Tech y CaaS 
 | Ruta | Qué |
 |---|---|
 | `/varietales` | landing + formulario (`VarietalesLanding.tsx` sobre `SurfaceShell`; copy en `servicesCopy.tsx`) |
-| `/ecp/varietales` | el tablero de leads del pilar `varietales` |
+| `/bcp/varietales` | el tablero de leads del pilar `varietales` |
 
 ## Mapa de código
 
 - `src/components/services/{VarietalesLanding,SurfaceShell,servicesCopy}.tsx`.
-- `src/lib/leads/actions.ts` (compartido: `FIELD_KEYS.varietales`), `src/app/ecp/(app)/varietales/page.tsx`,
+- `src/lib/leads/actions.ts` (compartido: `FIELD_KEYS.varietales`), `src/app/bcp/(app)/varietales/page.tsx`,
   `src/components/panel/leadsActions.ts` + `src/lib/panel/leadsPilares.ts` (la consola del pilar se deduce de la ruta
   de su tablero, V5.59), `src/lib/email/leadEmails.ts`.
 - El **catálogo de variedades** que se le enseña al productor sale de la fuente única de la Ficha:
@@ -42,7 +46,7 @@ Ninguno propio (deuda compartida con CTC Tech). Cubierto por `qa-solicitudes-kr-
 
 ## Lo que las consolas gobiernan de este componente
 
-**ECP · Varietales / Leads**: leer, responder, cambiar de estado. Un cambio en `PILLARS`/`FIELD_KEYS`
+**BCP · Varietales / Leads**: leer, responder, cambiar de estado. Un cambio en `PILLARS`/`FIELD_KEYS`
 alcanza a CTC Tech y CaaS; un cambio en `VARIETIES` alcanza a la Ficha de Kaffetal Regal.
 
 ## Pendientes

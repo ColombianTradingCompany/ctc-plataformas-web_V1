@@ -122,7 +122,7 @@ export function EscalaBoard({
       <p className={styles.warn}>
         <strong>Esto todavía no gobierna.</strong> La fuente única de grados sigue siendo <code>definicion.ts</code> — la
         escala SCA de dos en dos, que es la que se aplica hoy en la Ficha, el catálogo y las ofertas. Puede verla en{" "}
-        <Link href="/bcp/direccionamiento/grados">Direccionamiento · Grados de Calidad</Link>. Esta pantalla calcula y
+        <Link href="/ecp/direccionamiento/grados">Direccionamiento · Grados de Calidad</Link>. Esta pantalla calcula y
         enseña; no escribe en ningún lote.
       </p>
 

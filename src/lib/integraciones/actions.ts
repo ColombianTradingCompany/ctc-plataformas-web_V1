@@ -6,7 +6,7 @@
 // vivos.
 //
 // Gate: `requireConsoleWrite(CONSOLA)`, y CONSOLA es el BCP. El módulo se mudó del ECP al BCP en la V4.25
-// (PR-B): la RUTA se corrigió —`revalidatePath("/bcp/automatizaciones")`— y la CLAVE no, porque una
+// (PR-B): la RUTA se corrigió —`revalidatePath("/ecp/automatizaciones")`— y la CLAVE no, porque una
 // consola escrita como identificador no lleva barras y ninguna reescritura de rutas la toca. Estuvo un
 // mes pidiendo permiso del ECP desde una pantalla del BCP, sin fallarle a nadie (el owner tiene las tres
 // consolas). Lo cazó `qa-rutas-consolas` (f-bis) el día que aprendió a mirar `src/lib/` (V5.56).
@@ -21,7 +21,7 @@ import type { Automation, AutomationResult, IntegrationEvent } from "./types";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 
 /** La consola donde vive este módulo. UNA vez, y `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
-const CONSOLA: PanelConsoleKey = "bcp";
+const CONSOLA: PanelConsoleKey = "ecp";
 
 const NO_AUTH: AutomationResult = { ok: false, error: "No se pudo ejecutar: o tu sesión del BCP ya no está activa (vuelve a iniciar sesión), o tu nivel en el BCP es de lectura y borradores y esta acción emite, publica, cobra, notifica o borra." };
 
@@ -115,7 +115,7 @@ export async function saveAutomation(input: {
     : await service.from("automations").insert({ ...row, created_by: who.userId });
 
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/bcp/automatizaciones");
+  revalidatePath("/ecp/automatizaciones");
   return { ok: true };
 }
 
@@ -125,7 +125,7 @@ export async function deleteAutomation(id: string): Promise<AutomationResult> {
   const service = createServiceRoleClient();
   const { error } = await service.from("automations").delete().eq("id", id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/bcp/automatizaciones");
+  revalidatePath("/ecp/automatizaciones");
   return { ok: true };
 }
 
@@ -139,7 +139,7 @@ export async function retryFailedEvents(): Promise<AutomationResult> {
     .update({ estado: "pendiente", intentos: 0, ultimo_error: null })
     .eq("estado", "fallido");
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/bcp/automatizaciones");
+  revalidatePath("/ecp/automatizaciones");
   return { ok: true };
 }
 
@@ -154,6 +154,6 @@ export async function emitPing(): Promise<AutomationResult> {
     payload: { emitidoPor: who.userId, at: new Date().toISOString() },
   });
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/bcp/automatizaciones");
+  revalidatePath("/ecp/automatizaciones");
   return { ok: true };
 }

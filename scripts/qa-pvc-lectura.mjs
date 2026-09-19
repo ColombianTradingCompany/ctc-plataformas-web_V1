@@ -110,8 +110,8 @@ for (const f of ["primaMinima", "sobreBasePergamino", "verdeFobCop", "moqCargas"
   check(`LecturaBoard usa ${f}`, board.includes(f));
 }
 check("LecturaBoard dice que el precio NO se recalcula", /no lo\s*\n?\s*recalcula|no recalcula/.test(board));
-check("la pestaña Lectura está en el tab strip", lee("src/components/panel/pvc/PvcTabs.tsx").includes("/bcp/pvc/lectura"));
-check("la página lee la edición por su ventana", lee("src/app/bcp/(app)/pvc/lectura/page.tsx").includes("edicionVigente"));
+check("la pestaña Lectura está en el tab strip", lee("src/components/panel/pvc/PvcTabs.tsx").includes("/ecp/pvc/lectura"));
+check("la página lee la edición por su ventana", lee("src/app/ecp/(app)/pvc/lectura/page.tsx").includes("edicionVigente"));
 check("la página lee el mercado de market_anchors", lee("src/lib/pvc/servicio.ts").includes("lecturaDeMercado"));
 
 // ── 7 · la doctrina está escrita ──────────────────────────────────────────

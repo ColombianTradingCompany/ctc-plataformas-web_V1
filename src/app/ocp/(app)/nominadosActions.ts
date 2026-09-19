@@ -779,7 +779,8 @@ async function showcaseGate(
 /** Invita un lote galardonado a la vitrina de la Arena: fase → 'arena' (el
  *  pool de invitados desde el que se bloquea en una sesión). */
 export async function inviteLotToArena(lotId: string): Promise<Result> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
+  // Se pulsa desde DOS consolas: el circuito del lote (OCP) y la página de la Arena (BCP, V5.60).
+  const permiso = await permisoDeEscritura(["ocp", "bcp"], "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -806,13 +807,14 @@ export async function inviteLotToArena(lotId: string): Promise<Result> {
     note: "¡Su lote fue invitado a la vitrina de la Kaffetal Regal Arena — la gala en vivo de los mejores de la temporada! Le confirmaremos la fecha de la sesión.",
     created_by: adminId,
   });
-  revalidatePath("/ocp/arena");
+  revalidatePath("/bcp/arena");
   revalidateAll();
   return { ok: true };
 }
 
 export async function assignLotToSession(lotId: string, sessionId: string): Promise<Result> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
+  // Se pulsa desde DOS consolas: el circuito del lote (OCP) y la página de la Arena (BCP, V5.60).
+  const permiso = await permisoDeEscritura(["ocp", "bcp"], "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -858,7 +860,7 @@ export async function assignLotToSession(lotId: string, sessionId: string): Prom
     note: `¡Su lote tiene sesión de Arena confirmada! Fecha: ${fecha}.`,
     created_by: adminId,
   });
-  revalidatePath("/ocp/arena");
+  revalidatePath("/bcp/arena");
   revalidateAll();
   return { ok: true };
 }

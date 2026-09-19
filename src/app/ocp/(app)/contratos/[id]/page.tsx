@@ -8,7 +8,7 @@ import {
   resolveReconditioning,
   signContract,
 } from "../../contractActions";
-import { ActionForm } from "../../ActionForm";
+import { ActionForm } from "@/components/panel/ActionForm";
 import styles from "@/components/panel/shared.module.css";
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };

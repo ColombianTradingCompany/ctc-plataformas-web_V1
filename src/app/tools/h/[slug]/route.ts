@@ -8,7 +8,8 @@ import { requireActiveAdmin } from "@/lib/panel/requireActiveAdmin";
 //
 // ⚠️ POR QUÉ CUELGA DE `/tools` Y NO DE `/ecp` — es LA lección de la gotcha 12.
 // El mecanismo anterior de herramientas «privadas» servía desde
-// `/ecp/herramientas/<key>`, y eso las condenaba: en un subdominio el proxy
+// una ruta DE CONSOLA (`…/herramientas/<key>`, entonces bajo el ECP — el módulo
+// vive en el BCP desde la V5.60), y eso las condenaba: en un subdominio el proxy
 // reescribía esa ruta a `/kaffetal-regal/ecp/…` y daba 404, así que una
 // herramienta encendida para el productor «funcionaba en el ECP y 404 en KR».
 // `/tools` está EXCLUIDO del matcher del proxy (ver src/proxy.ts), de modo que

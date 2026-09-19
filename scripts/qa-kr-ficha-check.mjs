@@ -122,7 +122,7 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   // Y que las consolas lo USEN: definirla sin aplicarla no ensancha nada.
   for (const ruta of [
     "src/app/ocp/(app)/fincas/FincaModalRow.tsx",
-    "src/app/ocp/(app)/arena/ArenaBoardClient.tsx",
+    "src/app/bcp/(app)/arena/ArenaBoardClient.tsx",
     "src/app/ocp/(app)/nominados/NominadosClient.tsx",
   ]) {
     const src = lee(ruta);

@@ -158,8 +158,8 @@ check("ninguna variedad está en dos niveles", (() => {
 const board = lee("src/components/panel/pvc/EscalaBoard.tsx");
 check("EscalaBoard avisa que todavía no gobierna", /no gobierna/i.test(board));
 check("EscalaBoard remite a definicion.ts", board.includes("definicion.ts"));
-check("EscalaBoard enlaza la escala vigente", board.includes("/bcp/direccionamiento/grados"));
-check("la pestaña Grados está en el tab strip", lee("src/components/panel/pvc/PvcTabs.tsx").includes("/bcp/pvc/grados"));
+check("EscalaBoard enlaza la escala vigente", board.includes("/ecp/direccionamiento/grados"));
+check("la pestaña Grados está en el tab strip", lee("src/components/panel/pvc/PvcTabs.tsx").includes("/ecp/pvc/grados"));
 // La escala nombra a definicion.ts en su comentario a propósito (para decir
 // quién manda de verdad); lo que no debe hacer es IMPORTARLO: son dos escalas
 // distintas y mezclarlas es cómo nacería la tercera verdad.
@@ -168,7 +168,7 @@ check("el módulo de la escala NO importa definicion.ts", !/^\s*import[\s\S]*?fr
 // ── 12 · el rename del módulo ─────────────────────────────────────────────
 const consoles = lee("src/lib/panel/consoles.ts");
 check("el rail dice «Modelo Económico»", consoles.includes('label: "Modelo Económico"'));
-check("la ruta sigue siendo /bcp/pvc", consoles.includes('href: "/bcp/pvc", label: "Modelo Económico"'));
+check("el módulo conserva su segmento `pvc` (en el ECP desde la V5.60; nació en el BCP)", consoles.includes('href: "/ecp/pvc", label: "Modelo Económico"'));
 
 console.log(`qa-pvc-escala: ${ok} comprobaciones OK${fallos.length ? `, ${fallos.length} FALLOS: ${fallos.join(", ")}` : ""}`);
 if (fallos.length) process.exit(1);

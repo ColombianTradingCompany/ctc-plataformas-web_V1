@@ -1,6 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createLot, deleteAbandonedLot } from "../actions";
-import { ActionForm } from "../ActionForm";
+import { ActionForm } from "@/components/panel/ActionForm";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { LotesViews, type ViewLot } from "./LotesViews";

@@ -74,7 +74,7 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 | OCP · CTC Selection | qué lote se muestra a nombre de CTC (`black_negotiations.status='comprar'`) | vista `public_lot_catalog` |
 | **LCP** · CRM CaaS / Green / Roast / X (del OCP hasta la V5.58) | respuestas a leads, etapa manual del comprador, contacto de la lista de espera | `/lcp/crm/*` (las `/ocp/crm/*` son talones 308) |
 | BCP · Modelo Económico (PVC) | MOQ y moneda al comprador — **decididos** (2026-09-15 y §14 del 2026-09-17): la moneda ya se ejecutó (V5.52, `lib/precios/moneda.ts`); los mínimos por grado siguen sin ejecutar (segunda mitad de CP-1) | `PVC_BCP_PLAN.md` §8–§9, §14.4 |
-| ECP · Herramientas | gadgets y nivel Plus en la tienda | charter `herramientas-cafe` |
+| BCP · Herramientas del Café | gadgets y nivel Plus en la tienda | charter `herramientas-cafe` |
 
 ## Pendientes
 

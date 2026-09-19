@@ -82,7 +82,7 @@ export async function concederHerramienta(
   toolId: string,
   source: "manual" | "payment" = "manual"
 ): Promise<ResultadoGrant> {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura("bcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -111,13 +111,13 @@ export async function concederHerramienta(
     notes: source,
   });
 
-  revalidatePath("/ecp/herramientas");
+  revalidatePath("/bcp/herramientas");
   return { ok: true };
 }
 
 /** Retirar el permiso. La persona vuelve a ver la herramienta bloqueada. */
 export async function revocarHerramienta(userId: string, toolId: string): Promise<ResultadoGrant> {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura("bcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -137,7 +137,7 @@ export async function revocarHerramienta(userId: string, toolId: string): Promis
     performed_by: adminId,
   });
 
-  revalidatePath("/ecp/herramientas");
+  revalidatePath("/bcp/herramientas");
   return { ok: true };
 }
 

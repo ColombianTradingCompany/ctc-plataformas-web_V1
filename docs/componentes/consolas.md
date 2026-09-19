@@ -9,22 +9,22 @@ Las **cuatro** consolas internas del equipo CTC detrás de **un login maestro** 
 correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18; la cuarta, la LCP, nació el
 2026-09-19 con la V5.59 — fase 1 de `docs/OVERHAUL_CONSOLAS_PLAN.md`):
 
-- **BCP · Base Control Panel — *Business***: la **configuración del sistema** (usuarios y credenciales, documentación,
-  Mapa de Trabajo, consumo de IA, automatizaciones) y la **red de socios**. El primer grupo de su rail, **«BCP ·
-  Herramientas Internas»** (antes «Business Core»: Definición de Contexto, Misión y Visión, el Modelo Económico —PVC y
-  Grados—, y los modelos de Procesamiento y Logística), **NO es de este charter: es de `herramientas-internas`** (owner,
-  2026-09-19, V5.55 — que invirtió su propia decisión de esa mañana, «el PVC es únicamente del BCP»). De este componente
-  siguen siendo el rail, los permisos y las rutas donde ese grupo vive.
+- **BCP · Base Control Panel — *Business***: **lo que la casa ES** (cuadro del owner, V5.60). «BCP · Ecosistema de Valor»:
+  el tablero de cada plataforma de la red — Herramientas del Café, Directorio, Coffeed/Redacción, CTC Tech, Varietales
+  Registrados, Terratalento, **Kaffetal Regal Arena y su Club** (de vuelta: salieron al OCP en la V4.24). «BCP ·
+  Configuración del Sistema»: usuarios y credenciales, **socios de la red** (dejó de ser grupo aparte), documentación, Mapa
+  de Trabajo, consumo de IA y **Manejo de Plataformas**.
 - **OCP · Operational Control Panel — *Operation***: el **pasaporte del lote** de punta a punta —
   productores, fincas (visa EUDR), lotes (EVA, sello), nominados (bache y veredicto Q-Grader),
-  Arena (vitrina), galardonados, Club, **ofertas**, catálogo, contratos, **subastas**, **fichas**
+  galardonados, **ofertas**, catálogo, contratos, **subastas**, **fichas**
   (escáner), CTC Selection. (Los cuatro CRM de Cherry Picked se fueron a la LCP en la V5.59.)
-- **ECP · Executive Control Panel — *Execution***: plataformas (Manejo de Plataformas, SEO), las superficies
-  satélite (Directorio, Coffeed/Redacción, Herramientas, Terratalento, CTC Tech, Varietales — cada una con el tablero
-  de SUS leads o de SU lista de espera) y la caja de herramientas: **transcripciones** (del ECP desde
-  la V4.26; `/ocp/transcripciones` es solo su talón 308) es de aquí desde el 2026-09-19, con Stripe y la Herramienta de
-  Guion; los **cotizadores y las anclas de mercado** se fueron a «BCP · Herramientas Internas» en la V5.56.
-
+- **ECP · Executive Control Panel — *Execution***: **con qué decide la casa y qué tiene pendiente** (V5.60). Cabecera «ECP ·
+  Ejecución»: el **Tablero de Ejecución** (el Panel del ECP: las tareas DERIVADAS de las cuatro consolas en un sitio —
+  `src/lib/panel/{tareas,tareasCarga}.ts`) y **Transcripciones** (con Stripe y la Herramienta de Guion, de este charter desde
+  el 2026-09-19). Y **«Herramientas Internas»**, agrupadas por MODELO — Definición de Contexto · Modelo Económico en Origen ·
+  Modelo de Producción · Modelo Logístico · Automatizaciones —, que **NO es de este charter: es de `herramientas-internas`**.
+  De este componente siguen siendo el rail, los permisos y las rutas donde ese grupo vive. El rail **no promete lo que no
+  hay** (D9): «Seguimiento de Temas» y «Plataformas de Pagos» entran cuando tengan módulo, con su brief.
 - **LCP · Lead Control Panel — *Relationship*** (V5.59): **todo lo que entra de fuera y a quién se le responde**.
   «LCP · General»: **Buzón de entrada**, **Leads · Recepción** (el pilar `general`) y **Lista de espera** — que dejó de
   ser solo la de la portada: reúne con un filtro las cinco fuentes de `newsletter_subscribers` y la lista de Terratalento.
@@ -38,11 +38,11 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 | Ruta | Qué | Notas |
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
-| `/bcp/(app)/…` | Business | `usuarios`, `documentacion`, `mapa`, `consumo`, `automatizaciones`, `socios/[nodo]` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-*`, `anclas-mercado` (llegaron del ECP en la V5.56) |
-| `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `arena/[sessionId]/run`, `galardonados`, `club`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
-| `/ecp/(app)/…` | Execution | `plataformas`, `directorio`, `coffeed`, `herramientas`, `terratalento`, `ctc-tech`, `varietales`, `transcripciones` |
+| `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena/[sessionId]/run` (+ `temporadas`), `club` · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas` |
+| `/ocp/(app)/…` | Operation | `productores`, `fincas`, `lotes`, `nominados`, `galardonados`, `ofertas`, `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
+| `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
-| `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.59 (42 rutas) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
+| `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.60 (49 rutas; nueve viajes de vuelta en la V5.60) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
 | `/socios/<slug>` · `/socios/<slug>/acceso` · `/socios/<slug>/panel` | los 5 nodos socio (landing + login + panel) | `src/lib/partners/partners.ts`; credenciales desde `/bcp/socios` |
 
 ## Mapa de código
@@ -135,16 +135,18 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
 ## Pendientes
 
 - **OVERHAUL DE LAS CONSOLAS — `docs/OVERHAUL_CONSOLAS_PLAN.md`**, aprobado por el owner el 2026-09-19 («todo lo
-  recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45) y **fase 1 (V5.59: nace la LCP) — EJECUTADAS.**
-  **Quedan**: **fase 2** (Ecosistema de Valor al BCP, Herramientas Internas de vuelta al ECP — 16 rutas, 7 de ellas viajes
-  de vuelta—, Tablero de Ejecución); **fase 3** (la tabla única Productor·Finca·Lote en `/ocp/kr`, con el mapa); **fase 4**
-  (el circuito del lote sin Sondeo: a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo; DDL
-  aditivo en `lot_offers`); **fase 5** (Kaffetal Regal — **exige las cuentas `prueba-*`, que esta sesión no tiene**);
-  **fase 6** (stock físico y lo que no existe, por briefs; Wrap V46).
-  **Deuda que dejó la fase 1, a propósito**: **(a)** `EstructuraModal.tsx` (el diagrama «espejo del menú» de
-  `/bcp/documentacion`) sigue dibujando TRES consolas a mano — se redibuja UNA vez, al cerrar la fase 2, cuando el reparto
-  sea el definitivo; **(b)** los rótulos de Directorio, Herramientas y Terratalento siguen en el ECP con su lista de espera
-  embebida: la fase 2 los lleva al BCP y la compuerta en array de `interesActions` se deduce sola del rail.
+  recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
+  reparto BCP ↔ ECP y el Tablero de Ejecución) — **EJECUTADAS.**
+  **Quedan**: **fase 3** (la tabla única Productor·Finca·Lote en `/ocp/kr`, con el mapa); **fase 4** (el circuito del lote
+  sin Sondeo: a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo; DDL aditivo en `lot_offers`);
+  **fase 5** (Kaffetal Regal — **exige las cuentas `prueba-*`, que esta sesión no tiene**); **fase 6** (stock físico y lo
+  que no existe, por briefs; Wrap V46).
+  **Lo que la fase 2 dejó abierto, con dueño**: **(a)** la página de la **Arena** vive en el BCP pero sigue usando tres
+  acciones del circuito del lote (OCP): `assignLotToSession`, `inviteLotToArena`, `reviewEvaluationClaim` abren las DOS
+  consolas (`["ocp","bcp"]`) y dos componentes se importan del árbol del OCP por ruta absoluta — **la fase 4 decide** si la
+  Arena sigue asignando lotes; **(b)** los KPI del Modelo Económico se quedaron en el Panel del BCP (son cifras del
+  negocio) aunque el módulo viva en el ECP; **(c)** «Seguimiento de Temas» y «Plataformas de Pagos» no tienen módulo ni brief.
+  **Cerrado en la fase 2**: el diagrama de `/bcp/documentacion` ya no se dibuja a mano — se GENERA del rail.
 - **EL MODELO ECONÓMICO YA NO ES DE ESTE CHARTER (owner, 2026-09-19, V5.55).** Herramientas Internas pasó a ser lo que el
   rail llamaba «BCP · Business Core» —Contexto, Misión y Visión, Modelo Económico (PVC y Grados), Procesamiento, Logística— y
   se llevó los pendientes del PVC: la **fase 2**, el **refurbish** del módulo, **CN-1** (el PVC de ene–mar 2027 antes del
@@ -285,8 +287,9 @@ Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la
 3. AGENTS.md                      ← la compuerta y las reglas de la casa
 Eres el BACKSTAGE: todo cambio que altere lo que una superficie muestra o exige se ejecuta allí en
 la misma tanda o queda como pendiente con dueño en su charter, y siempre con una línea en el §3.
-El grupo «BCP · Herramientas Internas» del rail (Contexto, Misión y Visión, Modelo Económico —PVC y Grados—,
-Procesamiento, Logística; y los cotizadores y anclas del ECP) NO es tuyo: es del charter herramientas-internas.
+Son CUATRO consolas (BCP · ECP · OCP · LCP; la lista tiene una sola fuente, CONSOLE_ORDER). Los grupos de «Herramientas
+Internas» del rail del ECP (Definición de Contexto, Modelo Económico —PVC y Grados—, Producción, Logística, Automatizaciones,
+con sus cotizadores y anclas) NO son tuyos: son del charter herramientas-internas.
 Tuyos son su rail, sus permisos y sus rutas — y llevar lo que esos modelos calculan a ofertas, contratos y veredicto.
 Busca claves de permiso y revalidatePath, no solo rutas. Las consolas no se conducen en navegador.
 Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMMIT-PUSH (CTC Platforms)»

@@ -80,8 +80,8 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 |---|---|---|
 | BCP · Socios | emitir, reenviar, suspender y revocar la credencial de cada nodo; la ficha de estado | `sociosActions.ts`, `/bcp/socios/[nodo]` |
 | OCP | lo que cada sello significa en el pasaporte: liberación de verde (Centro de Calidad), booking/BL (Carga), DDS y nacionalización (Nacionalización), recepción y tueste (Roaster) — **hoy sin módulo de OCP que los reciba** | pendiente por nodo |
-| ECP · Coffeed | el trabajo del Estudio (luz verde, publicar) | charter `coffeed` |
-| ECP · Plataformas | título, descripción y sitemap de los cinco subdominios | `platform_surfaces` |
+| BCP · Coffeed (del ECP hasta la V5.59) | el trabajo del Estudio (luz verde, publicar) | charter `coffeed` |
+| BCP · Manejo de Plataformas | título, descripción y sitemap de los cinco subdominios | `platform_surfaces` |
 
 ## Pendientes
 

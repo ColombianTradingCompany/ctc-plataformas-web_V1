@@ -24,7 +24,7 @@ const check = (n, c) => (c ? ok++ : fallos.push(n));
 const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 
 const nominados = lee("src/app/ocp/(app)/nominadosActions.ts");
-const arena = lee("src/app/ocp/(app)/arenaActions.ts");
+const arena = lee("src/app/bcp/(app)/arenaActions.ts");
 const club = lee("src/lib/arena/club.ts");
 const producer = lee("src/lib/arena/producerActions.ts");
 const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");

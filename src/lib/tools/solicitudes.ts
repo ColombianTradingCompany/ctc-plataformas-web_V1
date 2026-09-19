@@ -95,7 +95,7 @@ export async function solicitarHerramienta(toolId: string, nota?: string): Promi
       .eq("id", fila.id);
   }
 
-  revalidatePath("/ecp/herramientas");
+  revalidatePath("/bcp/herramientas");
   return { ok: true };
 }
 
@@ -116,7 +116,7 @@ export async function resolverSolicitud(
   solicitudId: string,
   decision: "concedida" | "rechazada"
 ): Promise<ResultadoSolicitud> {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura("bcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -135,6 +135,6 @@ export async function resolverSolicitud(
     performed_by: adminId,
   });
 
-  revalidatePath("/ecp/herramientas");
+  revalidatePath("/bcp/herramientas");
   return { ok: true };
 }

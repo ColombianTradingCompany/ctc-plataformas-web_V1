@@ -4,13 +4,13 @@
 // own route tree and shell — NOT tabs inside one panel. See the vision board
 // (`reference_html-vision-board/ctc-arquitectura-v3.html`, tab "BCP · credenciales"):
 //
-//   BCP · Base Control Panel        — «Business». El negocio: dirección,
-//                                     configuración del sistema y red de socios.
+//   BCP · Base Control Panel        — «Business». El negocio: el Ecosistema de
+//                                     Valor y la configuración del sistema.
 //   OCP · Operational Control Panel — «Operation». La operación: del productor
 //                                     al catálogo — el pasaporte del lote entero
 //                                     y los tableros CRM de Cherry Picked.
-//   ECP · Executive Control Panel   — «Execution». La ejecución: plataformas,
-//                                     contacto y caja de herramientas interna.
+//   ECP · Executive Control Panel   — «Execution». La ejecución: Herramientas
+//                                     Internas (los modelos) y el Tablero de Ejecución.
 //                                     (La sigla conserva *Executive*: es la
 //                                     decisión F1 del owner, 2026-08-17.)
 //   LCP · Lead Control Panel        — «Relationship». La relación: todo lo que
@@ -65,73 +65,57 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     key: "bcp",
     code: "BCP",
     name: "Base Control Panel",
-    tagline: "El negocio: dirección, configuración y red de socios",
+    tagline: "El negocio: el ecosistema de valor y la configuración del sistema",
     accent: "#D3B8FA", // corporate lavender
     home: "/bcp",
-    // El rail del BCP, ya con su reparto (PR-B del paso (ii), V4.25). Los
-    // bloques son las tres cosas que el BCP ES: qué dice la casa
-    // (Direccionamiento), cómo está configurado el sistema, y quién forma la
-    // red de socios. El pasaporte del lote se opera desde el OCP desde PR-A.
+    // El rail del BCP según el cuadro del owner (2026-09-19, V5.60 — fase 2 del overhaul): el BCP es
+    // lo que la casa ES. Dos grupos: las plataformas que forman su Ecosistema de Valor, cada una con el
+    // tablero de lo SUYO, y la configuración del sistema. «Herramientas Internas» —que vivió aquí de la
+    // V5.55 a la V5.59— volvió al ECP: es con lo que la casa decide, no lo que es.
     nav: [
       {
-        // «Herramientas Internas» desde la V5.55 (owner, 2026-09-19); hasta entonces «Business Core».
-        // Son los MODELOS con los que la casa piensa y fija sus cifras: Definición de Contexto y
-        // Misión y Visión (hoy pestañas de Direccionamiento), el Modelo Económico (PVC y Grados) y,
-        // cuando tengan módulo, los modelos de Procesamiento y de Logística — cuyas piezas siguen
-        // llegaron del ECP en la V5.56 (cotizadores, anclas). El grupo es del charter
-        // `herramientas-internas`; el rail, los permisos y las rutas siguen siendo de `consolas`.
-        // La V5.55 cambió solo el nombre; la V5.56 hizo la mudanza (talones 308 en `/ecp/…`,
-        // las `/ocp/…` REAPUNTADAS, y las 17 compuertas de `src/lib/{cotizador,anclas}` a `bcp`).
-        // Orden: por MODELO — Contexto y Misión (Direccionamiento) · Económico (PVC, anclas, lotes)
-        // · Procesamiento (empaque) · Logística.
-        label: "BCP · Herramientas Internas",
+        label: "BCP · Ecosistema de Valor",
         links: [
           { href: "/bcp", label: "Panel", exact: true },
-          // Direccionamiento (← ECP, PR-B): qué dice la casa y con qué cifras.
-          // «Manejo de Plataformas» NO vino: F6 lo convierte en módulo suelto
-          // del ECP en PR-C, y hasta entonces sigue en /bcp/direccionamiento/…
-          { href: "/bcp/direccionamiento", label: "Direccionamiento" },
-          // Modelo Económico (V5.28 como «PVC · Valor de Cosecha»; renombrado en
-          // V5.45): el PVC es el indicador principal del negocio, pero no es lo
-          // único que vive ahí — con él van la lectura de mercado, la escala de
-          // grados con su calculadora, el tablero del método y el dossier. Es
-          // el corazón de «Herramientas Internas», y owner-only porque publicar una
-          // edición fija el precio de origen de la franja.
-          //
-          // La RUTA sigue siendo `/bcp/pvc` a propósito: el rename es de nombre,
-          // no de sitio, y mudarla costaría un talón 308 y tocar todo lo que la
-          // enlaza sin ganar nada. Ver docs/PVC_BCP_PLAN.md §11.
-          { href: "/bcp/pvc", label: "Modelo Económico", ownerOnly: true },
-          // Piezas del Modelo Económico: la lectura diaria del mercado (FNC) que el PVC consume,
-          // y cotizar un lote a un comprador. NO son owner-only: cotizar no fija el precio de
-          // origen de nadie, y quien las veía en el ECP las sigue viendo aquí.
-          { href: "/bcp/anclas-mercado", label: "Anclas de mercado" },
-          { href: "/bcp/cotizador-lotes", label: "Cotizador de lotes" },
-          // Pieza del Modelo de Procesamiento (de CPS a verde empacado y embalado).
-          { href: "/bcp/cotizador-empaque", label: "Costo de empaque" },
-          // Pieza del Modelo de Logística (lo que cuesta después del FOB, por volumen y región).
-          { href: "/bcp/cotizador-logistico", label: "Cotizador logístico" },
+          // Herramientas (← ECP): desde la Fase 4 de V4 es un PRODUCTO de la red (superficie pública
+          // propia), no tooling interno; aquí se administra su Disponibilidad, el Plus y su lista de espera.
+          { href: "/bcp/herramientas", label: "Herramientas del Café" },
+          // Directorio del Café (← ECP): la capa de personas de la red. Aquí se verifican las fichas
+          // (Aceptar/Revisar/Rechazar → Código de Verificado) y se modera el muro.
+          { href: "/bcp/directorio", label: "Directorio del Café" },
+          // Coffeed (← ECP): el muro de noticias de la red y su línea de producción editorial. La
+          // narrativa se dirige desde dentro, y su producción es lo que se delega — no al revés.
+          // Sus dos compuertas (`coffeedGate`, `studioGate`) leen la consola de ESTE enlace.
+          { href: "/bcp/coffeed", label: "Coffeed" },
+          // CTC Tech y Varietales (← ECP): el tablero de los leads de SU superficie. No son un CRM de
+          // Cherry Picked, y por eso no fueron a la LCP (D4). `leadsPilares.ts` deduce de estas rutas
+          // qué consola administra cada pilar.
+          { href: "/bcp/ctc-tech", label: "CTC Tech" },
+          { href: "/bcp/varietales", label: "Varietales Registrados" },
+          // Terratalento (← ECP): el servicio del RECOLECTOR. Aquí se hace el MATCH de las jornadas
+          // (llamar / confirmar cupos / descartar) y se ve el roster y la lista de espera.
+          { href: "/bcp/terratalento", label: "Terratalento" },
+          // Kaffetal Regal Arena y su Club (← OCP; DE VUELTA: salieron del BCP en la V4.24). La Arena
+          // es la vitrina —temporadas, sesiones, la jornada— y el Club la membresía que alimenta.
+          // ⚠️ Su página sigue usando tres acciones del circuito del lote, que es del OCP (asignar a
+          // sesión, invitar a la vitrina, revisar un reclamo): esas tres abren las DOS consolas.
+          { href: "/bcp/arena", label: "Kaffetal Regal Arena" },
+          { href: "/bcp/club", label: "Kaffetal Club" },
         ],
       },
       {
         label: "BCP · Configuración del Sistema",
         links: [
           { href: "/bcp/usuarios", label: "Usuarios y credenciales", ownerOnly: true },
+          // Los socios se administran donde se CREDENCIALAN: dar de alta una credencial es configurar
+          // la red. Fue grupo aparte («BCP · Red de Socios») hasta la V5.59; el cuadro lo trae aquí.
+          { href: "/bcp/socios", label: "Socios de la red", ownerOnly: true },
           { href: "/bcp/documentacion", label: "Documentación del sistema" },
           { href: "/bcp/mapa", label: "Mapa de Trabajo", ownerOnly: true },
           { href: "/bcp/consumo", label: "Consumo de IA" },
-          { href: "/bcp/automatizaciones", label: "Automatizaciones" },
-        ],
-      },
-      {
-        label: "BCP · Red de Socios",
-        links: [
-          // Los socios se administran donde se CREDENCIALAN. Estuvieron en el
-          // OCP desde 2026-07-20 con el argumento de que se OPERAN allí; la
-          // reorganización V5 se queda con el otro: dar de alta una credencial
-          // es configurar la red, y eso es el BCP. En el paso (iii) este módulo
-          // gana una ficha por nodo partner (F3).
-          { href: "/bcp/socios", label: "Socios de la red", ownerOnly: true },
+          // Manejo de Plataformas (← ECP; F6 lo hizo módulo suelto en la V4.26): cómo se presenta cada
+          // superficie de la red — estado, SEO, disponibilidad. Es configuración, y por eso está aquí.
+          { href: "/bcp/plataformas", label: "Manejo de Plataformas" },
         ],
       },
     ],
@@ -140,104 +124,62 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
     key: "ecp",
     code: "ECP",
     name: "Executive Control Panel",
-    tagline: "La ejecución: plataformas, contacto y caja de herramientas",
+    tagline: "La ejecución: con qué decide la casa y qué tiene pendiente",
     accent: "#FFCD00", // corporate gold
     home: "/ecp",
+    // El rail del ECP según el cuadro del owner (V5.60): una cabecera de EJECUCIÓN y «Herramientas
+    // Internas» agrupadas POR MODELO. El rail no tiene sub-grupos, así que cada modelo es un grupo con
+    // su rótulo; juntos son el componente `herramientas-internas` (su charter), y el rail, los permisos y
+    // las rutas siguen siendo de `consolas`.
+    //
+    // ⚠️ EL RAIL NO PROMETE LO QUE NO HAY (D9 del plan). El cuadro nombra entradas sin módulo —
+    // «Seguimiento de Temas», «Plataformas de Pagos», Procesamiento, los tres costos logísticos—: entran
+    // cuando lo tengan, cada una con su brief. Procesamiento/Empacado y Logística arrancan con el
+    // cotizador que ya existe.
     nav: [
       {
-        label: "ECP · Dirección",
+        label: "ECP · Ejecución",
         links: [
-          { href: "/ecp", label: "Panel", exact: true },
-          // Direccionamiento (2026-08-10): qué dice la casa y con qué cifras.
-          // Pestaña 1 = «Definición de contexto», la ficha viva de realineación
-          // de GTM y comunicación (CTCX · KR · CHP), con redacción asistida.
-          // Pestaña 2 = «Grados de Calidad» (2026-08-05), LA definición —
-          // estaba en tres sitios con tres respuestas distintas, dos de ellas
-          // material de cliente. Se metió aquí dentro porque es exactamente la
-          // cifra que el contenido no puede inventarse; /bcp/direccionamiento/grados sigue vivo
-          // como redirección.
-          // El Buzón, «Leads · Recepción» y la lista de espera de CTC Home se fueron a la
-          // LCP en la V5.59: son lo que ENTRA de fuera, y la LCP es la consola de eso.
-          // Sus URLs viejas siguen vivas como 308 (`rutasMovidas.ts`).
-          // Directorio del Café (2026-07-24): la capa de personas de la red. Aquí
-          // se verifican las fichas (Aceptar/Revisar/Rechazar → Código de
-          // Verificado) y se modera el muro.
-          { href: "/ecp/directorio", label: "Directorio del Café" },
-          // Coffeed (2026-07-30): el muro de noticias de la red y su línea de
-          // producción editorial. Nació como módulo del socio Estudio de
-          // Contenido y se movió AQUÍ por decisión del owner: la narrativa se
-          // dirige desde dentro, y su producción es lo que se delega — no al
-          // revés. Lo que se publica aquí aparece en KR, Cherry Picked y el DC.
-          { href: "/ecp/coffeed", label: "Coffeed" },
-          // CRMs de captación (V4 · Fase 1): CTC Tech y Varietales son capa
-          // estratégica, así que sus kanbans viven aquí (regla Fase 0: el CRM
-          // vive en la consola dueña del dominio).
-          { href: "/ecp/ctc-tech", label: "CRM CTC Tech" },
-          { href: "/ecp/varietales", label: "CRM Varietales" },
-          // Herramientas (2026-08-02): renombrada y movida de "IT y Plataforma"
-          // a Dirección — desde la Fase 4 de V4 es un PRODUCTO de la red
-          // (superficie pública propia), no tooling interno; aquí se administra
-          // su Disponibilidad.
-          { href: "/ecp/herramientas", label: "Herramientas del café" },
-          // Terratalento (CONSTRUIDO 2026-08-02): el servicio del RECOLECTOR —
-          // superficie propia (terratalento.ctcexport.com, identidad única del
-          // ecosistema, patrón Directorio) donde crea su perfil y se postula;
-          // las fincas publican "Jornadas de Recolecta" desde su panel de
-          // Kaffetal Regal, y aquí el ECP hace el MATCH (llamar / confirmar
-          // cupos / descartar) y ve el roster completo.
-          { href: "/ecp/terratalento", label: "Terratalento" },
-        ],
-      },
-      {
-        // Caja de herramientas interna (← OCP, PR-C): las herramientas del EQUIPO que no son
-        // pasos del pasaporte del lote. Llegó con cinco entradas; en la V5.56 los tres
-        // cotizadores y las anclas de mercado se fueron a «BCP · Herramientas Internas»
-        // —son piezas de los modelos Económico, de Procesamiento y de Logística— y aquí
-        // quedó Transcripciones, con su compuerta del ECP y la de
-        // `/api/transcripciones/descargar`. El grupo conserva el nombre: es donde caerá
-        // la próxima utilidad del equipo que no sea un modelo.
-        label: "ECP · Caja de herramientas",
-        links: [
+          // El Panel del ECP ES el Tablero de Ejecución (V5.60): las tareas pendientes de las cuatro
+          // consolas en un sitio. Hasta entonces era un índice con casillas de módulos por construir.
+          { href: "/ecp", label: "Tablero de Ejecución", exact: true },
           { href: "/ecp/transcripciones", label: "Transcripciones" },
         ],
       },
       {
-        // IT y Plataforma (2026-07-18): la administración de identidades salió del
-        // BCP. El BCP sigue siendo la RAÍZ de identidad del modelo de negocio (cada
-        // productor, comprador y lote nace ahí), pero administrar *la plataforma en
-        // sí* —quién opera las consolas, qué socios existen, cómo está documentado
-        // el sistema— es dirección, no operación diaria. Owner-only, como antes.
-        label: "ECP · IT y Plataforma",
-        // El gate es POR LINK, no por grupo: leer el mapa del sistema y repartir
-        // credenciales son riesgos distintos. La documentación es material de
-        // referencia sin secretos (estructura, no llaves) — cualquier operador
-        // con acceso a una consola gana entendiéndola. Emitir credenciales de
-        // colaboradores y socios sigue siendo cosa de owner.
+        // Definición de Contexto · Misión y Visión · Mercado Global · Grados: las pestañas de Direccionamiento.
+        label: "ECP · Definición de Contexto",
+        links: [{ href: "/ecp/direccionamiento", label: "Direccionamiento" }],
+      },
+      {
+        // El PVC es el indicador principal del negocio; con él van la lectura de mercado, la escala de
+        // grados con su calculadora, el tablero del método y el dossier. Owner-only porque publicar una
+        // edición fija el precio de origen de la franja. Las anclas (la lectura diaria de la FNC que el
+        // PVC consume) y cotizar un lote NO lo son: no fijan el precio de origen de nadie.
+        // La RUTA del módulo sigue llamándose `pvc` a propósito (docs/PVC_BCP_PLAN.md §11).
+        label: "ECP · Modelo Económico en Origen",
         links: [
-          // Automatizaciones (2026-08-05): el registro de lo que corre en Make y
-          // el pulso de la espina de integración. Va aquí porque es
-          // infraestructura, no operación. Ver docs/INTEGRACIONES_PLAN.md.
-          // Consumo de IA (2026-08-10): lo que cuestan los modelos, en tokens y
-          // en dólares. Va aquí y no en Dirección porque es infraestructura —
-          // el hermano de Automatizaciones: aquélla dice QUÉ corre, ésta dice
-          // CUÁNTO cuesta. Ver src/lib/ai/precios.ts para las tarifas.
-          // Manejo de Plataformas (2026-08-16) — ATAJO, no un módulo.
-          // La página VIVE dentro de Direccionamiento, como su tercera pestaña
-          // (decisión del owner: «tiene que estar fusionado en uno»), y este
-          // enlace apunta exactamente ahí. Está en este grupo porque es donde el
-          // owner la buscó primero — gobernar cómo se presenta cada superficie
-          // se siente infraestructura, aunque la pregunta de fondo sea la misma
-          // que la de las otras dos pestañas. Duplicar el DESTINO es barato;
-          // duplicar el MÓDULO habría sido el error que la regla evitaba.
-          // Manejo de Plataformas (F6, PR-C): dejó de colgar de Direccionamiento
-          // —que se fue al BCP en PR-B— y es módulo suelto. Ya no es un ATAJO a
-          // una pestaña ajena: es su propia ruta, y por eso `qa-nav-check` tiene
-          // invertida la aserción que antes exigía que `/ecp/plataformas` NO
-          // existiera.
-          { href: "/ecp/plataformas", label: "Manejo de Plataformas" },
-          // "Herramientas internas" se renombró y subió al grupo de Dirección
-          // (2026-08-02) — ver el comentario allá.
+          { href: "/ecp/pvc", label: "Modelo Económico", ownerOnly: true },
+          { href: "/ecp/anclas-mercado", label: "Anclas de mercado" },
+          { href: "/ecp/cotizador-lotes", label: "Cotizador de lotes" },
         ],
+      },
+      {
+        // De CPS a verde empacado y embalado. Hoy su única pieza es el costo de empaque.
+        label: "ECP · Modelo de Producción",
+        links: [{ href: "/ecp/cotizador-empaque", label: "Empacado · costo de empaque" }],
+      },
+      {
+        // Lo que cuesta después del FOB, por volumen y región. Hoy, el cotizador logístico entero; los
+        // tres costos del cuadro (puerto Colombia · puerto destino · puerta a puerta) son sus futuras vistas.
+        label: "ECP · Modelo Logístico",
+        links: [{ href: "/ecp/cotizador-logistico", label: "Cotizador logístico" }],
+      },
+      {
+        // El registro de lo que corre en Make y el pulso de la espina de integración
+        // (docs/INTEGRACIONES_PLAN.md). DE VUELTA: salió del ECP en la V4.25.
+        label: "ECP · Plataforma",
+        links: [{ href: "/ecp/automatizaciones", label: "Automatizaciones" }],
       },
     ],
   },
@@ -276,10 +218,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // viaja con ellos: es la membresía que la Arena alimenta.
         label: "OCP · KR Arena",
         links: [
+          // La Arena y el Club se fueron a «BCP · Ecosistema de Valor» en la V5.60.
           { href: "/ocp/nominados", label: "Nominados" },
-          { href: "/ocp/arena", label: "Arena" },
           { href: "/ocp/galardonados", label: "Galardonados" },
-          { href: "/ocp/club", label: "Kaffetal Club" },
         ],
       },
       {
@@ -350,3 +291,17 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
 // consolas —el conmutador, `/panel`, la pantalla de credenciales, `grantedConsoles`, los guardianes—
 // lee de aquí: una quinta consola es una línea en este archivo, no una búsqueda por el repo.
 export const CONSOLE_ORDER: PanelConsoleKey[] = ["bcp", "ecp", "ocp", "lcp"];
+
+/**
+ * La consola en cuyo rail vive un módulo, por su segmento: `consolaDelModulo("coffeed")` es la que tenga
+ * el enlace `/<consola>/coffeed`. Para las compuertas que viven FUERA del árbol de su consola
+ * (`src/lib/coffeed/`): en vez de llevar la clave escrita —que ninguna reescritura de rutas toca, y que
+ * por eso se quedó atrás en media docena de mudanzas— la leen de aquí, y mover el enlace mueve el permiso.
+ * `null` si nadie lo enlaza: quien llama tiene que CERRAR, no suponer una consola.
+ */
+export function consolaDelModulo(segmento: string): PanelConsoleKey | null {
+  for (const k of CONSOLE_ORDER) {
+    if (CONSOLES[k].nav.some((g) => g.links.some((l) => l.href === `/${k}/${segmento}`))) return k;
+  }
+  return null;
+}

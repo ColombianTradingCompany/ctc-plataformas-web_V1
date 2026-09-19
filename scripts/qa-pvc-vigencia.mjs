@@ -47,7 +47,7 @@ check(
   "EdicionesBoard ya NO deriva la vigente por status",
   !/ediciones\.find\(\(e\)\s*=>\s*e\.status\s*===\s*"published"/.test(board)
 );
-const pagina = lee("src/app/bcp/(app)/pvc/page.tsx");
+const pagina = lee("src/app/ecp/(app)/pvc/page.tsx");
 check("la página resuelve la vigente en el servidor", /edicionVigente/.test(pagina));
 check("la página resuelve la próxima en el servidor", /edicionProxima/.test(pagina));
 

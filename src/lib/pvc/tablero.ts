@@ -6,7 +6,7 @@ import { edicionVigente, listarEdiciones } from "./servicio";
 // ── PVC · el tablero interactivo, embebido con puente a la base ──────────────
 // El tablero es un HTML autocontenido (reference_html_tools/PVC_Tablero_de_
 // Control_CTC_V1.html, copiado a docs/pvc/tablero/). Se sirve AUTENTICADO por
-// el route handler `/bcp/pvc/tablero/embed` dentro de un <iframe>, igual que
+// el route handler `/ecp/pvc/tablero/embed` dentro de un <iframe>, igual que
 // las herramientas internas, y aquí se le inyecta `window.PVC_DB`: la edición
 // vigente y el historial de la base, y la URL para publicar. Sin el puente el
 // tablero cae a localStorage (así funciona abierto como archivo).
@@ -18,7 +18,7 @@ export async function tableroConPuente(): Promise<string | null> {
   try { html = await readFile(TABLERO_FILE, "utf8"); } catch { return null; }
   const [vigente, ediciones] = await Promise.all([edicionVigente(), listarEdiciones(30)]);
   const puente = {
-    publishUrl: "/bcp/pvc/tablero/embed/publicar",
+    publishUrl: "/ecp/pvc/tablero/embed/publicar",
     current: vigente ? { code: vigente.code, pvc: vigente.pvcCop, status: vigente.status, date: vigente.publishedAt, hash: vigente.hash, S: vigente.inputs, modelVersion: vigente.modelVersion } : null,
     editions: ediciones.map((e) => ({ id: e.id, code: e.code, pvc: e.pvcCop, status: e.status, date: e.publishedAt ?? e.createdAt, hash: e.hash, gob: e.outputs?.edicion?.gob ?? null, prima: e.outputs?.kpis?.prima_coop ?? null, modelVersion: e.modelVersion, S: e.inputs })),
   };

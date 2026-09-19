@@ -34,7 +34,7 @@ export function BcpKpis({
   return (
     <div className={styles.kpiGrid}>
       <div className={styles.kpiCard}>
-        <Link href="/bcp/pvc/lectura">
+        <Link href="/ecp/pvc/lectura">
           <div className={styles.kpiTop}><span className={styles.kpiK}>PVC vigente</span></div>
           <span className={styles.kpiV} style={{ display: "block" }}>{pvc == null ? "—" : `${Math.round(pvc / 1000)}k`}</span>
           <div className={styles.kpiSub}>
@@ -46,7 +46,7 @@ export function BcpKpis({
       </div>
 
       <div className={styles.kpiCard}>
-        <Link href="/bcp/pvc/lectura">
+        <Link href="/ecp/pvc/lectura">
           <div className={styles.kpiTop}><span className={styles.kpiK}>Prima mínima</span></div>
           <span className={styles.kpiV} style={{ display: "block" }}>{pct(prima)}</span>
           <div className={styles.kpiSub}>
@@ -56,7 +56,7 @@ export function BcpKpis({
       </div>
 
       <div className={styles.kpiCard}>
-        <Link href="/bcp/pvc/lectura">
+        <Link href="/ecp/pvc/lectura">
           <div className={styles.kpiTop}><span className={styles.kpiK}>Mercado desde el corte</span></div>
           <span className={styles.kpiV} style={{ display: "block" }}>{pct(desv)}</span>
           <div className={styles.kpiSub}>
@@ -66,7 +66,7 @@ export function BcpKpis({
       </div>
 
       <div className={styles.kpiCard}>
-        <Link href="/bcp/pvc">
+        <Link href="/ecp/pvc">
           <div className={styles.kpiTop}><span className={styles.kpiK}>Próxima edición</span></div>
           <span className={styles.kpiV} style={{ display: "block", fontSize: proxima ? 34 : 22 }}>
             {proxima ? `${Math.round((proxima.pvcCop ?? 0) / 1000)}k` : "Sin publicar"}

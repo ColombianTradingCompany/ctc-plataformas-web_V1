@@ -134,7 +134,7 @@ export async function listarSolicitudesPlus(): Promise<SolicitudPlus[]> {
 }
 
 export async function decidirPlus(grantId: string, decision: "activo" | "rechazado" | "pendiente"): Promise<ActionResult> {
-  const permiso = await permisoDeEscritura("ecp", "emite");
+  const permiso = await permisoDeEscritura("bcp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   if (!["activo", "rechazado", "pendiente"].includes(decision)) return { ok: false, error: "Decisión inválida." };
@@ -151,6 +151,6 @@ export async function decidirPlus(grantId: string, decision: "activo" | "rechaza
     new_status: decision,
     performed_by: adminId,
   });
-  for (const p of ["/ecp/herramientas", "/kaffetal-regal", "/cherry-picked-green", "/directorio", "/herramientas"]) revalidatePath(p);
+  for (const p of ["/bcp/herramientas", "/kaffetal-regal", "/cherry-picked-green", "/directorio", "/herramientas"]) revalidatePath(p);
   return { ok: true };
 }

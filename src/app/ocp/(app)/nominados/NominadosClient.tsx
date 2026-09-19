@@ -189,7 +189,7 @@ export function AssignSessionControls({
   const { pending, error, run } = useAction();
   const [sess, setSess] = useState("");
   if (!openSessions.length) {
-    return <p className={styles.meta}>Sin sesiones abiertas con cupo — cree una en /ocp/arena.</p>;
+    return <p className={styles.meta}>Sin sesiones abiertas con cupo — cree una en /bcp/arena.</p>;
   }
   return (
     <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>

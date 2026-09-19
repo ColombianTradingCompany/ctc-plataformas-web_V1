@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.58] — 2026-09-19 (commit pendiente)
+## [V5.58] — 2026-09-19 (commit 8fa0441)
 
 - **Seguridad**: **el Buzón se le escapó a la V5.57: un «viewer» podía responder correos.** Cuatro acciones de
   `src/app/ecp/(app)/buzonActions.ts` —`sendBuzonReply`, `setBuzonStatus`, `setBuzonTags`, `markInboundEmailRead`— no llaman

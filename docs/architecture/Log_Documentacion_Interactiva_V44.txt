@@ -321,4 +321,4 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   distancia.** «Fallo cerrado» solo lo es si el guardián recorre el camino entero hasta la compuerta.
 - Para la traza «Un viewer pulsa un botón que emite»: vale igual para el Buzón (`sendBuzonReply`), que además pasará a la
   cuarta consola LCP cuando se ejecute `docs/OVERHAUL_CONSOLAS_PLAN.md`.
-(commit: pendiente)
+(commit: 8fa0441)

@@ -6,7 +6,8 @@
 // Precios en USD por MILLÓN de tokens, tarifa de primera parte de Anthropic
 // (la misma que aplica en Microsoft Foundry; Bedrock y Vertex facturan aparte
 // y no las usamos). Verificadas contra la documentación de la API el
-// 2026-08-10 — si alguien las actualiza, que anote la fecha aquí.
+// 2026-08-10 y otra vez el 2026-09-19 (V5.54: Sonnet 5, ver abajo) — si alguien
+// las actualiza, que anote la fecha aquí.
 //
 // ⚠️ EL PRECIO SE CONGELA AL INSERTAR la fila de `ai_usage`, no se recalcula al
 // leer. Cambiar una tarifa aquí afecta a lo que se gaste A PARTIR de ahora y
@@ -20,7 +21,9 @@ export type Tarifa = {
   factorEscrituraCache?: number;
   /** Leer de la caché es lo barato: la palanca de ahorro de verdad. */
   factorLecturaCache?: number;
-  /** Precio de lanzamiento, si el modelo está en uno. */
+  /** Precio de lanzamiento, si el modelo está en uno. HOY NINGUNA TARIFA LO USA (V5.54); el mecanismo se
+   *  queda porque es correcto y el tablero de Consumo lo avisa solo — pero antes de escribir una promo,
+   *  comprobar en la documentación que de verdad lo es: la única que hubo aquí era la tarifa normal. */
   promo?: { entrada: number; salida: number; hasta: string };
   nota?: string;
 };
@@ -30,15 +33,15 @@ const LECTURA_CACHE = 0.1;
 
 export const TARIFAS: Record<string, Tarifa> = {
   // Los dos que la plataforma usa de verdad hoy.
-  "claude-sonnet-5": {
-    entrada: 3,
-    salida: 15,
-    // 📌 OJO AL CALENDARIO: hasta el 2026-08-31 Sonnet 5 va a precio de
-    // lanzamiento. El 1 de septiembre la misma llamada cuesta un 50% más, sin
-    // que nadie toque una línea de código. Es el modelo de MODEL_WRITE, o sea
-    // el que pagan Direccionamiento, Coffeed, Datawave y RT-Scriptor.
-    promo: { entrada: 2, salida: 10, hasta: "2026-08-31" },
-  },
+  // Sonnet 5 cuesta 2/10, SIN promoción. Hasta la V5.53 esta entrada decía «base
+  // 3/15, con precio de lanzamiento 2/10 hasta el 2026-08-31»: la promo no existía
+  // — 2/10 es la tarifa. Lo avisó CommaaS el 2026-09-14 (`ALINEACION` §3) y desde
+  // el 1 de septiembre cada llamada se habría anotado un 50% por encima de lo
+  // facturado. No llegó a pasar: entre el 1 y el 19 de septiembre el libro no tiene
+  // ni una fila de Sonnet 5 (las cinco que hay son de agosto, a 2/10), así que no
+  // hubo histórico que corregir. Es el modelo de MODEL_WRITE: Direccionamiento,
+  // Coffeed, Datawave y RT-Scriptor.
+  "claude-sonnet-5": { entrada: 2, salida: 10 },
   "claude-opus-5": { entrada: 5, salida: 25, nota: "sin uso en CTC desde V5.1 (se fue con el CV App Manager)" },
   "claude-haiku-4-5": { entrada: 1, salida: 5, nota: "MODEL_CHEAP de Coffeed" },
   "claude-haiku-4-5-20251001": { entrada: 1, salida: 5 },
@@ -49,6 +52,7 @@ export const TARIFAS: Record<string, Tarifa> = {
   "claude-opus-4-6": { entrada: 5, salida: 25 },
   "claude-sonnet-4-6": { entrada: 3, salida: 15 },
   "claude-fable-5": { entrada: 10, salida: 50 },
+  "claude-fable-5-1": { entrada: 10, salida: 50 },
 
   // GEMINI: A PROPÓSITO SIN TARIFA.
   // No se inventa un número. Los tokens se guardan igual y el coste queda en

@@ -19,6 +19,36 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.54] — 2026-09-19 (commit pendiente)
+
+- **Corregido**: **Sonnet 5 cuesta 2/10 por millón, sin promoción.** `src/lib/ai/precios.ts` lo tenía como base 3/15 con
+  un «precio de lanzamiento» 2/10 hasta el 2026-08-31 — la promo no existía: 2/10 ES la tarifa (tabla de modelos de la API,
+  verificada el 2026-09-19; lo avisó CommaaS el 2026-09-14 y la auditoría del nodo final le puso dueño). Desde el 1 de
+  septiembre cada llamada de Sonnet 5 se habría anotado un 50 % por encima de lo facturado. **No llegó a pasar**: el libro
+  no tiene ni una fila de Sonnet 5 entre el 1 y el 19 de septiembre (las cinco que hay son de agosto, a 2/10, comprobado
+  por SQL), así que no hay histórico que decidir. De paso entra la tarifa de `claude-fable-5-1` (10/50).
+- **Corregido**: **`qa-consumo-check` afirmaba la tarifa equivocada EN VERDE** — «el 2026-09-01 ya va a tarifa plena
+  (3 y 15)», «la misma llamada cuesta un 50 % más pasada la promo». Segunda vez en dos versiones que un guardián copia
+  la regla del código (la otra: la Base física, V5.53). Ahora afirma 2/10 antes y después del 1 de septiembre, que
+  ninguna tarifa declara una promoción, y contrasta siete modelos contra la tabla publicada (20 → **22**).
+- **Corregido**: **`qa-transcripciones-nube.mjs` estaba roto** (como muy tarde desde la reorganización de carpetas del 2026-09-11): buscaba su audio de prueba en
+  `../reference_html_tools/_whatsapp-transcript-html/…`, carpeta que dejó de existir, y moría con `ENOENT` a mitad de la
+  parte pagada. El audio vive en `tools/transcriptor/tests/fixtures/`; la ruta se ancla ahora al script (no al directorio
+  desde el que se corre) y su existencia se comprueba en la parte GRATIS. **Corrido de punta a punta**: subió los 43 s,
+  AssemblyAI devolvió 6 segmentos y 2 voces, el aviso llegó por webhook y la fila de prueba se borró (19 → **20**).
+- **Cambiado**: `ConsumoBoard` — el aviso «Sonnet 5 está a precio de lanzamiento» anunciaba una promo que no existía;
+  se queda dormido y despierta solo si `precios.ts` vuelve a declarar una. `docs/CLAVES_IA_Y_COSTE.md` deja de decir que
+  el capítulo con Sonnet cuesta «~$0.016 desde el 01/09».
+- **Cambiado**: **`docs/KICKOFF.html`** — **«Copiar prompt» copia primero por el camino síncrono**, dentro del clic, que
+  es lo único que un marco aislado como el visor de artefactos acepta siempre (la API moderna del portapapeles puede
+  estar vetada ahí y antes iba primero); probado con la API bloqueada y un clic real. El prompt de la ficha **se reescribe
+  en vivo** al teclear en «Hoy:», así que lo que se ve es lo que se copia — también en el último recurso, que selecciona
+  el texto para Ctrl+C. Los enlaces internos se resuelven a mano, por si el visor no navega a un «#ancla».
+- **Añadido**: **botón «↑ Arriba»** arriba a la derecha de cada una de las 18 fichas del KICKOFF (44 px, vuelve al
+  inicio —al índice, en el teléfono— y deja el foco allí).
+- **Docs**: cerradas las dos filas de `ALINEACION` §3b (`precios.ts`, el guardián de transcripciones) y los pendientes
+  (b) y (c) de la auditoría en `consolas.md`; `herramientas-internas.md` deja de anunciar el guardián como roto.
+
 ## [V5.53] — 2026-09-19 (commit a53a27d)
 
 - **Hito**: **el nodo final estrena oficio, y el owner cierra cinco decisiones en un día.** La conversación

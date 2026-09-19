@@ -68,8 +68,10 @@ async function cargar() {
 
   const filas = (data ?? []) as Fila[];
 
-  // La promo de Sonnet 5 es la única cifra del sistema con fecha de caducidad,
-  // y cuando expire la factura sube sin que nadie toque nada. Mejor decirlo.
+  // Un precio de lanzamiento es la única cifra del sistema con fecha de caducidad: cuando expira,
+  // la factura sube sin que nadie toque nada, y por eso el tablero lo avisa. HOY NO HAY NINGUNA
+  // (V5.54): la «promo» de Sonnet 5 que este aviso anunciaba no existía — 2/10 es su tarifa. El aviso
+  // se queda dormido y despierta solo si `precios.ts` vuelve a declarar una.
   const sonnet = TARIFAS["claude-sonnet-5"];
 
   return {

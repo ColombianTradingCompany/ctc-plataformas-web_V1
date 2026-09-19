@@ -8,13 +8,13 @@ sys.stdout.reconfigure(encoding='utf-8')
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # docs/
 ORDEN = [
  ('consolas', 'CTC Consolas internas', 'CTC Consolas internas',
-  'CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 **antes del 15-oct-2026** (espera la decisión O-1 del owner). Si O-1 no ha llegado, lo más barato con dueño: la tarifa de `claude-sonnet-5` en `src/lib/ai/precios.ts` y el guardián roto `qa-transcripciones-nube.mjs` (`ALINEACION` §3b).'),
+  'CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 **antes del 15-oct-2026** (espera la decisión O-1 del owner). Si O-1 no ha llegado: CN-2 (razón social completa en `legal.ts`, marca CTCx en las consolas, Papagayo Beans® en ficha pública y OG del lote), que no depende de nadie.'),
  ('socios', 'Red de Socios', 'Red de Socios (una conversación por nodo)',
   'Elegir el nodo de la sesión. Cuatro paneles son scaffolds (solo el Estudio tiene módulo real): empezar por verificar los cinco subdominios con `curl -I` y escribir `qa-socios-check.mjs` (PARTNERS ↔ subdominios ↔ puertas; requirePartner con sus tres condiciones); después, la primera pantalla del nodo elegido con su contraparte en el OCP.'),
  ('secretaria', 'Secretaría CTC', 'Secretaría CTC (Notion · Google)',
   'F0 del plan (`docs/SECRETARIA_PLAN.md` §4), sin código: añadir `ctc_id` · `CTC` · `Enlace CTC` a Lista de Proveedores, Lista de Fincas, Fichas Técnicas y Clientes Potenciales; proponer al owner las coincidencias (Doña Hortencia ↔ Hortencia PALMAS, Hacienda Calapo ↔ «Finca calapo», La Ceiba fuera de la Lista de Fincas) y escribir solo las confirmadas; reescribir la prosa de «Grados de Calidad CTC» desde su base; señalar las dos páginas con contraseñas en claro.'),
  ('herramientas-internas', 'Herramientas Internas', 'Herramientas Internas',
-  'Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha, y el guardián `qa-transcripciones-nube` que busca su fixture en una carpeta muerta. (El PVC ya no es de aquí: es solo del BCP, charter `consolas`.)'),
+  'Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha (RPC dedicada en vez de `service_role` en el instalador). (El PVC ya no es de aquí: es solo del BCP, charter `consolas`.)'),
  ('biblia', 'La Biblia del Café', 'Biblia del Café',
   'Leer `docs/HANDOFF_V1.md` de la app, añadir el lanzador `biblia-taller` (puerto 3019) a `C:\\dev\\ctc-platforms\\.claude\\launch.json`, y componer la siguiente sección del spine contra los dos contratos de estilo.'),
  ('kaffetal-regal', 'Kaffetal Regal', 'Kaffetal Regal',
@@ -234,6 +234,10 @@ for clase, rotulo in GRUPOS_NAV:
             nav.append(f'<li><a href="#{s["id"]}">{_h.escape(s["titulo"])}</a></li>')
     nav.append('</ul>')
 
+# El botón de arriba a la derecha de cada ficha: devuelve al inicio (al índice, en el teléfono).
+ARRIBA = ('<a class="up" href="#inicio" aria-label="Volver arriba">'
+          '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
+          'stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a>')
 cards = []
 for clase, rotulo in GRUPOS_NAV:
     cards.append(f'<h2 class="band">{rotulo}</h2>')
@@ -252,8 +256,8 @@ for clase, rotulo in GRUPOS_NAV:
         charter = f'<p class="charter">Charter · <code>{_h.escape(s["charter"])}</code></p>' if s['charter'] else ''
         sug = f'<p class="sug"><strong>Primera tarea sugerida.</strong> {_md(s["sugerencia"])}</p>' if s['sugerencia'] else ''
         cards.append(
-            f'<section class="prompt" id="{s["id"]}">'
-            f'<header><h3>{_h.escape(s["titulo"])}</h3><div class="meta">{meta}</div>{charter}</header>'
+            f'<section class="prompt" id="{s["id"]}" tabindex="-1">'
+            f'<header><div class="head"><h3>{_h.escape(s["titulo"])}</h3><div class="meta">{meta}</div>{charter}</div>{ARRIBA}</header>'
             f'<div class="tools">{campo}<button type="button" class="copy" data-target="pre-{s["id"]}">Copiar prompt</button></div>'
             f'<div class="scroll"><pre id="pre-{s["id"]}" tabindex="0">{_h.escape(s["prompt"])}</pre></div>'
             f'{sug}</section>')

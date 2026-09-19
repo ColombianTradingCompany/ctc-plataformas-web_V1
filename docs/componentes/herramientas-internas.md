@@ -39,8 +39,8 @@ Solo lee: `leads`, `profiles`, `audit_log` (escribe rastro).
 
 ## Guardianes
 
-`qa-transcripciones-check.mjs` (50, con `ts-resolve`) · `qa-transcripciones-nube.mjs` (19, toca AssemblyAI,
-~US$0,002 — ⚠️ hoy roto: busca su fixture en una carpeta que ya no existe, `ALINEACION` §3b) · `qa-anclas-check.mjs`.
+`qa-transcripciones-check.mjs` (50, con `ts-resolve`) · `qa-transcripciones-nube.mjs` (20, toca AssemblyAI,
+~US$0,002; arreglado y corrido de punta a punta en la V5.54) · `qa-anclas-check.mjs`.
 
 ## Reglas propias
 
@@ -70,8 +70,8 @@ owner. El Modelo Económico (PVC) **ya no es de este charter** (owner, 2026-09-1
 - **Transcriptor**: una credencial estrecha (RPC dedicada) en vez de `service_role` en el instalador.
 - **Herramienta de Guion**: decidir si se registra como herramienta interna (`clase: interna` en `tools`)
   o sigue fuera; hoy no la sirve nadie.
-- ~~`WorkersBadge.tsx` con la carpeta vieja~~ — **hecho en la V5.42**. Queda su gemelo: `scripts/qa-transcripciones-nube.mjs`
-  busca el fixture en la misma carpeta muerta y muere con `ENOENT` (dueño: consolas · ECP; `ALINEACION` §3b, 2026-09-19).
+- ~~`WorkersBadge.tsx` con la carpeta vieja~~ — **hecho en la V5.42**. Su gemelo, `scripts/qa-transcripciones-nube.mjs` (misma
+  carpeta muerta), se arregló en la **V5.54**.
 
 ## Kick-off
 

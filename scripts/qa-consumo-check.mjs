@@ -41,15 +41,23 @@ check("la caché leída cuesta la décima parte de la entrada",
 check("la caché escrita cuesta 1,25x la entrada",
   cerca(costeUSD("claude-opus-5", { tokens_entrada: 0, tokens_salida: 0, tokens_cache_escritos: 1e6 }, ayer), 6.25));
 
-// La promo de Sonnet 5 y su caducidad.
-check("Sonnet 5 hoy va a precio de lanzamiento (2 y 10)",
+// Sonnet 5 cuesta 2/10 y NO tiene promoción (tabla de modelos de la API, verificada el 2026-09-19).
+// Hasta la V5.53 estas comprobaciones afirmaban lo contrario —«el 2026-09-01 ya va a 3 y 15», «un 50% más
+// pasada la promo»— y pasaban en verde sobre una tarifa equivocada: copiaban la regla del código en vez
+// de tomarla de la fuente. La cifra de aquí sale de la documentación, no de `precios.ts`.
+check("Sonnet 5 cuesta 2 y 10 antes del 1 de septiembre",
   tarifaVigente("claude-sonnet-5", ayer).entrada === 2 && tarifaVigente("claude-sonnet-5", ayer).salida === 10);
-check("Sonnet 5 el 2026-09-01 ya va a tarifa plena (3 y 15)",
-  tarifaVigente("claude-sonnet-5", traLaPromo).entrada === 3 && tarifaVigente("claude-sonnet-5", traLaPromo).salida === 15);
-check("la misma llamada cuesta un 50% más pasada la promo", (() => {
+check("Sonnet 5 cuesta 2 y 10 también DESPUÉS del 1 de septiembre (no había promo)",
+  tarifaVigente("claude-sonnet-5", traLaPromo).entrada === 2 && tarifaVigente("claude-sonnet-5", traLaPromo).salida === 10);
+check("la misma llamada de Sonnet 5 cuesta lo mismo en agosto que en septiembre: $12 el millón de cada", (() => {
   const uso = { tokens_entrada: 1e6, tokens_salida: 1e6 };
-  return cerca(costeUSD("claude-sonnet-5", uso, traLaPromo), costeUSD("claude-sonnet-5", uso, ayer) * 1.5);
+  return cerca(costeUSD("claude-sonnet-5", uso, traLaPromo), 12) && cerca(costeUSD("claude-sonnet-5", uso, ayer), 12);
 })());
+check("ninguna tarifa declara hoy una promoción", Object.values(TARIFAS).every((t) => !t.promo));
+check("las tarifas de la casa coinciden con la tabla publicada", [
+  ["claude-sonnet-5", 2, 10], ["claude-opus-5", 5, 25], ["claude-haiku-4-5", 1, 5], ["claude-sonnet-4-6", 3, 15],
+  ["claude-opus-4-8", 5, 25], ["claude-fable-5", 10, 50], ["claude-fable-5-1", 10, 50],
+].every(([m, e, s]) => TARIFAS[m]?.entrada === e && TARIFAS[m]?.salida === s));
 
 // Sin tarifa ⇒ null, que NO es cero.
 check("un modelo sin tarifa devuelve null, no 0",

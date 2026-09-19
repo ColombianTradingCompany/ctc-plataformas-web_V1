@@ -80,7 +80,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-definicion-check.mjs` ·
 `qa-direccionamiento-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
 `qa-evaluaciones-check.mjs` (42, veredicto Q-Grader) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
-(31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` ·
+(31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
@@ -98,6 +98,9 @@ portal y el peso de las imágenes) ·
 - **Lo derivado no se persiste** (etapa del comprador, `ctc_selection`, `tiene_ficha`…): se calcula al leer.
 - **Un `throw` en una action de formulario tumba la página**: `{ ok:false, error }` + `ActionForm`.
 - La sesión de consola vive en **`ctc-panel-auth`**, jamás en la cookie compartida.
+- **La cifra de un guardián sale de la FUENTE, nunca del módulo que vigila** (el plan del owner, la documentación de la
+  API). Dos guardianes de este componente afirmaron en verde una regla equivocada por copiarla del código: `qa-pvc-escala`
+  (V5.53) y `qa-consumo-check` (V5.54).
 - **Modelo Económico: cambiar una regla del MOTOR empieza en Python** (`pvc_model_v2.py`, redondeo comercial), se regeneran
   `vals`/`paridad.json`, y después los otros tres motores hasta que los guardianes pasen. Un cambio de parámetros es **una
   versión nueva con acta**, no una edición. **Una sola ruta de publicación** (el embed). Y un guardián **no copia la regla
@@ -124,13 +127,11 @@ portal y el peso de las imágenes) ·
   `revisarBaseFisica(b, banda)` pide **factor ≤ 94, y hasta 98 si el lote es Black** (`FACTOR_MAXIMO`,
   `FACTOR_MAXIMO_BLACK`), y `qa-pvc-escala` (68) lo afirma desde el plan, no desde el código. Sigue siendo exhibición
   (BCP · Grados); la puerta real del veredicto es CN-9.
-  **(b)** **Guardián roto**: `scripts/qa-transcripciones-nube.mjs` (línea 60) busca el fixture en
-  `../reference_html_tools/_whatsapp-transcript-html/…`, que ya no existe; vive en
-  `tools/transcriptor/tests/fixtures/two_speakers.ogg`. Es el gemelo de la línea de `WorkersBadge` (hecha en la V5.42).
-  **(c)** **`src/lib/ai/precios.ts` es de este componente** (BCP · Consumo de IA; §3b le asignó dueño hoy):
-  `claude-sonnet-5` sigue con base 3/15 y una promo 2/10 vencida el 2026-08-31, cuando la tarifa es 2/10 sin promoción;
-  cada fila de Sonnet 5 del libro desde el 1-sep está un 50 % por encima. Falta decidir con el owner qué se hace con
-  esas filas.
+  **(b)** ~~**Guardián roto**: `qa-transcripciones-nube.mjs` busca su fixture en una carpeta que ya no existe~~ —
+  **arreglado y corrido de punta a punta en la V5.54** (20/20; el fixture se comprueba ahora en la parte gratis).
+  **(c)** ~~`src/lib/ai/precios.ts`: `claude-sonnet-5` con base 3/15 y una promo vencida~~ — **corregido en la V5.54**:
+  2/10 sin promoción. **No hubo histórico que decidir**: el libro no tiene ninguna fila de Sonnet 5 desde el 1 de
+  septiembre. Y `qa-consumo-check` (22) dejó de afirmar la tarifa equivocada: toma la cifra de la tabla publicada.
   **(d)** **Filas de §3b con dueño `consolas` que este charter no recogía** y siguen abiertas (el detalle vive allí, no
   se duplica): la **F1 del espejo** con Notion (`notion_espejos`, los seis eventos, `espejo-reporte.mjs` —
   `SECRETARIA_PLAN.md` §4); la **base física como puerta** del veredicto; la **segunda ronda del owner** (reoferta por

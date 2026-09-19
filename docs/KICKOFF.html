@@ -31,6 +31,8 @@
   }
 
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0; background: var(--ground); color: var(--ink);
     font: 400 15px/1.55 var(--sans);
@@ -40,6 +42,7 @@
   a { color: var(--accent); }
   code { font: 400 0.9em var(--mono); background: var(--well); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #inicio:focus { outline: none; }
 
   /* índice */
   nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); max-height: calc(100vh - 40px); overflow-y: auto; font-size: 14px; }
@@ -63,8 +66,13 @@
 
   /* un prompt */
   .prompt { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 18px 20px 20px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
-  .prompt:target { border-color: var(--accent); }
+  .prompt:target, .prompt:focus { border-color: var(--accent); outline: none; }
+  .prompt header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; }
+  .prompt .head { min-width: 0; }
   .prompt h3 { font: 700 21px/1.2 var(--cond); margin: 0 0 6px; text-wrap: balance; }
+  .up { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 4px; background: transparent; color: var(--muted); font: 500 13px var(--sans); text-decoration: none; white-space: nowrap; }
+  .up:hover { color: var(--accent); border-color: var(--accent); }
+  .up svg { width: 14px; height: 14px; flex: none; }
   .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; color: var(--muted); }
   .chip { font: 500 12px var(--mono); color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 999px; }
   .charter { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
@@ -92,7 +100,7 @@
     .copy { margin-left: 0; flex: 1 1 100%; }
   }
   @media print {
-    nav, .tools { display: none; }
+    nav, .tools, .up { display: none; }
     .wrap { display: block; }
     body { background: #fff; color: #000; }
     .prompt { break-inside: avoid; border-color: #999; margin-bottom: 14px; }
@@ -100,10 +108,10 @@
   }
 </style>
 
-<div class="wrap">
+<div class="wrap" id="inicio" tabindex="-1">
   <nav aria-label="Índice de prompts">
     <p class="brand">Kick-offs<br>CTC Platforms</p>
-    <p class="sub">18 prompts · compilado sobre la V5.53</p>
+    <p class="sub">18 prompts · compilado sobre la V5.54</p>
     <p class="nav-label">Componentes</p><ul>
 <li><a href="#consolas">CTC Consolas internas</a></li>
 <li><a href="#socios">Red de Socios</a></li>
@@ -137,7 +145,7 @@
     <p class="oro"><strong>Regla de oro.</strong> Si la tarea cruza dos componentes, se arranca en el que la ORIGINA (la consola, casi siempre) y el otro recibe un pendiente con dueño.</p>
 
     <h2 class="band">Componentes</h2>
-<section class="prompt" id="consolas"><header><h3>CTC Consolas internas</h3><div class="meta"><span class="chip">consolas</span><span class="grupo">Grupo: CTC Consolas internas</span></div><p class="charter">Charter · <code>docs/componentes/consolas.md</code></p></header><div class="tools"><label class="hoy" for="hoy-consolas"><span>Hoy:</span><input id="hoy-consolas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-consolas">Copiar prompt</button></div><div class="scroll"><pre id="pre-consolas" tabindex="0">Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la plataforma CTC
+<section class="prompt" id="consolas" tabindex="-1"><header><div class="head"><h3>CTC Consolas internas</h3><div class="meta"><span class="chip">consolas</span><span class="grupo">Grupo: CTC Consolas internas</span></div><p class="charter">Charter · <code>docs/componentes/consolas.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-consolas"><span>Hoy:</span><input id="hoy-consolas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-consolas">Copiar prompt</button></div><div class="scroll"><pre id="pre-consolas" tabindex="0">Trabajas SOLO en el componente «CTC Consolas internas» (clave: consolas) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/consolas.md   ← tu charter
 2. docs/ALINEACION.md             ← contratos transversales, la regla del backstage (§2) y el registro de permeación (§3)
@@ -150,8 +158,8 @@ Los WRAPS del mapa interactivo se llaman SOLO desde la conversación «WRAP-COMM
 de este grupo (ALINEACION §5.3: el nodo final, que audita maestro ↔ charters antes de compilar); tu asiento en el log va en el mismo commit que la versión (qa-arqlog).
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG en el mismo commit, sello del sha, push,
 verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de este charter al día.
-Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 <strong>antes del 15-oct-2026</strong> (espera la decisión O-1 del owner). Si O-1 no ha llegado, lo más barato con dueño: la tarifa de <code>claude-sonnet-5</code> en <code>src/lib/ai/precios.ts</code> y el guardián roto <code>qa-transcripciones-nube.mjs</code> (<code>ALINEACION</code> §3b).</p></section>
-<section class="prompt" id="socios"><header><h3>Red de Socios</h3><div class="meta"><span class="chip">socios</span><span class="grupo">Grupo: Red de Socios (una conversación por nodo)</span></div><p class="charter">Charter · <code>docs/componentes/socios.md</code></p></header><div class="tools"><label class="hoy" for="hoy-socios"><span>Hoy:</span><input id="hoy-socios" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-socios">Copiar prompt</button></div><div class="scroll"><pre id="pre-socios" tabindex="0">Trabajas SOLO en el componente «Red de Socios» (clave: socios) de la plataforma CTC
+Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 <strong>antes del 15-oct-2026</strong> (espera la decisión O-1 del owner). Si O-1 no ha llegado: CN-2 (razón social completa en <code>legal.ts</code>, marca CTCx en las consolas, Papagayo Beans® en ficha pública y OG del lote), que no depende de nadie.</p></section>
+<section class="prompt" id="socios" tabindex="-1"><header><div class="head"><h3>Red de Socios</h3><div class="meta"><span class="chip">socios</span><span class="grupo">Grupo: Red de Socios (una conversación por nodo)</span></div><p class="charter">Charter · <code>docs/componentes/socios.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-socios"><span>Hoy:</span><input id="hoy-socios" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-socios">Copiar prompt</button></div><div class="scroll"><pre id="pre-socios" tabindex="0">Trabajas SOLO en el componente «Red de Socios» (clave: socios) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en EL NODO &lt;nodo&gt;
 (centro-calidad · agente-carga · agente-nacionalizacion · master-roaster · estudio-contenido).
 Antes de tocar nada lee, en este orden:
@@ -166,7 +174,7 @@ Al terminar: compuerta completa (incl. qa-recuperacion, qa-rutas-consolas), APP_
 asiento en el log de arquitectura, sello, push, verificación en vivo en el subdominio del nodo, y
 «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Elegir el nodo de la sesión. Cuatro paneles son scaffolds (solo el Estudio tiene módulo real): empezar por verificar los cinco subdominios con <code>curl -I</code> y escribir <code>qa-socios-check.mjs</code> (PARTNERS ↔ subdominios ↔ puertas; requirePartner con sus tres condiciones); después, la primera pantalla del nodo elegido con su contraparte en el OCP.</p></section>
-<section class="prompt" id="secretaria"><header><h3>Secretaría CTC</h3><div class="meta"><span class="chip">secretaria</span><span class="grupo">Grupo: Secretaría CTC (Notion · Google)</span></div><p class="charter">Charter · <code>docs/componentes/secretaria.md</code></p></header><div class="tools"><label class="hoy" for="hoy-secretaria"><span>Hoy:</span><input id="hoy-secretaria" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-secretaria">Copiar prompt</button></div><div class="scroll"><pre id="pre-secretaria" tabindex="0">Trabajas SOLO en el componente «Secretaría CTC» (clave: secretaria) de la plataforma CTC
+<section class="prompt" id="secretaria" tabindex="-1"><header><div class="head"><h3>Secretaría CTC</h3><div class="meta"><span class="chip">secretaria</span><span class="grupo">Grupo: Secretaría CTC (Notion · Google)</span></div><p class="charter">Charter · <code>docs/componentes/secretaria.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-secretaria"><span>Hoy:</span><input id="hoy-secretaria" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-secretaria">Copiar prompt</button></div><div class="scroll"><pre id="pre-secretaria" tabindex="0">Trabajas SOLO en el componente «Secretaría CTC» (clave: secretaria) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Eres el ESPEJO entre la plataforma, Notion y
 Google: la plataforma manda en lo que gestiona; Notion lo refleja con ctc_id · CTC · Enlace CTC y
 puede tener más; de Notion vuelve solo lo que tenga manejador con nombre. Antes de tocar nada lee:
@@ -182,7 +190,7 @@ pendiente con dueño «consolas» y una línea en ALINEACION §3, no lo escribes
 Al terminar: fila en la bitácora del plan (§6), «Pendientes» de este charter al día, y si tocaste
 una base que otro componente refleja, su charter lo sabe.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> F0 del plan (<code>docs/SECRETARIA_PLAN.md</code> §4), sin código: añadir <code>ctc_id</code> · <code>CTC</code> · <code>Enlace CTC</code> a Lista de Proveedores, Lista de Fincas, Fichas Técnicas y Clientes Potenciales; proponer al owner las coincidencias (Doña Hortencia ↔ Hortencia PALMAS, Hacienda Calapo ↔ «Finca calapo», La Ceiba fuera de la Lista de Fincas) y escribir solo las confirmadas; reescribir la prosa de «Grados de Calidad CTC» desde su base; señalar las dos páginas con contraseñas en claro.</p></section>
-<section class="prompt" id="herramientas-internas"><header><h3>Herramientas Internas</h3><div class="meta"><span class="chip">herramientas-internas</span><span class="grupo">Grupo: Herramientas Internas</span></div><p class="charter">Charter · <code>docs/componentes/herramientas-internas.md</code></p></header><div class="tools"><label class="hoy" for="hoy-herramientas-internas"><span>Hoy:</span><input id="hoy-herramientas-internas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-herramientas-internas">Copiar prompt</button></div><div class="scroll"><pre id="pre-herramientas-internas" tabindex="0">Trabajas SOLO en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
+<section class="prompt" id="herramientas-internas" tabindex="-1"><header><div class="head"><h3>Herramientas Internas</h3><div class="meta"><span class="chip">herramientas-internas</span><span class="grupo">Grupo: Herramientas Internas</span></div><p class="charter">Charter · <code>docs/componentes/herramientas-internas.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-herramientas-internas"><span>Hoy:</span><input id="hoy-herramientas-internas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-herramientas-internas">Copiar prompt</button></div><div class="scroll"><pre id="pre-herramientas-internas" tabindex="0">Trabajas SOLO en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en LA HERRAMIENTA &lt;nombre&gt;.
 Antes de tocar nada lee, en este orden:
 1. docs/componentes/herramientas-internas.md   ← tu charter (dónde vive cada herramienta)
@@ -193,8 +201,8 @@ además tools/transcriptor/README.md y docs/TRANSCRIPCIONES_NUBE.md; para Stripe
 Lo que calcules aquí NO llega a Kaffetal Regal ni a Cherry Picked sin una línea en el §3 y el visto
 bueno del owner. Al terminar: compuerta, APP_VERSION + CHANGELOG, sello, push, verificación en vivo,
 log de arquitectura, y «Pendientes» de este charter al día.
-Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha, y el guardián <code>qa-transcripciones-nube</code> que busca su fixture en una carpeta muerta. (El PVC ya no es de aquí: es solo del BCP, charter <code>consolas</code>.)</p></section>
-<section class="prompt" id="biblia"><header><h3>La Biblia del Café</h3><div class="meta"><span class="chip">biblia</span><span class="grupo">Grupo: Biblia del Café</span></div><p class="charter">Charter · <code>docs/componentes/biblia.md</code></p></header><div class="tools"><label class="hoy" for="hoy-biblia"><span>Hoy:</span><input id="hoy-biblia" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-biblia">Copiar prompt</button></div><div class="scroll"><pre id="pre-biblia" tabindex="0">Trabajas SOLO en «La Biblia del Café» (clave: biblia), la app interna en
+Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha (RPC dedicada en vez de <code>service_role</code> en el instalador). (El PVC ya no es de aquí: es solo del BCP, charter <code>consolas</code>.)</p></section>
+<section class="prompt" id="biblia" tabindex="-1"><header><div class="head"><h3>La Biblia del Café</h3><div class="meta"><span class="chip">biblia</span><span class="grupo">Grupo: Biblia del Café</span></div><p class="charter">Charter · <code>docs/componentes/biblia.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-biblia"><span>Hoy:</span><input id="hoy-biblia" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-biblia">Copiar prompt</button></div><div class="scroll"><pre id="pre-biblia" tabindex="0">Trabajas SOLO en «La Biblia del Café» (clave: biblia), la app interna en
 C:\dev\ctc-platforms\apps-internas\biblia_del_cafe\biblia-del-cafe\ (sesión abierta desde
 C:\dev\ctc-platforms\ctc-platform). Antes de tocar nada lee, en este orden:
 1. docs/componentes/biblia.md (en el repo de la plataforma)  ← tu charter
@@ -205,7 +213,7 @@ la salida; conservas la longitud al corregir prosa paginada; una prueba nunca to
 coste de cada figura va a la vista. Al terminar: exportación medida (0 solapes, 0 desbordes),
 versión empaquetada si procede, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Leer <code>docs/HANDOFF_V1.md</code> de la app, añadir el lanzador <code>biblia-taller</code> (puerto 3019) a <code>C:\dev\ctc-platforms\.claude\launch.json</code>, y componer la siguiente sección del spine contra los dos contratos de estilo.</p></section>
-<section class="prompt" id="kaffetal-regal"><header><h3>Kaffetal Regal</h3><div class="meta"><span class="chip">kaffetal-regal</span><span class="grupo">Grupo: Kaffetal Regal</span></div><p class="charter">Charter · <code>docs/componentes/kaffetal-regal.md</code></p></header><div class="tools"><label class="hoy" for="hoy-kaffetal-regal"><span>Hoy:</span><input id="hoy-kaffetal-regal" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-kaffetal-regal">Copiar prompt</button></div><div class="scroll"><pre id="pre-kaffetal-regal" tabindex="0">Trabajas SOLO en el componente «Kaffetal Regal» (clave: kaffetal-regal) de la plataforma CTC
+<section class="prompt" id="kaffetal-regal" tabindex="-1"><header><div class="head"><h3>Kaffetal Regal</h3><div class="meta"><span class="chip">kaffetal-regal</span><span class="grupo">Grupo: Kaffetal Regal</span></div><p class="charter">Charter · <code>docs/componentes/kaffetal-regal.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-kaffetal-regal"><span>Hoy:</span><input id="hoy-kaffetal-regal" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-kaffetal-regal">Copiar prompt</button></div><div class="scroll"><pre id="pre-kaffetal-regal" tabindex="0">Trabajas SOLO en el componente «Kaffetal Regal» (clave: kaffetal-regal) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/kaffetal-regal.md   ← tu charter
 2. docs/ALINEACION.md                   ← contratos transversales y el registro de permeación (§3, desde la última fecha que conozcas)
@@ -216,7 +224,7 @@ default seguro. Se verifica en vivo con las cuentas prueba-* (memoria ctc-qa-fle
 compuerta completa (incl. qa-kr-panel, qa-kr-ficha), APP_VERSION + CHANGELOG, sello del sha, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Recorrer el bloque B del artefacto de revisión sobre el panel nuevo (B3/B4 primero) y convertir cada «Fix» en una tanda; después, estrenar el escáner visual con un soporte real.</p></section>
-<section class="prompt" id="cherry-picked"><header><h3>Cherry Picked</h3><div class="meta"><span class="chip">cherry-picked</span><span class="grupo">Grupo: Cherry Picked</span></div><p class="charter">Charter · <code>docs/componentes/cherry-picked.md</code></p></header><div class="tools"><label class="hoy" for="hoy-cherry-picked"><span>Hoy:</span><input id="hoy-cherry-picked" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-cherry-picked">Copiar prompt</button></div><div class="scroll"><pre id="pre-cherry-picked" tabindex="0">Trabajas SOLO en el componente «Cherry Picked» (clave: cherry-picked) de la plataforma CTC
+<section class="prompt" id="cherry-picked" tabindex="-1"><header><div class="head"><h3>Cherry Picked</h3><div class="meta"><span class="chip">cherry-picked</span><span class="grupo">Grupo: Cherry Picked</span></div><p class="charter">Charter · <code>docs/componentes/cherry-picked.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-cherry-picked"><span>Hoy:</span><input id="hoy-cherry-picked" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-cherry-picked">Copiar prompt</button></div><div class="scroll"><pre id="pre-cherry-picked" tabindex="0">Trabajas SOLO en el componente «Cherry Picked» (clave: cherry-picked) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/cherry-picked.md   ← tu charter
 2. docs/ALINEACION.md                  ← contratos transversales y el registro de permeación (§3)
@@ -228,7 +236,7 @@ y una línea en el §3. Se verifica con una cuenta de comprador QA. Al terminar:
 (incl. qa-sneak-peek, qa-subastas), APP_VERSION + CHANGELOG, sello, push, verificación en vivo, log
 de arquitectura, y «Pendientes» al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Preparar la primera subasta real (recorrer <code>/cherry-picked-green</code> con una cuenta Pintón contra una subasta abierta por el OCP en pruebas) y revisar la ficha pública y la cinta con el primer lote publicado.</p></section>
-<section class="prompt" id="herramientas-cafe"><header><h3>Herramientas del Café</h3><div class="meta"><span class="chip">herramientas-cafe</span><span class="grupo">Grupo: Herramientas del Café</span></div><p class="charter">Charter · <code>docs/componentes/herramientas-cafe.md</code></p></header><div class="tools"><label class="hoy" for="hoy-herramientas-cafe"><span>Hoy:</span><input id="hoy-herramientas-cafe" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-herramientas-cafe">Copiar prompt</button></div><div class="scroll"><pre id="pre-herramientas-cafe" tabindex="0">Trabajas SOLO en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
+<section class="prompt" id="herramientas-cafe" tabindex="-1"><header><div class="head"><h3>Herramientas del Café</h3><div class="meta"><span class="chip">herramientas-cafe</span><span class="grupo">Grupo: Herramientas del Café</span></div><p class="charter">Charter · <code>docs/componentes/herramientas-cafe.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-herramientas-cafe"><span>Hoy:</span><input id="hoy-herramientas-cafe" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-herramientas-cafe">Copiar prompt</button></div><div class="scroll"><pre id="pre-herramientas-cafe" tabindex="0">Trabajas SOLO en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main), y dentro de él en LA HERRAMIENTA &lt;id&gt;.
 Antes de tocar nada lee, en este orden:
 1. docs/componentes/herramientas-cafe.md   ← tu charter (el inventario y la receta de alta)
@@ -241,7 +249,7 @@ C:\dev\ctc-platforms\reference\html_tools\. Al terminar: compuerta completa (inc
 qa-tools-seo-espejo, qa-taller, conformidad del puente), APP_VERSION + CHANGELOG, sello, push,
 verificación en vivo, log de arquitectura, y «Pendientes» e inventario de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Elegir la herramienta de la sesión. Candidatas: Defectos del Café (línea del puente → <code>soporta_memoria</code>, fotogramas de tostado, conmutador de fondo); migrar el comodín <code>tools_plus_grants</code> a permisos por persona.</p></section>
-<section class="prompt" id="coffeed"><header><h3>Coffeed</h3><div class="meta"><span class="chip">coffeed</span><span class="grupo">Grupo: Coffeed</span></div><p class="charter">Charter · <code>docs/componentes/coffeed.md</code></p></header><div class="tools"><label class="hoy" for="hoy-coffeed"><span>Hoy:</span><input id="hoy-coffeed" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-coffeed">Copiar prompt</button></div><div class="scroll"><pre id="pre-coffeed" tabindex="0">Trabajas SOLO en el componente «Coffeed» (clave: coffeed) de la plataforma CTC
+<section class="prompt" id="coffeed" tabindex="-1"><header><div class="head"><h3>Coffeed</h3><div class="meta"><span class="chip">coffeed</span><span class="grupo">Grupo: Coffeed</span></div><p class="charter">Charter · <code>docs/componentes/coffeed.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-coffeed"><span>Hoy:</span><input id="hoy-coffeed" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-coffeed">Copiar prompt</button></div><div class="scroll"><pre id="pre-coffeed" tabindex="0">Trabajas SOLO en el componente «Coffeed» (clave: coffeed) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/coffeed.md    ← tu charter
 2. docs/ALINEACION.md             ← contratos transversales (sobre todo el libro de consumo) y el registro de permeación (§3)
@@ -252,7 +260,7 @@ revienta; un panel sin fuente no se acepta; el muro solo lee published. Al termi
 completa (incl. qa-redaccion, qa-feeds, qa-consumo), APP_VERSION + CHANGELOG, sello, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> La primera generación REAL de Redacción con las claves de producción (<code>docs/CLAVES_IA_Y_COSTE.md</code>), y dejar el evento <code>coffeed.redaccion.post_creado</code> listo para el escenario de Make del owner.</p></section>
-<section class="prompt" id="directorio"><header><h3>Directorio del Café</h3><div class="meta"><span class="chip">directorio</span><span class="grupo">Grupo: Directorio del Café</span></div><p class="charter">Charter · <code>docs/componentes/directorio.md</code></p></header><div class="tools"><label class="hoy" for="hoy-directorio"><span>Hoy:</span><input id="hoy-directorio" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-directorio">Copiar prompt</button></div><div class="scroll"><pre id="pre-directorio" tabindex="0">Trabajas SOLO en el componente «Directorio del Café» (clave: directorio) de la plataforma CTC
+<section class="prompt" id="directorio" tabindex="-1"><header><div class="head"><h3>Directorio del Café</h3><div class="meta"><span class="chip">directorio</span><span class="grupo">Grupo: Directorio del Café</span></div><p class="charter">Charter · <code>docs/componentes/directorio.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-directorio"><span>Hoy:</span><input id="hoy-directorio" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-directorio">Copiar prompt</button></div><div class="scroll"><pre id="pre-directorio" tabindex="0">Trabajas SOLO en el componente «Directorio del Café» (clave: directorio) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/directorio.md   ← tu charter
 2. docs/ALINEACION.md               ← contratos transversales y el registro de permeación (§3)
@@ -262,7 +270,7 @@ público; la verificación es del ECP (pendiente con dueño «consolas» si tu t
 Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push, verificación en vivo (curl al
 subdominio), log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Comprobar con <code>curl -I</code> que <code>directoriodelcafe.ctcexport.com</code> sirve con TLS, y escribir el guardián propio <code>qa-directorio-check.mjs</code> (ciclo de verificación de certificados + insignia pública + búsqueda sin tildes).</p></section>
-<section class="prompt" id="ctc-tech"><header><h3>CTC Tech</h3><div class="meta"><span class="chip">ctc-tech</span><span class="grupo">Grupo: CTC Tech</span></div><p class="charter">Charter · <code>docs/componentes/ctc-tech.md</code></p></header><div class="tools"><label class="hoy" for="hoy-ctc-tech"><span>Hoy:</span><input id="hoy-ctc-tech" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-ctc-tech">Copiar prompt</button></div><div class="scroll"><pre id="pre-ctc-tech" tabindex="0">Trabajas SOLO en el componente «CTC Tech» (clave: ctc-tech) de la plataforma CTC
+<section class="prompt" id="ctc-tech" tabindex="-1"><header><div class="head"><h3>CTC Tech</h3><div class="meta"><span class="chip">ctc-tech</span><span class="grupo">Grupo: CTC Tech</span></div><p class="charter">Charter · <code>docs/componentes/ctc-tech.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-ctc-tech"><span>Hoy:</span><input id="hoy-ctc-tech" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-ctc-tech">Copiar prompt</button></div><div class="scroll"><pre id="pre-ctc-tech" tabindex="0">Trabajas SOLO en el componente «CTC Tech» (clave: ctc-tech) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/ctc-tech.md   ← tu charter
 2. docs/ALINEACION.md             ← contratos transversales y el registro de permeación (§3)
@@ -272,7 +280,7 @@ es COMPARTIDO con Varietales y CaaS: tocarlo es cambio transversal (línea en §
 productor es del ECP. Al terminar: compuerta completa, APP_VERSION + CHANGELOG, sello, push,
 verificación en vivo, log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> El guardián ligero de leads compartido (<code>qa-leads-check.mjs</code>: listas blancas por pilar + aprovisionamiento), y el contenido real de la landing con el owner.</p></section>
-<section class="prompt" id="varietales"><header><h3>Varietales Registrados</h3><div class="meta"><span class="chip">varietales</span><span class="grupo">Grupo: Varietales Registrados</span></div><p class="charter">Charter · <code>docs/componentes/varietales.md</code></p></header><div class="tools"><label class="hoy" for="hoy-varietales"><span>Hoy:</span><input id="hoy-varietales" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-varietales">Copiar prompt</button></div><div class="scroll"><pre id="pre-varietales" tabindex="0">Trabajas SOLO en el componente «Varietales Registrados» (clave: varietales) de la plataforma CTC
+<section class="prompt" id="varietales" tabindex="-1"><header><div class="head"><h3>Varietales Registrados</h3><div class="meta"><span class="chip">varietales</span><span class="grupo">Grupo: Varietales Registrados</span></div><p class="charter">Charter · <code>docs/componentes/varietales.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-varietales"><span>Hoy:</span><input id="hoy-varietales" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-varietales">Copiar prompt</button></div><div class="scroll"><pre id="pre-varietales" tabindex="0">Trabajas SOLO en el componente «Varietales Registrados» (clave: varietales) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
 1. docs/componentes/varietales.md   ← tu charter
 2. docs/ALINEACION.md               ← contratos transversales y el registro de permeación (§3)
@@ -282,7 +290,7 @@ compartidos: tocarlos es cambio transversal (línea en §3). Al terminar: compue
 APP_VERSION + CHANGELOG, sello, push, verificación en vivo, log de arquitectura, y «Pendientes» al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> Lo mismo que CTC Tech para el pilar <code>varietales</code>, y definir con el owner el catálogo real de plántulas (hoy la landing recoge interés, no vende).</p></section>
 <h2 class="band">Transversal y cierre</h2>
-<section class="prompt" id="wrap-commit-push"><header><h3>WRAP-COMMIT-PUSH (CTC Platforms)</h3><div class="meta"><span class="chip">plataforma · nodo final</span><span class="grupo">Grupo: CTC Consolas internas — UNA sola conversación, siempre la misma</span></div><p class="charter">Charter · <code>docs/ALINEACION.md §5.3</code></p></header><div class="tools"><label class="hoy" for="hoy-wrap-commit-push"><span>Hoy:</span><input id="hoy-wrap-commit-push" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;auditoría y wrap | solo auditoría | la decisión que traigo&gt;" data-hueco="&lt;auditoría y wrap | solo auditoría | la decisión que traigo&gt;"></label><button type="button" class="copy" data-target="pre-wrap-commit-push">Copiar prompt</button></div><div class="scroll"><pre id="pre-wrap-commit-push" tabindex="0">Eres la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» del grupo CTC Consolas internas: el NODO FINAL de la
+<section class="prompt" id="wrap-commit-push" tabindex="-1"><header><div class="head"><h3>WRAP-COMMIT-PUSH (CTC Platforms)</h3><div class="meta"><span class="chip">plataforma · nodo final</span><span class="grupo">Grupo: CTC Consolas internas — UNA sola conversación, siempre la misma</span></div><p class="charter">Charter · <code>docs/ALINEACION.md §5.3</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-wrap-commit-push"><span>Hoy:</span><input id="hoy-wrap-commit-push" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;auditoría y wrap | solo auditoría | la decisión que traigo&gt;" data-hueco="&lt;auditoría y wrap | solo auditoría | la decisión que traigo&gt;"></label><button type="button" class="copy" data-target="pre-wrap-commit-push">Copiar prompt</button></div><div class="scroll"><pre id="pre-wrap-commit-push" tabindex="0">Eres la conversación «WRAP-COMMIT-PUSH (CTC Platforms)» del grupo CTC Consolas internas: el NODO FINAL de la
 plataforma CTC (repo C:\dev\ctc-platforms\ctc-platform, rama main; vía `plataforma`). Tu único oficio es comprobar
 que el maestro y el plan de cada componente están en el mismo punto, y solo entonces compilar el wrap del mapa y
 empujar. No construyes funcionalidades. Antes de tocar nada lee, en este orden:
@@ -308,7 +316,7 @@ propia tanda: tú eres el cierre, no un cuello de botella.
 Al terminar: git add de rutas explícitas, commit, sello del sha, push, verificación en vivo, y
 docs/KICKOFF.md + docs/KICKOFF.html recompilados (python docs/componentes/build_kickoff.py) si cambió un kick-off.
 Hoy: &lt;auditoría y wrap | solo auditoría | la decisión que traigo&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> «solo auditoría» después de que cualquier componente empuje una tanda; «auditoría y wrap» cuando el log vigente acumule cinco asientos o se cierre un hito. Si vuelves a la conversación que ya existe, no pegues el prompt entero: basta la línea «Hoy:».</p></section>
-<section class="prompt" id="plataforma"><header><h3>Plataforma (lo transversal)</h3><div class="meta"><span class="chip">plataforma</span><span class="grupo">Grupo: CTC Consolas internas (no tiene grupo propio: es el backstage del backstage)</span></div><p class="charter">Charter · <code>docs/HANDOFF.md + docs/ALINEACION.md</code></p></header><div class="tools"><label class="hoy" for="hoy-plataforma"><span>Hoy:</span><input id="hoy-plataforma" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-plataforma">Copiar prompt</button></div><div class="scroll"><pre id="pre-plataforma" tabindex="0">Trabajas en lo TRANSVERSAL de la plataforma CTC (clave: plataforma) — lo que no es de ningún componente:
+<section class="prompt" id="plataforma" tabindex="-1"><header><div class="head"><h3>Plataforma (lo transversal)</h3><div class="meta"><span class="chip">plataforma</span><span class="grupo">Grupo: CTC Consolas internas (no tiene grupo propio: es el backstage del backstage)</span></div><p class="charter">Charter · <code>docs/HANDOFF.md + docs/ALINEACION.md</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-plataforma"><span>Hoy:</span><input id="hoy-plataforma" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-plataforma">Copiar prompt</button></div><div class="scroll"><pre id="pre-plataforma" tabindex="0">Trabajas en lo TRANSVERSAL de la plataforma CTC (clave: plataforma) — lo que no es de ningún componente:
 CTC Home (/), src/proxy.ts y la red de subdominios, SEO/Open Graph/JSON-LD/sitemap, la auth compartida y
 «Recuperar acceso», los cinco nodos socio, Terratalento, version.ts, los guardianes transversales
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Antes de tocar nada lee, en este orden:
@@ -326,7 +334,7 @@ Al terminar: compuerta completa (incl. qa-rutas-consolas, qa-nav, qa-grados, qa-
 APP_VERSION + CHANGELOG, sello del sha, push, verificación en vivo en www y en el subdominio afectado,
 log de arquitectura.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> la política de privacidad de la red (GDPR / Ley 1581, declarando a Resend como subprocesador) — la deuda transversal más vieja; y el toggle de leaked-password protection en Supabase.</p></section>
-<section class="prompt" id="commaas"><header><h3>CommaaS (hub y tenants)</h3><div class="meta"><span class="chip">commaas</span><span class="grupo">Grupo: CommaaS</span></div><p class="charter">Charter · <code>C:\dev\commaas-hub\commaas\docs\HANDOFF.md (memoria propia C--dev-commaas-hub; tenants pendientes en C:\dev\commaas-hub\tenants-pendientes\)</code></p></header><div class="tools"><label class="hoy" for="hoy-commaas"><span>Hoy:</span><input id="hoy-commaas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-commaas">Copiar prompt</button></div><div class="scroll"><pre id="pre-commaas" tabindex="0">Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main) — el hub personal de despliegue
+<section class="prompt" id="commaas" tabindex="-1"><header><div class="head"><h3>CommaaS (hub y tenants)</h3><div class="meta"><span class="chip">commaas</span><span class="grupo">Grupo: CommaaS</span></div><p class="charter">Charter · <code>C:\dev\commaas-hub\commaas\docs\HANDOFF.md (memoria propia C--dev-commaas-hub; tenants pendientes en C:\dev\commaas-hub\tenants-pendientes\)</code></p></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-commaas"><span>Hoy:</span><input id="hoy-commaas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la tarea&gt;" data-hueco="&lt;la tarea&gt;"></label><button type="button" class="copy" data-target="pre-commaas">Copiar prompt</button></div><div class="scroll"><pre id="pre-commaas" tabindex="0">Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main) — el hub personal de despliegue
 del owner: un proyecto de Supabase (togwpmprggfvhwwxfzlh), un esquema de Postgres por app, un proyecto de
 Vercel y un subdominio por app, el contrato en packages/hub-kit. Hoy la sesión es sobre &lt;el hub | el tenant X&gt;.
 Antes de tocar nada lee, en este orden:
@@ -343,7 +351,7 @@ HANDOFF del hub al día.
 Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.</strong> el paso 3.7 del plan de CTC — escribir <code>commaas/docs/ALINEACION.md</code> (el gemelo: contratos entre hub y tenants + índice de tenants) y actualizar el HANDOFF del hub con la carpeta <code>tenants-pendientes</code>.</p></section>
 <h2 class="band">Proyectos nuevos</h2>
 <p class="lede">Cuando traes algo que no está en ningún charter, la sesión no empieza construyendo: escribe un <strong>brief de una página</strong> y una fila «en scoping» en el inventario de su componente. El código empieza cuando apruebas el brief.</p>
-<section class="prompt" id="nuevo-herramientas-internas"><header><h3>Herramientas Internas · PROYECTO NUEVO</h3><div class="meta"><span class="chip">herramientas-internas</span><span class="grupo">Grupo: Herramientas Internas</span></div></header><div class="tools"><label class="hoy" for="hoy-nuevo-herramientas-internas"><span>Hoy:</span><input id="hoy-nuevo-herramientas-internas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;el proyecto&gt;" data-hueco="&lt;el proyecto&gt;"></label><button type="button" class="copy" data-target="pre-nuevo-herramientas-internas">Copiar prompt</button></div><div class="scroll"><pre id="pre-nuevo-herramientas-internas" tabindex="0">Trabajas en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
+<section class="prompt" id="nuevo-herramientas-internas" tabindex="-1"><header><div class="head"><h3>Herramientas Internas · PROYECTO NUEVO</h3><div class="meta"><span class="chip">herramientas-internas</span><span class="grupo">Grupo: Herramientas Internas</span></div></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-nuevo-herramientas-internas"><span>Hoy:</span><input id="hoy-nuevo-herramientas-internas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;el proyecto&gt;" data-hueco="&lt;el proyecto&gt;"></label><button type="button" class="copy" data-target="pre-nuevo-herramientas-internas">Copiar prompt</button></div><div class="scroll"><pre id="pre-nuevo-herramientas-internas" tabindex="0">Trabajas en el componente «Herramientas Internas» (clave: herramientas-internas) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega un PROYECTO NUEVO que NO está en el charter:
 &lt;nombre y qué es, en dos líneas&gt;. Antes de construir nada:
 1. Lee docs/componentes/herramientas-internas.md (la tabla de herramientas y dónde vive cada una),
@@ -355,7 +363,7 @@ Hoy: &lt;la tarea&gt;.</pre></div><p class="sug"><strong>Primera tarea sugerida.
 3. Añade su fila a la tabla del charter con estado «en scoping» y una línea en ALINEACION §3 si toca a otro.
 4. Propón el primer paso y PARA: no se escribe código hasta que apruebe el brief.
 Hoy: &lt;el proyecto&gt;.</pre></div></section>
-<section class="prompt" id="nuevo-herramientas-cafe"><header><h3>Herramientas del Café · HERRAMIENTA NUEVA</h3><div class="meta"><span class="chip">herramientas-cafe</span><span class="grupo">Grupo: Herramientas del Café</span></div></header><div class="tools"><label class="hoy" for="hoy-nuevo-herramientas-cafe"><span>Hoy:</span><input id="hoy-nuevo-herramientas-cafe" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la herramienta&gt;" data-hueco="&lt;la herramienta&gt;"></label><button type="button" class="copy" data-target="pre-nuevo-herramientas-cafe">Copiar prompt</button></div><div class="scroll"><pre id="pre-nuevo-herramientas-cafe" tabindex="0">Trabajas en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
+<section class="prompt" id="nuevo-herramientas-cafe" tabindex="-1"><header><div class="head"><h3>Herramientas del Café · HERRAMIENTA NUEVA</h3><div class="meta"><span class="chip">herramientas-cafe</span><span class="grupo">Grupo: Herramientas del Café</span></div></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-nuevo-herramientas-cafe"><span>Hoy:</span><input id="hoy-nuevo-herramientas-cafe" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;la herramienta&gt;" data-hueco="&lt;la herramienta&gt;"></label><button type="button" class="copy" data-target="pre-nuevo-herramientas-cafe">Copiar prompt</button></div><div class="scroll"><pre id="pre-nuevo-herramientas-cafe" tabindex="0">Trabajas en el componente «Herramientas del Café» (clave: herramientas-cafe) de la plataforma CTC
 (repo C:\dev\ctc-platforms\ctc-platform, rama main). Hoy llega una HERRAMIENTA NUEVA que NO está en el
 inventario: &lt;nombre y qué hace, en dos líneas&gt;. La fuente (HTML o brief) está en
 C:\dev\ctc-platforms\reference\html_tools\&lt;archivo&gt;. Antes de registrar nada:
@@ -367,7 +375,7 @@ C:\dev\ctc-platforms\reference\html_tools\&lt;archivo&gt;. Antes de registrar na
 3. Añade su fila al inventario del charter con estado «en scoping» y PARA hasta que apruebe el brief.
    Después: .html a public/tools → vendor-tool-assets → alta en `tools` → puente → captura → qa-tools-seo-*.
 Hoy: &lt;la herramienta&gt;.</pre></div></section>
-<section class="prompt" id="nuevo-commaas"><header><h3>CommaaS · TENANT NUEVO</h3><div class="meta"><span class="chip">commaas</span><span class="grupo">Grupo: CommaaS</span></div></header><div class="tools"><label class="hoy" for="hoy-nuevo-commaas"><span>Hoy:</span><input id="hoy-nuevo-commaas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;el tenant&gt;" data-hueco="&lt;el tenant&gt;"></label><button type="button" class="copy" data-target="pre-nuevo-commaas">Copiar prompt</button></div><div class="scroll"><pre id="pre-nuevo-commaas" tabindex="0">Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main). Hoy llega un TENANT NUEVO que NO
+<section class="prompt" id="nuevo-commaas" tabindex="-1"><header><div class="head"><h3>CommaaS · TENANT NUEVO</h3><div class="meta"><span class="chip">commaas</span><span class="grupo">Grupo: CommaaS</span></div></div><a class="up" href="#inicio" aria-label="Volver arriba"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>Arriba</a></header><div class="tools"><label class="hoy" for="hoy-nuevo-commaas"><span>Hoy:</span><input id="hoy-nuevo-commaas" type="text" autocomplete="off" spellcheck="false" placeholder="&lt;el tenant&gt;" data-hueco="&lt;el tenant&gt;"></label><button type="button" class="copy" data-target="pre-nuevo-commaas">Copiar prompt</button></div><div class="scroll"><pre id="pre-nuevo-commaas" tabindex="0">Trabajas en el CommaaS Hub (repo C:\dev\commaas-hub\commaas, rama main). Hoy llega un TENANT NUEVO que NO
 está en el índice: &lt;nombre y qué es, en dos líneas&gt;; su prototipo, si existe, está en
 C:\dev\commaas-hub\tenants-pendientes\&lt;carpeta&gt;. Antes de portar nada:
 1. Comprueba que el proyecto de Supabase togwpmprggfvhwwxfzlh esté activo (se pausa a los 7 días).
@@ -385,45 +393,72 @@ Hoy: &lt;el tenant&gt;.</pre></div></section>
 
 <script>
   (function () {
-    function texto(btn) {
-      var pre = document.getElementById(btn.getAttribute('data-target'));
-      var t = pre.textContent;
-      var campo = btn.parentNode.querySelector('input[data-hueco]');
-      if (campo && campo.value.trim()) {
-        var hueco = campo.getAttribute('data-hueco');
-        var i = t.lastIndexOf('Hoy: ' + hueco);
-        if (i > -1) t = t.slice(0, i) + 'Hoy: ' + campo.value.trim() + t.slice(i + 5 + hueco.length);
-      }
-      return { t: t, pre: pre };
+    // El texto que se copia es SIEMPRE el que se ve: al escribir en «Hoy:» el prompt de la ficha se reescribe
+    // en vivo. Así el último recurso (seleccionar el texto para Ctrl+C) también lleva la tarea puesta.
+    var original = {};
+    var pres = document.querySelectorAll('section.prompt pre');
+    for (var k = 0; k < pres.length; k++) original[pres[k].id] = pres[k].textContent;
+
+    function pintar(campo) {
+      var pre = document.getElementById('pre-' + campo.id.slice(4));
+      if (!pre) return;
+      var base = original[pre.id], hueco = campo.getAttribute('data-hueco'), v = campo.value.trim();
+      var i = base.lastIndexOf('Hoy: ' + hueco);
+      pre.textContent = (v && i > -1) ? base.slice(0, i) + 'Hoy: ' + v + base.slice(i + 5 + hueco.length) : base;
     }
+    var campos = document.querySelectorAll('input[data-hueco]');
+    for (var c = 0; c < campos.length; c++) pintar(campos[c]);   // el navegador puede restaurar lo escrito
+    document.addEventListener('input', function (ev) {
+      if (ev.target && ev.target.matches && ev.target.matches('input[data-hueco]')) pintar(ev.target);
+    });
+
     function avisar(btn, msg, ok) {
       var antes = btn.getAttribute('data-label') || btn.textContent;
       btn.setAttribute('data-label', antes);
       btn.textContent = msg;
       btn.classList.toggle('done', !!ok);
       clearTimeout(btn._t);
-      btn._t = setTimeout(function () { btn.textContent = antes; btn.classList.remove('done'); }, 2200);
+      btn._t = setTimeout(function () { btn.textContent = antes; btn.classList.remove('done'); }, 2400);
     }
-    function porSeleccion(r, btn) {
+    // 1) El camino SÍNCRONO va primero: ocurre dentro del clic, que es lo único que un marco aislado
+    //    (como el visor de artefactos) acepta siempre. La API moderna puede estar vetada ahí.
+    function porComando(t) {
       var ta = document.createElement('textarea');
-      ta.value = r.t; ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
+      ta.value = t; ta.setAttribute('readonly', ''); ta.setAttribute('aria-hidden', 'true');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;';
+      document.body.appendChild(ta);
       var ok = false;
-      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      try { ta.focus({ preventScroll: true }); ta.select(); ta.setSelectionRange(0, t.length); ok = document.execCommand('copy'); }
+      catch (e) { ok = false; }
       document.body.removeChild(ta);
-      if (ok) { avisar(btn, 'Copiado', true); return; }
-      var sel = window.getSelection(), rango = document.createRange();
-      rango.selectNodeContents(r.pre); sel.removeAllRanges(); sel.addRange(rango);
-      avisar(btn, 'Seleccionado: pulsa Ctrl+C', false);
+      return ok;
     }
-    document.addEventListener('click', function (ev) {
-      var btn = ev.target.closest ? ev.target.closest('.copy') : null;
-      if (!btn) return;
-      var r = texto(btn);
+    function seleccionar(pre, btn) {
+      var sel = window.getSelection(), rango = document.createRange();
+      rango.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(rango);
+      pre.focus({ preventScroll: true });
+      avisar(btn, 'Texto seleccionado: pulsa Ctrl+C', false);
+    }
+    function copiar(btn) {
+      var pre = document.getElementById(btn.getAttribute('data-target'));
+      var t = pre.textContent;
+      if (porComando(t)) { btn.focus({ preventScroll: true }); avisar(btn, 'Copiado', true); return; }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(r.t).then(function () { avisar(btn, 'Copiado', true); }, function () { porSeleccion(r, btn); });
-      } else { porSeleccion(r, btn); }
+        navigator.clipboard.writeText(t).then(function () { avisar(btn, 'Copiado', true); }, function () { seleccionar(pre, btn); });
+      } else { seleccionar(pre, btn); }
+    }
+
+    document.addEventListener('click', function (ev) {
+      var el = ev.target.closest ? ev.target.closest('.copy, a[href^="#"]') : null;
+      if (!el) return;
+      if (el.classList.contains('copy')) { copiar(el); return; }
+      // Los enlaces internos se resuelven a mano: dentro de un visor incrustado un «#ancla» puede no navegar.
+      var id = el.getAttribute('href').slice(1), destino = document.getElementById(id);
+      if (!destino) return;
+      ev.preventDefault();
+      if (id === 'inicio') { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; }
+      else destino.scrollIntoView({ block: 'start' });
+      if (destino.focus) destino.focus({ preventScroll: true });
     });
   })();
 </script>

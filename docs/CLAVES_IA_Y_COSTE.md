@@ -41,11 +41,12 @@ Tarifas de `src/lib/ai/precios.ts`. Un post real ronda 700 tokens de entrada y
 |---|---|---|
 | **Leer los medios** (`refrescarNoticias`) | ninguno | **$0** |
 | Escribir el capítulo | **Haiku** (por defecto) | **~$0.005** |
-| Escribir el capítulo | Sonnet | ~$0.010 · **~$0.016 desde el 01/09** |
+| Escribir el capítulo | Sonnet | ~$0.010 |
 | Portada | Gemini imagen | **el renglón más caro** — por eso se pide |
 
-📌 **Sonnet está de precio de lanzamiento hasta el 2026-08-31.** El 1 de
-septiembre la misma llamada cuesta un 50 % más sin que nadie toque el código.
+📌 ~~Sonnet está de precio de lanzamiento hasta el 2026-08-31~~ — **no lo estaba** (corregido el 2026-09-19, V5.54):
+Sonnet 5 cuesta **2/10 por millón, sin promoción**, así que el 1 de septiembre no subió nada. `precios.ts` lo tenía
+como base 3/15 con promo; el libro no llegó a anotar ninguna fila inflada.
 
 ## 3. Dónde se iba el dinero de verdad
 

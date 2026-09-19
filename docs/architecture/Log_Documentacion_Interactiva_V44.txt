@@ -214,3 +214,21 @@ Sin versión (solo docs), pero cambia DOCTRINA —quién llama al wrap y qué ha
   Modelo Económico, no del plan de narrativa. CP-1 sigue por la mitad.
 - Compuerta: tsc · eslint 8 · build · 58 guardianes (2 sin cuentas `prueba-*`, 1 que exige servidor, 1 roto y anotado).
 (commit: a53a27d)
+
+## [2026-09-19] V5.54 · La tarifa de Sonnet 5 y dos guardianes que mentían o no corrían (consolas · BCP · ECP)
+- FICHA `consumo`: **Sonnet 5 = 2/10 por millón, sin promoción.** `precios.ts` lo tenía como 3/15 con promo 2/10 hasta el
+  2026-08-31; la promo no existía. El libro no anotó ninguna fila inflada (cero filas de Sonnet 5 entre el 1 y el 19 de
+  septiembre, por SQL). Si la ficha menciona el «precio de lanzamiento» o el aviso del tablero, corregirlo: el aviso de
+  `ConsumoBoard` queda dormido. Sigue valiendo lo demás: el precio se congela al insertar y el histórico no se reescribe.
+- LECCIÓN — **la segunda en dos versiones, ya es patrón y merece ficha propia en el V45** (candidata `guardianespejo`,
+  o ampliar `versionado`): `qa-consumo-check` afirmaba «el 1-sep va a 3 y 15» en verde, igual que `qa-pvc-escala`
+  afirmaba «factor 95 cumple» (V5.53). **Un guardián que copia la regla del código no verifica nada: la cifra sale de la
+  FUENTE** (la documentación de la API, el plan del owner). Familia de «dos copias de acuerdo no son una verificación».
+- FICHA `transcribirnube` / `transcripciones`: el guardián de la vía en la nube **vuelve a correr** (roto, como muy tarde desde la
+  reorganización del 2026-09-11, por una ruta a `reference_html_tools`, la misma carpeta muerta que `WorkersBadge` arregló en la V5.42). Verificado de
+  punta a punta: webhook incluido. El fixture vive en `tools/transcriptor/tests/fixtures/` y se comprueba en la parte gratis.
+- FICHA `componentes`: `docs/KICKOFF.html` — copiar por el camino síncrono primero (marcos aislados), el prompt se
+  reescribe en vivo con «Hoy:», botón «Arriba» en cada ficha. Sin alcance de nodos ni trazas.
+- Compuerta: tsc · eslint 8 · build · 55/58 guardianes (2 piden las cuentas `prueba-*`; el de
+  conformidad del puente exige servidor de desarrollo y no tocaba).
+(commit: pendiente)

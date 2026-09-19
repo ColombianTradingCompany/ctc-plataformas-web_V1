@@ -31,6 +31,8 @@
   }
 
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     margin: 0; background: var(--ground); color: var(--ink);
     font: 400 15px/1.55 var(--sans);
@@ -40,6 +42,7 @@
   a { color: var(--accent); }
   code { font: 400 0.9em var(--mono); background: var(--well); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #inicio:focus { outline: none; }
 
   /* índice */
   nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); max-height: calc(100vh - 40px); overflow-y: auto; font-size: 14px; }
@@ -63,8 +66,13 @@
 
   /* un prompt */
   .prompt { background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 18px 20px 20px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
-  .prompt:target { border-color: var(--accent); }
+  .prompt:target, .prompt:focus { border-color: var(--accent); outline: none; }
+  .prompt header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: start; }
+  .prompt .head { min-width: 0; }
   .prompt h3 { font: 700 21px/1.2 var(--cond); margin: 0 0 6px; text-wrap: balance; }
+  .up { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 4px; background: transparent; color: var(--muted); font: 500 13px var(--sans); text-decoration: none; white-space: nowrap; }
+  .up:hover { color: var(--accent); border-color: var(--accent); }
+  .up svg { width: 14px; height: 14px; flex: none; }
   .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; color: var(--muted); }
   .chip { font: 500 12px var(--mono); color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 999px; }
   .charter { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
@@ -92,7 +100,7 @@
     .copy { margin-left: 0; flex: 1 1 100%; }
   }
   @media print {
-    nav, .tools { display: none; }
+    nav, .tools, .up { display: none; }
     .wrap { display: block; }
     body { background: #fff; color: #000; }
     .prompt { break-inside: avoid; border-color: #999; margin-bottom: 14px; }
@@ -100,7 +108,7 @@
   }
 </style>
 
-<div class="wrap">
+<div class="wrap" id="inicio" tabindex="-1">
   <nav aria-label="Índice de prompts">
     <p class="brand">Kick-offs<br>CTC Platforms</p>
     <p class="sub">@@N@@ prompts · compilado sobre la V@@VERSION@@</p>
@@ -121,45 +129,72 @@
 
 <script>
   (function () {
-    function texto(btn) {
-      var pre = document.getElementById(btn.getAttribute('data-target'));
-      var t = pre.textContent;
-      var campo = btn.parentNode.querySelector('input[data-hueco]');
-      if (campo && campo.value.trim()) {
-        var hueco = campo.getAttribute('data-hueco');
-        var i = t.lastIndexOf('Hoy: ' + hueco);
-        if (i > -1) t = t.slice(0, i) + 'Hoy: ' + campo.value.trim() + t.slice(i + 5 + hueco.length);
-      }
-      return { t: t, pre: pre };
+    // El texto que se copia es SIEMPRE el que se ve: al escribir en «Hoy:» el prompt de la ficha se reescribe
+    // en vivo. Así el último recurso (seleccionar el texto para Ctrl+C) también lleva la tarea puesta.
+    var original = {};
+    var pres = document.querySelectorAll('section.prompt pre');
+    for (var k = 0; k < pres.length; k++) original[pres[k].id] = pres[k].textContent;
+
+    function pintar(campo) {
+      var pre = document.getElementById('pre-' + campo.id.slice(4));
+      if (!pre) return;
+      var base = original[pre.id], hueco = campo.getAttribute('data-hueco'), v = campo.value.trim();
+      var i = base.lastIndexOf('Hoy: ' + hueco);
+      pre.textContent = (v && i > -1) ? base.slice(0, i) + 'Hoy: ' + v + base.slice(i + 5 + hueco.length) : base;
     }
+    var campos = document.querySelectorAll('input[data-hueco]');
+    for (var c = 0; c < campos.length; c++) pintar(campos[c]);   // el navegador puede restaurar lo escrito
+    document.addEventListener('input', function (ev) {
+      if (ev.target && ev.target.matches && ev.target.matches('input[data-hueco]')) pintar(ev.target);
+    });
+
     function avisar(btn, msg, ok) {
       var antes = btn.getAttribute('data-label') || btn.textContent;
       btn.setAttribute('data-label', antes);
       btn.textContent = msg;
       btn.classList.toggle('done', !!ok);
       clearTimeout(btn._t);
-      btn._t = setTimeout(function () { btn.textContent = antes; btn.classList.remove('done'); }, 2200);
+      btn._t = setTimeout(function () { btn.textContent = antes; btn.classList.remove('done'); }, 2400);
     }
-    function porSeleccion(r, btn) {
+    // 1) El camino SÍNCRONO va primero: ocurre dentro del clic, que es lo único que un marco aislado
+    //    (como el visor de artefactos) acepta siempre. La API moderna puede estar vetada ahí.
+    function porComando(t) {
       var ta = document.createElement('textarea');
-      ta.value = r.t; ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
+      ta.value = t; ta.setAttribute('readonly', ''); ta.setAttribute('aria-hidden', 'true');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;';
+      document.body.appendChild(ta);
       var ok = false;
-      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      try { ta.focus({ preventScroll: true }); ta.select(); ta.setSelectionRange(0, t.length); ok = document.execCommand('copy'); }
+      catch (e) { ok = false; }
       document.body.removeChild(ta);
-      if (ok) { avisar(btn, 'Copiado', true); return; }
-      var sel = window.getSelection(), rango = document.createRange();
-      rango.selectNodeContents(r.pre); sel.removeAllRanges(); sel.addRange(rango);
-      avisar(btn, 'Seleccionado: pulsa Ctrl+C', false);
+      return ok;
     }
-    document.addEventListener('click', function (ev) {
-      var btn = ev.target.closest ? ev.target.closest('.copy') : null;
-      if (!btn) return;
-      var r = texto(btn);
+    function seleccionar(pre, btn) {
+      var sel = window.getSelection(), rango = document.createRange();
+      rango.selectNodeContents(pre); sel.removeAllRanges(); sel.addRange(rango);
+      pre.focus({ preventScroll: true });
+      avisar(btn, 'Texto seleccionado: pulsa Ctrl+C', false);
+    }
+    function copiar(btn) {
+      var pre = document.getElementById(btn.getAttribute('data-target'));
+      var t = pre.textContent;
+      if (porComando(t)) { btn.focus({ preventScroll: true }); avisar(btn, 'Copiado', true); return; }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(r.t).then(function () { avisar(btn, 'Copiado', true); }, function () { porSeleccion(r, btn); });
-      } else { porSeleccion(r, btn); }
+        navigator.clipboard.writeText(t).then(function () { avisar(btn, 'Copiado', true); }, function () { seleccionar(pre, btn); });
+      } else { seleccionar(pre, btn); }
+    }
+
+    document.addEventListener('click', function (ev) {
+      var el = ev.target.closest ? ev.target.closest('.copy, a[href^="#"]') : null;
+      if (!el) return;
+      if (el.classList.contains('copy')) { copiar(el); return; }
+      // Los enlaces internos se resuelven a mano: dentro de un visor incrustado un «#ancla» puede no navegar.
+      var id = el.getAttribute('href').slice(1), destino = document.getElementById(id);
+      if (!destino) return;
+      ev.preventDefault();
+      if (id === 'inicio') { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; }
+      else destino.scrollIntoView({ block: 'start' });
+      if (destino.focus) destino.focus({ preventScroll: true });
     });
   })();
 </script>

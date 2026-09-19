@@ -11,7 +11,8 @@
 //   6. Comprueba el resultado (hablantes, texto) y limpia fila + audio.
 //
 // Correr: node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/qa-transcripciones-nube.mjs
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 // .env.local a mano: los scripts de QA no pasan por el cargador de Next. TIENE que
 // ir ANTES de importar el módulo: `lib/supabase/server.ts` lee la URL del proyecto
@@ -47,6 +48,14 @@ check("body: sin webhook si no hay secreto", b2.webhook_url === undefined);
 const b3 = assemblyBody("https://x/a.ogg", { min_speakers: 2, max_speakers: 4 });
 check("body: rango de voces", JSON.stringify(b3.speaker_options) === '{"min_speakers_expected":2,"max_speakers_expected":4}');
 
+// ---- 2b. el audio de prueba EXISTE — y se comprueba aquí, en la parte gratis.
+// Vive con la herramienta (`tools/transcriptor/tests/fixtures/`) desde la V4.15. Hasta la V5.53 este
+// guardián lo buscaba en `../reference_html_tools/_whatsapp-transcript-html/…`, carpeta que dejó de
+// existir: moría con ENOENT a mitad de la parte pagada, con el audio ya a medio subir. La ruta se ancla
+// al script, no al directorio desde el que se corre.
+const AUDIO = fileURLToPath(new URL("../tools/transcriptor/tests/fixtures/two_speakers.ogg", import.meta.url));
+check("fixture: two_speakers.ogg está donde vive la herramienta", existsSync(AUDIO));
+
 if (!process.env.ASSEMBLYAI_API_KEY) {
   console.log("\n(sin ASSEMBLYAI_API_KEY: solo se comprobó la parte pura)");
   console.log(`\n${pass} pass, ${fail} fail`);
@@ -57,7 +66,6 @@ if (!process.env.ASSEMBLYAI_API_KEY) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const h = { apikey: key, Authorization: `Bearer ${key}`, "User-Agent": UA };
   const hj = { ...h, "Content-Type": "application/json" };
-  const AUDIO = "../reference_html_tools/_whatsapp-transcript-html/tests/fixtures/two_speakers.ogg";
 
   const clean = async (id, path) => {
     await fetch(`${url}/rest/v1/transcripts?id=eq.${id}`, { method: "DELETE", headers: h });

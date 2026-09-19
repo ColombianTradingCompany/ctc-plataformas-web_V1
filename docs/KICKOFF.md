@@ -57,7 +57,7 @@ verificación en vivo, entrada en el log de arquitectura, y «Pendientes» de es
 Hoy: <la tarea>.
 ```
 
-**Sugerencia de primera tarea:** CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 **antes del 15-oct-2026** (espera la decisión O-1 del owner). Si O-1 no ha llegado, lo más barato con dueño: la tarifa de `claude-sonnet-5` en `src/lib/ai/precios.ts` y el guardián roto `qa-transcripciones-nube.mjs` (`ALINEACION` §3b).
+**Sugerencia de primera tarea:** CN-1 del plan de narrativa, la única fecha dura: revisar la edición PVC-F4-2026 y publicar el PVC de ene–mar 2027 **antes del 15-oct-2026** (espera la decisión O-1 del owner). Si O-1 no ha llegado: CN-2 (razón social completa en `legal.ts`, marca CTCx en las consolas, Papagayo Beans® en ficha pública y OG del lote), que no depende de nadie.
 
 ## Red de Socios  ·  `socios`
 
@@ -127,7 +127,7 @@ log de arquitectura, y «Pendientes» de este charter al día.
 Hoy: <la tarea>.
 ```
 
-**Sugerencia de primera tarea:** Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha, y el guardián `qa-transcripciones-nube` que busca su fixture en una carpeta muerta. (El PVC ya no es de aquí: es solo del BCP, charter `consolas`.)
+**Sugerencia de primera tarea:** Elegir la herramienta de la sesión. Stripe: los cuatro pasos abiertos (país de la entidad · claves sandbox · OAuth del MCP · la tanda de pagos a productores). Transcriptor: la credencial estrecha (RPC dedicada en vez de `service_role` en el instalador). (El PVC ya no es de aquí: es solo del BCP, charter `consolas`.)
 
 ## La Biblia del Café  ·  `biblia`
 

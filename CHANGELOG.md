@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.65] — 2026-09-20 (commit pendiente)
+## [V5.65] — 2026-09-20 (commit 0ba60b1)
 
 - **Hito**: **el vocabulario EUDR queda asentado, una palabra por objeto en toda la red** (owner, 2026-09-20). **PASAPORTE** es de la
   **FINCA** —su debida diligencia—; **VISA** es del **LOTE**, se hereda del Pasaporte y es el **primer entregable de CTCx, y gratis**:

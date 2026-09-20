@@ -335,4 +335,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - ⚠️ PARA EL V46 / pendiente con dueño `consolas`: el OCP sigue diciendo «EVA» (columna de `/ocp/kr`,
   `EvaReviewCard`) por el veredicto documental, y «Visa EUDR» por lo de la finca. Brief escrito:
   `docs/componentes/briefs/consolas-simplificar-ocp-al-circuito.md`.
-(commit: pendiente)
+(commit: 0ba60b1)

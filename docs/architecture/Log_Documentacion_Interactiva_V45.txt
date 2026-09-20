@@ -294,4 +294,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - LECCIÓN: **un guardián que vigila una escalera de nombres es un guardián que hay que reescribir el día que el owner renombra.**
   Los dos rojos de esta tanda no eran regresiones: eran los guardianes haciendo su trabajo, diciendo «esto que cambiaste estaba
   protegido». El trabajo no era apagarlos, era moverlos a la regla nueva.
-(commit: pendiente)
+(commit: fcc8bed)

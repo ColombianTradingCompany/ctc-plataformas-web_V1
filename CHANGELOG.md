@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.64] — 2026-09-20 (commit pendiente)
+## [V5.64] — 2026-09-20 (commit fcc8bed)
 
 - **Hito**: **la barra del lote se redibuja en DOS líneas** (owner, 2026-09-20), y con ella se reparten de nuevo dos nombres que
   llevaban meses significando cosas distintas en cada superficie. Arriba el **expediente** — `FT · FT2 · EUDR · FOTO → VISA` —,

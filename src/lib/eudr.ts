@@ -6,6 +6,27 @@
 // BCP's server-rendered review pages without drifting apart.
 import type { Finca } from "@/components/kaffetal-regal/data";
 
+// ── El vocabulario EUDR, asentado por el owner (2026-09-20, V5.65) ──────────
+// Una palabra, un objeto, en TODAS las plataformas:
+//
+//   · **PASAPORTE** — es de la FINCA. Su debida diligencia EUDR: geolocalización
+//     o polígono, no deforestación posterior al 31/12/2020, producción legal,
+//     tenencia y áreas de legislación.
+//   · **VISA** — es del LOTE. Se hereda del Pasaporte de su(s) finca(s) y es el
+//     PRIMER entregable de CTCx al productor, y gratis: la documentación EUDR no
+//     necesita al Q-Grader, así que la Visa está disponible ANTES de la EVA.
+//   · **EVA** — «Evaluación de Muestras en Origen»: mandar las muestras al
+//     Q-Grader y recibir la Granulometría y el Perfil Sensorial, que dan «el
+//     Punto y la Tríada» y de ahí el Grado de Calidad. Es un paso POSTERIOR y no
+//     tiene nada que ver con el EUDR. (No vive en este archivo; se nombra aquí
+//     porque hasta la V5.64 «EVA» rotulaba también el veredicto documental, que
+//     es justo lo que ahora se llama Visa.)
+//
+// Antes de la V5.65 la finca tenía «Visa» y el lote «Sello», y el OCP llamaba
+// «EVA» al veredicto documental: tres nombres para dos cosas y una palabra
+// prestada. ⚠️ El OCP todavía dice «EVA» y «Visa EUDR» en su tabla — pendiente
+// con dueño `consolas` (ALINEACION §3, 2026-09-20).
+
 export type EudrTone = "ok" | "pend" | "stop";
 
 export type EudrStatus = {
@@ -110,7 +131,7 @@ export function parcelasGeoComplete(parcelas: ParcelaGeoFields[]): boolean {
 // La debida diligencia EUDR vive SOLO en la finca:
 //   · el PRODUCTOR porta su "Pasaporte" (su identidad de proveedor, CTC-P-…),
 //   · cada FINCA obtiene su "VISA" (la aptitud EUDR que otorga BCP),
-//   · cada LOTE recibe su "SELLO" — heredado por completo de la Visa de su(s)
+//   · cada LOTE recibe su "VISA" — heredada por completo del Pasaporte de su(s)
 //     finca(s) de origen, sin debida diligencia propia del lote.
 // F1: cuando el caller tiene las parcelas a mano (FincaModal, approveFinca, el
 // editor de BCP), la completitud geográfica se juzga POR PARCELAS — todas
@@ -127,9 +148,9 @@ export function fincaEudrDeclaracion(
   f: FincaEudrFields | null | undefined,
   parcelas?: ParcelaGeoFields[]
 ): EudrStatus {
-  if (!f) return status("no_apta", "Sin Visa", "stop");
+  if (!f) return status("no_apta", "Sin Pasaporte", "stop");
   if (f.eudrDeforestationFree === false || f.eudrLegalProduction === false) {
-    return status("no_apta", "Sin Visa", "stop");
+    return status("no_apta", "Sin Pasaporte", "stop");
   }
   const haOk = f.ha !== "—" && f.ha.trim() !== "" && Number(f.ha.replace(",", ".")) > 0;
   const geoOk = parcelas !== undefined ? parcelasGeoComplete(parcelas) : hasGeo(f);
@@ -143,13 +164,13 @@ export function fincaEudrDeclaracion(
     f.eudrDeforestationFree !== true ||
     !f.eudrTenure ||
     risk === "";
-  if (incomplete) return status("pendiente", "Visa en trámite", "pend");
+  if (incomplete) return status("pendiente", "Pasaporte en trámite", "pend");
   // Questionnaire answered but the residual risk is not insignificant (and no
   // effective mitigation on record): the Visa is withheld until it's addressed.
   if (risk === "no_insignificante") {
-    return status("no_apta", "Sin Visa · riesgo no insignificante", "stop");
+    return status("no_apta", "Sin Pasaporte · riesgo no insignificante", "stop");
   }
-  return status("apta", "Visa vigente", "ok");
+  return status("apta", "Pasaporte vigente", "ok");
 }
 
 // PASO 2 — LA VISA QUE SE PINTA EN PANTALLA.
@@ -179,14 +200,14 @@ export function fincaEudrStatus(
   if (!f || declaracion.code !== "apta") return declaracion;
 
   if (f.status === "rejected") {
-    return status("rechazada", "Visa rechazada por CTC", "stop");
+    return status("rechazada", "Pasaporte rechazado por CTC", "stop");
   }
   if (f.status === "approved") {
     return f.certShared
-      ? status("apta", "Visa vigente", "ok")
-      : status("aprobada", "Visa aprobada · expediente sin remitir", "pend");
+      ? status("apta", "Pasaporte vigente", "ok")
+      : status("aprobada", "Pasaporte aprobado · expediente sin remitir", "pend");
   }
-  return status("en_revision", "Visa en revisión por CTC", "pend");
+  return status("en_revision", "Pasaporte en revisión por CTC", "pend");
 }
 
 // The lot-level input is intentionally a narrow pick, not the whole FichaFormData --
@@ -203,7 +224,7 @@ export type LotEudrInput = {
 // manual "¿el sistema conecta este lote con su finca?" yes/no -- lots here are always
 // FK'd to real fincas, so an empty `sourceFincas` list IS that "not traceable" case.
 //
-// 2026-07-24 (owner): el SELLO del lote se HEREDA por completo de la Visa de sus
+// 2026-07-24 (owner): la VISA del lote se HEREDA por completo del Pasaporte de sus
 // fincas de origen — el lote ya no tiene debida diligencia propia (los campos
 // eudr_* del lote quedan como datos históricos; el parámetro `lot` se conserva
 // por compatibilidad de firma pero YA NO participa en la determinación). Regla:
@@ -216,22 +237,22 @@ export function lotEudrStatus(lot: LotEudrInput, sourceFincas: FincaEudrFields[]
   // parámetro opcional `parcelas`.
   const fincaStatuses = sourceFincas.map((f) => fincaEudrStatus(f));
   if (fincaStatuses.some((s) => s.code === "no_apta" || s.code === "rechazada")) {
-    return status("bloqueado", "Sin Visa de finca", "stop");
+    return status("bloqueado", "Sin Pasaporte de finca", "stop");
   }
   if (fincaStatuses.some((s) => s.code === "pendiente")) {
-    return status("pendiente", "Visa de finca en trámite", "pend");
+    return status("pendiente", "Pasaporte de finca en trámite", "pend");
   }
   // 2026-08-20: la Visa completa pero todavía en manos de CTC (en revisión, o
   // aprobada sin expediente remitido) NO es un Sello. Antes cualquier cosa que
   // no fuera "no_apta"/"pendiente" caía en el `return` de abajo y el lote decía
   // «Sello listo» con la finca sin aprobar siquiera.
   if (fincaStatuses.some((s) => s.code === "en_revision")) {
-    return status("pendiente", "Visa de finca en revisión por CTC", "pend");
+    return status("pendiente", "Pasaporte de finca en revisión por CTC", "pend");
   }
   if (fincaStatuses.some((s) => s.code === "aprobada")) {
-    return status("pendiente", "Visa aprobada · expediente sin remitir", "pend");
+    return status("pendiente", "Pasaporte de finca aprobado · expediente sin remitir", "pend");
   }
-  return status("eudr_ready", "Sello listo", "ok");
+  return status("eudr_ready", "Visa lista", "ok");
 }
 
 // The lot-level "Nivel de riesgo determinado" used to be a raw dropdown BCP

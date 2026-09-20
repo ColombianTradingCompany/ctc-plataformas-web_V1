@@ -110,7 +110,7 @@ export function LotEudrCertDoc({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
           <div>
             <p style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "#3C0A86", margin: 0 }}>Colombian Trading Company · CTCx</p>
-            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Sello EUDR del Lote</h1>
+            <h1 style={{ fontSize: 26, margin: "4px 0 2px" }}>Visa EUDR del Lote</h1>
             <p style={{ color: "#555", margin: "0 0 4px" }}>Reglamento (UE) 2023/1115 · Documento generado el {new Date().toLocaleDateString("es-CO")}</p>
             <p style={{ margin: 0, fontWeight: 700 }}>
               {lot.name} · <span style={{ fontFamily: "monospace" }}>{ctcLotReferenceShort(lot.id)}</span>
@@ -122,7 +122,7 @@ export function LotEudrCertDoc({
         </div>
 
         <div style={{ background: "#F3EFFB", border: "1px solid #d9ccf2", borderRadius: 8, padding: "10px 14px", marginTop: 14, fontSize: 12.5, color: "#3a2a5e" }}>
-          <b>Sello EUDR del lote — heredado de la Visa EUDR de su(s) finca(s) de origen.</b> La debida diligencia
+          <b>Visa EUDR del lote — heredada del Pasaporte EUDR de su(s) finca(s) de origen.</b> La debida diligencia
           (Reglamento (UE) 2023/1115) vive en la finca: su <b>Visa EUDR</b> acredita el origen libre de deforestación
           posterior al 31/12/2020, la producción legal, la tenencia y la geolocalización del predio. Este Sello se
           emite por herencia directa de esa Visa vigente — el lote no requiere trámites adicionales.

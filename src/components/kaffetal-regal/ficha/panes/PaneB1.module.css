@@ -14,3 +14,18 @@
 /* "No lo sé aún" toggle under an optional measurement field */
 .unknownRow{display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--font-spline-mono),monospace;font-size:11.5px;color:var(--muted);cursor:pointer;font-weight:400}
 .unknownRow input{width:15px;height:15px;flex:0 0 auto}
+
+/* ── V5.65 · el proceso, dentro de cada variedad ─────────────────────────────
+   Dejó de ser del lote (owner): un mismo lote puede llevar la Typica lavada y
+   la Gesha en honey. Va debajo de la ficha de la variedad, sangrado, para que
+   se lea como parte de ELLA y no como otra sección. */
+.procesos{grid-column:1/-1;display:grid;grid-template-columns:150px 1fr;gap:10px 12px;margin-top:8px;padding:10px 12px;border-left:2.5px solid var(--line);background:var(--card);border-radius:0 8px 8px 0}
+.procesos label{display:block;font-size:11.5px;font-weight:600;margin-bottom:4px}
+.procesos label small{font-weight:400;color:var(--muted)}
+.procesos select,.procesos input{width:100%;padding:9px 10px;border:1.5px solid var(--line);border-radius:7px;font-family:var(--font-spline-mono),monospace;font-size:12.5px;background:var(--paper);min-height:44px}
+@media(max-width:560px){.procesos{grid-template-columns:1fr}}
+
+/* La especie: consecuencia, no campo. */
+.especie{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--ink)}
+.especie b{font-family:var(--font-spline-mono),monospace;color:var(--primary-deep)}
+.especie span{color:var(--muted)}

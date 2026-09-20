@@ -128,3 +128,38 @@
   .tabs{flex-wrap:wrap;overflow-x:visible}
   .tab{padding:11px 12px}
 }
+
+/* ── V5.65 · El editor de UN cafetal (CafetalEditor) ─────────────────────────
+   El owner dibujó el bloque completo el 2026-09-20: el nombre con su lápiz, la
+   pregunta del área ANTES del mapa, el mapa, y después la altura y el área de
+   ESE cafetal. Parcela 1 y las 2..N montan el mismo componente, así que este
+   bloque se ve igual las dos veces — que era medio problema. */
+.cafetal{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper)}
+.cafetalHead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.cafetalTitulo{font-family:var(--font-fraunces),serif;font-size:20px;color:var(--primary-deep);margin:0;line-height:1.2}
+.cafetalResumen{font-family:var(--font-spline-mono),monospace;font-size:12px;color:var(--muted)}
+.cafetalHint{font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.5}
+/* El lápiz es un objetivo táctil de verdad (44 px), no un glifo de 12 px:
+   es la regla de la casa y además se toca con el pulgar en el campo. */
+.lapiz{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-11px 0;border:none;background:none;color:var(--muted);font-size:15px;cursor:pointer;border-radius:8px}
+.lapiz:hover{color:var(--primary-deep);background:var(--card)}
+
+/* La pregunta que decide el modo del mapa. Va arriba y se contesta primero:
+   antes se DEDUCÍA del área, y el mapa cambiaba de modo bajo las manos del
+   productor mientras escribía. */
+.preguntaArea{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1.5px solid var(--ink);border-radius:10px;padding:10px 14px;font-size:13.5px;font-weight:600;background:var(--card)}
+.siNo{display:inline-flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden}
+.siNo button{min-width:52px;min-height:44px;padding:0 14px;border:none;background:var(--paper);font-family:var(--font-spline-mono),monospace;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.siNo button+button{border-left:1.5px solid var(--line)}
+.siNo button:hover:not(:disabled){color:var(--ink)}
+.siNo button:disabled{cursor:not-allowed}
+.siNoOn{background:var(--primary) !important;color:#fff !important}
+
+/* Los puntos de geo-referencia, escritos: es lo que viaja al expediente EUDR,
+   y verlos deja comprobar que el pin cayó donde el productor cree. */
+.geoRef{display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin:10px 0 0;font-family:var(--font-spline-mono),monospace;font-size:12px;color:var(--muted)}
+.geoRef b{font-family:var(--font-instrument-sans),sans-serif;font-size:12px;color:var(--ink)}
+
+/* Botón abajo a la derecha — regla UI/UX de la casa. */
+.cafetalAcciones{display:flex;justify-content:flex-end;margin-top:12px}
+.totalesTitulo{grid-column:1/-1;font-family:var(--font-spline-mono),monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);font-weight:700;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}

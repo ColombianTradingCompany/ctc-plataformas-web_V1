@@ -79,8 +79,25 @@ export type Parcela = {
   lat: string;
   lng: string;
   polygon: { lat: number; lng: number }[] | null;
+  /** Altura de ESTE cafetal (V5.65). "" si no se ha traído del mapa ni escrito. */
+  alturaMsnm: string;
+  /** La respuesta del productor a «¿el área del cultivo es mayor a 4 ha?» (V5.65).
+   *  `null` = sin contestar: las parcelas anteriores a la V5.65 se resuelven por
+   *  área (`areaHa > 4`), que es como se deducía antes — ver `exigePoligono()`. */
+  mayor4ha: boolean | null;
   position: number;
 };
+
+/** ¿Este cafetal necesita polígono? La RESPUESTA del productor manda; si no la
+ *  ha dado (parcelas de antes de la V5.65), se cae al criterio viejo: el área.
+ *  Una sola función porque la miran el editor, el badge de estado y el guardián
+ *  — que se desviaran era justo lo que hacía que el mapa pidiera una cosa y el
+ *  formulario otra. */
+export function exigePoligono(mayor4ha: boolean | null, areaHa: string): boolean {
+  if (mayor4ha !== null) return mayor4ha;
+  const n = Number(areaHa.replace(",", "."));
+  return !isNaN(n) && n > 4;
+}
 
 // Credencial de la finca (nota "¿Finca o Lote?"): el certificado pertenece al
 // lugar y al periodo — el lote solo DERIVA claims (F2). Sin vigencia queda

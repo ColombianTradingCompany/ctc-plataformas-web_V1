@@ -63,7 +63,7 @@ export function EvaluacionesTab({
         <div className={styles.secSub}>Lleve sus lotes registrados al siguiente nivel</div>
         <div className={styles.alist} style={{ marginTop: 8 }}>
           Registrar su finca y armar la ficha no cuesta nada. Cuando CTC declara un lote <b>Apto</b> (EVA en verde, con
-          su Sello EUDR emitido), usted decide si <b>solicita su evaluación</b>: cuesta <b>{formatCop(EVALUATION_FEE_COP)}</b>{" "}
+          su Visa EUDR emitida), usted decide si <b>solicita su evaluación</b>: cuesta <b>{formatCop(EVALUATION_FEE_COP)}</b>{" "}
           por lote y cubre el análisis físico, la catación por un <b>Q-Grader certificado</b>, el factor de rendimiento,
           la certificación CTC y el feedback — <b>salga o no salga galardonado</b>. ¿Tiene un <b>código de campaña</b>?
           Aplíquelo al solicitar y verá su descuento al instante.
@@ -431,10 +431,10 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             {lotEudrReady ? (
               <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${lot.id}`} target="_blank" rel="noopener noreferrer">
-                Certificado y Sello EUDR del lote ↗
+                Certificado y Visa EUDR del lote ↗
               </a>
             ) : (
-              <span className={styles.certPending}>Sello EUDR: a la espera de la Visa de su finca</span>
+              <span className={styles.certPending}>Visa EUDR: a la espera de la Visa de su finca</span>
             )}
           </div>
           {/* La vitrina de la Arena (V5.19): la gala post-galardón de

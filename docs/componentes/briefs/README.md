@@ -36,6 +36,12 @@ vistas de dos modelos. Escritos el 2026-09-19 desde un inventario del repo y del
 | [`consolas-gestion-de-muestras.md`](consolas-gestion-de-muestras.md) | consolas | OCP · Gestión de Muestras | nada |
 | [`consolas-ctcx-selection-compras.md`](consolas-ctcx-selection-compras.md) | consolas | OCP · CTCx Selection · Compras | la fase 4b del overhaul; Pagos; Producción |
 
+**Simplificar el OCP al circuito** (`consolas`, 2026-09-20). Lo pidió el owner al cerrar el vocabulario EUDR; lo escribe la sesión de
+`kaffetal-regal` porque el cambio nace allí, pero el código es de `consolas`. Dos tandas: la **primera es media hora de vocabulario**
+(columna «EVA» → «Visa», «Visa EUDR» → «Pasaporte EUDR») y cierra una divergencia hoy declarada en §3; la segunda reorganiza el OCP en
+bandejas derivadas de `estadoDelCircuito()`. [`consolas-simplificar-ocp-al-circuito.md`](consolas-simplificar-ocp-al-circuito.md) ·
+**cinco decisiones del owner**, que bloquean la segunda tanda pero no la primera.
+
 **Compañeros de Finca** (`kaffetal-regal`, 2026-09-20). Pedido por el owner dentro de la tanda de interfaz de la V5.64 y
 aplazado por él mismo a tanda propia el mismo día: no es interfaz, es **control de acceso** —tabla nueva, RLS, guard triggers y
 revisar cada compuerta de escritura del productor—, y toca el contrato de **Identidad** de `ALINEACION` §1.

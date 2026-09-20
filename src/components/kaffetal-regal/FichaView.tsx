@@ -6,7 +6,7 @@ import { useToast } from "@/components/Toast";
 import { useAutosave, AutosaveChip } from "@/lib/useAutosave";
 import { fincaEudrStatus, lotEudrStatus, resolveContributionFincas, countryRiskFor, deriveChainComplexity, deriveProductRisk } from "@/lib/eudr";
 import { ctcLotReference, ctcLotReferenceShort, type Finca, type Lot } from "./data";
-import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, seedContributions, type FichaFormData } from "./ficha/fichaData";
+import { EMPTY_FICHA, num, B1_OPTIONAL_FIELDS, deriveCertSchemes, seedContributions, seedProcesos, especieDelLote, variedadDominante, type FichaFormData } from "./ficha/fichaData";
 import { computeFactor, computeMesh, computeSca, varietyTotal } from "./ficha/fichaCalculations";
 import { FichaNav, type PaneId } from "./ficha/FichaNav";
 import { PaneA1 } from "./ficha/panes/PaneA1";
@@ -176,7 +176,10 @@ export function FichaView({
     // reading `undefined[key]` in A3/A4 crashed the whole Ficha for old lots.
     // F2: los datasheets pre-2026-07-29 no traen `contributions` — se siembran
     // del viejo modelo estate/additional_estate_ids (idempotente).
-    const base: FichaFormData = seedContributions({ ...EMPTY_FICHA, ...(lot.datasheet ?? {}) }, fincas);
+    // V5.65: `seedProcesos` siembra el proceso de cada variedad con el que el
+    // lote tenía a nivel de Ficha — un datasheet anterior no pierde su proceso
+    // ni obliga al productor a reescribirlo variedad por variedad.
+    const base: FichaFormData = seedProcesos(seedContributions({ ...EMPTY_FICHA, ...(lot.datasheet ?? {}) }, fincas));
     // A few fields aren't independently editable inside the Ficha -- they're owned
     // elsewhere (the producer's profile, the lot record itself) and always win over
     // whatever was last saved in the datasheet, so the two can never drift apart.
@@ -268,7 +271,10 @@ export function FichaView({
       // sub-etapa A5 queda "completa" con el origen RESUELTO (≥1 finca real) —
       // el lote ya no declara custodia/país/factores propios.
       a5: sourceFincas.length > 0,
-      b1: vTotal > 0 && !!data.species,
+      // V5.65: la especie ya no se teclea (se deriva de las variedades) y el
+      // proceso pasó a ser de cada variedad — B1 se cierra cuando hay
+      // variedades declaradas y CADA una dice con qué proceso se benefició.
+      b1: vTotal > 0 && !!especieDelLote(data.varieties) && data.varieties.filter((v) => v.name.trim()).every((v) => !!v.base?.trim()),
       // V5.20 — «Reportado por Productor»: B2 se completa con un puntaje
       // válido O al menos un soporte adjunto (los sca_* viejos siguen contando
       // por los datasheets guardados antes). B3 con el camino básico VÁLIDO
@@ -319,7 +325,7 @@ export function FichaView({
   const QUE_FALTA: Partial<Record<PaneId, string>> = {
     a1: "A1 · Identidad & Comercio → el nombre comercial del café",
     a2: "A2 · Información de Origen → la finca de la que sale este café",
-    b1: "B1 · Variedades & Básica → la especie y al menos una variedad con su porcentaje",
+    b1: "B1 · Variedades & Básica → al menos una variedad con su porcentaje, y el Proceso Base de cada una",
     a3: "A3 · Reconocimientos & Narrativa → un premio, o la historia del origen",
     b2: "B2 · Perfil de Taza → su puntaje reportado (0–100) o un soporte adjunto (PDF/foto)",
     b3: "B3 · Física → UNO de los dos: el factor de rendimiento (75–120) o la almendra total (150–245 g). También sirve adjuntar un soporte del análisis físico",
@@ -338,15 +344,32 @@ export function FichaView({
 
   function buildUpdate(source: FichaFormData, intakeStep?: number): FichaSaveUpdate {
     const topVariety = source.varieties.find((v) => num(v.pct) > 0);
+    // ── V5.65 · las tres PROYECCIONES de B1 ──────────────────────────────────
+    // La verdad pasó a vivir en las variedades: la especie se deriva de ellas y
+    // el proceso es de cada una. Pero `species`, `base_processing` y
+    // `special_processing` los leen el OCP (`/ocp/kr`), el catálogo público, la
+    // ficha pública y el runner de Arena — código de OTROS componentes, que no
+    // se toca desde aquí (ALINEACION §2). Así que se siguen escribiendo, como
+    // PROYECCIÓN de la variedad dominante, igual que `summary.ficha_proceso`
+    // lleva años siendo la proyección del proceso. Una sola fuente, varias
+    // copias de lectura — no dos verdades.
+    const dominante = variedadDominante(source.varieties);
+    const especieDerivada = especieDelLote(source.varieties);
+    const proyectado: FichaFormData = {
+      ...source,
+      species: especieDerivada || source.species,
+      base_processing: dominante?.base?.trim() || source.base_processing,
+      special_processing: dominante?.special?.trim() || source.special_processing,
+    };
     return {
       name: source.product_name.trim() || undefined,
       finca: source.estate || undefined,
-      datasheet: source,
+      datasheet: proyectado,
       completionPct: overallPct,
       intakeStep,
       summary: {
         ficha_variedad: topVariety?.name || null,
-        ficha_proceso: source.base_processing || null,
+        ficha_proceso: proyectado.base_processing || null,
         ficha_altitud_m: source.masl ? Math.round(num(source.masl)) : null,
         // V5.21: el bloque de Notas de Análisis salió de B2 — las notas del
         // productor viven en cupping_profile; analysis_notes queda de legado.
@@ -470,7 +493,7 @@ export function FichaView({
     }
     if (step === 2) {
       if (!completed.a5) {
-        setNotice("En A5: seleccione la finca de origen (en A2) — el Sello EUDR del lote se hereda de la Visa de su finca.");
+        setNotice("En A5: seleccione la finca de origen (en A2) — la Visa EUDR del lote se hereda de la Visa de su finca.");
         return;
       }
       // El Sello se hereda de la Visa de la finca: si la Visa aún está en
@@ -478,7 +501,7 @@ export function FichaView({
       // hasta que la finca obtenga su Visa.
       if (!allFincasApta) {
         const msg =
-          "La(s) finca(s) de origen aún no tienen su Visa EUDR vigente.\n\nPuede continuar con el video, pero el lote quedará marcado en rojo y su Sello EUDR PENDIENTE hasta que su(s) finca(s) obtengan la Visa.\n\n¿Continuar de todas formas?";
+          "La(s) finca(s) de origen aún no tienen su Pasaporte EUDR vigente.\n\nPuede continuar con el video, pero el lote quedará marcado en rojo y su Sello EUDR PENDIENTE hasta que su(s) finca(s) obtengan la Visa.\n\n¿Continuar de todas formas?";
         if (!window.confirm(msg)) return;
       }
       setSaving(true);
@@ -487,10 +510,10 @@ export function FichaView({
       if (!ok) return;
       setCelebrate({
         emoji: "🌍",
-        title: allFincasApta ? "¡Sello EUDR en camino!" : "Origen registrado — Visa de finca pendiente",
+        title: allFincasApta ? "¡Visa EUDR en camino!" : "Origen registrado — Pasaporte de finca pendiente",
         body: allFincasApta
-          ? "La Visa de su finca está vigente: el Sello del lote queda listo. Último paso: dos fotos del café — con las del teléfono basta. El video es opcional."
-          : "Quedó registrado con la Visa de la finca en trámite (bandera roja). Último paso: dos fotos del café — con las del teléfono basta. El video es opcional.",
+          ? "El Pasaporte de su finca está vigente: la Visa del lote queda lista. Último paso: dos fotos del café — con las del teléfono basta. El video es opcional."
+          : "Quedó registrado con el Pasaporte de la finca en trámite (bandera roja). Último paso: dos fotos del café — con las del teléfono basta. El video es opcional.",
       });
       setActive("b4");
       return;
@@ -675,8 +698,14 @@ export function FichaView({
         <div className={styles.footer}>
           {showDeclare && (
             <label className={styles.chip}>
+              {/* V5.65 (owner): la declaración de la Ficha habla SOLO de la
+                  Ficha. Lo de la muestra de 2 kg marcada con el código del lote
+                  se dice donde se confirma la muestra, no aquí — cerrar el
+                  expediente y comprometerse a despachar café son dos actos
+                  distintos, y mezclarlos hacía que el productor firmara el
+                  segundo sin haberlo decidido. */}
               <input type="checkbox" checked={declared} onChange={(e) => setDeclared(e.target.checked)} autoFocus /> Declaro que la información
-              es veraz y que enviaré la muestra de 2 kg de pergamino marcada con el código del lote.
+              es veraz y entregada en buena fe para identificar este lote con la mejor información disponible.
             </label>
           )}
           <div className={styles.csvRow}>

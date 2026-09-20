@@ -10,8 +10,9 @@ Contratos. Desde aquí el productor registra fincas y lotes, llena la **Ficha T�
 → VID), pide su **evaluación** (muestra + COP 80.000), sigue su lote hasta el **galardón**, y responde a
 las **ofertas** (temporada · black · subasta Tyrian) cuya aceptación crea el contrato. El camino base
 del lote (**redibujado por el owner, V5.64**) son DOS líneas: el **expediente** `FT · FT2 · EUDR · FOTO → VISA` y el
-**tramo comercial** `MUE → EVA → GRADO → CONT`. **VISA** es el veredicto documental (el chip que antes se llamaba
-EVA aquí) y **EVA** es ahora la **evaluación con el Q-Grader**; `SON`, `GAL` y `ARE` salieron de la barra.
+**tramo comercial** `MUE → EVA → GRADO → CONT`. **VISA** es la del LOTE — se hereda del **Pasaporte** de su finca y es el **primer entregable de CTCx, y gratis** — y **EVA** es la
+**Evaluación de Muestras en Origen** (al Q-Grader y de vuelta con granulometría y perfil sensorial); `SON`, `GAL` y `ARE`
+salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive escrito en la cabecera de `src/lib/eudr.ts`.
 
 ## Superficies y rutas
 
@@ -51,7 +52,7 @@ EVA aquí) y **EVA** es ahora la **evaluación con el Q-Grader**; `SON`, `GAL` y
 
 `qa-kr-panel-check.mjs` (119) · `qa-kr-ficha-check.mjs` (**206**, con `ts-resolve` — el charter decía 207, pero la línea
 base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
-`qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**46**, lado productor) ·
+`qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**50**, lado productor + vocabulario) ·
 `qa-ofertas-check.mjs` (36, `respondToOffer`) · `qa-fichas-check.mjs` (31, panes B2/B3) ·
 `qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (30) · `qa-area-check.mjs` · `qa-claims-check.mjs` ·
 `qa-recuperacion-check.mjs` (puerta KR).
@@ -62,6 +63,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - **La barra del lote son DOS líneas y su segunda línea NO se calcula aquí**: `estadoDelCircuito()`
   (`src/lib/ocp/circuito.ts`) es la fuente única del tramo comercial, y el panel la IMPORTA (V5.62 → V5.64).
   `qa-evaluaciones` lo exige.
+- **Pasaporte = finca · Visa = lote · EVA = Evaluación de Muestras en Origen** (owner, 2026-09-20). Una palabra, un
+  objeto, en toda la red. La definición está en la cabecera de `src/lib/eudr.ts`; `qa-evaluaciones` la vigila.
+- **Un cafetal se edita en UN solo sitio**: `CafetalEditor` lo montan tanto la Parcela 1 como las 2..N. Y la
+  pregunta «¿mayor a 4 ha?» se DECLARA antes del mapa — nunca se deduce del área, que es un dato posterior.
+- **El proceso de beneficio es de cada VARIEDAD** y la **Especie se deriva** de ellas. `species`,
+  `base_processing` y `special_processing` se siguen escribiendo como PROYECCIÓN de la variedad dominante — los
+  leen otros componentes; son copias de lectura, no verdades paralelas.
 - **Lo derivado no se persiste**: B3 calcula al leer el factor o la almendra que el productor no reportó
   (`factor × almendra = 17.500`) y jamás lo escribe al datasheet — así el OCP distingue lo declarado de lo calculado.
 - **Todo campo nuevo del datasheet nace con default seguro** (`{ ...EMPTY_FICHA, ...lot.datasheet }`) — un
@@ -89,21 +97,18 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
-- **⚠️ `EVA` significa dos cosas distintas en dos superficies — dueño: `consolas`** (abierto el 2026-09-20 por la V5.64,
-  `ALINEACION` §3). En el panel del productor **VISA** es el veredicto documental y **EVA** es la catación con el
-  Q-Grader; en el OCP, la columna **«EVA»** de `/ocp/kr` (`KrTabla.tsx:224`) y el rótulo «Veredicto EVA» de
-  `EvaReviewCard` siguen nombrando lo documental. El owner definió EVA como la evaluación; el OCP tiene que renombrar
-  su columna a **Visa**. Hasta entonces, **es divergencia declarada, no un descuido**.
-- **⚠️ «Visa» queda usada para dos objetos** (owner, decidir): la **Visa EUDR de la FINCA** (columna `Visa EUDR` del
-  OCP, `qa-visa-check`) y ahora el chip **VISA del LOTE**, que hasta hoy se llamaba **Sello**. El owner eligió la palabra
-  a propósito el 2026-09-20; queda anotado para que sea deliberado y no una colisión heredada.
+- **⚠️ El OCP todavía dice «EVA» por el veredicto documental — dueño: `consolas`.** El owner asentó el vocabulario el
+  2026-09-20 (Pasaporte = finca · Visa = lote · EVA = Evaluación de Muestras en Origen) y KR ya lo dice entero; la columna
+  «EVA» de `/ocp/kr` (`KrTabla.tsx:224`), el badge «Veredicto EVA» de `EvaReviewCard` y la columna «Visa EUDR» de la finca
+  no. **Parte del OCP ya dice lo nuevo** — las etiquetas de `fincaEudrStatus`/`lotEudrStatus` cambiaron debajo — **y sus
+  encabezados dicen lo viejo**, que es la peor combinación. Brief con la tanda de media hora y el encargo del owner de
+  **simplificar el OCP al circuito**: [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md).
+- **El «Centro de Calidad» del Q-Grader — dueño: `consolas` / `socios`** (owner, 2026-09-20): el Q-Grader entrega sus dos
+  informes **por un login propio** que recibe la lista de lotes y permite evaluarlos **en orden**. No existe. Cuando exista,
+  el chip **EVA** del panel podrá decir cuántos de los dos informes han llegado; hoy solo dice que el lote está en evaluación.
 - **El dato falso del 205 g — dueño: `consolas`**: `src/app/ocp/(app)/fichasActions.ts:108` dice «gramos de almendra en
   muestra de 205 g» con un rango 150–245 — imposible. La aritmética del repo usa **250 g** (`computeFactor`,
   `fa_start`), único valor con el que cuadran los rangos. KR ya corrigió su copy (V5.64); el OCP no se tocó (código ajeno).
-- **El «Centro de Calidad» del Q-Grader — dueño: `consolas` / `socios`** (owner, 2026-09-20, al definir EVA): el Q-Grader
-  entrega el perfil sensorial y la granulometría **por un login del «Centro de Calidad»**, que recibe la lista de lotes y
-  permite evaluarlos **en orden**. No existe. Cuando exista, el chip **EVA** del panel podrá decir cuántos de los dos
-  informes han llegado; hoy solo dice que el lote está en evaluación.
 - **Compañeros de finca — tanda propia** (brief escrito: [`briefs/kaffetal-regal-companeros-de-finca.md`](briefs/kaffetal-regal-companeros-de-finca.md), con cinco preguntas al owner). Pedido por el owner el 2026-09-20 y aplazado por él mismo: atar una finca (y
   sus lotes) a otros productores, con **un solo admin** (borra y da pasos finales) y colaboradores que solo **agregan**
   información; en trazabilidad **figura únicamente el admin**, y hay que **revisar cada compuerta**. No es interfaz: es

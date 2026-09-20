@@ -87,7 +87,7 @@ export function PaneA4({ data, fincas, fincaCerts }: PaneProps) {
                 <b style={{ fontSize: 13 }}>{SCHEME_LABEL[c.scheme] ?? c.scheme}</b>
                 {c.claim ? (
                   <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green, #2E7D52)" }}>
-                    ✓ Sello del lote{c.fullyVerified ? " · verificado por CTC" : " · declarado"}
+                    ✓ Visa del lote{c.fullyVerified ? " · verificado por CTC" : " · declarado"}
                   </span>
                 ) : (
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#B45309" }}>

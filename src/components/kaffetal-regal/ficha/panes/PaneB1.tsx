@@ -1,4 +1,4 @@
-import { VARIETIES, type FichaFormData } from "../fichaData";
+import { PROCESOS_BASE, VARIETIES, especieDelLote, type FichaFormData } from "../fichaData";
 import { varietyTotal } from "../fichaCalculations";
 import { FieldInfo } from "./FieldInfo";
 import type { PaneProps } from "./types";
@@ -20,8 +20,8 @@ export function PaneB1({ data, onChange }: PaneProps) {
   // ha tocado la proporción.
   const defaultFirstPct = isBlend ? "50" : "100";
   const pctOptions = data.varieties.length === 3 ? ["100", "75", "50", "33", "25"] : PCT_OPTIONS;
-  // "Mezcla" como especie solo tiene sentido si ninguna variedad domina al 100%.
-  const hasFullVariety = data.varieties.some((v) => v.pct === "100");
+  // V5.65: la especie ya no se elige — se DERIVA de las variedades.
+  const especie = especieDelLote(data.varieties);
 
   // Mark a measurement as "No lo sé aún": records the key and clears the value.
   function toggleUnknown(key: string, field: OptField, checked: boolean) {
@@ -31,7 +31,7 @@ export function PaneB1({ data, onChange }: PaneProps) {
     onChange(patch);
   }
 
-  function updateRow(i: number, patch: Partial<{ pct: string; name: string }>) {
+  function updateRow(i: number, patch: Partial<{ pct: string; name: string; base: string; special: string }>) {
     const next = data.varieties.map((v, idx) => {
       if (idx !== i) return v;
       const merged = { ...v, ...patch };
@@ -43,7 +43,7 @@ export function PaneB1({ data, onChange }: PaneProps) {
     onChange({ varieties: next });
   }
   function addRow() {
-    onChange({ varieties: [...data.varieties, { pct: "", name: "" }] });
+    onChange({ varieties: [...data.varieties, { pct: "", name: "", base: "", special: "" }] });
   }
   function removeRow(i: number) {
     onChange({ varieties: data.varieties.filter((_, idx) => idx !== i) });
@@ -86,6 +86,37 @@ export function PaneB1({ data, onChange }: PaneProps) {
                   <span>{meta.c}</span>
                 </div>
               )}
+              {/* V5.65 (owner): el PROCESO es de cada variedad, no del lote.
+                  Un mismo lote puede llevar la Typica lavada y la Gesha en
+                  honey; con un solo proceso para todo, el productor tenía que
+                  elegir cuál de sus dos verdades escribía. Solo aparece cuando
+                  la fila ya tiene variedad: un proceso sin café al que
+                  pertenecer no es un dato, es una casilla. */}
+              {row.name.trim() && (
+                <div className={vstyles.procesos}>
+                  <div>
+                    <label>
+                      Proceso Base
+                      <FieldInfo text="El método de beneficio de ESTA variedad: Lavado, Honey o Natural — define cómo se retira la pulpa y el mucílago antes del secado." />
+                    </label>
+                    <select value={row.base ?? ""} onChange={(e) => updateRow(i, { base: e.target.value })}>
+                      <option value="">—</option>
+                      {PROCESOS_BASE.map((p) => <option key={p}>{p}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label>
+                      Proceso Especial <small>(opcional)</small>
+                      <FieldInfo text="Fermentaciones adicionales (anaeróbica, láctica, térmica) que se suman al proceso base de ESTA variedad." />
+                    </label>
+                    <input
+                      value={row.special ?? ""}
+                      onChange={(e) => updateRow(i, { special: e.target.value })}
+                      placeholder="Anaeróbico, láctico, thermal…"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -100,36 +131,20 @@ export function PaneB1({ data, onChange }: PaneProps) {
         </div>
       </div>
 
-      <div className={styles.fgrid} style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--line)" }}>
-        <div className={styles.ff}>
-          <label>Especie<FieldInfo text="La especie botánica del café — determina el perfil sensorial base y el mercado al que aplica. 'Mezcla' solo aplica cuando ninguna variedad representa el 100% del lote." /></label>
-          <select value={data.species} onChange={(e) => onChange({ species: e.target.value })}>
-            <option value="">—</option>
-            <option>Arabica</option>
-            <option>Robusta</option>
-            <option>Liberica</option>
-            <option disabled={hasFullVariety}>Mezcla</option>
-          </select>
-          {data.species === "Mezcla" && hasFullVariety && (
-            <p className={styles.fexample} style={{ marginTop: 4, color: "var(--red, #C4402F)" }}>
-              Hay una variedad al 100% — &quot;Mezcla&quot; solo aplica cuando ninguna domina el lote completo.
-            </p>
-          )}
-        </div>
-        <div className={styles.ff}>
-          <label>Proceso Base<FieldInfo text="El método de beneficio: Lavado, Honey o Natural — define cómo se retira la pulpa y el mucílago antes del secado." /></label>
-          <select value={data.base_processing} onChange={(e) => onChange({ base_processing: e.target.value })}>
-            <option value="">—</option>
-            <option>Lavado</option>
-            <option>Honey</option>
-            <option>Natural</option>
-          </select>
-        </div>
-        <div className={styles.ff}>
-          <label>Proceso Especial<FieldInfo text="Fermentaciones adicionales (anaeróbica, láctica, térmica) que se suman al proceso base para perfiles sensoriales diferenciados." /></label>
-          <input value={data.special_processing} onChange={(e) => onChange({ special_processing: e.target.value })} placeholder="Anaeróbico, láctico, thermal…" />
-        </div>
-      </div>
+      {/* V5.65 (owner): «la Especie es redundante, se consulta desde la
+          variedad». Dejó de ser un selector y pasó a ser lo que siempre fue:
+          una consecuencia. Se enseña para que el productor vea qué quedó
+          declarado —y qué pasa cuando mezcla especies—, pero no se teclea. */}
+      {especie && (
+        <p className={vstyles.especie}>
+          Especie del lote: <b>{especie}</b>
+          <span>
+            {especie === "Mezcla"
+              ? " — sus variedades no son todas de la misma especie."
+              : " — se toma de las variedades que declaró arriba."}
+          </span>
+        </p>
+      )}
 
       {/* Optional physical measurements -- the producer may not know these yet;
           "No lo sé aún" marks them for CTC to determine on evaluation. */}

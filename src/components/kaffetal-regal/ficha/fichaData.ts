@@ -226,7 +226,67 @@ export const MESH: [string, string][] = [
   ["mesh_ugq", "UGQ (M14)"], ["mesh_peaberry", "Pea Berry (M13–12)"], ["mesh_residue", "Residuo"],
 ];
 
-export type VarietyRow = { pct: string; name: string };
+export type VarietyRow = {
+  pct: string;
+  name: string;
+  /** V5.65 (owner): el proceso es de CADA variedad, no del lote. Un lote puede
+   *  llevar la Typica lavada y la Gesha en honey, y hasta hoy la Ficha solo
+   *  admitía un proceso para todo. Opcionales en el tipo por los datasheets
+   *  guardados antes: `seedProcesos()` los siembra del proceso de lote. */
+  base?: string;
+  special?: string;
+};
+
+/** Los procesos base que admite la Ficha. Cerrados a propósito: son los tres
+ *  que la industria reconoce, y el resto es «proceso especial». */
+export const PROCESOS_BASE = ["Lavado", "Honey", "Natural"] as const;
+
+/**
+ * La ESPECIE del lote, derivada de sus variedades (V5.65, owner: «en B1 la
+ * Especie es redundante, se consulta desde la variedad»). Una sola especie ⇒ esa;
+ * varias ⇒ «Mezcla». Se DERIVA al leer; lo que se guarda en `species` es la
+ * proyección para los lectores de fuera (OCP, catálogo público, docs) — igual
+ * que `summary.ficha_proceso`, y por el mismo motivo.
+ */
+export function especieDelLote(varieties: VarietyRow[]): string {
+  const especies = new Set(
+    varieties
+      .filter((v) => v.name.trim())
+      .map((v) => VARIETIES.find((x) => x.v === v.name)?.e)
+      .filter((e): e is string => !!e)
+  );
+  if (especies.size === 0) return "";
+  if (especies.size > 1) return "Mezcla";
+  const unica = [...especies][0];
+  // El catálogo las guarda en minúscula ("arabica"); de cara a quien lee, con
+  // mayúscula inicial, que es como se escribían a mano en el selector viejo.
+  return unica.charAt(0).toUpperCase() + unica.slice(1);
+}
+
+/** La variedad que manda en el lote: la de mayor proporción (la primera, a
+ *  igualdad). Es de quien salen los procesos que se proyectan hacia fuera. */
+export function variedadDominante(varieties: VarietyRow[]): VarietyRow | null {
+  const conNombre = varieties.filter((v) => v.name.trim());
+  if (conNombre.length === 0) return null;
+  return conNombre.reduce((mejor, v) => (num(v.pct) > num(mejor.pct) ? v : mejor), conNombre[0]);
+}
+
+/**
+ * Default seguro para los datasheets anteriores a la V5.65: una variedad sin
+ * proceso propio hereda el que el lote tenía a nivel de Ficha. Idempotente — si
+ * ya lo tiene, no lo toca.
+ */
+export function seedProcesos(d: FichaFormData): FichaFormData {
+  if (d.varieties.every((v) => v.base !== undefined)) return d;
+  return {
+    ...d,
+    varieties: d.varieties.map((v) => ({
+      ...v,
+      base: v.base ?? d.base_processing ?? "",
+      special: v.special ?? d.special_processing ?? "",
+    })),
+  };
+}
 
 export type FichaFormData = {
   // A1 — Identidad & Comercio

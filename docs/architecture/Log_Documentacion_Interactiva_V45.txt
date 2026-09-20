@@ -295,3 +295,44 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   Los dos rojos de esta tanda no eran regresiones: eran los guardianes haciendo su trabajo, diciendo «esto que cambiaste estaba
   protegido». El trabajo no era apagarlos, era moverlos a la regla nueva.
 (commit: fcc8bed)
+
+## [2026-09-20] V5.65 · El vocabulario EUDR asentado, el mapa rehecho y el proceso por variedad
+- Segunda tanda del día en `kaffetal-regal`, sobre la retroalimentación del owner a la V5.64.
+- VOCABULARIO (lo que el mapa interactivo tiene que reflejar en DICT y en toda ficha que los nombre):
+    PASAPORTE = de la FINCA — su debida diligencia EUDR.
+    VISA      = del LOTE — se hereda del Pasaporte; es el PRIMER entregable de CTCx y es GRATIS,
+                porque la documentación EUDR no necesita al Q-Grader: llega ANTES de la EVA.
+    EVA       = «Evaluación de Muestras en Origen» — las muestras van al Q-Grader y vuelven con
+                granulometría y perfil sensorial → el Punto y la Tríada → el Grado de Calidad.
+  Antes: la finca tenía «Visa», el lote «Sello», y el OCP llamaba «EVA» al veredicto documental.
+  La definición quedó ESCRITA en la cabecera de `src/lib/eudr.ts` (no en una bitácora: el próximo
+  barrido hace grep) y la vigila `qa-evaluaciones` por las dos caras.
+- ⚠️ ANN / fichas a repuntar: `fincaEudrStatus` y `lotEudrStatus` cambian TODAS sus etiquetas
+  («Visa vigente» → «Pasaporte vigente», «Sello listo» → «Visa lista»…). Las lee también el OCP.
+- Fichas que cambian: `fichatecnica` (A5 pasa a «Pasaporte de la Finca y Visa del Lote»; B1 pierde el
+  selector de Especie y gana proceso POR VARIEDAD); `fincamodal` (la pestaña 2 se rehízo); `eudr`.
+- ARQUITECTURA · `CafetalEditor`: componente nuevo en `FincaModal.tsx` que montan TANTO la Parcela 1
+  como las 2..N. Antes eran dos formularios distintos para el mismo objeto, y de ahí salía que uno
+  pidiera una cosa y el otro otra. El estado sigue viviendo en quien lo monta (la 1 en el borrador de
+  la finca, con su autosave y su espejo a la parcela 0; las 2..N en su fila, guardado inmediato).
+- ARQUITECTURA · el orden del formulario cambió de sentido: la pregunta «¿mayor a 4 ha?» se DECLARA
+  antes del mapa. Antes se DEDUCÍA del área, así que el mapa cambiaba de modo mientras el productor
+  escribía. La respuesta se guarda en `finca_parcelas.requires_polygon` — columna que existía desde F1
+  y que NADIE escribía; `null` = sin contestar y se resuelve por área (cero migración de datos).
+- DDL: `finca_parcelas.altitude_masl` (migración `parcelas_altura_y_declaracion_area`), más los dos
+  COMMENT que explican la semántica en la propia base.
+- B1: `VarietyRow` gana `base`/`special` — el proceso es de cada variedad. `species`,
+  `base_processing` y `special_processing` se siguen escribiendo como PROYECCIÓN de la variedad
+  dominante porque los leen el OCP, el catálogo público, la ficha pública y el runner de Arena.
+  Para el mapa: la fuente es la variedad; esas tres son copias de lectura, no verdades paralelas.
+- La declaración final de la Ficha ya no promete la muestra de 2 kg: eso se dirá al confirmar muestras.
+- Guardián: `qa-evaluaciones` 46 → 50, probado haciéndolo morder.
+- LECCIÓN (la de la tanda): **el owner había dibujado el flujo entero y yo entregué mejoras sueltas
+  dentro del flujo viejo** — contexto en el mapa, primer punto visible, arrastre. Todo cierto y nada
+  de eso era lo pedido: lo pedido era el ORDEN (preguntar antes de mapear) y la UNIFICACIÓN (un solo
+  editor de cafetal). Cuando hay un mockup, la unidad de trabajo es el flujo, no la lista de detalles
+  que uno reconoce en él.
+- ⚠️ PARA EL V46 / pendiente con dueño `consolas`: el OCP sigue diciendo «EVA» (columna de `/ocp/kr`,
+  `EvaReviewCard`) por el veredicto documental, y «Visa EUDR» por lo de la finca. Brief escrito:
+  `docs/componentes/briefs/consolas-simplificar-ocp-al-circuito.md`.
+(commit: pendiente)

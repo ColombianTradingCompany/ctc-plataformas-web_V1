@@ -16,7 +16,7 @@ import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker, type ParcelaEnMapa } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { ORIGIN_CERTS, INTL_CERTS, CERT_INFO } from "./ficha/fichaData";
-import { fincaCode, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
+import { exigePoligono, fincaCode, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
 import styles from "./FincaModal.module.css";
 
 // Etiqueta humana de cada esquema del catálogo (A3 + A4 de la Ficha).
@@ -189,7 +189,18 @@ const EMPTY_EUDR_DRAFT: EudrDraft = {
 
 // F1 (2026-07-29): parcelas y certificados viajan como props ya filtrados por
 // finca, con CRUD inmediato por fila (fuera del autosave — ver KaffetalExperience).
-type ParcelaDraft = { id?: string; fincaId: string; name: string; areaHa: string; lat: string; lng: string; polygon: { lat: number; lng: number }[] | null };
+type ParcelaDraft = {
+  id?: string;
+  fincaId: string;
+  name: string;
+  areaHa: string;
+  lat: string;
+  lng: string;
+  polygon: { lat: number; lng: number }[] | null;
+  /** V5.65: altura propia del cafetal, y la respuesta a «¿mayor a 4 ha?». */
+  alturaMsnm?: string;
+  mayor4ha?: boolean | null;
+};
 type CertDraft = { id?: string; fincaId: string; scheme: string; certNumber: string; validFrom: string; validTo: string; holderNote: string };
 
 type FincaModalExtras = {
@@ -536,7 +547,42 @@ function FincaModalBody({
     },
     ...extraParcelas.map((p) => ({ id: p.id, nombre: p.name, lat: p.lat, lng: p.lng, polygon: p.polygon })),
   ];
-  const needsPolygon = !isNaN(haNum) && haNum > 4;
+  // ── V5.65 · el Cafetal 1 como un cafetal más ──────────────────────────────
+  // Su GEOMETRÍA sigue siendo la de la finca (se espeja a la parcela 0 al
+  // guardar, para que dossier, KML y mapas legacy no se enteren de nada); lo
+  // demás —nombre, área, altura y la declaración de «> 4 ha»— vive en SU fila y
+  // se guarda aparte, igual que los cafetales 2..N.
+  const [areaUno, setAreaUno] = useState(parcelaUno?.areaHa ?? (finca?.ha && finca.ha !== "—" ? finca.ha : ""));
+  const [alturaUno, setAlturaUno] = useState(parcelaUno?.alturaMsnm ?? (finca?.alt && finca.alt !== "—" ? finca.alt : ""));
+  const [mayor4haUno, setMayor4haUno] = useState<boolean | null>(
+    parcelaUno?.mayor4ha ?? (finca ? exigePoligono(null, finca.ha !== "—" ? finca.ha : "") : null)
+  );
+  const [guardandoUno, setGuardandoUno] = useState(false);
+  // Con la finca aprobada la geometría queda congelada (lo hace
+  // `guard_finca_protected_columns`): se enseña, no se edita, y los cambios van
+  // por «Solicitar revisión de datos».
+  const eudrLocked = finca?.status === "approved";
+
+  async function guardarParcelaUno() {
+    if (!parcelaUno || guardandoUno) return;
+    setGuardandoUno(true);
+    await onSaveParcela({
+      id: parcelaUno.id,
+      fincaId: parcelaUno.fincaId,
+      name: nombreUno.trim() || "Cafetal 1",
+      areaHa: areaUno,
+      lat: eudr.lat,
+      lng: eudr.lng,
+      polygon: eudr.eudrPolygon,
+      alturaMsnm: alturaUno,
+      mayor4ha: mayor4haUno,
+    });
+    setGuardandoUno(false);
+  }
+
+  // La exigencia de polígono de la FINCA es la que declaró el Cafetal 1 (antes
+  // se deducía del área total, que con varios cafetales no dice nada de ninguno).
+  const needsPolygon = mayor4haUno ?? (!isNaN(haNum) && haNum > 4);
 
   // Which of the four tabs is showing. All four panels stay mounted (toggled by
   // `display`) so nothing remounts —y por tanto nada se reinicia— al cambiar de
@@ -676,7 +722,7 @@ function FincaModalBody({
 
       {/* Estado EUDR de la finca -- persistente sobre las tres pestañas. */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "6px 0 2px", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 600 }}>Visa EUDR del predio:</span>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>Pasaporte EUDR del predio:</span>
         <EudrStatusBadge status={eudrStatus} />
       </div>
       {ctcAdjustments.length > 0 && (
@@ -864,11 +910,99 @@ function FincaModalBody({
             decide si el EUDR exige polígono. Tenerlas en la pestaña 1, a dos
             clics de la geometría que las produce, obligaba a ir y volver. */}
         <div style={{ display: tab === "ubicacion" ? undefined : "none" }}>
+          {/* ── Los cafetales ─────────────────────────────────────────────
+              Para la UE la unidad que cuenta es la PARCELA: cada cafetal (área
+              continua de café) con su propia ubicación. El Cafetal 1 es este
+              mapa —se espeja a la parcela 0 al guardar— y los demás cuelgan
+              debajo; desde la V5.65 los dos son el MISMO editor. */}
+          <div className={styles.wide} style={{ margin: "4px 0 14px" }}>
+            {/* «Estoy aquí» (owner, 2026-08-20) ──────────────────────────────
+                Pedido para el caso de >4 ha: quien está PARADO en la mitad de
+                su predio no debería tener que encontrarse a sí mismo en un mapa
+                satelital arrastrando con el dedo — el GPS del teléfono ya sabe
+                dónde está, y con mejor precisión que el pulso de nadie sobre una
+                pantalla de 5 pulgadas.
+                Con polígono NO lo sustituye: el punto sigue siendo el centro
+                declarado y el polígono se dibuja aparte; por eso el texto de
+                abajo lo dice en vez de dejar creer que ya está todo hecho. */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, margin: "0 0 10px" }}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={usarUbicacionActual}
+                disabled={geoBusy}
+                title="Usa el GPS de este dispositivo para marcar el punto donde usted está ahora"
+              >
+                {geoBusy ? "Buscando su ubicación…" : "📍 Estoy aquí · usar mi ubicación actual"}
+              </button>
+              <p style={{ fontSize: 11, color: geoErr ? "var(--red)" : "var(--muted)", margin: 0 }}>
+                {geoErr
+                  ? geoErr
+                  : geoPrecision != null
+                    ? `Ubicación tomada del GPS (precisión ±${Math.round(geoPrecision)} m).${needsPolygon ? " Falta marcar el polígono: este punto es el centro, no el lindero." : " Compruébela en el mapa y ajústela si hace falta."}`
+                    : needsPolygon
+                      ? "Párese en la mitad del cafetal y tóquelo: marca el punto central. El polígono se marca aparte, abajo."
+                      : "Párese en el cafetal y tóquelo, o marque el punto a mano en el mapa."}
+              </p>
+            </div>
+
+            <CafetalEditor
+              titulo="Parcela 1"
+              nombre={nombreUno}
+              onNombre={setNombreUno}
+              mayor4ha={mayor4haUno}
+              onMayor4ha={setMayor4haUno}
+              lat={eudr.lat}
+              lng={eudr.lng}
+              polygon={eudr.eudrPolygon}
+              onPoint={(lat, lng) => patchEudr({ lat, lng })}
+              onPolygon={(polygon) => patchEudr({ eudrPolygon: polygon })}
+              areaHa={areaUno}
+              onAreaHa={setAreaUno}
+              alturaMsnm={alturaUno}
+              onAltura={setAlturaUno}
+              otras={enMapa.filter((p) => p.id !== (parcelaUno?.id ?? "parcela-uno"))}
+              locked={eudrLocked}
+              // La fila de la parcela 1 solo existe cuando la finca ya se guardó;
+              // hasta entonces la crea el espejo y no hay nada que guardar aparte.
+              onGuardar={parcelaUno ? guardarParcelaUno : undefined}
+              guardando={guardandoUno}
+            />
+          </div>
+
+          {/* F1: cafetales adicionales — una parcela por cada área de café
+              separada. La parcela 1 es el mapa de arriba (se espeja al guardar). */}
+          <div className={styles.wide} style={{ marginBottom: 14 }}>
+            <label>
+              ¿Su café crece en varios cafetales separados?
+              <FieldInfo text="Una finca puede tener varios cafetales que no se tocan entre sí (separados por potrero, bosque o carretera). La UE los cuenta uno a uno: cada cafetal separado necesita su propio punto — y su propio polígono si supera 4 ha." />
+            </label>
+            {finca ? (
+              <ParcelasExtra
+                fincaId={finca.id}
+                extras={extraParcelas}
+                enMapa={enMapa}
+                onSave={onSaveParcela}
+                onDelete={onDeleteParcela}
+              />
+            ) : (
+              <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder marcar cafetales adicionales.</p>
+            )}
+          </div>
+
+          {/* ── Totales de la finca ───────────────────────────────────────
+              Desde la V5.65 el área y la altura de CADA cafetal se piden en su
+              propio bloque, arriba. Estos dos campos se quedan porque son los
+              que viajan a `fincas` y de ahí al dossier EUDR, al KML y al OCP:
+              son el TOTAL del predio, no los de un cafetal. Se dejan editables
+              a mano —el área sembrada puede ser menor que la suma de linderos— y
+              con los mismos botones de siempre para traerlos del mapa. */}
+          <p className={styles.totalesTitulo}>Totales de la finca</p>
           <div className={styles.grid} style={{ marginBottom: 4 }}>
             <div>
               <label>
-                Área en café (ha)
-                <FieldInfo text="Superficie sembrada en café de este predio. Dibuje el polígono en el mapa de abajo y tóquele «Calcular del polígono» para traerla, o escríbala a mano: el área SEMBRADA puede ser menor que el predio delimitado. A partir de 4 ha el EUDR exige el polígono, no basta el punto." />
+                Área en café de TODA la finca (ha)
+                <FieldInfo text="Superficie total sembrada en café del predio, sumando todos sus cafetales. El área de CADA cafetal se pide en su propio bloque, arriba. Dibuje el polígono en el mapa de abajo y tóquele «Calcular del polígono» para traerla, o escríbala a mano: el área SEMBRADA puede ser menor que el predio delimitado. A partir de 4 ha el EUDR exige el polígono, no basta el punto." />
               </label>
               <div className={styles.fieldRow}>
                 <input
@@ -919,8 +1053,8 @@ function FincaModalBody({
             </div>
             <div>
               <label>
-                Altura (msnm)
-                <FieldInfo text="Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay (predios de más de 4 ha) o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
+                Altura de la finca (msnm)
+                <FieldInfo text="La altura de referencia del predio. La de CADA cafetal se pide en su propio bloque, arriba. Tráigala del mapa con el botón «Traer del mapa»: usa el centro del polígono cuando lo hay o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
               </label>
               <div className={styles.fieldRow}>
                 <input
@@ -957,113 +1091,6 @@ function FincaModalBody({
                           : "Toque «Traer del mapa» o escríbala a mano."}
               </p>
             </div>
-          </div>
-          <div className={styles.wide} style={{ margin: "14px 0" }}>
-            <label>
-              {extraParcelas.length > 0
-                ? `Parcela 1 · ${parcelaUno?.name ?? "Cafetal principal"}`
-                : needsPolygon
-                  ? "Polígono del cafetal (> 4 ha)"
-                  : "Ubicación del cafetal"}
-              <FieldInfo text="Para la UE, la unidad que cuenta es la PARCELA: cada cafetal (área continua de café) con su propia ubicación. Si todo su café crece en un solo cafetal, este mapa es todo lo que necesita. Un polígono no puede cubrir dos cafetales separados." />
-            </label>
-            <p style={{ fontSize: 12, color: "var(--muted)", margin: "2px 0 6px" }}>
-              {needsPolygon && extraParcelas.length === 0
-                ? "Este cafetal supera las 4 ha: el EUDR exige delimitarlo con un polígono, no solo un punto."
-                : "Marque el punto del cafetal en el mapa. Es la evidencia principal de geolocalización EUDR."}
-            </p>
-
-            {/* El NOMBRE de la parcela 1 (owner, 2026-09-20: «el usuario puede
-                cambiar el nombre de cada parcela»). Las 2..N ya lo tenían en su
-                tarjeta; esta no, porque nace espejada de la finca. Se guarda
-                sola, por fuera del autosave del modal — igual que las otras
-                parcelas. Solo aparece cuando la parcela 1 ya existe en la base:
-                antes de eso todavía no hay fila que renombrar, y el espejo le
-                pone «Cafetal 1» al crearla. */}
-            {parcelaUno && (
-              <div style={{ maxWidth: 340, margin: "0 0 10px" }}>
-                <label style={{ fontSize: 12 }}>Nombre de este cafetal</label>
-                <input
-                  value={nombreUno}
-                  onChange={(e) => setNombreUno(e.target.value)}
-                  onBlur={() => {
-                    const limpio = nombreUno.trim();
-                    if (!limpio || limpio === parcelaUno.name) return;
-                    void onSaveParcela({
-                      id: parcelaUno.id,
-                      fincaId: parcelaUno.fincaId,
-                      name: limpio,
-                      areaHa: parcelaUno.areaHa,
-                      lat: parcelaUno.lat,
-                      lng: parcelaUno.lng,
-                      polygon: parcelaUno.polygon,
-                    });
-                  }}
-                  placeholder="Cafetal 1"
-                />
-              </div>
-            )}
-
-            {/* «Estoy aquí» (owner, 2026-08-20) ──────────────────────────────
-                Pedido para el caso de >4 ha: quien está PARADO en la mitad de
-                su predio no debería tener que encontrarse a sí mismo en un mapa
-                satelital arrastrando con el dedo — el GPS del teléfono ya sabe
-                dónde está, y con mejor precisión que el pulso de nadie sobre una
-                pantalla de 5 pulgadas.
-                Con polígono NO lo sustituye: el punto sigue siendo el centro
-                declarado y el polígono se dibuja aparte; por eso el texto de
-                abajo lo dice en vez de dejar creer que ya está todo hecho. */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, margin: "0 0 10px" }}>
-              <button
-                type="button"
-                className="btn btn-sm"
-                onClick={usarUbicacionActual}
-                disabled={geoBusy}
-                title="Usa el GPS de este dispositivo para marcar el punto donde usted está ahora"
-              >
-                {geoBusy ? "Buscando su ubicación…" : "📍 Estoy aquí · usar mi ubicación actual"}
-              </button>
-              <p style={{ fontSize: 11, color: geoErr ? "var(--red)" : "var(--muted)", margin: 0 }}>
-                {geoErr
-                  ? geoErr
-                  : geoPrecision != null
-                    ? `Ubicación tomada del GPS (precisión ±${Math.round(geoPrecision)} m).${needsPolygon ? " Falta dibujar el polígono: este punto es el centro, no el lindero." : " Compruébela en el mapa y ajústela si hace falta."}`
-                    : needsPolygon
-                      ? "Párese en la mitad del cafetal y tóquelo: marca el punto central. El polígono se dibuja aparte, abajo."
-                      : "Párese en el cafetal y tóquelo, o marque el punto a mano en el mapa."}
-              </p>
-            </div>
-
-            <FincaMapPicker
-              lat={eudr.lat}
-              lng={eudr.lng}
-              polygon={eudr.eudrPolygon}
-              needsPolygon={needsPolygon}
-              onChangePoint={(lat, lng) => patchEudr({ lat, lng })}
-              onChangePolygon={(polygon) => patchEudr({ eudrPolygon: polygon })}
-              otras={enMapa.filter((p) => p.id !== (parcelaUno?.id ?? "parcela-uno"))}
-              nombreActual={parcelaUno?.name ?? "Cafetal 1"}
-            />
-          </div>
-
-          {/* F1: cafetales adicionales — una parcela por cada área de café
-              separada. La parcela 1 es el mapa de arriba (se espeja al guardar). */}
-          <div className={styles.wide} style={{ marginBottom: 14 }}>
-            <label>
-              ¿Su café crece en varios cafetales separados?
-              <FieldInfo text="Una finca puede tener varios cafetales que no se tocan entre sí (separados por potrero, bosque o carretera). La UE los cuenta uno a uno: cada cafetal separado necesita su propio punto — y su propio polígono si supera 4 ha." />
-            </label>
-            {finca ? (
-              <ParcelasExtra
-                fincaId={finca.id}
-                extras={extraParcelas}
-                enMapa={enMapa}
-                onSave={onSaveParcela}
-                onDelete={onDeleteParcela}
-              />
-            ) : (
-              <p style={{ fontSize: 12, color: "var(--muted)" }}>Guarde la finca primero para poder marcar cafetales adicionales.</p>
-            )}
           </div>
 
         </div>
@@ -1461,6 +1488,255 @@ function ParcelasExtra({
   );
 }
 
+// ── V5.65 · El editor de UN cafetal, compartido ─────────────────────────────
+// El owner dibujó el flujo completo (2026-09-20) y lo que el dibujo pide, antes
+// que nada, es que **todos los cafetales sean la misma cosa**: hasta la V5.64 la
+// Parcela 1 era el mapa suelto de la pestaña 2 —con el área y la altura de la
+// FINCA arriba, lejos— y las 2..N eran tarjetas con otro formulario. Dos piezas
+// distintas para el mismo objeto, y de ahí salía que una pidiera una cosa y la
+// otra otra. Ahora las dos montan ESTE componente.
+//
+// El orden es el del dibujo, y no es decorativo:
+//
+//   1. el NOMBRE del cafetal, editable con el lápiz;
+//   2. **la pregunta «¿el área del cultivo es mayor a 4 ha?»**, y hasta que no se
+//      conteste no hay mapa. Es el cambio de fondo: antes la exigencia de
+//      polígono se DEDUCÍA de un área que el productor todavía no había medido,
+//      así que el mapa cambiaba de modo debajo de sus manos al escribir el área.
+//      Ahora él lo declara primero, que es el orden en que lo sabe;
+//   3. el mapa, ya en el modo correcto y sin cambiar de modo a mitad;
+//   4. la altura y el área, **aquí dentro** y no en la finca: son de ESTE cafetal;
+//   5. «Guardar polígono» / «Guardar Punto», abajo a la derecha (regla de la casa).
+//
+// El estado vive en quien lo monta: la Parcela 1 escribe en el borrador de la
+// finca (y viaja con su autosave), las 2..N en su propia fila (guardado
+// inmediato). Este componente solo pinta y avisa.
+function CafetalEditor({
+  titulo,
+  nombre,
+  onNombre,
+  mayor4ha,
+  onMayor4ha,
+  lat,
+  lng,
+  polygon,
+  onPoint,
+  onPolygon,
+  areaHa,
+  onAreaHa,
+  alturaMsnm,
+  onAltura,
+  otras,
+  locked = false,
+  onGuardar,
+  guardando = false,
+}: {
+  titulo: string;
+  nombre: string;
+  onNombre: (v: string) => void;
+  mayor4ha: boolean | null;
+  onMayor4ha: (v: boolean) => void;
+  lat: string;
+  lng: string;
+  polygon: { lat: number; lng: number }[] | null;
+  onPoint: (lat: string, lng: string) => void;
+  onPolygon: (points: { lat: number; lng: number }[] | null) => void;
+  areaHa: string;
+  onAreaHa: (v: string) => void;
+  alturaMsnm: string;
+  onAltura: (v: string) => void;
+  otras: ParcelaEnMapa[];
+  locked?: boolean;
+  /** Ausente en la Parcela 1: allí guarda el autosave del modal. */
+  onGuardar?: () => void;
+  guardando?: boolean;
+}) {
+  const [editandoNombre, setEditandoNombre] = useState(false);
+  const [altBusy, setAltBusy] = useState(false);
+  const [altErr, setAltErr] = useState<string | null>(null);
+
+  const necesitaPoligono = mayor4ha === true;
+  const refPoint = fincaReferencePoint(lat, lng, polygon);
+  const areaDelPoligono = polygonAreaHa(polygon);
+  const ubicado = necesitaPoligono ? (polygon?.length ?? 0) >= 3 : lat.trim() !== "" && lng.trim() !== "";
+
+  async function traerAltura() {
+    if (!refPoint || altBusy) return;
+    setAltBusy(true);
+    setAltErr(null);
+    const m = await lookupElevation(refPoint.point);
+    setAltBusy(false);
+    if (m == null) {
+      setAltErr("No se pudo obtener la altura; escríbala a mano.");
+      return;
+    }
+    onAltura(String(m));
+  }
+
+  // El resumen que el dibujo pone junto al nombre en cuanto el cafetal existe.
+  const resumen = [areaHa.trim() ? `${areaHa} ha` : null, alturaMsnm.trim() ? `${alturaMsnm} msnm` : null].filter(Boolean).join(" · ");
+
+  return (
+    <div className={styles.cafetal}>
+      <div className={styles.cafetalHead}>
+        {editandoNombre && !locked ? (
+          <input
+            value={nombre}
+            onChange={(e) => onNombre(e.target.value)}
+            onBlur={() => setEditandoNombre(false)}
+            onKeyDown={(e) => e.key === "Enter" && setEditandoNombre(false)}
+            placeholder={titulo}
+            autoFocus
+            style={{ maxWidth: 260 }}
+          />
+        ) : (
+          <>
+            <h4 className={styles.cafetalTitulo}>{nombre.trim() || titulo}</h4>
+            {!locked && (
+              <button
+                type="button"
+                className={styles.lapiz}
+                onClick={() => setEditandoNombre(true)}
+                title="Cambiar el nombre de este cafetal"
+                aria-label={`Cambiar el nombre de ${nombre.trim() || titulo}`}
+              >
+                ✎
+              </button>
+            )}
+          </>
+        )}
+        {resumen && <span className={styles.cafetalResumen}>({resumen})</span>}
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 11.5, color: ubicado ? "#2E7D52" : "var(--muted)" }}>
+          {ubicado ? "✓ geolocalizado" : mayor4ha === null ? "" : necesitaPoligono ? "falta el polígono" : "falta el punto"}
+        </span>
+      </div>
+
+      {/* ── 1 · La pregunta, ANTES del mapa ──────────────────────────────── */}
+      <div className={styles.preguntaArea}>
+        <span>Área del cultivo mayor a 4 ha</span>
+        <div className={styles.siNo} role="group" aria-label="¿El área del cultivo es mayor a 4 ha?">
+          <button
+            type="button"
+            className={mayor4ha === true ? styles.siNoOn : undefined}
+            onClick={() => !locked && onMayor4ha(true)}
+            aria-pressed={mayor4ha === true}
+            disabled={locked}
+          >
+            sí
+          </button>
+          <button
+            type="button"
+            className={mayor4ha === false ? styles.siNoOn : undefined}
+            onClick={() => !locked && onMayor4ha(false)}
+            aria-pressed={mayor4ha === false}
+            disabled={locked}
+          >
+            no
+          </button>
+        </div>
+        <FieldInfo text="A partir de 4 ha el EUDR ya no acepta un punto: exige el polígono con el lindero del cafetal. Con menos, basta marcar un punto. Conteste con lo que sepa a ojo — el área exacta la calculamos después del polígono." />
+      </div>
+
+      {mayor4ha === null ? (
+        <p className={styles.cafetalHint}>Conteste arriba y le mostramos el mapa con lo que hace falta.</p>
+      ) : (
+        <>
+          <p className={styles.cafetalHint}>
+            {necesitaPoligono
+              ? "Toque «Marcar el polígono en el mapa» y marque cada esquina del cafetal. Verá el primer punto desde que lo ponga, y puede arrastrar cualquiera para corregirlo."
+              : "Marque el punto de ESTE cafetal — no el de la casa ni el del cafetal vecino. Puede usar su ubicación actual si está parado en él."}
+          </p>
+
+          {/* ── 2 · El mapa, ya en el modo correcto ──────────────────────── */}
+          <FincaMapPicker
+            lat={lat}
+            lng={lng}
+            polygon={polygon}
+            needsPolygon={necesitaPoligono}
+            onChangePoint={onPoint}
+            onChangePolygon={onPolygon}
+            otras={otras}
+            nombreActual={nombre.trim() || titulo}
+          />
+
+          {/* ── 3 · Altura y área, de ESTE cafetal ───────────────────────── */}
+          <div className={styles.grid} style={{ marginTop: 12 }}>
+            <div>
+              <label>
+                Altura (msnm)
+                <FieldInfo text="Tráigala del mapa: usa el centro del polígono cuando lo hay, o el punto marcado. También puede escribirla a mano si conoce el dato exacto." />
+              </label>
+              <div className={styles.fieldRow}>
+                <input value={alturaMsnm} onChange={(e) => { onAltura(e.target.value); setAltErr(null); }} type="number" placeholder="1680" disabled={locked} />
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={traerAltura}
+                  disabled={!refPoint || altBusy || locked}
+                  title={refPoint ? "Traer la altura del punto o del centro del polígono" : "Marque primero la ubicación en el mapa"}
+                >
+                  {altBusy ? "Calculando…" : "Traer del mapa ⛰"}
+                </button>
+              </div>
+              <p style={{ fontSize: 11, color: altErr ? "var(--red)" : "var(--muted)", margin: "3px 0 0" }}>
+                {altErr ?? (refPoint ? "Toque «Traer del mapa» o escríbala a mano." : "Marque la ubicación para poder traerla.")}
+              </p>
+            </div>
+            <div>
+              <label>
+                Área en café (ha)
+                <FieldInfo text="Superficie sembrada en café de ESTE cafetal. Con polígono, tóquele «Calcular del polígono» para traerla: el área sembrada puede ser menor que el lindero dibujado, así que ajústela si sembró menos." />
+              </label>
+              <div className={styles.fieldRow}>
+                <input value={areaHa} onChange={(e) => onAreaHa(e.target.value)} type="number" step="0.1" placeholder="3.5" disabled={locked} />
+                {necesitaPoligono && (
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => areaDelPoligono != null && onAreaHa(String(areaDelPoligono))}
+                    disabled={areaDelPoligono == null || locked}
+                    title={areaDelPoligono != null ? "Calcular el área del polígono dibujado" : "Guarde primero el polígono en el mapa"}
+                  >
+                    Calcular del polígono 📐
+                  </button>
+                )}
+              </div>
+              <p style={{ fontSize: 11, color: "var(--muted)", margin: "3px 0 0" }}>
+                {necesitaPoligono
+                  ? areaDelPoligono != null
+                    ? `El polígono guardado mide ${areaDelPoligono} ha.`
+                    : "Guarde el polígono para poder calcularla, o escríbala a mano."
+                  : "Escríbala a mano."}
+              </p>
+            </div>
+          </div>
+
+          {/* Los puntos de geo-referencia, a la vista en modo punto: es lo que
+              va al expediente EUDR, y verlos escritos es lo que deja al
+              productor comprobar que el pin cayó donde él cree. */}
+          {!necesitaPoligono && (
+            <p className={styles.geoRef}>
+              <b>Puntos de Geo-Referencia</b>
+              <span>Lat {lat.trim() ? Number(lat).toFixed(6) : "—"}</span>
+              <span>Lon {lng.trim() ? Number(lng).toFixed(6) : "—"}</span>
+            </p>
+          )}
+
+          {/* ── 4 · Guardar, abajo a la derecha (regla de la casa) ───────── */}
+          {onGuardar && (
+            <div className={styles.cafetalAcciones}>
+              <button type="button" className="btn btn-sm btn-solid" onClick={onGuardar} disabled={guardando || locked}>
+                {guardando ? "Guardando…" : necesitaPoligono ? "Guardar polígono" : "Guardar Punto"}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function ParcelaCard({
   index,
   parcela,
@@ -1486,28 +1762,41 @@ function ParcelaCard({
   const [lat, setLat] = useState(parcela?.lat ?? "");
   const [lng, setLng] = useState(parcela?.lng ?? "");
   const [polygon, setPolygon] = useState<{ lat: number; lng: number }[] | null>(parcela?.polygon ?? null);
+  const [alturaMsnm, setAlturaMsnm] = useState(parcela?.alturaMsnm ?? "");
+  // V5.65: la declaración del productor. Una parcela vieja no la tiene, así que
+  // se siembra con el criterio de antes (área > 4 ha) en vez de dejarla sin
+  // contestar y obligar a responder algo que ya estaba implícito en sus datos.
+  const [mayor4ha, setMayor4ha] = useState<boolean | null>(
+    parcela ? (parcela.mayor4ha !== null ? parcela.mayor4ha : exigePoligono(null, parcela.areaHa)) : null
+  );
   const [busy, setBusy] = useState(false);
-  const areaNum = Number(areaHa.replace(",", "."));
-  const needsPolygon = !isNaN(areaNum) && areaNum > 4;
+  const needsPolygon = mayor4ha === true;
   const located = (lat.trim() !== "" && lng.trim() !== "") || (polygon?.length ?? 0) >= 3;
   const geoOk = located && (!needsPolygon || (polygon?.length ?? 0) >= 3);
 
   async function save() {
     if (busy) return;
     setBusy(true);
-    await onSave({ id: parcela?.id, fincaId, name, areaHa, lat, lng, polygon });
+    await onSave({ id: parcela?.id, fincaId, name, areaHa, lat, lng, polygon, alturaMsnm, mayor4ha });
     setBusy(false);
   }
 
   return (
+    // Cerrada, la tarjeta es un renglón de resumen; abierta, el que manda es el
+    // CafetalEditor —que ya trae su propio título con el lápiz—, así que aquí
+    // arriba no se repite el nombre: se repetía y quedaban dos «Parcela 2».
     <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <b style={{ fontSize: 13 }}>
-          Parcela {index} · {parcela?.name ?? name}
-        </b>
-        <span style={{ fontSize: 11.5, color: geoOk ? "#2E7D52" : "var(--muted)" }}>
-          {geoOk ? "✓ geolocalizada" : needsPolygon ? "falta el polígono (> 4 ha)" : located ? "revise el área" : "sin ubicar"}
-        </span>
+        {!open && (
+          <>
+            <b style={{ fontSize: 13 }}>
+              Parcela {index} · {parcela?.name ?? name}
+            </b>
+            <span style={{ fontSize: 11.5, color: geoOk ? "#2E7D52" : "var(--muted)" }}>
+              {geoOk ? "✓ geolocalizada" : needsPolygon ? "falta el polígono (> 4 ha)" : located ? "falta el punto" : "sin ubicar"}
+            </span>
+          </>
+        )}
         <span style={{ flex: 1 }} />
         <button type="button" className="btn btn-sm" onClick={onToggle}>
           {open ? "Cerrar" : "Editar"}
@@ -1526,59 +1815,29 @@ function ParcelaCard({
         )}
       </div>
       {open && (
-        <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 190px", gap: 10 }}>
-            <div>
-              <label>Nombre del cafetal</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder={"Cafetal " + index} />
-            </div>
-            <div>
-              <label>Área (ha)</label>
-              <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
-                <input value={areaHa} onChange={(e) => setAreaHa(e.target.value)} type="number" step="0.1" placeholder="1.5" style={{ flex: 1, minWidth: 0 }} />
-                {/* Mismo gesto que en la finca: el polígono ya dibujado sabe
-                    cuánto mide, no hay por qué medirlo otra vez a ojo. */}
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={() => {
-                    const a = polygonAreaHa(polygon);
-                    if (a != null) setAreaHa(String(a));
-                  }}
-                  disabled={polygonAreaHa(polygon) == null}
-                  title={polygonAreaHa(polygon) != null ? "Calcular el área del polígono dibujado" : "Dibuje primero el polígono"}
-                  style={{ flex: "none" }}
-                >
-                  📐
-                </button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 6px" }}>
-              {needsPolygon
-                ? "Este cafetal supera las 4 ha: delimítelo con su propio polígono."
-                : "Marque el punto de ESTE cafetal (no el de la casa ni el del cafetal principal)."}
-            </p>
-            <FincaMapPicker
-              lat={lat}
-              lng={lng}
-              polygon={polygon}
-              needsPolygon={needsPolygon}
-              onChangePoint={(la, lo) => {
-                setLat(la);
-                setLng(lo);
-              }}
-              onChangePolygon={setPolygon}
-              otras={otras}
-              nombreActual={name || `Cafetal ${index}`}
-            />
-          </div>
-          <div>
-            <button type="button" className="btn btn-sm btn-solid" onClick={save} disabled={busy}>
-              {busy ? "Guardando…" : parcela ? "Guardar cafetal" : "Agregar cafetal"}
-            </button>
-          </div>
+        <div style={{ marginTop: 10 }}>
+          <CafetalEditor
+            titulo={`Parcela ${index}`}
+            nombre={name}
+            onNombre={setName}
+            mayor4ha={mayor4ha}
+            onMayor4ha={setMayor4ha}
+            lat={lat}
+            lng={lng}
+            polygon={polygon}
+            onPoint={(la, lo) => {
+              setLat(la);
+              setLng(lo);
+            }}
+            onPolygon={setPolygon}
+            areaHa={areaHa}
+            onAreaHa={setAreaHa}
+            alturaMsnm={alturaMsnm}
+            onAltura={setAlturaMsnm}
+            otras={otras}
+            onGuardar={save}
+            guardando={busy}
+          />
         </div>
       )}
     </div>

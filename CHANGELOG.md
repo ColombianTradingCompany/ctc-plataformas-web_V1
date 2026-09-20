@@ -19,6 +19,46 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.65] — 2026-09-20 (commit pendiente)
+
+- **Hito**: **el vocabulario EUDR queda asentado, una palabra por objeto en toda la red** (owner, 2026-09-20). **PASAPORTE** es de la
+  **FINCA** —su debida diligencia—; **VISA** es del **LOTE**, se hereda del Pasaporte y es el **primer entregable de CTCx, y gratis**:
+  la documentación EUDR no necesita al Q-Grader, así que la Visa llega **antes** de la evaluación. Y **EVA** deja de ser ambigua para
+  siempre: es **«Evaluación de Muestras en Origen»** —mandar las muestras al Q-Grader y recibir granulometría y perfil sensorial, que
+  dan el Punto y la Tríada y de ahí el Grado. Hasta hoy la finca tenía «Visa», el lote «Sello» y el OCP llamaba «EVA» al veredicto
+  documental: tres nombres para dos cosas y una palabra prestada. La definición vive escrita en la cabecera de `src/lib/eudr.ts` y la
+  vigila `qa-evaluaciones` por las dos caras (que la barra lo diga, y que las pantallas del productor **no** vuelvan a decir «Sello»).
+- **Hito**: **el mapa EUDR se rehízo con el flujo que dibujó el owner**, y lo primero que arregla es que **todos los cafetales sean la
+  misma cosa**: hasta ayer la Parcela 1 era un mapa suelto con el área y la altura de la FINCA lejos, arriba, y las 2..N eran tarjetas
+  con otro formulario — dos piezas para el mismo objeto. Ahora las dos montan **un solo `CafetalEditor`**.
+- **Cambiado**: **la pregunta «¿el área del cultivo es mayor a 4 ha?» se DECLARA antes de tocar el mapa**, y es por cafetal. Antes la
+  exigencia de polígono se **deducía** de un área que el productor todavía no había medido, así que el mapa **cambiaba de modo debajo
+  de sus manos** mientras escribía. Ahora contesta primero —que es el orden en que lo sabe— y el mapa abre ya en su modo. La respuesta
+  se guarda en `finca_parcelas.requires_polygon`, una columna que existía desde F1 y que **nadie escribía**; `null` sigue significando
+  «sin contestar» y se resuelve por área, así que ninguna parcela vieja necesita migración.
+- **Añadido**: **cada cafetal tiene su propia altura** (`finca_parcelas.altitude_masl`, migración `parcelas_altura_y_declaracion_area`),
+  con su «Traer del mapa ⛰», y su propia área con «Calcular del polígono 📐». El área y la altura de `fincas` se quedan donde estaban
+  —las leen el dossier, el KML y el OCP— pero bajan debajo de los cafetales y se rotulan como lo que son: **los totales de la finca**.
+- **Añadido**: el **nombre de cada cafetal se edita con un lápiz** junto al título (objetivo táctil de 44 px, no un glifo de 12), y el
+  bloque enseña su resumen «(3,5 ha · 1.354 msnm)» en cuanto existe. En modo punto, los **puntos de geo-referencia van escritos**: es
+  lo que viaja al expediente, y verlos es lo que deja comprobar que el pin cayó donde el productor cree.
+- **Cambiado**: **B1 pide un proceso por VARIEDAD, no uno por lote** (owner). Un mismo lote puede llevar la Typica lavada y la Gesha en
+  honey; con un solo proceso, el productor tenía que elegir cuál de sus dos verdades escribía. `VarietyRow` gana `base` y `special`
+  con **default seguro**: `seedProcesos()` siembra cada variedad con el proceso que el lote ya tenía, así que ningún datasheet
+  anterior pierde nada ni obliga a reescribir.
+- **Retirado**: **el selector de «Especie» de B1** (owner: «es redundante, se consulta desde la variedad»). Dejó de ser un campo y pasó
+  a ser lo que siempre fue: una consecuencia — `especieDelLote()` la deriva de las variedades y dice «Mezcla» cuando no son todas de
+  la misma especie. `species`, `base_processing` y `special_processing` **se siguen escribiendo** como proyección de la variedad
+  dominante, porque los leen el OCP, el catálogo público, la ficha pública y el runner de Arena — código de otros componentes, que no
+  se toca desde aquí. Una fuente, varias copias de lectura; no dos verdades.
+- **Cambiado**: **la declaración final de la Ficha habla solo de la Ficha** (owner): «Declaro que la información es veraz y entregada
+  en buena fe para identificar este lote con la mejor información disponible». Lo de la muestra de 2 kg marcada con el código del lote
+  **sale de aquí** y se dirá donde se confirme la muestra: cerrar el expediente y comprometerse a despachar café son dos actos
+  distintos, y juntarlos hacía que el productor firmara el segundo sin haberlo decidido.
+- **Docs**: `qa-evaluaciones` pasa de 46 a **50** comprobaciones — vigila el reparto de nombres por las dos caras y se probó haciéndolo
+  morder (devolver «Sello EUDR» a `PerfilTab` lo pone rojo). ⚠️ **El OCP todavía dice «EVA» y «Visa EUDR»** en su tabla y en
+  `EvaReviewCard`: **pendiente con dueño `consolas`**, con su brief de simplificación (`briefs/consolas-simplificar-ocp-al-circuito.md`).
+
 ## [V5.64] — 2026-09-20 (commit fcc8bed)
 
 - **Hito**: **la barra del lote se redibuja en DOS líneas** (owner, 2026-09-20), y con ella se reparten de nuevo dos nombres que

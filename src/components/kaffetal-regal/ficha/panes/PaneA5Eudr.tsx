@@ -18,8 +18,8 @@ import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 
 const INFO = {
-  visa: "La Visa EUDR es la debida diligencia de la FINCA (Reglamento (UE) 2023/1115): geolocalización o polígono, no deforestación posterior al 31/12/2020, producción legal, tenencia de la tierra y áreas de legislación verificadas. Se completa una sola vez por finca (desde 'Mis fincas' → Editar) y BCP la revisa y la otorga.",
-  sello: "El Sello EUDR del lote se HEREDA de la Visa de su(s) finca(s) de origen: cuando la finca tiene su Visa vigente, todo lote que salga de ella queda sellado automáticamente — sin trámites adicionales por lote. Si la Visa está en trámite, el lote queda con bandera roja hasta que la finca la obtenga.",
+  visa: "El Pasaporte EUDR es la debida diligencia de la FINCA (Reglamento (UE) 2023/1115): geolocalización o polígono, no deforestación posterior al 31/12/2020, producción legal, tenencia de la tierra y áreas de legislación verificadas. Se completa una sola vez por finca (desde 'Mis fincas' → Editar) y CTCx lo revisa y lo otorga.",
+  sello: "La Visa EUDR del lote se HEREDA del Pasaporte de su(s) finca(s) de origen: cuando la finca tiene su Pasaporte vigente, todo lote que salga de ella recibe su Visa automáticamente — sin trámites adicionales por lote. Es el PRIMER entregable de CTCx, y es gratis: no necesita la evaluación del Q-Grader. Si el Pasaporte está en trámite, el lote queda con bandera roja hasta que la finca lo obtenga.",
 };
 
 export function PaneA5Eudr({ data, fincas }: PaneProps) {
@@ -30,20 +30,20 @@ export function PaneA5Eudr({ data, fincas }: PaneProps) {
 
   return (
     <div className={styles.fsec}>
-      <h3><span className={styles.fn}>A5</span> Visa EUDR y Sello del Lote</h3>
+      <h3><span className={styles.fn}>A5</span> Pasaporte de la Finca y Visa del Lote</h3>
       <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "8px 0 4px" }}>
-        <span style={{ fontSize: 13, fontWeight: 600 }}>Sello EUDR de este lote:</span>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>Visa EUDR de este lote:</span>
         <EudrStatusBadge status={status} />
         <FieldInfo text={INFO.sello} />
       </div>
       <p className={styles.fexample}>
-        Reglamento (UE) 2023/1115 · alineación voluntaria. El Sello del lote se hereda por completo de la Visa EUDR de
+        Reglamento (UE) 2023/1115 · alineación voluntaria. La Visa del lote se hereda por completo del Pasaporte EUDR de
         su(s) finca(s) de origen — usted no diligencia nada adicional por lote.
       </p>
 
       <div style={{ margin: "16px 0" }}>
         <p style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
-          Visa de la(s) finca(s) de origen ({sourceFincas.length || "sin resolver"})
+          Pasaporte de la(s) finca(s) de origen ({sourceFincas.length || "sin resolver"})
           <FieldInfo text={INFO.visa} />
         </p>
         {sourceFincas.length ? (
@@ -56,7 +56,7 @@ export function PaneA5Eudr({ data, fincas }: PaneProps) {
           </ul>
         ) : (
           <p className={styles.fexample}>
-            Seleccione la finca de origen en A2 — sin origen no hay Visa que heredar ni Sello que emitir.
+            Seleccione la finca de origen en A2 — sin origen no hay Pasaporte que heredar ni Visa que emitir.
           </p>
         )}
       </div>
@@ -64,14 +64,14 @@ export function PaneA5Eudr({ data, fincas }: PaneProps) {
       {/* El camino según el estado: qué falta y dónde se resuelve. */}
       {status.code === "eudr_ready" ? (
         <p style={{ fontSize: 13, fontWeight: 600, color: "var(--green, #2E7D52)", background: "#EEF3EA", border: "1px solid var(--primary)", borderRadius: 10, padding: "10px 14px" }}>
-          ✓ Visa vigente en la(s) finca(s) de origen — el Sello EUDR de este lote queda listo. Al evaluarse el lote podrá
-          descargar su Sello desde «Certificación CTC».
+          ✓ Pasaporte vigente en la(s) finca(s) de origen — la Visa EUDR de este lote queda lista. Al evaluarse el lote podrá
+          descargar su Visa desde «Certificación CTC».
         </p>
       ) : status.code === "sin_origen" ? null : (
         <p style={{ fontSize: 13, fontWeight: 600, color: "#8A6D1F", background: "#FBF2DD", border: "1px solid #E4CE8F", borderRadius: 10, padding: "10px 14px" }}>
-          La Visa de su finca está {status.code === "bloqueado" ? "denegada o sin otorgar" : "en trámite"}: complete la
+          El Pasaporte de su finca está {status.code === "bloqueado" ? "denegado o sin otorgar" : "en trámite"}: complete la
           información EUDR de la finca desde <b>Mis fincas → Editar</b> (ubicación o polígono, no deforestación,
-          producción legal, tenencia y áreas legales). CTC la revisará y, al otorgarle la Visa, este lote quedará
+          producción legal, tenencia y áreas legales). CTC lo revisará y, al otorgarle el Pasaporte, este lote quedará
           sellado automáticamente.
         </p>
       )}

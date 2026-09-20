@@ -166,7 +166,7 @@ export function LotKanbanStepper({
           st(visaDone, visaActive),
           noApto
             ? "Visa del lote: No Apto (reabrible)"
-            : "Visa del lote — el veredicto documental de CTCx; en verde emite su sello EUDR"
+            : "Visa EUDR del lote — el primer entregable de CTCx, y gratis: se hereda del Pasaporte de su finca y no necesita al Q-Grader"
         )}
       </div>
 
@@ -174,7 +174,7 @@ export function LotKanbanStepper({
       <div className={styles.row} role="list" aria-label="Circuito comercial del lote">
         {chip("MUE", st(mueDone, mueActive), "Muestra enviada y tarifa pagada — cierra cuando CTCx confirma las dos", "evaluaciones")}
         <span className={styles.fork} aria-hidden>→</span>
-        {chip("EVA", st(evaDone, evaActive), "Evaluación con el Q-Grader: perfil sensorial y granulometría", "evaluaciones")}
+        {chip("EVA", st(evaDone, evaActive), "EVA · Evaluación de Muestras en Origen: el Q-Grader devuelve la granulometría y el perfil sensorial", "evaluaciones")}
         <span className={styles.fork} aria-hidden>→</span>
         {chip(
           "GRADO",

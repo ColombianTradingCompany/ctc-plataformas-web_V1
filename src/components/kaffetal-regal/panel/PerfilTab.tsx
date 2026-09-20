@@ -142,21 +142,21 @@ export function PerfilTab({
             <button className="btn btn-sm" onClick={() => onRequestFincaRevision(f)}>Solicitar revisión de datos</button>
           )}
         </div>
-        {/* La VISA EUDR de la finca (modelo Pasaporte/Visa/Sello, 2026-07-24):
-            descargable cuando CTC la otorgó y la compartió; si no, se
-            explica en qué va el trámite. */}
+        {/* El PASAPORTE EUDR de la finca (vocabulario asentado por el owner el
+            2026-09-20: Pasaporte = finca, Visa = lote). Descargable cuando CTC
+            lo otorgó y lo compartió; si no, se explica en qué va el trámite. */}
         <div className={styles.certRow}>
           {f.status === "approved" && f.certShared ? (
             <a className={styles.certDownload} href={`/kaffetal-regal/certificacion/${f.id}`} target="_blank" rel="noopener noreferrer">
-              ⬇ Descargar Visa EUDR de {f.name}
+              ⬇ Descargar Pasaporte EUDR de {f.name}
             </a>
           ) : fincaStatusOf(f).code === "pendiente" ? (
             <span className={styles.certPending}>
-              Visa EUDR: en trámite — información incompleta
-              <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y el cuestionario de riesgo) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga la Visa EUDR, habilitará su descarga. Con la Visa vigente, todos los lotes de esta finca reciben su Sello EUDR automáticamente." />
+              Pasaporte EUDR: en trámite — información incompleta
+              <FieldInfo text="Complete la información EUDR de esta finca (ubicación/polígono, no deforestación, tenencia de la tierra y el cuestionario de riesgo) desde 'Editar'. Cuando esté completa, CTC la revisará y, si le otorga el Pasaporte EUDR, habilitará su descarga. Con el Pasaporte vigente, todos los lotes de esta finca reciben su Visa EUDR automáticamente — es el primer entregable de CTCx, y es gratis." />
             </span>
           ) : (
-            <span className={styles.certPending}>Visa EUDR: en trámite (a la espera de la revisión de CTC)</span>
+            <span className={styles.certPending}>Pasaporte EUDR: en trámite (a la espera de la revisión de CTC)</span>
           )}
         </div>
       </div>
@@ -222,7 +222,7 @@ export function PerfilTab({
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
           {lotEudrReady && (
             <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${l.id}`} target="_blank" rel="noopener noreferrer" style={{ textAlign: "center" }}>
-              Sello EUDR ↗
+              Visa EUDR ↗
             </a>
           )}
           {/* Deletable any time before the paid pipeline takes the lot (sin

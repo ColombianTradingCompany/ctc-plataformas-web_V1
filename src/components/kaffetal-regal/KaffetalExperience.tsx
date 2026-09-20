@@ -148,6 +148,8 @@ type ParcelaRow = {
   lat: number | string | null;
   lng: number | string | null;
   polygon_geojson: { lat: number; lng: number }[] | null;
+  altitude_masl: number | null;
+  requires_polygon: boolean | null;
   position: number;
 };
 function dbParcelaToParcela(row: ParcelaRow): Parcela {
@@ -159,6 +161,8 @@ function dbParcelaToParcela(row: ParcelaRow): Parcela {
     lat: row.lat != null ? String(row.lat) : "",
     lng: row.lng != null ? String(row.lng) : "",
     polygon: row.polygon_geojson ?? null,
+    alturaMsnm: row.altitude_masl != null ? String(row.altitude_masl) : "",
+    mayor4ha: row.requires_polygon,
     position: row.position,
   };
 }
@@ -1535,6 +1539,7 @@ function Experience() {
     // total de la finca); con una sola, el área de la finca ES la de la parcela.
     const areaHa =
       own.length > 1 && uno?.areaHa ? Number(uno.areaHa.replace(",", ".")) : f.ha !== "—" && f.ha.trim() ? Number(f.ha.replace(",", ".")) : null;
+    const alturaUno = uno?.alturaMsnm?.trim() ? Number(uno.alturaMsnm.replace(",", ".")) : f.alt !== "—" && f.alt.trim() ? Number(f.alt.replace(",", ".")) : null;
     const payload = {
       finca_id: fincaId,
       name: uno?.name ?? "Cafetal 1",
@@ -1542,6 +1547,10 @@ function Experience() {
       lat: hasPoint ? Number(f.lat.replace(",", ".")) : null,
       lng: hasPoint ? Number(f.lng.replace(",", ".")) : null,
       polygon_geojson: hasPoly ? f.eudrPolygon : null,
+      // V5.65: el espejo NO inventa — conserva lo que la parcela 1 ya tenía, y
+      // solo cae a la altura de la finca cuando la parcela aún no tiene la suya.
+      altitude_masl: alturaUno != null && !isNaN(alturaUno) ? Math.round(alturaUno) : null,
+      requires_polygon: uno?.mayor4ha ?? f.requiresEudrPolygon ?? null,
       position: 0,
       updated_at: new Date().toISOString(),
     };
@@ -1554,8 +1563,19 @@ function Experience() {
     setParcelas((prev) => (uno ? prev.map((p) => (p.id === uno.id ? mapped : p)) : [...prev, mapped]));
   }
 
-  async function saveParcela(draft: { id?: string; fincaId: string; name: string; areaHa: string; lat: string; lng: string; polygon: { lat: number; lng: number }[] | null }): Promise<boolean> {
+  async function saveParcela(draft: {
+    id?: string;
+    fincaId: string;
+    name: string;
+    areaHa: string;
+    lat: string;
+    lng: string;
+    polygon: { lat: number; lng: number }[] | null;
+    alturaMsnm?: string;
+    mayor4ha?: boolean | null;
+  }): Promise<boolean> {
     const area = draft.areaHa.trim() ? Number(draft.areaHa.replace(",", ".")) : null;
+    const altura = draft.alturaMsnm?.trim() ? Number(draft.alturaMsnm.replace(",", ".")) : null;
     const payload = {
       finca_id: draft.fincaId,
       name: draft.name.trim() || "Cafetal",
@@ -1563,6 +1583,9 @@ function Experience() {
       lat: draft.lat.trim() ? Number(draft.lat.replace(",", ".")) : null,
       lng: draft.lng.trim() ? Number(draft.lng.replace(",", ".")) : null,
       polygon_geojson: draft.polygon?.length ? draft.polygon : null,
+      // V5.65: altura propia del cafetal y la respuesta a «¿mayor a 4 ha?».
+      altitude_masl: altura != null && !isNaN(altura) ? Math.round(altura) : null,
+      requires_polygon: draft.mayor4ha ?? null,
       updated_at: new Date().toISOString(),
     };
     if (draft.id) {

@@ -29,6 +29,9 @@ const club = lee("src/lib/arena/club.ts");
 const producer = lee("src/lib/arena/producerActions.ts");
 const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
 const stepper = lee("src/components/kaffetal-regal/LotKanbanStepper.tsx");
+// V5.65: la otra superficie del productor donde se nombran Pasaporte y Visa
+// (la de Evaluaciones ya está leída arriba como `evalTab`).
+const perfil = lee("src/components/kaffetal-regal/panel/PerfilTab.tsx");
 const data = lee("src/components/kaffetal-regal/data.ts");
 const inscripciones = lee("src/lib/arena/inscriptions.ts");
 const cliente = lee("src/app/ocp/(app)/nominados/NominadosClient.tsx");
@@ -81,11 +84,22 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
 
 // ── 6. La barra canónica del lote (redibujada en la V5.64) ────────────────
 {
-  // V5.64 (owner, 2026-09-20): la barra se redibujó en DOS líneas y GAL/ARE
-  // dejaron de existir. Arriba el expediente —FT · FT2 · EUDR · FOTO → VISA—,
-  // abajo el tramo comercial —MUE → EVA → GRADO → CONT—. Ojo al reparto de
-  // nombres: VISA es el veredicto DOCUMENTAL (lo que antes se llamaba EVA en
-  // esta barra) y EVA pasó a ser la EVALUACIÓN con el Q-Grader.
+  // V5.64/V5.65 (owner, 2026-09-20): la barra son DOS líneas y GAL/ARE ya no
+  // existen. Arriba el expediente —FT · FT2 · EUDR · FOTO → VISA—, abajo el
+  // tramo comercial —MUE → EVA → GRADO → CONT—.
+  //
+  // El reparto de nombres quedó ASENTADO por el owner en la V5.65, y es lo que
+  // estas comprobaciones protegen (ver la nota de cabecera de `src/lib/eudr.ts`):
+  //
+  //   · PASAPORTE = de la FINCA (su debida diligencia EUDR).
+  //   · VISA      = del LOTE. Se hereda del Pasaporte y es el PRIMER entregable
+  //                 de CTCx, gratis: la documentación EUDR no necesita al
+  //                 Q-Grader, así que la Visa llega ANTES de la EVA.
+  //   · EVA       = «Evaluación de Muestras en Origen»: las muestras van al
+  //                 Q-Grader y vuelven con granulometría y perfil sensorial.
+  //
+  // Antes de esto la finca tenía «Visa», el lote «Sello» y el OCP llamaba «EVA»
+  // al veredicto documental. Si alguien vuelve a mezclarlos, aquí se ve.
   const orden = ["FT", "FT2", "EUDR", "FOTO", "VISA", "MUE", "EVA", "GRADO", "CONT"];
   // Un chip con título largo se escribe repartido en varias líneas, así que se
   // busca por expresión regular y no por substring literal.
@@ -97,8 +111,15 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
   check("la barra declara los nueve chips de la V5.64", posiciones.every((i) => i > -1));
   check("y en el orden canónico", posiciones.every((v, i) => i === 0 || v > posiciones[i - 1]));
   check("ni GAL ni ARE siguen en la barra", !stepper.includes('chip("GAL"') && !stepper.includes('chip("ARE"'));
-  check("VISA es el veredicto documental", /chip\(\s*"VISA"[\s\S]{0,400}?veredicto documental/.test(stepper));
-  check("EVA es la evaluación del Q-Grader", /chip\(\s*"EVA"[\s\S]{0,300}?Q-Grader/.test(stepper));
+  check("VISA es del LOTE y se hereda del Pasaporte de la finca", /chip\(\s*"VISA"[\s\S]{0,400}?Pasaporte/.test(stepper));
+  check("y se dice que es el primer entregable, y gratis", /chip\(\s*"VISA"[\s\S]{0,400}?gratis/.test(stepper));
+  check("EVA es la Evaluación de Muestras en Origen", /chip\(\s*"EVA"[\s\S]{0,400}?Evaluación de Muestras en Origen/.test(stepper));
+  check("y nombra lo que devuelve el Q-Grader", /chip\(\s*"EVA"[\s\S]{0,400}?Q-Grader/.test(stepper));
+  // El reverso: en la superficie del productor la finca ya NO tiene «Visa» ni el
+  // lote «Sello». Las dos palabras se movieron de objeto y las dos superficies
+  // tienen que decir lo mismo.
+  check("la finca dice Pasaporte, no Visa", perfil.includes("Pasaporte EUDR") && !/Visa EUDR de \{f\.name\}/.test(perfil));
+  check("el lote dice Visa, no Sello", !/Sello EUDR/.test(perfil) && !/Sello EUDR/.test(evalTab));
   // Lo que la V5.62 dejó escrito: el panel del productor IMPORTA el estado del
   // circuito, no lo recalcula. Si alguien vuelve a tejer la lógica a mano aquí,
   // el OCP y el productor empezarán a decir cosas distintas del mismo lote.

@@ -36,5 +36,11 @@ vistas de dos modelos. Escritos el 2026-09-19 desde un inventario del repo y del
 | [`consolas-gestion-de-muestras.md`](consolas-gestion-de-muestras.md) | consolas | OCP · Gestión de Muestras | nada |
 | [`consolas-ctcx-selection-compras.md`](consolas-ctcx-selection-compras.md) | consolas | OCP · CTCx Selection · Compras | la fase 4b del overhaul; Pagos; Producción |
 
+**Compañeros de Finca** (`kaffetal-regal`, 2026-09-20). Pedido por el owner dentro de la tanda de interfaz de la V5.64 y
+aplazado por él mismo a tanda propia el mismo día: no es interfaz, es **control de acceso** —tabla nueva, RLS, guard triggers y
+revisar cada compuerta de escritura del productor—, y toca el contrato de **Identidad** de `ALINEACION` §1.
+[`kaffetal-regal-companeros-de-finca.md`](kaffetal-regal-companeros-de-finca.md) · **bloqueado por cinco decisiones del owner**,
+la más dura la del bucket `kaffetal-media` (la ruta `{producer_id}/…` no contempla que suba alguien que no es el dueño).
+
 Orden recomendado si se aprueban todos: **Pagos → Muestras → Producción → Logístico → Compras**; Temas, cuando el owner diga qué es.
 Las cuatro primeras tandas no se pisan entre sí y ninguna cambia un precio ni una regla.

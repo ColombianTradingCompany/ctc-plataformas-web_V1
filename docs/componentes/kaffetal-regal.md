@@ -104,7 +104,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   entrega el perfil sensorial y la granulometría **por un login del «Centro de Calidad»**, que recibe la lista de lotes y
   permite evaluarlos **en orden**. No existe. Cuando exista, el chip **EVA** del panel podrá decir cuántos de los dos
   informes han llegado; hoy solo dice que el lote está en evaluación.
-- **Colaboradores de finca — tanda propia, pedida por el owner el 2026-09-20 y aplazada por él mismo**: atar una finca (y
+- **Compañeros de finca — tanda propia** (brief escrito: [`briefs/kaffetal-regal-companeros-de-finca.md`](briefs/kaffetal-regal-companeros-de-finca.md), con cinco preguntas al owner). Pedido por el owner el 2026-09-20 y aplazado por él mismo: atar una finca (y
   sus lotes) a otros productores, con **un solo admin** (borra y da pasos finales) y colaboradores que solo **agregan**
   información; en trazabilidad **figura únicamente el admin**, y hay que **revisar cada compuerta**. No es interfaz: es
   tabla nueva + RLS + guard triggers y toca el contrato de **Identidad** de `ALINEACION` §1. Se entrega el diseño por

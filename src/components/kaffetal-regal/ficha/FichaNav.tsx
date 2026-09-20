@@ -3,7 +3,7 @@ import styles from "./FichaNav.module.css";
 export type PaneId = "a1" | "a2" | "a3" | "a4" | "a5" | "b1" | "b2" | "b3" | "b4" | "ficha";
 
 // `substage` mirrors `lots.intake_step`'s 0-4 progression (FT, FT2, EUDR,
-// Video, done) -- see FichaView.tsx for what actually gates advancing past
+// FOTO, done) -- see FichaView.tsx for what actually gates advancing past
 // each one. The nav groups by substage now instead of Extrínsecos/Intrínsecos,
 // since that's the order the producer is actually allowed to move through.
 const PANES: { id: PaneId; idx: string; label: string; substage: number }[] = [
@@ -15,10 +15,13 @@ const PANES: { id: PaneId; idx: string; label: string; substage: number }[] = [
   { id: "b2", idx: "B2", label: "Perfil de Taza · Notas", substage: 1 },
   { id: "b3", idx: "B3", label: "Física · Granulometría", substage: 1 },
   { id: "a5", idx: "A5", label: "EUDR / Debida Diligencia", substage: 2 },
-  { id: "b4", idx: "B4", label: "Video del Café", substage: 3 },
+  { id: "b4", idx: "B4", label: "Fotos y Video del Café", substage: 3 },
   { id: "ficha", idx: "→", label: "Ficha (vista final)", substage: 4 },
 ];
-const SUBSTAGE_LABEL = ["FT · Identidad y Origen", "FT2 · Certificados y Análisis", "EUDR · Debida Diligencia", "Video", "Exportar"];
+// FOTO (antes «Video»): fase 5 del overhaul, V5.64 — el paso 4 pide DOS fotos
+// obligatorias y deja el video en opcional. El rótulo del grupo es el mismo chip
+// que la barra del lote pinta como FOTO (LotKanbanStepper).
+const SUBSTAGE_LABEL = ["FT · Identidad y Origen", "FT2 · Certificados y Análisis", "EUDR · Debida Diligencia", "FOTO · Fotos y video", "Exportar"];
 
 export function FichaNav({
   active,

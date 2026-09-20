@@ -102,6 +102,7 @@ export function AppDashboard({
 
   const meta = TAB_META[tab];
   const irAEvaluaciones = () => onSelectTab("evaluaciones");
+  const irAContratos = () => onSelectTab("contratos");
   const irALotes = () => {
     onSelectTab("perfil");
     onSetDrill({ kind: "lotes" });
@@ -163,6 +164,9 @@ export function AppDashboard({
             onRenameLot={onRenameLot}
             onDeleteLot={onDeleteLot}
             onGoEvaluaciones={irAEvaluaciones}
+            onGoContratos={irAContratos}
+            offers={offers}
+            contracts={contracts}
           />
         )}
 

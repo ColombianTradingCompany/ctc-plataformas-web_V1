@@ -179,6 +179,9 @@ export type Lot = {
   videoAssetId: string | null;
   videoUrl: string | null;
   sampleShippedAt: string | null;
+  /** CTCx confirmó el recibo de la muestra de 2 kg (`lots.sample_2kg_confirmed_at`).
+   *  Solo lectura para el productor; es lo que cierra el chip MUE (V5.64). */
+  sampleConfirmedAt: string | null;
   source: string;
   // Postulación a la Arena (2026-07-17): la fila de arena_inscriptions ES el
   // tramo pagado del lote — nace cuando el productor postula un lote Apto.
@@ -253,6 +256,12 @@ export type GeneralInfo = {
   razon: string;
   nit: string;
   agri: string;
+  /** El correo con el que se abrió la cuenta (Supabase Auth). SOLO LECTURA aquí:
+   *  cambiarlo es cambiar la identidad, y `guard_profiles_protected_columns` no
+   *  deja que el usuario se lo reescriba. Se enseña en Información General
+   *  porque el productor necesita saber a dónde le llegan los avisos de CTCx
+   *  —y cuál de sus correos usó— sin salir del panel (owner, 2026-09-20). */
+  email: string;
   cedulaCafetera: string;
   phone: string;
   whatsappConfirmed: boolean;
@@ -444,6 +453,7 @@ export const EMPTY_GI: GeneralInfo = {
   razon: "—",
   nit: "—",
   agri: "—",
+  email: "",
   cedulaCafetera: "",
   phone: "",
   whatsappConfirmed: false,

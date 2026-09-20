@@ -79,12 +79,30 @@ for (const s of ["Solicitudes de Evaluación", "Evaluaciones en Fila", "Lotes Ga
 check("las fases legadas de la Arena no quedan invisibles", evalTab.includes('"arena", "sesion"'));
 check("el galardón muestra el sello del grado", evalTab.includes("/images/shared/grados/"));
 
-// ── 6. La escalera canónica: GAL antes que ARE, ARE opcional ──────────────
+// ── 6. La barra canónica del lote (redibujada en la V5.64) ────────────────
 {
-  const gal = stepper.indexOf('chip("GAL"');
-  const are = stepper.indexOf('chip("ARE"');
-  check("el stepper pinta GAL antes que ARE", gal > -1 && are > -1 && gal < are);
-  check("ARE se declara vitrina opcional", stepper.includes("Vitrina de la Arena (opcional"));
+  // V5.64 (owner, 2026-09-20): la barra se redibujó en DOS líneas y GAL/ARE
+  // dejaron de existir. Arriba el expediente —FT · FT2 · EUDR · FOTO → VISA—,
+  // abajo el tramo comercial —MUE → EVA → GRADO → CONT—. Ojo al reparto de
+  // nombres: VISA es el veredicto DOCUMENTAL (lo que antes se llamaba EVA en
+  // esta barra) y EVA pasó a ser la EVALUACIÓN con el Q-Grader.
+  const orden = ["FT", "FT2", "EUDR", "FOTO", "VISA", "MUE", "EVA", "GRADO", "CONT"];
+  // Un chip con título largo se escribe repartido en varias líneas, así que se
+  // busca por expresión regular y no por substring literal.
+  const posiciones = orden.map((n) => {
+    const re = new RegExp('(label:\\s*|chip\\(\\s*)"' + n + '"');
+    const m = re.exec(stepper);
+    return m ? m.index : -1;
+  });
+  check("la barra declara los nueve chips de la V5.64", posiciones.every((i) => i > -1));
+  check("y en el orden canónico", posiciones.every((v, i) => i === 0 || v > posiciones[i - 1]));
+  check("ni GAL ni ARE siguen en la barra", !stepper.includes('chip("GAL"') && !stepper.includes('chip("ARE"'));
+  check("VISA es el veredicto documental", /chip\(\s*"VISA"[\s\S]{0,400}?veredicto documental/.test(stepper));
+  check("EVA es la evaluación del Q-Grader", /chip\(\s*"EVA"[\s\S]{0,300}?Q-Grader/.test(stepper));
+  // Lo que la V5.62 dejó escrito: el panel del productor IMPORTA el estado del
+  // circuito, no lo recalcula. Si alguien vuelve a tejer la lógica a mano aquí,
+  // el OCP y el productor empezarán a decir cosas distintas del mismo lote.
+  check("la línea comercial sale de estadoDelCircuito()", stepper.includes('from "@/lib/ocp/circuito"') && stepper.includes("estadoDelCircuito({"));
 }
 check("InscriptionPhase conoce galardonado", inscripciones.includes('| "galardonado"'));
 check("el modelo del productor también", data.includes('"fila" | "galardonado" | "arena"'));

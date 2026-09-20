@@ -1,19 +1,24 @@
 import { FieldInfo } from "./FieldInfo";
 import { ReportFiles } from "./ReportFiles";
 import { FichasDelLote } from "./FichasDelLote";
+import { almendraDesdeFactor, factorDesdeAlmendra, B3_MUESTRA_G } from "../fichaCalculations";
 import type { LotFicha } from "@/lib/fichas/tipos";
 import type { PaneProps } from "./types";
 import styles from "../../FichaView.module.css";
 import bstyles from "./PaneB3.module.css";
 
-// ── B3 · Caracterización Física (rediseño V5.20; afinado V5.21) ─────────────
+// ── B3 · Caracterización Física (rediseño V5.20; afinado V5.21 y V5.64) ─────
 // Igual que B2, el productor ya no llena la granulometría malla a malla. Los
-// NÚMEROS van siempre a la vista (owner, V5.21): factor (75–120), almendra
-// total (150–245 g; AT = 205 g − cisco) y densidad en verde (600–1000 g/L)
-// arriba, y las humedades opcionales abajo. Dos caminos para COMPLETAR:
+// NÚMEROS van siempre a la vista (owner, V5.21): factor (75–120) y almendra
+// total (150–245 g) arriba, y las humedades y la densidad opcionales abajo.
+// Dos caminos para COMPLETAR:
 //   · «Solo sé información básica» (la casilla declara que no habrá soportes):
-//     factor y/o almendra, y la densidad OBLIGATORIA.
+//     factor de rendimiento O almendra total — UNO de los dos, porque son la
+//     misma medida y el que falte se DERIVA (V5.64, owner: factor × AT = 17.500,
+//     ver almendraDesdeFactor/factorDesdeAlmendra en fichaCalculations).
 //   · Adjuntar al menos un soporte (PDF o foto del análisis físico).
+// La Densidad en Verde dejó de ser obligatoria en la V5.64 (owner) y bajó al
+// bloque opcional, junto a las humedades.
 // Todo viaja con B2 como «Reportado por Productor». El detalle completo
 // (mallas, defectos, factor de laboratorio) nace después, cuando CTCx analiza
 // los soportes y compila las Fichas Técnicas del lote — aquí se listarán al
@@ -54,6 +59,21 @@ export function PaneB3({
 }) {
   const fueraDeRango = (v: string, r: { min: number; max: number }) => v.trim() !== "" && !rangoValido(v, r);
 
+  // El par factor ↔ almendra: el productor reporta UNO y el otro se DERIVA.
+  // Se muestra, no se guarda — así el OCP siempre sabe cuál de los dos declaró
+  // (ALINEACION §1: «lo derivado no se persiste»).
+  const factorOk = rangoValido(data.yield_factor_producer, B3_RANGOS.factor);
+  const almendraOk = rangoValido(data.b3_almendra_total, B3_RANGOS.almendra);
+  const almendraDerivada = !almendraOk && factorOk ? almendraDesdeFactor(num(data.yield_factor_producer)) : null;
+  const factorDerivado = !factorOk && almendraOk ? factorDesdeAlmendra(num(data.b3_almendra_total)) : null;
+  const derivado = (valor: number | null, unidad: string) =>
+    valor == null ? null : (
+      <p className={bstyles.derivado}>
+        Derivado de lo que reportó: <b>{valor}{unidad}</b>. No hace falta que lo escriba — si lo conoce y no coincide,
+        escríbalo y mandará el suyo.
+      </p>
+    );
+
   return (
     <div className={styles.fsec}>
       <h3><span className={styles.fn}>B3</span> Caracterización Física</h3>
@@ -66,8 +86,8 @@ export function PaneB3({
         </p>
         <p className={bstyles.introSub}>
           Si su cooperativa o un laboratorio ya le hizo el análisis, <b>adjunte esa hoja</b> (PDF o fotos) y CTC extrae
-          el detalle. Si solo conoce los números básicos —el factor que le dan al comprarle, o la almendra total—
-          marque <b>«Solo sé información básica»</b> y repórtelos aquí.
+          el detalle. Si solo conoce los números básicos, marque <b>«Solo sé información básica»</b> y repórtenos{" "}
+          <b>uno solo</b>: el factor que le dan al comprarle, <i>o</i> la almendra total. Con cualquiera de los dos basta.
         </p>
         <p className={styles.fexample} style={{ marginTop: 8 }}>
           🎥{" "}
@@ -93,8 +113,8 @@ export function PaneB3({
           ella marcada, factor/almendra + densidad completan la sección. */}
       <div className={bstyles.basicaBox}>
           <p className={styles.fexample} style={{ marginTop: 0 }}>
-            Reporte <b>al menos uno</b> de los dos primeros; la <b>Densidad en Verde</b> es obligatoria si no adjunta
-            soportes.
+            Reporte <b>uno de los dos</b> — el que le sea más fácil. Son la misma medida dicha de dos maneras, así que
+            <b> el otro lo calculamos nosotros</b> a partir del que usted escriba.
           </p>
           <div className={styles.fgrid}>
             <div className={styles.ff}>
@@ -112,11 +132,12 @@ export function PaneB3({
               {fueraDeRango(data.yield_factor_producer, B3_RANGOS.factor) && (
                 <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.factor.min} y {B3_RANGOS.factor.max}.</p>
               )}
+              {derivado(factorDerivado, "")}
             </div>
             <div className={styles.ff}>
               <label>
                 Almendra Total (g · {B3_RANGOS.almendra.min}–{B3_RANGOS.almendra.max})
-                <FieldInfo text="De una muestra de 205 g de pergamino, los gramos de almendra (café verde) que quedan al quitar el cisco: AT = 205 g − gramos de cisco. Otro número que suele dar la cooperativa." />
+                <FieldInfo text={`De la muestra de laboratorio de ${B3_MUESTRA_G} g de pergamino, los gramos de almendra (café verde) que quedan al quitar el cisco: AT = ${B3_MUESTRA_G} g − gramos de cisco. Otro número que suele dar la cooperativa. Es el mismo dato que el factor de rendimiento, visto al revés: factor × almendra = ${B3_MUESTRA_G * 70}.`} />
               </label>
               <input
                 type="number"
@@ -128,22 +149,7 @@ export function PaneB3({
               {fueraDeRango(data.b3_almendra_total, B3_RANGOS.almendra) && (
                 <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.almendra.min} y {B3_RANGOS.almendra.max} g.</p>
               )}
-            </div>
-            <div className={styles.ff}>
-              <label>
-                Densidad en Verde (g/L · {B3_RANGOS.densidad.min}–{B3_RANGOS.densidad.max}) · obligatoria
-                <FieldInfo text="Cuánto pesa un litro de su café verde. Un grano denso (más de 700 g/L) suele venir de buena altura y desarrollarse completo — es de los primeros números que mira un comprador." />
-              </label>
-              <input
-                type="number"
-                step="1"
-                value={data.b3_densidad_verde}
-                onChange={(e) => onChange({ b3_densidad_verde: e.target.value })}
-                placeholder="Ej. 720"
-              />
-              {fueraDeRango(data.b3_densidad_verde, B3_RANGOS.densidad) && (
-                <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.densidad.min} y {B3_RANGOS.densidad.max} g/L.</p>
-              )}
+              {derivado(almendraDerivada, " g")}
             </div>
           </div>
       </div>
@@ -169,6 +175,25 @@ export function PaneB3({
           Si además conoce estos números, repórtelos (opcional)
         </p>
         <div className={styles.fgrid}>
+          {/* V5.64 (owner): la Densidad en Verde bajó aquí. Sigue siendo el dato
+              que más mira un comprador, pero ya no bloquea completar B3 — el que
+              no la tenga medida no debería quedarse fuera por eso. */}
+          <div className={styles.ff}>
+            <label>
+              Densidad en Verde (g/L · {B3_RANGOS.densidad.min}–{B3_RANGOS.densidad.max})
+              <FieldInfo text="Cuánto pesa un litro de su café verde. Un grano denso (más de 700 g/L) suele venir de buena altura y desarrollarse completo — es de los primeros números que mira un comprador." />
+            </label>
+            <input
+              type="number"
+              step="1"
+              value={data.b3_densidad_verde}
+              onChange={(e) => onChange({ b3_densidad_verde: e.target.value })}
+              placeholder="Ej. 720"
+            />
+            {fueraDeRango(data.b3_densidad_verde, B3_RANGOS.densidad) && (
+              <p className={bstyles.rangoError}>Debe estar entre {B3_RANGOS.densidad.min} y {B3_RANGOS.densidad.max} g/L.</p>
+            )}
+          </div>
           <div className={styles.ff}>
             <label>Humedad en Pergamino (%)<FieldInfo text="Porcentaje de humedad del café pergamino. Rango sano: 10–12%." /></label>
             <input type="number" step="0.1" value={data.fa_parch_hum} onChange={(e) => onChange({ fa_parch_hum: e.target.value })} placeholder="Ej. 11.0" />

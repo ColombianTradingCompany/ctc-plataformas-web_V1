@@ -253,3 +253,45 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   `…/nominados/CircuitoVista.tsx`. ANN nuevas: `src/app/lcp/layout.tsx`, `src/app/ocp/(app)/{a-evaluar,en-evaluacion,muestras,compras}/page.tsx`.
 - NO inventar en el mapa: Gestión de Muestras y Compras están en el rail y NO existen (sus páginas lo dicen).
 (commit: cc8d39a)
+
+## [2026-09-20] V5.64 · Kaffetal Regal — la barra del lote en dos líneas, la fase 5 y el mapa multiparcela
+- Tanda de INTERFAZ del productor, seis instrucciones del owner en una sesión. Todo dentro de `kaffetal-regal`, salvo una
+  migración de base y dos guardianes que se pusieron al día.
+- CAMBIO DE VOCABULARIO (lo más importante para el mapa): la barra canónica del lote pasa de
+  `FT · FT2 · EUDR · VID → EVA → MUE · SON → GAL → ARE` a DOS líneas:
+    línea 1 (expediente):  `FT · FT2 · EUDR · FOTO → VISA`
+    línea 2 (comercial):   `MUE → EVA → GRADO → CONT`
+  **VISA** = el veredicto documental de CTCx (el chip que antes se llamaba EVA aquí). **EVA** = la EVALUACIÓN con el Q-Grader,
+  que es lo que la palabra significa en todo el resto de la casa. `SON` desaparece (el Sondeo ya no es concepto), `GAL` → `GRADO`,
+  `ARE` sale de la barra. Definición del owner, textual: MUE cierra cuando CTCx confirma muestra Y pago; en EVA el lote queda
+  ABIERTO a recibir dos informes (rueda del café + ficha técnica) que entrega el Q-Grader por un login del «Centro de Calidad»;
+  GRADO es el punto de equilibrio donde CTCx decide si va al catálogo; CONT es la oferta de temporada que el productor toma
+  declarando su tamaño inicial, o cambia por CaaS · CTCx Selection, o no toma.
+- Fichas que cambian: `lotkanbanstepper` (dos filas, nueve chips, chips-botón hacia Evaluaciones/Contratos);
+  `circuitodellote` gana un LECTOR nuevo — `estadoDelCircuito()` ya no lo lee solo el OCP: lo importa el panel del productor,
+  que es exactamente lo que la V5.62 dejó anotado que pasaría. `fichatecnica`: el paso 4 se llama FOTO y pide 2 fotos.
+- Fase 5 del overhaul EJECUTADA (lado productor): B4 «Video del Café» → «Fotos y Video del Café», 2 fotos obligatorias, video
+  opcional. Campo nuevo `datasheet.b4_files_foto` con default seguro `[]`.
+- ARQUITECTURA · guard trigger nuevo: `guard_lot_fotos_intake` sobre `lots` (migración `lots_fotos_obligatorias`) — el TERCERO
+  de esa tabla, junto a `guard_lots_producer_columns` y `guard_lot_protected_columns`; los tres corren y la regla efectiva es su
+  intersección. Rechaza `borrador → ficha_completa` sin 2 fotos, y SOLO en la transición (un lote ya cerrado no se re-valida).
+  Razón de que sea un trigger y no una Server Action: KR escribe directo contra Supabase con el JWT del productor — en este
+  componente «el servidor» ES el trigger. Para la ficha DICT de guards: la tabla `lots` pasa a tener tres.
+- B3 · Caracterización Física: el productor reporta UNO de factor/almendra y el otro se DERIVA (`factor × almendra = 17.500`,
+  muestra de laboratorio de 250 g). Lo derivado NO se persiste — se calcula al leer, regla de la casa. La Densidad en Verde
+  deja de ser obligatoria y baja al bloque opcional.
+- CORREGIDO un dato falso de cara al productor: B3 decía «muestra de 205 g» con un rango que llega a 245 g (imposible). El repo
+  ya usaba 250 en `computeFactor`. ⚠️ El mismo error sigue en `src/app/ocp/(app)/fichasActions.ts:108` — pendiente con dueño
+  `consolas`, no se tocó código ajeno.
+- Mapa EUDR (`FincaMapPicker`): todas las parcelas en UN mapa — la editable en oro, las hermanas fijas en gris con su nombre.
+  Cada esquina del borrador es un marcador numerado y arrastrable (antes el primer clic no pintaba nada: el `<Polygon>` no tiene
+  qué dibujar hasta el segundo punto, y parecía que el toque fallaba). Una sola puerta de entrada al dibujo; el clic suelto en el
+  mapa ya no arranca un borrador invisible. La Parcela 1 gana nombre editable.
+- Información General enseña el CORREO de la cuenta (de la sesión de Auth, no de `profiles`), en solo lectura.
+- Guardianes: `qa-reportado-productor` 38 → 45 y `qa-evaluaciones` 40 → 46, reescritos a las reglas nuevas en vez de dejarlos
+  rojos. `qa-evaluaciones` ahora EXIGE que la línea comercial salga de `estadoDelCircuito()`.
+- ⚠️ Para el V46: la línea base real de `qa-kr-ficha` era 205, no 207 como decía el charter (ahora 206). El charter se corrigió.
+- LECCIÓN: **un guardián que vigila una escalera de nombres es un guardián que hay que reescribir el día que el owner renombra.**
+  Los dos rojos de esta tanda no eran regresiones: eran los guardianes haciendo su trabajo, diciendo «esto que cambiaste estaba
+  protegido». El trabajo no era apagarlos, era moverlos a la regla nueva.
+(commit: pendiente)

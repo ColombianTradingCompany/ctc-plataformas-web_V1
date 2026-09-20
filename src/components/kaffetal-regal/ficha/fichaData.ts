@@ -300,7 +300,7 @@ export type FichaFormData = {
   b2_files_pdf: { assetId: string; fileName: string }[];
   b2_files_foto: { assetId: string; fileName: string }[];
   // B3 — rediseño V5.20: o «Solo sé información básica» (factor 75–120 y/o
-  // almendra total 150–245, y densidad en verde 600–1000 OBLIGATORIA), o
+  // O almendra total 150–245 — UNO de los dos, V5.64; el otro se deriva), o
   // soportes adjuntos con un bloque opcional de humedades/densidad. Junto a lo
   // de B2 forma el bloque «Reportado por Productor».
   b3_solo_basica: boolean;
@@ -326,6 +326,13 @@ export type FichaFormData = {
   // lots.video_asset_id); estos viajan en el datasheet y se suben por el mismo
   // bucket con la convención de ruta de kaffetalMedia.
   extra_video_assets: { assetId: string; fileName: string }[];
+  // B4 — las FOTOS del lote (fase 5 del overhaul, V5.64): el paso 4 del intake
+  // dejó de ser «Video» y pasó a «Fotos y video», con DOS fotos obligatorias y
+  // el video opcional. Default seguro `[]`: un lote guardado antes de que este
+  // campo existiera lo recibe vacío y no revienta (regla del charter).
+  // La obligatoriedad se exige también en el servidor — guard trigger
+  // `guard_lot_fotos_intake` sobre `lots` (migración `lots_fotos_obligatorias`).
+  b4_files_foto: { assetId: string; fileName: string }[];
   // A5 — confirmación POSITIVA de trazabilidad (no cuenta como factor de
   // riesgo; es el reverso tranquilizador de las casillas de riesgo).
   eudr_traceability_confirmed: boolean;
@@ -391,7 +398,7 @@ export const EMPTY_FICHA: FichaFormData = {
   mesh_ugq: "", mesh_peaberry: "", mesh_residue: "",
   analysis_notes: "", qgrader_1: "", qgrader_2: "", qgrader_3: "",
   qgrader_name: "", qgrader_lab: "", qgrader_cert: "",
-  extra_video_assets: [],
+  extra_video_assets: [], b4_files_foto: [],
   eudr_traceability_confirmed: false,
   ft2_a3_na: false, ft2_a4_na: false, ft2_b2_na: false, ft2_b3_na: false,
 };

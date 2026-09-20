@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { Fragment, useCallback, useRef, useState } from "react";
 import { GoogleMap, Marker, Polygon, useJsApiLoader } from "@react-google-maps/api";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { polygonAreaHa } from "@/lib/geo/area";
@@ -16,6 +16,26 @@ const MAP_STYLE = { width: "100%", height: 320, borderRadius: 10 };
 
 export type PolygonPoint = { lat: number; lng: number };
 
+/** Una parcela YA guardada que se pinta en el mismo mapa, en gris y sin tocar. */
+export type ParcelaEnMapa = {
+  id: string;
+  nombre: string;
+  lat: string;
+  lng: string;
+  polygon: PolygonPoint[] | null;
+};
+
+// El oro de los previews estáticos (mapPreviewUrl): la parcela que se está
+// editando. Las demás van en gris para que se lean como contexto y no como
+// algo que el gesto de ahora vaya a cambiar.
+const ORO = "#FFCD00";
+const GRIS = "#8A8578";
+
+const centroide = (pts: PolygonPoint[]): PolygonPoint => ({
+  lat: pts.reduce((s, p) => s + p.lat, 0) / pts.length,
+  lng: pts.reduce((s, p) => s + p.lng, 0) / pts.length,
+});
+
 export function FincaMapPicker({
   lat,
   lng,
@@ -23,6 +43,8 @@ export function FincaMapPicker({
   needsPolygon,
   onChangePoint,
   onChangePolygon,
+  otras = [],
+  nombreActual,
 }: {
   lat: string;
   lng: string;
@@ -30,6 +52,13 @@ export function FincaMapPicker({
   needsPolygon: boolean;
   onChangePoint: (lat: string, lng: string) => void;
   onChangePolygon: (points: PolygonPoint[] | null) => void;
+  /** V5.64 (owner): las OTRAS parcelas de la finca, en el MISMO mapa, bloqueadas.
+   *  «Cuando se agrega una segunda parcela, va en el mismo mapa, con la primera
+   *  fijada (editable en su propia pantalla).» Sin esto el productor dibujaba a
+   *  ciegas y podía solapar dos cafetales sin enterarse. */
+  otras?: ParcelaEnMapa[];
+  /** Cómo se llama lo que se está editando aquí — para rotularlo en el mapa. */
+  nombreActual?: string;
 }) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const { isLoaded, loadError } = useJsApiLoader({
@@ -69,8 +98,17 @@ export function FincaMapPicker({
   // makes GoogleMap snap the viewport back on every state change -- each
   // clicked vertex used to re-center the map out from under the producer.
   // After mount, all movement goes through panTo/fitBounds on the map ref.
-  const [initialCenter] = useState(() => markerPos ?? (polygon?.length ? polygon[0] : DEFAULT_CENTER));
-  const [initialZoom] = useState(() => (markerPos || polygon?.length ? 15 : 8));
+  // Si esta parcela aún no tiene geometría pero sus hermanas sí, se arranca
+  // sobre ELLAS: el cafetal nuevo casi siempre está al lado del anterior.
+  const [initialCenter] = useState(() => {
+    if (markerPos) return markerPos;
+    if (polygon?.length) return polygon[0];
+    const vecina = otras.find((o) => o.polygon?.length || (o.lat.trim() && o.lng.trim()));
+    if (vecina?.polygon?.length) return vecina.polygon[0];
+    if (vecina && vecina.lat.trim() && vecina.lng.trim()) return { lat: Number(vecina.lat), lng: Number(vecina.lng) };
+    return DEFAULT_CENTER;
+  });
+  const [initialZoom] = useState(() => (markerPos || polygon?.length || otras.length > 0 ? 15 : 8));
 
   const fitToPolygon = useCallback((points: PolygonPoint[]) => {
     const map = mapRef.current;
@@ -88,16 +126,17 @@ export function FincaMapPicker({
         if (manualMode) return;
         if (drawing) {
           setDraftPoints((pts) => [...(pts ?? []), point]);
-        } else if (!polygon?.length) {
-          // First click on an empty map starts the draft directly -- no need
-          // to find the "Dibujar polígono" button first.
-          setDraftPoints([point]);
         }
+        // Sin modo dibujo activo, un clic en el mapa NO empieza nada: la entrada
+        // es el botón de abajo (owner, 2026-09-20 — «un botón para agregar la
+        // primera parcela, y con él se abren los demás»). Antes el primer clic
+        // arrancaba un borrador invisible y el productor no sabía si había
+        // pasado algo.
         return;
       }
       onChangePoint(String(point.lat), String(point.lng));
     },
-    [needsPolygon, drawing, manualMode, polygon, onChangePoint]
+    [needsPolygon, drawing, manualMode, onChangePoint]
   );
 
   const handleMarkerDragEnd = useCallback(
@@ -107,6 +146,13 @@ export function FincaMapPicker({
     },
     [onChangePoint]
   );
+
+  /** Mover una esquina del borrador arrastrándola (owner: «grab and drop»). */
+  function moveDraftPoint(i: number, e: google.maps.MapMouseEvent) {
+    if (!e.latLng) return;
+    const punto = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+    setDraftPoints((pts) => pts?.map((p, idx) => (idx === i ? punto : p)) ?? null);
+  }
 
   function finishDrawing() {
     if (draftPoints && draftPoints.length >= 3) {
@@ -220,6 +266,8 @@ export function FincaMapPicker({
     return <p style={{ fontSize: 12.5, color: "var(--muted)" }}>Cargando mapa…</p>;
   }
 
+  const otrasUbicadas = otras.filter((o) => (o.polygon?.length ?? 0) >= 3 || (o.lat.trim() !== "" && o.lng.trim() !== ""));
+
   return (
     <div>
       <GoogleMap
@@ -235,14 +283,37 @@ export function FincaMapPicker({
         }}
         options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false, mapTypeId: "hybrid" }}
       >
-        {!needsPolygon && markerPos && <Marker position={markerPos} draggable onDragEnd={handleMarkerDragEnd} />}
+        {/* ── Las OTRAS parcelas: contexto fijado, no editable (V5.64) ───── */}
+        {otrasUbicadas.map((o) => {
+          const pts = (o.polygon?.length ?? 0) >= 3 ? o.polygon! : null;
+          const punto = pts ? centroide(pts) : { lat: Number(o.lat), lng: Number(o.lng) };
+          return (
+            <Fragment key={o.id}>
+              {pts && (
+                <Polygon
+                  path={pts}
+                  editable={false}
+                  options={{ strokeColor: GRIS, strokeWeight: 2, fillColor: GRIS, fillOpacity: 0.18, clickable: false, zIndex: 1 }}
+                />
+              )}
+              <Marker
+                position={punto}
+                clickable={false}
+                label={{ text: o.nombre, fontSize: "10px", fontWeight: "700", color: "#fff" }}
+                opacity={0.75}
+                title={`${o.nombre} — ya guardada. Se edita desde su propia tarjeta.`}
+                zIndex={1}
+              />
+            </Fragment>
+          );
+        })}
+
+        {!needsPolygon && markerPos && <Marker position={markerPos} draggable onDragEnd={handleMarkerDragEnd} zIndex={3} />}
         {needsPolygon && shownPolygon && shownPolygon.length > 0 && (
           <Polygon
             path={shownPolygon}
             editable={!drawing}
-            // Same gold as the static previews (mapPreviewUrl), so the shape
-            // reads as the same object across both renderings.
-            options={{ strokeColor: "#FFCD00", strokeWeight: 3, fillColor: "#FFCD00", fillOpacity: 0.2 }}
+            options={{ strokeColor: ORO, strokeWeight: 3, fillColor: ORO, fillOpacity: 0.2, zIndex: 2 }}
             onMouseUp={(e) => {
               if (drawing) return;
               // Editable-polygon vertex drags don't carry the full path in the
@@ -253,6 +324,26 @@ export function FincaMapPicker({
             }}
           />
         )}
+
+        {/* ── Las esquinas del borrador, UNA A UNA ───────────────────────────
+            Antes solo se veía algo al segundo clic, cuando el <Polygon> ya
+            tenía una línea que pintar: el primer punto caía en un mapa que no
+            reaccionaba y parecía que el clic no había funcionado (owner,
+            2026-09-20). Ahora cada esquina es un marcador numerado desde la
+            primera, y se puede arrastrar para corregirla sin deshacer. */}
+        {needsPolygon &&
+          drawing &&
+          (draftPoints ?? []).map((p, i) => (
+            <Marker
+              key={`draft-${i}`}
+              position={p}
+              draggable
+              onDragEnd={(e) => moveDraftPoint(i, e)}
+              label={{ text: String(i + 1), fontSize: "11px", fontWeight: "700", color: "#fff" }}
+              title={`Esquina ${i + 1} — arrástrela para corregirla`}
+              zIndex={4}
+            />
+          ))}
       </GoogleMap>
       <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
         <input
@@ -276,6 +367,15 @@ export function FincaMapPicker({
         </button>
       </div>
       {geoError && <p style={{ fontSize: 11.5, color: "var(--red)", marginTop: 6 }}>{geoError}</p>}
+
+      {otrasUbicadas.length > 0 && (
+        <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
+          En gris {otrasUbicadas.length === 1 ? "está" : "están"} {otrasUbicadas.map((o) => o.nombre).join(" · ")} —
+          ya {otrasUbicadas.length === 1 ? "guardada" : "guardadas"}, aquí solo de referencia para que no se solapen.
+          {nombreActual ? ` En oro, ${nombreActual}: lo que se edita en este mapa.` : ""}
+        </p>
+      )}
+
       {!needsPolygon && (
         <p style={{ fontSize: 11.5, color: "var(--muted)", marginTop: 6 }}>
           Busque su dirección, use su ubicación actual, o haga clic en el mapa / arrastre el pin para ajustar.
@@ -285,8 +385,11 @@ export function FincaMapPicker({
         <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {!drawing ? (
             <>
-              <button type="button" className="btn btn-sm" onClick={() => setDraftPoints([])}>
-                {polygon?.length ? "Redibujar polígono" : "Dibujar polígono"}
+              {/* UN botón de entrada (owner, 2026-09-20). Los demás —terminar,
+                  deshacer, ubicación, cancelar— solo existen mientras se
+                  dibuja: fuera de ese momento no hacen nada y solo estorban. */}
+              <button type="button" className="btn btn-sm btn-solid" onClick={() => setDraftPoints([])}>
+                {polygon?.length ? "✎ Redibujar el polígono" : "＋ Marcar el polígono en el mapa"}
               </button>
               <span style={{ display: "inline-flex", alignItems: "center" }}>
                 <button type="button" className="btn btn-sm" onClick={startManualEntry}>
@@ -303,14 +406,14 @@ export function FincaMapPicker({
               )}
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
                 {polygon?.length
-                  ? `${polygon.length} vértices${committedArea != null ? ` · ${committedArea} ha` : ""} — arrastre los puntos para ajustar`
-                  : "Predio > 4 ha: haga clic en el mapa para marcar el primer vértice del terreno"}
+                  ? `${polygon.length} vértices${committedArea != null ? ` · ${committedArea} ha` : ""} — arrastre cualquier esquina del polígono dorado para ajustarla`
+                  : "Predio > 4 ha: el EUDR pide el lindero completo. Toque el botón y marque las esquinas en el mapa."}
               </p>
             </>
           ) : (
             <>
               <button type="button" className="btn btn-sm btn-solid" onClick={finishDrawing} disabled={(draftPoints?.length ?? 0) < 3}>
-                Terminar polígono{draftPoints?.length ? ` (${draftPoints.length})` : ""}
+                Guardar polígono{draftPoints?.length ? ` (${draftPoints.length})` : ""}
               </button>
               <button type="button" className="btn btn-sm" onClick={undoLastPoint} disabled={(draftPoints?.length ?? 0) === 0}>
                 ↩ Deshacer punto
@@ -323,12 +426,14 @@ export function FincaMapPicker({
               </button>
               <p style={{ fontSize: 11.5, color: "var(--muted)", margin: 0 }}>
                 {/* Mientras se dibuja, la forma ya se ve pero TODAVÍA NO es la
-                    geometría de la finca: hasta «Terminar polígono» no viaja al
+                    geometría de la parcela: hasta «Guardar polígono» no viaja al
                     formulario, y por eso «Calcular del polígono» sigue apagado
                     allá arriba. Se dice aquí, junto al botón que lo resuelve. */}
-                {(draftPoints?.length ?? 0) < 3
-                  ? `Marque cada esquina del terreno en el mapa (${draftPoints?.length ?? 0} de mínimo 3).`
-                  : `${draftPoints?.length} vértices marcados${draftArea != null ? ` · ${draftArea} ha` : ""} — toque «Terminar polígono» para guardarlo en la finca.`}
+                {(draftPoints?.length ?? 0) === 0
+                  ? "Toque cada esquina del terreno en el mapa. La primera aparece marcada con un 1."
+                  : (draftPoints?.length ?? 0) < 3
+                    ? `${draftPoints?.length} de mínimo 3 — siga marcando las esquinas (puede arrastrar las ya puestas).`
+                    : `${draftPoints?.length} esquinas${draftArea != null ? ` · ${draftArea} ha` : ""} — arrástrelas para ajustar, y toque «Guardar polígono».`}
               </p>
             </>
           )}

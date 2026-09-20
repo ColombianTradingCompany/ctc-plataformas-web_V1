@@ -167,6 +167,18 @@ function InfoModalBody({
       </h3>
       <p>Se registra una sola vez y aplica a todos sus lotes y fincas. Puede actualizarla cuando lo necesite.</p>
       <div className={styles.grid}>
+        {/* El correo de la CUENTA (owner, 2026-09-20). Va de primero y en solo
+            lectura: es a donde CTCx le escribe, y el productor tenía que salir
+            del panel para acordarse de con cuál se registró. Cambiarlo es
+            cambiar la identidad — no es un campo de este formulario. */}
+        <div className={styles.wide}>
+          <label>Correo de la cuenta <small>(no editable)</small></label>
+          <input value={gi.email || "—"} readOnly disabled aria-label="Correo electrónico de la cuenta" />
+          <p style={{ fontSize: 11.5, color: "var(--muted)", margin: "4px 0 0" }}>
+            Es la dirección con la que entró y a la que CTCx le escribe. Si necesita cambiarla, pídalo por
+            «Retroalimentación y ayuda».
+          </p>
+        </div>
         <div className={styles.wide}><label>Razón social del proveedor</label><input value={form.razon} onChange={(e) => patch({ razon: e.target.value })} placeholder="Razón social legal del proveedor" /></div>
         <div><label>N.º de identificación legal (NIT / CC)</label><input value={form.nit} onChange={(e) => patch({ nit: e.target.value })} placeholder="N.º de identificación legal" /></div>
         <div><label>Nombre del agricultor</label><input value={form.agri} onChange={(e) => patch({ agri: e.target.value })} placeholder="Nombre del agricultor" /></div>

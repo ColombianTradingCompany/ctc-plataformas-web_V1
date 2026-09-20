@@ -13,7 +13,7 @@ import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaR
 import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
-import { FincaMapPicker } from "./FincaMapPicker";
+import { FincaMapPicker, type ParcelaEnMapa } from "./FincaMapPicker";
 import { FieldInfo } from "./ficha/panes/FieldInfo";
 import { ORIGIN_CERTS, INTL_CERTS, CERT_INFO } from "./ficha/fichaData";
 import { fincaCode, LOCAL_INFRA, type Finca, type FincaCertificate, type GeneralInfo, type Parcela } from "./data";
@@ -513,6 +513,29 @@ function FincaModalBody({
     })),
   ];
   const eudrStatus = fincaEudrStatus(previewFinca, previewParcelas);
+  // El nombre editable de la parcela 1 (V5.64). Se siembra del valor guardado;
+  // `parcelaUno?.name` como clave del estado inicial no hace falta porque el
+  // cuerpo del modal se monta de cero cada vez que se abre.
+  const [nombreUno, setNombreUno] = useState(parcelaUno?.name ?? "Cafetal 1");
+
+  // ── V5.64 · todas las parcelas en UN mapa ────────────────────────────────
+  // El owner las quiere juntas: la que se edita en oro, las demás fijadas en
+  // gris. `enMapa` es la vista que consume FincaMapPicker; cada mapa se quita
+  // a sí mismo de la lista antes de pintarla.
+  const enMapa: ParcelaEnMapa[] = [
+    // La parcela 1 NO sale de `parcelas`: sale del borrador vivo de este modal
+    // (el mapa de arriba ES la parcela 1, y se espeja al guardar). Si se leyera
+    // de props, las tarjetas de abajo pintarían la geometría ANTERIOR mientras
+    // el productor la está moviendo.
+    {
+      id: parcelaUno?.id ?? "parcela-uno",
+      nombre: parcelaUno?.name ?? "Cafetal 1",
+      lat: eudr.lat,
+      lng: eudr.lng,
+      polygon: eudr.eudrPolygon,
+    },
+    ...extraParcelas.map((p) => ({ id: p.id, nombre: p.name, lat: p.lat, lng: p.lng, polygon: p.polygon })),
+  ];
   const needsPolygon = !isNaN(haNum) && haNum > 4;
 
   // Which of the four tabs is showing. All four panels stay mounted (toggled by
@@ -950,6 +973,37 @@ function FincaModalBody({
                 : "Marque el punto del cafetal en el mapa. Es la evidencia principal de geolocalización EUDR."}
             </p>
 
+            {/* El NOMBRE de la parcela 1 (owner, 2026-09-20: «el usuario puede
+                cambiar el nombre de cada parcela»). Las 2..N ya lo tenían en su
+                tarjeta; esta no, porque nace espejada de la finca. Se guarda
+                sola, por fuera del autosave del modal — igual que las otras
+                parcelas. Solo aparece cuando la parcela 1 ya existe en la base:
+                antes de eso todavía no hay fila que renombrar, y el espejo le
+                pone «Cafetal 1» al crearla. */}
+            {parcelaUno && (
+              <div style={{ maxWidth: 340, margin: "0 0 10px" }}>
+                <label style={{ fontSize: 12 }}>Nombre de este cafetal</label>
+                <input
+                  value={nombreUno}
+                  onChange={(e) => setNombreUno(e.target.value)}
+                  onBlur={() => {
+                    const limpio = nombreUno.trim();
+                    if (!limpio || limpio === parcelaUno.name) return;
+                    void onSaveParcela({
+                      id: parcelaUno.id,
+                      fincaId: parcelaUno.fincaId,
+                      name: limpio,
+                      areaHa: parcelaUno.areaHa,
+                      lat: parcelaUno.lat,
+                      lng: parcelaUno.lng,
+                      polygon: parcelaUno.polygon,
+                    });
+                  }}
+                  placeholder="Cafetal 1"
+                />
+              </div>
+            )}
+
             {/* «Estoy aquí» (owner, 2026-08-20) ──────────────────────────────
                 Pedido para el caso de >4 ha: quien está PARADO en la mitad de
                 su predio no debería tener que encontrarse a sí mismo en un mapa
@@ -987,6 +1041,8 @@ function FincaModalBody({
               needsPolygon={needsPolygon}
               onChangePoint={(lat, lng) => patchEudr({ lat, lng })}
               onChangePolygon={(polygon) => patchEudr({ eudrPolygon: polygon })}
+              otras={enMapa.filter((p) => p.id !== (parcelaUno?.id ?? "parcela-uno"))}
+              nombreActual={parcelaUno?.name ?? "Cafetal 1"}
             />
           </div>
 
@@ -1001,6 +1057,7 @@ function FincaModalBody({
               <ParcelasExtra
                 fincaId={finca.id}
                 extras={extraParcelas}
+                enMapa={enMapa}
                 onSave={onSaveParcela}
                 onDelete={onDeleteParcela}
               />
@@ -1352,11 +1409,15 @@ function FincaModalBody({
 function ParcelasExtra({
   fincaId,
   extras,
+  enMapa,
   onSave,
   onDelete,
 }: {
   fincaId: string;
   extras: Parcela[];
+  /** V5.64: TODAS las parcelas de la finca (incluida la 1), para que el mapa de
+   *  cada tarjeta pinte en gris a las hermanas ya guardadas. */
+  enMapa: ParcelaEnMapa[];
   onSave: (draft: ParcelaDraft) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
 }) {
@@ -1371,6 +1432,7 @@ function ParcelasExtra({
           fincaId={fincaId}
           open={openId === p.id}
           onToggle={() => setOpenId(openId === p.id ? null : p.id)}
+          otras={enMapa.filter((o) => o.id !== p.id)}
           onSave={onSave}
           onDelete={onDelete}
         />
@@ -1382,6 +1444,7 @@ function ParcelasExtra({
           fincaId={fincaId}
           open
           onToggle={() => setOpenId(null)}
+          otras={enMapa}
           onSave={async (d) => {
             const ok = await onSave(d);
             if (ok) setOpenId(null);
@@ -1404,6 +1467,7 @@ function ParcelaCard({
   fincaId,
   open,
   onToggle,
+  otras,
   onSave,
   onDelete,
 }: {
@@ -1412,6 +1476,8 @@ function ParcelaCard({
   fincaId: string;
   open: boolean;
   onToggle: () => void;
+  /** Las hermanas ya guardadas — se pintan fijas en el mismo mapa (V5.64). */
+  otras: ParcelaEnMapa[];
   onSave: (draft: ParcelaDraft) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
 }) {
@@ -1504,6 +1570,8 @@ function ParcelaCard({
                 setLng(lo);
               }}
               onChangePolygon={setPolygon}
+              otras={otras}
+              nombreActual={name || `Cafetal ${index}`}
             />
           </div>
           <div>

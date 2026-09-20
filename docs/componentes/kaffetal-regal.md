@@ -9,7 +9,9 @@ login, el **panel en cinco interfaces** (V5.16): Mensajes · Ecosistema · Mi Pe
 Contratos. Desde aquí el productor registra fincas y lotes, llena la **Ficha Técnica** (FT → FT2 → EUDR
 → VID), pide su **evaluación** (muestra + COP 80.000), sigue su lote hasta el **galardón**, y responde a
 las **ofertas** (temporada · black · subasta Tyrian) cuya aceptación crea el contrato. El camino base
-del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opcional)`.
+del lote (**redibujado por el owner, V5.64**) son DOS líneas: el **expediente** `FT · FT2 · EUDR · FOTO → VISA` y el
+**tramo comercial** `MUE → EVA → GRADO → CONT`. **VISA** es el veredicto documental (el chip que antes se llamaba
+EVA aquí) y **EVA** es ahora la **evaluación con el Q-Grader**; `SON`, `GAL` y `ARE` salieron de la barra.
 
 ## Superficies y rutas
 
@@ -47,8 +49,9 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Guardianes
 
-`qa-kr-panel-check.mjs` (119) · `qa-kr-ficha-check.mjs` (207, con `ts-resolve`) ·
-`qa-reportado-productor-check.mjs` (40) · `qa-evaluaciones-check.mjs` (42, lado productor) ·
+`qa-kr-panel-check.mjs` (119) · `qa-kr-ficha-check.mjs` (**206**, con `ts-resolve` — el charter decía 207, pero la línea
+base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
+`qa-reportado-productor-check.mjs` (**45**) · `qa-evaluaciones-check.mjs` (**46**, lado productor) ·
 `qa-ofertas-check.mjs` (36, `respondToOffer`) · `qa-fichas-check.mjs` (31, panes B2/B3) ·
 `qa-solicitudes-kr-check.mjs` (22) · `qa-visa-check.mjs` (30) · `qa-area-check.mjs` · `qa-claims-check.mjs` ·
 `qa-recuperacion-check.mjs` (puerta KR).
@@ -56,6 +59,11 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 ## Reglas propias
 
 - **El productor nunca escribe un grado ni un estado más allá de `ficha_completa`**: lo hace el OCP.
+- **La barra del lote son DOS líneas y su segunda línea NO se calcula aquí**: `estadoDelCircuito()`
+  (`src/lib/ocp/circuito.ts`) es la fuente única del tramo comercial, y el panel la IMPORTA (V5.62 → V5.64).
+  `qa-evaluaciones` lo exige.
+- **Lo derivado no se persiste**: B3 calcula al leer el factor o la almendra que el productor no reportó
+  (`factor × almendra = 17.500`) y jamás lo escribe al datasheet — así el OCP distingue lo declarado de lo calculado.
 - **Todo campo nuevo del datasheet nace con default seguro** (`{ ...EMPTY_FICHA, ...lot.datasheet }`) — un
   lote guardado antes de que existiera el campo no puede reventar.
 - Las subidas van por `kaffetalMedia` con la ruta `{producer_id}/…` (las políticas de Storage la exigen);
@@ -81,11 +89,38 @@ del lote: `FT·FT2·EUDR·VID → EVA → MUE·SON → GAL → ARE (vitrina, opc
 
 ## Pendientes
 
-- **⚠️ El overhaul de las consolas toca este componente en su fase 5** (`docs/OVERHAUL_CONSOLAS_PLAN.md`, 2026-09-19, sin
-  ejecutar): el paso 4 del intake pasa de «Video» a **«Fotos y video» — 2 fotos obligatorias, video opcional**, validado en
-  el servidor (hoy el video solo se exige en el cliente y no se pide ninguna foto del lote); «Evaluar mi Café» pasa a **Por
-  evaluar · En evaluación · Evaluados** (el Sondeo desaparece como concepto); y al aceptar una oferta el productor acepta los
-  términos y declara su **Initial Locked Availability**. Se verifica en vivo con las cuentas `prueba-*`.
+- **⚠️ `EVA` significa dos cosas distintas en dos superficies — dueño: `consolas`** (abierto el 2026-09-20 por la V5.64,
+  `ALINEACION` §3). En el panel del productor **VISA** es el veredicto documental y **EVA** es la catación con el
+  Q-Grader; en el OCP, la columna **«EVA»** de `/ocp/kr` (`KrTabla.tsx:224`) y el rótulo «Veredicto EVA» de
+  `EvaReviewCard` siguen nombrando lo documental. El owner definió EVA como la evaluación; el OCP tiene que renombrar
+  su columna a **Visa**. Hasta entonces, **es divergencia declarada, no un descuido**.
+- **⚠️ «Visa» queda usada para dos objetos** (owner, decidir): la **Visa EUDR de la FINCA** (columna `Visa EUDR` del
+  OCP, `qa-visa-check`) y ahora el chip **VISA del LOTE**, que hasta hoy se llamaba **Sello**. El owner eligió la palabra
+  a propósito el 2026-09-20; queda anotado para que sea deliberado y no una colisión heredada.
+- **El dato falso del 205 g — dueño: `consolas`**: `src/app/ocp/(app)/fichasActions.ts:108` dice «gramos de almendra en
+  muestra de 205 g» con un rango 150–245 — imposible. La aritmética del repo usa **250 g** (`computeFactor`,
+  `fa_start`), único valor con el que cuadran los rangos. KR ya corrigió su copy (V5.64); el OCP no se tocó (código ajeno).
+- **El «Centro de Calidad» del Q-Grader — dueño: `consolas` / `socios`** (owner, 2026-09-20, al definir EVA): el Q-Grader
+  entrega el perfil sensorial y la granulometría **por un login del «Centro de Calidad»**, que recibe la lista de lotes y
+  permite evaluarlos **en orden**. No existe. Cuando exista, el chip **EVA** del panel podrá decir cuántos de los dos
+  informes han llegado; hoy solo dice que el lote está en evaluación.
+- **Colaboradores de finca — tanda propia, pedida por el owner el 2026-09-20 y aplazada por él mismo**: atar una finca (y
+  sus lotes) a otros productores, con **un solo admin** (borra y da pasos finales) y colaboradores que solo **agregan**
+  información; en trazabilidad **figura únicamente el admin**, y hay que **revisar cada compuerta**. No es interfaz: es
+  tabla nueva + RLS + guard triggers y toca el contrato de **Identidad** de `ALINEACION` §1. Se entrega el diseño por
+  escrito para aprobar antes de ejecutar.
+- **Ergonomía táctil por debajo de la regla de la casa** (auditoría del 2026-09-20, sin ejecutar): ~15 controles del panel
+  y la Ficha están bajo los **44 px** que exige `ALINEACION` §1. Los peores: `FlipCard .closeBtn` 26×26,
+  `AppDashboard .iconbtn` 30×30, `PaneB1 .unknownRow` ≈17 px, `RetroalimentacionPanel .ackRow` ≈15 px, y
+  `.deletebtn`/`.svcChip`/`.chip`/`FichaNav .item` entre 29 y 35 px. `PanelNav` sí cumple (≈69 px).
+
+- **El overhaul de las consolas en su fase 5** (`docs/OVERHAUL_CONSOLAS_PLAN.md`): **el paso 4 del intake está HECHO**
+  (V5.64, 2026-09-20) — pasó de «Video» a **«Fotos y video»: 2 fotos obligatorias, video opcional**, validado en el
+  servidor por el guard trigger `guard_lot_fotos_intake` (migración `lots_fotos_obligatorias`), no solo en el cliente.
+  **Sigue pendiente el resto de la fase 5**: «Evaluar mi Café» a **Por evaluar · En evaluación · Evaluados** (el Sondeo
+  desaparece como concepto — la barra del lote ya lo retiró en la V5.64, falta la pestaña), y que al aceptar una oferta
+  el productor acepte los términos y declare su **Initial Locked Availability**. Se verifica en vivo con `prueba-*`.
+
 - **Correcciones del owner al guion (2026-09-18, v0.9.1)** que alcanzan a otros: la evaluación deja de hablar de «descuento»
   —**CTCx coinvierte** del 30 % y hasta el 70 % del costo— y la compra inicial de **Gold en Cherry Picked es «hasta 100 kg»**,
   no «> 100 kg». ~~`PVC_BCP_PLAN.md` §14 dice todavía lo anterior: **consolas reconcilia**~~ — **reconciliado**: el plan del PVC

@@ -25,6 +25,9 @@ export function ReportFiles({
   onChange,
   onUploadFile,
   onGetFileUrl,
+  soloFotos = false,
+  etiquetaFotos,
+  maxFotos,
 }: {
   titulo: string;
   pdfs: ReportFile[];
@@ -32,6 +35,13 @@ export function ReportFiles({
   /** p. ej. `lots/<id>/b2` — el archivo va a `<base>/pdf-3` o `<base>/foto-1`. */
   subpathBase: string;
   locked: boolean;
+  /** V5.64 (B4 · Fotos y video): esconde la columna de PDFs — hay secciones
+   *  donde un PDF no es una respuesta posible y ofrecerlo solo confunde. */
+  soloFotos?: boolean;
+  /** Etiqueta de la columna de fotos cuando «Fotos» no dice lo suficiente. */
+  etiquetaFotos?: string;
+  /** Cuántas fotos admite esta sección (por defecto MAX_REPORT_FILES = 7). */
+  maxFotos?: number;
   onChange: (patch: { pdfs?: ReportFile[]; fotos?: ReportFile[] }) => void;
   onUploadFile: (subpath: string, file: File, onProgress?: (fraction: number) => void) => Promise<{ assetId: string } | { error: string }>;
   onGetFileUrl: (assetId: string) => Promise<string | null>;
@@ -39,11 +49,14 @@ export function ReportFiles({
   const up = useUpload();
   const [error, setError] = useState<string | null>(null);
 
+  const topeFotos = maxFotos ?? MAX_REPORT_FILES;
+  const tope = (kind: "pdf" | "foto") => (kind === "pdf" ? MAX_REPORT_FILES : topeFotos);
+
   async function add(kind: "pdf" | "foto", file: File) {
     setError(null);
     const list = kind === "pdf" ? pdfs : fotos;
-    if (list.length >= MAX_REPORT_FILES) {
-      setError(`Máximo ${MAX_REPORT_FILES} ${kind === "pdf" ? "PDFs" : "fotos"} por sección.`);
+    if (list.length >= tope(kind)) {
+      setError(`Máximo ${tope(kind)} ${kind === "pdf" ? "PDFs" : "fotos"} por sección.`);
       return;
     }
     const esPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
@@ -76,9 +89,9 @@ export function ReportFiles({
   const fila = (kind: "pdf" | "foto", list: ReportFile[]) => (
     <div className={styles.ff}>
       <label>
-        {kind === "pdf" ? "PDFs" : "Fotos"} <small>({list.length}/{MAX_REPORT_FILES})</small>
+        {kind === "pdf" ? "PDFs" : etiquetaFotos ?? "Fotos"} <small>({list.length}/{tope(kind)})</small>
       </label>
-      {!locked && list.length < MAX_REPORT_FILES && (
+      {!locked && list.length < tope(kind) && (
         <FileDrop onFile={(file) => void add(kind, file)}>
           <input
             type="file"
@@ -134,7 +147,7 @@ export function ReportFiles({
     <div style={{ border: "1px dashed var(--line)", borderRadius: 10, padding: "12px 14px", marginTop: 12 }}>
       <p className={styles.fexample} style={{ marginTop: 0, fontWeight: 600, color: "var(--ink)" }}>{titulo}</p>
       <div className={styles.fgrid}>
-        {fila("pdf", pdfs)}
+        {!soloFotos && fila("pdf", pdfs)}
         {fila("foto", fotos)}
       </div>
       {error && <p className={styles.fexample} style={{ color: "var(--red, #C4402F)", marginTop: 6 }}>{error}</p>}

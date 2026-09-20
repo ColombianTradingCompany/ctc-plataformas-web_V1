@@ -1,3 +1,7 @@
+/* La barra del lote, en DOS líneas desde la V5.64 (owner): arriba el
+   expediente (FT · FT2 · EUDR · FOTO → VISA), abajo el tramo comercial
+   (MUE → EVA → GRADO → CONT). Ver LotKanbanStepper.tsx. */
+.rows{display:flex;flex-direction:column;gap:2px}
 .row{display:flex;align-items:center;gap:5px;margin-top:8px;flex-wrap:wrap}
 .step,.ending{
   font: 700 10px var(--font-spline-mono),monospace;
@@ -10,3 +14,13 @@
 .fork{color:var(--muted);font-size:12px;padding:0 1px}
 .ending{border-style:dashed}
 .ending.done{border-style:solid}
+
+/* Los chips de la línea comercial llevan a su pestaña (Evaluaciones o
+   Contratos). Como el chip es diminuto por diseño —la barra tiene que caber en
+   una tarjeta de lote en un teléfono— el área TÁCTIL se agranda con un
+   pseudo-elemento en vez de con padding: así cumple los 44 px de la casa sin
+   deformar la barra. */
+.clickable{cursor:pointer;position:relative;font-family:var(--font-spline-mono),monospace}
+.clickable::after{content:"";position:absolute;left:0;right:0;top:50%;height:44px;transform:translateY(-50%)}
+.clickable:hover{border-color:var(--ink)}
+.clickable.pending:hover{opacity:.85}

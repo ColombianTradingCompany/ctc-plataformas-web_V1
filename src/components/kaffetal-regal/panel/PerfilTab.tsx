@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GRADES, STAGES, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela } from "../data";
+import { GRADES, STAGES, fincaCode, fincaSelfDeletable, isLotCommitted, type Finca, type GeneralInfo, type Lot, type Parcela, type ProducerContract, type ProducerOffer } from "../data";
 import { mapPreviewUrl, fincaEudrStatus, lotEudrStatus, type EudrStatus, type ParcelaGeoFields } from "@/lib/eudr";
 import { EudrStatusBadge } from "../EudrStatusBadge";
 import { FieldInfo } from "../ficha/panes/FieldInfo";
@@ -32,6 +32,9 @@ export function PerfilTab({
   onRenameLot,
   onDeleteLot,
   onGoEvaluaciones,
+  onGoContratos,
+  offers,
+  contracts,
 }: {
   gi: GeneralInfo;
   fincas: Finca[];
@@ -48,6 +51,11 @@ export function PerfilTab({
   onRenameLot: (lotId: string, newName: string) => void;
   onDeleteLot: (lotId: string) => void;
   onGoEvaluaciones: () => void;
+  onGoContratos: () => void;
+  /** V5.64: la línea comercial de la barra del lote sale de `estadoDelCircuito()`,
+   *  que necesita la última oferta y el contrato del lote. */
+  offers: ProducerOffer[];
+  contracts: ProducerContract[];
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -64,6 +72,28 @@ export function PerfilTab({
         hasPolygon: (p.polygon?.length ?? 0) >= 3,
       }));
   const fincaStatusOf = (f: Finca): EudrStatus => fincaEudrStatus(f, parcelaGeoOfFinca(f));
+
+  // ── La barra del lote (V5.64) ────────────────────────────────────────────
+  // Su línea comercial la deriva `estadoDelCircuito()`, la misma función que
+  // lee la tabla del OCP (ALINEACION §3, V5.62). Aquí solo se le arma la
+  // entrada: la última oferta del lote y su contrato, si los tiene.
+  const barraDelLote = (l: Lot) => {
+    const ofertasDelLote = offers.filter((o) => o.lotId === l.id);
+    const ultima = ofertasDelLote.length > 0 ? ofertasDelLote[ofertasDelLote.length - 1] : null;
+    return (
+      <LotKanbanStepper
+        stage={l.stage}
+        intakeStep={l.intakeStep}
+        grade={l.grade}
+        inscription={l.inscription}
+        sampleConfirmedAt={l.sampleConfirmedAt}
+        registradoPorCtc={l.source === "bcp_manual_entry"}
+        ultimaOferta={ultima?.status ?? null}
+        contrato={contracts.find((c) => c.lotId === l.id)?.status ?? null}
+        onIrA={(destino) => (destino === "contratos" ? onGoContratos() : onGoEvaluaciones())}
+      />
+    );
+  };
 
   function startRename(l: Lot) {
     setRenamingId(l.id);
@@ -176,7 +206,7 @@ export function PerfilTab({
               Muestra pendiente · gestionar envío →
             </button>
           )}
-          <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} inscription={l.inscription} />
+          {barraDelLote(l)}
         </div>
         <div className={styles.metrics}>
           <div className={styles.chips}>
@@ -222,7 +252,7 @@ export function PerfilTab({
           <span className={styles.datachip}>Puntaje: <b>{l.score}</b></span>
           <span className={styles.datachip}>Grado CTC: <b style={l.grade ? { color: GRADES[l.grade] } : undefined}>{l.grade || "Pendiente"}</b></span>
         </div>
-        <LotKanbanStepper stage={l.stage} intakeStep={l.intakeStep} grade={l.grade} inscription={l.inscription} />
+        {barraDelLote(l)}
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: "auto" }}>
           <button className="btn btn-sm" onClick={() => onOpenFicha(l.id)}>{l.stage === 0 ? "Completar ficha" : "Ver ficha"}</button>
           <span className={styles.state} style={{ ["--lc" as string]: col } as React.CSSProperties}>{STAGES[l.stage]}</span>
@@ -298,6 +328,14 @@ export function PerfilTab({
             Razón social: <b>{gi.razon}</b><br />
             NIT / CC: <b>{gi.nit}</b><br />
             Agricultor: <b>{gi.agri}</b>
+            {/* El correo de la cuenta, a la vista sin abrir el modal (owner,
+                2026-09-20): es a donde CTCx le escribe. */}
+            {gi.email && (
+              <>
+                <br />
+                Correo: <b style={{ overflowWrap: "anywhere" }}>{gi.email}</b>
+              </>
+            )}
           </div>
         </div>
         {gi.galleryUrls.filter(Boolean).length > 0 && (

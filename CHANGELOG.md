@@ -19,6 +19,55 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.64] — 2026-09-20 (commit pendiente)
+
+- **Hito**: **la barra del lote se redibuja en DOS líneas** (owner, 2026-09-20), y con ella se reparten de nuevo dos nombres que
+  llevaban meses significando cosas distintas en cada superficie. Arriba el **expediente** — `FT · FT2 · EUDR · FOTO → VISA` —,
+  donde **VISA** es el veredicto documental de CTCx (el chip que hasta hoy se llamaba EVA en esta barra). Abajo el **tramo
+  comercial** — `MUE → EVA → GRADO → CONT` —, donde **EVA** pasa a ser lo que siempre significó fuera de aquí: la **evaluación**
+  con el Q-Grader (perfil sensorial + granulometría). `GAL` y `ARE` dejan de existir: el galardón es `GRADO` y la vitrina ya no
+  es un paso de esta barra. Los chips de la línea comercial son **botones**: llevan a «Evaluaciones» o a «Contratos», que es la
+  pregunta que el productor tenía que resolver saltando entre pestañas.
+- **Hito**: **fase 5 del overhaul de consolas, ejecutada en el lado del productor**: el paso 4 del intake deja de ser «Video» y
+  pasa a **«Fotos y video»** — **2 fotos del lote obligatorias, video opcional**. Hasta hoy el video se exigía **solo en el
+  cliente**: la regla era a la vez más dura de cumplir y más fácil de saltarse.
+- **Seguridad**: la regla de las fotos se exige **en el servidor**. Kaffetal Regal escribe directo contra Supabase con el JWT del
+  productor (RLS + guard triggers, sin Server Action de por medio), así que «servidor» aquí es un **guard trigger**: nace
+  `guard_lot_fotos_intake` sobre `lots` (migración `lots_fotos_obligatorias`), el tercero de la tabla, que rechaza el paso a
+  `ficha_completa` sin las dos fotos. Solo muerde en la **transición**: un lote ya cerrado no se re-valida — no se le cambian las
+  reglas a algo que ya entregó. `EXECUTE` revocado a `public`/`anon`/`authenticated`, como los demás triggers de la casa.
+- **Cambiado**: **B3 · Caracterización Física pide UN número, no tres.** El factor de rendimiento y la almendra total son la
+  misma medida dicha de dos maneras, así que el productor reporta **uno de los dos** y el otro se **deriva** y se le muestra
+  (`almendraDesdeFactor` / `factorDesdeAlmendra`: **factor × almendra = 17.500**). Lo derivado **no se persiste** (ALINEACIÓN §1):
+  se calcula al leer, y así la Ficha y el OCP siempre distinguen el número declarado del calculado. La **Densidad en Verde** deja
+  de ser obligatoria y baja al bloque opcional, con las humedades.
+- **Corregido**: **B3 le decía al productor un número imposible.** La ayuda de Almendra Total hablaba de una muestra de **205 g**
+  mientras el rango declarado llega a **245 g** — una muestra no puede pesar menos que lo que sale de ella. La aritmética de
+  laboratorio del propio repo (`computeFactor`, `fa_start` = **250**) ya usaba 250, y solo con 250 cuadran los dos rangos
+  (AT 150–245 g ↔ factor 71–117, contra el 75–120 declarado). Copy corregida en KR. ⚠️ El mismo «205 g» sigue escrito en
+  `fichasActions.ts` del OCP: **pendiente con dueño `consolas`** (no se toca código ajeno).
+- **Añadido**: **el mapa EUDR enseña TODAS las parcelas a la vez** (owner). La que se edita va en oro; las hermanas ya guardadas,
+  fijas en gris y rotuladas con su nombre — antes cada cafetal se dibujaba en su propio mapa, a ciegas, y dos podían solaparse
+  sin que nadie se enterara. El mapa arranca centrado sobre ellas cuando la parcela nueva aún no tiene geometría.
+- **Corregido**: **el primer vértice del polígono no se veía.** El `<Polygon>` no tiene nada que pintar hasta el segundo clic, así
+  que el primero caía en un mapa que no reaccionaba y parecía que el toque no había funcionado (lo vio el owner). Ahora cada
+  esquina es un **marcador numerado desde la primera** y se puede **arrastrar** para corregirla sin deshacer.
+- **Cambiado**: **una sola puerta de entrada al dibujo.** Los botones de terminar, deshacer, ubicación y cancelar solo existen
+  mientras se dibuja; fuera de ese momento no hacían nada y estorbaban. Y un clic suelto en el mapa ya **no** arranca un borrador
+  invisible: la entrada es el botón, como pidió el owner.
+- **Añadido**: el **nombre de la Parcela 1** ya es editable (las 2..N lo eran desde F1; esa no, porque nace espejada de la finca).
+- **Añadido**: **el correo de la cuenta, a la vista** en Información General — en la tarjeta del panel y en el modal, en solo
+  lectura. Es la dirección a la que CTCx le escribe, y el productor tenía que salir del panel para acordarse de con cuál se
+  registró. Sale de la sesión de Auth, no de `profiles`; cambiarlo es cambiar la identidad y no es un campo de ese formulario.
+- **Datos**: `lots.sample_2kg_confirmed_at` entra al modelo cliente del panel (solo lectura — lo protege
+  `guard_lot_protected_columns`): es lo que cierra el chip **MUE**. Campo nuevo del datasheet `b4_files_foto` con **default
+  seguro `[]`**, como manda el charter.
+- **Docs**: dos guardianes se ponen al día con las reglas nuevas en vez de quedarse rojos (regla §4.5): `qa-reportado-productor`
+  (38 → **45**) pasa a vigilar que la básica de B3 pida uno u otro, que la densidad **ya no** esté en la compuerta, y que lo
+  derivado **no** se escriba al datasheet; `qa-evaluaciones` (40 → **46**) cambia la escalera `GAL`/`ARE` por los nueve chips de
+  la barra nueva y **exige que la línea comercial salga de `estadoDelCircuito()`**, no de lógica propia — que es lo que la V5.62
+  dejó escrito para cuando el panel del productor mostrara ese estado.
+
 ## [V5.63] — 2026-09-19 (commit cc8d39a)
 
 - **Corregido**: **la LCP salía lavada: texto casi invisible sobre blanco.** Lo vio el owner en una captura. A la cuarta consola

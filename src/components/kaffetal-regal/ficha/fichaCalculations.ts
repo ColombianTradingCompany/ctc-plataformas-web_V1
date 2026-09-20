@@ -14,6 +14,39 @@ export type ScaFields = Pick<
   | "sca_balance" | "sca_uniformity" | "sca_clean_cup" | "sca_sweetness" | "sca_cuppers"
 >;
 
+// ── B3 · Factor de Rendimiento ↔ Almendra Total (owner, 2026-09-20) ─────────
+// Son la MISMA medida dicha de dos maneras, sobre la muestra de laboratorio de
+// 250 g de pergamino que `fa_start` trae por defecto y que computeFactor() usa
+// abajo: la Almendra Total son los gramos de café verde que quedan al quitar el
+// cisco, y el Factor es cuántos kilos de pergamino hacen falta para 70 kg de
+// verde. De ahí sale una constante y no dos números independientes:
+//
+//   factor = 70 × 250 / AT   ⇒   factor × AT = 17.500
+//
+// Por eso el productor reporta UNO de los dos y el otro se DERIVA. Comprobación
+// con los rangos declarados en B3: AT 150–245 g ↔ factor 71,4–116,7, que es casi
+// exactamente el rango 75–120 del factor. (Con la muestra de 205 g que la copy
+// vieja de B3 mencionaba, el rango daba 58,6–95,7 y la almendra máxima de 245 g
+// era imposible — la muestra no puede pesar menos que lo que sale de ella.)
+//
+// ⚠️ Lo derivado NO se persiste (regla de la casa, ALINEACION §1): se calcula al
+// leer. Así la Ficha y el OCP siempre distinguen el número que el productor
+// declaró del que salió de él.
+export const B3_MUESTRA_G = 250;
+export const B3_PRODUCTO = 70 * B3_MUESTRA_G; // 17.500
+
+/** Almendra Total (g) implícita en un factor de rendimiento. `null` si no aplica. */
+export function almendraDesdeFactor(factor: number | null): number | null {
+  if (factor == null || !Number.isFinite(factor) || factor <= 0) return null;
+  return Math.round((B3_PRODUCTO / factor) * 10) / 10;
+}
+
+/** Factor de rendimiento implícito en una Almendra Total (g). `null` si no aplica. */
+export function factorDesdeAlmendra(almendraG: number | null): number | null {
+  if (almendraG == null || !Number.isFinite(almendraG) || almendraG <= 0) return null;
+  return Math.round((B3_PRODUCTO / almendraG) * 10) / 10;
+}
+
 export function computeFactor(data: FactorFields) {
   const start = num(data.fa_start);
   const remainder = num(data.fa_green_remainder);

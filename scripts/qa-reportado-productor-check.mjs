@@ -9,7 +9,8 @@
 //
 //   · B2: «No lo sé» O su estimación (puntaje 0–100 + escala SCA/CVA) O ≥1
 //     soporte. B3: «Solo sé información básica» (factor 75–120 y/o almendra
-//     150–245, densidad 600–1000 OBLIGATORIA) O ≥1 soporte.
+//     150–245 — UNO de los dos, V5.64: son la misma medida y el que falte se
+//     DERIVA) O ≥1 soporte. La densidad en verde bajó a opcional en la V5.64.
 //   · Hasta 7 PDFs y 7 fotos por sección, y la RE-DESCARGA sobrevive al
 //     bloqueo del fieldset (anclas, no botones).
 //   · Los campos viejos (sca_*, mesh_*, fa_*) siguen en el tipo — datasheets
@@ -27,6 +28,7 @@ const vista = lee("src/components/kaffetal-regal/FichaView.tsx");
 const b2 = lee("src/components/kaffetal-regal/ficha/panes/PaneB2.tsx");
 const b3 = lee("src/components/kaffetal-regal/ficha/panes/PaneB3.tsx");
 const files = lee("src/components/kaffetal-regal/ficha/panes/ReportFiles.tsx");
+const calculos = lee("src/components/kaffetal-regal/ficha/fichaCalculations.ts");
 const drop = lee("src/components/kaffetal-regal/FileDrop.tsx");
 
 // ── 1. El modelo: los campos nuevos y los viejos conviven ─────────────────
@@ -42,13 +44,23 @@ check("B3 = básica válida O soporte (y el Trillado legado cuenta)", vista.incl
 check("el puntaje B2 se valida 0–100", vista.includes("numOr(data.b2_score) >= 0 && numOr(data.b2_score) <= 100"));
 check("factor 75–120", vista.includes("enRango(data.yield_factor_producer, 75, 120)"));
 check("almendra 150–245", vista.includes("enRango(data.b3_almendra_total, 150, 245)"));
-check("densidad 600–1000 y OBLIGATORIA en la básica", vista.includes("enRango(data.b3_densidad_verde, 600, 1000)") && vista.includes("(b3FactorValido || b3AlmendraValida) && b3DensidadValida"));
+// V5.64 (owner): la básica se cierra con UNO de los dos, y la densidad dejó de
+// ser obligatoria. Se vigila las DOS caras: que el gate pida uno u otro, y que
+// la densidad ya NO aparezca en él — si alguien la devuelve al gate sin decirlo,
+// este guardián lo canta.
+check("B3 básica = factor O almendra (uno de los dos)", vista.includes("data.b3_solo_basica && (b3FactorValido || b3AlmendraValida)"));
+check("la densidad en verde ya NO es obligatoria", !vista.includes("b3DensidadValida"));
+check("la densidad vive en el bloque opcional de B3", /opcionalBox[\s\S]*b3_densidad_verde/.test(b3));
+check("el par factor↔almendra se deriva (17.500)", calculos.includes("B3_PRODUCTO = 70 * B3_MUESTRA_G") && calculos.includes("B3_MUESTRA_G = 250"));
+check("y lo derivado NO se persiste: solo se pinta", b3.includes("almendraDesdeFactor") && b3.includes("factorDesdeAlmendra") && !/onChange\(\{\s*(yield_factor_producer|b3_almendra_total):\s*(almendraDerivada|factorDerivado)/.test(b3));
 check("B3 ya no tiene escape «no lo sé» nuevo (solo legado)", !/b3:\s*"ft2_b3_na"/.test(vista));
 check("el puntaje reportado alimenta ficha_puntaje_estimado", vista.includes("ficha_puntaje_estimado: b2ScoreValido ? numOr(data.b2_score)"));
 
 // ── 3. Los soportes: tope de 7 y re-descarga tras el bloqueo ──────────────
 check("MAX_REPORT_FILES = 7", files.includes("export const MAX_REPORT_FILES = 7"));
-check("el tope se aplica al subir", files.includes("list.length >= MAX_REPORT_FILES"));
+check("el tope se aplica al subir", files.includes("list.length >= tope(kind)"));
+// V5.64: B4 reutiliza ReportFiles en modo «solo fotos» con su propio tope.
+check("el modo solo-fotos existe y esconde los PDFs", files.includes("soloFotos") && files.includes("{!soloFotos && fila(\"pdf\", pdfs)}"));
 check("un PDF no entra como foto (ni al revés)", files.includes("no es un PDF") && files.includes("es un PDF — súbalo en la casilla"));
 check("la descarga es un ANCLA (sobrevive al fieldset disabled)", /<a\s[\s\S]*?Descargar/.test(files));
 check("y lo dice en el propio componente", files.includes("fieldset disabled"));

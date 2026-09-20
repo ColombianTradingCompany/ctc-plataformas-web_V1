@@ -119,6 +119,9 @@ type LotRow = {
   ai_next_step_context: Record<string, unknown> | null;
   video_asset_id: string | null;
   sample_shipped_at: string | null;
+  /** Lo escribe CTCx al RECIBIR la muestra (el productor no puede — lo protege
+   *  `guard_lot_protected_columns`). Es lo que cierra el chip MUE de la barra. */
+  sample_2kg_confirmed_at: string | null;
   eudr_custody_stages: string[] | null;
   eudr_custody_method: string | null;
   eudr_custody_notes: string | null;
@@ -281,6 +284,7 @@ function dbLotToLot(
     videoAssetId: row.video_asset_id,
     videoUrl,
     sampleShippedAt: row.sample_shipped_at,
+    sampleConfirmedAt: row.sample_2kg_confirmed_at ?? null,
     source: row.source,
     inscription,
     eudrCustodyStages: row.eudr_custody_stages || [],
@@ -367,6 +371,9 @@ function Experience() {
 
   const loadData = useCallback(
     async (uid: string) => {
+      // El correo vive en la sesión de Auth, no en `profiles` — de ahí sale el
+      // que se muestra en Información General (V5.64).
+      const { data: sesion } = await supabase.auth.getUser();
       const [{ data: profile }, { data: producerProfile }, { data: fincaRows }, { data: lotRows }, { data: contractRows }, { data: snapshotRows }, { data: evalRows }, { data: commRows }, { data: ackRows }, { data: inscriptionRows }, { data: parcelaRows }, { data: certRows }, { data: offerRows }, { data: fichaRows }] =
         await Promise.all([
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
@@ -615,6 +622,7 @@ function Experience() {
         razon: producerProfile?.company_name || "—",
         nit: producerProfile?.tax_id || "—",
         agri: profile?.full_name || "—",
+        email: sesion.user?.email ?? "",
         cedulaCafetera: producerProfile?.cedula_cafetera || "",
         phone: profile?.phone || "",
         whatsappConfirmed: producerProfile?.whatsapp_confirmed || false,

@@ -17,7 +17,7 @@ import { PaneA5Eudr } from "./ficha/panes/PaneA5Eudr";
 import { PaneB1 } from "./ficha/panes/PaneB1";
 import { PaneB2 } from "./ficha/panes/PaneB2";
 import { PaneB3 } from "./ficha/panes/PaneB3";
-import { PaneB4 } from "./ficha/panes/PaneB4";
+import { PaneB4, fotosDelLoteCompletas, B4_FOTOS_MINIMO } from "./ficha/panes/PaneB4";
 import { FichaPreview } from "./ficha/FichaPreview";
 import { ShipmentInstructionsModal } from "./ficha/ShipmentInstructionsModal";
 import { OfficialScoreBanner } from "./ficha/OfficialScoreBanner";
@@ -247,8 +247,11 @@ export function FichaView({
   const b2Reportado = b2ScoreValido || data.b2_files_pdf.length + data.b2_files_foto.length > 0;
   const b3FactorValido = enRango(data.yield_factor_producer, 75, 120);
   const b3AlmendraValida = enRango(data.b3_almendra_total, 150, 245);
-  const b3DensidadValida = enRango(data.b3_densidad_verde, 600, 1000);
-  const b3Basica = data.b3_solo_basica && (b3FactorValido || b3AlmendraValida) && b3DensidadValida;
+  // V5.64 (owner): el camino básico se cierra con UNO de los dos —factor o
+  // almendra—, porque son la misma medida y el que falte se deriva (factor ×
+  // almendra = 17.500, ver fichaCalculations). La densidad en verde dejó de ser
+  // obligatoria y bajó al bloque opcional de B3.
+  const b3Basica = data.b3_solo_basica && (b3FactorValido || b3AlmendraValida);
   const b3Adjuntos = data.b3_files_pdf.length + data.b3_files_foto.length > 0;
   const b3Reportado = b3Basica || b3Adjuntos;
 
@@ -269,14 +272,15 @@ export function FichaView({
       // V5.20 — «Reportado por Productor»: B2 se completa con un puntaje
       // válido O al menos un soporte adjunto (los sca_* viejos siguen contando
       // por los datasheets guardados antes). B3 con el camino básico VÁLIDO
-      // (factor 75–120 y/o almendra 150–245, y densidad 600–1000 obligatoria)
+      // (UNO de los dos: factor 75–120 O almendra 150–245 — V5.64)
       // O al menos un soporte; el Trillado Verde legado sigue contando.
       b2: b2Reportado || sca.total > 0,
       b3: b3Reportado || factor.remainder > 0,
-      b4: !!lot.videoUrl,
+      // Fase 5 (V5.64): el paso 4 se cierra con las FOTOS, no con el video.
+      b4: fotosDelLoteCompletas(data.b4_files_foto),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- b2Reportado/b3Reportado derivan de `data`, ya en la lista
-    [data, vTotal, sca.total, factor.remainder, lot.videoUrl, sourceFincas.length]
+    [data, vTotal, sca.total, factor.remainder, sourceFincas.length]
   );
 
   const overallPct = Math.round((Object.values(completed).filter(Boolean).length / 9) * 100);
@@ -302,8 +306,8 @@ export function FichaView({
   // (ver el confirm en submitCurrentStage) -- la finca completa lo suyo en
   // paralelo sin frenar la Ficha.
   const eudrReady = !!completed.a5;
-  const videoReady = !!completed.b4;
-  const STAGE_READY = [ftReady, ft2Ready, eudrReady, videoReady];
+  const fotosReady = !!completed.b4;
+  const STAGE_READY = [ftReady, ft2Ready, eudrReady, fotosReady];
   const currentStepReady = effectiveIntakeStep < 4 ? STAGE_READY[effectiveIntakeStep] : true;
 
   // ── Qué falta, DICHO POR SU NOMBRE (owner, 2026-08-20) ────────────────────
@@ -318,7 +322,7 @@ export function FichaView({
     b1: "B1 · Variedades & Básica → la especie y al menos una variedad con su porcentaje",
     a3: "A3 · Reconocimientos & Narrativa → un premio, o la historia del origen",
     b2: "B2 · Perfil de Taza → su puntaje reportado (0–100) o un soporte adjunto (PDF/foto)",
-    b3: "B3 · Física → información básica (factor 75–120 o almendra total 150–245, y densidad en verde 600–1000) o un soporte adjunto",
+    b3: "B3 · Física → UNO de los dos: el factor de rendimiento (75–120) o la almendra total (150–245 g). También sirve adjuntar un soporte del análisis físico",
   };
 
   function faltantes(panes: PaneId[], conEscape: boolean): string {
@@ -485,15 +489,17 @@ export function FichaView({
         emoji: "🌍",
         title: allFincasApta ? "¡Sello EUDR en camino!" : "Origen registrado — Visa de finca pendiente",
         body: allFincasApta
-          ? "La Visa de su finca está vigente: el Sello del lote queda listo. Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan."
-          : "Quedó registrado con la Visa de la finca en trámite (bandera roja). Último paso: el video del café — tres tomas sencillas de ~30 segundos bastan.",
+          ? "La Visa de su finca está vigente: el Sello del lote queda listo. Último paso: dos fotos del café — con las del teléfono basta. El video es opcional."
+          : "Quedó registrado con la Visa de la finca en trámite (bandera roja). Último paso: dos fotos del café — con las del teléfono basta. El video es opcional.",
       });
       setActive("b4");
       return;
     }
     if (step === 3) {
-      if (!videoReady) {
-        setNotice("Suba al menos el video principal del café antes de continuar.");
+      if (!fotosReady) {
+        setNotice(
+          `En B4: suba al menos ${B4_FOTOS_MINIMO} fotos del lote antes de continuar. El video es opcional — las fotos no.`
+        );
         return;
       }
       if (!showDeclare) {
@@ -558,7 +564,7 @@ export function FichaView({
     "Completar FT y continuar",
     "Completar FT2 y continuar",
     "Completar EUDR y continuar",
-    showDeclare ? "Confirmar y Enviar" : "Completar Video y Enviar",
+    showDeclare ? "Confirmar y Enviar" : "Completar Fotos y Enviar",
   ];
 
   return (
@@ -622,7 +628,7 @@ export function FichaView({
               {active === "b1" && <PaneB1 {...paneProps} />}
               {active === "b2" && <PaneB2 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} fichas={fichas} />}
               {active === "b3" && <PaneB3 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} fichas={fichas} />}
-              {active === "b4" && <PaneB4 {...paneProps} />}
+              {active === "b4" && <PaneB4 {...paneProps} onUploadFile={onUploadFile} onGetFileUrl={onGetFileUrl} />}
               {active === "ficha" && (
                 <>
                   <FichaPreview data={data} factor={factor} mesh={mesh} sca={sca} varTotal={vTotal} scorings={lot.scaScorings} />

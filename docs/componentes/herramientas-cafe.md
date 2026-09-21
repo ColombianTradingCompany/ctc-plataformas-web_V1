@@ -93,7 +93,7 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 `qa-tools-carpetas.mjs` (166, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
 `qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
 once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
-`qa-tools-seo-espejo.mjs` (68, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
+`qa-tools-seo-espejo.mjs` (86, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
 `[idioma] [lab]`) ·
 `cromatografia-recorrido.mjs` y `cromatografia-calibrar.mjs` (manuales: recorrido visual y calibración de la compuerta).

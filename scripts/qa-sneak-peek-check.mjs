@@ -235,7 +235,7 @@ check("el reverso pinta la rueda", COMPONENTE.includes("styles.wheelBox"));
 // La rueda sale de la herramienta de la casa, no de una segunda rueda paralela.
 check(
   "la rueda la genera la herramienta de catación de la casa",
-  lee("scripts/build-ruedas-mock.mjs").includes("public/tools/rueda-catacion.html")
+  lee("scripts/build-ruedas-mock.mjs").includes("public/tools/catacion/rueda-catacion.html")
 );
 
 // ── 10. Las flechas de los extremos ─────────────────────────────────────────

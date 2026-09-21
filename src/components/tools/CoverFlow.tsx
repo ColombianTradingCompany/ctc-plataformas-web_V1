@@ -8,7 +8,7 @@ import styles from "./CoverFlow.module.css";
 // ── Cover Flow (owner, 2026-08-20 · V5.8) ───────────────────────────────────
 // «I asked for an Album Cover style instead of the list of blocks, meaning
 // something like the Cover Flow from Cool PDF.» Así que la mecánica se toma de
-// ahí LITERALMENTE — `RENDER.flow` de public/tools/cool-pdf.html:
+// ahí LITERALMENTE — `RENDER.flow` de public/tools/cool-pdf/cool-pdf.html:
 //
 //   o  = i - centro - frac        desplazamiento respecto al centro
 //   x  = signo·(w·.30·min(1,ab) + max(0,ab-1)·w·.20)

@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.66] — 2026-09-21 (commit pendiente)
+
+- **Hito**: **Herramientas del Café: una carpeta por herramienta, y el recuento para abrir una conversación por cada una**
+  (owner, 2026-09-21). Los 16 HTML sueltos de `public/tools/` pasan a `public/tools/<id>/` —la carpeta se llama como el
+  `tools.id` de la base, no como el archivo, así que los ids cruzados de mermas dejan de confundir—. La lista vive en UNA
+  fuente, `src/lib/tools/carpetas.ts`, y de ella salen las **16 redirecciones 308** de `next.config.ts`: toda URL plana de
+  antes (`/tools/agtron-dial.html`) sigue abriendo, incluidos enlaces impresos y resultados de Google.
+- **Docs**: **el recuento** en `docs/componentes/herramientas-cafe/README.md` —15 herramientas en la base (13 vivas, una
+  `noindex` a propósito, una archivada) + una candidata sin alta (Atlas cafetero)— con una **ficha por herramienta** en
+  `herramientas-cafe/<id>/README.md` (estado, dónde vive, dónde se reutiliza, qué queda abierto y la línea «Hoy:» de su
+  conversación) y el **mapa de interfaces**: qué otra parte de la plataforma usa ya cada herramienta y cuál la va a usar
+  (la Rueda del Café en el Centro de Calidad). Lo que destapó: la Rueda vive en dos versiones y el Sneak Peek dibuja con
+  la vieja; `mermas-ctc` y `cogs-verde` tienen **copias** en `public/ocp-apps/` para los cotizadores (CoGS ya en V19
+  contra la V18 pública); dos fichas del café verde; cuatro herramientas solo en inglés.
+- **Añadido**: `scripts/qa-tools-carpetas.mjs` (166): carpeta ↔ lista ↔ disco ↔ 308, nada suelto en la raíz, ninguna
+  carpeta llamada como lo compartido (`assets`, `h`), y **nadie en el código vuelve a escribir una ruta plana** (funcionaría
+  por la 308 y nadie lo notaría).
+- **Cambiado**: `qa-tools-seo-check` recorre las carpetas (257); `qa-taller-check`, `qa-tools-puente-conformance`,
+  `build-tool-shots`, `qa-cromatografia-check`, `cromatografia-recorrido`, `build-ruedas-mock` y `qa-sneak-peek-check`
+  apuntan a las rutas nuevas; el cotizador de empaque (`AppFrame.tsx`, `herramientas-internas`) embebe la nueva URL sin salto.
+- **Datos**: `tool_versions.src_publico` reapuntado a `/tools/<id>/<archivo>.html` en las 16 versiones del repo, **con esta
+  versión ya desplegada** (antes la base habría señalado archivos que aún no existían).
+- **Docs**: las fuentes del owner quedan en `reference/html_tools/<id>/` (fuera de git); las nuevas sin id, en `_candidatas/`.
+
 ## [V5.65] — 2026-09-20 (commit 0ba60b1)
 
 - **Hito**: **el vocabulario EUDR queda asentado, una palabra por objeto en toda la red** (owner, 2026-09-20). **PASAPORTE** es de la

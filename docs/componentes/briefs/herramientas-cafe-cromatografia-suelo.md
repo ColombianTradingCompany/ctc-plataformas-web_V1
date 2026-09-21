@@ -170,7 +170,7 @@ Haiku 4.5 · dataset propio en segunda tanda · solo español · validador: un e
   estén en el JSON) y coherencia por frase: 2 de 2 pasan al primer intento, rangos idénticos, **≈ US$ 0,013 por
   lectura**.
 
-**Investigación de fuentes** (fuera del repo, que es público: `reference/html_tools/Analisis Cromatografico/fuentes/`).
+**Investigación de fuentes** (fuera del repo, que es público: `reference/html_tools/cromatografia-suelo/Analisis Cromatografico/fuentes/`).
 26 documentos abiertos, 168 figuras con su manifiesto, `INDEX.md` y `HALLAZGOS.md`. Lo que cambia el modelo:
 - **Sí hay datasets públicos** (PDF2 decía que no): Martins et al. 2026, Zenodo 18840454 (108 cromas de 12 suelos
   con z-scores de 15 propiedades, CC BY 4.0, 35,9 GB) y su código con `raw_448px.zip` (Zenodo 18851814, descargado);

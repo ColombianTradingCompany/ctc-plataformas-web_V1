@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { REDIRECCIONES_HERRAMIENTAS } from "./src/lib/tools/carpetas";
 
 const nextConfig: NextConfig = {
   // El SHA del commit desplegado, visible en la insignia de versión de cada
@@ -46,6 +47,14 @@ const nextConfig: NextConfig = {
     // NOTA histórica: las herramientas "internas" (leídas del disco y luego
     // embebidas) ya no existen — desde 2026-07-24 TODAS las herramientas viven
     // en public/tools/ y se sirven estáticas, así que no hay nada que trazar.
+  },
+  // V5.66: cada herramienta vive en su carpeta (`public/tools/<id>/`). Las URLs
+  // planas de antes siguen abriendo con un 308 — la lista sale de
+  // src/lib/tools/carpetas.ts y la vigila qa-tools-carpetas. `/tools/` está
+  // fuera del matcher del proxy, pero `redirects()` corre antes que el
+  // sistema de archivos igual, en los 19 hosts.
+  async redirects() {
+    return REDIRECCIONES_HERRAMIENTAS;
   },
 };
 

@@ -3,7 +3,7 @@
 //   node --experimental-strip-types --import ./scripts/ts-resolve.mjs scripts/build-ruedas-mock.mjs
 //
 // POR QUÉ ASÍ, Y NO DIBUJANDO UNA RUEDA NUEVA. La rueda de sabores de la casa ya
-// existe y es la buena: `public/tools/rueda-catacion.html`, la herramienta que usa
+// existe y es la buena: `public/tools/catacion/rueda-catacion.html`, la herramienta que usa
 // el equipo. Tiene la taxonomía SCA entera (familias → subfamilias → hojas) y su
 // paleta. Redibujarla aquí habría creado una SEGUNDA rueda que se separaría de la
 // primera al primer cambio de taxonomía — exactamente el error que este repo ya
@@ -34,7 +34,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { SNEAK_PEEK_MOCK } from "../src/lib/catalogo/sneakPeekMock.ts";
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const HERRAMIENTA = `${RAIZ}/public/tools/rueda-catacion.html`;
+const HERRAMIENTA = `${RAIZ}/public/tools/catacion/rueda-catacion.html`;
 const SALIDA = `${RAIZ}/public/images/catalogo/sneak-peek`;
 const PERFIL = `${RAIZ}/.rueda-tmp-profile`;
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";

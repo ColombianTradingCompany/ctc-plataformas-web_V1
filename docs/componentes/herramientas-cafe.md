@@ -17,45 +17,55 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 **trabajos guardados** gracias al puente `ctc-bridge.js`. El inventario **vive en la base** (`tools` +
 `tool_versions`): una versión nueva se sube y publica desde el BCP sin desplegar.
 
-## El inventario (tabla `tools`, 2026-09-11)
+## El inventario (tabla `tools`, 2026-09-21)
 
-| id | Nombre | Nivel | Idioma | Memoria | Archivo en `public/tools/` |
+> **V5.66: una carpeta por herramienta.** Todo vive en `public/tools/<id>/` (la carpeta se llama como el
+> `tools.id`; lista en `src/lib/tools/carpetas.ts`, 308 desde las URLs planas viejas). El **recuento con
+> estado, fichas por herramienta, el mapa de interfaces y el orden de las conversaciones** está en
+> [`herramientas-cafe/README.md`](herramientas-cafe/README.md); cada ficha en `herramientas-cafe/<id>/README.md`.
+
+| id | Nombre | Nivel | Idioma | Memoria | Archivo en `public/tools/<id>/` |
 |---|---|---|---|---|---|
 | `agtron` | Disco Agtron | default | en | sí | `agtron-dial.html` |
 | `catacion` | Rueda de catación (rueda del sabor) | default | es | sí | `rueda-catacion.html` (+ `rueda-del-cafe-v23.html`) |
-| `cogs-verde` | Calculadora CoGS · Café verde | **plus** | es | sí | `cogs-cafe-verde.html` |
+| `cogs-verde` | Calculadora CoGS · Café verde | **plus** | es | sí | `cogs-cafe-verde.html` (copia **V19** en `public/ocp-apps/`) |
 | `cool-pdf` | Cool PDF · dale cuerpo a un PDF | default | en | sí | `cool-pdf.html` |
 | `costo-empaque` | Costo de empaque por kilo | default | es | sí | `costo-empaque.html` (referencia viva del puente) |
 | `defectos-cafe` | Defectos del Café | default | es | **no** | `defectos-cafe.html` (V5.25–27) |
 | `formula-calidad` | La fórmula de calidad del café | default | es | sí | `formula-calidad.html` |
 | `green-datasheet` | Ficha de café verde (datasheet) | default | es | sí | `green-coffee-datasheet.html` |
 | `mapa-variedades` | Coffee Varieties Map | default | en | sí | `mapa-variedades.html` |
-| `mermas-ctc` | Calculadora de mermas · **Detallada** | default | es | sí | `mermas-ctc.html` (⚠️ los ids están cruzados con la retirada) |
+| `mermas-ctc` | Calculadora de mermas · **Detallada** | default | es | sí | `mermas-ctc.html` (⚠️ los ids están cruzados con la retirada; copia V15 en `public/ocp-apps/`) |
 | `mermas-rapida` | Calculadora de mermas · Rápida | default | es | sí | `mermas-rapida.html` (`noindex` a propósito: modo cacao) |
 | `qr` | Generador de códigos QR | default | en | sí | `generador-qr.html` |
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
 | `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15): `mermas-detallada.html` sigue en `public/` con `noindex` |
 | `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es (+ en, de en la propia herramienta, V5.39) | sí (esquema propio) | `cromatografia-suelo.html` (V5.32–V5.41) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`, `/estado`) · brief en `briefs/` |
 
-Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_tools\` (p. ej.
-`rueda_del_cafe_V23.html`, `Defectos_del_Cafe_CTC_V3.html`) y de ahí se registran.
+Candidata sin registrar: **Atlas cafetero de Colombia** (ficha en `herramientas-cafe/_candidatas/atlas-cafetero/`).
+
+Las fuentes que el owner entrega llegan a `C:\dev\ctc-platforms\reference\html_tools\` y, desde el
+2026-09-21, se guardan en **`reference\html_tools\<id>\`** (p. ej. `catacion\rueda_del_cafe_V23.html`,
+`defectos-cafe\Defectos_del_Cafe_CTC_V3.html`, `cromatografia-suelo\Analisis Cromatografico\`); una nueva
+sin id todavía, en `_candidatas\<nombre>\`.
 
 ## Superficies y rutas
 
 `/herramientas` (landing) · `/herramientas/acceso` · `/herramientas/taller` · `/herramientas/taller/[slug]` ·
 `/kaffetal-regal/herramientas/[slug]` · `/cherry-picked-green/herramientas/[slug]` (la ruta es de la
-SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy) ·
+SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h/[slug]` (fuera del matcher del proxy; las `/tools/<archivo>.html` planas son 308) ·
 `/bcp/herramientas` (administración).
 
 ## Mapa de código
 
-- `public/tools/*.html` (vendorizadas; solo se toca el `<head>` para SEO) + **`public/tools/ctc-bridge.js`**
+- `public/tools/<id>/*.html` (vendorizadas; solo se toca el `<head>` para SEO; carpetas en **`src/lib/tools/carpetas.ts`**,
+  de donde salen las 308 de `next.config.ts`) + **`public/tools/ctc-bridge.js`**
   (una línea antes de `</body>` → memoria; `CTC.usarEstado/tocado/emitir`; postMessage mismo origen).
 - **Lector de Cromatografía** (V5.32–V5.41) · **guía de trabajo: `src/lib/tools/cromatografia/README.md`** (lo construido,
   contratos, cómo cambiar cada cosa, puntos abiertos y kick-off propio) · `public/tools/assets/cromatografia-{rasgos.js,reglas.json}` (motor y copia de
   las reglas para el navegador) · `src/lib/tools/cromatografia/{reglas.json,prompt.ts,salida.ts}` (puros) ·
   `src/app/api/herramientas/cromatografia/{route.ts,fincas/route.ts}`. Fuentes y datasets: fuera del repo, en
-  `reference/html_tools/Analisis Cromatografico/fuentes/` (INDEX.md, HALLAZGOS.md; con derechos, no se publican).
+  `reference/html_tools/cromatografia-suelo/Analisis Cromatografico/fuentes/` (INDEX.md, HALLAZGOS.md; con derechos, no se publican).
   V5.38: `public/tools/assets/cromatografia-ejemplos/` (3 fotos de ejemplo del diálogo «?») y
   `public/tools/assets/cromatografia-docs/` (3 PDF del diálogo «Bibliografía y metodología», generados con
   `scripts/build-cromatografia-docs.mjs`). V5.39: tres idiomas (diccionarios `T.*` y `DEF` en el HTML, bloque `i18n` en
@@ -80,8 +90,9 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/*.html` y `/tools/h/[slu
 
 ## Guardianes
 
+`qa-tools-carpetas.mjs` (166, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
 `qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
-once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (193) ·
+once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
 `qa-tools-seo-espejo.mjs` (68, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
 `[idioma] [lab]`) ·
@@ -96,8 +107,10 @@ once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-too
 - **La caducidad de un permiso se filtra en código** (`expires_at` nulo = no caduca); nunca `.lt()` a secas.
 - **`?volver=` solo acepta rutas relativas de ESA superficie** — un redirect abierto dentro del dominio es
   phishing servido por la casa.
-- Una herramienta nueva: `.html` a `public/tools/` → `vendor-tool-assets.mjs` → alta en `tools` desde el BCP
-  → línea del puente si guarda trabajo → captura con `build-tool-shots.mjs` → `qa-tools-seo-*` verdes.
+- Una herramienta nueva: `.html` a **`public/tools/<id>/`** + su línea en `carpetas.ts` + su ficha en `herramientas-cafe/<id>/` → `vendor-tool-assets.mjs` → alta en `tools` desde el BCP
+  → línea del puente si guarda trabajo → captura con `build-tool-shots.mjs` → `qa-tools-carpetas` y `qa-tools-seo-*` verdes.
+- **Una pieza que otra parte reutiliza se EXTRAE a una fuente única** (datos puros en `src/lib/tools/<id>/`, o la
+  herramienta embebida tal cual, como el cotizador de empaque); nunca una copia. Mapa en `herramientas-cafe/README.md`.
 
 ## Lo que las consolas gobiernan de este componente
 
@@ -107,6 +120,17 @@ once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-too
 cualquiera de esos campos se ve en las tres superficies al instante — sin desplegar.
 
 ## Pendientes
+
+- **V5.66 · una carpeta por herramienta, y una conversación por herramienta** (owner, 2026-09-21). El orden
+  sugerido y la línea «Hoy:» de cada una están en `herramientas-cafe/README.md` y en cada ficha. Lo que el recuento
+  destapó: **(a)** la Rueda del Café vive en DOS versiones y el Sneak Peek dibuja con la vieja (V10) — es la
+  primera conversación, porque el owner la quiere en el **Centro de Calidad**; **(b)** `mermas-ctc` y `cogs-verde`
+  tienen **copias** en `public/ocp-apps/` para los cotizadores (CoGS ya va en V19 contra V18 pública) — se
+  resuelve con `herramientas-internas`; **(c)** dos fichas del café verde (la herramienta y `/docs/ficha/[lotId]`);
+  **(d)** cuatro herramientas solo en inglés (`agtron`, `mapa-variedades`, `qr`, `cool-pdf`); **(e)** candidata
+  sin alta: Atlas cafetero. **Pendiente de operación**: los recursos del Lector de Cromatografía siguen en
+  `assets/` (moverlos toca el cuerpo y cinco scripts: de su conversación) y su `reglas.json` cita la ruta vieja de
+  las fuentes en el texto de procedencia.
 
 - **Tres niveles de acceso** (CEO, 2026-09-16, `docs/PVC_BCP_PLAN.md` §12 y charter `kaffetal-regal`): **Default**
   (cualquier cuenta de KR o de Cherry Picked, sin importar qué tenga dentro), **Básica** (productor con al menos un lote

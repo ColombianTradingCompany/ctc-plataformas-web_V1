@@ -336,3 +336,20 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   `EvaReviewCard`) por el veredicto documental, y «Visa EUDR» por lo de la finca. Brief escrito:
   `docs/componentes/briefs/consolas-simplificar-ocp-al-circuito.md`.
 (commit: 0ba60b1)
+
+## [2026-09-21] V5.66 · Herramientas del Café — una carpeta por herramienta y el recuento
+- ARQUITECTURA · `public/tools/<id>/<archivo>.html`: cada herramienta del repo en su carpeta, con el
+  nombre de su `tools.id`. Fuente única `src/lib/tools/carpetas.ts` (pura, sin imports), que lee
+  `next.config.ts` → `redirects()`: 16 × 308 desde las URLs planas. Lo compartido se queda en la raíz
+  (`ctc-bridge.js`, `assets/`); `h` está reservado para `/tools/h/[slug]`. El proxy no cambia: `/tools/`
+  sigue fuera de su matcher y `redirects()` corre antes que el sistema de archivos en los 19 hosts.
+- Nodo / ficha `herramientas`: el mapa debe enseñar la carpeta por herramienta y el mapa de
+  INTERFACES (herramienta → quién la consume): Rueda del Café → Sneak Peek (hoy, con la V10) y Centro
+  de Calidad (previsto); costo-empaque → cotizador de empaque (embebida tal cual); mermas-ctc y
+  cogs-verde → cotizadores de lotes y logístico (COPIAS en `public/ocp-apps/`, deuda anotada); cool-pdf
+  → CoverFlow y Coffeed Redacción (mecánica copiada).
+- DATOS: `tool_versions.src_publico` reapuntado tras el despliegue.
+- Guardián nuevo `qa-tools-carpetas` (166); `qa-tools-seo-check` 193 → 257 (recorre carpetas).
+- Docs: `docs/componentes/herramientas-cafe/README.md` (recuento) + `<id>/README.md` por herramienta +
+  `_candidatas/atlas-cafetero`. Fuentes del owner en `reference/html_tools/<id>/`.
+(commit: pendiente)

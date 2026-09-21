@@ -19,19 +19,19 @@ import { chromium } from "playwright";
 
 const BASE = process.env.CONF_BASE ?? "http://localhost:3210";
 const HERRAMIENTAS = {
-  "mermas-rapida": "/tools/mermas-rapida.html",
-  "mermas-ctc": "/tools/mermas-ctc.html",
-  agtron: "/tools/agtron-dial.html",
-  "cogs-verde": "/tools/cogs-cafe-verde.html",
-  "costo-empaque": "/tools/costo-empaque.html",
-  "cool-pdf": "/tools/cool-pdf.html",
-  catacion: "/tools/rueda-del-cafe-v23.html",
-  "green-datasheet": "/tools/green-coffee-datasheet.html",
-  qr: "/tools/generador-qr.html",
-  "formula-calidad": "/tools/formula-calidad.html",
-  "viaje-cafe": "/tools/viaje-cafe.html",
-  "mapa-variedades": "/tools/mapa-variedades.html",
-  "cromatografia-suelo": "/tools/cromatografia-suelo.html",
+  "mermas-rapida": "/tools/mermas-rapida/mermas-rapida.html",
+  "mermas-ctc": "/tools/mermas-ctc/mermas-ctc.html",
+  agtron: "/tools/agtron/agtron-dial.html",
+  "cogs-verde": "/tools/cogs-verde/cogs-cafe-verde.html",
+  "costo-empaque": "/tools/costo-empaque/costo-empaque.html",
+  "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
+  catacion: "/tools/catacion/rueda-del-cafe-v23.html",
+  "green-datasheet": "/tools/green-datasheet/green-coffee-datasheet.html",
+  qr: "/tools/qr/generador-qr.html",
+  "formula-calidad": "/tools/formula-calidad/formula-calidad.html",
+  "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",
+  "mapa-variedades": "/tools/mapa-variedades/mapa-variedades.html",
+  "cromatografia-suelo": "/tools/cromatografia-suelo/cromatografia-suelo.html",
 };
 
 // El campo donde escribir el centinela, cuando el primero de texto NO debe

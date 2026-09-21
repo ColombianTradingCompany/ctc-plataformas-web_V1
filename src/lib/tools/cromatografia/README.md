@@ -78,7 +78,7 @@ del informe del productor (`#labOnePager`, `pintarOnePager`, figura con prefijo 
 
 | Archivo | Qué hace |
 |---|---|
-| `public/tools/cromatografia-suelo.html` | La herramienta entera (HTML + CSS + JS ES5, sin librerías). Dos caras, diálogos, figura SVG, firma, export, diccionarios `T.es/en/de` y definiciones `DEF`. El puente `ctc-bridge.js` es la última línea antes de `</body>`. |
+| `public/tools/cromatografia-suelo/cromatografia-suelo.html` | La herramienta entera (HTML + CSS + JS ES5, sin librerías). Dos caras, diálogos, figura SVG, firma, export, diccionarios `T.es/en/de` y definiciones `DEF`. El puente `ctc-bridge.js` es la última línea antes de `</body>`. |
 | `public/tools/assets/cromatografia-rasgos.js` | Motor `croma-rasgos-1.2` (global `CromaRasgos`): compuerta + rasgos + Ford programático. Corre en el navegador y en los guardianes. |
 | `public/tools/assets/cromatografia-reglas.json` | Copia **byte a byte** de `reglas.json` para el navegador. |
 | `src/lib/tools/cromatografia/reglas.json` | **Reglas vivas v2.6**, de CTC (la v2.0 de `reference/` fue solo guía). Con `analisis_cuantitativo` (campos, límites de saneo y rangos bajo/medio/alto de Cenicafé con método y rango adecuado), `i18n.en/de` y `referentes` (documentación: quién es el referente y qué obras suyas se citan; el prompt no lo inyecta). |
@@ -103,7 +103,7 @@ En Supabase (proyecto `sjznkzvefqfcysczllli`): fila en `tools` y `tool_versions`
 `profiles.full_name`. No hay tablas propias: los análisis son **trabajos del taller** guardados por el puente.
 
 Fuera del repo (con derechos de terceros, **no se publica**):
-`C:\dev\ctc-platforms\reference\html_tools\Analisis Cromatografico\` → `fuentes/INDEX.md` (26 PDF con nivel,
+`C:\dev\ctc-platforms\reference\html_tools\cromatografia-suelo\Analisis Cromatografico\` → `fuentes/INDEX.md` (26 PDF con nivel,
 licencia y URL), `fuentes/HALLAZGOS.md` (verificación página a página contra las reglas), `fuentes/datasets/`
 (Martins D2 `raw_448px.zip` para calibrar), la tesis de Lozano Vesga 2021 (#24 del INDEX, entregada por el owner), el
 paquete original del owner (KICKOFF, PDF1, PDF2, JSON v2.0, mock) y `cromatografias_mock/` (origen de las fotos de ejemplo).

@@ -186,7 +186,7 @@ export function AppFrame({ quote, onSaved }: { quote: Quote; onSaved: () => void
   // /ocp-apps: es la MISMA que ven el productor y el público, y una copia se
   // quedaría atrás en cuanto el owner publique una versión nueva.
   const src =
-    quote.kind === "empaque" ? "/tools/costo-empaque.html"
+    quote.kind === "empaque" ? "/tools/costo-empaque/costo-empaque.html"
     : quote.kind === "logistico" ? "/ocp-apps/cotizador-logistico.html"
     : "/ocp-apps/cotizador-lotes.html";
   const ref = useRef<HTMLIFrameElement>(null);

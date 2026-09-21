@@ -7,7 +7,7 @@ import { QUOTE_BASE_PATH } from "@/lib/cotizador/types";
 export const metadata: Metadata = { title: "Costo de empaque · ECP", robots: { index: false, follow: false } };
 
 // Cotizador de Costo de Empaque (2026-08-06). La herramienta es la misma que el
-// banco público (`public/tools/costo-empaque.html`) — aquí gana memoria: cada
+// banco público (`public/tools/costo-empaque/costo-empaque.html`) — aquí gana memoria: cada
 // configuración se guarda como una cotización más, con su destinatario y su
 // historial, y se puede comparar contra las otras en el Cuadro de evaluación.
 export default function CotizadorEmpaquePage() {

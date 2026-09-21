@@ -48,7 +48,7 @@ async function contexto(esquema) {
   const p = await ctx.newPage();
   p.on("pageerror", (e) => errores.push(`${esquema}: ${e.message}`));
   p.on("console", (m) => { if (m.type() === "error" && !m.text().includes("401")) errores.push(`${esquema} consola: ${m.text()}`); });
-  await p.goto("http://ctc.local/tools/cromatografia-suelo.html", { waitUntil: "load" });
+  await p.goto("http://ctc.local/tools/cromatografia-suelo/cromatografia-suelo.html", { waitUntil: "load" });
   await p.waitForTimeout(700);
   return { ctx, p };
 }

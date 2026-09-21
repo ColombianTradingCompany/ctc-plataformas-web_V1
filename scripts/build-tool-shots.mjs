@@ -25,20 +25,20 @@ const SALIDA = new URL("../public/images/herramientas/shots/", import.meta.url);
 
 /** id del registro `tools` → ruta que sirve su versión publicada. */
 const HERRAMIENTAS = {
-  "mermas-rapida": "/tools/mermas-rapida.html",
-  "mermas-ctc": "/tools/mermas-ctc.html",
-  agtron: "/tools/agtron-dial.html",
-  "cogs-verde": "/tools/cogs-cafe-verde.html",
-  "costo-empaque": "/tools/costo-empaque.html",
-  "cool-pdf": "/tools/cool-pdf.html",
-  catacion: "/tools/rueda-del-cafe-v23.html", // V23 del owner (V5.7) — la captura sigue al publicado
-  "green-datasheet": "/tools/green-coffee-datasheet.html",
-  qr: "/tools/generador-qr.html",
-  "formula-calidad": "/tools/formula-calidad.html",
-  "viaje-cafe": "/tools/viaje-cafe.html",
-  "mapa-variedades": "/tools/mapa-variedades.html",
-  "defectos-cafe": "/tools/defectos-cafe.html",
-  "cromatografia-suelo": "/tools/cromatografia-suelo.html",
+  "mermas-rapida": "/tools/mermas-rapida/mermas-rapida.html",
+  "mermas-ctc": "/tools/mermas-ctc/mermas-ctc.html",
+  agtron: "/tools/agtron/agtron-dial.html",
+  "cogs-verde": "/tools/cogs-verde/cogs-cafe-verde.html",
+  "costo-empaque": "/tools/costo-empaque/costo-empaque.html",
+  "cool-pdf": "/tools/cool-pdf/cool-pdf.html",
+  catacion: "/tools/catacion/rueda-del-cafe-v23.html", // V23 del owner (V5.7) — la captura sigue al publicado
+  "green-datasheet": "/tools/green-datasheet/green-coffee-datasheet.html",
+  qr: "/tools/qr/generador-qr.html",
+  "formula-calidad": "/tools/formula-calidad/formula-calidad.html",
+  "viaje-cafe": "/tools/viaje-cafe/viaje-cafe.html",
+  "mapa-variedades": "/tools/mapa-variedades/mapa-variedades.html",
+  "defectos-cafe": "/tools/defectos-cafe/defectos-cafe.html",
+  "cromatografia-suelo": "/tools/cromatografia-suelo/cromatografia-suelo.html",
 };
 
 mkdirSync(SALIDA, { recursive: true });

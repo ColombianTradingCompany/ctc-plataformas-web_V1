@@ -445,7 +445,7 @@ check("fincas: nunca selecciona coordenadas ni EUDR", !/geolocation|eudr_|polygo
 check("fincas: Cherry Picked no habilita fincas", fincas.includes('get("superficie") === "cp"'));
 check("fincas: pasa por el veredicto de acceso", fincas.includes("puedeAbrir("));
 
-const html = leeTxt("public/tools/cromatografia-suelo.html");
+const html = leeTxt("public/tools/cromatografia-suelo/cromatografia-suelo.html");
 check("html: lleva el puente al pie", /<script src="\/tools\/ctc-bridge\.js"><\/script>\s*<\/body>/.test(html));
 check("html: carga el motor de rasgos y las reglas locales", html.includes("/tools/assets/cromatografia-rasgos.js") && html.includes("/tools/assets/cromatografia-reglas.json"));
 check("html: estado propio versionado y resumen", html.includes("CTC.usarEstado(") && html.includes("CTC.usarResumen(") && /esquema:\s*2/.test(html));

@@ -2,7 +2,7 @@
 //
 //   node scripts/qa-tools-seo-check.mjs
 //
-// LO QUE PROTEGE: las 12 páginas de `public/tools/` son ARCHIVOS ESTÁTICOS.
+// LO QUE PROTEGE: las páginas de `public/tools/<id>/` son ARCHIVOS ESTÁTICOS.
 // No las pinta Next, así que NO PASAN por `generateMetadata` ni por ningún
 // layout: lo que no esté escrito a mano dentro del `<head>` del propio archivo
 // sencillamente no existe. Y son URLs públicas e indexables.
@@ -43,7 +43,17 @@ const MAX = 165;
 // ECP. En un resultado de búsqueda no las lee el destinatario correcto.
 const INTERNAS = [/se ofrece a/i, /reemplazad[ao]/i, /solo para/i, /uso interno/i, /deprecad[ao]/i, /\btest\b/i];
 
-const archivos = readdirSync(DIR).filter((f) => f.endsWith(".html")).sort();
+// V5.66: cada herramienta vive en su carpeta (`public/tools/<id>/<archivo>.html`,
+// fuente única en src/lib/tools/carpetas.ts). Se lee un nivel hacia abajo; un
+// HTML suelto en la raíz se sigue revisando igual (y qa-tools-carpetas lo
+// denuncia como mal colocado).
+const archivos = readdirSync(DIR, { withFileTypes: true })
+  .flatMap((e) =>
+    e.isDirectory()
+      ? readdirSync(new URL(e.name + "/", DIR)).filter((f) => f.endsWith(".html")).map((f) => `${e.name}/${f}`)
+      : e.name.endsWith(".html") ? [e.name] : []
+  )
+  .sort();
 check("hay páginas de herramientas que revisar", archivos.length >= 12);
 
 const vistas = new Map();

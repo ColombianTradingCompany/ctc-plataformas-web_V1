@@ -87,11 +87,13 @@ check("una captura ausente cae a tarjeta, no a hueco", carrusel.includes("onErro
 
 // ── 6. TODAS las herramientas vivas llevan el puente (V5.6, owner) ──────────
 // mermas-detallada NO está: archivada el 2026-08-15, retirada es retirada.
+// V5.66: cada archivo vive en la carpeta de su herramienta (src/lib/tools/carpetas.ts).
 for (const f of [
-  "mermas-rapida", "mermas-ctc", "agtron-dial", "cogs-cafe-verde", "costo-empaque",
-  "cool-pdf", "rueda-catacion", "green-coffee-datasheet", "generador-qr",
-  "formula-calidad", "viaje-cafe",
-  "rueda-del-cafe-v23", "mapa-variedades", // V5.7: la V23 del owner y la herramienta nueva
+  "mermas-rapida/mermas-rapida", "mermas-ctc/mermas-ctc", "agtron/agtron-dial", "cogs-verde/cogs-cafe-verde",
+  "costo-empaque/costo-empaque", "cool-pdf/cool-pdf", "catacion/rueda-catacion",
+  "green-datasheet/green-coffee-datasheet", "qr/generador-qr", "formula-calidad/formula-calidad",
+  "viaje-cafe/viaje-cafe",
+  "catacion/rueda-del-cafe-v23", "mapa-variedades/mapa-variedades", // V5.7: la V23 del owner y la herramienta nueva
 ]) {
   check(`${f} incluye el puente`, lee(`public/tools/${f}.html`).includes('src="/tools/ctc-bridge.js"'));
 }

@@ -352,4 +352,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - Guardián nuevo `qa-tools-carpetas` (166); `qa-tools-seo-check` 193 → 257 (recorre carpetas).
 - Docs: `docs/componentes/herramientas-cafe/README.md` (recuento) + `<id>/README.md` por herramienta +
   `_candidatas/atlas-cafetero`. Fuentes del owner en `reference/html_tools/<id>/`.
-(commit: pendiente)
+(commit: 3467576)

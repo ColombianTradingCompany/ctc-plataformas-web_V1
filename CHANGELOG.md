@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.66] — 2026-09-21 (commit pendiente)
+## [V5.66] — 2026-09-21 (commit 3467576)
 
 - **Hito**: **Herramientas del Café: una carpeta por herramienta, y el recuento para abrir una conversación por cada una**
   (owner, 2026-09-21). Los 16 HTML sueltos de `public/tools/` pasan a `public/tools/<id>/` —la carpeta se llama como el

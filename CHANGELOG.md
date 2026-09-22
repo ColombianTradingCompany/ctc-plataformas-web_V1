@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.67] — 2026-09-22 (commit pendiente)
+
+- **Retirado**: **el «Reporte de proceso de café» (`mermas-detallada`) sale de la web** por decisión del owner: se borra
+  `public/tools/mermas-detallada/mermas-detallada.html`, archivada desde el 2026-08-15 y servida hasta hoy con `noindex`
+  (archivar no retira). Sus dos URLs —la plana y la de carpeta— **no dan 404**: van con 308 a su sucesora, la Calculadora de
+  mermas · Detallada (`mermas-ctc`), porque pueden estar enlazadas desde fuera. La fila de `tools` y su versión se quedan,
+  archivadas, como registro (sin trabajos, permisos ni solicitudes); la fuente original del owner sigue en
+  `reference/html_tools/mermas-detallada/`.
+- **Cambiado**: `src/lib/tools/carpetas.ts` gana `HERRAMIENTAS_BORRADAS` (id, archivo y sucesora), de donde salen esas 308;
+  `qa-tools-carpetas` (165) exige que una borrada no vuelva a tener carpeta y que su sucesora esté viva, y
+  `qa-tools-seo-espejo` (86) exige lo contrario que a una archivada: que el archivo **ya no esté**.
+
 ## [V5.66] — 2026-09-21 (commit 3467576)
 
 - **Hito**: **Herramientas del Café: una carpeta por herramienta, y el recuento para abrir una conversación por cada una**

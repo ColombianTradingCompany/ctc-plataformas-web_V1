@@ -353,3 +353,12 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - Docs: `docs/componentes/herramientas-cafe/README.md` (recuento) + `<id>/README.md` por herramienta +
   `_candidatas/atlas-cafetero`. Fuentes del owner en `reference/html_tools/<id>/`.
 (commit: 3467576)
+
+## [2026-09-22] V5.67 · Herramientas del Café — se borra el Reporte de proceso archivado
+- Retirado: `public/tools/mermas-detallada/mermas-detallada.html` (owner). La fila `tools.mermas-detallada`
+  se queda archivada como registro. Sus URLs (`/tools/mermas-detallada.html` y la de carpeta) → 308 a
+  `/tools/mermas-ctc/mermas-ctc.html`, la sucesora.
+- ARQUITECTURA · `HERRAMIENTAS_BORRADAS` en `src/lib/tools/carpetas.ts` (id · archivo · sucesora) alimenta las
+  308 junto a las de carpeta. Nodo `herramientas`: 14 carpetas en `public/tools/`, 15 filas en `tools`.
+- Guardianes: `qa-tools-carpetas` 165 (una borrada no vuelve), `qa-tools-seo-espejo` 86 (su archivo no está).
+(commit: pendiente)

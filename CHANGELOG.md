@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.67] — 2026-09-22 (commit pendiente)
+## [V5.67] — 2026-09-22 (commit 3c94c4b)
 
 - **Retirado**: **el «Reporte de proceso de café» (`mermas-detallada`) sale de la web** por decisión del owner: se borra
   `public/tools/mermas-detallada/mermas-detallada.html`, archivada desde el 2026-08-15 y servida hasta hoy con `noindex`

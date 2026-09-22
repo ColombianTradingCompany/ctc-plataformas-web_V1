@@ -361,4 +361,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - ARQUITECTURA · `HERRAMIENTAS_BORRADAS` en `src/lib/tools/carpetas.ts` (id · archivo · sucesora) alimenta las
   308 junto a las de carpeta. Nodo `herramientas`: 14 carpetas en `public/tools/`, 15 filas en `tools`.
 - Guardianes: `qa-tools-carpetas` 165 (una borrada no vuelve), `qa-tools-seo-espejo` 86 (su archivo no está).
-(commit: pendiente)
+(commit: 3c94c4b; el borrado salió antes, solo, en 5a54269)

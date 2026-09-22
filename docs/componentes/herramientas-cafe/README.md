@@ -40,12 +40,12 @@
 | [`qr`](qr/README.md) | Generador de códigos QR | Viva | default | en | KR | sí (puente) | 1 |
 | [`cool-pdf`](cool-pdf/README.md) | Cool PDF · dale cuerpo a un PDF | Viva | default | en | KR · web | sí (puente) | 0 |
 | [`cromatografia-suelo`](cromatografia-suelo/README.md) | Lector de Cromatografía de Suelo | Viva · primera con servidor | **plus** | es (+ en, de) | KR · web · DC | sí (esquema propio) | 0 |
-| [`mermas-detallada`](mermas-detallada/README.md) | Reporte de proceso de café | **Archivada** (2026-08-15) · `noindex` | — | es | ninguna | no | 0 |
+| [`mermas-detallada`](mermas-detallada/README.md) | Reporte de proceso de café | **Archivada · archivo borrado** (2026-09-22, V5.67) — 308 a `mermas-ctc` | — | es | ninguna | no | 0 |
 | [`atlas-cafetero`](_candidatas/atlas-cafetero/README.md) | Atlas cafetero de Colombia | **Candidata** (sin registrar) | — | es | — | — | — |
 
 Datos de la base leídos el 2026-09-21 (`tools`, `tool_versions`, `tool_sessions`). «Superficies» son las
 columnas de reparto (`kr`·`cp`·`web`·`dc`); el Taller lista TODO el catálogo compartible sin mirar `web`.
-Las 13 vivas y la archivada son `clase: compartible`; ninguna es interna.
+Las 13 vivas y la archivada son `clase: compartible`. En `public/tools/` quedan **14 carpetas** (la archivada ya no tiene archivo); ninguna es interna.
 
 ## Las herramientas como interfaz de otras partes
 
@@ -82,7 +82,7 @@ línea en `docs/ALINEACION.md` §3.
 5. **`mapa-variedades`**, **`agtron`**, **`qr`**, **`cool-pdf`** — idiomas (tres están solo en inglés) y fuente única.
 6. **`formula-calidad`**, **`viaje-cafe`** — alinear con Grados CTC y la narrativa v3.
 7. **`atlas-cafetero`** — alta.
-8. **`mermas-detallada`**, **`mermas-rapida`** — decisiones del owner (borrar/`noindex`; cacao).
+8. **`mermas-rapida`** — decisión del owner (el modo cacao). (`mermas-detallada` quedó resuelta: borrada el 2026-09-22.)
 9. **`cromatografia-suelo`** — sigue con su kick-off propio (`src/lib/tools/cromatografia/README.md`).
 
 **Transversal a todas** (charter · Pendientes): los tres niveles de acceso (Default · Básica · Plus) aún

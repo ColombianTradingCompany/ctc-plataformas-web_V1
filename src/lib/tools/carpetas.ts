@@ -42,12 +42,10 @@ export const CARPETAS_HERRAMIENTAS: CarpetaHerramienta[] = [
   { id: "green-datasheet", archivos: ["green-coffee-datasheet.html"] },
   { id: "mapa-variedades", archivos: ["mapa-variedades.html"] },
   // ⚠️ Los ids de mermas están cruzados con sus nombres: `mermas-ctc` es la
-  // DETALLADA y `mermas-detallada` es el «Reporte de proceso» archivado. La
+  // DETALLADA y `mermas-detallada` era el «Reporte de proceso» (borrado, abajo). La
   // carpeta sigue al id, que es lo que no se puede cambiar sin migrar trabajos.
   { id: "mermas-ctc", archivos: ["mermas-ctc.html"] },
   { id: "mermas-rapida", archivos: ["mermas-rapida.html"] },
-  // Archivada el 2026-08-15: sigue en public/ con noindex (archivar no retira).
-  { id: "mermas-detallada", archivos: ["mermas-detallada.html"] },
   { id: "qr", archivos: ["generador-qr.html"] },
   { id: "viaje-cafe", archivos: ["viaje-cafe.html"] },
 ];
@@ -60,8 +58,28 @@ export function rutaHerramienta(id: string, archivo: string): string {
   return `/tools/${id}/${archivo}`;
 }
 
-/** Las 308 de la mudanza: cada URL plana vieja → su carpeta. */
-export const REDIRECCIONES_HERRAMIENTAS: { source: string; destination: string; permanent: true }[] =
-  CARPETAS_HERRAMIENTAS.flatMap((c) =>
+/** Herramientas cuyo ARCHIVO se borró de `public/` (la fila de `tools` se queda,
+ *  archivada, como registro). Sus URLs —la plana y la de carpeta— no dan 404:
+ *  van con 308 a la herramienta que la sustituyó, porque pueden estar enlazadas
+ *  desde fuera.
+ *
+ *  · mermas-detallada («Reporte de proceso de café») — archivada el 2026-08-15,
+ *    sustituida por `mermas-ctc` (la Detallada); el owner mandó borrarla el
+ *    2026-09-22 (V5.67). La fuente original sigue en reference/html_tools/. */
+export const HERRAMIENTAS_BORRADAS: { id: string; archivo: string; sucesora: { id: string; archivo: string } }[] = [
+  { id: "mermas-detallada", archivo: "mermas-detallada.html", sucesora: { id: "mermas-ctc", archivo: "mermas-ctc.html" } },
+];
+
+/** Las 308: cada URL plana vieja → su carpeta; y las de una borrada → su sucesora. */
+export const REDIRECCIONES_HERRAMIENTAS: { source: string; destination: string; permanent: true }[] = [
+  ...CARPETAS_HERRAMIENTAS.flatMap((c) =>
     c.archivos.map((a) => ({ source: `/tools/${a}`, destination: rutaHerramienta(c.id, a), permanent: true as const }))
-  );
+  ),
+  ...HERRAMIENTAS_BORRADAS.flatMap((b) =>
+    [`/tools/${b.archivo}`, rutaHerramienta(b.id, b.archivo)].map((source) => ({
+      source,
+      destination: rutaHerramienta(b.sucesora.id, b.sucesora.archivo),
+      permanent: true as const,
+    }))
+  ),
+];

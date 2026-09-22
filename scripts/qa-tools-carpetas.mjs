@@ -20,7 +20,7 @@
 // existe lo comprueba `qa-tools-seo-espejo` (lee ese archivo; si no está, falla).
 
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
-import { CARPETAS_HERRAMIENTAS, RAIZ_COMPARTIDA_TOOLS, REDIRECCIONES_HERRAMIENTAS } from "../src/lib/tools/carpetas.ts";
+import { CARPETAS_HERRAMIENTAS, HERRAMIENTAS_BORRADAS, RAIZ_COMPARTIDA_TOOLS, REDIRECCIONES_HERRAMIENTAS } from "../src/lib/tools/carpetas.ts";
 
 const raiz = new URL("../", import.meta.url);
 const DIR = new URL("public/tools/", raiz);
@@ -30,7 +30,7 @@ const fallos = [];
 const check = (n, c) => (c ? ok++ : fallos.push(n));
 
 const ids = CARPETAS_HERRAMIENTAS.map((c) => c.id);
-check("la lista no está vacía", ids.length >= 15);
+check("la lista no está vacía", ids.length >= 14);
 check("ningún id se repite", new Set(ids).size === ids.length);
 for (const id of ids) {
   check(`${id}: id con forma de slug`, /^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(id));
@@ -63,7 +63,13 @@ for (const c of CARPETAS_HERRAMIENTAS) {
 
 // ── las 308 ─────────────────────────────────────────────────────────────────
 const fuentes = REDIRECCIONES_HERRAMIENTAS.map((r) => r.source);
-check("una 308 por archivo declarado", fuentes.length === CARPETAS_HERRAMIENTAS.reduce((n, c) => n + c.archivos.length, 0));
+check("una 308 por archivo declarado + dos por borrada", fuentes.length === CARPETAS_HERRAMIENTAS.reduce((n, c) => n + c.archivos.length, 0) + 2 * HERRAMIENTAS_BORRADAS.length);
+// Una borrada: ni su carpeta ni su archivo vuelven a aparecer, y su sucesora está viva.
+for (const b of HERRAMIENTAS_BORRADAS) {
+  check(`${b.id}: borrada, y no sigue en la lista de carpetas`, !ids.includes(b.id));
+  check(`${b.id}: borrada, y su carpeta ya no existe`, !existsSync(new URL(b.id + "/", DIR)));
+  check(`${b.id}: su sucesora ${b.sucesora.id} está en la lista`, ids.includes(b.sucesora.id));
+}
 check("ninguna URL vieja se repite", new Set(fuentes).size === fuentes.length);
 for (const r of REDIRECCIONES_HERRAMIENTAS) {
   check(`308 ${r.source}: es permanente`, r.permanent === true);

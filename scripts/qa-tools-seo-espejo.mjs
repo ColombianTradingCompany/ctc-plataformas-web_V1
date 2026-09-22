@@ -26,7 +26,7 @@
 // que es estático y corre siempre.
 
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
 const raiz = new URL("../", import.meta.url);
 for (const linea of readFileSync(new URL(".env.local", raiz), "utf8").split("\n")) {
@@ -52,6 +52,14 @@ if (!url || !service) {
 //     El cacao dejó de ser producto de la casa; la HERRAMIENTA no se toca (el
 //     owner paró la rama que quería amputarle el modo cacao). Se le quita la
 //     candidatura al índice, no la vida: `follow`, sigue abriendo y compartiendo.
+// Herramientas ARCHIVADAS cuyo archivo el owner mandó BORRAR de public/ (la fila
+// de `tools` se queda como registro, y su URL va con 308 a la sucesora — ver
+// src/lib/tools/carpetas.ts, HERRAMIENTAS_BORRADAS). Para ellas lo que se exige
+// es lo contrario: que el archivo YA NO esté.
+const BORRADAS_DEL_DISCO = {
+  "mermas-detallada": "borrada por el owner el 2026-09-22 (V5.67); 308 a mermas-ctc",
+};
+
 const FUERA_DEL_INDICE = {
   "mermas-rapida": "cacao en el cuerpo; producto retirado (2026-08-19, V4.45)",
 };
@@ -106,6 +114,11 @@ for (const t of tools) {
   // Borrar el archivo sería otra decisión —puede estar enlazado desde fuera—,
   // así que lo que se exige es lo proporcionado: que una retirada diga
   // `noindex`. Sale del índice y el enlace viejo sigue abriendo.
+  if (t.archivado_at && t.id in BORRADAS_DEL_DISCO) {
+    retiradas++;
+    check(`${t.id}: borrada del disco, y de verdad no está`, !existsSync(new URL("public" + v.src_publico, raiz)));
+    continue;
+  }
   if (t.archivado_at) {
     retiradas++;
     const arch = delArchivo(v.src_publico);
@@ -156,5 +169,5 @@ if (fallos.length) {
 }
 console.log(
   `✓ qa-tools-seo-espejo: ${ok} comprobaciones OK, 0 fallos ` +
-    `(${revisadas} indexables espejadas, ${retiradas} retirada(s) con noindex)`,
+    `(${revisadas} indexables espejadas, ${retiradas} retirada(s): noindex o borrada del disco)`,
 );

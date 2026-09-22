@@ -39,7 +39,7 @@ cuenta de KR, CP o Directorio), el **Taller** (Cover Flow en dos estantes: abier
 | `mermas-rapida` | Calculadora de mermas · Rápida | default | es | sí | `mermas-rapida.html` (`noindex` a propósito: modo cacao) |
 | `qr` | Generador de códigos QR | default | en | sí | `generador-qr.html` |
 | `viaje-cafe` | El viaje del café | default | es | sí | `viaje-cafe.html` |
-| `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15): `mermas-detallada.html` sigue en `public/` con `noindex` |
+| `mermas-detallada` | Reporte de proceso de café | — | es | no | **archivada** (2026-08-15) y **archivo borrado** (owner, 2026-09-22, V5.67): sus dos URLs van con 308 a `mermas-ctc`; la fila de `tools` se queda como registro; la fuente, en `reference/html_tools/mermas-detallada/` |
 | `cromatografia-suelo` | Lector de Cromatografía de Suelo | **plus** | es (+ en, de en la propia herramienta, V5.39) | sí (esquema propio) | `cromatografia-suelo.html` (V5.32–V5.41) · primera con servidor: `api/herramientas/cromatografia` (+ `/fincas`, `/estado`) · brief en `briefs/` |
 
 Candidata sin registrar: **Atlas cafetero de Colombia** (ficha en `herramientas-cafe/_candidatas/atlas-cafetero/`).
@@ -90,9 +90,9 @@ SUPERFICIE, no de una consola — gotcha 12) · `/tools/<id>/*.html` y `/tools/h
 
 ## Guardianes
 
-`qa-tools-carpetas.mjs` (166, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
+`qa-tools-carpetas.mjs` (165, `node --experimental-strip-types`: carpeta ↔ lista ↔ disco ↔ 308, y nadie escribe una ruta plana) ·
 `qa-taller-check.mjs` · `qa-herramientas-acceso-check.mjs` (26) · `qa-concha-herramientas-check.mjs` (42,
-once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (257, recorre las carpetas) ·
+once vectores de ataque) · `qa-tools-puente-conformance.mjs` (12/12) · `qa-tools-seo-check.mjs` (241, recorre las carpetas) ·
 `qa-tools-seo-espejo.mjs` (86, toca la base: columna = archivo; `noindex` en archivadas y en `FUERA_DEL_INDICE`) ·
 `qa-cromatografia-check.mjs` (294, puro) · `qa-cromatografia-modelo.mjs` (manual, gasta: estabilidad del modelo; acepta
 `[idioma] [lab]`) ·
@@ -186,7 +186,6 @@ cualquiera de esos campos se ve en las tres superficies al instante — sin desp
 - **Migrar el comodín `tools_plus_grants`** a permisos por persona (`quienDependeDelComodin()` es la lista) y retirar la tabla.
 - **Defectos del Café**: `soporta_memoria=false` (¿línea del puente?); fotogramas de tostado y conmutador de
   fondo abiertos (memoria `defectos-cafe-tool`).
-- **`mermas-detallada.html`**: borrar el archivo retirado o dejarlo con `noindex` — decisión del owner.
 - Trabajos compartidos entre cuentas y capturas por versión: no pedidos; el esquema los admite.
 
 ## Kick-off

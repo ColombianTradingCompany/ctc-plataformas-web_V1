@@ -12,6 +12,7 @@ import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
 import { cotizar, cotizarOpcion, descuentoAdquirido, pesoDimensional, pesoFacturable, tarifaBase } from "../src/lib/courier/calculo.ts";
+import { parseEiaSemanal, pctPorPrecio, semanaFedex } from "../src/lib/courier/combustible.ts";
 
 let pass = 0;
 const fails = [];
@@ -115,6 +116,34 @@ check("tras la gracia sin gasto, cero y lo avisa", "falta" in descuentoAdquirido
   check("una pieza de más de 68 kg solo cotiza carga", f.opciones.every((o) => o.embalaje === "carga"));
   const ipf = f.opciones.find((o) => o.servicio === "IPF");
   check("carga: 80 kg × 3 − (10 %) + 20 %", ipf && cerca(ipf.totalUsd, 80 * 3 * 0.9 * 1.2), String(ipf?.totalUsd));
+}
+
+// ── El combustible, derivado (V5.69) ─────────────────────────────────────────────────────────────────
+// La FUENTE de estas cifras es la página de FedEx del 2026-09-23 (fedex.com/es-co/shipping/surcharges.html):
+// su historial de 13 semanas (semana → precio USGC → %) y un tramo de su tabla de escalones. Son públicas.
+// Las fechas del viernes EIA salen de la EIA (serie EER_EPJK_PF4_RGC_DPG) para esos mismos precios.
+{
+  const escalasFedex = [];
+  for (let i = 0, lo = 2.75; lo < 4.43 - 1e-9; i++, lo += 0.04) escalasFedex.push({ desde: +lo.toFixed(2), hasta: +(lo + 0.04).toFixed(2), pct: 30.75 + 0.25 * i });
+  const historial = [ // [semana FedEx (lunes), precio publicado, % publicado, viernes EIA de ese precio]
+    ["2026-09-21", 4.418, 41.0, "2026-09-11"], ["2026-09-14", 4.082, 39.0, "2026-09-04"], ["2026-09-07", 3.715, 36.75, "2026-08-28"],
+    ["2026-08-31", 3.922, 38.0, "2026-08-21"], ["2026-08-24", 3.770, 37.0, "2026-08-14"], ["2026-08-17", 3.431, 35.0, "2026-08-07"],
+    ["2026-08-10", 3.736, 36.75, "2026-07-31"], ["2026-08-03", 3.676, 36.5, "2026-07-24"], ["2026-07-27", 3.497, 35.25, "2026-07-17"],
+    ["2026-07-20", 2.971, 32.0, "2026-07-10"], ["2026-07-13", 2.816, 31.0, "2026-07-03"],
+  ];
+  const malas = historial.filter(([lunes, usd, pct, viernes]) => semanaFedex(viernes).desde !== lunes || pctPorPrecio(escalasFedex, usd) !== pct);
+  check(`combustible: las ${historial.length} semanas publicadas por FedEx salen de EIA + 10 días + tabla`, malas.length === 0, JSON.stringify(malas));
+  check("combustible: la semana FedEx va de lunes a domingo", semanaFedex("2026-09-11").hasta === "2026-09-27");
+  check("combustible: el borde pertenece al escalón de arriba («al menos … menos que»)", pctPorPrecio(escalasFedex, 4.39) === 41.0 && pctPorPrecio(escalasFedex, 4.3899) === 40.75);
+  check("combustible: un precio fuera de la tabla no se adivina", pctPorPrecio(escalasFedex, 9.5) === null);
+  const html = `<tr><td class="B6">&nbsp;&nbsp;2026-Aug</td><td class="B5">08/21&nbsp;</td><td class="B3">3.922&nbsp;</td><td class="B5">08/28&nbsp;</td><td class="B3">3.715&nbsp;</td><td class="B5">&nbsp;</td><td class="B3">&nbsp;</td></tr>
+    <tr><td class="B6">&nbsp;&nbsp;2026-Sep</td><td class="B5">09/04&nbsp;</td><td class="B3">4.082&nbsp;</td><td class="B5">09/11&nbsp;</td><td class="B3">4.418&nbsp;</td></tr>
+    <tr><td class="B6">&nbsp;&nbsp;2025-Dec</td><td class="B5">01/02&nbsp;</td><td class="B3">2.100&nbsp;</td></tr>`;
+  const leidos = parseEiaSemanal(html);
+  check("EIA: lee las semanas con su viernes y su precio", JSON.stringify(leidos.slice(-4)) === JSON.stringify([
+    { semanaFin: "2026-08-21", usd: 3.922 }, { semanaFin: "2026-08-28", usd: 3.715 }, { semanaFin: "2026-09-04", usd: 4.082 }, { semanaFin: "2026-09-11", usd: 4.418 }]), JSON.stringify(leidos));
+  check("EIA: la semana de enero bajo el diciembre anterior es del año siguiente", leidos[0]?.semanaFin === "2026-01-02");
+  check("EIA: sin la tabla reconocible, nada (no un número inventado)", parseEiaSemanal("<html>Service unavailable 503 12/31 2026</html>").length === 0);
 }
 
 // ── Fuga cero ────────────────────────────────────────────────────────────────────────────────────────

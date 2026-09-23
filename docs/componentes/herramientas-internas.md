@@ -65,7 +65,7 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
 
 `direccionamiento_context` · `pvc_model_versions` · `pvc_editions` (guard: publicada = inmutable) · `pvc_cycles` ·
 `pvc_sources` · `pvc_trigger_watch` · `pvc_forecast_scores` · vistas `public_pvc_current` y `public_pvc_next` ·
-`quotes` · `market_anchors` · las ocho `courier_*` (V5.68: acuerdos, descuentos, descuento adquirido, bonificaciones, tarifas base, zonas, recargos, cotizaciones).
+`quotes` · `market_anchors` · las nueve `courier_*` (V5.68: acuerdos, descuentos, descuento adquirido, bonificaciones, tarifas base, zonas, recargos, cotizaciones; V5.69: `courier_combustible_escalas`).
 Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber quién lee ya la edición), `audit_log`
 (escribe rastro). Pasaron a `consolas`: `transcripts`, `transcript_workers`.
 
@@ -75,7 +75,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (67 — la regla de la mezcla, en el código Y en el plan) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs` · `qa-courier-check.mjs` (37 — el cálculo contra un acuerdo FICTICIO y la fuga cero por hash). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-courier-check.mjs` (44 — el cálculo contra un acuerdo FICTICIO, la fuga cero por hash y el combustible derivado contra el historial de FedEx). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias
 
@@ -105,7 +105,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
-- **Cotizador Courier (V5.68) — lo que queda.** (1) **El combustible es semanal**: alguien tiene que anotarlo cada viernes en la pantalla (FedEx lo publica en fedex.com/es-co/shipping/surcharges.html); sin él, la cotización sale «incompleta». Candidato a cron, como las anclas. (2) **Confirmar con el ejecutivo de FedEx** que el descuento por zona, el adquirido y la bonificación **se suman** (así está cargado, `modo_suma = aditivo`) y si el acuerdo cubre la **caja FedEx 10/25 kg** (hoy se cotiza a lista: sale mucho más cara y quizá no lo es). (3) **Contrastar tres envíos reales** contra la factura o fedex.com. (4) El **periodo de gracia termina el 2026-11-24**: desde ahí el descuento adquirido depende del gasto anualizado, que la pantalla pide a mano; calcularlo de las facturas es otra tanda. (5) Segunda tanda: importación y terceros; la API de tarifas de FedEx como contraste (owner: «después»); y que la modalidad courier del cotizador logístico y la Gestión de Muestras lean este costo (línea en `ALINEACION` §3). (6) Cuando llegue la guía 2027: `parse-guia.py` + `seed-courier.mjs … guia` — las tarifas son versión, no se sobrescriben.
+- **Cotizador Courier (V5.68) — lo que queda.** (1) ~~El combustible es semanal y se anotaba a mano~~ — **automático desde la V5.69**: cron de los jueves (`/api/cron/courier-combustible`) que deriva el % de la EIA (USGC jet fuel) + la tabla de escalones de FedEx (`courier_combustible_escalas`), porque fedex.com no responde a un servidor. **Queda**: cuando FedEx cambie su tabla de escalones (la vigente es del 2026-05-11), cargar la nueva — el cron lo avisa si un precio se sale de la tabla. Lo anotado a mano siempre manda. (2) **Confirmar con el ejecutivo de FedEx** que el descuento por zona, el adquirido y la bonificación **se suman** (así está cargado, `modo_suma = aditivo`) y si el acuerdo cubre la **caja FedEx 10/25 kg** (hoy se cotiza a lista: sale mucho más cara y quizá no lo es). (3) **Contrastar tres envíos reales** contra la factura o fedex.com. (4) El **periodo de gracia termina el 2026-11-24**: desde ahí el descuento adquirido depende del gasto anualizado, que la pantalla pide a mano; calcularlo de las facturas es otra tanda. (5) Segunda tanda: importación y terceros; la API de tarifas de FedEx como contraste (owner: «después»); y que la modalidad courier del cotizador logístico y la Gestión de Muestras lean este costo (línea en `ALINEACION` §3). (6) Cuando llegue la guía 2027: `parse-guia.py` + `seed-courier.mjs … guia` — las tarifas son versión, no se sobrescriben.
 - ~~**El overhaul de las consolas devuelve este grupo al ECP**~~ — **ejecutado en la V5.60** (fase 2 de
   `docs/OVERHAUL_CONSOLAS_PLAN.md`): el grupo vive en el ECP, agrupado por modelo como lo dibujó el owner — Definición de
   Contexto (con Misión y Visión y **Mercado Global**) · Modelo Económico en Origen (PVC · Grados) · **Modelo de Producción** ·

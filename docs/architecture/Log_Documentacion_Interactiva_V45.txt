@@ -375,3 +375,14 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   leer este costo (no en esta versión).
 - Guardián nuevo `qa-courier-check` (37); `qa-rutas-consolas` 490; `qa-niveles` 37 (15 borradores).
 (commit: 113f56b)
+
+## [2026-09-23] V5.69 · Herramientas Internas — el combustible del Cotizador Courier, automático
+- CRON NUEVO: `/api/cron/courier-combustible` (vercel.json, «30 13 * * 4», CRON_SECRET como market-anchors) →
+  `src/lib/courier/eia.ts` (lee la EIA, escribe `courier_recargos` con `automatico = true`) sobre la regla pura de
+  `src/lib/courier/combustible.ts` (desfase de 10 días, escalones «al menos … menos que», lector del HTML de la EIA).
+- Fuente externa nueva del mapa: EIA (eia.gov, serie EER_EPJK_PF4_RGC_DPG), pública y sin clave. fedex.com NO es
+  consultable desde el servidor: la tabla de escalones es dato (`courier_combustible_escalas`) y se actualiza a mano
+  cuando FedEx la cambie (el cron lo avisa: un precio fuera de la tabla no se adivina).
+- La acción `actualizarCombustibleAhora` (emite) hace lo mismo a demanda desde la pantalla.
+- Guardián `qa-courier-check` 44.
+(commit: pendiente)

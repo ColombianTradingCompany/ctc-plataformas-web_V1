@@ -11,7 +11,7 @@ export type ResumenCourier = {
   destinos: { clave: string; pais: string; zona: string }[];
   guia: { vigenteDesde: string; fuente: string; filas: number } | null;
   acuerdo: { referencia: string; vigenteDesde: string; finGracia: string | null; modoSuma: string } | null;
-  combustible: { valor: number; vigenteDesde: string; vigenteHasta: string | null; fuente: string }[];
+  combustible: { valor: number; vigenteDesde: string; vigenteHasta: string | null; fuente: string; automatico: boolean }[];
 };
 
 export type CotizacionGuardada = {

@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { requireConsoleWrite, quoteServiceClient } from "@/lib/panel/requireConsoleWrite";
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 import { cotizar, type Cotizacion, type Entrada, type Tablas } from "./calculo";
+import { actualizarCombustible } from "./eia";
 import { COURIER_PATH, type CotizacionGuardada, type ResultadoCourier, type ResumenCourier } from "./types";
 
 /** La consola donde vive este módulo. UNA vez; `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
@@ -37,7 +38,7 @@ async function leerTablas(db: Db): Promise<Tablas> {
   const [tarifas, zonas, recargos, acuerdos] = await Promise.all([
     todas<Fila>(db, "courier_tarifas_base", "servicio, embalaje, zona, peso_desde, peso_hasta, modo, usd, vigente_desde, fuente", porTransportista),
     todas<Fila>(db, "courier_zonas", "pais_iso, pais, zona, vigente_desde, fuente", porTransportista),
-    todas<Fila>(db, "courier_recargos", "concepto, tipo, valor, vigente_desde, vigente_hasta, fuente", porTransportista),
+    todas<Fila>(db, "courier_recargos", "concepto, tipo, valor, vigente_desde, vigente_hasta, fuente, automatico", porTransportista),
     todas<Fila>(db, "courier_acuerdos", "id, referencia, vigente_desde, fin_gracia, modo_suma, fuente", (q) => porTransportista(q).eq("estado", "vigente").order("vigente_desde", { ascending: false }).limit(1)),
   ]);
   const a = acuerdos[0];
@@ -59,7 +60,7 @@ async function leerTablas(db: Db): Promise<Tablas> {
   return {
     tarifas: tarifas.map((t) => ({ servicio: t.servicio, embalaje: t.embalaje, zona: t.zona, pesoDesde: Number(t.peso_desde), pesoHasta: t.peso_hasta === null ? null : Number(t.peso_hasta), modo: t.modo, usd: Number(t.usd), vigenteDesde: t.vigente_desde, fuente: t.fuente })),
     zonas: zonas.map((z) => ({ paisIso: z.pais_iso, pais: z.pais, zona: z.zona, vigenteDesde: z.vigente_desde, fuente: z.fuente })),
-    recargos: recargos.map((r) => ({ concepto: r.concepto, tipo: r.tipo, valor: Number(r.valor), vigenteDesde: r.vigente_desde, vigenteHasta: r.vigente_hasta, fuente: r.fuente })),
+    recargos: recargos.map((r) => ({ concepto: r.concepto, tipo: r.tipo, valor: Number(r.valor), vigenteDesde: r.vigente_desde, vigenteHasta: r.vigente_hasta, fuente: r.fuente, automatico: Boolean(r.automatico) })),
     acuerdo,
   };
 }
@@ -77,7 +78,7 @@ export async function resumenCourier(): Promise<ResumenCourier | null> {
     acuerdo: t.acuerdo ? { referencia: t.acuerdo.referencia, vigenteDesde: t.acuerdo.vigenteDesde, finGracia: t.acuerdo.finGracia, modoSuma: t.acuerdo.modoSuma } : null,
     combustible: t.recargos.filter((r) => r.concepto === "combustible")
       .sort((a, b) => b.vigenteDesde.localeCompare(a.vigenteDesde)).slice(0, 8)
-      .map((r) => ({ valor: r.valor, vigenteDesde: r.vigenteDesde, vigenteHasta: r.vigenteHasta, fuente: r.fuente })),
+      .map((r) => ({ valor: r.valor, vigenteDesde: r.vigenteDesde, vigenteHasta: r.vigenteHasta, fuente: r.fuente, automatico: Boolean(r.automatico) })),
   };
 }
 
@@ -100,6 +101,17 @@ export async function anotarCombustible(input: { valor: number; vigenteDesde: st
   }, { onConflict: "transportista,concepto,vigente_desde" });
   if (error) return { ok: false, error: error.message };
   revalidatePath(COURIER_PATH);
+  return { ok: true };
+}
+
+/** Lo mismo que hace el cron del jueves, a demanda: EIA → tabla de FedEx → % de la semana. No pisa lo anotado a mano. */
+export async function actualizarCombustibleAhora(): Promise<ResultadoCourier> {
+  const who = await requireConsoleWrite(CONSOLA);
+  if (!who) return NO_AUTH;
+  const r = await actualizarCombustible(quoteServiceClient(), AbortSignal.timeout(25_000));
+  revalidatePath(COURIER_PATH);
+  if (!r.ok) return { ok: false, error: r.error ?? "No se pudo actualizar." };
+  if (!r.anotadas.length) return { ok: false, error: r.omitidas.map((o) => `${o.semana}: ${o.motivo}`).join(" · ") || "Nada nuevo que anotar." };
   return { ok: true };
 }
 

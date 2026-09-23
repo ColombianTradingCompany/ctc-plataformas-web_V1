@@ -6,7 +6,7 @@
 // (`src/lib/courier/`): las tablas del acuerdo son CONFIDENCIALES y no viajan al navegador enteras.
 
 import { useCallback, useEffect, useState } from "react";
-import { anotarCombustible, cotizarCourier, guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier } from "@/lib/courier/actions";
+import { actualizarCombustibleAhora, anotarCombustible, cotizarCourier, guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier } from "@/lib/courier/actions";
 import type { Cotizacion, Entrada, Pieza } from "@/lib/courier/calculo";
 import type { CotizacionGuardada, ResumenCourier } from "@/lib/courier/types";
 import styles from "@/components/panel/shared.module.css";
@@ -239,10 +239,19 @@ export function CourierBoard() {
       )}
 
       <div className={styles.card}>
-        <div className={styles.sectionHead}><strong>Recargo de combustible</strong></div>
+        <div className={styles.sectionHead}>
+          <strong>Recargo de combustible</strong>
+          <span className={styles.actions}>
+            <button className="btn btn-sm" type="button" disabled={busy}
+              onClick={() => run(actualizarCombustibleAhora, "Recargo actualizado desde la EIA.")}>
+              Actualizar ahora
+            </button>
+          </span>
+        </div>
         <p className={styles.meta}>
-          FedEx lo publica cada viernes para la semana siguiente en fedex.com/es-co/shipping/surcharges.html. Sin el de
-          la semana del envío, la cotización sale marcada como incompleta.
+          Se anota solo cada jueves: el precio semanal del queroseno de aviación (EIA, Costa del Golfo) pasa por la tabla
+          de escalones de FedEx y da el % de la semana siguiente — el mismo cálculo que hace FedEx. Si FedEx publica otra
+          cifra (fedex.com/es-co/shipping/surcharges.html), anótala a mano: lo anotado a mano nunca lo pisa el automático.
         </p>
         <form className={styles.formGrid} style={{ justifyContent: "flex-end" }}
           onSubmit={async (e) => {
@@ -270,7 +279,7 @@ export function CourierBoard() {
         </form>
         {resumen.combustible.length > 0 && (
           <p className={styles.meta}>
-            Últimas semanas: {resumen.combustible.map((c) => `${c.valor} % (${day(c.vigenteDesde)})`).join(" · ")}
+            Últimas semanas: {resumen.combustible.map((c) => `${c.valor} % (${day(c.vigenteDesde)}${c.automatico ? " · auto" : " · a mano"})`).join(" · ")}
           </p>
         )}
       </div>

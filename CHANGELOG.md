@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.69] — 2026-09-23 (commit pendiente)
+
+- **Añadido**: **el recargo de combustible del Cotizador Courier se anota solo**, con un cron semanal
+  (`/api/cron/courier-combustible`, jueves 13:30 UTC). fedex.com no responde a un servidor (Akamai), así que el % se
+  **deriva como lo deriva FedEx**: precio semanal del queroseno de aviación USGC de la EIA (serie EER_EPJK_PF4_RGC_DPG) →
+  tabla de escalones de FedEx → rige el lunes 10 días después del viernes de la semana EIA. Comprobado contra las 11 semanas
+  que publicaba fedex.com el 2026-09-23. **Nunca pisa lo anotado a mano.** Botón «Actualizar ahora» en la pantalla, y cada
+  semana del historial dice si fue automática o a mano.
+- **Datos**: tabla `courier_combustible_escalas` (la de FedEx vigente desde 2026-05-11, 125 escalones);
+  `courier_recargos` gana `automatico`, `indice_usd`, `indice_semana`. Sembradas las semanas del 7 y 14 de septiembre.
+- **Añadido**: `qa-courier-check` 37 → 44 (el desfase y la tabla contra el historial publicado por FedEx; el lector de la EIA).
+
 ## [V5.68] — 2026-09-23 (commit 113f56b)
 
 - **Añadido**: **Cotizador Courier · FedEx** en `/ecp/cotizador-courier` («ECP · Modelo Logístico»): el costo para CTCx de un

@@ -177,3 +177,26 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - Guardián: `qa-evaluaciones-check` 50 → 53 (la cara del OCP).
 - ANN: el Mapa de Trabajo (`src/lib/workmap/schema.ts`) sigue con la barra anterior a la V5.64 — se redibuja con la 4b.
 (commit: 5ef97d6)
+
+## [2026-09-23] V5.75 · Consolas — Asistencia a Proveedores · Proveedor Desacoplado (las tres rutas del proveedor, 1.ª tanda)
+- ORIGEN: tres diagramas del owner (Ruta Estándar · Ruta CTCx Selection · Ruta Desacoplado), brief
+  `docs/componentes/briefs/consolas-rutas-del-proveedor.md` con sus siete respuestas. Autorizó tocar IDENTIDAD (§1): la sesión
+  asistida y la cuenta sin buzón.
+- NODOS NUEVOS en OCP · Kaffetal Regal: «Asistencia a Proveedores» (`/ocp/asistencia`) y «Proveedor Desacoplado»
+  (`/ocp/desacoplado`), un módulo `src/lib/asistencia/{desacoplado,actions}.ts` + `SesionAsistidaBoton.tsx`.
+- FLUJO NUEVO «sesión asistida»: OCP → `auth.admin.generateLink(magiclink)` → `verifyOtp` en la cookie COMPARTIDA (`sb-…`) →
+  KR se abre como el productor en otra pestaña; la cookie del panel (`ctc-panel-auth`) no se toca. Solo `role = producer`;
+  rastro en `audit_log` (`assisted_session_opened/closed`) + nota «Asistencia CTCx» en `producer_comm_log`. Cerrar = `scope: local`.
+- FLUJO NUEVO «desacoplado»: `auth.admin.createUser` con etiqueta `desacoplado-<slug>@ctcexport.com` (sin buzón, contraseña
+  aleatoria, `email_confirm`) → `handle_new_user` → `producer_profiles.gestion = desacoplado`; ENTREGA = `updateUserById(email
+  real)` + `profiles.email` + `gestion = entregado` + vale de «Recuperar acceso» por correo. `leadEmails.send` NO manda nada a una
+  etiqueta (catch-all → Buzón).
+- DATOS: migración `producer_profiles_gestion_desacoplado` (`gestion` · `gestion_desde` · `entregado_at`; guard extendido).
+  Acta: `docs/migraciones/2026-09-23_producer_profiles_gestion_desacoplado.sql` (carpeta nueva: el acta de cada DDL).
+- «CTCx asume el costo» (`asumirEvaluacion`, nominadosActions): inscripción `exento` con `payment_ref = Asumida por CTCx`.
+- DICT: `sesionasistida`, `desacoplado`, `gestion`. Ficha `identidad`: dos excepciones autorizadas (2026-09-23). ANN en la
+  tabla única (`gestion` bajo el nombre) y en ProducerPanel (insignia + botón).
+- Guardianes: `qa-asistencia-check` (57, nuevo) · `qa-rutas-consolas` 500 (MODULOS_LIB). `createLot` ya no lanza.
+- ABIERTO: nadie condujo la sesión asistida en vivo (sin `prueba-*`); la 4b (el owner la revisa en el paso siguiente); Ficha
+  retenida y descargable (KR); perfil único de CTCx Selection con imagen por lote (Compras); llamada de bienvenida (Tablero).
+(commit: pendiente)

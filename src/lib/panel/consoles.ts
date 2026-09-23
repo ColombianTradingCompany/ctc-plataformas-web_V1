@@ -214,6 +214,12 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // navegable en cualquier dirección, con su mapa, y el clic abre la vista completa
           // (`?lote=` · `?finca=` · `?productor=`). `/ocp/kr` por «Kaffetal Regal», el origen del lote.
           { href: "/ocp/kr", label: "Productores, Fincas y Lotes" },
+          // V5.75 (owner, 2026-09-23 — las tres rutas del proveedor): «entrar al perfil de un productor para
+          // hacer el proceso en su nombre». Los dos son UN mecanismo, la sesión asistida
+          // (`src/lib/asistencia/actions.ts`): Asistencia para el productor ya inscrito; Desacoplado para la
+          // cuenta que CTCx crea sin buzón y lleva por el dueño del café que no va a usar la plataforma.
+          { href: "/ocp/asistencia", label: "Asistencia a Proveedores" },
+          { href: "/ocp/desacoplado", label: "Proveedor Desacoplado" },
         ],
       },
       {

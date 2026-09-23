@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { esCorreoEtiquetaDesacoplado } from "@/lib/asistencia/desacoplado";
 
 // Transactional emails for CTC Home leads. Sender comes from EMAIL_FROM once
 // ctcexport.com is verified in Resend; until then the resend.dev fallback only
@@ -73,6 +74,13 @@ export async function sendTransactionalEmail(to: string, subject: string, text: 
 }
 
 async function send(to: string, subject: string, text: string): Promise<SendResult> {
+  // V5.75 · un Proveedor Desacoplado tiene un correo-ETIQUETA sin buzón (`desacoplado-…@ctcexport.com`).
+  // Nada sale hacia él: iría al catch-all de Hostinger y aparecería en el Buzón como correo «recibido».
+  // Se reporta ok porque no es un fallo: es una cuenta que, por diseño, no recibe correos.
+  if (esCorreoEtiquetaDesacoplado(to)) {
+    console.log(`[email] omitido: ${to} es una etiqueta de proveedor desacoplado (sin buzón) · "${subject}"`);
+    return { ok: true };
+  }
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.log(`[lead email - dev fallback, no RESEND_API_KEY] to=${to} subject="${subject}"\n${text}`);

@@ -40,8 +40,9 @@ vistas de dos modelos. Escritos el 2026-09-19 desde un inventario del repo y del
 Estándar · Ruta CTCx Selection · Ruta Desacoplado— y pidió dos módulos en el OCP: **Proveedor Desacoplado** y **Asistencia a
 Proveedores** (entrar al perfil de un productor y hacer el proceso en su nombre). El brief compara paso a paso con lo que hay,
 propone UN mecanismo para los dos (la sesión asistida: abrir KR como el productor, con rastro) y una cuenta sin buzón para el
-desacoplado. [`consolas-rutas-del-proveedor.md`](consolas-rutas-del-proveedor.md) · **siete decisiones del owner**; las dos
-primeras tocan el contrato de Identidad y bloquean toda la primera tanda. Los diagramas confirman D7 y la prima del 8 %.
+desacoplado. [`consolas-rutas-del-proveedor.md`](consolas-rutas-del-proveedor.md) · **las siete decisiones están contestadas** (al final del
+brief) y la **primera tanda está construida en la V5.75** (`/ocp/asistencia`, `/ocp/desacoplado`, «CTCx asume el costo»). Lo que
+sigue: la 4b (el owner la revisa en el paso siguiente), la Ficha retenida y descargable (KR), el perfil único de CTCx Selection (Compras).
 
 **Simplificar el OCP al circuito** (`consolas`, 2026-09-20). Lo pidió el owner al cerrar el vocabulario EUDR; lo escribe la sesión de
 `kaffetal-regal` porque el cambio nace allí, pero el código es de `consolas`. Dos tandas: la **primera es media hora de vocabulario**

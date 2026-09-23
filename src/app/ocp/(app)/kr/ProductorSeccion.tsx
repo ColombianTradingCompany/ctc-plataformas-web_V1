@@ -5,6 +5,7 @@ import { PHASE_LABEL, type InscriptionPhase } from "@/lib/arena/inscriptions";
 import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/bcp/producerSegments";
 import { estadoDeFinca, etapaDelLote } from "@/lib/ocp/etapas";
 import { ProducerPanel, type ProducerData, type ModuleStat } from "./ProducerPanel";
+import type { Gestion } from "@/lib/asistencia/desacoplado";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Vista completa · la sección del PRODUCTOR (V5.61) ────────────────────────
@@ -30,6 +31,7 @@ type PPRow = {
   department: string | null;
   whatsapp_confirmed: boolean | null;
   club_member_since: string | null;
+  gestion: Gestion | null;
 };
 type FincaRow = { id: string; name: string; status: string; municipio: string | null };
 type LotRow = { id: string; name: string; stage: string; intake_step: number };
@@ -44,7 +46,7 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     service.from("profiles").select("id, full_name, email, phone, created_at, role").eq("id", productorId).maybeSingle(),
     service
       .from("producer_profiles")
-      .select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, video_asset_id, gallery_asset_ids, country, department, whatsapp_confirmed, club_member_since")
+      .select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, video_asset_id, gallery_asset_ids, country, department, whatsapp_confirmed, club_member_since, gestion")
       .eq("profile_id", productorId)
       .maybeSingle(),
     service.from("fincas").select("id, name, status, municipio").eq("producer_id", productorId).order("created_at", { ascending: true }),
@@ -112,6 +114,7 @@ export async function ProductorSeccion({ service, productorId }: { service: Supa
     department: pp?.department ?? null,
     createdAt: p.created_at,
     clubMemberSince: pp?.club_member_since ?? null,
+    gestion: pp?.gestion ?? null,
     segmentLabel: PRODUCER_SEGMENTS.find((s) => s.id === segmento)?.label ?? "",
     media: {
       avatarUrl: pp?.avatar_asset_id ? firmadas.get(pp.avatar_asset_id) ?? null : null,

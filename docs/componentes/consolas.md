@@ -40,7 +40,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena/[sessionId]/run` (+ `temporadas`), `club` · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas` |
-| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, la Visa de una finca) · `a-evaluar` y `en-evaluacion` (las dos vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
+| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · `a-evaluar` y `en-evaluacion` (las dos vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -106,7 +106,8 @@ portal y el peso de las imágenes) ·
 `qa-moneda-check.mjs` (24 — la moneda de cara al comprador: USD en la tienda, EUR declarado en la subasta) ·
 `qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (36 — el nivel `viewer`: la regla y la lista
 blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
-`qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+`qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002) · **`qa-asistencia-check.mjs`** (57 — la sesión asistida solo para
+productores y siempre con rastro; la etiqueta del desacoplado no recibe correos; el guard de `gestion`). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -143,16 +144,18 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
 
 ## Pendientes
 
-- **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23) — brief en scoping**: `briefs/consolas-rutas-del-proveedor.md`. Tres
-  diagramas (Estándar · CTCx Selection · Desacoplado) y dos módulos pedidos para el OCP, **Proveedor Desacoplado** y **Asistencia
-  a Proveedores** (entrar al perfil de un productor para crear fincas y lotes y hacer el proceso en su nombre). La Ruta Estándar
-  ya está construida salvo lo que la 4b tiene parado; la CTCx Selection es el brief de Compras + un perfil de CTCx Selection + el
-  rechazo con interés; la Desacoplada es lo nuevo. Propuesta: UN mecanismo para los dos módulos —la **sesión asistida** (abrir
-  KR como el productor con `auth.admin.generateLink`, rastro en `audit_log` y nota al productor)— y una cuenta con correo-etiqueta
-  sin buzón para el desacoplado (`producer_profiles.gestion`). ⚠️ **Toca el contrato de Identidad: no se construye sin el sí del
-  owner** (siete preguntas al final del brief). Lo que los diagramas YA contestan de la 4b: D7 (declara cantidad al aceptar) y la
-  prima del 8 %. Lo evidente sin decisión: la tarea derivada «llamada de bienvenida» en el Tablero, los `throw` de `createLot`, los
-  comentarios de `circuito.ts` que dicen «EVA documental».
+- **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
+  respuestas del owner al final. **Primera tanda EJECUTADA en la V5.75**: **Asistencia a Proveedores** (`/ocp/asistencia` + botón
+  en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:
+  crear sin buzón, insignia, entregar) y «CTCx asume el costo» de una evaluación. Migración `producer_profiles_gestion_desacoplado` **aplicada** el
+  2026-09-23 (acta en `docs/migraciones/`, carpeta nueva: el acta de cada DDL, porque la fuente de verdad es la base). **Nadie ha conducido la sesión asistida en vivo**
+  (exige un productor `prueba-*`): se verificó por `tsc`, build, `qa-asistencia` (57) y lectura del flujo de Auth. **Queda de las
+  rutas**: la Ruta Estándar solo espera la 4b (el owner la revisa «en el paso siguiente») y la llamada de bienvenida como tarea
+  derivada del Tablero (no hecha); la Ruta CTCx Selection = brief de Compras + el **perfil único de CTCx Selection con imagen por
+  lote** (respuesta 7) + el rechazo con interés (KR); la Desacoplada tiene cuenta y carga, y le faltan la oferta al dueño del café
+  registrada por CTCx (respuesta 4: la evidencia es la evaluación, que hace CTCx) y la **Ficha retenida** hasta pagar (respuesta 6:
+  80.000 o «tal vez 200.000», por decidir; dueño `kaffetal-regal`). La «Ficha automatizada (base info)» del paso 5 es la Ficha
+  descargable (respuesta 5): botón de descarga, dueño KR. Los comentarios de `circuito.ts` que dicen «EVA documental» siguen.
 - **OVERHAUL DE LAS CONSOLAS — `docs/OVERHAUL_CONSOLAS_PLAN.md`**, aprobado por el owner el 2026-09-19 («todo lo
   recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
   reparto BCP ↔ ECP y el Tablero de Ejecución) y **fase 3** (V5.61: la tabla única «Productores, Fincas y Lotes») —

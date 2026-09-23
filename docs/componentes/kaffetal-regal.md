@@ -100,6 +100,15 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 - ~~**⚠️ El OCP todavía dice «EVA» por el veredicto documental — dueño: `consolas`.**~~ — **cerrado en la V5.74** (`consolas`):
   columna «Visa», «Pasaporte EUDR», «Veredicto de Visa»; `qa-evaluaciones` (53) vigila las dos caras. La segunda tanda del brief
   [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md) (bandejas) sigue esperando al owner.
+- **Las tres rutas del proveedor (owner, 2026-09-23; `briefs/consolas-rutas-del-proveedor.md`) — lo que le toca a KR**:
+  **(a)** desde la V5.75 el equipo puede abrir KR **como un productor** (sesión asistida, `src/lib/asistencia/actions.ts`): nada
+  cambia en el código de KR, pero el productor verá notas «Asistencia CTCx» en su feed y puede haber cuentas cuyo correo es una
+  etiqueta `desacoplado-…@ctcexport.com` sin buzón (ningún correo sale hacia ellas). **(b) La Ficha retenida — dueño KR**: la Ficha
+  de un desacoplado NO se entrega hasta que, entregada la cuenta, pague la tarifa (respuesta 6 del owner: COP 80.000 «o tal vez
+  200.000», por decidir) — hoy `lot_fichas_select_own` la enseña en cuanto existe; hace falta una marca que KR respete.
+  **(c) La Ficha descargable** (respuesta 5: la «Ficha automatizada (base info)» del paso 5 es la que se produce para descargar):
+  no hay botón de descarga en B2/B3. **(d) El rechazo con interés** (Ruta CTCx Selection): que `respondToOffer("rechazar")` pueda
+  decir «me interesa la oferta directa de CTCx» — espera la 4b (`lot_offers.kind = directa`).
 - **Tres restos del vocabulario viejo en el copy de KR — dueño: `kaffetal-regal`** (los vio la V5.74 al cerrar el OCP):
   `FichaView.tsx:496` dice que la Visa del lote «se hereda de la Visa de su finca» (es del **Pasaporte**); `:504` dice «Sello EUDR
   PENDIENTE hasta que su(s) finca(s) obtengan la Visa» (es **Visa** del lote y **Pasaporte** de la finca); `EvaluacionesTab.tsx:437`

@@ -7,6 +7,7 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import {
   addSondeoEvaluation,
   applyCodeOnBehalf,
+  asumirEvaluacion,
   assignLotToSession,
   assignLotsToBatch,
   confirmInscriptionPayment,
@@ -117,6 +118,17 @@ export function PaymentControls({
           onClick={() => run(() => confirmInscriptionPayment(lotId, ref))}
         >
           {pending ? "Guardando…" : `Confirmar pago · ${dueLabel}`}
+        </button>
+        {/* V5.75 · Ruta Desacoplada: CTCx asume el costo de la evaluación (queda «exento», sin fingir un código). */}
+        <button
+          className="btn btn-sm"
+          disabled={pending}
+          title="La evaluación la paga CTCx (proveedor desacoplado u otra razón): la inscripción queda exenta, con registro"
+          onClick={() => {
+            if (confirm("¿CTCx asume el costo de esta evaluación? La inscripción quedará exenta (100 %) y quedará registrado quién lo decidió.")) run(() => asumirEvaluacion(lotId));
+          }}
+        >
+          CTCx asume el costo
         </button>
       </div>
       {/* Un código de campaña (KRX-) ya aplicado cierra la caja: el descuento

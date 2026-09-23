@@ -142,6 +142,58 @@ export async function applyCodeOnBehalf(lotId: string, rawCode: string): Promise
 }
 
 /**
+ * V5.75 · CTCx ASUME el costo de la evaluación (Ruta Desacoplada, owner 2026-09-23: «CTCx bears the cost of
+ * this evaluation»). Hasta aquí la única exención era fingir un código de campaña al 100 %. Esto deja la
+ * inscripción «exento» con la razón escrita, y el circuito la lee igual que cualquier `exento`.
+ */
+export async function asumirEvaluacion(lotId: string): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+
+  const { data: ins } = await service
+    .from("arena_inscriptions")
+    .select("id, status, entry_code, entry_code_id, producer_id, lots(name)")
+    .eq("lot_id", lotId)
+    .maybeSingle();
+  if (!ins) return { ok: false, error: "Postulación no encontrada." };
+  if (ins.status !== "pendiente") return { ok: false, error: "Este pago ya está confirmado o exento." };
+
+  const now = new Date().toISOString();
+  const { error } = await service
+    .from("arena_inscriptions")
+    .update({ discount_pct: 100, status: "exento", payment_ref: "Asumida por CTCx", confirmed_by: adminId, confirmed_at: now })
+    .eq("id", ins.id);
+  if (error) return { ok: false, error: "No se pudo marcar la evaluación como asumida." };
+  if (ins.entry_code_id) {
+    await service.from("arena_entry_codes").update({ locked_at: now }).eq("id", ins.entry_code_id);
+  }
+
+  const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string } | null;
+  await service.from("audit_log").insert({
+    entity_type: "arena_inscription",
+    entity_id: lotId,
+    action: "assumed_by_ctcx",
+    previous_status: "pendiente",
+    new_status: "exento",
+    performed_by: adminId,
+    notes: `CTCx asume el costo de la evaluación (${formatCop(ARENA_FEE_COP)}) · código ${ins.entry_code ?? "—"}`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: ins.producer_id,
+    context_label: lot ? `Lote ${lot.name}` : null,
+    lot_id: lotId,
+    note: "CTCx asumió el costo de la evaluación de su lote: no tiene nada que pagar por ella.",
+    created_by: adminId,
+  });
+
+  await maybeAdvanceToFila(service, lotId);
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
  * Confirma el pago (o la exención cuando el descuento del código es 100%).
  * Sin input de descuento: el % viene EXCLUSIVAMENTE del código aplicado.
  * Este es el momento en que el código queda bloqueado (locked_at).

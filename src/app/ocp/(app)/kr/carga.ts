@@ -8,6 +8,7 @@ import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/b
 import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEudr";
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
 import { estadoDelCircuito, type EstadoDelCircuito } from "@/lib/ocp/circuito";
+import type { Gestion } from "@/lib/asistencia/desacoplado";
 
 // ── Productores, Fincas y Lotes · LA carga de la tabla única (V5.61) ─────────
 // Una sola lectura para las dos vistas (tabla y mapa). El GRANO ES EL LOTE: cada
@@ -33,6 +34,8 @@ export type KrFila = {
   segmento: string;
   pais: string;
   departamento: string;
+  /** V5.75: null = cuenta propia · desacoplado = la lleva CTCx sin buzón · entregado (`src/lib/asistencia/desacoplado.ts`). */
+  gestion: Gestion | null;
   // finca
   fincaId: string | null;
   fincaNombre: string | null;
@@ -69,6 +72,7 @@ type PPRow = {
   avatar_asset_id: string | null;
   country: string | null;
   department: string | null;
+  gestion: Gestion | null;
 };
 type FincaRow = FilaDeFincaParaLaVisa & {
   id: string;
@@ -104,7 +108,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
   const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }] =
     await Promise.all([
       service.from("profiles").select("id, full_name, email, phone, created_at, role").order("created_at", { ascending: true }),
-      service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department"),
+      service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
       service
         .from("fincas")
         .select(
@@ -200,6 +204,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
       segmento,
       pais: perfil?.country ?? "",
       departamento: perfil?.department ?? "",
+      gestion: perfil?.gestion ?? null,
     };
     const sinFinca = { fincaId: null, fincaNombre: null, fincaCodigo: null, fincaLugar: "", visa: null, lat: null, lng: null };
     const sinLote = {

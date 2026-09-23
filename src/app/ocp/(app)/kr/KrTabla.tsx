@@ -7,6 +7,7 @@ import { GRADO_HEX, GRADO_LABEL, PASOS_DE_LA_FICHA } from "@/lib/ocp/etapas";
 import { CIRCUITO_LABEL, ORDEN_DEL_CIRCUITO } from "@/lib/ocp/circuito";
 import { SeasonRangeDial } from "./LotePiezas";
 import type { KrFila, Tono } from "./carga";
+import { GESTION_CORTA } from "@/lib/asistencia/desacoplado";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Productores, Fincas y Lotes · la tabla única y su mapa (V5.61) ───────────
@@ -239,7 +240,7 @@ export function KrTabla({
                   <tr key={f.clave}>
                     <td style={td}>
                       <Link href={`/ocp/kr?productor=${f.productorId}`} style={enlace}>{f.productorNombre}</Link>
-                      <span style={sub}>{[f.productorCodigo, f.segmento, f.departamento].filter(Boolean).join(" · ")}</span>
+                      <span style={sub}>{[f.productorCodigo, f.gestion ? GESTION_CORTA[f.gestion] : null, f.segmento, f.departamento].filter(Boolean).join(" · ")}</span>
                     </td>
                     <td style={td}>
                       {f.fincaId ? (

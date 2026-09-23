@@ -162,3 +162,18 @@ Faltan las mismas de siempre: **que el owner abra `/ocp/kr`**, y **las cifras** 
    (la misma de COP 80.000) o sigue retenida? Es una marca en `lots`/`lot_fichas` que KR debe respetar (`kaffetal-regal`).
 7. **El perfil de CTCx Selection** (nombre, imágenes, texto que reemplaza a la finca en la vitrina): ¿se crea desde «Oferta
    desde CTCx Selection», como dice el diagrama, uno por lote o uno solo para toda la casa? Va con el brief de Compras.
+
+## Respuestas del owner (2026-09-23) — el brief queda APROBADO en su primera tanda
+
+1. **Sesión asistida: sí.**
+2. **Cuenta sin buzón: sí.** «Se asigna un correo de alguien cuando se haga un hand over (si no, nunca).»
+3. **La 4b** (cifras, orden, `/ocp/kr`): «lo revisamos en detalle en el paso siguiente».
+4. **Quién acepta en la Desacoplada**: se hace una oferta al dueño del café; la evidencia es la **evaluación, que hace CTCx por
+   su cuenta**. → La aceptación la registra CTCx desde el OCP; viaja con la 4b (`lot_offers.kind = directa`).
+5. **«Ficha automatizada (base info)»** = la Ficha que se produce **para ser descargada**. → Botón de descarga en KR (dueño
+   `kaffetal-regal`).
+6. **Ficha retenida**: se libera al pagar — **COP 80.000 «o tal vez 200.000»** (cifra por decidir). Dueño `kaffetal-regal`.
+7. **Perfil de CTCx Selection**: **UNO para toda la casa, con opción de adjuntar una imagen por lote.** → Brief de Compras.
+
+**Ejecutado en la V5.75** (primera tanda): Asistencia a Proveedores (`/ocp/asistencia`), Proveedor Desacoplado
+(`/ocp/desacoplado`), «CTCx asume el costo» de la evaluación, DDL `producer_profiles.gestion`, `qa-asistencia-check` (57).

@@ -19,6 +19,30 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.75] — 2026-09-23 (commit pendiente)
+
+- **Hito**: **nacen «Asistencia a Proveedores» y «Proveedor Desacoplado»** en OCP · Kaffetal Regal — la primera tanda del brief
+  `consolas-rutas-del-proveedor.md` (los tres diagramas del owner: Estándar · CTCx Selection · Desacoplado), autorizada por el
+  owner el 2026-09-23 sobre el contrato de Identidad: **sí a la sesión asistida, sí a la cuenta sin buzón**.
+- **Añadido**: **la sesión asistida** (`src/lib/asistencia/actions.ts`): «Entrar como el productor» genera un enlace de sesión
+  (`auth.admin.generateLink`, sin correo) y lo canjea en la cookie COMPARTIDA, así que Kaffetal Regal se abre en otra pestaña
+  como ese productor y toda su interfaz (finca, parcelas, mapa EUDR, la Ficha, fotos) sirve tal cual; las subidas caen en su
+  carpeta y los guard triggers aplican como a él. La consola sigue en `ctc-panel-auth`. **Solo para cuentas de productor**, y
+  siempre con rastro: `audit_log` + una nota en su feed. «Cerrar sesión asistida» limpia SOLO este navegador (`scope: local`).
+  El botón vive en `/ocp/asistencia` (lista de productores) y en la vista completa del productor (`/ocp/kr?productor=`).
+- **Añadido**: **Proveedor Desacoplado** (`/ocp/desacoplado`): CTCx crea una cuenta de productor con correo-etiqueta sin
+  buzón (`desacoplado-<slug>@ctcexport.com`, el precedente de `delivery_email`), contraseña que nadie ve y
+  `producer_profiles.gestion = desacoplado`; la carga con la sesión asistida; y la **entrega** asignándole el correo real de
+  alguien (una identidad, una cuenta) + el enlace de contraseña por el flujo de «Recuperar acceso». Mientras es desacoplado,
+  **ningún correo sale hacia él** (el remitente compartido filtra la etiqueta) y `/ocp/kr` lo rotula.
+- **Añadido**: **«CTCx asume el costo»** de una evaluación (`asumirEvaluacion`, junto a «Confirmar pago» en Lotes a Evaluar):
+  la inscripción queda `exento` con la razón escrita, sin fingir un código de campaña al 100 %.
+- **Datos**: migración `producer_profiles_gestion_desacoplado` — `gestion` (`desacoplado` · `entregado`), `gestion_desde`,
+  `entregado_at`; `guard_producer_protected_columns` las protege al insertar y al actualizar. Acta en
+  `docs/migraciones/2026-09-23_producer_profiles_gestion_desacoplado.sql`.
+- **Corregido**: `createLot` devolvía `throw` en dos rechazos alcanzables (tumbaba la tabla): ahora `{ ok: false, error }`.
+- **Docs**: guardián nuevo `qa-asistencia-check` (57); `qa-rutas-consolas` (500) declara el módulo; charter y §3.
+
 ## [V5.74] — 2026-09-23 (commit 5ef97d6)
 
 - **Cambiado**: **el OCP dice el vocabulario EUDR asentado en la V5.65** (`src/lib/eudr.ts`): la columna «EVA» de `/ocp/kr` es

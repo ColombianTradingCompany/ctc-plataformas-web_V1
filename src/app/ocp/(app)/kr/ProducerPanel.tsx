@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { logProducerComm } from "../commActions";
 import { ActionForm } from "@/components/panel/ActionForm";
+import { GESTION_LABEL, type Gestion } from "@/lib/asistencia/desacoplado";
+import { SesionAsistidaBoton } from "../asistencia/SesionAsistidaBoton";
 import styles from "@/components/panel/shared.module.css";
 
 // ── Panel del productor con pestañas (2026-07-23, pedido del owner) ──────────
@@ -41,6 +43,8 @@ export type ProducerData = {
   department: string | null;
   createdAt: string;
   clubMemberSince: string | null;
+  /** V5.75: la cuenta la lleva CTCx (desacoplado) o ya se entregó; null = propia. */
+  gestion: Gestion | null;
   segmentLabel: string;
   media: ProducerMedia;
   modules: Record<ModuleKey, ModuleStat>;
@@ -132,7 +136,10 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
               Pasaporte · {data.supplierCode}
             </span>
             {data.clubMemberSince && <span className={styles.badgeGood}>Kaffetal Club ✓</span>}
+            {data.gestion && <span className={`${styles.badge} ${data.gestion === "desacoplado" ? styles.badgeWarn : styles.badgeGood}`}>{GESTION_LABEL[data.gestion]}</span>}
             <span className={styles.badge}>{data.segmentLabel}</span>
+            {/* V5.75 · Asistencia a Proveedores: abrir Kaffetal Regal como este productor, con rastro. */}
+            <SesionAsistidaBoton producerId={data.id} nombre={data.fullName || undefined} compacto />
           </div>
           <p className={styles.meta} style={{ marginTop: 8 }}>
             {[

@@ -335,7 +335,8 @@ export async function createLot(formData: FormData): Promise<ActionResult> {
 
   const fincaId = String(formData.get("finca_id"));
   const { data: finca } = await service.from("fincas").select("producer_id").eq("id", fincaId).single();
-  if (!finca) throw new Error("Finca no encontrada.");
+  // V5.75: devolver, no lanzar — un throw aquí tumbaba la tabla entera (deuda (c) del charter).
+  if (!finca) return { ok: false, error: "Finca no encontrada." };
 
   const { data: lot, error } = await service
     .from("lots")
@@ -353,7 +354,7 @@ export async function createLot(formData: FormData): Promise<ActionResult> {
     .select("id")
     .single();
 
-  if (error || !lot) throw new Error("No se pudo crear el lote.");
+  if (error || !lot) return { ok: false, error: `No se pudo crear el lote${error ? `: ${error.message}` : "."}` };
 
   await service.from("audit_log").insert({
     entity_type: "lot",

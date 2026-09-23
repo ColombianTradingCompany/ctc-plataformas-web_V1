@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.71] — 2026-09-23 (commit pendiente)
+## [V5.71] — 2026-09-23 (commit 7fab5b6)
 
 - **Añadido**: botón **Borrar** en el recargo de combustible del Cotizador Courier: la lista «Semanas anotadas» (cerrada por
   defecto, bajo la gráfica) enseña cada semana con su origen y su fuente, y se borra con confirmación. Acción

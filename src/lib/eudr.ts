@@ -24,8 +24,8 @@ import type { Finca } from "@/components/kaffetal-regal/data";
 //
 // Antes de la V5.65 la finca tenía «Visa» y el lote «Sello», y el OCP llamaba
 // «EVA» al veredicto documental: tres nombres para dos cosas y una palabra
-// prestada. ⚠️ El OCP todavía dice «EVA» y «Visa EUDR» en su tabla — pendiente
-// con dueño `consolas` (ALINEACION §3, 2026-09-20).
+// prestada. El OCP dijo «EVA» y «Visa EUDR» en su tabla hasta la V5.73, que lo
+// cerró (ALINEACION §3, 2026-09-23).
 
 export type EudrTone = "ok" | "pend" | "stop";
 

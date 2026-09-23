@@ -246,7 +246,7 @@ export async function registerLotDds(
 
   const gate = await lotEudrGate(service, lotId);
   if (!gate.ready) {
-    return { ok: false, error: `El Sello EUDR del lote no está listo (${gate.label}) — no se puede registrar una DDS sobre un lote sin debida diligencia resuelta.` };
+    return { ok: false, error: `La Visa EUDR del lote no está lista (${gate.label}) — no se puede registrar una DDS sobre un lote sin debida diligencia resuelta.` };
   }
   if (!lot.harvest_from || !lot.harvest_to) {
     return { ok: false, error: "El lote no tiene ventana de recolección registrada (A2 de la Ficha) — la DDS exige la fecha o rango de producción." };
@@ -431,7 +431,7 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
   return { ok: true };
 }
 
-// ── EVA: el veredicto documental (2026-07-17) ───────────────────────────────
+// ── La VISA del lote: el veredicto documental (2026-07-17; hasta la V5.64 se llamaba «EVA») ──
 // Tras FT/FT2/EUDR/VID (todo gratis), CTC revisa la documentación y declara el
 // lote Apto o No Apto. Apto es la puerta de entrada al tramo pagado (postular →
 // pagar → sondeo → Arena); resolver el EUDR del lote es PARTE de esta revisión,
@@ -454,14 +454,14 @@ export async function markLotApto(lotId: string): Promise<{ ok: true } | { ok: f
   // pero la regla vive aquí.
   const missing = missingEvaItems(lot.eva_checklist as EvaChecklist);
   if (missing.length) {
-    return { ok: false, error: `Faltan bloques por revisar en la checklist EVA: ${missing.join(" · ")}.` };
+    return { ok: false, error: `Faltan bloques por revisar en la checklist de la Visa: ${missing.join(" · ")}.` };
   }
-  // Modelo Visa/Sello (2026-07-24): el Sello del lote se hereda de la Visa EUDR
-  // de su(s) finca(s) de origen — la compuerta ya no exige determinación propia
-  // del lote, solo que la finca tenga su Visa vigente.
+  // La Visa del lote se hereda del Pasaporte EUDR de su(s) finca(s) de origen
+  // (2026-07-24; vocabulario V5.65) — la compuerta ya no exige determinación
+  // propia del lote, solo que la finca tenga su Pasaporte vigente.
   const eudr = await lotEudrGate(service, lotId);
   if (!eudr.ready) {
-    return { ok: false, error: `El Sello EUDR del lote sigue "${eudr.label}" — otorgue la Visa EUDR de la finca de origen (en Fincas) antes del veredicto.` };
+    return { ok: false, error: `La Visa EUDR del lote sigue "${eudr.label}" — otorgue el Pasaporte EUDR de la finca de origen (en Fincas) antes del veredicto.` };
   }
 
   await service
@@ -504,7 +504,7 @@ export async function setEvaChecklistItem(
   const { data: lot } = await service.from("lots").select("stage, eva_checklist").eq("id", lotId).single();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
   if (lot.stage !== "ficha_completa") {
-    return { ok: false, error: "La checklist EVA solo aplica a un lote en evaluación (ficha completa)." };
+    return { ok: false, error: "La checklist de la Visa solo aplica a un lote con la ficha completa." };
   }
 
   const next = { ...((lot.eva_checklist as EvaChecklist) ?? {}), [key]: checked };
@@ -564,7 +564,7 @@ export async function markLotNoApto(lotId: string, reason: string): Promise<{ ok
   if (lot.stage === "apto") {
     // Un Apto ya postulado está en el tramo pagado — no se revierte por aquí.
     const { data: ins } = await service.from("arena_inscriptions").select("id").eq("lot_id", lotId).maybeSingle();
-    if (ins) return { ok: false, error: "Este lote ya fue postulado a la Arena — gestione su retiro desde Nominados, no desde el veredicto EVA." };
+    if (ins) return { ok: false, error: "Este lote ya fue postulado a la Arena — gestione su retiro desde Lotes en Evaluación, no desde el veredicto de Visa." };
   }
 
   await service

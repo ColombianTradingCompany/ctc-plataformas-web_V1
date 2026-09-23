@@ -207,7 +207,7 @@ export function KrTabla({
           <>
             <GeoMap markers={pines} height={520} />
             <p className={styles.meta}>
-              Finca: verde = Visa vigente o aprobada · ámbar = en trámite · rojo = rechazada o no apta. Lote: el color de su grado; negro,
+              Finca: verde = Pasaporte vigente o aprobado · ámbar = en trámite · rojo = rechazado o no apta. Lote: el color de su grado; negro,
               sin grado todavía. Lo que no tiene coordenadas no sale en el mapa — sí en la tabla.
             </p>
           </>
@@ -221,7 +221,9 @@ export function KrTabla({
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                {["Productor", "Finca", "Lote", "Circuito", "Visa EUDR", "Ficha", "EVA", "Muestra", "Grado", "Oferta CP", "Trato"].map((h) => (
+                {/* V5.73 · el vocabulario EUDR asentado en la V5.65 (`src/lib/eudr.ts`): PASAPORTE es de la finca,
+                    VISA es del lote (el veredicto documental que aquí se llamaba «EVA»); EVA es la catación. */}
+                {["Productor", "Finca", "Lote", "Circuito", "Pasaporte EUDR", "Ficha", "Visa", "Muestra", "Grado", "Oferta CP", "Trato"].map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>

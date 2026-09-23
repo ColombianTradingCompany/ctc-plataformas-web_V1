@@ -164,3 +164,16 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
   ni de cuenta**. `qa-courier-check` (51) vigila la fuga por hash.
 - ABIERTO (charter, «Pendientes»): confirmar con FedEx la suma de descuentos y si la caja 10/25 kg lleva descuento; contrastar
   envíos reales; fin de la gracia el 2026-11-24 (escalón por gasto anualizado); segunda tanda = importación, terceros, API de FedEx.
+
+## [2026-09-23] V5.74 · Consolas — el OCP dice Pasaporte · Visa · EVA (cierre de lo que le debían V5.64–V5.65)
+- Vocabulario, sin regla nueva: en `/ocp/kr` la columna «EVA» → «Visa» (veredicto documental del lote) y «Visa EUDR» (finca) →
+  «Pasaporte EUDR»; `EvaReviewCard` «Veredicto EVA» → «Veredicto de Visa», panel EUDR «Pasaporte de la finca»; `FincaSeccion`
+  «Esperando Visa», «Ver Pasaporte EUDR (dossier)»; `FincaEudrEditor` «Pasaporte EUDR de la finca (asistencia CTCx)»; los
+  mensajes de `markLotApto`, `registerLotDds`, `setEvaChecklistItem`, `markLotNoApto` ya no dicen «Sello».
+- DICT: la ficha `visa`/`eudr` del mapa debe decir que desde la V5.74 el OCP y KR nombran igual los tres objetos (cabecera de
+  `src/lib/eudr.ts`). Los identificadores `EvaReviewCard` · `EVA_CHECKLIST_ITEMS` · `lots.eva_checklist` conservan el nombre
+  viejo con nota en el archivo.
+- Corregido el dato «205 g» → 250 g en la instrucción del escáner (`fichasActions.ts`).
+- Guardián: `qa-evaluaciones-check` 50 → 53 (la cara del OCP).
+- ANN: el Mapa de Trabajo (`src/lib/workmap/schema.ts`) sigue con la barra anterior a la V5.64 — se redibuja con la 4b.
+(commit: pendiente)

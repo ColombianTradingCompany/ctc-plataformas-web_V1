@@ -1,4 +1,6 @@
-// ── La lista de verificación EVA (2026-07-18) ────────────────────────────────
+// ── La lista de verificación de la VISA (2026-07-18) ─────────────────────────
+// («EVA» en los identificadores es el nombre viejo del veredicto documental; desde
+// la V5.65 se llama Visa y EVA es la catación — ver la cabecera de `src/lib/eudr.ts`.)
 // La evaluación documental es una checklist explícita: BCP marca cada bloque de
 // la Ficha como revisado antes de poder declarar el veredicto. Las claves se
 // persisten en lots.eva_checklist (jsonb {clave: true}) y las comparten el

@@ -99,7 +99,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 
 `qa-rutas-consolas.mjs` (365 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
 `qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
-`qa-evaluaciones-check.mjs` (42, veredicto Q-Grader) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
+`qa-evaluaciones-check.mjs` (53 — el veredicto Q-Grader y, desde la V5.74, el vocabulario Pasaporte · Visa · EVA por las dos caras) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
@@ -163,13 +163,16 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
   columna y filtro de `/ocp/kr` — **ejecutada**. **La 4b está PARADA a propósito** y espera al owner: ver el recuadro de la
   fase 4 en el plan (un guard que, por orden, dejaría a los productores sin poder aceptar ofertas; dos pantallas operativas
   sin ver; y dinero sobre un contrato vivo).
-  **LO QUE LE DEBEN A ESTE CHARTER DOS ASIENTOS DE KAFFETAL REGAL (V5.64–V5.65), anotado por el nodo final en el Wrap V46**:
-  **(1)** el OCP sigue diciendo «EVA» por el veredicto documental que desde la V5.65 se llama **Visa** (la columna de `/ocp/kr`,
-  «Veredicto EVA» en `EvaReviewCard`) y «Visa EUDR» por lo de la finca, que es el **Pasaporte** — es la primera tanda del brief
-  `briefs/consolas-simplificar-ocp-al-circuito.md` (solo vocabulario; el resto del brief espera al owner); **(2)**
-  `src/app/ocp/(app)/fichasActions.ts:108` dice «muestra de 205 g» donde la Ficha ya dice 250 (un dato imposible: el rango llega
-  a 245); **(3)** la barra comercial del productor lee `estadoDelCircuito()` desde la V5.64 — un cambio en esa función es
-  transversal a `kaffetal-regal` y pasa por `qa-evaluaciones`, que lo exige.
+  **LO QUE LE DEBÍAN A ESTE CHARTER DOS ASIENTOS DE KAFFETAL REGAL (V5.64–V5.65), anotado por el nodo final en el Wrap V46**:
+  ~~**(1)** el OCP sigue diciendo «EVA» por el veredicto documental que desde la V5.65 se llama **Visa** y «Visa EUDR» por lo de
+  la finca, que es el **Pasaporte**~~ — **cerrado en la V5.74** (columna «Visa», «Pasaporte EUDR», «Veredicto de Visa», mensajes
+  de las acciones sin «Sello»; `qa-evaluaciones` 53 vigila las dos caras). Es la primera tanda del brief
+  `briefs/consolas-simplificar-ocp-al-circuito.md`; la segunda (bandejas derivadas del circuito) espera las cinco decisiones del
+  owner. Los identificadores (`EvaReviewCard`, `EVA_CHECKLIST_ITEMS`, `lots.eva_checklist`) se quedan con nota en el archivo. El
+  Mapa de Trabajo (`src/lib/workmap/schema.ts`) sigue dibujando la barra anterior a la V5.64 (VID · Sondeo · «EVA · veredicto
+  documental»): se redibuja cuando la 4b fije el circuito, no antes. ~~**(2)** `fichasActions.ts:108` dice «muestra de 205 g»~~ —
+  **corregido en la V5.74** (250 g). **(3)** la barra comercial del productor lee `estadoDelCircuito()` desde la V5.64 — un cambio
+  en esa función es transversal a `kaffetal-regal` y pasa por `qa-evaluaciones`, que lo exige.
   **Quedan**: **fase 4b** (el circuito del lote
   sin Sondeo: a evaluar → en evaluación → evaluado, pendiente de oferta → catálogo activo; DDL aditivo en `lot_offers`);
   **fase 5** (Kaffetal Regal — **exige las cuentas `prueba-*`, que esta sesión no tiene**); **fase 6** (stock físico y lo

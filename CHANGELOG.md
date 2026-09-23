@@ -19,6 +19,19 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.74] — 2026-09-23 (commit pendiente)
+
+- **Cambiado**: **el OCP dice el vocabulario EUDR asentado en la V5.65** (`src/lib/eudr.ts`): la columna «EVA» de `/ocp/kr` es
+  **«Visa»** (el veredicto documental del lote), la columna «Visa EUDR» de la finca es **«Pasaporte EUDR»**, el badge «Veredicto
+  EVA» es **«Veredicto de Visa»**, «Esperando EVA» es «Esperando Visa», el editor de asistencia dice «Pasaporte EUDR de la finca»
+  y los mensajes de `markLotApto` · `registerLotDds` · `setEvaChecklistItem` hablan de la Visa del lote y del Pasaporte de la
+  finca (ya no de «Sello»). Cierra la divergencia declarada en `ALINEACION` §3 el 2026-09-20 — primera tanda del brief
+  `consolas-simplificar-ocp-al-circuito.md`. **Ninguna regla cambió**; los identificadores (`EvaReviewCard`, `EVA_CHECKLIST_ITEMS`,
+  `lots.eva_checklist`) se quedan con nota en el archivo hasta la tanda de bandejas.
+- **Corregido**: `fichasActions.ts` decía «muestra de 205 g» en la instrucción del escáner de Fichas; es **250 g**, el único
+  valor con el que cuadra el rango 150–245 y la aritmética del repo (`computeFactor`, `fa_start`).
+- **Docs**: `qa-evaluaciones-check` (53) vigila ahora las DOS caras del vocabulario: la del productor (V5.65) y la del OCP.
+
 ## [V5.73] — 2026-09-23 (commit aa681e4)
 
 - **Hito**: **cierra el primer ciclo del Cotizador Courier · FedEx** (V5.68 → V5.73, un día): brief aprobado, cálculo con el acuerdo

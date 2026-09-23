@@ -100,7 +100,7 @@ function lotStatus(l: LotRow): Pick<FincaLote, "statusLabel" | "statusTone"> {
     case "borrador":
       return { statusLabel: `Ficha en curso · paso ${l.intake_step}/4`, statusTone: "muted" };
     case "ficha_completa":
-      return { statusLabel: "Esperando EVA", statusTone: "warn" };
+      return { statusLabel: "Esperando Visa", statusTone: "warn" };
     case "no_apto":
       return { statusLabel: "Requiere atención", statusTone: "bad" };
     case "apto":
@@ -309,7 +309,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                               {finca.status === "approved" && (
                                 <>
                                   <a className="btn btn-sm" href={`/ocp/kr/${finca.id}/dossier`} target="_blank" rel="noopener noreferrer">
-                                    Ver Visa EUDR (dossier) ↗
+                                    Ver Pasaporte EUDR (dossier) ↗
                                   </a>
                                   <ActionForm
                                     action={setFincaCertShared.bind(null, finca.id, !finca.eudr_cert_shared)}

@@ -8,7 +8,12 @@ import { Q_GRADER_REGISTRY } from "@/lib/certRegistry";
 import { EVA_CHECKLIST_ITEMS, type EvaChecklist, type EvaChecklistKey } from "./evaChecklist";
 import styles from "@/components/panel/shared.module.css";
 
-// ── La revisión EVA como checklist (2026-07-18) ──────────────────────────────
+// ── La revisión de la VISA como checklist (2026-07-18) ───────────────────────
+// El nombre del archivo y de las constantes dice «Eva» porque hasta la V5.64 el
+// veredicto documental se llamaba así; desde la V5.65 ese veredicto es la VISA
+// del lote y «EVA» es la catación del Q-Grader (`src/lib/eudr.ts`). Se renombró
+// lo que el operador LEE (V5.73); los identificadores se quedan hasta la tanda
+// que reorganice el OCP en bandejas (brief `consolas-simplificar-ocp-al-circuito`).
 // Rediseño pedido por el owner: la evaluación documental es literalmente una
 // lista de verificación. Arriba vive el VEREDICTO (Apto/No Apto, gateado por la
 // checklist + EUDR); debajo, un botón por bloque (FT · FT2 Certificados · FT2
@@ -199,7 +204,7 @@ export function EvaReviewCard({
       {showEvaVerdict && (
         <div style={{ margin: "12px 0", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" }}>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
-            <span className={styles.badge}>Veredicto EVA</span>
+            <span className={styles.badge}>Veredicto de Visa</span>
             <span className={`${styles.badge} ${eudrReady ? styles.badgeGood : styles.badgeWarn}`}>
               {eudrReady ? "EUDR ✓" : `EUDR: ${eudrLabel}`}
             </span>
@@ -457,21 +462,21 @@ export function EvaReviewCard({
 
           {openPanel === "eudr" && (
             <>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>EUDR · Visa de la finca</h4>
-              {/* Modelo Pasaporte/Visa/Sello (2026-07-24): la debida diligencia
-                  EUDR vive SOLO en la finca. El viejo expediente por lote
-                  (custodia, país, factores, nivel de riesgo, responsable) se
-                  retiró — el Sello del lote se hereda de la Visa de la finca. */}
+              <h4 style={{ margin: "0 0 8px", fontSize: 13.5 }}>EUDR · Pasaporte de la finca</h4>
+              {/* La debida diligencia EUDR vive SOLO en la finca (2026-07-24). El
+                  viejo expediente por lote (custodia, país, factores, nivel de
+                  riesgo, responsable) se retiró — la Visa del lote se hereda del
+                  Pasaporte de la finca (vocabulario V5.65, `src/lib/eudr.ts`). */}
               <p className={styles.meta} style={{ margin: "0 0 10px" }}>
-                El <b>Sello EUDR</b> de este lote se hereda por completo de la <b>Visa EUDR</b> de su(s) finca(s) de
+                La <b>Visa EUDR</b> de este lote se hereda por completo del <b>Pasaporte EUDR</b> de su(s) finca(s) de
                 origen — el lote no tiene debida diligencia propia.
               </p>
               <p style={{ fontSize: 13.5, fontWeight: 700, margin: "0 0 6px", color: eudrReady ? "var(--primary)" : "#B45309" }}>
-                {eudrReady ? "✓ " : ""}Estado del Sello: {eudrLabel}
+                {eudrReady ? "✓ " : ""}Estado de la Visa: {eudrLabel}
               </p>
               <p className={styles.meta} style={{ margin: 0 }}>
-                La Visa se revisa y otorga en <a href="/ocp/kr">Fincas</a> (panel de la finca → pestaña EUDR:
-                declaración del productor, análisis con Google Earth y atributos). Al quedar la Visa vigente, este
+                El Pasaporte se revisa y otorga en <a href="/ocp/kr">Fincas</a> (panel de la finca → pestaña EUDR:
+                declaración del productor, análisis con Google Earth y atributos). Al quedar el Pasaporte vigente, este
                 checklist se puede marcar y el veredicto Apto queda desbloqueado.
               </p>
 

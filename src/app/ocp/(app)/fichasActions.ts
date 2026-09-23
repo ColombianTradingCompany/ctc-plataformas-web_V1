@@ -105,7 +105,7 @@ Responde ÚNICAMENTE con un objeto JSON (sin markdown, sin texto alrededor) con 
   "laboratorio": string|null,
   "fecha_analisis": "YYYY-MM-DD"|null,
   "factor_rendimiento": number|null, // kg de pergamino para 70 kg de excelso
-  "almendra_total_g": number|null,   // gramos de almendra en muestra de 205 g
+  "almendra_total_g": number|null,   // gramos de almendra en muestra de 250 g (V5.73: decía 205, imposible con un rango que llega a 245)
   "densidad_verde_gl": number|null,  // g/L
   "humedad_pergamino_pct": number|null,
   "humedad_verde_pct": number|null,

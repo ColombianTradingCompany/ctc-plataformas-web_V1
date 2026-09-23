@@ -97,18 +97,19 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 
 ## Pendientes
 
-- **⚠️ El OCP todavía dice «EVA» por el veredicto documental — dueño: `consolas`.** El owner asentó el vocabulario el
-  2026-09-20 (Pasaporte = finca · Visa = lote · EVA = Evaluación de Muestras en Origen) y KR ya lo dice entero; la columna
-  «EVA» de `/ocp/kr` (`KrTabla.tsx:224`), el badge «Veredicto EVA» de `EvaReviewCard` y la columna «Visa EUDR» de la finca
-  no. **Parte del OCP ya dice lo nuevo** — las etiquetas de `fincaEudrStatus`/`lotEudrStatus` cambiaron debajo — **y sus
-  encabezados dicen lo viejo**, que es la peor combinación. Brief con la tanda de media hora y el encargo del owner de
-  **simplificar el OCP al circuito**: [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md).
+- ~~**⚠️ El OCP todavía dice «EVA» por el veredicto documental — dueño: `consolas`.**~~ — **cerrado en la V5.74** (`consolas`):
+  columna «Visa», «Pasaporte EUDR», «Veredicto de Visa»; `qa-evaluaciones` (53) vigila las dos caras. La segunda tanda del brief
+  [`briefs/consolas-simplificar-ocp-al-circuito.md`](briefs/consolas-simplificar-ocp-al-circuito.md) (bandejas) sigue esperando al owner.
+- **Tres restos del vocabulario viejo en el copy de KR — dueño: `kaffetal-regal`** (los vio la V5.74 al cerrar el OCP):
+  `FichaView.tsx:496` dice que la Visa del lote «se hereda de la Visa de su finca» (es del **Pasaporte**); `:504` dice «Sello EUDR
+  PENDIENTE hasta que su(s) finca(s) obtengan la Visa» (es **Visa** del lote y **Pasaporte** de la finca); `EvaluacionesTab.tsx:437`
+  dice «a la espera de la Visa de su finca» (Pasaporte). Copy, sin regla; `qa-evaluaciones` no los mira porque `FichaView` no
+  está en su lista.
 - **El «Centro de Calidad» del Q-Grader — dueño: `consolas` / `socios`** (owner, 2026-09-20): el Q-Grader entrega sus dos
   informes **por un login propio** que recibe la lista de lotes y permite evaluarlos **en orden**. No existe. Cuando exista,
   el chip **EVA** del panel podrá decir cuántos de los dos informes han llegado; hoy solo dice que el lote está en evaluación.
-- **El dato falso del 205 g — dueño: `consolas`**: `src/app/ocp/(app)/fichasActions.ts:108` dice «gramos de almendra en
-  muestra de 205 g» con un rango 150–245 — imposible. La aritmética del repo usa **250 g** (`computeFactor`,
-  `fa_start`), único valor con el que cuadran los rangos. KR ya corrigió su copy (V5.64); el OCP no se tocó (código ajeno).
+- ~~**El dato falso del 205 g — dueño: `consolas`**: `fichasActions.ts:108` dice «muestra de 205 g»~~ — **corregido en la
+  V5.74** (250 g).
 - **Compañeros de finca — tanda propia** (brief escrito: [`briefs/kaffetal-regal-companeros-de-finca.md`](briefs/kaffetal-regal-companeros-de-finca.md), con cinco preguntas al owner). Pedido por el owner el 2026-09-20 y aplazado por él mismo: atar una finca (y
   sus lotes) a otros productores, con **un solo admin** (borra y da pasos finales) y colaboradores que solo **agregan**
   información; en trazabilidad **figura únicamente el admin**, y hay que **revisar cada compuerta**. No es interfaz: es

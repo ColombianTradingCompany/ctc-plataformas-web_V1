@@ -120,6 +120,16 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
   // tienen que decir lo mismo.
   check("la finca dice Pasaporte, no Visa", perfil.includes("Pasaporte EUDR") && !/Visa EUDR de \{f\.name\}/.test(perfil));
   check("el lote dice Visa, no Sello", !/Sello EUDR/.test(perfil) && !/Sello EUDR/.test(evalTab));
+  // V5.73: la otra cara — el OCP. Hasta la V5.72 su tabla decía «EVA» por el
+  // veredicto documental y «Visa EUDR» por lo de la finca (divergencia declarada
+  // en ALINEACION §3 el 2026-09-20). Ahora las dos superficies dicen lo mismo.
+  const krTabla = lee("src/app/ocp/(app)/kr/KrTabla.tsx");
+  const evaCard = lee("src/app/ocp/(app)/kr/EvaReviewCard.tsx");
+  const fincaSec = lee("src/app/ocp/(app)/kr/FincaSeccion.tsx");
+  const ocpActions = lee("src/app/ocp/(app)/actions.ts");
+  check("la tabla del OCP rotula la finca como Pasaporte EUDR y el veredicto documental como Visa", krTabla.includes('"Pasaporte EUDR"') && krTabla.includes('"Visa"') && !krTabla.includes('"Visa EUDR"') && !krTabla.includes('"EVA"'));
+  check("el veredicto del OCP es «Veredicto de Visa»", evaCard.includes("Veredicto de Visa") && !evaCard.includes("Veredicto EVA"));
+  check("el OCP no llama Sello a la Visa del lote ni Visa al Pasaporte de la finca", !/Sello EUDR/.test(evaCard) && !/Sello EUDR/.test(ocpActions) && !/Esperando EVA/.test(fincaSec) && !/Visa EUDR de la finca/.test(fincaSec + evaCard));
   // Lo que la V5.62 dejó escrito: el panel del productor IMPORTA el estado del
   // circuito, no lo recalcula. Si alguien vuelve a tejer la lógica a mano aquí,
   // el OCP y el productor empezarán a decir cosas distintas del mismo lote.

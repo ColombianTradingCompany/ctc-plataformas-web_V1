@@ -21,6 +21,8 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ## [V5.70] — 2026-09-23 (commit c49ec33)
 
+> **Wrap V46** (2026-09-23): ciclo compilado en `Documentacion_Interactiva_V46.0(35ebddd).html` — 42 nodos (+2: la LCP, el Courier) · 155 fichas (+7: `lcp`, `tablerodeejecucion`, `tablaunica`, `circuitodellote`, `courier`, `espejoamano`, `derivadonosepersiste`) · 62 trazas (+3) · 105 wires (+10) · 38 CTX (+2) · 421 ANN (+32 y una ampliada, con 22 repuntadas). Doce asientos de cuatro sesiones: el overhaul de las consolas hasta donde se pudo.
+
 - **Corregido**: el Cotizador Courier ya no deja un envío futuro sin combustible. Si la semana del envío aún no está
   publicada, usa la última conocida y lo marca **provisional** (antes: «INCOMPLETO» y combustible US$ 0,00). Solo falta
   de verdad si no hay ninguna semana anotada antes de la fecha.

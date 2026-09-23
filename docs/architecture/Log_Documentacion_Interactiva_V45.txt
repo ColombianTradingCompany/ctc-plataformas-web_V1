@@ -362,3 +362,16 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   308 junto a las de carpeta. Nodo `herramientas`: 14 carpetas en `public/tools/`, 15 filas en `tools`.
 - Guardianes: `qa-tools-carpetas` 165 (una borrada no vuelve), `qa-tools-seo-espejo` 86 (su archivo no está).
 (commit: 3c94c4b; el borrado salió antes, solo, en 5a54269)
+
+## [2026-09-23] V5.68 · Herramientas Internas — Cotizador Courier (FedEx)
+- NODO NUEVO en «ECP · Modelo Logístico»: `/ecp/cotizador-courier` (rail: «Cotizador courier · FedEx»), junto al cotizador
+  logístico. Lógica pura en `src/lib/courier/calculo.ts`; acciones en `src/lib/courier/actions.ts` (CONSOLA = "ecp"; clases:
+  lectura · borrador `guardarCotizacionCourier` · emite `anotarCombustible`); pantalla `CourierBoard.tsx`.
+- DATOS: `courier_acuerdos` → `courier_descuentos` · `courier_descuento_adquirido` · `courier_bonificaciones`;
+  `courier_tarifas_base` · `courier_zonas` · `courier_recargos` (versionadas por `vigente_desde`); `courier_cotizaciones`
+  (snapshot inmutable por guard trigger). Todas service-role-only. Insumos fuera del repo: `apps-internas/courier-fedex/`.
+- REGLA: el acuerdo es confidencial → el mapa NO debe mostrar cifras del acuerdo; basta la forma del cálculo.
+- Interfaces previstas: la modalidad «Courrier (DHL/FedEx)» del cotizador logístico y la Gestión de Muestras del OCP podrán
+  leer este costo (no en esta versión).
+- Guardián nuevo `qa-courier-check` (37); `qa-rutas-consolas` 490; `qa-niveles` 37 (15 borradores).
+(commit: pendiente)

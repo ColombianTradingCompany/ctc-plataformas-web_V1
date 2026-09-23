@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.68] — 2026-09-23 (commit pendiente)
+
+- **Añadido**: **Cotizador Courier · FedEx** en `/ecp/cotizador-courier` («ECP · Modelo Logístico»): el costo para CTCx de un
+  envío de café (verde o tostado, < 100 kg). Tarifa de lista de la guía pública de FedEx Colombia 2026 − descuentos del acuerdo
+  firmado el 2026-09-22 (zona y banda de peso + descuento adquirido en gracia/escalón + bonificación por automatización) → cargo
+  mínimo → + combustible de la semana sobre la neta. Compara International Priority Express · Priority · Economy (y la caja
+  FedEx 10/25 kg, el Pak y el Freight cuando aplican), con el desglose línea a línea y la fuente de cada cifra; guarda la
+  cotización como acta congelada. Brief aprobado por el owner el mismo día (`briefs/herramientas-internas-cotizador-courier.md`).
+- **Datos**: ocho tablas `courier_*` (acuerdos, descuentos, descuento adquirido, bonificaciones, tarifas base, zonas, recargos,
+  cotizaciones), RLS + cero políticas; `guard_courier_cotizacion_inmutable`. Cargadas con `scripts/seed-courier.mjs` desde una
+  carpeta FUERA del repo: 1.350 tarifas de exportación, 85 zonas, el acuerdo, y el combustible de la semana 21–27 sep (41 %).
+- **Seguridad**: el acuerdo es **confidencial** (cláusula 6) y el repo es público: ninguna cifra, número de acuerdo ni de cuenta
+  entra al repo; el cálculo corre en el servidor y el navegador solo recibe el desglose de su envío.
+- **Añadido**: guardián `qa-courier-check` (37): el cálculo contra un acuerdo FICTICIO y la fuga cero por hash.
+  `qa-rutas-consolas` declara el módulo; `guardarCotizacionCourier` entra en la lista blanca de borradores (`qa-niveles`).
+
 ## [V5.67] — 2026-09-22 (commit 3c94c4b)
 
 - **Retirado**: **el «Reporte de proceso de café» (`mermas-detallada`) sale de la web** por decisión del owner: se borra

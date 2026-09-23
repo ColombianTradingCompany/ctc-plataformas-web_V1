@@ -235,6 +235,7 @@ Toda acción del servidor declara su **clase** —qué HACE—, y la clase decid
 | `setQuoteCounterparty` | ECP · cotizadores | a quién iría dirigida; no se le avisa |
 | `renameQuote` | ECP · cotizadores | el título interno |
 | `duplicateQuote` | ECP · cotizadores | copia un borrador |
+| `guardarCotizacionCourier` | ECP · Cotizador Courier | guarda una cotización interna del costo de envío (acta congelada); nadie de fuera la ve ni se avisa a nadie |
 | `updateTranscriptInfo` | ECP · transcripciones | rotula una transcripción ya hecha |
 | `renameSpeaker` | ECP · transcripciones | nombra una voz |
 | `saveProposal` | BCP · Mapa de Trabajo | una propuesta es, por definición, algo que otro confirma |

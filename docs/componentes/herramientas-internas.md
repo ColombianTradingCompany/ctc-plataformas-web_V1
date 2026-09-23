@@ -24,6 +24,7 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 | 3 | **Modelo Económico** — *PVC & Grados de Calidad* | cuánto vale una carga, qué grado lleva un café y qué paga cada grado | `/ecp/pvc` · `pvc/{lectura,grados,tablero,parametros,dossier}` · `pvc/tablero/embed[/publicar]` · `GET /api/pvc/current` · **la definición oficial de grados**: `/ecp/direccionamiento/grados` + `src/lib/grados/definicion.ts` · **Mercado Global** (`/ecp/direccionamiento/mercado-global`, vacía: será el «Marco de mercado» del plan §11) · **Anclas de mercado** (`/ecp/anclas-mercado`) · **Cotizador de lotes** (`/ecp/cotizador-lotes`) | vivo; fase 2 decidida y sin construir |
 | 4 | **Modelo de Procesamiento** | qué le pasa al café desde la finca: de CPS a verde, empacado y embalado — rendimientos, mermas, empaque, costo por etapa | **sin módulo propio.** Piezas: `src/lib/pvc/lectura.ts` (`CARGA_KG_CPS`, `EMPAQUES`, `embudoDeCarga`, la regla de la mezcla y los MOQ) · **Cotizador de empaque** (`/ecp/cotizador-empaque`) · la Base física de `escala.ts` | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-de-produccion.md`), espera al owner |
 | 5 | **Modelo de Logística** | qué cuesta después del FOB: estimaciones y cotizaciones según **volumen y región** | **sin módulo propio.** Piezas: **Cotizador logístico** (`/ecp/cotizador-logistico` + `public/ocp-apps/cotizador-logistico.html`) · `src/lib/pvc/canales.ts` (programas × tramos de incoterm) · los escalones de flete del motor (`n3`, aéreo) | **en scoping**: brief escrito el 2026-09-19 (`briefs/herramientas-internas-modelo-logistico.md`), espera al owner; el plan §12.10 ya lista lo que falta |
+| 5·a | **Cotizador Courier (FedEx)** — modalidad courier del Modelo de Logística | cuánto le cobra FedEx a CTCx por un envío de café (verde o tostado, < 100 kg): tarifa de lista de la guía vigente − descuentos del acuerdo firmado el 2026-09-22 + combustible de la semana | `/ecp/cotizador-courier` · `src/lib/courier/{calculo,actions,types}.ts` · `CourierBoard.tsx` · tablas `courier_*` (service-role-only) · insumos FUERA del repo en `apps-internas/courier-fedex/` (guía pública + acuerdo transcrito) · `scripts/seed-courier.mjs`. ⚠️ El acuerdo es **confidencial** (cláusula 6) y el repo es público: **ninguna cifra ni número de cuenta entra al repo**, solo a la base | **vivo (V5.68)**: exportación de paquetes; brief aprobado el 2026-09-23 (`briefs/herramientas-internas-cotizador-courier.md`) |
 
 **Lo que salió de este charter el 2026-09-19** y ahora es de `consolas` (ECP · Caja de herramientas): el **Transcriptor**
 (`tools/transcriptor/`, `/ecp/transcripciones`), **Stripe** (plugin y decisión de arquitectura) y la **Herramienta de Guion**
@@ -36,7 +37,7 @@ en el orden en que se apoyan uno en otro. Dos todavía no tienen módulo propio 
 
 `/ecp/direccionamiento` · `/ecp/direccionamiento/{grados,mision-vision,mercado-global}` · `/ecp/pvc` ·
 `/ecp/pvc/{lectura,grados,tablero,parametros,dossier}` · `/ecp/pvc/tablero/embed[/publicar]` · `/api/pvc/current` ·
-`/ecp/cotizador-{lotes,logistico,empaque}[/id]` · `/ecp/cotizador-empaque/evaluacion` · `/ecp/anclas-mercado`.
+`/ecp/cotizador-{lotes,logistico,empaque}[/id]` · `/ecp/cotizador-courier` · `/ecp/cotizador-empaque/evaluacion` · `/ecp/anclas-mercado`.
 
 Hay **dos pantallas de grados**, y desde la V5.56 no se llaman igual: `/ecp/direccionamiento/grados` es «Grados de Calidad ·
 definición vigente» (LA que leen todas las superficies) y `/ecp/pvc/grados` es «Escala de puntos · en validación» (la que
@@ -64,7 +65,7 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
 
 `direccionamiento_context` · `pvc_model_versions` · `pvc_editions` (guard: publicada = inmutable) · `pvc_cycles` ·
 `pvc_sources` · `pvc_trigger_watch` · `pvc_forecast_scores` · vistas `public_pvc_current` y `public_pvc_next` ·
-`quotes` · `market_anchors`.
+`quotes` · `market_anchors` · las ocho `courier_*` (V5.68: acuerdos, descuentos, descuento adquirido, bonificaciones, tarifas base, zonas, recargos, cotizaciones).
 Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber quién lee ya la edición), `audit_log`
 (escribe rastro). Pasaron a `consolas`: `transcripts`, `transcript_workers`.
 
@@ -74,7 +75,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
 `qa-pvc-vigencia.mjs` (28) · `qa-pvc-lectura.mjs` (67 — la regla de la mezcla, en el código Y en el plan) ·
 `qa-pvc-escala.mjs` (68 — incluye la Base física) · `qa-pvc-canales.mjs` (57) · `qa-pvc-compromiso.mjs` (31) ·
 `qa-grados-check.mjs` (48 — el contrato de grados) · `qa-definicion-check.mjs` · `qa-direccionamiento-check.mjs` ·
-`qa-anclas-check.mjs`. Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
+`qa-anclas-check.mjs` · `qa-courier-check.mjs` (37 — el cálculo contra un acuerdo FICTICIO y la fuga cero por hash). Y de la casa, porque el grupo vive en el rail del ECP: `qa-rutas-consolas.mjs`.
 
 ## Reglas propias
 
@@ -104,6 +105,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
 
 ## Pendientes
 
+- **Cotizador Courier (V5.68) — lo que queda.** (1) **El combustible es semanal**: alguien tiene que anotarlo cada viernes en la pantalla (FedEx lo publica en fedex.com/es-co/shipping/surcharges.html); sin él, la cotización sale «incompleta». Candidato a cron, como las anclas. (2) **Confirmar con el ejecutivo de FedEx** que el descuento por zona, el adquirido y la bonificación **se suman** (así está cargado, `modo_suma = aditivo`) y si el acuerdo cubre la **caja FedEx 10/25 kg** (hoy se cotiza a lista: sale mucho más cara y quizá no lo es). (3) **Contrastar tres envíos reales** contra la factura o fedex.com. (4) El **periodo de gracia termina el 2026-11-24**: desde ahí el descuento adquirido depende del gasto anualizado, que la pantalla pide a mano; calcularlo de las facturas es otra tanda. (5) Segunda tanda: importación y terceros; la API de tarifas de FedEx como contraste (owner: «después»); y que la modalidad courier del cotizador logístico y la Gestión de Muestras lean este costo (línea en `ALINEACION` §3). (6) Cuando llegue la guía 2027: `parse-guia.py` + `seed-courier.mjs … guia` — las tarifas son versión, no se sobrescriben.
 - ~~**El overhaul de las consolas devuelve este grupo al ECP**~~ — **ejecutado en la V5.60** (fase 2 de
   `docs/OVERHAUL_CONSOLAS_PLAN.md`): el grupo vive en el ECP, agrupado por modelo como lo dibujó el owner — Definición de
   Contexto (con Misión y Visión y **Mercado Global**) · Modelo Económico en Origen (PVC · Grados) · **Modelo de Producción** ·

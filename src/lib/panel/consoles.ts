@@ -176,7 +176,11 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         // Lo que cuesta después del FOB, por volumen y región. Hoy, el cotizador logístico entero; los
         // tres costos del cuadro (puerto Colombia · puerto destino · puerta a puerta) son sus futuras vistas.
         label: "ECP · Modelo Logístico",
-        links: [{ href: "/ecp/cotizador-logistico", label: "Cotizador logístico" }],
+        // El Cotizador Courier (V5.68): el costo FedEx de un envío de café < 100 kg, con el acuerdo firmado.
+        links: [
+          { href: "/ecp/cotizador-logistico", label: "Cotizador logístico" },
+          { href: "/ecp/cotizador-courier", label: "Cotizador courier · FedEx" },
+        ],
       },
       {
         // El registro de lo que corre en Make y el pulso de la espina de integración

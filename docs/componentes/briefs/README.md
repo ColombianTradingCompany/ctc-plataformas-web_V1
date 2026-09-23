@@ -48,5 +48,7 @@ revisar cada compuerta de escritura del productor—, y toca el contrato de **Id
 [`kaffetal-regal-companeros-de-finca.md`](kaffetal-regal-companeros-de-finca.md) · **bloqueado por cinco decisiones del owner**,
 la más dura la del bucket `kaffetal-media` (la ruta `{producer_id}/…` no contempla que suba alguien que no es el dueño).
 
+**Cotizador Courier (FedEx)** (`herramientas-internas`, 2026-09-23). Lo trajo el owner con el acuerdo de precios firmado con FedEx: calculadora de envíos courier (tarifa base publicada − descuentos del acuerdo + recargos a lista), modalidad courier del Modelo Logístico. ⚠️ El acuerdo es confidencial y el repo es público: las cifras viven solo en la base. [`herramientas-internas-cotizador-courier.md`](herramientas-internas-cotizador-courier.md) · **APROBADO y construido en la V5.68** (2026-09-23): vive en `/ecp/cotizador-courier`.
+
 Orden recomendado si se aprueban todos: **Pagos → Muestras → Producción → Logístico → Compras**; Temas, cuando el owner diga qué es.
 Las cuatro primeras tandas no se pisan entre sí y ninguna cambia un precio ni una regla.

@@ -131,3 +131,7 @@ Contexto abierto al cerrar V46 (2026-09-23) — plataforma V5.70:
 - Acción `borrarCombustible(id)` (emite) en `src/lib/courier/actions.ts`; lista «Semanas anotadas» con «Borrar» en `CourierBoard.tsx`.
 - Datos: borrada la fila de prueba del 40 % (16–30 sep, a mano) por orden del owner.
 (commit: 7fab5b6)
+
+## [2026-09-23] V5.72 · Herramientas Internas — Cotizador Courier: borrar cotizaciones guardadas
+- Acción `borrarCotizacionCourier(id)` (emite) en `src/lib/courier/actions.ts`; botón «Borrar» junto a «Abrir» en `CourierBoard.tsx`.
+(commit: pendiente)

@@ -171,6 +171,19 @@ export async function listarCotizacionesCourier(): Promise<CotizacionGuardada[] 
   return (data ?? []).map(aGuardada);
 }
 
+/** Borra una cotización guardada. Borrar nunca es un borrador (lista blanca de BCP_USER_ADMIN_PLAN): emite.
+ *  El guard trigger de `courier_cotizaciones` impide REESCRIBIR un acta, no retirarla. */
+export async function borrarCotizacionCourier(id: string): Promise<ResultadoCourier> {
+  const who = await requireConsoleWrite(CONSOLA);
+  if (!who) return NO_AUTH;
+  const { data, error } = await quoteServiceClient().from("courier_cotizaciones")
+    .delete().eq("id", id).eq("transportista", TRANSPORTISTA).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "Esa cotización ya no existe (¿la borró alguien más?)." };
+  revalidatePath(COURIER_PATH);
+  return { ok: true, mensaje: "Cotización borrada." };
+}
+
 /** Abre una cotización guardada: lo que se metió y el resultado tal como quedó (congelado). */
 export async function abrirCotizacionCourier(id: string): Promise<CotizacionAbierta | null> {
   if (!(await requireConsoleWrite(CONSOLA, "lectura"))) return null;

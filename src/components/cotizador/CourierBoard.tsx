@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  abrirCotizacionCourier, actualizarCombustibleAhora, anotarCombustible, borrarCombustible, cotizarCourier,
+  abrirCotizacionCourier, actualizarCombustibleAhora, anotarCombustible, borrarCombustible, borrarCotizacionCourier, cotizarCourier,
   guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier,
 } from "@/lib/courier/actions";
 import { pesoDimensional, type Cotizacion, type Entrada, type Pieza } from "@/lib/courier/calculo";
@@ -433,6 +433,15 @@ export function CourierBoard() {
                     <td className={table.muted}>{g.nota ?? "—"}</td>
                     <td className={table.acts}>
                       <button className="btn btn-sm" type="button" disabled={busy} onClick={() => abrir(g.id)}>Abrir</button>
+                      <button className="btn btn-sm" type="button" disabled={busy}
+                        onClick={() => {
+                          const que = `${g.pais ?? g.destino}${g.pesoRealKg !== null ? `, ${kg(g.pesoRealKg)} kg` : ""}${g.totalUsd !== null ? `, ${usd(g.totalUsd)}` : ""}`;
+                          if (!window.confirm(`¿Borrar la cotización del ${day(g.createdAt)} (${que})? No se puede deshacer.`)) return;
+                          if (abiertaDe?.id === g.id) { setAbiertaDe(null); setRes(null); }
+                          void run("guardadas", () => borrarCotizacionCourier(g.id), "Cotización borrada.");
+                        }}>
+                        Borrar
+                      </button>
                     </td>
                   </tr>
                 ))}

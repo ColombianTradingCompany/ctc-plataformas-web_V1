@@ -19,6 +19,12 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.72] — 2026-09-23 (commit pendiente)
+
+- **Añadido**: botón **Borrar** en «Cotizaciones guardadas» del Cotizador Courier, junto a «Abrir», con confirmación que nombra
+  la cotización (fecha, destino, peso y total). Acción `borrarCotizacionCourier` (clase `emite`: borrar nunca es borrador). Si
+  la cotización borrada estaba abierta, se cierra. El guard trigger sigue impidiendo REESCRIBIR un acta; retirarla, no.
+
 ## [V5.71] — 2026-09-23 (commit 7fab5b6)
 
 - **Añadido**: botón **Borrar** en el recargo de combustible del Cotizador Courier: la lista «Semanas anotadas» (cerrada por

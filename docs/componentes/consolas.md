@@ -143,6 +143,16 @@ blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, co
 
 ## Pendientes
 
+- **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23) — brief en scoping**: `briefs/consolas-rutas-del-proveedor.md`. Tres
+  diagramas (Estándar · CTCx Selection · Desacoplado) y dos módulos pedidos para el OCP, **Proveedor Desacoplado** y **Asistencia
+  a Proveedores** (entrar al perfil de un productor para crear fincas y lotes y hacer el proceso en su nombre). La Ruta Estándar
+  ya está construida salvo lo que la 4b tiene parado; la CTCx Selection es el brief de Compras + un perfil de CTCx Selection + el
+  rechazo con interés; la Desacoplada es lo nuevo. Propuesta: UN mecanismo para los dos módulos —la **sesión asistida** (abrir
+  KR como el productor con `auth.admin.generateLink`, rastro en `audit_log` y nota al productor)— y una cuenta con correo-etiqueta
+  sin buzón para el desacoplado (`producer_profiles.gestion`). ⚠️ **Toca el contrato de Identidad: no se construye sin el sí del
+  owner** (siete preguntas al final del brief). Lo que los diagramas YA contestan de la 4b: D7 (declara cantidad al aceptar) y la
+  prima del 8 %. Lo evidente sin decisión: la tarea derivada «llamada de bienvenida» en el Tablero, los `throw` de `createLot`, los
+  comentarios de `circuito.ts` que dicen «EVA documental».
 - **OVERHAUL DE LAS CONSOLAS — `docs/OVERHAUL_CONSOLAS_PLAN.md`**, aprobado por el owner el 2026-09-19 («todo lo
   recomendado», D1–D10), una versión por fase. **Fase 0** (Wrap V45), **fase 1** (V5.59: nace la LCP) y **fase 2** (V5.60: el
   reparto BCP ↔ ECP y el Tablero de Ejecución) y **fase 3** (V5.61: la tabla única «Productores, Fincas y Lotes») —

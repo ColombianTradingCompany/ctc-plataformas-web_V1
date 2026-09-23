@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.72] — 2026-09-23 (commit pendiente)
+## [V5.72] — 2026-09-23 (commit 8f6e969)
 
 - **Añadido**: botón **Borrar** en «Cotizaciones guardadas» del Cotizador Courier, junto a «Abrir», con confirmación que nombra
   la cotización (fecha, destino, peso y total). Acción `borrarCotizacionCourier` (clase `emite`: borrar nunca es borrador). Si

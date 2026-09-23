@@ -19,6 +19,23 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.73] — 2026-09-23 (commit pendiente)
+
+- **Hito**: **cierra el primer ciclo del Cotizador Courier · FedEx** (V5.68 → V5.73, un día): brief aprobado, cálculo con el acuerdo
+  confidencial, combustible automático, correcciones del primer recorrido, borrar, y ahora el enlace con el CRM.
+- **Añadido**: **enlace con LCP · CRM CP CaaS**. Cada cotización courier puede pertenecer a UN item CaaS (una tarjeta del CRM =
+  un lead del pilar `cocreate`); un item puede tener varias. En la tarjeta del CRM, la sección «Cotizaciones courier · FedEx»
+  enseña las suyas (total, destino, peso real y cobrado, servicio, envío, nota) con «Abrir», y el botón «Nueva cotización courier
+  para este item». El cotizador lee `?lead=` (banner «Cotizando para el item CaaS…», con «Ver en el CRM» y «Quitar vínculo»; lo
+  que se guarde queda en la tarjeta) y `?abrir=` (abre una guardada). La lista de guardadas gana la columna «Item CaaS», con
+  enlace a la tarjeta.
+- **Añadido**: **editar la nota** de una cotización guardada (en la misma fila, Guardar/Cancelar). Acción
+  `editarNotaCotizacionCourier`, clase `borrador` (entra en la lista blanca de `BCP_USER_ADMIN_PLAN.md`). Lo cotizado sigue
+  congelado por el guard trigger.
+- **Datos**: `courier_cotizaciones.lead_id` → `leads(id)` `on delete set null` (si el lead se borra, el acta se queda sin vínculo).
+- **Cambiado** (código ajeno, `consolas`): `LeadsBoard.tsx` lee `courier_cotizaciones` solo para el pilar `cocreate`. Línea en
+  `ALINEACION` §3.
+
 ## [V5.72] — 2026-09-23 (commit 8f6e969)
 
 - **Añadido**: botón **Borrar** en «Cotizaciones guardadas» del Cotizador Courier, junto a «Abrir», con confirmación que nombra

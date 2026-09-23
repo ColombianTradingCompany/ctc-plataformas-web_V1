@@ -9,7 +9,7 @@ import { requireConsoleWrite, quoteServiceClient } from "@/lib/panel/requireCons
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 import { cotizar, type Cotizacion, type Entrada, type Tablas } from "./calculo";
 import { actualizarCombustible } from "./eia";
-import { COURIER_PATH, type CotizacionAbierta, type CotizacionGuardada, type ResultadoCourier, type ResumenCourier } from "./types";
+import { COURIER_PATH, type CotizacionAbierta, type CotizacionGuardada, type ItemCaas, type ResultadoCourier, type ResumenCourier } from "./types";
 
 /** La consola donde vive este módulo. UNA vez; `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
 const CONSOLA: PanelConsoleKey = "ecp";
@@ -134,23 +134,24 @@ export async function actualizarCombustibleAhora(): Promise<ResultadoCourier> {
 }
 
 /** Guarda la cotización como acta: se recalcula AQUÍ (no se confía en lo que manda el navegador) y se congela. */
-export async function guardarCotizacionCourier(entrada: Entrada, servicioElegido: string | null, nota: string): Promise<ResultadoCourier> {
+export async function guardarCotizacionCourier(entrada: Entrada, servicioElegido: string | null, nota: string, leadId: string | null = null): Promise<ResultadoCourier> {
   const who = await requireConsoleWrite(CONSOLA, "borrador");
   if (!who) return NO_AUTH;
+  if (leadId && !(await leerItemCaas(leadId))) return { ok: false, error: "Ese item CaaS ya no existe en el CRM: guarda sin vínculo o elige otro." };
   const c = cotizar(await leerTablas(quoteServiceClient()), entrada);
   if (!c.opciones.some((o) => o.disponible)) return { ok: false, error: "No hay ninguna opción cotizable para guardar." };
   const elegida = c.opciones.find((o) => `${o.servicio}:${o.embalaje}` === servicioElegido && o.disponible) ?? c.opciones.find((o) => o.disponible)!;
   const { error } = await quoteServiceClient().from("courier_cotizaciones").insert({
     transportista: TRANSPORTISTA, destino_iso: entrada.destino, peso_facturable_kg: c.pesoFacturableKg,
     servicio_elegido: `${elegida.servicio}:${elegida.embalaje}`, total_usd: elegida.totalUsd,
-    entradas: entrada, snapshot: c, nota: nota.trim() || null, created_by: who.userId,
+    entradas: entrada, snapshot: c, nota: nota.trim() || null, created_by: who.userId, lead_id: leadId,
   });
   if (error) return { ok: false, error: error.message };
   revalidatePath(COURIER_PATH);
   return { ok: true };
 }
 
-const COLS_GUARDADA = "id, destino_iso, peso_facturable_kg, servicio_elegido, total_usd, nota, created_at, entradas, snapshot";
+const COLS_GUARDADA = "id, destino_iso, peso_facturable_kg, servicio_elegido, total_usd, nota, created_at, entradas, snapshot, lead_id, leads(nombre, fields)";
 
 function aGuardada(r: Fila): CotizacionGuardada {
   const snap = r.snapshot as Cotizacion | null, ent = r.entradas as Entrada | null;
@@ -160,6 +161,7 @@ function aGuardada(r: Fila): CotizacionGuardada {
     pesoRealKg: snap?.pesoRealKg ?? (ent ? ent.piezas.reduce((s, p) => s + (p.kg || 0), 0) : null),
     pesoFacturableKg: Number(r.peso_facturable_kg), servicio: r.servicio_elegido, servicioEtiqueta: op?.etiqueta ?? null,
     fechaEnvio: ent?.fechaEnvio ?? null,
+    leadId: r.lead_id ?? null, itemCaas: r.leads ? etiquetaItem(r.leads.nombre, r.leads.fields) : null,
     totalUsd: r.total_usd === null ? null : Number(r.total_usd), nota: r.nota, createdAt: r.created_at,
   };
 }
@@ -169,6 +171,38 @@ export async function listarCotizacionesCourier(): Promise<CotizacionGuardada[] 
   const { data } = await quoteServiceClient().from("courier_cotizaciones")
     .select(COLS_GUARDADA).order("created_at", { ascending: false }).limit(50);
   return (data ?? []).map(aGuardada);
+}
+
+const etiquetaItem = (nombre: string, fields: Record<string, unknown> | null) =>
+  [fields?.marca ? String(fields.marca) : null, nombre].filter(Boolean).join(" · ");
+
+/** Un item CaaS del CRM: SOLO leads del pilar `cocreate` (un lead de otro pilar no es un item CaaS). */
+async function leerItemCaas(id: string): Promise<ItemCaas | null> {
+  const { data } = await quoteServiceClient().from("leads").select("id, nombre, fields, pillar").eq("id", id).eq("pillar", "cocreate").maybeSingle();
+  if (!data) return null;
+  const f = (data.fields ?? {}) as Record<string, unknown>;
+  const s = (k: string) => (f[k] ? String(f[k]) : null);
+  return { id: data.id, nombre: data.nombre, marca: s("marca"), mercado: s("mercadoOtro") ?? s("mercado"), formato: s("formato"), vol: s("vol") };
+}
+
+/** Para el banner del cotizador cuando se llega desde el CRM CP CaaS (`?lead=`). */
+export async function itemCaasCourier(id: string): Promise<ItemCaas | null> {
+  if (!(await requireConsoleWrite(CONSOLA, "lectura"))) return null;
+  return leerItemCaas(id);
+}
+
+/** Cambia la nota de una cotización guardada. Lo cotizado sigue congelado (el guard trigger lo impide);
+ *  la nota es un rótulo interno que nadie de fuera lee: borrador (lista blanca de BCP_USER_ADMIN_PLAN). */
+export async function editarNotaCotizacionCourier(id: string, nota: string): Promise<ResultadoCourier> {
+  const who = await requireConsoleWrite(CONSOLA, "borrador");
+  if (!who) return NO_AUTH;
+  if (nota.length > 500) return { ok: false, error: "La nota es demasiado larga (máximo 500 caracteres)." };
+  const { data, error } = await quoteServiceClient().from("courier_cotizaciones")
+    .update({ nota: nota.trim() || null }).eq("id", id).eq("transportista", TRANSPORTISTA).select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "Esa cotización ya no existe." };
+  revalidatePath(COURIER_PATH);
+  return { ok: true, mensaje: "Nota guardada." };
 }
 
 /** Borra una cotización guardada. Borrar nunca es un borrador (lista blanca de BCP_USER_ADMIN_PLAN): emite.

@@ -8,10 +8,10 @@
 import { useEffect, useState } from "react";
 import {
   abrirCotizacionCourier, actualizarCombustibleAhora, anotarCombustible, borrarCombustible, borrarCotizacionCourier, cotizarCourier,
-  guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier,
+  editarNotaCotizacionCourier, guardarCotizacionCourier, itemCaasCourier, listarCotizacionesCourier, resumenCourier,
 } from "@/lib/courier/actions";
 import { pesoDimensional, type Cotizacion, type Entrada, type Pieza } from "@/lib/courier/calculo";
-import type { CotizacionAbierta, CotizacionGuardada, ResumenCourier } from "@/lib/courier/types";
+import { CRM_CAAS_PATH, type CotizacionAbierta, type CotizacionGuardada, type ItemCaas, type ResumenCourier } from "@/lib/courier/types";
 import styles from "@/components/panel/shared.module.css";
 import table from "./quotesTable.module.css";
 import c from "./courier.module.css";
@@ -68,7 +68,11 @@ function GraficaCombustible({ puntos }: { puntos: Punto[] }) {
   );
 }
 
-export function CourierBoard() {
+const enlaceCrm = (leadId: string) => `${CRM_CAAS_PATH}#lead-${leadId}`;
+const rotuloItem = (i: ItemCaas) => [i.marca, i.nombre].filter(Boolean).join(" · ");
+const detalleItem = (i: ItemCaas) => [i.mercado, i.formato, i.vol ? `${i.vol} kg/año` : null].filter(Boolean).join(" · ");
+
+export function CourierBoard({ leadInicial = null, abrirInicial = null }: { leadInicial?: string | null; abrirInicial?: string | null }) {
   const [resumen, setResumen] = useState<ResumenCourier | null | undefined>(undefined);
   const [guardadas, setGuardadas] = useState<CotizacionGuardada[]>([]);
   const [destino, setDestino] = useState("DE");
@@ -82,11 +86,26 @@ export function CourierBoard() {
   const [comb, setComb] = useState({ valor: "", desde: "", hasta: "", fuente: "" });
   const [busy, setBusy] = useState(false);
   const [aviso, setAviso] = useState<Aviso>(null);
+  const [item, setItem] = useState<ItemCaas | null>(null);
+  const [editando, setEditando] = useState<{ id: string; nota: string } | null>(null);
 
   const cargar = () => Promise.all([resumenCourier(), listarCotizacionesCourier()]).then(([r, g]) => { setResumen(r); setGuardadas(g ?? []); });
   useEffect(() => {
     Promise.all([resumenCourier(), listarCotizacionesCourier()]).then(([r, g]) => { setResumen(r); setGuardadas(g ?? []); });
-  }, []);
+    // Desde el LCP · CRM CP CaaS: «Nueva cotización courier» trae `?lead=`, «Abrir» trae `?abrir=`.
+    if (leadInicial) itemCaasCourier(leadInicial).then((i) => {
+      setItem(i);
+      if (!i) setAviso({ donde: "envio", texto: "Ese item CaaS no existe (o no es del CRM CP CaaS): se cotiza sin vínculo.", error: true });
+    });
+    if (abrirInicial) abrirCotizacionCourier(abrirInicial).then((a) => {
+      if (!a) { setAviso({ donde: "guardadas", texto: "No se pudo abrir esa cotización.", error: true }); return; }
+      setDestino(a.entradas.destino); setFecha(a.entradas.fechaEnvio);
+      setGasto(a.entradas.gastoAnualUsd != null ? String(a.entradas.gastoAnualUsd) : "");
+      setPiezas(a.entradas.piezas.map(aForm)); setNota(a.nota ?? "");
+      setRes(a.snapshot); setAbiertaDe(a); setDesglose(a.servicio);
+      if (a.leadId) itemCaasCourier(a.leadId).then(setItem);
+    });
+  }, [leadInicial, abrirInicial]);
 
   const entrada = (): Entrada => ({
     destino, fechaEnvio: fecha, gastoAnualUsd: gasto.trim() ? num(gasto) : null,
@@ -117,6 +136,7 @@ export function CourierBoard() {
     setGasto(a.entradas.gastoAnualUsd != null ? String(a.entradas.gastoAnualUsd) : "");
     setPiezas(a.entradas.piezas.map(aForm)); setNota(a.nota ?? "");
     setRes(a.snapshot); setAbiertaDe(a); setDesglose(a.servicio);
+    setItem(a.leadId ? await itemCaasCourier(a.leadId) : null);
     setTimeout(() => document.getElementById("courier-resultado")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   }
 
@@ -167,6 +187,18 @@ export function CourierBoard() {
 
       <section className={c.panel}>
         <div className={c.head}><h2>El envío</h2></div>
+        {item && (
+          <div className={c.item}>
+            <span>
+              Cotizando para el item CaaS <strong>{rotuloItem(item)}</strong>{detalleItem(item) ? ` · ${detalleItem(item)}` : ""}.
+              Lo que guardes queda en su tarjeta del CRM.
+            </span>
+            <span className={c.botones} style={{ marginTop: 0 }}>
+              <a className="btn btn-sm" href={enlaceCrm(item.id)}>Ver en el CRM CP CaaS</a>
+              <button className="btn btn-sm" type="button" onClick={() => setItem(null)}>Quitar vínculo</button>
+            </span>
+          </div>
+        )}
         <div className={c.campos}>
           <div className={c.campo}>
             <label htmlFor="c-dest">Destino</label>
@@ -312,7 +344,7 @@ export function CourierBoard() {
               {mensaje("resultado")}
               <div className={c.botones}>
                 <button className="btn btn-sm btn-solid" type="button" disabled={busy}
-                  onClick={() => run("resultado", () => guardarCotizacionCourier(entrada(), desglose ?? `${mejor.servicio}:${mejor.embalaje}`, nota), "Cotización guardada: está abajo, en «Cotizaciones guardadas».")}>
+                  onClick={() => run("resultado", () => guardarCotizacionCourier(entrada(), desglose ?? `${mejor.servicio}:${mejor.embalaje}`, nota, item?.id ?? null), item ? `Cotización guardada y vinculada a ${rotuloItem(item)}: está abajo y en su tarjeta del CRM CP CaaS.` : "Cotización guardada: está abajo, en «Cotizaciones guardadas».")}>
                   Guardar cotización
                 </button>
               </div>
@@ -414,7 +446,7 @@ export function CourierBoard() {
             <table className={table.t}>
               <thead>
                 <tr>
-                  <th>Guardada</th><th>Destino</th><th>Envío</th><th className={table.r}>Peso</th><th>Servicio</th>
+                  <th>Guardada</th><th>Item CaaS</th><th>Destino</th><th>Envío</th><th className={table.r}>Peso</th><th>Servicio</th>
                   <th className={table.r}>Total</th><th>Nota</th><th className={table.acts}></th>
                 </tr>
               </thead>
@@ -422,6 +454,7 @@ export function CourierBoard() {
                 {guardadas.map((g) => (
                   <tr key={g.id}>
                     <td>{day(g.createdAt)}</td>
+                    <td>{g.leadId ? <a href={enlaceCrm(g.leadId)} style={{ color: "var(--primary)" }}>{g.itemCaas ?? "item CaaS"}</a> : <span className={table.muted}>—</span>}</td>
                     <td>{g.pais ?? g.destino}</td>
                     <td>{g.fechaEnvio ? day(g.fechaEnvio) : "—"}</td>
                     <td className={table.r}>
@@ -430,9 +463,23 @@ export function CourierBoard() {
                     </td>
                     <td>{g.servicioEtiqueta ?? g.servicio ?? "—"}</td>
                     <td className={table.r}><span className={table.strong}>{g.totalUsd === null ? "—" : usd(g.totalUsd)}</span></td>
-                    <td className={table.muted}>{g.nota ?? "—"}</td>
+                    <td className={table.muted}>
+                      {editando?.id === g.id ? (
+                        <form className={c.notaEdit} onSubmit={async (e) => {
+                          e.preventDefault();
+                          const n = editando.nota;
+                          await run("guardadas", () => editarNotaCotizacionCourier(g.id, n), "Nota guardada.");
+                          setEditando(null);
+                        }}>
+                          <input aria-label="Nota" autoFocus maxLength={500} value={editando.nota} onChange={(e) => setEditando({ id: g.id, nota: e.target.value })} />
+                          <button className="btn btn-sm btn-solid" type="submit" disabled={busy}>Guardar</button>
+                          <button className="btn btn-sm" type="button" onClick={() => setEditando(null)}>Cancelar</button>
+                        </form>
+                      ) : (g.nota ?? "—")}
+                    </td>
                     <td className={table.acts}>
                       <button className="btn btn-sm" type="button" disabled={busy} onClick={() => abrir(g.id)}>Abrir</button>
+                      <button className="btn btn-sm" type="button" disabled={busy || editando?.id === g.id} onClick={() => setEditando({ id: g.id, nota: g.nota ?? "" })}>Editar nota</button>
                       <button className="btn btn-sm" type="button" disabled={busy}
                         onClick={() => {
                           const que = `${g.pais ?? g.destino}${g.pesoRealKg !== null ? `, ${kg(g.pesoRealKg)} kg` : ""}${g.totalUsd !== null ? `, ${usd(g.totalUsd)}` : ""}`;

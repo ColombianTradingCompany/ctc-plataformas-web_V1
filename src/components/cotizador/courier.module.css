@@ -29,6 +29,9 @@
 .error { margin-top: 10px; padding: 9px 12px; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 13px; }
 .aviso { margin: 6px 0 0; padding: 8px 12px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 12.5px; }
 
+.item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 14px; border-radius: 10px; background: #fdf6e3; color: #7a5a10; font-size: 13px; border: 1px solid #efdfb4; }
+.notaEdit { display: flex; gap: 6px; align-items: center; min-width: 260px; }
+.notaEdit input { flex: 1; padding: 6px 9px; border: 1.5px solid var(--line); border-radius: 7px; font-size: 13px; font-family: inherit; }
 .congelada { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 14px; border-radius: 10px; background: #eef2ff; color: #3730a3; font-size: 13px; }
 
 .resumenPeso { font-size: 13px; color: var(--muted); margin: 0 0 10px; }

@@ -42,6 +42,14 @@ type ReplyRow = {
 };
 
 type ProfileRow = { id: string; role: string; full_name: string | null };
+/** Las cotizaciones del Cotizador Courier (ECP · Modelo Logístico, charter `herramientas-internas`) que
+ *  pertenecen a un item CaaS (V5.73). Solo se leen aquí; se crean, abren y editan en el cotizador. */
+type CourierRow = {
+  id: string; lead_id: string; created_at: string; peso_facturable_kg: number; total_usd: number | null;
+  servicio_elegido: string | null; nota: string | null; entradas: { fechaEnvio?: string; piezas?: { kg?: number }[] } | null;
+  snapshot: { pais?: string | null; opciones?: { servicio: string; embalaje: string; etiqueta: string }[] } | null;
+};
+const COTIZADOR_COURIER = "/ecp/cotizador-courier";
 type PlatformNote = { id: string; lead_id: string | null; parent_id: string | null; note: string; author_role: string; created_at: string };
 
 export type LeadPillarKey = "general" | "tech" | "cocreate" | "varietales";
@@ -145,6 +153,20 @@ export async function LeadsBoard({
         ? service.from("orders").select("buyer_id").in("buyer_id", profileIds)
         : Promise.resolve({ data: [] }),
     ]);
+
+  // Las cotizaciones courier de cada item CaaS (solo en el tablero que monta el pilar `cocreate`).
+  const courierByLead = new Map<string, CourierRow[]>();
+  const caasIds = leads.filter((l) => l.pillar === "cocreate").map((l) => l.id);
+  if (caasIds.length) {
+    const { data: courierData } = await service
+      .from("courier_cotizaciones")
+      .select("id, lead_id, created_at, peso_facturable_kg, total_usd, servicio_elegido, nota, entradas, snapshot")
+      .in("lead_id", caasIds)
+      .order("created_at", { ascending: false });
+    for (const q of (courierData as CourierRow[] | null) ?? []) {
+      courierByLead.set(q.lead_id, [...(courierByLead.get(q.lead_id) ?? []), q]);
+    }
+  }
 
   const repliesByLead = new Map<string, ReplyRow[]>();
   for (const r of (repliesData as ReplyRow[] | null) ?? []) {
@@ -277,6 +299,7 @@ export async function LeadsBoard({
                             pillarLabel={p.label}
                             replies={repliesByLead.get(lead.id) ?? []}
                             platformNotes={platformByLead.get(lead.id) ?? []}
+                            courier={lead.pillar === "cocreate" ? courierByLead.get(lead.id) ?? [] : null}
                             profile={lead.profile_id ? profileById.get(lead.profile_id) : undefined}
                             fincaCount={lead.profile_id ? fincasByProfile.get(lead.profile_id) ?? 0 : 0}
                             lotCount={lead.profile_id ? lotsByProfile.get(lead.profile_id) ?? 0 : 0}
@@ -302,6 +325,7 @@ function LeadCard({
   pillarLabel,
   replies,
   platformNotes,
+  courier,
   profile,
   fincaCount,
   lotCount,
@@ -312,6 +336,8 @@ function LeadCard({
   pillarLabel: string;
   replies: ReplyRow[];
   platformNotes: PlatformNote[];
+  /** null = este pilar no cotiza courier; [] = item CaaS sin cotizaciones todavía. */
+  courier: CourierRow[] | null;
   profile: ProfileRow | undefined;
   fincaCount: number;
   lotCount: number;
@@ -374,6 +400,35 @@ function LeadCard({
         <p className={styles.meta} style={{ margin: "6px 0 0", whiteSpace: "pre-wrap" }}>
           &quot;{lead.message}&quot;
         </p>
+      )}
+
+      {courier && (
+        <>
+          {sectionHead(`Cotizaciones courier · FedEx (${courier.length})`)}
+          {courier.length === 0 && (
+            <p className={styles.meta} style={{ margin: "3px 0" }}>Este item todavía no tiene cotizaciones de envío.</p>
+          )}
+          {courier.map((q) => {
+            const real = q.entradas?.piezas?.reduce((s, p) => s + (Number(p.kg) || 0), 0) ?? null;
+            const op = q.snapshot?.opciones?.find((o) => `${o.servicio}:${o.embalaje}` === q.servicio_elegido);
+            const usdTxt = q.total_usd === null ? "—" : new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD" }).format(Number(q.total_usd));
+            return (
+              <p key={q.id} className={styles.meta} style={{ margin: "4px 0", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "baseline" }}>
+                <b style={{ color: "var(--ink)" }}>{usdTxt}</b>
+                <span>
+                  {q.snapshot?.pais ?? "—"} · {real !== null ? `${real} kg` : "—"}
+                  {real !== null && Number(q.peso_facturable_kg) !== real ? ` (se cobran ${Number(q.peso_facturable_kg)})` : ""} · {op?.etiqueta ?? q.servicio_elegido ?? "—"}
+                  {q.entradas?.fechaEnvio ? ` · envío ${fecha(q.entradas.fechaEnvio)}` : ""} · guardada {fecha(q.created_at)}
+                  {q.nota ? ` · «${q.nota}»` : ""}
+                </span>
+                <a href={`${COTIZADOR_COURIER}?abrir=${q.id}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>Abrir</a>
+              </p>
+            );
+          })}
+          <p style={{ margin: "8px 0 0", display: "flex", justifyContent: "flex-end" }}>
+            <a className="btn btn-sm" href={`${COTIZADOR_COURIER}?lead=${lead.id}`}>Nueva cotización courier para este item</a>
+          </p>
+        </>
       )}
 
       {sectionHead("Cuenta")}

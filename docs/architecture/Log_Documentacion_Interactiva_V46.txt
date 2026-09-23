@@ -135,3 +135,32 @@ Contexto abierto al cerrar V46 (2026-09-23) — plataforma V5.70:
 ## [2026-09-23] V5.72 · Herramientas Internas — Cotizador Courier: borrar cotizaciones guardadas
 - Acción `borrarCotizacionCourier(id)` (emite) en `src/lib/courier/actions.ts`; botón «Borrar» junto a «Abrir» en `CourierBoard.tsx`.
 (commit: 8f6e969)
+
+## [2026-09-23] V5.73 · Herramientas Internas — Cotizador Courier ↔ LCP · CRM CP CaaS (cierre del ciclo 1)
+- DATOS: `courier_cotizaciones.lead_id` → `leads(id)` (`on delete set null`), índice parcial. Un item CaaS = un lead del pilar
+  `cocreate` (lo valida `leerItemCaas`); un item tiene 0..N cotizaciones courier.
+- INTERFAZ NUEVA entre consolas: LCP · CRM CP CaaS (`LeadsBoard.tsx`, tarjeta `cocreate`) LEE `courier_cotizaciones` y enlaza al
+  ECP con `/ecp/cotizador-courier?lead=<id>` (nueva, vinculada) y `?abrir=<id>`; el cotizador enlaza de vuelta a
+  `/lcp/crm/caas#lead-<id>` (la tarjeta se abre sola por el ancla). ⚠️ quien tenga grant de LCP y no de ECP ve las cotizaciones
+  pero no puede abrir el cotizador.
+- Acciones nuevas: `itemCaasCourier` (lectura), `editarNotaCotizacionCourier` (borrador; lista blanca 16).
+(commit: pendiente)
+
+## ═══ PARA EL PRÓXIMO WRAP (V47): el Cotizador Courier, ciclo 1 completo (V5.68 → V5.73) ═══
+El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja entero. Lo que el wrap debe dibujar:
+- NODO NUEVO «Cotizador Courier · FedEx» en ECP · Modelo Logístico (charter `herramientas-internas`, fila 5·a), junto al
+  Cotizador logístico: `/ecp/cotizador-courier` · `src/lib/courier/{calculo,combustible,eia,actions,types}.ts` ·
+  `src/components/cotizador/{CourierBoard.tsx,courier.module.css}`.
+- DATOS (9 tablas `courier_*`, todas service-role-only): acuerdos → descuentos · descuento_adquirido · bonificaciones; tarifas_base ·
+  zonas (guía pública, versionadas por `vigente_desde`); recargos + combustible_escalas; cotizaciones (acta inmutable por guard
+  trigger, con `lead_id`).
+- FUENTES EXTERNAS nuevas del mapa: la guía pública de FedEx Colombia 2026 (cargada una vez por `scripts/seed-courier.mjs` desde
+  `apps-internas/courier-fedex/`, fuera del repo) y la **EIA** (serie EER_EPJK_PF4_RGC_DPG), que lee el **cron de los jueves**
+  `/api/cron/courier-combustible` (tercer cron de `vercel.json`). fedex.com NO es consultable desde el servidor (Akamai).
+- INTERFACES: ECP Cotizador Courier ↔ LCP CRM CP CaaS (arriba). Previstas, SIN construir: la modalidad «Courrier (DHL/FedEx)» del
+  cotizador logístico y la Gestión de Muestras del OCP leyendo este costo.
+- REGLA para el DICT y las fichas: el acuerdo con FedEx es **CONFIDENCIAL** (cláusula 6) y el repo es público → el mapa describe
+  la FORMA del cálculo (lista − zona − adquirido − bonificación → mínimo → + combustible) y **nunca una cifra, número de acuerdo
+  ni de cuenta**. `qa-courier-check` (51) vigila la fuga por hash.
+- ABIERTO (charter, «Pendientes»): confirmar con FedEx la suma de descuentos y si la caja 10/25 kg lleva descuento; contrastar
+  envíos reales; fin de la gracia el 2026-11-24 (escalón por gasto anualizado); segunda tanda = importación, terceros, API de FedEx.

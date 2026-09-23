@@ -374,4 +374,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
 - Interfaces previstas: la modalidad «Courrier (DHL/FedEx)» del cotizador logístico y la Gestión de Muestras del OCP podrán
   leer este costo (no en esta versión).
 - Guardián nuevo `qa-courier-check` (37); `qa-rutas-consolas` 490; `qa-niveles` 37 (15 borradores).
-(commit: pendiente)
+(commit: 113f56b)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.68] — 2026-09-23 (commit pendiente)
+## [V5.68] — 2026-09-23 (commit 113f56b)
 
 - **Añadido**: **Cotizador Courier · FedEx** en `/ecp/cotizador-courier` («ECP · Modelo Logístico»): el costo para CTCx de un
   envío de café (verde o tostado, < 100 kg). Tarifa de lista de la guía pública de FedEx Colombia 2026 − descuentos del acuerdo

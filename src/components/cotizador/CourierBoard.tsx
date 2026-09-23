@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  abrirCotizacionCourier, actualizarCombustibleAhora, anotarCombustible, cotizarCourier,
+  abrirCotizacionCourier, actualizarCombustibleAhora, anotarCombustible, borrarCombustible, cotizarCourier,
   guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier,
 } from "@/lib/courier/actions";
 import { pesoDimensional, type Cotizacion, type Entrada, type Pieza } from "@/lib/courier/calculo";
@@ -332,6 +332,38 @@ export function CourierBoard() {
           <span><span className={c.punto} style={{ background: "#d97706" }} />anotado a mano</span>
           <span>Pasa el cursor por un punto para ver su semana y su fuente.</span>
         </div>
+        {resumen.combustible.length > 0 && (
+          <details className={c.semanas}>
+            <summary>Semanas anotadas ({resumen.combustible.length}) — ver, corregir o borrar</summary>
+            <div className={table.scroll} style={{ marginTop: 10 }}>
+              <table className={table.t}>
+                <thead>
+                  <tr><th>Desde</th><th>Hasta</th><th className={table.r}>Recargo</th><th>Origen</th><th>Fuente</th><th className={table.acts}></th></tr>
+                </thead>
+                <tbody>
+                  {resumen.combustible.map((w) => (
+                    <tr key={w.id}>
+                      <td>{day(w.vigenteDesde)}</td>
+                      <td>{w.vigenteHasta ? day(w.vigenteHasta) : "—"}</td>
+                      <td className={table.r}><span className={table.strong}>{w.valor} %</span></td>
+                      <td>{w.automatico ? <span className={table.tag}>auto</span> : "a mano"}</td>
+                      <td className={table.muted}>{w.fuente}</td>
+                      <td className={table.acts}>
+                        <button className="btn btn-sm" type="button" disabled={busy}
+                          onClick={() => {
+                            if (!window.confirm(`¿Borrar el recargo de la semana del ${day(w.vigenteDesde)} (${w.valor} %)?${w.automatico ? "\n\nEs automático: si la EIA aún trae esa semana, el cron del jueves lo vuelve a anotar." : ""}`)) return;
+                            void run("combustible", () => borrarCombustible(w.id), "Semana borrada.");
+                          }}>
+                          Borrar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
         <div className={c.enlaces}>
           <a href={FEDEX_RECARGOS} target="_blank" rel="noopener noreferrer">FedEx · recargos de envío (tabla semanal) ↗</a>
           <a href={EIA_SERIE} target="_blank" rel="noopener noreferrer">EIA · precio semanal del queroseno de aviación USGC ↗</a>

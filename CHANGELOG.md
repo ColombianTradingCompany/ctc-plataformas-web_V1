@@ -19,6 +19,15 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.71] — 2026-09-23 (commit pendiente)
+
+- **Añadido**: botón **Borrar** en el recargo de combustible del Cotizador Courier: la lista «Semanas anotadas» (cerrada por
+  defecto, bajo la gráfica) enseña cada semana con su origen y su fuente, y se borra con confirmación. Acción
+  `borrarCombustible` (clase `emite`: borrar nunca es borrador). Una semana automática borrada la vuelve a anotar el cron
+  si la EIA aún la trae; el mensaje lo dice.
+- **Datos**: borrado, a petición del owner, el 40 % anotado a mano del 16 al 30 de septiembre (era una prueba y pisaba
+  la semana del 21 al 27).
+
 ## [V5.70] — 2026-09-23 (commit c49ec33)
 
 > **Wrap V46** (2026-09-23): ciclo compilado en `Documentacion_Interactiva_V46.0(35ebddd).html` — 42 nodos (+2: la LCP, el Courier) · 155 fichas (+7: `lcp`, `tablerodeejecucion`, `tablaunica`, `circuitodellote`, `courier`, `espejoamano`, `derivadonosepersiste`) · 62 trazas (+3) · 105 wires (+10) · 38 CTX (+2) · 421 ANN (+32 y una ampliada, con 22 repuntadas). Doce asientos de cuatro sesiones: el overhaul de las consolas hasta donde se pudo.

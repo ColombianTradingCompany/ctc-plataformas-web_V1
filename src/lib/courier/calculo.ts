@@ -37,7 +37,7 @@ export type Acuerdo = {
 };
 export type Recargo = {
   concepto: string; tipo: "pct" | "fijo"; valor: number;
-  vigenteDesde: string; vigenteHasta: string | null; fuente: string; automatico?: boolean;
+  vigenteDesde: string; vigenteHasta: string | null; fuente: string; automatico?: boolean; id?: string;
 };
 export type Tablas = { tarifas: TarifaBase[]; zonas: Zona[]; acuerdo: Acuerdo | null; recargos: Recargo[] };
 

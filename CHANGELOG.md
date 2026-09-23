@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.73] — 2026-09-23 (commit pendiente)
+## [V5.73] — 2026-09-23 (commit aa681e4)
 
 - **Hito**: **cierra el primer ciclo del Cotizador Courier · FedEx** (V5.68 → V5.73, un día): brief aprobado, cálculo con el acuerdo
   confidencial, combustible automático, correcciones del primer recorrido, borrar, y ahora el enlace con el CRM.

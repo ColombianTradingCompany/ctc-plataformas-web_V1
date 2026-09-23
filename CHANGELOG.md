@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.74] — 2026-09-23 (commit pendiente)
+## [V5.74] — 2026-09-23 (commit 5ef97d6)
 
 - **Cambiado**: **el OCP dice el vocabulario EUDR asentado en la V5.65** (`src/lib/eudr.ts`): la columna «EVA» de `/ocp/kr` es
   **«Visa»** (el veredicto documental del lote), la columna «Visa EUDR» de la finca es **«Pasaporte EUDR»**, el badge «Veredicto

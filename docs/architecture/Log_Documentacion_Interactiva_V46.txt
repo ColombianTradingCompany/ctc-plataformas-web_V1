@@ -176,4 +176,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - Corregido el dato «205 g» → 250 g en la instrucción del escáner (`fichasActions.ts`).
 - Guardián: `qa-evaluaciones-check` 50 → 53 (la cara del OCP).
 - ANN: el Mapa de Trabajo (`src/lib/workmap/schema.ts`) sigue con la barra anterior a la V5.64 — se redibuja con la 4b.
-(commit: pendiente)
+(commit: 5ef97d6)

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.69] — 2026-09-23 (commit pendiente)
+## [V5.69] — 2026-09-23 (commit b33ed67)
 
 - **Añadido**: **el recargo de combustible del Cotizador Courier se anota solo**, con un cron semanal
   (`/api/cron/courier-combustible`, jueves 13:30 UTC). fedex.com no responde a un servidor (Akamai), así que el % se

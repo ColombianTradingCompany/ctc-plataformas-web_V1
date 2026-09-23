@@ -385,4 +385,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   cuando FedEx la cambie (el cron lo avisa: un precio fuera de la tabla no se adivina).
 - La acción `actualizarCombustibleAhora` (emite) hace lo mismo a demanda desde la pantalla.
 - Guardián `qa-courier-check` 44.
-(commit: pendiente)
+(commit: b33ed67)

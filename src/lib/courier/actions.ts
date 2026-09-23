@@ -9,7 +9,7 @@ import { requireConsoleWrite, quoteServiceClient } from "@/lib/panel/requireCons
 import type { PanelConsoleKey } from "@/lib/panel/consoles";
 import { cotizar, type Cotizacion, type Entrada, type Tablas } from "./calculo";
 import { actualizarCombustible } from "./eia";
-import { COURIER_PATH, type CotizacionGuardada, type ResultadoCourier, type ResumenCourier } from "./types";
+import { COURIER_PATH, type CotizacionAbierta, type CotizacionGuardada, type ResultadoCourier, type ResumenCourier } from "./types";
 
 /** La consola donde vive este módulo. UNA vez; `qa-rutas-consolas` (f-bis) la contrasta con el rail. */
 const CONSOLA: PanelConsoleKey = "ecp";
@@ -77,7 +77,7 @@ export async function resumenCourier(): Promise<ResumenCourier | null> {
     guia: ultimaGuia ? { vigenteDesde: ultimaGuia, fuente: t.tarifas.find((x) => x.vigenteDesde === ultimaGuia)!.fuente.replace(/ p\.\d+$/, ""), filas: t.tarifas.filter((x) => x.vigenteDesde === ultimaGuia).length } : null,
     acuerdo: t.acuerdo ? { referencia: t.acuerdo.referencia, vigenteDesde: t.acuerdo.vigenteDesde, finGracia: t.acuerdo.finGracia, modoSuma: t.acuerdo.modoSuma } : null,
     combustible: t.recargos.filter((r) => r.concepto === "combustible")
-      .sort((a, b) => b.vigenteDesde.localeCompare(a.vigenteDesde)).slice(0, 8)
+      .sort((a, b) => b.vigenteDesde.localeCompare(a.vigenteDesde)).slice(0, 104)
       .map((r) => ({ valor: r.valor, vigenteDesde: r.vigenteDesde, vigenteHasta: r.vigenteHasta, fuente: r.fuente, automatico: Boolean(r.automatico) })),
   };
 }
@@ -111,8 +111,11 @@ export async function actualizarCombustibleAhora(): Promise<ResultadoCourier> {
   const r = await actualizarCombustible(quoteServiceClient(), AbortSignal.timeout(25_000));
   revalidatePath(COURIER_PATH);
   if (!r.ok) return { ok: false, error: r.error ?? "No se pudo actualizar." };
-  if (!r.anotadas.length) return { ok: false, error: r.omitidas.map((o) => `${o.semana}: ${o.motivo}`).join(" · ") || "Nada nuevo que anotar." };
-  return { ok: true };
+  const partes = [
+    ...r.anotadas.map((a) => `semana del ${a.semana}: ${a.pct} % (EIA $${a.usd})`),
+    ...r.omitidas.map((o) => `semana del ${o.semana}: ${o.motivo}`),
+  ];
+  return { ok: true, mensaje: partes.length ? `EIA consultada. ${partes.join(" · ")}.` : "EIA consultada: nada nuevo que anotar." };
 }
 
 /** Guarda la cotización como acta: se recalcula AQUÍ (no se confía en lo que manda el navegador) y se congela. */
@@ -132,13 +135,31 @@ export async function guardarCotizacionCourier(entrada: Entrada, servicioElegido
   return { ok: true };
 }
 
+const COLS_GUARDADA = "id, destino_iso, peso_facturable_kg, servicio_elegido, total_usd, nota, created_at, entradas, snapshot";
+
+function aGuardada(r: Fila): CotizacionGuardada {
+  const snap = r.snapshot as Cotizacion | null, ent = r.entradas as Entrada | null;
+  const op = snap?.opciones.find((o) => `${o.servicio}:${o.embalaje}` === r.servicio_elegido);
+  return {
+    id: r.id, destino: r.destino_iso, pais: snap?.pais ?? null,
+    pesoRealKg: snap?.pesoRealKg ?? (ent ? ent.piezas.reduce((s, p) => s + (p.kg || 0), 0) : null),
+    pesoFacturableKg: Number(r.peso_facturable_kg), servicio: r.servicio_elegido, servicioEtiqueta: op?.etiqueta ?? null,
+    fechaEnvio: ent?.fechaEnvio ?? null,
+    totalUsd: r.total_usd === null ? null : Number(r.total_usd), nota: r.nota, createdAt: r.created_at,
+  };
+}
+
 export async function listarCotizacionesCourier(): Promise<CotizacionGuardada[] | null> {
   if (!(await requireConsoleWrite(CONSOLA, "lectura"))) return null;
   const { data } = await quoteServiceClient().from("courier_cotizaciones")
-    .select("id, destino_iso, peso_facturable_kg, servicio_elegido, total_usd, nota, created_at")
-    .order("created_at", { ascending: false }).limit(30);
-  return (data ?? []).map((r) => ({
-    id: r.id, destino: r.destino_iso, pesoFacturableKg: Number(r.peso_facturable_kg), servicio: r.servicio_elegido,
-    totalUsd: r.total_usd === null ? null : Number(r.total_usd), nota: r.nota, createdAt: r.created_at,
-  }));
+    .select(COLS_GUARDADA).order("created_at", { ascending: false }).limit(50);
+  return (data ?? []).map(aGuardada);
+}
+
+/** Abre una cotización guardada: lo que se metió y el resultado tal como quedó (congelado). */
+export async function abrirCotizacionCourier(id: string): Promise<CotizacionAbierta | null> {
+  if (!(await requireConsoleWrite(CONSOLA, "lectura"))) return null;
+  const { data } = await quoteServiceClient().from("courier_cotizaciones").select(COLS_GUARDADA).eq("id", id).maybeSingle();
+  if (!data) return null;
+  return { ...aGuardada(data), entradas: data.entradas as Entrada, snapshot: data.snapshot as Cotizacion };
 }

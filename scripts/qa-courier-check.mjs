@@ -11,7 +11,7 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
-import { cotizar, cotizarOpcion, descuentoAdquirido, pesoDimensional, pesoFacturable, tarifaBase } from "../src/lib/courier/calculo.ts";
+import { cotizar, cotizarOpcion, descuentoAdquirido, motivoCarga, pesoDimensional, pesoFacturable, tarifaBase } from "../src/lib/courier/calculo.ts";
 import { parseEiaSemanal, pctPorPrecio, semanaFedex } from "../src/lib/courier/combustible.ts";
 
 let pass = 0;
@@ -102,6 +102,21 @@ check("tras la gracia sin gasto, cero y lo avisa", "falta" in descuentoAdquirido
   check("sin acuerdo: precio de lista y lo dice", s.pctTotal === 0 && s.avisos.some((a) => /lista/.test(a)));
   const c = cotizarOpcion(T, E({}), "Q", 25, "IP", "box25");
   check("embalaje que el acuerdo no nombra: sin descuento por zona y lo avisa", c.pctZona === 0 && c.avisos.some((a) => /Confírmalo/.test(a)));
+}
+
+// ── V5.70: combustible provisional y el límite de paquete por MEDIDAS, no por peso volumétrico ──────
+{
+  const o = cotizarOpcion(T, E({ fechaEnvio: "2030-02-20" }), "Q", 25, "IP", "paquete");
+  check("semana del envío sin publicar: usa la última conocida y lo marca provisional",
+    o.combustiblePct === 20 && o.avisos.some((a) => /provisional/.test(a)) && !o.avisos.some((a) => /INCOMPLETO/.test(a)), JSON.stringify(o.avisos));
+  const antes = cotizarOpcion(T, E({ fechaEnvio: "2030-01-15" }), "Q", 25, "IP", "paquete");
+  check("antes del primer recargo anotado: INCOMPLETO (no se inventa)", antes.combustiblePct === null && antes.avisos.some((a) => /INCOMPLETO/.test(a)));
+  check("70×70×70 no cabe como paquete: largo + contorno 350 > 330", /350 cm/.test(motivoCarga({ kg: 25, largoCm: 70, anchoCm: 70, altoCm: 70 }) ?? ""));
+  check("el volumétrico alto con medidas que caben sigue siendo paquete", motivoCarga({ kg: 5, largoCm: 100, anchoCm: 60, altoCm: 50 }) === null && pesoDimensional({ kg: 5, largoCm: 100, anchoCm: 60, altoCm: 50 }) === 60);
+  check("más de 68 kg reales es carga", /68/.test(motivoCarga({ kg: 69 }) ?? ""));
+  check("más de 274 cm de largo es carga (el lado mayor, venga en la casilla que venga)", /274/.test(motivoCarga({ kg: 5, largoCm: 20, anchoCm: 280, altoCm: 10 }) ?? ""));
+  const vol = cotizar(T, E({ piezas: [{ kg: 5, largoCm: 100, anchoCm: 60, altoCm: 50 }] }));
+  check("…y se cotiza como paquete con el peso volumétrico", vol.pesoFacturableKg === 60 && vol.opciones.some((o) => o.embalaje === "paquete"));
 }
 
 // ── El envío completo ────────────────────────────────────────────────────────────────────────────────

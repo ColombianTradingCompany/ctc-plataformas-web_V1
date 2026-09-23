@@ -19,6 +19,27 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.70] — 2026-09-23 (commit pendiente)
+
+- **Corregido**: el Cotizador Courier ya no deja un envío futuro sin combustible. Si la semana del envío aún no está
+  publicada, usa la última conocida y lo marca **provisional** (antes: «INCOMPLETO» y combustible US$ 0,00). Solo falta
+  de verdad si no hay ninguna semana anotada antes de la fecha.
+- **Corregido**: la frontera paquete/carga ya no usa el peso VOLUMÉTRICO: una pieza es carga (Freight) si pesa más de 68 kg
+  reales, mide más de 274 cm de largo o más de 330 cm de largo + contorno (la regla de FedEx), y el aviso dice cuál. El
+  volumétrico solo decide lo que se cobra (una caja de 70×70×70 sigue siendo carga, ahora por sus 350 cm de largo + contorno).
+- **Corregido**: los mensajes de «Actualizar ahora», «Anotar» y «Guardar» salen junto al botón que los dispara (antes solo
+  dentro de la tarjeta de resultados, invisibles si no había cotización); «Actualizar ahora» dice qué semanas anotó y por qué
+  omitió las demás.
+- **Añadido**: **gráfica del recargo de combustible** semana a semana (automático vs a mano, con su fuente al pasar el cursor)
+  y los enlaces a la tabla de FedEx y a la serie de la EIA.
+- **Añadido**: las **cotizaciones guardadas se abren de nuevo**: el resultado tal como quedó ese día (congelado) y sus datos de
+  vuelta en el formulario, con «Recotizar con tarifas de hoy». La lista enseña el peso REAL y el cobrado, la fecha del envío, el
+  país y el nombre del servicio (antes solo el peso cobrado y el código `IEF:carga`).
+- **Cambiado**: el tablero tiene su propio diseño (`courier.module.css`): `shared.module.css .card` es una fila flex con
+  `space-between` y repartía el formulario a las esquinas. Las piezas van en una rejilla con los rótulos encima de su casilla y
+  el volumétrico de cada pieza calculado al escribir.
+- **Añadido**: `qa-courier-check` 44 → 51.
+
 ## [V5.69] — 2026-09-23 (commit b33ed67)
 
 - **Añadido**: **el recargo de combustible del Cotizador Courier se anota solo**, con un cron semanal

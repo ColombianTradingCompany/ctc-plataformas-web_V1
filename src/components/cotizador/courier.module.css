@@ -1,0 +1,48 @@
+/* Cotizador Courier · el diseño propio del tablero. `shared.module.css .card` es una fila flex con
+   space-between (pensada para tarjetas de una línea) y repartía el formulario a las esquinas: aquí cada
+   bloque es una caja normal y los campos van en rejilla. */
+
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 18px; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.head h2 { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0; }
+.head small { color: var(--muted); font-size: 12.5px; }
+
+.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px 16px; margin-bottom: 18px; }
+.campo label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--ink); }
+.campo input, .campo select { width: 100%; padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 14px; background: var(--paper); font-family: inherit; color: var(--ink); }
+.campo small { display: block; margin-top: 4px; font-size: 11.5px; color: var(--muted); }
+
+/* Las piezas: la cabecera y cada fila usan LA MISMA rejilla, así los rótulos quedan encima de su casilla. */
+.piezas { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.fila { display: grid; grid-template-columns: 56px repeat(4, minmax(80px, 1fr)) 92px; gap: 10px; align-items: center; padding: 8px 12px; }
+.fila + .fila { border-top: 1px solid var(--line); }
+.cabecera { background: var(--paper); font-family: var(--font-spline-mono), monospace; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.fila input { width: 100%; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 7px; font-size: 14px; background: var(--card); font-family: inherit; text-align: right; }
+.num { font-weight: 600; color: var(--ink); }
+.volumen { grid-column: 2 / -1; font-size: 11.5px; color: var(--muted); margin-top: -2px; }
+
+.nota { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; }
+.nota a, .enlaces a { color: var(--primary); text-decoration: underline; }
+.botones { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+.ok { margin-top: 10px; padding: 9px 12px; border-radius: 8px; background: #ecfdf3; color: #166534; font-size: 13px; }
+.error { margin-top: 10px; padding: 9px 12px; border-radius: 8px; background: #fef2f2; color: #991b1b; font-size: 13px; }
+.aviso { margin: 6px 0 0; padding: 8px 12px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 12.5px; }
+
+.congelada { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; margin-bottom: 14px; border-radius: 10px; background: #eef2ff; color: #3730a3; font-size: 13px; }
+
+.resumenPeso { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+.resumenPeso strong { color: var(--ink); }
+
+.grafica { width: 100%; height: auto; display: block; margin: 4px 0 6px; color: var(--ink); }
+.leyenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.punto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.enlaces { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; margin: 10px 0 14px; }
+
+.combForm { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 16px; align-items: end; }
+
+@media (max-width: 720px) {
+  .fila { grid-template-columns: 40px repeat(2, 1fr); }
+  .cabecera { display: none; }
+  .fila input::placeholder { color: var(--muted); }
+}

@@ -5,20 +5,68 @@
 // guía vigente − descuentos del acuerdo + combustible de la semana. El cálculo corre en el servidor
 // (`src/lib/courier/`): las tablas del acuerdo son CONFIDENCIALES y no viajan al navegador enteras.
 
-import { useCallback, useEffect, useState } from "react";
-import { actualizarCombustibleAhora, anotarCombustible, cotizarCourier, guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier } from "@/lib/courier/actions";
-import type { Cotizacion, Entrada, Pieza } from "@/lib/courier/calculo";
-import type { CotizacionGuardada, ResumenCourier } from "@/lib/courier/types";
+import { useEffect, useState } from "react";
+import {
+  abrirCotizacionCourier, actualizarCombustibleAhora, anotarCombustible, cotizarCourier,
+  guardarCotizacionCourier, listarCotizacionesCourier, resumenCourier,
+} from "@/lib/courier/actions";
+import { pesoDimensional, type Cotizacion, type Entrada, type Pieza } from "@/lib/courier/calculo";
+import type { CotizacionAbierta, CotizacionGuardada, ResumenCourier } from "@/lib/courier/types";
 import styles from "@/components/panel/shared.module.css";
 import table from "./quotesTable.module.css";
+import c from "./courier.module.css";
+
+const FEDEX_RECARGOS = "https://www.fedex.com/es-co/shipping/surcharges.html";
+const EIA_SERIE = "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EER_EPJK_PF4_RGC_DPG&f=W";
 
 const usd = (v: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(v);
 const day = (d: string) => new Date(`${d.slice(0, 10)}T12:00:00`).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
 const hoy = () => new Date().toISOString().slice(0, 10);
 const num = (s: string) => { const v = Number(String(s).replace(",", ".")); return Number.isFinite(v) ? v : 0; };
+const kg = (v: number) => new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(v);
 
 type PiezaForm = { kg: string; largo: string; ancho: string; alto: string };
-const piezaVacia = (kg = ""): PiezaForm => ({ kg, largo: "", ancho: "", alto: "" });
+const piezaVacia = (k = ""): PiezaForm => ({ kg: k, largo: "", ancho: "", alto: "" });
+const aForm = (p: Pieza): PiezaForm => ({ kg: String(p.kg ?? ""), largo: p.largoCm ? String(p.largoCm) : "", ancho: p.anchoCm ? String(p.anchoCm) : "", alto: p.altoCm ? String(p.altoCm) : "" });
+type Donde = "envio" | "resultado" | "combustible" | "guardadas";
+type Aviso = { donde: Donde; texto: string; error: boolean } | null;
+type Punto = ResumenCourier["combustible"][number];
+
+/** El historial del recargo, semana a semana. SVG a mano: es una escalera y una retícula. */
+function GraficaCombustible({ puntos }: { puntos: Punto[] }) {
+  const serie = [...puntos].sort((a, b) => a.vigenteDesde.localeCompare(b.vigenteDesde));
+  if (!serie.length) return <p className={c.nota}>Aún no hay semanas anotadas.</p>;
+  const W = 760, H = 200, pl = 44, pr = 16, pt = 14, pb = 30;
+  const t = (d: string) => new Date(`${d}T12:00:00Z`).getTime();
+  const xs = serie.map((p) => t(p.vigenteDesde));
+  const x0 = Math.min(...xs), x1 = Math.max(...xs, x0 + 7 * 864e5);
+  const vs = serie.map((p) => p.valor);
+  const y0 = Math.floor(Math.min(...vs) - 1), y1 = Math.ceil(Math.max(...vs) + 1);
+  const sx = (v: number) => pl + ((v - x0) / (x1 - x0 || 1)) * (W - pl - pr);
+  const sy = (v: number) => H - pb - ((v - y0) / (y1 - y0 || 1)) * (H - pt - pb);
+  let d = "";
+  serie.forEach((p, i) => { const x = sx(xs[i]), y = sy(p.valor); d += i ? ` H${x.toFixed(1)} V${y.toFixed(1)}` : `M${x.toFixed(1)},${y.toFixed(1)}`; });
+  d += ` H${(sx(xs.at(-1)!) + 18).toFixed(1)}`;
+  const marcas = [y0, (y0 + y1) / 2, y1];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={c.grafica} role="img" aria-label="Recargo de combustible por semana">
+      {marcas.map((m) => (
+        <g key={m}>
+          <line x1={pl} x2={W - pr} y1={sy(m)} y2={sy(m)} stroke="currentColor" strokeOpacity=".1" />
+          <text x={pl - 6} y={sy(m) + 4} fontSize="10.5" textAnchor="end" fill="currentColor" fillOpacity=".6">{m.toFixed(1)} %</text>
+        </g>
+      ))}
+      <path d={d} fill="none" stroke="#3c0a86" strokeWidth="2" />
+      {serie.map((p, i) => (
+        <circle key={`${p.vigenteDesde}-${i}`} cx={sx(xs[i])} cy={sy(p.valor)} r="4.5" fill={p.automatico ? "#3c0a86" : "#d97706"} stroke="#fff" strokeWidth="1.5">
+          <title>{`${day(p.vigenteDesde)}${p.vigenteHasta ? ` → ${day(p.vigenteHasta)}` : ""}: ${p.valor} % · ${p.automatico ? "automático" : "a mano"}\n${p.fuente}`}</title>
+        </circle>
+      ))}
+      <text x={pl} y={H - 8} fontSize="10.5" fill="currentColor" fillOpacity=".6">{day(serie[0].vigenteDesde)}</text>
+      <text x={W - pr} y={H - 8} fontSize="10.5" textAnchor="end" fill="currentColor" fillOpacity=".6">{day(serie.at(-1)!.vigenteDesde)}</text>
+    </svg>
+  );
+}
 
 export function CourierBoard() {
   const [resumen, setResumen] = useState<ResumenCourier | null | undefined>(undefined);
@@ -28,17 +76,14 @@ export function CourierBoard() {
   const [gasto, setGasto] = useState("");
   const [piezas, setPiezas] = useState<PiezaForm[]>([piezaVacia("25")]);
   const [res, setRes] = useState<Cotizacion | null>(null);
-  const [abierta, setAbierta] = useState<string | null>(null);
+  const [abiertaDe, setAbiertaDe] = useState<CotizacionAbierta | null>(null);
+  const [desglose, setDesglose] = useState<string | null>(null);
   const [nota, setNota] = useState("");
   const [comb, setComb] = useState({ valor: "", desde: "", hasta: "", fuente: "" });
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [error, setError] = useState("");
+  const [aviso, setAviso] = useState<Aviso>(null);
 
-  const refresh = useCallback(async () => {
-    const [r, g] = await Promise.all([resumenCourier(), listarCotizacionesCourier()]);
-    setResumen(r); setGuardadas(g ?? []);
-  }, []);
+  const cargar = () => Promise.all([resumenCourier(), listarCotizacionesCourier()]).then(([r, g]) => { setResumen(r); setGuardadas(g ?? []); });
   useEffect(() => {
     Promise.all([resumenCourier(), listarCotizacionesCourier()]).then(([r, g]) => { setResumen(r); setGuardadas(g ?? []); });
   }, []);
@@ -49,24 +94,40 @@ export function CourierBoard() {
   });
 
   async function cotizarAhora() {
-    setBusy(true); setError(""); setMsg("");
-    const c = await cotizarCourier(entrada());
-    if (!c) setError("Tu sesión del ECP ya no está activa: vuelve a iniciar sesión.");
-    setRes(c); setAbierta(null); setBusy(false);
+    setBusy(true); setAviso(null); setAbiertaDe(null);
+    const r = await cotizarCourier(entrada());
+    if (!r) setAviso({ donde: "envio", texto: "Tu sesión del ECP ya no está activa: vuelve a iniciar sesión.", error: true });
+    setRes(r); setDesglose(null); setBusy(false);
   }
 
-  async function run(fn: () => Promise<{ ok: boolean; error?: string }>, okMsg: string) {
-    setBusy(true); setError(""); setMsg("");
+  async function run(donde: Donde, fn: () => Promise<{ ok: boolean; error?: string; mensaje?: string }>, okMsg: string) {
+    setBusy(true); setAviso(null);
     const r = await fn();
-    if (!r.ok) setError(r.error ?? "No se pudo.");
-    else { setMsg(okMsg); await refresh(); }
+    setAviso(r.ok ? { donde, texto: r.mensaje ?? okMsg, error: false } : { donde, texto: r.error ?? "No se pudo.", error: true });
+    if (r.ok) await cargar();
     setBusy(false);
   }
+
+  async function abrir(id: string) {
+    setBusy(true); setAviso(null);
+    const a = await abrirCotizacionCourier(id);
+    setBusy(false);
+    if (!a) { setAviso({ donde: "guardadas", texto: "No se pudo abrir esa cotización.", error: true }); return; }
+    setDestino(a.entradas.destino); setFecha(a.entradas.fechaEnvio);
+    setGasto(a.entradas.gastoAnualUsd != null ? String(a.entradas.gastoAnualUsd) : "");
+    setPiezas(a.entradas.piezas.map(aForm)); setNota(a.nota ?? "");
+    setRes(a.snapshot); setAbiertaDe(a); setDesglose(a.servicio);
+    setTimeout(() => document.getElementById("courier-resultado")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  }
+
+  const mensaje = (donde: Donde) =>
+    aviso?.donde === donde ? <p className={aviso.error ? c.error : c.ok} role="status">{aviso.texto}</p> : null;
 
   if (resumen === undefined) return <p className={styles.subtitle}>Cargando tarifas…</p>;
   if (resumen === null) return <p className={styles.warn}>Tu sesión del ECP ya no está activa: vuelve a iniciar sesión.</p>;
 
-  const combVigente = resumen.combustible.find((c) => c.vigenteDesde <= fecha && (!c.vigenteHasta || fecha <= c.vigenteHasta));
+  const combVigente = resumen.combustible.find((x) => x.vigenteDesde <= fecha && (!x.vigenteHasta || fecha <= x.vigenteHasta));
+  const combUltimo = resumen.combustible.find((x) => x.vigenteDesde <= fecha);
   const enGracia = resumen.acuerdo?.finGracia ? fecha <= resumen.acuerdo.finGracia : false;
   const mejor = res?.opciones.find((o) => o.disponible) ?? null;
 
@@ -93,79 +154,95 @@ export function CourierBoard() {
           </span>
         </div>
         <div className={styles.kpiCard}>
-          <span className={styles.kpiTop}><span className={styles.kpiK}>Combustible</span></span>
-          <span className={styles.kpiV} style={{ display: "block" }}>{combVigente ? `${combVigente.valor} %` : "falta"}</span>
-          <span className={styles.kpiSub}>{combVigente ? `semana desde ${day(combVigente.vigenteDesde)}` : "anótalo abajo para la fecha del envío"}</span>
+          <span className={styles.kpiTop}><span className={styles.kpiK}>Combustible para el {day(fecha)}</span></span>
+          <span className={styles.kpiV} style={{ display: "block" }}>
+            {combVigente ? `${combVigente.valor} %` : combUltimo ? `${combUltimo.valor} %*` : "falta"}
+          </span>
+          <span className={styles.kpiSub}>
+            {combVigente ? `semana desde ${day(combVigente.vigenteDesde)} · ${combVigente.automatico ? "automático" : "a mano"}`
+              : combUltimo ? `* provisional: esa semana aún no está publicada (última: ${day(combUltimo.vigenteDesde)})` : "no hay ninguno anotado"}
+          </span>
         </div>
       </div>
 
-      <div className={styles.card} style={{ marginTop: 18 }}>
-        <div className={styles.sectionHead}><strong>El envío</strong></div>
-        <div className={styles.formGrid}>
-          <div className={styles.field} style={{ minWidth: 220 }}>
+      <section className={c.panel}>
+        <div className={c.head}><h2>El envío</h2></div>
+        <div className={c.campos}>
+          <div className={c.campo}>
             <label htmlFor="c-dest">Destino</label>
             <select id="c-dest" value={destino} onChange={(e) => setDestino(e.target.value)}>
               {resumen.destinos.map((d) => <option key={d.clave} value={d.clave}>{d.pais} · zona {d.zona}</option>)}
             </select>
           </div>
-          <div className={styles.field} style={{ minWidth: 150 }}>
+          <div className={c.campo}>
             <label htmlFor="c-fecha">Fecha de envío</label>
             <input id="c-fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            <small>Decide la tarifa, el descuento y el combustible que aplican.</small>
           </div>
           {!enGracia && (
-            <div className={styles.field} style={{ minWidth: 200 }}>
+            <div className={c.campo}>
               <label htmlFor="c-gasto">Gasto anualizado en FedEx (US$)</label>
               <input id="c-gasto" inputMode="decimal" placeholder="bruto, antes de descuentos" value={gasto} onChange={(e) => setGasto(e.target.value)} />
             </div>
           )}
         </div>
 
-        <div className={table.scroll} style={{ marginTop: 12 }}>
-          <table className={table.t}>
-            <thead>
-              <tr><th>Pieza</th><th className={table.r}>Peso (kg)</th><th className={table.r}>Largo (cm)</th><th className={table.r}>Ancho (cm)</th><th className={table.r}>Alto (cm)</th><th className={table.acts}></th></tr>
-            </thead>
-            <tbody>
-              {piezas.map((p, i) => (
-                <tr key={i}>
-                  <td>{i + 1}</td>
-                  {(["kg", "largo", "ancho", "alto"] as const).map((k) => (
-                    <td key={k} className={table.r}>
-                      <input aria-label={`${k} de la pieza ${i + 1}`} inputMode="decimal" style={{ width: 90, textAlign: "right" }} value={p[k]}
-                        onChange={(e) => setPiezas(piezas.map((x, j) => (j === i ? { ...x, [k]: e.target.value } : x)))} />
-                    </td>
-                  ))}
-                  <td className={table.acts}>
-                    {piezas.length > 1 && <button className="btn btn-sm" type="button" onClick={() => setPiezas(piezas.filter((_, j) => j !== i))}>Quitar</button>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className={c.piezas}>
+          <div className={`${c.fila} ${c.cabecera}`}>
+            <span>Pieza</span><span>Peso real (kg)</span><span>Largo (cm)</span><span>Ancho (cm)</span><span>Alto (cm)</span><span />
+          </div>
+          {piezas.map((p, i) => {
+            const dim = pesoDimensional({ kg: 0, largoCm: num(p.largo), anchoCm: num(p.ancho), altoCm: num(p.alto) });
+            return (
+              <div key={i} className={c.fila}>
+                <span className={c.num}>{i + 1}</span>
+                {(["kg", "largo", "ancho", "alto"] as const).map((k) => (
+                  <input key={k} aria-label={`${k} de la pieza ${i + 1}`} placeholder={k === "kg" ? "kg" : `${k} cm`} inputMode="decimal" value={p[k]}
+                    onChange={(e) => setPiezas(piezas.map((x, j) => (j === i ? { ...x, [k]: e.target.value } : x)))} />
+                ))}
+                <span>{piezas.length > 1 && <button className="btn btn-sm" type="button" onClick={() => setPiezas(piezas.filter((_, j) => j !== i))}>Quitar</button>}</span>
+                {dim > 0 && (
+                  <span className={c.volumen}>
+                    Volumétrico: {kg(dim)} kg{dim > num(p.kg) ? " — pesa más que el real: FedEx cobrará el volumen" : " — manda el peso real"}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <p className={styles.meta}>
-          Las medidas son opcionales: si el volumen (L×A×H / 5.000) pesa más que la caja, FedEx cobra el volumen.
-          Una pieza de más de 68 kg ya no es paquete, es carga (Freight).
+        <p className={c.nota}>
+          Las medidas son opcionales: el volumen (L×A×H / 5.000) se cobra si pesa más que la caja. Una pieza de más de 68 kg
+          reales, de más de 274 cm de largo o de más de 330 cm de largo + contorno ya no es paquete: es carga (Freight).
         </p>
-        <div className={styles.actions} style={{ justifyContent: "flex-end", display: "flex", gap: 8 }}>
+        {mensaje("envio")}
+        <div className={c.botones}>
           <button className="btn btn-sm" type="button" onClick={() => setPiezas([...piezas, piezaVacia()])}>Añadir pieza</button>
           <button className="btn btn-sm btn-solid" type="button" disabled={busy} onClick={cotizarAhora}>Cotizar</button>
         </div>
-        {error && <p className={styles.warn}>{error}</p>}
-      </div>
+      </section>
 
       {res && (
-        <div className={styles.card}>
-          <div className={styles.sectionHead}>
-            <strong>Resultado · {res.pais ?? "—"}{res.zona ? ` · zona ${res.zona}` : ""}</strong>
-          </div>
-          <p className={styles.meta}>
-            Peso real {res.pesoRealKg} kg · volumétrico {res.pesoDimKg} kg · <strong>se cobra {res.pesoFacturableKg} kg</strong>
+        <section className={c.panel} id="courier-resultado">
+          {abiertaDe && (
+            <div className={c.congelada}>
+              <span>
+                <strong>Cotización guardada</strong> el {day(abiertaDe.createdAt)}{abiertaDe.nota ? ` · «${abiertaDe.nota}»` : ""} — se muestra tal
+                como quedó ese día. Arriba están sus datos, listos para recotizar con las tarifas de hoy.
+              </span>
+              <span className={c.botones} style={{ marginTop: 0 }}>
+                <button className="btn btn-sm" type="button" onClick={() => { setAbiertaDe(null); setRes(null); }}>Cerrar</button>
+                <button className="btn btn-sm btn-solid" type="button" disabled={busy} onClick={cotizarAhora}>Recotizar con tarifas de hoy</button>
+              </span>
+            </div>
+          )}
+          <div className={c.head}><h2>Resultado · {res.pais ?? "—"}{res.zona ? ` · zona ${res.zona}` : ""}</h2></div>
+          <p className={c.resumenPeso}>
+            Peso real <strong>{kg(res.pesoRealKg)} kg</strong> · volumétrico {kg(res.pesoDimKg)} kg · se cobran <strong>{kg(res.pesoFacturableKg)} kg</strong>
             {mejor && <> · la más barata: <strong>{mejor.etiqueta}, {usd(mejor.totalUsd)}</strong></>}
           </p>
-          {res.avisos.map((a) => <p key={a} className={styles.warn}>{a}</p>)}
+          {res.avisos.map((a) => <p key={a} className={c.aviso}>{a}</p>)}
 
-          <div className={table.scroll}>
+          <div className={table.scroll} style={{ marginTop: 10 }}>
             <table className={table.t}>
               <thead>
                 <tr>
@@ -181,18 +258,19 @@ export function CourierBoard() {
                       <td>
                         <span className={table.strong}>{o.etiqueta}</span>
                         {o === mejor && <span className={table.tag}>más barata</span>}
+                        {abiertaDe?.servicio === clave && <span className={table.tag}>la elegida</span>}
                         {!o.disponible && <small className={table.muted}>{o.motivo}</small>}
-                        {o.avisos.map((a) => <small key={a} className={table.muted} style={{ display: "block" }}>⚠ {a}</small>)}
+                        {o.avisos.filter((a) => !a.startsWith("Combustible provisional")).map((a) => <small key={a} className={table.muted} style={{ display: "block" }}>⚠ {a}</small>)}
                       </td>
                       <td className={table.r}>{o.disponible ? usd(o.baseUsd) : "—"}</td>
                       <td className={table.r}>{o.disponible ? `${o.pctTotal} %` : "—"}</td>
                       <td className={table.r}>{o.disponible ? usd(o.netoUsd) : "—"}</td>
-                      <td className={table.r}>{o.disponible ? usd(o.combustibleUsd) : "—"}</td>
+                      <td className={table.r}>{o.disponible ? <>{usd(o.combustibleUsd)}{o.combustiblePct !== null && <small>{o.combustiblePct} %</small>}</> : "—"}</td>
                       <td className={table.r}><span className={table.strong}>{o.disponible ? usd(o.totalUsd) : "—"}</span></td>
                       <td className={table.acts}>
                         {o.disponible && (
-                          <button className="btn btn-sm" type="button" aria-expanded={abierta === clave} onClick={() => setAbierta(abierta === clave ? null : clave)}>
-                            {abierta === clave ? "Cerrar" : "Desglose"}
+                          <button className="btn btn-sm" type="button" aria-expanded={desglose === clave} onClick={() => setDesglose(desglose === clave ? null : clave)}>
+                            {desglose === clave ? "Cerrar" : "Desglose"}
                           </button>
                         )}
                       </td>
@@ -203,10 +281,10 @@ export function CourierBoard() {
             </table>
           </div>
 
-          {res.opciones.filter((o) => `${o.servicio}:${o.embalaje}` === abierta).map((o) => (
+          {res.opciones.filter((o) => `${o.servicio}:${o.embalaje}` === desglose).map((o) => (
             <div key="desglose" className={table.scroll} style={{ marginTop: 12 }}>
               <table className={table.t}>
-                <thead><tr><th>{o.etiqueta} · {o.pesoCobradoKg} kg</th><th className={table.r}>US$</th><th>Cómo sale</th><th>Fuente</th></tr></thead>
+                <thead><tr><th>{o.etiqueta} · {kg(o.pesoCobradoKg)} kg</th><th className={table.r}>US$</th><th>Cómo sale</th><th>Fuente</th></tr></thead>
                 <tbody>
                   {o.lineas.map((l, i) => (
                     <tr key={i}>
@@ -222,87 +300,115 @@ export function CourierBoard() {
             </div>
           ))}
 
-          {mejor && (
-            <div className={styles.formGrid} style={{ marginTop: 12, justifyContent: "flex-end" }}>
-              <div className={styles.field} style={{ flex: 1, minWidth: 220 }}>
-                <label htmlFor="c-nota">Nota (para qué es este envío)</label>
-                <input id="c-nota" placeholder="p. ej. muestras para tostador en Hamburgo" value={nota} onChange={(e) => setNota(e.target.value)} />
+          {mejor && !abiertaDe && (
+            <>
+              <div className={c.campos} style={{ marginTop: 16, marginBottom: 0 }}>
+                <div className={c.campo}>
+                  <label htmlFor="c-nota">Nota (para qué es este envío)</label>
+                  <input id="c-nota" placeholder="p. ej. muestras para tostador en Hamburgo" value={nota} onChange={(e) => setNota(e.target.value)} />
+                  <small>Se guarda {desglose ? "la opción abierta en el desglose" : "la más barata"}; ábrelo en otra para guardar esa.</small>
+                </div>
               </div>
-              <button className="btn btn-sm btn-solid" type="button" disabled={busy}
-                onClick={() => run(() => guardarCotizacionCourier(entrada(), abierta ?? `${mejor.servicio}:${mejor.embalaje}`, nota), "Cotización guardada.")}>
-                Guardar cotización
-              </button>
-            </div>
+              {mensaje("resultado")}
+              <div className={c.botones}>
+                <button className="btn btn-sm btn-solid" type="button" disabled={busy}
+                  onClick={() => run("resultado", () => guardarCotizacionCourier(entrada(), desglose ?? `${mejor.servicio}:${mejor.embalaje}`, nota), "Cotización guardada: está abajo, en «Cotizaciones guardadas».")}>
+                  Guardar cotización
+                </button>
+              </div>
+            </>
           )}
-          {msg && <p className={styles.meta}>{msg}</p>}
-        </div>
+        </section>
       )}
 
-      <div className={styles.card}>
-        <div className={styles.sectionHead}>
-          <strong>Recargo de combustible</strong>
-          <span className={styles.actions}>
-            <button className="btn btn-sm" type="button" disabled={busy}
-              onClick={() => run(actualizarCombustibleAhora, "Recargo actualizado desde la EIA.")}>
-              Actualizar ahora
-            </button>
-          </span>
+      <section className={c.panel}>
+        <div className={c.head}>
+          <h2>Recargo de combustible</h2>
+          <small>{resumen.combustible.length} semanas anotadas</small>
         </div>
-        <p className={styles.meta}>
-          Se anota solo cada jueves: el precio semanal del queroseno de aviación (EIA, Costa del Golfo) pasa por la tabla
-          de escalones de FedEx y da el % de la semana siguiente — el mismo cálculo que hace FedEx. Si FedEx publica otra
-          cifra (fedex.com/es-co/shipping/surcharges.html), anótala a mano: lo anotado a mano nunca lo pisa el automático.
+        <GraficaCombustible puntos={resumen.combustible} />
+        <div className={c.leyenda}>
+          <span><span className={c.punto} style={{ background: "#3c0a86" }} />automático (cron de los jueves)</span>
+          <span><span className={c.punto} style={{ background: "#d97706" }} />anotado a mano</span>
+          <span>Pasa el cursor por un punto para ver su semana y su fuente.</span>
+        </div>
+        <div className={c.enlaces}>
+          <a href={FEDEX_RECARGOS} target="_blank" rel="noopener noreferrer">FedEx · recargos de envío (tabla semanal) ↗</a>
+          <a href={EIA_SERIE} target="_blank" rel="noopener noreferrer">EIA · precio semanal del queroseno de aviación USGC ↗</a>
+        </div>
+        <p className={c.nota}>
+          Se anota solo cada jueves: el precio semanal de la EIA pasa por la tabla de escalones de FedEx y da el % de la
+          semana siguiente — el mismo cálculo que hace FedEx. Si FedEx publica otra cifra, anótala a mano: lo anotado a mano
+          nunca lo pisa el automático. Si la semana del envío aún no está publicada, la cotización usa la última conocida y
+          lo marca como provisional.
         </p>
-        <form className={styles.formGrid} style={{ justifyContent: "flex-end" }}
+        <form className={c.combForm} style={{ marginTop: 14 }}
           onSubmit={async (e) => {
             e.preventDefault();
-            await run(() => anotarCombustible({ valor: num(comb.valor), vigenteDesde: comb.desde, vigenteHasta: comb.hasta || null, fuente: comb.fuente }), "Recargo anotado.");
+            await run("combustible", () => anotarCombustible({ valor: num(comb.valor), vigenteDesde: comb.desde, vigenteHasta: comb.hasta || null, fuente: comb.fuente }), "Recargo anotado.");
             setComb({ valor: "", desde: "", hasta: "", fuente: "" });
           }}>
-          <div className={styles.field} style={{ minWidth: 110 }}>
+          <div className={c.campo}>
             <label htmlFor="f-val">Recargo (%)</label>
             <input id="f-val" inputMode="decimal" placeholder="41,00" value={comb.valor} onChange={(e) => setComb({ ...comb, valor: e.target.value })} required />
           </div>
-          <div className={styles.field} style={{ minWidth: 150 }}>
+          <div className={c.campo}>
             <label htmlFor="f-desde">Desde (lunes)</label>
             <input id="f-desde" type="date" value={comb.desde} onChange={(e) => setComb({ ...comb, desde: e.target.value })} required />
           </div>
-          <div className={styles.field} style={{ minWidth: 150 }}>
+          <div className={c.campo}>
             <label htmlFor="f-hasta">Hasta (domingo)</label>
             <input id="f-hasta" type="date" value={comb.hasta} onChange={(e) => setComb({ ...comb, hasta: e.target.value })} />
           </div>
-          <div className={styles.field} style={{ flex: 1, minWidth: 180 }}>
+          <div className={c.campo}>
             <label htmlFor="f-fuente">Fuente</label>
             <input id="f-fuente" placeholder="fedex.com · surcharges" value={comb.fuente} onChange={(e) => setComb({ ...comb, fuente: e.target.value })} />
           </div>
-          <button className="btn btn-sm" type="submit" disabled={busy}>Anotar</button>
+          <div className={c.botones} style={{ gridColumn: "1 / -1", marginTop: 0 }}>
+            <button className="btn btn-sm" type="button" disabled={busy} onClick={() => run("combustible", actualizarCombustibleAhora, "Recargo actualizado desde la EIA.")}>
+              {busy ? "Consultando…" : "Actualizar ahora desde la EIA"}
+            </button>
+            <button className="btn btn-sm btn-solid" type="submit" disabled={busy}>Anotar a mano</button>
+          </div>
         </form>
-        {resumen.combustible.length > 0 && (
-          <p className={styles.meta}>
-            Últimas semanas: {resumen.combustible.map((c) => `${c.valor} % (${day(c.vigenteDesde)}${c.automatico ? " · auto" : " · a mano"})`).join(" · ")}
-          </p>
-        )}
-      </div>
+        {mensaje("combustible")}
+      </section>
 
-      {guardadas.length > 0 && (
-        <div className={table.scroll}>
-          <table className={table.t}>
-            <thead><tr><th>Fecha</th><th>Destino</th><th className={table.r}>Kg</th><th>Servicio</th><th className={table.r}>Total</th><th>Nota</th></tr></thead>
-            <tbody>
-              {guardadas.map((g) => (
-                <tr key={g.id}>
-                  <td>{day(g.createdAt)}</td>
-                  <td>{g.destino}</td>
-                  <td className={table.r}>{g.pesoFacturableKg}</td>
-                  <td>{g.servicio ?? "—"}</td>
-                  <td className={table.r}><span className={table.strong}>{g.totalUsd === null ? "—" : usd(g.totalUsd)}</span></td>
-                  <td className={table.muted}>{g.nota ?? "—"}</td>
+      <section className={c.panel}>
+        <div className={c.head}><h2>Cotizaciones guardadas</h2><small>{guardadas.length ? "se abren tal como quedaron" : "aún no hay"}</small></div>
+        {mensaje("guardadas")}
+        {guardadas.length > 0 && (
+          <div className={table.scroll}>
+            <table className={table.t}>
+              <thead>
+                <tr>
+                  <th>Guardada</th><th>Destino</th><th>Envío</th><th className={table.r}>Peso</th><th>Servicio</th>
+                  <th className={table.r}>Total</th><th>Nota</th><th className={table.acts}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {guardadas.map((g) => (
+                  <tr key={g.id}>
+                    <td>{day(g.createdAt)}</td>
+                    <td>{g.pais ?? g.destino}</td>
+                    <td>{g.fechaEnvio ? day(g.fechaEnvio) : "—"}</td>
+                    <td className={table.r}>
+                      <span className={table.strong}>{g.pesoRealKg !== null ? `${kg(g.pesoRealKg)} kg` : "—"}</span>
+                      {g.pesoRealKg !== g.pesoFacturableKg && <small>se cobran {kg(g.pesoFacturableKg)} kg</small>}
+                    </td>
+                    <td>{g.servicioEtiqueta ?? g.servicio ?? "—"}</td>
+                    <td className={table.r}><span className={table.strong}>{g.totalUsd === null ? "—" : usd(g.totalUsd)}</span></td>
+                    <td className={table.muted}>{g.nota ?? "—"}</td>
+                    <td className={table.acts}>
+                      <button className="btn btn-sm" type="button" disabled={busy} onClick={() => abrir(g.id)}>Abrir</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </>
   );
 }

@@ -77,8 +77,23 @@ export const EMBALAJES: Record<Embalaje, string> = {
   envelope: "Sobre", pak: "FedEx Pak", paquete: "Tu embalaje", box10: "FedEx 10 kg Box", box25: "FedEx 25 kg Box", carga: "Carga (puerta a puerta)",
 };
 
-/** Límite por pieza de los servicios de paquete, según la guía. Por encima, Freight. */
+/** Límites por pieza de los servicios de paquete (guía de FedEx): 68 kg de peso REAL, 274 cm de largo y
+ *  330 cm de largo + contorno (largo + 2·ancho + 2·alto, con el largo = el lado mayor). Por encima, Freight.
+ *  Ojo: el peso VOLUMÉTRICO no decide esto — solo lo que se cobra. */
 export const MAX_KG_PIEZA_PAQUETE = 68;
+export const MAX_LARGO_CM = 274;
+export const MAX_LARGO_CONTORNO_CM = 330;
+
+/** Por qué una pieza no cabe como paquete, o null si cabe. */
+export function motivoCarga(p: Pieza): string | null {
+  if (p.kg > MAX_KG_PIEZA_PAQUETE) return `pesa ${p.kg} kg, más de ${MAX_KG_PIEZA_PAQUETE}`;
+  const lados = [p.largoCm, p.anchoCm, p.altoCm].filter((x): x is number => !!x && x > 0).sort((a, b) => b - a);
+  if (lados.length < 3) return null;
+  if (lados[0] > MAX_LARGO_CM) return `mide ${lados[0]} cm de largo, más de ${MAX_LARGO_CM}`;
+  const lc = lados[0] + 2 * lados[1] + 2 * lados[2];
+  if (lc > MAX_LARGO_CONTORNO_CM) return `largo + contorno = ${lc} cm, más de ${MAX_LARGO_CONTORNO_CM}`;
+  return null;
+}
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 const subeA = (n: number, paso: number) => Math.ceil(n / paso - 1e-9) * paso;
@@ -145,11 +160,16 @@ export function descuentoAdquirido(acuerdo: Acuerdo, servicio: string, embalaje:
     : { pct: 0, detalle: `el gasto anualizado no alcanza el primer escalón · ${g.grupo}` };
 }
 
-function combustible(recargos: Recargo[], fecha: string): Recargo | null {
-  const c = recargos
-    .filter((r) => r.concepto === "combustible" && r.tipo === "pct" && r.vigenteDesde <= fecha && (!r.vigenteHasta || fecha <= r.vigenteHasta))
+/** El recargo de la semana del envío. Si esa semana aún no está anotada (un envío futuro), se usa el último
+ *  conocido anterior a la fecha y se dice que es PROVISIONAL: cotizar a futuro es lo normal, y un total sin
+ *  combustible engaña más que uno con el de la semana pasada. */
+function combustible(recargos: Recargo[], fecha: string): { r: Recargo; provisional: boolean } | null {
+  const suyos = recargos.filter((r) => r.concepto === "combustible" && r.tipo === "pct" && r.vigenteDesde <= fecha)
     .sort((a, b) => a.vigenteDesde.localeCompare(b.vigenteDesde));
-  return c.at(-1) ?? null;
+  const exacto = suyos.filter((r) => !r.vigenteHasta || fecha <= r.vigenteHasta).at(-1);
+  if (exacto) return { r: exacto, provisional: false };
+  const ultimo = suyos.at(-1);
+  return ultimo ? { r: ultimo, provisional: true } : null;
 }
 
 const pctTotal = (modo: Acuerdo["modoSuma"], ps: number[]) =>
@@ -194,10 +214,16 @@ export function cotizarOpcion(t: Tablas, e: Entrada, zona: string, peso: number,
   }
   lineas.push({ concepto: "Tarifa neta", usd: neto, detalle: "lista − descuento (o el mínimo)", fuente: "cálculo" });
 
-  const c = combustible(t.recargos, e.fechaEnvio);
+  const comb = combustible(t.recargos, e.fechaEnvio);
+  const c = comb?.r ?? null;
   const cUsd = c ? r2(neto * c.valor / 100) : 0;
-  if (c) lineas.push({ concepto: "Recargo de combustible", usd: cUsd, detalle: `${c.valor} % sobre la neta · semana desde ${c.vigenteDesde}`, fuente: c.fuente });
-  else avisos.push("Falta el recargo de combustible de la semana del envío: el total está INCOMPLETO. Anótalo arriba.");
+  if (c) lineas.push({
+    concepto: comb!.provisional ? "Recargo de combustible (provisional)" : "Recargo de combustible", usd: cUsd,
+    detalle: `${c.valor} % sobre la neta · semana desde ${c.vigenteDesde}${comb!.provisional ? " — la semana del envío aún no está publicada: se usa la última conocida" : ""}`,
+    fuente: c.fuente,
+  });
+  else avisos.push("No hay ningún recargo de combustible anotado hasta la fecha del envío: el total está INCOMPLETO.");
+  if (comb?.provisional) avisos.push(`Combustible provisional: la semana del envío aún no está publicada; se usa ${c!.valor} % (semana desde ${c!.vigenteDesde}).`);
 
   return {
     servicio, embalaje, etiqueta, disponible: true, pesoCobradoKg: peso,
@@ -220,7 +246,8 @@ export function cotizar(t: Tablas, e: Entrada): Cotizacion {
   if (z.paisIso !== e.destino) avisos.push(`El destino no está en el cuadro de zonas: se usa «${z.pais}» (zona ${z.zona}). Confírmalo con FedEx.`);
   if (facturable >= 100) avisos.push("El envío pasa de 100 kg: esta herramienta está pensada para envíos menores.");
 
-  const pesada = piezas.some((p) => Math.max(p.kg, pesoDimensional(p, divisor)) > MAX_KG_PIEZA_PAQUETE);
+  const razones = piezas.map((p) => motivoCarga(p)).map((m, i) => (m ? `pieza ${i + 1}: ${m}` : null)).filter(Boolean);
+  const pesada = razones.length > 0;
   const una = piezas.length === 1;
   const combos: [string, Embalaje][] = [];
   if (pesada) combos.push(["IPF", "carga"], ["IEF", "carga"]);
@@ -230,7 +257,7 @@ export function cotizar(t: Tablas, e: Entrada): Cotizacion {
     if (una && facturable <= 12) combos.push(["IP", "box10"]);
     if (una && facturable > 10 && facturable <= 30) combos.push(["IP", "box25"]);
   }
-  if (pesada) avisos.push(`Una pieza pasa de ${MAX_KG_PIEZA_PAQUETE} kg: solo aplica carga (Freight), con peso mínimo de ${MAX_KG_PIEZA_PAQUETE} kg.`);
+  if (pesada) avisos.push(`No cabe como paquete (${razones.join("; ")}): solo aplica carga (Freight), con peso mínimo de ${MAX_KG_PIEZA_PAQUETE} kg.`);
   const pesoCarga = Math.max(facturable, MAX_KG_PIEZA_PAQUETE);
   out.opciones = combos
     .map(([s, emb]) => cotizarOpcion(t, e, z.zona, emb === "carga" ? pesoCarga : facturable, s, emb))

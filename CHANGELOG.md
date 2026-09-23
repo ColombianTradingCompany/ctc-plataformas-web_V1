@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.75] — 2026-09-23 (commit pendiente)
+## [V5.75] — 2026-09-23 (commit f4f7c66)
 
 - **Hito**: **nacen «Asistencia a Proveedores» y «Proveedor Desacoplado»** en OCP · Kaffetal Regal — la primera tanda del brief
   `consolas-rutas-del-proveedor.md` (los tres diagramas del owner: Estándar · CTCx Selection · Desacoplado), autorizada por el

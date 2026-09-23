@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.70] — 2026-09-23 (commit pendiente)
+## [V5.70] — 2026-09-23 (commit c49ec33)
 
 - **Corregido**: el Cotizador Courier ya no deja un envío futuro sin combustible. Si la semana del envío aún no está
   publicada, usa la última conocida y lo marca **provisional** (antes: «INCOMPLETO» y combustible US$ 0,00). Solo falta

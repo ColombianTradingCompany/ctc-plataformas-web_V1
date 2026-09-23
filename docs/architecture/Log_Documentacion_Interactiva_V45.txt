@@ -394,4 +394,4 @@ Contexto abierto al cerrar V45 (2026-09-19) — plataforma V5.58:
   devuelve qué anotó. Pantalla: gráfica SVG del recargo, enlaces FedEx/EIA, mensajes junto a su botón, diseño propio
   (`src/components/cotizador/courier.module.css`).
 - Guardián `qa-courier-check` 51.
-(commit: pendiente)
+(commit: c49ec33)

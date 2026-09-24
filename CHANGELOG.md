@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.82] — 2026-09-24 (commit pendiente)
+## [V5.82] — 2026-09-24 (commit 2e35ddf)
 
 - **Hito**: **la fase 5 del `PLAN_CIRCUITO_DEL_LOTE.md` — confirmar y ofertar** (folio 8 del owner, pasos 12–14 y 19; respuestas
   1–3). El PVC **gobierna por primera vez un precio real**: código de `herramientas-internas` (`src/lib/pvc/`) tocado desde la sesión

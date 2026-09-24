@@ -27,7 +27,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   const { data: contract } = await service
     .from("purchase_contracts")
     .select(
-      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, lots(name, fincas(name))"
+      "id, status, grade_snapshot, signed_at, reference_price_source, reference_price_snapshot, price_per_kg_locked, quantity_frozen_kg, terms_version, declaracion, compra_inicial_kg, modificador_pct, lots(name, fincas(name))"
     )
     .eq("id", id)
     .single();
@@ -61,30 +61,23 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
           className={styles.card}
           style={{ display: "block" }}
         >
-          <div className={styles.formGrid}>
-            <div className={styles.field}>
-              <label htmlFor="reference_price_source">Referencia de precio</label>
-              <input id="reference_price_source" name="reference_price_source" placeholder="Ej. ICE C + Fedecafé" required />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="reference_price_snapshot">Precio de referencia ($/kg)</label>
-              <input id="reference_price_snapshot" name="reference_price_snapshot" type="number" step="0.01" required />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="price_per_kg_locked">Precio pactado ($/kg)</label>
-              <input id="price_per_kg_locked" name="price_per_kg_locked" type="number" step="0.01" required />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="quantity_frozen_kg">Cantidad congelada (kg)</label>
-              <input id="quantity_frozen_kg" name="quantity_frozen_kg" type="number" step="0.1" required />
-            </div>
-          </div>
+          {/* V5.83 (fase 6): el contrato nació LLENO de la oferta aceptada con la declaración del productor. Aquí solo se firma. */}
+          <p className={styles.meta} style={{ margin: "0 0 10px" }}>
+            Nació de la oferta aceptada por el productor: precio <b>{contract.price_per_kg_locked != null ? `$${Number(contract.price_per_kg_locked).toLocaleString("es-CO")}/kg` : "—"}</b>
+            {contract.reference_price_source && <> (referencia {contract.reference_price_source}{contract.modificador_pct ? ` ${Number(contract.modificador_pct) > 0 ? "+" : ""}${Number(contract.modificador_pct)} %` : ""})</>} · cantidad declarada{" "}
+            <b>{contract.quantity_frozen_kg != null ? `${Number(contract.quantity_frozen_kg)} kg` : "—"}</b>
+            {contract.declaracion && <> · {contract.declaracion === "trimestre" ? "por el trimestre" : "por 30 días"}</>}
+            {contract.compra_inicial_kg != null && <> · CTC compra de inmediato {Number(contract.compra_inicial_kg)} kg</>}
+            {contract.terms_version && <> · términos {contract.terms_version}</>}. Firmar activa el trato.
+          </p>
         </ActionForm>
       ) : (
         <div className={styles.card} style={{ display: "block", marginBottom: 24 }}>
           <p className={styles.meta}>
-            Referencia: {contract.reference_price_source} ({contract.reference_price_snapshot} $/kg) · Precio pactado:{" "}
-            <b>{contract.price_per_kg_locked} $/kg</b> · Cantidad congelada: <b>{contract.quantity_frozen_kg} kg</b> · Firmado:{" "}
+            Referencia: {contract.reference_price_source ?? "—"} ({contract.reference_price_snapshot ?? "—"} $/kg) · Precio pactado:{" "}
+            <b>{contract.price_per_kg_locked} $/kg</b> · Cantidad declarada: <b>{contract.quantity_frozen_kg} kg</b>
+            {contract.declaracion && <> ({contract.declaracion === "trimestre" ? "trimestre" : "30 días"})</>}
+            {contract.terms_version && <> · términos {contract.terms_version}</>} · Firmado:{" "}
             {contract.signed_at ? new Date(contract.signed_at).toLocaleDateString("es-CO") : "—"}
           </p>
         </div>

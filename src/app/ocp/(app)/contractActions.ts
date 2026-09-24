@@ -25,22 +25,25 @@ export async function signContract(
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
-  const { data: contract } = await service.from("purchase_contracts").select("status, lot_id").eq("id", contractId).single();
+  const { data: contract } = await service
+    .from("purchase_contracts")
+    .select("status, lot_id, price_per_kg_locked, quantity_frozen_kg")
+    .eq("id", contractId)
+    .single();
   if (!contract) return { ok: false, error: "Contrato no encontrado." };
   if (contract.status !== "pending_signature") return { ok: false, error: "Este contrato ya fue firmado." };
 
   // V5.77: el gate del Kaffetal Club se retiró (PLAN_CIRCUITO_DEL_LOTE §3): la firma nace del trato.
+  // V5.83 (fase 6): el contrato NACE LLENO de la oferta aceptada con la declaración del productor —precio, cantidad y
+  // referencia ya están— y CTCx solo FIRMA. Nada se teclea aquí; `formData` queda por la firma de <ActionForm>.
+  void formData;
+  if (contract.price_per_kg_locked == null || contract.quantity_frozen_kg == null) {
+    return { ok: false, error: "Este contrato nació sin precio o sin cantidad (anterior a la V5.83): retire la oferta y emita otra para que el productor acepte con su declaración." };
+  }
 
   await service
     .from("purchase_contracts")
-    .update({
-      reference_price_source: String(formData.get("reference_price_source") || "") || null,
-      reference_price_snapshot: Number(formData.get("reference_price_snapshot")),
-      price_per_kg_locked: Number(formData.get("price_per_kg_locked")),
-      quantity_frozen_kg: Number(formData.get("quantity_frozen_kg")),
-      signed_at: new Date().toISOString(),
-      status: "active",
-    })
+    .update({ signed_at: new Date().toISOString(), status: "active" })
     .eq("id", contractId);
 
   await service.from("contract_releases").insert(

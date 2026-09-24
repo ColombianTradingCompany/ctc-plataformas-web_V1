@@ -34,7 +34,8 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
   `FileDrop`, las secciones de la landing en la misma carpeta (`ArenaSection`, `PorQueSection`, `OportunidadSection`, `TratoSection`, `FaqSection`, `BienvenidosSection`, `CalendarioSection`…), `data.ts`
   (tipos `Lot`/`Finca`, `STAGES`, `isLotCommitted`).
 - `src/lib/arena/producerActions.ts` (postular/solicitar evaluación, pagos), `src/lib/ofertas/producerActions.ts`
-  (`respondToOffer`), `src/lib/fichas/tipos.ts` (set de Fichas), `src/lib/kaffetalMedia.ts` (subidas + URLs
+  (`respondToOffer`, V5.83: con la **declaración** — `lockedKg`, `trimestre | 30_dias`, `aceptaTerminos` — y el contrato que nace lleno),
+  `src/lib/trato/simulador.ts` (la **calculadora** del trato, pura; de `consolas`) y `src/lib/trato/terminos.ts` (los términos que se aceptan), `src/lib/fichas/tipos.ts` (set de Fichas), `src/lib/kaffetalMedia.ts` (subidas + URLs
   firmadas), `src/lib/eudr.ts`, `src/lib/evaluations.ts` (`officialAverages`), `src/lib/lotComposition.ts`,
   `src/lib/geo/` (área, elevación), `src/lib/earthKml.ts`, `src/lib/kaffetal/faq.ts`, `src/lib/grados/` (lee).
 - `src/lib/useAutosave.tsx` — autosave con flush de desmontaje: **snapshot y `save()` solo desde estado React**.
@@ -88,7 +89,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 | OCP · Lotes | **EVA** (checklist + `lotEudrGate`) → `apto` + sello; borrado de abandonados | `markLotApto`, `actions.ts` |
 | OCP · Productores, Fincas y Lotes (`/ocp/kr`, V5.61 — eran tres módulos) | la **Visa** de la finca (aprobar · rechazar · compartir la certificación), la **EVA** del lote (checklist y veredicto Apto/No apto), el recibo de la muestra, la DDS | `actions.ts` (sin cambios) |
 | OCP · Nominados | bache, planilla y **veredicto** (`gradoPorPuntaje` → `galardonado` + Club) | `recordEvaluationVerdict` |
-| OCP · Ofertas / Contratos | emisión de ofertas (temporada · black · subasta), precio y firma del contrato, escalera de liberación | `ofertasActions`, `contractActions` |
+| OCP · Ofertas / Contratos | emisión de ofertas ancladas al PVC (temporada · directa · excepción · black · subasta) y la decisión «sin oferta»; la firma del contrato (que nace lleno de la aceptación con declaración, V5.83); la escalera de liberación (hasta la fase 7) | `ofertasActions`, `contractActions` |
 | OCP · Fichas | el set de Fichas Técnicas y cuál es la **oficial ★** | `fichasActions` |
 | BCP · Kaffetal Regal Arena (del OCP hasta la V5.59) | la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato) | `inviteLotToArena` |
 | BCP · Kaffetal Club (del OCP hasta la V5.59) | membresía (llega con el galardón), campañas de pasaporte | `club.ts`, `clubActions` |
@@ -137,6 +138,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   vencimiento) en `OfferCard`; la **calculadora** del trato (`src/lib/trato/simulador.ts` puro + componente); la **declaración**
   al aceptar (`locked_kg` ≥ `min_kg`, `trimestre` | `30_dias`, `terms_version` aceptado); el contrato nace lleno; «Mi trato».
   La nota del feed ya explica la oferta (tarifa, compra inicial, mínimo, ventana).
+- **Fase 6 (V5.83) — HECHA desde la sesión `consolas` con el «continúa» del owner, SIN conducirla en navegador**: `OfferCard`
+  enseña el anclaje (PVC, %, mínimo, máximo, compra inicial, vencimiento, términos) y trae la **calculadora** (`simularTrato`:
+  hoy, mes a mes, retiro libre, «retirar todo costaría»); el productor **declara** los kg (≥ mínimo, ≤ máximo de una directa),
+  trimestre o 30 días, marca las condiciones y acepta; `respondToOffer` crea el contrato **lleno** y `signContract` solo firma.
+  «Contratos de Temporada» es **«Mi trato»** (declarado, precio, compra inicial, tramos, términos). El copy del Kaffetal Club
+  salió de la pestaña (`gi` sigue en la firma por `AppDashboard`). **Pendiente (exige `prueba-*`)**: conducir aceptar → contrato →
+  firma en el OCP; afinar el copy de la calculadora con el owner; «Mi trato» crece con la fase 7 (pedidos, pagos, retiros, mora).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

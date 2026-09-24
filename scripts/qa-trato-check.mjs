@@ -18,6 +18,7 @@ import {
 } from "../src/lib/trato/terminos.ts";
 import { PENALIZACION, TRAMO_LIBRE_ACUMULADO, MESES_DEL_PERIODO } from "../src/lib/pvc/compromiso.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
+import { simularTrato } from "../src/lib/trato/simulador.ts";
 
 let ok = 0;
 const fallos = [];
@@ -86,9 +87,9 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("y le avisa al productor sin devolución", decision.includes('from("producer_comm_log")') && !decision.includes("reembolso"));
   const emit = ofertas.slice(ofertas.indexOf("export async function emitOffer("), ofertas.indexOf("export async function retireOffer("));
   check("emitir una oferta reabre la decisión", emit.includes("decision_comercial: null"));
-  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo del grado", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: ANCLADAS.includes(kind) ? minimoKg(lot.grade) : null"));
+  check("la oferta de temporada lleva la compra inicial de CTCx y el mínimo del grado", emit.includes("compra_inicial_kg: kind === \"temporada\" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null") && emit.includes("min_kg: CON_DECLARACION.includes(kind) ? minimoKg(lot.grade) : null"));
   check("la directa lleva la ventana y su vencimiento", emit.includes("ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null") && emit.includes("expira_at: esDirecta"));
-  check("y los términos con los que nace", emit.includes("terms_version: ANCLADAS.includes(kind) ? TERMINOS_VERSION : null"));
+  check("y los términos con los que nace (también la excepción: es un Lote de Temporada)", emit.includes("terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null") && ofertas.includes('const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcion"]'));
 }
 
 // ── 4. El circuito conoce las dos salidas laterales ─────────────────────────
@@ -99,6 +100,38 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("pero una oferta emitida manda sobre la decisión", estadoDelCircuito({ ...base, grado: "blue", sinOferta: true, ultimaOferta: "emitida" }).estado === "oferta_emitida");
   check("y un contrato vivo también", estadoDelCircuito({ ...base, grado: "blue", sinOferta: true, contrato: "active" }).estado === "catalogo_activo");
   check("la tabla del OCP alimenta los dos datos", lee("src/app/ocp/(app)/kr/carga.ts").includes('noSupero: ins?.phase === "retirado" && ins.sondeo_result === "rechazado"') && lee("src/app/ocp/(app)/kr/carga.ts").includes('sinOferta: ins?.decision_comercial === "sin_oferta"'));
+}
+
+// ── 5. Aceptar con claridad (V5.83, fase 6): la calculadora, la declaración y el contrato que nace lleno ──
+{
+  // La calculadora reproduce el ejemplo del §12.9 del PVC plan: 8 cargas de Red (×1,3) al PVC de $2.500.000 →
+  // $3.250.000 por carga ($26.000/kg); retirando TODO: mes 1 $1.040.000 · mes 2 $780.000 · mes 3 $520.000 (4 %).
+  const s = simularTrato({ declaradoKg: 1000, copKg: 26000, declaracion: "trimestre", grado: "red" });
+  check("8 cargas de Red: retirar todo en el mes 1 cuesta $1.040.000", s.porMes[0].penalidadSiRetiraTodoCop === 1040000, `${s.porMes[0].penalidadSiRetiraTodoCop}`);
+  check("en el mes 2, $780.000 (25 % libre)", s.porMes[1].penalidadSiRetiraTodoCop === 780000 && s.porMes[1].retiroLibrePct === 25);
+  check("en el mes 3, $520.000 (50 % libre)", s.porMes[2].penalidadSiRetiraTodoCop === 520000 && s.porMes[2].retiroLibrePct === 50);
+  check("CTC compra de inmediato una carga (125 kg) al precio de la oferta", s.compraInicial.kg === 125 && s.compraInicial.cop === 125 * 26000);
+  check("el resto se reparte parejo en los tres meses y suma todo", s.porMes.reduce((a, m) => a + m.pedidoKg, 0) === 875 && s.totalCop === 1000 * 26000);
+  check("por 30 días es un solo mes sin tramo libre", simularTrato({ declaradoKg: 500, copKg: 26000, declaracion: "30_dias" }).porMes.length === 1 && simularTrato({ declaradoKg: 500, copKg: 26000, declaracion: "30_dias" }).porMes[0].retiroLibrePct === 0);
+  check("el mínimo del grado se mira (Red 6 cargas = 750 kg)", !simularTrato({ declaradoKg: 500, copKg: 26000, declaracion: "trimestre", grado: "red" }).cumpleMinimo && simularTrato({ declaradoKg: 750, copKg: 26000, declaracion: "trimestre", grado: "red" }).cumpleMinimo);
+  const simulador = lee("src/lib/trato/simulador.ts").replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+  check("el simulador es puro y lee las cifras de terminos.ts", !/from "@\/lib\/supabase/.test(simulador) && /from "\.\/terminos"/.test(simulador));
+
+  const kr = lee("src/lib/ofertas/producerActions.ts");
+  check("aceptar una oferta con términos exige la declaración", kr.includes("if (offer.terms_version) {") && kr.includes("if (!declaracion) return"));
+  check("la cantidad respeta el mínimo del grado y el máximo de la directa", kr.includes("kg < minKg") && kr.includes("kg > maxKg"));
+  check("y hay que marcar las condiciones", kr.includes("if (!declaracion.aceptaTerminos) return"));
+  check("el contrato NACE LLENO: precio de la oferta, cantidad declarada, referencia, términos", ["price_per_kg_locked: Number(offer.price_per_kg)", "quantity_frozen_kg: lockedKg", "reference_price_source: offer.reference_price_source", "terms_version: offer.terms_version", "declaracion: declarado", "compra_inicial_kg:"].every((x) => kr.includes(x)));
+  check("y la oferta guarda lo declarado y cuándo aceptó los términos", kr.includes("locked_kg: lockedKg, declaracion: declarado, terms_accepted_at: now"));
+  check("una directa vencida no se acepta (queda expirada)", kr.includes('status: "expirada"') && kr.includes("offer.expira_at"));
+  const firma = lee("src/app/ocp/(app)/contractActions.ts");
+  const sign = firma.slice(firma.indexOf("export async function signContract("), firma.indexOf("export async function recordContractRelease("));
+  check("signContract ya no teclea precio ni cantidad: solo firma", !/formData\.get\("price_per_kg_locked"\)/.test(sign) && !/formData\.get\("quantity_frozen_kg"\)/.test(sign) && sign.includes('update({ signed_at: new Date().toISOString(), status: "active" })'));
+  check("y se niega si el contrato nació vacío", sign.includes("contract.price_per_kg_locked == null || contract.quantity_frozen_kg == null"));
+  const tab = lee("src/components/kaffetal-regal/panel/ContratosTab.tsx");
+  check("el productor decide con la calculadora (simularTrato) y marca las condiciones", tab.includes("simularTrato({ declaradoKg, copKg: offer.pricePerKg, declaracion") && tab.includes("aceptaTerminos: acepta"));
+  check("y no puede aceptar por debajo del mínimo ni sin marcar", tab.includes("Boolean(sim?.cumpleMinimo) && cabeEnMaximo && acepta"));
+  check("«Mi trato» enseña lo declarado, la compra inicial y los tramos", tab.includes("CTC compra de inmediato") && tab.includes("retiro libre al cerrar cada mes"));
 }
 
 if (fallos.length) {

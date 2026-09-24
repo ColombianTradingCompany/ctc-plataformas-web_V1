@@ -373,6 +373,17 @@ export type ProducerOffer = {
   respondedAt: string | null;
   responseNote: string | null;
   contractId: string | null;
+  // V5.83 · el anclaje y la declaración (fase 6): lo que el productor lee y sobre lo que declara.
+  /** `terms_version`: la oferta se acepta CON declaración (cantidad ≥ mínimo, trimestre | 30 días, condiciones). */
+  termsVersion: string | null;
+  minKg: number | null;
+  maxKg: number | null;
+  compraInicialKg: number | null;
+  referencePriceSource: string | null;
+  modificadorPct: number;
+  expiraAt: string | null;
+  lockedKg: number | null;
+  declaracion: "trimestre" | "30_dias" | null;
 };
 
 export type ProducerContract = {
@@ -385,6 +396,11 @@ export type ProducerContract = {
   status: "pending_signature" | "active" | "reconditioning" | "completed" | "cancelled";
   pricePerKgLocked: number | null;
   quantityFrozenKg: number | null;
+  // V5.83: el contrato nace LLENO de la oferta aceptada con la declaración del productor.
+  termsVersion: string | null;
+  declaracion: "trimestre" | "30_dias" | null;
+  compraInicialKg: number | null;
+  referencePriceSource: string | null;
   releases: ContractRelease[];
   humidity: HumidityReading[];
 };

@@ -427,7 +427,7 @@ function Experience() {
           supabase
             .from("lot_offers")
             .select(
-              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id"
+              "id, lot_id, kind, status, grade_snapshot, score_snapshot, variety_snapshot, process_snapshot, price_per_kg, quantity_kg, notes, season_label, lote_de_temporada_pasada, emitted_at, responded_at, response_note, contract_id, terms_version, min_kg, max_kg, compra_inicial_kg, reference_price_source, modificador_pct, expira_at, locked_kg, declaracion"
             )
             .order("emitted_at", { ascending: false }),
           // RLS (lot_fichas_select_own) scopes this to the producer's own lots
@@ -552,6 +552,10 @@ function Experience() {
         price_per_kg_locked: number | null;
         quantity_frozen_kg: number | null;
         season_id: string | null;
+        terms_version: string | null;
+        declaracion: "trimestre" | "30_dias" | null;
+        compra_inicial_kg: number | string | null;
+        reference_price_source: string | null;
         lots: { id: string; name: string; grade: string | null } | null;
         contract_releases: {
           month_number: number;
@@ -574,6 +578,10 @@ function Experience() {
           status: c.status,
           pricePerKgLocked: c.price_per_kg_locked,
           quantityFrozenKg: c.quantity_frozen_kg,
+          termsVersion: c.terms_version ?? null,
+          declaracion: c.declaracion ?? null,
+          compraInicialKg: c.compra_inicial_kg != null ? Number(c.compra_inicial_kg) : null,
+          referencePriceSource: c.reference_price_source ?? null,
           releases: (c.contract_releases ?? [])
             .slice()
             .sort((a, b) => a.month_number - b.month_number)
@@ -610,6 +618,15 @@ function Experience() {
         responded_at: string | null;
         response_note: string | null;
         contract_id: string | null;
+        terms_version: string | null;
+        min_kg: number | string | null;
+        max_kg: number | string | null;
+        compra_inicial_kg: number | string | null;
+        reference_price_source: string | null;
+        modificador_pct: number | string | null;
+        expira_at: string | null;
+        locked_kg: number | string | null;
+        declaracion: "trimestre" | "30_dias" | null;
       };
       const lotNameById = new Map(lotRowList.map((l) => [l.id, l.name]));
       setOffers(
@@ -632,6 +649,15 @@ function Experience() {
           respondedAt: o.responded_at,
           responseNote: o.response_note,
           contractId: o.contract_id,
+          termsVersion: o.terms_version ?? null,
+          minKg: o.min_kg != null ? Number(o.min_kg) : null,
+          maxKg: o.max_kg != null ? Number(o.max_kg) : null,
+          compraInicialKg: o.compra_inicial_kg != null ? Number(o.compra_inicial_kg) : null,
+          referencePriceSource: o.reference_price_source ?? null,
+          modificadorPct: Number(o.modificador_pct ?? 0),
+          expiraAt: o.expira_at ?? null,
+          lockedKg: o.locked_kg != null ? Number(o.locked_kg) : null,
+          declaracion: o.declaracion ?? null,
         }))
       );
 

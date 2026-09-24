@@ -19,6 +19,27 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.83] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 6 del `PLAN_CIRCUITO_DEL_LOTE.md` — aceptar con claridad** (folio 8, pasos 14–16). Código de
+  `kaffetal-regal` tocado desde la sesión `consolas` con el «continúa» del owner y línea en `ALINEACION` §3. **No se condujo en
+  navegador**: exige las cuentas `prueba-*`.
+- **Añadido**: **la calculadora del trato** (`src/lib/trato/simulador.ts`, puro): con la cantidad que el productor piensa
+  comprometer y el precio anclado dice qué compra CTC de inmediato (una carga), qué pediría y pagaría cada mes, qué puede
+  retirar sin costo al cerrar cada mes (25 % · 25 %) y cuánto costaría retirar todo (4 % por carga sobre el tramo libre).
+  Reproduce el ejemplo del §12.9 del PVC plan; `qa-trato-check` lo exige.
+- **Cambiado**: **el productor acepta CON declaración**: en «Ofertas de Temporada» ve el anclaje (PVC, %, mínimo, máximo,
+  compra inicial, vencimiento, términos), usa la calculadora, declara los kg (≥ mínimo del grado, ≤ máximo de una directa) por
+  trimestre o por 30 días, marca las condiciones de retiro, mora y ruptura y acepta. `respondToOffer` lo exige para toda oferta
+  con términos (temporada · directa · excepción); Black y subasta se aceptan como antes. Una directa vencida queda `expirada`.
+- **Cambiado**: **el contrato nace LLENO**: precio de la oferta, cantidad declarada, referencia del PVC, términos, declaración,
+  compra inicial y anclaje quedan en `purchase_contracts` al aceptar; **`signContract` solo firma** (y se niega si un contrato
+  nació vacío). «Contratos de Temporada» es **«Mi trato»**: lo declarado, el precio, lo que CTC compra hoy, los tramos y los
+  términos. El copy del Kaffetal Club salió de la pestaña.
+- **Datos**: migración `aceptacion_con_declaracion` (acta en `docs/migraciones/`): `lot_offers.locked_kg/declaracion/
+  terms_accepted_at`; `purchase_contracts.offer_id/terms_version/declaracion/compra_inicial_kg/pvc_edition_id/modificador_pct`.
+- **Docs**: `qa-trato-check` 35 → 54 (la calculadora contra el §12.9; la declaración; el contrato lleno; la firma que no teclea).
+
 ## [V5.82] — 2026-09-24 (commit 2e35ddf)
 
 - **Hito**: **la fase 5 del `PLAN_CIRCUITO_DEL_LOTE.md` — confirmar y ofertar** (folio 8 del owner, pasos 12–14 y 19; respuestas

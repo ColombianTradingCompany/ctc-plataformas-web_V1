@@ -212,8 +212,13 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   motivo); past crop −10 %; el rechazo bajo Black es gratis (sin cashback) y la **re-evaluación** (`reevaluar`, tarifa plena, 80 %
   si sube de grado, previa razón de CTCx) reinicia la solicitud; `terminos.ts` completo con `qa-trato-check`; el circuito gana
   «no superó» y «sin oferta». **Diferido de la fase 5**: `moqCargas` (es el MOQ de mezcla de Cherry Picked, no el mínimo por lote);
-  los rótulos de rango en el motor Python y el tablero HTML (`herramientas-internas`). **Sigue: fase 6** (aceptar con claridad:
-  la calculadora, la declaración `locked_kg` ≥ mínimo, trimestre/30 días, el contrato nace lleno; **exige las cuentas `prueba-*`**).
+  los rótulos de rango en el motor Python y el tablero HTML (`herramientas-internas`). **Fase 6 EJECUTADA en la V5.83** (código de
+  KR con el «continúa» del owner, **sin conducir en navegador**): la calculadora (`src/lib/trato/simulador.ts`, puro), la
+  declaración al aceptar (`respondToOffer` exige `locked_kg` ≥ mínimo y ≤ máximo, trimestre/30 días, condiciones), el contrato
+  **nace lleno** (`offer_id`, precio, cantidad, referencia, términos, compra inicial, anclaje) y `signContract` **solo firma**;
+  «Mi trato» en KR. `qa-trato-check` 35 → 54. **Sigue: fase 7** (el trato mes a mes: `contract_months` — pedido, envío, pago,
+  retiros 25/25 + 4 %, mora 2+2/5 %, ruptura visible, renovación, past crop; `contract_releases` deja de ser la escalera;
+  publicación sin Club) y **conducir la 6 con `prueba-*`**.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

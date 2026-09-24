@@ -42,6 +42,8 @@ export type OfferKind = "temporada" | "directa" | "excepcion" | "black" | "subas
 
 /** Las clases cuyo precio sale del PVC. */
 const ANCLADAS: readonly OfferKind[] = ["temporada", "directa"];
+/** Las clases que el productor acepta CON declaración (cantidad ≥ mínimo, trimestre | 30 días, términos): las de temporada. */
+const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcion"];
 
 /** El grado que cada clase de oferta admite — la puerta es por CLASE. */
 function kindAllowsGrade(kind: OfferKind, grade: GradoId): boolean {
@@ -168,8 +170,9 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     modificador_pct: modificadorPct,
     reference_price_source: pvc ? `PVC ${pvc.edicion.code}` : null,
     reference_price_snapshot: pvc?.precio.copKg ?? null,
-    terms_version: ANCLADAS.includes(kind) ? TERMINOS_VERSION : null,
-    min_kg: ANCLADAS.includes(kind) ? minimoKg(lot.grade) : null,
+    // V5.83: toda oferta de Lote de Temporada (también la excepción) lleva términos y mínimo: el productor DECLARA al aceptar.
+    terms_version: CON_DECLARACION.includes(kind) ? TERMINOS_VERSION : null,
+    min_kg: CON_DECLARACION.includes(kind) ? minimoKg(lot.grade) : null,
     max_kg: esDirecta ? maxKg : null,
     ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null,
     expira_at: esDirecta ? new Date(now.getTime() + VENTANA_DIRECTA_DIAS * 86_400_000).toISOString() : null,

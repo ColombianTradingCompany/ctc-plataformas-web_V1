@@ -144,6 +144,15 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
 
 ## Pendientes
 
+- **ETAPA 1 · EL CIRCUITO DEL LOTE, DEL PERFIL AL CATÁLOGO ACTIVO — `docs/PLAN_CIRCUITO_DEL_LOTE.md` (2026-09-24, PLAN sin
+  ejecutar, espera ocho decisiones del owner).** Sustituye a las fases 4b, 5 y 6 del overhaul y absorbe los briefs de Muestras,
+  Compras y Simplificar el OCP. Nueve fases (0–8), una versión cada una: retiros y mudanzas (Arena dormida; Club fuera; campañas
+  → `/ocp/subvenciones`; temporadas → `/ocp/temporadas`; contratos dentro de Catálogo Activo) → el registro (revisión del lote,
+  recordatorios, dossier ES/EN) → solicitud, factura y muestra → **Centro de Calidad · Evaluación de Lotes** (el Q-Grader, anónimo,
+  con la Datasheet interna) → confirmar y ofertar (`pvcParaGrado`, `terminos.ts`) → aceptar con calculadora → el trato mes a mes →
+  CTCx Selection y Compras. Después viene la **Etapa 2** (correr todo con Asistencia y Desacoplado) y la **Etapa 3** (Cherry Picked).
+  ⚠️ Nada se ejecuta hasta que el owner conteste el §6 del plan (mínimos, tarifa, Tyrian, dossier, Q-Grader, congelar cuenta, rail,
+  borrado del contrato de prueba).
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
   respuestas del owner al final. **Primera tanda EJECUTADA en la V5.75**: **Asistencia a Proveedores** (`/ocp/asistencia` + botón
   en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:

@@ -1,5 +1,9 @@
 # Overhaul de las consolas · cuarta consola (LCP), nuevo reparto y el circuito del lote sin Sondeo
 
+> **2026-09-24 · Las fases 4b, 5 y 6 de este plan quedan SUSTITUIDAS por `docs/PLAN_CIRCUITO_DEL_LOTE.md`** (Etapa 1: el circuito
+> completo del perfil al Catálogo Activo, con los once folios del owner). Las fases 0–4a y la V5.63 están hechas y este documento
+> queda como su historia. Los briefs de Muestras, Compras y Simplificar el OCP viven ahora dentro del plan nuevo.
+
 **Estado: PLAN, sin ejecutar** (2026-09-19, escrito sobre la V5.58). Lo pidió el owner con un cuadro de cuatro columnas
 (BCP · ECP · OCP · LCP) y cinco notas sobre el OCP y Kaffetal Regal. Acordado con él: **plan primero, ejecución por fases**,
 una versión por fase. Este documento dice qué existe hoy, a dónde va cada cosa, qué hay que decidir y en qué orden se hace.

@@ -20,6 +20,7 @@ import {
   EnviarAlCentroForm,
   PaymentControls,
   ReciboForm,
+  ReevaluarForm,
   RegenerateMejorasButton,
   RemoveFromBatchButton,
   SondeoRegistroControls,
@@ -68,8 +69,8 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
     service
       .from("arena_inscriptions")
       .select("*, lots(id, name, producer_id, stage, source, sample_shipped_at, sample_2kg_confirmed_at)")
-      // Los galardonados ya no viven aquí: pasaron a Pendiente de Oferta.
-      .in("phase", ["postulacion", "sondeo", "fila", "retirado"]),
+      // Los galardonados solo se cargan por sus reembolsos pendientes (re-evaluación que subió de grado, V5.82).
+      .in("phase", ["postulacion", "sondeo", "fila", "retirado", "galardonado"]),
     service
       .from("sondeo_batches")
       .select("id, label, status, q_grader_name, shipped_at, cerrado_at, created_at, centro_calidad_account_id")
@@ -91,7 +92,10 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
   const recien = solicitadas.filter((i) => segmentPostulacion({ postulatedAt: i.postulated_at }) === "recien");
   const aEvaluar = inscriptions.filter((i) => i.phase === "fila" && i.lot);
   const enBache = inscriptions.filter((i) => i.phase === "sondeo" && i.lot);
-  const retiradosPend = inscriptions.filter((i) => i.phase === "retirado" && i.cashback_status === "pendiente" && i.lot);
+  // V5.82: los que no superaron (rechazo gratis con reporte; CTCx puede acordar la re-evaluación) y los reembolsos del 80 %
+  // pendientes de una re-evaluación que subió de grado.
+  const noSuperaron = inscriptions.filter((i) => i.phase === "retirado" && i.sondeo_result === "rechazado" && i.lot);
+  const reembolsosPend = inscriptions.filter((i) => i.cashback_status === "pendiente" && i.lot);
 
   const [producers, { data: muestrasRaw }, centros, { data: altasRaw }] = await Promise.all([
     fetchProducerContacts(service, inscriptions.map((i) => i.producer_id)),
@@ -428,21 +432,44 @@ export async function CircuitoVista({ vista }: { vista: VistaDelCircuito }) {
         </details>
       )}
 
-      {/* Retirados con cashback pendiente */}
-      {retiradosPend.length > 0 && (
+      {/* No superaron: el reporte de mejoras (gratis) y la re-evaluación que CTCx acuerda */}
+      {noSuperaron.length > 0 && (
         <div style={{ marginTop: 30 }}>
-          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Cashback pendiente (no superó la evaluación)</h2>
+          <h2 style={{ fontSize: 17, marginBottom: 6 }}>No superaron la evaluación</h2>
+          <p className={styles.subtitle}>
+            El rechazo bajo Black es gratis y se lleva el reporte de mejoras. Si CTCx ve que la mejora aseguraría una oferta, acuerda la
+            <b> re-evaluación a tarifa plena</b>: la solicitud vuelve a empezar y, si el lote sube de grado, se le reembolsa el 80 %.
+          </p>
           <div style={{ display: "grid", gap: 10 }}>
-            {retiradosPend.map((i) => (
+            {noSuperaron.map((i) => (
+              <div key={i.id} className={styles.card} style={{ flexDirection: "column", alignItems: "stretch" }}>
+                <b>{i.lot!.name}</b>
+                <p className={styles.meta}>
+                  {name(i.producer_id)} · puntaje {i.sondeo_score ?? "—"}{i.reevaluaciones ? ` · re-evaluación n.º ${i.reevaluaciones}` : ""}
+                  {i.sondeo_result_notes && <> · «{i.sondeo_result_notes}»</>}
+                </p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-start" }}>
+                  <RegenerateMejorasButton lotId={i.lot_id} has={Boolean(i.mejoras_doc)} />
+                  <ReevaluarForm lotId={i.lot_id} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reembolsos pendientes: 80 % de la tarifa cuando la re-evaluación subió de grado */}
+      {reembolsosPend.length > 0 && (
+        <div style={{ marginTop: 30 }}>
+          <h2 style={{ fontSize: 17, marginBottom: 6 }}>Reembolsos pendientes (re-evaluación que subió de grado)</h2>
+          <div style={{ display: "grid", gap: 10 }}>
+            {reembolsosPend.map((i) => (
               <div key={i.id} className={styles.card}>
                 <b>{i.lot!.name}</b>
                 <p className={styles.meta}>
                   {name(i.producer_id)} · 80% de {formatCop(i.amount_due_cop)} = <b>{formatCop(i.cashback_cop ?? 0)}</b>
                 </p>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  <CashbackControls lotId={i.lot_id} amountLabel={formatCop(i.cashback_cop ?? 0)} />
-                  <RegenerateMejorasButton lotId={i.lot_id} has={Boolean(i.mejoras_doc)} />
-                </div>
+                <CashbackControls lotId={i.lot_id} amountLabel={formatCop(i.cashback_cop ?? 0)} />
               </div>
             ))}
           </div>

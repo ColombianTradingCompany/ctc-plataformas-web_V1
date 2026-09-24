@@ -19,6 +19,8 @@
 export type EstadoDelCircuito =
   | "en_ficha" // todavía no pide evaluación: llena la Ficha o espera la Visa documental
   | "no_apto" // la Visa documental lo devolvió
+  | "no_supero" // paso 12: no superó la evaluación (bajo Black); puede volver por re-evaluación (lateral, V5.82)
+  | "sin_oferta" // paso 13: CTCx decidió no ofertar, sin devolución (lateral, V5.82)
   | "solicitada" // paso 7–9: pidió la evaluación; falta la factura, el pago, la muestra, o varias
   | "a_evaluar" // paso 10: pagado y recibido; espera que CTCx lo suba a un Bache de Evaluación
   | "en_evaluacion" // en un bache en manos del Centro de Calidad
@@ -41,6 +43,10 @@ export type EntradaDelCircuito = {
   enBache: boolean;
   /** Hay una `lot_evaluations` `q_grader_batch` en `pending`: el Centro lo dio de alta y CTCx no ha confirmado (V5.81). */
   evaluacionPendiente?: boolean;
+  /** `arena_inscriptions.phase === "retirado"` con `sondeo_result === "rechazado"`: no superó la evaluación (V5.82). */
+  noSupero?: boolean;
+  /** `arena_inscriptions.decision_comercial === "sin_oferta"`: CTCx decidió no ofertar (V5.82). */
+  sinOferta?: boolean;
   /** `lots.grade`: solo lo escribe el veredicto del Q-Grader. */
   grado: string | null;
   /** El `status` de la ÚLTIMA oferta del lote (`lot_offers`), o null si nunca tuvo. */
@@ -60,6 +66,8 @@ export type LecturaDelCircuito = {
 export const CIRCUITO_LABEL: Record<EstadoDelCircuito, string> = {
   en_ficha: "En ficha",
   no_apto: "No apto",
+  no_supero: "No superó",
+  sin_oferta: "Sin oferta",
   solicitada: "Solicitada",
   a_evaluar: "A evaluar",
   en_evaluacion: "En evaluación",
@@ -106,6 +114,9 @@ export function estadoDelCircuito(e: EntradaDelCircuito): LecturaDelCircuito {
   // La oferta salió y la pelota es del productor.
   if (e.ultimaOferta === "emitida") return lee("oferta_emitida", "warn", ["que el productor responda la oferta"]);
 
+  // Paso 13 (V5.82): CTCx decidió que no tiene sentido comercial ofertar — sin devolución. Emitir una oferta lo reabre.
+  if (e.grado && e.sinOferta) return lee("sin_oferta", "muted", ["volver a considerar la oferta si cambian las condiciones"]);
+
   // 4 · Evaluado, pendiente de oferta: el Q-Grader ya dijo (hay grado) y CTCx no ha ofertado —o la oferta
   //     anterior murió (rechazada, retirada o expirada) y hay que decidir otra.
   if (e.grado) {
@@ -115,6 +126,9 @@ export function estadoDelCircuito(e: EntradaDelCircuito): LecturaDelCircuito {
       e.ultimaOferta ? [`decidir una oferta nueva (la anterior quedó «${e.ultimaOferta}»)`] : ["confirmar el grado y emitir la oferta"]
     );
   }
+
+  // Paso 12 (V5.82): no superó la evaluación (bajo Black). Sin grado; puede volver por una re-evaluación, que reinicia la solicitud.
+  if (e.noSupero) return lee("no_supero", "bad", ["acordar la re-evaluación a tarifa plena, si la mejora aseguraría la oferta"]);
 
   // 3 · Pagado y recibido. El lote que registró CTC a mano no tiene inscripción —su muestra ya estaba en la
   //     casa—, así que para él basta el recibo. Con bache está EN evaluación (folio 7, paso 10: «los lotes se

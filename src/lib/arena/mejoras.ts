@@ -36,7 +36,7 @@ function buildPrompt(i: MejorasInput): string {
     .join("\n");
 }
 
-const SYSTEM = `Eres el equipo técnico de CTC (Colombian Trading Company), escribiendo unas "Recomendaciones de Mejora" para un caficultor colombiano cuyo lote no superó el sondeo preliminar de calidad antes de la Kaffetal Regal Arena.
+const SYSTEM = `Eres el equipo técnico de CTC (Colombian Trading Company), escribiendo unas "Recomendaciones de Mejora" para un caficultor colombiano cuyo lote no superó el sondeo preliminar de calidad antes de una re-evaluación.
 
 Escribe en español colombiano, tono cálido y respetuoso pero técnico y concreto. Estructura:
 1. Un párrafo corto reconociendo el trabajo y explicando qué mide el sondeo.

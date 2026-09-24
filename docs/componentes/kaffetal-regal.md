@@ -130,6 +130,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   una `lot_evaluations` `q_grader_batch` en `pending` para el lote — el productor ya la ve por `lot_evaluations_select_own_lot`)
   para que la barra diga «evaluado» y no «en evaluación» mientras CTCx confirma; y decidir si «Lotes Galardonados» muestra la
   **rueda** (`lot_evaluations.rueda`, etiquetas ES/EN en `src/lib/catacion/rueda.ts`) y la escala (SCA/CVA) de la evaluación.
+- **Fase 5 (V5.82) — lo que el productor recibe y lo que queda para la fase 6**: las ofertas llegan **ancladas al PVC** con
+  `min_kg`, `compra_inicial_kg`, `terms_version`, `modificador_pct`, `expira_at` (directa) y dos clases nuevas, **`directa`**
+  (CTCx Selection, PVC − 8 %, 30 días) y **`excepcion`**; `ProducerOffer.kind` ya las admite (una línea, V5.82) y se muestran
+  con las de temporada. **Pendiente KR (fase 6, exige `prueba-*`)**: enseñar el anclaje (PVC, banda, mínimo, compra inicial,
+  vencimiento) en `OfferCard`; la **calculadora** del trato (`src/lib/trato/simulador.ts` puro + componente); la **declaración**
+  al aceptar (`locked_kg` ≥ `min_kg`, `trimestre` | `30_dias`, `terms_version` aceptado); el contrato nace lleno; «Mi trato».
+  La nota del feed ya explica la oferta (tarifa, compra inicial, mínimo, ventana).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

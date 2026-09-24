@@ -19,6 +19,34 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.82] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 5 del `PLAN_CIRCUITO_DEL_LOTE.md` — confirmar y ofertar** (folio 8 del owner, pasos 12–14 y 19; respuestas
+  1–3). El PVC **gobierna por primera vez un precio real**: código de `herramientas-internas` (`src/lib/pvc/`) tocado desde la sesión
+  `consolas` con línea en `ALINEACION` §3.
+- **Añadido**: **`pvcParaGrado(grado, fecha?, {modificadorPct})`** — LA puerta al precio (`src/lib/pvc/servicio.ts` sobre
+  `precio.ts`, puro): edición vigente en la fecha → banda del grado (minúscula → mayúscula por `definicion.ts`) → COP/kg y COP/carga
+  × (1 ± %). Tyrian no tiene precio de oferta (se subasta). `RANGOS` del motor se **deriva de `definicion.ts`** (conflicto n.º 1
+  cerrado); nadie lee el `rango` de una edición publicada.
+- **Cambiado**: **la oferta se ancla, no se teclea** (`/ocp/ofertas`): CTCx decide «no ofertar» con motivo (paso 13) o emite un
+  **Lote de Temporada** (PVC × banda, mínimo del grado, CTC compra una carga de inmediato, términos versionados; past crop −10 %),
+  una **directa** de CTCx Selection (PVC − 8 %, ventana de 30 días, máximo) o una **excepción** con precio a mano y motivo
+  obligatorio. La oferta guarda `pvc_edition_id`, `pvc_cop_kg`, `modificador_pct`, `terms_version`, `min_kg`, `max_kg`,
+  `ventana_dias`, `expira_at`, `compra_inicial_kg` y, por fin, `reference_price_*`. Black conserva el precio negociado; Tyrian, el
+  mejor postor.
+- **Cambiado**: **el rechazo bajo Black es gratis** (reporte de mejoras, sin cashback) y nace la **re-evaluación** (`reevaluar`):
+  CTCx la acuerda con su razón, la solicitud vuelve a empezar a tarifa plena sin subvención (factura y muestra nuevas), y si el lote
+  **sube de grado** se le reembolsa el 80 % (`cashback_*` cambia de sentido). «Lotes en Evaluación» enseña «No superaron» y
+  «Reembolsos pendientes».
+- **Añadido**: `terminos.ts` completo — compra inicial (1 carga), tramos libres 25/25, penalidad 4 %, mora 2+2 semanas/5 %,
+  renovación 90 días, past crop 9 meses/−10 %, directa −8 %/30 días, declaraciones — y **el circuito gana «no superó» y «sin
+  oferta»** (laterales).
+- **Datos**: migración `ofertas_ancladas` (acta en `docs/migraciones/`): `lot_offers.kind` con `directa` y `excepcion` + nueve
+  columnas del anclaje; `arena_inscriptions` con la decisión comercial y la re-evaluación.
+- **Docs**: guardianes nuevos **`qa-pvc-precio`** (52 — reproduce la escalera publicada grado por grado desde `paridad.json`,
+  `RANGOS` = `definicion.ts`, las ancladas no teclean precio) y **`qa-trato-check`** (35 — cada cifra de `terminos.ts` contra el
+  §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»); `qa-circuito` 41 → 45.
+
 ## [V5.81] — 2026-09-24 (commit ebb5861)
 
 - **Hito**: **la fase 4 del `PLAN_CIRCUITO_DEL_LOTE.md` — Centro de Calidad · Evaluación de Lotes** (folio 7 del owner, paso 11;

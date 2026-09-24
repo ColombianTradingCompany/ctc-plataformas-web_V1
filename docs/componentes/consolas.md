@@ -86,6 +86,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 - **`src/lib/catacion/rueda.ts`** (V5.81, puro): la taxonomía ÚNICA de la rueda de sabores (nueve familias SCA/WCR, ES/EN;
   `lot_evaluations.rueda` guarda solo ids). La planilla `src/components/bcp/LabEvalEditor.tsx` + `src/lib/arena/labEvaluation.ts`
   (SCA o CVA con `computeCva`) la usan el Centro de Calidad (charter `socios`), el OCP y la Arena.
+- **La oferta anclada al PVC** (V5.82): `ofertasActions.ts` (`emitOffer` temporada · directa · excepcion · black · subasta,
+  `decidirNoOfertar`, `reabrirDecision`) pide el precio a `pvcParaGrado` (`src/lib/pvc/servicio.ts`, de `herramientas-internas`,
+  sobre `src/lib/pvc/precio.ts` puro) y los términos a `src/lib/trato/terminos.ts`; `reevaluar` vive en `nominadosActions.ts`.
 
 ## Tablas que posee (escritura service-role desde aquí)
 
@@ -125,7 +128,10 @@ el rail en el orden de la respuesta 7; el lado de KR) · **`qa-muestras-check.mj
 y nunca negativo, recibo = filas + marca o nada, toda muestra de un lote, la alerta de 90 días sin campo aparte, acciones en la lista
 blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde las notas y el folio, TOTAL y MONÓTONO; con
 «solicitada» y «evaluado») · **`qa-centro-calidad-check.mjs`** (65, V5.81 — el Centro de Calidad: anonimato, módulo por credencial,
-registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito) · **`qa-trato-check.mjs`** (35, V5.82 —
+cada cifra de `terminos.ts` contra el §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»; los laterales del circuito) ·
+**`qa-pvc-precio.mjs`** (52, V5.82 — la escalera publicada grado por grado, `RANGOS` = `definicion.ts`, nadie lee `rango`, las
+ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -199,8 +205,15 @@ registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` p
   supera) o **devuelve**; el circuito gana «evaluado». Registrar a mano sigue como recurso plegado. **Diferido de la fase 4**: el
   «uso directo» de la credencial (Ficha sin bache), la variante interna de la Datasheet Tool (`herramientas-cafe`), y que KR
   alimente `evaluacionPendiente` a la barra (hoy el productor ve «en evaluación» hasta que CTCx confirma). ⚠️ La fórmula del
-  CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa. **Sigue: fase 5** (confirmar
-  y ofertar: `pvcParaGrado`, `confirmarGradoYOfertar`, oferta anclada, rechazo automático, re-evaluación, `directa`).
+  CVA está en constantes con nombre (`CVA` en `labEvaluation.ts`): la valida el Q-Grader de la casa. **Fase 5 EJECUTADA en la
+  V5.82**: la oferta **anclada al PVC** (`pvcParaGrado` — LA puerta al precio, `precio.ts` puro, `RANGOS` derivados de
+  `definicion.ts`): en `/ocp/ofertas` CTCx decide «no ofertar» con motivo o emite Lote de Temporada (PVC × banda, mínimo del grado,
+  compra inicial de una carga, términos `TERMINOS_VERSION`), **directa** (PVC − 8 %, 30 días, máx.) o **excepción** (a mano, con
+  motivo); past crop −10 %; el rechazo bajo Black es gratis (sin cashback) y la **re-evaluación** (`reevaluar`, tarifa plena, 80 %
+  si sube de grado, previa razón de CTCx) reinicia la solicitud; `terminos.ts` completo con `qa-trato-check`; el circuito gana
+  «no superó» y «sin oferta». **Diferido de la fase 5**: `moqCargas` (es el MOQ de mezcla de Cherry Picked, no el mínimo por lote);
+  los rótulos de rango en el motor Python y el tablero HTML (`herramientas-internas`). **Sigue: fase 6** (aceptar con claridad:
+  la calculadora, la declaración `locked_kg` ≥ mínimo, trimestre/30 días, el contrato nace lleno; **exige las cuentas `prueba-*`**).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

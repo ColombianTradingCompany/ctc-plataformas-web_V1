@@ -89,6 +89,14 @@ export type ArenaInscription = {
   factura_emitida_by: string | null;
   subvencion_id: string | null;
   pago_contra_entrega: boolean;
+  // V5.82 · fase 5: la decisión comercial (paso 13) y la re-evaluación (paso 12).
+  decision_comercial: "sin_oferta" | null;
+  decision_comercial_at: string | null;
+  decision_comercial_motivo: string | null;
+  reevaluaciones: number;
+  grado_previo: string | null;
+  reevaluacion_previa: unknown;
+  reevaluacion_acuerdo: string | null;
   mejoras_doc: string | null;
   mejoras_generated_at: string | null;
   cashback_cop: number | null;

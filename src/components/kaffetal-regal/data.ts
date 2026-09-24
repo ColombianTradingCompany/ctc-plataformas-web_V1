@@ -355,7 +355,8 @@ export type ProducerOffer = {
   id: string;
   lotId: string;
   lotName: string;
-  kind: "temporada" | "black" | "subasta";
+  // V5.82: `directa` (CTCx Selection, PVC − 8 %) y `excepcion` (precio a mano con motivo) llegan del OCP; se muestran junto a temporada.
+  kind: "temporada" | "directa" | "excepcion" | "black" | "subasta";
   status: "emitida" | "aceptada" | "rechazada" | "retirada" | "expirada";
   grade: NonNullable<Lot["grade"]> | null;
   score: number | null;

@@ -17,15 +17,23 @@
 //   · pila      precio al comprador en US$/kg de verde garantizado: N0 finca →
 //               N1 empacado → N2 FCA Bogotá (≈FOB) → N3 CIP aeropuerto (≈CIF) → N4 DDP
 
+import { GRADOS } from "@/lib/grados/definicion";
+
 export const BANDAS = ["Black", "Red", "Blue", "Gold"] as const;
 export const BANDAS5 = ["Black", "Red", "Blue", "Gold", "Tyrian"] as const;
 export type Banda = (typeof BANDAS)[number];
 export type Banda5 = (typeof BANDAS5)[number];
 export type Nivel = "FCA" | "CIP" | "DDP";
 
-export const RANGOS: Record<Banda5, string> = {
-  Black: "80,0–83,9", Red: "84,0–85,9", Blue: "86,0–87,9", Gold: "88,0–88,9", Tyrian: "≥ 89,0",
-};
+// V5.82 (conflicto n.º 1 de ALINEACION §1, cerrado en la fase 5 del PLAN_CIRCUITO_DEL_LOTE): los rangos de
+// puntaje de cada banda se DERIVAN de `definicion.ts` —la única definición de los grados— en vez de escribirse
+// aquí una segunda vez. Hasta la V5.81 esta tabla decía «Red 84,0–85,9» mientras el grado Red era 82–83,99.
+// Son rótulos: solo alimentan el campo `rango` de la escalera. Las ediciones YA publicadas conservan sus
+// rótulos viejos (una edición publicada es inmutable); por eso `precio.ts` nunca lee `rango`.
+const fmtSca = (n: number) => n.toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const RANGOS: Record<Banda5, string> = Object.fromEntries(
+  GRADOS.map((g) => [g.nombre, g.scaMax >= 100 ? `≥ ${fmtSca(g.scaMin)}` : `${fmtSca(g.scaMin)}–${fmtSca(g.scaMax)}`])
+) as Record<Banda5, string>;
 
 export const SCORE_KEYS = [
   "Sub-índice O&D cafetero", "Clima / ENSO", "BRL/USD", "COP/USD (TRM)",

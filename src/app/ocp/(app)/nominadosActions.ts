@@ -9,9 +9,11 @@ import { generateMejorasDoc } from "@/lib/arena/mejoras";
 import { labEvaluationHasData, labEvaluationScaData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
 import { saldoDe } from "@/lib/muestras/particion";
+import { anularRecibo } from "@/lib/muestras/recibo";
 import { normalizaRueda } from "@/lib/catacion/rueda";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
-import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
+import { GRADOS, gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
+import { REEVALUACION, TARIFA_EVALUACION_COP } from "@/lib/trato/terminos";
 
 // ── El tramo pagado del lote, lado OCP (era «Nominados»; V5.80 = fase 3 del PLAN_CIRCUITO_DEL_LOTE) ──
 // Folio 7 del owner, pasos 7–12. Lo que vive aquí:
@@ -594,7 +596,7 @@ export async function recordEvaluationVerdict(
 
   const { data: ins } = await service
     .from("arena_inscriptions")
-    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, lots(name, stage)")
+    .select("id, phase, status, amount_due_cop, producer_id, sondeo_batch_id, sondeo_evaluation, reevaluaciones, grado_previo, lots(name, stage)")
     .eq("lot_id", lotId)
     .maybeSingle();
   if (!ins || ins.phase !== "sondeo") return { ok: false, error: "Este lote no está en evaluación." };
@@ -704,10 +706,23 @@ export async function recordEvaluationVerdict(
 
     // El grado y el galardón. El service role salta los guards por diseño.
     await service.from("lots").update({ grade: grado.id, stage: "galardonado" }).eq("id", lotId);
+    // V5.82 · folio 12 / respuesta 2: en una RE-EVALUACIÓN que SUBE de grado, CTC reembolsa el 80 % de lo pagado
+    // (`cashback_cop` / `cashback_status`, que antes eran el cashback del rechazado). Un exento no pagó: nada que devolver.
+    const subio = (ins.reevaluaciones ?? 0) > 0 && (ins.grado_previo == null || GRADOS.findIndex((g) => g.id === grado.id) > GRADOS.findIndex((g) => g.id === ins.grado_previo));
+    const reembolso = subio && ins.status === "pagado" ? Math.round((ins.amount_due_cop ?? 0) * (REEVALUACION.reembolsoPctSiSubeGrado / 100)) : null;
     await service
       .from("arena_inscriptions")
-      .update({ phase: "galardonado", sondeo_result: "aprobado", ...resultCols, sondeo_score: puntaje })
+      .update({ phase: "galardonado", sondeo_result: "aprobado", ...resultCols, sondeo_score: puntaje, ...(reembolso ? { cashback_cop: reembolso, cashback_status: "pendiente" } : {}) })
       .eq("id", ins.id);
+    if (reembolso) {
+      await service.from("producer_comm_log").insert({
+        producer_id: ins.producer_id,
+        context_label: lot ? `Lote ${lot.name}` : null,
+        lot_id: lotId,
+        note: `Su lote subió de grado en la re-evaluación: CTC le reembolsará el ${REEVALUACION.reembolsoPctSiSubeGrado} % de la tarifa (${formatCop(reembolso)}).`,
+        created_by: adminId,
+      });
+    }
     await service.from("audit_log").insert({
       entity_type: "lot",
       entity_id: lotId,
@@ -746,17 +761,11 @@ export async function recordEvaluationVerdict(
       }
     }
   } else {
-    // Cashback: 80% de lo efectivamente pagado. Un exento no pagó — sin cashback.
-    const cashback = ins.status === "pagado" ? Math.round((ins.amount_due_cop ?? 0) * 0.8) : null;
+    // V5.82 · folio 12 / respuesta 2: el rechazo bajo Black es GRATIS para el productor —se lleva el reporte de
+    // mejoras— y ya no hay cashback; el 80 % de reembolso existe solo en la re-evaluación que sube de grado.
     await service
       .from("arena_inscriptions")
-      .update({
-        phase: "retirado",
-        sondeo_result: "rechazado",
-        ...resultCols,
-        cashback_cop: cashback,
-        cashback_status: cashback ? "pendiente" : null,
-      })
+      .update({ phase: "retirado", sondeo_result: "rechazado", ...resultCols })
       .eq("id", ins.id);
     // El alta del Centro también se confirma cuando el café no supera: la evaluación vale, el lote no pasa.
     if (centroRow) await confirmarFilaDelCentro(service, centroRow.id, lotId, adminId);
@@ -766,13 +775,13 @@ export async function recordEvaluationVerdict(
       action: "sondeo_rechazado",
       new_status: "retirado",
       performed_by: adminId,
-      notes: `${cleanNotes.slice(0, 240)}${cashback ? ` · cashback ${formatCop(cashback)}` : ""}`,
+      notes: cleanNotes.slice(0, 240),
     });
     await service.from("producer_comm_log").insert({
       producer_id: ins.producer_id,
       context_label: lot ? `Lote ${lot.name}` : null,
       lot_id: lotId,
-      note: `Su café no superó la evaluación esta vez. Resultado: ${cleanNotes}${cashback ? ` · CTC le reembolsará el 80% de su inscripción (${formatCop(cashback)}) por Nequi.` : ""} En su panel encontrará las Recomendaciones de Mejora.`,
+      note: `Su café no superó la evaluación esta vez. Resultado: ${cleanNotes} En su panel encontrará las Recomendaciones de Mejora, sin costo. Si CTC ve que la mejora aseguraría una oferta, le propondrá una re-evaluación a tarifa plena (${formatCop(TARIFA_EVALUACION_COP)}) con el ${REEVALUACION.reembolsoPctSiSubeGrado} % de reembolso si sube de grado.`,
       created_by: adminId,
     });
     // Best-effort — un fallo de la IA jamás bloquea el registro del resultado.
@@ -781,6 +790,100 @@ export async function recordEvaluationVerdict(
 
   await cerrarBacheSiTermino(service, ins.sondeo_batch_id, adminId);
   revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * V5.82 · RE-EVALUACIÓN (folio 12 / respuesta 2): «a tarifa plena ($200.000), con 80 % de reembolso si sube un grado — y
+ * antes CTCx analiza que esa mejora aseguraría la oferta». CTCx la acuerda (con su razón) y la solicitud VUELVE A EMPEZAR
+ * sobre la misma fila: tarifa plena sin subvención, código nuevo, sin factura, sin muestra, sin bache. Lo anterior queda
+ * en `reevaluacion_previa` y `grado_previo`; las evaluaciones viejas siguen en `lot_evaluations`. Vale para un lote que no
+ * superó y para un galardonado que quiere subir; nunca con una oferta abierta o un contrato vivo.
+ */
+export async function reevaluar(lotId: string, formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const acuerdo = String(formData.get("acuerdo") ?? "").trim();
+  if (!acuerdo) return { ok: false, error: "Escriba por qué CTCx acuerda la re-evaluación (qué mejora aseguraría la oferta)." };
+
+  const [{ data: ins }, { data: lot }, { data: abierta }, { data: contratoVivo }] = await Promise.all([
+    service.from("arena_inscriptions").select("id, phase, status, producer_id, sondeo_result, sondeo_score, reevaluaciones, lots(name)").eq("lot_id", lotId).maybeSingle(),
+    service.from("lots").select("id, name, stage, grade").eq("id", lotId).maybeSingle(),
+    service.from("lot_offers").select("id").eq("lot_id", lotId).eq("status", "emitida").maybeSingle(),
+    service.from("purchase_contracts").select("id").eq("lot_id", lotId).in("status", ["pending_signature", "active", "reconditioning"]).maybeSingle(),
+  ]);
+  if (!ins || !lot) return { ok: false, error: "Solicitud no encontrada." };
+  if (ins.phase !== "retirado" && ins.phase !== "galardonado") return { ok: false, error: "Solo se re-evalúa un lote que no superó o uno ya galardonado." };
+  if (abierta) return { ok: false, error: "Este lote tiene una oferta abierta — retírela antes." };
+  if (contratoVivo) return { ok: false, error: "Este lote tiene un contrato vivo." };
+
+  let codeRow;
+  try {
+    codeRow = await insertEntryCode(service, { kind: "lote", prefix: "KRA", discountPct: 0, lotId, assignedTo: ins.producer_id, createdBy: adminId });
+    await service.from("arena_entry_codes").update({ redeemed_at: new Date().toISOString() }).eq("id", codeRow.id);
+  } catch {
+    return { ok: false, error: "No se pudo generar el código de la re-evaluación." };
+  }
+  const previa = { grado: lot.grade, puntaje: ins.sondeo_score, resultado: ins.sondeo_result, fase: ins.phase, cerrada_at: new Date().toISOString() };
+  const { error } = await service
+    .from("arena_inscriptions")
+    .update({
+      phase: "postulacion",
+      status: "pendiente",
+      amount_cop: TARIFA_EVALUACION_COP,
+      discount_pct: 0,
+      entry_code: codeRow.code,
+      entry_code_id: codeRow.id,
+      subvencion_id: null,
+      payment_ref: null,
+      confirmed_by: null,
+      confirmed_at: null,
+      factura_ref: null,
+      factura_emitida_at: null,
+      factura_emitida_by: null,
+      sondeo_batch_id: null,
+      sondeo_result: null,
+      sondeo_result_notes: null,
+      sondeo_score: null,
+      sondeo_evaluation: null,
+      sondeo_result_storage_path: null,
+      sondeo_result_filename: null,
+      cashback_cop: null,
+      cashback_status: null,
+      decision_comercial: null,
+      decision_comercial_at: null,
+      decision_comercial_motivo: null,
+      reevaluaciones: (ins.reevaluaciones ?? 0) + 1,
+      grado_previo: lot.grade,
+      reevaluacion_previa: previa,
+      reevaluacion_acuerdo: acuerdo,
+    })
+    .eq("id", ins.id);
+  if (error) return { ok: false, error: "No se pudo abrir la re-evaluación: " + error.message };
+  // El lote vuelve a Apto (conserva su grado hasta el veredicto nuevo) y la muestra hay que mandarla otra vez.
+  await service.from("lots").update({ stage: "apto" }).eq("id", lotId);
+  await anularRecibo(service, lotId, adminId, `Re-evaluación acordada: ${acuerdo}`);
+
+  await service.from("audit_log").insert({
+    entity_type: "arena_inscription",
+    entity_id: lotId,
+    action: "reevaluacion_acordada",
+    previous_status: ins.phase,
+    new_status: "postulacion",
+    performed_by: adminId,
+    notes: `${acuerdo.slice(0, 240)} · tarifa ${formatCop(TARIFA_EVALUACION_COP)} · código ${codeRow.code}`,
+  });
+  await service.from("producer_comm_log").insert({
+    producer_id: ins.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: `CTC acordó re-evaluar su lote a tarifa plena (${formatCop(TARIFA_EVALUACION_COP)}): ${acuerdo} Si sube de grado, le reembolsa el ${REEVALUACION.reembolsoPctSiSubeGrado} %. Recibirá la factura de cobro y deberá enviar una muestra nueva de 2 kg contra entrega.`,
+    created_by: adminId,
+  });
+  revalidateAll();
+  revalidatePath("/ocp/ofertas");
   return { ok: true };
 }
 

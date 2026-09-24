@@ -50,7 +50,7 @@ viene). Se funden con la fase 2. La pestaña vacía «Modelo Económico» de Dir
   (`PlataformasBoard.tsx` vive en esa carpeta pero es **Manejo de Plataformas**, del ECP: charter `consolas`.)
 - **Modelo Económico** — `src/lib/pvc/`: `motor.ts` (port del Python; **`paridad.json` es el contrato entre los cuatro
   motores** — Python de referencia en `C:\dev\ctc-platforms\apps-internas\PVC - Modelo\v2.0`, Excel, `motor.ts` y el JS del
-  tablero `docs/pvc/tablero/PVC_Tablero.html`), `servicio.ts` (`edicionVigente`: la edición cuya ventana contiene hoy),
+  tablero `docs/pvc/tablero/PVC_Tablero.html`), `servicio.ts` (`edicionVigente(fecha?)`: la edición cuya ventana contiene el día; **V5.82**: **`pvcParaGrado(grado, fecha?, {modificadorPct})`**, LA puerta al precio de un grado, sobre **`precio.ts`** —puro: `precioDeLaEscalera`, `bandaDeGrado`; nunca lee `rango`—),
   `actions.ts` (`crearVersionModeloAction`), `dossier.ts`, `tablero.ts`, `tipos.ts`, y los módulos PUROS que hoy se exhiben
   y no gobiernan nada: `lectura.ts`, `escala.ts` («El Punto y la Tríada» y la Base física), `canales.ts`, `compromiso.ts`.
   Pantallas en `src/components/panel/pvc/`; `scripts/seed-pvc-f4-2026.mjs`. **Grados**: `src/lib/grados/definicion.ts`
@@ -84,6 +84,7 @@ Solo lee: `lots`, `lot_offers`, `purchase_contracts`, `lot_listings` (para saber
   versión nueva con acta**, no una edición. **Una sola ruta de publicación** (el embed).
 - **La cifra de un guardián sale de la FUENTE, nunca del módulo que vigila**: el plan del owner, la documentación, el
   tablero. `qa-pvc-escala` afirmó en verde la Base física invertida (V5.53) por copiarla del código.
+- **Desde la V5.82 el PVC GOBIERNA una oferta real**: `emitOffer` (OCP) pide el precio a `pvcParaGrado` y guarda `pvc_edition_id`, `pvc_cop_kg` y el % (línea en `ALINEACION` §3 del 2026-09-24). Publicar una edición ya mueve dinero: la ventana `valid_from`/`valid_to` y la banda de cada grado son lo que el productor ve en su oferta.
 - **Un modelo se EXHIBE antes de GOBERNAR.** `lectura`, `escala`, `canales` y `compromiso` son cálculo puro que hoy solo
   se enseña en el ECP. El día que una oferta, un contrato o un listado los lea, es un cambio con alcance: línea en
   `ALINEACION` §3 y aviso previo a la superficie.
@@ -137,7 +138,7 @@ a Cherry Picked sin una línea en `ALINEACION` §3 y el visto bueno del owner** 
   modelo de **CN-9** (la escala de puntos; la puerta en el veredicto sigue siendo del OCP). **HI-1** (calculadora «PVC ×
   grado» para OCP, KR y campo) ya era de aquí: su primera versión es la pestaña Grados (V5.45).
 - **Conflicto vivo en un precio real** (2026-09-18): la edición PVC-F4-2026 rotula su fila «Gold» como *88,0–88,9* y
-  `definicion.ts` dice Gold 86,00–87,99. El owner decidió que manda `definicion.ts`; lo cierra la fase 2.
+  `definicion.ts` dice Gold 86,00–87,99. El owner decidió que manda `definicion.ts` — **cerrado en la V5.82** (fase 5 del `PLAN_CIRCUITO_DEL_LOTE`, desde `consolas`): `RANGOS` del motor TS se DERIVA de `definicion.ts` (`80,00–81,99`…) y `precio.ts` no lee el `rango` de una edición publicada (las de antes conservan los rótulos viejos). Quedan con dueño aquí los rótulos del motor Python (`pvc_model_v2.py`) y del tablero HTML (`PVC_Tablero.html:232`), que deben decir lo mismo.
 - **Validar la escala de puntos con el owner** antes de tocar `definicion.ts` (`ALINEACION` §3b): multiplicativa, K derivada,
   puerta 80–81,99, Tyrian exige SCA ≥ 89; y fijar el X % del collar de TRM (propuesta 6 %).
 - **Fase 2 del PVC** (`docs/PVC_BCP_PLAN.md` §7–§9): las cinco decisiones están **tomadas** (owner,

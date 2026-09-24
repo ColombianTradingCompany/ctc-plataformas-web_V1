@@ -1,6 +1,8 @@
 import "server-only";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { calcular, huella, type PvcEntradas, type PvcParams, type PvcSalida } from "./motor";
+import { precioDeLaEscalera, type EscalonPublicado, type PrecioDeGrado } from "./precio";
+import type { GradoId } from "@/lib/grados/definicion";
 import type { PvcCurrent, PvcEdition, PvcEditionStatus, PvcModelVersion } from "./tipos";
 
 // ── PVC · el servicio (lectura y escritura sobre las tablas) ─────────────────
@@ -64,8 +66,9 @@ export function hoyEnColombia(): string {
  * `coalesce(valid_from, publish_date)` a propósito: una edición a la que se le
  * olvidó la ventana no debe dejar al sistema sin precio.
  */
-export async function edicionVigente(): Promise<PvcEdition | null> {
-  const hoy = hoyEnColombia();
+export async function edicionVigente(fecha?: string): Promise<PvcEdition | null> {
+  // V5.82: acepta la fecha (YYYY-MM-DD) para «el PVC vigente el día D»; sin ella, hoy en Colombia.
+  const hoy = fecha ?? hoyEnColombia();
   const service = createServiceRoleClient();
   const { data } = await service
     .from("pvc_editions").select(EDITION_COLS)
@@ -74,6 +77,26 @@ export async function edicionVigente(): Promise<PvcEdition | null> {
   const filas = (data ?? []) as unknown as EditionRow[];
   const vigente = filas.find((r) => (r.valid_from ?? r.publish_date ?? "") <= hoy && (!r.valid_to || r.valid_to >= hoy));
   return vigente ? toEdition(vigente) : null;
+}
+
+export type PvcDeGrado = {
+  edicion: { id: string; code: string; validFrom: string | null; validTo: string | null; pvcCop: number | null };
+  precio: PrecioDeGrado;
+};
+
+/**
+ * V5.82 · LA puerta al precio (fase 5 del PLAN_CIRCUITO_DEL_LOTE): el PVC del grado `grado` vigente en la fecha
+ * (hoy si no se dice), con el % de modificación del trato (−8 % directa, −10 % past crop; `src/lib/trato/terminos.ts`).
+ * Devuelve null si no hay edición vigente o el grado no se oferta (Tyrian se subasta). Lee `banda` y `cop` de la
+ * escalera publicada, NUNCA su `rango` (`precio.ts`). Quien necesite un precio real lo pide aquí, no a la escalera.
+ */
+export async function pvcParaGrado(grado: GradoId, fecha?: string, opts?: { modificadorPct?: number }): Promise<PvcDeGrado | null> {
+  const edicion = await edicionVigente(fecha);
+  if (!edicion) return null;
+  const escalera = (edicion.outputs?.escalera ?? []) as unknown as EscalonPublicado[];
+  const precio = precioDeLaEscalera(escalera, grado, opts?.modificadorPct ?? 0);
+  if (!precio) return null;
+  return { edicion: { id: edicion.id, code: edicion.code, validFrom: edicion.validFrom, validTo: edicion.validTo, pvcCop: edicion.pvcCop }, precio };
 }
 
 /** Lo ya publicado que TODAVÍA no rige. No se esconde: que el precio de la

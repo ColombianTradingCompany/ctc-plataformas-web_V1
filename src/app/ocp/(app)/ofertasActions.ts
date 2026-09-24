@@ -5,51 +5,61 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
 import { currentSeason, seasonKey, seasonLabel, type Season } from "@/lib/arena/seasons";
+import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
+import { pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
+import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
 
-// ── Ofertas: CTCx confirma el trato, el productor decide (V5.18) ────────────
-// El circuito comercial del galardón. CTCx EMITE la oferta desde aquí —
-// referenciando la combinación Grado + Puntaje + Variedad + Proceso, congelada
-// como snapshot — y el productor la acepta o la rechaza desde «Contratos y
-// Compras». EL CONTRATO NACE DE LA ACEPTACIÓN (src/lib/ofertas/
-// producerActions.ts), no de la emisión ni del veredicto: V5.18 retiró el
-// contrato automático que el galardón creaba desde 2026-07-17.
+// ── Ofertas: CTCx decide y oferta, el productor acepta (V5.18 · anclada al PVC desde la V5.82) ────
+// El circuito comercial del galardón, folio 8 del owner (pasos 13–14 y 19; fase 5 del PLAN_CIRCUITO_DEL_LOTE).
+// CTCx decide si «tiene sentido comercial» ofertar (por defecto sí; puede no ofertar, sin devolución) y EMITE la
+// oferta desde aquí; el productor la acepta o la rechaza desde «Contratos y Compras». EL CONTRATO NACE DE LA
+// ACEPTACIÓN (src/lib/ofertas/producerActions.ts), no de la emisión ni del veredicto.
 //
-// Tres clases de oferta, una por destino comercial del grado:
-//   · temporada — red | blue | gold: la compra base con su escalera de
-//     liberación de 3 meses.
-//   · black — la consideración de compra directa (Black Stock): la abre
-//     decideBlackNegotiation('comprar'), no esta pantalla — la negociación
-//     sigue siendo el CRM de CTC; la oferta es su desenlace.
-//   · subasta — tyrian: «el podio de los mejores, al mejor postor». La puja
-//     del comprador NO está construida (fuera de alcance V5.18): CTC corre la
-//     subasta fuera y registra aquí el mejor postor como oferta; aceptar crea
-//     el contrato, igual que las demás.
+// EL PRECIO YA NO SE TECLEA (V5.82): sale de `pvcParaGrado` —la edición del PVC vigente el día de emitir, la banda
+// del grado y el % de modificación del trato— y la oferta guarda de qué edición salió, el COP/kg base y el %:
+//   · temporada — red | blue | gold: el «Lote de Temporada» del trimestre por comenzar, al PVC × multiplicador,
+//     con el mínimo del grado (respuesta 1), los términos versionados y la compra inmediata de UNA carga por CTCx.
+//     Si el lote es de la temporada pasada, −10 % (past crop).
+//   · directa — red | blue | gold: CTCx Selection (paso 19): PVC − 8 %, ventana de 30 días, cantidad mín./máx.
+//   · excepcion — red | blue | gold: precio a mano CON motivo. Existe para no bloquear la operación; deja rastro.
+//   · black — la consideración de compra directa (Black Stock): la abre decideBlackNegotiation('comprar') con el
+//     precio acordado en la negociación, no esta pantalla.
+//   · subasta — tyrian: «el podio de los mejores, al mejor postor»; se registra el mejor postor (Tyrian no tiene
+//     escalón en el PVC: se subasta — respuesta 3).
 //
-// Regla de temporada (owner): solo lotes galardonados EN esta temporada o en
-// la pasada (seasonKey, diferencia ≤ 1). El encuadre viaja congelado en la
-// oferta (season_label + lote_de_temporada_pasada) porque harvest_seasons es
-// service-role-only y el productor no podría derivarlo.
+// Regla de temporada (owner): solo lotes galardonados EN esta temporada o en la pasada (seasonKey, diferencia ≤ 1).
+// El encuadre viaja congelado en la oferta (season_label + lote_de_temporada_pasada).
 
 type Result = { ok: true } | { ok: false; error: string };
 
-const PATHS = ["/ocp/ofertas", "/ocp/contratos", "/ocp/ctc-selection", "/bcp"];
+const PATHS = ["/ocp/ofertas", "/ocp/contratos", "/ocp/ctc-selection", "/ocp/kr", "/bcp"];
 function revalidateAll() {
   for (const p of PATHS) revalidatePath(p);
 }
 
-export type OfferKind = "temporada" | "black" | "subasta";
+export type OfferKind = "temporada" | "directa" | "excepcion" | "black" | "subasta";
+
+/** Las clases cuyo precio sale del PVC. */
+const ANCLADAS: readonly OfferKind[] = ["temporada", "directa"];
 
 /** El grado que cada clase de oferta admite — la puerta es por CLASE. */
 function kindAllowsGrade(kind: OfferKind, grade: GradoId): boolean {
-  if (kind === "temporada") return grade === "red" || grade === "blue" || grade === "gold";
+  if (kind === "temporada" || kind === "directa" || kind === "excepcion") return grade === "red" || grade === "blue" || grade === "gold";
   if (kind === "black") return grade === "black";
   return grade === "tyrian";
 }
 
+const numOpcional = (v: FormDataEntryValue | null): number | null => {
+  const s = String(v ?? "").replace(",", ".").trim();
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+};
+
 /**
  * Emite una oferta sobre un lote galardonado. Reutilizable por la pantalla de
- * Ofertas (temporada · subasta) y por decideBlackNegotiation (black).
+ * Ofertas (temporada · directa · excepcion · subasta) y por decideBlackNegotiation (black).
  */
 export async function emitOffer(lotId: string, kind: OfferKind, formData: FormData): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");
@@ -57,13 +67,12 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
 
-  const price = Number(formData.get("price_per_kg"));
-  if (!Number.isFinite(price) || price <= 0) return { ok: false, error: "Escriba el precio ofrecido por kg (COP)." };
-  const quantityRaw = formData.get("quantity_kg");
-  const quantity = quantityRaw ? Number(quantityRaw) : null;
-  if (quantity !== null && (!Number.isFinite(quantity) || quantity <= 0)) {
+  const quantity = numOpcional(formData.get("quantity_kg"));
+  if (quantity !== null && (Number.isNaN(quantity) || quantity <= 0)) {
     return { ok: false, error: "La cantidad, si se indica, debe ser mayor que 0 kg." };
   }
+  const maxKg = numOpcional(formData.get("max_kg"));
+  if (maxKg !== null && (Number.isNaN(maxKg) || maxKg <= 0)) return { ok: false, error: "El máximo, si se indica, debe ser mayor que 0 kg." };
   const notes = String(formData.get("notes") || "").trim() || null;
 
   const { data: lot } = await service
@@ -82,7 +91,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   // inscripción que lo evaluó (fallback: la de registro del lote). Un lote sin
   // temporada registrada no se bloquea: es un hueco de datos, no un lote viejo.
   const [{ data: ins }, vigente] = await Promise.all([
-    service.from("arena_inscriptions").select("season_id").eq("lot_id", lotId).maybeSingle(),
+    service.from("arena_inscriptions").select("id, season_id, decision_comercial").eq("lot_id", lotId).maybeSingle(),
     currentSeason(service),
   ]);
   const gradingSeasonId = ins?.season_id ?? lot.season_id ?? null;
@@ -102,6 +111,23 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     }
   }
 
+  // ── El precio: del PVC para las ancladas; a mano, con motivo, para la excepción; el acordado o el mejor postor
+  //    para black y subasta. Para todas se guarda la referencia del PVC si la hay.
+  const modificadorPct = ANCLADAS.includes(kind) ? modificadorDeOferta({ directa: kind === "directa", pastCrop: lotePasado }) : 0;
+  const pvc: PvcDeGrado | null = lot.grade === "tyrian" ? null : await pvcParaGrado(lot.grade, undefined, { modificadorPct });
+  let price: number;
+  if (ANCLADAS.includes(kind)) {
+    if (!pvc) {
+      return { ok: false, error: "No hay una edición del PVC vigente hoy para ese grado — publíquela en ECP · Modelo Económico antes de ofertar (o emita una excepción con motivo)." };
+    }
+    price = pvc.precio.copKgFinal;
+  } else {
+    const typed = Number(String(formData.get("price_per_kg") ?? "").replace(",", "."));
+    if (!Number.isFinite(typed) || typed <= 0) return { ok: false, error: "Escriba el precio ofrecido por kg (COP)." };
+    if (kind === "excepcion" && !notes) return { ok: false, error: "Una oferta de excepción lleva su motivo en las notas — es lo que queda en el rastro." };
+    price = typed;
+  }
+
   // Una sola oferta abierta por lote (el índice parcial lo garantiza; esto da
   // el error legible). Y un lote con contrato vivo no se re-oferta.
   const [{ data: abierta }, { data: contratoVivo }] = await Promise.all([
@@ -118,6 +144,8 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     .eq("lot_id", lotId);
   const media = officialAverages(((evalRows as EvaluationRow[] | null) ?? []));
 
+  const now = new Date();
+  const esDirecta = kind === "directa";
   const { error } = await service.from("lot_offers").insert({
     lot_id: lotId,
     producer_id: lot.producer_id,
@@ -134,23 +162,47 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     quantity_kg: quantity,
     notes,
     emitted_by: adminId,
+    // V5.82 · el anclaje: de qué edición salió el precio, el COP/kg base y el % aplicado; los términos con los que nace.
+    pvc_edition_id: pvc?.edicion.id ?? null,
+    pvc_cop_kg: pvc?.precio.copKg ?? null,
+    modificador_pct: modificadorPct,
+    reference_price_source: pvc ? `PVC ${pvc.edicion.code}` : null,
+    reference_price_snapshot: pvc?.precio.copKg ?? null,
+    terms_version: ANCLADAS.includes(kind) ? TERMINOS_VERSION : null,
+    min_kg: ANCLADAS.includes(kind) ? minimoKg(lot.grade) : null,
+    max_kg: esDirecta ? maxKg : null,
+    ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null,
+    expira_at: esDirecta ? new Date(now.getTime() + VENTANA_DIRECTA_DIAS * 86_400_000).toISOString() : null,
+    compra_inicial_kg: kind === "temporada" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null,
   });
-  if (error) return { ok: false, error: "No se pudo emitir la oferta." };
+  if (error) return { ok: false, error: "No se pudo emitir la oferta: " + error.message };
 
+  // Emitir reabre una decisión de «sin oferta», si la había.
+  if (ins?.decision_comercial) {
+    await service.from("arena_inscriptions").update({ decision_comercial: null, decision_comercial_at: null, decision_comercial_motivo: null }).eq("id", ins.id);
+  }
+
+  const anclaje = pvc ? ` · PVC ${pvc.edicion.code} ${pvc.precio.banda} ×${pvc.precio.mult}${modificadorPct ? ` ${modificadorPct > 0 ? "+" : ""}${modificadorPct} %` : ""}` : "";
   await service.from("audit_log").insert({
     entity_type: "lot_offer",
     entity_id: lotId,
     action: "offer_emitted",
     new_status: "emitida",
     performed_by: adminId,
-    notes: `${kind} · ${lot.grade} · $${price}/kg${quantity ? ` · ${quantity} kg` : ""}`,
+    notes: `${kind} · ${lot.grade} · ${formatCop(price)}/kg${quantity ? ` · ${quantity} kg` : ""}${anclaje}${kind === "excepcion" ? ` · motivo: ${notes}` : ""}`,
   });
   const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : "Ofertas de Temporada";
+  const detalle =
+    kind === "temporada"
+      ? ` Es un Lote de Temporada: ${formatCop(price)}/kg de CPS anclados al PVC vigente${lotePasado ? " (lote de la temporada pasada, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minimoKg(lot.grade) ?? "—"} kg).`
+      : kind === "directa"
+        ? ` Es una oferta directa de CTCx Selection: ${formatCop(price)}/kg de CPS (PVC − 8 %), vigente ${VENTANA_DIRECTA_DIAS} días${maxKg ? `, hasta ${maxKg} kg` : ""}.`
+        : ` ${formatCop(price)}/kg de CPS.`;
   await service.from("producer_comm_log").insert({
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
     lot_id: lotId,
-    note: `CTC le envió una oferta por su lote galardonado (${lot.grade}). Revísela en «Contratos y Compras» → ${donde} — usted decide si la acepta o la rechaza.`,
+    note: `CTC le envió una oferta por su lote galardonado (${lot.grade}).${detalle} Revísela en «Contratos y Compras» → ${donde} — usted decide si la acepta o la rechaza.`,
     created_by: adminId,
   });
 
@@ -176,6 +228,59 @@ export async function retireOffer(offerId: string): Promise<Result> {
     new_status: "retirada",
     performed_by: adminId,
   });
+  revalidateAll();
+  return { ok: true };
+}
+
+/**
+ * V5.82 · Paso 13 del folio 8: «CTCx decide si tiene sentido comercial ofertar (por defecto sí; puede no ofertar, sin
+ * devolución)». La decisión queda en la solicitud con su motivo; el lote sale de «Pendiente de Oferta» al estado
+ * lateral «sin oferta» del circuito. Emitir una oferta después la reabre sola.
+ */
+export async function decidirNoOfertar(lotId: string, formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const motivo = String(formData.get("motivo") ?? "").trim();
+  if (!motivo) return { ok: false, error: "Escriba por qué no se oferta — es lo que queda en el rastro." };
+
+  const [{ data: lot }, { data: ins }, { data: abierta }] = await Promise.all([
+    service.from("lots").select("id, name, stage, producer_id").eq("id", lotId).maybeSingle(),
+    service.from("arena_inscriptions").select("id, decision_comercial").eq("lot_id", lotId).maybeSingle(),
+    service.from("lot_offers").select("id").eq("lot_id", lotId).eq("status", "emitida").maybeSingle(),
+  ]);
+  if (!lot || lot.stage !== "galardonado") return { ok: false, error: "Solo se decide sobre un lote galardonado." };
+  if (!ins) return { ok: false, error: "Este lote no tiene solicitud de evaluación." };
+  if (abierta) return { ok: false, error: "Este lote tiene una oferta abierta — retírela antes." };
+  if (ins.decision_comercial === "sin_oferta") return { ok: false, error: "Ya se decidió no ofertar este lote." };
+
+  const { error } = await service
+    .from("arena_inscriptions")
+    .update({ decision_comercial: "sin_oferta", decision_comercial_at: new Date().toISOString(), decision_comercial_motivo: motivo })
+    .eq("id", ins.id);
+  if (error) return { ok: false, error: "No se pudo guardar la decisión: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "lot", entity_id: lotId, action: "sin_oferta", performed_by: adminId, notes: motivo.slice(0, 300) });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: lotId,
+    note: "CTC decidió no emitir una oferta por su lote en esta temporada. Su galardón y su Ficha siguen vigentes; si las condiciones cambian, CTC le escribirá.",
+    created_by: adminId,
+  });
+  revalidateAll();
+  return { ok: true };
+}
+
+/** Deshace un «sin oferta» (el lote vuelve a Pendiente de Oferta). */
+export async function reabrirDecision(lotId: string): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const service = createServiceRoleClient();
+  const { data: ins } = await service.from("arena_inscriptions").select("id, decision_comercial").eq("lot_id", lotId).maybeSingle();
+  if (!ins || ins.decision_comercial !== "sin_oferta") return { ok: false, error: "Este lote no tiene una decisión de «sin oferta»." };
+  await service.from("arena_inscriptions").update({ decision_comercial: null, decision_comercial_at: null, decision_comercial_motivo: null }).eq("id", ins.id);
+  await service.from("audit_log").insert({ entity_type: "lot", entity_id: lotId, action: "sin_oferta_reabierta", performed_by: permiso.userId });
   revalidateAll();
   return { ok: true };
 }

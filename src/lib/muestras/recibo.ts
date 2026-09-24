@@ -90,3 +90,14 @@ export async function recibirMuestra(service: SupabaseClient, r: ReciboDeMuestra
   await avanzarAFilaSiCompleta(service, r.lotId);
   return { ok: true, partes };
 }
+
+/**
+ * V5.82 · la re-evaluación (folio 12) pide una muestra NUEVA: se borran las dos marcas del lote (enviada y recibida) para
+ * que el productor vuelva a mandar 2 kg y CTC vuelva a recibirlos. Las filas de `muestras` anteriores se QUEDAN: son el
+ * café que sigue en la casa (contramuestra, testeo), con su saldo. Vive aquí porque este módulo es el ÚNICO que escribe
+ * `sample_2kg_confirmed_at` (`qa-muestras-check`).
+ */
+export async function anularRecibo(service: SupabaseClient, lotId: string, adminId: string, motivo: string): Promise<void> {
+  await service.from("lots").update({ sample_shipped_at: null, sample_2kg_confirmed_at: null }).eq("id", lotId);
+  await service.from("audit_log").insert({ entity_type: "lot", entity_id: lotId, action: "sample_reset", performed_by: adminId, notes: motivo.slice(0, 300) });
+}

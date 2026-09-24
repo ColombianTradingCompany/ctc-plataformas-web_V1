@@ -38,9 +38,12 @@ export function ContratosTab({
   onGoEvaluaciones: () => void;
 }) {
   const isClubMember = !!gi.clubMemberSince;
-  const abiertas = (kind: ProducerOffer["kind"]) => offers.filter((o) => o.kind === kind && o.status === "emitida");
+  // V5.82: la directa (CTCx Selection) y la excepción son ofertas de temporada a otro precio; viven en la misma sección.
+  const esDeLaClase = (o: ProducerOffer, kind: ProducerOffer["kind"]) =>
+    kind === "temporada" ? o.kind === "temporada" || o.kind === "directa" || o.kind === "excepcion" : o.kind === kind;
+  const abiertas = (kind: ProducerOffer["kind"]) => offers.filter((o) => esDeLaClase(o, kind) && o.status === "emitida");
   const historial = (kind: ProducerOffer["kind"]) =>
-    offers.filter((o) => o.kind === kind && (o.status === "rechazada" || o.status === "retirada" || o.status === "expirada"));
+    offers.filter((o) => esDeLaClase(o, kind) && (o.status === "rechazada" || o.status === "retirada" || o.status === "expirada"));
   // La oferta aceptada que dio origen a cada contrato: trae el encuadre de
   // temporada congelado (label + «lote de la temporada pasada»).
   const ofertaDeContrato = new Map(offers.filter((o) => o.contractId).map((o) => [o.contractId!, o]));

@@ -69,8 +69,13 @@ const CASOS = [
   ["nota 5: hay contrato por firmar → catálogo activo", { grado: "blue", ultimaOferta: "aceptada", contrato: "pending_signature" }, "catalogo_activo"],
   ["nota 5: contrato vigente → catálogo activo", { grado: "gold", contrato: "active" }, "catalogo_activo"],
   ["nota 5: un contrato cumplido sigue siendo catálogo (es historia del trato, no un lote por ofertar)", { grado: "gold", contrato: "completed" }, "catalogo_activo"],
-  // la salida lateral
+  // las salidas laterales
   ["un No apto es No apto aunque tenga inscripción", { stage: "no_apto", tieneInscripcion: true, pagoConfirmado: true }, "no_apto"],
+  // FOLIO 7, PASO 12 (V5.82) — «bajo los mínimos de Black: rechazo automático» — y PASO 13 — «puede no ofertar, sin devolución»
+  ["paso 12: no superó la evaluación → no superó (sin grado)", { ...pagadoYRecibido, noSupero: true }, "no_supero"],
+  ["paso 12: la re-evaluación reinicia la solicitud: sin la marca, vuelve a solicitada", { tieneInscripcion: true, noSupero: false }, "solicitada"],
+  ["paso 13: galardonado y CTCx decidió no ofertar → sin oferta", { ...pagadoYRecibido, grado: "blue", sinOferta: true }, "sin_oferta"],
+  ["paso 13: emitir una oferta reabre la decisión", { ...pagadoYRecibido, grado: "blue", sinOferta: true, ultimaOferta: "emitida" }, "oferta_emitida"],
 ];
 for (const [nombre, entrada, esperado] of CASOS) {
   const r = E(entrada);
@@ -102,9 +107,9 @@ const B = [false, true];
 let combinaciones = 0;
 const desconocidos = [];
 for (const stage of STAGES) for (const registradoPorCtc of B) for (const tieneInscripcion of B) for (const pagoConfirmado of B)
-  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
+  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const noSupero of B) for (const sinOferta of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
     combinaciones++;
-    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, grado, ultimaOferta, contrato });
+    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, noSupero, sinOferta, grado, ultimaOferta, contrato });
     if (!CIRCUITO_LABEL[r.estado] || r.label !== CIRCUITO_LABEL[r.estado] || !Array.isArray(r.falta)) desconocidos.push(JSON.stringify(r));
   }
 check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etiquetado`, desconocidos.length === 0, desconocidos.slice(0, 3).join(" "));
@@ -148,7 +153,7 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   const tabla = readFileSync("src/app/ocp/(app)/kr/carga.ts", "utf8");
   check("la tabla del OCP deriva el estado con estadoDelCircuito()", tabla.includes("estadoDelCircuito("));
   check("y le dice si el lote va en un bache (fase «sondeo» con bache)", /enBache:\s*ins\?\.phase === "sondeo" && !!ins\.sondeo_batch_id/.test(tabla));
-  check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Pendiente de oferta|Catálogo activo)["'`]/.test(tabla));
+  check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Evaluado|No superó|Sin oferta|Pendiente de oferta|Catálogo activo)["'`]/.test(tabla));
   // La otra cara (V5.64): la barra del lote del productor lee la MISMA función y conoce el estado nuevo.
   const stepper = readFileSync("src/components/kaffetal-regal/LotKanbanStepper.tsx", "utf8");
   check("la barra del productor conoce «solicitada» y «evaluado» en su orden", /ORDEN[^=]*=\s*\[\s*"en_ficha",\s*"solicitada",\s*"a_evaluar",\s*"en_evaluacion",\s*"evaluado",\s*"pendiente_oferta"/.test(stepper));

@@ -319,3 +319,24 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE: uso directo de la credencial (Ficha sin bache); `green-datasheet` variante interna (herramientas-cafe); KR alimenta
   `evaluacionPendiente`; validar la fórmula del CVA con el Q-Grader; nadie ha conducido el módulo en vivo.
 (commit: ebb5861)
+
+## [2026-09-24] V5.82 · Consolas → Herramientas Internas (PVC) — fase 5 del PLAN_CIRCUITO_DEL_LOTE: confirmar y ofertar
+- REGLA NUEVA (DICT `pvcparagrado`): `src/lib/pvc/precio.ts` (puro: `precioDeLaEscalera`, `bandaDeGrado`, `GRADOS_SIN_OFERTA`) +
+  `pvcParaGrado(grado, fecha?, {modificadorPct})` en `servicio.ts` (`edicionVigente(fecha?)`): edición vigente → banda del grado
+  (`definicion.ts`) → COP/kg y COP/carga × (1 ± %). `RANGOS` del motor DERIVADO de `definicion.ts` (conflicto n.º 1 cerrado).
+- NODO «Pendiente de Oferta» `/ocp/ofertas` (`ofertasActions.ts`, `OfertasClient.tsx`): la oferta ANCLADA — temporada (PVC × banda,
+  `min_kg` del grado, `compra_inicial_kg` 125, `terms_version`), `directa` (PVC − 8 %, `ventana_dias` 30, `expira_at`, `max_kg`),
+  `excepcion` (a mano + motivo), past crop −10 %; `pvc_edition_id`, `pvc_cop_kg`, `modificador_pct`, `reference_price_*` escritos.
+  `decidirNoOfertar` (paso 13, motivo) / `reabrirDecision`; emitir reabre.
+- FLUJO «rechazo gratis + re-evaluación» (paso 12): el rechazo bajo Black ya no paga cashback; `reevaluar(lotId, acuerdo)` reinicia la
+  solicitud (tarifa plena, sin subvención, factura y muestra nuevas — `anularRecibo` en `recibo.ts`, único escritor de la marca) y
+  guarda lo previo; el galardón que SUBE de grado reembolsa el 80 % (`cashback_*`). «Lotes en Evaluación»: «No superaron» y
+  «Reembolsos pendientes».
+- DICT `terminos` completo: compra inicial 1 carga, tramos 25/25, penalidad 4 %, mora 2+2/5 %, renovación 90 d, past crop 9 m/−10 %,
+  directa −8 %/30 d, declaraciones; `modificadorDeOferta`. CIRCUITO: laterales «no superó» y «sin oferta».
+- DATOS: migración `ofertas_ancladas` (acta en `docs/migraciones/`).
+- Guardianes: `qa-pvc-precio` (52, nuevo — desde `paridad.json` y `definicion.ts`), `qa-trato-check` (35, nuevo — desde el plan),
+  `qa-circuito` 45; `qa-ofertas` 37 intacto.
+- PENDIENTE: fase 6 (KR: calculadora, declaración `locked_kg`, contrato lleno — exige `prueba-*`); rótulos `RANGOS` del motor Python y
+  del tablero HTML (herramientas-internas); `moqCargas` sigue siendo el MOQ de mezcla.
+(commit: pendiente)

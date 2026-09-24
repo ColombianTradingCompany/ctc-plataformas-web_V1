@@ -18,6 +18,7 @@ import {
   markCashbackPaid,
   postularOnBehalf,
   recordEvaluationVerdict,
+  reevaluar,
   regenerateMejoras,
   removeFromBatch,
   unsettleInscription,
@@ -460,7 +461,7 @@ export function ConfirmarCentroControls({
                 {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
               </button>
               <button className="btn btn-sm" disabled={pending || !notes.trim()} onClick={() => run(() => recordEvaluationVerdict(lotId, "rechazado", notes, undefined, { centroEvaluationId: alta.id }))}>
-                No supera (cashback 80% + mejoras IA)
+                No supera (reporte de mejoras, sin costo)
               </button>
             </div>
             <div style={{ borderTop: "1px dashed var(--line)", marginTop: 12, paddingTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
@@ -637,7 +638,7 @@ export function SondeoRegistroControls({
                       {grado ? `Galardonar → ${grado.nombre}` : "Galardonar"}
                     </button>
                     <button className="btn btn-sm" disabled={pending || uploading || !notes.trim()} onClick={() => verdict("rechazado")}>
-                      No supera (cashback 80% + mejoras IA)
+                      No supera (reporte de mejoras, sin costo)
                     </button>
                   </div>
                 </>
@@ -660,6 +661,41 @@ export function CashbackControls({ lotId, amountLabel }: { lotId: string; amount
       <button className="btn btn-sm btn-solid" disabled={pending} onClick={() => run(() => markCashbackPaid(lotId, ref))}>
         Cashback pagado · {amountLabel}
       </button>
+      <ErrorLine error={error} />
+    </div>
+  );
+}
+
+/** V5.82 · la re-evaluación (folio 12): CTCx la acuerda con su razón; la solicitud vuelve a empezar a tarifa plena. */
+export function ReevaluarForm({ lotId }: { lotId: string }) {
+  const { pending, error, run } = useAction();
+  const [open, setOpen] = useState(false);
+  const [acuerdo, setAcuerdo] = useState("");
+  if (!open) {
+    return (
+      <button className="btn btn-sm" onClick={() => setOpen(true)}>
+        Re-evaluar (tarifa plena)…
+      </button>
+    );
+  }
+  return (
+    <div style={{ display: "grid", gap: 6, width: "100%" }}>
+      <textarea rows={2} placeholder="Por qué CTCx acuerda la re-evaluación: qué mejora aseguraría la oferta (el productor lo lee)" value={acuerdo} onChange={(e) => setAcuerdo(e.target.value)} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <button
+          className="btn btn-sm btn-solid"
+          disabled={pending || !acuerdo.trim()}
+          onClick={() => {
+            if (!window.confirm("¿Acordar la re-evaluación? La solicitud vuelve a empezar a tarifa plena, sin subvención; el productor recibe factura nueva y manda una muestra nueva. Si sube de grado, se le reembolsa el 80 %.")) return;
+            const fd = new FormData();
+            fd.set("acuerdo", acuerdo);
+            run(() => reevaluar(lotId, fd));
+          }}
+        >
+          {pending ? "Abriendo…" : "Acordar re-evaluación"}
+        </button>
+        <button className="btn btn-sm" onClick={() => setOpen(false)}>Cancelar</button>
+      </div>
       <ErrorLine error={error} />
     </div>
   );

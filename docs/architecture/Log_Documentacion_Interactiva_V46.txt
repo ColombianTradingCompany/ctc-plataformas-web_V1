@@ -295,4 +295,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
   brief), `qa-circuito` 31 → 38; `qa-evaluaciones` y `qa-asistencia` re-apuntados al recibo único.
 - PENDIENTE: fase 4 (Centro de Calidad · Evaluación de Lotes: el Q-Grader escribe con su credencial, el nombre deja de teclearse);
   2.ª tanda de Muestras (alerta de 90 días derivada, muestras para comprador); la Datasheet interna.
-(commit: pendiente)
+(commit: bf2a0a5)

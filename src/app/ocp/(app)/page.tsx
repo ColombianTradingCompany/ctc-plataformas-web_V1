@@ -51,7 +51,8 @@ export default async function OcpHomePage() {
       v: pendingFincas.length,
       denom: totalFincas ?? 0,
       color: "#3C0A86",
-      href: "/ocp/kr",
+      // V5.76: abre la tabla con las FINCAS como elemento y el filtro «en revisión por CTCx» (pendiente (g) del charter).
+      href: "/ocp/kr?elemento=fincas&pasaporte=en_revision",
       sub: `de ${totalFincas ?? 0} fincas`,
     },
     {

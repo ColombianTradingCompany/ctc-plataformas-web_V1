@@ -9,6 +9,7 @@ import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEu
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
 import { estadoDelCircuito, type EstadoDelCircuito } from "@/lib/ocp/circuito";
 import type { Gestion } from "@/lib/asistencia/desacoplado";
+import type { EudrStatus } from "@/lib/eudr";
 
 // ── Productores, Fincas y Lotes · LA carga de la tabla única (V5.61) ─────────
 // Una sola lectura para las dos vistas (tabla y mapa). El GRANO ES EL LOTE: cada
@@ -42,6 +43,8 @@ export type KrFila = {
   fincaCodigo: string | null;
   fincaLugar: string;
   visa: { label: string; tono: Tono } | null;
+  /** V5.76: el código del estado del Pasaporte (`fincaEudrStatus`), para filtrar por etapa sin leer la etiqueta. */
+  pasaporte: EudrStatus["code"] | null;
   lat: number | null;
   lng: number | null;
   // lote
@@ -206,7 +209,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
       departamento: perfil?.department ?? "",
       gestion: perfil?.gestion ?? null,
     };
-    const sinFinca = { fincaId: null, fincaNombre: null, fincaCodigo: null, fincaLugar: "", visa: null, lat: null, lng: null };
+    const sinFinca = { fincaId: null, fincaNombre: null, fincaCodigo: null, fincaLugar: "", visa: null, pasaporte: null, lat: null, lng: null };
     const sinLote = {
       loteId: null, loteNombre: null, loteRef: null, etapa: null, etapaLabel: null, ficha: null, eva: null, circuito: null, muestra: null,
       grado: null, gradoLabel: null, temporadaId: null, temporadaLabel: null, oferta: null, trato: null,
@@ -221,6 +224,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
         fincaCodigo: fincaCode(f.id),
         fincaLugar: [f.municipio, f.departamento].filter(Boolean).join(", "),
         visa: { label: estado.label, tono: f.status === "rejected" ? ("bad" as Tono) : tonoDeLaVisa(estado.tone) },
+        pasaporte: estado.code,
         lat: centro?.la ?? null,
         lng: centro?.ln ?? null,
       };

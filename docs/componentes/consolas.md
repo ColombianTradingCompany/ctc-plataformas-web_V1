@@ -151,8 +151,16 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
   recordatorios, dossier ES/EN) → solicitud, factura y muestra → **Centro de Calidad · Evaluación de Lotes** (el Q-Grader, anónimo,
   con la Datasheet interna) → confirmar y ofertar (`pvcParaGrado`, `terminos.ts`) → aceptar con calculadora → el trato mes a mes →
   CTCx Selection y Compras. Después viene la **Etapa 2** (correr todo con Asistencia y Desacoplado) y la **Etapa 3** (Cherry Picked).
-  ⚠️ Nada se ejecuta hasta que el owner conteste el §6 del plan (mínimos, tarifa, Tyrian, dossier, Q-Grader, congelar cuenta, rail,
-  borrado del contrato de prueba).
+  **El owner contestó las ocho decisiones el 2026-09-24** (están en el §6 del plan) y la **fase 0 se ejecutó en la V5.76**: el juego
+  de prueba está borrado (contrato `8618ecda`, oferta, listado, lote `f5187234`); queda el archivo del video huérfano en
+  `kaffetal-media` (se retira por la Storage API, no por SQL) y el **wrap V47** lo compila WRAP-COMMIT-PUSH cuando el owner lo llame.
+  Lo que las respuestas cambiaron en el plan: la **Arena se queda** en BCP (se rehace como sesiones de segunda apreciación con la
+  Datasheet Tool; los «Reclamos de oficialización» salen de allí al chequeo del OCP); «Ofertas CP Aceptadas» y «Oferta desde CTCx
+  Selection» son el **staging** del Catálogo Activo; la subasta Tyrian sigue (MOQ 100 kg CPS); mínimos por lote 6 · 3 · 200 kg;
+  tarifa $200.000 con Campañas de Subvención (30–70 %); el Q-Grader es una credencial `centro-calidad` con módulos activables y uso
+  directo; la ruptura nunca es automática pero se hace visible sola. **Sigue: fase 1** (retiros y mudanzas).
+  También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
+  elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete
   respuestas del owner al final. **Primera tanda EJECUTADA en la V5.75**: **Asistencia a Proveedores** (`/ocp/asistencia` + botón
   en `/ocp/kr?productor=`: la sesión asistida, `src/lib/asistencia/actions.ts`), **Proveedor Desacoplado** (`/ocp/desacoplado`:
@@ -217,8 +225,8 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
   pendiente, que son las dos con botones que emiten. **(e)** los segmentos de «temperatura» (Marchitando · Nuevos ·
   Primíparos…) dejaron de ser un tablero: van como texto bajo el nombre del productor; si el owner echa de menos el kanban,
   vuelve como agrupación de la tabla. **(f)** `GRADO_LABEL` tiene una fuente (`src/lib/ocp/etapas.ts`) y seis copias más en
-  catálogo, contratos y la Arena, sin tocar. **(g)** el KPI «Fincas pendientes» del Panel del OCP abre la tabla SIN filtrar:
-  la tabla no tiene todavía un filtro «pendientes de revisión».
+  catálogo, contratos y la Arena, sin tocar. ~~**(g)** el KPI «Fincas pendientes» del Panel del OCP abre la tabla SIN filtrar~~ — **cerrado en la V5.76**: abre
+  `?elemento=fincas&pasaporte=en_revision`.
 - **EL MODELO ECONÓMICO YA NO ES DE ESTE CHARTER (owner, 2026-09-19, V5.55).** Herramientas Internas pasó a ser lo que el
   rail llamaba «BCP · Business Core» —Contexto, Misión y Visión, Modelo Económico (PVC y Grados), Procesamiento, Logística— y
   se llevó los pendientes del PVC: la **fase 2**, el **refurbish** del módulo, **CN-1** (el PVC de ene–mar 2027 antes del
@@ -237,8 +245,8 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
   **(a)** esconder o deshabilitar los botones de escritura a un viewer, consola por consola (OCP primero) — hoy los ve, los
   pulsa y recibe el mensaje; **(b)** `requireActiveAdmin()` a secas (las 16 lecturas) sigue sin mirar la CONSOLA: un operador
   con grant solo de ECP puede llamar a mano una lectura del OCP — es la «deuda anotada» del plan V5 §9, ahora acotada a leer;
-  **(c)** las validaciones que todavía hacen `throw` dentro de acciones de formulario (`createLot`: «Finca no encontrada»…)
-  son deuda anterior a esta tanda: tumban la página igual que antes.
+  **(c)** las validaciones que todavía hacen `throw` dentro de acciones de formulario son deuda anterior a esta tanda: tumban la
+  página igual que antes (`createLot` ya no existe: se retiró en la V5.76; `logProducerComm` sigue lanzando).
 - **Transcriptor**: una credencial estrecha (RPC dedicada) en vez de `service_role` en el instalador. **Stripe**: (1) país de
   la entidad legal; (2) claves sandbox en `.env.local` (owner, nunca por chat); (3) autorizar el MCP de Stripe (OAuth) en
   sesión interactiva; (4) primera tanda: seguimiento de pagos a productores en `contract_releases`, luego Checkout según

@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { ActionForm } from "@/components/panel/ActionForm";
-import { createLot } from "../actions";
 import { cargarKr } from "./carga";
-import { KrTabla, type FiltroRapido } from "./KrTabla";
+import { KrTabla, type Elemento, type FiltroPasaporte, type FiltroRapido } from "./KrTabla";
 import { AnclasViejas } from "./AnclasViejas";
 import { LoteSeccion } from "./LoteSeccion";
 import { FincaSeccion } from "./FincaSeccion";
@@ -28,8 +26,9 @@ export const dynamic = "force-dynamic";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FILTROS: FiltroRapido[] = ["galardonados", "sin-finca", "sin-lote"];
+const PASAPORTES: FiltroPasaporte[] = ["con", "sin", "no_apta", "pendiente", "en_revision", "aprobada", "apta", "rechazada"];
 
-type Params = { lote?: string; finca?: string; productor?: string; vista?: string; filtro?: string };
+type Params = { lote?: string; finca?: string; productor?: string; vista?: string; filtro?: string; elemento?: string; pasaporte?: string };
 
 export default async function KrPage({ searchParams }: { searchParams: Promise<Params> }) {
   const sp = await searchParams;
@@ -116,73 +115,36 @@ export default async function KrPage({ searchParams }: { searchParams: Promise<P
   }
 
   // ── La tabla y su mapa ───────────────────────────────────────────────────
-  const [{ filas, temporadas }, { data: fincasAprobadas }] = await Promise.all([
-    cargarKr(service),
-    service.from("fincas").select("id, name, municipio").eq("status", "approved").order("name"),
-  ]);
-  const aprobadas = (fincasAprobadas as { id: string; name: string; municipio: string | null }[] | null) ?? [];
+  // V5.76 (owner, al ver la tabla): sin «Nuevo lote (en nombre del productor)» —un lote en nombre de alguien
+  // se crea con la sesión asistida (`/ocp/asistencia`)—; agrupada por productor; y con el ELEMENTO (lotes o
+  // fincas) como filtro principal, que también decide qué pinta el mapa. `?elemento=fincas&pasaporte=en_revision`
+  // es lo que enlaza el KPI «Fincas pendientes» del Panel.
+  const { filas, temporadas } = await cargarKr(service);
   const filtroInicial = (FILTROS as string[]).includes(sp.filtro ?? "") ? (sp.filtro as FiltroRapido) : "";
+  const elementoInicial: Elemento = sp.elemento === "fincas" ? "fincas" : "lotes";
+  const pasaporteInicial = (PASAPORTES as string[]).includes(sp.pasaporte ?? "") ? (sp.pasaporte as FiltroPasaporte) : "";
 
   return (
     <div>
       <AnclasViejas />
       <h1 className={styles.title}>Productores, Fincas y Lotes</h1>
       <p className={styles.subtitle}>
-        Una fila por lote, con su finca y su productor al lado — y una fila propia para la finca que aún no tiene lote y el productor que
-        aún no tiene finca, que son a los que hay que acompañar. Cada celda abre la vista completa de lo que nombra. La pestaña{" "}
-        <b>Mapa</b> enseña lo mismo que esté filtrado aquí.
+        Una fila por lote, con su finca y su productor al lado, agrupadas por productor — y una fila propia para la finca que aún no
+        tiene lote y el productor que aún no tiene finca, que son a los que hay que acompañar. Con <b>Ver fincas</b>, una fila por finca y
+        el filtro de Pasaporte. Cada celda abre la vista completa de lo que nombra; la pestaña <b>Mapa</b> pinta lo mismo que esté filtrado.
       </p>
-
-      <details className={styles.card} style={{ display: "block", marginBottom: 24 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 600 }}>Nuevo lote (en nombre del productor)</summary>
-        {!aprobadas.length ? (
-          <p className={styles.empty} style={{ marginTop: 14 }}>Aprueba al menos una finca antes de poder crear un lote.</p>
-        ) : (
-          <ActionForm action={createLot} style={{ marginTop: 16 }} submitLabel="Crear lote" pendingLabel="Creando…" buttonClassName="btn btn-solid">
-            <div className={styles.field}>
-              <label htmlFor="finca_id">Finca</label>
-              <select id="finca_id" name="finca_id" required>
-                {aprobadas.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name} ({f.municipio})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="name">Nombre del lote</label>
-              <input id="name" name="name" required placeholder="Ej. Caturra Natural" />
-            </div>
-            <div className={styles.formGrid}>
-              <div className={styles.field}>
-                <label htmlFor="ficha_variedad">Variedad</label>
-                <input id="ficha_variedad" name="ficha_variedad" />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="ficha_proceso">Proceso</label>
-                <input id="ficha_proceso" name="ficha_proceso" />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="ficha_altitud_m">Altitud (m)</label>
-                <input id="ficha_altitud_m" name="ficha_altitud_m" type="number" />
-              </div>
-              <div className={styles.field}>
-                <label htmlFor="ficha_peso_muestra_kg">Peso de muestra (kg)</label>
-                <input id="ficha_peso_muestra_kg" name="ficha_peso_muestra_kg" type="number" step="0.1" defaultValue={2} />
-              </div>
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="ficha_notas_cata">Notas de cata</label>
-              <textarea id="ficha_notas_cata" name="ficha_notas_cata" rows={2} />
-            </div>
-          </ActionForm>
-        )}
-      </details>
 
       {!filas.length ? (
         <p className={styles.empty}>No hay productores registrados.</p>
       ) : (
-        <KrTabla filas={filas} temporadas={temporadas} vistaInicial={sp.vista === "mapa" ? "mapa" : "tabla"} filtroInicial={filtroInicial} />
+        <KrTabla
+          filas={filas}
+          temporadas={temporadas}
+          vistaInicial={sp.vista === "mapa" ? "mapa" : "tabla"}
+          filtroInicial={filtroInicial}
+          elementoInicial={elementoInicial}
+          pasaporteInicial={pasaporteInicial}
+        />
       )}
     </div>
   );

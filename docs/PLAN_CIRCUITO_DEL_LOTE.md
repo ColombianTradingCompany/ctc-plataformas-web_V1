@@ -1,6 +1,6 @@
 # Etapa 1 · Reestructurar y conectar el circuito del lote (del perfil al Catálogo Activo)
 
-**Estado: PLAN, sin ejecutar** (2026-09-24, escrito sobre la V5.75). Lo pidió el owner con once folios («CTC Platforms
+**Estado: PLAN aprobado en sus decisiones (§6, 2026-09-24); fase 0 ejecutada en la V5.76; fases 1–8 sin ejecutar** (escrito sobre la V5.75). Lo pidió el owner con once folios («CTC Platforms
 Optimization v2», fuera del repo en `reference/ocp-rutas-del-proveedor-2026-09-23/`): las tres rutas del proveedor, sus
 respuestas a las tres trabas de la 4b, el proceso «desenredado» en prosa (folios 7–8), la ventana de venta y la nota sobre la
 **CTCx Coffee Datasheet Tool**. Encargo textual: *«analiza y planea cómo reestructurar y conectar el sistema de tal manera que se
@@ -209,7 +209,29 @@ final lo que solo importa cuando haya un trato vivo. **Ninguna fase toca dinero 
 Las fases 1–5 no necesitan las cuentas de prueba (se verifican por guardianes, SQL y el lado del socio, que sí se conduce). La 6
 y la 7 son las que el productor ve: es donde la Etapa 2 hará su trabajo.
 
-## 6 · Decisiones del owner
+## 6 · Decisiones del owner — CONTESTADAS el 2026-09-24
+
+| # | Respuesta del owner | Lo que cambia en este plan |
+|---|---|---|
+| 1 | Son las cantidades **mínimas declaradas por cada lote**; las baja a **Black/Red 6 cargas · Blue 3 cargas · Gold 200 kg** | `terminos.ts` lleva esa tabla; `lectura.ts` (`moqCargas`) y `PVC_BCP_PLAN` §14.4 se alinean a ella (herramientas-internas); la compra inicial de CTCx sigue siendo 1 carga |
+| 2 | **$200.000 COP es la tarifa plana** (2026); los descuentos los da el **código de Subvención (30 % a 70 %)** | La tarifa vive en `terminos.ts`; los códigos de campaña **se conservan** (renombrados a subvención, 30–70 %) y los aplica CTCx o los canjea el productor; el rechazo automático es gratis; la re-evaluación es a tarifa plena con 80 % si sube de grado |
+| 3 | **La subasta sigue adelante**; MOQ de Tyrian **100 kg de CPS** | `/ocp/subastas` NO se retira ni se duerme: queda dentro de Catálogo Activo; Tyrian no entra por oferta; CN-4 (US$) sigue en pie |
+| 4 | **Un solo dossier por Lote**; una finca puede tener solo su dossier (Pasaporte) | Dos documentos ES/EN: el del lote (trazabilidad + Visa + caracterización) y el de la finca (Pasaporte) |
+| 5 | Sí: la credencial `centro-calidad` **activa uno o ambos módulos** (Evaluación de Lotes · Procesamiento de Lotes) y una **versión de uso directo**: emitir una Ficha Técnica o un reporte de procesamiento con la info de su propia interfaz, sin el OCP | `partner_accounts.modulos` jsonb (`{evaluacion, procesamiento}`) y un modo «uso directo» del módulo que no exige un bache; el nombre del Q-Grader deja de teclearse |
+| 6 | **Nunca automática; se hace visible de manera automática** | La mora y la ruptura potencial se DERIVAN y se pintan (OCP y KR); `estado_cuenta = congelada` lo escribe solo el owner a mano |
+| 7 | Sí. **Oferta desde CTCx Selection** toma lo confirmado como comprado en Compras y dice cuánto pasa al Catálogo Activo, en los mismos términos que cualquier productor (cantidad disponible). **Ofertas CP Aceptadas** viene de los contratos de KR con disponibilidad y contrato firmado, y se aceptan para moverlas al Catálogo Activo. **Las dos son el staging del Catálogo Activo** | `/ocp/contratos` («Ofertas CP Aceptadas») **se queda como módulo** (no se funde): es el staging del lado KR, con la acción «Pasar al Catálogo Activo»; «Oferta desde CTCx Selection» es el staging del lado Compras. El rail del OCP · Catálogo queda: Solicitudes de Evaluación · Lotes a Evaluar · Lotes en Evaluación · Evaluados → Pendiente Oferta · Ofertas CP Aceptadas · Oferta desde CTCx Selection · Catálogo Activo |
+| 8 | **Concedido** | **Ejecutado en la V5.76**: borrados contrato, liberaciones, oferta, listado y lote; el video queda huérfano en el bucket (Storage API); el wrap V47 lo llama WRAP-COMMIT-PUSH |
+
+**Y una nota del owner que cambia el §3**: **la Arena se queda** en BCP · Ecosistema de Valor y se rehará para su nueva función.
+Por ahora: (a) los **«Reclamos de oficialización pendientes»** (los `lot_evaluations` `producer_claim` = FT2 con soportes) salen
+de `/bcp/arena` y entran al chequeo del registro en el OCP (ya estaba en MOVER); (b) **se limpian todas las sesiones** y queda una
+interfaz mínima: crear una sesión **con nombre, sin temporada**; dentro, escoger cafés **galardonados** para llenarla; a cada uno
+se le puede hacer una **segunda apreciación con la Datasheet Tool**, que se **adjunta al lote** como una `lot_evaluations` más; **el
+grado lo rige UNA sola evaluación**, por defecto la inicial (`lot_evaluations.rige_grado`, una por lote) — así que
+`officialAverages` (el promedio de las aceptadas) **se retira** y el grado sale de la que rige. En §3, la fila «La Arena como
+evento» pasa de RETIRAR a **REHACER** (fase 1: limpiar sesiones y jornada; la interfaz nueva, con la Datasheet interna, en la fase 4).
+
+### Las preguntas tal como se hicieron (para el registro)
 
 1. **Una tabla de mínimos y compra inicial.** Propongo la del folio 4 como fuente y borro las otras dos: **Black/Red 7 cargas ·
    Blue 4 cargas · Gold/Tyrian 200 kg**, compra inicial de CTCx **1 carga (125 kg)** para todos. ¿Confirma? (7 cargas son 875 kg de

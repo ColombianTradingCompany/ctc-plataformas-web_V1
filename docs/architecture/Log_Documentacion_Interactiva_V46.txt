@@ -200,3 +200,18 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - ABIERTO: nadie condujo la sesión asistida en vivo (sin `prueba-*`); la 4b (el owner la revisa en el paso siguiente); Ficha
   retenida y descargable (KR); perfil único de CTCx Selection con imagen por lote (Compras); llamada de bienvenida (Tablero).
 (commit: f4f7c66)
+
+## [2026-09-24] V5.76 · Consolas — /ocp/kr según el owner; fase 0 del PLAN_CIRCUITO_DEL_LOTE (borrado del juego de prueba)
+- PLAN NUEVO para el mapa: `docs/PLAN_CIRCUITO_DEL_LOTE.md` (Etapa 1) sustituye a las fases 4b/5/6 del overhaul; las ocho decisiones
+  del owner están en su §6. Cambios de arquitectura DECIDIDOS y sin ejecutar: la Arena se queda en BCP como «sesiones de segunda
+  apreciación» (cada apreciación es una `lot_evaluations` más; el grado lo rige UNA, por defecto la inicial → `officialAverages`
+  deja de promediar); Ofertas CP Aceptadas + Oferta desde CTCx Selection = staging del Catálogo Activo; Tyrian sigue a subasta
+  (MOQ 100 kg CPS); mínimos declarados por lote 6 cargas (Black/Red) · 3 (Blue) · 200 kg (Gold); tarifa $200.000 con Campañas de
+  Subvención (30–70 %) en OCP · Stock Físico; Q-Grader = credencial `centro-calidad` con módulos activables (Evaluación · Procesamiento)
+  y uso directo; ruptura nunca automática, visible automáticamente.
+- `/ocp/kr`: sin `createLot` (retirado); agrupada por productor; ELEMENTO principal (lotes · fincas) que también decide los pines del
+  mapa; filtro de Pasaporte por etapa (`KrFila.pasaporte` = `fincaEudrStatus().code`); `?elemento=&pasaporte=`; el KPI «Fincas
+  pendientes» del Panel enlaza `?elemento=fincas&pasaporte=en_revision`.
+- DATOS: borrados contrato `8618ecda` (+3 liberaciones), oferta, listado y lote `f5187234` con sus dependientes; queda el video
+  huérfano en el bucket (Storage API). La base queda SIN contratos, ofertas ni listados: el circuito nuevo arranca en cero.
+(commit: pendiente)

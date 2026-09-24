@@ -41,18 +41,45 @@ const sub: React.CSSProperties = { display: "block", fontSize: 11.5, color: "var
 type Agrupar = "" | "productor" | "finca";
 export type FiltroRapido = "" | "galardonados" | "sin-finca" | "sin-lote";
 
+// ── V5.76 · las cuatro indicaciones del owner al ver la tabla (2026-09-24) ───
+// (1) «Nuevo lote (en nombre del productor)» se retiró: eso se hace con la sesión asistida.
+// (2) La agrupación por productor es la tabla por defecto.
+// (3) El mapa pinta los pines del ELEMENTO principal: fincas o lotes, no los dos a la vez.
+// (4) Un filtro principal —el ELEMENTO— deja ver las FINCAS como protagonista (una fila por finca,
+//     con cuántos lotes tiene) y filtrarlas por si tienen Pasaporte y en qué etapa va.
+export type Elemento = "lotes" | "fincas";
+/** Los valores del filtro de Pasaporte: «con» / «sin», o una etapa concreta de `fincaEudrStatus` (`src/lib/eudr.ts`). */
+export type FiltroPasaporte = "" | "con" | "sin" | KrFila["pasaporte"] & string;
+/** Las etapas del Pasaporte, en el orden del trámite. La etiqueta corta es la del filtro; la larga la pinta la insignia. */
+const ETAPAS_PASAPORTE: { code: KrFila["pasaporte"] & string; label: string }[] = [
+  { code: "no_apta", label: "Sin Pasaporte (declaración incompleta o riesgo)" },
+  { code: "pendiente", label: "En trámite (el productor)" },
+  { code: "en_revision", label: "En revisión por CTCx" },
+  { code: "aprobada", label: "Aprobado · expediente sin remitir" },
+  { code: "apta", label: "Vigente" },
+  { code: "rechazada", label: "Rechazado" },
+];
+/** «Tiene Pasaporte» = CTCx ya lo aprobó (remitido o no). Todo lo demás es «sin». */
+const CON_PASAPORTE = new Set<KrFila["pasaporte"]>(["apta", "aprobada"]);
+
 export function KrTabla({
   filas,
   temporadas,
   vistaInicial,
   filtroInicial,
+  elementoInicial = "lotes",
+  pasaporteInicial = "",
 }: {
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
   vistaInicial: "tabla" | "mapa";
   filtroInicial: FiltroRapido;
+  elementoInicial?: Elemento;
+  pasaporteInicial?: FiltroPasaporte;
 }) {
   const [vista, setVista] = useState<"tabla" | "mapa">(vistaInicial);
+  const [elemento, setElemento] = useState<Elemento>(elementoInicial);
+  const [pasaporte, setPasaporte] = useState<FiltroPasaporte>(pasaporteInicial);
   const [texto, setTexto] = useState("");
   const [pais, setPais] = useState("");
   const [depto, setDepto] = useState("");
@@ -60,7 +87,14 @@ export function KrTabla({
   const [circuito, setCircuito] = useState("");
   const [rapido, setRapido] = useState<FiltroRapido>(filtroInicial);
   const [rango, setRango] = useState<[number, number] | null>(null);
-  const [agrupar, setAgrupar] = useState<Agrupar>("");
+  const [agrupar, setAgrupar] = useState<Agrupar>("productor");
+
+  // Cuántos lotes tiene cada finca (la fila «finca sin lote» no cuenta): para la columna «Lotes» del elemento Fincas.
+  const lotesPorFinca = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of filas) if (f.fincaId && f.loteId) m.set(f.fincaId, (m.get(f.fincaId) ?? 0) + 1);
+    return m;
+  }, [filas]);
 
   const paises = useMemo(() => [...new Set(filas.map((f) => f.pais).filter(Boolean))].sort(), [filas]);
   const deptos = useMemo(
@@ -71,7 +105,18 @@ export function KrTabla({
   const visibles = useMemo(() => {
     const q = texto.trim().toLocaleLowerCase("es-CO");
     const enRango = rango ? new Set(temporadas.slice(rango[0], rango[1] + 1).map((t) => t.id)) : null;
+    // El elemento Fincas: UNA fila por finca (la primera de cada una; las filas ya vienen por productor y finca),
+    // sin los productores que no tienen finca. Lo demás filtra igual sobre esa fila.
+    const vistasFinca = new Set<string>();
     return filas.filter((f) => {
+      if (elemento === "fincas") {
+        if (!f.fincaId) return false;
+        if (vistasFinca.has(f.fincaId)) return false;
+        vistasFinca.add(f.fincaId);
+      }
+      if (pasaporte === "con" && !CON_PASAPORTE.has(f.pasaporte)) return false;
+      if (pasaporte === "sin" && (f.fincaId ? CON_PASAPORTE.has(f.pasaporte) : false)) return false;
+      if (pasaporte && pasaporte !== "con" && pasaporte !== "sin" && f.pasaporte !== pasaporte) return false;
       if (pais && f.pais !== pais) return false;
       if (depto && f.departamento !== depto) return false;
       if (grado && f.grado !== grado) return false;
@@ -90,7 +135,7 @@ export function KrTabla({
       }
       return true;
     });
-  }, [filas, texto, pais, depto, grado, circuito, rapido, rango, temporadas]);
+  }, [filas, elemento, pasaporte, texto, pais, depto, grado, circuito, rapido, rango, temporadas]);
 
   // Al agrupar, las filas se ordenan por el grupo y cada una sabe si ABRE grupo (lleva la cabecera encima).
   const ordenadas = useMemo((): { fila: KrFila; cabecera: string | null }[] => {
@@ -100,14 +145,15 @@ export function KrTabla({
     return orden.map((fila, i) => ({ fila, cabecera: i === 0 || grupoDe(orden[i - 1]) !== grupoDe(fila) ? grupoDe(fila) : null }));
   }, [visibles, agrupar]);
 
-  // El mapa: un pin por FINCA (color = su Visa) y uno por LOTE (color = su grado) sobre la misma finca.
-  // `GeoMap` abre en círculo los que comparten coordenada, así que los lotes de una finca se tocan por separado.
+  // El mapa pinta el ELEMENTO principal (V5.76): con Fincas, un pin por finca (color = su Pasaporte); con Lotes, un pin
+  // por lote (color = su grado) sobre las coordenadas de su finca. `GeoMap` abre en círculo los que comparten coordenada.
   const pines = useMemo((): GeoMarker[] => {
     const vistos = new Set<string>();
     const out: GeoMarker[] = [];
     for (const f of visibles) {
       if (f.lat == null || f.lng == null || !f.fincaId) continue;
-      if (!vistos.has(f.fincaId)) {
+      if (elemento === "fincas") {
+        if (vistos.has(f.fincaId)) continue;
         vistos.add(f.fincaId);
         out.push({
           id: `finca:${f.fincaId}`,
@@ -115,9 +161,10 @@ export function KrTabla({
           lng: f.lng,
           color: f.visa?.tono === "good" ? "#166534" : f.visa?.tono === "bad" ? "#991B1B" : "#B45309",
           title: f.fincaNombre ?? "Finca",
-          lines: [f.fincaCodigo ?? "", f.visa?.label ?? "", f.fincaLugar, f.productorNombre].filter(Boolean),
+          lines: [f.fincaCodigo ?? "", f.visa?.label ?? "", f.fincaLugar, f.productorNombre, `${lotesPorFinca.get(f.fincaId) ?? 0} lote(s)`].filter(Boolean),
           link: { label: "Abrir la finca", href: `/ocp/kr?finca=${f.fincaId}` },
         });
+        continue;
       }
       if (f.loteId) {
         out.push({
@@ -132,7 +179,7 @@ export function KrTabla({
       }
     }
     return out;
-  }, [visibles]);
+  }, [visibles, elemento, lotesPorFinca]);
 
   const cuenta = {
     productores: new Set(visibles.map((f) => f.productorId)).size,
@@ -163,6 +210,27 @@ export function KrTabla({
       </nav>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+        {/* El filtro principal: qué es una fila (y qué pinta el mapa). */}
+        <select
+          id="kr-elemento"
+          aria-label="Elemento"
+          value={elemento}
+          onChange={(e) => {
+            const v = e.target.value as Elemento;
+            setElemento(v);
+            if (v === "fincas" && rapido === "sin-finca") setRapido("");
+          }}
+          style={{ fontWeight: 700 }}
+        >
+          <option value="lotes">Ver lotes</option>
+          <option value="fincas">Ver fincas</option>
+        </select>
+        <select id="kr-pasaporte" aria-label="Pasaporte" value={pasaporte} onChange={(e) => setPasaporte(e.target.value as FiltroPasaporte)}>
+          <option value="">Pasaporte: todos</option>
+          <option value="con">Con Pasaporte</option>
+          <option value="sin">Sin Pasaporte</option>
+          {ETAPAS_PASAPORTE.map((e) => <option key={e.code} value={e.code}>{`Etapa · ${e.label}`}</option>)}
+        </select>
         <input
           id="kr-buscar"
           value={texto}
@@ -195,8 +263,8 @@ export function KrTabla({
         </select>
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
-        {chip("galardonados", "Galardonados")}
-        {chip("sin-finca", "Sin finca")}
+        {elemento === "lotes" && chip("galardonados", "Galardonados")}
+        {elemento === "lotes" && chip("sin-finca", "Sin finca")}
         {chip("sin-lote", "Sin lote")}
         <span className={styles.meta} style={{ marginTop: 0 }}>
           {cuenta.productores} productores · {cuenta.fincas} fincas · {cuenta.lotes} lotes
@@ -208,8 +276,10 @@ export function KrTabla({
           <>
             <GeoMap markers={pines} height={520} />
             <p className={styles.meta}>
-              Finca: verde = Pasaporte vigente o aprobado · ámbar = en trámite · rojo = rechazado o no apta. Lote: el color de su grado; negro,
-              sin grado todavía. Lo que no tiene coordenadas no sale en el mapa — sí en la tabla.
+              {elemento === "fincas"
+                ? "Un pin por finca: verde = Pasaporte vigente o aprobado · ámbar = en trámite · rojo = rechazado o no apta."
+                : "Un pin por lote, sobre su finca: el color de su grado; negro, sin grado todavía."}{" "}
+              Lo que no tiene coordenadas no sale en el mapa — sí en la tabla.
             </p>
           </>
         ) : (
@@ -224,13 +294,39 @@ export function KrTabla({
               <tr>
                 {/* V5.73 · el vocabulario EUDR asentado en la V5.65 (`src/lib/eudr.ts`): PASAPORTE es de la finca,
                     VISA es del lote (el veredicto documental que aquí se llamaba «EVA»); EVA es la catación. */}
-                {["Productor", "Finca", "Lote", "Circuito", "Pasaporte EUDR", "Ficha", "Visa", "Muestra", "Grado", "Oferta CP", "Trato"].map((h) => (
+                {(elemento === "fincas"
+                  ? ["Productor", "Finca", "Pasaporte EUDR", "Lotes"]
+                  : ["Productor", "Finca", "Lote", "Circuito", "Pasaporte EUDR", "Ficha", "Visa", "Muestra", "Grado", "Oferta CP", "Trato"]
+                ).map((h) => (
                   <th key={h} style={th}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {ordenadas.map(({ fila: f, cabecera }) => {
+                if (elemento === "fincas") {
+                  return [
+                    cabecera !== null && (
+                      <tr key={`g-${f.clave}`}>
+                        <td colSpan={4} style={{ ...td, background: "var(--paper)", fontWeight: 700, fontSize: 12.5 }}>{cabecera}</td>
+                      </tr>
+                    ),
+                    <tr key={`finca-${f.fincaId}`}>
+                      <td style={td}>
+                        <Link href={`/ocp/kr?productor=${f.productorId}`} style={enlace}>{f.productorNombre}</Link>
+                        <span style={sub}>{[f.productorCodigo, f.gestion ? GESTION_CORTA[f.gestion] : null, f.segmento, f.departamento].filter(Boolean).join(" · ")}</span>
+                      </td>
+                      <td style={td}>
+                        <Link href={`/ocp/kr?finca=${f.fincaId}`} style={enlace}>{f.fincaNombre}</Link>
+                        <span style={sub}>{[f.fincaCodigo, f.fincaLugar].filter(Boolean).join(" · ")}</span>
+                      </td>
+                      <td style={td}><Link href={`/ocp/kr?finca=${f.fincaId}`} style={{ textDecoration: "none" }}><Insignia v={f.visa} /></Link></td>
+                      <td style={td}>
+                        {lotesPorFinca.get(f.fincaId!) ?? 0}
+                      </td>
+                    </tr>,
+                  ];
+                }
                 return [
                   cabecera !== null && (
                     <tr key={`g-${f.clave}`}>

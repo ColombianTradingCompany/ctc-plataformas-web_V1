@@ -19,6 +19,25 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.76] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **fase 0 del `PLAN_CIRCUITO_DEL_LOTE.md`** (el owner contestó las ocho decisiones y concedió el borrado) y las cuatro
+  indicaciones del owner al ver por fin `/ocp/kr`.
+- **Cambiado**: **«Productores, Fincas y Lotes» según el owner** — (1) se retira «Nuevo lote (en nombre del productor)» y su acción
+  `createLot` (eso se hace con la sesión asistida); (2) la tabla nace **agrupada por productor**; (3) el mapa pinta los pines del
+  **elemento** principal (fincas o lotes), no los dos a la vez; (4) filtro principal **«Ver lotes / Ver fincas»**: con fincas, una fila
+  por finca con cuántos lotes tiene, y el filtro de **Pasaporte** (con · sin · o la etapa: sin Pasaporte, en trámite, en revisión por
+  CTCx, aprobado sin remitir, vigente, rechazado — las etapas de `fincaEudrStatus`, no una lista a mano). `?elemento=` y
+  `?pasaporte=` en la URL; el KPI «Fincas pendientes» del Panel del OCP abre `?elemento=fincas&pasaporte=en_revision`
+  (cierra el pendiente (g) del charter).
+- **Datos**: **borrado el juego de prueba** que el owner pidió retirar: el contrato `8618ecda` con sus 3 liberaciones, la oferta
+  aceptada, el listado publicado y el lote `f5187234` («Gesha 72h Ferm», Gold) con sus evaluaciones, aportes y snapshots.
+  `audit_log` se conserva; dos notas del productor quedan sin `lot_id`. ⚠️ El archivo del video queda huérfano en el bucket
+  `kaffetal-media` (Supabase no deja borrar `storage.objects` por SQL): se retira por la Storage API.
+- **Docs**: las ocho decisiones del owner escritas en el plan (§6) y lo que cambian en él: la Arena **se queda** en el BCP (se
+  rehace como sesiones de segunda apreciación), «Ofertas CP Aceptadas» y «Oferta desde CTCx Selection» son el **staging** del
+  Catálogo Activo, la subasta Tyrian sigue (MOQ 100 kg CPS), mínimos 6 · 3 · 200 kg, tarifa $200.000 con subvención 30–70 %.
+
 ## [V5.75] — 2026-09-23 (commit f4f7c66)
 
 - **Hito**: **nacen «Asistencia a Proveedores» y «Proveedor Desacoplado»** en OCP · Kaffetal Regal — la primera tanda del brief

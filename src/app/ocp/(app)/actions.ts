@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { countryRiskFor, deriveChainComplexity, deriveProductRisk, fincaEudrDeclaracion, parcelaGeoOk, parcelasGeoComplete, type FincaEudrFields } from "@/lib/eudr";
 import { deriveArchetype, deriveClaims, CUSTODY_MODEL, type ContributionInput } from "@/lib/lotComposition";
@@ -327,48 +326,10 @@ export async function registerLotDds(
   return { ok: true };
 }
 
-export async function createLot(formData: FormData): Promise<ActionResult> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-
-  const fincaId = String(formData.get("finca_id"));
-  const { data: finca } = await service.from("fincas").select("producer_id").eq("id", fincaId).single();
-  // V5.75: devolver, no lanzar — un throw aquí tumbaba la tabla entera (deuda (c) del charter).
-  if (!finca) return { ok: false, error: "Finca no encontrada." };
-
-  const { data: lot, error } = await service
-    .from("lots")
-    .insert({
-      finca_id: fincaId,
-      producer_id: finca.producer_id,
-      name: String(formData.get("name")),
-      source: "bcp_manual_entry",
-      ficha_variedad: String(formData.get("ficha_variedad") || "") || null,
-      ficha_proceso: String(formData.get("ficha_proceso") || "") || null,
-      ficha_altitud_m: formData.get("ficha_altitud_m") ? Number(formData.get("ficha_altitud_m")) : null,
-      ficha_notas_cata: String(formData.get("ficha_notas_cata") || "") || null,
-      ficha_peso_muestra_kg: formData.get("ficha_peso_muestra_kg") ? Number(formData.get("ficha_peso_muestra_kg")) : null,
-    })
-    .select("id")
-    .single();
-
-  if (error || !lot) return { ok: false, error: `No se pudo crear el lote${error ? `: ${error.message}` : "."}` };
-
-  await service.from("audit_log").insert({
-    entity_type: "lot",
-    entity_id: lot.id,
-    action: "created",
-    new_status: "borrador",
-    performed_by: adminId,
-    notes: "Creado por BCP en nombre del productor (source=bcp_manual_entry)",
-  });
-
-  revalidatePath("/ocp/kr");
-  revalidatePath("/bcp");
-  return { ok: true };
-}
+// `createLot` («Nuevo lote en nombre del productor») se retiró en la V5.76 por orden del owner: un lote en
+// nombre de alguien se crea con la sesión asistida (`src/lib/asistencia/actions.ts`), que reutiliza la Ficha
+// entera de Kaffetal Regal. `source = "bcp_manual_entry"` sigue existiendo como valor para los lotes que ya lo
+// tienen (el circuito y el recibo de muestra lo leen); ningún código lo escribe ya.
 
 // The 2kg-sample handoff is a deliberate two-sided confirmation, not a side effect
 // of picking a stage from the dropdown: the producer confirms shipment (Kaffetal

@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.79] — 2026-09-24 (commit pendiente)
+## [V5.79] — 2026-09-24 (commit ef8f87b)
 
 - **Hito**: **la fase 2 del `PLAN_CIRCUITO_DEL_LOTE.md` cierra por el lado de Kaffetal Regal** — código de `kaffetal-regal`
   tocado desde la sesión `consolas` con el sí del owner («hazlo tú desde esta sesión», 2026-09-24) y línea en `ALINEACION` §3.

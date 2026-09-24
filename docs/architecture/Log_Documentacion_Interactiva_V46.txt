@@ -264,4 +264,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
   oficial ★ + evaluación que rige) y certificaciones corroboradas. Sustituye, de cara al productor, a los documentos sueltos.
 - ANN: el productor ve el estado de cada certificación (`FincaModal`); el Pasaporte impreso filtra `retirada`.
 - Guardianes: `qa-registro-check` 50 → 67 (el lado KR); `qa-evaluaciones` §6 con el orden nuevo.
-(commit: pendiente)
+(commit: ef8f87b)

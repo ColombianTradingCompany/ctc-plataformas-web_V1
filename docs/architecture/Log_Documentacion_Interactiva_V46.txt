@@ -411,3 +411,18 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE: conducir las fases 6–8 con `prueba-*` (Etapa 2); 2.ª tanda de Compras (mezclas, pergamino/verde, ubicación); la imagen
   en `LotCard` (cherry-picked); copy «Red o superior» de KR; recordatorios de mora; 2.ª tanda de Muestras; wrap V47.
 (commit: 85e5014)
+
+## [2026-09-25] V5.86 · Consolas — recordatorios de mora (fila «Recordatorios» del §4 del PLAN_CIRCUITO_DEL_LOTE)
+- REGLA NUEVA (DICT `mora`): `src/lib/trato/mora.ts` (puro): `decidirRecordatorioDeMora(mes, ahora)` → nada | recordar: solo un mes
+  pedido y sin envío, solo en mora (recargo o ruptura potencial, `enMora(moraDelMes())`), el primero al entrar, luego cada
+  `DIAS_ENTRE_RECORDATORIOS` (7), nunca más de `MAX_RECORDATORIOS` (4, compartido con `registro/reglas.ts`).
+- FLUJO: `src/lib/trato/moraRecordatorios.ts` (server-only): `correrRecordatoriosDeMora` barre `contract_months` de tratos
+  `active`/`reconditioning` con pedido sin envío; `recordarMora` sube el contador, escribe `audit_log`
+  (`mora_recordatorio_enviado`, performed_by null) + nota en `producer_comm_log` + correo (`sendTransactionalEmail`, etiquetas
+  filtradas). NUNCA cambia un estado (decisión 6). El cron `/api/cron/recordatorios` corre los dos barridos.
+- NODO OCP `/ocp/contratos/[id]`: «recordatorios de mora n/4» por mes y el copy del cron.
+- DATOS: migración `mora_recordatorios` (acta en `docs/migraciones/`): `contract_months.recordatorios_mora`,
+  `ultimo_recordatorio_mora_at`.
+- Guardianes: `qa-trato-check` 90 → 106 (§7). `qa-registro` 67 intacto.
+- PENDIENTE: conducir las fases 6–8 con `prueba-*` (Etapa 2); 2.ª tanda de Compras; wrap V47 (el log lleva 16 asientos).
+(commit: pendiente)

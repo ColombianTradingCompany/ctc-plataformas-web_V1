@@ -14,6 +14,7 @@
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { enMora, esPastCrop, mesEnCurso, moraDelMes, moraDelTrato, renovacionDebida, retiro } from "../src/lib/trato/mesAMes.ts";
+import { decidirRecordatorioDeMora, MAX_RECORDATORIOS_MORA } from "../src/lib/trato/mora.ts";
 import {
   CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, DECLARACIONES, MODIFICADOR_DIRECTA_PCT, MODIFICADOR_PAST_CROP_PCT, MORA, MOQ_SUBASTA_TYRIAN_KG,
   PAST_CROP_MESES, PENALIDAD_RETIRO_PCT, PERIODO_MESES, REEVALUACION, RENOVACION_DIAS, TARIFA_EVALUACION_COP, TRAMO_LIBRE_ACUMULADO_PCT,
@@ -212,6 +213,36 @@ const num = (s) => Number(String(s).replace(/\./g, "").replace(",", "."));
   check("«Mi trato» enseña los meses con su mora, el retiro con la cuenta previa y la cuenta congelada", tab.includes("MORA_LABEL[") && tab.includes("previsualizarRetiro(") && tab.includes("retirarDelTrato(") && tab.includes('gi.estadoCuenta === "congelada"'));
   const ocp = lee("src/app/ocp/(app)/contratos/[id]/page.tsx");
   check("y el OCP pinta lo mismo con la misma función (moraDelMes); «Declarar ruptura» solo para el owner", ocp.includes("moraDelMes(") && ocp.includes("identity.isOwner") && ocp.includes("declararRuptura.bind"));
+}
+
+// ── 7. Los recordatorios de mora (V5.86): semanales, con tope, y NUNCA automáticos ──
+// Fila «Recordatorios» del §4 del plan y su riesgo del §7 («solo dos disparadores … semanal, con tope ×4 y el remitente único»).
+{
+  const hoy = new Date("2026-10-01T00:00:00Z");
+  const hace = (dias) => new Date(hoy.getTime() - dias * 86_400_000).toISOString();
+  const fila = plan.match(/^\| \*\*Recordatorios\*\* \| consolas \| (.+?) \|/m)?.[1] ?? "";
+  check("§4: el cron semanal recuerda la mora por correo y en el feed", /semanal/.test(fila) && /mora/.test(fila) && /correo al productor/.test(fila) && /nota en su feed/.test(fila));
+  check("§7: el mismo tope ×4 de las certificaciones", /tope ×4/.test(plan) && MAX_RECORDATORIOS_MORA === 4);
+  const base = { pedidoAt: null, enviadoAt: null, recordatoriosMora: 0, ultimoRecordatorioMoraAt: null };
+  const decide = (m) => decidirRecordatorioDeMora({ ...base, ...m }, hoy);
+  check("sin pedido: nada", decide({}) === "nada");
+  check("pedido enviado: nada (la mora se deriva del envío)", decide({ pedidoAt: hace(30), enviadoAt: hace(1) }) === "nada");
+  check("en las dos semanas sin cargo: nada — todavía no es mora", decide({ pedidoAt: hace(10) }) === "nada");
+  check("al entrar en recargo: el primer recordatorio", decide({ pedidoAt: hace(14) }) === "recordar");
+  check("tres días después del último: nada", decide({ pedidoAt: hace(20), recordatoriosMora: 1, ultimoRecordatorioMoraAt: hace(3) }) === "nada");
+  check("una semana después: el siguiente", decide({ pedidoAt: hace(24), recordatoriosMora: 1, ultimoRecordatorioMoraAt: hace(7) }) === "recordar");
+  check("en ruptura potencial sigue recordando (hasta el tope)", decide({ pedidoAt: hace(40), recordatoriosMora: 3, ultimoRecordatorioMoraAt: hace(8) }) === "recordar");
+  check("cuatro mandados: nunca un quinto — y nada automático (decisión 6)", decide({ pedidoAt: hace(60), recordatoriosMora: 4, ultimoRecordatorioMoraAt: hace(14) }) === "nada");
+  const sinComentarios = (t) => t.replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+  const moraSrc = sinComentarios(lee("src/lib/trato/mora.ts"));
+  check("mora.ts es puro, lee el tope de registro/reglas y la mora de mesAMes", !/supabase/.test(moraSrc) && moraSrc.includes('from "@/lib/registro/reglas"') && moraSrc.includes('from "./mesAMes"'));
+  const runner = lee("src/lib/trato/moraRecordatorios.ts");
+  check("el barrido mira solo tratos en curso, meses pedidos sin envío, y decide con la regla pura", runner.includes('.in("purchase_contracts.status", ["active", "reconditioning"])') && runner.includes('.is("enviado_at", null)') && runner.includes("decidirRecordatorioDeMora("));
+  check("recuerda por correo (el remitente único) y en el feed, con rastro en audit_log", runner.includes("sendTransactionalEmail(") && runner.includes('from("producer_comm_log")') && runner.includes('action: "mora_recordatorio_enviado"'));
+  check("y NO cambia el estado de nada", !/update\(\{[^}]*\bstatus\b/.test(sinComentarios(runner)) && !/estado_cuenta/.test(runner) && !/from\("purchase_contracts"\)/.test(runner) && (runner.match(/\.update\(/g) ?? []).length === 1);
+  const cron = lee("src/app/api/cron/recordatorios/route.ts");
+  check("el cron semanal corre los dos barridos y solo esos dos", cron.includes("correrRecordatorios(") && cron.includes("correrRecordatoriosDeMora(") && (cron.match(/await correr/g) ?? []).length === 2);
+  check("el OCP enseña cuántos recordatorios van", lee("src/app/ocp/(app)/contratos/[id]/page.tsx").includes("MAX_RECORDATORIOS_MORA"));
 }
 
 if (fallos.length) {

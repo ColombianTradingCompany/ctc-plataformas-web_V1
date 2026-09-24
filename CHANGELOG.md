@@ -19,6 +19,18 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.86] — 2026-09-25 (commit pendiente)
+
+- **Añadido**: **los recordatorios de mora** (fila «Recordatorios» del §4 del `PLAN_CIRCUITO_DEL_LOTE.md`; decisión 6: visible,
+  nunca automática). El cron semanal `/api/cron/recordatorios` corre ahora dos barridos, y solo dos: las certificaciones con
+  evidencia pedida (V5.78) y el **pedido del mes sin envío mientras esté en mora** — el primero al entrar en recargo, luego cada
+  semana, como mucho 4 por mes (el mismo tope de las certificaciones). Cada recordatorio deja rastro en `audit_log`
+  (`mora_recordatorio_enviado`), una nota en el feed del productor y un correo por el remitente único. **Nada cambia de estado**:
+  la ruptura sigue siendo del owner. Regla pura en `src/lib/trato/mora.ts`; el OCP enseña cuántos recordatorios van por mes.
+- **Datos**: migración `mora_recordatorios` (acta en `docs/migraciones/`): `contract_months.recordatorios_mora`,
+  `ultimo_recordatorio_mora_at`.
+- **Docs**: `qa-trato-check` 90 → 106 (§7: la regla desde el §4 y el §7 del plan; el barrido no toca estados).
+
 ## [V5.85] — 2026-09-24 (commit 85e5014)
 
 - **Hito**: **la fase 8 del `PLAN_CIRCUITO_DEL_LOTE.md` — CTCx Selection y Compras** (folio 8, paso 19; decisión 7; respuesta 7

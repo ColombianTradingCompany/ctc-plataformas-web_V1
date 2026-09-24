@@ -232,8 +232,11 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   con el perfil (`perfilCtcx.ts`), `public_lot_catalog.ctc_selection` desde `compras`, el CRM de `black_negotiations` retirado (un
   Black recibe temporada/directa como los demás), lateral «CTCx Selection» del circuito. `qa-compras-check` (51). **Con esto la
   Etapa 1 queda ejecutada en código.** **Sigue**: conducir las fases 6–8 con `prueba-*` (Etapa 2: correr todo con Asistencia y
-  Desacoplado); la 2.ª tanda de Compras (mezclas, unidad pergamino/verde, ubicación física — decisiones 1, 2, 4 y 5 del brief); los
-  recordatorios de mora por correo (fila «Recordatorios» del §4); la 2.ª tanda de Muestras; el wrap V47 desde WRAP-COMMIT-PUSH.
+  Desacoplado); la 2.ª tanda de Compras (mezclas, unidad pergamino/verde, ubicación física — decisiones 1, 2, 4 y 5 del brief); la
+  2.ª tanda de Muestras; el wrap V47 desde WRAP-COMMIT-PUSH. **Recordatorios de mora HECHOS en la V5.86** (fila «Recordatorios»
+  del §4): el cron semanal recuerda al productor el pedido del mes sin envío mientras esté en mora —desde el recargo—, hasta 4 veces
+  por mes, por correo (remitente único) y nota en su feed, con rastro; nunca cambia un estado (decisión 6). `src/lib/trato/mora.ts`
+  (puro) + `moraRecordatorios.ts`; `contract_months.recordatorios_mora`; `qa-trato` 90 → 106 (§7).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

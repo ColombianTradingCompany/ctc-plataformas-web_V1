@@ -19,6 +19,7 @@ import { formatCop } from "@/lib/arena/inscriptions";
 import { ESTADO_DE_CONTRATO } from "@/lib/ocp/etapas";
 import { MORA, PENALIDAD_RETIRO_PCT, RENOVACION_DIAS } from "@/lib/trato/terminos";
 import { MORA_LABEL, moraDelMes, resumenDelTrato, type FilaDelMes } from "@/lib/trato/mesAMes";
+import { MAX_RECORDATORIOS_MORA } from "@/lib/trato/mora";
 import styles from "@/components/panel/shared.module.css";
 
 // ── El contrato, mes a mes (V5.84 · fase 7 del PLAN_CIRCUITO_DEL_LOTE) ──────────────────────
@@ -46,6 +47,9 @@ type MesRow = {
   retirado_penalizado_kg: number | string;
   penalidad_cop: number | string;
   retiro_nota: string | null;
+  /** V5.86: los recordatorios de mora que el cron semanal ya mandó por este mes (tope MAX_RECORDATORIOS_MORA). */
+  recordatorios_mora?: number | null;
+  ultimo_recordatorio_mora_at?: string | null;
 };
 
 const fecha = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "—");
@@ -86,6 +90,7 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
   }));
   const notasDeRetiro = new Map(((mesesRaw as MesRow[] | null) ?? []).map((m) => [m.mes, m.retiro_nota]));
   const refsDePago = new Map(((mesesRaw as MesRow[] | null) ?? []).map((m) => [m.mes, m.pago_ref]));
+  const recordatoriosDe = new Map(((mesesRaw as MesRow[] | null) ?? []).map((m) => [m.mes, m.recordatorios_mora ?? 0]));
   const hoy = new Date();
   const nMeses = contract.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
   const resumen = resumenDelTrato({ quantityFrozenKg: contract.quantity_frozen_kg != null ? Number(contract.quantity_frozen_kg) : null, freezeMonths: nMeses, signedAt: contract.signed_at }, meses, hoy);
@@ -157,8 +162,9 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
           <p className={styles.meta} style={{ marginBottom: 10 }}>
             CTC pide la cantidad del mes; el productor la envía; CTC paga en la primera semana del mes siguiente. La mora se deriva del
             pedido sin envío: {MORA.semanasSinCargo} semanas sin cargo, {MORA.semanasConRecargo} más con recargo del {MORA.recargoPct} %, después{" "}
-            <b>ruptura potencial</b> (visible; la declara el owner). El productor retira desde su panel: tramo libre 25 % al cerrar el mes 1 y 50 % al
-            cerrar el mes 2; por encima, {PENALIDAD_RETIRO_PCT} % del precio de cada carga.
+            <b>ruptura potencial</b> (visible; la declara el owner). Cada lunes el cron se lo recuerda al productor por correo y en su feed
+            mientras esté en mora, hasta {MAX_RECORDATORIOS_MORA} veces por mes (V5.86). El productor retira desde su panel: tramo libre 25 % al cerrar
+            el mes 1 y 50 % al cerrar el mes 2; por encima, {PENALIDAD_RETIRO_PCT} % del precio de cada carga.
           </p>
           <div className={styles.list} style={{ marginBottom: 28 }}>
             {Array.from({ length: nMeses }, (_, i) => i + 1).map((mes) => {
@@ -175,6 +181,11 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
                         retiró {fila.retiradoKg} kg ({fila.retiradoLibreKg} libres · {fila.retiradoPenalizadoKg} con penalidad {formatCop(fila.penalidadCop)}){notasDeRetiro.get(mes) ? ` · «${notasDeRetiro.get(mes)}»` : ""}
                       </span>
                     ) : null}
+                    {(recordatoriosDe.get(mes) ?? 0) > 0 && (
+                      <span className={styles.meta}>
+                        · recordatorios de mora {recordatoriosDe.get(mes)}/{MAX_RECORDATORIOS_MORA}
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 8 }}>
                     <div>

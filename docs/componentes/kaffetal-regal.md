@@ -155,8 +155,8 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   función que el OCP; nunca en el render, nunca guardada) y la barra del lote recibe `enMora` (CONT hecho «en mora»; la
   ruptura lo apaga); el banner de **cuenta congelada** (`gi.estadoCuenta`, lo escribe solo el owner por ruptura) y las puertas:
   congelada no acepta ofertas (`respondToOffer`) ni retira. **Pendiente (exige `prueba-*`)**: conducir pedir → enviar → pagar →
-  retirar; afinar el copy de la mora y de la ruptura con el owner; los recordatorios de mora por correo (`consolas`, fila
-  «Recordatorios» del §4 del plan).
+  retirar; afinar el copy de la mora y de la ruptura con el owner. Los recordatorios de mora llegaron en la V5.86 (`consolas`):
+  el productor recibe correo + nota en su feed, hasta 4 por mes, mientras el pedido siga sin envío.
 - **Fase 8 (V5.85) — una línea de KR**: `LotKanbanStepper` recibe `compradoEnFirme` (CONT hecho como «CTCx Selection») y `PerfilTab`
   lo deriva con `esCompraEnFirme` (`src/lib/compras/reglas.ts`: la oferta del contrato es `directa` · `black` y CTC ya pagó un mes)
   — la misma regla que el OCP; `qa-compras` lo vigila. **Pendiente (dueño KR)**: desde la V5.85 un lote **Black** recibe oferta de

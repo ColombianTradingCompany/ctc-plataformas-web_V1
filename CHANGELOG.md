@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.84] — 2026-09-24 (commit pendiente)
+## [V5.84] — 2026-09-24 (commit 6be424e)
 
 - **Hito**: **la fase 7 del `PLAN_CIRCUITO_DEL_LOTE.md` — el trato mes a mes** (folio 8, pasos 16–18; decisión 6 del owner:
   «nunca automática; se hace visible de manera automática»). Código de `kaffetal-regal` tocado desde la sesión `consolas` con el

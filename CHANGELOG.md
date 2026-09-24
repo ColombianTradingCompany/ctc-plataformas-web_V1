@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.83] — 2026-09-24 (commit pendiente)
+## [V5.83] — 2026-09-24 (commit ef64fcb)
 
 - **Hito**: **la fase 6 del `PLAN_CIRCUITO_DEL_LOTE.md` — aceptar con claridad** (folio 8, pasos 14–16). Código de
   `kaffetal-regal` tocado desde la sesión `consolas` con el «continúa» del owner y línea en `ALINEACION` §3. **No se condujo en

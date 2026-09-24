@@ -356,4 +356,4 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - Guardianes: `qa-trato-check` 35 → 54 (la calculadora contra el §12.9; la declaración; el contrato lleno; la firma).
 - PENDIENTE: conducir la fase 6 con `prueba-*` (aceptar → contrato → firma); fase 7 (el trato mes a mes: `contract_months`,
   retiros, mora visible, renovación, past crop; `contract_releases` deja de ser la escalera); fase 8 (Compras + CTCx Selection).
-(commit: pendiente)
+(commit: ef64fcb)

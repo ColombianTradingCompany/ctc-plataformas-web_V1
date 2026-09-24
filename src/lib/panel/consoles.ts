@@ -102,8 +102,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           // es la vitrina —temporadas, sesiones, la jornada— y el Club la membresía que alimenta.
           // ⚠️ Su página sigue usando tres acciones del circuito del lote, que es del OCP (asignar a
           // sesión, invitar a la vitrina, revisar un reclamo): esas tres abren las DOS consolas.
+          // V5.77: la Arena se queda (sesiones de segunda apreciación); el Club como membresía se retiró y sus
+          // campañas viven en OCP · Manejo de Stock Físico como «Campañas de Subvención» (PLAN_CIRCUITO_DEL_LOTE §3).
           { href: "/bcp/arena", label: "Kaffetal Regal Arena" },
-          { href: "/bcp/club", label: "Kaffetal Club" },
         ],
       },
       {
@@ -251,6 +252,9 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
         label: "OCP · Manejo de Stock Físico",
         links: [
           { href: "/ocp/muestras", label: "Gestión de Muestras" },
+          // V5.77 (owner): las campañas de descuento salen del Kaffetal Club y son «Campañas de Subvención»:
+          // códigos con el 30–70 % de la tarifa de evaluación, que CTCx emite y decide en Gestión de Muestras.
+          { href: "/ocp/subvenciones", label: "Campañas de Subvención" },
           { href: "/ocp/compras", label: "CTCx Selection · Compras" },
         ],
       },

@@ -215,3 +215,23 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - DATOS: borrados contrato `8618ecda` (+3 liberaciones), oferta, listado y lote `f5187234` con sus dependientes; queda el video
   huérfano en el bucket (Storage API). La base queda SIN contratos, ofertas ni listados: el circuito nuevo arranca en cero.
 (commit: 4f3490c)
+
+## [2026-09-24] V5.77 · Consolas — fase 1 del PLAN_CIRCUITO_DEL_LOTE: la Arena rehecha, el Club fuera, Campañas de Subvención
+- NODO «Kaffetal Regal Arena» (BCP) CAMBIA DE FUNCIÓN: sesiones de SEGUNDA APRECIACIÓN. `arena_sessions.name`; roster en
+  `arena_session_lots` (solo galardonados); `registrarApreciacion` → `lot_evaluations` (bcp_arena, aceptada, `rige_grado=false`);
+  `elegirEvaluacionQueRige` → única reescritura de `lots.grade` fuera del veredicto. RETIRADO: runner de jornada, jueces,
+  descartes, ganador, `cup_registrations`, `revealSessionIdentities`, `jornada.ts`, la vitrina (invitar · bloquear en sesión),
+  KPI y tareas «fila para Arena». Fases `arena·sesion·competido` sin escritor; `arena_scores` dormida.
+- REGLA NUEVA (DICT `gradoquerige`): el oficial de un lote sale de LA evaluación que rige (`rige_grado`; por defecto la inicial
+  del Q-Grader), no del promedio. `src/lib/evaluations.ts` → `evaluacionQueRige()`; `officialAverages` conserva nombre y forma.
+- NODO «Kaffetal Club» RETIRADO del rail y como gate (`signContract`, `publishLot`, `grantClubMembershipOnce`,
+  `revokeClubMembership`, `clubEmails.ts`); `club_member_since` dormida. NODO NUEVO «Campañas de Subvención» en OCP · Stock
+  Físico (`/ocp/subvenciones`, `subvencionesActions.ts`: 30–70 % sobre la tarifa plana de $200.000; tablas `club_campaigns` y
+  `arena_entry_codes` conservan nombre). 308: `/bcp/club` → `/ocp/subvenciones`; `/ocp/club` reapuntada.
+- Los reclamos de oficialización (`producer_claim` pendientes) se revisan en `/ocp/kr?lote=` (`LoteSeccion`); `reviewEvaluationClaim`
+  pasa a ser solo del OCP. Panel del OCP: KPI «Solicitudes por resolver» y «Reclamos por revisar».
+- DATOS: migración `arena_apreciaciones` (acta en `docs/migraciones/`). `ATRIBUTOS_SCA` es la única lista de atributos SCA.
+- Guardianes: `qa-jornada-check` retirado; `qa-evaluaciones` 51 (sin Club; la Arena no toca el circuito); `qa-rutas-consolas` 505.
+- DIFERIDO de la fase 1: temporadas siguen en `/bcp/arena/temporadas`; `src/lib/arena/` no se renombra; cashback del 80 % y
+  `RELEASE_STAIRCASE` en la fase 5; copy de KR (Arena, Club) es de `kaffetal-regal`.
+(commit: pendiente)

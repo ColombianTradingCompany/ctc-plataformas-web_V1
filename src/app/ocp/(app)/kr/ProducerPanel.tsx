@@ -135,7 +135,6 @@ export function ProducerPanel({ data }: { data: ProducerData }) {
             <span className={styles.badge} title="Pasaporte del Productor — su identidad de proveedor CTC">
               Pasaporte · {data.supplierCode}
             </span>
-            {data.clubMemberSince && <span className={styles.badgeGood}>Kaffetal Club ✓</span>}
             {data.gestion && <span className={`${styles.badge} ${data.gestion === "desacoplado" ? styles.badgeWarn : styles.badgeGood}`}>{GESTION_LABEL[data.gestion]}</span>}
             <span className={styles.badge}>{data.segmentLabel}</span>
             {/* V5.75 · Asistencia a Proveedores: abrir Kaffetal Regal como este productor, con rastro. */}

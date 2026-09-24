@@ -38,19 +38,7 @@ export async function publishLot(formData: FormData): Promise<{ ok: true } | { o
     return { ok: false, error: "Los lotes Tyrian no se publican en el catálogo — van a la subasta." };
   }
 
-  // Kaffetal Club gate (defensa en profundidad además del gate al firmar):
-  // solo lotes de productores miembros entran al catálogo activo.
-  const { data: pp } = await service
-    .from("producer_profiles")
-    .select("club_member_since")
-    .eq("profile_id", lot.producer_id)
-    .maybeSingle();
-  if (!pp?.club_member_since) {
-    return {
-      ok: false,
-      error: "El productor de este lote todavía no es miembro del Kaffetal Club — la membresía se otorga al competir su lote en una jornada de Arena.",
-    };
-  }
+  // V5.77: el gate del Kaffetal Club se retiró (PLAN_CIRCUITO_DEL_LOTE §3): publicar nace del trato.
 
   const { data: contract } = await service
     .from("purchase_contracts")

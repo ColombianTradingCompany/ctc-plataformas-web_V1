@@ -5,50 +5,12 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 
 
-// A BCP-submitted evaluation is authoritative on entry (auto-accepted) --
-// unlike a producer_claim, which always starts pending. This is the "many
-// evaluations per lot, averaged" path: src/lib/evaluations.ts's averageOf()
-// reads every accepted row for a lot and averages sca_total/factor_rendimiento.
-export async function submitLotEvaluation(lotId: string, formData: FormData) {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-
-  const scaFields = ["fragrance", "flavor", "aftertaste", "acidity", "body", "balance", "uniformity", "clean_cup", "sweetness", "cuppers"];
-  const scaData: Record<string, number> = {};
-  let scaTotal = 0;
-  for (const key of scaFields) {
-    const v = Number(formData.get(`sca_${key}`) || 0);
-    scaData[key] = v;
-    scaTotal += v;
-  }
-  const factor = formData.get("factor_rendimiento") ? Number(formData.get("factor_rendimiento")) : null;
-  const notes = String(formData.get("notes") || "").trim() || null;
-
-  const { error } = await service.from("lot_evaluations").insert({
-    lot_id: lotId,
-    source: "bcp_arena",
-    status: "accepted",
-    sca_total: scaTotal > 0 ? scaTotal : null,
-    sca_data: scaData,
-    factor_rendimiento: factor,
-    notes,
-    submitted_by: adminId,
-    reviewed_by: adminId,
-    reviewed_at: new Date().toISOString(),
-  });
-  if (error) throw new Error("No se pudo guardar la evaluación.");
-
-  revalidatePath("/bcp/arena");
-}
-
 // Accept or reject a producer's officialization claim. Only on acceptance
 // does the claim's score start counting toward the lot's official average --
 // a rejected claim stays in the table (audit trail) but is simply excluded.
-export async function reviewEvaluationClaim(evaluationId: string, decision: "accepted" | "rejected", notes: string) {
-  // Se pulsa desde DOS consolas: el circuito del lote (OCP) y la página de la Arena (BCP, V5.60).
-  const permiso = await permisoDeEscritura(["ocp", "bcp"], "emite");
+export async function reviewEvaluationClaim(evaluationId: string, decision: "accepted" | "rejected", notes: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  // V5.77: los reclamos se revisan en la vista completa del lote (`/ocp/kr?lote=`), ya no en la Arena.
+  const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
@@ -58,7 +20,8 @@ export async function reviewEvaluationClaim(evaluationId: string, decision: "acc
     .update({ status: decision, reviewed_by: adminId, reviewed_at: new Date().toISOString(), notes: notes || null })
     .eq("id", evaluationId)
     .eq("status", "pending");
-  if (error) throw new Error("No se pudo actualizar la solicitud.");
+  if (error) return { ok: false, error: "No se pudo actualizar la solicitud." };
 
-  revalidatePath("/bcp/arena");
+  revalidatePath("/ocp/kr");
+  return { ok: true };
 }

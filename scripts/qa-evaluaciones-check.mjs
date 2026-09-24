@@ -25,7 +25,6 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
 
 const nominados = lee("src/app/ocp/(app)/nominadosActions.ts");
 const arena = lee("src/app/bcp/(app)/arenaActions.ts");
-const club = lee("src/lib/arena/club.ts");
 const producer = lee("src/lib/arena/producerActions.ts");
 const evalTab = lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx");
 const stepper = lee("src/components/kaffetal-regal/LotKanbanStepper.tsx");
@@ -64,12 +63,13 @@ check(
   lee("src/components/kaffetal-regal/ficha/fichaPreviewHtml.ts").includes("Evaluación CTC · Q-Grader en bache")
 );
 
-// ── 3. El Club llega con el galardón, en UN solo sitio ────────────────────
-check("el veredicto otorga la membresía", nominados.includes("grantClubMembershipOnce(service, ins.producer_id"));
-check("la función vive en lib/arena/club.ts", club.includes("export async function grantClubMembershipOnce("));
-check("y respeta una membresía existente", club.includes("if (pp?.club_member_since) return;"));
-check("finalizeJornada YA NO la reparte", !arena.includes("club_member_since: new Date().toISOString()"));
-check("ni conserva el bloque viejo", !arena.includes("granted_by_arena"));
+// ── 3. V5.77: el Kaffetal Club como membresía se RETIRÓ (PLAN_CIRCUITO_DEL_LOTE §3) ──
+// El galardón no reparte nada; firmar y publicar nacen del trato. Si alguien vuelve a colgar una
+// membresía del veredicto o un gate del Club de la firma, aquí se ve.
+check("el veredicto NO otorga membresía", !nominados.includes("grantClubMembershipOnce") && !nominados.includes("club_member_since"));
+check("firmar un contrato NO exige Club", !lee("src/app/ocp/(app)/contractActions.ts").includes("club_member_since"));
+check("publicar al catálogo NO exige Club", !lee("src/app/ocp/(app)/catalogActions.ts").includes("club_member_since"));
+check("la Arena tampoco reparte membresías", !arena.includes("club_member_since"));
 
 // ── 4. M3 intacto: solicitar evaluación ES postular ───────────────────────
 check("solo un lote Apto puede solicitar", producer.includes('lot.stage !== "apto"') || producer.includes('stage !== "apto"'));
@@ -138,19 +138,21 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
 check("InscriptionPhase conoce galardonado", inscripciones.includes('| "galardonado"'));
 check("el modelo del productor también", data.includes('"fila" | "galardonado" | "arena"'));
 
-// ── 7. V5.19: la Arena es la VITRINA y no toca el estado del lote ─────────
+// ── 7. V5.77: la Arena es una sesión de SEGUNDA APRECIACIÓN y no toca el circuito ──
+// (owner, 2026-09-24, PLAN_CIRCUITO_DEL_LOTE §6): cada apreciación se adjunta al lote como una
+// `lot_evaluations` más; el grado lo rige UNA sola (`rige_grado`), por defecto la inicial del Q-Grader.
 const acciones = lee("src/app/ocp/(app)/actions.ts");
-check("finalizeJornada ya no escribe grade/stage", !arena.includes('update({ grade, stage: "galardonado" })'));
-check("ni crea contratos", !arena.includes('from("purchase_contracts")'));
-check("ni abre negociaciones Black", !arena.includes('from("black_negotiations")'));
-check("la vitrina exige galardonado", nominados.includes('lot.stage !== "galardonado"') && nominados.includes("showcaseGate"));
-check("y los tres grados altos", nominados.includes('["blue", "gold", "tyrian"].includes(lot.grade'));
-check("y contrato abierto", nominados.includes('.in("status", ["pending_signature", "active"])'));
-check("invitar a la vitrina existe", nominados.includes("export async function inviteLotToArena("));
-check("bloquear en sesión ya no escribe fila_arena", !nominados.includes('update({ stage: "fila_arena" })'));
-check("confirmar el recibo tampoco", !acciones.includes('stage: "fila_arena"'));
+const evaluations = lee("src/lib/evaluations.ts");
+check("la vitrina (invitar · bloquear en sesión) ya no existe", !nominados.includes("inviteLotToArena") && !nominados.includes("assignLotToSession") && !nominados.includes("showcaseGate"));
+check("la Arena no crea contratos ni negociaciones", !arena.includes('from("purchase_contracts")') && !arena.includes('from("black_negotiations")'));
+check("ni toca la inscripción ni el stage del lote", !arena.includes('from("arena_inscriptions")') && !arena.includes("stage:"));
+check("una apreciación es una lot_evaluations bcp_arena aceptada que NO rige", arena.includes('source: "bcp_arena"') && arena.includes('status: "accepted"') && arena.includes("rige_grado: false"));
+check("elegir la que rige es lo ÚNICO que reescribe el grado fuera del veredicto", arena.includes("export async function elegirEvaluacionQueRige(") && arena.includes("gradoPorPuntaje(redondeaPuntaje(") && (arena.match(/update\(\{ grade: /g) ?? []).length === 1);
+check("y lo hace exclusivo por lote (todas a false, una a true)", arena.includes('.eq("rige_grado", true)') && arena.includes("rige_grado: true"));
+check("el oficial del lote sale de la que rige, no de un promedio", evaluations.includes("export function evaluacionQueRige") && !evaluations.includes("function average("));
+check("por defecto rige la inicial del Q-Grader", evaluations.includes('e.source === "q_grader_batch"'));
+check("confirmar el recibo no escribe fila_arena", !acciones.includes('stage: "fila_arena"'));
 check("y avanza la inscripción a la fila", acciones.includes('.eq("phase", "postulacion")'));
-check("eliminar una sesión no revierte un galardón", !arena.includes('.in("stage", ["fila_arena", "evaluado", "galardonado"])'));
 
 if (fallos.length) {
   console.error(`✗ qa-evaluaciones: ${fallos.length} fallo(s), ${ok} OK\n`);

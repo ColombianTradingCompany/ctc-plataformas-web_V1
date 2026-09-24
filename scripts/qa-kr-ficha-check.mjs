@@ -122,7 +122,7 @@ const lee = (r) => readFileSync(new URL(`../${r}`, import.meta.url), "utf8");
   // Y que las consolas lo USEN: definirla sin aplicarla no ensancha nada. (`FincaModalRow` salió de esta lista
   // en la V5.61: la tabla única abre una vista completa, no un pop-up, y el componente se retiró.)
   for (const ruta of [
-    "src/app/bcp/(app)/arena/ArenaBoardClient.tsx",
+    "src/app/bcp/(app)/arena/ArenaClient.tsx",
     "src/app/ocp/(app)/nominados/NominadosClient.tsx",
   ]) {
     const src = lee(ruta);

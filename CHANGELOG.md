@@ -19,6 +19,36 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.77] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **fase 1 del `PLAN_CIRCUITO_DEL_LOTE.md` — retiros y mudanzas**, con la nota del owner sobre la Arena.
+- **Cambiado**: **la Kaffetal Regal Arena se rehace como sesiones de segunda apreciación** (BCP · Ecosistema de Valor). Una sesión es
+  un NOMBRE (sin temporada ni fecha); se llena con cafés **galardonados**; a cada uno se le hace una apreciación más con la planilla
+  B2 · B3 (`LabEvalEditor`), que se **adjunta al lote** como `lot_evaluations` (`bcp_arena`, aceptada); y **el Grado lo rige UNA
+  sola evaluación** (`lot_evaluations.rige_grado`, por defecto la inicial del Q-Grader), que se elige en la sesión y es lo único que
+  reescribe `lots.grade` fuera del veredicto. `officialAverages` deja de promediar: devuelve la que rige (mismo nombre y forma,
+  para que ofertas, subastas y la Ficha del productor no cambien).
+- **Retirado**: la jornada en vivo de la Arena (runner, jueces, descartes, ganador, registro de tazas, sesión a ciegas
+  `revealSessionIdentities`, `jornada.ts`, `qa-jornada-check`), la **vitrina** (`showcaseGate`, `inviteLotToArena`,
+  `assignLotToSession` y sus botones) y los KPI/tareas «en fila para Arena». Las fases `arena · sesion · competido` quedan en el
+  CHECK sin escritor; `arena_scores` dormida.
+- **Retirado**: **el Kaffetal Club como membresía** — el galardón ya no la reparte (`grantClubMembershipOnce`), **firmar un
+  contrato y publicar al catálogo ya no la exigen**, `revokeClubMembership`, `clubEmails.ts` (sin importadores) y la insignia
+  «Kaffetal Club ✓» del OCP. `producer_profiles.club_member_since` queda dormida.
+- **Añadido**: **«Campañas de Subvención»** en OCP · Manejo de Stock Físico (`/ocp/subvenciones`, `+ campanas/[id]`): las
+  campañas de descuento del Club, con el nombre que el owner pidió, la tarifa plana de **$200.000** a la vista y la subvención
+  acotada al **30–70 %**. `/bcp/club` y `/ocp/club` → 308 (`rutasMovidas`, `/ocp/club` reapuntada, sin cadena).
+- **Cambiado**: los **reclamos de oficialización** del productor (FT2 con soportes, `producer_claim` pendientes) se revisan en la
+  **vista completa del lote** (`/ocp/kr?lote=`), no en la Arena; `reviewEvaluationClaim` es del OCP y devuelve resultado. El Panel
+  del OCP cambia sus dos KPI de Arena por «Solicitudes de evaluación por resolver» y «Reclamos por revisar».
+- **Datos**: migración `arena_apreciaciones` — `arena_sessions.name` (temporada y fecha ahora opcionales); `lot_evaluations.rige_grado`
+  con índice único parcial por lote y backfill (la más antigua del Q-Grader, si no la más antigua aceptada). Acta en
+  `docs/migraciones/2026-09-24_arena_apreciaciones.sql`.
+- **Docs**: los diez atributos SCA tienen UNA fuente (`ATRIBUTOS_SCA`, `src/lib/fichas/tipos.ts`; `SCA_KEYS` se fue con la
+  jornada). `qa-evaluaciones` (51) reescrita: sin Club, y la Arena como apreciación que no toca el circuito. Lo que la fase 1
+  DEJA para después: temporadas siguen en `/bcp/arena/temporadas`; `src/lib/arena/` no se renombra todavía; el cashback del 80 %
+  y `RELEASE_STAIRCASE` salen en la fase 5; el copy de KR sobre Arena y Club es de `kaffetal-regal`.
+
 ## [V5.76] — 2026-09-24 (commit 4f3490c)
 
 - **Hito**: **fase 0 del `PLAN_CIRCUITO_DEL_LOTE.md`** (el owner contestó las ocho decisiones y concedió el borrado) y las cuatro

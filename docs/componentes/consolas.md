@@ -39,8 +39,8 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 | Ruta | Qué | Notas |
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
-| `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena/[sessionId]/run` (+ `temporadas`), `club` · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas` |
-| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · `a-evaluar` y `en-evaluacion` (las dos vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
+| `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena` (+ `[sessionId]`: sesiones de segunda apreciación, V5.77; + `temporadas`) · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas`. `club` → 308 a `/ocp/subvenciones` (V5.77) |
+| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · `a-evaluar` y `en-evaluacion` (las dos vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -98,8 +98,9 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 ## Guardianes
 
 `qa-rutas-consolas.mjs` (365 — rail, talones, sin rutas viejas, compuerta de SU consola en `src/app` Y, desde la V5.56, en `src/lib`: (f-bis)) ·
-`qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` · `qa-jornada-check.mjs` ·
-`qa-evaluaciones-check.mjs` (53 — el veredicto Q-Grader y, desde la V5.74, el vocabulario Pasaporte · Visa · EVA por las dos caras) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
+`qa-nav-check.mjs` · `qa-crm-interes-check.mjs` · `qa-crm-green-check.mjs` · `qa-boards-check.mjs` · `qa-docs-check.mjs` ·
+`qa-evaluaciones-check.mjs` (51 — el veredicto Q-Grader, el vocabulario Pasaporte · Visa · EVA por las dos caras y, desde la V5.77,
+que el Club no existe y la Arena no toca el circuito; `qa-jornada-check` se retiró con la jornada) · `qa-ofertas-check.mjs` (36) · `qa-fichas-check.mjs`
 (31) · `qa-subastas-check.mjs` (30, lado OCP) · `qa-visa-check.mjs` (30) · `qa-consumo-check.mjs` (22 — las tarifas contra la tabla publicada, no contra el código) ·
 `qa-catalogo-publico-check.mjs` (119 — el código público del lote, «Find my Lot», las rutas SOLO-www, la marca del
 portal y el peso de las imágenes) ·
@@ -158,7 +159,13 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
   Datasheet Tool; los «Reclamos de oficialización» salen de allí al chequeo del OCP); «Ofertas CP Aceptadas» y «Oferta desde CTCx
   Selection» son el **staging** del Catálogo Activo; la subasta Tyrian sigue (MOQ 100 kg CPS); mínimos por lote 6 · 3 · 200 kg;
   tarifa $200.000 con Campañas de Subvención (30–70 %); el Q-Grader es una credencial `centro-calidad` con módulos activables y uso
-  directo; la ruptura nunca es automática pero se hace visible sola. **Sigue: fase 1** (retiros y mudanzas).
+  directo; la ruptura nunca es automática pero se hace visible sola. **Fase 1 EJECUTADA en la V5.77** (retiros y mudanzas): la
+  Arena rehecha como sesiones de segunda apreciación (`/bcp/arena`, `arenaActions.ts`; `rige_grado` decide el grado); el Club
+  fuera (gates de firma y publicación, membresía en el veredicto, `clubEmails`); **Campañas de Subvención** en
+  `/ocp/subvenciones` (30–70 % sobre $200.000); reclamos de oficialización en la vista del lote; `ATRIBUTOS_SCA` única fuente.
+  **Diferido de la fase 1** (con dueño aquí): mudar temporadas a `/ocp/temporadas`; renombrar `src/lib/arena/` → `evaluacion/` y
+  `trato/`; fundir `/ocp/fichas` en la vista del lote (fase 2); el cashback del 80 % y `RELEASE_STAIRCASE` (fase 5). **Sigue: fase 2**
+  (el registro: revisión del lote, recordatorios, dossier ES/EN).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

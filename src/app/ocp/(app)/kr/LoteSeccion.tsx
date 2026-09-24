@@ -5,6 +5,8 @@ import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
 import { ConfirmReceiptButton } from "./ConfirmReceiptButton";
 import { RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
+import { ActionForm } from "@/components/panel/ActionForm";
+import { reviewEvaluationClaim } from "../evaluationActions";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
@@ -26,6 +28,7 @@ import { EudrStatusBadge } from "@/components/kaffetal-regal/EudrStatusBadge";
 import { ProducerContactLine } from "../ProducerContactLine";
 import styles from "@/components/panel/shared.module.css";
 
+type ClaimRow = { id: string; lot_id: string; sca_total: number | null; factor_rendimiento: number | null; q_grader_reference: string | null; created_at: string };
 type CommRow = { id: string; lot_id: string | null; context_label: string | null; note: string; created_at: string; author_role: string };
 
 
@@ -203,6 +206,17 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
       .in("lot_id", lotRows.map((l) => l.id)),
     signedKaffetalMediaUrls(service, assetIds),
   ]);
+  // V5.77: los «reclamos de oficialización» (`lot_evaluations` `producer_claim` pendientes: el productor reportó FT2
+  // con soportes) se revisan aquí, en la vista del lote — salieron de `/bcp/arena`, que ya no es parte del circuito.
+  const { data: claimRows } = await service
+    .from("lot_evaluations")
+    .select("id, lot_id, sca_total, factor_rendimiento, q_grader_reference, created_at")
+    .in("lot_id", lotRows.map((l) => l.id))
+    .eq("source", "producer_claim")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+  const claimsByLot = new Map<string, ClaimRow[]>();
+  for (const c of (claimRows as ClaimRow[] | null) ?? []) claimsByLot.set(c.lot_id, [...(claimsByLot.get(c.lot_id) ?? []), c]);
   const inscriptionSettledByLot = new Map<string, boolean>();
   const postulatedLots = new Set<string>();
   for (const i of (inscriptionRows as { lot_id: string; status: string }[] | null) ?? []) {
@@ -229,6 +243,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
         · Productor: <Link href={`/ocp/kr?productor=${lot.producer_id}`}>{producers.get(lot.producer_id)?.fullName ?? "abrir"}</Link>
       </p>
       <LotCard
+        claims={claimsByLot.get(lot.id) ?? []}
         lot={lot}
         producer={producers.get(lot.producer_id)}
         comms={commsByLot.get(lot.id) ?? []}
@@ -284,6 +299,7 @@ function LotCard({
   showConfirmReceipt,
   showEvaVerdict,
   inscriptionSettled,
+  claims,
   derivedClaimRows,
   archetypeLabel,
 }: {
@@ -294,6 +310,8 @@ function LotCard({
   showConfirmReceipt: boolean;
   showEvaVerdict: boolean;
   inscriptionSettled: boolean;
+  /** V5.77: reclamos de oficialización pendientes (`producer_claim`) de este lote. */
+  claims: ClaimRow[];
   // F2: claims derivados (lot_contributions × finca_certificates × cosecha) y
   // arquetipo calculado — la EVA los VERIFICA, no los digita.
   derivedClaimRows: { l: string; v: string }[];
@@ -455,6 +473,25 @@ function LotCard({
       </div>
       <ProducerContactLine producer={producer} />
       <p className={styles.meta}>Finca: {lot.fincas?.name ?? "—"}</p>
+
+      {claims.length > 0 && (
+        <div className={styles.card} style={{ display: "block", margin: "10px 0" }}>
+          <h4 style={{ margin: "0 0 6px", fontSize: 13.5 }}>Reclamos de oficialización pendientes</h4>
+          <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+            El productor reportó un puntaje con soportes (FT2). Aceptar lo suma al expediente del lote; rechazar lo deja como rastro.
+          </p>
+          {claims.map((c) => (
+            <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px dashed var(--line)", padding: "8px 0" }}>
+              <span style={{ flex: 1, minWidth: 200, fontSize: 13 }}>
+                SCA declarado: <b>{c.sca_total ?? "—"}</b> · factor {c.factor_rendimiento ?? "—"}
+                {c.q_grader_reference && ` · Q-Grader: ${c.q_grader_reference}`} · {new Date(c.created_at).toLocaleDateString("es-CO")}
+              </span>
+              <ActionForm action={reviewEvaluationClaim.bind(null, c.id, "accepted", "")} submitLabel="Aceptar" pendingLabel="Guardando…" />
+              <ActionForm action={reviewEvaluationClaim.bind(null, c.id, "rejected", "")} submitLabel="Rechazar" pendingLabel="Guardando…" buttonClassName="btn btn-sm" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {awaitingShipment && <p className={styles.meta}>Ficha completa · esperando que el productor confirme el envío de la muestra</p>}
       {lot.sample_shipped_at && !lot.sample_2kg_confirmed_at && (

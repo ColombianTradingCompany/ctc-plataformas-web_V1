@@ -136,7 +136,10 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
   { de: "/ecp/terratalento", a: "/bcp/terratalento", desde: "V5.60" },
   // Ecosistema de Valor ← OCP (de vuelta)
   { de: "/ocp/arena", a: "/bcp/arena", desde: "V5.60 · de vuelta (salió en la V4.24)" },
-  { de: "/ocp/club", a: "/bcp/club", desde: "V5.60 · de vuelta (salió en la V4.24)" },
+  // V5.77: el Club como membresía se retiró y sus campañas son «Campañas de Subvención» en el OCP
+  // (PLAN_CIRCUITO_DEL_LOTE §3). `/ocp/club` se REAPUNTA (nunca se encadena un talón con otro).
+  { de: "/ocp/club", a: "/ocp/subvenciones", desde: "V5.60 → V5.77 (reapuntada)" },
+  { de: "/bcp/club", a: "/ocp/subvenciones", desde: "V5.77" },
   // Configuración del Sistema ← ECP
   { de: "/ecp/plataformas", a: "/bcp/plataformas", desde: "V5.60" },
   // Herramientas Internas → ECP (todas de vuelta salvo el PVC, que nació en el BCP en la V5.28)

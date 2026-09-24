@@ -74,34 +74,5 @@ export async function setAdminLockPassword(current: string, next: string): Promi
   return { ok: true };
 }
 
-export type RevealedIdentity = { lotId: string; lotName: string; producerName: string | null };
-
-/**
- * "Mirar bajo el capó" de una sesión a ciegas: con la contraseña del candado,
- * devuelve la identidad de cada taza. Las identidades NUNCA viajan al cliente
- * en el render — solo salen de aquí, tras verificar la contraseña.
- */
-export async function revealSessionIdentities(
-  sessionId: string,
-  password: string
-): Promise<{ ok: true; identities: RevealedIdentity[] } | { ok: false; error: string }> {
-  const gate = await verifyAdminLock(password);
-  if (!gate.ok) return gate;
-  const service = createServiceRoleClient();
-  const { data: roster } = await service
-    .from("arena_session_lots")
-    .select("lot_id, lots(id, name, producer_id)")
-    .eq("arena_session_id", sessionId);
-  const lots = (roster ?? []).map((r) => (Array.isArray(r.lots) ? r.lots[0] : r.lots) as { id: string; name: string; producer_id: string } | null);
-  const producerIds = [...new Set(lots.filter(Boolean).map((l) => l!.producer_id))];
-  const { data: pps } = producerIds.length
-    ? await service.from("profiles").select("id, full_name").in("id", producerIds)
-    : { data: [] };
-  const nameById = new Map(((pps as { id: string; full_name: string | null }[] | null) ?? []).map((p) => [p.id, p.full_name]));
-  return {
-    ok: true,
-    identities: lots
-      .filter((l): l is NonNullable<typeof l> => !!l)
-      .map((l) => ({ lotId: l.id, lotName: l.name, producerName: nameById.get(l.producer_id) ?? null })),
-  };
-}
+// `revealSessionIdentities` («mirar bajo el capó» de una sesión a ciegas) se retiró en la V5.77 con la
+// jornada de la Arena: las sesiones de segunda apreciación no son a ciegas. El candado sigue vivo para lo que venga.

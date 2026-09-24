@@ -30,17 +30,20 @@ export default async function OcpHomePage() {
 
   // Las tareas —y las filas de las que salen— vienen del motor compartido (`tareasCarga.ts`, V5.60):
   // el mismo que alimenta el Tablero de Ejecución del ECP. Aquí solo se piden los recuentos de los KPI.
-  const [{ tareas, fuentes }, { count: openSessions }, { count: totalSessions }, { count: totalFincas }, { count: totalLots }, { count: totalReadings }, { data: recentAudit }] =
+  // V5.77: los KPI de la Arena («lotes en fila», «sesiones abiertas») se retiraron — la Arena ya no es parte del
+  // circuito. Entran las solicitudes de evaluación por resolver y los reclamos de oficialización por revisar.
+  const [{ tareas, fuentes }, { count: solicitudesPendientes }, { count: totalSolicitudes }, { count: reclamos }, { count: totalFincas }, { count: totalLots }, { count: totalReadings }, { data: recentAudit }] =
     await Promise.all([
       cargarTareas(service),
-      service.from("arena_sessions").select("id", { count: "exact", head: true }).in("status", ["scheduled", "in_progress"]),
-      service.from("arena_sessions").select("id", { count: "exact", head: true }),
+      service.from("arena_inscriptions").select("id", { count: "exact", head: true }).eq("phase", "postulacion"),
+      service.from("arena_inscriptions").select("id", { count: "exact", head: true }),
+      service.from("lot_evaluations").select("id", { count: "exact", head: true }).eq("source", "producer_claim").eq("status", "pending"),
       service.from("fincas").select("id", { count: "exact", head: true }),
       service.from("lots").select("id", { count: "exact", head: true }),
       service.from("humidity_readings").select("id", { count: "exact", head: true }),
       service.from("audit_log").select("entity_type, entity_id, action, notes, created_at").order("created_at", { ascending: false }).limit(8),
     ]);
-  const { pendingFincas, queuedLots, flagged } = fuentes;
+  const { pendingFincas, flagged } = fuentes;
   const audit = (recentAudit as AuditRow[] | null) ?? [];
 
   // ---- KPI tiles (graphical: number + proportion meter, colored + linked) ----
@@ -56,22 +59,22 @@ export default async function OcpHomePage() {
       sub: `de ${totalFincas ?? 0} fincas`,
     },
     {
-      k: "Lotes en fila para Arena",
+      k: "Solicitudes de evaluación por resolver",
       icon: "☕",
-      v: queuedLots.length,
-      denom: totalLots ?? 0,
+      v: solicitudesPendientes ?? 0,
+      denom: totalSolicitudes ?? 0,
       color: "#003087",
-      href: "/ocp/kr",
-      sub: `de ${totalLots ?? 0} lotes`,
+      href: "/ocp/a-evaluar",
+      sub: `de ${totalSolicitudes ?? 0} solicitudes`,
     },
     {
-      k: "Sesiones de Arena abiertas",
+      k: "Reclamos de oficialización por revisar",
       icon: "⚖️",
-      v: openSessions ?? 0,
-      denom: totalSessions ?? 0,
+      v: reclamos ?? 0,
+      denom: totalLots ?? 0,
       color: "#A87A14",
-      href: "/bcp/arena",
-      sub: `de ${totalSessions ?? 0} sesiones`,
+      href: "/ocp/kr",
+      sub: `sobre ${totalLots ?? 0} lotes`,
     },
     {
       k: "Humedad fuera de rango",
@@ -119,7 +122,7 @@ export default async function OcpHomePage() {
       <h2 className={styles.sectionHead}>Tareas · pendientes de la operación</h2>
       <PanelTasks items={items} />
       <p className={styles.kpiSub} style={{ marginTop: 10 }}>
-        Las de las otras consolas —leads, la fila de la Arena— están en el <Link href="/ecp">Tablero de Ejecución</Link>.
+        Las de las otras consolas —los leads— están en el <Link href="/ecp">Tablero de Ejecución</Link>.
       </p>
 
       <h2 className={styles.sectionHead} style={{ marginTop: 32 }}>

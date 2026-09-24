@@ -8,7 +8,6 @@ import {
   addSondeoEvaluation,
   applyCodeOnBehalf,
   asumirEvaluacion,
-  assignLotToSession,
   assignLotsToBatch,
   confirmInscriptionPayment,
   confirmSampleReceivedNom,
@@ -22,7 +21,6 @@ import {
   planSondeoBatch,
   postularOnBehalf,
   recordEvaluationVerdict,
-  inviteLotToArena,
   regenerateMejoras,
   removeFromBatch,
   setBatchLab,
@@ -165,56 +163,6 @@ export function ConfirmSampleButton({ lotId, shipped }: { lotId: string; shipped
     <div style={{ marginTop: 6 }}>
       <button className="btn btn-sm" disabled={pending || !shipped} onClick={() => run(() => confirmSampleReceivedNom(lotId))}>
         {pending ? "Confirmando…" : shipped ? "Confirmar muestra recibida" : "Muestra aún no enviada"}
-      </button>
-      <ErrorLine error={error} />
-    </div>
-  );
-}
-
-/** Invita un lote galardonado (Blue/Gold/Tyrian con contrato) a la vitrina. */
-export function InviteToShowcaseButton({ lotId, lotName }: { lotId: string; lotName: string }) {
-  const { pending, error, run } = useAction();
-  return (
-    <span>
-      <button
-        className="btn btn-sm btn-solid"
-        disabled={pending}
-        onClick={() => {
-          if (window.confirm(`¿Invitar ${lotName} a la vitrina de la Arena? El productor recibirá la invitación.`))
-            run(() => inviteLotToArena(lotId));
-        }}
-      >
-        {pending ? "Invitando…" : "Invitar a la vitrina"}
-      </button>
-      <ErrorLine error={error} />
-    </span>
-  );
-}
-
-export function AssignSessionControls({
-  lotId,
-  openSessions,
-}: {
-  lotId: string;
-  openSessions: { id: string; label: string; free: number }[];
-}) {
-  const { pending, error, run } = useAction();
-  const [sess, setSess] = useState("");
-  if (!openSessions.length) {
-    return <p className={styles.meta}>Sin sesiones abiertas con cupo — cree una en /bcp/arena.</p>;
-  }
-  return (
-    <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-      <select value={sess} onChange={(e) => setSess(e.target.value)}>
-        <option value="">Elegir sesión…</option>
-        {openSessions.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.label} · {s.free} cupos
-          </option>
-        ))}
-      </select>
-      <button className="btn btn-sm btn-solid" disabled={pending || !sess} onClick={() => run(() => assignLotToSession(lotId, sess))}>
-        {pending ? "Asignando…" : "Confirmar sesión"}
       </button>
       <ErrorLine error={error} />
     </div>

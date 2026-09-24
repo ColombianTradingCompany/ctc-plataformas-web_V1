@@ -1,7 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchProducerContacts } from "@/lib/bcpProducers";
-import { consolaDelModulo } from "./consoles";
 import { consolaDelPilar, tableroDelPilar } from "./leadsPilares";
 import type { TareaDeConsola } from "./tareas";
 
@@ -40,12 +39,11 @@ function snippet(text: string, n = 60): string {
 
 export async function cargarTareas(service: SupabaseClient): Promise<{
   tareas: TareaDeConsola[];
-  fuentes: { pendingFincas: NamedRow[]; queuedLots: NamedRow[]; flagged: HumidityRow[]; newLeads: LeadRow[] };
+  fuentes: { pendingFincas: NamedRow[]; flagged: HumidityRow[]; newLeads: LeadRow[] };
 }> {
-  const [{ data: fincaRows }, { data: lotRows }, { data: flaggedRows }, { data: commRows }, { data: leadRows }, { data: stateRows }] =
+  const [{ data: fincaRows }, { data: flaggedRows }, { data: commRows }, { data: leadRows }, { data: stateRows }] =
     await Promise.all([
       service.from("fincas").select("id, name, municipio").eq("status", "pending_review").order("created_at", { ascending: true }),
-      service.from("lots").select("id, name").eq("stage", "fila_arena").order("created_at", { ascending: true }),
       service.from("humidity_readings").select("id, reading_month, humidity_pct").eq("flagged", true).order("reported_at", { ascending: false }),
       service
         .from("producer_comm_log")
@@ -58,7 +56,6 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
     ]);
 
   const pendingFincas = (fincaRows as NamedRow[] | null) ?? [];
-  const queuedLots = (lotRows as NamedRow[] | null) ?? [];
   const flagged = (flaggedRows as HumidityRow[] | null) ?? [];
   const msgs = (commRows as CommRow[] | null) ?? [];
   const newLeads = (leadRows as LeadRow[] | null) ?? [];
@@ -115,15 +112,7 @@ export async function cargarTareas(service: SupabaseClient): Promise<{
       consola: "ocp",
     });
   }
-  for (const l of queuedLots) {
-    pon({
-      key: `lot:${l.id}`,
-      icon: "☕",
-      label: `Lote ${l.name} en fila para Arena`,
-      href: "/bcp/arena",
-      consola: consolaDelModulo("arena") ?? "ocp",
-    });
-  }
+  // V5.77: «lote en fila para Arena» se retiró — la Arena ya no es parte del circuito (PLAN_CIRCUITO_DEL_LOTE).
 
-  return { tareas, fuentes: { pendingFincas, queuedLots, flagged, newLeads } };
+  return { tareas, fuentes: { pendingFincas, flagged, newLeads } };
 }

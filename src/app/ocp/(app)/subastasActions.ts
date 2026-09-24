@@ -57,7 +57,7 @@ export async function abrirSubasta(lotId: string, formData: FormData): Promise<R
   const { data: open } = await service.from("lot_auctions").select("id").eq("lot_id", lotId).eq("status", "abierta").maybeSingle();
   if (open) return { ok: false, error: "Este lote ya tiene una subasta abierta." };
 
-  const { data: evals } = await service.from("lot_evaluations").select("source, status, sca_total, factor_rendimiento").eq("lot_id", lotId);
+  const { data: evals } = await service.from("lot_evaluations").select("source, status, sca_total, factor_rendimiento, rige_grado, created_at").eq("lot_id", lotId);
   const avg = officialAverages(((evals as EvaluationRow[] | null) ?? []));
   const finca = (Array.isArray(lot.fincas) ? lot.fincas[0] : lot.fincas) as { name: string } | null;
 

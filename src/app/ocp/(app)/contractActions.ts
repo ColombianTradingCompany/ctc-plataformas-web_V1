@@ -29,22 +29,7 @@ export async function signContract(
   if (!contract) return { ok: false, error: "Contrato no encontrado." };
   if (contract.status !== "pending_signature") return { ok: false, error: "Este contrato ya fue firmado." };
 
-  // Kaffetal Club gate: only member producers sign contracts (and from there
-  // participate in the active catalog / Cherry Picked).
-  const { data: lot } = await service.from("lots").select("producer_id").eq("id", contract.lot_id).single();
-  const { data: pp } = await service
-    .from("producer_profiles")
-    .select("club_member_since")
-    .eq("profile_id", lot?.producer_id ?? "")
-    .maybeSingle();
-  if (!pp?.club_member_since) {
-    // Desde V5.17 la membresía se otorga automáticamente con el GALARDÓN
-    // (grantClubMembershipOnce); este gate queda como defensa en profundidad.
-    return {
-      ok: false,
-      error: "El productor de este lote todavía no es miembro del Kaffetal Club — la membresía llega automáticamente cuando un lote suyo es galardonado.",
-    };
-  }
+  // V5.77: el gate del Kaffetal Club se retiró (PLAN_CIRCUITO_DEL_LOTE §3): la firma nace del trato.
 
   await service
     .from("purchase_contracts")

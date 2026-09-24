@@ -103,7 +103,7 @@ const lee = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
   const iResend = emails.indexOf("resend.emails.send(");
   check("el remitente compartido filtra las etiquetas ANTES de llamar a Resend", iSend > -1 && iGuard > iSend && iResend > iGuard);
   check("y es el ÚNICO sitio que llama a Resend (los demás pasan por él)", (emails.match(/resend\.emails\.send\(/g) ?? []).length === 1);
-  const otros = ["src/lib/email/clubEmails.ts", "src/lib/email/recuperacionEmails.ts", "src/lib/email/terratalentoEmails.ts"].map(lee).join("\n");
+  const otros = ["src/lib/email/recuperacionEmails.ts", "src/lib/email/terratalentoEmails.ts"].map(lee).join("\n");
   check("ningún otro remitente instancia Resend por su cuenta", !/new Resend\(/.test(otros));
 }
 

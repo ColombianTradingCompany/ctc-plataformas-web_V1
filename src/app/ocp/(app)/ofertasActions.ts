@@ -111,10 +111,10 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   if (abierta) return { ok: false, error: "Este lote ya tiene una oferta abierta — retírela antes de emitir otra." };
   if (contratoVivo) return { ok: false, error: "Este lote ya tiene un contrato vivo." };
 
-  // El puntaje del snapshot: el promedio oficial (evaluaciones aceptadas).
+  // El puntaje del snapshot: la evaluación que RIGE el grado (V5.77; antes el promedio de las aceptadas).
   const { data: evalRows } = await service
     .from("lot_evaluations")
-    .select("status, sca_total, factor_rendimiento")
+    .select("status, sca_total, factor_rendimiento, rige_grado, source, created_at")
     .eq("lot_id", lotId);
   const media = officialAverages(((evalRows as EvaluationRow[] | null) ?? []));
 

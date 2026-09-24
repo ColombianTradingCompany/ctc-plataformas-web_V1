@@ -85,6 +85,12 @@ Ninguno propio (deuda). Lo tocan `qa-recuperacion-check.mjs` (las cinco puertas 
 
 ## Pendientes
 
+- **V5.77 (`consolas`, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — dos cosas con dueño aquí**: (a) la Arena ya no es una gala con
+  jornada en vivo sino una sesión de segunda apreciación, así que el sello del **Estudio de Contenido** «video de Arena + assets del
+  lote» (`partners.ts`) queda sin objeto en su primera mitad: pasa a «assets del lote»; (b) la fase 4 del plan construye el módulo
+  **Evaluación de Lotes** del Centro de Calidad sobre su credencial (hoy suspendida), con módulos activables (Evaluación ·
+  Procesamiento) y uso directo (respuesta 5 del owner, 2026-09-24).
+
 - **Plan de ejecución de la narrativa** (`docs/PLAN_NARRATIVA_2026-09-17.md`): **SO-1** (narrativa de los nodos; ola 1)
   · SO-2 (panel del Master Roaster con etiquetas y Centro de Calidad con el CIR; espera CN-8 y las alianzas O-5).
 - **Tercera ronda de narrativa (2026-09-17, `PVC_BCP_PLAN.md` §14.7)**: el **Centro de Calidad** hace el procesamiento (trilla,

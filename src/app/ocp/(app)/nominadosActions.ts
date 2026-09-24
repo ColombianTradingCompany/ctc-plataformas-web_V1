@@ -8,9 +8,8 @@ import { claimCampaignCode, insertEntryCode } from "@/lib/arena/entryCodes";
 import { generateMejorasDoc } from "@/lib/arena/mejoras";
 import { labEvaluationHasData, labEvaluationScore, toLabEvaluationList, computeFactor, type LabEvaluation } from "@/lib/arena/labEvaluation";
 import { currentSeason, lotSeasonCount, MAX_SEASONS_PER_LOT } from "@/lib/arena/seasons";
-import { SCA_KEYS } from "@/lib/arena/jornada";
+import { ATRIBUTOS_SCA } from "@/lib/fichas/tipos";
 import { gradoPorPuntaje, redondeaPuntaje } from "@/lib/grados/definicion";
-import { grantClubMembershipOnce } from "@/lib/arena/club";
 
 // ── Nominados: el tramo pagado de la Arena, lado BCP ────────────────────────
 // Rediseño 2026-07-20 (paquete del owner). El tablero de arriba tiene TRES
@@ -556,8 +555,8 @@ export async function addSondeoEvaluation(lotId: string, evaluation: LabEvaluati
  * el lote sale GALARDONADO aquí mismo — el grado se DERIVA del puntaje con
  * `gradoPorPuntaje()` (regla 1 del owner, 2026-08-19: «el puntaje manda»; ver
  * src/lib/grados/definicion.ts) y nadie digita un grado a mano. La planilla
- * queda como `lot_evaluations` con procedencia PROPIA (`q_grader_batch`) y la
- * membresía del Club llega con el galardón (grantClubMembershipOnce).
+ * queda como `lot_evaluations` con procedencia PROPIA (`q_grader_batch`). (Hasta la
+ * V5.76 el galardón repartía además la membresía del Club; el Club se retiró en la V5.77.)
  * Rechazado ⇒ sale del pipeline con cashback del 80% de lo pagado (si pagó) y
  * unas "Recomendaciones de Mejora" generadas por IA (best-effort).
  *
@@ -645,7 +644,7 @@ export async function recordEvaluationVerdict(
     // procedencia propia — el comprador confía en esa etiqueta.
     if (lastEval) {
       const scaData: Record<string, number> = {};
-      for (const key of SCA_KEYS) scaData[key] = Number(lastEval[`sca_${key}` as keyof LabEvaluation]) || 0;
+      for (const key of ATRIBUTOS_SCA) scaData[key] = Number(lastEval[`sca_${key}` as keyof LabEvaluation]) || 0;
       const derived = computeFactor(lastEval);
       const { error: evalError } = await service.from("lot_evaluations").insert({
         lot_id: lotId,
@@ -700,10 +699,8 @@ export async function recordEvaluationVerdict(
       created_by: adminId,
     });
 
-    // La membresía del Club llega con el galardón (decisión del owner V5.17).
-    if (ins.producer_id) {
-      await grantClubMembershipOnce(service, ins.producer_id, adminId, new Set<string>());
-    }
+    // V5.77: el Kaffetal Club como membresía se retiró (PLAN_CIRCUITO_DEL_LOTE §3): el galardón ya no
+    // reparte nada; firmar y publicar nacen del trato, no de una membresía.
 
     // Destino comercial (V5.18): EL CONTRATO YA NO NACE AQUÍ. Red/Blue/Gold
     // aparecen en la cola de /ocp/ofertas (CTCx emite, el productor acepta y
@@ -800,120 +797,6 @@ export async function regenerateMejoras(lotId: string): Promise<Result> {
   return ok ? { ok: true } : { ok: false, error: "La generación falló — revise ANTHROPIC_API_KEY o reintente." };
 }
 
-/** Bloquea un lote APTO (phase='arena', ya sondeado) en una sesión abierta con
- *  cupo. Se llama desde el módulo Arena, no desde Nominados. Aquí llega fila_arena. */
-// ── La compuerta de la vitrina (V5.19) ──────────────────────────────────────
-// La Arena dejó de ser parte del camino base: es la VITRINA post-galardón,
-// exclusiva de Blue/Gold/Tyrian CON CONTRATO ABIERTO (pendiente de firma o
-// activo — el Tyrian llega vía su subasta aceptada). Esta función centraliza
-// la regla para invitar y para bloquear en sesión.
-async function showcaseGate(
-  service: ReturnType<typeof createServiceRoleClient>,
-  lotId: string
-): Promise<{ ok: true; lot: { name: string; producer_id: string } } | { ok: false; error: string }> {
-  const { data: lot } = await service.from("lots").select("id, name, stage, grade, producer_id").eq("id", lotId).maybeSingle();
-  if (!lot) return { ok: false, error: "Lote no encontrado." };
-  if (lot.stage !== "galardonado") return { ok: false, error: "La vitrina de la Arena es para lotes GALARDONADOS." };
-  if (!["blue", "gold", "tyrian"].includes(lot.grade ?? "")) {
-    return { ok: false, error: "La vitrina de la Arena es exclusiva de los grados Blue, Gold y Tyrian." };
-  }
-  const { data: contrato } = await service
-    .from("purchase_contracts")
-    .select("id")
-    .eq("lot_id", lotId)
-    .in("status", ["pending_signature", "active"])
-    .maybeSingle();
-  if (!contrato) {
-    return { ok: false, error: "La vitrina exige un contrato abierto — emita la oferta y espere la aceptación del productor." };
-  }
-  return { ok: true, lot: { name: lot.name, producer_id: lot.producer_id } };
-}
-
-/** Invita un lote galardonado a la vitrina de la Arena: fase → 'arena' (el
- *  pool de invitados desde el que se bloquea en una sesión). */
-export async function inviteLotToArena(lotId: string): Promise<Result> {
-  // Se pulsa desde DOS consolas: el circuito del lote (OCP) y la página de la Arena (BCP, V5.60).
-  const permiso = await permisoDeEscritura(["ocp", "bcp"], "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-
-  const gate = await showcaseGate(service, lotId);
-  if (!gate.ok) return gate;
-  const { data: ins } = await service.from("arena_inscriptions").select("id, phase").eq("lot_id", lotId).maybeSingle();
-  if (!ins) return { ok: false, error: "Este lote no tiene inscripción — la vitrina hereda la inscripción de su evaluación." };
-  if (ins.phase !== "galardonado") return { ok: false, error: "Solo un lote en fase galardonado puede invitarse a la vitrina." };
-
-  await service.from("arena_inscriptions").update({ phase: "arena" }).eq("id", ins.id);
-  await service.from("audit_log").insert({
-    entity_type: "arena_inscription",
-    entity_id: lotId,
-    action: "invited_to_showcase",
-    previous_status: "galardonado",
-    new_status: "arena",
-    performed_by: adminId,
-  });
-  await service.from("producer_comm_log").insert({
-    producer_id: gate.lot.producer_id,
-    context_label: `Lote ${gate.lot.name}`,
-    lot_id: lotId,
-    note: "¡Su lote fue invitado a la vitrina de la Kaffetal Regal Arena — la gala en vivo de los mejores de la temporada! Le confirmaremos la fecha de la sesión.",
-    created_by: adminId,
-  });
-  revalidatePath("/bcp/arena");
-  revalidateAll();
-  return { ok: true };
-}
-
-export async function assignLotToSession(lotId: string, sessionId: string): Promise<Result> {
-  // Se pulsa desde DOS consolas: el circuito del lote (OCP) y la página de la Arena (BCP, V5.60).
-  const permiso = await permisoDeEscritura(["ocp", "bcp"], "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-
-  const [{ data: ins }, { data: sess }, { count: roster }] = await Promise.all([
-    service.from("arena_inscriptions").select("id, phase, producer_id, sondeo_result, lots(name)").eq("lot_id", lotId).maybeSingle(),
-    service.from("arena_sessions").select("id, status, capacity, run_state, session_date").eq("id", sessionId).maybeSingle(),
-    service.from("arena_session_lots").select("id", { count: "exact", head: true }).eq("arena_session_id", sessionId),
-  ]);
-  // V5.19: la sesión es la VITRINA. Solo un lote invitado (phase='arena') que
-  // pase la compuerta —galardonado, Blue/Gold/Tyrian, contrato abierto— se
-  // bloquea en una sesión.
-  if (!ins || ins.phase !== "arena") {
-    return { ok: false, error: "Este lote no está invitado a la vitrina — invítelo primero (galardonado Blue/Gold/Tyrian con contrato)." };
-  }
-  const gate = await showcaseGate(service, lotId);
-  if (!gate.ok) return gate;
-  if (!sess || sess.status === "completed" || sess.run_state) {
-    return { ok: false, error: "Esa sesión no está abierta." };
-  }
-  if ((roster ?? 0) >= sess.capacity) return { ok: false, error: `La sesión ya está llena (${sess.capacity} lotes).` };
-
-  const { error } = await service.from("arena_session_lots").insert({ arena_session_id: sessionId, lot_id: lotId });
-  if (error) return { ok: false, error: "El lote ya está en esa sesión." };
-  // El stage del lote NO se toca (V5.19): ya es 'galardonado' y la vitrina no
-  // lo degrada — el viejo write a 'fila_arena' se retiró con la compuerta.
-  await service.from("arena_inscriptions").update({ phase: "sesion" }).eq("id", ins.id);
-
-  const lot = (Array.isArray(ins.lots) ? ins.lots[0] : ins.lots) as { name: string } | null;
-  const fecha = sess.session_date ? new Date(sess.session_date).toLocaleDateString("es-CO") : "por definir";
-  await service.from("audit_log").insert({
-    entity_type: "arena_inscription",
-    entity_id: lotId,
-    action: "assigned_to_session",
-    new_status: "sesion",
-    performed_by: adminId,
-    notes: `Sesión ${sessionId.slice(0, 8)} · ${fecha}`,
-  });
-  await service.from("producer_comm_log").insert({
-    producer_id: ins.producer_id,
-    context_label: lot ? `Lote ${lot.name}` : null,
-    lot_id: lotId,
-    note: `¡Su lote tiene sesión de Arena confirmada! Fecha: ${fecha}.`,
-    created_by: adminId,
-  });
-  revalidatePath("/bcp/arena");
-  revalidateAll();
-  return { ok: true };
-}
+// La vitrina de la Arena (la compuerta, invitar y bloquear en sesión) se retiró en la V5.77:
+// la Arena es ahora una sesión de segunda apreciación (`src/app/bcp/(app)/arenaActions.ts`) y no toca
+// la inscripción ni el estado del lote. Las fases `arena · sesion · competido` quedan en el CHECK sin escritor.

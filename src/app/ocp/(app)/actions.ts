@@ -357,7 +357,7 @@ export async function confirmSampleReceived(lotId: string): Promise<{ ok: true }
   }
   // 2. Luego la inscripción de Arena (COP 80.000, descontable/eximible).
   if (!(await lotInscriptionSettled(service, lotId))) {
-    return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, descuento o exención) en /bcp/club." };
+    return { ok: false, error: "La inscripción de Arena de este lote no está saldada — confírmala (pago, subvención o exención) en Lotes a Evaluar." };
   }
   // 3. Y la muestra tiene que haber salido de la finca.
   if (!lot.sample_shipped_at && lot.source !== "bcp_manual_entry") {

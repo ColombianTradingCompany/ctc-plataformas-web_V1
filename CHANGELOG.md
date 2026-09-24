@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.81] — 2026-09-24 (commit pendiente)
+## [V5.81] — 2026-09-24 (commit ebb5861)
 
 - **Hito**: **la fase 4 del `PLAN_CIRCUITO_DEL_LOTE.md` — Centro de Calidad · Evaluación de Lotes** (folio 7 del owner, paso 11;
   respuesta 5). Código de `socios` tocado desde la sesión `consolas` con el «continúa con la fase 4» del owner; línea en `ALINEACION` §3.

@@ -64,4 +64,7 @@ export const ESTADO_DE_CONTRATO: Record<string, string> = {
   reconditioning: "Reacondicionamiento",
   completed: "Cumplido",
   cancelled: "Cancelado",
+  // V5.84 (fase 7): la ruptura la declara el owner a mano; «renovado» = CTCx ofreció la renovación con el PVC nuevo.
+  ruptura: "Ruptura contractual",
+  renovado: "Renovado",
 };

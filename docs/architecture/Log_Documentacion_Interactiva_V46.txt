@@ -357,3 +357,30 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE: conducir la fase 6 con `prueba-*` (aceptar → contrato → firma); fase 7 (el trato mes a mes: `contract_months`,
   retiros, mora visible, renovación, past crop; `contract_releases` deja de ser la escalera); fase 8 (Compras + CTCx Selection).
 (commit: ef64fcb)
+
+## [2026-09-24] V5.84 · Consolas → Kaffetal Regal — fase 7 del PLAN_CIRCUITO_DEL_LOTE: el trato mes a mes
+- REGLA NUEVA (DICT `mesAMes`): `src/lib/trato/mesAMes.ts` (puro): `moraDelMes`/`moraDelTrato` (sin pedido · cumplido · sin cargo
+  <2 sem · con recargo 5 % <4 sem · ruptura POTENCIAL), `enMora` (desde el recargo; lo usan el OCP y KR), `mesEnCurso` (tramos de
+  30 días desde la firma), `tramoLibrePct`, `retiro()` (libre acumulado − ya retirado libre; el resto cargas × COP/carga × 4 %),
+  `esPastCrop` (+9 m), `renovacionDebida` (≥90 d), `resumenDelTrato`. NADA se persiste (decisión 6 del owner).
+- FLUJO «el trato mes a mes» (folio 8, pasos 16–18), NODO OCP `/ocp/contratos/[id]`: por mes `pedirDelMes` → `registrarEnvioDelMes`
+  (espejo en `contract_releases` al 100 % → `lot_listings.total_kg`) → `registrarPagoDelMes` (solo lo enviado); `cerrarSiCumplido` →
+  `completed`; tarjeta de renovación (`ofrecerRenovacion`: cumplido + 90 d → `emitOffer` temporada con `renewal_of_contract_id`;
+  el viejo queda `renovado`) y de ruptura (`declararRuptura`: SOLO owner (`esOwner`), motivo → `status: ruptura` +
+  `producer_profiles.estado_cuenta = congelada`; `descongelarCuenta`). `/ocp/contratos` + «Renovados» · «Ruptura».
+  `RELEASE_STAIRCASE` y `recordContractRelease` retirados. `emitOffer`: past crop también desde `harvest_to`; se niega ante una
+  cuenta congelada.
+- NODO KR `ContratosTab` («Mi trato»): tabla de meses (pidió · envió · pagó · retiró · situación con la mora derivada), resumen
+  (comprometido · retirado · vigente · mes en curso), `RetiroForm` (`previsualizarRetiro` → `retirarDelTrato`,
+  `src/lib/trato/producerActions.ts`), banner de cuenta congelada (`gi.estadoCuenta`); la mora se deriva en `loadData`, no en el
+  render. `LotKanbanStepper` recibe `enMora` (CONT hecho «en mora»; la ruptura lo apaga); `PerfilTab` lo alimenta. Puertas:
+  congelada no acepta ofertas (`respondToOffer`) ni retira.
+- CIRCUITO: laterales `en_mora` (contrato en curso + `enMora`) y `ruptura`; la tabla del OCP pasa `enMora: enMora(moraDelTrato(...))`.
+  `ESTADO_DE_CONTRATO` + ruptura/renovado.
+- DATOS: migración `trato_mes_a_mes` (acta en `docs/migraciones/`): `contract_months`, enum `contract_status` + `ruptura` ·
+  `renovado`, `purchase_contracts.ruptura_at/ruptura_motivo/renovado_at/renewal_offer_id`, `lot_offers.renewal_of_contract_id`,
+  `producer_profiles.estado_cuenta/_at/_motivo` + `guard_producer_estado_cuenta`.
+- Guardianes: `qa-trato-check` 54 → 90 (§6, desde el plan y el §12.9), `qa-circuito` 45 → 56.
+- PENDIENTE: conducir las fases 6–7 con `prueba-*`; fase 8 (CTCx Selection y Compras); los recordatorios de mora por correo (fila
+  «Recordatorios» del §4, sin ejecutar).
+(commit: pendiente)

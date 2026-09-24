@@ -8,6 +8,7 @@ import { currentSeason, seasonKey, seasonLabel, type Season } from "@/lib/arena/
 import { formatCop } from "@/lib/arena/inscriptions";
 import { esGradoValido, type GradoId } from "@/lib/grados/definicion";
 import { pvcParaGrado, type PvcDeGrado } from "@/lib/pvc/servicio";
+import { esPastCrop } from "@/lib/trato/mesAMes";
 import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, modificadorDeOferta, TERMINOS_VERSION, VENTANA_DIRECTA_DIAS } from "@/lib/trato/terminos";
 
 // ── Ofertas: CTCx decide y oferta, el productor acepta (V5.18 · anclada al PVC desde la V5.82) ────
@@ -79,10 +80,15 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
 
   const { data: lot } = await service
     .from("lots")
-    .select("id, name, stage, grade, producer_id, season_id, ficha_variedad, ficha_proceso")
+    .select("id, name, stage, grade, producer_id, season_id, ficha_variedad, ficha_proceso, harvest_to")
     .eq("id", lotId)
     .maybeSingle();
   if (!lot) return { ok: false, error: "Lote no encontrado." };
+  // V5.84 (fase 7, decisión 6): a una cuenta congelada por ruptura no se le oferta; el owner la descongela primero.
+  const { data: perfilProductor } = await service.from("producer_profiles").select("estado_cuenta").eq("profile_id", lot.producer_id).maybeSingle();
+  if (perfilProductor?.estado_cuenta === "congelada") return { ok: false, error: "La cuenta de este productor está congelada por ruptura contractual — descongélela (owner) antes de ofertar." };
+  // V5.84 · renovación (paso 18): la oferta nueva nace del contrato cumplido; se guarda de cuál.
+  const renewalOf = String(formData.get("renewal_of_contract_id") ?? "").trim() || null;
   if (lot.stage !== "galardonado") return { ok: false, error: "Solo un lote galardonado puede recibir una oferta." };
   if (!lot.grade || !esGradoValido(lot.grade)) return { ok: false, error: "El lote no tiene un Grado CTC válido." };
   if (!kindAllowsGrade(kind, lot.grade)) {
@@ -115,7 +121,9 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
 
   // ── El precio: del PVC para las ancladas; a mano, con motivo, para la excepción; el acordado o el mejor postor
   //    para black y subasta. Para todas se guarda la referencia del PVC si la hay.
-  const modificadorPct = ANCLADAS.includes(kind) ? modificadorDeOferta({ directa: kind === "directa", pastCrop: lotePasado }) : 0;
+  // Past crop (paso 18, V5.84): un lote de la temporada pasada O con recolección final a más de 9 meses → −10 %.
+  const pastCrop = lotePasado || esPastCrop(lot.harvest_to, new Date());
+  const modificadorPct = ANCLADAS.includes(kind) ? modificadorDeOferta({ directa: kind === "directa", pastCrop }) : 0;
   const pvc: PvcDeGrado | null = lot.grade === "tyrian" ? null : await pvcParaGrado(lot.grade, undefined, { modificadorPct });
   let price: number;
   if (ANCLADAS.includes(kind)) {
@@ -177,6 +185,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
     ventana_dias: esDirecta ? VENTANA_DIRECTA_DIAS : null,
     expira_at: esDirecta ? new Date(now.getTime() + VENTANA_DIRECTA_DIAS * 86_400_000).toISOString() : null,
     compra_inicial_kg: kind === "temporada" ? COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG : null,
+    renewal_of_contract_id: renewalOf,
   });
   if (error) return { ok: false, error: "No se pudo emitir la oferta: " + error.message };
 
@@ -197,7 +206,7 @@ export async function emitOffer(lotId: string, kind: OfferKind, formData: FormDa
   const donde = kind === "subasta" ? "Subastas Tyrian" : kind === "black" ? "Ofertas Black" : "Ofertas de Temporada";
   const detalle =
     kind === "temporada"
-      ? ` Es un Lote de Temporada: ${formatCop(price)}/kg de CPS anclados al PVC vigente${lotePasado ? " (lote de la temporada pasada, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minimoKg(lot.grade) ?? "—"} kg).`
+      ? ` Es un Lote de Temporada${renewalOf ? " (renovación de su trato)" : ""}: ${formatCop(price)}/kg de CPS anclados al PVC vigente${pastCrop ? " (past crop, −10 %)" : ""}; CTC compra de inmediato una carga (${COMPRA_INICIAL_CTCX_CARGAS * CARGA_KG} kg) al precio acordado y usted declara cuánto compromete para el trimestre (mínimo ${minimoKg(lot.grade) ?? "—"} kg).`
       : kind === "directa"
         ? ` Es una oferta directa de CTCx Selection: ${formatCop(price)}/kg de CPS (PVC − 8 %), vigente ${VENTANA_DIRECTA_DIAS} días${maxKg ? `, hasta ${maxKg} kg` : ""}.`
         : ` ${formatCop(price)}/kg de CPS.`;

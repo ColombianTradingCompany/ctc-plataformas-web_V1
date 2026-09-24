@@ -5,13 +5,9 @@ import type { ActionResult } from "@/components/panel/ActionForm";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { emitOffer } from "./ofertasActions";
+import { renovacionDebida } from "@/lib/trato/mesAMes";
+import { RENOVACION_DIAS } from "@/lib/trato/terminos";
 
-
-const RELEASE_STAIRCASE = [
-  { month_number: 1, max_release_pct: 50 },
-  { month_number: 2, max_release_pct: 75 },
-  { month_number: 3, max_release_pct: 100 },
-];
 
 // Devuelve resultado en vez de lanzar: "ya fue firmado" y el gate del Club son
 // rechazos alcanzables desde el botón de firmar, y un throw en una form action
@@ -46,9 +42,9 @@ export async function signContract(
     .update({ signed_at: new Date().toISOString(), status: "active" })
     .eq("id", contractId);
 
-  await service.from("contract_releases").insert(
-    RELEASE_STAIRCASE.map((r) => ({ contract_id: contractId, month_number: r.month_number, max_release_pct: r.max_release_pct }))
-  );
+  // V5.84 (fase 7): la escalera 50/75/100 de `contract_releases` se retiró. El trato se lleva MES A MES en
+  // `contract_months` (pedir · enviar · pagar · retirar); `contract_releases` queda como espejo de cada envío para que
+  // `lot_listings.total_kg` (trigger `contract_releases_sync_listing_total`) y `publishLot` sigan leyendo lo mismo.
 
   await service.from("audit_log").insert({
     entity_type: "purchase_contract",
@@ -64,49 +60,218 @@ export async function signContract(
   return { ok: true };
 }
 
-export async function recordContractRelease(contractId: string, monthNumber: number, formData: FormData) {
+// ── El trato mes a mes (fase 7 del PLAN_CIRCUITO_DEL_LOTE, V5.84) ────────────────────────────
+// Folio 8, pasos 16–18 y decisión 6 del owner. CTCx PIDE una cantidad del café declarado (paso 17), el productor la
+// envía y CTC registra el recibo, CTC PAGA en la primera semana del mes siguiente; el productor RETIRA desde su panel
+// (`src/lib/trato/producerActions.ts`). La mora y la ruptura potencial se DERIVAN (`src/lib/trato/mesAMes.ts`) y se
+// pintan; la RUPTURA la declara el owner a mano y congela la cuenta; la RENOVACIÓN a los ~90 días emite una oferta
+// nueva anclada al PVC vigente. Cada envío se espeja en `contract_releases` (una fila por mes, 100 %) porque el
+// catálogo público lee de ahí su stock.
+
+type MesRow = { id: string; mes: number; pedido_at: string | null; enviado_at: string | null; pagado_at: string | null };
+
+async function contratoYMeses(service: ReturnType<typeof createServiceRoleClient>, contractId: string) {
+  const [{ data: contract }, { data: meses }] = await Promise.all([
+    service.from("purchase_contracts").select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, lots(name, producer_id)").eq("id", contractId).maybeSingle(),
+    service.from("contract_months").select("id, mes, pedido_at, enviado_at, pagado_at").eq("contract_id", contractId),
+  ]);
+  const lot = (Array.isArray(contract?.lots) ? contract?.lots[0] : contract?.lots) as { name: string; producer_id: string } | null;
+  return { contract, lot, meses: ((meses as MesRow[] | null) ?? []) };
+}
+
+const mesValido = (contract: { freeze_months: number | null } | null, mes: number) => {
+  const meses = contract?.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  return Number.isInteger(mes) && mes >= 1 && mes <= meses;
+};
+
+/** Si todos los meses del periodo están enviados y pagados, el trato queda cumplido (sin tocar nada más). */
+async function cerrarSiCumplido(service: ReturnType<typeof createServiceRoleClient>, contractId: string, adminId: string) {
+  const { contract, meses } = await contratoYMeses(service, contractId);
+  if (!contract || contract.status !== "active") return;
+  const n = contract.freeze_months && contract.freeze_months > 0 ? Math.min(3, contract.freeze_months) : 3;
+  const cerrado = meses.length >= n && meses.every((m) => m.enviado_at && m.pagado_at);
+  if (!cerrado) return;
+  await service.from("purchase_contracts").update({ status: "completed" }).eq("id", contractId);
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: "completed", previous_status: "active", new_status: "completed", performed_by: adminId });
+}
+
+/** Paso 17: CTCx pide la cantidad del mes. Desde aquí corre el reloj de la mora del productor. */
+export async function pedirDelMes(contractId: string, mes: number, formData: FormData): Promise<ActionResult> {
   const permiso = await permisoDeEscritura("ocp", "emite");
   if (!permiso.ok) return { ok: false as const, error: permiso.error };
   const adminId = permiso.userId;
   const service = createServiceRoleClient();
-
-  const releasedKg = formData.get("released_kg") ? Number(formData.get("released_kg")) : null;
-  const releasedAt = formData.get("released_at") ? String(formData.get("released_at")) : null;
-  const paymentConfirmedAt = formData.get("payment_confirmed_at") ? String(formData.get("payment_confirmed_at")) : null;
-  const shippedAt = monthNumber === 3 && formData.get("shipped_at") ? String(formData.get("shipped_at")) : null;
-
-  await service
-    .from("contract_releases")
-    .update({
-      released_kg: releasedKg,
-      released_at: releasedAt,
-      payment_confirmed_at: paymentConfirmedAt,
-      ...(monthNumber === 3 ? { shipped_at: shippedAt } : {}),
-    })
-    .eq("contract_id", contractId)
-    .eq("month_number", monthNumber);
-
-  await service.from("audit_log").insert({
-    entity_type: "contract_release",
-    entity_id: contractId,
-    action: `month_${monthNumber}_recorded`,
-    performed_by: adminId,
+  const kg = Number(String(formData.get("pedido_kg") ?? "").replace(",", "."));
+  if (!Number.isFinite(kg) || kg <= 0) return { ok: false, error: "Escriba los kilos que CTC pide este mes." };
+  const { contract, lot, meses } = await contratoYMeses(service, contractId);
+  if (!contract || !lot || contract.status !== "active") return { ok: false, error: "Solo se pide sobre un trato vigente (firmado)." };
+  if (!mesValido(contract, mes)) return { ok: false, error: "Ese mes no está en el periodo del trato." };
+  const fila = meses.find((m) => m.mes === mes);
+  if (fila?.enviado_at) return { ok: false, error: "Ese mes ya está enviado." };
+  const now = new Date().toISOString();
+  const { error } = fila
+    ? await service.from("contract_months").update({ pedido_kg: kg, pedido_at: now, pedido_por: adminId }).eq("id", fila.id)
+    : await service.from("contract_months").insert({ contract_id: contractId, mes, pedido_kg: kg, pedido_at: now, pedido_por: adminId });
+  if (error) return { ok: false, error: "No se pudo registrar el pedido: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: `mes_${mes}_pedido`, performed_by: adminId, notes: `${kg} kg` });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: contract.lot_id,
+    note: `CTC le pide ${kg} kg de CPS de su trato (mes ${mes}). Envíelos y CTC le paga en la primera semana del mes siguiente. Recuerde: dos semanas sin cargo; después corre el recargo del 5 %.`,
+    created_by: adminId,
   });
-
-  if (monthNumber === 3 && shippedAt && paymentConfirmedAt) {
-    await service.from("purchase_contracts").update({ status: "completed" }).eq("id", contractId);
-    await service.from("audit_log").insert({
-      entity_type: "purchase_contract",
-      entity_id: contractId,
-      action: "completed",
-      previous_status: "active",
-      new_status: "completed",
-      performed_by: adminId,
-    });
-  }
-
   revalidatePath(`/ocp/contratos/${contractId}`);
   revalidatePath("/ocp/contratos");
+  revalidatePath("/ocp/kr");
+  return { ok: true };
+}
+
+/** El productor envió y CTC recibió: el mes queda enviado y se espeja en `contract_releases` (stock del catálogo). */
+export async function registrarEnvioDelMes(contractId: string, mes: number, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const kg = Number(String(formData.get("enviado_kg") ?? "").replace(",", "."));
+  const fecha = String(formData.get("enviado_at") ?? "").trim() || new Date().toISOString().slice(0, 10);
+  if (!Number.isFinite(kg) || kg <= 0) return { ok: false, error: "Escriba los kilos que llegaron." };
+  const { contract, meses } = await contratoYMeses(service, contractId);
+  if (!contract || contract.status !== "active") return { ok: false, error: "Solo se registra sobre un trato vigente." };
+  if (!mesValido(contract, mes)) return { ok: false, error: "Ese mes no está en el periodo del trato." };
+  const fila = meses.find((m) => m.mes === mes);
+  const { error } = fila
+    ? await service.from("contract_months").update({ enviado_kg: kg, enviado_at: fecha }).eq("id", fila.id)
+    : await service.from("contract_months").insert({ contract_id: contractId, mes, enviado_kg: kg, enviado_at: fecha });
+  if (error) return { ok: false, error: "No se pudo registrar el envío: " + error.message };
+  // El espejo que lee el catálogo público (`lot_listings.total_kg` por trigger) y la precondición de `publishLot`.
+  await service
+    .from("contract_releases")
+    .upsert({ contract_id: contractId, month_number: mes, max_release_pct: 100, released_kg: kg, released_at: fecha, shipped_at: fecha }, { onConflict: "contract_id,month_number" });
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: `mes_${mes}_enviado`, performed_by: adminId, notes: `${kg} kg · ${fecha}` });
+  await cerrarSiCumplido(service, contractId, adminId);
+  revalidatePath(`/ocp/contratos/${contractId}`);
+  revalidatePath("/ocp/contratos");
+  revalidatePath("/ocp/kr");
+  return { ok: true };
+}
+
+/** Paso 17: CTC paga en la primera semana del mes siguiente. */
+export async function registrarPagoDelMes(contractId: string, mes: number, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const cop = Number(String(formData.get("pagado_cop") ?? "").replace(/\./g, "").replace(",", "."));
+  const ref = String(formData.get("pago_ref") ?? "").trim() || null;
+  const fecha = String(formData.get("pagado_at") ?? "").trim() || new Date().toISOString().slice(0, 10);
+  if (!Number.isFinite(cop) || cop <= 0) return { ok: false, error: "Escriba el valor pagado (COP)." };
+  const { contract, lot, meses } = await contratoYMeses(service, contractId);
+  if (!contract || !lot || contract.status !== "active") return { ok: false, error: "Solo se registra sobre un trato vigente." };
+  const fila = meses.find((m) => m.mes === mes);
+  if (!fila?.enviado_at) return { ok: false, error: "Se paga lo enviado: registre primero el envío del mes." };
+  const { error } = await service.from("contract_months").update({ pagado_cop: cop, pagado_at: fecha, pago_ref: ref }).eq("id", fila.id);
+  if (error) return { ok: false, error: "No se pudo registrar el pago: " + error.message };
+  await service.from("contract_releases").update({ payment_confirmed_at: fecha }).eq("contract_id", contractId).eq("month_number", mes);
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: `mes_${mes}_pagado`, performed_by: adminId, notes: `${cop} COP${ref ? ` · ${ref}` : ""} · ${fecha}` });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: contract.lot_id,
+    note: `CTC pagó el mes ${mes} de su trato: $${cop.toLocaleString("es-CO")}${ref ? ` (ref. ${ref})` : ""}.`,
+    created_by: adminId,
+  });
+  await cerrarSiCumplido(service, contractId, adminId);
+  revalidatePath(`/ocp/contratos/${contractId}`);
+  revalidatePath("/ocp/contratos");
+  return { ok: true };
+}
+
+/**
+ * Paso 18: a los ~90 días CTCx ofrece renovar con el PVC nuevo y una cantidad nueva. Emite una oferta de temporada
+ * anclada (con past crop si toca) y deja el contrato cumplido como «renovado». Solo sobre un trato CUMPLIDO: uno
+ * vigente se cierra primero (envíos y pagos).
+ */
+export async function ofrecerRenovacion(contractId: string): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const { contract } = await contratoYMeses(service, contractId);
+  if (!contract) return { ok: false, error: "Contrato no encontrado." };
+  if (contract.status !== "completed") return { ok: false, error: "La renovación se ofrece sobre un trato cumplido (todos los meses enviados y pagados)." };
+  if (!renovacionDebida(contract.signed_at, new Date())) return { ok: false, error: `La renovación se ofrece a los ${RENOVACION_DIAS} días de la firma.` };
+  const fd = new FormData();
+  fd.set("renewal_of_contract_id", contractId);
+  fd.set("notes", "Renovación del trato: PVC vigente y cantidad nueva a declarar.");
+  const res = await emitOffer(contract.lot_id, "temporada", fd);
+  if (!res.ok) return res;
+  const { data: nueva } = await service.from("lot_offers").select("id").eq("lot_id", contract.lot_id).eq("status", "emitida").order("emitted_at", { ascending: false }).limit(1).maybeSingle();
+  await service.from("purchase_contracts").update({ status: "renovado", renovado_at: new Date().toISOString(), renewal_offer_id: nueva?.id ?? null }).eq("id", contractId);
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: "renovacion_ofrecida", previous_status: "completed", new_status: "renovado", performed_by: adminId, notes: nueva?.id ?? null });
+  revalidatePath(`/ocp/contratos/${contractId}`);
+  revalidatePath("/ocp/contratos");
+  revalidatePath("/ocp/ofertas");
+  return { ok: true };
+}
+
+/** Solo un owner del panel declara la ruptura o descongela una cuenta (decisión 6: nunca automática). */
+async function esOwner(service: ReturnType<typeof createServiceRoleClient>, userId: string): Promise<boolean> {
+  const { data } = await service.from("panel_users").select("is_owner, status").eq("profile_id", userId).maybeSingle();
+  return Boolean(data?.is_owner && data?.status === "active");
+}
+
+/**
+ * Paso 16: «después, Ruptura Contractual (cuenta congelada, demanda). Excepción: causa legítima comunicada antes».
+ * La plataforma la hace VISIBLE (mora → ruptura potencial); declararla es del owner, a mano, con motivo, y congela la
+ * cuenta del productor (`producer_profiles.estado_cuenta`).
+ */
+export async function declararRuptura(contractId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  if (!(await esOwner(service, adminId))) return { ok: false, error: "Solo el owner declara una ruptura contractual." };
+  const motivo = String(formData.get("motivo") ?? "").trim();
+  if (!motivo) return { ok: false, error: "Escriba el motivo — queda en el rastro y el productor lo lee." };
+  const { contract, lot } = await contratoYMeses(service, contractId);
+  if (!contract || !lot) return { ok: false, error: "Contrato no encontrado." };
+  if (contract.status !== "active" && contract.status !== "reconditioning") return { ok: false, error: "Solo se declara sobre un trato vigente." };
+  const now = new Date().toISOString();
+  const { error } = await service.from("purchase_contracts").update({ status: "ruptura", ruptura_at: now, ruptura_motivo: motivo }).eq("id", contractId);
+  if (error) return { ok: false, error: "No se pudo declarar la ruptura: " + error.message };
+  await service.from("producer_profiles").update({ estado_cuenta: "congelada", estado_cuenta_at: now, estado_cuenta_motivo: motivo }).eq("profile_id", lot.producer_id);
+  await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: "ruptura_declarada", previous_status: contract.status, new_status: "ruptura", performed_by: adminId, notes: motivo.slice(0, 300) });
+  await service.from("audit_log").insert({ entity_type: "producer_profile", entity_id: lot.producer_id, action: "cuenta_congelada", performed_by: adminId, notes: motivo.slice(0, 300) });
+  await service.from("producer_comm_log").insert({
+    producer_id: lot.producer_id,
+    context_label: `Lote ${lot.name}`,
+    lot_id: contract.lot_id,
+    note: `CTC declaró la ruptura contractual de su trato: ${motivo} Su cuenta queda congelada mientras se resuelve. Si hubo una causa legítima, escríbanos por este hilo.`,
+    created_by: adminId,
+  });
+  revalidatePath(`/ocp/contratos/${contractId}`);
+  revalidatePath("/ocp/contratos");
+  revalidatePath("/ocp/kr");
+  return { ok: true };
+}
+
+/** El owner descongela la cuenta (la ruptura del contrato queda como historia). */
+export async function descongelarCuenta(producerId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  if (!(await esOwner(service, adminId))) return { ok: false, error: "Solo el owner descongela una cuenta." };
+  const motivo = String(formData.get("motivo") ?? "").trim();
+  if (!motivo) return { ok: false, error: "Escriba por qué se descongela." };
+  const { error } = await service.from("producer_profiles").update({ estado_cuenta: "activa", estado_cuenta_at: new Date().toISOString(), estado_cuenta_motivo: motivo }).eq("profile_id", producerId);
+  if (error) return { ok: false, error: "No se pudo descongelar: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "producer_profile", entity_id: producerId, action: "cuenta_descongelada", performed_by: adminId, notes: motivo.slice(0, 300) });
+  await service.from("producer_comm_log").insert({ producer_id: producerId, note: `CTC reactivó su cuenta: ${motivo}`, created_by: adminId });
+  revalidatePath("/ocp/contratos");
+  revalidatePath("/ocp/kr");
+  return { ok: true };
 }
 
 export async function recordHumidityReading(contractId: string, formData: FormData): Promise<ActionResult> {

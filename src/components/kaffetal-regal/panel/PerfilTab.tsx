@@ -7,6 +7,7 @@ import { EudrStatusBadge } from "../EudrStatusBadge";
 import { FieldInfo } from "../ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "../LotCompletionSparkline";
 import { LotKanbanStepper } from "../LotKanbanStepper";
+import { enMora } from "@/lib/trato/mesAMes";
 import { CtcRef } from "./CtcRef";
 import type { PanelDrill } from "./panelTabs";
 import styles from "../AppDashboard.module.css";
@@ -80,6 +81,7 @@ export function PerfilTab({
   const barraDelLote = (l: Lot) => {
     const ofertasDelLote = offers.filter((o) => o.lotId === l.id);
     const ultima = ofertasDelLote.length > 0 ? ofertasDelLote[ofertasDelLote.length - 1] : null;
+    const contratoDelLote = contracts.find((c) => c.lotId === l.id);
     return (
       <LotKanbanStepper
         stage={l.stage}
@@ -89,7 +91,8 @@ export function PerfilTab({
         sampleConfirmedAt={l.sampleConfirmedAt}
         registradoPorCtc={l.source === "bcp_manual_entry"}
         ultimaOferta={ultima?.status ?? null}
-        contrato={contracts.find((c) => c.lotId === l.id)?.status ?? null}
+        contrato={contratoDelLote?.status ?? null}
+        enMora={contratoDelLote ? enMora(contratoDelLote.mora) : false}
         onIrA={(destino) => (destino === "contratos" ? onGoContratos() : onGoEvaluaciones())}
       />
     );

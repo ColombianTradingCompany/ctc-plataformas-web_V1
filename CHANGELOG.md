@@ -19,6 +19,35 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.84] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 7 del `PLAN_CIRCUITO_DEL_LOTE.md` — el trato mes a mes** (folio 8, pasos 16–18; decisión 6 del owner:
+  «nunca automática; se hace visible de manera automática»). Código de `kaffetal-regal` tocado desde la sesión `consolas` con el
+  «continúa» del owner y línea en `ALINEACION` §3. **No se condujo en navegador**: exige las cuentas `prueba-*`.
+- **Añadido**: **`contract_months`** — el trato vive mes a mes: CTCx **pide** la cantidad del mes (`pedirDelMes`), registra el
+  **envío** (`registrarEnvioDelMes`, que se espeja en `contract_releases` al 100 % para que el stock del catálogo siga leyendo lo
+  mismo) y el **pago** (`registrarPagoDelMes`, solo sobre lo enviado); con los meses enviados y pagados el trato queda `completed`
+  solo. `/ocp/contratos` gana «Renovados» y «Ruptura».
+- **Añadido**: **lo derivado se deriva** (`src/lib/trato/mesAMes.ts`, puro): la mora de cada mes (2 semanas sin cargo · 2 con
+  5 % · después **ruptura potencial**), el mes en curso, el tramo libre de retiro, el past crop y si toca renovar. El OCP
+  (`/ocp/contratos/[id]`, la tabla de `/ocp/kr`) y el productor («Mi trato», la barra del lote) la leen con la MISMA función;
+  nada se persiste; el circuito gana las laterales **«en mora»** y **«ruptura»**.
+- **Añadido**: **el retiro del productor** (`previsualizarRetiro` → `retirarDelTrato`, `src/lib/trato/producerActions.ts`): ve
+  la cuenta antes de confirmar — lo que cabe en el tramo libre acumulado sale sin costo, el resto paga el 4 % del precio de cada
+  carga (`retiro()` reproduce el §12.9: $1.040.000 · $780.000 · $520.000).
+- **Añadido**: **la ruptura contractual la declara el owner** (`declararRuptura`, con motivo): `status: ruptura` y la cuenta del
+  productor **congelada** (`producer_profiles.estado_cuenta`, Identidad — decisión 6); `descongelarCuenta` también es del owner.
+  Una cuenta congelada no acepta ofertas, no retira y no recibe ofertas nuevas.
+- **Añadido**: **la renovación** (`ofrecerRenovacion`): a los 90 días de la firma, sobre un trato cumplido, emite la oferta nueva
+  al PVC vigente (`renewal_of_contract_id`; el contrato viejo queda `renovado`); **past crop** también desde `lots.harvest_to` +
+  9 meses (−10 %).
+- **Retirado**: la escalera `RELEASE_STAIRCASE` 50/75/100 y `recordContractRelease`; `signContract` ya no siembra liberaciones.
+- **Datos**: migración `trato_mes_a_mes` (acta en `docs/migraciones/`): `contract_months` (RLS select-own), `contract_status` +
+  `ruptura` · `renovado`, `purchase_contracts.ruptura_at/ruptura_motivo/renovado_at/renewal_offer_id`,
+  `lot_offers.renewal_of_contract_id`, `producer_profiles.estado_cuenta/_at/_motivo` con guard trigger (un JWT no la cambia).
+- **Docs**: `qa-trato-check` 54 → 90 (§6: mora, retiro, renovación, past crop, decisión 6 — desde el plan);
+  `qa-circuito` 45 → 56 (`en_mora`/`ruptura`, TOTAL sobre `enMora`, los dos lectores de la mora derivada).
+
 ## [V5.83] — 2026-09-24 (commit ef64fcb)
 
 - **Hito**: **la fase 6 del `PLAN_CIRCUITO_DEL_LOTE.md` — aceptar con claridad** (folio 8, pasos 14–16). Código de

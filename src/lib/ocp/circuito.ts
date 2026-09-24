@@ -21,6 +21,8 @@ export type EstadoDelCircuito =
   | "no_apto" // la Visa documental lo devolvió
   | "no_supero" // paso 12: no superó la evaluación (bajo Black); puede volver por re-evaluación (lateral, V5.82)
   | "sin_oferta" // paso 13: CTCx decidió no ofertar, sin devolución (lateral, V5.82)
+  | "en_mora" // paso 16: un pedido del trato lleva más de dos semanas sin envío (lateral derivado, V5.84)
+  | "ruptura" // paso 16: el owner declaró la ruptura contractual; la cuenta quedó congelada (lateral, V5.84)
   | "solicitada" // paso 7–9: pidió la evaluación; falta la factura, el pago, la muestra, o varias
   | "a_evaluar" // paso 10: pagado y recibido; espera que CTCx lo suba a un Bache de Evaluación
   | "en_evaluacion" // en un bache en manos del Centro de Calidad
@@ -47,6 +49,8 @@ export type EntradaDelCircuito = {
   noSupero?: boolean;
   /** `arena_inscriptions.decision_comercial === "sin_oferta"`: CTCx decidió no ofertar (V5.82). */
   sinOferta?: boolean;
+  /** `moraDelTrato(contract_months)` ∈ {con_recargo, ruptura_potencial} sobre un contrato vivo (V5.84, derivado). */
+  enMora?: boolean;
   /** `lots.grade`: solo lo escribe el veredicto del Q-Grader. */
   grado: string | null;
   /** El `status` de la ÚLTIMA oferta del lote (`lot_offers`), o null si nunca tuvo. */
@@ -68,6 +72,8 @@ export const CIRCUITO_LABEL: Record<EstadoDelCircuito, string> = {
   no_apto: "No apto",
   no_supero: "No superó",
   sin_oferta: "Sin oferta",
+  en_mora: "En mora",
+  ruptura: "Ruptura",
   solicitada: "Solicitada",
   a_evaluar: "A evaluar",
   en_evaluacion: "En evaluación",
@@ -90,6 +96,8 @@ export const ORDEN_DEL_CIRCUITO: EstadoDelCircuito[] = [
 ];
 
 const CONTRATO_VIVO = new Set(["pending_signature", "active", "reconditioning", "completed"]);
+// Solo un trato EN CURSO puede estar en mora: por firmar no tiene pedidos y cumplido ya envió y cobró todo (V5.84).
+const CONTRATO_EN_CURSO = new Set(["active", "reconditioning"]);
 
 /**
  * El estado del lote en el circuito. Las reglas van DE ATRÁS HACIA ADELANTE —lo más avanzado gana—,
@@ -105,6 +113,11 @@ export function estadoDelCircuito(e: EntradaDelCircuito): LecturaDelCircuito {
 
   // Una salida lateral que manda sobre todo lo demás: la Visa documental lo devolvió.
   if (e.stage === "no_apto") return lee("no_apto", "bad", ["que el productor corrija lo que la Visa señaló, o reabrir la evaluación"]);
+
+  // Paso 16 (V5.84): la ruptura la declaró el owner — manda sobre la oferta aceptada que dio origen al contrato.
+  if (e.contrato === "ruptura") return lee("ruptura", "bad", ["la cuenta quedó congelada; solo el owner la descongela"]);
+  // Paso 16 (V5.84, derivado — decisión 6): un pedido del trato lleva semanas sin envío. Visible, nunca automático.
+  if (e.contrato && CONTRATO_EN_CURSO.has(e.contrato) && e.enMora) return lee("en_mora", "warn", ["que el productor envíe el pedido del mes"]);
 
   // 5 · Catálogo activo: hay trato. Una oferta «aceptada» CREA el contrato, así que cualquiera de los dos vale;
   //     se miran los dos por si uno llegara sin el otro.

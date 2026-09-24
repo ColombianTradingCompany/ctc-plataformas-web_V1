@@ -35,7 +35,8 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
   (tipos `Lot`/`Finca`, `STAGES`, `isLotCommitted`).
 - `src/lib/arena/producerActions.ts` (postular/solicitar evaluación, pagos), `src/lib/ofertas/producerActions.ts`
   (`respondToOffer`, V5.83: con la **declaración** — `lockedKg`, `trimestre | 30_dias`, `aceptaTerminos` — y el contrato que nace lleno),
-  `src/lib/trato/simulador.ts` (la **calculadora** del trato, pura; de `consolas`) y `src/lib/trato/terminos.ts` (los términos que se aceptan), `src/lib/fichas/tipos.ts` (set de Fichas), `src/lib/kaffetalMedia.ts` (subidas + URLs
+  `src/lib/trato/simulador.ts` (la **calculadora** del trato, pura; de `consolas`), `src/lib/trato/mesAMes.ts` (lo DERIVADO del trato — mora, mes en curso, retiro, past crop —; puro, de `consolas`, V5.84),
+  `src/lib/trato/producerActions.ts` (`previsualizarRetiro` · `retirarDelTrato`, V5.84) y `src/lib/trato/terminos.ts` (los términos que se aceptan), `src/lib/fichas/tipos.ts` (set de Fichas), `src/lib/kaffetalMedia.ts` (subidas + URLs
   firmadas), `src/lib/eudr.ts`, `src/lib/evaluations.ts` (`officialAverages`), `src/lib/lotComposition.ts`,
   `src/lib/geo/` (área, elevación), `src/lib/earthKml.ts`, `src/lib/kaffetal/faq.ts`, `src/lib/grados/` (lee).
 - `src/lib/useAutosave.tsx` — autosave con flush de desmontaje: **snapshot y `save()` solo desde estado React**.
@@ -47,7 +48,9 @@ salieron de la barra. El vocabulario lo asentó el owner el 2026-09-20 y vive es
 `media_assets` (bucket `kaffetal-media`, ruta `{producer_id}/…`) · `producer_profiles` · `producer_comm_log` /
 `producer_comm_ack` (hilos) · `lot_evaluations` (filas `producer_claim`).
 **Solo lee** (select-own): `arena_inscriptions`, `arena_entry_codes`, `lot_offers`, `lot_fichas`,
-`purchase_contracts` (+ releases, humedades), `harvest_seasons` (vía snapshot en la oferta).
+`purchase_contracts` (+ releases, humedades, `contract_months` — V5.84), `harvest_seasons` (vía snapshot en la oferta).
+`producer_profiles.estado_cuenta*` (V5.84) lo escribe SOLO el owner desde el OCP (`declararRuptura` · `descongelarCuenta`); el JWT
+no lo cambia (guard trigger) — una cuenta congelada no acepta ofertas ni retira.
 
 ## Guardianes
 
@@ -89,7 +92,7 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
 | OCP · Lotes | **EVA** (checklist + `lotEudrGate`) → `apto` + sello; borrado de abandonados | `markLotApto`, `actions.ts` |
 | OCP · Productores, Fincas y Lotes (`/ocp/kr`, V5.61 — eran tres módulos) | la **Visa** de la finca (aprobar · rechazar · compartir la certificación), la **EVA** del lote (checklist y veredicto Apto/No apto), el recibo de la muestra, la DDS | `actions.ts` (sin cambios) |
 | OCP · Nominados | bache, planilla y **veredicto** (`gradoPorPuntaje` → `galardonado` + Club) | `recordEvaluationVerdict` |
-| OCP · Ofertas / Contratos | emisión de ofertas ancladas al PVC (temporada · directa · excepción · black · subasta) y la decisión «sin oferta»; la firma del contrato (que nace lleno de la aceptación con declaración, V5.83); la escalera de liberación (hasta la fase 7) | `ofertasActions`, `contractActions` |
+| OCP · Ofertas / Contratos | emisión de ofertas ancladas al PVC (temporada · directa · excepción · black · subasta) y la decisión «sin oferta»; la firma del contrato (que nace lleno de la aceptación con declaración, V5.83); **el trato mes a mes** (V5.84: pedido · envío · pago por mes; la **ruptura** la declara el owner y congela la cuenta — `producer_profiles.estado_cuenta` —; la renovación a los 90 días) | `ofertasActions`, `contractActions` |
 | OCP · Fichas | el set de Fichas Técnicas y cuál es la **oficial ★** | `fichasActions` |
 | BCP · Kaffetal Regal Arena (del OCP hasta la V5.59) | la invitación a la **vitrina** (Blue/Gold/Tyrian con contrato) | `inviteLotToArena` |
 | BCP · Kaffetal Club (del OCP hasta la V5.59) | membresía (llega con el galardón), campañas de pasaporte | `club.ts`, `clubActions` |
@@ -145,6 +148,15 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   «Contratos de Temporada» es **«Mi trato»** (declarado, precio, compra inicial, tramos, términos). El copy del Kaffetal Club
   salió de la pestaña (`gi` sigue en la firma por `AppDashboard`). **Pendiente (exige `prueba-*`)**: conducir aceptar → contrato →
   firma en el OCP; afinar el copy de la calculadora con el owner; «Mi trato» crece con la fase 7 (pedidos, pagos, retiros, mora).
+- **Fase 7 (V5.84) — HECHA desde la sesión `consolas` con el «continúa» del owner, SIN conducirla en navegador**: «Mi trato»
+  enseña los meses (`contract_months`: pidió · envió · pagó · retiró · situación), el resumen (comprometido · retirado · vigente ·
+  mes en curso) y el **retiro** (`RetiroForm`: `previsualizarRetiro` enseña la cuenta — tramo libre y penalidad al 4 % — y
+  `retirarDelTrato` la registra en el mes en curso); la **mora se deriva al cargar** (`loadData` con `mesAMes.ts`, la misma
+  función que el OCP; nunca en el render, nunca guardada) y la barra del lote recibe `enMora` (CONT hecho «en mora»; la
+  ruptura lo apaga); el banner de **cuenta congelada** (`gi.estadoCuenta`, lo escribe solo el owner por ruptura) y las puertas:
+  congelada no acepta ofertas (`respondToOffer`) ni retira. **Pendiente (exige `prueba-*`)**: conducir pedir → enviar → pagar →
+  retirar; afinar el copy de la mora y de la ruptura con el owner; los recordatorios de mora por correo (`consolas`, fila
+  «Recordatorios» del §4 del plan).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

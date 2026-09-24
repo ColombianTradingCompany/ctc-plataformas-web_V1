@@ -76,6 +76,17 @@ const CASOS = [
   ["paso 12: la re-evaluación reinicia la solicitud: sin la marca, vuelve a solicitada", { tieneInscripcion: true, noSupero: false }, "solicitada"],
   ["paso 13: galardonado y CTCx decidió no ofertar → sin oferta", { ...pagadoYRecibido, grado: "blue", sinOferta: true }, "sin_oferta"],
   ["paso 13: emitir una oferta reabre la decisión", { ...pagadoYRecibido, grado: "blue", sinOferta: true, ultimaOferta: "emitida" }, "oferta_emitida"],
+  // FOLIO 8, PASO 16 (V5.84) — «Mora: 2 semanas sin cargo, 2 más con 5 %; después Ruptura Contractual» — y la DECISIÓN 6 del
+  // owner: «nunca automática; se hace visible de manera automática». La mora se DERIVA (`mesAMes.ts`) y se pinta como lateral
+  // de un contrato vivo; la ruptura la declara el owner a mano y es un `status` del contrato.
+  ["paso 16: contrato vigente con un pedido en mora → en mora (lateral, sigue siendo catálogo)", { grado: "blue", contrato: "active", enMora: true }, "en_mora"],
+  ["paso 16: la mora sin contrato vivo no existe (un contrato cumplido no debe nada)", { grado: "blue", contrato: "completed", enMora: true }, "catalogo_activo"],
+  ["paso 16: la mora sobre un contrato por firmar tampoco (no hay pedido posible)", { grado: "blue", contrato: "pending_signature", enMora: true }, "catalogo_activo"],
+  ["decisión 6: la ruptura declarada por el owner → ruptura", { grado: "blue", contrato: "ruptura" }, "ruptura"],
+  ["decisión 6: la ruptura manda sobre la mora derivada", { grado: "blue", contrato: "ruptura", enMora: true }, "ruptura"],
+  // §4 del plan: «renovado (vuelve a oferta emitida)» — la oferta nueva es otra fila y manda; si murió, CTCx decide otra vez.
+  ["paso 18: un contrato renovado vuelve a «oferta emitida» (la oferta nueva)", { grado: "blue", contrato: "renovado", ultimaOferta: "emitida" }, "oferta_emitida"],
+  ["paso 18: si la oferta de renovación murió, vuelve a pendiente de oferta", { grado: "blue", contrato: "renovado", ultimaOferta: "expirada" }, "pendiente_oferta"],
 ];
 for (const [nombre, entrada, esperado] of CASOS) {
   const r = E(entrada);
@@ -102,14 +113,14 @@ for (const [nombre, entrada, esperado] of CASOS) {
 // ── 3. TOTAL: toda combinación da un estado conocido, con etiqueta ───────────
 const STAGES = ["borrador", "ficha_completa", "videos_ok", "muestra_transito", "apto", "no_apto", "fila_arena", "evaluado", "galardonado", "etapa_que_no_existe"];
 const OFERTAS = [null, "emitida", "aceptada", "rechazada", "retirada", "expirada", "estado_nuevo"];
-const CONTRATOS = [null, "pending_signature", "active", "reconditioning", "completed", "cancelled"];
+const CONTRATOS = [null, "pending_signature", "active", "reconditioning", "completed", "cancelled", "ruptura", "renovado"];
 const B = [false, true];
 let combinaciones = 0;
 const desconocidos = [];
 for (const stage of STAGES) for (const registradoPorCtc of B) for (const tieneInscripcion of B) for (const pagoConfirmado of B)
-  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const noSupero of B) for (const sinOferta of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
+  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const noSupero of B) for (const sinOferta of B) for (const enMora of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
     combinaciones++;
-    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, noSupero, sinOferta, grado, ultimaOferta, contrato });
+    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, noSupero, sinOferta, enMora, grado, ultimaOferta, contrato });
     if (!CIRCUITO_LABEL[r.estado] || r.label !== CIRCUITO_LABEL[r.estado] || !Array.isArray(r.falta)) desconocidos.push(JSON.stringify(r));
   }
 check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etiquetado`, desconocidos.length === 0, desconocidos.slice(0, 3).join(" "));
@@ -153,11 +164,18 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   const tabla = readFileSync("src/app/ocp/(app)/kr/carga.ts", "utf8");
   check("la tabla del OCP deriva el estado con estadoDelCircuito()", tabla.includes("estadoDelCircuito("));
   check("y le dice si el lote va en un bache (fase «sondeo» con bache)", /enBache:\s*ins\?\.phase === "sondeo" && !!ins\.sondeo_batch_id/.test(tabla));
-  check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Evaluado|No superó|Sin oferta|Pendiente de oferta|Catálogo activo)["'`]/.test(tabla));
+  check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Evaluado|No superó|Sin oferta|Pendiente de oferta|Catálogo activo|En mora|Ruptura)["'`]/.test(tabla));
+  // V5.84 (fase 7): la mora la deriva `mesAMes.ts` de `contract_months` — la tabla del OCP y la barra del productor pasan
+  // `enMora` calculado con la MISMA función (`enMora(moraDelTrato(...))`); ninguna lee una columna «mora».
+  check("la tabla del OCP deriva la mora con enMora(moraDelTrato()) de mesAMes.ts", /enMora\(moraDelTrato\(/.test(tabla) && tabla.includes('from "@/lib/trato/mesAMes"'));
+  check("y no lee una columna de mora (lo derivado no se persiste)", !/mora_estado|en_mora:/.test(tabla));
   // La otra cara (V5.64): la barra del lote del productor lee la MISMA función y conoce el estado nuevo.
   const stepper = readFileSync("src/components/kaffetal-regal/LotKanbanStepper.tsx", "utf8");
   check("la barra del productor conoce «solicitada» y «evaluado» en su orden", /ORDEN[^=]*=\s*\[\s*"en_ficha",\s*"solicitada",\s*"a_evaluar",\s*"en_evaluacion",\s*"evaluado",\s*"pendiente_oferta"/.test(stepper));
   check("y deriva el bache de la fase de la solicitud", stepper.includes('enBache: inscription?.phase === "sondeo"'));
+  check("y recibe la mora derivada (V5.84) y sabe que un trato en mora sigue siendo un trato", /enMora,\s*\}\)/.test(stepper) && stepper.includes('estado === "catalogo_activo" || estado === "en_mora"'));
+  const perfil = readFileSync("src/components/kaffetal-regal/panel/PerfilTab.tsx", "utf8");
+  check("y el productor la alimenta con la misma función que el OCP", perfil.includes("enMora(contratoDelLote.mora)") && perfil.includes('from "@/lib/trato/mesAMes"'));
 }
 
 if (fallos.length) {

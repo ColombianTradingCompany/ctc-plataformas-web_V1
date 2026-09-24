@@ -8,6 +8,7 @@ import { infoGeneralComplete, PRODUCER_SEGMENTS, segmentProducer } from "@/lib/b
 import { fincaEudrFieldsDe, type FilaDeFincaParaLaVisa } from "@/lib/ocp/fincaEudr";
 import { ESTADO_DE_CONTRATO, ESTADO_DE_OFERTA, etapaDelLote, evaDelLote, fichaHecha, gradoLabel } from "@/lib/ocp/etapas";
 import { estadoDelCircuito, type EstadoDelCircuito } from "@/lib/ocp/circuito";
+import { enMora, moraDelTrato } from "@/lib/trato/mesAMes";
 import type { Gestion } from "@/lib/asistencia/desacoplado";
 import type { EudrStatus } from "@/lib/eudr";
 
@@ -108,7 +109,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
 }> {
-  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }] =
+  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }, { data: cmRaw }] =
     await Promise.all([
       service.from("profiles").select("id, full_name, email, phone, created_at, role").order("created_at", { ascending: true }),
       service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
@@ -129,8 +130,19 @@ export async function cargarKr(service: SupabaseClient): Promise<{
       service.from("lot_contributions").select("lot_id, finca_id"),
       // V5.81: el alta del Centro de Calidad que CTCx no ha confirmado → estado «evaluado» del circuito.
       service.from("lot_evaluations").select("lot_id").eq("source", "q_grader_batch").eq("status", "pending"),
+      // V5.84: los meses del trato, para derivar la mora (decisión 6: visible, nunca automática).
+      service.from("contract_months").select("contract_id, pedido_at, enviado_at"),
     ]);
   const pendientesDelCentro = new Set(((evRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
+  const mesesPorContrato = new Map<string, { pedidoAt: string | null; enviadoAt: string | null }[]>();
+  for (const m of (cmRaw as { contract_id: string; pedido_at: string | null; enviado_at: string | null }[] | null) ?? []) {
+    mesesPorContrato.set(m.contract_id, [...(mesesPorContrato.get(m.contract_id) ?? []), { pedidoAt: m.pedido_at, enviadoAt: m.enviado_at }]);
+  }
+  const hoy = new Date();
+  const enMoraDe = (contractId: string | undefined) => {
+    if (!contractId) return false;
+    return enMora(moraDelTrato(mesesPorContrato.get(contractId) ?? [], hoy));
+  };
 
   const perfiles = (pRaw as ProfileRow[] | null) ?? [];
   const pp = new Map(((ppRaw as PPRow[] | null) ?? []).map((r) => [r.profile_id, r]));
@@ -263,6 +275,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
           evaluacionPendiente: pendientesDelCentro.has(l.id),
           noSupero: ins?.phase === "retirado" && ins.sondeo_result === "rechazado",
           sinOferta: ins?.decision_comercial === "sin_oferta",
+          enMora: enMoraDe(contrato?.id),
           grado: l.grade,
           ultimaOferta: oferta?.status ?? null,
           contrato: contrato?.status ?? null,

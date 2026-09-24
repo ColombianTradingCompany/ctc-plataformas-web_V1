@@ -11,6 +11,7 @@ import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 // into these upload handlers, so the byte-level % shows next to the input.
 type ProgressFn = (fraction: number) => void;
 import { officialAverages, type EvaluationRow } from "@/lib/evaluations";
+import { moraDelMes, resumenDelTrato } from "@/lib/trato/mesAMes";
 import { Landing } from "./Landing";
 import { LoginModal } from "./LoginModal";
 import { AppDashboard } from "./AppDashboard";
@@ -390,14 +391,14 @@ function Experience() {
           supabase.from("profiles").select("full_name, phone").eq("id", uid).single(),
           supabase
             .from("producer_profiles")
-            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids, club_member_since")
+            .select("company_name, tax_id, cedula_cafetera, whatsapp_confirmed, country, department, avatar_asset_id, video_asset_id, gallery_asset_ids, club_member_since, estado_cuenta, estado_cuenta_motivo")
             .eq("profile_id", uid)
             .single(),
           supabase.from("fincas").select("*").eq("producer_id", uid).order("created_at", { ascending: true }),
           supabase.from("lots").select("*").eq("producer_id", uid).order("created_at", { ascending: false }),
           supabase
             .from("purchase_contracts")
-            .select("*, lots(id, name, grade), contract_releases(*), humidity_readings(*)")
+            .select("*, lots(id, name, grade), contract_releases(*), humidity_readings(*), contract_months(*)")
             .order("created_at", { ascending: false }),
           supabase.from("ficha_completion_snapshots").select("lot_id, completion_pct, recorded_at").order("recorded_at", { ascending: true }),
           // RLS (lot_evaluations_select_own_lot) already scopes this to the producer's own lots.
@@ -556,6 +557,21 @@ function Experience() {
         declaracion: "trimestre" | "30_dias" | null;
         compra_inicial_kg: number | string | null;
         reference_price_source: string | null;
+        signed_at: string | null;
+        freeze_months: number | null;
+        contract_months: {
+          mes: number;
+          pedido_kg: number | string | null;
+          pedido_at: string | null;
+          enviado_kg: number | string | null;
+          enviado_at: string | null;
+          pagado_cop: number | string | null;
+          pagado_at: string | null;
+          retirado_kg: number | string;
+          retirado_libre_kg: number | string;
+          retirado_penalizado_kg: number | string;
+          penalidad_cop: number | string;
+        }[];
         lots: { id: string; name: string; grade: string | null } | null;
         contract_releases: {
           month_number: number;
@@ -568,8 +584,29 @@ function Experience() {
         humidity_readings: { reading_month: number; humidity_pct: string | number; flagged: boolean; reported_at: string }[];
       };
 
+      // V5.84 (fase 7): lo derivado del trato (la mora de cada mes, el mes en curso) se calcula AQUÍ, al cargar, con la
+      // misma función que lee el OCP (`mesAMes.ts`) — nunca en el render (react-hooks/purity) y nunca se guarda.
+      const hoy = new Date();
       setContracts(
-        ((contractRows as ContractRow[] | null) ?? []).map((c) => ({
+        ((contractRows as ContractRow[] | null) ?? []).map((c) => {
+          const meses = (c.contract_months ?? [])
+            .slice()
+            .sort((a, b) => a.mes - b.mes)
+            .map((m) => ({
+              mes: m.mes,
+              pedidoKg: m.pedido_kg != null ? Number(m.pedido_kg) : null,
+              pedidoAt: m.pedido_at,
+              enviadoKg: m.enviado_kg != null ? Number(m.enviado_kg) : null,
+              enviadoAt: m.enviado_at,
+              pagadoCop: m.pagado_cop != null ? Number(m.pagado_cop) : null,
+              pagadoAt: m.pagado_at,
+              retiradoKg: Number(m.retirado_kg ?? 0),
+              retiradoLibreKg: Number(m.retirado_libre_kg ?? 0),
+              retiradoPenalizadoKg: Number(m.retirado_penalizado_kg ?? 0),
+              penalidadCop: Number(m.penalidad_cop ?? 0),
+            }));
+          const resumen = resumenDelTrato({ quantityFrozenKg: c.quantity_frozen_kg, freezeMonths: c.freeze_months, signedAt: c.signed_at }, meses, hoy);
+          return {
           id: c.id,
           lotId: c.lot_id,
           seasonId: c.season_id,
@@ -582,6 +619,14 @@ function Experience() {
           declaracion: c.declaracion ?? null,
           compraInicialKg: c.compra_inicial_kg != null ? Number(c.compra_inicial_kg) : null,
           referencePriceSource: c.reference_price_source ?? null,
+          signedAt: c.signed_at ?? null,
+          freezeMonths: c.freeze_months ?? null,
+          months: meses.map((m) => {
+            const mora = moraDelMes(m, hoy);
+            return { ...m, mora: mora.estado, moraSemanas: mora.semanas };
+          }),
+          mesEnCurso: resumen.mesEnCurso,
+          mora: resumen.mora,
           releases: (c.contract_releases ?? [])
             .slice()
             .sort((a, b) => a.month_number - b.month_number)
@@ -597,7 +642,8 @@ function Experience() {
             .slice()
             .sort((a, b) => a.reading_month - b.reading_month)
             .map((h) => ({ month: h.reading_month, pct: Number(h.humidity_pct), flagged: h.flagged, reportedAt: h.reported_at })),
-        }))
+          };
+        })
       );
 
       type OfferRow = {
@@ -680,6 +726,8 @@ function Experience() {
         galleryAssetIds: producerProfile?.gallery_asset_ids ?? [],
         galleryUrls: (producerProfile?.gallery_asset_ids ?? []).map((id: string) => urlByAssetId.get(id) ?? ""),
         clubMemberSince: producerProfile?.club_member_since ?? null,
+        estadoCuenta: producerProfile?.estado_cuenta === "congelada" ? "congelada" : "activa",
+        estadoCuentaMotivo: producerProfile?.estado_cuenta_motivo ?? null,
       });
       setUserName((profile?.full_name || "productor").split(" ")[0]);
       const ackByCommId = new Map<string, string>(

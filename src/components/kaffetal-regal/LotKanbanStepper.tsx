@@ -60,6 +60,7 @@ export function LotKanbanStepper({
   registradoPorCtc = false,
   ultimaOferta = null,
   contrato = null,
+  enMora = false,
   onIrA,
 }: {
   stage: number;
@@ -74,6 +75,8 @@ export function LotKanbanStepper({
   ultimaOferta?: string | null;
   /** `status` del contrato del lote. */
   contrato?: string | null;
+  /** V5.84: la mora DERIVADA del trato (`enMora(moraDelTrato(...))`, la misma cuenta que hace el OCP). */
+  enMora?: boolean;
   /** Saltar a la pestaña donde vive este tramo. Sin ella los chips no son botones. */
   onIrA?: (destino: DestinoDeChip) => void;
 }) {
@@ -103,6 +106,7 @@ export function LotKanbanStepper({
     grado: grade,
     ultimaOferta,
     contrato,
+    enMora,
   });
 
   // MUE — el productor pidió la evaluación: recibe la factura, paga la tarifa y manda la muestra.
@@ -124,8 +128,15 @@ export function LotKanbanStepper({
   // CONT — la oferta de contrato de temporada, abierta para que el productor la
   // tome (declarando el tamaño inicial), opte por CaaS · CTCx Selection, o no
   // tome ninguna.
-  const contDone = estado === "catalogo_activo";
+  // V5.84 (fase 7): un trato en mora sigue siendo un trato (chip hecho, con aviso); la ruptura lo apaga.
+  const contDone = estado === "catalogo_activo" || estado === "en_mora";
   const contActive = estado === "oferta_emitida";
+  const contTitle =
+    estado === "en_mora"
+      ? "Trato vigente EN MORA: CTC pidió el mes y el envío no ha llegado — revise Contratos"
+      : estado === "ruptura"
+        ? "Ruptura contractual declarada por CTC"
+        : "Oferta de contrato de temporada · CaaS · CTCx Selection";
 
   const st = (done: boolean, active: boolean | undefined): StepState => (done ? "done" : active ? "active" : "pending");
 
@@ -188,7 +199,7 @@ export function LotKanbanStepper({
           "evaluaciones"
         )}
         <span className={styles.fork} aria-hidden>→</span>
-        {chip("CONT", st(contDone, contActive), "Oferta de contrato de temporada · CaaS · CTCx Selection", "contratos")}
+        {chip("CONT", st(contDone, contActive), contTitle, "contratos")}
       </div>
     </div>
   );

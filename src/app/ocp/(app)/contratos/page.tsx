@@ -8,6 +8,9 @@ const TABS = [
   { value: "active", label: "Activos" },
   { value: "reconditioning", label: "Reacondicionamiento" },
   { value: "completed", label: "Completados" },
+  // V5.84 (fase 7): la ruptura la declara el owner; «renovado» = ya se ofreció la renovación con el PVC nuevo.
+  { value: "renovado", label: "Renovados" },
+  { value: "ruptura", label: "Ruptura" },
 ] as const;
 
 const GRADE_LABEL: Record<string, string> = { black: "Black", red: "Red", blue: "Blue", gold: "Gold", tyrian: "Tyrian" };

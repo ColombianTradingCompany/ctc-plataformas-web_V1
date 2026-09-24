@@ -1,4 +1,5 @@
 import type { FichaFormData } from "./ficha/fichaData";
+import type { EstadoDeMora } from "@/lib/trato/mesAMes";
 
 export type Finca = {
   id: string;
@@ -305,6 +306,9 @@ export type GeneralInfo = {
   // Kaffetal Club: null = no miembro. Set only by CTC (guard-protected column);
   // the producer activates it redeeming a BCP-emitted code in "Mis contratos".
   clubMemberSince: string | null;
+  /** V5.84 (decisión 6): «congelada» solo la escribe el owner al declarar una ruptura contractual; el productor la ve. */
+  estadoCuenta: "activa" | "congelada";
+  estadoCuentaMotivo: string | null;
 };
 
 export type ContractRelease = {
@@ -393,7 +397,7 @@ export type ProducerContract = {
   seasonId: string | null;
   lotName: string;
   grade: Lot["grade"];
-  status: "pending_signature" | "active" | "reconditioning" | "completed" | "cancelled";
+  status: "pending_signature" | "active" | "reconditioning" | "completed" | "cancelled" | "ruptura" | "renovado";
   pricePerKgLocked: number | null;
   quantityFrozenKg: number | null;
   // V5.83: el contrato nace LLENO de la oferta aceptada con la declaración del productor.
@@ -401,8 +405,33 @@ export type ProducerContract = {
   declaracion: "trimestre" | "30_dias" | null;
   compraInicialKg: number | null;
   referencePriceSource: string | null;
+  // V5.84 (fase 7): el trato mes a mes — lo que CTC pide, lo enviado, lo pagado y los retiros; la mora se DERIVA
+  // al cargar (`moraDelMes` / `resumenDelTrato`, la misma función que lee el OCP), nunca se guarda.
+  signedAt: string | null;
+  freezeMonths: number | null;
+  months: ContractMonth[];
+  mesEnCurso: number;
+  mora: EstadoDeMora;
   releases: ContractRelease[];
   humidity: HumidityReading[];
+};
+
+/** Un mes del trato (`contract_months`, solo lectura para el productor; retirar pasa por `retirarDelTrato`). */
+export type ContractMonth = {
+  mes: number;
+  pedidoKg: number | null;
+  pedidoAt: string | null;
+  enviadoKg: number | null;
+  enviadoAt: string | null;
+  pagadoCop: number | null;
+  pagadoAt: string | null;
+  retiradoKg: number;
+  retiradoLibreKg: number;
+  retiradoPenalizadoKg: number;
+  penalidadCop: number;
+  /** Derivado al cargar con `moraDelMes(fila, hoy)`. */
+  mora: EstadoDeMora;
+  moraSemanas: number;
 };
 
 export const CONTRACT_STATUS_LABEL: Record<ProducerContract["status"], string> = {
@@ -411,6 +440,8 @@ export const CONTRACT_STATUS_LABEL: Record<ProducerContract["status"], string> =
   reconditioning: "En reacondicionamiento",
   completed: "Completado",
   cancelled: "Cancelado",
+  ruptura: "Ruptura contractual",
+  renovado: "Renovado",
 };
 
 export const GRADES: Record<string, string> = {
@@ -510,4 +541,6 @@ export const EMPTY_GI: GeneralInfo = {
   galleryAssetIds: [],
   galleryUrls: [],
   clubMemberSince: null,
+  estadoCuenta: "activa",
+  estadoCuentaMotivo: null,
 };

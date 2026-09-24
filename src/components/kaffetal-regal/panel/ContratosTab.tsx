@@ -4,34 +4,39 @@ import { useState } from "react";
 import Image from "next/image";
 import { CONTRACT_STATUS_LABEL, GRADES, type GeneralInfo, type Lot, type ProducerContract, type ProducerOffer } from "../data";
 import { respondToOffer } from "@/lib/ofertas/producerActions";
+import { previsualizarRetiro, retirarDelTrato } from "@/lib/trato/producerActions";
 import { formatCop } from "@/lib/arena/inscriptions";
 import { simularTrato, type Declaracion } from "@/lib/trato/simulador";
 import { MORA, PENALIDAD_RETIRO_PCT, TRAMO_LIBRE_ACUMULADO_PCT } from "@/lib/trato/terminos";
+import { MORA_LABEL, type Retiro } from "@/lib/trato/mesAMes";
 import { useToast } from "@/components/Toast";
 import { CtcRef } from "./CtcRef";
 import styles from "../AppDashboard.module.css";
 
-// ── Contratos y Compras (V5.18: las cuatro secciones · V5.83: aceptar con claridad) ────────
-// El circuito comercial del galardón, lado productor (mockups del owner; folio 8, pasos 14–16):
+// ── Contratos y Compras (V5.18: las cuatro secciones · V5.83: aceptar con claridad · V5.84: el trato mes a mes) ──
+// El circuito comercial del galardón, lado productor (mockups del owner; folio 8, pasos 14–18):
 //   1. OFERTAS DE TEMPORADA — lotes galardonados Red o superior, de esta
 //      temporada o la pasada; CTCx oferta ANCLADA al PVC y el productor DECIDE
 //      con la calculadora: cuánto compromete (≥ el mínimo del grado), por
 //      trimestre o por 30 días, y acepta las condiciones. Aceptar CREA el
 //      contrato LLENO (precio y cantidad ya fijados), pendiente de la firma de CTC.
 //   2. CONTRATOS DE TEMPORADA — «Mi trato»: lo declarado, el precio, la compra
-//      inicial de CTC, los tramos libres de retiro y el seguimiento mes a mes.
+//      inicial de CTC, y el seguimiento MES A MES (lo que CTC pidió, lo enviado,
+//      lo pagado, los retiros) con la mora DERIVADA a la vista (decisión 6: se
+//      enseña sola, nunca actúa sola) y el retiro con su tramo libre y su penalidad.
 //   3. OFERTAS BLACK — la consideración de compra directa de CTCx sobre los
 //      lotes Black (precio negociado; se acepta sin declaración).
 //   4. SUBASTAS TYRIAN — «el podio de los mejores, al mejor postor»: el lote
 //      Tyrian va rumbo a subasta y el mejor postor llega como oferta.
 export function ContratosTab({
+  gi,
   contracts,
   offers,
   lots,
   onRefreshData,
   onGoEvaluaciones,
 }: {
-  /** Se conserva en la firma por AppDashboard; el Club se retiró en la V5.77 y ya no se lee aquí. */
+  /** V5.84: de aquí sale el estado de la cuenta (`producer_profiles.estado_cuenta`, lo escribe solo el owner). */
   gi: GeneralInfo;
   contracts: ProducerContract[];
   offers: ProducerOffer[];
@@ -48,6 +53,7 @@ export function ContratosTab({
   // La oferta aceptada que dio origen a cada contrato: trae el encuadre de
   // temporada congelado (label + «lote de la temporada pasada»).
   const ofertaDeContrato = new Map(offers.filter((o) => o.contractId).map((o) => [o.contractId!, o]));
+  const cuentaCongelada = gi.estadoCuenta === "congelada";
 
   // Tyrian «rumbo a subasta»: galardonado Tyrian sin oferta abierta ni contrato.
   const conOfertaAbierta = new Set(offers.filter((o) => o.status === "emitida").map((o) => o.lotId));
@@ -58,6 +64,14 @@ export function ContratosTab({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 12 }}>
+      {cuentaCongelada && (
+        <div className={styles.alist} style={{ border: "1.5px solid var(--accent)", borderRadius: 10, padding: "10px 14px", background: "var(--paper)", lineHeight: 1.6 }}>
+          <b>Su cuenta está congelada por ruptura contractual.</b>
+          {gi.estadoCuentaMotivo && <> Motivo: {gi.estadoCuentaMotivo}.</>} Mientras esté congelada no puede aceptar ofertas ni retirar de sus
+          tratos. Si hubo una causa legítima, escríbale a CTC: la reactivación la decide CTC.
+        </div>
+      )}
+
       <section>
         <div className={styles.secHead}>
           <span className={styles.secTitle}>Ofertas de Temporada</span>
@@ -97,64 +111,9 @@ export function ContratosTab({
           </div>
         ) : (
           <div style={{ marginTop: 10 }}>
-            {contracts.map((c) => {
-              const oferta = ofertaDeContrato.get(c.id);
-              const sim =
-                c.quantityFrozenKg != null && c.pricePerKgLocked != null
-                  ? simularTrato({ declaradoKg: c.quantityFrozenKg, copKg: c.pricePerKgLocked, declaracion: c.declaracion ?? "trimestre", grado: c.grade?.toLowerCase() })
-                  : null;
-              return (
-                <div className={styles.fincarow} key={c.id} style={{ marginTop: 10 }}>
-                  <h5>
-                    <CtcRef id={c.lotId} /> · {c.lotName}{" "}
-                    {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
-                  </h5>
-                  <div className={styles.sub}>
-                    Estado: <b>{CONTRACT_STATUS_LABEL[c.status]}</b>
-                    {oferta?.seasonLabel && <> · Temporada de venta: <b>{oferta.seasonLabel}</b></>}
-                    {c.quantityFrozenKg != null && <> · Declarado: <b>{c.quantityFrozenKg} kg de CPS</b>{c.declaracion && <> ({c.declaracion === "trimestre" ? "trimestre" : "30 días"})</>}</>}
-                    {c.pricePerKgLocked != null && <> · Precio: <b>{formatCop(c.pricePerKgLocked)}/kg</b>{c.referencePriceSource && <> ({c.referencePriceSource})</>}</>}
-                  </div>
-                  {sim && (
-                    <div className={styles.alist} style={{ marginTop: 4 }}>
-                      CTC compra de inmediato <b>{sim.compraInicial.kg} kg</b> ({formatCop(sim.compraInicial.cop)}) · el trato vale{" "}
-                      <b>{formatCop(sim.totalCop)}</b> · retiro libre al cerrar cada mes:{" "}
-                      {sim.porMes.map((m) => `mes ${m.mes} ${m.retiroLibrePct} %`).join(" · ")} · penalidad por encima del tramo:{" "}
-                      {PENALIDAD_RETIRO_PCT} % por carga{c.termsVersion && <> · términos {c.termsVersion}</>}
-                    </div>
-                  )}
-                  {oferta?.loteDeTemporadaPasada && (
-                    <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
-                      Lote de la temporada pasada — posicionado en la ventana de esta temporada, y valorado como tal.
-                    </div>
-                  )}
-                  {c.status === "pending_signature" && (
-                    <div className={styles.sub}>CTC está preparando la firma — el precio y la cantidad ya quedaron fijados al aceptar.</div>
-                  )}
-                  <div className={styles.track} aria-label="Progreso del trato">
-                    {[1, 2, 3].map((m) => (
-                      <i key={m} className={c.releases.find((r) => r.month === m)?.releasedAt ? styles.on : ""} />
-                    ))}
-                  </div>
-                  {c.releases.length > 0 && (
-                    <div className={styles.alist} style={{ marginTop: 4 }}>
-                      {c.releases.map((r) => (
-                        <span key={r.month}>
-                          Mes {r.month}: {r.releasedKg != null ? `liberó ${r.releasedKg} kg` : "pendiente"}
-                          {r.shippedAt ? " · enviado" : ""}
-                          {r.month < 3 ? " · " : ""}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {c.humidity.length > 0 && (
-                    <div className={styles.alist} style={{ marginTop: 6 }}>
-                      Humedad: {c.humidity.map((h) => `mes ${h.month}: ${h.pct.toFixed(1)}%${h.flagged ? " ⚠" : " ✓"}`).join(" · ")}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {contracts.map((c) => (
+              <ContratoCard key={c.id} contract={c} oferta={ofertaDeContrato.get(c.id)} cuentaCongelada={cuentaCongelada} onRefreshData={onRefreshData} />
+            ))}
           </div>
         )}
       </section>
@@ -203,6 +162,255 @@ export function ContratosTab({
           onRefreshData={onRefreshData}
         />
       </section>
+    </div>
+  );
+}
+
+const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : null);
+const td: React.CSSProperties = { textAlign: "right", padding: "3px 4px", whiteSpace: "nowrap" };
+
+// «Mi trato» (V5.84, fase 7): el resumen, los meses con su mora derivada, el retiro y la humedad.
+// Lo derivado (mora, mes en curso) viene calculado del cargador con `mesAMes.ts`; aquí no se lee la hora.
+function ContratoCard({ contract: c, oferta, cuentaCongelada, onRefreshData }: { contract: ProducerContract; oferta: ProducerOffer | undefined; cuentaCongelada: boolean; onRefreshData: () => void }) {
+  const sim =
+    c.quantityFrozenKg != null && c.pricePerKgLocked != null
+      ? simularTrato({ declaradoKg: c.quantityFrozenKg, copKg: c.pricePerKgLocked, declaracion: c.declaracion ?? "trimestre", grado: c.grade?.toLowerCase() })
+      : null;
+  const nMeses = c.freezeMonths && c.freezeMonths > 0 ? Math.min(3, c.freezeMonths) : 3;
+  const retiradoKg = Math.round(c.months.reduce((a, m) => a + m.retiradoKg, 0) * 10) / 10;
+  const penalidadCop = c.months.reduce((a, m) => a + m.penalidadCop, 0);
+  const vigenteKg = c.quantityFrozenKg != null ? Math.round((c.quantityFrozenKg - retiradoKg) * 10) / 10 : null;
+  const enCurso = c.status === "active" || c.status === "reconditioning";
+  const moraColor = c.mora === "ruptura_potencial" || c.mora === "con_recargo" ? "var(--accent)" : "var(--muted)";
+
+  return (
+    <div className={styles.fincarow} style={{ marginTop: 10 }}>
+      <h5>
+        <CtcRef id={c.lotId} /> · {c.lotName}{" "}
+        {c.grade && <b style={{ color: GRADES[c.grade] }}>· {c.grade}</b>}
+      </h5>
+      <div className={styles.sub}>
+        Estado: <b>{CONTRACT_STATUS_LABEL[c.status]}</b>
+        {oferta?.seasonLabel && <> · Temporada de venta: <b>{oferta.seasonLabel}</b></>}
+        {c.quantityFrozenKg != null && <> · Declarado: <b>{c.quantityFrozenKg} kg de CPS</b>{c.declaracion && <> ({c.declaracion === "trimestre" ? "trimestre" : "30 días"})</>}</>}
+        {c.pricePerKgLocked != null && <> · Precio: <b>{formatCop(c.pricePerKgLocked)}/kg</b>{c.referencePriceSource && <> ({c.referencePriceSource})</>}</>}
+        {c.signedAt && <> · Firmado el {fecha(c.signedAt)}</>}
+      </div>
+      {sim && (
+        <div className={styles.alist} style={{ marginTop: 4 }}>
+          CTC compra de inmediato <b>{sim.compraInicial.kg} kg</b> ({formatCop(sim.compraInicial.cop)}) · el trato vale{" "}
+          <b>{formatCop(sim.totalCop)}</b> · retiro libre al cerrar cada mes:{" "}
+          {sim.porMes.map((m) => `mes ${m.mes} ${m.retiroLibrePct} %`).join(" · ")} · penalidad por encima del tramo:{" "}
+          {PENALIDAD_RETIRO_PCT} % por carga{c.termsVersion && <> · términos {c.termsVersion}</>}
+        </div>
+      )}
+      {oferta?.loteDeTemporadaPasada && (
+        <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
+          Lote de la temporada pasada — posicionado en la ventana de esta temporada, y valorado como tal.
+        </div>
+      )}
+      {c.status === "pending_signature" && (
+        <div className={styles.sub}>CTC está preparando la firma — el precio y la cantidad ya quedaron fijados al aceptar.</div>
+      )}
+      {c.status === "ruptura" && (
+        <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700 }}>
+          Ruptura contractual declarada por CTC: un pedido pasó de las cuatro semanas sin envío. Su cuenta quedó congelada; si hubo causa
+          legítima, escríbale a CTC.
+        </div>
+      )}
+      {c.status === "renovado" && (
+        <div className={styles.sub} style={{ color: "var(--green)", fontWeight: 700 }}>
+          Trato cumplido y renovación ofrecida: la oferta nueva, con el PVC vigente, está arriba en «Ofertas de Temporada».
+        </div>
+      )}
+      {c.status === "completed" && <div className={styles.sub} style={{ color: "var(--green)", fontWeight: 700 }}>Trato cumplido: los {nMeses} meses enviados y pagados. A los 90 días de la firma CTC le ofrece renovar.</div>}
+
+      {/* La barra: un tramo por mes, encendido cuando el envío del mes quedó recibido */}
+      <div className={styles.track} aria-label="Progreso del trato">
+        {Array.from({ length: nMeses }, (_, i) => i + 1).map((m) => (
+          <i key={m} className={c.months.find((x) => x.mes === m)?.enviadoAt ? styles.on : ""} />
+        ))}
+      </div>
+
+      {c.status !== "pending_signature" && (
+        <>
+          <div className={styles.alist} style={{ marginTop: 6 }}>
+            Comprometido <b>{c.quantityFrozenKg ?? "—"} kg</b> · retirado {retiradoKg} kg · <b>vigente {vigenteKg ?? "—"} kg</b>
+            {penalidadCop > 0 && <> · penalidades {formatCop(penalidadCop)}</>}
+            {enCurso && <> · mes en curso <b>{c.mesEnCurso} de {nMeses}</b></>}
+            {enCurso && c.mora !== "sin_pedido" && c.mora !== "cumplido" && <> · <b style={{ color: moraColor }}>{MORA_LABEL[c.mora]}</b></>}
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, marginTop: 6 }}>
+            <thead>
+              <tr style={{ color: "var(--muted)" }}>
+                <th style={{ textAlign: "left", padding: "3px 4px" }}>Mes</th>
+                <th style={td}>CTC pidió</th>
+                <th style={td}>Usted envió</th>
+                <th style={td}>CTC pagó</th>
+                <th style={td}>Retiró</th>
+                <th style={{ textAlign: "left", padding: "3px 4px" }}>Situación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: nMeses }, (_, i) => i + 1).map((mes) => {
+                const m = c.months.find((x) => x.mes === mes);
+                const situacion = !m ? "—" : m.mora === "sin_pedido" && m.retiradoKg > 0 ? "Retiro registrado" : MORA_LABEL[m.mora];
+                const alerta = m && (m.mora === "con_recargo" || m.mora === "ruptura_potencial");
+                return (
+                  <tr key={mes} style={{ borderTop: "1px solid var(--line)", fontWeight: enCurso && mes === c.mesEnCurso ? 700 : 400 }}>
+                    <td style={{ padding: "3px 4px" }}>Mes {mes}</td>
+                    <td style={td}>{m?.pedidoKg != null ? `${m.pedidoKg} kg` : "—"}</td>
+                    <td style={td}>{m?.enviadoKg != null ? `${m.enviadoKg} kg${m.enviadoAt ? ` · ${fecha(m.enviadoAt)}` : ""}` : "—"}</td>
+                    <td style={td}>{m?.pagadoCop != null ? formatCop(m.pagadoCop) : "—"}</td>
+                    <td style={td}>{m && m.retiradoKg > 0 ? `${m.retiradoKg} kg${m.penalidadCop > 0 ? ` (${formatCop(m.penalidadCop)})` : ""}` : "—"}</td>
+                    <td style={{ padding: "3px 4px", color: alerta ? "var(--accent)" : "var(--muted)", fontWeight: alerta ? 700 : 400 }}>
+                      {situacion}
+                      {m && alerta ? ` · ${m.moraSemanas} sem.` : ""}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {enCurso && (
+            <div className={styles.sub} style={{ marginTop: 4 }}>
+              CTC pide cada mes y paga en la primera semana del siguiente. Si un pedido no se envía: {MORA.semanasSinCargo} semanas sin cargo,{" "}
+              {MORA.semanasConRecargo} más con {MORA.recargoPct} %; después, ruptura contractual (la declara CTC; avise antes si hay una causa legítima).
+            </div>
+          )}
+        </>
+      )}
+
+      {c.status === "active" && c.quantityFrozenKg != null && c.pricePerKgLocked != null && (vigenteKg ?? 0) > 0 && (
+        cuentaCongelada ? (
+          <div className={styles.sub} style={{ marginTop: 6 }}>Con la cuenta congelada no se puede retirar de este trato.</div>
+        ) : (
+          <RetiroForm contract={c} vigenteKg={vigenteKg ?? 0} nMeses={nMeses} onRefreshData={onRefreshData} />
+        )
+      )}
+
+      {c.humidity.length > 0 && (
+        <div className={styles.alist} style={{ marginTop: 6 }}>
+          Humedad: {c.humidity.map((h) => `mes ${h.month}: ${h.pct.toFixed(1)}%${h.flagged ? " ⚠" : " ✓"}`).join(" · ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// El retiro (paso 16): el productor escribe los kilos, VE la cuenta que hará el servidor (tramo libre · penalidad) y confirma.
+// La cuenta la hace `retiro()` (pura) en `previsualizarRetiro` y `retirarDelTrato`: aquí no se calcula nada.
+function RetiroForm({ contract, vigenteKg, nMeses, onRefreshData }: { contract: ProducerContract; vigenteKg: number; nMeses: number; onRefreshData: () => void }) {
+  const { showToast } = useToast();
+  const [abierto, setAbierto] = useState(false);
+  const [kg, setKg] = useState("");
+  const [nota, setNota] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [vista, setVista] = useState<{ retiro: Retiro; mes: number } | null>(null);
+  const n = Number(String(kg).replace(",", "."));
+  const valido = Number.isFinite(n) && n > 0 && n <= vigenteKg + 1e-9;
+  const tramoLibre = TRAMO_LIBRE_ACUMULADO_PCT[Math.min(3, Math.max(1, contract.mesEnCurso)) as 1 | 2 | 3] ?? 0;
+
+  async function calcular() {
+    if (!valido) return;
+    setBusy(true);
+    const r = await previsualizarRetiro(contract.id, n);
+    setBusy(false);
+    if (r.ok) setVista({ retiro: r.retiro, mes: r.mes });
+    else showToast(r.message);
+  }
+
+  async function confirmar() {
+    if (!vista) return;
+    const ok = window.confirm(
+      `¿Retirar ${n} kg de su trato por ${contract.lotName}?\n\n` +
+        `${vista.retiro.libreKg} kg dentro del tramo libre · ${vista.retiro.penalizadoKg} kg con penalidad de ${formatCop(vista.retiro.penalidadCop)} (${PENALIDAD_RETIRO_PCT} % del precio de cada carga).\n` +
+        `Quedarán ${Math.round((vigenteKg - n) * 10) / 10} kg comprometidos.`
+    );
+    if (!ok) return;
+    setBusy(true);
+    const r = await retirarDelTrato(contract.id, n, nota);
+    setBusy(false);
+    if (r.ok) {
+      showToast(`Retiro registrado ✓ · ${r.retiro.libreKg} kg libres · penalidad ${formatCop(r.retiro.penalidadCop)}`);
+      setAbierto(false);
+      setKg("");
+      setNota("");
+      setVista(null);
+      onRefreshData();
+    } else {
+      showToast(r.message);
+    }
+  }
+
+  if (!abierto) {
+    return (
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+        <button className="btn btn-sm" type="button" onClick={() => setAbierto(true)}>
+          Retirar kilos del trato…
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, border: "1px dashed var(--line)", borderRadius: 8, padding: "10px 12px", background: "var(--card)" }}>
+      <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 6 }}>Retirar del trato (mes {contract.mesEnCurso} de {nMeses})</div>
+      <div className={styles.sub} style={{ marginBottom: 6 }}>
+        Puede retirar hasta el 100 %. Tramo libre acumulado a esta altura: <b>{tramoLibre} %</b> de lo declarado (menos lo ya retirado libre); lo que
+        pase de ahí paga el {PENALIDAD_RETIRO_PCT} % del precio de cada carga. Quedan {vigenteKg} kg comprometidos.
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <label style={{ fontSize: 12.5 }}>
+          Retiro{" "}
+          <input
+            inputMode="decimal"
+            value={kg}
+            onChange={(e) => {
+              setKg(e.target.value);
+              setVista(null);
+            }}
+            style={{ width: 90, padding: "5px 7px", border: "1.5px solid var(--line)", borderRadius: 7, fontSize: 12.5, background: "var(--paper)" }}
+          />{" "}
+          kg
+        </label>
+        <input
+          placeholder="Motivo (opcional)"
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+          style={{ flex: 1, minWidth: 160, padding: "5px 7px", border: "1.5px solid var(--line)", borderRadius: 7, fontSize: 12.5, background: "var(--paper)" }}
+        />
+      </div>
+      {kg && !valido && <div className={styles.sub} style={{ color: "var(--accent)", fontWeight: 700, marginTop: 4 }}>Escriba entre 0 y {vigenteKg} kg.</div>}
+      {vista && (
+        <div className={styles.alist} style={{ marginTop: 6 }}>
+          Mes {vista.mes}: <b>{vista.retiro.libreKg} kg</b> dentro del tramo libre (disponible {vista.retiro.libreDisponibleKg} kg) ·{" "}
+          <b>{vista.retiro.penalizadoKg} kg</b> con penalidad de <b>{formatCop(vista.retiro.penalidadCop)}</b>
+          {vista.retiro.cargasPenalizadas > 0 && <> ({vista.retiro.cargasPenalizadas} carga(s) al {PENALIDAD_RETIRO_PCT} %)</>}
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end", marginTop: 10 }}>
+        {vista ? (
+          <button className="btn btn-sm btn-solid-accent" type="button" disabled={busy || !valido} onClick={confirmar}>
+            {busy ? "Registrando…" : "Confirmar el retiro"}
+          </button>
+        ) : (
+          <button className="btn btn-sm btn-solid" type="button" disabled={busy || !valido} onClick={calcular}>
+            {busy ? "Calculando…" : "Ver la cuenta"}
+          </button>
+        )}
+        <button
+          className="btn btn-sm"
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            setAbierto(false);
+            setVista(null);
+          }}
+        >
+          Cancelar
+        </button>
+      </div>
     </div>
   );
 }

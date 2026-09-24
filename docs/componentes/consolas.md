@@ -99,11 +99,13 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `muestras` · `muestra_movimientos` (V5.80) ·
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
-`lot_auctions` (administración) · `black_negotiations` · `purchase_contracts` · `contract_releases` ·
+`lot_auctions` (administración) · `black_negotiations` · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes) ·
+`contract_releases` (desde la V5.84, espejo de cada envío registrado) ·
 `humidity_readings` · `lot_listings` (publicación) · `club_campaigns` · `ai_usage` · `transcripts` ·
 `transcript_workers` (+ RPC `claim_transcript_job`).
 
-**Solo lee** (dueño en otro charter): `fincas`, `lots`, `producer_profiles`, `buyer_profiles`,
+**Solo lee** (dueño en otro charter): `fincas`, `lots`, `producer_profiles` (salvo `estado_cuenta*`, que escribe SOLO el
+owner desde `declararRuptura` · `descongelarCuenta`, V5.84), `buyer_profiles`,
 `orders`, `directorio_*`, `coffeed_*`, `tools*`, `terratalento_*`, y de `herramientas-internas`: `pvc_*`,
 `direccionamiento_context`, `quotes`, `market_anchors`.
 
@@ -216,9 +218,16 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   KR con el «continúa» del owner, **sin conducir en navegador**): la calculadora (`src/lib/trato/simulador.ts`, puro), la
   declaración al aceptar (`respondToOffer` exige `locked_kg` ≥ mínimo y ≤ máximo, trimestre/30 días, condiciones), el contrato
   **nace lleno** (`offer_id`, precio, cantidad, referencia, términos, compra inicial, anclaje) y `signContract` **solo firma**;
-  «Mi trato» en KR. `qa-trato-check` 35 → 54. **Sigue: fase 7** (el trato mes a mes: `contract_months` — pedido, envío, pago,
-  retiros 25/25 + 4 %, mora 2+2/5 %, ruptura visible, renovación, past crop; `contract_releases` deja de ser la escalera;
-  publicación sin Club) y **conducir la 6 con `prueba-*`**.
+  «Mi trato» en KR. `qa-trato-check` 35 → 54. **Fase 7 EJECUTADA en la V5.84** (código de KR con el «continúa» del owner,
+  **sin conducir en navegador**): `contract_months` y `src/lib/trato/mesAMes.ts` (puro — lo derivado se deriva: mora 2+2/5 % →
+  ruptura POTENCIAL, mes en curso, `retiro()` al 4 %, past crop, renovación; nada se persiste, decisión 6); en
+  `/ocp/contratos/[id]` pedir → envío (espejo en `contract_releases` al 100 %) → pago (solo lo enviado), cierre solo a `completed`;
+  **la ruptura la declara el owner** (`declararRuptura` → `status: ruptura` + cuenta congelada; `descongelarCuenta`; `esOwner`);
+  `ofrecerRenovacion` a los 90 días sobre un trato cumplido (oferta nueva al PVC vigente, `renewal_of_contract_id`); el retiro del
+  productor y «Mi trato» mes a mes en KR; `en_mora` y `ruptura` en el circuito; pestañas «Renovados» y «Ruptura». `qa-trato-check`
+  54 → 90 (§6, desde el plan); `qa-circuito` 45 → 56. **Sigue: fase 8** (CTCx Selection y Compras: `compras`,
+  el perfil único + imagen, la vitrina enmascarada, «Oferta desde CTCx Selection» = disponibilidad; decisión 7) y **conducir la 6
+  y la 7 con `prueba-*`**; los recordatorios de mora por correo (fila «Recordatorios» del §4) siguen sin ejecutar.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

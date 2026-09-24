@@ -56,6 +56,11 @@ export async function respondToOffer(
     .eq("id", offerId)
     .maybeSingle();
   if (!offer || offer.producer_id !== auth.userId) return { ok: false, message: "Oferta no encontrada." };
+  // V5.84 (fase 7, decisión 6): una cuenta congelada por ruptura no acepta ofertas (la congela y la reactiva el owner).
+  if (respuesta === "aceptar") {
+    const { data: perfil } = await service.from("producer_profiles").select("estado_cuenta").eq("profile_id", auth.userId).maybeSingle();
+    if (perfil?.estado_cuenta === "congelada") return { ok: false, message: "Su cuenta está congelada por ruptura contractual: no puede aceptar ofertas. Escríbale a CTC para revisar su caso." };
+  }
   if (offer.status !== "emitida") return { ok: false, message: "Esta oferta ya fue respondida o retirada." };
 
   const lot = (Array.isArray(offer.lots) ? offer.lots[0] : offer.lots) as { name: string } | null;

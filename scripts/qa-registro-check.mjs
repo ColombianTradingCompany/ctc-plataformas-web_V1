@@ -106,6 +106,43 @@ const HOY = new Date("2026-10-01T12:00:00Z");
   check("con los soportes de una sola fuente (src/lib/fichas/soportes.ts)", lote.includes('from "@/lib/fichas/soportes"') && lee("src/app/ocp/(app)/fichas/page.tsx").includes('from "@/lib/fichas/soportes"'));
 }
 
+// ── 6. V5.79 · lo que la fase 2 le tocó a Kaffetal Regal (con el sí del owner, línea en §3) ──
+{
+  // Folio 7: «B4 (Fotos y Video) debe suceder antes … el último paso es A5». El orden es FT · FT2 · FOTO · EUDR
+  // en las TRES piezas que lo escriben: la Ficha, su navegación y la barra del lote — y en la etiqueta del OCP.
+  const vista = lee("src/components/kaffetal-regal/FichaView.tsx");
+  const nav = lee("src/components/kaffetal-regal/ficha/FichaNav.tsx");
+  const barra = lee("src/components/kaffetal-regal/LotKanbanStepper.tsx");
+  const etapas = lee("src/lib/ocp/etapas.ts");
+  check("la Ficha abre B4 en el paso 2 y A5 en el 3", vista.includes('const FIRST_PANE_BY_STEP: PaneId[] = ["a1", "a3", "b4", "a5", "ficha"];'));
+  check("y sus subetapas dicen lo mismo", vista.includes("b4: 2, a5: 3, ficha: 4"));
+  check("las compuertas van en ese orden (fotos antes que EUDR)", vista.includes("const STAGE_READY = [ftReady, ft2Ready, fotosReady, eudrReady];"));
+  check("el botón del último paso es el EUDR", vista.includes('"Completar EUDR y Enviar"') && vista.includes('"Completar Fotos y continuar"'));
+  const iB4 = nav.indexOf('{ id: "b4"');
+  const iA5 = nav.indexOf('{ id: "a5"');
+  check("la navegación lista B4 antes que A5, con sus subetapas 2 y 3", iB4 > -1 && iA5 > iB4 && nav.includes('label: "Fotos y Video del Café", substage: 2') && nav.includes('label: "EUDR / Debida Diligencia", substage: 3'));
+  check("y el rótulo de los grupos también", nav.includes('"FOTO · Fotos y video", "EUDR · Debida Diligencia", "Exportar"'));
+  const iFoto = barra.indexOf('{ label: "FOTO"');
+  const iEudr = barra.indexOf('{ label: "EUDR"');
+  check("la barra del lote pinta FOTO en el paso 2 y EUDR en el 3", iFoto > -1 && iEudr > iFoto && barra.includes('label: "FOTO", title: "Fotos del lote (2 obligatorias) y video opcional", atStep: 2') && barra.includes('label: "EUDR", title: "Debida diligencia", atStep: 3'));
+  check("y la tabla del OCP rotula los pasos igual", etapas.includes('export const PASOS_DE_LA_FICHA = ["FT", "FT2", "FOTO", "EUDR"] as const;'));
+  // El productor VE el estado de cada certificación; el Pasaporte impreso no lista las retiradas.
+  const modal = lee("src/components/kaffetal-regal/FincaModal.tsx");
+  check("el productor ve «retirada del Pasaporte» y «CTC pidió el respaldo»", modal.includes("retirada del Pasaporte por CTC") && modal.includes("CTC pidió el respaldo"));
+  check("con el conteo de recordatorios de la fuente", modal.includes("MAX_RECORDATORIOS") && modal.includes('from "@/lib/registro/reglas"'));
+  const dossier = lee("src/components/kaffetal-regal/EudrDossierDoc.tsx");
+  check("el Pasaporte impreso deja fuera las certificaciones retiradas", dossier.includes('c.status !== "retirada"'));
+  check("y el cargador del dossier trae el estado", lee("src/lib/dossierExtras.ts").includes("verified_by_ctc, status"));
+  // El dossier del lote, en dos idiomas.
+  const doc = lee("src/components/kaffetal-regal/LotDossierDoc.tsx");
+  const ruta = lee("src/app/kaffetal-regal/dossier/[id]/page.tsx");
+  check("el dossier del lote existe en español e inglés", doc.includes("es: {") && doc.includes("en: {") && doc.includes('lang: Lang'));
+  check("la ruta acepta ?lang= y exige ser el dueño", ruta.includes('sp.lang === "en"') && ruta.includes("lot.producer_id !== user.id"));
+  check("solo imprime certificaciones corroboradas", ruta.includes('.eq("status", "corroborada")'));
+  check("y la caracterización sale de la ficha oficial y de la evaluación que rige", ruta.includes('.eq("is_official", true)') && ruta.includes("evaluacionQueRige("));
+  check("el galardón enlaza a los dos idiomas", lee("src/components/kaffetal-regal/panel/EvaluacionesTab.tsx").includes("/kaffetal-regal/dossier/${lot.id}?lang=en"));
+}
+
 if (fallos.length) {
   console.error(`✗ qa-registro: ${fallos.length} fallo(s), ${ok} OK`);
   for (const f of fallos) console.error("  - " + f);

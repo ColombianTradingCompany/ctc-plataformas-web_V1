@@ -11,6 +11,7 @@ import { Modal } from "@/components/Modal";
 import { checkFileSizeMb } from "@/lib/fileSize";
 import { fincaEudrStatus, deriveChainComplexity, deriveProductRisk, deriveFincaRiskLevel, PRODUCT_RISK_AFFIRMATIONS, type ParcelaGeoFields } from "@/lib/eudr";
 import { fincaLevelSchemes, CERT_REGISTRY } from "@/lib/certRegistry";
+import { MAX_RECORDATORIOS } from "@/lib/registro/reglas";
 import { EudrYesNo } from "./EudrYesNo";
 import { EudrStatusBadge } from "./EudrStatusBadge";
 import { FincaMapPicker, type ParcelaEnMapa } from "./FincaMapPicker";
@@ -1234,7 +1235,7 @@ function FincaModalBody({
                 {certificates.map((c) => (
                   <span key={c.id} className={styles.readChip}>
                     {SCHEME_LABEL[c.scheme] ?? c.scheme}
-                    {c.verifiedByCtc ? " ✓" : ""}
+                    {c.status === "retirada" ? " (retirada)" : c.verifiedByCtc || c.status === "corroborada" ? " ✓" : c.status === "evidencia_pedida" ? " (respaldo pendiente)" : ""}
                   </span>
                 ))}
               </div>
@@ -1917,8 +1918,14 @@ function CertCard({
     <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 12px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <b style={{ fontSize: 13 }}>{label}</b>
-        {cert.verifiedByCtc ? (
-          <span style={{ fontSize: 11.5, color: "#2E7D52" }}>✓ verificado por CTC</span>
+        {cert.status === "retirada" ? (
+          <span style={{ fontSize: 11.5, color: "var(--red, #B3261E)", fontWeight: 700 }}>retirada del Pasaporte por CTC</span>
+        ) : cert.status === "evidencia_pedida" ? (
+          <span style={{ fontSize: 11.5, color: "#B45309", fontWeight: 700 }}>
+            CTC pidió el respaldo{cert.recordatorios > 0 ? ` · recordatorio ${cert.recordatorios} de ${MAX_RECORDATORIOS}` : ""}
+          </span>
+        ) : cert.verifiedByCtc || cert.status === "corroborada" ? (
+          <span style={{ fontSize: 11.5, color: "#2E7D52" }}>✓ corroborado por CTC</span>
         ) : hasValidity ? (
           <span style={{ fontSize: 11.5, color: "var(--muted)" }}>
             declarado · vigencia {cert.validFrom} → {cert.validTo}
@@ -1941,6 +1948,9 @@ function CertCard({
           Eliminar
         </button>
       </div>
+      {cert.notaCtc && cert.status !== "corroborada" && (
+        <p style={{ fontSize: 12, color: "#B45309", margin: "6px 0 0" }}>Nota de CTC: {cert.notaCtc}</p>
+      )}
       {cert.certNumber !== "" && !editing && (
         <p style={{ fontSize: 12, color: "var(--muted)", margin: "4px 0 0" }}>N.º {cert.certNumber}</p>
       )}

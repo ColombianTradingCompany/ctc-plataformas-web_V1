@@ -28,8 +28,11 @@ export type { PaneProps } from "./ficha/panes/types";
 // Which FichaNav pane opens by default for each intake_step (0-4) -- the
 // first not-yet-submitted pane in that sub-stage, or the final preview once
 // everything is locked in.
-const FIRST_PANE_BY_STEP: PaneId[] = ["a1", "a3", "a5", "b4", "ficha"];
-const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 1, b2: 1, b3: 1, a5: 2, b4: 3, ficha: 4 };
+// V5.79 (folio 7 del owner, 2026-09-24): «B4 (Fotos y Video) debe suceder antes para que esto pueda ser hecho en
+// paralelo; es decir, el último paso es A5». El orden es FT · FT2 · FOTO · EUDR: la finca completa su Pasaporte
+// mientras el productor termina el lote, y la Visa se hereda al final.
+const FIRST_PANE_BY_STEP: PaneId[] = ["a1", "a3", "b4", "a5", "ficha"];
+const PANE_SUBSTAGE: Record<PaneId, number> = { a1: 0, a2: 0, b1: 0, a3: 1, a4: 1, b2: 1, b3: 1, b4: 2, a5: 3, ficha: 4 };
 // FT2 escape hatches: A3/A4/B2 can be declared "no lo sé / no aplica" instead
 // of filled in (fichaData's ft2_*_na). B3 YA NO (V5.20): su escape es el camino
 // «Solo sé información básica» dentro del propio pane — ft2_b3_na queda en el
@@ -313,7 +316,7 @@ export function FichaView({
   // paralelo sin frenar la Ficha.
   const eudrReady = !!completed.a5;
   const fotosReady = !!completed.b4;
-  const STAGE_READY = [ftReady, ft2Ready, eudrReady, fotosReady];
+  const STAGE_READY = [ftReady, ft2Ready, fotosReady, eudrReady];
   const currentStepReady = effectiveIntakeStep < 4 ? STAGE_READY[effectiveIntakeStep] : true;
 
   // ── Qué falta, DICHO POR SU NOMBRE (owner, 2026-08-20) ────────────────────
@@ -486,44 +489,41 @@ export function FichaView({
       setCelebrate({
         emoji: "🏅",
         title: "¡FT2 enviada a CTC!",
-        body: "Su café ya tiene perfil y análisis. Sigue el EUDR: la debida diligencia que le abre la puerta del mercado europeo.",
+        body: "Su café ya tiene perfil y análisis. Siguen dos fotos del café — con las del teléfono basta; el video es opcional.",
       });
-      setActive("a5");
+      setActive("b4");
       return;
     }
     if (step === 2) {
-      if (!completed.a5) {
-        setNotice("En A5: seleccione la finca de origen (en A2) — la Visa EUDR del lote se hereda de la Visa de su finca.");
+      if (!fotosReady) {
+        setNotice(
+          `En B4: suba al menos ${B4_FOTOS_MINIMO} fotos del lote antes de continuar. El video es opcional — las fotos no.`
+        );
         return;
-      }
-      // El Sello se hereda de la Visa de la finca: si la Visa aún está en
-      // trámite, se puede seguir al video — el lote queda con su bandera roja
-      // hasta que la finca obtenga su Visa.
-      if (!allFincasApta) {
-        const msg =
-          "La(s) finca(s) de origen aún no tienen su Pasaporte EUDR vigente.\n\nPuede continuar con el video, pero el lote quedará marcado en rojo y su Sello EUDR PENDIENTE hasta que su(s) finca(s) obtengan la Visa.\n\n¿Continuar de todas formas?";
-        if (!window.confirm(msg)) return;
       }
       setSaving(true);
       const ok = await onSave(buildUpdate(withRevisionDate(), 3));
       setSaving(false);
       if (!ok) return;
       setCelebrate({
-        emoji: "🌍",
-        title: allFincasApta ? "¡Visa EUDR en camino!" : "Origen registrado — Pasaporte de finca pendiente",
-        body: allFincasApta
-          ? "El Pasaporte de su finca está vigente: la Visa del lote queda lista. Último paso: dos fotos del café — con las del teléfono basta. El video es opcional."
-          : "Quedó registrado con el Pasaporte de la finca en trámite (bandera roja). Último paso: dos fotos del café — con las del teléfono basta. El video es opcional.",
+        emoji: "📷",
+        title: "¡Fotos recibidas!",
+        body: "Último paso: el EUDR (A5) — señale la finca de origen; la Visa del lote se hereda del Pasaporte de su finca.",
       });
-      setActive("b4");
+      setActive("a5");
       return;
     }
     if (step === 3) {
-      if (!fotosReady) {
-        setNotice(
-          `En B4: suba al menos ${B4_FOTOS_MINIMO} fotos del lote antes de continuar. El video es opcional — las fotos no.`
-        );
+      if (!completed.a5) {
+        setNotice("En A5: seleccione la finca de origen (en A2) — la Visa EUDR del lote se hereda del Pasaporte de su finca.");
         return;
+      }
+      // La Visa se hereda del Pasaporte de la finca: si el Pasaporte aún está en trámite, se puede enviar igual —
+      // el lote queda con su bandera roja hasta que la finca lo obtenga.
+      if (!allFincasApta) {
+        const msg =
+          "La(s) finca(s) de origen aún no tienen su Pasaporte EUDR vigente.\n\nPuede enviar la Ficha igual, pero el lote quedará marcado en rojo y su Visa EUDR PENDIENTE hasta que su(s) finca(s) obtengan el Pasaporte.\n\n¿Continuar de todas formas?";
+        if (!window.confirm(msg)) return;
       }
       if (!showDeclare) {
         setShowDeclare(true);
@@ -586,8 +586,8 @@ export function FichaView({
   const STAGE_BUTTON_LABEL = [
     "Completar FT y continuar",
     "Completar FT2 y continuar",
-    "Completar EUDR y continuar",
-    showDeclare ? "Confirmar y Enviar" : "Completar Fotos y Enviar",
+    "Completar Fotos y continuar",
+    showDeclare ? "Confirmar y Enviar" : "Completar EUDR y Enviar",
   ];
 
   return (

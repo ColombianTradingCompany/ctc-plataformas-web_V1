@@ -168,9 +168,9 @@ chequeo EUDR y la transcripción de FT2 en la vista del lote). Los siete `qa-pvc
   **Diferido de la fase 1** (con dueño aquí): mudar temporadas a `/ocp/temporadas`; renombrar `src/lib/arena/` → `evaluacion/` y
   `trato/`; el cashback del 80 % y `RELEASE_STAIRCASE` (fase 5). **Fase 2 EJECUTADA en la V5.78 (lado OCP)**: certificaciones
   con estado y recordatorios semanales ×4 (`src/lib/registro/`, cron `/api/cron/recordatorios`), el chequeo EUDR de CTC en la
-  finca (texto + adjuntos), y la transcripción de FT2 en la vista del lote (set de fichas + `crearFichaManual`). **Lo que la fase 2
-  deja a `kaffetal-regal`** (anotado en su charter): A5 último paso, dossier ES/EN, Ficha descargable, el estado de cada
-  certificación en su panel. **Sigue: fase 3** (Solicitudes de Evaluación, factura, subvención decidida, pago contra entrega,
+  finca (texto + adjuntos), y la transcripción de FT2 en la vista del lote (set de fichas + `crearFichaManual`). **Y en la V5.79, el lado de
+  KR, desde esta sesión con el sí del owner**: A5 último paso, el dossier del lote ES/EN (`/kaffetal-regal/dossier/[id]`), el
+  estado de cada certificación en la finca del productor. **Sigue: fase 3** (Solicitudes de Evaluación, factura, subvención decidida, pago contra entrega,
   muestras 500/500/1000 y los Baches de Evaluación).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.

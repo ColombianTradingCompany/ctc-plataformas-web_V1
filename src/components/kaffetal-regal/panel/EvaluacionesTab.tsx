@@ -429,12 +429,19 @@ function GalardonCard({ lot, fincas }: { lot: Lot; fincas: Finca[] }) {
             <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 6 }}>Feedback del Q-Grader: {ins.sondeoResultNotes}</div>
           )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+            {/* V5.79: el dossier del lote (trazabilidad + EUDR + caracterización), en español e inglés. */}
+            <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/dossier/${lot.id}`} target="_blank" rel="noopener noreferrer">
+              Dossier del lote (ES) ↗
+            </a>
+            <a className="btn btn-sm" href={`/kaffetal-regal/dossier/${lot.id}?lang=en`} target="_blank" rel="noopener noreferrer">
+              Lot dossier (EN) ↗
+            </a>
             {lotEudrReady ? (
-              <a className="btn btn-sm btn-solid" href={`/kaffetal-regal/certificacion-lote/${lot.id}`} target="_blank" rel="noopener noreferrer">
-                Certificado y Visa EUDR del lote ↗
+              <a className="btn btn-sm" href={`/kaffetal-regal/certificacion-lote/${lot.id}`} target="_blank" rel="noopener noreferrer">
+                Visa EUDR del lote ↗
               </a>
             ) : (
-              <span className={styles.certPending}>Visa EUDR: a la espera de la Visa de su finca</span>
+              <span className={styles.certPending}>Visa EUDR: a la espera del Pasaporte de su finca</span>
             )}
           </div>
           {/* La vitrina de la Arena (V5.19): la gala post-galardón de

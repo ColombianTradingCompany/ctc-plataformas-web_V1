@@ -34,7 +34,8 @@ export const GRADO_HEX: Record<string, string> = { black: "#1A1C1E", red: "#B01F
 export const gradoLabel = (grade: string | null | undefined): string | null => (grade ? GRADO_LABEL[grade] ?? grade : null);
 
 /** Los pasos de la Ficha que el productor llena, en orden. `intake_step` dice en cuál va. */
-export const PASOS_DE_LA_FICHA = ["FT", "FT2", "EUDR", "Video"] as const;
+// V5.79: FT · FT2 · FOTO · EUDR — A5 (EUDR) es el último paso del intake (folio 7 del owner); «Video» pasó a «FOTO» en la V5.64.
+export const PASOS_DE_LA_FICHA = ["FT", "FT2", "FOTO", "EUDR"] as const;
 
 /** Qué pasos de la Ficha están hechos. Un lote que ya salió de `borrador` los tiene todos. */
 export function fichaHecha(stage: string, intakeStep: number): boolean[] {

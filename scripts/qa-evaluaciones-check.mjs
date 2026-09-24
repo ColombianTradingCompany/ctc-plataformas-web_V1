@@ -85,7 +85,8 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
 // ── 6. La barra canónica del lote (redibujada en la V5.64) ────────────────
 {
   // V5.64/V5.65 (owner, 2026-09-20): la barra son DOS líneas y GAL/ARE ya no
-  // existen. Arriba el expediente —FT · FT2 · EUDR · FOTO → VISA—, abajo el
+  // existen. Arriba el expediente —FT · FT2 · FOTO · EUDR → VISA (V5.79: A5 es
+  // el último paso, folio 7 del owner)—, abajo el
   // tramo comercial —MUE → EVA → GRADO → CONT—.
   //
   // El reparto de nombres quedó ASENTADO por el owner en la V5.65, y es lo que
@@ -100,7 +101,7 @@ check("el galardón muestra el sello del grado", evalTab.includes("/images/share
   //
   // Antes de esto la finca tenía «Visa», el lote «Sello» y el OCP llamaba «EVA»
   // al veredicto documental. Si alguien vuelve a mezclarlos, aquí se ve.
-  const orden = ["FT", "FT2", "EUDR", "FOTO", "VISA", "MUE", "EVA", "GRADO", "CONT"];
+  const orden = ["FT", "FT2", "FOTO", "EUDR", "VISA", "MUE", "EVA", "GRADO", "CONT"];
   // Un chip con título largo se escribe repartido en varias líneas, así que se
   // busca por expresión regular y no por substring literal.
   const posiciones = orden.map((n) => {

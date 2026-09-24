@@ -19,6 +19,24 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.79] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 2 del `PLAN_CIRCUITO_DEL_LOTE.md` cierra por el lado de Kaffetal Regal** — código de `kaffetal-regal`
+  tocado desde la sesión `consolas` con el sí del owner («hazlo tú desde esta sesión», 2026-09-24) y línea en `ALINEACION` §3.
+- **Cambiado**: **A5 (EUDR) es el ÚLTIMO paso del intake y B4 (fotos) va antes** (folio 7 del owner): el orden es
+  **FT · FT2 · FOTO · EUDR → VISA** en la Ficha (`FichaView`: panes, compuertas y botones), su navegación (`FichaNav`), la barra
+  del lote (`LotKanbanStepper`) y la etiqueta del OCP (`PASOS_DE_LA_FICHA`). La finca completa su Pasaporte mientras el productor
+  termina el lote; la Visa se hereda al final.
+- **Añadido**: **el dossier del lote en español e inglés** (`/kaffetal-regal/dossier/[id]?lang=es|en`, `LotDossierDoc`): UN documento
+  imprimible con la identidad y trazabilidad, el Pasaporte de la(s) finca(s) y la Visa del lote (con la DDS), la caracterización
+  (la ficha oficial ★ y la evaluación que rige el grado) y las certificaciones **corroboradas**. Solo afirma lo que la plataforma
+  tiene. Enlazado desde «Lotes Galardonados» (ES y EN); es la «Ficha descargable» de la respuesta 5 (Imprimir / PDF).
+- **Añadido**: **el productor ve el estado de cada certificación** en su finca («CTC pidió el respaldo · recordatorio n de 4»,
+  «corroborado por CTC», «retirada del Pasaporte por CTC», con la nota de CTC), y el **Pasaporte impreso deja fuera las retiradas**.
+- **Datos**: el único borrador que iba por `intake_step = 3` (EUDR hecho, fotos pendientes) pasa a `2` para que el orden nuevo
+  lo lea bien (las fotos son lo que le falta; el EUDR ya cargado se confirma en un clic).
+- **Docs**: `qa-registro-check` (67) vigila también el lado de KR: el orden en las tres piezas, el estado visible y el dossier.
+
 ## [V5.78] — 2026-09-24 (commit a5a7f1c)
 
 - **Hito**: **fase 2 del `PLAN_CIRCUITO_DEL_LOTE.md` — el registro** (lado OCP; lo de Kaffetal Regal queda con dueño en su charter).

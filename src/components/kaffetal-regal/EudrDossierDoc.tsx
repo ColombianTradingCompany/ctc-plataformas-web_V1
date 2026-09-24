@@ -92,6 +92,8 @@ export type DossierCert = {
   validTo: string;
   holderNote: string;
   verifiedByCtc: boolean;
+  /** V5.79: el estado que CTC le da; las «retirada» no se imprimen. */
+  status?: "declarada" | "evidencia_pedida" | "corroborada" | "retirada";
 };
 
 export function EudrDossierDoc({
@@ -323,7 +325,7 @@ export function EudrDossierDoc({
                 </tr>
               </thead>
               <tbody>
-                {certificates.map((c, i) => (
+                {certificates.filter((c) => c.status !== "retirada").map((c, i) => (
                   <tr key={i}>
                     <td style={{ padding: "4px 12px 4px 0", fontWeight: 600 }}>
                       {c.schemeLabel}
@@ -331,7 +333,7 @@ export function EudrDossierDoc({
                     </td>
                     <td style={{ padding: "4px 12px 4px 0" }}>{c.certNumber || "—"}</td>
                     <td style={{ padding: "4px 12px 4px 0" }}>{c.validFrom && c.validTo ? `${c.validFrom} → ${c.validTo}` : "sin registrar"}</td>
-                    <td style={{ padding: "4px 0" }}>{c.verifiedByCtc ? "Verificado por CTC" : "Declarado"}</td>
+                    <td style={{ padding: "4px 0" }}>{c.status === "corroborada" || c.verifiedByCtc ? "Corroborado por CTC" : c.status === "evidencia_pedida" ? "Declarado · respaldo pendiente" : "Declarado"}</td>
                   </tr>
                 ))}
               </tbody>

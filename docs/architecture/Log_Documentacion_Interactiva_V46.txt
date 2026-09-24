@@ -253,3 +253,15 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE con dueño `kaffetal-regal`: A5 último paso del intake; dossier ES/EN por lote (+ el de la finca); Ficha descargable;
   enseñar el estado de cada certificación al productor (y sus «retiradas» fuera del Pasaporte impreso).
 (commit: a5a7f1c)
+
+## [2026-09-24] V5.79 · Consolas → Kaffetal Regal — la fase 2 cierra por el lado del productor (A5 último, estado de certificaciones, dossier ES/EN)
+- CÓDIGO AJENO con el sí del owner y línea en §3: `FichaView`, `FichaNav`, `LotKanbanStepper`, `FincaModal`, `EudrDossierDoc`,
+  `EvaluacionesTab`, `KaffetalExperience`, `data.ts` (kaffetal-regal); `etapas.ts`, `dossierExtras.ts` (consolas/lib).
+- ORDEN DEL INTAKE (DICT `intake`): FT · FT2 · **FOTO · EUDR** → VISA. A5 es el último paso (folio 7). `intake_step` 2 = fotos
+  pendientes, 3 = EUDR pendiente. Datos: un borrador en 3 pasó a 2.
+- NODO NUEVO (documento) «Dossier del lote» `/kaffetal-regal/dossier/[id]?lang=es|en` (`LotDossierDoc`, presentacional; la ruta
+  resuelve y guarda la puerta: dueño del lote). Reúne FT (identidad/trazabilidad), Pasaporte/Visa + DDS, caracterización (ficha
+  oficial ★ + evaluación que rige) y certificaciones corroboradas. Sustituye, de cara al productor, a los documentos sueltos.
+- ANN: el productor ve el estado de cada certificación (`FincaModal`); el Pasaporte impreso filtra `retirada`.
+- Guardianes: `qa-registro-check` 50 → 67 (el lado KR); `qa-evaluaciones` §6 con el orden nuevo.
+(commit: pendiente)

@@ -109,15 +109,13 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   **(c) La Ficha descargable** (respuesta 5: la «Ficha automatizada (base info)» del paso 5 es la que se produce para descargar):
   no hay botón de descarga en B2/B3. **(d) El rechazo con interés** (Ruta CTCx Selection): que `respondToOffer("rechazar")` pueda
   decir «me interesa la oferta directa de CTCx» — espera la 4b (`lot_offers.kind = directa`).
-- **Fase 2 del `PLAN_CIRCUITO_DEL_LOTE` (V5.78) — lo que le toca a KR, con dueño `kaffetal-regal`**: **(a)** **A5 (EUDR) pasa a ser
-  el ÚLTIMO paso del intake y B4 (fotos) va antes** (folio 7 del owner: «el último paso es A5», para que finca y lote corran en
-  paralelo) — `FIRST_PANE_BY_STEP`, `PANE_SUBSTAGE`, `FichaNav`, los rótulos de los pasos, la barra `LotKanbanStepper`
-  (`FT · FT2 · FOTO · EUDR → VISA`) y `PASOS_DE_LA_FICHA` en `src/lib/ocp/etapas.ts` (consolas); ojo con los borradores en
-  `intake_step = 2/3`, que cambian de significado. **(b)** **El estado de cada certificación de la finca** (`finca_certificates.status`:
-  declarada · evidencia_pedida · corroborada · retirada, con `nota_ctc` y `recordatorios`) hay que enseñárselo al productor en
-  `PerfilTab`/A3-A4 y sacar las **retiradas** del Pasaporte impreso (`EudrDossierDoc`); hoy solo lo sabe por su feed y por correo.
-  **(c)** **Un dossier ES/EN por lote** (trazabilidad + Visa + caracterización) y el de la finca (Pasaporte), que reemplacen a los
-  cuatro documentos sueltos; **(d)** la **Ficha descargable** (respuesta 5 del owner).
+- ~~**Fase 2 del `PLAN_CIRCUITO_DEL_LOTE` (V5.78) — lo que le toca a KR**~~ — **HECHO en la V5.79 desde la sesión `consolas`, con el sí
+  del owner** («hazlo tú desde esta sesión», 2026-09-24; línea en §3): **(a)** A5 es el último paso del intake, B4 va antes
+  (`FichaView`, `FichaNav`, `LotKanbanStepper`, `PASOS_DE_LA_FICHA`; el borrador que iba en `intake_step = 3` pasó a 2);
+  **(b)** el productor ve el estado de cada certificación en la tarjeta de la finca (`FincaModal`) y el Pasaporte impreso
+  (`EudrDossierDoc`) deja fuera las retiradas; **(c)+(d)** el **dossier del lote ES/EN** (`/kaffetal-regal/dossier/[id]?lang=`,
+  `LotDossierDoc`), enlazado desde «Lotes Galardonados», es la Ficha descargable. **Lo que sigue siendo de KR**: el Pasaporte
+  de la finca sigue solo en español (`EudrDossierDoc`); el dossier del lote muestra el estado del Pasaporte pero no lo reemplaza.
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

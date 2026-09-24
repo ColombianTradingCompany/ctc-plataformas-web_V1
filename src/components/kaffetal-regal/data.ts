@@ -113,6 +113,10 @@ export type FincaCertificate = {
   supportAssetId: string | null;
   supportFilename: string | null;
   verifiedByCtc: boolean;
+  /** V5.79: el estado que CTC le da a la certificación (`src/lib/registro/reglas.ts`). */
+  status: "declarada" | "evidencia_pedida" | "corroborada" | "retirada";
+  notaCtc: string | null;
+  recordatorios: number;
 };
 
 // The five categorical declarations + geolocation the producer submits; CTC

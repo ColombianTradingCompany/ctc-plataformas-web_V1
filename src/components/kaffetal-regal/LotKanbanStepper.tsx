@@ -34,8 +34,9 @@ import styles from "./LotKanbanStepper.module.css";
 const INTAKE_STEPS = [
   { label: "FT", title: "Ficha (A1, A2, B1)", atStep: 0 },
   { label: "FT2", title: "A3, A4, B2, B3", atStep: 1 },
-  { label: "EUDR", title: "Debida diligencia", atStep: 2 },
-  { label: "FOTO", title: "Fotos del lote (2 obligatorias) y video opcional", atStep: 3 },
+  // V5.79: FOTO antes que EUDR (A5 es el último paso del intake — folio 7 del owner).
+  { label: "FOTO", title: "Fotos del lote (2 obligatorias) y video opcional", atStep: 2 },
+  { label: "EUDR", title: "Debida diligencia", atStep: 3 },
 ];
 
 type StepState = "done" | "active" | "pending";

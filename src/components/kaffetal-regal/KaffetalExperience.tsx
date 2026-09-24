@@ -178,6 +178,9 @@ type FincaCertRow = {
   support_asset_id: string | null;
   support_filename: string | null;
   verified_by_ctc: boolean;
+  status?: FincaCertificate["status"] | null;
+  nota_ctc?: string | null;
+  recordatorios?: number | null;
 };
 function dbCertToCert(row: FincaCertRow): FincaCertificate {
   return {
@@ -191,6 +194,10 @@ function dbCertToCert(row: FincaCertRow): FincaCertificate {
     supportAssetId: row.support_asset_id,
     supportFilename: row.support_filename,
     verifiedByCtc: row.verified_by_ctc,
+    // V5.79: el estado que CTC le da (declarada · evidencia_pedida · corroborada · retirada) y su nota.
+    status: row.status ?? (row.verified_by_ctc ? "corroborada" : "declarada"),
+    notaCtc: row.nota_ctc ?? null,
+    recordatorios: row.recordatorios ?? 0,
   };
 }
 
@@ -851,7 +858,7 @@ function Experience() {
     if (finca) patch.finca_id = finca.id;
     if (updates.intakeStep != null) {
       patch.intake_step = updates.intakeStep;
-      // Reaching the last intake sub-stage (Video) is what actually locks the
+      // Reaching the last intake sub-stage (EUDR/A5 desde la V5.79) is what actually locks the
       // Ficha in and moves the lot out of "borrador" -- everything downstream
       // (Arena, contracts, catalog) only ever reasons about `stage`, so this
       // is the one place the two concepts connect.

@@ -24,7 +24,7 @@ export async function dossierParcelasAndCerts(
       .order("position", { ascending: true }),
     client
       .from("finca_certificates")
-      .select("scheme, cert_number, valid_from, valid_to, holder_note, verified_by_ctc")
+      .select("scheme, cert_number, valid_from, valid_to, holder_note, verified_by_ctc, status")
       .eq("finca_id", fincaId)
       .order("created_at", { ascending: true }),
   ]);
@@ -43,6 +43,7 @@ export async function dossierParcelasAndCerts(
       validTo: (c.valid_to as string | null) ?? "",
       holderNote: (c.holder_note as string | null) ?? "",
       verifiedByCtc: !!c.verified_by_ctc,
+      status: (c.status as DossierCert["status"]) ?? "declarada",
     })),
   };
 }

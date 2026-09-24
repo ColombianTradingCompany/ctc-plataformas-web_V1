@@ -343,13 +343,16 @@ for (const l of SNEAK_PEEK_MOCK) {
     "la tienda pide ctc_selection a la vista",
     tienda.includes("ctc_selection")
   );
+  // V5.85 (fase 8): el rótulo es el PERFIL ÚNICO de CTCx Selection (`rotuloCtcx`, `lib/catalogo/perfilCtcx.ts`), que cae a la
+  // razón social de `legal.ts` cuando no hay perfil — sigue sin haber una segunda definición escrita a mano.
+  const perfil = lee("src/lib/catalogo/perfilCtcx.ts");
   check(
-    "el rótulo de CTC sale de legal.ts en la cinta, no escrito a mano",
-    sneak.includes("CTC_RAZON") && !/finca:\s*["'`]C(TC|olombian)/.test(sneak)
+    "el rótulo de CTC sale del perfil de CTCx Selection en la cinta (rotuloCtcx → legal.ts), no escrito a mano",
+    sneak.includes("rotuloCtcx(perfil)") && !/finca:\s*["'`]C(TC|olombian)/.test(sneak) && perfil.includes('from "@/lib/legal"') && /return nombre \|\| CTC_RAZON/.test(perfil)
   );
   check(
-    "el rótulo de CTC sale de legal.ts en la tienda, no escrito a mano",
-    tienda.includes("CTC_RAZON")
+    "y en la tienda, el mismo rótulo",
+    tienda.includes("rotuloCtcx(perfil)")
   );
   check(
     "ningún componente escribe la razón social a mano",
@@ -390,7 +393,7 @@ for (const l of SNEAK_PEEK_MOCK) {
   const vitrinaCinta = lee("src/lib/catalogo/sneakPeek.ts");
   check(
     "la vitrina sigue enseñando CTC en vez de la finca cuando el lote es de CTC Selection",
-    /ctc_selection\s*\?\s*CTC_RAZON/.test(vitrinaTienda) && /ctc_selection\s*\?\s*CTC_RAZON/.test(vitrinaCinta)
+    /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(vitrinaTienda) && /ctc_selection\s*\?\s*rotuloCtcx\(perfil\)/.test(vitrinaCinta)
   );
 }
 

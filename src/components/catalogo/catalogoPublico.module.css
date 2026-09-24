@@ -515,3 +515,28 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ── CTCx Selection (V5.85, fase 8): el perfil único de la casa en vez de la finca, con la imagen por lote ── */
+.ctcx {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+.ctcxImagen {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+.ctcxLema {
+  margin: 0;
+  font-size: 14px;
+}
+.ctcxTexto {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  max-width: 62ch;
+}

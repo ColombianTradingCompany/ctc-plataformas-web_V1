@@ -242,17 +242,15 @@ export const CONSOLES: Record<PanelConsoleKey, PanelConsole> = {
           { href: "/ocp/ofertas", label: "Lotes Evaluados → Pendiente Oferta" },
           // Las ofertas que el productor aceptó: el contrato, sus liberaciones y la humedad mes a mes (staging KR).
           { href: "/ocp/contratos", label: "Ofertas CP Aceptadas" },
-          // Lo que CTCx compra en firme para venderlo como productor (staging Compras). Tyrian no cabe: lo impide un CHECK.
+          // Decisión 7 (V5.85): la disponibilidad de lo comprado en firme (`compras`) — el staging del Catálogo Activo del lado Compras.
           { href: "/ocp/ctc-selection", label: "Oferta desde CTCx Selection" },
           // Nota 5: lo publicado. Las subastas Tyrian son su pestaña (Tyrian no se oferta: se subasta).
           { href: "/ocp/catalogo", label: "Catálogo Activo" },
         ],
       },
       {
-        // ⚠️ ESTOS DOS MÓDULOS NO EXISTEN TODAVÍA. El owner pidió el cuadro completo en el rail (2026-09-19),
-        // lo que invierte la D9 del plan («el rail no promete lo que no hay») para este grupo. Sus páginas NO
-        // fingen: dicen que no hay módulo, qué será, y que el brief espera su aprobación
-        // (`docs/componentes/briefs/consolas-{gestion-de-muestras,ctcx-selection-compras}.md`).
+        // El owner pidió el cuadro completo en el rail (2026-09-19) antes de que existieran los módulos; hoy existen los
+        // tres: Gestión de Muestras (V5.80), Campañas de Subvención (V5.77) y CTCx Selection · Compras (V5.85, fase 8).
         label: "OCP · Manejo de Stock Físico",
         links: [
           { href: "/ocp/muestras", label: "Gestión de Muestras" },

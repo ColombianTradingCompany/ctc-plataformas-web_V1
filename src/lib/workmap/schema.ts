@@ -187,7 +187,8 @@ const NODES: MapNode[] = [
   t("purchase_contracts", "purchase_contracts", "purchase_contracts", ["OCP · Contratos", "KR · Contratos y Compras"], "comercio", 2670, 320),
   t("lot_listings", "lot_listings", "lot_listings", ["OCP · Catálogo", "CP · tienda"], "comercio", 2670, 470),
   t("orders", "orders / order_items", "orders", ["CP · checkout", "OCP"], "comercio", 2670, 620),
-  t("black_negotiations", "black_negotiations", "black_negotiations", ["OCP · CTC Selection"], "comercio", 2670, 770),
+  // V5.85 (fase 8): `black_negotiations` quedó DORMIDA (CRM retirado, 0 filas, sin escritor); lo comprado en firme vive en `compras`.
+  t("compras", "compras / ctcx_selection_lotes", "compras", ["OCP · Compras", "OCP · Oferta desde CTCx Selection"], "comercio", 2670, 770),
   t("contract_releases", "contract_releases / humidity_readings", "contract_releases", ["OCP · Contratos / Humedad", "KR · Contratos y Compras"], "comercio", 2670, 920),
   // Kaffetal Club
   t("club_campaigns", "club_campaigns", "club_campaigns", ["BCP · Kaffetal Club"], "club", 2990, 190),
@@ -247,9 +248,8 @@ const EDGES: MapEdge[] = [
   e("e_of", "lot_offers", "purchase_contracts", "ok", "aceptada → contrato"),
   e("e20", "gal", "lot_listings"),
   e("e22", "lot_listings", "orders"),
-  // Grado Black: negociación aparte; su «comprar» EMITE la oferta black.
-  e("e23", "gal", "black_negotiations", "info", "grado Black"),
-  e("e_bo", "black_negotiations", "lot_offers", "info", "comprar → oferta"),
+  // V5.85: el pago de un mes de un contrato de compra en firme (oferta directa · black) documenta la compra.
+  e("e_bo", "purchase_contracts", "compras", "info", "pago del mes → compra en firme"),
   e("e24", "purchase_contracts", "contract_releases", "info"),
   e("e25", "purchase_contracts", "club_member_codes", "info"),
   e("e26", "club_campaigns", "club_member_codes"),

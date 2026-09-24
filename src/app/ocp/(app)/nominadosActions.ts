@@ -743,23 +743,10 @@ export async function recordEvaluationVerdict(
     // V5.77: el Kaffetal Club como membresía se retiró (PLAN_CIRCUITO_DEL_LOTE §3): el galardón ya no
     // reparte nada; firmar y publicar nacen del trato, no de una membresía.
 
-    // Destino comercial (V5.18): EL CONTRATO YA NO NACE AQUÍ. Red/Blue/Gold
-    // aparecen en la cola de /ocp/ofertas (CTCx emite, el productor acepta y
-    // AHÍ nace el contrato — respondToOffer); Tyrian aparece en la cola de
-    // Subastas de la misma pantalla. Black conserva su CRM: se abre la
-    // negociación, y su desenlace «comprar» emite la oferta Black.
-    if (grado.id === "black") {
-      const { data: neg } = await service.from("black_negotiations").insert({ lot_id: lotId }).select("id").single();
-      if (neg) {
-        await service.from("audit_log").insert({
-          entity_type: "black_negotiation",
-          entity_id: neg.id,
-          action: "opened",
-          new_status: "abierta",
-          performed_by: adminId,
-        });
-      }
-    }
+    // Destino comercial (V5.18): EL CONTRATO YA NO NACE AQUÍ. Todo grado menos Tyrian aparece en la cola de
+    // /ocp/ofertas (CTCx emite —temporada, directa o excepción; desde la V5.85 también para Black—, el productor
+    // acepta y AHÍ nace el contrato — respondToOffer); Tyrian aparece en la cola de Subastas de la misma pantalla.
+    // V5.85 (fase 8): el CRM de `black_negotiations` se retiró — la compra en firme de un Black es una oferta directa.
   } else {
     // V5.82 · folio 12 / respuesta 2: el rechazo bajo Black es GRATIS para el productor —se lleva el reporte de
     // mejoras— y ya no hay cashback; el 80 % de reembolso existe solo en la re-evaluación que sube de grado.

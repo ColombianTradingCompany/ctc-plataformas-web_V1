@@ -137,6 +137,8 @@ export default async function BcpContractDetailPage({ params }: { params: Promis
             Comprometido <b>{resumen.comprometidoKg} kg</b> · retirado {resumen.retiradoKg} kg · <b>vigente {resumen.vigenteKg} kg</b> · pedido {resumen.pedidoKg} kg · enviado{" "}
             {resumen.enviadoKg} kg · pagado <b>{formatCop(resumen.pagadoCop)}</b>
             {resumen.penalidadCop > 0 && <> · penalidades {formatCop(resumen.penalidadCop)}</>} · mes en curso {resumen.mesEnCurso} de {nMeses}
+            {/* Decisión 7 (V5.85): «Ofertas CP Aceptadas» es el staging del Catálogo Activo del lado KR: con un envío registrado, se publica. */}
+            {resumen.enviadoKg > 0 && <> · <Link href="/ocp/catalogo">Pasar al Catálogo Activo →</Link></>}
           </p>
           {contract.status === "ruptura" && (
             <p className={styles.warn} style={{ marginTop: 6 }}>

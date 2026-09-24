@@ -9,7 +9,8 @@ import styles from "./ManifiestoSection.module.css";
 // secas. Dos cosas de la tarjeta no lo cumplían leído así:
 //
 //   · la FINCA — desde D3.1 (V4.28), un lote que CTC compró en firme se muestra
-//     a nombre de CTC. `public_lot_catalog` deja de devolver `finca_name`. El
+//     a nombre de CTC (V5.85: del perfil único de CTCx Selection; `ctc_selection`
+//     sale de `compras`). `public_lot_catalog` deja de devolver `finca_name`. El
 //     registro conserva la finca real; la vitrina enseña a quien vende.
 //   · las PERSONAS — y esto NO lo trajo D3.1: la tarjeta no ha mostrado nunca al
 //     productor, de ningún lote. El tipo `Lot` (data.ts) ni siquiera tiene campo.

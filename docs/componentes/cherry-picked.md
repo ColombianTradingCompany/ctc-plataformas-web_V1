@@ -32,7 +32,7 @@ que voltean) es la cara pública del catálogo; el catálogo con precios pide se
 - `src/components/cherry-picked-hub/HubLanding.tsx`, `cherry-picked-roast/`, `cherry-picked-x/`,
   `src/components/services/CaasLanding.tsx`.
 - `src/components/catalogo/SneakPeek.tsx` (montado en 7 superficies), `src/lib/catalogo/{sneakPeek,sneakPeekMock,
-  atributosSca,fichaPublica}.ts` (`sneakPeek.ts` es `server-only`: **nunca importar un VALOR desde cliente**).
+  atributosSca,fichaPublica,perfilCtcx}.ts` (`perfilCtcx.ts`, V5.85: el perfil único de CTCx Selection, sin `server-only`, lo leen la cinta, la tienda, el portal y la ficha) (`sneakPeek.ts` es `server-only`: **nunca importar un VALOR desde cliente**).
 - `src/lib/subastas/{tipos,buyerActions}.ts` (`listarSubastas`, `pujar`: sesión + Pintón; la regla del
   monto vive en el trigger `auction_bids_guard`).
 - `src/lib/newsletter/actions.ts` (`SOURCES`), `src/lib/market/` (lee), `src/lib/leads/actions.ts` (CaaS, compartido).
@@ -58,8 +58,9 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 - **Nada comercial sale por la cinta**: el tipo `SneakPeekLot` no tiene dónde ponerlo; un campo nuevo se
   añade a propósito y el guardián obliga a justificarlo. Tyrian nunca aparece en la cinta (es de subasta).
 - **La ficha pública es lista BLANCA** (`fichaPublica.ts`): una clave nueva del formulario nace privada.
-- **Dos caras del lote comprado en firme**: la vitrina muestra a CTC (`ctc_selection`), la ficha muestra la
-  finca real. Se anula en la vista, no en el componente.
+- **Dos caras del lote comprado en firme**: la vitrina muestra el **perfil único de CTCx Selection** (`ctc_selection`, que desde la
+  V5.85 sale de `compras`; el rótulo es `rotuloCtcx(perfil)`, que cae a `CTC_RAZON`), la ficha muestra la finca real como dato.
+  Se anula en la vista, no en el componente.
 - **Subasta**: EUR/kg; el comprador jamás toca `lot_auctions`/`auction_bids` con su sesión; adjudicar es del
   OCP y **no emite oferta** (la oferta al productor es COP/kg).
 - La etapa del CRM del comprador se **deduce** de los pedidos (0/1/2+), nunca se persiste.
@@ -71,13 +72,19 @@ con cuenta QA) · `qa-ficha-publica-check.mjs` (115, contra las 110 claves reale
 |---|---|---|
 | OCP · Catálogo | **publicar** un lote (`publishLot`: contrato firmado + ≥1 liberación + Club), `lot_listings`, `total_kg` sincronizado de las liberaciones | `catalogActions` |
 | OCP · Subastas | abrir · cerrar · adjudicar · cancelar la subasta Tyrian | `subastasActions` |
-| OCP · CTC Selection | qué lote se muestra a nombre de CTC (`black_negotiations.status='comprar'`) | vista `public_lot_catalog` |
+| OCP · Oferta desde CTCx Selection / Compras (V5.85) | qué lote se muestra como **CTCx Selection** (hay filas en `compras`, cualquier grado menos Tyrian), el **perfil único** de la casa (nombre · lema · descripción · imagen: `platform_settings.ctcx_selection_perfil` → vista `public_ctcx_selection_perfil`) y la **imagen por lote** (`ctcx_selection_lotes` → `public_lot_catalog.ctcx_imagen_path`, bucket público `ctcx-selection`) | vistas `public_lot_catalog` · `public_ctcx_selection_perfil`; `src/lib/catalogo/perfilCtcx.ts` |
 | **LCP** · CRM CaaS / Green / Roast / X (del OCP hasta la V5.58) | respuestas a leads, etapa manual del comprador, contacto de la lista de espera | `/lcp/crm/*` (las `/ocp/crm/*` son talones 308) |
 | BCP · Modelo Económico (PVC) | MOQ y moneda al comprador — **decididos** (2026-09-15 y §14 del 2026-09-17): la moneda ya se ejecutó (V5.52, `lib/precios/moneda.ts`); los mínimos por grado siguen sin ejecutar (segunda mitad de CP-1) | `PVC_BCP_PLAN.md` §8–§9, §14.4 |
 | BCP · Herramientas del Café | gadgets y nivel Plus en la tienda | charter `herramientas-cafe` |
 
 ## Pendientes
 
+- **CTCx Selection en la vitrina (V5.85, fase 8 del `PLAN_CIRCUITO_DEL_LOTE`; código de este componente tocado desde `consolas`
+  con el «continúa» del owner, línea en `ALINEACION` §3)**: la tarjeta de la tienda y la cinta enseñan el **perfil único** en vez de
+  la finca; la cinta y el portal (`PaquetePublico`) pintan la **imagen por lote** (`ctcx_imagen_path`) o, si no hay, la del perfil.
+  **Queda con dueño aquí**: la tarjeta de la tienda (`LotCard`, tipo `Lot`) no tiene campo de imagen — decidir si la lleva; el copy
+  EN · ES · DE alrededor del perfil («CTCx Selection» como rótulo se pinta tal cual); nada se condujo en navegador con un lote comprado
+  (hay 0 compras). `qa-sneak-peek` ya vigila el rótulo nuevo.
 - **Guion del video del comprador** (`briefs/cherry-picked-guion-video-comprador.md`, **v0.1 · en revisión del owner**, 2026-09-18):
   gemelo del guion del productor, 694 palabras, ≈ 5:20, en «tú». Esperan respuesta cinco decisiones (§5 del brief): idioma de la
   locución, tratamiento, el matiz del 80 % del alza, el ejemplo de precio en pantalla y el QR de la bolsa. **No se rueda la versión

@@ -2,7 +2,7 @@
 
 > Fase 6 del overhaul (`docs/OVERHAUL_CONSOLAS_PLAN.md`, D9). Segunda entrada de **OCP · Manejo de Stock Físico**. El plan: «lo
 > que CTCx compra en firme y lo que de ahí se ofrece», y hereda el tablero de negociación de `/ocp/ctc-selection`. La nota 5 del
-> owner la necesita: las ofertas de CTCx Selection toman su cantidad **de aquí**. Estado: **en scoping — espera al owner, y a la fase 4b.**
+> owner la necesita: las ofertas de CTCx Selection toman su cantidad **de aquí**. Estado: **1.ª tanda EJECUTADA en la V5.85** (fase 8 del `PLAN_CIRCUITO_DEL_LOTE`, 2026-09-24): la tabla `compras` (nace del pago de un mes de una oferta `directa`/`black`, o a mano con nota), «Oferta desde CTCx Selection» = disponibilidad (decisión 7), el perfil único + la imagen por lote (respuesta 7), `ctc_selection` desde `compras`, el CRM de negociación retirado. **Queda la 2.ª tanda** (mezclas con `COMPOSICION_MEZCLA`, unidad pergamino/verde, ubicación física) y las decisiones 1, 2, 4 y 5 de abajo; la 3 (prima del 8 %) la contestó el owner el 23-sep.
 > **V5.63:** el owner pidió el cuadro completo en el rail, así que la entrada YA EXISTE (`/ocp/compras`) con una página que dice que el
 > módulo no existe, qué será y qué falta decidir. Cuando este brief se apruebe y se construya, esa página se reemplaza entera.
 

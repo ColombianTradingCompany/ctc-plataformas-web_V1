@@ -384,3 +384,30 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - PENDIENTE: conducir las fases 6–7 con `prueba-*`; fase 8 (CTCx Selection y Compras); los recordatorios de mora por correo (fila
   «Recordatorios» del §4, sin ejecutar).
 (commit: 6be424e)
+
+## [2026-09-24] V5.85 · Consolas → Cherry Picked (+ KR) — fase 8 del PLAN_CIRCUITO_DEL_LOTE: CTCx Selection y Compras (cierra la Etapa 1 en código)
+- REGLA NUEVA (DICT `compras`): `src/lib/compras/reglas.ts` (puro): `KINDS_COMPRA_EN_FIRME` = directa · black, `esCompraEnFirme`,
+  `disponibleKg` (comprado − vendido, nunca negativo — NO se guarda), `resumenDeCompras`, `BUCKET_CTCX`, `CLAVE_PERFIL_CTCX`.
+  `src/lib/catalogo/perfilCtcx.ts` (sin server-only): `rotuloCtcx` (cae a `CTC_RAZON`), `urlDeImagenCtcx`, `aPerfilCtcx`, la vista
+  `public_ctcx_selection_perfil`.
+- FLUJO «compra en firme» (folio 8, paso 19): `registrarPagoDelMes` documenta en `compras` el pago de un mes de un contrato cuya oferta
+  es `directa`/`black` (kg enviados × precio pactado, edición del PVC del contrato); `registrarCompraManual` (comprasActions.ts) para
+  lo comprado fuera de la plataforma, con nota; ambas `emite`. `publishLot` admite `completed`.
+- NODO OCP `/ocp/ctc-selection` («Oferta desde CTCx Selection», decisión 7): KPIs, el perfil ÚNICO (`guardarPerfilCtcx`) con su imagen,
+  por lote comprado: comprado · pagado · listado · disponible · «Pasar al Catálogo Activo» y la imagen por lote
+  (`ImagenCtcxUploader`: URL firmada → bucket público `ctcx-selection` → `fijarImagenCtcx`). NODO `/ocp/compras`: la tabla de
+  compras (con `pvc_editions(code)`) y el alta a mano. `/ocp/catalogo` acepta el contrato cumplido y rotula «CTCx Selection».
+- RETIRADO: el CRM de `black_negotiations` (SelectionBoard, BlackStockCard, SelectionTabs, seleccion/page, ctcSelectionActions,
+  `decideBlackNegotiation`, la negociación que abría el veredicto, el contador en Contratos): tabla DORMIDA. Talón 308 para la pestaña.
+  `kindAllowsGrade`: Black recibe temporada/directa/excepción. `workmap/schema.ts`: nodo `compras` en lugar del CRM.
+- VITRINA (cherry-picked, tocada): `public_lot_catalog` v2 (`ctc_selection` desde `compras`; `ctcx_imagen_path`); la cinta, la tienda,
+  el portal (`PaquetePublico` + `ctcx`: imagen, lema, descripción) y la ficha enseñan `rotuloCtcx(perfil)` en vez de la finca.
+- CIRCUITO: lateral `ctcx_selection` (`compradoEnFirme`; manda sobre el catálogo, no sobre ruptura ni mora); la tabla del OCP lee
+  `compras`; KR `LotKanbanStepper`/`PerfilTab` lo derivan con `esCompraEnFirme` + un mes pagado.
+- DATOS: migración `compras_ctcx_selection` (acta en `docs/migraciones/`): `compras`, `ctcx_selection_lotes`, bucket `ctcx-selection`
+  (lectura anónima), `public_lot_catalog` v2, `public_ctcx_selection_perfil`, semilla del perfil.
+- Guardianes: `qa-compras-check` (51, nuevo), `qa-circuito` 56 → 60, `qa-ofertas` 37 (CRM fuera), `qa-sneak-peek` (rótulo del perfil),
+  `qa-rutas-consolas` 512.
+- PENDIENTE: conducir las fases 6–8 con `prueba-*` (Etapa 2); 2.ª tanda de Compras (mezclas, pergamino/verde, ubicación); la imagen
+  en `LotCard` (cherry-picked); copy «Red o superior» de KR; recordatorios de mora; 2.ª tanda de Muestras; wrap V47.
+(commit: pendiente)

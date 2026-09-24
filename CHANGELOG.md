@@ -19,6 +19,32 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.85] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **la fase 8 del `PLAN_CIRCUITO_DEL_LOTE.md` — CTCx Selection y Compras** (folio 8, paso 19; decisión 7; respuesta 7
+  del 23-sep). Con ella **la Etapa 1 queda ejecutada en código** (fases 0–8, V5.76–V5.85); las fases 6–8 no se condujeron en
+  navegador (exigen las cuentas `prueba-*`). Código de `cherry-picked` y `kaffetal-regal` tocado con el «continúa» del owner
+  (`ALINEACION` §3).
+- **Añadido**: **`compras`** — el registro de cada compra en firme de CTCx (lote, grado, kg, COP/kg con su edición del PVC, pagada,
+  recibida, origen). Nace sola al **pagar el mes** de un contrato de compra en firme (oferta `directa` · `black`;
+  `registrarPagoDelMes`) o a mano en `/ocp/compras` (`registrarCompraManual`, con nota). Lo disponible no se guarda: se deriva
+  (`src/lib/compras/reglas.ts`).
+- **Añadido**: **«Oferta desde CTCx Selection» = la disponibilidad de lo comprado** (decisión 7): por lote, lo comprado, lo pagado,
+  su listado en Cherry Picked, lo disponible y «Pasar al Catálogo Activo»; `publishLot` admite un contrato cumplido.
+- **Añadido**: **el perfil único de CTCx Selection** (nombre, lema, descripción e imagen; `platform_settings.ctcx_selection_perfil`,
+  vista pública `public_ctcx_selection_perfil`) y la **imagen por lote** (`ctcx_selection_lotes`, bucket público `ctcx-selection`,
+  subida firmada desde el navegador). La cinta, la tienda, el portal y la ficha enseñan el perfil en vez de la finca; la cinta y
+  el portal pintan la imagen.
+- **Cambiado**: `public_lot_catalog.ctc_selection` sale de `compras` (cualquier grado menos Tyrian) y la vista gana
+  `ctcx_imagen_path`; un **Black** recibe oferta de temporada/directa/excepción como los demás grados; el circuito gana el lateral
+  **«CTCx Selection»** (OCP y KR con la misma regla, `esCompraEnFirme`).
+- **Retirado**: el CRM de `black_negotiations` (kanban Black Stock · Selección, `decideBlackNegotiation`, `ctcSelectionActions`, la
+  negociación que nacía en el veredicto): tabla dormida, sin lector ni escritor; la pestaña «Selección» dejó su talón 308.
+- **Datos**: migración `compras_ctcx_selection` (acta en `docs/migraciones/`): `compras`, `ctcx_selection_lotes`, bucket
+  `ctcx-selection` (lectura anónima), `public_lot_catalog` v2, `public_ctcx_selection_perfil`, semilla del perfil.
+- **Docs**: `qa-compras-check` (51, nuevo — desde el brief, el paso 19 y la decisión 7); `qa-circuito` 56 → 60; `qa-ofertas` y
+  `qa-sneak-peek` al rótulo nuevo; `qa-rutas-consolas` 512 (56 rutas mudadas).
+
 ## [V5.84] — 2026-09-24 (commit 6be424e)
 
 - **Hito**: **la fase 7 del `PLAN_CIRCUITO_DEL_LOTE.md` — el trato mes a mes** (folio 8, pasos 16–18; decisión 6 del owner:

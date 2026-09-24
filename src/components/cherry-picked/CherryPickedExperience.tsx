@@ -6,7 +6,7 @@ import { puedoSer } from "@/lib/identidad/matriz";
 import { QuickNav, type QuickNavLabels, type QuickNavSection } from "@/components/QuickNav";
 import { SneakPeek } from "@/components/catalogo/SneakPeek";
 import { DIRECTORIO_HREF } from "@/lib/directorioLink";
-import { CTC_RAZON } from "@/lib/legal";
+import { aPerfilCtcx, rotuloCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx, type PerfilCtcx } from "@/lib/catalogo/perfilCtcx";
 import { createClient } from "@/lib/supabase/client";
 import { Header } from "./Header";
 import { Hero } from "./Hero";
@@ -171,7 +171,7 @@ type CatalogRow = {
 
 type TransparencyRow = { lot_listing_id: string; price_per_kg_locked: number; reference_price_snapshot: number };
 
-function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transparency: TransparencyRow | undefined): Lot | null {
+function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transparency: TransparencyRow | undefined, perfil: PerfilCtcx): Lot | null {
   const grade = catalog?.grade ? GRADE_DB[catalog.grade] : null;
   if (!catalog || !grade) return null;
   return {
@@ -185,7 +185,7 @@ function listingToLot(row: ListingRow, catalog: CatalogRow | undefined, transpar
     // REGISTRO conserva la finca real —pasaporte y rastro EUDR intactos—,
     // la VITRINA enseña a quien vende. La vista ya no devuelve el nombre de
     // la finca en ese caso, así que aquí solo se pone el rótulo.
-    origin: `${catalog.ctc_selection ? CTC_RAZON : catalog.finca_name ?? "—"} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
+    origin: `${catalog.ctc_selection ? rotuloCtcx(perfil) : catalog.finca_name ?? "—"} · ${catalog.municipio ?? "—"}, ${catalog.departamento ?? "—"}`,
     variety: catalog.ficha_variedad || "—",
     process: catalog.ficha_proceso || "—",
     // Prefer the real official average (accepted lot_evaluations) over the
@@ -244,7 +244,7 @@ function Experience() {
   const myBids = subastas.filter((s) => s.status === "abierta").reduce((n, s) => n + s.fraccionesDetalle.filter((f) => f.miPuja != null).length, 0);
 
   const loadCatalog = useCallback(async () => {
-    const [{ data: listingRows }, { data: catalogRows }, { data: transparencyRows }, { data: zoneRows }] = await Promise.all([
+    const [{ data: listingRows }, { data: catalogRows }, { data: transparencyRows }, { data: zoneRows }, { data: perfilRow }] = await Promise.all([
       supabase
         .from("lot_listings")
         .select("id, lot_id, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg")
@@ -256,12 +256,15 @@ function Experience() {
         ),
       supabase.from("public_transparency_pricing").select("lot_listing_id, price_per_kg_locked, reference_price_snapshot"),
       supabase.from("shipping_zones").select("code, label, rate_per_kg").order("sort_order"),
+      // V5.85: el perfil ÚNICO de CTCx Selection (respuesta 7 del owner): la tarjeta lo enseña en vez de la finca.
+      supabase.from(VISTA_PERFIL_CTCX).select(PERFIL_CTCX_SELECT).maybeSingle(),
     ]);
+    const perfil = aPerfilCtcx((perfilRow as FilaPerfilCtcx | null) ?? null);
     const catalogByLotId = new Map(((catalogRows ?? []) as CatalogRow[]).map((c) => [c.lot_id, c]));
     const transparencyByListingId = new Map(((transparencyRows ?? []) as TransparencyRow[]).map((t) => [t.lot_listing_id, t]));
     setLots(
       ((listingRows as ListingRow[] | null) ?? [])
-        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id), transparencyByListingId.get(r.id)))
+        .map((r) => listingToLot(r, catalogByLotId.get(r.lot_id), transparencyByListingId.get(r.id), perfil))
         .filter((l): l is Lot => l !== null)
     );
     setZones(((zoneRows ?? []) as { code: string; label: string; rate_per_kg: number }[]).map((z) => ({ code: z.code, label: z.label, ratePerKg: Number(z.rate_per_kg) })));

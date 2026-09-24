@@ -15,7 +15,7 @@
 //   · La propiedad: respondToOffer verifica que la oferta sea del productor
 //     autenticado, y toda escritura de lot_offers va por service role.
 //   · El veredicto del galardón ya NO inserta contratos (V5.17 lo hacía como
-//     interinato); decideBlackNegotiation('comprar') EMITE la oferta.
+//     interinato); la compra en firme (directa · black) se documenta en `compras` al pagar (V5.85).
 
 import { readFileSync } from "node:fs";
 
@@ -66,11 +66,10 @@ check("la lectura del productor es RLS select-own (sin writes cliente)", lee("sr
 // ── 4. El contrato ya no nace en otro sitio ───────────────────────────────
 // SELECT sí (la compuerta de la vitrina V5.19 lee el contrato); INSERT jamás.
 check("el veredicto del galardón NO inserta contratos", !/from\("purchase_contracts"\)\s*\.\s*insert/.test(nominados));
-check("decideBlackNegotiation emite la oferta", contratos.includes('emitOffer(neg.lot_id, "black"'));
-{
-  const black = contratos.split("decideBlackNegotiation")[1] ?? "";
-  check("y ya no inserta el contrato directamente", !black.includes('from("purchase_contracts")\n      .insert'));
-}
+// V5.85 (fase 8 del PLAN_CIRCUITO_DEL_LOTE): el CRM de Black se retiró — un Black recibe temporada/directa/excepción como los
+// demás grados, y el contrato nace SOLO de la aceptación del productor (`qa-compras` vigila lo comprado en firme).
+check("decideBlackNegotiation y el CRM de black_negotiations ya no existen", !contratos.includes("export async function decideBlackNegotiation") && !contratos.includes('from("black_negotiations")'));
+check("y contractActions no inserta contratos", !/from\("purchase_contracts"\)\s*\.\s*insert/.test(contratos));
 check("signContract sigue siendo la firma de CTC", contratos.includes("export async function signContract("));
 
 // ── 5. Las cuatro secciones del productor ─────────────────────────────────

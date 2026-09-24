@@ -157,6 +157,11 @@ base real medida el 2026-09-20 era **205**: la V5.64 sumó una) ·
   congelada no acepta ofertas (`respondToOffer`) ni retira. **Pendiente (exige `prueba-*`)**: conducir pedir → enviar → pagar →
   retirar; afinar el copy de la mora y de la ruptura con el owner; los recordatorios de mora por correo (`consolas`, fila
   «Recordatorios» del §4 del plan).
+- **Fase 8 (V5.85) — una línea de KR**: `LotKanbanStepper` recibe `compradoEnFirme` (CONT hecho como «CTCx Selection») y `PerfilTab`
+  lo deriva con `esCompraEnFirme` (`src/lib/compras/reglas.ts`: la oferta del contrato es `directa` · `black` y CTC ya pagó un mes)
+  — la misma regla que el OCP; `qa-compras` lo vigila. **Pendiente (dueño KR)**: desde la V5.85 un lote **Black** recibe oferta de
+  temporada/directa/excepción como los demás grados (`kindAllowsGrade`), así que el copy «Red o superior» de «Ofertas de Temporada»
+  en `ContratosTab` quedó viejo y la sección «Ofertas Black» solo enseña la clase histórica `black` (que ya nadie emite).
 - **La Arena y el Club cambiaron (V5.77, fase 1 del `PLAN_CIRCUITO_DEL_LOTE`) — copy de KR con dueño `kaffetal-regal`**: el
   Club como membresía **ya no existe** (firmar y publicar no lo exigen; el galardón no lo reparte), así que `ContratosTab`
   («Pasaporte del Club», `isClubMember`) y el gate visual de «Mis contratos» hablan de algo retirado; la Arena es una **sesión de

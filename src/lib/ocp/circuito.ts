@@ -23,6 +23,7 @@ export type EstadoDelCircuito =
   | "sin_oferta" // paso 13: CTCx decidió no ofertar, sin devolución (lateral, V5.82)
   | "en_mora" // paso 16: un pedido del trato lleva más de dos semanas sin envío (lateral derivado, V5.84)
   | "ruptura" // paso 16: el owner declaró la ruptura contractual; la cuenta quedó congelada (lateral, V5.84)
+  | "ctcx_selection" // paso 19: CTCx compró en firme (hay `compras`); el lote se ofrece como CTCx Selection (lateral, V5.85)
   | "solicitada" // paso 7–9: pidió la evaluación; falta la factura, el pago, la muestra, o varias
   | "a_evaluar" // paso 10: pagado y recibido; espera que CTCx lo suba a un Bache de Evaluación
   | "en_evaluacion" // en un bache en manos del Centro de Calidad
@@ -51,6 +52,8 @@ export type EntradaDelCircuito = {
   sinOferta?: boolean;
   /** `moraDelTrato(contract_months)` ∈ {con_recargo, ruptura_potencial} sobre un contrato vivo (V5.84, derivado). */
   enMora?: boolean;
+  /** Hay filas en `compras` para el lote: CTCx lo compró en firme (oferta directa · black pagada, o a mano) (V5.85). */
+  compradoEnFirme?: boolean;
   /** `lots.grade`: solo lo escribe el veredicto del Q-Grader. */
   grado: string | null;
   /** El `status` de la ÚLTIMA oferta del lote (`lot_offers`), o null si nunca tuvo. */
@@ -74,6 +77,7 @@ export const CIRCUITO_LABEL: Record<EstadoDelCircuito, string> = {
   sin_oferta: "Sin oferta",
   en_mora: "En mora",
   ruptura: "Ruptura",
+  ctcx_selection: "CTCx Selection",
   solicitada: "Solicitada",
   a_evaluar: "A evaluar",
   en_evaluacion: "En evaluación",
@@ -118,6 +122,8 @@ export function estadoDelCircuito(e: EntradaDelCircuito): LecturaDelCircuito {
   if (e.contrato === "ruptura") return lee("ruptura", "bad", ["la cuenta quedó congelada; solo el owner la descongela"]);
   // Paso 16 (V5.84, derivado — decisión 6): un pedido del trato lleva semanas sin envío. Visible, nunca automático.
   if (e.contrato && CONTRATO_EN_CURSO.has(e.contrato) && e.enMora) return lee("en_mora", "warn", ["que el productor envíe el pedido del mes"]);
+  // Paso 19 (V5.85): CTCx compró en firme — el café es suyo y se ofrece como CTCx Selection (decisión 7: staging del lado Compras).
+  if (e.compradoEnFirme) return lee("ctcx_selection", "good", []);
 
   // 5 · Catálogo activo: hay trato. Una oferta «aceptada» CREA el contrato, así que cualquiera de los dos vale;
   //     se miran los dos por si uno llegara sin el otro.

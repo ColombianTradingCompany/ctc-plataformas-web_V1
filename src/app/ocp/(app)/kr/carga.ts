@@ -109,7 +109,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
   filas: KrFila[];
   temporadas: { id: string; label: string }[];
 }> {
-  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }, { data: cmRaw }] =
+  const [{ data: pRaw }, { data: ppRaw }, { data: fRaw }, { data: lRaw }, { data: iRaw }, { data: oRaw }, { data: cRaw }, { data: sRaw }, { data: aRaw }, { data: evRaw }, { data: cmRaw }, { data: coRaw }] =
     await Promise.all([
       service.from("profiles").select("id, full_name, email, phone, created_at, role").order("created_at", { ascending: true }),
       service.from("producer_profiles").select("profile_id, company_name, tax_id, cedula_cafetera, avatar_asset_id, country, department, gestion"),
@@ -132,7 +132,10 @@ export async function cargarKr(service: SupabaseClient): Promise<{
       service.from("lot_evaluations").select("lot_id").eq("source", "q_grader_batch").eq("status", "pending"),
       // V5.84: los meses del trato, para derivar la mora (decisión 6: visible, nunca automática).
       service.from("contract_months").select("contract_id, pedido_at, enviado_at"),
+      // V5.85: lo comprado en firme por CTCx → lateral «CTCx Selection» del circuito.
+      service.from("compras").select("lot_id"),
     ]);
+  const compradoEnFirme = new Set(((coRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
   const pendientesDelCentro = new Set(((evRaw as { lot_id: string }[] | null) ?? []).map((r) => r.lot_id));
   const mesesPorContrato = new Map<string, { pedidoAt: string | null; enviadoAt: string | null }[]>();
   for (const m of (cmRaw as { contract_id: string; pedido_at: string | null; enviado_at: string | null }[] | null) ?? []) {
@@ -276,6 +279,7 @@ export async function cargarKr(service: SupabaseClient): Promise<{
           noSupero: ins?.phase === "retirado" && ins.sondeo_result === "rechazado",
           sinOferta: ins?.decision_comercial === "sin_oferta",
           enMora: enMoraDe(contrato?.id),
+          compradoEnFirme: compradoEnFirme.has(l.id),
           grado: l.grade,
           ultimaOferta: oferta?.status ?? null,
           contrato: contrato?.status ?? null,

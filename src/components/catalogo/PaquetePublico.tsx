@@ -36,6 +36,9 @@ export type LotePublico = {
   /** El puntaje es el autorreporte del productor, no una catación aceptada. */
   puntajeEstimado: boolean;
   finca: string;
+  /** V5.85: el perfil ÚNICO de CTCx Selection cuando el lote es comprado en firme (la vitrina lo enseña en vez de la finca;
+   *  la imagen es la del lote o, si no tiene, la del perfil). Null en un lote del productor. */
+  ctcx: { nombre: string; lema: string | null; descripcion: string | null; imagenUrl: string | null } | null;
   lugar: string;
   altura: string | null;
   variedad: string | null;
@@ -198,6 +201,18 @@ export function PaquetePublico({ lote }: { lote: LotePublico }) {
                 {lote.gradoNombre ? ` · ${lote.gradoNombre}` : ""}
                 {lote.puntajeEstimado && <span className={styles.estimado}> · {t.estimado}</span>}
               </p>
+            )}
+            {lote.ctcx && (
+              <div className={styles.ctcx}>
+                {lote.ctcx.imagenUrl && (
+                  <Image className={styles.ctcxImagen} src={lote.ctcx.imagenUrl} alt={lote.ctcx.nombre} width={1040} height={650} unoptimized />
+                )}
+                <p className={styles.ctcxLema}>
+                  <b>{lote.ctcx.nombre}</b>
+                  {lote.ctcx.lema ? ` · ${lote.ctcx.lema}` : ""}
+                </p>
+                {lote.ctcx.descripcion && <p className={styles.ctcxTexto}>{lote.ctcx.descripcion}</p>}
+              </div>
             )}
           </div>
         </header>

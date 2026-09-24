@@ -20,16 +20,12 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
   const activeStatus = (status && TABS.some((t) => t.value === status) ? status : "pending_signature") as (typeof TABS)[number]["value"];
 
   const service = createServiceRoleClient();
-  // La cola de negociación Black se mudó a su propio módulo (V4 · Black
-  // Stock); aquí solo queda la señal de cuántas esperan.
-  const [{ data: contracts }, { count: blackOpenCount }] = await Promise.all([
-    service
-      .from("purchase_contracts")
-      .select("id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, lots(name, fincas(name))")
-      .eq("status", activeStatus)
-      .order("created_at", { ascending: false }),
-    service.from("black_negotiations").select("id", { count: "exact", head: true }).eq("status", "abierta"),
-  ]);
+  // V5.85: la señal de negociaciones Black abiertas se fue con el CRM de `black_negotiations` (fase 8).
+  const { data: contracts } = await service
+    .from("purchase_contracts")
+    .select("id, status, grade_snapshot, price_per_kg_locked, quantity_frozen_kg, lots(name, fincas(name))")
+    .eq("status", activeStatus)
+    .order("created_at", { ascending: false });
 
   return (
     <div>
@@ -40,13 +36,6 @@ export default async function BcpContratosPage({ searchParams }: { searchParams:
           Humedad fuera de rango →
         </Link>
       </div>
-
-      {(blackOpenCount ?? 0) > 0 && (
-        <p className={styles.subtitle} style={{ marginBottom: 20 }}>
-          {blackOpenCount} negociación{(blackOpenCount ?? 0) === 1 ? "" : "es"} Black abierta
-          {(blackOpenCount ?? 0) === 1 ? "" : "s"} esperando en el <Link href="/ocp/ctc-selection">Black Stock →</Link>
-        </p>
-      )}
 
       <div className={styles.tabs}>
         {TABS.map((t) => (

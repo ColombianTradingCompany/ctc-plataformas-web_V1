@@ -14,16 +14,19 @@ type ReleaseRow = { contract_id: string; released_kg: number | null; released_at
 export default async function BcpCatalogoPage() {
   const service = createServiceRoleClient();
 
-  const [{ data: gradedLots }, { data: listedRows }, { data: listings }] = await Promise.all([
+  const [{ data: gradedLots }, { data: listedRows }, { data: listings }, { data: comprasRows }] = await Promise.all([
     service.from("lots").select("id, name, grade, fincas(name)").eq("stage", "galardonado").neq("grade", "tyrian"),
     service.from("lot_listings").select("lot_id"),
     service
       .from("lot_listings")
       .select(
-        "id, status, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, arrival_date, lots(name, grade, public_code)"
+        "id, lot_id, status, commercial_mode, unit_kg, moq_kg, total_kg, sold_kg, price_per_kg, arrival_date, lots(name, grade, public_code)"
       )
       .order("created_at", { ascending: false }),
+    // V5.85 (fase 8): los lotes comprados en firme se publican como CTCx Selection (la vitrina enseña el perfil, no la finca).
+    service.from("compras").select("lot_id"),
   ]);
+  const compradoEnFirme = new Set(((comprasRows ?? []) as { lot_id: string }[]).map((c) => c.lot_id));
 
   const listedSet = new Set((listedRows ?? []).map((r) => r.lot_id));
   const unpublishedLots = ((gradedLots ?? []) as unknown as GradedLot[]).filter((l) => !listedSet.has(l.id));
@@ -54,7 +57,8 @@ export default async function BcpCatalogoPage() {
   for (const lot of unpublishedLots) {
     const contract = contractByLotId.get(lot.id);
     const releasedSoFar = contract ? releasedByContractId.get(contract.id) ?? 0 : 0;
-    if (contract && contract.status === "active" && releasedSoFar > 0) {
+    // V5.85: un contrato CUMPLIDO también se publica (la compra en firme de 30 días queda completed al pagar su mes).
+    if (contract && (contract.status === "active" || contract.status === "completed") && releasedSoFar > 0) {
       readyToPublish.push({ lot, contract, releasedSoFar });
     } else {
       awaitingContractOrRelease.push({ lot, contract, releasedSoFar });
@@ -67,7 +71,7 @@ export default async function BcpCatalogoPage() {
       <h1 className={styles.title}>Catálogo Activo</h1>
 
       <h3 style={{ marginTop: 8 }}>Listos para publicar</h3>
-      <p className={styles.meta}>Contrato activo con al menos una liberación mensual confirmada.</p>
+      <p className={styles.meta}>Contrato firmado (activo o cumplido) con al menos un envío registrado. Un lote comprado en firme sale como CTCx Selection.</p>
       {!readyToPublish.length && <p className={styles.empty}>Ningún lote listo todavía.</p>}
       <div className={styles.list}>
         {readyToPublish.map(({ lot, contract, releasedSoFar }) => (
@@ -77,6 +81,7 @@ export default async function BcpCatalogoPage() {
               <span className={styles.meta}>
                 {lot.fincas?.name ?? "—"} ·{" "}
                 <span className={styles.badge}>{GRADE_LABEL[lot.grade ?? ""] ?? lot.grade}</span>
+                {compradoEnFirme.has(lot.id) && <> <span className={styles.badgeGood}>CTCx Selection</span></>}
               </span>
             </summary>
             <p className={styles.meta} style={{ marginTop: 10 }}>
@@ -131,7 +136,7 @@ export default async function BcpCatalogoPage() {
       </div>
 
       <h3 style={{ marginTop: 32 }}>Esperando liberación</h3>
-      <p className={styles.meta}>Lotes galardonados sin contrato firmado, o con contrato activo pero sin liberación mensual confirmada todavía.</p>
+      <p className={styles.meta}>Lotes galardonados sin contrato firmado, o con contrato firmado pero sin ningún envío registrado todavía.</p>
       {!awaitingContractOrRelease.length && <p className={styles.empty}>Nada pendiente aquí.</p>}
       <div className={styles.list}>
         {awaitingContractOrRelease.map(({ lot, contract }) => (
@@ -143,9 +148,11 @@ export default async function BcpCatalogoPage() {
                 <span className={styles.badge}>{GRADE_LABEL[lot.grade ?? ""] ?? lot.grade}</span> ·{" "}
                 {!contract
                   ? "sin contrato firmado"
-                  : contract.status !== "active"
+                  : contract.status === "pending_signature"
                     ? "contrato por firmar"
-                    : "contrato activo, sin liberación confirmada"}
+                    : contract.status !== "active" && contract.status !== "completed"
+                      ? `contrato ${contract.status}`
+                      : "contrato firmado, sin envío registrado"}
               </p>
             </div>
           </div>
@@ -162,7 +169,8 @@ export default async function BcpCatalogoPage() {
               <div>
                 <h3>{lot?.name ?? "—"}</h3>
                 <p className={styles.meta}>
-                  <span className={styles.badge}>{GRADE_LABEL[lot?.grade ?? ""] ?? lot?.grade}</span> ·{" "}
+                  <span className={styles.badge}>{GRADE_LABEL[lot?.grade ?? ""] ?? lot?.grade}</span>{" "}
+                  {compradoEnFirme.has(l.lot_id) && <><span className={styles.badgeGood}>CTCx Selection</span> </>}·{" "}
                   <span className={styles.badge}>{STATUS_LABEL[l.status]}</span> · {l.commercial_mode} · {l.sold_kg}/{l.total_kg} kg
                   vendidos · US${l.price_per_kg}/kg
                   {/* El código público del lote (V5.48): lo que el comprador

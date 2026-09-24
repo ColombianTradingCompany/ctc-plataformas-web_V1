@@ -87,6 +87,11 @@ const CASOS = [
   // §4 del plan: «renovado (vuelve a oferta emitida)» — la oferta nueva es otra fila y manda; si murió, CTCx decide otra vez.
   ["paso 18: un contrato renovado vuelve a «oferta emitida» (la oferta nueva)", { grado: "blue", contrato: "renovado", ultimaOferta: "emitida" }, "oferta_emitida"],
   ["paso 18: si la oferta de renovación murió, vuelve a pendiente de oferta", { grado: "blue", contrato: "renovado", ultimaOferta: "expirada" }, "pendiente_oferta"],
+  // FOLIO 8, PASO 19 (V5.85) — «CTCx Selection … se documenta en Compras» — y la DECISIÓN 7: lo comprado en firme es de CTCx y
+  // se ofrece como CTCx Selection. Es un lateral «bueno» que manda sobre el catálogo del productor, no sobre la ruptura ni la mora.
+  ["paso 19: CTCx compró en firme (hay compras) → CTCx Selection", { grado: "blue", contrato: "completed", compradoEnFirme: true }, "ctcx_selection"],
+  ["paso 19: la compra no borra la ruptura declarada por el owner", { grado: "blue", contrato: "ruptura", compradoEnFirme: true }, "ruptura"],
+  ["paso 19: ni la mora de un contrato en curso", { grado: "blue", contrato: "active", enMora: true, compradoEnFirme: true }, "en_mora"],
 ];
 for (const [nombre, entrada, esperado] of CASOS) {
   const r = E(entrada);
@@ -118,9 +123,9 @@ const B = [false, true];
 let combinaciones = 0;
 const desconocidos = [];
 for (const stage of STAGES) for (const registradoPorCtc of B) for (const tieneInscripcion of B) for (const pagoConfirmado of B)
-  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const noSupero of B) for (const sinOferta of B) for (const enMora of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
+  for (const muestraRecibida of B) for (const enBache of B) for (const evaluacionPendiente of B) for (const noSupero of B) for (const sinOferta of B) for (const enMora of B) for (const compradoEnFirme of B) for (const grado of [null, "blue"]) for (const ultimaOferta of OFERTAS) for (const contrato of CONTRATOS) {
     combinaciones++;
-    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, noSupero, sinOferta, enMora, grado, ultimaOferta, contrato });
+    const r = estadoDelCircuito({ stage, registradoPorCtc, tieneInscripcion, pagoConfirmado, muestraRecibida, enBache, evaluacionPendiente, noSupero, sinOferta, enMora, compradoEnFirme, grado, ultimaOferta, contrato });
     if (!CIRCUITO_LABEL[r.estado] || r.label !== CIRCUITO_LABEL[r.estado] || !Array.isArray(r.falta)) desconocidos.push(JSON.stringify(r));
   }
 check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etiquetado`, desconocidos.length === 0, desconocidos.slice(0, 3).join(" "));
@@ -164,7 +169,10 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   const tabla = readFileSync("src/app/ocp/(app)/kr/carga.ts", "utf8");
   check("la tabla del OCP deriva el estado con estadoDelCircuito()", tabla.includes("estadoDelCircuito("));
   check("y le dice si el lote va en un bache (fase «sondeo» con bache)", /enBache:\s*ins\?\.phase === "sondeo" && !!ins\.sondeo_batch_id/.test(tabla));
-  check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Evaluado|No superó|Sin oferta|Pendiente de oferta|Catálogo activo|En mora|Ruptura)["'`]/.test(tabla));
+  check("y no se inventa etiquetas del circuito por su cuenta", !/["'`](Solicitada|A evaluar|En evaluación|Evaluado|No superó|Sin oferta|Pendiente de oferta|Catálogo activo|En mora|Ruptura|CTCx Selection)["'`]/.test(tabla));
+  // V5.85 (fase 8): lo comprado en firme se lee de `compras` (la tabla) y de la oferta del contrato + un mes pagado (KR), con
+  // `esCompraEnFirme` como única definición de qué clases compran en firme — `qa-compras` afina el resto.
+  check("la tabla del OCP deriva «CTCx Selection» de compras", tabla.includes('from("compras").select("lot_id")') && tabla.includes("compradoEnFirme: compradoEnFirme.has(l.id)"));
   // V5.84 (fase 7): la mora la deriva `mesAMes.ts` de `contract_months` — la tabla del OCP y la barra del productor pasan
   // `enMora` calculado con la MISMA función (`enMora(moraDelTrato(...))`); ninguna lee una columna «mora».
   check("la tabla del OCP deriva la mora con enMora(moraDelTrato()) de mesAMes.ts", /enMora\(moraDelTrato\(/.test(tabla) && tabla.includes('from "@/lib/trato/mesAMes"'));
@@ -173,7 +181,7 @@ check(`TOTAL: las ${combinaciones} combinaciones dan un estado conocido y etique
   const stepper = readFileSync("src/components/kaffetal-regal/LotKanbanStepper.tsx", "utf8");
   check("la barra del productor conoce «solicitada» y «evaluado» en su orden", /ORDEN[^=]*=\s*\[\s*"en_ficha",\s*"solicitada",\s*"a_evaluar",\s*"en_evaluacion",\s*"evaluado",\s*"pendiente_oferta"/.test(stepper));
   check("y deriva el bache de la fase de la solicitud", stepper.includes('enBache: inscription?.phase === "sondeo"'));
-  check("y recibe la mora derivada (V5.84) y sabe que un trato en mora sigue siendo un trato", /enMora,\s*\}\)/.test(stepper) && stepper.includes('estado === "catalogo_activo" || estado === "en_mora"'));
+  check("y recibe la mora derivada (V5.84) y sabe que un trato en mora sigue siendo un trato", /enMora,\s*compradoEnFirme,\s*\}\)/.test(stepper) && stepper.includes('estado === "catalogo_activo" || estado === "en_mora"'));
   const perfil = readFileSync("src/components/kaffetal-regal/panel/PerfilTab.tsx", "utf8");
   check("y el productor la alimenta con la misma función que el OCP", perfil.includes("enMora(contratoDelLote.mora)") && perfil.includes('from "@/lib/trato/mesAMes"'));
 }

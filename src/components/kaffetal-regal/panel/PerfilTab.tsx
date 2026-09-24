@@ -8,6 +8,7 @@ import { FieldInfo } from "../ficha/panes/FieldInfo";
 import { LotCompletionSparkline } from "../LotCompletionSparkline";
 import { LotKanbanStepper } from "../LotKanbanStepper";
 import { enMora } from "@/lib/trato/mesAMes";
+import { esCompraEnFirme } from "@/lib/compras/reglas";
 import { CtcRef } from "./CtcRef";
 import type { PanelDrill } from "./panelTabs";
 import styles from "../AppDashboard.module.css";
@@ -82,6 +83,9 @@ export function PerfilTab({
     const ofertasDelLote = offers.filter((o) => o.lotId === l.id);
     const ultima = ofertasDelLote.length > 0 ? ofertasDelLote[ofertasDelLote.length - 1] : null;
     const contratoDelLote = contracts.find((c) => c.lotId === l.id);
+    // V5.85: comprado en firme = la oferta del contrato es de compra en firme (directa · black) y CTC ya pagó un mes.
+    const ofertaDelContrato = contratoDelLote ? ofertasDelLote.find((o) => o.contractId === contratoDelLote.id) : undefined;
+    const compradoEnFirme = Boolean(contratoDelLote && esCompraEnFirme(ofertaDelContrato?.kind) && contratoDelLote.months.some((m) => m.pagadoAt));
     return (
       <LotKanbanStepper
         stage={l.stage}
@@ -93,6 +97,7 @@ export function PerfilTab({
         ultimaOferta={ultima?.status ?? null}
         contrato={contratoDelLote?.status ?? null}
         enMora={contratoDelLote ? enMora(contratoDelLote.mora) : false}
+        compradoEnFirme={compradoEnFirme}
         onIrA={(destino) => (destino === "contratos" ? onGoContratos() : onGoEvaluaciones())}
       />
     );

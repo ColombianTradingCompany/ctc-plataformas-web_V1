@@ -40,13 +40,18 @@ export async function publishLot(formData: FormData): Promise<{ ok: true } | { o
 
   // V5.77: el gate del Kaffetal Club se retiró (PLAN_CIRCUITO_DEL_LOTE §3): publicar nace del trato.
 
+  // V5.85 (fase 8, decisión 7): se publica desde un contrato FIRMADO, activo o ya cumplido (una compra en firme de 30 días
+  // queda `completed` en cuanto se paga su mes, y ES lo que se ofrece como CTCx Selection). El más reciente del lote.
   const { data: contract } = await service
     .from("purchase_contracts")
     .select("id, status")
     .eq("lot_id", lotId)
+    .in("status", ["active", "completed"])
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
-  if (!contract || contract.status !== "active") {
-    return { ok: false, error: "Este lote necesita un contrato firmado (activo) antes de poder publicarse." };
+  if (!contract) {
+    return { ok: false, error: "Este lote necesita un contrato firmado (activo o cumplido) antes de poder publicarse." };
   }
 
   const { data: releases } = await service

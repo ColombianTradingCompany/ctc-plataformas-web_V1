@@ -102,6 +102,9 @@ export const RUTAS_MOVIDAS: RutaMovida[] = [
 
   // ── Paso (iii)-1 «CTC Selection» (V4.27, 2026-08-18) ───────────────────────
   { de: "/ocp/black-stock", a: "/ocp/ctc-selection", desde: "V4.27" },
+  // V5.85 (fase 8 del PLAN_CIRCUITO_DEL_LOTE): el CRM de `black_negotiations` se retiró y «Oferta desde CTCx Selection» es UNA
+  // pantalla (la disponibilidad de lo comprado en firme); la pestaña «Selección» ya no existe.
+  { de: "/ocp/ctc-selection/seleccion", a: "/ocp/ctc-selection", desde: "V5.85" },
 
   // ── V5.59 (2026-09-19) · nace la LCP — fase 1 de docs/OVERHAUL_CONSOLAS_PLAN.md ──────────
   // La cuarta consola se lleva lo que ENTRA de fuera: el buzón, la recepción de leads y la lista

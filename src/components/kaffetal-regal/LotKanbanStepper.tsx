@@ -61,6 +61,7 @@ export function LotKanbanStepper({
   ultimaOferta = null,
   contrato = null,
   enMora = false,
+  compradoEnFirme = false,
   onIrA,
 }: {
   stage: number;
@@ -77,6 +78,8 @@ export function LotKanbanStepper({
   contrato?: string | null;
   /** V5.84: la mora DERIVADA del trato (`enMora(moraDelTrato(...))`, la misma cuenta que hace el OCP). */
   enMora?: boolean;
+  /** V5.85: CTCx compró el lote en firme (oferta directa/black con un mes pagado): se ofrece como CTCx Selection. */
+  compradoEnFirme?: boolean;
   /** Saltar a la pestaña donde vive este tramo. Sin ella los chips no son botones. */
   onIrA?: (destino: DestinoDeChip) => void;
 }) {
@@ -107,6 +110,7 @@ export function LotKanbanStepper({
     ultimaOferta,
     contrato,
     enMora,
+    compradoEnFirme,
   });
 
   // MUE — el productor pidió la evaluación: recibe la factura, paga la tarifa y manda la muestra.
@@ -129,13 +133,15 @@ export function LotKanbanStepper({
   // tome (declarando el tamaño inicial), opte por CaaS · CTCx Selection, o no
   // tome ninguna.
   // V5.84 (fase 7): un trato en mora sigue siendo un trato (chip hecho, con aviso); la ruptura lo apaga.
-  const contDone = estado === "catalogo_activo" || estado === "en_mora";
+  const contDone = estado === "catalogo_activo" || estado === "en_mora" || estado === "ctcx_selection";
   const contActive = estado === "oferta_emitida";
   const contTitle =
     estado === "en_mora"
       ? "Trato vigente EN MORA: CTC pidió el mes y el envío no ha llegado — revise Contratos"
       : estado === "ruptura"
         ? "Ruptura contractual declarada por CTC"
+        : estado === "ctcx_selection"
+          ? "Comprado en firme por CTCx: su café se ofrece como CTCx Selection"
         : "Oferta de contrato de temporada · CaaS · CTCx Selection";
 
   const st = (done: boolean, active: boolean | undefined): StepState => (done ? "done" : active ? "active" : "pending");

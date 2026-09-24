@@ -7,6 +7,7 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { emitOffer } from "./ofertasActions";
 import { renovacionDebida } from "@/lib/trato/mesAMes";
 import { RENOVACION_DIAS } from "@/lib/trato/terminos";
+import { esCompraEnFirme } from "@/lib/compras/reglas";
 
 
 // Devuelve resultado en vez de lanzar: "ya fue firmado" y el gate del Club son
@@ -68,12 +69,13 @@ export async function signContract(
 // nueva anclada al PVC vigente. Cada envío se espeja en `contract_releases` (una fila por mes, 100 %) porque el
 // catálogo público lee de ahí su stock.
 
-type MesRow = { id: string; mes: number; pedido_at: string | null; enviado_at: string | null; pagado_at: string | null };
+type MesRow = { id: string; mes: number; pedido_at: string | null; enviado_kg: number | string | null;
+  enviado_at: string | null; pagado_at: string | null };
 
 async function contratoYMeses(service: ReturnType<typeof createServiceRoleClient>, contractId: string) {
   const [{ data: contract }, { data: meses }] = await Promise.all([
-    service.from("purchase_contracts").select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, lots(name, producer_id)").eq("id", contractId).maybeSingle(),
-    service.from("contract_months").select("id, mes, pedido_at, enviado_at, pagado_at").eq("contract_id", contractId),
+    service.from("purchase_contracts").select("id, lot_id, status, quantity_frozen_kg, price_per_kg_locked, freeze_months, signed_at, grade_snapshot, offer_id, pvc_edition_id, modificador_pct, reference_price_source, lots(name, producer_id)").eq("id", contractId).maybeSingle(),
+    service.from("contract_months").select("id, mes, pedido_at, enviado_kg, enviado_at, pagado_at").eq("contract_id", contractId),
   ]);
   const lot = (Array.isArray(contract?.lots) ? contract?.lots[0] : contract?.lots) as { name: string; producer_id: string } | null;
   return { contract, lot, meses: ((meses as MesRow[] | null) ?? []) };
@@ -174,6 +176,37 @@ export async function registrarPagoDelMes(contractId: string, mes: number, formD
   if (error) return { ok: false, error: "No se pudo registrar el pago: " + error.message };
   await service.from("contract_releases").update({ payment_confirmed_at: fecha }).eq("contract_id", contractId).eq("month_number", mes);
   await service.from("audit_log").insert({ entity_type: "purchase_contract", entity_id: contractId, action: `mes_${mes}_pagado`, performed_by: adminId, notes: `${cop} COP${ref ? ` · ${ref}` : ""} · ${fecha}` });
+  // V5.85 (fase 8, paso 19): el pago de un mes de un contrato de COMPRA EN FIRME (oferta directa · black) queda documentado en
+  // Compras: ese café es de CTCx y se ofrece como CTCx Selection. Un Lote de Temporada NO pasa por aquí (se vende a nombre del productor).
+  const { data: oferta } = contract.offer_id ? await service.from("lot_offers").select("kind").eq("id", contract.offer_id).maybeSingle() : { data: null };
+  const kgComprados = Number(fila.enviado_kg ?? 0);
+  if (oferta && esCompraEnFirme(oferta.kind) && contract.grade_snapshot && contract.grade_snapshot !== "tyrian" && kgComprados > 0) {
+    const compra = {
+      lot_id: contract.lot_id,
+      contract_id: contractId,
+      mes,
+      grado: contract.grade_snapshot,
+      kg: kgComprados,
+      cop_kg: Number(contract.price_per_kg_locked ?? 0) || Math.round(cop / kgComprados),
+      total_cop: cop,
+      pvc_edition_id: contract.pvc_edition_id ?? null,
+      modificador_pct: contract.modificador_pct ?? null,
+      precio_fuente: contract.reference_price_source ?? `oferta ${oferta.kind}`,
+      acordada_at: contract.signed_at,
+      recibida_at: fila.enviado_at,
+      pagada_at: fecha,
+      pago_ref: ref,
+      origen: "contrato",
+      registrada_por: adminId,
+    };
+    const { data: previa } = await service.from("compras").select("id").eq("contract_id", contractId).eq("mes", mes).maybeSingle();
+    const { data: guardada } = previa
+      ? await service.from("compras").update(compra).eq("id", previa.id).select("id").single()
+      : await service.from("compras").insert(compra).select("id").single();
+    if (guardada) await service.from("audit_log").insert({ entity_type: "compra", entity_id: guardada.id, action: "compra_registrada", performed_by: adminId, notes: `${lot.name} · mes ${mes} · ${kgComprados} kg · contrato` });
+    revalidatePath("/ocp/compras");
+    revalidatePath("/ocp/ctc-selection");
+  }
   await service.from("producer_comm_log").insert({
     producer_id: lot.producer_id,
     context_label: `Lote ${lot.name}`,
@@ -337,61 +370,6 @@ export async function resolveReconditioning(contractId: string, outcome: "active
   return { ok: true };
 }
 
-// ── Negociación de lotes Black (2026-07-17; desenlace re-cableado V5.18) ────
-// Un lote graduado Black no entra a la compra base automáticamente: se negocia
-// aparte. Desde V5.18, "comprar" YA NO crea el contrato directamente — EMITE
-// una OFERTA Black (lot_offers, vía emitOffer) que el productor acepta o
-// rechaza desde «Contratos y Compras»; el contrato nace de su aceptación
-// (misma compuerta de Club al firmar). "liberado" cierra sin compra — el lote
-// conserva su grado.
-export async function decideBlackNegotiation(
-  negotiationId: string,
-  outcome: "comprar" | "liberado",
-  formData: FormData
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const permiso = await permisoDeEscritura("ocp", "emite");
-  if (!permiso.ok) return { ok: false as const, error: permiso.error };
-  const adminId = permiso.userId;
-  const service = createServiceRoleClient();
-
-  const { data: neg } = await service.from("black_negotiations").select("id, status, lot_id").eq("id", negotiationId).maybeSingle();
-  if (!neg) return { ok: false, error: "Negociación no encontrada." };
-  if (neg.status !== "abierta") return { ok: false, error: "Esta negociación ya fue resuelta." };
-
-  const notes = String(formData.get("notes") || "").trim() || null;
-
-  if (outcome === "comprar") {
-    const price = formData.get("agreed_price_per_kg") ? Number(formData.get("agreed_price_per_kg")) : null;
-    if (!price || !Number.isFinite(price) || price <= 0) {
-      return { ok: false, error: "Escriba el precio acordado por kg — es lo que la oferta Black le presenta al productor." };
-    }
-    // La oferta congela los snapshots y le avisa al productor; el contrato
-    // nace cuando él acepte (lot_offers.contract_id lo enlazará).
-    const fd = new FormData();
-    fd.set("price_per_kg", String(price));
-    if (notes) fd.set("notes", notes);
-    const emitted = await emitOffer(neg.lot_id, "black", fd);
-    if (!emitted.ok) return emitted;
-    await service
-      .from("black_negotiations")
-      .update({ status: "comprar", agreed_price_per_kg: price, notes, decided_by: adminId, decided_at: new Date().toISOString() })
-      .eq("id", negotiationId);
-  } else {
-    await service
-      .from("black_negotiations")
-      .update({ status: "liberado", notes, decided_by: adminId, decided_at: new Date().toISOString() })
-      .eq("id", negotiationId);
-  }
-
-  await service.from("audit_log").insert({
-    entity_type: "black_negotiation",
-    entity_id: negotiationId,
-    action: outcome === "comprar" ? "decided_buy" : "decided_release",
-    previous_status: "abierta",
-    new_status: outcome,
-    performed_by: adminId,
-  });
-
-  revalidatePath("/ocp/contratos");
-  return { ok: true };
-}
+// V5.85 (fase 8 del PLAN_CIRCUITO_DEL_LOTE): `decideBlackNegotiation` y el CRM de `black_negotiations` se retiraron. La compra en
+// firme de un lote (Black incluido) es una oferta `directa` (o la histórica `black`) emitida desde Pendiente Oferta; lo comprado
+// se documenta en `compras` al pagar el mes (`registrarPagoDelMes`). La tabla queda dormida (0 filas), sin escritor.

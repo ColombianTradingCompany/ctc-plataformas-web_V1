@@ -4,7 +4,7 @@ import { createEphemeralClient } from "@/lib/supabase/server";
 import { esGradoValido, GRADO_POR_ID, SCA_DECIMALES, type GradoId } from "@/lib/grados/definicion";
 import type { AtributoSCA } from "./atributosSca";
 import { SNEAK_PEEK_MOCK } from "./sneakPeekMock";
-import { CTC_RAZON } from "@/lib/legal";
+import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx, type PerfilCtcx } from "./perfilCtcx";
 
 // ── «Active Catalogue Sneak Peek» · el dato ──────────────────────────────────
 // El vistazo al Catálogo Activo que se enseña SIN sesión: en CTC Home y en la
@@ -134,11 +134,13 @@ type FilaCatalogo = {
    *  sirve para saber si encender el botón. */
   tiene_ficha: boolean;
   ctc_selection: boolean;
+  /** V5.85: la imagen por lote de CTCx Selection (solo cuando `ctc_selection`). */
+  ctcx_imagen_path: string | null;
   municipio: string | null;
   departamento: string | null;
 };
 
-function aTarjeta(fila: FilaCatalogo): SneakPeekLot | null {
+function aTarjeta(fila: FilaCatalogo, perfil: PerfilCtcx): SneakPeekLot | null {
   // El grado que se pinta es el que la plataforma tiene GUARDADO, igual que en
   // la tienda: si la cinta lo derivara del puntaje y la tienda no, las dos
   // dirían cosas distintas del mismo lote. (Los mock sí lo derivan, porque su
@@ -162,7 +164,9 @@ function aTarjeta(fila: FilaCatalogo): SneakPeekLot | null {
     // finca (decisión del owner, D3.1). La vista ya NO devuelve el nombre
     // real en ese caso —es legible por `anon`, taparlo aquí no serviría de
     // nada—, así que esto pone el RÓTULO desde su fuente única.
-    finca: fila.ctc_selection ? CTC_RAZON : fila.finca_name ?? "—",
+    finca: fila.ctc_selection ? rotuloCtcx(perfil) : fila.finca_name ?? "—",
+    // V5.85: la imagen por lote de CTCx Selection (o la del perfil); sin ella, la tarjeta cae al sello del grado.
+    image: fila.ctc_selection ? (urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl ?? undefined) : undefined,
     municipio: fila.municipio,
     departamento: fila.departamento,
     altitudeM: fila.ficha_altitud_m,
@@ -185,14 +189,17 @@ async function leeCatalogoVivo(): Promise<SneakPeekLot[]> {
   // ninguna sesión (ni heredarla). La vista ya filtra por publicado.
   const supabase = createEphemeralClient();
 
-  const [{ data: publicadas }, { data: filas }] = await Promise.all([
+  const [{ data: publicadas }, { data: filas }, { data: perfilRaw }] = await Promise.all([
     supabase.from("lot_listings").select("lot_id").eq("status", "published"),
     supabase
       .from("public_lot_catalog")
       .select(
-        "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection, tiene_ficha"
+        "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection, ctcx_imagen_path, tiene_ficha"
       ),
+    // V5.85: el perfil ÚNICO de CTCx Selection (respuesta 7): lo que la tarjeta enseña en vez de la finca.
+    supabase.from(VISTA_PERFIL_CTCX).select(PERFIL_CTCX_SELECT).maybeSingle(),
   ]);
+  const perfil = aPerfilCtcx((perfilRaw as FilaPerfilCtcx | null) ?? null);
 
   // La vista incluye `sold_out` además de `published` (la tienda los sigue
   // enseñando agotados). Un teaser que invita a entrar no debe anunciar lo que
@@ -201,7 +208,7 @@ async function leeCatalogoVivo(): Promise<SneakPeekLot[]> {
 
   return ((filas ?? []) as FilaCatalogo[])
     .filter((f) => vivas.has(f.lot_id))
-    .map(aTarjeta)
+    .map((f) => aTarjeta(f, perfil))
     .filter((l): l is SneakPeekLot => l !== null);
 }
 

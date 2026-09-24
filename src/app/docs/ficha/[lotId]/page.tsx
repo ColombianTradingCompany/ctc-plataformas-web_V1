@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createEphemeralClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { fichaPublica, fichaVale, type FichaPublica } from "@/lib/catalogo/fichaPublica";
 import { CTC_RAZON } from "@/lib/legal";
+import { aPerfilCtcx, rotuloCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx } from "@/lib/catalogo/perfilCtcx";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,8 @@ export default async function FichaLotePage({ params }: { params: Promise<{ lotI
 
   const fila = data as Fila | null;
   if (!fila) notFound();
+  // V5.85: el perfil ÚNICO de CTCx Selection reemplaza a la finca en la ficha de un lote comprado en firme (misma regla que la vitrina).
+  const perfil = fila.ctc_selection ? aPerfilCtcx(((await anon.from(VISTA_PERFIL_CTCX).select(PERFIL_CTCX_SELECT).maybeSingle()).data as FilaPerfilCtcx | null) ?? null) : aPerfilCtcx(null);
 
   // El `datasheet` solo se toca una vez pasada la compuerta de arriba, y lo que
   // sale de aquí es la proyección, nunca la fila.
@@ -83,13 +86,13 @@ export default async function FichaLotePage({ params }: { params: Promise<{ lotI
   if (fila.tiene_ficha) {
     const service = createServiceRoleClient();
     const { data: crudo } = await service.from("lots").select("datasheet").eq("id", lotId).maybeSingle();
-    ficha = fichaPublica(crudo?.datasheet, { ctcSelection: fila.ctc_selection, rotuloCTC: CTC_RAZON });
+    ficha = fichaPublica(crudo?.datasheet, { ctcSelection: fila.ctc_selection, rotuloCTC: rotuloCtcx(perfil) });
   }
 
   // El rótulo de origen se arma igual que en la tarjeta, desde la MISMA regla:
   // la vista ya no devuelve la finca de un lote comprado, y el rótulo sale de
   // `legal.ts`. La ficha no puede desmentir a la vitrina.
-  const finca = fila.ctc_selection ? CTC_RAZON : fila.finca_name ?? "—";
+  const finca = fila.ctc_selection ? rotuloCtcx(perfil) : fila.finca_name ?? "—";
   const lugar = [fila.municipio, fila.departamento].filter(Boolean).join(", ") || "—";
   const puntaje = fila.official_score ?? fila.ficha_puntaje_estimado;
   const estimado = fila.official_score == null && fila.ficha_puntaje_estimado != null;

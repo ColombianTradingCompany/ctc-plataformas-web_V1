@@ -19,13 +19,14 @@ import { CARGA_KG, COMPRA_INICIAL_CTCX_CARGAS, minimoKg, modificadorDeOferta, TE
 //
 // EL PRECIO YA NO SE TECLEA (V5.82): sale de `pvcParaGrado` —la edición del PVC vigente el día de emitir, la banda
 // del grado y el % de modificación del trato— y la oferta guarda de qué edición salió, el COP/kg base y el %:
-//   · temporada — red | blue | gold: el «Lote de Temporada» del trimestre por comenzar, al PVC × multiplicador,
+//   · temporada — black | red | blue | gold (Black desde la V5.85): el «Lote de Temporada» del trimestre por comenzar, al PVC × multiplicador,
 //     con el mínimo del grado (respuesta 1), los términos versionados y la compra inmediata de UNA carga por CTCx.
 //     Si el lote es de la temporada pasada, −10 % (past crop).
-//   · directa — red | blue | gold: CTCx Selection (paso 19): PVC − 8 %, ventana de 30 días, cantidad mín./máx.
-//   · excepcion — red | blue | gold: precio a mano CON motivo. Existe para no bloquear la operación; deja rastro.
-//   · black — la consideración de compra directa (Black Stock): la abre decideBlackNegotiation('comprar') con el
-//     precio acordado en la negociación, no esta pantalla.
+//   · directa — black | red | blue | gold: CTCx Selection (paso 19): PVC − 8 %, ventana de 30 días, cantidad mín./máx.
+//     Su aceptación es una COMPRA EN FIRME: al pagar el mes queda en `compras` (V5.85, fase 8).
+//   · excepcion — black | red | blue | gold: precio a mano CON motivo. Existe para no bloquear la operación; deja rastro.
+//   · black — clase HISTÓRICA (precio negociado a mano) de la compra directa de un Black; desde la V5.85 nadie la emite
+//     (el CRM de `black_negotiations` se retiró): un Black va por `directa`. Sigue contando como compra en firme.
 //   · subasta — tyrian: «el podio de los mejores, al mejor postor»; se registra el mejor postor (Tyrian no tiene
 //     escalón en el PVC: se subasta — respuesta 3).
 //
@@ -48,7 +49,9 @@ const CON_DECLARACION: readonly OfferKind[] = ["temporada", "directa", "excepcio
 
 /** El grado que cada clase de oferta admite — la puerta es por CLASE. */
 function kindAllowsGrade(kind: OfferKind, grade: GradoId): boolean {
-  if (kind === "temporada" || kind === "directa" || kind === "excepcion") return grade === "red" || grade === "blue" || grade === "gold";
+  // V5.85 (fase 8): el CRM de Black se retiró — un Black recibe las mismas clases que Red/Blue/Gold (el PVC tiene su banda ×1,15 y
+  // `terminos.ts` su mínimo de 6 cargas); `black` (precio negociado a mano) queda como clase histórica, solo para Black.
+  if (kind === "temporada" || kind === "directa" || kind === "excepcion") return grade === "black" || grade === "red" || grade === "blue" || grade === "gold";
   if (kind === "black") return grade === "black";
   return grade === "tyrian";
 }
@@ -62,7 +65,7 @@ const numOpcional = (v: FormDataEntryValue | null): number | null => {
 
 /**
  * Emite una oferta sobre un lote galardonado. Reutilizable por la pantalla de
- * Ofertas (temporada · directa · excepcion · subasta) y por decideBlackNegotiation (black).
+ * Ofertas (temporada · directa · excepcion · subasta) y por ofrecerRenovacion (temporada, V5.84).
  */
 export async function emitOffer(lotId: string, kind: OfferKind, formData: FormData): Promise<Result> {
   const permiso = await permisoDeEscritura("ocp", "emite");

@@ -6,7 +6,7 @@ import { fichaPublica, fichaVale, type FichaPublica } from "@/lib/catalogo/ficha
 import { normalizaCodigo, rutaDelCodigo } from "@/lib/catalogo/codigoPublico";
 import { esGradoValido, GRADO_POR_ID, SCA_DECIMALES } from "@/lib/grados/definicion";
 import { metadatosDeSuperficie } from "@/lib/seo/openGraph";
-import { CTC_RAZON } from "@/lib/legal";
+import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx, PERFIL_CTCX_SELECT, VISTA_PERFIL_CTCX, type FilaPerfilCtcx } from "@/lib/catalogo/perfilCtcx";
 import { OrganizationLd } from "@/components/JsonLd";
 import { ToastProvider } from "@/components/Toast";
 import { LangProvider } from "@/components/lang/i18n";
@@ -59,6 +59,7 @@ type Fila = {
   municipio: string | null;
   departamento: string | null;
   ctc_selection: boolean;
+  ctcx_imagen_path: string | null;
   tiene_ficha: boolean;
   public_code: string;
 };
@@ -92,13 +93,15 @@ const cargaLote = cache(async (codigo: string): Promise<LotePublico | null> => {
   const { data } = await anon
     .from("public_lot_catalog")
     .select(
-      "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection, tiene_ficha, public_code"
+      "lot_id, name, grade, ficha_variedad, ficha_proceso, ficha_altitud_m, ficha_puntaje_estimado, official_score, ficha_notas_cata, finca_name, municipio, departamento, ctc_selection, ctcx_imagen_path, tiene_ficha, public_code"
     )
     .eq("public_code", codigo)
     .maybeSingle();
 
   const fila = data as Fila | null;
   if (!fila || !UUID.test(fila.lot_id)) return null;
+  // V5.85: el perfil ÚNICO de CTCx Selection (respuesta 7): reemplaza a la finca en la vitrina de un lote comprado en firme.
+  const perfil = fila.ctc_selection ? aPerfilCtcx(((await anon.from(VISTA_PERFIL_CTCX).select(PERFIL_CTCX_SELECT).maybeSingle()).data as FilaPerfilCtcx | null) ?? null) : aPerfilCtcx(null);
 
   // El `datasheet` solo se toca una vez pasada la compuerta de arriba, y lo que
   // sale de aquí es la proyección, nunca la fila.
@@ -106,7 +109,7 @@ const cargaLote = cache(async (codigo: string): Promise<LotePublico | null> => {
   if (fila.tiene_ficha) {
     const service = createServiceRoleClient();
     const { data: crudo } = await service.from("lots").select("datasheet").eq("id", fila.lot_id).maybeSingle();
-    ficha = fichaPublica(crudo?.datasheet, { ctcSelection: fila.ctc_selection, rotuloCTC: CTC_RAZON });
+    ficha = fichaPublica(crudo?.datasheet, { ctcSelection: fila.ctc_selection, rotuloCTC: rotuloCtcx(perfil) });
   }
 
   const dato = (k: keyof FichaPublica) => {
@@ -128,7 +131,8 @@ const cargaLote = cache(async (codigo: string): Promise<LotePublico | null> => {
     gradoNombre: grado?.nombre ?? null,
     puntaje: puntaje != null ? Number(puntaje).toFixed(SCA_DECIMALES) : null,
     puntajeEstimado: fila.official_score == null && fila.ficha_puntaje_estimado != null,
-    finca: fila.ctc_selection ? CTC_RAZON : fila.finca_name ?? "—",
+    finca: fila.ctc_selection ? rotuloCtcx(perfil) : fila.finca_name ?? "—",
+    ctcx: fila.ctc_selection ? { nombre: perfil.nombre, lema: perfil.lema, descripcion: perfil.descripcion, imagenUrl: urlDeImagenCtcx(fila.ctcx_imagen_path) ?? perfil.imagenUrl } : null,
     lugar: [fila.municipio, fila.departamento].filter(Boolean).join(", ") || "—",
     altura: fila.ficha_altitud_m ? `${fila.ficha_altitud_m} msnm` : dato("masl"),
     variedad: fila.ficha_variedad ?? dato("varieties"),

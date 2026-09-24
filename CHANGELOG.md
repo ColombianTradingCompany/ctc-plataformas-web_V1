@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.86] — 2026-09-25 (commit pendiente)
+## [V5.86] — 2026-09-25 (commit c1ba77e)
 
 - **Añadido**: **los recordatorios de mora** (fila «Recordatorios» del §4 del `PLAN_CIRCUITO_DEL_LOTE.md`; decisión 6: visible,
   nunca automática). El cron semanal `/api/cron/recordatorios` corre ahora dos barridos, y solo dos: las certificaciones con

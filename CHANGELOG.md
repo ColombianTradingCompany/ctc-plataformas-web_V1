@@ -19,7 +19,7 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
-## [V5.76] — 2026-09-24 (commit pendiente)
+## [V5.76] — 2026-09-24 (commit 4f3490c)
 
 - **Hito**: **fase 0 del `PLAN_CIRCUITO_DEL_LOTE.md`** (el owner contestó las ocho decisiones y concedió el borrado) y las cuatro
   indicaciones del owner al ver por fin `/ocp/kr`.

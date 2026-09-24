@@ -9,7 +9,7 @@ import styles from "@/components/panel/shared.module.css";
 
 export const dynamic = "force-dynamic";
 
-// Una campaña de subvención (V5.77; era `/bcp/club/campanas/[id]`): emite códigos KRX- con su %,
+// Una campaña de subvención (V5.77; era la página de campaña del Club en el BCP): emite códigos KRX- con su %,
 // asignados a un productor o anónimos para entregar en mano, y enseña quién usó cada uno.
 
 type CodeRow = { id: string; code: string; created_at: string; assigned_to: string | null; redeemed_at: string | null; lot_id: string | null; revoked_at: string | null };

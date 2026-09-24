@@ -9,7 +9,7 @@ import styles from "@/components/panel/shared.module.css";
 export const dynamic = "force-dynamic";
 
 // ── OCP · Manejo de Stock Físico · Campañas de Subvención (V5.77, owner 2026-09-24) ──
-// Eran las campañas de descuento del Kaffetal Club (`/bcp/club`, 308 hasta aquí). Una campaña fija un
+// Eran las campañas de descuento del Kaffetal Club (la página del Club en el BCP, hoy un 308 hasta aquí). Una campaña fija un
 // % (30–70) sobre la tarifa de evaluación y emite códigos KRX- que CTCx aplica en nombre del productor
 // (o él canjea al solicitar). La decisión de qué subvención aplicar se toma al recibir la solicitud
 // (fase 3 del plan: Solicitudes de Evaluación · Gestión de Muestras).

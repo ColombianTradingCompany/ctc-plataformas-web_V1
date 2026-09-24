@@ -186,7 +186,9 @@ export async function setFincaCertVerified(
   }
   await service
     .from("finca_certificates")
-    .update({ verified_by_ctc: verified, verified_at: verified ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    // V5.78: `status` es lo que rige (declarada · evidencia_pedida · corroborada · retirada); `verified_by_ctc` se
+    // conserva porque lo leen los claims derivados (F2). Las dos columnas se mueven juntas.
+    .update({ verified_by_ctc: verified, verified_at: verified ? new Date().toISOString() : null, status: verified ? "corroborada" : "declarada", updated_at: new Date().toISOString() })
     .eq("id", certId);
   await service.from("audit_log").insert({
     entity_type: "finca",
@@ -626,6 +628,8 @@ const FINCA_EUDR_FIELD_LABEL: Record<string, string> = {
   eudr_sustainability_tags: "Sostenibilidad",
   eudr_sustainability_notes: "Notas de sostenibilidad",
   eudr_google_earth_url: "URL de Google Earth",
+  eudr_chequeo_notas: "Chequeo contra bases EUDR (notas)",
+  eudr_chequeo_files: "Chequeo contra bases EUDR (adjuntos)",
   eudr_custody_stages: "Cadena de custodia",
   eudr_custody_method: "Método de separación",
   eudr_custody_notes: "Notas de custodia",
@@ -654,7 +658,7 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
   const { data: before } = await service
     .from("fincas")
     .select(
-      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective"
+      "name, producer_id, hectares, eudr_lat, eudr_lng, eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types, eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, eudr_chequeo_notas, eudr_chequeo_files"
     )
     .eq("id", fincaId)
     .single();
@@ -679,7 +683,23 @@ export async function updateFincaEudr(fincaId: string, formData: FormData) {
       ? fincaPrevResponsible
       : `${fincaResponsableName} · ${new Date().toLocaleDateString("es-CO")}`;
 
+  // V5.78 · el chequeo contra bases EUDR oficiales (folio 7 del owner: «cuadro de texto y un archivo adjunto,
+  // después lo refinamos»): notas libres y una lista de adjuntos. Los adjuntos ya subieron al Storage desde el
+  // navegador (`chequeo_asset_<clave>` / `chequeo_name_<clave>`); `chequeo_remove_<assetId>` quita uno existente.
+  const chequeoExistentes = ((before as { eudr_chequeo_files?: { assetId: string; fileName: string }[] }).eudr_chequeo_files ?? []).filter(
+    (f) => !formData.get(`chequeo_remove_${f.assetId}`)
+  );
+  const chequeoNuevos: { assetId: string; fileName: string }[] = [];
+  for (const [k, v] of formData.entries()) {
+    const m = k.match(/^chequeo_asset_(.+)$/);
+    if (!m) continue;
+    const fileName = textOrNull(formData, `chequeo_name_${m[1]}`);
+    if (typeof v === "string" && v && fileName) chequeoNuevos.push({ assetId: v, fileName });
+  }
+
   const patch = {
+    eudr_chequeo_notas: textOrNull(formData, "eudr_chequeo_notas"),
+    eudr_chequeo_files: [...chequeoExistentes, ...chequeoNuevos],
     // Área cultivada (ha): BCP puede completarla/corregirla en nombre del
     // productor -- es requisito para que la finca llegue a "Apta". "" -> null.
     hectares: formData.get("hectares") !== null && String(formData.get("hectares")).trim() !== "" ? Number(formData.get("hectares")) : null,

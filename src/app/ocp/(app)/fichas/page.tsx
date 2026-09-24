@@ -4,10 +4,11 @@ import { fetchProducerContacts } from "@/lib/bcpProducers";
 import { ctcLotReferenceShort } from "@/components/kaffetal-regal/data";
 import { rowToLotFicha, ordenaFichas, type LotFicha } from "@/lib/fichas/tipos";
 import type { FichaFormData } from "@/components/kaffetal-regal/ficha/fichaData";
-import { LotFichasCard, type SoporteRef } from "./FichasClient";
+import { LotFichasCard } from "./FichasClient";
+import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
 import styles from "@/components/panel/shared.module.css";
 
-// ── Fichas Técnicas (V5.23) ──────────────────────────────────────────────────
+// ── Fichas Técnicas (V5.23) — el ÍNDICE; desde la V5.78 el trabajo se hace también en la vista completa del lote ──
 // El taller documental del lote, lado CTCx. Aquí están los SOPORTES que el
 // productor adjuntó en B2/B3 (hojas de catación y análisis físicos), el
 // ESCÁNER VISUAL que los lee con IA (opt-in: un botón por lote, nunca
@@ -24,27 +25,6 @@ type LotRow = {
   datasheet: Partial<FichaFormData> | null;
   fincas: { name: string } | { name: string }[] | null;
 };
-
-function soportesDe(ds: Partial<FichaFormData> | null): SoporteRef[] {
-  if (!ds) return [];
-  const out: SoporteRef[] = [];
-  const add = (files: { assetId: string; fileName: string }[] | undefined, section: "b2" | "b3", kind: "pdf" | "foto") => {
-    for (const f of files ?? []) if (f?.assetId) out.push({ ...f, section, kind });
-  };
-  add(ds.b2_files_pdf, "b2", "pdf");
-  add(ds.b2_files_foto, "b2", "foto");
-  add(ds.b3_files_pdf, "b3", "pdf");
-  add(ds.b3_files_foto, "b3", "foto");
-  return out;
-}
-
-/** ¿El productor reportó algo compilable en B2/B3? (para habilitar el botón
- *  «Compilar del reporte» sin gastar un viaje al servidor en saberlo). */
-function tieneReporte(ds: Partial<FichaFormData> | null): boolean {
-  if (!ds) return false;
-  const campos = [ds.b2_score, ds.cupping_profile, ds.yield_factor_producer, ds.b3_almendra_total, ds.b3_densidad_verde, ds.fa_parch_hum, ds.b3_humedad_verde];
-  return campos.some((v) => typeof v === "string" && v.trim() !== "");
-}
 
 export default async function OcpFichasPage() {
   const service = createServiceRoleClient();

@@ -19,6 +19,29 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.78] — 2026-09-24 (commit pendiente)
+
+- **Hito**: **fase 2 del `PLAN_CIRCUITO_DEL_LOTE.md` — el registro** (lado OCP; lo de Kaffetal Regal queda con dueño en su charter).
+- **Añadido**: **las certificaciones de la finca tienen estado** (folio 7 del owner): `declarada` → **evidencia pedida** (CTC
+  pide el respaldo con una nota: correo + feed) → `corroborada` (contrastada, exige vigencia) — o **retirada del Pasaporte** si
+  nunca se respaldó; el registro queda. **Recordatorio semanal** al productor, **máximo cuatro**, y a la quinta semana se retira
+  sola: cron nuevo `/api/cron/recordatorios` (lunes 12:00 UTC, `vercel.json`), regla PURA en `src/lib/registro/reglas.ts`,
+  servidor en `src/lib/registro/certificados.ts`. En el panel de certificaciones del OCP: Corroborar · Pedir evidencia… ·
+  Retirar… · Reabrir, con el estado y el conteo de recordatorios a la vista.
+- **Añadido**: **el chequeo contra bases EUDR oficiales** en la finca (manual por ahora, como pidió el owner): un cuadro de
+  texto y adjuntos en «Análisis y Evidencia» del editor de asistencia (`fincas.eudr_chequeo_notas`, `eudr_chequeo_files`, solo CTC).
+- **Cambiado**: **la transcripción de FT2 se hace en la vista completa del lote** (`/ocp/kr?lote=`): el set de Fichas Técnicas
+  (soportes adjuntos, escáner con IA opt-in, compilar del reporte, la oficial ★) se monta allí; `/ocp/fichas` queda como índice.
+  Y nace la **transcripción a mano en el formato de la Datasheet** (`crearFichaManual`, fuente «Compilada por CTC» que estaba
+  reservada sin escritor): los mismos campos y rangos del escáner; lo que el documento no muestra se deja vacío.
+- **Datos**: migración `registro_chequeo_y_certificados` (acta en `docs/migraciones/`): `finca_certificates.status` +
+  `nota_ctc` + `evidencia_pedida_at` + `recordatorios` + `ultimo_recordatorio_at` + `retirada_at` (backfill: las verificadas
+  → corroborada; guard: solo CTC mueve el estado, un INSERT nace «declarada», editar una corroborada la devuelve a «declarada»);
+  `fincas.eudr_chequeo_*` protegidas por `guard_finca_protected_columns`.
+- **Docs**: guardián nuevo `qa-registro-check` (50: la regla desde el folio, rastro en cada movimiento, remitente único, cron
+  con secreto, el OCP como único escritor). **Lo que la fase 2 deja a `kaffetal-regal`**: A5 como último paso del intake, el
+  dossier ES/EN por lote, la Ficha descargable, y enseñarle al productor el estado de cada certificación (hoy lo sabe por su feed).
+
 ## [V5.77] — 2026-09-24 (commit 1c80795)
 
 - **Hito**: **fase 1 del `PLAN_CIRCUITO_DEL_LOTE.md` — retiros y mudanzas**, con la nota del owner sobre la Arena.

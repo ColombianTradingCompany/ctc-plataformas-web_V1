@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/courier-combustible",
       "schedule": "30 13 * * 4"
+    },
+    {
+      "path": "/api/cron/recordatorios",
+      "schedule": "0 12 * * 1"
     }
   ]
 }

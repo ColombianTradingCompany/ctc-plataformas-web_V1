@@ -7,6 +7,9 @@ import { RegisterDdsButton, RevertNoAptoButton } from "./LotePiezas";
 import { PostularOnBehalfButton } from "../nominados/NominadosClient";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { reviewEvaluationClaim } from "../evaluationActions";
+import { LotFichasCard } from "../fichas/FichasClient";
+import { soportesDe, tieneReporte } from "@/lib/fichas/soportes";
+import { ordenaFichas, rowToLotFicha, type LotFicha } from "@/lib/fichas/tipos";
 import { EvaReviewCard, type CertItem, type EvaEudrFields, type FileLink, type FisicoPanel, type Row } from "./EvaReviewCard";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { deriveClaims, deriveArchetype, ARCHETYPE_LABEL, type ContributionInput, type CertInput } from "@/lib/lotComposition";
@@ -217,6 +220,18 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
     .order("created_at", { ascending: true });
   const claimsByLot = new Map<string, ClaimRow[]>();
   for (const c of (claimRows as ClaimRow[] | null) ?? []) claimsByLot.set(c.lot_id, [...(claimsByLot.get(c.lot_id) ?? []), c]);
+  // V5.78: el set de Fichas Técnicas del lote (escáner, compilada del reporte, transcrita a mano) se trabaja AQUÍ,
+  // en la revisión del registro; `/ocp/fichas` queda como índice.
+  const { data: fichaRows } = await service
+    .from("lot_fichas")
+    .select("id, lot_id, source, title, data, source_files, model, confianza, observaciones, is_official, created_at")
+    .in("lot_id", lotRows.map((l) => l.id))
+    .order("created_at", { ascending: false });
+  const fichasByLot = new Map<string, LotFicha[]>();
+  for (const r of (fichaRows as Parameters<typeof rowToLotFicha>[0][] | null) ?? []) {
+    const f = rowToLotFicha(r);
+    fichasByLot.set(f.lotId, [...(fichasByLot.get(f.lotId) ?? []), f]);
+  }
   const inscriptionSettledByLot = new Map<string, boolean>();
   const postulatedLots = new Set<string>();
   for (const i of (inscriptionRows as { lot_id: string; status: string }[] | null) ?? []) {
@@ -244,6 +259,7 @@ export async function LoteSeccion({ service, loteId }: { service: SupabaseClient
       </p>
       <LotCard
         claims={claimsByLot.get(lot.id) ?? []}
+        fichas={ordenaFichas(fichasByLot.get(lot.id) ?? [])}
         lot={lot}
         producer={producers.get(lot.producer_id)}
         comms={commsByLot.get(lot.id) ?? []}
@@ -300,6 +316,7 @@ function LotCard({
   showEvaVerdict,
   inscriptionSettled,
   claims,
+  fichas,
   derivedClaimRows,
   archetypeLabel,
 }: {
@@ -312,6 +329,8 @@ function LotCard({
   inscriptionSettled: boolean;
   /** V5.77: reclamos de oficialización pendientes (`producer_claim`) de este lote. */
   claims: ClaimRow[];
+  /** V5.78: el set de Fichas Técnicas del lote (la oficial primero). */
+  fichas: LotFicha[];
   // F2: claims derivados (lot_contributions × finca_certificates × cosecha) y
   // arquetipo calculado — la EVA los VERIFICA, no los digita.
   derivedClaimRows: { l: string; v: string }[];
@@ -502,6 +521,17 @@ function LotCard({
       {finca && fincaEudrStatus(finca).code === "no_apta" && (
         <p className={styles.warn}>La finca de origen tiene deforestación o producción ilegal declarada.</p>
       )}
+
+      {/* V5.78 · la transcripción de FT2: soportes, escáner (IA, opt-in), compilar el reporte, transcribir a mano; y la oficial ★. */}
+      <div style={{ margin: "10px 0" }}>
+        <LotFichasCard
+          lotId={lot.id}
+          header={<b style={{ fontSize: 13.5 }}>Ficha Técnica · caracterización (FT2)</b>}
+          soportes={soportesDe(lot.datasheet ?? null)}
+          tieneReporte={tieneReporte(lot.datasheet ?? null)}
+          fichas={fichas}
+        />
+      </div>
 
       <EvaReviewCard
         lotId={lot.id}

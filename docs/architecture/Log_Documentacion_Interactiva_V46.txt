@@ -235,3 +235,21 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - DIFERIDO de la fase 1: temporadas siguen en `/bcp/arena/temporadas`; `src/lib/arena/` no se renombra; cashback del 80 % y
   `RELEASE_STAIRCASE` en la fase 5; copy de KR (Arena, Club) es de `kaffetal-regal`.
 (commit: 1c80795)
+
+## [2026-09-24] V5.78 · Consolas — fase 2 del PLAN_CIRCUITO_DEL_LOTE: el registro (certificaciones con estado, chequeo EUDR, FT2 en el lote)
+- REGLA NUEVA (DICT `certificacionconestado`): `finca_certificates.status` declarada → evidencia_pedida → corroborada | retirada.
+  Pedir evidencia arranca un reloj: recordatorio SEMANAL al productor (correo por el remitente único + nota en su feed), máximo
+  CUATRO; a la quinta semana la certificación se retira del Pasaporte (el registro queda). Fuente pura `src/lib/registro/reglas.ts`
+  (`decidirRecordatorio`); servidor `src/lib/registro/certificados.ts` (pedirEvidencia · recordar · retirar · corroborar · reabrir,
+  cada uno con audit_log + producer_comm_log); acciones `certificadosActions.ts` (OCP · emite).
+- CRON NUEVO (4.º de `vercel.json`, permea a `plataforma`): `/api/cron/recordatorios`, lunes 12:00 UTC, `CRON_SECRET`.
+- NODO finca: «Chequeo contra bases EUDR oficiales» = `fincas.eudr_chequeo_notas` + `eudr_chequeo_files` (jsonb lista), en la
+  pestaña «Análisis y Evidencia» del editor de asistencia; solo CTC (guard).
+- NODO lote: la vista completa (`/ocp/kr?lote=`) monta el set de Fichas (`LotFichasCard`) — escáner IA, compilar reporte,
+  **transcribir a mano** (`crearFichaManual`, `source = "ctc"`), oficial ★. `/ocp/fichas` = índice. `src/lib/fichas/soportes.ts`
+  única fuente de «qué material tiene el lote».
+- DATOS: migración `registro_chequeo_y_certificados` (acta en `docs/migraciones/`); HANDOFF: fila nueva del guard de certificados.
+- Guardianes: `qa-registro-check` (50, nuevo).
+- PENDIENTE con dueño `kaffetal-regal`: A5 último paso del intake; dossier ES/EN por lote (+ el de la finca); Ficha descargable;
+  enseñar el estado de cada certificación al productor (y sus «retiradas» fuera del Pasaporte impreso).
+(commit: pendiente)

@@ -108,7 +108,9 @@ portal y el peso de las imágenes) ·
 `qa-guard-check.mjs` (seguridad, con cuentas QA) · **`qa-niveles-check.mjs`** (36 — el nivel `viewer`: la regla y la lista
 blanca de borradores se leen DEL PLAN) · `qa-transcripciones-check.mjs` (50, con `ts-resolve`) ·
 `qa-transcripciones-nube.mjs` (20, toca AssemblyAI, ~US$0,002) · **`qa-asistencia-check.mjs`** (57 — la sesión asistida solo para
-productores y siempre con rastro; la etiqueta del desacoplado no recibe correos; el guard de `gestion`). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+productores y siempre con rastro; la etiqueta del desacoplado no recibe correos; el guard de `gestion`) · **`qa-registro-check.mjs`**
+(50 — la regla de los recordatorios desde el folio 7, rastro en cada movimiento de una certificación, el cron con secreto, el
+chequeo EUDR y la transcripción de FT2 en la vista del lote). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -164,8 +166,12 @@ productores y siempre con rastro; la etiqueta del desacoplado no recibe correos;
   fuera (gates de firma y publicación, membresía en el veredicto, `clubEmails`); **Campañas de Subvención** en
   `/ocp/subvenciones` (30–70 % sobre $200.000); reclamos de oficialización en la vista del lote; `ATRIBUTOS_SCA` única fuente.
   **Diferido de la fase 1** (con dueño aquí): mudar temporadas a `/ocp/temporadas`; renombrar `src/lib/arena/` → `evaluacion/` y
-  `trato/`; fundir `/ocp/fichas` en la vista del lote (fase 2); el cashback del 80 % y `RELEASE_STAIRCASE` (fase 5). **Sigue: fase 2**
-  (el registro: revisión del lote, recordatorios, dossier ES/EN).
+  `trato/`; el cashback del 80 % y `RELEASE_STAIRCASE` (fase 5). **Fase 2 EJECUTADA en la V5.78 (lado OCP)**: certificaciones
+  con estado y recordatorios semanales ×4 (`src/lib/registro/`, cron `/api/cron/recordatorios`), el chequeo EUDR de CTC en la
+  finca (texto + adjuntos), y la transcripción de FT2 en la vista del lote (set de fichas + `crearFichaManual`). **Lo que la fase 2
+  deja a `kaffetal-regal`** (anotado en su charter): A5 último paso, dossier ES/EN, Ficha descargable, el estado de cada
+  certificación en su panel. **Sigue: fase 3** (Solicitudes de Evaluación, factura, subvención decidida, pago contra entrega,
+  muestras 500/500/1000 y los Baches de Evaluación).
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

@@ -378,6 +378,73 @@ export async function crearFichaDesdeReporte(lotId: string): Promise<Result> {
   return { ok: true };
 }
 
+/**
+ * V5.78 · La transcripción A MANO de los soportes FT2, en el formato de la Datasheet (folio 7 del owner). Es
+ * la fuente «ctc» que `FichaSource` reservaba sin escritor. Mismos rangos que el escáner: lo que no cabe en
+ * el rango se descarta (nunca se inventa); un formulario vacío no crea nada.
+ */
+export async function crearFichaManual(lotId: string, formData: FormData): Promise<Result> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+
+  const { data: lot } = await service.from("lots").select("id, producer_id").eq("id", lotId).maybeSingle();
+  if (!lot) return { ok: false, error: "El lote no existe." };
+
+  const t = (k: string) => String(formData.get(k) ?? "").trim() || null;
+  const n = (k: string, min: number, max: number) => numOrNull(t(k), min, max);
+  const escalaRaw = t("escala");
+  const atributos: Partial<Record<AtributoSca, number | null>> = {};
+  let hayAtributos = false;
+  for (const k of ATRIBUTOS_SCA) {
+    const v = n(`atributo_${k}`, 0, 10);
+    if (v != null) {
+      atributos[k] = v;
+      hayAtributos = true;
+    }
+  }
+  const data: FichaTecnicaData = {
+    ...FICHA_TECNICA_VACIA,
+    puntaje: n("puntaje", 0, 100),
+    escala: escalaRaw === "sca" || escalaRaw === "cva" ? escalaRaw : null,
+    atributos: hayAtributos ? atributos : null,
+    notas_cata: t("notas_cata"),
+    catador: t("catador"),
+    laboratorio: t("laboratorio"),
+    fecha_analisis: t("fecha_analisis"),
+    factor_rendimiento: n("factor_rendimiento", 75, 120),
+    almendra_total_g: n("almendra_total_g", 150, 245),
+    densidad_verde_gl: n("densidad_verde_gl", 600, 1000),
+    humedad_pergamino_pct: n("humedad_pergamino_pct", 0, 30),
+    humedad_verde_pct: n("humedad_verde_pct", 0, 30),
+    actividad_agua: n("actividad_agua", 0, 1),
+    defectos: t("defectos"),
+  };
+  const tieneAlgo = Object.entries(data).some(([k, v]) => k !== "mallas" && v !== null);
+  if (!tieneAlgo) return { ok: false, error: "La ficha está vacía: transcriba al menos un dato." };
+
+  const { error: insErr } = await service.from("lot_fichas").insert({
+    lot_id: lot.id,
+    producer_id: lot.producer_id,
+    source: "ctc",
+    title: t("title") ?? "Transcrita por CTCx",
+    data,
+    source_files: [],
+    created_by: adminId,
+  });
+  if (insErr) return { ok: false, error: insErr.message };
+  await service.from("audit_log").insert({
+    entity_type: "lot",
+    entity_id: lot.id,
+    action: "ficha_transcrita",
+    performed_by: adminId,
+    notes: `Ficha compilada a mano por CTCx${data.puntaje != null ? ` · puntaje ${data.puntaje}` : ""}`,
+  });
+  revalidateAll();
+  return { ok: true };
+}
+
 // ── El set: oficial y borrado ───────────────────────────────────────────────
 
 /** Fija (o retira) LA ficha oficial del lote. Primero limpia, luego fija — el

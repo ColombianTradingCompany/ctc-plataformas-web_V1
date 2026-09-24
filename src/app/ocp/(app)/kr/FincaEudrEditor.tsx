@@ -10,7 +10,8 @@ import { useUpload, UploadProgressRing } from "@/components/UploadProgress";
 import { LOCAL_INFRA, fincaCode } from "@/components/kaffetal-regal/data";
 import { CERT_REGISTRY } from "@/lib/certRegistry";
 import { ORIGIN_CERTS, INTL_CERTS } from "@/components/kaffetal-regal/ficha/fichaData";
-import { setFincaCertVerified } from "../actions";
+import { corroborarCertificado, pedirEvidenciaCertificado, reabrirCertificado, retirarCertificado } from "../certificadosActions";
+import { ESTADO_CERTIFICACION_LABEL, MAX_RECORDATORIOS, type EstadoCertificacion } from "@/lib/registro/reglas";
 import styles from "@/components/panel/shared.module.css";
 
 const INFRA_DICT: [string, string][] = LOCAL_INFRA.map(([k, l]) => [k, l]);
@@ -93,6 +94,9 @@ export type FincaEudrValues = {
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   eudr_google_earth_url: string | null;
+  /** V5.78: el chequeo de CTC contra bases EUDR oficiales — notas y adjuntos (solo CTC). */
+  eudr_chequeo_notas: string | null;
+  eudr_chequeo_files: { assetId: string; fileName: string }[] | null;
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_local_infra: string[] | null;
@@ -194,6 +198,13 @@ export type BcpCert = {
   supportUrl: string | null;
   supportFilename: string | null;
   verifiedByCtc: boolean;
+  /** V5.78: el estado de la certificación (`src/lib/registro/reglas.ts`). */
+  status: EstadoCertificacion;
+  notaCtc: string | null;
+  evidenciaPedidaAt: string | null;
+  recordatorios: number;
+  ultimoRecordatorioAt: string | null;
+  retiradaAt: string | null;
 };
 
 const SCHEME_LABEL: Record<string, string> = Object.fromEntries([
@@ -336,7 +347,7 @@ export function FincaEudrEditor({
       if (!form || saving) return false;
       const fd = new FormData(form);
       for (const k of [...fd.keys()]) {
-        if (/^(evidence|sustainability)_file_/.test(k)) fd.delete(k);
+        if (/^(evidence|sustainability|chequeo)_file_/.test(k)) fd.delete(k);
       }
       await saveAction(fd);
       return true;
@@ -361,7 +372,7 @@ export function FincaEudrEditor({
     // "saved fine" locally and silently never arrived in production.
     const staged: { field: string; group: string; key: string; file: File }[] = [];
     for (const [k, v] of fd.entries()) {
-      const m = k.match(/^(evidence|sustainability)_file_(.+)$/);
+      const m = k.match(/^(evidence|sustainability|chequeo)_file_(.+)$/);
       if (!m || !(v instanceof File)) continue;
       if (v.size > 5 * 1024 * 1024) {
         setSaveError(`El archivo "${v.name}" supera 5 MB. Adjunte uno más liviano.`);
@@ -497,6 +508,22 @@ export function FincaEudrEditor({
               </div>
               <div>Evidencia: {labelsFor(values.eudr_evidence_types, EVIDENCE_TYPES)}</div>
               {values.eudr_evidence_notes && <div>Notas de evidencia: {values.eudr_evidence_notes}</div>}
+            </div>
+            {/* V5.78 · el chequeo contra bases EUDR oficiales (folio 7 del owner: manual por ahora). */}
+            <div className={styles.meta} style={{ lineHeight: 1.9, marginTop: 8 }}>
+              <b style={{ fontSize: 12.5 }}>Chequeo contra bases EUDR oficiales</b>
+              <div style={{ whiteSpace: "pre-wrap" }}>{values.eudr_chequeo_notas || <span style={{ color: "#B45309" }}>Sin chequeo anotado.</span>}</div>
+              {(values.eudr_chequeo_files ?? []).length > 0 && (
+                <div>
+                  Adjuntos:{" "}
+                  {(values.eudr_chequeo_files ?? []).map((f, i) => (
+                    <span key={f.assetId}>
+                      {i > 0 && " · "}
+                      {fileUrls[f.assetId] ? <a href={fileUrls[f.assetId]} target="_blank" rel="noopener noreferrer">{f.fileName}</a> : f.fileName}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             {/* F1: el Art. 9 cuenta PARCELAS — cada cafetal con su geometría.
                 Las edita el productor; aquí se auditan contra el umbral de 4 ha. */}
@@ -685,6 +712,21 @@ export function FincaEudrEditor({
               </label>
               <input name="eudr_google_earth_url" type="url" defaultValue={values.eudr_google_earth_url ?? ""} placeholder="https://earth.google.com/..." />
             </div>
+          </div>
+
+          {/* V5.78 · el chequeo contra bases EUDR oficiales: cuadro de texto + adjuntos (folio 7 del owner). */}
+          <div className={styles.field}>
+            <label>
+              Chequeo contra bases EUDR oficiales
+              <span style={{ fontWeight: 400, color: "var(--muted)" }}> (enlaces, qué se consultó y qué salió; manual por ahora)</span>
+            </label>
+            <textarea name="eudr_chequeo_notas" rows={4} defaultValue={values.eudr_chequeo_notas ?? ""} placeholder="Ej. Global Forest Watch (2026-09-24): sin alertas de pérdida de cobertura desde 2020 en el polígono. IDEAM…" />
+            {(values.eudr_chequeo_files ?? []).map((f) => (
+              <label key={f.assetId} style={{ display: "inline-flex", gap: 6, fontSize: 12.5, fontWeight: 400, marginTop: 6 }}>
+                <input type="checkbox" name={`chequeo_remove_${f.assetId}`} /> quitar {fileUrls[f.assetId] ? <a href={fileUrls[f.assetId]} target="_blank" rel="noopener noreferrer">{f.fileName}</a> : f.fileName}
+              </label>
+            ))}
+            <input type="file" name="chequeo_file_nuevo" accept=".pdf,image/*" style={{ marginTop: 6 }} />
           </div>
 
           <div className={styles.field}>
@@ -905,17 +947,36 @@ export function FincaEudrEditor({
   );
 }
 
-// ── F1 · Certificaciones de la finca (vista BCP) ─────────────────────────────
-// Lo declarado por el productor (esquema, número, vigencia, soporte) + el botón
-// de verificación de CTC. El contraste es manual contra el registro público del
-// esquema (certRegistry); verificar exige vigencia registrada (la acción lo
-// re-impone en el servidor).
+// ── Certificaciones de la finca (vista OCP) ──────────────────────────────────
+// Lo declarado por el productor (esquema, número, vigencia, soporte) y, desde la V5.78 (folio 7 del
+// owner), el ESTADO que CTC le da: declarada → evidencia pedida (recordatorio semanal, máximo cuatro;
+// luego se retira del Pasaporte) → corroborada. El contraste es manual contra el registro público del
+// esquema (certRegistry); corroborar exige vigencia registrada (la acción lo re-impone en el servidor).
+// `setFincaCertVerified` sigue existiendo (mueve `verified_by_ctc` y el estado a la vez).
+const TONO_ESTADO: Record<EstadoCertificacion, string> = {
+  declarada: "var(--muted)",
+  evidencia_pedida: "#B45309",
+  corroborada: "var(--green, #2E7D52)",
+  retirada: "var(--red)",
+};
 function FincaCertsPanel({ certificates }: { certificates: BcpCert[] }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [abierto, setAbierto] = useState<{ id: string; que: "evidencia" | "retirar" } | null>(null);
+  const [texto, setTexto] = useState("");
   if (!certificates.length) {
     return <p className={styles.meta}>El productor no ha registrado certificados para esta finca.</p>;
   }
+  const corre = (fn: () => Promise<{ ok: true } | { ok: false; error: string }>) =>
+    startTransition(async () => {
+      const res = await fn();
+      setError(res.ok ? null : res.error);
+      if (res.ok) {
+        setAbierto(null);
+        setTexto("");
+      }
+    });
+  const fecha = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("es-CO") : "");
   return (
     <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
       {error && <p style={{ color: "var(--red)", fontSize: 12.5, margin: 0 }}>{error}</p>}
@@ -923,31 +984,63 @@ function FincaCertsPanel({ certificates }: { certificates: BcpCert[] }) {
         const reg = CERT_REGISTRY[c.scheme];
         const hasValidity = c.validFrom !== "" && c.validTo !== "";
         const lapsed = hasValidity && c.validTo < new Date().toISOString().slice(0, 10);
+        const estado = c.status ?? (c.verifiedByCtc ? "corroborada" : "declarada");
         return (
           <div key={c.id} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "9px 12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <b style={{ fontSize: 13 }}>{SCHEME_LABEL[c.scheme] ?? c.scheme}</b>
-              {c.verifiedByCtc ? (
-                <span style={{ fontSize: 11.5, color: "var(--green, #2E7D52)", fontWeight: 700 }}>✓ verificado</span>
-              ) : (
-                <span style={{ fontSize: 11.5, color: "var(--muted)" }}>declarado</span>
-              )}
+              <span style={{ fontSize: 11.5, color: TONO_ESTADO[estado], fontWeight: 700 }}>
+                {estado === "corroborada" ? "✓ " : ""}{ESTADO_CERTIFICACION_LABEL[estado]}
+                {estado === "evidencia_pedida" && ` · ${c.recordatorios}/${MAX_RECORDATORIOS} recordatorios${c.ultimoRecordatorioAt ? ` (último ${fecha(c.ultimoRecordatorioAt)})` : c.evidenciaPedidaAt ? ` (pedida ${fecha(c.evidenciaPedidaAt)})` : ""}`}
+                {estado === "retirada" && c.retiradaAt && ` · ${fecha(c.retiradaAt)}`}
+              </span>
               {lapsed && <span style={{ fontSize: 11.5, color: "var(--red)", fontWeight: 700 }}>vencido {c.validTo}</span>}
               <span style={{ flex: 1 }} />
-              <button
-                type="button"
-                className={`btn btn-sm ${c.verifiedByCtc ? "" : "btn-solid"}`}
-                disabled={pending}
-                onClick={() =>
-                  startTransition(async () => {
-                    const res = await setFincaCertVerified(c.id, !c.verifiedByCtc);
-                    setError(res.ok ? null : res.error);
-                  })
-                }
-              >
-                {c.verifiedByCtc ? "Retirar verificación" : "Marcar verificado"}
-              </button>
+              {estado !== "corroborada" && estado !== "retirada" && (
+                <button type="button" className="btn btn-sm btn-solid" disabled={pending} onClick={() => corre(() => corroborarCertificado(c.id))}>
+                  Corroborar
+                </button>
+              )}
+              {estado === "declarada" && (
+                <button type="button" className="btn btn-sm" disabled={pending} onClick={() => setAbierto(abierto?.id === c.id && abierto.que === "evidencia" ? null : { id: c.id, que: "evidencia" })}>
+                  Pedir evidencia…
+                </button>
+              )}
+              {(estado === "declarada" || estado === "evidencia_pedida") && (
+                <button type="button" className="btn btn-sm" disabled={pending} onClick={() => setAbierto(abierto?.id === c.id && abierto.que === "retirar" ? null : { id: c.id, que: "retirar" })}>
+                  Retirar…
+                </button>
+              )}
+              {(estado === "corroborada" || estado === "retirada") && (
+                <button type="button" className="btn btn-sm" disabled={pending} onClick={() => corre(() => reabrirCertificado(c.id))}>
+                  Reabrir
+                </button>
+              )}
             </div>
+            {abierto?.id === c.id && (
+              <div style={{ display: "flex", gap: 6, alignItems: "flex-start", flexWrap: "wrap", marginTop: 8 }}>
+                <textarea
+                  rows={2}
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  placeholder={abierto.que === "evidencia" ? "Qué falta (ej. el certificado escaneado y su vigencia)…" : "Motivo del retiro (opcional)…"}
+                  style={{ flex: 1, minWidth: 240, fontSize: 12.5 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-solid"
+                  disabled={pending}
+                  onClick={() => {
+                    const fd = new FormData();
+                    fd.set(abierto.que === "evidencia" ? "nota" : "motivo", texto);
+                    corre(() => (abierto.que === "evidencia" ? pedirEvidenciaCertificado(c.id, fd) : retirarCertificado(c.id, fd)));
+                  }}
+                >
+                  {pending ? "Guardando…" : abierto.que === "evidencia" ? "Pedir evidencia (avisa al productor)" : "Retirar del Pasaporte"}
+                </button>
+              </div>
+            )}
+            {c.notaCtc && <p className={styles.meta} style={{ margin: "4px 0 0" }}>Nota de CTC: {c.notaCtc}</p>}
             <div className={styles.meta} style={{ lineHeight: 1.8, marginTop: 4 }}>
               <div>N.º: {c.certNumber || "sin número"} · Vigencia: {hasValidity ? `${c.validFrom} → ${c.validTo}` : <b style={{ color: "#B45309" }}>sin registrar — no respalda claims</b>}</div>
               {c.holderNote && <div>Titular: {c.holderNote}</div>}

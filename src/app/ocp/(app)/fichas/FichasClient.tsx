@@ -2,7 +2,8 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { scanFichaSoportes, crearFichaDesdeReporte, setFichaOficial, deleteFicha, signSoporteUrl } from "../fichasActions";
+import { scanFichaSoportes, crearFichaDesdeReporte, crearFichaManual, setFichaOficial, deleteFicha, signSoporteUrl } from "../fichasActions";
+import { ATRIBUTOS_SCA, ATRIBUTO_LABEL } from "@/lib/fichas/tipos";
 import { FICHA_SOURCE_LABEL, type LotFicha } from "@/lib/fichas/tipos";
 import { FichaDatos } from "@/components/fichas/FichaDatos";
 import styles from "@/components/panel/shared.module.css";
@@ -11,7 +12,8 @@ import styles from "@/components/panel/shared.module.css";
 // disparar el escáner (opt-in, con su aviso de costo), compilar el reporte del
 // productor y administrar el set (oficial · eliminar).
 
-export type SoporteRef = { assetId: string; fileName: string; section: "b2" | "b3"; kind: "pdf" | "foto" };
+import { type SoporteRef } from "@/lib/fichas/soportes";
+export type { SoporteRef };
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -138,6 +140,7 @@ export function LotFichasCard({
       </div>
 
       {error && <p className={styles.warn} style={{ marginTop: 6 }}>{error}</p>}
+      <FichaManualForm lotId={lotId} />
       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 10, flexWrap: "wrap" }}>
         {tieneReporte && (
           <button className="btn btn-sm" disabled={pending} onClick={() => run(() => crearFichaDesdeReporte(lotId))}>
@@ -159,5 +162,106 @@ export function LotFichasCard({
         )}
       </div>
     </div>
+  );
+}
+
+// ── V5.78 · Transcribir a mano, en el formato de la Datasheet (fase 2 del plan) ──
+// El folio 7 del owner: si el productor adjunta archivos en FT2, «CTCx debe analizar y transcribir la info
+// en el formato CTCx Coffee Datasheet Tool (eventualmente incluimos un transcriptor automatizado)». El
+// escáner con IA es el automatizado (opt-in); esto es la mano: los mismos campos de `FichaTecnicaData`,
+// que queda como ficha «Compilada por CTC» (`source = "ctc"`, la fuente que estaba reservada sin escritor).
+function FichaManualForm({ lotId }: { lotId: string }) {
+  const { pending, error, run } = useAction();
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <div style={{ marginTop: 10 }}>
+        <button className="btn btn-sm" type="button" onClick={() => setOpen(true)}>
+          Transcribir a mano (formato Datasheet)…
+        </button>
+      </div>
+    );
+  }
+  const num = (name: string, label: string, step = "0.01") => (
+    <div className={styles.field} style={{ margin: 0 }}>
+      <label style={{ fontSize: 11.5 }}>{label}</label>
+      <input name={name} type="number" step={step} />
+    </div>
+  );
+  return (
+    <form
+      style={{ marginTop: 10, border: "1px dashed var(--line)", borderRadius: 10, padding: 12 }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        run(async () => {
+          const r = await crearFichaManual(lotId, fd);
+          if (r.ok) setOpen(false);
+          return r;
+        });
+      }}
+    >
+      <p className={styles.meta} style={{ margin: "0 0 8px" }}>
+        Lo que se transcribe de los soportes FT2, en el formato de la Datasheet. Deje vacío lo que el documento no muestra: nunca se inventa.
+      </p>
+      <div className={styles.field}>
+        <label style={{ fontSize: 11.5 }}>Título de la ficha</label>
+        <input name="title" defaultValue="Transcrita por CTCx" required />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px 10px" }}>
+        {num("puntaje", "Puntaje (0–100)")}
+        <div className={styles.field} style={{ margin: 0 }}>
+          <label style={{ fontSize: 11.5 }}>Escala</label>
+          <select name="escala" defaultValue="">
+            <option value="">—</option>
+            <option value="sca">SCA</option>
+            <option value="cva">CVA</option>
+          </select>
+        </div>
+        <div className={styles.field} style={{ margin: 0 }}>
+          <label style={{ fontSize: 11.5 }}>Catador</label>
+          <input name="catador" />
+        </div>
+        <div className={styles.field} style={{ margin: 0 }}>
+          <label style={{ fontSize: 11.5 }}>Laboratorio</label>
+          <input name="laboratorio" />
+        </div>
+        <div className={styles.field} style={{ margin: 0 }}>
+          <label style={{ fontSize: 11.5 }}>Fecha del análisis</label>
+          <input name="fecha_analisis" type="date" />
+        </div>
+      </div>
+      <details style={{ marginTop: 8 }}>
+        <summary style={{ cursor: "pointer", fontSize: 12.5, fontWeight: 600 }}>Atributos SCA (10)</summary>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "6px 10px", marginTop: 6 }}>
+          {ATRIBUTOS_SCA.map((k) => num(`atributo_${k}`, ATRIBUTO_LABEL[k], "0.25"))}
+        </div>
+      </details>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px 10px", marginTop: 8 }}>
+        {num("factor_rendimiento", "Factor de rendimiento")}
+        {num("almendra_total_g", "Almendra total (g)")}
+        {num("densidad_verde_gl", "Densidad verde (g/L)")}
+        {num("humedad_pergamino_pct", "Humedad pergamino (%)")}
+        {num("humedad_verde_pct", "Humedad verde (%)")}
+        {num("actividad_agua", "Actividad de agua", "0.001")}
+      </div>
+      <div className={styles.field} style={{ marginTop: 8 }}>
+        <label style={{ fontSize: 11.5 }}>Notas de cata</label>
+        <textarea name="notas_cata" rows={2} />
+      </div>
+      <div className={styles.field}>
+        <label style={{ fontSize: 11.5 }}>Defectos</label>
+        <input name="defectos" />
+      </div>
+      {error && <p className={styles.warn}>{error}</p>}
+      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+        <button className="btn btn-sm" type="button" onClick={() => setOpen(false)} disabled={pending}>
+          Cancelar
+        </button>
+        <button className="btn btn-sm btn-solid" type="submit" disabled={pending}>
+          {pending ? "Guardando…" : "Guardar ficha transcrita"}
+        </button>
+      </div>
+    </form>
   );
 }

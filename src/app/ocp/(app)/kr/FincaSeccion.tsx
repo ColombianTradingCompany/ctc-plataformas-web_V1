@@ -14,7 +14,7 @@ import { logProducerComm } from "../commActions";
 import { ProducerContactLine } from "../ProducerContactLine";
 import { ActionForm } from "@/components/panel/ActionForm";
 import { DeleteAbandonedButton } from "../DeleteAbandonedButton";
-import { FincaEudrEditor, type ProducerAnswers } from "./FincaEudrEditor";
+import { FincaEudrEditor, type BcpCert, type ProducerAnswers } from "./FincaEudrEditor";
 import { FincaPanel, type FincaLote } from "./FincaPanel";
 import styles from "@/components/panel/shared.module.css";
 
@@ -49,6 +49,8 @@ type FincaRow = {
   eudr_sustainability_tags: string[] | null;
   eudr_sustainability_notes: string | null;
   eudr_google_earth_url: string | null;
+  eudr_chequeo_notas: string | null;
+  eudr_chequeo_files: { assetId: string; fileName: string }[] | null;
   eudr_evidence_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_sustainability_files: Record<string, { assetId: string; fileName: string }> | null;
   eudr_cert_shared: boolean | null;
@@ -131,7 +133,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
        requires_eudr_polygon, eudr_polygon_geojson, eudr_lat, eudr_lng,
        eudr_planting_date, eudr_production_system, eudr_deforestation_free, eudr_legal_production, eudr_evidence_types,
        eudr_evidence_notes, eudr_legal_areas, eudr_tenure, eudr_legal_docs_asset_id, eudr_legal_docs_filename,
-       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra,
+       eudr_sustainability_tags, eudr_sustainability_notes, eudr_google_earth_url, eudr_chequeo_notas, eudr_chequeo_files, eudr_evidence_files, eudr_sustainability_files, eudr_cert_shared, eudr_producer_answers, eudr_local_infra,
        eudr_support_doc_type, eudr_custody_stages, eudr_custody_method, eudr_custody_notes, eudr_product_risk_factors, eudr_illegality_indicators, eudr_docs_available, eudr_cert_scheme, eudr_mitigation_actions, eudr_mitigation_responsible, eudr_mitigation_effective, created_at`
     )
     .eq("id", fincaId);
@@ -146,6 +148,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     f.video_asset_id,
     ...Object.values(f.eudr_evidence_files ?? {}).map((v) => v.assetId),
     ...Object.values(f.eudr_sustainability_files ?? {}).map((v) => v.assetId),
+    ...(f.eudr_chequeo_files ?? []).map((v) => v.assetId),
   ]);
   const [signedUrls, producers, { data: comms }, { data: lotsRaw }, { data: parcelasRaw }, { data: certsRaw }] = await Promise.all([
     signedKaffetalMediaUrls(service, allAssetIds),
@@ -168,7 +171,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
       .order("position", { ascending: true }),
     service
       .from("finca_certificates")
-      .select("id, finca_id, scheme, cert_number, valid_from, valid_to, holder_note, support_asset_id, support_filename, verified_by_ctc")
+      .select("id, finca_id, scheme, cert_number, valid_from, valid_to, holder_note, support_asset_id, support_filename, verified_by_ctc, status, nota_ctc, evidencia_pedida_at, recordatorios, ultimo_recordatorio_at, retirada_at")
       .in("finca_id", fincaRows.map((f) => f.id))
       .order("created_at", { ascending: true }),
   ]);
@@ -183,7 +186,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
     lotsByFinca.set(l.finca_id, [...(lotsByFinca.get(l.finca_id) ?? []), l]);
   }
   type BcpParcelaRow = { id: string; finca_id: string; name: string; area_ha: number | string | null; lat: number | string | null; lng: number | string | null; polygon_geojson: { lat: number; lng: number }[] | null; position: number };
-  type BcpCertRow = { id: string; finca_id: string; scheme: string; cert_number: string | null; valid_from: string | null; valid_to: string | null; holder_note: string | null; support_asset_id: string | null; support_filename: string | null; verified_by_ctc: boolean };
+  type BcpCertRow = { id: string; finca_id: string; scheme: string; cert_number: string | null; valid_from: string | null; valid_to: string | null; holder_note: string | null; support_asset_id: string | null; support_filename: string | null; verified_by_ctc: boolean; status: BcpCert["status"]; nota_ctc: string | null; evidencia_pedida_at: string | null; recordatorios: number; ultimo_recordatorio_at: string | null; retirada_at: string | null };
   const parcelasByFinca = new Map<string, BcpParcelaRow[]>();
   for (const p of (parcelasRaw as BcpParcelaRow[] | null) ?? []) {
     parcelasByFinca.set(p.finca_id, [...(parcelasByFinca.get(p.finca_id) ?? []), p]);
@@ -343,6 +346,7 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                               [
                                 ...Object.values(finca.eudr_evidence_files ?? {}),
                                 ...Object.values(finca.eudr_sustainability_files ?? {}),
+                                ...(finca.eudr_chequeo_files ?? []),
                               ]
                                 .map((v) => [v.assetId, signedUrls.get(v.assetId)])
                                 .filter((e): e is [string, string] => !!e[1])
@@ -373,6 +377,12 @@ export async function FincaSeccion({ service, fincaId }: { service: SupabaseClie
                               supportUrl: c.support_asset_id ? certUrls.get(c.support_asset_id) ?? null : null,
                               supportFilename: c.support_filename,
                               verifiedByCtc: c.verified_by_ctc,
+                              status: c.status,
+                              notaCtc: c.nota_ctc,
+                              evidenciaPedidaAt: c.evidencia_pedida_at,
+                              recordatorios: c.recordatorios,
+                              ultimoRecordatorioAt: c.ultimo_recordatorio_at,
+                              retiradaAt: c.retirada_at,
                             }))}
                           />
                         }

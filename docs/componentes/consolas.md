@@ -40,7 +40,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 |---|---|---|
 | `/login` · `/verify` · `/panel` · `/cambiar-contrasena` | login maestro (2FA), selector, cambio forzado | `src/app/api/panel/auth/{password,verify,logout}` |
 | `/bcp/(app)/…` | Business | Ecosistema de Valor: `herramientas`, `directorio`, `coffeed`, `ctc-tech`, `varietales`, `terratalento`, `arena` (+ `[sessionId]`: sesiones de segunda apreciación, V5.77; + `temporadas`) · Configuración: `usuarios`, `socios/[nodo]`, `documentacion`, `mapa`, `consumo`, `plataformas`. `club` → 308 a `/ocp/subvenciones` (V5.77) |
-| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` (V5.85: «Oferta desde CTCx Selection», la disponibilidad de lo comprado en firme + el perfil único y la imagen por lote) · **`compras`** (V5.85: el registro de compras en firme, `comprasActions.ts`) |
+| `/ocp/(app)/…` | Operation — **el rail es el cuadro del owner (V5.63)**: Kaffetal Regal · Catálogo · Manejo de Stock Físico | `kr` (+ `kr/[id]/{dossier,kml}`, el Pasaporte de una finca) · **`asistencia`** y **`desacoplado`** (V5.75: la sesión asistida y el proveedor sin buzón, `src/lib/asistencia/`) · **`subvenciones`** (+ `campanas/[id]`, V5.77: las campañas del Club, `subvencionesActions.ts`) · **`solicitudes`**, `a-evaluar` y `en-evaluacion` (las TRES vistas de lo que fue Nominados: `nominados/CircuitoVista.tsx`; V5.80: la solicitud con factura y subvención, los Baches de Evaluación, el veredicto hasta la fase 4) · **`muestras`** (V5.80: Gestión de Muestras, 1.ª tanda) · `ofertas` («Pendiente Oferta»), `catalogo`, `contratos`, `subastas`, `fichas`, `ctc-selection` (V5.85: «Oferta desde CTCx Selection», la disponibilidad de lo comprado en firme + el perfil único y la imagen por lote) · **`compras`** (+ `compras/mezclas`, `compras/mezclas/[id]` — V5.85/V5.87: el registro de compras en firme y las mezclas; `comprasActions.ts`, `src/lib/compras/{reglas,mezclas,mezclasServidor}.ts`) |
 | `/ecp/(app)/…` | Execution | `/ecp` (Tablero de Ejecución), `transcripciones` — y, **de `herramientas-internas`**: `direccionamiento/*`, `pvc/*`, `cotizador-{lotes,logistico,empaque}`, `anclas-mercado`, `automatizaciones` |
 | `/lcp/(app)/…` | Relationship (V5.59) | `buzon`, `leads`, `lista-espera` (`?lista=ctc-home·roast·x·directorio·herramientas·terratalento`), `crm/{caas,green,roast,x}` |
 | `/bcp|/ocp|/ecp/<modulo>/[[...resto]]` | **talones 308** de las mudanzas V4.24–V5.61 (53 rutas; nueve viajes de vuelta en la V5.60; cuatro «muchas a una» en la V5.61) | fuente: `src/lib/panel/rutasMovidas.ts`; fuera de `(app)` a propósito |
@@ -99,7 +99,7 @@ correo), cada una con su palabra de misión (vocabulario congelado el 2026-08-18
 `muestras` · `muestra_movimientos` (V5.80) ·
 `arena_entry_codes` · `arena_sessions` · `arena_session_lots` · `arena_scores` · `lot_evaluations`
 (filas `q_grader_batch` y `bcp_arena`) · `lot_offers` (emisión) · `lot_fichas` (escáner y set) ·
-`lot_auctions` (administración) · `black_negotiations` (DORMIDA desde la V5.85: sin lector ni escritor) · **`compras`** · **`ctcx_selection_lotes`** (V5.85) · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes) ·
+`lot_auctions` (administración) · `black_negotiations` (DORMIDA desde la V5.85: sin lector ni escritor) · **`compras`** · **`ctcx_selection_lotes`** (V5.85) · **`mezclas`** · **`mezcla_componentes`** (V5.87) · `purchase_contracts` · `contract_months` (V5.84, el trato mes a mes) ·
 `contract_releases` (desde la V5.84, espejo de cada envío registrado) ·
 `humidity_readings` · `lot_listings` (publicación) · `club_campaigns` · `ai_usage` · `transcripts` ·
 `transcript_workers` (+ RPC `claim_transcript_job`).
@@ -133,7 +133,7 @@ blanca) · `qa-circuito-check.mjs` (41 — la tabla de verdad del circuito desde
 registrar ≠ confirmar, CVA, rueda; charter `socios`, guardián de `consolas` porque vigila el circuito) · **`qa-trato-check.mjs`** (35, V5.82 —
 cada cifra de `terminos.ts` contra el §0/§6 del plan; rechazo gratis; re-evaluación; «sin oferta»; los laterales del circuito) ·
 **`qa-pvc-precio.mjs`** (52, V5.82 — la escalera publicada grado por grado, `RANGOS` = `definicion.ts`, nadie lee `rango`, las
-ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (51, V5.85 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
+ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-internas`) · **`qa-compras-check.mjs`** (73, V5.85 · mezclas V5.87 — lo disponible derivado y nunca negativo, `ctc_selection` desde `compras` sin Tyrian y con la finca anulada en SQL, el precio cita el PVC, la compra nace del pago de una oferta de compra en firme, el CRM sin escritor, el perfil único y la imagen por lote, la vitrina con el perfil, el circuito y la barra con la misma regla, decisión 7) · `qa-ofertas-check.mjs` (37). Los siete `qa-pvc-*`, `qa-grados`, `qa-definicion`,
 `qa-direccionamiento` y `qa-anclas` pasaron a `herramientas-internas` el 2026-09-19.
 
 ## Reglas propias
@@ -232,11 +232,15 @@ ofertas ancladas no teclean precio; vive con los `qa-pvc-*` de `herramientas-int
   con el perfil (`perfilCtcx.ts`), `public_lot_catalog.ctc_selection` desde `compras`, el CRM de `black_negotiations` retirado (un
   Black recibe temporada/directa como los demás), lateral «CTCx Selection» del circuito. `qa-compras-check` (51). **Con esto la
   Etapa 1 queda ejecutada en código.** **Sigue**: conducir las fases 6–8 con `prueba-*` (Etapa 2: correr todo con Asistencia y
-  Desacoplado); la 2.ª tanda de Compras (mezclas, unidad pergamino/verde, ubicación física — decisiones 1, 2, 4 y 5 del brief); la
+  Desacoplado); la
   2.ª tanda de Muestras; el wrap V47 desde WRAP-COMMIT-PUSH. **Recordatorios de mora HECHOS en la V5.86** (fila «Recordatorios»
   del §4): el cron semanal recuerda al productor el pedido del mes sin envío mientras esté en mora —desde el recargo—, hasta 4 veces
   por mes, por correo (remitente único) y nota en su feed, con rastro; nunca cambia un estado (decisión 6). `src/lib/trato/mora.ts`
-  (puro) + `moraRecordatorios.ts`; `contract_months.recordatorios_mora`; `qa-trato` 90 → 106 (§7).
+  (puro) + `moraRecordatorios.ts`; `contract_months.recordatorios_mora`; `qa-trato` 90 → 106 (§7). **2.ª tanda de Compras HECHA en la V5.87**: `mezclas` +
+  `mezcla_componentes` (Black 3–4 orígenes y/o variedades · Red una sola variedad · una carga por productor; la regla LEÍDA de
+  `lectura.ts` en `src/lib/compras/mezclas.ts` —al añadir y al cerrar— y repetida por `guard_mezcla_cerrada`; borrador → cerrada ·
+  anulada, nada se borra; lo asignado descuenta de lo disponible), `compras.ubicacion` (decisión 2, texto libre), todo en kg de CPS
+  (decisión 5). Queda del owner la decisión 4 (¿la mezcla es un lote nuevo con código público y ficha?). `qa-compras` 51 → 73.
   También en la V5.76, las cuatro indicaciones del owner sobre `/ocp/kr`: sin «Nuevo lote», agrupada por productor, el mapa por
   elemento, y «Ver fincas» con el filtro de Pasaporte por etapa.
 - **LAS TRES RUTAS DEL PROVEEDOR (owner, 2026-09-23)** — brief `briefs/consolas-rutas-del-proveedor.md`, con las siete

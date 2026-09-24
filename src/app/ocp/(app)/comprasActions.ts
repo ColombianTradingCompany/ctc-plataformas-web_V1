@@ -7,6 +7,8 @@ import { permisoDeEscritura } from "@/lib/panel/requireActiveAdmin";
 import { edicionVigente } from "@/lib/pvc/servicio";
 import { BUCKET_CTCX, CLAVE_PERFIL_CTCX } from "@/lib/compras/reglas";
 import { formatCop } from "@/lib/arena/inscriptions";
+import { esGradoDeMezcla, resumenDeMezcla, validarCierre, validarComponente, type GradoDeMezcla } from "@/lib/compras/mezclas";
+import { cargarMezcla } from "@/lib/compras/mezclasServidor";
 
 // ── CTCx Selection · Compras (fase 8 del PLAN_CIRCUITO_DEL_LOTE, V5.85) ──────────────────────
 // Folio 8, paso 19, y la decisión 7 del owner. Una compra en firme nace normalmente del PAGO de un mes de un contrato
@@ -180,5 +182,131 @@ export async function quitarImagenCtcx(destino: DestinoCtcx): Promise<ActionResu
   if (anterior) await service.storage.from(BUCKET_CTCX).remove([anterior]);
   await service.from("audit_log").insert({ entity_type: destino.tipo === "lote" ? "lot" : "platform_setting", entity_id: destino.tipo === "lote" ? destino.lotId : adminId, action: "ctcx_imagen_quitada", performed_by: adminId, notes: anterior });
   revalida();
+  return { ok: true };
+}
+
+// ── 2.ª tanda (V5.87): la ubicación física de una compra y las MEZCLAS ─────────────────────────
+// La regla de la mezcla (Black 3–4 orígenes y/o variedades · Red una variedad · una carga por productor) la impone
+// `src/lib/compras/mezclas.ts` (puro, que la LEE de `lectura.ts`) al añadir cada componente y al cerrar; el guard
+// `guard_mezcla_cerrada` la repite en la base. Una mezcla es borrador → cerrada · anulada: nada se borra.
+
+const revalidaMezclas = (id?: string) => {
+  revalida();
+  revalidatePath("/ocp/compras/mezclas");
+  if (id) revalidatePath(`/ocp/compras/mezclas/${id}`);
+};
+
+/** Dónde está físicamente el café comprado (decisión 2 del brief: texto libre hasta que el owner fije los sitios). */
+export async function ubicarCompra(compraId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const ubicacion = texto(formData.get("ubicacion"));
+  const { error } = await service.from("compras").update({ ubicacion }).eq("id", compraId);
+  if (error) return { ok: false, error: "No se pudo guardar la ubicación: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "compra", entity_id: compraId, action: "compra_ubicada", performed_by: adminId, notes: ubicacion });
+  revalida();
+  return { ok: true };
+}
+
+export async function crearMezcla(formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const nombre = texto(formData.get("nombre"));
+  const grado = texto(formData.get("grado"));
+  if (!nombre) return { ok: false, error: "Póngale nombre a la mezcla." };
+  if (!esGradoDeMezcla(grado)) return { ok: false, error: "Solo Black y Red se mezclan (Blue, Gold y Tyrian son lote único)." };
+  const { data, error } = await service.from("mezclas").insert({ nombre, grado, nota: texto(formData.get("nota")), created_by: adminId }).select("id, codigo").single();
+  if (error || !data) return { ok: false, error: "No se pudo crear la mezcla: " + (error?.message ?? "sin fila") };
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: data.id, action: "mezcla_creada", performed_by: adminId, notes: `${data.codigo} · ${nombre} · ${grado}` });
+  revalidaMezclas(data.id);
+  return { ok: true };
+}
+
+export async function agregarComponente(mezclaId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const compraId = texto(formData.get("compra_id"));
+  const kg = kgDe(formData.get("kg"));
+  if (!compraId) return { ok: false, error: "Elija la compra." };
+  if (!Number.isFinite(kg) || kg <= 0) return { ok: false, error: "Escriba los kilos que entran en la mezcla." };
+  const mezcla = await cargarMezcla(service, mezclaId);
+  if (!mezcla) return { ok: false, error: "Mezcla no encontrada." };
+  if (mezcla.status !== "borrador") return { ok: false, error: "Los componentes solo cambian mientras la mezcla es un borrador." };
+  const { data: compra } = await service.from("compras").select("id, kg, grado, lots(producer_id, ficha_variedad)").eq("id", compraId).maybeSingle();
+  if (!compra) return { ok: false, error: "Compra no encontrada." };
+  const lot = (Array.isArray(compra.lots) ? compra.lots[0] : compra.lots) as { producer_id: string; ficha_variedad: string | null } | null;
+  const { data: asignadoRaw } = await service.from("mezcla_componentes").select("kg, mezclas!inner(status)").eq("compra_id", compraId).neq("mezclas.status", "anulada");
+  const asignado = ((asignadoRaw as { kg: number | string }[] | null) ?? []).reduce((a, r) => a + Number(r.kg), 0);
+  const nuevo = {
+    compraId,
+    kg,
+    producerId: lot?.producer_id ?? "",
+    variedad: lot?.ficha_variedad ?? null,
+    grado: compra.grado,
+    disponibleKg: Math.max(0, Math.round((Number(compra.kg) - asignado) * 10) / 10),
+  };
+  const errores = validarComponente(mezcla.grado as GradoDeMezcla, mezcla.componentes, nuevo);
+  if (errores.length) return { ok: false, error: errores.join(" ") };
+  const { error } = await service.from("mezcla_componentes").insert({ mezcla_id: mezclaId, compra_id: compraId, kg });
+  if (error) return { ok: false, error: "No se pudo añadir el componente: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_componente_anadido", performed_by: adminId, notes: `compra ${compraId.slice(0, 8)} · ${kg} kg` });
+  revalidaMezclas(mezclaId);
+  return { ok: true };
+}
+
+export async function quitarComponente(mezclaId: string, componenteId: string): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const { data: m } = await service.from("mezclas").select("status").eq("id", mezclaId).maybeSingle();
+  if (!m) return { ok: false, error: "Mezcla no encontrada." };
+  if (m.status !== "borrador") return { ok: false, error: "Los componentes solo cambian mientras la mezcla es un borrador." };
+  const { error } = await service.from("mezcla_componentes").delete().eq("id", componenteId).eq("mezcla_id", mezclaId);
+  if (error) return { ok: false, error: "No se pudo quitar el componente: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_componente_quitado", performed_by: adminId, notes: componenteId.slice(0, 8) });
+  revalidaMezclas(mezclaId);
+  return { ok: true };
+}
+
+/** Cerrar = la regla entera se cumple (servidor) y la base la repite (guard). Desde aquí la mezcla no cambia: solo se anula. */
+export async function cerrarMezcla(mezclaId: string): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const mezcla = await cargarMezcla(service, mezclaId);
+  if (!mezcla) return { ok: false, error: "Mezcla no encontrada." };
+  if (mezcla.status !== "borrador") return { ok: false, error: "Solo se cierra un borrador." };
+  const errores = validarCierre(mezcla.grado, mezcla.componentes);
+  if (errores.length) return { ok: false, error: errores.join(" ") };
+  const { error } = await service.from("mezclas").update({ status: "cerrada" }).eq("id", mezclaId);
+  if (error) return { ok: false, error: "La base no dejó cerrar la mezcla: " + error.message };
+  const r = resumenDeMezcla(mezcla.componentes);
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_cerrada", performed_by: adminId, notes: `${mezcla.codigo} · ${r.componentes} componentes · ${r.productores} productores · ${r.kgTotal} kg (${r.cargas} cargas)${r.variedades.length ? ` · ${r.variedades.join(", ")}` : ""}` });
+  revalidaMezclas(mezclaId);
+  return { ok: true };
+}
+
+export async function anularMezcla(mezclaId: string, formData: FormData): Promise<ActionResult> {
+  const permiso = await permisoDeEscritura("ocp", "emite");
+  if (!permiso.ok) return { ok: false as const, error: permiso.error };
+  const adminId = permiso.userId;
+  const service = createServiceRoleClient();
+  const motivo = texto(formData.get("motivo"));
+  if (!motivo) return { ok: false, error: "Anular lleva motivo (queda en el rastro)." };
+  const { data: m } = await service.from("mezclas").select("status, codigo").eq("id", mezclaId).maybeSingle();
+  if (!m) return { ok: false, error: "Mezcla no encontrada." };
+  if (m.status === "anulada") return { ok: false, error: "Ya estaba anulada." };
+  const { error } = await service.from("mezclas").update({ status: "anulada", anulada_motivo: motivo }).eq("id", mezclaId);
+  if (error) return { ok: false, error: "No se pudo anular: " + error.message };
+  await service.from("audit_log").insert({ entity_type: "mezcla", entity_id: mezclaId, action: "mezcla_anulada", performed_by: adminId, previous_status: m.status, new_status: "anulada", notes: `${m.codigo} · ${motivo.slice(0, 300)}` });
+  revalidaMezclas(mezclaId);
   return { ok: true };
 }

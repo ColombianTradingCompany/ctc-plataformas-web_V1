@@ -55,13 +55,19 @@ export default async function OfertaDesdeCtcxSelectionPage() {
   const compras = (cRaw as unknown as CompraRow[] | null) ?? [];
   const lotIds = [...new Set(compras.map((c) => c.lot_id))];
   const producerIds = [...new Set(compras.map((c) => c.lots?.producer_id ?? "").filter(Boolean))];
-  const [{ data: lRaw }, { data: iRaw }, producers] = await Promise.all([
+  const [{ data: lRaw }, { data: iRaw }, producers, { data: mcRaw }] = await Promise.all([
     lotIds.length
       ? service.from("lot_listings").select("lot_id, status, total_kg, sold_kg, price_per_kg").in("lot_id", lotIds).neq("status", "archived")
       : Promise.resolve({ data: [] as ListingRow[] }),
     lotIds.length ? service.from("ctcx_selection_lotes").select("lot_id, imagen_path, imagen_alt").in("lot_id", lotIds) : Promise.resolve({ data: [] as ImagenRow[] }),
     fetchProducerContacts(service, producerIds),
+    // V5.87: lo asignado a mezclas (no anuladas) descuenta de lo disponible por lote.
+    compras.length
+      ? service.from("mezcla_componentes").select("compra_id, kg, mezclas!inner(status)").in("compra_id", compras.map((c) => c.id)).neq("mezclas.status", "anulada")
+      : Promise.resolve({ data: [] as { compra_id: string; kg: number | string }[] }),
   ]);
+  const asignadoByCompra = new Map<string, number>();
+  for (const r of ((mcRaw as { compra_id: string; kg: number | string }[] | null) ?? [])) asignadoByCompra.set(r.compra_id, (asignadoByCompra.get(r.compra_id) ?? 0) + Number(r.kg));
   const valor = (perfilRaw?.value as Record<string, string | null> | null) ?? null;
   const perfil = aPerfilCtcx(valor ? { nombre: valor.nombre ?? null, lema: valor.lema ?? null, descripcion: valor.descripcion ?? null, imagen_path: valor.imagen_path ?? null } : null);
   const listingByLot = new Map(((lRaw as ListingRow[] | null) ?? []).map((l) => [l.lot_id, l]));
@@ -75,7 +81,8 @@ export default async function OfertaDesdeCtcxSelectionPage() {
     const copPagado = Math.round(filas.filter((c) => c.pagada_at).reduce((a, c) => a + Number(c.total_cop), 0));
     const listing = listingByLot.get(id);
     const vendidoKg = n1(listing?.sold_kg);
-    return { id, lot, grado: filas[0].grado, filas, compradoKg, copPagado, listing, vendidoKg, disponibleKg: disponibleKg({ compradoKg, vendidoKg }), imagen: imagenByLot.get(id) };
+    const asignadoKg = n1(filas.reduce((a, c) => a + (asignadoByCompra.get(c.id) ?? 0), 0));
+    return { id, lot, grado: filas[0].grado, filas, compradoKg, copPagado, listing, vendidoKg, asignadoKg, disponibleKg: disponibleKg({ compradoKg, vendidoKg, asignadoKg }), imagen: imagenByLot.get(id) };
   });
   const kgDisponibles = n1(porLote.reduce((a, l) => a + l.disponibleKg, 0));
   const kgVendidos = n1(porLote.reduce((a, l) => a + l.vendidoKg, 0));
@@ -84,7 +91,7 @@ export default async function OfertaDesdeCtcxSelectionPage() {
   const kpis = [
     { k: "Lotes comprados en firme", v: String(resumen.lotes), sub: `${resumen.compras} compra${resumen.compras === 1 ? "" : "s"}` },
     { k: "Kg comprados (CPS)", v: String(resumen.kgComprados), sub: `${resumen.kgRecibidos} kg recibidos` },
-    { k: "Disponible para ofrecer", v: `${kgDisponibles} kg`, sub: "comprado − vendido (derivado)" },
+    { k: "Disponible para ofrecer", v: `${kgDisponibles} kg`, sub: "comprado − en mezclas − vendido (derivado)" },
     { k: "En el Catálogo Activo", v: String(publicados), sub: `${kgVendidos} kg vendidos en Cherry Picked` },
     { k: "Pagado a productores", v: formatCop(resumen.copPagado), sub: "compras pagadas" },
   ];
@@ -186,7 +193,7 @@ export default async function OfertaDesdeCtcxSelectionPage() {
                       sin publicar — <Link href="/ocp/catalogo">Pasar al Catálogo Activo →</Link>
                     </>
                   )}{" "}
-                  · <b>disponible {l.disponibleKg} kg</b>
+                  {l.asignadoKg > 0 && <> · en mezclas {l.asignadoKg} kg</>} · <b>disponible {l.disponibleKg} kg</b>
                 </p>
                 <div style={{ marginTop: 10 }}>
                   <ImagenCtcxUploader destino={{ tipo: "lote", lotId: l.id }} imagenUrl={urlDeImagenCtcx(l.imagen?.imagen_path)} alt={l.imagen?.imagen_alt} etiqueta="Imagen de este lote en la vitrina (opcional)" />

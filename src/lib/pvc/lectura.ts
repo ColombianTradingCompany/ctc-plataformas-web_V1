@@ -81,8 +81,8 @@ export const MOQ_MEZCLA: Record<number, number> = Object.fromEntries(
   LOTES_EN_MEZCLA.map((n) => [n, n * CARGAS_POR_PRODUCTOR]),
 );
 
-/** De qué se compone cada mezcla. Hoy se EXHIBE (BCP · Lectura); el día que el OCP
- *  arme blends, esta es la regla que tendrá que hacer cumplir. */
+/** De qué se compone cada mezcla. Se EXHIBE (BCP · Lectura) y, desde la V5.87, la hace cumplir el OCP al armar
+ *  mezclas: `src/lib/compras/mezclas.ts` la LEE de aquí y el guard `guard_mezcla_cerrada` la repite en la base. */
 export const COMPOSICION_MEZCLA = {
   Black: { productores: LOTES_EN_MEZCLA, variedades: "varias", nota: "blend de 3 a 4 orígenes y/o variedades" },
   Red: { productores: LOTES_EN_MEZCLA, variedades: "una", nota: "una sola variedad: mezcla regional de 3 a 4 orígenes" },

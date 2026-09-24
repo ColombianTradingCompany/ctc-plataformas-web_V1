@@ -19,6 +19,8 @@ import { BUCKET_CTCX, CLAVE_PERFIL_CTCX, KINDS_COMPRA_EN_FIRME, disponibleKg, es
 import { aPerfilCtcx, rotuloCtcx, urlDeImagenCtcx } from "../src/lib/catalogo/perfilCtcx.ts";
 import { CTC_RAZON } from "../src/lib/legal.ts";
 import { estadoDelCircuito } from "../src/lib/ocp/circuito.ts";
+import { KG_MINIMOS_POR_COMPONENTE, MAX_COMPONENTES, MIN_COMPONENTES, unaSolaVariedad, validarCierre, validarComponente } from "../src/lib/compras/mezclas.ts";
+import { CARGAS_POR_PRODUCTOR, COMPOSICION_MEZCLA, LOTES_EN_MEZCLA } from "../src/lib/pvc/lectura.ts";
 
 let ok = 0;
 const fallos = [];
@@ -128,6 +130,39 @@ const compras = lee("src/app/ocp/(app)/comprasActions.ts");
   const p19 = paso(19);
   check("paso 19 del plan: ventana de 30 días y PVC − 8 %, y la pantalla lo dice", /\*\*ventana de 30 días\*\*/.test(p19) && /\*\*PVC − 8 %\*\*/.test(p19) && pantalla.includes("PVC − 8 %, 30 días"));
   check("Compras: la tabla y el alta a mano", lee("src/app/ocp/(app)/compras/page.tsx").includes("registrarCompraManual") && lee("src/app/ocp/(app)/compras/page.tsx").includes("pvc_editions(code)"));
+}
+
+// ── 10. Las mezclas (V5.87, 2.ª tanda del brief): la regla se LEE de lectura.ts y se impone; lo asignado descuenta ──
+// Owner, 2026-09-19 (PVC_BCP_PLAN §14.7): Black = blend de 3 a 4 orígenes y/o variedades; Red = una sola variedad; una carga
+// por productor; una mezcla de dos no existe, de cinco tampoco. El brief (punto 1 del guardián previsto): la regla NO se copia.
+{
+  const pvc = lee("docs/PVC_BCP_PLAN.md");
+  check("PVC plan §14.7: Black 3 a 4 orígenes y/o variedades; Red una sola variedad; ni de dos ni de cinco", /\*\*Black\*\* es un blend de 3 a 4/.test(pvc) && /mezcla regional\*\* de 3 a 4 orígenes/.test(pvc) && /Una mezcla de dos no existe, y una de cinco tampoco/.test(pvc));
+  check("la regla se LEE de lectura.ts: 3–4 componentes, una carga por productor, Red de una variedad", MIN_COMPONENTES === LOTES_EN_MEZCLA[0] && MAX_COMPONENTES === LOTES_EN_MEZCLA[LOTES_EN_MEZCLA.length - 1] && MIN_COMPONENTES === 3 && MAX_COMPONENTES === 4 && KG_MINIMOS_POR_COMPONENTE === CARGAS_POR_PRODUCTOR * 125 && unaSolaVariedad("red") === (COMPOSICION_MEZCLA.Red.variedades === "una") && !unaSolaVariedad("black"));
+  const mezclasSrc = lee("src/lib/compras/mezclas.ts").replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, "");
+  check("mezclas.ts es puro y no copia las cifras (importa lectura.ts y terminos.ts)", !/supabase|server-only/.test(mezclasSrc) && mezclasSrc.includes('from "@/lib/pvc/lectura"') && mezclasSrc.includes('from "@/lib/trato/terminos"') && !/=\s*\[?\s*3\s*,\s*4\s*\]?/.test(mezclasSrc) && !/=\s*125\b/.test(mezclasSrc));
+  const c = (i, extra = {}) => ({ compraId: "c" + i, kg: 125, producerId: "p" + i, variedad: "Caturra", grado: "red", disponibleKg: 500, ...extra });
+  const negros = (n) => Array.from({ length: n }, (_, i) => c(i + 1, { grado: "black", variedad: ["Caturra", "Castillo", "Colombia", "Bourbon", "Tabi"][i] }));
+  check("Red de 3 productores, una variedad, una carga cada uno: cierra", validarCierre("red", [c(1), c(2), c(3)]).length === 0);
+  check("Black de 4 orígenes con variedades distintas: cierra", validarCierre("black", negros(4)).length === 0);
+  check("de dos no existe", validarCierre("red", [c(1), c(2)]).length > 0);
+  check("de cinco tampoco", validarCierre("black", negros(5)).length > 0);
+  check("una carga por productor: un productor repetido no cierra", validarCierre("red", [c(1), c(2), c(3, { producerId: "p1" })]).length > 0);
+  check("menos de una carga en un componente no cierra", validarCierre("red", [c(1), c(2), c(3, { kg: 100 })]).length > 0);
+  check("Red con dos variedades no cierra; Black sí", validarCierre("red", [c(1), c(2), c(3, { variedad: "Geisha" })]).length > 0 && validarCierre("black", [c(1, { grado: "black" }), c(2, { grado: "black" }), c(3, { grado: "black", variedad: "Geisha" })]).length === 0);
+  check("Red con un lote sin variedad registrada no cierra", validarCierre("red", [c(1), c(2), c(3, { variedad: null })]).length > 0);
+  check("un componente de otro grado no cierra", validarCierre("red", [c(1), c(2), c(3, { grado: "black" })]).length > 0);
+  check("más kilos de los que quedan en la compra no cierra", validarCierre("red", [c(1), c(2), c(3, { kg: 600, disponibleKg: 500 })]).length > 0);
+  check("al añadir: mismo productor, otra variedad en Red o un quinto componente se rechazan; un tercero válido pasa", validarComponente("red", [c(1), c(2)], c(3, { producerId: "p1" })).length > 0 && validarComponente("red", [c(1)], c(2, { variedad: "Geisha" })).length > 0 && validarComponente("black", negros(4), c(5, { grado: "black" })).length > 0 && validarComponente("red", [c(1), c(2)], c(3)).length === 0);
+  check("lo disponible descuenta lo asignado a mezclas y sigue sin ser negativo", disponibleKg({ compradoKg: 500, vendidoKg: 100, asignadoKg: 150 }) === 250 && disponibleKg({ compradoKg: 200, vendidoKg: 100, asignadoKg: 150 }) === 0);
+  const acta = lee("docs/migraciones/2026-09-25_mezclas_ctcx_selection.sql");
+  check("la base repite la regla al CERRAR, con las mismas cifras que lectura.ts", acta.includes("create trigger guard_mezcla_cerrada") && new RegExp(`if n < ${MIN_COMPONENTES} or n > ${MAX_COMPONENTES}`).test(acta) && new RegExp(`if minkg < ${KG_MINIMOS_POR_COMPONENTE}`).test(acta) && /if prods <> n/.test(acta) && /if new\.grado = 'red' and vars <> 1/.test(acta));
+  check("los componentes solo cambian en borrador; una mezcla no se borra, se anula", acta.includes("create trigger guard_mezcla_componente") && /'borrador', 'cerrada', 'anulada'/.test(acta) && !/from\("mezclas"\)\s*\.\s*delete/.test(compras));
+  check("RLS y cero políticas en mezclas y componentes", acta.includes("alter table public.mezclas enable row level security") && acta.includes("alter table public.mezcla_componentes enable row level security") && !/create policy [^\n]* on public\.mezcla/.test(acta));
+  check("añadir y cerrar pasan por la regla pura antes que por la base", compras.includes("validarComponente(mezcla.grado as GradoDeMezcla, mezcla.componentes, nuevo)") && compras.includes("validarCierre(mezcla.grado, mezcla.componentes)") && compras.includes('update({ status: "cerrada" })'));
+  check("«Oferta desde CTCx Selection» descuenta lo asignado a mezclas no anuladas", lee("src/app/ocp/(app)/ctc-selection/page.tsx").includes("asignadoKg") && lee("src/app/ocp/(app)/ctc-selection/page.tsx").includes('neq("mezclas.status", "anulada")'));
+  check("la ubicación física existe (decisión 2, texto libre) y las dos pantallas de mezclas", compras.includes("export async function ubicarCompra") && acta.includes("add column ubicacion") && lee("src/app/ocp/(app)/compras/mezclas/page.tsx").includes("crearMezcla") && lee("src/app/ocp/(app)/compras/mezclas/[id]/page.tsx").includes("cerrarMezcla"));
+  check("la pantalla habla en kg de CPS y no inventa un factor a verde (decisión 5)", lee("src/app/ocp/(app)/compras/page.tsx").includes("kg de CPS") && !/verde\s*[*×]|factor\s*=\s*0\./.test(lee("src/app/ocp/(app)/compras/page.tsx")));
 }
 
 if (fallos.length) {

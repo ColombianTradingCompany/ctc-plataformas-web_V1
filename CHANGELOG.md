@@ -19,6 +19,22 @@ compilar el mapa interactivo, no para buscar «¿qué trajo la V4.42?»).
 
 ---
 
+## [V5.87] — 2026-09-25 (commit pendiente)
+
+- **Añadido**: **las mezclas de CTCx Selection** (2.ª tanda del brief de Compras): `/ocp/compras/mezclas` arma una mezcla como
+  borrador, componente a componente, con compras en firme del mismo grado, y la **cierra** cuando cumple la regla del owner —
+  **Black** blend de 3 a 4 orígenes y/o variedades, **Red** una sola variedad y 3 a 4 orígenes, **una carga (125 kg de CPS) por
+  productor**, ni de dos ni de cinco—. La regla se LEE de `src/lib/pvc/lectura.ts` (`src/lib/compras/mezclas.ts`, puro) y la base la
+  repite al cerrar (`guard_mezcla_cerrada`); los componentes se congelan fuera del borrador; una mezcla no se borra, se anula con motivo.
+- **Añadido**: **lo disponible descuenta lo asignado a mezclas** (comprado − en mezclas − vendido, derivado) en «Oferta desde CTCx
+  Selection» y en Compras; la **ubicación física** de cada compra (`compras.ubicacion`, texto libre hasta que el owner fije los sitios).
+- **Cambiado**: Compras enseña «En mezcla» y «Ubicación» por compra y habla en kg de CPS (la conversión a verde es del Modelo de
+  Producción: aquí no se inventa un factor).
+- **Datos**: migración `mezclas_ctcx_selection` (acta en `docs/migraciones/`): `mezclas` (código `MZ-AAAA-NNN`), `mezcla_componentes`,
+  `compras.ubicacion`, guards `guard_mezcla_cerrada` y `guard_mezcla_componente`; RLS y cero políticas.
+- **Docs**: `qa-compras-check` 51 → 73 (§10: la regla desde `lectura.ts` y el PVC plan, la base con las mismas cifras, lo asignado
+  descuenta, nada se borra). Queda con el owner la decisión 4 del brief (¿una mezcla es un lote nuevo con código público y ficha?).
+
 ## [V5.86] — 2026-09-25 (commit c1ba77e)
 
 - **Añadido**: **los recordatorios de mora** (fila «Recordatorios» del §4 del `PLAN_CIRCUITO_DEL_LOTE.md`; decisión 6: visible,

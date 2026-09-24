@@ -20,9 +20,10 @@ export const CLAVE_PERFIL_CTCX = "ctcx_selection_perfil";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
-/** Lo DISPONIBLE para ofrecer no se guarda: es lo comprado menos lo vendido en el listado, y nunca negativo (brief, punto 2). */
-export function disponibleKg(o: { compradoKg: number; vendidoKg: number }): number {
-  return Math.max(0, r1((Number(o.compradoKg) || 0) - (Number(o.vendidoKg) || 0)));
+/** Lo DISPONIBLE para ofrecer no se guarda: es lo comprado menos lo asignado a una mezcla (V5.87) y menos lo vendido en el
+ *  listado, y nunca negativo (brief, punto 2). */
+export function disponibleKg(o: { compradoKg: number; vendidoKg: number; asignadoKg?: number }): number {
+  return Math.max(0, r1((Number(o.compradoKg) || 0) - (Number(o.asignadoKg) || 0) - (Number(o.vendidoKg) || 0)));
 }
 
 export type FilaDeCompra = {

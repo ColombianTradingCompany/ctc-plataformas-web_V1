@@ -426,3 +426,22 @@ El owner cerró el primer ciclo el 2026-09-23 y pidió que el mapa lo recoja ent
 - Guardianes: `qa-trato-check` 90 → 106 (§7). `qa-registro` 67 intacto.
 - PENDIENTE: conducir las fases 6–8 con `prueba-*` (Etapa 2); 2.ª tanda de Compras; wrap V47 (el log lleva 16 asientos).
 (commit: c1ba77e)
+
+## [2026-09-25] V5.87 · Consolas — 2.ª tanda de Compras: las mezclas de CTCx Selection, lo asignado y la ubicación
+- REGLA NUEVA (DICT `mezclas`): `src/lib/compras/mezclas.ts` (puro): LEE `LOTES_EN_MEZCLA`/`CARGAS_POR_PRODUCTOR`/`COMPOSICION_MEZCLA`
+  de `pvc/lectura.ts` y `CARGA_KG` de `trato/terminos.ts`; `validarComponente` (al añadir: grado, una carga, disponible, productor no
+  repetido, Red misma variedad, tope 4) y `validarCierre` (3–4, productores distintos, todos del grado, ≥ 125 kg, ≤ disponible, Red una
+  variedad); `resumenDeMezcla`, `unaSolaVariedad`. `reglas.ts`: `disponibleKg` descuenta `asignadoKg`.
+- FLUJO (comprasActions.ts): `crearMezcla` → `agregarComponente` / `quitarComponente` (solo borrador) → `cerrarMezcla` (regla pura +
+  `guard_mezcla_cerrada` en la base) · `anularMezcla` (motivo; nada se borra) · `ubicarCompra`. `src/lib/compras/mezclasServidor.ts`
+  (`cargarMezcla`, `comprasDisponiblesPara`, `asignadoPorCompra`).
+- NODOS OCP: `/ocp/compras/mezclas` (nueva mezcla + lista) y `/ocp/compras/mezclas/[id]` (componentes, elegibles, lo que falta para
+  cerrar, cerrar/anular); `/ocp/compras` gana «En mezcla», «Ubicación» y el campo ubicación del alta a mano; «Oferta desde CTCx
+  Selection» descuenta lo asignado (comprado − en mezclas − vendido).
+- DATOS: migración `mezclas_ctcx_selection` (acta): `mezclas` (`MZ-AAAA-NNN`, borrador → cerrada · anulada), `mezcla_componentes`,
+  `compras.ubicacion`, `guard_mezcla_cerrada` (3 · 4 · 125 · productores distintos · Red una variedad · ≤ comprado),
+  `guard_mezcla_componente`.
+- Guardianes: `qa-compras-check` 51 → 73 (§10). Decisiones del brief: 1 resuelta por diseño (se paga por mes/envío), 2 texto libre,
+  3 contestada (8 %), 5 kg de CPS (la conversión es del Modelo de Producción); **la 4 (¿la mezcla es un lote nuevo?) sigue del owner**.
+- PENDIENTE: conducir con `prueba-*` (Etapa 2); llevar la mezcla a la vitrina cuando el owner conteste la 4; wrap V47 (17 asientos).
+(commit: pendiente)
